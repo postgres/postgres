@@ -2182,11 +2182,9 @@ pltcl_returnnext(ClientData cdata, Tcl_Interp *interp,
 		{
 			HeapTuple	tuple;
 
-			SPI_push();
 			tuple = pltcl_build_tuple_result(interp, rowObjv, rowObjc,
 											 call_state);
 			tuplestore_puttuple(call_state->tuple_store, tuple);
-			SPI_pop();
 		}
 	}
 	else
@@ -2249,12 +2247,6 @@ pltcl_subtrans_commit(MemoryContext oldcontext, ResourceOwner oldowner)
 	ReleaseCurrentSubTransaction();
 	MemoryContextSwitchTo(oldcontext);
 	CurrentResourceOwner = oldowner;
-
-	/*
-	 * AtEOSubXact_SPI() should not have popped any SPI context, but just in
-	 * case it did, make sure we remain connected.
-	 */
-	SPI_restore_connection();
 }
 
 static void
@@ -2272,13 +2264,6 @@ pltcl_subtrans_abort(Tcl_Interp *interp,
 	RollbackAndReleaseCurrentSubTransaction();
 	MemoryContextSwitchTo(oldcontext);
 	CurrentResourceOwner = oldowner;
-
-	/*
-	 * If AtEOSubXact_SPI() popped any SPI context of the subxact, it will
-	 * have left us in a disconnected state.  We need this hack to return to
-	 * connected state.
-	 */
-	SPI_restore_connection();
 
 	/* Pass the error data to Tcl */
 	pltcl_construct_errorCode(interp, edata);
@@ -3029,9 +3014,6 @@ pltcl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc)
  * mess, there's no way to prevent the datatype input functions it calls
  * from leaking.  Run it in a short-lived context, unless we're about to
  * exit the procedure anyway.
- *
- * Also, caller is responsible for doing SPI_push/SPI_pop if calling from
- * inside SPI environment.
  **********************************************************************/
 static HeapTuple
 pltcl_build_tuple_result(Tcl_Interp *interp, Tcl_Obj **kvObjv, int kvObjc,

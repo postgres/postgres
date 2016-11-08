@@ -44,8 +44,7 @@ int			SPI_result;
 static _SPI_connection *_SPI_stack = NULL;
 static _SPI_connection *_SPI_current = NULL;
 static int	_SPI_stack_depth = 0;		/* allocated size of _SPI_stack */
-static int	_SPI_connected = -1;
-static int	_SPI_curid = -1;
+static int	_SPI_connected = -1;	/* current stack index */
 
 static Portal SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
 						 ParamListInfo paramLI, bool read_only);
@@ -86,13 +85,7 @@ SPI_connect(void)
 {
 	int			newdepth;
 
-	/*
-	 * When procedure called by Executor _SPI_curid expected to be equal to
-	 * _SPI_connected
-	 */
-	if (_SPI_curid != _SPI_connected)
-		return SPI_ERROR_CONNECT;
-
+	/* Enlarge stack if necessary */
 	if (_SPI_stack == NULL)
 	{
 		if (_SPI_connected != -1 || _SPI_stack_depth != 0)
@@ -117,9 +110,7 @@ SPI_connect(void)
 		}
 	}
 
-	/*
-	 * We're entering procedure where _SPI_curid == _SPI_connected - 1
-	 */
+	/* Enter new stack level */
 	_SPI_connected++;
 	Assert(_SPI_connected >= 0 && _SPI_connected < _SPI_stack_depth);
 
@@ -178,14 +169,9 @@ SPI_finish(void)
 	SPI_lastoid = InvalidOid;
 	SPI_tuptable = NULL;
 
-	/*
-	 * After _SPI_begin_call _SPI_connected == _SPI_curid. Now we are closing
-	 * connection to SPI and returning to upper Executor and so _SPI_connected
-	 * must be equal to _SPI_curid.
-	 */
+	/* Exit stack level */
 	_SPI_connected--;
-	_SPI_curid--;
-	if (_SPI_connected == -1)
+	if (_SPI_connected < 0)
 		_SPI_current = NULL;
 	else
 		_SPI_current = &(_SPI_stack[_SPI_connected]);
@@ -212,7 +198,7 @@ AtEOXact_SPI(bool isCommit)
 
 	_SPI_current = _SPI_stack = NULL;
 	_SPI_stack_depth = 0;
-	_SPI_connected = _SPI_curid = -1;
+	_SPI_connected = -1;
 	SPI_processed = 0;
 	SPI_lastoid = InvalidOid;
 	SPI_tuptable = NULL;
@@ -258,8 +244,7 @@ AtEOSubXact_SPI(bool isCommit, SubTransactionId mySubid)
 		 * be already gone.
 		 */
 		_SPI_connected--;
-		_SPI_curid = _SPI_connected;
-		if (_SPI_connected == -1)
+		if (_SPI_connected < 0)
 			_SPI_current = NULL;
 		else
 			_SPI_current = &(_SPI_stack[_SPI_connected]);
@@ -312,53 +297,6 @@ AtEOSubXact_SPI(bool isCommit, SubTransactionId mySubid)
 	}
 }
 
-
-/* Pushes SPI stack to allow recursive SPI calls */
-void
-SPI_push(void)
-{
-	_SPI_curid++;
-}
-
-/* Pops SPI stack to allow recursive SPI calls */
-void
-SPI_pop(void)
-{
-	_SPI_curid--;
-}
-
-/* Conditional push: push only if we're inside a SPI procedure */
-bool
-SPI_push_conditional(void)
-{
-	bool		pushed = (_SPI_curid != _SPI_connected);
-
-	if (pushed)
-	{
-		_SPI_curid++;
-		/* We should now be in a state where SPI_connect would succeed */
-		Assert(_SPI_curid == _SPI_connected);
-	}
-	return pushed;
-}
-
-/* Conditional pop: pop only if SPI_push_conditional pushed */
-void
-SPI_pop_conditional(bool pushed)
-{
-	/* We should be in a state where SPI_connect would succeed */
-	Assert(_SPI_curid == _SPI_connected);
-	if (pushed)
-		_SPI_curid--;
-}
-
-/* Restore state of SPI stack after aborting a subtransaction */
-void
-SPI_restore_connection(void)
-{
-	Assert(_SPI_connected >= 0);
-	_SPI_curid = _SPI_connected - 1;
-}
 
 /* Parse, plan, and execute a query string */
 int
@@ -691,7 +629,7 @@ SPI_freeplan(SPIPlanPtr plan)
 HeapTuple
 SPI_copytuple(HeapTuple tuple)
 {
-	MemoryContext oldcxt = NULL;
+	MemoryContext oldcxt;
 	HeapTuple	ctuple;
 
 	if (tuple == NULL)
@@ -700,17 +638,17 @@ SPI_copytuple(HeapTuple tuple)
 		return NULL;
 	}
 
-	if (_SPI_curid + 1 == _SPI_connected)		/* connected */
+	if (_SPI_current == NULL)
 	{
-		if (_SPI_current != &(_SPI_stack[_SPI_curid + 1]))
-			elog(ERROR, "SPI stack corrupted");
-		oldcxt = MemoryContextSwitchTo(_SPI_current->savedcxt);
+		SPI_result = SPI_ERROR_UNCONNECTED;
+		return NULL;
 	}
+
+	oldcxt = MemoryContextSwitchTo(_SPI_current->savedcxt);
 
 	ctuple = heap_copytuple(tuple);
 
-	if (oldcxt)
-		MemoryContextSwitchTo(oldcxt);
+	MemoryContextSwitchTo(oldcxt);
 
 	return ctuple;
 }
@@ -718,7 +656,7 @@ SPI_copytuple(HeapTuple tuple)
 HeapTupleHeader
 SPI_returntuple(HeapTuple tuple, TupleDesc tupdesc)
 {
-	MemoryContext oldcxt = NULL;
+	MemoryContext oldcxt;
 	HeapTupleHeader dtup;
 
 	if (tuple == NULL || tupdesc == NULL)
@@ -727,22 +665,22 @@ SPI_returntuple(HeapTuple tuple, TupleDesc tupdesc)
 		return NULL;
 	}
 
+	if (_SPI_current == NULL)
+	{
+		SPI_result = SPI_ERROR_UNCONNECTED;
+		return NULL;
+	}
+
 	/* For RECORD results, make sure a typmod has been assigned */
 	if (tupdesc->tdtypeid == RECORDOID &&
 		tupdesc->tdtypmod < 0)
 		assign_record_type_typmod(tupdesc);
 
-	if (_SPI_curid + 1 == _SPI_connected)		/* connected */
-	{
-		if (_SPI_current != &(_SPI_stack[_SPI_curid + 1]))
-			elog(ERROR, "SPI stack corrupted");
-		oldcxt = MemoryContextSwitchTo(_SPI_current->savedcxt);
-	}
+	oldcxt = MemoryContextSwitchTo(_SPI_current->savedcxt);
 
 	dtup = DatumGetHeapTupleHeader(heap_copy_tuple_as_datum(tuple, tupdesc));
 
-	if (oldcxt)
-		MemoryContextSwitchTo(oldcxt);
+	MemoryContextSwitchTo(oldcxt);
 
 	return dtup;
 }
@@ -751,7 +689,7 @@ HeapTuple
 SPI_modifytuple(Relation rel, HeapTuple tuple, int natts, int *attnum,
 				Datum *Values, const char *Nulls)
 {
-	MemoryContext oldcxt = NULL;
+	MemoryContext oldcxt;
 	HeapTuple	mtuple;
 	int			numberOfAttributes;
 	Datum	   *v;
@@ -764,13 +702,16 @@ SPI_modifytuple(Relation rel, HeapTuple tuple, int natts, int *attnum,
 		return NULL;
 	}
 
-	if (_SPI_curid + 1 == _SPI_connected)		/* connected */
+	if (_SPI_current == NULL)
 	{
-		if (_SPI_current != &(_SPI_stack[_SPI_curid + 1]))
-			elog(ERROR, "SPI stack corrupted");
-		oldcxt = MemoryContextSwitchTo(_SPI_current->savedcxt);
+		SPI_result = SPI_ERROR_UNCONNECTED;
+		return NULL;
 	}
+
+	oldcxt = MemoryContextSwitchTo(_SPI_current->savedcxt);
+
 	SPI_result = 0;
+
 	numberOfAttributes = rel->rd_att->natts;
 	v = (Datum *) palloc(numberOfAttributes * sizeof(Datum));
 	n = (bool *) palloc(numberOfAttributes * sizeof(bool));
@@ -810,8 +751,7 @@ SPI_modifytuple(Relation rel, HeapTuple tuple, int natts, int *attnum,
 	pfree(v);
 	pfree(n);
 
-	if (oldcxt)
-		MemoryContextSwitchTo(oldcxt);
+	MemoryContextSwitchTo(oldcxt);
 
 	return mtuple;
 }
@@ -980,22 +920,10 @@ SPI_getnspname(Relation rel)
 void *
 SPI_palloc(Size size)
 {
-	MemoryContext oldcxt = NULL;
-	void	   *pointer;
+	if (_SPI_current == NULL)
+		elog(ERROR, "SPI_palloc called while not connected to SPI");
 
-	if (_SPI_curid + 1 == _SPI_connected)		/* connected */
-	{
-		if (_SPI_current != &(_SPI_stack[_SPI_curid + 1]))
-			elog(ERROR, "SPI stack corrupted");
-		oldcxt = MemoryContextSwitchTo(_SPI_current->savedcxt);
-	}
-
-	pointer = palloc(size);
-
-	if (oldcxt)
-		MemoryContextSwitchTo(oldcxt);
-
-	return pointer;
+	return MemoryContextAlloc(_SPI_current->savedcxt, size);
 }
 
 void *
@@ -1015,20 +943,17 @@ SPI_pfree(void *pointer)
 Datum
 SPI_datumTransfer(Datum value, bool typByVal, int typLen)
 {
-	MemoryContext oldcxt = NULL;
+	MemoryContext oldcxt;
 	Datum		result;
 
-	if (_SPI_curid + 1 == _SPI_connected)		/* connected */
-	{
-		if (_SPI_current != &(_SPI_stack[_SPI_curid + 1]))
-			elog(ERROR, "SPI stack corrupted");
-		oldcxt = MemoryContextSwitchTo(_SPI_current->savedcxt);
-	}
+	if (_SPI_current == NULL)
+		elog(ERROR, "SPI_datumTransfer called while not connected to SPI");
+
+	oldcxt = MemoryContextSwitchTo(_SPI_current->savedcxt);
 
 	result = datumTransfer(value, typByVal, typLen);
 
-	if (oldcxt)
-		MemoryContextSwitchTo(oldcxt);
+	MemoryContextSwitchTo(oldcxt);
 
 	return result;
 }
@@ -1050,16 +975,11 @@ SPI_freetuptable(SPITupleTable *tuptable)
 		return;
 
 	/*
-	 * Since this function might be called during error recovery, it seems
-	 * best not to insist that the caller be actively connected.  We just
-	 * search the topmost SPI context, connected or not.
+	 * Search only the topmost SPI context for a matching tuple table.
 	 */
-	if (_SPI_connected >= 0)
+	if (_SPI_current != NULL)
 	{
 		slist_mutable_iter siter;
-
-		if (_SPI_current != &(_SPI_stack[_SPI_connected]))
-			elog(ERROR, "SPI stack corrupted");
 
 		/* find tuptable in active list, then remove it */
 		slist_foreach_modify(siter, &_SPI_current->tuptables)
@@ -1168,13 +1088,9 @@ SPI_cursor_open_with_args(const char *name,
 
 	/* We needn't copy the plan; SPI_cursor_open_internal will do so */
 
-	/* Adjust stack so that SPI_cursor_open_internal doesn't complain */
-	_SPI_curid--;
-
 	result = SPI_cursor_open_internal(name, &plan, paramLI, read_only);
 
 	/* And clean up */
-	_SPI_curid++;
 	_SPI_end_call(true);
 
 	return result;
@@ -1723,14 +1639,8 @@ spi_dest_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	MemoryContext oldcxt;
 	MemoryContext tuptabcxt;
 
-	/*
-	 * When called by Executor _SPI_curid expected to be equal to
-	 * _SPI_connected
-	 */
-	if (_SPI_curid != _SPI_connected || _SPI_connected < 0)
-		elog(ERROR, "improper call to spi_dest_startup");
-	if (_SPI_current != &(_SPI_stack[_SPI_curid]))
-		elog(ERROR, "SPI stack corrupted");
+	if (_SPI_current == NULL)
+		elog(ERROR, "spi_dest_startup called while not connected to SPI");
 
 	if (_SPI_current->tuptable != NULL)
 		elog(ERROR, "improper call to spi_dest_startup");
@@ -1775,14 +1685,8 @@ spi_printtup(TupleTableSlot *slot, DestReceiver *self)
 	SPITupleTable *tuptable;
 	MemoryContext oldcxt;
 
-	/*
-	 * When called by Executor _SPI_curid expected to be equal to
-	 * _SPI_connected
-	 */
-	if (_SPI_curid != _SPI_connected || _SPI_connected < 0)
-		elog(ERROR, "improper call to spi_printtup");
-	if (_SPI_current != &(_SPI_stack[_SPI_curid]))
-		elog(ERROR, "SPI stack corrupted");
+	if (_SPI_current == NULL)
+		elog(ERROR, "spi_printtup called while not connected to SPI");
 
 	tuptable = _SPI_current->tuptable;
 	if (tuptable == NULL)
@@ -2534,11 +2438,8 @@ _SPI_procmem(void)
 static int
 _SPI_begin_call(bool execmem)
 {
-	if (_SPI_curid + 1 != _SPI_connected)
+	if (_SPI_current == NULL)
 		return SPI_ERROR_UNCONNECTED;
-	_SPI_curid++;
-	if (_SPI_current != &(_SPI_stack[_SPI_curid]))
-		elog(ERROR, "SPI stack corrupted");
 
 	if (execmem)				/* switch to the Executor memory context */
 		_SPI_execmem();
@@ -2554,11 +2455,6 @@ _SPI_begin_call(bool execmem)
 static int
 _SPI_end_call(bool procmem)
 {
-	/*
-	 * We're returning to procedure where _SPI_curid == _SPI_connected - 1
-	 */
-	_SPI_curid--;
-
 	if (procmem)				/* switch to the procedure memory context */
 	{
 		_SPI_procmem();

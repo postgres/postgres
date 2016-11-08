@@ -1103,8 +1103,6 @@ PLy_abort_open_subtransactions(int save_subxact_level)
 
 		RollbackAndReleaseCurrentSubTransaction();
 
-		SPI_restore_connection();
-
 		subtransactiondata = (PLySubtransactionData *) linitial(explicit_subtransactions);
 		explicit_subtransactions = list_delete_first(explicit_subtransactions);
 

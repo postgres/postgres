@@ -53,7 +53,6 @@
 #include "access/transam.h"
 #include "catalog/namespace.h"
 #include "executor/executor.h"
-#include "executor/spi.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/cost.h"
@@ -878,7 +877,6 @@ BuildCachedPlan(CachedPlanSource *plansource, List *qlist,
 	CachedPlan *plan;
 	List	   *plist;
 	bool		snapshot_set;
-	bool		spi_pushed;
 	bool		is_transient;
 	MemoryContext plan_context;
 	MemoryContext oldcxt = CurrentMemoryContext;
@@ -927,20 +925,9 @@ BuildCachedPlan(CachedPlanSource *plansource, List *qlist,
 	}
 
 	/*
-	 * The planner may try to call SPI-using functions, which causes a problem
-	 * if we're already inside one.  Rather than expect all SPI-using code to
-	 * do SPI_push whenever a replan could happen, it seems best to take care
-	 * of the case here.
-	 */
-	spi_pushed = SPI_push_conditional();
-
-	/*
 	 * Generate the plan.
 	 */
 	plist = pg_plan_queries(qlist, plansource->cursor_options, boundParams);
-
-	/* Clean up SPI state */
-	SPI_pop_conditional(spi_pushed);
 
 	/* Release snapshot if we got one */
 	if (snapshot_set)

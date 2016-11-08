@@ -59,6 +59,13 @@ typedef struct _SPI_plan *SPIPlanPtr;
 #define SPI_OK_UPDATE_RETURNING 13
 #define SPI_OK_REWRITTEN		14
 
+/* These used to be functions, now just no-ops for backwards compatibility */
+#define SPI_push()	((void) 0)
+#define SPI_pop()	((void) 0)
+#define SPI_push_conditional()	false
+#define SPI_pop_conditional(pushed) ((void) 0)
+#define SPI_restore_connection()	((void) 0)
+
 extern PGDLLIMPORT uint64 SPI_processed;
 extern PGDLLIMPORT Oid SPI_lastoid;
 extern PGDLLIMPORT SPITupleTable *SPI_tuptable;
@@ -66,11 +73,6 @@ extern PGDLLIMPORT int SPI_result;
 
 extern int	SPI_connect(void);
 extern int	SPI_finish(void);
-extern void SPI_push(void);
-extern void SPI_pop(void);
-extern bool SPI_push_conditional(void);
-extern void SPI_pop_conditional(bool pushed);
-extern void SPI_restore_connection(void);
 extern int	SPI_execute(const char *src, bool read_only, long tcount);
 extern int SPI_execute_plan(SPIPlanPtr plan, Datum *Values, const char *Nulls,
 				 bool read_only, long tcount);

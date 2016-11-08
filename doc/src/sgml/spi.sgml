@@ -90,21 +90,6 @@ int SPI_connect(void)
    function if you want to execute commands through SPI.  Some utility
    SPI functions can be called from unconnected procedures.
   </para>
-
-  <para>
-   If your procedure is already connected,
-   <function>SPI_connect</function> will return the error code
-   <returnvalue>SPI_ERROR_CONNECT</returnvalue>.  This could happen if
-   a procedure that has called <function>SPI_connect</function>
-   directly calls another procedure that calls
-   <function>SPI_connect</function>.  While recursive calls to the
-   <acronym>SPI</acronym> manager are permitted when an SQL command
-   called through SPI invokes another function that uses
-   <acronym>SPI</acronym>, directly nested calls to
-   <function>SPI_connect</function> and
-   <function>SPI_finish</function> are forbidden.
-   (But see <function>SPI_push</function> and <function>SPI_pop</function>.)
-  </para>
  </refsect1>
 
  <refsect1>
@@ -164,13 +149,6 @@ int SPI_finish(void)
    abort the transaction via <literal>elog(ERROR)</literal>.  In that
    case SPI will clean itself up automatically.
   </para>
-
-  <para>
-   If <function>SPI_finish</function> is called without having a valid
-   connection, it will return <symbol>SPI_ERROR_UNCONNECTED</symbol>.
-   There is no fundamental problem with this; it means that the SPI
-   manager has nothing to do.
-  </para>
  </refsect1>
 
  <refsect1>
@@ -196,86 +174,6 @@ int SPI_finish(void)
    </varlistentry>
   </variablelist>
  </refsect1>
-</refentry>
-
-<!-- *********************************************** -->
-
-<refentry id="spi-spi-push">
- <indexterm><primary>SPI_push</primary></indexterm>
-
- <refmeta>
-  <refentrytitle>SPI_push</refentrytitle>
-  <manvolnum>3</manvolnum>
- </refmeta>
-
- <refnamediv>
-  <refname>SPI_push</refname>
-  <refpurpose>push SPI stack to allow recursive SPI usage</refpurpose>
- </refnamediv>
-
- <refsynopsisdiv>
-<synopsis>
-void SPI_push(void)
-</synopsis>
- </refsynopsisdiv>
-
- <refsect1>
-  <title>Description</title>
-
-  <para>
-   <function>SPI_push</function> should be called before executing another
-   procedure that might itself wish to use SPI.
-   After <function>SPI_push</function>, SPI is no longer in a
-   <quote>connected</> state, and SPI function calls will be rejected unless
-   a fresh <function>SPI_connect</function> is done.  This ensures a clean
-   separation between your procedure's SPI state and that of another procedure
-   you call.  After the other procedure returns, call
-   <function>SPI_pop</function> to restore access to your own SPI state.
-  </para>
-
-  <para>
-   Note that <function>SPI_execute</function> and related functions
-   automatically do the equivalent of <function>SPI_push</function> before
-   passing control back to the SQL execution engine, so it is not necessary
-   for you to worry about this when using those functions.
-   Only when you are directly calling arbitrary code that might contain
-   <function>SPI_connect</function> calls do you need to issue
-   <function>SPI_push</function> and <function>SPI_pop</function>.
-  </para>
- </refsect1>
-
-</refentry>
-
-<!-- *********************************************** -->
-
-<refentry id="spi-spi-pop">
- <indexterm><primary>SPI_pop</primary></indexterm>
-
- <refmeta>
-  <refentrytitle>SPI_pop</refentrytitle>
-  <manvolnum>3</manvolnum>
- </refmeta>
-
- <refnamediv>
-  <refname>SPI_pop</refname>
-  <refpurpose>pop SPI stack to return from recursive SPI usage</refpurpose>
- </refnamediv>
-
- <refsynopsisdiv>
-<synopsis>
-void SPI_pop(void)
-</synopsis>
- </refsynopsisdiv>
-
- <refsect1>
-  <title>Description</title>
-
-  <para>
-   <function>SPI_pop</function> pops the previous environment from the
-   SPI call stack.  See <function>SPI_push</function>.
-  </para>
- </refsect1>
-
 </refentry>
 
 <!-- *********************************************** -->
@@ -3361,17 +3259,8 @@ char * SPI_getnspname(Relation <parameter>rel</parameter>)
    <quote>upper executor context</quote>, that is, the memory context
    that was current when <function>SPI_connect</function> was called,
    which is precisely the right context for a value returned from your
-   procedure.
-  </para>
-
-  <para>
-   If <function>SPI_palloc</function> is called while the procedure is
-   not connected to SPI, then it acts the same as a normal
-   <function>palloc</function>.  Before a procedure connects to the
-   SPI manager, the current memory context is the upper executor
-   context, so all allocations made by the procedure via
-   <function>palloc</function> or by SPI utility functions are made in
-   this context.
+   procedure.  Several of the other utility procedures described in
+   this section also return objects created in the upper executor context.
   </para>
 
   <para>
@@ -3379,23 +3268,12 @@ char * SPI_getnspname(Relation <parameter>rel</parameter>)
    context of the procedure, which is created by
    <function>SPI_connect</function>, is made the current context.  All
    allocations made by <function>palloc</function>,
-   <function>repalloc</function>, or SPI utility functions (except for
-   <function>SPI_copytuple</function>,
-   <function>SPI_returntuple</function>,
-   <function>SPI_modifytuple</function>,
-   <function>SPI_palloc</function>, and
-   <function>SPI_datumTransfer</function>) are made in this context.  When a
+   <function>repalloc</function>, or SPI utility functions (except as
+   described in this section) are made in this context.  When a
    procedure disconnects from the SPI manager (via
    <function>SPI_finish</function>) the current context is restored to
    the upper executor context, and all allocations made in the
    procedure memory context are freed and cannot be used any more.
-  </para>
-
-  <para>
-   All functions described in this section can be used by both
-   connected and unconnected procedures.  In an unconnected procedure,
-   they act the same as the underlying ordinary server functions
-   (<function>palloc</>, etc.).
   </para>
 
 <!-- *********************************************** -->
@@ -3425,6 +3303,11 @@ void * SPI_palloc(Size <parameter>size</parameter>)
   <para>
    <function>SPI_palloc</function> allocates memory in the upper
    executor context.
+  </para>
+
+  <para>
+   This function can only be used while connected to SPI.
+   Otherwise, it throws an error.
   </para>
  </refsect1>
 
@@ -3605,6 +3488,12 @@ HeapTuple SPI_copytuple(HeapTuple <parameter>row</parameter>)
    row from a trigger.  In a function declared to return a composite
    type, use <function>SPI_returntuple</function> instead.
   </para>
+
+  <para>
+   This function can only be used while connected to SPI.
+   Otherwise, it returns NULL and sets <varname>SPI_result</varname> to
+   <symbol>SPI_ERROR_UNCONNECTED</symbol>.
+  </para>
  </refsect1>
 
  <refsect1>
@@ -3626,8 +3515,8 @@ HeapTuple SPI_copytuple(HeapTuple <parameter>row</parameter>)
   <title>Return Value</title>
 
   <para>
-   the copied row; <symbol>NULL</symbol> only if
-   <parameter>tuple</parameter> is <symbol>NULL</symbol>
+   the copied row, or <symbol>NULL</symbol> on error
+   (see <varname>SPI_result</varname> for an error indication)
   </para>
  </refsect1>
 </refentry>
@@ -3661,6 +3550,12 @@ HeapTupleHeader SPI_returntuple(HeapTuple <parameter>row</parameter>, TupleDesc 
    the upper executor context, returning it in the form of a row type <type>Datum</type>.
    The returned pointer need only be converted to <type>Datum</type> via <function>PointerGetDatum</function>
    before returning.
+  </para>
+
+  <para>
+   This function can only be used while connected to SPI.
+   Otherwise, it returns NULL and sets <varname>SPI_result</varname> to
+   <symbol>SPI_ERROR_UNCONNECTED</symbol>.
   </para>
 
   <para>
@@ -3699,10 +3594,9 @@ HeapTupleHeader SPI_returntuple(HeapTuple <parameter>row</parameter>, TupleDesc 
   <title>Return Value</title>
 
   <para>
-   <type>HeapTupleHeader</type> pointing to copied row;
-   <symbol>NULL</symbol> only if
-   <parameter>row</parameter> or <parameter>rowdesc</parameter> is
-   <symbol>NULL</symbol>
+   <type>HeapTupleHeader</type> pointing to copied row,
+   or <symbol>NULL</symbol> on error
+   (see <varname>SPI_result</varname> for an error indication)
   </para>
  </refsect1>
 </refentry>
@@ -3736,6 +3630,13 @@ HeapTuple SPI_modifytuple(Relation <parameter>rel</parameter>, HeapTuple <parame
    <function>SPI_modifytuple</function> creates a new row by
    substituting new values for selected columns, copying the original
    row's columns at other positions.  The input row is not modified.
+   The new row is returned in the upper executor context.
+  </para>
+
+  <para>
+   This function can only be used while connected to SPI.
+   Otherwise, it returns NULL and sets <varname>SPI_result</varname> to
+   <symbol>SPI_ERROR_UNCONNECTED</symbol>.
   </para>
  </refsect1>
 
@@ -3821,8 +3722,8 @@ HeapTuple SPI_modifytuple(Relation <parameter>rel</parameter>, HeapTuple <parame
 
   <para>
    new row with modifications, allocated in the upper executor
-   context; <symbol>NULL</symbol> only if <parameter>row</parameter>
-   is <symbol>NULL</symbol>
+   context, or <symbol>NULL</symbol> on error
+   (see <varname>SPI_result</varname> for an error indication)
   </para>
 
   <para>
@@ -3845,8 +3746,17 @@ HeapTuple SPI_modifytuple(Relation <parameter>rel</parameter>, HeapTuple <parame
      <listitem>
       <para>
        if <parameter>colnum</> contains an invalid column number (less
-       than or equal to 0 or greater than the number of column in
+       than or equal to 0 or greater than the number of columns in
        <parameter>row</>)
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><symbol>SPI_ERROR_UNCONNECTED</symbol></term>
+     <listitem>
+      <para>
+       if SPI is not active
       </para>
      </listitem>
     </varlistentry>

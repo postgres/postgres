@@ -19,7 +19,6 @@
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
 #include "executor/functions.h"
-#include "executor/spi.h"
 #include "lib/stringinfo.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
@@ -1878,24 +1877,15 @@ OidFunctionCall9Coll(Oid functionId, Oid collation, Datum arg1, Datum arg2,
  * the caller should assume the result is NULL, but we'll call the input
  * function anyway if it's not strict.  So this is almost but not quite
  * the same as FunctionCall3.
- *
- * One important difference from the bare function call is that we will
- * push any active SPI context, allowing SPI-using I/O functions to be
- * called from other SPI functions without extra notation.  This is a hack,
- * but the alternative of expecting all SPI functions to do SPI_push/SPI_pop
- * around I/O calls seems worse.
  */
 Datum
 InputFunctionCall(FmgrInfo *flinfo, char *str, Oid typioparam, int32 typmod)
 {
 	FunctionCallInfoData fcinfo;
 	Datum		result;
-	bool		pushed;
 
 	if (str == NULL && flinfo->fn_strict)
 		return (Datum) 0;		/* just return null result */
-
-	pushed = SPI_push_conditional();
 
 	InitFunctionCallInfoData(fcinfo, flinfo, 3, InvalidOid, NULL, NULL);
 
@@ -1922,8 +1912,6 @@ InputFunctionCall(FmgrInfo *flinfo, char *str, Oid typioparam, int32 typmod)
 				 fcinfo.flinfo->fn_oid);
 	}
 
-	SPI_pop_conditional(pushed);
-
 	return result;
 }
 
@@ -1932,22 +1920,12 @@ InputFunctionCall(FmgrInfo *flinfo, char *str, Oid typioparam, int32 typmod)
  *
  * Do not call this on NULL datums.
  *
- * This is almost just window dressing for FunctionCall1, but it includes
- * SPI context pushing for the same reasons as InputFunctionCall.
+ * This is currently little more than window dressing for FunctionCall1.
  */
 char *
 OutputFunctionCall(FmgrInfo *flinfo, Datum val)
 {
-	char	   *result;
-	bool		pushed;
-
-	pushed = SPI_push_conditional();
-
-	result = DatumGetCString(FunctionCall1(flinfo, val));
-
-	SPI_pop_conditional(pushed);
-
-	return result;
+	return DatumGetCString(FunctionCall1(flinfo, val));
 }
 
 /*
@@ -1956,8 +1934,7 @@ OutputFunctionCall(FmgrInfo *flinfo, Datum val)
  * "buf" may be NULL to indicate we are reading a NULL.  In this case
  * the caller should assume the result is NULL, but we'll call the receive
  * function anyway if it's not strict.  So this is almost but not quite
- * the same as FunctionCall3.  Also, this includes SPI context pushing for
- * the same reasons as InputFunctionCall.
+ * the same as FunctionCall3.
  */
 Datum
 ReceiveFunctionCall(FmgrInfo *flinfo, StringInfo buf,
@@ -1965,12 +1942,9 @@ ReceiveFunctionCall(FmgrInfo *flinfo, StringInfo buf,
 {
 	FunctionCallInfoData fcinfo;
 	Datum		result;
-	bool		pushed;
 
 	if (buf == NULL && flinfo->fn_strict)
 		return (Datum) 0;		/* just return null result */
-
-	pushed = SPI_push_conditional();
 
 	InitFunctionCallInfoData(fcinfo, flinfo, 3, InvalidOid, NULL, NULL);
 
@@ -1997,8 +1971,6 @@ ReceiveFunctionCall(FmgrInfo *flinfo, StringInfo buf,
 				 fcinfo.flinfo->fn_oid);
 	}
 
-	SPI_pop_conditional(pushed);
-
 	return result;
 }
 
@@ -2009,22 +1981,12 @@ ReceiveFunctionCall(FmgrInfo *flinfo, StringInfo buf,
  *
  * This is little more than window dressing for FunctionCall1, but it does
  * guarantee a non-toasted result, which strictly speaking the underlying
- * function doesn't.  Also, this includes SPI context pushing for the same
- * reasons as InputFunctionCall.
+ * function doesn't.
  */
 bytea *
 SendFunctionCall(FmgrInfo *flinfo, Datum val)
 {
-	bytea	   *result;
-	bool		pushed;
-
-	pushed = SPI_push_conditional();
-
-	result = DatumGetByteaP(FunctionCall1(flinfo, val));
-
-	SPI_pop_conditional(pushed);
-
-	return result;
+	return DatumGetByteaP(FunctionCall1(flinfo, val));
 }
 
 /*

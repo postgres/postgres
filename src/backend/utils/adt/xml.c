@@ -2644,8 +2644,6 @@ schema_to_xml_internal(Oid nspid, const char *xmlschema, bool nulls,
 
 	relid_list = schema_get_xml_visible_tables(nspid);
 
-	SPI_push();
-
 	foreach(cell, relid_list)
 	{
 		Oid			relid = lfirst_oid(cell);
@@ -2658,7 +2656,6 @@ schema_to_xml_internal(Oid nspid, const char *xmlschema, bool nulls,
 		appendStringInfoChar(result, '\n');
 	}
 
-	SPI_pop();
 	SPI_finish();
 
 	xmldata_root_element_end(result, xmlsn);
@@ -2822,8 +2819,6 @@ database_to_xml_internal(const char *xmlschema, bool nulls,
 
 	nspid_list = database_get_xml_visible_schemas();
 
-	SPI_push();
-
 	foreach(cell, nspid_list)
 	{
 		Oid			nspid = lfirst_oid(cell);
@@ -2836,7 +2831,6 @@ database_to_xml_internal(const char *xmlschema, bool nulls,
 		appendStringInfoChar(result, '\n');
 	}
 
-	SPI_pop();
 	SPI_finish();
 
 	xmldata_root_element_end(result, xmlcn);

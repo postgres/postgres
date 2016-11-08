@@ -3057,12 +3057,6 @@ plperl_spi_exec(char *query, int limit)
 		ReleaseCurrentSubTransaction();
 		MemoryContextSwitchTo(oldcontext);
 		CurrentResourceOwner = oldowner;
-
-		/*
-		 * AtEOSubXact_SPI() should not have popped any SPI context, but just
-		 * in case it did, make sure we remain connected.
-		 */
-		SPI_restore_connection();
 	}
 	PG_CATCH();
 	{
@@ -3077,13 +3071,6 @@ plperl_spi_exec(char *query, int limit)
 		RollbackAndReleaseCurrentSubTransaction();
 		MemoryContextSwitchTo(oldcontext);
 		CurrentResourceOwner = oldowner;
-
-		/*
-		 * If AtEOSubXact_SPI() popped any SPI context of the subxact, it will
-		 * have left us in a disconnected state.  We need this hack to return
-		 * to connected state.
-		 */
-		SPI_restore_connection();
 
 		/* Punt the error to Perl */
 		croak_cstr(edata->message);
@@ -3296,12 +3283,6 @@ plperl_spi_query(char *query)
 		ReleaseCurrentSubTransaction();
 		MemoryContextSwitchTo(oldcontext);
 		CurrentResourceOwner = oldowner;
-
-		/*
-		 * AtEOSubXact_SPI() should not have popped any SPI context, but just
-		 * in case it did, make sure we remain connected.
-		 */
-		SPI_restore_connection();
 	}
 	PG_CATCH();
 	{
@@ -3316,13 +3297,6 @@ plperl_spi_query(char *query)
 		RollbackAndReleaseCurrentSubTransaction();
 		MemoryContextSwitchTo(oldcontext);
 		CurrentResourceOwner = oldowner;
-
-		/*
-		 * If AtEOSubXact_SPI() popped any SPI context of the subxact, it will
-		 * have left us in a disconnected state.  We need this hack to return
-		 * to connected state.
-		 */
-		SPI_restore_connection();
 
 		/* Punt the error to Perl */
 		croak_cstr(edata->message);
@@ -3382,12 +3356,6 @@ plperl_spi_fetchrow(char *cursor)
 		ReleaseCurrentSubTransaction();
 		MemoryContextSwitchTo(oldcontext);
 		CurrentResourceOwner = oldowner;
-
-		/*
-		 * AtEOSubXact_SPI() should not have popped any SPI context, but just
-		 * in case it did, make sure we remain connected.
-		 */
-		SPI_restore_connection();
 	}
 	PG_CATCH();
 	{
@@ -3402,13 +3370,6 @@ plperl_spi_fetchrow(char *cursor)
 		RollbackAndReleaseCurrentSubTransaction();
 		MemoryContextSwitchTo(oldcontext);
 		CurrentResourceOwner = oldowner;
-
-		/*
-		 * If AtEOSubXact_SPI() popped any SPI context of the subxact, it will
-		 * have left us in a disconnected state.  We need this hack to return
-		 * to connected state.
-		 */
-		SPI_restore_connection();
 
 		/* Punt the error to Perl */
 		croak_cstr(edata->message);
@@ -3543,12 +3504,6 @@ plperl_spi_prepare(char *query, int argc, SV **argv)
 		ReleaseCurrentSubTransaction();
 		MemoryContextSwitchTo(oldcontext);
 		CurrentResourceOwner = oldowner;
-
-		/*
-		 * AtEOSubXact_SPI() should not have popped any SPI context, but just
-		 * in case it did, make sure we remain connected.
-		 */
-		SPI_restore_connection();
 	}
 	PG_CATCH();
 	{
@@ -3573,13 +3528,6 @@ plperl_spi_prepare(char *query, int argc, SV **argv)
 		RollbackAndReleaseCurrentSubTransaction();
 		MemoryContextSwitchTo(oldcontext);
 		CurrentResourceOwner = oldowner;
-
-		/*
-		 * If AtEOSubXact_SPI() popped any SPI context of the subxact, it will
-		 * have left us in a disconnected state.  We need this hack to return
-		 * to connected state.
-		 */
-		SPI_restore_connection();
 
 		/* Punt the error to Perl */
 		croak_cstr(edata->message);
@@ -3694,12 +3642,6 @@ plperl_spi_exec_prepared(char *query, HV *attr, int argc, SV **argv)
 		ReleaseCurrentSubTransaction();
 		MemoryContextSwitchTo(oldcontext);
 		CurrentResourceOwner = oldowner;
-
-		/*
-		 * AtEOSubXact_SPI() should not have popped any SPI context, but just
-		 * in case it did, make sure we remain connected.
-		 */
-		SPI_restore_connection();
 	}
 	PG_CATCH();
 	{
@@ -3714,13 +3656,6 @@ plperl_spi_exec_prepared(char *query, HV *attr, int argc, SV **argv)
 		RollbackAndReleaseCurrentSubTransaction();
 		MemoryContextSwitchTo(oldcontext);
 		CurrentResourceOwner = oldowner;
-
-		/*
-		 * If AtEOSubXact_SPI() popped any SPI context of the subxact, it will
-		 * have left us in a disconnected state.  We need this hack to return
-		 * to connected state.
-		 */
-		SPI_restore_connection();
 
 		/* Punt the error to Perl */
 		croak_cstr(edata->message);
@@ -3823,12 +3758,6 @@ plperl_spi_query_prepared(char *query, int argc, SV **argv)
 		ReleaseCurrentSubTransaction();
 		MemoryContextSwitchTo(oldcontext);
 		CurrentResourceOwner = oldowner;
-
-		/*
-		 * AtEOSubXact_SPI() should not have popped any SPI context, but just
-		 * in case it did, make sure we remain connected.
-		 */
-		SPI_restore_connection();
 	}
 	PG_CATCH();
 	{
@@ -3843,13 +3772,6 @@ plperl_spi_query_prepared(char *query, int argc, SV **argv)
 		RollbackAndReleaseCurrentSubTransaction();
 		MemoryContextSwitchTo(oldcontext);
 		CurrentResourceOwner = oldowner;
-
-		/*
-		 * If AtEOSubXact_SPI() popped any SPI context of the subxact, it will
-		 * have left us in a disconnected state.  We need this hack to return
-		 * to connected state.
-		 */
-		SPI_restore_connection();
 
 		/* Punt the error to Perl */
 		croak_cstr(edata->message);

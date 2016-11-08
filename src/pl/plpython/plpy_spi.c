@@ -516,12 +516,6 @@ PLy_spi_subtransaction_commit(MemoryContext oldcontext, ResourceOwner oldowner)
 	ReleaseCurrentSubTransaction();
 	MemoryContextSwitchTo(oldcontext);
 	CurrentResourceOwner = oldowner;
-
-	/*
-	 * AtEOSubXact_SPI() should not have popped any SPI context, but just in
-	 * case it did, make sure we remain connected.
-	 */
-	SPI_restore_connection();
 }
 
 void
@@ -540,13 +534,6 @@ PLy_spi_subtransaction_abort(MemoryContext oldcontext, ResourceOwner oldowner)
 	RollbackAndReleaseCurrentSubTransaction();
 	MemoryContextSwitchTo(oldcontext);
 	CurrentResourceOwner = oldowner;
-
-	/*
-	 * If AtEOSubXact_SPI() popped any SPI context of the subxact, it will
-	 * have left us in a disconnected state.  We need this hack to return to
-	 * connected state.
-	 */
-	SPI_restore_connection();
 
 	/* Look up the correct exception */
 	entry = hash_search(PLy_spi_exceptions, &(edata->sqlerrcode),
