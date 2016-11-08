@@ -896,18 +896,13 @@ static HeapTuple
 PLy_modify_tuple(PLyProcedure *proc, PyObject *pltd, TriggerData *tdata,
 				 HeapTuple otup)
 {
+	HeapTuple	rtup;
 	PyObject   *volatile plntup;
 	PyObject   *volatile plkeys;
 	PyObject   *volatile plval;
-	HeapTuple	rtup;
-	int			natts,
-				i,
-				attn,
-				atti;
-	int		   *volatile modattrs;
 	Datum	   *volatile modvalues;
-	char	   *volatile modnulls;
-	TupleDesc	tupdesc;
+	bool	   *volatile modnulls;
+	bool	   *volatile modrepls;
 	ErrorContextCallback plerrcontext;
 
 	plerrcontext.callback = plpython_trigger_error_callback;
@@ -915,12 +910,16 @@ PLy_modify_tuple(PLyProcedure *proc, PyObject *pltd, TriggerData *tdata,
 	error_context_stack = &plerrcontext;
 
 	plntup = plkeys = plval = NULL;
-	modattrs = NULL;
 	modvalues = NULL;
 	modnulls = NULL;
+	modrepls = NULL;
 
 	PG_TRY();
 	{
+		TupleDesc	tupdesc;
+		int			nkeys,
+					i;
+
 		if ((plntup = PyDict_GetItemString(pltd, "new")) == NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -932,18 +931,20 @@ PLy_modify_tuple(PLyProcedure *proc, PyObject *pltd, TriggerData *tdata,
 					 errmsg("TD[\"new\"] is not a dictionary")));
 
 		plkeys = PyDict_Keys(plntup);
-		natts = PyList_Size(plkeys);
-
-		modattrs = (int *) palloc(natts * sizeof(int));
-		modvalues = (Datum *) palloc(natts * sizeof(Datum));
-		modnulls = (char *) palloc(natts * sizeof(char));
+		nkeys = PyList_Size(plkeys);
 
 		tupdesc = tdata->tg_relation->rd_att;
 
-		for (i = 0; i < natts; i++)
+		modvalues = (Datum *) palloc0(tupdesc->natts * sizeof(Datum));
+		modnulls = (bool *) palloc0(tupdesc->natts * sizeof(bool));
+		modrepls = (bool *) palloc0(tupdesc->natts * sizeof(bool));
+
+		for (i = 0; i < nkeys; i++)
 		{
 			PyObject   *platt;
 			char	   *plattstr;
+			int			attn;
+			PLyObToDatum *att;
 
 			platt = PyList_GetItem(plkeys, i);
 			if (PyString_Check(platt))
@@ -963,7 +964,12 @@ PLy_modify_tuple(PLyProcedure *proc, PyObject *pltd, TriggerData *tdata,
 						(errcode(ERRCODE_UNDEFINED_COLUMN),
 						 errmsg("key \"%s\" found in TD[\"new\"] does not exist as a column in the triggering row",
 								plattstr)));
-			atti = attn - 1;
+			if (attn <= 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("cannot set system attribute \"%s\"",
+								plattstr)));
+			att = &proc->result.out.r.atts[attn - 1];
 
 			plval = PyDict_GetItem(plntup, platt);
 			if (plval == NULL)
@@ -971,41 +977,31 @@ PLy_modify_tuple(PLyProcedure *proc, PyObject *pltd, TriggerData *tdata,
 
 			Py_INCREF(plval);
 
-			modattrs[i] = attn;
-
-			if (tupdesc->attrs[atti]->attisdropped)
+			if (plval != Py_None)
 			{
-				modvalues[i] = (Datum) 0;
-				modnulls[i] = 'n';
-			}
-			else if (plval != Py_None)
-			{
-				PLyObToDatum *att = &proc->result.out.r.atts[atti];
-
-				modvalues[i] = (att->func) (att,
-											tupdesc->attrs[atti]->atttypmod,
-											plval,
-											false);
-				modnulls[i] = ' ';
+				modvalues[attn - 1] =
+					(att->func) (att,
+								 tupdesc->attrs[attn - 1]->atttypmod,
+								 plval,
+								 false);
+				modnulls[attn - 1] = false;
 			}
 			else
 			{
-				modvalues[i] =
-					InputFunctionCall(&proc->result.out.r.atts[atti].typfunc,
+				modvalues[attn - 1] =
+					InputFunctionCall(&att->typfunc,
 									  NULL,
-									proc->result.out.r.atts[atti].typioparam,
-									  tupdesc->attrs[atti]->atttypmod);
-				modnulls[i] = 'n';
+									  att->typioparam,
+									  tupdesc->attrs[attn - 1]->atttypmod);
+				modnulls[attn - 1] = true;
 			}
+			modrepls[attn - 1] = true;
 
 			Py_DECREF(plval);
 			plval = NULL;
 		}
 
-		rtup = SPI_modifytuple(tdata->tg_relation, otup, natts,
-							   modattrs, modvalues, modnulls);
-		if (rtup == NULL)
-			elog(ERROR, "SPI_modifytuple failed: error %d", SPI_result);
+		rtup = heap_modify_tuple(otup, tupdesc, modvalues, modnulls, modrepls);
 	}
 	PG_CATCH();
 	{
@@ -1013,12 +1009,12 @@ PLy_modify_tuple(PLyProcedure *proc, PyObject *pltd, TriggerData *tdata,
 		Py_XDECREF(plkeys);
 		Py_XDECREF(plval);
 
-		if (modnulls)
-			pfree(modnulls);
 		if (modvalues)
 			pfree(modvalues);
-		if (modattrs)
-			pfree(modattrs);
+		if (modnulls)
+			pfree(modnulls);
+		if (modrepls)
+			pfree(modrepls);
 
 		PG_RE_THROW();
 	}
@@ -1027,9 +1023,9 @@ PLy_modify_tuple(PLyProcedure *proc, PyObject *pltd, TriggerData *tdata,
 	Py_DECREF(plntup);
 	Py_DECREF(plkeys);
 
-	pfree(modattrs);
 	pfree(modvalues);
 	pfree(modnulls);
+	pfree(modrepls);
 
 	error_context_stack = plerrcontext.previous;
 
