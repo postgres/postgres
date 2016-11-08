@@ -811,6 +811,10 @@ _hash_splitbucket(Relation rel,
 			Size		itemsz;
 			Bucket		bucket;
 
+			/* skip dead tuples */
+			if (ItemIdIsDead(PageGetItemId(opage, ooffnum)))
+				continue;
+
 			/*
 			 * Fetch the item's hash key (conveniently stored in the item) and
 			 * determine which bucket it now belongs in.

@@ -656,6 +656,10 @@ _hash_squeezebucket(Relation rel,
 			IndexTuple	itup;
 			Size		itemsz;
 
+			/* skip dead tuples */
+			if (ItemIdIsDead(PageGetItemId(rpage, roffnum)))
+				continue;
+
 			itup = (IndexTuple) PageGetItem(rpage,
 											PageGetItemId(rpage, roffnum));
 			itemsz = IndexTupleDSize(*itup);
