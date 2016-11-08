@@ -88,7 +88,7 @@ PostgreSQL documentation
       There is no guarantee that all WAL files required for the backup are archived
       at the end of backup. If you are planning to use the backup for an archive
       recovery and want to ensure that all required files are available at that moment,
-      you need to include them into the backup by using <literal>-x</> option.
+      you need to include them into the backup by using the <literal>-x</> option.
      </para>
     </listitem>
     <listitem>
