@@ -215,16 +215,14 @@ $node->command_ok([ 'pg_basebackup', '-D', "$tempdir/backupR", '-R' ],
 ok(-f "$tempdir/backupR/recovery.conf", 'recovery.conf was created');
 my $recovery_conf = slurp_file "$tempdir/backupR/recovery.conf";
 
-# using a character class for the final "'" here works around an apparent
-# bug in several version of the Msys DTK perl
 my $port = $node->port;
 like(
 	$recovery_conf,
-	qr/^standby_mode = 'on[']$/m,
+	qr/^standby_mode = 'on'\n/m,
 	'recovery.conf sets standby_mode');
 like(
 	$recovery_conf,
-	qr/^primary_conninfo = '.*port=$port.*'$/m,
+	qr/^primary_conninfo = '.*port=$port.*'\n/m,
 	'recovery.conf sets primary_conninfo');
 
 $node->command_ok(
@@ -273,5 +271,5 @@ $node->command_ok(
 	'pg_basebackup with replication slot and -R runs');
 like(
 	slurp_file("$tempdir/backupxs_sl_R/recovery.conf"),
-	qr/^primary_slot_name = 'slot1'$/m,
+	qr/^primary_slot_name = 'slot1'\n/m,
 	'recovery.conf sets primary_slot_name');

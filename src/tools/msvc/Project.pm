@@ -256,7 +256,7 @@ sub AddDir
 	# Match rules that pull in source files from different directories, eg
 	# pgstrcasecmp.c rint.c snprintf.c: % : $(top_srcdir)/src/port/%
 	my $replace_re =
-	  qr{^([^:\n\$]+\.c)\s*:\s*(?:%\s*: )?\$(\([^\)]+\))\/(.*)\/[^\/]+$}m;
+	  qr{^([^:\n\$]+\.c)\s*:\s*(?:%\s*: )?\$(\([^\)]+\))\/(.*)\/[^\/]+\n}m;
 	while ($mf =~ m{$replace_re}m)
 	{
 		my $match  = $1;

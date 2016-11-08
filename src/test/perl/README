@@ -46,6 +46,10 @@ against them and evaluate the results. For example:
 
     $node->stop('fast');
 
+Test::More::like entails use of the qr// operator.  Avoid Perl 5.8.8 bug
+#39185 by not using the "$" regular expression metacharacter in qr// when also
+using the "/m" modifier.  Instead of "$", use "\n" or "(?=\n|\z)".
+
 Read the Test::More documentation for more on how to write tests:
 
     perldoc Test::More
