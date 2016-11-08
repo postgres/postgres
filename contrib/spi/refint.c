@@ -135,7 +135,7 @@ check_primary_key(PG_FUNCTION_ARGS)
 		int			fnumber = SPI_fnumber(tupdesc, args[i]);
 
 		/* Bad guys may give us un-existing column in CREATE TRIGGER */
-		if (fnumber < 0)
+		if (fnumber <= 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_COLUMN),
 					 errmsg("there is no attribute \"%s\" in relation \"%s\"",
@@ -362,7 +362,7 @@ check_foreign_key(PG_FUNCTION_ARGS)
 		int			fnumber = SPI_fnumber(tupdesc, args[i]);
 
 		/* Bad guys may give us un-existing column in CREATE TRIGGER */
-		if (fnumber < 0)
+		if (fnumber <= 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_COLUMN),
 					 errmsg("there is no attribute \"%s\" in relation \"%s\"",
@@ -469,6 +469,7 @@ check_foreign_key(PG_FUNCTION_ARGS)
 						char	   *type;
 
 						fn = SPI_fnumber(tupdesc, args_temp[k - 1]);
+						Assert(fn > 0); /* already checked above */
 						nv = SPI_getvalue(newtuple, tupdesc, fn);
 						type = SPI_gettype(tupdesc, fn);
 

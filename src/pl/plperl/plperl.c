@@ -1062,10 +1062,15 @@ plperl_build_tuple_result(HV *perlhash, TupleDesc td)
 		char	   *key = hek2cstr(he);
 		int			attn = SPI_fnumber(td, key);
 
-		if (attn <= 0 || td->attrs[attn - 1]->attisdropped)
+		if (attn == SPI_ERROR_NOATTRIBUTE)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_COLUMN),
 					 errmsg("Perl hash contains nonexistent column \"%s\"",
+							key)));
+		if (attn <= 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot set system attribute \"%s\"",
 							key)));
 
 		values[attn - 1] = plperl_sv_to_datum(val,

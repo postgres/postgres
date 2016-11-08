@@ -157,7 +157,7 @@ timetravel(PG_FUNCTION_ARGS)
 	for (i = 0; i < MinAttrNum; i++)
 	{
 		attnum[i] = SPI_fnumber(tupdesc, args[i]);
-		if (attnum[i] < 0)
+		if (attnum[i] <= 0)
 			elog(ERROR, "timetravel (%s): there is no attribute %s", relname, args[i]);
 		if (SPI_gettypeid(tupdesc, attnum[i]) != ABSTIMEOID)
 			elog(ERROR, "timetravel (%s): attribute %s must be of abstime type",
@@ -166,7 +166,7 @@ timetravel(PG_FUNCTION_ARGS)
 	for (; i < argc; i++)
 	{
 		attnum[i] = SPI_fnumber(tupdesc, args[i]);
-		if (attnum[i] < 0)
+		if (attnum[i] <= 0)
 			elog(ERROR, "timetravel (%s): there is no attribute %s", relname, args[i]);
 		if (SPI_gettypeid(tupdesc, attnum[i]) != TEXTOID)
 			elog(ERROR, "timetravel (%s): attribute %s must be of text type",

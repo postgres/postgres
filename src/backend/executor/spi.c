@@ -824,7 +824,8 @@ SPI_fnumber(TupleDesc tupdesc, const char *fname)
 
 	for (res = 0; res < tupdesc->natts; res++)
 	{
-		if (namestrcmp(&tupdesc->attrs[res]->attname, fname) == 0)
+		if (namestrcmp(&tupdesc->attrs[res]->attname, fname) == 0 &&
+			!tupdesc->attrs[res]->attisdropped)
 			return res + 1;
 	}
 

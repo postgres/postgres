@@ -2891,7 +2891,7 @@ int SPI_fnumber(TupleDesc <parameter>rowdesc</parameter>, const char * <paramete
   <title>Return Value</title>
 
   <para>
-   Column number (count starts at 1), or
+   Column number (count starts at 1 for user-defined columns), or
    <symbol>SPI_ERROR_NOATTRIBUTE</symbol> if the named column was not
    found.
   </para>

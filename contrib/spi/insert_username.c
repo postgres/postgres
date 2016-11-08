@@ -67,7 +67,7 @@ insert_username(PG_FUNCTION_ARGS)
 
 	attnum = SPI_fnumber(tupdesc, args[0]);
 
-	if (attnum < 0)
+	if (attnum <= 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_TRIGGERED_ACTION_EXCEPTION),
 				 errmsg("\"%s\" has no attribute \"%s\"", relname, args[0])));

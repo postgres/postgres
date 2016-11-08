@@ -603,6 +603,7 @@ pltcl_init_load_unknown(Tcl_Interp *interp)
 	 * leave this code as DString - it's only executed once per session
 	 ************************************************************/
 	fno = SPI_fnumber(SPI_tuptable->tupdesc, "modsrc");
+	Assert(fno > 0);
 
 	Tcl_DStringInit(&unknown_src);
 
@@ -1258,12 +1259,6 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS, pltcl_call_state *call_state,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("cannot set system attribute \"%s\"",
 							ret_name)));
-
-		/************************************************************
-		 * Ignore dropped columns
-		 ************************************************************/
-		if (tupdesc->attrs[attnum - 1]->attisdropped)
-			continue;
 
 		/************************************************************
 		 * Lookup the attribute type's input function
@@ -3076,10 +3071,6 @@ pltcl_build_tuple_result(Tcl_Interp *interp, Tcl_Obj **kvObjv, int kvObjc,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("cannot set system attribute \"%s\"",
 							fieldName)));
-
-		/* Ignore dropped attributes */
-		if (call_state->ret_tupdesc->attrs[attn - 1]->attisdropped)
-			continue;
 
 		values[attn - 1] = utf_e2u(Tcl_GetString(kvObjv[i + 1]));
 	}

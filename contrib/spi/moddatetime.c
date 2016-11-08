@@ -84,9 +84,9 @@ moddatetime(PG_FUNCTION_ARGS)
 
 	/*
 	 * This is where we check to see if the field we are supposed to update
-	 * even exists. The above function must return -1 if name not found?
+	 * even exists.
 	 */
-	if (attnum < 0)
+	if (attnum <= 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_TRIGGERED_ACTION_EXCEPTION),
 				 errmsg("\"%s\" has no attribute \"%s\"",

@@ -71,7 +71,7 @@ autoinc(PG_FUNCTION_ARGS)
 		int32		val;
 		Datum		seqname;
 
-		if (attnum < 0)
+		if (attnum <= 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_TRIGGERED_ACTION_EXCEPTION),
 					 errmsg("\"%s\" has no attribute \"%s\"",
