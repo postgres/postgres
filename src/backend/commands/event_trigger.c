@@ -742,7 +742,7 @@ EventTriggerCommonSetup(Node *parsetree,
 
 	/*
 	 * Filter list of event triggers by command tag, and copy them into our
-	 * memory context.  Once we start running the command trigers, or indeed
+	 * memory context.  Once we start running the command triggers, or indeed
 	 * once we do anything at all that touches the catalogs, an invalidation
 	 * might leave cachelist pointing at garbage, so we must do this before we
 	 * can do much else.
