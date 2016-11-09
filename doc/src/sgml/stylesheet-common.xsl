@@ -77,7 +77,9 @@
 <!-- Special support for Tcl synopses -->
 
 <xsl:template match="optional[@role='tcl']">
-  ?<xsl:call-template name="inline.charseq"/>?
+  <xsl:text>?</xsl:text>
+  <xsl:call-template name="inline.charseq"/>
+  <xsl:text>?</xsl:text>
 </xsl:template>
 
 </xsl:stylesheet>
