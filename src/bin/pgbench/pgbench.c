@@ -180,6 +180,7 @@ char	   *pghost = "";
 char	   *pgport = "";
 char	   *login = NULL;
 char	   *dbName;
+char	   *logfile_prefix = NULL;
 const char *progname;
 
 #define WSEP '@'				/* weight separator */
@@ -511,6 +512,8 @@ usage(void)
 		   "  --aggregate-interval=NUM aggregate data over NUM seconds\n"
 		"  --progress-timestamp     use Unix epoch timestamps for progress\n"
 		   "  --sampling-rate=NUM      fraction of transactions to log (e.g., 0.01 for 1%%)\n"
+		   "  --log-prefix=PREFIX      prefix for transaction time log file\n"
+		   "                           (default: \"pgbench_log\")\n"
 		   "\nCommon options:\n"
 		   "  -d, --debug              print debugging output\n"
 	  "  -h, --host=HOSTNAME      database server host or socket directory\n"
@@ -3643,6 +3646,7 @@ main(int argc, char **argv)
 		{"sampling-rate", required_argument, NULL, 4},
 		{"aggregate-interval", required_argument, NULL, 5},
 		{"progress-timestamp", no_argument, NULL, 6},
+		{"log-prefix", required_argument, NULL, 7},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -3990,6 +3994,10 @@ main(int argc, char **argv)
 				progress_timestamp = true;
 				benchmarking_option_set = true;
 				break;
+			case 7:
+				benchmarking_option_set = true;
+				logfile_prefix = pg_strdup(optarg);
+				break;
 			default:
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 				exit(1);
@@ -4084,6 +4092,12 @@ main(int argc, char **argv)
 	if (agg_interval > 0 && !use_log)
 	{
 		fprintf(stderr, "log aggregation is allowed only when actually logging transactions\n");
+		exit(1);
+	}
+
+	if (!use_log && logfile_prefix)
+	{
+		fprintf(stderr, "log file prefix (--log-prefix) is allowed only when logging transactions (-l)\n");
 		exit(1);
 	}
 
@@ -4388,11 +4402,13 @@ threadRun(void *arg)
 	if (use_log)
 	{
 		char		logpath[64];
+		char		*prefix = logfile_prefix ? logfile_prefix : "pgbench_log";
 
 		if (thread->tid == 0)
-			snprintf(logpath, sizeof(logpath), "pgbench_log.%d", main_pid);
+			snprintf(logpath, sizeof(logpath), "%s.%d", prefix, main_pid);
 		else
-			snprintf(logpath, sizeof(logpath), "pgbench_log.%d.%d", main_pid, thread->tid);
+			snprintf(logpath, sizeof(logpath), "%s.%d.%d", prefix, main_pid, thread->tid);
+
 		thread->logfile = fopen(logpath, "w");
 
 		if (thread->logfile == NULL)

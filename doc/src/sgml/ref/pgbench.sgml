@@ -614,6 +614,16 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
       </listitem>
      </varlistentry>
 
+     <varlistentry>
+      <term><option>--log-prefix=<replaceable>prefix</></option></term>
+      <listitem>
+       <para>
+        Set the filename prefix for the transaction log file created by
+        <option>--log</>.  The default is <replaceable>pgbench_log</>.
+       </para>
+      </listitem>
+     </varlistentry>
+
     </variablelist>
    </para>
 
@@ -1121,15 +1131,17 @@ END;
    With the <option>-l</> option but without the <option>--aggregate-interval</option>,
    <application>pgbench</> writes the time taken by each transaction
    to a log file.  The log file will be named
-   <filename>pgbench_log.<replaceable>nnn</></filename>, where
-   <replaceable>nnn</> is the PID of the <application>pgbench</application> process.
-   If the <option>-j</> option is 2 or higher, creating multiple worker
-   threads, each will have its own log file. The first worker will use the
-   same name for its log file as in the standard single worker case.
+   <filename><replaceable>prefix</>.<replaceable>nnn</></filename>,
+   where <replaceable>prefix</> defaults to <literal>pgbench_log</>, and
+   <replaceable>nnn</> is the PID of the
+   <application>pgbench</application> process. If the <option>-j</> option is 2 or higher,
+   creating multiple worker threads, each will have its own log file. The first worker will
+   use the same name for its log file as in the standard single worker case.
    The additional log files for the other workers will be named
-   <filename>pgbench_log.<replaceable>nnn</>.<replaceable>mmm</></filename>,
+   <filename><replaceable>pgbench_log</>.<replaceable>nnn</>.<replaceable>mmm</></filename>,
    where <replaceable>mmm</> is a sequential number for each worker starting
-   with 1.
+   with 1.  The prefix can be changed by using the <option>--log-prefix</>
+   option.
   </para>
 
   <para>
