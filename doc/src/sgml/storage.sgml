@@ -474,7 +474,7 @@ for storing <acronym>TOAST</>-able columns on disk:
 
 Each <acronym>TOAST</>-able data type specifies a default strategy for columns
 of that data type, but the strategy for a given table column can be altered
-with <command>ALTER TABLE SET STORAGE</>.
+with <link linkend="sql-altertable"><command>ALTER TABLE ... SET STORAGE</></link>.
 </para>
 
 <para>
