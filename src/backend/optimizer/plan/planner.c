@@ -3741,11 +3741,11 @@ create_grouping_paths(PlannerInfo *root,
 											   &total_groups);
 
 			/*
-			 * Gather is always unsorted, so we'll need to sort, unless
-			 * there's no GROUP BY clause, in which case there will only be a
-			 * single group.
+			 * Since Gather's output is always unsorted, we'll need to sort,
+			 * unless there's no GROUP BY clause or a degenerate (constant)
+			 * one, in which case there will only be a single group.
 			 */
-			if (parse->groupClause)
+			if (root->group_pathkeys)
 				path = (Path *) create_sort_path(root,
 												 grouped_rel,
 												 path,
