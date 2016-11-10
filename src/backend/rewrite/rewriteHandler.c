@@ -447,6 +447,15 @@ rewriteRuleAction(Query *parsetree,
 	}
 
 	/*
+	 * Also, we might have absorbed some RTEs with RLS conditions into the
+	 * sub_action.  If so, mark it as hasRowSecurity, whether or not those
+	 * RTEs will be referenced after we finish rewriting.  (Note: currently
+	 * this is a no-op because RLS conditions aren't added till later, but it
+	 * seems like good future-proofing to do this anyway.)
+	 */
+	sub_action->hasRowSecurity |= parsetree->hasRowSecurity;
+
+	/*
 	 * Each rule action's jointree should be the main parsetree's jointree
 	 * plus that rule's jointree, but usually *without* the original rtindex
 	 * that we're replacing (if present, which it won't be for INSERT). Note
@@ -1835,10 +1844,10 @@ fireRIRrules(Query *parsetree, List *activeRIRs, bool forUpdatePushedDown)
 			}
 
 			/*
-			 * Add the new security quals to the start of the RTE's list so
-			 * that they get applied before any existing security quals (which
-			 * might have come from a user-written security barrier view, and
-			 * might contain malicious code).
+			 * Add the new security barrier quals to the start of the RTE's
+			 * list so that they get applied before any existing barrier quals
+			 * (which would have come from a security-barrier view, and should
+			 * get lower priority than RLS conditions on the table itself).
 			 */
 			rte->securityQuals = list_concat(securityQuals,
 											 rte->securityQuals);
@@ -2957,9 +2966,9 @@ rewriteTargetView(Query *parsetree, Relation view)
 	 * only adjust their varnos to reference the new target (just the same as
 	 * we did with the view targetlist).
 	 *
-	 * Note that there is special-case handling for the quals of a security
-	 * barrier view, since they need to be kept separate from any
-	 * user-supplied quals, so these quals are kept on the new target RTE.
+	 * If it's a security-barrier view, its WHERE quals must be applied before
+	 * quals from the outer query, so we attach them to the RTE as security
+	 * barrier quals rather than adding them to the main WHERE clause.
 	 *
 	 * For INSERT, the view's quals can be ignored in the main query.
 	 */
@@ -2980,11 +2989,20 @@ rewriteTargetView(Query *parsetree, Relation view)
 		if (RelationIsSecurityView(view))
 		{
 			/*
+			 * The view's quals go in front of existing barrier quals: those
+			 * would have come from an outer level of security-barrier view,
+			 * and so must get evaluated later.
+			 *
 			 * Note: the parsetree has been mutated, so the new_rte pointer is
 			 * stale and needs to be re-computed.
 			 */
 			new_rte = rt_fetch(new_rt_index, parsetree->rtable);
 			new_rte->securityQuals = lcons(viewqual, new_rte->securityQuals);
+
+			/*
+			 * Do not set parsetree->hasRowSecurity, because these aren't RLS
+			 * conditions (they aren't affected by enabling/disabling RLS).
+			 */
 
 			/*
 			 * Make sure that the query is marked correctly if the added qual
