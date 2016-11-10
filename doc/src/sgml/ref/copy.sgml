@@ -395,9 +395,15 @@ COPY <replaceable class="parameter">count</replaceable>
   <title>Notes</title>
 
    <para>
-    <command>COPY</command> can only be used with plain tables, not
+    <command>COPY TO</command> can only be used with plain tables, not
     with views.  However, you can write <literal>COPY (SELECT * FROM
-    <replaceable class="parameter">viewname</replaceable>) TO ...</literal>.
+    <replaceable class="parameter">viewname</replaceable>) TO ...</literal>
+    to copy the current contents of a view.
+   </para>
+
+   <para>
+    <command>COPY FROM</command> can be used with plain tables and with views
+    that have <literal>INSTEAD OF INSERT</> triggers.
    </para>
 
    <para>

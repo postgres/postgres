@@ -864,8 +864,8 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt, uint64 *processed)
 			 * statement.
 			 *
 			 * In the case that columns are specified in the attribute list,
-			 * create a ColumnRef and ResTarget for each column and add them to
-			 * the target list for the resulting SELECT statement.
+			 * create a ColumnRef and ResTarget for each column and add them
+			 * to the target list for the resulting SELECT statement.
 			 */
 			if (!stmt->attlist)
 			{
@@ -2269,13 +2269,21 @@ CopyFrom(CopyState cstate)
 
 	Assert(cstate->rel);
 
-	if (cstate->rel->rd_rel->relkind != RELKIND_RELATION)
+	/*
+	 * The target must be a plain relation or have an INSTEAD OF INSERT row
+	 * trigger.  (Currently, such triggers are only allowed on views, so we
+	 * only hint about them in the view case.)
+	 */
+	if (cstate->rel->rd_rel->relkind != RELKIND_RELATION &&
+		!(cstate->rel->trigdesc &&
+		  cstate->rel->trigdesc->trig_insert_instead_row))
 	{
 		if (cstate->rel->rd_rel->relkind == RELKIND_VIEW)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("cannot copy to view \"%s\"",
-							RelationGetRelationName(cstate->rel))));
+							RelationGetRelationName(cstate->rel)),
+					 errhint("To enable copying to a view, provide an INSTEAD OF INSERT trigger.")));
 		else if (cstate->rel->rd_rel->relkind == RELKIND_MATVIEW)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -2496,52 +2504,64 @@ CopyFrom(CopyState cstate)
 
 		if (!skip_tuple)
 		{
-			/* Check the constraints of the tuple */
-			if (cstate->rel->rd_att->constr)
-				ExecConstraints(resultRelInfo, slot, estate);
-
-			if (useHeapMultiInsert)
+			if (resultRelInfo->ri_TrigDesc &&
+				resultRelInfo->ri_TrigDesc->trig_insert_instead_row)
 			{
-				/* Add this tuple to the tuple buffer */
-				if (nBufferedTuples == 0)
-					firstBufferedLineNo = cstate->cur_lineno;
-				bufferedTuples[nBufferedTuples++] = tuple;
-				bufferedTuplesSize += tuple->t_len;
-
-				/*
-				 * If the buffer filled up, flush it. Also flush if the total
-				 * size of all the tuples in the buffer becomes large, to
-				 * avoid using large amounts of memory for the buffers when
-				 * the tuples are exceptionally wide.
-				 */
-				if (nBufferedTuples == MAX_BUFFERED_TUPLES ||
-					bufferedTuplesSize > 65535)
-				{
-					CopyFromInsertBatch(cstate, estate, mycid, hi_options,
-										resultRelInfo, myslot, bistate,
-										nBufferedTuples, bufferedTuples,
-										firstBufferedLineNo);
-					nBufferedTuples = 0;
-					bufferedTuplesSize = 0;
-				}
+				/* Pass the data to the INSTEAD ROW INSERT trigger */
+				ExecIRInsertTriggers(estate, resultRelInfo, slot);
 			}
 			else
 			{
-				List	   *recheckIndexes = NIL;
+				/* Check the constraints of the tuple */
+				if (cstate->rel->rd_att->constr)
+					ExecConstraints(resultRelInfo, slot, estate);
 
-				/* OK, store the tuple and create index entries for it */
-				heap_insert(cstate->rel, tuple, mycid, hi_options, bistate);
+				if (useHeapMultiInsert)
+				{
+					/* Add this tuple to the tuple buffer */
+					if (nBufferedTuples == 0)
+						firstBufferedLineNo = cstate->cur_lineno;
+					bufferedTuples[nBufferedTuples++] = tuple;
+					bufferedTuplesSize += tuple->t_len;
 
-				if (resultRelInfo->ri_NumIndices > 0)
-					recheckIndexes = ExecInsertIndexTuples(slot, &(tuple->t_self),
-														 estate, false, NULL,
-														   NIL);
+					/*
+					 * If the buffer filled up, flush it.  Also flush if the
+					 * total size of all the tuples in the buffer becomes
+					 * large, to avoid using large amounts of memory for the
+					 * buffer when the tuples are exceptionally wide.
+					 */
+					if (nBufferedTuples == MAX_BUFFERED_TUPLES ||
+						bufferedTuplesSize > 65535)
+					{
+						CopyFromInsertBatch(cstate, estate, mycid, hi_options,
+											resultRelInfo, myslot, bistate,
+											nBufferedTuples, bufferedTuples,
+											firstBufferedLineNo);
+						nBufferedTuples = 0;
+						bufferedTuplesSize = 0;
+					}
+				}
+				else
+				{
+					List	   *recheckIndexes = NIL;
 
-				/* AFTER ROW INSERT Triggers */
-				ExecARInsertTriggers(estate, resultRelInfo, tuple,
-									 recheckIndexes);
+					/* OK, store the tuple and create index entries for it */
+					heap_insert(cstate->rel, tuple, mycid, hi_options, bistate);
 
-				list_free(recheckIndexes);
+					if (resultRelInfo->ri_NumIndices > 0)
+						recheckIndexes = ExecInsertIndexTuples(slot,
+															&(tuple->t_self),
+															   estate,
+															   false,
+															   NULL,
+															   NIL);
+
+					/* AFTER ROW INSERT Triggers */
+					ExecARInsertTriggers(estate, resultRelInfo, tuple,
+										 recheckIndexes);
+
+					list_free(recheckIndexes);
+				}
 			}
 
 			/*
