@@ -296,7 +296,7 @@ WARNING:  error for publication relation,{eins,zwei,drei},{integer}: cross-datab
 SELECT pg_get_object_address('language', '{one}', '{}');
 ERROR:  language "one" does not exist
 SELECT pg_get_object_address('language', '{one,two}', '{}');
-ERROR:  language name cannot be qualified
+ERROR:  name list length must be exactly 1
 SELECT pg_get_object_address('large object', '{123}', '{}');
 ERROR:  large object 123 does not exist
 SELECT pg_get_object_address('large object', '{123,456}', '{}');
@@ -306,47 +306,47 @@ ERROR:  invalid input syntax for type oid: "blargh"
 SELECT pg_get_object_address('schema', '{one}', '{}');
 ERROR:  schema "one" does not exist
 SELECT pg_get_object_address('schema', '{one,two}', '{}');
-ERROR:  schema name cannot be qualified
+ERROR:  name list length must be exactly 1
 SELECT pg_get_object_address('role', '{one}', '{}');
 ERROR:  role "one" does not exist
 SELECT pg_get_object_address('role', '{one,two}', '{}');
-ERROR:  role name cannot be qualified
+ERROR:  name list length must be exactly 1
 SELECT pg_get_object_address('database', '{one}', '{}');
 ERROR:  database "one" does not exist
 SELECT pg_get_object_address('database', '{one,two}', '{}');
-ERROR:  database name cannot be qualified
+ERROR:  name list length must be exactly 1
 SELECT pg_get_object_address('tablespace', '{one}', '{}');
 ERROR:  tablespace "one" does not exist
 SELECT pg_get_object_address('tablespace', '{one,two}', '{}');
-ERROR:  tablespace name cannot be qualified
+ERROR:  name list length must be exactly 1
 SELECT pg_get_object_address('foreign-data wrapper', '{one}', '{}');
 ERROR:  foreign-data wrapper "one" does not exist
 SELECT pg_get_object_address('foreign-data wrapper', '{one,two}', '{}');
-ERROR:  foreign-data wrapper name cannot be qualified
+ERROR:  name list length must be exactly 1
 SELECT pg_get_object_address('server', '{one}', '{}');
 ERROR:  server "one" does not exist
 SELECT pg_get_object_address('server', '{one,two}', '{}');
-ERROR:  server name cannot be qualified
+ERROR:  name list length must be exactly 1
 SELECT pg_get_object_address('extension', '{one}', '{}');
 ERROR:  extension "one" does not exist
 SELECT pg_get_object_address('extension', '{one,two}', '{}');
-ERROR:  extension name cannot be qualified
+ERROR:  name list length must be exactly 1
 SELECT pg_get_object_address('event trigger', '{one}', '{}');
 ERROR:  event trigger "one" does not exist
 SELECT pg_get_object_address('event trigger', '{one,two}', '{}');
-ERROR:  event trigger name cannot be qualified
+ERROR:  name list length must be exactly 1
 SELECT pg_get_object_address('access method', '{one}', '{}');
 ERROR:  access method "one" does not exist
 SELECT pg_get_object_address('access method', '{one,two}', '{}');
-ERROR:  access method name cannot be qualified
+ERROR:  name list length must be exactly 1
 SELECT pg_get_object_address('publication', '{one}', '{}');
 ERROR:  publication "one" does not exist
 SELECT pg_get_object_address('publication', '{one,two}', '{}');
-ERROR:  publication name cannot be qualified
+ERROR:  name list length must be exactly 1
 SELECT pg_get_object_address('subscription', '{one}', '{}');
 ERROR:  subscription "one" does not exist
 SELECT pg_get_object_address('subscription', '{one,two}', '{}');
-ERROR:  subscription name cannot be qualified
+ERROR:  name list length must be exactly 1
 -- test successful cases
 WITH objects (type, name, args) AS (VALUES
 				('table', '{addr_nsp, gentable}'::text[], '{}'::text[]),

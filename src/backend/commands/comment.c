@@ -48,12 +48,11 @@ CommentObject(CommentStmt *stmt)
 	 * (which is really pg_restore's fault, but for now we will work around
 	 * the problem here).  Consensus is that the best fix is to treat wrong
 	 * database name as a WARNING not an ERROR; hence, the following special
-	 * case.  (If the length of stmt->objname is not 1, get_object_address
-	 * will throw an error below; that's OK.)
+	 * case.
 	 */
-	if (stmt->objtype == OBJECT_DATABASE && list_length(stmt->objname) == 1)
+	if (stmt->objtype == OBJECT_DATABASE)
 	{
-		char	   *database = strVal(linitial(stmt->objname));
+		char	   *database = strVal((Value *) stmt->object);
 
 		if (!OidIsValid(get_database_oid(database, true)))
 		{
@@ -70,12 +69,12 @@ CommentObject(CommentStmt *stmt)
 	 * does not exist, and will also acquire a lock on the target to guard
 	 * against concurrent DROP operations.
 	 */
-	address = get_object_address(stmt->objtype, stmt->objname, stmt->objargs,
+	address = get_object_address(stmt->objtype, stmt->object,
 								 &relation, ShareUpdateExclusiveLock, false);
 
 	/* Require ownership of the target object. */
 	check_object_ownership(GetUserId(), stmt->objtype, address,
-						   stmt->objname, stmt->objargs, relation);
+						   stmt->object, relation);
 
 	/* Perform other integrity checks as needed. */
 	switch (stmt->objtype)

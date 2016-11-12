@@ -40,17 +40,17 @@ extern const ObjectAddress InvalidObjectAddress;
 #define ObjectAddressSet(addr, class_id, object_id) \
 	ObjectAddressSubSet(addr, class_id, object_id, 0)
 
-extern ObjectAddress get_object_address(ObjectType objtype, List *objname,
-				   List *objargs, Relation *relp,
+extern ObjectAddress get_object_address(ObjectType objtype, Node *object,
+				   Relation *relp,
 				   LOCKMODE lockmode, bool missing_ok);
 
 extern ObjectAddress get_object_address_rv(ObjectType objtype, RangeVar *rel,
-					  List *objname, List *objargs, Relation *relp,
+					  List *object, Relation *relp,
 					  LOCKMODE lockmode, bool missing_ok);
 
 extern void check_object_ownership(Oid roleid,
 					   ObjectType objtype, ObjectAddress address,
-					   List *objname, List *objargs, Relation relation);
+					   Node *object, Relation relation);
 
 extern Oid	get_object_namespace(const ObjectAddress *address);
 

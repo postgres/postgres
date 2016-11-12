@@ -2076,8 +2076,7 @@ typedef struct AlterExtensionContentsStmt
 	char	   *extname;		/* Extension's name */
 	int			action;			/* +1 = add object, -1 = drop object */
 	ObjectType	objtype;		/* Object's type */
-	List	   *objname;		/* Qualified name of the object */
-	List	   *objargs;		/* Arguments if needed (eg, for functions) */
+	Node	   *object;			/* Qualified name of the object */
 } AlterExtensionContentsStmt;
 
 /* ----------------------
@@ -2462,8 +2461,7 @@ typedef struct AlterOpFamilyStmt
 typedef struct DropStmt
 {
 	NodeTag		type;
-	List	   *objects;		/* list of sublists of names (as Values) */
-	List	   *arguments;		/* list of sublists of arguments (as Values) */
+	List	   *objects;		/* list of names */
 	ObjectType	removeType;		/* object type */
 	DropBehavior behavior;		/* RESTRICT or CASCADE behavior */
 	bool		missing_ok;		/* skip error if object is missing? */
@@ -2490,8 +2488,7 @@ typedef struct CommentStmt
 {
 	NodeTag		type;
 	ObjectType	objtype;		/* Object's type */
-	List	   *objname;		/* Qualified name of the object */
-	List	   *objargs;		/* Arguments if needed (eg, for functions) */
+	Node	   *object;			/* Qualified name of the object */
 	char	   *comment;		/* Comment to insert, or NULL to remove */
 } CommentStmt;
 
@@ -2503,8 +2500,7 @@ typedef struct SecLabelStmt
 {
 	NodeTag		type;
 	ObjectType	objtype;		/* Object's type */
-	List	   *objname;		/* Qualified name of the object */
-	List	   *objargs;		/* Arguments if needed (eg, for functions) */
+	Node	   *object;			/* Qualified name of the object */
 	char	   *provider;		/* Label provider (or NULL) */
 	char	   *label;			/* New security label to be assigned */
 } SecLabelStmt;
@@ -2678,8 +2674,7 @@ typedef struct RenameStmt
 	ObjectType	renameType;		/* OBJECT_TABLE, OBJECT_COLUMN, etc */
 	ObjectType	relationType;	/* if column name, associated relation type */
 	RangeVar   *relation;		/* in case it's a table */
-	List	   *object;			/* in case it's some other object */
-	List	   *objarg;			/* argument types, if applicable */
+	Node	   *object;			/* in case it's some other object */
 	char	   *subname;		/* name of contained object (column, rule,
 								 * trigger, etc) */
 	char	   *newname;		/* the new name */
@@ -2696,8 +2691,7 @@ typedef struct AlterObjectDependsStmt
 	NodeTag		type;
 	ObjectType	objectType;		/* OBJECT_FUNCTION, OBJECT_TRIGGER, etc */
 	RangeVar   *relation;		/* in case a table is involved */
-	List	   *objname;		/* name of the object */
-	List	   *objargs;		/* argument types, if applicable */
+	Node	   *object;			/* name of the object */
 	Value	   *extname;		/* extension name */
 } AlterObjectDependsStmt;
 
@@ -2710,8 +2704,7 @@ typedef struct AlterObjectSchemaStmt
 	NodeTag		type;
 	ObjectType	objectType;		/* OBJECT_TABLE, OBJECT_TYPE, etc */
 	RangeVar   *relation;		/* in case it's a table */
-	List	   *object;			/* in case it's some other object */
-	List	   *objarg;			/* argument types, if applicable */
+	Node	   *object;			/* in case it's some other object */
 	char	   *newschema;		/* the new schema */
 	bool		missing_ok;		/* skip error if missing? */
 } AlterObjectSchemaStmt;
@@ -2725,8 +2718,7 @@ typedef struct AlterOwnerStmt
 	NodeTag		type;
 	ObjectType	objectType;		/* OBJECT_TABLE, OBJECT_TYPE, etc */
 	RangeVar   *relation;		/* in case it's a table */
-	List	   *object;			/* in case it's some other object */
-	List	   *objarg;			/* argument types, if applicable */
+	Node	   *object;			/* in case it's some other object */
 	RoleSpec   *newowner;		/* the new owner */
 } AlterOwnerStmt;
 

@@ -82,9 +82,6 @@ create event trigger regress_event_trigger2 on ddl_command_start
 -- OK
 comment on event trigger regress_event_trigger is 'test comment';
 
--- should fail, event triggers are not schema objects
-comment on event trigger wrong.regress_event_trigger is 'test comment';
-
 -- drop as non-superuser should fail
 create role regress_evt_user;
 set role regress_evt_user;

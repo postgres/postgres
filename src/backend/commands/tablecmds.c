@@ -2786,7 +2786,7 @@ RenameConstraint(RenameStmt *stmt)
 		Relation	rel;
 		HeapTuple	tup;
 
-		typid = typenameTypeId(NULL, makeTypeNameFromNameList(stmt->object));
+		typid = typenameTypeId(NULL, makeTypeNameFromNameList(castNode(List, stmt->object)));
 		rel = heap_open(TypeRelationId, RowExclusiveLock);
 		tup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typid));
 		if (!HeapTupleIsValid(tup))
@@ -9392,11 +9392,9 @@ RebuildConstraintComment(AlteredTableInfo *tab, int pass, Oid objid,
 	/* Build node CommentStmt */
 	cmd = makeNode(CommentStmt);
 	cmd->objtype = OBJECT_TABCONSTRAINT;
-	cmd->objname = list_make3(
-				   makeString(get_namespace_name(RelationGetNamespace(rel))),
-							  makeString(RelationGetRelationName(rel)),
-							  makeString(conname));
-	cmd->objargs = NIL;
+	cmd->object = (Node *) list_make3(makeString(get_namespace_name(RelationGetNamespace(rel))),
+									  makeString(RelationGetRelationName(rel)),
+									  makeString(conname));
 	cmd->comment = comment_str;
 
 	/* Append it to list of commands */

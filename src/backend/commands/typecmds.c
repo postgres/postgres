@@ -3133,7 +3133,7 @@ replace_domain_constraint_value(ParseState *pstate, ColumnRef *cref)
 ObjectAddress
 RenameType(RenameStmt *stmt)
 {
-	List	   *names = stmt->object;
+	List	   *names = castNode(List, stmt->object);
 	const char *newTypeName = stmt->newname;
 	TypeName   *typename;
 	Oid			typeOid;
