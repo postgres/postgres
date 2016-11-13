@@ -1290,19 +1290,7 @@ query.',
    <para>
     <function>ts_headline</> uses the original document, not a
     <type>tsvector</type> summary, so it can be slow and should be used with
-    care.  A typical mistake is to call <function>ts_headline</function> for
-    <emphasis>every</emphasis> matching document when only ten documents are
-    to be shown. <acronym>SQL</acronym> subqueries can help; here is an
-    example:
-
-<programlisting>
-SELECT id, ts_headline(body, q), rank
-FROM (SELECT id, body, q, ts_rank_cd(ti, q) AS rank
-      FROM apod, to_tsquery('stars') q
-      WHERE ti @@ q
-      ORDER BY rank DESC
-      LIMIT 10) AS foo;
-</programlisting>
+    care.
    </para>
 
   </sect2>
