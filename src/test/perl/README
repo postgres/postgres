@@ -6,6 +6,12 @@ across the source tree, particularly tests in src/bin and src/test. It's used
 to drive tests for backup and restore, replication, etc - anything that can't
 really be expressed using pg_regress or the isolation test framework.
 
+The tests are invoked via perl's 'prove' command, wrapped in PostgreSQL
+makefiles to handle instance setup etc. See the $(prove_check) and
+$(prove_installcheck) targets in Makefile.global. By default every test in the
+t/ subdirectory is run. Individual test(s) can be run instead by passing
+something like PROVE_TESTS="t/001_testname.pl t/002_othertestname.pl" to make.
+
 You should prefer to write tests using pg_regress in src/test/regress, or
 isolation tester specs in src/test/isolation, if possible. If not, check to
 see if your new tests make sense under an existing tree in src/test, like
