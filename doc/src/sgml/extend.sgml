@@ -1194,6 +1194,15 @@ include $(PGXS)
      </varlistentry>
 
      <varlistentry>
+      <term><varname>NO_INSTALLCHECK</varname></term>
+      <listitem>
+       <para>
+        don't define an installcheck target, useful e.g. if tests require special configuration, or don't use pg_regress
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><varname>EXTRA_CLEAN</varname></term>
       <listitem>
        <para>
