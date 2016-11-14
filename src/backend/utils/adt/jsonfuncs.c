@@ -3554,7 +3554,7 @@ jsonb_set(PG_FUNCTION_ARGS)
 
 
 /*
- * SQL function jsonb_delete(jsonb, text[])
+ * SQL function jsonb_delete_path(jsonb, text[])
  */
 Datum
 jsonb_delete_path(PG_FUNCTION_ARGS)
