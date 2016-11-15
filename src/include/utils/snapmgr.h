@@ -69,6 +69,7 @@ extern Snapshot GetOldestSnapshot(void);
 extern Snapshot GetCatalogSnapshot(Oid relid);
 extern Snapshot GetNonHistoricCatalogSnapshot(Oid relid);
 extern void InvalidateCatalogSnapshot(void);
+extern void InvalidateCatalogSnapshotConditionally(void);
 
 extern void PushActiveSnapshot(Snapshot snapshot);
 extern void PushCopiedSnapshot(Snapshot snapshot);
