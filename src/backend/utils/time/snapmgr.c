@@ -1,4 +1,5 @@
 /*-------------------------------------------------------------------------
+ *
  * snapmgr.c
  *		PostgreSQL snapshot manager
  *
@@ -19,16 +20,19 @@
  * have regd_count = 1 and are counted in RegisteredSnapshots, but are not
  * tracked by any resource owner.
  *
+ * Likewise, the CatalogSnapshot is counted in RegisteredSnapshots when it
+ * is valid, but is not tracked by any resource owner.
+ *
  * The same is true for historic snapshots used during logical decoding,
- * their lifetime is managed separately (as they life longer as one xact.c
+ * their lifetime is managed separately (as they live longer than one xact.c
  * transaction).
  *
  * These arrangements let us reset MyPgXact->xmin when there are no snapshots
- * referenced by this transaction.  (One possible improvement would be to be
- * able to advance Xmin when the snapshot with the earliest Xmin is no longer
- * referenced.  That's a bit harder though, it requires more locking, and
- * anyway it should be rather uncommon to keep temporary snapshots referenced
- * for too long.)
+ * referenced by this transaction, and advance it when the one with oldest
+ * Xmin is no longer referenced.  For simplicity however, only registered
+ * snapshots not active snapshots participate in tracking which one is oldest;
+ * we don't try to change MyPgXact->xmin except when the active-snapshot
+ * stack is empty.
  *
  *
  * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
@@ -65,7 +69,7 @@
  * SecondarySnapshot is a snapshot that's always up-to-date as of the current
  * instant, even in transaction-snapshot mode.  It should only be used for
  * special-purpose code (say, RI checking.)  CatalogSnapshot points to an
- * MVCC snapshot intended to be used for catalog scans; we must refresh it
+ * MVCC snapshot intended to be used for catalog scans; we must invalidate it
  * whenever a system catalog change occurs.
  *
  * These SnapshotData structs are static to simplify memory allocation
@@ -80,11 +84,6 @@ static Snapshot CurrentSnapshot = NULL;
 static Snapshot SecondarySnapshot = NULL;
 static Snapshot CatalogSnapshot = NULL;
 static Snapshot HistoricSnapshot = NULL;
-
-/*
- * Staleness detection for CatalogSnapshot.
- */
-static bool CatalogSnapshotStale = true;
 
 /*
  * These are updated by GetSnapshotData.  We initialize them this way
@@ -183,6 +182,12 @@ GetTransactionSnapshot(void)
 	/* First call in transaction? */
 	if (!FirstSnapshotSet)
 	{
+		/*
+		 * Don't allow catalog snapshot to be older than xact snapshot.  Must
+		 * do this first to allow the following Assert to succeed.
+		 */
+		InvalidateCatalogSnapshot();
+
 		Assert(RegisteredSnapshots == 0);
 		Assert(FirstXactSnapshot == NULL);
 
@@ -210,9 +215,6 @@ GetTransactionSnapshot(void)
 		else
 			CurrentSnapshot = GetSnapshotData(&CurrentSnapshotData);
 
-		/* Don't allow catalog snapshot to be older than xact snapshot. */
-		CatalogSnapshotStale = true;
-
 		FirstSnapshotSet = true;
 		return CurrentSnapshot;
 	}
@@ -221,7 +223,7 @@ GetTransactionSnapshot(void)
 		return CurrentSnapshot;
 
 	/* Don't allow catalog snapshot to be older than xact snapshot. */
-	CatalogSnapshotStale = true;
+	InvalidateCatalogSnapshot();
 
 	CurrentSnapshot = GetSnapshotData(&CurrentSnapshotData);
 
@@ -288,36 +290,70 @@ GetNonHistoricCatalogSnapshot(Oid relid)
 	 * trying to scan a relation for which neither catcache nor snapshot
 	 * invalidations are sent, we must refresh the snapshot every time.
 	 */
-	if (!CatalogSnapshotStale && !RelationInvalidatesSnapshotsOnly(relid) &&
+	if (CatalogSnapshot &&
+		!RelationInvalidatesSnapshotsOnly(relid) &&
 		!RelationHasSysCache(relid))
-		CatalogSnapshotStale = true;
+		InvalidateCatalogSnapshot();
 
-	if (CatalogSnapshotStale)
+	if (CatalogSnapshot == NULL)
 	{
 		/* Get new snapshot. */
 		CatalogSnapshot = GetSnapshotData(&CatalogSnapshotData);
 
 		/*
-		 * Mark new snapshost as valid.  We must do this last, in case an
-		 * ERROR occurs inside GetSnapshotData().
+		 * Make sure the catalog snapshot will be accounted for in decisions
+		 * about advancing PGXACT->xmin.  We could apply RegisterSnapshot, but
+		 * that would result in making a physical copy, which is overkill; and
+		 * it would also create a dependency on some resource owner, which we
+		 * do not want for reasons explained at the head of this file. Instead
+		 * just count it in RegisteredSnapshots. This has to be reversed in
+		 * InvalidateCatalogSnapshot, of course.
 		 */
-		CatalogSnapshotStale = false;
+		RegisteredSnapshots++;
 	}
 
 	return CatalogSnapshot;
 }
 
 /*
- * Mark the current catalog snapshot as invalid.  We could change this API
- * to allow the caller to provide more fine-grained invalidation details, so
- * that a change to relation A wouldn't prevent us from using our cached
- * snapshot to scan relation B, but so far there's no evidence that the CPU
- * cycles we spent tracking such fine details would be well-spent.
+ * InvalidateCatalogSnapshot
+ *		Mark the current catalog snapshot, if any, as invalid
+ *
+ * We could change this API to allow the caller to provide more fine-grained
+ * invalidation details, so that a change to relation A wouldn't prevent us
+ * from using our cached snapshot to scan relation B, but so far there's no
+ * evidence that the CPU cycles we spent tracking such fine details would be
+ * well-spent.
  */
 void
-InvalidateCatalogSnapshot()
+InvalidateCatalogSnapshot(void)
 {
-	CatalogSnapshotStale = true;
+	if (CatalogSnapshot)
+	{
+		Assert(RegisteredSnapshots > 0);
+		RegisteredSnapshots--;
+		CatalogSnapshot = NULL;
+		SnapshotResetXmin();
+	}
+}
+
+/*
+ * InvalidateCatalogSnapshotConditionally
+ *		Drop catalog snapshot if it's the only one we have
+ *
+ * This is called when we are about to wait for client input, so we don't
+ * want to continue holding the catalog snapshot if it might mean that the
+ * global xmin horizon can't advance.  However, if there are other snapshots
+ * still active or registered, the catalog snapshot isn't likely to be the
+ * oldest one, so we might as well keep it.
+ */
+void
+InvalidateCatalogSnapshotConditionally(void)
+{
+	if (CatalogSnapshot &&
+		ActiveSnapshot == NULL &&
+		RegisteredSnapshots == 1)
+		InvalidateCatalogSnapshot();
 }
 
 /*
@@ -334,6 +370,7 @@ SnapshotSetCommandId(CommandId curcid)
 		CurrentSnapshot->curcid = curcid;
 	if (SecondarySnapshot)
 		SecondarySnapshot->curcid = curcid;
+	/* Should we do the same with CatalogSnapshot? */
 }
 
 /*
@@ -349,6 +386,9 @@ SetTransactionSnapshot(Snapshot sourcesnap, TransactionId sourcexid)
 {
 	/* Caller should have checked this already */
 	Assert(!FirstSnapshotSet);
+
+	/* Better do this to ensure following Assert succeeds. */
+	InvalidateCatalogSnapshot();
 
 	Assert(RegisteredSnapshots == 0);
 	Assert(FirstXactSnapshot == NULL);
@@ -809,6 +849,9 @@ AtEOXact_Snapshot(bool isCommit)
 
 		exportedSnapshots = NIL;
 	}
+
+	/* Drop catalog snapshot if any */
+	InvalidateCatalogSnapshot();
 
 	/* On commit, complain about leftover snapshots */
 	if (isCommit)
