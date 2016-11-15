@@ -48,7 +48,7 @@ require "ucs2utf.pl";
 	'UHC'        => 'CP949.TXT',
 	'JOHAB'      => 'JOHAB.TXT',);
 
-@charsets = keys(filename);
+@charsets = keys(%filename);
 @charsets = @ARGV if scalar(@ARGV);
 foreach $charset (@charsets)
 {
