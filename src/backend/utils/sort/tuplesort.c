@@ -108,7 +108,8 @@
  * code we determine the number of tapes M on the basis of workMem: we want
  * workMem/M to be large enough that we read a fair amount of data each time
  * we preread from a tape, so as to maintain the locality of access described
- * above.  Nonetheless, with large workMem we can have many tapes.
+ * above.  Nonetheless, with large workMem we can have many tapes (but not
+ * too many -- see the comments in tuplesort_merge_order).
  *
  *
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
@@ -247,6 +248,7 @@ typedef enum
  * tape during a preread cycle (see discussion at top of file).
  */
 #define MINORDER		6		/* minimum merge order */
+#define MAXORDER		500		/* maximum merge order */
 #define TAPE_BUFFER_OVERHEAD		(BLCKSZ * 3)
 #define MERGE_BUFFER_SIZE			(BLCKSZ * 32)
 
@@ -2313,8 +2315,19 @@ tuplesort_merge_order(int64 allowedMem)
 	mOrder = (allowedMem - TAPE_BUFFER_OVERHEAD) /
 		(MERGE_BUFFER_SIZE + TAPE_BUFFER_OVERHEAD);
 
-	/* Even in minimum memory, use at least a MINORDER merge */
+	/*
+	 * Even in minimum memory, use at least a MINORDER merge.  On the other
+	 * hand, even when we have lots of memory, do not use more than a MAXORDER
+	 * merge.  Tapes are pretty cheap, but they're not entirely free.  Each
+	 * additional tape reduces the amount of memory available to build runs,
+	 * which in turn can cause the same sort to need more runs, which makes
+	 * merging slower even if it can still be done in a single pass.  Also,
+	 * high order merges are quite slow due to CPU cache effects; it can be
+	 * faster to pay the I/O cost of a polyphase merge than to perform a single
+	 * merge pass across many hundreds of tapes.
+	 */
 	mOrder = Max(mOrder, MINORDER);
+	mOrder = Min(mOrder, MAXORDER);
 
 	return mOrder;
 }
