@@ -4401,7 +4401,7 @@ threadRun(void *arg)
 	/* open log file if requested */
 	if (use_log)
 	{
-		char		logpath[64];
+		char		logpath[MAXPGPATH];
 		char		*prefix = logfile_prefix ? logfile_prefix : "pgbench_log";
 
 		if (thread->tid == 0)
