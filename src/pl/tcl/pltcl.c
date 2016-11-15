@@ -2192,6 +2192,10 @@ pltcl_returnnext(ClientData cdata, Tcl_Interp *interp,
 		Datum		retval;
 		bool		isNull = false;
 
+		/* for paranoia's sake, check that tupdesc has exactly one column */
+		if (call_state->ret_tupdesc->natts != 1)
+			elog(ERROR, "wrong result type supplied in return_next");
+
 		retval = InputFunctionCall(&prodesc->result_in_func,
 								   utf_u2e((char *) Tcl_GetString(objv[1])),
 								   prodesc->result_typioparam,
