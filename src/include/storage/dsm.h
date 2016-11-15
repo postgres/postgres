@@ -19,6 +19,9 @@ typedef struct dsm_segment dsm_segment;
 
 #define DSM_CREATE_NULL_IF_MAXSEGMENTS			0x0001
 
+/* A sentinel value for an invalid DSM handle. */
+#define DSM_HANDLE_INVALID 0
+
 /* Startup and shutdown functions. */
 struct PGShmemHeader;			/* avoid including pg_shmem.h */
 extern void dsm_cleanup_using_control_segment(dsm_handle old_control_handle);
