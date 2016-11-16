@@ -251,4 +251,45 @@
   </xsl:call-template>
 </xsl:template>
 
+<xsl:template name="html.head">
+  <xsl:param name="prev" select="/foo"/>
+  <xsl:param name="next" select="/foo"/>
+
+  <!-- Optimization for pgsql-docs: Cut out a bunch of things we don't need
+       here, including an expensive //legalnotice search. -->
+
+  <head>
+    <xsl:call-template name="system.head.content"/>
+    <xsl:call-template name="head.content"/>
+
+    <xsl:if test="$prev">
+      <link rel="prev">
+        <xsl:attribute name="href">
+          <xsl:call-template name="href.target">
+            <xsl:with-param name="object" select="$prev"/>
+          </xsl:call-template>
+        </xsl:attribute>
+        <xsl:attribute name="title">
+          <xsl:apply-templates select="$prev" mode="object.title.markup.textonly"/>
+        </xsl:attribute>
+      </link>
+    </xsl:if>
+
+    <xsl:if test="$next">
+      <link rel="next">
+        <xsl:attribute name="href">
+          <xsl:call-template name="href.target">
+            <xsl:with-param name="object" select="$next"/>
+          </xsl:call-template>
+        </xsl:attribute>
+        <xsl:attribute name="title">
+          <xsl:apply-templates select="$next" mode="object.title.markup.textonly"/>
+        </xsl:attribute>
+      </link>
+    </xsl:if>
+
+    <xsl:call-template name="user.head.content"/>
+  </head>
+</xsl:template>
+
 </xsl:stylesheet>
