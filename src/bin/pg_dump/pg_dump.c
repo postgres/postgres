@@ -546,9 +546,11 @@ main(int argc, char **argv)
 	if (dopt.column_inserts)
 		dopt.dump_inserts = 1;
 
-	/* Binary upgrade mode implies dumping sequence data even in schema-only
+	/*
+	 * Binary upgrade mode implies dumping sequence data even in schema-only
 	 * mode.  This is not exposed as a separate option, but kept separate
-	 * internally for clarity. */
+	 * internally for clarity.
+	 */
 	if (dopt.binary_upgrade)
 		dopt.sequence_data = 1;
 

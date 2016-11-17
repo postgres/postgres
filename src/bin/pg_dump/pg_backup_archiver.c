@@ -2108,7 +2108,9 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 	if (strncmp(sig, "PGDMP", 5) == 0)
 	{
 		int			byteread;
-		char		vmaj, vmin, vrev;
+		char		vmaj,
+					vmin,
+					vrev;
 
 		/*
 		 * Finish reading (most of) a custom-format header.
@@ -3563,7 +3565,9 @@ ReadHead(ArchiveHandle *AH)
 	 */
 	if (!AH->readHeader)
 	{
-		char		vmaj, vmin, vrev;
+		char		vmaj,
+					vmin,
+					vrev;
 
 		(*AH->ReadBufPtr) (AH, tmpMag, 5);
 
