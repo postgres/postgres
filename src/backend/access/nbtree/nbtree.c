@@ -804,6 +804,10 @@ btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 	}
 
 	/*
+	 * Check to see if we need to issue one final WAL record for this index,
+	 * which may be needed for correctness on a hot standby node when non-MVCC
+	 * index scans could take place.
+	 *
 	 * If the WAL is replayed in hot standby, the replay process needs to get
 	 * cleanup locks on all index leaf pages, just as we've been doing here.
 	 * However, we won't issue any WAL records about pages that have no items
@@ -1013,10 +1017,13 @@ restart:
 		if (ndeletable > 0)
 		{
 			/*
-			 * Notice that the issued XLOG_BTREE_VACUUM WAL record includes an
-			 * instruction to the replay code to get cleanup lock on all pages
-			 * between the previous lastBlockVacuumed and this page.  This
-			 * ensures that WAL replay locks all leaf pages at some point.
+			 * Notice that the issued XLOG_BTREE_VACUUM WAL record includes
+			 * all information to the replay code to allow it to get a cleanup
+			 * lock on all pages between the previous lastBlockVacuumed and
+			 * this page. This ensures that WAL replay locks all leaf pages at
+			 * some point, which is important should non-MVCC scans be
+			 * requested. This is currently unused on standby, but we record
+			 * it anyway, so that the WAL contains the required information.
 			 *
 			 * Since we can visit leaf pages out-of-order when recursing,
 			 * replay might end up locking such pages an extra time, but it
