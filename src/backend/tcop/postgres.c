@@ -2427,8 +2427,6 @@ start_xact_command(void)
 {
 	if (!xact_started)
 	{
-		ereport(DEBUG3,
-				(errmsg_internal("StartTransactionCommand")));
 		StartTransactionCommand();
 
 		/* Set statement timeout running, if any */
@@ -2449,10 +2447,6 @@ finish_xact_command(void)
 	{
 		/* Cancel any active statement timeout before committing */
 		disable_timeout(STATEMENT_TIMEOUT, false);
-
-		/* Now commit the command */
-		ereport(DEBUG3,
-				(errmsg_internal("CommitTransactionCommand")));
 
 		CommitTransactionCommand();
 
