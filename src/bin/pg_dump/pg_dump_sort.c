@@ -786,6 +786,7 @@ repairViewRuleLoop(DumpableObject *viewobj,
 {
 	/* remove rule's dependency on view */
 	removeObjectDependency(ruleobj, viewobj->dumpId);
+	/* flags on the two objects are already set correctly for this case */
 }
 
 /*
@@ -805,27 +806,17 @@ repairViewRuleMultiLoop(DumpableObject *viewobj,
 {
 	TableInfo  *viewinfo = (TableInfo *) viewobj;
 	RuleInfo   *ruleinfo = (RuleInfo *) ruleobj;
-	int			i;
 
 	/* remove view's dependency on rule */
 	removeObjectDependency(viewobj, ruleobj->dumpId);
-	/* pretend view is a plain table and dump it that way */
-	viewinfo->relkind = 'r';	/* RELKIND_RELATION */
+	/* mark view to be printed with a dummy definition */
+	viewinfo->dummy_view = true;
 	/* mark rule as needing its own dump */
 	ruleinfo->separate = true;
-	/* move any reloptions from view to rule */
-	if (viewinfo->reloptions)
-	{
-		ruleinfo->reloptions = viewinfo->reloptions;
-		viewinfo->reloptions = NULL;
-	}
 	/* put back rule's dependency on view */
 	addObjectDependency(ruleobj, viewobj->dumpId);
 	/* now that rule is separate, it must be post-data */
 	addObjectDependency(ruleobj, postDataBoundId);
-	/* also, any triggers on the view must be dumped after the rule */
-	for (i = 0; i < viewinfo->numTriggers; i++)
-		addObjectDependency(&(viewinfo->triggers[i].dobj), ruleobj->dumpId);
 }
 
 /*
