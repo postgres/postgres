@@ -138,11 +138,22 @@ SELECT nextval('sequence_test2');
 SELECT nextval('sequence_test2');
 SELECT nextval('sequence_test2');
 
+
+CREATE SEQUENCE sequence_test3;  -- not read from, to test is_called
+
+
 -- Information schema
 SELECT * FROM information_schema.sequences WHERE sequence_name IN
-  ('sequence_test2', 'serialtest2_f2_seq', 'serialtest2_f3_seq',
+  ('sequence_test2', 'sequence_test3', 'serialtest2_f2_seq', 'serialtest2_f3_seq',
    'serialtest2_f4_seq', 'serialtest2_f5_seq', 'serialtest2_f6_seq')
   ORDER BY sequence_name ASC;
+
+SELECT schemaname, sequencename, start_value, min_value, max_value, increment_by, cycle, cache_size, last_value
+FROM pg_sequences
+WHERE sequencename IN
+  ('sequence_test2', 'sequence_test3', 'serialtest2_f2_seq', 'serialtest2_f3_seq',
+   'serialtest2_f4_seq', 'serialtest2_f5_seq', 'serialtest2_f6_seq')
+  ORDER BY sequencename ASC;
 
 -- Test comments
 COMMENT ON SEQUENCE asdf IS 'won''t work';

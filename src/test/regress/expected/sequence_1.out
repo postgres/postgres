@@ -300,20 +300,39 @@ SELECT nextval('sequence_test2');
        5
 (1 row)
 
+CREATE SEQUENCE sequence_test3;  -- not read from, to test is_called
 -- Information schema
 SELECT * FROM information_schema.sequences WHERE sequence_name IN
-  ('sequence_test2', 'serialtest2_f2_seq', 'serialtest2_f3_seq',
+  ('sequence_test2', 'sequence_test3', 'serialtest2_f2_seq', 'serialtest2_f3_seq',
    'serialtest2_f4_seq', 'serialtest2_f5_seq', 'serialtest2_f6_seq')
   ORDER BY sequence_name ASC;
  sequence_catalog | sequence_schema |   sequence_name    | data_type | numeric_precision | numeric_precision_radix | numeric_scale | start_value | minimum_value |    maximum_value    | increment | cycle_option 
 ------------------+-----------------+--------------------+-----------+-------------------+-------------------------+---------------+-------------+---------------+---------------------+-----------+--------------
  regression       | public          | sequence_test2     | bigint    |                64 |                       2 |             0 | 32          | 5             | 36                  | 4         | YES
+ regression       | public          | sequence_test3     | bigint    |                64 |                       2 |             0 | 1           | 1             | 9223372036854775807 | 1         | NO
  regression       | public          | serialtest2_f2_seq | bigint    |                64 |                       2 |             0 | 1           | 1             | 9223372036854775807 | 1         | NO
  regression       | public          | serialtest2_f3_seq | bigint    |                64 |                       2 |             0 | 1           | 1             | 9223372036854775807 | 1         | NO
  regression       | public          | serialtest2_f4_seq | bigint    |                64 |                       2 |             0 | 1           | 1             | 9223372036854775807 | 1         | NO
  regression       | public          | serialtest2_f5_seq | bigint    |                64 |                       2 |             0 | 1           | 1             | 9223372036854775807 | 1         | NO
  regression       | public          | serialtest2_f6_seq | bigint    |                64 |                       2 |             0 | 1           | 1             | 9223372036854775807 | 1         | NO
-(6 rows)
+(7 rows)
+
+SELECT schemaname, sequencename, start_value, min_value, max_value, increment_by, cycle, cache_size, last_value
+FROM pg_sequences
+WHERE sequencename IN
+  ('sequence_test2', 'sequence_test3', 'serialtest2_f2_seq', 'serialtest2_f3_seq',
+   'serialtest2_f4_seq', 'serialtest2_f5_seq', 'serialtest2_f6_seq')
+  ORDER BY sequencename ASC;
+ schemaname |    sequencename    | start_value | min_value |      max_value      | increment_by | cycle | cache_size | last_value 
+------------+--------------------+-------------+-----------+---------------------+--------------+-------+------------+------------
+ public     | sequence_test2     |          32 |         5 |                  36 |            4 | t     |          1 |          5
+ public     | sequence_test3     |           1 |         1 | 9223372036854775807 |            1 | f     |          1 |           
+ public     | serialtest2_f2_seq |           1 |         1 | 9223372036854775807 |            1 | f     |          1 |          2
+ public     | serialtest2_f3_seq |           1 |         1 | 9223372036854775807 |            1 | f     |          1 |          2
+ public     | serialtest2_f4_seq |           1 |         1 | 9223372036854775807 |            1 | f     |          1 |          2
+ public     | serialtest2_f5_seq |           1 |         1 | 9223372036854775807 |            1 | f     |          1 |          2
+ public     | serialtest2_f6_seq |           1 |         1 | 9223372036854775807 |            1 | f     |          1 |          2
+(7 rows)
 
 -- Test comments
 COMMENT ON SEQUENCE asdf IS 'won''t work';

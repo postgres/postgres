@@ -7395,6 +7395,11 @@
      </row>
 
      <row>
+      <entry><link linkend="view-pg-sequences"><structname>pg_sequences</structname></link></entry>
+      <entry>sequences</entry>
+     </row>
+
+     <row>
       <entry><link linkend="view-pg-settings"><structname>pg_settings</structname></link></entry>
       <entry>parameter settings</entry>
      </row>
@@ -9129,6 +9134,98 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       <entry><type>text</type></entry>
       <entry><literal><link linkend="catalog-pg-seclabel"><structname>pg_seclabel</structname></link>.label</literal></entry>
       <entry>The security label applied to this object.</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="view-pg-sequences">
+  <title><structname>pg_sequences</structname></title>
+
+  <indexterm zone="view-pg-sequences">
+   <primary>pg_sequences</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_sequences</structname> provides access to
+   useful information about each sequence in the database.
+  </para>
+
+  <table>
+   <title><structname>pg_sequences</> Columns</title>
+
+   <tgroup cols="4">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry><structfield>schemaname</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry><literal><link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link>.nspname</literal></entry>
+      <entry>Name of schema containing sequence</entry>
+     </row>
+     <row>
+      <entry><structfield>sequencename</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.relname</literal></entry>
+      <entry>Name of sequence</entry>
+     </row>
+     <row>
+      <entry><structfield>sequenceowner</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.rolname</literal></entry>
+      <entry>Name of sequence's owner</entry>
+     </row>
+     <row>
+      <entry><structfield>start_value</structfield></entry>
+      <entry><type>bigint</type></entry>
+      <entry></entry>
+      <entry>Start value of the sequence</entry>
+     </row>
+     <row>
+      <entry><structfield>min_value</structfield></entry>
+      <entry><type>bigint</type></entry>
+      <entry></entry>
+      <entry>Minimum value of the sequence</entry>
+     </row>
+     <row>
+      <entry><structfield>max_value</structfield></entry>
+      <entry><type>bigint</type></entry>
+      <entry></entry>
+      <entry>Maximum value of the sequence</entry>
+     </row>
+     <row>
+      <entry><structfield>increment_by</structfield></entry>
+      <entry><type>bigint</type></entry>
+      <entry></entry>
+      <entry>Increment value of the sequence</entry>
+     </row>
+     <row>
+      <entry><structfield>cycle</structfield></entry>
+      <entry><type>boolean</type></entry>
+      <entry></entry>
+      <entry>Whether the sequence cycles</entry>
+     </row>
+     <row>
+      <entry><structfield>cache_size</structfield></entry>
+      <entry><type>bigint</type></entry>
+      <entry></entry>
+      <entry>Cache size of the sequence</entry>
+     </row>
+     <row>
+      <entry><structfield>last_value</structfield></entry>
+      <entry><type>bigint</type></entry>
+      <entry></entry>
+      <entry>The last sequence value written to disk.  If caching is used,
+       this value can be greater than the last value handed out from the
+       sequence.  Null if the sequence has not been read from yet.</entry>
      </row>
     </tbody>
    </tgroup>

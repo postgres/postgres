@@ -1615,6 +1615,20 @@ UNION ALL
     l.label
    FROM (pg_shseclabel l
      JOIN pg_authid rol ON (((l.classoid = rol.tableoid) AND (l.objoid = rol.oid))));
+pg_sequences| SELECT n.nspname AS schemaname,
+    c.relname AS sequencename,
+    pg_get_userbyid(c.relowner) AS sequenceowner,
+    p.start_value,
+    p.minimum_value AS min_value,
+    p.maximum_value AS max_value,
+    p.increment AS increment_by,
+    p.cycle_option AS cycle,
+    p.cache_size,
+    pg_sequence_last_value((c.oid)::regclass) AS last_value
+   FROM (pg_class c
+     LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace))),
+    LATERAL pg_sequence_parameters(c.oid) p(start_value, minimum_value, maximum_value, increment, cycle_option, cache_size)
+  WHERE ((NOT pg_is_other_temp_schema(n.oid)) AND (c.relkind = 'S'::"char"));
 pg_settings| SELECT a.name,
     a.setting,
     a.unit,

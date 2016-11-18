@@ -158,6 +158,23 @@ CREATE VIEW pg_indexes AS
          LEFT JOIN pg_tablespace T ON (T.oid = I.reltablespace)
     WHERE C.relkind IN ('r', 'm') AND I.relkind = 'i';
 
+CREATE OR REPLACE VIEW pg_sequences AS
+    SELECT
+        N.nspname AS schemaname,
+        C.relname AS sequencename,
+        pg_get_userbyid(C.relowner) AS sequenceowner,
+        p.start_value AS start_value,
+        p.minimum_value AS min_value,
+        p.maximum_value AS max_value,
+        p.increment AS increment_by,
+        p.cycle_option AS cycle,
+        p.cache_size AS cache_size,
+        pg_sequence_last_value(C.oid) AS last_value
+    FROM pg_class C LEFT JOIN pg_namespace N ON (N.oid = C.relnamespace),
+         LATERAL pg_sequence_parameters(C.oid) p
+    WHERE NOT pg_is_other_temp_schema(N.oid)
+          AND relkind = 'S';
+
 CREATE VIEW pg_stats WITH (security_barrier) AS
     SELECT
         nspname AS schemaname,
