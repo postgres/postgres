@@ -1333,7 +1333,7 @@ create_merge_append_path(PlannerInfo *root,
 	cost_merge_append(&pathnode->path, root,
 					  pathkeys, list_length(subpaths),
 					  input_startup_cost, input_total_cost,
-					  rel->tuples);
+					  pathnode->path.rows);
 
 	return pathnode;
 }
