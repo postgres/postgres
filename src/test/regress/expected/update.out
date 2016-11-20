@@ -56,6 +56,13 @@ SELECT * FROM update_test;
  100 | 20 | 
 (2 rows)
 
+-- fail, wrong data type:
+UPDATE update_test SET a = v.* FROM (VALUES(100, 20)) AS v(i, j)
+  WHERE update_test.b = v.j;
+ERROR:  column "a" is of type integer but expression is of type record
+LINE 1: UPDATE update_test SET a = v.* FROM (VALUES(100, 20)) AS v(i...
+                                   ^
+HINT:  You will need to rewrite or cast the expression.
 --
 -- Test multiple-set-clause syntax
 --
@@ -133,6 +140,17 @@ SELECT * FROM update_test;
     |     | 
 (4 rows)
 
+-- these should work, but don't yet:
+UPDATE update_test SET (a,b) = (v.*) FROM (VALUES(21, 100)) AS v(i, j)
+  WHERE update_test.a = v.i;
+ERROR:  number of columns does not match number of values
+LINE 1: UPDATE update_test SET (a,b) = (v.*) FROM (VALUES(21, 100)) ...
+                                       ^
+UPDATE update_test SET (a,b) = ROW(v.*) FROM (VALUES(21, 101)) AS v(i, j)
+  WHERE update_test.a = v.i;
+ERROR:  syntax error at or near "ROW"
+LINE 1: UPDATE update_test SET (a,b) = ROW(v.*) FROM (VALUES(21, 101...
+                                       ^
 -- if an alias for the target table is specified, don't allow references
 -- to the original table name
 UPDATE update_test AS t SET b = update_test.b + 10 WHERE t.a = 10;
