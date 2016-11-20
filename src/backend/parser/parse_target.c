@@ -122,10 +122,14 @@ transformTargetList(ParseState *pstate, List *targetlist,
 					ParseExprKind exprKind)
 {
 	List	   *p_target = NIL;
+	bool		expand_star;
 	ListCell   *o_target;
 
 	/* Shouldn't have any leftover multiassign items at start */
 	Assert(pstate->p_multiassign_exprs == NIL);
+
+	/* Expand "something.*" in SELECT and RETURNING, but not UPDATE */
+	expand_star = (exprKind != EXPR_KIND_UPDATE_SOURCE);
 
 	foreach(o_target, targetlist)
 	{
@@ -136,35 +140,42 @@ transformTargetList(ParseState *pstate, List *targetlist,
 		 * "something", the star could appear as the last field in ColumnRef,
 		 * or as the last indirection item in A_Indirection.
 		 */
-		if (IsA(res->val, ColumnRef))
+		if (expand_star)
 		{
-			ColumnRef  *cref = (ColumnRef *) res->val;
-
-			if (IsA(llast(cref->fields), A_Star))
+			if (IsA(res->val, ColumnRef))
 			{
-				/* It is something.*, expand into multiple items */
-				p_target = list_concat(p_target,
-									   ExpandColumnRefStar(pstate, cref,
-														   true));
-				continue;
+				ColumnRef  *cref = (ColumnRef *) res->val;
+
+				if (IsA(llast(cref->fields), A_Star))
+				{
+					/* It is something.*, expand into multiple items */
+					p_target = list_concat(p_target,
+										   ExpandColumnRefStar(pstate,
+															   cref,
+															   true));
+					continue;
+				}
 			}
-		}
-		else if (IsA(res->val, A_Indirection))
-		{
-			A_Indirection *ind = (A_Indirection *) res->val;
-
-			if (IsA(llast(ind->indirection), A_Star))
+			else if (IsA(res->val, A_Indirection))
 			{
-				/* It is something.*, expand into multiple items */
-				p_target = list_concat(p_target,
-									   ExpandIndirectionStar(pstate, ind,
-															 true, exprKind));
-				continue;
+				A_Indirection *ind = (A_Indirection *) res->val;
+
+				if (IsA(llast(ind->indirection), A_Star))
+				{
+					/* It is something.*, expand into multiple items */
+					p_target = list_concat(p_target,
+										   ExpandIndirectionStar(pstate,
+																 ind,
+																 true,
+																 exprKind));
+					continue;
+				}
 			}
 		}
 
 		/*
-		 * Not "something.*", so transform as a single expression
+		 * Not "something.*", or we want to treat that as a plain whole-row
+		 * variable, so transform as a single expression
 		 */
 		p_target = lappend(p_target,
 						   transformTargetEntry(pstate,
