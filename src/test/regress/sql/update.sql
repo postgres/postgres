@@ -40,6 +40,10 @@ UPDATE update_test SET a=v.i FROM (VALUES(100, 20)) AS v(i, j)
 
 SELECT * FROM update_test;
 
+-- fail, wrong data type:
+UPDATE update_test SET a = v.* FROM (VALUES(100, 20)) AS v(i, j)
+  WHERE update_test.b = v.j;
+
 --
 -- Test multiple-set-clause syntax
 --
@@ -70,6 +74,11 @@ UPDATE update_test SET (b,a) = (select a+1,b from update_test);
 UPDATE update_test SET (b,a) = (select a+1,b from update_test where a = 1000)
   WHERE a = 11;
 SELECT * FROM update_test;
+-- these should work, but don't yet:
+UPDATE update_test SET (a,b) = (v.*) FROM (VALUES(21, 100)) AS v(i, j)
+  WHERE update_test.a = v.i;
+UPDATE update_test SET (a,b) = ROW(v.*) FROM (VALUES(21, 101)) AS v(i, j)
+  WHERE update_test.a = v.i;
 
 -- if an alias for the target table is specified, don't allow references
 -- to the original table name
