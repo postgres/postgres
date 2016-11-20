@@ -52,6 +52,13 @@ SELECT * FROM update_test;
  100 | 20 | 
 (2 rows)
 
+-- fail, wrong data type:
+UPDATE update_test SET a = v.* FROM (VALUES(100, 20)) AS v(i, j)
+  WHERE update_test.b = v.j;
+ERROR:  column "a" is of type integer but expression is of type record
+LINE 1: UPDATE update_test SET a = v.* FROM (VALUES(100, 20)) AS v(i...
+                                   ^
+HINT:  You will need to rewrite or cast the expression.
 --
 -- Test multiple-set-clause syntax
 --
