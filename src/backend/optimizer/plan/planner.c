@@ -342,11 +342,11 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	 * actually a safe thing to do.  (Note: we assume adding a Material node
 	 * above did not change the parallel safety of the plan, so we can still
 	 * rely on best_path->parallel_safe.  However, that flag doesn't account
-	 * for initPlans, which render the plan parallel-unsafe.)
+	 * for subplans, which we are unable to transmit to workers presently.)
 	 */
 	if (force_parallel_mode != FORCE_PARALLEL_OFF &&
 		best_path->parallel_safe &&
-		top_plan->initPlan == NIL)
+		glob->subplans == NIL)
 	{
 		Gather	   *gather = makeNode(Gather);
 
