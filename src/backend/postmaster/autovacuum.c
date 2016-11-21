@@ -130,6 +130,17 @@ int			Log_autovacuum_min_duration = -1;
 #define MIN_AUTOVAC_SLEEPTIME 100.0		/* milliseconds */
 #define MAX_AUTOVAC_SLEEPTIME 300		/* seconds */
 
+/*
+ * Maximum number of orphan temporary tables to drop in a single transaction.
+ * (If this is too high, we might run out of heavyweight locks.)
+ */
+#define MAX_ORPHAN_ITEMS		50
+
+/*
+ * After this many failures, stop trying to drop orphan temporary tables.
+ */
+#define MAX_ORPHAN_DROP_FAILURE	10
+
 /* Flags to tell if we are in an autovacuum process */
 static bool am_autovacuum_launcher = false;
 static bool am_autovacuum_worker = false;
@@ -1887,6 +1898,8 @@ do_autovacuum(void)
 	HeapScanDesc relScan;
 	Form_pg_database dbForm;
 	List	   *table_oids = NIL;
+	List	   *orphan_oids = NIL;
+	List	   *pending_oids = NIL;
 	HASHCTL		ctl;
 	HTAB	   *table_toast_map;
 	ListCell   *volatile cell;
@@ -1895,6 +1908,7 @@ do_autovacuum(void)
 	BufferAccessStrategy bstrategy;
 	ScanKeyData key;
 	TupleDesc	pg_class_desc;
+	int			orphan_failures;
 	int			effective_multixact_freeze_max_age;
 
 	/*
@@ -2038,33 +2052,11 @@ do_autovacuum(void)
 			if (backendID == MyBackendId || BackendIdGetProc(backendID) == NULL)
 			{
 				/*
-				 * We found an orphan temp table (which was probably left
-				 * behind by a crashed backend).  If it's so old as to need
-				 * vacuum for wraparound, forcibly drop it.  Otherwise just
-				 * log a complaint.
+				 * We found an orphan temp table which was probably left
+				 * behind by a crashed backend.  Remember it, so we can attempt
+				 * to drop it.
 				 */
-				if (wraparound)
-				{
-					ObjectAddress object;
-
-					ereport(LOG,
-							(errmsg("autovacuum: dropping orphan temp table \"%s\".\"%s\" in database \"%s\"",
-								 get_namespace_name(classForm->relnamespace),
-									NameStr(classForm->relname),
-									get_database_name(MyDatabaseId))));
-					object.classId = RelationRelationId;
-					object.objectId = relid;
-					object.objectSubId = 0;
-					performDeletion(&object, DROP_CASCADE, PERFORM_DELETION_INTERNAL);
-				}
-				else
-				{
-					ereport(LOG,
-							(errmsg("autovacuum: found orphan temp table \"%s\".\"%s\" in database \"%s\"",
-								 get_namespace_name(classForm->relnamespace),
-									NameStr(classForm->relname),
-									get_database_name(MyDatabaseId))));
-				}
+				orphan_oids = lappend_oid(orphan_oids, relid);
 			}
 		}
 		else
@@ -2160,6 +2152,115 @@ do_autovacuum(void)
 
 	heap_endscan(relScan);
 	heap_close(classRel, AccessShareLock);
+
+	/*
+	 * Loop through orphan temporary tables and drop them in batches.  If
+	 * we're unable to drop one particular table, we'll retry to see if we
+	 * can drop others, but if we fail too many times we'll give up and proceed
+	 * with our regular work, so that this step hopefully can't wedge
+	 * autovacuum for too long.
+	 */
+	while (list_length(orphan_oids) > 0 &&
+		   orphan_failures < MAX_ORPHAN_DROP_FAILURE)
+	{
+		Oid				relid = linitial_oid(orphan_oids);
+		ObjectAddress	object;
+		char		   *namespace = get_namespace_name(get_rel_namespace(relid));
+		char		   *relname = get_rel_name(relid);
+
+		orphan_oids = list_delete_first(orphan_oids);
+
+		PG_TRY();
+		{
+			ereport(LOG,
+					(errmsg("autovacuum: dropping orphan temp table \"%s\".\"%s\" in database \"%s\"",
+							namespace, relname,
+							get_database_name(MyDatabaseId))));
+			object.classId = RelationRelationId;
+			object.objectId = relid;
+			object.objectSubId = 0;
+			performDeletion(&object, DROP_CASCADE, PERFORM_DELETION_INTERNAL);
+
+			/*
+			 * This orphan table has been dropped correctly, add it to the
+			 * list of tables whose drop should be attempted again if an
+			 * error after in the same transaction.
+			 */
+			pending_oids = lappend_oid(pending_oids, relid);
+		}
+		PG_CATCH();
+		{
+			/* Abort the current transaction. */
+			HOLD_INTERRUPTS();
+
+			errcontext("dropping of orphan temp table \"%s\".\"%s\" in database \"%s\"",
+					   namespace, relname,
+					   get_database_name(MyDatabaseId));
+
+			EmitErrorReport();
+
+			/* this resets the PGXACT flags too */
+			AbortOutOfAnyTransaction();
+			FlushErrorState();
+
+			/*
+			 * Any tables were succesfully dropped before the failure now
+			 * need to be dropped again.  Add them back into the list, but
+			 * don't retry the table that failed.
+			 */
+			orphan_oids = list_concat(orphan_oids, pending_oids);
+			orphan_failures++;
+
+			/* Start a new transaction. */
+			StartTransactionCommand();
+
+			/* StartTransactionCommand changed elsewhere the memory context */
+			MemoryContextSwitchTo(AutovacMemCxt);
+
+			RESUME_INTERRUPTS();
+		}
+		PG_END_TRY();
+
+		/*
+		 * If we've successfully dropped quite a few tables, commit the
+		 * transaction and begin a new one.  The main point of this is to
+		 * avoid accumulating too many locks and blowing out the lock table,
+		 * but it also minimizes the amount of work that will have to be rolled
+		 * back if we fail to drop some table later in the list.
+		 */
+		if (list_length(pending_oids) >= MAX_ORPHAN_ITEMS)
+		{
+			CommitTransactionCommand();
+			StartTransactionCommand();
+
+			/* StartTransactionCommand changed elsewhere */
+			MemoryContextSwitchTo(AutovacMemCxt);
+
+			list_free(pending_oids);
+			pending_oids = NIL;
+		}
+
+		pfree(relname);
+		pfree(namespace);
+	}
+
+	/*
+	 * Commit current transaction to finish the cleanup done previously and
+	 * restart a new one to not bloat the activity of the following steps.
+	 * This needs to happen only if there are any items thought as previously
+	 * pending, but are actually not as the last transaction doing the cleanup
+	 * has been successful.
+	 */
+	if (list_length(pending_oids) > 0)
+	{
+		CommitTransactionCommand();
+		StartTransactionCommand();
+
+		/* StartTransactionCommand changed elsewhere */
+		MemoryContextSwitchTo(AutovacMemCxt);
+
+		list_free(pending_oids);
+	}
 
 	/*
 	 * Create a buffer access strategy object for VACUUM to use.  We want to
