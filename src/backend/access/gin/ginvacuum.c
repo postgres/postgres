@@ -143,19 +143,30 @@ ginVacuumPostingTreeLeaves(GinVacuumState *gvs, BlockNumber blkno, bool isRoot, 
 		/* if root is a leaf page, we don't desire further processing */
 		if (!isRoot && !hasVoidPage && GinDataLeafPageIsEmpty(page))
 			hasVoidPage = TRUE;
+
+		UnlockReleaseBuffer(buffer);
 	}
 	else
 	{
 		OffsetNumber i;
 		bool		isChildHasVoid = FALSE;
+		OffsetNumber maxoff = GinPageGetOpaque(page)->maxoff;
+		BlockNumber* children = palloc(sizeof(BlockNumber) * maxoff);
 
-		for (i = FirstOffsetNumber; i <= GinPageGetOpaque(page)->maxoff; i++)
+		for (i = FirstOffsetNumber; i <= maxoff; i++)
 		{
 			PostingItem *pitem = GinDataPageGetPostingItem(page, i);
 
-			if (ginVacuumPostingTreeLeaves(gvs, PostingItemGetBlockNumber(pitem), FALSE, NULL))
-				isChildHasVoid = TRUE;
+			children[i] = PostingItemGetBlockNumber(pitem);
 		}
+
+		UnlockReleaseBuffer(buffer);
+
+		for (i = FirstOffsetNumber; i <= maxoff; i++)
+				{
+					if (ginVacuumPostingTreeLeaves(gvs, children[i], FALSE, NULL))
+						isChildHasVoid = TRUE;
+				}
 
 		if (isChildHasVoid)
 			hasVoidPage = TRUE;
@@ -170,7 +181,6 @@ ginVacuumPostingTreeLeaves(GinVacuumState *gvs, BlockNumber blkno, bool isRoot, 
 
 	if (!(isRoot && hasVoidPage))
 	{
-		UnlockReleaseBuffer(buffer);
 	}
 	else
 	{
