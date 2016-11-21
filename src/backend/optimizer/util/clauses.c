@@ -1150,8 +1150,14 @@ is_parallel_safe(PlannerInfo *root, Node *node)
 {
 	max_parallel_hazard_context context;
 
-	/* If max_parallel_hazard found nothing unsafe, we don't need to look */
-	if (root->glob->maxParallelHazard == PROPARALLEL_SAFE)
+	/*
+	 * Even if the original querytree contained nothing unsafe, we need to
+	 * search the expression if we have generated any PARAM_EXEC Params while
+	 * planning, because those are parallel-restricted and there might be one
+	 * in this expression.  But otherwise we don't need to look.
+	 */
+	if (root->glob->maxParallelHazard == PROPARALLEL_SAFE &&
+		root->glob->nParamExec == 0)
 		return true;
 	/* Else use max_parallel_hazard's search logic, but stop on RESTRICTED */
 	context.max_hazard = PROPARALLEL_SAFE;
