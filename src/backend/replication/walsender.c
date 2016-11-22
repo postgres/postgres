@@ -66,6 +66,7 @@
 #include "replication/walreceiver.h"
 #include "replication/walsender.h"
 #include "replication/walsender_private.h"
+#include "storage/condition_variable.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/pmsignal.h"
@@ -253,6 +254,7 @@ void
 WalSndErrorCleanup(void)
 {
 	LWLockReleaseAll();
+	ConditionVariableCancelSleep();
 	pgstat_report_wait_end();
 
 	if (sendFile >= 0)

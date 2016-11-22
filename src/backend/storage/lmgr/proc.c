@@ -43,6 +43,7 @@
 #include "postmaster/autovacuum.h"
 #include "replication/slot.h"
 #include "replication/syncrep.h"
+#include "storage/condition_variable.h"
 #include "storage/standby.h"
 #include "storage/ipc.h"
 #include "storage/lmgr.h"
@@ -802,6 +803,9 @@ ProcKill(int code, Datum arg)
 	 */
 	LWLockReleaseAll();
 
+	/* Cancel any pending condition variable sleep, too */
+	ConditionVariableCancelSleep();
+
 	/* Make sure active replication slots are released */
 	if (MyReplicationSlot != NULL)
 		ReplicationSlotRelease();
@@ -906,6 +910,9 @@ AuxiliaryProcKill(int code, Datum arg)
 
 	/* Release any LW locks I am holding (see notes above) */
 	LWLockReleaseAll();
+
+	/* Cancel any pending condition variable sleep, too */
+	ConditionVariableCancelSleep();
 
 	/*
 	 * Reset MyLatch to the process local one.  This is so that signal

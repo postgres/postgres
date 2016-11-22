@@ -69,6 +69,8 @@ proclist_push_head_offset(proclist_head *list, int procno, size_t node_offset)
 	else
 	{
 		Assert(list->tail != INVALID_PGPROCNO);
+		Assert(list->head != procno);
+		Assert(list->tail != procno);
 		node->next = list->head;
 		proclist_node_get(node->next, node_offset)->prev = procno;
 		node->prev = INVALID_PGPROCNO;
@@ -77,7 +79,7 @@ proclist_push_head_offset(proclist_head *list, int procno, size_t node_offset)
 }
 
 /*
- * Insert a node a the end of a list.
+ * Insert a node at the end of a list.
  */
 static inline void
 proclist_push_tail_offset(proclist_head *list, int procno, size_t node_offset)
@@ -93,6 +95,8 @@ proclist_push_tail_offset(proclist_head *list, int procno, size_t node_offset)
 	else
 	{
 		Assert(list->head != INVALID_PGPROCNO);
+		Assert(list->head != procno);
+		Assert(list->tail != procno);
 		node->prev = list->tail;
 		proclist_node_get(node->prev, node_offset)->next = procno;
 		node->next = INVALID_PGPROCNO;
@@ -117,6 +121,52 @@ proclist_delete_offset(proclist_head *list, int procno, size_t node_offset)
 		list->tail = node->prev;
 	else
 		proclist_node_get(node->next, node_offset)->prev = node->prev;
+
+	node->next = node->prev = INVALID_PGPROCNO;
+}
+
+/*
+ * Check if a node is currently in a list.  It must be known that the node is
+ * not in any _other_ proclist that uses the same proclist_node, so that the
+ * only possibilities are that it is in this list or none.
+ */
+static inline bool
+proclist_contains_offset(proclist_head *list, int procno,
+						 size_t node_offset)
+{
+	proclist_node *node = proclist_node_get(procno, node_offset);
+
+	/*
+	 * If this is not a member of a proclist, then the next and prev pointers
+	 * should be 0. Circular lists are not allowed so this condition is not
+	 * confusable with a real pgprocno 0.
+	 */
+	if (node->prev == 0 && node->next == 0)
+		return false;
+
+	/* If there is a previous node, then this node must be in the list. */
+	if (node->prev != INVALID_PGPROCNO)
+		return true;
+
+	/*
+	 * There is no previous node, so the only way this node can be in the list
+	 * is if it's the head node.
+	 */
+	return list->head == procno;
+}
+
+/*
+ * Remove and return the first node from a list (there must be one).
+ */
+static inline PGPROC *
+proclist_pop_head_node_offset(proclist_head *list, size_t node_offset)
+{
+	PGPROC	   *proc;
+
+	Assert(!proclist_is_empty(list));
+	proc = GetPGProcByNumber(list->head);
+	proclist_delete_offset(list, list->head, node_offset);
+	return proc;
 }
 
 /*
@@ -129,6 +179,10 @@ proclist_delete_offset(proclist_head *list, int procno, size_t node_offset)
 	proclist_push_head_offset((list), (procno), offsetof(PGPROC, link_member))
 #define proclist_push_tail(list, procno, link_member) \
 	proclist_push_tail_offset((list), (procno), offsetof(PGPROC, link_member))
+#define proclist_pop_head_node(list, link_member) \
+	proclist_pop_head_node_offset((list), offsetof(PGPROC, link_member))
+#define proclist_contains(list, procno, link_member) \
+	proclist_contains_offset((list), (procno), offsetof(PGPROC, link_member))
 
 /*
  * Iterate through the list pointed at by 'lhead', storing the current

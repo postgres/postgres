@@ -46,6 +46,7 @@
 #include "postmaster/bgwriter.h"
 #include "storage/bufmgr.h"
 #include "storage/buf_internals.h"
+#include "storage/condition_variable.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/lwlock.h"
@@ -187,6 +188,7 @@ BackgroundWriterMain(void)
 		 * about in bgwriter, but we do have LWLocks, buffers, and temp files.
 		 */
 		LWLockReleaseAll();
+		ConditionVariableCancelSleep();
 		AbortBufferIO();
 		UnlockBuffers();
 		/* buffer pins are released here: */

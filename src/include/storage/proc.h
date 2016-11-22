@@ -115,6 +115,9 @@ struct PGPROC
 	uint8		lwWaitMode;		/* lwlock mode being waited for */
 	proclist_node lwWaitLink;	/* position in LW lock wait list */
 
+	/* Support for condition variables. */
+	proclist_node	cvWaitLink;	/* position in CV wait list */
+
 	/* Info about lock the process is currently waiting for, if any. */
 	/* waitLock and waitProcLock are NULL if not currently waiting. */
 	LOCK	   *waitLock;		/* Lock object we're sleeping on ... */

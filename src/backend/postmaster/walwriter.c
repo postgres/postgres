@@ -50,6 +50,7 @@
 #include "pgstat.h"
 #include "postmaster/walwriter.h"
 #include "storage/bufmgr.h"
+#include "storage/condition_variable.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/lwlock.h"
@@ -167,6 +168,7 @@ WalWriterMain(void)
 		 * about in walwriter, but we do have LWLocks, and perhaps buffers?
 		 */
 		LWLockReleaseAll();
+		ConditionVariableCancelSleep();
 		pgstat_report_wait_end();
 		AbortBufferIO();
 		UnlockBuffers();
