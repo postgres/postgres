@@ -422,9 +422,9 @@ UPDATE films SET kind = 'Dramatic' WHERE CURRENT OF c_films;
    According to the standard, the source value for a parenthesized sub-list of
    column names can be any row-valued expression yielding the correct number
    of columns.  <productname>PostgreSQL</productname> only allows the source
-   value to be a parenthesized list of expressions (a row constructor) or a
+   value to be a parenthesized list of expressions or a
    sub-<literal>SELECT</>.  An individual column's updated value can be
-   specified as <literal>DEFAULT</> in the row-constructor case, but not
+   specified as <literal>DEFAULT</> in the list-of-expressions case, but not
    inside a sub-<literal>SELECT</>.
   </para>
  </refsect1>
