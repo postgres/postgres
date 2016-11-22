@@ -4931,7 +4931,7 @@ conninfo_uri_parse_options(PQconninfoOption *options, const char *uri,
 {
 	int			prefix_len;
 	char	   *p;
-	char	   *buf;
+	char	   *buf = NULL;
 	char	   *start;
 	char		prevchar = '\0';
 	char	   *user = NULL;
@@ -4946,7 +4946,7 @@ conninfo_uri_parse_options(PQconninfoOption *options, const char *uri,
 	{
 		printfPQExpBuffer(errorMessage,
 						  libpq_gettext("out of memory\n"));
-		return false;
+		goto cleanup;
 	}
 
 	/* need a modifiable copy of the input URI */
@@ -4955,7 +4955,7 @@ conninfo_uri_parse_options(PQconninfoOption *options, const char *uri,
 	{
 		printfPQExpBuffer(errorMessage,
 						  libpq_gettext("out of memory\n"));
-		return false;
+		goto cleanup;
 	}
 	start = buf;
 
@@ -5156,7 +5156,8 @@ conninfo_uri_parse_options(PQconninfoOption *options, const char *uri,
 cleanup:
 	termPQExpBuffer(&hostbuf);
 	termPQExpBuffer(&portbuf);
-	free(buf);
+	if (buf)
+		free(buf);
 	return retval;
 }
 

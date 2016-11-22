@@ -483,6 +483,7 @@ verify_peer_name_matches_certificate_name(PGconn *conn, ASN1_STRING *name_entry,
 	char	   *name;
 	const unsigned char *namedata;
 	int			result;
+	char	   *host = PQhost(conn);
 
 	*store_name = NULL;
 
@@ -528,12 +529,12 @@ verify_peer_name_matches_certificate_name(PGconn *conn, ASN1_STRING *name_entry,
 		return -1;
 	}
 
-	if (pg_strcasecmp(name, conn->pghost) == 0)
+	if (pg_strcasecmp(name, host) == 0)
 	{
 		/* Exact name match */
 		result = 1;
 	}
-	else if (wildcard_certificate_match(name, conn->pghost))
+	else if (wildcard_certificate_match(name, host))
 	{
 		/* Matched wildcard name */
 		result = 1;
@@ -563,6 +564,7 @@ verify_peer_name_matches_certificate(PGconn *conn)
 	STACK_OF(GENERAL_NAME) *peer_san;
 	int			i;
 	int			rc;
+	char	   *host = PQhost(conn);
 
 	/*
 	 * If told not to verify the peer name, don't do it. Return true
@@ -572,7 +574,7 @@ verify_peer_name_matches_certificate(PGconn *conn)
 		return true;
 
 	/* Check that we have a hostname to compare with. */
-	if (!(conn->pghost && conn->pghost[0] != '\0'))
+	if (!(host && host[0] != '\0'))
 	{
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("host name must be specified for a verified SSL connection\n"));
@@ -670,13 +672,13 @@ verify_peer_name_matches_certificate(PGconn *conn)
 							  libpq_ngettext("server certificate for \"%s\" (and %d other name) does not match host name \"%s\"\n",
 											 "server certificate for \"%s\" (and %d other names) does not match host name \"%s\"\n",
 											 names_examined - 1),
-							  first_name, names_examined - 1, conn->pghost);
+							  first_name, names_examined - 1, host);
 		}
 		else if (names_examined == 1)
 		{
 			printfPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("server certificate for \"%s\" does not match host name \"%s\"\n"),
-							  first_name, conn->pghost);
+							  first_name, host);
 		}
 		else
 		{
