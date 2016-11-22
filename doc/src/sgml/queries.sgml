@@ -2262,7 +2262,8 @@ SELECT * FROM moved_rows;
 
    <para>
     Data-modifying statements in <literal>WITH</> usually have
-    <literal>RETURNING</> clauses, as seen in the example above.
+    <literal>RETURNING</> clauses (see <xref linkend="dml-returning">),
+    as shown in the example above.
     It is the output of the <literal>RETURNING</> clause, <emphasis>not</> the
     target table of the data-modifying statement, that forms the temporary
     table that can be referred to by the rest of the query.  If a

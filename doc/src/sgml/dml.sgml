@@ -102,6 +102,18 @@ INSERT INTO products (product_no, name, price) VALUES
 </programlisting>
   </para>
 
+  <para>
+   It is also possible to insert the result of a query (which might be no
+   rows, one row, or many rows):
+<programlisting>
+INSERT INTO products (product_no, name, price)
+  SELECT product_no, name, price FROM new_products
+    WHERE release_date = 'today';
+</programlisting>
+   This provides the full power of the SQL query mechanism (<xref
+   linkend="queries">) for computing the rows to be inserted.
+  </para>
+
   <tip>
    <para>
     When inserting a lot of data at the same time, considering using
@@ -251,5 +263,92 @@ DELETE FROM products;
 </programlisting>
    then all rows in the table will be deleted!  Caveat programmer.
   </para>
+ </sect1>
+
+ <sect1 id="dml-returning">
+  <title>Returning Data From Modified Rows</title>
+
+  <indexterm zone="dml-returning">
+   <primary>RETURNING</primary>
+  </indexterm>
+
+  <indexterm zone="dml-returning">
+   <primary>INSERT</primary>
+   <secondary>RETURNING</secondary>
+  </indexterm>
+
+  <indexterm zone="dml-returning">
+   <primary>UPDATE</primary>
+   <secondary>RETURNING</secondary>
+  </indexterm>
+
+  <indexterm zone="dml-returning">
+   <primary>DELETE</primary>
+   <secondary>RETURNING</secondary>
+  </indexterm>
+
+  <para>
+   Sometimes it is useful to obtain data from modified rows while they are
+   being manipulated.  The <command>INSERT</>, <command>UPDATE</>,
+   and <command>DELETE</> commands all have an
+   optional <literal>RETURNING</> clause that supports this.  Use
+   of <literal>RETURNING</> avoids performing an extra database query to
+   collect the data, and is especially valuable when it would otherwise be
+   difficult to identify the modified rows reliably.
+  </para>
+
+  <para>
+   The allowed contents of a <literal>RETURNING</> clause are the same as
+   a <command>SELECT</> command's output list
+   (see <xref linkend="queries-select-lists">).  It can contain column
+   names of the command's target table, or value expressions using those
+   columns.  A common shorthand is <literal>RETURNING *</>, which selects
+   all columns of the target table in order.
+  </para>
+
+  <para>
+   In an <command>INSERT</>, the data available to <literal>RETURNING</> is
+   the row as it was inserted.  This is not so useful in trivial inserts,
+   since it would just repeat the data provided by the client.  But it can
+   be very handy when relying on computed default values.  For example,
+   when using a <link linkend="datatype-serial"><type>serial</></link>
+   column to provide unique identifiers, <literal>RETURNING</> can return
+   the ID assigned to a new row:
+<programlisting>
+CREATE TABLE users (firstname text, lastname text, id serial primary key);
+
+INSERT INTO users (firstname, lastname) VALUES ('Joe', 'Cool') RETURNING id;
+</programlisting>
+   The <literal>RETURNING</> clause is also very useful
+   with <literal>INSERT ... SELECT</>.
+  </para>
+
+  <para>
+   In an <command>UPDATE</>, the data available to <literal>RETURNING</> is
+   the new content of the modified row.  For example:
+<programlisting>
+UPDATE products SET price = price * 1.10
+  WHERE price &lt;= 99.99
+  RETURNING name, price AS new_price;
+</programlisting>
+  </para>
+
+  <para>
+   In a <command>DELETE</>, the data available to <literal>RETURNING</> is
+   the content of the deleted row.  For example:
+<programlisting>
+DELETE FROM products
+  WHERE obsoletion_date = 'today'
+  RETURNING *;
+</programlisting>
+  </para>
+
+  <para>
+   If there are triggers (<xref linkend="triggers">) on the target table,
+   the data available to <literal>RETURNING</> is the row as modified by
+   the triggers.  Thus, inspecting columns computed by triggers is another
+   common use-case for <literal>RETURNING</>.
+  </para>
+
  </sect1>
 </chapter>
