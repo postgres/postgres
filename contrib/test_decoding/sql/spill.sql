@@ -116,7 +116,7 @@ SAVEPOINT s2;
 INSERT INTO spill_test SELECT 'serialize-subsmall-subbig--2:'||g.i FROM generate_series(2, 5001) g(i);
 RELEASE SAVEPOINT s2;
 COMMIT;
-SELECT (regexp_split_to_array(data, ':'))[4], COUNT(*), (array_agg(data))[1], (array_agg(data))[count(*)]
+SELECT (regexp_split_to_array(data, ':'))[4] COLLATE "C", COUNT(*), (array_agg(data))[1], (array_agg(data))[count(*)]
 FROM pg_logical_slot_get_changes('regression_slot', NULL,NULL) WHERE data ~ 'INSERT'
 GROUP BY 1 ORDER BY 1;
 
@@ -129,7 +129,7 @@ INSERT INTO spill_test SELECT 'serialize-nested-subbig-subbig--2:'||g.i FROM gen
 RELEASE SAVEPOINT s2;
 RELEASE SAVEPOINT s1;
 COMMIT;
-SELECT (regexp_split_to_array(data, ':'))[4], COUNT(*), (array_agg(data))[1], (array_agg(data))[count(*)]
+SELECT (regexp_split_to_array(data, ':'))[4] COLLATE "C", COUNT(*), (array_agg(data))[1], (array_agg(data))[count(*)]
 FROM pg_logical_slot_get_changes('regression_slot', NULL,NULL) WHERE data ~ 'INSERT'
 GROUP BY 1 ORDER BY 1;
 
@@ -142,7 +142,7 @@ INSERT INTO spill_test SELECT 'serialize-nested-subbig-subsmall--2:'||g.i FROM g
 RELEASE SAVEPOINT s2;
 RELEASE SAVEPOINT s1;
 COMMIT;
-SELECT (regexp_split_to_array(data, ':'))[4], COUNT(*), (array_agg(data))[1], (array_agg(data))[count(*)]
+SELECT (regexp_split_to_array(data, ':'))[4] COLLATE "C", COUNT(*), (array_agg(data))[1], (array_agg(data))[count(*)]
 FROM pg_logical_slot_get_changes('regression_slot', NULL,NULL) WHERE data ~ 'INSERT'
 GROUP BY 1 ORDER BY 1;
 
@@ -155,7 +155,7 @@ INSERT INTO spill_test SELECT 'serialize-nested-subsmall-subbig--2:'||g.i FROM g
 RELEASE SAVEPOINT s2;
 RELEASE SAVEPOINT s1;
 COMMIT;
-SELECT (regexp_split_to_array(data, ':'))[4], COUNT(*), (array_agg(data))[1], (array_agg(data))[count(*)]
+SELECT (regexp_split_to_array(data, ':'))[4] COLLATE "C", COUNT(*), (array_agg(data))[1], (array_agg(data))[count(*)]
 FROM pg_logical_slot_get_changes('regression_slot', NULL,NULL) WHERE data ~ 'INSERT'
 GROUP BY 1 ORDER BY 1;
 
@@ -170,7 +170,7 @@ SAVEPOINT s3;
 INSERT INTO spill_test SELECT 'serialize-nested-subbig-subbigabort-subbig-3:'||g.i FROM generate_series(5001, 10000) g(i);
 RELEASE SAVEPOINT s1;
 COMMIT;
-SELECT (regexp_split_to_array(data, ':'))[4], COUNT(*), (array_agg(data))[1], (array_agg(data))[count(*)]
+SELECT (regexp_split_to_array(data, ':'))[4] COLLATE "C", COUNT(*), (array_agg(data))[1], (array_agg(data))[count(*)]
 FROM pg_logical_slot_get_changes('regression_slot', NULL,NULL) WHERE data ~ 'INSERT'
 GROUP BY 1 ORDER BY 1;
 
