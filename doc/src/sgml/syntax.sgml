@@ -1449,12 +1449,13 @@ $1.somecolumn
    </para>
 
    <para>
-    In a select list (see <xref linkend="queries-select-lists">), you
-    can ask for all fields of a composite value by
+    You can ask for all fields of a composite value by
     writing <literal>.*</literal>:
 <programlisting>
 (compositecol).*
 </programlisting>
+    This notation behaves differently depending on context;
+    see <xref linkend="rowtypes-usage"> for details.
    </para>
   </sect2>
 
@@ -1531,7 +1532,7 @@ sqrt(2)
      interchangeable.  This behavior is not SQL-standard but is provided
      in <productname>PostgreSQL</> because it allows use of functions to
      emulate <quote>computed fields</>.  For more information see
-     <xref linkend="xfunc-sql-composite-functions">.
+     <xref linkend="rowtypes-usage">.
     </para>
    </note>
   </sect2>
@@ -2291,7 +2292,8 @@ SELECT ROW(1,2.5,'this is a test');
     <replaceable>rowvalue</replaceable><literal>.*</literal>,
     which will be expanded to a list of the elements of the row value,
     just as occurs when the <literal>.*</> syntax is used at the top level
-    of a <command>SELECT</> list.  For example, if table <literal>t</> has
+    of a <command>SELECT</> list (see <xref linkend="rowtypes-usage">).
+    For example, if table <literal>t</> has
     columns <literal>f1</> and <literal>f2</>, these are the same:
 <programlisting>
 SELECT ROW(t.*, 42) FROM t;
@@ -2302,9 +2304,9 @@ SELECT ROW(t.f1, t.f2, 42) FROM t;
    <note>
     <para>
      Before <productname>PostgreSQL</productname> 8.2, the
-     <literal>.*</literal> syntax was not expanded, so that writing
-     <literal>ROW(t.*, 42)</> created a two-field row whose first field
-     was another row value.  The new behavior is usually more useful.
+     <literal>.*</literal> syntax was not expanded in row constructors, so
+     that writing <literal>ROW(t.*, 42)</> created a two-field row whose first
+     field was another row value.  The new behavior is usually more useful.
      If you need the old behavior of nested row values, write the inner
      row value without <literal>.*</literal>, for instance
      <literal>ROW(t, 42)</>.

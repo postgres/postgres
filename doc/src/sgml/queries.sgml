@@ -1457,7 +1457,8 @@ SELECT tbl1.a, tbl2.a, tbl1.b FROM ...
 <programlisting>
 SELECT tbl1.*, tbl2.a FROM ...
 </programlisting>
-    (See also <xref linkend="queries-where">.)
+    See <xref linkend="rowtypes-usage"> for more about
+    the <replaceable>table_name</><literal>.*</> notation.
    </para>
 
    <para>
