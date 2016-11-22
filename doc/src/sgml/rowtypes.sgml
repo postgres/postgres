@@ -19,7 +19,7 @@
   column of a table can be declared to be of a composite type.
  </para>
 
- <sect2>
+ <sect2 id="rowtypes-declaring">
   <title>Declaration of Composite Types</title>
 
  <para>
@@ -90,7 +90,7 @@ CREATE TABLE inventory_item (
  </sect2>
 
  <sect2>
-  <title>Composite Value Input</title>
+  <title>Constructing Composite Values</title>
 
   <indexterm>
    <primary>composite type</primary>
@@ -101,8 +101,9 @@ CREATE TABLE inventory_item (
    To write a composite value as a literal constant, enclose the field
    values within parentheses and separate them by commas.  You can put double
    quotes around any field value, and must do so if it contains commas or
-   parentheses.  (More details appear below.)  Thus, the general format of a
-   composite constant is the following:
+   parentheses.  (More details appear <link
+   linkend="rowtypes-io-syntax">below</link>.)  Thus, the general format of
+   a composite constant is the following:
 <synopsis>
 '( <replaceable>val1</replaceable> , <replaceable>val2</replaceable> , ... )'
 </synopsis>
@@ -129,7 +130,8 @@ CREATE TABLE inventory_item (
    the generic type constants discussed in <xref
    linkend="sql-syntax-constants-generic">.  The constant is initially
    treated as a string and passed to the composite-type input conversion
-   routine.  An explicit type specification might be necessary.)
+   routine.  An explicit type specification might be necessary to tell
+   which type to convert the constant to.)
   </para>
 
  <para>
@@ -143,7 +145,7 @@ ROW('fuzzy dice', 42, 1.99)
 ROW('', 42, NULL)
 </programlisting>
   The ROW keyword is actually optional as long as you have more than one
-  field in the expression, so these can simplify to:
+  field in the expression, so these can be simplified to:
 <programlisting>
 ('fuzzy dice', 42, 1.99)
 ('', 42, NULL)
@@ -153,7 +155,7 @@ ROW('', 42, NULL)
  </para>
  </sect2>
 
- <sect2>
+ <sect2 id="rowtypes-accessing">
   <title>Accessing Composite Types</title>
 
  <para>
@@ -198,6 +200,11 @@ SELECT (my_func(...)).field FROM ...
 
   Without the extra parentheses, this will generate a syntax error.
  </para>
+
+ <para>
+  The special field name <literal>*</> means <quote>all fields</>, as
+  further explained in <xref linkend="rowtypes-usage">.
+ </para>
  </sect2>
 
  <sect2>
@@ -241,6 +248,199 @@ INSERT INTO mytab (complex_col.r, complex_col.i) VALUES(1.1, 2.2);
   Had we not supplied values for all the subfields of the column, the
   remaining subfields would have been filled with null values.
  </para>
+ </sect2>
+
+ <sect2 id="rowtypes-usage">
+  <title>Using Composite Types in Queries</title>
+
+  <para>
+   There are various special syntax rules and behaviors associated with
+   composite types in queries.  These rules provide useful shortcuts,
+   but can be confusing if you don't know the logic behind them.
+  </para>
+
+  <para>
+   In <productname>PostgreSQL</>, a reference to a table name (or alias)
+   in a query is effectively a reference to the composite value of the
+   table's current row.  For example, if we had a table
+   <structname>inventory_item</> as shown
+   <link linkend="rowtypes-declaring">above</link>, we could write:
+<programlisting>
+SELECT c FROM inventory_item c;
+</programlisting>
+   This query produces a single composite-valued column, so we might get
+   output like:
+<programlisting>
+           c
+------------------------
+ ("fuzzy dice",42,1.99)
+(1 row)
+</programlisting>
+   Note however that simple names are matched to column names before table
+   names, so this example works only because there is no column
+   named <structfield>c</> in the query's tables.
+  </para>
+
+  <para>
+   The ordinary qualified-column-name
+   syntax <replaceable>table_name</><literal>.</><replaceable>column_name</>
+   can be understood as applying <link linkend="field-selection">field
+   selection</link> to the composite value of the table's current row.
+   (For efficiency reasons, it's not actually implemented that way.)
+  </para>
+
+  <para>
+   When we write
+<programlisting>
+SELECT c.* FROM inventory_item c;
+</programlisting>
+   then, according to the SQL standard, we should get the contents of the
+   table expanded into separate columns:
+<programlisting>
+    name    | supplier_id | price
+------------+-------------+-------
+ fuzzy dice |          42 |  1.99
+(1 row)
+</programlisting>
+   as if the query were
+<programlisting>
+SELECT c.name, c.supplier_id, c.price FROM inventory_item c;
+</programlisting>
+   <productname>PostgreSQL</> will apply this expansion behavior to
+   any composite-valued expression, although as shown <link
+   linkend="rowtypes-accessing">above</link>, you need to write parentheses
+   around the value that <literal>.*</> is applied to whenever it's not a
+   simple table name.  For example, if <function>myfunc()</> is a function
+   returning a composite type with columns <structfield>a</>,
+   <structfield>b</>, and <structfield>c</>, then these two queries have the
+   same result:
+<programlisting>
+SELECT (myfunc(x)).* FROM some_table;
+SELECT (myfunc(x)).a, (myfunc(x)).b, (myfunc(x)).c FROM some_table;
+</programlisting>
+  </para>
+
+  <tip>
+   <para>
+    <productname>PostgreSQL</> handles column expansion by
+    actually transforming the first form into the second.  So, in this
+    example, <function>myfunc()</> would get invoked three times per row
+    with either syntax.  If it's an expensive function you may wish to
+    avoid that, which you can do with a query like:
+<programlisting>
+SELECT (m).* FROM (SELECT myfunc(x) AS m FROM some_table OFFSET 0) ss;
+</programlisting>
+    The <literal>OFFSET 0</> clause keeps the optimizer
+    from <quote>flattening</> the sub-select to arrive at the form with
+    multiple calls of <function>myfunc()</>.
+   </para>
+  </tip>
+
+  <para>
+   The <replaceable>composite_value</><literal>.*</> syntax results in
+   column expansion of this kind when it appears at the top level of
+   a <link linkend="queries-select-lists"><command>SELECT</> output
+   list</link>, a <link linkend="dml-returning"><literal>RETURNING</>
+   list</link> in <command>INSERT</>/<command>UPDATE</>/<command>DELETE</>,
+   a <link linkend="queries-values"><literal>VALUES</> clause</link>, or
+   a <link linkend="sql-syntax-row-constructors">row constructor</link>.
+   In all other contexts (including when nested inside one of those
+   constructs), attaching <literal>.*</> to a composite value does not
+   change the value, since it means <quote>all columns</> and so the
+   same composite value is produced again.  For example,
+   if <function>somefunc()</> accepts a composite-valued argument,
+   these queries are the same:
+
+<programlisting>
+SELECT somefunc(c.*) FROM inventory_item c;
+SELECT somefunc(c) FROM inventory_item c;
+</programlisting>
+
+   In both cases, the current row of <structname>inventory_item</> is
+   passed to the function as a single composite-valued argument.
+   Even though <literal>.*</> does nothing in such cases, using it is good
+   style, since it makes clear that a composite value is intended.  In
+   particular, the parser will consider <literal>c</> in <literal>c.*</> to
+   refer to a table name or alias, not to a column name, so that there is
+   no ambiguity; whereas without <literal>.*</>, it is not clear
+   whether <literal>c</> means a table name or a column name, and in fact
+   the column-name interpretation will be preferred if there is a column
+   named <literal>c</>.
+  </para>
+
+  <para>
+   Another example demonstrating these concepts is that all these queries
+   mean the same thing:
+<programlisting>
+SELECT * FROM inventory_item c ORDER BY c;
+SELECT * FROM inventory_item c ORDER BY c.*;
+SELECT * FROM inventory_item c ORDER BY ROW(c.*);
+</programlisting>
+   All of these <literal>ORDER BY</> clauses specify the row's composite
+   value, resulting in sorting the rows according to the rules described
+   in <xref linkend="composite-type-comparison">.  However,
+   if <structname>inventory_item</> contained a column
+   named <structfield>c</>, the first case would be different from the
+   others, as it would mean to sort by that column only.  Given the column
+   names previously shown, these queries are also equivalent to those above:
+<programlisting>
+SELECT * FROM inventory_item c ORDER BY ROW(c.name, c.supplier_id, c.price);
+SELECT * FROM inventory_item c ORDER BY (c.name, c.supplier_id, c.price);
+</programlisting>
+   (The last case uses a row constructor with the key word <literal>ROW</>
+   omitted.)
+  </para>
+
+  <para>
+   Another special syntactical behavior associated with composite values is
+   that we can use <firstterm>functional notation</> for extracting a field
+   of a composite value.  The simple way to explain this is that
+   the notations <literal><replaceable>field</>(<replaceable>table</>)</>
+   and <literal><replaceable>table</>.<replaceable>field</></>
+   are interchangeable.  For example, these queries are equivalent:
+
+<programlisting>
+SELECT c.name FROM inventory_item c WHERE c.price &gt; 1000;
+SELECT name(c) FROM inventory_item c WHERE price(c) &gt; 1000;
+</programlisting>
+
+   Moreover, if we have a function that accepts a single argument of a
+   composite type, we can call it with either notation.  These queries are
+   all equivalent:
+
+<programlisting>
+SELECT somefunc(c) FROM inventory_item c;
+SELECT somefunc(c.*) FROM inventory_item c;
+SELECT c.somefunc FROM inventory_item c;
+</programlisting>
+  </para>
+
+  <para>
+   This equivalence between functional notation and field notation
+   makes it possible to use functions on composite types to implement
+   <quote>computed fields</>.
+   <indexterm>
+    <primary>computed field</primary>
+   </indexterm>
+   <indexterm>
+    <primary>field</primary>
+    <secondary>computed</secondary>
+   </indexterm>
+   An application using the last query above wouldn't need to be directly
+   aware that <literal>somefunc</> isn't a real column of the table.
+  </para>
+
+  <tip>
+   <para>
+    Because of this behavior, it's unwise to give a function that takes a
+    single composite-type argument the same name as any of the fields of
+    that composite type.  If there is ambiguity, the field-name
+    interpretation will be preferred, so that such a function could not be
+    called without tricks.  One way to force the function interpretation is
+    to schema-qualify the function name, that is, write
+    <literal><replaceable>schema</>.<replaceable>func</>(<replaceable>compositevalue</>)</literal>.
+   </para>
+  </tip>
  </sect2>
 
  <sect2 id="rowtypes-io-syntax">

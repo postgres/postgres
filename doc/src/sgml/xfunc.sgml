@@ -394,8 +394,8 @@ SELECT name, double_salary(emp.*) AS dream
     <para>
      Notice the use of the syntax <literal>$1.salary</literal>
      to select one field of the argument row value.  Also notice
-     how the calling <command>SELECT</> command uses <literal>*</>
-     to select
+     how the calling <command>SELECT</> command
+     uses <replaceable>table_name</><literal>.*</> to select
      the entire current row of a table as a composite value.  The table
      row can alternatively be referenced using just the table name,
      like this:
@@ -405,6 +405,8 @@ SELECT name, double_salary(emp) AS dream
     WHERE emp.cubicle ~= point '(2,1)';
 </screen>
      but this usage is deprecated since it's easy to get confused.
+     (See <xref linkend="rowtypes-usage"> for details about these
+     two notations for the composite value of a table row.)
     </para>
 
     <para>
@@ -479,7 +481,8 @@ $$ LANGUAGE SQL;
     </para>
 
     <para>
-     We could call this function directly in either of two ways:
+     We could call this function directly either by using it in
+     a value expression:
 
 <screen>
 SELECT new_emp();
@@ -487,7 +490,11 @@ SELECT new_emp();
          new_emp
 --------------------------
  (None,1000.0,25,"(2,2)")
+</screen>
 
+     or by calling it as a table function:
+
+<screen>
 SELECT * FROM new_emp();
 
  name | salary | age | cubicle
@@ -524,12 +531,7 @@ LINE 1: SELECT new_emp().name;
     </para>
 
     <para>
-     Another option is to use
-     functional notation for extracting an attribute.  The  simple  way
-     to explain this is that we can use the
-     notations <literal><replaceable>attribute</>(<replaceable>table</>)</>
-     and  <literal><replaceable>table</>.<replaceable>attribute</></>
-     interchangeably.
+     Another option is to use functional notation for extracting an attribute:
 
 <screen>
 SELECT name(new_emp());
@@ -539,49 +541,9 @@ SELECT name(new_emp());
  None
 </screen>
 
-<screen>
--- This is the same as:
--- SELECT emp.name AS youngster FROM emp WHERE emp.age &lt; 30;
-
-SELECT name(emp) AS youngster FROM emp WHERE age(emp) &lt; 30;
-
- youngster
------------
- Sam
- Andy
-</screen>
+     As explained in <xref linkend="rowtypes-usage">, the field notation and
+     functional notation are equivalent.
     </para>
-
-    <tip>
-     <para>
-      The equivalence between functional notation and attribute notation
-      makes it possible to use functions on composite types to emulate
-      <quote>computed fields</>.
-      <indexterm>
-       <primary>computed field</primary>
-      </indexterm>
-      <indexterm>
-       <primary>field</primary>
-       <secondary>computed</secondary>
-      </indexterm>
-      For example, using the previous definition
-      for <literal>double_salary(emp)</>, we can write
-
-<screen>
-SELECT emp.name, emp.double_salary FROM emp;
-</screen>
-
-      An application using this wouldn't need to be directly aware that
-      <literal>double_salary</> isn't a real column of the table.
-      (You can also emulate computed fields with views.)
-     </para>
-
-     <para>
-      Because of this behavior, it's unwise to give a function that takes
-      a single composite-type argument the same name as any of the fields of
-      that composite type.
-     </para>
-    </tip>
 
     <para>
      Another way to use a function returning a composite type is to pass the
@@ -598,12 +560,6 @@ SELECT getname(new_emp());
  None
 (1 row)
 </screen>
-    </para>
-
-    <para>
-     Still another way to use a function that returns a composite type is to
-     call it as a table function, as described in <xref
-     linkend="xfunc-sql-table-functions">.
     </para>
    </sect2>
 
