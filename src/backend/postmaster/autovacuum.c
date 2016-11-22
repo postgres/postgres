@@ -1908,7 +1908,7 @@ do_autovacuum(void)
 	BufferAccessStrategy bstrategy;
 	ScanKeyData key;
 	TupleDesc	pg_class_desc;
-	int			orphan_failures;
+	int			orphan_failures = 0;
 	int			effective_multixact_freeze_max_age;
 
 	/*
