@@ -365,8 +365,8 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 				qualified_name_list any_name any_name_list type_name_list
 				any_operator expr_list attrs
 				target_list opt_target_list insert_column_list set_target_list
-				set_clause_list set_clause multiple_set_clause
-				ctext_expr_list ctext_row def_list operator_def_list indirection opt_indirection
+				set_clause_list set_clause
+				def_list operator_def_list indirection opt_indirection
 				reloption_list group_clause TriggerFuncArgs select_limit
 				opt_select_limit opclass_item_list opclass_drop_list
 				opclass_purpose opt_opfamily transaction_mode_list_or_empty
@@ -454,7 +454,6 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <node>	case_expr case_arg when_clause case_default
 %type <list>	when_clause_list
 %type <ival>	sub_type
-%type <node>	ctext_expr
 %type <value>	NumericOnly
 %type <list>	NumericOnly_list
 %type <alias>	alias_clause opt_alias_clause
@@ -466,7 +465,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <range>	relation_expr
 %type <range>	relation_expr_opt_alias
 %type <node>	tablesample_clause opt_repeatable_clause
-%type <target>	target_el single_set_clause set_target insert_column_item
+%type <target>	target_el set_target insert_column_item
 
 %type <str>		generic_option_name
 %type <node>	generic_option_arg
@@ -9914,67 +9913,16 @@ set_clause_list:
 		;
 
 set_clause:
-			single_set_clause						{ $$ = list_make1($1); }
-			| multiple_set_clause					{ $$ = $1; }
-		;
-
-single_set_clause:
-			set_target '=' ctext_expr
+			set_target '=' a_expr
 				{
-					$$ = $1;
-					$$->val = (Node *) $3;
+					$1->val = (Node *) $3;
+					$$ = list_make1($1);
 				}
-		;
-
-/*
- * Ideally, we'd accept any row-valued a_expr as RHS of a multiple_set_clause.
- * However, per SQL spec the row-constructor case must allow DEFAULT as a row
- * member, and it's pretty unclear how to do that (unless perhaps we allow
- * DEFAULT in any a_expr and let parse analysis sort it out later?).  For the
- * moment, the planner/executor only support a subquery as a multiassignment
- * source anyhow, so we need only accept ctext_row and subqueries here.
- */
-multiple_set_clause:
-			'(' set_target_list ')' '=' ctext_row
+			| '(' set_target_list ')' '=' a_expr
 				{
-					ListCell *col_cell;
-					ListCell *val_cell;
-
-					/*
-					 * Break the ctext_row apart, merge individual expressions
-					 * into the destination ResTargets.  This is semantically
-					 * equivalent to, and much cheaper to process than, the
-					 * general case.
-					 */
-					if (list_length($2) != list_length($5))
-						ereport(ERROR,
-								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("number of columns does not match number of values"),
-								 parser_errposition(@5)));
-					forboth(col_cell, $2, val_cell, $5)
-					{
-						ResTarget *res_col = (ResTarget *) lfirst(col_cell);
-						Node *res_val = (Node *) lfirst(val_cell);
-
-						res_col->val = res_val;
-					}
-
-					$$ = $2;
-				}
-			| '(' set_target_list ')' '=' select_with_parens
-				{
-					SubLink *sl = makeNode(SubLink);
 					int ncolumns = list_length($2);
 					int i = 1;
 					ListCell *col_cell;
-
-					/* First, convert bare SelectStmt into a SubLink */
-					sl->subLinkType = MULTIEXPR_SUBLINK;
-					sl->subLinkId = 0;		/* will be assigned later */
-					sl->testexpr = NULL;
-					sl->operName = NIL;
-					sl->subselect = $5;
-					sl->location = @5;
 
 					/* Create a MultiAssignRef source for each target */
 					foreach(col_cell, $2)
@@ -9982,7 +9930,7 @@ multiple_set_clause:
 						ResTarget *res_col = (ResTarget *) lfirst(col_cell);
 						MultiAssignRef *r = makeNode(MultiAssignRef);
 
-						r->source = (Node *) sl;
+						r->source = (Node *) $5;
 						r->colno = i;
 						r->ncolumns = ncolumns;
 						res_col->val = (Node *) r;
@@ -10641,17 +10589,22 @@ locked_rels_list:
 		;
 
 
+/*
+ * We should allow ROW '(' expr_list ')' too, but that seems to require
+ * making VALUES a fully reserved word, which will probably break more apps
+ * than allowing the noise-word is worth.
+ */
 values_clause:
-			VALUES ctext_row
+			VALUES '(' expr_list ')'
 				{
 					SelectStmt *n = makeNode(SelectStmt);
-					n->valuesLists = list_make1($2);
+					n->valuesLists = list_make1($3);
 					$$ = (Node *) n;
 				}
-			| values_clause ',' ctext_row
+			| values_clause ',' '(' expr_list ')'
 				{
 					SelectStmt *n = (SelectStmt *) $1;
-					n->valuesLists = lappend(n->valuesLists, $3);
+					n->valuesLists = lappend(n->valuesLists, $4);
 					$$ = (Node *) n;
 				}
 		;
@@ -12042,6 +11995,20 @@ a_expr:		c_expr									{ $$ = $1; }
 												 list_make1($1), @2),
 									 @2);
 				}
+			| DEFAULT
+				{
+					/*
+					 * The SQL spec only allows DEFAULT in "contextually typed
+					 * expressions", but for us, it's easier to allow it in
+					 * any a_expr and then throw error during parse analysis
+					 * if it's in an inappropriate context.  This way also
+					 * lets us say something smarter than "syntax error".
+					 */
+					SetToDefault *n = makeNode(SetToDefault);
+					/* parse analysis will fill in the rest */
+					n->location = @1;
+					$$ = (Node *)n;
+				}
 		;
 
 /*
@@ -13295,36 +13262,6 @@ opt_indirection:
 
 opt_asymmetric: ASYMMETRIC
 			| /*EMPTY*/
-		;
-
-/*
- * The SQL spec defines "contextually typed value expressions" and
- * "contextually typed row value constructors", which for our purposes
- * are the same as "a_expr" and "row" except that DEFAULT can appear at
- * the top level.
- */
-
-ctext_expr:
-			a_expr					{ $$ = (Node *) $1; }
-			| DEFAULT
-				{
-					SetToDefault *n = makeNode(SetToDefault);
-					n->location = @1;
-					$$ = (Node *) n;
-				}
-		;
-
-ctext_expr_list:
-			ctext_expr								{ $$ = list_make1($1); }
-			| ctext_expr_list ',' ctext_expr		{ $$ = lappend($1, $3); }
-		;
-
-/*
- * We should allow ROW '(' ctext_expr_list ')' too, but that seems to require
- * making VALUES a fully reserved word, which will probably break more apps
- * than allowing the noise-word is worth.
- */
-ctext_row: '(' ctext_expr_list ')'					{ $$ = $2; }
 		;
 
 

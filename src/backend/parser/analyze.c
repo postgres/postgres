@@ -644,8 +644,12 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 		{
 			List	   *sublist = (List *) lfirst(lc);
 
-			/* Do basic expression transformation (same as a ROW() expr) */
-			sublist = transformExpressionList(pstate, sublist, EXPR_KIND_VALUES);
+			/*
+			 * Do basic expression transformation (same as a ROW() expr, but
+			 * allow SetToDefault at top level)
+			 */
+			sublist = transformExpressionList(pstate, sublist,
+											  EXPR_KIND_VALUES, true);
 
 			/*
 			 * All the sublists must be the same length, *after*
@@ -752,10 +756,14 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 		Assert(list_length(valuesLists) == 1);
 		Assert(selectStmt->intoClause == NULL);
 
-		/* Do basic expression transformation (same as a ROW() expr) */
+		/*
+		 * Do basic expression transformation (same as a ROW() expr, but allow
+		 * SetToDefault at top level)
+		 */
 		exprList = transformExpressionList(pstate,
 										   (List *) linitial(valuesLists),
-										   EXPR_KIND_VALUES);
+										   EXPR_KIND_VALUES,
+										   true);
 
 		/* Prepare row for assignment to target table */
 		exprList = transformInsertRow(pstate, exprList,
@@ -1293,9 +1301,7 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 	}
 
 	/*
-	 * For each row of VALUES, transform the raw expressions.  This is also a
-	 * handy place to reject DEFAULT nodes, which the grammar allows for
-	 * simplicity.
+	 * For each row of VALUES, transform the raw expressions.
 	 *
 	 * Note that the intermediate representation we build is column-organized
 	 * not row-organized.  That simplifies the type and collation processing
@@ -1305,8 +1311,12 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 	{
 		List	   *sublist = (List *) lfirst(lc);
 
-		/* Do basic expression transformation (same as a ROW() expr) */
-		sublist = transformExpressionList(pstate, sublist, EXPR_KIND_VALUES);
+		/*
+		 * Do basic expression transformation (same as a ROW() expr, but here
+		 * we disallow SetToDefault)
+		 */
+		sublist = transformExpressionList(pstate, sublist,
+										  EXPR_KIND_VALUES, false);
 
 		/*
 		 * All the sublists must be the same length, *after* transformation
@@ -1329,17 +1339,12 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 										exprLocation((Node *) sublist))));
 		}
 
-		/* Check for DEFAULT and build per-column expression lists */
+		/* Build per-column expression lists */
 		i = 0;
 		foreach(lc2, sublist)
 		{
 			Node	   *col = (Node *) lfirst(lc2);
 
-			if (IsA(col, SetToDefault))
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("DEFAULT can only appear in a VALUES list within INSERT"),
-						 parser_errposition(pstate, exprLocation(col))));
 			colexprs[i] = lappend(colexprs[i], col);
 			i++;
 		}

@@ -91,7 +91,17 @@ transformTargetEntry(ParseState *pstate,
 {
 	/* Transform the node if caller didn't do it already */
 	if (expr == NULL)
-		expr = transformExpr(pstate, node, exprKind);
+	{
+		/*
+		 * If it's a SetToDefault node and we should allow that, pass it
+		 * through unmodified.  (transformExpr will throw the appropriate
+		 * error if we're disallowing it.)
+		 */
+		if (exprKind == EXPR_KIND_UPDATE_SOURCE && IsA(node, SetToDefault))
+			expr = node;
+		else
+			expr = transformExpr(pstate, node, exprKind);
+	}
 
 	if (colname == NULL && !resjunk)
 	{
@@ -210,10 +220,13 @@ transformTargetList(ParseState *pstate, List *targetlist,
  * the input list elements are bare expressions without ResTarget decoration,
  * and the output elements are likewise just expressions without TargetEntry
  * decoration.  We use this for ROW() and VALUES() constructs.
+ *
+ * exprKind is not enough to tell us whether to allow SetToDefault, so
+ * an additional flag is needed for that.
  */
 List *
 transformExpressionList(ParseState *pstate, List *exprlist,
-						ParseExprKind exprKind)
+						ParseExprKind exprKind, bool allowDefault)
 {
 	List	   *result = NIL;
 	ListCell   *lc;
@@ -255,10 +268,17 @@ transformExpressionList(ParseState *pstate, List *exprlist,
 		}
 
 		/*
-		 * Not "something.*", so transform as a single expression
+		 * Not "something.*", so transform as a single expression.  If it's a
+		 * SetToDefault node and we should allow that, pass it through
+		 * unmodified.  (transformExpr will throw the appropriate error if
+		 * we're disallowing it.)
 		 */
-		result = lappend(result,
-						 transformExpr(pstate, e, exprKind));
+		if (allowDefault && IsA(e, SetToDefault))
+			 /* do nothing */ ;
+		else
+			e = transformExpr(pstate, e, exprKind);
+
+		result = lappend(result, e);
 	}
 
 	/* Shouldn't have any multiassign items here */

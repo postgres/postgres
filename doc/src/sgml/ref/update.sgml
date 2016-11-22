@@ -24,7 +24,7 @@ PostgreSQL documentation
 [ WITH [ RECURSIVE ] <replaceable class="parameter">with_query</replaceable> [, ...] ]
 UPDATE [ ONLY ] <replaceable class="PARAMETER">table_name</replaceable> [ * ] [ [ AS ] <replaceable class="parameter">alias</replaceable> ]
     SET { <replaceable class="PARAMETER">column_name</replaceable> = { <replaceable class="PARAMETER">expression</replaceable> | DEFAULT } |
-          ( <replaceable class="PARAMETER">column_name</replaceable> [, ...] ) = ( { <replaceable class="PARAMETER">expression</replaceable> | DEFAULT } [, ...] ) |
+          ( <replaceable class="PARAMETER">column_name</replaceable> [, ...] ) = [ ROW ] ( { <replaceable class="PARAMETER">expression</replaceable> | DEFAULT } [, ...] ) |
           ( <replaceable class="PARAMETER">column_name</replaceable> [, ...] ) = ( <replaceable class="PARAMETER">sub-SELECT</replaceable> )
         } [, ...]
     [ FROM <replaceable class="PARAMETER">from_list</replaceable> ]
@@ -420,12 +420,12 @@ UPDATE films SET kind = 'Dramatic' WHERE CURRENT OF c_films;
 
   <para>
    According to the standard, the source value for a parenthesized sub-list of
-   column names can be any row-valued expression yielding the correct number
-   of columns.  <productname>PostgreSQL</productname> only allows the source
-   value to be a parenthesized list of expressions (a row constructor) or a
-   sub-<literal>SELECT</>.  An individual column's updated value can be
-   specified as <literal>DEFAULT</> in the row-constructor case, but not
-   inside a sub-<literal>SELECT</>.
+   target column names can be any row-valued expression yielding the correct
+   number of columns.  <productname>PostgreSQL</productname> only allows the
+   source value to be a <link linkend="sql-syntax-row-constructors">row
+   constructor</link> or a sub-<literal>SELECT</>.  An individual column's
+   updated value can be specified as <literal>DEFAULT</> in the
+   row-constructor case, but not inside a sub-<literal>SELECT</>.
   </para>
  </refsect1>
 </refentry>

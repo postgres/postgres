@@ -106,7 +106,7 @@ static Node *transformCaseExpr(ParseState *pstate, CaseExpr *c);
 static Node *transformSubLink(ParseState *pstate, SubLink *sublink);
 static Node *transformArrayExpr(ParseState *pstate, A_ArrayExpr *a,
 				   Oid array_type, Oid element_type, int32 typmod);
-static Node *transformRowExpr(ParseState *pstate, RowExpr *r);
+static Node *transformRowExpr(ParseState *pstate, RowExpr *r, bool allowDefault);
 static Node *transformCoalesceExpr(ParseState *pstate, CoalesceExpr *c);
 static Node *transformMinMaxExpr(ParseState *pstate, MinMaxExpr *m);
 static Node *transformSQLValueFunction(ParseState *pstate,
@@ -299,7 +299,7 @@ transformExprRecurse(ParseState *pstate, Node *expr)
 			break;
 
 		case T_RowExpr:
-			result = transformRowExpr(pstate, (RowExpr *) expr);
+			result = transformRowExpr(pstate, (RowExpr *) expr, false);
 			break;
 
 		case T_CoalesceExpr:
@@ -348,8 +348,20 @@ transformExprRecurse(ParseState *pstate, Node *expr)
 			break;
 
 			/*
-			 * CaseTestExpr and SetToDefault don't require any processing;
-			 * they are only injected into parse trees in fully-formed state.
+			 * In all places where DEFAULT is legal, the caller should have
+			 * processed it rather than passing it to transformExpr().
+			 */
+		case T_SetToDefault:
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("DEFAULT is not allowed in this context"),
+					 parser_errposition(pstate,
+										((SetToDefault *) expr)->location)));
+			break;
+
+			/*
+			 * CaseTestExpr doesn't require any processing; it is only
+			 * injected into parse trees in a fully-formed state.
 			 *
 			 * Ordinarily we should not see a Var here, but it is convenient
 			 * for transformJoinUsingClause() to create untransformed operator
@@ -358,7 +370,6 @@ transformExprRecurse(ParseState *pstate, Node *expr)
 			 * references, which seems expensively pointless.  So allow it.
 			 */
 		case T_CaseTestExpr:
-		case T_SetToDefault:
 		case T_Var:
 			{
 				result = (Node *) expr;
@@ -1486,9 +1497,9 @@ static Node *
 transformMultiAssignRef(ParseState *pstate, MultiAssignRef *maref)
 {
 	SubLink    *sublink;
+	RowExpr    *rexpr;
 	Query	   *qtree;
 	TargetEntry *tle;
-	Param	   *param;
 
 	/* We should only see this in first-stage processing of UPDATE tlists */
 	Assert(pstate->p_expr_kind == EXPR_KIND_UPDATE_SOURCE);
@@ -1496,64 +1507,139 @@ transformMultiAssignRef(ParseState *pstate, MultiAssignRef *maref)
 	/* We only need to transform the source if this is the first column */
 	if (maref->colno == 1)
 	{
-		sublink = (SubLink *) transformExprRecurse(pstate, maref->source);
-		/* Currently, the grammar only allows a SubLink as source */
-		Assert(IsA(sublink, SubLink));
-		Assert(sublink->subLinkType == MULTIEXPR_SUBLINK);
-		qtree = (Query *) sublink->subselect;
-		Assert(IsA(qtree, Query));
+		/*
+		 * For now, we only allow EXPR SubLinks and RowExprs as the source of
+		 * an UPDATE multiassignment.  This is sufficient to cover interesting
+		 * cases; at worst, someone would have to write (SELECT * FROM expr)
+		 * to expand a composite-returning expression of another form.
+		 */
+		if (IsA(maref->source, SubLink) &&
+			((SubLink *) maref->source)->subLinkType == EXPR_SUBLINK)
+		{
+			/* Relabel it as a MULTIEXPR_SUBLINK */
+			sublink = (SubLink *) maref->source;
+			sublink->subLinkType = MULTIEXPR_SUBLINK;
+			/* And transform it */
+			sublink = (SubLink *) transformExprRecurse(pstate,
+													   (Node *) sublink);
 
-		/* Check subquery returns required number of columns */
-		if (count_nonjunk_tlist_entries(qtree->targetList) != maref->ncolumns)
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
+			qtree = (Query *) sublink->subselect;
+			Assert(IsA(qtree, Query));
+
+			/* Check subquery returns required number of columns */
+			if (count_nonjunk_tlist_entries(qtree->targetList) != maref->ncolumns)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("number of columns does not match number of values"),
-					 parser_errposition(pstate, sublink->location)));
+						 parser_errposition(pstate, sublink->location)));
 
-		/*
-		 * Build a resjunk tlist item containing the MULTIEXPR SubLink, and
-		 * add it to pstate->p_multiassign_exprs, whence it will later get
-		 * appended to the completed targetlist.  We needn't worry about
-		 * selecting a resno for it; transformUpdateStmt will do that.
-		 */
-		tle = makeTargetEntry((Expr *) sublink, 0, NULL, true);
-		pstate->p_multiassign_exprs = lappend(pstate->p_multiassign_exprs, tle);
+			/*
+			 * Build a resjunk tlist item containing the MULTIEXPR SubLink,
+			 * and add it to pstate->p_multiassign_exprs, whence it will later
+			 * get appended to the completed targetlist.  We needn't worry
+			 * about selecting a resno for it; transformUpdateStmt will do
+			 * that.
+			 */
+			tle = makeTargetEntry((Expr *) sublink, 0, NULL, true);
+			pstate->p_multiassign_exprs = lappend(pstate->p_multiassign_exprs,
+												  tle);
 
-		/*
-		 * Assign a unique-within-this-targetlist ID to the MULTIEXPR SubLink.
-		 * We can just use its position in the p_multiassign_exprs list.
-		 */
-		sublink->subLinkId = list_length(pstate->p_multiassign_exprs);
+			/*
+			 * Assign a unique-within-this-targetlist ID to the MULTIEXPR
+			 * SubLink.  We can just use its position in the
+			 * p_multiassign_exprs list.
+			 */
+			sublink->subLinkId = list_length(pstate->p_multiassign_exprs);
+		}
+		else if (IsA(maref->source, RowExpr))
+		{
+			/* Transform the RowExpr, allowing SetToDefault items */
+			rexpr = (RowExpr *) transformRowExpr(pstate,
+												 (RowExpr *) maref->source,
+												 true);
+
+			/* Check it returns required number of columns */
+			if (list_length(rexpr->args) != maref->ncolumns)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("number of columns does not match number of values"),
+						 parser_errposition(pstate, rexpr->location)));
+
+			/*
+			 * Temporarily append it to p_multiassign_exprs, so we can get it
+			 * back when we come back here for additional columns.
+			 */
+			tle = makeTargetEntry((Expr *) rexpr, 0, NULL, true);
+			pstate->p_multiassign_exprs = lappend(pstate->p_multiassign_exprs,
+												  tle);
+		}
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("source for a multiple-column UPDATE item must be a sub-SELECT or ROW() expression"),
+				   parser_errposition(pstate, exprLocation(maref->source))));
 	}
 	else
 	{
 		/*
 		 * Second or later column in a multiassignment.  Re-fetch the
-		 * transformed query, which we assume is still the last entry in
-		 * p_multiassign_exprs.
+		 * transformed SubLink or RowExpr, which we assume is still the last
+		 * entry in p_multiassign_exprs.
 		 */
 		Assert(pstate->p_multiassign_exprs != NIL);
 		tle = (TargetEntry *) llast(pstate->p_multiassign_exprs);
+	}
+
+	/*
+	 * Emit the appropriate output expression for the current column
+	 */
+	if (IsA(tle->expr, SubLink))
+	{
+		Param	   *param;
+
 		sublink = (SubLink *) tle->expr;
-		Assert(IsA(sublink, SubLink));
 		Assert(sublink->subLinkType == MULTIEXPR_SUBLINK);
 		qtree = (Query *) sublink->subselect;
 		Assert(IsA(qtree, Query));
+
+		/* Build a Param representing the current subquery output column */
+		tle = (TargetEntry *) list_nth(qtree->targetList, maref->colno - 1);
+		Assert(!tle->resjunk);
+
+		param = makeNode(Param);
+		param->paramkind = PARAM_MULTIEXPR;
+		param->paramid = (sublink->subLinkId << 16) | maref->colno;
+		param->paramtype = exprType((Node *) tle->expr);
+		param->paramtypmod = exprTypmod((Node *) tle->expr);
+		param->paramcollid = exprCollation((Node *) tle->expr);
+		param->location = exprLocation((Node *) tle->expr);
+
+		return (Node *) param;
 	}
 
-	/* Build a Param representing the appropriate subquery output column */
-	tle = (TargetEntry *) list_nth(qtree->targetList, maref->colno - 1);
-	Assert(!tle->resjunk);
+	if (IsA(tle->expr, RowExpr))
+	{
+		Node	   *result;
 
-	param = makeNode(Param);
-	param->paramkind = PARAM_MULTIEXPR;
-	param->paramid = (sublink->subLinkId << 16) | maref->colno;
-	param->paramtype = exprType((Node *) tle->expr);
-	param->paramtypmod = exprTypmod((Node *) tle->expr);
-	param->paramcollid = exprCollation((Node *) tle->expr);
-	param->location = exprLocation((Node *) tle->expr);
+		rexpr = (RowExpr *) tle->expr;
 
-	return (Node *) param;
+		/* Just extract and return the next element of the RowExpr */
+		result = (Node *) list_nth(rexpr->args, maref->colno - 1);
+
+		/*
+		 * If we're at the last column, delete the RowExpr from
+		 * p_multiassign_exprs; we don't need it anymore, and don't want it in
+		 * the finished UPDATE tlist.
+		 */
+		if (maref->colno == maref->ncolumns)
+			pstate->p_multiassign_exprs =
+				list_delete_ptr(pstate->p_multiassign_exprs, tle);
+
+		return result;
+	}
+
+	elog(ERROR, "unexpected expr type in multiassign list");
+	return NULL;				/* keep compiler quiet */
 }
 
 static Node *
@@ -2081,7 +2167,7 @@ transformArrayExpr(ParseState *pstate, A_ArrayExpr *a,
 }
 
 static Node *
-transformRowExpr(ParseState *pstate, RowExpr *r)
+transformRowExpr(ParseState *pstate, RowExpr *r, bool allowDefault)
 {
 	RowExpr    *newr;
 	char		fname[16];
@@ -2091,7 +2177,8 @@ transformRowExpr(ParseState *pstate, RowExpr *r)
 	newr = makeNode(RowExpr);
 
 	/* Transform the field expressions */
-	newr->args = transformExpressionList(pstate, r->args, pstate->p_expr_kind);
+	newr->args = transformExpressionList(pstate, r->args,
+										 pstate->p_expr_kind, allowDefault);
 
 	/* Barring later casting, we consider the type RECORD */
 	newr->row_typeid = RECORDOID;

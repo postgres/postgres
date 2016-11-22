@@ -140,17 +140,15 @@ SELECT * FROM update_test;
     |     | 
 (4 rows)
 
--- these should work, but don't yet:
-UPDATE update_test SET (a,b) = (v.*) FROM (VALUES(21, 100)) AS v(i, j)
+-- *-expansion should work in this context:
+UPDATE update_test SET (a,b) = ROW(v.*) FROM (VALUES(21, 100)) AS v(i, j)
   WHERE update_test.a = v.i;
-ERROR:  number of columns does not match number of values
-LINE 1: UPDATE update_test SET (a,b) = (v.*) FROM (VALUES(21, 100)) ...
-                                       ^
-UPDATE update_test SET (a,b) = ROW(v.*) FROM (VALUES(21, 101)) AS v(i, j)
+-- you might expect this to work, but syntactically it's not a RowExpr:
+UPDATE update_test SET (a,b) = (v.*) FROM (VALUES(21, 101)) AS v(i, j)
   WHERE update_test.a = v.i;
-ERROR:  syntax error at or near "ROW"
-LINE 1: UPDATE update_test SET (a,b) = ROW(v.*) FROM (VALUES(21, 101...
-                                       ^
+ERROR:  source for a multiple-column UPDATE item must be a sub-SELECT or ROW() expression
+LINE 1: UPDATE update_test SET (a,b) = (v.*) FROM (VALUES(21, 101)) ...
+                                        ^
 -- if an alias for the target table is specified, don't allow references
 -- to the original table name
 UPDATE update_test AS t SET b = update_test.b + 10 WHERE t.a = 10;
@@ -163,8 +161,8 @@ UPDATE update_test SET c = repeat('x', 10000) WHERE c = 'car';
 SELECT a, b, char_length(c) FROM update_test;
  a  |  b  | char_length 
 ----+-----+-------------
- 21 | 101 |            
     |     |            
+ 21 | 100 |            
  41 |  12 |       10000
  42 |  12 |       10000
 (4 rows)
