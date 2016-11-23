@@ -61,6 +61,111 @@ SELECT relname, spcname FROM pg_catalog.pg_tablespace t, pg_catalog.pg_class c
  foo_idx | regress_tblspace
 (1 row)
 
+-- check that default_tablespace doesn't affect ALTER TABLE index rebuilds
+CREATE TABLE testschema.test_default_tab(id bigint) TABLESPACE regress_tblspace;
+INSERT INTO testschema.test_default_tab VALUES (1);
+CREATE INDEX test_index1 on testschema.test_default_tab (id);
+CREATE INDEX test_index2 on testschema.test_default_tab (id) TABLESPACE regress_tblspace;
+\d testschema.test_index1
+Index "testschema.test_index1"
+ Column |  Type  | Definition 
+--------+--------+------------
+ id     | bigint | id
+btree, for table "testschema.test_default_tab"
+
+\d testschema.test_index2
+Index "testschema.test_index2"
+ Column |  Type  | Definition 
+--------+--------+------------
+ id     | bigint | id
+btree, for table "testschema.test_default_tab"
+Tablespace: "regress_tblspace"
+
+-- use a custom tablespace for default_tablespace
+SET default_tablespace TO regress_tblspace;
+-- tablespace should not change if no rewrite
+ALTER TABLE testschema.test_default_tab ALTER id TYPE bigint;
+\d testschema.test_index1
+Index "testschema.test_index1"
+ Column |  Type  | Definition 
+--------+--------+------------
+ id     | bigint | id
+btree, for table "testschema.test_default_tab"
+
+\d testschema.test_index2
+Index "testschema.test_index2"
+ Column |  Type  | Definition 
+--------+--------+------------
+ id     | bigint | id
+btree, for table "testschema.test_default_tab"
+Tablespace: "regress_tblspace"
+
+SELECT * FROM testschema.test_default_tab;
+ id 
+----
+  1
+(1 row)
+
+-- tablespace should not change even if there is an index rewrite
+ALTER TABLE testschema.test_default_tab ALTER id TYPE int;
+\d testschema.test_index1
+Index "testschema.test_index1"
+ Column |  Type   | Definition 
+--------+---------+------------
+ id     | integer | id
+btree, for table "testschema.test_default_tab"
+
+\d testschema.test_index2
+Index "testschema.test_index2"
+ Column |  Type   | Definition 
+--------+---------+------------
+ id     | integer | id
+btree, for table "testschema.test_default_tab"
+Tablespace: "regress_tblspace"
+
+SELECT * FROM testschema.test_default_tab;
+ id 
+----
+  1
+(1 row)
+
+-- now use the default tablespace for default_tablespace
+SET default_tablespace TO '';
+-- tablespace should not change if no rewrite
+ALTER TABLE testschema.test_default_tab ALTER id TYPE int;
+\d testschema.test_index1
+Index "testschema.test_index1"
+ Column |  Type   | Definition 
+--------+---------+------------
+ id     | integer | id
+btree, for table "testschema.test_default_tab"
+
+\d testschema.test_index2
+Index "testschema.test_index2"
+ Column |  Type   | Definition 
+--------+---------+------------
+ id     | integer | id
+btree, for table "testschema.test_default_tab"
+Tablespace: "regress_tblspace"
+
+-- tablespace should not change even if there is an index rewrite
+ALTER TABLE testschema.test_default_tab ALTER id TYPE bigint;
+\d testschema.test_index1
+Index "testschema.test_index1"
+ Column |  Type  | Definition 
+--------+--------+------------
+ id     | bigint | id
+btree, for table "testschema.test_default_tab"
+
+\d testschema.test_index2
+Index "testschema.test_index2"
+ Column |  Type  | Definition 
+--------+--------+------------
+ id     | bigint | id
+btree, for table "testschema.test_default_tab"
+Tablespace: "regress_tblspace"
+
+DROP TABLE testschema.test_default_tab;
 -- let's try moving a table from one place to another
 CREATE TABLE testschema.atable AS VALUES (1), (2);
 CREATE UNIQUE INDEX anindex ON testschema.atable(column1);
