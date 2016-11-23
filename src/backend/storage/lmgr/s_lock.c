@@ -51,7 +51,7 @@
 #include <unistd.h>
 
 #include "storage/s_lock.h"
-#include "storage/barrier.h"
+#include "port/atomics.h"
 
 
 #define MIN_SPINS_PER_DELAY 10

@@ -33,8 +33,8 @@
 
 #include "bootstrap/bootstrap.h"
 #include "common/username.h"
+#include "port/atomics.h"
 #include "postmaster/postmaster.h"
-#include "storage/barrier.h"
 #include "storage/s_lock.h"
 #include "storage/spin.h"
 #include "tcop/tcopprot.h"

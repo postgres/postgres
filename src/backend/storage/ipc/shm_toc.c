@@ -13,7 +13,7 @@
 
 #include "postgres.h"
 
-#include "storage/barrier.h"
+#include "port/atomics.h"
 #include "storage/shm_toc.h"
 #include "storage/spin.h"
 
