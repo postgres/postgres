@@ -157,12 +157,23 @@ SH_SCOPE void SH_STAT(SH_TYPE *tb);
 
 #include "utils/memutils.h"
 
-/* conservative fillfactor for a robin hood table, might want to adjust */
-#define SH_FILLFACTOR (0.8)
-/* increase fillfactor if we otherwise would error out */
-#define SH_MAX_FILLFACTOR (0.95)
 /* max data array size,we allow up to PG_UINT32_MAX buckets, including 0 */
 #define SH_MAX_SIZE (((uint64) PG_UINT32_MAX) + 1)
+
+/* normal fillfactor, unless already close to maximum */
+#ifndef SH_FILLFACTOR
+#define SH_FILLFACTOR (0.9)
+#endif
+/* increase fillfactor if we otherwise would error out */
+#define SH_MAX_FILLFACTOR (0.98)
+/* grow if actual and optimal location bigger than */
+#ifndef SH_GROW_MAX_DIB
+#define SH_GROW_MAX_DIB 25
+#endif
+/* grow if more than elements to move when inserting */
+#ifndef SH_GROW_MAX_MOVE
+#define SH_GROW_MAX_MOVE 150
+#endif
 
 #ifdef SH_STORE_HASH
 #define SH_COMPARE_KEYS(tb, ahash, akey, b) (ahash == SH_GET_HASH(tb, b) && SH_EQUAL(tb, b->SH_KEY, akey))
@@ -466,12 +477,18 @@ SH_INSERT(SH_TYPE *tb, SH_KEY_TYPE key, bool *found)
 	uint32		startelem;
 	uint32		curelem;
 	SH_ELEMENT_TYPE *data;
-	uint32		insertdist = 0;
+	uint32		insertdist;
+
+restart:
+	insertdist = 0;
 
 	/*
 	 * We do the grow check even if the key is actually present, to avoid
 	 * doing the check inside the loop. This also lets us avoid having to
 	 * re-find our position in the hashtable after resizing.
+	 *
+	 * Note that this also reached when resizing the table due to
+	 * SH_GROW_MAX_DIB / SH_GROW_MAX_MOVE.
 	 */
 	if (unlikely(tb->members >= tb->grow_threshold))
 	{
@@ -536,6 +553,7 @@ SH_INSERT(SH_TYPE *tb, SH_KEY_TYPE key, bool *found)
 			SH_ELEMENT_TYPE *lastentry = entry;
 			uint32		emptyelem = curelem;
 			uint32		moveelem;
+			int32		emptydist = 0;
 
 			/* find next empty bucket */
 			while (true)
@@ -549,6 +567,19 @@ SH_INSERT(SH_TYPE *tb, SH_KEY_TYPE key, bool *found)
 				{
 					lastentry = emptyentry;
 					break;
+				}
+
+				/*
+				 * To avoid negative consequences from overly imbalanced
+				 * hashtables, grow the hashtable if collisions would require
+				 * us to move a lot of entries.  The most likely cause of such
+				 * imbalance is filling a (currently) small table, from a
+				 * currently big one, in hash-table order.
+				 */
+				if (++emptydist > SH_GROW_MAX_MOVE)
+				{
+					tb->grow_threshold = 0;
+					goto restart;
 				}
 			}
 
@@ -585,6 +616,18 @@ SH_INSERT(SH_TYPE *tb, SH_KEY_TYPE key, bool *found)
 
 		curelem = SH_NEXT(tb, curelem, startelem);
 		insertdist++;
+
+		/*
+		 * To avoid negative consequences from overly imbalanced hashtables,
+		 * grow the hashtable if collisions lead to large runs. The most
+		 * likely cause of such imbalance is filling a (currently) small
+		 * table, from a currently big one, in hash-table order.
+		 */
+		if (insertdist > SH_GROW_MAX_DIB)
+		{
+			tb->grow_threshold = 0;
+			goto restart;
+		}
 	}
 }
 
@@ -878,6 +921,8 @@ SH_STAT(SH_TYPE *tb)
 #undef SH_MAKE_NAME_
 #undef SH_FILLFACTOR
 #undef SH_MAX_FILLFACTOR
+#undef SH_GROW_MAX_DIB
+#undef SH_GROW_MAX_MOVE
 #undef SH_MAX_SIZE
 
 /* types */
