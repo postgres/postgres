@@ -131,7 +131,7 @@ add_paths_to_joinrel(PlannerInfo *root,
 	 */
 	foreach(lc, root->join_info_list)
 	{
-		SpecialJoinInfo *sjinfo = (SpecialJoinInfo *) lfirst(lc);
+		SpecialJoinInfo *sjinfo2 = (SpecialJoinInfo *) lfirst(lc);
 
 		/*
 		 * SJ is relevant to this join if we have some part of its RHS
@@ -140,19 +140,19 @@ add_paths_to_joinrel(PlannerInfo *root,
 		 * join has already been proven legal.)  If the SJ is relevant, it
 		 * presents constraints for joining to anything not in its RHS.
 		 */
-		if (bms_overlap(joinrel->relids, sjinfo->min_righthand) &&
-			!bms_overlap(joinrel->relids, sjinfo->min_lefthand))
+		if (bms_overlap(joinrel->relids, sjinfo2->min_righthand) &&
+			!bms_overlap(joinrel->relids, sjinfo2->min_lefthand))
 			extra.param_source_rels = bms_join(extra.param_source_rels,
 										   bms_difference(root->all_baserels,
-													 sjinfo->min_righthand));
+													sjinfo2->min_righthand));
 
 		/* full joins constrain both sides symmetrically */
-		if (sjinfo->jointype == JOIN_FULL &&
-			bms_overlap(joinrel->relids, sjinfo->min_lefthand) &&
-			!bms_overlap(joinrel->relids, sjinfo->min_righthand))
+		if (sjinfo2->jointype == JOIN_FULL &&
+			bms_overlap(joinrel->relids, sjinfo2->min_lefthand) &&
+			!bms_overlap(joinrel->relids, sjinfo2->min_righthand))
 			extra.param_source_rels = bms_join(extra.param_source_rels,
 										   bms_difference(root->all_baserels,
-													  sjinfo->min_lefthand));
+													 sjinfo2->min_lefthand));
 	}
 
 	/*
