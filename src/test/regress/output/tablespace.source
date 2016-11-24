@@ -166,6 +166,35 @@ btree, for table "testschema.test_default_tab"
 Tablespace: "regress_tblspace"
 
 DROP TABLE testschema.test_default_tab;
+-- check that default_tablespace affects index additions in ALTER TABLE
+CREATE TABLE testschema.test_tab(id int) TABLESPACE regress_tblspace;
+INSERT INTO testschema.test_tab VALUES (1);
+SET default_tablespace TO regress_tblspace;
+ALTER TABLE testschema.test_tab ADD CONSTRAINT test_tab_unique UNIQUE (id);
+SET default_tablespace TO '';
+ALTER TABLE testschema.test_tab ADD CONSTRAINT test_tab_pkey PRIMARY KEY (id);
+\d testschema.test_tab_unique
+Index "testschema.test_tab_unique"
+ Column |  Type   | Definition 
+--------+---------+------------
+ id     | integer | id
+unique, btree, for table "testschema.test_tab"
+Tablespace: "regress_tblspace"
+
+\d testschema.test_tab_pkey
+Index "testschema.test_tab_pkey"
+ Column |  Type   | Definition 
+--------+---------+------------
+ id     | integer | id
+primary key, btree, for table "testschema.test_tab"
+
+SELECT * FROM testschema.test_tab;
+ id 
+----
+  1
+(1 row)
+
+DROP TABLE testschema.test_tab;
 -- let's try moving a table from one place to another
 CREATE TABLE testschema.atable AS VALUES (1), (2);
 CREATE UNIQUE INDEX anindex ON testschema.atable(column1);
