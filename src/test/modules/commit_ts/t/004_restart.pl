@@ -25,19 +25,13 @@ like(
 
 ($ret, $stdout, $stderr) =
   $node_master->psql('postgres', qq[SELECT pg_xact_commit_timestamp('1');]);
-is($ret, 3, 'getting ts of BootstrapTransactionId reports error');
-like(
-	$stderr,
-	qr/cannot retrieve commit timestamp for transaction/,
-	'expected error from BootstrapTransactionId');
+is($ret, 0, 'getting ts of BootstrapTransactionId succeeds');
+is($stdout, '', 'timestamp of BootstrapTransactionId is null');
 
 ($ret, $stdout, $stderr) =
   $node_master->psql('postgres', qq[SELECT pg_xact_commit_timestamp('2');]);
-is($ret, 3, 'getting ts of FrozenTransactionId reports error');
-like(
-	$stderr,
-	qr/cannot retrieve commit timestamp for transaction/,
-	'expected error from FrozenTransactionId');
+is($ret, 0, 'getting ts of FrozenTransactionId succeeds');
+is($stdout, '', 'timestamp of FrozenTransactionId is null');
 
 # Since FirstNormalTransactionId will've occurred during initdb, long before we
 # enabled commit timestamps, it'll be null since we have no cts data for it but
