@@ -1903,10 +1903,10 @@ include_dir 'conf.d'
          <xref linkend="guc-shared-buffers">, but smaller than the OS's page
          cache, where performance might degrade.  This setting may have no
          effect on some platforms.  The valid range is between
-         <literal>0</literal>, which disables controlled writeback, and
+         <literal>0</literal>, which disables forced writeback, and
          <literal>2MB</literal>.  The default is <literal>512kB</> on Linux,
-         <literal>0</> elsewhere.  (Non-default values of
-         <symbol>BLCKSZ</symbol> change the default and maximum.)
+         <literal>0</> elsewhere.  (If <symbol>BLCKSZ</symbol> is not 8kB,
+         the default and maximum values scale proportionally to it.)
          This parameter can only be set in the <filename>postgresql.conf</>
          file or on the server command line.
         </para>
@@ -2055,10 +2055,10 @@ include_dir 'conf.d'
          that are bigger than <xref linkend="guc-shared-buffers">, but smaller
          than the OS's page cache, where performance might degrade.  This
          setting may have no effect on some platforms.  The valid range is
-         between <literal>0</literal>, which disables controlled writeback,
-         and <literal>2MB</literal>.  The default is <literal>0</> (i.e. no
-         flush control).  (Non-default values of <symbol>BLCKSZ</symbol>
-         change the maximum.)
+         between <literal>0</literal>, which disables forced writeback,
+         and <literal>2MB</literal>.  The default is <literal>0</>, i.e., no
+         forced writeback.  (If <symbol>BLCKSZ</symbol> is not 8kB,
+         the maximum value scales proportionally to it.)
         </para>
        </listitem>
       </varlistentry>
@@ -2518,10 +2518,11 @@ include_dir 'conf.d'
       <para>
         Specifies how often the WAL writer flushes WAL. After flushing WAL it
         sleeps for <varname>wal_writer_delay</> milliseconds, unless woken up
-        by an asynchronously committing transaction. In case the last flush
+        by an asynchronously committing transaction. If the last flush
         happened less than <varname>wal_writer_delay</> milliseconds ago and
         less than <varname>wal_writer_flush_after</> bytes of WAL have been
-        produced since, WAL is only written to the OS, not flushed to disk.
+        produced since, then WAL is only written to the operating system, not
+        flushed to disk.
         The default value is 200 milliseconds (<literal>200ms</>).  Note that
         on many systems, the effective resolution of sleep delays is 10
         milliseconds; setting <varname>wal_writer_delay</> to a value that is
@@ -2540,12 +2541,12 @@ include_dir 'conf.d'
       </term>
       <listitem>
       <para>
-        Specifies how often the WAL writer flushes WAL. In case the last flush
+        Specifies how often the WAL writer flushes WAL. If the last flush
         happened less than <varname>wal_writer_delay</> milliseconds ago and
         less than <varname>wal_writer_flush_after</> bytes of WAL have been
-        produced since, WAL is only written to the OS, not flushed to disk.
-        If <varname>wal_writer_flush_after</> is set to <literal>0</> WAL is
-        flushed every time the WAL writer has written WAL.  The default is
+        produced since, then WAL is only written to the operating system, not
+        flushed to disk.  If <varname>wal_writer_flush_after</> is set
+        to <literal>0</> then WAL data is flushed immediately.  The default is
         <literal>1MB</literal>. This parameter can only be set in the
         <filename>postgresql.conf</> file or on the server command line.
        </para>
@@ -2665,10 +2666,10 @@ include_dir 'conf.d'
         that are bigger than <xref linkend="guc-shared-buffers">, but smaller
         than the OS's page cache, where performance might degrade.  This
         setting may have no effect on some platforms.  The valid range is
-        between <literal>0</literal>, which disables controlled writeback,
+        between <literal>0</literal>, which disables forced writeback,
         and <literal>2MB</literal>.  The default is <literal>256kB</> on
-        Linux, <literal>0</> elsewhere.  (Non-default values of
-        <symbol>BLCKSZ</symbol> change the default and maximum.)
+        Linux, <literal>0</> elsewhere.  (If <symbol>BLCKSZ</symbol> is not
+        8kB, the default and maximum values scale proportionally to it.)
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
        </para>

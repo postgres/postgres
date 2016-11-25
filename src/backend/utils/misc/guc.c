@@ -2281,7 +2281,6 @@ static struct config_int ConfigureNamesInt[] =
 			GUC_UNIT_BLOCKS
 		},
 		&checkpoint_flush_after,
-		/* see bufmgr.h: OS dependent default */
 		DEFAULT_CHECKPOINT_FLUSH_AFTER, 0, WRITEBACK_MAX_PENDING_FLUSHES,
 		NULL, NULL, NULL
 	},
@@ -2310,12 +2309,12 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		{"wal_writer_flush_after", PGC_SIGHUP, WAL_SETTINGS,
-			gettext_noop("Amount of WAL written out by WAL writer triggering a flush."),
+			gettext_noop("Amount of WAL written out by WAL writer that triggers a flush."),
 			NULL,
 			GUC_UNIT_XBLOCKS
 		},
 		&WalWriterFlushAfter,
-		128, 0, INT_MAX,
+		(1024*1024) / XLOG_BLCKSZ, 0, INT_MAX,
 		NULL, NULL, NULL
 	},
 
@@ -2439,7 +2438,6 @@ static struct config_int ConfigureNamesInt[] =
 			GUC_UNIT_BLOCKS
 		},
 		&bgwriter_flush_after,
-		/* see bufmgr.h: OS dependent default */
 		DEFAULT_BGWRITER_FLUSH_AFTER, 0, WRITEBACK_MAX_PENDING_FLUSHES,
 		NULL, NULL, NULL
 	},
@@ -2467,7 +2465,7 @@ static struct config_int ConfigureNamesInt[] =
 			GUC_UNIT_BLOCKS
 		},
 		&backend_flush_after,
-		0, 0, WRITEBACK_MAX_PENDING_FLUSHES,
+		DEFAULT_BACKEND_FLUSH_AFTER, 0, WRITEBACK_MAX_PENDING_FLUSHES,
 		NULL, NULL, NULL
 	},
 

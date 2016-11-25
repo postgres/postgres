@@ -64,11 +64,11 @@
 #include "common/file_utils.h"
 #include "common/restricted_token.h"
 #include "common/username.h"
-#include "mb/pg_wchar.h"
+#include "fe_utils/string_utils.h"
 #include "getaddrinfo.h"
 #include "getopt_long.h"
+#include "mb/pg_wchar.h"
 #include "miscadmin.h"
-#include "fe_utils/string_utils.h"
 
 
 /* Ideally this would be in a .h file, but it hardly seems worth the trouble */
@@ -1094,6 +1094,27 @@ setup_config(void)
 			 dynamic_shared_memory_type);
 	conflines = replace_token(conflines, "#dynamic_shared_memory_type = posix",
 							  repltok);
+
+#if DEFAULT_BACKEND_FLUSH_AFTER > 0
+	snprintf(repltok, sizeof(repltok), "#backend_flush_after = %dkB",
+			 DEFAULT_BACKEND_FLUSH_AFTER * (BLCKSZ / 1024));
+	conflines = replace_token(conflines, "#backend_flush_after = 0",
+							  repltok);
+#endif
+
+#if DEFAULT_BGWRITER_FLUSH_AFTER > 0
+	snprintf(repltok, sizeof(repltok), "#bgwriter_flush_after = %dkB",
+			 DEFAULT_BGWRITER_FLUSH_AFTER * (BLCKSZ / 1024));
+	conflines = replace_token(conflines, "#bgwriter_flush_after = 0",
+							  repltok);
+#endif
+
+#if DEFAULT_CHECKPOINT_FLUSH_AFTER > 0
+	snprintf(repltok, sizeof(repltok), "#checkpoint_flush_after = %dkB",
+			 DEFAULT_CHECKPOINT_FLUSH_AFTER * (BLCKSZ / 1024));
+	conflines = replace_token(conflines, "#checkpoint_flush_after = 0",
+							  repltok);
+#endif
 
 #ifndef USE_PREFETCH
 	conflines = replace_token(conflines,
