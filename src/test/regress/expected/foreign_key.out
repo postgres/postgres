@@ -1401,4 +1401,17 @@ rollback to x;
 commit; -- fail
 ERROR:  insert or update on table "fktable2" violates foreign key constraint "fktable2_f1_fkey"
 DETAIL:  Key (f1)=(2) is not present in table "pktable2".
+--
+-- Test that we prevent dropping FK constraint with pending trigger events
+--
+begin;
+insert into fktable2 values(2);
+alter table fktable2 drop constraint fktable2_f1_fkey;
+ERROR:  cannot ALTER TABLE "fktable2" because it has pending trigger events
+commit;
+begin;
+delete from pktable2 where f1 = 1;
+alter table fktable2 drop constraint fktable2_f1_fkey;
+ERROR:  cannot ALTER TABLE "pktable2" because it has pending trigger events
+commit;
 drop table pktable2, fktable2;

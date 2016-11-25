@@ -1041,4 +1041,17 @@ delete from fktable2;
 rollback to x;
 commit; -- fail
 
+--
+-- Test that we prevent dropping FK constraint with pending trigger events
+--
+begin;
+insert into fktable2 values(2);
+alter table fktable2 drop constraint fktable2_f1_fkey;
+commit;
+
+begin;
+delete from pktable2 where f1 = 1;
+alter table fktable2 drop constraint fktable2_f1_fkey;
+commit;
+
 drop table pktable2, fktable2;
