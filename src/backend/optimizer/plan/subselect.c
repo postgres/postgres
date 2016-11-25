@@ -2128,11 +2128,13 @@ SS_identify_outer_params(PlannerInfo *root)
 }
 
 /*
- * SS_charge_for_initplans - account for cost of initplans in Path costs
+ * SS_charge_for_initplans - account for initplans in Path costs & parallelism
  *
  * If any initPlans have been created in the current query level, they will
  * get attached to the Plan tree created from whichever Path we select from
- * the given rel; so increment all the rel's Paths' costs to account for them.
+ * the given rel.  Increment all that rel's Paths' costs to account for them,
+ * and make sure the paths get marked as parallel-unsafe, since we can't
+ * currently transmit initPlans to parallel workers.
  *
  * This is separate from SS_attach_initplans because we might conditionally
  * create more initPlans during create_plan(), depending on which Path we
@@ -2164,7 +2166,7 @@ SS_charge_for_initplans(PlannerInfo *root, RelOptInfo *final_rel)
 	}
 
 	/*
-	 * Now adjust the costs.
+	 * Now adjust the costs and parallel_safe flags.
 	 */
 	foreach(lc, final_rel->pathlist)
 	{
@@ -2172,6 +2174,7 @@ SS_charge_for_initplans(PlannerInfo *root, RelOptInfo *final_rel)
 
 		path->startup_cost += initplan_cost;
 		path->total_cost += initplan_cost;
+		path->parallel_safe = false;
 	}
 
 	/* We needn't do set_cheapest() here, caller will do it */

@@ -341,12 +341,9 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	 * Optionally add a Gather node for testing purposes, provided this is
 	 * actually a safe thing to do.  (Note: we assume adding a Material node
 	 * above did not change the parallel safety of the plan, so we can still
-	 * rely on best_path->parallel_safe.  However, that flag doesn't account
-	 * for subplans, which we are unable to transmit to workers presently.)
+	 * rely on best_path->parallel_safe.)
 	 */
-	if (force_parallel_mode != FORCE_PARALLEL_OFF &&
-		best_path->parallel_safe &&
-		glob->subplans == NIL)
+	if (force_parallel_mode != FORCE_PARALLEL_OFF && best_path->parallel_safe)
 	{
 		Gather	   *gather = makeNode(Gather);
 
@@ -801,10 +798,10 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	SS_identify_outer_params(root);
 
 	/*
-	 * If any initPlans were created in this query level, increment the
-	 * surviving Paths' costs to account for them.  They won't actually get
-	 * attached to the plan tree till create_plan() runs, but we want to be
-	 * sure their costs are included now.
+	 * If any initPlans were created in this query level, adjust the surviving
+	 * Paths' costs and parallel-safety flags to account for them.  The
+	 * initPlans won't actually get attached to the plan tree till
+	 * create_plan() runs, but we must include their effects now.
 	 */
 	final_rel = fetch_upper_rel(root, UPPERREL_FINAL, NULL);
 	SS_charge_for_initplans(root, final_rel);
