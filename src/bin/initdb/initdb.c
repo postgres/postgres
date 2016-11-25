@@ -1287,6 +1287,27 @@ setup_config(void)
 	conflines = replace_token(conflines, "#dynamic_shared_memory_type = posix",
 							  repltok);
 
+#if DEFAULT_BACKEND_FLUSH_AFTER > 0
+	snprintf(repltok, sizeof(repltok), "#backend_flush_after = %dkB",
+			 DEFAULT_BACKEND_FLUSH_AFTER * (BLCKSZ / 1024));
+	conflines = replace_token(conflines, "#backend_flush_after = 0",
+							  repltok);
+#endif
+
+#if DEFAULT_BGWRITER_FLUSH_AFTER > 0
+	snprintf(repltok, sizeof(repltok), "#bgwriter_flush_after = %dkB",
+			 DEFAULT_BGWRITER_FLUSH_AFTER * (BLCKSZ / 1024));
+	conflines = replace_token(conflines, "#bgwriter_flush_after = 0",
+							  repltok);
+#endif
+
+#if DEFAULT_CHECKPOINT_FLUSH_AFTER > 0
+	snprintf(repltok, sizeof(repltok), "#checkpoint_flush_after = %dkB",
+			 DEFAULT_CHECKPOINT_FLUSH_AFTER * (BLCKSZ / 1024));
+	conflines = replace_token(conflines, "#checkpoint_flush_after = 0",
+							  repltok);
+#endif
+
 #ifndef USE_PREFETCH
 	conflines = replace_token(conflines,
 							  "#effective_io_concurrency = 1",

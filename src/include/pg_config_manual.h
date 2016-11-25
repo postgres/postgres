@@ -148,6 +148,24 @@
 #endif
 
 /*
+ * Default and maximum values for backend_flush_after, bgwriter_flush_after
+ * and checkpoint_flush_after; measured in blocks.  Currently, these are
+ * enabled by default if sync_file_range() exists, ie, only on Linux.  Perhaps
+ * we could also enable by default if we have mmap and msync(MS_ASYNC)?
+ */
+#ifdef HAVE_SYNC_FILE_RANGE
+#define DEFAULT_BACKEND_FLUSH_AFTER 0	/* never enabled by default */
+#define DEFAULT_BGWRITER_FLUSH_AFTER 64
+#define DEFAULT_CHECKPOINT_FLUSH_AFTER 32
+#else
+#define DEFAULT_BACKEND_FLUSH_AFTER 0
+#define DEFAULT_BGWRITER_FLUSH_AFTER 0
+#define DEFAULT_CHECKPOINT_FLUSH_AFTER 0
+#endif
+/* upper limit for all three variables */
+#define WRITEBACK_MAX_PENDING_FLUSHES 256
+
+/*
  * USE_SSL code should be compiled only when compiling with an SSL
  * implementation.  (Currently, only OpenSSL is supported, but we might add
  * more implementations in the future.)
