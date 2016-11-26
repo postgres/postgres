@@ -144,9 +144,9 @@ do { \
  * from utils/init/globals.c
  */
 extern PGDLLIMPORT pid_t PostmasterPid;
-extern bool IsPostmasterEnvironment;
+extern PGDLLIMPORT bool IsPostmasterEnvironment;
 extern PGDLLIMPORT bool IsUnderPostmaster;
-extern bool IsBackgroundWorker;
+extern PGDLLIMPORT bool IsBackgroundWorker;
 extern PGDLLIMPORT bool IsBinaryUpgrade;
 
 extern bool ExitOnAnyError;
