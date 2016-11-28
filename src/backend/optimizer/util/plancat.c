@@ -78,6 +78,7 @@ static List *build_index_tlist(PlannerInfo *root, IndexOptInfo *index,
  *	fdwroutine	if it's a foreign table, the FDW function pointers
  *	pages		number of pages
  *	tuples		number of tuples
+ *	rel_parallel_workers user-defined number of parallel workers
  *
  * Also, add information about the relation's foreign keys to root->fkey_list.
  *
