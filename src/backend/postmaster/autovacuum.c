@@ -87,6 +87,7 @@
 #include "storage/bufmgr.h"
 #include "storage/ipc.h"
 #include "storage/latch.h"
+#include "storage/lmgr.h"
 #include "storage/pmsignal.h"
 #include "storage/proc.h"
 #include "storage/procsignal.h"
@@ -129,17 +130,6 @@ int			Log_autovacuum_min_duration = -1;
 /* the minimum allowed time between two awakenings of the launcher */
 #define MIN_AUTOVAC_SLEEPTIME 100.0		/* milliseconds */
 #define MAX_AUTOVAC_SLEEPTIME 300		/* seconds */
-
-/*
- * Maximum number of orphan temporary tables to drop in a single transaction.
- * (If this is too high, we might run out of heavyweight locks.)
- */
-#define MAX_ORPHAN_ITEMS		50
-
-/*
- * After this many failures, stop trying to drop orphan temporary tables.
- */
-#define MAX_ORPHAN_DROP_FAILURE	10
 
 /* Flags to tell if we are in an autovacuum process */
 static bool am_autovacuum_launcher = false;
@@ -1899,7 +1889,6 @@ do_autovacuum(void)
 	Form_pg_database dbForm;
 	List	   *table_oids = NIL;
 	List	   *orphan_oids = NIL;
-	List	   *pending_oids = NIL;
 	HASHCTL		ctl;
 	HTAB	   *table_toast_map;
 	ListCell   *volatile cell;
@@ -1908,7 +1897,6 @@ do_autovacuum(void)
 	BufferAccessStrategy bstrategy;
 	ScanKeyData key;
 	TupleDesc	pg_class_desc;
-	int			orphan_failures = 0;
 	int			effective_multixact_freeze_max_age;
 
 	/*
@@ -2000,7 +1988,7 @@ do_autovacuum(void)
 	 * TOAST tables. The reason for doing the second pass is that during it we
 	 * want to use the main relation's pg_class.reloptions entry if the TOAST
 	 * table does not have any, and we cannot obtain it unless we know
-	 * beforehand what's the main  table OID.
+	 * beforehand what's the main table OID.
 	 *
 	 * We need to check TOAST tables separately because in cases with short,
 	 * wide tables there might be proportionally much more activity in the
@@ -2028,16 +2016,6 @@ do_autovacuum(void)
 
 		relid = HeapTupleGetOid(tuple);
 
-		/* Fetch reloptions and the pgstat entry for this table */
-		relopts = extract_autovac_opts(tuple, pg_class_desc);
-		tabentry = get_pgstat_tabentry_relid(relid, classForm->relisshared,
-											 shared, dbentry);
-
-		/* Check if it needs vacuum or analyze */
-		relation_needs_vacanalyze(relid, relopts, classForm, tabentry,
-								  effective_multixact_freeze_max_age,
-								  &dovacuum, &doanalyze, &wraparound);
-
 		/*
 		 * Check if it is a temp table (presumably, of some other backend's).
 		 * We cannot safely process other backends' temp tables.
@@ -2049,47 +2027,60 @@ do_autovacuum(void)
 			backendID = GetTempNamespaceBackendId(classForm->relnamespace);
 
 			/* We just ignore it if the owning backend is still active */
-			if (backendID == MyBackendId || BackendIdGetProc(backendID) == NULL)
+			if (backendID != InvalidBackendId &&
+				(backendID == MyBackendId ||
+				 BackendIdGetProc(backendID) == NULL))
 			{
 				/*
-				 * We found an orphan temp table which was probably left
-				 * behind by a crashed backend.  Remember it, so we can attempt
-				 * to drop it.
+				 * The table seems to be orphaned -- although it might be that
+				 * the owning backend has already deleted it and exited; our
+				 * pg_class scan snapshot is not necessarily up-to-date
+				 * anymore, so we could be looking at a committed-dead entry.
+				 * Remember it so we can try to delete it later.
 				 */
 				orphan_oids = lappend_oid(orphan_oids, relid);
 			}
+			continue;
 		}
-		else
+
+		/* Fetch reloptions and the pgstat entry for this table */
+		relopts = extract_autovac_opts(tuple, pg_class_desc);
+		tabentry = get_pgstat_tabentry_relid(relid, classForm->relisshared,
+											 shared, dbentry);
+
+		/* Check if it needs vacuum or analyze */
+		relation_needs_vacanalyze(relid, relopts, classForm, tabentry,
+								  effective_multixact_freeze_max_age,
+								  &dovacuum, &doanalyze, &wraparound);
+
+		/* Relations that need work are added to table_oids */
+		if (dovacuum || doanalyze)
+			table_oids = lappend_oid(table_oids, relid);
+
+		/*
+		 * Remember TOAST associations for the second pass.  Note: we must do
+		 * this whether or not the table is going to be vacuumed, because we
+		 * don't automatically vacuum toast tables along the parent table.
+		 */
+		if (OidIsValid(classForm->reltoastrelid))
 		{
-			/* relations that need work are added to table_oids */
-			if (dovacuum || doanalyze)
-				table_oids = lappend_oid(table_oids, relid);
+			av_relation *hentry;
+			bool		found;
 
-			/*
-			 * Remember the association for the second pass.  Note: we must do
-			 * this even if the table is going to be vacuumed, because we
-			 * don't automatically vacuum toast tables along the parent table.
-			 */
-			if (OidIsValid(classForm->reltoastrelid))
+			hentry = hash_search(table_toast_map,
+								 &classForm->reltoastrelid,
+								 HASH_ENTER, &found);
+
+			if (!found)
 			{
-				av_relation *hentry;
-				bool		found;
-
-				hentry = hash_search(table_toast_map,
-									 &classForm->reltoastrelid,
-									 HASH_ENTER, &found);
-
-				if (!found)
+				/* hash_search already filled in the key */
+				hentry->ar_relid = relid;
+				hentry->ar_hasrelopts = false;
+				if (relopts != NULL)
 				{
-					/* hash_search already filled in the key */
-					hentry->ar_relid = relid;
-					hentry->ar_hasrelopts = false;
-					if (relopts != NULL)
-					{
-						hentry->ar_hasrelopts = true;
-						memcpy(&hentry->ar_reloptions, relopts,
-							   sizeof(AutoVacOpts));
-					}
+					hentry->ar_hasrelopts = true;
+					memcpy(&hentry->ar_reloptions, relopts,
+						   sizeof(AutoVacOpts));
 				}
 			}
 		}
@@ -2154,112 +2145,90 @@ do_autovacuum(void)
 	heap_close(classRel, AccessShareLock);
 
 	/*
-	 * Loop through orphan temporary tables and drop them in batches.  If
-	 * we're unable to drop one particular table, we'll retry to see if we
-	 * can drop others, but if we fail too many times we'll give up and proceed
-	 * with our regular work, so that this step hopefully can't wedge
-	 * autovacuum for too long.
+	 * Recheck orphan temporary tables, and if they still seem orphaned, drop
+	 * them.  We'll eat a transaction per dropped table, which might seem
+	 * excessive, but we should only need to do anything as a result of a
+	 * previous backend crash, so this should not happen often enough to
+	 * justify "optimizing".  Using separate transactions ensures that we
+	 * don't bloat the lock table if there are many temp tables to be dropped,
+	 * and it ensures that we don't lose work if a deletion attempt fails.
 	 */
-	while (list_length(orphan_oids) > 0 &&
-		   orphan_failures < MAX_ORPHAN_DROP_FAILURE)
+	foreach(cell, orphan_oids)
 	{
-		Oid				relid = linitial_oid(orphan_oids);
-		ObjectAddress	object;
-		char		   *namespace = get_namespace_name(get_rel_namespace(relid));
-		char		   *relname = get_rel_name(relid);
-
-		orphan_oids = list_delete_first(orphan_oids);
-
-		PG_TRY();
-		{
-			ereport(LOG,
-					(errmsg("autovacuum: dropping orphan temp table \"%s\".\"%s\" in database \"%s\"",
-							namespace, relname,
-							get_database_name(MyDatabaseId))));
-			object.classId = RelationRelationId;
-			object.objectId = relid;
-			object.objectSubId = 0;
-			performDeletion(&object, DROP_CASCADE, PERFORM_DELETION_INTERNAL);
-
-			/*
-			 * This orphan table has been dropped correctly, add it to the
-			 * list of tables whose drop should be attempted again if an
-			 * error after in the same transaction.
-			 */
-			pending_oids = lappend_oid(pending_oids, relid);
-		}
-		PG_CATCH();
-		{
-			/* Abort the current transaction. */
-			HOLD_INTERRUPTS();
-
-			errcontext("dropping of orphan temp table \"%s\".\"%s\" in database \"%s\"",
-					   namespace, relname,
-					   get_database_name(MyDatabaseId));
-
-			EmitErrorReport();
-
-			/* this resets the PGXACT flags too */
-			AbortOutOfAnyTransaction();
-			FlushErrorState();
-
-			/*
-			 * Any tables were succesfully dropped before the failure now
-			 * need to be dropped again.  Add them back into the list, but
-			 * don't retry the table that failed.
-			 */
-			orphan_oids = list_concat(orphan_oids, pending_oids);
-			orphan_failures++;
-
-			/* Start a new transaction. */
-			StartTransactionCommand();
-
-			/* StartTransactionCommand changed elsewhere the memory context */
-			MemoryContextSwitchTo(AutovacMemCxt);
-
-			RESUME_INTERRUPTS();
-		}
-		PG_END_TRY();
+		Oid			relid = lfirst_oid(cell);
+		Form_pg_class classForm;
+		int			backendID;
+		ObjectAddress object;
 
 		/*
-		 * If we've successfully dropped quite a few tables, commit the
-		 * transaction and begin a new one.  The main point of this is to
-		 * avoid accumulating too many locks and blowing out the lock table,
-		 * but it also minimizes the amount of work that will have to be rolled
-		 * back if we fail to drop some table later in the list.
+		 * Check for user-requested abort.
 		 */
-		if (list_length(pending_oids) >= MAX_ORPHAN_ITEMS)
+		CHECK_FOR_INTERRUPTS();
+
+		/*
+		 * Try to lock the table.  If we can't get the lock immediately,
+		 * somebody else is using (or dropping) the table, so it's not our
+		 * concern anymore.  Having the lock prevents race conditions below.
+		 */
+		if (!ConditionalLockRelationOid(relid, AccessExclusiveLock))
+			continue;
+
+		/*
+		 * Re-fetch the pg_class tuple and re-check whether it still seems to
+		 * be an orphaned temp table.  If it's not there or no longer the same
+		 * relation, ignore it.
+		 */
+		tuple = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(relid));
+		if (!HeapTupleIsValid(tuple))
 		{
-			CommitTransactionCommand();
-			StartTransactionCommand();
+			/* be sure to drop useless lock so we don't bloat lock table */
+			UnlockRelationOid(relid, AccessExclusiveLock);
+			continue;
+		}
+		classForm = (Form_pg_class) GETSTRUCT(tuple);
 
-			/* StartTransactionCommand changed elsewhere */
-			MemoryContextSwitchTo(AutovacMemCxt);
-
-			list_free(pending_oids);
-			pending_oids = NIL;
+		/*
+		 * Make all the same tests made in the loop above.  In event of OID
+		 * counter wraparound, the pg_class entry we have now might be
+		 * completely unrelated to the one we saw before.
+		 */
+		if (!((classForm->relkind == RELKIND_RELATION ||
+			   classForm->relkind == RELKIND_MATVIEW) &&
+			  classForm->relpersistence == RELPERSISTENCE_TEMP))
+		{
+			UnlockRelationOid(relid, AccessExclusiveLock);
+			continue;
+		}
+		backendID = GetTempNamespaceBackendId(classForm->relnamespace);
+		if (!(backendID != InvalidBackendId &&
+			  (backendID == MyBackendId ||
+			   BackendIdGetProc(backendID) == NULL)))
+		{
+			UnlockRelationOid(relid, AccessExclusiveLock);
+			continue;
 		}
 
-		pfree(relname);
-		pfree(namespace);
-	}
+		/* OK, let's delete it */
+		ereport(LOG,
+				(errmsg("autovacuum: dropping orphan temp table \"%s.%s.%s\"",
+						get_database_name(MyDatabaseId),
+						get_namespace_name(classForm->relnamespace),
+						NameStr(classForm->relname))));
 
-	/*
-	 * Commit current transaction to finish the cleanup done previously and
-	 * restart a new one to not bloat the activity of the following steps.
-	 * This needs to happen only if there are any items thought as previously
-	 * pending, but are actually not as the last transaction doing the cleanup
-	 * has been successful.
-	 */
-	if (list_length(pending_oids) > 0)
-	{
+		object.classId = RelationRelationId;
+		object.objectId = relid;
+		object.objectSubId = 0;
+		performDeletion(&object, DROP_CASCADE, PERFORM_DELETION_INTERNAL);
+
+		/*
+		 * To commit the deletion, end current transaction and start a new
+		 * one.  Note this also releases the lock we took.
+		 */
 		CommitTransactionCommand();
 		StartTransactionCommand();
 
-		/* StartTransactionCommand changed elsewhere */
+		/* StartTransactionCommand changed current memory context */
 		MemoryContextSwitchTo(AutovacMemCxt);
-
-		list_free(pending_oids);
 	}
 
 	/*
