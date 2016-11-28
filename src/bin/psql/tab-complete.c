@@ -1804,7 +1804,7 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH_LIST4("PLAIN", "EXTERNAL", "EXTENDED", "MAIN");
 	/* ALTER TABLE ALTER [COLUMN] <foo> DROP */
 	else if (Matches7("ALTER", "TABLE", MatchAny, "ALTER", "COLUMN", MatchAny, "DROP") ||
-			 Matches8("ALTER", "TABLE", MatchAny, "TABLE", MatchAny, "ALTER", MatchAny, "DROP"))
+			 Matches6("ALTER", "TABLE", MatchAny, "ALTER", MatchAny, "DROP"))
 		COMPLETE_WITH_LIST2("DEFAULT", "NOT NULL");
 	else if (Matches4("ALTER", "TABLE", MatchAny, "CLUSTER"))
 		COMPLETE_WITH_CONST("ON");
