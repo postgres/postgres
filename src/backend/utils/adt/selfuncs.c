@@ -2511,10 +2511,24 @@ eqjoinsel_semi(Oid operator,
 	 * We can apply this clamping both with respect to the base relation from
 	 * which the join variable comes (if there is just one), and to the
 	 * immediate inner input relation of the current join.
+	 *
+	 * If we clamp, we can treat nd2 as being a non-default estimate; it's not
+	 * great, maybe, but it didn't come out of nowhere either.  This is most
+	 * helpful when the inner relation is empty and consequently has no stats.
 	 */
 	if (vardata2->rel)
-		nd2 = Min(nd2, vardata2->rel->rows);
-	nd2 = Min(nd2, inner_rel->rows);
+	{
+		if (nd2 >= vardata2->rel->rows)
+		{
+			nd2 = vardata2->rel->rows;
+			isdefault2 = false;
+		}
+	}
+	if (nd2 >= inner_rel->rows)
+	{
+		nd2 = inner_rel->rows;
+		isdefault2 = false;
+	}
 
 	if (HeapTupleIsValid(vardata1->statsTuple))
 	{
