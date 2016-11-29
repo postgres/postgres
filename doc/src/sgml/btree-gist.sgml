@@ -16,7 +16,8 @@
   <type>time without time zone</>, <type>date</>, <type>interval</>,
   <type>oid</>, <type>money</>, <type>char</>,
   <type>varchar</>, <type>text</>, <type>bytea</>, <type>bit</>,
-  <type>varbit</>, <type>macaddr</>, <type>inet</>, and <type>cidr</>.
+  <type>varbit</>, <type>macaddr</>, <type>inet</>, <type>cidr</>,
+  and <type>uuid</>.
  </para>
 
  <para>
@@ -99,8 +100,9 @@ INSERT 0 1
 
   <para>
    Teodor Sigaev (<email>teodor@stack.net</email>),
-   Oleg Bartunov (<email>oleg@sai.msu.su</email>), and
-   Janko Richter (<email>jankorichter@yahoo.de</email>).  See
+   Oleg Bartunov (<email>oleg@sai.msu.su</email>),
+   Janko Richter (<email>jankorichter@yahoo.de</email>), and
+   Paul Jungwirth (<email>pj@illuminatedcomputing.com</email>).  See
    <ulink url="http://www.sai.msu.su/~megera/postgres/gist/"></ulink>
    for additional information.
   </para>

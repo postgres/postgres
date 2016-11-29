@@ -14,11 +14,13 @@
 #ifndef UUID_H
 #define UUID_H
 
-/* guid size in bytes */
+/* uuid size in bytes */
 #define UUID_LEN 16
 
-/* opaque struct; defined in uuid.c */
-typedef struct pg_uuid_t pg_uuid_t;
+typedef struct pg_uuid_t
+{
+	unsigned char data[UUID_LEN];
+} pg_uuid_t;
 
 /* fmgr interface macros */
 #define UUIDPGetDatum(X)		PointerGetDatum(X)
