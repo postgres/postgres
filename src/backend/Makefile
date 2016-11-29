@@ -291,7 +291,7 @@ endif
 	$(MAKE) -C tsearch uninstall-data
 	rm -f '$(DESTDIR)$(datadir)/pg_hba.conf.sample' \
 	      '$(DESTDIR)$(datadir)/pg_ident.conf.sample' \
-              '$(DESTDIR)$(datadir)/postgresql.conf.sample' \
+	      '$(DESTDIR)$(datadir)/postgresql.conf.sample' \
 	      '$(DESTDIR)$(datadir)/recovery.conf.sample'
 
 
