@@ -24,6 +24,7 @@
 #include "catalog/pg_type.h"
 #include "storage/lmgr.h"
 #include "miscadmin.h"
+#include "nodes/value.h"
 #include "utils/builtins.h"
 #include "utils/catcache.h"
 #include "utils/fmgroids.h"

@@ -15,7 +15,6 @@
 #define BUILTINS_H
 
 #include "fmgr.h"
-#include "nodes/parsenodes.h"
 #include "utils/sortsupport.h"
 
 /*

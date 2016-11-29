@@ -19,6 +19,7 @@
 
 #include "catalog/pg_type.h"
 #include "libpq/pqformat.h"
+#include "nodes/value.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 
