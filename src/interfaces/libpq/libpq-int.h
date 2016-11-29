@@ -361,6 +361,9 @@ struct pg_conn
 	char	   *krbsrvname;		/* Kerberos service name */
 #endif
 
+	char	   *target_session_attrs;	/* Type of connection to make
+										 * Possible values any, read-write. */
+
 	/* Optional file to write trace info to */
 	FILE	   *Pfdebug;
 
