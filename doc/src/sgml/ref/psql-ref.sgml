@@ -4172,7 +4172,7 @@ second | four
   with the <command>\crosstabview</command> command:
 <programlisting>
 testdb=&gt; <userinput>SELECT first, second, first &gt; 2 AS gt2 FROM my_table;</userinput>
- first | second | ge2 
+ first | second | gt2 
 -------+--------+-----
      1 | one    | f
      2 | two    | f
