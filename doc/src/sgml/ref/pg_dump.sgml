@@ -138,8 +138,11 @@ PostgreSQL documentation
        <para>
         Include large objects in the dump.  This is the default behavior
         except when <option>--schema</>, <option>--table</>, or
-        <option>--schema-only</> is specified, so the <option>-b</>
-        switch is only useful to add large objects to selective dumps.
+        <option>--schema-only</> is specified.  The <option>-b</>
+        switch is therefore only useful to add large objects to dumps
+        where a specific schema or table has been requested.  Note that
+        blobs are considered data and therefore will be included when
+        --data-only is used, but not when --schema-only is.
        </para>
       </listitem>
      </varlistentry>
