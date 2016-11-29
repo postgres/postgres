@@ -1,5 +1,10 @@
 CREATE EXTENSION pg_trgm;
 
+-- Check whether any of our opclasses fail amvalidate
+SELECT amname, opcname
+FROM pg_opclass opc LEFT JOIN pg_am am ON am.oid = opcmethod
+WHERE opc.oid >= 16384 AND NOT amvalidate(opc.oid);
+
 select show_trgm('');
 select show_trgm('(*&^$@%@');
 select show_trgm('a b c');

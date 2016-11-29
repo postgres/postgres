@@ -1,5 +1,10 @@
 CREATE EXTENSION intarray;
 
+-- Check whether any of our opclasses fail amvalidate
+SELECT amname, opcname
+FROM pg_opclass opc LEFT JOIN pg_am am ON am.oid = opcmethod
+WHERE opc.oid >= 16384 AND NOT amvalidate(opc.oid);
+
 SELECT intset(1234);
 SELECT icount('{1234234,234234}');
 SELECT sort('{1234234,-30,234234}');
