@@ -291,6 +291,7 @@ main(int argc, char **argv)
 	static struct option long_options[] = {
 		{"data-only", no_argument, NULL, 'a'},
 		{"blobs", no_argument, NULL, 'b'},
+		{"no-blobs", no_argument, NULL, 'B'},
 		{"clean", no_argument, NULL, 'c'},
 		{"create", no_argument, NULL, 'C'},
 		{"dbname", required_argument, NULL, 'd'},
@@ -379,7 +380,7 @@ main(int argc, char **argv)
 
 	InitDumpOptions(&dopt);
 
-	while ((c = getopt_long(argc, argv, "abcCd:E:f:F:h:j:n:N:oOp:RsS:t:T:U:vwWxZ:",
+	while ((c = getopt_long(argc, argv, "abBcCd:E:f:F:h:j:n:N:oOp:RsS:t:T:U:vwWxZ:",
 							long_options, &optindex)) != -1)
 	{
 		switch (c)
@@ -390,6 +391,10 @@ main(int argc, char **argv)
 
 			case 'b':			/* Dump blobs */
 				dopt.outputBlobs = true;
+				break;
+
+			case 'B':			/* Don't dump blobs */
+				dopt.dontOutputBlobs = true;
 				break;
 
 			case 'c':			/* clean (i.e., drop) schema prior to create */
@@ -713,10 +718,15 @@ main(int argc, char **argv)
 	/* non-matching exclusion patterns aren't an error */
 
 	/*
-	 * Dumping blobs is now default unless we saw an inclusion switch or -s
-	 * ... but even if we did see one of these, -b turns it back on.
+	 * Dumping blobs is the default for dumps where an inclusion switch is not
+	 * used (an "include everything" dump).  -B can be used to exclude blobs
+	 * from those dumps.  -b can be used to include blobs even when an
+	 * inclusion switch is used.
+	 *
+	 * -s means "schema only" and blobs are data, not schema, so we never
+	 * include blobs when -s is used.
 	 */
-	if (dopt.include_everything && !dopt.schemaOnly)
+	if (dopt.include_everything && !dopt.schemaOnly && !dopt.dontOutputBlobs)
 		dopt.outputBlobs = true;
 
 	/*
@@ -876,6 +886,7 @@ help(const char *progname)
 	printf(_("\nOptions controlling the output content:\n"));
 	printf(_("  -a, --data-only              dump only the data, not the schema\n"));
 	printf(_("  -b, --blobs                  include large objects in dump\n"));
+	printf(_("  -B, --no-blobs               exclude large objects in dump\n"));
 	printf(_("  -c, --clean                  clean (drop) database objects before recreating\n"));
 	printf(_("  -C, --create                 include commands to create database in dump\n"));
 	printf(_("  -E, --encoding=ENCODING      dump the data in encoding ENCODING\n"));

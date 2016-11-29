@@ -148,6 +148,22 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-B</></term>
+      <term><option>--no-blobs</></term>
+      <listitem>
+       <para>
+        Exclude large objects in the dump.
+       </para>
+
+       <para>
+        When both <option>-b</> and <option>-B</> are given, the behavior
+        is to output large objects, when data is being dumped, see the
+        <option>-b</> documentation.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-c</option></term>
       <term><option>--clean</option></term>
       <listitem>
