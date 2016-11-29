@@ -3346,6 +3346,23 @@ eval_const_expressions_mutator(Node *node,
 				newcoalesce->location = coalesceexpr->location;
 				return (Node *) newcoalesce;
 			}
+		case T_SQLValueFunction:
+			{
+				/*
+				 * All variants of SQLValueFunction are stable, so if we are
+				 * estimating the expression's value, we should evaluate the
+				 * current function value.  Otherwise just copy.
+				 */
+				SQLValueFunction *svf = (SQLValueFunction *) node;
+
+				if (context->estimate)
+					return (Node *) evaluate_expr((Expr *) svf,
+												  svf->type,
+												  svf->typmod,
+												  InvalidOid);
+				else
+					return copyObject((Node *) svf);
+			}
 		case T_FieldSelect:
 			{
 				/*
