@@ -537,7 +537,7 @@ set_rel_consider_parallel(PlannerInfo *root, RelOptInfo *rel,
 			 */
 			if (rte->tablesample != NULL)
 			{
-				Oid			proparallel = func_parallel(rte->tablesample->tsmhandler);
+				char		proparallel = func_parallel(rte->tablesample->tsmhandler);
 
 				if (proparallel != PROPARALLEL_SAFE)
 					return;
