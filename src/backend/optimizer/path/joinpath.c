@@ -1217,7 +1217,11 @@ consider_parallel_nestloop(PlannerInfo *root,
 						   JoinType jointype,
 						   JoinPathExtraData *extra)
 {
+	JoinType	save_jointype = jointype;
 	ListCell   *lc1;
+
+	if (jointype == JOIN_UNIQUE_INNER)
+		jointype = JOIN_INNER;
 
 	foreach(lc1, outerrel->partial_pathlist)
 	{
@@ -1244,18 +1248,19 @@ consider_parallel_nestloop(PlannerInfo *root,
 				continue;
 
 			/*
-			 * Like match_unsorted_outer, we only consider a single nestloop
-			 * path when the jointype is JOIN_UNIQUE_INNER.  But we have to
-			 * scan cheapest_parameterized_paths to find the one we want to
-			 * consider, because cheapest_total_path might not be
-			 * parallel-safe.
+			 * If we're doing JOIN_UNIQUE_INNER, we can only use the inner's
+			 * cheapest_total_path, and we have to unique-ify it.  (We might
+			 * be able to relax this to allow other safe, unparameterized
+			 * inner paths, but right now create_unique_path is not on board
+			 * with that.)
 			 */
-			if (jointype == JOIN_UNIQUE_INNER)
+			if (save_jointype == JOIN_UNIQUE_INNER)
 			{
-				if (!bms_is_empty(PATH_REQ_OUTER(innerpath)))
+				if (innerpath != innerrel->cheapest_total_path)
 					continue;
 				innerpath = (Path *) create_unique_path(root, innerrel,
-												   innerpath, extra->sjinfo);
+														innerpath,
+														extra->sjinfo);
 				Assert(innerpath);
 			}
 
@@ -1284,6 +1289,7 @@ hash_inner_and_outer(PlannerInfo *root,
 					 JoinType jointype,
 					 JoinPathExtraData *extra)
 {
+	JoinType	save_jointype = jointype;
 	bool		isouterjoin = IS_OUTER_JOIN(jointype);
 	List	   *hashclauses;
 	ListCell   *l;
@@ -1450,9 +1456,9 @@ hash_inner_and_outer(PlannerInfo *root,
 		 * extended rows.  Also, the resulting path must not be parameterized.
 		 */
 		if (joinrel->consider_parallel &&
-			jointype != JOIN_UNIQUE_OUTER &&
-			jointype != JOIN_FULL &&
-			jointype != JOIN_RIGHT &&
+			save_jointype != JOIN_UNIQUE_OUTER &&
+			save_jointype != JOIN_FULL &&
+			save_jointype != JOIN_RIGHT &&
 			outerrel->partial_pathlist != NIL &&
 			bms_is_empty(joinrel->lateral_relids))
 		{
@@ -1466,11 +1472,12 @@ hash_inner_and_outer(PlannerInfo *root,
 			 * Normally, given that the joinrel is parallel-safe, the cheapest
 			 * total inner path will also be parallel-safe, but if not, we'll
 			 * have to search cheapest_parameterized_paths for the cheapest
-			 * unparameterized inner path.
+			 * safe, unparameterized inner path.  If doing JOIN_UNIQUE_INNER,
+			 * we can't use any alternative inner path.
 			 */
 			if (cheapest_total_inner->parallel_safe)
 				cheapest_safe_inner = cheapest_total_inner;
-			else
+			else if (save_jointype != JOIN_UNIQUE_INNER)
 			{
 				ListCell   *lc;
 
