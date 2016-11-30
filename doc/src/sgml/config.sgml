@@ -1316,11 +1316,6 @@ include_dir 'conf.d'
        <para>
         On systems with less than 1GB of RAM, a smaller percentage of RAM is
         appropriate, so as to leave adequate space for the operating system.
-        Also, on Windows, large values for <varname>shared_buffers</varname>
-        aren't as effective.  You may find better results keeping the setting
-        relatively low and using the operating system cache more instead.  The
-        useful range for <varname>shared_buffers</varname> on Windows systems
-        is generally from 64MB to 512MB.
        </para>
 
       </listitem>
