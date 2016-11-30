@@ -1,6 +1,6 @@
 /* src/backend/utils/mb/Unicode/euc_jp_to_utf8.map */
 
-static const pg_local_to_utf LUmapEUC_JP[] = {
+static const pg_local_to_utf LUmapEUC_JP[ 13197 ] = {
   {0x8ea1, 0xefbda1},
   {0x8ea2, 0xefbda2},
   {0x8ea3, 0xefbda3},
@@ -13197,5 +13197,5 @@ static const pg_local_to_utf LUmapEUC_JP[] = {
   {0x8ff4fb, 0xe9ab99},
   {0x8ff4fc, 0xe9adb2},
   {0x8ff4fd, 0xefa8ad},
-  {0x8ff4fe, 0xe9bb91},
+  {0x8ff4fe, 0xe9bb91}
 };

@@ -25,56 +25,17 @@
 #		 # and Unicode name (not used in this script)
 
 
-require "ucs2utf.pl";
+require "convutils.pm";
 
+# Load BIG5.TXT
+my $all = &read_source("BIG5.TXT");
 
-#
-# first, generate UTF8 --> BIG5 table
-#
-$in_file = "BIG5.TXT";
+# Load CP950.TXT
+my $cp950txt = &read_source("CP950.TXT");
 
-open(FILE, $in_file) || die("cannot open $in_file");
-
-reset 'array';
-
-while (<FILE>)
-{
-	chop;
-	if (/^#/)
-	{
-		next;
-	}
-	($c, $u, $rest) = split;
-	$ucs  = hex($u);
-	$code = hex($c);
-	if ($code >= 0x80 && $ucs >= 0x0080)
-	{
-		$utf = &ucs2utf($ucs);
-		if ($array{$utf} ne "")
-		{
-			printf STDERR "Warning: duplicate UTF8: %04x\n", $ucs;
-			next;
-		}
-		$count++;
-		$array{$utf} = $code;
-	}
-}
-close(FILE);
-
-$in_file = "CP950.TXT";
-
-open(FILE, $in_file) || die("cannot open $in_file");
-
-while (<FILE>)
-{
-	chop;
-	if (/^#/)
-	{
-		next;
-	}
-	($c, $u, $rest) = split;
-	$ucs  = hex($u);
-	$code = hex($c);
+foreach my $i (@$cp950txt) {
+	my $code = $i->{code};
+	my $ucs = $i->{ucs};
 
 	# Pick only the ETEN extended characters in the range 0xf9d6 - 0xf9dc
 	# from CP950.TXT
@@ -83,126 +44,25 @@ while (<FILE>)
 		&& $code >= 0xf9d6
 		&& $code <= 0xf9dc)
 	{
-		$utf = &ucs2utf($ucs);
-		if ($array{$utf} ne "")
-		{
-			printf STDERR "Warning: duplicate UTF8: %04x\n", $ucs;
-			next;
-		}
-		$count++;
-		$array{$utf} = $code;
-	}
-}
-close(FILE);
-
-$file = lc("utf8_to_big5.map");
-open(FILE, "> $file") || die("cannot open $file");
-
-print FILE "/* src/backend/utils/mb/Unicode/$file */\n\n";
-print FILE "static const pg_utf_to_local ULmapBIG5[ $count ] = {\n";
-
-for $index (sort { $a <=> $b } keys(%array))
-{
-	$code = $array{$index};
-	$count--;
-	if ($count == 0)
-	{
-		printf FILE "  {0x%04x, 0x%04x}\n", $index, $code;
-	}
-	else
-	{
-		printf FILE "  {0x%04x, 0x%04x},\n", $index, $code;
+		push @$all, {code => $code,
+					 ucs => $ucs,
+					 comment => $i->{comment},
+					 direction => "both"};
 	}
 }
 
-print FILE "};\n";
-close(FILE);
+foreach my $i (@$all) {
+	my $code = $i->{code};
+	my $ucs = $i->{ucs};
 
-#
-# then generate BIG5 --> UTF8 table
-#
-$in_file = "BIG5.TXT";
-
-open(FILE, $in_file) || die("cannot open $in_file");
-
-reset 'array';
-
-while (<FILE>)
-{
-	chop;
-	if (/^#/)
+	# BIG5.TXT maps several BIG5 characters to U+FFFD. The UTF-8 to BIG5 mapping can
+	# contain only one of them. XXX: Doesn't really make sense to include any of them,
+	# but for historical reasons, we map the first one of them.
+	if ($i->{ucs} == 0xFFFD && $i->{code} != 0xA15A)
 	{
-		next;
-	}
-	($c, $u, $rest) = split;
-	$ucs  = hex($u);
-	$code = hex($c);
-	if ($code >= 0x80 && $ucs >= 0x0080)
-	{
-		$utf = &ucs2utf($ucs);
-		if ($array{$utf} ne "")
-		{
-			printf STDERR "Warning: duplicate UTF8: %04x\n", $ucs;
-			next;
-		}
-		$count++;
-		$array{$code} = $utf;
-	}
-}
-close(FILE);
-
-$in_file = "CP950.TXT";
-
-open(FILE, $in_file) || die("cannot open $in_file");
-
-while (<FILE>)
-{
-	chop;
-	if (/^#/)
-	{
-		next;
-	}
-	($c, $u, $rest) = split;
-	$ucs  = hex($u);
-	$code = hex($c);
-
-	# Pick only the ETEN extended characters in the range 0xf9d6 - 0xf9dc
-	# from CP950.TXT
-	if (   $code >= 0x80
-		&& $ucs >= 0x0080
-		&& $code >= 0xf9d6
-		&& $code <= 0xf9dc)
-	{
-		$utf = &ucs2utf($ucs);
-		if ($array{$utf} ne "")
-		{
-			printf STDERR "Warning: duplicate UTF8: %04x\n", $ucs;
-			next;
-		}
-		$count++;
-		$array{$code} = $utf;
-	}
-}
-close(FILE);
-
-$file = lc("big5_to_utf8.map");
-open(FILE, "> $file") || die("cannot open $file");
-
-print FILE "/* src/backend/utils/mb/Unicode/$file */\n\n";
-print FILE "static const pg_local_to_utf LUmapBIG5[ $count ] = {\n";
-for $index (sort { $a <=> $b } keys(%array))
-{
-	$utf = $array{$index};
-	$count--;
-	if ($count == 0)
-	{
-		printf FILE "  {0x%04x, 0x%04x}\n", $index, $utf;
-	}
-	else
-	{
-		printf FILE "  {0x%04x, 0x%04x},\n", $index, $utf;
+		$i->{direction} = "to_unicode";
 	}
 }
 
-print FILE "};\n";
-close(FILE);
+# Output
+print_tables("BIG5", $all);

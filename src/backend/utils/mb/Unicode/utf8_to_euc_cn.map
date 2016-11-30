@@ -1,3 +1,5 @@
+/* src/backend/utils/mb/Unicode/utf8_to_euc_cn.map */
+
 static const pg_utf_to_local ULmapEUC_CN[ 7445 ] = {
   {0xc2a4, 0xa1e8},
   {0xc2a7, 0xa1ec},

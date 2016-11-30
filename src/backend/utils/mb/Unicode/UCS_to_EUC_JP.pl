@@ -8,275 +8,223 @@
 # map files provided by Unicode organization.
 # Unfortunately it is prohibited by the organization
 # to distribute the map files. So if you try to use this script,
-# you have to obtain JIS0201.TXT, JIS0208.TXT, JIS0212.TXT from
-# the organization's ftp site.
-#
-# JIS0201.TXT format:
-#		 JIS0201 code in hex
-#		 UCS-2 code in hex
-#		 # and Unicode name (not used in this script)
-#
-# JIS0208.TXT format:
-#		 JIS0208 shift-JIS code in hex
-#		 JIS0208 code in hex
-#		 UCS-2 code in hex
-#		 # and Unicode name (not used in this script)
-#
-# JIS0212.TXT format:
-#		 JIS0212 code in hex
-#		 UCS-2 code in hex
-#		 # and Unicode name (not used in this script)
+# you have to obtain CP932.TXT and JIS0212.TXT from the
+# organization's ftp site.
 
-require "ucs2utf.pl";
+use strict;
+require "convutils.pm";
 
-# first generate UTF-8 --> EUC_JP table
+# Load JIS0212.TXT
+my $jis0212 = &read_source("JIS0212.TXT");
 
-#
-# JIS0201
-#
-$in_file = "JIS0201.TXT";
+my @mapping;
 
-open(FILE, $in_file) || die("cannot open $in_file");
-
-reset 'array';
-
-while (<FILE>)
-{
-	chop;
-	if (/^#/)
+foreach my $i (@$jis0212) {
+	# We have a different mapping for this in the EUC_JP to UTF-8 direction.
+	if ($i->{code} == 0x2243)
 	{
-		next;
+		$i->{direction} = "from_unicode";
 	}
-	($c, $u, $rest) = split;
-	$ucs  = hex($u);
-	$code = hex($c);
-	if ($code >= 0x80 && $ucs >= 0x0080)
-	{
-		$utf = &ucs2utf($ucs);
-		if ($array{$utf} ne "")
-		{
-			printf STDERR "Warning: duplicate UTF8: %04x\n", $ucs;
-			next;
-		}
-		$count++;
 
-		# add single shift 2
-		$array{$utf} = ($code | 0x8e00);
+	if ($i->{code} == 0x2271)
+	{
+		$i->{direction} = "to_unicode";
 	}
-}
-close(FILE);
 
-#
-# JIS0208
-#
-$in_file = "JIS0208.TXT";
-
-open(FILE, $in_file) || die("cannot open $in_file");
-
-while (<FILE>)
-{
-	chop;
-	if (/^#/)
+	if ($i->{ucs} >= 0x080)
 	{
-		next;
-	}
-	($s, $c, $u, $rest) = split;
-	$ucs  = hex($u);
-	$code = hex($c);
-	if ($code >= 0x80 && $ucs >= 0x0080)
-	{
-		$utf = &ucs2utf($ucs);
-		if ($array{$utf} ne "")
-		{
-			printf STDERR "Warning: duplicate UTF8: %04x\n", $ucs;
-			next;
-		}
-		$count++;
-
-		$array{$utf} = ($code | 0x8080);
-	}
-}
-close(FILE);
-
-#
-# JIS0212
-#
-$in_file = "JIS0212.TXT";
-
-open(FILE, $in_file) || die("cannot open $in_file");
-
-while (<FILE>)
-{
-	chop;
-	if (/^#/)
-	{
-		next;
-	}
-	($c, $u, $rest) = split;
-	$ucs  = hex($u);
-	$code = hex($c);
-	if ($code >= 0x80 && $ucs >= 0x0080)
-	{
-		$utf = &ucs2utf($ucs);
-		if ($array{$utf} ne "")
-		{
-			printf STDERR "Warning: duplicate UTF8: %04x\n", $ucs;
-			next;
-		}
-		$count++;
-
-		$array{$utf} = ($code | 0x8f8080);
-	}
-}
-close(FILE);
-
-$file = "utf8_to_euc_jp.map";
-open(FILE, "> $file") || die("cannot open $file");
-
-print FILE "/* src/backend/utils/mb/Unicode/$file */\n\n";
-print FILE "static const pg_utf_to_local ULmapEUC_JP[ $count ] = {\n";
-
-for $index (sort { $a <=> $b } keys(%array))
-{
-	$code = $array{$index};
-	$count--;
-	if ($count == 0)
-	{
-		printf FILE "  {0x%04x, 0x%04x}\n", $index, $code;
+		$i->{code} = $i->{code} | 0x8f8080;
 	}
 	else
 	{
-		printf FILE "  {0x%04x, 0x%04x},\n", $index, $code;
+		next;
 	}
+
+	push @mapping, $i;
 }
 
-print FILE "};\n";
-close(FILE);
+# Load CP932.TXT.
+my $ct932 = &read_source("CP932.TXT");
 
-#
-# then generate EUC_JP --> UTF8 table
-#
+foreach my $i (@$ct932) {
+	my $sjis = $i->{code};
 
-#
-# JIS0201
-#
-$in_file = "JIS0201.TXT";
-
-open(FILE, $in_file) || die("cannot open $in_file");
-
-reset 'array';
-
-while (<FILE>)
-{
-	chop;
-	if (/^#/)
+	# We have a different mapping for this in the EUC_JP to UTF-8 direction.
+	if ($sjis == 0xeefa ||
+		$sjis == 0xeefb ||
+		$sjis == 0xeefc)
 	{
 		next;
 	}
-	($c, $u, $rest) = split;
-	$ucs  = hex($u);
-	$code = hex($c);
-	if ($code >= 0x80 && $ucs >= 0x0080)
-	{
-		$utf = &ucs2utf($ucs);
-		if ($array{$code} ne "")
-		{
-			printf STDERR "Warning: duplicate code: %04x\n", $ucs;
-			next;
-		}
-		$count++;
 
-		# add single shift 2
-		$code |= 0x8e00;
-		$array{$code} = $utf;
+	if ($sjis >= 0xa1)
+	{
+		my $jis = &sjis2jis($sjis);
+
+		$i->{code} = $jis | ($jis < 0x100 ? 0x8e00 :
+							 ($sjis >= 0xeffd  ? 0x8f8080 : 0x8080));
+
+		# Remember the SJIS code for later.
+		$i->{sjis} = $sjis;
+
+		push @mapping, $i;
 	}
 }
-close(FILE);
 
-#
-# JIS0208
-#
-$in_file = "JIS0208.TXT";
+foreach my $i (@mapping) {
+	my $sjis = $i->{sjis};
 
-open(FILE, $in_file) || die("cannot open $in_file");
-
-while (<FILE>)
-{
-	chop;
-	if (/^#/)
+	# These SJIS characters are excluded completely.
+	if ($sjis >= 0xed00 && $sjis <= 0xeef9 ||
+		$sjis >= 0xfa54 && $sjis <= 0xfa56 ||
+		$sjis >= 0xfa58 && $sjis <= 0xfc4b)
 	{
+		$i->{direction} = "none";
 		next;
 	}
-	($s, $c, $u, $rest) = split;
-	$ucs  = hex($u);
-	$code = hex($c);
-	if ($code >= 0x80 && $ucs >= 0x0080)
+
+	# These SJIS characters are only in the UTF-8 to EUC_JP table
+	if ($sjis == 0xeefa || $sjis == 0xeefb || $sjis == 0xeefc)
 	{
-		$utf = &ucs2utf($ucs);
-		if ($array{$code} ne "")
-		{
-			printf STDERR "Warning: duplicate code: %04x\n", $ucs;
-			next;
-		}
-		$count++;
-
-		$code |= 0x8080;
-		$array{$code} = $utf;
-	}
-}
-close(FILE);
-
-#
-# JIS0212
-#
-$in_file = "JIS0212.TXT";
-
-open(FILE, $in_file) || die("cannot open $in_file");
-
-while (<FILE>)
-{
-	chop;
-	if (/^#/)
-	{
+		$i->{direction} = "from_unicode";
 		next;
 	}
-	($c, $u, $rest) = split;
-	$ucs  = hex($u);
-	$code = hex($c);
-	if ($code >= 0x80 && $ucs >= 0x0080)
-	{
-		$utf = &ucs2utf($ucs);
-		if ($array{$code} ne "")
-		{
-			printf STDERR "Warning: duplicate code: %04x\n", $ucs;
-			next;
-		}
-		$count++;
 
-		$code |= 0x8f8080;
-		$array{$code} = $utf;
+	if ($sjis == 0x8790 || $sjis == 0x8791 || $sjis == 0x8792 ||
+		$sjis == 0x8795 || $sjis == 0x8796 || $sjis == 0x8797 ||
+		$sjis == 0x879a || $sjis == 0x879b || $sjis == 0x879c ||
+		($sjis >= 0xfa4a && $sjis <= 0xfa53))
+	{
+		$i->{direction} = "to_unicode";
+		next;
 	}
 }
-close(FILE);
 
-$file = "euc_jp_to_utf8.map";
-open(FILE, "> $file") || die("cannot open $file");
+push @mapping, (
+	 {direction => 'both', ucs => 0x4efc, code => 0x8ff4af, comment => '# CJK(4EFC)'},
+	 {direction => 'both', ucs => 0x50f4, code => 0x8ff4b0, comment => '# CJK(50F4)'},
+	 {direction => 'both', ucs => 0x51EC, code => 0x8ff4b1, comment => '# CJK(51EC)'},
+	 {direction => 'both', ucs => 0x5307, code => 0x8ff4b2, comment => '# CJK(5307)'},
+	 {direction => 'both', ucs => 0x5324, code => 0x8ff4b3, comment => '# CJK(5324)'},
+	 {direction => 'both', ucs => 0x548A, code => 0x8ff4b5, comment => '# CJK(548A)'},
+	 {direction => 'both', ucs => 0x5759, code => 0x8ff4b6, comment => '# CJK(5759)'},
+	 {direction => 'both', ucs => 0x589E, code => 0x8ff4b9, comment => '# CJK(589E)'},
+	 {direction => 'both', ucs => 0x5BEC, code => 0x8ff4ba, comment => '# CJK(5BEC)'},
+	 {direction => 'both', ucs => 0x5CF5, code => 0x8ff4bb, comment => '# CJK(5CF5)'},
+	 {direction => 'both', ucs => 0x5D53, code => 0x8ff4bc, comment => '# CJK(5D53)'},
+	 {direction => 'both', ucs => 0x5FB7, code => 0x8ff4be, comment => '# CJK(5FB7)'},
+	 {direction => 'both', ucs => 0x6085, code => 0x8ff4bf, comment => '# CJK(6085)'},
+	 {direction => 'both', ucs => 0x6120, code => 0x8ff4c0, comment => '# CJK(6120)'},
+	 {direction => 'both', ucs => 0x654E, code => 0x8ff4c1, comment => '# CJK(654E)'},
+	 {direction => 'both', ucs => 0x663B, code => 0x8ff4c2, comment => '# CJK(663B)'},
+	 {direction => 'both', ucs => 0x6665, code => 0x8ff4c3, comment => '# CJK(6665)'},
+	 {direction => 'both', ucs => 0x6801, code => 0x8ff4c6, comment => '# CJK(6801)'},
+	 {direction => 'both', ucs => 0x6A6B, code => 0x8ff4c9, comment => '# CJK(6A6B)'},
+	 {direction => 'both', ucs => 0x6AE2, code => 0x8ff4ca, comment => '# CJK(6AE2)'},
+	 {direction => 'both', ucs => 0x6DF2, code => 0x8ff4cc, comment => '# CJK(6DF2)'},
+	 {direction => 'both', ucs => 0x6DF8, code => 0x8ff4cb, comment => '# CJK(6DF8)'},
+	 {direction => 'both', ucs => 0x7028, code => 0x8ff4cd, comment => '# CJK(7028)'},
+	 {direction => 'both', ucs => 0x70BB, code => 0x8ff4ae, comment => '# CJK(70BB)'},
+	 {direction => 'both', ucs => 0x7501, code => 0x8ff4d0, comment => '# CJK(7501)'},
+	 {direction => 'both', ucs => 0x7682, code => 0x8ff4d1, comment => '# CJK(7682)'},
+	 {direction => 'both', ucs => 0x769E, code => 0x8ff4d2, comment => '# CJK(769E)'},
+	 {direction => 'both', ucs => 0x7930, code => 0x8ff4d4, comment => '# CJK(7930)'},
+	 {direction => 'both', ucs => 0x7AE7, code => 0x8ff4d9, comment => '# CJK(7AE7)'},
+	 {direction => 'both', ucs => 0x7DA0, code => 0x8ff4dc, comment => '# CJK(7DA0)'},
+	 {direction => 'both', ucs => 0x7DD6, code => 0x8ff4dd, comment => '# CJK(7DD6)'},
+	 {direction => 'both', ucs => 0x8362, code => 0x8ff4df, comment => '# CJK(8362)'},
+	 {direction => 'both', ucs => 0x85B0, code => 0x8ff4e1, comment => '# CJK(85B0)'},
+	 {direction => 'both', ucs => 0x8807, code => 0x8ff4e4, comment => '# CJK(8807)'},
+	 {direction => 'both', ucs => 0x8B7F, code => 0x8ff4e6, comment => '# CJK(8B7F)'},
+	 {direction => 'both', ucs => 0x8CF4, code => 0x8ff4e7, comment => '# CJK(8CF4)'},
+	 {direction => 'both', ucs => 0x8D76, code => 0x8ff4e8, comment => '# CJK(8D76)'},
+	 {direction => 'both', ucs => 0x90DE, code => 0x8ff4ec, comment => '# CJK(90DE)'},
+	 {direction => 'both', ucs => 0x9115, code => 0x8ff4ee, comment => '# CJK(9115)'},
+	 {direction => 'both', ucs => 0x9592, code => 0x8ff4f1, comment => '# CJK(9592)'},
+	 {direction => 'both', ucs => 0x973B, code => 0x8ff4f4, comment => '# CJK(973B)'},
+	 {direction => 'both', ucs => 0x974D, code => 0x8ff4f5, comment => '# CJK(974D)'},
+	 {direction => 'both', ucs => 0x9751, code => 0x8ff4f6, comment => '# CJK(9751)'},
+	 {direction => 'both', ucs => 0x999E, code => 0x8ff4fa, comment => '# CJK(999E)'},
+	 {direction => 'both', ucs => 0x9AD9, code => 0x8ff4fb, comment => '# CJK(9AD9)'},
+	 {direction => 'both', ucs => 0x9B72, code => 0x8ff4fc, comment => '# CJK(9B72)'},
+	 {direction => 'both', ucs => 0x9ED1, code => 0x8ff4fe, comment => '# CJK(9ED1)'},
+	 {direction => 'both', ucs => 0xF929, code => 0x8ff4c5, comment => '# CJK COMPATIBILITY IDEOGRAPH-F929'},
+	 {direction => 'both', ucs => 0xF9DC, code => 0x8ff4f2, comment => '# CJK COMPATIBILITY IDEOGRAPH-F9DC'},
+	 {direction => 'both', ucs => 0xFA0E, code => 0x8ff4b4, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA0E'},
+	 {direction => 'both', ucs => 0xFA0F, code => 0x8ff4b7, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA0F'},
+	 {direction => 'both', ucs => 0xFA10, code => 0x8ff4b8, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA10'},
+	 {direction => 'both', ucs => 0xFA11, code => 0x8ff4bd, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA11'},
+	 {direction => 'both', ucs => 0xFA12, code => 0x8ff4c4, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA12'},
+	 {direction => 'both', ucs => 0xFA13, code => 0x8ff4c7, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA13'},
+	 {direction => 'both', ucs => 0xFA14, code => 0x8ff4c8, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA14'},
+	 {direction => 'both', ucs => 0xFA15, code => 0x8ff4ce, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA15'},
+	 {direction => 'both', ucs => 0xFA16, code => 0x8ff4cf, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA16'},
+	 {direction => 'both', ucs => 0xFA17, code => 0x8ff4d3, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA17'},
+	 {direction => 'both', ucs => 0xFA18, code => 0x8ff4d5, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA18'},
+	 {direction => 'both', ucs => 0xFA19, code => 0x8ff4d6, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA19'},
+	 {direction => 'both', ucs => 0xFA1A, code => 0x8ff4d7, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA1A'},
+	 {direction => 'both', ucs => 0xFA1B, code => 0x8ff4d8, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA1B'},
+	 {direction => 'both', ucs => 0xFA1C, code => 0x8ff4da, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA1C'},
+	 {direction => 'both', ucs => 0xFA1D, code => 0x8ff4db, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA1D'},
+	 {direction => 'both', ucs => 0xFA1E, code => 0x8ff4de, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA1E'},
+	 {direction => 'both', ucs => 0xFA1F, code => 0x8ff4e0, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA1F'},
+	 {direction => 'both', ucs => 0xFA20, code => 0x8ff4e2, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA20'},
+	 {direction => 'both', ucs => 0xFA21, code => 0x8ff4e3, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA21'},
+	 {direction => 'both', ucs => 0xFA22, code => 0x8ff4e5, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA22'},
+	 {direction => 'both', ucs => 0xFA23, code => 0x8ff4e9, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA23'},
+	 {direction => 'both', ucs => 0xFA24, code => 0x8ff4ea, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA24'},
+	 {direction => 'both', ucs => 0xFA25, code => 0x8ff4eb, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA25'},
+	 {direction => 'both', ucs => 0xFA26, code => 0x8ff4ed, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA26'},
+	 {direction => 'both', ucs => 0xFA27, code => 0x8ff4ef, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA27'},
+	 {direction => 'both', ucs => 0xFA28, code => 0x8ff4f0, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA28'},
+	 {direction => 'both', ucs => 0xFA29, code => 0x8ff4f3, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA29'},
+	 {direction => 'both', ucs => 0xFA2A, code => 0x8ff4f7, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA2A'},
+	 {direction => 'both', ucs => 0xFA2B, code => 0x8ff4f8, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA2B'},
+	 {direction => 'both', ucs => 0xFA2C, code => 0x8ff4f9, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA2C'},
+	 {direction => 'both', ucs => 0xFA2D, code => 0x8ff4fd, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA2D'},
+	 {direction => 'both', ucs => 0xFF07, code => 0x8ff4a9, comment => '# FULLWIDTH APOSTROPHE'},
+	 {direction => 'both', ucs => 0xFFE4, code => 0x8fa2c3, comment => '# FULLWIDTH BROKEN BAR'},
 
-print FILE "/* src/backend/utils/mb/Unicode/$file */\n\n";
-print FILE "static const pg_local_to_utf LUmapEUC_JP[ $count ] = {\n";
-for $index (sort { $a <=> $b } keys(%array))
+	 # additional conversions for EUC_JP -> UTF-8 conversion
+	 {direction => 'to_unicode', ucs => 0x2116, code => 0x8ff4ac, comment => '# NUMERO SIGN'},
+	 {direction => 'to_unicode', ucs => 0x2121, code => 0x8ff4ad, comment => '# TELEPHONE SIGN'},
+	 {direction => 'to_unicode', ucs => 0x3231, code => 0x8ff4ab, comment => '# PARENTHESIZED IDEOGRAPH STOCK'}
+	);
+
+print_tables("EUC_JP", \@mapping);
+
+#######################################################################
+# sjis2jis ; SJIS => JIS conversion
+sub sjis2jis
 {
-	$utf = $array{$index};
-	$count--;
-	if ($count == 0)
-	{
-		printf FILE "  {0x%04x, 0x%04x}\n", $index, $utf;
-	}
-	else
-	{
-		printf FILE "  {0x%04x, 0x%04x},\n", $index, $utf;
-	}
-}
+	my ($sjis) = @_;
 
-print FILE "};\n";
-close(FILE);
+	return $sjis if ($sjis <= 0x100);
+
+	my $hi = $sjis >> 8;
+	my $lo = $sjis & 0xff;
+
+	if ($lo >= 0x80) { $lo--; }
+	$lo -= 0x40;
+	if ($hi >= 0xe0) { $hi -= 0x40; }
+	$hi -= 0x81;
+	my $pos = $lo + $hi * 0xbc;
+
+	if ($pos >= 114 * 0x5e && $pos <= 115 * 0x5e + 0x1b)
+	{
+		# This region (115-ku) is out of range of JIS code but for
+		# convenient to generate code in EUC CODESET 3, move this to
+		# seemingly duplicate region (83-84-ku).
+		$pos = $pos - ((31 * 0x5e) + 12);
+
+		# after 85-ku 82-ten needs to be moved 2 codepoints
+		$pos = $pos - 2 if ($pos >= 84 * 0x5c + 82)
+	}
+
+	my $hi2 = $pos / 0x5e;
+	my $lo2 = ($pos % 0x5e);
+
+	my $ret = $lo2 + 0x21 + (($hi2 + 0x21) << 8);
+
+	return $ret;
+}

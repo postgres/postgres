@@ -1,3 +1,5 @@
+/* src/backend/utils/mb/Unicode/johab_to_utf8.map */
+
 static const pg_local_to_utf LUmapJOHAB[ 17049 ] = {
   {0x8444, 0xe384b3},
   {0x8446, 0xe384b5},

@@ -16,113 +16,22 @@
 #		 UCS-2 code in hex
 #		 # and Unicode name (not used in this script)
 
-require "ucs2utf.pl";
+require "convutils.pm";
 
-# first generate UTF-8 --> EUC_KR table
+# Load the source file.
 
-$in_file = "KSX1001.TXT";
+my $mapping = &read_source("KSX1001.TXT");
 
-open(FILE, $in_file) || die("cannot open $in_file");
-
-while (<FILE>)
+foreach my $i (@$mapping)
 {
-	chop;
-	if (/^#/)
-	{
-		next;
-	}
-	($c, $u, $rest) = split;
-	$ucs  = hex($u);
-	$code = hex($c);
-	if ($code >= 0x80 && $ucs >= 0x0080)
-	{
-		$utf = &ucs2utf($ucs);
-		if ($array{$utf} ne "")
-		{
-			printf STDERR "Warning: duplicate UTF8: %04x\n", $ucs;
-			next;
-		}
-		$count++;
-
-		$array{$utf} = ($code | 0x8080);
-	}
-}
-close(FILE);
-
-$file = "utf8_to_euc_kr.map";
-open(FILE, "> $file") || die("cannot open $file");
-
-print FILE "/* src/backend/utils/mb/Unicode/$file */\n\n";
-print FILE "static const pg_utf_to_local ULmapEUC_KR[ $count ] = {\n";
-
-for $index (sort { $a <=> $b } keys(%array))
-{
-	$code = $array{$index};
-	$count--;
-	if ($count == 0)
-	{
-		printf FILE "  {0x%04x, 0x%04x}\n", $index, $code;
-	}
-	else
-	{
-		printf FILE "  {0x%04x, 0x%04x},\n", $index, $code;
-	}
+	$i->{code} = $i->{code} | 0x8080;
 }
 
-print FILE "};\n";
-close(FILE);
+# Some extra characters that are not in KSX1001.TXT
+push @$mapping, (
+	{direction => 'both', ucs => 0x20AC, code => 0xa2e6, comment => '# EURO SIGN'},
+	{direction => 'both', ucs => 0x00AE, code => 0xa2e7, comment => '# REGISTERED SIGN'},
+	{direction => 'both', ucs => 0x327E, code => 0xa2e8, comment => '# CIRCLED HANGUL IEUNG U'}
+	);
 
-#
-# then generate EUC_KR --> UTF8 table
-#
-reset 'array';
-
-open(FILE, $in_file) || die("cannot open $in_file");
-
-while (<FILE>)
-{
-	chop;
-	if (/^#/)
-	{
-		next;
-	}
-	($c, $u, $rest) = split;
-	$ucs  = hex($u);
-	$code = hex($c);
-	if ($code >= 0x80 && $ucs >= 0x0080)
-	{
-		$utf = &ucs2utf($ucs);
-		if ($array{$code} ne "")
-		{
-			printf STDERR "Warning: duplicate code: %04x\n", $ucs;
-			next;
-		}
-		$count++;
-
-		$code |= 0x8080;
-		$array{$code} = $utf;
-	}
-}
-close(FILE);
-
-$file = "euc_kr_to_utf8.map";
-open(FILE, "> $file") || die("cannot open $file");
-
-print FILE "/* src/backend/utils/mb/Unicode/$file */\n\n";
-print FILE "static const pg_local_to_utf LUmapEUC_KR[ $count ] = {\n";
-for $index (sort { $a <=> $b } keys(%array))
-{
-	$utf = $array{$index};
-	$count--;
-	if ($count == 0)
-	{
-		printf FILE "  {0x%04x, 0x%04x}\n", $index, $utf;
-	}
-	else
-	{
-		printf FILE "  {0x%04x, 0x%04x},\n", $index, $utf;
-	}
-}
-
-print FILE "};\n";
-close(FILE);
+print_tables("EUC_KR", $mapping);

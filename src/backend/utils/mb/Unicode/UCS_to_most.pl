@@ -15,7 +15,7 @@
 #		 UCS-2 code in hex
 #		 # and Unicode name (not used in this script)
 
-require "ucs2utf.pl";
+require "convutils.pm";
 
 %filename = (
 	'WIN866'     => 'CP866.TXT',
@@ -44,121 +44,13 @@ require "ucs2utf.pl";
 	'ISO8859_16' => '8859-16.TXT',
 	'KOI8R'      => 'KOI8-R.TXT',
 	'KOI8U'      => 'KOI8-U.TXT',
-	'GBK'        => 'CP936.TXT',
-	'UHC'        => 'CP949.TXT',
-	'JOHAB'      => 'JOHAB.TXT',);
+	'GBK'        => 'CP936.TXT');
 
 @charsets = keys(%filename);
 @charsets = @ARGV if scalar(@ARGV);
 foreach $charset (@charsets)
 {
+	my $mapping = &read_source($filename{$charset});
 
-	#
-	# first, generate UTF8-> charset table
-	#
-	$in_file = $filename{$charset};
-
-	open(FILE, $in_file) || die("cannot open $in_file");
-
-	reset 'array';
-
-	while (<FILE>)
-	{
-		chop;
-		if (/^#/)
-		{
-			next;
-		}
-		($c, $u, $rest) = split;
-		$ucs  = hex($u);
-		$code = hex($c);
-		if ($code >= 0x80 && $ucs >= 0x0080)
-		{
-			$utf = &ucs2utf($ucs);
-			if ($array{$utf} ne "")
-			{
-				printf STDERR "Warning: duplicate UTF8: %04x\n", $ucs;
-				next;
-			}
-			$count++;
-			$array{$utf} = $code;
-		}
-	}
-	close(FILE);
-
-	$file = lc("utf8_to_${charset}.map");
-	open(FILE, "> $file") || die("cannot open $file");
-
-	print FILE "/* src/backend/utils/mb/Unicode/$file */\n\n";
-	print FILE "static const pg_utf_to_local ULmap${charset}[ $count ] = {\n";
-
-	for $index (sort { $a <=> $b } keys(%array))
-	{
-		$code = $array{$index};
-		$count--;
-		if ($count == 0)
-		{
-			printf FILE "  {0x%04x, 0x%04x}\n", $index, $code;
-		}
-		else
-		{
-			printf FILE "  {0x%04x, 0x%04x},\n", $index, $code;
-		}
-	}
-
-	print FILE "};\n";
-	close(FILE);
-
-	#
-	# then generate character set code ->UTF8 table
-	#
-	open(FILE, $in_file) || die("cannot open $in_file");
-
-	reset 'array';
-
-	while (<FILE>)
-	{
-		chop;
-		if (/^#/)
-		{
-			next;
-		}
-		($c, $u, $rest) = split;
-		$ucs  = hex($u);
-		$code = hex($c);
-		if ($code >= 0x80 && $ucs >= 0x0080)
-		{
-			$utf = &ucs2utf($ucs);
-			if ($array{$code} ne "")
-			{
-				printf STDERR "Warning: duplicate UTF8: %04x\n", $ucs;
-				next;
-			}
-			$count++;
-			$array{$code} = $utf;
-		}
-	}
-	close(FILE);
-
-	$file = lc("${charset}_to_utf8.map");
-	open(FILE, "> $file") || die("cannot open $file");
-
-	print FILE "/* src/backend/utils/mb/Unicode/$file */\n\n";
-	print FILE "static const pg_local_to_utf LUmap${charset}[ $count ] = {\n";
-	for $index (sort { $a <=> $b } keys(%array))
-	{
-		$utf = $array{$index};
-		$count--;
-		if ($count == 0)
-		{
-			printf FILE "  {0x%04x, 0x%04x}\n", $index, $utf;
-		}
-		else
-		{
-			printf FILE "  {0x%04x, 0x%04x},\n", $index, $utf;
-		}
-	}
-
-	print FILE "};\n";
-	close(FILE);
+	print_tables($charset, $mapping);
 }

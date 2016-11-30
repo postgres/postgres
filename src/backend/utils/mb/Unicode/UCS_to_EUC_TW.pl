@@ -17,141 +17,47 @@
 #		 UCS-2 code in hex
 #		 # and Unicode name (not used in this script)
 
-require "ucs2utf.pl";
+require "convutils.pm";
 
-# first generate UTF-8 --> EUC_TW table
+my $mapping = &read_source("CNS11643.TXT");
 
-$in_file = "CNS11643.TXT";
+my @extras;
 
-open(FILE, $in_file) || die("cannot open $in_file");
-
-while (<FILE>)
+foreach my $i (@$mapping)
 {
-	chop;
-	if (/^#/)
+	my $ucs = $i->{ucs};
+	my $code = $i->{code};
+	my $origcode = $i->{code};
+
+	my $plane = ($code & 0x1f0000) >> 16;
+	if ($plane > 16)
 	{
+		printf STDERR "Warning: invalid plane No.$plane. ignored\n";
 		next;
 	}
-	($c, $u, $rest) = split;
-	$ucs  = hex($u);
-	$code = hex($c);
-	if ($code >= 0x80 && $ucs >= 0x0080)
+
+	if ($plane == 1)
 	{
-		$utf = &ucs2utf($ucs);
-		if ($array{$utf} ne "")
-		{
-			printf STDERR "Warning: duplicate UTF8: %04x\n", $ucs;
-			next;
-		}
-		$count++;
-
-		$plane = ($code & 0x1f0000) >> 16;
-		if ($plane > 16)
-		{
-			printf STDERR "Warning: invalid plane No.$plane. ignored\n";
-			next;
-		}
-
-		if ($plane == 1)
-		{
-			$array{$utf} = (($code & 0xffff) | 0x8080);
-		}
-		else
-		{
-			$array{$utf} =
-			  (0x8ea00000 + ($plane << 16)) | (($code & 0xffff) | 0x8080);
-		}
-	}
-}
-close(FILE);
-
-$file = "utf8_to_euc_tw.map";
-open(FILE, "> $file") || die("cannot open $file");
-
-print FILE "/* src/backend/utils/mb/Unicode/$file */\n\n";
-print FILE "static const pg_utf_to_local ULmapEUC_TW[ $count ] = {\n";
-
-for $index (sort { $a <=> $b } keys(%array))
-{
-	$code = $array{$index};
-	$count--;
-	if ($count == 0)
-	{
-		printf FILE "  {0x%04x, 0x%04x}\n", $index, $code;
+		$code = ($code & 0xffff) | 0x8080;
 	}
 	else
 	{
-		printf FILE "  {0x%04x, 0x%04x},\n", $index, $code;
+		$code = (0x8ea00000 + ($plane << 16)) | (($code & 0xffff) | 0x8080);
+	}
+	$i->{code} = $code;
+
+	# Some codes are mapped twice in the EUC_TW to UTF-8 table.
+	if ($origcode >= 0x12121 && $origcode <= 0x20000)
+	{
+		push @extras, {
+			ucs => $i->{ucs},
+			code => ($i->{code} + 0x8ea10000),
+			rest => $i->{rest},
+			direction => 'to_unicode'
+		}
 	}
 }
 
-print FILE "};\n";
-close(FILE);
+push @$mapping, @extras;
 
-#
-# then generate EUC_TW --> UTF8 table
-#
-reset 'array';
-
-open(FILE, $in_file) || die("cannot open $in_file");
-
-while (<FILE>)
-{
-	chop;
-	if (/^#/)
-	{
-		next;
-	}
-	($c, $u, $rest) = split;
-	$ucs  = hex($u);
-	$code = hex($c);
-	if ($code >= 0x80 && $ucs >= 0x0080)
-	{
-		$utf = &ucs2utf($ucs);
-		if ($array{$code} ne "")
-		{
-			printf STDERR "Warning: duplicate code: %04x\n", $ucs;
-			next;
-		}
-		$count++;
-
-		$plane = ($code & 0x1f0000) >> 16;
-		if ($plane > 16)
-		{
-			printf STDERR "Warning: invalid plane No.$plane. ignored\n";
-			next;
-		}
-
-		if ($plane == 1)
-		{
-			$c = (($code & 0xffff) | 0x8080);
-			$array{$c} = $utf;
-			$count++;
-		}
-		$c = (0x8ea00000 + ($plane << 16)) | (($code & 0xffff) | 0x8080);
-		$array{$c} = $utf;
-	}
-}
-close(FILE);
-
-$file = "euc_tw_to_utf8.map";
-open(FILE, "> $file") || die("cannot open $file");
-
-print FILE "/* src/backend/utils/mb/Unicode/$file */\n\n";
-print FILE "static const pg_local_to_utf LUmapEUC_TW[ $count ] = {\n";
-for $index (sort { $a <=> $b } keys(%array))
-{
-	$utf = $array{$index};
-	$count--;
-	if ($count == 0)
-	{
-		printf FILE "  {0x%04x, 0x%04x}\n", $index, $utf;
-	}
-	else
-	{
-		printf FILE "  {0x%04x, 0x%04x},\n", $index, $utf;
-	}
-}
-
-print FILE "};\n";
-close(FILE);
+print_tables("EUC_TW", $mapping);

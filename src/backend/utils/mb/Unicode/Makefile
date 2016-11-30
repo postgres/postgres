@@ -39,8 +39,6 @@ WINMAPS = win866_to_utf8.map utf8_to_win866.map \
 	win1258_to_utf8.map utf8_to_win1258.map
 
 GENERICMAPS = $(ISO8859MAPS) $(WINMAPS) \
-	johab_to_utf8.map utf8_to_johab.map \
-	uhc_to_utf8.map utf8_to_uhc.map \
 	gbk_to_utf8.map utf8_to_gbk.map \
 	koi8r_to_utf8.map utf8_to_koi8r.map
 
@@ -51,6 +49,8 @@ SPECIALMAPS = euc_cn_to_utf8.map utf8_to_euc_cn.map \
 	sjis_to_utf8.map utf8_to_sjis.map \
 	gb18030_to_utf8.map utf8_to_gb18030.map \
 	big5_to_utf8.map utf8_to_big5.map \
+	johab_to_utf8.map utf8_to_johab.map \
+	uhc_to_utf8.map utf8_to_uhc.map \
 	euc_jis_2004_to_utf8.map euc_jis_2004_to_utf8_combined.map \
 	utf8_to_euc_jis_2004.map utf8_to_euc_jis_2004_combined.map \
 	shift_jis_2004_to_utf8.map shift_jis_2004_to_utf8_combined.map \
@@ -63,23 +63,29 @@ ISO8859TEXTS = 8859-2.TXT 8859-3.TXT 8859-4.TXT 8859-5.TXT \
 	8859-10.TXT 8859-13.TXT 8859-14.TXT 8859-15.TXT \
 	8859-16.TXT
 
-WINTEXTS = CP866.TXT CP874.TXT CP936.TXT CP949.TXT \
+WINTEXTS = CP866.TXT CP874.TXT CP936.TXT \
 	CP1250.TXT CP1251.TXT \
 	CP1252.TXT CP1253.TXT CP1254.TXT CP1255.TXT \
 	CP1256.TXT CP1257.TXT CP1258.TXT
 
 GENERICTEXTS = $(ISO8859TEXTS) $(WINTEXTS) \
-	KOI8-R.TXT KOI8-U.TXT JOHAB.TXT
+	KOI8-R.TXT KOI8-U.TXT
 
 all: $(MAPS)
 
 $(GENERICMAPS): UCS_to_most.pl $(GENERICTEXTS)
 	$(PERL) $<
 
-euc_jp_to_utf8.map utf8_to_euc_jp.map: UCS_to_EUC_JP.pl JIS0201.TXT JIS0208.TXT JIS0212.TXT
+johab_to_utf8.map utf8_to_johab.map: UCS_to_JOHAB.pl JOHAB.TXT
 	$(PERL) $<
 
-euc_cn_to_utf8.map utf8_to_euc_cn.map: UCS_to_EUC_CN.pl GB2312.TXT
+uhc_to_utf8.map utf8_to_uhc.map: UCS_to_UHC.pl windows-949-2000.xml
+	$(PERL) $<
+
+euc_jp_to_utf8.map utf8_to_euc_jp.map: UCS_to_EUC_JP.pl CP932.TXT JIS0212.TXT
+	$(PERL) $<
+
+euc_cn_to_utf8.map utf8_to_euc_cn.map: UCS_to_EUC_CN.pl gb-18030-2000.xml
 	$(PERL) $<
 
 euc_kr_to_utf8.map utf8_to_euc_kr.map: UCS_to_EUC_KR.pl KSX1001.TXT
@@ -119,7 +125,7 @@ BIG5.TXT CNS11643.TXT:
 euc-jis-2004-std.txt sjis-0213-2004-std.txt:
 	$(DOWNLOAD) http://x0213.org/codetable/$(@F)
 
-gb-18030-2000.xml:
+gb-18030-2000.xml windows-949-2000.xml:
 	$(DOWNLOAD) https://ssl.icu-project.org/repos/icu/data/trunk/charset/data/xml/$(@F)
 
 GB2312.TXT:
@@ -137,7 +143,7 @@ KOI8-R.TXT KOI8-U.TXT:
 $(ISO8859TEXTS):
 	$(DOWNLOAD) http://ftp.unicode.org/Public/MAPPINGS/ISO8859/$(@F)
 
-$(filter-out CP8%,$(WINTEXTS)):
+$(filter-out CP8%,$(WINTEXTS)) CP932.TXT CP950.TXT:
 	$(DOWNLOAD) http://ftp.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WINDOWS/$(@F)
 
 $(filter CP8%,$(WINTEXTS)):
