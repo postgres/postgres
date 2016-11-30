@@ -127,8 +127,9 @@ typedef struct
 	 * where to start streaming (after setting receiveStart and
 	 * receiveStartTLI), and also to tell it to send apply feedback to the
 	 * primary whenever specially marked commit records are applied.
+	 * This is normally mapped to procLatch when walreceiver is running.
 	 */
-	Latch		latch;
+	Latch	   *latch;
 } WalRcvData;
 
 extern WalRcvData *WalRcv;

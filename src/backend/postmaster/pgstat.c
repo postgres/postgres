@@ -3338,6 +3338,9 @@ pgstat_get_wait_client(WaitEventClient w)
 		case WAIT_EVENT_WAL_RECEIVER_WAIT_START:
 			event_name = "WalReceiverWaitStart";
 			break;
+		case WAIT_EVENT_LIBPQWALRECEIVER_READ:
+			event_name = "LibPQWalReceiverRead";
+			break;
 		case WAIT_EVENT_WAL_SENDER_WAIT_WAL:
 			event_name = "WalSenderWaitForWAL";
 			break;
