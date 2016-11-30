@@ -668,9 +668,6 @@ ResourceOwnerReleaseInternal(ResourceOwner owner,
 				PrintFileLeakWarning(res);
 			FileClose(res);
 		}
-
-		/* Clean up index scans too */
-		ReleaseResources_hash();
 	}
 
 	/* Let add-on modules get a chance too */

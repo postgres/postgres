@@ -28,18 +28,22 @@
 void
 _hash_doinsert(Relation rel, IndexTuple itup)
 {
-	Buffer		buf;
+	Buffer		buf = InvalidBuffer;
+	Buffer		bucket_buf;
 	Buffer		metabuf;
 	HashMetaPage metap;
 	BlockNumber blkno;
-	BlockNumber oldblkno = InvalidBlockNumber;
-	bool		retry = false;
+	BlockNumber oldblkno;
+	bool		retry;
 	Page		page;
 	HashPageOpaque pageopaque;
 	Size		itemsz;
 	bool		do_expand;
 	uint32		hashkey;
 	Bucket		bucket;
+	uint32		maxbucket;
+	uint32		highmask;
+	uint32		lowmask;
 
 	/*
 	 * Get the hash key for the item (it's stored in the index tuple itself).
@@ -51,6 +55,7 @@ _hash_doinsert(Relation rel, IndexTuple itup)
 	itemsz = MAXALIGN(itemsz);	/* be safe, PageAddItem will do this but we
 								 * need to be consistent */
 
+restart_insert:
 	/* Read the metapage */
 	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ, LH_META_PAGE);
 	metap = HashPageGetMeta(BufferGetPage(metabuf));
@@ -69,6 +74,9 @@ _hash_doinsert(Relation rel, IndexTuple itup)
 						itemsz, HashMaxItemSize((Page) metap)),
 			errhint("Values larger than a buffer page cannot be indexed.")));
 
+	oldblkno = InvalidBlockNumber;
+	retry = false;
+
 	/*
 	 * Loop until we get a lock on the correct target bucket.
 	 */
@@ -84,21 +92,32 @@ _hash_doinsert(Relation rel, IndexTuple itup)
 
 		blkno = BUCKET_TO_BLKNO(metap, bucket);
 
+		/*
+		 * Copy bucket mapping info now; refer the comment in
+		 * _hash_expandtable where we copy this information before calling
+		 * _hash_splitbucket to see why this is okay.
+		 */
+		maxbucket = metap->hashm_maxbucket;
+		highmask = metap->hashm_highmask;
+		lowmask = metap->hashm_lowmask;
+
 		/* Release metapage lock, but keep pin. */
 		_hash_chgbufaccess(rel, metabuf, HASH_READ, HASH_NOLOCK);
 
 		/*
-		 * If the previous iteration of this loop locked what is still the
-		 * correct target bucket, we are done.  Otherwise, drop any old lock
-		 * and lock what now appears to be the correct bucket.
+		 * If the previous iteration of this loop locked the primary page of
+		 * what is still the correct target bucket, we are done.  Otherwise,
+		 * drop any old lock before acquiring the new one.
 		 */
 		if (retry)
 		{
 			if (oldblkno == blkno)
 				break;
-			_hash_droplock(rel, oldblkno, HASH_SHARE);
+			_hash_relbuf(rel, buf);
 		}
-		_hash_getlock(rel, blkno, HASH_SHARE);
+
+		/* Fetch and lock the primary bucket page for the target bucket */
+		buf = _hash_getbuf(rel, blkno, HASH_WRITE, LH_BUCKET_PAGE);
 
 		/*
 		 * Reacquire metapage lock and check that no bucket split has taken
@@ -109,11 +128,35 @@ _hash_doinsert(Relation rel, IndexTuple itup)
 		retry = true;
 	}
 
-	/* Fetch the primary bucket page for the bucket */
-	buf = _hash_getbuf(rel, blkno, HASH_WRITE, LH_BUCKET_PAGE);
+	/* remember the primary bucket buffer to release the pin on it at end. */
+	bucket_buf = buf;
+
 	page = BufferGetPage(buf);
 	pageopaque = (HashPageOpaque) PageGetSpecialPointer(page);
 	Assert(pageopaque->hasho_bucket == bucket);
+
+	/*
+	 * If this bucket is in the process of being split, try to finish the
+	 * split before inserting, because that might create room for the
+	 * insertion to proceed without allocating an additional overflow page.
+	 * It's only interesting to finish the split if we're trying to insert
+	 * into the bucket from which we're removing tuples (the "old" bucket),
+	 * not if we're trying to insert into the bucket into which tuples are
+	 * being moved (the "new" bucket).
+	 */
+	if (H_BUCKET_BEING_SPLIT(pageopaque) && IsBufferCleanupOK(buf))
+	{
+		/* release the lock on bucket buffer, before completing the split. */
+		_hash_chgbufaccess(rel, buf, HASH_READ, HASH_NOLOCK);
+
+		_hash_finish_split(rel, metabuf, buf, pageopaque->hasho_bucket,
+						   maxbucket, highmask, lowmask);
+
+		/* release the pin on old and meta buffer.  retry for insert. */
+		_hash_dropbuf(rel, buf);
+		_hash_dropbuf(rel, metabuf);
+		goto restart_insert;
+	}
 
 	/* Do the insertion */
 	while (PageGetFreeSpace(page) < itemsz)
@@ -127,9 +170,15 @@ _hash_doinsert(Relation rel, IndexTuple itup)
 		{
 			/*
 			 * ovfl page exists; go get it.  if it doesn't have room, we'll
-			 * find out next pass through the loop test above.
+			 * find out next pass through the loop test above.  we always
+			 * release both the lock and pin if this is an overflow page, but
+			 * only the lock if this is the primary bucket page, since the pin
+			 * on the primary bucket must be retained throughout the scan.
 			 */
-			_hash_relbuf(rel, buf);
+			if (buf != bucket_buf)
+				_hash_relbuf(rel, buf);
+			else
+				_hash_chgbufaccess(rel, buf, HASH_READ, HASH_NOLOCK);
 			buf = _hash_getbuf(rel, nextblkno, HASH_WRITE, LH_OVERFLOW_PAGE);
 			page = BufferGetPage(buf);
 		}
@@ -144,7 +193,7 @@ _hash_doinsert(Relation rel, IndexTuple itup)
 			_hash_chgbufaccess(rel, buf, HASH_READ, HASH_NOLOCK);
 
 			/* chain to a new overflow page */
-			buf = _hash_addovflpage(rel, metabuf, buf);
+			buf = _hash_addovflpage(rel, metabuf, buf, (buf == bucket_buf) ? true : false);
 			page = BufferGetPage(buf);
 
 			/* should fit now, given test above */
@@ -158,11 +207,14 @@ _hash_doinsert(Relation rel, IndexTuple itup)
 	/* found page with enough space, so add the item here */
 	(void) _hash_pgaddtup(rel, buf, itemsz, itup);
 
-	/* write and release the modified page */
+	/*
+	 * write and release the modified page.  if the page we modified was an
+	 * overflow page, we also need to separately drop the pin we retained on
+	 * the primary bucket page.
+	 */
 	_hash_wrtbuf(rel, buf);
-
-	/* We can drop the bucket lock now */
-	_hash_droplock(rel, blkno, HASH_SHARE);
+	if (buf != bucket_buf)
+		_hash_dropbuf(rel, bucket_buf);
 
 	/*
 	 * Write-lock the metapage so we can increment the tuple count. After

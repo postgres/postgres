@@ -126,52 +126,53 @@ the initially created buckets.
 Lock Definitions
 ----------------
 
-We use both lmgr locks ("heavyweight" locks) and buffer context locks
-(LWLocks) to control access to a hash index.  lmgr locks are needed for
-long-term locking since there is a (small) risk of deadlock, which we must
-be able to detect.  Buffer context locks are used for short-term access
-control to individual pages of the index.
+Concurrency control for hash indexes is provided using buffer content
+locks, buffer pins, and cleanup locks.   Here as elsewhere in PostgreSQL,
+cleanup lock means that we hold an exclusive lock on the buffer and have
+observed at some point after acquiring the lock that we hold the only pin
+on that buffer.  For hash indexes, a cleanup lock on a primary bucket page
+represents the right to perform an arbitrary reorganization of the entire
+bucket.  Therefore, scans retain a pin on the primary bucket page for the
+bucket they are currently scanning.  Splitting a bucket requires a cleanup
+lock on both the old and new primary bucket pages.  VACUUM therefore takes
+a cleanup lock on every bucket page in order to remove tuples.  It can also
+remove tuples copied to a new bucket by any previous split operation, because
+the cleanup lock taken on the primary bucket page guarantees that no scans
+which started prior to the most recent split can still be in progress.  After
+cleaning each page individually, it attempts to take a cleanup lock on the
+primary bucket page in order to "squeeze" the bucket down to the minimum
+possible number of pages.
 
-LockPage(rel, page), where page is the page number of a hash bucket page,
-represents the right to split or compact an individual bucket.  A process
-splitting a bucket must exclusive-lock both old and new halves of the
-bucket until it is done.  A process doing VACUUM must exclusive-lock the
-bucket it is currently purging tuples from.  Processes doing scans or
-insertions must share-lock the bucket they are scanning or inserting into.
-(It is okay to allow concurrent scans and insertions.)
-
-The lmgr lock IDs corresponding to overflow pages are currently unused.
-These are available for possible future refinements.  LockPage(rel, 0)
-is also currently undefined (it was previously used to represent the right
-to modify the hash-code-to-bucket mapping, but it is no longer needed for
-that purpose).
-
-Note that these lock definitions are conceptually distinct from any sort
-of lock on the pages whose numbers they share.  A process must also obtain
-read or write buffer lock on the metapage or bucket page before accessing
-said page.
-
-Processes performing hash index scans must hold share lock on the bucket
-they are scanning throughout the scan.  This seems to be essential, since
-there is no reasonable way for a scan to cope with its bucket being split
-underneath it.  This creates a possibility of deadlock external to the
-hash index code, since a process holding one of these locks could block
-waiting for an unrelated lock held by another process.  If that process
-then does something that requires exclusive lock on the bucket, we have
-deadlock.  Therefore the bucket locks must be lmgr locks so that deadlock
-can be detected and recovered from.
-
-Processes must obtain read (share) buffer context lock on any hash index
-page while reading it, and write (exclusive) lock while modifying it.
-To prevent deadlock we enforce these coding rules: no buffer lock may be
-held long term (across index AM calls), nor may any buffer lock be held
-while waiting for an lmgr lock, nor may more than one buffer lock
-be held at a time by any one process.  (The third restriction is probably
-stronger than necessary, but it makes the proof of no deadlock obvious.)
+To avoid deadlocks, we must be consistent about the lock order in which we
+lock the buckets for operations that requires locks on two different buckets.
+We choose to always lock the lower-numbered bucket first.  The metapage is
+only ever locked after all bucket locks have been taken.
 
 
 Pseudocode Algorithms
 ---------------------
+
+Various flags that are used in hash index operations are described as below:
+
+The bucket-being-split and bucket-being-populated flags indicate that split
+the operation is in progress for a bucket.  During split operation, a
+bucket-being-split flag is set on the old bucket and bucket-being-populated
+flag is set on new bucket.  These flags are cleared once the split operation
+is finished.
+
+The split-cleanup flag indicates that a bucket which has been recently split
+still contains tuples that were also copied to the new bucket; it essentially
+marks the split as incomplete.  Once we're certain that no scans which
+started before the new bucket was fully populated are still in progress, we
+can remove the copies from the old bucket and clear the flag.  We insist that
+this flag must be clear before splitting a bucket; thus, a bucket can't be
+split again until the previous split is totally complete.
+
+The moved-by-split flag on a tuple indicates that tuple is moved from old to
+new bucket.  Concurrent scans can skip such tuples till the split operation
+is finished.  Once the tuple is marked as moved-by-split, it will remain so
+forever but that does no harm.  We have intentionally not cleared it as that
+can generate an additional I/O which is not necessary.
 
 The operations we need to support are: readers scanning the index for
 entries of a particular hash code (which by definition are all in the same
@@ -193,37 +194,47 @@ The reader algorithm is:
 		release meta page buffer content lock
 		if (correct bucket page is already locked)
 			break
-		release any existing bucket page lock (if a concurrent split happened)
-		take heavyweight bucket lock
+		release any existing bucket page buffer content lock (if a concurrent
+         split happened)
+		take the buffer content lock on bucket page in shared mode
 		retake meta page buffer content lock in shared mode
--- then, per read request:
 	release pin on metapage
-	read current page of bucket and take shared buffer content lock
-		step to next page if necessary (no chaining of locks)
+	if the target bucket is still being populated by a split:
+		release the buffer content lock on current bucket page
+		pin and acquire the buffer content lock on old bucket in shared mode
+		release the buffer content lock on old bucket, but not pin
+		retake the buffer content lock on new bucket
+		arrange to scan the old bucket normally and the new bucket for
+         tuples which are not moved-by-split
+-- then, per read request:
+	reacquire content lock on current page
+	step to next page if necessary (no chaining of content locks, but keep
+     the pin on the primary bucket throughout the scan; we also maintain
+     a pin on the page currently being scanned)
 	get tuple
-	release buffer content lock and pin on current page
+	release content lock
 -- at scan shutdown:
-	release bucket share-lock
+	release all pins still held
 
-We can't hold the metapage lock while acquiring a lock on the target bucket,
-because that might result in an undetected deadlock (lwlocks do not participate
-in deadlock detection).  Instead, we relock the metapage after acquiring the
-bucket page lock and check whether the bucket has been split.  If not, we're
-done.  If so, we release our previously-acquired lock and repeat the process
-using the new bucket number.  Holding the bucket sharelock for
-the remainder of the scan prevents the reader's current-tuple pointer from
-being invalidated by splits or compactions.  Notice that the reader's lock
-does not prevent other buckets from being split or compacted.
+Holding the buffer pin on the primary bucket page for the whole scan prevents
+the reader's current-tuple pointer from being invalidated by splits or
+compactions.  (Of course, other buckets can still be split or compacted.)
 
 To keep concurrency reasonably good, we require readers to cope with
 concurrent insertions, which means that they have to be able to re-find
-their current scan position after re-acquiring the page sharelock.  Since
-deletion is not possible while a reader holds the bucket sharelock, and
-we assume that heap tuple TIDs are unique, this can be implemented by
+their current scan position after re-acquiring the buffer content lock on
+page.  Since deletion is not possible while a reader holds the pin on bucket,
+and we assume that heap tuple TIDs are unique, this can be implemented by
 searching for the same heap tuple TID previously returned.  Insertion does
 not move index entries across pages, so the previously-returned index entry
 should always be on the same page, at the same or higher offset number,
 as it was before.
+
+To allow for scans during a bucket split, if at the start of the scan, the
+bucket is marked as bucket-being-populated, it scan all the tuples in that
+bucket except for those that are marked as moved-by-split.  Once it finishes
+the scan of all the tuples in the current bucket, it scans the old bucket from
+which this bucket is formed by split.
 
 The insertion algorithm is rather similar:
 
@@ -233,18 +244,29 @@ The insertion algorithm is rather similar:
 		release meta page buffer content lock
 		if (correct bucket page is already locked)
 			break
-		release any existing bucket page lock (if a concurrent split happened)
-		take heavyweight bucket lock in shared mode
+		release any existing bucket page buffer content lock (if a concurrent
+         split happened)
+		take the buffer content lock on bucket page in exclusive mode
 		retake meta page buffer content lock in shared mode
--- (so far same as reader)
 	release pin on metapage
-	pin current page of bucket and take exclusive buffer content lock
-	if full, release, read/exclusive-lock next page; repeat as needed
+-- (so far same as reader, except for acquisition of buffer content lock in
+	exclusive mode on primary bucket page)
+	if the bucket-being-split flag is set for a bucket and pin count on it is
+	 one, then finish the split
+		release the buffer content lock on current bucket
+		get the "new" bucket which was being populated by the split
+		scan the new bucket and form the hash table of TIDs
+		conditionally get the cleanup lock on old and new buckets
+		if we get the lock on both the buckets
+			finish the split using algorithm mentioned below for split
+		release the pin on old bucket and restart the insert from beginning.
+	if current page is full, release lock but not pin, read/exclusive-lock
+     next page; repeat as needed
 	>> see below if no space in any page of bucket
 	insert tuple at appropriate place in page
 	mark current page dirty and release buffer content lock and pin
-	release heavyweight share-lock
-	pin meta page and take buffer content lock in shared mode
+	if the current page is not a bucket page, release the pin on bucket page
+	pin meta page and take buffer content lock in exclusive mode
 	increment tuple count, decide if split needed
 	mark meta page dirty and release buffer content lock and pin
 	done if no split needed, else enter Split algorithm below
@@ -256,11 +278,13 @@ bucket that is being actively scanned, because readers can cope with this
 as explained above.  We only need the short-term buffer locks to ensure
 that readers do not see a partially-updated page.
 
-It is clearly impossible for readers and inserters to deadlock, and in
-fact this algorithm allows them a very high degree of concurrency.
-(The exclusive metapage lock taken to update the tuple count is stronger
-than necessary, since readers do not care about the tuple count, but the
-lock is held for such a short time that this is probably not an issue.)
+To avoid deadlock between readers and inserters, whenever there is a need
+to lock multiple buckets, we always take in the order suggested in Lock
+Definitions above.  This algorithm allows them a very high degree of
+concurrency.  (The exclusive metapage lock taken to update the tuple count
+is stronger than necessary, since readers do not care about the tuple count,
+but the lock is held for such a short time that this is probably not an
+issue.)
 
 When an inserter cannot find space in any existing page of a bucket, it
 must obtain an overflow page and add that page to the bucket's chain.
@@ -271,46 +295,45 @@ index is overfull (has a higher-than-wanted ratio of tuples to buckets).
 The algorithm attempts, but does not necessarily succeed, to split one
 existing bucket in two, thereby lowering the fill ratio:
 
-	pin meta page and take buffer content lock in exclusive mode
-	check split still needed
-	if split not needed anymore, drop buffer content lock and pin and exit
-	decide which bucket to split
-	Attempt to X-lock old bucket number (definitely could fail)
-	Attempt to X-lock new bucket number (shouldn't fail, but...)
-	if above fail, drop locks and pin and exit
-	update meta page to reflect new number of buckets
-	mark meta page dirty and release buffer content lock and pin
-	-- now, accesses to all other buckets can proceed.
-	Perform actual split of bucket, moving tuples as needed
-	>> see below about acquiring needed extra space
-	Release X-locks of old and new buckets
+    pin meta page and take buffer content lock in exclusive mode
+    check split still needed
+    if split not needed anymore, drop buffer content lock and pin and exit
+    decide which bucket to split
+    try to take a cleanup lock on that bucket; if fail, give up
+    if that bucket is still being split or has split-cleanup work:
+       try to finish the split and the cleanup work
+       if that succeeds, start over; if it fails, give up
+	mark the old and new buckets indicating split is in progress
+	copy the tuples that belongs to new bucket from old bucket, marking
+     them as moved-by-split
+	release lock but not pin for primary bucket page of old bucket,
+	 read/shared-lock next page; repeat as needed
+	clear the bucket-being-split and bucket-being-populated flags
+	mark the old bucket indicating split-cleanup
 
-Note the metapage lock is not held while the actual tuple rearrangement is
-performed, so accesses to other buckets can proceed in parallel; in fact,
-it's possible for multiple bucket splits to proceed in parallel.
-
-Split's attempt to X-lock the old bucket number could fail if another
-process holds S-lock on it.  We do not want to wait if that happens, first
-because we don't want to wait while holding the metapage exclusive-lock,
-and second because it could very easily result in deadlock.  (The other
-process might be out of the hash AM altogether, and could do something
-that blocks on another lock this process holds; so even if the hash
-algorithm itself is deadlock-free, a user-induced deadlock could occur.)
-So, this is a conditional LockAcquire operation, and if it fails we just
-abandon the attempt to split.  This is all right since the index is
-overfull but perfectly functional.  Every subsequent inserter will try to
-split, and eventually one will succeed.  If multiple inserters failed to
-split, the index might still be overfull, but eventually, the index will
+The split operation's attempt to acquire cleanup-lock on the old bucket number
+could fail if another process holds any lock or pin on it.  We do not want to
+wait if that happens, because we don't want to wait while holding the metapage
+exclusive-lock.  So, this is a conditional LWLockAcquire operation, and if
+it fails we just abandon the attempt to split.  This is all right since the
+index is overfull but perfectly functional.  Every subsequent inserter will
+try to split, and eventually one will succeed.  If multiple inserters failed
+to split, the index might still be overfull, but eventually, the index will
 not be overfull and split attempts will stop.  (We could make a successful
 splitter loop to see if the index is still overfull, but it seems better to
 distribute the split overhead across successive insertions.)
 
-A problem is that if a split fails partway through (eg due to insufficient
-disk space) the index is left corrupt.  The probability of that could be
-made quite low if we grab a free page or two before we update the meta
-page, but the only real solution is to treat a split as a WAL-loggable,
-must-complete action.  I'm not planning to teach hash about WAL in this
-go-round.
+If a split fails partway through (e.g. due to insufficient disk space or an
+interrupt), the index will not be corrupted.  Instead, we'll retry the split
+every time a tuple is inserted into the old bucket prior to inserting the new
+tuple; eventually, we should succeed.  The fact that a split is left
+unfinished doesn't prevent subsequent buckets from being split, but we won't
+try to split the bucket again until the prior split is finished.  In other
+words, a bucket can be in the middle of being split for some time, but it can't
+be in the middle of two splits at the same time.
+
+Although we can survive a failure to split a bucket, a crash is likely to
+corrupt the index, since hash indexes are not yet WAL-logged.
 
 The fourth operation is garbage collection (bulk deletion):
 
@@ -319,9 +342,17 @@ The fourth operation is garbage collection (bulk deletion):
 	fetch current max bucket number
 	release meta page buffer content lock and pin
 	while next bucket <= max bucket do
-		Acquire X lock on target bucket
-		Scan and remove tuples, compact free space as needed
-		Release X lock
+		acquire cleanup lock on primary bucket page
+		loop:
+			scan and remove tuples
+			if this is the last bucket page, break out of loop
+			pin and x-lock next page
+			release prior lock and pin (except keep pin on primary bucket page)
+		if the page we have locked is not the primary bucket page:
+			release lock and take exclusive lock on primary bucket page
+		if there are no other pins on the primary bucket page:
+			squeeze the bucket to remove free space
+		release the pin on primary bucket page
 		next bucket ++
 	end loop
 	pin metapage and take buffer content lock in exclusive mode
@@ -330,20 +361,24 @@ The fourth operation is garbage collection (bulk deletion):
 	else update metapage tuple count
 	mark meta page dirty and release buffer content lock and pin
 
-Note that this is designed to allow concurrent splits.  If a split occurs,
-tuples relocated into the new bucket will be visited twice by the scan,
-but that does no harm.  (We must however be careful about the statistics
+Note that this is designed to allow concurrent splits and scans.  If a split
+occurs, tuples relocated into the new bucket will be visited twice by the
+scan, but that does no harm.  As we release the lock on bucket page during
+cleanup scan of a bucket, it will allow concurrent scan to start on a bucket
+and ensures that scan will always be behind cleanup.  It is must to keep scans
+behind cleanup, else vacuum could decrease the TIDs that are required to
+complete the scan.  Now, as the scan that returns multiple tuples from the
+same bucket page always expect next valid TID to be greater than or equal to
+the current TID, it might miss the tuples.  This holds true for backward scans
+as well (backward scans first traverse each bucket starting from first bucket
+to last overflow page in the chain).  We must be careful about the statistics
 reported by the VACUUM operation.  What we can do is count the number of
-tuples scanned, and believe this in preference to the stored tuple count
-if the stored tuple count and number of buckets did *not* change at any
-time during the scan.  This provides a way of correcting the stored tuple
-count if it gets out of sync for some reason.  But if a split or insertion
-does occur concurrently, the scan count is untrustworthy; instead,
-subtract the number of tuples deleted from the stored tuple count and
-use that.)
-
-The exclusive lock request could deadlock in some strange scenarios, but
-we can just error out without any great harm being done.
+tuples scanned, and believe this in preference to the stored tuple count if
+the stored tuple count and number of buckets did *not* change at any time
+during the scan.  This provides a way of correcting the stored tuple count if
+it gets out of sync for some reason.  But if a split or insertion does occur
+concurrently, the scan count is untrustworthy; instead, subtract the number of
+tuples deleted from the stored tuple count and use that.
 
 
 Free Space Management
@@ -417,13 +452,11 @@ free page; there can be no other process holding lock on it.
 
 Bucket splitting uses a similar algorithm if it has to extend the new
 bucket, but it need not worry about concurrent extension since it has
-exclusive lock on the new bucket.
+buffer content lock in exclusive mode on the new bucket.
 
-Freeing an overflow page is done by garbage collection and by bucket
-splitting (the old bucket may contain no-longer-needed overflow pages).
-In both cases, the process holds exclusive lock on the containing bucket,
-so need not worry about other accessors of pages in the bucket.  The
-algorithm is:
+Freeing an overflow page requires the process to hold buffer content lock in
+exclusive mode on the containing bucket, so need not worry about other
+accessors of pages in the bucket.  The algorithm is:
 
 	delink overflow page from bucket chain
 	(this requires read/update/write/release of fore and aft siblings)
@@ -454,14 +487,6 @@ locks.  Since they need no lmgr locks, deadlock is not possible.
 Other Notes
 -----------
 
-All the shenanigans with locking prevent a split occurring while *another*
-process is stopped in a given bucket.  They do not ensure that one of
-our *own* backend's scans is not stopped in the bucket, because lmgr
-doesn't consider a process's own locks to conflict.  So the Split
-algorithm must check for that case separately before deciding it can go
-ahead with the split.  VACUUM does not have this problem since nothing
-else can be happening within the vacuuming backend.
-
-Should we instead try to fix the state of any conflicting local scan?
-Seems mighty ugly --- got to move the held bucket S-lock as well as lots
-of other messiness.  For now, just punt and don't split.
+Clean up locks prevent a split from occurring while *another* process is stopped
+in a given bucket.  It also ensures that one of our *own* backend's scans is not
+stopped in the bucket.

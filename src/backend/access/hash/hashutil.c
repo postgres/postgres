@@ -20,6 +20,8 @@
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 
+#define CALC_NEW_BUCKET(old_bucket, lowmask) \
+			old_bucket | (lowmask + 1)
 
 /*
  * _hash_checkqual -- does the index tuple satisfy the scan conditions?
@@ -351,4 +353,96 @@ _hash_binsearch_last(Page page, uint32 hash_value)
 	}
 
 	return lower;
+}
+
+/*
+ *	_hash_get_oldblock_from_newbucket() -- get the block number of a bucket
+ *			from which current (new) bucket is being split.
+ */
+BlockNumber
+_hash_get_oldblock_from_newbucket(Relation rel, Bucket new_bucket)
+{
+	Bucket		old_bucket;
+	uint32		mask;
+	Buffer		metabuf;
+	HashMetaPage metap;
+	BlockNumber blkno;
+
+	/*
+	 * To get the old bucket from the current bucket, we need a mask to modulo
+	 * into lower half of table.  This mask is stored in meta page as
+	 * hashm_lowmask, but here we can't rely on the same, because we need a
+	 * value of lowmask that was prevalent at the time when bucket split was
+	 * started.  Masking the most significant bit of new bucket would give us
+	 * old bucket.
+	 */
+	mask = (((uint32) 1) << (fls(new_bucket) - 1)) - 1;
+	old_bucket = new_bucket & mask;
+
+	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ, LH_META_PAGE);
+	metap = HashPageGetMeta(BufferGetPage(metabuf));
+
+	blkno = BUCKET_TO_BLKNO(metap, old_bucket);
+
+	_hash_relbuf(rel, metabuf);
+
+	return blkno;
+}
+
+/*
+ *	_hash_get_newblock_from_oldbucket() -- get the block number of a bucket
+ *			that will be generated after split from old bucket.
+ *
+ * This is used to find the new bucket from old bucket based on current table
+ * half.  It is mainly required to finish the incomplete splits where we are
+ * sure that not more than one bucket could have split in progress from old
+ * bucket.
+ */
+BlockNumber
+_hash_get_newblock_from_oldbucket(Relation rel, Bucket old_bucket)
+{
+	Bucket		new_bucket;
+	Buffer		metabuf;
+	HashMetaPage metap;
+	BlockNumber blkno;
+
+	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ, LH_META_PAGE);
+	metap = HashPageGetMeta(BufferGetPage(metabuf));
+
+	new_bucket = _hash_get_newbucket_from_oldbucket(rel, old_bucket,
+													metap->hashm_lowmask,
+													metap->hashm_maxbucket);
+	blkno = BUCKET_TO_BLKNO(metap, new_bucket);
+
+	_hash_relbuf(rel, metabuf);
+
+	return blkno;
+}
+
+/*
+ *	_hash_get_newbucket_from_oldbucket() -- get the new bucket that will be
+ *			generated after split from current (old) bucket.
+ *
+ * This is used to find the new bucket from old bucket.  New bucket can be
+ * obtained by OR'ing old bucket with most significant bit of current table
+ * half (lowmask passed in this function can be used to identify msb of
+ * current table half).  There could be multiple buckets that could have
+ * been split from current bucket.  We need the first such bucket that exists.
+ * Caller must ensure that no more than one split has happened from old
+ * bucket.
+ */
+Bucket
+_hash_get_newbucket_from_oldbucket(Relation rel, Bucket old_bucket,
+								   uint32 lowmask, uint32 maxbucket)
+{
+	Bucket		new_bucket;
+
+	new_bucket = CALC_NEW_BUCKET(old_bucket, lowmask);
+	if (new_bucket > maxbucket)
+	{
+		lowmask = lowmask >> 1;
+		new_bucket = CALC_NEW_BUCKET(old_bucket, lowmask);
+	}
+
+	return new_bucket;
 }

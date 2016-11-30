@@ -63,7 +63,7 @@ typedef IndexAttributeBitMapData *IndexAttributeBitMap;
  * t_info manipulation macros
  */
 #define INDEX_SIZE_MASK 0x1FFF
-/* bit 0x2000 is not used at present */
+/* bit 0x2000 is reserved for index-AM specific usage */
 #define INDEX_VAR_MASK	0x4000
 #define INDEX_NULL_MASK 0x8000
 

@@ -82,15 +82,12 @@ blkno_to_bitno(HashMetaPage metap, BlockNumber ovflblkno)
  *
  *	On entry, the caller must hold a pin but no lock on 'buf'.  The pin is
  *	dropped before exiting (we assume the caller is not interested in 'buf'
- *	anymore).  The returned overflow page will be pinned and write-locked;
- *	it is guaranteed to be empty.
+ *	anymore) if not asked to retain.  The pin will be retained only for the
+ *	primary bucket.  The returned overflow page will be pinned and
+ *	write-locked; it is guaranteed to be empty.
  *
  *	The caller must hold a pin, but no lock, on the metapage buffer.
  *	That buffer is returned in the same state.
- *
- *	The caller must hold at least share lock on the bucket, to ensure that
- *	no one else tries to compact the bucket meanwhile.  This guarantees that
- *	'buf' won't stop being part of the bucket while it's unlocked.
  *
  * NB: since this could be executed concurrently by multiple processes,
  * one should not assume that the returned overflow page will be the
@@ -98,7 +95,7 @@ blkno_to_bitno(HashMetaPage metap, BlockNumber ovflblkno)
  * pages might have been added to the bucket chain in between.
  */
 Buffer
-_hash_addovflpage(Relation rel, Buffer metabuf, Buffer buf)
+_hash_addovflpage(Relation rel, Buffer metabuf, Buffer buf, bool retain_pin)
 {
 	Buffer		ovflbuf;
 	Page		page;
@@ -131,7 +128,10 @@ _hash_addovflpage(Relation rel, Buffer metabuf, Buffer buf)
 			break;
 
 		/* we assume we do not need to write the unmodified page */
-		_hash_relbuf(rel, buf);
+		if ((pageopaque->hasho_flag & LH_BUCKET_PAGE) && retain_pin)
+			_hash_chgbufaccess(rel, buf, HASH_READ, HASH_NOLOCK);
+		else
+			_hash_relbuf(rel, buf);
 
 		buf = _hash_getbuf(rel, nextblkno, HASH_WRITE, LH_OVERFLOW_PAGE);
 	}
@@ -149,7 +149,10 @@ _hash_addovflpage(Relation rel, Buffer metabuf, Buffer buf)
 
 	/* logically chain overflow page to previous page */
 	pageopaque->hasho_nextblkno = BufferGetBlockNumber(ovflbuf);
-	_hash_wrtbuf(rel, buf);
+	if ((pageopaque->hasho_flag & LH_BUCKET_PAGE) && retain_pin)
+		_hash_chgbufaccess(rel, buf, HASH_WRITE, HASH_NOLOCK);
+	else
+		_hash_wrtbuf(rel, buf);
 
 	return ovflbuf;
 }
@@ -369,21 +372,25 @@ _hash_firstfreebit(uint32 map)
  *	Returns the block number of the page that followed the given page
  *	in the bucket, or InvalidBlockNumber if no following page.
  *
- *	NB: caller must not hold lock on metapage, nor on either page that's
- *	adjacent in the bucket chain.  The caller had better hold exclusive lock
- *	on the bucket, too.
+ *	NB: caller must not hold lock on metapage, nor on page, that's next to
+ *	ovflbuf in the bucket chain.  We don't acquire the lock on page that's
+ *	prior to ovflbuf in chain if it is same as wbuf because the caller already
+ *	has a lock on same.  This function releases the lock on wbuf and caller
+ *	is responsible for releasing the pin on same.
  */
 BlockNumber
-_hash_freeovflpage(Relation rel, Buffer ovflbuf,
-				   BufferAccessStrategy bstrategy)
+_hash_freeovflpage(Relation rel, Buffer ovflbuf, Buffer wbuf,
+				   bool wbuf_dirty, BufferAccessStrategy bstrategy)
 {
 	HashMetaPage metap;
 	Buffer		metabuf;
 	Buffer		mapbuf;
+	Buffer		prevbuf = InvalidBuffer;
 	BlockNumber ovflblkno;
 	BlockNumber prevblkno;
 	BlockNumber blkno;
 	BlockNumber nextblkno;
+	BlockNumber writeblkno;
 	HashPageOpaque ovflopaque;
 	Page		ovflpage;
 	Page		mappage;
@@ -400,6 +407,7 @@ _hash_freeovflpage(Relation rel, Buffer ovflbuf,
 	ovflopaque = (HashPageOpaque) PageGetSpecialPointer(ovflpage);
 	nextblkno = ovflopaque->hasho_nextblkno;
 	prevblkno = ovflopaque->hasho_prevblkno;
+	writeblkno = BufferGetBlockNumber(wbuf);
 	bucket = ovflopaque->hasho_bucket;
 
 	/*
@@ -413,23 +421,39 @@ _hash_freeovflpage(Relation rel, Buffer ovflbuf,
 	/*
 	 * Fix up the bucket chain.  this is a doubly-linked list, so we must fix
 	 * up the bucket chain members behind and ahead of the overflow page being
-	 * deleted.  No concurrency issues since we hold exclusive lock on the
-	 * entire bucket.
+	 * deleted.  Concurrency issues are avoided by using lock chaining as
+	 * described atop hashbucketcleanup.
 	 */
 	if (BlockNumberIsValid(prevblkno))
 	{
-		Buffer		prevbuf = _hash_getbuf_with_strategy(rel,
-														 prevblkno,
-														 HASH_WRITE,
+		Page		prevpage;
+		HashPageOpaque prevopaque;
+
+		if (prevblkno == writeblkno)
+			prevbuf = wbuf;
+		else
+			prevbuf = _hash_getbuf_with_strategy(rel,
+												 prevblkno,
+												 HASH_WRITE,
 										   LH_BUCKET_PAGE | LH_OVERFLOW_PAGE,
-														 bstrategy);
-		Page		prevpage = BufferGetPage(prevbuf);
-		HashPageOpaque prevopaque = (HashPageOpaque) PageGetSpecialPointer(prevpage);
+												 bstrategy);
+
+		prevpage = BufferGetPage(prevbuf);
+		prevopaque = (HashPageOpaque) PageGetSpecialPointer(prevpage);
 
 		Assert(prevopaque->hasho_bucket == bucket);
 		prevopaque->hasho_nextblkno = nextblkno;
-		_hash_wrtbuf(rel, prevbuf);
+
+		if (prevblkno != writeblkno)
+			_hash_wrtbuf(rel, prevbuf);
 	}
+
+	/* write and unlock the write buffer */
+	if (wbuf_dirty)
+		_hash_chgbufaccess(rel, wbuf, HASH_WRITE, HASH_NOLOCK);
+	else
+		_hash_chgbufaccess(rel, wbuf, HASH_READ, HASH_NOLOCK);
+
 	if (BlockNumberIsValid(nextblkno))
 	{
 		Buffer		nextbuf = _hash_getbuf_with_strategy(rel,
@@ -570,8 +594,15 @@ _hash_initbitmap(Relation rel, HashMetaPage metap, BlockNumber blkno,
  *	required that to be true on entry as well, but it's a lot easier for
  *	callers to leave empty overflow pages and let this guy clean it up.
  *
- *	Caller must hold exclusive lock on the target bucket.  This allows
- *	us to safely lock multiple pages in the bucket.
+ *	Caller must acquire cleanup lock on the primary page of the target
+ *	bucket to exclude any scans that are in progress, which could easily
+ *	be confused into returning the same tuple more than once or some tuples
+ *	not at all by the rearrangement we are performing here.  To prevent
+ *	any concurrent scan to cross the squeeze scan we use lock chaining
+ *	similar to hasbucketcleanup.  Refer comments atop hashbucketcleanup.
+ *
+ *	We need to retain a pin on the primary bucket to ensure that no concurrent
+ *	split can start.
  *
  *	Since this function is invoked in VACUUM, we provide an access strategy
  *	parameter that controls fetches of the bucket pages.
@@ -580,6 +611,7 @@ void
 _hash_squeezebucket(Relation rel,
 					Bucket bucket,
 					BlockNumber bucket_blkno,
+					Buffer bucket_buf,
 					BufferAccessStrategy bstrategy)
 {
 	BlockNumber wblkno;
@@ -593,23 +625,20 @@ _hash_squeezebucket(Relation rel,
 	bool		wbuf_dirty;
 
 	/*
-	 * start squeezing into the base bucket page.
+	 * start squeezing into the primary bucket page.
 	 */
 	wblkno = bucket_blkno;
-	wbuf = _hash_getbuf_with_strategy(rel,
-									  wblkno,
-									  HASH_WRITE,
-									  LH_BUCKET_PAGE,
-									  bstrategy);
+	wbuf = bucket_buf;
 	wpage = BufferGetPage(wbuf);
 	wopaque = (HashPageOpaque) PageGetSpecialPointer(wpage);
 
 	/*
-	 * if there aren't any overflow pages, there's nothing to squeeze.
+	 * if there aren't any overflow pages, there's nothing to squeeze. caller
+	 * is responsible for releasing the pin on primary bucket page.
 	 */
 	if (!BlockNumberIsValid(wopaque->hasho_nextblkno))
 	{
-		_hash_relbuf(rel, wbuf);
+		_hash_chgbufaccess(rel, wbuf, HASH_WRITE, HASH_NOLOCK);
 		return;
 	}
 
@@ -646,6 +675,7 @@ _hash_squeezebucket(Relation rel,
 		OffsetNumber maxroffnum;
 		OffsetNumber deletable[MaxOffsetNumber];
 		int			ndeletable = 0;
+		bool		retain_pin = false;
 
 		/* Scan each tuple in "read" page */
 		maxroffnum = PageGetMaxOffsetNumber(rpage);
@@ -671,13 +701,37 @@ _hash_squeezebucket(Relation rel,
 			 */
 			while (PageGetFreeSpace(wpage) < itemsz)
 			{
+				Buffer		next_wbuf = InvalidBuffer;
+
 				Assert(!PageIsEmpty(wpage));
+
+				if (wblkno == bucket_blkno)
+					retain_pin = true;
 
 				wblkno = wopaque->hasho_nextblkno;
 				Assert(BlockNumberIsValid(wblkno));
 
+				/* don't need to move to next page if we reached the read page */
+				if (wblkno != rblkno)
+					next_wbuf = _hash_getbuf_with_strategy(rel,
+														   wblkno,
+														   HASH_WRITE,
+														   LH_OVERFLOW_PAGE,
+														   bstrategy);
+
+				/*
+				 * release the lock on previous page after acquiring the lock
+				 * on next page
+				 */
 				if (wbuf_dirty)
-					_hash_wrtbuf(rel, wbuf);
+				{
+					if (retain_pin)
+						_hash_chgbufaccess(rel, wbuf, HASH_WRITE, HASH_NOLOCK);
+					else
+						_hash_wrtbuf(rel, wbuf);
+				}
+				else if (retain_pin)
+					_hash_chgbufaccess(rel, wbuf, HASH_READ, HASH_NOLOCK);
 				else
 					_hash_relbuf(rel, wbuf);
 
@@ -695,15 +749,12 @@ _hash_squeezebucket(Relation rel,
 					return;
 				}
 
-				wbuf = _hash_getbuf_with_strategy(rel,
-												  wblkno,
-												  HASH_WRITE,
-												  LH_OVERFLOW_PAGE,
-												  bstrategy);
+				wbuf = next_wbuf;
 				wpage = BufferGetPage(wbuf);
 				wopaque = (HashPageOpaque) PageGetSpecialPointer(wpage);
 				Assert(wopaque->hasho_bucket == bucket);
 				wbuf_dirty = false;
+				retain_pin = false;
 			}
 
 			/*
@@ -728,28 +779,29 @@ _hash_squeezebucket(Relation rel,
 		 * Tricky point here: if our read and write pages are adjacent in the
 		 * bucket chain, our write lock on wbuf will conflict with
 		 * _hash_freeovflpage's attempt to update the sibling links of the
-		 * removed page.  However, in that case we are done anyway, so we can
-		 * simply drop the write lock before calling _hash_freeovflpage.
+		 * removed page.  In that case, we don't need to lock it again and we
+		 * always release the lock on wbuf in _hash_freeovflpage and then
+		 * retake it again here.  This will not only simplify the code, but is
+		 * required to atomically log the changes which will be helpful when
+		 * we write WAL for hash indexes.
 		 */
 		rblkno = ropaque->hasho_prevblkno;
 		Assert(BlockNumberIsValid(rblkno));
 
+		/* free this overflow page (releases rbuf) */
+		_hash_freeovflpage(rel, rbuf, wbuf, wbuf_dirty, bstrategy);
+
 		/* are we freeing the page adjacent to wbuf? */
 		if (rblkno == wblkno)
 		{
-			/* yes, so release wbuf lock first */
-			if (wbuf_dirty)
-				_hash_wrtbuf(rel, wbuf);
-			else
-				_hash_relbuf(rel, wbuf);
-			/* free this overflow page (releases rbuf) */
-			_hash_freeovflpage(rel, rbuf, bstrategy);
-			/* done */
+			/* retain the pin on primary bucket page till end of bucket scan */
+			if (wblkno != bucket_blkno)
+				_hash_dropbuf(rel, wbuf);
 			return;
 		}
 
-		/* free this overflow page, then get the previous one */
-		_hash_freeovflpage(rel, rbuf, bstrategy);
+		/* lock the overflow page being written, then get the previous one */
+		_hash_chgbufaccess(rel, wbuf, HASH_NOLOCK, HASH_WRITE);
 
 		rbuf = _hash_getbuf_with_strategy(rel,
 										  rblkno,
