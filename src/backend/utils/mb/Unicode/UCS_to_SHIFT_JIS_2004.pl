@@ -7,27 +7,27 @@
 # Generate UTF-8 <--> SHIFT_JIS_2004 code conversion tables from
 # "sjis-0213-2004-std.txt" (http://x0213.org)
 
-require "convutils.pm";
+use strict;
+require convutils;
 
 # first generate UTF-8 --> SHIFT_JIS_2004 table
 
-$in_file = "sjis-0213-2004-std.txt";
+my $in_file = "sjis-0213-2004-std.txt";
 
-open(FILE, $in_file) || die("cannot open $in_file");
+open(my $in, '<', $in_file) || die("cannot open $in_file");
 
 my @mapping;
 
-while ($line = <FILE>)
+while (my $line = <$in>)
 {
 	if ($line =~ /^0x(.*)[ \t]*U\+(.*)\+(.*)[ \t]*#(.*)$/)
 	{
-		$c              = $1;
-		$u1             = $2;
-		$u2             = $3;
-		$rest           = "U+" . $u1 . "+" . $u2 . $4;
-		$code           = hex($c);
-		$ucs1           = hex($u1);
-		$ucs2           = hex($u2);
+		# combined characters
+		my ($c, $u1, $u2) = ($1, $2, $3);
+		my $rest = "U+" . $u1 . "+" . $u2 . $4;
+		my $code = hex($c);
+		my $ucs1 = hex($u1);
+		my $ucs2 = hex($u2);
 
 		push @mapping, {
 			code => $code,
@@ -40,42 +40,37 @@ while ($line = <FILE>)
 	}
 	elsif ($line =~ /^0x(.*)[ \t]*U\+(.*)[ \t]*#(.*)$/)
 	{
-		$c    = $1;
-		$u    = $2;
-		$rest = "U+" . $u . $3;
-	}
-	else
-	{
-		next;
-	}
+		# non-combined characters
+		my ($c, $u, $rest) = ($1, $2, "U+" . $2 . $3);
+		my $ucs  = hex($u);
+		my $code = hex($c);
+		my $direction;
 
-	$ucs  = hex($u);
-	$code = hex($c);
+		if ($code < 0x80 && $ucs < 0x80)
+		{
+			next;
+		}
+		elsif ($code < 0x80)
+		{
+			$direction = 'from_unicode';
+		}
+		elsif ($ucs < 0x80)
+		{
+			$direction = 'to_unicode';
+		}
+		else
+		{
+			$direction = 'both';
+		}
 
-	if ($code < 0x80 && $ucs < 0x80)
-	{
-		next;
+		push @mapping, {
+			code => $code,
+			ucs => $ucs,
+			comment => $rest,
+			direction => $direction
+		};
 	}
-	elsif ($code < 0x80)
-	{
-		$direction = 'from_unicode';
-	}
-	elsif ($ucs < 0x80)
-	{
-		$direction = 'to_unicode';
-	}
-	else
-	{
-		$direction = 'both';
-	}
-
-	push @mapping, {
-		code => $code,
-		ucs => $ucs,
-		comment => $rest,
-		direction => $direction
-	};
 }
-close(FILE);
+close($in);
 
 print_tables("SHIFT_JIS_2004", \@mapping, 1);

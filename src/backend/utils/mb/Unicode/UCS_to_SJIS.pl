@@ -11,7 +11,7 @@
 # ftp site.
 
 use strict;
-require "convutils.pm";
+require convutils;
 
 my $charset = read_source("CP932.TXT");
 

@@ -12,7 +12,7 @@
 # organization's ftp site.
 
 use strict;
-require "convutils.pm";
+require convutils;
 
 # Load JIS0212.TXT
 my $jis0212 = &read_source("JIS0212.TXT");

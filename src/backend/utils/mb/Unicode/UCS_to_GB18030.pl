@@ -13,24 +13,24 @@
 # where the "u" field is the Unicode code point in hex,
 # and the "b" field is the hex byte sequence for GB18030
 
-require "convutils.pm";
+use strict;
+require convutils;
 
 # Read the input
 
-$in_file = "gb-18030-2000.xml";
+my $in_file = "gb-18030-2000.xml";
 
-open(FILE, $in_file) || die("cannot open $in_file");
+open(my $in, '<', $in_file) || die("cannot open $in_file");
 
 my @mapping;
 
-while (<FILE>)
+while (<$in>)
 {
 	next if (!m/<a u="([0-9A-F]+)" b="([0-9A-F ]+)"/);
-	$u = $1;
-	$c = $2;
+	my ($u, $c) = ($1, $2);
 	$c =~ s/ //g;
-	$ucs  = hex($u);
-	$code = hex($c);
+	my $ucs  = hex($u);
+	my $code = hex($c);
 	if ($code >= 0x80 && $ucs >= 0x0080)
 	{
 		push @mapping, {
@@ -40,6 +40,6 @@ while (<FILE>)
 		}
 	}
 }
-close(FILE);
+close($in);
 
 print_tables("GB18030", \@mapping);

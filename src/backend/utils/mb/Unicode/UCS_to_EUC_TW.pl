@@ -17,7 +17,8 @@
 #		 UCS-2 code in hex
 #		 # and Unicode name (not used in this script)
 
-require "convutils.pm";
+use strict;
+require convutils;
 
 my $mapping = &read_source("CNS11643.TXT");
 

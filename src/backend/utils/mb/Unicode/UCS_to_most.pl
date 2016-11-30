@@ -15,9 +15,10 @@
 #		 UCS-2 code in hex
 #		 # and Unicode name (not used in this script)
 
-require "convutils.pm";
+use strict;
+require convutils;
 
-%filename = (
+my %filename = (
 	'WIN866'     => 'CP866.TXT',
 	'WIN874'     => 'CP874.TXT',
 	'WIN1250'    => 'CP1250.TXT',
@@ -46,9 +47,10 @@ require "convutils.pm";
 	'KOI8U'      => 'KOI8-U.TXT',
 	'GBK'        => 'CP936.TXT');
 
-@charsets = keys(%filename);
-@charsets = @ARGV if scalar(@ARGV);
-foreach $charset (@charsets)
+# make maps for all encodings if not specified
+my @charsets = (scalar(@ARGV) > 0) ? @ARGV : keys(%filename);
+
+foreach my $charset (@charsets)
 {
 	my $mapping = &read_source($filename{$charset});
 

@@ -13,24 +13,24 @@
 # where the "u" field is the Unicode code point in hex,
 # and the "b" field is the hex byte sequence for UHC
 
-require "convutils.pm";
+use strict;
+require convutils;
 
 # Read the input
 
-$in_file = "windows-949-2000.xml";
+my $in_file = "windows-949-2000.xml";
 
-open(FILE, $in_file) || die("cannot open $in_file");
+open(my $in, '<', $in_file) || die("cannot open $in_file");
 
 my @mapping;
 
-while (<FILE>)
+while (<$in>)
 {
 	next if (!m/<a u="([0-9A-F]+)" b="([0-9A-F ]+)"/);
-	$u = $1;
-	$c = $2;
+	my ($u, $c) = ($1, $2);
 	$c =~ s/ //g;
-	$ucs  = hex($u);
-	$code = hex($c);
+	my $ucs  = hex($u);
+	my $code = hex($c);
 
 	next if ($code == 0x0080 || $code == 0x00FF);
 
@@ -43,7 +43,7 @@ while (<FILE>)
 		}
 	}
 }
-close(FILE);
+close($in);
 
 # One extra character that's not in the source file.
 push @mapping, { direction => 'both', code => 0xa2e8, ucs => 0x327e, comment => 'CIRCLED HANGUL IEUNG U' };
