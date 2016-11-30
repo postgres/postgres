@@ -1302,7 +1302,7 @@ include_dir 'conf.d'
         If you have a dedicated database server with 1GB or more of RAM, a
         reasonable starting value for <varname>shared_buffers</varname> is 25%
         of the memory in your system.  There are some workloads where even
-        large settings for <varname>shared_buffers</varname> are effective, but
+        larger settings for <varname>shared_buffers</varname> are effective, but
         because <productname>PostgreSQL</productname> also relies on the
         operating system cache, it is unlikely that an allocation of more than
         40% of RAM to <varname>shared_buffers</varname> will work better than a
