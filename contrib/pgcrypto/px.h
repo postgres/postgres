@@ -88,10 +88,10 @@ void		px_free(void *p);
 #define PXE_PGP_COMPRESSION_ERROR	-105
 #define PXE_PGP_NOT_TEXT			-106
 #define PXE_PGP_UNEXPECTED_PKT		-107
-#define PXE_PGP_NO_BIGNUM			-108
+/* -108 is unused */
 #define PXE_PGP_MATH_FAILED			-109
 #define PXE_PGP_SHORT_ELGAMAL_KEY	-110
-#define PXE_PGP_RSA_UNSUPPORTED		-111
+/* -111 is unused */
 #define PXE_PGP_UNKNOWN_PUBALGO		-112
 #define PXE_PGP_WRONG_KEY			-113
 #define PXE_PGP_MULTIPLE_KEYS		-114
