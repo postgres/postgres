@@ -5736,7 +5736,8 @@ PQhost(const PGconn *conn)
 {
 	if (!conn)
 		return NULL;
-	if (conn->connhost != NULL)
+	if (conn->connhost != NULL &&
+		conn->connhost[conn->whichhost].type != CHT_HOST_ADDRESS)
 		return conn->connhost[conn->whichhost].host;
 	else if (conn->pghost != NULL && conn->pghost[0] != '\0')
 		return conn->pghost;
