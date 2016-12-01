@@ -1717,7 +1717,7 @@ build_hash_table(AggState *aggstate)
 	additionalsize = aggstate->numaggs * sizeof(AggStatePerGroupData);
 
 	aggstate->hashtable = BuildTupleHashTable(node->numCols,
-											  node->grpColIdx,
+											  aggstate->hashGrpColIdxHash,
 											  aggstate->phase->eqfunctions,
 											  aggstate->hashfunctions,
 											  node->numGroups,
@@ -1727,29 +1727,24 @@ build_hash_table(AggState *aggstate)
 }
 
 /*
- * Create a list of the tuple columns that actually need to be stored in
- * hashtable entries.  The incoming tuples from the child plan node will
- * contain grouping columns, other columns referenced in our targetlist and
- * qual, columns used to compute the aggregate functions, and perhaps just
- * junk columns we don't use at all.  Only columns of the first two types
- * need to be stored in the hashtable, and getting rid of the others can
- * make the table entries significantly smaller.  To avoid messing up Var
- * numbering, we keep the same tuple descriptor for hashtable entries as the
- * incoming tuples have, but set unwanted columns to NULL in the tuples that
- * go into the table.
+ * Compute columns that actually need to be stored in hashtable entries.  The
+ * incoming tuples from the child plan node will contain grouping columns,
+ * other columns referenced in our targetlist and qual, columns used to
+ * compute the aggregate functions, and perhaps just junk columns we don't use
+ * at all.  Only columns of the first two types need to be stored in the
+ * hashtable, and getting rid of the others can make the table entries
+ * significantly smaller.  The hashtable only contains the relevant columns,
+ * and is packed/unpacked in lookup_hash_entry() / agg_retrieve_hash_table()
+ * into the format of the normal input descriptor.
  *
- * To eliminate duplicates, we build a bitmapset of the needed columns, then
- * convert it to an integer list (cheaper to scan at runtime). The list is
- * in decreasing order so that the first entry is the largest;
- * lookup_hash_entry depends on this to use slot_getsomeattrs correctly.
- * Note that the list is preserved over ExecReScanAgg, so we allocate it in
- * the per-query context (unlike the hash table itself).
+ * Additional columns, in addition to the columns grouped by, come from two
+ * sources: Firstly functionally dependent columns that we don't need to group
+ * by themselves, and secondly ctids for row-marks.
  *
- * Note: at present, searching the tlist/qual is not really necessary since
- * the parser should disallow any unaggregated references to ungrouped
- * columns.  However, the search will be needed when we add support for
- * SQL99 semantics that allow use of "functionally dependent" columns that
- * haven't been explicitly grouped by.
+ * To eliminate duplicates, we build a bitmapset of the needed columns, and
+ * then build an array of the columns included in the hashtable.  Note that
+ * the array is preserved over ExecReScanAgg, so we allocate it in the
+ * per-query context (unlike the hash table itself).
  */
 static List *
 find_hash_columns(AggState *aggstate)
@@ -1757,7 +1752,12 @@ find_hash_columns(AggState *aggstate)
 	Agg		   *node = (Agg *) aggstate->ss.ps.plan;
 	Bitmapset  *colnos;
 	List	   *collist;
+	TupleDesc	hashDesc;
+	List	   *outerTlist = outerPlanState(aggstate)->plan->targetlist;
+	List		*hashTlist = NIL;
 	int			i;
+
+	aggstate->largestGrpColIdx = 0;
 
 	/* Find Vars that will be needed in tlist and qual */
 	colnos = find_unaggregated_cols(aggstate);
@@ -1766,8 +1766,49 @@ find_hash_columns(AggState *aggstate)
 		colnos = bms_add_member(colnos, node->grpColIdx[i]);
 	/* Convert to list, using lcons so largest element ends up first */
 	collist = NIL;
+
+	aggstate->hashGrpColIdxInput =
+		palloc(bms_num_members(colnos) * sizeof(AttrNumber));
+	aggstate->hashGrpColIdxHash =
+		palloc(node->numCols * sizeof(AttrNumber));
+
+	/*
+	 * First build mapping for columns directly hashed. These are the first,
+	 * because they'll be accessed when computing hash values and comparing
+	 * tuples for exact matches. We also build simple mapping for
+	 * execGrouping, so it knows where to find the to-be-hashed / compared
+	 * columns in the input.
+	 */
+	for (i = 0; i < node->numCols; i++)
+	{
+		aggstate->hashGrpColIdxInput[i] = node->grpColIdx[i];
+		aggstate->hashGrpColIdxHash[i] = i + 1;
+		aggstate->numhashGrpCols++;
+		/* delete already mapped columns */
+		bms_del_member(colnos, node->grpColIdx[i]);
+	}
+
+	/* and add the remaining columns */
 	while ((i = bms_first_member(colnos)) >= 0)
-		collist = lcons_int(i, collist);
+	{
+		aggstate->hashGrpColIdxInput[aggstate->numhashGrpCols] = i;
+		aggstate->numhashGrpCols++;
+	}
+
+	/* and build a tuple descriptor for the hashtable */
+	for (i = 0; i < aggstate->numhashGrpCols; i++)
+	{
+		int			varNumber = aggstate->hashGrpColIdxInput[i] - 1;
+
+		hashTlist = lappend(hashTlist, list_nth(outerTlist, varNumber));
+		aggstate->largestGrpColIdx =
+			Max(varNumber + 1, aggstate->largestGrpColIdx);
+	}
+
+	hashDesc = ExecTypeFromTL(hashTlist, false);
+	ExecSetSlotDescriptor(aggstate->hashslot, hashDesc);
+
+	list_free(hashTlist);
 	bms_free(colnos);
 
 	return collist;
@@ -1804,27 +1845,22 @@ static TupleHashEntryData *
 lookup_hash_entry(AggState *aggstate, TupleTableSlot *inputslot)
 {
 	TupleTableSlot *hashslot = aggstate->hashslot;
-	ListCell   *l;
 	TupleHashEntryData *entry;
 	bool		isnew;
-
-	/* if first time through, initialize hashslot by cloning input slot */
-	if (hashslot->tts_tupleDescriptor == NULL)
-	{
-		ExecSetSlotDescriptor(hashslot, inputslot->tts_tupleDescriptor);
-		/* Make sure all unused columns are NULLs */
-		ExecStoreAllNullTuple(hashslot);
-	}
+	int i;
 
 	/* transfer just the needed columns into hashslot */
-	slot_getsomeattrs(inputslot, linitial_int(aggstate->hash_needed));
-	foreach(l, aggstate->hash_needed)
-	{
-		int			varNumber = lfirst_int(l) - 1;
+	slot_getsomeattrs(inputslot, aggstate->largestGrpColIdx);
+	ExecClearTuple(hashslot);
 
-		hashslot->tts_values[varNumber] = inputslot->tts_values[varNumber];
-		hashslot->tts_isnull[varNumber] = inputslot->tts_isnull[varNumber];
+	for (i = 0; i < aggstate->numhashGrpCols; i++)
+	{
+		int			varNumber = aggstate->hashGrpColIdxInput[i] - 1;
+
+		hashslot->tts_values[i] = inputslot->tts_values[varNumber];
+		hashslot->tts_isnull[i] = inputslot->tts_isnull[varNumber];
 	}
+	ExecStoreVirtualTuple(hashslot);
 
 	/* find or create the hashtable entry using the filtered tuple */
 	entry = LookupTupleHashEntry(aggstate->hashtable, hashslot, &isnew);
@@ -2286,6 +2322,7 @@ agg_retrieve_hash_table(AggState *aggstate)
 	TupleHashEntryData *entry;
 	TupleTableSlot *firstSlot;
 	TupleTableSlot *result;
+	TupleTableSlot *hashslot;
 
 	/*
 	 * get state info from node
@@ -2294,6 +2331,8 @@ agg_retrieve_hash_table(AggState *aggstate)
 	econtext = aggstate->ss.ps.ps_ExprContext;
 	peragg = aggstate->peragg;
 	firstSlot = aggstate->ss.ss_ScanTupleSlot;
+	hashslot = aggstate->hashslot;
+
 
 	/*
 	 * We loop retrieving groups until we find one satisfying
@@ -2301,6 +2340,8 @@ agg_retrieve_hash_table(AggState *aggstate)
 	 */
 	while (!aggstate->agg_done)
 	{
+		int i;
+
 		/*
 		 * Find the next entry in the hash table
 		 */
@@ -2322,12 +2363,24 @@ agg_retrieve_hash_table(AggState *aggstate)
 		ResetExprContext(econtext);
 
 		/*
-		 * Store the copied first input tuple in the tuple table slot reserved
-		 * for it, so that it can be used in ExecProject.
+		 * Transform representative tuple back into one with the right
+		 * columns.
 		 */
-		ExecStoreMinimalTuple(entry->firstTuple,
-							  firstSlot,
-							  false);
+		ExecStoreMinimalTuple(entry->firstTuple, hashslot, false);
+		slot_getallattrs(hashslot);
+
+		ExecClearTuple(firstSlot);
+		memset(firstSlot->tts_isnull, true,
+			   firstSlot->tts_tupleDescriptor->natts * sizeof(bool));
+
+		for (i = 0; i < aggstate->numhashGrpCols; i++)
+		{
+			int			varNumber = aggstate->hashGrpColIdxInput[i] - 1;
+
+			firstSlot->tts_values[varNumber] = hashslot->tts_values[i];
+			firstSlot->tts_isnull[varNumber] = hashslot->tts_isnull[i];
+		}
+		ExecStoreVirtualTuple(firstSlot);
 
 		pergroup = (AggStatePerGroup) entry->additional;
 
@@ -2605,16 +2658,6 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		aggstate->all_grouped_cols = lcons_int(i, aggstate->all_grouped_cols);
 
 	/*
-	 * Hashing can only appear in the initial phase.
-	 */
-
-	if (node->aggstrategy == AGG_HASHED)
-		execTuplesHashPrepare(node->numCols,
-							  node->grpOperators,
-							  &aggstate->phases[0].eqfunctions,
-							  &aggstate->hashfunctions);
-
-	/*
 	 * Initialize current phase-dependent values to initial phase
 	 */
 
@@ -2635,12 +2678,21 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	aggstate->peragg = peraggs;
 	aggstate->pertrans = pertransstates;
 
+
+	/*
+	 * Hashing can only appear in the initial phase.
+	 */
 	if (node->aggstrategy == AGG_HASHED)
 	{
+		find_hash_columns(aggstate);
+
+		execTuplesHashPrepare(node->numCols,
+							  node->grpOperators,
+							  &aggstate->phases[0].eqfunctions,
+							  &aggstate->hashfunctions);
+
 		build_hash_table(aggstate);
 		aggstate->table_filled = false;
-		/* Compute the columns we actually need to hash on */
-		aggstate->hash_needed = find_hash_columns(aggstate);
 	}
 	else
 	{

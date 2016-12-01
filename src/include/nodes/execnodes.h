@@ -1860,7 +1860,10 @@ typedef struct AggState
 	/* these fields are used in AGG_HASHED mode: */
 	TupleHashTable hashtable;	/* hash table with one entry per group */
 	TupleTableSlot *hashslot;	/* slot for loading hash table */
-	List	   *hash_needed;	/* list of columns needed in hash table */
+	int			numhashGrpCols;	/* number of columns in hash table */
+	int			largestGrpColIdx; /* largest column required for hashing */
+	AttrNumber *hashGrpColIdxInput;	/* and their indices in input slot */
+	AttrNumber *hashGrpColIdxHash;	/* indices for execGrouping in hashtbl */
 	bool		table_filled;	/* hash table filled yet? */
 	TupleHashIterator hashiter; /* for iterating through hash table */
 	/* support for evaluation of agg inputs */
