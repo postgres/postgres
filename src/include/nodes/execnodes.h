@@ -1863,6 +1863,10 @@ typedef struct AggState
 	List	   *hash_needed;	/* list of columns needed in hash table */
 	bool		table_filled;	/* hash table filled yet? */
 	TupleHashIterator hashiter; /* for iterating through hash table */
+	/* support for evaluation of agg inputs */
+	TupleTableSlot *evalslot;	/* slot for agg inputs */
+	ProjectionInfo *evalproj;	/* projection machinery */
+	TupleDesc	evaldesc;		/* descriptor of input tuples */
 } AggState;
 
 /* ----------------
