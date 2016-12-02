@@ -30,6 +30,8 @@
  *		cursor	is initialized to zero by makeStringInfo or initStringInfo,
  *				but is not otherwise touched by the stringinfo.c routines.
  *				Some routines use it to scan through a StringInfo.
+ *		long_ok whether this StringInfo can allocate more than MaxAllocSize
+ *				bytes (but still up to 2GB).
  *-------------------------
  */
 typedef struct StringInfoData
@@ -38,6 +40,7 @@ typedef struct StringInfoData
 	int			len;
 	int			maxlen;
 	int			cursor;
+	bool		long_ok;
 } StringInfoData;
 
 typedef StringInfoData *StringInfo;
@@ -46,11 +49,11 @@ typedef StringInfoData *StringInfo;
 /*------------------------
  * There are two ways to create a StringInfo object initially:
  *
- * StringInfo stringptr = makeStringInfo();
+ * StringInfo stringptr = makeStringInfo(); // or makeLongStringInfo();
  *		Both the StringInfoData and the data buffer are palloc'd.
  *
  * StringInfoData string;
- * initStringInfo(&string);
+ * initStringInfo(&string); // or initLongStringInfo();
  *		The data buffer is palloc'd but the StringInfoData is just local.
  *		This is the easiest approach for a StringInfo object that will
  *		only live as long as the current routine.
@@ -67,21 +70,26 @@ typedef StringInfoData *StringInfo;
 
 /*------------------------
  * makeStringInfo
- * Create an empty 'StringInfoData' & return a pointer to it.
+ * makeLongStringInfo
+ * Create an empty 'StringInfoData' & return a pointer to it.  The former
+ * allows up to 1 GB in size, per palloc(); the latter allows up to 2 GB.
  */
 extern StringInfo makeStringInfo(void);
+extern StringInfo makeLongStringInfo(void);
 
 /*------------------------
  * initStringInfo
+ * initLongStringInfo
  * Initialize a StringInfoData struct (with previously undefined contents)
- * to describe an empty string.
+ * to describe an empty string.  Size limits as above.
  */
 extern void initStringInfo(StringInfo str);
+extern void initLongStringInfo(StringInfo str);
 
 /*------------------------
  * resetStringInfo
  * Clears the current content of the StringInfo, if any. The
- * StringInfo remains valid.
+ * StringInfo remains valid.  The long_ok flag is not reset.
  */
 extern void resetStringInfo(StringInfo str);
 

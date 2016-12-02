@@ -397,7 +397,7 @@ ReceiveCopyBegin(CopyState cstate)
 			pq_sendint(&buf, format, 2);		/* per-column formats */
 		pq_endmessage(&buf);
 		cstate->copy_dest = COPY_NEW_FE;
-		cstate->fe_msgbuf = makeStringInfo();
+		cstate->fe_msgbuf = makeLongStringInfo();
 	}
 	else if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 2)
 	{
@@ -1903,7 +1903,7 @@ CopyTo(CopyState cstate)
 	cstate->null_print_client = cstate->null_print;		/* default */
 
 	/* We use fe_msgbuf as a per-row buffer regardless of copy_dest */
-	cstate->fe_msgbuf = makeStringInfo();
+	cstate->fe_msgbuf = makeLongStringInfo();
 
 	/* Get info about the columns we need to process. */
 	cstate->out_functions = (FmgrInfo *) palloc(num_phys_attrs * sizeof(FmgrInfo));
@@ -2717,8 +2717,8 @@ BeginCopyFrom(Relation rel,
 	cstate->cur_attval = NULL;
 
 	/* Set up variables to avoid per-attribute overhead. */
-	initStringInfo(&cstate->attribute_buf);
-	initStringInfo(&cstate->line_buf);
+	initLongStringInfo(&cstate->attribute_buf);
+	initLongStringInfo(&cstate->line_buf);
 	cstate->line_buf_converted = false;
 	cstate->raw_buf = (char *) palloc(RAW_BUF_SIZE + 1);
 	cstate->raw_buf_index = cstate->raw_buf_len = 0;
