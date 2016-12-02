@@ -4,7 +4,8 @@
  *
  * StringInfo provides an indefinitely-extensible string data type.
  * It can be used to buffer either ordinary C strings (null-terminated text)
- * or arbitrary binary data.  All storage is allocated with palloc().
+ * or arbitrary binary data.  All storage is allocated with palloc() and
+ * friends.
  *
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -37,10 +38,28 @@ makeStringInfo(void)
 }
 
 /*
+ * makeLongStringInfo
+ *
+ * Same as makeStringInfo, for larger strings.
+ */
+StringInfo
+makeLongStringInfo(void)
+{
+	StringInfo	res;
+
+	res = (StringInfo) palloc(sizeof(StringInfoData));
+
+	initLongStringInfo(res);
+
+	return res;
+}
+
+
+/*
  * initStringInfo
  *
  * Initialize a StringInfoData struct (with previously undefined contents)
- * to describe an empty string.
+ * to describe an empty string; don't enable long strings yet.
  */
 void
 initStringInfo(StringInfo str)
@@ -49,7 +68,20 @@ initStringInfo(StringInfo str)
 
 	str->data = (char *) palloc(size);
 	str->maxlen = size;
+	str->long_ok = false;
 	resetStringInfo(str);
+}
+
+/*
+ * initLongStringInfo
+ *
+ * Same as initStringInfo, plus enable long strings.
+ */
+void
+initLongStringInfo(StringInfo str)
+{
+	initStringInfo(str);
+	str->long_ok = true;
 }
 
 /*
@@ -142,7 +174,7 @@ appendStringInfoVA(StringInfo str, const char *fmt, va_list args)
 	/*
 	 * Return pvsnprintf's estimate of the space needed.  (Although this is
 	 * given as a size_t, we know it will fit in int because it's not more
-	 * than MaxAllocSize.)
+	 * than either MaxAllocSize or half an int's width.)
 	 */
 	return (int) nprinted;
 }
@@ -244,7 +276,17 @@ appendBinaryStringInfo(StringInfo str, const char *data, int datalen)
 void
 enlargeStringInfo(StringInfo str, int needed)
 {
-	int			newlen;
+	Size		newlen;
+	Size		limit;
+
+	/*
+	 * Determine the upper size limit.  Because of overflow concerns outside
+	 * of this module, we limit ourselves to 4-byte signed integer range,
+	 * even for "long_ok" strings.
+	 */
+	limit = str->long_ok ?
+		(((Size) 1) << (sizeof(int32) * 8 - 1)) - 1 :
+		MaxAllocSize;
 
 	/*
 	 * Guard against out-of-range "needed" values.  Without this, we can get
@@ -252,7 +294,7 @@ enlargeStringInfo(StringInfo str, int needed)
 	 */
 	if (needed < 0)				/* should not happen */
 		elog(ERROR, "invalid string enlargement request size: %d", needed);
-	if (((Size) needed) >= (MaxAllocSize - (Size) str->len))
+	if (((Size) needed) >= (limit - (Size) str->len))
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("out of memory"),
@@ -261,7 +303,7 @@ enlargeStringInfo(StringInfo str, int needed)
 
 	needed += str->len + 1;		/* total space required now */
 
-	/* Because of the above test, we now have needed <= MaxAllocSize */
+	/* Because of the above test, we now have needed <= limit */
 
 	if (needed <= str->maxlen)
 		return;					/* got enough space already */
@@ -276,14 +318,14 @@ enlargeStringInfo(StringInfo str, int needed)
 		newlen = 2 * newlen;
 
 	/*
-	 * Clamp to MaxAllocSize in case we went past it.  Note we are assuming
-	 * here that MaxAllocSize <= INT_MAX/2, else the above loop could
-	 * overflow.  We will still have newlen >= needed.
+	 * Clamp to the limit in case we went past it.  Note we are assuming here
+	 * that limit <= INT_MAX/2, else the above loop could overflow.  We will
+	 * still have newlen >= needed.
 	 */
-	if (newlen > (int) MaxAllocSize)
-		newlen = (int) MaxAllocSize;
+	if (newlen > limit)
+		newlen = limit;
 
-	str->data = (char *) repalloc(str->data, newlen);
+	str->data = (char *) repalloc_huge(str->data, (Size) newlen);
 
 	str->maxlen = newlen;
 }
