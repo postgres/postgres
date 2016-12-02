@@ -2416,6 +2416,12 @@ dlist_iter
 dlist_mutable_iter
 dlist_node
 ds_state
+dsa_area
+dsa_area_control
+dsa_area_pool
+dsa_area_span
+dsa_segment_header
+dsa_segment_map
 dsm_control_header
 dsm_control_item
 dsm_handle
