@@ -2477,7 +2477,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL,
 		},
 		&max_worker_processes,
-		8, 0, MAX_BACKENDS,
+		16, 0, MAX_BACKENDS,
 		check_max_worker_processes, NULL, NULL
 	},
 
@@ -2661,6 +2661,16 @@ static struct config_int ConfigureNamesInt[] =
 		},
 		&max_parallel_workers_per_gather,
 		2, 0, 1024,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"max_parallel_workers", PGC_USERSET, RESOURCES_ASYNCHRONOUS,
+			gettext_noop("Sets the maximum number of parallel workers than can be active at one time."),
+			NULL
+		},
+		&max_parallel_workers,
+		8, 0, 1024,
 		NULL, NULL, NULL
 	},
 

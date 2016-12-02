@@ -1982,7 +1982,7 @@ include_dir 'conf.d'
         <para>
          Sets the maximum number of background processes that the system
          can support.  This parameter can only be set at server start.  The
-         default is 8.
+         default is 16.
         </para>
 
         <para>
@@ -2004,8 +2004,9 @@ include_dir 'conf.d'
          Sets the maximum number of workers that can be started by a single
          <literal>Gather</literal> node.  Parallel workers are taken from the
          pool of processes established by
-         <xref linkend="guc-max-worker-processes">.  Note that the requested
-         number of workers may not actually be available at run time.  If this
+         <xref linkend="guc-max-worker-processes">, limited by
+         <xref linkend="guc-max-parallel-workers">.  Note that the requested
+         number of workers may not actually be available at runtime.  If this
          occurs, the plan will run with fewer workers than expected, which may
          be inefficient.  The default value is 2.  Setting this value to 0
          disables parallel query execution.
@@ -2030,6 +2031,22 @@ include_dir 'conf.d'
         <para>
          For more information on parallel query, see
          <xref linkend="parallel-query">.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry id="guc-max-parallel-workers" xreflabel="max_parallel_workers">
+       <term><varname>max_parallel_workers</varname> (<type>integer</type>)
+       <indexterm>
+        <primary><varname>max_parallel_workers</> configuration parameter</primary>
+       </indexterm>
+       </term>
+       <listitem>
+        <para>
+         Sets the maximum number of workers that the system can support for
+         parallel queries.  The default value is 8.  When increasing or
+         decreasing this value, consider also adjusting
+         <xref linkend="guc-max-parallel-workers-per-gather">.
         </para>
        </listitem>
       </varlistentry>

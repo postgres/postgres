@@ -454,7 +454,8 @@ LaunchParallelWorkers(ParallelContext *pcxt)
 	snprintf(worker.bgw_name, BGW_MAXLEN, "parallel worker for PID %d",
 			 MyProcPid);
 	worker.bgw_flags =
-		BGWORKER_SHMEM_ACCESS | BGWORKER_BACKEND_DATABASE_CONNECTION;
+		BGWORKER_SHMEM_ACCESS | BGWORKER_BACKEND_DATABASE_CONNECTION
+		| BGWORKER_CLASS_PARALLEL;
 	worker.bgw_start_time = BgWorkerStart_ConsistentState;
 	worker.bgw_restart_time = BGW_NEVER_RESTART;
 	worker.bgw_main = ParallelWorkerMain;

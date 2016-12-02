@@ -58,6 +58,15 @@
  */
 #define BGWORKER_BACKEND_DATABASE_CONNECTION		0x0002
 
+/*
+ * This class is used internally for parallel queries, to keep track of the
+ * number of active parallel workers and make sure we never launch more than
+ * max_parallel_workers parallel workers at the same time.  Third party
+ * background workers should not use this class.
+ */
+#define BGWORKER_CLASS_PARALLEL					0x0010
+/* add additional bgworker classes here */
+
 
 typedef void (*bgworker_main_type) (Datum main_arg);
 

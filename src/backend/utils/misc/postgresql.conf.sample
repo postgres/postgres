@@ -161,8 +161,9 @@
 # - Asynchronous Behavior -
 
 #effective_io_concurrency = 1		# 1-1000; 0 disables prefetching
-#max_worker_processes = 8		# (change requires restart)
+#max_worker_processes = 16		# (change requires restart)
 #max_parallel_workers_per_gather = 2	# taken from max_worker_processes
+#max_parallel_workers = 8	    # total maximum number of worker_processes
 #old_snapshot_threshold = -1		# 1min-60d; -1 disables; 0 is immediate
 					# (change requires restart)
 #backend_flush_after = 0		# measured in pages, 0 disables
