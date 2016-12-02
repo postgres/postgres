@@ -161,37 +161,37 @@ typedef void (*walrcv_disconnect_fn) (WalReceiverConn *conn);
 
 typedef struct WalReceiverFunctionsType
 {
-	walrcv_connect_fn					connect;
-	walrcv_get_conninfo_fn				get_conninfo;
-	walrcv_identify_system_fn			identify_system;
-	walrcv_readtimelinehistoryfile_fn	readtimelinehistoryfile;
-	walrcv_startstreaming_fn			startstreaming;
-	walrcv_endstreaming_fn				endstreaming;
-	walrcv_receive_fn					receive;
-	walrcv_send_fn						send;
-	walrcv_disconnect_fn				disconnect;
+	walrcv_connect_fn					walrcv_connect;
+	walrcv_get_conninfo_fn				walrcv_get_conninfo;
+	walrcv_identify_system_fn			walrcv_identify_system;
+	walrcv_readtimelinehistoryfile_fn	walrcv_readtimelinehistoryfile;
+	walrcv_startstreaming_fn			walrcv_startstreaming;
+	walrcv_endstreaming_fn				walrcv_endstreaming;
+	walrcv_receive_fn					walrcv_receive;
+	walrcv_send_fn						walrcv_send;
+	walrcv_disconnect_fn				walrcv_disconnect;
 } WalReceiverFunctionsType;
 
 extern PGDLLIMPORT WalReceiverFunctionsType *WalReceiverFunctions;
 
 #define walrcv_connect(conninfo, logical, appname) \
-	WalReceiverFunctions->connect(conninfo, logical, appname)
+	WalReceiverFunctions->walrcv_connect(conninfo, logical, appname)
 #define walrcv_get_conninfo(conn) \
-	WalReceiverFunctions->get_conninfo(conn)
+	WalReceiverFunctions->walrcv_get_conninfo(conn)
 #define walrcv_identify_system(conn, primary_tli) \
-	WalReceiverFunctions->identify_system(conn, primary_tli)
+	WalReceiverFunctions->walrcv_identify_system(conn, primary_tli)
 #define walrcv_readtimelinehistoryfile(conn, tli, filename, content, size) \
-	WalReceiverFunctions->readtimelinehistoryfile(conn, tli, filename, content, size)
+	WalReceiverFunctions->walrcv_readtimelinehistoryfile(conn, tli, filename, content, size)
 #define walrcv_startstreaming(conn, tli, startpoint, slotname) \
-	WalReceiverFunctions->startstreaming(conn, tli, startpoint, slotname)
+	WalReceiverFunctions->walrcv_startstreaming(conn, tli, startpoint, slotname)
 #define walrcv_endstreaming(conn, next_tli) \
-	WalReceiverFunctions->endstreaming(conn, next_tli)
+	WalReceiverFunctions->walrcv_endstreaming(conn, next_tli)
 #define walrcv_receive(conn, buffer, wait_fd) \
-	WalReceiverFunctions->receive(conn, buffer, wait_fd)
+	WalReceiverFunctions->walrcv_receive(conn, buffer, wait_fd)
 #define walrcv_send(conn, buffer, nbytes) \
-	WalReceiverFunctions->send(conn, buffer, nbytes)
+	WalReceiverFunctions->walrcv_send(conn, buffer, nbytes)
 #define walrcv_disconnect(conn) \
-	WalReceiverFunctions->disconnect(conn)
+	WalReceiverFunctions->walrcv_disconnect(conn)
 
 /* prototypes for functions in walreceiver.c */
 extern void WalReceiverMain(void) pg_attribute_noreturn();
