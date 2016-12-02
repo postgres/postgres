@@ -46,7 +46,7 @@ typedef struct dsa_area dsa_area;
  * dsa_get_address.  Also, an atomic version and appropriately sized atomic
  * operations.
  */
-#if DSA_POINTER_SIZEOF == 4
+#if SIZEOF_DSA_POINTER == 4
 typedef uint32 dsa_pointer;
 typedef pg_atomic_uint32 dsa_pointer_atomic;
 #define dsa_pointer_atomic_init pg_atomic_init_u32
