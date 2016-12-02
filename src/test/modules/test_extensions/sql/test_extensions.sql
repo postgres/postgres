@@ -55,7 +55,7 @@ do 'declare c int = 0;
 begin
   while (select count(*) from pg_stat_activity where pid = '
     :'oldpid'
-  ') > 0 loop c := c + 1; end loop;
+  ') > 0 loop c := c + 1; perform pg_stat_clear_snapshot(); end loop;
   raise log ''test_extensions looped % times'', c;
 end';
 
