@@ -1285,10 +1285,6 @@ heap_create_with_catalog(const char *relname,
 	 * should they have any ACL entries.  The same applies for extension
 	 * dependencies.
 	 *
-	 * If it's a temp table, we do not make it an extension member; this
-	 * prevents the unintuitive result that deletion of the temp table at
-	 * session end would make the whole extension go away.
-	 *
 	 * Also, skip this in bootstrap mode, since we don't make dependencies
 	 * while bootstrapping.
 	 */
@@ -1309,8 +1305,7 @@ heap_create_with_catalog(const char *relname,
 
 		recordDependencyOnOwner(RelationRelationId, relid, ownerid);
 
-		if (relpersistence != RELPERSISTENCE_TEMP)
-			recordDependencyOnCurrentExtension(&myself, false);
+		recordDependencyOnCurrentExtension(&myself, false);
 
 		if (reloftypeid)
 		{

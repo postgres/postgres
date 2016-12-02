@@ -2218,7 +2218,10 @@ do_autovacuum(void)
 		object.classId = RelationRelationId;
 		object.objectId = relid;
 		object.objectSubId = 0;
-		performDeletion(&object, DROP_CASCADE, PERFORM_DELETION_INTERNAL);
+		performDeletion(&object, DROP_CASCADE,
+						PERFORM_DELETION_INTERNAL |
+						PERFORM_DELETION_QUIETLY |
+						PERFORM_DELETION_SKIP_EXTENSIONS);
 
 		/*
 		 * To commit the deletion, end current transaction and start a new

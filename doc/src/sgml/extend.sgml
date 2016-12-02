@@ -390,6 +390,15 @@
     schema(s) its member objects are within.
    </para>
 
+   <para>
+    If an extension's script creates any temporary objects (such as temp
+    tables), those objects are treated as extension members for the
+    remainder of the current session, but are automatically dropped at
+    session end, as any temporary object would be.  This is an exception
+    to the rule that extension member objects cannot be dropped without
+    dropping the whole extension.
+   </para>
+
    <sect2>
     <title>Extension Files</title>
 
@@ -803,7 +812,8 @@ SELECT pg_catalog.pg_extension_config_dump('my_config', 'WHERE NOT standard_entr
      environment that <command>CREATE EXTENSION</> provides for installation
      scripts: in particular, <varname>search_path</> is set up in the same
      way, and any new objects created by the script are automatically added
-     to the extension.
+     to the extension.  Also, if the script chooses to drop extension member
+     objects, they are automatically dissociated from the extension.
     </para>
 
     <para>

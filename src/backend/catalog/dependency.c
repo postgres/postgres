@@ -168,6 +168,7 @@ static const Oid object_classes[] = {
 
 
 static void findDependentObjects(const ObjectAddress *object,
+					 int objflags,
 					 int flags,
 					 ObjectAddressStack *stack,
 					 ObjectAddresses *targetObjects,
@@ -175,7 +176,7 @@ static void findDependentObjects(const ObjectAddress *object,
 					 Relation *depRel);
 static void reportDependentObjects(const ObjectAddresses *targetObjects,
 					   DropBehavior behavior,
-					   int msglevel,
+					   int flags,
 					   const ObjectAddress *origObject);
 static void deleteOneObject(const ObjectAddress *object,
 				Relation *depRel, int32 flags);
@@ -237,11 +238,17 @@ deleteObjectsInList(ObjectAddresses *targetObjects, Relation *depRel,
 	}
 
 	/*
-	 * Delete all the objects in the proper order.
+	 * Delete all the objects in the proper order, except that if told to, we
+	 * should skip the original object(s).
 	 */
 	for (i = 0; i < targetObjects->numrefs; i++)
 	{
 		ObjectAddress *thisobj = targetObjects->refs + i;
+		ObjectAddressExtra *thisextra = targetObjects->extras + i;
+
+		if ((flags & PERFORM_DELETION_SKIP_ORIGINAL) &&
+			(thisextra->flags & DEPFLAG_ORIGINAL))
+			continue;
 
 		deleteOneObject(thisobj, depRel, flags);
 	}
@@ -255,16 +262,32 @@ deleteObjectsInList(ObjectAddresses *targetObjects, Relation *depRel,
  * according to the dependency type.
  *
  * This is the outer control routine for all forms of DROP that drop objects
- * that can participate in dependencies.  Note that the next two routines
- * are variants on the same theme; if you change anything here you'll likely
- * need to fix them too.
+ * that can participate in dependencies.  Note that performMultipleDeletions
+ * is a variant on the same theme; if you change anything here you'll likely
+ * need to fix that too.
  *
- * flags should include PERFORM_DELETION_INTERNAL when the drop operation is
- * not the direct result of a user-initiated action.  For example, when a
- * temporary schema is cleaned out so that a new backend can use it, or when
- * a column default is dropped as an intermediate step while adding a new one,
- * that's an internal operation.  On the other hand, when we drop something
- * because the user issued a DROP statement against it, that's not internal.
+ * Bits in the flags argument can include:
+ *
+ * PERFORM_DELETION_INTERNAL: indicates that the drop operation is not the
+ * direct result of a user-initiated action.  For example, when a temporary
+ * schema is cleaned out so that a new backend can use it, or when a column
+ * default is dropped as an intermediate step while adding a new one, that's
+ * an internal operation.  On the other hand, when we drop something because
+ * the user issued a DROP statement against it, that's not internal. Currently
+ * this suppresses calling event triggers and making some permissions checks.
+ *
+ * PERFORM_DELETION_CONCURRENTLY: perform the drop concurrently.  This does
+ * not currently work for anything except dropping indexes; don't set it for
+ * other object types or you may get strange results.
+ *
+ * PERFORM_DELETION_QUIETLY: reduce message level from NOTICE to DEBUG2.
+ *
+ * PERFORM_DELETION_SKIP_ORIGINAL: do not delete the specified object(s),
+ * but only what depends on it/them.
+ *
+ * PERFORM_DELETION_SKIP_EXTENSIONS: do not delete extensions, even when
+ * deleting objects that are part of an extension.  This should generally
+ * be used only when dropping temporary objects.
  */
 void
 performDeletion(const ObjectAddress *object,
@@ -293,6 +316,7 @@ performDeletion(const ObjectAddress *object,
 
 	findDependentObjects(object,
 						 DEPFLAG_ORIGINAL,
+						 flags,
 						 NULL,	/* empty stack */
 						 targetObjects,
 						 NULL,	/* no pendingObjects */
@@ -303,7 +327,7 @@ performDeletion(const ObjectAddress *object,
 	 */
 	reportDependentObjects(targetObjects,
 						   behavior,
-						   NOTICE,
+						   flags,
 						   object);
 
 	/* do the deed */
@@ -364,6 +388,7 @@ performMultipleDeletions(const ObjectAddresses *objects,
 
 		findDependentObjects(thisobj,
 							 DEPFLAG_ORIGINAL,
+							 flags,
 							 NULL,		/* empty stack */
 							 targetObjects,
 							 objects,
@@ -378,93 +403,11 @@ performMultipleDeletions(const ObjectAddresses *objects,
 	 */
 	reportDependentObjects(targetObjects,
 						   behavior,
-						   NOTICE,
+						   flags,
 						   (objects->numrefs == 1 ? objects->refs : NULL));
 
 	/* do the deed */
 	deleteObjectsInList(targetObjects, &depRel, flags);
-
-	/* And clean up */
-	free_object_addresses(targetObjects);
-
-	heap_close(depRel, RowExclusiveLock);
-}
-
-/*
- * deleteWhatDependsOn: attempt to drop everything that depends on the
- * specified object, though not the object itself.  Behavior is always
- * CASCADE.
- *
- * This is currently used only to clean out the contents of a schema
- * (namespace): the passed object is a namespace.  We normally want this
- * to be done silently, so there's an option to suppress NOTICE messages.
- *
- * Note we don't fire object drop event triggers here; it would be wrong to do
- * so for the current only use of this function, but if more callers are added
- * this might need to be reconsidered.
- */
-void
-deleteWhatDependsOn(const ObjectAddress *object,
-					bool showNotices)
-{
-	Relation	depRel;
-	ObjectAddresses *targetObjects;
-	int			i;
-
-	/*
-	 * We save some cycles by opening pg_depend just once and passing the
-	 * Relation pointer down to all the recursive deletion steps.
-	 */
-	depRel = heap_open(DependRelationId, RowExclusiveLock);
-
-	/*
-	 * Acquire deletion lock on the target object.  (Ideally the caller has
-	 * done this already, but many places are sloppy about it.)
-	 */
-	AcquireDeletionLock(object, 0);
-
-	/*
-	 * Construct a list of objects to delete (ie, the given object plus
-	 * everything directly or indirectly dependent on it).
-	 */
-	targetObjects = new_object_addresses();
-
-	findDependentObjects(object,
-						 DEPFLAG_ORIGINAL,
-						 NULL,	/* empty stack */
-						 targetObjects,
-						 NULL,	/* no pendingObjects */
-						 &depRel);
-
-	/*
-	 * Check if deletion is allowed, and report about cascaded deletes.
-	 */
-	reportDependentObjects(targetObjects,
-						   DROP_CASCADE,
-						   showNotices ? NOTICE : DEBUG2,
-						   object);
-
-	/*
-	 * Delete all the objects in the proper order, except we skip the original
-	 * object.
-	 */
-	for (i = 0; i < targetObjects->numrefs; i++)
-	{
-		ObjectAddress *thisobj = targetObjects->refs + i;
-		ObjectAddressExtra *thisextra = targetObjects->extras + i;
-
-		if (thisextra->flags & DEPFLAG_ORIGINAL)
-			continue;
-
-		/*
-		 * Since this function is currently only used to clean out temporary
-		 * schemas, we pass PERFORM_DELETION_INTERNAL here, indicating that
-		 * the operation is an automatic system operation rather than a user
-		 * action.  If, in the future, this function is used for other
-		 * purposes, we might need to revisit this.
-		 */
-		deleteOneObject(thisobj, &depRel, PERFORM_DELETION_INTERNAL);
-	}
 
 	/* And clean up */
 	free_object_addresses(targetObjects);
@@ -492,16 +435,22 @@ deleteWhatDependsOn(const ObjectAddress *object,
  * its sub-objects too.
  *
  *	object: the object to add to targetObjects and find dependencies on
- *	flags: flags to be ORed into the object's targetObjects entry
+ *	objflags: flags to be ORed into the object's targetObjects entry
+ *	flags: PERFORM_DELETION_xxx flags for the deletion operation as a whole
  *	stack: list of objects being visited in current recursion; topmost item
  *			is the object that we recursed from (NULL for external callers)
  *	targetObjects: list of objects that are scheduled to be deleted
  *	pendingObjects: list of other objects slated for destruction, but
  *			not necessarily in targetObjects yet (can be NULL if none)
  *	*depRel: already opened pg_depend relation
+ *
+ * Note: objflags describes the reason for visiting this particular object
+ * at this time, and is not passed down when recursing.  The flags argument
+ * is passed down, since it describes what we're doing overall.
  */
 static void
 findDependentObjects(const ObjectAddress *object,
+					 int objflags,
 					 int flags,
 					 ObjectAddressStack *stack,
 					 ObjectAddresses *targetObjects,
@@ -518,8 +467,8 @@ findDependentObjects(const ObjectAddress *object,
 
 	/*
 	 * If the target object is already being visited in an outer recursion
-	 * level, just report the current flags back to that level and exit. This
-	 * is needed to avoid infinite recursion in the face of circular
+	 * level, just report the current objflags back to that level and exit.
+	 * This is needed to avoid infinite recursion in the face of circular
 	 * dependencies.
 	 *
 	 * The stack check alone would result in dependency loops being broken at
@@ -532,19 +481,19 @@ findDependentObjects(const ObjectAddress *object,
 	 * auto dependency, too, if we had to.  However there are no known cases
 	 * where that would be necessary.
 	 */
-	if (stack_address_present_add_flags(object, flags, stack))
+	if (stack_address_present_add_flags(object, objflags, stack))
 		return;
 
 	/*
 	 * It's also possible that the target object has already been completely
 	 * processed and put into targetObjects.  If so, again we just add the
-	 * specified flags to its entry and return.
+	 * specified objflags to its entry and return.
 	 *
 	 * (Note: in these early-exit cases we could release the caller-taken
 	 * lock, since the object is presumably now locked multiple times; but it
 	 * seems not worth the cycles.)
 	 */
-	if (object_address_present_add_flags(object, flags, targetObjects))
+	if (object_address_present_add_flags(object, objflags, targetObjects))
 		return;
 
 	/*
@@ -596,6 +545,15 @@ findDependentObjects(const ObjectAddress *object,
 				break;
 
 			case DEPENDENCY_EXTENSION:
+
+				/*
+				 * If told to, ignore EXTENSION dependencies altogether.  This
+				 * flag is normally used to prevent dropping extensions during
+				 * temporary-object cleanup, even if a temp object was created
+				 * during an extension script.
+				 */
+				if (flags & PERFORM_DELETION_SKIP_EXTENSIONS)
+					break;
 
 				/*
 				 * If the other object is the extension currently being
@@ -699,6 +657,7 @@ findDependentObjects(const ObjectAddress *object,
 				 */
 				findDependentObjects(&otherObject,
 									 DEPFLAG_REVERSE,
+									 flags,
 									 stack,
 									 targetObjects,
 									 pendingObjects,
@@ -729,7 +688,7 @@ findDependentObjects(const ObjectAddress *object,
 	 * they have to be deleted before the current object.
 	 */
 	mystack.object = object;	/* set up a new stack level */
-	mystack.flags = flags;
+	mystack.flags = objflags;
 	mystack.next = stack;
 
 	ScanKeyInit(&key[0],
@@ -783,7 +742,7 @@ findDependentObjects(const ObjectAddress *object,
 			continue;
 		}
 
-		/* Recurse, passing flags indicating the dependency type */
+		/* Recurse, passing objflags indicating the dependency type */
 		switch (foundDep->deptype)
 		{
 			case DEPENDENCY_NORMAL:
@@ -820,6 +779,7 @@ findDependentObjects(const ObjectAddress *object,
 
 		findDependentObjects(&otherObject,
 							 subflags,
+							 flags,
 							 &mystack,
 							 targetObjects,
 							 pendingObjects,
@@ -850,16 +810,17 @@ findDependentObjects(const ObjectAddress *object,
  *
  *	targetObjects: list of objects that are scheduled to be deleted
  *	behavior: RESTRICT or CASCADE
- *	msglevel: elog level for non-error report messages
+ *	flags: other flags for the deletion operation
  *	origObject: base object of deletion, or NULL if not available
  *		(the latter case occurs in DROP OWNED)
  */
 static void
 reportDependentObjects(const ObjectAddresses *targetObjects,
 					   DropBehavior behavior,
-					   int msglevel,
+					   int flags,
 					   const ObjectAddress *origObject)
 {
+	int			msglevel = (flags & PERFORM_DELETION_QUIETLY) ? DEBUG2 : NOTICE;
 	bool		ok = true;
 	StringInfoData clientdetail;
 	StringInfoData logdetail;
@@ -1140,8 +1101,7 @@ doDeletion(const ObjectAddress *object, int flags)
 
 				if (relKind == RELKIND_INDEX)
 				{
-					bool		concurrent = ((flags & PERFORM_DELETION_CONCURRENTLY)
-										   == PERFORM_DELETION_CONCURRENTLY);
+					bool		concurrent = ((flags & PERFORM_DELETION_CONCURRENTLY) != 0);
 
 					Assert(object->objectSubId == 0);
 					index_drop(object->objectId, concurrent);

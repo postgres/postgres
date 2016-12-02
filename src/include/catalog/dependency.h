@@ -166,20 +166,21 @@ typedef enum ObjectClass
 
 #define LAST_OCLASS		OCLASS_TRANSFORM
 
+/* flag bits for performDeletion/performMultipleDeletions: */
+#define PERFORM_DELETION_INTERNAL			0x0001		/* internal action */
+#define PERFORM_DELETION_CONCURRENTLY		0x0002		/* concurrent drop */
+#define PERFORM_DELETION_QUIETLY			0x0004		/* suppress notices */
+#define PERFORM_DELETION_SKIP_ORIGINAL		0x0008		/* keep original obj */
+#define PERFORM_DELETION_SKIP_EXTENSIONS	0x0010		/* keep extensions */
+
 
 /* in dependency.c */
-
-#define PERFORM_DELETION_INTERNAL			0x0001
-#define PERFORM_DELETION_CONCURRENTLY		0x0002
 
 extern void performDeletion(const ObjectAddress *object,
 				DropBehavior behavior, int flags);
 
 extern void performMultipleDeletions(const ObjectAddresses *objects,
 						 DropBehavior behavior, int flags);
-
-extern void deleteWhatDependsOn(const ObjectAddress *object,
-					bool showNotices);
 
 extern void recordDependencyOnExpr(const ObjectAddress *depender,
 					   Node *expr, List *rtable,

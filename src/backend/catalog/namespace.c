@@ -3872,14 +3872,19 @@ RemoveTempRelations(Oid tempNamespaceId)
 	/*
 	 * We want to get rid of everything in the target namespace, but not the
 	 * namespace itself (deleting it only to recreate it later would be a
-	 * waste of cycles).  We do this by finding everything that has a
-	 * dependency on the namespace.
+	 * waste of cycles).  Hence, specify SKIP_ORIGINAL.  It's also an INTERNAL
+	 * deletion, and we want to not drop any extensions that might happen to
+	 * own temp objects.
 	 */
 	object.classId = NamespaceRelationId;
 	object.objectId = tempNamespaceId;
 	object.objectSubId = 0;
 
-	deleteWhatDependsOn(&object, false);
+	performDeletion(&object, DROP_CASCADE,
+					PERFORM_DELETION_INTERNAL |
+					PERFORM_DELETION_QUIETLY |
+					PERFORM_DELETION_SKIP_ORIGINAL |
+					PERFORM_DELETION_SKIP_EXTENSIONS);
 }
 
 /*
