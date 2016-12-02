@@ -388,14 +388,11 @@ libpqrcv_readtimelinehistoryfile(WalReceiverConn *conn,
 
 /*
  * Send a query and wait for the results by using the asynchronous libpq
- * functions and the backend version of select().
+ * functions and socket readiness events.
  *
  * We must not use the regular blocking libpq functions like PQexec()
  * since they are uninterruptible by signals on some platforms, such as
  * Windows.
- *
- * We must also not use vanilla select() here since it cannot handle the
- * signal emulation layer on Windows.
  *
  * The function is modeled on PQexec() in libpq, but only implements
  * those parts that are in use in the walreceiver.
