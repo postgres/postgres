@@ -726,6 +726,13 @@ Form_pg_user_mapping
 FormatNode
 FreeBlockNumberArray
 FreeListData
+FreePageBtree
+FreePageBtreeHeader
+FreePageBtreeInternalKey
+FreePageBtreeLeafKey
+FreePageBtreeSearchResult
+FreePageManager
+FreePageSpanLeader
 FromCharDateMode
 FromExpr
 FuncCall
