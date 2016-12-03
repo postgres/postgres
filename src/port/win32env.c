@@ -92,7 +92,6 @@ pgwin32_putenv(const char *envval)
 					rtmodules[i].putenvFunc = (PUTENVPROC) GetProcAddress(rtmodules[i].hmodule, "_putenv");
 					if (rtmodules[i].putenvFunc == NULL)
 					{
-						CloseHandle(rtmodules[i].hmodule);
 						rtmodules[i].hmodule = INVALID_HANDLE_VALUE;
 						continue;
 					}
