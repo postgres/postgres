@@ -41,29 +41,56 @@ pgwin32_putenv(const char *envval)
 			"msvcrt", NULL, NULL
 		},						/* Visual Studio 6.0 / MinGW */
 		{
+			"msvcrtd", NULL, NULL
+		},
+		{
 			"msvcr70", NULL, NULL
 		},						/* Visual Studio 2002 */
+		{
+			"msvcr70d", NULL, NULL
+		},
 		{
 			"msvcr71", NULL, NULL
 		},						/* Visual Studio 2003 */
 		{
+			"msvcr71d", NULL, NULL
+		},
+		{
 			"msvcr80", NULL, NULL
 		},						/* Visual Studio 2005 */
+		{
+			"msvcr80d", NULL, NULL
+		},
 		{
 			"msvcr90", NULL, NULL
 		},						/* Visual Studio 2008 */
 		{
+			"msvcr90d", NULL, NULL
+		},
+		{
 			"msvcr100", NULL, NULL
 		},						/* Visual Studio 2010 */
+		{
+			"msvcr100d", NULL, NULL
+		},
 		{
 			"msvcr110", NULL, NULL
 		},						/* Visual Studio 2012 */
 		{
+			"msvcr110d", NULL, NULL
+		},
+		{
 			"msvcr120", NULL, NULL
 		},						/* Visual Studio 2013 */
 		{
+			"msvcr120d", NULL, NULL
+		},
+		{
 			"ucrtbase", NULL, NULL
 		},						/* Visual Studio 2015 and later */
+		{
+			"ucrtbased", NULL, NULL
+		},
 		{
 			NULL, NULL, NULL
 		}
