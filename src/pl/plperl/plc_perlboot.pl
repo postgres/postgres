@@ -1,5 +1,7 @@
 #  src/pl/plperl/plc_perlboot.pl
 
+use strict;
+
 use 5.008001;
 use vars qw(%_SHARED $_TD);
 

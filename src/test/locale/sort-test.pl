@@ -1,4 +1,6 @@
 #! /usr/bin/perl
+
+use strict;
 use locale;
 
 open(INFILE, "<$ARGV[0]");

@@ -20,13 +20,17 @@
 # "devel", "alphaN", "betaN", "rcN".
 #
 
+use strict;
+
 # Major version is hard-wired into the script.  We update it when we branch
 # a new development version.
-$majorversion = 10;
+my $majorversion = 10;
 
 # Validate argument and compute derived variables
-$minor = shift;
+my $minor = shift;
 defined($minor) || die "$0: missing required argument: minor-version\n";
+
+my ($dotneeded, $numericminor);
 
 if ($minor =~ m/^\d+$/)
 {
@@ -58,6 +62,8 @@ else
 	die "$0: minor-version must be N, devel, alphaN, betaN, or rcN\n";
 }
 
+my $fullversion;
+
 # Create various required forms of the version number
 if ($dotneeded)
 {
@@ -67,13 +73,13 @@ else
 {
 	$fullversion = $majorversion . $minor;
 }
-$numericversion = $majorversion . "." . $numericminor;
-$padnumericversion = sprintf("%d%04d", $majorversion, $numericminor);
+my $numericversion = $majorversion . "." . $numericminor;
+my $padnumericversion = sprintf("%d%04d", $majorversion, $numericminor);
 
 # Get the autoconf version number for eventual nag message
 # (this also ensures we're in the right directory)
 
-$aconfver = "";
+my $aconfver = "";
 open(FILE, "configure.in") || die "could not read configure.in: $!\n";
 while (<FILE>)
 {
@@ -90,7 +96,7 @@ $aconfver ne ""
 
 # Update configure.in and other files that contain version numbers
 
-$fixedfiles = "";
+my $fixedfiles = "";
 
 sed_file("configure.in",
 "-e 's/AC_INIT(\\[PostgreSQL\\], \\[[0-9a-z.]*\\]/AC_INIT([PostgreSQL], [$fullversion]/'"

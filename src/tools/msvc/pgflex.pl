@@ -2,11 +2,11 @@
 
 # src/tools/msvc/pgflex.pl
 
-# silence flex bleatings about file path style
-$ENV{CYGWIN} = 'nodosfilewarning';
-
 use strict;
 use File::Basename;
+
+# silence flex bleatings about file path style
+$ENV{CYGWIN} = 'nodosfilewarning';
 
 # assume we are in the postgres source root
 

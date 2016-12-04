@@ -2,6 +2,8 @@
 
 # doc/src/sgml/mk_feature_tables.pl
 
+use strict;
+
 my $yesno = $ARGV[0];
 
 open PACK, $ARGV[1] or die;

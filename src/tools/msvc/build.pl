@@ -2,6 +2,8 @@
 
 # src/tools/msvc/build.pl
 
+use strict;
+
 BEGIN
 {
 
@@ -68,6 +70,6 @@ else
 
 # report status
 
-$status = $? >> 8;
+my $status = $? >> 8;
 
 exit $status;

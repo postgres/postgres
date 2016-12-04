@@ -1,10 +1,10 @@
-my @def;
-
-use warnings;
 use strict;
+use warnings;
 use 5.8.0;
 use File::Spec::Functions qw(splitpath catpath);
 use List::Util qw(max);
+
+my @def;
 
 #
 # Script that generates a .DEF file for all objects in a directory
