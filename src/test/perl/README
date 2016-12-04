@@ -64,3 +64,21 @@ For available PostgreSQL-specific test methods and some example tests read the
 perldoc for the test modules, e.g.:
 
     perldoc src/test/perl/PostgresNode.pm
+
+Required Perl
+-------------
+
+Tests must run on perl 5.8.0 and newer. perlbrew is a good way to obtain such
+a Perl; see http://perlbrew.pl .
+
+Just install and
+
+    perlbrew --force install 5.8.0
+    perlbrew use 5.8.0
+    perlbrew install-cpanm
+    cpanm install IPC::Run
+
+then re-run configure to ensure the correct Perl is used when running
+tests. To verify that the right Perl was found:
+
+    grep ^PERL= config.log
