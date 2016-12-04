@@ -21,7 +21,6 @@ pgwin32_putenv(const char *envval)
 {
 	char	   *envcpy;
 	char	   *cp;
-#ifdef _MSC_VER
 	typedef int (_cdecl * PUTENVPROC) (const char *);
 	static const char *const modulenames[] = {
 		"msvcrt",				/* Visual Studio 6.0 / MinGW */
@@ -45,7 +44,6 @@ pgwin32_putenv(const char *envval)
 		NULL
 	};
 	int			i;
-#endif   /* _MSC_VER */
 
 	/*
 	 * Update process environment, making this change visible to child
@@ -88,7 +86,6 @@ pgwin32_putenv(const char *envval)
 	 * against.  Addresses within these modules may become invalid the moment
 	 * we call FreeLibrary(), so don't cache them.
 	 */
-#ifdef _MSC_VER
 	for (i = 0; modulenames[i]; i++)
 	{
 		HMODULE		hmodule = NULL;
@@ -104,9 +101,12 @@ pgwin32_putenv(const char *envval)
 			FreeLibrary(hmodule);
 		}
 	}
-#endif   /* _MSC_VER */
 
-	/* Finally, update our "own" cache */
+	/*
+	 * Finally, update our "own" cache.  This is redundant with the loop
+	 * above, except when PostgreSQL itself links to a CRT not listed above.
+	 * Ideally, the loop does visit all possible CRTs, making this redundant.
+	 */
 	return _putenv(envval);
 }
 
