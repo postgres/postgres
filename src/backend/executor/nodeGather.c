@@ -173,6 +173,7 @@ ExecGather(GatherState *node)
 			if (pcxt->nworkers_launched > 0)
 			{
 				node->nreaders = 0;
+				node->nextreader = 0;
 				node->reader =
 					palloc(pcxt->nworkers_launched * sizeof(TupleQueueReader *));
 
@@ -335,6 +336,7 @@ gather_readnext(GatherState *gatherstate)
 		CHECK_FOR_INTERRUPTS();
 
 		/* Attempt to read a tuple, but don't block if none is available. */
+		Assert(gatherstate->nextreader < gatherstate->nreaders);
 		reader = gatherstate->reader[gatherstate->nextreader];
 		tup = TupleQueueReaderNext(reader, true, &readerdone);
 
