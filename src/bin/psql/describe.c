@@ -887,10 +887,44 @@ permissionsList(const char *pattern)
 						  "  ), E'\\n') AS \"%s\"",
 						  gettext_noop("Column privileges"));
 
-	if (pset.sversion >= 90500)
+	if (pset.sversion >= 90500 && pset.sversion < 100000)
 		appendPQExpBuffer(&buf,
 						  ",\n  pg_catalog.array_to_string(ARRAY(\n"
 						  "    SELECT polname\n"
+						  "    || CASE WHEN polcmd != '*' THEN\n"
+						  "           E' (' || polcmd || E'):'\n"
+						  "       ELSE E':' \n"
+						  "       END\n"
+						  "    || CASE WHEN polqual IS NOT NULL THEN\n"
+						  "           E'\\n  (u): ' || pg_catalog.pg_get_expr(polqual, polrelid)\n"
+						  "       ELSE E''\n"
+						  "       END\n"
+						  "    || CASE WHEN polwithcheck IS NOT NULL THEN\n"
+						  "           E'\\n  (c): ' || pg_catalog.pg_get_expr(polwithcheck, polrelid)\n"
+						  "       ELSE E''\n"
+						  "       END"
+						  "    || CASE WHEN polroles <> '{0}' THEN\n"
+				   "           E'\\n  to: ' || pg_catalog.array_to_string(\n"
+						  "               ARRAY(\n"
+						  "                   SELECT rolname\n"
+						  "                   FROM pg_catalog.pg_roles\n"
+						  "                   WHERE oid = ANY (polroles)\n"
+						  "                   ORDER BY 1\n"
+						  "               ), E', ')\n"
+						  "       ELSE E''\n"
+						  "       END\n"
+						  "    FROM pg_catalog.pg_policy pol\n"
+						  "    WHERE polrelid = c.oid), E'\\n')\n"
+						  "    AS \"%s\"",
+						  gettext_noop("Policies"));
+
+	if (pset.sversion >= 100000)
+		appendPQExpBuffer(&buf,
+						  ",\n  pg_catalog.array_to_string(ARRAY(\n"
+						  "    SELECT polname\n"
+						  "    || CASE WHEN NOT polpermissive THEN\n"
+						  "       E' (RESTRICTIVE)'\n"
+						  "       ELSE '' END\n"
 						  "    || CASE WHEN polcmd != '*' THEN\n"
 						  "           E' (' || polcmd || E'):'\n"
 						  "       ELSE E':' \n"
@@ -2112,21 +2146,36 @@ describeOneTableDetails(const char *schemaname,
 		/* print any row-level policies */
 		if (pset.sversion >= 90500)
 		{
-			printfPQExpBuffer(&buf,
-							  "SELECT pol.polname,\n"
-							  "CASE WHEN pol.polroles = '{0}' THEN NULL ELSE array_to_string(array(select rolname from pg_roles where oid = any (pol.polroles) order by 1),',') END,\n"
-					   "pg_catalog.pg_get_expr(pol.polqual, pol.polrelid),\n"
-				  "pg_catalog.pg_get_expr(pol.polwithcheck, pol.polrelid),\n"
-							  "CASE pol.polcmd \n"
-							  "WHEN 'r' THEN 'SELECT'\n"
-							  "WHEN 'a' THEN 'INSERT'\n"
-							  "WHEN 'w' THEN 'UPDATE'\n"
-							  "WHEN 'd' THEN 'DELETE'\n"
-							  "WHEN '*' THEN 'ALL'\n"
-							  "END AS cmd\n"
-							  "FROM pg_catalog.pg_policy pol\n"
-							  "WHERE pol.polrelid = '%s' ORDER BY 1;",
-							  oid);
+			if (pset.sversion >= 100000)
+				printfPQExpBuffer(&buf,
+								  "SELECT pol.polname, pol.polpermissive,\n"
+								  "CASE WHEN pol.polroles = '{0}' THEN NULL ELSE array_to_string(array(select rolname from pg_roles where oid = any (pol.polroles) order by 1),',') END,\n"
+						   "pg_catalog.pg_get_expr(pol.polqual, pol.polrelid),\n"
+					  "pg_catalog.pg_get_expr(pol.polwithcheck, pol.polrelid),\n"
+								  "CASE pol.polcmd \n"
+								  "WHEN 'r' THEN 'SELECT'\n"
+								  "WHEN 'a' THEN 'INSERT'\n"
+								  "WHEN 'w' THEN 'UPDATE'\n"
+								  "WHEN 'd' THEN 'DELETE'\n"
+								  "END AS cmd\n"
+								  "FROM pg_catalog.pg_policy pol\n"
+								  "WHERE pol.polrelid = '%s' ORDER BY 1;",
+								  oid);
+			else
+				printfPQExpBuffer(&buf,
+								  "SELECT pol.polname, 't' as polpermissive,\n"
+								  "CASE WHEN pol.polroles = '{0}' THEN NULL ELSE array_to_string(array(select rolname from pg_roles where oid = any (pol.polroles) order by 1),',') END,\n"
+						   "pg_catalog.pg_get_expr(pol.polqual, pol.polrelid),\n"
+					  "pg_catalog.pg_get_expr(pol.polwithcheck, pol.polrelid),\n"
+								  "CASE pol.polcmd \n"
+								  "WHEN 'r' THEN 'SELECT'\n"
+								  "WHEN 'a' THEN 'INSERT'\n"
+								  "WHEN 'w' THEN 'UPDATE'\n"
+								  "WHEN 'd' THEN 'DELETE'\n"
+								  "END AS cmd\n"
+								  "FROM pg_catalog.pg_policy pol\n"
+								  "WHERE pol.polrelid = '%s' ORDER BY 1;",
+								  oid);
 
 			result = PSQLexec(buf.data);
 			if (!result)
@@ -2160,23 +2209,26 @@ describeOneTableDetails(const char *schemaname,
 				printfPQExpBuffer(&buf, "    POLICY \"%s\"",
 								  PQgetvalue(result, i, 0));
 
-				if (!PQgetisnull(result, i, 4))
-					appendPQExpBuffer(&buf, " FOR %s",
-									  PQgetvalue(result, i, 4));
+				if (*(PQgetvalue(result, i, 1)) == 'f')
+					appendPQExpBuffer(&buf, " AS RESTRICTIVE");
 
-				if (!PQgetisnull(result, i, 1))
-				{
-					appendPQExpBuffer(&buf, "\n      TO %s",
-									  PQgetvalue(result, i, 1));
-				}
+				if (!PQgetisnull(result, i, 5))
+					appendPQExpBuffer(&buf, " FOR %s",
+									  PQgetvalue(result, i, 5));
 
 				if (!PQgetisnull(result, i, 2))
-					appendPQExpBuffer(&buf, "\n      USING (%s)",
+				{
+					appendPQExpBuffer(&buf, "\n      TO %s",
 									  PQgetvalue(result, i, 2));
+				}
 
 				if (!PQgetisnull(result, i, 3))
-					appendPQExpBuffer(&buf, "\n      WITH CHECK (%s)",
+					appendPQExpBuffer(&buf, "\n      USING (%s)",
 									  PQgetvalue(result, i, 3));
+
+				if (!PQgetisnull(result, i, 4))
+					appendPQExpBuffer(&buf, "\n      WITH CHECK (%s)",
+									  PQgetvalue(result, i, 4));
 
 				printTableAddFooter(&cont, buf.data);
 

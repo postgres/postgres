@@ -3037,6 +3037,7 @@ getPolicies(Archive *fout, TableInfo tblinfo[], int numTables)
 	int			i_tableoid;
 	int			i_polname;
 	int			i_polcmd;
+	int			i_polpermissive;
 	int			i_polroles;
 	int			i_polqual;
 	int			i_polwithcheck;
@@ -3082,7 +3083,8 @@ getPolicies(Archive *fout, TableInfo tblinfo[], int numTables)
 			polinfo->dobj.name = pg_strdup(tbinfo->dobj.name);
 			polinfo->poltable = tbinfo;
 			polinfo->polname = NULL;
-			polinfo->polcmd = NULL;
+			polinfo->polcmd = '\0';
+			polinfo->polpermissive = 0;
 			polinfo->polroles = NULL;
 			polinfo->polqual = NULL;
 			polinfo->polwithcheck = NULL;
@@ -3101,15 +3103,26 @@ getPolicies(Archive *fout, TableInfo tblinfo[], int numTables)
 		resetPQExpBuffer(query);
 
 		/* Get the policies for the table. */
-		appendPQExpBuffer(query,
-						  "SELECT oid, tableoid, pol.polname, pol.polcmd, "
-						  "CASE WHEN pol.polroles = '{0}' THEN 'PUBLIC' ELSE "
-						  "   pg_catalog.array_to_string(ARRAY(SELECT pg_catalog.quote_ident(rolname) from pg_catalog.pg_roles WHERE oid = ANY(pol.polroles)), ', ') END AS polroles, "
-			 "pg_catalog.pg_get_expr(pol.polqual, pol.polrelid) AS polqual, "
-						  "pg_catalog.pg_get_expr(pol.polwithcheck, pol.polrelid) AS polwithcheck "
-						  "FROM pg_catalog.pg_policy pol "
-						  "WHERE polrelid = '%u'",
-						  tbinfo->dobj.catId.oid);
+		if (fout->remoteVersion >= 100000)
+			appendPQExpBuffer(query,
+							  "SELECT oid, tableoid, pol.polname, pol.polcmd, pol.polpermissive, "
+							  "CASE WHEN pol.polroles = '{0}' THEN NULL ELSE "
+							  "   pg_catalog.array_to_string(ARRAY(SELECT pg_catalog.quote_ident(rolname) from pg_catalog.pg_roles WHERE oid = ANY(pol.polroles)), ', ') END AS polroles, "
+				 "pg_catalog.pg_get_expr(pol.polqual, pol.polrelid) AS polqual, "
+							  "pg_catalog.pg_get_expr(pol.polwithcheck, pol.polrelid) AS polwithcheck "
+							  "FROM pg_catalog.pg_policy pol "
+							  "WHERE polrelid = '%u'",
+							  tbinfo->dobj.catId.oid);
+		else
+			appendPQExpBuffer(query,
+							  "SELECT oid, tableoid, pol.polname, pol.polcmd, 't' as polpermissive, "
+							  "CASE WHEN pol.polroles = '{0}' THEN NULL ELSE "
+							  "   pg_catalog.array_to_string(ARRAY(SELECT pg_catalog.quote_ident(rolname) from pg_catalog.pg_roles WHERE oid = ANY(pol.polroles)), ', ') END AS polroles, "
+				 "pg_catalog.pg_get_expr(pol.polqual, pol.polrelid) AS polqual, "
+							  "pg_catalog.pg_get_expr(pol.polwithcheck, pol.polrelid) AS polwithcheck "
+							  "FROM pg_catalog.pg_policy pol "
+							  "WHERE polrelid = '%u'",
+							  tbinfo->dobj.catId.oid);
 		res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 		ntups = PQntuples(res);
@@ -3129,6 +3142,7 @@ getPolicies(Archive *fout, TableInfo tblinfo[], int numTables)
 		i_tableoid = PQfnumber(res, "tableoid");
 		i_polname = PQfnumber(res, "polname");
 		i_polcmd = PQfnumber(res, "polcmd");
+		i_polpermissive = PQfnumber(res, "polpermissive");
 		i_polroles = PQfnumber(res, "polroles");
 		i_polqual = PQfnumber(res, "polqual");
 		i_polwithcheck = PQfnumber(res, "polwithcheck");
@@ -3147,8 +3161,13 @@ getPolicies(Archive *fout, TableInfo tblinfo[], int numTables)
 			polinfo[j].polname = pg_strdup(PQgetvalue(res, j, i_polname));
 			polinfo[j].dobj.name = pg_strdup(polinfo[j].polname);
 
-			polinfo[j].polcmd = pg_strdup(PQgetvalue(res, j, i_polcmd));
-			polinfo[j].polroles = pg_strdup(PQgetvalue(res, j, i_polroles));
+			polinfo[j].polcmd = *(PQgetvalue(res, j, i_polcmd));
+			polinfo[j].polpermissive = *(PQgetvalue(res, j, i_polpermissive)) == 't';
+
+			if (PQgetisnull(res, j, i_polroles))
+				polinfo[j].polroles = NULL;
+			else
+				polinfo[j].polroles = pg_strdup(PQgetvalue(res, j, i_polroles));
 
 			if (PQgetisnull(res, j, i_polqual))
 				polinfo[j].polqual = NULL;
@@ -3210,19 +3229,19 @@ dumpPolicy(Archive *fout, PolicyInfo *polinfo)
 		return;
 	}
 
-	if (strcmp(polinfo->polcmd, "*") == 0)
-		cmd = "ALL";
-	else if (strcmp(polinfo->polcmd, "r") == 0)
-		cmd = "SELECT";
-	else if (strcmp(polinfo->polcmd, "a") == 0)
-		cmd = "INSERT";
-	else if (strcmp(polinfo->polcmd, "w") == 0)
-		cmd = "UPDATE";
-	else if (strcmp(polinfo->polcmd, "d") == 0)
-		cmd = "DELETE";
+	if (polinfo->polcmd == '*')
+		cmd = "";
+	else if (polinfo->polcmd == 'r')
+		cmd = " FOR SELECT";
+	else if (polinfo->polcmd == 'a')
+		cmd = " FOR INSERT";
+	else if (polinfo->polcmd == 'w')
+		cmd = " FOR UPDATE";
+	else if (polinfo->polcmd == 'd')
+		cmd = " FOR DELETE";
 	else
 	{
-		write_msg(NULL, "unexpected policy command type: \"%s\"\n",
+		write_msg(NULL, "unexpected policy command type: %c\n",
 				  polinfo->polcmd);
 		exit_nicely(1);
 	}
@@ -3231,7 +3250,9 @@ dumpPolicy(Archive *fout, PolicyInfo *polinfo)
 	delqry = createPQExpBuffer();
 
 	appendPQExpBuffer(query, "CREATE POLICY %s", fmtId(polinfo->polname));
-	appendPQExpBuffer(query, " ON %s FOR %s", fmtId(tbinfo->dobj.name), cmd);
+
+	appendPQExpBuffer(query, " ON %s%s%s", fmtId(tbinfo->dobj.name),
+					  !polinfo->polpermissive ? " AS RESTRICTIVE" : "", cmd);
 
 	if (polinfo->polroles != NULL)
 		appendPQExpBuffer(query, " TO %s", polinfo->polroles);

@@ -23,6 +23,7 @@ CATALOG(pg_policy,3256)
 	NameData	polname;		/* Policy name. */
 	Oid			polrelid;		/* Oid of the relation with policy. */
 	char		polcmd;			/* One of ACL_*_CHR, or '*' for all */
+	bool		polpermissive;	/* restrictive or permissive policy */
 
 #ifdef CATALOG_VARLEN
 	Oid			polroles[1];	/* Roles associated with policy, not-NULL */
@@ -42,12 +43,13 @@ typedef FormData_pg_policy *Form_pg_policy;
  *		compiler constants for pg_policy
  * ----------------
  */
-#define Natts_pg_policy				6
-#define Anum_pg_policy_polname		1
-#define Anum_pg_policy_polrelid		2
-#define Anum_pg_policy_polcmd		3
-#define Anum_pg_policy_polroles		4
-#define Anum_pg_policy_polqual		5
-#define Anum_pg_policy_polwithcheck 6
+#define Natts_pg_policy					7
+#define Anum_pg_policy_polname			1
+#define Anum_pg_policy_polrelid			2
+#define Anum_pg_policy_polcmd			3
+#define Anum_pg_policy_polpermissive	4
+#define Anum_pg_policy_polroles			5
+#define Anum_pg_policy_polqual			6
+#define Anum_pg_policy_polwithcheck 	7
 
 #endif   /* PG_POLICY_H */

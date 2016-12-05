@@ -4748,6 +4748,13 @@
      </row>
 
      <row>
+      <entry><structfield>polpermissive</structfield></entry>
+      <entry><type>boolean</type></entry>
+      <entry></entry>
+      <entry>Is the policy permissive or restrictive?</entry>
+     </row>
+
+     <row>
       <entry><structfield>polroles</structfield></entry>
       <entry><type>oid[]</type></entry>
       <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
@@ -8436,6 +8443,12 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       <entry><type>name</type></entry>
       <entry><literal><link linkend="catalog-pg-policy"><structname>pg_policy</structname></link>.polname</literal></entry>
       <entry>Name of policy</entry>
+     </row>
+     <row>
+      <entry><structfield>polpermissive</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>Is the policy permissive or restrictive?</entry>
      </row>
      <row>
       <entry><structfield>roles</structfield></entry>

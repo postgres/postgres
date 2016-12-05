@@ -235,6 +235,7 @@ RelationBuildRowSecurity(Relation relation)
 		{
 			Datum		value_datum;
 			char		cmd_value;
+			bool		permissive_value;
 			Datum		roles_datum;
 			char	   *qual_value;
 			Expr	   *qual_expr;
@@ -256,6 +257,12 @@ RelationBuildRowSecurity(Relation relation)
 									   RelationGetDescr(catalog), &isnull);
 			Assert(!isnull);
 			cmd_value = DatumGetChar(value_datum);
+
+			/* Get policy permissive or restrictive */
+			value_datum = heap_getattr(tuple, Anum_pg_policy_polpermissive,
+									   RelationGetDescr(catalog), &isnull);
+			Assert(!isnull);
+			permissive_value = DatumGetBool(value_datum);
 
 			/* Get policy name */
 			value_datum = heap_getattr(tuple, Anum_pg_policy_polname,
@@ -298,6 +305,7 @@ RelationBuildRowSecurity(Relation relation)
 			policy = palloc0(sizeof(RowSecurityPolicy));
 			policy->policy_name = pstrdup(policy_name_value);
 			policy->polcmd = cmd_value;
+			policy->permissive = permissive_value;
 			policy->roles = DatumGetArrayTypePCopy(roles_datum);
 			policy->qual = copyObject(qual_expr);
 			policy->with_check_qual = copyObject(with_check_qual);
@@ -796,6 +804,7 @@ CreatePolicy(CreatePolicyStmt *stmt)
 	values[Anum_pg_policy_polname - 1] = DirectFunctionCall1(namein,
 										 CStringGetDatum(stmt->policy_name));
 	values[Anum_pg_policy_polcmd - 1] = CharGetDatum(polcmd);
+	values[Anum_pg_policy_polpermissive - 1] = BoolGetDatum(stmt->permissive);
 	values[Anum_pg_policy_polroles - 1] = PointerGetDatum(role_ids);
 
 	/* Add qual if present. */

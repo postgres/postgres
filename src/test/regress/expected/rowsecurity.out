@@ -7,6 +7,7 @@ SET client_min_messages TO 'warning';
 DROP USER IF EXISTS regress_rls_alice;
 DROP USER IF EXISTS regress_rls_bob;
 DROP USER IF EXISTS regress_rls_carol;
+DROP USER IF EXISTS regress_rls_dave;
 DROP USER IF EXISTS regress_rls_exempt_user;
 DROP ROLE IF EXISTS regress_rls_group1;
 DROP ROLE IF EXISTS regress_rls_group2;
@@ -16,6 +17,7 @@ RESET client_min_messages;
 CREATE USER regress_rls_alice NOLOGIN;
 CREATE USER regress_rls_bob NOLOGIN;
 CREATE USER regress_rls_carol NOLOGIN;
+CREATE USER regress_rls_dave NOLOGIN;
 CREATE USER regress_rls_exempt_user BYPASSRLS NOLOGIN;
 CREATE ROLE regress_rls_group1 NOLOGIN;
 CREATE ROLE regress_rls_group2 NOLOGIN;
@@ -67,11 +69,84 @@ INSERT INTO document VALUES
     ( 5, 44, 2, 'regress_rls_bob', 'my second manga'),
     ( 6, 22, 1, 'regress_rls_carol', 'great science fiction'),
     ( 7, 33, 2, 'regress_rls_carol', 'great technology book'),
-    ( 8, 44, 1, 'regress_rls_carol', 'great manga');
+    ( 8, 44, 1, 'regress_rls_carol', 'great manga'),
+    ( 9, 22, 1, 'regress_rls_dave', 'awesome science fiction'),
+    (10, 33, 2, 'regress_rls_dave', 'awesome technology book');
 ALTER TABLE document ENABLE ROW LEVEL SECURITY;
 -- user's security level must be higher than or equal to document's
-CREATE POLICY p1 ON document
+CREATE POLICY p1 ON document AS PERMISSIVE
     USING (dlevel <= (SELECT seclv FROM uaccount WHERE pguser = current_user));
+-- try to create a policy of bogus type
+CREATE POLICY p1 ON document AS UGLY
+    USING (dlevel <= (SELECT seclv FROM uaccount WHERE pguser = current_user));
+ERROR:  unrecognized row security option "ugly"
+LINE 1: CREATE POLICY p1 ON document AS UGLY
+                                        ^
+HINT:  Only PERMISSIVE or RESTRICTIVE policies are supported currently.
+-- but Dave isn't allowed to anything at cid 50 or above
+-- this is to make sure that we sort the policies by name first
+-- when applying WITH CHECK, a later INSERT by Dave should fail due
+-- to p1r first
+CREATE POLICY p2r ON document AS RESTRICTIVE TO regress_rls_dave
+    USING (cid <> 44 AND cid < 50);
+-- and Dave isn't allowed to see manga documents
+CREATE POLICY p1r ON document AS RESTRICTIVE TO regress_rls_dave
+    USING (cid <> 44);
+\dp
+                                                                  Access privileges
+       Schema       |   Name   | Type  |              Access privileges              | Column privileges |                  Policies                  
+--------------------+----------+-------+---------------------------------------------+-------------------+--------------------------------------------
+ regress_rls_schema | category | table | regress_rls_alice=arwdDxt/regress_rls_alice+|                   | 
+                    |          |       | =arwdDxt/regress_rls_alice                  |                   | 
+ regress_rls_schema | document | table | regress_rls_alice=arwdDxt/regress_rls_alice+|                   | p1:                                       +
+                    |          |       | =arwdDxt/regress_rls_alice                  |                   |   (u): (dlevel <= ( SELECT uaccount.seclv +
+                    |          |       |                                             |                   |    FROM uaccount                          +
+                    |          |       |                                             |                   |   WHERE (uaccount.pguser = CURRENT_USER)))+
+                    |          |       |                                             |                   | p2r (RESTRICTIVE):                        +
+                    |          |       |                                             |                   |   (u): ((cid <> 44) AND (cid < 50))       +
+                    |          |       |                                             |                   |   to: regress_rls_dave                    +
+                    |          |       |                                             |                   | p1r (RESTRICTIVE):                        +
+                    |          |       |                                             |                   |   (u): (cid <> 44)                        +
+                    |          |       |                                             |                   |   to: regress_rls_dave
+ regress_rls_schema | uaccount | table | regress_rls_alice=arwdDxt/regress_rls_alice+|                   | 
+                    |          |       | =r/regress_rls_alice                        |                   | 
+(3 rows)
+
+\d document
+        Table "regress_rls_schema.document"
+ Column  |  Type   | Collation | Nullable | Default 
+---------+---------+-----------+----------+---------
+ did     | integer |           | not null | 
+ cid     | integer |           |          | 
+ dlevel  | integer |           | not null | 
+ dauthor | name    |           |          | 
+ dtitle  | text    |           |          | 
+Indexes:
+    "document_pkey" PRIMARY KEY, btree (did)
+Foreign-key constraints:
+    "document_cid_fkey" FOREIGN KEY (cid) REFERENCES category(cid)
+Policies:
+    POLICY "p1"
+      USING ((dlevel <= ( SELECT uaccount.seclv
+   FROM uaccount
+  WHERE (uaccount.pguser = CURRENT_USER))))
+    POLICY "p1r" AS RESTRICTIVE
+      TO regress_rls_dave
+      USING ((cid <> 44))
+    POLICY "p2r" AS RESTRICTIVE
+      TO regress_rls_dave
+      USING (((cid <> 44) AND (cid < 50)))
+
+SELECT * FROM pg_policies WHERE schemaname = 'regress_rls_schema' AND tablename = 'document' ORDER BY policyname;
+     schemaname     | tablename | policyname | permissive  |       roles        | cmd |                    qual                    | with_check 
+--------------------+-----------+------------+-------------+--------------------+-----+--------------------------------------------+------------
+ regress_rls_schema | document  | p1         | PERMISSIVE  | {public}           | ALL | (dlevel <= ( SELECT uaccount.seclv        +| 
+                    |           |            |             |                    |     |    FROM uaccount                          +| 
+                    |           |            |             |                    |     |   WHERE (uaccount.pguser = CURRENT_USER))) | 
+ regress_rls_schema | document  | p1r        | RESTRICTIVE | {regress_rls_dave} | ALL | (cid <> 44)                                | 
+ regress_rls_schema | document  | p2r        | RESTRICTIVE | {regress_rls_dave} | ALL | ((cid <> 44) AND (cid < 50))               | 
+(3 rows)
+
 -- viewpoint from regress_rls_bob
 SET SESSION AUTHORIZATION regress_rls_bob;
 SET row_security TO ON;
@@ -80,26 +155,30 @@ NOTICE:  f_leak => my first novel
 NOTICE:  f_leak => my first manga
 NOTICE:  f_leak => great science fiction
 NOTICE:  f_leak => great manga
- did | cid | dlevel |      dauthor      |        dtitle         
------+-----+--------+-------------------+-----------------------
+NOTICE:  f_leak => awesome science fiction
+ did | cid | dlevel |      dauthor      |         dtitle          
+-----+-----+--------+-------------------+-------------------------
    1 |  11 |      1 | regress_rls_bob   | my first novel
    4 |  44 |      1 | regress_rls_bob   | my first manga
    6 |  22 |      1 | regress_rls_carol | great science fiction
    8 |  44 |      1 | regress_rls_carol | great manga
-(4 rows)
+   9 |  22 |      1 | regress_rls_dave  | awesome science fiction
+(5 rows)
 
 SELECT * FROM document NATURAL JOIN category WHERE f_leak(dtitle) ORDER BY did;
 NOTICE:  f_leak => my first novel
 NOTICE:  f_leak => my first manga
 NOTICE:  f_leak => great science fiction
 NOTICE:  f_leak => great manga
- cid | did | dlevel |      dauthor      |        dtitle         |      cname      
------+-----+--------+-------------------+-----------------------+-----------------
-  11 |   1 |      1 | regress_rls_bob   | my first novel        | novel
-  44 |   4 |      1 | regress_rls_bob   | my first manga        | manga
-  22 |   6 |      1 | regress_rls_carol | great science fiction | science fiction
-  44 |   8 |      1 | regress_rls_carol | great manga           | manga
-(4 rows)
+NOTICE:  f_leak => awesome science fiction
+ cid | did | dlevel |      dauthor      |         dtitle          |      cname      
+-----+-----+--------+-------------------+-------------------------+-----------------
+  11 |   1 |      1 | regress_rls_bob   | my first novel          | novel
+  44 |   4 |      1 | regress_rls_bob   | my first manga          | manga
+  22 |   6 |      1 | regress_rls_carol | great science fiction   | science fiction
+  44 |   8 |      1 | regress_rls_carol | great manga             | manga
+  22 |   9 |      1 | regress_rls_dave  | awesome science fiction | science fiction
+(5 rows)
 
 -- try a sampled version
 SELECT * FROM document TABLESAMPLE BERNOULLI(50) REPEATABLE(0)
@@ -107,12 +186,14 @@ SELECT * FROM document TABLESAMPLE BERNOULLI(50) REPEATABLE(0)
 NOTICE:  f_leak => my first manga
 NOTICE:  f_leak => great science fiction
 NOTICE:  f_leak => great manga
- did | cid | dlevel |      dauthor      |        dtitle         
------+-----+--------+-------------------+-----------------------
+NOTICE:  f_leak => awesome science fiction
+ did | cid | dlevel |      dauthor      |         dtitle          
+-----+-----+--------+-------------------+-------------------------
    4 |  44 |      1 | regress_rls_bob   | my first manga
    6 |  22 |      1 | regress_rls_carol | great science fiction
    8 |  44 |      1 | regress_rls_carol | great manga
-(3 rows)
+   9 |  22 |      1 | regress_rls_dave  | awesome science fiction
+(4 rows)
 
 -- viewpoint from regress_rls_carol
 SET SESSION AUTHORIZATION regress_rls_carol;
@@ -125,8 +206,10 @@ NOTICE:  f_leak => my second manga
 NOTICE:  f_leak => great science fiction
 NOTICE:  f_leak => great technology book
 NOTICE:  f_leak => great manga
- did | cid | dlevel |      dauthor      |        dtitle         
------+-----+--------+-------------------+-----------------------
+NOTICE:  f_leak => awesome science fiction
+NOTICE:  f_leak => awesome technology book
+ did | cid | dlevel |      dauthor      |         dtitle          
+-----+-----+--------+-------------------+-------------------------
    1 |  11 |      1 | regress_rls_bob   | my first novel
    2 |  11 |      2 | regress_rls_bob   | my second novel
    3 |  22 |      2 | regress_rls_bob   | my science fiction
@@ -135,7 +218,9 @@ NOTICE:  f_leak => great manga
    6 |  22 |      1 | regress_rls_carol | great science fiction
    7 |  33 |      2 | regress_rls_carol | great technology book
    8 |  44 |      1 | regress_rls_carol | great manga
-(8 rows)
+   9 |  22 |      1 | regress_rls_dave  | awesome science fiction
+  10 |  33 |      2 | regress_rls_dave  | awesome technology book
+(10 rows)
 
 SELECT * FROM document NATURAL JOIN category WHERE f_leak(dtitle) ORDER BY did;
 NOTICE:  f_leak => my first novel
@@ -146,17 +231,21 @@ NOTICE:  f_leak => my second manga
 NOTICE:  f_leak => great science fiction
 NOTICE:  f_leak => great technology book
 NOTICE:  f_leak => great manga
- cid | did | dlevel |      dauthor      |        dtitle         |      cname      
------+-----+--------+-------------------+-----------------------+-----------------
-  11 |   1 |      1 | regress_rls_bob   | my first novel        | novel
-  11 |   2 |      2 | regress_rls_bob   | my second novel       | novel
-  22 |   3 |      2 | regress_rls_bob   | my science fiction    | science fiction
-  44 |   4 |      1 | regress_rls_bob   | my first manga        | manga
-  44 |   5 |      2 | regress_rls_bob   | my second manga       | manga
-  22 |   6 |      1 | regress_rls_carol | great science fiction | science fiction
-  33 |   7 |      2 | regress_rls_carol | great technology book | technology
-  44 |   8 |      1 | regress_rls_carol | great manga           | manga
-(8 rows)
+NOTICE:  f_leak => awesome science fiction
+NOTICE:  f_leak => awesome technology book
+ cid | did | dlevel |      dauthor      |         dtitle          |      cname      
+-----+-----+--------+-------------------+-------------------------+-----------------
+  11 |   1 |      1 | regress_rls_bob   | my first novel          | novel
+  11 |   2 |      2 | regress_rls_bob   | my second novel         | novel
+  22 |   3 |      2 | regress_rls_bob   | my science fiction      | science fiction
+  44 |   4 |      1 | regress_rls_bob   | my first manga          | manga
+  44 |   5 |      2 | regress_rls_bob   | my second manga         | manga
+  22 |   6 |      1 | regress_rls_carol | great science fiction   | science fiction
+  33 |   7 |      2 | regress_rls_carol | great technology book   | technology
+  44 |   8 |      1 | regress_rls_carol | great manga             | manga
+  22 |   9 |      1 | regress_rls_dave  | awesome science fiction | science fiction
+  33 |  10 |      2 | regress_rls_dave  | awesome technology book | technology
+(10 rows)
 
 -- try a sampled version
 SELECT * FROM document TABLESAMPLE BERNOULLI(50) REPEATABLE(0)
@@ -165,13 +254,15 @@ NOTICE:  f_leak => my first manga
 NOTICE:  f_leak => my second manga
 NOTICE:  f_leak => great science fiction
 NOTICE:  f_leak => great manga
- did | cid | dlevel |      dauthor      |        dtitle         
------+-----+--------+-------------------+-----------------------
+NOTICE:  f_leak => awesome science fiction
+ did | cid | dlevel |      dauthor      |         dtitle          
+-----+-----+--------+-------------------+-------------------------
    4 |  44 |      1 | regress_rls_bob   | my first manga
    5 |  44 |      2 | regress_rls_bob   | my second manga
    6 |  22 |      1 | regress_rls_carol | great science fiction
    8 |  44 |      1 | regress_rls_carol | great manga
-(4 rows)
+   9 |  22 |      1 | regress_rls_dave  | awesome science fiction
+(5 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM document WHERE f_leak(dtitle);
                         QUERY PLAN                        
@@ -201,6 +292,81 @@ EXPLAIN (COSTS OFF) SELECT * FROM document NATURAL JOIN category WHERE f_leak(dt
                              Index Cond: (pguser = CURRENT_USER)
 (11 rows)
 
+-- viewpoint from regress_rls_dave
+SET SESSION AUTHORIZATION regress_rls_dave;
+SELECT * FROM document WHERE f_leak(dtitle) ORDER BY did;
+NOTICE:  f_leak => my first novel
+NOTICE:  f_leak => my second novel
+NOTICE:  f_leak => my science fiction
+NOTICE:  f_leak => great science fiction
+NOTICE:  f_leak => great technology book
+NOTICE:  f_leak => awesome science fiction
+NOTICE:  f_leak => awesome technology book
+ did | cid | dlevel |      dauthor      |         dtitle          
+-----+-----+--------+-------------------+-------------------------
+   1 |  11 |      1 | regress_rls_bob   | my first novel
+   2 |  11 |      2 | regress_rls_bob   | my second novel
+   3 |  22 |      2 | regress_rls_bob   | my science fiction
+   6 |  22 |      1 | regress_rls_carol | great science fiction
+   7 |  33 |      2 | regress_rls_carol | great technology book
+   9 |  22 |      1 | regress_rls_dave  | awesome science fiction
+  10 |  33 |      2 | regress_rls_dave  | awesome technology book
+(7 rows)
+
+SELECT * FROM document NATURAL JOIN category WHERE f_leak(dtitle) ORDER BY did;
+NOTICE:  f_leak => my first novel
+NOTICE:  f_leak => my second novel
+NOTICE:  f_leak => my science fiction
+NOTICE:  f_leak => great science fiction
+NOTICE:  f_leak => great technology book
+NOTICE:  f_leak => awesome science fiction
+NOTICE:  f_leak => awesome technology book
+ cid | did | dlevel |      dauthor      |         dtitle          |      cname      
+-----+-----+--------+-------------------+-------------------------+-----------------
+  11 |   1 |      1 | regress_rls_bob   | my first novel          | novel
+  11 |   2 |      2 | regress_rls_bob   | my second novel         | novel
+  22 |   3 |      2 | regress_rls_bob   | my science fiction      | science fiction
+  22 |   6 |      1 | regress_rls_carol | great science fiction   | science fiction
+  33 |   7 |      2 | regress_rls_carol | great technology book   | technology
+  22 |   9 |      1 | regress_rls_dave  | awesome science fiction | science fiction
+  33 |  10 |      2 | regress_rls_dave  | awesome technology book | technology
+(7 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM document WHERE f_leak(dtitle);
+                                   QUERY PLAN                                    
+---------------------------------------------------------------------------------
+ Subquery Scan on document
+   Filter: f_leak(document.dtitle)
+   ->  Seq Scan on document document_1
+         Filter: ((cid <> 44) AND (cid <> 44) AND (cid < 50) AND (dlevel <= $0))
+         InitPlan 1 (returns $0)
+           ->  Index Scan using uaccount_pkey on uaccount
+                 Index Cond: (pguser = CURRENT_USER)
+(7 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM document NATURAL JOIN category WHERE f_leak(dtitle);
+                                         QUERY PLAN                                          
+---------------------------------------------------------------------------------------------
+ Hash Join
+   Hash Cond: (category.cid = document.cid)
+   ->  Seq Scan on category
+   ->  Hash
+         ->  Subquery Scan on document
+               Filter: f_leak(document.dtitle)
+               ->  Seq Scan on document document_1
+                     Filter: ((cid <> 44) AND (cid <> 44) AND (cid < 50) AND (dlevel <= $0))
+                     InitPlan 1 (returns $0)
+                       ->  Index Scan using uaccount_pkey on uaccount
+                             Index Cond: (pguser = CURRENT_USER)
+(11 rows)
+
+-- 44 would technically fail for both p2r and p1r, but we should get an error
+-- back from p1r for this because it sorts first
+INSERT INTO document VALUES (100, 44, 1, 'regress_rls_dave', 'testing sorting of policies'); -- fail
+ERROR:  new row violates row-level security policy "p1r" for table "document"
+-- Just to see a p2r error
+INSERT INTO document VALUES (100, 55, 1, 'regress_rls_dave', 'testing sorting of policies'); -- fail
+ERROR:  new row violates row-level security policy "p2r" for table "document"
 -- only owner can change policies
 ALTER POLICY p1 ON document USING (true);    --fail
 ERROR:  must be owner of relation document
@@ -318,7 +484,7 @@ SELECT * FROM document d FULL OUTER JOIN category c on d.cid = c.cid;
    7 |  33 |      2 | regress_rls_carol | great technology book |     | 
 (3 rows)
 
-INSERT INTO document VALUES (10, 33, 1, current_user, 'hoge');
+INSERT INTO document VALUES (11, 33, 1, current_user, 'hoge');
 -- UNIQUE or PRIMARY KEY constraint violation DOES reveal presence of row
 SET SESSION AUTHORIZATION regress_rls_bob;
 INSERT INTO document VALUES (8, 44, 1, 'regress_rls_bob', 'my third manga'); -- Must fail with unique violation, revealing presence of did we can't see
@@ -337,8 +503,8 @@ ERROR:  new row violates row-level security policy for table "document"
 RESET SESSION AUTHORIZATION;
 SET row_security TO ON;
 SELECT * FROM document;
- did | cid | dlevel |      dauthor      |        dtitle         
------+-----+--------+-------------------+-----------------------
+ did | cid | dlevel |      dauthor      |         dtitle          
+-----+-----+--------+-------------------+-------------------------
    1 |  11 |      1 | regress_rls_bob   | my first novel
    2 |  11 |      2 | regress_rls_bob   | my second novel
    3 |  22 |      2 | regress_rls_bob   | my science fiction
@@ -347,8 +513,10 @@ SELECT * FROM document;
    6 |  22 |      1 | regress_rls_carol | great science fiction
    7 |  33 |      2 | regress_rls_carol | great technology book
    8 |  44 |      1 | regress_rls_carol | great manga
-  10 |  33 |      1 | regress_rls_carol | hoge
-(9 rows)
+   9 |  22 |      1 | regress_rls_dave  | awesome science fiction
+  10 |  33 |      2 | regress_rls_dave  | awesome technology book
+  11 |  33 |      1 | regress_rls_carol | hoge
+(11 rows)
 
 SELECT * FROM category;
  cid |      cname      
@@ -363,8 +531,8 @@ SELECT * FROM category;
 RESET SESSION AUTHORIZATION;
 SET row_security TO OFF;
 SELECT * FROM document;
- did | cid | dlevel |      dauthor      |        dtitle         
------+-----+--------+-------------------+-----------------------
+ did | cid | dlevel |      dauthor      |         dtitle          
+-----+-----+--------+-------------------+-------------------------
    1 |  11 |      1 | regress_rls_bob   | my first novel
    2 |  11 |      2 | regress_rls_bob   | my second novel
    3 |  22 |      2 | regress_rls_bob   | my science fiction
@@ -373,8 +541,10 @@ SELECT * FROM document;
    6 |  22 |      1 | regress_rls_carol | great science fiction
    7 |  33 |      2 | regress_rls_carol | great technology book
    8 |  44 |      1 | regress_rls_carol | great manga
-  10 |  33 |      1 | regress_rls_carol | hoge
-(9 rows)
+   9 |  22 |      1 | regress_rls_dave  | awesome science fiction
+  10 |  33 |      2 | regress_rls_dave  | awesome technology book
+  11 |  33 |      1 | regress_rls_carol | hoge
+(11 rows)
 
 SELECT * FROM category;
  cid |      cname      
@@ -389,8 +559,8 @@ SELECT * FROM category;
 SET SESSION AUTHORIZATION regress_rls_exempt_user;
 SET row_security TO OFF;
 SELECT * FROM document;
- did | cid | dlevel |      dauthor      |        dtitle         
------+-----+--------+-------------------+-----------------------
+ did | cid | dlevel |      dauthor      |         dtitle          
+-----+-----+--------+-------------------+-------------------------
    1 |  11 |      1 | regress_rls_bob   | my first novel
    2 |  11 |      2 | regress_rls_bob   | my second novel
    3 |  22 |      2 | regress_rls_bob   | my science fiction
@@ -399,8 +569,10 @@ SELECT * FROM document;
    6 |  22 |      1 | regress_rls_carol | great science fiction
    7 |  33 |      2 | regress_rls_carol | great technology book
    8 |  44 |      1 | regress_rls_carol | great manga
-  10 |  33 |      1 | regress_rls_carol | hoge
-(9 rows)
+   9 |  22 |      1 | regress_rls_dave  | awesome science fiction
+  10 |  33 |      2 | regress_rls_dave  | awesome technology book
+  11 |  33 |      1 | regress_rls_carol | hoge
+(11 rows)
 
 SELECT * FROM category;
  cid |      cname      
@@ -415,8 +587,8 @@ SELECT * FROM category;
 SET SESSION AUTHORIZATION regress_rls_alice;
 SET row_security TO ON;
 SELECT * FROM document;
- did | cid | dlevel |      dauthor      |        dtitle         
------+-----+--------+-------------------+-----------------------
+ did | cid | dlevel |      dauthor      |         dtitle          
+-----+-----+--------+-------------------+-------------------------
    1 |  11 |      1 | regress_rls_bob   | my first novel
    2 |  11 |      2 | regress_rls_bob   | my second novel
    3 |  22 |      2 | regress_rls_bob   | my science fiction
@@ -425,8 +597,10 @@ SELECT * FROM document;
    6 |  22 |      1 | regress_rls_carol | great science fiction
    7 |  33 |      2 | regress_rls_carol | great technology book
    8 |  44 |      1 | regress_rls_carol | great manga
-  10 |  33 |      1 | regress_rls_carol | hoge
-(9 rows)
+   9 |  22 |      1 | regress_rls_dave  | awesome science fiction
+  10 |  33 |      2 | regress_rls_dave  | awesome technology book
+  11 |  33 |      1 | regress_rls_carol | hoge
+(11 rows)
 
 SELECT * FROM category;
  cid |      cname      
@@ -441,8 +615,8 @@ SELECT * FROM category;
 SET SESSION AUTHORIZATION regress_rls_alice;
 SET row_security TO OFF;
 SELECT * FROM document;
- did | cid | dlevel |      dauthor      |        dtitle         
------+-----+--------+-------------------+-----------------------
+ did | cid | dlevel |      dauthor      |         dtitle          
+-----+-----+--------+-------------------+-------------------------
    1 |  11 |      1 | regress_rls_bob   | my first novel
    2 |  11 |      2 | regress_rls_bob   | my second novel
    3 |  22 |      2 | regress_rls_bob   | my science fiction
@@ -451,8 +625,10 @@ SELECT * FROM document;
    6 |  22 |      1 | regress_rls_carol | great science fiction
    7 |  33 |      2 | regress_rls_carol | great technology book
    8 |  44 |      1 | regress_rls_carol | great manga
-  10 |  33 |      1 | regress_rls_carol | hoge
-(9 rows)
+   9 |  22 |      1 | regress_rls_dave  | awesome science fiction
+  10 |  33 |      2 | regress_rls_dave  | awesome technology book
+  11 |  33 |      1 | regress_rls_carol | hoge
+(11 rows)
 
 SELECT * FROM category;
  cid |      cname      
@@ -1517,6 +1693,7 @@ SELECT * FROM b1;
 --
 SET SESSION AUTHORIZATION regress_rls_alice;
 DROP POLICY p1 ON document;
+DROP POLICY p1r ON document;
 CREATE POLICY p1 ON document FOR SELECT USING (true);
 CREATE POLICY p2 ON document FOR INSERT WITH CHECK (dauthor = current_user);
 CREATE POLICY p3 ON document FOR UPDATE
@@ -3461,6 +3638,7 @@ RESET client_min_messages;
 DROP USER regress_rls_alice;
 DROP USER regress_rls_bob;
 DROP USER regress_rls_carol;
+DROP USER regress_rls_dave;
 DROP USER regress_rls_exempt_user;
 DROP ROLE regress_rls_group1;
 DROP ROLE regress_rls_group2;

@@ -332,6 +332,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <str>		all_Op MathOp
 
 %type <str>		row_security_cmd RowSecurityDefaultForCmd
+%type <boolean> RowSecurityDefaultPermissive
 %type <node>	RowSecurityOptionalWithCheck RowSecurityOptionalExpr
 %type <list>	RowSecurityDefaultToRole RowSecurityOptionalToRole
 
@@ -4628,26 +4629,30 @@ AlterUserMappingStmt: ALTER USER MAPPING FOR auth_ident SERVER name alter_generi
 /*****************************************************************************
  *
  *		QUERIES:
- *				CREATE POLICY name ON table [FOR cmd] [TO role, ...]
- *					[USING (qual)] [WITH CHECK (with_check)]
+ *				CREATE POLICY name ON table
+ *					[AS { PERMISSIVE | RESTRICTIVE } ]
+ *					[FOR { SELECT | INSERT | UPDATE | DELETE } ]
+ *					[TO role, ...]
+ *					[USING (qual)] [WITH CHECK (with check qual)]
  *				ALTER POLICY name ON table [TO role, ...]
- *					[USING (qual)] [WITH CHECK (with_check)]
+ *					[USING (qual)] [WITH CHECK (with check qual)]
  *				DROP POLICY name ON table
  *
  *****************************************************************************/
 
 CreatePolicyStmt:
-			CREATE POLICY name ON qualified_name RowSecurityDefaultForCmd
-				RowSecurityDefaultToRole RowSecurityOptionalExpr
-				RowSecurityOptionalWithCheck
+			CREATE POLICY name ON qualified_name RowSecurityDefaultPermissive
+				RowSecurityDefaultForCmd RowSecurityDefaultToRole
+				RowSecurityOptionalExpr RowSecurityOptionalWithCheck
 				{
 					CreatePolicyStmt *n = makeNode(CreatePolicyStmt);
 					n->policy_name = $3;
 					n->table = $5;
-					n->cmd_name = $6;
-					n->roles = $7;
-					n->qual = $8;
-					n->with_check = $9;
+					n->permissive = $6;
+					n->cmd_name = $7;
+					n->roles = $8;
+					n->qual = $9;
+					n->with_check = $10;
 					$$ = (Node *) n;
 				}
 		;
@@ -4709,6 +4714,24 @@ RowSecurityDefaultToRole:
 RowSecurityOptionalToRole:
 			TO role_list			{ $$ = $2; }
 			| /* EMPTY */			{ $$ = NULL; }
+		;
+
+RowSecurityDefaultPermissive:
+			AS IDENT
+				{
+					if (strcmp($2, "permissive") == 0)
+						$$ = true;
+					else if (strcmp($2, "restrictive") == 0)
+						$$ = false;
+					else
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("unrecognized row security option \"%s\"", $2),
+								 errhint("Only PERMISSIVE or RESTRICTIVE policies are supported currently."),
+									 parser_errposition(@2)));
+
+				}
+			| /* EMPTY */			{ $$ = true; }
 		;
 
 RowSecurityDefaultForCmd:

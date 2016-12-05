@@ -22,6 +22,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable class="parameter">table_name</replaceable>
+    [ AS { PERMISSIVE | RESTRICTIVE } ]
     [ FOR { ALL | SELECT | INSERT | UPDATE | DELETE } ]
     [ TO { <replaceable class="parameter">role_name</replaceable> | PUBLIC | CURRENT_USER | SESSION_USER } [, ...] ]
     [ USING ( <replaceable class="parameter">using_expression</replaceable> ) ]
@@ -115,6 +116,33 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
      <para>
       The name (optionally schema-qualified) of the table the
       policy applies to.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">PERMISSIVE</replaceable></term>
+    <listitem>
+     <para>
+      Specify that the policy is to be created as a permissive policy.
+      All permissive policies which are applicable to a given query will
+      be combined together using the boolean "OR" operator.  By creating
+      permissive policies, administrators can add to the set of records
+      which can be accessed.  Policies are PERMISSIVE by default.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">RESTRICTIVE</replaceable></term>
+    <listitem>
+     <para>
+      Specify that the policy is to be created as a restrictive policy.
+      All restrictive policies which are applicable to a given query will
+      be combined together using the boolean "AND" operator.  By creating
+      restrictive policies, administrators can reduce the set of records
+      which can be accessed as all restrictive policies must be passed for
+      each record.
      </para>
     </listitem>
    </varlistentry>
@@ -388,6 +416,16 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
    delete, or update records at all which might possibly indicate a value they
    are not otherwise able to see, or by using generated values (e.g., surrogate
    keys) instead of keys with external meanings.
+  </para>
+
+  <para>
+   Note that there needs to be at least one permissive policy to grant
+   access to records before restrictive policies can be usefully used to
+   reduce that access. If only restrictive policies exist, then no records
+   will be accessible. When a mix of permissive and restrictive policies
+   are present, a record is only accessible if at least one of the
+   permissive policies passes, in addition to all the restrictive
+   policies.
   </para>
 
   <para>

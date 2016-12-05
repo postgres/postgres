@@ -547,7 +547,8 @@ typedef struct _policyInfo
 	DumpableObject dobj;
 	TableInfo  *poltable;
 	char	   *polname;		/* null indicates RLS is enabled on rel */
-	char	   *polcmd;
+	char		polcmd;
+	bool		polpermissive;
 	char	   *polroles;
 	char	   *polqual;
 	char	   *polwithcheck;

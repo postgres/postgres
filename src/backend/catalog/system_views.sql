@@ -76,6 +76,12 @@ CREATE VIEW pg_policies AS
         C.relname AS tablename,
         pol.polname AS policyname,
         CASE
+            WHEN pol.polpermissive THEN
+                'PERMISSIVE'
+            ELSE
+                'RESTRICTIVE'
+        END AS permissive,
+        CASE
             WHEN pol.polroles = '{0}' THEN
                 string_to_array('public', '')
             ELSE

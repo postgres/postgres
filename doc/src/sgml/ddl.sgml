@@ -1599,9 +1599,11 @@ REVOKE ALL ON accounts FROM PUBLIC;
 
   <para>
    When multiple policies apply to a given query, they are combined using
-   <literal>OR</literal>, so that a row is accessible if any policy allows
-   it.  This is similar to the rule that a given role has the privileges
-   of all roles that they are a member of.
+   either <literal>OR</literal> (for permissive policies, which are the
+   default) or using <literal>AND</literal> (for restrictive policies).
+   This is similar to the rule that a given role has the privileges
+   of all roles that they are a member of.  Permissive vs. restrictive
+   policies are discussed further below.
   </para>
 
   <para>
@@ -1761,6 +1763,56 @@ ERROR:  permission denied for relation passwd
 -- Alice can change her own password; RLS silently prevents updating other rows
 postgres=&gt; update passwd set pwhash = 'abc';
 UPDATE 1
+</programlisting>
+
+  <para>
+   All of the policies constructed thus far have been permissive policies,
+   meaning that when multiple policies are applied they are combined using
+   the "OR" boolean operator.  While permissive policies can be constructed
+   to only allow access to rows in the intended cases, it can be simpler to
+   combine permissive policies with restrictive policies (which the records
+   must pass and which are combined using the "AND" boolean operator).
+   Building on the example above, we add a restrictive policy to require
+   the administrator to be connected over a local unix socket to access the
+   records of the passwd table:
+  </para>
+
+<programlisting>
+CREATE POLICY admin_local_only ON passwd AS RESTRICTIVE TO admin
+    USING (pg_catalog.inet_client_addr() IS NULL);
+</programlisting>
+
+  <para>
+   We can then see that an administrator connecting over a network will not
+   see any records, due to the restrictive policy:
+  </para>
+
+<programlisting>
+=&gt; SELECT current_user;
+ current_user 
+--------------
+ admin
+(1 row)
+
+=&gt; select inet_client_addr();
+ inet_client_addr 
+------------------
+ 127.0.0.1
+(1 row)
+
+=&gt; SELECT current_user;
+ current_user 
+--------------
+ admin
+(1 row)
+
+=&gt; TABLE passwd;
+ user_name | pwhash | uid | gid | real_name | home_phone | extra_info | home_dir | shell
+-----------+--------+-----+-----+-----------+------------+------------+----------+-------
+(0 rows)
+
+=&gt; UPDATE passwd set pwhash = NULL;
+UPDATE 0
 </programlisting>
 
   <para>

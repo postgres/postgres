@@ -2004,7 +2004,7 @@ my %tests = (
 						   USING (true)
 						   WITH CHECK (true);',
 		regexp => qr/^
-			\QCREATE POLICY p1 ON test_table FOR ALL TO PUBLIC \E
+			\QCREATE POLICY p1 ON test_table \E
 			\QUSING (true) WITH CHECK (true);\E
 			/xm,
 		like => {
@@ -2166,7 +2166,36 @@ my %tests = (
 			pg_dumpall_globals_clean => 1,
 			role                     => 1,
 			section_pre_data         => 1, }, },
-
+	'CREATE POLICY p6 ON test_table AS RESTRICTIVE' => {
+		create_order => 27,
+		create_sql   => 'CREATE POLICY p6 ON dump_test.test_table AS RESTRICTIVE
+						   USING (false);',
+		regexp => qr/^
+			\QCREATE POLICY p6 ON test_table AS RESTRICTIVE \E
+			\QUSING (false);\E
+			/xm,
+		like => {
+			binary_upgrade          => 1,
+			clean                   => 1,
+			clean_if_exists         => 1,
+			createdb                => 1,
+			defaults                => 1,
+			exclude_test_table_data => 1,
+			no_privs                => 1,
+			no_owner                => 1,
+			only_dump_test_schema   => 1,
+			only_dump_test_table    => 1,
+			pg_dumpall_dbprivs      => 1,
+			schema_only             => 1,
+			section_post_data       => 1,
+			test_schema_plus_blobs  => 1, },
+		unlike => {
+			exclude_dump_test_schema => 1,
+			exclude_test_table       => 1,
+			pg_dumpall_globals       => 1,
+			pg_dumpall_globals_clean => 1,
+			role                     => 1,
+		    section_pre_data         => 1, }, },
 	'CREATE SCHEMA dump_test' => {
 		all_runs => 1,
 		catch_all => 'CREATE ... commands',

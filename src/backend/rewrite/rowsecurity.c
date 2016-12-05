@@ -86,10 +86,10 @@ static bool check_role_for_policy(ArrayType *policy_roles, Oid user_id);
  * hooks to allow extensions to add their own security policies
  *
  * row_security_policy_hook_permissive can be used to add policies which
- * are included in the "OR"d set of policies.
+ * are combined with the other permissive policies, using OR.
  *
  * row_security_policy_hook_restrictive can be used to add policies which
- * are enforced, regardless of other policies (they are "AND"d).
+ * are enforced, regardless of other policies (they are combined using AND).
  */
 row_security_policy_hook_type row_security_policy_hook_permissive = NULL;
 row_security_policy_hook_type row_security_policy_hook_restrictive = NULL;
@@ -212,8 +212,8 @@ get_row_security_policies(Query *root, RangeTblEntry *rte, int rt_index,
 	/*
 	 * For SELECT, UPDATE and DELETE, add security quals to enforce the USING
 	 * policies.  These security quals control access to existing table rows.
-	 * Restrictive policies are "AND"d together, and permissive policies are
-	 * "OR"d together.
+	 * Restrictive policies are combined together using AND, and permissive
+	 * policies are combined together using OR.
 	 */
 
 	get_policies_for_relation(rel, commandType, user_id, &permissive_policies,
@@ -433,8 +433,19 @@ get_policies_for_relation(Relation relation, CmdType cmd, Oid user_id,
 		 * the specified role.
 		 */
 		if (cmd_matches && check_role_for_policy(policy->roles, user_id))
-			*permissive_policies = lappend(*permissive_policies, policy);
+		{
+			if (policy->permissive)
+				*permissive_policies = lappend(*permissive_policies, policy);
+			else
+				*restrictive_policies = lappend(*restrictive_policies, policy);
+		}
 	}
+
+	/*
+	 * We sort restrictive policies by name so that any WCOs they generate are
+	 * checked in a well-defined order.
+	 */
+	*restrictive_policies = sort_policies_by_name(*restrictive_policies);
 
 	/*
 	 * Then add any permissive or restrictive policies defined by extensions.
@@ -447,8 +458,10 @@ get_policies_for_relation(Relation relation, CmdType cmd, Oid user_id,
 		(*row_security_policy_hook_restrictive) (cmd, relation);
 
 		/*
-		 * We sort restrictive policies by name so that any WCOs they generate
-		 * are checked in a well-defined order.
+		 * As with built-in restrictive policies, we sort any hook-provided
+		 * restrictive policies by name also.  Note that we also intentionally
+		 * always check all built-in restrictive policies, in name order,
+		 * before checking restrictive policies added by hooks, in name order.
 		 */
 		hook_policies = sort_policies_by_name(hook_policies);
 
@@ -481,8 +494,8 @@ get_policies_for_relation(Relation relation, CmdType cmd, Oid user_id,
  *
  * This is only used for restrictive policies, ensuring that any
  * WithCheckOptions they generate are applied in a well-defined order.
- * This is not necessary for permissive policies, since they are all "OR"d
- * together into a single WithCheckOption check.
+ * This is not necessary for permissive policies, since they are all combined
+ * together using OR into a single WithCheckOption check.
  */
 static List *
 sort_policies_by_name(List *policies)
@@ -580,8 +593,8 @@ add_security_quals(int rt_index,
 		/*
 		 * We now know that permissive policies exist, so we can now add
 		 * security quals based on the USING clauses from the restrictive
-		 * policies.  Since these need to be "AND"d together, we can just add
-		 * them one at a time.
+		 * policies.  Since these need to be combined together using AND, we
+		 * can just add them one at a time.
 		 */
 		foreach(item, restrictive_policies)
 		{
@@ -599,8 +612,8 @@ add_security_quals(int rt_index,
 		}
 
 		/*
-		 * Then add a single security qual "OR"ing together the USING clauses
-		 * from all the permissive policies.
+		 * Then add a single security qual combining together the USING
+		 * clauses from all the permissive policies using OR.
 		 */
 		if (list_length(permissive_quals) == 1)
 			rowsec_expr = (Expr *) linitial(permissive_quals);
@@ -681,10 +694,11 @@ add_with_check_options(Relation rel,
 	if (permissive_quals != NIL)
 	{
 		/*
-		 * Add a single WithCheckOption for all the permissive policy clauses
-		 * "OR"d together.  This check has no policy name, since if the check
-		 * fails it means that no policy granted permission to perform the
-		 * update, rather than any particular policy being violated.
+		 * Add a single WithCheckOption for all the permissive policy clauses,
+		 * combining them together using OR.  This check has no policy name,
+		 * since if the check fails it means that no policy granted permission
+		 * to perform the update, rather than any particular policy being
+		 * violated.
 		 */
 		WithCheckOption *wco;
 
@@ -705,9 +719,9 @@ add_with_check_options(Relation rel,
 
 		/*
 		 * Now add WithCheckOptions for each of the restrictive policy clauses
-		 * (which will be "AND"d together).  We use a separate WithCheckOption
-		 * for each restrictive policy to allow the policy name to be included
-		 * in error reports if the policy is violated.
+		 * (which will be combined together using AND).  We use a separate
+		 * WithCheckOption for each restrictive policy to allow the policy
+		 * name to be included in error reports if the policy is violated.
 		 */
 		foreach(item, restrictive_policies)
 		{

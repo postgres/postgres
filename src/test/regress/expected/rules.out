@@ -1380,6 +1380,10 @@ pg_policies| SELECT n.nspname AS schemaname,
     c.relname AS tablename,
     pol.polname AS policyname,
         CASE
+            WHEN pol.polpermissive THEN 'PERMISSIVE'::text
+            ELSE 'RESTRICTIVE'::text
+        END AS permissive,
+        CASE
             WHEN (pol.polroles = '{0}'::oid[]) THEN (string_to_array('public'::text, ''::text))::name[]
             ELSE ARRAY( SELECT pg_authid.rolname
                FROM pg_authid
