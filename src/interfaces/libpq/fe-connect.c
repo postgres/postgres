@@ -1762,6 +1762,39 @@ connectDBComplete(PGconn *conn)
 	}
 }
 
+/*
+ * This subroutine saves conn->errorMessage, which will be restored back by
+ * restoreErrorMessage subroutine.
+ */
+static bool
+saveErrorMessage(PGconn *conn, PQExpBuffer savedMessage)
+{
+	initPQExpBuffer(savedMessage);
+	if (PQExpBufferBroken(savedMessage))
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("out of memory\n"));
+		return false;
+	}
+
+	appendPQExpBufferStr(savedMessage,
+						 conn->errorMessage.data);
+	resetPQExpBuffer(&conn->errorMessage);
+	return true;
+}
+
+/*
+ * Restores saved error messages back to conn->errorMessage.
+ */
+static void
+restoreErrorMessage(PGconn *conn, PQExpBuffer savedMessage)
+{
+	appendPQExpBufferStr(savedMessage, conn->errorMessage.data);
+	resetPQExpBuffer(&conn->errorMessage);
+	appendPQExpBufferStr(&conn->errorMessage, savedMessage->data);
+	termPQExpBuffer(savedMessage);
+}
+
 /* ----------------
  *		PQconnectPoll
  *
@@ -1795,6 +1828,7 @@ PQconnectPoll(PGconn *conn)
 	PGresult   *res;
 	char		sebuf[256];
 	int			optval;
+	PQExpBufferData savedMessage;
 
 	if (conn == NULL)
 		return PGRES_POLLING_FAILED;
@@ -2792,11 +2826,26 @@ keep_going:						/* We will come back to here until there is
 				if (conn->target_session_attrs != NULL &&
 					strcmp(conn->target_session_attrs, "read-write") == 0)
 				{
+					/*
+					 * We are yet to make a connection. Save all existing error
+					 * messages until we make a successful connection state.
+					 * This is important because PQsendQuery is going to reset
+					 * conn->errorMessage and we will loose error messages
+					 * related to previous hosts we have tried to connect and
+					 * failed.
+					 */
+					if (!saveErrorMessage(conn, &savedMessage))
+						goto error_return;
+
 					conn->status = CONNECTION_OK;
 					if (!PQsendQuery(conn,
 									 "show transaction_read_only"))
+					{
+						restoreErrorMessage(conn, &savedMessage);
 						goto error_return;
+					}
 					conn->status = CONNECTION_CHECK_WRITABLE;
+					restoreErrorMessage(conn, &savedMessage);
 					return PGRES_POLLING_READING;
 				}
 
@@ -2841,11 +2890,18 @@ keep_going:						/* We will come back to here until there is
 			if (conn->target_session_attrs != NULL &&
 				strcmp(conn->target_session_attrs, "read-write") == 0)
 			{
+				if (!saveErrorMessage(conn, &savedMessage))
+					goto error_return;
+
 				conn->status = CONNECTION_OK;
 				if (!PQsendQuery(conn,
 								 "show transaction_read_only"))
+				{
+					restoreErrorMessage(conn, &savedMessage);
 					goto error_return;
+				}
 				conn->status = CONNECTION_CHECK_WRITABLE;
+				restoreErrorMessage(conn, &savedMessage);
 				return PGRES_POLLING_READING;
 			}
 
@@ -2858,13 +2914,20 @@ keep_going:						/* We will come back to here until there is
 
 		case CONNECTION_CHECK_WRITABLE:
 			{
+				if (!saveErrorMessage(conn, &savedMessage))
+					goto error_return;
+
 				conn->status = CONNECTION_OK;
 				if (!PQconsumeInput(conn))
+				{
+					restoreErrorMessage(conn, &savedMessage);
 					goto error_return;
+				}
 
 				if (PQisBusy(conn))
 				{
 					conn->status = CONNECTION_CHECK_WRITABLE;
+					restoreErrorMessage(conn, &savedMessage);
 					return PGRES_POLLING_READING;
 				}
 
@@ -2878,6 +2941,7 @@ keep_going:						/* We will come back to here until there is
 					if (strncmp(val, "on", 2) == 0)
 					{
 						PQclear(res);
+						restoreErrorMessage(conn, &savedMessage);
 
 						/* Not writable; close connection. */
 						appendPQExpBuffer(&conn->errorMessage,
@@ -2902,6 +2966,7 @@ keep_going:						/* We will come back to here until there is
 						goto error_return;
 					}
 					PQclear(res);
+					termPQExpBuffer(&savedMessage);
 
 					/* We can release the address lists now. */
 					release_all_addrinfo(conn);
@@ -2917,6 +2982,7 @@ keep_going:						/* We will come back to here until there is
 				 */
 				if (res)
 					PQclear(res);
+				restoreErrorMessage(conn, &savedMessage);
 				appendPQExpBuffer(&conn->errorMessage,
 				  libpq_gettext("test \"show transaction_read_only\" failed "
 								" on \"%s:%s\" \n"),
