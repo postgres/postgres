@@ -1103,7 +1103,9 @@ su - postgres
          Allow the build to succeed even if <productname>PostgreSQL</>
          has no support for strong random numbers on the platform.
          A source of random numbers is needed for some authentication
-         protocols, as well as some routines in <xref linkend="pgcrypto">
+         protocols, as well as some routines in the
+         <![%standalone-include[pgcrypto]]>
+         <![%standalone-ignore[<xref linkend="pgcrypto">]]>
          module. --disable-strong-random disables functionality that
          requires cryptographically strong random numbers, and substitutes
          a weak pseudo-random-number-generator for the generation of
