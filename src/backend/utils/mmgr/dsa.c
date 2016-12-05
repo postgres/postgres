@@ -98,7 +98,7 @@
 #define DSA_OFFSET_BITMASK (((dsa_pointer) 1 << DSA_OFFSET_WIDTH) - 1)
 
 /* The maximum size of a DSM segment. */
-#define DSA_MAX_SEGMENT_SIZE ((size_t) 1 << DSA_OFFSET_WIDTH)
+#define DSA_MAX_SEGMENT_SIZE ((Size) 1 << DSA_OFFSET_WIDTH)
 
 /* Number of pages (see FPM_PAGE_SIZE) per regular superblock. */
 #define DSA_PAGES_PER_SUPERBLOCK		16
@@ -1919,7 +1919,7 @@ get_best_segment(dsa_area *area, Size npages)
 		 * The minimum contiguous size that any segment in this bin should
 		 * have.  We'll re-bin if we see segments with fewer.
 		 */
-		Size		threshold = 1 << (bin - 1);
+		Size		threshold = (Size) 1 << (bin - 1);
 		dsa_segment_index segment_index;
 
 		/* Search this bin for a segment with enough contiguous space. */
