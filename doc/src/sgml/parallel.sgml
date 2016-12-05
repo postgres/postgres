@@ -61,14 +61,15 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
     session will request a number of <link linkend="bgworker">background
     worker processes</link> equal to the number
     of workers chosen by the planner.  The total number of background
-    workers that can exist at any one time is limited by
-    <xref linkend="guc-max-worker-processes">, so it is possible for a
+    workers that can exist at any one time is limited by both
+    <xref linkend="guc-max-worker-processes"> and
+    <xref linkend="guc-max-parallel-workers">, so it is possible for a
     parallel query to run with fewer workers than planned, or even with
     no workers at all.  The optimal plan may depend on the number of workers
     that are available, so this can result in poor query performance.  If this
     occurrence is frequent, considering increasing
-    <varname>max_worker_processes</> so that more workers can be run
-    simultaneously or alternatively reducing
+    <varname>max_worker_processes</> and <varname>max_parallel_workers</>
+    so that more workers can be run simultaneously or alternatively reducing
     <xref linkend="guc-max-parallel-workers-per-gather"> so that the planner
     requests fewer workers.
    </para>
@@ -200,6 +201,14 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
         No background workers can be obtained because of the limitation that
         the total number of background workers cannot exceed
         <xref linkend="guc-max-worker-processes">.
+      </para>
+    </listitem>
+
+    <listitem>
+      <para> 
+        No background workers can be obtained because of the limitation that
+        the total number of background workers launched for purposes of
+        parallel query cannot exceed <xref linkend="guc-max-parallel-workers">.
       </para>
     </listitem>
 

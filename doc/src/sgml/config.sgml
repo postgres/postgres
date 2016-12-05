@@ -1990,6 +1990,12 @@ include_dir 'conf.d'
          same or higher value than on the master server. Otherwise, queries
          will not be allowed in the standby server.
         </para>
+
+        <para>
+         When changing this value, consider also adjusting
+         <xref linkend="guc-max-parallel-workers"> and
+         <xref linkend="guc-max-parallel-workers-per-gather">.
+        </para>
        </listitem>
       </varlistentry>
 
@@ -2047,6 +2053,10 @@ include_dir 'conf.d'
          parallel queries.  The default value is 8.  When increasing or
          decreasing this value, consider also adjusting
          <xref linkend="guc-max-parallel-workers-per-gather">.
+         Also, note that a setting for this value which is higher than
+         <xref linkend="guc-max-worker-processes"> will have no effect,
+         since parallel workers are taken from the pool of worker processes
+         established by that setting.
         </para>
        </listitem>
       </varlistentry>
