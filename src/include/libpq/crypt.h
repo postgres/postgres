@@ -16,6 +16,6 @@
 #include "libpq/libpq-be.h"
 
 extern int md5_crypt_verify(const Port *port, const char *role,
-				 char *client_pass, char **logdetail);
+				 char *client_pass, char *md5_salt, int md5_salt_len, char **logdetail);
 
 #endif

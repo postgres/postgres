@@ -197,6 +197,7 @@ enable_dtrace	= @enable_dtrace@
 enable_coverage	= @enable_coverage@
 enable_tap_tests	= @enable_tap_tests@
 enable_thread_safety	= @enable_thread_safety@
+enable_strong_random	= @enable_strong_random@
 
 python_includespec	= @python_includespec@
 python_libdir		= @python_libdir@

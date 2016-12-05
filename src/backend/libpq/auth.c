@@ -33,6 +33,7 @@
 #include "miscadmin.h"
 #include "replication/walsender.h"
 #include "storage/ipc.h"
+#include "utils/backend_random.h"
 
 
 /*----------------------------------------------------------------
@@ -43,8 +44,20 @@ static void sendAuthRequest(Port *port, AuthRequest areq, char *extradata,
 				int extralen);
 static void auth_failed(Port *port, int status, char *logdetail);
 static char *recv_password_packet(Port *port);
-static int	recv_and_check_password_packet(Port *port, char **logdetail);
 
+
+/*----------------------------------------------------------------
+ * MD5 authentication
+ *----------------------------------------------------------------
+ */
+static int CheckMD5Auth(Port *port, char **logdetail);
+
+/*----------------------------------------------------------------
+ * Plaintext password authentication
+ *----------------------------------------------------------------
+ */
+
+static int CheckPasswordAuth(Port *port, char **logdetail);
 
 /*----------------------------------------------------------------
  * Ident authentication
@@ -536,13 +549,11 @@ ClientAuthentication(Port *port)
 						(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
 						 errmsg("MD5 authentication is not supported when \"db_user_namespace\" is enabled")));
 			/* include the salt to use for computing the response */
-			sendAuthRequest(port, AUTH_REQ_MD5, port->md5Salt, 4);
-			status = recv_and_check_password_packet(port, &logdetail);
+			status = CheckMD5Auth(port, &logdetail);
 			break;
 
 		case uaPassword:
-			sendAuthRequest(port, AUTH_REQ_PASSWORD, NULL, 0);
-			status = recv_and_check_password_packet(port, &logdetail);
+			status = CheckPasswordAuth(port, &logdetail);
 			break;
 
 		case uaPAM:
@@ -696,23 +707,48 @@ recv_password_packet(Port *port)
  *----------------------------------------------------------------
  */
 
-/*
- * Called when we have sent an authorization request for a password.
- * Get the response and check it.
- * On error, optionally store a detail string at *logdetail.
- */
 static int
-recv_and_check_password_packet(Port *port, char **logdetail)
+CheckMD5Auth(Port *port, char **logdetail)
 {
+	char		md5Salt[4];		/* Password salt */
 	char	   *passwd;
 	int			result;
+
+	pg_backend_random(md5Salt, 4);
+
+	sendAuthRequest(port, AUTH_REQ_MD5, md5Salt, 4);
 
 	passwd = recv_password_packet(port);
 
 	if (passwd == NULL)
 		return STATUS_EOF;		/* client wouldn't send password */
 
-	result = md5_crypt_verify(port, port->user_name, passwd, logdetail);
+	result = md5_crypt_verify(port, port->user_name, passwd, md5Salt, 4, logdetail);
+
+	pfree(passwd);
+
+	return result;
+}
+
+/*----------------------------------------------------------------
+ * Plaintext password authentication
+ *----------------------------------------------------------------
+ */
+
+static int
+CheckPasswordAuth(Port *port, char **logdetail)
+{
+	char	   *passwd;
+	int			result;
+
+	sendAuthRequest(port, AUTH_REQ_PASSWORD, NULL, 0);
+
+	passwd = recv_password_packet(port);
+
+	if (passwd == NULL)
+		return STATUS_EOF;		/* client wouldn't send password */
+
+	result = md5_crypt_verify(port, port->user_name, passwd, NULL, 0, logdetail);
 
 	pfree(passwd);
 
@@ -920,7 +956,7 @@ pg_GSS_recvauth(Port *port)
 				 (unsigned int) port->gss->outbuf.length);
 
 			sendAuthRequest(port, AUTH_REQ_GSS_CONT,
-							port->gss->outbuf.value, port->gss->outbuf.length);
+						  port->gss->outbuf.value, port->gss->outbuf.length);
 
 			gss_release_buffer(&lmin_s, &port->gss->outbuf);
 		}
@@ -1166,7 +1202,7 @@ pg_SSPI_recvauth(Port *port)
 			port->gss->outbuf.value = outbuf.pBuffers[0].pvBuffer;
 
 			sendAuthRequest(port, AUTH_REQ_GSS_CONT,
-							port->gss->outbuf.value, port->gss->outbuf.length);
+						  port->gss->outbuf.value, port->gss->outbuf.length);
 
 			FreeContextBuffer(outbuf.pBuffers[0].pvBuffer);
 		}

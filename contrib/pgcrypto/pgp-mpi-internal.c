@@ -57,17 +57,16 @@ mp_clear_free(mpz_t *a)
 static int
 mp_px_rand(uint32 bits, mpz_t *res)
 {
-	int			err;
+#ifdef HAVE_STRONG_RANDOM
 	unsigned	bytes = (bits + 7) / 8;
 	int			last_bits = bits & 7;
 	uint8	   *buf;
 
 	buf = px_alloc(bytes);
-	err = px_get_random_bytes(buf, bytes);
-	if (err < 0)
+	if (!pg_strong_random((char *) buf, bytes))
 	{
 		px_free(buf);
-		return err;
+		return PXE_NO_RANDOM;
 	}
 
 	/* clear unnecessary bits and set last bit to one */
@@ -84,6 +83,9 @@ mp_px_rand(uint32 bits, mpz_t *res)
 	px_free(buf);
 
 	return 0;
+#else
+	return PXE_NO_RANDOM;
+#endif
 }
 
 static void

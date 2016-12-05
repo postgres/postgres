@@ -36,7 +36,7 @@
  */
 int
 md5_crypt_verify(const Port *port, const char *role, char *client_pass,
-				 char **logdetail)
+				 char *md5_salt, int md5_salt_len, char **logdetail)
 {
 	int			retval = STATUS_ERROR;
 	char	   *shadow_pass,
@@ -91,13 +91,14 @@ md5_crypt_verify(const Port *port, const char *role, char *client_pass,
 	switch (port->hba->auth_method)
 	{
 		case uaMD5:
+			Assert(md5_salt != NULL && md5_salt_len > 0);
 			crypt_pwd = palloc(MD5_PASSWD_LEN + 1);
 			if (isMD5(shadow_pass))
 			{
 				/* stored password already encrypted, only do salt */
 				if (!pg_md5_encrypt(shadow_pass + strlen("md5"),
-									port->md5Salt,
-									sizeof(port->md5Salt), crypt_pwd))
+									md5_salt, md5_salt_len,
+									crypt_pwd))
 				{
 					pfree(crypt_pwd);
 					return STATUS_ERROR;
@@ -118,8 +119,7 @@ md5_crypt_verify(const Port *port, const char *role, char *client_pass,
 					return STATUS_ERROR;
 				}
 				if (!pg_md5_encrypt(crypt_pwd2 + strlen("md5"),
-									port->md5Salt,
-									sizeof(port->md5Salt),
+									md5_salt, md5_salt_len,
 									crypt_pwd))
 				{
 					pfree(crypt_pwd);

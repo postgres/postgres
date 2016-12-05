@@ -38,7 +38,6 @@
 #include "sha1.h"
 #include "blf.h"
 #include "rijndael.h"
-#include "fortuna.h"
 
 /*
  * System reseeds should be separated at least this much.
@@ -613,67 +612,5 @@ px_find_cipher(const char *name, PX_Cipher **res)
 		return PXE_NO_CIPHER;
 
 	*res = c;
-	return 0;
-}
-
-/*
- * Randomness provider
- */
-
-static time_t seed_time = 0;
-static time_t check_time = 0;
-
-static void
-system_reseed(void)
-{
-	uint8		buf[1024];
-	int			n;
-	time_t		t;
-	int			skip = 1;
-
-	t = time(NULL);
-
-	if (seed_time == 0)
-		skip = 0;
-	else if ((t - seed_time) < SYSTEM_RESEED_MIN)
-		skip = 1;
-	else if ((t - seed_time) > SYSTEM_RESEED_MAX)
-		skip = 0;
-	else if (check_time == 0 ||
-			 (t - check_time) > SYSTEM_RESEED_CHECK_TIME)
-	{
-		check_time = t;
-
-		/* roll dice */
-		px_get_random_bytes(buf, 1);
-		skip = buf[0] >= SYSTEM_RESEED_CHANCE;
-	}
-	/* clear 1 byte */
-	px_memset(buf, 0, sizeof(buf));
-
-	if (skip)
-		return;
-
-	n = px_acquire_system_randomness(buf);
-	if (n > 0)
-		fortuna_add_entropy(buf, n);
-
-	seed_time = t;
-	px_memset(buf, 0, sizeof(buf));
-}
-
-int
-px_get_random_bytes(uint8 *dst, unsigned count)
-{
-	system_reseed();
-	fortuna_get_bytes(count, dst);
-	return 0;
-}
-
-int
-px_add_entropy(const uint8 *data, unsigned count)
-{
-	system_reseed();
-	fortuna_add_entropy(data, count);
 	return 0;
 }

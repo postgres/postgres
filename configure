@@ -739,6 +739,7 @@ GENHTML
 LCOV
 GCOV
 enable_debug
+enable_strong_random
 enable_rpath
 default_port
 WANTED_LANGUAGES
@@ -806,6 +807,7 @@ with_pgport
 enable_rpath
 enable_spinlocks
 enable_atomics
+enable_strong_random
 enable_debug
 enable_profiling
 enable_coverage
@@ -1478,6 +1480,7 @@ Optional Features:
                           executables
   --disable-spinlocks     do not use spinlocks
   --disable-atomics       do not use atomic operations
+  --disable-strong-random do not use a strong random number source
   --enable-debug          build with debugging symbols (-g)
   --enable-profiling      build with profiling enabled
   --enable-coverage       build with coverage testing instrumentation
@@ -3189,6 +3192,34 @@ else
   enable_atomics=yes
 
 fi
+
+
+
+#
+# Random number generation
+#
+
+
+# Check whether --enable-strong-random was given.
+if test "${enable_strong_random+set}" = set; then :
+  enableval=$enable_strong_random;
+  case $enableval in
+    yes)
+      :
+      ;;
+    no)
+      :
+      ;;
+    *)
+      as_fn_error $? "no argument expected for --enable-strong-random option" "$LINENO" 5
+      ;;
+  esac
+
+else
+  enable_strong_random=yes
+
+fi
+
 
 
 
@@ -14980,6 +15011,84 @@ else
 $as_echo "#define USE_WIN32_SHARED_MEMORY 1" >>confdefs.h
 
   SHMEM_IMPLEMENTATION="src/backend/port/win32_shmem.c"
+fi
+
+# Select random number source
+#
+# You can override this logic by setting the appropriate USE_*RANDOM flag to 1
+# in the template or configure command line.
+
+# If not selected manually, try to select a source automatically.
+if test "$enable_strong_random" = "yes" && test x"$USE_OPENSSL_RANDOM" = x"" && test x"$USE_WIN32_RANDOM" = x"" && test x"$USE_DEV_URANDOM" = x"" ; then
+  if test x"$with_openssl" = x"yes" ; then
+    USE_OPENSSL_RANDOM=1
+  elif test "$PORTNAME" = x"win32" ; then
+    USE_WIN32_RANDOM=1
+  else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for /dev/urandom" >&5
+$as_echo_n "checking for /dev/urandom... " >&6; }
+if ${ac_cv_file__dev_urandom+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  test "$cross_compiling" = yes &&
+  as_fn_error $? "cannot check for file existence when cross compiling" "$LINENO" 5
+if test -r "/dev/urandom"; then
+  ac_cv_file__dev_urandom=yes
+else
+  ac_cv_file__dev_urandom=no
+fi
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_file__dev_urandom" >&5
+$as_echo "$ac_cv_file__dev_urandom" >&6; }
+if test "x$ac_cv_file__dev_urandom" = xyes; then :
+
+fi
+
+
+    if test x"$ac_cv_file__dev_urandom" = x"yes" ; then
+      USE_DEV_URANDOM=1
+    fi
+  fi
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking which random number source to use" >&5
+$as_echo_n "checking which random number source to use... " >&6; }
+if test "$enable_strong_random" = yes ; then
+  if test x"$USE_OPENSSL_RANDOM" = x"1" ; then
+
+$as_echo "#define USE_OPENSSL_RANDOM 1" >>confdefs.h
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: OpenSSL" >&5
+$as_echo "OpenSSL" >&6; }
+  elif test x"$USE_WIN32_RANDOM" = x"1" ; then
+
+$as_echo "#define USE_WIN32_RANDOM 1" >>confdefs.h
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: Windows native" >&5
+$as_echo "Windows native" >&6; }
+  elif test x"$USE_DEV_URANDOM" = x"1" ; then
+
+$as_echo "#define USE_DEV_URANDOM 1" >>confdefs.h
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: /dev/urandom" >&5
+$as_echo "/dev/urandom" >&6; }
+  else
+    as_fn_error $? "
+no source of strong random numbers was found
+PostgreSQL can use OpenSSL or /dev/urandom as a source of random numbers,
+for authentication protocols. You can use --disable-strong-random to use of a built-in
+pseudo random number generator, but that may be insecure." "$LINENO" 5
+  fi
+
+$as_echo "#define HAVE_STRONG_RANDOM 1" >>confdefs.h
+
+else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: weak builtin PRNG" >&5
+$as_echo "weak builtin PRNG" >&6; }
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING:
+*** Not using a strong random number source may be insecure." >&5
+$as_echo "$as_me: WARNING:
+*** Not using a strong random number source may be insecure." >&2;}
 fi
 
 # If not set in template file, set bytes to use libc memset()

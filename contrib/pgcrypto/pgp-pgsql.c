@@ -62,65 +62,6 @@ PG_FUNCTION_INFO_V1(pg_dearmor);
 PG_FUNCTION_INFO_V1(pgp_armor_headers);
 
 /*
- * Mix a block of data into RNG.
- */
-static void
-add_block_entropy(PX_MD *md, text *data)
-{
-	uint8		sha1[20];
-
-	px_md_reset(md);
-	px_md_update(md, (uint8 *) VARDATA(data), VARSIZE(data) - VARHDRSZ);
-	px_md_finish(md, sha1);
-
-	px_add_entropy(sha1, 20);
-
-	px_memset(sha1, 0, 20);
-}
-
-/*
- * Mix user data into RNG.  It is for user own interests to have
- * RNG state shuffled.
- */
-static void
-add_entropy(text *data1, text *data2, text *data3)
-{
-	PX_MD	   *md;
-	uint8		rnd[3];
-
-	if (!data1 && !data2 && !data3)
-		return;
-
-	if (px_get_random_bytes(rnd, 3) < 0)
-		return;
-
-	if (px_find_digest("sha1", &md) < 0)
-		return;
-
-	/*
-	 * Try to make the feeding unpredictable.
-	 *
-	 * Prefer data over keys, as it's rather likely that key is same in
-	 * several calls.
-	 */
-
-	/* chance: 7/8 */
-	if (data1 && rnd[0] >= 32)
-		add_block_entropy(md, data1);
-
-	/* chance: 5/8 */
-	if (data2 && rnd[1] >= 160)
-		add_block_entropy(md, data2);
-
-	/* chance: 5/8 */
-	if (data3 && rnd[2] >= 160)
-		add_block_entropy(md, data3);
-
-	px_md_free(md);
-	px_memset(rnd, 0, sizeof(rnd));
-}
-
-/*
  * returns src in case of no conversion or error
  */
 static text *
@@ -432,11 +373,7 @@ init_work(PGP_Context **ctx_p, int is_text,
 						 VARSIZE(args) - VARHDRSZ, ex);
 
 	if (err)
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_EXTERNAL_ROUTINE_INVOCATION_EXCEPTION),
-				 errmsg("%s", px_strerror(err))));
-	}
+		px_THROW_ERROR(err);
 
 	if (ex->debug)
 		px_set_debug_handler(show_debug);
@@ -458,11 +395,6 @@ encrypt_internal(int is_pubenc, int is_text,
 	int			err;
 	struct debug_expect ex;
 	text	   *tmp_data = NULL;
-
-	/*
-	 * Add data and key info RNG.
-	 */
-	add_entropy(data, key, NULL);
 
 	init_work(&ctx, is_text, args, &ex);
 
@@ -516,9 +448,7 @@ encrypt_internal(int is_pubenc, int is_text,
 		pgp_free(ctx);
 		mbuf_free(src);
 		mbuf_free(dst);
-		ereport(ERROR,
-				(errcode(ERRCODE_EXTERNAL_ROUTINE_INVOCATION_EXCEPTION),
-				 errmsg("%s", px_strerror(err))));
+		px_THROW_ERROR(err);
 	}
 
 	/* res_len includes VARHDRSZ */
@@ -605,9 +535,7 @@ decrypt_internal(int is_pubenc, int need_text, text *data,
 	{
 		px_set_debug_handler(NULL);
 		mbuf_free(dst);
-		ereport(ERROR,
-				(errcode(ERRCODE_EXTERNAL_ROUTINE_INVOCATION_EXCEPTION),
-				 errmsg("%s", px_strerror(err))));
+		px_THROW_ERROR(err);
 	}
 
 	res_len = mbuf_steal_data(dst, &restmp);
@@ -628,11 +556,6 @@ decrypt_internal(int is_pubenc, int need_text, text *data,
 		}
 	}
 	px_set_debug_handler(NULL);
-
-	/*
-	 * add successful decryptions also into RNG
-	 */
-	add_entropy(res, key, keypsw);
 
 	return res;
 }
@@ -985,9 +908,7 @@ pg_dearmor(PG_FUNCTION_ARGS)
 
 	ret = pgp_armor_decode((uint8 *) VARDATA(data), data_len, &buf);
 	if (ret < 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_EXTERNAL_ROUTINE_INVOCATION_EXCEPTION),
-				 errmsg("%s", px_strerror(ret))));
+		px_THROW_ERROR(ret);
 	res = palloc(VARHDRSZ + buf.len);
 	SET_VARSIZE(res, VARHDRSZ + buf.len);
 	memcpy(VARDATA(res), buf.data, buf.len);
@@ -1041,9 +962,7 @@ pgp_armor_headers(PG_FUNCTION_ARGS)
 										&state->nheaders, &state->keys,
 										&state->values);
 		if (res < 0)
-			ereport(ERROR,
-					(errcode(ERRCODE_EXTERNAL_ROUTINE_INVOCATION_EXCEPTION),
-					 errmsg("%s", px_strerror(res))));
+			px_THROW_ERROR(res);
 
 		MemoryContextSwitchTo(oldcontext);
 		funcctx->user_fctx = state;
@@ -1092,9 +1011,7 @@ pgp_key_id_w(PG_FUNCTION_ARGS)
 	res_len = pgp_get_keyid(buf, VARDATA(res));
 	mbuf_free(buf);
 	if (res_len < 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_EXTERNAL_ROUTINE_INVOCATION_EXCEPTION),
-				 errmsg("%s", px_strerror(res_len))));
+		px_THROW_ERROR(res_len);
 	SET_VARSIZE(res, VARHDRSZ + res_len);
 
 	PG_FREE_IF_COPY(data, 0);

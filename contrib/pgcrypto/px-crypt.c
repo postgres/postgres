@@ -34,6 +34,7 @@
 #include "px.h"
 #include "px-crypt.h"
 
+#include "utils/backend_random.h"
 
 static char *
 run_crypt_des(const char *psw, const char *salt,
@@ -132,7 +133,6 @@ static struct generator gen_list[] = {
 int
 px_gen_salt(const char *salt_type, char *buf, int rounds)
 {
-	int			res;
 	struct generator *g;
 	char	   *p;
 	char		rbuf[16];
@@ -153,9 +153,8 @@ px_gen_salt(const char *salt_type, char *buf, int rounds)
 			return PXE_BAD_SALT_ROUNDS;
 	}
 
-	res = px_get_random_bytes((uint8 *) rbuf, g->input_len);
-	if (res < 0)
-		return res;
+	if (!pg_backend_random(rbuf, g->input_len))
+		return PXE_NO_RANDOM;
 
 	p = g->gen(rounds, rbuf, g->input_len, buf, PX_MAX_SALT_LEN);
 	px_memset(rbuf, 0, sizeof(rbuf));

@@ -348,6 +348,9 @@
 /* Define to 1 if you have the <string.h> header file. */
 #define HAVE_STRING_H 1
 
+/* Define to use have a strong random number source */
+#define HAVE_STRONG_RANDOM 1
+
 /* Define to 1 if you have the `strtoll' function. */
 //#define HAVE_STRTOLL 1
 
@@ -616,6 +619,9 @@
 /* Define to 1 to build with BSD Authentication support. (--with-bsd-auth) */
 /* #undef USE_BSD_AUTH */
 
+/* Define to use /dev/urandom for random number generation */
+/* #undef USE_DEV_URANDOM */
+
 /* Define to 1 if you want 64-bit integer timestamp and interval support.
    (--enable-integer-datetimes) */
 /* #undef USE_INTEGER_DATETIMES */
@@ -628,6 +634,9 @@
 
 /* Define to build with OpenSSL support. (--with-openssl) */
 /* #undef USE_OPENSSL */
+
+/* Define to use OpenSSL for random number generation */
+/* #undef USE_OPENSSL_RANDOM */
 
 /* Define to 1 to build with PAM support. (--with-pam) */
 /* #undef USE_PAM */
@@ -656,6 +665,9 @@
 
 /* Define to select unnamed POSIX semaphores. */
 /* #undef USE_UNNAMED_POSIX_SEMAPHORES */
+
+/* Define to use native Windows API for random number generation */
+#define USE_WIN32_RANDOM 1
 
 /* Define to select Win32-style semaphores. */
 #define USE_WIN32_SEMAPHORES 1
