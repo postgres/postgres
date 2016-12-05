@@ -2007,8 +2007,8 @@ if test "$enable_strong_random" = yes ; then
     AC_MSG_ERROR([
 no source of strong random numbers was found
 PostgreSQL can use OpenSSL or /dev/urandom as a source of random numbers,
-for authentication protocols. You can use --disable-strong-random to use of a built-in
-pseudo random number generator, but that may be insecure.])
+for authentication protocols. You can use --disable-strong-random to use a
+built-in pseudo random number generator, but that may be insecure.])
   fi
   AC_DEFINE(HAVE_STRONG_RANDOM, 1, [Define to use have a strong random number source])
 else

@@ -15076,8 +15076,8 @@ $as_echo "/dev/urandom" >&6; }
     as_fn_error $? "
 no source of strong random numbers was found
 PostgreSQL can use OpenSSL or /dev/urandom as a source of random numbers,
-for authentication protocols. You can use --disable-strong-random to use of a built-in
-pseudo random number generator, but that may be insecure." "$LINENO" 5
+for authentication protocols. You can use --disable-strong-random to use a
+built-in pseudo random number generator, but that may be insecure." "$LINENO" 5
   fi
 
 $as_echo "#define HAVE_STRONG_RANDOM 1" >>confdefs.h
