@@ -1099,9 +1099,10 @@ dsa_dump(dsa_area *area)
 
 						span = dsa_get_address(area, span_pointer);
 						fprintf(stderr,
-								"        span descriptor at %016lx, "
-								"superblock at %016lx, pages = %zu, "
-								"objects free = %hu/%hu\n",
+								"        span descriptor at "
+								DSA_POINTER_FORMAT ", superblock at "
+								DSA_POINTER_FORMAT
+								", pages = %zu, objects free = %hu/%hu\n",
 								span_pointer, span->start, span->npages,
 								span->nallocatable, span->nmax);
 						span_pointer = span->nextspan;
