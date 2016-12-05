@@ -1982,7 +1982,7 @@ include_dir 'conf.d'
         <para>
          Sets the maximum number of background processes that the system
          can support.  This parameter can only be set at server start.  The
-         default is 16.
+         default is 8.
         </para>
 
         <para>
