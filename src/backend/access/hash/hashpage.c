@@ -653,13 +653,21 @@ restart_expand:
 	 */
 	if (H_NEEDS_SPLIT_CLEANUP(oopaque))
 	{
+		/*
+		 * Copy bucket mapping info now; refer to the comment in code below
+		 * where we copy this information before calling _hash_splitbucket
+		 * to see why this is okay.
+		 */
+		maxbucket = metap->hashm_maxbucket;
+		highmask = metap->hashm_highmask;
+		lowmask = metap->hashm_lowmask;
+
 		/* Release the metapage lock. */
 		_hash_chgbufaccess(rel, metabuf, HASH_READ, HASH_NOLOCK);
 
 		hashbucketcleanup(rel, old_bucket, buf_oblkno, start_oblkno, NULL,
-						  metap->hashm_maxbucket, metap->hashm_highmask,
-						  metap->hashm_lowmask, NULL,
-						  NULL, true, NULL, NULL);
+						  maxbucket, highmask, lowmask, NULL, NULL, true,
+						  NULL, NULL);
 
 		_hash_dropbuf(rel, buf_oblkno);
 
