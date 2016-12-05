@@ -1184,7 +1184,7 @@ create_internal(void *place, size_t size,
 	control->segment_header.freed = false;
 	control->segment_header.size = DSA_INITIAL_SEGMENT_SIZE;
 	control->handle = control_handle;
-	control->max_total_segment_size = SIZE_MAX;
+	control->max_total_segment_size = (Size) -1;
 	control->total_segment_size = size;
 	memset(&control->segment_handles[0], 0,
 		   sizeof(dsm_handle) * DSA_MAX_SEGMENTS);
