@@ -87,13 +87,13 @@ gin_desc(StringInfo buf, XLogReaderState *record)
 		case XLOG_GIN_INSERT:
 			{
 				ginxlogInsert *xlrec = (ginxlogInsert *) rec;
-				char	   *payload = rec + sizeof(ginxlogInsert);
 
 				appendStringInfo(buf, "isdata: %c isleaf: %c",
 							  (xlrec->flags & GIN_INSERT_ISDATA) ? 'T' : 'F',
 							 (xlrec->flags & GIN_INSERT_ISLEAF) ? 'T' : 'F');
 				if (!(xlrec->flags & GIN_INSERT_ISLEAF))
 				{
+					char	   *payload = rec + sizeof(ginxlogInsert);
 					BlockNumber leftChildBlkno;
 					BlockNumber rightChildBlkno;
 
@@ -104,27 +104,27 @@ gin_desc(StringInfo buf, XLogReaderState *record)
 					appendStringInfo(buf, " children: %u/%u",
 									 leftChildBlkno, rightChildBlkno);
 				}
-				if (!(xlrec->flags & GIN_INSERT_ISDATA))
-					appendStringInfo(buf, " isdelete: %c",
-					(((ginxlogInsertEntry *) payload)->isDelete) ? 'T' : 'F');
-				else if (xlrec->flags & GIN_INSERT_ISLEAF)
-				{
-					ginxlogRecompressDataLeaf *insertData =
-					(ginxlogRecompressDataLeaf *) payload;
-
-					if (XLogRecHasBlockImage(record, 0))
-						appendStringInfoString(buf, " (full page image)");
-					else
-						desc_recompress_leaf(buf, insertData);
-				}
+				if (XLogRecHasBlockImage(record, 0))
+					appendStringInfoString(buf, " (full page image)");
 				else
 				{
-					ginxlogInsertDataInternal *insertData = (ginxlogInsertDataInternal *) payload;
+					char	   *payload = XLogRecGetBlockData(record, 0, NULL);
 
-					appendStringInfo(buf, " pitem: %u-%u/%u",
-							 PostingItemGetBlockNumber(&insertData->newitem),
-						 ItemPointerGetBlockNumber(&insertData->newitem.key),
-					   ItemPointerGetOffsetNumber(&insertData->newitem.key));
+					if (!(xlrec->flags & GIN_INSERT_ISDATA))
+						appendStringInfo(buf, " isdelete: %c",
+						 (((ginxlogInsertEntry *) payload)->isDelete) ? 'T' : 'F');
+					else if (xlrec->flags & GIN_INSERT_ISLEAF)
+						desc_recompress_leaf(buf, (ginxlogRecompressDataLeaf *) payload);
+					else
+					{
+						ginxlogInsertDataInternal *insertData =
+							(ginxlogInsertDataInternal *) payload;
+
+						appendStringInfo(buf, " pitem: %u-%u/%u",
+										 PostingItemGetBlockNumber(&insertData->newitem),
+										 ItemPointerGetBlockNumber(&insertData->newitem.key),
+										 ItemPointerGetOffsetNumber(&insertData->newitem.key));
+					}
 				}
 			}
 			break;
@@ -144,12 +144,15 @@ gin_desc(StringInfo buf, XLogReaderState *record)
 			break;
 		case XLOG_GIN_VACUUM_DATA_LEAF_PAGE:
 			{
-				ginxlogVacuumDataLeafPage *xlrec = (ginxlogVacuumDataLeafPage *) rec;
-
 				if (XLogRecHasBlockImage(record, 0))
 					appendStringInfoString(buf, " (full page image)");
 				else
+				{
+					ginxlogVacuumDataLeafPage *xlrec =
+						(ginxlogVacuumDataLeafPage *) XLogRecGetBlockData(record, 0, NULL);
+
 					desc_recompress_leaf(buf, &xlrec->data);
+				}
 			}
 			break;
 		case XLOG_GIN_DELETE_PAGE:
