@@ -229,6 +229,15 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
 
     <listitem>
       <para> 
+        A prepared statement is executed using a <literal>CREATE TABLE .. AS
+        EXECUTE ..</literal> statement.  This construct converts what otherwise
+        would have been a read-only operation into a read-write operation,
+        making it ineligible for parallel query.
+      </para>
+    </listitem>
+
+    <listitem>
+      <para> 
         The transaction isolation level is serializable.  This situation
         does not normally arise, because parallel query plans are not
         generated when the transaction isolation level is serializable.

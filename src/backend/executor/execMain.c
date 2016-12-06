@@ -1540,10 +1540,11 @@ ExecutePlan(EState *estate,
 	estate->es_direction = direction;
 
 	/*
-	 * If a tuple count was supplied, we must force the plan to run without
-	 * parallelism, because we might exit early.
+	 * If a tuple count was supplied or data is being written to relation, we
+	 * must force the plan to run without parallelism, because we might exit
+	 * early.
 	 */
-	if (numberTuples)
+	if (numberTuples || dest->mydest == DestIntoRel)
 		use_parallel_mode = false;
 
 	/*
