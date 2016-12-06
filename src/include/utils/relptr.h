@@ -16,7 +16,7 @@
 
 /*
  * Relative pointers are intended to be used when storing an address that may
- * be relative either to the base of the processes address space or some
+ * be relative either to the base of the process's address space or some
  * dynamic shared memory segment mapped therein.
  *
  * The idea here is that you declare a relative pointer as relptr(type)
@@ -29,11 +29,14 @@
 #define relptr(type)	 union { type *relptr_type; Size relptr_off; }
 
 /*
- * pgindent gets confused by declarations of the type relptr(type), so it's
- * useful to give them a name that doesn't include parentheses.
+ * pgindent gets confused by declarations that use "relptr(type)" directly,
+ * so preferred style is to write
+ *		typedef struct ... SomeStruct;
+ *		relptr_declare(SomeStruct, RelptrSomeStruct);
+ * and then declare pointer variables as "RelptrSomeStruct someptr".
  */
-#define relptr_declare(type, name) \
-	typedef union { type *relptr_type; Size relptr_off; } name;
+#define relptr_declare(type, relptrtype) \
+	typedef relptr(type) relptrtype
 
 #ifdef HAVE__BUILTIN_TYPES_COMPATIBLE_P
 #define relptr_access(base, rp) \
