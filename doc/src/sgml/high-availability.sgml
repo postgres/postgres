@@ -1161,6 +1161,10 @@ synchronous_standby_names = '2 (s1, s2, s3)'
     <literal>s2</> fails. <literal>s4</> is an asynchronous standby since
     its name is not in the list.
    </para>
+   <para>
+    The synchronous states of standby servers can be viewed using
+    the <structname>pg_stat_replication</structname> view.
+   </para>
    </sect3>
 
    <sect3 id="synchronous-replication-performance">
@@ -1235,6 +1239,8 @@ synchronous_standby_names = '2 (s1, s2, s3)'
     will increase according to the length of time the standby has been down.
     The standby is only able to become a synchronous standby
     once it has reached <literal>streaming</> state.
+    This state can be viewed using
+    the <structname>pg_stat_replication</structname> view.
    </para>
 
    <para>

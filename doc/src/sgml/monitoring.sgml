@@ -1357,7 +1357,33 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
     <row>
      <entry><structfield>state</></entry>
      <entry><type>text</></entry>
-     <entry>Current WAL sender state</entry>
+     <entry>Current WAL sender state.
+       Possible values are:
+       <itemizedlist>
+         <listitem>
+          <para>
+           <literal>startup</>: This WAL sender is starting up.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <literal>catchup</>: This WAL sender's connected standby is
+           catching up with the primary.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <literal>streaming</>: This WAL sender is streaming changes
+           after its connected standby server has caught up with the primary.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <literal>backup</>: This WAL sender is sending a backup.
+          </para>
+         </listitem>
+       </itemizedlist>
+     </entry>
     </row>
     <row>
      <entry><structfield>sent_location</></entry>
@@ -1391,7 +1417,28 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
     <row>
      <entry><structfield>sync_state</></entry>
      <entry><type>text</></entry>
-     <entry>Synchronous state of this standby server</entry>
+     <entry>Synchronous state of this standby server.
+       Possible values are:
+       <itemizedlist>
+         <listitem>
+          <para>
+           <literal>async</>: This standby server is asynchronous.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <literal>potential</>: This standby server is now asynchronous,
+           but can potentially become synchronous if one of current
+           synchronous ones fails.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <literal>sync</>: This standby server is synchronous.
+          </para>
+         </listitem>
+       </itemizedlist>
+     </entry>
     </row>
    </tbody>
    </tgroup>
