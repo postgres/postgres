@@ -1955,8 +1955,8 @@ if test "$PORTNAME" != "win32"; then
       SEMA_IMPLEMENTATION="src/backend/port/sysv_sema.c"
       sematype="System V"
     fi
-  AC_MSG_RESULT([$sematype])
   fi
+  AC_MSG_RESULT([$sematype])
 else
   AC_DEFINE(USE_WIN32_SEMAPHORES, 1, [Define to select Win32-style semaphores.])
   SEMA_IMPLEMENTATION="src/backend/port/win32_sema.c"

@@ -14989,9 +14989,9 @@ $as_echo "#define USE_SYSV_SEMAPHORES 1" >>confdefs.h
       SEMA_IMPLEMENTATION="src/backend/port/sysv_sema.c"
       sematype="System V"
     fi
+  fi
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $sematype" >&5
 $as_echo "$sematype" >&6; }
-  fi
 else
 
 $as_echo "#define USE_WIN32_SEMAPHORES 1" >>confdefs.h
