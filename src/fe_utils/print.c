@@ -2884,6 +2884,8 @@ PageOutput(int lines, const printTableOpt *topt)
 			pagerpipe = popen(pagerprog, "w");
 			if (pagerpipe)
 				return pagerpipe;
+			/* if popen fails, silently proceed without pager */
+			restore_sigpipe_trap();
 		}
 	}
 
