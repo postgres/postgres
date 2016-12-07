@@ -2208,6 +2208,12 @@ PageOutput(int lines, unsigned short int pager)
 			pagerprog = getenv("PAGER");
 			if (!pagerprog)
 				pagerprog = DEFAULT_PAGER;
+			else
+			{
+				/* if PAGER is empty or all-white-space, don't use pager */
+				if (strspn(pagerprog, " \t\r\n") == strlen(pagerprog))
+					return stdout;
+			}
 #ifndef WIN32
 			pqsignal(SIGPIPE, SIG_IGN);
 #endif
