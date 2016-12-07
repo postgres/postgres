@@ -2484,8 +2484,9 @@ log_line_prefix(StringInfo buf, ErrorData *edata)
 						saved_timeval_set = true;
 					}
 
-					sprintf(strfbuf, "%ld.%03d", saved_timeval.tv_sec,
-							(int) (saved_timeval.tv_usec / 1000));
+					snprintf(strfbuf, sizeof(strfbuf), "%ld.%03d",
+							 (long) saved_timeval.tv_sec,
+							 (int) (saved_timeval.tv_usec / 1000));
 
 					if (padding != 0)
 						appendStringInfo(buf, "%*s", padding, strfbuf);
