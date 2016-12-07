@@ -1168,6 +1168,8 @@ _equalCreateStmt(const CreateStmt *a, const CreateStmt *b)
 	COMPARE_NODE_FIELD(relation);
 	COMPARE_NODE_FIELD(tableElts);
 	COMPARE_NODE_FIELD(inhRelations);
+	COMPARE_NODE_FIELD(partspec);
+	COMPARE_NODE_FIELD(partbound);
 	COMPARE_NODE_FIELD(ofTypename);
 	COMPARE_NODE_FIELD(constraints);
 	COMPARE_NODE_FIELD(options);
@@ -2646,6 +2648,59 @@ _equalTriggerTransition(const TriggerTransition *a, const TriggerTransition *b)
 	return true;
 }
 
+static bool
+_equalPartitionSpec(const PartitionSpec *a, const PartitionSpec *b)
+{
+	COMPARE_STRING_FIELD(strategy);
+	COMPARE_NODE_FIELD(partParams);
+	COMPARE_LOCATION_FIELD(location);
+
+	return true;
+}
+
+static bool
+_equalPartitionElem(const PartitionElem *a, const PartitionElem *b)
+{
+	COMPARE_STRING_FIELD(name);
+	COMPARE_NODE_FIELD(expr);
+	COMPARE_NODE_FIELD(collation);
+	COMPARE_NODE_FIELD(opclass);
+	COMPARE_LOCATION_FIELD(location);
+
+	return true;
+}
+
+static bool
+_equalPartitionBoundSpec(const PartitionBoundSpec *a, const PartitionBoundSpec *b)
+{
+	COMPARE_SCALAR_FIELD(strategy);
+	COMPARE_NODE_FIELD(listdatums);
+	COMPARE_NODE_FIELD(lowerdatums);
+	COMPARE_NODE_FIELD(upperdatums);
+	COMPARE_LOCATION_FIELD(location);
+
+	return true;
+}
+
+static bool
+_equalPartitionRangeDatum(const PartitionRangeDatum *a, const PartitionRangeDatum *b)
+{
+	COMPARE_SCALAR_FIELD(infinite);
+	COMPARE_NODE_FIELD(value);
+	COMPARE_LOCATION_FIELD(location);
+
+	return true;
+}
+
+static bool
+_equalPartitionCmd(const PartitionCmd *a, const PartitionCmd *b)
+{
+	COMPARE_NODE_FIELD(name);
+	COMPARE_NODE_FIELD(bound);
+
+	return true;
+}
+
 /*
  * Stuff from pg_list.h
  */
@@ -3401,6 +3456,21 @@ equal(const void *a, const void *b)
 			break;
 		case T_TriggerTransition:
 			retval = _equalTriggerTransition(a, b);
+			break;
+		case T_PartitionSpec:
+			retval = _equalPartitionSpec(a, b);
+			break;
+		case T_PartitionElem:
+			retval = _equalPartitionElem(a, b);
+			break;
+		case T_PartitionBoundSpec:
+			retval = _equalPartitionBoundSpec(a, b);
+			break;
+		case T_PartitionRangeDatum:
+			retval = _equalPartitionRangeDatum(a, b);
+			break;
+		case T_PartitionCmd:
+			retval = _equalPartitionCmd(a, b);
 			break;
 
 		default:

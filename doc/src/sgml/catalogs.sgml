@@ -226,6 +226,11 @@
      </row>
 
      <row>
+      <entry><link linkend="catalog-pg-partitioned-table"><structname>pg_partitioned_table</structname></link></entry>
+      <entry>information about partition key of tables</entry>
+     </row>
+
+     <row>
       <entry><link linkend="catalog-pg-policy"><structname>pg_policy</structname></link></entry>
       <entry>row-security policies</entry>
      </row>
@@ -1723,7 +1728,8 @@
       <entry><type>char</type></entry>
       <entry></entry>
       <entry>
-       <literal>r</> = ordinary table, <literal>i</> = index,
+       <literal>r</> = ordinary table, <literal>P</> = partitioned table,
+       <literal>i</> = index
        <literal>S</> = sequence, <literal>v</> = view,
        <literal>m</> = materialized view,
        <literal>c</> = composite type, <literal>t</> = TOAST table,
@@ -1840,6 +1846,13 @@
      </row>
 
      <row>
+      <entry><structfield>relispartition</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>True if table is a partition</entry>
+     </row>
+
+     <row>
       <entry><structfield>relfrozenxid</structfield></entry>
       <entry><type>xid</type></entry>
       <entry></entry>
@@ -1883,6 +1896,16 @@
       <entry></entry>
       <entry>
        Access-method-specific options, as <quote>keyword=value</> strings
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>relpartbound</structfield></entry>
+      <entry><type>pg_node_tree</type></entry>
+      <entry></entry>
+      <entry>
+       If table is a partition (see <structfield>relispartition</structfield>),
+       internal representation of the partition bound
       </entry>
      </row>
     </tbody>
@@ -4687,6 +4710,110 @@
    </para>
   </note>
 
+ </sect1>
+
+ <sect1 id="catalog-pg-partitioned-table">
+  <title><structname>pg_partitioned_table</structname></title>
+
+  <indexterm zone="catalog-pg-partitioned-table">
+   <primary>pg_partitioned_table</primary>
+  </indexterm>
+
+  <para>
+   The catalog <structname>pg_partitioned_table</structname> stores
+   information about how tables are partitioned.
+  </para>
+
+  <table>
+   <title><structname>pg_partitioned_table</> Columns</title>
+
+   <tgroup cols="4">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+
+     <row>
+      <entry><structfield>partrelid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
+      <entry>The OID of the <structname>pg_class</> entry for this partitioned table</entry>
+     </row>
+
+     <row>
+      <entry><structfield>partstrat</structfield></entry>
+      <entry><type>char</type></entry>
+      <entry></entry>
+      <entry>
+       Partitioning strategy; <literal>l</> = list partitioned table,
+       <literal>r</> = range partitioned table
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>partnatts</structfield></entry>
+      <entry><type>int2</type></entry>
+      <entry></entry>
+      <entry>The number of columns in partition key</entry>
+     </row>
+
+     <row>
+      <entry><structfield>partattrs</structfield></entry>
+      <entry><type>int2vector</type></entry>
+      <entry><literal><link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.attnum</literal></entry>
+      <entry>
+       This is an array of <structfield>partnatts</structfield> values that
+       indicate which table columns are part of the partition key.  For
+       example, a value of <literal>1 3</literal> would mean that the first
+       and the third table columns make up the partition key.  A zero in this
+       array indicates that the corresponding partition key column is an
+       expression, rather than a simple column reference.
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>partclass</structfield></entry>
+      <entry><type>oidvector</type></entry>
+      <entry><literal><link linkend="catalog-pg-opclass"><structname>pg_opclass</structname></link>.oid</literal></entry>
+      <entry>
+       For each column in the partition key, this contains the OID of the
+       operator class to use.  See
+       <link linkend="catalog-pg-opclass"><structname>pg_opclass</structname></link> for details.
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>partcollation</structfield></entry>
+      <entry><type>oidvector</type></entry>
+      <entry><literal><link linkend="catalog-pg-opclass"><structname>pg_opclass</structname></link>.oid</literal></entry>
+      <entry>
+       For each column in the partition key, this contains the OID of the
+       the collation to use for partitioning.
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>partexprs</structfield></entry>
+      <entry><type>pg_node_tree</type></entry>
+      <entry></entry>
+      <entry>
+       Expression trees (in <function>nodeToString()</function>
+       representation) for partition key columns that are not simple column
+       references.  This is a list with one element for each zero
+       entry in <structfield>partattrs</>.  Null if all partition key columns
+       are simple references.
+      </entry>
+     </row>
+
+    </tbody>
+   </tgroup>
+  </table>
  </sect1>
 
  <sect1 id="catalog-pg-policy">

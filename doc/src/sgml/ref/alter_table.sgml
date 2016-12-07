@@ -33,6 +33,10 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
     SET SCHEMA <replaceable class="PARAMETER">new_schema</replaceable>
 ALTER TABLE ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> [ OWNED BY <replaceable class="PARAMETER">role_name</replaceable> [, ... ] ]
     SET TABLESPACE <replaceable class="PARAMETER">new_tablespace</replaceable> [ NOWAIT ]
+ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
+    ATTACH PARTITION <replaceable class="PARAMETER">partition_name</replaceable> FOR VALUES <replaceable class="PARAMETER">partition_bound_spec</replaceable>
+ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
+    DETACH PARTITION <replaceable class="PARAMETER">partition_name</replaceable>
 
 <phrase>where <replaceable class="PARAMETER">action</replaceable> is one of:</phrase>
 
@@ -165,6 +169,12 @@ ALTER TABLE ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
       These forms change whether a column is marked to allow null
       values or to reject null values.  You can only use <literal>SET
       NOT NULL</> when the column contains no null values.
+     </para>
+
+     <para>
+      If this table is a partition, one cannot perform <literal>DROP NOT NULL</>
+      on a column if it is marked <literal>NOT NULL</literal> in the parent
+      table.
      </para>
     </listitem>
    </varlistentry>
@@ -704,13 +714,63 @@ ALTER TABLE ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
     </listitem>
    </varlistentry>
 
+   <varlistentry>
+    <term><literal>ATTACH PARTITION</literal> <replaceable class="PARAMETER">partition_name</replaceable> <replaceable class="PARAMETER">partition_bound_spec</replaceable></term>
+    <listitem>
+     <para>
+      This form attaches an existing table (which might itself be partitioned)
+      as a partition of the target table using the same syntax for
+      <replaceable class="PARAMETER">partition_bound_spec</replaceable> as
+      <xref linkend="sql-createtable">.  The partition bound specification
+      must correspond to the partitioning strategy and partition key of the
+      target table.  The table to be attached must have all the same columns
+      as the target table and no more; moreover, the column types must also
+      match.  Also, it must have all the <literal>NOT NULL</literal> and
+      <literal>CHECK</literal> constraints of the target table.  Currently
+      <literal>UNIQUE</literal>, <literal>PRIMARY KEY</literal>, and
+      <literal>FOREIGN KEY</literal> constraints are not considered.
+      If any of the <literal>CHECK</literal> constraints of the table being
+      attached is marked <literal>NO INHERIT</literal>, the command will fail;
+      such a constraint must be recreated without the <literal>NO INHERIT</literal>
+      clause.
+     </para>
+
+     <para>
+      A full table scan is performed on the table being attached to check that
+      no existing row in the table violates the partition constraint.  It is
+      possible to avoid this scan by adding a valid <literal>CHECK</literal>
+      constraint to the table that would allow only the rows satisfying the
+      desired partition constraint before running this command.  It will be
+      determined using such a constraint that the table need not be scanned
+      to validate the partition constraint.  This does not work, however, if
+      any of the partition keys is an expression and the partition does not
+      accept <literal>NULL</literal> values.  If attaching a list partition
+      that will not accept <literal>NULL</literal> values, also add
+      <literal>NOT NULL</literal> constraint to the partition key column,
+      unless it's an expression.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>DETACH PARTITION</literal> <replaceable class="PARAMETER">partition_name</replaceable></term>
+    <listitem>
+     <para>
+      This form detaches specified partition of the target table.  The detached
+      partition continues to exist as a standalone table, but no longer has any
+      ties to the table from which it was detached.
+     </para>
+    </listitem>
+   </varlistentry>
+
   </variablelist>
   </para>
 
   <para>
    All the actions except <literal>RENAME</literal>,
-   <literal>SET TABLESPACE</literal> and <literal>SET SCHEMA</literal>
-   can be combined into
+   <literal>SET TABLESPACE</literal>, <literal>SET SCHEMA</literal>,
+   <literal>ATTACH PARTITION</literal>, and
+   <literal>DETACH PARTITION</literal> can be combined into
    a list of multiple alterations to apply in parallel.  For example, it
    is possible to add several columns and/or alter the type of several
    columns in a single command.  This is particularly useful with large
@@ -721,8 +781,9 @@ ALTER TABLE ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
    You must own the table to use <command>ALTER TABLE</>.
    To change the schema or tablespace of a table, you must also have
    <literal>CREATE</literal> privilege on the new schema or tablespace.
-   To add the table as a new child of a parent table, you must own the
-   parent table as well.
+   To add the table as a new child of a parent table, you must own the parent
+   table as well.  Also, to attach a table as a new partition of the table,
+   you must own the table being attached.
    To alter the owner, you must also be a direct or indirect member of the new
    owning role, and that role must have <literal>CREATE</literal> privilege on
    the table's schema.  (These restrictions enforce that altering the owner
@@ -938,6 +999,25 @@ ALTER TABLE ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
       </listitem>
      </varlistentry>
 
+     <varlistentry>
+      <term><replaceable class="PARAMETER">partition_name</replaceable></term>
+      <listitem>
+       <para>
+        The name of the table to attach as a new partition or to detach from this table.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER">partition_bound_spec</replaceable></term>
+      <listitem>
+       <para>
+        The partition bound specification for a new partition.  Refer to
+        <xref linkend="sql-createtable"> for more details on the syntax of the same.
+       </para>
+      </listitem>
+     </varlistentry>
+
     </variablelist>
  </refsect1>
 
@@ -975,6 +1055,11 @@ ALTER TABLE ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
     Adding a <literal>CHECK</> or <literal>NOT NULL</> constraint requires
     scanning the table to verify that existing rows meet the constraint,
     but does not require a table rewrite.
+   </para>
+
+   <para>
+    Similarly, when attaching a new partition it may be scanned to verify that
+    existing rows meet the partition constraint.
    </para>
 
    <para>
@@ -1047,6 +1132,9 @@ ALTER TABLE ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
     COLUMN</literal> (i.e., <command>ALTER TABLE ONLY ... DROP
     COLUMN</command>) never removes any descendant columns, but
     instead marks them as independently defined rather than inherited.
+    A nonrecursive <literal>DROP COLUMN</literal> command will fail for a
+    partitioned table, because all partitions of a table must have the same
+    columns as the partitioning root.
    </para>
 
    <para>
@@ -1231,6 +1319,27 @@ ALTER TABLE myschema.distributors SET SCHEMA yourschema;
 CREATE UNIQUE INDEX CONCURRENTLY dist_id_temp_idx ON distributors (dist_id);
 ALTER TABLE distributors DROP CONSTRAINT distributors_pkey,
     ADD CONSTRAINT distributors_pkey PRIMARY KEY USING INDEX dist_id_temp_idx;
+</programlisting></para>
+
+  <para>
+   Attach a partition to range partitioned table:
+<programlisting>
+ALTER TABLE measurement
+    ATTACH PARTITION measurement_y2016m07 FOR VALUES FROM ('2016-07-01') TO ('2016-08-01');
+</programlisting></para>
+
+  <para>
+   Attach a partition to list partitioned table:
+<programlisting>
+ALTER TABLE cities
+    ATTACH PARTITION cities_west FOR VALUES IN ('Los Angeles', 'San Francisco');
+</programlisting></para>
+
+  <para>
+   Detach a partition from partitioned table:
+<programlisting>
+ALTER TABLE cities
+    DETACH PARTITION measurement_y2015m12;
 </programlisting></para>
 
  </refsect1>

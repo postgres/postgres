@@ -1552,6 +1552,12 @@ exprLocation(const Node *expr)
 			/* just use nested expr's location */
 			loc = exprLocation((Node *) ((const InferenceElem *) expr)->expr);
 			break;
+		case T_PartitionBoundSpec:
+			loc = ((const PartitionBoundSpec *) expr)->location;
+			break;
+		case T_PartitionRangeDatum:
+			loc = ((const PartitionRangeDatum *) expr)->location;
+			break;
 		default:
 			/* for any other node type it's just unknown... */
 			loc = -1;

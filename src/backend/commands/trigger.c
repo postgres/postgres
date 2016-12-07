@@ -176,7 +176,8 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 	 * Triggers must be on tables or views, and there are additional
 	 * relation-type-specific restrictions.
 	 */
-	if (rel->rd_rel->relkind == RELKIND_RELATION)
+	if (rel->rd_rel->relkind == RELKIND_RELATION ||
+		rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 	{
 		/* Tables can't have INSTEAD OF triggers */
 		if (stmt->timing != TRIGGER_TYPE_BEFORE &&
@@ -186,6 +187,13 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 					 errmsg("\"%s\" is a table",
 							RelationGetRelationName(rel)),
 					 errdetail("Tables cannot have INSTEAD OF triggers.")));
+		/* Disallow ROW triggers on partitioned tables */
+		if (stmt->row && rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("\"%s\" is a partitioned table",
+							RelationGetRelationName(rel)),
+					 errdetail("Partitioned tables cannot have ROW triggers.")));
 	}
 	else if (rel->rd_rel->relkind == RELKIND_VIEW)
 	{
@@ -1211,7 +1219,8 @@ RemoveTriggerById(Oid trigOid)
 
 	if (rel->rd_rel->relkind != RELKIND_RELATION &&
 		rel->rd_rel->relkind != RELKIND_VIEW &&
-		rel->rd_rel->relkind != RELKIND_FOREIGN_TABLE)
+		rel->rd_rel->relkind != RELKIND_FOREIGN_TABLE &&
+		rel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("\"%s\" is not a table, view, or foreign table",
@@ -1316,7 +1325,8 @@ RangeVarCallbackForRenameTrigger(const RangeVar *rv, Oid relid, Oid oldrelid,
 
 	/* only tables and views can have triggers */
 	if (form->relkind != RELKIND_RELATION && form->relkind != RELKIND_VIEW &&
-		form->relkind != RELKIND_FOREIGN_TABLE)
+		form->relkind != RELKIND_FOREIGN_TABLE &&
+		form->relkind != RELKIND_PARTITIONED_TABLE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("\"%s\" is not a table, view, or foreign table",

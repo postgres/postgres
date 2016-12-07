@@ -87,7 +87,7 @@ RangeVarCallbackForLockTable(const RangeVar *rv, Oid relid, Oid oldrelid,
 								 * check */
 
 	/* Currently, we only allow plain tables to be locked */
-	if (relkind != RELKIND_RELATION)
+	if (relkind != RELKIND_RELATION && relkind != RELKIND_PARTITIONED_TABLE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("\"%s\" is not a table",

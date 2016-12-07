@@ -112,7 +112,7 @@ create_ctas_internal(List *attrList, IntoClause *into)
 	 * Create the relation.  (This will error out if there's an existing view,
 	 * so we don't need more code to complain if "replace" is false.)
 	 */
-	intoRelationAddr = DefineRelation(create, relkind, InvalidOid, NULL);
+	intoRelationAddr = DefineRelation(create, relkind, InvalidOid, NULL, NULL);
 
 	/*
 	 * If necessary, create a TOAST table for the target table.  Note that

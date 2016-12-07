@@ -536,3 +536,55 @@ FROM generate_series(1, 3) g(i);
 reset enable_seqscan;
 reset enable_indexscan;
 reset enable_bitmapscan;
+
+--
+-- Check that constraint exclusion works correctly with partitions using
+-- implicit constraints generated from the partition bound information.
+--
+create table list_parted (
+	a	varchar
+) partition by list (a);
+create table part_ab_cd partition of list_parted for values in ('ab', 'cd');
+create table part_ef_gh partition of list_parted for values in ('ef', 'gh');
+create table part_null_xy partition of list_parted for values in (null, 'xy');
+
+explain (costs off) select * from list_parted;
+explain (costs off) select * from list_parted where a is null;
+explain (costs off) select * from list_parted where a is not null;
+explain (costs off) select * from list_parted where a in ('ab', 'cd', 'ef');
+explain (costs off) select * from list_parted where a = 'ab' or a in (null, 'cd');
+explain (costs off) select * from list_parted where a = 'ab';
+
+create table range_list_parted (
+	a	int,
+	b	char(2)
+) partition by range (a);
+create table part_1_10 partition of range_list_parted for values from (1) to (10) partition by list (b);
+create table part_1_10_ab partition of part_1_10 for values in ('ab');
+create table part_1_10_cd partition of part_1_10 for values in ('cd');
+create table part_10_20 partition of range_list_parted for values from (10) to (20) partition by list (b);
+create table part_10_20_ab partition of part_10_20 for values in ('ab');
+create table part_10_20_cd partition of part_10_20 for values in ('cd');
+create table part_21_30 partition of range_list_parted for values from (21) to (30) partition by list (b);
+create table part_21_30_ab partition of part_21_30 for values in ('ab');
+create table part_21_30_cd partition of part_21_30 for values in ('cd');
+create table part_40_inf partition of range_list_parted for values from (40) to (unbounded) partition by list (b);
+create table part_40_inf_ab partition of part_40_inf for values in ('ab');
+create table part_40_inf_cd partition of part_40_inf for values in ('cd');
+create table part_40_inf_null partition of part_40_inf for values in (null);
+
+explain (costs off) select * from range_list_parted;
+explain (costs off) select * from range_list_parted where a = 5;
+explain (costs off) select * from range_list_parted where b = 'ab';
+explain (costs off) select * from range_list_parted where a between 3 and 23 and b in ('ab');
+
+/* Should select no rows because range partition key cannot be null */
+explain (costs off) select * from range_list_parted where a is null;
+
+/* Should only select rows from the null-accepting partition */
+explain (costs off) select * from range_list_parted where b is null;
+explain (costs off) select * from range_list_parted where a is not null and a < 67;
+explain (costs off) select * from range_list_parted where a >= 30;
+
+drop table list_parted cascade;
+drop table range_list_parted cascade;

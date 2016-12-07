@@ -229,6 +229,9 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 	struct ImportQual	*importqual;
 	InsertStmt			*istmt;
 	VariableSetStmt		*vsetstmt;
+	PartitionElem		*partelem;
+	PartitionSpec		*partspec;
+	PartitionRangeDatum	*partrange_datum;
 }
 
 %type <node>	stmt schema_stmt
@@ -276,7 +279,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <ival>	add_drop opt_asc_desc opt_nulls_order
 
 %type <node>	alter_table_cmd alter_type_cmd opt_collate_clause
-	   replica_identity
+	   replica_identity partition_cmd
 %type <list>	alter_table_cmds alter_type_cmds
 
 %type <dbehavior>	opt_drop_behavior
@@ -545,6 +548,17 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 				opt_frame_clause frame_extent frame_bound
 %type <str>		opt_existing_window_name
 %type <boolean> opt_if_not_exists
+%type <partspec>	PartitionSpec OptPartitionSpec
+%type <str>			part_strategy
+%type <partelem>	part_elem
+%type <list>		part_params
+%type <list>		OptPartitionElementList PartitionElementList
+%type <node>		PartitionElement
+%type <node>		ForValues
+%type <node>		partbound_datum
+%type <list>		partbound_datum_list
+%type <partrange_datum>	PartitionRangeDatum
+%type <list>		range_datum_list
 
 /*
  * Non-keyword token types.  These are hard-wired into the "flex" lexer.
@@ -570,7 +584,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 /* ordinary key words in alphabetical order */
 %token <keyword> ABORT_P ABSOLUTE_P ACCESS ACTION ADD_P ADMIN AFTER
 	AGGREGATE ALL ALSO ALTER ALWAYS ANALYSE ANALYZE AND ANY ARRAY AS ASC
-	ASSERTION ASSIGNMENT ASYMMETRIC AT ATTRIBUTE AUTHORIZATION
+	ASSERTION ASSIGNMENT ASYMMETRIC AT ATTACH ATTRIBUTE AUTHORIZATION
 
 	BACKWARD BEFORE BEGIN_P BETWEEN BIGINT BINARY BIT
 	BOOLEAN_P BOTH BY
@@ -586,7 +600,8 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 
 	DATA_P DATABASE DAY_P DEALLOCATE DEC DECIMAL_P DECLARE DEFAULT DEFAULTS
 	DEFERRABLE DEFERRED DEFINER DELETE_P DELIMITER DELIMITERS DEPENDS DESC
-	DICTIONARY DISABLE_P DISCARD DISTINCT DO DOCUMENT_P DOMAIN_P DOUBLE_P DROP
+	DETACH DICTIONARY DISABLE_P DISCARD DISTINCT DO DOCUMENT_P DOMAIN_P
+	DOUBLE_P DROP
 
 	EACH ELSE ENABLE_P ENCODING ENCRYPTED END_P ENUM_P ESCAPE EVENT EXCEPT
 	EXCLUDE EXCLUDING EXCLUSIVE EXECUTE EXISTS EXPLAIN
@@ -1787,6 +1802,24 @@ AlterTableStmt:
 					n->missing_ok = true;
 					$$ = (Node *)n;
 				}
+		|	ALTER TABLE relation_expr partition_cmd
+				{
+					AlterTableStmt *n = makeNode(AlterTableStmt);
+					n->relation = $3;
+					n->cmds = list_make1($4);
+					n->relkind = OBJECT_TABLE;
+					n->missing_ok = false;
+					$$ = (Node *)n;
+				}
+		|	ALTER TABLE IF_P EXISTS relation_expr partition_cmd
+				{
+					AlterTableStmt *n = makeNode(AlterTableStmt);
+					n->relation = $5;
+					n->cmds = list_make1($6);
+					n->relkind = OBJECT_TABLE;
+					n->missing_ok = true;
+					$$ = (Node *)n;
+				}
 		|	ALTER TABLE ALL IN_P TABLESPACE name SET TABLESPACE name opt_nowait
 				{
 					AlterTableMoveAllStmt *n =
@@ -1930,6 +1963,34 @@ AlterTableStmt:
 alter_table_cmds:
 			alter_table_cmd							{ $$ = list_make1($1); }
 			| alter_table_cmds ',' alter_table_cmd	{ $$ = lappend($1, $3); }
+		;
+
+partition_cmd:
+			/* ALTER TABLE <name> ATTACH PARTITION <table_name> FOR VALUES */
+			ATTACH PARTITION qualified_name ForValues
+				{
+					AlterTableCmd *n = makeNode(AlterTableCmd);
+					PartitionCmd *cmd = makeNode(PartitionCmd);
+
+					n->subtype = AT_AttachPartition;
+					cmd->name = $3;
+					cmd->bound = (Node *) $4;
+					n->def = (Node *) cmd;
+
+					$$ = (Node *) n;
+				}
+			/* ALTER TABLE <name> DETACH PARTITION <partition_name> */
+			| DETACH PARTITION qualified_name
+				{
+					AlterTableCmd *n = makeNode(AlterTableCmd);
+					PartitionCmd *cmd = makeNode(PartitionCmd);
+
+					n->subtype = AT_DetachPartition;
+					cmd->name = $3;
+					n->def = (Node *) cmd;
+
+					$$ = (Node *) n;
+				}
 		;
 
 alter_table_cmd:
@@ -2467,6 +2528,73 @@ reloption_elem:
 				}
 		;
 
+ForValues:
+			/* a LIST partition */
+			FOR VALUES IN_P '(' partbound_datum_list ')'
+				{
+					PartitionBoundSpec *n = makeNode(PartitionBoundSpec);
+
+					n->strategy = PARTITION_STRATEGY_LIST;
+					n->listdatums = $5;
+					n->location = @3;
+
+					$$ = (Node *) n;
+				}
+
+			/* a RANGE partition */
+			| FOR VALUES FROM '(' range_datum_list ')' TO '(' range_datum_list ')'
+				{
+					PartitionBoundSpec *n = makeNode(PartitionBoundSpec);
+
+					n->strategy = PARTITION_STRATEGY_RANGE;
+					n->lowerdatums = $5;
+					n->upperdatums = $9;
+					n->location = @3;
+
+					$$ = (Node *) n;
+				}
+		;
+
+partbound_datum:
+			Sconst			{ $$ = makeStringConst($1, @1); }
+			| NumericOnly	{ $$ = makeAConst($1, @1); }
+			| NULL_P		{ $$ = makeNullAConst(@1); }
+		;
+
+partbound_datum_list:
+			partbound_datum						{ $$ = list_make1($1); }
+			| partbound_datum_list ',' partbound_datum
+												{ $$ = lappend($1, $3); }
+		;
+
+range_datum_list:
+			PartitionRangeDatum					{ $$ = list_make1($1); }
+			| range_datum_list ',' PartitionRangeDatum
+												{ $$ = lappend($1, $3); }
+		;
+
+PartitionRangeDatum:
+			UNBOUNDED
+				{
+					PartitionRangeDatum *n = makeNode(PartitionRangeDatum);
+
+					n->infinite = true;
+					n->value = NULL;
+					n->location = @1;
+
+					$$ = n;
+				}
+			| partbound_datum
+				{
+					PartitionRangeDatum *n = makeNode(PartitionRangeDatum);
+
+					n->infinite = false;
+					n->value = $1;
+					n->location = @1;
+
+					$$ = n;
+				}
+		;
 
 /*****************************************************************************
  *
@@ -2812,14 +2940,52 @@ copy_generic_opt_arg_list_item:
  *****************************************************************************/
 
 CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
-			OptInherit OptWith OnCommitOption OptTableSpace
+			OptInherit OptPartitionSpec OptWith OnCommitOption OptTableSpace
 				{
 					CreateStmt *n = makeNode(CreateStmt);
 					$4->relpersistence = $2;
 					n->relation = $4;
 					n->tableElts = $6;
 					n->inhRelations = $8;
+					n->partspec = $9;
 					n->ofTypename = NULL;
+					n->constraints = NIL;
+					n->options = $10;
+					n->oncommit = $11;
+					n->tablespacename = $12;
+					n->if_not_exists = false;
+					$$ = (Node *)n;
+				}
+		| CREATE OptTemp TABLE IF_P NOT EXISTS qualified_name '('
+			OptTableElementList ')' OptInherit OptPartitionSpec OptWith
+			OnCommitOption OptTableSpace
+				{
+					CreateStmt *n = makeNode(CreateStmt);
+					$7->relpersistence = $2;
+					n->relation = $7;
+					n->tableElts = $9;
+					n->inhRelations = $11;
+					n->partspec = $12;
+					n->ofTypename = NULL;
+					n->constraints = NIL;
+					n->options = $13;
+					n->oncommit = $14;
+					n->tablespacename = $15;
+					n->if_not_exists = true;
+					$$ = (Node *)n;
+				}
+		| CREATE OptTemp TABLE qualified_name OF any_name
+			OptTypedTableElementList OptPartitionSpec OptWith OnCommitOption
+			OptTableSpace
+				{
+					CreateStmt *n = makeNode(CreateStmt);
+					$4->relpersistence = $2;
+					n->relation = $4;
+					n->tableElts = $7;
+					n->inhRelations = NIL;
+					n->partspec = $8;
+					n->ofTypename = makeTypeNameFromNameList($6);
+					n->ofTypename->location = @6;
 					n->constraints = NIL;
 					n->options = $9;
 					n->oncommit = $10;
@@ -2827,16 +2993,18 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					n->if_not_exists = false;
 					$$ = (Node *)n;
 				}
-		| CREATE OptTemp TABLE IF_P NOT EXISTS qualified_name '('
-			OptTableElementList ')' OptInherit OptWith OnCommitOption
+		| CREATE OptTemp TABLE IF_P NOT EXISTS qualified_name OF any_name
+			OptTypedTableElementList OptPartitionSpec OptWith OnCommitOption
 			OptTableSpace
 				{
 					CreateStmt *n = makeNode(CreateStmt);
 					$7->relpersistence = $2;
 					n->relation = $7;
-					n->tableElts = $9;
-					n->inhRelations = $11;
-					n->ofTypename = NULL;
+					n->tableElts = $10;
+					n->inhRelations = NIL;
+					n->partspec = $11;
+					n->ofTypename = makeTypeNameFromNameList($9);
+					n->ofTypename->location = @9;
 					n->constraints = NIL;
 					n->options = $12;
 					n->oncommit = $13;
@@ -2844,37 +3012,41 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					n->if_not_exists = true;
 					$$ = (Node *)n;
 				}
-		| CREATE OptTemp TABLE qualified_name OF any_name
-			OptTypedTableElementList OptWith OnCommitOption OptTableSpace
+		| CREATE OptTemp TABLE qualified_name PARTITION OF qualified_name
+			OptPartitionElementList ForValues OptPartitionSpec OptWith
+			OnCommitOption OptTableSpace
 				{
 					CreateStmt *n = makeNode(CreateStmt);
 					$4->relpersistence = $2;
 					n->relation = $4;
-					n->tableElts = $7;
-					n->inhRelations = NIL;
-					n->ofTypename = makeTypeNameFromNameList($6);
-					n->ofTypename->location = @6;
-					n->constraints = NIL;
-					n->options = $8;
-					n->oncommit = $9;
-					n->tablespacename = $10;
-					n->if_not_exists = false;
-					$$ = (Node *)n;
-				}
-		| CREATE OptTemp TABLE IF_P NOT EXISTS qualified_name OF any_name
-			OptTypedTableElementList OptWith OnCommitOption OptTableSpace
-				{
-					CreateStmt *n = makeNode(CreateStmt);
-					$7->relpersistence = $2;
-					n->relation = $7;
-					n->tableElts = $10;
-					n->inhRelations = NIL;
-					n->ofTypename = makeTypeNameFromNameList($9);
-					n->ofTypename->location = @9;
+					n->tableElts = $8;
+					n->inhRelations = list_make1($7);
+					n->partbound = (Node *) $9;
+					n->partspec = $10;
+					n->ofTypename = NULL;
 					n->constraints = NIL;
 					n->options = $11;
 					n->oncommit = $12;
 					n->tablespacename = $13;
+					n->if_not_exists = false;
+					$$ = (Node *)n;
+				}
+		| CREATE OptTemp TABLE IF_P NOT EXISTS qualified_name PARTITION OF
+			qualified_name OptPartitionElementList ForValues OptPartitionSpec
+			OptWith OnCommitOption OptTableSpace
+				{
+					CreateStmt *n = makeNode(CreateStmt);
+					$7->relpersistence = $2;
+					n->relation = $7;
+					n->tableElts = $11;
+					n->inhRelations = list_make1($10);
+					n->partbound = (Node *) $12;
+					n->partspec = $13;
+					n->ofTypename = NULL;
+					n->constraints = NIL;
+					n->options = $14;
+					n->oncommit = $15;
+					n->tablespacename = $16;
 					n->if_not_exists = true;
 					$$ = (Node *)n;
 				}
@@ -2923,6 +3095,11 @@ OptTypedTableElementList:
 			| /*EMPTY*/							{ $$ = NIL; }
 		;
 
+OptPartitionElementList:
+			'(' PartitionElementList ')'		{ $$ = $2; }
+			| /*EMPTY*/							{ $$ = NIL; }
+		;
+
 TableElementList:
 			TableElement
 				{
@@ -2945,6 +3122,17 @@ TypedTableElementList:
 				}
 		;
 
+PartitionElementList:
+			PartitionElement
+				{
+					$$ = list_make1($1);
+				}
+			| PartitionElementList ',' PartitionElement
+				{
+					$$ = lappend($1, $3);
+				}
+		;
+
 TableElement:
 			columnDef							{ $$ = $1; }
 			| TableLikeClause					{ $$ = $1; }
@@ -2954,6 +3142,28 @@ TableElement:
 TypedTableElement:
 			columnOptions						{ $$ = $1; }
 			| TableConstraint					{ $$ = $1; }
+		;
+
+PartitionElement:
+		TableConstraint					{ $$ = $1; }
+		|	ColId ColQualList
+			{
+				ColumnDef *n = makeNode(ColumnDef);
+				n->colname = $1;
+				n->typeName = NULL;
+				n->inhcount = 0;
+				n->is_local = true;
+				n->is_not_null = false;
+				n->is_from_type = false;
+				n->storage = 0;
+				n->raw_default = NULL;
+				n->cooked_default = NULL;
+				n->collOid = InvalidOid;
+				SplitColQualList($2, &n->constraints, &n->collClause,
+								 yyscanner);
+				n->location = @1;
+				$$ = (Node *) n;
+			}
 		;
 
 columnDef:	ColId Typename create_generic_options ColQualList
@@ -3419,6 +3629,65 @@ OptInherit: INHERITS '(' qualified_name_list ')'	{ $$ = $3; }
 			| /*EMPTY*/								{ $$ = NIL; }
 		;
 
+/* Optional partition key specification */
+OptPartitionSpec: PartitionSpec	{ $$ = $1; }
+			| /*EMPTY*/			{ $$ = NULL; }
+		;
+
+PartitionSpec: PARTITION BY part_strategy '(' part_params ')'
+				{
+					PartitionSpec *n = makeNode(PartitionSpec);
+
+					n->strategy = $3;
+					n->partParams = $5;
+					n->location = @1;
+
+					$$ = n;
+				}
+		;
+
+part_strategy:	IDENT					{ $$ = $1; }
+				| unreserved_keyword	{ $$ = pstrdup($1); }
+		;
+
+part_params:	part_elem						{ $$ = list_make1($1); }
+			| part_params ',' part_elem			{ $$ = lappend($1, $3); }
+		;
+
+part_elem: ColId opt_collate opt_class
+				{
+					PartitionElem *n = makeNode(PartitionElem);
+
+					n->name = $1;
+					n->expr = NULL;
+					n->collation = $2;
+					n->opclass = $3;
+					n->location = @1;
+					$$ = n;
+				}
+			| func_expr_windowless opt_collate opt_class
+				{
+					PartitionElem *n = makeNode(PartitionElem);
+
+					n->name = NULL;
+					n->expr = $1;
+					n->collation = $2;
+					n->opclass = $3;
+					n->location = @1;
+					$$ = n;
+				}
+			| '(' a_expr ')' opt_collate opt_class
+				{
+					PartitionElem *n = makeNode(PartitionElem);
+
+					n->name = NULL;
+					n->expr = $2;
+					n->collation = $4;
+					n->opclass = $5;
+					n->location = @1;
+					$$ = n;
+				}
+		;
 /* WITH (options) is preferred, WITH OIDS and WITHOUT OIDS are legacy forms */
 OptWith:
 			WITH reloptions				{ $$ = $2; }
@@ -4482,6 +4751,48 @@ CreateForeignTableStmt:
 					/* FDW-specific data */
 					n->servername = $13;
 					n->options = $14;
+					$$ = (Node *) n;
+				}
+		| CREATE FOREIGN TABLE qualified_name
+			PARTITION OF qualified_name OptPartitionElementList ForValues
+			SERVER name create_generic_options
+				{
+					CreateForeignTableStmt *n = makeNode(CreateForeignTableStmt);
+					$4->relpersistence = RELPERSISTENCE_PERMANENT;
+					n->base.relation = $4;
+					n->base.inhRelations = list_make1($7);
+					n->base.tableElts = $8;
+					n->base.partbound = (Node *) $9;
+					n->base.ofTypename = NULL;
+					n->base.constraints = NIL;
+					n->base.options = NIL;
+					n->base.oncommit = ONCOMMIT_NOOP;
+					n->base.tablespacename = NULL;
+					n->base.if_not_exists = false;
+					/* FDW-specific data */
+					n->servername = $11;
+					n->options = $12;
+					$$ = (Node *) n;
+				}
+		| CREATE FOREIGN TABLE IF_P NOT EXISTS qualified_name
+			PARTITION OF qualified_name OptPartitionElementList ForValues
+			SERVER name create_generic_options
+				{
+					CreateForeignTableStmt *n = makeNode(CreateForeignTableStmt);
+					$7->relpersistence = RELPERSISTENCE_PERMANENT;
+					n->base.relation = $7;
+					n->base.inhRelations = list_make1($10);
+					n->base.tableElts = $11;
+					n->base.partbound = (Node *) $12;
+					n->base.ofTypename = NULL;
+					n->base.constraints = NIL;
+					n->base.options = NIL;
+					n->base.oncommit = ONCOMMIT_NOOP;
+					n->base.tablespacename = NULL;
+					n->base.if_not_exists = true;
+					/* FDW-specific data */
+					n->servername = $14;
+					n->options = $15;
 					$$ = (Node *) n;
 				}
 		;
@@ -13703,6 +14014,7 @@ unreserved_keyword:
 			| ASSERTION
 			| ASSIGNMENT
 			| AT
+			| ATTACH
 			| ATTRIBUTE
 			| BACKWARD
 			| BEFORE
@@ -13749,6 +14061,7 @@ unreserved_keyword:
 			| DELIMITER
 			| DELIMITERS
 			| DEPENDS
+			| DETACH
 			| DICTIONARY
 			| DISABLE_P
 			| DISCARD

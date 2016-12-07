@@ -2266,6 +2266,36 @@ _readExtensibleNode(void)
 }
 
 /*
+ * _readPartitionBoundSpec
+ */
+static PartitionBoundSpec *
+_readPartitionBoundSpec(void)
+{
+	READ_LOCALS(PartitionBoundSpec);
+
+	READ_CHAR_FIELD(strategy);
+	READ_NODE_FIELD(listdatums);
+	READ_NODE_FIELD(lowerdatums);
+	READ_NODE_FIELD(upperdatums);
+
+	READ_DONE();
+}
+
+/*
+ * _readPartitionRangeDatum
+ */
+static PartitionRangeDatum *
+_readPartitionRangeDatum(void)
+{
+	READ_LOCALS(PartitionRangeDatum);
+
+	READ_BOOL_FIELD(infinite);
+	READ_NODE_FIELD(value);
+
+	READ_DONE();
+}
+
+/*
  * parseNodeString
  *
  * Given a character string representing a node tree, parseNodeString creates
@@ -2497,6 +2527,10 @@ parseNodeString(void)
 		return_value = _readAlternativeSubPlan();
 	else if (MATCH("EXTENSIBLENODE", 14))
 		return_value = _readExtensibleNode();
+	else if (MATCH("PARTITIONBOUND", 14))
+		return_value = _readPartitionBoundSpec();
+	else if (MATCH("PARTRANGEDATUM", 14))
+		return_value = _readPartitionRangeDatum();
 	else
 	{
 		elog(ERROR, "badly formatted node string \"%.32s\"...", token);

@@ -189,7 +189,8 @@ extern void recordDependencyOnExpr(const ObjectAddress *depender,
 extern void recordDependencyOnSingleRelExpr(const ObjectAddress *depender,
 								Node *expr, Oid relId,
 								DependencyType behavior,
-								DependencyType self_behavior);
+								DependencyType self_behavior,
+								bool ignore_self);
 
 extern ObjectClass getObjectClass(const ObjectAddress *object);
 

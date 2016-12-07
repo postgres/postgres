@@ -1469,6 +1469,11 @@ ParsedText
 ParsedWord
 ParserSetupHook
 ParserState
+PartitionBoundInfoData
+PartitionBoundSpec
+PartitionCmd
+PartitionListValue
+PartitionRangeBound
 Path
 PathClauseUsage
 PathCostComparison
@@ -1660,6 +1665,7 @@ RWConflictPoolHeader
 Range
 RangeBound
 RangeBox
+RangeDatumContent
 RangeFunction
 RangeIOData
 RangeQueryClause

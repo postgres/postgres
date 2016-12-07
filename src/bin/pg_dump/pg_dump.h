@@ -312,6 +312,7 @@ typedef struct _tableInfo
 	bool	   *inhNotNull;		/* true if NOT NULL is inherited */
 	struct _attrDefInfo **attrdefs;		/* DEFAULT expressions */
 	struct _constraintInfo *checkexprs; /* CHECK constraints */
+	char	   *partkeydef;		/* partition key definition */
 
 	/*
 	 * Stuff computed only for dumpable tables.
@@ -321,6 +322,8 @@ typedef struct _tableInfo
 	struct _tableDataInfo *dataObj;		/* TableDataInfo, if dumping its data */
 	int			numTriggers;	/* number of triggers for table */
 	struct _triggerInfo *triggers;		/* array of TriggerInfo structs */
+	struct _tableInfo *partitionOf;	/* TableInfo for the partition parent */
+	char	   *partitiondef;		/* partition key definition */
 } TableInfo;
 
 typedef struct _attrDefInfo
@@ -458,6 +461,15 @@ typedef struct _inhInfo
 	Oid			inhrelid;		/* OID of a child table */
 	Oid			inhparent;		/* OID of its parent */
 } InhInfo;
+
+/* PartInfo isn't a DumpableObject, just temporary state */
+typedef struct _partInfo
+{
+	Oid			partrelid;		/* OID of a partition */
+	Oid			partparent;		/* OID of its parent */
+	char	   *partdef;		/* partition bound definition */
+} PartInfo;
+
 
 typedef struct _prsInfo
 {
@@ -625,6 +637,7 @@ extern ConvInfo *getConversions(Archive *fout, int *numConversions);
 extern TableInfo *getTables(Archive *fout, int *numTables);
 extern void getOwnedSeqs(Archive *fout, TableInfo tblinfo[], int numTables);
 extern InhInfo *getInherits(Archive *fout, int *numInherits);
+extern PartInfo *getPartitions(Archive *fout, int *numPartitions);
 extern void getIndexes(Archive *fout, TableInfo tblinfo[], int numTables);
 extern void getConstraints(Archive *fout, TableInfo tblinfo[], int numTables);
 extern RuleInfo *getRules(Archive *fout, int *numRules);
@@ -649,5 +662,6 @@ extern void processExtensionTables(Archive *fout, ExtensionInfo extinfo[],
 					   int numExtensions);
 extern EventTriggerInfo *getEventTriggers(Archive *fout, int *numEventTriggers);
 extern void getPolicies(Archive *fout, TableInfo tblinfo[], int numTables);
+extern void getTablePartitionKeyInfo(Archive *fout, TableInfo *tblinfo, int numTables);
 
 #endif   /* PG_DUMP_H */

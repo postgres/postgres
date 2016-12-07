@@ -261,7 +261,8 @@ DefineQueryRewrite(char *rulename,
 	 */
 	if (event_relation->rd_rel->relkind != RELKIND_RELATION &&
 		event_relation->rd_rel->relkind != RELKIND_MATVIEW &&
-		event_relation->rd_rel->relkind != RELKIND_VIEW)
+		event_relation->rd_rel->relkind != RELKIND_VIEW &&
+		event_relation->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("\"%s\" is not a table or view",

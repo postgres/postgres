@@ -1314,7 +1314,8 @@ vacuum_rel(Oid relid, RangeVar *relation, int options, VacuumParams *params)
 	 */
 	if (onerel->rd_rel->relkind != RELKIND_RELATION &&
 		onerel->rd_rel->relkind != RELKIND_MATVIEW &&
-		onerel->rd_rel->relkind != RELKIND_TOASTVALUE)
+		onerel->rd_rel->relkind != RELKIND_TOASTVALUE &&
+		onerel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
 	{
 		ereport(WARNING,
 				(errmsg("skipping \"%s\" --- cannot vacuum non-tables or special system tables",

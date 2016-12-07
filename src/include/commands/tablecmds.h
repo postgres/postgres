@@ -23,7 +23,7 @@
 
 
 extern ObjectAddress DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
-			   ObjectAddress *typaddress);
+			   ObjectAddress *typaddress, const char *queryString);
 
 extern void RemoveRelations(DropStmt *drop);
 

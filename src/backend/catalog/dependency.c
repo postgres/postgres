@@ -1352,7 +1352,8 @@ void
 recordDependencyOnSingleRelExpr(const ObjectAddress *depender,
 								Node *expr, Oid relId,
 								DependencyType behavior,
-								DependencyType self_behavior)
+								DependencyType self_behavior,
+								bool ignore_self)
 {
 	find_expr_references_context context;
 	RangeTblEntry rte;
@@ -1407,9 +1408,10 @@ recordDependencyOnSingleRelExpr(const ObjectAddress *depender,
 		context.addrs->numrefs = outrefs;
 
 		/* Record the self-dependencies */
-		recordMultipleDependencies(depender,
-								   self_addrs->refs, self_addrs->numrefs,
-								   self_behavior);
+		if (!ignore_self)
+			recordMultipleDependencies(depender,
+									   self_addrs->refs, self_addrs->numrefs,
+									   self_behavior);
 
 		free_object_addresses(self_addrs);
 	}

@@ -121,7 +121,8 @@ get_row_security_policies(Query *root, RangeTblEntry *rte, int rt_index,
 	*hasSubLinks = false;
 
 	/* If this is not a normal relation, just return immediately */
-	if (rte->relkind != RELKIND_RELATION)
+	if (rte->relkind != RELKIND_RELATION &&
+		rte->relkind != RELKIND_PARTITIONED_TABLE)
 		return;
 
 	/* Switch to checkAsUser if it's set */

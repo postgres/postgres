@@ -28,6 +28,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
     [, ... ]
 ] )
 [ INHERITS ( <replaceable>parent_table</replaceable> [, ... ] ) ]
+[ PARTITION BY { RANGE | LIST } ( { <replaceable class="parameter">column_name</replaceable> | ( <replaceable class="parameter">expression</replaceable> ) } [ COLLATE <replaceable class="parameter">collation</replaceable> ] [ <replaceable class="parameter">opclass</replaceable> ] [, ... ] ) ]
 [ WITH ( <replaceable class="PARAMETER">storage_parameter</replaceable> [= <replaceable class="PARAMETER">value</replaceable>] [, ... ] ) | WITH OIDS | WITHOUT OIDS ]
 [ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]
 [ TABLESPACE <replaceable class="PARAMETER">tablespace_name</replaceable> ]
@@ -38,6 +39,18 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
     | <replaceable>table_constraint</replaceable> }
     [, ... ]
 ) ]
+[ PARTITION BY { RANGE | LIST } ( { <replaceable class="parameter">column_name</replaceable> | ( <replaceable class="parameter">expression</replaceable> ) } [ COLLATE <replaceable class="parameter">collation</replaceable> ] [ <replaceable class="parameter">opclass</replaceable> ] [, ... ] ) ]
+[ WITH ( <replaceable class="PARAMETER">storage_parameter</replaceable> [= <replaceable class="PARAMETER">value</replaceable>] [, ... ] ) | WITH OIDS | WITHOUT OIDS ]
+[ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]
+[ TABLESPACE <replaceable class="PARAMETER">tablespace_name</replaceable> ]
+
+CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXISTS ] <replaceable class="PARAMETER">table_name</replaceable>
+    PARTITION OF <replaceable class="PARAMETER">parent_table</replaceable> [ (
+  { <replaceable class="PARAMETER">column_name</replaceable> [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
+    | <replaceable>table_constraint</replaceable> }
+    [, ... ]
+) ] FOR VALUES <replaceable class="PARAMETER">partition_bound_spec</replaceable>
+[ PARTITION BY { RANGE | LIST } ( { <replaceable class="parameter">column_name</replaceable> | ( <replaceable class="parameter">expression</replaceable> ) } [ COLLATE <replaceable class="parameter">collation</replaceable> ] [ <replaceable class="parameter">opclass</replaceable> ] [, ... ] ) ]
 [ WITH ( <replaceable class="PARAMETER">storage_parameter</replaceable> [= <replaceable class="PARAMETER">value</replaceable>] [, ... ] ) | WITH OIDS | WITHOUT OIDS ]
 [ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]
 [ TABLESPACE <replaceable class="PARAMETER">tablespace_name</replaceable> ]
@@ -69,6 +82,11 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
 <phrase>and <replaceable class="PARAMETER">like_option</replaceable> is:</phrase>
 
 { INCLUDING | EXCLUDING } { DEFAULTS | CONSTRAINTS | INDEXES | STORAGE | COMMENTS | ALL }
+
+<phrase>and <replaceable class="PARAMETER">partition_bound_spec</replaceable> is:</phrase>
+
+{ IN ( <replaceable class="PARAMETER">expression</replaceable> [, ...] ) |
+  FROM ( { <replaceable class="PARAMETER">expression</replaceable> | UNBOUNDED } [, ...] ) TO ( { <replaceable class="PARAMETER">expression</replaceable> | UNBOUNDED } [, ...] ) }
 
 <phrase><replaceable class="PARAMETER">index_parameters</replaceable> in <literal>UNIQUE</literal>, <literal>PRIMARY KEY</literal>, and <literal>EXCLUDE</literal> constraints are:</phrase>
 
@@ -230,6 +248,51 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
    </varlistentry>
 
    <varlistentry>
+    <term><literal>PARTITION OF <replaceable class="PARAMETER">parent_table</replaceable></literal></term>
+    <listitem>
+     <para>
+      Creates the table as <firstterm>partition</firstterm> of the specified
+      parent table.
+     </para>
+
+     <para>
+      The partition bound specification must correspond to the partitioning
+      method and partition key of the parent table, and must not overlap with
+      any existing partition of that parent.
+     </para>
+
+     <para>
+      A partition cannot have columns other than those inherited from the
+      parent.  That includes the <structfield>oid</> column, which can be
+      specified using the <literal>WITH (OIDS)</literal> clause.
+      Defaults and constraints can optionally be specified for each of the
+      inherited columns.  One can also specify table constraints in addition
+      to those inherited from the parent.  If a check constraint with the name
+      matching one of the parent's constraint is specified, it is merged with
+      the latter, provided the specified condition is same.
+     </para>
+
+     <para>
+      Rows inserted into a partitioned table will be automatically routed to
+      the correct partition.  If no suitable partition exists, an error will
+      occur.
+     </para>
+
+     <para>
+      A partition must have the same column names and types as the table of
+      which it is a partition.  Therefore, modifications to the column names
+      or types of the partitioned table will automatically propagate to all
+      children, as will operations such as TRUNCATE which normally affect a
+      table and all of its inheritance children.  It is also possible to
+      TRUNCATE a partition individually, just as for an inheritance child.
+      Note that dropping a partition with <literal>DROP TABLE</literal>
+      requires taking an <literal>ACCESS EXCLUSIVE</literal> lock on the
+      parent table.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><replaceable class="PARAMETER">column_name</replaceable></term>
     <listitem>
      <para>
@@ -308,6 +371,46 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
 
      <para>
       Column <literal>STORAGE</> settings are also copied from parent tables.
+     </para>
+
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>PARTITION BY { RANGE | LIST } ( { <replaceable class="parameter">column_name</replaceable> | ( <replaceable class="parameter">expression</replaceable> ) } [ <replaceable class="parameter">opclass</replaceable> ] [, ...] ) </literal></term>
+    <listitem>
+     <para>
+      The optional <literal>PARTITION BY</literal> clause specifies a strategy
+      of partitioning the table.  The table thus created is called a
+      <firstterm>partitioned</firstterm> table.  The parenthesized list of
+      columns or expressions forms the <firstterm>partition key</firstterm>
+      for the table.  When using range partitioning, the partition key can
+      include multiple columns or expressions, but for list partitioning, the
+      partition key must consist of a single column or expression.  If no
+      btree operator class is specified when creating a partitioned table,
+      the default btree operator class for the datatype will be used.  If
+      there is none, an error will be reported.
+     </para>
+
+     <para>
+      A partitioned table is divided into sub-tables (called partitions),
+      which are created using separate <literal>CREATE TABLE</> commands.
+      The partitioned table is itself empty.  A data row inserted into the
+      table is routed to a partition based on the value of columns or
+      expressions in the partition key.  If no existing partition matches
+      the values in the new row, an error will be reported.
+     </para>
+
+     <para>
+      Partitioned tables do not support <literal>UNIQUE</literal>,
+      <literal>PRIMARY KEY</literal>, <literal>EXCLUDE</literal>, or
+      <literal>FOREIGN KEY</literal> constraints; however, you can define
+      these constraints on individual partitions.
+     </para>
+
+     <para>
+      When using range partitioning, a <literal>NOT NULL</literal> constraint
+      is added to each non-expression column in the partition key.
      </para>
 
     </listitem>
@@ -1368,6 +1471,57 @@ CREATE TABLE employees OF employee_type (
     PRIMARY KEY (name),
     salary WITH OPTIONS DEFAULT 1000
 );
+</programlisting></para>
+
+  <para>
+   Create a range partitioned table:
+<programlisting>
+CREATE TABLE measurement (
+    city_id         int not null,
+    logdate         date not null,
+    peaktemp        int,
+    unitsales       int
+) PARTITION BY RANGE (logdate);
+</programlisting></para>
+
+  <para>
+   Create a list partitioned table:
+<programlisting>
+CREATE TABLE cities (
+    name         text not null,
+    population   int,
+) PARTITION BY LIST (initcap(name));
+</programlisting></para>
+
+  <para>
+   Create partition of a range partitioned table:
+<programlisting>
+CREATE TABLE measurement_y2016m07
+    PARTITION OF measurement (
+    unitsales WITH OPTIONS DEFAULT 0
+) FOR VALUES FROM ('2016-07-01') TO ('2016-08-01');
+</programlisting></para>
+
+  <para>
+   Create partition of a list partitioned table:
+<programlisting>
+CREATE TABLE cities_west
+    PARTITION OF cities (
+    CONSTRAINT city_id_nonzero CHECK (city_id != 0)
+) FOR VALUES IN ('Los Angeles', 'San Francisco');
+</programlisting></para>
+
+  <para>
+   Create partition of a list partitioned table that is itself further
+   partitioned and then add a partition to it:
+<programlisting>
+CREATE TABLE cities_west
+    PARTITION OF cities (
+    CONSTRAINT city_id_nonzero CHECK (city_id != 0)
+) FOR VALUES IN ('Los Angeles', 'San Francisco') PARTITION BY RANGE (population);
+
+CREATE TABLE cities_west_10000_to_100000
+    PARTITION OF cities_west FOR VALUES FROM (10000) TO (100000);
 </programlisting></para>
  </refsect1>
 

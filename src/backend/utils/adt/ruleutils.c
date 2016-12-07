@@ -33,6 +33,7 @@
 #include "catalog/pg_language.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
+#include "catalog/pg_partitioned_table.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_type.h"
@@ -315,6 +316,7 @@ static char *pg_get_indexdef_worker(Oid indexrelid, int colno,
 					   const Oid *excludeOps,
 					   bool attrsOnly, bool showTblSpc,
 					   int prettyFlags, bool missing_ok);
+static char *pg_get_partkeydef_worker(Oid relid, int prettyFlags);
 static char *pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 							int prettyFlags, bool missing_ok);
 static text *pg_get_expr_worker(text *expr, Oid relid, const char *relname,
@@ -1415,6 +1417,163 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 	return buf.data;
 }
 
+/*
+ * pg_get_partkeydef
+ *
+ * Returns the partition key specification, ie, the following:
+ *
+ * PARTITION BY { RANGE | LIST } (column opt_collation opt_opclass [, ...])
+ */
+Datum
+pg_get_partkeydef(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+
+	PG_RETURN_TEXT_P(string_to_text(pg_get_partkeydef_worker(relid,
+									PRETTYFLAG_INDENT)));
+}
+
+/*
+ * Internal workhorse to decompile a partition key definition.
+ */
+static char *
+pg_get_partkeydef_worker(Oid relid, int prettyFlags)
+{
+	Form_pg_partitioned_table	form;
+	HeapTuple	tuple;
+	oidvector  *partclass;
+	oidvector  *partcollation;
+	List	   *partexprs;
+	ListCell   *partexpr_item;
+	List	   *context;
+	Datum		datum;
+	bool		isnull;
+	StringInfoData buf;
+	int			keyno;
+	char	   *str;
+	char	   *sep;
+
+	tuple = SearchSysCache1(PARTRELID, ObjectIdGetDatum(relid));
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "cache lookup failed for partition key of %u", relid);
+
+	form = (Form_pg_partitioned_table) GETSTRUCT(tuple);
+
+	Assert(form->partrelid == relid);
+
+	/* Must get partclass and partcollation the hard way */
+	datum = SysCacheGetAttr(PARTRELID, tuple,
+							Anum_pg_partitioned_table_partclass, &isnull);
+	Assert(!isnull);
+	partclass = (oidvector *) DatumGetPointer(datum);
+
+	datum = SysCacheGetAttr(PARTRELID, tuple,
+							Anum_pg_partitioned_table_partcollation, &isnull);
+	Assert(!isnull);
+	partcollation = (oidvector *) DatumGetPointer(datum);
+
+
+	/*
+	 * Get the expressions, if any.  (NOTE: we do not use the relcache
+	 * versions of the expressions, because we want to display non-const-folded
+	 * expressions.)
+	 */
+	if (!heap_attisnull(tuple, Anum_pg_partitioned_table_partexprs))
+	{
+		Datum		exprsDatum;
+		bool		isnull;
+		char	   *exprsString;
+
+		exprsDatum = SysCacheGetAttr(PARTRELID, tuple,
+									 Anum_pg_partitioned_table_partexprs, &isnull);
+		Assert(!isnull);
+		exprsString = TextDatumGetCString(exprsDatum);
+		partexprs = (List *) stringToNode(exprsString);
+
+		if (!IsA(partexprs, List))
+			elog(ERROR, "unexpected node type found in partexprs: %d",
+						(int) nodeTag(partexprs));
+
+		pfree(exprsString);
+	}
+	else
+		partexprs = NIL;
+
+	partexpr_item = list_head(partexprs);
+	context = deparse_context_for(get_relation_name(relid), relid);
+
+	initStringInfo(&buf);
+
+	switch (form->partstrat)
+	{
+		case PARTITION_STRATEGY_LIST:
+			appendStringInfo(&buf, "LIST");
+			break;
+		case PARTITION_STRATEGY_RANGE:
+			appendStringInfo(&buf, "RANGE");
+			break;
+		default:
+			elog(ERROR, "unexpected partition strategy: %d",
+						(int) form->partstrat);
+	}
+
+	appendStringInfo(&buf, " (");
+	sep = "";
+	for (keyno = 0; keyno < form->partnatts; keyno++)
+	{
+		AttrNumber	attnum = form->partattrs.values[keyno];
+		Oid			keycoltype;
+		Oid			keycolcollation;
+		Oid			partcoll;
+
+		appendStringInfoString(&buf, sep);
+		sep = ", ";
+		if (attnum != 0)
+		{
+			/* Simple attribute reference */
+			char	   *attname;
+			int32		keycoltypmod;
+
+			attname = get_relid_attribute_name(relid, attnum);
+			appendStringInfoString(&buf, quote_identifier(attname));
+			get_atttypetypmodcoll(relid, attnum,
+								  &keycoltype, &keycoltypmod,
+								  &keycolcollation);
+		}
+		else
+		{
+			/* Expression */
+			Node	   *partkey;
+
+			if (partexpr_item == NULL)
+				elog(ERROR, "too few entries in partexprs list");
+			partkey = (Node *) lfirst(partexpr_item);
+			partexpr_item = lnext(partexpr_item);
+			/* Deparse */
+			str = deparse_expression_pretty(partkey, context, false, false,
+											0, 0);
+
+			appendStringInfoString(&buf, str);
+			keycoltype = exprType(partkey);
+			keycolcollation = exprCollation(partkey);
+		}
+
+		/* Add collation, if not default for column */
+		partcoll = partcollation->values[keyno];
+		if (OidIsValid(partcoll) && partcoll != keycolcollation)
+			appendStringInfo(&buf, " COLLATE %s",
+							 generate_collation_name((partcoll)));
+
+		/* Add the operator class name, if not default */
+		get_opclass_name(partclass->values[keyno], keycoltype, &buf);
+	}
+	appendStringInfoChar(&buf, ')');
+
+	/* Clean up */
+	ReleaseSysCache(tuple);
+
+	return buf.data;
+}
 
 /*
  * pg_get_constraintdef
@@ -8287,6 +8446,88 @@ get_rule_expr(Node *node, deparse_context *context,
 					Oid			inferopcinputtype = get_opclass_input_type(iexpr->inferopclass);
 
 					get_opclass_name(inferopclass, inferopcinputtype, buf);
+				}
+			}
+			break;
+
+		case T_PartitionBoundSpec:
+			{
+				PartitionBoundSpec *spec = (PartitionBoundSpec *) node;
+				ListCell *cell;
+				char	 *sep;
+
+				switch (spec->strategy)
+				{
+					case PARTITION_STRATEGY_LIST:
+						Assert(spec->listdatums != NIL);
+
+						appendStringInfoString(buf, "FOR VALUES");
+						appendStringInfoString(buf, " IN (");
+						sep = "";
+						foreach (cell, spec->listdatums)
+						{
+							Const *val = lfirst(cell);
+
+							appendStringInfoString(buf, sep);
+							get_const_expr(val, context, -1);
+							sep = ", ";
+						}
+
+						appendStringInfoString(buf, ")");
+						break;
+
+					case PARTITION_STRATEGY_RANGE:
+						Assert(spec->lowerdatums != NIL &&
+							   spec->upperdatums != NIL &&
+							   list_length(spec->lowerdatums) ==
+							   list_length(spec->upperdatums));
+
+						appendStringInfoString(buf, "FOR VALUES");
+						appendStringInfoString(buf, " FROM");
+						appendStringInfoString(buf, " (");
+						sep = "";
+						foreach (cell, spec->lowerdatums)
+						{
+							PartitionRangeDatum *datum = lfirst(cell);
+							Const *val;
+
+							appendStringInfoString(buf, sep);
+							if (datum->infinite)
+								appendStringInfoString(buf, "UNBOUNDED");
+							else
+							{
+								val = (Const *) datum->value;
+								get_const_expr(val, context, -1);
+							}
+							sep = ", ";
+						}
+						appendStringInfoString(buf, ")");
+
+						appendStringInfoString(buf, " TO");
+						appendStringInfoString(buf, " (");
+						sep = "";
+						foreach (cell, spec->upperdatums)
+						{
+							PartitionRangeDatum *datum = lfirst(cell);
+							Const *val;
+
+							appendStringInfoString(buf, sep);
+							if (datum->infinite)
+								appendStringInfoString(buf, "UNBOUNDED");
+							else
+							{
+								val = (Const *) datum->value;
+								get_const_expr(val, context, -1);
+							}
+							sep = ", ";
+						}
+						appendStringInfoString(buf, ")");
+						break;
+
+					default:
+						elog(ERROR, "unrecognized partition strategy: %d",
+							 (int) spec->strategy);
+						break;
 				}
 			}
 			break;

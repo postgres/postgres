@@ -69,8 +69,6 @@ static void ComputeIndexAttrs(IndexInfo *indexInfo,
 				  char *accessMethodName, Oid accessMethodId,
 				  bool amcanorder,
 				  bool isconstraint);
-static Oid GetIndexOpClass(List *opclass, Oid attrType,
-				char *accessMethodName, Oid accessMethodId);
 static char *ChooseIndexName(const char *tabname, Oid namespaceId,
 				List *colnames, List *exclusionOpNames,
 				bool primary, bool isconstraint);
@@ -382,6 +380,11 @@ DefineIndex(Oid relationId,
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("cannot create index on foreign table \"%s\"",
+							RelationGetRelationName(rel))));
+		else if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("cannot create index on partitioned table \"%s\"",
 							RelationGetRelationName(rel))));
 		else
 			ereport(ERROR,
@@ -1145,10 +1148,10 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 		/*
 		 * Identify the opclass to use.
 		 */
-		classOidP[attn] = GetIndexOpClass(attribute->opclass,
-										  atttype,
-										  accessMethodName,
-										  accessMethodId);
+		classOidP[attn] = ResolveOpClass(attribute->opclass,
+										 atttype,
+										 accessMethodName,
+										 accessMethodId);
 
 		/*
 		 * Identify the exclusion operator, if any.
@@ -1255,10 +1258,13 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 
 /*
  * Resolve possibly-defaulted operator class specification
+ *
+ * Note: This is used to resolve operator class specification in index and
+ * partition key definitions.
  */
-static Oid
-GetIndexOpClass(List *opclass, Oid attrType,
-				char *accessMethodName, Oid accessMethodId)
+Oid
+ResolveOpClass(List *opclass, Oid attrType,
+			   char *accessMethodName, Oid accessMethodId)
 {
 	char	   *schemaname;
 	char	   *opcname;

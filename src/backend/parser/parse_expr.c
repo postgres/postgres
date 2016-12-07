@@ -1843,6 +1843,9 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 		case EXPR_KIND_TRIGGER_WHEN:
 			err = _("cannot use subquery in trigger WHEN condition");
 			break;
+		case EXPR_KIND_PARTITION_EXPRESSION:
+			err = _("cannot use subquery in partition key expression");
+			break;
 
 			/*
 			 * There is intentionally no default: case here, so that the
@@ -3446,6 +3449,8 @@ ParseExprKindName(ParseExprKind exprKind)
 			return "EXECUTE";
 		case EXPR_KIND_TRIGGER_WHEN:
 			return "WHEN";
+		case EXPR_KIND_PARTITION_EXPRESSION:
+			return "PARTITION BY";
 
 			/*
 			 * There is intentionally no default: case here, so that the

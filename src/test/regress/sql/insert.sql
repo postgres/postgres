@@ -84,3 +84,89 @@ create rule irule3 as on insert to inserttest2 do also
 drop table inserttest2;
 drop table inserttest;
 drop type insert_test_type;
+
+-- direct partition inserts should check partition bound constraint
+create table range_parted (
+	a text,
+	b int
+) partition by range (a, (b+0));
+create table part1 partition of range_parted for values from ('a', 1) to ('a', 10);
+create table part2 partition of range_parted for values from ('a', 10) to ('a', 20);
+create table part3 partition of range_parted for values from ('b', 1) to ('b', 10);
+create table part4 partition of range_parted for values from ('b', 10) to ('b', 20);
+
+-- fail
+insert into part1 values ('a', 11);
+insert into part1 values ('b', 1);
+-- ok
+insert into part1 values ('a', 1);
+-- fail
+insert into part4 values ('b', 21);
+insert into part4 values ('a', 10);
+-- ok
+insert into part4 values ('b', 10);
+
+-- fail (partition key a has a NOT NULL constraint)
+insert into part1 values (null);
+-- fail (expression key (b+0) cannot be null either)
+insert into part1 values (1);
+
+create table list_parted (
+	a text,
+	b int
+) partition by list (lower(a));
+create table part_aa_bb partition of list_parted FOR VALUES IN ('aa', 'bb');
+create table part_cc_dd partition of list_parted FOR VALUES IN ('cc', 'dd');
+create table part_null partition of list_parted FOR VALUES IN (null);
+
+-- fail
+insert into part_aa_bb values ('cc', 1);
+insert into part_aa_bb values ('AAa', 1);
+insert into part_aa_bb values (null);
+-- ok
+insert into part_cc_dd values ('cC', 1);
+insert into part_null values (null, 0);
+
+-- check in case of multi-level partitioned table
+create table part_ee_ff partition of list_parted for values in ('ee', 'ff') partition by range (b);
+create table part_ee_ff1 partition of part_ee_ff for values from (1) to (10);
+create table part_ee_ff2 partition of part_ee_ff for values from (10) to (20);
+
+-- fail
+insert into part_ee_ff1 values ('EE', 11);
+-- fail (even the parent's, ie, part_ee_ff's partition constraint applies)
+insert into part_ee_ff1 values ('cc', 1);
+-- ok
+insert into part_ee_ff1 values ('ff', 1);
+insert into part_ee_ff2 values ('ff', 11);
+
+-- Check tuple routing for partitioned tables
+
+-- fail
+insert into range_parted values ('a', 0);
+-- ok
+insert into range_parted values ('a', 1);
+insert into range_parted values ('a', 10);
+-- fail
+insert into range_parted values ('a', 20);
+-- ok
+insert into range_parted values ('b', 1);
+insert into range_parted values ('b', 10);
+-- fail (partition key (b+0) is null)
+insert into range_parted values ('a');
+select tableoid::regclass, * from range_parted;
+
+-- ok
+insert into list_parted values (null, 1);
+insert into list_parted (a) values ('aA');
+-- fail (partition of part_ee_ff not found in both cases)
+insert into list_parted values ('EE', 0);
+insert into part_ee_ff values ('EE', 0);
+-- ok
+insert into list_parted values ('EE', 1);
+insert into part_ee_ff values ('EE', 10);
+select tableoid::regclass, * from list_parted;
+
+-- cleanup
+drop table range_parted cascade;
+drop table list_parted cascade;

@@ -1231,7 +1231,8 @@ rewriteTargetListUD(Query *parsetree, RangeTblEntry *target_rte,
 	TargetEntry *tle;
 
 	if (target_relation->rd_rel->relkind == RELKIND_RELATION ||
-		target_relation->rd_rel->relkind == RELKIND_MATVIEW)
+		target_relation->rd_rel->relkind == RELKIND_MATVIEW ||
+		target_relation->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 	{
 		/*
 		 * Emit CTID so that executor can find the row to update or delete.

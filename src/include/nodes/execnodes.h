@@ -16,6 +16,7 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
+#include "access/tupconvert.h"
 #include "executor/instrument.h"
 #include "lib/pairingheap.h"
 #include "nodes/params.h"
@@ -320,6 +321,8 @@ typedef struct JunkFilter
  *		projectReturning		for computing a RETURNING list
  *		onConflictSetProj		for computing ON CONFLICT DO UPDATE SET
  *		onConflictSetWhere		list of ON CONFLICT DO UPDATE exprs (qual)
+ *		PartitionCheck			partition check expression
+ *		PartitionCheckExpr		partition check expression state
  * ----------------
  */
 typedef struct ResultRelInfo
@@ -344,6 +347,8 @@ typedef struct ResultRelInfo
 	ProjectionInfo *ri_projectReturning;
 	ProjectionInfo *ri_onConflictSetProj;
 	List	   *ri_onConflictSetWhere;
+	List	   *ri_PartitionCheck;
+	List	   *ri_PartitionCheckExpr;
 } ResultRelInfo;
 
 /* ----------------
@@ -1143,6 +1148,15 @@ typedef struct ModifyTableState
 										 * tlist  */
 	TupleTableSlot *mt_conflproj;		/* CONFLICT ... SET ... projection
 										 * target */
+	struct PartitionDispatchData **mt_partition_dispatch_info;
+										/* Tuple-routing support info */
+	int				mt_num_dispatch;	/* Number of entries in the above
+										 * array */
+	int				mt_num_partitions;	/* Number of members in the
+										 * following arrays */
+	ResultRelInfo  *mt_partitions;	/* Per partition result relation */
+	TupleConversionMap **mt_partition_tupconv_maps;
+									/* Per partition tuple conversion map */
 } ModifyTableState;
 
 /* ----------------

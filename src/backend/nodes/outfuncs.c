@@ -2392,6 +2392,8 @@ _outCreateStmtInfo(StringInfo str, const CreateStmt *node)
 	WRITE_NODE_FIELD(relation);
 	WRITE_NODE_FIELD(tableElts);
 	WRITE_NODE_FIELD(inhRelations);
+	WRITE_NODE_FIELD(partspec);
+	WRITE_NODE_FIELD(partbound);
 	WRITE_NODE_FIELD(ofTypename);
 	WRITE_NODE_FIELD(constraints);
 	WRITE_NODE_FIELD(options);
@@ -3277,6 +3279,47 @@ _outForeignKeyCacheInfo(StringInfo str, const ForeignKeyCacheInfo *node)
 		appendStringInfo(str, " %u", node->conpfeqop[i]);
 }
 
+static void
+_outPartitionSpec(StringInfo str, const PartitionSpec *node)
+{
+	WRITE_NODE_TYPE("PARTITIONBY");
+
+	WRITE_STRING_FIELD(strategy);
+	WRITE_NODE_FIELD(partParams);
+	WRITE_LOCATION_FIELD(location);
+}
+
+static void
+_outPartitionElem(StringInfo str, const PartitionElem *node)
+{
+	WRITE_NODE_TYPE("PARTITIONELEM");
+
+	WRITE_STRING_FIELD(name);
+	WRITE_NODE_FIELD(expr);
+	WRITE_NODE_FIELD(collation);
+	WRITE_NODE_FIELD(opclass);
+	WRITE_LOCATION_FIELD(location);
+}
+
+static void
+_outPartitionBoundSpec(StringInfo str, const PartitionBoundSpec *node)
+{
+	WRITE_NODE_TYPE("PARTITIONBOUND");
+
+	WRITE_CHAR_FIELD(strategy);
+	WRITE_NODE_FIELD(listdatums);
+	WRITE_NODE_FIELD(lowerdatums);
+	WRITE_NODE_FIELD(upperdatums);
+}
+
+static void
+_outPartitionRangeDatum(StringInfo str, const PartitionRangeDatum *node)
+{
+	WRITE_NODE_TYPE("PARTRANGEDATUM");
+
+	WRITE_BOOL_FIELD(infinite);
+	WRITE_NODE_FIELD(value);
+}
 
 /*
  * outNode -
@@ -3864,6 +3907,18 @@ outNode(StringInfo str, const void *obj)
 				break;
 			case T_TriggerTransition:
 				_outTriggerTransition(str, obj);
+				break;
+			case T_PartitionSpec:
+				_outPartitionSpec(str, obj);
+				break;
+			case T_PartitionElem:
+				_outPartitionElem(str, obj);
+				break;
+			case T_PartitionBoundSpec:
+				_outPartitionBoundSpec(str, obj);
+				break;
+			case T_PartitionRangeDatum:
+				_outPartitionRangeDatum(str, obj);
 				break;
 
 			default:

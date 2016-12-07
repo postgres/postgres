@@ -14,6 +14,7 @@
 #ifndef EXECUTOR_H
 #define EXECUTOR_H
 
+#include "catalog/partition.h"
 #include "executor/execdesc.h"
 #include "nodes/parsenodes.h"
 
@@ -188,6 +189,7 @@ extern void CheckValidResultRel(Relation resultRel, CmdType operation);
 extern void InitResultRelInfo(ResultRelInfo *resultRelInfo,
 				  Relation resultRelationDesc,
 				  Index resultRelationIndex,
+				  bool load_partition_check,
 				  int instrument_options);
 extern ResultRelInfo *ExecGetTriggerResultRel(EState *estate, Oid relid);
 extern bool ExecContextForcesOids(PlanState *planstate, bool *hasoids);
@@ -211,6 +213,10 @@ extern void EvalPlanQualSetPlan(EPQState *epqstate,
 extern void EvalPlanQualSetTuple(EPQState *epqstate, Index rti,
 					 HeapTuple tuple);
 extern HeapTuple EvalPlanQualGetTuple(EPQState *epqstate, Index rti);
+extern int ExecFindPartition(ResultRelInfo *resultRelInfo,
+				  PartitionDispatch *pd,
+				  TupleTableSlot *slot,
+				  EState *estate);
 
 #define EvalPlanQualSetSlot(epqstate, slot)  ((epqstate)->origslot = (slot))
 extern void EvalPlanQualFetchRowMarks(EPQState *epqstate);

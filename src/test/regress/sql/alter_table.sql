@@ -1875,3 +1875,297 @@ ALTER TABLE test_add_column
 	ADD COLUMN c4 integer;
 \d test_add_column
 DROP TABLE test_add_column;
+
+-- unsupported constraint types for partitioned tables
+CREATE TABLE partitioned (
+	a int,
+	b int
+) PARTITION BY RANGE (a, (a+b+1));
+ALTER TABLE partitioned ADD UNIQUE (a);
+ALTER TABLE partitioned ADD PRIMARY KEY (a);
+ALTER TABLE partitioned ADD FOREIGN KEY (a) REFERENCES blah;
+ALTER TABLE partitioned ADD EXCLUDE USING gist (a WITH &&);
+
+-- cannot drop column that is part of the partition key
+ALTER TABLE partitioned DROP COLUMN a;
+ALTER TABLE partitioned ALTER COLUMN a TYPE char(5);
+ALTER TABLE partitioned DROP COLUMN b;
+ALTER TABLE partitioned ALTER COLUMN b TYPE char(5);
+
+-- cannot drop NOT NULL on columns in the range partition key
+ALTER TABLE partitioned ALTER COLUMN a DROP NOT NULL;
+
+-- partitioned table cannot partiticipate in regular inheritance
+CREATE TABLE foo (
+	a int,
+	b int
+);
+ALTER TABLE partitioned INHERIT foo;
+ALTER TABLE foo INHERIT partitioned;
+
+-- cannot add NO INHERIT constraint to partitioned tables
+ALTER TABLE partitioned ADD CONSTRAINT chk_a CHECK (a > 0) NO INHERIT;
+
+DROP TABLE partitioned, foo;
+
+--
+-- ATTACH PARTITION
+--
+
+-- check that target table is partitioned
+CREATE TABLE unparted (
+	a int
+);
+CREATE TABLE fail_part (like unparted);
+ALTER TABLE unparted ATTACH PARTITION fail_part FOR VALUES IN ('a');
+DROP TABLE unparted, fail_part;
+
+-- check that partition bound is compatible
+CREATE TABLE list_parted (
+	a int NOT NULL,
+	b char(2) COLLATE "en_US",
+	CONSTRAINT check_a CHECK (a > 0)
+) PARTITION BY LIST (a);
+CREATE TABLE fail_part (LIKE list_parted);
+ALTER TABLE list_parted ATTACH PARTITION fail_part FOR VALUES FROM (1) TO (10);
+DROP TABLE fail_part;
+
+-- check that the table being attached exists
+ALTER TABLE list_parted ATTACH PARTITION nonexistant FOR VALUES IN (1);
+
+-- check ownership of the source table
+CREATE ROLE regress_test_me;
+CREATE ROLE regress_test_not_me;
+CREATE TABLE not_owned_by_me (LIKE list_parted);
+ALTER TABLE not_owned_by_me OWNER TO regress_test_not_me;
+SET SESSION AUTHORIZATION regress_test_me;
+CREATE TABLE owned_by_me (
+	a int
+) PARTITION BY LIST (a);
+ALTER TABLE owned_by_me ATTACH PARTITION not_owned_by_me FOR VALUES IN (1);
+RESET SESSION AUTHORIZATION;
+DROP TABLE owned_by_me, not_owned_by_me;
+DROP ROLE regress_test_not_me;
+DROP ROLE regress_test_me;
+
+-- check that the table being attached is not part of regular inheritance
+CREATE TABLE parent (LIKE list_parted);
+CREATE TABLE child () INHERITS (parent);
+ALTER TABLE list_parted ATTACH PARTITION child FOR VALUES IN (1);
+ALTER TABLE list_parted ATTACH PARTITION parent FOR VALUES IN (1);
+DROP TABLE parent CASCADE;
+
+-- check any TEMP-ness
+CREATE TEMP TABLE temp_parted (a int) PARTITION BY LIST (a);
+CREATE TABLE perm_part (a int);
+ALTER TABLE temp_parted ATTACH PARTITION perm_part FOR VALUES IN (1);
+DROP TABLE temp_parted, perm_part;
+
+-- check that the table being attached is not a typed table
+CREATE TYPE mytype AS (a int);
+CREATE TABLE fail_part OF mytype;
+ALTER TABLE list_parted ATTACH PARTITION fail_part FOR VALUES IN (1);
+DROP TYPE mytype CASCADE;
+
+-- check existence (or non-existence) of oid column
+ALTER TABLE list_parted SET WITH OIDS;
+CREATE TABLE fail_part (a int);
+ALTER TABLE list_parted ATTACH PARTITION fail_part FOR VALUES IN (1);
+
+ALTER TABLE list_parted SET WITHOUT OIDS;
+ALTER TABLE fail_part SET WITH OIDS;
+ALTER TABLE list_parted ATTACH PARTITION fail_part FOR VALUES IN (1);
+DROP TABLE fail_part;
+
+-- check that the table being attached has only columns present in the parent
+CREATE TABLE fail_part (like list_parted, c int);
+ALTER TABLE list_parted ATTACH PARTITION fail_part FOR VALUES IN (1);
+DROP TABLE fail_part;
+
+-- check that the table being attached has every column of the parent
+CREATE TABLE fail_part (a int NOT NULL);
+ALTER TABLE list_parted ATTACH PARTITION fail_part FOR VALUES IN (1);
+DROP TABLE fail_part;
+
+-- check that columns match in type, collation and NOT NULL status
+CREATE TABLE fail_part (
+	b char(3),
+	a int NOT NULL
+);
+ALTER TABLE list_parted ATTACH PARTITION fail_part FOR VALUES IN (1);
+ALTER TABLE fail_part ALTER b TYPE char (2) COLLATE "en_CA";
+ALTER TABLE list_parted ATTACH PARTITION fail_part FOR VALUES IN (1);
+DROP TABLE fail_part;
+
+-- check that the table being attached has all constraints of the parent
+CREATE TABLE fail_part (
+	b char(2) COLLATE "en_US",
+	a int NOT NULL
+);
+ALTER TABLE list_parted ATTACH PARTITION fail_part FOR VALUES IN (1);
+
+-- check that the constraint matches in definition with parent's constraint
+ALTER TABLE fail_part ADD CONSTRAINT check_a CHECK (a >= 0);
+ALTER TABLE list_parted ATTACH PARTITION fail_part FOR VALUES IN (1);
+DROP TABLE fail_part;
+
+-- check the attributes and constraints after partition is attached
+CREATE TABLE part_1 (
+	a int NOT NULL,
+	b char(2) COLLATE "en_US",
+	CONSTRAINT check_a CHECK (a > 0)
+);
+ALTER TABLE list_parted ATTACH PARTITION part_1 FOR VALUES IN (1);
+-- attislocal and conislocal are always false for merged attributes and constraints respectively.
+SELECT attislocal, attinhcount FROM pg_attribute WHERE attrelid = 'part_1'::regclass AND attnum > 0;
+SELECT conislocal, coninhcount FROM pg_constraint WHERE conrelid = 'part_1'::regclass AND conname = 'check_a';
+
+-- check that the new partition won't overlap with an existing partition
+CREATE TABLE fail_part (LIKE part_1 INCLUDING CONSTRAINTS);
+ALTER TABLE list_parted ATTACH PARTITION fail_part FOR VALUES IN (1);
+
+-- check validation when attaching list partitions
+CREATE TABLE list_parted2 (
+	a int,
+	b char
+) PARTITION BY LIST (a);
+
+-- check that violating rows are correctly reported
+CREATE TABLE part_2 (LIKE list_parted2);
+INSERT INTO part_2 VALUES (3, 'a');
+ALTER TABLE list_parted2 ATTACH PARTITION part_2 FOR VALUES IN (2);
+
+-- should be ok after deleting the bad row
+DELETE FROM part_2;
+ALTER TABLE list_parted2 ATTACH PARTITION part_2 FOR VALUES IN (2);
+
+-- adding constraints that describe the desired partition constraint
+-- (or more restrictive) will help skip the validation scan
+CREATE TABLE part_3_4 (
+	LIKE list_parted2,
+	CONSTRAINT check_a CHECK (a IN (3))
+);
+
+-- however, if a list partition does not accept nulls, there should be
+-- an explicit NOT NULL constraint on the partition key column for the
+-- validation scan to be skipped;
+ALTER TABLE list_parted2 ATTACH PARTITION part_3_4 FOR VALUES IN (3, 4);
+
+-- adding a NOT NULL constraint will cause the scan to be skipped
+ALTER TABLE list_parted2 DETACH PARTITION part_3_4;
+ALTER TABLE part_3_4 ALTER a SET NOT NULL;
+ALTER TABLE list_parted2 ATTACH PARTITION part_3_4 FOR VALUES IN (3, 4);
+
+
+-- check validation when attaching range partitions
+CREATE TABLE range_parted (
+	a int,
+	b int
+) PARTITION BY RANGE (a, b);
+
+-- check that violating rows are correctly reported
+CREATE TABLE part1 (
+	a int NOT NULL CHECK (a = 1),
+	b int NOT NULL CHECK (b >= 1 AND b <= 10)
+);
+INSERT INTO part1 VALUES (1, 10);
+-- Remember the TO bound is exclusive
+ALTER TABLE range_parted ATTACH PARTITION part1 FOR VALUES FROM (1, 1) TO (1, 10);
+
+-- should be ok after deleting the bad row
+DELETE FROM part1;
+ALTER TABLE range_parted ATTACH PARTITION part1 FOR VALUES FROM (1, 1) TO (1, 10);
+
+-- adding constraints that describe the desired partition constraint
+-- (or more restrictive) will help skip the validation scan
+CREATE TABLE part2 (
+	a int NOT NULL CHECK (a = 1),
+	b int NOT NULL CHECK (b >= 10 AND b < 18)
+);
+ALTER TABLE range_parted ATTACH PARTITION part2 FOR VALUES FROM (1, 10) TO (1, 20);
+
+-- check that leaf partitions are scanned when attaching a partitioned
+-- table
+CREATE TABLE part_5 (
+	LIKE list_parted2
+) PARTITION BY LIST (b);
+
+-- check that violating rows are correctly reported
+CREATE TABLE part_5_a PARTITION OF part_5 FOR VALUES IN ('a');
+INSERT INTO part_5_a (a, b) VALUES (6, 'a');
+ALTER TABLE list_parted2 ATTACH PARTITION part_5 FOR VALUES IN (5);
+
+-- delete the faulting row and also add a constraint to skip the scan
+DELETE FROM part_5_a WHERE a NOT IN (3);
+ALTER TABLE part_5 ADD CONSTRAINT check_a CHECK (a IN (5)), ALTER a SET NOT NULL;
+ALTER TABLE list_parted2 ATTACH PARTITION part_5 FOR VALUES IN (5);
+
+
+-- check that the table being attached is not already a partition
+ALTER TABLE list_parted2 ATTACH PARTITION part_2 FOR VALUES IN (2);
+
+-- check that circular inheritance is not allowed
+ALTER TABLE part_5 ATTACH PARTITION list_parted2 FOR VALUES IN ('b');
+ALTER TABLE list_parted2 ATTACH PARTITION list_parted2 FOR VALUES IN (0);
+
+--
+-- DETACH PARTITION
+--
+
+-- check that the partition being detached exists at all
+ALTER TABLE list_parted2 DETACH PARTITION part_4;
+
+-- check that the partition being detached is actually a partition of the parent
+CREATE TABLE not_a_part (a int);
+ALTER TABLE list_parted2 DETACH PARTITION not_a_part;
+ALTER TABLE list_parted2 DETACH PARTITION part_1;
+
+-- check that, after being detached, attinhcount/coninhcount is dropped to 0 and
+-- attislocal/conislocal is set to true
+ALTER TABLE list_parted2 DETACH PARTITION part_3_4;
+SELECT attinhcount, attislocal FROM pg_attribute WHERE attrelid = 'part_3_4'::regclass AND attnum > 0;
+SELECT coninhcount, conislocal FROM pg_constraint WHERE conrelid = 'part_3_4'::regclass AND conname = 'check_a';
+DROP TABLE part_3_4;
+
+-- Check ALTER TABLE commands for partitioned tables and partitions
+
+-- cannot add/drop column to/from *only* the parent
+ALTER TABLE ONLY list_parted2 ADD COLUMN c int;
+ALTER TABLE ONLY list_parted2 DROP COLUMN b;
+
+-- cannot add a column to partition or drop an inherited one
+ALTER TABLE part_2 ADD COLUMN c text;
+ALTER TABLE part_2 DROP COLUMN b;
+
+-- Nor rename, alter type
+ALTER TABLE part_2 RENAME COLUMN b to c;
+ALTER TABLE part_2 ALTER COLUMN b TYPE text;
+
+-- cannot add NOT NULL or check constraints to *only* the parent (ie, non-inherited)
+ALTER TABLE ONLY list_parted2 ALTER b SET NOT NULL;
+ALTER TABLE ONLY list_parted2 add constraint check_b check (b <> 'zz');
+ALTER TABLE list_parted2 add constraint check_b check (b <> 'zz') NO INHERIT;
+
+-- cannot drop inherited NOT NULL or check constraints from partition
+ALTER TABLE list_parted2 ALTER b SET NOT NULL, ADD CONSTRAINT check_a2 CHECK (a > 0);
+ALTER TABLE part_2 ALTER b DROP NOT NULL;
+ALTER TABLE part_2 DROP CONSTRAINT check_a2;
+
+-- cannot drop NOT NULL or check constraints from *only* the parent
+ALTER TABLE ONLY list_parted2 ALTER a DROP NOT NULL;
+ALTER TABLE ONLY list_parted2 DROP CONSTRAINT check_a2;
+
+-- check that a partition cannot participate in regular inheritance
+CREATE TABLE inh_test () INHERITS (part_2);
+CREATE TABLE inh_test (LIKE part_2);
+ALTER TABLE inh_test INHERIT part_2;
+ALTER TABLE part_2 INHERIT inh_test;
+
+-- cannot drop or alter type of partition key columns of lower level
+-- partitioned tables; for example, part_5, which is list_parted2's
+-- partition, is partitioned on b;
+ALTER TABLE list_parted2 DROP COLUMN b;
+ALTER TABLE list_parted2 ALTER COLUMN b TYPE text;
+
+-- cleanup
+DROP TABLE list_parted, list_parted2, range_parted CASCADE;

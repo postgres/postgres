@@ -27,6 +27,15 @@ CREATE FOREIGN TABLE [ IF NOT EXISTS ] <replaceable class="PARAMETER">table_name
   SERVER <replaceable class="parameter">server_name</replaceable>
 [ OPTIONS ( <replaceable class="PARAMETER">option</replaceable> '<replaceable class="PARAMETER">value</replaceable>' [, ... ] ) ]
 
+CREATE FOREIGN TABLE [ IF NOT EXISTS ] <replaceable class="PARAMETER">table_name</replaceable>
+  PARTITION OF <replaceable class="PARAMETER">parent_table</replaceable> [ (
+  { <replaceable class="PARAMETER">column_name</replaceable> WITH OPTIONS [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
+    | <replaceable>table_constraint</replaceable> }
+    [, ... ]
+) ] <replaceable class="PARAMETER">partition_bound_spec</replaceable>
+  SERVER <replaceable class="parameter">server_name</replaceable>
+[ OPTIONS ( <replaceable class="PARAMETER">option</replaceable> '<replaceable class="PARAMETER">value</replaceable>' [, ... ] ) ]
+
 <phrase>where <replaceable class="PARAMETER">column_constraint</replaceable> is:</phrase>
 
 [ CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> ]
@@ -65,6 +74,12 @@ CHECK ( <replaceable class="PARAMETER">expression</replaceable> ) [ NO INHERIT ]
    type that represents the composite type corresponding to one row of
    the foreign table.  Therefore, foreign tables cannot have the same
    name as any existing data type in the same schema.
+  </para>
+
+  <para>
+   If <literal>PARTITION OF</literal> clause is specified then the table is
+   created as a partition of <literal>parent_table</literal> with specified
+   bounds.
   </para>
 
   <para>
@@ -312,6 +327,17 @@ CREATE FOREIGN TABLE films (
     len         interval hour to minute
 )
 SERVER film_server;
+</programlisting></para>
+
+  <para>
+   Create foreign table <structname>measurement_y2016m07</>, which will be
+   accessed through the server <structname>server_07</>, as a partition
+   of the range partitioned table <structname>measurement</>:
+
+<programlisting>
+CREATE FOREIGN TABLE measurement_y2016m07
+    PARTITION OF measurement FOR VALUES FROM ('2016-07-01') TO ('2016-08-01')
+    SERVER server_07;
 </programlisting></para>
 
  </refsect1>

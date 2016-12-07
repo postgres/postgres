@@ -1043,7 +1043,7 @@ index_create(Relation heapRelation,
 										  (Node *) indexInfo->ii_Expressions,
 											heapRelationId,
 											DEPENDENCY_NORMAL,
-											DEPENDENCY_AUTO);
+											DEPENDENCY_AUTO, false);
 		}
 
 		/* Store dependencies on anything mentioned in predicate */
@@ -1053,7 +1053,7 @@ index_create(Relation heapRelation,
 											(Node *) indexInfo->ii_Predicate,
 											heapRelationId,
 											DEPENDENCY_NORMAL,
-											DEPENDENCY_AUTO);
+											DEPENDENCY_AUTO, false);
 		}
 	}
 	else

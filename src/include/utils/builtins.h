@@ -728,6 +728,7 @@ extern Datum pg_get_viewdef_wrap(PG_FUNCTION_ARGS);
 extern Datum pg_get_viewdef_name(PG_FUNCTION_ARGS);
 extern Datum pg_get_viewdef_name_ext(PG_FUNCTION_ARGS);
 extern Datum pg_get_indexdef(PG_FUNCTION_ARGS);
+extern Datum pg_get_partkeydef(PG_FUNCTION_ARGS);
 extern Datum pg_get_indexdef_ext(PG_FUNCTION_ARGS);
 extern Datum pg_get_triggerdef(PG_FUNCTION_ARGS);
 extern Datum pg_get_triggerdef_ext(PG_FUNCTION_ARGS);

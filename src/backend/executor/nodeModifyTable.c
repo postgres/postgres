@@ -258,6 +258,7 @@ ExecInsert(ModifyTableState *mtstate,
 {
 	HeapTuple	tuple;
 	ResultRelInfo *resultRelInfo;
+	ResultRelInfo *saved_resultRelInfo = NULL;
 	Relation	resultRelationDesc;
 	Oid			newId;
 	List	   *recheckIndexes = NIL;
@@ -272,6 +273,56 @@ ExecInsert(ModifyTableState *mtstate,
 	 * get information on the (current) result relation
 	 */
 	resultRelInfo = estate->es_result_relation_info;
+
+	/* Determine the partition to heap_insert the tuple into */
+	if (mtstate->mt_partition_dispatch_info)
+	{
+		int		leaf_part_index;
+		TupleConversionMap *map;
+
+		/*
+		 * Away we go ... If we end up not finding a partition after all,
+		 * ExecFindPartition() does not return and errors out instead.
+		 * Otherwise, the returned value is to be used as an index into
+		 * arrays mt_partitions[] and mt_partition_tupconv_maps[] that
+		 * will get us the ResultRelInfo and TupleConversionMap for the
+		 * partition, respectively.
+		 */
+		leaf_part_index = ExecFindPartition(resultRelInfo,
+										mtstate->mt_partition_dispatch_info,
+											slot,
+											estate);
+		Assert(leaf_part_index >= 0 &&
+			   leaf_part_index < mtstate->mt_num_partitions);
+
+		/*
+		 * Save the old ResultRelInfo and switch to the one corresponding to
+		 * the selected partition.
+		 */
+		saved_resultRelInfo = resultRelInfo;
+		resultRelInfo = mtstate->mt_partitions + leaf_part_index;
+
+		/* We do not yet have a way to insert into a foreign partition */
+		if (resultRelInfo->ri_FdwRoutine)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot route inserted tuples to a foreign table")));
+
+		/* For ExecInsertIndexTuples() to work on the partition's indexes */
+		estate->es_result_relation_info = resultRelInfo;
+
+		/*
+		 * We might need to convert from the parent rowtype to the partition
+		 * rowtype.
+		 */
+		map = mtstate->mt_partition_tupconv_maps[leaf_part_index];
+		if (map)
+		{
+			tuple = do_convert_tuple(tuple, map);
+			ExecStoreTuple(tuple, slot, InvalidBuffer, true);
+		}
+	}
+
 	resultRelationDesc = resultRelInfo->ri_RelationDesc;
 
 	/*
@@ -369,7 +420,7 @@ ExecInsert(ModifyTableState *mtstate,
 		/*
 		 * Check the constraints of the tuple
 		 */
-		if (resultRelationDesc->rd_att->constr)
+		if (resultRelationDesc->rd_att->constr || resultRelInfo->ri_PartitionCheck)
 			ExecConstraints(resultRelInfo, slot, estate);
 
 		if (onconflict != ONCONFLICT_NONE && resultRelInfo->ri_NumIndices > 0)
@@ -510,6 +561,12 @@ ExecInsert(ModifyTableState *mtstate,
 	ExecARInsertTriggers(estate, resultRelInfo, tuple, recheckIndexes);
 
 	list_free(recheckIndexes);
+
+	if (saved_resultRelInfo)
+	{
+		resultRelInfo = saved_resultRelInfo;
+		estate->es_result_relation_info = resultRelInfo;
+	}
 
 	/*
 	 * Check any WITH CHECK OPTION constraints from parent views.  We are
@@ -922,7 +979,7 @@ lreplace:;
 		/*
 		 * Check the constraints of the tuple
 		 */
-		if (resultRelationDesc->rd_att->constr)
+		if (resultRelationDesc->rd_att->constr || resultRelInfo->ri_PartitionCheck)
 			ExecConstraints(resultRelInfo, slot, estate);
 
 		/*
@@ -1565,6 +1622,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	Plan	   *subplan;
 	ListCell   *l;
 	int			i;
+	Relation	rel;
 
 	/* check for unsupported flags */
 	Assert(!(eflags & (EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK)));
@@ -1654,6 +1712,75 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	}
 
 	estate->es_result_relation_info = saved_resultRelInfo;
+
+	/* Build state for INSERT tuple routing */
+	rel = mtstate->resultRelInfo->ri_RelationDesc;
+	if (operation == CMD_INSERT &&
+		rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+	{
+		PartitionDispatch  *pd;
+		int					i,
+							j,
+							num_parted,
+							num_leaf_parts;
+		List			   *leaf_parts;
+		ListCell		   *cell;
+		ResultRelInfo	   *leaf_part_rri;
+
+		/* Form the partition node tree and lock partitions */
+		pd = RelationGetPartitionDispatchInfo(rel, RowExclusiveLock,
+											  &num_parted, &leaf_parts);
+		mtstate->mt_partition_dispatch_info = pd;
+		mtstate->mt_num_dispatch = num_parted;
+		num_leaf_parts = list_length(leaf_parts);
+		mtstate->mt_num_partitions = num_leaf_parts;
+		mtstate->mt_partitions = (ResultRelInfo *)
+						palloc0(num_leaf_parts * sizeof(ResultRelInfo));
+		mtstate->mt_partition_tupconv_maps = (TupleConversionMap **)
+					palloc0(num_leaf_parts * sizeof(TupleConversionMap *));
+
+		leaf_part_rri = mtstate->mt_partitions;
+		i = j = 0;
+		foreach(cell, leaf_parts)
+		{
+			Oid			partrelid = lfirst_oid(cell);
+			Relation	partrel;
+
+			/*
+			 * We locked all the partitions above including the leaf
+			 * partitions.  Note that each of the relations in
+			 * mtstate->mt_partitions will be closed by ExecEndModifyTable().
+			 */
+			partrel = heap_open(partrelid, NoLock);
+
+			/*
+			 * Verify result relation is a valid target for the current
+			 * operation
+			 */
+			CheckValidResultRel(partrel, CMD_INSERT);
+
+			InitResultRelInfo(leaf_part_rri,
+							  partrel,
+							  1,		/* dummy */
+							  false,	/* no partition constraint checks */
+							  eflags);
+
+			/* Open partition indices (note: ON CONFLICT unsupported)*/
+			if (partrel->rd_rel->relhasindex && operation != CMD_DELETE &&
+				leaf_part_rri->ri_IndexRelationDescs == NULL)
+				ExecOpenIndices(leaf_part_rri, false);
+
+			if (!equalTupleDescs(RelationGetDescr(rel),
+								 RelationGetDescr(partrel)))
+				mtstate->mt_partition_tupconv_maps[i] =
+							convert_tuples_by_name(RelationGetDescr(rel),
+												   RelationGetDescr(partrel),
+								  gettext_noop("could not convert row type"));
+
+			leaf_part_rri++;
+			i++;
+		}
+	}
 
 	/*
 	 * Initialize any WITH CHECK OPTION constraints if needed.
@@ -1886,7 +2013,8 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 
 					relkind = resultRelInfo->ri_RelationDesc->rd_rel->relkind;
 					if (relkind == RELKIND_RELATION ||
-						relkind == RELKIND_MATVIEW)
+						relkind == RELKIND_MATVIEW ||
+						relkind == RELKIND_PARTITIONED_TABLE)
 					{
 						j->jf_junkAttNo = ExecFindJunkAttribute(j, "ctid");
 						if (!AttributeNumberIsValid(j->jf_junkAttNo))
@@ -1969,6 +2097,26 @@ ExecEndModifyTable(ModifyTableState *node)
 			resultRelInfo->ri_FdwRoutine->EndForeignModify != NULL)
 			resultRelInfo->ri_FdwRoutine->EndForeignModify(node->ps.state,
 														   resultRelInfo);
+	}
+
+	/* Close all the partitioned tables, leaf partitions, and their indices
+	 *
+	 * Remember node->mt_partition_dispatch_info[0] corresponds to the root
+	 * partitioned table, which we must not try to close, because it is the
+	 * main target table of the query that will be closed by ExecEndPlan().
+	 */
+	for (i = 1; i < node->mt_num_dispatch; i++)
+	{
+		PartitionDispatch pd = node->mt_partition_dispatch_info[i];
+
+		heap_close(pd->reldesc, NoLock);
+	}
+	for (i = 0; i < node->mt_num_partitions; i++)
+	{
+		ResultRelInfo *resultRelInfo = node->mt_partitions + i;
+
+		ExecCloseIndices(resultRelInfo);
+		heap_close(resultRelInfo->ri_RelationDesc, NoLock);
 	}
 
 	/*
