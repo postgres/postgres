@@ -3111,7 +3111,7 @@ CREATE TABLE fail_part (
 );
 ALTER TABLE list_parted ATTACH PARTITION fail_part FOR VALUES IN (1);
 ERROR:  child table "fail_part" has different type for column "b"
-ALTER TABLE fail_part ALTER b TYPE char (2) COLLATE "en_CA";
+ALTER TABLE fail_part ALTER b TYPE char (2) COLLATE "POSIX";
 ALTER TABLE list_parted ATTACH PARTITION fail_part FOR VALUES IN (1);
 ERROR:  child table "fail_part" has different collation for column "b"
 DROP TABLE fail_part;

@@ -1993,7 +1993,7 @@ CREATE TABLE fail_part (
 	a int NOT NULL
 );
 ALTER TABLE list_parted ATTACH PARTITION fail_part FOR VALUES IN (1);
-ALTER TABLE fail_part ALTER b TYPE char (2) COLLATE "en_CA";
+ALTER TABLE fail_part ALTER b TYPE char (2) COLLATE "POSIX";
 ALTER TABLE list_parted ATTACH PARTITION fail_part FOR VALUES IN (1);
 DROP TABLE fail_part;
 
