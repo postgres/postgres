@@ -391,7 +391,7 @@ CREATE TABLE partitioned (
 	b int,
 	c text,
 	d text
-) PARTITION BY RANGE (a oid_ops, plusone(b), c collate "default", d collate "en_US");
+) PARTITION BY RANGE (a oid_ops, plusone(b), c collate "default", d collate "C");
 -- check relkind
 SELECT relkind FROM pg_class WHERE relname = 'partitioned';
  relkind 
@@ -429,7 +429,7 @@ ERROR:  cannot inherit from partitioned table "partitioned2"
  b      | integer |           |          | 
  c      | text    |           | not null | 
  d      | text    |           | not null | 
-Partition key: RANGE (a oid_ops, plusone(b), c, d COLLATE "en_US")
+Partition key: RANGE (a oid_ops, plusone(b), c, d COLLATE "C")
 
 \d partitioned2
             Table "public.partitioned2"

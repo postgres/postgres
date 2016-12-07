@@ -397,7 +397,7 @@ CREATE TABLE partitioned (
 	b int,
 	c text,
 	d text
-) PARTITION BY RANGE (a oid_ops, plusone(b), c collate "default", d collate "en_US");
+) PARTITION BY RANGE (a oid_ops, plusone(b), c collate "default", d collate "C");
 
 -- check relkind
 SELECT relkind FROM pg_class WHERE relname = 'partitioned';

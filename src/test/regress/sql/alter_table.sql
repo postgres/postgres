@@ -1923,7 +1923,7 @@ DROP TABLE unparted, fail_part;
 -- check that partition bound is compatible
 CREATE TABLE list_parted (
 	a int NOT NULL,
-	b char(2) COLLATE "en_US",
+	b char(2) COLLATE "C",
 	CONSTRAINT check_a CHECK (a > 0)
 ) PARTITION BY LIST (a);
 CREATE TABLE fail_part (LIKE list_parted);
@@ -1999,7 +1999,7 @@ DROP TABLE fail_part;
 
 -- check that the table being attached has all constraints of the parent
 CREATE TABLE fail_part (
-	b char(2) COLLATE "en_US",
+	b char(2) COLLATE "C",
 	a int NOT NULL
 );
 ALTER TABLE list_parted ATTACH PARTITION fail_part FOR VALUES IN (1);
@@ -2012,7 +2012,7 @@ DROP TABLE fail_part;
 -- check the attributes and constraints after partition is attached
 CREATE TABLE part_1 (
 	a int NOT NULL,
-	b char(2) COLLATE "en_US",
+	b char(2) COLLATE "C",
 	CONSTRAINT check_a CHECK (a > 0)
 );
 ALTER TABLE list_parted ATTACH PARTITION part_1 FOR VALUES IN (1);
