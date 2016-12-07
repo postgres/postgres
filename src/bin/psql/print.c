@@ -2217,6 +2217,10 @@ PageOutput(int lines, unsigned short int pager)
 			pagerpipe = popen(pagerprog, "w");
 			if (pagerpipe)
 				return pagerpipe;
+			/* if popen fails, silently proceed without pager */
+#ifndef WIN32
+			pqsignal(SIGPIPE, SIG_DFL);
+#endif
 #ifdef TIOCGWINSZ
 		}
 #endif
