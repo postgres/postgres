@@ -28,7 +28,8 @@
 typedef enum ReplicationSlotPersistency
 {
 	RS_PERSISTENT,
-	RS_EPHEMERAL
+	RS_EPHEMERAL,
+	RS_TEMPORARY
 } ReplicationSlotPersistency;
 
 /*
@@ -165,6 +166,7 @@ extern void ReplicationSlotDrop(const char *name);
 
 extern void ReplicationSlotAcquire(const char *name);
 extern void ReplicationSlotRelease(void);
+extern void ReplicationSlotCleanup(void);
 extern void ReplicationSlotSave(void);
 extern void ReplicationSlotMarkDirty(void);
 

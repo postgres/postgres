@@ -77,6 +77,7 @@ Node *replication_parse_result;
 %token K_LOGICAL
 %token K_SLOT
 %token K_RESERVE_WAL
+%token K_TEMPORARY
 
 %type <node>	command
 %type <node>	base_backup start_replication start_logical_replication
@@ -89,7 +90,7 @@ Node *replication_parse_result;
 %type <defelt>	plugin_opt_elem
 %type <node>	plugin_opt_arg
 %type <str>		opt_slot
-%type <boolval>	opt_reserve_wal
+%type <boolval>	opt_reserve_wal opt_temporary
 
 %%
 
@@ -183,24 +184,26 @@ base_backup_opt:
 			;
 
 create_replication_slot:
-			/* CREATE_REPLICATION_SLOT slot PHYSICAL RESERVE_WAL */
-			K_CREATE_REPLICATION_SLOT IDENT K_PHYSICAL opt_reserve_wal
+			/* CREATE_REPLICATION_SLOT slot TEMPORARY PHYSICAL RESERVE_WAL */
+			K_CREATE_REPLICATION_SLOT IDENT opt_temporary K_PHYSICAL opt_reserve_wal
 				{
 					CreateReplicationSlotCmd *cmd;
 					cmd = makeNode(CreateReplicationSlotCmd);
 					cmd->kind = REPLICATION_KIND_PHYSICAL;
 					cmd->slotname = $2;
-					cmd->reserve_wal = $4;
+					cmd->temporary = $3;
+					cmd->reserve_wal = $5;
 					$$ = (Node *) cmd;
 				}
-			/* CREATE_REPLICATION_SLOT slot LOGICAL plugin */
-			| K_CREATE_REPLICATION_SLOT IDENT K_LOGICAL IDENT
+			/* CREATE_REPLICATION_SLOT slot TEMPORARY LOGICAL plugin */
+			| K_CREATE_REPLICATION_SLOT IDENT opt_temporary K_LOGICAL IDENT
 				{
 					CreateReplicationSlotCmd *cmd;
 					cmd = makeNode(CreateReplicationSlotCmd);
 					cmd->kind = REPLICATION_KIND_LOGICAL;
 					cmd->slotname = $2;
-					cmd->plugin = $4;
+					cmd->temporary = $3;
+					cmd->plugin = $5;
 					$$ = (Node *) cmd;
 				}
 			;
@@ -273,6 +276,11 @@ opt_physical:
 
 opt_reserve_wal:
 			K_RESERVE_WAL					{ $$ = true; }
+			| /* EMPTY */					{ $$ = false; }
+			;
+
+opt_temporary:
+			K_TEMPORARY						{ $$ = true; }
 			| /* EMPTY */					{ $$ = false; }
 			;
 

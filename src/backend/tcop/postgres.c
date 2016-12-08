@@ -3878,6 +3878,9 @@ PostgresMain(int argc, char *argv[],
 		if (MyReplicationSlot != NULL)
 			ReplicationSlotRelease();
 
+		/* We also want to cleanup temporary slots on error. */
+		ReplicationSlotCleanup();
+
 		/*
 		 * Now return to normal top-level context and clear ErrorContext for
 		 * next time.

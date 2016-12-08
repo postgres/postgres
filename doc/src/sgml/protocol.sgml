@@ -1434,7 +1434,7 @@ The commands accepted in walsender mode are:
   </varlistentry>
 
   <varlistentry>
-   <term><literal>CREATE_REPLICATION_SLOT</literal> <replaceable class="parameter">slot_name</> { <literal>PHYSICAL</> [ <literal>RESERVE_WAL</> ] | <literal>LOGICAL</> <replaceable class="parameter">output_plugin</> }
+   <term><literal>CREATE_REPLICATION_SLOT</literal> <replaceable class="parameter">slot_name</> [ <literal>TEMPORARY</> ] { <literal>PHYSICAL</> [ <literal>RESERVE_WAL</> ] | <literal>LOGICAL</> <replaceable class="parameter">output_plugin</> }
      <indexterm><primary>CREATE_REPLICATION_SLOT</primary></indexterm>
     </term>
     <listitem>
@@ -1461,6 +1461,17 @@ The commands accepted in walsender mode are:
           The name of the output plugin used for logical decoding
           (see <xref linkend="logicaldecoding-output-plugin">).
          </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><literal>TEMPORARY</></term>
+       <listitem>
+        <para>
+         Specify that this replication slot is a temporary one. Temporary
+         slots are not saved to disk and are automatically dropped on error
+         or when the session has finished.
+        </para>
        </listitem>
       </varlistentry>
 

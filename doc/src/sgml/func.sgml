@@ -18465,7 +18465,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         <indexterm>
          <primary>pg_create_physical_replication_slot</primary>
         </indexterm>
-        <literal><function>pg_create_physical_replication_slot(<parameter>slot_name</parameter> <type>name</type> <optional>, <parameter>immediately_reserve</> <type>boolean</> </optional>)</function></literal>
+        <literal><function>pg_create_physical_replication_slot(<parameter>slot_name</parameter> <type>name</type> <optional>, <parameter>immediately_reserve</> <type>boolean</>, <parameter>temporary</> <type>boolean</></optional>)</function></literal>
        </entry>
        <entry>
         (<parameter>slot_name</parameter> <type>name</type>, <parameter>xlog_position</parameter> <type>pg_lsn</type>)
@@ -18478,7 +18478,11 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         the <acronym>LSN</> is reserved on first connection from a streaming
         replication client. Streaming changes from a physical slot is only
         possible with the streaming-replication protocol &mdash;
-        see <xref linkend="protocol-replication">. This function corresponds
+        see <xref linkend="protocol-replication">. The optional third
+        parameter, <parameter>temporary</>, when set to true, specifies that
+        the slot should not be permanently stored to disk and is only meant
+        for use by current session. Temporary slots are also
+        released upon any error. This function corresponds
         to the replication protocol command <literal>CREATE_REPLICATION_SLOT
         ... PHYSICAL</literal>.
        </entry>
@@ -18505,7 +18509,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         <indexterm>
          <primary>pg_create_logical_replication_slot</primary>
         </indexterm>
-        <literal><function>pg_create_logical_replication_slot(<parameter>slot_name</parameter> <type>name</type>, <parameter>plugin</parameter> <type>name</type>)</function></literal>
+        <literal><function>pg_create_logical_replication_slot(<parameter>slot_name</parameter> <type>name</type>, <parameter>plugin</parameter> <type>name</type> <optional>, <parameter>temporary</> <type>boolean</></optional>)</function></literal>
        </entry>
        <entry>
         (<parameter>slot_name</parameter> <type>name</type>, <parameter>xlog_position</parameter> <type>pg_lsn</type>)
@@ -18513,7 +18517,11 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
        <entry>
         Creates a new logical (decoding) replication slot named
         <parameter>slot_name</parameter> using the output plugin
-        <parameter>plugin</parameter>.  A call to this function has the same
+        <parameter>plugin</parameter>. The optional third
+        parameter, <parameter>temporary</>, when set to true, specifies that
+        the slot should not be permanently stored to disk and is only meant
+        for use by current session. Temporary slots are also
+        released upon any error. A call to this function has the same
         effect as the replication protocol command
         <literal>CREATE_REPLICATION_SLOT ... LOGICAL</literal>.
        </entry>

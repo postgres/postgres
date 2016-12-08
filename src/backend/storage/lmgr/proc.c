@@ -810,6 +810,9 @@ ProcKill(int code, Datum arg)
 	if (MyReplicationSlot != NULL)
 		ReplicationSlotRelease();
 
+	/* Also cleanup all the temporary slots. */
+	ReplicationSlotCleanup();
+
 	/*
 	 * Detach from any lock group of which we are a member.  If the leader
 	 * exist before all other group members, it's PGPROC will remain allocated

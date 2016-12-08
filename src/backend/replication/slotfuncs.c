@@ -41,6 +41,7 @@ pg_create_physical_replication_slot(PG_FUNCTION_ARGS)
 {
 	Name		name = PG_GETARG_NAME(0);
 	bool		immediately_reserve = PG_GETARG_BOOL(1);
+	bool		temporary = PG_GETARG_BOOL(2);
 	Datum		values[2];
 	bool		nulls[2];
 	TupleDesc	tupdesc;
@@ -57,7 +58,8 @@ pg_create_physical_replication_slot(PG_FUNCTION_ARGS)
 	CheckSlotRequirements();
 
 	/* acquire replication slot, this will check for conflicting names */
-	ReplicationSlotCreate(NameStr(*name), false, RS_PERSISTENT);
+	ReplicationSlotCreate(NameStr(*name), false,
+						  temporary ? RS_TEMPORARY : RS_PERSISTENT);
 
 	values[0] = NameGetDatum(&MyReplicationSlot->data.name);
 	nulls[0] = false;
@@ -96,6 +98,7 @@ pg_create_logical_replication_slot(PG_FUNCTION_ARGS)
 {
 	Name		name = PG_GETARG_NAME(0);
 	Name		plugin = PG_GETARG_NAME(1);
+	bool		temporary = PG_GETARG_BOOL(2);
 
 	LogicalDecodingContext *ctx = NULL;
 
@@ -116,11 +119,14 @@ pg_create_logical_replication_slot(PG_FUNCTION_ARGS)
 
 	/*
 	 * Acquire a logical decoding slot, this will check for conflicting names.
-	 * Initially create it as ephemeral - that allows us to nicely handle
-	 * errors during initialization because it'll get dropped if this
+	 * Initially create persisent slot as ephemeral - that allows us to nicely
+	 * handle errors during initialization because it'll get dropped if this
 	 * transaction fails. We'll make it persistent at the end.
+	 * Temporary slots can be created as temporary from beginning as they get
+	 * dropped on error as well.
 	 */
-	ReplicationSlotCreate(NameStr(*name), true, RS_EPHEMERAL);
+	ReplicationSlotCreate(NameStr(*name), true,
+						  temporary ? RS_TEMPORARY : RS_EPHEMERAL);
 
 	/*
 	 * Create logical decoding context, to build the initial snapshot.
@@ -143,8 +149,9 @@ pg_create_logical_replication_slot(PG_FUNCTION_ARGS)
 	tuple = heap_form_tuple(tupdesc, values, nulls);
 	result = HeapTupleGetDatum(tuple);
 
-	/* ok, slot is now fully created, mark it as persistent */
-	ReplicationSlotPersist();
+	/* ok, slot is now fully created, mark it as persistent if needed */
+	if (!temporary)
+		ReplicationSlotPersist();
 	ReplicationSlotRelease();
 
 	PG_RETURN_DATUM(result);
@@ -174,7 +181,7 @@ pg_drop_replication_slot(PG_FUNCTION_ARGS)
 Datum
 pg_get_replication_slots(PG_FUNCTION_ARGS)
 {
-#define PG_GET_REPLICATION_SLOTS_COLS 10
+#define PG_GET_REPLICATION_SLOTS_COLS 11
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 	TupleDesc	tupdesc;
 	Tuplestorestate *tupstore;
@@ -219,6 +226,7 @@ pg_get_replication_slots(PG_FUNCTION_ARGS)
 		Datum		values[PG_GET_REPLICATION_SLOTS_COLS];
 		bool		nulls[PG_GET_REPLICATION_SLOTS_COLS];
 
+		ReplicationSlotPersistency	persistency;
 		TransactionId xmin;
 		TransactionId catalog_xmin;
 		XLogRecPtr	restart_lsn;
@@ -246,6 +254,7 @@ pg_get_replication_slots(PG_FUNCTION_ARGS)
 			namecpy(&plugin, &slot->data.plugin);
 
 			active_pid = slot->active_pid;
+			persistency = slot->data.persistency;
 		}
 		SpinLockRelease(&slot->mutex);
 
@@ -269,6 +278,7 @@ pg_get_replication_slots(PG_FUNCTION_ARGS)
 		else
 			values[i++] = database;
 
+		values[i++] = BoolGetDatum(persistency == RS_TEMPORARY);
 		values[i++] = BoolGetDatum(active_pid != 0);
 
 		if (active_pid != 0)

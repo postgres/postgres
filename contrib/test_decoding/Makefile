@@ -39,7 +39,7 @@ submake-test_decoding:
 
 REGRESSCHECKS=ddl xact rewrite toast permissions decoding_in_xact \
 	decoding_into_rel binary prepared replorigin time messages \
-	spill
+	spill slot
 
 regresscheck: | submake-regress submake-test_decoding temp-install
 	$(MKDIR_P) regression_output

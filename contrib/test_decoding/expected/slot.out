@@ -1,0 +1,58 @@
+SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot_p', 'test_decoding');
+ ?column? 
+----------
+ init
+(1 row)
+
+SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot_t', 'test_decoding', true);
+ ?column? 
+----------
+ init
+(1 row)
+
+SELECT pg_drop_replication_slot('regression_slot_p');
+ pg_drop_replication_slot 
+--------------------------
+ 
+(1 row)
+
+SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot_p', 'test_decoding', false);
+ ?column? 
+----------
+ init
+(1 row)
+
+-- reconnect to clean temp slots
+\c
+SELECT pg_drop_replication_slot('regression_slot_p');
+ pg_drop_replication_slot 
+--------------------------
+ 
+(1 row)
+
+-- should fail because the temporary slot was dropped automatically
+SELECT pg_drop_replication_slot('regression_slot_t');
+ERROR:  replication slot "regression_slot_t" does not exist
+-- test switching between slots in a session
+SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot1', 'test_decoding', true);
+ ?column? 
+----------
+ init
+(1 row)
+
+SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot2', 'test_decoding', true);
+ ?column? 
+----------
+ init
+(1 row)
+
+SELECT * FROM pg_logical_slot_get_changes('regression_slot1', NULL, NULL);
+ location | xid | data 
+----------+-----+------
+(0 rows)
+
+SELECT * FROM pg_logical_slot_get_changes('regression_slot2', NULL, NULL);
+ location | xid | data 
+----------+-----+------
+(0 rows)
+
