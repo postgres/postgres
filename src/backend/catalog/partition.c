@@ -1744,7 +1744,7 @@ partition_rbound_cmp(PartitionKey key,
 					 Datum *datums1, RangeDatumContent *content1, bool lower1,
 					 PartitionRangeBound *b2)
 {
-	int32		cmpval;
+	int32		cmpval = 0;		/* placate compiler */
 	int			i;
 	Datum	   *datums2 = b2->datums;
 	RangeDatumContent *content2 = b2->content;
