@@ -164,13 +164,18 @@ blbuildempty(Relation index)
 	metapage = (Page) palloc(BLCKSZ);
 	BloomFillMetapage(index, metapage);
 
-	/* Write the page.  If archiving/streaming, XLOG it. */
+	/*
+	 * Write the page and log it.  It might seem that an immediate sync
+	 * would be sufficient to guarantee that the file exists on disk, but
+	 * recovery itself might remove it while replaying, for example, an
+	 * XLOG_DBASE_CREATE or XLOG_TBLSPC_CREATE record.  Therefore, we
+	 * need this even when wal_level=minimal.
+	 */
 	PageSetChecksumInplace(metapage, BLOOM_METAPAGE_BLKNO);
 	smgrwrite(index->rd_smgr, INIT_FORKNUM, BLOOM_METAPAGE_BLKNO,
 			  (char *) metapage, true);
-	if (XLogIsNeeded())
-		log_newpage(&index->rd_smgr->smgr_rnode.node, INIT_FORKNUM,
-					BLOOM_METAPAGE_BLKNO, metapage, false);
+	log_newpage(&index->rd_smgr->smgr_rnode.node, INIT_FORKNUM,
+				BLOOM_METAPAGE_BLKNO, metapage, false);
 
 	/*
 	 * An immediate sync is required even if we xlog'd the page, because the
