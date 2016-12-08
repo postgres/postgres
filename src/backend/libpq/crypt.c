@@ -31,11 +31,16 @@
 
 /*
  * Check given password for given user, and return STATUS_OK or STATUS_ERROR.
+ *
+ * 'client_pass' is the password response given by the remote user.  If
+ * 'md5_salt' is not NULL, it is a response to an MD5 authentication
+ * challenge, with the given salt.  Otherwise, it is a plaintext password.
+ *
  * In the error case, optionally store a palloc'd string at *logdetail
  * that will be sent to the postmaster log (but not the client).
  */
 int
-md5_crypt_verify(const Port *port, const char *role, char *client_pass,
+md5_crypt_verify(const char *role, char *client_pass,
 				 char *md5_salt, int md5_salt_len, char **logdetail)
 {
 	int			retval = STATUS_ERROR;
@@ -88,63 +93,64 @@ md5_crypt_verify(const Port *port, const char *role, char *client_pass,
 	 * error is out-of-memory, which is unlikely, and if it did happen adding
 	 * a psprintf call would only make things worse.)
 	 */
-	switch (port->hba->auth_method)
+	if (md5_salt)
 	{
-		case uaMD5:
-			Assert(md5_salt != NULL && md5_salt_len > 0);
-			crypt_pwd = palloc(MD5_PASSWD_LEN + 1);
-			if (isMD5(shadow_pass))
+		/* MD5 authentication */
+		Assert(md5_salt_len > 0);
+		crypt_pwd = palloc(MD5_PASSWD_LEN + 1);
+		if (isMD5(shadow_pass))
+		{
+			/* stored password already encrypted, only do salt */
+			if (!pg_md5_encrypt(shadow_pass + strlen("md5"),
+								md5_salt, md5_salt_len,
+								crypt_pwd))
 			{
-				/* stored password already encrypted, only do salt */
-				if (!pg_md5_encrypt(shadow_pass + strlen("md5"),
-									md5_salt, md5_salt_len,
-									crypt_pwd))
-				{
-					pfree(crypt_pwd);
-					return STATUS_ERROR;
-				}
+				pfree(crypt_pwd);
+				return STATUS_ERROR;
 			}
-			else
-			{
-				/* stored password is plain, double-encrypt */
-				char	   *crypt_pwd2 = palloc(MD5_PASSWD_LEN + 1);
+		}
+		else
+		{
+			/* stored password is plain, double-encrypt */
+			char	   *crypt_pwd2 = palloc(MD5_PASSWD_LEN + 1);
 
-				if (!pg_md5_encrypt(shadow_pass,
-									port->user_name,
-									strlen(port->user_name),
-									crypt_pwd2))
-				{
-					pfree(crypt_pwd);
-					pfree(crypt_pwd2);
-					return STATUS_ERROR;
-				}
-				if (!pg_md5_encrypt(crypt_pwd2 + strlen("md5"),
-									md5_salt, md5_salt_len,
-									crypt_pwd))
-				{
-					pfree(crypt_pwd);
-					pfree(crypt_pwd2);
-					return STATUS_ERROR;
-				}
-				pfree(crypt_pwd2);
-			}
-			break;
-		default:
-			if (isMD5(shadow_pass))
+			if (!pg_md5_encrypt(shadow_pass,
+								role,
+								strlen(role),
+								crypt_pwd2))
 			{
-				/* Encrypt user-supplied password to match stored MD5 */
-				crypt_client_pass = palloc(MD5_PASSWD_LEN + 1);
-				if (!pg_md5_encrypt(client_pass,
-									port->user_name,
-									strlen(port->user_name),
-									crypt_client_pass))
-				{
-					pfree(crypt_client_pass);
-					return STATUS_ERROR;
-				}
+				pfree(crypt_pwd);
+				pfree(crypt_pwd2);
+				return STATUS_ERROR;
 			}
-			crypt_pwd = shadow_pass;
-			break;
+			if (!pg_md5_encrypt(crypt_pwd2 + strlen("md5"),
+								md5_salt, md5_salt_len,
+								crypt_pwd))
+			{
+				pfree(crypt_pwd);
+				pfree(crypt_pwd2);
+				return STATUS_ERROR;
+			}
+			pfree(crypt_pwd2);
+		}
+	}
+	else
+	{
+		/* Client sent password in plaintext */
+		if (isMD5(shadow_pass))
+		{
+			/* Encrypt user-supplied password to match stored MD5 */
+			crypt_client_pass = palloc(MD5_PASSWD_LEN + 1);
+			if (!pg_md5_encrypt(client_pass,
+								role,
+								strlen(role),
+								crypt_client_pass))
+			{
+				pfree(crypt_client_pass);
+				return STATUS_ERROR;
+			}
+		}
+		crypt_pwd = shadow_pass;
 	}
 
 	if (strcmp(crypt_client_pass, crypt_pwd) == 0)
@@ -167,7 +173,7 @@ md5_crypt_verify(const Port *port, const char *role, char *client_pass,
 		*logdetail = psprintf(_("Password does not match for user \"%s\"."),
 							  role);
 
-	if (port->hba->auth_method == uaMD5)
+	if (crypt_pwd != shadow_pass)
 		pfree(crypt_pwd);
 	if (crypt_client_pass != client_pass)
 		pfree(crypt_client_pass);

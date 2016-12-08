@@ -50,14 +50,14 @@ static char *recv_password_packet(Port *port);
  * MD5 authentication
  *----------------------------------------------------------------
  */
-static int CheckMD5Auth(Port *port, char **logdetail);
+static int	CheckMD5Auth(Port *port, char **logdetail);
 
 /*----------------------------------------------------------------
  * Plaintext password authentication
  *----------------------------------------------------------------
  */
 
-static int CheckPasswordAuth(Port *port, char **logdetail);
+static int	CheckPasswordAuth(Port *port, char **logdetail);
 
 /*----------------------------------------------------------------
  * Ident authentication
@@ -544,11 +544,6 @@ ClientAuthentication(Port *port)
 			break;
 
 		case uaMD5:
-			if (Db_user_namespace)
-				ereport(FATAL,
-						(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-						 errmsg("MD5 authentication is not supported when \"db_user_namespace\" is enabled")));
-			/* include the salt to use for computing the response */
 			status = CheckMD5Auth(port, &logdetail);
 			break;
 
@@ -714,6 +709,12 @@ CheckMD5Auth(Port *port, char **logdetail)
 	char	   *passwd;
 	int			result;
 
+	if (Db_user_namespace)
+		ereport(FATAL,
+				(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+				 errmsg("MD5 authentication is not supported when \"db_user_namespace\" is enabled")));
+
+	/* include the salt to use for computing the response */
 	pg_backend_random(md5Salt, 4);
 
 	sendAuthRequest(port, AUTH_REQ_MD5, md5Salt, 4);
@@ -723,7 +724,7 @@ CheckMD5Auth(Port *port, char **logdetail)
 	if (passwd == NULL)
 		return STATUS_EOF;		/* client wouldn't send password */
 
-	result = md5_crypt_verify(port, port->user_name, passwd, md5Salt, 4, logdetail);
+	result = md5_crypt_verify(port->user_name, passwd, md5Salt, 4, logdetail);
 
 	pfree(passwd);
 
@@ -748,7 +749,7 @@ CheckPasswordAuth(Port *port, char **logdetail)
 	if (passwd == NULL)
 		return STATUS_EOF;		/* client wouldn't send password */
 
-	result = md5_crypt_verify(port, port->user_name, passwd, NULL, 0, logdetail);
+	result = md5_crypt_verify(port->user_name, passwd, NULL, 0, logdetail);
 
 	pfree(passwd);
 
