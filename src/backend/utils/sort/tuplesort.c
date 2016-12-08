@@ -2637,8 +2637,16 @@ mergeruns(Tuplesortstate *state)
 	}
 
 	/*
-	 * Use all the spare memory we have available for read buffers among the
-	 * input tapes.
+	 * Allocate a new 'memtuples' array, for the heap.  It will hold one tuple
+	 * from each input tape.
+	 */
+	state->memtupsize = numInputTapes;
+	state->memtuples = (SortTuple *) palloc(numInputTapes * sizeof(SortTuple));
+	USEMEM(state, GetMemoryChunkSpace(state->memtuples));
+
+	/*
+	 * Use all the remaining memory we have available for read buffers among
+	 * the input tapes.
 	 *
 	 * We do this only after checking for the case that we produced only one
 	 * initial run, because there is no need to use a large read buffer when
@@ -2661,16 +2669,8 @@ mergeruns(Tuplesortstate *state)
 			 (state->availMem) / 1024, numInputTapes);
 #endif
 
-	state->read_buffer_size = state->availMem / numInputTapes;
+	state->read_buffer_size = Min(state->availMem / numInputTapes, 0);
 	USEMEM(state, state->availMem);
-
-	/*
-	 * Allocate a new 'memtuples' array, for the heap.  It will hold one tuple
-	 * from each input tape.
-	 */
-	state->memtupsize = numInputTapes;
-	state->memtuples = (SortTuple *) palloc(numInputTapes * sizeof(SortTuple));
-	USEMEM(state, GetMemoryChunkSpace(state->memtuples));
 
 	/* End of step D2: rewind all output tapes to prepare for merging */
 	for (tapenum = 0; tapenum < state->tapeRange; tapenum++)
