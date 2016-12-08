@@ -164,30 +164,33 @@ spgbuildempty(PG_FUNCTION_ARGS)
 	page = (Page) palloc(BLCKSZ);
 	SpGistInitMetapage(page);
 
-	/* Write the page.  If archiving/streaming, XLOG it. */
+	/*
+	 * Write the page and log it unconditionally.  This is important
+	 * particularly for indexes created on tablespaces and databases
+	 * whose creation happened after the last redo pointer as recovery
+	 * removes any of their existing content when the corresponding
+	 * create records are replayed.
+	 */
 	smgrwrite(index->rd_smgr, INIT_FORKNUM, SPGIST_METAPAGE_BLKNO,
 			  (char *) page, true);
-	if (XLogIsNeeded())
-		log_newpage(&index->rd_smgr->smgr_rnode.node, INIT_FORKNUM,
-					SPGIST_METAPAGE_BLKNO, page);
+	log_newpage(&index->rd_smgr->smgr_rnode.node, INIT_FORKNUM,
+				SPGIST_METAPAGE_BLKNO, page);
 
 	/* Likewise for the root page. */
 	SpGistInitPage(page, SPGIST_LEAF);
 
 	smgrwrite(index->rd_smgr, INIT_FORKNUM, SPGIST_ROOT_BLKNO,
 			  (char *) page, true);
-	if (XLogIsNeeded())
-		log_newpage(&index->rd_smgr->smgr_rnode.node, INIT_FORKNUM,
-					SPGIST_ROOT_BLKNO, page);
+	log_newpage(&index->rd_smgr->smgr_rnode.node, INIT_FORKNUM,
+				SPGIST_ROOT_BLKNO, page);
 
 	/* Likewise for the null-tuples root page. */
 	SpGistInitPage(page, SPGIST_LEAF | SPGIST_NULLS);
 
 	smgrwrite(index->rd_smgr, INIT_FORKNUM, SPGIST_NULL_BLKNO,
 			  (char *) page, true);
-	if (XLogIsNeeded())
-		log_newpage(&index->rd_smgr->smgr_rnode.node, INIT_FORKNUM,
-					SPGIST_NULL_BLKNO, page);
+	log_newpage(&index->rd_smgr->smgr_rnode.node, INIT_FORKNUM,
+				SPGIST_NULL_BLKNO, page);
 
 	/*
 	 * An immediate sync is required even if we xlog'd the pages, because the
