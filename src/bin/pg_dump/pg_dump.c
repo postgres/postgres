@@ -7022,8 +7022,7 @@ void
 getTablePartitionKeyInfo(Archive *fout, TableInfo *tblinfo, int numTables)
 {
 	PQExpBuffer q = createPQExpBuffer();
-	int			i,
-				ntups;
+	int			i;
 	PGresult   *res;
 
 	/* No partitioned tables before 10 */
@@ -7046,8 +7045,7 @@ getTablePartitionKeyInfo(Archive *fout, TableInfo *tblinfo, int numTables)
 		appendPQExpBuffer(q, "SELECT pg_catalog.pg_get_partkeydef('%u'::pg_catalog.oid)",
 							 tbinfo->dobj.catId.oid);
 		res = ExecuteSqlQuery(fout, q->data, PGRES_TUPLES_OK);
-		ntups = PQntuples(res);
-		Assert(ntups == 1);
+		Assert(PQntuples(res) == 1);
 		tbinfo->partkeydef = pg_strdup(PQgetvalue(res, 0, 0));
 	}
 }
@@ -14639,9 +14637,10 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 			if (tbinfo->partitionOf)
 			{
 				appendPQExpBufferStr(q, "\n-- For binary upgrade, set up partitions this way.\n");
-				appendPQExpBuffer(q, "ALTER TABLE ONLY %s ATTACH PARTITION %s %s;\n",
-								  fmtId(tbinfo->partitionOf->dobj.name),
-								  tbinfo->dobj.name,
+				appendPQExpBuffer(q, "ALTER TABLE ONLY %s ",
+								  fmtId(tbinfo->partitionOf->dobj.name));
+				appendPQExpBuffer(q, "ATTACH PARTITION %s %s;\n",
+								  fmtId(tbinfo->dobj.name),
 								  tbinfo->partitiondef);
 			}
 
