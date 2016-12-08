@@ -2669,8 +2669,8 @@ mergeruns(Tuplesortstate *state)
 			 (state->availMem) / 1024, numInputTapes);
 #endif
 
-	state->read_buffer_size = Min(state->availMem / numInputTapes, 0);
-	USEMEM(state, state->availMem);
+	state->read_buffer_size = Max(state->availMem / numInputTapes, 0);
+	USEMEM(state, state->read_buffer_size * numInputTapes);
 
 	/* End of step D2: rewind all output tapes to prepare for merging */
 	for (tapenum = 0; tapenum < state->tapeRange; tapenum++)
