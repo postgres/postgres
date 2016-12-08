@@ -2149,13 +2149,12 @@ _copyRangeTblEntry(const RangeTblEntry *from)
 	COPY_NODE_FIELD(functions);
 	COPY_SCALAR_FIELD(funcordinality);
 	COPY_NODE_FIELD(values_lists);
-	COPY_NODE_FIELD(values_collations);
 	COPY_STRING_FIELD(ctename);
 	COPY_SCALAR_FIELD(ctelevelsup);
 	COPY_SCALAR_FIELD(self_reference);
-	COPY_NODE_FIELD(ctecoltypes);
-	COPY_NODE_FIELD(ctecoltypmods);
-	COPY_NODE_FIELD(ctecolcollations);
+	COPY_NODE_FIELD(coltypes);
+	COPY_NODE_FIELD(coltypmods);
+	COPY_NODE_FIELD(colcollations);
 	COPY_NODE_FIELD(alias);
 	COPY_NODE_FIELD(eref);
 	COPY_SCALAR_FIELD(lateral);

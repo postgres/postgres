@@ -85,7 +85,9 @@ extern RangeTblEntry *addRangeTableEntryForFunction(ParseState *pstate,
 							  bool inFromCl);
 extern RangeTblEntry *addRangeTableEntryForValues(ParseState *pstate,
 							List *exprs,
-							List *collations,
+							List *coltypes,
+							List *coltypmods,
+							List *colcollations,
 							Alias *alias,
 							bool lateral,
 							bool inFromCl);

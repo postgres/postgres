@@ -927,7 +927,6 @@ typedef struct RangeTblEntry
 	 * Fields valid for a values RTE (else NIL):
 	 */
 	List	   *values_lists;	/* list of expression lists */
-	List	   *values_collations;		/* OID list of column collation OIDs */
 
 	/*
 	 * Fields valid for a CTE RTE (else NULL/zero):
@@ -935,9 +934,17 @@ typedef struct RangeTblEntry
 	char	   *ctename;		/* name of the WITH list item */
 	Index		ctelevelsup;	/* number of query levels up */
 	bool		self_reference; /* is this a recursive self-reference? */
-	List	   *ctecoltypes;	/* OID list of column type OIDs */
-	List	   *ctecoltypmods;	/* integer list of column typmods */
-	List	   *ctecolcollations;		/* OID list of column collation OIDs */
+
+	/*
+	 * Fields valid for values and CTE RTEs (else NIL):
+	 *
+	 * We need these for CTE RTEs so that the types of self-referential
+	 * columns are well-defined.  For VALUES RTEs, storing these explicitly
+	 * saves having to re-determine the info by scanning the values_lists.
+	 */
+	List	   *coltypes;		/* OID list of column type OIDs */
+	List	   *coltypmods;		/* integer list of column typmods */
+	List	   *colcollations;	/* OID list of column collation OIDs */
 
 	/*
 	 * Fields valid in all RTEs:

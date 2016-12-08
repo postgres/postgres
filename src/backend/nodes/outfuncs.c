@@ -2841,15 +2841,17 @@ _outRangeTblEntry(StringInfo str, const RangeTblEntry *node)
 			break;
 		case RTE_VALUES:
 			WRITE_NODE_FIELD(values_lists);
-			WRITE_NODE_FIELD(values_collations);
+			WRITE_NODE_FIELD(coltypes);
+			WRITE_NODE_FIELD(coltypmods);
+			WRITE_NODE_FIELD(colcollations);
 			break;
 		case RTE_CTE:
 			WRITE_STRING_FIELD(ctename);
 			WRITE_UINT_FIELD(ctelevelsup);
 			WRITE_BOOL_FIELD(self_reference);
-			WRITE_NODE_FIELD(ctecoltypes);
-			WRITE_NODE_FIELD(ctecoltypmods);
-			WRITE_NODE_FIELD(ctecolcollations);
+			WRITE_NODE_FIELD(coltypes);
+			WRITE_NODE_FIELD(coltypmods);
+			WRITE_NODE_FIELD(colcollations);
 			break;
 		default:
 			elog(ERROR, "unrecognized RTE kind: %d", (int) node->rtekind);

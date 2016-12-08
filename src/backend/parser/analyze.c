@@ -633,10 +633,11 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 		 * RTE.
 		 */
 		List	   *exprsLists = NIL;
-		List	   *collations = NIL;
+		List	   *coltypes = NIL;
+		List	   *coltypmods = NIL;
+		List	   *colcollations = NIL;
 		int			sublist_length = -1;
 		bool		lateral = false;
-		int			i;
 
 		Assert(selectStmt->intoClause == NULL);
 
@@ -703,11 +704,20 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 		}
 
 		/*
-		 * Although we don't really need collation info, let's just make sure
-		 * we provide a correctly-sized list in the VALUES RTE.
+		 * Construct column type/typmod/collation lists for the VALUES RTE.
+		 * Every expression in each column has been coerced to the type/typmod
+		 * of the corresponding target column or subfield, so it's sufficient
+		 * to look at the exprType/exprTypmod of the first row.  We don't care
+		 * about the collation labeling, so just fill in InvalidOid for that.
 		 */
-		for (i = 0; i < sublist_length; i++)
-			collations = lappend_oid(collations, InvalidOid);
+		foreach(lc, (List *) linitial(exprsLists))
+		{
+			Node	   *val = (Node *) lfirst(lc);
+
+			coltypes = lappend_oid(coltypes, exprType(val));
+			coltypmods = lappend_int(coltypmods, exprTypmod(val));
+			colcollations = lappend_oid(colcollations, InvalidOid);
+		}
 
 		/*
 		 * Ordinarily there can't be any current-level Vars in the expression
@@ -722,7 +732,8 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 		/*
 		 * Generate the VALUES RTE
 		 */
-		rte = addRangeTableEntryForValues(pstate, exprsLists, collations,
+		rte = addRangeTableEntryForValues(pstate, exprsLists,
+										  coltypes, coltypmods, colcollations,
 										  NULL, lateral, true);
 		rtr = makeNode(RangeTblRef);
 		/* assume new rte is at end */
@@ -1274,7 +1285,9 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 {
 	Query	   *qry = makeNode(Query);
 	List	   *exprsLists;
-	List	   *collations;
+	List	   *coltypes = NIL;
+	List	   *coltypmods = NIL;
+	List	   *colcollations = NIL;
 	List	  **colexprs = NULL;
 	int			sublist_length = -1;
 	bool		lateral = false;
@@ -1360,8 +1373,8 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 
 	/*
 	 * Now resolve the common types of the columns, and coerce everything to
-	 * those types.  Then identify the common collation, if any, of each
-	 * column.
+	 * those types.  Then identify the common typmod and common collation, if
+	 * any, of each column.
 	 *
 	 * We must do collation processing now because (1) assign_query_collations
 	 * doesn't process rangetable entries, and (2) we need to label the VALUES
@@ -1372,11 +1385,12 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 	 *
 	 * Note we modify the per-column expression lists in-place.
 	 */
-	collations = NIL;
 	for (i = 0; i < sublist_length; i++)
 	{
 		Oid			coltype;
+		int32		coltypmod = -1;
 		Oid			colcoll;
+		bool		first = true;
 
 		coltype = select_common_type(pstate, colexprs[i], "VALUES", NULL);
 
@@ -1386,11 +1400,24 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 
 			col = coerce_to_common_type(pstate, col, coltype, "VALUES");
 			lfirst(lc) = (void *) col;
+			if (first)
+			{
+				coltypmod = exprTypmod(col);
+				first = false;
+			}
+			else
+			{
+				/* As soon as we see a non-matching typmod, fall back to -1 */
+				if (coltypmod >= 0 && coltypmod != exprTypmod(col))
+					coltypmod = -1;
+			}
 		}
 
 		colcoll = select_common_collation(pstate, colexprs[i], true);
 
-		collations = lappend_oid(collations, colcoll);
+		coltypes = lappend_oid(coltypes, coltype);
+		coltypmods = lappend_int(coltypmods, coltypmod);
+		colcollations = lappend_oid(colcollations, colcoll);
 	}
 
 	/*
@@ -1432,7 +1459,8 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 	/*
 	 * Generate the VALUES RTE
 	 */
-	rte = addRangeTableEntryForValues(pstate, exprsLists, collations,
+	rte = addRangeTableEntryForValues(pstate, exprsLists,
+									  coltypes, coltypmods, colcollations,
 									  NULL, lateral, true);
 	addRTEtoQuery(pstate, rte, true, true, true);
 

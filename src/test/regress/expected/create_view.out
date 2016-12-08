@@ -288,6 +288,43 @@ SELECT relname, relkind, reloptions FROM pg_class
  mysecview4 | v       | {security_barrier=false}
 (4 rows)
 
+-- This test checks that proper typmods are assigned in a multi-row VALUES
+CREATE VIEW tt1 AS
+  SELECT * FROM (
+    VALUES
+       ('abc'::varchar(3), '0123456789', 42, 'abcd'::varchar(4)),
+       ('0123456789', 'abc'::varchar(3), 42.12, 'abc'::varchar(4))
+  ) vv(a,b,c,d);
+\d+ tt1
+                                View "testviewschm2.tt1"
+ Column |         Type         | Collation | Nullable | Default | Storage  | Description 
+--------+----------------------+-----------+----------+---------+----------+-------------
+ a      | character varying    |           |          |         | extended | 
+ b      | character varying    |           |          |         | extended | 
+ c      | numeric              |           |          |         | main     | 
+ d      | character varying(4) |           |          |         | extended | 
+View definition:
+ SELECT vv.a,
+    vv.b,
+    vv.c,
+    vv.d
+   FROM ( VALUES ('abc'::character varying(3),'0123456789'::character varying,42,'abcd'::character varying(4)), ('0123456789'::character varying,'abc'::character varying(3),42.12,'abc'::character varying(4))) vv(a, b, c, d);
+
+SELECT * FROM tt1;
+     a      |     b      |   c   |  d   
+------------+------------+-------+------
+ abc        | 0123456789 |    42 | abcd
+ 0123456789 | abc        | 42.12 | abc
+(2 rows)
+
+SELECT a::varchar(3) FROM tt1;
+  a  
+-----
+ abc
+ 012
+(2 rows)
+
+DROP VIEW tt1;
 -- Test view decompilation in the face of relation renaming conflicts
 CREATE TABLE tt1 (f1 int, f2 int, f3 text);
 CREATE TABLE tx1 (x1 int, x2 int, x3 text);

@@ -2460,13 +2460,12 @@ _equalRangeTblEntry(const RangeTblEntry *a, const RangeTblEntry *b)
 	COMPARE_NODE_FIELD(functions);
 	COMPARE_SCALAR_FIELD(funcordinality);
 	COMPARE_NODE_FIELD(values_lists);
-	COMPARE_NODE_FIELD(values_collations);
 	COMPARE_STRING_FIELD(ctename);
 	COMPARE_SCALAR_FIELD(ctelevelsup);
 	COMPARE_SCALAR_FIELD(self_reference);
-	COMPARE_NODE_FIELD(ctecoltypes);
-	COMPARE_NODE_FIELD(ctecoltypmods);
-	COMPARE_NODE_FIELD(ctecolcollations);
+	COMPARE_NODE_FIELD(coltypes);
+	COMPARE_NODE_FIELD(coltypmods);
+	COMPARE_NODE_FIELD(colcollations);
 	COMPARE_NODE_FIELD(alias);
 	COMPARE_NODE_FIELD(eref);
 	COMPARE_SCALAR_FIELD(lateral);

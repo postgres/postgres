@@ -1314,15 +1314,17 @@ _readRangeTblEntry(void)
 			break;
 		case RTE_VALUES:
 			READ_NODE_FIELD(values_lists);
-			READ_NODE_FIELD(values_collations);
+			READ_NODE_FIELD(coltypes);
+			READ_NODE_FIELD(coltypmods);
+			READ_NODE_FIELD(colcollations);
 			break;
 		case RTE_CTE:
 			READ_STRING_FIELD(ctename);
 			READ_UINT_FIELD(ctelevelsup);
 			READ_BOOL_FIELD(self_reference);
-			READ_NODE_FIELD(ctecoltypes);
-			READ_NODE_FIELD(ctecoltypmods);
-			READ_NODE_FIELD(ctecolcollations);
+			READ_NODE_FIELD(coltypes);
+			READ_NODE_FIELD(coltypmods);
+			READ_NODE_FIELD(colcollations);
 			break;
 		default:
 			elog(ERROR, "unrecognized RTE kind: %d",
