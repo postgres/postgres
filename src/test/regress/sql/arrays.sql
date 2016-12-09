@@ -262,6 +262,15 @@ $$ LANGUAGE plpgsql;
 SELECT array_position('[2:4]={1,2,3}'::int[], 1);
 SELECT array_positions('[2:4]={1,2,3}'::int[], 1);
 
+SELECT
+    array_position(ids, (1, 1)),
+    array_positions(ids, (1, 1))
+        FROM
+(VALUES
+    (ARRAY[(0, 0), (1, 1)]),
+    (ARRAY[(1, 1)])
+) AS f (ids);
+
 -- operators
 SELECT a FROM arrtest WHERE b = ARRAY[[[113,142],[1,147]]];
 SELECT NOT ARRAY[1.1,1.2,1.3] = ARRAY[1.1,1.2,1.3] AS "FALSE";
