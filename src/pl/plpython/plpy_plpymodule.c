@@ -25,6 +25,9 @@ HTAB	   *PLy_spi_exceptions = NULL;
 
 
 static void PLy_add_exceptions(PyObject *plpy);
+static PyObject *PLy_create_exception(char *name,
+					 PyObject *base, PyObject *dict,
+					 const char *modname, PyObject *mod);
 static void PLy_generate_spi_exceptions(PyObject *mod, PyObject *base);
 
 /* module functions */
@@ -192,44 +195,60 @@ PLy_add_exceptions(PyObject *plpy)
 #else
 	excmod = PyModule_Create(&PLy_exc_module);
 #endif
+	if (excmod == NULL)
+		PLy_elog(ERROR, "could not create the spiexceptions module");
+
+	/*
+	 * PyModule_AddObject does not add a refcount to the object, for some odd
+	 * reason; we must do that.
+	 */
+	Py_INCREF(excmod);
 	if (PyModule_AddObject(plpy, "spiexceptions", excmod) < 0)
 		PLy_elog(ERROR, "could not add the spiexceptions module");
 
-	/*
-	 * XXX it appears that in some circumstances the reference count of the
-	 * spiexceptions module drops to zero causing a Python assert failure when
-	 * the garbage collector visits the module. This has been observed on the
-	 * buildfarm. To fix this, add an additional ref for the module here.
-	 *
-	 * This shouldn't cause a memory leak - we don't want this garbage
-	 * collected, and this function shouldn't be called more than once per
-	 * backend.
-	 */
-	Py_INCREF(excmod);
-
-	PLy_exc_error = PyErr_NewException("plpy.Error", NULL, NULL);
-	PLy_exc_fatal = PyErr_NewException("plpy.Fatal", NULL, NULL);
-	PLy_exc_spi_error = PyErr_NewException("plpy.SPIError", NULL, NULL);
-
-	if (PLy_exc_error == NULL ||
-		PLy_exc_fatal == NULL ||
-		PLy_exc_spi_error == NULL)
-		PLy_elog(ERROR, "could not create the base SPI exceptions");
-
-	Py_INCREF(PLy_exc_error);
-	PyModule_AddObject(plpy, "Error", PLy_exc_error);
-	Py_INCREF(PLy_exc_fatal);
-	PyModule_AddObject(plpy, "Fatal", PLy_exc_fatal);
-	Py_INCREF(PLy_exc_spi_error);
-	PyModule_AddObject(plpy, "SPIError", PLy_exc_spi_error);
+	PLy_exc_error = PLy_create_exception("plpy.Error", NULL, NULL,
+										 "Error", plpy);
+	PLy_exc_fatal = PLy_create_exception("plpy.Fatal", NULL, NULL,
+										 "Fatal", plpy);
+	PLy_exc_spi_error = PLy_create_exception("plpy.SPIError", NULL, NULL,
+											 "SPIError", plpy);
 
 	memset(&hash_ctl, 0, sizeof(hash_ctl));
 	hash_ctl.keysize = sizeof(int);
 	hash_ctl.entrysize = sizeof(PLyExceptionEntry);
-	PLy_spi_exceptions = hash_create("SPI exceptions", 256,
+	PLy_spi_exceptions = hash_create("PL/Python SPI exceptions", 256,
 									 &hash_ctl, HASH_ELEM | HASH_BLOBS);
 
 	PLy_generate_spi_exceptions(excmod, PLy_exc_spi_error);
+}
+
+/*
+ * Create an exception object and add it to the module
+ */
+static PyObject *
+PLy_create_exception(char *name, PyObject *base, PyObject *dict,
+					 const char *modname, PyObject *mod)
+{
+	PyObject   *exc;
+
+	exc = PyErr_NewException(name, base, dict);
+	if (exc == NULL)
+		PLy_elog(ERROR, "could not create exception \"%s\"", name);
+
+	/*
+	 * PyModule_AddObject does not add a refcount to the object, for some odd
+	 * reason; we must do that.
+	 */
+	Py_INCREF(exc);
+	PyModule_AddObject(mod, modname, exc);
+
+	/*
+	 * The caller will also store a pointer to the exception object in some
+	 * permanent variable, so add another ref to account for that.  This is
+	 * probably excessively paranoid, but let's be sure.
+	 */
+	Py_INCREF(exc);
+	return exc;
 }
 
 /*
@@ -257,12 +276,14 @@ PLy_generate_spi_exceptions(PyObject *mod, PyObject *base)
 
 		PyDict_SetItemString(dict, "sqlstate", sqlstate);
 		Py_DECREF(sqlstate);
-		exc = PyErr_NewException(exception_map[i].name, base, dict);
-		PyModule_AddObject(mod, exception_map[i].classname, exc);
+
+		exc = PLy_create_exception(exception_map[i].name, base, dict,
+								   exception_map[i].classname, mod);
+
 		entry = hash_search(PLy_spi_exceptions, &exception_map[i].sqlstate,
 							HASH_ENTER, &found);
-		entry->exc = exc;
 		Assert(!found);
+		entry->exc = exc;
 	}
 }
 
