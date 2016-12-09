@@ -589,6 +589,20 @@ SELECT array_positions('[2:4]={1,2,3}'::int[], 1);
  {2}
 (1 row)
 
+SELECT
+    array_position(ids, (1, 1)),
+    array_positions(ids, (1, 1))
+        FROM
+(VALUES
+    (ARRAY[(0, 0), (1, 1)]),
+    (ARRAY[(1, 1)])
+) AS f (ids);
+ array_position | array_positions 
+----------------+-----------------
+              2 | {2}
+              1 | {1}
+(2 rows)
+
 -- operators
 SELECT a FROM arrtest WHERE b = ARRAY[[[113,142],[1,147]]];
        a       
