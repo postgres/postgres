@@ -47,6 +47,7 @@ static void expandTupleDesc(TupleDesc tupdesc, Alias *eref,
 				int rtindex, int sublevels_up,
 				int location, bool include_dropped,
 				List **colnames, List **colvars);
+static int32 *getValuesTypmods(RangeTblEntry *rte);
 static int	specialAttNum(const char *attname);
 
 
@@ -1708,8 +1709,21 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 			{
 				/* Values RTE */
 				ListCell   *aliasp_item = list_head(rte->eref->colnames);
+				int32	   *coltypmods;
 				ListCell   *lcv;
 				ListCell   *lcc;
+
+				/*
+				 * It's okay to extract column types from the expressions in
+				 * the first row, since all rows will have been coerced to the
+				 * same types.  Their typmods might not be the same though, so
+				 * we potentially need to examine all rows to compute those.
+				 * Column collations are pre-computed in values_collations.
+				 */
+				if (colvars)
+					coltypmods = getValuesTypmods(rte);
+				else
+					coltypmods = NULL;
 
 				varattno = 0;
 				forboth(lcv, (List *) linitial(rte->values_lists),
@@ -1735,13 +1749,15 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 
 						varnode = makeVar(rtindex, varattno,
 										  exprType(col),
-										  exprTypmod(col),
+										  coltypmods[varattno - 1],
 										  colcollation,
 										  sublevels_up);
 						varnode->location = location;
 						*colvars = lappend(*colvars, varnode);
 					}
 				}
+				if (coltypmods)
+					pfree(coltypmods);
 			}
 			break;
 		case RTE_JOIN:
@@ -1847,6 +1863,8 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 						varnode = makeVar(rtindex, varattno,
 										  coltype, coltypmod, colcoll,
 										  sublevels_up);
+						varnode->location = location;
+
 						*colvars = lappend(*colvars, varnode);
 					}
 				}
@@ -1935,6 +1953,74 @@ expandTupleDesc(TupleDesc tupdesc, Alias *eref,
 			*colvars = lappend(*colvars, varnode);
 		}
 	}
+}
+
+/*
+ * getValuesTypmods -- expandRTE subroutine
+ *
+ * Identify per-column typmods for the given VALUES RTE.  Returns a
+ * palloc'd array.
+ */
+static int32 *
+getValuesTypmods(RangeTblEntry *rte)
+{
+	int32	   *coltypmods;
+	List	   *firstrow;
+	int			ncolumns,
+				nvalid,
+				i;
+	ListCell   *lc;
+
+	Assert(rte->values_lists != NIL);
+	firstrow = (List *) linitial(rte->values_lists);
+	ncolumns = list_length(firstrow);
+	coltypmods = (int32 *) palloc(ncolumns * sizeof(int32));
+	nvalid = 0;
+
+	/* Collect the typmods from the first VALUES row */
+	i = 0;
+	foreach(lc, firstrow)
+	{
+		Node	   *col = (Node *) lfirst(lc);
+
+		coltypmods[i] = exprTypmod(col);
+		if (coltypmods[i] >= 0)
+			nvalid++;
+		i++;
+	}
+
+	/*
+	 * Scan remaining rows; as soon as we have a non-matching typmod for a
+	 * column, reset that typmod to -1.  We can bail out early if all typmods
+	 * become -1.
+	 */
+	if (nvalid > 0)
+	{
+		for_each_cell(lc, lnext(list_head(rte->values_lists)))
+		{
+			List	   *thisrow = (List *) lfirst(lc);
+			ListCell   *lc2;
+
+			Assert(list_length(thisrow) == ncolumns);
+			i = 0;
+			foreach(lc2, thisrow)
+			{
+				Node	   *col = (Node *) lfirst(lc2);
+
+				if (coltypmods[i] >= 0 && coltypmods[i] != exprTypmod(col))
+				{
+					coltypmods[i] = -1;
+					nvalid--;
+				}
+				i++;
+			}
+
+			if (nvalid <= 0)
+				break;
+		}
+	}
+
+	return coltypmods;
 }
 
 /*
@@ -2150,18 +2236,25 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 			break;
 		case RTE_VALUES:
 			{
-				/* Values RTE --- get type info from first sublist */
-				/* collation is stored separately, though */
+				/*
+				 * Values RTE --- we can get type info from first sublist, but
+				 * typmod may require scanning all sublists, and collation is
+				 * stored separately.  Using getValuesTypmods() is overkill,
+				 * but this path is taken so seldom for VALUES that it's not
+				 * worth writing extra code.
+				 */
 				List	   *collist = (List *) linitial(rte->values_lists);
 				Node	   *col;
+				int32	   *coltypmods = getValuesTypmods(rte);
 
 				if (attnum < 1 || attnum > list_length(collist))
 					elog(ERROR, "values list %s does not have attribute %d",
 						 rte->eref->aliasname, attnum);
 				col = (Node *) list_nth(collist, attnum - 1);
 				*vartype = exprType(col);
-				*vartypmod = exprTypmod(col);
+				*vartypmod = coltypmods[attnum - 1];
 				*varcollid = list_nth_oid(rte->values_collations, attnum - 1);
+				pfree(coltypmods);
 			}
 			break;
 		case RTE_JOIN:
