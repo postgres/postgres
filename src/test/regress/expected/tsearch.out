@@ -908,6 +908,21 @@ SELECT ts_rewrite( 'bar & new & qq & foo & york', 'SELECT keyword, sample FROM t
  'citi' & 'foo' & ( 'bar' | 'qq' ) & ( 'nyc' | ( 'big' & 'appl' | 'new' & 'york' ) )
 (1 row)
 
+-- Check empty substitution
+SELECT ts_rewrite(to_tsquery('5 & (6 | 5)'), to_tsquery('5'), to_tsquery(''));
+NOTICE:  text-search query doesn't contain lexemes: ""
+ ts_rewrite 
+------------
+ '6'
+(1 row)
+
+SELECT ts_rewrite(to_tsquery('!5'), to_tsquery('5'), to_tsquery(''));
+NOTICE:  text-search query doesn't contain lexemes: ""
+ ts_rewrite 
+------------
+ 
+(1 row)
+
 SELECT keyword FROM test_tsquery WHERE keyword @> 'new';
     keyword     
 ----------------
