@@ -141,6 +141,12 @@ findeq(QTNode *node, QTNode *ex, QTNode *subs, bool *isfind)
 				node->nchild = j;
 
 				/*
+				 * At this point we might have a node with zero or one child,
+				 * which should be simplified.  But we leave it to our caller
+				 * (dofindsubquery) to take care of that.
+				 */
+
+				/*
 				 * Re-sort the node to put new child in the right place.  This
 				 * is a bit bogus, because it won't matter for findsubquery's
 				 * remaining processing, and it's insufficient to prepare the
@@ -186,6 +192,15 @@ findeq(QTNode *node, QTNode *ex, QTNode *subs, bool *isfind)
  * Recursive guts of findsubquery(): attempt to replace "ex" with "subs"
  * at the root node, and if we failed to do so, recursively match against
  * child nodes.
+ *
+ * Delete any void subtrees resulting from the replacement.
+ * In the following example '5' is replaced by empty operand:
+ *
+ *	  AND		->	  6
+ *	 /	 \
+ *	5	 OR
+ *		/  \
+ *	   6	5
  */
 static QTNode *
 dofindsubquery(QTNode *root, QTNode *ex, QTNode *subs, bool *isfind)
@@ -196,45 +211,33 @@ dofindsubquery(QTNode *root, QTNode *ex, QTNode *subs, bool *isfind)
 	/* also, since it's a bit expensive, let's check for query cancel. */
 	CHECK_FOR_INTERRUPTS();
 
+	/* match at the node itself */
 	root = findeq(root, ex, subs, isfind);
 
-	if (root && (root->flags & QTN_NOCHANGE) == 0 && root->valnode->type == QI_OPR)
-	{
-		int			i;
-
-		for (i = 0; i < root->nchild; i++)
-			root->child[i] = dofindsubquery(root->child[i], ex, subs, isfind);
-	}
-
-	return root;
-}
-
-/*
- * Delete any void subtrees that may have been inserted when the replacement
- * subtree is void.
- */
-static QTNode *
-dropvoidsubtree(QTNode *root)
-{
-	if (!root)
-		return NULL;
-
-	if (root->valnode->type == QI_OPR)
+	/* unless we matched here, consider matches at child nodes */
+	if (root && (root->flags & QTN_NOCHANGE) == 0 &&
+		root->valnode->type == QI_OPR)
 	{
 		int			i,
 					j = 0;
 
+		/*
+		 * Any subtrees that are replaced by NULL must be dropped from the
+		 * tree.
+		 */
 		for (i = 0; i < root->nchild; i++)
 		{
-			if (root->child[i])
-			{
-				root->child[j] = root->child[i];
+			root->child[j] = dofindsubquery(root->child[i], ex, subs, isfind);
+			if (root->child[j])
 				j++;
-			}
 		}
 
 		root->nchild = j;
 
+		/*
+		 * If we have just zero or one remaining child node, simplify out this
+		 * operator node.
+		 */
 		if (root->nchild == 0)
 		{
 			QTNFree(root);
@@ -266,9 +269,6 @@ findsubquery(QTNode *root, QTNode *ex, QTNode *subs, bool *isfind)
 	bool		DidFind = false;
 
 	root = dofindsubquery(root, ex, subs, &DidFind);
-
-	if (!subs && DidFind)
-		root = dropvoidsubtree(root);
 
 	if (isfind)
 		*isfind = DidFind;
