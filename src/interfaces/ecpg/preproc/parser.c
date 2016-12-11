@@ -60,7 +60,7 @@ filtered_base_yylex(void)
 		cur_token = lookahead_token;
 		base_yylval = lookahead_yylval;
 		base_yylloc = lookahead_yylloc;
-		yytext = lookahead_yytext;
+		base_yytext = lookahead_yytext;
 		*lookahead_end = lookahead_hold_char;
 		have_lookahead = false;
 	}
@@ -93,13 +93,13 @@ filtered_base_yylex(void)
 	 * '\0' here, and will undo that when we call it again.  We need to redo
 	 * it to fully revert the lookahead call for error reporting purposes.
 	 */
-	lookahead_end = yytext + cur_token_length;
+	lookahead_end = base_yytext + cur_token_length;
 	Assert(*lookahead_end == '\0');
 
 	/* Save and restore lexer output variables around the call */
 	cur_yylval = base_yylval;
 	cur_yylloc = base_yylloc;
-	cur_yytext = yytext;
+	cur_yytext = base_yytext;
 
 	/* Get next token, saving outputs into lookahead variables */
 	next_token = base_yylex();
@@ -107,11 +107,11 @@ filtered_base_yylex(void)
 	lookahead_token = next_token;
 	lookahead_yylval = base_yylval;
 	lookahead_yylloc = base_yylloc;
-	lookahead_yytext = yytext;
+	lookahead_yytext = base_yytext;
 
 	base_yylval = cur_yylval;
 	base_yylloc = cur_yylloc;
-	yytext = cur_yytext;
+	base_yytext = cur_yytext;
 
 	/* Now revert the un-truncation of the current token */
 	lookahead_hold_char = *lookahead_end;
