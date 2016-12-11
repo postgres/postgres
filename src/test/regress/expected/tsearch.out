@@ -1251,6 +1251,21 @@ SELECT ts_rewrite('5 <-> (6 | 8)', 'SELECT keyword, sample FROM test_tsquery'::t
  '5' <-> '7' | '5' <-> '8'
 (1 row)
 
+-- Check empty substitution
+SELECT ts_rewrite(to_tsquery('5 & (6 | 5)'), to_tsquery('5'), to_tsquery(''));
+NOTICE:  text-search query doesn't contain lexemes: ""
+ ts_rewrite 
+------------
+ '6'
+(1 row)
+
+SELECT ts_rewrite(to_tsquery('!5'), to_tsquery('5'), to_tsquery(''));
+NOTICE:  text-search query doesn't contain lexemes: ""
+ ts_rewrite 
+------------
+ 
+(1 row)
+
 SELECT keyword FROM test_tsquery WHERE keyword @> 'new';
     keyword     
 ----------------
