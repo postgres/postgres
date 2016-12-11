@@ -1916,11 +1916,3 @@ void parser_init(void)
 {
  /* This function is empty. It only exists for compatibility with the backend parser right now. */
 }
-
-/*
- * Must undefine base_yylex before including pgc.c, since we want it
- * to create the function base_yylex not filtered_base_yylex.
- */
-#undef base_yylex
-
-#include "pgc.c"
