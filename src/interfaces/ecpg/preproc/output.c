@@ -11,7 +11,7 @@ output_line_number(void)
 {
 	char	   *line = hashline_number();
 
-	fprintf(yyout, "%s", line);
+	fprintf(base_yyout, "%s", line);
 	free(line);
 }
 
@@ -37,22 +37,22 @@ print_action(struct when * w)
 	switch (w->code)
 	{
 		case W_SQLPRINT:
-			fprintf(yyout, "sqlprint();");
+			fprintf(base_yyout, "sqlprint();");
 			break;
 		case W_GOTO:
-			fprintf(yyout, "goto %s;", w->command);
+			fprintf(base_yyout, "goto %s;", w->command);
 			break;
 		case W_DO:
-			fprintf(yyout, "%s;", w->command);
+			fprintf(base_yyout, "%s;", w->command);
 			break;
 		case W_STOP:
-			fprintf(yyout, "exit (1);");
+			fprintf(base_yyout, "exit (1);");
 			break;
 		case W_BREAK:
-			fprintf(yyout, "break;");
+			fprintf(base_yyout, "break;");
 			break;
 		default:
-			fprintf(yyout, "{/* %d not implemented yet */}", w->code);
+			fprintf(base_yyout, "{/* %d not implemented yet */}", w->code);
 			break;
 	}
 }
@@ -63,24 +63,24 @@ whenever_action(int mode)
 	if ((mode & 1) == 1 && when_nf.code != W_NOTHING)
 	{
 		output_line_number();
-		fprintf(yyout, "\nif (sqlca.sqlcode == ECPG_NOT_FOUND) ");
+		fprintf(base_yyout, "\nif (sqlca.sqlcode == ECPG_NOT_FOUND) ");
 		print_action(&when_nf);
 	}
 	if (when_warn.code != W_NOTHING)
 	{
 		output_line_number();
-		fprintf(yyout, "\nif (sqlca.sqlwarn[0] == 'W') ");
+		fprintf(base_yyout, "\nif (sqlca.sqlwarn[0] == 'W') ");
 		print_action(&when_warn);
 	}
 	if (when_error.code != W_NOTHING)
 	{
 		output_line_number();
-		fprintf(yyout, "\nif (sqlca.sqlcode < 0) ");
+		fprintf(base_yyout, "\nif (sqlca.sqlcode < 0) ");
 		print_action(&when_error);
 	}
 
 	if ((mode & 2) == 2)
-		fputc('}', yyout);
+		fputc('}', base_yyout);
 
 	output_line_number();
 }
@@ -91,7 +91,7 @@ hashline_number(void)
 	/* do not print line numbers if we are in debug mode */
 	if (input_filename
 #ifdef YYDEBUG
-		&& !yydebug
+		&& !base_yydebug
 #endif
 		)
 	{
@@ -100,7 +100,7 @@ hashline_number(void)
 		char	   *src,
 				   *dest;
 
-		sprintf(line, "\n#line %d \"", yylineno);
+		sprintf(line, "\n#line %d \"", base_yylineno);
 		src = input_filename;
 		dest = line + strlen(line);
 		while (*src)
@@ -128,27 +128,27 @@ static char *ecpg_statement_type_name[] = {
 void
 output_statement(char *stmt, int whenever_mode, enum ECPG_statement_type st)
 {
-	fprintf(yyout, "{ ECPGdo(__LINE__, %d, %d, %s, %d, ", compat, force_indicator, connection ? connection : "NULL", questionmarks);
+	fprintf(base_yyout, "{ ECPGdo(__LINE__, %d, %d, %s, %d, ", compat, force_indicator, connection ? connection : "NULL", questionmarks);
 	if (st == ECPGst_execute || st == ECPGst_exec_immediate)
 	{
-		fprintf(yyout, "%s, %s, ", ecpg_statement_type_name[st], stmt);
+		fprintf(base_yyout, "%s, %s, ", ecpg_statement_type_name[st], stmt);
 	}
 	else
 	{
 		if (st == ECPGst_prepnormal && auto_prepare)
-			fputs("ECPGst_prepnormal, \"", yyout);
+			fputs("ECPGst_prepnormal, \"", base_yyout);
 		else
-			fputs("ECPGst_normal, \"", yyout);
+			fputs("ECPGst_normal, \"", base_yyout);
 
 		output_escaped_str(stmt, false);
-		fputs("\", ", yyout);
+		fputs("\", ", base_yyout);
 	}
 
 	/* dump variables to C file */
 	dump_variables(argsinsert, 1);
-	fputs("ECPGt_EOIT, ", yyout);
+	fputs("ECPGt_EOIT, ", base_yyout);
 	dump_variables(argsresult, 1);
-	fputs("ECPGt_EORT);", yyout);
+	fputs("ECPGt_EORT);", base_yyout);
 	reset_variables();
 
 	whenever_action(whenever_mode | 2);
@@ -160,11 +160,11 @@ output_statement(char *stmt, int whenever_mode, enum ECPG_statement_type st)
 void
 output_prepare_statement(char *name, char *stmt)
 {
-	fprintf(yyout, "{ ECPGprepare(__LINE__, %s, %d, ", connection ? connection : "NULL", questionmarks);
+	fprintf(base_yyout, "{ ECPGprepare(__LINE__, %s, %d, ", connection ? connection : "NULL", questionmarks);
 	output_escaped_str(name, true);
-	fputs(", ", yyout);
+	fputs(", ", base_yyout);
 	output_escaped_str(stmt, true);
-	fputs(");", yyout);
+	fputs(");", base_yyout);
 	whenever_action(2);
 	free(name);
 	if (connection != NULL)
@@ -178,12 +178,12 @@ output_deallocate_prepare_statement(char *name)
 
 	if (strcmp(name, "all") != 0)
 	{
-		fprintf(yyout, "{ ECPGdeallocate(__LINE__, %d, %s, ", compat, con);
+		fprintf(base_yyout, "{ ECPGdeallocate(__LINE__, %d, %s, ", compat, con);
 		output_escaped_str(name, true);
-		fputs(");", yyout);
+		fputs(");", base_yyout);
 	}
 	else
-		fprintf(yyout, "{ ECPGdeallocate_all(__LINE__, %d, %s);", compat, con);
+		fprintf(base_yyout, "{ ECPGdeallocate_all(__LINE__, %d, %s);", compat, con);
 
 	whenever_action(2);
 	free(name);
@@ -203,16 +203,16 @@ output_escaped_str(char *str, bool quoted)
 	{
 		i = 1;
 		len--;
-		fputs("\"", yyout);
+		fputs("\"", base_yyout);
 	}
 
 	/* output this char by char as we have to filter " and \n */
 	for (; i < len; i++)
 	{
 		if (str[i] == '"')
-			fputs("\\\"", yyout);
+			fputs("\\\"", base_yyout);
 		else if (str[i] == '\n')
-			fputs("\\\n", yyout);
+			fputs("\\\n", base_yyout);
 		else if (str[i] == '\\')
 		{
 			int			j = i;
@@ -230,17 +230,17 @@ output_escaped_str(char *str, bool quoted)
 
 			if ((str[j] != '\n') && (str[j] != '\r' || str[j + 1] != '\n'))		/* not followed by a
 																				 * newline */
-				fputs("\\\\", yyout);
+				fputs("\\\\", base_yyout);
 		}
 		else if (str[i] == '\r' && str[i + 1] == '\n')
 		{
-			fputs("\\\r\n", yyout);
+			fputs("\\\r\n", base_yyout);
 			i++;
 		}
 		else
-			fputc(str[i], yyout);
+			fputc(str[i], base_yyout);
 	}
 
 	if (quoted && str[0] == '"' && str[len] == '"')
-		fputs("\"", yyout);
+		fputs("\"", base_yyout);
 }

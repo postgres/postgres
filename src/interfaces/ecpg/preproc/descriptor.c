@@ -58,7 +58,7 @@ ECPGnumeric_lvalue(char *name)
 		case ECPGt_unsigned_long:
 		case ECPGt_unsigned_long_long:
 		case ECPGt_const:
-			fputs(name, yyout);
+			fputs(name, base_yyout);
 			break;
 		default:
 			mmerror(PARSE_ERROR, ET_ERROR, "variable \"%s\" must have a numeric type", name);
@@ -152,7 +152,7 @@ output_get_descr_header(char *desc_name)
 {
 	struct assignment *results;
 
-	fprintf(yyout, "{ ECPGget_desc_header(__LINE__, %s, &(", desc_name);
+	fprintf(base_yyout, "{ ECPGget_desc_header(__LINE__, %s, &(", desc_name);
 	for (results = assignments; results != NULL; results = results->next)
 	{
 		if (results->value == ECPGd_count)
@@ -162,7 +162,7 @@ output_get_descr_header(char *desc_name)
 	}
 
 	drop_assignments();
-	fprintf(yyout, "));\n");
+	fprintf(base_yyout, "));\n");
 	whenever_action(3);
 }
 
@@ -171,7 +171,7 @@ output_get_descr(char *desc_name, char *index)
 {
 	struct assignment *results;
 
-	fprintf(yyout, "{ ECPGget_desc(__LINE__, %s, %s,", desc_name, index);
+	fprintf(base_yyout, "{ ECPGget_desc(__LINE__, %s, %s,", desc_name, index);
 	for (results = assignments; results != NULL; results = results->next)
 	{
 		const struct variable *v = find_variable(results->variable);
@@ -188,12 +188,13 @@ output_get_descr(char *desc_name, char *index)
 			default:
 				break;
 		}
-		fprintf(yyout, "%s,", get_dtype(results->value));
-		ECPGdump_a_type(yyout, v->name, v->type, v->brace_level, NULL, NULL, -1, NULL, NULL, str_zero, NULL, NULL);
+		fprintf(base_yyout, "%s,", get_dtype(results->value));
+		ECPGdump_a_type(base_yyout, v->name, v->type, v->brace_level,
+						NULL, NULL, -1, NULL, NULL, str_zero, NULL, NULL);
 		free(str_zero);
 	}
 	drop_assignments();
-	fputs("ECPGd_EODT);\n", yyout);
+	fputs("ECPGd_EODT);\n", base_yyout);
 
 	whenever_action(2 | 1);
 }
@@ -203,7 +204,7 @@ output_set_descr_header(char *desc_name)
 {
 	struct assignment *results;
 
-	fprintf(yyout, "{ ECPGset_desc_header(__LINE__, %s, (int)(", desc_name);
+	fprintf(base_yyout, "{ ECPGset_desc_header(__LINE__, %s, (int)(", desc_name);
 	for (results = assignments; results != NULL; results = results->next)
 	{
 		if (results->value == ECPGd_count)
@@ -213,7 +214,7 @@ output_set_descr_header(char *desc_name)
 	}
 
 	drop_assignments();
-	fprintf(yyout, "));\n");
+	fprintf(base_yyout, "));\n");
 	whenever_action(3);
 }
 
@@ -264,7 +265,7 @@ output_set_descr(char *desc_name, char *index)
 {
 	struct assignment *results;
 
-	fprintf(yyout, "{ ECPGset_desc(__LINE__, %s, %s,", desc_name, index);
+	fprintf(base_yyout, "{ ECPGset_desc(__LINE__, %s, %s,", desc_name, index);
 	for (results = assignments; results != NULL; results = results->next)
 	{
 		const struct variable *v = find_variable(results->variable);
@@ -297,8 +298,9 @@ output_set_descr(char *desc_name, char *index)
 				{
 					char	   *str_zero = mm_strdup("0");
 
-					fprintf(yyout, "%s,", get_dtype(results->value));
-					ECPGdump_a_type(yyout, v->name, v->type, v->brace_level, NULL, NULL, -1, NULL, NULL, str_zero, NULL, NULL);
+					fprintf(base_yyout, "%s,", get_dtype(results->value));
+					ECPGdump_a_type(base_yyout, v->name, v->type, v->brace_level,
+						   NULL, NULL, -1, NULL, NULL, str_zero, NULL, NULL);
 					free(str_zero);
 				}
 				break;
@@ -308,7 +310,7 @@ output_set_descr(char *desc_name, char *index)
 		}
 	}
 	drop_assignments();
-	fputs("ECPGd_EODT);\n", yyout);
+	fputs("ECPGd_EODT);\n", base_yyout);
 
 	whenever_action(2 | 1);
 }
