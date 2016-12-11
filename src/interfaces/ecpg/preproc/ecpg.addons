@@ -8,7 +8,7 @@ ECPG: stmtClosePortalStmt block
 				if (connection)
 					mmerror(PARSE_ERROR, ET_ERROR, "AT option not allowed in CLOSE DATABASE statement");
 
-				fprintf(yyout, "{ ECPGdisconnect(__LINE__, \"CURRENT\");");
+				fprintf(base_yyout, "{ ECPGdisconnect(__LINE__, \"CURRENT\");");
 				whenever_action(2);
 				free($1);
 				break;
@@ -42,14 +42,14 @@ ECPG: stmtPrepareStmt block
 	}
 ECPG: stmtTransactionStmt block
 	{
-		fprintf(yyout, "{ ECPGtrans(__LINE__, %s, \"%s\");", connection ? connection : "NULL", $1);
+		fprintf(base_yyout, "{ ECPGtrans(__LINE__, %s, \"%s\");", connection ? connection : "NULL", $1);
 		whenever_action(2);
 		free($1);
 	}
 ECPG: stmtViewStmt rule
 	| ECPGAllocateDescr
 	{
-		fprintf(yyout,"ECPGallocate_desc(__LINE__, %s);",$1);
+		fprintf(base_yyout,"ECPGallocate_desc(__LINE__, %s);",$1);
 		whenever_action(0);
 		free($1);
 	}
@@ -58,7 +58,7 @@ ECPG: stmtViewStmt rule
 		if (connection)
 			mmerror(PARSE_ERROR, ET_ERROR, "AT option not allowed in CONNECT statement");
 
-		fprintf(yyout, "{ ECPGconnect(__LINE__, %d, %s, %d); ", compat, $1, autocommit);
+		fprintf(base_yyout, "{ ECPGconnect(__LINE__, %d, %s, %d); ", compat, $1, autocommit);
 		reset_variables();
 		whenever_action(2);
 		free($1);
@@ -69,7 +69,7 @@ ECPG: stmtViewStmt rule
 	}
 	| ECPGDeallocateDescr
 	{
-		fprintf(yyout,"ECPGdeallocate_desc(__LINE__, %s);",$1);
+		fprintf(base_yyout,"ECPGdeallocate_desc(__LINE__, %s);",$1);
 		whenever_action(0);
 		free($1);
 	}
@@ -79,10 +79,10 @@ ECPG: stmtViewStmt rule
 	}
 	| ECPGDescribe
 	{
-		fprintf(yyout, "{ ECPGdescribe(__LINE__, %d, %s,", compat, $1);
+		fprintf(base_yyout, "{ ECPGdescribe(__LINE__, %d, %s,", compat, $1);
 		dump_variables(argsresult, 1);
-		fputs("ECPGt_EORT);", yyout);
-		fprintf(yyout, "}");
+		fputs("ECPGt_EORT);", base_yyout);
+		fprintf(base_yyout, "}");
 		output_line_number();
 
 		free($1);
@@ -92,7 +92,7 @@ ECPG: stmtViewStmt rule
 		if (connection)
 			mmerror(PARSE_ERROR, ET_ERROR, "AT option not allowed in DISCONNECT statement");
 
-		fprintf(yyout, "{ ECPGdisconnect(__LINE__, %s);",
+		fprintf(base_yyout, "{ ECPGdisconnect(__LINE__, %s);",
 				$1 ? $1 : "\"CURRENT\"");
 		whenever_action(2);
 		free($1);
@@ -103,11 +103,11 @@ ECPG: stmtViewStmt rule
 		const char *con = connection ? connection : "NULL";
 
 		if (strcmp($1, "all") == 0)
-			fprintf(yyout, "{ ECPGdeallocate_all(__LINE__, %d, %s);", compat, con);
+			fprintf(base_yyout, "{ ECPGdeallocate_all(__LINE__, %d, %s);", compat, con);
 		else if ($1[0] == ':')
-			fprintf(yyout, "{ ECPGdeallocate(__LINE__, %d, %s, %s);", compat, con, $1+1);
+			fprintf(base_yyout, "{ ECPGdeallocate(__LINE__, %d, %s, %s);", compat, con, $1+1);
 		else
-			fprintf(yyout, "{ ECPGdeallocate(__LINE__, %d, %s, \"%s\");", compat, con, $1);
+			fprintf(base_yyout, "{ ECPGdeallocate(__LINE__, %d, %s, \"%s\");", compat, con, $1);
 
 		whenever_action(2);
 		free($1);
@@ -138,7 +138,7 @@ ECPG: stmtViewStmt rule
 	}
 	| ECPGSetAutocommit
 	{
-		fprintf(yyout, "{ ECPGsetcommit(__LINE__, \"%s\", %s);", $1, connection ? connection : "NULL");
+		fprintf(base_yyout, "{ ECPGsetcommit(__LINE__, \"%s\", %s);", $1, connection ? connection : "NULL");
 		whenever_action(2);
 		free($1);
 	}
@@ -147,7 +147,7 @@ ECPG: stmtViewStmt rule
 		if (connection)
 			mmerror(PARSE_ERROR, ET_ERROR, "AT option not allowed in SET CONNECTION statement");
 
-		fprintf(yyout, "{ ECPGsetconn(__LINE__, %s);", $1);
+		fprintf(base_yyout, "{ ECPGsetconn(__LINE__, %s);", $1);
 		whenever_action(2);
 		free($1);
 	}
@@ -169,7 +169,7 @@ ECPG: stmtViewStmt rule
 		if (connection)
 			mmerror(PARSE_ERROR, ET_ERROR, "AT option not allowed in TYPE statement");
 
-		fprintf(yyout, "%s", $1);
+		fprintf(base_yyout, "%s", $1);
 		free($1);
 		output_line_number();
 	}
