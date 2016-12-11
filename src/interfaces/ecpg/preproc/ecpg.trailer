@@ -8,14 +8,14 @@ statement: ecpgstart at stmt ';' { connection = NULL; }
 				| ecpgstart stmt ';'
 				| ecpgstart ECPGVarDeclaration
 				{
-					fprintf(yyout, "%s", $2);
+					fprintf(base_yyout, "%s", $2);
 					free($2);
 					output_line_number();
 				}
 				| ECPGDeclaration
-				| c_thing               { fprintf(yyout, "%s", $1); free($1); }
-				| CPP_LINE              { fprintf(yyout, "%s", $1); free($1); }
-				| '{'                   { braces_open++; fputs("{", yyout); }
+				| c_thing               { fprintf(base_yyout, "%s", $1); free($1); }
+				| CPP_LINE              { fprintf(base_yyout, "%s", $1); free($1); }
+				| '{'                   { braces_open++; fputs("{", base_yyout); }
 				| '}'
 		{
 			remove_typedefs(braces_open);
@@ -25,7 +25,7 @@ statement: ecpgstart at stmt ';' { connection = NULL; }
 				free(current_function);
 				current_function = NULL;
 			}
-			fputs("}", yyout);
+			fputs("}", base_yyout);
 		}
 		;
 
@@ -380,10 +380,10 @@ ecpg_interval:	opt_interval	{ $$ = $1; }
  * variable declaration inside exec sql declare block
  */
 ECPGDeclaration: sql_startdeclare
-		{ fputs("/* exec sql begin declare section */", yyout); }
+		{ fputs("/* exec sql begin declare section */", base_yyout); }
 		var_type_declarations sql_enddeclare
 		{
-			fprintf(yyout, "%s/* exec sql end declare section */", $3);
+			fprintf(base_yyout, "%s/* exec sql end declare section */", $3);
 			free($3);
 			output_line_number();
 		}
@@ -417,7 +417,7 @@ type_declaration: S_TYPEDEF
 	{
 		add_typedef($5, $6.index1, $6.index2, $3.type_enum, $3.type_dimension, $3.type_index, initializer, *$4 ? 1 : 0);
 
-		fprintf(yyout, "typedef %s %s %s %s;\n", $3.type_str, *$4 ? "*" : "", $5, $6.str);
+		fprintf(base_yyout, "typedef %s %s %s %s;\n", $3.type_str, *$4 ? "*" : "", $5, $6.str);
 		output_line_number();
 		$$ = mm_strdup("");
 	};
@@ -1909,7 +1909,7 @@ void base_yyerror(const char *error)
 {
 	/* translator: %s is typically the translation of "syntax error" */
 	mmerror(PARSE_ERROR, ET_ERROR, "%s at or near \"%s\"",
-			_(error), token_start ? token_start : yytext);
+			_(error), token_start ? token_start : base_yytext);
 }
 
 void parser_init(void)

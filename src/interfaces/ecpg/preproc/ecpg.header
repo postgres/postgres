@@ -72,7 +72,7 @@ vmmerror(int error_code, enum errortype type, const char *error, va_list ap)
 	/* localize the error message string */
 	error = _(error);
 
-	fprintf(stderr, "%s:%d: ", input_filename, yylineno);
+	fprintf(stderr, "%s:%d: ", input_filename, base_yylineno);
 
 	switch(type)
 	{
@@ -117,10 +117,10 @@ mmfatal(int error_code, const char *error, ...)
 	vmmerror(error_code, ET_ERROR, error, ap);
 	va_end(ap);
 
-	if (yyin)
-		fclose(yyin);
-	if (yyout)
-		fclose(yyout);
+	if (base_yyin)
+		fclose(base_yyin);
+	if (base_yyout)
+		fclose(base_yyout);
 
 	if (strcmp(output_filename, "-") != 0 && unlink(output_filename) != 0)
 		fprintf(stderr, _("could not remove output file \"%s\"\n"), output_filename);
@@ -195,7 +195,7 @@ make3_str(char *str1, char *str2, char *str3)
 static char *
 make_name(void)
 {
-	return mm_strdup(yytext);
+	return mm_strdup(base_yytext);
 }
 
 static char *
