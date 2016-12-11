@@ -316,6 +316,9 @@ SELECT ts_rewrite( 'moscow', 'SELECT keyword, sample FROM test_tsquery');
 SELECT ts_rewrite( 'moscow & hotel', 'SELECT keyword, sample FROM test_tsquery');
 SELECT ts_rewrite( 'bar & new & qq & foo & york', 'SELECT keyword, sample FROM test_tsquery');
 
+-- Check empty substitution
+SELECT ts_rewrite(to_tsquery('5 & (6 | 5)'), to_tsquery('5'), to_tsquery(''));
+SELECT ts_rewrite(to_tsquery('!5'), to_tsquery('5'), to_tsquery(''));
 
 SELECT keyword FROM test_tsquery WHERE keyword @> 'new';
 SELECT keyword FROM test_tsquery WHERE keyword @> 'moscow';
