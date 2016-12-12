@@ -1808,7 +1808,7 @@ describeOneTableDetails(const char *schemaname,
 	}
 
 	/* Make footers */
-	if (pset.sversion >= 90600)
+	if (pset.sversion >= 100000)
 	{
 		/* Get the partition information  */
 		PGresult   *result;
