@@ -1841,12 +1841,12 @@ tuplesort_performsort(Tuplesortstate *state)
 /*
  * Internal routine to fetch the next tuple in either forward or back
  * direction into *stup.  Returns FALSE if no more tuples.
- * If *should_free is set, the caller must pfree stup.tuple when done with it.
- * Otherwise, caller should not use tuple following next call here.
+ * Returned tuple belongs to tuplesort memory context, and must not be freed
+ * by caller.  Caller should not use tuple following next call here.
  */
 static bool
 tuplesort_gettuple_common(Tuplesortstate *state, bool forward,
-						  SortTuple *stup, bool *should_free)
+						  SortTuple *stup)
 {
 	unsigned int tuplen;
 
@@ -1855,7 +1855,6 @@ tuplesort_gettuple_common(Tuplesortstate *state, bool forward,
 		case TSS_SORTEDINMEM:
 			Assert(forward || state->randomAccess);
 			Assert(!state->slabAllocatorUsed);
-			*should_free = false;
 			if (forward)
 			{
 				if (state->current < state->memtupcount)
@@ -1927,7 +1926,6 @@ tuplesort_gettuple_common(Tuplesortstate *state, bool forward,
 					 */
 					state->lastReturnedTuple = stup->tuple;
 
-					*should_free = false;
 					return true;
 				}
 				else
@@ -2008,14 +2006,12 @@ tuplesort_gettuple_common(Tuplesortstate *state, bool forward,
 			 */
 			state->lastReturnedTuple = stup->tuple;
 
-			*should_free = false;
 			return true;
 
 		case TSS_FINALMERGE:
 			Assert(forward);
 			/* We are managing memory ourselves, with the slab allocator. */
 			Assert(state->slabAllocatorUsed);
-			*should_free = false;
 
 			/*
 			 * The slab slot holding the tuple that we returned in previous
@@ -2097,9 +2093,8 @@ tuplesort_gettupleslot(Tuplesortstate *state, bool forward,
 {
 	MemoryContext oldcontext = MemoryContextSwitchTo(state->sortcontext);
 	SortTuple	stup;
-	bool		should_free;
 
-	if (!tuplesort_gettuple_common(state, forward, &stup, &should_free))
+	if (!tuplesort_gettuple_common(state, forward, &stup))
 		stup.tuple = NULL;
 
 	MemoryContextSwitchTo(oldcontext);
@@ -2110,12 +2105,8 @@ tuplesort_gettupleslot(Tuplesortstate *state, bool forward,
 		if (state->sortKeys->abbrev_converter && abbrev)
 			*abbrev = stup.datum1;
 
-		if (!should_free)
-		{
-			stup.tuple = heap_copy_minimal_tuple((MinimalTuple) stup.tuple);
-			should_free = true;
-		}
-		ExecStoreMinimalTuple((MinimalTuple) stup.tuple, slot, should_free);
+		stup.tuple = heap_copy_minimal_tuple((MinimalTuple) stup.tuple);
+		ExecStoreMinimalTuple((MinimalTuple) stup.tuple, slot, true);
 		return true;
 	}
 	else
@@ -2127,18 +2118,17 @@ tuplesort_gettupleslot(Tuplesortstate *state, bool forward,
 
 /*
  * Fetch the next tuple in either forward or back direction.
- * Returns NULL if no more tuples.  If *should_free is set, the
- * caller must pfree the returned tuple when done with it.
- * If it is not set, caller should not use tuple following next
- * call here.
+ * Returns NULL if no more tuples.  Returned tuple belongs to tuplesort memory
+ * context, and must not be freed by caller.  Caller should not use tuple
+ * following next call here.
  */
 HeapTuple
-tuplesort_getheaptuple(Tuplesortstate *state, bool forward, bool *should_free)
+tuplesort_getheaptuple(Tuplesortstate *state, bool forward)
 {
 	MemoryContext oldcontext = MemoryContextSwitchTo(state->sortcontext);
 	SortTuple	stup;
 
-	if (!tuplesort_gettuple_common(state, forward, &stup, should_free))
+	if (!tuplesort_gettuple_common(state, forward, &stup))
 		stup.tuple = NULL;
 
 	MemoryContextSwitchTo(oldcontext);
@@ -2148,19 +2138,17 @@ tuplesort_getheaptuple(Tuplesortstate *state, bool forward, bool *should_free)
 
 /*
  * Fetch the next index tuple in either forward or back direction.
- * Returns NULL if no more tuples.  If *should_free is set, the
- * caller must pfree the returned tuple when done with it.
- * If it is not set, caller should not use tuple following next
- * call here.
+ * Returns NULL if no more tuples.  Returned tuple belongs to tuplesort memory
+ * context, and must not be freed by caller.  Caller should not use tuple
+ * following next call here.
  */
 IndexTuple
-tuplesort_getindextuple(Tuplesortstate *state, bool forward,
-						bool *should_free)
+tuplesort_getindextuple(Tuplesortstate *state, bool forward)
 {
 	MemoryContext oldcontext = MemoryContextSwitchTo(state->sortcontext);
 	SortTuple	stup;
 
-	if (!tuplesort_gettuple_common(state, forward, &stup, should_free))
+	if (!tuplesort_gettuple_common(state, forward, &stup))
 		stup.tuple = NULL;
 
 	MemoryContextSwitchTo(oldcontext);
@@ -2173,7 +2161,8 @@ tuplesort_getindextuple(Tuplesortstate *state, bool forward,
  * Returns FALSE if no more datums.
  *
  * If the Datum is pass-by-ref type, the returned value is freshly palloc'd
- * and is now owned by the caller.
+ * and is now owned by the caller (this differs from similar routines for
+ * other types of tuplesorts).
  *
  * Caller may optionally be passed back abbreviated value (on TRUE return
  * value) when abbreviation was used, which can be used to cheaply avoid
@@ -2188,9 +2177,8 @@ tuplesort_getdatum(Tuplesortstate *state, bool forward,
 {
 	MemoryContext oldcontext = MemoryContextSwitchTo(state->sortcontext);
 	SortTuple	stup;
-	bool		should_free;
 
-	if (!tuplesort_gettuple_common(state, forward, &stup, &should_free))
+	if (!tuplesort_gettuple_common(state, forward, &stup))
 	{
 		MemoryContextSwitchTo(oldcontext);
 		return false;
@@ -2208,11 +2196,7 @@ tuplesort_getdatum(Tuplesortstate *state, bool forward,
 	else
 	{
 		/* use stup.tuple because stup.datum1 may be an abbreviation */
-
-		if (should_free)
-			*val = PointerGetDatum(stup.tuple);
-		else
-			*val = datumCopy(PointerGetDatum(stup.tuple), false, state->datumTypeLen);
+		*val = datumCopy(PointerGetDatum(stup.tuple), false, state->datumTypeLen);
 		*isNull = false;
 	}
 
@@ -2270,16 +2254,12 @@ tuplesort_skiptuples(Tuplesortstate *state, int64 ntuples, bool forward)
 			while (ntuples-- > 0)
 			{
 				SortTuple	stup;
-				bool		should_free;
 
-				if (!tuplesort_gettuple_common(state, forward,
-											   &stup, &should_free))
+				if (!tuplesort_gettuple_common(state, forward, &stup))
 				{
 					MemoryContextSwitchTo(oldcontext);
 					return false;
 				}
-				if (should_free && stup.tuple)
-					pfree(stup.tuple);
 				CHECK_FOR_INTERRUPTS();
 			}
 			MemoryContextSwitchTo(oldcontext);

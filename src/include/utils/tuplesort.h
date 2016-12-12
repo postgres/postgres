@@ -94,10 +94,8 @@ extern void tuplesort_performsort(Tuplesortstate *state);
 
 extern bool tuplesort_gettupleslot(Tuplesortstate *state, bool forward,
 					   TupleTableSlot *slot, Datum *abbrev);
-extern HeapTuple tuplesort_getheaptuple(Tuplesortstate *state, bool forward,
-					   bool *should_free);
-extern IndexTuple tuplesort_getindextuple(Tuplesortstate *state, bool forward,
-						bool *should_free);
+extern HeapTuple tuplesort_getheaptuple(Tuplesortstate *state, bool forward);
+extern IndexTuple tuplesort_getindextuple(Tuplesortstate *state, bool forward);
 extern bool tuplesort_getdatum(Tuplesortstate *state, bool forward,
 				   Datum *val, bool *isNull, Datum *abbrev);
 

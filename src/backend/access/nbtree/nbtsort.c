@@ -680,9 +680,7 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 	bool		merge = (btspool2 != NULL);
 	IndexTuple	itup,
 				itup2 = NULL;
-	bool		should_free,
-				should_free2,
-				load1;
+	bool		load1;
 	TupleDesc	tupdes = RelationGetDescr(wstate->index);
 	int			i,
 				keysz = RelationGetNumberOfAttributes(wstate->index);
@@ -697,10 +695,8 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 		 */
 
 		/* the preparation of merge */
-		itup = tuplesort_getindextuple(btspool->sortstate,
-									   true, &should_free);
-		itup2 = tuplesort_getindextuple(btspool2->sortstate,
-										true, &should_free2);
+		itup = tuplesort_getindextuple(btspool->sortstate, true);
+		itup2 = tuplesort_getindextuple(btspool2->sortstate, true);
 		indexScanKey = _bt_mkscankey_nodata(wstate->index);
 
 		/* Prepare SortSupport data for each column */
@@ -775,18 +771,12 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 			if (load1)
 			{
 				_bt_buildadd(wstate, state, itup);
-				if (should_free)
-					pfree(itup);
-				itup = tuplesort_getindextuple(btspool->sortstate,
-											   true, &should_free);
+				itup = tuplesort_getindextuple(btspool->sortstate, true);
 			}
 			else
 			{
 				_bt_buildadd(wstate, state, itup2);
-				if (should_free2)
-					pfree(itup2);
-				itup2 = tuplesort_getindextuple(btspool2->sortstate,
-												true, &should_free2);
+				itup2 = tuplesort_getindextuple(btspool2->sortstate, true);
 			}
 		}
 		pfree(sortKeys);
@@ -795,15 +785,13 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 	{
 		/* merge is unnecessary */
 		while ((itup = tuplesort_getindextuple(btspool->sortstate,
-											   true, &should_free)) != NULL)
+											   true)) != NULL)
 		{
 			/* When we see first tuple, create first index page */
 			if (state == NULL)
 				state = _bt_pagestate(wstate, 0);
 
 			_bt_buildadd(wstate, state, itup);
-			if (should_free)
-				pfree(itup);
 		}
 	}
 

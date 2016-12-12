@@ -1057,11 +1057,10 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 		for (;;)
 		{
 			HeapTuple	tuple;
-			bool		shouldfree;
 
 			CHECK_FOR_INTERRUPTS();
 
-			tuple = tuplesort_getheaptuple(tuplesort, true, &shouldfree);
+			tuple = tuplesort_getheaptuple(tuplesort, true);
 			if (tuple == NULL)
 				break;
 
@@ -1069,9 +1068,6 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 									 oldTupDesc, newTupDesc,
 									 values, isnull,
 									 NewHeap->rd_rel->relhasoids, rwstate);
-
-			if (shouldfree)
-				heap_freetuple(tuple);
 		}
 
 		tuplesort_end(tuplesort);
