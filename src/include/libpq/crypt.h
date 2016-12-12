@@ -15,7 +15,12 @@
 
 #include "datatype/timestamp.h"
 
-extern int md5_crypt_verify(const char *role, char *client_pass,
-				 char *md5_salt, int md5_salt_len, char **logdetail);
+extern int	get_role_password(const char *role, char **shadow_pass, char **logdetail);
+
+extern int md5_crypt_verify(const char *role, const char *shadow_pass,
+				 const char *client_pass, const char *md5_salt,
+				 int md5_salt_len, char **logdetail);
+extern int plain_crypt_verify(const char *role, const char *shadow_pass,
+				   const char *client_pass, char **logdetail);
 
 #endif

@@ -704,6 +704,7 @@ CheckMD5Auth(Port *port, char **logdetail)
 {
 	char		md5Salt[4];		/* Password salt */
 	char	   *passwd;
+	char	   *shadow_pass;
 	int			result;
 
 	if (Db_user_namespace)
@@ -722,12 +723,16 @@ CheckMD5Auth(Port *port, char **logdetail)
 	sendAuthRequest(port, AUTH_REQ_MD5, md5Salt, 4);
 
 	passwd = recv_password_packet(port);
-
 	if (passwd == NULL)
 		return STATUS_EOF;		/* client wouldn't send password */
 
-	result = md5_crypt_verify(port->user_name, passwd, md5Salt, 4, logdetail);
+	result = get_role_password(port->user_name, &shadow_pass, logdetail);
+	if (result == STATUS_OK)
+		result = md5_crypt_verify(port->user_name, shadow_pass, passwd,
+								  md5Salt, 4, logdetail);
 
+	if (shadow_pass)
+		pfree(shadow_pass);
 	pfree(passwd);
 
 	return result;
@@ -743,16 +748,21 @@ CheckPasswordAuth(Port *port, char **logdetail)
 {
 	char	   *passwd;
 	int			result;
+	char	   *shadow_pass;
 
 	sendAuthRequest(port, AUTH_REQ_PASSWORD, NULL, 0);
 
 	passwd = recv_password_packet(port);
-
 	if (passwd == NULL)
 		return STATUS_EOF;		/* client wouldn't send password */
 
-	result = md5_crypt_verify(port->user_name, passwd, NULL, 0, logdetail);
+	result = get_role_password(port->user_name, &shadow_pass, logdetail);
+	if (result == STATUS_OK)
+		result = plain_crypt_verify(port->user_name, shadow_pass, passwd,
+									logdetail);
 
+	if (shadow_pass)
+		pfree(shadow_pass);
 	pfree(passwd);
 
 	return result;
