@@ -715,7 +715,12 @@ CheckMD5Auth(Port *port, char **logdetail)
 				 errmsg("MD5 authentication is not supported when \"db_user_namespace\" is enabled")));
 
 	/* include the salt to use for computing the response */
-	pg_backend_random(md5Salt, 4);
+	if (!pg_backend_random(md5Salt, 4))
+	{
+		ereport(LOG,
+				(errmsg("could not acquire random number for MD5 salt.")));
+		return STATUS_ERROR;
+	}
 
 	sendAuthRequest(port, AUTH_REQ_MD5, md5Salt, 4);
 
