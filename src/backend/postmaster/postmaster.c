@@ -3903,8 +3903,8 @@ BackendStartup(Port *port)
 	{
 		free(bn);
 		ereport(LOG,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("could not acquire random number")));
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("could not generate random cancel key")));
 		return STATUS_ERROR;
 	}
 
@@ -5288,7 +5288,7 @@ StartAutovacuumWorker(void)
 		{
 			ereport(LOG,
 					(errcode(ERRCODE_INTERNAL_ERROR),
-					 errmsg("could not acquire random number")));
+					 errmsg("could not generate random cancel key")));
 			return;
 		}
 
@@ -5594,7 +5594,7 @@ assign_backendlist_entry(RegisteredBgWorker *rw)
 	{
 		ereport(LOG,
 				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("could not acquire random number")));
+				 errmsg("could not generate random cancel key")));
 
 		rw->rw_crashed_at = GetCurrentTimestamp();
 		return false;

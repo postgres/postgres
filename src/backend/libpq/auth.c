@@ -194,9 +194,6 @@ static int pg_SSPI_make_upn(char *accountname,
  * RADIUS Authentication
  *----------------------------------------------------------------
  */
-#ifdef USE_OPENSSL
-#include <openssl/rand.h>
-#endif
 static int	CheckRADIUSAuth(Port *port);
 
 
@@ -718,7 +715,7 @@ CheckMD5Auth(Port *port, char **logdetail)
 	if (!pg_backend_random(md5Salt, 4))
 	{
 		ereport(LOG,
-				(errmsg("could not acquire random number for MD5 salt.")));
+				(errmsg("could not generate random MD5 salt.")));
 		return STATUS_ERROR;
 	}
 
@@ -2550,18 +2547,12 @@ CheckRADIUSAuth(Port *port)
 	/* Construct RADIUS packet */
 	packet->code = RADIUS_ACCESS_REQUEST;
 	packet->length = RADIUS_HEADER_LENGTH;
-#ifdef USE_OPENSSL
-	if (RAND_bytes(packet->vector, RADIUS_VECTOR_LENGTH) != 1)
+	if (!pg_backend_random((char *) packet->vector, RADIUS_VECTOR_LENGTH))
 	{
 		ereport(LOG,
 				(errmsg("could not generate random encryption vector")));
 		return STATUS_ERROR;
 	}
-#else
-	for (i = 0; i < RADIUS_VECTOR_LENGTH; i++)
-		/* Use a lower strengh random number of OpenSSL is not available */
-		packet->vector[i] = random() % 255;
-#endif
 	packet->id = packet->vector[0];
 	radius_add_attribute(packet, RADIUS_SERVICE_TYPE, (unsigned char *) &service, sizeof(service));
 	radius_add_attribute(packet, RADIUS_USER_NAME, (unsigned char *) port->user_name, strlen(port->user_name));
