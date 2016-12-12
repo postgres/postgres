@@ -219,6 +219,8 @@ encrypt_free(void *priv)
 {
 	struct EncStat *st = priv;
 
+	if (st->ciph)
+		pgp_cfb_free(st->ciph);
 	px_memset(st, 0, sizeof(*st));
 	px_free(st);
 }
