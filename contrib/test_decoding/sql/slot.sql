@@ -4,14 +4,22 @@ SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot_t', 'test
 SELECT pg_drop_replication_slot('regression_slot_p');
 SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot_p', 'test_decoding', false);
 
--- reconnect to clean temp slots
-\c
-
-SELECT pg_drop_replication_slot('regression_slot_p');
+-- here we want to start a new session and wait till old one is gone
+select pg_backend_pid() as oldpid \gset
+\c -
+do 'declare c int = 0;
+begin
+  while (select count(*) from pg_stat_activity where pid = '
+    :'oldpid'
+  ') > 0 loop c := c + 1; perform pg_stat_clear_snapshot(); end loop;
+  raise log ''slot test looped % times'', c;
+end';
 
 -- should fail because the temporary slot was dropped automatically
 SELECT pg_drop_replication_slot('regression_slot_t');
 
+-- permanent slot has survived
+SELECT pg_drop_replication_slot('regression_slot_p');
 
 -- test switching between slots in a session
 SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot1', 'test_decoding', true);
