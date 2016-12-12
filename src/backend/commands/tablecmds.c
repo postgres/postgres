@@ -13167,7 +13167,7 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd)
 	tupleDesc = RelationGetDescr(attachRel);
 	attachRel_constr = tupleDesc->constr;
 	existConstraint = NIL;
-	if (attachRel_constr > 0)
+	if (attachRel_constr != NULL)
 	{
 		int			num_check = attachRel_constr->num_check;
 		int			i;
