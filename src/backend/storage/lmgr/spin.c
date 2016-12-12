@@ -23,11 +23,12 @@
 #include "postgres.h"
 
 #include "storage/pg_sema.h"
+#include "storage/shmem.h"
 #include "storage/spin.h"
 
 
 #ifndef HAVE_SPINLOCKS
-PGSemaphore SpinlockSemaArray;
+PGSemaphore *SpinlockSemaArray;
 #endif
 
 /*
@@ -37,7 +38,7 @@ PGSemaphore SpinlockSemaArray;
 Size
 SpinlockSemaSize(void)
 {
-	return SpinlockSemas() * sizeof(PGSemaphoreData);
+	return SpinlockSemas() * sizeof(PGSemaphore);
 }
 
 #ifdef HAVE_SPINLOCKS
@@ -67,16 +68,24 @@ SpinlockSemas(void)
 }
 
 /*
- * Initialize semaphores.
+ * Initialize spinlock emulation.
+ *
+ * This must be called after PGReserveSemaphores().
  */
-extern void
-SpinlockSemaInit(PGSemaphore spinsemas)
+void
+SpinlockSemaInit(void)
 {
-	int			i;
+	PGSemaphore *spinsemas;
 	int			nsemas = SpinlockSemas();
+	int			i;
 
+	/*
+	 * We must use ShmemAllocUnlocked(), since the spinlock protecting
+	 * ShmemAlloc() obviously can't be ready yet.
+	 */
+	spinsemas = (PGSemaphore *) ShmemAllocUnlocked(SpinlockSemaSize());
 	for (i = 0; i < nsemas; ++i)
-		PGSemaphoreCreate(&spinsemas[i]);
+		spinsemas[i] = PGSemaphoreCreate();
 	SpinlockSemaArray = spinsemas;
 }
 
@@ -109,7 +118,7 @@ s_unlock_sema(volatile slock_t *lock)
 
 	if (lockndx <= 0 || lockndx > NUM_SPINLOCK_SEMAPHORES)
 		elog(ERROR, "invalid spinlock number: %d", lockndx);
-	PGSemaphoreUnlock(&SpinlockSemaArray[lockndx - 1]);
+	PGSemaphoreUnlock(SpinlockSemaArray[lockndx - 1]);
 }
 
 bool
@@ -128,7 +137,7 @@ tas_sema(volatile slock_t *lock)
 	if (lockndx <= 0 || lockndx > NUM_SPINLOCK_SEMAPHORES)
 		elog(ERROR, "invalid spinlock number: %d", lockndx);
 	/* Note that TAS macros return 0 if *success* */
-	return !PGSemaphoreTryLock(&SpinlockSemaArray[lockndx - 1]);
+	return !PGSemaphoreTryLock(SpinlockSemaArray[lockndx - 1]);
 }
 
 #endif   /* !HAVE_SPINLOCKS */

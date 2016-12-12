@@ -102,6 +102,10 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 		Size		size;
 		int			numSemas;
 
+		/* Compute number of semaphores we'll need */
+		numSemas = ProcGlobalSemas();
+		numSemas += SpinlockSemas();
+
 		/*
 		 * Size of the Postgres shared-memory block is estimated via
 		 * moderately-accurate estimates for the big hogs, plus 100K for the
@@ -112,6 +116,7 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 		 * need to be so careful during the actual allocation phase.
 		 */
 		size = 100000;
+		size = add_size(size, PGSemaphoreShmemSize(numSemas));
 		size = add_size(size, SpinlockSemaSize());
 		size = add_size(size, hash_estimate_size(SHMEM_INDEX_SIZE,
 												 sizeof(ShmemIndexEnt)));
@@ -166,9 +171,15 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 		/*
 		 * Create semaphores
 		 */
-		numSemas = ProcGlobalSemas();
-		numSemas += SpinlockSemas();
 		PGReserveSemaphores(numSemas, port);
+
+		/*
+		 * If spinlocks are disabled, initialize emulation layer (which
+		 * depends on semaphores, so the order is important here).
+		 */
+#ifndef HAVE_SPINLOCKS
+		SpinlockSemaInit();
+#endif
 	}
 	else
 	{

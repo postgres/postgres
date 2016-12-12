@@ -484,7 +484,7 @@ typedef struct
 	VariableCache ShmemVariableCache;
 	Backend    *ShmemBackendArray;
 #ifndef HAVE_SPINLOCKS
-	PGSemaphore SpinlockSemaArray;
+	PGSemaphore *SpinlockSemaArray;
 #endif
 	int			NamedLWLockTrancheRequests;
 	NamedLWLockTranche *NamedLWLockTrancheArray;

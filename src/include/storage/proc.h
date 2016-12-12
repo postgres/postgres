@@ -87,7 +87,7 @@ struct PGPROC
 	SHM_QUEUE	links;			/* list link if process is in a list */
 	PGPROC	  **procgloballist; /* procglobal list that owns this PGPROC */
 
-	PGSemaphoreData sem;		/* ONE semaphore to sleep on */
+	PGSemaphore sem;			/* ONE semaphore to sleep on */
 	int			waitStatus;		/* STATUS_WAITING, STATUS_OK or STATUS_ERROR */
 
 	Latch		procLatch;		/* generic latch for process */
@@ -116,7 +116,7 @@ struct PGPROC
 	proclist_node lwWaitLink;	/* position in LW lock wait list */
 
 	/* Support for condition variables. */
-	proclist_node	cvWaitLink;	/* position in CV wait list */
+	proclist_node cvWaitLink;	/* position in CV wait list */
 
 	/* Info about lock the process is currently waiting for, if any. */
 	/* waitLock and waitProcLock are NULL if not currently waiting. */

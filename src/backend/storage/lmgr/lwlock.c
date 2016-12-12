@@ -1012,7 +1012,7 @@ LWLockWakeup(LWLock *lock)
 		 */
 		pg_write_barrier();
 		waiter->lwWaiting = false;
-		PGSemaphoreUnlock(&waiter->sem);
+		PGSemaphoreUnlock(waiter->sem);
 	}
 }
 
@@ -1129,7 +1129,7 @@ LWLockDequeueSelf(LWLock *lock)
 		 */
 		for (;;)
 		{
-			PGSemaphoreLock(&MyProc->sem);
+			PGSemaphoreLock(MyProc->sem);
 			if (!MyProc->lwWaiting)
 				break;
 			extraWaits++;
@@ -1139,7 +1139,7 @@ LWLockDequeueSelf(LWLock *lock)
 		 * Fix the process wait semaphore's count for any absorbed wakeups.
 		 */
 		while (extraWaits-- > 0)
-			PGSemaphoreUnlock(&MyProc->sem);
+			PGSemaphoreUnlock(MyProc->sem);
 	}
 
 #ifdef LOCK_DEBUG
@@ -1283,7 +1283,7 @@ LWLockAcquire(LWLock *lock, LWLockMode mode)
 
 		for (;;)
 		{
-			PGSemaphoreLock(&proc->sem);
+			PGSemaphoreLock(proc->sem);
 			if (!proc->lwWaiting)
 				break;
 			extraWaits++;
@@ -1320,7 +1320,7 @@ LWLockAcquire(LWLock *lock, LWLockMode mode)
 	 * Fix the process wait semaphore's count for any absorbed wakeups.
 	 */
 	while (extraWaits-- > 0)
-		PGSemaphoreUnlock(&proc->sem);
+		PGSemaphoreUnlock(proc->sem);
 
 	return result;
 }
@@ -1444,7 +1444,7 @@ LWLockAcquireOrWait(LWLock *lock, LWLockMode mode)
 
 			for (;;)
 			{
-				PGSemaphoreLock(&proc->sem);
+				PGSemaphoreLock(proc->sem);
 				if (!proc->lwWaiting)
 					break;
 				extraWaits++;
@@ -1481,7 +1481,7 @@ LWLockAcquireOrWait(LWLock *lock, LWLockMode mode)
 	 * Fix the process wait semaphore's count for any absorbed wakeups.
 	 */
 	while (extraWaits-- > 0)
-		PGSemaphoreUnlock(&proc->sem);
+		PGSemaphoreUnlock(proc->sem);
 
 	if (mustwait)
 	{
@@ -1662,7 +1662,7 @@ LWLockWaitForVar(LWLock *lock, uint64 *valptr, uint64 oldval, uint64 *newval)
 
 		for (;;)
 		{
-			PGSemaphoreLock(&proc->sem);
+			PGSemaphoreLock(proc->sem);
 			if (!proc->lwWaiting)
 				break;
 			extraWaits++;
@@ -1692,7 +1692,7 @@ LWLockWaitForVar(LWLock *lock, uint64 *valptr, uint64 oldval, uint64 *newval)
 	 * Fix the process wait semaphore's count for any absorbed wakeups.
 	 */
 	while (extraWaits-- > 0)
-		PGSemaphoreUnlock(&proc->sem);
+		PGSemaphoreUnlock(proc->sem);
 
 	/*
 	 * Now okay to allow cancel/die interrupts.
@@ -1759,7 +1759,7 @@ LWLockUpdateVar(LWLock *lock, uint64 *valptr, uint64 val)
 		/* check comment in LWLockWakeup() about this barrier */
 		pg_write_barrier();
 		waiter->lwWaiting = false;
-		PGSemaphoreUnlock(&waiter->sem);
+		PGSemaphoreUnlock(waiter->sem);
 	}
 }
 

@@ -36,6 +36,7 @@ extern void InitShmemAccess(void *seghdr);
 extern void InitShmemAllocation(void);
 extern void *ShmemAlloc(Size size);
 extern void *ShmemAllocNoError(Size size);
+extern void *ShmemAllocUnlocked(Size size);
 extern bool ShmemAddrIsValid(const void *addr);
 extern void InitShmemIndex(void);
 extern HTAB *ShmemInitHash(const char *name, long init_size, long max_size,

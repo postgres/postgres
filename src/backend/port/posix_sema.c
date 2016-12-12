@@ -6,6 +6,14 @@
  * We prefer the unnamed style of POSIX semaphore (the kind made with
  * sem_init).  We can cope with the kind made with sem_open, however.
  *
+ * In either implementation, typedef PGSemaphore is equivalent to "sem_t *".
+ * With unnamed semaphores, the sem_t structs live in an array in shared
+ * memory.  With named semaphores, that's not true because we cannot persuade
+ * sem_open to do its allocation there.  Therefore, the named-semaphore code
+ * *does not cope with EXEC_BACKEND*.  The sem_t structs will just be in the
+ * postmaster's private memory, where they are successfully inherited by
+ * forked backends, but they could not be accessed by exec'd backends.
+ *
  *
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -18,28 +26,38 @@
 #include "postgres.h"
 
 #include <fcntl.h>
+#include <semaphore.h>
 #include <signal.h>
 #include <unistd.h>
 
 #include "miscadmin.h"
 #include "storage/ipc.h"
 #include "storage/pg_sema.h"
+#include "storage/shmem.h"
 
 
-#ifdef USE_NAMED_POSIX_SEMAPHORES
-/* PGSemaphore is pointer to pointer to sem_t */
-#define PG_SEM_REF(x)	(*(x))
-#else
-/* PGSemaphore is pointer to sem_t */
-#define PG_SEM_REF(x)	(x)
+/* see file header comment */
+#if defined(USE_NAMED_POSIX_SEMAPHORES) && defined(EXEC_BACKEND)
+#error cannot use named POSIX semaphores with EXEC_BACKEND
 #endif
 
+/* typedef PGSemaphore is equivalent to pointer to sem_t */
+typedef struct PGSemaphoreData
+{
+	sem_t		pgsem;
+} PGSemaphoreData;
+
+#define PG_SEM_REF(x)	(&(x)->pgsem)
 
 #define IPCProtection	(0600)	/* access/modify by user only */
 
+#ifdef USE_NAMED_POSIX_SEMAPHORES
 static sem_t **mySemPointers;	/* keep track of created semaphores */
+#else
+static PGSemaphore sharedSemas; /* array of PGSemaphoreData in shared memory */
+#endif
 static int	numSems;			/* number of semas acquired so far */
-static int	maxSems;			/* allocated size of mySemaPointers array */
+static int	maxSems;			/* allocated size of above arrays */
 static int	nextSemKey;			/* next name to try */
 
 
@@ -134,6 +152,21 @@ PosixSemaphoreKill(sem_t * sem)
 
 
 /*
+ * Report amount of shared memory needed for semaphores
+ */
+Size
+PGSemaphoreShmemSize(int maxSemas)
+{
+#ifdef USE_NAMED_POSIX_SEMAPHORES
+	/* No shared memory needed in this case */
+	return 0;
+#else
+	/* Need a PGSemaphoreData per semaphore */
+	return mul_size(maxSemas, sizeof(PGSemaphoreData));
+#endif
+}
+
+/*
  * PGReserveSemaphores --- initialize semaphore support
  *
  * This is called during postmaster start or shared memory reinitialization.
@@ -147,15 +180,33 @@ PosixSemaphoreKill(sem_t * sem)
  * zero will be passed.
  *
  * In the Posix implementation, we acquire semaphores on-demand; the
- * maxSemas parameter is just used to size the array that keeps track of
- * acquired semas for subsequent releasing.
+ * maxSemas parameter is just used to size the arrays.  For unnamed
+ * semaphores, there is an array of PGSemaphoreData structs in shared memory.
+ * For named semaphores, we keep a postmaster-local array of sem_t pointers,
+ * which we use for releasing the semphores when done.
+ * (This design minimizes the dependency of postmaster shutdown on the
+ * contents of shared memory, which a failed backend might have clobbered.
+ * We can't do much about the possibility of sem_destroy() crashing, but
+ * we don't have to expose the counters to other processes.)
  */
 void
 PGReserveSemaphores(int maxSemas, int port)
 {
+#ifdef USE_NAMED_POSIX_SEMAPHORES
 	mySemPointers = (sem_t **) malloc(maxSemas * sizeof(sem_t *));
 	if (mySemPointers == NULL)
 		elog(PANIC, "out of memory");
+#else
+
+	/*
+	 * We must use ShmemAllocUnlocked(), since the spinlock protecting
+	 * ShmemAlloc() won't be ready yet.  (This ordering is necessary when we
+	 * are emulating spinlocks with semaphores.)
+	 */
+	sharedSemas = (PGSemaphore)
+		ShmemAllocUnlocked(PGSemaphoreShmemSize(maxSemas));
+#endif
+
 	numSems = 0;
 	maxSems = maxSemas;
 	nextSemKey = port * 1000;
@@ -173,19 +224,27 @@ ReleaseSemaphores(int status, Datum arg)
 {
 	int			i;
 
+#ifdef USE_NAMED_POSIX_SEMAPHORES
 	for (i = 0; i < numSems; i++)
 		PosixSemaphoreKill(mySemPointers[i]);
 	free(mySemPointers);
+#endif
+
+#ifdef USE_UNNAMED_POSIX_SEMAPHORES
+	for (i = 0; i < numSems; i++)
+		PosixSemaphoreKill(PG_SEM_REF(sharedSemas + i));
+#endif
 }
 
 /*
  * PGSemaphoreCreate
  *
- * Initialize a PGSemaphore structure to represent a sema with count 1
+ * Allocate a PGSemaphore structure with initial count 1
  */
-void
-PGSemaphoreCreate(PGSemaphore sema)
+PGSemaphore
+PGSemaphoreCreate(void)
 {
+	PGSemaphore sema;
 	sem_t	   *newsem;
 
 	/* Can't do this in a backend, because static state is postmaster's */
@@ -195,14 +254,19 @@ PGSemaphoreCreate(PGSemaphore sema)
 		elog(PANIC, "too many semaphores created");
 
 #ifdef USE_NAMED_POSIX_SEMAPHORES
-	*sema = newsem = PosixSemaphoreCreate();
+	newsem = PosixSemaphoreCreate();
+	/* Remember new sema for ReleaseSemaphores */
+	mySemPointers[numSems] = newsem;
+	sema = (PGSemaphore) newsem;
 #else
-	PosixSemaphoreCreate(sema);
-	newsem = sema;
+	sema = &sharedSemas[numSems];
+	newsem = PG_SEM_REF(sema);
+	PosixSemaphoreCreate(newsem);
 #endif
 
-	/* Remember new sema for ReleaseSemaphores */
-	mySemPointers[numSems++] = newsem;
+	numSems++;
+
+	return sema;
 }
 
 /*

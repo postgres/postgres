@@ -117,35 +117,21 @@ InitShmemAllocation(void)
 	Assert(shmhdr != NULL);
 
 	/*
-	 * If spinlocks are disabled, initialize emulation layer.  We have to do
-	 * the space allocation the hard way, since obviously ShmemAlloc can't be
-	 * called yet.
+	 * Initialize the spinlock used by ShmemAlloc.  We must use
+	 * ShmemAllocUnlocked, since obviously ShmemAlloc can't be called yet.
 	 */
-#ifndef HAVE_SPINLOCKS
-	{
-		PGSemaphore spinsemas;
+	ShmemLock = (slock_t *) ShmemAllocUnlocked(sizeof(slock_t));
 
-		spinsemas = (PGSemaphore) (((char *) shmhdr) + shmhdr->freeoffset);
-		shmhdr->freeoffset += MAXALIGN(SpinlockSemaSize());
-		SpinlockSemaInit(spinsemas);
-		Assert(shmhdr->freeoffset <= shmhdr->totalsize);
-	}
-#endif
+	SpinLockInit(ShmemLock);
 
 	/*
-	 * Initialize the spinlock used by ShmemAlloc; we have to do this the hard
-	 * way, too, for the same reasons as above.
+	 * Allocations after this point should go through ShmemAlloc, which
+	 * expects to allocate everything on cache line boundaries.  Make sure the
+	 * first allocation begins on a cache line boundary.
 	 */
-	ShmemLock = (slock_t *) (((char *) shmhdr) + shmhdr->freeoffset);
-	shmhdr->freeoffset += MAXALIGN(sizeof(slock_t));
-	Assert(shmhdr->freeoffset <= shmhdr->totalsize);
-
-	/* Make sure the first allocation begins on a cache line boundary. */
 	aligned = (char *)
 		(CACHELINEALIGN((((char *) shmhdr) + shmhdr->freeoffset)));
 	shmhdr->freeoffset = aligned - (char *) shmhdr;
-
-	SpinLockInit(ShmemLock);
 
 	/* ShmemIndex can't be set up yet (need LWLocks first) */
 	shmhdr->index = NULL;
@@ -225,6 +211,45 @@ ShmemAllocNoError(Size size)
 
 	/* note this assert is okay with newSpace == NULL */
 	Assert(newSpace == (void *) CACHELINEALIGN(newSpace));
+
+	return newSpace;
+}
+
+/*
+ * ShmemAllocUnlocked -- allocate max-aligned chunk from shared memory
+ *
+ * Allocate space without locking ShmemLock.  This should be used for,
+ * and only for, allocations that must happen before ShmemLock is ready.
+ *
+ * We consider maxalign, rather than cachealign, sufficient here.
+ */
+void *
+ShmemAllocUnlocked(Size size)
+{
+	Size		newStart;
+	Size		newFree;
+	void	   *newSpace;
+
+	/*
+	 * Ensure allocated space is adequately aligned.
+	 */
+	size = MAXALIGN(size);
+
+	Assert(ShmemSegHdr != NULL);
+
+	newStart = ShmemSegHdr->freeoffset;
+
+	newFree = newStart + size;
+	if (newFree > ShmemSegHdr->totalsize)
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of shared memory (%zu bytes requested)",
+						size)));
+	ShmemSegHdr->freeoffset = newFree;
+
+	newSpace = (void *) ((char *) ShmemBase + newStart);
+
+	Assert(newSpace == (void *) MAXALIGN(newSpace));
 
 	return newSpace;
 }

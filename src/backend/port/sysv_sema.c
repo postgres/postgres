@@ -27,7 +27,14 @@
 #include "miscadmin.h"
 #include "storage/ipc.h"
 #include "storage/pg_sema.h"
+#include "storage/shmem.h"
 
+
+typedef struct PGSemaphoreData
+{
+	int			semId;			/* semaphore set identifier */
+	int			semNum;			/* semaphore number within set */
+} PGSemaphoreData;
 
 #ifndef HAVE_UNION_SEMUN
 union semun
@@ -54,6 +61,9 @@ typedef int IpcSemaphoreId;		/* semaphore ID returned by semget(2) */
 #define PGSemaMagic		537		/* must be less than SEMVMX */
 
 
+static PGSemaphore sharedSemas; /* array of PGSemaphoreData in shared memory */
+static int	numSharedSemas;		/* number of PGSemaphoreDatas used so far */
+static int	maxSharedSemas;		/* allocated size of PGSemaphoreData array */
 static IpcSemaphoreId *mySemaSets;		/* IDs of sema sets acquired so far */
 static int	numSemaSets;		/* number of sema sets acquired so far */
 static int	maxSemaSets;		/* allocated size of mySemaSets array */
@@ -274,6 +284,15 @@ IpcSemaphoreCreate(int numSems)
 
 
 /*
+ * Report amount of shared memory needed for semaphores
+ */
+Size
+PGSemaphoreShmemSize(int maxSemas)
+{
+	return mul_size(maxSemas, sizeof(PGSemaphoreData));
+}
+
+/*
  * PGReserveSemaphores --- initialize semaphore support
  *
  * This is called during postmaster start or shared memory reinitialization.
@@ -287,12 +306,26 @@ IpcSemaphoreCreate(int numSems)
  * zero will be passed.
  *
  * In the SysV implementation, we acquire semaphore sets on-demand; the
- * maxSemas parameter is just used to size the array that keeps track of
- * acquired sets for subsequent releasing.
+ * maxSemas parameter is just used to size the arrays.  There is an array
+ * of PGSemaphoreData structs in shared memory, and a postmaster-local array
+ * with one entry per SysV semaphore set, which we use for releasing the
+ * semaphore sets when done.  (This design ensures that postmaster shutdown
+ * doesn't rely on the contents of shared memory, which a failed backend might
+ * have clobbered.)
  */
 void
 PGReserveSemaphores(int maxSemas, int port)
 {
+	/*
+	 * We must use ShmemAllocUnlocked(), since the spinlock protecting
+	 * ShmemAlloc() won't be ready yet.  (This ordering is necessary when we
+	 * are emulating spinlocks with semaphores.)
+	 */
+	sharedSemas = (PGSemaphore)
+		ShmemAllocUnlocked(PGSemaphoreShmemSize(maxSemas));
+	numSharedSemas = 0;
+	maxSharedSemas = maxSemas;
+
 	maxSemaSets = (maxSemas + SEMAS_PER_SET - 1) / SEMAS_PER_SET;
 	mySemaSets = (IpcSemaphoreId *)
 		malloc(maxSemaSets * sizeof(IpcSemaphoreId));
@@ -323,11 +356,13 @@ ReleaseSemaphores(int status, Datum arg)
 /*
  * PGSemaphoreCreate
  *
- * Initialize a PGSemaphore structure to represent a sema with count 1
+ * Allocate a PGSemaphore structure with initial count 1
  */
-void
-PGSemaphoreCreate(PGSemaphore sema)
+PGSemaphore
+PGSemaphoreCreate(void)
 {
+	PGSemaphore sema;
+
 	/* Can't do this in a backend, because static state is postmaster's */
 	Assert(!IsUnderPostmaster);
 
@@ -340,11 +375,17 @@ PGSemaphoreCreate(PGSemaphore sema)
 		numSemaSets++;
 		nextSemaNumber = 0;
 	}
+	/* Use the next shared PGSemaphoreData */
+	if (numSharedSemas >= maxSharedSemas)
+		elog(PANIC, "too many semaphores created");
+	sema = &sharedSemas[numSharedSemas++];
 	/* Assign the next free semaphore in the current set */
 	sema->semId = mySemaSets[numSemaSets - 1];
 	sema->semNum = nextSemaNumber++;
 	/* Initialize it to count 1 */
 	IpcSemaphoreInitialize(sema->semId, sema->semNum, 1);
+
+	return sema;
 }
 
 /*

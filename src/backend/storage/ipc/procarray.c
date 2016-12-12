@@ -522,7 +522,7 @@ ProcArrayGroupClearXid(PGPROC *proc, TransactionId latestXid)
 		for (;;)
 		{
 			/* acts as a read barrier */
-			PGSemaphoreLock(&proc->sem);
+			PGSemaphoreLock(proc->sem);
 			if (!proc->procArrayGroupMember)
 				break;
 			extraWaits++;
@@ -532,7 +532,7 @@ ProcArrayGroupClearXid(PGPROC *proc, TransactionId latestXid)
 
 		/* Fix semaphore count for any absorbed wakeups */
 		while (extraWaits-- > 0)
-			PGSemaphoreUnlock(&proc->sem);
+			PGSemaphoreUnlock(proc->sem);
 		return;
 	}
 
@@ -591,7 +591,7 @@ ProcArrayGroupClearXid(PGPROC *proc, TransactionId latestXid)
 		proc->procArrayGroupMember = false;
 
 		if (proc != MyProc)
-			PGSemaphoreUnlock(&proc->sem);
+			PGSemaphoreUnlock(proc->sem);
 	}
 }
 
