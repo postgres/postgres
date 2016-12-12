@@ -15022,7 +15022,7 @@ fi
 if test "$enable_strong_random" = "yes" && test x"$USE_OPENSSL_RANDOM" = x"" && test x"$USE_WIN32_RANDOM" = x"" && test x"$USE_DEV_URANDOM" = x"" ; then
   if test x"$with_openssl" = x"yes" ; then
     USE_OPENSSL_RANDOM=1
-  elif test "$PORTNAME" = x"win32" ; then
+  elif test "$PORTNAME" = "win32" ; then
     USE_WIN32_RANDOM=1
   else
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for /dev/urandom" >&5
