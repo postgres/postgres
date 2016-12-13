@@ -279,6 +279,14 @@ UPDATE <replaceable class="parameter">count</replaceable>
    sub-selects is safer, though often harder to read and slower than
    using a join.
   </para>
+
+  <para>
+   In the case of a partitioned table, updating a row might cause it to no
+   longer satisfy the partition constraint.  Since there is no provision to
+   move the row to the partition appropriate to the new value of its
+   partitioning key, an error will occur in this case.  This can also happen
+   when updating a partition directly.
+  </para>
  </refsect1>
 
  <refsect1>

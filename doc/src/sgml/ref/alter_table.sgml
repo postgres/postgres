@@ -715,7 +715,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term><literal>ATTACH PARTITION</literal> <replaceable class="PARAMETER">partition_name</replaceable> <replaceable class="PARAMETER">partition_bound_spec</replaceable></term>
+    <term><literal>ATTACH PARTITION</literal> <replaceable class="PARAMETER">partition_name</replaceable> FOR VALUES <replaceable class="PARAMETER">partition_bound_spec</replaceable></term>
     <listitem>
      <para>
       This form attaches an existing table (which might itself be partitioned)
@@ -1332,7 +1332,7 @@ ALTER TABLE measurement
    Attach a partition to list partitioned table:
 <programlisting>
 ALTER TABLE cities
-    ATTACH PARTITION cities_west FOR VALUES IN ('Los Angeles', 'San Francisco');
+    ATTACH PARTITION cities_ab FOR VALUES IN ('a', 'b');
 </programlisting></para>
 
   <para>

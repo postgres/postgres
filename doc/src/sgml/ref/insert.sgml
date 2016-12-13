@@ -526,6 +526,17 @@ INSERT <replaceable>oid</replaceable> <replaceable class="parameter">count</repl
    updated by the command.
   </para>
  </refsect1>
+ 
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   If the specified table is a partitioned table, each row is routed to
+   the appropriate partition and inserted into it.  If the specified table
+   is a partition, an error will occur if one of the input rows violates
+   the partition constraint.
+  </para>
+ </refsect1>
 
  <refsect1>
   <title>Examples</title>

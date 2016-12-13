@@ -248,7 +248,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
    </varlistentry>
 
    <varlistentry>
-    <term><literal>PARTITION OF <replaceable class="PARAMETER">parent_table</replaceable></literal></term>
+    <term><literal>PARTITION OF <replaceable class="PARAMETER">parent_table</replaceable></literal> FOR VALUES <replaceable class="PARAMETER">partition_bound_spec</replaceable></term>
     <listitem>
      <para>
       Creates the table as <firstterm>partition</firstterm> of the specified
@@ -275,7 +275,8 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
      <para>
       Rows inserted into a partitioned table will be automatically routed to
       the correct partition.  If no suitable partition exists, an error will
-      occur.
+      occur.  Also, if updating a row in a given partition causes it to move
+      to another partition due to the new partition key, an error will occur.
      </para>
 
      <para>
@@ -1477,7 +1478,6 @@ CREATE TABLE employees OF employee_type (
    Create a range partitioned table:
 <programlisting>
 CREATE TABLE measurement (
-    city_id         int not null,
     logdate         date not null,
     peaktemp        int,
     unitsales       int
@@ -1488,9 +1488,10 @@ CREATE TABLE measurement (
    Create a list partitioned table:
 <programlisting>
 CREATE TABLE cities (
+    city_id      bigserial not null,
     name         text not null,
-    population   int,
-) PARTITION BY LIST (initcap(name));
+    population   bigint,
+) PARTITION BY LIST (left(lower(name), 1));
 </programlisting></para>
 
   <para>
@@ -1498,30 +1499,30 @@ CREATE TABLE cities (
 <programlisting>
 CREATE TABLE measurement_y2016m07
     PARTITION OF measurement (
-    unitsales WITH OPTIONS DEFAULT 0
+    unitsales DEFAULT 0
 ) FOR VALUES FROM ('2016-07-01') TO ('2016-08-01');
 </programlisting></para>
 
   <para>
    Create partition of a list partitioned table:
 <programlisting>
-CREATE TABLE cities_west
+CREATE TABLE cities_ab
     PARTITION OF cities (
     CONSTRAINT city_id_nonzero CHECK (city_id != 0)
-) FOR VALUES IN ('Los Angeles', 'San Francisco');
+) FOR VALUES IN ('a', 'b');
 </programlisting></para>
 
   <para>
    Create partition of a list partitioned table that is itself further
    partitioned and then add a partition to it:
 <programlisting>
-CREATE TABLE cities_west
+CREATE TABLE cities_ab
     PARTITION OF cities (
     CONSTRAINT city_id_nonzero CHECK (city_id != 0)
-) FOR VALUES IN ('Los Angeles', 'San Francisco') PARTITION BY RANGE (population);
+) FOR VALUES IN ('a', 'b') PARTITION BY RANGE (population);
 
-CREATE TABLE cities_west_10000_to_100000
-    PARTITION OF cities_west FOR VALUES FROM (10000) TO (100000);
+CREATE TABLE cities_ab_10000_to_100000
+    PARTITION OF cities_ab FOR VALUES FROM (10000) TO (100000);
 </programlisting></para>
  </refsect1>
 
