@@ -1887,6 +1887,10 @@ heap_drop_with_catalog(Oid relid)
 
 	if (parent)
 	{
+		/*
+		 * Invalidate the parent's relcache so that the partition is no longer
+		 * included in its partition descriptor.
+		 */
 		CacheInvalidateRelcache(parent);
 		heap_close(parent, NoLock);		/* keep the lock */
 	}

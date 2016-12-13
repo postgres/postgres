@@ -1492,7 +1492,7 @@ generate_partition_qual(Relation rel, bool recurse)
  *			Construct values[] and isnull[] arrays for the partition key
  *			of a tuple.
  *
- *	pkinfo			partition key execution info
+ *	pd				Partition dispatch object of the partitioned table
  *	slot			Heap tuple from which to extract partition key
  *	estate			executor state for evaluating any partition key
  *					expressions (must be non-NULL)
@@ -1565,7 +1565,7 @@ FormPartitionKeyDatum(PartitionDispatch pd,
  * the latter case.
  */
 int
-get_partition_for_tuple(PartitionDispatch * pd,
+get_partition_for_tuple(PartitionDispatch *pd,
 						TupleTableSlot *slot,
 						EState *estate,
 						Oid *failed_at)

@@ -1718,26 +1718,26 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	if (operation == CMD_INSERT &&
 		rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 	{
-		PartitionDispatch  *pd;
 		int					i,
 							j,
-							num_parted,
-							num_leaf_parts;
+							num_parted;
 		List			   *leaf_parts;
 		ListCell		   *cell;
 		ResultRelInfo	   *leaf_part_rri;
 
-		/* Form the partition node tree and lock partitions */
-		pd = RelationGetPartitionDispatchInfo(rel, RowExclusiveLock,
-											  &num_parted, &leaf_parts);
-		mtstate->mt_partition_dispatch_info = pd;
+		/* Get the tuple-routing information and lock partitions */
+		mtstate->mt_partition_dispatch_info =
+					RelationGetPartitionDispatchInfo(rel, RowExclusiveLock,
+													 &num_parted,
+													 &leaf_parts);
 		mtstate->mt_num_dispatch = num_parted;
-		num_leaf_parts = list_length(leaf_parts);
-		mtstate->mt_num_partitions = num_leaf_parts;
+		mtstate->mt_num_partitions = list_length(leaf_parts);
 		mtstate->mt_partitions = (ResultRelInfo *)
-						palloc0(num_leaf_parts * sizeof(ResultRelInfo));
+						palloc0(mtstate->mt_num_partitions *
+												sizeof(ResultRelInfo));
 		mtstate->mt_partition_tupconv_maps = (TupleConversionMap **)
-					palloc0(num_leaf_parts * sizeof(TupleConversionMap *));
+						palloc0(mtstate->mt_num_partitions *
+												sizeof(TupleConversionMap *));
 
 		leaf_part_rri = mtstate->mt_partitions;
 		i = j = 0;

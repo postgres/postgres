@@ -161,11 +161,11 @@ typedef struct CopyStateData
 	ExprState **defexprs;		/* array of default att expressions */
 	bool		volatile_defexprs;		/* is any of defexprs volatile? */
 	List	   *range_table;
-	PartitionDispatch	   *partition_dispatch_info;
-	int						num_dispatch;
-	int						num_partitions;
-	ResultRelInfo		   *partitions;
-	TupleConversionMap	  **partition_tupconv_maps;
+	PartitionDispatch *partition_dispatch_info;
+	int			num_dispatch;
+	int			num_partitions;
+	ResultRelInfo *partitions;
+	TupleConversionMap **partition_tupconv_maps;
 
 	/*
 	 * These variables are used to reduce overhead in textual COPY FROM.
@@ -1403,31 +1403,28 @@ BeginCopy(ParseState *pstate,
 					 errmsg("table \"%s\" does not have OIDs",
 							RelationGetRelationName(cstate->rel))));
 
-		/*
-		 * Initialize state for CopyFrom tuple routing.  Watch out for
-		 * any foreign partitions.
-		 */
+		/* Initialize state for CopyFrom tuple routing. */
 		if (is_from && rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 		{
-			PartitionDispatch *pd;
-			List		   *leaf_parts;
-			ListCell	   *cell;
-			int				i,
-							num_parted,
-							num_leaf_parts;
-			ResultRelInfo  *leaf_part_rri;
+			List	   *leaf_parts;
+			ListCell   *cell;
+			int			i,
+						num_parted;
+			ResultRelInfo *leaf_part_rri;
 
 			/* Get the tuple-routing information and lock partitions */
-			pd = RelationGetPartitionDispatchInfo(rel, RowExclusiveLock,
-												  &num_parted, &leaf_parts);
-			num_leaf_parts = list_length(leaf_parts);
-			cstate->partition_dispatch_info = pd;
+			cstate->partition_dispatch_info =
+				RelationGetPartitionDispatchInfo(rel, RowExclusiveLock,
+												 &num_parted,
+												 &leaf_parts);
 			cstate->num_dispatch = num_parted;
-			cstate->num_partitions = num_leaf_parts;
-			cstate->partitions = (ResultRelInfo *) palloc(num_leaf_parts *
-														sizeof(ResultRelInfo));
+			cstate->num_partitions = list_length(leaf_parts);
+			cstate->partitions = (ResultRelInfo *)
+				palloc(cstate->num_partitions *
+					   sizeof(ResultRelInfo));
 			cstate->partition_tupconv_maps = (TupleConversionMap **)
-						palloc0(num_leaf_parts * sizeof(TupleConversionMap *));
+				palloc0(cstate->num_partitions *
+						sizeof(TupleConversionMap *));
 
 			leaf_part_rri = cstate->partitions;
 			i = 0;
@@ -1438,8 +1435,8 @@ BeginCopy(ParseState *pstate,
 				/*
 				 * We locked all the partitions above including the leaf
 				 * partitions.  Note that each of the relations in
-				 * cstate->partitions will be closed by CopyFrom() after
-				 * it's finished with its processing.
+				 * cstate->partitions will be closed by CopyFrom() after it's
+				 * finished with its processing.
 				 */
 				partrel = heap_open(lfirst_oid(cell), NoLock);
 
@@ -1451,8 +1448,9 @@ BeginCopy(ParseState *pstate,
 
 				InitResultRelInfo(leaf_part_rri,
 								  partrel,
-								  1,	 /* dummy */
-								  false, /* no partition constraint check */
+								  1,	/* dummy */
+								  false,		/* no partition constraint
+												 * check */
 								  0);
 
 				/* Open partition indices */
@@ -1460,9 +1458,9 @@ BeginCopy(ParseState *pstate,
 
 				if (!equalTupleDescs(tupDesc, RelationGetDescr(partrel)))
 					cstate->partition_tupconv_maps[i] =
-								convert_tuples_by_name(tupDesc,
-									RelationGetDescr(partrel),
-									gettext_noop("could not convert row type"));
+						convert_tuples_by_name(tupDesc,
+											   RelationGetDescr(partrel),
+								 gettext_noop("could not convert row type"));
 				leaf_part_rri++;
 				i++;
 			}
@@ -2486,8 +2484,8 @@ CopyFrom(CopyState cstate)
 	 * BEFORE/INSTEAD OF triggers, or we need to evaluate volatile default
 	 * expressions. Such triggers or expressions might query the table we're
 	 * inserting to, and act differently if the tuples that have already been
-	 * processed and prepared for insertion are not there.  We also can't
-	 * do it if the table is partitioned.
+	 * processed and prepared for insertion are not there.  We also can't do
+	 * it if the table is partitioned.
 	 */
 	if ((resultRelInfo->ri_TrigDesc != NULL &&
 		 (resultRelInfo->ri_TrigDesc->trig_insert_before_row ||
@@ -2572,7 +2570,7 @@ CopyFrom(CopyState cstate)
 		/* Determine the partition to heap_insert the tuple into */
 		if (cstate->partition_dispatch_info)
 		{
-			int		leaf_part_index;
+			int			leaf_part_index;
 			TupleConversionMap *map;
 
 			/*
@@ -2584,7 +2582,7 @@ CopyFrom(CopyState cstate)
 			 * partition, respectively.
 			 */
 			leaf_part_index = ExecFindPartition(resultRelInfo,
-											cstate->partition_dispatch_info,
+											 cstate->partition_dispatch_info,
 												slot,
 												estate);
 			Assert(leaf_part_index >= 0 &&
@@ -2601,7 +2599,7 @@ CopyFrom(CopyState cstate)
 			if (resultRelInfo->ri_FdwRoutine)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cannot route inserted tuples to a foreign table")));
+				 errmsg("cannot route inserted tuples to a foreign table")));
 
 			/*
 			 * For ExecInsertIndexTuples() to work on the partition's indexes
@@ -2752,7 +2750,7 @@ CopyFrom(CopyState cstate)
 	/* Close all the partitioned tables, leaf partitions, and their indices */
 	if (cstate->partition_dispatch_info)
 	{
-		int		i;
+		int			i;
 
 		/*
 		 * Remember cstate->partition_dispatch_info[0] corresponds to the root
