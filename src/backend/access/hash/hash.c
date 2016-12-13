@@ -523,7 +523,8 @@ hashbulkdelete(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 	orig_maxbucket = metap->hashm_maxbucket;
 	orig_ntuples = metap->hashm_ntuples;
 	memcpy(&local_metapage, metap, sizeof(local_metapage));
-	_hash_relbuf(rel, metabuf);
+	/* release the lock, but keep pin */
+	_hash_chgbufaccess(rel, metabuf, HASH_READ, HASH_NOLOCK);
 
 	/* Scan the buckets that we know exist */
 	cur_bucket = 0;
@@ -563,7 +564,22 @@ loop_top:
 		 */
 		if (!H_BUCKET_BEING_SPLIT(bucket_opaque) &&
 			H_NEEDS_SPLIT_CLEANUP(bucket_opaque))
+		{
 			split_cleanup = true;
+
+			/*
+			 * This bucket might have been split since we last held a lock on
+			 * the metapage.  If so, hashm_maxbucket, hashm_highmask and
+			 * hashm_lowmask might be old enough to cause us to fail to remove
+			 * tuples left behind by the most recent split.  To prevent that,
+			 * now that the primary page of the target bucket has been locked
+			 * (and thus can't be further split), update our cached metapage
+			 * data.
+			 */
+			_hash_chgbufaccess(rel, metabuf, HASH_NOLOCK, HASH_READ);
+			memcpy(&local_metapage, metap, sizeof(local_metapage));
+			_hash_chgbufaccess(rel, metabuf, HASH_READ, HASH_NOLOCK);
+		}
 
 		bucket_buf = buf;
 
@@ -581,7 +597,7 @@ loop_top:
 	}
 
 	/* Write-lock metapage and check for split since we started */
-	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_WRITE, LH_META_PAGE);
+	_hash_chgbufaccess(rel, metabuf, HASH_NOLOCK, HASH_WRITE);
 	metap = HashPageGetMeta(BufferGetPage(metabuf));
 
 	if (cur_maxbucket != metap->hashm_maxbucket)
@@ -589,7 +605,7 @@ loop_top:
 		/* There's been a split, so process the additional bucket(s) */
 		cur_maxbucket = metap->hashm_maxbucket;
 		memcpy(&local_metapage, metap, sizeof(local_metapage));
-		_hash_relbuf(rel, metabuf);
+		_hash_chgbufaccess(rel, metabuf, HASH_READ, HASH_NOLOCK);
 		goto loop_top;
 	}
 
