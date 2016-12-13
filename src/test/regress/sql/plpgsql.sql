@@ -3719,6 +3719,7 @@ drop function tftest(int);
 create or replace function rttest()
 returns setof int as $$
 declare rc int;
+  rca int[];
 begin
   return query values(10),(20);
   get diagnostics rc = row_count;
@@ -3727,11 +3728,12 @@ begin
   get diagnostics rc = row_count;
   raise notice '% %', found, rc;
   return query execute 'values(10),(20)';
-  get diagnostics rc = row_count;
-  raise notice '% %', found, rc;
+  -- just for fun, let's use array elements as targets
+  get diagnostics rca[1] = row_count;
+  raise notice '% %', found, rca[1];
   return query execute 'select * from (values(10),(20)) f(a) where false';
-  get diagnostics rc = row_count;
-  raise notice '% %', found, rc;
+  get diagnostics rca[2] = row_count;
+  raise notice '% %', found, rca[2];
 end;
 $$ language plpgsql;
 

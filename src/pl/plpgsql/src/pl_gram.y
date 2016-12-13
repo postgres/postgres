@@ -180,10 +180,11 @@ static	void			check_raise_parameters(PLpgSQL_stmt_raise *stmt);
 %type <expr>	expr_until_then expr_until_loop opt_expr_until_when
 %type <expr>	opt_exitcond
 
-%type <ival>	assign_var foreach_slice
+%type <datum>	assign_var
 %type <var>		cursor_variable
 %type <datum>	decl_cursor_arg
 %type <forvariable>	for_variable
+%type <ival>	foreach_slice
 %type <stmt>	for_control
 
 %type <str>		any_identifier opt_block_label opt_loop_label opt_label
@@ -209,7 +210,8 @@ static	void			check_raise_parameters(PLpgSQL_stmt_raise *stmt);
 %type <boolean>	getdiag_area_opt
 %type <list>	getdiag_list
 %type <diagitem> getdiag_list_item
-%type <ival>	getdiag_item getdiag_target
+%type <datum>	getdiag_target
+%type <ival>	getdiag_item
 
 %type <ival>	opt_scrollable
 %type <fetch>	opt_fetch_direction
@@ -916,7 +918,7 @@ stmt_assign		: assign_var assign_operator expr_until_semi
 						new = palloc0(sizeof(PLpgSQL_stmt_assign));
 						new->cmd_type = PLPGSQL_STMT_ASSIGN;
 						new->lineno   = plpgsql_location_to_lineno(@1);
-						new->varno = $1;
+						new->varno = $1->dno;
 						new->expr  = $3;
 
 						$$ = (PLpgSQL_stmt *)new;
@@ -1014,7 +1016,7 @@ getdiag_list_item : getdiag_target assign_operator getdiag_item
 						PLpgSQL_diag_item *new;
 
 						new = palloc(sizeof(PLpgSQL_diag_item));
-						new->target = $1;
+						new->target = $1->dno;
 						new->kind = $3;
 
 						$$ = new;
@@ -1069,17 +1071,16 @@ getdiag_item :
 					}
 				;
 
-getdiag_target	: T_DATUM
+getdiag_target	: assign_var
 					{
-						check_assignable($1.datum, @1);
-						if ($1.datum->dtype == PLPGSQL_DTYPE_ROW ||
-							$1.datum->dtype == PLPGSQL_DTYPE_REC)
+						if ($1->dtype == PLPGSQL_DTYPE_ROW ||
+							$1->dtype == PLPGSQL_DTYPE_REC)
 							ereport(ERROR,
 									(errcode(ERRCODE_SYNTAX_ERROR),
 									 errmsg("\"%s\" is not a scalar variable",
-											NameOfDatum(&($1))),
+											((PLpgSQL_variable *) $1)->refname),
 									 parser_errposition(@1)));
-						$$ = $1.datum->dno;
+						$$ = $1;
 					}
 				| T_WORD
 					{
@@ -1097,7 +1098,7 @@ getdiag_target	: T_DATUM
 assign_var		: T_DATUM
 					{
 						check_assignable($1.datum, @1);
-						$$ = $1.datum->dno;
+						$$ = $1.datum;
 					}
 				| assign_var '[' expr_until_rightbracket
 					{
@@ -1106,13 +1107,13 @@ assign_var		: T_DATUM
 						new = palloc0(sizeof(PLpgSQL_arrayelem));
 						new->dtype		= PLPGSQL_DTYPE_ARRAYELEM;
 						new->subscript	= $3;
-						new->arrayparentno = $1;
+						new->arrayparentno = $1->dno;
 						/* initialize cached type data to "not valid" */
 						new->parenttypoid = InvalidOid;
 
 						plpgsql_adddatum((PLpgSQL_datum *) new);
 
-						$$ = new->dno;
+						$$ = (PLpgSQL_datum *) new;
 					}
 				;
 
@@ -2173,7 +2174,13 @@ stmt_null		: K_NULL ';'
 
 cursor_variable	: T_DATUM
 					{
-						if ($1.datum->dtype != PLPGSQL_DTYPE_VAR)
+						/*
+						 * In principle we should support a cursor_variable
+						 * that is an array element, but for now we don't, so
+						 * just throw an error if next token is '['.
+						 */
+						if ($1.datum->dtype != PLPGSQL_DTYPE_VAR ||
+							plpgsql_peek() == '[')
 							ereport(ERROR,
 									(errcode(ERRCODE_DATATYPE_MISMATCH),
 									 errmsg("cursor variable must be a simple variable"),
