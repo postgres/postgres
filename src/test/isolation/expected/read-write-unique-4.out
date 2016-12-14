@@ -1,0 +1,41 @@
+Parsed test spec with 2 sessions
+
+starting permutation: r1 r2 w1 w2 c1 c2
+step r1: SELECT COALESCE(MAX(invoice_number) + 1, 1) FROM invoice WHERE year = 2016;
+coalesce       
+
+3              
+step r2: SELECT COALESCE(MAX(invoice_number) + 1, 1) FROM invoice WHERE year = 2016;
+coalesce       
+
+3              
+step w1: INSERT INTO invoice VALUES (2016, 3);
+step w2: INSERT INTO invoice VALUES (2016, 3); <waiting ...>
+step c1: COMMIT;
+step w2: <... completed>
+error in steps c1 w2: ERROR:  could not serialize access due to read/write dependencies among transactions
+step c2: COMMIT;
+
+starting permutation: r1 w1 w2 c1 c2
+step r1: SELECT COALESCE(MAX(invoice_number) + 1, 1) FROM invoice WHERE year = 2016;
+coalesce       
+
+3              
+step w1: INSERT INTO invoice VALUES (2016, 3);
+step w2: INSERT INTO invoice VALUES (2016, 3); <waiting ...>
+step c1: COMMIT;
+step w2: <... completed>
+error in steps c1 w2: ERROR:  duplicate key value violates unique constraint "invoice_pkey"
+step c2: COMMIT;
+
+starting permutation: r2 w1 w2 c1 c2
+step r2: SELECT COALESCE(MAX(invoice_number) + 1, 1) FROM invoice WHERE year = 2016;
+coalesce       
+
+3              
+step w1: INSERT INTO invoice VALUES (2016, 3);
+step w2: INSERT INTO invoice VALUES (2016, 3); <waiting ...>
+step c1: COMMIT;
+step w2: <... completed>
+error in steps c1 w2: ERROR:  duplicate key value violates unique constraint "invoice_pkey"
+step c2: COMMIT;
