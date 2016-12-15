@@ -192,7 +192,7 @@ cleanup_directories_atexit(void)
 
 	if (made_tablespace_dirs || found_tablespace_dirs)
 		fprintf(stderr,
-				_("%s: changes to tablespace directories will not be undone"),
+				_("%s: changes to tablespace directories will not be undone\n"),
 				progname);
 }
 
