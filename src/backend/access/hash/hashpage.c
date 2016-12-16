@@ -290,25 +290,6 @@ _hash_dropscanbuf(Relation rel, HashScanOpaque so)
 }
 
 /*
- *	_hash_wrtbuf() -- write a hash page to disk.
- *
- *		This routine releases the lock held on the buffer and our refcount
- *		for it.  It is an error to call _hash_wrtbuf() without a write lock
- *		and a pin on the buffer.
- *
- * NOTE: this routine should go away when/if hash indexes are WAL-ified.
- * The correct sequence of operations is to mark the buffer dirty, then
- * write the WAL record, then release the lock and pin; so marking dirty
- * can't be combined with releasing.
- */
-void
-_hash_wrtbuf(Relation rel, Buffer buf)
-{
-	MarkBufferDirty(buf);
-	UnlockReleaseBuffer(buf);
-}
-
-/*
  * _hash_chgbufaccess() -- Change the lock type on a buffer, without
  *			dropping our pin on it.
  *
@@ -483,7 +464,8 @@ _hash_metapinit(Relation rel, double num_tuples, ForkNumber forkNum)
 		pageopaque->hasho_bucket = i;
 		pageopaque->hasho_flag = LH_BUCKET_PAGE;
 		pageopaque->hasho_page_id = HASHO_PAGE_ID;
-		_hash_wrtbuf(rel, buf);
+		MarkBufferDirty(buf);
+		_hash_relbuf(rel, buf);
 	}
 
 	/* Now reacquire buffer lock on metapage */
@@ -495,7 +477,8 @@ _hash_metapinit(Relation rel, double num_tuples, ForkNumber forkNum)
 	_hash_initbitmap(rel, metap, num_buckets + 1, forkNum);
 
 	/* all done */
-	_hash_wrtbuf(rel, metabuf);
+	MarkBufferDirty(metabuf);
+	_hash_relbuf(rel, metabuf);
 
 	return num_buckets;
 }
@@ -1075,7 +1058,10 @@ _hash_splitbucket_guts(Relation rel,
 	if (nbuf == bucket_nbuf)
 		_hash_chgbufaccess(rel, bucket_nbuf, HASH_WRITE, HASH_NOLOCK);
 	else
-		_hash_wrtbuf(rel, nbuf);
+	{
+		MarkBufferDirty(nbuf);
+		_hash_relbuf(rel, nbuf);
+	}
 
 	_hash_chgbufaccess(rel, bucket_obuf, HASH_NOLOCK, HASH_WRITE);
 	opage = BufferGetPage(bucket_obuf);

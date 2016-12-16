@@ -635,7 +635,8 @@ loop_top:
 		num_index_tuples = metap->hashm_ntuples;
 	}
 
-	_hash_wrtbuf(rel, metabuf);
+	MarkBufferDirty(metabuf);
+	_hash_relbuf(rel, metabuf);
 
 	/* return statistics */
 	if (stats == NULL)
@@ -724,7 +725,6 @@ hashbucketcleanup(Relation rel, Bucket cur_bucket, Buffer bucket_buf,
 		OffsetNumber deletable[MaxOffsetNumber];
 		int			ndeletable = 0;
 		bool		retain_pin = false;
-		bool		curr_page_dirty = false;
 
 		vacuum_delay_point();
 
@@ -805,7 +805,7 @@ hashbucketcleanup(Relation rel, Bucket cur_bucket, Buffer bucket_buf,
 		{
 			PageIndexMultiDelete(page, deletable, ndeletable);
 			bucket_dirty = true;
-			curr_page_dirty = true;
+			MarkBufferDirty(buf);
 		}
 
 		/* bail out if there are no more pages to scan. */
@@ -820,15 +820,7 @@ hashbucketcleanup(Relation rel, Bucket cur_bucket, Buffer bucket_buf,
 		 * release the lock on previous page after acquiring the lock on next
 		 * page
 		 */
-		if (curr_page_dirty)
-		{
-			if (retain_pin)
-				_hash_chgbufaccess(rel, buf, HASH_WRITE, HASH_NOLOCK);
-			else
-				_hash_wrtbuf(rel, buf);
-			curr_page_dirty = false;
-		}
-		else if (retain_pin)
+		if (retain_pin)
 			_hash_chgbufaccess(rel, buf, HASH_READ, HASH_NOLOCK);
 		else
 			_hash_relbuf(rel, buf);
@@ -862,6 +854,7 @@ hashbucketcleanup(Relation rel, Bucket cur_bucket, Buffer bucket_buf,
 		bucket_opaque = (HashPageOpaque) PageGetSpecialPointer(page);
 
 		bucket_opaque->hasho_flag &= ~LH_BUCKET_NEEDS_SPLIT_CLEANUP;
+		MarkBufferDirty(bucket_buf);
 	}
 
 	/*
@@ -873,7 +866,7 @@ hashbucketcleanup(Relation rel, Bucket cur_bucket, Buffer bucket_buf,
 		_hash_squeezebucket(rel, cur_bucket, bucket_blkno, bucket_buf,
 							bstrategy);
 	else
-		_hash_chgbufaccess(rel, bucket_buf, HASH_WRITE, HASH_NOLOCK);
+		_hash_chgbufaccess(rel, bucket_buf, HASH_READ, HASH_NOLOCK);
 }
 
 void

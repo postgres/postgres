@@ -208,11 +208,12 @@ restart_insert:
 	(void) _hash_pgaddtup(rel, buf, itemsz, itup);
 
 	/*
-	 * write and release the modified page.  if the page we modified was an
+	 * dirty and release the modified page.  if the page we modified was an
 	 * overflow page, we also need to separately drop the pin we retained on
 	 * the primary bucket page.
 	 */
-	_hash_wrtbuf(rel, buf);
+	MarkBufferDirty(buf);
+	_hash_relbuf(rel, buf);
 	if (buf != bucket_buf)
 		_hash_dropbuf(rel, bucket_buf);
 

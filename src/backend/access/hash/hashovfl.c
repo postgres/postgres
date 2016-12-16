@@ -149,10 +149,11 @@ _hash_addovflpage(Relation rel, Buffer metabuf, Buffer buf, bool retain_pin)
 
 	/* logically chain overflow page to previous page */
 	pageopaque->hasho_nextblkno = BufferGetBlockNumber(ovflbuf);
+	MarkBufferDirty(buf);
 	if ((pageopaque->hasho_flag & LH_BUCKET_PAGE) && retain_pin)
-		_hash_chgbufaccess(rel, buf, HASH_WRITE, HASH_NOLOCK);
+		_hash_chgbufaccess(rel, buf, HASH_READ, HASH_NOLOCK);
 	else
-		_hash_wrtbuf(rel, buf);
+		_hash_relbuf(rel, buf);
 
 	return ovflbuf;
 }
@@ -304,7 +305,8 @@ found:
 
 	/* mark page "in use" in the bitmap */
 	SETBIT(freep, bit);
-	_hash_wrtbuf(rel, mapbuf);
+	MarkBufferDirty(mapbuf);
+	_hash_relbuf(rel, mapbuf);
 
 	/* Reacquire exclusive lock on the meta page */
 	_hash_chgbufaccess(rel, metabuf, HASH_NOLOCK, HASH_WRITE);
@@ -416,7 +418,8 @@ _hash_freeovflpage(Relation rel, Buffer ovflbuf, Buffer wbuf,
 	 * in _hash_pageinit() when the page is reused.)
 	 */
 	MemSet(ovflpage, 0, BufferGetPageSize(ovflbuf));
-	_hash_wrtbuf(rel, ovflbuf);
+	MarkBufferDirty(ovflbuf);
+	_hash_relbuf(rel, ovflbuf);
 
 	/*
 	 * Fix up the bucket chain.  this is a doubly-linked list, so we must fix
@@ -445,7 +448,10 @@ _hash_freeovflpage(Relation rel, Buffer ovflbuf, Buffer wbuf,
 		prevopaque->hasho_nextblkno = nextblkno;
 
 		if (prevblkno != writeblkno)
-			_hash_wrtbuf(rel, prevbuf);
+		{
+			MarkBufferDirty(prevbuf);
+			_hash_relbuf(rel, prevbuf);
+		}
 	}
 
 	/* write and unlock the write buffer */
@@ -466,7 +472,8 @@ _hash_freeovflpage(Relation rel, Buffer ovflbuf, Buffer wbuf,
 
 		Assert(nextopaque->hasho_bucket == bucket);
 		nextopaque->hasho_prevblkno = prevblkno;
-		_hash_wrtbuf(rel, nextbuf);
+		MarkBufferDirty(nextbuf);
+		_hash_relbuf(rel, nextbuf);
 	}
 
 	/* Note: bstrategy is intentionally not used for metapage and bitmap */
@@ -494,7 +501,8 @@ _hash_freeovflpage(Relation rel, Buffer ovflbuf, Buffer wbuf,
 	freep = HashPageGetBitmap(mappage);
 	Assert(ISSET(freep, bitmapbit));
 	CLRBIT(freep, bitmapbit);
-	_hash_wrtbuf(rel, mapbuf);
+	MarkBufferDirty(mapbuf);
+	_hash_relbuf(rel, mapbuf);
 
 	/* Get write-lock on metapage to update firstfree */
 	_hash_chgbufaccess(rel, metabuf, HASH_NOLOCK, HASH_WRITE);
@@ -503,13 +511,9 @@ _hash_freeovflpage(Relation rel, Buffer ovflbuf, Buffer wbuf,
 	if (ovflbitno < metap->hashm_firstfree)
 	{
 		metap->hashm_firstfree = ovflbitno;
-		_hash_wrtbuf(rel, metabuf);
+		MarkBufferDirty(metabuf);
 	}
-	else
-	{
-		/* no need to change metapage */
-		_hash_relbuf(rel, metabuf);
-	}
+	_hash_relbuf(rel, metabuf);
 
 	return nextblkno;
 }
@@ -559,8 +563,9 @@ _hash_initbitmap(Relation rel, HashMetaPage metap, BlockNumber blkno,
 	freep = HashPageGetBitmap(pg);
 	MemSet(freep, 0xFF, BMPGSZ_BYTE(metap));
 
-	/* write out the new bitmap page (releasing write lock and pin) */
-	_hash_wrtbuf(rel, buf);
+	/* dirty the new bitmap page, and release write lock and pin */
+	MarkBufferDirty(buf);
+	_hash_relbuf(rel, buf);
 
 	/* add the new bitmap page to the metapage's list of bitmaps */
 	/* metapage already has a write lock */
@@ -724,13 +729,8 @@ _hash_squeezebucket(Relation rel,
 				 * on next page
 				 */
 				if (wbuf_dirty)
-				{
-					if (retain_pin)
-						_hash_chgbufaccess(rel, wbuf, HASH_WRITE, HASH_NOLOCK);
-					else
-						_hash_wrtbuf(rel, wbuf);
-				}
-				else if (retain_pin)
+					MarkBufferDirty(wbuf);
+				if (retain_pin)
 					_hash_chgbufaccess(rel, wbuf, HASH_READ, HASH_NOLOCK);
 				else
 					_hash_relbuf(rel, wbuf);
@@ -742,10 +742,9 @@ _hash_squeezebucket(Relation rel,
 					{
 						/* Delete tuples we already moved off read page */
 						PageIndexMultiDelete(rpage, deletable, ndeletable);
-						_hash_wrtbuf(rel, rbuf);
+						MarkBufferDirty(rbuf);
 					}
-					else
-						_hash_relbuf(rel, rbuf);
+					_hash_relbuf(rel, rbuf);
 					return;
 				}
 
