@@ -924,6 +924,13 @@ check_synchronous_standby_names(char **newval, void **extra, GucSource source)
 			return false;
 		}
 
+		if (syncrep_parse_result->num_sync <= 0)
+		{
+			GUC_check_errmsg("number of synchronous standbys (%d) must be greater than zero",
+							 syncrep_parse_result->num_sync);
+			return false;
+		}
+
 		/* GUC extra value must be malloc'd, not palloc'd */
 		pconf = (SyncRepConfigData *)
 			malloc(syncrep_parse_result->config_size);
