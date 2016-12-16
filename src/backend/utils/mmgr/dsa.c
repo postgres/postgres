@@ -362,9 +362,6 @@ struct dsa_area
 	/* Pointer to the control object in shared memory. */
 	dsa_area_control *control;
 
-	/* The lock tranche for this process. */
-	LWLockTranche lwlock_tranche;
-
 	/* Has the mapping been pinned? */
 	bool		mapping_pinned;
 
@@ -1207,10 +1204,8 @@ create_internal(void *place, size_t size,
 	area->mapping_pinned = false;
 	memset(area->segment_maps, 0, sizeof(dsa_segment_map) * DSA_MAX_SEGMENTS);
 	area->high_segment_index = 0;
-	area->lwlock_tranche.array_base = &area->control->pools[0];
-	area->lwlock_tranche.array_stride = sizeof(dsa_area_pool);
-	area->lwlock_tranche.name = control->lwlock_tranche_name;
-	LWLockRegisterTranche(control->lwlock_tranche_id, &area->lwlock_tranche);
+	LWLockRegisterTranche(control->lwlock_tranche_id,
+						  control->lwlock_tranche_name);
 	LWLockInitialize(&control->lock, control->lwlock_tranche_id);
 	for (i = 0; i < DSA_NUM_SIZE_CLASSES; ++i)
 		LWLockInitialize(DSA_SCLASS_LOCK(area, i),
@@ -1267,10 +1262,8 @@ attach_internal(void *place, dsm_segment *segment, dsa_handle handle)
 	memset(&area->segment_maps[0], 0,
 		   sizeof(dsa_segment_map) * DSA_MAX_SEGMENTS);
 	area->high_segment_index = 0;
-	area->lwlock_tranche.array_base = &area->control->pools[0];
-	area->lwlock_tranche.array_stride = sizeof(dsa_area_pool);
-	area->lwlock_tranche.name = control->lwlock_tranche_name;
-	LWLockRegisterTranche(control->lwlock_tranche_id, &area->lwlock_tranche);
+	LWLockRegisterTranche(control->lwlock_tranche_id,
+						  control->lwlock_tranche_name);
 
 	/* Set up the segment map for this process's mapping. */
 	segment_map = &area->segment_maps[0];

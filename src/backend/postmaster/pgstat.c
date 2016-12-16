@@ -3152,11 +3152,8 @@ pgstat_get_wait_event_type(uint32 wait_event_info)
 
 	switch (classId)
 	{
-		case PG_WAIT_LWLOCK_NAMED:
-			event_type = "LWLockNamed";
-			break;
-		case PG_WAIT_LWLOCK_TRANCHE:
-			event_type = "LWLockTranche";
+		case PG_WAIT_LWLOCK:
+			event_type = "LWLock";
 			break;
 		case PG_WAIT_LOCK:
 			event_type = "Lock";
@@ -3209,8 +3206,7 @@ pgstat_get_wait_event(uint32 wait_event_info)
 
 	switch (classId)
 	{
-		case PG_WAIT_LWLOCK_NAMED:
-		case PG_WAIT_LWLOCK_TRANCHE:
+		case PG_WAIT_LWLOCK:
 			event_name = GetLWLockIdentifier(classId, eventId);
 			break;
 		case PG_WAIT_LOCK:

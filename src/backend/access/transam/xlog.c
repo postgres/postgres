@@ -517,7 +517,6 @@ typedef struct XLogCtlInsert
 	 * WAL insertion locks.
 	 */
 	WALInsertLockPadded *WALInsertLocks;
-	LWLockTranche WALInsertLockTranche;
 } XLogCtlInsert;
 
 /*
@@ -4688,7 +4687,7 @@ XLOGShmemInit(void)
 		/* Initialize local copy of WALInsertLocks and register the tranche */
 		WALInsertLocks = XLogCtl->Insert.WALInsertLocks;
 		LWLockRegisterTranche(LWTRANCHE_WAL_INSERT,
-							  &XLogCtl->Insert.WALInsertLockTranche);
+							  "wal_insert");
 		return;
 	}
 	memset(XLogCtl, 0, sizeof(XLogCtlData));
@@ -4711,11 +4710,7 @@ XLOGShmemInit(void)
 		(WALInsertLockPadded *) allocptr;
 	allocptr += sizeof(WALInsertLockPadded) * NUM_XLOGINSERT_LOCKS;
 
-	XLogCtl->Insert.WALInsertLockTranche.name = "wal_insert";
-	XLogCtl->Insert.WALInsertLockTranche.array_base = WALInsertLocks;
-	XLogCtl->Insert.WALInsertLockTranche.array_stride = sizeof(WALInsertLockPadded);
-
-	LWLockRegisterTranche(LWTRANCHE_WAL_INSERT, &XLogCtl->Insert.WALInsertLockTranche);
+	LWLockRegisterTranche(LWTRANCHE_WAL_INSERT, "wal_insert");
 	for (i = 0; i < NUM_XLOGINSERT_LOCKS; i++)
 	{
 		LWLockInitialize(&WALInsertLocks[i].l.lock, LWTRANCHE_WAL_INSERT);

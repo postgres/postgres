@@ -25,32 +25,6 @@
 struct PGPROC;
 
 /*
- * Prior to PostgreSQL 9.4, every lightweight lock in the system was stored
- * in a single array.  For convenience and for compatibility with past
- * releases, we still have a main array, but it's now also permissible to
- * store LWLocks elsewhere in the main shared memory segment or in a dynamic
- * shared memory segment.  Each array of lwlocks forms a separate "tranche".
- *
- * It's occasionally necessary to identify a particular LWLock "by name"; e.g.
- * because we wish to report the lock to dtrace.  We could store a name or
- * other identifying information in the lock itself, but since it's common
- * to have many nearly-identical locks (e.g. one per buffer) this would end
- * up wasting significant amounts of memory.  Instead, each lwlock stores a
- * tranche ID which tells us which array it's part of.  Based on that, we can
- * figure out where the lwlock lies within the array using the data structure
- * shown below; the lock is then identified based on the tranche name and
- * computed array index.  We need the array stride because the array might not
- * be an array of lwlocks, but rather some larger data structure that includes
- * one or more lwlocks per element.
- */
-typedef struct LWLockTranche
-{
-	const char *name;
-	void	   *array_base;
-	Size		array_stride;
-} LWLockTranche;
-
-/*
  * Code outside of lwlock.c should not manipulate the contents of this
  * structure directly, but we have to declare it here to allow LWLocks to be
  * incorporated into other data structures.
@@ -118,8 +92,8 @@ extern char *MainLWLockNames[];
 /* struct for storing named tranche information */
 typedef struct NamedLWLockTranche
 {
-	LWLockTranche lwLockTranche;
 	int			trancheId;
+	char	   *trancheName;
 } NamedLWLockTranche;
 
 extern PGDLLIMPORT NamedLWLockTranche *NamedLWLockTrancheArray;
@@ -199,9 +173,9 @@ extern LWLockPadded *GetNamedLWLockTranche(const char *tranche_name);
  * There is another, more flexible method of obtaining lwlocks. First, call
  * LWLockNewTrancheId just once to obtain a tranche ID; this allocates from
  * a shared counter.  Next, each individual process using the tranche should
- * call LWLockRegisterTranche() to associate that tranche ID with appropriate
- * metadata.  Finally, LWLockInitialize should be called just once per lwlock,
- * passing the tranche ID as an argument.
+ * call LWLockRegisterTranche() to associate that tranche ID with a name.
+ * Finally, LWLockInitialize should be called just once per lwlock, passing
+ * the tranche ID as an argument.
  *
  * It may seem strange that each process using the tranche must register it
  * separately, but dynamic shared memory segments aren't guaranteed to be
@@ -209,17 +183,18 @@ extern LWLockPadded *GetNamedLWLockTranche(const char *tranche_name);
  * registration in the main shared memory segment wouldn't work for that case.
  */
 extern int	LWLockNewTrancheId(void);
-extern void LWLockRegisterTranche(int tranche_id, LWLockTranche *tranche);
+extern void LWLockRegisterTranche(int tranche_id, char *tranche_name);
 extern void LWLockInitialize(LWLock *lock, int tranche_id);
 
 /*
- * We reserve a few predefined tranche IDs.  A call to LWLockNewTrancheId
- * will never return a value less than LWTRANCHE_FIRST_USER_DEFINED.
+ * Every tranche ID less than NUM_INDIVIDUAL_LWLOCKS is reserved; also,
+ * we reserve additional tranche IDs for builtin tranches not included in
+ * the set of individual LWLocks.  A call to LWLockNewTrancheId will never
+ * return a value less than LWTRANCHE_FIRST_USER_DEFINED.
  */
 typedef enum BuiltinTrancheIds
 {
-	LWTRANCHE_MAIN,
-	LWTRANCHE_CLOG_BUFFERS,
+	LWTRANCHE_CLOG_BUFFERS = NUM_INDIVIDUAL_LWLOCKS,
 	LWTRANCHE_COMMITTS_BUFFERS,
 	LWTRANCHE_SUBTRANS_BUFFERS,
 	LWTRANCHE_MXACTOFFSET_BUFFERS,

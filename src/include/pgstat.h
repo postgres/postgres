@@ -715,8 +715,7 @@ typedef enum BackendState
  * Wait Classes
  * ----------
  */
-#define PG_WAIT_LWLOCK_NAMED		0x01000000U
-#define PG_WAIT_LWLOCK_TRANCHE		0x02000000U
+#define PG_WAIT_LWLOCK				0x01000000U
 #define PG_WAIT_LOCK				0x03000000U
 #define PG_WAIT_BUFFER_PIN			0x04000000U
 #define PG_WAIT_ACTIVITY			0x05000000U

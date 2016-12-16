@@ -104,7 +104,6 @@ typedef struct SlruSharedData
 
 	/* LWLocks */
 	int			lwlock_tranche_id;
-	LWLockTranche lwlock_tranche;
 	char		lwlock_tranche_name[SLRU_MAX_NAME_LENGTH];
 	LWLockPadded *buffer_locks;
 } SlruSharedData;

@@ -28,14 +28,14 @@ provider postgresql {
 	probe transaction__commit(LocalTransactionId);
 	probe transaction__abort(LocalTransactionId);
 
-	probe lwlock__acquire(const char *, int, LWLockMode);
-	probe lwlock__release(const char *, int);
-	probe lwlock__wait__start(const char *, int, LWLockMode);
-	probe lwlock__wait__done(const char *, int, LWLockMode);
-	probe lwlock__condacquire(const char *, int, LWLockMode);
-	probe lwlock__condacquire__fail(const char *, int, LWLockMode);
-	probe lwlock__acquire__or__wait(const char *, int, LWLockMode);
-	probe lwlock__acquire__or__wait__fail(const char *, int, LWLockMode);
+	probe lwlock__acquire(const char *, LWLockMode);
+	probe lwlock__release(const char *);
+	probe lwlock__wait__start(const char *, LWLockMode);
+	probe lwlock__wait__done(const char *, LWLockMode);
+	probe lwlock__condacquire(const char *, LWLockMode);
+	probe lwlock__condacquire__fail(const char *, LWLockMode);
+	probe lwlock__acquire__or__wait(const char *, LWLockMode);
+	probe lwlock__acquire__or__wait__fail(const char *, LWLockMode);
 
 	probe lock__wait__start(unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, LOCKMODE);
 	probe lock__wait__done(unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, LOCKMODE);

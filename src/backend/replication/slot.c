@@ -98,8 +98,6 @@ ReplicationSlot *MyReplicationSlot = NULL;
 int			max_replication_slots = 0;	/* the maximum number of replication
 										 * slots */
 
-static LWLockTranche ReplSlotIOLWLockTranche;
-
 static void ReplicationSlotDropAcquired(void);
 static void ReplicationSlotDropPtr(ReplicationSlot *slot);
 
@@ -141,12 +139,8 @@ ReplicationSlotsShmemInit(void)
 		ShmemInitStruct("ReplicationSlot Ctl", ReplicationSlotsShmemSize(),
 						&found);
 
-	ReplSlotIOLWLockTranche.name = "replication_slot_io";
-	ReplSlotIOLWLockTranche.array_base =
-		((char *) ReplicationSlotCtl) + offsetof(ReplicationSlotCtlData, replication_slots) +offsetof(ReplicationSlot, io_in_progress_lock);
-	ReplSlotIOLWLockTranche.array_stride = sizeof(ReplicationSlot);
 	LWLockRegisterTranche(LWTRANCHE_REPLICATION_SLOT_IO_IN_PROGRESS,
-						  &ReplSlotIOLWLockTranche);
+						  "replication_slot_io");
 
 	if (!found)
 	{

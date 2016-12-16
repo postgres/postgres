@@ -143,7 +143,6 @@ typedef struct ReplicationStateOnDisk
 typedef struct ReplicationStateCtl
 {
 	int			tranche_id;
-	LWLockTranche tranche;
 	ReplicationState states[FLEXIBLE_ARRAY_MEMBER];
 } ReplicationStateCtl;
 
@@ -474,11 +473,6 @@ ReplicationOriginShmemInit(void)
 		int			i;
 
 		replication_states_ctl->tranche_id = LWTRANCHE_REPLICATION_ORIGIN;
-		replication_states_ctl->tranche.name = "replication_origin";
-		replication_states_ctl->tranche.array_base =
-			&replication_states[0].lock;
-		replication_states_ctl->tranche.array_stride =
-			sizeof(ReplicationState);
 
 		MemSet(replication_states, 0, ReplicationOriginShmemSize());
 
@@ -488,7 +482,7 @@ ReplicationOriginShmemInit(void)
 	}
 
 	LWLockRegisterTranche(replication_states_ctl->tranche_id,
-						  &replication_states_ctl->tranche);
+						  "replication_origin");
 }
 
 /* ---------------------------------------------------------------------------
