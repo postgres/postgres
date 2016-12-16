@@ -452,6 +452,11 @@ _hash_freeovflpage(Relation rel, Buffer ovflbuf, Buffer wbuf,
 			MarkBufferDirty(prevbuf);
 			_hash_relbuf(rel, prevbuf);
 		}
+		else
+		{
+			/* ensure to mark prevbuf as dirty */
+			wbuf_dirty = true;
+		}
 	}
 
 	/* write and unlock the write buffer */
@@ -643,7 +648,7 @@ _hash_squeezebucket(Relation rel,
 	 */
 	if (!BlockNumberIsValid(wopaque->hasho_nextblkno))
 	{
-		_hash_chgbufaccess(rel, wbuf, HASH_WRITE, HASH_NOLOCK);
+		_hash_chgbufaccess(rel, wbuf, HASH_READ, HASH_NOLOCK);
 		return;
 	}
 
