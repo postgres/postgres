@@ -2123,7 +2123,7 @@ hlCover(HeadlineParsedText *prs, TSQuery query, int *p, int *q)
 
 		ch.words = &(prs->words[*p]);
 		ch.len = *q - *p + 1;
-		if (TS_execute(GETQUERY(query), &ch, false, checkcondition_HL))
+		if (TS_execute(GETQUERY(query), &ch, TS_EXEC_EMPTY, checkcondition_HL))
 			return true;
 		else
 		{

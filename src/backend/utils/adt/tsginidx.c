@@ -188,7 +188,7 @@ checkcondition_gin_internal(GinChkVal *gcv, QueryOperand *val, ExecPhraseData *d
 	 * information then set recheck flag
 	 */
 	if (val->weight != 0 || data != NULL)
-		*gcv->need_recheck = true;
+		*(gcv->need_recheck) = true;
 
 	/* convert item's number to corresponding entry's (operand's) number */
 	j = gcv->map_item_operand[((QueryItem *) val) - gcv->first_item];
@@ -289,19 +289,18 @@ gin_tsquery_consistent(PG_FUNCTION_ARGS)
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(5);
 	bool		res = FALSE;
 
-	/* The query requires recheck only if it involves weights */
+	/* Initially assume query doesn't require recheck */
 	*recheck = false;
 
 	if (query->size > 0)
 	{
-		QueryItem  *item;
 		GinChkVal	gcv;
 
 		/*
 		 * check-parameter array has one entry for each value (operand) in the
 		 * query.
 		 */
-		gcv.first_item = item = GETQUERY(query);
+		gcv.first_item = GETQUERY(query);
 		gcv.check = check;
 		gcv.map_item_operand = (int *) (extra_data[0]);
 		gcv.need_recheck = recheck;
@@ -328,19 +327,18 @@ gin_tsquery_triconsistent(PG_FUNCTION_ARGS)
 	GinTernaryValue res = GIN_FALSE;
 	bool		recheck;
 
-	/* The query requires recheck only if it involves weights */
+	/* Initially assume query doesn't require recheck */
 	recheck = false;
 
 	if (query->size > 0)
 	{
-		QueryItem  *item;
 		GinChkVal	gcv;
 
 		/*
 		 * check-parameter array has one entry for each value (operand) in the
 		 * query.
 		 */
-		gcv.first_item = item = GETQUERY(query);
+		gcv.first_item = GETQUERY(query);
 		gcv.check = check;
 		gcv.map_item_operand = (int *) (extra_data[0]);
 		gcv.need_recheck = &recheck;

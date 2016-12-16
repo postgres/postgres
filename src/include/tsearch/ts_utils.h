@@ -12,9 +12,9 @@
 #ifndef _PG_TS_UTILS_H_
 #define _PG_TS_UTILS_H_
 
-#include "tsearch/ts_type.h"
-#include "tsearch/ts_public.h"
 #include "nodes/pg_list.h"
+#include "tsearch/ts_public.h"
+#include "tsearch/ts_type.h"
 
 /*
  * Common parse definitions for tsvector and tsquery
@@ -102,34 +102,67 @@ extern void hlparsetext(Oid cfgId, HeadlineParsedText *prs, TSQuery query,
 extern text *generateHeadline(HeadlineParsedText *prs);
 
 /*
- * Common check function for tsvector @@ tsquery
+ * TSQuery execution support
+ *
+ * TS_execute() executes a tsquery against data that can be represented in
+ * various forms.  The TSExecuteCallback callback function is called to check
+ * whether a given primitive tsquery value is matched in the data.
+ */
+
+/*
+ * struct ExecPhraseData is passed to a TSExecuteCallback function if we need
+ * lexeme position data (because of a phrase-match operator in the tsquery).
+ * The callback should fill in position data when it returns true (success).
+ * If it cannot return position data, it may ignore its "data" argument, but
+ * then the caller of TS_execute() must pass the TS_EXEC_PHRASE_AS_AND flag
+ * and must arrange for a later recheck with position data available.
+ *
+ * The reported lexeme positions must be sorted and unique.  Callers must only
+ * consult the position bits of the pos array, ie, WEP_GETPOS(data->pos[i]).
+ * This allows the returned "pos" to point directly to the WordEntryPos
+ * portion of a tsvector value.  If "allocated" is true then the pos array
+ * is palloc'd workspace and caller may free it when done.
+ *
+ * All fields of the ExecPhraseData struct are initially zeroed by caller.
  */
 typedef struct ExecPhraseData
 {
-	int			npos;
-	bool		allocated;
-	WordEntryPos *pos;
+	int			npos;			/* number of positions reported */
+	bool		allocated;		/* pos points to palloc'd data? */
+	WordEntryPos *pos;			/* ordered, non-duplicate lexeme positions */
 } ExecPhraseData;
 
 /*
- * Evaluates tsquery, flags are followe below
+ * Signature for TSQuery lexeme check functions
+ *
+ * arg: opaque value passed through from caller of TS_execute
+ * val: lexeme to test for presence of
+ * data: to be filled with lexeme positions; NULL if position data not needed
+ *
+ * Return TRUE if lexeme is present in data, else FALSE
  */
-extern bool TS_execute(QueryItem *curitem, void *checkval, uint32 flags,
-		   bool (*chkcond) (void *, QueryOperand *, ExecPhraseData *));
+typedef bool (*TSExecuteCallback) (void *arg, QueryOperand *val,
+											   ExecPhraseData *data);
 
+/*
+ * Flag bits for TS_execute
+ */
 #define TS_EXEC_EMPTY			(0x00)
 /*
- * if TS_EXEC_CALC_NOT is not set then NOT expression evaluated to be true,
- * used in cases where NOT cannot be accurately computed (GiST) or
- * it isn't important (ranking)
+ * If TS_EXEC_CALC_NOT is not set, then NOT expressions are automatically
+ * evaluated to be true.  Useful in cases where NOT cannot be accurately
+ * computed (GiST) or it isn't important (ranking).
  */
 #define TS_EXEC_CALC_NOT		(0x01)
 /*
- * Treat OP_PHRASE as OP_AND. Used when posiotional information is not
- * accessible, like in consistent methods of GIN/GiST indexes
+ * Treat OP_PHRASE as OP_AND.  Used when positional information is not
+ * accessible, like in consistent methods of GIN/GiST indexes; rechecking
+ * must occur later.
  */
 #define TS_EXEC_PHRASE_AS_AND	(0x02)
 
+extern bool TS_execute(QueryItem *curitem, void *arg, uint32 flags,
+		   TSExecuteCallback chkcond);
 extern bool tsquery_requires_match(QueryItem *curitem);
 
 /*

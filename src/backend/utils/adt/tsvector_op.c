@@ -1405,20 +1405,26 @@ checkcondition_str(void *checkval, QueryOperand *val, ExecPhraseData *data)
 }
 
 /*
- * Check for phrase condition. Fallback to the AND operation
- * if there is no positional information.
+ * Execute tsquery at or below an OP_PHRASE operator.
+ *
+ * This handles the recursion at levels where we need to care about
+ * match locations.  In addition to the same arguments used for TS_execute,
+ * the caller may pass a preinitialized-to-zeroes ExecPhraseData struct to
+ * be filled with lexeme match positions on success.  data == NULL if no
+ * match data need be returned.  (In practice, outside callers pass NULL,
+ * and only the internal recursion cases pass a data pointer.)
  */
 static bool
-TS_phrase_execute(QueryItem *curitem,
-				  void *checkval, uint32 flags, ExecPhraseData *data,
-				  bool (*chkcond) (void *, QueryOperand *, ExecPhraseData *))
+TS_phrase_execute(QueryItem *curitem, void *arg, uint32 flags,
+				  ExecPhraseData *data,
+				  TSExecuteCallback chkcond)
 {
 	/* since this function recurses, it could be driven to stack overflow */
 	check_stack_depth();
 
 	if (curitem->type == QI_VAL)
 	{
-		return chkcond(checkval, (QueryOperand *) curitem, data);
+		return chkcond(arg, (QueryOperand *) curitem, data);
 	}
 	else
 	{
@@ -1432,33 +1438,31 @@ TS_phrase_execute(QueryItem *curitem,
 		Assert(curitem->qoperator.oper == OP_PHRASE);
 
 		if (!TS_phrase_execute(curitem + curitem->qoperator.left,
-							   checkval, flags, &Ldata, chkcond))
+							   arg, flags, &Ldata, chkcond))
 			return false;
 
-		if (!TS_phrase_execute(curitem + 1, checkval, flags, &Rdata, chkcond))
+		if (!TS_phrase_execute(curitem + 1, arg, flags, &Rdata, chkcond))
 			return false;
 
 		/*
-		 * if at least one of the operands has no position information, then
-		 * return false. But if TS_EXEC_PHRASE_AS_AND flag is set then we
-		 * return true as it is a AND operation
+		 * If either operand has no position information, then we normally
+		 * return false.  But if TS_EXEC_PHRASE_AS_AND flag is set then we
+		 * return true, treating OP_PHRASE as if it were OP_AND.
 		 */
 		if (Ldata.npos == 0 || Rdata.npos == 0)
 			return (flags & TS_EXEC_PHRASE_AS_AND) ? true : false;
 
 		/*
-		 * Result of the operation is a list of the corresponding positions of
-		 * RIGHT operand.
+		 * Prepare output position array if needed.
 		 */
 		if (data)
 		{
+			/*
+			 * We can recycle the righthand operand's result array if it was
+			 * palloc'd, else must allocate our own.  The number of matches
+			 * couldn't be more than the smaller of the two operands' matches.
+			 */
 			if (!Rdata.allocated)
-
-				/*
-				 * OP_PHRASE is based on the OP_AND, so the number of
-				 * resulting positions could not be greater than the total
-				 * amount of operands.
-				 */
 				data->pos = palloc(sizeof(WordEntryPos) * Min(Ldata.npos, Rdata.npos));
 			else
 				data->pos = Rdata.pos;
@@ -1469,10 +1473,12 @@ TS_phrase_execute(QueryItem *curitem,
 		}
 
 		/*
-		 * Find matches by distance, WEP_GETPOS() is needed because
-		 * ExecPhraseData->data can point to the tsvector's WordEntryPosVector
+		 * Find matches by distance.  WEP_GETPOS() is needed because
+		 * ExecPhraseData->data can point to a tsvector's WordEntryPosVector.
+		 *
+		 * Note that the output positions are those of the matching RIGHT
+		 * operands.
 		 */
-
 		Rpos = Rdata.pos;
 		LposStart = Ldata.pos;
 		while (Rpos < Rdata.pos + Rdata.npos)
@@ -1505,8 +1511,9 @@ TS_phrase_execute(QueryItem *curitem,
 					else
 					{
 						/*
-						 * We are in the root of the phrase tree and hence we
-						 * don't have to store the resulting positions
+						 * We are at the root of the phrase tree and hence we
+						 * don't have to identify all the match positions.
+						 * Just report success.
 						 */
 						return true;
 					}
@@ -1546,42 +1553,45 @@ TS_phrase_execute(QueryItem *curitem,
 /*
  * Evaluate tsquery boolean expression.
  *
- * chkcond is a callback function used to evaluate each VAL node in the query.
- * checkval can be used to pass information to the callback. TS_execute doesn't
- * do anything with it.
- * It believes that ordinary operators are always closier to root than phrase
- * operator, so, TS_execute() may not take care of lexeme's position at all.
+ * curitem: current tsquery item (initially, the first one)
+ * arg: opaque value to pass through to callback function
+ * flags: bitmask of flag bits shown in ts_utils.h
+ * chkcond: callback function to check whether a primitive value is present
+ *
+ * The logic here deals only with operators above any phrase operator, for
+ * which we do not need to worry about lexeme positions.  As soon as we hit an
+ * OP_PHRASE operator, we pass it off to TS_phrase_execute which does worry.
  */
 bool
-TS_execute(QueryItem *curitem, void *checkval, uint32 flags,
-   bool (*chkcond) (void *checkval, QueryOperand *val, ExecPhraseData *data))
+TS_execute(QueryItem *curitem, void *arg, uint32 flags,
+		   TSExecuteCallback chkcond)
 {
 	/* since this function recurses, it could be driven to stack overflow */
 	check_stack_depth();
 
 	if (curitem->type == QI_VAL)
-		return chkcond(checkval, (QueryOperand *) curitem,
+		return chkcond(arg, (QueryOperand *) curitem,
 					   NULL /* we don't need position info */ );
 
 	switch (curitem->qoperator.oper)
 	{
 		case OP_NOT:
 			if (flags & TS_EXEC_CALC_NOT)
-				return !TS_execute(curitem + 1, checkval, flags, chkcond);
+				return !TS_execute(curitem + 1, arg, flags, chkcond);
 			else
 				return true;
 
 		case OP_AND:
-			if (TS_execute(curitem + curitem->qoperator.left, checkval, flags, chkcond))
-				return TS_execute(curitem + 1, checkval, flags, chkcond);
+			if (TS_execute(curitem + curitem->qoperator.left, arg, flags, chkcond))
+				return TS_execute(curitem + 1, arg, flags, chkcond);
 			else
 				return false;
 
 		case OP_OR:
-			if (TS_execute(curitem + curitem->qoperator.left, checkval, flags, chkcond))
+			if (TS_execute(curitem + curitem->qoperator.left, arg, flags, chkcond))
 				return true;
 			else
-				return TS_execute(curitem + 1, checkval, flags, chkcond);
+				return TS_execute(curitem + 1, arg, flags, chkcond);
 
 		case OP_PHRASE:
 
@@ -1589,7 +1599,7 @@ TS_execute(QueryItem *curitem, void *checkval, uint32 flags,
 			 * do not check TS_EXEC_PHRASE_AS_AND here because chkcond() could
 			 * do something more if it's called from TS_phrase_execute()
 			 */
-			return TS_phrase_execute(curitem, checkval, flags, NULL, chkcond);
+			return TS_phrase_execute(curitem, arg, flags, NULL, chkcond);
 
 		default:
 			elog(ERROR, "unrecognized operator: %d", curitem->qoperator.oper);
@@ -1684,12 +1694,10 @@ ts_match_vq(PG_FUNCTION_ARGS)
 	chkval.arre = chkval.arrb + val->size;
 	chkval.values = STRPTR(val);
 	chkval.operand = GETOPERAND(query);
-	result = TS_execute(
-						GETQUERY(query),
+	result = TS_execute(GETQUERY(query),
 						&chkval,
 						TS_EXEC_CALC_NOT,
-						checkcondition_str
-		);
+						checkcondition_str);
 
 	PG_FREE_IF_COPY(val, 0);
 	PG_FREE_IF_COPY(query, 1);
