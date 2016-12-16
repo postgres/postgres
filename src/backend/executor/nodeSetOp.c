@@ -130,7 +130,8 @@ build_hash_table(SetOpState *setopstate)
 												node->numGroups,
 												0,
 												setopstate->tableContext,
-												setopstate->tempContext);
+												setopstate->tempContext,
+												false);
 }
 
 /*

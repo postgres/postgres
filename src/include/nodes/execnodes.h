@@ -533,6 +533,7 @@ typedef struct TupleHashTableData
 	TupleTableSlot *inputslot;	/* current input tuple's slot */
 	FmgrInfo   *in_hash_funcs;	/* hash functions for input datatype(s) */
 	FmgrInfo   *cur_eq_funcs;	/* equality functions for input vs. table */
+	uint32		hash_iv;		/* hash-function IV */
 }	TupleHashTableData;
 
 typedef tuplehash_iterator TupleHashIterator;

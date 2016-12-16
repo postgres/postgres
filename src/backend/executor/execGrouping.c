@@ -18,6 +18,8 @@
  */
 #include "postgres.h"
 
+#include "access/hash.h"
+#include "access/parallel.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
 #include "utils/lsyscache.h"
@@ -289,7 +291,8 @@ BuildTupleHashTable(int numCols, AttrNumber *keyColIdx,
 					FmgrInfo *eqfunctions,
 					FmgrInfo *hashfunctions,
 					long nbuckets, Size additionalsize,
-					MemoryContext tablecxt, MemoryContext tempcxt)
+					MemoryContext tablecxt, MemoryContext tempcxt,
+					bool use_variable_hash_iv)
 {
 	TupleHashTable hashtable;
 	Size		entrysize = sizeof(TupleHashEntryData) + additionalsize;
@@ -313,6 +316,19 @@ BuildTupleHashTable(int numCols, AttrNumber *keyColIdx,
 	hashtable->inputslot = NULL;
 	hashtable->in_hash_funcs = NULL;
 	hashtable->cur_eq_funcs = NULL;
+
+	/*
+	 * If parallelism is in use, even if the master backend is performing the
+	 * scan itself, we don't want to create the hashtable exactly the same way
+	 * in all workers. As hashtables are iterated over in keyspace-order,
+	 * doing so in all processes in the same way is likely to lead to
+	 * "unbalanced" hashtables when the table size initially is
+	 * underestimated.
+	 */
+	if (use_variable_hash_iv)
+		hashtable->hash_iv = hash_uint32(ParallelWorkerNumber);
+	else
+		hashtable->hash_iv = 0;
 
 	hashtable->hashtab = tuplehash_create(tablecxt, nbuckets);
 	hashtable->hashtab->private_data = hashtable;
@@ -450,7 +466,7 @@ TupleHashTableHash(struct tuplehash_hash *tb, const MinimalTuple tuple)
 	TupleHashTable hashtable = (TupleHashTable) tb->private_data;
 	int			numCols = hashtable->numCols;
 	AttrNumber *keyColIdx = hashtable->keyColIdx;
-	uint32		hashkey = 0;
+	uint32		hashkey = hashtable->hash_iv;
 	TupleTableSlot *slot;
 	FmgrInfo   *hashfunctions;
 	int			i;

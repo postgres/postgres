@@ -43,7 +43,8 @@ build_hash_table(RecursiveUnionState *rustate)
 											 node->numGroups,
 											 0,
 											 rustate->tableContext,
-											 rustate->tempContext);
+											 rustate->tempContext,
+											 false);
 }
 
 

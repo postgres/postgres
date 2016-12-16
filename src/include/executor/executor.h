@@ -143,7 +143,7 @@ extern TupleHashTable BuildTupleHashTable(int numCols, AttrNumber *keyColIdx,
 					FmgrInfo *hashfunctions,
 					long nbuckets, Size additionalsize,
 					MemoryContext tablecxt,
-					MemoryContext tempcxt);
+					MemoryContext tempcxt, bool use_variable_hash_iv);
 extern TupleHashEntry LookupTupleHashEntry(TupleHashTable hashtable,
 					 TupleTableSlot *slot,
 					 bool *isnew);

@@ -510,7 +510,8 @@ buildSubPlanHash(SubPlanState *node, ExprContext *econtext)
 										  nbuckets,
 										  0,
 										  node->hashtablecxt,
-										  node->hashtempcxt);
+										  node->hashtempcxt,
+										  false);
 
 	if (!subplan->unknownEqFalse)
 	{
@@ -529,7 +530,8 @@ buildSubPlanHash(SubPlanState *node, ExprContext *econtext)
 											  nbuckets,
 											  0,
 											  node->hashtablecxt,
-											  node->hashtempcxt);
+											  node->hashtempcxt,
+											  false);
 	}
 
 	/*
