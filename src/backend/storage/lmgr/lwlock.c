@@ -581,8 +581,8 @@ LWLockNewTrancheId(void)
 
 /*
  * Register a tranche ID in the lookup table for the current process.  This
- * routine will save a pointer to the tranche object passed as an argument,
- * so that object should be allocated in a backend-lifetime context
+ * routine will save a pointer to the tranche name passed as an argument,
+ * so the name should be allocated in a backend-lifetime context
  * (TopMemoryContext, static variable, or similar).
  */
 void
