@@ -526,7 +526,7 @@ INSERT <replaceable>oid</replaceable> <replaceable class="parameter">count</repl
    updated by the command.
   </para>
  </refsect1>
- 
+
  <refsect1>
   <title>Notes</title>
 

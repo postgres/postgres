@@ -134,12 +134,12 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
 
   <itemizedlist>
     <listitem>
-      <para> 
+      <para>
         The query writes any data or locks any database rows. If a query
         contains a data-modifying operation either at the top level or within
         a CTE, no parallel plans for that query will be generated. This is a
         limitation of the current implementation which could be lifted in a
-        future release. 
+        future release.
       </para>
     </listitem>
 
@@ -153,7 +153,7 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
         <literal>FOR x IN query LOOP .. END LOOP</literal> will never use a
         parallel plan, because the parallel query system is unable to verify
         that the code in the loop is safe to execute while parallel query is
-        active. 
+        active.
       </para>
     </listitem>
 
@@ -174,7 +174,7 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
         query itself, that query will never use a parallel plan. This is a
         limitation of the current implementation, but it may not be desirable
         to remove this limitation, since it could result in a single query
-        using a very large number of processes. 
+        using a very large number of processes.
       </para>
     </listitem>
 
@@ -197,7 +197,7 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
 
   <itemizedlist>
     <listitem>
-      <para> 
+      <para>
         No background workers can be obtained because of the limitation that
         the total number of background workers cannot exceed
         <xref linkend="guc-max-worker-processes">.
@@ -205,7 +205,7 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
     </listitem>
 
     <listitem>
-      <para> 
+      <para>
         No background workers can be obtained because of the limitation that
         the total number of background workers launched for purposes of
         parallel query cannot exceed <xref linkend="guc-max-parallel-workers">.
@@ -213,7 +213,7 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
     </listitem>
 
     <listitem>
-      <para> 
+      <para>
         The client sends an Execute message with a non-zero fetch count.
         See the discussion of the
         <link linkend="protocol-flow-ext-query">extended query protocol</link>.
@@ -228,7 +228,7 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
     </listitem>
 
     <listitem>
-      <para> 
+      <para>
         A prepared statement is executed using a <literal>CREATE TABLE .. AS
         EXECUTE ..</literal> statement.  This construct converts what otherwise
         would have been a read-only operation into a read-write operation,
@@ -237,7 +237,7 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
     </listitem>
 
     <listitem>
-      <para> 
+      <para>
         The transaction isolation level is serializable.  This situation
         does not normally arise, because parallel query plans are not
         generated when the transaction isolation level is serializable.
@@ -467,7 +467,7 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
     transaction. If you write a function which does this, and this behavior
     difference is important to you, mark such functions as
     <literal>PARALLEL RESTRICTED</literal>
-    to ensure that they execute only in the leader. 
+    to ensure that they execute only in the leader.
   </para>
 
   <para>
@@ -475,7 +475,7 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
     parallel-restricted functions or aggregates involved in the query in
     order to obtain a superior plan.  So, for example, if a <literal>WHERE</>
     clause applied to a particular table is parallel restricted, the query
-    planner will not consider placing the scan of that table below a 
+    planner will not consider placing the scan of that table below a
     <literal>Gather</> node.  In some cases, it would be
     possible (and perhaps even efficient) to include the scan of that table in
     the parallel portion of the query and defer the evaluation of the

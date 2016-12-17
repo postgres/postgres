@@ -1121,7 +1121,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
     Also, because selecting from the parent also selects from its descendents,
     a constraint on the parent cannot be marked valid unless it is also marked
     valid for those descendents.  In all of these cases, <command>ALTER TABLE
-    ONLY</command> will be rejected.  
+    ONLY</command> will be rejected.
    </para>
 
    <para>

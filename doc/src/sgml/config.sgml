@@ -1181,7 +1181,7 @@ include_dir 'conf.d'
         it in plaintext. <literal>on</> and <literal>off</> are also accepted, as
         aliases for <literal>md5</> and <literal>plain</>, respectively.
        </para>
-       
+
       </listitem>
      </varlistentry>
 

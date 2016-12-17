@@ -24,7 +24,7 @@ PostgreSQL documentation
    <command>reindexdb</command>
    <arg rep="repeat"><replaceable>connection-option</replaceable></arg>
    <arg rep="repeat"><replaceable>option</replaceable></arg>
-   
+
    <arg choice="plain" rep="repeat">
     <arg choice="opt">
      <group choice="plain">
