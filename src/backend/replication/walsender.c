@@ -806,7 +806,7 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 		CheckLogicalDecodingRequirements();
 
 		/*
-		 * Initially create persisent slot as ephemeral - that allows us to
+		 * Initially create persistent slot as ephemeral - that allows us to
 		 * nicely handle errors during initialization because it'll get
 		 * dropped if this transaction fails. We'll make it persistent at the
 		 * end. Temporary slots can be created as temporary from beginning as
