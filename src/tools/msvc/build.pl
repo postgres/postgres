@@ -54,7 +54,7 @@ elsif (uc($ARGV[0]) ne "RELEASE")
 if ($buildwhat and $vcver >= 10.00)
 {
 	system(
-		"msbuild $buildwhat.vcxproj $msbflags /verbosity:normal /p:Configuration=$bconf"
+		"msbuild $buildwhat.vcxproj /verbosity:normal $msbflags /p:Configuration=$bconf"
 	);
 }
 elsif ($buildwhat)
@@ -63,7 +63,7 @@ elsif ($buildwhat)
 }
 else
 {
-	system("msbuild pgsql.sln $msbflags /verbosity:normal /p:Configuration=$bconf");
+	system("msbuild pgsql.sln /verbosity:normal $msbflags /p:Configuration=$bconf");
 }
 
 # report status
