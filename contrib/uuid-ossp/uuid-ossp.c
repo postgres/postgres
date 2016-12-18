@@ -17,6 +17,10 @@
 #include "utils/builtins.h"
 #include "utils/uuid.h"
 
+/* for ntohl/htonl */
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 /*
  * It's possible that there's more than one uuid.h header file present.
  * We expect configure to set the HAVE_ symbol for only the one we want.
