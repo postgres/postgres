@@ -1370,26 +1370,16 @@ throttle(size_t increment)
 		if (wait_result & WL_LATCH_SET)
 			CHECK_FOR_INTERRUPTS();
 	}
-	else
-	{
-		/*
-		 * The actual transfer rate is below the limit.  A negative value
-		 * would distort the adjustment of throttled_last.
-		 */
-		wait_result = 0;
-		sleep = 0;
-	}
 
 	/*
-	 * Only a whole multiple of throttling_sample was processed. The rest will
-	 * be done during the next call of this function.
+	 * As we work with integers, only whole multiple of throttling_sample was
+	 * processed. The rest will be done during the next call of this function.
 	 */
 	throttling_counter %= throttling_sample;
 
-	/* Once the (possible) sleep has ended, new period starts. */
-	if (wait_result & WL_TIMEOUT)
-		throttled_last += elapsed + sleep;
-	else if (sleep > 0)
-		/* Sleep was necessary but might have been interrupted. */
-		throttled_last = GetCurrentIntegerTimestamp();
+	/*
+	 * Time interval for the remaining amount and possible next increments
+	 * starts now.
+	 */
+	throttled_last = GetCurrentIntegerTimestamp();
 }
