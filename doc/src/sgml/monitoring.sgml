@@ -1404,7 +1404,8 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
      <entry><structfield>sync_priority</></entry>
      <entry><type>integer</></entry>
      <entry>Priority of this standby server for being chosen as the
-      synchronous standby</entry>
+      synchronous standby in a priority-based synchronous replication.
+      This has no effect in a quorum-based synchronous replication.</entry>
     </row>
     <row>
      <entry><structfield>sync_state</></entry>
@@ -1427,6 +1428,12 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
          <listitem>
           <para>
            <literal>sync</>: This standby server is synchronous.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <literal>quorum</>: This standby server is considered as a candidate
+           for quorum standbys.
           </para>
          </listitem>
        </itemizedlist>

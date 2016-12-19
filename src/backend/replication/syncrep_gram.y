@@ -21,7 +21,7 @@ SyncRepConfigData *syncrep_parse_result;
 char	   *syncrep_parse_error_msg;
 
 static SyncRepConfigData *create_syncrep_config(const char *num_sync,
-					  List *members);
+					List *members, uint8 syncrep_method);
 
 /*
  * Bison doesn't allocate anything that needs to live across parser calls,
@@ -46,7 +46,7 @@ static SyncRepConfigData *create_syncrep_config(const char *num_sync,
 	SyncRepConfigData *config;
 }
 
-%token <str> NAME NUM JUNK
+%token <str> NAME NUM JUNK ANY FIRST
 
 %type <config> result standby_config
 %type <list> standby_list
@@ -60,8 +60,10 @@ result:
 	;
 
 standby_config:
-		standby_list				{ $$ = create_syncrep_config("1", $1); }
-		| NUM '(' standby_list ')'	{ $$ = create_syncrep_config($1, $3); }
+		standby_list				{ $$ = create_syncrep_config("1", $1, SYNC_REP_PRIORITY); }
+		| NUM '(' standby_list ')'		{ $$ = create_syncrep_config($1, $3, SYNC_REP_PRIORITY); }
+		| ANY NUM '(' standby_list ')'		{ $$ = create_syncrep_config($2, $4, SYNC_REP_QUORUM); }
+		| FIRST NUM '(' standby_list ')'		{ $$ = create_syncrep_config($2, $4, SYNC_REP_PRIORITY); }
 	;
 
 standby_list:
@@ -75,9 +77,8 @@ standby_name:
 	;
 %%
 
-
 static SyncRepConfigData *
-create_syncrep_config(const char *num_sync, List *members)
+create_syncrep_config(const char *num_sync, List *members, uint8 syncrep_method)
 {
 	SyncRepConfigData *config;
 	int			size;
@@ -98,6 +99,7 @@ create_syncrep_config(const char *num_sync, List *members)
 
 	config->config_size = size;
 	config->num_sync = atoi(num_sync);
+	config->syncrep_method = syncrep_method;
 	config->nmembers = list_length(members);
 	ptr = config->member_names;
 	foreach(lc, members)

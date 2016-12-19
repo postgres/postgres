@@ -245,7 +245,8 @@
 # These settings are ignored on a standby server.
 
 #synchronous_standby_names = ''	# standby servers that provide sync rep
-				# number of sync standbys and comma-separated list of application_name
+				# method to choose sync standbys, number of sync standbys
+				# and comma-separated list of application_name
 				# from standby(s); '*' = all
 #vacuum_defer_cleanup_age = 0	# number of xacts by which cleanup is delayed
 

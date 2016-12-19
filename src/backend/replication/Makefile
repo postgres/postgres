@@ -26,7 +26,7 @@ repl_gram.o: repl_scanner.c
 
 # syncrep_scanner is complied as part of syncrep_gram
 syncrep_gram.o: syncrep_scanner.c
-syncrep_scanner.c: FLEXFLAGS = -CF -p
+syncrep_scanner.c: FLEXFLAGS = -CF -p -i
 syncrep_scanner.c: FLEX_NO_BACKUP=yes
 
 # repl_gram.c, repl_scanner.c, syncrep_gram.c and syncrep_scanner.c

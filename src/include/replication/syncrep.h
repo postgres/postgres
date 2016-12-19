@@ -32,6 +32,10 @@
 #define SYNC_REP_WAITING			1
 #define SYNC_REP_WAIT_COMPLETE		2
 
+/* syncrep_method of SyncRepConfigData */
+#define SYNC_REP_PRIORITY		0
+#define SYNC_REP_QUORUM		1
+
 /*
  * Struct for the configuration of synchronous replication.
  *
@@ -44,10 +48,13 @@ typedef struct SyncRepConfigData
 	int			config_size;	/* total size of this struct, in bytes */
 	int			num_sync;		/* number of sync standbys that we need to
 								 * wait for */
+	uint8		syncrep_method;	/* method to choose sync standbys */
 	int			nmembers;		/* number of members in the following list */
 	/* member_names contains nmembers consecutive nul-terminated C strings */
 	char		member_names[FLEXIBLE_ARRAY_MEMBER];
 } SyncRepConfigData;
+
+extern SyncRepConfigData *SyncRepConfig;
 
 /* communication variables for parsing synchronous_standby_names GUC */
 extern SyncRepConfigData *syncrep_parse_result;

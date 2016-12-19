@@ -1138,19 +1138,25 @@ primary_slot_name = 'node_a_slot'
     as synchronous confirm receipt of their data. The number of synchronous
     standbys that transactions must wait for replies from is specified in
     <varname>synchronous_standby_names</>. This parameter also specifies
-    a list of standby names, which determines the priority of each standby
-    for being chosen as a synchronous standby. The standbys whose names
-    appear earlier in the list are given higher priority and will be considered
-    as synchronous. Other standby servers appearing later in this list
-    represent potential synchronous standbys. If any of the current
-    synchronous standbys disconnects for whatever reason, it will be replaced
-    immediately with the next-highest-priority standby.
+    a list of standby names and the method (<literal>FIRST</> and
+    <literal>ANY</>) to choose synchronous standbys from the listed ones.
    </para>
    <para>
-    An example of <varname>synchronous_standby_names</> for multiple
-    synchronous standbys is:
+    The method <literal>FIRST</> specifies a priority-based synchronous
+    replication and makes transaction commits wait until their WAL records are
+    replicated to the requested number of synchronous standbys chosen based on
+    their priorities. The standbys whose names appear earlier in the list are
+    given higher priority and will be considered as synchronous. Other standby
+    servers appearing later in this list represent potential synchronous
+    standbys. If any of the current synchronous standbys disconnects for
+    whatever reason, it will be replaced immediately with the
+    next-highest-priority standby.
+   </para>
+   <para>
+    An example of <varname>synchronous_standby_names</> for
+    a priority-based multiple synchronous standbys is:
 <programlisting>
-synchronous_standby_names = '2 (s1, s2, s3)'
+synchronous_standby_names = 'FIRST 2 (s1, s2, s3)'
 </programlisting>
     In this example, if four standby servers <literal>s1</>, <literal>s2</>,
     <literal>s3</> and <literal>s4</> are running, the two standbys
@@ -1160,6 +1166,24 @@ synchronous_standby_names = '2 (s1, s2, s3)'
     the role of synchronous standby when either of <literal>s1</> or
     <literal>s2</> fails. <literal>s4</> is an asynchronous standby since
     its name is not in the list.
+   </para>
+   <para>
+    The method <literal>ANY</> specifies a quorum-based synchronous
+    replication and makes transaction commits wait until their WAL records
+    are replicated to <emphasis>at least</> the requested number of
+    synchronous standbys in the list.
+   </para>
+   <para>
+    An example of <varname>synchronous_standby_names</> for
+    a quorum-based multiple synchronous standbys is:
+<programlisting>
+ synchronous_standby_names = 'ANY 2 (s1, s2, s3)'
+</programlisting>
+    In this example, if four standby servers <literal>s1</>, <literal>s2</>,
+    <literal>s3</> and <literal>s4</> are running, transaction commits will
+    wait for replies from at least any two standbys of <literal>s1</>,
+    <literal>s2</> and <literal>s3</>. <literal>s4</> is an asynchronous
+    standby since its name is not in the list.
    </para>
    <para>
     The synchronous states of standby servers can be viewed using

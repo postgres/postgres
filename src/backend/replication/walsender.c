@@ -2868,12 +2868,20 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 
 			/*
 			 * More easily understood version of standby state. This is purely
-			 * informational, not different from priority.
+			 * informational.
+			 *
+			 * In quorum-based sync replication, the role of each standby
+			 * listed in synchronous_standby_names can be changing very
+			 * frequently. Any standbys considered as "sync" at one moment can
+			 * be switched to "potential" ones at the next moment. So, it's
+			 * basically useless to report "sync" or "potential" as their sync
+			 * states. We report just "quorum" for them.
 			 */
 			if (priority == 0)
 				values[7] = CStringGetTextDatum("async");
 			else if (list_member_int(sync_standbys, i))
-				values[7] = CStringGetTextDatum("sync");
+				values[7] = SyncRepConfig->syncrep_method == SYNC_REP_PRIORITY ?
+					CStringGetTextDatum("sync") : CStringGetTextDatum("quorum");
 			else
 				values[7] = CStringGetTextDatum("potential");
 		}

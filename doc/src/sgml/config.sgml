@@ -3054,41 +3054,71 @@ include_dir 'conf.d'
         transactions waiting for commit will be allowed to proceed after
         these standby servers confirm receipt of their data.
         The synchronous standbys will be those whose names appear
-        earlier in this list, and
+        in this list, and
         that are both currently connected and streaming data in real-time
         (as shown by a state of <literal>streaming</literal> in the
         <link linkend="monitoring-stats-views-table">
         <literal>pg_stat_replication</></link> view).
-        Other standby servers appearing later in this list represent potential
-        synchronous standbys. If any of the current synchronous
-        standbys disconnects for whatever reason,
-        it will be replaced immediately with the next-highest-priority standby.
-        Specifying more than one standby name can allow very high availability.
+        Specifying more than one standby names can allow very high availability.
        </para>
        <para>
         This parameter specifies a list of standby servers using
         either of the following syntaxes:
 <synopsis>
-<replaceable class="parameter">num_sync</replaceable> ( <replaceable class="parameter">standby_name</replaceable> [, ...] )
+[FIRST] <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="parameter">standby_name</replaceable> [, ...] )
+ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="parameter">standby_name</replaceable> [, ...] )
 <replaceable class="parameter">standby_name</replaceable> [, ...]
 </synopsis>
         where <replaceable class="parameter">num_sync</replaceable> is
         the number of synchronous standbys that transactions need to
         wait for replies from,
         and <replaceable class="parameter">standby_name</replaceable>
-        is the name of a standby server. For example, a setting of
-        <literal>3 (s1, s2, s3, s4)</> makes transaction commits wait
-        until their WAL records are received by three higher-priority standbys
-        chosen from standby servers <literal>s1</>, <literal>s2</>,
-        <literal>s3</> and <literal>s4</>.
-        </para>
-        <para>
-        The second syntax was used before <productname>PostgreSQL</>
+        is the name of a standby server.
+        <literal>FIRST</> and <literal>ANY</> specify the method to choose
+        synchronous standbys from the listed servers.
+       </para>
+       <para>
+        The keyword <literal>FIRST</>, coupled with
+        <replaceable class="parameter">num_sync</replaceable>, specifies a
+        priority-based synchronous replication and makes transaction commits
+        wait until their WAL records are replicated to
+        <replaceable class="parameter">num_sync</replaceable> synchronous
+        standbys chosen based on their priorities. For example, a setting of
+        <literal>FIRST 3 (s1, s2, s3, s4)</> will cause each commit to wait for
+        replies from three higher-priority standbys chosen from standby servers
+        <literal>s1</>, <literal>s2</>, <literal>s3</> and <literal>s4</>.
+        The standbys whose names appear earlier in the list are given higher
+        priority and will be considered as synchronous. Other standby servers
+        appearing later in this list represent potential synchronous standbys.
+        If any of the current synchronous standbys disconnects for whatever
+        reason, it will be replaced immediately with the next-highest-priority
+        standby. The keyword <literal>FIRST</> is optional.
+       </para>
+       <para>
+        The keyword <literal>ANY</>, coupled with
+        <replaceable class="parameter">num_sync</replaceable>, specifies a
+        quorum-based synchronous replication and makes transaction commits
+        wait until their WAL records are replicated to <emphasis>at least</>
+        <replaceable class="parameter">num_sync</replaceable> listed standbys.
+        For example, a setting of <literal>ANY 3 (s1, s2, s3, s4)</> will cause
+        each commit to proceed as soon as at least any three standbys of
+        <literal>s1</>, <literal>s2</>, <literal>s3</> and <literal>s4</>
+        reply.
+       </para>
+       <para>
+        <literal>FIRST</> and <literal>ANY</> are case-insensitive. If these
+        keywords are used as the name of a standby server,
+        its <replaceable class="parameter">standby_name</replaceable> must
+        be double-quoted.
+       </para>
+       <para>
+        The third syntax was used before <productname>PostgreSQL</>
         version 9.6 and is still supported. It's the same as the first syntax
-        with <replaceable class="parameter">num_sync</replaceable> equal to 1.
-        For example, <literal>1 (s1, s2)</> and
-        <literal>s1, s2</> have the same meaning: either <literal>s1</>
-        or <literal>s2</> is chosen as a synchronous standby.
+        with <literal>FIRST</> and
+        <replaceable class="parameter">num_sync</replaceable> equal to 1.
+        For example, <literal>FIRST 1 (s1, s2)</> and <literal>s1, s2</> have
+        the same meaning: either <literal>s1</> or <literal>s2</> is chosen
+        as a synchronous standby.
        </para>
        <para>
         The name of a standby server for this purpose is the

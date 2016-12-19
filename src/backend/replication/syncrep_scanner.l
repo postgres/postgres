@@ -64,6 +64,9 @@ xdinside		[^"]+
 %%
 {space}+	{ /* ignore */ }
 
+ANY		{ return ANY; }
+FIRST		{ return FIRST; }
+
 {xdstart}	{
 				initStringInfo(&xdbuf);
 				BEGIN(xd);
