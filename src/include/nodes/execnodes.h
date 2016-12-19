@@ -427,6 +427,9 @@ typedef struct EState
 	HeapTuple  *es_epqTuple;	/* array of EPQ substitute tuples */
 	bool	   *es_epqTupleSet; /* true if EPQ tuple is provided */
 	bool	   *es_epqScanDone; /* true if EPQ tuple has been fetched */
+
+	/* The per-query shared memory area to use for parallel execution. */
+	struct dsa_area   *es_query_dsa;
 } EState;
 
 

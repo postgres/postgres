@@ -17,6 +17,7 @@
 #include "nodes/execnodes.h"
 #include "nodes/parsenodes.h"
 #include "nodes/plannodes.h"
+#include "utils/dsa.h"
 
 typedef struct SharedExecutorInstrumentation SharedExecutorInstrumentation;
 
@@ -27,6 +28,7 @@ typedef struct ParallelExecutorInfo
 	BufferUsage *buffer_usage;
 	SharedExecutorInstrumentation *instrumentation;
 	shm_mq_handle **tqueue;
+	dsa_area   *area;
 	bool		finished;
 } ParallelExecutorInfo;
 

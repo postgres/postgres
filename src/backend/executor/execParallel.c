@@ -34,6 +34,7 @@
 #include "optimizer/planner.h"
 #include "storage/spin.h"
 #include "tcop/tcopprot.h"
+#include "utils/dsa.h"
 #include "utils/memutils.h"
 #include "utils/snapmgr.h"
 
@@ -47,6 +48,7 @@
 #define PARALLEL_KEY_BUFFER_USAGE		UINT64CONST(0xE000000000000003)
 #define PARALLEL_KEY_TUPLE_QUEUE		UINT64CONST(0xE000000000000004)
 #define PARALLEL_KEY_INSTRUMENTATION	UINT64CONST(0xE000000000000005)
+#define PARALLEL_KEY_DSA				UINT64CONST(0xE000000000000006)
 
 #define PARALLEL_TUPLE_QUEUE_SIZE		65536
 
@@ -345,6 +347,7 @@ ExecInitParallelPlan(PlanState *planstate, EState *estate, int nworkers)
 	int			param_len;
 	int			instrumentation_len = 0;
 	int			instrument_offset = 0;
+	Size		dsa_minsize = dsa_minimum_size();
 
 	/* Allocate object for return value. */
 	pei = palloc0(sizeof(ParallelExecutorInfo));
@@ -413,6 +416,10 @@ ExecInitParallelPlan(PlanState *planstate, EState *estate, int nworkers)
 		shm_toc_estimate_keys(&pcxt->estimator, 1);
 	}
 
+	/* Estimate space for DSA area. */
+	shm_toc_estimate_chunk(&pcxt->estimator, dsa_minsize);
+	shm_toc_estimate_keys(&pcxt->estimator, 1);
+
 	/* Everyone's had a chance to ask for space, so now create the DSM. */
 	InitializeParallelDSM(pcxt);
 
@@ -465,6 +472,29 @@ ExecInitParallelPlan(PlanState *planstate, EState *estate, int nworkers)
 					   instrumentation);
 		pei->instrumentation = instrumentation;
 	}
+
+	/*
+	 * Create a DSA area that can be used by the leader and all workers.
+	 * (However, if we failed to create a DSM and are using private memory
+	 * instead, then skip this.)
+	 */
+	if (pcxt->seg != NULL)
+	{
+		char	   *area_space;
+
+		area_space = shm_toc_allocate(pcxt->toc, dsa_minsize);
+		shm_toc_insert(pcxt->toc, PARALLEL_KEY_DSA, area_space);
+		pei->area = dsa_create_in_place(area_space, dsa_minsize,
+										LWTRANCHE_PARALLEL_QUERY_DSA,
+										"parallel_query_dsa",
+										pcxt->seg);
+	}
+
+	/*
+	 * Make the area available to executor nodes running in the leader.  See
+	 * also ParallelQueryMain which makes it available to workers.
+	 */
+	estate->es_query_dsa = pei->area;
 
 	/*
 	 * Give parallel-aware nodes a chance to initialize their shared data.
@@ -571,6 +601,11 @@ ExecParallelFinish(ParallelExecutorInfo *pei)
 void
 ExecParallelCleanup(ParallelExecutorInfo *pei)
 {
+	if (pei->area != NULL)
+	{
+		dsa_detach(pei->area);
+		pei->area = NULL;
+	}
 	if (pei->pcxt != NULL)
 	{
 		DestroyParallelContext(pei->pcxt);
@@ -728,6 +763,8 @@ ParallelQueryMain(dsm_segment *seg, shm_toc *toc)
 	QueryDesc  *queryDesc;
 	SharedExecutorInstrumentation *instrumentation;
 	int			instrument_options = 0;
+	void	   *area_space;
+	dsa_area   *area;
 
 	/* Set up DestReceiver, SharedExecutorInstrumentation, and QueryDesc. */
 	receiver = ExecParallelGetReceiver(seg, toc);
@@ -739,10 +776,21 @@ ParallelQueryMain(dsm_segment *seg, shm_toc *toc)
 	/* Prepare to track buffer usage during query execution. */
 	InstrStartParallelQuery();
 
-	/* Start up the executor, have it run the plan, and then shut it down. */
+	/* Attach to the dynamic shared memory area. */
+	area_space = shm_toc_lookup(toc, PARALLEL_KEY_DSA);
+	area = dsa_attach_in_place(area_space, seg);
+
+	/* Start up the executor */
 	ExecutorStart(queryDesc, 0);
+
+	/* Special executor initialization steps for parallel workers */
+	queryDesc->planstate->state->es_query_dsa = area;
 	ExecParallelInitializeWorker(queryDesc->planstate, toc);
+
+	/* Run the plan */
 	ExecutorRun(queryDesc, ForwardScanDirection, 0L);
+
+	/* Shut down the executor */
 	ExecutorFinish(queryDesc);
 
 	/* Report buffer usage during parallel execution. */
@@ -758,6 +806,7 @@ ParallelQueryMain(dsm_segment *seg, shm_toc *toc)
 	ExecutorEnd(queryDesc);
 
 	/* Cleanup. */
+	dsa_detach(area);
 	FreeQueryDesc(queryDesc);
 	(*receiver->rDestroy) (receiver);
 }
