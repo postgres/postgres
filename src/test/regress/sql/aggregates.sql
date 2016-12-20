@@ -727,6 +727,9 @@ select my_avg(one),my_avg(one) from (values(1),(3)) t(one);
 -- aggregate state should be shared as transfn is the same for both aggs.
 select my_avg(one),my_sum(one) from (values(1),(3)) t(one);
 
+-- same as previous one, but with DISTINCT, which requires sorting the input.
+select my_avg(distinct one),my_sum(distinct one) from (values(1),(3),(1)) t(one);
+
 -- shouldn't share states due to the distinctness not matching.
 select my_avg(distinct one),my_sum(one) from (values(1),(3)) t(one);
 

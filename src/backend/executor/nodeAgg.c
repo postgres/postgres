@@ -1575,16 +1575,19 @@ finalize_aggregates(AggState *aggstate,
 	Datum	   *aggvalues = econtext->ecxt_aggvalues;
 	bool	   *aggnulls = econtext->ecxt_aggnulls;
 	int			aggno;
+	int			transno;
 
 	Assert(currentSet == 0 ||
 		   ((Agg *) aggstate->ss.ps.plan)->aggstrategy != AGG_HASHED);
 
 	aggstate->current_set = currentSet;
 
-	for (aggno = 0; aggno < aggstate->numaggs; aggno++)
+	/*
+	 * If there were any DISTINCT and/or ORDER BY aggregates, sort their
+	 * inputs and run the transition functions.
+	 */
+	for (transno = 0; transno < aggstate->numtrans; transno++)
 	{
-		AggStatePerAgg peragg = &peraggs[aggno];
-		int			transno = peragg->transno;
 		AggStatePerTrans pertrans = &aggstate->pertrans[transno];
 		AggStatePerGroup pergroupstate;
 
@@ -1603,6 +1606,18 @@ finalize_aggregates(AggState *aggstate,
 												pertrans,
 												pergroupstate);
 		}
+	}
+
+	/*
+	 * Run the final functions.
+	 */
+	for (aggno = 0; aggno < aggstate->numaggs; aggno++)
+	{
+		AggStatePerAgg peragg = &peraggs[aggno];
+		int			transno = peragg->transno;
+		AggStatePerGroup pergroupstate;
+
+		pergroupstate = &pergroup[transno + (currentSet * (aggstate->numtrans))];
 
 		if (DO_AGGSPLIT_SKIPFINAL(aggstate->aggsplit))
 			finalize_partialaggregate(aggstate, peragg, pergroupstate,
