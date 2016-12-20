@@ -777,10 +777,11 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 		 * it does not return on error.
 		 */
 		check_new_partition_bound(relname, parent, bound);
-		heap_close(parent, NoLock);
 
 		/* Update the pg_class entry. */
-		StorePartitionBound(rel, bound);
+		StorePartitionBound(rel, parent, bound);
+
+		heap_close(parent, NoLock);
 
 		/*
 		 * The code that follows may also update the pg_class tuple to update
@@ -13141,7 +13142,7 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd)
 							  cmd->bound);
 
 	/* Update the pg_class entry. */
-	StorePartitionBound(attachRel, cmd->bound);
+	StorePartitionBound(attachRel, rel, cmd->bound);
 
 	/*
 	 * Generate partition constraint from the partition bound specification.
@@ -13351,12 +13352,6 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd)
 				heap_close(part_rel, NoLock);
 		}
 	}
-
-	/*
-	 * Invalidate the parent's relcache so that the new partition is now
-	 * included its partition descriptor.
-	 */
-	CacheInvalidateRelcache(rel);
 
 	ObjectAddressSet(address, RelationRelationId, RelationGetRelid(attachRel));
 

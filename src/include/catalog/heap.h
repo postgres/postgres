@@ -143,6 +143,6 @@ extern void StorePartitionKey(Relation rel,
 					Oid *partopclass,
 					Oid *partcollation);
 extern void RemovePartitionKeyByRelId(Oid relid);
-extern void StorePartitionBound(Relation rel, Node *bound);
+extern void StorePartitionBound(Relation rel, Relation parent, Node *bound);
 
 #endif   /* HEAP_H */
