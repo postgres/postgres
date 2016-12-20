@@ -716,7 +716,7 @@ CheckMD5Auth(Port *port, char **logdetail)
 	if (!pg_backend_random(md5Salt, 4))
 	{
 		ereport(LOG,
-				(errmsg("could not generate random MD5 salt.")));
+				(errmsg("could not generate random MD5 salt")));
 		return STATUS_ERROR;
 	}
 
