@@ -209,6 +209,9 @@ DECLARE_UNIQUE_INDEX(pg_rewrite_oid_index, 2692, on pg_rewrite using btree(oid o
 DECLARE_UNIQUE_INDEX(pg_rewrite_rel_rulename_index, 2693, on pg_rewrite using btree(ev_class oid_ops, rulename name_ops));
 #define RewriteRelRulenameIndexId  2693
 
+DECLARE_UNIQUE_INDEX(pg_sequence_seqrelid_index, 5002, on pg_sequence using btree(seqrelid oid_ops));
+#define SequenceRelidIndexId	5002
+
 DECLARE_INDEX(pg_shdepend_depender_index, 1232, on pg_shdepend using btree(dbid oid_ops, classid oid_ops, objid oid_ops, objsubid int4_ops));
 #define SharedDependDependerIndexId		1232
 DECLARE_INDEX(pg_shdepend_reference_index, 1233, on pg_shdepend using btree(refclassid oid_ops, refobjid oid_ops));

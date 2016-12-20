@@ -273,3 +273,11 @@ SELECT * FROM information_schema.sequences WHERE sequence_name IN
 
 DROP USER regress_seq_user;
 DROP SEQUENCE seq;
+
+-- cache tests
+CREATE SEQUENCE test_seq1 CACHE 10;
+SELECT nextval('test_seq1');
+SELECT nextval('test_seq1');
+SELECT nextval('test_seq1');
+
+DROP SEQUENCE test_seq1;

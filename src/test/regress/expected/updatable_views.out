@@ -86,55 +86,48 @@ SELECT table_name, column_name, is_updatable
   FROM information_schema.columns
  WHERE table_name LIKE E'r_\\_view%'
  ORDER BY table_name, ordinal_position;
- table_name |  column_name  | is_updatable 
-------------+---------------+--------------
- ro_view1   | a             | NO
- ro_view1   | b             | NO
- ro_view10  | a             | NO
- ro_view11  | a             | NO
- ro_view11  | b             | NO
- ro_view12  | a             | NO
- ro_view13  | a             | NO
- ro_view13  | b             | NO
- ro_view17  | a             | NO
- ro_view17  | b             | NO
- ro_view18  | a             | NO
- ro_view19  | sequence_name | NO
- ro_view19  | last_value    | NO
- ro_view19  | start_value   | NO
- ro_view19  | increment_by  | NO
- ro_view19  | max_value     | NO
- ro_view19  | min_value     | NO
- ro_view19  | cache_value   | NO
- ro_view19  | log_cnt       | NO
- ro_view19  | is_cycled     | NO
- ro_view19  | is_called     | NO
- ro_view2   | a             | NO
- ro_view2   | b             | NO
- ro_view20  | a             | NO
- ro_view20  | b             | NO
- ro_view20  | g             | NO
- ro_view3   | ?column?      | NO
- ro_view4   | count         | NO
- ro_view5   | a             | NO
- ro_view5   | rank          | NO
- ro_view6   | a             | NO
- ro_view6   | b             | NO
- ro_view7   | a             | NO
- ro_view7   | b             | NO
- ro_view8   | a             | NO
- ro_view8   | b             | NO
- ro_view9   | a             | NO
- ro_view9   | b             | NO
- rw_view14  | ctid          | NO
- rw_view14  | a             | YES
- rw_view14  | b             | YES
- rw_view15  | a             | YES
- rw_view15  | upper         | NO
- rw_view16  | a             | YES
- rw_view16  | b             | YES
- rw_view16  | aa            | YES
-(46 rows)
+ table_name | column_name | is_updatable 
+------------+-------------+--------------
+ ro_view1   | a           | NO
+ ro_view1   | b           | NO
+ ro_view10  | a           | NO
+ ro_view11  | a           | NO
+ ro_view11  | b           | NO
+ ro_view12  | a           | NO
+ ro_view13  | a           | NO
+ ro_view13  | b           | NO
+ ro_view17  | a           | NO
+ ro_view17  | b           | NO
+ ro_view18  | a           | NO
+ ro_view19  | last_value  | NO
+ ro_view19  | log_cnt     | NO
+ ro_view19  | is_called   | NO
+ ro_view2   | a           | NO
+ ro_view2   | b           | NO
+ ro_view20  | a           | NO
+ ro_view20  | b           | NO
+ ro_view20  | g           | NO
+ ro_view3   | ?column?    | NO
+ ro_view4   | count       | NO
+ ro_view5   | a           | NO
+ ro_view5   | rank        | NO
+ ro_view6   | a           | NO
+ ro_view6   | b           | NO
+ ro_view7   | a           | NO
+ ro_view7   | b           | NO
+ ro_view8   | a           | NO
+ ro_view8   | b           | NO
+ ro_view9   | a           | NO
+ ro_view9   | b           | NO
+ rw_view14  | ctid        | NO
+ rw_view14  | a           | YES
+ rw_view14  | b           | YES
+ rw_view15  | a           | YES
+ rw_view15  | upper       | NO
+ rw_view16  | a           | YES
+ rw_view16  | b           | YES
+ rw_view16  | aa          | YES
+(39 rows)
 
 -- Read-only views
 DELETE FROM ro_view1;
@@ -327,7 +320,7 @@ DELETE FROM ro_view18;
 ERROR:  cannot delete from view "ro_view18"
 DETAIL:  Views that do not select from a single table or view are not automatically updatable.
 HINT:  To enable deleting from the view, provide an INSTEAD OF DELETE trigger or an unconditional ON DELETE DO INSTEAD rule.
-UPDATE ro_view19 SET max_value=1000;
+UPDATE ro_view19 SET last_value=1000;
 ERROR:  cannot update view "ro_view19"
 DETAIL:  Views that do not select from a single table or view are not automatically updatable.
 HINT:  To enable updating the view, provide an INSTEAD OF UPDATE trigger or an unconditional ON UPDATE DO INSTEAD rule.

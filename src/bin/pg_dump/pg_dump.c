@@ -15351,7 +15351,27 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 	snprintf(bufm, sizeof(bufm), INT64_FORMAT, SEQ_MINVALUE);
 	snprintf(bufx, sizeof(bufx), INT64_FORMAT, SEQ_MAXVALUE);
 
-	if (fout->remoteVersion >= 80400)
+	if (fout->remoteVersion >= 100000)
+	{
+		appendPQExpBuffer(query,
+						  "SELECT relname, "
+						  "seqstart, seqincrement, "
+						  "CASE WHEN seqincrement > 0 AND seqmax = %s THEN NULL "
+						  "     WHEN seqincrement < 0 AND seqmax = -1 THEN NULL "
+						  "     ELSE seqmax "
+						  "END AS seqmax, "
+						  "CASE WHEN seqincrement > 0 AND seqmin = 1 THEN NULL "
+						  "     WHEN seqincrement < 0 AND seqmin = %s THEN NULL "
+						  "     ELSE seqmin "
+						  "END AS seqmin, "
+						  "seqcache, seqcycle "
+						  "FROM pg_class c "
+						  "JOIN pg_sequence s ON (s.seqrelid = c.oid) "
+						  "WHERE relname = ",
+						  bufx, bufm);
+		appendStringLiteralAH(query, tbinfo->dobj.name, fout);
+	}
+	else if (fout->remoteVersion >= 80400)
 	{
 		appendPQExpBuffer(query,
 						  "SELECT sequence_name, "

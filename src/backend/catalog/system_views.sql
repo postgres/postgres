@@ -169,15 +169,15 @@ CREATE OR REPLACE VIEW pg_sequences AS
         N.nspname AS schemaname,
         C.relname AS sequencename,
         pg_get_userbyid(C.relowner) AS sequenceowner,
-        p.start_value AS start_value,
-        p.minimum_value AS min_value,
-        p.maximum_value AS max_value,
-        p.increment AS increment_by,
-        p.cycle_option AS cycle,
-        p.cache_size AS cache_size,
+        S.seqstart AS start_value,
+        S.seqmin AS min_value,
+        S.seqmax AS max_value,
+        S.seqincrement AS increment_by,
+        S.seqcycle AS cycle,
+        S.seqcache AS cache_size,
         pg_sequence_last_value(C.oid) AS last_value
-    FROM pg_class C LEFT JOIN pg_namespace N ON (N.oid = C.relnamespace),
-         LATERAL pg_sequence_parameters(C.oid) p
+    FROM pg_sequence S JOIN pg_class C ON (C.oid = S.seqrelid)
+         LEFT JOIN pg_namespace N ON (N.oid = C.relnamespace)
     WHERE NOT pg_is_other_temp_schema(N.oid)
           AND relkind = 'S';
 

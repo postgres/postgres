@@ -53,6 +53,7 @@
 #include "catalog/pg_range.h"
 #include "catalog/pg_rewrite.h"
 #include "catalog/pg_seclabel.h"
+#include "catalog/pg_sequence.h"
 #include "catalog/pg_shdepend.h"
 #include "catalog/pg_shdescription.h"
 #include "catalog/pg_shseclabel.h"
@@ -667,6 +668,17 @@ static const struct cachedesc cacheinfo[] = {
 			0
 		},
 		8
+	},
+	{SequenceRelationId,			/* SEQRELID */
+		SequenceRelidIndexId,
+		1,
+		{
+			Anum_pg_sequence_seqrelid,
+			0,
+			0,
+			0
+		},
+		32
 	},
 	{StatisticRelationId,		/* STATRELATTINH */
 		StatisticRelidAttnumInhIndexId,

@@ -1535,15 +1535,16 @@ CREATE VIEW sequences AS
            CAST(64 AS cardinal_number) AS numeric_precision,
            CAST(2 AS cardinal_number) AS numeric_precision_radix,
            CAST(0 AS cardinal_number) AS numeric_scale,
-           CAST(p.start_value AS character_data) AS start_value,
-           CAST(p.minimum_value AS character_data) AS minimum_value,
-           CAST(p.maximum_value AS character_data) AS maximum_value,
-           CAST(p.increment AS character_data) AS increment,
-           CAST(CASE WHEN p.cycle_option THEN 'YES' ELSE 'NO' END AS yes_or_no) AS cycle_option
-    FROM pg_namespace nc, pg_class c, LATERAL pg_sequence_parameters(c.oid) p
+           CAST(s.seqstart AS character_data) AS start_value,
+           CAST(s.seqmin AS character_data) AS minimum_value,
+           CAST(s.seqmax AS character_data) AS maximum_value,
+           CAST(s.seqincrement AS character_data) AS increment,
+           CAST(CASE WHEN s.seqcycle THEN 'YES' ELSE 'NO' END AS yes_or_no) AS cycle_option
+    FROM pg_namespace nc, pg_class c, pg_sequence s
     WHERE c.relnamespace = nc.oid
           AND c.relkind = 'S'
           AND (NOT pg_is_other_temp_schema(nc.oid))
+          AND c.oid = s.seqrelid
           AND (pg_has_role(c.relowner, 'USAGE')
                OR has_sequence_privilege(c.oid, 'SELECT, UPDATE, USAGE') );
 

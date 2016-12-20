@@ -261,6 +261,11 @@
      </row>
 
      <row>
+      <entry><link linkend="catalog-pg-sequence"><structname>pg_sequence</structname></link></entry>
+      <entry>information about sequences</entry>
+     </row>
+
+     <row>
       <entry><link linkend="catalog-pg-shdepend"><structname>pg_shdepend</structname></link></entry>
       <entry>dependencies on shared objects</entry>
      </row>
@@ -1546,7 +1551,8 @@
    The catalog <structname>pg_class</structname> catalogs tables and most
    everything else that has columns or is otherwise similar to a
    table.  This includes indexes (but see also
-   <structname>pg_index</structname>), sequences, views, materialized
+   <structname>pg_index</structname>), sequences (but see also
+   <structname>pg_sequence</structname>), views, materialized
    views, composite types, and TOAST tables; see <structfield>relkind</>.
    Below, when we mean all of these
    kinds of objects we speak of <quote>relations</quote>.  Not all
@@ -5581,6 +5587,86 @@
       <entry><type>text</type></entry>
       <entry></entry>
       <entry>The security label applied to this object.</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="catalog-pg-sequence">
+  <title><structname>pg_sequence</structname></title>
+
+  <indexterm zone="catalog-pg-sequence">
+   <primary>pg_sequence</primary>
+  </indexterm>
+
+  <para>
+   The catalog <structname>pg_sequence</structname> contains information about
+   sequences.  Some of the information about sequences, such as the name and
+   the schema, is in <structname>pg_class</structname>.
+  </para>
+
+  <table>
+   <title><structname>pg_sequence</> Columns</title>
+
+   <tgroup cols="4">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><structfield>seqrelid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
+      <entry>The OID of the <structname>pg_class</> entry for this sequence</entry>
+     </row>
+
+     <row>
+      <entry><structfield>seqstart</structfield></entry>
+      <entry><type>int8</type></entry>
+      <entry></entry>
+      <entry>Start value of the sequence</entry>
+     </row>
+
+     <row>
+      <entry><structfield>seqincrement</structfield></entry>
+      <entry><type>int8</type></entry>
+      <entry></entry>
+      <entry>Increment value of the sequence</entry>
+     </row>
+
+     <row>
+      <entry><structfield>seqmax</structfield></entry>
+      <entry><type>int8</type></entry>
+      <entry></entry>
+      <entry>Maximum value of the sequence</entry>
+     </row>
+
+     <row>
+      <entry><structfield>seqmin</structfield></entry>
+      <entry><type>int8</type></entry>
+      <entry></entry>
+      <entry>Minimum value of the sequence</entry>
+     </row>
+
+     <row>
+      <entry><structfield>seqcache</structfield></entry>
+      <entry><type>int8</type></entry>
+      <entry></entry>
+      <entry>Cache size of the sequence</entry>
+     </row>
+
+     <row>
+      <entry><structfield>seqcycle</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>Whether the sequence cycles</entry>
      </row>
     </tbody>
    </tgroup>

@@ -95,7 +95,7 @@ DELETE FROM rw_view16 WHERE a=-3; -- should be OK
 -- Read-only views
 INSERT INTO ro_view17 VALUES (3, 'ROW 3');
 DELETE FROM ro_view18;
-UPDATE ro_view19 SET max_value=1000;
+UPDATE ro_view19 SET last_value=1000;
 UPDATE ro_view20 SET b=upper(b);
 
 DROP TABLE base_tbl CASCADE;

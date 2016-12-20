@@ -66,6 +66,7 @@
 #include "commands/proclang.h"
 #include "commands/schemacmds.h"
 #include "commands/seclabel.h"
+#include "commands/sequence.h"
 #include "commands/trigger.h"
 #include "commands/typecmds.h"
 #include "nodes/nodeFuncs.h"
@@ -1114,6 +1115,11 @@ doDeletion(const ObjectAddress *object, int flags)
 					else
 						heap_drop_with_catalog(object->objectId);
 				}
+
+				/* for a sequence, in addition to dropping the heap, also
+				 * delete pg_sequence tuple */
+				if (relKind == RELKIND_SEQUENCE)
+					DeleteSequenceTuple(object->objectId);
 				break;
 			}
 

@@ -128,6 +128,7 @@ pg_range|t
 pg_replication_origin|t
 pg_rewrite|t
 pg_seclabel|t
+pg_sequence|t
 pg_shdepend|t
 pg_shdescription|t
 pg_shseclabel|t

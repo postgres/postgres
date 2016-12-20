@@ -22,38 +22,24 @@
 #include "storage/relfilenode.h"
 
 
-typedef struct FormData_pg_sequence
+typedef struct FormData_pg_sequence_data
 {
-	NameData	sequence_name;
 	int64		last_value;
-	int64		start_value;
-	int64		increment_by;
-	int64		max_value;
-	int64		min_value;
-	int64		cache_value;
 	int64		log_cnt;
-	bool		is_cycled;
 	bool		is_called;
-} FormData_pg_sequence;
+} FormData_pg_sequence_data;
 
-typedef FormData_pg_sequence *Form_pg_sequence;
+typedef FormData_pg_sequence_data *Form_pg_sequence_data;
 
 /*
  * Columns of a sequence relation
  */
 
-#define SEQ_COL_NAME			1
-#define SEQ_COL_LASTVAL			2
-#define SEQ_COL_STARTVAL		3
-#define SEQ_COL_INCBY			4
-#define SEQ_COL_MAXVALUE		5
-#define SEQ_COL_MINVALUE		6
-#define SEQ_COL_CACHE			7
-#define SEQ_COL_LOG				8
-#define SEQ_COL_CYCLE			9
-#define SEQ_COL_CALLED			10
+#define SEQ_COL_LASTVAL			1
+#define SEQ_COL_LOG				2
+#define SEQ_COL_CALLED			3
 
-#define SEQ_COL_FIRSTCOL		SEQ_COL_NAME
+#define SEQ_COL_FIRSTCOL		SEQ_COL_LASTVAL
 #define SEQ_COL_LASTCOL			SEQ_COL_CALLED
 
 /* XLOG stuff */
@@ -77,6 +63,7 @@ extern Datum pg_sequence_last_value(PG_FUNCTION_ARGS);
 
 extern ObjectAddress DefineSequence(ParseState *pstate, CreateSeqStmt *stmt);
 extern ObjectAddress AlterSequence(ParseState *pstate, AlterSeqStmt *stmt);
+extern void DeleteSequenceTuple(Oid relid);
 extern void ResetSequence(Oid seq_relid);
 extern void ResetSequenceCaches(void);
 
