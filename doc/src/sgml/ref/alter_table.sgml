@@ -708,10 +708,10 @@ ALTER TABLE ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
   </para>
 
   <para>
-   All the actions except <literal>RENAME</literal>,
-   <literal>SET TABLESPACE</literal> and <literal>SET SCHEMA</literal>
-   can be combined into
-   a list of multiple alterations to apply in parallel.  For example, it
+   All the forms of ALTER TABLE that act on a single table, except
+   <literal>RENAME</literal>, and <literal>SET SCHEMA</literal>
+   can be combined into a list of multiple alterations to applied together.
+   For example, it
    is possible to add several columns and/or alter the type of several
    columns in a single command.  This is particularly useful with large
    tables, since only one pass over the table need be made.
