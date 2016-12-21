@@ -227,12 +227,12 @@ DefineSequence(ParseState *pstate, CreateSeqStmt *seq)
 	memset(pgs_nulls, 0, sizeof(pgs_nulls));
 
 	pgs_values[Anum_pg_sequence_seqrelid - 1] = ObjectIdGetDatum(seqoid);
+	pgs_values[Anum_pg_sequence_seqcycle - 1] = BoolGetDatum(seqform.seqcycle);
 	pgs_values[Anum_pg_sequence_seqstart - 1] = Int64GetDatumFast(seqform.seqstart);
 	pgs_values[Anum_pg_sequence_seqincrement - 1] = Int64GetDatumFast(seqform.seqincrement);
 	pgs_values[Anum_pg_sequence_seqmax - 1] = Int64GetDatumFast(seqform.seqmax);
 	pgs_values[Anum_pg_sequence_seqmin - 1] = Int64GetDatumFast(seqform.seqmin);
 	pgs_values[Anum_pg_sequence_seqcache - 1] = Int64GetDatumFast(seqform.seqcache);
-	pgs_values[Anum_pg_sequence_seqcycle - 1] = BoolGetDatum(seqform.seqcycle);
 
 	tuple = heap_form_tuple(tupDesc, pgs_values, pgs_nulls);
 	simple_heap_insert(rel, tuple);
@@ -622,11 +622,11 @@ nextval_internal(Oid relid)
 	if (!HeapTupleIsValid(pgstuple))
 		elog(ERROR, "cache lookup failed for sequence %u", relid);
 	pgsform = (Form_pg_sequence) GETSTRUCT(pgstuple);
+	cycle = pgsform->seqcycle;
 	incby = pgsform->seqincrement;
 	maxv = pgsform->seqmax;
 	minv = pgsform->seqmin;
 	cache = pgsform->seqcache;
-	cycle = pgsform->seqcycle;
 	ReleaseSysCache(pgstuple);
 
 	/* lock page' buffer and read tuple */

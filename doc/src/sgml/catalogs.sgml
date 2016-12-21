@@ -5628,6 +5628,13 @@
      </row>
 
      <row>
+      <entry><structfield>seqcycle</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>Whether the sequence cycles</entry>
+     </row>
+
+     <row>
       <entry><structfield>seqstart</structfield></entry>
       <entry><type>int8</type></entry>
       <entry></entry>
@@ -5660,13 +5667,6 @@
       <entry><type>int8</type></entry>
       <entry></entry>
       <entry>Cache size of the sequence</entry>
-     </row>
-
-     <row>
-      <entry><structfield>seqcycle</structfield></entry>
-      <entry><type>bool</type></entry>
-      <entry></entry>
-      <entry>Whether the sequence cycles</entry>
      </row>
     </tbody>
    </tgroup>
