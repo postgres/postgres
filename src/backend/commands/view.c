@@ -59,15 +59,13 @@ validateWithCheckOption(char *value)
 /*---------------------------------------------------------------------
  * DefineVirtualRelation
  *
- * Create the "view" relation. `DefineRelation' does all the work,
- * we just provide the correct arguments ... at least when we're
- * creating a view.  If we're updating an existing view, we have to
- * work harder.
+ * Create a view relation and use the rules system to store the query
+ * for the view.
  *---------------------------------------------------------------------
  */
 static ObjectAddress
 DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
-					  List *options)
+					  List *options, Query *viewParse)
 {
 	Oid			viewOid;
 	LOCKMODE	lockmode;
@@ -162,18 +160,13 @@ DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
 		checkViewTupleDesc(descriptor, rel->rd_att);
 
 		/*
-		 * The new options list replaces the existing options list, even if
-		 * it's empty.
-		 */
-		atcmd = makeNode(AlterTableCmd);
-		atcmd->subtype = AT_ReplaceRelOptions;
-		atcmd->def = (Node *) options;
-		atcmds = lappend(atcmds, atcmd);
-
-		/*
 		 * If new attributes have been added, we must add pg_attribute entries
 		 * for them.  It is convenient (although overkill) to use the ALTER
 		 * TABLE ADD COLUMN infrastructure for this.
+		 *
+		 * Note that we must do this before updating the query for the view,
+		 * since the rules system requires that the correct view columns be in
+		 * place when defining the new rules.
 		 */
 		if (list_length(attrList) > rel->rd_att->natts)
 		{
@@ -192,9 +185,38 @@ DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
 				atcmd->def = (Node *) lfirst(c);
 				atcmds = lappend(atcmds, atcmd);
 			}
+
+			AlterTableInternal(viewOid, atcmds, true);
+
+			/* Make the new view columns visible */
+			CommandCounterIncrement();
 		}
 
-		/* OK, let's do it. */
+		/*
+		 * Update the query for the view.
+		 *
+		 * Note that we must do this before updating the view options, because
+		 * the new options may not be compatible with the old view query (for
+		 * example if we attempt to add the WITH CHECK OPTION, we require that
+		 * the new view be automatically updatable, but the old view may not
+		 * have been).
+		 */
+		StoreViewQuery(viewOid, viewParse, replace);
+
+		/* Make the new view query visible */
+		CommandCounterIncrement();
+
+		/*
+		 * Finally update the view options.
+		 *
+		 * The new options list replaces the existing options list, even if
+		 * it's empty.
+		 */
+		atcmd = makeNode(AlterTableCmd);
+		atcmd->subtype = AT_ReplaceRelOptions;
+		atcmd->def = (Node *) options;
+		atcmds = list_make1(atcmd);
+
 		AlterTableInternal(viewOid, atcmds, true);
 
 		ObjectAddressSet(address, RelationRelationId, viewOid);
@@ -211,7 +233,7 @@ DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
 		ObjectAddress address;
 
 		/*
-		 * now set the parameters for keys/inheritance etc. All of these are
+		 * Set the parameters for keys/inheritance etc. All of these are
 		 * uninteresting for views...
 		 */
 		createStmt->relation = relation;
@@ -224,13 +246,20 @@ DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
 		createStmt->if_not_exists = false;
 
 		/*
-		 * finally create the relation (this will error out if there's an
-		 * existing view, so we don't need more code to complain if "replace"
-		 * is false).
+		 * Create the relation (this will error out if there's an existing
+		 * view, so we don't need more code to complain if "replace" is
+		 * false).
 		 */
 		address = DefineRelation(createStmt, RELKIND_VIEW, InvalidOid, NULL,
 								 NULL);
 		Assert(address.objectId != InvalidOid);
+
+		/* Make the new view relation visible */
+		CommandCounterIncrement();
+
+		/* Store the query for the view */
+		StoreViewQuery(address.objectId, viewParse, replace);
+
 		return address;
 	}
 }
@@ -530,16 +559,7 @@ DefineView(ViewStmt *stmt, const char *queryString)
 	 * aborted.
 	 */
 	address = DefineVirtualRelation(view, viewParse->targetList,
-									stmt->replace, stmt->options);
-
-	/*
-	 * The relation we have just created is not visible to any other commands
-	 * running with the same transaction & command id. So, increment the
-	 * command id counter (but do NOT pfree any memory!!!!)
-	 */
-	CommandCounterIncrement();
-
-	StoreViewQuery(address.objectId, viewParse, stmt->replace);
+									stmt->replace, stmt->options, viewParse);
 
 	return address;
 }
