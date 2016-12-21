@@ -264,7 +264,7 @@ SELECT 'fat &amp; cow'::tsquery @@ 'a fat cat sat on a mat and ate a fat rat'::t
     text, any more than a <type>tsvector</type> is.  A <type>tsquery</type>
     contains search terms, which must be already-normalized lexemes, and
     may combine multiple terms using AND, OR, NOT, and FOLLOWED BY operators.
-    (For details see <xref linkend="datatype-tsquery">.)  There are
+    (For syntax details see <xref linkend="datatype-tsquery">.)  There are
     functions <function>to_tsquery</>, <function>plainto_tsquery</>,
     and <function>phraseto_tsquery</>
     that are helpful in converting user-written text into a proper
@@ -323,6 +323,8 @@ text @@ text
     at least one of its arguments must appear, while the <literal>!</> (NOT)
     operator specifies that its argument must <emphasis>not</> appear in
     order to have a match.
+    For example, the query <literal>fat &amp; ! rat</> matches documents that
+    contain <literal>fat</> but not <literal>rat</>.
    </para>
 
    <para>
@@ -376,6 +378,28 @@ SELECT phraseto_tsquery('the cats ate the rats');
     operators.  Without parentheses, <literal>|</literal> binds least tightly,
     then <literal>&amp;</literal>, then <literal>&lt;-&gt;</literal>,
     and <literal>!</literal> most tightly.
+   </para>
+
+   <para>
+    It's worth noticing that the AND/OR/NOT operators mean something subtly
+    different when they are within the arguments of a FOLLOWED BY operator
+    than when they are not, because within FOLLOWED BY the exact position of
+    the match is significant.  For example, normally <literal>!x</> matches
+    only documents that do not contain <literal>x</> anywhere.
+    But <literal>!x &lt;-&gt; y</> matches <literal>y</> if it is not
+    immediately after an <literal>x</>; an occurrence of <literal>x</>
+    elsewhere in the document does not prevent a match.  Another example is
+    that <literal>x &amp; y</> normally only requires that <literal>x</>
+    and <literal>y</> both appear somewhere in the document, but
+    <literal>(x &amp; y) &lt;-&gt; z</> requires <literal>x</>
+    and <literal>y</> to match at the same place, immediately before
+    a <literal>z</>.  Thus this query behaves differently from
+    <literal>x &lt;-&gt; z &amp; y &lt;-&gt; z</>, which will match a
+    document containing two separate sequences <literal>x z</> and
+    <literal>y z</>.  (This specific query is useless as written,
+    since <literal>x</> and <literal>y</> could not match at the same place;
+    but with more complex situations such as prefix-match patterns, a query
+    of this form could be useful.)
    </para>
   </sect2>
 

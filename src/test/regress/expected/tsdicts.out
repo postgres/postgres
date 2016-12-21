@@ -470,15 +470,15 @@ SELECT to_tsquery('hunspell_tst', 'footballyklubber:b & rebookings:A & sky');
 (1 row)
 
 SELECT to_tsquery('hunspell_tst', 'footballyklubber:b <-> sky');
-                           to_tsquery                            
------------------------------------------------------------------
- 'foot':B <-> 'sky' & 'ball':B <-> 'sky' & 'klubber':B <-> 'sky'
+                   to_tsquery                    
+-------------------------------------------------
+ ( 'foot':B & 'ball':B & 'klubber':B ) <-> 'sky'
 (1 row)
 
 SELECT phraseto_tsquery('hunspell_tst', 'footballyklubber sky');
-                     phraseto_tsquery                      
------------------------------------------------------------
- 'foot' <-> 'sky' & 'ball' <-> 'sky' & 'klubber' <-> 'sky'
+             phraseto_tsquery              
+-------------------------------------------
+ ( 'foot' & 'ball' & 'klubber' ) <-> 'sky'
 (1 row)
 
 -- Test ispell dictionary with hunspell affix with FLAG long in configuration

@@ -212,7 +212,7 @@ checkcondition_gin(void *checkval, QueryOperand *val, ExecPhraseData *data)
  * Evaluate tsquery boolean expression using ternary logic.
  */
 static GinTernaryValue
-TS_execute_ternary(GinChkVal *gcv, QueryItem *curitem)
+TS_execute_ternary(GinChkVal *gcv, QueryItem *curitem, bool in_phrase)
 {
 	GinTernaryValue val1,
 				val2,
@@ -230,7 +230,10 @@ TS_execute_ternary(GinChkVal *gcv, QueryItem *curitem)
 	switch (curitem->qoperator.oper)
 	{
 		case OP_NOT:
-			result = TS_execute_ternary(gcv, curitem + 1);
+			/* In phrase search, always return MAYBE since we lack positions */
+			if (in_phrase)
+				return GIN_MAYBE;
+			result = TS_execute_ternary(gcv, curitem + 1, in_phrase);
 			if (result == GIN_MAYBE)
 				return result;
 			return !result;
@@ -238,17 +241,21 @@ TS_execute_ternary(GinChkVal *gcv, QueryItem *curitem)
 		case OP_PHRASE:
 
 			/*
-			 * GIN doesn't contain any information about positions, treat
+			 * GIN doesn't contain any information about positions, so treat
 			 * OP_PHRASE as OP_AND with recheck requirement
 			 */
-			*gcv->need_recheck = true;
+			*(gcv->need_recheck) = true;
+			/* Pass down in_phrase == true in case there's a NOT below */
+			in_phrase = true;
+
 			/* FALL THRU */
 
 		case OP_AND:
-			val1 = TS_execute_ternary(gcv, curitem + curitem->qoperator.left);
+			val1 = TS_execute_ternary(gcv, curitem + curitem->qoperator.left,
+									  in_phrase);
 			if (val1 == GIN_FALSE)
 				return GIN_FALSE;
-			val2 = TS_execute_ternary(gcv, curitem + 1);
+			val2 = TS_execute_ternary(gcv, curitem + 1, in_phrase);
 			if (val2 == GIN_FALSE)
 				return GIN_FALSE;
 			if (val1 == GIN_TRUE && val2 == GIN_TRUE)
@@ -257,10 +264,11 @@ TS_execute_ternary(GinChkVal *gcv, QueryItem *curitem)
 				return GIN_MAYBE;
 
 		case OP_OR:
-			val1 = TS_execute_ternary(gcv, curitem + curitem->qoperator.left);
+			val1 = TS_execute_ternary(gcv, curitem + curitem->qoperator.left,
+									  in_phrase);
 			if (val1 == GIN_TRUE)
 				return GIN_TRUE;
-			val2 = TS_execute_ternary(gcv, curitem + 1);
+			val2 = TS_execute_ternary(gcv, curitem + 1, in_phrase);
 			if (val2 == GIN_TRUE)
 				return GIN_TRUE;
 			if (val1 == GIN_FALSE && val2 == GIN_FALSE)
@@ -307,7 +315,7 @@ gin_tsquery_consistent(PG_FUNCTION_ARGS)
 
 		res = TS_execute(GETQUERY(query),
 						 &gcv,
-						 TS_EXEC_CALC_NOT | TS_EXEC_PHRASE_AS_AND,
+						 TS_EXEC_CALC_NOT | TS_EXEC_PHRASE_NO_POS,
 						 checkcondition_gin);
 	}
 
@@ -343,7 +351,7 @@ gin_tsquery_triconsistent(PG_FUNCTION_ARGS)
 		gcv.map_item_operand = (int *) (extra_data[0]);
 		gcv.need_recheck = &recheck;
 
-		res = TS_execute_ternary(&gcv, GETQUERY(query));
+		res = TS_execute_ternary(&gcv, GETQUERY(query), false);
 
 		if (res == GIN_TRUE && recheck)
 			res = GIN_MAYBE;

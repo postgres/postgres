@@ -3959,15 +3959,7 @@ SELECT 'fat &amp; rat &amp; ! cat'::tsquery;
         tsquery         
 ------------------------
  'fat' &amp; 'rat' &amp; !'cat'
-
-SELECT '(fat | rat) &lt;-&gt; cat'::tsquery;
-              tsquery
------------------------------------
- 'fat' &lt;-&gt; 'cat' | 'rat' &lt;-&gt; 'cat'
 </programlisting>
-
-     The last example demonstrates that <type>tsquery</type> sometimes
-     rearranges nested operators into a logically equivalent formulation.
     </para>
 
     <para>

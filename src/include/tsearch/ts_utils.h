@@ -113,8 +113,8 @@ extern text *generateHeadline(HeadlineParsedText *prs);
  * struct ExecPhraseData is passed to a TSExecuteCallback function if we need
  * lexeme position data (because of a phrase-match operator in the tsquery).
  * The callback should fill in position data when it returns true (success).
- * If it cannot return position data, it may ignore its "data" argument, but
- * then the caller of TS_execute() must pass the TS_EXEC_PHRASE_AS_AND flag
+ * If it cannot return position data, it may leave "data" unchanged, but
+ * then the caller of TS_execute() must pass the TS_EXEC_PHRASE_NO_POS flag
  * and must arrange for a later recheck with position data available.
  *
  * The reported lexeme positions must be sorted and unique.  Callers must only
@@ -123,13 +123,21 @@ extern text *generateHeadline(HeadlineParsedText *prs);
  * portion of a tsvector value.  If "allocated" is true then the pos array
  * is palloc'd workspace and caller may free it when done.
  *
+ * "negate" means that the pos array contains positions where the query does
+ * not match, rather than positions where it does.  "width" is positive when
+ * the match is wider than one lexeme.  Neither of these fields normally need
+ * to be touched by TSExecuteCallback functions; they are used for
+ * phrase-search processing within TS_execute.
+ *
  * All fields of the ExecPhraseData struct are initially zeroed by caller.
  */
 typedef struct ExecPhraseData
 {
 	int			npos;			/* number of positions reported */
 	bool		allocated;		/* pos points to palloc'd data? */
+	bool		negate;			/* positions are where query is NOT matched */
 	WordEntryPos *pos;			/* ordered, non-duplicate lexeme positions */
+	int			width;			/* width of match in lexemes, less 1 */
 } ExecPhraseData;
 
 /*
@@ -139,7 +147,9 @@ typedef struct ExecPhraseData
  * val: lexeme to test for presence of
  * data: to be filled with lexeme positions; NULL if position data not needed
  *
- * Return TRUE if lexeme is present in data, else FALSE
+ * Return TRUE if lexeme is present in data, else FALSE.  If data is not
+ * NULL, it should be filled with lexeme positions, but function can leave
+ * it as zeroes if position data is not available.
  */
 typedef bool (*TSExecuteCallback) (void *arg, QueryOperand *val,
 											   ExecPhraseData *data);
@@ -151,15 +161,18 @@ typedef bool (*TSExecuteCallback) (void *arg, QueryOperand *val,
 /*
  * If TS_EXEC_CALC_NOT is not set, then NOT expressions are automatically
  * evaluated to be true.  Useful in cases where NOT cannot be accurately
- * computed (GiST) or it isn't important (ranking).
+ * computed (GiST) or it isn't important (ranking).  From TS_execute's
+ * perspective, !CALC_NOT means that the TSExecuteCallback function might
+ * return false-positive indications of a lexeme's presence.
  */
 #define TS_EXEC_CALC_NOT		(0x01)
 /*
- * Treat OP_PHRASE as OP_AND.  Used when positional information is not
- * accessible, like in consistent methods of GIN/GiST indexes; rechecking
- * must occur later.
+ * If TS_EXEC_PHRASE_NO_POS is set, allow OP_PHRASE to be executed lossily
+ * in the absence of position information: a TRUE result indicates that the
+ * phrase might be present.  Without this flag, OP_PHRASE always returns
+ * false if lexeme position information is not available.
  */
-#define TS_EXEC_PHRASE_AS_AND	(0x02)
+#define TS_EXEC_PHRASE_NO_POS	(0x02)
 
 extern bool TS_execute(QueryItem *curitem, void *arg, uint32 flags,
 		   TSExecuteCallback chkcond);
@@ -228,7 +241,7 @@ extern Datum gin_tsquery_consistent_oldsig(PG_FUNCTION_ARGS);
  * TSQuery Utilities
  */
 extern QueryItem *clean_NOT(QueryItem *ptr, int32 *len);
-extern TSQuery cleanup_fakeval_and_phrase(TSQuery in);
+extern TSQuery cleanup_tsquery_stopwords(TSQuery in);
 
 typedef struct QTNode
 {

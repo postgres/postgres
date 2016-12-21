@@ -64,34 +64,6 @@ SELECT 'a & !!b'::tsquery;
 SELECT '!!a & b'::tsquery;
 SELECT '!!a & !!b'::tsquery;
 
--- phrase transformation
-SELECT 'a <-> (b|c)'::tsquery;
-SELECT '(a|b) <-> c'::tsquery;
-SELECT '(a|b) <-> (d|c)'::tsquery;
-
-SELECT 'a <-> (b&c)'::tsquery;
-SELECT '(a&b) <-> c'::tsquery;
-SELECT '(a&b) <-> (d&c)'::tsquery;
-
-SELECT 'a <-> !b'::tsquery;
-SELECT '!a <-> b'::tsquery;
-SELECT '!a <-> !b'::tsquery;
-
-SELECT 'a <-> !(b&c)'::tsquery;
-SELECT 'a <-> !(b|c)'::tsquery;
-SELECT  '!(a&b) <-> c'::tsquery;
-SELECT  '!(a|b) <-> c'::tsquery;
-
-SELECT  '(!a|b) <-> c'::tsquery;
-SELECT  '(!a&b) <-> c'::tsquery;
-SELECT  'c <-> (!a|b)'::tsquery;
-SELECT  'c <-> (!a&b)'::tsquery;
-
-SELECT  '(a|b) <-> !c'::tsquery;
-SELECT  '(a&b) <-> !c'::tsquery;
-SELECT  '!c <-> (a|b)'::tsquery;
-SELECT  '!c <-> (a&b)'::tsquery;
-
 --comparisons
 SELECT 'a' < 'b & c'::tsquery as "true";
 SELECT 'a' > 'b & c'::tsquery as "false";
@@ -146,10 +118,33 @@ SELECT to_tsvector('simple', '1 2 11 3') @@ '1:* <-> 3' AS "true";
 
 SELECT to_tsvector('simple', '1 2 3 4') @@ '1 <-> 2 <-> 3' AS "true";
 SELECT to_tsvector('simple', '1 2 3 4') @@ '(1 <-> 2) <-> 3' AS "true";
-SELECT to_tsvector('simple', '1 2 3 4') @@ '1 <-> (2 <-> 3)' AS "false";
-SELECT to_tsvector('simple', '1 2 3 4') @@ '1 <2> (2 <-> 3)' AS "true";
+SELECT to_tsvector('simple', '1 2 3 4') @@ '1 <-> (2 <-> 3)' AS "true";
+SELECT to_tsvector('simple', '1 2 3 4') @@ '1 <2> (2 <-> 3)' AS "false";
 SELECT to_tsvector('simple', '1 2 1 2 3 4') @@ '(1 <-> 2) <-> 3' AS "true";
 SELECT to_tsvector('simple', '1 2 1 2 3 4') @@ '1 <-> 2 <-> 3' AS "true";
+-- without position data, phrase search does not match
+SELECT strip(to_tsvector('simple', '1 2 3 4')) @@ '1 <-> 2 <-> 3' AS "false";
+
+select to_tsvector('simple', 'q x q y') @@ 'q <-> (x & y)' AS "false";
+select to_tsvector('simple', 'q x') @@ 'q <-> (x | y <-> z)' AS "true";
+select to_tsvector('simple', 'q y') @@ 'q <-> (x | y <-> z)' AS "false";
+select to_tsvector('simple', 'q y z') @@ 'q <-> (x | y <-> z)' AS "true";
+select to_tsvector('simple', 'q y x') @@ 'q <-> (x | y <-> z)' AS "false";
+select to_tsvector('simple', 'q x y') @@ 'q <-> (x | y <-> z)' AS "true";
+select to_tsvector('simple', 'q x') @@ '(x | y <-> z) <-> q' AS "false";
+select to_tsvector('simple', 'x q') @@ '(x | y <-> z) <-> q' AS "true";
+select to_tsvector('simple', 'x y q') @@ '(x | y <-> z) <-> q' AS "false";
+select to_tsvector('simple', 'x y z') @@ '(x | y <-> z) <-> q' AS "false";
+select to_tsvector('simple', 'x y z q') @@ '(x | y <-> z) <-> q' AS "true";
+select to_tsvector('simple', 'y z q') @@ '(x | y <-> z) <-> q' AS "true";
+select to_tsvector('simple', 'y y q') @@ '(x | y <-> z) <-> q' AS "false";
+select to_tsvector('simple', 'y y q') @@ '(!x | y <-> z) <-> q' AS "true";
+select to_tsvector('simple', 'x y q') @@ '(!x | y <-> z) <-> q' AS "true";
+select to_tsvector('simple', 'y y q') @@ '(x | y <-> !z) <-> q' AS "true";
+select to_tsvector('simple', 'x q') @@ '(x | y <-> !z) <-> q' AS "true";
+select to_tsvector('simple', 'x q') @@ '(!x | y <-> z) <-> q' AS "false";
+select to_tsvector('simple', 'z q') @@ '(!x | y <-> z) <-> q' AS "true";
+select to_tsvector('simple', 'x y q y') @@ '!x <-> y' AS "true";
 
 --ranking
 SELECT ts_rank(' a:1 s:2C d g'::tsvector, 'a | s');
@@ -193,6 +188,7 @@ SELECT 'a:1 b:3'::tsvector @@ 'a <0> b'::tsquery AS "false";
 SELECT 'a:1 b:3'::tsvector @@ 'a <1> b'::tsquery AS "false";
 SELECT 'a:1 b:3'::tsvector @@ 'a <2> b'::tsquery AS "true";
 SELECT 'a:1 b:3'::tsvector @@ 'a <3> b'::tsquery AS "false";
+SELECT 'a:1 b:3'::tsvector @@ 'a <0> a:*'::tsquery AS "true";
 
 -- tsvector editing operations
 

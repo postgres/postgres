@@ -366,133 +366,6 @@ SELECT '!!a & !!b'::tsquery;
  !!'a' & !!'b'
 (1 row)
 
--- phrase transformation
-SELECT 'a <-> (b|c)'::tsquery;
-          tsquery          
----------------------------
- 'a' <-> 'b' | 'a' <-> 'c'
-(1 row)
-
-SELECT '(a|b) <-> c'::tsquery;
-          tsquery          
----------------------------
- 'a' <-> 'c' | 'b' <-> 'c'
-(1 row)
-
-SELECT '(a|b) <-> (d|c)'::tsquery;
-                        tsquery                        
--------------------------------------------------------
- 'a' <-> 'd' | 'b' <-> 'd' | 'a' <-> 'c' | 'b' <-> 'c'
-(1 row)
-
-SELECT 'a <-> (b&c)'::tsquery;
-          tsquery          
----------------------------
- 'a' <-> 'b' & 'a' <-> 'c'
-(1 row)
-
-SELECT '(a&b) <-> c'::tsquery;
-          tsquery          
----------------------------
- 'a' <-> 'c' & 'b' <-> 'c'
-(1 row)
-
-SELECT '(a&b) <-> (d&c)'::tsquery;
-                        tsquery                        
--------------------------------------------------------
- 'a' <-> 'd' & 'b' <-> 'd' & 'a' <-> 'c' & 'b' <-> 'c'
-(1 row)
-
-SELECT 'a <-> !b'::tsquery;
-        tsquery         
-------------------------
- 'a' & !( 'a' <-> 'b' )
-(1 row)
-
-SELECT '!a <-> b'::tsquery;
-        tsquery         
-------------------------
- !( 'a' <-> 'b' ) & 'b'
-(1 row)
-
-SELECT '!a <-> !b'::tsquery;
-              tsquery               
-------------------------------------
- !'a' & !( !( 'a' <-> 'b' ) & 'b' )
-(1 row)
-
-SELECT 'a <-> !(b&c)'::tsquery;
-               tsquery                
---------------------------------------
- 'a' & !( 'a' <-> 'b' & 'a' <-> 'c' )
-(1 row)
-
-SELECT 'a <-> !(b|c)'::tsquery;
-               tsquery                
---------------------------------------
- 'a' & !( 'a' <-> 'b' | 'a' <-> 'c' )
-(1 row)
-
-SELECT  '!(a&b) <-> c'::tsquery;
-               tsquery                
---------------------------------------
- !( 'a' <-> 'c' & 'b' <-> 'c' ) & 'c'
-(1 row)
-
-SELECT  '!(a|b) <-> c'::tsquery;
-               tsquery                
---------------------------------------
- !( 'a' <-> 'c' | 'b' <-> 'c' ) & 'c'
-(1 row)
-
-SELECT  '(!a|b) <-> c'::tsquery;
-               tsquery                
---------------------------------------
- !( 'a' <-> 'c' ) & 'c' | 'b' <-> 'c'
-(1 row)
-
-SELECT  '(!a&b) <-> c'::tsquery;
-               tsquery                
---------------------------------------
- !( 'a' <-> 'c' ) & 'c' & 'b' <-> 'c'
-(1 row)
-
-SELECT  'c <-> (!a|b)'::tsquery;
-               tsquery                
---------------------------------------
- 'c' & !( 'c' <-> 'a' ) | 'c' <-> 'b'
-(1 row)
-
-SELECT  'c <-> (!a&b)'::tsquery;
-               tsquery                
---------------------------------------
- 'c' & !( 'c' <-> 'a' ) & 'c' <-> 'b'
-(1 row)
-
-SELECT  '(a|b) <-> !c'::tsquery;
-                    tsquery                     
-------------------------------------------------
- ( 'a' | 'b' ) & !( 'a' <-> 'c' | 'b' <-> 'c' )
-(1 row)
-
-SELECT  '(a&b) <-> !c'::tsquery;
-                  tsquery                   
---------------------------------------------
- 'a' & 'b' & !( 'a' <-> 'c' & 'b' <-> 'c' )
-(1 row)
-
-SELECT  '!c <-> (a|b)'::tsquery;
-                     tsquery                     
--------------------------------------------------
- !( 'c' <-> 'a' ) & 'a' | !( 'c' <-> 'b' ) & 'b'
-(1 row)
-
-SELECT  '!c <-> (a&b)'::tsquery;
-                     tsquery                     
--------------------------------------------------
- !( 'c' <-> 'a' ) & 'a' & !( 'c' <-> 'b' ) & 'b'
-(1 row)
-
 --comparisons
 SELECT 'a' < 'b & c'::tsquery as "true";
  true 
@@ -568,33 +441,33 @@ SELECT 'foo & bar'::tsquery && 'asd | fg';
 (1 row)
 
 SELECT 'a' <-> 'b & d'::tsquery;
-         ?column?          
----------------------------
- 'a' <-> 'b' & 'a' <-> 'd'
+       ?column?        
+-----------------------
+ 'a' <-> ( 'b' & 'd' )
 (1 row)
 
 SELECT 'a & g' <-> 'b & d'::tsquery;
-                       ?column?                        
--------------------------------------------------------
- 'a' <-> 'b' & 'g' <-> 'b' & 'a' <-> 'd' & 'g' <-> 'd'
+            ?column?             
+---------------------------------
+ ( 'a' & 'g' ) <-> ( 'b' & 'd' )
 (1 row)
 
 SELECT 'a & g' <-> 'b | d'::tsquery;
-                       ?column?                        
--------------------------------------------------------
- 'a' <-> 'b' & 'g' <-> 'b' | 'a' <-> 'd' & 'g' <-> 'd'
+            ?column?             
+---------------------------------
+ ( 'a' & 'g' ) <-> ( 'b' | 'd' )
 (1 row)
 
 SELECT 'a & g' <-> 'b <-> d'::tsquery;
-                     ?column?                      
----------------------------------------------------
- 'a' <-> ( 'b' <-> 'd' ) & 'g' <-> ( 'b' <-> 'd' )
+             ?column?              
+-----------------------------------
+ ( 'a' & 'g' ) <-> ( 'b' <-> 'd' )
 (1 row)
 
 SELECT tsquery_phrase('a <3> g', 'b & d', 10);
-               tsquery_phrase                
----------------------------------------------
- 'a' <3> 'g' <10> 'b' & 'a' <3> 'g' <10> 'd'
+         tsquery_phrase         
+--------------------------------
+ 'a' <3> 'g' <10> ( 'b' & 'd' )
 (1 row)
 
 -- tsvector-tsquery operations
@@ -749,16 +622,16 @@ SELECT to_tsvector('simple', '1 2 3 4') @@ '(1 <-> 2) <-> 3' AS "true";
  t
 (1 row)
 
-SELECT to_tsvector('simple', '1 2 3 4') @@ '1 <-> (2 <-> 3)' AS "false";
- false 
--------
- f
-(1 row)
-
-SELECT to_tsvector('simple', '1 2 3 4') @@ '1 <2> (2 <-> 3)' AS "true";
+SELECT to_tsvector('simple', '1 2 3 4') @@ '1 <-> (2 <-> 3)' AS "true";
  true 
 ------
  t
+(1 row)
+
+SELECT to_tsvector('simple', '1 2 3 4') @@ '1 <2> (2 <-> 3)' AS "false";
+ false 
+-------
+ f
 (1 row)
 
 SELECT to_tsvector('simple', '1 2 1 2 3 4') @@ '(1 <-> 2) <-> 3' AS "true";
@@ -768,6 +641,133 @@ SELECT to_tsvector('simple', '1 2 1 2 3 4') @@ '(1 <-> 2) <-> 3' AS "true";
 (1 row)
 
 SELECT to_tsvector('simple', '1 2 1 2 3 4') @@ '1 <-> 2 <-> 3' AS "true";
+ true 
+------
+ t
+(1 row)
+
+-- without position data, phrase search does not match
+SELECT strip(to_tsvector('simple', '1 2 3 4')) @@ '1 <-> 2 <-> 3' AS "false";
+ false 
+-------
+ f
+(1 row)
+
+select to_tsvector('simple', 'q x q y') @@ 'q <-> (x & y)' AS "false";
+ false 
+-------
+ f
+(1 row)
+
+select to_tsvector('simple', 'q x') @@ 'q <-> (x | y <-> z)' AS "true";
+ true 
+------
+ t
+(1 row)
+
+select to_tsvector('simple', 'q y') @@ 'q <-> (x | y <-> z)' AS "false";
+ false 
+-------
+ f
+(1 row)
+
+select to_tsvector('simple', 'q y z') @@ 'q <-> (x | y <-> z)' AS "true";
+ true 
+------
+ t
+(1 row)
+
+select to_tsvector('simple', 'q y x') @@ 'q <-> (x | y <-> z)' AS "false";
+ false 
+-------
+ f
+(1 row)
+
+select to_tsvector('simple', 'q x y') @@ 'q <-> (x | y <-> z)' AS "true";
+ true 
+------
+ t
+(1 row)
+
+select to_tsvector('simple', 'q x') @@ '(x | y <-> z) <-> q' AS "false";
+ false 
+-------
+ f
+(1 row)
+
+select to_tsvector('simple', 'x q') @@ '(x | y <-> z) <-> q' AS "true";
+ true 
+------
+ t
+(1 row)
+
+select to_tsvector('simple', 'x y q') @@ '(x | y <-> z) <-> q' AS "false";
+ false 
+-------
+ f
+(1 row)
+
+select to_tsvector('simple', 'x y z') @@ '(x | y <-> z) <-> q' AS "false";
+ false 
+-------
+ f
+(1 row)
+
+select to_tsvector('simple', 'x y z q') @@ '(x | y <-> z) <-> q' AS "true";
+ true 
+------
+ t
+(1 row)
+
+select to_tsvector('simple', 'y z q') @@ '(x | y <-> z) <-> q' AS "true";
+ true 
+------
+ t
+(1 row)
+
+select to_tsvector('simple', 'y y q') @@ '(x | y <-> z) <-> q' AS "false";
+ false 
+-------
+ f
+(1 row)
+
+select to_tsvector('simple', 'y y q') @@ '(!x | y <-> z) <-> q' AS "true";
+ true 
+------
+ t
+(1 row)
+
+select to_tsvector('simple', 'x y q') @@ '(!x | y <-> z) <-> q' AS "true";
+ true 
+------
+ t
+(1 row)
+
+select to_tsvector('simple', 'y y q') @@ '(x | y <-> !z) <-> q' AS "true";
+ true 
+------
+ t
+(1 row)
+
+select to_tsvector('simple', 'x q') @@ '(x | y <-> !z) <-> q' AS "true";
+ true 
+------
+ t
+(1 row)
+
+select to_tsvector('simple', 'x q') @@ '(!x | y <-> z) <-> q' AS "false";
+ false 
+-------
+ f
+(1 row)
+
+select to_tsvector('simple', 'z q') @@ '(!x | y <-> z) <-> q' AS "true";
+ true 
+------
+ t
+(1 row)
+
+select to_tsvector('simple', 'x y q y') @@ '!x <-> y' AS "true";
  true 
 ------
  t
@@ -1000,6 +1000,12 @@ SELECT 'a:1 b:3'::tsvector @@ 'a <3> b'::tsquery AS "false";
  false 
 -------
  f
+(1 row)
+
+SELECT 'a:1 b:3'::tsvector @@ 'a <0> a:*'::tsquery AS "true";
+ true 
+------
+ t
 (1 row)
 
 -- tsvector editing operations
