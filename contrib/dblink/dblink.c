@@ -2705,7 +2705,7 @@ dblink_res_error(const char *conname, PGresult *res, const char *dblink_context_
 	ereport(level,
 			(errcode(sqlstate),
 			 message_primary ? errmsg_internal("%s", message_primary) :
-			 errmsg("unknown error"),
+			 errmsg("could not obtain message string for remote error"),
 			 message_detail ? errdetail_internal("%s", message_detail) : 0,
 			 message_hint ? errhint("%s", message_hint) : 0,
 			 message_context ? errcontext("%s", message_context) : 0,
