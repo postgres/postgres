@@ -1108,6 +1108,33 @@ my %tests = (
 			section_post_data        => 1,
 			test_schema_plus_blobs   => 1, }, },
 
+	'CREATE CAST FOR timestamptz' => {
+		create_order => 51,
+		create_sql => 'CREATE CAST (timestamptz AS interval) WITH FUNCTION age(timestamptz) AS ASSIGNMENT;',
+		regexp => qr/CREATE CAST \(timestamp with time zone AS interval\) WITH FUNCTION pg_catalog\.age\(timestamp with time zone\) AS ASSIGNMENT;/m,
+		like => {
+			binary_upgrade => 1,
+			clean => 1,
+			clean_if_exists => 1,
+			createdb => 1,
+			defaults => 1,
+			exclude_dump_test_schema => 1,
+			exclude_test_table => 1,
+			exclude_test_table_data => 1,
+			no_blobs                => 1,
+			no_privs => 1,
+			no_owner => 1,
+			pg_dumpall_dbprivs       => 1,
+			schema_only => 1,
+			section_pre_data => 1,
+		},
+		unlike => {
+			only_dump_test_schema => 1,
+			only_dump_test_table => 1,
+			pg_dumpall_globals => 1,
+			section_post_data => 1,
+			test_schema_plus_blobs => 1, }, },
+
 	'CREATE DATABASE postgres' => {
 		all_runs => 1,
 		regexp => qr/^
@@ -1856,38 +1883,32 @@ my %tests = (
 			section_post_data        => 1,
 			test_schema_plus_blobs   => 1, }, },
 
-#######################################
-	# Currently broken.
-#######################################
-#
-#	'CREATE TRANSFORM FOR int' => {
-#		create_order => 34,
-#		create_sql => 'CREATE TRANSFORM FOR int LANGUAGE SQL (FROM SQL WITH FUNCTION varchar_transform(internal), TO SQL WITH FUNCTION int4recv(internal));',
-#		regexp => qr/CREATE TRANSFORM FOR int LANGUAGE SQL \(FROM SQL WITH FUNCTION varchar_transform\(internal\), TO SQL WITH FUNCTION int4recv\(internal\)\);/m,
-#		like => {
-#			binary_upgrade => 1,
-#			clean => 1,
-#			clean_if_exists => 1,
-#			createdb => 1,
-#			defaults => 1,
-#			exclude_dump_test_schema => 1,
-#			exclude_test_table => 1,
-#			exclude_test_table_data => 1,
-#			no_blobs                => 1,
-#			no_privs => 1,
-#			no_owner => 1,
-#			pg_dumpall_dbprivs       => 1,
-#			schema_only => 1,
-#			section_post_data => 1,
-#		},
-#		unlike => {
-#			section_pre_data => 1,
-#			only_dump_test_schema => 1,
-#			only_dump_test_table => 1,
-#			pg_dumpall_globals => 1,
-#			test_schema_plus_blobs => 1,
-#		},
-#	},
+	'CREATE TRANSFORM FOR int' => {
+		create_order => 34,
+		create_sql => 'CREATE TRANSFORM FOR int LANGUAGE SQL (FROM SQL WITH FUNCTION varchar_transform(internal), TO SQL WITH FUNCTION int4recv(internal));',
+		regexp => qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog\.varchar_transform\(internal\), TO SQL WITH FUNCTION pg_catalog\.int4recv\(internal\)\);/m,
+		like => {
+			binary_upgrade => 1,
+			clean => 1,
+			clean_if_exists => 1,
+			createdb => 1,
+			defaults => 1,
+			exclude_dump_test_schema => 1,
+			exclude_test_table => 1,
+			exclude_test_table_data => 1,
+			no_blobs                => 1,
+			no_privs => 1,
+			no_owner => 1,
+			pg_dumpall_dbprivs       => 1,
+			schema_only => 1,
+			section_pre_data => 1,
+		},
+		unlike => {
+			only_dump_test_schema => 1,
+			only_dump_test_table => 1,
+			pg_dumpall_globals => 1,
+			section_post_data => 1,
+			test_schema_plus_blobs => 1, }, },
 
 	'CREATE LANGUAGE pltestlang' => {
 		all_runs => 1,
