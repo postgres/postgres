@@ -133,6 +133,9 @@ typedef struct WaitEvent
 	uint32		events;			/* triggered events */
 	pgsocket	fd;				/* socket fd associated with event */
 	void	   *user_data;		/* pointer provided in AddWaitEventToSet */
+#ifdef WIN32
+	bool		reset;			/* Is reset of the event required? */
+#endif
 } WaitEvent;
 
 /* forward declaration to avoid exposing latch.c implementation details */
