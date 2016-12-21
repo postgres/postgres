@@ -13297,8 +13297,11 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd)
 		}
 	}
 
+	/* It's safe to skip the validation scan after all */
 	if (skip_validate)
-		elog(NOTICE, "skipping scan to validate partition constraint");
+		ereport(INFO,
+				(errmsg("partition constraint for table \"%s\" is implied by existing constraints",
+						RelationGetRelationName(attachRel))));
 
 	/*
 	 * Set up to have the table to be scanned to validate the partition

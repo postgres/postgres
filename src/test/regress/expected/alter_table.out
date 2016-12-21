@@ -3179,7 +3179,7 @@ ALTER TABLE list_parted2 ATTACH PARTITION part_3_4 FOR VALUES IN (3, 4);
 ALTER TABLE list_parted2 DETACH PARTITION part_3_4;
 ALTER TABLE part_3_4 ALTER a SET NOT NULL;
 ALTER TABLE list_parted2 ATTACH PARTITION part_3_4 FOR VALUES IN (3, 4);
-NOTICE:  skipping scan to validate partition constraint
+INFO:  partition constraint for table "part_3_4" is implied by existing constraints
 -- check validation when attaching range partitions
 CREATE TABLE range_parted (
 	a int,
@@ -3204,7 +3204,7 @@ CREATE TABLE part2 (
 	b int NOT NULL CHECK (b >= 10 AND b < 18)
 );
 ALTER TABLE range_parted ATTACH PARTITION part2 FOR VALUES FROM (1, 10) TO (1, 20);
-NOTICE:  skipping scan to validate partition constraint
+INFO:  partition constraint for table "part2" is implied by existing constraints
 -- check that leaf partitions are scanned when attaching a partitioned
 -- table
 CREATE TABLE part_5 (
@@ -3219,7 +3219,7 @@ ERROR:  partition constraint is violated by some row
 DELETE FROM part_5_a WHERE a NOT IN (3);
 ALTER TABLE part_5 ADD CONSTRAINT check_a CHECK (a IN (5)), ALTER a SET NOT NULL;
 ALTER TABLE list_parted2 ATTACH PARTITION part_5 FOR VALUES IN (5);
-NOTICE:  skipping scan to validate partition constraint
+INFO:  partition constraint for table "part_5" is implied by existing constraints
 -- check that the table being attached is not already a partition
 ALTER TABLE list_parted2 ATTACH PARTITION part_2 FOR VALUES IN (2);
 ERROR:  "part_2" is already a partition
