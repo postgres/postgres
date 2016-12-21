@@ -1395,7 +1395,15 @@ litbuf_udeescape(unsigned char escape, core_yyscan_t yyscanner)
 		}
 	}
 
+	/* unfinished surrogate pair? */
+	if (pair_first)
+	{
+		ADVANCE_YYLLOC(in - litbuf + 3);				/* 3 for U&" */
+		yyerror("invalid Unicode surrogate pair");
+	}
+
 	*out = '\0';
+
 	/*
 	 * We could skip pg_verifymbstr if we didn't process any non-7-bit-ASCII
 	 * codes; but it's probably not worth the trouble, since this isn't
