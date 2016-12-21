@@ -2268,6 +2268,16 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
+	if (format == 't' && streamwal && strcmp(basedir, "-") == 0)
+	{
+		fprintf(stderr,
+			_("%s: cannot stream transaction logs in tar mode to stdout\n"),
+				progname);
+		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
+				progname);
+		exit(1);
+	}
+
 	if (replication_slot && !streamwal)
 	{
 		fprintf(stderr,
