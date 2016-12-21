@@ -556,15 +556,15 @@ SELECT plainto_tsquery('english', 'foo bar') && 'asd | fg';
 
 -- Check stop word deletion, a and s are stop-words
 SELECT to_tsquery('english', '!(a & !b) & c');
- to_tsquery 
-------------
- 'b' & 'c'
+ to_tsquery  
+-------------
+ !!'b' & 'c'
 (1 row)
 
 SELECT to_tsquery('english', '!(a & !b)');
  to_tsquery 
 ------------
- 'b'
+ !!'b'
 (1 row)
 
 SELECT to_tsquery('english', '(1 <-> 2) <-> a');
@@ -1240,15 +1240,15 @@ SELECT ts_rewrite('1 & (2 <2> 3)', 'SELECT keyword, sample FROM test_tsquery'::t
 (1 row)
 
 SELECT ts_rewrite('5 <-> (1 & (2 <-> 3))', 'SELECT keyword, sample FROM test_tsquery'::text );
-              ts_rewrite               
----------------------------------------
- '5' <-> '1' & '5' <-> ( '2' <-> '3' )
+       ts_rewrite        
+-------------------------
+ '5' <-> ( '2' <-> '4' )
 (1 row)
 
 SELECT ts_rewrite('5 <-> (6 | 8)', 'SELECT keyword, sample FROM test_tsquery'::text );
-        ts_rewrite         
----------------------------
- '5' <-> '7' | '5' <-> '8'
+      ts_rewrite       
+-----------------------
+ '5' <-> ( '6' | '8' )
 (1 row)
 
 -- Check empty substitution
@@ -1384,6 +1384,26 @@ SELECT ts_rewrite( query, 'SELECT keyword, sample FROM test_tsquery' ) FROM to_t
                                    ts_rewrite                                    
 ---------------------------------------------------------------------------------
  'citi' & 'foo' & ( 'bar' | 'qq' ) & ( 'nyc' | 'big' & 'appl' | 'new' & 'york' )
+(1 row)
+
+SELECT ts_rewrite(tsquery_phrase('foo', 'foo'), 'foo', 'bar | baz');
+               ts_rewrite                
+-----------------------------------------
+ ( 'bar' | 'baz' ) <-> ( 'bar' | 'baz' )
+(1 row)
+
+SELECT to_tsvector('foo bar') @@
+  ts_rewrite(tsquery_phrase('foo', 'foo'), 'foo', 'bar | baz');
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT to_tsvector('bar baz') @@
+  ts_rewrite(tsquery_phrase('foo', 'foo'), 'foo', 'bar | baz');
+ ?column? 
+----------
+ t
 (1 row)
 
 RESET enable_seqscan;

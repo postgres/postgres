@@ -104,7 +104,7 @@ tsquery_or(PG_FUNCTION_ARGS)
 	PG_FREE_IF_COPY(a, 0);
 	PG_FREE_IF_COPY(b, 1);
 
-	PG_RETURN_POINTER(query);
+	PG_RETURN_TSQUERY(query);
 }
 
 Datum
@@ -140,7 +140,7 @@ tsquery_phrase_distance(PG_FUNCTION_ARGS)
 	PG_FREE_IF_COPY(a, 0);
 	PG_FREE_IF_COPY(b, 1);
 
-	PG_RETURN_POINTER(cleanup_fakeval_and_phrase(query));
+	PG_RETURN_TSQUERY(query);
 }
 
 Datum

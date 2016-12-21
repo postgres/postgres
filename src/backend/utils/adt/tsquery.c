@@ -557,13 +557,11 @@ findoprnd_recurse(QueryItem *ptr, uint32 *pos, int nnodes, bool *needcleanup)
 				   curitem->oper == OP_OR ||
 				   curitem->oper == OP_PHRASE);
 
-			if (curitem->oper == OP_PHRASE)
-				*needcleanup = true;	/* push OP_PHRASE down later */
-
 			(*pos)++;
 
 			/* process RIGHT argument */
 			findoprnd_recurse(ptr, pos, nnodes, needcleanup);
+
 			curitem->left = *pos - tmp; /* set LEFT arg's offset */
 
 			/* process LEFT argument */
@@ -574,8 +572,9 @@ findoprnd_recurse(QueryItem *ptr, uint32 *pos, int nnodes, bool *needcleanup)
 
 
 /*
- * Fills in the left-fields previously left unfilled. The input
- * QueryItems must be in polish (prefix) notation.
+ * Fill in the left-fields previously left unfilled.
+ * The input QueryItems must be in polish (prefix) notation.
+ * Also, set *needcleanup to true if there are any QI_VALSTOP nodes.
  */
 static void
 findoprnd(QueryItem *ptr, int size, bool *needcleanup)
@@ -687,15 +686,17 @@ parse_tsquery(char *buf,
 	memcpy((void *) GETOPERAND(query), (void *) state.op, state.sumlen);
 	pfree(state.op);
 
-	/* Set left operand pointers for every operator. */
+	/*
+	 * Set left operand pointers for every operator.  While we're at it,
+	 * detect whether there are any QI_VALSTOP nodes.
+	 */
 	findoprnd(ptr, query->size, &needcleanup);
 
 	/*
-	 * QI_VALSTOP nodes should be cleaned and OP_PHRASE should be pushed
-	 * down
+	 * If there are QI_VALSTOP nodes, delete them and simplify the tree.
 	 */
 	if (needcleanup)
-		return cleanup_fakeval_and_phrase(query);
+		query = cleanup_tsquery_stopwords(query);
 
 	return query;
 }
@@ -1088,6 +1089,9 @@ tsqueryrecv(PG_FUNCTION_ARGS)
 	 */
 	findoprnd(item, size, &needcleanup);
 
+	/* Can't have found any QI_VALSTOP nodes */
+	Assert(!needcleanup);
+
 	/* Copy operands to output struct */
 	for (i = 0; i < size; i++)
 	{
@@ -1104,9 +1108,6 @@ tsqueryrecv(PG_FUNCTION_ARGS)
 	Assert(ptr - GETOPERAND(query) == datalen);
 
 	SET_VARSIZE(query, len + datalen);
-
-	if (needcleanup)
-		PG_RETURN_TSQUERY(cleanup_fakeval_and_phrase(query));
 
 	PG_RETURN_TSQUERY(query);
 }
