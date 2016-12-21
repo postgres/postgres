@@ -1435,6 +1435,13 @@ litbuf_udeescape(unsigned char escape, core_yyscan_t yyscanner)
 		}
 	}
 
+	/* unfinished surrogate pair? */
+	if (pair_first)
+	{
+		ADVANCE_YYLLOC(in - litbuf + 3);				/* 3 for U&" */
+		yyerror("invalid Unicode surrogate pair");
+	}
+
 	*out = '\0';
 
 	/*
