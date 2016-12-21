@@ -213,6 +213,11 @@ extern void EvalPlanQualSetPlan(EPQState *epqstate,
 extern void EvalPlanQualSetTuple(EPQState *epqstate, Index rti,
 					 HeapTuple tuple);
 extern HeapTuple EvalPlanQualGetTuple(EPQState *epqstate, Index rti);
+extern void ExecSetupPartitionTupleRouting(Relation rel,
+							   PartitionDispatch **pd,
+							   ResultRelInfo **partitions,
+							   TupleConversionMap ***tup_conv_maps,
+							   int *num_parted, int *num_partitions);
 extern int ExecFindPartition(ResultRelInfo *resultRelInfo,
 				  PartitionDispatch *pd,
 				  TupleTableSlot *slot,

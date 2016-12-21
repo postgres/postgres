@@ -1718,68 +1718,22 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	if (operation == CMD_INSERT &&
 		rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 	{
-		int					i,
-							j,
-							num_parted;
-		List			   *leaf_parts;
-		ListCell		   *cell;
-		ResultRelInfo	   *leaf_part_rri;
+		PartitionDispatch  *partition_dispatch_info;
+		ResultRelInfo	   *partitions;
+		TupleConversionMap **partition_tupconv_maps;
+		int					num_parted,
+							num_partitions;
 
-		/* Get the tuple-routing information and lock partitions */
-		mtstate->mt_partition_dispatch_info =
-					RelationGetPartitionDispatchInfo(rel, RowExclusiveLock,
-													 &num_parted,
-													 &leaf_parts);
+		ExecSetupPartitionTupleRouting(rel,
+									   &partition_dispatch_info,
+									   &partitions,
+									   &partition_tupconv_maps,
+									   &num_parted, &num_partitions);
+		mtstate->mt_partition_dispatch_info = partition_dispatch_info;
 		mtstate->mt_num_dispatch = num_parted;
-		mtstate->mt_num_partitions = list_length(leaf_parts);
-		mtstate->mt_partitions = (ResultRelInfo *)
-						palloc0(mtstate->mt_num_partitions *
-												sizeof(ResultRelInfo));
-		mtstate->mt_partition_tupconv_maps = (TupleConversionMap **)
-						palloc0(mtstate->mt_num_partitions *
-												sizeof(TupleConversionMap *));
-
-		leaf_part_rri = mtstate->mt_partitions;
-		i = j = 0;
-		foreach(cell, leaf_parts)
-		{
-			Oid			partrelid = lfirst_oid(cell);
-			Relation	partrel;
-
-			/*
-			 * We locked all the partitions above including the leaf
-			 * partitions.  Note that each of the relations in
-			 * mtstate->mt_partitions will be closed by ExecEndModifyTable().
-			 */
-			partrel = heap_open(partrelid, NoLock);
-
-			/*
-			 * Verify result relation is a valid target for the current
-			 * operation
-			 */
-			CheckValidResultRel(partrel, CMD_INSERT);
-
-			InitResultRelInfo(leaf_part_rri,
-							  partrel,
-							  1,		/* dummy */
-							  false,	/* no partition constraint checks */
-							  eflags);
-
-			/* Open partition indices (note: ON CONFLICT unsupported)*/
-			if (partrel->rd_rel->relhasindex && operation != CMD_DELETE &&
-				leaf_part_rri->ri_IndexRelationDescs == NULL)
-				ExecOpenIndices(leaf_part_rri, false);
-
-			if (!equalTupleDescs(RelationGetDescr(rel),
-								 RelationGetDescr(partrel)))
-				mtstate->mt_partition_tupconv_maps[i] =
-							convert_tuples_by_name(RelationGetDescr(rel),
-												   RelationGetDescr(partrel),
-								  gettext_noop("could not convert row type"));
-
-			leaf_part_rri++;
-			i++;
-		}
+		mtstate->mt_partitions = partitions;
+		mtstate->mt_num_partitions = num_partitions;
+		mtstate->mt_partition_tupconv_maps = partition_tupconv_maps;
 	}
 
 	/*

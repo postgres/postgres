@@ -51,6 +51,7 @@
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
 #include "parser/parsetree.h"
+#include "rewrite/rewriteManip.h"
 #include "storage/bufmgr.h"
 #include "storage/lmgr.h"
 #include "tcop/utility.h"
@@ -2996,6 +2997,97 @@ EvalPlanQualEnd(EPQState *epqstate)
 	epqstate->estate = NULL;
 	epqstate->planstate = NULL;
 	epqstate->origslot = NULL;
+}
+
+/*
+ * ExecSetupPartitionTupleRouting - set up information needed during
+ * tuple routing for partitioned tables
+ *
+ * Output arguments:
+ * 'pd' receives an array of PartitionDispatch objects with one entry for
+ *		every partitioned table in the partition tree
+ * 'partitions' receives an array of ResultRelInfo objects with one entry for
+ *		every leaf partition in the partition tree
+ * 'tup_conv_maps' receives an array of TupleConversionMap objects with one
+ *		entry for every leaf partition (required to convert input tuple based
+ *		on the root table's rowtype to a leaf partition's rowtype after tuple
+ *		routing is done
+ * 'num_parted' receives the number of partitioned tables in the partition
+ *		tree (= the number of entries in the 'pd' output array)
+ * 'num_partitions' receives the number of leaf partitions in the partition
+ *		tree (= the number of entries in the 'partitions' and 'tup_conv_maps'
+ *		output arrays
+ *
+ * Note that all the relations in the partition tree are locked using the
+ * RowExclusiveLock mode upon return from this function.
+ */
+void
+ExecSetupPartitionTupleRouting(Relation rel,
+							   PartitionDispatch **pd,
+							   ResultRelInfo **partitions,
+							   TupleConversionMap ***tup_conv_maps,
+							   int *num_parted, int *num_partitions)
+{
+	TupleDesc	tupDesc = RelationGetDescr(rel);
+	List	   *leaf_parts;
+	ListCell   *cell;
+	int			i;
+	ResultRelInfo *leaf_part_rri;
+
+	/* Get the tuple-routing information and lock partitions */
+	*pd = RelationGetPartitionDispatchInfo(rel, RowExclusiveLock, num_parted,
+										   &leaf_parts);
+	*num_partitions = list_length(leaf_parts);
+	*partitions = (ResultRelInfo *) palloc(*num_partitions *
+										   sizeof(ResultRelInfo));
+	*tup_conv_maps = (TupleConversionMap **) palloc0(*num_partitions *
+										   sizeof(TupleConversionMap *));
+
+	leaf_part_rri = *partitions;
+	i = 0;
+	foreach(cell, leaf_parts)
+	{
+		Relation	partrel;
+		TupleDesc	part_tupdesc;
+
+		/*
+		 * We locked all the partitions above including the leaf partitions.
+		 * Note that each of the relations in *partitions are eventually
+		 * closed by the caller.
+		 */
+		partrel = heap_open(lfirst_oid(cell), NoLock);
+		part_tupdesc = RelationGetDescr(partrel);
+
+		/*
+		 * Verify result relation is a valid target for the current operation.
+		 */
+		CheckValidResultRel(partrel, CMD_INSERT);
+
+		/*
+		 * Save a tuple conversion map to convert a tuple routed to this
+		 * partition from the parent's type to the partition's.
+		 */
+		(*tup_conv_maps)[i] = convert_tuples_by_name(tupDesc, part_tupdesc,
+								 gettext_noop("could not convert row type"));
+
+		InitResultRelInfo(leaf_part_rri,
+						  partrel,
+						  1,	 /* dummy */
+						  false,
+						  0);
+
+		/*
+		 * Open partition indices (remember we do not support ON CONFLICT in
+		 * case of partitioned tables, so we do not need support information
+		 * for speculative insertion)
+		 */
+		if (leaf_part_rri->ri_RelationDesc->rd_rel->relhasindex &&
+			leaf_part_rri->ri_IndexRelationDescs == NULL)
+			ExecOpenIndices(leaf_part_rri, false);
+
+		leaf_part_rri++;
+		i++;
+	}
 }
 
 /*
