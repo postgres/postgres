@@ -932,7 +932,8 @@ advance_aggregates(AggState *aggstate, AggStatePerGroup pergroup)
 
 			/* Load values into fcinfo */
 			/* Start from 1, since the 0th arg will be the transition value */
-			Assert(slot->tts_nvalid >= numTransInputs);
+			Assert(slot->tts_nvalid >= (numTransInputs + inputoff));
+
 			for (i = 0; i < numTransInputs; i++)
 			{
 				fcinfo->arg[i + 1] = slot->tts_values[i + inputoff];
@@ -963,14 +964,13 @@ combine_aggregates(AggState *aggstate, AggStatePerGroup pergroup)
 {
 	int			transno;
 	int			numTrans = aggstate->numtrans;
-	TupleTableSlot *slot = NULL;
+	TupleTableSlot *slot;
 
 	/* combine not supported with grouping sets */
 	Assert(aggstate->phase->numsets == 0);
 
 	/* compute input for all aggregates */
-	if (aggstate->evalproj)
-		slot = ExecProject(aggstate->evalproj, NULL);
+	slot = ExecProject(aggstate->evalproj, NULL);
 
 	for (transno = 0; transno < numTrans; transno++)
 	{
@@ -979,8 +979,7 @@ combine_aggregates(AggState *aggstate, AggStatePerGroup pergroup)
 		FunctionCallInfo fcinfo = &pertrans->transfn_fcinfo;
 		int			inputoff = pertrans->inputoff;
 
-		Assert(slot->tts_nvalid >= 1);
-		Assert(slot->tts_nvalid + inputoff >= 1);
+		Assert(slot->tts_nvalid > inputoff);
 
 		/*
 		 * deserialfn_oid will be set if we must deserialize the input state
