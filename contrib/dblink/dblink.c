@@ -40,6 +40,7 @@
 #include "access/reloptions.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_foreign_data_wrapper.h"
 #include "catalog/pg_foreign_server.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_user_mapping.h"
@@ -2727,6 +2728,25 @@ get_connect_string(const char *servername)
 	AclResult	aclresult;
 	char	   *srvname;
 
+	static const PQconninfoOption *options = NULL;
+
+	/*
+	 * Get list of valid libpq options.
+	 *
+	 * To avoid unnecessary work, we get the list once and use it throughout
+	 * the lifetime of this backend process.  We don't need to care about
+	 * memory context issues, because PQconndefaults allocates with malloc.
+	 */
+	if (!options)
+	{
+		options = PQconndefaults();
+		if (!options)			/* assume reason for failure is OOM */
+			ereport(ERROR,
+					(errcode(ERRCODE_FDW_OUT_OF_MEMORY),
+					 errmsg("out of memory"),
+			 errdetail("could not get libpq's default connection options")));
+	}
+
 	/* first gather the server connstr options */
 	srvname = pstrdup(servername);
 	truncate_identifier(srvname, strlen(srvname), false);
@@ -2750,16 +2770,18 @@ get_connect_string(const char *servername)
 		{
 			DefElem    *def = lfirst(cell);
 
-			appendStringInfo(buf, "%s='%s' ", def->defname,
-							 escape_param_str(strVal(def->arg)));
+			if (is_valid_dblink_option(options, def->defname, ForeignDataWrapperRelationId))
+				appendStringInfo(buf, "%s='%s' ", def->defname,
+								 escape_param_str(strVal(def->arg)));
 		}
 
 		foreach(cell, foreign_server->options)
 		{
 			DefElem    *def = lfirst(cell);
 
-			appendStringInfo(buf, "%s='%s' ", def->defname,
-							 escape_param_str(strVal(def->arg)));
+			if (is_valid_dblink_option(options, def->defname, ForeignServerRelationId))
+				appendStringInfo(buf, "%s='%s' ", def->defname,
+								 escape_param_str(strVal(def->arg)));
 		}
 
 		foreach(cell, user_mapping->options)
@@ -2767,8 +2789,9 @@ get_connect_string(const char *servername)
 
 			DefElem    *def = lfirst(cell);
 
-			appendStringInfo(buf, "%s='%s' ", def->defname,
-							 escape_param_str(strVal(def->arg)));
+			if (is_valid_dblink_option(options, def->defname, UserMappingRelationId))
+				appendStringInfo(buf, "%s='%s' ", def->defname,
+								 escape_param_str(strVal(def->arg)));
 		}
 
 		return buf->data;
