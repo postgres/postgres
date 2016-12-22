@@ -173,9 +173,9 @@ DROP SEQUENCE sequence_test;
 CREATE SEQUENCE foo_seq;
 ALTER TABLE foo_seq RENAME TO foo_seq_new;
 SELECT * FROM foo_seq_new;
- sequence_name | last_value | start_value | increment_by |      max_value      | min_value | cache_value | log_cnt | is_cycled | is_called 
----------------+------------+-------------+--------------+---------------------+-----------+-------------+---------+-----------+-----------
- foo_seq       |          1 |           1 |            1 | 9223372036854775807 |         1 |           1 |       0 | f         | f
+ last_value | log_cnt | is_called 
+------------+---------+-----------
+          1 |       0 | f
 (1 row)
 
 SELECT nextval('foo_seq_new');
@@ -191,9 +191,9 @@ SELECT nextval('foo_seq_new');
 (1 row)
 
 SELECT * FROM foo_seq_new;
- sequence_name | last_value | start_value | increment_by |      max_value      | min_value | cache_value | log_cnt | is_cycled | is_called 
----------------+------------+-------------+--------------+---------------------+-----------+-------------+---------+-----------+-----------
- foo_seq       |          2 |           1 |            1 | 9223372036854775807 |         1 |           1 |      32 | f         | t
+ last_value | log_cnt | is_called 
+------------+---------+-----------
+          2 |      32 | t
 (1 row)
 
 DROP SEQUENCE foo_seq_new;
@@ -536,3 +536,24 @@ SELECT * FROM information_schema.sequences WHERE sequence_name IN
 
 DROP USER regress_seq_user;
 DROP SEQUENCE seq;
+-- cache tests
+CREATE SEQUENCE test_seq1 CACHE 10;
+SELECT nextval('test_seq1');
+ nextval 
+---------
+       1
+(1 row)
+
+SELECT nextval('test_seq1');
+ nextval 
+---------
+       2
+(1 row)
+
+SELECT nextval('test_seq1');
+ nextval 
+---------
+       3
+(1 row)
+
+DROP SEQUENCE test_seq1;
