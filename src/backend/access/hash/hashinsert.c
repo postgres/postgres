@@ -35,6 +35,7 @@ _hash_doinsert(Relation rel, IndexTuple itup)
 	BlockNumber blkno;
 	BlockNumber oldblkno;
 	bool		retry;
+	Page		metapage;
 	Page		page;
 	HashPageOpaque pageopaque;
 	Size		itemsz;
@@ -58,7 +59,8 @@ _hash_doinsert(Relation rel, IndexTuple itup)
 restart_insert:
 	/* Read the metapage */
 	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ, LH_META_PAGE);
-	metap = HashPageGetMeta(BufferGetPage(metabuf));
+	metapage = BufferGetPage(metabuf);
+	metap = HashPageGetMeta(metapage);
 
 	/*
 	 * Check whether the item can fit on a hash page at all. (Eventually, we
@@ -67,11 +69,11 @@ restart_insert:
 	 *
 	 * XXX this is useless code if we are only storing hash keys.
 	 */
-	if (itemsz > HashMaxItemSize((Page) metap))
+	if (itemsz > HashMaxItemSize(metapage))
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("index row size %zu exceeds hash maximum %zu",
-						itemsz, HashMaxItemSize((Page) metap)),
+						itemsz, HashMaxItemSize(metapage)),
 			errhint("Values larger than a buffer page cannot be indexed.")));
 
 	oldblkno = InvalidBlockNumber;
