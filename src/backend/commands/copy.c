@@ -2436,6 +2436,15 @@ CopyFrom(CopyState cstate)
 	estate->es_trig_tuple_slot = ExecInitExtraTupleSlot(estate);
 
 	/*
+	 * Initialize a dedicated slot to manipulate tuples of any given
+	 * partition's rowtype.
+	 */
+	if (cstate->partition_dispatch_info)
+		estate->es_partition_tuple_slot = ExecInitExtraTupleSlot(estate);
+	else
+		estate->es_partition_tuple_slot = NULL;
+
+	/*
 	 * It's more efficient to prepare a bunch of tuples for insertion, and
 	 * insert them in one heap_multi_insert() call, than call heap_insert()
 	 * separately for every tuple. However, we can't do that if there are
@@ -2484,7 +2493,8 @@ CopyFrom(CopyState cstate)
 
 	for (;;)
 	{
-		TupleTableSlot *slot;
+		TupleTableSlot *slot,
+					   *oldslot = NULL;
 		bool		skip_tuple;
 		Oid			loaded_oid = InvalidOid;
 
@@ -2571,7 +2581,19 @@ CopyFrom(CopyState cstate)
 			map = cstate->partition_tupconv_maps[leaf_part_index];
 			if (map)
 			{
+				Relation	partrel = resultRelInfo->ri_RelationDesc;
+
 				tuple = do_convert_tuple(tuple, map);
+
+				/*
+				 * We must use the partition's tuple descriptor from this
+				 * point on.  Use a dedicated slot from this point on until
+				 * we're finished dealing with the partition.
+				 */
+				oldslot = slot;
+				slot = estate->es_partition_tuple_slot;
+				Assert(slot != NULL);
+				ExecSetSlotDescriptor(slot, RelationGetDescr(partrel));
 				ExecStoreTuple(tuple, slot, InvalidBuffer, true);
 			}
 
@@ -2667,6 +2689,10 @@ CopyFrom(CopyState cstate)
 			{
 				resultRelInfo = saved_resultRelInfo;
 				estate->es_result_relation_info = resultRelInfo;
+
+				/* Switch back to the slot corresponding to the root table */
+				Assert(oldslot != NULL);
+				slot = oldslot;
 			}
 		}
 	}
@@ -2714,13 +2740,14 @@ CopyFrom(CopyState cstate)
 		 * Remember cstate->partition_dispatch_info[0] corresponds to the root
 		 * partitioned table, which we must not try to close, because it is
 		 * the main target table of COPY that will be closed eventually by
-		 * DoCopy().
+		 * DoCopy().  Also, tupslot is NULL for the root partitioned table.
 		 */
 		for (i = 1; i < cstate->num_dispatch; i++)
 		{
 			PartitionDispatch pd = cstate->partition_dispatch_info[i];
 
 			heap_close(pd->reldesc, NoLock);
+			ExecDropSingleTupleTableSlot(pd->tupslot);
 		}
 		for (i = 0; i < cstate->num_partitions; i++)
 		{

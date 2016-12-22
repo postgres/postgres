@@ -262,6 +262,7 @@ ExecInsert(ModifyTableState *mtstate,
 	Relation	resultRelationDesc;
 	Oid			newId;
 	List	   *recheckIndexes = NIL;
+	TupleTableSlot *oldslot = NULL;
 
 	/*
 	 * get the heap tuple out of the tuple table slot, making sure we have a
@@ -318,7 +319,19 @@ ExecInsert(ModifyTableState *mtstate,
 		map = mtstate->mt_partition_tupconv_maps[leaf_part_index];
 		if (map)
 		{
+			Relation partrel = resultRelInfo->ri_RelationDesc;
+
 			tuple = do_convert_tuple(tuple, map);
+
+			/*
+			 * We must use the partition's tuple descriptor from this
+			 * point on, until we're finished dealing with the partition.
+			 * Use the dedicated slot for that.
+			 */
+			oldslot = slot;
+			slot = estate->es_partition_tuple_slot;
+			Assert(slot != NULL);
+			ExecSetSlotDescriptor(slot, RelationGetDescr(partrel));
 			ExecStoreTuple(tuple, slot, InvalidBuffer, true);
 		}
 	}
@@ -566,6 +579,10 @@ ExecInsert(ModifyTableState *mtstate,
 	{
 		resultRelInfo = saved_resultRelInfo;
 		estate->es_result_relation_info = resultRelInfo;
+
+		/* Switch back to the slot corresponding to the root table */
+		Assert(oldslot != NULL);
+		slot = oldslot;
 	}
 
 	/*
@@ -1734,7 +1751,15 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		mtstate->mt_partitions = partitions;
 		mtstate->mt_num_partitions = num_partitions;
 		mtstate->mt_partition_tupconv_maps = partition_tupconv_maps;
+
+		/*
+		 * Initialize a dedicated slot to manipulate tuples of any given
+		 * partition's rowtype.
+		 */
+		estate->es_partition_tuple_slot = ExecInitExtraTupleSlot(estate);
 	}
+	else
+		estate->es_partition_tuple_slot = NULL;
 
 	/*
 	 * Initialize any WITH CHECK OPTION constraints if needed.
@@ -2058,12 +2083,14 @@ ExecEndModifyTable(ModifyTableState *node)
 	 * Remember node->mt_partition_dispatch_info[0] corresponds to the root
 	 * partitioned table, which we must not try to close, because it is the
 	 * main target table of the query that will be closed by ExecEndPlan().
+	 * Also, tupslot is NULL for the root partitioned table.
 	 */
 	for (i = 1; i < node->mt_num_dispatch; i++)
 	{
 		PartitionDispatch pd = node->mt_partition_dispatch_info[i];
 
 		heap_close(pd->reldesc, NoLock);
+		ExecDropSingleTupleTableSlot(pd->tupslot);
 	}
 	for (i = 0; i < node->mt_num_partitions; i++)
 	{

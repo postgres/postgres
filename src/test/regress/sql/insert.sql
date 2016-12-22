@@ -170,3 +170,29 @@ select tableoid::regclass, * from list_parted;
 -- cleanup
 drop table range_parted cascade;
 drop table list_parted cascade;
+
+-- more tests for certain multi-level partitioning scenarios
+create table p (a int, b int) partition by range (a, b);
+create table p1 (b int, a int not null) partition by range (b);
+create table p11 (like p1);
+alter table p11 drop a;
+alter table p11 add a int;
+alter table p11 drop a;
+alter table p11 add a int not null;
+-- attnum for key attribute 'a' is different in p, p1, and p11
+select attrelid::regclass, attname, attnum
+from pg_attribute
+where attname = 'a'
+ and (attrelid = 'p'::regclass
+   or attrelid = 'p1'::regclass
+   or attrelid = 'p11'::regclass);
+
+alter table p1 attach partition p11 for values from (2) to (5);
+alter table p attach partition p1 for values from (1, 2) to (1, 10);
+
+-- check that "(1, 2)" is correctly routed to p11.
+insert into p values (1, 2);
+select tableoid::regclass, * from p;
+
+-- cleanup
+drop table p cascade;
