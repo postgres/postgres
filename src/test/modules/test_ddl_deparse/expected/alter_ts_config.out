@@ -1,0 +1,8 @@
+--
+-- ALTER TEXT SEARCH CONFIGURATION
+--
+CREATE TEXT SEARCH CONFIGURATION en (copy=english);
+NOTICE:  DDL test: type simple, tag CREATE TEXT SEARCH CONFIGURATION
+ALTER TEXT SEARCH CONFIGURATION en
+  ALTER MAPPING FOR host, email, url, sfloat WITH simple;
+NOTICE:  DDL test: type alter text search configuration, tag ALTER TEXT SEARCH CONFIGURATION

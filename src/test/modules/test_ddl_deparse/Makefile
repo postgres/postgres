@@ -23,6 +23,7 @@ REGRESS = test_ddl_deparse \
 	comment_on \
 	alter_function \
 	alter_sequence \
+	alter_ts_config \
 	alter_type_enum \
 	opfamily \
 	defprivs \
