@@ -254,4 +254,11 @@ SELECT oid FROM like_test4;
 -----
 (0 rows)
 
-DROP TABLE has_oid, no_oid, like_test, like_test2, like_test3, like_test4;
+CREATE TABLE like_test5 (z INTEGER, LIKE no_oid) WITH OIDS;
+SELECT oid FROM like_test5;
+ oid 
+-----
+(0 rows)
+
+DROP TABLE has_oid, no_oid, like_test, like_test2, like_test3,
+  like_test4, like_test5;

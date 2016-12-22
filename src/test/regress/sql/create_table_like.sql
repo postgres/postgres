@@ -131,4 +131,7 @@ CREATE TABLE like_test3 (z INTEGER, LIKE has_oid, LIKE no_oid);
 SELECT oid FROM like_test3;
 CREATE TABLE like_test4 (z INTEGER, PRIMARY KEY(oid), LIKE has_oid);
 SELECT oid FROM like_test4;
-DROP TABLE has_oid, no_oid, like_test, like_test2, like_test3, like_test4;
+CREATE TABLE like_test5 (z INTEGER, LIKE no_oid) WITH OIDS;
+SELECT oid FROM like_test5;
+DROP TABLE has_oid, no_oid, like_test, like_test2, like_test3,
+  like_test4, like_test5;
