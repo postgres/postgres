@@ -73,8 +73,8 @@ static XLogRecData *mainrdata_head;
 static XLogRecData *mainrdata_last = (XLogRecData *) &mainrdata_head;
 static uint32 mainrdata_len;	/* total # of bytes in chain */
 
-/* Should the in-progress insertion log the origin? */
-static bool include_origin = false;
+/* flags for the in-progress insertion */
+static uint8 curinsert_flags = 0;
 
 /*
  * These are used to hold the record header while constructing a record.
@@ -201,7 +201,7 @@ XLogResetInsertion(void)
 	max_registered_block_id = 0;
 	mainrdata_len = 0;
 	mainrdata_last = (XLogRecData *) &mainrdata_head;
-	include_origin = false;
+	curinsert_flags = 0;
 	begininsert_called = false;
 }
 
@@ -384,13 +384,20 @@ XLogRegisterBufData(uint8 block_id, char *data, int len)
 }
 
 /*
- * Should this record include the replication origin if one is set up?
+ * Set insert status flags for the upcoming WAL record.
+ *
+ * The flags that can be used here are:
+ * - XLOG_INCLUDE_ORIGIN, to determine if the replication origin should be
+ *   included in the record.
+ * - XLOG_MARK_UNIMPORTANT, to signal that the record is not important for
+ *   durability, which allows to avoid triggering WAL archiving and other
+ *   background activity.
  */
 void
-XLogIncludeOrigin(void)
+XLogSetRecordFlags(uint8 flags)
 {
 	Assert(begininsert_called);
-	include_origin = true;
+	curinsert_flags = flags;
 }
 
 /*
@@ -450,7 +457,7 @@ XLogInsert(RmgrId rmid, uint8 info)
 		rdt = XLogRecordAssemble(rmid, info, RedoRecPtr, doPageWrites,
 								 &fpw_lsn);
 
-		EndPos = XLogInsertRecord(rdt, fpw_lsn);
+		EndPos = XLogInsertRecord(rdt, fpw_lsn, curinsert_flags);
 	} while (EndPos == InvalidXLogRecPtr);
 
 	XLogResetInsertion();
@@ -701,7 +708,8 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 	}
 
 	/* followed by the record's origin, if any */
-	if (include_origin && replorigin_session_origin != InvalidRepOriginId)
+	if ((curinsert_flags & XLOG_INCLUDE_ORIGIN) &&
+		replorigin_session_origin != InvalidRepOriginId)
 	{
 		*(scratch++) = XLR_BLOCK_ID_ORIGIN;
 		memcpy(scratch, &replorigin_session_origin, sizeof(replorigin_session_origin));

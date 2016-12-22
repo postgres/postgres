@@ -442,11 +442,21 @@ typedef struct XLogwrtResult
  * the WAL record is just copied to the page and the lock is released. But
  * to avoid the deadlock-scenario explained above, the indicator is always
  * updated before sleeping while holding an insertion lock.
+ *
+ * lastImportantAt contains the LSN of the last important WAL record inserted
+ * using a given lock. This value is used to detect if there has been
+ * important WAL activity since the last time some action, like a checkpoint,
+ * was performed - allowing to not repeat the action if not. The LSN is
+ * updated for all insertions, unless the XLOG_MARK_UNIMPORTANT flag was
+ * set. lastImportantAt is never cleared, only overwritten by the LSN of newer
+ * records.  Tracking the WAL activity directly in WALInsertLock has the
+ * advantage of not needing any additional locks to update the value.
  */
 typedef struct
 {
 	LWLock		lock;
 	XLogRecPtr	insertingAt;
+	XLogRecPtr	lastImportantAt;
 } WALInsertLock;
 
 /*
@@ -541,8 +551,9 @@ typedef struct XLogCtlData
 	XLogRecPtr	unloggedLSN;
 	slock_t		ulsn_lck;
 
-	/* Time of last xlog segment switch. Protected by WALWriteLock. */
+	/* Time and LSN of last xlog segment switch. Protected by WALWriteLock. */
 	pg_time_t	lastSegSwitchTime;
+	XLogRecPtr	lastSegSwitchLSN;
 
 	/*
 	 * Protected by info_lck and WALWriteLock (you must hold either lock to
@@ -884,6 +895,9 @@ static void WALInsertLockUpdateInsertingAt(XLogRecPtr insertingAt);
  * which pages need a full-page image, and retry.  If fpw_lsn is invalid, the
  * record is always inserted.
  *
+ * 'flags' gives more in-depth control on the record being inserted. See
+ * XLogSetRecordFlags() for details.
+ *
  * The first XLogRecData in the chain must be for the record header, and its
  * data must be MAXALIGNed.  XLogInsertRecord fills in the xl_prev and
  * xl_crc fields in the header, the rest of the header must already be filled
@@ -896,7 +910,9 @@ static void WALInsertLockUpdateInsertingAt(XLogRecPtr insertingAt);
  * WAL rule "write the log before the data".)
  */
 XLogRecPtr
-XLogInsertRecord(XLogRecData *rdata, XLogRecPtr fpw_lsn)
+XLogInsertRecord(XLogRecData *rdata,
+				 XLogRecPtr fpw_lsn,
+				 uint8 flags)
 {
 	XLogCtlInsert *Insert = &XLogCtl->Insert;
 	pg_crc32c	rdata_crc;
@@ -1013,6 +1029,18 @@ XLogInsertRecord(XLogRecData *rdata, XLogRecPtr fpw_lsn)
 		 */
 		CopyXLogRecordToWAL(rechdr->xl_tot_len, isLogSwitch, rdata,
 							StartPos, EndPos);
+
+		/*
+		 * Unless record is flagged as not important, update LSN of last
+		 * important record in the current slot. When holding all locks, just
+		 * update the first one.
+		 */
+		if ((flags & XLOG_MARK_UNIMPORTANT) == 0)
+		{
+			int lockno = holdingAllLocks ? 0 : MyLockNo;
+
+			WALInsertLocks[lockno].l.lastImportantAt = StartPos;
+		}
 	}
 	else
 	{
@@ -2332,6 +2360,7 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible)
 					XLogArchiveNotifySeg(openLogSegNo);
 
 				XLogCtl->lastSegSwitchTime = (pg_time_t) time(NULL);
+				XLogCtl->lastSegSwitchLSN = LogwrtResult.Flush;
 
 				/*
 				 * Request a checkpoint if we've consumed too much xlog since
@@ -4715,6 +4744,7 @@ XLOGShmemInit(void)
 	{
 		LWLockInitialize(&WALInsertLocks[i].l.lock, LWTRANCHE_WAL_INSERT);
 		WALInsertLocks[i].l.insertingAt = InvalidXLogRecPtr;
+		WALInsertLocks[i].l.lastImportantAt = InvalidXLogRecPtr;
 	}
 
 	/*
@@ -7431,8 +7461,9 @@ StartupXLOG(void)
 	 */
 	InRecovery = false;
 
-	/* start the archive_timeout timer running */
+	/* start the archive_timeout timer and LSN running */
 	XLogCtl->lastSegSwitchTime = (pg_time_t) time(NULL);
+	XLogCtl->lastSegSwitchLSN = EndOfLog;
 
 	/* also initialize latestCompletedXid, to nextXid - 1 */
 	LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
@@ -7994,16 +8025,51 @@ GetFlushRecPtr(void)
 }
 
 /*
- * Get the time of the last xlog segment switch
+ * GetLastImportantRecPtr -- Returns the LSN of the last important record
+ * inserted. All records not explicitly marked as unimportant are considered
+ * important.
+ *
+ * The LSN is determined by computing the maximum of
+ * WALInsertLocks[i].lastImportantAt.
+ */
+XLogRecPtr
+GetLastImportantRecPtr(void)
+{
+	XLogRecPtr	res = InvalidXLogRecPtr;
+	int			i;
+
+	for (i = 0; i < NUM_XLOGINSERT_LOCKS; i++)
+	{
+		XLogRecPtr	last_important;
+
+		/*
+		 * Need to take a lock to prevent torn reads of the LSN, which are
+		 * possible on some of the supported platforms. WAL insert locks only
+		 * support exclusive mode, so we have to use that.
+		 */
+		LWLockAcquire(&WALInsertLocks[i].l.lock, LW_EXCLUSIVE);
+		last_important = WALInsertLocks[i].l.lastImportantAt;
+		LWLockRelease(&WALInsertLocks[i].l.lock);
+
+		if (res < last_important)
+			res = last_important;
+	}
+
+	return res;
+}
+
+/*
+ * Get the time and LSN of the last xlog segment switch
  */
 pg_time_t
-GetLastSegSwitchTime(void)
+GetLastSegSwitchData(XLogRecPtr *lastSwitchLSN)
 {
 	pg_time_t	result;
 
 	/* Need WALWriteLock, but shared lock is sufficient */
 	LWLockAcquire(WALWriteLock, LW_SHARED);
 	result = XLogCtl->lastSegSwitchTime;
+	*lastSwitchLSN = XLogCtl->lastSegSwitchLSN;
 	LWLockRelease(WALWriteLock);
 
 	return result;
@@ -8065,7 +8131,7 @@ ShutdownXLOG(int code, Datum arg)
 		 * record will go to the next XLOG file and won't be archived (yet).
 		 */
 		if (XLogArchivingActive() && XLogArchiveCommandSet())
-			RequestXLogSwitch();
+			RequestXLogSwitch(false);
 
 		CreateCheckPoint(CHECKPOINT_IS_SHUTDOWN | CHECKPOINT_IMMEDIATE);
 	}
@@ -8253,7 +8319,7 @@ CreateCheckPoint(int flags)
 	uint32		freespace;
 	XLogRecPtr	PriorRedoPtr;
 	XLogRecPtr	curInsert;
-	XLogRecPtr	prevPtr;
+	XLogRecPtr	last_important_lsn;
 	VirtualTransactionId *vxids;
 	int			nvxids;
 
@@ -8334,38 +8400,33 @@ CreateCheckPoint(int flags)
 		checkPoint.oldestActiveXid = InvalidTransactionId;
 
 	/*
+	 * Get location of last important record before acquiring insert locks (as
+	 * GetLastImportantRecPtr() also locks WAL locks).
+	 */
+	last_important_lsn = GetLastImportantRecPtr();
+
+	/*
 	 * We must block concurrent insertions while examining insert state to
 	 * determine the checkpoint REDO pointer.
 	 */
 	WALInsertLockAcquireExclusive();
 	curInsert = XLogBytePosToRecPtr(Insert->CurrBytePos);
-	prevPtr = XLogBytePosToRecPtr(Insert->PrevBytePos);
 
 	/*
-	 * If this isn't a shutdown or forced checkpoint, and we have not inserted
-	 * any XLOG records since the start of the last checkpoint, skip the
-	 * checkpoint.  The idea here is to avoid inserting duplicate checkpoints
-	 * when the system is idle. That wastes log space, and more importantly it
-	 * exposes us to possible loss of both current and previous checkpoint
-	 * records if the machine crashes just as we're writing the update.
-	 * (Perhaps it'd make even more sense to checkpoint only when the previous
-	 * checkpoint record is in a different xlog page?)
-	 *
-	 * If the previous checkpoint crossed a WAL segment, however, we create
-	 * the checkpoint anyway, to have the latest checkpoint fully contained in
-	 * the new segment. This is for a little bit of extra robustness: it's
-	 * better if you don't need to keep two WAL segments around to recover the
-	 * checkpoint.
+	 * If this isn't a shutdown or forced checkpoint, and if there has been no
+	 * WAL activity requiring a checkpoint, skip it.  The idea here is to
+	 * avoid inserting duplicate checkpoints when the system is idle.
 	 */
 	if ((flags & (CHECKPOINT_IS_SHUTDOWN | CHECKPOINT_END_OF_RECOVERY |
 				  CHECKPOINT_FORCE)) == 0)
 	{
-		if (prevPtr == ControlFile->checkPointCopy.redo &&
-			prevPtr / XLOG_SEG_SIZE == curInsert / XLOG_SEG_SIZE)
+		if (last_important_lsn == ControlFile->checkPoint)
 		{
 			WALInsertLockRelease();
 			LWLockRelease(CheckpointLock);
 			END_CRIT_SECTION();
+			ereport(DEBUG1,
+					(errmsg("checkpoint skipped due to an idle system")));
 			return;
 		}
 	}
@@ -9122,12 +9183,15 @@ XLogPutNextOid(Oid nextOid)
  * write a switch record because we are already at segment start.
  */
 XLogRecPtr
-RequestXLogSwitch(void)
+RequestXLogSwitch(bool mark_unimportant)
 {
 	XLogRecPtr	RecPtr;
 
 	/* XLOG SWITCH has no data */
 	XLogBeginInsert();
+
+	if (mark_unimportant)
+		XLogSetRecordFlags(XLOG_MARK_UNIMPORTANT);
 	RecPtr = XLogInsert(RM_XLOG_ID, XLOG_SWITCH);
 
 	return RecPtr;
@@ -9997,7 +10061,7 @@ do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 		 * recovery case described above.
 		 */
 		if (!backup_started_in_recovery)
-			RequestXLogSwitch();
+			RequestXLogSwitch(false);
 
 		do
 		{
@@ -10582,7 +10646,7 @@ do_pg_stop_backup(char *labelfile, bool waitforarchive, TimeLineID *stoptli_p)
 	 * Force a switch to a new xlog segment file, so that the backup is valid
 	 * as soon as archiver moves out the current segment file.
 	 */
-	RequestXLogSwitch();
+	RequestXLogSwitch(false);
 
 	XLByteToPrevSeg(stoppoint, _logSegNo);
 	XLogFileName(stopxlogfilename, ThisTimeLineID, _logSegNo);

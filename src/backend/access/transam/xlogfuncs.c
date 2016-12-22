@@ -293,7 +293,7 @@ pg_switch_xlog(PG_FUNCTION_ARGS)
 				 errmsg("recovery is in progress"),
 				 errhint("WAL control functions cannot be executed during recovery.")));
 
-	switchpoint = RequestXLogSwitch();
+	switchpoint = RequestXLogSwitch(false);
 
 	/*
 	 * As a convenience, return the WAL location of the switch record

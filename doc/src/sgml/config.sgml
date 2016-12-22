@@ -2852,12 +2852,10 @@ include_dir 'conf.d'
         parameter is greater than zero, the server will switch to a new
         segment file whenever this many seconds have elapsed since the last
         segment file switch, and there has been any database activity,
-        including a single checkpoint.  (Increasing
-        <varname>checkpoint_timeout</> will reduce unnecessary
-        checkpoints on an idle system.)
-        Note that archived files that are closed early
-        due to a forced switch are still the same length as completely full
-        files.  Therefore, it is unwise to use a very short
+        including a single checkpoint (checkpoints are skipped if there is
+        no database activity).  Note that archived files that are closed
+        early due to a forced switch are still the same length as completely
+        full files.  Therefore, it is unwise to use a very short
         <varname>archive_timeout</> &mdash; it will bloat your archive
         storage.  <varname>archive_timeout</> settings of a minute or so are
         usually reasonable.  You should consider using streaming replication,

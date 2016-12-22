@@ -961,10 +961,11 @@ LogStandbySnapshot(void)
 /*
  * Record an enhanced snapshot of running transactions into WAL.
  *
- * The definitions of RunningTransactionsData and xl_xact_running_xacts
- * are similar. We keep them separate because xl_xact_running_xacts
- * is a contiguous chunk of memory and never exists fully until it is
- * assembled in WAL.
+ * The definitions of RunningTransactionsData and xl_xact_running_xacts are
+ * similar. We keep them separate because xl_xact_running_xacts is a
+ * contiguous chunk of memory and never exists fully until it is assembled in
+ * WAL. The inserted records are marked as not being important for durability,
+ * to avoid triggering superflous checkpoint / archiving activity.
  */
 static XLogRecPtr
 LogCurrentRunningXacts(RunningTransactions CurrRunningXacts)
@@ -981,6 +982,7 @@ LogCurrentRunningXacts(RunningTransactions CurrRunningXacts)
 
 	/* Header */
 	XLogBeginInsert();
+	XLogSetRecordFlags(XLOG_MARK_UNIMPORTANT);
 	XLogRegisterData((char *) (&xlrec), MinSizeOfXactRunningXacts);
 
 	/* array of TransactionIds */
@@ -1035,6 +1037,7 @@ LogAccessExclusiveLocks(int nlocks, xl_standby_lock *locks)
 	XLogBeginInsert();
 	XLogRegisterData((char *) &xlrec, offsetof(xl_standby_locks, locks));
 	XLogRegisterData((char *) locks, nlocks * sizeof(xl_standby_lock));
+	XLogSetRecordFlags(XLOG_MARK_UNIMPORTANT);
 
 	(void) XLogInsert(RM_STANDBY_ID, XLOG_STANDBY_LOCK);
 }

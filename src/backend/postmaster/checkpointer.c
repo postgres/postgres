@@ -573,15 +573,21 @@ CheckpointerMain(void)
 /*
  * CheckArchiveTimeout -- check for archive_timeout and switch xlog files
  *
- * This will switch to a new WAL file and force an archive file write
- * if any activity is recorded in the current WAL file, including just
- * a single checkpoint record.
+ * This will switch to a new WAL file and force an archive file write if
+ * meaningful activity is recorded in the current WAL file. This includes most
+ * writes, including just a single checkpoint record, but excludes WAL records
+ * that were inserted with the XLOG_MARK_UNIMPORTANT flag being set (like
+ * snapshots of running transactions).  Such records, depending on
+ * configuration, occur on regular intervals and don't contain important
+ * information.  This avoids generating archives with a few unimportant
+ * records.
  */
 static void
 CheckArchiveTimeout(void)
 {
 	pg_time_t	now;
 	pg_time_t	last_time;
+	XLogRecPtr	last_switch_lsn;
 
 	if (XLogArchiveTimeout <= 0 || RecoveryInProgress())
 		return;
@@ -596,26 +602,33 @@ CheckArchiveTimeout(void)
 	 * Update local state ... note that last_xlog_switch_time is the last time
 	 * a switch was performed *or requested*.
 	 */
-	last_time = GetLastSegSwitchTime();
+	last_time = GetLastSegSwitchData(&last_switch_lsn);
 
 	last_xlog_switch_time = Max(last_xlog_switch_time, last_time);
 
-	/* Now we can do the real check */
+	/* Now we can do the real checks */
 	if ((int) (now - last_xlog_switch_time) >= XLogArchiveTimeout)
 	{
-		XLogRecPtr	switchpoint;
-
-		/* OK, it's time to switch */
-		switchpoint = RequestXLogSwitch();
-
 		/*
-		 * If the returned pointer points exactly to a segment boundary,
-		 * assume nothing happened.
+		 * Switch segment only when "important" WAL has been logged since the
+		 * last segment switch.
 		 */
-		if ((switchpoint % XLogSegSize) != 0)
-			ereport(DEBUG1,
-				(errmsg("transaction log switch forced (archive_timeout=%d)",
-						XLogArchiveTimeout)));
+		if (GetLastImportantRecPtr() > last_switch_lsn)
+		{
+			XLogRecPtr	switchpoint;
+
+			/* mark switch as unimportant, avoids triggering checkpoints */
+			switchpoint = RequestXLogSwitch(true);
+
+			/*
+			 * If the returned pointer points exactly to a segment boundary,
+			 * assume nothing happened.
+			 */
+			if ((switchpoint % XLogSegSize) != 0)
+				ereport(DEBUG1,
+						(errmsg("transaction log switch forced (archive_timeout=%d)",
+								XLogArchiveTimeout)));
+		}
 
 		/*
 		 * Update state in any case, so we don't retry constantly when the

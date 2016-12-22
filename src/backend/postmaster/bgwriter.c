@@ -310,7 +310,7 @@ BackgroundWriterMain(void)
 		 * check whether there has been any WAL inserted since the last time
 		 * we've logged a running xacts.
 		 *
-		 * We do this logging in the bgwriter as its the only process that is
+		 * We do this logging in the bgwriter as it is the only process that is
 		 * run regularly and returns to its mainloop all the time. E.g.
 		 * Checkpointer, when active, is barely ever in its mainloop and thus
 		 * makes it hard to log regularly.
@@ -324,11 +324,11 @@ BackgroundWriterMain(void)
 												  LOG_SNAPSHOT_INTERVAL_MS);
 
 			/*
-			 * only log if enough time has passed and some xlog record has
-			 * been inserted.
+			 * Only log if enough time has passed and interesting records have
+			 * been inserted since the last snapshot.
 			 */
 			if (now >= timeout &&
-				last_snapshot_lsn != GetXLogInsertRecPtr())
+				last_snapshot_lsn < GetLastImportantRecPtr())
 			{
 				last_snapshot_lsn = LogStandbySnapshot();
 				last_snapshot_ts = now;

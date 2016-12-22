@@ -184,6 +184,13 @@ extern bool XLOG_DEBUG;
 #define CHECKPOINT_CAUSE_XLOG	0x0040	/* XLOG consumption */
 #define CHECKPOINT_CAUSE_TIME	0x0080	/* Elapsed time */
 
+/*
+ * Flag bits for the record being inserted, set using XLogSetRecordFlags().
+ */
+#define XLOG_INCLUDE_ORIGIN		0x01	/* include the replication origin */
+#define XLOG_MARK_UNIMPORTANT	0x02	/* record not important for durability */
+
+
 /* Checkpoint statistics */
 typedef struct CheckpointStatsData
 {
@@ -211,7 +218,9 @@ extern CheckpointStatsData CheckpointStats;
 
 struct XLogRecData;
 
-extern XLogRecPtr XLogInsertRecord(struct XLogRecData *rdata, XLogRecPtr fpw_lsn);
+extern XLogRecPtr XLogInsertRecord(struct XLogRecData *rdata,
+								   XLogRecPtr fpw_lsn,
+								   uint8 flags);
 extern void XLogFlush(XLogRecPtr RecPtr);
 extern bool XLogBackgroundFlush(void);
 extern bool XLogNeedsFlush(XLogRecPtr RecPtr);
@@ -262,6 +271,7 @@ extern void GetFullPageWriteInfo(XLogRecPtr *RedoRecPtr_p, bool *doPageWrites_p)
 extern XLogRecPtr GetRedoRecPtr(void);
 extern XLogRecPtr GetInsertRecPtr(void);
 extern XLogRecPtr GetFlushRecPtr(void);
+extern XLogRecPtr GetLastImportantRecPtr(void);
 extern void GetNextXidAndEpoch(TransactionId *xid, uint32 *epoch);
 extern void RemovePromoteSignalFiles(void);
 
