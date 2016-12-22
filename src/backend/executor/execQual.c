@@ -2960,12 +2960,18 @@ ExecEvalCase(CaseExprState *caseExpr, ExprContext *econtext,
 
 	if (caseExpr->arg)
 	{
+		Datum		arg_value;
 		bool		arg_isNull;
 
-		econtext->caseValue_datum = ExecEvalExpr(caseExpr->arg,
-												 econtext,
-												 &arg_isNull,
-												 NULL);
+		arg_value = ExecEvalExpr(caseExpr->arg,
+								 econtext,
+								 &arg_isNull,
+								 NULL);
+		/* Since caseValue_datum may be read multiple times, force to R/O */
+		econtext->caseValue_datum =
+			MakeExpandedObjectReadOnly(arg_value,
+									   arg_isNull,
+									   caseExpr->argtyplen);
 		econtext->caseValue_isNull = arg_isNull;
 	}
 
@@ -4026,11 +4032,18 @@ ExecEvalCoerceToDomain(CoerceToDomainState *cstate, ExprContext *econtext,
 					 * nodes. We must save and restore prior setting of
 					 * econtext's domainValue fields, in case this node is
 					 * itself within a check expression for another domain.
+					 *
+					 * Also, if we are working with a read-write expanded
+					 * datum, be sure that what we pass to CHECK expressions
+					 * is a read-only pointer; else called functions might
+					 * modify or even delete the expanded object.
 					 */
 					save_datum = econtext->domainValue_datum;
 					save_isNull = econtext->domainValue_isNull;
 
-					econtext->domainValue_datum = result;
+					econtext->domainValue_datum =
+						MakeExpandedObjectReadOnly(result, *isNull,
+									 cstate->constraint_ref->tcache->typlen);
 					econtext->domainValue_isNull = *isNull;
 
 					conResult = ExecEvalExpr(con->check_expr,
@@ -4858,6 +4871,8 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				}
 				cstate->args = outlist;
 				cstate->defresult = ExecInitExpr(caseexpr->defresult, parent);
+				if (caseexpr->arg)
+					cstate->argtyplen = get_typlen(exprType((Node *) caseexpr->arg));
 				state = (ExprState *) cstate;
 			}
 			break;
