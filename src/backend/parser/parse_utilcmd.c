@@ -61,7 +61,6 @@
 #include "rewrite/rewriteManip.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
-#include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 #include "utils/ruleutils.h"
@@ -278,10 +277,7 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 
 	/*
 	 * Run through each primary element in the table creation clause. Separate
-	 * column defs from constraints, and do preliminary analysis.  We have to
-	 * process column-defining clauses first because it can control the
-	 * presence of columns which are referenced by columns referenced by
-	 * constraints.
+	 * column defs from constraints, and do preliminary analysis.
 	 */
 	foreach(elements, stmt->tableElts)
 	{
@@ -293,17 +289,13 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 				transformColumnDefinition(&cxt, (ColumnDef *) element);
 				break;
 
-			case T_TableLikeClause:
-				if (!like_found)
-				{
-					cxt.hasoids = false;
-					like_found = true;
-				}
-				transformTableLikeClause(&cxt, (TableLikeClause *) element);
+			case T_Constraint:
+				transformTableConstraint(&cxt, (Constraint *) element);
 				break;
 
-			case T_Constraint:
-				/* process later */
+			case T_TableLikeClause:
+				like_found = true;
+				transformTableLikeClause(&cxt, (TableLikeClause *) element);
 				break;
 
 			default:
@@ -313,27 +305,19 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 		}
 	}
 
-	if (like_found)
-	{
-		/*
-		 * To match INHERITS, the existence of any LIKE table with OIDs causes
-		 * the new table to have oids.  For the same reason, WITH/WITHOUT OIDs
-		 * is also ignored with LIKE.  We prepend because the first oid option
-		 * list entry is honored.  Our prepended WITHOUT OIDS clause will be
-		 * overridden if an inherited table has oids.
-		 */
+	/*
+	 * If we had any LIKE tables, they may require creation of an OID column
+	 * even though the command's own WITH clause didn't ask for one (or,
+	 * perhaps, even specifically rejected having one).  Insert a WITH option
+	 * to ensure that happens.  We prepend to the list because the first oid
+	 * option will be honored, and we want to override anything already there.
+	 * (But note that DefineRelation will override this again to add an OID
+	 * column if one appears in an inheritance parent table.)
+	 */
+	if (like_found && cxt.hasoids)
 		stmt->options = lcons(makeDefElem("oids",
-									  (Node *) makeInteger(cxt.hasoids), -1),
+										  (Node *) makeInteger(true), -1),
 							  stmt->options);
-	}
-
-	foreach(elements, stmt->tableElts)
-	{
-		Node	   *element = lfirst(elements);
-
-		if (nodeTag(element) == T_Constraint)
-			transformTableConstraint(&cxt, (Constraint *) element);
-	}
 
 	/*
 	 * transformIndexConstraints wants cxt.alist to contain only index
@@ -975,7 +959,7 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 	}
 
 	/* We use oids if at least one LIKE'ed table has oids. */
-	cxt->hasoids = cxt->hasoids || relation->rd_rel->relhasoids;
+	cxt->hasoids |= relation->rd_rel->relhasoids;
 
 	/*
 	 * Copy CHECK constraints if requested, being careful to adjust attribute
