@@ -12996,7 +12996,6 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd)
 			   *existConstraint;
 	SysScanDesc scan;
 	ScanKeyData skey;
-	HeapTuple	tuple;
 	AttrNumber	attno;
 	int			natts;
 	TupleDesc	tupleDesc;
@@ -13018,7 +13017,7 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd)
 				 errmsg("\"%s\" is already a partition",
 						RelationGetRelationName(attachRel))));
 
-	if (attachRel->rd_rel->reloftype)
+	if (OidIsValid(attachRel->rd_rel->reloftype))
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("cannot attach a typed table as partition")));
@@ -13119,9 +13118,10 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd)
 		if (attribute->attisdropped)
 			continue;
 
-		/* Find same column in parent (matching on column name). */
-		tuple = SearchSysCacheCopyAttName(RelationGetRelid(rel), attributeName);
-		if (!HeapTupleIsValid(tuple))
+		/* Try to find the column in parent (matching on column name) */
+		if (!SearchSysCacheExists2(ATTNAME,
+								   ObjectIdGetDatum(RelationGetRelid(rel)),
+								   CStringGetDatum(attributeName)))
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("table \"%s\" contains column \"%s\" not found in parent \"%s\"",
@@ -13167,7 +13167,6 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd)
 	 * There is a case in which we cannot rely on just the result of the
 	 * proof.
 	 */
-	tupleDesc = RelationGetDescr(attachRel);
 	attachRel_constr = tupleDesc->constr;
 	existConstraint = NIL;
 	if (attachRel_constr != NULL)
