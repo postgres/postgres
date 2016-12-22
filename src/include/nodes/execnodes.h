@@ -889,6 +889,7 @@ typedef struct CaseExprState
 	ExprState  *arg;			/* implicit equality comparison argument */
 	List	   *args;			/* the arguments (list of WHEN clauses) */
 	ExprState  *defresult;		/* the default result (ELSE clause) */
+	int16		argtyplen;		/* if arg is provided, its typlen */
 } CaseExprState;
 
 /* ----------------

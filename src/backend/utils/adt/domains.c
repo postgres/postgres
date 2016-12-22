@@ -35,6 +35,7 @@
 #include "executor/executor.h"
 #include "lib/stringinfo.h"
 #include "utils/builtins.h"
+#include "utils/expandeddatum.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "utils/typcache.h"
@@ -166,9 +167,14 @@ domain_check_input(Datum value, bool isnull, DomainIOData *my_extra)
 					 * Set up value to be returned by CoerceToDomainValue
 					 * nodes.  Unlike ExecEvalCoerceToDomain, this econtext
 					 * couldn't be shared with anything else, so no need to
-					 * save and restore fields.
+					 * save and restore fields.  But we do need to protect the
+					 * passed-in value against being changed by called
+					 * functions.  (It couldn't be a R/W expanded object for
+					 * most uses, but that seems possible for domain_check().)
 					 */
-					econtext->domainValue_datum = value;
+					econtext->domainValue_datum =
+						MakeExpandedObjectReadOnly(value, isnull,
+									my_extra->constraint_ref.tcache->typlen);
 					econtext->domainValue_isNull = isnull;
 
 					conResult = ExecEvalExprSwitchContext(con->check_expr,
