@@ -251,6 +251,56 @@
   </xsl:call-template>
 </xsl:template>
 
+<xsl:template name="href.target">
+  <xsl:param name="context" select="."/>
+  <xsl:param name="object" select="."/>
+  <xsl:param name="toc-context" select="."/>
+  <!-- Optimization for pgsql-docs: Remove support for dbhtml processing
+       instruction here -->
+  <xsl:variable name="href.to.uri">
+    <xsl:call-template name="href.target.uri">
+      <xsl:with-param name="object" select="$object"/>
+    </xsl:call-template>
+  </xsl:variable>
+  <xsl:variable name="href.from.uri">
+    <xsl:choose>
+      <xsl:when test="not($toc-context = .)">
+        <xsl:call-template name="href.target.uri">
+          <xsl:with-param name="object" select="$toc-context"/>
+        </xsl:call-template>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:call-template name="href.target.uri">
+          <xsl:with-param name="object" select="$context"/>
+        </xsl:call-template>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:variable>
+  <xsl:variable name="href.to">
+    <xsl:value-of select="$href.to.uri"/>
+  </xsl:variable>
+  <xsl:variable name="href.from">
+    <xsl:call-template name="trim.common.uri.paths">
+      <xsl:with-param name="uriA" select="$href.to.uri"/>
+      <xsl:with-param name="uriB" select="$href.from.uri"/>
+      <xsl:with-param name="return" select="'B'"/>
+    </xsl:call-template>
+  </xsl:variable>
+  <xsl:variable name="depth">
+    <xsl:call-template name="count.uri.path.depth">
+      <xsl:with-param name="filename" select="$href.from"/>
+    </xsl:call-template>
+  </xsl:variable>
+  <xsl:variable name="href">
+    <xsl:call-template name="copy-string">
+      <xsl:with-param name="string" select="'../'"/>
+      <xsl:with-param name="count" select="$depth"/>
+    </xsl:call-template>
+    <xsl:value-of select="$href.to"/>
+  </xsl:variable>
+  <xsl:value-of select="$href"/>
+</xsl:template>
+
 <xsl:template name="html.head">
   <xsl:param name="prev" select="/foo"/>
   <xsl:param name="next" select="/foo"/>
