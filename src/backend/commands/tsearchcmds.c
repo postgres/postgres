@@ -1215,10 +1215,10 @@ AlterTSConfiguration(AlterTSConfigurationStmt *stmt)
 	/* Update dependencies */
 	makeConfigurationDependencies(tup, true, relMap);
 
-	InvokeObjectPostAlterHook(TSConfigMapRelationId,
+	InvokeObjectPostAlterHook(TSConfigRelationId,
 							  HeapTupleGetOid(tup), 0);
 
-	ObjectAddressSet(address, TSConfigMapRelationId, cfgId);
+	ObjectAddressSet(address, TSConfigRelationId, cfgId);
 
 	heap_close(relMap, RowExclusiveLock);
 
