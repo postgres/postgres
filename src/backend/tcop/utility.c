@@ -1467,7 +1467,13 @@ ProcessUtilitySlow(Node *parsetree,
 				break;
 
 			case T_AlterTSConfigurationStmt:
-				address = AlterTSConfiguration((AlterTSConfigurationStmt *) parsetree);
+				AlterTSConfiguration((AlterTSConfigurationStmt *) parsetree);
+				/*
+				 * Commands are stashed in MakeConfigurationMapping and
+				 * DropConfigurationMapping, which are called from
+				 * AlterTSConfiguration
+				 */
+				commandCollected = true;
 				break;
 
 			case T_AlterTableMoveAllStmt:
