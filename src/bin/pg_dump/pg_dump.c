@@ -15430,8 +15430,7 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 	if (fout->remoteVersion >= 100000)
 	{
 		appendPQExpBuffer(query,
-						  "SELECT relname, "
-						  "seqstart, seqincrement, "
+						  "SELECT seqstart, seqincrement, "
 						  "CASE WHEN seqincrement > 0 AND seqmax = %s THEN NULL "
 						  "     WHEN seqincrement < 0 AND seqmax = -1 THEN NULL "
 						  "     ELSE seqmax "
@@ -15450,8 +15449,7 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 	else if (fout->remoteVersion >= 80400)
 	{
 		appendPQExpBuffer(query,
-						  "SELECT sequence_name, "
-						  "start_value, increment_by, "
+						  "SELECT start_value, increment_by, "
 				   "CASE WHEN increment_by > 0 AND max_value = %s THEN NULL "
 				   "     WHEN increment_by < 0 AND max_value = -1 THEN NULL "
 						  "     ELSE max_value "
@@ -15467,8 +15465,7 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 	else
 	{
 		appendPQExpBuffer(query,
-						  "SELECT sequence_name, "
-						  "0 AS start_value, increment_by, "
+						  "SELECT 0 AS start_value, increment_by, "
 				   "CASE WHEN increment_by > 0 AND max_value = %s THEN NULL "
 				   "     WHEN increment_by < 0 AND max_value = -1 THEN NULL "
 						  "     ELSE max_value "
@@ -15493,24 +15490,14 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 		exit_nicely(1);
 	}
 
-	/* Disable this check: it fails if sequence has been renamed */
-#ifdef NOT_USED
-	if (strcmp(PQgetvalue(res, 0, 0), tbinfo->dobj.name) != 0)
-	{
-		write_msg(NULL, "query to get data of sequence \"%s\" returned name \"%s\"\n",
-				  tbinfo->dobj.name, PQgetvalue(res, 0, 0));
-		exit_nicely(1);
-	}
-#endif
-
-	startv = PQgetvalue(res, 0, 1);
-	incby = PQgetvalue(res, 0, 2);
+	startv = PQgetvalue(res, 0, 0);
+	incby = PQgetvalue(res, 0, 1);
+	if (!PQgetisnull(res, 0, 2))
+		maxv = PQgetvalue(res, 0, 2);
 	if (!PQgetisnull(res, 0, 3))
-		maxv = PQgetvalue(res, 0, 3);
-	if (!PQgetisnull(res, 0, 4))
-		minv = PQgetvalue(res, 0, 4);
-	cache = PQgetvalue(res, 0, 5);
-	cycled = (strcmp(PQgetvalue(res, 0, 6), "t") == 0);
+		minv = PQgetvalue(res, 0, 3);
+	cache = PQgetvalue(res, 0, 4);
+	cycled = (strcmp(PQgetvalue(res, 0, 5), "t") == 0);
 
 	/*
 	 * DROP must be fully qualified in case same name appears in pg_catalog
