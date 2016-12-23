@@ -11250,28 +11250,28 @@ relation_expr:
 				{
 					/* inheritance query, implicitly */
 					$$ = $1;
-					$$->inhOpt = INH_YES;
+					$$->inh = true;
 					$$->alias = NULL;
 				}
 			| qualified_name '*'
 				{
-					/* inheritance query */
+					/* inheritance query, explicitly */
 					$$ = $1;
-					$$->inhOpt = INH_YES;
+					$$->inh = true;
 					$$->alias = NULL;
 				}
 			| ONLY qualified_name
 				{
 					/* no inheritance */
 					$$ = $2;
-					$$->inhOpt = INH_NO;
+					$$->inh = false;
 					$$->alias = NULL;
 				}
 			| ONLY '(' qualified_name ')'
 				{
 					/* no inheritance, SQL99-style syntax */
 					$$ = $3;
-					$$->inhOpt = INH_NO;
+					$$->inh = false;
 					$$->alias = NULL;
 				}
 		;

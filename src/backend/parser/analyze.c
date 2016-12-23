@@ -380,7 +380,7 @@ transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt)
 
 	/* set up range table with just the result rel */
 	qry->resultRelation = setTargetTable(pstate, stmt->relation,
-								  (stmt->relation->inhOpt == INH_YES),
+										 stmt->relation->inh,
 										 true,
 										 ACL_DELETE);
 
@@ -2177,7 +2177,7 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 	}
 
 	qry->resultRelation = setTargetTable(pstate, stmt->relation,
-								  (stmt->relation->inhOpt == INH_YES),
+										 stmt->relation->inh,
 										 true,
 										 ACL_UPDATE);
 

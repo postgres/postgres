@@ -412,8 +412,7 @@ transformTableEntry(ParseState *pstate, RangeVar *r)
 	RangeTblEntry *rte;
 
 	/* We need only build a range table entry */
-	rte = addRangeTableEntry(pstate, r, r->alias,
-							 (r->inhOpt == INH_YES), true);
+	rte = addRangeTableEntry(pstate, r, r->alias, r->inh, true);
 
 	return rte;
 }

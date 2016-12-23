@@ -1112,7 +1112,7 @@ _copyRangeVar(const RangeVar *from)
 	COPY_STRING_FIELD(catalogname);
 	COPY_STRING_FIELD(schemaname);
 	COPY_STRING_FIELD(relname);
-	COPY_SCALAR_FIELD(inhOpt);
+	COPY_SCALAR_FIELD(inh);
 	COPY_SCALAR_FIELD(relpersistence);
 	COPY_NODE_FIELD(alias);
 	COPY_LOCATION_FIELD(location);
@@ -4192,7 +4192,6 @@ _copyAlterPolicyStmt(const AlterPolicyStmt *from)
 static PartitionSpec *
 _copyPartitionSpec(const PartitionSpec *from)
 {
-
 	PartitionSpec *newnode = makeNode(PartitionSpec);
 
 	COPY_STRING_FIELD(strategy);
