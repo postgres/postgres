@@ -274,7 +274,7 @@ hashgettuple(IndexScanDesc scan, ScanDirection dir)
 	 * Reacquire the read lock here.
 	 */
 	if (BufferIsValid(so->hashso_curbuf))
-		_hash_chgbufaccess(rel, so->hashso_curbuf, HASH_NOLOCK, HASH_READ);
+		LockBuffer(so->hashso_curbuf, BUFFER_LOCK_SHARE);
 
 	/*
 	 * If we've already initialized this scan, we can just advance it in the
@@ -354,7 +354,7 @@ hashgettuple(IndexScanDesc scan, ScanDirection dir)
 
 	/* Release read lock on current buffer, but keep it pinned */
 	if (BufferIsValid(so->hashso_curbuf))
-		_hash_chgbufaccess(rel, so->hashso_curbuf, HASH_READ, HASH_NOLOCK);
+		LockBuffer(so->hashso_curbuf, BUFFER_LOCK_UNLOCK);
 
 	/* Return current heap TID on success */
 	scan->xs_ctup.t_self = so->hashso_heappos;
@@ -524,7 +524,7 @@ hashbulkdelete(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 	orig_ntuples = metap->hashm_ntuples;
 	memcpy(&local_metapage, metap, sizeof(local_metapage));
 	/* release the lock, but keep pin */
-	_hash_chgbufaccess(rel, metabuf, HASH_READ, HASH_NOLOCK);
+	LockBuffer(metabuf, BUFFER_LOCK_UNLOCK);
 
 	/* Scan the buckets that we know exist */
 	cur_bucket = 0;
@@ -576,9 +576,9 @@ loop_top:
 			 * (and thus can't be further split), update our cached metapage
 			 * data.
 			 */
-			_hash_chgbufaccess(rel, metabuf, HASH_NOLOCK, HASH_READ);
+			LockBuffer(metabuf, BUFFER_LOCK_SHARE);
 			memcpy(&local_metapage, metap, sizeof(local_metapage));
-			_hash_chgbufaccess(rel, metabuf, HASH_READ, HASH_NOLOCK);
+			LockBuffer(metabuf, BUFFER_LOCK_UNLOCK);
 		}
 
 		bucket_buf = buf;
@@ -597,7 +597,7 @@ loop_top:
 	}
 
 	/* Write-lock metapage and check for split since we started */
-	_hash_chgbufaccess(rel, metabuf, HASH_NOLOCK, HASH_WRITE);
+	LockBuffer(metabuf, BUFFER_LOCK_EXCLUSIVE);
 	metap = HashPageGetMeta(BufferGetPage(metabuf));
 
 	if (cur_maxbucket != metap->hashm_maxbucket)
@@ -605,7 +605,7 @@ loop_top:
 		/* There's been a split, so process the additional bucket(s) */
 		cur_maxbucket = metap->hashm_maxbucket;
 		memcpy(&local_metapage, metap, sizeof(local_metapage));
-		_hash_chgbufaccess(rel, metabuf, HASH_READ, HASH_NOLOCK);
+		LockBuffer(metabuf, BUFFER_LOCK_UNLOCK);
 		goto loop_top;
 	}
 
@@ -821,7 +821,7 @@ hashbucketcleanup(Relation rel, Bucket cur_bucket, Buffer bucket_buf,
 		 * page
 		 */
 		if (retain_pin)
-			_hash_chgbufaccess(rel, buf, HASH_READ, HASH_NOLOCK);
+			LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 		else
 			_hash_relbuf(rel, buf);
 
@@ -836,7 +836,7 @@ hashbucketcleanup(Relation rel, Bucket cur_bucket, Buffer bucket_buf,
 	if (buf != bucket_buf)
 	{
 		_hash_relbuf(rel, buf);
-		_hash_chgbufaccess(rel, bucket_buf, HASH_NOLOCK, HASH_WRITE);
+		LockBuffer(bucket_buf, BUFFER_LOCK_EXCLUSIVE);
 	}
 
 	/*
@@ -866,7 +866,7 @@ hashbucketcleanup(Relation rel, Bucket cur_bucket, Buffer bucket_buf,
 		_hash_squeezebucket(rel, cur_bucket, bucket_blkno, bucket_buf,
 							bstrategy);
 	else
-		_hash_chgbufaccess(rel, bucket_buf, HASH_READ, HASH_NOLOCK);
+		LockBuffer(bucket_buf, BUFFER_LOCK_UNLOCK);
 }
 
 void

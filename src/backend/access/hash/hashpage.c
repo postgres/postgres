@@ -289,32 +289,6 @@ _hash_dropscanbuf(Relation rel, HashScanOpaque so)
 	so->hashso_buc_split = false;
 }
 
-/*
- * _hash_chgbufaccess() -- Change the lock type on a buffer, without
- *			dropping our pin on it.
- *
- * from_access and to_access may be HASH_READ, HASH_WRITE, or HASH_NOLOCK,
- * the last indicating that no buffer-level lock is held or wanted.
- *
- * When from_access == HASH_WRITE, we assume the buffer is dirty and tell
- * bufmgr it must be written out.  If the caller wants to release a write
- * lock on a page that's not been modified, it's okay to pass from_access
- * as HASH_READ (a bit ugly, but handy in some places).
- */
-void
-_hash_chgbufaccess(Relation rel,
-				   Buffer buf,
-				   int from_access,
-				   int to_access)
-{
-	if (from_access == HASH_WRITE)
-		MarkBufferDirty(buf);
-	if (from_access != HASH_NOLOCK)
-		LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-	if (to_access != HASH_NOLOCK)
-		LockBuffer(buf, to_access);
-}
-
 
 /*
  *	_hash_metapinit() -- Initialize the metadata page of a hash index,
@@ -446,7 +420,8 @@ _hash_metapinit(Relation rel, double num_tuples, ForkNumber forkNum)
 	 * won't accomplish anything.  It's a bad idea to hold buffer locks for
 	 * long intervals in any case, since that can block the bgwriter.
 	 */
-	_hash_chgbufaccess(rel, metabuf, HASH_WRITE, HASH_NOLOCK);
+	MarkBufferDirty(metabuf);
+	LockBuffer(metabuf, BUFFER_LOCK_UNLOCK);
 
 	/*
 	 * Initialize the first N buckets
@@ -469,7 +444,7 @@ _hash_metapinit(Relation rel, double num_tuples, ForkNumber forkNum)
 	}
 
 	/* Now reacquire buffer lock on metapage */
-	_hash_chgbufaccess(rel, metabuf, HASH_NOLOCK, HASH_WRITE);
+	LockBuffer(metabuf, BUFFER_LOCK_EXCLUSIVE);
 
 	/*
 	 * Initialize first bitmap page
@@ -528,7 +503,7 @@ restart_expand:
 	 * Write-lock the meta page.  It used to be necessary to acquire a
 	 * heavyweight lock to begin a split, but that is no longer required.
 	 */
-	_hash_chgbufaccess(rel, metabuf, HASH_NOLOCK, HASH_WRITE);
+	LockBuffer(metabuf, BUFFER_LOCK_EXCLUSIVE);
 
 	_hash_checkpage(rel, metabuf, LH_META_PAGE);
 	metap = HashPageGetMeta(BufferGetPage(metabuf));
@@ -609,8 +584,8 @@ restart_expand:
 		 * Release the lock on metapage and old_bucket, before completing the
 		 * split.
 		 */
-		_hash_chgbufaccess(rel, metabuf, HASH_READ, HASH_NOLOCK);
-		_hash_chgbufaccess(rel, buf_oblkno, HASH_READ, HASH_NOLOCK);
+		LockBuffer(metabuf, BUFFER_LOCK_UNLOCK);
+		LockBuffer(buf_oblkno, BUFFER_LOCK_UNLOCK);
 
 		_hash_finish_split(rel, metabuf, buf_oblkno, old_bucket, maxbucket,
 						   highmask, lowmask);
@@ -646,7 +621,7 @@ restart_expand:
 		lowmask = metap->hashm_lowmask;
 
 		/* Release the metapage lock. */
-		_hash_chgbufaccess(rel, metabuf, HASH_READ, HASH_NOLOCK);
+		LockBuffer(metabuf, BUFFER_LOCK_UNLOCK);
 
 		hashbucketcleanup(rel, old_bucket, buf_oblkno, start_oblkno, NULL,
 						  maxbucket, highmask, lowmask, NULL, NULL, true,
@@ -753,7 +728,8 @@ restart_expand:
 	lowmask = metap->hashm_lowmask;
 
 	/* Write out the metapage and drop lock, but keep pin */
-	_hash_chgbufaccess(rel, metabuf, HASH_WRITE, HASH_NOLOCK);
+	MarkBufferDirty(metabuf);
+	LockBuffer(metabuf, BUFFER_LOCK_UNLOCK);
 
 	/* Relocate records to the new bucket */
 	_hash_splitbucket(rel, metabuf,
@@ -767,7 +743,7 @@ restart_expand:
 fail:
 
 	/* We didn't write the metapage, so just drop lock */
-	_hash_chgbufaccess(rel, metabuf, HASH_READ, HASH_NOLOCK);
+	LockBuffer(metabuf, BUFFER_LOCK_UNLOCK);
 }
 
 
@@ -1001,7 +977,8 @@ _hash_splitbucket_guts(Relation rel,
 				if (PageGetFreeSpace(npage) < itemsz)
 				{
 					/* write out nbuf and drop lock, but keep pin */
-					_hash_chgbufaccess(rel, nbuf, HASH_WRITE, HASH_NOLOCK);
+					MarkBufferDirty(nbuf);
+					LockBuffer(nbuf, BUFFER_LOCK_UNLOCK);
 					/* chain to a new overflow page */
 					nbuf = _hash_addovflpage(rel, metabuf, nbuf, (nbuf == bucket_nbuf) ? true : false);
 					npage = BufferGetPage(nbuf);
@@ -1033,7 +1010,7 @@ _hash_splitbucket_guts(Relation rel,
 
 		/* retain the pin on the old primary bucket */
 		if (obuf == bucket_obuf)
-			_hash_chgbufaccess(rel, obuf, HASH_READ, HASH_NOLOCK);
+			LockBuffer(obuf, BUFFER_LOCK_UNLOCK);
 		else
 			_hash_relbuf(rel, obuf);
 
@@ -1056,18 +1033,21 @@ _hash_splitbucket_guts(Relation rel,
 	 * bucket and then the new bucket.
 	 */
 	if (nbuf == bucket_nbuf)
-		_hash_chgbufaccess(rel, bucket_nbuf, HASH_WRITE, HASH_NOLOCK);
+	{
+		MarkBufferDirty(bucket_nbuf);
+		LockBuffer(bucket_nbuf, BUFFER_LOCK_UNLOCK);
+	}
 	else
 	{
 		MarkBufferDirty(nbuf);
 		_hash_relbuf(rel, nbuf);
 	}
 
-	_hash_chgbufaccess(rel, bucket_obuf, HASH_NOLOCK, HASH_WRITE);
+	LockBuffer(bucket_obuf, BUFFER_LOCK_EXCLUSIVE);
 	opage = BufferGetPage(bucket_obuf);
 	oopaque = (HashPageOpaque) PageGetSpecialPointer(opage);
 
-	_hash_chgbufaccess(rel, bucket_nbuf, HASH_NOLOCK, HASH_WRITE);
+	LockBuffer(bucket_nbuf, BUFFER_LOCK_EXCLUSIVE);
 	npage = BufferGetPage(bucket_nbuf);
 	nopaque = (HashPageOpaque) PageGetSpecialPointer(npage);
 
@@ -1172,7 +1152,7 @@ _hash_finish_split(Relation rel, Buffer metabuf, Buffer obuf, Bucket obucket,
 		 * retain the pin on primary bucket.
 		 */
 		if (nbuf == bucket_nbuf)
-			_hash_chgbufaccess(rel, nbuf, HASH_READ, HASH_NOLOCK);
+			LockBuffer(nbuf, BUFFER_LOCK_UNLOCK);
 		else
 			_hash_relbuf(rel, nbuf);
 
@@ -1194,7 +1174,7 @@ _hash_finish_split(Relation rel, Buffer metabuf, Buffer obuf, Bucket obucket,
 	}
 	if (!ConditionalLockBufferForCleanup(bucket_nbuf))
 	{
-		_hash_chgbufaccess(rel, obuf, HASH_READ, HASH_NOLOCK);
+		LockBuffer(obuf, BUFFER_LOCK_UNLOCK);
 		hash_destroy(tidhtab);
 		return;
 	}
@@ -1208,6 +1188,6 @@ _hash_finish_split(Relation rel, Buffer metabuf, Buffer obuf, Bucket obucket,
 						   maxbucket, highmask, lowmask);
 
 	_hash_relbuf(rel, bucket_nbuf);
-	_hash_chgbufaccess(rel, obuf, HASH_READ, HASH_NOLOCK);
+	LockBuffer(obuf, BUFFER_LOCK_UNLOCK);
 	hash_destroy(tidhtab);
 }

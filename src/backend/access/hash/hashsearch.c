@@ -83,7 +83,7 @@ _hash_readnext(IndexScanDesc scan,
 	 * comments in _hash_first to know the reason of retaining pin.
 	 */
 	if (*bufp == so->hashso_bucket_buf || *bufp == so->hashso_split_bucket_buf)
-		_hash_chgbufaccess(rel, *bufp, HASH_READ, HASH_NOLOCK);
+		LockBuffer(*bufp, BUFFER_LOCK_UNLOCK);
 	else
 		_hash_relbuf(rel, *bufp);
 
@@ -109,7 +109,7 @@ _hash_readnext(IndexScanDesc scan,
 		 */
 		Assert(BufferIsValid(*bufp));
 
-		_hash_chgbufaccess(rel, *bufp, HASH_NOLOCK, HASH_READ);
+		LockBuffer(*bufp, BUFFER_LOCK_SHARE);
 
 		/*
 		 * setting hashso_buc_split to true indicates that we are scanning
@@ -147,7 +147,7 @@ _hash_readprev(IndexScanDesc scan,
 	 * comments in _hash_first to know the reason of retaining pin.
 	 */
 	if (*bufp == so->hashso_bucket_buf || *bufp == so->hashso_split_bucket_buf)
-		_hash_chgbufaccess(rel, *bufp, HASH_READ, HASH_NOLOCK);
+		LockBuffer(*bufp, BUFFER_LOCK_UNLOCK);
 	else
 		_hash_relbuf(rel, *bufp);
 
@@ -182,7 +182,7 @@ _hash_readprev(IndexScanDesc scan,
 		 */
 		Assert(BufferIsValid(*bufp));
 
-		_hash_chgbufaccess(rel, *bufp, HASH_NOLOCK, HASH_READ);
+		LockBuffer(*bufp, BUFFER_LOCK_SHARE);
 		*pagep = BufferGetPage(*bufp);
 		*opaquep = (HashPageOpaque) PageGetSpecialPointer(*pagep);
 
@@ -298,7 +298,7 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 		blkno = BUCKET_TO_BLKNO(metap, bucket);
 
 		/* Release metapage lock, but keep pin. */
-		_hash_chgbufaccess(rel, metabuf, HASH_READ, HASH_NOLOCK);
+		LockBuffer(metabuf, BUFFER_LOCK_UNLOCK);
 
 		/*
 		 * If the previous iteration of this loop locked what is still the
@@ -319,7 +319,7 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 		 * Reacquire metapage lock and check that no bucket split has taken
 		 * place while we were awaiting the bucket lock.
 		 */
-		_hash_chgbufaccess(rel, metabuf, HASH_NOLOCK, HASH_READ);
+		LockBuffer(metabuf, BUFFER_LOCK_SHARE);
 		oldblkno = blkno;
 		retry = true;
 	}
@@ -359,7 +359,7 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 		 * release the lock on new bucket and re-acquire it after acquiring
 		 * the lock on old bucket.
 		 */
-		_hash_chgbufaccess(rel, buf, HASH_READ, HASH_NOLOCK);
+		LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 
 		old_buf = _hash_getbuf(rel, old_blkno, HASH_READ, LH_BUCKET_PAGE);
 
@@ -368,9 +368,9 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 		 * scanning.
 		 */
 		so->hashso_split_bucket_buf = old_buf;
-		_hash_chgbufaccess(rel, old_buf, HASH_READ, HASH_NOLOCK);
+		LockBuffer(old_buf, BUFFER_LOCK_UNLOCK);
 
-		_hash_chgbufaccess(rel, buf, HASH_NOLOCK, HASH_READ);
+		LockBuffer(buf, BUFFER_LOCK_SHARE);
 		page = BufferGetPage(buf);
 		opaque = (HashPageOpaque) PageGetSpecialPointer(page);
 		Assert(opaque->hasho_bucket == bucket);

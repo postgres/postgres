@@ -336,8 +336,6 @@ extern Buffer _hash_getbuf_with_strategy(Relation rel, BlockNumber blkno,
 extern void _hash_relbuf(Relation rel, Buffer buf);
 extern void _hash_dropbuf(Relation rel, Buffer buf);
 extern void _hash_dropscanbuf(Relation rel, HashScanOpaque so);
-extern void _hash_chgbufaccess(Relation rel, Buffer buf, int from_access,
-				   int to_access);
 extern uint32 _hash_metapinit(Relation rel, double num_tuples,
 				ForkNumber forkNum);
 extern void _hash_pageinit(Page page, Size size);
