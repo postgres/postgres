@@ -13774,9 +13774,6 @@ SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
         <primary>percentile</primary>
         <secondary>continuous</secondary>
        </indexterm>
-       <indexterm>
-        <primary>median</primary>
-       </indexterm>
        <function>percentile_cont(<replaceable class="parameter">fraction</replaceable>) WITHIN GROUP (ORDER BY <replaceable class="parameter">sort_expression</replaceable>)</function>
       </entry>
       <entry>
