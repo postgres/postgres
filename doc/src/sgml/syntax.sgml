@@ -1694,11 +1694,21 @@ SELECT string_agg(a ORDER BY a, ',') FROM table;  -- incorrect
     case, write just <literal>()</> not <literal>(*)</>.
     (<productname>PostgreSQL</> will actually accept either spelling, but
     only the first way conforms to the SQL standard.)
+   </para>
+
+   <para>
+    <indexterm>
+     <primary>median</primary>
+    </indexterm>
+    <indexterm>
+     <primary>median</primary>
+     <seealso>percentile</seealso>
+    </indexterm>
     An example of an ordered-set aggregate call is:
 
 <programlisting>
-SELECT percentile_disc(0.5) WITHIN GROUP (ORDER BY income) FROM households;
- percentile_disc
+SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY income) FROM households;
+ percentile_cont
 -----------------
            50489
 </programlisting>
