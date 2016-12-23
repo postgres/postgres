@@ -1116,11 +1116,11 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
     rename, or change the type of a column in the parent table without doing
     same to the descendants.  This ensures that the descendants always have
     columns matching the parent.  Similarly, a constraint cannot be renamed
-    in the parent without also renaming it in all descendents, so that
-    constraints also match between the parent and its descendents.
-    Also, because selecting from the parent also selects from its descendents,
+    in the parent without also renaming it in all descendants, so that
+    constraints also match between the parent and its descendants.
+    Also, because selecting from the parent also selects from its descendants,
     a constraint on the parent cannot be marked valid unless it is also marked
-    valid for those descendents.  In all of these cases, <command>ALTER TABLE
+    valid for those descendants.  In all of these cases, <command>ALTER TABLE
     ONLY</command> will be rejected.
    </para>
 

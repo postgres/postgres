@@ -146,7 +146,7 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
     Instead of writing <literal>ONLY</> before the table name, you can write
     <literal>*</> after the table name to explicitly specify that descendant
     tables are included.  There is no real reason to use this syntax any more,
-    because searching descendent tables is now always the default behavior.
+    because searching descendant tables is now always the default behavior.
     However, it is supported for compatibility with older releases.
    </para>
 

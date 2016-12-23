@@ -518,7 +518,7 @@ ExecInitParallelPlan(PlanState *planstate, EState *estate, int nworkers)
 }
 
 /*
- * Copy instrumentation information about this node and its descendents from
+ * Copy instrumentation information about this node and its descendants from
  * dynamic shared memory.
  */
 static bool
@@ -666,7 +666,7 @@ ExecParallelGetQueryDesc(shm_toc *toc, DestReceiver *receiver,
 }
 
 /*
- * Copy instrumentation information from this node and its descendents into
+ * Copy instrumentation information from this node and its descendants into
  * dynamic shared memory, so that the parallel leader can retrieve it.
  */
 static bool
@@ -706,7 +706,7 @@ ExecParallelReportInstrumentation(PlanState *planstate,
 }
 
 /*
- * Initialize the PlanState and its descendents with the information
+ * Initialize the PlanState and its descendants with the information
  * retrieved from shared memory.  This has to be done once the PlanState
  * is allocated and initialized by executor; that is, after ExecutorStart().
  */
