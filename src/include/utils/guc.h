@@ -244,7 +244,6 @@ extern bool log_btree_build_stats;
 
 extern PGDLLIMPORT bool check_function_bodies;
 extern bool default_with_oids;
-extern bool SQL_inheritance;
 
 extern int	log_min_error_statement;
 extern int	log_min_messages;

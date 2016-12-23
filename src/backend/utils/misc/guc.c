@@ -440,7 +440,6 @@ char	   *event_source;
 bool		row_security;
 bool		check_function_bodies = true;
 bool		default_with_oids = false;
-bool		SQL_inheritance = true;
 
 int			log_min_error_statement = ERROR;
 int			log_min_messages = WARNING;
@@ -1319,15 +1318,6 @@ static struct config_bool ConfigureNamesBool[] =
 		},
 		&log_hostname,
 		false,
-		NULL, NULL, NULL
-	},
-	{
-		{"sql_inheritance", PGC_USERSET, COMPAT_OPTIONS_PREVIOUS,
-			gettext_noop("Causes subtables to be included by default in various commands."),
-			NULL
-		},
-		&SQL_inheritance,
-		true,
 		NULL, NULL, NULL
 	},
 	{

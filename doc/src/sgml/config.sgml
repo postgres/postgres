@@ -7394,36 +7394,6 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-sql-inheritance" xreflabel="sql_inheritance">
-      <term><varname>sql_inheritance</varname> (<type>boolean</type>)
-      <indexterm>
-       <primary><varname>sql_inheritance</> configuration parameter</primary>
-      </indexterm>
-      <indexterm><primary>inheritance</></>
-      </term>
-      <listitem>
-       <para>
-        This setting controls whether undecorated table references are
-        considered to include inheritance child tables.  The default is
-        <literal>on</>, which means child tables are included (thus,
-        a <literal>*</> suffix is assumed by default).  If turned
-        <literal>off</>, child tables are not included (thus, an
-        <literal>ONLY</literal> prefix is assumed).  The SQL standard
-        requires child tables to be included, so the <literal>off</> setting
-        is not spec-compliant, but it is provided for compatibility with
-        <productname>PostgreSQL</> releases prior to 7.1.
-        See <xref linkend="ddl-inherit"> for more information.
-       </para>
-
-       <para>
-        Turning <varname>sql_inheritance</> off is deprecated, because that
-        behavior has been found to be error-prone as well as contrary to SQL
-        standard.  Discussions of inheritance behavior elsewhere in this
-        manual generally assume that it is <literal>on</>.
-       </para>
-      </listitem>
-     </varlistentry>
-
      <varlistentry id="guc-standard-conforming-strings" xreflabel="standard_conforming_strings">
       <term><varname>standard_conforming_strings</varname> (<type>boolean</type>)
       <indexterm><primary>strings</><secondary>standard conforming</></>

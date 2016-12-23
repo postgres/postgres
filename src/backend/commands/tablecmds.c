@@ -1184,7 +1184,7 @@ ExecuteTruncate(TruncateStmt *stmt)
 	{
 		RangeVar   *rv = lfirst(cell);
 		Relation	rel;
-		bool		recurse = interpretInhOption(rv->inhOpt);
+		bool		recurse = (rv->inhOpt == INH_YES);
 		Oid			myrelid;
 
 		rel = heap_openrv(rv, AccessExclusiveLock);
@@ -2655,7 +2655,7 @@ renameatt(RenameStmt *stmt)
 		renameatt_internal(relid,
 						   stmt->subname,		/* old att name */
 						   stmt->newname,		/* new att name */
-						   interpretInhOption(stmt->relation->inhOpt),	/* recursive? */
+						   (stmt->relation->inhOpt == INH_YES),	/* recursive? */
 						   false,		/* recursing? */
 						   0,	/* expected inhcount */
 						   stmt->behavior);
@@ -2807,7 +2807,7 @@ RenameConstraint(RenameStmt *stmt)
 		rename_constraint_internal(relid, typid,
 								   stmt->subname,
 								   stmt->newname,
-		 stmt->relation ? interpretInhOption(stmt->relation->inhOpt) : false,	/* recursive? */
+		 (stmt->relation && stmt->relation->inhOpt == INH_YES),	/* recursive? */
 								   false,		/* recursing? */
 								   0 /* expected inhcount */ );
 
@@ -3050,7 +3050,7 @@ AlterTable(Oid relid, LOCKMODE lockmode, AlterTableStmt *stmt)
 	CheckTableNotInUse(rel, "ALTER TABLE");
 
 	ATController(stmt,
-				 rel, stmt->cmds, interpretInhOption(stmt->relation->inhOpt),
+				 rel, stmt->cmds, (stmt->relation->inhOpt == INH_YES),
 				 lockmode);
 }
 

@@ -28,12 +28,11 @@
  *	  current transaction and are just parsing commands to find the next
  *	  ROLLBACK or COMMIT.  If you make use of SET variables, then you
  *	  will do the wrong thing in multi-query strings like this:
- *			SET SQL_inheritance TO off; SELECT * FROM foo;
+ *			SET constraint_exclusion TO off; SELECT * FROM foo;
  *	  because the entire string is parsed by gram.y before the SET gets
  *	  executed.  Anything that depends on the database or changeable state
  *	  should be handled during parse analysis so that it happens at the
- *	  right time not the wrong time.  The handling of SQL_inheritance is
- *	  a good example.
+ *	  right time not the wrong time.
  *
  * WARNINGS
  *	  If you use a list, make sure the datum is a node so that the printing
@@ -11249,9 +11248,9 @@ join_qual:	USING '(' name_list ')'					{ $$ = (Node *) $3; }
 relation_expr:
 			qualified_name
 				{
-					/* default inheritance */
+					/* inheritance query, implicitly */
 					$$ = $1;
-					$$->inhOpt = INH_DEFAULT;
+					$$->inhOpt = INH_YES;
 					$$->alias = NULL;
 				}
 			| qualified_name '*'

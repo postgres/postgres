@@ -54,7 +54,7 @@ LockTableCommand(LockStmt *lockstmt)
 	foreach(p, lockstmt->relations)
 	{
 		RangeVar   *rv = (RangeVar *) lfirst(p);
-		bool		recurse = interpretInhOption(rv->inhOpt);
+		bool		recurse = (rv->inhOpt == INH_YES);
 		Oid			reloid;
 
 		reloid = RangeVarGetRelidExtended(rv, lockstmt->mode, false,

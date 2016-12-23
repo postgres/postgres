@@ -2529,11 +2529,9 @@ SELECT name, altitude
     WHERE altitude &gt; 500;
 </programlisting>
 
-   Writing <literal>*</> is not necessary, since this behavior is
-   the default (unless you have changed the setting of the
-   <xref linkend="guc-sql-inheritance"> configuration option).
-   However writing <literal>*</> might be useful to emphasize that
-   additional tables will be searched.
+   Writing <literal>*</> is not necessary, since this behavior is always
+   the default.  However, this syntax is still supported for
+   compatibility with older releases where the default could be changed.
   </para>
 
   <para>

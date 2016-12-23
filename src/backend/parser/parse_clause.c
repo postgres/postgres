@@ -229,30 +229,6 @@ setTargetTable(ParseState *pstate, RangeVar *relation,
 }
 
 /*
- * Simplify InhOption (yes/no/default) into boolean yes/no.
- *
- * The reason we do things this way is that we don't want to examine the
- * SQL_inheritance option flag until parse_analyze() is run.    Otherwise,
- * we'd do the wrong thing with query strings that intermix SET commands
- * with queries.
- */
-bool
-interpretInhOption(InhOption inhOpt)
-{
-	switch (inhOpt)
-	{
-		case INH_NO:
-			return false;
-		case INH_YES:
-			return true;
-		case INH_DEFAULT:
-			return SQL_inheritance;
-	}
-	elog(ERROR, "bogus InhOption value: %d", inhOpt);
-	return false;				/* keep compiler quiet */
-}
-
-/*
  * Given a relation-options list (of DefElems), return true iff the specified
  * table/result set should be created with OIDs. This needs to be done after
  * parsing the query string because the return value can depend upon the
@@ -437,7 +413,7 @@ transformTableEntry(ParseState *pstate, RangeVar *r)
 
 	/* We need only build a range table entry */
 	rte = addRangeTableEntry(pstate, r, r->alias,
-							 interpretInhOption(r->inhOpt), true);
+							 (r->inhOpt == INH_YES), true);
 
 	return rte;
 }

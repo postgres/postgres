@@ -606,7 +606,6 @@
 #lo_compat_privileges = off
 #operator_precedence_warning = off
 #quote_all_identifiers = off
-#sql_inheritance = on
 #standard_conforming_strings = on
 #synchronize_seqscans = on
 

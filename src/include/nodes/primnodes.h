@@ -45,8 +45,7 @@ typedef struct Alias
 typedef enum InhOption
 {
 	INH_NO,						/* Do NOT scan child tables */
-	INH_YES,					/* DO scan child tables */
-	INH_DEFAULT					/* Use current SQL_inheritance option */
+	INH_YES						/* DO scan child tables */
 } InhOption;
 
 /* What to do at commit time for temporary relations */
