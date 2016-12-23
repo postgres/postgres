@@ -4594,16 +4594,16 @@ ExecInitExpr(Expr *node, PlanState *parent)
 			}
 			else
 			{
-				state = (ExprState *) makeNode(ExprState);
+				state = makeNode(ExprState);
 				state->evalfunc = ExecEvalScalarVar;
 			}
 			break;
 		case T_Const:
-			state = (ExprState *) makeNode(ExprState);
+			state = makeNode(ExprState);
 			state->evalfunc = ExecEvalConst;
 			break;
 		case T_Param:
-			state = (ExprState *) makeNode(ExprState);
+			state = makeNode(ExprState);
 			switch (((Param *) node)->paramkind)
 			{
 				case PARAM_EXEC:
@@ -4619,11 +4619,11 @@ ExecInitExpr(Expr *node, PlanState *parent)
 			}
 			break;
 		case T_CoerceToDomainValue:
-			state = (ExprState *) makeNode(ExprState);
+			state = makeNode(ExprState);
 			state->evalfunc = ExecEvalCoerceToDomainValue;
 			break;
 		case T_CaseTestExpr:
-			state = (ExprState *) makeNode(ExprState);
+			state = makeNode(ExprState);
 			state->evalfunc = ExecEvalCaseTestExpr;
 			break;
 		case T_Aggref:
@@ -5176,7 +5176,7 @@ ExecInitExpr(Expr *node, PlanState *parent)
 			}
 			break;
 		case T_SQLValueFunction:
-			state = (ExprState *) makeNode(ExprState);
+			state = makeNode(ExprState);
 			state->evalfunc = ExecEvalSQLValueFunction;
 			break;
 		case T_XmlExpr:
@@ -5250,7 +5250,7 @@ ExecInitExpr(Expr *node, PlanState *parent)
 			}
 			break;
 		case T_CurrentOfExpr:
-			state = (ExprState *) makeNode(ExprState);
+			state = makeNode(ExprState);
 			state->evalfunc = ExecEvalCurrentOfExpr;
 			break;
 		case T_TargetEntry:

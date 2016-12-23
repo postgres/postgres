@@ -12743,7 +12743,7 @@ transformPartitionSpec(Relation rel, PartitionSpec *partspec, char *strategy)
 	RangeTblEntry *rte;
 	ListCell   *l;
 
-	newspec = (PartitionSpec *) makeNode(PartitionSpec);
+	newspec = makeNode(PartitionSpec);
 
 	newspec->strategy = partspec->strategy;
 	newspec->location = partspec->location;

@@ -131,8 +131,7 @@ identify_system:
 base_backup:
 			K_BASE_BACKUP base_backup_opt_list
 				{
-					BaseBackupCmd *cmd =
-						(BaseBackupCmd *) makeNode(BaseBackupCmd);
+					BaseBackupCmd *cmd = makeNode(BaseBackupCmd);
 					cmd->options = $2;
 					$$ = (Node *) cmd;
 				}

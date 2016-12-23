@@ -703,7 +703,7 @@ add_with_check_options(Relation rel,
 		 */
 		WithCheckOption *wco;
 
-		wco = (WithCheckOption *) makeNode(WithCheckOption);
+		wco = makeNode(WithCheckOption);
 		wco->kind = kind;
 		wco->relname = pstrdup(RelationGetRelationName(rel));
 		wco->polname = NULL;
@@ -735,7 +735,7 @@ add_with_check_options(Relation rel,
 				qual = copyObject(qual);
 				ChangeVarNodes((Node *) qual, 1, rt_index, 0);
 
-				wco = (WithCheckOption *) makeNode(WithCheckOption);
+				wco = makeNode(WithCheckOption);
 				wco->kind = kind;
 				wco->relname = pstrdup(RelationGetRelationName(rel));
 				wco->polname = pstrdup(policy->policy_name);
@@ -755,7 +755,7 @@ add_with_check_options(Relation rel,
 		 */
 		WithCheckOption *wco;
 
-		wco = (WithCheckOption *) makeNode(WithCheckOption);
+		wco = makeNode(WithCheckOption);
 		wco->kind = kind;
 		wco->relname = pstrdup(RelationGetRelationName(rel));
 		wco->polname = NULL;
