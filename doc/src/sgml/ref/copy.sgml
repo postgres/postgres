@@ -425,6 +425,15 @@ COPY <replaceable class="parameter">count</replaceable>
    </para>
 
    <para>
+    If row-level security is enabled for the table, the relevant 
+    <command>SELECT</command> policies will apply to <literal>COPY
+    <replaceable class="parameter">table</> TO</literal> statements.
+    Currently, <command>COPY FROM</command> is not supported for tables
+    with row-level security. Use equivalent <command>INSERT</command>
+    statements instead.
+   </para>
+
+   <para>
     Files named in a <command>COPY</command> command are read or written
     directly by the server, not by the client application. Therefore,
     they must reside on or be accessible to the database server machine,

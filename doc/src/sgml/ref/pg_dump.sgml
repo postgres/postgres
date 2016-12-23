@@ -718,6 +718,11 @@ PostgreSQL documentation
         to dump the parts of the contents of the table that they have access to.
        </para>
 
+       <para>
+        Note that if you use this option currently, you probably also want
+        the dump be in <command>INSERT</command> format, as the
+        <command>COPY FROM</command> during restore does not support row security.
+       </para>
       </listitem>
      </varlistentry>
 

@@ -543,7 +543,7 @@
 
        <para>
         Note that this option currently also requires the dump be in <command>INSERT</command>
-        format, as <command>COPY TO</command> does not support row security.
+        format, as <command>COPY FROM</command> does not support row security.
        </para>
       </listitem>
      </varlistentry>
