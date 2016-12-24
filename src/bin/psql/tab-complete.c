@@ -1059,7 +1059,7 @@ psql_completion(char *text, int start, int end)
 			 pg_strcasecmp(prev_wd, "PRIVILEGES") == 0)
 	{
 		static const char *const list_ALTER_DEFAULT_PRIVILEGES[] =
-		{"FOR ROLE", "FOR USER", "IN SCHEMA", NULL};
+		{"FOR ROLE", "IN SCHEMA", NULL};
 
 		COMPLETE_WITH_LIST(list_ALTER_DEFAULT_PRIVILEGES);
 	}
@@ -1069,19 +1069,26 @@ psql_completion(char *text, int start, int end)
 			 pg_strcasecmp(prev2_wd, "PRIVILEGES") == 0 &&
 			 pg_strcasecmp(prev_wd, "FOR") == 0)
 	{
-		static const char *const list_ALTER_DEFAULT_PRIVILEGES_FOR[] =
-		{"ROLE", "USER", NULL};
-
-		COMPLETE_WITH_LIST(list_ALTER_DEFAULT_PRIVILEGES_FOR);
+		COMPLETE_WITH_CONST("ROLE");
 	}
-	/* ALTER DEFAULT PRIVILEGES { FOR ROLE ... | IN SCHEMA ... } */
+	/* ALTER DEFAULT PRIVILEGES FOR ROLE ... } */
 	else if (pg_strcasecmp(prev5_wd, "DEFAULT") == 0 &&
 			 pg_strcasecmp(prev4_wd, "PRIVILEGES") == 0 &&
-			 (pg_strcasecmp(prev3_wd, "FOR") == 0 ||
-			  pg_strcasecmp(prev3_wd, "IN") == 0))
+			 pg_strcasecmp(prev3_wd, "FOR") == 0)
 	{
 		static const char *const list_ALTER_DEFAULT_PRIVILEGES_REST[] =
-		{"GRANT", "REVOKE", NULL};
+		{"GRANT", "REVOKE", "IN SCHEMA", NULL};
+
+		COMPLETE_WITH_LIST(list_ALTER_DEFAULT_PRIVILEGES_REST);
+	}
+	/* ALTER DEFAULT PRIVILEGES IN SCHEMA ... } */
+	else if (pg_strcasecmp(prev5_wd, "DEFAULT") == 0 &&
+			 pg_strcasecmp(prev4_wd, "PRIVILEGES") == 0 &&
+			 pg_strcasecmp(prev3_wd, "IN") == 0 &&
+			 pg_strcasecmp(prev2_wd, "SCHEMA") == 0)
+	{
+		static const char *const list_ALTER_DEFAULT_PRIVILEGES_REST[] =
+		{"GRANT", "REVOKE", "FOR ROLE", NULL};
 
 		COMPLETE_WITH_LIST(list_ALTER_DEFAULT_PRIVILEGES_REST);
 	}
@@ -2299,8 +2306,9 @@ psql_completion(char *text, int start, int end)
 
 /* GRANT && REVOKE */
 	/* Complete GRANT/REVOKE with a list of roles and privileges */
-	else if (pg_strcasecmp(prev_wd, "GRANT") == 0 ||
-			 pg_strcasecmp(prev_wd, "REVOKE") == 0)
+	else if (prev2_wd[0] == '\0' &&
+			 (pg_strcasecmp(prev_wd, "GRANT") == 0 ||
+			  pg_strcasecmp(prev_wd, "REVOKE") == 0))
 	{
 		COMPLETE_WITH_QUERY(Query_for_list_of_roles
 							" UNION SELECT 'SELECT'"
