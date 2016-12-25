@@ -352,7 +352,8 @@ printCrosstab(const PGresult *results,
 	{
 		int			row_number;
 		int			col_number;
-		pivot_field *p;
+		pivot_field *rp,
+				   *cp;
 		pivot_field elt;
 
 		/* Find target row */
@@ -360,13 +361,13 @@ printCrosstab(const PGresult *results,
 			elt.name = PQgetvalue(results, rn, field_for_rows);
 		else
 			elt.name = NULL;
-		p = (pivot_field *) bsearch(&elt,
-									piv_rows,
-									num_rows,
-									sizeof(pivot_field),
-									pivotFieldCompare);
-		Assert(p != NULL);
-		row_number = p->rank;
+		rp = (pivot_field *) bsearch(&elt,
+									 piv_rows,
+									 num_rows,
+									 sizeof(pivot_field),
+									 pivotFieldCompare);
+		Assert(rp != NULL);
+		row_number = rp->rank;
 
 		/* Find target column */
 		if (!PQgetisnull(results, rn, field_for_columns))
@@ -374,13 +375,13 @@ printCrosstab(const PGresult *results,
 		else
 			elt.name = NULL;
 
-		p = (pivot_field *) bsearch(&elt,
-									piv_columns,
-									num_columns,
-									sizeof(pivot_field),
-									pivotFieldCompare);
-		Assert(p != NULL);
-		col_number = p->rank;
+		cp = (pivot_field *) bsearch(&elt,
+									 piv_columns,
+									 num_columns,
+									 sizeof(pivot_field),
+									 pivotFieldCompare);
+		Assert(cp != NULL);
+		col_number = cp->rank;
 
 		/* Place value into cell */
 		if (col_number >= 0 && row_number >= 0)
@@ -396,10 +397,10 @@ printCrosstab(const PGresult *results,
 			if (cont.cells[idx] != NULL)
 			{
 				psql_error("\\crosstabview: query result contains multiple data values for row \"%s\", column \"%s\"\n",
-					  piv_rows[row_number].name ? piv_rows[row_number].name :
-						   popt.nullPrint ? popt.nullPrint : "(null)",
-				piv_columns[col_number].name ? piv_columns[col_number].name :
-						   popt.nullPrint ? popt.nullPrint : "(null)");
+						   rp->name ? rp->name :
+						   (popt.nullPrint ? popt.nullPrint : "(null)"),
+						   cp->name ? cp->name :
+						   (popt.nullPrint ? popt.nullPrint : "(null)"));
 				goto error;
 			}
 
@@ -694,8 +695,8 @@ indexOfColumn(char *arg, const PGresult *res)
 static int
 pivotFieldCompare(const void *a, const void *b)
 {
-	pivot_field *pa = (pivot_field *) a;
-	pivot_field *pb = (pivot_field *) b;
+	const pivot_field *pa = (const pivot_field *) a;
+	const pivot_field *pb = (const pivot_field *) b;
 
 	/* test null values */
 	if (!pb->name)
@@ -704,12 +705,11 @@ pivotFieldCompare(const void *a, const void *b)
 		return 1;
 
 	/* non-null values */
-	return strcmp(((pivot_field *) a)->name,
-				  ((pivot_field *) b)->name);
+	return strcmp(pa->name, pb->name);
 }
 
 static int
 rankCompare(const void *a, const void *b)
 {
-	return *((int *) a) - *((int *) b);
+	return *((const int *) a) - *((const int *) b);
 }
