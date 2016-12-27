@@ -682,6 +682,24 @@ SELECT interval '1 2:03:04.5678' minute to second(2);
  1 day 02:03:04.57
 (1 row)
 
+-- test casting to restricted precision (bug #14479)
+SELECT f1, f1::INTERVAL DAY TO MINUTE AS "minutes",
+  (f1 + INTERVAL '1 month')::INTERVAL MONTH::INTERVAL YEAR AS "years"
+  FROM interval_tbl;
+       f1        |     minutes     |  years   
+-----------------+-----------------+----------
+ 00:01:00        | 00:01:00        | 00:00:00
+ 05:00:00        | 05:00:00        | 00:00:00
+ 10 days         | 10 days         | 00:00:00
+ 34 years        | 34 years        | 34 years
+ 3 mons          | 3 mons          | 00:00:00
+ -00:00:14       | 00:00:00        | 00:00:00
+ 1 day 02:03:04  | 1 day 02:03:00  | 00:00:00
+ 6 years         | 6 years         | 6 years
+ 5 mons          | 5 mons          | 00:00:00
+ 5 mons 12:00:00 | 5 mons 12:00:00 | 00:00:00
+(10 rows)
+
 -- test inputting and outputting SQL standard interval literals
 SET IntervalStyle TO sql_standard;
 SELECT  interval '0'                       AS "zero",

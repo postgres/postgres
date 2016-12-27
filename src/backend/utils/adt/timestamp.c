@@ -1250,6 +1250,59 @@ intervaltypmodout(PG_FUNCTION_ARGS)
 	PG_RETURN_CSTRING(res);
 }
 
+/*
+ * Given an interval typmod value, return a code for the least-significant
+ * field that the typmod allows to be nonzero, for instance given
+ * INTERVAL DAY TO HOUR we want to identify "hour".
+ *
+ * The results should be ordered by field significance, which means
+ * we can't use the dt.h macros YEAR etc, because for some odd reason
+ * they aren't ordered that way.  Instead, arbitrarily represent
+ * SECOND = 0, MINUTE = 1, HOUR = 2, DAY = 3, MONTH = 4, YEAR = 5.
+ */
+static int
+intervaltypmodleastfield(int32 typmod)
+{
+	if (typmod < 0)
+		return 0;				/* SECOND */
+
+	switch (INTERVAL_RANGE(typmod))
+	{
+		case INTERVAL_MASK(YEAR):
+			return 5;			/* YEAR */
+		case INTERVAL_MASK(MONTH):
+			return 4;			/* MONTH */
+		case INTERVAL_MASK(DAY):
+			return 3;			/* DAY */
+		case INTERVAL_MASK(HOUR):
+			return 2;			/* HOUR */
+		case INTERVAL_MASK(MINUTE):
+			return 1;			/* MINUTE */
+		case INTERVAL_MASK(SECOND):
+			return 0;			/* SECOND */
+		case INTERVAL_MASK(YEAR) | INTERVAL_MASK(MONTH):
+			return 4;			/* MONTH */
+		case INTERVAL_MASK(DAY) | INTERVAL_MASK(HOUR):
+			return 2;			/* HOUR */
+		case INTERVAL_MASK(DAY) | INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE):
+			return 1;			/* MINUTE */
+		case INTERVAL_MASK(DAY) | INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE) | INTERVAL_MASK(SECOND):
+			return 0;			/* SECOND */
+		case INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE):
+			return 1;			/* MINUTE */
+		case INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE) | INTERVAL_MASK(SECOND):
+			return 0;			/* SECOND */
+		case INTERVAL_MASK(MINUTE) | INTERVAL_MASK(SECOND):
+			return 0;			/* SECOND */
+		case INTERVAL_FULL_RANGE:
+			return 0;			/* SECOND */
+		default:
+			elog(ERROR, "invalid INTERVAL typmod: 0x%x", typmod);
+			break;
+	}
+	return 0;					/* can't get here, but keep compiler quiet */
+}
+
 
 /* interval_transform()
  * Flatten superfluous calls to interval_scale().  The interval typmod is
@@ -1271,39 +1324,39 @@ interval_transform(PG_FUNCTION_ARGS)
 	if (IsA(typmod, Const) &&!((Const *) typmod)->constisnull)
 	{
 		Node	   *source = (Node *) linitial(expr->args);
-		int32		old_typmod = exprTypmod(source);
 		int32		new_typmod = DatumGetInt32(((Const *) typmod)->constvalue);
-		int			old_range;
-		int			old_precis;
-		int			new_range = INTERVAL_RANGE(new_typmod);
-		int			new_precis = INTERVAL_PRECISION(new_typmod);
-		int			new_range_fls;
-		int			old_range_fls;
+		bool		noop;
 
-		if (old_typmod < 0)
-		{
-			old_range = INTERVAL_FULL_RANGE;
-			old_precis = INTERVAL_FULL_PRECISION;
-		}
+		if (new_typmod < 0)
+			noop = true;
 		else
 		{
-			old_range = INTERVAL_RANGE(old_typmod);
-			old_precis = INTERVAL_PRECISION(old_typmod);
-		}
+			int32		old_typmod = exprTypmod(source);
+			int			old_least_field;
+			int			new_least_field;
+			int			old_precis;
+			int			new_precis;
 
-		/*
-		 * Temporally-smaller fields occupy higher positions in the range
-		 * bitmap.  Since only the temporally-smallest bit matters for length
-		 * coercion purposes, we compare the last-set bits in the ranges.
-		 * Precision, which is to say, sub-second precision, only affects
-		 * ranges that include SECOND.
-		 */
-		new_range_fls = fls(new_range);
-		old_range_fls = fls(old_range);
-		if (new_typmod < 0 ||
-			((new_range_fls >= SECOND || new_range_fls >= old_range_fls) &&
-		   (old_range_fls < SECOND || new_precis >= MAX_INTERVAL_PRECISION ||
-			new_precis >= old_precis)))
+			old_least_field = intervaltypmodleastfield(old_typmod);
+			new_least_field = intervaltypmodleastfield(new_typmod);
+			if (old_typmod < 0)
+				old_precis = INTERVAL_FULL_PRECISION;
+			else
+				old_precis = INTERVAL_PRECISION(old_typmod);
+			new_precis = INTERVAL_PRECISION(new_typmod);
+
+			/*
+			 * Cast is a no-op if least field stays the same or decreases
+			 * while precision stays the same or increases.  But precision,
+			 * which is to say, sub-second precision, only affects ranges that
+			 * include SECOND.
+			 */
+			noop = (new_least_field <= old_least_field) &&
+				(old_least_field > 0 /* SECOND */ ||
+				 new_precis >= MAX_INTERVAL_PRECISION ||
+				 new_precis >= old_precis);
+		}
+		if (noop)
 			ret = relabel_to_typmod(source, new_typmod);
 	}
 
