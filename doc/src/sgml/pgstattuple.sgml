@@ -117,6 +117,16 @@ free_percent       | 1.95
      </tgroup>
     </table>
 
+    <note>
+      <para>
+        The <literal>table_len</literal> will always be greater than the sum
+        of the <literal>tuple_len</literal>, <literal>dead_tuple_len</literal>
+        and <literal>free_space</literal>. The difference is accounted for by
+        fixed page overhead, the per-page table of pointers to tuples, and
+        padding to ensure that tuples are correctly aligned. 
+      </para>
+    </note>
+
     <para>
      <function>pgstattuple</function> acquires only a read lock on the
      relation. So the results do not reflect an instantaneous snapshot;
