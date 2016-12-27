@@ -82,7 +82,7 @@ lo_manage(PG_FUNCTION_ARGS)
 		char	   *newv = SPI_getvalue(newtuple, tupdesc, attnum);
 
 		if (orig != NULL && (newv == NULL || strcmp(orig, newv) != 0))
-			DirectFunctionCall1(lo_unlink,
+			DirectFunctionCall1(be_lo_unlink,
 								ObjectIdGetDatum(atooid(orig)));
 
 		if (newv)
@@ -102,7 +102,7 @@ lo_manage(PG_FUNCTION_ARGS)
 
 		if (orig != NULL)
 		{
-			DirectFunctionCall1(lo_unlink,
+			DirectFunctionCall1(be_lo_unlink,
 								ObjectIdGetDatum(atooid(orig)));
 
 			pfree(orig);

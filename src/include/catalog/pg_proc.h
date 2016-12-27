@@ -903,11 +903,11 @@ DESCR("storage manager");
 DATA(insert OID = 763 (  smgrne			   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 16 "210 210" _null_ _null_ _null_ _null_ _null_ smgrne _null_ _null_ _null_ ));
 DESCR("storage manager");
 
-DATA(insert OID = 764 (  lo_import		   PGNSP PGUID 12 1 0 0 0 f f f f t f v u 1 0 26 "25" _null_ _null_ _null_ _null_ _null_ lo_import _null_ _null_ _null_ ));
+DATA(insert OID = 764 (  lo_import		   PGNSP PGUID 12 1 0 0 0 f f f f t f v u 1 0 26 "25" _null_ _null_ _null_ _null_ _null_ be_lo_import _null_ _null_ _null_ ));
 DESCR("large object import");
-DATA(insert OID = 767 (  lo_import		   PGNSP PGUID 12 1 0 0 0 f f f f t f v u 2 0 26 "25 26" _null_ _null_ _null_ _null_ _null_ lo_import_with_oid _null_ _null_ _null_ ));
+DATA(insert OID = 767 (  lo_import		   PGNSP PGUID 12 1 0 0 0 f f f f t f v u 2 0 26 "25 26" _null_ _null_ _null_ _null_ _null_ be_lo_import_with_oid _null_ _null_ _null_ ));
 DESCR("large object import");
-DATA(insert OID = 765 (  lo_export		   PGNSP PGUID 12 1 0 0 0 f f f f t f v u 2 0 23 "26 25" _null_ _null_ _null_ _null_ _null_ lo_export _null_ _null_ _null_ ));
+DATA(insert OID = 765 (  lo_export		   PGNSP PGUID 12 1 0 0 0 f f f f t f v u 2 0 23 "26 25" _null_ _null_ _null_ _null_ _null_ be_lo_export _null_ _null_ _null_ ));
 DESCR("large object export");
 
 DATA(insert OID = 766 (  int4inc		   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 23 "23" _null_ _null_ _null_ _null_ _null_ int4inc _null_ _null_ _null_ ));
@@ -1011,38 +1011,38 @@ DESCR("convert text to char");
 DATA(insert OID = 946 (  text			   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 25 "18" _null_ _null_ _null_ _null_ _null_ char_text _null_ _null_ _null_ ));
 DESCR("convert char to text");
 
-DATA(insert OID = 952 (  lo_open		   PGNSP PGUID 12 1 0 0 0 f f f f t f v u 2 0 23 "26 23" _null_ _null_ _null_ _null_ _null_ lo_open _null_ _null_ _null_ ));
+DATA(insert OID = 952 (  lo_open		   PGNSP PGUID 12 1 0 0 0 f f f f t f v u 2 0 23 "26 23" _null_ _null_ _null_ _null_ _null_ be_lo_open _null_ _null_ _null_ ));
 DESCR("large object open");
-DATA(insert OID = 953 (  lo_close		   PGNSP PGUID 12 1 0 0 0 f f f f t f v u 1 0 23 "23" _null_ _null_ _null_ _null_ _null_ lo_close _null_ _null_ _null_ ));
+DATA(insert OID = 953 (  lo_close		   PGNSP PGUID 12 1 0 0 0 f f f f t f v u 1 0 23 "23" _null_ _null_ _null_ _null_ _null_ be_lo_close _null_ _null_ _null_ ));
 DESCR("large object close");
-DATA(insert OID = 954 (  loread			   PGNSP PGUID 12 1 0 0 0 f f f f t f v u 2 0 17 "23 23" _null_ _null_ _null_ _null_ _null_ loread _null_ _null_ _null_ ));
+DATA(insert OID = 954 (  loread			   PGNSP PGUID 12 1 0 0 0 f f f f t f v u 2 0 17 "23 23" _null_ _null_ _null_ _null_ _null_ be_loread _null_ _null_ _null_ ));
 DESCR("large object read");
-DATA(insert OID = 955 (  lowrite		   PGNSP PGUID 12 1 0 0 0 f f f f t f v u 2 0 23 "23 17" _null_ _null_ _null_ _null_ _null_ lowrite _null_ _null_ _null_ ));
+DATA(insert OID = 955 (  lowrite		   PGNSP PGUID 12 1 0 0 0 f f f f t f v u 2 0 23 "23 17" _null_ _null_ _null_ _null_ _null_ be_lowrite _null_ _null_ _null_ ));
 DESCR("large object write");
-DATA(insert OID = 956 (  lo_lseek		   PGNSP PGUID 12 1 0 0 0 f f f f t f v u 3 0 23 "23 23 23" _null_ _null_ _null_ _null_ _null_	lo_lseek _null_ _null_ _null_ ));
+DATA(insert OID = 956 (  lo_lseek		   PGNSP PGUID 12 1 0 0 0 f f f f t f v u 3 0 23 "23 23 23" _null_ _null_ _null_ _null_ _null_	be_lo_lseek _null_ _null_ _null_ ));
 DESCR("large object seek");
-DATA(insert OID = 3170 (  lo_lseek64	   PGNSP PGUID 12 1 0 0 0 f f f f t f v u 3 0 20 "23 20 23" _null_ _null_ _null_ _null_ _null_	lo_lseek64 _null_ _null_ _null_ ));
+DATA(insert OID = 3170 (  lo_lseek64	   PGNSP PGUID 12 1 0 0 0 f f f f t f v u 3 0 20 "23 20 23" _null_ _null_ _null_ _null_ _null_	be_lo_lseek64 _null_ _null_ _null_ ));
 DESCR("large object seek (64 bit)");
-DATA(insert OID = 957 (  lo_creat		   PGNSP PGUID 12 1 0 0 0 f f f f t f v u 1 0 26 "23" _null_ _null_ _null_ _null_ _null_ lo_creat _null_ _null_ _null_ ));
+DATA(insert OID = 957 (  lo_creat		   PGNSP PGUID 12 1 0 0 0 f f f f t f v u 1 0 26 "23" _null_ _null_ _null_ _null_ _null_ be_lo_creat _null_ _null_ _null_ ));
 DESCR("large object create");
-DATA(insert OID = 715 (  lo_create		   PGNSP PGUID 12 1 0 0 0 f f f f t f v u 1 0 26 "26" _null_ _null_ _null_ _null_ _null_ lo_create _null_ _null_ _null_ ));
+DATA(insert OID = 715 (  lo_create		   PGNSP PGUID 12 1 0 0 0 f f f f t f v u 1 0 26 "26" _null_ _null_ _null_ _null_ _null_ be_lo_create _null_ _null_ _null_ ));
 DESCR("large object create");
-DATA(insert OID = 958 (  lo_tell		   PGNSP PGUID 12 1 0 0 0 f f f f t f v u 1 0 23 "23" _null_ _null_ _null_ _null_ _null_ lo_tell _null_ _null_ _null_ ));
+DATA(insert OID = 958 (  lo_tell		   PGNSP PGUID 12 1 0 0 0 f f f f t f v u 1 0 23 "23" _null_ _null_ _null_ _null_ _null_ be_lo_tell _null_ _null_ _null_ ));
 DESCR("large object position");
-DATA(insert OID = 3171 (  lo_tell64		   PGNSP PGUID 12 1 0 0 0 f f f f t f v u 1 0 20 "23" _null_ _null_ _null_ _null_ _null_ lo_tell64 _null_ _null_ _null_ ));
+DATA(insert OID = 3171 (  lo_tell64		   PGNSP PGUID 12 1 0 0 0 f f f f t f v u 1 0 20 "23" _null_ _null_ _null_ _null_ _null_ be_lo_tell64 _null_ _null_ _null_ ));
 DESCR("large object position (64 bit)");
-DATA(insert OID = 1004 (  lo_truncate	   PGNSP PGUID 12 1 0 0 0 f f f f t f v u 2 0 23 "23 23" _null_ _null_ _null_ _null_ _null_ lo_truncate _null_ _null_ _null_ ));
+DATA(insert OID = 1004 (  lo_truncate	   PGNSP PGUID 12 1 0 0 0 f f f f t f v u 2 0 23 "23 23" _null_ _null_ _null_ _null_ _null_ be_lo_truncate _null_ _null_ _null_ ));
 DESCR("truncate large object");
-DATA(insert OID = 3172 (  lo_truncate64    PGNSP PGUID 12 1 0 0 0 f f f f t f v u 2 0 23 "23 20" _null_ _null_ _null_ _null_ _null_ lo_truncate64 _null_ _null_ _null_ ));
+DATA(insert OID = 3172 (  lo_truncate64    PGNSP PGUID 12 1 0 0 0 f f f f t f v u 2 0 23 "23 20" _null_ _null_ _null_ _null_ _null_ be_lo_truncate64 _null_ _null_ _null_ ));
 DESCR("truncate large object (64 bit)");
 
-DATA(insert OID = 3457 (  lo_from_bytea    PGNSP PGUID 12 1 0 0 0 f f f f t f v u 2 0 26 "26 17" _null_ _null_ _null_ _null_ _null_ lo_from_bytea _null_ _null_ _null_ ));
+DATA(insert OID = 3457 (  lo_from_bytea    PGNSP PGUID 12 1 0 0 0 f f f f t f v u 2 0 26 "26 17" _null_ _null_ _null_ _null_ _null_ be_lo_from_bytea _null_ _null_ _null_ ));
 DESCR("create new large object with given content");
-DATA(insert OID = 3458 (  lo_get		   PGNSP PGUID 12 1 0 0 0 f f f f t f v u 1 0 17 "26" _null_ _null_ _null_ _null_ _null_ lo_get _null_ _null_ _null_ ));
+DATA(insert OID = 3458 (  lo_get		   PGNSP PGUID 12 1 0 0 0 f f f f t f v u 1 0 17 "26" _null_ _null_ _null_ _null_ _null_ be_lo_get _null_ _null_ _null_ ));
 DESCR("read entire large object");
-DATA(insert OID = 3459 (  lo_get		   PGNSP PGUID 12 1 0 0 0 f f f f t f v u 3 0 17 "26 20 23" _null_ _null_ _null_ _null_ _null_ lo_get_fragment _null_ _null_ _null_ ));
+DATA(insert OID = 3459 (  lo_get		   PGNSP PGUID 12 1 0 0 0 f f f f t f v u 3 0 17 "26 20 23" _null_ _null_ _null_ _null_ _null_ be_lo_get_fragment _null_ _null_ _null_ ));
 DESCR("read large object from offset for length");
-DATA(insert OID = 3460 (  lo_put		   PGNSP PGUID 12 1 0 0 0 f f f f t f v u 3 0 2278 "26 20 17" _null_ _null_ _null_ _null_ _null_ lo_put _null_ _null_ _null_ ));
+DATA(insert OID = 3460 (  lo_put		   PGNSP PGUID 12 1 0 0 0 f f f f t f v u 3 0 2278 "26 20 17" _null_ _null_ _null_ _null_ _null_ be_lo_put _null_ _null_ _null_ ));
 DESCR("write data at offset");
 
 DATA(insert OID = 959 (  on_pl			   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 16 "600 628" _null_ _null_ _null_ _null_ _null_ on_pl _null_ _null_ _null_ ));
@@ -1051,7 +1051,7 @@ DATA(insert OID = 961 (  close_pl		   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0
 DATA(insert OID = 962 (  close_sl		   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 600 "601 628" _null_ _null_ _null_ _null_ _null_	close_sl _null_ _null_ _null_ ));
 DATA(insert OID = 963 (  close_lb		   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 600 "628 603" _null_ _null_ _null_ _null_ _null_	close_lb _null_ _null_ _null_ ));
 
-DATA(insert OID = 964 (  lo_unlink		   PGNSP PGUID 12 1 0 0 0 f f f f t f v u 1 0 23 "26" _null_ _null_ _null_ _null_ _null_ lo_unlink _null_ _null_ _null_ ));
+DATA(insert OID = 964 (  lo_unlink		   PGNSP PGUID 12 1 0 0 0 f f f f t f v u 1 0 23 "26" _null_ _null_ _null_ _null_ _null_ be_lo_unlink _null_ _null_ _null_ ));
 DESCR("large object unlink (delete)");
 
 DATA(insert OID = 973 (  path_inter		   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 16 "602 602" _null_ _null_ _null_ _null_ _null_ path_inter _null_ _null_ _null_ ));

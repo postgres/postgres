@@ -93,7 +93,7 @@ static Oid	lo_import_internal(text *filename, Oid lobjOid);
  *****************************************************************************/
 
 Datum
-lo_open(PG_FUNCTION_ARGS)
+be_lo_open(PG_FUNCTION_ARGS)
 {
 	Oid			lobjId = PG_GETARG_OID(0);
 	int32		mode = PG_GETARG_INT32(1);
@@ -122,7 +122,7 @@ lo_open(PG_FUNCTION_ARGS)
 }
 
 Datum
-lo_close(PG_FUNCTION_ARGS)
+be_lo_close(PG_FUNCTION_ARGS)
 {
 	int32		fd = PG_GETARG_INT32(0);
 
@@ -224,7 +224,7 @@ lo_write(int fd, const char *buf, int len)
 }
 
 Datum
-lo_lseek(PG_FUNCTION_ARGS)
+be_lo_lseek(PG_FUNCTION_ARGS)
 {
 	int32		fd = PG_GETARG_INT32(0);
 	int32		offset = PG_GETARG_INT32(1);
@@ -249,7 +249,7 @@ lo_lseek(PG_FUNCTION_ARGS)
 }
 
 Datum
-lo_lseek64(PG_FUNCTION_ARGS)
+be_lo_lseek64(PG_FUNCTION_ARGS)
 {
 	int32		fd = PG_GETARG_INT32(0);
 	int64		offset = PG_GETARG_INT64(1);
@@ -267,7 +267,7 @@ lo_lseek64(PG_FUNCTION_ARGS)
 }
 
 Datum
-lo_creat(PG_FUNCTION_ARGS)
+be_lo_creat(PG_FUNCTION_ARGS)
 {
 	Oid			lobjId;
 
@@ -283,7 +283,7 @@ lo_creat(PG_FUNCTION_ARGS)
 }
 
 Datum
-lo_create(PG_FUNCTION_ARGS)
+be_lo_create(PG_FUNCTION_ARGS)
 {
 	Oid			lobjId = PG_GETARG_OID(0);
 
@@ -299,7 +299,7 @@ lo_create(PG_FUNCTION_ARGS)
 }
 
 Datum
-lo_tell(PG_FUNCTION_ARGS)
+be_lo_tell(PG_FUNCTION_ARGS)
 {
 	int32		fd = PG_GETARG_INT32(0);
 	int64		offset;
@@ -322,7 +322,7 @@ lo_tell(PG_FUNCTION_ARGS)
 }
 
 Datum
-lo_tell64(PG_FUNCTION_ARGS)
+be_lo_tell64(PG_FUNCTION_ARGS)
 {
 	int32		fd = PG_GETARG_INT32(0);
 	int64		offset;
@@ -338,7 +338,7 @@ lo_tell64(PG_FUNCTION_ARGS)
 }
 
 Datum
-lo_unlink(PG_FUNCTION_ARGS)
+be_lo_unlink(PG_FUNCTION_ARGS)
 {
 	Oid			lobjId = PG_GETARG_OID(0);
 
@@ -378,7 +378,7 @@ lo_unlink(PG_FUNCTION_ARGS)
  *****************************************************************************/
 
 Datum
-loread(PG_FUNCTION_ARGS)
+be_loread(PG_FUNCTION_ARGS)
 {
 	int32		fd = PG_GETARG_INT32(0);
 	int32		len = PG_GETARG_INT32(1);
@@ -396,7 +396,7 @@ loread(PG_FUNCTION_ARGS)
 }
 
 Datum
-lowrite(PG_FUNCTION_ARGS)
+be_lowrite(PG_FUNCTION_ARGS)
 {
 	int32		fd = PG_GETARG_INT32(0);
 	bytea	   *wbuf = PG_GETARG_BYTEA_P(1);
@@ -417,7 +417,7 @@ lowrite(PG_FUNCTION_ARGS)
  *	  imports a file as an (inversion) large object.
  */
 Datum
-lo_import(PG_FUNCTION_ARGS)
+be_lo_import(PG_FUNCTION_ARGS)
 {
 	text	   *filename = PG_GETARG_TEXT_PP(0);
 
@@ -429,7 +429,7 @@ lo_import(PG_FUNCTION_ARGS)
  *	  imports a file as an (inversion) large object specifying oid.
  */
 Datum
-lo_import_with_oid(PG_FUNCTION_ARGS)
+be_lo_import_with_oid(PG_FUNCTION_ARGS)
 {
 	text	   *filename = PG_GETARG_TEXT_PP(0);
 	Oid			oid = PG_GETARG_OID(1);
@@ -502,7 +502,7 @@ lo_import_internal(text *filename, Oid lobjOid)
  *	  exports an (inversion) large object.
  */
 Datum
-lo_export(PG_FUNCTION_ARGS)
+be_lo_export(PG_FUNCTION_ARGS)
 {
 	Oid			lobjId = PG_GETARG_OID(0);
 	text	   *filename = PG_GETARG_TEXT_PP(1);
@@ -606,7 +606,7 @@ lo_truncate_internal(int32 fd, int64 len)
 }
 
 Datum
-lo_truncate(PG_FUNCTION_ARGS)
+be_lo_truncate(PG_FUNCTION_ARGS)
 {
 	int32		fd = PG_GETARG_INT32(0);
 	int32		len = PG_GETARG_INT32(1);
@@ -616,7 +616,7 @@ lo_truncate(PG_FUNCTION_ARGS)
 }
 
 Datum
-lo_truncate64(PG_FUNCTION_ARGS)
+be_lo_truncate64(PG_FUNCTION_ARGS)
 {
 	int32		fd = PG_GETARG_INT32(0);
 	int64		len = PG_GETARG_INT64(1);
@@ -828,7 +828,7 @@ lo_get_fragment_internal(Oid loOid, int64 offset, int32 nbytes)
  * Read entire LO
  */
 Datum
-lo_get(PG_FUNCTION_ARGS)
+be_lo_get(PG_FUNCTION_ARGS)
 {
 	Oid			loOid = PG_GETARG_OID(0);
 	bytea	   *result;
@@ -842,7 +842,7 @@ lo_get(PG_FUNCTION_ARGS)
  * Read range within LO
  */
 Datum
-lo_get_fragment(PG_FUNCTION_ARGS)
+be_lo_get_fragment(PG_FUNCTION_ARGS)
 {
 	Oid			loOid = PG_GETARG_OID(0);
 	int64		offset = PG_GETARG_INT64(1);
@@ -863,7 +863,7 @@ lo_get_fragment(PG_FUNCTION_ARGS)
  * Create LO with initial contents given by a bytea argument
  */
 Datum
-lo_from_bytea(PG_FUNCTION_ARGS)
+be_lo_from_bytea(PG_FUNCTION_ARGS)
 {
 	Oid			loOid = PG_GETARG_OID(0);
 	bytea	   *str = PG_GETARG_BYTEA_PP(1);
@@ -885,7 +885,7 @@ lo_from_bytea(PG_FUNCTION_ARGS)
  * Update range within LO
  */
 Datum
-lo_put(PG_FUNCTION_ARGS)
+be_lo_put(PG_FUNCTION_ARGS)
 {
 	Oid			loOid = PG_GETARG_OID(0);
 	int64		offset = PG_GETARG_INT64(1);
