@@ -13244,7 +13244,7 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd)
 			skip_validate = true;
 
 		/*
-		 * We choose to err on the safer side, ie, give up on skipping the the
+		 * We choose to err on the safer side, i.e., give up on skipping the
 		 * validation scan, if the partition key column doesn't have the NOT
 		 * NULL constraint and the table is to become a list partition that
 		 * does not accept nulls.  In this case, the partition predicate
