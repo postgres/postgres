@@ -679,7 +679,7 @@ ReceiveXlogStream(PGconn *conn, StreamCtl *stream)
 	}
 
 error:
-	if (walfile != NULL && stream->walmethod->close(walfile, CLOSE_NORMAL) != 0)
+	if (walfile != NULL && stream->walmethod->close(walfile, CLOSE_NO_RENAME) != 0)
 		fprintf(stderr, _("%s: could not close file \"%s\": %s\n"),
 		  progname, current_walfile_name, stream->walmethod->getlasterror());
 	walfile = NULL;
