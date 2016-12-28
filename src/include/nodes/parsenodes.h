@@ -1753,7 +1753,7 @@ typedef struct GrantStmt
 	bool		is_grant;		/* true = GRANT, false = REVOKE */
 	GrantTargetType targtype;	/* type of the grant target */
 	GrantObjectType objtype;	/* kind of object being operated on */
-	List	   *objects;		/* list of RangeVar nodes, FuncWithArgs nodes,
+	List	   *objects;		/* list of RangeVar nodes, ObjectWithArgs nodes,
 								 * or plain names (as Value strings) */
 	List	   *privileges;		/* list of AccessPriv nodes */
 	/* privileges == NIL denotes ALL PRIVILEGES */
@@ -1763,16 +1763,16 @@ typedef struct GrantStmt
 } GrantStmt;
 
 /*
- * Note: FuncWithArgs carries only the types of the input parameters of the
+ * Note: ObjectWithArgs carries only the types of the input parameters of the
  * function.  So it is sufficient to identify an existing function, but it
  * is not enough info to define a function nor to call it.
  */
-typedef struct FuncWithArgs
+typedef struct ObjectWithArgs
 {
 	NodeTag		type;
-	List	   *funcname;		/* qualified name of function */
-	List	   *funcargs;		/* list of Typename nodes */
-} FuncWithArgs;
+	List	   *objname;		/* qualified name of function/operator */
+	List	   *objargs;		/* list of Typename nodes */
+} ObjectWithArgs;
 
 /*
  * An access privilege, with optional list of column names
@@ -2644,7 +2644,7 @@ typedef struct FunctionParameter
 typedef struct AlterFunctionStmt
 {
 	NodeTag		type;
-	FuncWithArgs *func;			/* name and args of function */
+	ObjectWithArgs *func;		/* name and args of function */
 	List	   *actions;		/* list of DefElem */
 } AlterFunctionStmt;
 
@@ -3138,7 +3138,7 @@ typedef struct CreateCastStmt
 	NodeTag		type;
 	TypeName   *sourcetype;
 	TypeName   *targettype;
-	FuncWithArgs *func;
+	ObjectWithArgs *func;
 	CoercionContext context;
 	bool		inout;
 } CreateCastStmt;
@@ -3153,8 +3153,8 @@ typedef struct CreateTransformStmt
 	bool		replace;
 	TypeName   *type_name;
 	char	   *lang;
-	FuncWithArgs *fromsql;
-	FuncWithArgs *tosql;
+	ObjectWithArgs *fromsql;
+	ObjectWithArgs *tosql;
 } CreateTransformStmt;
 
 /* ----------------------

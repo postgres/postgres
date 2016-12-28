@@ -1181,8 +1181,8 @@ AlterFunction(ParseState *pstate, AlterFunctionStmt *stmt)
 
 	rel = heap_open(ProcedureRelationId, RowExclusiveLock);
 
-	funcOid = LookupFuncNameTypeNames(stmt->func->funcname,
-									  stmt->func->funcargs,
+	funcOid = LookupFuncNameTypeNames(stmt->func->objname,
+									  stmt->func->objargs,
 									  false);
 
 	tup = SearchSysCacheCopy1(PROCOID, ObjectIdGetDatum(funcOid));
@@ -1194,13 +1194,13 @@ AlterFunction(ParseState *pstate, AlterFunctionStmt *stmt)
 	/* Permission check: must own function */
 	if (!pg_proc_ownercheck(funcOid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_PROC,
-					   NameListToString(stmt->func->funcname));
+					   NameListToString(stmt->func->objname));
 
 	if (procForm->proisagg)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("\"%s\" is an aggregate function",
-						NameListToString(stmt->func->funcname))));
+						NameListToString(stmt->func->objname))));
 
 	/* Examine requested actions. */
 	foreach(l, stmt->actions)
@@ -1453,8 +1453,8 @@ CreateCast(CreateCastStmt *stmt)
 	{
 		Form_pg_proc procstruct;
 
-		funcid = LookupFuncNameTypeNames(stmt->func->funcname,
-										 stmt->func->funcargs,
+		funcid = LookupFuncNameTypeNames(stmt->func->objname,
+										 stmt->func->objargs,
 										 false);
 
 		tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
@@ -1836,14 +1836,14 @@ CreateTransform(CreateTransformStmt *stmt)
 	 */
 	if (stmt->fromsql)
 	{
-		fromsqlfuncid = LookupFuncNameTypeNames(stmt->fromsql->funcname, stmt->fromsql->funcargs, false);
+		fromsqlfuncid = LookupFuncNameTypeNames(stmt->fromsql->objname, stmt->fromsql->objargs, false);
 
 		if (!pg_proc_ownercheck(fromsqlfuncid, GetUserId()))
-			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_PROC, NameListToString(stmt->fromsql->funcname));
+			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_PROC, NameListToString(stmt->fromsql->objname));
 
 		aclresult = pg_proc_aclcheck(fromsqlfuncid, GetUserId(), ACL_EXECUTE);
 		if (aclresult != ACLCHECK_OK)
-			aclcheck_error(aclresult, ACL_KIND_PROC, NameListToString(stmt->fromsql->funcname));
+			aclcheck_error(aclresult, ACL_KIND_PROC, NameListToString(stmt->fromsql->objname));
 
 		tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(fromsqlfuncid));
 		if (!HeapTupleIsValid(tuple))
@@ -1862,14 +1862,14 @@ CreateTransform(CreateTransformStmt *stmt)
 
 	if (stmt->tosql)
 	{
-		tosqlfuncid = LookupFuncNameTypeNames(stmt->tosql->funcname, stmt->tosql->funcargs, false);
+		tosqlfuncid = LookupFuncNameTypeNames(stmt->tosql->objname, stmt->tosql->objargs, false);
 
 		if (!pg_proc_ownercheck(tosqlfuncid, GetUserId()))
-			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_PROC, NameListToString(stmt->tosql->funcname));
+			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_PROC, NameListToString(stmt->tosql->objname));
 
 		aclresult = pg_proc_aclcheck(tosqlfuncid, GetUserId(), ACL_EXECUTE);
 		if (aclresult != ACLCHECK_OK)
-			aclcheck_error(aclresult, ACL_KIND_PROC, NameListToString(stmt->tosql->funcname));
+			aclcheck_error(aclresult, ACL_KIND_PROC, NameListToString(stmt->tosql->objname));
 
 		tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(tosqlfuncid));
 		if (!HeapTupleIsValid(tuple))

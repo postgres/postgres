@@ -451,7 +451,7 @@ typedef enum NodeTag
 	T_SortGroupClause,
 	T_GroupingSet,
 	T_WindowClause,
-	T_FuncWithArgs,
+	T_ObjectWithArgs,
 	T_AccessPriv,
 	T_CreateOpClassItem,
 	T_TableLikeClause,

@@ -218,7 +218,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 	TypeName			*typnam;
 	FunctionParameter   *fun_param;
 	FunctionParameterMode fun_param_mode;
-	FuncWithArgs		*funwithargs;
+	ObjectWithArgs		*objwithargs;
 	DefElem				*defelt;
 	SortBy				*sortby;
 	WindowDef			*windef;
@@ -357,7 +357,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <accesspriv> privilege
 %type <list>	privileges privilege_list
 %type <privtarget> privilege_target
-%type <funwithargs> function_with_argtypes aggregate_with_argtypes
+%type <objwithargs> function_with_argtypes aggregate_with_argtypes operator_with_argtypes
 %type <list>	function_with_argtypes_list
 %type <ival>	defacl_privilege_target
 %type <defelt>	DefACLOption
@@ -4255,8 +4255,8 @@ AlterExtensionContentsStmt:
 					n->extname = $3;
 					n->action = $4;
 					n->objtype = OBJECT_AGGREGATE;
-					n->objname = $6->funcname;
-					n->objargs = $6->funcargs;
+					n->objname = $6->objname;
+					n->objargs = $6->objargs;
 					$$ = (Node *)n;
 				}
 			| ALTER EXTENSION name add_drop CAST '(' Typename AS Typename ')'
@@ -4302,8 +4302,8 @@ AlterExtensionContentsStmt:
 					n->extname = $3;
 					n->action = $4;
 					n->objtype = OBJECT_FUNCTION;
-					n->objname = $6->funcname;
-					n->objargs = $6->funcargs;
+					n->objname = $6->objname;
+					n->objargs = $6->objargs;
 					$$ = (Node *)n;
 				}
 			| ALTER EXTENSION name add_drop opt_procedural LANGUAGE name
@@ -4315,14 +4315,14 @@ AlterExtensionContentsStmt:
 					n->objname = list_make1(makeString($7));
 					$$ = (Node *)n;
 				}
-			| ALTER EXTENSION name add_drop OPERATOR any_operator oper_argtypes
+			| ALTER EXTENSION name add_drop OPERATOR operator_with_argtypes
 				{
 					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
 					n->extname = $3;
 					n->action = $4;
 					n->objtype = OBJECT_OPERATOR;
-					n->objname = $6;
-					n->objargs = $7;
+					n->objname = $6->objname;
+					n->objargs = $6->objargs;
 					$$ = (Node *)n;
 				}
 			| ALTER EXTENSION name add_drop OPERATOR CLASS any_name USING access_method
@@ -5798,23 +5798,23 @@ opclass_item:
 					n->order_family = $4;
 					$$ = (Node *) n;
 				}
-			| OPERATOR Iconst any_operator oper_argtypes opclass_purpose
+			| OPERATOR Iconst operator_with_argtypes opclass_purpose
 			  opt_recheck
 				{
 					CreateOpClassItem *n = makeNode(CreateOpClassItem);
 					n->itemtype = OPCLASS_ITEM_OPERATOR;
-					n->name = $3;
-					n->args = $4;
+					n->name = $3->objname;
+					n->args = $3->objargs;
 					n->number = $2;
-					n->order_family = $5;
+					n->order_family = $4;
 					$$ = (Node *) n;
 				}
 			| FUNCTION Iconst function_with_argtypes
 				{
 					CreateOpClassItem *n = makeNode(CreateOpClassItem);
 					n->itemtype = OPCLASS_ITEM_FUNCTION;
-					n->name = $3->funcname;
-					n->args = $3->funcargs;
+					n->name = $3->objname;
+					n->args = $3->objargs;
 					n->number = $2;
 					$$ = (Node *) n;
 				}
@@ -5822,8 +5822,8 @@ opclass_item:
 				{
 					CreateOpClassItem *n = makeNode(CreateOpClassItem);
 					n->itemtype = OPCLASS_ITEM_FUNCTION;
-					n->name = $6->funcname;
-					n->args = $6->funcargs;
+					n->name = $6->objname;
+					n->args = $6->objargs;
 					n->number = $2;
 					n->class_args = $4;
 					$$ = (Node *) n;
@@ -6219,8 +6219,8 @@ CommentStmt:
 				{
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_AGGREGATE;
-					n->objname = $4->funcname;
-					n->objargs = $4->funcargs;
+					n->objname = $4->objname;
+					n->objargs = $4->objargs;
 					n->comment = $6;
 					$$ = (Node *) n;
 				}
@@ -6228,18 +6228,18 @@ CommentStmt:
 				{
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_FUNCTION;
-					n->objname = $4->funcname;
-					n->objargs = $4->funcargs;
+					n->objname = $4->objname;
+					n->objargs = $4->objargs;
 					n->comment = $6;
 					$$ = (Node *) n;
 				}
-			| COMMENT ON OPERATOR any_operator oper_argtypes IS comment_text
+			| COMMENT ON OPERATOR operator_with_argtypes IS comment_text
 				{
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_OPERATOR;
-					n->objname = $4;
-					n->objargs = $5;
-					n->comment = $7;
+					n->objname = $4->objname;
+					n->objargs = $4->objargs;
+					n->comment = $6;
 					$$ = (Node *) n;
 				}
 			| COMMENT ON CONSTRAINT name ON any_name IS comment_text
@@ -6427,8 +6427,8 @@ SecLabelStmt:
 					SecLabelStmt *n = makeNode(SecLabelStmt);
 					n->provider = $3;
 					n->objtype = OBJECT_AGGREGATE;
-					n->objname = $6->funcname;
-					n->objargs = $6->funcargs;
+					n->objname = $6->objname;
+					n->objargs = $6->objargs;
 					n->label = $8;
 					$$ = (Node *) n;
 				}
@@ -6438,8 +6438,8 @@ SecLabelStmt:
 					SecLabelStmt *n = makeNode(SecLabelStmt);
 					n->provider = $3;
 					n->objtype = OBJECT_FUNCTION;
-					n->objname = $6->funcname;
-					n->objargs = $6->funcargs;
+					n->objname = $6->objname;
+					n->objargs = $6->objargs;
 					n->label = $8;
 					$$ = (Node *) n;
 				}
@@ -7280,9 +7280,9 @@ function_with_argtypes_list:
 function_with_argtypes:
 			func_name func_args
 				{
-					FuncWithArgs *n = makeNode(FuncWithArgs);
-					n->funcname = $1;
-					n->funcargs = extractArgTypes($2);
+					ObjectWithArgs *n = makeNode(ObjectWithArgs);
+					n->objname = $1;
+					n->objargs = extractArgTypes($2);
 					$$ = n;
 				}
 		;
@@ -7492,9 +7492,9 @@ aggr_args_list:
 aggregate_with_argtypes:
 			func_name aggr_args
 				{
-					FuncWithArgs *n = makeNode(FuncWithArgs);
-					n->funcname = $1;
-					n->funcargs = extractAggrArgTypes($2);
+					ObjectWithArgs *n = makeNode(ObjectWithArgs);
+					n->objname = $1;
+					n->objargs = extractAggrArgTypes($2);
 					$$ = n;
 				}
 		;
@@ -7684,8 +7684,8 @@ RemoveFuncStmt:
 				{
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = OBJECT_FUNCTION;
-					n->objects = list_make1($3->funcname);
-					n->arguments = list_make1($3->funcargs);
+					n->objects = list_make1($3->objname);
+					n->arguments = list_make1($3->objargs);
 					n->behavior = $4;
 					n->missing_ok = false;
 					n->concurrent = false;
@@ -7695,8 +7695,8 @@ RemoveFuncStmt:
 				{
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = OBJECT_FUNCTION;
-					n->objects = list_make1($5->funcname);
-					n->arguments = list_make1($5->funcargs);
+					n->objects = list_make1($5->objname);
+					n->arguments = list_make1($5->objargs);
 					n->behavior = $6;
 					n->missing_ok = true;
 					n->concurrent = false;
@@ -7709,8 +7709,8 @@ RemoveAggrStmt:
 				{
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = OBJECT_AGGREGATE;
-					n->objects = list_make1($3->funcname);
-					n->arguments = list_make1($3->funcargs);
+					n->objects = list_make1($3->objname);
+					n->arguments = list_make1($3->objargs);
 					n->behavior = $4;
 					n->missing_ok = false;
 					n->concurrent = false;
@@ -7720,8 +7720,8 @@ RemoveAggrStmt:
 				{
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = OBJECT_AGGREGATE;
-					n->objects = list_make1($5->funcname);
-					n->arguments = list_make1($5->funcargs);
+					n->objects = list_make1($5->objname);
+					n->arguments = list_make1($5->objargs);
 					n->behavior = $6;
 					n->missing_ok = true;
 					n->concurrent = false;
@@ -7730,24 +7730,24 @@ RemoveAggrStmt:
 		;
 
 RemoveOperStmt:
-			DROP OPERATOR any_operator oper_argtypes opt_drop_behavior
+			DROP OPERATOR operator_with_argtypes opt_drop_behavior
 				{
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = OBJECT_OPERATOR;
-					n->objects = list_make1($3);
-					n->arguments = list_make1($4);
-					n->behavior = $5;
+					n->objects = list_make1($3->objname);
+					n->arguments = list_make1($3->objargs);
+					n->behavior = $4;
 					n->missing_ok = false;
 					n->concurrent = false;
 					$$ = (Node *)n;
 				}
-			| DROP OPERATOR IF_P EXISTS any_operator oper_argtypes opt_drop_behavior
+			| DROP OPERATOR IF_P EXISTS operator_with_argtypes opt_drop_behavior
 				{
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = OBJECT_OPERATOR;
-					n->objects = list_make1($5);
-					n->arguments = list_make1($6);
-					n->behavior = $7;
+					n->objects = list_make1($5->objname);
+					n->arguments = list_make1($5->objargs);
+					n->behavior = $6;
 					n->missing_ok = true;
 					n->concurrent = false;
 					$$ = (Node *)n;
@@ -7776,6 +7776,16 @@ any_operator:
 					{ $$ = list_make1(makeString($1)); }
 			| ColId '.' any_operator
 					{ $$ = lcons(makeString($1), $3); }
+		;
+
+operator_with_argtypes:
+			any_operator oper_argtypes
+				{
+					ObjectWithArgs *n = makeNode(ObjectWithArgs);
+					n->objname = $1;
+					n->objargs = $2;
+					$$ = n;
+				}
 		;
 
 /*****************************************************************************
@@ -8025,8 +8035,8 @@ RenameStmt: ALTER AGGREGATE aggregate_with_argtypes RENAME TO name
 				{
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_AGGREGATE;
-					n->object = $3->funcname;
-					n->objarg = $3->funcargs;
+					n->object = $3->objname;
+					n->objarg = $3->objargs;
 					n->newname = $6;
 					n->missing_ok = false;
 					$$ = (Node *)n;
@@ -8089,8 +8099,8 @@ RenameStmt: ALTER AGGREGATE aggregate_with_argtypes RENAME TO name
 				{
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_FUNCTION;
-					n->object = $3->funcname;
-					n->objarg = $3->funcargs;
+					n->object = $3->objname;
+					n->objarg = $3->objargs;
 					n->newname = $6;
 					n->missing_ok = false;
 					$$ = (Node *)n;
@@ -8527,8 +8537,8 @@ AlterObjectDependsStmt:
 					AlterObjectDependsStmt *n = makeNode(AlterObjectDependsStmt);
 					n->objectType = OBJECT_FUNCTION;
 					n->relation = NULL;
-					n->objname = $3->funcname;
-					n->objargs = $3->funcargs;
+					n->objname = $3->objname;
+					n->objargs = $3->objargs;
 					n->extname = makeString($7);
 					$$ = (Node *)n;
 				}
@@ -8575,8 +8585,8 @@ AlterObjectSchemaStmt:
 				{
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
 					n->objectType = OBJECT_AGGREGATE;
-					n->object = $3->funcname;
-					n->objarg = $3->funcargs;
+					n->object = $3->objname;
+					n->objarg = $3->objargs;
 					n->newschema = $6;
 					n->missing_ok = false;
 					$$ = (Node *)n;
@@ -8621,19 +8631,19 @@ AlterObjectSchemaStmt:
 				{
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
 					n->objectType = OBJECT_FUNCTION;
-					n->object = $3->funcname;
-					n->objarg = $3->funcargs;
+					n->object = $3->objname;
+					n->objarg = $3->objargs;
 					n->newschema = $6;
 					n->missing_ok = false;
 					$$ = (Node *)n;
 				}
-			| ALTER OPERATOR any_operator oper_argtypes SET SCHEMA name
+			| ALTER OPERATOR operator_with_argtypes SET SCHEMA name
 				{
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
 					n->objectType = OBJECT_OPERATOR;
-					n->object = $3;
-					n->objarg = $4;
-					n->newschema = $7;
+					n->object = $3->objname;
+					n->objarg = $3->objargs;
+					n->newschema = $6;
 					n->missing_ok = false;
 					$$ = (Node *)n;
 				}
@@ -8799,12 +8809,12 @@ AlterObjectSchemaStmt:
  *****************************************************************************/
 
 AlterOperatorStmt:
-			ALTER OPERATOR any_operator oper_argtypes SET '(' operator_def_list ')'
+			ALTER OPERATOR operator_with_argtypes SET '(' operator_def_list ')'
 				{
 					AlterOperatorStmt *n = makeNode(AlterOperatorStmt);
-					n->opername = $3;
-					n->operargs = $4;
-					n->options = $7;
+					n->opername = $3->objname;
+					n->operargs = $3->objargs;
+					n->options = $6;
 					$$ = (Node *)n;
 				}
 		;
@@ -8829,8 +8839,8 @@ AlterOwnerStmt: ALTER AGGREGATE aggregate_with_argtypes OWNER TO RoleSpec
 				{
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_AGGREGATE;
-					n->object = $3->funcname;
-					n->objarg = $3->funcargs;
+					n->object = $3->objname;
+					n->objarg = $3->objargs;
 					n->newowner = $6;
 					$$ = (Node *)n;
 				}
@@ -8870,8 +8880,8 @@ AlterOwnerStmt: ALTER AGGREGATE aggregate_with_argtypes OWNER TO RoleSpec
 				{
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_FUNCTION;
-					n->object = $3->funcname;
-					n->objarg = $3->funcargs;
+					n->object = $3->objname;
+					n->objarg = $3->objargs;
 					n->newowner = $6;
 					$$ = (Node *)n;
 				}
@@ -8891,13 +8901,13 @@ AlterOwnerStmt: ALTER AGGREGATE aggregate_with_argtypes OWNER TO RoleSpec
 					n->newowner = $7;
 					$$ = (Node *)n;
 				}
-			| ALTER OPERATOR any_operator oper_argtypes OWNER TO RoleSpec
+			| ALTER OPERATOR operator_with_argtypes OWNER TO RoleSpec
 				{
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_OPERATOR;
-					n->object = $3;
-					n->objarg = $4;
-					n->newowner = $7;
+					n->object = $3->objname;
+					n->objarg = $3->objargs;
+					n->newowner = $6;
 					$$ = (Node *)n;
 				}
 			| ALTER OPERATOR CLASS any_name USING access_method OWNER TO RoleSpec

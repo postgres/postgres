@@ -1095,10 +1095,10 @@ _equalGrantStmt(const GrantStmt *a, const GrantStmt *b)
 }
 
 static bool
-_equalFuncWithArgs(const FuncWithArgs *a, const FuncWithArgs *b)
+_equalObjectWithArgs(const ObjectWithArgs *a, const ObjectWithArgs *b)
 {
-	COMPARE_NODE_FIELD(funcname);
-	COMPARE_NODE_FIELD(funcargs);
+	COMPARE_NODE_FIELD(objname);
+	COMPARE_NODE_FIELD(objargs);
 
 	return true;
 }
@@ -3532,8 +3532,8 @@ equal(const void *a, const void *b)
 		case T_CommonTableExpr:
 			retval = _equalCommonTableExpr(a, b);
 			break;
-		case T_FuncWithArgs:
-			retval = _equalFuncWithArgs(a, b);
+		case T_ObjectWithArgs:
+			retval = _equalObjectWithArgs(a, b);
 			break;
 		case T_AccessPriv:
 			retval = _equalAccessPriv(a, b);
