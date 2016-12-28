@@ -1542,7 +1542,7 @@ typedef struct CreateSchemaStmt
 {
 	NodeTag		type;
 	char	   *schemaname;		/* the name of the schema to create */
-	Node	   *authrole;		/* the owner of the created schema */
+	RoleSpec   *authrole;		/* the owner of the created schema */
 	List	   *schemaElts;		/* schema components (list of parsenodes) */
 	bool		if_not_exists;	/* just do nothing if schema already exists? */
 } CreateSchemaStmt;
@@ -1647,7 +1647,7 @@ typedef struct AlterTableCmd	/* one subcommand of an ALTER TABLE */
 	AlterTableType subtype;		/* Type of table alteration to apply */
 	char	   *name;			/* column, constraint, or trigger to act on,
 								 * or tablespace */
-	Node	   *newowner;		/* RoleSpec */
+	RoleSpec   *newowner;
 	Node	   *def;			/* definition of new column, index,
 								 * constraint, or parent table */
 	DropBehavior behavior;		/* RESTRICT or CASCADE for DROP cases */
@@ -1766,7 +1766,7 @@ typedef struct GrantRoleStmt
 	List	   *grantee_roles;	/* list of member roles to add/delete */
 	bool		is_grant;		/* true = GRANT, false = REVOKE */
 	bool		admin_opt;		/* with admin option */
-	Node	   *grantor;		/* set grantor to other than current role */
+	RoleSpec   *grantor;		/* set grantor to other than current role */
 	DropBehavior behavior;		/* drop behavior (for REVOKE) */
 } GrantRoleStmt;
 
@@ -1981,7 +1981,7 @@ typedef struct CreateTableSpaceStmt
 {
 	NodeTag		type;
 	char	   *tablespacename;
-	Node	   *owner;
+	RoleSpec   *owner;
 	char	   *location;
 	List	   *options;
 } CreateTableSpaceStmt;
@@ -2107,7 +2107,7 @@ typedef struct CreateForeignTableStmt
 typedef struct CreateUserMappingStmt
 {
 	NodeTag		type;
-	Node	   *user;			/* user role */
+	RoleSpec   *user;			/* user role */
 	char	   *servername;		/* server name */
 	List	   *options;		/* generic options to server */
 } CreateUserMappingStmt;
@@ -2115,7 +2115,7 @@ typedef struct CreateUserMappingStmt
 typedef struct AlterUserMappingStmt
 {
 	NodeTag		type;
-	Node	   *user;			/* user role */
+	RoleSpec   *user;			/* user role */
 	char	   *servername;		/* server name */
 	List	   *options;		/* generic options to server */
 } AlterUserMappingStmt;
@@ -2123,7 +2123,7 @@ typedef struct AlterUserMappingStmt
 typedef struct DropUserMappingStmt
 {
 	NodeTag		type;
-	Node	   *user;			/* user role */
+	RoleSpec   *user;			/* user role */
 	char	   *servername;		/* server name */
 	bool		missing_ok;		/* ignore missing mappings */
 } DropUserMappingStmt;
@@ -2288,7 +2288,7 @@ typedef struct CreateRoleStmt
 typedef struct AlterRoleStmt
 {
 	NodeTag		type;
-	Node	   *role;			/* role */
+	RoleSpec   *role;			/* role */
 	List	   *options;		/* List of DefElem nodes */
 	int			action;			/* +1 = add members, -1 = drop members */
 } AlterRoleStmt;
@@ -2296,7 +2296,7 @@ typedef struct AlterRoleStmt
 typedef struct AlterRoleSetStmt
 {
 	NodeTag		type;
-	Node	   *role;			/* role */
+	RoleSpec   *role;			/* role */
 	char	   *database;		/* database name, or NULL */
 	VariableSetStmt *setstmt;	/* SET or RESET subcommand */
 } AlterRoleSetStmt;
@@ -2687,7 +2687,7 @@ typedef struct AlterOwnerStmt
 	RangeVar   *relation;		/* in case it's a table */
 	List	   *object;			/* in case it's some other object */
 	List	   *objarg;			/* argument types, if applicable */
-	Node	   *newowner;		/* the new owner */
+	RoleSpec   *newowner;		/* the new owner */
 } AlterOwnerStmt;
 
 
@@ -3171,7 +3171,7 @@ typedef struct ReassignOwnedStmt
 {
 	NodeTag		type;
 	List	   *roles;
-	Node	   *newrole;
+	RoleSpec   *newrole;
 } ReassignOwnedStmt;
 
 /*

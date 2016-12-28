@@ -144,7 +144,7 @@ static Node *makeBitStringConst(char *str, int location);
 static Node *makeNullAConst(int location);
 static Node *makeAConst(Value *v, int location);
 static Node *makeBoolAConst(bool state, int location);
-static Node *makeRoleSpec(RoleSpecType type, int location);
+static RoleSpec *makeRoleSpec(RoleSpecType type, int location);
 static void check_qualified_name(List *names, core_yyscan_t yyscanner);
 static List *check_func_name(List *names, core_yyscan_t yyscanner);
 static List *check_indirection(List *indirection, core_yyscan_t yyscanner);
@@ -231,6 +231,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 	PartitionElem		*partelem;
 	PartitionSpec		*partspec;
 	PartitionRangeDatum	*partrange_datum;
+	RoleSpec			*rolespec;
 }
 
 %type <node>	stmt schema_stmt
@@ -339,7 +340,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <list>	RowSecurityDefaultToRole RowSecurityOptionalToRole
 
 %type <str>		iso_level opt_encoding
-%type <node>	grantee
+%type <rolespec> grantee
 %type <list>	grantee_list
 %type <accesspriv> privilege
 %type <list>	privileges privilege_list
@@ -506,7 +507,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <str>		NonReservedWord NonReservedWord_or_Sconst
 %type <str>		createdb_opt_name
 %type <node>	var_value zone_value
-%type <node>	auth_ident RoleSpec opt_granted_by
+%type <rolespec> auth_ident RoleSpec opt_granted_by
 
 %type <keyword> unreserved_keyword type_func_name_keyword
 %type <keyword> col_name_keyword reserved_keyword
@@ -522,7 +523,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <list>	constraints_set_list
 %type <boolean> constraints_set_mode
 %type <str>		OptTableSpace OptConsTableSpace
-%type <node>	OptTableSpaceOwner
+%type <rolespec> OptTableSpaceOwner
 %type <ival>	opt_check_option
 
 %type <str>		opt_provider security_label
@@ -13918,10 +13919,10 @@ RoleSpec:	NonReservedWord
 						}
 						else
 						{
-							n = (RoleSpec *) makeRoleSpec(ROLESPEC_CSTRING, @1);
+							n = makeRoleSpec(ROLESPEC_CSTRING, @1);
 							n->rolename = pstrdup($1);
 						}
-						$$ = (Node *) n;
+						$$ = n;
 					}
 			| CURRENT_USER
 					{
@@ -14644,7 +14645,7 @@ makeBoolAConst(bool state, int location)
 /* makeRoleSpec
  * Create a RoleSpec with the given type
  */
-static Node *
+static RoleSpec *
 makeRoleSpec(RoleSpecType type, int location)
 {
 	RoleSpec *spec = makeNode(RoleSpec);
@@ -14652,7 +14653,7 @@ makeRoleSpec(RoleSpecType type, int location)
 	spec->roletype = type;
 	spec->location = location;
 
-	return (Node *) spec;
+	return spec;
 }
 
 /* check_qualified_name --- check the result of qualified_name production

@@ -177,7 +177,7 @@ policy_role_list_to_array(List *roles, int *num_roles)
 		}
 		else
 			role_oids[i++] =
-				ObjectIdGetDatum(get_rolespec_oid((Node *) spec, false));
+				ObjectIdGetDatum(get_rolespec_oid(spec, false));
 	}
 
 	return role_oids;
