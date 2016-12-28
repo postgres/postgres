@@ -69,6 +69,24 @@ SELECT m / 2::int2 FROM money_data;
    $61.50
 (1 row)
 
+SELECT m * 2::int8 FROM money_data;
+ ?column? 
+----------
+  $246.00
+(1 row)
+
+SELECT 2::int8 * m FROM money_data;
+ ?column? 
+----------
+  $246.00
+(1 row)
+
+SELECT m / 2::int8 FROM money_data;
+ ?column? 
+----------
+   $61.50
+(1 row)
+
 SELECT m * 2::float8 FROM money_data;
  ?column? 
 ----------

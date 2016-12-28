@@ -957,8 +957,11 @@ DESCR("name of the current database");
 DATA(insert OID = 817 (  current_query		  PGNSP PGUID 12 1 0 0 0 f f f f f f v r 0 0 25 "" _null_ _null_ _null_ _null_	_null_ current_query _null_ _null_ _null_ ));
 DESCR("get the currently executing query");
 
+DATA(insert OID = 3343 (  int8_mul_cash		   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 790 "20 790" _null_ _null_ _null_ _null_ _null_ int8_mul_cash _null_ _null_ _null_ ));
 DATA(insert OID =  862 (  int4_mul_cash		   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 790 "23 790" _null_ _null_ _null_ _null_ _null_ int4_mul_cash _null_ _null_ _null_ ));
 DATA(insert OID =  863 (  int2_mul_cash		   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 790 "21 790" _null_ _null_ _null_ _null_ _null_ int2_mul_cash _null_ _null_ _null_ ));
+DATA(insert OID = 3344 (  cash_mul_int8		   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 790 "790 20" _null_ _null_ _null_ _null_ _null_ cash_mul_int8 _null_ _null_ _null_ ));
+DATA(insert OID = 3345 (  cash_div_int8		   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 790 "790 20" _null_ _null_ _null_ _null_ _null_ cash_div_int8 _null_ _null_ _null_ ));
 DATA(insert OID =  864 (  cash_mul_int4		   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 790 "790 23" _null_ _null_ _null_ _null_ _null_ cash_mul_int4 _null_ _null_ _null_ ));
 DATA(insert OID =  865 (  cash_div_int4		   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 790 "790 23" _null_ _null_ _null_ _null_ _null_ cash_div_int4 _null_ _null_ _null_ ));
 DATA(insert OID =  866 (  cash_mul_int2		   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 790 "790 21" _null_ _null_ _null_ _null_ _null_ cash_mul_int2 _null_ _null_ _null_ ));
