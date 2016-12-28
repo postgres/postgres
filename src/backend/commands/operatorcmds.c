@@ -402,10 +402,7 @@ AlterOperator(AlterOperatorStmt *stmt)
 	Oid			joinOid;
 
 	/* Look up the operator */
-	oprId = LookupOperNameTypeNames(NULL, stmt->opername,
-									(TypeName *) linitial(stmt->operargs),
-									(TypeName *) lsecond(stmt->operargs),
-									false, -1);
+	oprId = LookupOperWithArgs(stmt->opername, false);
 	catalog = heap_open(OperatorRelationId, RowExclusiveLock);
 	tup = SearchSysCacheCopy1(OPEROID, ObjectIdGetDatum(oprId));
 	if (tup == NULL)

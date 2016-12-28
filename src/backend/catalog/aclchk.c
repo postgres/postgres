@@ -670,8 +670,7 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 				ObjectWithArgs *func = (ObjectWithArgs *) lfirst(cell);
 				Oid			funcid;
 
-				funcid = LookupFuncNameTypeNames(func->objname,
-												 func->objargs, false);
+				funcid = LookupFuncWithArgs(func, false);
 				objects = lappend_oid(objects, funcid);
 			}
 			break;

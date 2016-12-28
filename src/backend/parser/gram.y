@@ -5778,9 +5778,11 @@ opclass_item:
 			OPERATOR Iconst any_operator opclass_purpose opt_recheck
 				{
 					CreateOpClassItem *n = makeNode(CreateOpClassItem);
+					ObjectWithArgs *owa = makeNode(ObjectWithArgs);
+					owa->objname = $3;
+					owa->objargs = NIL;
 					n->itemtype = OPCLASS_ITEM_OPERATOR;
-					n->name = $3;
-					n->args = NIL;
+					n->name = owa;
 					n->number = $2;
 					n->order_family = $4;
 					$$ = (Node *) n;
@@ -5790,8 +5792,7 @@ opclass_item:
 				{
 					CreateOpClassItem *n = makeNode(CreateOpClassItem);
 					n->itemtype = OPCLASS_ITEM_OPERATOR;
-					n->name = $3->objname;
-					n->args = $3->objargs;
+					n->name = $3;
 					n->number = $2;
 					n->order_family = $4;
 					$$ = (Node *) n;
@@ -5800,8 +5801,7 @@ opclass_item:
 				{
 					CreateOpClassItem *n = makeNode(CreateOpClassItem);
 					n->itemtype = OPCLASS_ITEM_FUNCTION;
-					n->name = $3->objname;
-					n->args = $3->objargs;
+					n->name = $3;
 					n->number = $2;
 					$$ = (Node *) n;
 				}
@@ -5809,8 +5809,7 @@ opclass_item:
 				{
 					CreateOpClassItem *n = makeNode(CreateOpClassItem);
 					n->itemtype = OPCLASS_ITEM_FUNCTION;
-					n->name = $6->objname;
-					n->args = $6->objargs;
+					n->name = $6;
 					n->number = $2;
 					n->class_args = $4;
 					$$ = (Node *) n;
@@ -8789,8 +8788,7 @@ AlterOperatorStmt:
 			ALTER OPERATOR operator_with_argtypes SET '(' operator_def_list ')'
 				{
 					AlterOperatorStmt *n = makeNode(AlterOperatorStmt);
-					n->opername = $3->objname;
-					n->operargs = $3->objargs;
+					n->opername = $3;
 					n->options = $6;
 					$$ = (Node *)n;
 				}

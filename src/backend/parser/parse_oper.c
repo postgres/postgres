@@ -132,32 +132,34 @@ LookupOperName(ParseState *pstate, List *opername, Oid oprleft, Oid oprright,
 }
 
 /*
- * LookupOperNameTypeNames
+ * LookupOperWithArgs
  *		Like LookupOperName, but the argument types are specified by
- *		TypeName nodes.
- *
- * Pass oprleft = NULL for a prefix op, oprright = NULL for a postfix op.
+ *		a ObjectWithArg node.
  */
 Oid
-LookupOperNameTypeNames(ParseState *pstate, List *opername,
-						TypeName *oprleft, TypeName *oprright,
-						bool noError, int location)
+LookupOperWithArgs(ObjectWithArgs *oper, bool noError)
 {
+	TypeName   *oprleft,
+			   *oprright;
 	Oid			leftoid,
 				rightoid;
+
+	Assert(list_length(oper->objargs) == 2);
+	oprleft = linitial(oper->objargs);
+	oprright = lsecond(oper->objargs);
 
 	if (oprleft == NULL)
 		leftoid = InvalidOid;
 	else
-		leftoid = LookupTypeNameOid(pstate, oprleft, noError);
+		leftoid = LookupTypeNameOid(NULL, oprleft, noError);
 
 	if (oprright == NULL)
 		rightoid = InvalidOid;
 	else
-		rightoid = LookupTypeNameOid(pstate, oprright, noError);
+		rightoid = LookupTypeNameOid(NULL, oprright, noError);
 
-	return LookupOperName(pstate, opername, leftoid, rightoid,
-						  noError, location);
+	return LookupOperName(NULL, oper->objname, leftoid, rightoid,
+						  noError, -1);
 }
 
 /*

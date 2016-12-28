@@ -2418,9 +2418,7 @@ typedef struct CreateOpClassItem
 {
 	NodeTag		type;
 	int			itemtype;		/* see codes above */
-	/* fields used for an operator or function item: */
-	List	   *name;			/* operator or function name */
-	List	   *args;			/* argument types */
+	ObjectWithArgs *name;		/* operator or function name and args */
 	int			number;			/* strategy num or support proc num */
 	List	   *order_family;	/* only used for ordering operators */
 	List	   *class_args;		/* amproclefttype/amprocrighttype or
@@ -2730,8 +2728,7 @@ typedef struct AlterOwnerStmt
 typedef struct AlterOperatorStmt
 {
 	NodeTag		type;
-	List	   *opername;		/* operator name */
-	List	   *operargs;		/* operator's argument TypeNames */
+	ObjectWithArgs *opername;	/* operator name and argument types */
 	List	   *options;		/* List of DefElem nodes */
 } AlterOperatorStmt;
 

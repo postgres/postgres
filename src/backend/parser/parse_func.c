@@ -1932,19 +1932,19 @@ LookupFuncName(List *funcname, int nargs, const Oid *argtypes, bool noError)
 }
 
 /*
- * LookupFuncNameTypeNames
+ * LookupFuncWithArgs
  *		Like LookupFuncName, but the argument types are specified by a
- *		list of TypeName nodes.
+ *		ObjectWithArgs node.
  */
 Oid
-LookupFuncNameTypeNames(List *funcname, List *argtypes, bool noError)
+LookupFuncWithArgs(ObjectWithArgs *func, bool noError)
 {
 	Oid			argoids[FUNC_MAX_ARGS];
 	int			argcount;
 	int			i;
 	ListCell   *args_item;
 
-	argcount = list_length(argtypes);
+	argcount = list_length(func->objargs);
 	if (argcount > FUNC_MAX_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
@@ -1953,7 +1953,7 @@ LookupFuncNameTypeNames(List *funcname, List *argtypes, bool noError)
 							   FUNC_MAX_ARGS,
 							   FUNC_MAX_ARGS)));
 
-	args_item = list_head(argtypes);
+	args_item = list_head(func->objargs);
 	for (i = 0; i < argcount; i++)
 	{
 		TypeName   *t = (TypeName *) lfirst(args_item);
@@ -1962,19 +1962,19 @@ LookupFuncNameTypeNames(List *funcname, List *argtypes, bool noError)
 		args_item = lnext(args_item);
 	}
 
-	return LookupFuncName(funcname, argcount, argoids, noError);
+	return LookupFuncName(func->objname, argcount, argoids, noError);
 }
 
 /*
- * LookupAggNameTypeNames
- *		Find an aggregate function given a name and list of TypeName nodes.
+ * LookupAggWithArgs
+ *		Find an aggregate function from a given ObjectWithArgs node.
  *
- * This is almost like LookupFuncNameTypeNames, but the error messages refer
+ * This is almost like LookupFuncWithArgs, but the error messages refer
  * to aggregates rather than plain functions, and we verify that the found
  * function really is an aggregate.
  */
 Oid
-LookupAggNameTypeNames(List *aggname, List *argtypes, bool noError)
+LookupAggWithArgs(ObjectWithArgs *agg, bool noError)
 {
 	Oid			argoids[FUNC_MAX_ARGS];
 	int			argcount;
@@ -1984,7 +1984,7 @@ LookupAggNameTypeNames(List *aggname, List *argtypes, bool noError)
 	HeapTuple	ftup;
 	Form_pg_proc pform;
 
-	argcount = list_length(argtypes);
+	argcount = list_length(agg->objargs);
 	if (argcount > FUNC_MAX_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
@@ -1994,7 +1994,7 @@ LookupAggNameTypeNames(List *aggname, List *argtypes, bool noError)
 							   FUNC_MAX_ARGS)));
 
 	i = 0;
-	foreach(lc, argtypes)
+	foreach(lc, agg->objargs)
 	{
 		TypeName   *t = (TypeName *) lfirst(lc);
 
@@ -2002,7 +2002,7 @@ LookupAggNameTypeNames(List *aggname, List *argtypes, bool noError)
 		i++;
 	}
 
-	oid = LookupFuncName(aggname, argcount, argoids, true);
+	oid = LookupFuncName(agg->objname, argcount, argoids, true);
 
 	if (!OidIsValid(oid))
 	{
@@ -2012,12 +2012,12 @@ LookupAggNameTypeNames(List *aggname, List *argtypes, bool noError)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_FUNCTION),
 					 errmsg("aggregate %s(*) does not exist",
-							NameListToString(aggname))));
+							NameListToString(agg->objname))));
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_FUNCTION),
 					 errmsg("aggregate %s does not exist",
-							func_signature_string(aggname, argcount,
+							func_signature_string(agg->objname, argcount,
 												  NIL, argoids))));
 	}
 
@@ -2036,7 +2036,7 @@ LookupAggNameTypeNames(List *aggname, List *argtypes, bool noError)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("function %s is not an aggregate",
-						func_signature_string(aggname, argcount,
+						func_signature_string(agg->objname, argcount,
 											  NIL, argoids))));
 	}
 

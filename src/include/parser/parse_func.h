@@ -62,9 +62,9 @@ extern const char *func_signature_string(List *funcname, int nargs,
 
 extern Oid LookupFuncName(List *funcname, int nargs, const Oid *argtypes,
 			   bool noError);
-extern Oid LookupFuncNameTypeNames(List *funcname, List *argtypes,
+extern Oid LookupFuncWithArgs(ObjectWithArgs *func,
 						bool noError);
-extern Oid LookupAggNameTypeNames(List *aggname, List *argtypes,
+extern Oid LookupAggWithArgs(ObjectWithArgs *agg,
 					   bool noError);
 
 extern void check_srf_call_placement(ParseState *pstate, int location);

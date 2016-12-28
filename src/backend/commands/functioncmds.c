@@ -1181,9 +1181,7 @@ AlterFunction(ParseState *pstate, AlterFunctionStmt *stmt)
 
 	rel = heap_open(ProcedureRelationId, RowExclusiveLock);
 
-	funcOid = LookupFuncNameTypeNames(stmt->func->objname,
-									  stmt->func->objargs,
-									  false);
+	funcOid = LookupFuncWithArgs(stmt->func, false);
 
 	tup = SearchSysCacheCopy1(PROCOID, ObjectIdGetDatum(funcOid));
 	if (!HeapTupleIsValid(tup)) /* should not happen */
@@ -1453,9 +1451,7 @@ CreateCast(CreateCastStmt *stmt)
 	{
 		Form_pg_proc procstruct;
 
-		funcid = LookupFuncNameTypeNames(stmt->func->objname,
-										 stmt->func->objargs,
-										 false);
+		funcid = LookupFuncWithArgs(stmt->func, false);
 
 		tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
 		if (!HeapTupleIsValid(tuple))
@@ -1836,7 +1832,7 @@ CreateTransform(CreateTransformStmt *stmt)
 	 */
 	if (stmt->fromsql)
 	{
-		fromsqlfuncid = LookupFuncNameTypeNames(stmt->fromsql->objname, stmt->fromsql->objargs, false);
+		fromsqlfuncid = LookupFuncWithArgs(stmt->fromsql, false);
 
 		if (!pg_proc_ownercheck(fromsqlfuncid, GetUserId()))
 			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_PROC, NameListToString(stmt->fromsql->objname));
@@ -1862,7 +1858,7 @@ CreateTransform(CreateTransformStmt *stmt)
 
 	if (stmt->tosql)
 	{
-		tosqlfuncid = LookupFuncNameTypeNames(stmt->tosql->objname, stmt->tosql->objargs, false);
+		tosqlfuncid = LookupFuncWithArgs(stmt->tosql, false);
 
 		if (!pg_proc_ownercheck(tosqlfuncid, GetUserId()))
 			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_PROC, NameListToString(stmt->tosql->objname));

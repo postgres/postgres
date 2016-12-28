@@ -15,6 +15,7 @@
 #define PARSE_OPER_H
 
 #include "access/htup.h"
+#include "nodes/parsenodes.h"
 #include "parser/parse_node.h"
 
 
@@ -24,9 +25,7 @@ typedef HeapTuple Operator;
 extern Oid LookupOperName(ParseState *pstate, List *opername,
 			   Oid oprleft, Oid oprright,
 			   bool noError, int location);
-extern Oid LookupOperNameTypeNames(ParseState *pstate, List *opername,
-						TypeName *oprleft, TypeName *oprright,
-						bool noError, int location);
+extern Oid LookupOperWithArgs(ObjectWithArgs *oper, bool noError);
 
 /* Routines to find operators matching a name and given input types */
 /* NB: the selected operator may require coercion of the input types! */

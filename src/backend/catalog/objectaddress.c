@@ -868,36 +868,20 @@ get_object_address(ObjectType objtype, Node *object,
 				address = get_object_address_type(objtype, castNode(TypeName, object), missing_ok);
 				break;
 			case OBJECT_AGGREGATE:
-				{
-					ObjectWithArgs *owa = castNode(ObjectWithArgs, object);
-					address.classId = ProcedureRelationId;
-					address.objectId =
-						LookupAggNameTypeNames(owa->objname, owa->objargs, missing_ok);
-					address.objectSubId = 0;
-					break;
-				}
+				address.classId = ProcedureRelationId;
+				address.objectId = LookupAggWithArgs(castNode(ObjectWithArgs, object), missing_ok);
+				address.objectSubId = 0;
+				break;
 			case OBJECT_FUNCTION:
-				{
-					ObjectWithArgs *owa = castNode(ObjectWithArgs, object);
-					address.classId = ProcedureRelationId;
-					address.objectId =
-						LookupFuncNameTypeNames(owa->objname, owa->objargs, missing_ok);
-					address.objectSubId = 0;
-					break;
-				}
+				address.classId = ProcedureRelationId;
+				address.objectId = LookupFuncWithArgs(castNode(ObjectWithArgs, object), missing_ok);
+				address.objectSubId = 0;
+				break;
 			case OBJECT_OPERATOR:
-				{
-					ObjectWithArgs *owa = castNode(ObjectWithArgs, object);
-					address.classId = OperatorRelationId;
-					Assert(list_length(owa->objargs) == 2);
-					address.objectId =
-						LookupOperNameTypeNames(NULL, owa->objname,
-												castNode(TypeName, linitial(owa->objargs)),
-												castNode(TypeName, lsecond(owa->objargs)),
-												missing_ok, -1);
-					address.objectSubId = 0;
-					break;
-				}
+				address.classId = OperatorRelationId;
+				address.objectId = LookupOperWithArgs(castNode(ObjectWithArgs, object), missing_ok);
+				address.objectSubId = 0;
+				break;
 			case OBJECT_COLLATION:
 				address.classId = CollationRelationId;
 				address.objectId = get_collation_oid(castNode(List, object), missing_ok);
