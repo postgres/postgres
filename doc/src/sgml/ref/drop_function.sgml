@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP FUNCTION [ IF EXISTS ] <replaceable class="parameter">name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] )
+DROP FUNCTION [ IF EXISTS ] <replaceable class="parameter">name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) [, ...]
     [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
@@ -134,6 +134,12 @@ DROP FUNCTION [ IF EXISTS ] <replaceable class="parameter">name</replaceable> ( 
 
 <programlisting>
 DROP FUNCTION sqrt(integer);
+</programlisting></para>
+
+  <para>
+   Drop multiple functions in one command:
+<programlisting>
+DROP FUNCTION sqrt(integer), sqrt(bigint);
 </programlisting></para>
  </refsect1>
 

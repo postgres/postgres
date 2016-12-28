@@ -217,9 +217,10 @@ SELECT routine_name, ordinal_position, parameter_name, parameter_default
  functest_is_3 |                2 | b              | 
 (7 rows)
 
+DROP FUNCTION functest_IS_1(int, int, text), functest_IS_2(int), functest_IS_3(int);
 -- Cleanups
 DROP SCHEMA temp_func_test CASCADE;
-NOTICE:  drop cascades to 19 other objects
+NOTICE:  drop cascades to 16 other objects
 DETAIL:  drop cascades to function functest_a_1(text,date)
 drop cascades to function functest_a_2(text[])
 drop cascades to function functest_a_3()
@@ -236,8 +237,5 @@ drop cascades to function functext_f_1(integer)
 drop cascades to function functext_f_2(integer)
 drop cascades to function functext_f_3(integer)
 drop cascades to function functext_f_4(integer)
-drop cascades to function functest_is_1(integer,integer,text)
-drop cascades to function functest_is_2(integer)
-drop cascades to function functest_is_3(integer)
 DROP USER regress_unpriv_user;
 RESET search_path;

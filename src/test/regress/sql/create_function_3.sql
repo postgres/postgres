@@ -156,6 +156,8 @@ SELECT routine_name, ordinal_position, parameter_name, parameter_default
     WHERE routine_schema = 'temp_func_test' AND routine_name ~ '^functest_is_'
     ORDER BY 1, 2;
 
+DROP FUNCTION functest_IS_1(int, int, text), functest_IS_2(int), functest_IS_3(int);
+
 
 -- Cleanups
 DROP SCHEMA temp_func_test CASCADE;
