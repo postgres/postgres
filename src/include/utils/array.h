@@ -328,38 +328,6 @@ extern bool Array_nulls;
 /*
  * prototypes for functions defined in arrayfuncs.c
  */
-extern Datum array_in(PG_FUNCTION_ARGS);
-extern Datum array_out(PG_FUNCTION_ARGS);
-extern Datum array_recv(PG_FUNCTION_ARGS);
-extern Datum array_send(PG_FUNCTION_ARGS);
-extern Datum array_eq(PG_FUNCTION_ARGS);
-extern Datum array_ne(PG_FUNCTION_ARGS);
-extern Datum array_lt(PG_FUNCTION_ARGS);
-extern Datum array_gt(PG_FUNCTION_ARGS);
-extern Datum array_le(PG_FUNCTION_ARGS);
-extern Datum array_ge(PG_FUNCTION_ARGS);
-extern Datum btarraycmp(PG_FUNCTION_ARGS);
-extern Datum hash_array(PG_FUNCTION_ARGS);
-extern Datum arrayoverlap(PG_FUNCTION_ARGS);
-extern Datum arraycontains(PG_FUNCTION_ARGS);
-extern Datum arraycontained(PG_FUNCTION_ARGS);
-extern Datum array_ndims(PG_FUNCTION_ARGS);
-extern Datum array_dims(PG_FUNCTION_ARGS);
-extern Datum array_lower(PG_FUNCTION_ARGS);
-extern Datum array_upper(PG_FUNCTION_ARGS);
-extern Datum array_length(PG_FUNCTION_ARGS);
-extern Datum array_cardinality(PG_FUNCTION_ARGS);
-extern Datum array_larger(PG_FUNCTION_ARGS);
-extern Datum array_smaller(PG_FUNCTION_ARGS);
-extern Datum generate_subscripts(PG_FUNCTION_ARGS);
-extern Datum generate_subscripts_nodir(PG_FUNCTION_ARGS);
-extern Datum array_fill(PG_FUNCTION_ARGS);
-extern Datum array_fill_with_lower_bounds(PG_FUNCTION_ARGS);
-extern Datum array_unnest(PG_FUNCTION_ARGS);
-extern Datum array_remove(PG_FUNCTION_ARGS);
-extern Datum array_replace(PG_FUNCTION_ARGS);
-extern Datum width_bucket_array(PG_FUNCTION_ARGS);
-
 extern void CopyArrayEls(ArrayType *array,
 			 Datum *values,
 			 bool *nulls,
@@ -478,28 +446,10 @@ extern void deconstruct_expanded_array(ExpandedArrayHeader *eah);
 /*
  * prototypes for functions defined in array_userfuncs.c
  */
-extern Datum array_append(PG_FUNCTION_ARGS);
-extern Datum array_prepend(PG_FUNCTION_ARGS);
-extern Datum array_cat(PG_FUNCTION_ARGS);
-
 extern ArrayType *create_singleton_array(FunctionCallInfo fcinfo,
 					   Oid element_type,
 					   Datum element,
 					   bool isNull,
 					   int ndims);
-
-extern Datum array_agg_transfn(PG_FUNCTION_ARGS);
-extern Datum array_agg_finalfn(PG_FUNCTION_ARGS);
-extern Datum array_agg_array_transfn(PG_FUNCTION_ARGS);
-extern Datum array_agg_array_finalfn(PG_FUNCTION_ARGS);
-
-extern Datum array_position(PG_FUNCTION_ARGS);
-extern Datum array_position_start(PG_FUNCTION_ARGS);
-extern Datum array_positions(PG_FUNCTION_ARGS);
-
-/*
- * prototypes for functions defined in array_typanalyze.c
- */
-extern Datum array_typanalyze(PG_FUNCTION_ARGS);
 
 #endif   /* ARRAY_H */

@@ -27,7 +27,17 @@
 #include "postgres.h"
 
 #include "access/hash.h"
+#include "utils/builtins.h"
 
+/*
+ * Datatype-specific hash functions.
+ *
+ * These support both hash indexes and hash joins.
+ *
+ * NOTE: some of these are also used by catcache operations, without
+ * any direct connection to hash indexes.  Also, the common hash_any
+ * routine is also used by dynahash tables.
+ */
 
 /* Note: this is used for both "char" and boolean datatypes */
 Datum

@@ -2058,6 +2058,7 @@ DATA(insert OID = 1671 (  varbitlt			PGNSP PGUID 12 1 0 0 0 f f f t t f i s 2 0 
 DATA(insert OID = 1672 (  varbitcmp			PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 23 "1562 1562" _null_ _null_ _null_ _null_ _null_ bitcmp _null_ _null_ _null_ ));
 DESCR("less-equal-greater");
 
+/* avoid the C names bitand and bitor, since they are C++ keywords */
 DATA(insert OID = 1673 (  bitand			PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 1560 "1560 1560" _null_ _null_ _null_ _null_ _null_	bit_and _null_ _null_ _null_ ));
 DATA(insert OID = 1674 (  bitor				PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 1560 "1560 1560" _null_ _null_ _null_ _null_ _null_	bit_or _null_ _null_ _null_ ));
 DATA(insert OID = 1675 (  bitxor			PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 1560 "1560 1560" _null_ _null_ _null_ _null_ _null_	bitxor _null_ _null_ _null_ ));

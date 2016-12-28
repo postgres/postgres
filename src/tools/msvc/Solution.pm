@@ -268,7 +268,7 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
 	if (IsNewer(
 			'src/backend/utils/fmgrtab.c', 'src/include/catalog/pg_proc.h'))
 	{
-		print "Generating fmgrtab.c and fmgroids.h...\n";
+		print "Generating fmgrtab.c, fmgroids.h, fmgrprotos.h...\n";
 		chdir('src/backend/utils');
 		system(
 "perl -I ../catalog Gen_fmgrtab.pl ../../../src/include/catalog/pg_proc.h");
@@ -280,6 +280,14 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
 	{
 		copyFile('src/backend/utils/fmgroids.h',
 			'src/include/utils/fmgroids.h');
+	}
+
+	if (IsNewer(
+			'src/include/utils/fmgrprotos.h',
+			'src/backend/utils/fmgrprotos.h'))
+	{
+		copyFile('src/backend/utils/fmgrprotos.h',
+			'src/include/utils/fmgrprotos.h');
 	}
 
 	if (IsNewer(

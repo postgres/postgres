@@ -28,6 +28,7 @@
 #include "pgstat.h"
 #include "storage/bufmgr.h"
 #include "storage/freespace.h"
+#include "utils/builtins.h"
 #include "utils/index_selfuncs.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"

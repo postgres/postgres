@@ -20,18 +20,6 @@
 #include "utils/builtins.h"
 
 
-Datum		binary_upgrade_set_next_pg_type_oid(PG_FUNCTION_ARGS);
-Datum		binary_upgrade_set_next_array_pg_type_oid(PG_FUNCTION_ARGS);
-Datum		binary_upgrade_set_next_toast_pg_type_oid(PG_FUNCTION_ARGS);
-Datum		binary_upgrade_set_next_heap_pg_class_oid(PG_FUNCTION_ARGS);
-Datum		binary_upgrade_set_next_index_pg_class_oid(PG_FUNCTION_ARGS);
-Datum		binary_upgrade_set_next_toast_pg_class_oid(PG_FUNCTION_ARGS);
-Datum		binary_upgrade_set_next_pg_enum_oid(PG_FUNCTION_ARGS);
-Datum		binary_upgrade_set_next_pg_authid_oid(PG_FUNCTION_ARGS);
-Datum		binary_upgrade_create_empty_extension(PG_FUNCTION_ARGS);
-Datum		binary_upgrade_set_record_init_privs(PG_FUNCTION_ARGS);
-
-
 #define CHECK_IS_BINARY_UPGRADE									\
 do {															\
 	if (!IsBinaryUpgrade)										\

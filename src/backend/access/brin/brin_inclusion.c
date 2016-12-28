@@ -30,6 +30,7 @@
 #include "access/skey.h"
 #include "catalog/pg_amop.h"
 #include "catalog/pg_type.h"
+#include "utils/builtins.h"
 #include "utils/datum.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
@@ -76,10 +77,6 @@ typedef struct InclusionOpaque
 	FmgrInfo	strategy_procinfos[RTMaxStrategyNumber];
 } InclusionOpaque;
 
-Datum		brin_inclusion_opcinfo(PG_FUNCTION_ARGS);
-Datum		brin_inclusion_add_value(PG_FUNCTION_ARGS);
-Datum		brin_inclusion_consistent(PG_FUNCTION_ARGS);
-Datum		brin_inclusion_union(PG_FUNCTION_ARGS);
 static FmgrInfo *inclusion_get_procinfo(BrinDesc *bdesc, uint16 attno,
 					   uint16 procnum);
 static FmgrInfo *inclusion_get_strategy_procinfo(BrinDesc *bdesc, uint16 attno,

@@ -16,6 +16,7 @@
 #include "access/stratnum.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_amop.h"
+#include "utils/builtins.h"
 #include "utils/datum.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
@@ -28,10 +29,6 @@ typedef struct MinmaxOpaque
 	FmgrInfo	strategy_procinfos[BTMaxStrategyNumber];
 } MinmaxOpaque;
 
-Datum		brin_minmax_opcinfo(PG_FUNCTION_ARGS);
-Datum		brin_minmax_add_value(PG_FUNCTION_ARGS);
-Datum		brin_minmax_consistent(PG_FUNCTION_ARGS);
-Datum		brin_minmax_union(PG_FUNCTION_ARGS);
 static FmgrInfo *minmax_get_strategy_procinfo(BrinDesc *bdesc, uint16 attno,
 							 Oid subtype, uint16 strategynum);
 

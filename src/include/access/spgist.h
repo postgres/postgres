@@ -183,7 +183,6 @@ typedef struct spgLeafConsistentOut
 
 
 /* spgutils.c */
-extern Datum spghandler(PG_FUNCTION_ARGS);
 extern bytea *spgoptions(Datum reloptions, bool validate);
 
 /* spginsert.c */

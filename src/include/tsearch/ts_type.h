@@ -121,61 +121,6 @@ typedef TSVectorData *TSVector;
 #define PG_GETARG_TSVECTOR_COPY(n)	DatumGetTSVectorCopy(PG_GETARG_DATUM(n))
 #define PG_RETURN_TSVECTOR(x)		return TSVectorGetDatum(x)
 
-/*
- * I/O
- */
-extern Datum tsvectorin(PG_FUNCTION_ARGS);
-extern Datum tsvectorout(PG_FUNCTION_ARGS);
-extern Datum tsvectorsend(PG_FUNCTION_ARGS);
-extern Datum tsvectorrecv(PG_FUNCTION_ARGS);
-
-/*
- * operations with tsvector
- */
-extern Datum tsvector_lt(PG_FUNCTION_ARGS);
-extern Datum tsvector_le(PG_FUNCTION_ARGS);
-extern Datum tsvector_eq(PG_FUNCTION_ARGS);
-extern Datum tsvector_ne(PG_FUNCTION_ARGS);
-extern Datum tsvector_ge(PG_FUNCTION_ARGS);
-extern Datum tsvector_gt(PG_FUNCTION_ARGS);
-extern Datum tsvector_cmp(PG_FUNCTION_ARGS);
-
-extern Datum tsvector_length(PG_FUNCTION_ARGS);
-extern Datum tsvector_strip(PG_FUNCTION_ARGS);
-extern Datum tsvector_setweight(PG_FUNCTION_ARGS);
-extern Datum tsvector_setweight_by_filter(PG_FUNCTION_ARGS);
-extern Datum tsvector_concat(PG_FUNCTION_ARGS);
-extern Datum tsvector_delete_str(PG_FUNCTION_ARGS);
-extern Datum tsvector_delete_arr(PG_FUNCTION_ARGS);
-extern Datum tsvector_unnest(PG_FUNCTION_ARGS);
-extern Datum tsvector_to_array(PG_FUNCTION_ARGS);
-extern Datum array_to_tsvector(PG_FUNCTION_ARGS);
-extern Datum tsvector_filter(PG_FUNCTION_ARGS);
-extern Datum tsvector_update_trigger_byid(PG_FUNCTION_ARGS);
-extern Datum tsvector_update_trigger_bycolumn(PG_FUNCTION_ARGS);
-
-extern Datum ts_match_vq(PG_FUNCTION_ARGS);
-extern Datum ts_match_qv(PG_FUNCTION_ARGS);
-extern Datum ts_match_tt(PG_FUNCTION_ARGS);
-extern Datum ts_match_tq(PG_FUNCTION_ARGS);
-
-extern Datum ts_stat1(PG_FUNCTION_ARGS);
-extern Datum ts_stat2(PG_FUNCTION_ARGS);
-
-extern Datum ts_rank_tt(PG_FUNCTION_ARGS);
-extern Datum ts_rank_wtt(PG_FUNCTION_ARGS);
-extern Datum ts_rank_ttf(PG_FUNCTION_ARGS);
-extern Datum ts_rank_wttf(PG_FUNCTION_ARGS);
-extern Datum ts_rankcd_tt(PG_FUNCTION_ARGS);
-extern Datum ts_rankcd_wtt(PG_FUNCTION_ARGS);
-extern Datum ts_rankcd_ttf(PG_FUNCTION_ARGS);
-extern Datum ts_rankcd_wttf(PG_FUNCTION_ARGS);
-
-extern Datum tsmatchsel(PG_FUNCTION_ARGS);
-extern Datum tsmatchjoinsel(PG_FUNCTION_ARGS);
-
-extern Datum ts_typanalyze(PG_FUNCTION_ARGS);
-
 
 /*
  * TSQuery
@@ -293,39 +238,5 @@ typedef TSQueryData *TSQuery;
 #define PG_GETARG_TSQUERY(n)		DatumGetTSQuery(PG_GETARG_DATUM(n))
 #define PG_GETARG_TSQUERY_COPY(n)	DatumGetTSQueryCopy(PG_GETARG_DATUM(n))
 #define PG_RETURN_TSQUERY(x)		return TSQueryGetDatum(x)
-
-/*
- * I/O
- */
-extern Datum tsqueryin(PG_FUNCTION_ARGS);
-extern Datum tsqueryout(PG_FUNCTION_ARGS);
-extern Datum tsquerysend(PG_FUNCTION_ARGS);
-extern Datum tsqueryrecv(PG_FUNCTION_ARGS);
-
-/*
- * operations with tsquery
- */
-extern Datum tsquery_lt(PG_FUNCTION_ARGS);
-extern Datum tsquery_le(PG_FUNCTION_ARGS);
-extern Datum tsquery_eq(PG_FUNCTION_ARGS);
-extern Datum tsquery_ne(PG_FUNCTION_ARGS);
-extern Datum tsquery_ge(PG_FUNCTION_ARGS);
-extern Datum tsquery_gt(PG_FUNCTION_ARGS);
-extern Datum tsquery_cmp(PG_FUNCTION_ARGS);
-
-extern Datum tsquerytree(PG_FUNCTION_ARGS);
-extern Datum tsquery_numnode(PG_FUNCTION_ARGS);
-
-extern Datum tsquery_and(PG_FUNCTION_ARGS);
-extern Datum tsquery_or(PG_FUNCTION_ARGS);
-extern Datum tsquery_phrase(PG_FUNCTION_ARGS);
-extern Datum tsquery_phrase_distance(PG_FUNCTION_ARGS);
-extern Datum tsquery_not(PG_FUNCTION_ARGS);
-
-extern Datum tsquery_rewrite(PG_FUNCTION_ARGS);
-extern Datum tsquery_rewrite_query(PG_FUNCTION_ARGS);
-
-extern Datum tsq_mcontains(PG_FUNCTION_ARGS);
-extern Datum tsq_mcontained(PG_FUNCTION_ARGS);
 
 #endif   /* _PG_TSTYPE_H_ */

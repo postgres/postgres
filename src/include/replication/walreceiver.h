@@ -195,7 +195,6 @@ extern PGDLLIMPORT WalReceiverFunctionsType *WalReceiverFunctions;
 
 /* prototypes for functions in walreceiver.c */
 extern void WalReceiverMain(void) pg_attribute_noreturn();
-extern Datum pg_stat_get_wal_receiver(PG_FUNCTION_ARGS);
 
 /* prototypes for functions in walreceiverfuncs.c */
 extern Size WalRcvShmemSize(void);

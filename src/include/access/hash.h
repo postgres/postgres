@@ -258,7 +258,6 @@ typedef HashMetaPageData *HashMetaPage;
 
 /* public routines */
 
-extern Datum hashhandler(PG_FUNCTION_ARGS);
 extern IndexBuildResult *hashbuild(Relation heap, Relation index,
 		  struct IndexInfo *indexInfo);
 extern void hashbuildempty(Relation index);
@@ -280,27 +279,6 @@ extern IndexBulkDeleteResult *hashvacuumcleanup(IndexVacuumInfo *info,
 extern bytea *hashoptions(Datum reloptions, bool validate);
 extern bool hashvalidate(Oid opclassoid);
 
-/*
- * Datatype-specific hash functions in hashfunc.c.
- *
- * These support both hash indexes and hash joins.
- *
- * NOTE: some of these are also used by catcache operations, without
- * any direct connection to hash indexes.  Also, the common hash_any
- * routine is also used by dynahash tables.
- */
-extern Datum hashchar(PG_FUNCTION_ARGS);
-extern Datum hashint2(PG_FUNCTION_ARGS);
-extern Datum hashint4(PG_FUNCTION_ARGS);
-extern Datum hashint8(PG_FUNCTION_ARGS);
-extern Datum hashoid(PG_FUNCTION_ARGS);
-extern Datum hashenum(PG_FUNCTION_ARGS);
-extern Datum hashfloat4(PG_FUNCTION_ARGS);
-extern Datum hashfloat8(PG_FUNCTION_ARGS);
-extern Datum hashoidvector(PG_FUNCTION_ARGS);
-extern Datum hashname(PG_FUNCTION_ARGS);
-extern Datum hashtext(PG_FUNCTION_ARGS);
-extern Datum hashvarlena(PG_FUNCTION_ARGS);
 extern Datum hash_any(register const unsigned char *k, register int keylen);
 extern Datum hash_uint32(uint32 k);
 

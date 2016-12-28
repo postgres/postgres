@@ -30,6 +30,7 @@
 #include "postmaster/autovacuum.h"
 #include "storage/indexfsm.h"
 #include "storage/lmgr.h"
+#include "utils/builtins.h"
 
 /* GUC parameter */
 int			gin_pending_list_limit = 0;

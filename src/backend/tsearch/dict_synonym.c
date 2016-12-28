@@ -16,6 +16,7 @@
 #include "commands/defrem.h"
 #include "tsearch/ts_locale.h"
 #include "tsearch/ts_utils.h"
+#include "utils/builtins.h"
 
 typedef struct
 {

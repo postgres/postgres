@@ -16,12 +16,6 @@
 
 
 /*
- * prototypes for functions in brin.c (external entry points for BRIN)
- */
-extern Datum brinhandler(PG_FUNCTION_ARGS);
-extern Datum brin_summarize_new_values(PG_FUNCTION_ARGS);
-
-/*
  * Storage type for BRIN's reloptions
  */
 typedef struct BrinOptions

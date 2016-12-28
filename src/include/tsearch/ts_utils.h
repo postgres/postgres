@@ -184,51 +184,6 @@ extern bool tsquery_requires_match(QueryItem *curitem);
 extern TSVector make_tsvector(ParsedText *prs);
 extern int32 tsCompareString(char *a, int lena, char *b, int lenb, bool prefix);
 
-extern Datum to_tsvector_byid(PG_FUNCTION_ARGS);
-extern Datum to_tsvector(PG_FUNCTION_ARGS);
-extern Datum to_tsquery_byid(PG_FUNCTION_ARGS);
-extern Datum to_tsquery(PG_FUNCTION_ARGS);
-extern Datum plainto_tsquery_byid(PG_FUNCTION_ARGS);
-extern Datum plainto_tsquery(PG_FUNCTION_ARGS);
-extern Datum phraseto_tsquery_byid(PG_FUNCTION_ARGS);
-extern Datum phraseto_tsquery(PG_FUNCTION_ARGS);
-
-/*
- * GiST support function
- */
-
-extern Datum gtsvector_compress(PG_FUNCTION_ARGS);
-extern Datum gtsvector_decompress(PG_FUNCTION_ARGS);
-extern Datum gtsvector_consistent(PG_FUNCTION_ARGS);
-extern Datum gtsvector_union(PG_FUNCTION_ARGS);
-extern Datum gtsvector_same(PG_FUNCTION_ARGS);
-extern Datum gtsvector_penalty(PG_FUNCTION_ARGS);
-extern Datum gtsvector_picksplit(PG_FUNCTION_ARGS);
-extern Datum gtsvector_consistent_oldsig(PG_FUNCTION_ARGS);
-
-/*
- * IO functions for pseudotype gtsvector
- * used internally in tsvector GiST opclass
- */
-extern Datum gtsvectorin(PG_FUNCTION_ARGS);
-extern Datum gtsvectorout(PG_FUNCTION_ARGS);
-
-/*
- * GIN support function
- */
-
-extern Datum gin_extract_tsvector(PG_FUNCTION_ARGS);
-extern Datum gin_cmp_tslexeme(PG_FUNCTION_ARGS);
-extern Datum gin_cmp_prefix(PG_FUNCTION_ARGS);
-extern Datum gin_extract_tsquery(PG_FUNCTION_ARGS);
-extern Datum gin_tsquery_consistent(PG_FUNCTION_ARGS);
-extern Datum gin_tsquery_triconsistent(PG_FUNCTION_ARGS);
-extern Datum gin_extract_tsvector_2args(PG_FUNCTION_ARGS);
-extern Datum gin_extract_tsquery_5args(PG_FUNCTION_ARGS);
-extern Datum gin_tsquery_consistent_6args(PG_FUNCTION_ARGS);
-extern Datum gin_extract_tsquery_oldsig(PG_FUNCTION_ARGS);
-extern Datum gin_tsquery_consistent_oldsig(PG_FUNCTION_ARGS);
-
 /*
  * Possible strategy numbers for indexes
  *	  TSearchStrategyNumber  - (tsvector|text) @@ tsquery
@@ -281,77 +236,5 @@ extern bool QTNEq(QTNode *a, QTNode *b);
 extern TSQuerySign makeTSQuerySign(TSQuery a);
 extern QTNode *findsubquery(QTNode *root, QTNode *ex, QTNode *subs,
 			 bool *isfind);
-
-/*
- * TSQuery GiST support
- */
-extern Datum gtsquery_compress(PG_FUNCTION_ARGS);
-extern Datum gtsquery_decompress(PG_FUNCTION_ARGS);
-extern Datum gtsquery_consistent(PG_FUNCTION_ARGS);
-extern Datum gtsquery_union(PG_FUNCTION_ARGS);
-extern Datum gtsquery_same(PG_FUNCTION_ARGS);
-extern Datum gtsquery_penalty(PG_FUNCTION_ARGS);
-extern Datum gtsquery_picksplit(PG_FUNCTION_ARGS);
-extern Datum gtsquery_consistent_oldsig(PG_FUNCTION_ARGS);
-
-/*
- * Parser interface to SQL
- */
-extern Datum ts_token_type_byid(PG_FUNCTION_ARGS);
-extern Datum ts_token_type_byname(PG_FUNCTION_ARGS);
-extern Datum ts_parse_byid(PG_FUNCTION_ARGS);
-extern Datum ts_parse_byname(PG_FUNCTION_ARGS);
-
-/*
- * Default word parser
- */
-
-extern Datum prsd_start(PG_FUNCTION_ARGS);
-extern Datum prsd_nexttoken(PG_FUNCTION_ARGS);
-extern Datum prsd_end(PG_FUNCTION_ARGS);
-extern Datum prsd_headline(PG_FUNCTION_ARGS);
-extern Datum prsd_lextype(PG_FUNCTION_ARGS);
-
-/*
- * Dictionary interface to SQL
- */
-extern Datum ts_lexize(PG_FUNCTION_ARGS);
-
-/*
- * Simple built-in dictionary
- */
-extern Datum dsimple_init(PG_FUNCTION_ARGS);
-extern Datum dsimple_lexize(PG_FUNCTION_ARGS);
-
-/*
- * Synonym built-in dictionary
- */
-extern Datum dsynonym_init(PG_FUNCTION_ARGS);
-extern Datum dsynonym_lexize(PG_FUNCTION_ARGS);
-
-/*
- * ISpell dictionary
- */
-extern Datum dispell_init(PG_FUNCTION_ARGS);
-extern Datum dispell_lexize(PG_FUNCTION_ARGS);
-
-/*
- * Thesaurus
- */
-extern Datum thesaurus_init(PG_FUNCTION_ARGS);
-extern Datum thesaurus_lexize(PG_FUNCTION_ARGS);
-
-/*
- * headline
- */
-extern Datum ts_headline_byid_opt(PG_FUNCTION_ARGS);
-extern Datum ts_headline_byid(PG_FUNCTION_ARGS);
-extern Datum ts_headline(PG_FUNCTION_ARGS);
-extern Datum ts_headline_opt(PG_FUNCTION_ARGS);
-
-/*
- * current cfg
- */
-extern Datum get_current_ts_config(PG_FUNCTION_ARGS);
 
 #endif   /* _PG_TS_UTILS_H_ */

@@ -14,37 +14,6 @@
 #ifndef BE_FSSTUBS_H
 #define BE_FSSTUBS_H
 
-#include "fmgr.h"
-
-/*
- * LO functions available via pg_proc entries
- */
-extern Datum be_lo_import(PG_FUNCTION_ARGS);
-extern Datum be_lo_import_with_oid(PG_FUNCTION_ARGS);
-extern Datum be_lo_export(PG_FUNCTION_ARGS);
-
-extern Datum be_lo_creat(PG_FUNCTION_ARGS);
-extern Datum be_lo_create(PG_FUNCTION_ARGS);
-extern Datum be_lo_from_bytea(PG_FUNCTION_ARGS);
-
-extern Datum be_lo_open(PG_FUNCTION_ARGS);
-extern Datum be_lo_close(PG_FUNCTION_ARGS);
-
-extern Datum be_loread(PG_FUNCTION_ARGS);
-extern Datum be_lowrite(PG_FUNCTION_ARGS);
-
-extern Datum be_lo_get(PG_FUNCTION_ARGS);
-extern Datum be_lo_get_fragment(PG_FUNCTION_ARGS);
-extern Datum be_lo_put(PG_FUNCTION_ARGS);
-
-extern Datum be_lo_lseek(PG_FUNCTION_ARGS);
-extern Datum be_lo_tell(PG_FUNCTION_ARGS);
-extern Datum be_lo_lseek64(PG_FUNCTION_ARGS);
-extern Datum be_lo_tell64(PG_FUNCTION_ARGS);
-extern Datum be_lo_unlink(PG_FUNCTION_ARGS);
-extern Datum be_lo_truncate(PG_FUNCTION_ARGS);
-extern Datum be_lo_truncate64(PG_FUNCTION_ARGS);
-
 /*
  * compatibility option for access control
  */

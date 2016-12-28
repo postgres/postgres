@@ -203,6 +203,4 @@ typedef struct IndexAmRoutine
 extern IndexAmRoutine *GetIndexAmRoutine(Oid amhandler);
 extern IndexAmRoutine *GetIndexAmRoutineByAmId(Oid amoid, bool noerror);
 
-extern Datum amvalidate(PG_FUNCTION_ARGS);
-
 #endif   /* AMAPI_H */

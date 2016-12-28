@@ -43,13 +43,6 @@
 #include "utils/datum.h"
 #include "utils/rangetypes.h"
 
-/* SP-GiST API functions */
-Datum		spg_range_quad_config(PG_FUNCTION_ARGS);
-Datum		spg_range_quad_choose(PG_FUNCTION_ARGS);
-Datum		spg_range_quad_picksplit(PG_FUNCTION_ARGS);
-Datum		spg_range_quad_inner_consistent(PG_FUNCTION_ARGS);
-Datum		spg_range_quad_leaf_consistent(PG_FUNCTION_ARGS);
-
 static int16 getQuadrant(TypeCacheEntry *typcache, RangeType *centroid,
 			RangeType *tst);
 static int	bound_cmp(const void *a, const void *b, void *arg);

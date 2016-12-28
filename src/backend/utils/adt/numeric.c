@@ -3110,7 +3110,11 @@ numeric_float8(PG_FUNCTION_ARGS)
 }
 
 
-/* Convert numeric to float8; if out of range, return +/- HUGE_VAL */
+/*
+ * Convert numeric to float8; if out of range, return +/- HUGE_VAL
+ *
+ * (internal helper function, not directly callable from SQL)
+ */
 Datum
 numeric_float8_no_overflow(PG_FUNCTION_ARGS)
 {

@@ -25,6 +25,7 @@
 #include "commands/vacuum.h"
 #include "miscadmin.h"
 #include "optimizer/plancat.h"
+#include "utils/builtins.h"
 #include "utils/index_selfuncs.h"
 #include "utils/rel.h"
 

@@ -19,8 +19,8 @@ OH, me, I'm Terry Mackintosh <terry@terrym.com>
 #include "catalog/pg_type.h"
 #include "executor/spi.h"
 #include "commands/trigger.h"
+#include "utils/builtins.h"
 #include "utils/rel.h"
-#include "utils/timestamp.h"
 
 PG_MODULE_MAGIC;
 

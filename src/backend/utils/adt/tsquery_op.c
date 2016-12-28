@@ -15,6 +15,7 @@
 #include "postgres.h"
 
 #include "tsearch/ts_utils.h"
+#include "utils/builtins.h"
 
 Datum
 tsquery_numnode(PG_FUNCTION_ARGS)

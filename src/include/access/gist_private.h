@@ -423,7 +423,6 @@ typedef struct GiSTOptions
 } GiSTOptions;
 
 /* gist.c */
-extern Datum gisthandler(PG_FUNCTION_ARGS);
 extern void gistbuildempty(Relation index);
 extern bool gistinsert(Relation r, Datum *values, bool *isnull,
 		   ItemPointer ht_ctid, Relation heapRel,

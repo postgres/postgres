@@ -71,18 +71,4 @@ const char *replorigin_identify(uint8 info);
 extern Size ReplicationOriginShmemSize(void);
 extern void ReplicationOriginShmemInit(void);
 
-/* SQL callable functions */
-extern Datum pg_replication_origin_create(PG_FUNCTION_ARGS);
-extern Datum pg_replication_origin_drop(PG_FUNCTION_ARGS);
-extern Datum pg_replication_origin_oid(PG_FUNCTION_ARGS);
-extern Datum pg_replication_origin_session_setup(PG_FUNCTION_ARGS);
-extern Datum pg_replication_origin_session_reset(PG_FUNCTION_ARGS);
-extern Datum pg_replication_origin_session_is_setup(PG_FUNCTION_ARGS);
-extern Datum pg_replication_origin_session_progress(PG_FUNCTION_ARGS);
-extern Datum pg_replication_origin_xact_setup(PG_FUNCTION_ARGS);
-extern Datum pg_replication_origin_xact_reset(PG_FUNCTION_ARGS);
-extern Datum pg_replication_origin_advance(PG_FUNCTION_ARGS);
-extern Datum pg_replication_origin_progress(PG_FUNCTION_ARGS);
-extern Datum pg_show_replication_origin_status(PG_FUNCTION_ARGS);
-
 #endif   /* PG_ORIGIN_H */

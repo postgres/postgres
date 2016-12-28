@@ -139,8 +139,8 @@ storage/lmgr/lwlocknames.h: storage/lmgr/generate-lwlocknames.pl storage/lmgr/lw
 utils/errcodes.h: utils/generate-errcodes.pl utils/errcodes.txt
 	$(MAKE) -C utils errcodes.h
 
-utils/fmgroids.h: utils/Gen_fmgrtab.pl catalog/Catalog.pm $(top_srcdir)/src/include/catalog/pg_proc.h
-	$(MAKE) -C utils fmgroids.h
+utils/fmgroids.h utils/fmgrprotos.h: utils/Gen_fmgrtab.pl catalog/Catalog.pm $(top_srcdir)/src/include/catalog/pg_proc.h
+	$(MAKE) -C utils $(notdir $@)
 
 utils/probes.h: utils/probes.d
 	$(MAKE) -C utils probes.h
@@ -166,7 +166,7 @@ submake-schemapg:
 
 .PHONY: generated-headers
 
-generated-headers: $(top_builddir)/src/include/parser/gram.h $(top_builddir)/src/include/catalog/schemapg.h $(top_builddir)/src/include/storage/lwlocknames.h $(top_builddir)/src/include/utils/errcodes.h $(top_builddir)/src/include/utils/fmgroids.h $(top_builddir)/src/include/utils/probes.h
+generated-headers: $(top_builddir)/src/include/parser/gram.h $(top_builddir)/src/include/catalog/schemapg.h $(top_builddir)/src/include/storage/lwlocknames.h $(top_builddir)/src/include/utils/errcodes.h $(top_builddir)/src/include/utils/fmgroids.h $(top_builddir)/src/include/utils/fmgrprotos.h $(top_builddir)/src/include/utils/probes.h
 
 $(top_builddir)/src/include/parser/gram.h: parser/gram.h
 	prereqdir=`cd '$(dir $<)' >/dev/null && pwd` && \
@@ -193,6 +193,11 @@ $(top_builddir)/src/include/utils/fmgroids.h: utils/fmgroids.h
 	  cd '$(dir $@)' && rm -f $(notdir $@) && \
 	  $(LN_S) "$$prereqdir/$(notdir $<)" .
 
+$(top_builddir)/src/include/utils/fmgrprotos.h: utils/fmgrprotos.h
+	prereqdir=`cd '$(dir $<)' >/dev/null && pwd` && \
+	  cd '$(dir $@)' && rm -f $(notdir $@) && \
+	  $(LN_S) "$$prereqdir/$(notdir $<)" .
+
 $(top_builddir)/src/include/utils/probes.h: utils/probes.h
 	cd '$(dir $@)' && rm -f $(notdir $@) && \
 	    $(LN_S) "../../../$(subdir)/utils/probes.h" .
@@ -211,7 +216,7 @@ distprep:
 	$(MAKE) -C catalog	schemapg.h postgres.bki postgres.description postgres.shdescription
 	$(MAKE) -C replication	repl_gram.c repl_scanner.c syncrep_gram.c syncrep_scanner.c
 	$(MAKE) -C storage/lmgr	lwlocknames.h
-	$(MAKE) -C utils	fmgrtab.c fmgroids.h errcodes.h
+	$(MAKE) -C utils	fmgrtab.c fmgroids.h fmgrprotos.h errcodes.h
 	$(MAKE) -C utils/misc	guc-file.c
 	$(MAKE) -C utils/sort	qsort_tuple.c
 
@@ -303,6 +308,7 @@ clean:
 		$(top_builddir)/src/include/catalog/schemapg.h \
 		$(top_builddir)/src/include/storage/lwlocknames.h \
 		$(top_builddir)/src/include/utils/fmgroids.h \
+		$(top_builddir)/src/include/utils/fmgrprotos.h \
 		$(top_builddir)/src/include/utils/probes.h
 ifeq ($(PORTNAME), cygwin)
 	rm -f postgres.dll libpostgres.a
@@ -331,6 +337,7 @@ maintainer-clean: distclean
 	      storage/lmgr/lwlocknames.c \
 	      storage/lmgr/lwlocknames.h \
 	      utils/fmgroids.h \
+	      utils/fmgrprotos.h \
 	      utils/fmgrtab.c \
 	      utils/errcodes.h \
 	      utils/misc/guc-file.c \

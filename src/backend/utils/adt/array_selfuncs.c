@@ -22,6 +22,7 @@
 #include "catalog/pg_statistic.h"
 #include "optimizer/clauses.h"
 #include "utils/array.h"
+#include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/selfuncs.h"
 #include "utils/typcache.h"

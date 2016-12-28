@@ -28,10 +28,6 @@
 #include "utils/syscache.h"
 
 
-extern Datum pg_options_to_table(PG_FUNCTION_ARGS);
-extern Datum postgresql_fdw_validator(PG_FUNCTION_ARGS);
-
-
 /*
  * GetForeignDataWrapper -	look up the foreign-data wrapper by OID.
  */

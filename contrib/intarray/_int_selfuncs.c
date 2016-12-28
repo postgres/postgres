@@ -19,6 +19,7 @@
 #include "catalog/pg_operator.h"
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
+#include "utils/builtins.h"
 #include "utils/selfuncs.h"
 #include "utils/syscache.h"
 #include "utils/lsyscache.h"

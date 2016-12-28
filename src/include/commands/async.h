@@ -38,11 +38,6 @@ extern void Async_Listen(const char *channel);
 extern void Async_Unlisten(const char *channel);
 extern void Async_UnlistenAll(void);
 
-/* notify-related SQL functions */
-extern Datum pg_listening_channels(PG_FUNCTION_ARGS);
-extern Datum pg_notify(PG_FUNCTION_ARGS);
-extern Datum pg_notification_queue_usage(PG_FUNCTION_ARGS);
-
 /* perform (or cancel) outbound notify processing at transaction commit */
 extern void PreCommit_Notify(void);
 extern void AtCommit_Notify(void);

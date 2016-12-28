@@ -18,6 +18,7 @@
 #include "catalog/pg_collation.h"
 #include "commands/vacuum.h"
 #include "utils/array.h"
+#include "utils/builtins.h"
 #include "utils/datum.h"
 #include "utils/lsyscache.h"
 #include "utils/typcache.h"

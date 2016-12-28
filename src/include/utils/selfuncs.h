@@ -180,32 +180,6 @@ extern Pattern_Prefix_Status pattern_fixed_prefix(Const *patt,
 extern Const *make_greater_string(const Const *str_const, FmgrInfo *ltproc,
 					Oid collation);
 
-extern Datum eqsel(PG_FUNCTION_ARGS);
-extern Datum neqsel(PG_FUNCTION_ARGS);
-extern Datum scalarltsel(PG_FUNCTION_ARGS);
-extern Datum scalargtsel(PG_FUNCTION_ARGS);
-extern Datum regexeqsel(PG_FUNCTION_ARGS);
-extern Datum icregexeqsel(PG_FUNCTION_ARGS);
-extern Datum likesel(PG_FUNCTION_ARGS);
-extern Datum iclikesel(PG_FUNCTION_ARGS);
-extern Datum regexnesel(PG_FUNCTION_ARGS);
-extern Datum icregexnesel(PG_FUNCTION_ARGS);
-extern Datum nlikesel(PG_FUNCTION_ARGS);
-extern Datum icnlikesel(PG_FUNCTION_ARGS);
-
-extern Datum eqjoinsel(PG_FUNCTION_ARGS);
-extern Datum neqjoinsel(PG_FUNCTION_ARGS);
-extern Datum scalarltjoinsel(PG_FUNCTION_ARGS);
-extern Datum scalargtjoinsel(PG_FUNCTION_ARGS);
-extern Datum regexeqjoinsel(PG_FUNCTION_ARGS);
-extern Datum icregexeqjoinsel(PG_FUNCTION_ARGS);
-extern Datum likejoinsel(PG_FUNCTION_ARGS);
-extern Datum iclikejoinsel(PG_FUNCTION_ARGS);
-extern Datum regexnejoinsel(PG_FUNCTION_ARGS);
-extern Datum icregexnejoinsel(PG_FUNCTION_ARGS);
-extern Datum nlikejoinsel(PG_FUNCTION_ARGS);
-extern Datum icnlikejoinsel(PG_FUNCTION_ARGS);
-
 extern Selectivity boolvarsel(PlannerInfo *root, Node *arg, int varRelid);
 extern Selectivity booltestsel(PlannerInfo *root, BoolTestType booltesttype,
 			Node *arg, int varRelid,
@@ -245,7 +219,5 @@ extern Selectivity scalararraysel_containment(PlannerInfo *root,
 						   Node *leftop, Node *rightop,
 						   Oid elemtype, bool isEquality, bool useOr,
 						   int varRelid);
-extern Datum arraycontsel(PG_FUNCTION_ARGS);
-extern Datum arraycontjoinsel(PG_FUNCTION_ARGS);
 
 #endif   /* SELFUNCS_H */

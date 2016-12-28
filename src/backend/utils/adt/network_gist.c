@@ -49,6 +49,7 @@
 
 #include "access/gist.h"
 #include "access/stratnum.h"
+#include "utils/builtins.h"
 #include "utils/inet.h"
 
 /*

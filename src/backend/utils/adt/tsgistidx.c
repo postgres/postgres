@@ -17,6 +17,7 @@
 #include "access/gist.h"
 #include "access/tuptoaster.h"
 #include "tsearch/ts_utils.h"
+#include "utils/builtins.h"
 #include "utils/pg_crc.h"
 
 

@@ -22,6 +22,7 @@
 #include "storage/bufmgr.h"
 #include "storage/indexfsm.h"
 #include "storage/lmgr.h"
+#include "utils/builtins.h"
 #include "utils/index_selfuncs.h"
 #include "utils/lsyscache.h"
 

@@ -22,6 +22,7 @@
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "storage/predicate.h"
+#include "utils/builtins.h"
 #include "utils/rel.h"
 #include "utils/tqual.h"
 

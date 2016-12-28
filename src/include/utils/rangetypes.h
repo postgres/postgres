@@ -92,44 +92,7 @@ typedef struct
  * prototypes for functions defined in rangetypes.c
  */
 
-/* I/O */
-extern Datum range_in(PG_FUNCTION_ARGS);
-extern Datum range_out(PG_FUNCTION_ARGS);
-extern Datum range_recv(PG_FUNCTION_ARGS);
-extern Datum range_send(PG_FUNCTION_ARGS);
-
-/* constructors */
-extern Datum range_constructor2(PG_FUNCTION_ARGS);
-extern Datum range_constructor3(PG_FUNCTION_ARGS);
-
-/* range -> subtype */
-extern Datum range_lower(PG_FUNCTION_ARGS);
-extern Datum range_upper(PG_FUNCTION_ARGS);
-
-/* range -> bool */
-extern Datum range_empty(PG_FUNCTION_ARGS);
-extern Datum range_lower_inc(PG_FUNCTION_ARGS);
-extern Datum range_upper_inc(PG_FUNCTION_ARGS);
-extern Datum range_lower_inf(PG_FUNCTION_ARGS);
-extern Datum range_upper_inf(PG_FUNCTION_ARGS);
-
-/* range, element -> bool */
-extern Datum range_contains_elem(PG_FUNCTION_ARGS);
-extern Datum elem_contained_by_range(PG_FUNCTION_ARGS);
-
 extern bool range_contains_elem_internal(TypeCacheEntry *typcache, RangeType *r, Datum val);
-
-/* range, range -> bool */
-extern Datum range_eq(PG_FUNCTION_ARGS);
-extern Datum range_ne(PG_FUNCTION_ARGS);
-extern Datum range_contains(PG_FUNCTION_ARGS);
-extern Datum range_contained_by(PG_FUNCTION_ARGS);
-extern Datum range_before(PG_FUNCTION_ARGS);
-extern Datum range_after(PG_FUNCTION_ARGS);
-extern Datum range_adjacent(PG_FUNCTION_ARGS);
-extern Datum range_overlaps(PG_FUNCTION_ARGS);
-extern Datum range_overleft(PG_FUNCTION_ARGS);
-extern Datum range_overright(PG_FUNCTION_ARGS);
 
 /* internal versions of the above */
 extern bool range_eq_internal(TypeCacheEntry *typcache, RangeType *r1,
@@ -153,38 +116,6 @@ extern bool range_overleft_internal(TypeCacheEntry *typcache, RangeType *r1,
 extern bool range_overright_internal(TypeCacheEntry *typcache, RangeType *r1,
 						 RangeType *r2);
 
-/* range, range -> range */
-extern Datum range_minus(PG_FUNCTION_ARGS);
-extern Datum range_union(PG_FUNCTION_ARGS);
-extern Datum range_intersect(PG_FUNCTION_ARGS);
-
-/* BTree support */
-extern Datum range_cmp(PG_FUNCTION_ARGS);
-extern Datum range_lt(PG_FUNCTION_ARGS);
-extern Datum range_le(PG_FUNCTION_ARGS);
-extern Datum range_ge(PG_FUNCTION_ARGS);
-extern Datum range_gt(PG_FUNCTION_ARGS);
-
-/* Hash support */
-extern Datum hash_range(PG_FUNCTION_ARGS);
-
-/* ANALYZE support */
-extern Datum range_typanalyze(PG_FUNCTION_ARGS);
-extern Datum rangesel(PG_FUNCTION_ARGS);
-
-/* Canonical functions */
-extern Datum int4range_canonical(PG_FUNCTION_ARGS);
-extern Datum int8range_canonical(PG_FUNCTION_ARGS);
-extern Datum daterange_canonical(PG_FUNCTION_ARGS);
-
-/* Subtype Difference functions */
-extern Datum int4range_subdiff(PG_FUNCTION_ARGS);
-extern Datum int8range_subdiff(PG_FUNCTION_ARGS);
-extern Datum numrange_subdiff(PG_FUNCTION_ARGS);
-extern Datum daterange_subdiff(PG_FUNCTION_ARGS);
-extern Datum tsrange_subdiff(PG_FUNCTION_ARGS);
-extern Datum tstzrange_subdiff(PG_FUNCTION_ARGS);
-
 /* assorted support functions */
 extern TypeCacheEntry *range_get_typcache(FunctionCallInfo fcinfo,
 				   Oid rngtypid);
@@ -204,16 +135,5 @@ extern int range_cmp_bound_values(TypeCacheEntry *typcache, RangeBound *b1,
 extern bool bounds_adjacent(TypeCacheEntry *typcache, RangeBound bound1,
 				RangeBound bound2);
 extern RangeType *make_empty_range(TypeCacheEntry *typcache);
-
-/* GiST support (in rangetypes_gist.c) */
-extern Datum range_gist_consistent(PG_FUNCTION_ARGS);
-extern Datum range_gist_compress(PG_FUNCTION_ARGS);
-extern Datum range_gist_decompress(PG_FUNCTION_ARGS);
-extern Datum range_gist_fetch(PG_FUNCTION_ARGS);
-extern Datum range_gist_union(PG_FUNCTION_ARGS);
-extern Datum range_merge(PG_FUNCTION_ARGS);
-extern Datum range_gist_penalty(PG_FUNCTION_ARGS);
-extern Datum range_gist_picksplit(PG_FUNCTION_ARGS);
-extern Datum range_gist_same(PG_FUNCTION_ARGS);
 
 #endif   /* RANGETYPES_H */

@@ -41,10 +41,6 @@
 #include "utils/syscache.h"
 
 
-Datum		fmgr_internal_validator(PG_FUNCTION_ARGS);
-Datum		fmgr_c_validator(PG_FUNCTION_ARGS);
-Datum		fmgr_sql_validator(PG_FUNCTION_ARGS);
-
 typedef struct
 {
 	char	   *proname;

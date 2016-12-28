@@ -45,6 +45,7 @@ install: all installdirs
 	$(INSTALL_DATA) pg_config_os.h  '$(DESTDIR)$(includedir_server)'
 	$(INSTALL_DATA) utils/errcodes.h '$(DESTDIR)$(includedir_server)/utils'
 	$(INSTALL_DATA) utils/fmgroids.h '$(DESTDIR)$(includedir_server)/utils'
+	$(INSTALL_DATA) utils/fmgrprotos.h '$(DESTDIR)$(includedir_server)/utils'
 # We don't use INSTALL_DATA for performance reasons --- there are a lot of files
 	cp $(srcdir)/*.h '$(DESTDIR)$(includedir_server)'/ || exit; \
 	chmod $(INSTALL_DATA_MODE) '$(DESTDIR)$(includedir_server)'/*.h  || exit; \
@@ -72,7 +73,7 @@ uninstall:
 
 
 clean:
-	rm -f utils/fmgroids.h utils/errcodes.h parser/gram.h utils/probes.h catalog/schemapg.h
+	rm -f utils/fmgroids.h utils/fmgrprotos.h utils/errcodes.h parser/gram.h utils/probes.h catalog/schemapg.h
 
 distclean maintainer-clean: clean
 	rm -f pg_config.h pg_config_ext.h pg_config_os.h dynloader.h stamp-h stamp-ext-h

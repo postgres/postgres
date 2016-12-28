@@ -18,6 +18,7 @@
 
 #include "tsearch/ts_utils.h"
 #include "utils/array.h"
+#include "utils/builtins.h"
 #include "miscadmin.h"
 
 
