@@ -2424,7 +2424,8 @@ typedef struct CreateOpClassItem
 	List	   *args;			/* argument types */
 	int			number;			/* strategy num or support proc num */
 	List	   *order_family;	/* only used for ordering operators */
-	List	   *class_args;		/* only used for functions */
+	List	   *class_args;		/* amproclefttype/amprocrighttype or
+								 * amoplefttype/amoprighttype */
 	/* fields used for a storagetype item: */
 	TypeName   *storedtype;		/* datatype stored in index */
 } CreateOpClassItem;

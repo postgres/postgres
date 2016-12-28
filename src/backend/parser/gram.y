@@ -5910,7 +5910,7 @@ opclass_drop:
 					CreateOpClassItem *n = makeNode(CreateOpClassItem);
 					n->itemtype = OPCLASS_ITEM_OPERATOR;
 					n->number = $2;
-					n->args = $4;
+					n->class_args = $4;
 					$$ = (Node *) n;
 				}
 			| FUNCTION Iconst '(' type_list ')'
@@ -5918,7 +5918,7 @@ opclass_drop:
 					CreateOpClassItem *n = makeNode(CreateOpClassItem);
 					n->itemtype = OPCLASS_ITEM_FUNCTION;
 					n->number = $2;
-					n->args = $4;
+					n->class_args = $4;
 					$$ = (Node *) n;
 				}
 		;

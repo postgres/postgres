@@ -989,7 +989,7 @@ AlterOpFamilyDrop(AlterOpFamilyStmt *stmt, Oid amoid, Oid opfamilyoid,
 							 errmsg("invalid operator number %d,"
 									" must be between 1 and %d",
 									item->number, maxOpNumber)));
-				processTypesSpec(item->args, &lefttype, &righttype);
+				processTypesSpec(item->class_args, &lefttype, &righttype);
 				/* Save the info */
 				member = (OpFamilyMember *) palloc0(sizeof(OpFamilyMember));
 				member->number = item->number;
@@ -1004,7 +1004,7 @@ AlterOpFamilyDrop(AlterOpFamilyStmt *stmt, Oid amoid, Oid opfamilyoid,
 							 errmsg("invalid procedure number %d,"
 									" must be between 1 and %d",
 									item->number, maxProcNumber)));
-				processTypesSpec(item->args, &lefttype, &righttype);
+				processTypesSpec(item->class_args, &lefttype, &righttype);
 				/* Save the info */
 				member = (OpFamilyMember *) palloc0(sizeof(OpFamilyMember));
 				member->number = item->number;
