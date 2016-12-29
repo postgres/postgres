@@ -1604,7 +1604,7 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 	 * execute if the user attempts to create a table with hundreds of
 	 * thousands of columns.
 	 *
-	 * Note that we also need to check that any we do not exceed this figure
+	 * Note that we also need to check that we do not exceed this figure
 	 * after including columns from inherited relations.
 	 */
 	if (list_length(schema) > MaxHeapAttributeNumber)
