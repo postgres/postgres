@@ -314,7 +314,8 @@ from pg_attribute
 where attname = 'a'
  and (attrelid = 'p'::regclass
    or attrelid = 'p1'::regclass
-   or attrelid = 'p11'::regclass);
+   or attrelid = 'p11'::regclass)
+order by attrelid::regclass::text;
  attrelid | attname | attnum 
 ----------+---------+--------
  p        | a       |      1
@@ -333,7 +334,4 @@ select tableoid::regclass, * from p;
 (1 row)
 
 -- cleanup
-drop table p cascade;
-NOTICE:  drop cascades to 2 other objects
-DETAIL:  drop cascades to table p1
-drop cascades to table p11
+drop table p, p1, p11;

@@ -185,7 +185,8 @@ from pg_attribute
 where attname = 'a'
  and (attrelid = 'p'::regclass
    or attrelid = 'p1'::regclass
-   or attrelid = 'p11'::regclass);
+   or attrelid = 'p11'::regclass)
+order by attrelid::regclass::text;
 
 alter table p1 attach partition p11 for values from (2) to (5);
 alter table p attach partition p1 for values from (1, 2) to (1, 10);
@@ -195,4 +196,4 @@ insert into p values (1, 2);
 select tableoid::regclass, * from p;
 
 -- cleanup
-drop table p cascade;
+drop table p, p1, p11;
