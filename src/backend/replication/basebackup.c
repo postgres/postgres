@@ -1281,7 +1281,6 @@ throttle(size_t increment)
 	int64		elapsed,
 				elapsed_min,
 				sleep;
-	int			wait_result;
 
 	if (throttling_counter < 0)
 		return;
@@ -1304,9 +1303,9 @@ throttle(size_t increment)
 		 * (TAR_SEND_SIZE / throttling_sample * elapsed_min_unit) should be
 		 * the maximum time to sleep. Thus the cast to long is safe.
 		 */
-		wait_result = WaitLatch(&MyWalSnd->latch,
-							 WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
-								(long) (sleep / 1000));
+		WaitLatch(&MyWalSnd->latch,
+				  WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
+				  (long) (sleep / 1000));
 	}
 
 	/*
