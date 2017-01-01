@@ -2483,27 +2483,23 @@ doLog(TState *thread, CState *st, instr_time *now,
 	else
 	{
 		/* no, print raw transactions */
-#ifndef WIN32
+		struct timeval tv;
 
-		/* This is more than we really ought to know about instr_time */
+		/*
+		 * We print the current system timestamp in the log, so that entries
+		 * can be correlated against other logs.  On some platforms this is
+		 * available in *now, but rather than get entangled with that, we just
+		 * eat the cost of an extra syscall in all cases.
+		 */
+		gettimeofday(&tv, NULL);
 		if (skipped)
 			fprintf(logfile, "%d " INT64_FORMAT " skipped %d %ld %ld",
 					st->id, st->cnt, st->use_file,
-					(long) now->tv_sec, (long) now->tv_usec);
+					(long) tv.tv_sec, (long) tv.tv_usec);
 		else
 			fprintf(logfile, "%d " INT64_FORMAT " %.0f %d %ld %ld",
 					st->id, st->cnt, latency, st->use_file,
-					(long) now->tv_sec, (long) now->tv_usec);
-#else
-
-		/* On Windows, instr_time doesn't provide a timestamp anyway */
-		if (skipped)
-			fprintf(logfile, "%d " INT64_FORMAT " skipped %d 0 0",
-					st->id, st->cnt, st->use_file);
-		else
-			fprintf(logfile, "%d " INT64_FORMAT " %.0f %d 0 0",
-					st->id, st->cnt, latency, st->use_file);
-#endif
+					(long) tv.tv_sec, (long) tv.tv_usec);
 		if (throttle_delay)
 			fprintf(logfile, " %.0f", lag);
 		fputc('\n', logfile);
@@ -4402,7 +4398,7 @@ threadRun(void *arg)
 	if (use_log)
 	{
 		char		logpath[MAXPGPATH];
-		char		*prefix = logfile_prefix ? logfile_prefix : "pgbench_log";
+		char	   *prefix = logfile_prefix ? logfile_prefix : "pgbench_log";
 
 		if (thread->tid == 0)
 			snprintf(logpath, sizeof(logpath), "%s.%d", prefix, main_pid);
