@@ -355,7 +355,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
       <term><option>--log</option></term>
       <listitem>
        <para>
-        Write the time taken by each transaction to a log file.
+        Write information about each transaction to a log file.
         See below for details.
        </para>
       </listitem>
@@ -572,13 +572,9 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
       <term><option>--aggregate-interval=<replaceable>seconds</></option></term>
       <listitem>
        <para>
-        Length of aggregation interval (in seconds). May be used only together
-        with <application>-l</application> - with this option, the log contains
-        per-interval summary (number of transactions, min/max latency and two
-        additional fields useful for variance estimation).
-       </para>
-       <para>
-        This option is not currently supported on Windows.
+        Length of aggregation interval (in seconds).  May be used only
+        with <option>-l</option> option.  With this option, the log contains
+        per-interval summary data, as described below.
        </para>
       </listitem>
      </varlistentry>
@@ -618,8 +614,8 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
       <term><option>--log-prefix=<replaceable>prefix</></option></term>
       <listitem>
        <para>
-        Set the filename prefix for the transaction log file created by
-        <option>--log</>.  The default is <replaceable>pgbench_log</>.
+        Set the filename prefix for the transaction log files created by
+        <option>--log</>.  The default is <literal>pgbench_log</>.
        </para>
       </listitem>
      </varlistentry>
@@ -1128,38 +1124,44 @@ END;
   <title>Per-Transaction Logging</title>
 
   <para>
-   With the <option>-l</> option but without the <option>--aggregate-interval</option>,
-   <application>pgbench</> writes the time taken by each transaction
+   With the <option>-l</> option (but without
+   the <option>--aggregate-interval</option> option),
+   <application>pgbench</> writes information about each transaction
    to a log file.  The log file will be named
    <filename><replaceable>prefix</>.<replaceable>nnn</></filename>,
    where <replaceable>prefix</> defaults to <literal>pgbench_log</>, and
    <replaceable>nnn</> is the PID of the
-   <application>pgbench</application> process. If the <option>-j</> option is 2 or higher,
-   creating multiple worker threads, each will have its own log file. The first worker will
+   <application>pgbench</application> process.
+   The prefix can be changed by using the <option>--log-prefix</> option.
+   If the <option>-j</> option is 2 or higher, so that there are multiple
+   worker threads, each will have its own log file. The first worker will
    use the same name for its log file as in the standard single worker case.
    The additional log files for the other workers will be named
-   <filename><replaceable>pgbench_log</>.<replaceable>nnn</>.<replaceable>mmm</></filename>,
+   <filename><replaceable>prefix</>.<replaceable>nnn</>.<replaceable>mmm</></filename>,
    where <replaceable>mmm</> is a sequential number for each worker starting
-   with 1.  The prefix can be changed by using the <option>--log-prefix</>
-   option.
+   with 1.
   </para>
 
   <para>
    The format of the log is:
 
 <synopsis>
-<replaceable>client_id</> <replaceable>transaction_no</> <replaceable>time</> <replaceable>script_no</> <replaceable>time_epoch</> <replaceable>time_us</> <optional><replaceable>schedule_lag</replaceable></optional>
+<replaceable>client_id</> <replaceable>transaction_no</> <replaceable>time</> <replaceable>script_no</> <replaceable>time_epoch</> <replaceable>time_us</> <optional> <replaceable>schedule_lag</replaceable> </optional>
 </synopsis>
 
-   where <replaceable>time</> is the total elapsed transaction time in microseconds,
+   where
+   <replaceable>client_id</> indicates which client session ran the transaction,
+   <replaceable>transaction_no</> counts how many transactions have been
+   run by that session,
+   <replaceable>time</> is the total elapsed transaction time in microseconds,
    <replaceable>script_no</> identifies which script file was used (useful when
    multiple scripts were specified with <option>-f</> or <option>-b</>),
    and <replaceable>time_epoch</>/<replaceable>time_us</> are a
-   Unix epoch format time stamp and an offset
+   Unix-epoch time stamp and an offset
    in microseconds (suitable for creating an ISO 8601
    time stamp with fractional seconds) showing when
    the transaction completed.
-   Field <replaceable>schedule_lag</> is the difference between the
+   The <replaceable>schedule_lag</> field is the difference between the
    transaction's scheduled start time, and the time it actually started, in
    microseconds. It is only present when the <option>--rate</> option is used.
    When both <option>--rate</> and <option>--latency-limit</> are used,
@@ -1168,7 +1170,7 @@ END;
   </para>
 
   <para>
-   Here is a snippet of the log file generated:
+   Here is a snippet of a log file generated in a single-client run:
 <screen>
 0 199 2241 0 1175850568 995598
 0 200 2465 0 1175850568 998079
@@ -1176,7 +1178,8 @@ END;
 0 202 2038 0 1175850569 2663
 </screen>
 
-   Another example with --rate=100 and --latency-limit=5 (note the additional
+   Another example with <literal>--rate=100</>
+   and <literal>--latency-limit=5</> (note the additional
    <replaceable>schedule_lag</> column):
 <screen>
 0 81 4621 0 1412881037 912698 3005
@@ -1203,32 +1206,41 @@ END;
   <title>Aggregated Logging</title>
 
   <para>
-   With the <option>--aggregate-interval</option> option, the logs use a bit different format:
+   With the <option>--aggregate-interval</option> option, a different
+   format is used for the log files:
 
 <synopsis>
-<replaceable>interval_start</> <replaceable>num_of_transactions</> <replaceable>latency_sum</> <replaceable>latency_2_sum</> <replaceable>min_latency</> <replaceable>max_latency</> <optional><replaceable>lag_sum</> <replaceable>lag_2_sum</> <replaceable>min_lag</> <replaceable>max_lag</> <optional><replaceable>skipped_transactions</></optional></optional>
+<replaceable>interval_start</> <replaceable>num_transactions</> <replaceable>sum_latency</> <replaceable>sum_latency_2</> <replaceable>min_latency</> <replaceable>max_latency</> <optional> <replaceable>sum_lag</> <replaceable>sum_lag_2</> <replaceable>min_lag</> <replaceable>max_lag</> <optional> <replaceable>skipped</> </optional> </optional>
 </synopsis>
 
-   where <replaceable>interval_start</> is the start of the interval (Unix epoch
-   format time stamp), <replaceable>num_of_transactions</> is the number of transactions
-   within the interval, <replaceable>latency_sum</replaceable> is a sum of latencies
-   (so you can compute average latency easily). The following two fields are useful
-   for variance estimation - <replaceable>latency_sum</> is a sum of latencies and
-   <replaceable>latency_2_sum</> is a sum of 2nd powers of latencies. The next two
-   fields are <replaceable>min_latency</> - a minimum latency within the interval, and
-   <replaceable>max_latency</> - maximum latency within the interval. A transaction is
-   counted into the interval when it was committed. The fields in the end,
-   <replaceable>lag_sum</>, <replaceable>lag_2_sum</>, <replaceable>min_lag</>,
+   where
+   <replaceable>interval_start</> is the start of the interval (as a Unix
+   epoch time stamp),
+   <replaceable>num_transactions</> is the number of transactions
+   within the interval,
+   <replaceable>sum_latency</replaceable> is the sum of the transaction
+   latencies within the interval,
+   <replaceable>sum_latency_2</replaceable> is the sum of squares of the
+   transaction latencies within the interval,
+   <replaceable>min_latency</> is the minimum latency within the interval,
+   and
+   <replaceable>max_latency</> is the maximum latency within the interval.
+   The next fields,
+   <replaceable>sum_lag</>, <replaceable>sum_lag_2</>, <replaceable>min_lag</>,
    and <replaceable>max_lag</>, are only present if the <option>--rate</>
-   option is used. The very last one, <replaceable>skipped_transactions</>,
-   is only present if the option <option>--latency-limit</> is present, too.
-   They are calculated from the time each transaction had to wait for the
+   option is used.
+   They provide statistics about the time each transaction had to wait for the
    previous one to finish, i.e. the difference between each transaction's
    scheduled start time and the time it actually started.
+   The very last field, <replaceable>skipped</>,
+   is only present if the <option>--latency-limit</> option is used, too.
+   It counts the number of transactions skipped because they would have
+   started too late.
+   Each transaction is counted in the interval when it was committed.
   </para>
 
   <para>
-   Here is example output:
+   Here is some example output:
 <screen>
 1345828501 5601 1542744 483552416 61 2573
 1345828503 7884 1979812 565806736 60 1479
@@ -1238,9 +1250,9 @@ END;
 </screen></para>
 
   <para>
-   Notice that while the plain (unaggregated) log file contains a reference
-   to the custom script files, the aggregated log does not. Therefore if
-   you need per script data, you need to aggregate the data on your own.
+   Notice that while the plain (unaggregated) log file shows which script
+   was used for each transaction, the aggregated log does not. Therefore if
+   you need per-script data, you need to aggregate the data on your own.
   </para>
 
  </refsect2>
