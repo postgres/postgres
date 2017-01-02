@@ -4,10 +4,10 @@
  *	  portable high-precision interval timing
  *
  * This file provides an abstraction layer to hide portability issues in
- * interval timing.  On Unix we use gettimeofday(), but on Windows that
- * gives a low-precision result so we must use QueryPerformanceCounter()
- * instead.  These macros also give some breathing room to use other
- * high-precision-timing APIs on yet other platforms.
+ * interval timing.  On Unix we use clock_gettime() if available, else
+ * gettimeofday().  On Windows, gettimeofday() gives a low-precision result
+ * so we must use QueryPerformanceCounter() instead.  These macros also give
+ * some breathing room to use other high-precision-timing APIs.
  *
  * The basic data type is instr_time, which all callers should treat as an
  * opaque typedef.  instr_time can store either an absolute time (of
@@ -53,6 +53,94 @@
 #define INSTR_TIME_H
 
 #ifndef WIN32
+
+#ifdef HAVE_CLOCK_GETTIME
+
+/* Use clock_gettime() */
+
+#include <time.h>
+
+/*
+ * The best clockid to use according to the POSIX spec is CLOCK_MONOTONIC,
+ * since that will give reliable interval timing even in the face of changes
+ * to the system clock.  However, POSIX doesn't require implementations to
+ * provide anything except CLOCK_REALTIME, so fall back to that if we don't
+ * find CLOCK_MONOTONIC.
+ *
+ * Also, some implementations have nonstandard clockids with better properties
+ * than CLOCK_MONOTONIC.  In particular, as of macOS 10.12, Apple provides
+ * CLOCK_MONOTONIC_RAW which is both faster to read and higher resolution than
+ * their version of CLOCK_MONOTONIC.
+ */
+#if defined(__darwin__) && defined(CLOCK_MONOTONIC_RAW)
+#define PG_INSTR_CLOCK	CLOCK_MONOTONIC_RAW
+#elif defined(CLOCK_MONOTONIC)
+#define PG_INSTR_CLOCK	CLOCK_MONOTONIC
+#else
+#define PG_INSTR_CLOCK	CLOCK_REALTIME
+#endif
+
+typedef struct timespec instr_time;
+
+#define INSTR_TIME_IS_ZERO(t)	((t).tv_nsec == 0 && (t).tv_sec == 0)
+
+#define INSTR_TIME_SET_ZERO(t)	((t).tv_sec = 0, (t).tv_nsec = 0)
+
+#define INSTR_TIME_SET_CURRENT(t)	((void) clock_gettime(PG_INSTR_CLOCK, &(t)))
+
+#define INSTR_TIME_ADD(x,y) \
+	do { \
+		(x).tv_sec += (y).tv_sec; \
+		(x).tv_nsec += (y).tv_nsec; \
+		/* Normalize */ \
+		while ((x).tv_nsec >= 1000000000) \
+		{ \
+			(x).tv_nsec -= 1000000000; \
+			(x).tv_sec++; \
+		} \
+	} while (0)
+
+#define INSTR_TIME_SUBTRACT(x,y) \
+	do { \
+		(x).tv_sec -= (y).tv_sec; \
+		(x).tv_nsec -= (y).tv_nsec; \
+		/* Normalize */ \
+		while ((x).tv_nsec < 0) \
+		{ \
+			(x).tv_nsec += 1000000000; \
+			(x).tv_sec--; \
+		} \
+	} while (0)
+
+#define INSTR_TIME_ACCUM_DIFF(x,y,z) \
+	do { \
+		(x).tv_sec += (y).tv_sec - (z).tv_sec; \
+		(x).tv_nsec += (y).tv_nsec - (z).tv_nsec; \
+		/* Normalize after each add to avoid overflow/underflow of tv_nsec */ \
+		while ((x).tv_nsec < 0) \
+		{ \
+			(x).tv_nsec += 1000000000; \
+			(x).tv_sec--; \
+		} \
+		while ((x).tv_nsec >= 1000000000) \
+		{ \
+			(x).tv_nsec -= 1000000000; \
+			(x).tv_sec++; \
+		} \
+	} while (0)
+
+#define INSTR_TIME_GET_DOUBLE(t) \
+	(((double) (t).tv_sec) + ((double) (t).tv_nsec) / 1000000000.0)
+
+#define INSTR_TIME_GET_MILLISEC(t) \
+	(((double) (t).tv_sec * 1000.0) + ((double) (t).tv_nsec) / 1000000.0)
+
+#define INSTR_TIME_GET_MICROSEC(t) \
+	(((uint64) (t).tv_sec * (uint64) 1000000) + (uint64) ((t).tv_nsec / 1000))
+
+#else							/* !HAVE_CLOCK_GETTIME */
+
+/* Use gettimeofday() */
 
 #include <sys/time.h>
 
@@ -113,7 +201,12 @@ typedef struct timeval instr_time;
 
 #define INSTR_TIME_GET_MICROSEC(t) \
 	(((uint64) (t).tv_sec * (uint64) 1000000) + (uint64) (t).tv_usec)
+
+#endif   /* HAVE_CLOCK_GETTIME */
+
 #else							/* WIN32 */
+
+/* Use QueryPerformanceCounter() */
 
 typedef LARGE_INTEGER instr_time;
 
@@ -149,6 +242,7 @@ GetTimerFrequency(void)
 	QueryPerformanceFrequency(&f);
 	return (double) f.QuadPart;
 }
+
 #endif   /* WIN32 */
 
 #endif   /* INSTR_TIME_H */
