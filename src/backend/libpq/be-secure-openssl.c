@@ -75,6 +75,7 @@ static DH  *load_dh_file(int keylength);
 static DH  *load_dh_buffer(const char *, size_t);
 static DH  *generate_dh_parameters(int prime_len, int generator);
 static DH  *tmp_dh_cb(SSL *s, int is_export, int keylength);
+static int	ssl_passwd_cb(char *buf, int size, int rwflag, void *userdata);
 static int	verify_cb(int, X509_STORE_CTX *);
 static void info_cb(const SSL *ssl, int type, int args);
 static bool initialize_ecdh(SSL_CTX *context, bool failOnError);
@@ -202,6 +203,11 @@ be_tls_init(bool failOnError)
 	 * unnecessary failures in nonblocking send cases.
 	 */
 	SSL_CTX_set_mode(context, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
+
+	/*
+	 * Override OpenSSL's default handling of passphrase-protected files.
+	 */
+	SSL_CTX_set_default_passwd_cb(context, ssl_passwd_cb);
 
 	/*
 	 * Load and verify server's certificate and private key
@@ -1058,6 +1064,29 @@ tmp_dh_cb(SSL *s, int is_export, int keylength)
 	}
 
 	return r;
+}
+
+/*
+ *	Passphrase collection callback
+ *
+ * If OpenSSL is told to use a passphrase-protected server key, by default
+ * it will issue a prompt on /dev/tty and try to read a key from there.
+ * That's completely no good for a postmaster SIGHUP cycle, not to mention
+ * SSL context reload in an EXEC_BACKEND postmaster child.  So override it
+ * with this dummy function that just returns an empty passphrase,
+ * guaranteeing failure.  Later we might think about collecting a passphrase
+ * at server start and feeding it to OpenSSL repeatedly, but we'd still
+ * need this callback for that.
+ */
+static int
+ssl_passwd_cb(char *buf, int size, int rwflag, void *userdata)
+{
+	ereport(LOG,
+			(errcode(ERRCODE_CONFIG_FILE_ERROR),
+			 errmsg("server's private key file requires a passphrase")));
+	Assert(size > 0);
+	buf[0] = '\0';
+	return 0;
 }
 
 /*
