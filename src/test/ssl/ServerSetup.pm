@@ -70,7 +70,11 @@ sub configure_test_server_for_ssl
 
 	close CONF;
 
-# Copy all server certificates and keys, and client root cert, to the data dir
+	# ssl configuration will be placed here
+	open SSLCONF, ">$pgdata/sslconfig.conf";
+	close SSLCONF;
+
+	# Copy all server certificates and keys, and client root cert, to the data dir
 	copy_files("ssl/server-*.crt", $pgdata);
 	copy_files("ssl/server-*.key", $pgdata);
 	chmod(0600, glob "$pgdata/server-*.key") or die $!;
@@ -78,10 +82,45 @@ sub configure_test_server_for_ssl
 	copy_files("ssl/root_ca.crt", $pgdata);
 	copy_files("ssl/root+client.crl",    $pgdata);
 
-  # Only accept SSL connections from localhost. Our tests don't depend on this
-  # but seems best to keep it as narrow as possible for security reasons.
-  #
-  # When connecting to certdb, also check the client certificate.
+	# Stop and restart server to load new listen_addresses.
+	$node->restart;
+
+	# Change pg_hba after restart because hostssl requires ssl=on
+	configure_hba_for_ssl($node, $serverhost);
+}
+
+# Change the configuration to use given server cert file, and reload
+# the server so that the configuration takes effect.
+sub switch_server_cert
+{
+	my $node     = $_[0];
+	my $certfile = $_[1];
+	my $cafile = $_[2] || "root+client_ca";
+	my $pgdata   = $node->data_dir;
+
+	diag "Reloading server with certfile \"$certfile\" and cafile \"$cafile\"...";
+
+	open SSLCONF, ">$pgdata/sslconfig.conf";
+	print SSLCONF "ssl=on\n";
+	print SSLCONF "ssl_ca_file='$cafile.crt'\n";
+	print SSLCONF "ssl_cert_file='$certfile.crt'\n";
+	print SSLCONF "ssl_key_file='$certfile.key'\n";
+	print SSLCONF "ssl_crl_file='root+client.crl'\n";
+	close SSLCONF;
+
+	$node->reload;
+}
+
+sub configure_hba_for_ssl
+{
+	my $node       = $_[0];
+	my $serverhost = $_[1];
+	my $pgdata     = $node->data_dir;
+
+	# Only accept SSL connections from localhost. Our tests don't depend on this
+	# but seems best to keep it as narrow as possible for security reasons.
+	#
+	# When connecting to certdb, also check the client certificate.
 	open HBA, ">$pgdata/pg_hba.conf";
 	print HBA
 "# TYPE  DATABASE        USER            ADDRESS                 METHOD\n";
@@ -94,27 +133,4 @@ sub configure_test_server_for_ssl
 	print HBA
 "hostssl certdb          ssltestuser     ::1/128                 cert\n";
 	close HBA;
-}
-
-# Change the configuration to use given server cert file, and restart
-# the server so that the configuration takes effect.
-sub switch_server_cert
-{
-	my $node     = $_[0];
-	my $certfile = $_[1];
-	my $cafile = $_[2] || "root+client_ca";
-	my $pgdata   = $node->data_dir;
-
-	diag "Restarting server with certfile \"$certfile\" and cafile \"$cafile\"...";
-
-	open SSLCONF, ">$pgdata/sslconfig.conf";
-	print SSLCONF "ssl=on\n";
-	print SSLCONF "ssl_ca_file='$cafile.crt'\n";
-	print SSLCONF "ssl_cert_file='$certfile.crt'\n";
-	print SSLCONF "ssl_key_file='$certfile.key'\n";
-	print SSLCONF "ssl_crl_file='root+client.crl'\n";
-	close SSLCONF;
-
-	# Stop and restart server to reload the new config.
-	$node->restart;
 }

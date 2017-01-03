@@ -156,9 +156,11 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
       <para>
        To make use of this option the server must be built with
        <acronym>SSL</acronym> support. Furthermore,
-       <acronym>SSL</acronym> must be enabled at server start time
+       <acronym>SSL</acronym> must be enabled
        by setting the <xref linkend="guc-ssl"> configuration parameter (see
        <xref linkend="ssl-tcp"> for more information).
+       Otherwise, the <literal>hostssl</literal> record is ignored except for
+       logging a warning that it cannot match any connections.
       </para>
      </listitem>
     </varlistentry>

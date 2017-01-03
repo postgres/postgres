@@ -348,28 +348,22 @@ ClientAuthentication(Port *port)
 	 */
 	if (port->hba->clientcert)
 	{
+		/* If we haven't loaded a root certificate store, fail */
+		if (!secure_loaded_verify_locations())
+			ereport(FATAL,
+					(errcode(ERRCODE_CONFIG_FILE_ERROR),
+					 errmsg("client certificates can only be checked if a root certificate store is available")));
+
 		/*
-		 * When we parse pg_hba.conf, we have already made sure that we have
-		 * been able to load a certificate store. Thus, if a certificate is
-		 * present on the client, it has been verified against our root
+		 * If we loaded a root certificate store, and if a certificate is
+		 * present on the client, then it has been verified against our root
 		 * certificate store, and the connection would have been aborted
 		 * already if it didn't verify ok.
 		 */
-#ifdef USE_SSL
 		if (!port->peer_cert_valid)
-		{
 			ereport(FATAL,
 					(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
 				  errmsg("connection requires a valid client certificate")));
-		}
-#else
-
-		/*
-		 * hba.c makes sure hba->clientcert can't be set unless OpenSSL is
-		 * present.
-		 */
-		Assert(false);
-#endif
 	}
 
 	/*

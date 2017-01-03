@@ -2285,11 +2285,20 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
   </table>
 
    <para>
-    The files <filename>server.key</>, <filename>server.crt</>,
-    <filename>root.crt</filename>, and <filename>root.crl</filename>
-    (or their configured alternative names)
-    are only examined during server start; so you must restart
-    the server for changes in them to take effect.
+    The server reads these files at server start and whenever the server
+    configuration is reloaded.  On <systemitem class="osname">Windows</>
+    systems, they are also re-read whenever a new backend process is spawned
+    for a new client connection.
+   </para>
+
+   <para>
+    If an error in these files is detected at server start, the server will
+    refuse to start.  But if an error is detected during a configuration
+    reload, the files are ignored and the old values continue to be used.
+    On <systemitem class="osname">Windows</> systems, if an error in these
+    files is detected at backend start, that backend will be unable to
+    establish an SSL connection.  In all these cases, the error condition is
+    reported in the server log.
    </para>
   </sect2>
 

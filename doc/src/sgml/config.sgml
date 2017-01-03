@@ -958,10 +958,10 @@ include_dir 'conf.d'
       <listitem>
        <para>
         Enables <acronym>SSL</> connections. Please read
-        <xref linkend="ssl-tcp"> before using this. The default
-        is <literal>off</>. This parameter can only be set at server
-        start.  <acronym>SSL</> communication is only possible with
-        TCP/IP connections.
+        <xref linkend="ssl-tcp"> before using this.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
+        The default is <literal>off</>.
        </para>
       </listitem>
      </varlistentry>
@@ -975,11 +975,16 @@ include_dir 'conf.d'
       <listitem>
        <para>
         Specifies the name of the file containing the SSL server certificate
-        authority (CA).  The default is empty, meaning no CA file is loaded,
-        and client certificate verification is not performed.  (In previous
-        releases of PostgreSQL, the name of this file was hard-coded
-        as <filename>root.crt</filename>.)  Relative paths are relative to the
-        data directory.  This parameter can only be set at server start.
+        authority (CA).
+        Relative paths are relative to the data directory.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
+        The default is empty, meaning no CA file is loaded,
+        and client certificate verification is not performed.
+       </para>
+       <para>
+        In previous releases of PostgreSQL, the name of this file was
+        hard-coded as <filename>root.crt</filename>.
        </para>
       </listitem>
      </varlistentry>
@@ -993,9 +998,10 @@ include_dir 'conf.d'
       <listitem>
        <para>
         Specifies the name of the file containing the SSL server certificate.
-        The default is <filename>server.crt</filename>.  Relative paths are
-        relative to the data directory.  This parameter can only be set at
-        server start.
+        Relative paths are relative to the data directory.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
+        The default is <filename>server.crt</filename>.
        </para>
       </listitem>
      </varlistentry>
@@ -1009,11 +1015,15 @@ include_dir 'conf.d'
       <listitem>
        <para>
         Specifies the name of the file containing the SSL server certificate
-        revocation list (CRL).  The default is empty, meaning no CRL file is
-        loaded.  (In previous releases of PostgreSQL, the name of this file was
-        hard-coded as <filename>root.crl</filename>.)  Relative paths are
-        relative to the data directory.  This parameter can only be set at
-        server start.
+        revocation list (CRL).
+        Relative paths are relative to the data directory.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
+        The default is empty, meaning no CRL file is loaded.
+       </para>
+       <para>
+        In previous releases of PostgreSQL, the name of this file was
+        hard-coded as <filename>root.crl</filename>.
        </para>
       </listitem>
      </varlistentry>
@@ -1027,9 +1037,10 @@ include_dir 'conf.d'
       <listitem>
        <para>
         Specifies the name of the file containing the SSL server private key.
-        The default is <filename>server.key</filename>.  Relative paths are
-        relative to the data directory.  This parameter can only be set at
-        server start.
+        Relative paths are relative to the data directory.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
+        The default is <filename>server.key</filename>.
        </para>
       </listitem>
      </varlistentry>
@@ -1046,10 +1057,12 @@ include_dir 'conf.d'
         used on secure connections.  See
         the <citerefentry><refentrytitle>ciphers</></citerefentry> manual page
         in the <application>OpenSSL</> package for the syntax of this setting
-        and a list of supported values.  The default value is
-        <literal>HIGH:MEDIUM:+3DES:!aNULL</>.  It is usually reasonable,
-        unless you have specific security requirements.  This parameter can only
-        be set at server start.
+        and a list of supported values.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
+        The default value is <literal>HIGH:MEDIUM:+3DES:!aNULL</>.  The
+        default is usually a reasonable choice unless you have specific
+        security requirements.
        </para>
 
        <para>
@@ -1113,7 +1126,7 @@ include_dir 'conf.d'
      </varlistentry>
 
      <varlistentry id="guc-ssl-prefer-server-ciphers" xreflabel="ssl_prefer_server_ciphers">
-      <term><varname>ssl_prefer_server_ciphers</varname> (<type>bool</type>)
+      <term><varname>ssl_prefer_server_ciphers</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>ssl_prefer_server_ciphers</> configuration parameter</primary>
       </indexterm>
@@ -1121,8 +1134,10 @@ include_dir 'conf.d'
       <listitem>
        <para>
         Specifies whether to use the server's SSL cipher preferences, rather
-        than the client's.  The default is true.  This parameter can only be
-        set at server start.
+        than the client's.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
+        The default is <literal>true</>.
        </para>
 
        <para>
@@ -1145,19 +1160,18 @@ include_dir 'conf.d'
        <para>
         Specifies the name of the curve to use in <acronym>ECDH</> key
         exchange.  It needs to be supported by all clients that connect.
-        It does not need to be same curve as used by server's Elliptic
-        Curve key.  The default is <literal>prime256v1</>.  This parameter
-        can only be set at server start.
+        It does not need to be the same curve used by the server's Elliptic
+        Curve key.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
+        The default is <literal>prime256v1</>.
        </para>
 
        <para>
-        OpenSSL names for most common curves:
+        OpenSSL names for the most common curves are:
         <literal>prime256v1</> (NIST P-256),
         <literal>secp384r1</> (NIST P-384),
         <literal>secp521r1</> (NIST P-521).
-       </para>
-
-       <para>
         The full list of available curves can be shown with the command
         <command>openssl ecparam -list_curves</command>.  Not all of them
         are usable in <acronym>TLS</> though.
@@ -3003,7 +3017,7 @@ include_dir 'conf.d'
      </varlistentry>
 
      <varlistentry id="guc-track-commit-timestamp" xreflabel="track_commit_timestamp">
-      <term><varname>track_commit_timestamp</varname> (<type>bool</type>)
+      <term><varname>track_commit_timestamp</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>track_commit_timestamp</> configuration parameter</primary>
       </indexterm>

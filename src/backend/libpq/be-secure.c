@@ -63,16 +63,31 @@ bool		SSLPreferServerCiphers;
 /* ------------------------------------------------------------ */
 
 /*
- *	Initialize global context
+ *	Initialize global context.
+ *
+ * If failOnError is true, report any errors as FATAL (so we don't return).
+ * Otherwise, log errors at LOG level and return -1 to indicate trouble.
+ * Returns 0 if OK.
  */
 int
-secure_initialize(void)
+secure_initialize(bool failOnError)
 {
 #ifdef USE_SSL
-	be_tls_init();
-#endif
-
+	return be_tls_init(failOnError);
+#else
 	return 0;
+#endif
+}
+
+/*
+ *	Destroy global context, if any.
+ */
+void
+secure_destroy(void)
+{
+#ifdef USE_SSL
+	be_tls_destroy();
+#endif
 }
 
 /*

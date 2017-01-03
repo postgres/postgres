@@ -77,12 +77,13 @@ static DH  *generate_dh_parameters(int prime_len, int generator);
 static DH  *tmp_dh_cb(SSL *s, int is_export, int keylength);
 static int	verify_cb(int, X509_STORE_CTX *);
 static void info_cb(const SSL *ssl, int type, int args);
-static void initialize_ecdh(void);
+static bool initialize_ecdh(SSL_CTX *context, bool failOnError);
 static const char *SSLerrmessage(unsigned long ecode);
 
 static char *X509_NAME_to_cstring(X509_NAME *name);
 
 static SSL_CTX *SSL_context = NULL;
+static bool SSL_initialized = false;
 
 /* ------------------------------------------------------------ */
 /*						 Hardcoded values						*/
@@ -156,15 +157,20 @@ KWbuHn491xNO25CQWMtem80uKw+pTnisBRF/454n1Jnhub144YRBoN8CAQI=\n\
 
 /*
  *	Initialize global SSL context.
+ *
+ * If failOnError is true, report any errors as FATAL (so we don't return).
+ * Otherwise, log errors at LOG level and return -1 to indicate trouble.
+ * Returns 0 if OK.
  */
-void
-be_tls_init(void)
+int
+be_tls_init(bool failOnError)
 {
+	STACK_OF(X509_NAME) *root_cert_list = NULL;
+	SSL_CTX    *context;
 	struct stat buf;
 
-	STACK_OF(X509_NAME) *root_cert_list = NULL;
-
-	if (!SSL_context)
+	/* This stuff need be done only once. */
+	if (!SSL_initialized)
 	{
 #ifdef HAVE_OPENSSL_INIT_SSL
 		OPENSSL_init_ssl(OPENSSL_INIT_LOAD_CONFIG, NULL);
@@ -173,121 +179,157 @@ be_tls_init(void)
 		SSL_library_init();
 		SSL_load_error_strings();
 #endif
+		SSL_initialized = true;
+	}
 
-		/*
-		 * We use SSLv23_method() because it can negotiate use of the highest
-		 * mutually supported protocol version, while alternatives like
-		 * TLSv1_2_method() permit only one specific version.  Note that we
-		 * don't actually allow SSL v2 or v3, only TLS protocols (see below).
-		 */
-		SSL_context = SSL_CTX_new(SSLv23_method());
-		if (!SSL_context)
-			ereport(FATAL,
-					(errmsg("could not create SSL context: %s",
-							SSLerrmessage(ERR_get_error()))));
+	/*
+	 * We use SSLv23_method() because it can negotiate use of the highest
+	 * mutually supported protocol version, while alternatives like
+	 * TLSv1_2_method() permit only one specific version.  Note that we don't
+	 * actually allow SSL v2 or v3, only TLS protocols (see below).
+	 */
+	context = SSL_CTX_new(SSLv23_method());
+	if (!context)
+	{
+		ereport(failOnError ? FATAL : LOG,
+				(errmsg("could not create SSL context: %s",
+						SSLerrmessage(ERR_get_error()))));
+		goto error;
+	}
 
-		/*
-		 * Disable OpenSSL's moving-write-buffer sanity check, because it
-		 * causes unnecessary failures in nonblocking send cases.
-		 */
-		SSL_CTX_set_mode(SSL_context, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
+	/*
+	 * Disable OpenSSL's moving-write-buffer sanity check, because it causes
+	 * unnecessary failures in nonblocking send cases.
+	 */
+	SSL_CTX_set_mode(context, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
 
-		/*
-		 * Load and verify server's certificate and private key
-		 */
-		if (SSL_CTX_use_certificate_chain_file(SSL_context,
-											   ssl_cert_file) != 1)
-			ereport(FATAL,
-					(errcode(ERRCODE_CONFIG_FILE_ERROR),
-				  errmsg("could not load server certificate file \"%s\": %s",
-						 ssl_cert_file, SSLerrmessage(ERR_get_error()))));
+	/*
+	 * Load and verify server's certificate and private key
+	 */
+	if (SSL_CTX_use_certificate_chain_file(context, ssl_cert_file) != 1)
+	{
+		ereport(failOnError ? FATAL : LOG,
+				(errcode(ERRCODE_CONFIG_FILE_ERROR),
+				 errmsg("could not load server certificate file \"%s\": %s",
+						ssl_cert_file, SSLerrmessage(ERR_get_error()))));
+		goto error;
+	}
 
-		if (stat(ssl_key_file, &buf) != 0)
-			ereport(FATAL,
-					(errcode_for_file_access(),
-					 errmsg("could not access private key file \"%s\": %m",
-							ssl_key_file)));
+	if (stat(ssl_key_file, &buf) != 0)
+	{
+		ereport(failOnError ? FATAL : LOG,
+				(errcode_for_file_access(),
+				 errmsg("could not access private key file \"%s\": %m",
+						ssl_key_file)));
+		goto error;
+	}
 
-		if (!S_ISREG(buf.st_mode))
-			ereport(FATAL,
-					(errcode(ERRCODE_CONFIG_FILE_ERROR),
-					 errmsg("private key file \"%s\" is not a regular file",
-							ssl_key_file)));
+	if (!S_ISREG(buf.st_mode))
+	{
+		ereport(failOnError ? FATAL : LOG,
+				(errcode(ERRCODE_CONFIG_FILE_ERROR),
+				 errmsg("private key file \"%s\" is not a regular file",
+						ssl_key_file)));
+		goto error;
+	}
 
-		/*
-		 * Refuse to load files owned by users other than us or root.
-		 *
-		 * XXX surely we can check this on Windows somehow, too.
-		 */
+	/*
+	 * Refuse to load files owned by users other than us or root.
+	 *
+	 * XXX surely we can check this on Windows somehow, too.
+	 */
 #if !defined(WIN32) && !defined(__CYGWIN__)
-		if (buf.st_uid != geteuid() && buf.st_uid != 0)
-			ereport(FATAL,
-					(errcode(ERRCODE_CONFIG_FILE_ERROR),
-					 errmsg("private key file \"%s\" must be owned by the database user or root",
-							ssl_key_file)));
+	if (buf.st_uid != geteuid() && buf.st_uid != 0)
+	{
+		ereport(failOnError ? FATAL : LOG,
+				(errcode(ERRCODE_CONFIG_FILE_ERROR),
+				 errmsg("private key file \"%s\" must be owned by the database user or root",
+						ssl_key_file)));
+		goto error;
+	}
 #endif
 
-		/*
-		 * Require no public access to key file. If the file is owned by us,
-		 * require mode 0600 or less. If owned by root, require 0640 or less
-		 * to allow read access through our gid, or a supplementary gid that
-		 * allows to read system-wide certificates.
-		 *
-		 * XXX temporarily suppress check when on Windows, because there may
-		 * not be proper support for Unix-y file permissions.  Need to think
-		 * of a reasonable check to apply on Windows.  (See also the data
-		 * directory permission check in postmaster.c)
-		 */
+	/*
+	 * Require no public access to key file. If the file is owned by us,
+	 * require mode 0600 or less. If owned by root, require 0640 or less to
+	 * allow read access through our gid, or a supplementary gid that allows
+	 * to read system-wide certificates.
+	 *
+	 * XXX temporarily suppress check when on Windows, because there may not
+	 * be proper support for Unix-y file permissions.  Need to think of a
+	 * reasonable check to apply on Windows.  (See also the data directory
+	 * permission check in postmaster.c)
+	 */
 #if !defined(WIN32) && !defined(__CYGWIN__)
-		if ((buf.st_uid == geteuid() && buf.st_mode & (S_IRWXG | S_IRWXO)) ||
-			(buf.st_uid == 0 && buf.st_mode & (S_IWGRP | S_IXGRP | S_IRWXO)))
-			ereport(FATAL,
-					(errcode(ERRCODE_CONFIG_FILE_ERROR),
-				  errmsg("private key file \"%s\" has group or world access",
-						 ssl_key_file),
-					 errdetail("File must have permissions u=rw (0600) or less if owned by the database user, or permissions u=rw,g=r (0640) or less if owned by root.")));
+	if ((buf.st_uid == geteuid() && buf.st_mode & (S_IRWXG | S_IRWXO)) ||
+		(buf.st_uid == 0 && buf.st_mode & (S_IWGRP | S_IXGRP | S_IRWXO)))
+	{
+		ereport(failOnError ? FATAL : LOG,
+				(errcode(ERRCODE_CONFIG_FILE_ERROR),
+				 errmsg("private key file \"%s\" has group or world access",
+						ssl_key_file),
+				 errdetail("File must have permissions u=rw (0600) or less if owned by the database user, or permissions u=rw,g=r (0640) or less if owned by root.")));
+		goto error;
+	}
 #endif
 
-		if (SSL_CTX_use_PrivateKey_file(SSL_context,
-										ssl_key_file,
-										SSL_FILETYPE_PEM) != 1)
-			ereport(FATAL,
-					(errmsg("could not load private key file \"%s\": %s",
-							ssl_key_file, SSLerrmessage(ERR_get_error()))));
+	if (SSL_CTX_use_PrivateKey_file(context,
+									ssl_key_file,
+									SSL_FILETYPE_PEM) != 1)
+	{
+		ereport(failOnError ? FATAL : LOG,
+				(errcode(ERRCODE_CONFIG_FILE_ERROR),
+				 errmsg("could not load private key file \"%s\": %s",
+						ssl_key_file, SSLerrmessage(ERR_get_error()))));
+		goto error;
+	}
 
-		if (SSL_CTX_check_private_key(SSL_context) != 1)
-			ereport(FATAL,
-					(errmsg("check of private key failed: %s",
-							SSLerrmessage(ERR_get_error()))));
+	if (SSL_CTX_check_private_key(context) != 1)
+	{
+		ereport(failOnError ? FATAL : LOG,
+				(errcode(ERRCODE_CONFIG_FILE_ERROR),
+				 errmsg("check of private key failed: %s",
+						SSLerrmessage(ERR_get_error()))));
+		goto error;
 	}
 
 	/* set up ephemeral DH keys, and disallow SSL v2/v3 while at it */
-	SSL_CTX_set_tmp_dh_callback(SSL_context, tmp_dh_cb);
-	SSL_CTX_set_options(SSL_context,
+	SSL_CTX_set_tmp_dh_callback(context, tmp_dh_cb);
+	SSL_CTX_set_options(context,
 						SSL_OP_SINGLE_DH_USE |
 						SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
 
 	/* set up ephemeral ECDH keys */
-	initialize_ecdh();
+	if (!initialize_ecdh(context, failOnError))
+		goto error;
 
 	/* set up the allowed cipher list */
-	if (SSL_CTX_set_cipher_list(SSL_context, SSLCipherSuites) != 1)
-		elog(FATAL, "could not set the cipher list (no valid ciphers available)");
+	if (SSL_CTX_set_cipher_list(context, SSLCipherSuites) != 1)
+	{
+		ereport(failOnError ? FATAL : LOG,
+				(errcode(ERRCODE_CONFIG_FILE_ERROR),
+				 errmsg("could not set the cipher list (no valid ciphers available)")));
+		goto error;
+	}
 
 	/* Let server choose order */
 	if (SSLPreferServerCiphers)
-		SSL_CTX_set_options(SSL_context, SSL_OP_CIPHER_SERVER_PREFERENCE);
+		SSL_CTX_set_options(context, SSL_OP_CIPHER_SERVER_PREFERENCE);
 
 	/*
 	 * Load CA store, so we can verify client certificates if needed.
 	 */
 	if (ssl_ca_file[0])
 	{
-		if (SSL_CTX_load_verify_locations(SSL_context, ssl_ca_file, NULL) != 1 ||
+		if (SSL_CTX_load_verify_locations(context, ssl_ca_file, NULL) != 1 ||
 			(root_cert_list = SSL_load_client_CA_file(ssl_ca_file)) == NULL)
-			ereport(FATAL,
-					(errmsg("could not load root certificate file \"%s\": %s",
+		{
+			ereport(failOnError ? FATAL : LOG,
+					(errcode(ERRCODE_CONFIG_FILE_ERROR),
+					 errmsg("could not load root certificate file \"%s\": %s",
 							ssl_ca_file, SSLerrmessage(ERR_get_error()))));
+			goto error;
+		}
 	}
 
 	/*----------
@@ -297,7 +339,7 @@ be_tls_init(void)
 	 */
 	if (ssl_crl_file[0])
 	{
-		X509_STORE *cvstore = SSL_CTX_get_cert_store(SSL_context);
+		X509_STORE *cvstore = SSL_CTX_get_cert_store(context);
 
 		if (cvstore)
 		{
@@ -310,15 +352,20 @@ be_tls_init(void)
 						  X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL);
 #else
 				ereport(LOG,
-				(errmsg("SSL certificate revocation list file \"%s\" ignored",
-						ssl_crl_file),
-				 errdetail("SSL library does not support certificate revocation lists.")));
+						(errcode(ERRCODE_CONFIG_FILE_ERROR),
+				errmsg("SSL certificate revocation list file \"%s\" ignored",
+					   ssl_crl_file),
+						 errdetail("SSL library does not support certificate revocation lists.")));
 #endif
 			}
 			else
-				ereport(FATAL,
-						(errmsg("could not load SSL certificate revocation list file \"%s\": %s",
+			{
+				ereport(failOnError ? FATAL : LOG,
+						(errcode(ERRCODE_CONFIG_FILE_ERROR),
+						 errmsg("could not load SSL certificate revocation list file \"%s\": %s",
 							 ssl_crl_file, SSLerrmessage(ERR_get_error()))));
+				goto error;
+			}
 		}
 	}
 
@@ -329,21 +376,53 @@ be_tls_init(void)
 		 * presented.  We might fail such connections later, depending on what
 		 * we find in pg_hba.conf.
 		 */
-		SSL_CTX_set_verify(SSL_context,
+		SSL_CTX_set_verify(context,
 						   (SSL_VERIFY_PEER |
 							SSL_VERIFY_CLIENT_ONCE),
 						   verify_cb);
-
-		/* Set flag to remember CA store is successfully loaded */
-		ssl_loaded_verify_locations = true;
 
 		/*
 		 * Tell OpenSSL to send the list of root certs we trust to clients in
 		 * CertificateRequests.  This lets a client with a keystore select the
 		 * appropriate client certificate to send to us.
 		 */
-		SSL_CTX_set_client_CA_list(SSL_context, root_cert_list);
+		SSL_CTX_set_client_CA_list(context, root_cert_list);
 	}
+
+	/*
+	 * Success!  Replace any existing SSL_context.
+	 */
+	if (SSL_context)
+		SSL_CTX_free(SSL_context);
+
+	SSL_context = context;
+
+	/*
+	 * Set flag to remember whether CA store has been loaded into SSL_context.
+	 */
+	if (ssl_ca_file[0])
+		ssl_loaded_verify_locations = true;
+	else
+		ssl_loaded_verify_locations = false;
+
+	return 0;
+
+error:
+	if (context)
+		SSL_CTX_free(context);
+	return -1;
+}
+
+/*
+ *	Destroy global SSL context, if any.
+ */
+void
+be_tls_destroy(void)
+{
+	if (SSL_context)
+		SSL_CTX_free(SSL_context);
+	SSL_context = NULL;
+	ssl_loaded_verify_locations = false;
 }
 
 /*
@@ -359,6 +438,14 @@ be_tls_open_server(Port *port)
 
 	Assert(!port->ssl);
 	Assert(!port->peer);
+
+	if (!SSL_context)
+	{
+		ereport(COMMERROR,
+				(errcode(ERRCODE_PROTOCOL_VIOLATION),
+				 errmsg("could not initialize SSL connection: SSL context not set up")));
+		return -1;
+	}
 
 	if (!(port->ssl = SSL_new(SSL_context)))
 	{
@@ -743,7 +830,7 @@ my_BIO_s_socket(void)
 			!BIO_meth_set_puts(my_bio_methods, BIO_meth_get_puts(biom)) ||
 			!BIO_meth_set_ctrl(my_bio_methods, BIO_meth_get_ctrl(biom)) ||
 			!BIO_meth_set_create(my_bio_methods, BIO_meth_get_create(biom)) ||
-			!BIO_meth_set_destroy(my_bio_methods, BIO_meth_get_destroy(biom)) ||
+		 !BIO_meth_set_destroy(my_bio_methods, BIO_meth_get_destroy(biom)) ||
 			!BIO_meth_set_callback_ctrl(my_bio_methods, BIO_meth_get_callback_ctrl(biom)))
 		{
 			BIO_meth_free(my_bio_methods);
@@ -1034,8 +1121,8 @@ info_cb(const SSL *ssl, int type, int args)
 	}
 }
 
-static void
-initialize_ecdh(void)
+static bool
+initialize_ecdh(SSL_CTX *context, bool failOnError)
 {
 #ifndef OPENSSL_NO_ECDH
 	EC_KEY	   *ecdh;
@@ -1043,18 +1130,28 @@ initialize_ecdh(void)
 
 	nid = OBJ_sn2nid(SSLECDHCurve);
 	if (!nid)
-		ereport(FATAL,
-				(errmsg("ECDH: unrecognized curve name: %s", SSLECDHCurve)));
+	{
+		ereport(failOnError ? FATAL : LOG,
+				(errcode(ERRCODE_CONFIG_FILE_ERROR),
+				 errmsg("ECDH: unrecognized curve name: %s", SSLECDHCurve)));
+		return false;
+	}
 
 	ecdh = EC_KEY_new_by_curve_name(nid);
 	if (!ecdh)
-		ereport(FATAL,
-				(errmsg("ECDH: could not create key")));
+	{
+		ereport(failOnError ? FATAL : LOG,
+				(errcode(ERRCODE_CONFIG_FILE_ERROR),
+				 errmsg("ECDH: could not create key")));
+		return false;
+	}
 
-	SSL_CTX_set_options(SSL_context, SSL_OP_SINGLE_ECDH_USE);
-	SSL_CTX_set_tmp_ecdh(SSL_context, ecdh);
+	SSL_CTX_set_options(context, SSL_OP_SINGLE_ECDH_USE);
+	SSL_CTX_set_tmp_ecdh(context, ecdh);
 	EC_KEY_free(ecdh);
 #endif
+
+	return true;
 }
 
 /*

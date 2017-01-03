@@ -870,28 +870,23 @@ parse_hba_line(List *line, int line_num, char *raw_line)
 
 		if (token->string[4] == 's')	/* "hostssl" */
 		{
-			/* SSL support must be actually active, else complain */
+			parsedline->conntype = ctHostSSL;
+			/* Log a warning if SSL support is not active */
 #ifdef USE_SSL
-			if (EnableSSL)
-				parsedline->conntype = ctHostSSL;
-			else
-			{
+			if (!EnableSSL)
 				ereport(LOG,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
-						 errmsg("hostssl requires SSL to be turned on"),
+				errmsg("hostssl record cannot match because SSL is disabled"),
 						 errhint("Set ssl = on in postgresql.conf."),
 						 errcontext("line %d of configuration file \"%s\"",
 									line_num, HbaFileName)));
-				return NULL;
-			}
 #else
 			ereport(LOG,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
-					 errmsg("hostssl is not supported by this build"),
+					 errmsg("hostssl record cannot match because SSL is not supported by this build"),
 			  errhint("Compile with --with-openssl to use SSL connections."),
 					 errcontext("line %d of configuration file \"%s\"",
 								line_num, HbaFileName)));
-			return NULL;
 #endif
 		}
 		else if (token->string[4] == 'n')		/* "hostnossl" */
@@ -1417,10 +1412,6 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline, int line_num)
 	}
 	else if (strcmp(name, "clientcert") == 0)
 	{
-		/*
-		 * Since we require ctHostSSL, this really can never happen on
-		 * non-SSL-enabled builds, so don't bother checking for USE_SSL.
-		 */
 		if (hbaline->conntype != ctHostSSL)
 		{
 			ereport(LOG,
@@ -1432,16 +1423,6 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline, int line_num)
 		}
 		if (strcmp(val, "1") == 0)
 		{
-			if (!secure_loaded_verify_locations())
-			{
-				ereport(LOG,
-						(errcode(ERRCODE_CONFIG_FILE_ERROR),
-						 errmsg("client certificates can only be checked if a root certificate store is available"),
-						 errhint("Make sure the configuration parameter \"%s\" is set.", "ssl_ca_file"),
-						 errcontext("line %d of configuration file \"%s\"",
-									line_num, HbaFileName)));
-				return false;
-			}
 			hbaline->clientcert = true;
 		}
 		else

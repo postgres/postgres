@@ -76,15 +76,14 @@
 # - Security and Authentication -
 
 #authentication_timeout = 1min		# 1s-600s
-#ssl = off				# (change requires restart)
+#ssl = off
 #ssl_ciphers = 'HIGH:MEDIUM:+3DES:!aNULL' # allowed SSL ciphers
-					# (change requires restart)
-#ssl_prefer_server_ciphers = on		# (change requires restart)
-#ssl_ecdh_curve = 'prime256v1'		# (change requires restart)
-#ssl_cert_file = 'server.crt'		# (change requires restart)
-#ssl_key_file = 'server.key'		# (change requires restart)
-#ssl_ca_file = ''			# (change requires restart)
-#ssl_crl_file = ''			# (change requires restart)
+#ssl_prefer_server_ciphers = on
+#ssl_ecdh_curve = 'prime256v1'
+#ssl_cert_file = 'server.crt'
+#ssl_key_file = 'server.key'
+#ssl_ca_file = ''
+#ssl_crl_file = ''
 #password_encryption = md5		# md5 or plain
 #db_user_namespace = off
 #row_security = on

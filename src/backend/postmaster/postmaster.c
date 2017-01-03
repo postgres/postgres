@@ -368,6 +368,11 @@ static unsigned int random_seed = 0;
 static struct timeval random_start_time;
 #endif
 
+#ifdef USE_SSL
+/* Set when and if SSL has been initialized properly */
+static bool LoadedSSL = false;
+#endif
+
 #ifdef USE_BONJOUR
 static DNSServiceRef bonjour_sdref = NULL;
 #endif
@@ -930,7 +935,10 @@ PostmasterMain(int argc, char *argv[])
 	 */
 #ifdef USE_SSL
 	if (EnableSSL)
-		secure_initialize();
+	{
+		(void) secure_initialize(true);
+		LoadedSSL = true;
+	}
 #endif
 
 	/*
@@ -1961,7 +1969,7 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 
 #ifdef USE_SSL
 		/* No SSL when disabled or on Unix sockets */
-		if (!EnableSSL || IS_AF_UNIX(port->laddr.addr.ss_family))
+		if (!LoadedSSL || IS_AF_UNIX(port->laddr.addr.ss_family))
 			SSLok = 'N';
 		else
 			SSLok = 'S';		/* Support for SSL */
@@ -2498,12 +2506,29 @@ SIGHUP_handler(SIGNAL_ARGS)
 
 		/* Reload authentication config files too */
 		if (!load_hba())
-			ereport(WARNING,
+			ereport(LOG,
 					(errmsg("pg_hba.conf not reloaded")));
 
 		if (!load_ident())
-			ereport(WARNING,
+			ereport(LOG,
 					(errmsg("pg_ident.conf not reloaded")));
+
+#ifdef USE_SSL
+		/* Reload SSL configuration as well */
+		if (EnableSSL)
+		{
+			if (secure_initialize(false) == 0)
+				LoadedSSL = true;
+			else
+				ereport(LOG,
+						(errmsg("SSL context not reloaded")));
+		}
+		else
+		{
+			secure_destroy();
+			LoadedSSL = false;
+		}
+#endif
 
 #ifdef EXEC_BACKEND
 		/* Update the starting-point file for future children */
@@ -4733,12 +4758,22 @@ SubPostmasterMain(int argc, char *argv[])
 		 * context structures contain function pointers and cannot be passed
 		 * through the parameter file.
 		 *
+		 * If for some reason reload fails (maybe the user installed broken
+		 * key files), soldier on without SSL; that's better than all
+		 * connections becoming impossible.
+		 *
 		 * XXX should we do this in all child processes?  For the moment it's
 		 * enough to do it in backend children.
 		 */
 #ifdef USE_SSL
 		if (EnableSSL)
-			secure_initialize();
+		{
+			if (secure_initialize(false) == 0)
+				LoadedSSL = true;
+			else
+				ereport(LOG,
+						(errmsg("SSL context could not be reloaded in child process")));
+		}
 #endif
 
 		/*
