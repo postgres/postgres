@@ -3,7 +3,7 @@
  * ifaddr.h
  *	  IP netmask calculations, and enumerating network interfaces.
  *
- * Copyright (c) 2003-2016, PostgreSQL Global Development Group
+ * Copyright (c) 2003-2017, PostgreSQL Global Development Group
  *
  * src/include/libpq/ifaddr.h
  *

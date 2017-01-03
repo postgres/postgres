@@ -15,7 +15,7 @@
  * for a table itself, so that it is distinct from any column privilege.
  * Currently, objsubid is unused and zero for all other kinds of objects.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_init_privs.h

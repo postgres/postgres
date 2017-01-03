@@ -6,7 +6,7 @@
  * Our definition of "strong" is that it's suitable for generating random
  * salts and query cancellation keys, during authentication.
  *
- * Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Copyright (c) 1996-2017, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/port/pg_strong_random.c
