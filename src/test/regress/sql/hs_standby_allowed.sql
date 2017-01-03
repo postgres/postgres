@@ -16,7 +16,7 @@ COPY hs1 TO '/tmp/copy_test';
 \! cat /tmp/copy_test
 
 -- Access sequence directly
-select min_value as sequence_min_value from hsseq;
+select min_value as sequence_min_value from pg_sequences where sequencename = 'hsseq';
 
 -- Transactions
 
