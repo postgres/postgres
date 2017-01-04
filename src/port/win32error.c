@@ -161,6 +161,9 @@ static const struct
 	},
 	{
 		ERROR_NOT_ENOUGH_QUOTA, ENOMEM
+	},
+	{
+		ERROR_DELETE_PENDING, ENOENT
 	}
 };
 

@@ -372,7 +372,22 @@ pgwin32_safestat(const char *path, struct stat * buf)
 
 	r = stat(path, buf);
 	if (r < 0)
+	{
+		if (GetLastError() == ERROR_DELETE_PENDING)
+		{
+			/*
+			 * File has been deleted, but is not gone from the filesystem
+			 * yet. This can happen when some process with FILE_SHARE_DELETE
+			 * has it open and it will be fully removed once that handle
+			 * is closed. Meanwhile, we can't open it, so indicate that
+			 * the file just doesn't exist.
+			 */
+			errno = ENOENT;
+			return -1;
+		}
+
 		return r;
+	}
 
 	if (!GetFileAttributesEx(path, GetFileExInfoStandard, &attr))
 	{
