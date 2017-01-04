@@ -1651,13 +1651,14 @@ SELECT E'\\xDEADBEEF';
    <para>
     When <type>timestamp</> values are stored as eight-byte integers
     (currently the default), microsecond precision is available over
-    the full range of values. When <type>timestamp</> values are
-    stored as double precision floating-point numbers instead (a
-    deprecated compile-time option), the effective limit of precision
-    might be less than 6. <type>timestamp</type> values are stored as
-    seconds before or after midnight 2000-01-01.  When
-    <type>timestamp</type> values are implemented using floating-point
-    numbers, microsecond precision is achieved for dates within a few
+    the full range of values.  In this case, the internal representation
+    is the number of microseconds before or after midnight 2000-01-01.
+    When <type>timestamp</> values are stored as double precision
+    floating-point numbers (a deprecated compile-time option), the
+    internal representation is the number of seconds before or after
+    midnight 2000-01-01.  With this representation, the effective limit
+    of precision might be less than 6; in practice,
+    microsecond precision is achieved for dates within a few
     years of 2000-01-01, but the precision degrades for dates further
     away. Note that using floating-point datetimes allows a larger
     range of <type>timestamp</type> values to be represented than
