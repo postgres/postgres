@@ -58,16 +58,17 @@ typedef struct LWLock
  * LWLockPadded can be used for cases where we want each lock to be an entire
  * cache line.
  *
- * On 32-bit platforms, an LWLockMinimallyPadded might actually contain more
- * than the absolute minimum amount of padding required to keep a lock from
- * crossing a cache line boundary, because an unpadded LWLock might fit into
- * 16 bytes.  We ignore that possibility when determining the minimal amount
- * of padding.  Older releases had larger LWLocks, so 32 really was the
- * minimum, and packing them in tighter might hurt performance.
+ * An LWLockMinimallyPadded might contain more than the absolute minimum amount
+ * of padding required to keep a lock from crossing a cache line boundary,
+ * because an unpadded LWLock will normally fit into 16 bytes.  We ignore that
+ * possibility when determining the minimal amount of padding.  Older releases
+ * had larger LWLocks, so 32 really was the minimum, and packing them in
+ * tighter might hurt performance.
  *
  * LWLOCK_MINIMAL_SIZE should be 32 on basically all common platforms, but
- * because slock_t is more than 2 bytes on some obscure platforms, we allow
- * for the possibility that it might be 64.
+ * because pg_atomic_uint32 is more than 4 bytes on some obscure platforms, we
+ * allow for the possibility that it might be 64.  Even on those platforms,
+ * we probably won't exceed 32 bytes unless LOCK_DEBUG is defined.
  */
 #define LWLOCK_PADDED_SIZE	PG_CACHE_LINE_SIZE
 #define LWLOCK_MINIMAL_SIZE (sizeof(LWLock) <= 32 ? 32 : 64)
