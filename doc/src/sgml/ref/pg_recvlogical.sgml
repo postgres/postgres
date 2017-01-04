@@ -38,6 +38,14 @@ PostgreSQL documentation
    constraints as <xref linkend="app-pgreceivexlog">, plus those for logical
    replication (see <xref linkend="logicaldecoding">).
   </para>
+
+  <para>
+   <command>pg_recvlogical</> has no equivalent to the logical decoding
+   SQL interface's peek and get modes. It sends replay confirmations for
+   data lazily as it receives it and on clean exit. To examine pending data on
+    a slot without consuming it, use
+   <link linkend="functions-replication"><function>pg_logical_slot_peek_changes</></>.
+  </para>
  </refsect1>
 
  <refsect1>
@@ -150,6 +158,32 @@ PostgreSQL documentation
         LSN.  For details on the effect of this, see the documentation
         in <xref linkend="logicaldecoding">
         and <xref linkend="protocol-replication">. Ignored in other modes.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-E <replaceable>lsn</replaceable></option></term>
+      <term><option>--endpos=<replaceable>lsn</replaceable></option></term>
+      <listitem>
+       <para>
+        In <option>--start</option> mode, automatically stop replication
+        and exit with normal exit status 0 when receiving reaches the
+        specified LSN.  If specified when not in <option>--start</option>
+        mode, an error is raised.
+       </para>
+
+       <para>
+        If there's a record with LSN exactly equal to <replaceable>lsn</>,
+        the record will be output.
+       </para>
+
+       <para>
+        The <option>--endpos</option> option is not aware of transaction
+        boundaries and may truncate output partway through a transaction.
+        Any partially output transaction will not be consumed and will be
+        replayed again when the slot is next read from. Individual messages
+        are never truncated.
        </para>
       </listitem>
      </varlistentry>
