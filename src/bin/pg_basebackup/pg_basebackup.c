@@ -71,8 +71,8 @@ static bool noclean = false;
 static bool showprogress = false;
 static int	verbose = 0;
 static int	compresslevel = 0;
-static bool includewal = false;
-static bool streamwal = false;
+static bool includewal = true;
+static bool streamwal = true;
 static bool fastcheckpoint = false;
 static bool writerecoveryconf = false;
 static bool do_sync = true;
@@ -325,8 +325,7 @@ usage(void)
 	printf(_("  -S, --slot=SLOTNAME    replication slot to use\n"));
 	printf(_("  -T, --tablespace-mapping=OLDDIR=NEWDIR\n"
 	  "                         relocate tablespace in OLDDIR to NEWDIR\n"));
-	printf(_("  -x, --xlog             include required WAL files in backup (fetch mode)\n"));
-	printf(_("  -X, --xlog-method=fetch|stream\n"
+	printf(_("  -X, --xlog-method=none|fetch|stream\n"
 			 "                         include required WAL files with specified method\n"));
 	printf(_("      --xlogdir=XLOGDIR  location for the transaction log directory\n"));
 	printf(_("  -z, --gzip             compress tar output\n"));
@@ -1700,7 +1699,11 @@ BaseBackup(void)
 	 */
 	if (streamwal && !CheckServerVersionForStreaming(conn))
 	{
-		/* Error message already written in CheckServerVersionForStreaming() */
+		/*
+		 * Error message already written in CheckServerVersionForStreaming(),
+		 * but add a hint about using -X none.
+		 */
+		fprintf(stderr, _("HINT: use -X none or -X fetch to disable log streaming\n"));
 		disconnect_and_exit(1);
 	}
 
@@ -2035,7 +2038,6 @@ main(int argc, char **argv)
 		{"write-recovery-conf", no_argument, NULL, 'R'},
 		{"slot", required_argument, NULL, 'S'},
 		{"tablespace-mapping", required_argument, NULL, 'T'},
-		{"xlog", no_argument, NULL, 'x'},
 		{"xlog-method", required_argument, NULL, 'X'},
 		{"gzip", no_argument, NULL, 'z'},
 		{"compress", required_argument, NULL, 'Z'},
@@ -2078,7 +2080,7 @@ main(int argc, char **argv)
 
 	atexit(cleanup_directories_atexit);
 
-	while ((c = getopt_long(argc, argv, "D:F:r:RT:xX:l:nNzZ:d:c:h:p:U:s:S:wWvP",
+	while ((c = getopt_long(argc, argv, "D:F:r:RT:X:l:nNzZ:d:c:h:p:U:s:S:wWvP",
 							long_options, &option_index)) != -1)
 	{
 		switch (c)
@@ -2111,38 +2113,29 @@ main(int argc, char **argv)
 			case 'T':
 				tablespace_list_append(optarg);
 				break;
-			case 'x':
-				if (includewal)
-				{
-					fprintf(stderr,
-					 _("%s: cannot specify both --xlog and --xlog-method\n"),
-							progname);
-					exit(1);
-				}
-
-				includewal = true;
-				streamwal = false;
-				break;
 			case 'X':
-				if (includewal)
+				if (strcmp(optarg, "n") == 0 ||
+					strcmp(optarg, "none") == 0)
 				{
-					fprintf(stderr,
-					 _("%s: cannot specify both --xlog and --xlog-method\n"),
-							progname);
-					exit(1);
-				}
-
-				includewal = true;
-				if (strcmp(optarg, "f") == 0 ||
-					strcmp(optarg, "fetch") == 0)
+					includewal = false;
 					streamwal = false;
+				}
+				else if (strcmp(optarg, "f") == 0 ||
+					strcmp(optarg, "fetch") == 0)
+				{
+					includewal = true;
+					streamwal = false;
+				}
 				else if (strcmp(optarg, "s") == 0 ||
 						 strcmp(optarg, "stream") == 0)
+				{
+					includewal = true;
 					streamwal = true;
+				}
 				else
 				{
 					fprintf(stderr,
-							_("%s: invalid xlog-method option \"%s\", must be \"fetch\" or \"stream\"\n"),
+							_("%s: invalid xlog-method option \"%s\", must be \"fetch\", \"stream\" or \"none\"\n"),
 							progname, optarg);
 					exit(1);
 				}

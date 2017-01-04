@@ -56,7 +56,7 @@ PostgreSQL documentation
    and <filename>pg_hba.conf</filename> must explicitly permit the replication
    connection. The server must also be configured
    with <xref linkend="guc-max-wal-senders"> set high enough to leave at least
-   one session available for the backup.
+   one session available for the backup and one for WAL streaming (if used).
   </para>
 
   <para>
@@ -85,10 +85,8 @@ PostgreSQL documentation
     </listitem>
     <listitem>
      <para>
-      There is no guarantee that all WAL files required for the backup are archived
-      at the end of backup. If you are planning to use the backup for an archive
-      recovery and want to ensure that all required files are available at that moment,
-      you need to include them into the backup by using the <literal>-x</> option.
+      If you are using <literal>-X none</>, there is no guarantee that all
+      WAL files required for the backup are archived at the end of backup.
      </para>
     </listitem>
     <listitem>
@@ -285,33 +283,32 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-x</option></term>
-      <term><option>--xlog</option></term>
-      <listitem>
-       <para>
-        Using this option is equivalent of using <literal>-X</literal> with
-        method <literal>fetch</literal>.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><option>-X <replaceable class="parameter">method</replaceable></option></term>
       <term><option>--xlog-method=<replaceable class="parameter">method</replaceable></option></term>
       <listitem>
        <para>
         Includes the required transaction log files (WAL files) in the
         backup. This will include all transaction logs generated during
-        the backup. If this option is specified, it is possible to start
-        a postmaster directly in the extracted directory without the need
-        to consult the log archive, thus making this a completely standalone
-        backup.
+        the backup. Unless the method <literal>none</literal> is specified,
+        it is possible to start a postmaster directly in the extracted
+        directory without the need to consult the log archive, thus
+        making this a completely standalone backup.
        </para>
        <para>
         The following methods for collecting the transaction logs are
         supported:
 
         <variablelist>
+         <varlistentry>
+          <term><literal>n</literal></term>
+          <term><literal>none</literal></term>
+          <listitem>
+           <para>
+            Don't include transaction log in the backup.
+           </para>
+          </listitem>
+         </varlistentry>
+
          <varlistentry>
           <term><literal>f</literal></term>
           <term><literal>fetch</literal></term>
@@ -348,6 +345,9 @@ PostgreSQL documentation
             The transaction log files are written to a separate file
             named <filename>pg_wal.tar</filename> (if the server is a version
             earlier than 10, the file will be named <filename>pg_xlog.tar</filename>).
+           </para>
+           <para>
+            This value is the default.
            </para>
           </listitem>
          </varlistentry>
@@ -699,7 +699,7 @@ PostgreSQL documentation
    To create a backup of a single-tablespace local database and compress
    this with <productname>bzip2</productname>:
 <screen>
-<prompt>$</prompt> <userinput>pg_basebackup -D - -Ft | bzip2 &gt; backup.tar.bz2</userinput>
+<prompt>$</prompt> <userinput>pg_basebackup -D - -Ft -X fetch | bzip2 &gt; backup.tar.bz2</userinput>
 </screen>
    (This command will fail if there are multiple tablespaces in the
    database.)
