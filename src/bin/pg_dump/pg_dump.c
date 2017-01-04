@@ -5736,7 +5736,7 @@ getPartitions(Archive *fout, int *numPartitions)
 	PGresult   *res;
 	int			ntups;
 	int			i;
-	PQExpBuffer query = createPQExpBuffer();
+	PQExpBuffer query;
 	PartInfo    *partinfo;
 
 	int			i_partrelid;
@@ -5749,6 +5749,8 @@ getPartitions(Archive *fout, int *numPartitions)
 		*numPartitions = 0;
 		return NULL;
 	}
+
+	query = createPQExpBuffer();
 
 	/* Make sure we are in proper schema */
 	selectSourceSchema(fout, "pg_catalog");
@@ -7067,13 +7069,15 @@ getTransforms(Archive *fout, int *numTransforms)
 void
 getTablePartitionKeyInfo(Archive *fout, TableInfo *tblinfo, int numTables)
 {
-	PQExpBuffer q = createPQExpBuffer();
+	PQExpBuffer q;
 	int			i;
 	PGresult   *res;
 
 	/* No partitioned tables before 10 */
 	if (fout->remoteVersion < 100000)
 		return;
+
+	q = createPQExpBuffer();
 
 	for (i = 0; i < numTables; i++)
 	{
@@ -7094,6 +7098,8 @@ getTablePartitionKeyInfo(Archive *fout, TableInfo *tblinfo, int numTables)
 		Assert(PQntuples(res) == 1);
 		tbinfo->partkeydef = pg_strdup(PQgetvalue(res, 0, 0));
 	}
+
+	destroyPQExpBuffer(q);
 }
 
 /*

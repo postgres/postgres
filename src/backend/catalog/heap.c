@@ -3248,6 +3248,10 @@ StorePartitionBound(Relation rel, Relation parent, Node *bound)
 	classRel = heap_open(RelationRelationId, RowExclusiveLock);
 	tuple = SearchSysCacheCopy1(RELOID,
 								ObjectIdGetDatum(RelationGetRelid(rel)));
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "cache lookup failed for relation %u",
+			 RelationGetRelid(rel));
+
 #ifdef USE_ASSERT_CHECKING
 	{
 		Form_pg_class	classForm;

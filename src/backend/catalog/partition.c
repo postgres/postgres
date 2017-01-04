@@ -200,6 +200,8 @@ RelationBuildPartitionDesc(Relation rel)
 		Node	   *boundspec;
 
 		tuple = SearchSysCache1(RELOID, inhrelid);
+		if (!HeapTupleIsValid(tuple))
+			elog(ERROR, "cache lookup failed for relation %u", inhrelid);
 
 		/*
 		 * It is possible that the pg_class tuple of a partition has not been
@@ -1516,6 +1518,10 @@ generate_partition_qual(Relation rel)
 		elog(ERROR, "relation \"%s\" has relispartition = false",
 			 RelationGetRelationName(rel));
 	tuple = SearchSysCache1(RELOID, RelationGetRelid(rel));
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "cache lookup failed for relation %u",
+			 RelationGetRelid(rel));
+
 	boundDatum = SysCacheGetAttr(RELOID, tuple,
 								 Anum_pg_class_relpartbound,
 								 &isnull);
