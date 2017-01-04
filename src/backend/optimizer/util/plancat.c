@@ -1228,7 +1228,7 @@ get_relation_constraints(PlannerInfo *root,
 	}
 
 	/* Append partition predicates, if any */
-	pcqual = RelationGetPartitionQual(relation, true);
+	pcqual = RelationGetPartitionQual(relation);
 	if (pcqual)
 	{
 		/*

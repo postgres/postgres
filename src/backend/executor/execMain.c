@@ -1259,8 +1259,7 @@ InitResultRelInfo(ResultRelInfo *resultRelInfo,
 	resultRelInfo->ri_projectReturning = NULL;
 	if (load_partition_check)
 		resultRelInfo->ri_PartitionCheck =
-							RelationGetPartitionQual(resultRelationDesc,
-													 true);
+							RelationGetPartitionQual(resultRelationDesc);
 	/*
 	 * The following gets set to NULL unless we are initializing leaf
 	 * partitions for tuple-routing.

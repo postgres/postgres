@@ -13151,7 +13151,7 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd)
 	 */
 	partConstraint = list_concat(get_qual_from_partbound(attachRel, rel,
 														 cmd->bound),
-								 RelationGetPartitionQual(rel, true));
+								 RelationGetPartitionQual(rel));
 	partConstraint = (List *) eval_const_expressions(NULL,
 													 (Node *) partConstraint);
 	partConstraint = (List *) canonicalize_qual((Expr *) partConstraint);
