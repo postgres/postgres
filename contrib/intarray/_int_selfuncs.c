@@ -32,14 +32,6 @@ PG_FUNCTION_INFO_V1(_int_contains_joinsel);
 PG_FUNCTION_INFO_V1(_int_contained_joinsel);
 PG_FUNCTION_INFO_V1(_int_matchsel);
 
-Datum		_int_overlap_sel(PG_FUNCTION_ARGS);
-Datum		_int_contains_sel(PG_FUNCTION_ARGS);
-Datum		_int_contained_sel(PG_FUNCTION_ARGS);
-Datum		_int_overlap_joinsel(PG_FUNCTION_ARGS);
-Datum		_int_contains_joinsel(PG_FUNCTION_ARGS);
-Datum		_int_contained_joinsel(PG_FUNCTION_ARGS);
-Datum		_int_matchsel(PG_FUNCTION_ARGS);
-
 
 static Selectivity int_query_opr_selec(ITEM *item, Datum *values, float4 *freqs,
 					int nmncelems, float4 minfreq);
