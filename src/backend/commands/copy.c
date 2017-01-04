@@ -2426,6 +2426,7 @@ CopyFrom(CopyState cstate)
 					  cstate->rel,
 					  1,		/* dummy rangetable index */
 					  true,		/* do load partition check expression */
+					  NULL,
 					  0);
 
 	ExecOpenIndices(resultRelInfo, false);
@@ -2491,7 +2492,7 @@ CopyFrom(CopyState cstate)
 	for (;;)
 	{
 		TupleTableSlot *slot,
-					   *oldslot = NULL;
+					   *oldslot;
 		bool		skip_tuple;
 		Oid			loaded_oid = InvalidOid;
 
@@ -2533,6 +2534,7 @@ CopyFrom(CopyState cstate)
 		ExecStoreTuple(tuple, slot, InvalidBuffer, false);
 
 		/* Determine the partition to heap_insert the tuple into */
+		oldslot = slot;
 		if (cstate->partition_dispatch_info)
 		{
 			int			leaf_part_index;
@@ -2587,7 +2589,6 @@ CopyFrom(CopyState cstate)
 				 * point on.  Use a dedicated slot from this point on until
 				 * we're finished dealing with the partition.
 				 */
-				oldslot = slot;
 				slot = cstate->partition_tuple_slot;
 				Assert(slot != NULL);
 				ExecSetSlotDescriptor(slot, RelationGetDescr(partrel));
@@ -2624,7 +2625,7 @@ CopyFrom(CopyState cstate)
 				/* Check the constraints of the tuple */
 				if (cstate->rel->rd_att->constr ||
 					resultRelInfo->ri_PartitionCheck)
-					ExecConstraints(resultRelInfo, slot, estate);
+					ExecConstraints(resultRelInfo, slot, oldslot, estate);
 
 				if (useHeapMultiInsert)
 				{
@@ -2686,10 +2687,6 @@ CopyFrom(CopyState cstate)
 			{
 				resultRelInfo = saved_resultRelInfo;
 				estate->es_result_relation_info = resultRelInfo;
-
-				/* Switch back to the slot corresponding to the root table */
-				Assert(oldslot != NULL);
-				slot = oldslot;
 			}
 		}
 	}

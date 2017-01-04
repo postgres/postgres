@@ -349,6 +349,7 @@ typedef struct ResultRelInfo
 	List	   *ri_onConflictSetWhere;
 	List	   *ri_PartitionCheck;
 	List	   *ri_PartitionCheckExpr;
+	Relation	ri_PartitionRoot;
 } ResultRelInfo;
 
 /* ----------------

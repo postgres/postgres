@@ -262,7 +262,7 @@ ExecInsert(ModifyTableState *mtstate,
 	Relation	resultRelationDesc;
 	Oid			newId;
 	List	   *recheckIndexes = NIL;
-	TupleTableSlot *oldslot = NULL;
+	TupleTableSlot *oldslot = slot;
 
 	/*
 	 * get the heap tuple out of the tuple table slot, making sure we have a
@@ -328,7 +328,6 @@ ExecInsert(ModifyTableState *mtstate,
 			 * point on, until we're finished dealing with the partition.
 			 * Use the dedicated slot for that.
 			 */
-			oldslot = slot;
 			slot = mtstate->mt_partition_tuple_slot;
 			Assert(slot != NULL);
 			ExecSetSlotDescriptor(slot, RelationGetDescr(partrel));
@@ -434,7 +433,7 @@ ExecInsert(ModifyTableState *mtstate,
 		 * Check the constraints of the tuple
 		 */
 		if (resultRelationDesc->rd_att->constr || resultRelInfo->ri_PartitionCheck)
-			ExecConstraints(resultRelInfo, slot, estate);
+			ExecConstraints(resultRelInfo, slot, oldslot, estate);
 
 		if (onconflict != ONCONFLICT_NONE && resultRelInfo->ri_NumIndices > 0)
 		{
@@ -579,10 +578,6 @@ ExecInsert(ModifyTableState *mtstate,
 	{
 		resultRelInfo = saved_resultRelInfo;
 		estate->es_result_relation_info = resultRelInfo;
-
-		/* Switch back to the slot corresponding to the root table */
-		Assert(oldslot != NULL);
-		slot = oldslot;
 	}
 
 	/*
@@ -994,10 +989,12 @@ lreplace:;
 								 resultRelInfo, slot, estate);
 
 		/*
-		 * Check the constraints of the tuple
+		 * Check the constraints of the tuple.  Note that we pass the same
+		 * slot for the orig_slot argument, because unlike ExecInsert(), no
+		 * tuple-routing is performed here, hence the slot remains unchanged.
 		 */
 		if (resultRelationDesc->rd_att->constr || resultRelInfo->ri_PartitionCheck)
-			ExecConstraints(resultRelInfo, slot, estate);
+			ExecConstraints(resultRelInfo, slot, slot, estate);
 
 		/*
 		 * replace the heap tuple

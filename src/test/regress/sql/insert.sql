@@ -195,5 +195,11 @@ alter table p attach partition p1 for values from (1, 2) to (1, 10);
 insert into p values (1, 2);
 select tableoid::regclass, * from p;
 
+truncate p;
+alter table p add constraint check_b check (b = 3);
+-- check that correct input row is shown when constraint check_b fails on p11
+-- after "(1, 2)" is routed to it
+insert into p values (1, 2);
+
 -- cleanup
 drop table p, p1, p11;

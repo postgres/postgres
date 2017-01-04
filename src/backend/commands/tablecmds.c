@@ -1324,6 +1324,7 @@ ExecuteTruncate(TruncateStmt *stmt)
 						  rel,
 						  0,	/* dummy rangetable index */
 						  false,
+						  NULL,
 						  0);
 		resultRelInfo++;
 	}

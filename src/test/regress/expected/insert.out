@@ -333,5 +333,12 @@ select tableoid::regclass, * from p;
  p11      | 1 | 2
 (1 row)
 
+truncate p;
+alter table p add constraint check_b check (b = 3);
+-- check that correct input row is shown when constraint check_b fails on p11
+-- after "(1, 2)" is routed to it
+insert into p values (1, 2);
+ERROR:  new row for relation "p11" violates check constraint "check_b"
+DETAIL:  Failing row contains (1, 2).
 -- cleanup
 drop table p, p1, p11;
