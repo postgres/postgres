@@ -65,15 +65,15 @@ bool		SSLPreferServerCiphers;
 /*
  *	Initialize global context.
  *
- * If failOnError is true, report any errors as FATAL (so we don't return).
- * Otherwise, log errors at LOG level and return -1 to indicate trouble.
- * Returns 0 if OK.
+ * If isServerStart is true, report any errors as FATAL (so we don't return).
+ * Otherwise, log errors at LOG level and return -1 to indicate trouble,
+ * preserving the old SSL state if any.  Returns 0 if OK.
  */
 int
-secure_initialize(bool failOnError)
+secure_initialize(bool isServerStart)
 {
 #ifdef USE_SSL
-	return be_tls_init(failOnError);
+	return be_tls_init(isServerStart);
 #else
 	return 0;
 #endif

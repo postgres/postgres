@@ -199,7 +199,7 @@ typedef struct Port
  * These functions are implemented by the glue code specific to each
  * SSL implementation (e.g. be-secure-openssl.c)
  */
-extern int	be_tls_init(bool failOnError);
+extern int	be_tls_init(bool isServerStart);
 extern void be_tls_destroy(void);
 extern int	be_tls_open_server(Port *port);
 extern void be_tls_close(Port *port);

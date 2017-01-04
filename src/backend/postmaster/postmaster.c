@@ -2507,11 +2507,11 @@ SIGHUP_handler(SIGNAL_ARGS)
 		/* Reload authentication config files too */
 		if (!load_hba())
 			ereport(LOG,
-					(errmsg("pg_hba.conf not reloaded")));
+					(errmsg("pg_hba.conf was not reloaded")));
 
 		if (!load_ident())
 			ereport(LOG,
-					(errmsg("pg_ident.conf not reloaded")));
+					(errmsg("pg_ident.conf was not reloaded")));
 
 #ifdef USE_SSL
 		/* Reload SSL configuration as well */
@@ -2521,7 +2521,7 @@ SIGHUP_handler(SIGNAL_ARGS)
 				LoadedSSL = true;
 			else
 				ereport(LOG,
-						(errmsg("SSL context not reloaded")));
+						(errmsg("SSL configuration was not reloaded")));
 		}
 		else
 		{
@@ -4772,7 +4772,7 @@ SubPostmasterMain(int argc, char *argv[])
 				LoadedSSL = true;
 			else
 				ereport(LOG,
-						(errmsg("SSL context could not be reloaded in child process")));
+						(errmsg("SSL configuration could not be loaded in child process")));
 		}
 #endif
 

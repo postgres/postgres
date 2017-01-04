@@ -78,13 +78,14 @@ static DH  *tmp_dh_cb(SSL *s, int is_export, int keylength);
 static int	ssl_passwd_cb(char *buf, int size, int rwflag, void *userdata);
 static int	verify_cb(int, X509_STORE_CTX *);
 static void info_cb(const SSL *ssl, int type, int args);
-static bool initialize_ecdh(SSL_CTX *context, bool failOnError);
+static bool initialize_ecdh(SSL_CTX *context, bool isServerStart);
 static const char *SSLerrmessage(unsigned long ecode);
 
 static char *X509_NAME_to_cstring(X509_NAME *name);
 
 static SSL_CTX *SSL_context = NULL;
 static bool SSL_initialized = false;
+static bool ssl_passwd_cb_called = false;
 
 /* ------------------------------------------------------------ */
 /*						 Hardcoded values						*/
@@ -159,12 +160,12 @@ KWbuHn491xNO25CQWMtem80uKw+pTnisBRF/454n1Jnhub144YRBoN8CAQI=\n\
 /*
  *	Initialize global SSL context.
  *
- * If failOnError is true, report any errors as FATAL (so we don't return).
- * Otherwise, log errors at LOG level and return -1 to indicate trouble.
- * Returns 0 if OK.
+ * If isServerStart is true, report any errors as FATAL (so we don't return).
+ * Otherwise, log errors at LOG level and return -1 to indicate trouble,
+ * preserving the old SSL state if any.  Returns 0 if OK.
  */
 int
-be_tls_init(bool failOnError)
+be_tls_init(bool isServerStart)
 {
 	STACK_OF(X509_NAME) *root_cert_list = NULL;
 	SSL_CTX    *context;
@@ -192,7 +193,7 @@ be_tls_init(bool failOnError)
 	context = SSL_CTX_new(SSLv23_method());
 	if (!context)
 	{
-		ereport(failOnError ? FATAL : LOG,
+		ereport(isServerStart ? FATAL : LOG,
 				(errmsg("could not create SSL context: %s",
 						SSLerrmessage(ERR_get_error()))));
 		goto error;
@@ -205,16 +206,21 @@ be_tls_init(bool failOnError)
 	SSL_CTX_set_mode(context, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
 
 	/*
-	 * Override OpenSSL's default handling of passphrase-protected files.
+	 * If reloading, override OpenSSL's default handling of
+	 * passphrase-protected files, because we don't want to prompt for a
+	 * passphrase in an already-running server.  (Not that the default
+	 * handling is very desirable during server start either, but some people
+	 * insist we need to keep it.)
 	 */
-	SSL_CTX_set_default_passwd_cb(context, ssl_passwd_cb);
+	if (!isServerStart)
+		SSL_CTX_set_default_passwd_cb(context, ssl_passwd_cb);
 
 	/*
 	 * Load and verify server's certificate and private key
 	 */
 	if (SSL_CTX_use_certificate_chain_file(context, ssl_cert_file) != 1)
 	{
-		ereport(failOnError ? FATAL : LOG,
+		ereport(isServerStart ? FATAL : LOG,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				 errmsg("could not load server certificate file \"%s\": %s",
 						ssl_cert_file, SSLerrmessage(ERR_get_error()))));
@@ -223,7 +229,7 @@ be_tls_init(bool failOnError)
 
 	if (stat(ssl_key_file, &buf) != 0)
 	{
-		ereport(failOnError ? FATAL : LOG,
+		ereport(isServerStart ? FATAL : LOG,
 				(errcode_for_file_access(),
 				 errmsg("could not access private key file \"%s\": %m",
 						ssl_key_file)));
@@ -232,7 +238,7 @@ be_tls_init(bool failOnError)
 
 	if (!S_ISREG(buf.st_mode))
 	{
-		ereport(failOnError ? FATAL : LOG,
+		ereport(isServerStart ? FATAL : LOG,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				 errmsg("private key file \"%s\" is not a regular file",
 						ssl_key_file)));
@@ -240,14 +246,14 @@ be_tls_init(bool failOnError)
 	}
 
 	/*
-	 * Refuse to load files owned by users other than us or root.
+	 * Refuse to load key files owned by users other than us or root.
 	 *
 	 * XXX surely we can check this on Windows somehow, too.
 	 */
 #if !defined(WIN32) && !defined(__CYGWIN__)
 	if (buf.st_uid != geteuid() && buf.st_uid != 0)
 	{
-		ereport(failOnError ? FATAL : LOG,
+		ereport(isServerStart ? FATAL : LOG,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				 errmsg("private key file \"%s\" must be owned by the database user or root",
 						ssl_key_file)));
@@ -270,7 +276,7 @@ be_tls_init(bool failOnError)
 	if ((buf.st_uid == geteuid() && buf.st_mode & (S_IRWXG | S_IRWXO)) ||
 		(buf.st_uid == 0 && buf.st_mode & (S_IWGRP | S_IXGRP | S_IRWXO)))
 	{
-		ereport(failOnError ? FATAL : LOG,
+		ereport(isServerStart ? FATAL : LOG,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				 errmsg("private key file \"%s\" has group or world access",
 						ssl_key_file),
@@ -279,20 +285,31 @@ be_tls_init(bool failOnError)
 	}
 #endif
 
+	/*
+	 * OK, try to load the private key file.
+	 */
+	ssl_passwd_cb_called = false;
+
 	if (SSL_CTX_use_PrivateKey_file(context,
 									ssl_key_file,
 									SSL_FILETYPE_PEM) != 1)
 	{
-		ereport(failOnError ? FATAL : LOG,
-				(errcode(ERRCODE_CONFIG_FILE_ERROR),
-				 errmsg("could not load private key file \"%s\": %s",
-						ssl_key_file, SSLerrmessage(ERR_get_error()))));
+		if (ssl_passwd_cb_called)
+			ereport(isServerStart ? FATAL : LOG,
+					(errcode(ERRCODE_CONFIG_FILE_ERROR),
+					 errmsg("private key file \"%s\" cannot be reloaded because it requires a passphrase",
+							ssl_key_file)));
+		else
+			ereport(isServerStart ? FATAL : LOG,
+					(errcode(ERRCODE_CONFIG_FILE_ERROR),
+					 errmsg("could not load private key file \"%s\": %s",
+							ssl_key_file, SSLerrmessage(ERR_get_error()))));
 		goto error;
 	}
 
 	if (SSL_CTX_check_private_key(context) != 1)
 	{
-		ereport(failOnError ? FATAL : LOG,
+		ereport(isServerStart ? FATAL : LOG,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				 errmsg("check of private key failed: %s",
 						SSLerrmessage(ERR_get_error()))));
@@ -306,13 +323,13 @@ be_tls_init(bool failOnError)
 						SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
 
 	/* set up ephemeral ECDH keys */
-	if (!initialize_ecdh(context, failOnError))
+	if (!initialize_ecdh(context, isServerStart))
 		goto error;
 
 	/* set up the allowed cipher list */
 	if (SSL_CTX_set_cipher_list(context, SSLCipherSuites) != 1)
 	{
-		ereport(failOnError ? FATAL : LOG,
+		ereport(isServerStart ? FATAL : LOG,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				 errmsg("could not set the cipher list (no valid ciphers available)")));
 		goto error;
@@ -330,7 +347,7 @@ be_tls_init(bool failOnError)
 		if (SSL_CTX_load_verify_locations(context, ssl_ca_file, NULL) != 1 ||
 			(root_cert_list = SSL_load_client_CA_file(ssl_ca_file)) == NULL)
 		{
-			ereport(failOnError ? FATAL : LOG,
+			ereport(isServerStart ? FATAL : LOG,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
 					 errmsg("could not load root certificate file \"%s\": %s",
 							ssl_ca_file, SSLerrmessage(ERR_get_error()))));
@@ -366,7 +383,7 @@ be_tls_init(bool failOnError)
 			}
 			else
 			{
-				ereport(failOnError ? FATAL : LOG,
+				ereport(isServerStart ? FATAL : LOG,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
 						 errmsg("could not load SSL certificate revocation list file \"%s\": %s",
 							 ssl_crl_file, SSLerrmessage(ERR_get_error()))));
@@ -1071,19 +1088,16 @@ tmp_dh_cb(SSL *s, int is_export, int keylength)
  *
  * If OpenSSL is told to use a passphrase-protected server key, by default
  * it will issue a prompt on /dev/tty and try to read a key from there.
- * That's completely no good for a postmaster SIGHUP cycle, not to mention
- * SSL context reload in an EXEC_BACKEND postmaster child.  So override it
- * with this dummy function that just returns an empty passphrase,
- * guaranteeing failure.  Later we might think about collecting a passphrase
- * at server start and feeding it to OpenSSL repeatedly, but we'd still
- * need this callback for that.
+ * That's no good during a postmaster SIGHUP cycle, not to mention SSL context
+ * reload in an EXEC_BACKEND postmaster child.  So override it with this dummy
+ * function that just returns an empty passphrase, guaranteeing failure.
  */
 static int
 ssl_passwd_cb(char *buf, int size, int rwflag, void *userdata)
 {
-	ereport(LOG,
-			(errcode(ERRCODE_CONFIG_FILE_ERROR),
-			 errmsg("server's private key file requires a passphrase")));
+	/* Set flag to change the error message we'll report */
+	ssl_passwd_cb_called = true;
+	/* And return empty string */
 	Assert(size > 0);
 	buf[0] = '\0';
 	return 0;
@@ -1151,7 +1165,7 @@ info_cb(const SSL *ssl, int type, int args)
 }
 
 static bool
-initialize_ecdh(SSL_CTX *context, bool failOnError)
+initialize_ecdh(SSL_CTX *context, bool isServerStart)
 {
 #ifndef OPENSSL_NO_ECDH
 	EC_KEY	   *ecdh;
@@ -1160,7 +1174,7 @@ initialize_ecdh(SSL_CTX *context, bool failOnError)
 	nid = OBJ_sn2nid(SSLECDHCurve);
 	if (!nid)
 	{
-		ereport(failOnError ? FATAL : LOG,
+		ereport(isServerStart ? FATAL : LOG,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				 errmsg("ECDH: unrecognized curve name: %s", SSLECDHCurve)));
 		return false;
@@ -1169,7 +1183,7 @@ initialize_ecdh(SSL_CTX *context, bool failOnError)
 	ecdh = EC_KEY_new_by_curve_name(nid);
 	if (!ecdh)
 	{
-		ereport(failOnError ? FATAL : LOG,
+		ereport(isServerStart ? FATAL : LOG,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				 errmsg("ECDH: could not create key")));
 		return false;
