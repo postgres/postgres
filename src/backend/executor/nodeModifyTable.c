@@ -329,7 +329,7 @@ ExecInsert(ModifyTableState *mtstate,
 			 * Use the dedicated slot for that.
 			 */
 			oldslot = slot;
-			slot = estate->es_partition_tuple_slot;
+			slot = mtstate->mt_partition_tuple_slot;
 			Assert(slot != NULL);
 			ExecSetSlotDescriptor(slot, RelationGetDescr(partrel));
 			ExecStoreTuple(tuple, slot, InvalidBuffer, true);
@@ -1738,6 +1738,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		PartitionDispatch  *partition_dispatch_info;
 		ResultRelInfo	   *partitions;
 		TupleConversionMap **partition_tupconv_maps;
+		TupleTableSlot	   *partition_tuple_slot;
 		int					num_parted,
 							num_partitions;
 
@@ -1745,21 +1746,15 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 									   &partition_dispatch_info,
 									   &partitions,
 									   &partition_tupconv_maps,
+									   &partition_tuple_slot,
 									   &num_parted, &num_partitions);
 		mtstate->mt_partition_dispatch_info = partition_dispatch_info;
 		mtstate->mt_num_dispatch = num_parted;
 		mtstate->mt_partitions = partitions;
 		mtstate->mt_num_partitions = num_partitions;
 		mtstate->mt_partition_tupconv_maps = partition_tupconv_maps;
-
-		/*
-		 * Initialize a dedicated slot to manipulate tuples of any given
-		 * partition's rowtype.
-		 */
-		estate->es_partition_tuple_slot = ExecInitExtraTupleSlot(estate);
+		mtstate->mt_partition_tuple_slot = partition_tuple_slot;
 	}
-	else
-		estate->es_partition_tuple_slot = NULL;
 
 	/*
 	 * Initialize any WITH CHECK OPTION constraints if needed.
@@ -2099,6 +2094,10 @@ ExecEndModifyTable(ModifyTableState *node)
 		ExecCloseIndices(resultRelInfo);
 		heap_close(resultRelInfo->ri_RelationDesc, NoLock);
 	}
+
+	/* Release the standalone partition tuple descriptor, if any */
+	if (node->mt_partition_tuple_slot)
+		ExecDropSingleTupleTableSlot(node->mt_partition_tuple_slot);
 
 	/*
 	 * Free the exprcontext

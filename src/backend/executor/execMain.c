@@ -3012,6 +3012,9 @@ EvalPlanQualEnd(EPQState *epqstate)
  *		entry for every leaf partition (required to convert input tuple based
  *		on the root table's rowtype to a leaf partition's rowtype after tuple
  *		routing is done
+ * 'partition_tuple_slot' receives a standalone TupleTableSlot to be used
+ *		to manipulate any given leaf partition's rowtype after that partition
+ *		is chosen by tuple-routing.
  * 'num_parted' receives the number of partitioned tables in the partition
  *		tree (= the number of entries in the 'pd' output array)
  * 'num_partitions' receives the number of leaf partitions in the partition
@@ -3026,6 +3029,7 @@ ExecSetupPartitionTupleRouting(Relation rel,
 							   PartitionDispatch **pd,
 							   ResultRelInfo **partitions,
 							   TupleConversionMap ***tup_conv_maps,
+							   TupleTableSlot **partition_tuple_slot,
 							   int *num_parted, int *num_partitions)
 {
 	TupleDesc	tupDesc = RelationGetDescr(rel);
@@ -3042,6 +3046,14 @@ ExecSetupPartitionTupleRouting(Relation rel,
 										   sizeof(ResultRelInfo));
 	*tup_conv_maps = (TupleConversionMap **) palloc0(*num_partitions *
 										   sizeof(TupleConversionMap *));
+
+	/*
+	 * Initialize an empty slot that will be used to manipulate tuples of any
+	 * given partition's rowtype.  It is attached to the caller-specified node
+	 * (such as ModifyTableState) and released when the node finishes
+	 * processing.
+	 */
+	*partition_tuple_slot = MakeTupleTableSlot();
 
 	leaf_part_rri = *partitions;
 	i = 0;

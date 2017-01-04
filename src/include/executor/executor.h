@@ -217,6 +217,7 @@ extern void ExecSetupPartitionTupleRouting(Relation rel,
 							   PartitionDispatch **pd,
 							   ResultRelInfo **partitions,
 							   TupleConversionMap ***tup_conv_maps,
+							   TupleTableSlot **partition_tuple_slot,
 							   int *num_parted, int *num_partitions);
 extern int ExecFindPartition(ResultRelInfo *resultRelInfo,
 				  PartitionDispatch *pd,
