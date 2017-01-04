@@ -32,14 +32,9 @@ $node_standby_2->start;
 # Create some content on master
 $node_master->safe_psql('postgres',
 	"CREATE TABLE tab_int AS SELECT generate_series(1,1000) AS a");
-my $until_lsn =
-  $node_master->safe_psql('postgres', "SELECT pg_current_xlog_location();");
 
 # Wait until standby has replayed enough data on standby 1
-my $caughtup_query =
-  "SELECT '$until_lsn'::pg_lsn <= pg_last_xlog_replay_location()";
-$node_standby_1->poll_query_until('postgres', $caughtup_query)
-  or die "Timed out while waiting for standby to catch up";
+$node_master->wait_for_catchup($node_standby_1, 'replay', $node_master->lsn('write'));
 
 # Stop and remove master, and promote standby 1, switching it to a new timeline
 $node_master->teardown_node;
@@ -50,7 +45,7 @@ rmtree($node_standby_2->data_dir . '/recovery.conf');
 my $connstr_1 = $node_standby_1->connstr;
 $node_standby_2->append_conf(
 	'recovery.conf', qq(
-primary_conninfo='$connstr_1'
+primary_conninfo='$connstr_1 application_name=@{[$node_standby_2->name]}'
 standby_mode=on
 recovery_target_timeline='latest'
 ));
@@ -60,12 +55,7 @@ $node_standby_2->restart;
 # to ensure that the timeline switch has been done.
 $node_standby_1->safe_psql('postgres',
 	"INSERT INTO tab_int VALUES (generate_series(1001,2000))");
-$until_lsn = $node_standby_1->safe_psql('postgres',
-	"SELECT pg_current_xlog_location();");
-$caughtup_query =
-  "SELECT '$until_lsn'::pg_lsn <= pg_last_xlog_replay_location()";
-$node_standby_2->poll_query_until('postgres', $caughtup_query)
-  or die "Timed out while waiting for standby to catch up";
+$node_standby_1->wait_for_catchup($node_standby_2, 'replay', $node_standby_1->lsn('write'));
 
 my $result =
   $node_standby_2->safe_psql('postgres', "SELECT count(*) FROM tab_int");
