@@ -9,8 +9,19 @@ SELECT * FROM money_data;
 SELECT m + '123' FROM money_data;
 SELECT m + '123.45' FROM money_data;
 SELECT m - '123.45' FROM money_data;
+SELECT m / '2'::money FROM money_data;
 SELECT m * 2 FROM money_data;
+SELECT 2 * m FROM money_data;
 SELECT m / 2 FROM money_data;
+SELECT m * 2::int2 FROM money_data;
+SELECT 2::int2 * m FROM money_data;
+SELECT m / 2::int2 FROM money_data;
+SELECT m * 2::float8 FROM money_data;
+SELECT 2::float8 * m FROM money_data;
+SELECT m / 2::float8 FROM money_data;
+SELECT m * 2::float4 FROM money_data;
+SELECT 2::float4 * m FROM money_data;
+SELECT m / 2::float4 FROM money_data;
 
 -- All true
 SELECT m = '$123.00' FROM money_data;
@@ -83,7 +94,7 @@ SELECT '92233720368547758.08'::money;
 SELECT '-92233720368547758.085'::money;
 SELECT '92233720368547758.075'::money;
 
--- Cast int4/int8 to money
+-- Cast int4/int8/numeric to money
 SELECT 1234567890::money;
 SELECT 12345678901234567::money;
 SELECT (-12345)::money;
@@ -91,5 +102,11 @@ SELECT (-1234567890)::money;
 SELECT (-12345678901234567)::money;
 SELECT 1234567890::int4::money;
 SELECT 12345678901234567::int8::money;
+SELECT 12345678901234567::numeric::money;
 SELECT (-1234567890)::int4::money;
 SELECT (-12345678901234567)::int8::money;
+SELECT (-12345678901234567)::numeric::money;
+
+-- Cast from money
+SELECT '12345678901234567'::money::numeric;
+SELECT '-12345678901234567'::money::numeric;

@@ -27,13 +27,79 @@ SELECT m - '123.45' FROM money_data;
    -$0.45
 (1 row)
 
+SELECT m / '2'::money FROM money_data;
+ ?column? 
+----------
+     61.5
+(1 row)
+
 SELECT m * 2 FROM money_data;
  ?column? 
 ----------
   $246.00
 (1 row)
 
+SELECT 2 * m FROM money_data;
+ ?column? 
+----------
+  $246.00
+(1 row)
+
 SELECT m / 2 FROM money_data;
+ ?column? 
+----------
+   $61.50
+(1 row)
+
+SELECT m * 2::int2 FROM money_data;
+ ?column? 
+----------
+  $246.00
+(1 row)
+
+SELECT 2::int2 * m FROM money_data;
+ ?column? 
+----------
+  $246.00
+(1 row)
+
+SELECT m / 2::int2 FROM money_data;
+ ?column? 
+----------
+   $61.50
+(1 row)
+
+SELECT m * 2::float8 FROM money_data;
+ ?column? 
+----------
+  $246.00
+(1 row)
+
+SELECT 2::float8 * m FROM money_data;
+ ?column? 
+----------
+  $246.00
+(1 row)
+
+SELECT m / 2::float8 FROM money_data;
+ ?column? 
+----------
+   $61.50
+(1 row)
+
+SELECT m * 2::float4 FROM money_data;
+ ?column? 
+----------
+  $246.00
+(1 row)
+
+SELECT 2::float4 * m FROM money_data;
+ ?column? 
+----------
+  $246.00
+(1 row)
+
+SELECT m / 2::float4 FROM money_data;
  ?column? 
 ----------
    $61.50
@@ -275,7 +341,7 @@ SELECT '92233720368547758.075'::money;
 ERROR:  value "92233720368547758.075" is out of range for type money
 LINE 1: SELECT '92233720368547758.075'::money;
                ^
--- Cast int4/int8 to money
+-- Cast int4/int8/numeric to money
 SELECT 1234567890::money;
        money       
 -------------------
@@ -318,6 +384,12 @@ SELECT 12345678901234567::int8::money;
  $12,345,678,901,234,567.00
 (1 row)
 
+SELECT 12345678901234567::numeric::money;
+           money            
+----------------------------
+ $12,345,678,901,234,567.00
+(1 row)
+
 SELECT (-1234567890)::int4::money;
        money        
 --------------------
@@ -328,5 +400,24 @@ SELECT (-12345678901234567)::int8::money;
             money            
 -----------------------------
  -$12,345,678,901,234,567.00
+(1 row)
+
+SELECT (-12345678901234567)::numeric::money;
+            money            
+-----------------------------
+ -$12,345,678,901,234,567.00
+(1 row)
+
+-- Cast from money
+SELECT '12345678901234567'::money::numeric;
+       numeric        
+----------------------
+ 12345678901234567.00
+(1 row)
+
+SELECT '-12345678901234567'::money::numeric;
+        numeric        
+-----------------------
+ -12345678901234567.00
 (1 row)
 
