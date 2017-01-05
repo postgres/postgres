@@ -1324,15 +1324,17 @@ sub run_log
 	TestLib::run_log(@_);
 }
 
-=pod $node->lsn(mode)
+=pod
 
-Look up xlog positions on the server:
+=item $node->lsn(mode)
 
-* insert position (master only, error on replica)
-* write position (master only, error on replica)
-* flush position
-* receive position (always undef on master)
-* replay position
+Look up WAL positions on the server:
+
+ * insert position (master only, error on replica)
+ * write position (master only, error on replica)
+ * flush position (master only, error on replica)
+ * receive position (always undef on master)
+ * replay position (always undef on master)
 
 mode must be specified.
 
@@ -1363,11 +1365,13 @@ sub lsn
 	}
 }
 
-=pod $node->wait_for_catchup(standby_name, mode, target_lsn)
+=pod
+
+=item $node->wait_for_catchup(standby_name, mode, target_lsn)
 
 Wait for the node with application_name standby_name (usually from node->name)
 until its replication position in pg_stat_replication equals or passes the
-upstream's xlog insert point at the time this function is called. By default
+upstream's WAL insert point at the time this function is called. By default
 the replay_location is waited for, but 'mode' may be specified to wait for any
 of sent|write|flush|replay.
 
@@ -1401,7 +1405,9 @@ sub wait_for_catchup
 	print "done\n";
 }
 
-=pod $node->wait_for_slot_catchup(slot_name, mode, target_lsn)
+=pod
+
+=item $node->wait_for_slot_catchup(slot_name, mode, target_lsn)
 
 Wait for the named replication slot to equal or pass the supplied target_lsn.
 The position used is the restart_lsn unless mode is given, in which case it may
@@ -1435,7 +1441,9 @@ sub wait_for_slot_catchup
 	print "done\n";
 }
 
-=pod $node->query_hash($dbname, $query, @columns)
+=pod
+
+=item $node->query_hash($dbname, $query, @columns)
 
 Execute $query on $dbname, replacing any appearance of the string __COLUMNS__
 within the query with a comma-separated list of @columns.
@@ -1473,7 +1481,9 @@ sub query_hash
 	return \%val;
 }
 
-=pod $node->slot(slot_name)
+=pod
+
+=item $node->slot(slot_name)
 
 Return hash-ref of replication slot data for the named slot, or a hash-ref with
 all values '' if not found. Does not differentiate between null and empty string
