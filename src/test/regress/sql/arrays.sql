@@ -482,11 +482,19 @@ select array_fill(7, array[3,3],array[2,2]);
 select array_fill(7, array[3,3]);
 select array_fill('juhu'::text, array[3,3],array[2,2]);
 select array_fill('juhu'::text, array[3,3]);
+select a, a = '{}' as is_eq, array_dims(a)
+  from (select array_fill(42, array[0]) as a) ss;
+select a, a = '{}' as is_eq, array_dims(a)
+  from (select array_fill(42, '{}') as a) ss;
+select a, a = '{}' as is_eq, array_dims(a)
+  from (select array_fill(42, '{}', '{}') as a) ss;
 -- raise exception
 select array_fill(1, null, array[2,2]);
 select array_fill(1, array[2,2], null);
+select array_fill(1, array[2,2], '{}');
 select array_fill(1, array[3,3], array[1,1,1]);
 select array_fill(1, array[1,2,null]);
+select array_fill(1, array[[1,2],[3,4]]);
 
 select string_to_array('1|2|3', '|');
 select string_to_array('1|2|3|', '|');

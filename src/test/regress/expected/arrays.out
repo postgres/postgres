@@ -1553,16 +1553,43 @@ select array_fill('juhu'::text, array[3,3]);
  {{juhu,juhu,juhu},{juhu,juhu,juhu},{juhu,juhu,juhu}}
 (1 row)
 
+select a, a = '{}' as is_eq, array_dims(a)
+  from (select array_fill(42, array[0]) as a) ss;
+ a  | is_eq | array_dims 
+----+-------+------------
+ {} | t     | 
+(1 row)
+
+select a, a = '{}' as is_eq, array_dims(a)
+  from (select array_fill(42, '{}') as a) ss;
+ a  | is_eq | array_dims 
+----+-------+------------
+ {} | t     | 
+(1 row)
+
+select a, a = '{}' as is_eq, array_dims(a)
+  from (select array_fill(42, '{}', '{}') as a) ss;
+ a  | is_eq | array_dims 
+----+-------+------------
+ {} | t     | 
+(1 row)
+
 -- raise exception
 select array_fill(1, null, array[2,2]);
 ERROR:  dimension array or low bound array cannot be null
 select array_fill(1, array[2,2], null);
 ERROR:  dimension array or low bound array cannot be null
+select array_fill(1, array[2,2], '{}');
+ERROR:  wrong number of array subscripts
+DETAIL:  Low bound array has different size than dimensions array.
 select array_fill(1, array[3,3], array[1,1,1]);
 ERROR:  wrong number of array subscripts
 DETAIL:  Low bound array has different size than dimensions array.
 select array_fill(1, array[1,2,null]);
 ERROR:  dimension values cannot be null
+select array_fill(1, array[[1,2],[3,4]]);
+ERROR:  wrong number of array subscripts
+DETAIL:  Dimension array must be one dimensional.
 select string_to_array('1|2|3', '|');
  string_to_array 
 -----------------
