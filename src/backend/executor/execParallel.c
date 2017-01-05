@@ -486,7 +486,6 @@ ExecInitParallelPlan(PlanState *planstate, EState *estate, int nworkers)
 		shm_toc_insert(pcxt->toc, PARALLEL_KEY_DSA, area_space);
 		pei->area = dsa_create_in_place(area_space, dsa_minsize,
 										LWTRANCHE_PARALLEL_QUERY_DSA,
-										"parallel_query_dsa",
 										pcxt->seg);
 	}
 

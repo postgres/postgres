@@ -508,6 +508,8 @@ RegisterLWLockTranches(void)
 	LWLockRegisterTranche(LWTRANCHE_LOCK_MANAGER, "lock_manager");
 	LWLockRegisterTranche(LWTRANCHE_PREDICATE_LOCK_MANAGER,
 						  "predicate_lock_manager");
+	LWLockRegisterTranche(LWTRANCHE_PARALLEL_QUERY_DSA,
+						  "parallel_query_dsa");
 
 	/* Register named tranches. */
 	for (i = 0; i < NamedLWLockTrancheRequests; i++)

@@ -90,10 +90,9 @@ typedef dsm_handle dsa_handle;
 
 extern void dsa_startup(void);
 
-extern dsa_area *dsa_create(int tranche_id, const char *tranche_name);
+extern dsa_area *dsa_create(int tranche_id);
 extern dsa_area *dsa_create_in_place(void *place, Size size,
-					int tranche_id, const char *tranche_name,
-					dsm_segment *segment);
+					int tranche_id, dsm_segment *segment);
 extern dsa_area *dsa_attach(dsa_handle handle);
 extern dsa_area *dsa_attach_in_place(void *place, dsm_segment *segment);
 extern void dsa_release_in_place(void *place);
