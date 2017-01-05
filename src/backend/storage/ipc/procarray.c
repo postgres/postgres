@@ -484,7 +484,6 @@ ProcArrayGroupClearXid(PGPROC *proc, TransactionId latestXid)
 	volatile PROC_HDR *procglobal = ProcGlobal;
 	uint32		nextidx;
 	uint32		wakeidx;
-	int			extraWaits = -1;
 
 	/* We should definitely have an XID to clear. */
 	Assert(TransactionIdIsValid(allPgXact[proc->pgprocno].xid));
@@ -511,6 +510,8 @@ ProcArrayGroupClearXid(PGPROC *proc, TransactionId latestXid)
 	 */
 	if (nextidx != INVALID_PGPROCNO)
 	{
+		int			extraWaits = 0;
+
 		/* Sleep until the leader clears our XID. */
 		for (;;)
 		{
