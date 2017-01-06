@@ -1738,7 +1738,7 @@ build_hash_table(AggState *aggstate)
 											  additionalsize,
 							 aggstate->aggcontexts[0]->ecxt_per_tuple_memory,
 											  tmpmem,
-								  !DO_AGGSPLIT_SKIPFINAL(aggstate->aggsplit));
+								  DO_AGGSPLIT_SKIPFINAL(aggstate->aggsplit));
 }
 
 /*
