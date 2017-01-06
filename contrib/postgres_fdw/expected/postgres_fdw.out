@@ -3575,12 +3575,99 @@ EXECUTE st5('foo', 1);
   1 |  1 | 00001 | Fri Jan 02 00:00:00 1970 PST | Fri Jan 02 00:00:00 1970 | 1  | 1          | foo
 (1 row)
 
+-- altering FDW options requires replanning
+PREPARE st6 AS SELECT * FROM ft1 t1 WHERE t1.c1 = t1.c2;
+EXPLAIN (VERBOSE, COSTS OFF) EXECUTE st6;
+                                          QUERY PLAN                                          
+----------------------------------------------------------------------------------------------
+ Foreign Scan on public.ft1 t1
+   Output: c1, c2, c3, c4, c5, c6, c7, c8
+   Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" WHERE (("C 1" = c2))
+(3 rows)
+
+PREPARE st7 AS INSERT INTO ft1 (c1,c2,c3) VALUES (1001,101,'foo');
+EXPLAIN (VERBOSE, COSTS OFF) EXECUTE st7;
+                                                                                           QUERY PLAN                                                                                            
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Insert on public.ft1
+   Remote SQL: INSERT INTO "S 1"."T 1"("C 1", c2, c3, c4, c5, c6, c7, c8) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+   ->  Result
+         Output: NULL::integer, 1001, 101, 'foo'::text, NULL::timestamp with time zone, NULL::timestamp without time zone, NULL::character varying, 'ft1       '::character(10), NULL::user_enum
+(4 rows)
+
+ALTER TABLE "S 1"."T 1" RENAME TO "T 0";
+ALTER FOREIGN TABLE ft1 OPTIONS (SET table_name 'T 0');
+EXPLAIN (VERBOSE, COSTS OFF) EXECUTE st6;
+                                          QUERY PLAN                                          
+----------------------------------------------------------------------------------------------
+ Foreign Scan on public.ft1 t1
+   Output: c1, c2, c3, c4, c5, c6, c7, c8
+   Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 0" WHERE (("C 1" = c2))
+(3 rows)
+
+EXECUTE st6;
+ c1 | c2 |  c3   |              c4              |            c5            | c6 |     c7     | c8  
+----+----+-------+------------------------------+--------------------------+----+------------+-----
+  1 |  1 | 00001 | Fri Jan 02 00:00:00 1970 PST | Fri Jan 02 00:00:00 1970 | 1  | 1          | foo
+  2 |  2 | 00002 | Sat Jan 03 00:00:00 1970 PST | Sat Jan 03 00:00:00 1970 | 2  | 2          | foo
+  3 |  3 | 00003 | Sun Jan 04 00:00:00 1970 PST | Sun Jan 04 00:00:00 1970 | 3  | 3          | foo
+  4 |  4 | 00004 | Mon Jan 05 00:00:00 1970 PST | Mon Jan 05 00:00:00 1970 | 4  | 4          | foo
+  5 |  5 | 00005 | Tue Jan 06 00:00:00 1970 PST | Tue Jan 06 00:00:00 1970 | 5  | 5          | foo
+  6 |  6 | 00006 | Wed Jan 07 00:00:00 1970 PST | Wed Jan 07 00:00:00 1970 | 6  | 6          | foo
+  7 |  7 | 00007 | Thu Jan 08 00:00:00 1970 PST | Thu Jan 08 00:00:00 1970 | 7  | 7          | foo
+  8 |  8 | 00008 | Fri Jan 09 00:00:00 1970 PST | Fri Jan 09 00:00:00 1970 | 8  | 8          | foo
+  9 |  9 | 00009 | Sat Jan 10 00:00:00 1970 PST | Sat Jan 10 00:00:00 1970 | 9  | 9          | foo
+(9 rows)
+
+EXPLAIN (VERBOSE, COSTS OFF) EXECUTE st7;
+                                                                                           QUERY PLAN                                                                                            
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Insert on public.ft1
+   Remote SQL: INSERT INTO "S 1"."T 0"("C 1", c2, c3, c4, c5, c6, c7, c8) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+   ->  Result
+         Output: NULL::integer, 1001, 101, 'foo'::text, NULL::timestamp with time zone, NULL::timestamp without time zone, NULL::character varying, 'ft1       '::character(10), NULL::user_enum
+(4 rows)
+
+ALTER TABLE "S 1"."T 0" RENAME TO "T 1";
+ALTER FOREIGN TABLE ft1 OPTIONS (SET table_name 'T 1');
+PREPARE st8 AS SELECT count(c3) FROM ft1 t1 WHERE t1.c1 === t1.c2;
+EXPLAIN (VERBOSE, COSTS OFF) EXECUTE st8;
+                                       QUERY PLAN                                        
+-----------------------------------------------------------------------------------------
+ Foreign Scan
+   Output: (count(c3))
+   Relations: Aggregate on (public.ft1 t1)
+   Remote SQL: SELECT count(c3) FROM "S 1"."T 1" WHERE (("C 1" OPERATOR(public.===) c2))
+(4 rows)
+
+ALTER SERVER loopback OPTIONS (DROP extensions);
+EXPLAIN (VERBOSE, COSTS OFF) EXECUTE st8;
+                        QUERY PLAN                         
+-----------------------------------------------------------
+ Aggregate
+   Output: count(c3)
+   ->  Foreign Scan on public.ft1 t1
+         Output: c3
+         Filter: (t1.c1 === t1.c2)
+         Remote SQL: SELECT "C 1", c2, c3 FROM "S 1"."T 1"
+(6 rows)
+
+EXECUTE st8;
+ count 
+-------
+     9
+(1 row)
+
+ALTER SERVER loopback OPTIONS (ADD extensions 'postgres_fdw');
 -- cleanup
 DEALLOCATE st1;
 DEALLOCATE st2;
 DEALLOCATE st3;
 DEALLOCATE st4;
 DEALLOCATE st5;
+DEALLOCATE st6;
+DEALLOCATE st7;
+DEALLOCATE st8;
 -- System columns, except ctid and oid, should not be sent to remote
 EXPLAIN (VERBOSE, COSTS OFF)
 SELECT * FROM ft1 t1 WHERE t1.tableoid = 'pg_class'::regclass LIMIT 1;
