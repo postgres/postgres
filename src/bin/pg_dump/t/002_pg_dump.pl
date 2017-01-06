@@ -88,7 +88,7 @@ my %pgdump_runs = (
 			"$tempdir/defaults_custom_format.dump", 'postgres', ],
 		restore_cmd => [
 			'pg_restore',
-			'-f',
+			'-Fc', '-f',
 			"$tempdir/defaults_custom_format.sql",
 			"$tempdir/defaults_custom_format.dump", ], },
 	defaults_dir_format => {
@@ -98,7 +98,7 @@ my %pgdump_runs = (
 			'postgres', ],
 		restore_cmd => [
 			'pg_restore',
-			'-f',
+			'-Fd', '-f',
 			"$tempdir/defaults_dir_format.sql",
 			"$tempdir/defaults_dir_format", ], },
 	defaults_parallel => {
@@ -117,7 +117,7 @@ my %pgdump_runs = (
 			'postgres', ],
 		restore_cmd => [
 			'pg_restore',
-			'-f',
+			'-Ft', '-f',
 			"$tempdir/defaults_tar_format.sql",
 			"$tempdir/defaults_tar_format.tar", ], },
 	exclude_dump_test_schema => {
@@ -136,7 +136,7 @@ my %pgdump_runs = (
 			'--exclude-table-data=dump_test.test_table', 'postgres', ], },
 	pg_dumpall_globals => {
 		dump_cmd =>
-		  [ 'pg_dumpall', '-f', "$tempdir/pg_dumpall_globals.sql", '-g', ], },
+		  [ 'pg_dumpall', '-v', '-f', "$tempdir/pg_dumpall_globals.sql", '-g', ], },
 	pg_dumpall_globals_clean => {
 		dump_cmd => [
 			'pg_dumpall', '-f', "$tempdir/pg_dumpall_globals_clean.sql",
