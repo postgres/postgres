@@ -65,7 +65,7 @@ typedef enum ParseExprKind
 	EXPR_KIND_EXECUTE_PARAMETER,	/* parameter value in EXECUTE */
 	EXPR_KIND_TRIGGER_WHEN,		/* WHEN condition in CREATE TRIGGER */
 	EXPR_KIND_POLICY,			/* USING or WITH CHECK expr in policy */
-	EXPR_KIND_PARTITION_EXPRESSION	/* PARTITION BY expression */
+	EXPR_KIND_PARTITION_EXPRESSION		/* PARTITION BY expression */
 } ParseExprKind;
 
 
@@ -123,11 +123,42 @@ typedef Node *(*CoerceParamHook) (ParseState *pstate, Param *param,
  * p_parent_cte: CommonTableExpr that immediately contains the current query,
  * if any.
  *
+ * p_target_relation: target relation, if query is INSERT, UPDATE, or DELETE.
+ *
+ * p_target_rangetblentry: target relation's entry in the rtable list.
+ *
+ * p_is_insert: true to process assignment expressions like INSERT, false
+ * to process them like UPDATE.  (Note this can change intra-statement, for
+ * cases like INSERT ON CONFLICT UPDATE.)
+ *
  * p_windowdefs: list of WindowDefs representing WINDOW and OVER clauses.
  * We collect these while transforming expressions and then transform them
  * afterwards (so that any resjunk tlist items needed for the sort/group
  * clauses end up at the end of the query tlist).  A WindowDef's location in
  * this list, counting from 1, is the winref number to use to reference it.
+ *
+ * p_expr_kind: kind of expression we're currently parsing, as per enum above;
+ * EXPR_KIND_NONE when not in an expression.
+ *
+ * p_next_resno: next TargetEntry.resno to assign, starting from 1.
+ *
+ * p_multiassign_exprs: partially-processed MultiAssignRef source expressions.
+ *
+ * p_locking_clause: query's FOR UPDATE/FOR SHARE clause, if any.
+ *
+ * p_locked_from_parent: true if parent query level applies FOR UPDATE/SHARE
+ * to this subquery as a whole.
+ *
+ * p_value_substitute: replacement for VALUE references, if we're parsing
+ * a domain CHECK constraint.
+ *
+ * p_hasAggs, p_hasWindowFuncs, etc: true if we've found any of the indicated
+ * constructs in the query.
+ *
+ * p_pre_columnref_hook, etc: optional parser hook functions for modifying the
+ * interpretation of ColumnRefs and ParamRefs.
+ *
+ * p_ref_hook_state: passthrough state for the parser hook functions.
  */
 struct ParseState
 {
@@ -143,21 +174,24 @@ struct ParseState
 	List	   *p_ctenamespace; /* current namespace for common table exprs */
 	List	   *p_future_ctes;	/* common table exprs not yet in namespace */
 	CommonTableExpr *p_parent_cte;		/* this query's containing CTE */
+	Relation	p_target_relation;		/* INSERT/UPDATE/DELETE target rel */
+	RangeTblEntry *p_target_rangetblentry;		/* target rel's RTE */
+	bool		p_is_insert;	/* process assignment like INSERT not UPDATE */
 	List	   *p_windowdefs;	/* raw representations of window clauses */
 	ParseExprKind p_expr_kind;	/* what kind of expression we're parsing */
 	int			p_next_resno;	/* next targetlist resno to assign */
 	List	   *p_multiassign_exprs;	/* junk tlist entries for multiassign */
 	List	   *p_locking_clause;		/* raw FOR UPDATE/FOR SHARE info */
+	bool		p_locked_from_parent;	/* parent has marked this subquery
+										 * with FOR UPDATE/FOR SHARE */
 	Node	   *p_value_substitute;		/* what to replace VALUE with, if any */
+
+	/* Flags telling about things found in the query: */
 	bool		p_hasAggs;
 	bool		p_hasWindowFuncs;
 	bool		p_hasTargetSRFs;
 	bool		p_hasSubLinks;
 	bool		p_hasModifyingCTE;
-	bool		p_is_insert;
-	bool		p_locked_from_parent;
-	Relation	p_target_relation;
-	RangeTblEntry *p_target_rangetblentry;
 
 	/*
 	 * Optional hook functions for parser callbacks.  These are null unless
