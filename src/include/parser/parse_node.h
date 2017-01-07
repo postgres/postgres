@@ -149,9 +149,6 @@ typedef Node *(*CoerceParamHook) (ParseState *pstate, Param *param,
  * p_locked_from_parent: true if parent query level applies FOR UPDATE/SHARE
  * to this subquery as a whole.
  *
- * p_value_substitute: replacement for VALUE references, if we're parsing
- * a domain CHECK constraint.
- *
  * p_hasAggs, p_hasWindowFuncs, etc: true if we've found any of the indicated
  * constructs in the query.
  *
@@ -184,7 +181,6 @@ struct ParseState
 	List	   *p_locking_clause;		/* raw FOR UPDATE/FOR SHARE info */
 	bool		p_locked_from_parent;	/* parent has marked this subquery
 										 * with FOR UPDATE/FOR SHARE */
-	Node	   *p_value_substitute;		/* what to replace VALUE with, if any */
 
 	/* Flags telling about things found in the query: */
 	bool		p_hasAggs;

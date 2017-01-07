@@ -577,27 +577,6 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					/*
 					 * Not known as a column of any range-table entry.
 					 *
-					 * Consider the possibility that it's VALUE in a domain
-					 * check expression.  (We handle VALUE as a name, not a
-					 * keyword, to avoid breaking a lot of applications that
-					 * have used VALUE as a column name in the past.)
-					 */
-					if (pstate->p_value_substitute != NULL &&
-						strcmp(colname, "value") == 0)
-					{
-						node = (Node *) copyObject(pstate->p_value_substitute);
-
-						/*
-						 * Try to propagate location knowledge.  This should
-						 * be extended if p_value_substitute can ever take on
-						 * other node types.
-						 */
-						if (IsA(node, CoerceToDomainValue))
-							((CoerceToDomainValue *) node)->location = cref->location;
-						break;
-					}
-
-					/*
 					 * Try to find the name as a relation.  Note that only
 					 * relations already entered into the rangetable will be
 					 * recognized.

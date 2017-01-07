@@ -104,6 +104,8 @@ static char *domainAddConstraint(Oid domainOid, Oid domainNamespace,
 					Oid baseTypeOid,
 					int typMod, Constraint *constr,
 					char *domainName, ObjectAddress *constrAddr);
+static Node *replace_domain_constraint_value(ParseState *pstate,
+								ColumnRef *cref);
 
 
 /*
@@ -3022,7 +3024,8 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 	domVal->collation = get_typcollation(baseTypeOid);
 	domVal->location = -1;		/* will be set when/if used */
 
-	pstate->p_value_substitute = (Node *) domVal;
+	pstate->p_pre_columnref_hook = replace_domain_constraint_value;
+	pstate->p_ref_hook_state = (void *) domVal;
 
 	expr = transformExpr(pstate, constr->raw_expr, EXPR_KIND_DOMAIN_CHECK);
 
@@ -3097,6 +3100,35 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 	 * perform any additional required tests.
 	 */
 	return ccbin;
+}
+
+/* Parser pre_columnref_hook for domain CHECK constraint parsing */
+static Node *
+replace_domain_constraint_value(ParseState *pstate, ColumnRef *cref)
+{
+	/*
+	 * Check for a reference to "value", and if that's what it is, replace
+	 * with a CoerceToDomainValue as prepared for us by domainAddConstraint.
+	 * (We handle VALUE as a name, not a keyword, to avoid breaking a lot of
+	 * applications that have used VALUE as a column name in the past.)
+	 */
+	if (list_length(cref->fields) == 1)
+	{
+		Node	   *field1 = (Node *) linitial(cref->fields);
+		char	   *colname;
+
+		Assert(IsA(field1, String));
+		colname = strVal(field1);
+		if (strcmp(colname, "value") == 0)
+		{
+			CoerceToDomainValue *domVal = copyObject(pstate->p_ref_hook_state);
+
+			/* Propagate location knowledge, if any */
+			domVal->location = cref->location;
+			return (Node *) domVal;
+		}
+	}
+	return NULL;
 }
 
 
