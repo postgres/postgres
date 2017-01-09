@@ -287,7 +287,7 @@ brin_doupdate(Relation idxrel, BlockNumber pagesPerRange,
 			XLogRegisterBufData(0, (char *) newtup, newsz);
 
 			/* revmap page */
-			XLogRegisterBuffer(1, revmapbuf, REGBUF_STANDARD);
+			XLogRegisterBuffer(1, revmapbuf, 0);
 
 			/* old page */
 			XLogRegisterBuffer(2, oldbuf, REGBUF_STANDARD);
