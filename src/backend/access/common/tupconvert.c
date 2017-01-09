@@ -206,55 +206,12 @@ convert_tuples_by_name(TupleDesc indesc,
 {
 	TupleConversionMap *map;
 	AttrNumber *attrMap;
-	int			n;
+	int			n = outdesc->natts;
 	int			i;
 	bool		same;
 
 	/* Verify compatibility and prepare attribute-number map */
-	n = outdesc->natts;
-	attrMap = (AttrNumber *) palloc0(n * sizeof(AttrNumber));
-	for (i = 0; i < n; i++)
-	{
-		Form_pg_attribute att = outdesc->attrs[i];
-		char	   *attname;
-		Oid			atttypid;
-		int32		atttypmod;
-		int			j;
-
-		if (att->attisdropped)
-			continue;			/* attrMap[i] is already 0 */
-		attname = NameStr(att->attname);
-		atttypid = att->atttypid;
-		atttypmod = att->atttypmod;
-		for (j = 0; j < indesc->natts; j++)
-		{
-			att = indesc->attrs[j];
-			if (att->attisdropped)
-				continue;
-			if (strcmp(attname, NameStr(att->attname)) == 0)
-			{
-				/* Found it, check type */
-				if (atttypid != att->atttypid || atttypmod != att->atttypmod)
-					ereport(ERROR,
-							(errcode(ERRCODE_DATATYPE_MISMATCH),
-							 errmsg_internal("%s", _(msg)),
-							 errdetail("Attribute \"%s\" of type %s does not match corresponding attribute of type %s.",
-									   attname,
-									   format_type_be(outdesc->tdtypeid),
-									   format_type_be(indesc->tdtypeid))));
-				attrMap[i] = (AttrNumber) (j + 1);
-				break;
-			}
-		}
-		if (attrMap[i] == 0)
-			ereport(ERROR,
-					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg_internal("%s", _(msg)),
-					 errdetail("Attribute \"%s\" of type %s does not exist in type %s.",
-							   attname,
-							   format_type_be(outdesc->tdtypeid),
-							   format_type_be(indesc->tdtypeid))));
-	}
+	attrMap = convert_tuples_by_name_map(indesc, outdesc, msg);
 
 	/*
 	 * Check to see if the map is one-to-one and the tuple types are the same.
@@ -310,6 +267,69 @@ convert_tuples_by_name(TupleDesc indesc,
 	map->inisnull[0] = true;
 
 	return map;
+}
+
+/*
+ * Return a palloc'd bare attribute map for tuple conversion, matching input
+ * and output columns by name.  (Dropped columns are ignored in both input and
+ * output.)  This is normally a subroutine for convert_tuples_by_name, but can
+ * be used standalone.
+ */
+AttrNumber *
+convert_tuples_by_name_map(TupleDesc indesc,
+						   TupleDesc outdesc,
+						   const char *msg)
+{
+	AttrNumber *attrMap;
+	int			n;
+	int			i;
+
+	n = outdesc->natts;
+	attrMap = (AttrNumber *) palloc0(n * sizeof(AttrNumber));
+	for (i = 0; i < n; i++)
+	{
+		Form_pg_attribute att = outdesc->attrs[i];
+		char	   *attname;
+		Oid			atttypid;
+		int32		atttypmod;
+		int			j;
+
+		if (att->attisdropped)
+			continue;			/* attrMap[i] is already 0 */
+		attname = NameStr(att->attname);
+		atttypid = att->atttypid;
+		atttypmod = att->atttypmod;
+		for (j = 0; j < indesc->natts; j++)
+		{
+			att = indesc->attrs[j];
+			if (att->attisdropped)
+				continue;
+			if (strcmp(attname, NameStr(att->attname)) == 0)
+			{
+				/* Found it, check type */
+				if (atttypid != att->atttypid || atttypmod != att->atttypmod)
+					ereport(ERROR,
+							(errcode(ERRCODE_DATATYPE_MISMATCH),
+							 errmsg_internal("%s", _(msg)),
+							 errdetail("Attribute \"%s\" of type %s does not match corresponding attribute of type %s.",
+									   attname,
+									   format_type_be(outdesc->tdtypeid),
+									   format_type_be(indesc->tdtypeid))));
+				attrMap[i] = (AttrNumber) (j + 1);
+				break;
+			}
+		}
+		if (attrMap[i] == 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg_internal("%s", _(msg)),
+					 errdetail("Attribute \"%s\" of type %s does not exist in type %s.",
+							   attname,
+							   format_type_be(outdesc->tdtypeid),
+							   format_type_be(indesc->tdtypeid))));
+	}
+
+	return attrMap;
 }
 
 /*
