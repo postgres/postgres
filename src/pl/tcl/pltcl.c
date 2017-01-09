@@ -299,6 +299,14 @@ static int pltcl_SPI_execute_plan(ClientData cdata, Tcl_Interp *interp,
 static int pltcl_SPI_lastoid(ClientData cdata, Tcl_Interp *interp,
 				  int objc, Tcl_Obj *const objv[]);
 
+static void pltcl_subtrans_begin(MemoryContext oldcontext,
+					 ResourceOwner oldowner);
+static void pltcl_subtrans_commit(MemoryContext oldcontext,
+					  ResourceOwner oldowner);
+static void pltcl_subtrans_abort(Tcl_Interp *interp,
+					 MemoryContext oldcontext,
+					 ResourceOwner oldowner);
+
 static void pltcl_set_tuple_values(Tcl_Interp *interp, const char *arrayname,
 					   uint64 tupno, HeapTuple tuple, TupleDesc tupdesc);
 static Tcl_Obj *pltcl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc);
@@ -2073,9 +2081,9 @@ pltcl_returnnext(ClientData cdata, Tcl_Interp *interp,
 	pltcl_call_state *call_state = pltcl_current_call_state;
 	FunctionCallInfo fcinfo = call_state->fcinfo;
 	pltcl_proc_desc *prodesc = call_state->prodesc;
-	int			result = TCL_OK;
-	MemoryContext tmpcxt;
-	MemoryContext oldcxt;
+	MemoryContext oldcontext = CurrentMemoryContext;
+	ResourceOwner oldowner = CurrentResourceOwner;
+	volatile int result = TCL_OK;
 
 	/*
 	 * Check that we're called as a set-returning function
@@ -2103,52 +2111,63 @@ pltcl_returnnext(ClientData cdata, Tcl_Interp *interp,
 		return TCL_ERROR;
 	}
 
-	/* Set up tuple store if first output row */
-	if (call_state->tuple_store == NULL)
-		pltcl_init_tuple_store(call_state);
-
-	/* Make short-lived context to run input functions in */
-	tmpcxt = AllocSetContextCreate(CurrentMemoryContext,
-								   "pltcl_returnnext",
-								   ALLOCSET_SMALL_SIZES);
-	oldcxt = MemoryContextSwitchTo(tmpcxt);
-
-	if (prodesc->fn_retistuple)
+	/*
+	 * The rest might throw elog(ERROR), so must run in a subtransaction.
+	 *
+	 * A small advantage of using a subtransaction is that it provides a
+	 * short-lived memory context for free, so we needn't worry about leaking
+	 * memory here.  To use that context, call BeginInternalSubTransaction
+	 * directly instead of going through pltcl_subtrans_begin.
+	 */
+	BeginInternalSubTransaction(NULL);
+	PG_TRY();
 	{
-		Tcl_Obj   **rowObjv;
-		int			rowObjc;
+		/* Set up tuple store if first output row */
+		if (call_state->tuple_store == NULL)
+			pltcl_init_tuple_store(call_state);
 
-		/* result should be a list, so break it down */
-		if (Tcl_ListObjGetElements(interp, objv[1], &rowObjc, &rowObjv) == TCL_ERROR)
-			result = TCL_ERROR;
+		if (prodesc->fn_retistuple)
+		{
+			Tcl_Obj   **rowObjv;
+			int			rowObjc;
+
+			/* result should be a list, so break it down */
+			if (Tcl_ListObjGetElements(interp, objv[1], &rowObjc, &rowObjv) == TCL_ERROR)
+				result = TCL_ERROR;
+			else
+			{
+				HeapTuple	tuple;
+
+				tuple = pltcl_build_tuple_result(interp, rowObjv, rowObjc,
+												 call_state);
+				tuplestore_puttuple(call_state->tuple_store, tuple);
+			}
+		}
 		else
 		{
-			HeapTuple	tuple;
+			Datum		retval;
+			bool		isNull = false;
 
-			tuple = pltcl_build_tuple_result(interp, rowObjv, rowObjc,
-											 call_state);
-			tuplestore_puttuple(call_state->tuple_store, tuple);
+			/* for paranoia's sake, check that tupdesc has exactly one column */
+			if (call_state->ret_tupdesc->natts != 1)
+				elog(ERROR, "wrong result type supplied in return_next");
+
+			retval = InputFunctionCall(&prodesc->result_in_func,
+									utf_u2e((char *) Tcl_GetString(objv[1])),
+									   prodesc->result_typioparam,
+									   -1);
+			tuplestore_putvalues(call_state->tuple_store, call_state->ret_tupdesc,
+								 &retval, &isNull);
 		}
+
+		pltcl_subtrans_commit(oldcontext, oldowner);
 	}
-	else
+	PG_CATCH();
 	{
-		Datum		retval;
-		bool		isNull = false;
-
-		/* for paranoia's sake, check that tupdesc has exactly one column */
-		if (call_state->ret_tupdesc->natts != 1)
-			elog(ERROR, "wrong result type supplied in return_next");
-
-		retval = InputFunctionCall(&prodesc->result_in_func,
-								   utf_u2e((char *) Tcl_GetString(objv[1])),
-								   prodesc->result_typioparam,
-								   -1);
-		tuplestore_putvalues(call_state->tuple_store, call_state->ret_tupdesc,
-							 &retval, &isNull);
+		pltcl_subtrans_abort(interp, oldcontext, oldowner);
+		return TCL_ERROR;
 	}
-
-	MemoryContextSwitchTo(oldcxt);
-	MemoryContextDelete(tmpcxt);
+	PG_END_TRY();
 
 	return result;
 }
