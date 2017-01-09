@@ -61,6 +61,16 @@ typedef struct TablespaceList
  */
 #define MINIMUM_VERSION_FOR_PG_WAL	100000
 
+/*
+ * Different ways to include WAL
+ */
+typedef enum
+{
+	NO_WAL,
+	FETCH_WAL,
+	STREAM_WAL
+} IncludeWal;
+
 /* Global options */
 static char *basedir = NULL;
 static TablespaceList tablespace_dirs = {NULL, NULL};
@@ -71,8 +81,7 @@ static bool noclean = false;
 static bool showprogress = false;
 static int	verbose = 0;
 static int	compresslevel = 0;
-static bool includewal = true;
-static bool streamwal = true;
+static IncludeWal includewal = STREAM_WAL;
 static bool fastcheckpoint = false;
 static bool writerecoveryconf = false;
 static bool do_sync = true;
@@ -1697,7 +1706,7 @@ BaseBackup(void)
 	 * If WAL streaming was requested, also check that the server is new
 	 * enough for that.
 	 */
-	if (streamwal && !CheckServerVersionForStreaming(conn))
+	if (includewal == STREAM_WAL && !CheckServerVersionForStreaming(conn))
 	{
 		/*
 		 * Error message already written in CheckServerVersionForStreaming(),
@@ -1731,9 +1740,9 @@ BaseBackup(void)
 		psprintf("BASE_BACKUP LABEL '%s' %s %s %s %s %s %s",
 				 escaped_label,
 				 showprogress ? "PROGRESS" : "",
-				 includewal && !streamwal ? "WAL" : "",
+				 includewal == FETCH_WAL ? "WAL" : "",
 				 fastcheckpoint ? "FAST" : "",
-				 includewal ? "NOWAIT" : "",
+				 includewal == NO_WAL ? "" : "NOWAIT",
 				 maxrate_clause ? maxrate_clause : "",
 				 format == 't' ? "TABLESPACE_MAP" : "");
 
@@ -1776,7 +1785,7 @@ BaseBackup(void)
 	PQclear(res);
 	MemSet(xlogend, 0, sizeof(xlogend));
 
-	if (verbose && includewal)
+	if (verbose && includewal != NO_WAL)
 		fprintf(stderr, _("transaction log start point: %s on timeline %u\n"),
 				xlogstart, starttli);
 
@@ -1833,7 +1842,7 @@ BaseBackup(void)
 	 * If we're streaming WAL, start the streaming session before we start
 	 * receiving the actual data chunks.
 	 */
-	if (streamwal)
+	if (includewal == STREAM_WAL)
 	{
 		if (verbose)
 			fprintf(stderr, _("%s: starting background WAL receiver\n"),
@@ -1879,7 +1888,7 @@ BaseBackup(void)
 		disconnect_and_exit(1);
 	}
 	strlcpy(xlogend, PQgetvalue(res, 0, 0), sizeof(xlogend));
-	if (verbose && includewal)
+	if (verbose && includewal != NO_WAL)
 		fprintf(stderr, "transaction log end point: %s\n", xlogend);
 	PQclear(res);
 
@@ -2117,20 +2126,17 @@ main(int argc, char **argv)
 				if (strcmp(optarg, "n") == 0 ||
 					strcmp(optarg, "none") == 0)
 				{
-					includewal = false;
-					streamwal = false;
+					includewal = NO_WAL;
 				}
 				else if (strcmp(optarg, "f") == 0 ||
 					strcmp(optarg, "fetch") == 0)
 				{
-					includewal = true;
-					streamwal = false;
+					includewal = FETCH_WAL;
 				}
 				else if (strcmp(optarg, "s") == 0 ||
 						 strcmp(optarg, "stream") == 0)
 				{
-					includewal = true;
-					streamwal = true;
+					includewal = STREAM_WAL;
 				}
 				else
 				{
@@ -2261,7 +2267,7 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
-	if (format == 't' && streamwal && strcmp(basedir, "-") == 0)
+	if (format == 't' && includewal == STREAM_WAL && strcmp(basedir, "-") == 0)
 	{
 		fprintf(stderr,
 			_("%s: cannot stream transaction logs in tar mode to stdout\n"),
@@ -2271,7 +2277,7 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
-	if (replication_slot && !streamwal)
+	if (replication_slot && includewal != STREAM_WAL)
 	{
 		fprintf(stderr,
 			_("%s: replication slots can only be used with WAL streaming\n"),
