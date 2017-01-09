@@ -185,12 +185,23 @@ select * from T_pkey2 order by key1 using @<, key2 collate "C";
 
 -- show dump of trigger data
 insert into trigger_test values(1,'insert');
-NOTICE:  NEW: {i: 1, v: insert}
+NOTICE:  NEW: {}
+NOTICE:  OLD: {}
+NOTICE:  TG_level: STATEMENT
+NOTICE:  TG_name: statement_trigger
+NOTICE:  TG_op: INSERT
+NOTICE:  TG_relatts: {{} i v {} test_skip test_return_null test_argisnull}
+NOTICE:  TG_relid: bogus:12345
+NOTICE:  TG_table_name: trigger_test
+NOTICE:  TG_table_schema: public
+NOTICE:  TG_when: BEFORE
+NOTICE:  args: {42 {statement trigger}}
+NOTICE:  NEW: {i: 1, test_argisnull: f, test_return_null: f, test_skip: f, v: insert}
 NOTICE:  OLD: {}
 NOTICE:  TG_level: ROW
 NOTICE:  TG_name: show_trigger_data_trig
 NOTICE:  TG_op: INSERT
-NOTICE:  TG_relatts: {{} i v}
+NOTICE:  TG_relatts: {{} i v {} test_skip test_return_null test_argisnull}
 NOTICE:  TG_relid: bogus:12345
 NOTICE:  TG_table_name: trigger_test
 NOTICE:  TG_table_schema: public
@@ -232,13 +243,37 @@ NOTICE:  TG_table_name: trigger_test_view
 NOTICE:  TG_table_schema: public
 NOTICE:  TG_when: {INSTEAD OF}
 NOTICE:  args: {24 {skidoo view}}
+update trigger_test set v = 'update', test_skip=true where i = 1;
+NOTICE:  NEW: {}
+NOTICE:  OLD: {}
+NOTICE:  TG_level: STATEMENT
+NOTICE:  TG_name: statement_trigger
+NOTICE:  TG_op: UPDATE
+NOTICE:  TG_relatts: {{} i v {} test_skip test_return_null test_argisnull}
+NOTICE:  TG_relid: bogus:12345
+NOTICE:  TG_table_name: trigger_test
+NOTICE:  TG_table_schema: public
+NOTICE:  TG_when: BEFORE
+NOTICE:  args: {42 {statement trigger}}
+NOTICE:  SKIPPING OPERATION UPDATE
 update trigger_test set v = 'update' where i = 1;
-NOTICE:  NEW: {i: 1, v: update}
-NOTICE:  OLD: {i: 1, v: insert}
+NOTICE:  NEW: {}
+NOTICE:  OLD: {}
+NOTICE:  TG_level: STATEMENT
+NOTICE:  TG_name: statement_trigger
+NOTICE:  TG_op: UPDATE
+NOTICE:  TG_relatts: {{} i v {} test_skip test_return_null test_argisnull}
+NOTICE:  TG_relid: bogus:12345
+NOTICE:  TG_table_name: trigger_test
+NOTICE:  TG_table_schema: public
+NOTICE:  TG_when: BEFORE
+NOTICE:  args: {42 {statement trigger}}
+NOTICE:  NEW: {i: 1, test_argisnull: f, test_return_null: f, test_skip: f, v: update}
+NOTICE:  OLD: {i: 1, test_argisnull: f, test_return_null: f, test_skip: f, v: insert}
 NOTICE:  TG_level: ROW
 NOTICE:  TG_name: show_trigger_data_trig
 NOTICE:  TG_op: UPDATE
-NOTICE:  TG_relatts: {{} i v}
+NOTICE:  TG_relatts: {{} i v {} test_skip test_return_null test_argisnull}
 NOTICE:  TG_relid: bogus:12345
 NOTICE:  TG_table_name: trigger_test
 NOTICE:  TG_table_schema: public
@@ -246,16 +281,39 @@ NOTICE:  TG_when: BEFORE
 NOTICE:  args: {23 skidoo}
 delete from trigger_test;
 NOTICE:  NEW: {}
-NOTICE:  OLD: {i: 1, v: update}
+NOTICE:  OLD: {}
+NOTICE:  TG_level: STATEMENT
+NOTICE:  TG_name: statement_trigger
+NOTICE:  TG_op: DELETE
+NOTICE:  TG_relatts: {{} i v {} test_skip test_return_null test_argisnull}
+NOTICE:  TG_relid: bogus:12345
+NOTICE:  TG_table_name: trigger_test
+NOTICE:  TG_table_schema: public
+NOTICE:  TG_when: BEFORE
+NOTICE:  args: {42 {statement trigger}}
+NOTICE:  NEW: {}
+NOTICE:  OLD: {i: 1, test_argisnull: f, test_return_null: f, test_skip: f, v: update}
 NOTICE:  TG_level: ROW
 NOTICE:  TG_name: show_trigger_data_trig
 NOTICE:  TG_op: DELETE
-NOTICE:  TG_relatts: {{} i v}
+NOTICE:  TG_relatts: {{} i v {} test_skip test_return_null test_argisnull}
 NOTICE:  TG_relid: bogus:12345
 NOTICE:  TG_table_name: trigger_test
 NOTICE:  TG_table_schema: public
 NOTICE:  TG_when: BEFORE
 NOTICE:  args: {23 skidoo}
+truncate trigger_test;
+NOTICE:  NEW: {}
+NOTICE:  OLD: {}
+NOTICE:  TG_level: STATEMENT
+NOTICE:  TG_name: statement_trigger
+NOTICE:  TG_op: TRUNCATE
+NOTICE:  TG_relatts: {{} i v {} test_skip test_return_null test_argisnull}
+NOTICE:  TG_relid: bogus:12345
+NOTICE:  TG_table_name: trigger_test
+NOTICE:  TG_table_schema: public
+NOTICE:  TG_when: BEFORE
+NOTICE:  args: {42 {statement trigger}}
 -- Test composite-type arguments
 select tcl_composite_arg_ref1(row('tkey', 42, 'ref2'));
  tcl_composite_arg_ref1 
@@ -288,6 +346,22 @@ select tcl_argisnull(null);
  t
 (1 row)
 
+-- should error
+insert into trigger_test(test_argisnull) values(true);
+NOTICE:  NEW: {}
+NOTICE:  OLD: {}
+NOTICE:  TG_level: STATEMENT
+NOTICE:  TG_name: statement_trigger
+NOTICE:  TG_op: INSERT
+NOTICE:  TG_relatts: {{} i v {} test_skip test_return_null test_argisnull}
+NOTICE:  TG_relid: bogus:12345
+NOTICE:  TG_table_name: trigger_test
+NOTICE:  TG_table_schema: public
+NOTICE:  TG_when: BEFORE
+NOTICE:  args: {42 {statement trigger}}
+ERROR:  argisnull cannot be used in triggers
+select trigger_data();
+ERROR:  trigger functions can only be called as triggers
 -- Test spi_lastoid primitive
 create temp table t1 (f1 int);
 select tcl_lastoid('t1');
@@ -304,14 +378,14 @@ select tcl_lastoid('t2') > 0;
 (1 row)
 
 -- test some error cases
-CREATE FUNCTION tcl_error(OUT a int, OUT b int) AS $$return {$$ LANGUAGE pltcl;
-SELECT tcl_error();
+create function tcl_error(out a int, out b int) as $$return {$$ language pltcl;
+select tcl_error();
 ERROR:  missing close-brace
-CREATE FUNCTION bad_record(OUT a text, OUT b text) AS $$return [list a]$$ LANGUAGE pltcl;
-SELECT bad_record();
+create function bad_record(out a text, out b text) as $$return [list a]$$ language pltcl;
+select bad_record();
 ERROR:  column name/value list must have even number of elements
-CREATE FUNCTION bad_field(OUT a text, OUT b text) AS $$return [list a 1 b 2 cow 3]$$ LANGUAGE pltcl;
-SELECT bad_field();
+create function bad_field(out a text, out b text) as $$return [list a 1 b 2 cow 3]$$ language pltcl;
+select bad_field();
 ERROR:  column name/value list contains nonexistent column name "cow"
 -- test compound return
 select * from tcl_test_cube_squared(5);
@@ -351,16 +425,238 @@ select 1, tcl_test_sequence(0,5);
         1 |                 4
 (5 rows)
 
-CREATE FUNCTION non_srf() RETURNS int AS $$return_next 1$$ LANGUAGE pltcl;
+create function non_srf() returns int as $$return_next 1$$ language pltcl;
 select non_srf();
 ERROR:  return_next cannot be used in non-set-returning functions
-CREATE FUNCTION bad_record_srf(OUT a text, OUT b text) RETURNS SETOF record AS $$
+create function bad_record_srf(out a text, out b text) returns setof record as $$
 return_next [list a]
-$$ LANGUAGE pltcl;
-SELECT bad_record_srf();
+$$ language pltcl;
+select bad_record_srf();
 ERROR:  column name/value list must have even number of elements
-CREATE FUNCTION bad_field_srf(OUT a text, OUT b text) RETURNS SETOF record AS $$
+create function bad_field_srf(out a text, out b text) returns setof record as $$
 return_next [list a 1 b 2 cow 3]
-$$ LANGUAGE pltcl;
-SELECT bad_field_srf();
+$$ language pltcl;
+select bad_field_srf();
 ERROR:  column name/value list contains nonexistent column name "cow"
+-- test quote
+select tcl_eval('quote foo bar');
+ERROR:  wrong # args: should be "quote string"
+select tcl_eval('quote [format %c 39]');
+ tcl_eval 
+----------
+ ''
+(1 row)
+
+select tcl_eval('quote [format %c 92]');
+ tcl_eval 
+----------
+ \\
+(1 row)
+
+-- Test argisnull
+select tcl_eval('argisnull');
+ERROR:  wrong # args: should be "argisnull argno"
+select tcl_eval('argisnull 14');
+ERROR:  argno out of range
+select tcl_eval('argisnull abc');
+ERROR:  expected integer but got "abc"
+-- Test return_null
+select tcl_eval('return_null 14');
+ERROR:  wrong # args: should be "return_null "
+-- should error
+insert into trigger_test(test_return_null) values(true);
+NOTICE:  NEW: {}
+NOTICE:  OLD: {}
+NOTICE:  TG_level: STATEMENT
+NOTICE:  TG_name: statement_trigger
+NOTICE:  TG_op: INSERT
+NOTICE:  TG_relatts: {{} i v {} test_skip test_return_null test_argisnull}
+NOTICE:  TG_relid: bogus:12345
+NOTICE:  TG_table_name: trigger_test
+NOTICE:  TG_table_schema: public
+NOTICE:  TG_when: BEFORE
+NOTICE:  args: {42 {statement trigger}}
+ERROR:  return_null cannot be used in triggers
+-- Test spi_exec
+select tcl_eval('spi_exec');
+ERROR:  wrong # args: should be "spi_exec ?-count n? ?-array name? query ?loop body?"
+select tcl_eval('spi_exec -count');
+ERROR:  missing argument to -count or -array
+select tcl_eval('spi_exec -array');
+ERROR:  missing argument to -count or -array
+select tcl_eval('spi_exec -count abc');
+ERROR:  expected integer but got "abc"
+select tcl_eval('spi_exec query loop body toomuch');
+ERROR:  wrong # args: should be "query ?loop body?"
+select tcl_eval('spi_exec "begin; rollback;"');
+ERROR:  pltcl: SPI_execute failed: SPI_ERROR_TRANSACTION
+-- Test spi_execp
+select tcl_eval('spi_execp');
+ERROR:  missing argument to -count or -array
+select tcl_eval('spi_execp -count');
+ERROR:  missing argument to -array, -count or -nulls
+select tcl_eval('spi_execp -array');
+ERROR:  missing argument to -array, -count or -nulls
+select tcl_eval('spi_execp -count abc');
+ERROR:  expected integer but got "abc"
+select tcl_eval('spi_execp -nulls');
+ERROR:  missing argument to -array, -count or -nulls
+select tcl_eval('spi_execp ""');
+ERROR:  invalid queryid ''
+-- test spi_prepare
+select tcl_eval('spi_prepare');
+ERROR:  wrong # args: should be "spi_prepare query argtypes"
+select tcl_eval('spi_prepare a b');
+ERROR:  type "b" does not exist
+select tcl_eval('spi_prepare a "b {"');
+ERROR:  unmatched open brace in list
+select tcl_error_handling_test($tcl$spi_prepare "select moo" []$tcl$);
+       tcl_error_handling_test        
+--------------------------------------
+ SQLSTATE: 42703                     +
+ condition: undefined_column         +
+ cursor_position: 8                  +
+ message: column "moo" does not exist+
+ statement: select moo
+(1 row)
+
+-- test full error text
+select tcl_error_handling_test($tcl$
+spi_exec "DO $$
+BEGIN
+RAISE 'my message'
+	USING HINT = 'my hint'
+	, DETAIL = 'my detail'
+	, SCHEMA = 'my schema'
+	, TABLE = 'my table'
+	, COLUMN = 'my column'
+	, CONSTRAINT = 'my constraint'
+	, DATATYPE = 'my datatype'
+;
+END$$;"
+$tcl$);
+                   tcl_error_handling_test                    
+--------------------------------------------------------------
+ SQLSTATE: P0001                                             +
+ column: my column                                           +
+ condition: raise_exception                                  +
+ constraint: my constraint                                   +
+ context: PL/pgSQL function inline_code_block line 3 at RAISE+
+         SQL statement "DO $$                                +
+         BEGIN                                               +
+         RAISE 'my message'                                  +
+                 USING HINT = 'my hint'                      +
+                 , DETAIL = 'my detail'                      +
+                 , SCHEMA = 'my schema'                      +
+                 , TABLE = 'my table'                        +
+                 , COLUMN = 'my column'                      +
+                 , CONSTRAINT = 'my constraint'              +
+                 , DATATYPE = 'my datatype'                  +
+         ;                                                   +
+         END$$;"                                             +
+ datatype: my datatype                                       +
+ detail: my detail                                           +
+ hint: my hint                                               +
+ message: my message                                         +
+ schema: my schema                                           +
+ table: my table
+(1 row)
+
+-- verify tcl_error_handling_test() properly reports non-postgres errors
+select tcl_error_handling_test('moo');
+  tcl_error_handling_test   
+----------------------------
+ invalid command name "moo"
+(1 row)
+
+-- test elog
+select tcl_eval('elog');
+ERROR:  wrong # args: should be "elog level msg"
+select tcl_eval('elog foo bar');
+ERROR:  bad priority "foo": must be DEBUG, LOG, INFO, NOTICE, WARNING, ERROR, or FATAL
+-- test forced error
+select tcl_eval('error "forced error"');
+ERROR:  forced error
+-- test loop control in spi_exec[p]
+select tcl_spi_exec(true, 'break');
+NOTICE:  col1 1, col2 foo
+NOTICE:  col1 2, col2 bar
+NOTICE:  action: break
+NOTICE:  end of function
+ tcl_spi_exec 
+--------------
+ 
+(1 row)
+
+select tcl_spi_exec(true, 'continue');
+NOTICE:  col1 1, col2 foo
+NOTICE:  col1 2, col2 bar
+NOTICE:  action: continue
+NOTICE:  col1 3, col2 baz
+NOTICE:  end of function
+ tcl_spi_exec 
+--------------
+ 
+(1 row)
+
+select tcl_spi_exec(true, 'error');
+NOTICE:  col1 1, col2 foo
+NOTICE:  col1 2, col2 bar
+NOTICE:  action: error
+ERROR:  error message
+select tcl_spi_exec(true, 'return');
+NOTICE:  col1 1, col2 foo
+NOTICE:  col1 2, col2 bar
+NOTICE:  action: return
+ tcl_spi_exec 
+--------------
+ 
+(1 row)
+
+select tcl_spi_exec(false, 'break');
+NOTICE:  col1 1, col2 foo
+NOTICE:  col1 2, col2 bar
+NOTICE:  action: break
+NOTICE:  end of function
+ tcl_spi_exec 
+--------------
+ 
+(1 row)
+
+select tcl_spi_exec(false, 'continue');
+NOTICE:  col1 1, col2 foo
+NOTICE:  col1 2, col2 bar
+NOTICE:  action: continue
+NOTICE:  col1 3, col2 baz
+NOTICE:  end of function
+ tcl_spi_exec 
+--------------
+ 
+(1 row)
+
+select tcl_spi_exec(false, 'error');
+NOTICE:  col1 1, col2 foo
+NOTICE:  col1 2, col2 bar
+NOTICE:  action: error
+ERROR:  error message
+select tcl_spi_exec(false, 'return');
+NOTICE:  col1 1, col2 foo
+NOTICE:  col1 2, col2 bar
+NOTICE:  action: return
+ tcl_spi_exec 
+--------------
+ 
+(1 row)
+
+-- forcibly run the Tcl event loop for awhile, to check that we have not
+-- messed things up too badly by disabling the Tcl notifier subsystem
+select tcl_eval($$
+  unset -nocomplain ::tcl_vwait
+  after 100 {set ::tcl_vwait 1}
+  vwait ::tcl_vwait
+  unset -nocomplain ::tcl_vwait$$);
+ tcl_eval 
+----------
+ 
+(1 row)
+
