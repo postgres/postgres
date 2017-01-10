@@ -313,19 +313,20 @@ enlargeStringInfo(StringInfo str, int needed)
 	 * for efficiency, double the buffer size each time it overflows.
 	 * Actually, we might need to more than double it if 'needed' is big...
 	 */
-	newlen = 2 * str->maxlen;
-	while (needed > newlen)
+	newlen = 2 * (Size) str->maxlen;
+	while ((Size) needed > newlen)
 		newlen = 2 * newlen;
 
 	/*
-	 * Clamp to the limit in case we went past it.  Note we are assuming here
-	 * that limit <= INT_MAX/2, else the above loop could overflow.  We will
-	 * still have newlen >= needed.
+	 * Clamp to the limit in case we went past it.  (We used to depend on
+	 * limit <= INT32_MAX/2, to avoid overflow in the loop above; we no longer
+	 * depend on that, but if "needed" and str->maxlen ever become wider, we
+	 * will need similar caution here.)  We will still have newlen >= needed.
 	 */
 	if (newlen > limit)
 		newlen = limit;
 
-	str->data = (char *) repalloc_huge(str->data, (Size) newlen);
+	str->data = (char *) repalloc_huge(str->data, newlen);
 
 	str->maxlen = newlen;
 }
