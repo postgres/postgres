@@ -117,9 +117,12 @@ PostgreSQL documentation
       <term><option>--path=<replaceable>path</replaceable></option></term>
       <listitem>
        <para>
-        Directory in which to find log segment files.  The default is to search
-        for them in the <literal>pg_wal</literal> subdirectory of the current
-        directory.
+        Specifies a directory to search for log segment files or a
+        directory with a <literal>pg_wal</literal> subdirectory that
+        contains such files.  The default is to search in the current
+        directory, the <literal>pg_wal</literal> subdirectory of the
+        current directory, and the <literal>pg_wal</literal> subdirectory
+        of <envar>PGDATA</envar>.
        </para>
       </listitem>
      </varlistentry>
