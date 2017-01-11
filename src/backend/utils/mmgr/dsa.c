@@ -435,7 +435,7 @@ dsa_create(int tranche_id)
 	 */
 	dsm_pin_segment(segment);
 
-	/* Create a new DSA area with the control objet in this segment. */
+	/* Create a new DSA area with the control object in this segment. */
 	area = create_internal(dsm_segment_address(segment),
 						   DSA_INITIAL_SEGMENT_SIZE,
 						   tranche_id,
@@ -1147,7 +1147,7 @@ create_internal(void *place, size_t size,
 		elog(ERROR, "dsa_area space must be at least %zu, but %zu provided",
 			 dsa_minimum_size(), size);
 
-	/* Now figure out how much space is usuable */
+	/* Now figure out how much space is usable */
 	total_pages = size / FPM_PAGE_SIZE;
 	metadata_bytes =
 		MAXALIGN(sizeof(dsa_area_control)) +
@@ -1672,7 +1672,7 @@ get_segment_by_index(dsa_area *area, dsa_segment_index index)
 		 */
 		handle = area->control->segment_handles[index];
 
-		/* It's an erro to try to access an unused slot. */
+		/* It's an error to try to access an unused slot. */
 		if (handle == DSM_HANDLE_INVALID)
 			elog(ERROR,
 			   "dsa_area could not attach to a segment that has been freed");
