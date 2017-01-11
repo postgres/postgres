@@ -330,6 +330,22 @@ main(int argc, char **argv)
 		exit_nicely(1);
 	}
 
+	if (numWorkers <= 0)
+	{
+		fprintf(stderr, _("%s: invalid number of parallel jobs\n"), progname);
+		exit(1);
+	}
+
+	/* See comments in pg_dump.c */
+#ifdef WIN32
+	if (numWorkers > MAXIMUM_WAIT_OBJECTS)
+	{
+		fprintf(stderr, _("%s: maximum number of parallel jobs is %d\n"),
+				progname, MAXIMUM_WAIT_OBJECTS);
+		exit(1);
+	}
+#endif
+
 	/* Can't do single-txn mode with multiple connections */
 	if (opts->single_txn && numWorkers > 1)
 	{
@@ -401,16 +417,6 @@ main(int argc, char **argv)
 
 	if (opts->tocFile)
 		SortTocFromFile(AH);
-
-	/* See comments in pg_dump.c */
-#ifdef WIN32
-	if (numWorkers > MAXIMUM_WAIT_OBJECTS)
-	{
-		fprintf(stderr, _("%s: maximum number of parallel jobs is %d\n"),
-				progname, MAXIMUM_WAIT_OBJECTS);
-		exit(1);
-	}
-#endif
 
 	AH->numWorkers = numWorkers;
 
