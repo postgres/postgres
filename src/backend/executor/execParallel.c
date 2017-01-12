@@ -742,10 +742,11 @@ ExecParallelInitializeWorker(PlanState *planstate, shm_toc *toc)
 /*
  * Main entrypoint for parallel query worker processes.
  *
- * We reach this function from ParallelMain, so the setup necessary to create
- * a sensible parallel environment has already been done; ParallelMain worries
- * about stuff like the transaction state, combo CID mappings, and GUC values,
- * so we don't need to deal with any of that here.
+ * We reach this function from ParallelWorkerMain, so the setup necessary to
+ * create a sensible parallel environment has already been done;
+ * ParallelWorkerMain worries about stuff like the transaction state, combo
+ * CID mappings, and GUC values, so we don't need to deal with any of that
+ * here.
  *
  * Our job is to deal with concerns specific to the executor.  The parallel
  * group leader will have stored a serialized PlannedStmt, and it's our job
