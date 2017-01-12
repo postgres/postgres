@@ -52,6 +52,12 @@ typedef struct catcache
 												 * heap scans */
 	bool		cc_isname[CATCACHE_MAXKEYS];	/* flag "name" key columns */
 	dlist_head	cc_lists;		/* list of CatCList structs */
+	dlist_head *cc_bucket;		/* hash buckets */
+
+	/*
+	 * Keep these at the end, so that compiling catcache.c with CATCACHE_STATS
+	 * doesn't break ABI for other modules
+	 */
 #ifdef CATCACHE_STATS
 	long		cc_searches;	/* total # searches against this cache */
 	long		cc_hits;		/* # of matches against existing entry */
@@ -66,7 +72,6 @@ typedef struct catcache
 	long		cc_lsearches;	/* total # list-searches */
 	long		cc_lhits;		/* # of matches against existing lists */
 #endif
-	dlist_head *cc_bucket;		/* hash buckets */
 } CatCache;
 
 
