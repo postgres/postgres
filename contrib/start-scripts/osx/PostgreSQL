@@ -96,9 +96,9 @@ StopService () {
 RestartService () {
     if [ "${POSTGRESQL:=-NO-}" = "-YES-" ]; then
         ConsoleMessage "Restarting PostgreSQL database server"
-	# should match StopService:
-	sudo -u $PGUSER sh -c "$PGCTL stop -D '${PGDATA}' -s -m fast"
-	# should match StartService:
+        # should match StopService:
+        sudo -u $PGUSER sh -c "$PGCTL stop -D '${PGDATA}' -s -m fast"
+        # should match StartService:
         if [ "${ROTATELOGS}" = "1" ]; then
             sudo -u $PGUSER sh -c "${DAEMON} -D '${PGDATA}' &" 2>&1 | ${LOGUTIL} "${PGLOG}" ${ROTATESEC} &
         else

@@ -108,10 +108,10 @@ case $1 in
 	echo "ok"
 	;;
   reload)
-        echo -n "Reload PostgreSQL: "
-        su - $PGUSER -c "$PGCTL reload -D '$PGDATA' -s"
-        echo "ok"
-        ;;
+	echo -n "Reload PostgreSQL: "
+	su - $PGUSER -c "$PGCTL reload -D '$PGDATA' -s"
+	echo "ok"
+	;;
   status)
 	su - $PGUSER -c "$PGCTL status -D '$PGDATA'"
 	;;
