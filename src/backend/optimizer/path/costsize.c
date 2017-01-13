@@ -161,6 +161,7 @@ static Selectivity get_foreign_key_join_selectivity(PlannerInfo *root,
 static void set_rel_width(PlannerInfo *root, RelOptInfo *rel);
 static double relation_byte_size(double tuples, int width);
 static double page_size(double tuples, int width);
+static double get_parallel_divisor(Path *path);
 
 
 /*
@@ -238,32 +239,7 @@ cost_seqscan(Path *path, PlannerInfo *root,
 	/* Adjust costing for parallelism, if used. */
 	if (path->parallel_workers > 0)
 	{
-		double		parallel_divisor = path->parallel_workers;
-		double		leader_contribution;
-
-		/*
-		 * Early experience with parallel query suggests that when there is
-		 * only one worker, the leader often makes a very substantial
-		 * contribution to executing the parallel portion of the plan, but as
-		 * more workers are added, it does less and less, because it's busy
-		 * reading tuples from the workers and doing whatever non-parallel
-		 * post-processing is needed.  By the time we reach 4 workers, the
-		 * leader no longer makes a meaningful contribution.  Thus, for now,
-		 * estimate that the leader spends 30% of its time servicing each
-		 * worker, and the remainder executing the parallel plan.
-		 */
-		leader_contribution = 1.0 - (0.3 * path->parallel_workers);
-		if (leader_contribution > 0)
-			parallel_divisor += leader_contribution;
-
-		/*
-		 * In the case of a parallel plan, the row count needs to represent
-		 * the number of tuples processed per worker.  Otherwise, higher-level
-		 * plan nodes that appear below the gather will be costed incorrectly,
-		 * because they'll anticipate receiving more rows than any given copy
-		 * will actually get.
-		 */
-		path->rows = clamp_row_est(path->rows / parallel_divisor);
+		double		parallel_divisor = get_parallel_divisor(path);
 
 		/* The CPU cost is divided among all the workers. */
 		cpu_run_cost /= parallel_divisor;
@@ -274,6 +250,12 @@ cost_seqscan(Path *path, PlannerInfo *root,
 		 * prefetching.  For now, we assume that the disk run cost can't be
 		 * amortized at all.
 		 */
+
+		/*
+		 * In the case of a parallel plan, the row count needs to represent
+		 * the number of tuples processed per worker.
+		 */
+		path->rows = clamp_row_est(path->rows / parallel_divisor);
 	}
 
 	path->startup_cost = startup_cost;
@@ -2013,6 +1995,10 @@ final_cost_nestloop(PlannerInfo *root, NestPath *path,
 	else
 		path->path.rows = path->path.parent->rows;
 
+	/* For partial paths, scale row estimate. */
+	if (path->path.parallel_workers > 0)
+		path->path.rows /= get_parallel_divisor(&path->path);
+
 	/*
 	 * We could include disable_cost in the preliminary estimate, but that
 	 * would amount to optimizing for the case where the join method is
@@ -2431,6 +2417,10 @@ final_cost_mergejoin(PlannerInfo *root, MergePath *path,
 	else
 		path->jpath.path.rows = path->jpath.path.parent->rows;
 
+	/* For partial paths, scale row estimate. */
+	if (path->jpath.path.parallel_workers > 0)
+		path->jpath.path.rows /= get_parallel_divisor(&path->jpath.path);
+
 	/*
 	 * We could include disable_cost in the preliminary estimate, but that
 	 * would amount to optimizing for the case where the join method is
@@ -2809,6 +2799,10 @@ final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 		path->jpath.path.rows = path->jpath.path.param_info->ppi_rows;
 	else
 		path->jpath.path.rows = path->jpath.path.parent->rows;
+
+	/* For partial paths, scale row estimate. */
+	if (path->jpath.path.parallel_workers > 0)
+		path->jpath.path.rows /= get_parallel_divisor(&path->jpath.path);
 
 	/*
 	 * We could include disable_cost in the preliminary estimate, but that
@@ -4797,4 +4791,32 @@ static double
 page_size(double tuples, int width)
 {
 	return ceil(relation_byte_size(tuples, width) / BLCKSZ);
+}
+
+/*
+ * Estimate the fraction of the work that each worker will do given the
+ * number of workers budgeted for the path.
+ */
+static double
+get_parallel_divisor(Path *path)
+{
+	double		parallel_divisor = path->parallel_workers;
+	double		leader_contribution;
+
+	/*
+	 * Early experience with parallel query suggests that when there is only
+	 * one worker, the leader often makes a very substantial contribution to
+	 * executing the parallel portion of the plan, but as more workers are
+	 * added, it does less and less, because it's busy reading tuples from the
+	 * workers and doing whatever non-parallel post-processing is needed.  By
+	 * the time we reach 4 workers, the leader no longer makes a meaningful
+	 * contribution.  Thus, for now, estimate that the leader spends 30% of
+	 * its time servicing each worker, and the remainder executing the
+	 * parallel plan.
+	 */
+	leader_contribution = 1.0 - (0.3 * path->parallel_workers);
+	if (leader_contribution > 0)
+		parallel_divisor += leader_contribution;
+
+	return parallel_divisor;
 }
