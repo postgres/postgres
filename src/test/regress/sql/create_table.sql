@@ -403,7 +403,9 @@ CREATE TABLE partitioned (
 SELECT relkind FROM pg_class WHERE relname = 'partitioned';
 
 -- check that range partition key columns are marked NOT NULL
-SELECT attname, attnotnull FROM pg_attribute WHERE attrelid = 'partitioned'::regclass AND attnum > 0;
+SELECT attname, attnotnull FROM pg_attribute
+  WHERE attrelid = 'partitioned'::regclass AND attnum > 0
+  ORDER BY attnum;
 
 -- prevent a function referenced in partition key from being dropped
 DROP FUNCTION plusone(int);
@@ -548,7 +550,9 @@ CREATE TABLE parted (
 CREATE TABLE part_a PARTITION OF parted FOR VALUES IN ('a');
 
 -- only inherited attributes (never local ones)
-SELECT attname, attislocal, attinhcount FROM pg_attribute WHERE attrelid = 'part_a'::regclass and attnum > 0;
+SELECT attname, attislocal, attinhcount FROM pg_attribute
+  WHERE attrelid = 'part_a'::regclass and attnum > 0
+  ORDER BY attnum;
 
 -- able to specify column default, column constraint, and table constraint
 CREATE TABLE part_b PARTITION OF parted (

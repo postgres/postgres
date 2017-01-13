@@ -3353,7 +3353,8 @@ from pg_attribute
 where attname = 'a'
  and (attrelid = 'p'::regclass
    or attrelid = 'p1'::regclass
-   or attrelid = 'p11'::regclass);
+   or attrelid = 'p11'::regclass)
+order by attrelid::regclass::text;
  attrelid | attname | attnum 
 ----------+---------+--------
  p        | a       |      1

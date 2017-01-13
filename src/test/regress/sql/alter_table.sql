@@ -2206,7 +2206,8 @@ from pg_attribute
 where attname = 'a'
  and (attrelid = 'p'::regclass
    or attrelid = 'p1'::regclass
-   or attrelid = 'p11'::regclass);
+   or attrelid = 'p11'::regclass)
+order by attrelid::regclass::text;
 
 alter table p1 attach partition p11 for values from (2) to (5);
 
