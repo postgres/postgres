@@ -77,6 +77,7 @@ extern bool partition_bounds_equal(PartitionKey key,
 extern void check_new_partition_bound(char *relname, Relation parent, Node *bound);
 extern Oid get_partition_parent(Oid relid);
 extern List *get_qual_from_partbound(Relation rel, Relation parent, Node *bound);
+extern List *map_partition_varattnos(List *expr, Relation partrel, Relation parent);
 extern List *RelationGetPartitionQual(Relation rel);
 
 /* For tuple routing */

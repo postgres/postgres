@@ -3339,3 +3339,33 @@ drop cascades to table part_2
 drop cascades to table part_5
 drop cascades to table part_5_a
 drop cascades to table part_1
+-- more tests for certain multi-level partitioning scenarios
+create table p (a int, b int) partition by range (a, b);
+create table p1 (b int, a int not null) partition by range (b);
+create table p11 (like p1);
+alter table p11 drop a;
+alter table p11 add a int;
+alter table p11 drop a;
+alter table p11 add a int not null;
+-- attnum for key attribute 'a' is different in p, p1, and p11
+select attrelid::regclass, attname, attnum
+from pg_attribute
+where attname = 'a'
+ and (attrelid = 'p'::regclass
+   or attrelid = 'p1'::regclass
+   or attrelid = 'p11'::regclass);
+ attrelid | attname | attnum 
+----------+---------+--------
+ p        | a       |      1
+ p1       | a       |      2
+ p11      | a       |      4
+(3 rows)
+
+alter table p1 attach partition p11 for values from (2) to (5);
+insert into p1 (a, b) values (2, 3);
+-- check that partition validation scan correctly detects violating rows
+alter table p attach partition p1 for values from (1, 2) to (1, 10);
+ERROR:  partition constraint is violated by some row
+-- cleanup
+drop table p, p1 cascade;
+NOTICE:  drop cascades to table p11
