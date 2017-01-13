@@ -448,7 +448,7 @@ sub upgradecheck
 	print "\nRunning initdb on old cluster\n\n";
 	standard_initdb() or exit 1;
 	print "\nStarting old cluster\n\n";
-	my @args = ('pg_ctl', 'start', '-l', "$logdir/postmaster1.log", '-w');
+	my @args = ('pg_ctl', 'start', '-l', "$logdir/postmaster1.log");
 	system(@args) == 0 or exit 1;
 
 	print "\nCreating databases with names covering most ASCII bytes\n\n";
@@ -475,7 +475,7 @@ sub upgradecheck
 		$bindir,      '-B', $bindir);
 	system(@args) == 0 or exit 1;
 	print "\nStarting new cluster\n\n";
-	@args = ('pg_ctl', '-l', "$logdir/postmaster2.log", '-w', 'start');
+	@args = ('pg_ctl', '-l', "$logdir/postmaster2.log", 'start');
 	system(@args) == 0 or exit 1;
 	print "\nSetting up stats on new cluster\n\n";
 	system(".\\analyze_new_cluster.bat") == 0 or exit 1;

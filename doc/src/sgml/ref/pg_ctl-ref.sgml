@@ -31,7 +31,7 @@ PostgreSQL documentation
   <cmdsynopsis>
    <command>pg_ctl</command>
    <arg choice="plain"><option>start</option></arg>
-   <arg choice="opt"><option>-w</option></arg>
+   <arg choice="opt"><option>-W</option></arg>
    <arg choice="opt"><option>-t</option> <replaceable>seconds</replaceable></arg>
    <arg choice="opt"><option>-s</option></arg>
    <arg choice="opt"><option>-D</option> <replaceable>datadir</replaceable></arg>
@@ -60,7 +60,7 @@ PostgreSQL documentation
   <cmdsynopsis>
    <command>pg_ctl</command>
    <arg choice="plain"><option>restart</option></arg>
-   <arg choice="opt"><option>-w</option></arg>
+   <arg choice="opt"><option>-W</option></arg>
    <arg choice="opt"><option>-t</option> <replaceable>seconds</replaceable></arg>
    <arg choice="opt"><option>-s</option></arg>
    <arg choice="opt"><option>-D</option> <replaceable>datadir</replaceable></arg>
@@ -91,7 +91,7 @@ PostgreSQL documentation
   <cmdsynopsis>
    <command>pg_ctl</command>
    <arg choice="plain"><option>promote</option></arg>
-   <arg choice="opt"><option>-w</option></arg>
+   <arg choice="opt"><option>-W</option></arg>
    <arg choice="opt"><option>-t</option> <replaceable>seconds</replaceable></arg>
    <arg choice="opt"><option>-s</option></arg>
    <arg choice="opt"><option>-D</option> <replaceable>datadir</replaceable></arg>
@@ -117,7 +117,7 @@ PostgreSQL documentation
        <arg choice="plain"><option>d[emand]</option></arg>
      </group>
    </arg>
-   <arg choice="opt"><option>-w</option></arg>
+   <arg choice="opt"><option>-W</option></arg>
    <arg choice="opt"><option>-t</option> <replaceable>seconds</replaceable></arg>
    <arg choice="opt"><option>-s</option></arg>
    <arg choice="opt"><option>-o</option> <replaceable>options</replaceable></arg>
@@ -391,17 +391,7 @@ PostgreSQL documentation
         Wait for an operation to complete.  This is supported for the
         modes <literal>start</literal>, <literal>stop</literal>,
         <literal>restart</literal>, <literal>promote</literal>,
-        and <literal>register</literal>.
-       </para>
-
-       <para>
-        Waiting is the default option for shutdowns, but not startups,
-        restarts, or promotions.  This is mainly for historical reasons; the
-        waiting option is almost always preferable.  If waiting is not
-        selected, the requested action is triggered, but there is no feedback
-        about its success.  In that case, the server log file or an external
-        monitoring system would have to be used to check the progress and
-        success of the operation.
+        and <literal>register</literal>, and is the default for those modes.
        </para>
 
        <para>
@@ -423,6 +413,18 @@ PostgreSQL documentation
        <para>
         Do not wait for an operation to complete.  This is the opposite of the
         option <option>-w</option>.
+       </para>
+
+       <para>
+        If waiting is disabled, the requested action is triggered, but there
+        is no feedback about its success.  In that case, the server log file
+        or an external monitoring system would have to be used to check the
+        progress and success of the operation.
+       </para>
+
+       <para>
+        In prior releases of PostgreSQL, this was the default except for
+        the <literal>stop</literal> mode.
        </para>
       </listitem>
      </varlistentry>
@@ -593,7 +595,7 @@ PostgreSQL documentation
     To start the server, waiting until the server is
     accepting connections:
 <screen>
-<prompt>$</prompt> <userinput>pg_ctl -w start</userinput>
+<prompt>$</prompt> <userinput>pg_ctl start</userinput>
 </screen>
    </para>
 
@@ -637,7 +639,7 @@ PostgreSQL documentation
     To restart the server,
     waiting for it to shut down and restart:
 <screen>
-<prompt>$</prompt> <userinput>pg_ctl -w restart</userinput>
+<prompt>$</prompt> <userinput>pg_ctl restart</userinput>
 </screen>
    </para>
 

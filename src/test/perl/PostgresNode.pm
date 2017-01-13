@@ -632,7 +632,7 @@ port = $port
 
 =item $node->start()
 
-Wrapper for pg_ctl -w start
+Wrapper for pg_ctl start
 
 Start the node and wait until it is ready to accept connections.
 
@@ -645,7 +645,7 @@ sub start
 	my $pgdata = $self->data_dir;
 	my $name   = $self->name;
 	print("### Starting node \"$name\"\n");
-	my $ret = TestLib::system_log('pg_ctl', '-w', '-D', $self->data_dir, '-l',
+	my $ret = TestLib::system_log('pg_ctl', '-D', $self->data_dir, '-l',
 		$self->logfile, 'start');
 
 	if ($ret != 0)
@@ -702,7 +702,7 @@ sub reload
 
 =item $node->restart()
 
-Wrapper for pg_ctl -w restart
+Wrapper for pg_ctl restart
 
 =cut
 
@@ -714,7 +714,7 @@ sub restart
 	my $logfile = $self->logfile;
 	my $name    = $self->name;
 	print "### Restarting node \"$name\"\n";
-	TestLib::system_log('pg_ctl', '-D', $pgdata, '-w', '-l', $logfile,
+	TestLib::system_log('pg_ctl', '-D', $pgdata, '-l', $logfile,
 		'restart');
 	$self->_update_pid;
 }
@@ -723,7 +723,7 @@ sub restart
 
 =item $node->promote()
 
-Wrapper for pg_ctl promote -w
+Wrapper for pg_ctl promote
 
 =cut
 
@@ -735,7 +735,7 @@ sub promote
 	my $logfile = $self->logfile;
 	my $name    = $self->name;
 	print "### Promoting node \"$name\"\n";
-	TestLib::system_log('pg_ctl', '-D', $pgdata, '-w', '-l', $logfile,
+	TestLib::system_log('pg_ctl', '-D', $pgdata, '-l', $logfile,
 		'promote');
 }
 

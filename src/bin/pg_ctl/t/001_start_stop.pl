@@ -32,24 +32,24 @@ else
 	print CONF "listen_addresses = '127.0.0.1'\n";
 }
 close CONF;
-command_ok([ 'pg_ctl', 'start', '-D', "$tempdir/data", '-w' ],
-	'pg_ctl start -w');
+command_ok([ 'pg_ctl', 'start', '-D', "$tempdir/data" ],
+	'pg_ctl start');
 
 # sleep here is because Windows builds can't check postmaster.pid exactly,
 # so they may mistake a pre-existing postmaster.pid for one created by the
 # postmaster they start.  Waiting more than the 2 seconds slop time allowed
 # by test_postmaster_connection prevents that mistake.
 sleep 3 if ($windows_os);
-command_fails([ 'pg_ctl', 'start', '-D', "$tempdir/data", '-w' ],
-	'second pg_ctl start -w fails');
-command_ok([ 'pg_ctl', 'stop', '-D', "$tempdir/data", '-w' ],
-	'pg_ctl stop -w');
-command_fails([ 'pg_ctl', 'stop', '-D', "$tempdir/data", '-w' ],
+command_fails([ 'pg_ctl', 'start', '-D', "$tempdir/data" ],
+	'second pg_ctl start fails');
+command_ok([ 'pg_ctl', 'stop', '-D', "$tempdir/data" ],
+	'pg_ctl stop');
+command_fails([ 'pg_ctl', 'stop', '-D', "$tempdir/data" ],
 	'second pg_ctl stop fails');
 
-command_ok([ 'pg_ctl', 'restart', '-D', "$tempdir/data", '-w' ],
+command_ok([ 'pg_ctl', 'restart', '-D', "$tempdir/data" ],
 	'pg_ctl restart with server not running');
-command_ok([ 'pg_ctl', 'restart', '-D', "$tempdir/data", '-w' ],
+command_ok([ 'pg_ctl', 'restart', '-D', "$tempdir/data" ],
 	'pg_ctl restart with server running');
 
 system_or_bail 'pg_ctl', 'stop', '-D', "$tempdir/data";

@@ -65,8 +65,7 @@ ROTATESEC="604800"
 PATH="$prefix/bin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin"
 
 # What to use to start up the postmaster.  (If you want the script to wait
-# until the server has started, you could use "pg_ctl start -w" here.
-# But without -w, pg_ctl adds no value.)
+# until the server has started, you could use "pg_ctl start" here.)
 DAEMON="$prefix/bin/postmaster"
 
 # What to use to shut down the postmaster
