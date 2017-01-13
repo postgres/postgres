@@ -465,7 +465,7 @@ sub upgradecheck
 	@args = ('pg_dumpall', '-f', "$tmp_root/dump1.sql");
 	system(@args) == 0 or exit 1;
 	print "\nStopping old cluster\n\n";
-	system("pg_ctl -m fast stop") == 0 or exit 1;
+	system("pg_ctl stop") == 0 or exit 1;
 	$ENV{PGDATA} = "$data";
 	print "\nSetting up new cluster\n\n";
 	standard_initdb() or exit 1;
@@ -483,7 +483,7 @@ sub upgradecheck
 	@args = ('pg_dumpall', '-f', "$tmp_root/dump2.sql");
 	system(@args) == 0 or exit 1;
 	print "\nStopping new cluster\n\n";
-	system("pg_ctl -m fast stop") == 0 or exit 1;
+	system("pg_ctl stop") == 0 or exit 1;
 	print "\nDeleting old cluster\n\n";
 	system(".\\delete_old_cluster.bat") == 0 or exit 1;
 	print "\nComparing old and new cluster dumps\n\n";

@@ -97,12 +97,12 @@ case $1 in
 	;;
   stop)
 	echo -n "Stopping PostgreSQL: "
-	su - $PGUSER -c "$PGCTL stop -D '$PGDATA' -s -m fast"
+	su - $PGUSER -c "$PGCTL stop -D '$PGDATA' -s"
 	echo "ok"
 	;;
   restart)
 	echo -n "Restarting PostgreSQL: "
-	su - $PGUSER -c "$PGCTL stop -D '$PGDATA' -s -m fast -w"
+	su - $PGUSER -c "$PGCTL stop -D '$PGDATA' -s -w"
 	test -e "$PG_OOM_ADJUST_FILE" && echo "$PG_MASTER_OOM_SCORE_ADJ" > "$PG_OOM_ADJUST_FILE"
 	su - $PGUSER -c "$DAEMON_ENV $DAEMON -D '$PGDATA' &" >>$PGLOG 2>&1
 	echo "ok"

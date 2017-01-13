@@ -48,10 +48,10 @@ case $1 in
 	echo -n ' postgresql'
 	;;
     stop)
-	su -l $PGUSER -c "$PGCTL stop -D '$PGDATA' -s -m fast"
+	su -l $PGUSER -c "$PGCTL stop -D '$PGDATA' -s"
 	;;
     restart)
-	su -l $PGUSER -c "$PGCTL stop -D '$PGDATA' -s -m fast -w"
+	su -l $PGUSER -c "$PGCTL stop -D '$PGDATA' -s -w"
 	su -l $PGUSER -c "$DAEMON -D '$PGDATA' &" >>$PGLOG 2>&1
 	;;
     status)

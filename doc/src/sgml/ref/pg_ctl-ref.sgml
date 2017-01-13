@@ -615,7 +615,7 @@ PostgreSQL documentation
     The <option>-m</option> option allows control over
     <emphasis>how</emphasis> the server shuts down:
 <screen>
-<prompt>$</prompt> <userinput>pg_ctl stop -m fast</userinput>
+<prompt>$</prompt> <userinput>pg_ctl stop -m smart</userinput>
 </screen></para>
   </refsect2>
 

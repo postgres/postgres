@@ -42,14 +42,14 @@ command_ok([ 'pg_ctl', 'start', '-D', "$tempdir/data", '-w' ],
 sleep 3 if ($windows_os);
 command_fails([ 'pg_ctl', 'start', '-D', "$tempdir/data", '-w' ],
 	'second pg_ctl start -w fails');
-command_ok([ 'pg_ctl', 'stop', '-D', "$tempdir/data", '-w', '-m', 'fast' ],
+command_ok([ 'pg_ctl', 'stop', '-D', "$tempdir/data", '-w' ],
 	'pg_ctl stop -w');
-command_fails([ 'pg_ctl', 'stop', '-D', "$tempdir/data", '-w', '-m', 'fast' ],
+command_fails([ 'pg_ctl', 'stop', '-D', "$tempdir/data", '-w' ],
 	'second pg_ctl stop fails');
 
-command_ok([ 'pg_ctl', 'restart', '-D', "$tempdir/data", '-w', '-m', 'fast' ],
+command_ok([ 'pg_ctl', 'restart', '-D', "$tempdir/data", '-w' ],
 	'pg_ctl restart with server not running');
-command_ok([ 'pg_ctl', 'restart', '-D', "$tempdir/data", '-w', '-m', 'fast' ],
+command_ok([ 'pg_ctl', 'restart', '-D', "$tempdir/data", '-w' ],
 	'pg_ctl restart with server running');
 
-system_or_bail 'pg_ctl', 'stop', '-D', "$tempdir/data", '-m', 'fast';
+system_or_bail 'pg_ctl', 'stop', '-D', "$tempdir/data";
