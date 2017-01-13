@@ -653,9 +653,9 @@ as $function$
         # Get rid of keys that can't be expected to remain constant
         array set myArray $::errorCode
         unset myArray(POSTGRES)
-        unset myArray(funcname)
-        unset myArray(filename)
-        unset myArray(lineno)
+        unset -nocomplain myArray(funcname)
+        unset -nocomplain myArray(filename)
+        unset -nocomplain myArray(lineno)
 
         # Format into something nicer
         set vals []
