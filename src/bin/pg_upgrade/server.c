@@ -320,7 +320,7 @@ stop_postmaster(bool fast)
 			  "\"%s/pg_ctl\" -w -D \"%s\" -o \"%s\" %s stop",
 			  cluster->bindir, cluster->pgconfig,
 			  cluster->pgopts ? cluster->pgopts : "",
-			  fast ? "-m fast" : "");
+			  fast ? "-m fast" : "-m smart");
 
 	os_info.running_cluster = NULL;
 }
