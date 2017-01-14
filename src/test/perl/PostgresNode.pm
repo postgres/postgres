@@ -415,7 +415,6 @@ sub init
 
 	if ($params{allows_streaming})
 	{
-		print $conf "wal_level = replica\n";
 		print $conf "max_wal_senders = 5\n";
 		print $conf "wal_keep_segments = 20\n";
 		print $conf "max_wal_size = 128MB\n";
@@ -423,6 +422,11 @@ sub init
 		print $conf "wal_log_hints = on\n";
 		print $conf "hot_standby = on\n";
 		print $conf "max_connections = 10\n";
+	}
+	else
+	{
+		print $conf "wal_level = minimal\n";
+		print $conf "max_wal_senders = 0\n";
 	}
 
 	if ($TestLib::windows_os)

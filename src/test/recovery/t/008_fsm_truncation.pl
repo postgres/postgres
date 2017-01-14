@@ -14,7 +14,6 @@ $node_master->init(allows_streaming => 1);
 
 $node_master->append_conf('postgresql.conf', qq{
 fsync = on
-wal_level = replica
 wal_log_hints = on
 max_prepared_transactions = 5
 autovacuum = off

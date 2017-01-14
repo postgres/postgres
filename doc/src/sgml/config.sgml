@@ -2183,12 +2183,12 @@ include_dir 'conf.d'
       </term>
       <listitem>
        <para>
-        <varname>wal_level</> determines how much information is written
-        to the WAL. The default value is <literal>minimal</>, which writes
-        only the information needed to recover from a crash or immediate
-        shutdown. <literal>replica</> adds logging required for WAL
-        archiving as well as information required to run
-        read-only queries on a standby server.  Finally,
+        <varname>wal_level</> determines how much information is written to
+        the WAL. The default value is <literal>replica</>, which writes enough
+        data to support WAL archiving and replication, including running
+        read-only queries on a standby server. <literal>minimal</> removes all
+        logging except the information required to recover from a crash or
+        immediate shutdown.  Finally,
         <literal>logical</> adds information necessary to support logical
         decoding.  Each level includes the information logged at all lower
         levels.  This parameter can only be set at server start.
@@ -2926,7 +2926,7 @@ include_dir 'conf.d'
         Specifies the maximum number of concurrent connections from
         standby servers or streaming base backup clients (i.e., the
         maximum number of simultaneously running WAL sender
-        processes). The default is zero, meaning replication is
+        processes). The default is 10. The value 0 means replication is
         disabled. WAL sender processes count towards the total number
         of connections, so the parameter cannot be set higher than
         <xref linkend="guc-max-connections">.  Abrupt streaming client
@@ -2951,7 +2951,7 @@ include_dir 'conf.d'
         <para>
          Specifies the maximum number of replication slots
          (see <xref linkend="streaming-replication-slots">) that the server
-         can support. The default is zero.  This parameter can only be set at
+         can support. The default is 10.  This parameter can only be set at
          server start.
          <varname>wal_level</varname> must be set
          to <literal>replica</literal> or higher to allow replication slots to

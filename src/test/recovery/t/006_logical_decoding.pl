@@ -10,7 +10,6 @@ my $node_master = get_new_node('master');
 $node_master->init(allows_streaming => 1);
 $node_master->append_conf(
 		'postgresql.conf', qq(
-max_replication_slots = 4
 wal_level = logical
 ));
 $node_master->start;

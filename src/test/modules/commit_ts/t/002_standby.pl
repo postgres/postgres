@@ -15,7 +15,6 @@ $master->append_conf(
 	'postgresql.conf', qq{
 	track_commit_timestamp = on
 	max_wal_senders = 5
-	wal_level = hot_standby
 	});
 $master->start;
 $master->backup($bkplabel);

@@ -1420,7 +1420,8 @@ restore_command = 'cp /mnt/server/archivedir/%f %p'
      <para>
       If more flexibility in copying the backup files is needed, a lower
       level process can be used for standalone hot backups as well.
-      To prepare for low level standalone hot backups, set <varname>wal_level</> to
+      To prepare for low level standalone hot backups, make sure
+      <varname>wal_level</> is set to
       <literal>replica</> or higher, <varname>archive_mode</> to
       <literal>on</>, and set up an <varname>archive_command</> that performs
       archiving only when a <emphasis>switch file</> exists.  For example:
