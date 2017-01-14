@@ -1572,7 +1572,9 @@ ImportForeignSchema(ImportForeignSchemaStmt *stmt)
 		 */
 		foreach(lc2, raw_parsetree_list)
 		{
-			CreateForeignTableStmt *cstmt = lfirst(lc2);
+			RawStmt    *rs = (RawStmt *) lfirst(lc2);
+			CreateForeignTableStmt *cstmt = (CreateForeignTableStmt *) rs->stmt;
+			PlannedStmt *pstmt;
 
 			/*
 			 * Because we only allow CreateForeignTableStmt, we can skip parse
@@ -1593,8 +1595,16 @@ ImportForeignSchema(ImportForeignSchemaStmt *stmt)
 			/* Ensure creation schema is the one given in IMPORT statement */
 			cstmt->base.relation->schemaname = pstrdup(stmt->local_schema);
 
+			/* No planning needed, just make a wrapper PlannedStmt */
+			pstmt = makeNode(PlannedStmt);
+			pstmt->commandType = CMD_UTILITY;
+			pstmt->canSetTag = false;
+			pstmt->utilityStmt = (Node *) cstmt;
+			pstmt->stmt_location = rs->stmt_location;
+			pstmt->stmt_len = rs->stmt_len;
+
 			/* Execute statement */
-			ProcessUtility((Node *) cstmt,
+			ProcessUtility(pstmt,
 						   cmd,
 						   PROCESS_UTILITY_SUBCOMMAND, NULL,
 						   None_Receiver, NULL);

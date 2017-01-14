@@ -24,16 +24,16 @@ typedef enum
 } ProcessUtilityContext;
 
 /* Hook for plugins to get control in ProcessUtility() */
-typedef void (*ProcessUtility_hook_type) (Node *parsetree,
+typedef void (*ProcessUtility_hook_type) (PlannedStmt *pstmt,
 					  const char *queryString, ProcessUtilityContext context,
 													  ParamListInfo params,
 									DestReceiver *dest, char *completionTag);
 extern PGDLLIMPORT ProcessUtility_hook_type ProcessUtility_hook;
 
-extern void ProcessUtility(Node *parsetree, const char *queryString,
+extern void ProcessUtility(PlannedStmt *pstmt, const char *queryString,
 			   ProcessUtilityContext context, ParamListInfo params,
 			   DestReceiver *dest, char *completionTag);
-extern void standard_ProcessUtility(Node *parsetree, const char *queryString,
+extern void standard_ProcessUtility(PlannedStmt *pstmt, const char *queryString,
 						ProcessUtilityContext context, ParamListInfo params,
 						DestReceiver *dest, char *completionTag);
 
@@ -47,6 +47,6 @@ extern const char *CreateCommandTag(Node *parsetree);
 
 extern LogStmtLevel GetCommandLogLevel(Node *parsetree);
 
-extern bool CommandIsReadOnly(Node *parsetree);
+extern bool CommandIsReadOnly(PlannedStmt *pstmt);
 
 #endif   /* UTILITY_H */

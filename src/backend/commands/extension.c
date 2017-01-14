@@ -712,7 +712,7 @@ execute_sql_string(const char *sql, const char *filename)
 	 */
 	foreach(lc1, raw_parsetree_list)
 	{
-		Node	   *parsetree = (Node *) lfirst(lc1);
+		RawStmt    *parsetree = (RawStmt *) lfirst(lc1);
 		List	   *stmt_list;
 		ListCell   *lc2;
 
@@ -724,23 +724,17 @@ execute_sql_string(const char *sql, const char *filename)
 
 		foreach(lc2, stmt_list)
 		{
-			Node	   *stmt = (Node *) lfirst(lc2);
-
-			if (IsA(stmt, TransactionStmt))
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("transaction control statements are not allowed within an extension script")));
+			PlannedStmt *stmt = (PlannedStmt *) lfirst(lc2);
 
 			CommandCounterIncrement();
 
 			PushActiveSnapshot(GetTransactionSnapshot());
 
-			if (IsA(stmt, PlannedStmt) &&
-				((PlannedStmt *) stmt)->utilityStmt == NULL)
+			if (stmt->utilityStmt == NULL)
 			{
 				QueryDesc  *qdesc;
 
-				qdesc = CreateQueryDesc((PlannedStmt *) stmt,
+				qdesc = CreateQueryDesc(stmt,
 										sql,
 										GetActiveSnapshot(), NULL,
 										dest, NULL, 0);
@@ -754,6 +748,11 @@ execute_sql_string(const char *sql, const char *filename)
 			}
 			else
 			{
+				if (IsA(stmt->utilityStmt, TransactionStmt))
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("transaction control statements are not allowed within an extension script")));
+
 				ProcessUtility(stmt,
 							   sql,
 							   PROCESS_UTILITY_QUERY,
@@ -1434,7 +1433,8 @@ CreateExtensionInternal(char *extensionName,
 			csstmt->authrole = NULL;	/* will be created by current user */
 			csstmt->schemaElts = NIL;
 			csstmt->if_not_exists = false;
-			CreateSchemaCommand(csstmt, NULL);
+			CreateSchemaCommand(csstmt, "(generated CREATE SCHEMA command)",
+								-1, -1);
 
 			/*
 			 * CreateSchemaCommand includes CommandCounterIncrement, so new

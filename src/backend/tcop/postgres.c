@@ -183,8 +183,8 @@ static int	errdetail_recovery_conflict(void);
 static void start_xact_command(void);
 static void finish_xact_command(void);
 static bool IsTransactionExitStmt(Node *parsetree);
-static bool IsTransactionExitStmtList(List *parseTrees);
-static bool IsTransactionStmtList(List *parseTrees);
+static bool IsTransactionExitStmtList(List *pstmts);
+static bool IsTransactionStmtList(List *pstmts);
 static void drop_unnamed_stmt(void);
 static void SigHupHandler(SIGNAL_ARGS);
 static void log_disconnections(int code, Datum arg);
@@ -588,8 +588,8 @@ ProcessClientWriteInterrupt(bool blocked)
 /*
  * Do raw parsing (only).
  *
- * A list of parsetrees is returned, since there might be multiple
- * commands in the given string.
+ * A list of parsetrees (RawStmt nodes) is returned, since there might be
+ * multiple commands in the given string.
  *
  * NOTE: for interactive queries, it is important to keep this routine
  * separate from the analysis & rewrite stages.  Analysis and rewriting
@@ -641,7 +641,7 @@ pg_parse_query(const char *query_string)
  * NOTE: for reasons mentioned above, this must be separate from raw parsing.
  */
 List *
-pg_analyze_and_rewrite(Node *parsetree, const char *query_string,
+pg_analyze_and_rewrite(RawStmt *parsetree, const char *query_string,
 					   Oid *paramTypes, int numParams)
 {
 	Query	   *query;
@@ -676,7 +676,7 @@ pg_analyze_and_rewrite(Node *parsetree, const char *query_string,
  * hooks instead of a fixed list of parameter datatypes.
  */
 List *
-pg_analyze_and_rewrite_params(Node *parsetree,
+pg_analyze_and_rewrite_params(RawStmt *parsetree,
 							  const char *query_string,
 							  ParserSetupHook parserSetup,
 							  void *parserSetupArg)
@@ -833,8 +833,10 @@ pg_plan_query(Query *querytree, int cursorOptions, ParamListInfo boundParams)
 /*
  * Generate plans for a list of already-rewritten queries.
  *
- * Normal optimizable statements generate PlannedStmt entries in the result
- * list.  Utility statements are simply represented by their statement nodes.
+ * For normal optimizable statements, invoke the planner.  For utility
+ * statements, just make a wrapper PlannedStmt node.
+ *
+ * The result is a list of PlannedStmt nodes.
  */
 List *
 pg_plan_queries(List *querytrees, int cursorOptions, ParamListInfo boundParams)
@@ -845,16 +847,21 @@ pg_plan_queries(List *querytrees, int cursorOptions, ParamListInfo boundParams)
 	foreach(query_list, querytrees)
 	{
 		Query	   *query = (Query *) lfirst(query_list);
-		Node	   *stmt;
+		PlannedStmt *stmt;
 
 		if (query->commandType == CMD_UTILITY)
 		{
-			/* Utility commands have no plans. */
-			stmt = query->utilityStmt;
+			/* Utility commands require no planning. */
+			stmt = makeNode(PlannedStmt);
+			stmt->commandType = CMD_UTILITY;
+			stmt->canSetTag = query->canSetTag;
+			stmt->utilityStmt = query->utilityStmt;
+			stmt->stmt_location = query->stmt_location;
+			stmt->stmt_len = query->stmt_len;
 		}
 		else
 		{
-			stmt = (Node *) pg_plan_query(query, cursorOptions, boundParams);
+			stmt = pg_plan_query(query, cursorOptions, boundParams);
 		}
 
 		stmt_list = lappend(stmt_list, stmt);
@@ -955,7 +962,7 @@ exec_simple_query(const char *query_string)
 	 */
 	foreach(parsetree_item, parsetree_list)
 	{
-		Node	   *parsetree = (Node *) lfirst(parsetree_item);
+		RawStmt    *parsetree = (RawStmt *) lfirst(parsetree_item);
 		bool		snapshot_set = false;
 		const char *commandTag;
 		char		completionTag[COMPLETION_TAG_BUFSIZE];
@@ -971,7 +978,7 @@ exec_simple_query(const char *query_string)
 		 * do any special start-of-SQL-command processing needed by the
 		 * destination.
 		 */
-		commandTag = CreateCommandTag(parsetree);
+		commandTag = CreateCommandTag(parsetree->stmt);
 
 		set_ps_display(commandTag, false);
 
@@ -986,7 +993,7 @@ exec_simple_query(const char *query_string)
 		 * state, but not many...)
 		 */
 		if (IsAbortedTransactionBlockState() &&
-			!IsTransactionExitStmt(parsetree))
+			!IsTransactionExitStmt(parsetree->stmt))
 			ereport(ERROR,
 					(errcode(ERRCODE_IN_FAILED_SQL_TRANSACTION),
 					 errmsg("current transaction is aborted, "
@@ -1061,9 +1068,9 @@ exec_simple_query(const char *query_string)
 		 * backward compatibility...)
 		 */
 		format = 0;				/* TEXT is default */
-		if (IsA(parsetree, FetchStmt))
+		if (IsA(parsetree->stmt, FetchStmt))
 		{
-			FetchStmt  *stmt = (FetchStmt *) parsetree;
+			FetchStmt  *stmt = (FetchStmt *) parsetree->stmt;
 
 			if (!stmt->ismove)
 			{
@@ -1102,7 +1109,7 @@ exec_simple_query(const char *query_string)
 
 		PortalDrop(portal, false);
 
-		if (IsA(parsetree, TransactionStmt))
+		if (IsA(parsetree->stmt, TransactionStmt))
 		{
 			/*
 			 * If this was a transaction control statement, commit it. We will
@@ -1194,7 +1201,7 @@ exec_parse_message(const char *query_string,	/* string to execute */
 	MemoryContext unnamed_stmt_context = NULL;
 	MemoryContext oldcontext;
 	List	   *parsetree_list;
-	Node	   *raw_parse_tree;
+	RawStmt    *raw_parse_tree;
 	const char *commandTag;
 	List	   *querytree_list;
 	CachedPlanSource *psrc;
@@ -1279,12 +1286,12 @@ exec_parse_message(const char *query_string,	/* string to execute */
 		bool		snapshot_set = false;
 		int			i;
 
-		raw_parse_tree = (Node *) linitial(parsetree_list);
+		raw_parse_tree = (RawStmt *) linitial(parsetree_list);
 
 		/*
 		 * Get the command name for possible use in status display.
 		 */
-		commandTag = CreateCommandTag(raw_parse_tree);
+		commandTag = CreateCommandTag(raw_parse_tree->stmt);
 
 		/*
 		 * If we are in an aborted transaction, reject all commands except
@@ -1295,7 +1302,7 @@ exec_parse_message(const char *query_string,	/* string to execute */
 		 * state, but not many...)
 		 */
 		if (IsAbortedTransactionBlockState() &&
-			!IsTransactionExitStmt(raw_parse_tree))
+			!IsTransactionExitStmt(raw_parse_tree->stmt))
 			ereport(ERROR,
 					(errcode(ERRCODE_IN_FAILED_SQL_TRANSACTION),
 					 errmsg("current transaction is aborted, "
@@ -1552,7 +1559,7 @@ exec_bind_message(StringInfo input_message)
 	 * functions.
 	 */
 	if (IsAbortedTransactionBlockState() &&
-		(!IsTransactionExitStmt(psrc->raw_parse_tree) ||
+		(!IsTransactionExitStmt(psrc->raw_parse_tree->stmt) ||
 		 numParams != 0))
 		ereport(ERROR,
 				(errcode(ERRCODE_IN_FAILED_SQL_TRANSACTION),
@@ -2140,11 +2147,11 @@ errdetail_execute(List *raw_parsetree_list)
 
 	foreach(parsetree_item, raw_parsetree_list)
 	{
-		Node	   *parsetree = (Node *) lfirst(parsetree_item);
+		RawStmt    *parsetree = (RawStmt *) lfirst(parsetree_item);
 
-		if (IsA(parsetree, ExecuteStmt))
+		if (IsA(parsetree->stmt, ExecuteStmt))
 		{
-			ExecuteStmt *stmt = (ExecuteStmt *) parsetree;
+			ExecuteStmt *stmt = (ExecuteStmt *) parsetree->stmt;
 			PreparedStatement *pstmt;
 
 			pstmt = FetchPreparedStatement(stmt->name, false);
@@ -2488,45 +2495,33 @@ IsTransactionExitStmt(Node *parsetree)
 	return false;
 }
 
-/* Test a list that might contain Query nodes or bare parsetrees */
+/* Test a list that contains PlannedStmt nodes */
 static bool
-IsTransactionExitStmtList(List *parseTrees)
+IsTransactionExitStmtList(List *pstmts)
 {
-	if (list_length(parseTrees) == 1)
+	if (list_length(pstmts) == 1)
 	{
-		Node	   *stmt = (Node *) linitial(parseTrees);
+		PlannedStmt *pstmt = (PlannedStmt *) linitial(pstmts);
 
-		if (IsA(stmt, Query))
-		{
-			Query	   *query = (Query *) stmt;
-
-			if (query->commandType == CMD_UTILITY &&
-				IsTransactionExitStmt(query->utilityStmt))
-				return true;
-		}
-		else if (IsTransactionExitStmt(stmt))
+		Assert(IsA(pstmt, PlannedStmt));
+		if (pstmt->commandType == CMD_UTILITY &&
+			IsTransactionExitStmt(pstmt->utilityStmt))
 			return true;
 	}
 	return false;
 }
 
-/* Test a list that might contain Query nodes or bare parsetrees */
+/* Test a list that contains PlannedStmt nodes */
 static bool
-IsTransactionStmtList(List *parseTrees)
+IsTransactionStmtList(List *pstmts)
 {
-	if (list_length(parseTrees) == 1)
+	if (list_length(pstmts) == 1)
 	{
-		Node	   *stmt = (Node *) linitial(parseTrees);
+		PlannedStmt *pstmt = (PlannedStmt *) linitial(pstmts);
 
-		if (IsA(stmt, Query))
-		{
-			Query	   *query = (Query *) stmt;
-
-			if (query->commandType == CMD_UTILITY &&
-				IsA(query->utilityStmt, TransactionStmt))
-				return true;
-		}
-		else if (IsA(stmt, TransactionStmt))
+		Assert(IsA(pstmt, PlannedStmt));
+		if (pstmt->commandType == CMD_UTILITY &&
+			IsA(pstmt->utilityStmt, TransactionStmt))
 			return true;
 	}
 	return false;

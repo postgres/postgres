@@ -301,6 +301,7 @@ typedef enum NodeTag
 	/*
 	 * TAGS FOR STATEMENT NODES (mostly in parsenodes.h)
 	 */
+	T_RawStmt,
 	T_Query,
 	T_PlannedStmt,
 	T_InsertStmt,

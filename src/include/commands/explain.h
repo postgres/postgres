@@ -49,6 +49,7 @@ typedef struct ExplainState
 
 /* Hook for plugins to get control in ExplainOneQuery() */
 typedef void (*ExplainOneQuery_hook_type) (Query *query,
+													   int cursorOptions,
 													   IntoClause *into,
 													   ExplainState *es,
 													 const char *queryString,

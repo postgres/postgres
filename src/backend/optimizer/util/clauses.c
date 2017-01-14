@@ -4479,7 +4479,6 @@ inline_function(Oid funcid, Oid result_type, Oid result_collid,
 	 */
 	if (!IsA(querytree, Query) ||
 		querytree->commandType != CMD_SELECT ||
-		querytree->utilityStmt ||
 		querytree->hasAggs ||
 		querytree->hasWindowFuncs ||
 		querytree->hasTargetSRFs ||
@@ -5006,8 +5005,7 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 	 * The single command must be a plain SELECT.
 	 */
 	if (!IsA(querytree, Query) ||
-		querytree->commandType != CMD_SELECT ||
-		querytree->utilityStmt)
+		querytree->commandType != CMD_SELECT)
 		goto fail;
 
 	/*

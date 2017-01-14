@@ -7,7 +7,9 @@
  * This is a byte (not character) offset in the original source text, to be
  * used for positioning an error cursor when there is an error related to
  * the node.  Access to the original source text is needed to make use of
- * the location.
+ * the location.  At the topmost (statement) level, we also provide a
+ * statement length, likewise measured in bytes, for convenience in
+ * identifying statement boundaries in multi-statement source strings.
  *
  *
  * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
@@ -89,9 +91,7 @@ typedef uint32 AclMode;			/* a bitmask of privilege bits */
  *	  for further processing by the rewriter and planner.
  *
  *	  Utility statements (i.e. non-optimizable statements) have the
- *	  utilityStmt field set, and the Query itself is mostly dummy.
- *	  DECLARE CURSOR is a special case: it is represented like a SELECT,
- *	  but the original DeclareCursorStmt is stored in utilityStmt.
+ *	  utilityStmt field set, and the rest of the Query is mostly dummy.
  *
  *	  Planning converts a Query tree into a Plan tree headed by a PlannedStmt
  *	  node --- the Query structure is not used by the executor.
@@ -108,8 +108,7 @@ typedef struct Query
 
 	bool		canSetTag;		/* do I set the command result tag? */
 
-	Node	   *utilityStmt;	/* non-null if this is DECLARE CURSOR or a
-								 * non-optimizable statement */
+	Node	   *utilityStmt;	/* non-null if commandType == CMD_UTILITY */
 
 	int			resultRelation; /* rtable index of target relation for
 								 * INSERT/UPDATE/DELETE; 0 for SELECT */
@@ -162,6 +161,15 @@ typedef struct Query
 										 * are only added during rewrite and
 										 * therefore are not written out as
 										 * part of Query. */
+
+	/*
+	 * The following two fields identify the portion of the source text string
+	 * containing this query.  They are typically only populated in top-level
+	 * Queries, not in sub-queries.  When not set, they might both be zero, or
+	 * both be -1 meaning "unknown".
+	 */
+	int			stmt_location;	/* start location, or -1 if unknown */
+	int			stmt_len;		/* length in bytes; 0 means "rest of string" */
 } Query;
 
 
@@ -1308,6 +1316,30 @@ typedef struct TriggerTransition
 } TriggerTransition;
 
 /*****************************************************************************
+ *		Raw Grammar Output Statements
+ *****************************************************************************/
+
+/*
+ *		RawStmt --- container for any one statement's raw parse tree
+ *
+ * Parse analysis converts a raw parse tree headed by a RawStmt node into
+ * an analyzed statement headed by a Query node.  For optimizable statements,
+ * the conversion is complex.  For utility statements, the parser usually just
+ * transfers the raw parse tree (sans RawStmt) into the utilityStmt field of
+ * the Query node, and all the useful work happens at execution time.
+ *
+ * stmt_location/stmt_len identify the portion of the source text string
+ * containing this raw statement (useful for multi-statement strings).
+ */
+typedef struct RawStmt
+{
+	NodeTag		type;
+	Node	   *stmt;			/* raw parse tree */
+	int			stmt_location;	/* start location, or -1 if unknown */
+	int			stmt_len;		/* length in bytes; 0 means "rest of string" */
+} RawStmt;
+
+/*****************************************************************************
  *		Optimizable Statements
  *****************************************************************************/
 
@@ -1474,6 +1506,9 @@ typedef struct SetOperationStmt
  *		statements do need attention from parse analysis, and this is
  *		done by routines in parser/parse_utilcmd.c after ProcessUtility
  *		receives the command for execution.
+ *		DECLARE CURSOR, EXPLAIN, and CREATE TABLE AS are special cases:
+ *		they contain optimizable statements, which get processed normally
+ *		by parser/analyze.c.
  *****************************************************************************/
 
 /*
@@ -1794,7 +1829,7 @@ typedef struct CopyStmt
 	NodeTag		type;
 	RangeVar   *relation;		/* the relation to copy */
 	Node	   *query;			/* the query (SELECT or DML statement with
-								 * RETURNING) to copy */
+								 * RETURNING) to copy, as a raw parse tree */
 	List	   *attlist;		/* List of column names (as Strings), or NIL
 								 * for all columns */
 	bool		is_from;		/* TO or FROM */
@@ -2472,9 +2507,9 @@ typedef struct SecLabelStmt
 /* ----------------------
  *		Declare Cursor Statement
  *
- * Note: the "query" field of DeclareCursorStmt is only used in the raw grammar
- * output.  After parse analysis it's set to null, and the Query points to the
- * DeclareCursorStmt, not vice versa.
+ * The "query" field is initially a raw parse tree, and is converted to a
+ * Query node during parse analysis.  Note that rewriting and planning
+ * of the query are always postponed until execution.
  * ----------------------
  */
 #define CURSOR_OPT_BINARY		0x0001	/* BINARY */
@@ -2493,7 +2528,7 @@ typedef struct DeclareCursorStmt
 	NodeTag		type;
 	char	   *portalname;		/* name of the portal (cursor) */
 	int			options;		/* bitmask of options (see above) */
-	Node	   *query;			/* the raw SELECT query */
+	Node	   *query;			/* the query (see comments above) */
 } DeclareCursorStmt;
 
 /* ----------------------
@@ -2841,7 +2876,7 @@ typedef struct ViewStmt
 	NodeTag		type;
 	RangeVar   *view;			/* the view to be created */
 	List	   *aliases;		/* target column names */
-	Node	   *query;			/* the SELECT query */
+	Node	   *query;			/* the SELECT query (as a raw parse tree) */
 	bool		replace;		/* replace an existing view? */
 	List	   *options;		/* options from WITH clause */
 	ViewCheckOption withCheckOption;	/* WITH CHECK OPTION */
@@ -2950,9 +2985,9 @@ typedef struct VacuumStmt
 /* ----------------------
  *		Explain Statement
  *
- * The "query" field is either a raw parse tree (SelectStmt, InsertStmt, etc)
- * or a Query node if parse analysis has been done.  Note that rewriting and
- * planning of the query are always postponed until execution of EXPLAIN.
+ * The "query" field is initially a raw parse tree, and is converted to a
+ * Query node during parse analysis.  Note that rewriting and planning
+ * of the query are always postponed until execution.
  * ----------------------
  */
 typedef struct ExplainStmt

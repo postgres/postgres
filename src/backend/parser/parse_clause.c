@@ -478,12 +478,11 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 	pstate->p_expr_kind = EXPR_KIND_NONE;
 
 	/*
-	 * Check that we got something reasonable.  Many of these conditions are
-	 * impossible given restrictions of the grammar, but check 'em anyway.
+	 * Check that we got a SELECT.  Anything else should be impossible given
+	 * restrictions of the grammar, but check anyway.
 	 */
 	if (!IsA(query, Query) ||
-		query->commandType != CMD_SELECT ||
-		query->utilityStmt != NULL)
+		query->commandType != CMD_SELECT)
 		elog(ERROR, "unexpected non-SELECT command in subquery in FROM");
 
 	/*

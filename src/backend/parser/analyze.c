@@ -48,6 +48,7 @@
 /* Hook for plugins to get control at end of parse analysis */
 post_parse_analyze_hook_type post_parse_analyze_hook = NULL;
 
+static Query *transformOptionalSelectInto(ParseState *pstate, Node *parseTree);
 static Query *transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt);
 static Query *transformInsertStmt(ParseState *pstate, InsertStmt *stmt);
 static List *transformInsertRow(ParseState *pstate, List *exprlist,
@@ -92,7 +93,7 @@ static bool test_raw_expression_coverage(Node *node, void *context);
  * a dummy CMD_UTILITY Query node.
  */
 Query *
-parse_analyze(Node *parseTree, const char *sourceText,
+parse_analyze(RawStmt *parseTree, const char *sourceText,
 			  Oid *paramTypes, int numParams)
 {
 	ParseState *pstate = make_parsestate(NULL);
@@ -123,7 +124,7 @@ parse_analyze(Node *parseTree, const char *sourceText,
  * be modified or enlarged (via repalloc).
  */
 Query *
-parse_analyze_varparams(Node *parseTree, const char *sourceText,
+parse_analyze_varparams(RawStmt *parseTree, const char *sourceText,
 						Oid **paramTypes, int *numParams)
 {
 	ParseState *pstate = make_parsestate(NULL);
@@ -174,14 +175,35 @@ parse_sub_analyze(Node *parseTree, ParseState *parentParseState,
  * transformTopLevelStmt -
  *	  transform a Parse tree into a Query tree.
  *
+ * This function is just responsible for transferring statement location data
+ * from the RawStmt into the finished Query.
+ */
+Query *
+transformTopLevelStmt(ParseState *pstate, RawStmt *parseTree)
+{
+	Query	   *result;
+
+	/* We're at top level, so allow SELECT INTO */
+	result = transformOptionalSelectInto(pstate, parseTree->stmt);
+
+	result->stmt_location = parseTree->stmt_location;
+	result->stmt_len = parseTree->stmt_len;
+
+	return result;
+}
+
+/*
+ * transformOptionalSelectInto -
+ *	  If SELECT has INTO, convert it to CREATE TABLE AS.
+ *
  * The only thing we do here that we don't do in transformStmt() is to
  * convert SELECT ... INTO into CREATE TABLE AS.  Since utility statements
  * aren't allowed within larger statements, this is only allowed at the top
  * of the parse tree, and so we only try it before entering the recursive
  * transformStmt() processing.
  */
-Query *
-transformTopLevelStmt(ParseState *pstate, Node *parseTree)
+static Query *
+transformOptionalSelectInto(ParseState *pstate, Node *parseTree)
 {
 	if (IsA(parseTree, SelectStmt))
 	{
@@ -318,11 +340,11 @@ transformStmt(ParseState *pstate, Node *parseTree)
  * Classification here should match transformStmt().
  */
 bool
-analyze_requires_snapshot(Node *parseTree)
+analyze_requires_snapshot(RawStmt *parseTree)
 {
 	bool		result;
 
-	switch (nodeTag(parseTree))
+	switch (nodeTag(parseTree->stmt))
 	{
 			/*
 			 * Optimizable statements
@@ -338,10 +360,6 @@ analyze_requires_snapshot(Node *parseTree)
 			 * Special cases
 			 */
 		case T_DeclareCursorStmt:
-			/* yes, because it's analyzed just like SELECT */
-			result = true;
-			break;
-
 		case T_ExplainStmt:
 		case T_CreateTableAsStmt:
 			/* yes, because we must analyze the contained statement */
@@ -563,8 +581,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 
 		/* The grammar should have produced a SELECT */
 		if (!IsA(selectQuery, Query) ||
-			selectQuery->commandType != CMD_SELECT ||
-			selectQuery->utilityStmt != NULL)
+			selectQuery->commandType != CMD_SELECT)
 			elog(ERROR, "unexpected non-SELECT command in INSERT ... SELECT");
 
 		/*
@@ -2344,17 +2361,17 @@ transformReturningList(ParseState *pstate, List *returningList)
  * transformDeclareCursorStmt -
  *	transform a DECLARE CURSOR Statement
  *
- * DECLARE CURSOR is a hybrid case: it's an optimizable statement (in fact not
- * significantly different from a SELECT) as far as parsing/rewriting/planning
- * are concerned, but it's not passed to the executor and so in that sense is
- * a utility statement.  We transform it into a Query exactly as if it were
- * a SELECT, then stick the original DeclareCursorStmt into the utilityStmt
- * field to carry the cursor name and options.
+ * DECLARE CURSOR is like other utility statements in that we emit it as a
+ * CMD_UTILITY Query node; however, we must first transform the contained
+ * query.  We used to postpone that until execution, but it's really necessary
+ * to do it during the normal parse analysis phase to ensure that side effects
+ * of parser hooks happen at the expected time.
  */
 static Query *
 transformDeclareCursorStmt(ParseState *pstate, DeclareCursorStmt *stmt)
 {
 	Query	   *result;
+	Query	   *query;
 
 	/*
 	 * Don't allow both SCROLL and NO SCROLL to be specified
@@ -2365,12 +2382,13 @@ transformDeclareCursorStmt(ParseState *pstate, DeclareCursorStmt *stmt)
 				(errcode(ERRCODE_INVALID_CURSOR_DEFINITION),
 				 errmsg("cannot specify both SCROLL and NO SCROLL")));
 
-	result = transformStmt(pstate, stmt->query);
+	/* Transform contained query, not allowing SELECT INTO */
+	query = transformStmt(pstate, stmt->query);
+	stmt->query = (Node *) query;
 
 	/* Grammar should not have allowed anything but SELECT */
-	if (!IsA(result, Query) ||
-		result->commandType != CMD_SELECT ||
-		result->utilityStmt != NULL)
+	if (!IsA(query, Query) ||
+		query->commandType != CMD_SELECT)
 		elog(ERROR, "unexpected non-SELECT command in DECLARE CURSOR");
 
 	/*
@@ -2378,47 +2396,47 @@ transformDeclareCursorStmt(ParseState *pstate, DeclareCursorStmt *stmt)
 	 * allowed, but the semantics of when the updates occur might be
 	 * surprising.)
 	 */
-	if (result->hasModifyingCTE)
+	if (query->hasModifyingCTE)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("DECLARE CURSOR must not contain data-modifying statements in WITH")));
 
 	/* FOR UPDATE and WITH HOLD are not compatible */
-	if (result->rowMarks != NIL && (stmt->options & CURSOR_OPT_HOLD))
+	if (query->rowMarks != NIL && (stmt->options & CURSOR_OPT_HOLD))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 		/*------
 		  translator: %s is a SQL row locking clause such as FOR UPDATE */
 				 errmsg("DECLARE CURSOR WITH HOLD ... %s is not supported",
 						LCS_asString(((RowMarkClause *)
-									  linitial(result->rowMarks))->strength)),
+									  linitial(query->rowMarks))->strength)),
 				 errdetail("Holdable cursors must be READ ONLY.")));
 
 	/* FOR UPDATE and SCROLL are not compatible */
-	if (result->rowMarks != NIL && (stmt->options & CURSOR_OPT_SCROLL))
+	if (query->rowMarks != NIL && (stmt->options & CURSOR_OPT_SCROLL))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 		/*------
 		  translator: %s is a SQL row locking clause such as FOR UPDATE */
 				 errmsg("DECLARE SCROLL CURSOR ... %s is not supported",
 						LCS_asString(((RowMarkClause *)
-									  linitial(result->rowMarks))->strength)),
+									  linitial(query->rowMarks))->strength)),
 				 errdetail("Scrollable cursors must be READ ONLY.")));
 
 	/* FOR UPDATE and INSENSITIVE are not compatible */
-	if (result->rowMarks != NIL && (stmt->options & CURSOR_OPT_INSENSITIVE))
+	if (query->rowMarks != NIL && (stmt->options & CURSOR_OPT_INSENSITIVE))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 		/*------
 		  translator: %s is a SQL row locking clause such as FOR UPDATE */
 				 errmsg("DECLARE INSENSITIVE CURSOR ... %s is not supported",
 						LCS_asString(((RowMarkClause *)
-									  linitial(result->rowMarks))->strength)),
+									  linitial(query->rowMarks))->strength)),
 				 errdetail("Insensitive cursors must be READ ONLY.")));
 
-	/* We won't need the raw querytree any more */
-	stmt->query = NULL;
-
+	/* represent the command as a utility Query */
+	result = makeNode(Query);
+	result->commandType = CMD_UTILITY;
 	result->utilityStmt = (Node *) stmt;
 
 	return result;
@@ -2441,7 +2459,7 @@ transformExplainStmt(ParseState *pstate, ExplainStmt *stmt)
 	Query	   *result;
 
 	/* transform contained query, allowing SELECT INTO */
-	stmt->query = (Node *) transformTopLevelStmt(pstate, stmt->query);
+	stmt->query = (Node *) transformOptionalSelectInto(pstate, stmt->query);
 
 	/* represent the command as a utility Query */
 	result = makeNode(Query);
@@ -2457,7 +2475,7 @@ transformExplainStmt(ParseState *pstate, ExplainStmt *stmt)
  *	transform a CREATE TABLE AS, SELECT ... INTO, or CREATE MATERIALIZED VIEW
  *	Statement
  *
- * As with EXPLAIN, transform the contained statement now.
+ * As with DECLARE CURSOR and EXPLAIN, transform the contained statement now.
  */
 static Query *
 transformCreateTableAsStmt(ParseState *pstate, CreateTableAsStmt *stmt)
@@ -2465,7 +2483,7 @@ transformCreateTableAsStmt(ParseState *pstate, CreateTableAsStmt *stmt)
 	Query	   *result;
 	Query	   *query;
 
-	/* transform contained query */
+	/* transform contained query, not allowing SELECT INTO */
 	query = transformStmt(pstate, stmt->query);
 	stmt->query = (Node *) query;
 

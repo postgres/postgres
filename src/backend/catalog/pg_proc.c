@@ -934,7 +934,7 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 			querytree_list = NIL;
 			foreach(lc, raw_parsetree_list)
 			{
-				Node	   *parsetree = (Node *) lfirst(lc);
+				RawStmt    *parsetree = (RawStmt *) lfirst(lc);
 				List	   *querytree_sublist;
 
 				querytree_sublist = pg_analyze_and_rewrite_params(parsetree,

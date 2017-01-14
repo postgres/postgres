@@ -414,8 +414,10 @@ UpdateRangeTableOfViewParse(Oid viewOid, Query *viewParse)
  *		Execute a CREATE VIEW command.
  */
 ObjectAddress
-DefineView(ViewStmt *stmt, const char *queryString)
+DefineView(ViewStmt *stmt, const char *queryString,
+		   int stmt_location, int stmt_len)
 {
+	RawStmt    *rawstmt;
 	Query	   *viewParse;
 	RangeVar   *view;
 	ListCell   *cell;
@@ -429,8 +431,12 @@ DefineView(ViewStmt *stmt, const char *queryString)
 	 * Since parse analysis scribbles on its input, copy the raw parse tree;
 	 * this ensures we don't corrupt a prepared statement, for example.
 	 */
-	viewParse = parse_analyze((Node *) copyObject(stmt->query),
-							  queryString, NULL, 0);
+	rawstmt = makeNode(RawStmt);
+	rawstmt->stmt = (Node *) copyObject(stmt->query);
+	rawstmt->stmt_location = stmt_location;
+	rawstmt->stmt_len = stmt_len;
+
+	viewParse = parse_analyze(rawstmt, queryString, NULL, 0);
 
 	/*
 	 * The grammar should ensure that the result is a single SELECT Query.
@@ -443,8 +449,7 @@ DefineView(ViewStmt *stmt, const char *queryString)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("views must not contain SELECT INTO")));
-	if (viewParse->commandType != CMD_SELECT ||
-		viewParse->utilityStmt != NULL)
+	if (viewParse->commandType != CMD_SELECT)
 		elog(ERROR, "unexpected parse analysis result");
 
 	/*

@@ -156,13 +156,15 @@ ExecSerializePlan(Plan *plan, EState *estate)
 	pstmt->planTree = plan;
 	pstmt->rtable = estate->es_range_table;
 	pstmt->resultRelations = NIL;
-	pstmt->utilityStmt = NULL;
 	pstmt->subplans = NIL;
 	pstmt->rewindPlanIDs = NULL;
 	pstmt->rowMarks = NIL;
 	pstmt->relationOids = NIL;
 	pstmt->invalItems = NIL;	/* workers can't replan anyway... */
 	pstmt->nParamExec = estate->es_plannedstmt->nParamExec;
+	pstmt->utilityStmt = NULL;
+	pstmt->stmt_location = -1;
+	pstmt->stmt_len = -1;
 
 	/* Return serialized copy of our dummy PlannedStmt. */
 	return nodeToString(pstmt);

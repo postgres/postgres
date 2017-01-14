@@ -53,7 +53,8 @@ explain_get_index_name_hook_type explain_get_index_name_hook = NULL;
 #define X_CLOSE_IMMEDIATE 2
 #define X_NOWHITESPACE 4
 
-static void ExplainOneQuery(Query *query, IntoClause *into, ExplainState *es,
+static void ExplainOneQuery(Query *query, int cursorOptions,
+				IntoClause *into, ExplainState *es,
 				const char *queryString, ParamListInfo params);
 static void report_triggers(ResultRelInfo *rInfo, bool show_relname,
 				ExplainState *es);
@@ -245,7 +246,8 @@ ExplainQuery(ParseState *pstate, ExplainStmt *stmt, const char *queryString,
 		/* Explain every plan */
 		foreach(l, rewritten)
 		{
-			ExplainOneQuery((Query *) lfirst(l), NULL, es,
+			ExplainOneQuery((Query *) lfirst(l),
+							CURSOR_OPT_PARALLEL_OK, NULL, es,
 							queryString, params);
 
 			/* Separate plans with an appropriate separator */
@@ -329,7 +331,8 @@ ExplainResultDesc(ExplainStmt *stmt)
  * "into" is NULL unless we are explaining the contents of a CreateTableAsStmt.
  */
 static void
-ExplainOneQuery(Query *query, IntoClause *into, ExplainState *es,
+ExplainOneQuery(Query *query, int cursorOptions,
+				IntoClause *into, ExplainState *es,
 				const char *queryString, ParamListInfo params)
 {
 	/* planner will not cope with utility statements */
@@ -341,7 +344,8 @@ ExplainOneQuery(Query *query, IntoClause *into, ExplainState *es,
 
 	/* if an advisor plugin is present, let it manage things */
 	if (ExplainOneQuery_hook)
-		(*ExplainOneQuery_hook) (query, into, es, queryString, params);
+		(*ExplainOneQuery_hook) (query, cursorOptions, into, es,
+								 queryString, params);
 	else
 	{
 		PlannedStmt *plan;
@@ -351,7 +355,7 @@ ExplainOneQuery(Query *query, IntoClause *into, ExplainState *es,
 		INSTR_TIME_SET_CURRENT(planstart);
 
 		/* plan the query */
-		plan = pg_plan_query(query, into ? 0 : CURSOR_OPT_PARALLEL_OK, params);
+		plan = pg_plan_query(query, cursorOptions, params);
 
 		INSTR_TIME_SET_CURRENT(planduration);
 		INSTR_TIME_SUBTRACT(planduration, planstart);
@@ -385,6 +389,8 @@ ExplainOneUtility(Node *utilityStmt, IntoClause *into, ExplainState *es,
 		 * We have to rewrite the contained SELECT and then pass it back to
 		 * ExplainOneQuery.  It's probably not really necessary to copy the
 		 * contained parsetree another time, but let's be safe.
+		 *
+		 * Like ExecCreateTableAs, disallow parallelism in the plan.
 		 */
 		CreateTableAsStmt *ctas = (CreateTableAsStmt *) utilityStmt;
 		List	   *rewritten;
@@ -392,7 +398,28 @@ ExplainOneUtility(Node *utilityStmt, IntoClause *into, ExplainState *es,
 		Assert(IsA(ctas->query, Query));
 		rewritten = QueryRewrite((Query *) copyObject(ctas->query));
 		Assert(list_length(rewritten) == 1);
-		ExplainOneQuery((Query *) linitial(rewritten), ctas->into, es,
+		ExplainOneQuery((Query *) linitial(rewritten),
+						0, ctas->into, es,
+						queryString, params);
+	}
+	else if (IsA(utilityStmt, DeclareCursorStmt))
+	{
+		/*
+		 * Likewise for DECLARE CURSOR.
+		 *
+		 * Notice that if you say EXPLAIN ANALYZE DECLARE CURSOR then we'll
+		 * actually run the query.  This is different from pre-8.3 behavior
+		 * but seems more useful than not running the query.  No cursor will
+		 * be created, however.
+		 */
+		DeclareCursorStmt *dcs = (DeclareCursorStmt *) utilityStmt;
+		List	   *rewritten;
+
+		Assert(IsA(dcs->query, Query));
+		rewritten = QueryRewrite((Query *) copyObject(dcs->query));
+		Assert(list_length(rewritten) == 1);
+		ExplainOneQuery((Query *) linitial(rewritten),
+						dcs->options, NULL, es,
 						queryString, params);
 	}
 	else if (IsA(utilityStmt, ExecuteStmt))
@@ -423,11 +450,6 @@ ExplainOneUtility(Node *utilityStmt, IntoClause *into, ExplainState *es,
  * "into" is NULL unless we are explaining the contents of a CreateTableAsStmt,
  * in which case executing the query should result in creating that table.
  *
- * Since we ignore any DeclareCursorStmt that might be attached to the query,
- * if you say EXPLAIN ANALYZE DECLARE CURSOR then we'll actually run the
- * query.  This is different from pre-8.3 behavior but seems more useful than
- * not running the query.  No cursor will be created, however.
- *
  * This is exported because it's called back from prepare.c in the
  * EXPLAIN EXECUTE case, and because an index advisor plugin would need
  * to call it.
@@ -443,6 +465,8 @@ ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
 	double		totaltime = 0;
 	int			eflags;
 	int			instrument_option = 0;
+
+	Assert(plannedstmt->commandType != CMD_UTILITY);
 
 	if (es->analyze && es->timing)
 		instrument_option |= INSTRUMENT_TIMER;

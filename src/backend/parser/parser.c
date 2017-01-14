@@ -29,7 +29,8 @@
  * raw_parser
  *		Given a query in string form, do lexical and grammatical analysis.
  *
- * Returns a list of raw (un-analyzed) parse trees.
+ * Returns a list of raw (un-analyzed) parse trees.  The immediate elements
+ * of the list are always RawStmt nodes.
  */
 List *
 raw_parser(const char *str)

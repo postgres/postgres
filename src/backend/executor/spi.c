@@ -1232,7 +1232,7 @@ SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
 	if (!(portal->cursorOptions & (CURSOR_OPT_SCROLL | CURSOR_OPT_NO_SCROLL)))
 	{
 		if (list_length(stmt_list) == 1 &&
-			IsA((Node *) linitial(stmt_list), PlannedStmt) &&
+		 ((PlannedStmt *) linitial(stmt_list))->commandType != CMD_UTILITY &&
 			((PlannedStmt *) linitial(stmt_list))->rowMarks == NIL &&
 			ExecSupportsBackwardScan(((PlannedStmt *) linitial(stmt_list))->planTree))
 			portal->cursorOptions |= CURSOR_OPT_SCROLL;
@@ -1248,7 +1248,7 @@ SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
 	if (portal->cursorOptions & CURSOR_OPT_SCROLL)
 	{
 		if (list_length(stmt_list) == 1 &&
-			IsA((Node *) linitial(stmt_list), PlannedStmt) &&
+		 ((PlannedStmt *) linitial(stmt_list))->commandType != CMD_UTILITY &&
 			((PlannedStmt *) linitial(stmt_list))->rowMarks != NIL)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -1270,7 +1270,7 @@ SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
 
 		foreach(lc, stmt_list)
 		{
-			Node	   *pstmt = (Node *) lfirst(lc);
+			PlannedStmt *pstmt = (PlannedStmt *) lfirst(lc);
 
 			if (!CommandIsReadOnly(pstmt))
 			{
@@ -1279,9 +1279,9 @@ SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					/* translator: %s is a SQL statement name */
 					   errmsg("%s is not allowed in a non-volatile function",
-							  CreateCommandTag(pstmt))));
+							  CreateCommandTag((Node *) pstmt))));
 				else
-					PreventCommandIfParallelMode(CreateCommandTag(pstmt));
+					PreventCommandIfParallelMode(CreateCommandTag((Node *) pstmt));
 			}
 		}
 	}
@@ -1757,7 +1757,7 @@ _SPI_prepare_plan(const char *src, SPIPlanPtr plan)
 
 	foreach(list_item, raw_parsetree_list)
 	{
-		Node	   *parsetree = (Node *) lfirst(list_item);
+		RawStmt    *parsetree = (RawStmt *) lfirst(list_item);
 		List	   *stmt_list;
 		CachedPlanSource *plansource;
 
@@ -1767,7 +1767,7 @@ _SPI_prepare_plan(const char *src, SPIPlanPtr plan)
 		 */
 		plansource = CreateCachedPlan(parsetree,
 									  src,
-									  CreateCommandTag(parsetree));
+									  CreateCommandTag(parsetree->stmt));
 
 		/*
 		 * Parameter datatypes are driven by parserSetup hook if provided,
@@ -1859,12 +1859,12 @@ _SPI_prepare_oneshot_plan(const char *src, SPIPlanPtr plan)
 
 	foreach(list_item, raw_parsetree_list)
 	{
-		Node	   *parsetree = (Node *) lfirst(list_item);
+		RawStmt    *parsetree = (RawStmt *) lfirst(list_item);
 		CachedPlanSource *plansource;
 
 		plansource = CreateOneShotCachedPlan(parsetree,
 											 src,
-											 CreateCommandTag(parsetree));
+										  CreateCommandTag(parsetree->stmt));
 
 		plancache_list = lappend(plancache_list, plansource);
 	}
@@ -1959,7 +1959,7 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 		 */
 		if (plan->oneshot)
 		{
-			Node	   *parsetree = plansource->raw_parse_tree;
+			RawStmt    *parsetree = plansource->raw_parse_tree;
 			const char *src = plansource->query_string;
 			List	   *stmt_list;
 
@@ -2018,26 +2018,19 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 
 		foreach(lc2, stmt_list)
 		{
-			Node	   *stmt = (Node *) lfirst(lc2);
-			bool		canSetTag;
+			PlannedStmt *stmt = (PlannedStmt *) lfirst(lc2);
+			bool		canSetTag = stmt->canSetTag;
 			DestReceiver *dest;
 
 			_SPI_current->processed = 0;
 			_SPI_current->lastoid = InvalidOid;
 			_SPI_current->tuptable = NULL;
 
-			if (IsA(stmt, PlannedStmt))
+			if (stmt->utilityStmt)
 			{
-				canSetTag = ((PlannedStmt *) stmt)->canSetTag;
-			}
-			else
-			{
-				/* utilities are canSetTag if only thing in list */
-				canSetTag = (list_length(stmt_list) == 1);
-
-				if (IsA(stmt, CopyStmt))
+				if (IsA(stmt->utilityStmt, CopyStmt))
 				{
-					CopyStmt   *cstmt = (CopyStmt *) stmt;
+					CopyStmt   *cstmt = (CopyStmt *) stmt->utilityStmt;
 
 					if (cstmt->filename == NULL)
 					{
@@ -2045,7 +2038,7 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 						goto fail;
 					}
 				}
-				else if (IsA(stmt, TransactionStmt))
+				else if (IsA(stmt->utilityStmt, TransactionStmt))
 				{
 					my_res = SPI_ERROR_TRANSACTION;
 					goto fail;
@@ -2057,10 +2050,10 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				/* translator: %s is a SQL statement name */
 					   errmsg("%s is not allowed in a non-volatile function",
-							  CreateCommandTag(stmt))));
+							  CreateCommandTag((Node *) stmt))));
 
 			if (IsInParallelMode() && !CommandIsReadOnly(stmt))
-				PreventCommandIfParallelMode(CreateCommandTag(stmt));
+				PreventCommandIfParallelMode(CreateCommandTag((Node *) stmt));
 
 			/*
 			 * If not read-only mode, advance the command counter before each
@@ -2074,8 +2067,7 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 
 			dest = CreateDestReceiver(canSetTag ? DestSPI : DestNone);
 
-			if (IsA(stmt, PlannedStmt) &&
-				((PlannedStmt *) stmt)->utilityStmt == NULL)
+			if (stmt->utilityStmt == NULL)
 			{
 				QueryDesc  *qdesc;
 				Snapshot	snap;
@@ -2085,7 +2077,7 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 				else
 					snap = InvalidSnapshot;
 
-				qdesc = CreateQueryDesc((PlannedStmt *) stmt,
+				qdesc = CreateQueryDesc(stmt,
 										plansource->query_string,
 										snap, crosscheck_snapshot,
 										dest,
@@ -2116,9 +2108,9 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 				 * Some utility statements return a row count, even though the
 				 * tuples are not returned to the caller.
 				 */
-				if (IsA(stmt, CreateTableAsStmt))
+				if (IsA(stmt->utilityStmt, CreateTableAsStmt))
 				{
-					CreateTableAsStmt *ctastmt = (CreateTableAsStmt *) stmt;
+					CreateTableAsStmt *ctastmt = (CreateTableAsStmt *) stmt->utilityStmt;
 
 					if (strncmp(completionTag, "SELECT ", 7) == 0)
 						_SPI_current->processed =
@@ -2141,7 +2133,7 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 					if (ctastmt->is_select_into)
 						res = SPI_OK_SELINTO;
 				}
-				else if (IsA(stmt, CopyStmt))
+				else if (IsA(stmt->utilityStmt, CopyStmt))
 				{
 					Assert(strncmp(completionTag, "COPY ", 5) == 0);
 					_SPI_current->processed = pg_strtouint64(completionTag + 5,
@@ -2270,7 +2262,6 @@ _SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, uint64 tcount)
 	switch (operation)
 	{
 		case CMD_SELECT:
-			Assert(queryDesc->plannedstmt->utilityStmt == NULL);
 			if (queryDesc->dest->mydest != DestSPI)
 			{
 				/* Don't return SPI_OK_SELECT if we're discarding result */

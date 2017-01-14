@@ -139,45 +139,26 @@ GetPortalByName(const char *name)
 }
 
 /*
- * PortalListGetPrimaryStmt
+ * PortalGetPrimaryStmt
  *		Get the "primary" stmt within a portal, ie, the one marked canSetTag.
  *
  * Returns NULL if no such stmt.  If multiple PlannedStmt structs within the
  * portal are marked canSetTag, returns the first one.  Neither of these
  * cases should occur in present usages of this function.
- *
- * Copes if given a list of Querys --- can't happen in a portal, but this
- * code also supports plancache.c, which needs both cases.
- *
- * Note: the reason this is just handed a List is so that plancache.c
- * can share the code.  For use with a portal, use PortalGetPrimaryStmt
- * rather than calling this directly.
  */
-Node *
-PortalListGetPrimaryStmt(List *stmts)
+PlannedStmt *
+PortalGetPrimaryStmt(Portal portal)
 {
 	ListCell   *lc;
 
-	foreach(lc, stmts)
+	foreach(lc, portal->stmts)
 	{
-		Node	   *stmt = (Node *) lfirst(lc);
+		PlannedStmt *stmt = (PlannedStmt *) lfirst(lc);
 
-		if (IsA(stmt, PlannedStmt))
-		{
-			if (((PlannedStmt *) stmt)->canSetTag)
-				return stmt;
-		}
-		else if (IsA(stmt, Query))
-		{
-			if (((Query *) stmt)->canSetTag)
-				return stmt;
-		}
-		else
-		{
-			/* Utility stmts are assumed canSetTag if they're the only stmt */
-			if (list_length(stmts) == 1)
-				return stmt;
-		}
+		Assert(IsA(stmt, PlannedStmt));
+
+		if (stmt->canSetTag)
+			return stmt;
 	}
 	return NULL;
 }

@@ -946,6 +946,18 @@ _equalQuery(const Query *a, const Query *b)
 	COMPARE_NODE_FIELD(setOperations);
 	COMPARE_NODE_FIELD(constraintDeps);
 	COMPARE_NODE_FIELD(withCheckOptions);
+	COMPARE_LOCATION_FIELD(stmt_location);
+	COMPARE_LOCATION_FIELD(stmt_len);
+
+	return true;
+}
+
+static bool
+_equalRawStmt(const RawStmt *a, const RawStmt *b)
+{
+	COMPARE_NODE_FIELD(stmt);
+	COMPARE_LOCATION_FIELD(stmt_location);
+	COMPARE_LOCATION_FIELD(stmt_len);
 
 	return true;
 }
@@ -3014,6 +3026,9 @@ equal(const void *a, const void *b)
 			 */
 		case T_Query:
 			retval = _equalQuery(a, b);
+			break;
+		case T_RawStmt:
+			retval = _equalRawStmt(a, b);
 			break;
 		case T_InsertStmt:
 			retval = _equalInsertStmt(a, b);

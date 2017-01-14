@@ -292,7 +292,7 @@ static void pgss_ExecutorRun(QueryDesc *queryDesc,
 				 uint64 count);
 static void pgss_ExecutorFinish(QueryDesc *queryDesc);
 static void pgss_ExecutorEnd(QueryDesc *queryDesc);
-static void pgss_ProcessUtility(Node *parsetree, const char *queryString,
+static void pgss_ProcessUtility(PlannedStmt *pstmt, const char *queryString,
 					ProcessUtilityContext context, ParamListInfo params,
 					DestReceiver *dest, char *completionTag);
 static uint32 pgss_hash_fn(const void *key, Size keysize);
@@ -942,10 +942,12 @@ pgss_ExecutorEnd(QueryDesc *queryDesc)
  * ProcessUtility hook
  */
 static void
-pgss_ProcessUtility(Node *parsetree, const char *queryString,
+pgss_ProcessUtility(PlannedStmt *pstmt, const char *queryString,
 					ProcessUtilityContext context, ParamListInfo params,
 					DestReceiver *dest, char *completionTag)
 {
+	Node	   *parsetree = pstmt->utilityStmt;
+
 	/*
 	 * If it's an EXECUTE statement, we don't track it and don't increment the
 	 * nesting level.  This allows the cycles to be charged to the underlying
@@ -979,11 +981,11 @@ pgss_ProcessUtility(Node *parsetree, const char *queryString,
 		PG_TRY();
 		{
 			if (prev_ProcessUtility)
-				prev_ProcessUtility(parsetree, queryString,
+				prev_ProcessUtility(pstmt, queryString,
 									context, params,
 									dest, completionTag);
 			else
-				standard_ProcessUtility(parsetree, queryString,
+				standard_ProcessUtility(pstmt, queryString,
 										context, params,
 										dest, completionTag);
 			nested_level--;
@@ -1044,11 +1046,11 @@ pgss_ProcessUtility(Node *parsetree, const char *queryString,
 	else
 	{
 		if (prev_ProcessUtility)
-			prev_ProcessUtility(parsetree, queryString,
+			prev_ProcessUtility(pstmt, queryString,
 								context, params,
 								dest, completionTag);
 		else
-			standard_ProcessUtility(parsetree, queryString,
+			standard_ProcessUtility(pstmt, queryString,
 									context, params,
 									dest, completionTag);
 	}

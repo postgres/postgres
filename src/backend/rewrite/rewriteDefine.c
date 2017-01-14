@@ -330,8 +330,7 @@ DefineQueryRewrite(char *rulename,
 		 */
 		query = (Query *) linitial(action);
 		if (!is_instead ||
-			query->commandType != CMD_SELECT ||
-			query->utilityStmt != NULL)
+			query->commandType != CMD_SELECT)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("rules on SELECT must have action INSTEAD SELECT")));

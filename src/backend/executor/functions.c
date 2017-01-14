@@ -66,7 +66,7 @@ typedef struct execution_state
 	ExecStatus	status;
 	bool		setsResult;		/* true if this query produces func's result */
 	bool		lazyEval;		/* true if should fetch one row at a time */
-	Node	   *stmt;			/* PlannedStmt or utility statement */
+	PlannedStmt *stmt;			/* plan for this query */
 	QueryDesc  *qd;				/* null unless status == RUN */
 } execution_state;
 
@@ -487,45 +487,56 @@ init_execution_state(List *queryTree_list,
 		foreach(lc2, qtlist)
 		{
 			Query	   *queryTree = (Query *) lfirst(lc2);
-			Node	   *stmt;
+			PlannedStmt *stmt;
 			execution_state *newes;
 
 			Assert(IsA(queryTree, Query));
 
 			/* Plan the query if needed */
 			if (queryTree->commandType == CMD_UTILITY)
-				stmt = queryTree->utilityStmt;
+			{
+				/* Utility commands require no planning. */
+				stmt = makeNode(PlannedStmt);
+				stmt->commandType = CMD_UTILITY;
+				stmt->canSetTag = queryTree->canSetTag;
+				stmt->utilityStmt = queryTree->utilityStmt;
+				stmt->stmt_location = queryTree->stmt_location;
+				stmt->stmt_len = queryTree->stmt_len;
+			}
 			else
-				stmt = (Node *) pg_plan_query(queryTree,
+				stmt = pg_plan_query(queryTree,
 						  fcache->readonly_func ? CURSOR_OPT_PARALLEL_OK : 0,
-											  NULL);
+									 NULL);
 
 			/*
 			 * Precheck all commands for validity in a function.  This should
 			 * generally match the restrictions spi.c applies.
 			 */
-			if (IsA(stmt, CopyStmt) &&
-				((CopyStmt *) stmt)->filename == NULL)
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			if (stmt->commandType == CMD_UTILITY)
+			{
+				if (IsA(stmt->utilityStmt, CopyStmt) &&
+					((CopyStmt *) stmt->utilityStmt)->filename == NULL)
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					errmsg("cannot COPY to/from client in a SQL function")));
 
-			if (IsA(stmt, TransactionStmt))
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				/* translator: %s is a SQL statement name */
-						 errmsg("%s is not allowed in a SQL function",
-								CreateCommandTag(stmt))));
+				if (IsA(stmt->utilityStmt, TransactionStmt))
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					/* translator: %s is a SQL statement name */
+							 errmsg("%s is not allowed in a SQL function",
+									CreateCommandTag(stmt->utilityStmt))));
+			}
 
 			if (fcache->readonly_func && !CommandIsReadOnly(stmt))
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				/* translator: %s is a SQL statement name */
 					   errmsg("%s is not allowed in a non-volatile function",
-							  CreateCommandTag(stmt))));
+							  CreateCommandTag((Node *) stmt))));
 
 			if (IsInParallelMode() && !CommandIsReadOnly(stmt))
-				PreventCommandIfParallelMode(CreateCommandTag(stmt));
+				PreventCommandIfParallelMode(CreateCommandTag((Node *) stmt));
 
 			/* OK, build the execution_state for this query */
 			newes = (execution_state *) palloc(sizeof(execution_state));
@@ -569,15 +580,9 @@ init_execution_state(List *queryTree_list,
 	{
 		lasttages->setsResult = true;
 		if (lazyEvalOK &&
-			IsA(lasttages->stmt, PlannedStmt))
-		{
-			PlannedStmt *ps = (PlannedStmt *) lasttages->stmt;
-
-			if (ps->commandType == CMD_SELECT &&
-				ps->utilityStmt == NULL &&
-				!ps->hasModifyingCTE)
-				fcache->lazyEval = lasttages->lazyEval = true;
-		}
+			lasttages->stmt->commandType == CMD_SELECT &&
+			!lasttages->stmt->hasModifyingCTE)
+			fcache->lazyEval = lasttages->lazyEval = true;
 	}
 
 	return eslist;
@@ -704,7 +709,7 @@ init_sql_fcache(FmgrInfo *finfo, Oid collation, bool lazyEvalOK)
 	flat_query_list = NIL;
 	foreach(lc, raw_parsetree_list)
 	{
-		Node	   *parsetree = (Node *) lfirst(lc);
+		RawStmt    *parsetree = (RawStmt *) lfirst(lc);
 		List	   *queryTree_sublist;
 
 		queryTree_sublist = pg_analyze_and_rewrite_params(parsetree,
@@ -801,22 +806,15 @@ postquel_start(execution_state *es, SQLFunctionCachePtr fcache)
 	else
 		dest = None_Receiver;
 
-	if (IsA(es->stmt, PlannedStmt))
-		es->qd = CreateQueryDesc((PlannedStmt *) es->stmt,
-								 fcache->src,
-								 GetActiveSnapshot(),
-								 InvalidSnapshot,
-								 dest,
-								 fcache->paramLI, 0);
-	else
-		es->qd = CreateUtilityQueryDesc(es->stmt,
-										fcache->src,
-										GetActiveSnapshot(),
-										dest,
-										fcache->paramLI);
+	es->qd = CreateQueryDesc(es->stmt,
+							 fcache->src,
+							 GetActiveSnapshot(),
+							 InvalidSnapshot,
+							 dest,
+							 fcache->paramLI, 0);
 
 	/* Utility commands don't need Executor. */
-	if (es->qd->utilitystmt == NULL)
+	if (es->qd->operation != CMD_UTILITY)
 	{
 		/*
 		 * In lazyEval mode, do not let the executor set up an AfterTrigger
@@ -844,12 +842,9 @@ postquel_getnext(execution_state *es, SQLFunctionCachePtr fcache)
 {
 	bool		result;
 
-	if (es->qd->utilitystmt)
+	if (es->qd->operation == CMD_UTILITY)
 	{
-		/* ProcessUtility needs the PlannedStmt for DECLARE CURSOR */
-		ProcessUtility((es->qd->plannedstmt ?
-						(Node *) es->qd->plannedstmt :
-						es->qd->utilitystmt),
+		ProcessUtility(es->qd->plannedstmt,
 					   fcache->src,
 					   PROCESS_UTILITY_QUERY,
 					   es->qd->params,
@@ -882,7 +877,7 @@ postquel_end(execution_state *es)
 	es->status = F_EXEC_DONE;
 
 	/* Utility commands don't need Executor. */
-	if (es->qd->utilitystmt == NULL)
+	if (es->qd->operation != CMD_UTILITY)
 	{
 		ExecutorFinish(es->qd);
 		ExecutorEnd(es->qd);
@@ -1576,8 +1571,7 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 	 * entities.
 	 */
 	if (parse &&
-		parse->commandType == CMD_SELECT &&
-		parse->utilityStmt == NULL)
+		parse->commandType == CMD_SELECT)
 	{
 		tlist_ptr = &parse->targetList;
 		tlist = parse->targetList;

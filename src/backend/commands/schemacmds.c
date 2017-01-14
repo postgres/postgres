@@ -40,9 +40,16 @@ static void AlterSchemaOwner_internal(HeapTuple tup, Relation rel, Oid newOwnerI
 
 /*
  * CREATE SCHEMA
+ *
+ * Note: caller should pass in location information for the whole
+ * CREATE SCHEMA statement, which in turn we pass down as the location
+ * of the component commands.  This comports with our general plan of
+ * reporting location/len for the whole command even when executing
+ * a subquery.
  */
 Oid
-CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString)
+CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString,
+					int stmt_location, int stmt_len)
 {
 	const char *schemaName = stmt->schemaname;
 	Oid			namespaceId;
@@ -172,14 +179,24 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString)
 	foreach(parsetree_item, parsetree_list)
 	{
 		Node	   *stmt = (Node *) lfirst(parsetree_item);
+		PlannedStmt *wrapper;
+
+		/* need to make a wrapper PlannedStmt */
+		wrapper = makeNode(PlannedStmt);
+		wrapper->commandType = CMD_UTILITY;
+		wrapper->canSetTag = false;
+		wrapper->utilityStmt = stmt;
+		wrapper->stmt_location = stmt_location;
+		wrapper->stmt_len = stmt_len;
 
 		/* do this step */
-		ProcessUtility(stmt,
+		ProcessUtility(wrapper,
 					   queryString,
 					   PROCESS_UTILITY_SUBCOMMAND,
 					   NULL,
 					   None_Receiver,
 					   NULL);
+
 		/* make sure later steps can see the object created here */
 		CommandCounterIncrement();
 	}

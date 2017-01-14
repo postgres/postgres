@@ -80,7 +80,8 @@
 
 /*
  * The above macro assigns -1 (unknown) as the parse location of any
- * nonterminal that was reduced from an empty rule.  This is problematic
+ * nonterminal that was reduced from an empty rule, or whose leftmost
+ * component was reduced from an empty rule.  This is problematic
  * for nonterminals defined like
  *		OptFooList: / * EMPTY * / { ... } | OptFooList Foo { ... } ;
  * because we'll set -1 as the location during the first reduction and then
@@ -91,6 +92,12 @@
  * (Although we have many nonterminals that follow this pattern, we only
  * bother with fixing @$ like this when the nonterminal's parse location
  * is actually referenced in some rule.)
+ *
+ * A cleaner answer would be to make YYLLOC_DEFAULT scan all the Rhs
+ * locations until it's found one that's not -1.  Then we'd get a correct
+ * location for any nonterminal that isn't entirely empty.  But this way
+ * would add overhead to every rule reduction, and so far there's not been
+ * a compelling reason to pay that overhead.
  */
 
 /*
@@ -133,6 +140,8 @@ typedef struct ImportQual
 
 static void base_yyerror(YYLTYPE *yylloc, core_yyscan_t yyscanner,
 						 const char *msg);
+static RawStmt *makeRawStmt(Node *stmt, int stmt_location);
+static void updateRawStmtEnd(RawStmt *rs, int end_location);
 static Node *makeColumnRef(char *colname, List *indirection,
 						   int location, core_yyscan_t yyscanner);
 static Node *makeTypeCast(Node *arg, TypeName *typename, int location);
@@ -758,18 +767,32 @@ stmtblock:	stmtmulti
 			}
 		;
 
-/* the thrashing around here is to discard "empty" statements... */
+/*
+ * At top level, we wrap each stmt with a RawStmt node carrying start location
+ * and length of the stmt's text.  Notice that the start loc/len are driven
+ * entirely from semicolon locations (@2).  It would seem natural to use
+ * @1 or @3 to get the true start location of a stmt, but that doesn't work
+ * for statements that can start with empty nonterminals (opt_with_clause is
+ * the main offender here); as noted in the comments for YYLLOC_DEFAULT,
+ * we'd get -1 for the location in such cases.
+ * We also take care to discard empty statements entirely.
+ */
 stmtmulti:	stmtmulti ';' stmt
 				{
+					if ($1 != NIL)
+					{
+						/* update length of previous stmt */
+						updateRawStmtEnd((RawStmt *) llast($1), @2);
+					}
 					if ($3 != NULL)
-						$$ = lappend($1, $3);
+						$$ = lappend($1, makeRawStmt($3, @2 + 1));
 					else
 						$$ = $1;
 				}
 			| stmt
 				{
 					if ($1 != NULL)
-						$$ = list_make1($1);
+						$$ = list_make1(makeRawStmt($1, 0));
 					else
 						$$ = NIL;
 				}
@@ -14472,6 +14495,33 @@ static void
 base_yyerror(YYLTYPE *yylloc, core_yyscan_t yyscanner, const char *msg)
 {
 	parser_yyerror(msg);
+}
+
+static RawStmt *
+makeRawStmt(Node *stmt, int stmt_location)
+{
+	RawStmt    *rs = makeNode(RawStmt);
+
+	rs->stmt = stmt;
+	rs->stmt_location = stmt_location;
+	rs->stmt_len = 0;			/* might get changed later */
+	return rs;
+}
+
+/* Adjust a RawStmt to reflect that it doesn't run to the end of the string */
+static void
+updateRawStmtEnd(RawStmt *rs, int end_location)
+{
+	/*
+	 * If we already set the length, don't change it.  This is for situations
+	 * like "select foo ;; select bar" where the same statement will be last
+	 * in the string for more than one semicolon.
+	 */
+	if (rs->stmt_len > 0)
+		return;
+
+	/* OK, update length of RawStmt */
+	rs->stmt_len = end_location - rs->stmt_location;
 }
 
 static Node *

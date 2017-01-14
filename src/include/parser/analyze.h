@@ -22,19 +22,19 @@ typedef void (*post_parse_analyze_hook_type) (ParseState *pstate,
 extern PGDLLIMPORT post_parse_analyze_hook_type post_parse_analyze_hook;
 
 
-extern Query *parse_analyze(Node *parseTree, const char *sourceText,
+extern Query *parse_analyze(RawStmt *parseTree, const char *sourceText,
 			  Oid *paramTypes, int numParams);
-extern Query *parse_analyze_varparams(Node *parseTree, const char *sourceText,
+extern Query *parse_analyze_varparams(RawStmt *parseTree, const char *sourceText,
 						Oid **paramTypes, int *numParams);
 
 extern Query *parse_sub_analyze(Node *parseTree, ParseState *parentParseState,
 				  CommonTableExpr *parentCTE,
 				  bool locked_from_parent);
 
-extern Query *transformTopLevelStmt(ParseState *pstate, Node *parseTree);
+extern Query *transformTopLevelStmt(ParseState *pstate, RawStmt *parseTree);
 extern Query *transformStmt(ParseState *pstate, Node *parseTree);
 
-extern bool analyze_requires_snapshot(Node *parseTree);
+extern bool analyze_requires_snapshot(RawStmt *parseTree);
 
 extern const char *LCS_asString(LockClauseStrength strength);
 extern void CheckSelectLocking(Query *qry, LockClauseStrength strength);
