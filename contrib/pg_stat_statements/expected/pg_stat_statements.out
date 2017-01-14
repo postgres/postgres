@@ -1,21 +1,359 @@
 CREATE EXTENSION pg_stat_statements;
-CREATE TABLE test (a int, b char(20));
--- test the basic functionality of pg_stat_statements
+--
+-- simple and compound statements
+--
+SET pg_stat_statements.track_utility = FALSE;
 SELECT pg_stat_statements_reset();
  pg_stat_statements_reset 
 --------------------------
  
 (1 row)
 
-INSERT INTO test VALUES(generate_series(1, 10), 'aaa');
-UPDATE test SET b = 'bbb' WHERE a > 5;
-SELECT query, calls, rows from pg_stat_statements ORDER BY rows;
-                       query                        | calls | rows 
-----------------------------------------------------+-------+------
- SELECT pg_stat_statements_reset();                 |     1 |    1
- UPDATE test SET b = ? WHERE a > ?;                 |     1 |    5
- INSERT INTO test VALUES(generate_series(?, ?), ?); |     1 |   10
-(3 rows)
+SELECT 1 AS "int";
+ int 
+-----
+   1
+(1 row)
 
-DROP TABLE test;
+SELECT 'hello'
+  -- multiline
+  AS "text";
+ text  
+-------
+ hello
+(1 row)
+
+SELECT 'world' AS "text";
+ text  
+-------
+ world
+(1 row)
+
+-- transaction
+BEGIN;
+SELECT 1 AS "int";
+ int 
+-----
+   1
+(1 row)
+
+SELECT 'hello' AS "text";
+ text  
+-------
+ hello
+(1 row)
+
+COMMIT;
+-- compound transaction
+BEGIN \;
+SELECT 2.0 AS "float" \;
+SELECT 'world' AS "text" \;
+COMMIT;
+-- compound with empty statements and spurious leading spacing
+\;\;   SELECT 3 + 3 \;\;\;   SELECT ' ' || ' !' \;\;   SELECT 1 + 4 \;;
+ ?column? 
+----------
+        5
+(1 row)
+
+-- non ;-terminated statements
+SELECT 1 + 1 + 1 AS "add" \gset
+SELECT :add + 1 + 1 AS "add" \;
+SELECT :add + 1 + 1 AS "add" \gset
+-- set operator
+SELECT 1 AS i UNION SELECT 2 ORDER BY i;
+ i 
+---
+ 1
+ 2
+(2 rows)
+
+-- cte
+WITH t(f) AS (
+  VALUES (1.0), (2.0)
+)
+  SELECT f FROM t ORDER BY f;
+  f  
+-----
+ 1.0
+ 2.0
+(2 rows)
+
+SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
+                  query                  | calls | rows 
+-----------------------------------------+-------+------
+ SELECT ?                               +|     4 |    4
+                                        +|       | 
+   AS "text"                             |       | 
+ SELECT ? + ?                            |     2 |    2
+ SELECT ? + ? + ? AS "add"               |     3 |    3
+ SELECT ? AS "float"                     |     1 |    1
+ SELECT ? AS "int"                       |     2 |    2
+ SELECT ? AS i UNION SELECT ? ORDER BY i |     1 |    2
+ SELECT ? || ?                           |     1 |    1
+ SELECT pg_stat_statements_reset()       |     1 |    1
+ WITH t(f) AS (                         +|     1 |    2
+   VALUES (?), (?)                      +|       | 
+ )                                      +|       | 
+   SELECT f FROM t ORDER BY f            |       | 
+(9 rows)
+
+--
+-- CRUD: INSERT SELECT UPDATE DELETE on test table
+--
+SELECT pg_stat_statements_reset();
+ pg_stat_statements_reset 
+--------------------------
+ 
+(1 row)
+
+-- utility "create table" should not be shown
+CREATE TABLE test (a int, b char(20));
+INSERT INTO test VALUES(generate_series(1, 10), 'aaa');
+UPDATE test SET b = 'bbb' WHERE a > 7;
+DELETE FROM test WHERE a > 9;
+-- explicit transaction
+BEGIN;
+UPDATE test SET b = '111' WHERE a = 1 ;
+COMMIT;
+BEGIN \;
+UPDATE test SET b = '222' WHERE a = 2 \;
+COMMIT ;
+UPDATE test SET b = '333' WHERE a = 3 \;
+UPDATE test SET b = '444' WHERE a = 4 ;
+BEGIN \;
+UPDATE test SET b = '555' WHERE a = 5 \;
+UPDATE test SET b = '666' WHERE a = 6 \;
+COMMIT ;
+-- SELECT with constants
+SELECT * FROM test WHERE a > 5 ORDER BY a ;
+ a |          b           
+---+----------------------
+ 6 | 666                 
+ 7 | aaa                 
+ 8 | bbb                 
+ 9 | bbb                 
+(4 rows)
+
+SELECT *
+  FROM test
+  WHERE a > 9
+  ORDER BY a ;
+ a | b 
+---+---
+(0 rows)
+
+-- SELECT without constants
+SELECT * FROM test ORDER BY a;
+ a |          b           
+---+----------------------
+ 1 | 111                 
+ 2 | 222                 
+ 3 | 333                 
+ 4 | 444                 
+ 5 | 555                 
+ 6 | 666                 
+ 7 | aaa                 
+ 8 | bbb                 
+ 9 | bbb                 
+(9 rows)
+
+SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
+                       query                       | calls | rows 
+---------------------------------------------------+-------+------
+ DELETE FROM test WHERE a > ?                      |     1 |    1
+ INSERT INTO test VALUES(generate_series(?, ?), ?) |     1 |   10
+ SELECT * FROM test ORDER BY a                     |     1 |    9
+ SELECT * FROM test WHERE a > ? ORDER BY a         |     2 |    4
+ SELECT pg_stat_statements_reset()                 |     1 |    1
+ UPDATE test SET b = ? WHERE a = ?                 |     6 |    6
+ UPDATE test SET b = ? WHERE a > ?                 |     1 |    3
+(7 rows)
+
+--
+-- pg_stat_statements.track = none
+--
+SET pg_stat_statements.track = 'none';
+SELECT pg_stat_statements_reset();
+ pg_stat_statements_reset 
+--------------------------
+ 
+(1 row)
+
+SELECT 1 AS "one";
+ one 
+-----
+   1
+(1 row)
+
+SELECT 1 + 1 AS "two";
+ two 
+-----
+   2
+(1 row)
+
+SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
+ query | calls | rows 
+-------+-------+------
+(0 rows)
+
+--
+-- pg_stat_statements.track = top
+--
+SET pg_stat_statements.track = 'top';
+SELECT pg_stat_statements_reset();
+ pg_stat_statements_reset 
+--------------------------
+ 
+(1 row)
+
+DO LANGUAGE plpgsql $$
+BEGIN
+  -- this is a SELECT
+  PERFORM 'hello world'::TEXT;
+END;
+$$;
+-- PL/pgSQL function
+CREATE FUNCTION PLUS_TWO(i INTEGER) RETURNS INTEGER AS $$
+DECLARE
+  r INTEGER;
+BEGIN
+  SELECT (i + 1 + 1.0)::INTEGER INTO r;
+  RETURN r;
+END; $$ LANGUAGE plpgsql;
+SELECT PLUS_TWO(3);
+ plus_two 
+----------
+        5
+(1 row)
+
+SELECT PLUS_TWO(7);
+ plus_two 
+----------
+        9
+(1 row)
+
+-- SQL function --- use LIMIT to keep it from being inlined
+CREATE FUNCTION PLUS_ONE(i INTEGER) RETURNS INTEGER AS
+$$ SELECT (i + 1.0)::INTEGER LIMIT 1 $$ LANGUAGE SQL;
+SELECT PLUS_ONE(8);
+ plus_one 
+----------
+        9
+(1 row)
+
+SELECT PLUS_ONE(10);
+ plus_one 
+----------
+       11
+(1 row)
+
+SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
+               query               | calls | rows 
+-----------------------------------+-------+------
+ SELECT ?::TEXT                    |     1 |    1
+ SELECT PLUS_ONE(?)                |     2 |    2
+ SELECT PLUS_TWO(?)                |     2 |    2
+ SELECT pg_stat_statements_reset() |     1 |    1
+(4 rows)
+
+--
+-- pg_stat_statements.track = all
+--
+SET pg_stat_statements.track = 'all';
+SELECT pg_stat_statements_reset();
+ pg_stat_statements_reset 
+--------------------------
+ 
+(1 row)
+
+-- we drop and recreate the functions to avoid any caching funnies
+DROP FUNCTION PLUS_ONE(INTEGER);
+DROP FUNCTION PLUS_TWO(INTEGER);
+-- PL/pgSQL function
+CREATE FUNCTION PLUS_TWO(i INTEGER) RETURNS INTEGER AS $$
+DECLARE
+  r INTEGER;
+BEGIN
+  SELECT (i + 1 + 1.0)::INTEGER INTO r;
+  RETURN r;
+END; $$ LANGUAGE plpgsql;
+SELECT PLUS_TWO(-1);
+ plus_two 
+----------
+        1
+(1 row)
+
+SELECT PLUS_TWO(2);
+ plus_two 
+----------
+        4
+(1 row)
+
+-- SQL function --- use LIMIT to keep it from being inlined
+CREATE FUNCTION PLUS_ONE(i INTEGER) RETURNS INTEGER AS
+$$ SELECT (i + 1.0)::INTEGER LIMIT 1 $$ LANGUAGE SQL;
+SELECT PLUS_ONE(3);
+ plus_one 
+----------
+        4
+(1 row)
+
+SELECT PLUS_ONE(1);
+ plus_one 
+----------
+        2
+(1 row)
+
+SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
+               query               | calls | rows 
+-----------------------------------+-------+------
+ SELECT (i + ? + ?)::INTEGER       |     2 |    2
+ SELECT (i + ?)::INTEGER LIMIT ?   |     2 |    2
+ SELECT PLUS_ONE(?)                |     2 |    2
+ SELECT PLUS_TWO(?)                |     2 |    2
+ SELECT pg_stat_statements_reset() |     1 |    1
+(5 rows)
+
+--
+-- utility commands
+--
+SET pg_stat_statements.track_utility = TRUE;
+SELECT pg_stat_statements_reset();
+ pg_stat_statements_reset 
+--------------------------
+ 
+(1 row)
+
+SELECT 1;
+ ?column? 
+----------
+        1
+(1 row)
+
+CREATE INDEX test_b ON test(b);
+DROP TABLE test \;
+DROP TABLE IF EXISTS test \;
+DROP FUNCTION PLUS_ONE(INTEGER);
+NOTICE:  table "test" does not exist, skipping
+DROP TABLE IF EXISTS test \;
+DROP TABLE IF EXISTS test \;
+DROP FUNCTION IF EXISTS PLUS_ONE(INTEGER);
+NOTICE:  table "test" does not exist, skipping
+NOTICE:  table "test" does not exist, skipping
+NOTICE:  function plus_one(pg_catalog.int4) does not exist, skipping
+DROP FUNCTION PLUS_TWO(INTEGER);
+SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
+                   query                   | calls | rows 
+-------------------------------------------+-------+------
+ CREATE INDEX test_b ON test(b)            |     1 |    0
+ DROP FUNCTION IF EXISTS PLUS_ONE(INTEGER) |     1 |    0
+ DROP FUNCTION PLUS_ONE(INTEGER)           |     1 |    0
+ DROP FUNCTION PLUS_TWO(INTEGER)           |     1 |    0
+ DROP TABLE IF EXISTS test                 |     3 |    0
+ DROP TABLE test                           |     1 |    0
+ SELECT ?                                  |     1 |    1
+ SELECT pg_stat_statements_reset()         |     1 |    1
+(8 rows)
+
 DROP EXTENSION pg_stat_statements;
