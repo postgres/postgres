@@ -497,7 +497,16 @@ init_execution_state(List *queryTree_list,
 			else
 				stmt = (Node *) pg_plan_query(queryTree, 0, NULL);
 
-			/* Precheck all commands for validity in a function */
+			/*
+			 * Precheck all commands for validity in a function.  This should
+			 * generally match the restrictions spi.c applies.
+			 */
+			if (IsA(stmt, CopyStmt) &&
+				((CopyStmt *) stmt)->filename == NULL)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					errmsg("cannot COPY to/from client in a SQL function")));
+
 			if (IsA(stmt, TransactionStmt))
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
