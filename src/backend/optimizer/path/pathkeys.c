@@ -480,17 +480,30 @@ build_index_pathkeys(PlannerInfo *root,
 											  index->rel->relids,
 											  false);
 
-		/*
-		 * If the sort key isn't already present in any EquivalenceClass, then
-		 * it's not an interesting sort order for this query.  So we can stop
-		 * now --- lower-order sort keys aren't useful either.
-		 */
-		if (!cpathkey)
-			break;
-
-		/* Add to list unless redundant */
-		if (!pathkey_is_redundant(cpathkey, retval))
-			retval = lappend(retval, cpathkey);
+		if (cpathkey)
+		{
+			/*
+			 * We found the sort key in an EquivalenceClass, so it's relevant
+			 * for this query.  Add it to list, unless it's redundant.
+			 */
+			if (!pathkey_is_redundant(cpathkey, retval))
+				retval = lappend(retval, cpathkey);
+		}
+		else
+		{
+			/*
+			 * Boolean index keys might be redundant even if they do not
+			 * appear in an EquivalenceClass, because of our special treatment
+			 * of boolean equality conditions --- see the comment for
+			 * indexcol_is_bool_constant_for_query().  If that applies, we can
+			 * continue to examine lower-order index columns.  Otherwise, the
+			 * sort key is not an interesting sort order for this query, so we
+			 * should stop considering index columns; any lower-order sort
+			 * keys won't be useful either.
+			 */
+			if (!indexcol_is_bool_constant_for_query(index, i))
+				break;
+		}
 
 		i++;
 	}

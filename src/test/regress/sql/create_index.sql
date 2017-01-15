@@ -1011,6 +1011,21 @@ explain (costs off)
   select * from tenk1 where (thousand, tenthous) in ((1,1001), (null,null));
 
 --
+-- Check matching of boolean index columns to WHERE conditions and sort keys
+--
+
+create temp table boolindex (b bool, i int, unique(b, i), junk float);
+
+explain (costs off)
+  select * from boolindex order by b, i limit 10;
+explain (costs off)
+  select * from boolindex where b order by i limit 10;
+explain (costs off)
+  select * from boolindex where b = true order by i desc limit 10;
+explain (costs off)
+  select * from boolindex where not b order by i limit 10;
+
+--
 -- REINDEX (VERBOSE)
 --
 CREATE TABLE reindex_verbose(id integer primary key);

@@ -2953,6 +2953,48 @@ explain (costs off)
 (2 rows)
 
 --
+-- Check matching of boolean index columns to WHERE conditions and sort keys
+--
+create temp table boolindex (b bool, i int, unique(b, i), junk float);
+explain (costs off)
+  select * from boolindex order by b, i limit 10;
+                      QUERY PLAN                       
+-------------------------------------------------------
+ Limit
+   ->  Index Scan using boolindex_b_i_key on boolindex
+(2 rows)
+
+explain (costs off)
+  select * from boolindex where b order by i limit 10;
+                      QUERY PLAN                       
+-------------------------------------------------------
+ Limit
+   ->  Index Scan using boolindex_b_i_key on boolindex
+         Index Cond: (b = true)
+         Filter: b
+(4 rows)
+
+explain (costs off)
+  select * from boolindex where b = true order by i desc limit 10;
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ Limit
+   ->  Index Scan Backward using boolindex_b_i_key on boolindex
+         Index Cond: (b = true)
+         Filter: b
+(4 rows)
+
+explain (costs off)
+  select * from boolindex where not b order by i limit 10;
+                      QUERY PLAN                       
+-------------------------------------------------------
+ Limit
+   ->  Index Scan using boolindex_b_i_key on boolindex
+         Index Cond: (b = false)
+         Filter: (NOT b)
+(4 rows)
+
+--
 -- REINDEX (VERBOSE)
 --
 CREATE TABLE reindex_verbose(id integer primary key);

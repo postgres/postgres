@@ -3025,6 +3025,52 @@ relation_has_unique_index_for(PlannerInfo *root, RelOptInfo *rel,
 	return false;
 }
 
+/*
+ * indexcol_is_bool_constant_for_query
+ *
+ * If an index column is constrained to have a constant value by the query's
+ * WHERE conditions, then it's irrelevant for sort-order considerations.
+ * Usually that means we have a restriction clause WHERE indexcol = constant,
+ * which gets turned into an EquivalenceClass containing a constant, which
+ * is recognized as redundant by build_index_pathkeys().  But if the index
+ * column is a boolean variable (or expression), then we are not going to
+ * see WHERE indexcol = constant, because expression preprocessing will have
+ * simplified that to "WHERE indexcol" or "WHERE NOT indexcol".  So we are not
+ * going to have a matching EquivalenceClass (unless the query also contains
+ * "ORDER BY indexcol").  To allow such cases to work the same as they would
+ * for non-boolean values, this function is provided to detect whether the
+ * specified index column matches a boolean restriction clause.
+ */
+bool
+indexcol_is_bool_constant_for_query(IndexOptInfo *index, int indexcol)
+{
+	ListCell   *lc;
+
+	/* If the index isn't boolean, we can't possibly get a match */
+	if (!IsBooleanOpfamily(index->opfamily[indexcol]))
+		return false;
+
+	/* Check each restriction clause for the index's rel */
+	foreach(lc, index->rel->baserestrictinfo)
+	{
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
+
+		/*
+		 * As in match_clause_to_indexcol, never match pseudoconstants to
+		 * indexes.  (It might be semantically okay to do so here, but the
+		 * odds of getting a match are negligible, so don't waste the cycles.)
+		 */
+		if (rinfo->pseudoconstant)
+			continue;
+
+		/* See if we can match the clause's expression to the index column */
+		if (match_boolean_index_clause((Node *) rinfo->clause, indexcol, index))
+			return true;
+	}
+
+	return false;
+}
+
 
 /****************************************************************************
  *				----  ROUTINES TO CHECK OPERANDS  ----
