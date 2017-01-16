@@ -790,7 +790,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 		 */
 		exprList = transformExpressionList(pstate,
 										   (List *) linitial(valuesLists),
-										   EXPR_KIND_VALUES,
+										   EXPR_KIND_VALUES_SINGLE,
 										   true);
 
 		/* Prepare row for assignment to target table */
