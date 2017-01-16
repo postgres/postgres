@@ -2800,7 +2800,8 @@ mergeonerun(Tuplesortstate *state)
 		WRITETUP(state, destTape, &state->memtuples[0]);
 
 		/* recycle the slot of the tuple we just wrote out, for the next read */
-		RELEASE_SLAB_SLOT(state, state->memtuples[0].tuple);
+		if (state->memtuples[0].tuple)
+			RELEASE_SLAB_SLOT(state, state->memtuples[0].tuple);
 
 		/*
 		 * pull next tuple from the tape, and replace the written-out tuple in
