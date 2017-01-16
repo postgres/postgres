@@ -4,7 +4,7 @@ use Cwd;
 use Config;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 71;
+use Test::More tests => 72;
 
 program_help_ok('pg_basebackup');
 program_version_ok('pg_basebackup');
@@ -244,6 +244,9 @@ $node->command_ok(
 	[ 'pg_basebackup', '-D', "$tempdir/backupxst", '-X', 'stream', '-Ft' ],
 	'pg_basebackup -X stream runs in tar mode');
 ok(-f "$tempdir/backupxst/pg_wal.tar", "tar file was created");
+$node->command_ok(
+	[ 'pg_basebackup', '-D', "$tempdir/backupnoslot", '-X', 'stream', '--no-slot' ],
+	'pg_basebackup -X stream runs with --no-slot');
 
 $node->command_fails(
 	[ 'pg_basebackup', '-D', "$tempdir/fail", '-S', 'slot1' ],

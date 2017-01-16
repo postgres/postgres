@@ -37,13 +37,15 @@ typedef struct StreamCtl
 												 * often */
 	bool		synchronous;	/* Flush immediately WAL data on write */
 	bool		mark_done;		/* Mark segment as done in generated archive */
-	bool		do_sync;		/* Flush to disk to ensure consistent state
-								 * of data */
+	bool		do_sync;		/* Flush to disk to ensure consistent state of
+								 * data */
 
 	stream_stop_callback stream_stop;	/* Stop streaming when returns true */
 
 	WalWriteMethod *walmethod;	/* How to write the WAL */
 	char	   *partial_suffix; /* Suffix appended to partially received files */
+	char	   *replication_slot;		/* Replication slot to use, or NULL */
+	bool		temp_slot;		/* Create temporary replication slot */
 } StreamCtl;
 
 

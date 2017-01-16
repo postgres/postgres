@@ -455,10 +455,10 @@ ReceiveXlogStream(PGconn *conn, StreamCtl *stream)
 	 * synchronous_standby_names, but we've protected them against it so
 	 * far, so let's continue to do so unless specifically requested.
 	 */
-	if (replication_slot != NULL)
+	if (stream->replication_slot != NULL)
 	{
 		reportFlushPosition = true;
-		sprintf(slotcmd, "SLOT \"%s\" ", replication_slot);
+		sprintf(slotcmd, "SLOT \"%s\" ", stream->replication_slot);
 	}
 	else
 	{
@@ -506,6 +506,24 @@ ReceiveXlogStream(PGconn *conn, StreamCtl *stream)
 			return false;
 		}
 		PQclear(res);
+	}
+
+	/*
+	 * Create temporary replication slot if one is needed
+	 */
+	if (stream->temp_slot)
+	{
+		snprintf(query, sizeof(query),
+			 "CREATE_REPLICATION_SLOT \"%s\" TEMPORARY PHYSICAL RESERVE_WAL",
+				 stream->replication_slot);
+		res = PQexec(conn, query);
+		if (PQresultStatus(res) != PGRES_TUPLES_OK)
+		{
+			fprintf(stderr, _("%s: could not create temporary replication slot \"%s\": %s"),
+					progname, stream->replication_slot, PQerrorMessage(conn));
+			PQclear(res);
+			return false;
+		}
 	}
 
 	/*

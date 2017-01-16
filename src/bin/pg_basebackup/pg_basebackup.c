@@ -62,6 +62,11 @@ typedef struct TablespaceList
 #define MINIMUM_VERSION_FOR_PG_WAL	100000
 
 /*
+ * Temporary replication slots are supported from version 10.
+ */
+#define MINIMUM_VERSION_FOR_TEMP_SLOTS 100000
+
+/*
  * Different ways to include WAL
  */
 typedef enum
@@ -88,6 +93,8 @@ static bool do_sync = true;
 static int	standby_message_timeout = 10 * 1000;		/* 10 sec = default */
 static pg_time_t last_progress_report = 0;
 static int32 maxrate = 0;		/* no limit by default */
+static char *replication_slot = NULL;
+static bool temp_replication_slot = true;
 
 static bool success = false;
 static bool made_new_pgdata = false;
@@ -332,6 +339,7 @@ usage(void)
 	printf(_("  -R, --write-recovery-conf\n"
 			 "                         write recovery.conf after backup\n"));
 	printf(_("  -S, --slot=SLOTNAME    replication slot to use\n"));
+	printf(_("      --no-slot          prevent creation of temporary replication slot\n"));
 	printf(_("  -T, --tablespace-mapping=OLDDIR=NEWDIR\n"
 	  "                         relocate tablespace in OLDDIR to NEWDIR\n"));
 	printf(_("  -X, --xlog-method=none|fetch|stream\n"
@@ -460,6 +468,7 @@ typedef struct
 	char		xlog[MAXPGPATH];	/* directory or tarfile depending on mode */
 	char	   *sysidentifier;
 	int			timeline;
+	bool		temp_slot;
 } logstreamer_param;
 
 static int
@@ -479,6 +488,10 @@ LogStreamerMain(logstreamer_param *param)
 	stream.do_sync = do_sync;
 	stream.mark_done = true;
 	stream.partial_suffix = NULL;
+	stream.replication_slot = replication_slot;
+	stream.temp_slot = param->temp_slot;
+	if (stream.temp_slot && !stream.replication_slot)
+		stream.replication_slot = psprintf("pg_basebackup_%d", (int) getpid());
 
 	if (format == 'p')
 		stream.walmethod = CreateWalDirectoryMethod(param->xlog, do_sync);
@@ -565,6 +578,11 @@ StartLogStreamer(char *startpos, uint32 timeline, char *sysidentifier)
 			 PQserverVersion(conn) < MINIMUM_VERSION_FOR_PG_WAL ?
 				"pg_xlog" : "pg_wal");
 
+	/* Temporary replication slots are only supported in 10 and newer */
+	if (PQserverVersion(conn) < MINIMUM_VERSION_FOR_TEMP_SLOTS)
+		param->temp_slot = false;
+	else
+		param->temp_slot = temp_replication_slot;
 
 	if (format == 'p')
 	{
@@ -2063,11 +2081,13 @@ main(int argc, char **argv)
 		{"verbose", no_argument, NULL, 'v'},
 		{"progress", no_argument, NULL, 'P'},
 		{"xlogdir", required_argument, NULL, 1},
+		{"no-slot", no_argument, NULL, 2},
 		{NULL, 0, NULL, 0}
 	};
 	int			c;
 
 	int			option_index;
+	bool		no_slot = false;
 
 	progname = get_progname(argv[0]);
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_basebackup"));
@@ -2117,7 +2137,16 @@ main(int argc, char **argv)
 				writerecoveryconf = true;
 				break;
 			case 'S':
+
+				/*
+				 * When specifying replication slot name, use a permanent
+				 * slot.
+				 */
 				replication_slot = pg_strdup(optarg);
+				temp_replication_slot = false;
+				break;
+			case 2:
+				no_slot = true;
 				break;
 			case 'T':
 				tablespace_list_append(optarg);
@@ -2277,7 +2306,7 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
-	if (replication_slot && includewal != STREAM_WAL)
+	if ((replication_slot || no_slot) && includewal != STREAM_WAL)
 	{
 		fprintf(stderr,
 			_("%s: replication slots can only be used with WAL streaming\n"),
@@ -2285,6 +2314,20 @@ main(int argc, char **argv)
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 				progname);
 		exit(1);
+	}
+
+	if (no_slot)
+	{
+		if (replication_slot)
+		{
+			fprintf(stderr,
+					_("%s: --no-slot cannot be used with slot name\n"),
+					progname);
+			fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
+					progname);
+			exit(1);
+		}
+		temp_replication_slot = false;
 	}
 
 	if (strcmp(xlog_dir, "") != 0)

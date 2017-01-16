@@ -45,6 +45,7 @@ static bool do_create_slot = false;
 static bool slot_exists_ok = false;
 static bool do_start_slot = false;
 static bool do_drop_slot = false;
+static char *replication_slot = NULL;
 
 /* filled pairwise with option, value. value may be NULL */
 static char **options;

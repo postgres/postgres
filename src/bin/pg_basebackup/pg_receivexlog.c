@@ -41,6 +41,7 @@ static bool do_create_slot = false;
 static bool slot_exists_ok = false;
 static bool do_drop_slot = false;
 static bool synchronous = false;
+static char *replication_slot = NULL;
 
 
 static void usage(void);
@@ -340,6 +341,8 @@ StreamLog(void)
 	stream.mark_done = false;
 	stream.walmethod = CreateWalDirectoryMethod(basedir, stream.do_sync);
 	stream.partial_suffix = ".partial";
+	stream.replication_slot = replication_slot;
+	stream.temp_slot = false;
 
 	ReceiveXlogStream(conn, &stream);
 
