@@ -83,7 +83,7 @@ ConditionVariablePrepareToSleep(ConditionVariable *cv)
 
 /*--------------------------------------------------------------------------
  * Wait for the given condition variable to be signaled.  This should be
- * called in a predicate loop that tests for a specfic exit condition and
+ * called in a predicate loop that tests for a specific exit condition and
  * otherwise sleeps, like so:
  *
  *   ConditionVariablePrepareToSleep(cv); [optional]
@@ -108,7 +108,7 @@ ConditionVariableSleep(ConditionVariable *cv, uint32 wait_event_info)
 	 * return can be avoided by calling ConditionVariablePrepareToSleep(cv)
 	 * first.  Whether it's worth doing that depends on whether you expect the
 	 * condition to be met initially, in which case skipping the prepare
-	 * allows you to skip manipulation of the wait list, or not met intiailly,
+	 * allows you to skip manipulation of the wait list, or not met initially,
 	 * in which case preparing first allows you to skip a spurious test of the
 	 * caller's exit condition.
 	 */
