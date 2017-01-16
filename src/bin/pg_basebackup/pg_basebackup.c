@@ -2306,7 +2306,7 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
-	if ((replication_slot || no_slot) && includewal != STREAM_WAL)
+	if (replication_slot && includewal != STREAM_WAL)
 	{
 		fprintf(stderr,
 			_("%s: replication slots can only be used with WAL streaming\n"),
