@@ -66,7 +66,6 @@ static int	yyline = 1;			/* line number for error reporting */
 
 D		[0-9]
 oct		\\{D}{D}{D}
-Exp		[Ee][-+]?{D}+
 id		([A-Za-z0-9_]|{oct}|\-)+
 sid		\"([^\"])*\"
 arrayid [A-Za-z0-9_]+\[{D}*\]
@@ -126,13 +125,6 @@ insert			{ return(INSERT_TUPLE); }
 					yytext[strlen(yytext)] = '"'; /* restore quotes */
 					return(ID);
 				}
-
-(-)?{D}+"."{D}*({Exp})? |
-(-)?{D}*"."{D}+({Exp})? |
-(-)?{D}+{Exp}			{
-							yylval.str = pstrdup(yytext);
-							return(CONST_P);
-						}
 
 .				{
 					elog(ERROR, "syntax error at line %d: unexpected character \"%s\"", yyline, yytext);
