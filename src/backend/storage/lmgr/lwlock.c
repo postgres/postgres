@@ -953,7 +953,7 @@ LWLockWakeup(LWLock *lock)
 		 * that happens before the list unlink happens, the list would end up
 		 * being corrupted.
 		 *
-		 * The barrier pairs with the LWLockWaitListLock() when enqueing for
+		 * The barrier pairs with the LWLockWaitListLock() when enqueueing for
 		 * another lock.
 		 */
 		pg_write_barrier();
