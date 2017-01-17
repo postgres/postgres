@@ -15,9 +15,9 @@
 #define BUILTINS_H
 
 #include "fmgr.h"
-#include "fmgrprotos.h"
 #include "nodes/nodes.h"
 #include "nodes/pg_list.h"
+#include "utils/fmgrprotos.h"
 #include "utils/sortsupport.h"
 
 
