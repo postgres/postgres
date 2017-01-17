@@ -41,7 +41,8 @@ struct WalWriteMethod
  *						   (only implements the methods required for pg_basebackup,
  *						   not all those required for pg_receivexlog)
  */
-WalWriteMethod *CreateWalDirectoryMethod(const char *basedir, bool sync);
+WalWriteMethod *CreateWalDirectoryMethod(const char *basedir,
+										 int compression, bool sync);
 WalWriteMethod *CreateWalTarMethod(const char *tarbase, int compression, bool sync);
 
 /* Cleanup routines for previously-created methods */

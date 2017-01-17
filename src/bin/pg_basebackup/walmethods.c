@@ -41,6 +41,7 @@
 typedef struct DirectoryMethodData
 {
 	char	   *basedir;
+	int			compression;
 	bool		sync;
 }	DirectoryMethodData;
 static DirectoryMethodData *dir_data = NULL;
@@ -55,6 +56,9 @@ typedef struct DirectoryMethodFile
 	char	   *pathname;
 	char	   *fullpath;
 	char	   *temp_suffix;
+#ifdef HAVE_LIBZ
+	gzFile		gzfp;
+#endif
 }	DirectoryMethodFile;
 
 static char *
@@ -70,17 +74,47 @@ dir_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 	static char tmppath[MAXPGPATH];
 	int			fd;
 	DirectoryMethodFile *f;
+#ifdef HAVE_LIBZ
+	gzFile		gzfp = NULL;
+#endif
 
-	snprintf(tmppath, sizeof(tmppath), "%s/%s%s",
-			 dir_data->basedir, pathname, temp_suffix ? temp_suffix : "");
+	snprintf(tmppath, sizeof(tmppath), "%s/%s%s%s",
+			 dir_data->basedir, pathname,
+			 dir_data->compression > 0 ? ".gz" : "",
+			 temp_suffix ? temp_suffix : "");
 
+	/*
+	 * Open a file for non-compressed as well as compressed files. Tracking
+	 * the file descriptor is important for dir_sync() method as gzflush()
+	 * does not do any system calls to fsync() to make changes permanent on
+	 * disk.
+	 */
 	fd = open(tmppath, O_WRONLY | O_CREAT | PG_BINARY, S_IRUSR | S_IWUSR);
 	if (fd < 0)
 		return NULL;
 
-	if (pad_to_size)
+#ifdef HAVE_LIBZ
+	if (dir_data->compression > 0)
 	{
-		/* Always pre-pad on regular files */
+		gzfp = gzdopen(fd, "wb");
+		if (gzfp == NULL)
+		{
+			close(fd);
+			return NULL;
+		}
+
+		if (gzsetparams(gzfp, dir_data->compression,
+						Z_DEFAULT_STRATEGY) != Z_OK)
+		{
+			gzclose(gzfp);
+			return NULL;
+		}
+	}
+#endif
+
+	/* Do pre-padding on non-compressed files */
+	if (pad_to_size && dir_data->compression == 0)
+	{
 		char	   *zerobuf;
 		int			bytes;
 
@@ -120,12 +154,21 @@ dir_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 		if (fsync_fname(tmppath, false, progname) != 0 ||
 			fsync_parent_path(tmppath, progname) != 0)
 		{
-			close(fd);
+#ifdef HAVE_LIBZ
+			if (dir_data->compression > 0)
+				gzclose(gzfp);
+			else
+#endif
+				close(fd);
 			return NULL;
 		}
 	}
 
 	f = pg_malloc0(sizeof(DirectoryMethodFile));
+#ifdef HAVE_LIBZ
+	if (dir_data->compression > 0)
+		f->gzfp = gzfp;
+#endif
 	f->fd = fd;
 	f->currpos = 0;
 	f->pathname = pg_strdup(pathname);
@@ -144,7 +187,12 @@ dir_write(Walfile f, const void *buf, size_t count)
 
 	Assert(f != NULL);
 
-	r = write(df->fd, buf, count);
+#ifdef HAVE_LIBZ
+	if (dir_data->compression > 0)
+		r = (ssize_t) gzwrite(df->gzfp, buf, count);
+	else
+#endif
+		r = write(df->fd, buf, count);
 	if (r > 0)
 		df->currpos += r;
 	return r;
@@ -169,7 +217,12 @@ dir_close(Walfile f, WalCloseMethod method)
 
 	Assert(f != NULL);
 
-	r = close(df->fd);
+#ifdef HAVE_LIBZ
+	if (dir_data->compression > 0)
+		r = gzclose(df->gzfp);
+	else
+#endif
+		r = close(df->fd);
 
 	if (r == 0)
 	{
@@ -180,17 +233,22 @@ dir_close(Walfile f, WalCloseMethod method)
 			 * If we have a temp prefix, normal operation is to rename the
 			 * file.
 			 */
-			snprintf(tmppath, sizeof(tmppath), "%s/%s%s",
-					 dir_data->basedir, df->pathname, df->temp_suffix);
-			snprintf(tmppath2, sizeof(tmppath2), "%s/%s",
-					 dir_data->basedir, df->pathname);
+			snprintf(tmppath, sizeof(tmppath), "%s/%s%s%s",
+					 dir_data->basedir, df->pathname,
+					 dir_data->compression > 0 ? ".gz" : "",
+					 df->temp_suffix);
+			snprintf(tmppath2, sizeof(tmppath2), "%s/%s%s",
+					 dir_data->basedir, df->pathname,
+					 dir_data->compression > 0 ? ".gz" : "");
 			r = durable_rename(tmppath, tmppath2, progname);
 		}
 		else if (method == CLOSE_UNLINK)
 		{
 			/* Unlink the file once it's closed */
-			snprintf(tmppath, sizeof(tmppath), "%s/%s%s",
-					 dir_data->basedir, df->pathname, df->temp_suffix ? df->temp_suffix : "");
+			snprintf(tmppath, sizeof(tmppath), "%s/%s%s%s",
+					 dir_data->basedir, df->pathname,
+					 dir_data->compression > 0 ? ".gz" : "",
+					 df->temp_suffix ? df->temp_suffix : "");
 			r = unlink(tmppath);
 		}
 		else
@@ -225,6 +283,14 @@ dir_sync(Walfile f)
 
 	if (!dir_data->sync)
 		return 0;
+
+#ifdef HAVE_LIBZ
+	if (dir_data->compression > 0)
+	{
+		if (gzflush(((DirectoryMethodFile *) f)->gzfp, Z_SYNC_FLUSH) != Z_OK)
+			return -1;
+	}
+#endif
 
 	return fsync(((DirectoryMethodFile *) f)->fd);
 }
@@ -277,7 +343,7 @@ dir_finish(void)
 
 
 WalWriteMethod *
-CreateWalDirectoryMethod(const char *basedir, bool sync)
+CreateWalDirectoryMethod(const char *basedir, int compression, bool sync)
 {
 	WalWriteMethod *method;
 
@@ -293,6 +359,7 @@ CreateWalDirectoryMethod(const char *basedir, bool sync)
 	method->getlasterror = dir_getlasterror;
 
 	dir_data = pg_malloc0(sizeof(DirectoryMethodData));
+	dir_data->compression = compression;
 	dir_data->basedir = pg_strdup(basedir);
 	dir_data->sync = sync;
 
