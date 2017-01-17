@@ -169,7 +169,7 @@ $ENV{MSBFLAGS}="/m";
       <productname>Microsoft Windows SDK</productname> it
       is recommended that you upgrade to the latest version (currently
       version 7.1), available for download from
-      <ulink url="http://www.microsoft.com/downloads/"></>.
+      <ulink url="https://www.microsoft.com/download"></>.
      </para>
      <para>
       You must always include the
