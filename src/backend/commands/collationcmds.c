@@ -224,11 +224,17 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 {
 #if defined(HAVE_LOCALE_T) && !defined(WIN32)
 	bool		if_not_exists = PG_GETARG_BOOL(0);
-	Oid         nspid = PG_GETARG_OID(1);
+	Oid			nspid = PG_GETARG_OID(1);
 
 	FILE	   *locale_a_handle;
 	char		localebuf[NAMEDATALEN]; /* we assume ASCII so this is fine */
 	int			count = 0;
+	List	   *aliaslist = NIL;
+	List	   *localelist = NIL;
+	List	   *enclist = NIL;
+	ListCell   *lca,
+			   *lcl,
+			   *lce;
 #endif
 
 	if (!superuser())
@@ -306,26 +312,36 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 		 * ease of use.  Note that collation names are unique per encoding
 		 * only, so this doesn't clash with "en_US" for LATIN1, say.
 		 *
-		 * This always runs in "if not exists" mode, to skip aliases that
-		 * conflict with an existing locale name for the same encoding.  For
-		 * example, "br_FR.iso88591" is normalized to "br_FR", both for
-		 * encoding LATIN1.  But the unnormalized locale "br_FR" already
-		 * exists for LATIN1.
+		 * However, it might conflict with a name we'll see later in the
+		 * "locale -a" output.  So save up the aliases and try to add them
+		 * after we've read all the output.
 		 */
 		if (normalize_locale_name(alias, localebuf))
 		{
-			CollationCreate(alias, nspid, GetUserId(), enc,
-							localebuf, localebuf, true);
-			CommandCounterIncrement();
+			aliaslist = lappend(aliaslist, pstrdup(alias));
+			localelist = lappend(localelist, pstrdup(localebuf));
+			enclist = lappend_int(enclist, enc);
 		}
 	}
 
 	ClosePipeStream(locale_a_handle);
 
+	/* Now try to add any aliases we created */
+	forthree(lca, aliaslist, lcl, localelist, lce, enclist)
+	{
+		char	   *alias = (char *) lfirst(lca);
+		char	   *locale = (char *) lfirst(lcl);
+		int			enc = lfirst_int(lce);
+
+		CollationCreate(alias, nspid, GetUserId(), enc,
+						locale, locale, true);
+		CommandCounterIncrement();
+	}
+
 	if (count == 0)
 		ereport(ERROR,
 				(errmsg("no usable system locales were found")));
-#endif	/* not HAVE_LOCALE_T && not WIN32 */
+#endif   /* not HAVE_LOCALE_T && not WIN32 */
 
 	PG_RETURN_VOID();
 }
