@@ -339,7 +339,7 @@ do { \
 
 #define HeapTupleHeaderIsHeapOnly(tup) \
 ( \
-  (tup)->t_infomask2 & HEAP_ONLY_TUPLE \
+  ((tup)->t_infomask2 & HEAP_ONLY_TUPLE) != 0 \
 )
 
 #define HeapTupleHeaderSetHeapOnly(tup) \
@@ -354,7 +354,7 @@ do { \
 
 #define HeapTupleHeaderHasMatch(tup) \
 ( \
-  (tup)->t_infomask2 & HEAP_TUPLE_HAS_MATCH \
+  ((tup)->t_infomask2 & HEAP_TUPLE_HAS_MATCH) != 0 \
 )
 
 #define HeapTupleHeaderSetMatch(tup) \
