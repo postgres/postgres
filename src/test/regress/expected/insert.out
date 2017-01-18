@@ -314,28 +314,10 @@ select tableoid::regclass::text, a, min(b) as min_b, max(b) as max_b from list_p
 (9 rows)
 
 -- cleanup
-drop table range_parted cascade;
-NOTICE:  drop cascades to 4 other objects
-DETAIL:  drop cascades to table part1
-drop cascades to table part2
-drop cascades to table part3
-drop cascades to table part4
-drop table list_parted cascade;
-NOTICE:  drop cascades to 14 other objects
-DETAIL:  drop cascades to table part_aa_bb
-drop cascades to table part_cc_dd
-drop cascades to table part_null
-drop cascades to table part_ee_ff
-drop cascades to table part_ee_ff1
-drop cascades to table part_ee_ff2
-drop cascades to table part_ee_ff3
-drop cascades to table part_ee_ff3_1
-drop cascades to table part_ee_ff3_2
-drop cascades to table part_gg
-drop cascades to table part_gg1
-drop cascades to table part_gg2
-drop cascades to table part_gg2_1
-drop cascades to table part_gg2_2
+drop table part1, part2, part3, part4, range_parted;
+drop table part_ee_ff3_1, part_ee_ff3_2, part_ee_ff1, part_ee_ff2, part_ee_ff3;
+drop table part_ee_ff, part_gg2_2, part_gg2_1, part_gg2, part_gg1, part_gg;
+drop table part_aa_bb, part_cc_dd, part_null, list_parted;
 -- more tests for certain multi-level partitioning scenarios
 create table p (a int, b int) partition by range (a, b);
 create table p1 (b int, a int not null) partition by range (b);
