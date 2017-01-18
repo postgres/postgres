@@ -19190,6 +19190,46 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
     in the database's default tablespace, the tablespace can be specified as 0.
    </para>
 
+   <para>
+    <xref linkend="functions-admin-collation"> lists functions used to manage
+    collations.
+   </para>
+
+   <table id="functions-admin-collation">
+    <title>Collation Management Functions</title>
+    <tgroup cols="3">
+     <thead>
+      <row><entry>Name</entry> <entry>Return Type</entry> <entry>Description</entry></row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry>
+        <indexterm><primary>pg_import_system_collations</primary></indexterm>
+        <literal><function>pg_import_system_collations(<parameter>if_not_exists</> <type>boolean</>, <parameter>schema</> <type>regnamespace</>)</function></literal>
+       </entry>
+       <entry><type>void</type></entry>
+       <entry>Import operating system collations</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <para>
+    <function>pg_import_system_collations</> populates the system
+    catalog <literal>pg_collation</literal> with collations based on all the
+    locales it finds on the operating system.  This is
+    what <command>initdb</command> uses;
+    see <xref linkend="collation-managing"> for more details.  If additional
+    locales are installed into the operating system later on, this function
+    can be run again to add collations for the new locales.  In that case, the
+    parameter <parameter>if_not_exists</parameter> should be set to true to
+    skip over existing collations.  The <parameter>schema</parameter>
+    parameter would typically be <literal>pg_catalog</literal>, but that is
+    not a requirement.  (Collation objects based on locales that are no longer
+    present on the operating system are never removed by this function.)
+   </para>
+
   </sect2>
 
   <sect2 id="functions-admin-index">

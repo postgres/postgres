@@ -496,7 +496,7 @@ SELECT * FROM test1 ORDER BY a || b COLLATE "fr_FR";
    </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="collation-managing">
    <title>Managing Collations</title>
 
    <para>

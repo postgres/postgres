@@ -17,7 +17,8 @@
 extern Oid CollationCreate(const char *collname, Oid collnamespace,
 				Oid collowner,
 				int32 collencoding,
-				const char *collcollate, const char *collctype);
+				const char *collcollate, const char *collctype,
+				bool if_not_exists);
 extern void RemoveCollationById(Oid collationOid);
 
 #endif   /* PG_COLLATION_FN_H */

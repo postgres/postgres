@@ -41,7 +41,8 @@ Oid
 CollationCreate(const char *collname, Oid collnamespace,
 				Oid collowner,
 				int32 collencoding,
-				const char *collcollate, const char *collctype)
+				const char *collcollate, const char *collctype,
+				bool if_not_exists)
 {
 	Relation	rel;
 	TupleDesc	tupDesc;
@@ -72,10 +73,21 @@ CollationCreate(const char *collname, Oid collnamespace,
 							  PointerGetDatum(collname),
 							  Int32GetDatum(collencoding),
 							  ObjectIdGetDatum(collnamespace)))
-		ereport(ERROR,
+	{
+		if (if_not_exists)
+		{
+			ereport(NOTICE,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
-				 errmsg("collation \"%s\" for encoding \"%s\" already exists",
+				 errmsg("collation \"%s\" for encoding \"%s\" already exists, skipping",
 						collname, pg_encoding_to_char(collencoding))));
+			return InvalidOid;
+		}
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_DUPLICATE_OBJECT),
+					 errmsg("collation \"%s\" for encoding \"%s\" already exists",
+							collname, pg_encoding_to_char(collencoding))));
+	}
 
 	/*
 	 * Also forbid matching an any-encoding entry.  This test of course is not
@@ -86,10 +98,21 @@ CollationCreate(const char *collname, Oid collnamespace,
 							  PointerGetDatum(collname),
 							  Int32GetDatum(-1),
 							  ObjectIdGetDatum(collnamespace)))
-		ereport(ERROR,
+	{
+		if (if_not_exists)
+		{
+			ereport(NOTICE,
+				(errcode(ERRCODE_DUPLICATE_OBJECT),
+				 errmsg("collation \"%s\" already exists, skipping",
+						collname)));
+			return InvalidOid;
+		}
+		else
+			ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
 				 errmsg("collation \"%s\" already exists",
 						collname)));
+	}
 
 	/* open pg_collation */
 	rel = heap_open(CollationRelationId, RowExclusiveLock);
