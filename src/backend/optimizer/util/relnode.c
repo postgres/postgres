@@ -14,6 +14,8 @@
  */
 #include "postgres.h"
 
+#include <limits.h>
+
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
@@ -135,6 +137,7 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
 	rel->baserestrictinfo = NIL;
 	rel->baserestrictcost.startup = 0;
 	rel->baserestrictcost.per_tuple = 0;
+	rel->baserestrict_min_security = UINT_MAX;
 	rel->joininfo = NIL;
 	rel->has_eclass_joins = false;
 
@@ -171,6 +174,16 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
 
 	/* Save the finished struct in the query's simple_rel_array */
 	root->simple_rel_array[relid] = rel;
+
+	/*
+	 * This is a convenient spot at which to note whether rels participating
+	 * in the query have any securityQuals attached.  If so, increase
+	 * root->qual_security_level to ensure it's larger than the maximum
+	 * security level needed for securityQuals.
+	 */
+	if (rte->securityQuals)
+		root->qual_security_level = Max(root->qual_security_level,
+										list_length(rte->securityQuals));
 
 	/*
 	 * If this rel is an appendrel parent, recurse to build "other rel"
@@ -407,6 +420,7 @@ build_join_rel(PlannerInfo *root,
 	joinrel->baserestrictinfo = NIL;
 	joinrel->baserestrictcost.startup = 0;
 	joinrel->baserestrictcost.per_tuple = 0;
+	joinrel->baserestrict_min_security = UINT_MAX;
 	joinrel->joininfo = NIL;
 	joinrel->has_eclass_joins = false;
 

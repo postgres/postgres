@@ -2143,6 +2143,23 @@ match_clause_to_index(IndexOptInfo *index,
 {
 	int			indexcol;
 
+	/*
+	 * Never match pseudoconstants to indexes.  (Normally a match could not
+	 * happen anyway, since a pseudoconstant clause couldn't contain a Var,
+	 * but what if someone builds an expression index on a constant? It's not
+	 * totally unreasonable to do so with a partial index, either.)
+	 */
+	if (rinfo->pseudoconstant)
+		return;
+
+	/*
+	 * If clause can't be used as an indexqual because it must wait till after
+	 * some lower-security-level restriction clause, reject it.
+	 */
+	if (!restriction_is_securely_promotable(rinfo, index->rel))
+		return;
+
+	/* OK, check each index column for a match */
 	for (indexcol = 0; indexcol < index->ncolumns; indexcol++)
 	{
 		if (match_clause_to_indexcol(index,
@@ -2236,15 +2253,6 @@ match_clause_to_indexcol(IndexOptInfo *index,
 	Oid			expr_op;
 	Oid			expr_coll;
 	bool		plain_op;
-
-	/*
-	 * Never match pseudoconstants to indexes.  (Normally this could not
-	 * happen anyway, since a pseudoconstant clause couldn't contain a Var,
-	 * but what if someone builds an expression index on a constant? It's not
-	 * totally unreasonable to do so with a partial index, either.)
-	 */
-	if (rinfo->pseudoconstant)
-		return false;
 
 	/* First check for boolean-index cases. */
 	if (IsBooleanOpfamily(opfamily))

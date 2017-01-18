@@ -265,32 +265,28 @@ NOTICE:  f_leak => awesome science fiction
 (5 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM document WHERE f_leak(dtitle);
-                        QUERY PLAN                        
-----------------------------------------------------------
- Subquery Scan on document
-   Filter: f_leak(document.dtitle)
-   ->  Seq Scan on document document_1
-         Filter: (dlevel <= $0)
-         InitPlan 1 (returns $0)
-           ->  Index Scan using uaccount_pkey on uaccount
-                 Index Cond: (pguser = CURRENT_USER)
-(7 rows)
+                     QUERY PLAN                     
+----------------------------------------------------
+ Seq Scan on document
+   Filter: ((dlevel <= $0) AND f_leak(dtitle))
+   InitPlan 1 (returns $0)
+     ->  Index Scan using uaccount_pkey on uaccount
+           Index Cond: (pguser = CURRENT_USER)
+(5 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM document NATURAL JOIN category WHERE f_leak(dtitle);
-                              QUERY PLAN                              
-----------------------------------------------------------------------
+                        QUERY PLAN                         
+-----------------------------------------------------------
  Hash Join
    Hash Cond: (category.cid = document.cid)
+   InitPlan 1 (returns $0)
+     ->  Index Scan using uaccount_pkey on uaccount
+           Index Cond: (pguser = CURRENT_USER)
    ->  Seq Scan on category
    ->  Hash
-         ->  Subquery Scan on document
-               Filter: f_leak(document.dtitle)
-               ->  Seq Scan on document document_1
-                     Filter: (dlevel <= $0)
-                     InitPlan 1 (returns $0)
-                       ->  Index Scan using uaccount_pkey on uaccount
-                             Index Cond: (pguser = CURRENT_USER)
-(11 rows)
+         ->  Seq Scan on document
+               Filter: ((dlevel <= $0) AND f_leak(dtitle))
+(9 rows)
 
 -- viewpoint from regress_rls_dave
 SET SESSION AUTHORIZATION regress_rls_dave;
@@ -333,32 +329,28 @@ NOTICE:  f_leak => awesome technology book
 (7 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM document WHERE f_leak(dtitle);
-                                   QUERY PLAN                                    
----------------------------------------------------------------------------------
- Subquery Scan on document
-   Filter: f_leak(document.dtitle)
-   ->  Seq Scan on document document_1
-         Filter: ((cid <> 44) AND (cid <> 44) AND (cid < 50) AND (dlevel <= $0))
-         InitPlan 1 (returns $0)
-           ->  Index Scan using uaccount_pkey on uaccount
-                 Index Cond: (pguser = CURRENT_USER)
-(7 rows)
+                                          QUERY PLAN                                          
+----------------------------------------------------------------------------------------------
+ Seq Scan on document
+   Filter: ((cid <> 44) AND (cid <> 44) AND (cid < 50) AND (dlevel <= $0) AND f_leak(dtitle))
+   InitPlan 1 (returns $0)
+     ->  Index Scan using uaccount_pkey on uaccount
+           Index Cond: (pguser = CURRENT_USER)
+(5 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM document NATURAL JOIN category WHERE f_leak(dtitle);
-                                         QUERY PLAN                                          
----------------------------------------------------------------------------------------------
+                                                QUERY PLAN                                                
+----------------------------------------------------------------------------------------------------------
  Hash Join
    Hash Cond: (category.cid = document.cid)
+   InitPlan 1 (returns $0)
+     ->  Index Scan using uaccount_pkey on uaccount
+           Index Cond: (pguser = CURRENT_USER)
    ->  Seq Scan on category
    ->  Hash
-         ->  Subquery Scan on document
-               Filter: f_leak(document.dtitle)
-               ->  Seq Scan on document document_1
-                     Filter: ((cid <> 44) AND (cid <> 44) AND (cid < 50) AND (dlevel <= $0))
-                     InitPlan 1 (returns $0)
-                       ->  Index Scan using uaccount_pkey on uaccount
-                             Index Cond: (pguser = CURRENT_USER)
-(11 rows)
+         ->  Seq Scan on document
+               Filter: ((cid <> 44) AND (cid <> 44) AND (cid < 50) AND (dlevel <= $0) AND f_leak(dtitle))
+(9 rows)
 
 -- 44 would technically fail for both p2r and p1r, but we should get an error
 -- back from p1r for this because it sorts first
@@ -431,25 +423,21 @@ NOTICE:  f_leak => great manga
 (3 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM document WHERE f_leak(dtitle);
-                QUERY PLAN                
-------------------------------------------
- Subquery Scan on document
-   Filter: f_leak(document.dtitle)
-   ->  Seq Scan on document document_1
-         Filter: (dauthor = CURRENT_USER)
-(4 rows)
+                       QUERY PLAN                        
+---------------------------------------------------------
+ Seq Scan on document
+   Filter: ((dauthor = CURRENT_USER) AND f_leak(dtitle))
+(2 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM document NATURAL JOIN category WHERE f_leak(dtitle);
-                    QUERY PLAN                    
---------------------------------------------------
+                          QUERY PLAN                           
+---------------------------------------------------------------
  Nested Loop
-   ->  Subquery Scan on document
-         Filter: f_leak(document.dtitle)
-         ->  Seq Scan on document document_1
-               Filter: (dauthor = CURRENT_USER)
+   ->  Seq Scan on document
+         Filter: ((dauthor = CURRENT_USER) AND f_leak(dtitle))
    ->  Index Scan using category_pkey on category
          Index Cond: (cid = document.cid)
-(7 rows)
+(5 rows)
 
 -- interaction of FK/PK constraints
 SET SESSION AUTHORIZATION regress_rls_alice;
@@ -698,18 +686,16 @@ NOTICE:  f_leak => yyy
 (5 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM t1 WHERE f_leak(b);
-             QUERY PLAN              
--------------------------------------
- Subquery Scan on t1
-   Filter: f_leak(t1.b)
-   ->  Append
-         ->  Seq Scan on t1 t1_1
-               Filter: ((a % 2) = 0)
-         ->  Seq Scan on t2
-               Filter: ((a % 2) = 0)
-         ->  Seq Scan on t3
-               Filter: ((a % 2) = 0)
-(9 rows)
+                  QUERY PLAN                   
+-----------------------------------------------
+ Append
+   ->  Seq Scan on t1
+         Filter: (((a % 2) = 0) AND f_leak(b))
+   ->  Seq Scan on t2
+         Filter: (((a % 2) = 0) AND f_leak(b))
+   ->  Seq Scan on t3
+         Filter: (((a % 2) = 0) AND f_leak(b))
+(7 rows)
 
 -- reference to system column
 SELECT oid, * FROM t1;
@@ -769,20 +755,17 @@ SELECT * FROM t1 FOR SHARE;
 (5 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM t1 FOR SHARE;
-                      QUERY PLAN                       
--------------------------------------------------------
+             QUERY PLAN              
+-------------------------------------
  LockRows
-   ->  Subquery Scan on t1
-         ->  LockRows
-               ->  Result
-                     ->  Append
-                           ->  Seq Scan on t1 t1_1
-                                 Filter: ((a % 2) = 0)
-                           ->  Seq Scan on t2
-                                 Filter: ((a % 2) = 0)
-                           ->  Seq Scan on t3
-                                 Filter: ((a % 2) = 0)
-(11 rows)
+   ->  Append
+         ->  Seq Scan on t1
+               Filter: ((a % 2) = 0)
+         ->  Seq Scan on t2
+               Filter: ((a % 2) = 0)
+         ->  Seq Scan on t3
+               Filter: ((a % 2) = 0)
+(8 rows)
 
 SELECT * FROM t1 WHERE f_leak(b) FOR SHARE;
 NOTICE:  f_leak => bbb
@@ -800,21 +783,17 @@ NOTICE:  f_leak => yyy
 (5 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM t1 WHERE f_leak(b) FOR SHARE;
-                      QUERY PLAN                       
--------------------------------------------------------
+                     QUERY PLAN                      
+-----------------------------------------------------
  LockRows
-   ->  Subquery Scan on t1
-         Filter: f_leak(t1.b)
-         ->  LockRows
-               ->  Result
-                     ->  Append
-                           ->  Seq Scan on t1 t1_1
-                                 Filter: ((a % 2) = 0)
-                           ->  Seq Scan on t2
-                                 Filter: ((a % 2) = 0)
-                           ->  Seq Scan on t3
-                                 Filter: ((a % 2) = 0)
-(12 rows)
+   ->  Append
+         ->  Seq Scan on t1
+               Filter: (((a % 2) = 0) AND f_leak(b))
+         ->  Seq Scan on t2
+               Filter: (((a % 2) = 0) AND f_leak(b))
+         ->  Seq Scan on t3
+               Filter: (((a % 2) = 0) AND f_leak(b))
+(8 rows)
 
 -- union all query
 SELECT a, b, oid FROM t2 UNION ALL SELECT a, b, oid FROM t3;
@@ -1024,21 +1003,14 @@ NOTICE:  f_leak => a87ff679a2f3e71d9181a67b7542122c
 (2 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM only s1 WHERE f_leak(b);
-                        QUERY PLAN                        
-----------------------------------------------------------
- Subquery Scan on s1
-   Filter: f_leak(s1.b)
-   ->  Hash Join
-         Hash Cond: (s1_1.a = s2.x)
-         ->  Seq Scan on s1 s1_1
-         ->  Hash
-               ->  HashAggregate
-                     Group Key: s2.x
-                     ->  Subquery Scan on s2
-                           Filter: (s2.y ~~ '%2f%'::text)
-                           ->  Seq Scan on s2 s2_1
-                                 Filter: ((x % 2) = 0)
-(12 rows)
+                        QUERY PLAN                         
+-----------------------------------------------------------
+ Seq Scan on s1
+   Filter: ((hashed SubPlan 1) AND f_leak(b))
+   SubPlan 1
+     ->  Seq Scan on s2
+           Filter: (((x % 2) = 0) AND (y ~~ '%2f%'::text))
+(5 rows)
 
 SET SESSION AUTHORIZATION regress_rls_alice;
 ALTER POLICY p1 ON s1 USING (a in (select x from v2)); -- using VIEW in RLS policy
@@ -1053,21 +1025,14 @@ NOTICE:  f_leak => 1679091c5a880faf6fb5e6087eb1b2dc
 (2 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM s1 WHERE f_leak(b);
-                        QUERY PLAN                        
-----------------------------------------------------------
- Subquery Scan on s1
-   Filter: f_leak(s1.b)
-   ->  Hash Join
-         Hash Cond: (s1_1.a = s2.x)
-         ->  Seq Scan on s1 s1_1
-         ->  Hash
-               ->  HashAggregate
-                     Group Key: s2.x
-                     ->  Subquery Scan on s2
-                           Filter: (s2.y ~~ '%af%'::text)
-                           ->  Seq Scan on s2 s2_1
-                                 Filter: ((x % 2) = 0)
-(12 rows)
+                        QUERY PLAN                         
+-----------------------------------------------------------
+ Seq Scan on s1
+   Filter: ((hashed SubPlan 1) AND f_leak(b))
+   SubPlan 1
+     ->  Seq Scan on s2
+           Filter: (((x % 2) = 0) AND (y ~~ '%af%'::text))
+(5 rows)
 
 SELECT (SELECT x FROM s1 LIMIT 1) xx, * FROM s2 WHERE y like '%28%';
  xx | x  |                y                 
@@ -1078,24 +1043,18 @@ SELECT (SELECT x FROM s1 LIMIT 1) xx, * FROM s2 WHERE y like '%28%';
 (3 rows)
 
 EXPLAIN (COSTS OFF) SELECT (SELECT x FROM s1 LIMIT 1) xx, * FROM s2 WHERE y like '%28%';
-                             QUERY PLAN                             
---------------------------------------------------------------------
- Subquery Scan on s2
-   Filter: (s2.y ~~ '%28%'::text)
-   ->  Seq Scan on s2 s2_1
-         Filter: ((x % 2) = 0)
-   SubPlan 1
+                               QUERY PLAN                                
+-------------------------------------------------------------------------
+ Seq Scan on s2
+   Filter: (((x % 2) = 0) AND (y ~~ '%28%'::text))
+   SubPlan 2
      ->  Limit
-           ->  Subquery Scan on s1
-                 ->  Nested Loop Semi Join
-                       Join Filter: (s1_1.a = s2_2.x)
-                       ->  Seq Scan on s1 s1_1
-                       ->  Materialize
-                             ->  Subquery Scan on s2_2
-                                   Filter: (s2_2.y ~~ '%af%'::text)
-                                   ->  Seq Scan on s2 s2_3
-                                         Filter: ((x % 2) = 0)
-(15 rows)
+           ->  Seq Scan on s1
+                 Filter: (hashed SubPlan 1)
+                 SubPlan 1
+                   ->  Seq Scan on s2 s2_1
+                         Filter: (((x % 2) = 0) AND (y ~~ '%af%'::text))
+(9 rows)
 
 SET SESSION AUTHORIZATION regress_rls_alice;
 ALTER POLICY p2 ON s2 USING (x in (select a from s1 where b like '%d2%'));
@@ -1239,28 +1198,19 @@ EXPLAIN (COSTS OFF) EXECUTE p2(2);
 --
 SET SESSION AUTHORIZATION regress_rls_bob;
 EXPLAIN (COSTS OFF) UPDATE t1 SET b = b || b WHERE f_leak(b);
-                QUERY PLAN                 
--------------------------------------------
- Update on t1 t1_3
-   Update on t1 t1_3
-   Update on t2 t1
-   Update on t3 t1
-   ->  Subquery Scan on t1
-         Filter: f_leak(t1.b)
-         ->  LockRows
-               ->  Seq Scan on t1 t1_4
-                     Filter: ((a % 2) = 0)
-   ->  Subquery Scan on t1_1
-         Filter: f_leak(t1_1.b)
-         ->  LockRows
-               ->  Seq Scan on t2
-                     Filter: ((a % 2) = 0)
-   ->  Subquery Scan on t1_2
-         Filter: f_leak(t1_2.b)
-         ->  LockRows
-               ->  Seq Scan on t3
-                     Filter: ((a % 2) = 0)
-(19 rows)
+                  QUERY PLAN                   
+-----------------------------------------------
+ Update on t1
+   Update on t1
+   Update on t2
+   Update on t3
+   ->  Seq Scan on t1
+         Filter: (((a % 2) = 0) AND f_leak(b))
+   ->  Seq Scan on t2
+         Filter: (((a % 2) = 0) AND f_leak(b))
+   ->  Seq Scan on t3
+         Filter: (((a % 2) = 0) AND f_leak(b))
+(10 rows)
 
 UPDATE t1 SET b = b || b WHERE f_leak(b);
 NOTICE:  f_leak => bbb
@@ -1269,15 +1219,12 @@ NOTICE:  f_leak => bcd
 NOTICE:  f_leak => def
 NOTICE:  f_leak => yyy
 EXPLAIN (COSTS OFF) UPDATE only t1 SET b = b || '_updt' WHERE f_leak(b);
-                QUERY PLAN                 
--------------------------------------------
- Update on t1 t1_1
-   ->  Subquery Scan on t1
-         Filter: f_leak(t1.b)
-         ->  LockRows
-               ->  Seq Scan on t1 t1_2
-                     Filter: ((a % 2) = 0)
-(6 rows)
+                  QUERY PLAN                   
+-----------------------------------------------
+ Update on t1
+   ->  Seq Scan on t1
+         Filter: (((a % 2) = 0) AND f_leak(b))
+(3 rows)
 
 UPDATE only t1 SET b = b || '_updt' WHERE f_leak(b);
 NOTICE:  f_leak => bbbbbb
@@ -1325,89 +1272,63 @@ NOTICE:  f_leak => yyyyyy
 -- updates with from clause
 EXPLAIN (COSTS OFF) UPDATE t2 SET b=t2.b FROM t3
 WHERE t2.a = 3 and t3.a = 2 AND f_leak(t2.b) AND f_leak(t3.b);
-                          QUERY PLAN                           
----------------------------------------------------------------
- Update on t2 t2_1
+                           QUERY PLAN                            
+-----------------------------------------------------------------
+ Update on t2
    ->  Nested Loop
-         ->  Subquery Scan on t2
-               Filter: f_leak(t2.b)
-               ->  LockRows
-                     ->  Seq Scan on t2 t2_2
-                           Filter: ((a = 3) AND ((a % 2) = 1))
+         ->  Seq Scan on t2
+               Filter: ((a = 3) AND ((a % 2) = 1) AND f_leak(b))
          ->  Seq Scan on t3
-               Filter: (f_leak(b) AND (a = 2))
-(9 rows)
+               Filter: ((a = 2) AND f_leak(b))
+(6 rows)
 
 UPDATE t2 SET b=t2.b FROM t3
 WHERE t2.a = 3 and t3.a = 2 AND f_leak(t2.b) AND f_leak(t3.b);
 NOTICE:  f_leak => cde
-NOTICE:  f_leak => xxx
-NOTICE:  f_leak => zzz
 NOTICE:  f_leak => yyyyyy
 EXPLAIN (COSTS OFF) UPDATE t1 SET b=t1.b FROM t2
 WHERE t1.a = 3 and t2.a = 3 AND f_leak(t1.b) AND f_leak(t2.b);
-                          QUERY PLAN                           
----------------------------------------------------------------
- Update on t1 t1_3
-   Update on t1 t1_3
-   Update on t2 t1
-   Update on t3 t1
+                           QUERY PLAN                            
+-----------------------------------------------------------------
+ Update on t1
+   Update on t1
+   Update on t2 t2_1
+   Update on t3
    ->  Nested Loop
-         ->  Subquery Scan on t1
-               Filter: f_leak(t1.b)
-               ->  LockRows
-                     ->  Seq Scan on t1 t1_4
-                           Filter: ((a = 3) AND ((a % 2) = 0))
-         ->  Subquery Scan on t2
-               Filter: f_leak(t2.b)
-               ->  Seq Scan on t2 t2_3
-                     Filter: ((a = 3) AND ((a % 2) = 1))
+         ->  Seq Scan on t1
+               Filter: ((a = 3) AND ((a % 2) = 0) AND f_leak(b))
+         ->  Seq Scan on t2
+               Filter: ((a = 3) AND ((a % 2) = 1) AND f_leak(b))
    ->  Nested Loop
-         ->  Subquery Scan on t1_1
-               Filter: f_leak(t1_1.b)
-               ->  LockRows
-                     ->  Seq Scan on t2 t2_4
-                           Filter: ((a = 3) AND ((a % 2) = 0))
-         ->  Subquery Scan on t2_1
-               Filter: f_leak(t2_1.b)
-               ->  Seq Scan on t2 t2_5
-                     Filter: ((a = 3) AND ((a % 2) = 1))
+         ->  Seq Scan on t2 t2_1
+               Filter: ((a = 3) AND ((a % 2) = 0) AND f_leak(b))
+         ->  Seq Scan on t2
+               Filter: ((a = 3) AND ((a % 2) = 1) AND f_leak(b))
    ->  Nested Loop
-         ->  Subquery Scan on t1_2
-               Filter: f_leak(t1_2.b)
-               ->  LockRows
-                     ->  Seq Scan on t3
-                           Filter: ((a = 3) AND ((a % 2) = 0))
-         ->  Subquery Scan on t2_2
-               Filter: f_leak(t2_2.b)
-               ->  Seq Scan on t2 t2_6
-                     Filter: ((a = 3) AND ((a % 2) = 1))
-(34 rows)
+         ->  Seq Scan on t3
+               Filter: ((a = 3) AND ((a % 2) = 0) AND f_leak(b))
+         ->  Seq Scan on t2
+               Filter: ((a = 3) AND ((a % 2) = 1) AND f_leak(b))
+(19 rows)
 
 UPDATE t1 SET b=t1.b FROM t2
 WHERE t1.a = 3 and t2.a = 3 AND f_leak(t1.b) AND f_leak(t2.b);
 EXPLAIN (COSTS OFF) UPDATE t2 SET b=t2.b FROM t1
 WHERE t1.a = 3 and t2.a = 3 AND f_leak(t1.b) AND f_leak(t2.b);
-                             QUERY PLAN                              
----------------------------------------------------------------------
- Update on t2 t2_1
+                              QUERY PLAN                               
+-----------------------------------------------------------------------
+ Update on t2
    ->  Nested Loop
-         ->  Subquery Scan on t2
-               Filter: f_leak(t2.b)
-               ->  LockRows
-                     ->  Seq Scan on t2 t2_2
-                           Filter: ((a = 3) AND ((a % 2) = 1))
-         ->  Subquery Scan on t1
-               Filter: f_leak(t1.b)
-               ->  Result
-                     ->  Append
-                           ->  Seq Scan on t1 t1_1
-                                 Filter: ((a = 3) AND ((a % 2) = 0))
-                           ->  Seq Scan on t2 t2_3
-                                 Filter: ((a = 3) AND ((a % 2) = 0))
-                           ->  Seq Scan on t3
-                                 Filter: ((a = 3) AND ((a % 2) = 0))
-(17 rows)
+         ->  Seq Scan on t2
+               Filter: ((a = 3) AND ((a % 2) = 1) AND f_leak(b))
+         ->  Append
+               ->  Seq Scan on t1
+                     Filter: ((a = 3) AND ((a % 2) = 0) AND f_leak(b))
+               ->  Seq Scan on t2 t2_1
+                     Filter: ((a = 3) AND ((a % 2) = 0) AND f_leak(b))
+               ->  Seq Scan on t3
+                     Filter: ((a = 3) AND ((a % 2) = 0) AND f_leak(b))
+(11 rows)
 
 UPDATE t2 SET b=t2.b FROM t1
 WHERE t1.a = 3 and t2.a = 3 AND f_leak(t1.b) AND f_leak(t2.b);
@@ -1416,21 +1337,16 @@ NOTICE:  f_leak => cde
 EXPLAIN (COSTS OFF) UPDATE t2 t2_1 SET b = t2_2.b FROM t2 t2_2
 WHERE t2_1.a = 3 AND t2_2.a = t2_1.a AND t2_2.b = t2_1.b
 AND f_leak(t2_1.b) AND f_leak(t2_2.b) RETURNING *, t2_1, t2_2;
-                          QUERY PLAN                           
----------------------------------------------------------------
- Update on t2 t2_1_1
+                           QUERY PLAN                            
+-----------------------------------------------------------------
+ Update on t2 t2_1
    ->  Nested Loop
          Join Filter: (t2_1.b = t2_2.b)
-         ->  Subquery Scan on t2_1
-               Filter: f_leak(t2_1.b)
-               ->  LockRows
-                     ->  Seq Scan on t2 t2_1_2
-                           Filter: ((a = 3) AND ((a % 2) = 1))
-         ->  Subquery Scan on t2_2
-               Filter: f_leak(t2_2.b)
-               ->  Seq Scan on t2 t2_2_1
-                     Filter: ((a = 3) AND ((a % 2) = 1))
-(12 rows)
+         ->  Seq Scan on t2 t2_1
+               Filter: ((a = 3) AND ((a % 2) = 1) AND f_leak(b))
+         ->  Seq Scan on t2 t2_2
+               Filter: ((a = 3) AND ((a % 2) = 1) AND f_leak(b))
+(7 rows)
 
 UPDATE t2 t2_1 SET b = t2_2.b FROM t2 t2_2
 WHERE t2_1.a = 3 AND t2_2.a = t2_1.a AND t2_2.b = t2_1.b
@@ -1445,61 +1361,46 @@ NOTICE:  f_leak => cde
 EXPLAIN (COSTS OFF) UPDATE t1 t1_1 SET b = t1_2.b FROM t1 t1_2
 WHERE t1_1.a = 4 AND t1_2.a = t1_1.a AND t1_2.b = t1_1.b
 AND f_leak(t1_1.b) AND f_leak(t1_2.b) RETURNING *, t1_1, t1_2;
-                          QUERY PLAN                           
----------------------------------------------------------------
- Update on t1 t1_1_3
-   Update on t1 t1_1_3
-   Update on t2 t1_1
-   Update on t3 t1_1
+                              QUERY PLAN                               
+-----------------------------------------------------------------------
+ Update on t1 t1_1
+   Update on t1 t1_1
+   Update on t2 t1_1_1
+   Update on t3 t1_1_2
    ->  Nested Loop
          Join Filter: (t1_1.b = t1_2.b)
-         ->  Subquery Scan on t1_1
-               Filter: f_leak(t1_1.b)
-               ->  LockRows
-                     ->  Seq Scan on t1 t1_1_4
-                           Filter: ((a = 4) AND ((a % 2) = 0))
-         ->  Subquery Scan on t1_2
-               Filter: f_leak(t1_2.b)
-               ->  Append
-                     ->  Seq Scan on t1 t1_2_3
-                           Filter: ((a = 4) AND ((a % 2) = 0))
-                     ->  Seq Scan on t2 t1_2_4
-                           Filter: ((a = 4) AND ((a % 2) = 0))
-                     ->  Seq Scan on t3 t1_2_5
-                           Filter: ((a = 4) AND ((a % 2) = 0))
+         ->  Seq Scan on t1 t1_1
+               Filter: ((a = 4) AND ((a % 2) = 0) AND f_leak(b))
+         ->  Append
+               ->  Seq Scan on t1 t1_2
+                     Filter: ((a = 4) AND ((a % 2) = 0) AND f_leak(b))
+               ->  Seq Scan on t2 t1_2_1
+                     Filter: ((a = 4) AND ((a % 2) = 0) AND f_leak(b))
+               ->  Seq Scan on t3 t1_2_2
+                     Filter: ((a = 4) AND ((a % 2) = 0) AND f_leak(b))
    ->  Nested Loop
-         Join Filter: (t1_1_1.b = t1_2_1.b)
-         ->  Subquery Scan on t1_1_1
-               Filter: f_leak(t1_1_1.b)
-               ->  LockRows
-                     ->  Seq Scan on t2 t1_1_5
-                           Filter: ((a = 4) AND ((a % 2) = 0))
-         ->  Subquery Scan on t1_2_1
-               Filter: f_leak(t1_2_1.b)
-               ->  Append
-                     ->  Seq Scan on t1 t1_2_6
-                           Filter: ((a = 4) AND ((a % 2) = 0))
-                     ->  Seq Scan on t2 t1_2_7
-                           Filter: ((a = 4) AND ((a % 2) = 0))
-                     ->  Seq Scan on t3 t1_2_8
-                           Filter: ((a = 4) AND ((a % 2) = 0))
+         Join Filter: (t1_1_1.b = t1_2.b)
+         ->  Seq Scan on t2 t1_1_1
+               Filter: ((a = 4) AND ((a % 2) = 0) AND f_leak(b))
+         ->  Append
+               ->  Seq Scan on t1 t1_2
+                     Filter: ((a = 4) AND ((a % 2) = 0) AND f_leak(b))
+               ->  Seq Scan on t2 t1_2_1
+                     Filter: ((a = 4) AND ((a % 2) = 0) AND f_leak(b))
+               ->  Seq Scan on t3 t1_2_2
+                     Filter: ((a = 4) AND ((a % 2) = 0) AND f_leak(b))
    ->  Nested Loop
-         Join Filter: (t1_1_2.b = t1_2_2.b)
-         ->  Subquery Scan on t1_1_2
-               Filter: f_leak(t1_1_2.b)
-               ->  LockRows
-                     ->  Seq Scan on t3 t1_1_6
-                           Filter: ((a = 4) AND ((a % 2) = 0))
-         ->  Subquery Scan on t1_2_2
-               Filter: f_leak(t1_2_2.b)
-               ->  Append
-                     ->  Seq Scan on t1 t1_2_9
-                           Filter: ((a = 4) AND ((a % 2) = 0))
-                     ->  Seq Scan on t2 t1_2_10
-                           Filter: ((a = 4) AND ((a % 2) = 0))
-                     ->  Seq Scan on t3 t1_2_11
-                           Filter: ((a = 4) AND ((a % 2) = 0))
-(52 rows)
+         Join Filter: (t1_1_2.b = t1_2.b)
+         ->  Seq Scan on t3 t1_1_2
+               Filter: ((a = 4) AND ((a % 2) = 0) AND f_leak(b))
+         ->  Append
+               ->  Seq Scan on t1 t1_2
+                     Filter: ((a = 4) AND ((a % 2) = 0) AND f_leak(b))
+               ->  Seq Scan on t2 t1_2_1
+                     Filter: ((a = 4) AND ((a % 2) = 0) AND f_leak(b))
+               ->  Seq Scan on t3 t1_2_2
+                     Filter: ((a = 4) AND ((a % 2) = 0) AND f_leak(b))
+(37 rows)
 
 UPDATE t1 t1_1 SET b = t1_2.b FROM t1 t1_2
 WHERE t1_1.a = 4 AND t1_2.a = t1_1.a AND t1_2.b = t1_1.b
@@ -1537,39 +1438,27 @@ SELECT * FROM t1 ORDER BY a,b;
 SET SESSION AUTHORIZATION regress_rls_bob;
 SET row_security TO ON;
 EXPLAIN (COSTS OFF) DELETE FROM only t1 WHERE f_leak(b);
-                QUERY PLAN                 
--------------------------------------------
- Delete on t1 t1_1
-   ->  Subquery Scan on t1
-         Filter: f_leak(t1.b)
-         ->  LockRows
-               ->  Seq Scan on t1 t1_2
-                     Filter: ((a % 2) = 0)
-(6 rows)
+                  QUERY PLAN                   
+-----------------------------------------------
+ Delete on t1
+   ->  Seq Scan on t1
+         Filter: (((a % 2) = 0) AND f_leak(b))
+(3 rows)
 
 EXPLAIN (COSTS OFF) DELETE FROM t1 WHERE f_leak(b);
-                QUERY PLAN                 
--------------------------------------------
- Delete on t1 t1_3
-   Delete on t1 t1_3
-   Delete on t2 t1
-   Delete on t3 t1
-   ->  Subquery Scan on t1
-         Filter: f_leak(t1.b)
-         ->  LockRows
-               ->  Seq Scan on t1 t1_4
-                     Filter: ((a % 2) = 0)
-   ->  Subquery Scan on t1_1
-         Filter: f_leak(t1_1.b)
-         ->  LockRows
-               ->  Seq Scan on t2
-                     Filter: ((a % 2) = 0)
-   ->  Subquery Scan on t1_2
-         Filter: f_leak(t1_2.b)
-         ->  LockRows
-               ->  Seq Scan on t3
-                     Filter: ((a % 2) = 0)
-(19 rows)
+                  QUERY PLAN                   
+-----------------------------------------------
+ Delete on t1
+   Delete on t1
+   Delete on t2
+   Delete on t3
+   ->  Seq Scan on t1
+         Filter: (((a % 2) = 0) AND f_leak(b))
+   ->  Seq Scan on t2
+         Filter: (((a % 2) = 0) AND f_leak(b))
+   ->  Seq Scan on t3
+         Filter: (((a % 2) = 0) AND f_leak(b))
+(10 rows)
 
 DELETE FROM only t1 WHERE f_leak(b) RETURNING oid, *, t1;
 NOTICE:  f_leak => bbbbbb_updt
@@ -1634,30 +1523,22 @@ INSERT INTO bv1 VALUES (11, 'xxx'); -- should fail RLS check
 ERROR:  new row violates row-level security policy for table "b1"
 INSERT INTO bv1 VALUES (12, 'xxx'); -- ok
 EXPLAIN (COSTS OFF) UPDATE bv1 SET b = 'yyy' WHERE a = 4 AND f_leak(b);
-                                QUERY PLAN                                 
----------------------------------------------------------------------------
- Update on b1 b1_1
-   ->  Subquery Scan on b1
-         Filter: f_leak(b1.b)
-         ->  Subquery Scan on b1_2
-               ->  LockRows
-                     ->  Seq Scan on b1 b1_3
-                           Filter: ((a > 0) AND (a = 4) AND ((a % 2) = 0))
-(7 rows)
+                              QUERY PLAN                               
+-----------------------------------------------------------------------
+ Update on b1
+   ->  Seq Scan on b1
+         Filter: ((a > 0) AND (a = 4) AND ((a % 2) = 0) AND f_leak(b))
+(3 rows)
 
 UPDATE bv1 SET b = 'yyy' WHERE a = 4 AND f_leak(b);
 NOTICE:  f_leak => a87ff679a2f3e71d9181a67b7542122c
 EXPLAIN (COSTS OFF) DELETE FROM bv1 WHERE a = 6 AND f_leak(b);
-                                QUERY PLAN                                 
----------------------------------------------------------------------------
- Delete on b1 b1_1
-   ->  Subquery Scan on b1
-         Filter: f_leak(b1.b)
-         ->  Subquery Scan on b1_2
-               ->  LockRows
-                     ->  Seq Scan on b1 b1_3
-                           Filter: ((a > 0) AND (a = 6) AND ((a % 2) = 0))
-(7 rows)
+                              QUERY PLAN                               
+-----------------------------------------------------------------------
+ Delete on b1
+   ->  Seq Scan on b1
+         Filter: ((a > 0) AND (a = 6) AND ((a % 2) = 0) AND f_leak(b))
+(3 rows)
 
 DELETE FROM bv1 WHERE a = 6 AND f_leak(b);
 NOTICE:  f_leak => 1679091c5a880faf6fb5e6087eb1b2dc
@@ -1848,53 +1729,45 @@ NOTICE:  f_leak => dad
 (2 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM z1 WHERE f_leak(b);
-          QUERY PLAN           
--------------------------------
- Subquery Scan on z1
-   Filter: f_leak(z1.b)
-   ->  Seq Scan on z1 z1_1
-         Filter: ((a % 2) = 0)
-(4 rows)
+               QUERY PLAN                
+-----------------------------------------
+ Seq Scan on z1
+   Filter: (((a % 2) = 0) AND f_leak(b))
+(2 rows)
 
 PREPARE plancache_test AS SELECT * FROM z1 WHERE f_leak(b);
 EXPLAIN (COSTS OFF) EXECUTE plancache_test;
-          QUERY PLAN           
--------------------------------
- Subquery Scan on z1
-   Filter: f_leak(z1.b)
-   ->  Seq Scan on z1 z1_1
-         Filter: ((a % 2) = 0)
-(4 rows)
+               QUERY PLAN                
+-----------------------------------------
+ Seq Scan on z1
+   Filter: (((a % 2) = 0) AND f_leak(b))
+(2 rows)
 
 PREPARE plancache_test2 AS WITH q AS (SELECT * FROM z1 WHERE f_leak(b)) SELECT * FROM q,z2;
 EXPLAIN (COSTS OFF) EXECUTE plancache_test2;
-              QUERY PLAN               
----------------------------------------
+                   QUERY PLAN                    
+-------------------------------------------------
  Nested Loop
    CTE q
-     ->  Subquery Scan on z1
-           Filter: f_leak(z1.b)
-           ->  Seq Scan on z1 z1_1
-                 Filter: ((a % 2) = 0)
+     ->  Seq Scan on z1
+           Filter: (((a % 2) = 0) AND f_leak(b))
    ->  CTE Scan on q
    ->  Materialize
          ->  Seq Scan on z2
-(9 rows)
+(7 rows)
 
 PREPARE plancache_test3 AS WITH q AS (SELECT * FROM z2) SELECT * FROM q,z1 WHERE f_leak(z1.b);
 EXPLAIN (COSTS OFF) EXECUTE plancache_test3;
-                QUERY PLAN                 
--------------------------------------------
+                     QUERY PLAN                      
+-----------------------------------------------------
  Nested Loop
    CTE q
      ->  Seq Scan on z2
    ->  CTE Scan on q
    ->  Materialize
-         ->  Subquery Scan on z1
-               Filter: f_leak(z1.b)
-               ->  Seq Scan on z1 z1_1
-                     Filter: ((a % 2) = 0)
-(9 rows)
+         ->  Seq Scan on z1
+               Filter: (((a % 2) = 0) AND f_leak(b))
+(7 rows)
 
 SET ROLE regress_rls_group1;
 SELECT * FROM z1 WHERE f_leak(b);
@@ -1907,50 +1780,42 @@ NOTICE:  f_leak => dad
 (2 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM z1 WHERE f_leak(b);
-          QUERY PLAN           
--------------------------------
- Subquery Scan on z1
-   Filter: f_leak(z1.b)
-   ->  Seq Scan on z1 z1_1
-         Filter: ((a % 2) = 0)
-(4 rows)
+               QUERY PLAN                
+-----------------------------------------
+ Seq Scan on z1
+   Filter: (((a % 2) = 0) AND f_leak(b))
+(2 rows)
 
 EXPLAIN (COSTS OFF) EXECUTE plancache_test;
-          QUERY PLAN           
--------------------------------
- Subquery Scan on z1
-   Filter: f_leak(z1.b)
-   ->  Seq Scan on z1 z1_1
-         Filter: ((a % 2) = 0)
-(4 rows)
+               QUERY PLAN                
+-----------------------------------------
+ Seq Scan on z1
+   Filter: (((a % 2) = 0) AND f_leak(b))
+(2 rows)
 
 EXPLAIN (COSTS OFF) EXECUTE plancache_test2;
-              QUERY PLAN               
----------------------------------------
+                   QUERY PLAN                    
+-------------------------------------------------
  Nested Loop
    CTE q
-     ->  Subquery Scan on z1
-           Filter: f_leak(z1.b)
-           ->  Seq Scan on z1 z1_1
-                 Filter: ((a % 2) = 0)
+     ->  Seq Scan on z1
+           Filter: (((a % 2) = 0) AND f_leak(b))
    ->  CTE Scan on q
    ->  Materialize
          ->  Seq Scan on z2
-(9 rows)
+(7 rows)
 
 EXPLAIN (COSTS OFF) EXECUTE plancache_test3;
-                QUERY PLAN                 
--------------------------------------------
+                     QUERY PLAN                      
+-----------------------------------------------------
  Nested Loop
    CTE q
      ->  Seq Scan on z2
    ->  CTE Scan on q
    ->  Materialize
-         ->  Subquery Scan on z1
-               Filter: f_leak(z1.b)
-               ->  Seq Scan on z1 z1_1
-                     Filter: ((a % 2) = 0)
-(9 rows)
+         ->  Seq Scan on z1
+               Filter: (((a % 2) = 0) AND f_leak(b))
+(7 rows)
 
 SET SESSION AUTHORIZATION regress_rls_carol;
 SELECT * FROM z1 WHERE f_leak(b);
@@ -1963,50 +1828,42 @@ NOTICE:  f_leak => ccc
 (2 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM z1 WHERE f_leak(b);
-          QUERY PLAN           
--------------------------------
- Subquery Scan on z1
-   Filter: f_leak(z1.b)
-   ->  Seq Scan on z1 z1_1
-         Filter: ((a % 2) = 1)
-(4 rows)
+               QUERY PLAN                
+-----------------------------------------
+ Seq Scan on z1
+   Filter: (((a % 2) = 1) AND f_leak(b))
+(2 rows)
 
 EXPLAIN (COSTS OFF) EXECUTE plancache_test;
-          QUERY PLAN           
--------------------------------
- Subquery Scan on z1
-   Filter: f_leak(z1.b)
-   ->  Seq Scan on z1 z1_1
-         Filter: ((a % 2) = 1)
-(4 rows)
+               QUERY PLAN                
+-----------------------------------------
+ Seq Scan on z1
+   Filter: (((a % 2) = 1) AND f_leak(b))
+(2 rows)
 
 EXPLAIN (COSTS OFF) EXECUTE plancache_test2;
-              QUERY PLAN               
----------------------------------------
+                   QUERY PLAN                    
+-------------------------------------------------
  Nested Loop
    CTE q
-     ->  Subquery Scan on z1
-           Filter: f_leak(z1.b)
-           ->  Seq Scan on z1 z1_1
-                 Filter: ((a % 2) = 1)
+     ->  Seq Scan on z1
+           Filter: (((a % 2) = 1) AND f_leak(b))
    ->  CTE Scan on q
    ->  Materialize
          ->  Seq Scan on z2
-(9 rows)
+(7 rows)
 
 EXPLAIN (COSTS OFF) EXECUTE plancache_test3;
-                QUERY PLAN                 
--------------------------------------------
+                     QUERY PLAN                      
+-----------------------------------------------------
  Nested Loop
    CTE q
      ->  Seq Scan on z2
    ->  CTE Scan on q
    ->  Materialize
-         ->  Subquery Scan on z1
-               Filter: f_leak(z1.b)
-               ->  Seq Scan on z1 z1_1
-                     Filter: ((a % 2) = 1)
-(9 rows)
+         ->  Seq Scan on z1
+               Filter: (((a % 2) = 1) AND f_leak(b))
+(7 rows)
 
 SET ROLE regress_rls_group2;
 SELECT * FROM z1 WHERE f_leak(b);
@@ -2019,50 +1876,42 @@ NOTICE:  f_leak => ccc
 (2 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM z1 WHERE f_leak(b);
-          QUERY PLAN           
--------------------------------
- Subquery Scan on z1
-   Filter: f_leak(z1.b)
-   ->  Seq Scan on z1 z1_1
-         Filter: ((a % 2) = 1)
-(4 rows)
+               QUERY PLAN                
+-----------------------------------------
+ Seq Scan on z1
+   Filter: (((a % 2) = 1) AND f_leak(b))
+(2 rows)
 
 EXPLAIN (COSTS OFF) EXECUTE plancache_test;
-          QUERY PLAN           
--------------------------------
- Subquery Scan on z1
-   Filter: f_leak(z1.b)
-   ->  Seq Scan on z1 z1_1
-         Filter: ((a % 2) = 1)
-(4 rows)
+               QUERY PLAN                
+-----------------------------------------
+ Seq Scan on z1
+   Filter: (((a % 2) = 1) AND f_leak(b))
+(2 rows)
 
 EXPLAIN (COSTS OFF) EXECUTE plancache_test2;
-              QUERY PLAN               
----------------------------------------
+                   QUERY PLAN                    
+-------------------------------------------------
  Nested Loop
    CTE q
-     ->  Subquery Scan on z1
-           Filter: f_leak(z1.b)
-           ->  Seq Scan on z1 z1_1
-                 Filter: ((a % 2) = 1)
+     ->  Seq Scan on z1
+           Filter: (((a % 2) = 1) AND f_leak(b))
    ->  CTE Scan on q
    ->  Materialize
          ->  Seq Scan on z2
-(9 rows)
+(7 rows)
 
 EXPLAIN (COSTS OFF) EXECUTE plancache_test3;
-                QUERY PLAN                 
--------------------------------------------
+                     QUERY PLAN                      
+-----------------------------------------------------
  Nested Loop
    CTE q
      ->  Seq Scan on z2
    ->  CTE Scan on q
    ->  Materialize
-         ->  Subquery Scan on z1
-               Filter: f_leak(z1.b)
-               ->  Seq Scan on z1 z1_1
-                     Filter: ((a % 2) = 1)
-(9 rows)
+         ->  Seq Scan on z1
+               Filter: (((a % 2) = 1) AND f_leak(b))
+(7 rows)
 
 --
 -- Views should follow policy for view owner.
@@ -2133,13 +1982,11 @@ NOTICE:  f_leak => dad
 (2 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM rls_view;
-          QUERY PLAN           
--------------------------------
- Subquery Scan on z1
-   Filter: f_leak(z1.b)
-   ->  Seq Scan on z1 z1_1
-         Filter: ((a % 2) = 0)
-(4 rows)
+               QUERY PLAN                
+-----------------------------------------
+ Seq Scan on z1
+   Filter: (((a % 2) = 0) AND f_leak(b))
+(2 rows)
 
 -- Query as role that is not owner of table but is owner of view.
 -- Should return records based on view owner policies.
@@ -2154,13 +2001,11 @@ NOTICE:  f_leak => dad
 (2 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM rls_view;
-          QUERY PLAN           
--------------------------------
- Subquery Scan on z1
-   Filter: f_leak(z1.b)
-   ->  Seq Scan on z1 z1_1
-         Filter: ((a % 2) = 0)
-(4 rows)
+               QUERY PLAN                
+-----------------------------------------
+ Seq Scan on z1
+   Filter: (((a % 2) = 0) AND f_leak(b))
+(2 rows)
 
 -- Query as role that is not the owner of the table or view without permissions.
 SET SESSION AUTHORIZATION regress_rls_carol;
@@ -2181,13 +2026,11 @@ NOTICE:  f_leak => dad
 (2 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM rls_view;
-          QUERY PLAN           
--------------------------------
- Subquery Scan on z1
-   Filter: f_leak(z1.b)
-   ->  Seq Scan on z1 z1_1
-         Filter: ((a % 2) = 0)
-(4 rows)
+               QUERY PLAN                
+-----------------------------------------
+ Seq Scan on z1
+   Filter: (((a % 2) = 0) AND f_leak(b))
+(2 rows)
 
 SET SESSION AUTHORIZATION regress_rls_bob;
 DROP VIEW rls_view;
@@ -2333,13 +2176,11 @@ SET SESSION AUTHORIZATION regress_rls_bob;
 CREATE VIEW rls_sbv WITH (security_barrier) AS
     SELECT * FROM y1 WHERE f_leak(b);
 EXPLAIN (COSTS OFF) SELECT * FROM rls_sbv WHERE (a = 1);
-                        QUERY PLAN                        
-----------------------------------------------------------
- Subquery Scan on y1
-   Filter: f_leak(y1.b)
-   ->  Seq Scan on y1 y1_1
-         Filter: ((a = 1) AND ((a > 2) OR ((a % 2) = 0)))
-(4 rows)
+                            QUERY PLAN                            
+------------------------------------------------------------------
+ Seq Scan on y1
+   Filter: ((a = 1) AND ((a > 2) OR ((a % 2) = 0)) AND f_leak(b))
+(2 rows)
 
 DROP VIEW rls_sbv;
 --
@@ -2384,13 +2225,11 @@ NOTICE:  f_leak => 98f13708210194c475687be6106a3b84
 (14 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM y2 WHERE f_leak(b);
-                            QUERY PLAN                             
--------------------------------------------------------------------
- Subquery Scan on y2
-   Filter: f_leak(y2.b)
-   ->  Seq Scan on y2 y2_1
-         Filter: (((a % 4) = 0) OR ((a % 3) = 0) OR ((a % 2) = 0))
-(4 rows)
+                                 QUERY PLAN                                  
+-----------------------------------------------------------------------------
+ Seq Scan on y2
+   Filter: ((((a % 4) = 0) OR ((a % 3) = 0) OR ((a % 2) = 0)) AND f_leak(b))
+(2 rows)
 
 --
 -- Qual push-down of leaky functions, when not referring to table
@@ -2485,17 +2324,15 @@ NOTICE:  f_leak => 98f13708210194c475687be6106a3b84
 (0 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM y2 JOIN test_qual_pushdown ON (b = abc) WHERE f_leak(b);
-                                  QUERY PLAN                                   
--------------------------------------------------------------------------------
+                                       QUERY PLAN                                        
+-----------------------------------------------------------------------------------------
  Hash Join
    Hash Cond: (test_qual_pushdown.abc = y2.b)
    ->  Seq Scan on test_qual_pushdown
    ->  Hash
-         ->  Subquery Scan on y2
-               Filter: f_leak(y2.b)
-               ->  Seq Scan on y2 y2_1
-                     Filter: (((a % 4) = 0) OR ((a % 3) = 0) OR ((a % 2) = 0))
-(8 rows)
+         ->  Seq Scan on y2
+               Filter: ((((a % 4) = 0) OR ((a % 3) = 0) OR ((a % 2) = 0)) AND f_leak(b))
+(6 rows)
 
 DROP TABLE test_qual_pushdown;
 --
@@ -2581,15 +2418,13 @@ NOTICE:  f_leak => 98f13708210194c475687be6106a3b84
 (11 rows)
 
 EXPLAIN (COSTS OFF) WITH cte1 AS (SELECT * FROM t1 WHERE f_leak(b)) SELECT * FROM cte1;
-              QUERY PLAN               
----------------------------------------
+                   QUERY PLAN                    
+-------------------------------------------------
  CTE Scan on cte1
    CTE cte1
-     ->  Subquery Scan on t1
-           Filter: f_leak(t1.b)
-           ->  Seq Scan on t1 t1_1
-                 Filter: ((a % 2) = 0)
-(6 rows)
+     ->  Seq Scan on t1
+           Filter: (((a % 2) = 0) AND f_leak(b))
+(4 rows)
 
 WITH cte1 AS (UPDATE t1 SET a = a + 1 RETURNING *) SELECT * FROM cte1; --fail
 ERROR:  new row violates row-level security policy for table "t1"
@@ -3100,17 +2935,13 @@ SELECT * FROM current_check;
 
 -- Plan should be a subquery TID scan
 EXPLAIN (COSTS OFF) UPDATE current_check SET payload = payload WHERE CURRENT OF current_check_cursor;
-                             QUERY PLAN                              
----------------------------------------------------------------------
- Update on current_check current_check_1
-   ->  Subquery Scan on current_check
-         ->  Subquery Scan on current_check_2
-               Filter: ((current_check_2.currentid % 2) = 0)
-               ->  LockRows
-                     ->  Tid Scan on current_check current_check_3
-                           TID Cond: CURRENT OF current_check_cursor
-                           Filter: (currentid = 4)
-(8 rows)
+                         QUERY PLAN                          
+-------------------------------------------------------------
+ Update on current_check
+   ->  Tid Scan on current_check
+         TID Cond: CURRENT OF current_check_cursor
+         Filter: ((currentid = 4) AND ((currentid % 2) = 0))
+(4 rows)
 
 -- Similarly can only delete row 4
 FETCH ABSOLUTE 1 FROM current_check_cursor;

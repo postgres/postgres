@@ -19,20 +19,20 @@
 
 /* Convenience macro for the common case of a valid-everywhere qual */
 #define make_simple_restrictinfo(clause)  \
-	make_restrictinfo(clause, true, false, false, NULL, NULL, NULL)
+	make_restrictinfo(clause, true, false, false, 0, NULL, NULL, NULL)
 
 extern RestrictInfo *make_restrictinfo(Expr *clause,
 				  bool is_pushed_down,
 				  bool outerjoin_delayed,
 				  bool pseudoconstant,
+				  Index security_level,
 				  Relids required_relids,
 				  Relids outer_relids,
 				  Relids nullable_relids);
-extern List *make_restrictinfos_from_actual_clauses(PlannerInfo *root,
-									   List *clause_list);
 extern bool restriction_is_or_clause(RestrictInfo *restrictinfo);
+extern bool restriction_is_securely_promotable(RestrictInfo *restrictinfo,
+								   RelOptInfo *rel);
 extern List *get_actual_clauses(List *restrictinfo_list);
-extern List *get_all_actual_clauses(List *restrictinfo_list);
 extern List *extract_actual_clauses(List *restrictinfo_list,
 					   bool pseudoconstant);
 extern void extract_actual_join_clauses(List *restrictinfo_list,

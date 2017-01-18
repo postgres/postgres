@@ -2059,6 +2059,7 @@ _outPlannerInfo(StringInfo str, const PlannerInfo *node)
 	WRITE_FLOAT_FIELD(total_table_pages, "%.0f");
 	WRITE_FLOAT_FIELD(tuple_fraction, "%.4f");
 	WRITE_FLOAT_FIELD(limit_tuples, "%.0f");
+	WRITE_UINT_FIELD(qual_security_level);
 	WRITE_BOOL_FIELD(hasInheritedTarget);
 	WRITE_BOOL_FIELD(hasJoinRTEs);
 	WRITE_BOOL_FIELD(hasLateralRTEs);
@@ -2112,6 +2113,7 @@ _outRelOptInfo(StringInfo str, const RelOptInfo *node)
 	WRITE_BOOL_FIELD(useridiscurrent);
 	/* we don't try to print fdwroutine or fdw_private */
 	WRITE_NODE_FIELD(baserestrictinfo);
+	WRITE_UINT_FIELD(baserestrict_min_security);
 	WRITE_NODE_FIELD(joininfo);
 	WRITE_BOOL_FIELD(has_eclass_joins);
 }
@@ -2195,6 +2197,8 @@ _outEquivalenceClass(StringInfo str, const EquivalenceClass *node)
 	WRITE_BOOL_FIELD(ec_below_outer_join);
 	WRITE_BOOL_FIELD(ec_broken);
 	WRITE_UINT_FIELD(ec_sortref);
+	WRITE_UINT_FIELD(ec_min_security);
+	WRITE_UINT_FIELD(ec_max_security);
 }
 
 static void
@@ -2261,6 +2265,8 @@ _outRestrictInfo(StringInfo str, const RestrictInfo *node)
 	WRITE_BOOL_FIELD(outerjoin_delayed);
 	WRITE_BOOL_FIELD(can_join);
 	WRITE_BOOL_FIELD(pseudoconstant);
+	WRITE_BOOL_FIELD(leakproof);
+	WRITE_UINT_FIELD(security_level);
 	WRITE_BITMAPSET_FIELD(clause_relids);
 	WRITE_BITMAPSET_FIELD(required_relids);
 	WRITE_BITMAPSET_FIELD(outer_relids);

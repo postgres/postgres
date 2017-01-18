@@ -805,6 +805,7 @@ _equalRestrictInfo(const RestrictInfo *a, const RestrictInfo *b)
 	COMPARE_NODE_FIELD(clause);
 	COMPARE_SCALAR_FIELD(is_pushed_down);
 	COMPARE_SCALAR_FIELD(outerjoin_delayed);
+	COMPARE_SCALAR_FIELD(security_level);
 	COMPARE_BITMAPSET_FIELD(required_relids);
 	COMPARE_BITMAPSET_FIELD(outer_relids);
 	COMPARE_BITMAPSET_FIELD(nullable_relids);

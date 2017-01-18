@@ -286,6 +286,9 @@ typedef struct PlannerInfo
 	double		tuple_fraction; /* tuple_fraction passed to query_planner */
 	double		limit_tuples;	/* limit_tuples passed to query_planner */
 
+	Index		qual_security_level;	/* minimum security_level for quals */
+	/* Note: qual_security_level is zero if there are no securityQuals */
+
 	bool		hasInheritedTarget;		/* true if parse->resultRelation is an
 										 * inheritance child rel */
 	bool		hasJoinRTEs;	/* true if any RTEs are RTE_JOIN kind */
@@ -443,6 +446,8 @@ typedef struct PlannerInfo
  *					participates (only used for base rels)
  *		baserestrictcost - Estimated cost of evaluating the baserestrictinfo
  *					clauses at a single tuple (only used for base rels)
+ *		baserestrict_min_security - Smallest security_level found among
+ *					clauses in baserestrictinfo
  *		joininfo  - List of RestrictInfo nodes, containing info about each
  *					join clause in which this relation participates (but
  *					note this excludes clauses that might be derivable from
@@ -539,6 +544,8 @@ typedef struct RelOptInfo
 	List	   *baserestrictinfo;		/* RestrictInfo structures (if base
 										 * rel) */
 	QualCost	baserestrictcost;		/* cost of evaluating the above */
+	Index		baserestrict_min_security;		/* min security_level found in
+												 * baserestrictinfo */
 	List	   *joininfo;		/* RestrictInfo structures for join clauses
 								 * involving this rel */
 	bool		has_eclass_joins;		/* T means joininfo is incomplete */
@@ -713,6 +720,8 @@ typedef struct EquivalenceClass
 	bool		ec_below_outer_join;	/* equivalence applies below an OJ */
 	bool		ec_broken;		/* failed to generate needed clauses? */
 	Index		ec_sortref;		/* originating sortclause label, or 0 */
+	Index		ec_min_security;	/* minimum security_level in ec_sources */
+	Index		ec_max_security;	/* maximum security_level in ec_sources */
 	struct EquivalenceClass *ec_merged; /* set if merged into another EC */
 } EquivalenceClass;
 
@@ -1560,6 +1569,15 @@ typedef struct LimitPath
  * outer join(s). A clause that is not outerjoin_delayed can be enforced
  * anywhere it is computable.
  *
+ * To handle security-barrier conditions efficiently, we mark RestrictInfo
+ * nodes with a security_level field, in which higher values identify clauses
+ * coming from less-trusted sources.  The exact semantics are that a clause
+ * cannot be evaluated before another clause with a lower security_level value
+ * unless the first clause is leakproof.  As with outer-join clauses, this
+ * creates a reason for clauses to sometimes need to be evaluated higher in
+ * the join tree than their contents would suggest; and even at a single plan
+ * node, this rule constrains the order of application of clauses.
+ *
  * In general, the referenced clause might be arbitrarily complex.  The
  * kinds of clauses we can handle as indexscan quals, mergejoin clauses,
  * or hashjoin clauses are limited (e.g., no volatile functions).  The code
@@ -1613,6 +1631,10 @@ typedef struct RestrictInfo
 	bool		can_join;		/* see comment above */
 
 	bool		pseudoconstant; /* see comment above */
+
+	bool		leakproof;		/* TRUE if known to contain no leaked Vars */
+
+	Index		security_level; /* see comment above */
 
 	/* The set of relids (varnos) actually referenced in the clause: */
 	Relids		clause_relids;

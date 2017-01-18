@@ -36,11 +36,6 @@ extern Node *negate_clause(Node *node);
 extern Expr *canonicalize_qual(Expr *qual);
 
 /*
- * prototypes for prepsecurity.c
- */
-extern void expand_security_quals(PlannerInfo *root, List *tlist);
-
-/*
  * prototypes for preptlist.c
  */
 extern List *preprocess_targetlist(PlannerInfo *root, List *tlist);

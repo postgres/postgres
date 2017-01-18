@@ -896,9 +896,11 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 		RangeTblEntry *childRTE;
 		RelOptInfo *childrel;
 		List	   *childquals;
-		Node	   *childqual;
+		Index		cq_min_security;
+		bool		have_const_false_cq;
 		ListCell   *parentvars;
 		ListCell   *childvars;
+		ListCell   *lc;
 
 		/* append_rel_list contains all append rels; ignore others */
 		if (appinfo->parent_relid != parentRTindex)
@@ -921,34 +923,113 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 		 * constraint exclusion; so do that first and then check to see if we
 		 * can disregard this child.
 		 *
-		 * As of 8.4, the child rel's targetlist might contain non-Var
-		 * expressions, which means that substitution into the quals could
-		 * produce opportunities for const-simplification, and perhaps even
-		 * pseudoconstant quals.  To deal with this, we strip the RestrictInfo
-		 * nodes, do the substitution, do const-simplification, and then
-		 * reconstitute the RestrictInfo layer.
+		 * The child rel's targetlist might contain non-Var expressions, which
+		 * means that substitution into the quals could produce opportunities
+		 * for const-simplification, and perhaps even pseudoconstant quals.
+		 * Therefore, transform each RestrictInfo separately to see if it
+		 * reduces to a constant or pseudoconstant.  (We must process them
+		 * separately to keep track of the security level of each qual.)
 		 */
-		childquals = get_all_actual_clauses(rel->baserestrictinfo);
-		childquals = (List *) adjust_appendrel_attrs(root,
-													 (Node *) childquals,
-													 appinfo);
-		childqual = eval_const_expressions(root, (Node *)
-										   make_ands_explicit(childquals));
-		if (childqual && IsA(childqual, Const) &&
-			(((Const *) childqual)->constisnull ||
-			 !DatumGetBool(((Const *) childqual)->constvalue)))
+		childquals = NIL;
+		cq_min_security = UINT_MAX;
+		have_const_false_cq = false;
+		foreach(lc, rel->baserestrictinfo)
+		{
+			RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
+			Node	   *childqual;
+			bool		pseudoconstant;
+
+			Assert(IsA(rinfo, RestrictInfo));
+			childqual = adjust_appendrel_attrs(root,
+											   (Node *) rinfo->clause,
+											   appinfo);
+			childqual = eval_const_expressions(root, childqual);
+			/* check for flat-out constant */
+			if (childqual && IsA(childqual, Const))
+			{
+				if (((Const *) childqual)->constisnull ||
+					!DatumGetBool(((Const *) childqual)->constvalue))
+				{
+					/* Restriction reduces to constant FALSE or NULL */
+					have_const_false_cq = true;
+					break;
+				}
+				/* Restriction reduces to constant TRUE, so drop it */
+				continue;
+			}
+			/* check for pseudoconstant (no Vars or volatile functions) */
+			pseudoconstant =
+				!contain_vars_of_level(childqual, 0) &&
+				!contain_volatile_functions(childqual);
+			if (pseudoconstant)
+			{
+				/* tell createplan.c to check for gating quals */
+				root->hasPseudoConstantQuals = true;
+			}
+			/* reconstitute RestrictInfo with appropriate properties */
+			childquals = lappend(childquals,
+								 make_restrictinfo((Expr *) childqual,
+												   rinfo->is_pushed_down,
+												   rinfo->outerjoin_delayed,
+												   pseudoconstant,
+												   rinfo->security_level,
+												   NULL, NULL, NULL));
+			/* track minimum security level among child quals */
+			cq_min_security = Min(cq_min_security, rinfo->security_level);
+		}
+
+		/*
+		 * In addition to the quals inherited from the parent, we might have
+		 * securityQuals associated with this particular child node.
+		 * (Currently this can only happen in appendrels originating from
+		 * UNION ALL; inheritance child tables don't have their own
+		 * securityQuals, see expand_inherited_rtentry().)	Pull any such
+		 * securityQuals up into the baserestrictinfo for the child.  This is
+		 * similar to process_security_barrier_quals() for the parent rel,
+		 * except that we can't make any general deductions from such quals,
+		 * since they don't hold for the whole appendrel.
+		 */
+		if (childRTE->securityQuals)
+		{
+			Index		security_level = 0;
+
+			foreach(lc, childRTE->securityQuals)
+			{
+				List	   *qualset = (List *) lfirst(lc);
+				ListCell   *lc2;
+
+				foreach(lc2, qualset)
+				{
+					Expr	   *qual = (Expr *) lfirst(lc2);
+
+					/* not likely that we'd see constants here, so no check */
+					childquals = lappend(childquals,
+										 make_restrictinfo(qual,
+														   true, false, false,
+														   security_level,
+														   NULL, NULL, NULL));
+					cq_min_security = Min(cq_min_security, security_level);
+				}
+				security_level++;
+			}
+			Assert(security_level <= root->qual_security_level);
+		}
+
+		/*
+		 * OK, we've got all the baserestrictinfo quals for this child.
+		 */
+		childrel->baserestrictinfo = childquals;
+		childrel->baserestrict_min_security = cq_min_security;
+
+		if (have_const_false_cq)
 		{
 			/*
-			 * Restriction reduces to constant FALSE or constant NULL after
+			 * Some restriction clause reduced to constant FALSE or NULL after
 			 * substitution, so this child need not be scanned.
 			 */
 			set_dummy_rel_pathlist(childrel);
 			continue;
 		}
-		childquals = make_ands_implicit((Expr *) childqual);
-		childquals = make_restrictinfos_from_actual_clauses(root,
-															childquals);
-		childrel->baserestrictinfo = childquals;
 
 		if (relation_excluded_by_constraints(root, childrel, childRTE))
 		{
@@ -1712,6 +1793,7 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 			}
 		}
 		rel->baserestrictinfo = upperrestrictlist;
+		/* We don't bother recomputing baserestrict_min_security */
 	}
 
 	pfree(safetyInfo.unsafeColumns);
@@ -2640,46 +2722,6 @@ subquery_push_qual(Query *subquery, RangeTblEntry *rte, Index rti, Node *qual)
 		recurse_push_qual(subquery->setOperations, subquery,
 						  rte, rti, qual);
 	}
-	else if (IsA(qual, CurrentOfExpr))
-	{
-		/*
-		 * This is possible when a WHERE CURRENT OF expression is applied to a
-		 * table with row-level security.  In that case, the subquery should
-		 * contain precisely one rtable entry for the table, and we can safely
-		 * push the expression down into the subquery.  This will cause a TID
-		 * scan subquery plan to be generated allowing the target relation to
-		 * be updated.
-		 *
-		 * Someday we might also be able to use a WHERE CURRENT OF expression
-		 * on a view, but currently the rewriter prevents that, so we should
-		 * never see any other case here, but generate sane error messages in
-		 * case it does somehow happen.
-		 */
-		if (subquery->rtable == NIL)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("WHERE CURRENT OF is not supported on a view with no underlying relation")));
-
-		if (list_length(subquery->rtable) > 1)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("WHERE CURRENT OF is not supported on a view with more than one underlying relation")));
-
-		if (subquery->hasAggs || subquery->groupClause || subquery->groupingSets || subquery->havingQual)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("WHERE CURRENT OF is not supported on a view with grouping or aggregation")));
-
-		/*
-		 * Adjust the CURRENT OF expression to refer to the underlying table
-		 * in the subquery, and attach it to the subquery's WHERE clause.
-		 */
-		qual = copyObject(qual);
-		((CurrentOfExpr *) qual)->cvarno = 1;
-
-		subquery->jointree->quals =
-			make_and_qual(subquery->jointree->quals, qual);
-	}
 	else
 	{
 		/*
@@ -2708,7 +2750,7 @@ subquery_push_qual(Query *subquery, RangeTblEntry *rte, Index rti, Node *qual)
 				make_and_qual(subquery->jointree->quals, qual);
 
 		/*
-		 * We need not change the subquery's hasAggs or hasSublinks flags,
+		 * We need not change the subquery's hasAggs or hasSubLinks flags,
 		 * since we can't be pushing down any aggregates that weren't there
 		 * before, and we don't push down subselects at all.
 		 */

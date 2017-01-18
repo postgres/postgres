@@ -1001,8 +1001,8 @@ SELECT * FROM v1 WHERE a=3; -- should not see anything
 SELECT * FROM v1 WHERE a=8;
 
 EXPLAIN (VERBOSE, COSTS OFF)
-UPDATE v1 SET a=100 WHERE snoop(a) AND leakproof(a) AND a = 3;
-UPDATE v1 SET a=100 WHERE snoop(a) AND leakproof(a) AND a = 3;
+UPDATE v1 SET a=100 WHERE snoop(a) AND leakproof(a) AND a < 7 AND a != 6;
+UPDATE v1 SET a=100 WHERE snoop(a) AND leakproof(a) AND a < 7 AND a != 6;
 
 SELECT * FROM v1 WHERE a=100; -- Nothing should have been changed to 100
 SELECT * FROM t1 WHERE a=100; -- Nothing should have been changed to 100

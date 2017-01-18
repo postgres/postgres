@@ -56,7 +56,6 @@ typedef struct
 {
 	PlannerInfo *root;
 	AppendRelInfo *appinfo;
-	int			sublevels_up;
 } adjust_appendrel_attrs_context;
 
 static Path *recurse_set_operations(Node *setOp, PlannerInfo *root,
@@ -1467,12 +1466,19 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 		 * We copy most fields of the parent's RTE, but replace relation OID
 		 * and relkind, and set inh = false.  Also, set requiredPerms to zero
 		 * since all required permissions checks are done on the original RTE.
+		 * Likewise, set the child's securityQuals to empty, because we only
+		 * want to apply the parent's RLS conditions regardless of what RLS
+		 * properties individual children may have.  (This is an intentional
+		 * choice to make inherited RLS work like regular permissions checks.)
+		 * The parent securityQuals will be propagated to children along with
+		 * other base restriction clauses, so we don't need to do it here.
 		 */
 		childrte = copyObject(rte);
 		childrte->relid = childOID;
 		childrte->relkind = newrelation->rd_rel->relkind;
 		childrte->inh = false;
 		childrte->requiredPerms = 0;
+		childrte->securityQuals = NIL;
 		parse->rtable = lappend(parse->rtable, childrte);
 		childRTindex = list_length(parse->rtable);
 
@@ -1541,7 +1547,8 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 	/*
 	 * If all the children were temp tables, pretend it's a non-inheritance
 	 * situation.  The duplicate RTE we added for the parent table is
-	 * harmless, so we don't bother to get rid of it.
+	 * harmless, so we don't bother to get rid of it; ditto for the useless
+	 * PlanRowMark node.
 	 */
 	if (list_length(appinfos) < 2)
 	{
@@ -1717,9 +1724,8 @@ translate_col_privs(const Bitmapset *parent_privs,
  *	  child rel instead.  We also update rtindexes appearing outside Vars,
  *	  such as resultRelation and jointree relids.
  *
- * Note: this is applied after conversion of sublinks to subplans in the
- * query jointree, but there may still be sublinks in the security barrier
- * quals of RTEs, so we do need to cope with recursion into sub-queries.
+ * Note: this is only applied after conversion of sublinks to subplans,
+ * so we don't need to cope with recursion into sub-queries.
  *
  * Note: this is not hugely different from what pullup_replace_vars() does;
  * maybe we should try to fold the two routines together.
@@ -1732,12 +1738,9 @@ adjust_appendrel_attrs(PlannerInfo *root, Node *node, AppendRelInfo *appinfo)
 
 	context.root = root;
 	context.appinfo = appinfo;
-	context.sublevels_up = 0;
 
 	/*
-	 * Must be prepared to start with a Query or a bare expression tree; if
-	 * it's a Query, go straight to query_tree_walker to make sure that
-	 * sublevels_up doesn't get incremented prematurely.
+	 * Must be prepared to start with a Query or a bare expression tree.
 	 */
 	if (node && IsA(node, Query))
 	{
@@ -1776,7 +1779,7 @@ adjust_appendrel_attrs_mutator(Node *node,
 	{
 		Var		   *var = (Var *) copyObject(node);
 
-		if (var->varlevelsup == context->sublevels_up &&
+		if (var->varlevelsup == 0 &&
 			var->varno == appinfo->parent_relid)
 		{
 			var->varno = appinfo->child_relid;
@@ -1793,7 +1796,6 @@ adjust_appendrel_attrs_mutator(Node *node,
 				if (newnode == NULL)
 					elog(ERROR, "attribute %d of relation \"%s\" does not exist",
 						 var->varattno, get_rel_name(appinfo->parent_reloid));
-				((Var *) newnode)->varlevelsup += context->sublevels_up;
 				return newnode;
 			}
 			else if (var->varattno == 0)
@@ -1836,17 +1838,10 @@ adjust_appendrel_attrs_mutator(Node *node,
 					RowExpr    *rowexpr;
 					List	   *fields;
 					RangeTblEntry *rte;
-					ListCell   *lc;
 
 					rte = rt_fetch(appinfo->parent_relid,
 								   context->root->parse->rtable);
 					fields = (List *) copyObject(appinfo->translated_vars);
-					foreach(lc, fields)
-					{
-						Var		   *field = (Var *) lfirst(lc);
-
-						field->varlevelsup += context->sublevels_up;
-					}
 					rowexpr = makeNode(RowExpr);
 					rowexpr->args = fields;
 					rowexpr->row_typeid = var->vartype;
@@ -1865,8 +1860,7 @@ adjust_appendrel_attrs_mutator(Node *node,
 	{
 		CurrentOfExpr *cexpr = (CurrentOfExpr *) copyObject(node);
 
-		if (context->sublevels_up == 0 &&
-			cexpr->cvarno == appinfo->parent_relid)
+		if (cexpr->cvarno == appinfo->parent_relid)
 			cexpr->cvarno = appinfo->child_relid;
 		return (Node *) cexpr;
 	}
@@ -1874,8 +1868,7 @@ adjust_appendrel_attrs_mutator(Node *node,
 	{
 		RangeTblRef *rtr = (RangeTblRef *) copyObject(node);
 
-		if (context->sublevels_up == 0 &&
-			rtr->rtindex == appinfo->parent_relid)
+		if (rtr->rtindex == appinfo->parent_relid)
 			rtr->rtindex = appinfo->child_relid;
 		return (Node *) rtr;
 	}
@@ -1888,8 +1881,7 @@ adjust_appendrel_attrs_mutator(Node *node,
 											  adjust_appendrel_attrs_mutator,
 												 (void *) context);
 		/* now fix JoinExpr's rtindex (probably never happens) */
-		if (context->sublevels_up == 0 &&
-			j->rtindex == appinfo->parent_relid)
+		if (j->rtindex == appinfo->parent_relid)
 			j->rtindex = appinfo->child_relid;
 		return (Node *) j;
 	}
@@ -1902,7 +1894,7 @@ adjust_appendrel_attrs_mutator(Node *node,
 											  adjust_appendrel_attrs_mutator,
 														 (void *) context);
 		/* now fix PlaceHolderVar's relid sets */
-		if (phv->phlevelsup == context->sublevels_up)
+		if (phv->phlevelsup == 0)
 			phv->phrels = adjust_relid_set(phv->phrels,
 										   appinfo->parent_relid,
 										   appinfo->child_relid);
@@ -1973,29 +1965,12 @@ adjust_appendrel_attrs_mutator(Node *node,
 		return (Node *) newinfo;
 	}
 
-	if (IsA(node, Query))
-	{
-		/*
-		 * Recurse into sublink subqueries. This should only be possible in
-		 * security barrier quals of top-level RTEs. All other sublinks should
-		 * have already been converted to subplans during expression
-		 * preprocessing, but this doesn't happen for security barrier quals,
-		 * since they are destined to become quals of a subquery RTE, which
-		 * will be recursively planned, and so should not be preprocessed at
-		 * this stage.
-		 *
-		 * We don't explicitly Assert() for securityQuals here simply because
-		 * it's not trivial to do so.
-		 */
-		Query	   *newnode;
-
-		context->sublevels_up++;
-		newnode = query_tree_mutator((Query *) node,
-									 adjust_appendrel_attrs_mutator,
-									 (void *) context, 0);
-		context->sublevels_up--;
-		return (Node *) newnode;
-	}
+	/*
+	 * NOTE: we do not need to recurse into sublinks, because they should
+	 * already have been converted to subplans before we see them.
+	 */
+	Assert(!IsA(node, SubLink));
+	Assert(!IsA(node, Query));
 
 	return expression_tree_mutator(node, adjust_appendrel_attrs_mutator,
 								   (void *) context);

@@ -913,6 +913,7 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	subroot->processed_tlist = NIL;
 	subroot->grouping_map = NULL;
 	subroot->minmax_aggs = NIL;
+	subroot->qual_security_level = 0;
 	subroot->hasInheritedTarget = false;
 	subroot->hasRecursion = false;
 	subroot->wt_param_id = -1;

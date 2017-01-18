@@ -490,6 +490,7 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	root->processed_tlist = NIL;
 	root->grouping_map = NULL;
 	root->minmax_aggs = NIL;
+	root->qual_security_level = 0;
 	root->hasInheritedTarget = false;
 	root->hasRecursion = hasRecursion;
 	if (hasRecursion)
@@ -669,6 +670,7 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	{
 		RangeTblEntry *rte = (RangeTblEntry *) lfirst(l);
 		int			kind;
+		ListCell   *lcsq;
 
 		if (rte->rtekind == RTE_RELATION)
 		{
@@ -703,6 +705,19 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 			kind = rte->lateral ? EXPRKIND_VALUES_LATERAL : EXPRKIND_VALUES;
 			rte->values_lists = (List *)
 				preprocess_expression(root, (Node *) rte->values_lists, kind);
+		}
+
+		/*
+		 * Process each element of the securityQuals list as if it were a
+		 * separate qual expression (as indeed it is).  We need to do it this
+		 * way to get proper canonicalization of AND/OR structure.  Note that
+		 * this converts each element into an implicit-AND sublist.
+		 */
+		foreach(lcsq, rte->securityQuals)
+		{
+			lfirst(lcsq) = preprocess_expression(root,
+												 (Node *) lfirst(lcsq),
+												 EXPRKIND_QUAL);
 		}
 	}
 
@@ -978,7 +993,6 @@ inheritance_planner(PlannerInfo *root)
 {
 	Query	   *parse = root->parse;
 	int			parentRTindex = parse->resultRelation;
-	Bitmapset  *resultRTindexes;
 	Bitmapset  *subqueryRTindexes;
 	Bitmapset  *modifiableARIindexes;
 	int			nominalRelation = -1;
@@ -1012,26 +1026,7 @@ inheritance_planner(PlannerInfo *root)
 	 * at least O(N^3) work expended here; and (2) would greatly complicate
 	 * management of the rowMarks list.
 	 *
-	 * Note that any RTEs with security barrier quals will be turned into
-	 * subqueries during planning, and so we must create copies of them too,
-	 * except where they are target relations, which will each only be used in
-	 * a single plan.
-	 *
-	 * To begin with, we'll need a bitmapset of the target relation relids.
-	 */
-	resultRTindexes = bms_make_singleton(parentRTindex);
-	foreach(lc, root->append_rel_list)
-	{
-		AppendRelInfo *appinfo = (AppendRelInfo *) lfirst(lc);
-
-		if (appinfo->parent_relid == parentRTindex)
-			resultRTindexes = bms_add_member(resultRTindexes,
-											 appinfo->child_relid);
-	}
-
-	/*
-	 * Now, generate a bitmapset of the relids of the subquery RTEs, including
-	 * security-barrier RTEs that will become subqueries, as just explained.
+	 * To begin with, generate a bitmapset of the relids of the subquery RTEs.
 	 */
 	subqueryRTindexes = NULL;
 	rti = 1;
@@ -1039,9 +1034,7 @@ inheritance_planner(PlannerInfo *root)
 	{
 		RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
 
-		if (rte->rtekind == RTE_SUBQUERY ||
-			(rte->securityQuals != NIL &&
-			 !bms_is_member(rti, resultRTindexes)))
+		if (rte->rtekind == RTE_SUBQUERY)
 			subqueryRTindexes = bms_add_member(subqueryRTindexes, rti);
 		rti++;
 	}
@@ -1079,6 +1072,8 @@ inheritance_planner(PlannerInfo *root)
 	{
 		AppendRelInfo *appinfo = (AppendRelInfo *) lfirst(lc);
 		PlannerInfo *subroot;
+		RangeTblEntry *parent_rte;
+		RangeTblEntry *child_rte;
 		RelOptInfo *sub_final_rel;
 		Path	   *subpath;
 
@@ -1103,6 +1098,15 @@ inheritance_planner(PlannerInfo *root)
 			adjust_appendrel_attrs(root,
 								   (Node *) parse,
 								   appinfo);
+
+		/*
+		 * If there are securityQuals attached to the parent, move them to the
+		 * child rel (they've already been transformed properly for that).
+		 */
+		parent_rte = rt_fetch(parentRTindex, subroot->parse->rtable);
+		child_rte = rt_fetch(appinfo->child_relid, subroot->parse->rtable);
+		child_rte->securityQuals = parent_rte->securityQuals;
+		parent_rte->securityQuals = NIL;
 
 		/*
 		 * The rowMarks list might contain references to subquery RTEs, so
@@ -1151,11 +1155,11 @@ inheritance_planner(PlannerInfo *root)
 
 		/*
 		 * If this isn't the first child Query, generate duplicates of all
-		 * subquery (or subquery-to-be) RTEs, and adjust Var numbering to
-		 * reference the duplicates.  To simplify the loop logic, we scan the
-		 * original rtable not the copy just made by adjust_appendrel_attrs;
-		 * that should be OK since subquery RTEs couldn't contain any
-		 * references to the target rel.
+		 * subquery RTEs, and adjust Var numbering to reference the
+		 * duplicates. To simplify the loop logic, we scan the original rtable
+		 * not the copy just made by adjust_appendrel_attrs; that should be OK
+		 * since subquery RTEs couldn't contain any references to the target
+		 * rel.
 		 */
 		if (final_rtable != NIL && subqueryRTindexes != NULL)
 		{
@@ -1172,9 +1176,9 @@ inheritance_planner(PlannerInfo *root)
 
 					/*
 					 * The RTE can't contain any references to its own RT
-					 * index, except in the security barrier quals, so we can
-					 * save a few cycles by applying ChangeVarNodes before we
-					 * append the RTE to the rangetable.
+					 * index, except in its securityQuals, so we can save a
+					 * few cycles by applying ChangeVarNodes to the rest of
+					 * the rangetable before we append the RTE to it.
 					 */
 					newrti = list_length(subroot->parse->rtable) + 1;
 					ChangeVarNodes((Node *) subroot->parse, rti, newrti, 0);
@@ -1211,12 +1215,6 @@ inheritance_planner(PlannerInfo *root)
 
 		/* Generate Path(s) for accessing this result relation */
 		grouping_planner(subroot, true, 0.0 /* retrieve all tuples */ );
-
-		/*
-		 * Planning may have modified the query result relation (if there were
-		 * security barrier quals on the result RTE).
-		 */
-		appinfo->child_relid = subroot->parse->resultRelation;
 
 		/*
 		 * We'll use the first child relation (even if it's excluded) as the
@@ -1256,41 +1254,9 @@ inheritance_planner(PlannerInfo *root)
 		if (final_rtable == NIL)
 			final_rtable = subroot->parse->rtable;
 		else
-		{
-			List	   *tmp_rtable = NIL;
-			ListCell   *cell1,
-					   *cell2;
-
-			/*
-			 * Check to see if any of the original RTEs were turned into
-			 * subqueries during planning.  Currently, this should only ever
-			 * happen due to securityQuals being involved which push a
-			 * relation down under a subquery, to ensure that the security
-			 * barrier quals are evaluated first.
-			 *
-			 * When this happens, we want to use the new subqueries in the
-			 * final rtable.
-			 */
-			forboth(cell1, final_rtable, cell2, subroot->parse->rtable)
-			{
-				RangeTblEntry *rte1 = (RangeTblEntry *) lfirst(cell1);
-				RangeTblEntry *rte2 = (RangeTblEntry *) lfirst(cell2);
-
-				if (rte1->rtekind == RTE_RELATION &&
-					rte2->rtekind == RTE_SUBQUERY)
-				{
-					/* Should only be when there are securityQuals today */
-					Assert(rte1->securityQuals != NIL);
-					tmp_rtable = lappend(tmp_rtable, rte2);
-				}
-				else
-					tmp_rtable = lappend(tmp_rtable, rte1);
-			}
-
-			final_rtable = list_concat(tmp_rtable,
+			final_rtable = list_concat(final_rtable,
 									   list_copy_tail(subroot->parse->rtable,
 												 list_length(final_rtable)));
-		}
 
 		/*
 		 * We need to collect all the RelOptInfos from all child plans into
@@ -1633,12 +1599,6 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 				preprocess_onconflict_targetlist(parse->onConflict->onConflictSet,
 												 parse->resultRelation,
 												 parse->rtable);
-
-		/*
-		 * Expand any rangetable entries that have security barrier quals.
-		 * This may add new security barrier subquery RTEs to the rangetable.
-		 */
-		expand_security_quals(root, tlist);
 
 		/*
 		 * We are now done hacking up the query's targetlist.  Most of the
@@ -2297,17 +2257,8 @@ select_rowmark_type(RangeTblEntry *rte, LockClauseStrength strength)
 
 				/*
 				 * We don't need a tuple lock, only the ability to re-fetch
-				 * the row.  Regular tables support ROW_MARK_REFERENCE, but if
-				 * this RTE has security barrier quals, it will be turned into
-				 * a subquery during planning, so use ROW_MARK_COPY.
-				 *
-				 * This is only necessary for LCS_NONE, since real tuple locks
-				 * on an RTE with security barrier quals are supported by
-				 * pushing the lock down into the subquery --- see
-				 * expand_security_qual.
+				 * the row.
 				 */
-				if (rte->securityQuals != NIL)
-					return ROW_MARK_COPY;
 				return ROW_MARK_REFERENCE;
 				break;
 			case LCS_FORKEYSHARE:

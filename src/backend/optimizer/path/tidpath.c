@@ -43,12 +43,13 @@
 #include "optimizer/clauses.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
+#include "optimizer/restrictinfo.h"
 
 
 static bool IsTidEqualClause(OpExpr *node, int varno);
 static bool IsTidEqualAnyClause(ScalarArrayOpExpr *node, int varno);
 static List *TidQualFromExpr(Node *expr, int varno);
-static List *TidQualFromRestrictinfo(List *restrictinfo, int varno);
+static List *TidQualFromBaseRestrictinfo(RelOptInfo *rel);
 
 
 /*
@@ -216,24 +217,26 @@ TidQualFromExpr(Node *expr, int varno)
 }
 
 /*
- *	Extract a set of CTID conditions from the given restrictinfo list
- *
- *	This is essentially identical to the AND case of TidQualFromExpr,
- *	except for the format of the input.
+ *	Extract a set of CTID conditions from the rel's baserestrictinfo list
  */
 static List *
-TidQualFromRestrictinfo(List *restrictinfo, int varno)
+TidQualFromBaseRestrictinfo(RelOptInfo *rel)
 {
 	List	   *rlst = NIL;
 	ListCell   *l;
 
-	foreach(l, restrictinfo)
+	foreach(l, rel->baserestrictinfo)
 	{
 		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
 
-		if (!IsA(rinfo, RestrictInfo))
-			continue;			/* probably should never happen */
-		rlst = TidQualFromExpr((Node *) rinfo->clause, varno);
+		/*
+		 * If clause must wait till after some lower-security-level
+		 * restriction clause, reject it.
+		 */
+		if (!restriction_is_securely_promotable(rinfo, rel))
+			continue;
+
+		rlst = TidQualFromExpr((Node *) rinfo->clause, rel->relid);
 		if (rlst)
 			break;
 	}
@@ -259,7 +262,7 @@ create_tidscan_paths(PlannerInfo *root, RelOptInfo *rel)
 	 */
 	required_outer = rel->lateral_relids;
 
-	tidquals = TidQualFromRestrictinfo(rel->baserestrictinfo, rel->relid);
+	tidquals = TidQualFromBaseRestrictinfo(rel);
 
 	if (tidquals)
 		add_path(rel, (Path *) create_tidscan_path(root, rel, tidquals,

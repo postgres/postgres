@@ -24,6 +24,7 @@ static RestrictInfo *make_restrictinfo_internal(Expr *clause,
 						   bool is_pushed_down,
 						   bool outerjoin_delayed,
 						   bool pseudoconstant,
+						   Index security_level,
 						   Relids required_relids,
 						   Relids outer_relids,
 						   Relids nullable_relids);
@@ -31,6 +32,7 @@ static Expr *make_sub_restrictinfos(Expr *clause,
 					   bool is_pushed_down,
 					   bool outerjoin_delayed,
 					   bool pseudoconstant,
+					   Index security_level,
 					   Relids required_relids,
 					   Relids outer_relids,
 					   Relids nullable_relids);
@@ -43,7 +45,7 @@ static Expr *make_sub_restrictinfos(Expr *clause,
  *
  * The is_pushed_down, outerjoin_delayed, and pseudoconstant flags for the
  * RestrictInfo must be supplied by the caller, as well as the correct values
- * for outer_relids and nullable_relids.
+ * for security_level, outer_relids, and nullable_relids.
  * required_relids can be NULL, in which case it defaults to the actual clause
  * contents (i.e., clause_relids).
  *
@@ -56,6 +58,7 @@ make_restrictinfo(Expr *clause,
 				  bool is_pushed_down,
 				  bool outerjoin_delayed,
 				  bool pseudoconstant,
+				  Index security_level,
 				  Relids required_relids,
 				  Relids outer_relids,
 				  Relids nullable_relids)
@@ -69,6 +72,7 @@ make_restrictinfo(Expr *clause,
 													   is_pushed_down,
 													   outerjoin_delayed,
 													   pseudoconstant,
+													   security_level,
 													   required_relids,
 													   outer_relids,
 													   nullable_relids);
@@ -81,62 +85,10 @@ make_restrictinfo(Expr *clause,
 									  is_pushed_down,
 									  outerjoin_delayed,
 									  pseudoconstant,
+									  security_level,
 									  required_relids,
 									  outer_relids,
 									  nullable_relids);
-}
-
-/*
- * make_restrictinfos_from_actual_clauses
- *
- * Given a list of implicitly-ANDed restriction clauses, produce a list
- * of RestrictInfo nodes.  This is used to reconstitute the RestrictInfo
- * representation after doing transformations of a list of clauses.
- *
- * We assume that the clauses are relation-level restrictions and therefore
- * we don't have to worry about is_pushed_down, outerjoin_delayed,
- * outer_relids, and nullable_relids (these can be assumed true, false,
- * NULL, and NULL, respectively).
- * We do take care to recognize pseudoconstant clauses properly.
- */
-List *
-make_restrictinfos_from_actual_clauses(PlannerInfo *root,
-									   List *clause_list)
-{
-	List	   *result = NIL;
-	ListCell   *l;
-
-	foreach(l, clause_list)
-	{
-		Expr	   *clause = (Expr *) lfirst(l);
-		bool		pseudoconstant;
-		RestrictInfo *rinfo;
-
-		/*
-		 * It's pseudoconstant if it contains no Vars and no volatile
-		 * functions.  We probably can't see any sublinks here, so
-		 * contain_var_clause() would likely be enough, but for safety use
-		 * contain_vars_of_level() instead.
-		 */
-		pseudoconstant =
-			!contain_vars_of_level((Node *) clause, 0) &&
-			!contain_volatile_functions((Node *) clause);
-		if (pseudoconstant)
-		{
-			/* tell createplan.c to check for gating quals */
-			root->hasPseudoConstantQuals = true;
-		}
-
-		rinfo = make_restrictinfo(clause,
-								  true,
-								  false,
-								  pseudoconstant,
-								  NULL,
-								  NULL,
-								  NULL);
-		result = lappend(result, rinfo);
-	}
-	return result;
 }
 
 /*
@@ -150,6 +102,7 @@ make_restrictinfo_internal(Expr *clause,
 						   bool is_pushed_down,
 						   bool outerjoin_delayed,
 						   bool pseudoconstant,
+						   Index security_level,
 						   Relids required_relids,
 						   Relids outer_relids,
 						   Relids nullable_relids)
@@ -162,8 +115,19 @@ make_restrictinfo_internal(Expr *clause,
 	restrictinfo->outerjoin_delayed = outerjoin_delayed;
 	restrictinfo->pseudoconstant = pseudoconstant;
 	restrictinfo->can_join = false;		/* may get set below */
+	restrictinfo->security_level = security_level;
 	restrictinfo->outer_relids = outer_relids;
 	restrictinfo->nullable_relids = nullable_relids;
+
+	/*
+	 * If it's potentially delayable by lower-level security quals, figure out
+	 * whether it's leakproof.  We can skip testing this for level-zero quals,
+	 * since they would never get delayed on security grounds anyway.
+	 */
+	if (security_level > 0)
+		restrictinfo->leakproof = !contain_leaked_vars((Node *) clause);
+	else
+		restrictinfo->leakproof = false;		/* really, "don't know" */
 
 	/*
 	 * If it's a binary opclause, set up left/right relids info. In any case
@@ -250,7 +214,7 @@ make_restrictinfo_internal(Expr *clause,
  *
  * The same is_pushed_down, outerjoin_delayed, and pseudoconstant flag
  * values can be applied to all RestrictInfo nodes in the result.  Likewise
- * for outer_relids and nullable_relids.
+ * for security_level, outer_relids, and nullable_relids.
  *
  * The given required_relids are attached to our top-level output,
  * but any OR-clause constituents are allowed to default to just the
@@ -261,6 +225,7 @@ make_sub_restrictinfos(Expr *clause,
 					   bool is_pushed_down,
 					   bool outerjoin_delayed,
 					   bool pseudoconstant,
+					   Index security_level,
 					   Relids required_relids,
 					   Relids outer_relids,
 					   Relids nullable_relids)
@@ -276,6 +241,7 @@ make_sub_restrictinfos(Expr *clause,
 													is_pushed_down,
 													outerjoin_delayed,
 													pseudoconstant,
+													security_level,
 													NULL,
 													outer_relids,
 													nullable_relids));
@@ -284,6 +250,7 @@ make_sub_restrictinfos(Expr *clause,
 												   is_pushed_down,
 												   outerjoin_delayed,
 												   pseudoconstant,
+												   security_level,
 												   required_relids,
 												   outer_relids,
 												   nullable_relids);
@@ -299,6 +266,7 @@ make_sub_restrictinfos(Expr *clause,
 													 is_pushed_down,
 													 outerjoin_delayed,
 													 pseudoconstant,
+													 security_level,
 													 required_relids,
 													 outer_relids,
 													 nullable_relids));
@@ -310,6 +278,7 @@ make_sub_restrictinfos(Expr *clause,
 												   is_pushed_down,
 												   outerjoin_delayed,
 												   pseudoconstant,
+												   security_level,
 												   required_relids,
 												   outer_relids,
 												   nullable_relids);
@@ -324,6 +293,27 @@ bool
 restriction_is_or_clause(RestrictInfo *restrictinfo)
 {
 	if (restrictinfo->orclause != NULL)
+		return true;
+	else
+		return false;
+}
+
+/*
+ * restriction_is_securely_promotable
+ *
+ * Returns true if it's okay to evaluate this clause "early", that is before
+ * other restriction clauses attached to the specified relation.
+ */
+bool
+restriction_is_securely_promotable(RestrictInfo *restrictinfo,
+								   RelOptInfo *rel)
+{
+	/*
+	 * It's okay if there are no baserestrictinfo clauses for the rel that
+	 * would need to go before this one, *or* if this one is leakproof.
+	 */
+	if (restrictinfo->security_level <= rel->baserestrict_min_security ||
+		restrictinfo->leakproof)
 		return true;
 	else
 		return false;
@@ -350,31 +340,6 @@ get_actual_clauses(List *restrictinfo_list)
 		Assert(IsA(rinfo, RestrictInfo));
 
 		Assert(!rinfo->pseudoconstant);
-
-		result = lappend(result, rinfo->clause);
-	}
-	return result;
-}
-
-/*
- * get_all_actual_clauses
- *
- * Returns a list containing the bare clauses from 'restrictinfo_list'.
- *
- * This loses the distinction between regular and pseudoconstant clauses,
- * so be careful what you use it for.
- */
-List *
-get_all_actual_clauses(List *restrictinfo_list)
-{
-	List	   *result = NIL;
-	ListCell   *l;
-
-	foreach(l, restrictinfo_list)
-	{
-		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
-
-		Assert(IsA(rinfo, RestrictInfo));
 
 		result = lappend(result, rinfo->clause);
 	}

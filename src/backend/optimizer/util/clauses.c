@@ -1500,10 +1500,8 @@ contain_context_dependent_node_walker(Node *node, int *flags)
  *
  * Returns true if the clause contains any non-leakproof functions that are
  * passed Var nodes of the current query level, and which might therefore leak
- * data.  Qualifiers from outside a security_barrier view that might leak data
- * in this way should not be pushed down into the view in case the contents of
- * tuples intended to be filtered out by the view are revealed by the leaky
- * functions.
+ * data.  Such clauses must be applied after any lower-level security barrier
+ * clauses.
  */
 bool
 contain_leaked_vars(Node *clause)
@@ -1598,10 +1596,10 @@ contain_leaked_vars_walker(Node *node, void *context)
 		case T_CurrentOfExpr:
 
 			/*
-			 * WHERE CURRENT OF doesn't contain function calls.  Moreover, it
-			 * is important that this can be pushed down into a
-			 * security_barrier view, since the planner must always generate a
-			 * TID scan when CURRENT OF is present -- c.f. cost_tidscan.
+			 * WHERE CURRENT OF doesn't contain leaky function calls.
+			 * Moreover, it is essential that this is considered non-leaky,
+			 * since the planner must always generate a TID scan when CURRENT
+			 * OF is present -- c.f. cost_tidscan.
 			 */
 			return false;
 
