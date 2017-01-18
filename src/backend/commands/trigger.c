@@ -522,8 +522,9 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 		if (funcrettype == OPAQUEOID)
 		{
 			ereport(WARNING,
-					(errmsg("changing return type of function %s from \"opaque\" to \"trigger\"",
-							NameListToString(stmt->funcname))));
+				 (errmsg("changing return type of function %s from %s to %s",
+						 NameListToString(stmt->funcname),
+						 "opaque", "trigger")));
 			SetFunctionReturnType(funcoid, TRIGGEROID);
 		}
 		else

@@ -278,8 +278,9 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 			{
 				ereport(WARNING,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("changing return type of function %s from \"opaque\" to \"language_handler\"",
-								NameListToString(stmt->plhandler))));
+				  errmsg("changing return type of function %s from %s to %s",
+						 NameListToString(stmt->plhandler),
+						 "opaque", "language_handler")));
 				SetFunctionReturnType(handlerOid, LANGUAGE_HANDLEROID);
 			}
 			else

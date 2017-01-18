@@ -1819,7 +1819,8 @@ ExecGrant_Relation(InternalGrant *istmt)
 					 */
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_GRANT_OPERATION),
-						  errmsg("invalid privilege type USAGE for table")));
+							 errmsg("invalid privilege type %s for table",
+									"USAGE")));
 				}
 			}
 		}

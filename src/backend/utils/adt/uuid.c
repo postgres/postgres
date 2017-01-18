@@ -133,8 +133,8 @@ string_to_uuid(const char *source, pg_uuid_t *uuid)
 syntax_error:
 	ereport(ERROR,
 			(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-			 errmsg("invalid input syntax for uuid: \"%s\"",
-					source)));
+			 errmsg("invalid input syntax for type %s: \"%s\"",
+					"uuid", source)));
 }
 
 Datum

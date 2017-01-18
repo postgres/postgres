@@ -1514,7 +1514,7 @@ SELECT dup(22);
 (1 row)
 
 SELECT dup('xyz');	-- fails
-ERROR:  could not determine polymorphic type because input has type "unknown"
+ERROR:  could not determine polymorphic type because input has type unknown
 SELECT dup('xyz'::text);
         dup        
 -------------------

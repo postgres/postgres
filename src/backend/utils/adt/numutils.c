@@ -48,8 +48,8 @@ pg_atoi(const char *s, int size, int c)
 	if (*s == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for integer: \"%s\"",
-						s)));
+				 errmsg("invalid input syntax for %s: \"%s\"",
+						"integer", s)));
 
 	errno = 0;
 	l = strtol(s, &badp, 10);
@@ -58,8 +58,8 @@ pg_atoi(const char *s, int size, int c)
 	if (s == badp)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for integer: \"%s\"",
-						s)));
+				 errmsg("invalid input syntax for %s: \"%s\"",
+						"integer", s)));
 
 	switch (size)
 	{
@@ -72,13 +72,15 @@ pg_atoi(const char *s, int size, int c)
 				)
 				ereport(ERROR,
 						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				errmsg("value \"%s\" is out of range for type integer", s)));
+						 errmsg("value \"%s\" is out of range for type %s", s,
+								"integer")));
 			break;
 		case sizeof(int16):
 			if (errno == ERANGE || l < SHRT_MIN || l > SHRT_MAX)
 				ereport(ERROR,
 						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				errmsg("value \"%s\" is out of range for type smallint", s)));
+						 errmsg("value \"%s\" is out of range for type %s", s,
+								"smallint")));
 			break;
 		case sizeof(int8):
 			if (errno == ERANGE || l < SCHAR_MIN || l > SCHAR_MAX)
@@ -100,8 +102,8 @@ pg_atoi(const char *s, int size, int c)
 	if (*badp && *badp != c)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for integer: \"%s\"",
-						s)));
+				 errmsg("invalid input syntax for %s: \"%s\"",
+						"integer", s)));
 
 	return (int32) l;
 }

@@ -498,7 +498,7 @@ CheckAttributeType(const char *attname,
 		 */
 		ereport(WARNING,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-				 errmsg("column \"%s\" has type \"unknown\"", attname),
+				 errmsg("column \"%s\" has type %s", attname, "unknown"),
 				 errdetail("Proceeding with relation creation anyway.")));
 	}
 	else if (att_typtype == TYPTYPE_PSEUDO)

@@ -18,9 +18,9 @@ ERROR:  type "foo" does not exist
 CREATE TRANSFORM FOR hstore LANGUAGE foo (FROM SQL WITH FUNCTION hstore_to_plperl(internal), TO SQL WITH FUNCTION plperl_to_hstore(internal));  -- fail
 ERROR:  language "foo" does not exist
 CREATE TRANSFORM FOR hstore LANGUAGE plperl (FROM SQL WITH FUNCTION hstore_out(hstore), TO SQL WITH FUNCTION plperl_to_hstore(internal));  -- fail
-ERROR:  return data type of FROM SQL function must be "internal"
+ERROR:  return data type of FROM SQL function must be internal
 CREATE TRANSFORM FOR hstore LANGUAGE plperl (FROM SQL WITH FUNCTION internal_in(cstring), TO SQL WITH FUNCTION plperl_to_hstore(internal));  -- fail
-ERROR:  first argument of transform function must be type "internal"
+ERROR:  first argument of transform function must be type internal
 CREATE TRANSFORM FOR hstore LANGUAGE plperl (FROM SQL WITH FUNCTION hstore_to_plperl(internal), TO SQL WITH FUNCTION plperl_to_hstore(internal));  -- ok
 CREATE TRANSFORM FOR hstore LANGUAGE plperl (FROM SQL WITH FUNCTION hstore_to_plperl(internal), TO SQL WITH FUNCTION plperl_to_hstore(internal));  -- fail
 ERROR:  transform for type hstore language "plperl" already exists

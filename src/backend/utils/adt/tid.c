@@ -68,24 +68,24 @@ tidin(PG_FUNCTION_ARGS)
 	if (i < NTIDARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for type tid: \"%s\"",
-						str)));
+				 errmsg("invalid input syntax for type %s: \"%s\"",
+						"tid", str)));
 
 	errno = 0;
 	blockNumber = strtoul(coord[0], &badp, 10);
 	if (errno || *badp != DELIM)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for type tid: \"%s\"",
-						str)));
+				 errmsg("invalid input syntax for type %s: \"%s\"",
+						"tid", str)));
 
 	hold_offset = strtol(coord[1], &badp, 10);
 	if (errno || *badp != RDELIM ||
 		hold_offset > USHRT_MAX || hold_offset < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for type tid: \"%s\"",
-						str)));
+				 errmsg("invalid input syntax for type %s: \"%s\"",
+						"tid", str)));
 
 	offsetNumber = hold_offset;
 

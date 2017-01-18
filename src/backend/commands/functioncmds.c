@@ -1482,11 +1482,13 @@ CreateCast(CreateCastStmt *stmt)
 		if (nargs > 1 && procstruct->proargtypes.values[1] != INT4OID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-			errmsg("second argument of cast function must be type integer")));
+				   errmsg("second argument of cast function must be type %s",
+						  "integer")));
 		if (nargs > 2 && procstruct->proargtypes.values[2] != BOOLOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-			errmsg("third argument of cast function must be type boolean")));
+					 errmsg("third argument of cast function must be type %s",
+							"boolean")));
 		if (!IsBinaryCoercible(procstruct->prorettype, targettypeid))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
@@ -1776,7 +1778,8 @@ check_transform_function(Form_pg_proc procstruct)
 	if (procstruct->proargtypes.values[0] != INTERNALOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("first argument of transform function must be type \"internal\"")));
+			   errmsg("first argument of transform function must be type %s",
+					  "internal")));
 }
 
 
@@ -1859,7 +1862,8 @@ CreateTransform(CreateTransformStmt *stmt)
 		if (procstruct->prorettype != INTERNALOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("return data type of FROM SQL function must be \"internal\"")));
+				   errmsg("return data type of FROM SQL function must be %s",
+						  "internal")));
 		check_transform_function(procstruct);
 		ReleaseSysCache(tuple);
 	}
