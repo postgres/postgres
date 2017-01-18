@@ -334,19 +334,20 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 	so->hashso_bucket_buf = buf;
 
 	/*
-	 * If the bucket split is in progress, then while scanning the bucket
-	 * being populated, we need to skip tuples that are moved from bucket
-	 * being split.  We need to maintain the pin on bucket being split to
+	 * If a bucket split is in progress, then while scanning the bucket being
+	 * populated, we need to skip tuples that were copied from bucket being
+	 * split.  We also need to maintain a pin on the bucket being split to
 	 * ensure that split-cleanup work done by vacuum doesn't remove tuples
-	 * from it till this scan is done.  We need to main to maintain the pin on
+	 * from it till this scan is done.  We need to maintain a pin on the
 	 * bucket being populated to ensure that vacuum doesn't squeeze that
-	 * bucket till this scan is complete, otherwise the ordering of tuples
+	 * bucket till this scan is complete; otherwise, the ordering of tuples
 	 * can't be maintained during forward and backward scans.  Here, we have
-	 * to be cautious about locking order, first acquire the lock on bucket
-	 * being split, release the lock on it, but not pin, then acquire the lock
-	 * on bucket being populated and again re-verify whether the bucket split
-	 * still is in progress.  First acquiring lock on bucket being split
-	 * ensures that the vacuum waits for this scan to finish.
+	 * to be cautious about locking order: first, acquire the lock on bucket
+	 * being split; then, release the lock on it but not the pin; then,
+	 * acquire a lock on bucket being populated and again re-verify whether
+	 * the bucket split is still in progress.  Acquiring the lock on bucket
+	 * being split first ensures that the vacuum waits for this scan to
+	 * finish.
 	 */
 	if (H_BUCKET_BEING_POPULATED(opaque))
 	{
