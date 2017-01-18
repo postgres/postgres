@@ -167,6 +167,24 @@ insert into list_parted values ('EE', 1);
 insert into part_ee_ff values ('EE', 10);
 select tableoid::regclass, * from list_parted;
 
+-- some more tests to exercise tuple-routing with multi-level partitioning
+create table part_gg partition of list_parted for values in ('gg') partition by range (b);
+create table part_gg1 partition of part_gg for values from (unbounded) to (1);
+create table part_gg2 partition of part_gg for values from (1) to (10) partition by range (b);
+create table part_gg2_1 partition of part_gg2 for values from (1) to (5);
+create table part_gg2_2 partition of part_gg2 for values from (5) to (10);
+
+create table part_ee_ff3 partition of part_ee_ff for values from (20) to (30) partition by range (b);
+create table part_ee_ff3_1 partition of part_ee_ff3 for values from (20) to (25);
+create table part_ee_ff3_2 partition of part_ee_ff3 for values from (25) to (30);
+
+truncate list_parted;
+insert into list_parted values ('aa'), ('cc');
+insert into list_parted select 'Ff', s.a from generate_series(1, 29) s(a);
+insert into list_parted select 'gg', s.a from generate_series(1, 9) s(a);
+insert into list_parted (b) values (1);
+select tableoid::regclass::text, a, min(b) as min_b, max(b) as max_b from list_parted group by 1, 2 order by 1;
+
 -- cleanup
 drop table range_parted cascade;
 drop table list_parted cascade;
