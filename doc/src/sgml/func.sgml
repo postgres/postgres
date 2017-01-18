@@ -10845,6 +10845,14 @@ table2-mapping
        </row>
        <row>
         <entry><literal>-</literal></entry>
+        <entry><type>text[]</type></entry>
+        <entry>Delete multiple key/value pairs or <emphasis>string</emphasis>
+        elements from left operand.  Key/value pairs are matched based
+        on their key value.</entry>
+        <entry><literal>'{"a": "b", "c": "d"}'::jsonb - '{a,c}'::text[] </literal></entry>
+       </row>
+       <row>
+        <entry><literal>-</literal></entry>
         <entry><type>integer</type></entry>
         <entry>Delete the array element with specified index (Negative
         integers count from the end).  Throws an error if top level

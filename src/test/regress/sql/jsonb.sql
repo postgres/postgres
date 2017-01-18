@@ -777,6 +777,10 @@ select '["a","b","c"]'::jsonb - -2;
 select '["a","b","c"]'::jsonb - -3;
 select '["a","b","c"]'::jsonb - -4;
 
+select '{"a":1 , "b":2, "c":3}'::jsonb - '{b}'::text[];
+select '{"a":1 , "b":2, "c":3}'::jsonb - '{c,b}'::text[];
+select '{"a":1 , "b":2, "c":3}'::jsonb - '{}'::text[];
+
 select jsonb_set('{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}'::jsonb, '{n}', '[1,2,3]');
 select jsonb_set('{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}'::jsonb, '{b,-1}', '[1,2,3]');
 select jsonb_set('{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}'::jsonb, '{d,1,0}', '[1,2,3]');

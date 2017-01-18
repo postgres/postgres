@@ -1826,6 +1826,8 @@ DATA(insert OID = 3284 (  "||"	   PGNSP PGUID b f f 3802 3802 3802 0 0 jsonb_con
 DESCR("concatenate");
 DATA(insert OID = 3285 (  "-"	   PGNSP PGUID b f f 3802 25 3802 0 0 3302 - - ));
 DESCR("delete object field");
+DATA(insert OID = 3398 (  "-"      PGNSP PGUID b f f 3802 1009 3802 0 0 3343 - -));
+DESCR("delete object fields");
 DATA(insert OID = 3286 (  "-"	   PGNSP PGUID b f f 3802 23 3802 0 0 3303 - - ));
 DESCR("delete array element");
 DATA(insert OID = 3287 (  "#-"	   PGNSP PGUID b f f 3802 1009 3802 0 0 jsonb_delete_path - - ));
