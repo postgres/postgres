@@ -5202,84 +5202,15 @@ interval_part(PG_FUNCTION_ARGS)
 
 
 /* timestamp_zone_transform()
- * If the zone argument of a timestamp_zone() or timestamptz_zone() call is a
- * plan-time constant denoting a zone equivalent to UTC, the call will always
- * return its second argument unchanged.  Simplify the expression tree
- * accordingly.  Civil time zones almost never qualify, because jurisdictions
- * that follow UTC today have not done so continuously.
+ * The original optimization here caused problems by relabeling Vars that
+ * could be matched to index entries.  It might be possible to resurrect it
+ * at some point by teaching the planner to be less cavalier with RelabelType
+ * nodes, but that will take careful analysis.
  */
 Datum
 timestamp_zone_transform(PG_FUNCTION_ARGS)
 {
-	Node	   *func_node = (Node *) PG_GETARG_POINTER(0);
-	FuncExpr   *expr = (FuncExpr *) func_node;
-	Node	   *ret = NULL;
-	Node	   *zone_node;
-
-	Assert(IsA(expr, FuncExpr));
-	Assert(list_length(expr->args) == 2);
-
-	zone_node = (Node *) linitial(expr->args);
-
-	if (IsA(zone_node, Const) &&!((Const *) zone_node)->constisnull)
-	{
-		text	   *zone = DatumGetTextPP(((Const *) zone_node)->constvalue);
-		char		tzname[TZ_STRLEN_MAX + 1];
-		char	   *lowzone;
-		int			type,
-					abbrev_offset;
-		pg_tz	   *tzp;
-		bool		noop = false;
-
-		/*
-		 * If the timezone is forever UTC+0, the FuncExpr function call is a
-		 * no-op for all possible timestamps.  This passage mirrors code in
-		 * timestamp_zone().
-		 */
-		text_to_cstring_buffer(zone, tzname, sizeof(tzname));
-		lowzone = downcase_truncate_identifier(tzname,
-											   strlen(tzname),
-											   false);
-		type = DecodeTimezoneAbbrev(0, lowzone, &abbrev_offset, &tzp);
-		if (type == TZ || type == DTZ)
-			noop = (abbrev_offset == 0);
-		else if (type == DYNTZ)
-		{
-			/*
-			 * An abbreviation of a single-offset timezone ought not to be
-			 * configured as a DYNTZ, so don't bother checking.
-			 */
-		}
-		else
-		{
-			long		tzname_offset;
-
-			tzp = pg_tzset(tzname);
-			if (tzp && pg_get_timezone_offset(tzp, &tzname_offset))
-				noop = (tzname_offset == 0);
-		}
-
-		if (noop)
-		{
-			Node	   *timestamp = (Node *) lsecond(expr->args);
-
-			/* Strip any existing RelabelType node(s) */
-			while (timestamp && IsA(timestamp, RelabelType))
-				timestamp = (Node *) ((RelabelType *) timestamp)->arg;
-
-			/*
-			 * Replace the FuncExpr with its timestamp argument, relabeled as
-			 * though the function call had computed it.
-			 */
-			ret = (Node *) makeRelabelType((Expr *) timestamp,
-										   exprType(func_node),
-										   exprTypmod(func_node),
-										   exprCollation(func_node),
-										   COERCE_EXPLICIT_CAST);
-		}
-	}
-
-	PG_RETURN_POINTER(ret);
+	PG_RETURN_POINTER(NULL);
 }
 
 /*	timestamp_zone()
@@ -5376,49 +5307,15 @@ timestamp_zone(PG_FUNCTION_ARGS)
 }
 
 /* timestamp_izone_transform()
- * If we deduce at plan time that a particular timestamp_izone() or
- * timestamptz_izone() call can only compute tz=0, the call will always return
- * its second argument unchanged.  Simplify the expression tree accordingly.
+ * The original optimization here caused problems by relabeling Vars that
+ * could be matched to index entries.  It might be possible to resurrect it
+ * at some point by teaching the planner to be less cavalier with RelabelType
+ * nodes, but that will take careful analysis.
  */
 Datum
 timestamp_izone_transform(PG_FUNCTION_ARGS)
 {
-	Node	   *func_node = (Node *) PG_GETARG_POINTER(0);
-	FuncExpr   *expr = (FuncExpr *) func_node;
-	Node	   *ret = NULL;
-	Node	   *zone_node;
-
-	Assert(IsA(expr, FuncExpr));
-	Assert(list_length(expr->args) == 2);
-
-	zone_node = (Node *) linitial(expr->args);
-
-	if (IsA(zone_node, Const) &&!((Const *) zone_node)->constisnull)
-	{
-		Interval   *zone;
-
-		zone = DatumGetIntervalP(((Const *) zone_node)->constvalue);
-		if (zone->month == 0 && zone->day == 0 && zone->time == 0)
-		{
-			Node	   *timestamp = (Node *) lsecond(expr->args);
-
-			/* Strip any existing RelabelType node(s) */
-			while (timestamp && IsA(timestamp, RelabelType))
-				timestamp = (Node *) ((RelabelType *) timestamp)->arg;
-
-			/*
-			 * Replace the FuncExpr with its timestamp argument, relabeled as
-			 * though the function call had computed it.
-			 */
-			ret = (Node *) makeRelabelType((Expr *) timestamp,
-										   exprType(func_node),
-										   exprTypmod(func_node),
-										   exprCollation(func_node),
-										   COERCE_EXPLICIT_CAST);
-		}
-	}
-
-	PG_RETURN_POINTER(ret);
+	PG_RETURN_POINTER(NULL);
 }
 
 /* timestamp_izone()

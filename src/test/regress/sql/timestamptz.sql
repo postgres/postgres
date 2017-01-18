@@ -484,3 +484,12 @@ set timezone_abbreviations = 'Australia';
 select count(distinct utc_offset) >= 24 as ok from pg_timezone_abbrevs;
 set timezone_abbreviations = 'India';
 select count(distinct utc_offset) >= 24 as ok from pg_timezone_abbrevs;
+
+--
+-- Test that AT TIME ZONE isn't misoptimized when using an index (bug #14504)
+--
+create temp table tmptz (f1 timestamptz primary key);
+insert into tmptz values ('2017-01-18 00:00+00');
+explain (costs off)
+select * from tmptz where f1 at time zone 'utc' = '2017-01-18 00:00';
+select * from tmptz where f1 at time zone 'utc' = '2017-01-18 00:00';

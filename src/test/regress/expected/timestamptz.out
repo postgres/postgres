@@ -2638,3 +2638,22 @@ select count(distinct utc_offset) >= 24 as ok from pg_timezone_abbrevs;
  t
 (1 row)
 
+--
+-- Test that AT TIME ZONE isn't misoptimized when using an index (bug #14504)
+--
+create temp table tmptz (f1 timestamptz primary key);
+insert into tmptz values ('2017-01-18 00:00+00');
+explain (costs off)
+select * from tmptz where f1 at time zone 'utc' = '2017-01-18 00:00';
+                                           QUERY PLAN                                            
+-------------------------------------------------------------------------------------------------
+ Seq Scan on tmptz
+   Filter: (timezone('utc'::text, f1) = 'Wed Jan 18 00:00:00 2017'::timestamp without time zone)
+(2 rows)
+
+select * from tmptz where f1 at time zone 'utc' = '2017-01-18 00:00';
+              f1              
+------------------------------
+ Tue Jan 17 16:00:00 2017 PST
+(1 row)
+
