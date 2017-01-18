@@ -1001,7 +1001,7 @@ SELECT thousand, tenthous FROM tenk1
 WHERE thousand < 2 AND tenthous IN (1001,3000)
 ORDER BY thousand;
 
-RESET enable_indexscan;
+RESET enable_indexonlyscan;
 
 --
 -- Check elimination of constant-NULL subexpressions
