@@ -998,7 +998,7 @@ SELECT name, listchildren(name) FROM nodes;
     </para>
 
     <para>
-     If there is more than one set-returning function in the same select
+     If there is more than one set-returning function in the query's select
      list, the behavior is similar to what you get from putting the functions
      into a single <literal>LATERAL ROWS FROM( ... )</> <literal>FROM</>-clause
      item.  For each row from the underlying query, there is an output row
@@ -1007,21 +1007,53 @@ SELECT name, listchildren(name) FROM nodes;
      produce fewer outputs than others, null values are substituted for the
      missing data, so that the total number of rows emitted for one
      underlying row is the same as for the set-returning function that
-     produced the most outputs.
+     produced the most outputs.  Thus the set-returning functions
+     run <quote>in lockstep</> until they are all exhausted, and then
+     execution continues with the next underlying row.
     </para>
 
     <para>
      Set-returning functions can be nested in a select list, although that is
      not allowed in <literal>FROM</>-clause items.  In such cases, each level
      of nesting is treated separately, as though it were
-     another <literal>LATERAL ROWS FROM( ... )</> item.  For example, in
+     a separate <literal>LATERAL ROWS FROM( ... )</> item.  For example, in
 <programlisting>
-SELECT srf1(srf2(x), srf3(y)), srf4(srf5(z)) FROM ...
+SELECT srf1(srf2(x), srf3(y)), srf4(srf5(z)) FROM tab;
 </programlisting>
      the set-returning functions <function>srf2</>, <function>srf3</>,
-     and <function>srf5</> would be run in lockstep for each row of the
-     underlying query, and then <function>srf1</> and <function>srf4</> would
-     be applied in lockstep to each row produced by the lower functions.
+     and <function>srf5</> would be run in lockstep for each row
+     of <structname>tab</>, and then <function>srf1</> and <function>srf4</>
+     would be applied in lockstep to each row produced by the lower
+     functions.
+    </para>
+
+    <para>
+     This behavior also means that set-returning functions will be evaluated
+     even when it might appear that they should be skipped because of a
+     conditional-evaluation construct, such as <literal>CASE</>
+     or <literal>COALESCE</>.  For example, consider
+<programlisting>
+SELECT x, CASE WHEN x &gt; 0 THEN generate_series(1, 5) ELSE 0 END FROM tab;
+</programlisting>
+     It might seem that this should produce five repetitions of input
+     rows that have <literal>x &gt; 0</>, and a single repetition of those
+     that do not; but actually it will produce five repetitions of every
+     input row.  This is because <function>generate_series()</> is run first,
+     and then the <literal>CASE</> expression is applied to its result rows.
+     The behavior is thus comparable to
+<programlisting>
+SELECT x, CASE WHEN x &gt; 0 THEN g ELSE 0 END
+  FROM tab, LATERAL generate_series(1,5) AS g;
+</programlisting>
+     It would be exactly the same, except that in this specific example,
+     the planner could choose to put <structname>g</> on the outside of the
+     nestloop join, since <structname>g</> has no actual lateral dependency
+     on <structname>tab</>.  That would result in a different output row
+     order.  Set-returning functions in the select list are always evaluated
+     as though they are on the inside of a nestloop join with the rest of
+     the <literal>FROM</> clause, so that the function(s) are run to
+     completion before the next row from the <literal>FROM</> clause is
+     considered.
     </para>
 
     <note>
@@ -1043,9 +1075,14 @@ SELECT srf1(srf2(x), srf3(y)), srf4(srf5(z)) FROM ...
       sensibly unless they always produced equal numbers of rows.  Otherwise,
       what you got was a number of output rows equal to the least common
       multiple of the numbers of rows produced by the set-returning
-      functions.  Furthermore, nested set-returning functions did not work at
-      all.  Use of the <literal>LATERAL</> syntax is recommended when writing
-      queries that need to work in older <productname>PostgreSQL</> versions.
+      functions.  Also, nested set-returning functions did not work as
+      described above; instead, a set-returning function could have at most
+      one set-returning argument, and each nest of set-returning functions
+      was run independently.  The behavior for conditional execution
+      (set-returning functions inside <literal>CASE</> etc) was different too.
+      Use of the <literal>LATERAL</> syntax is recommended when writing
+      queries that need to work in older <productname>PostgreSQL</> versions,
+      because that will give consistent results across different versions.
      </para>
     </note>
    </sect2>
