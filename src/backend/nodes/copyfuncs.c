@@ -166,6 +166,22 @@ _copyResult(const Result *from)
 }
 
 /*
+ * _copyProjectSet
+ */
+static ProjectSet *
+_copyProjectSet(const ProjectSet *from)
+{
+	ProjectSet *newnode = makeNode(ProjectSet);
+
+	/*
+	 * copy node superclass fields
+	 */
+	CopyPlanFields((const Plan *) from, (Plan *) newnode);
+
+	return newnode;
+}
+
+/*
  * _copyModifyTable
  */
 static ModifyTable *
@@ -4414,6 +4430,9 @@ copyObject(const void *from)
 			break;
 		case T_Result:
 			retval = _copyResult(from);
+			break;
+		case T_ProjectSet:
+			retval = _copyProjectSet(from);
 			break;
 		case T_ModifyTable:
 			retval = _copyModifyTable(from);

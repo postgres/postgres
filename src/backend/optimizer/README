@@ -375,6 +375,7 @@ RelOptInfo      - a relation or joined relations
   UniquePath    - remove duplicate rows (either by hashing or sorting)
   GatherPath    - collect the results of parallel workers
   ProjectionPath - a Result plan node with child (used for projection)
+  ProjectSetPath - a ProjectSet plan node applied to some sub-path
   SortPath      - a Sort plan node applied to some sub-path
   GroupPath     - a Group plan node applied to some sub-path
   UpperUniquePath - a Unique plan node applied to some sub-path

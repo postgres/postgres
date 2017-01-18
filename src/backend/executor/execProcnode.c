@@ -88,6 +88,7 @@
 #include "executor/nodeCustom.h"
 #include "executor/nodeForeignscan.h"
 #include "executor/nodeFunctionscan.h"
+#include "executor/nodeGather.h"
 #include "executor/nodeGroup.h"
 #include "executor/nodeHash.h"
 #include "executor/nodeHashjoin.h"
@@ -100,7 +101,7 @@
 #include "executor/nodeMergejoin.h"
 #include "executor/nodeModifyTable.h"
 #include "executor/nodeNestloop.h"
-#include "executor/nodeGather.h"
+#include "executor/nodeProjectSet.h"
 #include "executor/nodeRecursiveunion.h"
 #include "executor/nodeResult.h"
 #include "executor/nodeSamplescan.h"
@@ -153,6 +154,11 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 		case T_Result:
 			result = (PlanState *) ExecInitResult((Result *) node,
 												  estate, eflags);
+			break;
+
+		case T_ProjectSet:
+			result = (PlanState *) ExecInitProjectSet((ProjectSet *) node,
+													  estate, eflags);
 			break;
 
 		case T_ModifyTable:
@@ -390,6 +396,10 @@ ExecProcNode(PlanState *node)
 			 */
 		case T_ResultState:
 			result = ExecResult((ResultState *) node);
+			break;
+
+		case T_ProjectSetState:
+			result = ExecProjectSet((ProjectSetState *) node);
 			break;
 
 		case T_ModifyTableState:
@@ -632,6 +642,10 @@ ExecEndNode(PlanState *node)
 			 */
 		case T_ResultState:
 			ExecEndResult((ResultState *) node);
+			break;
+
+		case T_ProjectSetState:
+			ExecEndProjectSet((ProjectSetState *) node);
 			break;
 
 		case T_ModifyTableState:

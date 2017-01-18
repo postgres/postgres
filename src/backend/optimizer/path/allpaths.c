@@ -3051,6 +3051,10 @@ print_path(PlannerInfo *root, Path *path, int indent)
 			ptype = "Projection";
 			subpath = ((ProjectionPath *) path)->subpath;
 			break;
+		case T_ProjectSetPath:
+			ptype = "ProjectSet";
+			subpath = ((ProjectSetPath *) path)->subpath;
+			break;
 		case T_SortPath:
 			ptype = "Sort";
 			subpath = ((SortPath *) path)->subpath;

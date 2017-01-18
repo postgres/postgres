@@ -153,6 +153,8 @@ static List *make_pathkeys_for_window(PlannerInfo *root, WindowClause *wc,
 static PathTarget *make_sort_input_target(PlannerInfo *root,
 					   PathTarget *final_target,
 					   bool *have_postponed_srfs);
+static void adjust_paths_for_srfs(PlannerInfo *root, RelOptInfo *rel,
+					  List *targets, List *targets_contain_srfs);
 
 
 /*****************************************************************************
@@ -1400,8 +1402,9 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 	int64		count_est = 0;
 	double		limit_tuples = -1.0;
 	bool		have_postponed_srfs = false;
-	double		tlist_rows;
 	PathTarget *final_target;
+	List	   *final_targets;
+	List	   *final_targets_contain_srfs;
 	RelOptInfo *current_rel;
 	RelOptInfo *final_rel;
 	ListCell   *lc;
@@ -1464,6 +1467,10 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 		/* Also extract the PathTarget form of the setop result tlist */
 		final_target = current_rel->cheapest_total_path->pathtarget;
 
+		/* The setop result tlist couldn't contain any SRFs */
+		Assert(!parse->hasTargetSRFs);
+		final_targets = final_targets_contain_srfs = NIL;
+
 		/*
 		 * Can't handle FOR [KEY] UPDATE/SHARE here (parser should have
 		 * checked already, but let's make sure).
@@ -1489,8 +1496,14 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 	{
 		/* No set operations, do regular planning */
 		PathTarget *sort_input_target;
+		List	   *sort_input_targets;
+		List	   *sort_input_targets_contain_srfs;
 		PathTarget *grouping_target;
+		List	   *grouping_targets;
+		List	   *grouping_targets_contain_srfs;
 		PathTarget *scanjoin_target;
+		List	   *scanjoin_targets;
+		List	   *scanjoin_targets_contain_srfs;
 		bool		have_grouping;
 		AggClauseCosts agg_costs;
 		WindowFuncLists *wflists = NULL;
@@ -1735,8 +1748,50 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 			scanjoin_target = grouping_target;
 
 		/*
-		 * Forcibly apply scan/join target to all the Paths for the scan/join
-		 * rel.
+		 * If there are any SRFs in the targetlist, we must separate each of
+		 * these PathTargets into SRF-computing and SRF-free targets.  Replace
+		 * each of the named targets with a SRF-free version, and remember the
+		 * list of additional projection steps we need to add afterwards.
+		 */
+		if (parse->hasTargetSRFs)
+		{
+			/* final_target doesn't recompute any SRFs in sort_input_target */
+			split_pathtarget_at_srfs(root, final_target, sort_input_target,
+									 &final_targets,
+									 &final_targets_contain_srfs);
+			final_target = (PathTarget *) linitial(final_targets);
+			Assert(!linitial_int(final_targets_contain_srfs));
+			/* likewise for sort_input_target vs. grouping_target */
+			split_pathtarget_at_srfs(root, sort_input_target, grouping_target,
+									 &sort_input_targets,
+									 &sort_input_targets_contain_srfs);
+			sort_input_target = (PathTarget *) linitial(sort_input_targets);
+			Assert(!linitial_int(sort_input_targets_contain_srfs));
+			/* likewise for grouping_target vs. scanjoin_target */
+			split_pathtarget_at_srfs(root, grouping_target, scanjoin_target,
+									 &grouping_targets,
+									 &grouping_targets_contain_srfs);
+			grouping_target = (PathTarget *) linitial(grouping_targets);
+			Assert(!linitial_int(grouping_targets_contain_srfs));
+			/* scanjoin_target will not have any SRFs precomputed for it */
+			split_pathtarget_at_srfs(root, scanjoin_target, NULL,
+									 &scanjoin_targets,
+									 &scanjoin_targets_contain_srfs);
+			scanjoin_target = (PathTarget *) linitial(scanjoin_targets);
+			Assert(!linitial_int(scanjoin_targets_contain_srfs));
+		}
+		else
+		{
+			/* initialize lists, just to keep compiler quiet */
+			final_targets = final_targets_contain_srfs = NIL;
+			sort_input_targets = sort_input_targets_contain_srfs = NIL;
+			grouping_targets = grouping_targets_contain_srfs = NIL;
+			scanjoin_targets = scanjoin_targets_contain_srfs = NIL;
+		}
+
+		/*
+		 * Forcibly apply SRF-free scan/join target to all the Paths for the
+		 * scan/join rel.
 		 *
 		 * In principle we should re-run set_cheapest() here to identify the
 		 * cheapest path, but it seems unlikely that adding the same tlist
@@ -1807,6 +1862,12 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 			current_rel->partial_pathlist = NIL;
 		}
 
+		/* Now fix things up if scan/join target contains SRFs */
+		if (parse->hasTargetSRFs)
+			adjust_paths_for_srfs(root, current_rel,
+								  scanjoin_targets,
+								  scanjoin_targets_contain_srfs);
+
 		/*
 		 * Save the various upper-rel PathTargets we just computed into
 		 * root->upper_targets[].  The core code doesn't use this, but it
@@ -1831,6 +1892,11 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 												&agg_costs,
 												rollup_lists,
 												rollup_groupclauses);
+			/* Fix things up if grouping_target contains SRFs */
+			if (parse->hasTargetSRFs)
+				adjust_paths_for_srfs(root, current_rel,
+									  grouping_targets,
+									  grouping_targets_contain_srfs);
 		}
 
 		/*
@@ -1846,6 +1912,11 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 											  tlist,
 											  wflists,
 											  activeWindows);
+			/* Fix things up if sort_input_target contains SRFs */
+			if (parse->hasTargetSRFs)
+				adjust_paths_for_srfs(root, current_rel,
+									  sort_input_targets,
+									  sort_input_targets_contain_srfs);
 		}
 
 		/*
@@ -1874,40 +1945,11 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 										   final_target,
 										   have_postponed_srfs ? -1.0 :
 										   limit_tuples);
-	}
-
-	/*
-	 * If there are set-returning functions in the tlist, scale up the output
-	 * rowcounts of all surviving Paths to account for that.  Note that if any
-	 * SRFs appear in sorting or grouping columns, we'll have underestimated
-	 * the numbers of rows passing through earlier steps; but that's such a
-	 * weird usage that it doesn't seem worth greatly complicating matters to
-	 * account for it.
-	 */
-	if (parse->hasTargetSRFs)
-		tlist_rows = tlist_returns_set_rows(tlist);
-	else
-		tlist_rows = 1;
-
-	if (tlist_rows > 1)
-	{
-		foreach(lc, current_rel->pathlist)
-		{
-			Path	   *path = (Path *) lfirst(lc);
-
-			/*
-			 * We assume that execution costs of the tlist as such were
-			 * already accounted for.  However, it still seems appropriate to
-			 * charge something more for the executor's general costs of
-			 * processing the added tuples.  The cost is probably less than
-			 * cpu_tuple_cost, though, so we arbitrarily use half of that.
-			 */
-			path->total_cost += path->rows * (tlist_rows - 1) *
-				cpu_tuple_cost / 2;
-
-			path->rows *= tlist_rows;
-		}
-		/* No need to run set_cheapest; we're keeping all paths anyway. */
+		/* Fix things up if final_target contains SRFs */
+		if (parse->hasTargetSRFs)
+			adjust_paths_for_srfs(root, current_rel,
+								  final_targets,
+								  final_targets_contain_srfs);
 	}
 
 	/*
@@ -5099,6 +5141,109 @@ get_cheapest_fractional_path(RelOptInfo *rel, double tuple_fraction)
 	}
 
 	return best_path;
+}
+
+/*
+ * adjust_paths_for_srfs
+ *		Fix up the Paths of the given upperrel to handle tSRFs properly.
+ *
+ * The executor can only handle set-returning functions that appear at the
+ * top level of the targetlist of a ProjectSet plan node.  If we have any SRFs
+ * that are not at top level, we need to split up the evaluation into multiple
+ * plan levels in which each level satisfies this constraint.  This function
+ * modifies each Path of an upperrel that (might) compute any SRFs in its
+ * output tlist to insert appropriate projection steps.
+ *
+ * The given targets and targets_contain_srfs lists are from
+ * split_pathtarget_at_srfs().  We assume the existing Paths emit the first
+ * target in targets.
+ */
+static void
+adjust_paths_for_srfs(PlannerInfo *root, RelOptInfo *rel,
+					  List *targets, List *targets_contain_srfs)
+{
+	ListCell   *lc;
+
+	Assert(list_length(targets) == list_length(targets_contain_srfs));
+	Assert(!linitial_int(targets_contain_srfs));
+
+	/* If no SRFs appear at this plan level, nothing to do */
+	if (list_length(targets) == 1)
+		return;
+
+	/*
+	 * Stack SRF-evaluation nodes atop each path for the rel.
+	 *
+	 * In principle we should re-run set_cheapest() here to identify the
+	 * cheapest path, but it seems unlikely that adding the same tlist eval
+	 * costs to all the paths would change that, so we don't bother. Instead,
+	 * just assume that the cheapest-startup and cheapest-total paths remain
+	 * so.  (There should be no parameterized paths anymore, so we needn't
+	 * worry about updating cheapest_parameterized_paths.)
+	 */
+	foreach(lc, rel->pathlist)
+	{
+		Path	   *subpath = (Path *) lfirst(lc);
+		Path	   *newpath = subpath;
+		ListCell   *lc1,
+				   *lc2;
+
+		Assert(subpath->param_info == NULL);
+		forboth(lc1, targets, lc2, targets_contain_srfs)
+		{
+			PathTarget *thistarget = (PathTarget *) lfirst(lc1);
+			bool		contains_srfs = (bool) lfirst_int(lc2);
+
+			/* If this level doesn't contain SRFs, do regular projection */
+			if (contains_srfs)
+				newpath = (Path *) create_set_projection_path(root,
+															  rel,
+															  newpath,
+															  thistarget);
+			else
+				newpath = (Path *) apply_projection_to_path(root,
+															rel,
+															newpath,
+															thistarget);
+		}
+		lfirst(lc) = newpath;
+		if (subpath == rel->cheapest_startup_path)
+			rel->cheapest_startup_path = newpath;
+		if (subpath == rel->cheapest_total_path)
+			rel->cheapest_total_path = newpath;
+	}
+
+	/* Likewise for partial paths, if any */
+	foreach(lc, rel->partial_pathlist)
+	{
+		Path	   *subpath = (Path *) lfirst(lc);
+		Path	   *newpath = subpath;
+		ListCell   *lc1,
+				   *lc2;
+
+		Assert(subpath->param_info == NULL);
+		forboth(lc1, targets, lc2, targets_contain_srfs)
+		{
+			PathTarget *thistarget = (PathTarget *) lfirst(lc1);
+			bool		contains_srfs = (bool) lfirst_int(lc2);
+
+			/* If this level doesn't contain SRFs, do regular projection */
+			if (contains_srfs)
+				newpath = (Path *) create_set_projection_path(root,
+															  rel,
+															  newpath,
+															  thistarget);
+			else
+			{
+				/* avoid apply_projection_to_path, in case of multiple refs */
+				newpath = (Path *) create_projection_path(root,
+														  rel,
+														  newpath,
+														  thistarget);
+			}
+		}
+		lfirst(lc) = newpath;
+	}
 }
 
 /*

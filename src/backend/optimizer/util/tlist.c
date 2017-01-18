@@ -16,7 +16,18 @@
 
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
+#include "optimizer/cost.h"
 #include "optimizer/tlist.h"
+
+
+typedef struct
+{
+	List	   *nextlevel_tlist;
+	bool		nextlevel_contains_srfs;
+} split_pathtarget_context;
+
+static bool split_pathtarget_walker(Node *node,
+						split_pathtarget_context *context);
 
 
 /*****************************************************************************
@@ -758,4 +769,192 @@ apply_pathtarget_labeling_to_tlist(List *tlist, PathTarget *target)
 		}
 		i++;
 	}
+}
+
+/*
+ * split_pathtarget_at_srfs
+ *		Split given PathTarget into multiple levels to position SRFs safely
+ *
+ * The executor can only handle set-returning functions that appear at the
+ * top level of the targetlist of a ProjectSet plan node.  If we have any SRFs
+ * that are not at top level, we need to split up the evaluation into multiple
+ * plan levels in which each level satisfies this constraint.  This function
+ * creates appropriate PathTarget(s) for each level.
+ *
+ * As an example, consider the tlist expression
+ *		x + srf1(srf2(y + z))
+ * This expression should appear as-is in the top PathTarget, but below that
+ * we must have a PathTarget containing
+ *		x, srf1(srf2(y + z))
+ * and below that, another PathTarget containing
+ *		x, srf2(y + z)
+ * and below that, another PathTarget containing
+ *		x, y, z
+ * When these tlists are processed by setrefs.c, subexpressions that match
+ * output expressions of the next lower tlist will be replaced by Vars,
+ * so that what the executor gets are tlists looking like
+ *		Var1 + Var2
+ *		Var1, srf1(Var2)
+ *		Var1, srf2(Var2 + Var3)
+ *		x, y, z
+ * which satisfy the desired property.
+ *
+ * In some cases, a SRF has already been evaluated in some previous plan level
+ * and we shouldn't expand it again (that is, what we see in the target is
+ * already meant as a reference to a lower subexpression).  So, don't expand
+ * any tlist expressions that appear in input_target, if that's not NULL.
+ * In principle we might need to consider matching subexpressions to
+ * input_target, but for now it's not necessary because only ORDER BY and
+ * GROUP BY expressions are at issue and those will look the same at both
+ * plan levels.
+ *
+ * The outputs of this function are two parallel lists, one a list of
+ * PathTargets and the other an integer list of bool flags indicating
+ * whether the corresponding PathTarget contains any top-level SRFs.
+ * The lists are given in the order they'd need to be evaluated in, with
+ * the "lowest" PathTarget first.  So the last list entry is always the
+ * originally given PathTarget, and any entries before it indicate evaluation
+ * levels that must be inserted below it.  The first list entry must not
+ * contain any SRFs, since it will typically be attached to a plan node
+ * that cannot evaluate SRFs.
+ *
+ * Note: using a list for the flags may seem like overkill, since there
+ * are only a few possible patterns for which levels contain SRFs.
+ * But this representation decouples callers from that knowledge.
+ */
+void
+split_pathtarget_at_srfs(PlannerInfo *root,
+						 PathTarget *target, PathTarget *input_target,
+						 List **targets, List **targets_contain_srfs)
+{
+	/* Initialize output lists to empty; we prepend to them within loop */
+	*targets = *targets_contain_srfs = NIL;
+
+	/* Loop to consider each level of PathTarget we need */
+	for (;;)
+	{
+		bool		target_contains_srfs = false;
+		split_pathtarget_context context;
+		ListCell   *lc;
+
+		context.nextlevel_tlist = NIL;
+		context.nextlevel_contains_srfs = false;
+
+		/*
+		 * Scan the PathTarget looking for SRFs.  Top-level SRFs are handled
+		 * in this loop, ones lower down are found by split_pathtarget_walker.
+		 */
+		foreach(lc, target->exprs)
+		{
+			Node	   *node = (Node *) lfirst(lc);
+
+			/*
+			 * A tlist item that is just a reference to an expression already
+			 * computed in input_target need not be evaluated here, so just
+			 * make sure it's included in the next PathTarget.
+			 */
+			if (input_target && list_member(input_target->exprs, node))
+			{
+				context.nextlevel_tlist = lappend(context.nextlevel_tlist, node);
+				continue;
+			}
+
+			/* Else, we need to compute this expression. */
+			if (IsA(node, FuncExpr) &&
+				((FuncExpr *) node)->funcretset)
+			{
+				/* Top-level SRF: it can be evaluated here */
+				target_contains_srfs = true;
+				/* Recursively examine SRF's inputs */
+				split_pathtarget_walker((Node *) ((FuncExpr *) node)->args,
+										&context);
+			}
+			else if (IsA(node, OpExpr) &&
+					 ((OpExpr *) node)->opretset)
+			{
+				/* Same as above, but for set-returning operator */
+				target_contains_srfs = true;
+				split_pathtarget_walker((Node *) ((OpExpr *) node)->args,
+										&context);
+			}
+			else
+			{
+				/* Not a top-level SRF, so recursively examine expression */
+				split_pathtarget_walker(node, &context);
+			}
+		}
+
+		/*
+		 * Prepend current target and associated flag to output lists.
+		 */
+		*targets = lcons(target, *targets);
+		*targets_contain_srfs = lcons_int(target_contains_srfs,
+										  *targets_contain_srfs);
+
+		/*
+		 * Done if we found no SRFs anywhere in this target; the tentative
+		 * tlist we built for the next level can be discarded.
+		 */
+		if (!target_contains_srfs && !context.nextlevel_contains_srfs)
+			break;
+
+		/*
+		 * Else build the next PathTarget down, and loop back to process it.
+		 * Copy the subexpressions to make sure PathTargets don't share
+		 * substructure (might be unnecessary, but be safe); and drop any
+		 * duplicate entries in the sub-targetlist.
+		 */
+		target = create_empty_pathtarget();
+		add_new_columns_to_pathtarget(target,
+							   (List *) copyObject(context.nextlevel_tlist));
+		set_pathtarget_cost_width(root, target);
+	}
+}
+
+/* Recursively examine expressions for split_pathtarget_at_srfs */
+static bool
+split_pathtarget_walker(Node *node, split_pathtarget_context *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Var) ||
+		IsA(node, PlaceHolderVar) ||
+		IsA(node, Aggref) ||
+		IsA(node, GroupingFunc) ||
+		IsA(node, WindowFunc))
+	{
+		/*
+		 * Pass these items down to the child plan level for evaluation.
+		 *
+		 * We assume that these constructs cannot contain any SRFs (if one
+		 * does, there will be an executor failure from a misplaced SRF).
+		 */
+		context->nextlevel_tlist = lappend(context->nextlevel_tlist, node);
+
+		/* Having done that, we need not examine their sub-structure */
+		return false;
+	}
+	else if ((IsA(node, FuncExpr) &&
+			  ((FuncExpr *) node)->funcretset) ||
+			 (IsA(node, OpExpr) &&
+			  ((OpExpr *) node)->opretset))
+	{
+		/*
+		 * Pass SRFs down to the child plan level for evaluation, and mark
+		 * that it contains SRFs.  (We are not at top level of our own tlist,
+		 * else this would have been picked up by split_pathtarget_at_srfs.)
+		 */
+		context->nextlevel_tlist = lappend(context->nextlevel_tlist, node);
+		context->nextlevel_contains_srfs = true;
+
+		/* Inputs to the SRF need not be considered here, so we're done */
+		return false;
+	}
+
+	/*
+	 * Otherwise, the node is evaluatable within the current PathTarget, so
+	 * recurse to examine its inputs.
+	 */
+	return expression_tree_walker(node, split_pathtarget_walker,
+								  (void *) context);
 }

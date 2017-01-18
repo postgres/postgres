@@ -253,6 +253,10 @@ extern Tuplestorestate *ExecMakeTableFunctionResult(ExprState *funcexpr,
 							MemoryContext argContext,
 							TupleDesc expectedDesc,
 							bool randomAccess);
+extern Datum ExecMakeFunctionResultSet(FuncExprState *fcache,
+						  ExprContext *econtext,
+						  bool *isNull,
+						  ExprDoneCond *isDone);
 extern Datum ExecEvalExprSwitchContext(ExprState *expression, ExprContext *econtext,
 						  bool *isNull, ExprDoneCond *isDone);
 extern ExprState *ExecInitExpr(Expr *node, PlanState *parent);

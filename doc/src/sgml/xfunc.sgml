@@ -962,12 +962,11 @@ SELECT name, child FROM nodes, LATERAL listchildren(name) AS child;
     </para>
 
     <para>
-     Currently, functions returning sets can also be called in the select list
+     Functions returning sets can also be called in the select list
      of a query.  For each row that the query
-     generates by itself, the function returning set is invoked, and an output
-     row is generated for each element of the function's result set. Note,
-     however, that this capability is deprecated and might be removed in future
-     releases. The previous example could also be done with queries like
+     generates by itself, the set-returning function is invoked, and an output
+     row is generated for each element of the function's result set.
+     The previous example could also be done with queries like
      these:
 
 <screen>
@@ -998,6 +997,33 @@ SELECT name, listchildren(name) FROM nodes;
      the <literal>LATERAL</> syntax.
     </para>
 
+    <para>
+     If there is more than one set-returning function in the same select
+     list, the behavior is similar to what you get from putting the functions
+     into a single <literal>LATERAL ROWS FROM( ... )</> <literal>FROM</>-clause
+     item.  For each row from the underlying query, there is an output row
+     using the first result from each function, then an output row using the
+     second result, and so on.  If some of the set-returning functions
+     produce fewer outputs than others, null values are substituted for the
+     missing data, so that the total number of rows emitted for one
+     underlying row is the same as for the set-returning function that
+     produced the most outputs.
+    </para>
+
+    <para>
+     Set-returning functions can be nested in a select list, although that is
+     not allowed in <literal>FROM</>-clause items.  In such cases, each level
+     of nesting is treated separately, as though it were
+     another <literal>LATERAL ROWS FROM( ... )</> item.  For example, in
+<programlisting>
+SELECT srf1(srf2(x), srf3(y)), srf4(srf5(z)) FROM ...
+</programlisting>
+     the set-returning functions <function>srf2</>, <function>srf3</>,
+     and <function>srf5</> would be run in lockstep for each row of the
+     underlying query, and then <function>srf1</> and <function>srf4</> would
+     be applied in lockstep to each row produced by the lower functions.
+    </para>
+
     <note>
      <para>
       If a function's last command is <command>INSERT</>, <command>UPDATE</>,
@@ -1012,14 +1038,14 @@ SELECT name, listchildren(name) FROM nodes;
 
     <note>
      <para>
-      The key problem with using set-returning functions in the select list,
-      rather than the <literal>FROM</> clause, is that putting more than one
-      set-returning function in the same select list does not behave very
-      sensibly.  (What you actually get if you do so is a number of output
-      rows equal to the least common multiple of the numbers of rows produced
-      by each set-returning function.)  The <literal>LATERAL</> syntax
-      produces less surprising results when calling multiple set-returning
-      functions, and should usually be used instead.
+      Before <productname>PostgreSQL</> 10, putting more than one
+      set-returning function in the same select list did not behave very
+      sensibly unless they always produced equal numbers of rows.  Otherwise,
+      what you got was a number of output rows equal to the least common
+      multiple of the numbers of rows produced by the set-returning
+      functions.  Furthermore, nested set-returning functions did not work at
+      all.  Use of the <literal>LATERAL</> syntax is recommended when writing
+      queries that need to work in older <productname>PostgreSQL</> versions.
      </para>
     </note>
    </sect2>

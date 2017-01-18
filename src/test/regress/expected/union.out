@@ -636,9 +636,10 @@ ORDER BY x;
          ->  HashAggregate
                Group Key: (1), (generate_series(1, 10))
                ->  Append
+                     ->  ProjectSet
+                           ->  Result
                      ->  Result
-                     ->  Result
-(9 rows)
+(10 rows)
 
 SELECT * FROM
   (SELECT 1 AS t, generate_series(1,10) AS x

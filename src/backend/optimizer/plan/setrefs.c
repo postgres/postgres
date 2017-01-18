@@ -733,6 +733,9 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 					fix_scan_expr(root, splan->resconstantqual, rtoffset);
 			}
 			break;
+		case T_ProjectSet:
+			set_upper_references(root, plan, rtoffset);
+			break;
 		case T_ModifyTable:
 			{
 				ModifyTable *splan = (ModifyTable *) plan;

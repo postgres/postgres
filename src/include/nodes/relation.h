@@ -1305,6 +1305,17 @@ typedef struct ProjectionPath
 } ProjectionPath;
 
 /*
+ * ProjectSetPath represents evaluation of a targetlist that includes
+ * set-returning function(s), which will need to be implemented by a
+ * ProjectSet plan node.
+ */
+typedef struct ProjectSetPath
+{
+	Path		path;
+	Path	   *subpath;		/* path representing input source */
+} ProjectSetPath;
+
+/*
  * SortPath represents an explicit sort step
  *
  * The sort keys are, by definition, the same as path.pathkeys.

@@ -852,6 +852,9 @@ ExplainNode(PlanState *planstate, List *ancestors,
 		case T_Result:
 			pname = sname = "Result";
 			break;
+		case T_ProjectSet:
+			pname = sname = "ProjectSet";
+			break;
 		case T_ModifyTable:
 			sname = "ModifyTable";
 			switch (((ModifyTable *) plan)->operation)

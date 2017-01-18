@@ -1484,6 +1484,19 @@ _readResult(void)
 }
 
 /*
+ * _readProjectSet
+ */
+static ProjectSet *
+_readProjectSet(void)
+{
+	READ_LOCALS_NO_FIELDS(ProjectSet);
+
+	ReadCommonPlan(&local_node->plan);
+
+	READ_DONE();
+}
+
+/*
  * _readModifyTable
  */
 static ModifyTable *
@@ -2450,6 +2463,8 @@ parseNodeString(void)
 		return_value = _readPlan();
 	else if (MATCH("RESULT", 6))
 		return_value = _readResult();
+	else if (MATCH("PROJECTSET", 10))
+		return_value = _readProjectSet();
 	else if (MATCH("MODIFYTABLE", 11))
 		return_value = _readModifyTable();
 	else if (MATCH("APPEND", 6))

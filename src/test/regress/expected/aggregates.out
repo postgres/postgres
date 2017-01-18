@@ -822,8 +822,9 @@ explain (costs off)
      ->  Limit
            ->  Index Only Scan Backward using tenk1_unique2 on tenk1
                  Index Cond: (unique2 IS NOT NULL)
-   ->  Result
-(7 rows)
+   ->  ProjectSet
+         ->  Result
+(8 rows)
 
 select max(unique2), generate_series(1,3) as g from tenk1 order by g desc;
  max  | g 

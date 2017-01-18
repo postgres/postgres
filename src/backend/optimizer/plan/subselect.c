@@ -2680,6 +2680,7 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 							  &context);
 			break;
 
+		case T_ProjectSet:
 		case T_Hash:
 		case T_Material:
 		case T_Sort:
@@ -2687,6 +2688,7 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 		case T_Gather:
 		case T_SetOp:
 		case T_Group:
+			/* no node-type-specific fields need fixing */
 			break;
 
 		default:

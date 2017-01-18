@@ -25,8 +25,8 @@ SELECT generate_series(1, 2), generate_series(1,4);
 -----------------+-----------------
                1 |               1
                2 |               2
-               1 |               3
-               2 |               4
+                 |               3
+                 |               4
 (4 rows)
 
 -- srf, with SRF argument
@@ -43,7 +43,16 @@ SELECT generate_series(1, generate_series(1, 3));
 
 -- srf, with two SRF arguments
 SELECT generate_series(generate_series(1,3), generate_series(2, 4));
-ERROR:  functions and operators can take at most one set argument
+ generate_series 
+-----------------
+               1
+               2
+               2
+               3
+               3
+               4
+(6 rows)
+
 CREATE TABLE few(id int, dataa text, datab text);
 INSERT INTO few VALUES(1, 'a', 'foo'),(2, 'a', 'bar'),(3, 'b', 'bar');
 -- SRF output order of sorting is maintained, if SRF is not referenced
@@ -118,15 +127,15 @@ SELECT few.dataa, count(*), min(id), max(id), unnest('{1,1,3}'::int[]) FROM few 
 SELECT few.dataa, count(*), min(id), max(id), unnest('{1,1,3}'::int[]) FROM few WHERE few.id = 1 GROUP BY few.dataa, unnest('{1,1,3}'::int[]);
  dataa | count | min | max | unnest 
 -------+-------+-----+-----+--------
- a     |     2 |   1 |   1 |      1
  a     |     1 |   1 |   1 |      3
+ a     |     2 |   1 |   1 |      1
 (2 rows)
 
 SELECT few.dataa, count(*), min(id), max(id), unnest('{1,1,3}'::int[]) FROM few WHERE few.id = 1 GROUP BY few.dataa, 5;
  dataa | count | min | max | unnest 
 -------+-------+-----+-----+--------
- a     |     2 |   1 |   1 |      1
  a     |     1 |   1 |   1 |      3
+ a     |     2 |   1 |   1 |      1
 (2 rows)
 
 -- check HAVING works when GROUP BY does [not] reference SRF output

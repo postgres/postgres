@@ -81,6 +81,7 @@ static Plan *create_join_plan(PlannerInfo *root, JoinPath *best_path);
 static Plan *create_append_plan(PlannerInfo *root, AppendPath *best_path);
 static Plan *create_merge_append_plan(PlannerInfo *root, MergeAppendPath *best_path);
 static Result *create_result_plan(PlannerInfo *root, ResultPath *best_path);
+static ProjectSet *create_project_set_plan(PlannerInfo *root, ProjectSetPath *best_path);
 static Material *create_material_plan(PlannerInfo *root, MaterialPath *best_path,
 					 int flags);
 static Plan *create_unique_plan(PlannerInfo *root, UniquePath *best_path,
@@ -264,6 +265,7 @@ static SetOp *make_setop(SetOpCmd cmd, SetOpStrategy strategy, Plan *lefttree,
 		   long numGroups);
 static LockRows *make_lockrows(Plan *lefttree, List *rowMarks, int epqParam);
 static Result *make_result(List *tlist, Node *resconstantqual, Plan *subplan);
+static ProjectSet *make_project_set(List *tlist, Plan *subplan);
 static ModifyTable *make_modifytable(PlannerInfo *root,
 				 CmdType operation, bool canSetTag,
 				 Index nominalRelation,
@@ -391,6 +393,10 @@ create_plan_recurse(PlannerInfo *root, Path *best_path, int flags)
 				plan = (Plan *) create_result_plan(root,
 												   (ResultPath *) best_path);
 			}
+			break;
+		case T_ProjectSet:
+			plan = (Plan *) create_project_set_plan(root,
+											   (ProjectSetPath *) best_path);
 			break;
 		case T_Material:
 			plan = (Plan *) create_material_plan(root,
@@ -1135,6 +1141,31 @@ create_result_plan(PlannerInfo *root, ResultPath *best_path)
 	quals = order_qual_clauses(root, best_path->quals);
 
 	plan = make_result(tlist, (Node *) quals, NULL);
+
+	copy_generic_path_info(&plan->plan, (Path *) best_path);
+
+	return plan;
+}
+
+/*
+ * create_project_set_plan
+ *	  Create a ProjectSet plan for 'best_path'.
+ *
+ *	  Returns a Plan node.
+ */
+static ProjectSet *
+create_project_set_plan(PlannerInfo *root, ProjectSetPath *best_path)
+{
+	ProjectSet *plan;
+	Plan	   *subplan;
+	List	   *tlist;
+
+	/* Since we intend to project, we don't need to constrain child tlist */
+	subplan = create_plan_recurse(root, best_path->subpath, 0);
+
+	tlist = build_path_tlist(root, &best_path->path);
+
+	plan = make_project_set(tlist, subplan);
 
 	copy_generic_path_info(&plan->plan, (Path *) best_path);
 
@@ -6064,6 +6095,25 @@ make_result(List *tlist,
 }
 
 /*
+ * make_project_set
+ *	  Build a ProjectSet plan node
+ */
+static ProjectSet *
+make_project_set(List *tlist,
+				 Plan *subplan)
+{
+	ProjectSet *node = makeNode(ProjectSet);
+	Plan	   *plan = &node->plan;
+
+	plan->targetlist = tlist;
+	plan->qual = NIL;
+	plan->lefttree = subplan;
+	plan->righttree = NULL;
+
+	return node;
+}
+
+/*
  * make_modifytable
  *	  Build a ModifyTable plan node
  */
@@ -6229,6 +6279,15 @@ is_projection_capable_path(Path *path)
 			 * projection to its dummy path.
 			 */
 			return IS_DUMMY_PATH(path);
+		case T_ProjectSet:
+
+			/*
+			 * Although ProjectSet certainly projects, say "no" because we
+			 * don't want the planner to randomly replace its tlist with
+			 * something else; the SRFs have to stay at top level.  This might
+			 * get relaxed later.
+			 */
+			return false;
 		default:
 			break;
 	}
@@ -6256,6 +6315,15 @@ is_projection_capable_plan(Plan *plan)
 		case T_Append:
 		case T_MergeAppend:
 		case T_RecursiveUnion:
+			return false;
+		case T_ProjectSet:
+
+			/*
+			 * Although ProjectSet certainly projects, say "no" because we
+			 * don't want the planner to randomly replace its tlist with
+			 * something else; the SRFs have to stay at top level.  This might
+			 * get relaxed later.
+			 */
 			return false;
 		default:
 			break;

@@ -39,6 +39,7 @@
 #include "executor/nodeMergejoin.h"
 #include "executor/nodeModifyTable.h"
 #include "executor/nodeNestloop.h"
+#include "executor/nodeProjectSet.h"
 #include "executor/nodeRecursiveunion.h"
 #include "executor/nodeResult.h"
 #include "executor/nodeSamplescan.h"
@@ -128,6 +129,10 @@ ExecReScan(PlanState *node)
 	{
 		case T_ResultState:
 			ExecReScanResult((ResultState *) node);
+			break;
+
+		case T_ProjectSetState:
+			ExecReScanProjectSet((ProjectSetState *) node);
 			break;
 
 		case T_ModifyTableState:

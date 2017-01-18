@@ -177,6 +177,17 @@ typedef struct Result
 } Result;
 
 /* ----------------
+ *	 ProjectSet node -
+ *		Apply a projection that includes set-returning functions to the
+ *		output tuples of the outer plan.
+ * ----------------
+ */
+typedef struct ProjectSet
+{
+	Plan		plan;
+} ProjectSet;
+
+/* ----------------
  *	 ModifyTable node -
  *		Apply rows produced by subplan(s) to result table(s),
  *		by inserting, updating, or deleting.

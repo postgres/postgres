@@ -99,7 +99,6 @@ static bool contain_agg_clause_walker(Node *node, void *context);
 static bool get_agg_clause_costs_walker(Node *node,
 							get_agg_clause_costs_context *context);
 static bool find_window_functions_walker(Node *node, WindowFuncLists *lists);
-static bool expression_returns_set_rows_walker(Node *node, double *count);
 static bool contain_subplans_walker(Node *node, void *context);
 static bool contain_mutable_functions_walker(Node *node, void *context);
 static bool contain_volatile_functions_walker(Node *node, void *context);
@@ -790,114 +789,37 @@ find_window_functions_walker(Node *node, WindowFuncLists *lists)
 /*
  * expression_returns_set_rows
  *	  Estimate the number of rows returned by a set-returning expression.
- *	  The result is 1 if there are no set-returning functions.
+ *	  The result is 1 if it's not a set-returning expression.
  *
- * We use the product of the rowcount estimates of all the functions in
- * the given tree (this corresponds to the behavior of ExecMakeFunctionResult
- * for nested set-returning functions).
+ * We should only examine the top-level function or operator; it used to be
+ * appropriate to recurse, but not anymore.  (Even if there are more SRFs in
+ * the function's inputs, their multipliers are accounted for separately.)
  *
  * Note: keep this in sync with expression_returns_set() in nodes/nodeFuncs.c.
  */
 double
 expression_returns_set_rows(Node *clause)
 {
-	double		result = 1;
-
-	(void) expression_returns_set_rows_walker(clause, &result);
-	return clamp_row_est(result);
-}
-
-static bool
-expression_returns_set_rows_walker(Node *node, double *count)
-{
-	if (node == NULL)
-		return false;
-	if (IsA(node, FuncExpr))
+	if (clause == NULL)
+		return 1.0;
+	if (IsA(clause, FuncExpr))
 	{
-		FuncExpr   *expr = (FuncExpr *) node;
+		FuncExpr   *expr = (FuncExpr *) clause;
 
 		if (expr->funcretset)
-			*count *= get_func_rows(expr->funcid);
+			return clamp_row_est(get_func_rows(expr->funcid));
 	}
-	if (IsA(node, OpExpr))
+	if (IsA(clause, OpExpr))
 	{
-		OpExpr	   *expr = (OpExpr *) node;
+		OpExpr	   *expr = (OpExpr *) clause;
 
 		if (expr->opretset)
 		{
 			set_opfuncid(expr);
-			*count *= get_func_rows(expr->opfuncid);
+			return clamp_row_est(get_func_rows(expr->opfuncid));
 		}
 	}
-
-	/* Avoid recursion for some cases that can't return a set */
-	if (IsA(node, Aggref))
-		return false;
-	if (IsA(node, WindowFunc))
-		return false;
-	if (IsA(node, DistinctExpr))
-		return false;
-	if (IsA(node, NullIfExpr))
-		return false;
-	if (IsA(node, ScalarArrayOpExpr))
-		return false;
-	if (IsA(node, BoolExpr))
-		return false;
-	if (IsA(node, SubLink))
-		return false;
-	if (IsA(node, SubPlan))
-		return false;
-	if (IsA(node, AlternativeSubPlan))
-		return false;
-	if (IsA(node, ArrayExpr))
-		return false;
-	if (IsA(node, RowExpr))
-		return false;
-	if (IsA(node, RowCompareExpr))
-		return false;
-	if (IsA(node, CoalesceExpr))
-		return false;
-	if (IsA(node, MinMaxExpr))
-		return false;
-	if (IsA(node, XmlExpr))
-		return false;
-
-	return expression_tree_walker(node, expression_returns_set_rows_walker,
-								  (void *) count);
-}
-
-/*
- * tlist_returns_set_rows
- *	  Estimate the number of rows returned by a set-returning targetlist.
- *	  The result is 1 if there are no set-returning functions.
- *
- * Here, the result is the largest rowcount estimate of any of the tlist's
- * expressions, not the product as you would get from naively applying
- * expression_returns_set_rows() to the whole tlist.  The behavior actually
- * implemented by ExecTargetList produces a number of rows equal to the least
- * common multiple of the expression rowcounts, so that the product would be
- * a worst-case estimate that is typically not realistic.  Taking the max as
- * we do here is a best-case estimate that might not be realistic either,
- * but it's probably closer for typical usages.  We don't try to compute the
- * actual LCM because we're working with very approximate estimates, so their
- * LCM would be unduly noisy.
- */
-double
-tlist_returns_set_rows(List *tlist)
-{
-	double		result = 1;
-	ListCell   *lc;
-
-	foreach(lc, tlist)
-	{
-		TargetEntry *tle = (TargetEntry *) lfirst(lc);
-		double		colresult;
-
-		colresult = expression_returns_set_rows((Node *) tle->expr);
-		if (result < colresult)
-			result = colresult;
-	}
-	return result;
+	return 1.0;
 }
 
 

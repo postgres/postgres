@@ -1995,12 +1995,10 @@ SELECT *,
         END)
 FROM
   (VALUES (1,''), (2,'0000000049404'), (3,'FROM 10000000876')) v(id, str);
- id |       str        |      lower       
-----+------------------+------------------
-  1 |                  | 
-  2 | 0000000049404    | 49404
-  3 | FROM 10000000876 | from 10000000876
-(3 rows)
+ id |      str      | lower 
+----+---------------+-------
+  2 | 0000000049404 | 49404
+(1 row)
 
 -- check whole-row-Var handling in nested lateral functions (bug #11703)
 create function extractq2(t int8_tbl) returns int8 as $$

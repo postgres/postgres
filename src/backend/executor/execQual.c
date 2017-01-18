@@ -29,9 +29,9 @@
  *		instead of doing needless copying.  -cim 5/31/91
  *
  *		During expression evaluation, we check_stack_depth only in
- *		ExecMakeFunctionResult (and substitute routines) rather than at every
- *		single node.  This is a compromise that trades off precision of the
- *		stack limit setting to gain speed.
+ *		ExecMakeFunctionResultSet/ExecMakeFunctionResultNoSets rather than at
+ *		every single node.  This is a compromise that trades off precision of
+ *		the stack limit setting to gain speed.
  */
 
 #include "postgres.h"
@@ -92,7 +92,7 @@ static Datum ExecEvalParamExec(ExprState *exprstate, ExprContext *econtext,
 static Datum ExecEvalParamExtern(ExprState *exprstate, ExprContext *econtext,
 					bool *isNull, ExprDoneCond *isDone);
 static void init_fcache(Oid foid, Oid input_collation, FuncExprState *fcache,
-			MemoryContext fcacheCxt, bool needDescForSets);
+			MemoryContext fcacheCxt, bool allowSRF, bool needDescForSRF);
 static void ShutdownFuncExpr(Datum arg);
 static TupleDesc get_cached_rowtype(Oid type_id, int32 typmod,
 				   TupleDesc *cache_field, ExprContext *econtext);
@@ -104,10 +104,6 @@ static void ExecPrepareTuplestoreResult(FuncExprState *fcache,
 							Tuplestorestate *resultStore,
 							TupleDesc resultDesc);
 static void tupledesc_match(TupleDesc dst_tupdesc, TupleDesc src_tupdesc);
-static Datum ExecMakeFunctionResult(FuncExprState *fcache,
-					   ExprContext *econtext,
-					   bool *isNull,
-					   ExprDoneCond *isDone);
 static Datum ExecMakeFunctionResultNoSets(FuncExprState *fcache,
 							 ExprContext *econtext,
 							 bool *isNull, ExprDoneCond *isDone);
@@ -1327,7 +1323,7 @@ GetAttributeByName(HeapTupleHeader tuple, const char *attname, bool *isNull)
  */
 static void
 init_fcache(Oid foid, Oid input_collation, FuncExprState *fcache,
-			MemoryContext fcacheCxt, bool needDescForSets)
+			MemoryContext fcacheCxt, bool allowSRF, bool needDescForSRF)
 {
 	AclResult	aclresult;
 
@@ -1360,8 +1356,17 @@ init_fcache(Oid foid, Oid input_collation, FuncExprState *fcache,
 							 list_length(fcache->args),
 							 input_collation, NULL, NULL);
 
+	/* If function returns set, check if that's allowed by caller */
+	if (fcache->func.fn_retset && !allowSRF)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("set-valued function called in context that cannot accept a set")));
+
+	/* Otherwise, ExecInitExpr should have marked the fcache correctly */
+	Assert(fcache->func.fn_retset == fcache->funcReturnsSet);
+
 	/* If function returns set, prepare expected tuple descriptor */
-	if (fcache->func.fn_retset && needDescForSets)
+	if (fcache->func.fn_retset && needDescForSRF)
 	{
 		TypeFuncClass functypclass;
 		Oid			funcrettype;
@@ -1549,7 +1554,7 @@ ExecEvalFuncArgs(FunctionCallInfo fcinfo,
 /*
  *		ExecPrepareTuplestoreResult
  *
- * Subroutine for ExecMakeFunctionResult: prepare to extract rows from a
+ * Subroutine for ExecMakeFunctionResultSet: prepare to extract rows from a
  * tuplestore function result.  We must set up a funcResultSlot (unless
  * already done in a previous call cycle) and verify that the function
  * returned the expected tuple descriptor.
@@ -1673,19 +1678,17 @@ tupledesc_match(TupleDesc dst_tupdesc, TupleDesc src_tupdesc)
 }
 
 /*
- *		ExecMakeFunctionResult
+ *		ExecMakeFunctionResultSet
  *
- * Evaluate the arguments to a function and then the function itself.
- * init_fcache is presumed already run on the FuncExprState.
- *
- * This function handles the most general case, wherein the function or
- * one of its arguments can return a set.
+ * Evaluate the arguments to a set-returning function and then call the
+ * function itself.  The argument expressions may not contain set-returning
+ * functions (the planner is supposed to have separated evaluation for those).
  */
-static Datum
-ExecMakeFunctionResult(FuncExprState *fcache,
-					   ExprContext *econtext,
-					   bool *isNull,
-					   ExprDoneCond *isDone)
+Datum
+ExecMakeFunctionResultSet(FuncExprState *fcache,
+						  ExprContext *econtext,
+						  bool *isNull,
+						  ExprDoneCond *isDone)
 {
 	List	   *arguments;
 	Datum		result;
@@ -1700,6 +1703,31 @@ restart:
 
 	/* Guard against stack overflow due to overly complex expressions */
 	check_stack_depth();
+
+	/*
+	 * Initialize function cache if first time through.  The expression node
+	 * could be either a FuncExpr or an OpExpr.
+	 */
+	if (fcache->func.fn_oid == InvalidOid)
+	{
+		if (IsA(fcache->xprstate.expr, FuncExpr))
+		{
+			FuncExpr   *func = (FuncExpr *) fcache->xprstate.expr;
+
+			init_fcache(func->funcid, func->inputcollid, fcache,
+						econtext->ecxt_per_query_memory, true, true);
+		}
+		else if (IsA(fcache->xprstate.expr, OpExpr))
+		{
+			OpExpr	   *op = (OpExpr *) fcache->xprstate.expr;
+
+			init_fcache(op->opfuncid, op->inputcollid, fcache,
+						econtext->ecxt_per_query_memory, true, true);
+		}
+		else
+			elog(ERROR, "unrecognized node type: %d",
+				 (int) nodeTag(fcache->xprstate.expr));
+	}
 
 	/*
 	 * If a previous call of the function returned a set result in the form of
@@ -1750,19 +1778,11 @@ restart:
 	if (!fcache->setArgsValid)
 	{
 		argDone = ExecEvalFuncArgs(fcinfo, arguments, econtext);
-		if (argDone == ExprEndResult)
-		{
-			/* input is an empty set, so return an empty set. */
-			*isNull = true;
-			if (isDone)
-				*isDone = ExprEndResult;
-			else
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("set-valued function called in context that cannot accept a set")));
-			return (Datum) 0;
-		}
-		hasSetArg = (argDone != ExprSingleResult);
+		if (argDone != ExprSingleResult)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("set-valued function called in context that cannot accept a set")));
+		hasSetArg = false;
 	}
 	else
 	{
@@ -1989,8 +2009,8 @@ restart:
 /*
  *		ExecMakeFunctionResultNoSets
  *
- * Simplified version of ExecMakeFunctionResult that can only handle
- * non-set cases.  Hand-tuned for speed.
+ * Evaluate a function or operator node with a non-set-returning function.
+ * Assumes init_fcache() already done.  Hand-tuned for speed.
  */
 static Datum
 ExecMakeFunctionResultNoSets(FuncExprState *fcache,
@@ -2120,7 +2140,7 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 		ExprDoneCond argDone;
 
 		/*
-		 * This path is similar to ExecMakeFunctionResult.
+		 * This path is similar to ExecMakeFunctionResultSet.
 		 */
 		direct_function_call = true;
 
@@ -2132,7 +2152,7 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 			FuncExpr   *func = (FuncExpr *) fcache->xprstate.expr;
 
 			init_fcache(func->funcid, func->inputcollid, fcache,
-						econtext->ecxt_per_query_memory, false);
+						econtext->ecxt_per_query_memory, true, false);
 		}
 		returnsSet = fcache->func.fn_retset;
 		InitFunctionCallInfoData(fcinfo, &(fcache->func),
@@ -2423,24 +2443,11 @@ ExecEvalFunc(FuncExprState *fcache,
 
 	/* Initialize function lookup info */
 	init_fcache(func->funcid, func->inputcollid, fcache,
-				econtext->ecxt_per_query_memory, true);
+				econtext->ecxt_per_query_memory, false, false);
 
-	/*
-	 * We need to invoke ExecMakeFunctionResult if either the function itself
-	 * or any of its input expressions can return a set.  Otherwise, invoke
-	 * ExecMakeFunctionResultNoSets.  In either case, change the evalfunc
-	 * pointer to go directly there on subsequent uses.
-	 */
-	if (fcache->func.fn_retset || expression_returns_set((Node *) func->args))
-	{
-		fcache->xprstate.evalfunc = (ExprStateEvalFunc) ExecMakeFunctionResult;
-		return ExecMakeFunctionResult(fcache, econtext, isNull, isDone);
-	}
-	else
-	{
-		fcache->xprstate.evalfunc = (ExprStateEvalFunc) ExecMakeFunctionResultNoSets;
-		return ExecMakeFunctionResultNoSets(fcache, econtext, isNull, isDone);
-	}
+	/* Change the evalfunc pointer to save a few cycles in additional calls */
+	fcache->xprstate.evalfunc = (ExprStateEvalFunc) ExecMakeFunctionResultNoSets;
+	return ExecMakeFunctionResultNoSets(fcache, econtext, isNull, isDone);
 }
 
 /* ----------------------------------------------------------------
@@ -2458,24 +2465,11 @@ ExecEvalOper(FuncExprState *fcache,
 
 	/* Initialize function lookup info */
 	init_fcache(op->opfuncid, op->inputcollid, fcache,
-				econtext->ecxt_per_query_memory, true);
+				econtext->ecxt_per_query_memory, false, false);
 
-	/*
-	 * We need to invoke ExecMakeFunctionResult if either the function itself
-	 * or any of its input expressions can return a set.  Otherwise, invoke
-	 * ExecMakeFunctionResultNoSets.  In either case, change the evalfunc
-	 * pointer to go directly there on subsequent uses.
-	 */
-	if (fcache->func.fn_retset || expression_returns_set((Node *) op->args))
-	{
-		fcache->xprstate.evalfunc = (ExprStateEvalFunc) ExecMakeFunctionResult;
-		return ExecMakeFunctionResult(fcache, econtext, isNull, isDone);
-	}
-	else
-	{
-		fcache->xprstate.evalfunc = (ExprStateEvalFunc) ExecMakeFunctionResultNoSets;
-		return ExecMakeFunctionResultNoSets(fcache, econtext, isNull, isDone);
-	}
+	/* Change the evalfunc pointer to save a few cycles in additional calls */
+	fcache->xprstate.evalfunc = (ExprStateEvalFunc) ExecMakeFunctionResultNoSets;
+	return ExecMakeFunctionResultNoSets(fcache, econtext, isNull, isDone);
 }
 
 /* ----------------------------------------------------------------
@@ -2512,8 +2506,7 @@ ExecEvalDistinct(FuncExprState *fcache,
 		DistinctExpr *op = (DistinctExpr *) fcache->xprstate.expr;
 
 		init_fcache(op->opfuncid, op->inputcollid, fcache,
-					econtext->ecxt_per_query_memory, true);
-		Assert(!fcache->func.fn_retset);
+					econtext->ecxt_per_query_memory, false, false);
 	}
 
 	/*
@@ -2589,8 +2582,7 @@ ExecEvalScalarArrayOp(ScalarArrayOpExprState *sstate,
 	if (sstate->fxprstate.func.fn_oid == InvalidOid)
 	{
 		init_fcache(opexpr->opfuncid, opexpr->inputcollid, &sstate->fxprstate,
-					econtext->ecxt_per_query_memory, true);
-		Assert(!sstate->fxprstate.func.fn_retset);
+					econtext->ecxt_per_query_memory, false, false);
 	}
 
 	/*
@@ -3857,8 +3849,7 @@ ExecEvalNullIf(FuncExprState *nullIfExpr,
 		NullIfExpr *op = (NullIfExpr *) nullIfExpr->xprstate.expr;
 
 		init_fcache(op->opfuncid, op->inputcollid, nullIfExpr,
-					econtext->ecxt_per_query_memory, true);
-		Assert(!nullIfExpr->func.fn_retset);
+					econtext->ecxt_per_query_memory, false, false);
 	}
 
 	/*
@@ -4739,6 +4730,7 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				fstate->args = (List *)
 					ExecInitExpr((Expr *) funcexpr->args, parent);
 				fstate->func.fn_oid = InvalidOid;		/* not initialized */
+				fstate->funcReturnsSet = funcexpr->funcretset;
 				state = (ExprState *) fstate;
 			}
 			break;
@@ -4751,6 +4743,7 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				fstate->args = (List *)
 					ExecInitExpr((Expr *) opexpr->args, parent);
 				fstate->func.fn_oid = InvalidOid;		/* not initialized */
+				fstate->funcReturnsSet = opexpr->opretset;
 				state = (ExprState *) fstate;
 			}
 			break;
@@ -4763,6 +4756,7 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				fstate->args = (List *)
 					ExecInitExpr((Expr *) distinctexpr->args, parent);
 				fstate->func.fn_oid = InvalidOid;		/* not initialized */
+				fstate->funcReturnsSet = false; /* not supported */
 				state = (ExprState *) fstate;
 			}
 			break;
@@ -4775,6 +4769,7 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				fstate->args = (List *)
 					ExecInitExpr((Expr *) nullifexpr->args, parent);
 				fstate->func.fn_oid = InvalidOid;		/* not initialized */
+				fstate->funcReturnsSet = false; /* not supported */
 				state = (ExprState *) fstate;
 			}
 			break;
@@ -4787,6 +4782,7 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				sstate->fxprstate.args = (List *)
 					ExecInitExpr((Expr *) opexpr->args, parent);
 				sstate->fxprstate.func.fn_oid = InvalidOid;		/* not initialized */
+				sstate->fxprstate.funcReturnsSet = false;		/* not supported */
 				sstate->element_type = InvalidOid;		/* ditto */
 				state = (ExprState *) sstate;
 			}

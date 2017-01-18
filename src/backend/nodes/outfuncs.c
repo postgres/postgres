@@ -327,6 +327,14 @@ _outResult(StringInfo str, const Result *node)
 }
 
 static void
+_outProjectSet(StringInfo str, const ProjectSet *node)
+{
+	WRITE_NODE_TYPE("PROJECTSET");
+
+	_outPlanInfo(str, (const Plan *) node);
+}
+
+static void
 _outModifyTable(StringInfo str, const ModifyTable *node)
 {
 	WRITE_NODE_TYPE("MODIFYTABLE");
@@ -1805,6 +1813,16 @@ _outProjectionPath(StringInfo str, const ProjectionPath *node)
 
 	WRITE_NODE_FIELD(subpath);
 	WRITE_BOOL_FIELD(dummypp);
+}
+
+static void
+_outProjectSetPath(StringInfo str, const ProjectSetPath *node)
+{
+	WRITE_NODE_TYPE("PROJECTSETPATH");
+
+	_outPathInfo(str, (const Path *) node);
+
+	WRITE_NODE_FIELD(subpath);
 }
 
 static void
@@ -3367,6 +3385,9 @@ outNode(StringInfo str, const void *obj)
 			case T_Result:
 				_outResult(str, obj);
 				break;
+			case T_ProjectSet:
+				_outProjectSet(str, obj);
+				break;
 			case T_ModifyTable:
 				_outModifyTable(str, obj);
 				break;
@@ -3678,6 +3699,9 @@ outNode(StringInfo str, const void *obj)
 				break;
 			case T_ProjectionPath:
 				_outProjectionPath(str, obj);
+				break;
+			case T_ProjectSetPath:
+				_outProjectSetPath(str, obj);
 				break;
 			case T_SortPath:
 				_outSortPath(str, obj);

@@ -807,24 +807,28 @@ select * from int4_tbl where
 explain (verbose, costs off)
 select * from int4_tbl o where (f1, f1) in
   (select f1, generate_series(1,2) / 10 g from int4_tbl i group by f1);
-                           QUERY PLAN                           
-----------------------------------------------------------------
- Hash Semi Join
+                            QUERY PLAN                             
+-------------------------------------------------------------------
+ Nested Loop Semi Join
    Output: o.f1
-   Hash Cond: (o.f1 = "ANY_subquery".f1)
+   Join Filter: (o.f1 = "ANY_subquery".f1)
    ->  Seq Scan on public.int4_tbl o
          Output: o.f1
-   ->  Hash
+   ->  Materialize
          Output: "ANY_subquery".f1, "ANY_subquery".g
          ->  Subquery Scan on "ANY_subquery"
                Output: "ANY_subquery".f1, "ANY_subquery".g
                Filter: ("ANY_subquery".f1 = "ANY_subquery".g)
-               ->  HashAggregate
-                     Output: i.f1, (generate_series(1, 2) / 10)
-                     Group Key: i.f1
-                     ->  Seq Scan on public.int4_tbl i
-                           Output: i.f1
-(15 rows)
+               ->  Result
+                     Output: i.f1, ((generate_series(1, 2)) / 10)
+                     ->  ProjectSet
+                           Output: i.f1, generate_series(1, 2)
+                           ->  HashAggregate
+                                 Output: i.f1
+                                 Group Key: i.f1
+                                 ->  Seq Scan on public.int4_tbl i
+                                       Output: i.f1
+(19 rows)
 
 select * from int4_tbl o where (f1, f1) in
   (select f1, generate_series(1,2) / 10 g from int4_tbl i group by f1);
@@ -899,9 +903,10 @@ select * from
  Subquery Scan on ss
    Output: x, u
    Filter: tattle(ss.x, 8)
-   ->  Result
+   ->  ProjectSet
          Output: 9, unnest('{1,2,3,11,12,13}'::integer[])
-(5 rows)
+         ->  Result
+(6 rows)
 
 select * from
   (select 9 as x, unnest(array[1,2,3,11,12,13]) as u) ss
@@ -930,10 +935,11 @@ select * from
   where tattle(x, 8);
                      QUERY PLAN                     
 ----------------------------------------------------
- Result
+ ProjectSet
    Output: 9, unnest('{1,2,3,11,12,13}'::integer[])
-   One-Time Filter: tattle(9, 8)
-(3 rows)
+   ->  Result
+         One-Time Filter: tattle(9, 8)
+(4 rows)
 
 select * from
   (select 9 as x, unnest(array[1,2,3,11,12,13]) as u) ss
@@ -959,9 +965,10 @@ select * from
  Subquery Scan on ss
    Output: x, u
    Filter: tattle(ss.x, ss.u)
-   ->  Result
+   ->  ProjectSet
          Output: 9, unnest('{1,2,3,11,12,13}'::integer[])
-(5 rows)
+         ->  Result
+(6 rows)
 
 select * from
   (select 9 as x, unnest(array[1,2,3,11,12,13]) as u) ss
