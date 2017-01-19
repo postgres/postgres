@@ -519,6 +519,10 @@ CREATE TABLE part0 PARTITION OF range_parted2 FOR VALUES FROM (unbounded) TO (1)
 CREATE TABLE fail_part PARTITION OF range_parted2 FOR VALUES FROM (unbounded) TO (2);
 CREATE TABLE part1 PARTITION OF range_parted2 FOR VALUES FROM (1) TO (10);
 CREATE TABLE fail_part PARTITION OF range_parted2 FOR VALUES FROM (9) TO (unbounded);
+CREATE TABLE part2 PARTITION OF range_parted2 FOR VALUES FROM (20) TO (30);
+CREATE TABLE part3 PARTITION OF range_parted2 FOR VALUES FROM (30) TO (40);
+CREATE TABLE fail_part PARTITION OF range_parted2 FOR VALUES FROM (10) TO (30);
+CREATE TABLE fail_part PARTITION OF range_parted2 FOR VALUES FROM (10) TO (50);
 
 -- now check for multi-column range partition key
 CREATE TABLE range_parted3 (

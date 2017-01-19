@@ -741,37 +741,68 @@ check_new_partition_bound(char *relname, Relation parent, Node *bound)
 						   boundinfo->strategy == PARTITION_STRATEGY_RANGE);
 
 					/*
-					 * Find the greatest index of a range bound that is less
-					 * than or equal with the new lower bound.
+					 * Firstly, find the greatest range bound that is less
+					 * than or equal to the new lower bound.
 					 */
 					off1 = partition_bound_bsearch(key, boundinfo, lower, true,
 												   &equal);
 
 					/*
-					 * If equal has been set to true, that means the new lower
-					 * bound is found to be equal with the bound at off1,
-					 * which clearly means an overlap with the partition at
-					 * index off1+1).
-					 *
-					 * Otherwise, check if there is a "gap" that could be
-					 * occupied by the new partition.  In case of a gap, the
-					 * new upper bound should not cross past the upper
-					 * boundary of the gap, that is, off2 == off1 should be
-					 * true.
+					 * off1 == -1 means that all existing bounds are greater
+					 * than the new lower bound.  In that case and the case
+					 * where no partition is defined between the bounds at
+					 * off1 and off1 + 1, we have a "gap" in the range that
+					 * could be occupied by the new partition.  We confirm if
+					 * so by checking whether the new upper bound is confined
+					 * within the gap.
 					 */
 					if (!equal && boundinfo->indexes[off1 + 1] < 0)
 					{
 						off2 = partition_bound_bsearch(key, boundinfo, upper,
 													   true, &equal);
 
+						/*
+						 * If the new upper bound is returned to be equal to
+						 * the bound at off2, the latter must be the upper
+						 * bound of some partition with which the new
+						 * partition clearly overlaps.
+						 *
+						 * Also, if bound at off2 is not same as the one
+						 * returned for the new lower bound (IOW, off1 !=
+						 * off2), then the new partition overlaps at least one
+						 * partition.
+						 */
 						if (equal || off1 != off2)
 						{
 							overlap = true;
-							with = boundinfo->indexes[off2 + 1];
+
+							/*
+							 * The bound at off2 could be the lower bound of
+							 * the partition with which the new partition
+							 * overlaps.  In that case, use the upper bound
+							 * (that is, the bound at off2 + 1) to get the
+							 * index of that partition.
+							 */
+							if (boundinfo->indexes[off2] < 0)
+								with = boundinfo->indexes[off2 + 1];
+							else
+								with = boundinfo->indexes[off2];
 						}
 					}
 					else
 					{
+						/*
+						 * Equal has been set to true and there is no "gap"
+						 * between the bound at off1 and that at off1 + 1, so
+						 * the new partition will overlap some partition. In
+						 * the former case, the new lower bound is found to be
+						 * equal to the bound at off1, which could only ever
+						 * be true if the latter is the lower bound of some
+						 * partition.  It's clear in such a case that the new
+						 * partition overlaps that partition, whose index we
+						 * get using its upper bound (that is, using the bound
+						 * at off1 + 1).
+						 */
 						overlap = true;
 						with = boundinfo->indexes[off1 + 1];
 					}
@@ -1957,8 +1988,8 @@ partition_bound_cmp(PartitionKey key, PartitionBoundInfo boundinfo,
 }
 
 /*
- * Binary search on a collection of partition bounds. Returns greatest index
- * of bound in array boundinfo->datums which is less or equal with *probe.
+ * Binary search on a collection of partition bounds. Returns greatest
+ * bound in array boundinfo->datums which is less than or equal to *probe
  * If all bounds in the array are greater than *probe, -1 is returned.
  *
  * *probe could either be a partition bound or a Datum array representing
@@ -1990,6 +2021,9 @@ partition_bound_bsearch(PartitionKey key, PartitionBoundInfo boundinfo,
 		{
 			lo = mid;
 			*is_equal = (cmpval == 0);
+
+			if (*is_equal)
+				break;
 		}
 		else
 			hi = mid - 1;
