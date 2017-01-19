@@ -28,7 +28,7 @@ struct pg_tm
 	int			tm_min;
 	int			tm_hour;
 	int			tm_mday;
-	int			tm_mon;			/* origin 0, not 1 */
+	int			tm_mon;			/* origin 1, not 0! */
 	int			tm_year;		/* relative to 1900 */
 	int			tm_wday;
 	int			tm_yday;
