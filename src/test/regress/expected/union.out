@@ -720,3 +720,33 @@ select * from
 
 drop table t3;
 drop function expensivefunc(int);
+-- Test handling of appendrel quals that const-simplify into an AND
+explain (costs off)
+select * from
+  (select *, 0 as x from int8_tbl a
+   union all
+   select *, 1 as x from int8_tbl b) ss
+where (x = 0) or (q1 >= q2 and q1 <= q2);
+                 QUERY PLAN                  
+---------------------------------------------
+ Append
+   ->  Seq Scan on int8_tbl a
+   ->  Seq Scan on int8_tbl b
+         Filter: ((q1 >= q2) AND (q1 <= q2))
+(4 rows)
+
+select * from
+  (select *, 0 as x from int8_tbl a
+   union all
+   select *, 1 as x from int8_tbl b) ss
+where (x = 0) or (q1 >= q2 and q1 <= q2);
+        q1        |        q2         | x 
+------------------+-------------------+---
+              123 |               456 | 0
+              123 |  4567890123456789 | 0
+ 4567890123456789 |               123 | 0
+ 4567890123456789 |  4567890123456789 | 0
+ 4567890123456789 | -4567890123456789 | 0
+ 4567890123456789 |  4567890123456789 | 1
+(6 rows)
+

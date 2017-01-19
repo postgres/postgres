@@ -896,7 +896,7 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 		{
 			RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
 			Node	   *childqual;
-			bool		pseudoconstant;
+			ListCell   *lc2;
 
 			Assert(IsA(rinfo, RestrictInfo));
 			childqual = adjust_appendrel_attrs(root,
@@ -916,25 +916,32 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 				/* Restriction reduces to constant TRUE, so drop it */
 				continue;
 			}
-			/* check for pseudoconstant (no Vars or volatile functions) */
-			pseudoconstant =
-				!contain_vars_of_level(childqual, 0) &&
-				!contain_volatile_functions(childqual);
-			if (pseudoconstant)
+			/* might have gotten an AND clause, if so flatten it */
+			foreach(lc2, make_ands_implicit((Expr *) childqual))
 			{
-				/* tell createplan.c to check for gating quals */
-				root->hasPseudoConstantQuals = true;
+				Node	   *onecq = (Node *) lfirst(lc2);
+				bool		pseudoconstant;
+
+				/* check for pseudoconstant (no Vars or volatile functions) */
+				pseudoconstant =
+					!contain_vars_of_level(onecq, 0) &&
+					!contain_volatile_functions(onecq);
+				if (pseudoconstant)
+				{
+					/* tell createplan.c to check for gating quals */
+					root->hasPseudoConstantQuals = true;
+				}
+				/* reconstitute RestrictInfo with appropriate properties */
+				childquals = lappend(childquals,
+									 make_restrictinfo((Expr *) onecq,
+													   rinfo->is_pushed_down,
+													rinfo->outerjoin_delayed,
+													   pseudoconstant,
+													   rinfo->security_level,
+													   NULL, NULL, NULL));
+				/* track minimum security level among child quals */
+				cq_min_security = Min(cq_min_security, rinfo->security_level);
 			}
-			/* reconstitute RestrictInfo with appropriate properties */
-			childquals = lappend(childquals,
-								 make_restrictinfo((Expr *) childqual,
-												   rinfo->is_pushed_down,
-												   rinfo->outerjoin_delayed,
-												   pseudoconstant,
-												   rinfo->security_level,
-												   NULL, NULL, NULL));
-			/* track minimum security level among child quals */
-			cq_min_security = Min(cq_min_security, rinfo->security_level);
 		}
 
 		/*
