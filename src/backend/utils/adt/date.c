@@ -252,16 +252,20 @@ make_date(PG_FUNCTION_ARGS)
 	struct pg_tm tm;
 	DateADT		date;
 	int			dterr;
+	bool		bc = false;
 
 	tm.tm_year = PG_GETARG_INT32(0);
 	tm.tm_mon = PG_GETARG_INT32(1);
 	tm.tm_mday = PG_GETARG_INT32(2);
 
-	/*
-	 * Note: we'll reject zero or negative year values.  Perhaps negatives
-	 * should be allowed to represent BC years?
-	 */
-	dterr = ValidateDate(DTK_DATE_M, false, false, false, &tm);
+	/* Handle negative years as BC */
+	if (tm.tm_year < 0)
+	{
+		bc = true;
+		tm.tm_year = -tm.tm_year;
+	}
+
+	dterr = ValidateDate(DTK_DATE_M, false, false, bc, &tm);
 
 	if (dterr != 0)
 		ereport(ERROR,

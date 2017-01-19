@@ -1454,6 +1454,12 @@ select make_date(2013, 7, 15);
  07-15-2013
 (1 row)
 
+select make_date(-44, 3, 15);
+   make_date   
+---------------
+ 03-15-0044 BC
+(1 row)
+
 select make_time(8, 20, 0.0);
  make_time 
 -----------
@@ -1467,8 +1473,6 @@ select make_date(2013, 13, 1);
 ERROR:  date field value out of range: 2013-13-01
 select make_date(2013, 11, -1);
 ERROR:  date field value out of range: 2013-11--1
-select make_date(-44, 3, 15);  -- perhaps we should allow this sometime?
-ERROR:  date field value out of range: -44-03-15
 select make_time(10, 55, 100.1);
 ERROR:  time field value out of range: 10:55:100.1
 select make_time(24, 0, 2.1);
