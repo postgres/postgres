@@ -15671,7 +15671,7 @@ dumpSequenceData(Archive *fout, TableDataInfo *tdinfo)
 	appendPQExpBuffer(query, ", %s, %s);\n",
 					  last, (called ? "true" : "false"));
 
-	if (tbinfo->dobj.dump & DUMP_COMPONENT_DATA)
+	if (tdinfo->dobj.dump & DUMP_COMPONENT_DATA)
 		ArchiveEntry(fout, nilCatalogId, createDumpId(),
 					 tbinfo->dobj.name,
 					 tbinfo->dobj.namespace->dobj.name,
