@@ -265,6 +265,25 @@ my %tests = (
 			schema_only        => 1,
 			section_pre_data   => 1,
 			section_post_data  => 1, }, },
+	'SETVAL SEQUENCE regress_seq_dumpable' => {
+		create_order => 6,
+		create_sql => qq{SELECT nextval('regress_seq_dumpable');},
+		regexp => qr/^
+			\QSELECT pg_catalog.setval('regress_seq_dumpable', 1, true);\E
+			\n/xm,
+		like   => {
+			clean              => 1,
+			clean_if_exists    => 1,
+			createdb           => 1,
+			data_only          => 1,
+			defaults           => 1,
+			no_owner           => 1,
+			no_privs           => 1, },
+		unlike => {
+			pg_dumpall_globals => 1,
+			schema_only        => 1,
+			section_pre_data   => 1,
+			section_post_data  => 1, }, },
 	'CREATE TABLE regress_pg_dump_table' => {
 		regexp => qr/^
 			\QCREATE TABLE regress_pg_dump_table (\E
