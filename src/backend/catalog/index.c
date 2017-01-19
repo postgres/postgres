@@ -1805,8 +1805,7 @@ FormIndexDatum(IndexInfo *indexInfo,
 				elog(ERROR, "wrong number of index expressions");
 			iDatum = ExecEvalExprSwitchContext((ExprState *) lfirst(indexpr_item),
 											   GetPerTupleExprContext(estate),
-											   &isNull,
-											   NULL);
+											   &isNull);
 			indexpr_item = lnext(indexpr_item);
 		}
 		values[i] = iDatum;

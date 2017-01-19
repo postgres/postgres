@@ -603,7 +603,7 @@ xmlelement(XmlExprState *xmlExpr, ExprContext *econtext)
 		bool		isnull;
 		char	   *str;
 
-		value = ExecEvalExpr(e, econtext, &isnull, NULL);
+		value = ExecEvalExpr(e, econtext, &isnull);
 		if (isnull)
 			str = NULL;
 		else
@@ -620,7 +620,7 @@ xmlelement(XmlExprState *xmlExpr, ExprContext *econtext)
 		bool		isnull;
 		char	   *str;
 
-		value = ExecEvalExpr(e, econtext, &isnull, NULL);
+		value = ExecEvalExpr(e, econtext, &isnull);
 		/* here we can just forget NULL elements immediately */
 		if (!isnull)
 		{

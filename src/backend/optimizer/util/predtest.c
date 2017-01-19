@@ -1596,7 +1596,7 @@ operator_predicate_proof(Expr *predicate, Node *clause, bool refute_it)
 	/* And execute it. */
 	test_result = ExecEvalExprSwitchContext(test_exprstate,
 											GetPerTupleExprContext(estate),
-											&isNull, NULL);
+											&isNull);
 
 	/* Get back to outer memory context */
 	MemoryContextSwitchTo(oldcontext);

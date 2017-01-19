@@ -100,8 +100,6 @@ ExecInitGather(Gather *node, EState *estate, int eflags)
 	outerNode = outerPlan(node);
 	outerPlanState(gatherstate) = ExecInitNode(outerNode, estate, eflags);
 
-	gatherstate->ps.ps_TupFromTlist = false;
-
 	/*
 	 * Initialize result tuple type and projection info.
 	 */
@@ -132,8 +130,6 @@ ExecGather(GatherState *node)
 	TupleTableSlot *fslot = node->funnel_slot;
 	int			i;
 	TupleTableSlot *slot;
-	TupleTableSlot *resultSlot;
-	ExprDoneCond isDone;
 	ExprContext *econtext;
 
 	/*
@@ -200,25 +196,10 @@ ExecGather(GatherState *node)
 	}
 
 	/*
-	 * Check to see if we're still projecting out tuples from a previous scan
-	 * tuple (because there is a function-returning-set in the projection
-	 * expressions).  If so, try to project another one.
-	 */
-	if (node->ps.ps_TupFromTlist)
-	{
-		resultSlot = ExecProject(node->ps.ps_ProjInfo, &isDone);
-		if (isDone == ExprMultipleResult)
-			return resultSlot;
-		/* Done with that source tuple... */
-		node->ps.ps_TupFromTlist = false;
-	}
-
-	/*
 	 * Reset per-tuple memory context to free any expression evaluation
-	 * storage allocated in the previous tuple cycle.  Note we can't do this
-	 * until we're done projecting.  This will also clear any previous tuple
-	 * returned by a TupleQueueReader; to make sure we don't leave a dangling
-	 * pointer around, clear the working slot first.
+	 * storage allocated in the previous tuple cycle.  This will also clear
+	 * any previous tuple returned by a TupleQueueReader; to make sure we
+	 * don't leave a dangling pointer around, clear the working slot first.
 	 */
 	ExecClearTuple(node->funnel_slot);
 	econtext = node->ps.ps_ExprContext;
@@ -241,13 +222,8 @@ ExecGather(GatherState *node)
 		 * back around for another tuple
 		 */
 		econtext->ecxt_outertuple = slot;
-		resultSlot = ExecProject(node->ps.ps_ProjInfo, &isDone);
 
-		if (isDone != ExprEndResult)
-		{
-			node->ps.ps_TupFromTlist = (isDone == ExprMultipleResult);
-			return resultSlot;
-		}
+		return ExecProject(node->ps.ps_ProjInfo);
 	}
 
 	return slot;

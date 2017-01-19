@@ -70,8 +70,8 @@
  * now it's just a macro invoking the function pointed to by an ExprState
  * node.  Beware of double evaluation of the ExprState argument!
  */
-#define ExecEvalExpr(expr, econtext, isNull, isDone) \
-	((*(expr)->evalfunc) (expr, econtext, isNull, isDone))
+#define ExecEvalExpr(expr, econtext, isNull) \
+	((*(expr)->evalfunc) (expr, econtext, isNull))
 
 
 /* Hook for plugins to get control in ExecutorStart() */
@@ -257,14 +257,13 @@ extern Datum ExecMakeFunctionResultSet(FuncExprState *fcache,
 						  bool *isNull,
 						  ExprDoneCond *isDone);
 extern Datum ExecEvalExprSwitchContext(ExprState *expression, ExprContext *econtext,
-						  bool *isNull, ExprDoneCond *isDone);
+						  bool *isNull);
 extern ExprState *ExecInitExpr(Expr *node, PlanState *parent);
 extern ExprState *ExecPrepareExpr(Expr *node, EState *estate);
 extern bool ExecQual(List *qual, ExprContext *econtext, bool resultForNull);
 extern int	ExecTargetListLength(List *targetlist);
 extern int	ExecCleanTargetListLength(List *targetlist);
-extern TupleTableSlot *ExecProject(ProjectionInfo *projInfo,
-			ExprDoneCond *isDone);
+extern TupleTableSlot *ExecProject(ProjectionInfo *projInfo);
 
 /*
  * prototypes from functions in execScan.c

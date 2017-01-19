@@ -169,7 +169,7 @@ ExecProjectSRF(ProjectSetState *node, bool continuing)
 		else
 		{
 			/* Non-SRF tlist expression, just evaluate normally. */
-			*result = ExecEvalExpr(gstate->arg, econtext, isnull, NULL);
+			*result = ExecEvalExpr(gstate->arg, econtext, isnull);
 			*isdone = ExprSingleResult;
 		}
 

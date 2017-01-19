@@ -269,8 +269,6 @@ ExecInitCteScan(CteScan *node, EState *estate, int eflags)
 	ExecAssignResultTypeFromTL(&scanstate->ss.ps);
 	ExecAssignScanProjectionInfo(&scanstate->ss);
 
-	scanstate->ss.ps.ps_TupFromTlist = false;
-
 	return scanstate;
 }
 

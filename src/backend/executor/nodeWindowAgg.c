@@ -256,7 +256,7 @@ advance_windowaggregate(WindowAggState *winstate,
 	if (filter)
 	{
 		bool		isnull;
-		Datum		res = ExecEvalExpr(filter, econtext, &isnull, NULL);
+		Datum		res = ExecEvalExpr(filter, econtext, &isnull);
 
 		if (isnull || !DatumGetBool(res))
 		{
@@ -272,7 +272,7 @@ advance_windowaggregate(WindowAggState *winstate,
 		ExprState  *argstate = (ExprState *) lfirst(arg);
 
 		fcinfo->arg[i] = ExecEvalExpr(argstate, econtext,
-									  &fcinfo->argnull[i], NULL);
+									  &fcinfo->argnull[i]);
 		i++;
 	}
 
@@ -433,7 +433,7 @@ advance_windowaggregate_base(WindowAggState *winstate,
 	if (filter)
 	{
 		bool		isnull;
-		Datum		res = ExecEvalExpr(filter, econtext, &isnull, NULL);
+		Datum		res = ExecEvalExpr(filter, econtext, &isnull);
 
 		if (isnull || !DatumGetBool(res))
 		{
@@ -449,7 +449,7 @@ advance_windowaggregate_base(WindowAggState *winstate,
 		ExprState  *argstate = (ExprState *) lfirst(arg);
 
 		fcinfo->arg[i] = ExecEvalExpr(argstate, econtext,
-									  &fcinfo->argnull[i], NULL);
+									  &fcinfo->argnull[i]);
 		i++;
 	}
 
@@ -1584,38 +1584,18 @@ update_frametailpos(WindowObject winobj, TupleTableSlot *slot)
  *	ExecWindowAgg receives tuples from its outer subplan and
  *	stores them into a tuplestore, then processes window functions.
  *	This node doesn't reduce nor qualify any row so the number of
- *	returned rows is exactly the same as its outer subplan's result
- *	(ignoring the case of SRFs in the targetlist, that is).
+ *	returned rows is exactly the same as its outer subplan's result.
  * -----------------
  */
 TupleTableSlot *
 ExecWindowAgg(WindowAggState *winstate)
 {
-	TupleTableSlot *result;
-	ExprDoneCond isDone;
 	ExprContext *econtext;
 	int			i;
 	int			numfuncs;
 
 	if (winstate->all_done)
 		return NULL;
-
-	/*
-	 * Check to see if we're still projecting out tuples from a previous
-	 * output tuple (because there is a function-returning-set in the
-	 * projection expressions).  If so, try to project another one.
-	 */
-	if (winstate->ss.ps.ps_TupFromTlist)
-	{
-		TupleTableSlot *result;
-		ExprDoneCond isDone;
-
-		result = ExecProject(winstate->ss.ps.ps_ProjInfo, &isDone);
-		if (isDone == ExprMultipleResult)
-			return result;
-		/* Done with that source tuple... */
-		winstate->ss.ps.ps_TupFromTlist = false;
-	}
 
 	/*
 	 * Compute frame offset values, if any, during first call.
@@ -1634,8 +1614,7 @@ ExecWindowAgg(WindowAggState *winstate)
 			Assert(winstate->startOffset != NULL);
 			value = ExecEvalExprSwitchContext(winstate->startOffset,
 											  econtext,
-											  &isnull,
-											  NULL);
+											  &isnull);
 			if (isnull)
 				ereport(ERROR,
 						(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
@@ -1660,8 +1639,7 @@ ExecWindowAgg(WindowAggState *winstate)
 			Assert(winstate->endOffset != NULL);
 			value = ExecEvalExprSwitchContext(winstate->endOffset,
 											  econtext,
-											  &isnull,
-											  NULL);
+											  &isnull);
 			if (isnull)
 				ereport(ERROR,
 						(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
@@ -1684,7 +1662,6 @@ ExecWindowAgg(WindowAggState *winstate)
 		winstate->all_first = false;
 	}
 
-restart:
 	if (winstate->buffer == NULL)
 	{
 		/* Initialize for first partition and set current row = 0 */
@@ -1776,17 +1753,8 @@ restart:
 	 * evaluated with respect to that row.
 	 */
 	econtext->ecxt_outertuple = winstate->ss.ss_ScanTupleSlot;
-	result = ExecProject(winstate->ss.ps.ps_ProjInfo, &isDone);
 
-	if (isDone == ExprEndResult)
-	{
-		/* SRF in tlist returned no rows, so advance to next input tuple */
-		goto restart;
-	}
-
-	winstate->ss.ps.ps_TupFromTlist =
-		(isDone == ExprMultipleResult);
-	return result;
+	return ExecProject(winstate->ss.ps.ps_ProjInfo);
 }
 
 /* -----------------
@@ -1895,8 +1863,6 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 	 */
 	ExecAssignResultTypeFromTL(&winstate->ss.ps);
 	ExecAssignProjectionInfo(&winstate->ss.ps, NULL);
-
-	winstate->ss.ps.ps_TupFromTlist = false;
 
 	/* Set up data for comparing tuples */
 	if (node->partNumCols > 0)
@@ -2090,8 +2056,6 @@ ExecReScanWindowAgg(WindowAggState *node)
 	ExprContext *econtext = node->ss.ps.ps_ExprContext;
 
 	node->all_done = false;
-
-	node->ss.ps.ps_TupFromTlist = false;
 	node->all_first = true;
 
 	/* release tuplestore et al */
@@ -2712,7 +2676,7 @@ WinGetFuncArgInPartition(WindowObject winobj, int argno,
 		}
 		econtext->ecxt_outertuple = slot;
 		return ExecEvalExpr((ExprState *) list_nth(winobj->argstates, argno),
-							econtext, isnull, NULL);
+							econtext, isnull);
 	}
 }
 
@@ -2811,7 +2775,7 @@ WinGetFuncArgInFrame(WindowObject winobj, int argno,
 		}
 		econtext->ecxt_outertuple = slot;
 		return ExecEvalExpr((ExprState *) list_nth(winobj->argstates, argno),
-							econtext, isnull, NULL);
+							econtext, isnull);
 	}
 }
 
@@ -2841,5 +2805,5 @@ WinGetFuncArgCurrent(WindowObject winobj, int argno, bool *isnull)
 
 	econtext->ecxt_outertuple = winstate->ss.ss_ScanTupleSlot;
 	return ExecEvalExpr((ExprState *) list_nth(winobj->argstates, argno),
-						econtext, isnull, NULL);
+						econtext, isnull);
 }

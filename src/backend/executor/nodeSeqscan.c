@@ -206,8 +206,6 @@ ExecInitSeqScan(SeqScan *node, EState *estate, int eflags)
 	 */
 	InitScanRelation(scanstate, estate, eflags);
 
-	scanstate->ss.ps.ps_TupFromTlist = false;
-
 	/*
 	 * Initialize result tuple type and projection info.
 	 */

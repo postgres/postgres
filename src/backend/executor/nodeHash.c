@@ -959,7 +959,7 @@ ExecHashGetHashValue(HashJoinTable hashtable,
 		/*
 		 * Get the join attribute value of the tuple
 		 */
-		keyval = ExecEvalExpr(keyexpr, econtext, &isNull, NULL);
+		keyval = ExecEvalExpr(keyexpr, econtext, &isNull);
 
 		/*
 		 * If the attribute is NULL, and the join operator is strict, then

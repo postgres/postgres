@@ -2735,7 +2735,7 @@ validateDomainConstraint(Oid domainoid, char *ccbin)
 
 				conResult = ExecEvalExprSwitchContext(exprstate,
 													  econtext,
-													  &isNull, NULL);
+													  &isNull);
 
 				if (!isNull && !DatumGetBool(conResult))
 				{

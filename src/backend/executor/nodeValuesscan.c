@@ -140,8 +140,7 @@ ValuesNext(ValuesScanState *node)
 
 			values[resind] = ExecEvalExpr(estate,
 										  econtext,
-										  &isnull[resind],
-										  NULL);
+										  &isnull[resind]);
 
 			/*
 			 * We must force any R/W expanded datums to read-only state, in
@@ -271,8 +270,6 @@ ExecInitValuesScan(ValuesScan *node, EState *estate, int eflags)
 	{
 		scanstate->exprlists[i++] = (List *) lfirst(vtl);
 	}
-
-	scanstate->ss.ps.ps_TupFromTlist = false;
 
 	/*
 	 * Initialize result tuple type and projection info.

@@ -104,8 +104,7 @@ TidListCreate(TidScanState *tidstate)
 			itemptr = (ItemPointer)
 				DatumGetPointer(ExecEvalExprSwitchContext(exstate,
 														  econtext,
-														  &isNull,
-														  NULL));
+														  &isNull));
 			if (!isNull &&
 				ItemPointerIsValid(itemptr) &&
 				ItemPointerGetBlockNumber(itemptr) < nblocks)
@@ -133,8 +132,7 @@ TidListCreate(TidScanState *tidstate)
 			exstate = (ExprState *) lsecond(saexstate->fxprstate.args);
 			arraydatum = ExecEvalExprSwitchContext(exstate,
 												   econtext,
-												   &isNull,
-												   NULL);
+												   &isNull);
 			if (isNull)
 				continue;
 			itemarray = DatumGetArrayTypeP(arraydatum);
@@ -468,8 +466,6 @@ ExecInitTidScan(TidScan *node, EState *estate, int eflags)
 	 * create expression context for node
 	 */
 	ExecAssignExprContext(estate, &tidstate->ss.ps);
-
-	tidstate->ss.ps.ps_TupFromTlist = false;
 
 	/*
 	 * initialize child expressions

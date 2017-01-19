@@ -4685,7 +4685,7 @@ evaluate_expr(Expr *expr, Oid result_type, int32 result_typmod,
 	 */
 	const_val = ExecEvalExprSwitchContext(exprstate,
 										  GetPerTupleExprContext(estate),
-										  &const_is_null, NULL);
+										  &const_is_null);
 
 	/* Get info needed about result datatype */
 	get_typlenbyval(result_type, &resultTypLen, &resultTypByVal);

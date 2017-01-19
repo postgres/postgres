@@ -189,8 +189,6 @@ ExecInitSampleScan(SampleScan *node, EState *estate, int eflags)
 	 */
 	InitScanRelation(scanstate, estate, eflags);
 
-	scanstate->ss.ps.ps_TupFromTlist = false;
-
 	/*
 	 * Initialize result tuple type and projection info.
 	 */
@@ -300,8 +298,7 @@ tablesample_init(SampleScanState *scanstate)
 
 		params[i] = ExecEvalExprSwitchContext(argstate,
 											  econtext,
-											  &isnull,
-											  NULL);
+											  &isnull);
 		if (isnull)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLESAMPLE_ARGUMENT),
@@ -313,8 +310,7 @@ tablesample_init(SampleScanState *scanstate)
 	{
 		datum = ExecEvalExprSwitchContext(scanstate->repeatable,
 										  econtext,
-										  &isnull,
-										  NULL);
+										  &isnull);
 		if (isnull)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLESAMPLE_REPEAT),

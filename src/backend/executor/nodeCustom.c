@@ -48,8 +48,6 @@ ExecInitCustomScan(CustomScan *cscan, EState *estate, int eflags)
 	/* create expression context for node */
 	ExecAssignExprContext(estate, &css->ss.ps);
 
-	css->ss.ps.ps_TupFromTlist = false;
-
 	/* initialize child expressions */
 	css->ss.ps.targetlist = (List *)
 		ExecInitExpr((Expr *) cscan->scan.plan.targetlist,

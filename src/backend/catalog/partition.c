@@ -1358,7 +1358,7 @@ get_qual_for_range(PartitionKey key, PartitionBoundSpec *spec)
 			test_exprstate = ExecInitExpr(test_expr, NULL);
 			test_result = ExecEvalExprSwitchContext(test_exprstate,
 											  GetPerTupleExprContext(estate),
-													&isNull, NULL);
+													&isNull);
 			MemoryContextSwitchTo(oldcxt);
 			FreeExecutorState(estate);
 
@@ -1630,8 +1630,7 @@ FormPartitionKeyDatum(PartitionDispatch pd,
 				elog(ERROR, "wrong number of partition key expressions");
 			datum = ExecEvalExprSwitchContext((ExprState *) lfirst(partexpr_item),
 											  GetPerTupleExprContext(estate),
-											  &isNull,
-											  NULL);
+											  &isNull);
 			partexpr_item = lnext(partexpr_item);
 		}
 		values[i] = datum;

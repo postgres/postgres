@@ -59,7 +59,6 @@
 #include "utils/syscache.h"
 
 
-static bool TargetListSupportsBackwardScan(List *targetlist);
 static bool IndexSupportsBackwardScan(Oid indexid);
 
 
@@ -120,7 +119,7 @@ ExecReScan(PlanState *node)
 			UpdateChangedParamSet(node->righttree, node->chgParam);
 	}
 
-	/* Shut down any SRFs in the plan node's targetlist */
+	/* Call expression callbacks */
 	if (node->ps_ExprContext)
 		ReScanExprContext(node->ps_ExprContext);
 
@@ -460,8 +459,7 @@ ExecSupportsBackwardScan(Plan *node)
 	{
 		case T_Result:
 			if (outerPlan(node) != NULL)
-				return ExecSupportsBackwardScan(outerPlan(node)) &&
-					TargetListSupportsBackwardScan(node->targetlist);
+				return ExecSupportsBackwardScan(outerPlan(node));
 			else
 				return false;
 
@@ -478,13 +476,6 @@ ExecSupportsBackwardScan(Plan *node)
 				return true;
 			}
 
-		case T_SeqScan:
-		case T_TidScan:
-		case T_FunctionScan:
-		case T_ValuesScan:
-		case T_CteScan:
-			return TargetListSupportsBackwardScan(node->targetlist);
-
 		case T_SampleScan:
 			/* Simplify life for tablesample methods by disallowing this */
 			return false;
@@ -493,52 +484,39 @@ ExecSupportsBackwardScan(Plan *node)
 			return false;
 
 		case T_IndexScan:
-			return IndexSupportsBackwardScan(((IndexScan *) node)->indexid) &&
-				TargetListSupportsBackwardScan(node->targetlist);
+			return IndexSupportsBackwardScan(((IndexScan *) node)->indexid);
 
 		case T_IndexOnlyScan:
-			return IndexSupportsBackwardScan(((IndexOnlyScan *) node)->indexid) &&
-				TargetListSupportsBackwardScan(node->targetlist);
+			return IndexSupportsBackwardScan(((IndexOnlyScan *) node)->indexid);
 
 		case T_SubqueryScan:
-			return ExecSupportsBackwardScan(((SubqueryScan *) node)->subplan) &&
-				TargetListSupportsBackwardScan(node->targetlist);
+			return ExecSupportsBackwardScan(((SubqueryScan *) node)->subplan);
 
 		case T_CustomScan:
 			{
 				uint32		flags = ((CustomScan *) node)->flags;
 
-				if ((flags & CUSTOMPATH_SUPPORT_BACKWARD_SCAN) &&
-					TargetListSupportsBackwardScan(node->targetlist))
+				if (flags & CUSTOMPATH_SUPPORT_BACKWARD_SCAN)
 					return true;
 			}
 			return false;
 
+		case T_SeqScan:
+		case T_TidScan:
+		case T_FunctionScan:
+		case T_ValuesScan:
+		case T_CteScan:
 		case T_Material:
 		case T_Sort:
-			/* these don't evaluate tlist */
 			return true;
 
 		case T_LockRows:
 		case T_Limit:
-			/* these don't evaluate tlist */
 			return ExecSupportsBackwardScan(outerPlan(node));
 
 		default:
 			return false;
 	}
-}
-
-/*
- * If the tlist contains set-returning functions, we can't support backward
- * scan, because the TupFromTlist code is direction-ignorant.
- */
-static bool
-TargetListSupportsBackwardScan(List *targetlist)
-{
-	if (expression_returns_set((Node *) targetlist))
-		return false;
-	return true;
 }
 
 /*

@@ -3444,7 +3444,7 @@ process_query_params(ExprContext *econtext,
 		bool		isNull;
 
 		/* Evaluate the parameter expression */
-		expr_value = ExecEvalExpr(expr_state, econtext, &isNull, NULL);
+		expr_value = ExecEvalExpr(expr_state, econtext, &isNull);
 
 		/*
 		 * Get string representation of each parameter value by invoking

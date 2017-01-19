@@ -413,8 +413,7 @@ EvaluateParams(PreparedStatement *pstmt, List *params,
 		prm->pflags = PARAM_FLAG_CONST;
 		prm->value = ExecEvalExprSwitchContext(n,
 											   GetPerTupleExprContext(estate),
-											   &prm->isnull,
-											   NULL);
+											   &prm->isnull);
 
 		i++;
 	}

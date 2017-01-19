@@ -5606,8 +5606,7 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 	 */
 	*result = ExecEvalExpr(expr->expr_simple_state,
 						   econtext,
-						   isNull,
-						   NULL);
+						   isNull);
 
 	/* Assorted cleanup */
 	expr->expr_simple_in_use = false;
@@ -6272,7 +6271,7 @@ exec_cast_value(PLpgSQL_execstate *estate,
 			cast_entry->cast_in_use = true;
 
 			value = ExecEvalExpr(cast_entry->cast_exprstate, econtext,
-								 isnull, NULL);
+								 isnull);
 
 			cast_entry->cast_in_use = false;
 

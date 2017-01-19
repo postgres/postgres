@@ -239,8 +239,7 @@ recompute_limits(LimitState *node)
 	{
 		val = ExecEvalExprSwitchContext(node->limitOffset,
 										econtext,
-										&isNull,
-										NULL);
+										&isNull);
 		/* Interpret NULL offset as no offset */
 		if (isNull)
 			node->offset = 0;
@@ -263,8 +262,7 @@ recompute_limits(LimitState *node)
 	{
 		val = ExecEvalExprSwitchContext(node->limitCount,
 										econtext,
-										&isNull,
-										NULL);
+										&isNull);
 		/* Interpret NULL count as no count (LIMIT ALL) */
 		if (isNull)
 		{
@@ -346,18 +344,11 @@ pass_down_bound(LimitState *node, PlanState *child_node)
 	else if (IsA(child_node, ResultState))
 	{
 		/*
-		 * An extra consideration here is that if the Result is projecting a
-		 * targetlist that contains any SRFs, we can't assume that every input
-		 * tuple generates an output tuple, so a Sort underneath might need to
-		 * return more than N tuples to satisfy LIMIT N. So we cannot use
-		 * bounded sort.
-		 *
 		 * If Result supported qual checking, we'd have to punt on seeing a
-		 * qual, too.  Note that having a resconstantqual is not a
-		 * showstopper: if that fails we're not getting any rows at all.
+		 * qual.  Note that having a resconstantqual is not a showstopper: if
+		 * that fails we're not getting any rows at all.
 		 */
-		if (outerPlanState(child_node) &&
-			!expression_returns_set((Node *) child_node->plan->targetlist))
+		if (outerPlanState(child_node))
 			pass_down_bound(node, outerPlanState(child_node));
 	}
 }

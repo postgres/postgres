@@ -4460,8 +4460,7 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 
 					values[ex->attnum - 1] = ExecEvalExpr(ex->exprstate,
 														  econtext,
-													 &isnull[ex->attnum - 1],
-														  NULL);
+													 &isnull[ex->attnum - 1]);
 				}
 
 				/*

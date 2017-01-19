@@ -175,7 +175,7 @@ ExecProcessReturning(ResultRelInfo *resultRelInfo,
 	econtext->ecxt_outertuple = planSlot;
 
 	/* Compute the RETURNING expressions */
-	return ExecProject(projectReturning, NULL);
+	return ExecProject(projectReturning);
 }
 
 /*
@@ -1300,7 +1300,7 @@ ExecOnConflictUpdate(ModifyTableState *mtstate,
 	}
 
 	/* Project the new tuple version */
-	ExecProject(resultRelInfo->ri_onConflictSetProj, NULL);
+	ExecProject(resultRelInfo->ri_onConflictSetProj);
 
 	/*
 	 * Note that it is possible that the target tuple has been modified in

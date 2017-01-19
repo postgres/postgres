@@ -854,7 +854,7 @@ advance_aggregates(AggState *aggstate, AggStatePerGroup pergroup)
 
 	/* compute input for all aggregates */
 	if (aggstate->evalproj)
-		aggstate->evalslot = ExecProject(aggstate->evalproj, NULL);
+		aggstate->evalslot = ExecProject(aggstate->evalproj);
 
 	for (transno = 0; transno < numTrans; transno++)
 	{
@@ -871,7 +871,7 @@ advance_aggregates(AggState *aggstate, AggStatePerGroup pergroup)
 			bool		isnull;
 
 			res = ExecEvalExprSwitchContext(filter, aggstate->tmpcontext,
-											&isnull, NULL);
+											&isnull);
 			if (isnull || !DatumGetBool(res))
 				continue;
 		}
@@ -970,7 +970,7 @@ combine_aggregates(AggState *aggstate, AggStatePerGroup pergroup)
 	Assert(aggstate->phase->numsets == 0);
 
 	/* compute input for all aggregates */
-	slot = ExecProject(aggstate->evalproj, NULL);
+	slot = ExecProject(aggstate->evalproj);
 
 	for (transno = 0; transno < numTrans; transno++)
 	{
@@ -1368,8 +1368,7 @@ finalize_aggregate(AggState *aggstate,
 
 		fcinfo.arg[i] = ExecEvalExpr(expr,
 									 aggstate->ss.ps.ps_ExprContext,
-									 &fcinfo.argnull[i],
-									 NULL);
+									 &fcinfo.argnull[i]);
 		anynull |= fcinfo.argnull[i];
 		i++;
 	}
@@ -1630,7 +1629,7 @@ finalize_aggregates(AggState *aggstate,
 /*
  * Project the result of a group (whose aggs have already been calculated by
  * finalize_aggregates). Returns the result slot, or NULL if no row is
- * projected (suppressed by qual or by an empty SRF).
+ * projected (suppressed by qual).
  */
 static TupleTableSlot *
 project_aggregates(AggState *aggstate)
@@ -1643,20 +1642,10 @@ project_aggregates(AggState *aggstate)
 	if (ExecQual(aggstate->ss.ps.qual, econtext, false))
 	{
 		/*
-		 * Form and return or store a projection tuple using the aggregate
-		 * results and the representative input tuple.
+		 * Form and return projection tuple using the aggregate results and
+		 * the representative input tuple.
 		 */
-		ExprDoneCond isDone;
-		TupleTableSlot *result;
-
-		result = ExecProject(aggstate->ss.ps.ps_ProjInfo, &isDone);
-
-		if (isDone != ExprEndResult)
-		{
-			aggstate->ss.ps.ps_TupFromTlist =
-				(isDone == ExprMultipleResult);
-			return result;
-		}
+		return ExecProject(aggstate->ss.ps.ps_ProjInfo);
 	}
 	else
 		InstrCountFiltered1(aggstate, 1);
@@ -1911,27 +1900,6 @@ ExecAgg(AggState *node)
 {
 	TupleTableSlot *result;
 
-	/*
-	 * Check to see if we're still projecting out tuples from a previous agg
-	 * tuple (because there is a function-returning-set in the projection
-	 * expressions).  If so, try to project another one.
-	 */
-	if (node->ss.ps.ps_TupFromTlist)
-	{
-		ExprDoneCond isDone;
-
-		result = ExecProject(node->ss.ps.ps_ProjInfo, &isDone);
-		if (isDone == ExprMultipleResult)
-			return result;
-		/* Done with that source tuple... */
-		node->ss.ps.ps_TupFromTlist = false;
-	}
-
-	/*
-	 * (We must do the ps_TupFromTlist check first, because in some cases
-	 * agg_done gets set before we emit the final aggregate tuple, and we have
-	 * to finish running SRFs for it.)
-	 */
 	if (!node->agg_done)
 	{
 		/* Dispatch based on strategy */
@@ -2570,8 +2538,6 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	 */
 	ExecAssignResultTypeFromTL(&aggstate->ss.ps);
 	ExecAssignProjectionInfo(&aggstate->ss.ps, NULL);
-
-	aggstate->ss.ps.ps_TupFromTlist = false;
 
 	/*
 	 * get the count of aggregates in targetlist and quals
@@ -3574,8 +3540,6 @@ ExecReScanAgg(AggState *node)
 	int			setno;
 
 	node->agg_done = false;
-
-	node->ss.ps.ps_TupFromTlist = false;
 
 	if (aggnode->aggstrategy == AGG_HASHED)
 	{

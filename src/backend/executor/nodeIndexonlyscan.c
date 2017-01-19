@@ -412,8 +412,6 @@ ExecInitIndexOnlyScan(IndexOnlyScan *node, EState *estate, int eflags)
 	 */
 	ExecAssignExprContext(estate, &indexstate->ss.ps);
 
-	indexstate->ss.ps.ps_TupFromTlist = false;
-
 	/*
 	 * initialize child expressions
 	 *

@@ -179,7 +179,7 @@ domain_check_input(Datum value, bool isnull, DomainIOData *my_extra)
 
 					conResult = ExecEvalExprSwitchContext(con->check_expr,
 														  econtext,
-														  &conIsNull, NULL);
+														  &conIsNull);
 
 					if (!conIsNull &&
 						!DatumGetBool(conResult))

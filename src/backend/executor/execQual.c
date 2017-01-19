@@ -64,40 +64,40 @@
 /* static function decls */
 static Datum ExecEvalArrayRef(ArrayRefExprState *astate,
 				 ExprContext *econtext,
-				 bool *isNull, ExprDoneCond *isDone);
+				 bool *isNull);
 static bool isAssignmentIndirectionExpr(ExprState *exprstate);
 static Datum ExecEvalAggref(AggrefExprState *aggref,
 			   ExprContext *econtext,
-			   bool *isNull, ExprDoneCond *isDone);
+			   bool *isNull);
 static Datum ExecEvalWindowFunc(WindowFuncExprState *wfunc,
 				   ExprContext *econtext,
-				   bool *isNull, ExprDoneCond *isDone);
+				   bool *isNull);
 static Datum ExecEvalScalarVar(ExprState *exprstate, ExprContext *econtext,
-				  bool *isNull, ExprDoneCond *isDone);
+				  bool *isNull);
 static Datum ExecEvalScalarVarFast(ExprState *exprstate, ExprContext *econtext,
-					  bool *isNull, ExprDoneCond *isDone);
+					  bool *isNull);
 static Datum ExecEvalWholeRowVar(WholeRowVarExprState *wrvstate,
 					ExprContext *econtext,
-					bool *isNull, ExprDoneCond *isDone);
+					bool *isNull);
 static Datum ExecEvalWholeRowFast(WholeRowVarExprState *wrvstate,
 					 ExprContext *econtext,
-					 bool *isNull, ExprDoneCond *isDone);
+					 bool *isNull);
 static Datum ExecEvalWholeRowSlow(WholeRowVarExprState *wrvstate,
 					 ExprContext *econtext,
-					 bool *isNull, ExprDoneCond *isDone);
+					 bool *isNull);
 static Datum ExecEvalConst(ExprState *exprstate, ExprContext *econtext,
-			  bool *isNull, ExprDoneCond *isDone);
+			  bool *isNull);
 static Datum ExecEvalParamExec(ExprState *exprstate, ExprContext *econtext,
-				  bool *isNull, ExprDoneCond *isDone);
+				  bool *isNull);
 static Datum ExecEvalParamExtern(ExprState *exprstate, ExprContext *econtext,
-					bool *isNull, ExprDoneCond *isDone);
+					bool *isNull);
 static void init_fcache(Oid foid, Oid input_collation, FuncExprState *fcache,
 			MemoryContext fcacheCxt, bool allowSRF, bool needDescForSRF);
 static void ShutdownFuncExpr(Datum arg);
 static TupleDesc get_cached_rowtype(Oid type_id, int32 typmod,
 				   TupleDesc *cache_field, ExprContext *econtext);
 static void ShutdownTupleDescRef(Datum arg);
-static ExprDoneCond ExecEvalFuncArgs(FunctionCallInfo fcinfo,
+static void ExecEvalFuncArgs(FunctionCallInfo fcinfo,
 				 List *argList, ExprContext *econtext);
 static void ExecPrepareTuplestoreResult(FuncExprState *fcache,
 							ExprContext *econtext,
@@ -106,85 +106,85 @@ static void ExecPrepareTuplestoreResult(FuncExprState *fcache,
 static void tupledesc_match(TupleDesc dst_tupdesc, TupleDesc src_tupdesc);
 static Datum ExecMakeFunctionResultNoSets(FuncExprState *fcache,
 							 ExprContext *econtext,
-							 bool *isNull, ExprDoneCond *isDone);
+							 bool *isNull);
 static Datum ExecEvalFunc(FuncExprState *fcache, ExprContext *econtext,
-			 bool *isNull, ExprDoneCond *isDone);
+			 bool *isNull);
 static Datum ExecEvalOper(FuncExprState *fcache, ExprContext *econtext,
-			 bool *isNull, ExprDoneCond *isDone);
+			 bool *isNull);
 static Datum ExecEvalDistinct(FuncExprState *fcache, ExprContext *econtext,
-				 bool *isNull, ExprDoneCond *isDone);
+				 bool *isNull);
 static Datum ExecEvalScalarArrayOp(ScalarArrayOpExprState *sstate,
 					  ExprContext *econtext,
-					  bool *isNull, ExprDoneCond *isDone);
+					  bool *isNull);
 static Datum ExecEvalNot(BoolExprState *notclause, ExprContext *econtext,
-			bool *isNull, ExprDoneCond *isDone);
+			bool *isNull);
 static Datum ExecEvalOr(BoolExprState *orExpr, ExprContext *econtext,
-		   bool *isNull, ExprDoneCond *isDone);
+		   bool *isNull);
 static Datum ExecEvalAnd(BoolExprState *andExpr, ExprContext *econtext,
-			bool *isNull, ExprDoneCond *isDone);
+			bool *isNull);
 static Datum ExecEvalConvertRowtype(ConvertRowtypeExprState *cstate,
 					   ExprContext *econtext,
-					   bool *isNull, ExprDoneCond *isDone);
+					   bool *isNull);
 static Datum ExecEvalCase(CaseExprState *caseExpr, ExprContext *econtext,
-			 bool *isNull, ExprDoneCond *isDone);
+			 bool *isNull);
 static Datum ExecEvalCaseTestExpr(ExprState *exprstate,
 					 ExprContext *econtext,
-					 bool *isNull, ExprDoneCond *isDone);
+					 bool *isNull);
 static Datum ExecEvalArray(ArrayExprState *astate,
 			  ExprContext *econtext,
-			  bool *isNull, ExprDoneCond *isDone);
+			  bool *isNull);
 static Datum ExecEvalRow(RowExprState *rstate,
 			ExprContext *econtext,
-			bool *isNull, ExprDoneCond *isDone);
+			bool *isNull);
 static Datum ExecEvalRowCompare(RowCompareExprState *rstate,
 				   ExprContext *econtext,
-				   bool *isNull, ExprDoneCond *isDone);
+				   bool *isNull);
 static Datum ExecEvalCoalesce(CoalesceExprState *coalesceExpr,
 				 ExprContext *econtext,
-				 bool *isNull, ExprDoneCond *isDone);
+				 bool *isNull);
 static Datum ExecEvalMinMax(MinMaxExprState *minmaxExpr,
 			   ExprContext *econtext,
-			   bool *isNull, ExprDoneCond *isDone);
+			   bool *isNull);
 static Datum ExecEvalSQLValueFunction(ExprState *svfExpr,
 						 ExprContext *econtext,
-						 bool *isNull, ExprDoneCond *isDone);
+						 bool *isNull);
 static Datum ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
-			bool *isNull, ExprDoneCond *isDone);
+			bool *isNull);
 static Datum ExecEvalNullIf(FuncExprState *nullIfExpr,
 			   ExprContext *econtext,
-			   bool *isNull, ExprDoneCond *isDone);
+			   bool *isNull);
 static Datum ExecEvalNullTest(NullTestState *nstate,
 				 ExprContext *econtext,
-				 bool *isNull, ExprDoneCond *isDone);
+				 bool *isNull);
 static Datum ExecEvalBooleanTest(GenericExprState *bstate,
 					ExprContext *econtext,
-					bool *isNull, ExprDoneCond *isDone);
+					bool *isNull);
 static Datum ExecEvalCoerceToDomain(CoerceToDomainState *cstate,
 					   ExprContext *econtext,
-					   bool *isNull, ExprDoneCond *isDone);
+					   bool *isNull);
 static Datum ExecEvalCoerceToDomainValue(ExprState *exprstate,
 							ExprContext *econtext,
-							bool *isNull, ExprDoneCond *isDone);
+							bool *isNull);
 static Datum ExecEvalFieldSelect(FieldSelectState *fstate,
 					ExprContext *econtext,
-					bool *isNull, ExprDoneCond *isDone);
+					bool *isNull);
 static Datum ExecEvalFieldStore(FieldStoreState *fstate,
 				   ExprContext *econtext,
-				   bool *isNull, ExprDoneCond *isDone);
+				   bool *isNull);
 static Datum ExecEvalRelabelType(GenericExprState *exprstate,
 					ExprContext *econtext,
-					bool *isNull, ExprDoneCond *isDone);
+					bool *isNull);
 static Datum ExecEvalCoerceViaIO(CoerceViaIOState *iostate,
 					ExprContext *econtext,
-					bool *isNull, ExprDoneCond *isDone);
+					bool *isNull);
 static Datum ExecEvalArrayCoerceExpr(ArrayCoerceExprState *astate,
 						ExprContext *econtext,
-						bool *isNull, ExprDoneCond *isDone);
+						bool *isNull);
 static Datum ExecEvalCurrentOfExpr(ExprState *exprstate, ExprContext *econtext,
-					  bool *isNull, ExprDoneCond *isDone);
+					  bool *isNull);
 static Datum ExecEvalGroupingFuncExpr(GroupingFuncExprState *gstate,
 						 ExprContext *econtext,
-						 bool *isNull, ExprDoneCond *isDone);
+						 bool *isNull);
 
 
 /* ----------------------------------------------------------------
@@ -195,8 +195,7 @@ static Datum ExecEvalGroupingFuncExpr(GroupingFuncExprState *gstate,
  * Each of the following routines having the signature
  *		Datum ExecEvalFoo(ExprState *expression,
  *						  ExprContext *econtext,
- *						  bool *isNull,
- *						  ExprDoneCond *isDone);
+ *						  bool *isNull);
  * is responsible for evaluating one type or subtype of ExprState node.
  * They are normally called via the ExecEvalExpr macro, which makes use of
  * the function pointer set up when the ExprState node was built by
@@ -220,22 +219,6 @@ static Datum ExecEvalGroupingFuncExpr(GroupingFuncExprState *gstate,
  *		return value: Datum value of result
  *		*isNull: set to TRUE if result is NULL (actual return value is
  *				 meaningless if so); set to FALSE if non-null result
- *		*isDone: set to indicator of set-result status
- *
- * A caller that can only accept a singleton (non-set) result should pass
- * NULL for isDone; if the expression computes a set result then an error
- * will be reported via ereport.  If the caller does pass an isDone pointer
- * then *isDone is set to one of these three states:
- *		ExprSingleResult		singleton result (not a set)
- *		ExprMultipleResult		return value is one element of a set
- *		ExprEndResult			there are no more elements in the set
- * When ExprMultipleResult is returned, the caller should invoke
- * ExecEvalExpr() repeatedly until ExprEndResult is returned.  ExprEndResult
- * is returned after the last real set element.  For convenience isNull will
- * always be set TRUE when ExprEndResult is returned, but this should not be
- * taken as indicating a NULL element of the set.  Note that these return
- * conventions allow us to distinguish among a singleton NULL, a NULL element
- * of a set, and an empty set.
  *
  * The caller should already have switched into the temporary memory
  * context econtext->ecxt_per_tuple_memory.  The convenience entry point
@@ -260,8 +243,7 @@ static Datum ExecEvalGroupingFuncExpr(GroupingFuncExprState *gstate,
 static Datum
 ExecEvalArrayRef(ArrayRefExprState *astate,
 				 ExprContext *econtext,
-				 bool *isNull,
-				 ExprDoneCond *isDone)
+				 bool *isNull)
 {
 	ArrayRef   *arrayRef = (ArrayRef *) astate->xprstate.expr;
 	Datum		array_source;
@@ -278,8 +260,7 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 
 	array_source = ExecEvalExpr(astate->refexpr,
 								econtext,
-								isNull,
-								isDone);
+								isNull);
 
 	/*
 	 * If refexpr yields NULL, and it's a fetch, then result is NULL. In the
@@ -287,8 +268,6 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 	 */
 	if (*isNull)
 	{
-		if (isDone && *isDone == ExprEndResult)
-			return (Datum) NULL;	/* end of set result */
 		if (!isAssignment)
 			return (Datum) NULL;
 	}
@@ -314,8 +293,7 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 
 		upper.indx[i++] = DatumGetInt32(ExecEvalExpr(eltstate,
 													 econtext,
-													 &eisnull,
-													 NULL));
+													 &eisnull));
 		/* If any index expr yields NULL, result is NULL or error */
 		if (eisnull)
 		{
@@ -350,8 +328,7 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 
 			lower.indx[j++] = DatumGetInt32(ExecEvalExpr(eltstate,
 														 econtext,
-														 &eisnull,
-														 NULL));
+														 &eisnull));
 			/* If any index expr yields NULL, result is NULL or error */
 			if (eisnull)
 			{
@@ -438,8 +415,7 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 		 */
 		sourceData = ExecEvalExpr(astate->refassgnexpr,
 								  econtext,
-								  &eisnull,
-								  NULL);
+								  &eisnull);
 
 		econtext->caseValue_datum = save_datum;
 		econtext->caseValue_isNull = save_isNull;
@@ -542,11 +518,8 @@ isAssignmentIndirectionExpr(ExprState *exprstate)
  */
 static Datum
 ExecEvalAggref(AggrefExprState *aggref, ExprContext *econtext,
-			   bool *isNull, ExprDoneCond *isDone)
+			   bool *isNull)
 {
-	if (isDone)
-		*isDone = ExprSingleResult;
-
 	if (econtext->ecxt_aggvalues == NULL)		/* safety check */
 		elog(ERROR, "no aggregates in this expression context");
 
@@ -563,11 +536,8 @@ ExecEvalAggref(AggrefExprState *aggref, ExprContext *econtext,
  */
 static Datum
 ExecEvalWindowFunc(WindowFuncExprState *wfunc, ExprContext *econtext,
-				   bool *isNull, ExprDoneCond *isDone)
+				   bool *isNull)
 {
-	if (isDone)
-		*isDone = ExprSingleResult;
-
 	if (econtext->ecxt_aggvalues == NULL)		/* safety check */
 		elog(ERROR, "no window functions in this expression context");
 
@@ -588,14 +558,11 @@ ExecEvalWindowFunc(WindowFuncExprState *wfunc, ExprContext *econtext,
  */
 static Datum
 ExecEvalScalarVar(ExprState *exprstate, ExprContext *econtext,
-				  bool *isNull, ExprDoneCond *isDone)
+				  bool *isNull)
 {
 	Var		   *variable = (Var *) exprstate->expr;
 	TupleTableSlot *slot;
 	AttrNumber	attnum;
-
-	if (isDone)
-		*isDone = ExprSingleResult;
 
 	/* Get the input slot and attribute number we want */
 	switch (variable->varno)
@@ -677,14 +644,11 @@ ExecEvalScalarVar(ExprState *exprstate, ExprContext *econtext,
  */
 static Datum
 ExecEvalScalarVarFast(ExprState *exprstate, ExprContext *econtext,
-					  bool *isNull, ExprDoneCond *isDone)
+					  bool *isNull)
 {
 	Var		   *variable = (Var *) exprstate->expr;
 	TupleTableSlot *slot;
 	AttrNumber	attnum;
-
-	if (isDone)
-		*isDone = ExprSingleResult;
 
 	/* Get the input slot and attribute number we want */
 	switch (variable->varno)
@@ -725,16 +689,13 @@ ExecEvalScalarVarFast(ExprState *exprstate, ExprContext *econtext,
  */
 static Datum
 ExecEvalWholeRowVar(WholeRowVarExprState *wrvstate, ExprContext *econtext,
-					bool *isNull, ExprDoneCond *isDone)
+					bool *isNull)
 {
 	Var		   *variable = (Var *) wrvstate->xprstate.expr;
 	TupleTableSlot *slot;
 	TupleDesc	output_tupdesc;
 	MemoryContext oldcontext;
 	bool		needslow = false;
-
-	if (isDone)
-		*isDone = ExprSingleResult;
 
 	/* This was checked by ExecInitExpr */
 	Assert(variable->varattno == InvalidAttrNumber);
@@ -941,7 +902,7 @@ ExecEvalWholeRowVar(WholeRowVarExprState *wrvstate, ExprContext *econtext,
 
 	/* Fetch the value */
 	return (*wrvstate->xprstate.evalfunc) ((ExprState *) wrvstate, econtext,
-										   isNull, isDone);
+										   isNull);
 }
 
 /* ----------------------------------------------------------------
@@ -952,14 +913,12 @@ ExecEvalWholeRowVar(WholeRowVarExprState *wrvstate, ExprContext *econtext,
  */
 static Datum
 ExecEvalWholeRowFast(WholeRowVarExprState *wrvstate, ExprContext *econtext,
-					 bool *isNull, ExprDoneCond *isDone)
+					 bool *isNull)
 {
 	Var		   *variable = (Var *) wrvstate->xprstate.expr;
 	TupleTableSlot *slot;
 	HeapTupleHeader dtuple;
 
-	if (isDone)
-		*isDone = ExprSingleResult;
 	*isNull = false;
 
 	/* Get the input slot we want */
@@ -1008,7 +967,7 @@ ExecEvalWholeRowFast(WholeRowVarExprState *wrvstate, ExprContext *econtext,
  */
 static Datum
 ExecEvalWholeRowSlow(WholeRowVarExprState *wrvstate, ExprContext *econtext,
-					 bool *isNull, ExprDoneCond *isDone)
+					 bool *isNull)
 {
 	Var		   *variable = (Var *) wrvstate->xprstate.expr;
 	TupleTableSlot *slot;
@@ -1018,8 +977,6 @@ ExecEvalWholeRowSlow(WholeRowVarExprState *wrvstate, ExprContext *econtext,
 	HeapTupleHeader dtuple;
 	int			i;
 
-	if (isDone)
-		*isDone = ExprSingleResult;
 	*isNull = false;
 
 	/* Get the input slot we want */
@@ -1097,12 +1054,9 @@ ExecEvalWholeRowSlow(WholeRowVarExprState *wrvstate, ExprContext *econtext,
  */
 static Datum
 ExecEvalConst(ExprState *exprstate, ExprContext *econtext,
-			  bool *isNull, ExprDoneCond *isDone)
+			  bool *isNull)
 {
 	Const	   *con = (Const *) exprstate->expr;
-
-	if (isDone)
-		*isDone = ExprSingleResult;
 
 	*isNull = con->constisnull;
 	return con->constvalue;
@@ -1116,14 +1070,11 @@ ExecEvalConst(ExprState *exprstate, ExprContext *econtext,
  */
 static Datum
 ExecEvalParamExec(ExprState *exprstate, ExprContext *econtext,
-				  bool *isNull, ExprDoneCond *isDone)
+				  bool *isNull)
 {
 	Param	   *expression = (Param *) exprstate->expr;
 	int			thisParamId = expression->paramid;
 	ParamExecData *prm;
-
-	if (isDone)
-		*isDone = ExprSingleResult;
 
 	/*
 	 * PARAM_EXEC params (internal executor parameters) are stored in the
@@ -1149,14 +1100,11 @@ ExecEvalParamExec(ExprState *exprstate, ExprContext *econtext,
  */
 static Datum
 ExecEvalParamExtern(ExprState *exprstate, ExprContext *econtext,
-					bool *isNull, ExprDoneCond *isDone)
+					bool *isNull)
 {
 	Param	   *expression = (Param *) exprstate->expr;
 	int			thisParamId = expression->paramid;
 	ParamListInfo paramInfo = econtext->ecxt_param_list_info;
-
-	if (isDone)
-		*isDone = ExprSingleResult;
 
 	/*
 	 * PARAM_EXTERN parameters must be sought in ecxt_param_list_info.
@@ -1421,7 +1369,6 @@ init_fcache(Oid foid, Oid input_collation, FuncExprState *fcache,
 	/* Initialize additional state */
 	fcache->funcResultStore = NULL;
 	fcache->funcResultSlot = NULL;
-	fcache->setArgsValid = false;
 	fcache->shutdown_reg = false;
 }
 
@@ -1508,47 +1455,26 @@ ShutdownTupleDescRef(Datum arg)
 /*
  * Evaluate arguments for a function.
  */
-static ExprDoneCond
+static void
 ExecEvalFuncArgs(FunctionCallInfo fcinfo,
 				 List *argList,
 				 ExprContext *econtext)
 {
-	ExprDoneCond argIsDone;
 	int			i;
 	ListCell   *arg;
-
-	argIsDone = ExprSingleResult;		/* default assumption */
 
 	i = 0;
 	foreach(arg, argList)
 	{
 		ExprState  *argstate = (ExprState *) lfirst(arg);
-		ExprDoneCond thisArgIsDone;
 
 		fcinfo->arg[i] = ExecEvalExpr(argstate,
 									  econtext,
-									  &fcinfo->argnull[i],
-									  &thisArgIsDone);
-
-		if (thisArgIsDone != ExprSingleResult)
-		{
-			/*
-			 * We allow only one argument to have a set value; we'd need much
-			 * more complexity to keep track of multiple set arguments (cf.
-			 * ExecTargetList) and it doesn't seem worth it.
-			 */
-			if (argIsDone != ExprSingleResult)
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("functions and operators can take at most one set argument")));
-			argIsDone = thisArgIsDone;
-		}
+									  &fcinfo->argnull[i]);
 		i++;
 	}
 
 	Assert(i == fcinfo->nargs);
-
-	return argIsDone;
 }
 
 /*
@@ -1694,9 +1620,8 @@ ExecMakeFunctionResultSet(FuncExprState *fcache,
 	Datum		result;
 	FunctionCallInfo fcinfo;
 	PgStat_FunctionCallUsage fcusage;
-	ReturnSetInfo rsinfo;		/* for functions returning sets */
-	ExprDoneCond argDone;
-	bool		hasSetArg;
+	ReturnSetInfo rsinfo;
+	bool		callit;
 	int			i;
 
 restart:
@@ -1727,6 +1652,9 @@ restart:
 		else
 			elog(ERROR, "unrecognized node type: %d",
 				 (int) nodeTag(fcache->xprstate.expr));
+
+		/* shouldn't get here otherwise */
+		Assert(fcache->func.fn_retset);
 	}
 
 	/*
@@ -1736,7 +1664,6 @@ restart:
 	 */
 	if (fcache->funcResultStore)
 	{
-		Assert(isDone);			/* it was provided before ... */
 		if (tuplestore_gettupleslot(fcache->funcResultStore, true, false,
 									fcache->funcResultSlot))
 		{
@@ -1756,15 +1683,9 @@ restart:
 		/* Exhausted the tuplestore, so clean up */
 		tuplestore_end(fcache->funcResultStore);
 		fcache->funcResultStore = NULL;
-		/* We are done unless there was a set-valued argument */
-		if (!fcache->setHasSetArg)
-		{
-			*isDone = ExprEndResult;
-			*isNull = true;
-			return (Datum) 0;
-		}
-		/* If there was, continue evaluating the argument values */
-		Assert(!fcache->setArgsValid);
+		*isDone = ExprEndResult;
+		*isNull = true;
+		return (Datum) 0;
 	}
 
 	/*
@@ -1776,18 +1697,9 @@ restart:
 	fcinfo = &fcache->fcinfo_data;
 	arguments = fcache->args;
 	if (!fcache->setArgsValid)
-	{
-		argDone = ExecEvalFuncArgs(fcinfo, arguments, econtext);
-		if (argDone != ExprSingleResult)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("set-valued function called in context that cannot accept a set")));
-		hasSetArg = false;
-	}
+		ExecEvalFuncArgs(fcinfo, arguments, econtext);
 	else
 	{
-		/* Re-use callinfo from previous evaluation */
-		hasSetArg = fcache->setHasSetArg;
 		/* Reset flag (we may set it again below) */
 		fcache->setArgsValid = false;
 	}
@@ -1795,213 +1707,105 @@ restart:
 	/*
 	 * Now call the function, passing the evaluated parameter values.
 	 */
-	if (fcache->func.fn_retset || hasSetArg)
+
+	/* Prepare a resultinfo node for communication. */
+	fcinfo->resultinfo = (Node *) &rsinfo;
+	rsinfo.type = T_ReturnSetInfo;
+	rsinfo.econtext = econtext;
+	rsinfo.expectedDesc = fcache->funcResultDesc;
+	rsinfo.allowedModes = (int) (SFRM_ValuePerCall | SFRM_Materialize);
+	/* note we do not set SFRM_Materialize_Random or _Preferred */
+	rsinfo.returnMode = SFRM_ValuePerCall;
+	/* isDone is filled below */
+	rsinfo.setResult = NULL;
+	rsinfo.setDesc = NULL;
+
+	/*
+	 * If function is strict, and there are any NULL arguments, skip calling
+	 * the function.
+	 */
+	callit = true;
+	if (fcache->func.fn_strict)
 	{
-		/*
-		 * We need to return a set result.  Complain if caller not ready to
-		 * accept one.
-		 */
-		if (isDone == NULL)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("set-valued function called in context that cannot accept a set")));
-
-		/*
-		 * Prepare a resultinfo node for communication.  If the function
-		 * doesn't itself return set, we don't pass the resultinfo to the
-		 * function, but we need to fill it in anyway for internal use.
-		 */
-		if (fcache->func.fn_retset)
-			fcinfo->resultinfo = (Node *) &rsinfo;
-		rsinfo.type = T_ReturnSetInfo;
-		rsinfo.econtext = econtext;
-		rsinfo.expectedDesc = fcache->funcResultDesc;
-		rsinfo.allowedModes = (int) (SFRM_ValuePerCall | SFRM_Materialize);
-		/* note we do not set SFRM_Materialize_Random or _Preferred */
-		rsinfo.returnMode = SFRM_ValuePerCall;
-		/* isDone is filled below */
-		rsinfo.setResult = NULL;
-		rsinfo.setDesc = NULL;
-
-		/*
-		 * This loop handles the situation where we have both a set argument
-		 * and a set-valued function.  Once we have exhausted the function's
-		 * value(s) for a particular argument value, we have to get the next
-		 * argument value and start the function over again. We might have to
-		 * do it more than once, if the function produces an empty result set
-		 * for a particular input value.
-		 */
-		for (;;)
+		for (i = 0; i < fcinfo->nargs; i++)
 		{
-			/*
-			 * If function is strict, and there are any NULL arguments, skip
-			 * calling the function (at least for this set of args).
-			 */
-			bool		callit = true;
-
-			if (fcache->func.fn_strict)
+			if (fcinfo->argnull[i])
 			{
-				for (i = 0; i < fcinfo->nargs; i++)
-				{
-					if (fcinfo->argnull[i])
-					{
-						callit = false;
-						break;
-					}
-				}
-			}
-
-			if (callit)
-			{
-				pgstat_init_function_usage(fcinfo, &fcusage);
-
-				fcinfo->isnull = false;
-				rsinfo.isDone = ExprSingleResult;
-				result = FunctionCallInvoke(fcinfo);
-				*isNull = fcinfo->isnull;
-				*isDone = rsinfo.isDone;
-
-				pgstat_end_function_usage(&fcusage,
-										rsinfo.isDone != ExprMultipleResult);
-			}
-			else if (fcache->func.fn_retset)
-			{
-				/* for a strict SRF, result for NULL is an empty set */
-				result = (Datum) 0;
-				*isNull = true;
-				*isDone = ExprEndResult;
-			}
-			else
-			{
-				/* for a strict non-SRF, result for NULL is a NULL */
-				result = (Datum) 0;
-				*isNull = true;
-				*isDone = ExprSingleResult;
-			}
-
-			/* Which protocol does function want to use? */
-			if (rsinfo.returnMode == SFRM_ValuePerCall)
-			{
-				if (*isDone != ExprEndResult)
-				{
-					/*
-					 * Got a result from current argument. If function itself
-					 * returns set, save the current argument values to re-use
-					 * on the next call.
-					 */
-					if (fcache->func.fn_retset &&
-						*isDone == ExprMultipleResult)
-					{
-						fcache->setHasSetArg = hasSetArg;
-						fcache->setArgsValid = true;
-						/* Register cleanup callback if we didn't already */
-						if (!fcache->shutdown_reg)
-						{
-							RegisterExprContextCallback(econtext,
-														ShutdownFuncExpr,
-													PointerGetDatum(fcache));
-							fcache->shutdown_reg = true;
-						}
-					}
-
-					/*
-					 * Make sure we say we are returning a set, even if the
-					 * function itself doesn't return sets.
-					 */
-					if (hasSetArg)
-						*isDone = ExprMultipleResult;
-					break;
-				}
-			}
-			else if (rsinfo.returnMode == SFRM_Materialize)
-			{
-				/* check we're on the same page as the function author */
-				if (rsinfo.isDone != ExprSingleResult)
-					ereport(ERROR,
-							(errcode(ERRCODE_E_R_I_E_SRF_PROTOCOL_VIOLATED),
-							 errmsg("table-function protocol for materialize mode was not followed")));
-				if (rsinfo.setResult != NULL)
-				{
-					/* prepare to return values from the tuplestore */
-					ExecPrepareTuplestoreResult(fcache, econtext,
-												rsinfo.setResult,
-												rsinfo.setDesc);
-					/* remember whether we had set arguments */
-					fcache->setHasSetArg = hasSetArg;
-					/* loop back to top to start returning from tuplestore */
-					goto restart;
-				}
-				/* if setResult was left null, treat it as empty set */
-				*isDone = ExprEndResult;
-				*isNull = true;
-				result = (Datum) 0;
-			}
-			else
-				ereport(ERROR,
-						(errcode(ERRCODE_E_R_I_E_SRF_PROTOCOL_VIOLATED),
-						 errmsg("unrecognized table-function returnMode: %d",
-								(int) rsinfo.returnMode)));
-
-			/* Else, done with this argument */
-			if (!hasSetArg)
-				break;			/* input not a set, so done */
-
-			/* Re-eval args to get the next element of the input set */
-			argDone = ExecEvalFuncArgs(fcinfo, arguments, econtext);
-
-			if (argDone != ExprMultipleResult)
-			{
-				/* End of argument set, so we're done. */
-				*isNull = true;
-				*isDone = ExprEndResult;
-				result = (Datum) 0;
+				callit = false;
 				break;
 			}
-
-			/*
-			 * If we reach here, loop around to run the function on the new
-			 * argument.
-			 */
 		}
 	}
-	else
+
+	if (callit)
 	{
-		/*
-		 * Non-set case: much easier.
-		 *
-		 * In common cases, this code path is unreachable because we'd have
-		 * selected ExecMakeFunctionResultNoSets instead.  However, it's
-		 * possible to get here if an argument sometimes produces set results
-		 * and sometimes scalar results.  For example, a CASE expression might
-		 * call a set-returning function in only some of its arms.
-		 */
-		if (isDone)
-			*isDone = ExprSingleResult;
-
-		/*
-		 * If function is strict, and there are any NULL arguments, skip
-		 * calling the function and return NULL.
-		 */
-		if (fcache->func.fn_strict)
-		{
-			for (i = 0; i < fcinfo->nargs; i++)
-			{
-				if (fcinfo->argnull[i])
-				{
-					*isNull = true;
-					return (Datum) 0;
-				}
-			}
-		}
-
 		pgstat_init_function_usage(fcinfo, &fcusage);
 
 		fcinfo->isnull = false;
+		rsinfo.isDone = ExprSingleResult;
 		result = FunctionCallInvoke(fcinfo);
 		*isNull = fcinfo->isnull;
+		*isDone = rsinfo.isDone;
 
-		pgstat_end_function_usage(&fcusage, true);
+		pgstat_end_function_usage(&fcusage,
+								  rsinfo.isDone != ExprMultipleResult);
 	}
+	else
+	{
+		/* for a strict SRF, result for NULL is an empty set */
+		result = (Datum) 0;
+		*isNull = true;
+		*isDone = ExprEndResult;
+	}
+
+	/* Which protocol does function want to use? */
+	if (rsinfo.returnMode == SFRM_ValuePerCall)
+	{
+		if (*isDone != ExprEndResult)
+		{
+			/*
+			 * Save the current argument values to re-use on the next call.
+			 */
+			if (*isDone == ExprMultipleResult)
+			{
+				fcache->setArgsValid = true;
+				/* Register cleanup callback if we didn't already */
+				if (!fcache->shutdown_reg)
+				{
+					RegisterExprContextCallback(econtext,
+												ShutdownFuncExpr,
+												PointerGetDatum(fcache));
+					fcache->shutdown_reg = true;
+				}
+			}
+		}
+	}
+	else if (rsinfo.returnMode == SFRM_Materialize)
+	{
+		/* check we're on the same page as the function author */
+		if (rsinfo.isDone != ExprSingleResult)
+			ereport(ERROR,
+					(errcode(ERRCODE_E_R_I_E_SRF_PROTOCOL_VIOLATED),
+					 errmsg("table-function protocol for materialize mode was not followed")));
+		if (rsinfo.setResult != NULL)
+		{
+			/* prepare to return values from the tuplestore */
+			ExecPrepareTuplestoreResult(fcache, econtext,
+										rsinfo.setResult,
+										rsinfo.setDesc);
+			/* loop back to top to start returning from tuplestore */
+			goto restart;
+		}
+		/* if setResult was left null, treat it as empty set */
+		*isDone = ExprEndResult;
+		*isNull = true;
+		result = (Datum) 0;
+	}
+	else
+		ereport(ERROR,
+				(errcode(ERRCODE_E_R_I_E_SRF_PROTOCOL_VIOLATED),
+				 errmsg("unrecognized table-function returnMode: %d",
+						(int) rsinfo.returnMode)));
 
 	return result;
 }
@@ -2015,8 +1819,7 @@ restart:
 static Datum
 ExecMakeFunctionResultNoSets(FuncExprState *fcache,
 							 ExprContext *econtext,
-							 bool *isNull,
-							 ExprDoneCond *isDone)
+							 bool *isNull)
 {
 	ListCell   *arg;
 	Datum		result;
@@ -2027,9 +1830,6 @@ ExecMakeFunctionResultNoSets(FuncExprState *fcache,
 	/* Guard against stack overflow due to overly complex expressions */
 	check_stack_depth();
 
-	if (isDone)
-		*isDone = ExprSingleResult;
-
 	/* inlined, simplified version of ExecEvalFuncArgs */
 	fcinfo = &fcache->fcinfo_data;
 	i = 0;
@@ -2039,8 +1839,7 @@ ExecMakeFunctionResultNoSets(FuncExprState *fcache,
 
 		fcinfo->arg[i] = ExecEvalExpr(argstate,
 									  econtext,
-									  &fcinfo->argnull[i],
-									  NULL);
+									  &fcinfo->argnull[i]);
 		i++;
 	}
 
@@ -2137,7 +1936,6 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 		IsA(funcexpr->expr, FuncExpr))
 	{
 		FuncExprState *fcache = (FuncExprState *) funcexpr;
-		ExprDoneCond argDone;
 
 		/*
 		 * This path is similar to ExecMakeFunctionResultSet.
@@ -2172,14 +1970,8 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 		 */
 		MemoryContextReset(argContext);
 		oldcontext = MemoryContextSwitchTo(argContext);
-		argDone = ExecEvalFuncArgs(&fcinfo, fcache->args, econtext);
+		ExecEvalFuncArgs(&fcinfo, fcache->args, econtext);
 		MemoryContextSwitchTo(oldcontext);
-
-		/* We don't allow sets in the arguments of the table function */
-		if (argDone != ExprSingleResult)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("set-valued function called in context that cannot accept a set")));
 
 		/*
 		 * If function is strict, and there are any NULL arguments, skip
@@ -2240,8 +2032,8 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 		}
 		else
 		{
-			result = ExecEvalExpr(funcexpr, econtext,
-								  &fcinfo.isnull, &rsinfo.isDone);
+			result = ExecEvalExpr(funcexpr, econtext, &fcinfo.isnull);
+			rsinfo.isDone = ExprSingleResult;
 		}
 
 		/* Which protocol does function want to use? */
@@ -2435,8 +2227,7 @@ no_function_result:
 static Datum
 ExecEvalFunc(FuncExprState *fcache,
 			 ExprContext *econtext,
-			 bool *isNull,
-			 ExprDoneCond *isDone)
+			 bool *isNull)
 {
 	/* This is called only the first time through */
 	FuncExpr   *func = (FuncExpr *) fcache->xprstate.expr;
@@ -2447,7 +2238,7 @@ ExecEvalFunc(FuncExprState *fcache,
 
 	/* Change the evalfunc pointer to save a few cycles in additional calls */
 	fcache->xprstate.evalfunc = (ExprStateEvalFunc) ExecMakeFunctionResultNoSets;
-	return ExecMakeFunctionResultNoSets(fcache, econtext, isNull, isDone);
+	return ExecMakeFunctionResultNoSets(fcache, econtext, isNull);
 }
 
 /* ----------------------------------------------------------------
@@ -2457,8 +2248,7 @@ ExecEvalFunc(FuncExprState *fcache,
 static Datum
 ExecEvalOper(FuncExprState *fcache,
 			 ExprContext *econtext,
-			 bool *isNull,
-			 ExprDoneCond *isDone)
+			 bool *isNull)
 {
 	/* This is called only the first time through */
 	OpExpr	   *op = (OpExpr *) fcache->xprstate.expr;
@@ -2469,7 +2259,7 @@ ExecEvalOper(FuncExprState *fcache,
 
 	/* Change the evalfunc pointer to save a few cycles in additional calls */
 	fcache->xprstate.evalfunc = (ExprStateEvalFunc) ExecMakeFunctionResultNoSets;
-	return ExecMakeFunctionResultNoSets(fcache, econtext, isNull, isDone);
+	return ExecMakeFunctionResultNoSets(fcache, econtext, isNull);
 }
 
 /* ----------------------------------------------------------------
@@ -2486,17 +2276,13 @@ ExecEvalOper(FuncExprState *fcache,
 static Datum
 ExecEvalDistinct(FuncExprState *fcache,
 				 ExprContext *econtext,
-				 bool *isNull,
-				 ExprDoneCond *isDone)
+				 bool *isNull)
 {
 	Datum		result;
 	FunctionCallInfo fcinfo;
-	ExprDoneCond argDone;
 
-	/* Set default values for result flags: non-null, not a set result */
+	/* Set non-null as default */
 	*isNull = false;
-	if (isDone)
-		*isDone = ExprSingleResult;
 
 	/*
 	 * Initialize function cache if first time through
@@ -2513,11 +2299,7 @@ ExecEvalDistinct(FuncExprState *fcache,
 	 * Evaluate arguments
 	 */
 	fcinfo = &fcache->fcinfo_data;
-	argDone = ExecEvalFuncArgs(fcinfo, fcache->args, econtext);
-	if (argDone != ExprSingleResult)
-		ereport(ERROR,
-				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("IS DISTINCT FROM does not support set arguments")));
+	ExecEvalFuncArgs(fcinfo, fcache->args, econtext);
 	Assert(fcinfo->nargs == 2);
 
 	if (fcinfo->argnull[0] && fcinfo->argnull[1])
@@ -2553,7 +2335,7 @@ ExecEvalDistinct(FuncExprState *fcache,
 static Datum
 ExecEvalScalarArrayOp(ScalarArrayOpExprState *sstate,
 					  ExprContext *econtext,
-					  bool *isNull, ExprDoneCond *isDone)
+					  bool *isNull)
 {
 	ScalarArrayOpExpr *opexpr = (ScalarArrayOpExpr *) sstate->fxprstate.xprstate.expr;
 	bool		useOr = opexpr->useOr;
@@ -2562,7 +2344,6 @@ ExecEvalScalarArrayOp(ScalarArrayOpExprState *sstate,
 	Datum		result;
 	bool		resultnull;
 	FunctionCallInfo fcinfo;
-	ExprDoneCond argDone;
 	int			i;
 	int16		typlen;
 	bool		typbyval;
@@ -2571,10 +2352,8 @@ ExecEvalScalarArrayOp(ScalarArrayOpExprState *sstate,
 	bits8	   *bitmap;
 	int			bitmask;
 
-	/* Set default values for result flags: non-null, not a set result */
+	/* Set non-null as default */
 	*isNull = false;
-	if (isDone)
-		*isDone = ExprSingleResult;
 
 	/*
 	 * Initialize function cache if first time through
@@ -2589,11 +2368,7 @@ ExecEvalScalarArrayOp(ScalarArrayOpExprState *sstate,
 	 * Evaluate arguments
 	 */
 	fcinfo = &sstate->fxprstate.fcinfo_data;
-	argDone = ExecEvalFuncArgs(fcinfo, sstate->fxprstate.args, econtext);
-	if (argDone != ExprSingleResult)
-		ereport(ERROR,
-				(errcode(ERRCODE_DATATYPE_MISMATCH),
-			   errmsg("op ANY/ALL (array) does not support set arguments")));
+	ExecEvalFuncArgs(fcinfo, sstate->fxprstate.args, econtext);
 	Assert(fcinfo->nargs == 2);
 
 	/*
@@ -2739,15 +2514,12 @@ ExecEvalScalarArrayOp(ScalarArrayOpExprState *sstate,
  */
 static Datum
 ExecEvalNot(BoolExprState *notclause, ExprContext *econtext,
-			bool *isNull, ExprDoneCond *isDone)
+			bool *isNull)
 {
 	ExprState  *clause = linitial(notclause->args);
 	Datum		expr_value;
 
-	if (isDone)
-		*isDone = ExprSingleResult;
-
-	expr_value = ExecEvalExpr(clause, econtext, isNull, NULL);
+	expr_value = ExecEvalExpr(clause, econtext, isNull);
 
 	/*
 	 * if the expression evaluates to null, then we just cascade the null back
@@ -2769,14 +2541,11 @@ ExecEvalNot(BoolExprState *notclause, ExprContext *econtext,
  */
 static Datum
 ExecEvalOr(BoolExprState *orExpr, ExprContext *econtext,
-		   bool *isNull, ExprDoneCond *isDone)
+		   bool *isNull)
 {
 	List	   *clauses = orExpr->args;
 	ListCell   *clause;
 	bool		AnyNull;
-
-	if (isDone)
-		*isDone = ExprSingleResult;
 
 	AnyNull = false;
 
@@ -2798,7 +2567,7 @@ ExecEvalOr(BoolExprState *orExpr, ExprContext *econtext,
 		ExprState  *clausestate = (ExprState *) lfirst(clause);
 		Datum		clause_value;
 
-		clause_value = ExecEvalExpr(clausestate, econtext, isNull, NULL);
+		clause_value = ExecEvalExpr(clausestate, econtext, isNull);
 
 		/*
 		 * if we have a non-null true result, then return it.
@@ -2820,14 +2589,11 @@ ExecEvalOr(BoolExprState *orExpr, ExprContext *econtext,
  */
 static Datum
 ExecEvalAnd(BoolExprState *andExpr, ExprContext *econtext,
-			bool *isNull, ExprDoneCond *isDone)
+			bool *isNull)
 {
 	List	   *clauses = andExpr->args;
 	ListCell   *clause;
 	bool		AnyNull;
-
-	if (isDone)
-		*isDone = ExprSingleResult;
 
 	AnyNull = false;
 
@@ -2845,7 +2611,7 @@ ExecEvalAnd(BoolExprState *andExpr, ExprContext *econtext,
 		ExprState  *clausestate = (ExprState *) lfirst(clause);
 		Datum		clause_value;
 
-		clause_value = ExecEvalExpr(clausestate, econtext, isNull, NULL);
+		clause_value = ExecEvalExpr(clausestate, econtext, isNull);
 
 		/*
 		 * if we have a non-null false result, then return it.
@@ -2871,7 +2637,7 @@ ExecEvalAnd(BoolExprState *andExpr, ExprContext *econtext,
 static Datum
 ExecEvalConvertRowtype(ConvertRowtypeExprState *cstate,
 					   ExprContext *econtext,
-					   bool *isNull, ExprDoneCond *isDone)
+					   bool *isNull)
 {
 	ConvertRowtypeExpr *convert = (ConvertRowtypeExpr *) cstate->xprstate.expr;
 	HeapTuple	result;
@@ -2879,7 +2645,7 @@ ExecEvalConvertRowtype(ConvertRowtypeExprState *cstate,
 	HeapTupleHeader tuple;
 	HeapTupleData tmptup;
 
-	tupDatum = ExecEvalExpr(cstate->arg, econtext, isNull, isDone);
+	tupDatum = ExecEvalExpr(cstate->arg, econtext, isNull);
 
 	/* this test covers the isDone exception too: */
 	if (*isNull)
@@ -2955,15 +2721,12 @@ ExecEvalConvertRowtype(ConvertRowtypeExprState *cstate,
  */
 static Datum
 ExecEvalCase(CaseExprState *caseExpr, ExprContext *econtext,
-			 bool *isNull, ExprDoneCond *isDone)
+			 bool *isNull)
 {
 	List	   *clauses = caseExpr->args;
 	ListCell   *clause;
 	Datum		save_datum;
 	bool		save_isNull;
-
-	if (isDone)
-		*isDone = ExprSingleResult;
 
 	/*
 	 * If there's a test expression, we have to evaluate it and save the value
@@ -2989,8 +2752,7 @@ ExecEvalCase(CaseExprState *caseExpr, ExprContext *econtext,
 
 		arg_value = ExecEvalExpr(caseExpr->arg,
 								 econtext,
-								 &arg_isNull,
-								 NULL);
+								 &arg_isNull);
 		/* Since caseValue_datum may be read multiple times, force to R/O */
 		econtext->caseValue_datum =
 			MakeExpandedObjectReadOnly(arg_value,
@@ -3012,8 +2774,7 @@ ExecEvalCase(CaseExprState *caseExpr, ExprContext *econtext,
 
 		clause_value = ExecEvalExpr(wclause->expr,
 									econtext,
-									&clause_isNull,
-									NULL);
+									&clause_isNull);
 
 		/*
 		 * if we have a true test, then we return the result, since the case
@@ -3026,8 +2787,7 @@ ExecEvalCase(CaseExprState *caseExpr, ExprContext *econtext,
 			econtext->caseValue_isNull = save_isNull;
 			return ExecEvalExpr(wclause->result,
 								econtext,
-								isNull,
-								isDone);
+								isNull);
 		}
 	}
 
@@ -3038,8 +2798,7 @@ ExecEvalCase(CaseExprState *caseExpr, ExprContext *econtext,
 	{
 		return ExecEvalExpr(caseExpr->defresult,
 							econtext,
-							isNull,
-							isDone);
+							isNull);
 	}
 
 	*isNull = true;
@@ -3054,10 +2813,8 @@ ExecEvalCase(CaseExprState *caseExpr, ExprContext *econtext,
 static Datum
 ExecEvalCaseTestExpr(ExprState *exprstate,
 					 ExprContext *econtext,
-					 bool *isNull, ExprDoneCond *isDone)
+					 bool *isNull)
 {
-	if (isDone)
-		*isDone = ExprSingleResult;
 	*isNull = econtext->caseValue_isNull;
 	return econtext->caseValue_datum;
 }
@@ -3074,16 +2831,12 @@ ExecEvalCaseTestExpr(ExprState *exprstate,
 static Datum
 ExecEvalGroupingFuncExpr(GroupingFuncExprState *gstate,
 						 ExprContext *econtext,
-						 bool *isNull,
-						 ExprDoneCond *isDone)
+						 bool *isNull)
 {
 	int			result = 0;
 	int			attnum = 0;
 	Bitmapset  *grouped_cols = gstate->aggstate->grouped_cols;
 	ListCell   *lc;
-
-	if (isDone)
-		*isDone = ExprSingleResult;
 
 	*isNull = false;
 
@@ -3106,7 +2859,7 @@ ExecEvalGroupingFuncExpr(GroupingFuncExprState *gstate,
  */
 static Datum
 ExecEvalArray(ArrayExprState *astate, ExprContext *econtext,
-			  bool *isNull, ExprDoneCond *isDone)
+			  bool *isNull)
 {
 	ArrayExpr  *arrayExpr = (ArrayExpr *) astate->xprstate.expr;
 	ArrayType  *result;
@@ -3116,10 +2869,8 @@ ExecEvalArray(ArrayExprState *astate, ExprContext *econtext,
 	int			dims[MAXDIM];
 	int			lbs[MAXDIM];
 
-	/* Set default values for result flags: non-null, not a set result */
+	/* Set non-null as default */
 	*isNull = false;
-	if (isDone)
-		*isDone = ExprSingleResult;
 
 	if (!arrayExpr->multidims)
 	{
@@ -3144,7 +2895,7 @@ ExecEvalArray(ArrayExprState *astate, ExprContext *econtext,
 		{
 			ExprState  *e = (ExprState *) lfirst(element);
 
-			dvalues[i] = ExecEvalExpr(e, econtext, &dnulls[i], NULL);
+			dvalues[i] = ExecEvalExpr(e, econtext, &dnulls[i]);
 			i++;
 		}
 
@@ -3194,7 +2945,7 @@ ExecEvalArray(ArrayExprState *astate, ExprContext *econtext,
 			ArrayType  *array;
 			int			this_ndims;
 
-			arraydatum = ExecEvalExpr(e, econtext, &eisnull, NULL);
+			arraydatum = ExecEvalExpr(e, econtext, &eisnull);
 			/* temporarily ignore null subarrays */
 			if (eisnull)
 			{
@@ -3333,7 +3084,7 @@ ExecEvalArray(ArrayExprState *astate, ExprContext *econtext,
 static Datum
 ExecEvalRow(RowExprState *rstate,
 			ExprContext *econtext,
-			bool *isNull, ExprDoneCond *isDone)
+			bool *isNull)
 {
 	HeapTuple	tuple;
 	Datum	   *values;
@@ -3342,10 +3093,8 @@ ExecEvalRow(RowExprState *rstate,
 	ListCell   *arg;
 	int			i;
 
-	/* Set default values for result flags: non-null, not a set result */
+	/* Set non-null as default */
 	*isNull = false;
-	if (isDone)
-		*isDone = ExprSingleResult;
 
 	/* Allocate workspace */
 	natts = rstate->tupdesc->natts;
@@ -3361,7 +3110,7 @@ ExecEvalRow(RowExprState *rstate,
 	{
 		ExprState  *e = (ExprState *) lfirst(arg);
 
-		values[i] = ExecEvalExpr(e, econtext, &isnull[i], NULL);
+		values[i] = ExecEvalExpr(e, econtext, &isnull[i]);
 		i++;
 	}
 
@@ -3380,7 +3129,7 @@ ExecEvalRow(RowExprState *rstate,
 static Datum
 ExecEvalRowCompare(RowCompareExprState *rstate,
 				   ExprContext *econtext,
-				   bool *isNull, ExprDoneCond *isDone)
+				   bool *isNull)
 {
 	bool		result;
 	RowCompareType rctype = ((RowCompareExpr *) rstate->xprstate.expr)->rctype;
@@ -3389,8 +3138,6 @@ ExecEvalRowCompare(RowCompareExprState *rstate,
 	ListCell   *r;
 	int			i;
 
-	if (isDone)
-		*isDone = ExprSingleResult;
 	*isNull = true;				/* until we get a result */
 
 	i = 0;
@@ -3404,9 +3151,9 @@ ExecEvalRowCompare(RowCompareExprState *rstate,
 								 rstate->collations[i],
 								 NULL, NULL);
 		locfcinfo.arg[0] = ExecEvalExpr(le, econtext,
-										&locfcinfo.argnull[0], NULL);
+										&locfcinfo.argnull[0]);
 		locfcinfo.arg[1] = ExecEvalExpr(re, econtext,
-										&locfcinfo.argnull[1], NULL);
+										&locfcinfo.argnull[1]);
 		if (rstate->funcs[i].fn_strict &&
 			(locfcinfo.argnull[0] || locfcinfo.argnull[1]))
 			return (Datum) 0;	/* force NULL result */
@@ -3450,12 +3197,9 @@ ExecEvalRowCompare(RowCompareExprState *rstate,
  */
 static Datum
 ExecEvalCoalesce(CoalesceExprState *coalesceExpr, ExprContext *econtext,
-				 bool *isNull, ExprDoneCond *isDone)
+				 bool *isNull)
 {
 	ListCell   *arg;
-
-	if (isDone)
-		*isDone = ExprSingleResult;
 
 	/* Simply loop through until something NOT NULL is found */
 	foreach(arg, coalesceExpr->args)
@@ -3463,7 +3207,7 @@ ExecEvalCoalesce(CoalesceExprState *coalesceExpr, ExprContext *econtext,
 		ExprState  *e = (ExprState *) lfirst(arg);
 		Datum		value;
 
-		value = ExecEvalExpr(e, econtext, isNull, NULL);
+		value = ExecEvalExpr(e, econtext, isNull);
 		if (!*isNull)
 			return value;
 	}
@@ -3479,7 +3223,7 @@ ExecEvalCoalesce(CoalesceExprState *coalesceExpr, ExprContext *econtext,
  */
 static Datum
 ExecEvalMinMax(MinMaxExprState *minmaxExpr, ExprContext *econtext,
-			   bool *isNull, ExprDoneCond *isDone)
+			   bool *isNull)
 {
 	Datum		result = (Datum) 0;
 	MinMaxExpr *minmax = (MinMaxExpr *) minmaxExpr->xprstate.expr;
@@ -3488,8 +3232,6 @@ ExecEvalMinMax(MinMaxExprState *minmaxExpr, ExprContext *econtext,
 	FunctionCallInfoData locfcinfo;
 	ListCell   *arg;
 
-	if (isDone)
-		*isDone = ExprSingleResult;
 	*isNull = true;				/* until we get a result */
 
 	InitFunctionCallInfoData(locfcinfo, &minmaxExpr->cfunc, 2,
@@ -3504,7 +3246,7 @@ ExecEvalMinMax(MinMaxExprState *minmaxExpr, ExprContext *econtext,
 		bool		valueIsNull;
 		int32		cmpresult;
 
-		value = ExecEvalExpr(e, econtext, &valueIsNull, NULL);
+		value = ExecEvalExpr(e, econtext, &valueIsNull);
 		if (valueIsNull)
 			continue;			/* ignore NULL inputs */
 
@@ -3540,14 +3282,12 @@ ExecEvalMinMax(MinMaxExprState *minmaxExpr, ExprContext *econtext,
 static Datum
 ExecEvalSQLValueFunction(ExprState *svfExpr,
 						 ExprContext *econtext,
-						 bool *isNull, ExprDoneCond *isDone)
+						 bool *isNull)
 {
 	Datum		result = (Datum) 0;
 	SQLValueFunction *svf = (SQLValueFunction *) svfExpr->expr;
 	FunctionCallInfoData fcinfo;
 
-	if (isDone)
-		*isDone = ExprSingleResult;
 	*isNull = false;
 
 	/*
@@ -3608,7 +3348,7 @@ ExecEvalSQLValueFunction(ExprState *svfExpr,
  */
 static Datum
 ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
-			bool *isNull, ExprDoneCond *isDone)
+			bool *isNull)
 {
 	XmlExpr    *xexpr = (XmlExpr *) xmlExpr->xprstate.expr;
 	Datum		value;
@@ -3616,8 +3356,6 @@ ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
 	ListCell   *arg;
 	ListCell   *narg;
 
-	if (isDone)
-		*isDone = ExprSingleResult;
 	*isNull = true;				/* until we get a result */
 
 	switch (xexpr->op)
@@ -3630,7 +3368,7 @@ ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
 				{
 					ExprState  *e = (ExprState *) lfirst(arg);
 
-					value = ExecEvalExpr(e, econtext, &isnull, NULL);
+					value = ExecEvalExpr(e, econtext, &isnull);
 					if (!isnull)
 						values = lappend(values, DatumGetPointer(value));
 				}
@@ -3655,7 +3393,7 @@ ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
 					ExprState  *e = (ExprState *) lfirst(arg);
 					char	   *argname = strVal(lfirst(narg));
 
-					value = ExecEvalExpr(e, econtext, &isnull, NULL);
+					value = ExecEvalExpr(e, econtext, &isnull);
 					if (!isnull)
 					{
 						appendStringInfo(&buf, "<%s>%s</%s>",
@@ -3698,13 +3436,13 @@ ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
 				Assert(list_length(xmlExpr->args) == 2);
 
 				e = (ExprState *) linitial(xmlExpr->args);
-				value = ExecEvalExpr(e, econtext, &isnull, NULL);
+				value = ExecEvalExpr(e, econtext, &isnull);
 				if (isnull)
 					return (Datum) 0;
 				data = DatumGetTextP(value);
 
 				e = (ExprState *) lsecond(xmlExpr->args);
-				value = ExecEvalExpr(e, econtext, &isnull, NULL);
+				value = ExecEvalExpr(e, econtext, &isnull);
 				if (isnull)		/* probably can't happen */
 					return (Datum) 0;
 				preserve_whitespace = DatumGetBool(value);
@@ -3728,7 +3466,7 @@ ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
 				if (xmlExpr->args)
 				{
 					e = (ExprState *) linitial(xmlExpr->args);
-					value = ExecEvalExpr(e, econtext, &isnull, NULL);
+					value = ExecEvalExpr(e, econtext, &isnull);
 					if (isnull)
 						arg = NULL;
 					else
@@ -3755,20 +3493,20 @@ ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
 				Assert(list_length(xmlExpr->args) == 3);
 
 				e = (ExprState *) linitial(xmlExpr->args);
-				value = ExecEvalExpr(e, econtext, &isnull, NULL);
+				value = ExecEvalExpr(e, econtext, &isnull);
 				if (isnull)
 					return (Datum) 0;
 				data = DatumGetXmlP(value);
 
 				e = (ExprState *) lsecond(xmlExpr->args);
-				value = ExecEvalExpr(e, econtext, &isnull, NULL);
+				value = ExecEvalExpr(e, econtext, &isnull);
 				if (isnull)
 					version = NULL;
 				else
 					version = DatumGetTextP(value);
 
 				e = (ExprState *) lthird(xmlExpr->args);
-				value = ExecEvalExpr(e, econtext, &isnull, NULL);
+				value = ExecEvalExpr(e, econtext, &isnull);
 				standalone = DatumGetInt32(value);
 
 				*isNull = false;
@@ -3787,7 +3525,7 @@ ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
 				Assert(list_length(xmlExpr->args) == 1);
 
 				e = (ExprState *) linitial(xmlExpr->args);
-				value = ExecEvalExpr(e, econtext, &isnull, NULL);
+				value = ExecEvalExpr(e, econtext, &isnull);
 				if (isnull)
 					return (Datum) 0;
 
@@ -3805,7 +3543,7 @@ ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
 				Assert(list_length(xmlExpr->args) == 1);
 
 				e = (ExprState *) linitial(xmlExpr->args);
-				value = ExecEvalExpr(e, econtext, &isnull, NULL);
+				value = ExecEvalExpr(e, econtext, &isnull);
 				if (isnull)
 					return (Datum) 0;
 				else
@@ -3832,14 +3570,10 @@ ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
 static Datum
 ExecEvalNullIf(FuncExprState *nullIfExpr,
 			   ExprContext *econtext,
-			   bool *isNull, ExprDoneCond *isDone)
+			   bool *isNull)
 {
 	Datum		result;
 	FunctionCallInfo fcinfo;
-	ExprDoneCond argDone;
-
-	if (isDone)
-		*isDone = ExprSingleResult;
 
 	/*
 	 * Initialize function cache if first time through
@@ -3856,11 +3590,7 @@ ExecEvalNullIf(FuncExprState *nullIfExpr,
 	 * Evaluate arguments
 	 */
 	fcinfo = &nullIfExpr->fcinfo_data;
-	argDone = ExecEvalFuncArgs(fcinfo, nullIfExpr->args, econtext);
-	if (argDone != ExprSingleResult)
-		ereport(ERROR,
-				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("NULLIF does not support set arguments")));
+	ExecEvalFuncArgs(fcinfo, nullIfExpr->args, econtext);
 	Assert(fcinfo->nargs == 2);
 
 	/* if either argument is NULL they can't be equal */
@@ -3890,16 +3620,12 @@ ExecEvalNullIf(FuncExprState *nullIfExpr,
 static Datum
 ExecEvalNullTest(NullTestState *nstate,
 				 ExprContext *econtext,
-				 bool *isNull,
-				 ExprDoneCond *isDone)
+				 bool *isNull)
 {
 	NullTest   *ntest = (NullTest *) nstate->xprstate.expr;
 	Datum		result;
 
-	result = ExecEvalExpr(nstate->arg, econtext, isNull, isDone);
-
-	if (isDone && *isDone == ExprEndResult)
-		return result;			/* nothing to check */
+	result = ExecEvalExpr(nstate->arg, econtext, isNull);
 
 	if (ntest->argisrow && !(*isNull))
 	{
@@ -3999,16 +3725,12 @@ ExecEvalNullTest(NullTestState *nstate,
 static Datum
 ExecEvalBooleanTest(GenericExprState *bstate,
 					ExprContext *econtext,
-					bool *isNull,
-					ExprDoneCond *isDone)
+					bool *isNull)
 {
 	BooleanTest *btest = (BooleanTest *) bstate->xprstate.expr;
 	Datum		result;
 
-	result = ExecEvalExpr(bstate->arg, econtext, isNull, isDone);
-
-	if (isDone && *isDone == ExprEndResult)
-		return result;			/* nothing to check */
+	result = ExecEvalExpr(bstate->arg, econtext, isNull);
 
 	switch (btest->booltesttype)
 	{
@@ -4084,16 +3806,13 @@ ExecEvalBooleanTest(GenericExprState *bstate,
  */
 static Datum
 ExecEvalCoerceToDomain(CoerceToDomainState *cstate, ExprContext *econtext,
-					   bool *isNull, ExprDoneCond *isDone)
+					   bool *isNull)
 {
 	CoerceToDomain *ctest = (CoerceToDomain *) cstate->xprstate.expr;
 	Datum		result;
 	ListCell   *l;
 
-	result = ExecEvalExpr(cstate->arg, econtext, isNull, isDone);
-
-	if (isDone && *isDone == ExprEndResult)
-		return result;			/* nothing to check */
+	result = ExecEvalExpr(cstate->arg, econtext, isNull);
 
 	/* Make sure we have up-to-date constraints */
 	UpdateDomainConstraintRef(cstate->constraint_ref);
@@ -4138,8 +3857,8 @@ ExecEvalCoerceToDomain(CoerceToDomainState *cstate, ExprContext *econtext,
 									 cstate->constraint_ref->tcache->typlen);
 					econtext->domainValue_isNull = *isNull;
 
-					conResult = ExecEvalExpr(con->check_expr,
-											 econtext, &conIsNull, NULL);
+					conResult = ExecEvalExpr(con->check_expr, econtext,
+											 &conIsNull);
 
 					if (!conIsNull &&
 						!DatumGetBool(conResult))
@@ -4174,10 +3893,8 @@ ExecEvalCoerceToDomain(CoerceToDomainState *cstate, ExprContext *econtext,
 static Datum
 ExecEvalCoerceToDomainValue(ExprState *exprstate,
 							ExprContext *econtext,
-							bool *isNull, ExprDoneCond *isDone)
+							bool *isNull)
 {
-	if (isDone)
-		*isDone = ExprSingleResult;
 	*isNull = econtext->domainValue_isNull;
 	return econtext->domainValue_datum;
 }
@@ -4191,8 +3908,7 @@ ExecEvalCoerceToDomainValue(ExprState *exprstate,
 static Datum
 ExecEvalFieldSelect(FieldSelectState *fstate,
 					ExprContext *econtext,
-					bool *isNull,
-					ExprDoneCond *isDone)
+					bool *isNull)
 {
 	FieldSelect *fselect = (FieldSelect *) fstate->xprstate.expr;
 	AttrNumber	fieldnum = fselect->fieldnum;
@@ -4205,9 +3921,8 @@ ExecEvalFieldSelect(FieldSelectState *fstate,
 	Form_pg_attribute attr;
 	HeapTupleData tmptup;
 
-	tupDatum = ExecEvalExpr(fstate->arg, econtext, isNull, isDone);
+	tupDatum = ExecEvalExpr(fstate->arg, econtext, isNull);
 
-	/* this test covers the isDone exception too: */
 	if (*isNull)
 		return tupDatum;
 
@@ -4270,8 +3985,7 @@ ExecEvalFieldSelect(FieldSelectState *fstate,
 static Datum
 ExecEvalFieldStore(FieldStoreState *fstate,
 				   ExprContext *econtext,
-				   bool *isNull,
-				   ExprDoneCond *isDone)
+				   bool *isNull)
 {
 	FieldStore *fstore = (FieldStore *) fstate->xprstate.expr;
 	HeapTuple	tuple;
@@ -4284,10 +3998,7 @@ ExecEvalFieldStore(FieldStoreState *fstate,
 	ListCell   *l1,
 			   *l2;
 
-	tupDatum = ExecEvalExpr(fstate->arg, econtext, isNull, isDone);
-
-	if (isDone && *isDone == ExprEndResult)
-		return tupDatum;
+	tupDatum = ExecEvalExpr(fstate->arg, econtext, isNull);
 
 	/* Lookup tupdesc if first time through or after rescan */
 	tupDesc = get_cached_rowtype(fstore->resulttype, -1,
@@ -4347,8 +4058,7 @@ ExecEvalFieldStore(FieldStoreState *fstate,
 
 		values[fieldnum - 1] = ExecEvalExpr(newval,
 											econtext,
-											&isnull[fieldnum - 1],
-											NULL);
+											&isnull[fieldnum - 1]);
 	}
 
 	econtext->caseValue_datum = save_datum;
@@ -4371,9 +4081,9 @@ ExecEvalFieldStore(FieldStoreState *fstate,
 static Datum
 ExecEvalRelabelType(GenericExprState *exprstate,
 					ExprContext *econtext,
-					bool *isNull, ExprDoneCond *isDone)
+					bool *isNull)
 {
-	return ExecEvalExpr(exprstate->arg, econtext, isNull, isDone);
+	return ExecEvalExpr(exprstate->arg, econtext, isNull);
 }
 
 /* ----------------------------------------------------------------
@@ -4385,16 +4095,13 @@ ExecEvalRelabelType(GenericExprState *exprstate,
 static Datum
 ExecEvalCoerceViaIO(CoerceViaIOState *iostate,
 					ExprContext *econtext,
-					bool *isNull, ExprDoneCond *isDone)
+					bool *isNull)
 {
 	Datum		result;
 	Datum		inputval;
 	char	   *string;
 
-	inputval = ExecEvalExpr(iostate->arg, econtext, isNull, isDone);
-
-	if (isDone && *isDone == ExprEndResult)
-		return inputval;		/* nothing to do */
+	inputval = ExecEvalExpr(iostate->arg, econtext, isNull);
 
 	if (*isNull)
 		string = NULL;			/* output functions are not called on nulls */
@@ -4419,16 +4126,14 @@ ExecEvalCoerceViaIO(CoerceViaIOState *iostate,
 static Datum
 ExecEvalArrayCoerceExpr(ArrayCoerceExprState *astate,
 						ExprContext *econtext,
-						bool *isNull, ExprDoneCond *isDone)
+						bool *isNull)
 {
 	ArrayCoerceExpr *acoerce = (ArrayCoerceExpr *) astate->xprstate.expr;
 	Datum		result;
 	FunctionCallInfoData locfcinfo;
 
-	result = ExecEvalExpr(astate->arg, econtext, isNull, isDone);
+	result = ExecEvalExpr(astate->arg, econtext, isNull);
 
-	if (isDone && *isDone == ExprEndResult)
-		return result;			/* nothing to do */
 	if (*isNull)
 		return result;			/* nothing to do */
 
@@ -4496,7 +4201,7 @@ ExecEvalArrayCoerceExpr(ArrayCoerceExprState *astate,
  */
 static Datum
 ExecEvalCurrentOfExpr(ExprState *exprstate, ExprContext *econtext,
-					  bool *isNull, ExprDoneCond *isDone)
+					  bool *isNull)
 {
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -4513,14 +4218,13 @@ ExecEvalCurrentOfExpr(ExprState *exprstate, ExprContext *econtext,
 Datum
 ExecEvalExprSwitchContext(ExprState *expression,
 						  ExprContext *econtext,
-						  bool *isNull,
-						  ExprDoneCond *isDone)
+						  bool *isNull)
 {
 	Datum		retDatum;
 	MemoryContext oldContext;
 
 	oldContext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
-	retDatum = ExecEvalExpr(expression, econtext, isNull, isDone);
+	retDatum = ExecEvalExpr(expression, econtext, isNull);
 	MemoryContextSwitchTo(oldContext);
 	return retDatum;
 }
@@ -5387,7 +5091,7 @@ ExecQual(List *qual, ExprContext *econtext, bool resultForNull)
 		Datum		expr_value;
 		bool		isNull;
 
-		expr_value = ExecEvalExpr(clause, econtext, &isNull, NULL);
+		expr_value = ExecEvalExpr(clause, econtext, &isNull);
 
 		if (isNull)
 		{
@@ -5445,17 +5149,11 @@ ExecCleanTargetListLength(List *targetlist)
 /*
  * ExecTargetList
  *		Evaluates a targetlist with respect to the given
- *		expression context.  Returns TRUE if we were able to create
- *		a result, FALSE if we have exhausted a set-valued expression.
+ *		expression context.
+ *
+ * tupdesc must describe the rowtype of the expected result.
  *
  * Results are stored into the passed values and isnull arrays.
- * The caller must provide an itemIsDone array that persists across calls.
- *
- * As with ExecEvalExpr, the caller should pass isDone = NULL if not
- * prepared to deal with sets of result tuples.  Otherwise, a return
- * of *isDone = ExprMultipleResult signifies a set element, and a return
- * of *isDone = ExprEndResult signifies end of the set of tuple.
- * We assume that *isDone has been initialized to ExprSingleResult by caller.
  *
  * Since fields of the result tuple might be multiply referenced in higher
  * plan nodes, we have to force any read/write expanded values to read-only
@@ -5464,19 +5162,16 @@ ExecCleanTargetListLength(List *targetlist)
  * actually-multiply-referenced Vars and insert an expression node that
  * would do that only where really required.
  */
-static bool
+static void
 ExecTargetList(List *targetlist,
 			   TupleDesc tupdesc,
 			   ExprContext *econtext,
 			   Datum *values,
-			   bool *isnull,
-			   ExprDoneCond *itemIsDone,
-			   ExprDoneCond *isDone)
+			   bool *isnull)
 {
 	Form_pg_attribute *att = tupdesc->attrs;
 	MemoryContext oldContext;
 	ListCell   *tl;
-	bool		haveDoneSets;
 
 	/*
 	 * Run in short-lived per-tuple context while computing expressions.
@@ -5486,8 +5181,6 @@ ExecTargetList(List *targetlist,
 	/*
 	 * evaluate all the expressions in the target list
 	 */
-	haveDoneSets = false;		/* any exhausted set exprs in tlist? */
-
 	foreach(tl, targetlist)
 	{
 		GenericExprState *gstate = (GenericExprState *) lfirst(tl);
@@ -5496,117 +5189,14 @@ ExecTargetList(List *targetlist,
 
 		values[resind] = ExecEvalExpr(gstate->arg,
 									  econtext,
-									  &isnull[resind],
-									  &itemIsDone[resind]);
+									  &isnull[resind]);
 
 		values[resind] = MakeExpandedObjectReadOnly(values[resind],
 													isnull[resind],
 													att[resind]->attlen);
-
-		if (itemIsDone[resind] != ExprSingleResult)
-		{
-			/* We have a set-valued expression in the tlist */
-			if (isDone == NULL)
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("set-valued function called in context that cannot accept a set")));
-			if (itemIsDone[resind] == ExprMultipleResult)
-			{
-				/* we have undone sets in the tlist, set flag */
-				*isDone = ExprMultipleResult;
-			}
-			else
-			{
-				/* we have done sets in the tlist, set flag for that */
-				haveDoneSets = true;
-			}
-		}
 	}
 
-	if (haveDoneSets)
-	{
-		/*
-		 * note: can't get here unless we verified isDone != NULL
-		 */
-		if (*isDone == ExprSingleResult)
-		{
-			/*
-			 * all sets are done, so report that tlist expansion is complete.
-			 */
-			*isDone = ExprEndResult;
-			MemoryContextSwitchTo(oldContext);
-			return false;
-		}
-		else
-		{
-			/*
-			 * We have some done and some undone sets.  Restart the done ones
-			 * so that we can deliver a tuple (if possible).
-			 */
-			foreach(tl, targetlist)
-			{
-				GenericExprState *gstate = (GenericExprState *) lfirst(tl);
-				TargetEntry *tle = (TargetEntry *) gstate->xprstate.expr;
-				AttrNumber	resind = tle->resno - 1;
-
-				if (itemIsDone[resind] == ExprEndResult)
-				{
-					values[resind] = ExecEvalExpr(gstate->arg,
-												  econtext,
-												  &isnull[resind],
-												  &itemIsDone[resind]);
-
-					values[resind] = MakeExpandedObjectReadOnly(values[resind],
-															  isnull[resind],
-														att[resind]->attlen);
-
-					if (itemIsDone[resind] == ExprEndResult)
-					{
-						/*
-						 * Oh dear, this item is returning an empty set. Guess
-						 * we can't make a tuple after all.
-						 */
-						*isDone = ExprEndResult;
-						break;
-					}
-				}
-			}
-
-			/*
-			 * If we cannot make a tuple because some sets are empty, we still
-			 * have to cycle the nonempty sets to completion, else resources
-			 * will not be released from subplans etc.
-			 *
-			 * XXX is that still necessary?
-			 */
-			if (*isDone == ExprEndResult)
-			{
-				foreach(tl, targetlist)
-				{
-					GenericExprState *gstate = (GenericExprState *) lfirst(tl);
-					TargetEntry *tle = (TargetEntry *) gstate->xprstate.expr;
-					AttrNumber	resind = tle->resno - 1;
-
-					while (itemIsDone[resind] == ExprMultipleResult)
-					{
-						values[resind] = ExecEvalExpr(gstate->arg,
-													  econtext,
-													  &isnull[resind],
-													  &itemIsDone[resind]);
-						/* no need for MakeExpandedObjectReadOnly */
-					}
-				}
-
-				MemoryContextSwitchTo(oldContext);
-				return false;
-			}
-		}
-	}
-
-	/* Report success */
 	MemoryContextSwitchTo(oldContext);
-
-	return true;
 }
 
 /*
@@ -5623,7 +5213,7 @@ ExecTargetList(List *targetlist,
  *		result slot.
  */
 TupleTableSlot *
-ExecProject(ProjectionInfo *projInfo, ExprDoneCond *isDone)
+ExecProject(ProjectionInfo *projInfo)
 {
 	TupleTableSlot *slot;
 	ExprContext *econtext;
@@ -5640,14 +5230,9 @@ ExecProject(ProjectionInfo *projInfo, ExprDoneCond *isDone)
 	slot = projInfo->pi_slot;
 	econtext = projInfo->pi_exprContext;
 
-	/* Assume single result row until proven otherwise */
-	if (isDone)
-		*isDone = ExprSingleResult;
-
 	/*
 	 * Clear any former contents of the result slot.  This makes it safe for
-	 * us to use the slot's Datum/isnull arrays as workspace. (Also, we can
-	 * return the slot as-is if we decide no rows can be projected.)
+	 * us to use the slot's Datum/isnull arrays as workspace.
 	 */
 	ExecClearTuple(slot);
 
@@ -5711,26 +5296,19 @@ ExecProject(ProjectionInfo *projInfo, ExprDoneCond *isDone)
 	}
 
 	/*
-	 * If there are any generic expressions, evaluate them.  It's possible
-	 * that there are set-returning functions in such expressions; if so and
-	 * we have reached the end of the set, we return the result slot, which we
-	 * already marked empty.
+	 * If there are any generic expressions, evaluate them.
 	 */
 	if (projInfo->pi_targetlist)
 	{
-		if (!ExecTargetList(projInfo->pi_targetlist,
-							slot->tts_tupleDescriptor,
-							econtext,
-							slot->tts_values,
-							slot->tts_isnull,
-							projInfo->pi_itemIsDone,
-							isDone))
-			return slot;		/* no more result rows, return empty slot */
+		ExecTargetList(projInfo->pi_targetlist,
+					   slot->tts_tupleDescriptor,
+					   econtext,
+					   slot->tts_values,
+					   slot->tts_isnull);
 	}
 
 	/*
-	 * Successfully formed a result row.  Mark the result slot as containing a
-	 * valid virtual tuple.
+	 * Mark the result slot as containing a valid virtual tuple.
 	 */
 	return ExecStoreVirtualTuple(slot);
 }

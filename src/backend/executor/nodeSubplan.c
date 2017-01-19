@@ -41,12 +41,10 @@
 
 static Datum ExecSubPlan(SubPlanState *node,
 			ExprContext *econtext,
-			bool *isNull,
-			ExprDoneCond *isDone);
+			bool *isNull);
 static Datum ExecAlternativeSubPlan(AlternativeSubPlanState *node,
 					   ExprContext *econtext,
-					   bool *isNull,
-					   ExprDoneCond *isDone);
+					   bool *isNull);
 static Datum ExecHashSubPlan(SubPlanState *node,
 				ExprContext *econtext,
 				bool *isNull);
@@ -69,15 +67,12 @@ static bool slotNoNulls(TupleTableSlot *slot);
 static Datum
 ExecSubPlan(SubPlanState *node,
 			ExprContext *econtext,
-			bool *isNull,
-			ExprDoneCond *isDone)
+			bool *isNull)
 {
 	SubPlan    *subplan = (SubPlan *) node->xprstate.expr;
 
-	/* Set default values for result flags: non-null, not a set result */
+	/* Set non-null as default */
 	*isNull = false;
-	if (isDone)
-		*isDone = ExprSingleResult;
 
 	/* Sanity checks */
 	if (subplan->subLinkType == CTE_SUBLINK)
@@ -128,7 +123,7 @@ ExecHashSubPlan(SubPlanState *node,
 	 * have to set the econtext to use (hack alert!).
 	 */
 	node->projLeft->pi_exprContext = econtext;
-	slot = ExecProject(node->projLeft, NULL);
+	slot = ExecProject(node->projLeft);
 
 	/*
 	 * Note: because we are typically called in a per-tuple context, we have
@@ -285,8 +280,7 @@ ExecScanSubPlan(SubPlanState *node,
 
 		prm->value = ExecEvalExprSwitchContext((ExprState *) lfirst(pvar),
 											   econtext,
-											   &(prm->isnull),
-											   NULL);
+											   &(prm->isnull));
 		planstate->chgParam = bms_add_member(planstate->chgParam, paramid);
 	}
 
@@ -403,7 +397,7 @@ ExecScanSubPlan(SubPlanState *node,
 		}
 
 		rowresult = ExecEvalExprSwitchContext(node->testexpr, econtext,
-											  &rownull, NULL);
+											  &rownull);
 
 		if (subLinkType == ANY_SUBLINK)
 		{
@@ -572,7 +566,7 @@ buildSubPlanHash(SubPlanState *node, ExprContext *econtext)
 										  &(prmdata->isnull));
 			col++;
 		}
-		slot = ExecProject(node->projRight, NULL);
+		slot = ExecProject(node->projRight);
 
 		/*
 		 * If result contains any nulls, store separately or not at all.
@@ -985,8 +979,7 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 
 		prm->value = ExecEvalExprSwitchContext((ExprState *) lfirst(pvar),
 											   econtext,
-											   &(prm->isnull),
-											   NULL);
+											   &(prm->isnull));
 		planstate->chgParam = bms_add_member(planstate->chgParam, paramid);
 	}
 
@@ -1222,8 +1215,7 @@ ExecInitAlternativeSubPlan(AlternativeSubPlan *asplan, PlanState *parent)
 static Datum
 ExecAlternativeSubPlan(AlternativeSubPlanState *node,
 					   ExprContext *econtext,
-					   bool *isNull,
-					   ExprDoneCond *isDone)
+					   bool *isNull)
 {
 	/* Just pass control to the active subplan */
 	SubPlanState *activesp = (SubPlanState *) list_nth(node->subplans,
@@ -1231,8 +1223,5 @@ ExecAlternativeSubPlan(AlternativeSubPlanState *node,
 
 	Assert(IsA(activesp, SubPlanState));
 
-	return ExecSubPlan(activesp,
-					   econtext,
-					   isNull,
-					   isDone);
+	return ExecSubPlan(activesp, econtext, isNull);
 }

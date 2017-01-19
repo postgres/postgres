@@ -125,8 +125,6 @@ ExecScan(ScanState *node,
 	ExprContext *econtext;
 	List	   *qual;
 	ProjectionInfo *projInfo;
-	ExprDoneCond isDone;
-	TupleTableSlot *resultSlot;
 
 	/*
 	 * Fetch data from node
@@ -146,24 +144,8 @@ ExecScan(ScanState *node,
 	}
 
 	/*
-	 * Check to see if we're still projecting out tuples from a previous scan
-	 * tuple (because there is a function-returning-set in the projection
-	 * expressions).  If so, try to project another one.
-	 */
-	if (node->ps.ps_TupFromTlist)
-	{
-		Assert(projInfo);		/* can't get here if not projecting */
-		resultSlot = ExecProject(projInfo, &isDone);
-		if (isDone == ExprMultipleResult)
-			return resultSlot;
-		/* Done with that source tuple... */
-		node->ps.ps_TupFromTlist = false;
-	}
-
-	/*
 	 * Reset per-tuple memory context to free any expression evaluation
-	 * storage allocated in the previous tuple cycle.  Note this can't happen
-	 * until we're done projecting out tuples from a scan tuple.
+	 * storage allocated in the previous tuple cycle.
 	 */
 	ResetExprContext(econtext);
 
@@ -214,15 +196,9 @@ ExecScan(ScanState *node,
 			{
 				/*
 				 * Form a projection tuple, store it in the result tuple slot
-				 * and return it --- unless we find we can project no tuples
-				 * from this scan tuple, in which case continue scan.
+				 * and return it.
 				 */
-				resultSlot = ExecProject(projInfo, &isDone);
-				if (isDone != ExprEndResult)
-				{
-					node->ps.ps_TupFromTlist = (isDone == ExprMultipleResult);
-					return resultSlot;
-				}
+				return ExecProject(projInfo);
 			}
 			else
 			{
@@ -351,9 +327,6 @@ void
 ExecScanReScan(ScanState *node)
 {
 	EState	   *estate = node->ps.state;
-
-	/* Stop projecting any tuples from SRFs in the targetlist */
-	node->ps.ps_TupFromTlist = false;
 
 	/* Rescan EvalPlanQual tuple if we're inside an EvalPlanQual recheck */
 	if (estate->es_epqScanDone != NULL)
