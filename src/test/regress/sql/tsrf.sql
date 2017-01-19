@@ -31,10 +31,12 @@ SELECT few.id, generate_series(1,3) g FROM few ORDER BY id, generate_series(1,3)
 SELECT few.id FROM few ORDER BY id, generate_series(1,3) DESC;
 
 -- SRFs are computed after aggregation
+SET enable_hashagg TO 0; -- stable output order
 SELECT few.dataa, count(*), min(id), max(id), unnest('{1,1,3}'::int[]) FROM few WHERE few.id = 1 GROUP BY few.dataa;
 -- unless referenced in GROUP BY clause
 SELECT few.dataa, count(*), min(id), max(id), unnest('{1,1,3}'::int[]) FROM few WHERE few.id = 1 GROUP BY few.dataa, unnest('{1,1,3}'::int[]);
 SELECT few.dataa, count(*), min(id), max(id), unnest('{1,1,3}'::int[]) FROM few WHERE few.id = 1 GROUP BY few.dataa, 5;
+RESET enable_hashagg;
 
 -- check HAVING works when GROUP BY does [not] reference SRF output
 SELECT dataa, generate_series(1,1), count(*) FROM few GROUP BY 1 HAVING count(*) > 1;
