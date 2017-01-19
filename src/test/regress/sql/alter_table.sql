@@ -2189,8 +2189,10 @@ ALTER TABLE part_2 INHERIT inh_test;
 ALTER TABLE list_parted2 DROP COLUMN b;
 ALTER TABLE list_parted2 ALTER COLUMN b TYPE text;
 
--- cleanup
-DROP TABLE list_parted, list_parted2, range_parted CASCADE;
+-- cleanup: avoid using CASCADE
+DROP TABLE list_parted, part_1;
+DROP TABLE list_parted2, part_2, part_5, part_5_a;
+DROP TABLE range_parted, part1, part2;
 
 -- more tests for certain multi-level partitioning scenarios
 create table p (a int, b int) partition by range (a, b);
@@ -2215,5 +2217,5 @@ insert into p1 (a, b) values (2, 3);
 -- check that partition validation scan correctly detects violating rows
 alter table p attach partition p1 for values from (1, 2) to (1, 10);
 
--- cleanup
-drop table p, p1 cascade;
+-- cleanup: avoid using CASCADE
+drop table p, p1, p11;

@@ -651,30 +651,10 @@ Check constraints:
     "check_a" CHECK (length(a) > 0)
 Number of partitions: 3 (Use \d+ to list them.)
 
--- partitions cannot be dropped directly
-DROP TABLE part_a;
--- need to specify CASCADE to drop partitions along with the parent
-DROP TABLE parted;
-ERROR:  cannot drop table parted because other objects depend on it
-DETAIL:  table part_b depends on table parted
-table part_c depends on table parted
-table part_c_1_10 depends on table part_c
-HINT:  Use DROP ... CASCADE to drop the dependent objects too.
-DROP TABLE parted, list_parted, range_parted, list_parted2, range_parted2, range_parted3 CASCADE;
-NOTICE:  drop cascades to 16 other objects
-DETAIL:  drop cascades to table part00
-drop cascades to table part10
-drop cascades to table part11
-drop cascades to table part12
-drop cascades to table part0
-drop cascades to table part1
-drop cascades to table part2
-drop cascades to table part3
-drop cascades to table part_null_z
-drop cascades to table part_ab
-drop cascades to table part_1
-drop cascades to table part_2
-drop cascades to table part_null
-drop cascades to table part_b
-drop cascades to table part_c
-drop cascades to table part_c_1_10
+-- cleanup: avoid using CASCADE
+DROP TABLE parted, part_a, part_b, part_c, part_c_1_10;
+DROP TABLE list_parted, part_1, part_2, part_null;
+DROP TABLE range_parted;
+DROP TABLE list_parted2, part_ab, part_null_z;
+DROP TABLE range_parted2, part0, part1, part2, part3;
+DROP TABLE range_parted3, part00, part10, part11, part12;

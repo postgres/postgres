@@ -3330,15 +3330,10 @@ ALTER TABLE list_parted2 DROP COLUMN b;
 ERROR:  cannot drop column named in partition key
 ALTER TABLE list_parted2 ALTER COLUMN b TYPE text;
 ERROR:  cannot alter type of column named in partition key
--- cleanup
-DROP TABLE list_parted, list_parted2, range_parted CASCADE;
-NOTICE:  drop cascades to 6 other objects
-DETAIL:  drop cascades to table part1
-drop cascades to table part2
-drop cascades to table part_2
-drop cascades to table part_5
-drop cascades to table part_5_a
-drop cascades to table part_1
+-- cleanup: avoid using CASCADE
+DROP TABLE list_parted, part_1;
+DROP TABLE list_parted2, part_2, part_5, part_5_a;
+DROP TABLE range_parted, part1, part2;
 -- more tests for certain multi-level partitioning scenarios
 create table p (a int, b int) partition by range (a, b);
 create table p1 (b int, a int not null) partition by range (b);
@@ -3367,6 +3362,5 @@ insert into p1 (a, b) values (2, 3);
 -- check that partition validation scan correctly detects violating rows
 alter table p attach partition p1 for values from (1, 2) to (1, 10);
 ERROR:  partition constraint is violated by some row
--- cleanup
-drop table p, p1 cascade;
-NOTICE:  drop cascades to table p11
+-- cleanup: avoid using CASCADE
+drop table p, p1, p11;
