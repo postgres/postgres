@@ -61,6 +61,7 @@
 #endif
 
 #include "catalog/catalog.h"
+#include "catalog/pg_authid.h"
 #include "common/file_utils.h"
 #include "common/restricted_token.h"
 #include "common/username.h"
@@ -1617,7 +1618,7 @@ setup_collation(FILE *cmdfd)
 	PG_CMD_PUTS("SELECT pg_import_system_collations(if_not_exists => false, schema => 'pg_catalog');\n\n");
 
 	/* Add an SQL-standard name */
-	PG_CMD_PRINTF2("INSERT INTO pg_collation (collname, collnamespace, collowner, collencoding, collcollate, collctype) VALUES ('ucs_basic', 'pg_catalog'::regnamespace, '%s'::regrole, %d, 'C', 'C');\n\n", escape_quotes(username), PG_UTF8);
+	PG_CMD_PRINTF2("INSERT INTO pg_collation (collname, collnamespace, collowner, collencoding, collcollate, collctype) VALUES ('ucs_basic', 'pg_catalog'::regnamespace, %u, %d, 'C', 'C');\n\n", BOOTSTRAP_SUPERUSERID, PG_UTF8);
 }
 
 /*
@@ -1688,7 +1689,7 @@ setup_privileges(FILE *cmdfd)
 		"  SET relacl = (SELECT array_agg(a.acl) FROM "
 		" (SELECT E'=r/\"$POSTGRES_SUPERUSERNAME\"' as acl "
 		"  UNION SELECT unnest(pg_catalog.acldefault("
-		"    CASE WHEN relkind = 'S' THEN 's' ELSE 'r' END::\"char\",10::oid))"
+		"    CASE WHEN relkind = 'S' THEN 's' ELSE 'r' END::\"char\"," CppAsString2(BOOTSTRAP_SUPERUSERID) "::oid))"
 		" ) as a) "
 		"  WHERE relkind IN ('r', 'v', 'm', 'S') AND relacl IS NULL;\n\n",
 		"GRANT USAGE ON SCHEMA pg_catalog TO PUBLIC;\n\n",
