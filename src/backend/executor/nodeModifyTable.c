@@ -262,7 +262,8 @@ ExecInsert(ModifyTableState *mtstate,
 	Relation	resultRelationDesc;
 	Oid			newId;
 	List	   *recheckIndexes = NIL;
-	TupleTableSlot *oldslot = slot;
+	TupleTableSlot *oldslot = slot,
+				   *result = NULL;
 
 	/*
 	 * get the heap tuple out of the tuple table slot, making sure we have a
@@ -574,12 +575,6 @@ ExecInsert(ModifyTableState *mtstate,
 
 	list_free(recheckIndexes);
 
-	if (saved_resultRelInfo)
-	{
-		resultRelInfo = saved_resultRelInfo;
-		estate->es_result_relation_info = resultRelInfo;
-	}
-
 	/*
 	 * Check any WITH CHECK OPTION constraints from parent views.  We are
 	 * required to do this after testing all constraints and uniqueness
@@ -597,9 +592,12 @@ ExecInsert(ModifyTableState *mtstate,
 
 	/* Process RETURNING if present */
 	if (resultRelInfo->ri_projectReturning)
-		return ExecProcessReturning(resultRelInfo, slot, planSlot);
+		result = ExecProcessReturning(resultRelInfo, slot, planSlot);
 
-	return NULL;
+	if (saved_resultRelInfo)
+		estate->es_result_relation_info = saved_resultRelInfo;
+
+	return result;
 }
 
 /* ----------------------------------------------------------------
@@ -1786,6 +1784,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	{
 		TupleTableSlot *slot;
 		ExprContext *econtext;
+		List		*returningList;
 
 		/*
 		 * Initialize result tuple slot and assign its rowtype using the first
@@ -1812,6 +1811,32 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 			List	   *rlist = (List *) lfirst(l);
 			List	   *rliststate;
 
+			rliststate = (List *) ExecInitExpr((Expr *) rlist, &mtstate->ps);
+			resultRelInfo->ri_projectReturning =
+				ExecBuildProjectionInfo(rliststate, econtext, slot,
+									 resultRelInfo->ri_RelationDesc->rd_att);
+			resultRelInfo++;
+		}
+
+		/*
+		 * Build a projection for each leaf partition rel.  Note that we
+		 * didn't build the returningList for each partition within the
+		 * planner, but simple translation of the varattnos for each
+		 * partition will suffice.  This only occurs for the INSERT case;
+		 * UPDATE/DELETE are handled above.
+		 */
+		resultRelInfo = mtstate->mt_partitions;
+		returningList = linitial(node->returningLists);
+		for (i = 0; i < mtstate->mt_num_partitions; i++)
+		{
+			Relation	partrel = resultRelInfo->ri_RelationDesc;
+			List	   *rlist,
+					   *rliststate;
+
+			/* varno = node->nominalRelation */
+			rlist = map_partition_varattnos(returningList,
+											node->nominalRelation,
+											partrel, rel);
 			rliststate = (List *) ExecInitExpr((Expr *) rlist, &mtstate->ps);
 			resultRelInfo->ri_projectReturning =
 				ExecBuildProjectionInfo(rliststate, econtext, slot,

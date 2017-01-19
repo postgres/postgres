@@ -13454,6 +13454,7 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd)
 			constr = linitial(partConstraint);
 			my_constr = make_ands_implicit((Expr *) constr);
 			tab->partition_constraint = map_partition_varattnos(my_constr,
+																1,
 																part_rel,
 																rel);
 			/* keep our lock until commit */

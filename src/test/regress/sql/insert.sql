@@ -226,5 +226,19 @@ insert into p values (1, 2);
 -- selected by tuple-routing
 insert into p1 (a, b) values (2, 3);
 
+-- check that RETURNING works correctly with tuple-routing
+alter table p drop constraint check_b;
+create table p12 partition of p1 for values from (5) to (10);
+create table p2 (b int not null, a int not null);
+alter table p attach partition p2 for values from (1, 10) to (1, 20);
+create table p3 partition of p for values from (1, 20) to (1, 30);
+create table p4 (like p);
+alter table p4 drop a;
+alter table p4 add a int not null;
+alter table p attach partition p4 for values from (1, 30) to (1, 40);
+with ins (a, b, c) as
+  (insert into p (b, a) select s.a, 1 from generate_series(2, 39) s(a) returning tableoid::regclass, *)
+  select a, b, min(c), max(c) from ins group by a, b order by 1;
+
 -- cleanup
-drop table p, p1, p11;
+drop table p, p1, p11, p12, p2, p3, p4;

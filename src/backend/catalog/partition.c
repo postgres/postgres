@@ -883,7 +883,8 @@ get_qual_from_partbound(Relation rel, Relation parent, Node *bound)
  * different from the parent's.
  */
 List *
-map_partition_varattnos(List *expr, Relation partrel, Relation parent)
+map_partition_varattnos(List *expr, int target_varno,
+						Relation partrel, Relation parent)
 {
 	TupleDesc	tupdesc = RelationGetDescr(parent);
 	AttrNumber	attno;
@@ -908,7 +909,7 @@ map_partition_varattnos(List *expr, Relation partrel, Relation parent)
 	}
 
 	expr = (List *) map_variable_attnos((Node *) expr,
-										1, 0,
+										target_varno, 0,
 										part_attnos,
 										tupdesc->natts,
 										&found_whole_row);
@@ -1540,8 +1541,9 @@ generate_partition_qual(Relation rel)
 	 * Change Vars to have partition's attnos instead of the parent's.
 	 * We do this after we concatenate the parent's quals, because
 	 * we want every Var in it to bear this relation's attnos.
+	 * It's safe to assume varno = 1 here.
 	 */
-	result = map_partition_varattnos(result, rel, parent);
+	result = map_partition_varattnos(result, 1, rel, parent);
 
 	/* Save a copy in the relcache */
 	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);

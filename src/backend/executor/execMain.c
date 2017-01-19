@@ -1279,10 +1279,10 @@ InitResultRelInfo(ResultRelInfo *resultRelInfo,
 		/*
 		 * This is not our own partition constraint, but rather an ancestor's.
 		 * So any Vars in it bear the ancestor's attribute numbers.  We must
-		 * switch them to our own.
+		 * switch them to our own. (dummy varno = 1)
 		 */
 		if (partition_check != NIL)
-			partition_check = map_partition_varattnos(partition_check,
+			partition_check = map_partition_varattnos(partition_check, 1,
 													  resultRelationDesc,
 													  partition_root);
 	}
