@@ -1153,6 +1153,15 @@ vac_truncate_clog(TransactionId frozenXID,
 		return;
 
 	/*
+	 * Advance the oldest value for commit timestamps before truncating, so
+	 * that if a user requests a timestamp for a transaction we're truncating
+	 * away right after this point, they get NULL instead of an ugly "file not
+	 * found" error from slru.c.  This doesn't matter for xact/multixact
+	 * because they are not subject to arbitrary lookups from users.
+	 */
+	AdvanceOldestCommitTsXid(frozenXID);
+
+	/*
 	 * Truncate CLOG, multixact and CommitTs to the oldest computed value.
 	 */
 	TruncateCLOG(frozenXID);
@@ -1167,7 +1176,6 @@ vac_truncate_clog(TransactionId frozenXID,
 	 */
 	SetTransactionIdLimit(frozenXID, oldestxid_datoid);
 	SetMultiXactIdLimit(minMulti, minmulti_datoid);
-	AdvanceOldestCommitTsXid(frozenXID);
 }
 
 

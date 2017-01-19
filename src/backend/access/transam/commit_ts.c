@@ -113,7 +113,7 @@ static bool CommitTsPagePrecedes(int page1, int page2);
 static void ActivateCommitTs(void);
 static void DeactivateCommitTs(void);
 static void WriteZeroPageXlogRec(int pageno);
-static void WriteTruncateXlogRec(int pageno);
+static void WriteTruncateXlogRec(int pageno, TransactionId oldestXid);
 static void WriteSetTimestampXlogRec(TransactionId mainxid, int nsubxids,
 						 TransactionId *subxids, TimestampTz timestamp,
 						 RepOriginId nodeid);
@@ -824,7 +824,7 @@ TruncateCommitTs(TransactionId oldestXact)
 		return;					/* nothing to remove */
 
 	/* Write XLOG record */
-	WriteTruncateXlogRec(cutoffPage);
+	WriteTruncateXlogRec(cutoffPage, oldestXact);
 
 	/* Now we can remove the old CommitTs segment(s) */
 	SimpleLruTruncate(CommitTsCtl, cutoffPage);
@@ -910,10 +910,15 @@ WriteZeroPageXlogRec(int pageno)
  * Write a TRUNCATE xlog record
  */
 static void
-WriteTruncateXlogRec(int pageno)
+WriteTruncateXlogRec(int pageno, TransactionId oldestXid)
 {
+	xl_commit_ts_truncate xlrec;
+
+	xlrec.pageno = pageno;
+	xlrec.oldestXid = oldestXid;
+
 	XLogBeginInsert();
-	XLogRegisterData((char *) (&pageno), sizeof(int));
+	XLogRegisterData((char *) (&xlrec), SizeOfCommitTsTruncate);
 	(void) XLogInsert(RM_COMMIT_TS_ID, COMMIT_TS_TRUNCATE);
 }
 
@@ -967,17 +972,17 @@ commit_ts_redo(XLogReaderState *record)
 	}
 	else if (info == COMMIT_TS_TRUNCATE)
 	{
-		int			pageno;
+		xl_commit_ts_truncate *trunc = (xl_commit_ts_truncate *) XLogRecGetData(record);
 
-		memcpy(&pageno, XLogRecGetData(record), sizeof(int));
+		AdvanceOldestCommitTsXid(trunc->oldestXid);
 
 		/*
 		 * During XLOG replay, latest_page_number isn't set up yet; insert a
 		 * suitable value to bypass the sanity test in SimpleLruTruncate.
 		 */
-		CommitTsCtl->shared->latest_page_number = pageno;
+		CommitTsCtl->shared->latest_page_number = trunc->pageno;
 
-		SimpleLruTruncate(CommitTsCtl, pageno);
+		SimpleLruTruncate(CommitTsCtl, trunc->pageno);
 	}
 	else if (info == COMMIT_TS_SETTS)
 	{

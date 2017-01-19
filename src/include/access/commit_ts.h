@@ -61,6 +61,14 @@ typedef struct xl_commit_ts_set
 #define SizeOfCommitTsSet	(offsetof(xl_commit_ts_set, mainxid) + \
 							 sizeof(TransactionId))
 
+typedef struct xl_commit_ts_truncate
+{
+	int			pageno;
+	TransactionId oldestXid;
+} xl_commit_ts_truncate;
+
+#define SizeOfCommitTsTruncate	(offsetof(xl_commit_ts_truncate, oldestXid) + \
+								 sizeof(TransactionId))
 
 extern void commit_ts_redo(XLogReaderState *record);
 extern void commit_ts_desc(StringInfo buf, XLogReaderState *record);
