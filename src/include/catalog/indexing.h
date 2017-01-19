@@ -325,6 +325,24 @@ DECLARE_UNIQUE_INDEX(pg_replication_origin_roname_index, 6002, on pg_replication
 DECLARE_UNIQUE_INDEX(pg_partitioned_table_partrelid_index, 3351, on pg_partitioned_table using btree(partrelid oid_ops));
 #define PartitionedRelidIndexId          3351
 
+DECLARE_UNIQUE_INDEX(pg_publication_oid_index, 6110, on pg_publication using btree(oid oid_ops));
+#define PublicationObjectIndexId 6110
+
+DECLARE_UNIQUE_INDEX(pg_publication_pubname_index, 6111, on pg_publication using btree(pubname name_ops));
+#define PublicationNameIndexId 6111
+
+DECLARE_UNIQUE_INDEX(pg_publication_rel_oid_index, 6112, on pg_publication_rel using btree(oid oid_ops));
+#define PublicationRelObjectIndexId 6112
+
+DECLARE_UNIQUE_INDEX(pg_publication_rel_map_index, 6113, on pg_publication_rel using btree(prrelid oid_ops, prpubid oid_ops));
+#define PublicationRelMapIndexId 6113
+
+DECLARE_UNIQUE_INDEX(pg_subscription_oid_index, 6114, on pg_subscription using btree(oid oid_ops));
+#define SubscriptionObjectIndexId 6114
+
+DECLARE_UNIQUE_INDEX(pg_subscription_subname_index, 6115, on pg_subscription using btree(subdbid oid_ops, subname name_ops));
+#define SubscriptionNameIndexId 6115
+
 /* last step of initialization script: build the indexes declared above */
 BUILD_INDICES
 

@@ -113,6 +113,7 @@
 #include "postmaster/pgarch.h"
 #include "postmaster/postmaster.h"
 #include "postmaster/syslogger.h"
+#include "replication/logicallauncher.h"
 #include "replication/walsender.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
@@ -940,6 +941,14 @@ PostmasterMain(int argc, char *argv[])
 		LoadedSSL = true;
 	}
 #endif
+
+	/*
+	 * Register the apply launcher.  Since it registers a background worker,
+	 * it needs to be called before InitializeMaxBackends(), and it's probably
+	 * a good idea to call it before any modules had chance to take the
+	 * background worker slots.
+	 */
+	ApplyLauncherRegister();
 
 	/*
 	 * process any libraries that should be preloaded at postmaster start

@@ -124,6 +124,8 @@ pg_partitioned_table|t
 pg_pltemplate|t
 pg_policy|t
 pg_proc|t
+pg_publication|t
+pg_publication_rel|t
 pg_range|t
 pg_replication_origin|t
 pg_rewrite|t
@@ -133,6 +135,7 @@ pg_shdepend|t
 pg_shdescription|t
 pg_shseclabel|t
 pg_statistic|t
+pg_subscription|t
 pg_tablespace|t
 pg_transform|t
 pg_trigger|t

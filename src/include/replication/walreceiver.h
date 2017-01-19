@@ -134,34 +134,64 @@ typedef struct
 
 extern WalRcvData *WalRcv;
 
+typedef struct
+{
+	bool		logical;					/* True if this is logical
+											   replication stream, false if
+											   physical stream.  */
+	char	   *slotname;					/* Name of the replication slot
+											   or NULL. */
+	XLogRecPtr	startpoint;					/* LSN of starting point. */
+
+	union
+	{
+		struct
+		{
+			TimeLineID	startpointTLI;		/* Starting timeline */
+		} physical;
+		struct
+		{
+			uint32	proto_version;			/* Logical protocol version */
+			List   *publication_names;		/* String list of publications */
+		} logical;
+	} proto;
+} WalRcvStreamOptions;
+
 struct WalReceiverConn;
 typedef struct WalReceiverConn WalReceiverConn;
 
 /* libpqwalreceiver hooks */
 typedef WalReceiverConn *(*walrcv_connect_fn) (const char *conninfo, bool logical,
-											   const char *appname);
+											   const char *appname,
+											   char **err);
+typedef void (*walrcv_check_conninfo_fn) (const char *conninfo);
 typedef char *(*walrcv_get_conninfo_fn) (WalReceiverConn *conn);
 typedef char *(*walrcv_identify_system_fn) (WalReceiverConn *conn,
-											TimeLineID *primary_tli);
+											TimeLineID *primary_tli,
+											int *server_version);
 typedef void (*walrcv_readtimelinehistoryfile_fn) (WalReceiverConn *conn,
 												   TimeLineID tli,
 												   char **filename,
 												   char **content, int *size);
 typedef bool (*walrcv_startstreaming_fn) (WalReceiverConn *conn,
-										  TimeLineID tli,
-										  XLogRecPtr startpoint,
-										  const char *slotname);
+										  const WalRcvStreamOptions *options);
 typedef void (*walrcv_endstreaming_fn) (WalReceiverConn *conn,
 										TimeLineID *next_tli);
 typedef int (*walrcv_receive_fn) (WalReceiverConn *conn, char **buffer,
 								  pgsocket *wait_fd);
 typedef void (*walrcv_send_fn) (WalReceiverConn *conn, const char *buffer,
 								int nbytes);
+typedef char *(*walrcv_create_slot_fn) (WalReceiverConn *conn,
+										const char *slotname, bool temporary,
+										XLogRecPtr *lsn);
+typedef bool (*walrcv_command_fn) (WalReceiverConn *conn, const char *cmd,
+								   char **err);
 typedef void (*walrcv_disconnect_fn) (WalReceiverConn *conn);
 
 typedef struct WalReceiverFunctionsType
 {
 	walrcv_connect_fn					walrcv_connect;
+	walrcv_check_conninfo_fn            walrcv_check_conninfo;
 	walrcv_get_conninfo_fn				walrcv_get_conninfo;
 	walrcv_identify_system_fn			walrcv_identify_system;
 	walrcv_readtimelinehistoryfile_fn	walrcv_readtimelinehistoryfile;
@@ -169,27 +199,35 @@ typedef struct WalReceiverFunctionsType
 	walrcv_endstreaming_fn				walrcv_endstreaming;
 	walrcv_receive_fn					walrcv_receive;
 	walrcv_send_fn						walrcv_send;
+	walrcv_create_slot_fn				walrcv_create_slot;
+	walrcv_command_fn					walrcv_command;
 	walrcv_disconnect_fn				walrcv_disconnect;
 } WalReceiverFunctionsType;
 
 extern PGDLLIMPORT WalReceiverFunctionsType *WalReceiverFunctions;
 
-#define walrcv_connect(conninfo, logical, appname) \
-	WalReceiverFunctions->walrcv_connect(conninfo, logical, appname)
+#define walrcv_connect(conninfo, logical, appname, err) \
+	WalReceiverFunctions->walrcv_connect(conninfo, logical, appname, err)
+#define walrcv_check_conninfo(conninfo) \
+	WalReceiverFunctions->walrcv_check_conninfo(conninfo)
 #define walrcv_get_conninfo(conn) \
 	WalReceiverFunctions->walrcv_get_conninfo(conn)
-#define walrcv_identify_system(conn, primary_tli) \
-	WalReceiverFunctions->walrcv_identify_system(conn, primary_tli)
+#define walrcv_identify_system(conn, primary_tli, server_version) \
+	WalReceiverFunctions->walrcv_identify_system(conn, primary_tli, server_version)
 #define walrcv_readtimelinehistoryfile(conn, tli, filename, content, size) \
 	WalReceiverFunctions->walrcv_readtimelinehistoryfile(conn, tli, filename, content, size)
-#define walrcv_startstreaming(conn, tli, startpoint, slotname) \
-	WalReceiverFunctions->walrcv_startstreaming(conn, tli, startpoint, slotname)
+#define walrcv_startstreaming(conn, options) \
+	WalReceiverFunctions->walrcv_startstreaming(conn, options)
 #define walrcv_endstreaming(conn, next_tli) \
 	WalReceiverFunctions->walrcv_endstreaming(conn, next_tli)
 #define walrcv_receive(conn, buffer, wait_fd) \
 	WalReceiverFunctions->walrcv_receive(conn, buffer, wait_fd)
 #define walrcv_send(conn, buffer, nbytes) \
 	WalReceiverFunctions->walrcv_send(conn, buffer, nbytes)
+#define walrcv_create_slot(conn, slotname, temporary, lsn) \
+	WalReceiverFunctions->walrcv_create_slot(conn, slotname, temporary, lsn)
+#define walrcv_command(conn, cmd, err) \
+	WalReceiverFunctions->walrcv_command(conn, cmd, err)
 #define walrcv_disconnect(conn) \
 	WalReceiverFunctions->walrcv_disconnect(conn)
 

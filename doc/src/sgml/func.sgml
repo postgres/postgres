@@ -18762,7 +18762,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
       </row>
 
       <row>
-       <entry>
+       <entry id="pg-replication-origin-advance">
         <indexterm>
          <primary>pg_replication_origin_advance</primary>
         </indexterm>

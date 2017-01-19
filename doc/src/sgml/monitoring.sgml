@@ -309,6 +309,14 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
 
      <row>
+      <entry><structname>pg_stat_subscription</><indexterm><primary>pg_stat_subscription</primary></indexterm></entry>
+      <entry>At least one row per subscription, showing information about
+       the subscription workers.
+       See <xref linkend="pg-stat-subscription"> for details.
+      </entry>
+     </row>
+
+     <row>
       <entry><structname>pg_stat_ssl</><indexterm><primary>pg_stat_ssl</primary></indexterm></entry>
       <entry>One row per connection (regular and replication), showing information about
        SSL used on this connection.
@@ -1543,6 +1551,72 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
    The <structname>pg_stat_wal_receiver</structname> view will contain only
    one row, showing statistics about the WAL receiver from that receiver's
    connected server.
+  </para>
+
+  <table id="pg-stat-subscription" xreflabel="pg_stat_subscription">
+   <title><structname>pg_stat_subscription</structname> View</title>
+   <tgroup cols="3">
+    <thead>
+    <row>
+      <entry>Column</entry>
+      <entry>Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+   <tbody>
+    <row>
+     <entry><structfield>subid</></entry>
+     <entry><type>oid</></entry>
+     <entry>OID of the subscription</entry>
+    </row>
+    <row>
+     <entry><structfield>subname</></entry>
+     <entry><type>text</></entry>
+     <entry>Name of the subscription</entry>
+    </row>
+    <row>
+     <entry><structfield>pid</></entry>
+     <entry><type>integer</></entry>
+     <entry>Process ID of the subscription worker process</entry>
+    </row>
+    <row>
+     <entry><structfield>received_lsn</></entry>
+     <entry><type>pg_lsn</></entry>
+     <entry>Last transaction log position received, the initial value of
+      this field being 0</entry>
+    </row>
+    <row>
+     <entry><structfield>last_msg_send_time</></entry>
+     <entry><type>timestamp with time zone</></entry>
+     <entry>Send time of last message received from origin WAL sender</entry>
+    </row>
+    <row>
+     <entry><structfield>last_msg_receipt_time</></entry>
+     <entry><type>timestamp with time zone</></entry>
+     <entry>Receipt time of last message received from origin WAL sender
+     </entry>
+    </row>
+    <row>
+     <entry><structfield>latest_end_lsn</></entry>
+     <entry><type>pg_lsn</></entry>
+     <entry>Last transaction log position reported to origin WAL sender
+     </entry>
+    </row>
+    <row>
+     <entry><structfield>latest_end_time</></entry>
+     <entry><type>timestamp with time zone</></entry>
+     <entry>Time of last transaction log position reported to origin WAL
+      sender</entry>
+    </row>
+   </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   The <structname>pg_stat_subscription</structname> view will contain one
+   row per subscription for main worker (with null PID if the worker is
+   not running).
   </para>
 
   <table id="pg-stat-ssl-view" xreflabel="pg_stat_ssl">

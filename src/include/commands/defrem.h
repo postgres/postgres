@@ -154,5 +154,6 @@ extern int64 defGetInt64(DefElem *def);
 extern List *defGetQualifiedName(DefElem *def);
 extern TypeName *defGetTypeName(DefElem *def);
 extern int	defGetTypeLength(DefElem *def);
+extern List *defGetStringList(DefElem *def);
 
 #endif   /* DEFREM_H */

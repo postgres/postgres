@@ -1,0 +1,139 @@
+<!--
+doc/src/sgml/ref/alter_subscription.sgml
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-ALTERSUBSCRIPTION">
+ <indexterm zone="sql-altersubscription">
+  <primary>ALTER SUBSCRIPTION</primary>
+ </indexterm>
+
+ <refmeta>
+  <refentrytitle>ALTER SUBSCRIPTION</refentrytitle>
+  <manvolnum>7</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>ALTER SUBSCRIPTION</refname>
+  <refpurpose>change the definition of a subscription</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+<synopsis>
+ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> WITH ( <replaceable class="PARAMETER">option</replaceable> [, ... ] ) ]
+
+<phrase>where <replaceable class="PARAMETER">option</replaceable> can be:</phrase>
+
+  SLOT NAME = slot_name
+
+ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> OWNER TO { <replaceable>new_owner</replaceable> | CURRENT_USER | SESSION_USER }
+ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> CONNECTION 'conninfo'
+ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> SET PUBLICATION publication_name [, ...]
+ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> ENABLE
+ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> DISABLE
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>ALTER SUBSCRIPTION</command> can change most of the subscription
+   properties that can be specified
+   in <xref linkend="sql-createsubscription">.
+  </para>
+
+  <para>
+   To alter the owner, you must also be a direct or indirect member of the
+   new owning role. The new owner has to be a superuser
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="parameter">name</replaceable></term>
+    <listitem>
+     <para>
+      The name of a subscription whose properties are to be altered.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>CONNECTION '<replaceable class="parameter">conninfo</replaceable>'</literal></term>
+    <term><literal>SET PUBLICATION <replaceable class="parameter">publication_name</replaceable></literal></term>
+    <term><literal>SLOT NAME = <replaceable class="parameter">slot_name</replaceable></literal></term>
+    <listitem>
+     <para>
+      These clauses alter properties originally set by
+      <xref linkend="SQL-CREATESUBSCRIPTION">.  See there for more
+      information.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>ENABLE</literal></term>
+    <listitem>
+     <para>
+      Enables the previously disabled subscription, starting the logical
+      replication worker at the end of transaction.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>DISABLE</literal></term>
+    <listitem>
+     <para>
+      Disables the running subscription, stopping the logical replication
+      worker at the end of transaction.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   Change the publication subscribed by a subscription to
+   <literal>insert_only</literal>:
+<programlisting>
+ALTER SUBSCRIPTION mysub SET PUBLICATION insert_only;
+</programlisting>
+  </para>
+
+  <para>
+   Disable (stop) the subscription:
+<programlisting>
+ALTER SUBSCRIPTION mysub DISABLE;
+</programlisting>
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   <command>ALTER SUBSCRIPTION</command> is a <productname>PostgreSQL</>
+   extension.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-createsubscription"></member>
+   <member><xref linkend="sql-dropsubscription"></member>
+   <member><xref linkend="sql-createpublication"></member>
+   <member><xref linkend="sql-alterpublication"></member>
+  </simplelist>
+ </refsect1>
+</refentry>

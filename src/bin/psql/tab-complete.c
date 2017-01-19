@@ -960,11 +960,13 @@ static const pgsql_thing_t words_after_create[] = {
 	{"OWNED", NULL, NULL, THING_NO_CREATE},		/* for DROP OWNED BY ... */
 	{"PARSER", Query_for_list_of_ts_parsers, NULL, THING_NO_SHOW},
 	{"POLICY", NULL, NULL},
+	{"PUBLICATION", NULL, NULL},
 	{"ROLE", Query_for_list_of_roles},
 	{"RULE", "SELECT pg_catalog.quote_ident(rulename) FROM pg_catalog.pg_rules WHERE substring(pg_catalog.quote_ident(rulename),1,%d)='%s'"},
 	{"SCHEMA", Query_for_list_of_schemas},
 	{"SEQUENCE", NULL, &Query_for_list_of_sequences},
 	{"SERVER", Query_for_list_of_servers},
+	{"SUBSCRIPTION", NULL, NULL},
 	{"TABLE", NULL, &Query_for_list_of_tables},
 	{"TABLESPACE", Query_for_list_of_tablespaces},
 	{"TEMP", NULL, NULL, THING_NO_DROP},		/* for CREATE TEMP TABLE ... */
@@ -1407,8 +1409,8 @@ psql_completion(const char *text, int start, int end)
 		{"AGGREGATE", "COLLATION", "CONVERSION", "DATABASE", "DEFAULT PRIVILEGES", "DOMAIN",
 			"EVENT TRIGGER", "EXTENSION", "FOREIGN DATA WRAPPER", "FOREIGN TABLE", "FUNCTION",
 			"GROUP", "INDEX", "LANGUAGE", "LARGE OBJECT", "MATERIALIZED VIEW", "OPERATOR",
-			"POLICY", "ROLE", "RULE", "SCHEMA", "SERVER", "SEQUENCE", "SYSTEM", "TABLE",
-			"TABLESPACE", "TEXT SEARCH", "TRIGGER", "TYPE",
+			"POLICY", "PUBLICATION", "ROLE", "RULE", "SCHEMA", "SERVER", "SEQUENCE",
+			"SUBSCRIPTION", "SYSTEM", "TABLE", "TABLESPACE", "TEXT SEARCH", "TRIGGER", "TYPE",
 		"USER", "USER MAPPING FOR", "VIEW", NULL};
 
 		COMPLETE_WITH_LIST(list_ALTER);
@@ -1433,7 +1435,26 @@ psql_completion(const char *text, int start, int end)
 		else
 			COMPLETE_WITH_FUNCTION_ARG(prev2_wd);
 	}
-
+	/* ALTER PUBLICATION <name> ...*/
+	else if (Matches3("ALTER","PUBLICATION",MatchAny))
+	{
+		COMPLETE_WITH_LIST5("WITH", "ADD TABLE", "SET TABLE", "DROP TABLE", "OWNER TO");
+	}
+	/* ALTER PUBLICATION <name> .. WITH ( ... */
+	else if (HeadMatches3("ALTER", "PUBLICATION",MatchAny) && TailMatches2("WITH", "("))
+	{
+		COMPLETE_WITH_LIST6("PUBLISH INSERT", "NOPUBLISH INSERT", "PUBLISH UPDATE",
+							"NOPUBLISH UPDATE", "PUBLISH DELETE", "NOPUBLISH DELETE");
+	}
+	/* ALTER SUBSCRIPTION <name> ... */
+	else if (Matches3("ALTER","SUBSCRIPTION",MatchAny))
+	{
+		COMPLETE_WITH_LIST6("WITH", "CONNECTION", "SET PUBLICATION", "ENABLE", "DISABLE", "OWNER TO");
+	}
+	else if (HeadMatches3("ALTER", "SUBSCRIPTION", MatchAny) && TailMatches2("WITH", "("))
+	{
+		COMPLETE_WITH_CONST("SLOT NAME");
+	}
 	/* ALTER SCHEMA <name> */
 	else if (Matches3("ALTER", "SCHEMA", MatchAny))
 		COMPLETE_WITH_LIST2("OWNER TO", "RENAME TO");
@@ -2227,6 +2248,20 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH_CONST("(");
 
 
+/* CREATE PUBLICATION */
+	else if (Matches3("CREATE", "PUBLICATION", MatchAny))
+		COMPLETE_WITH_LIST3("FOR TABLE", "FOR ALL TABLES", "WITH (");
+	else if (Matches4("CREATE", "PUBLICATION", MatchAny, "FOR"))
+		COMPLETE_WITH_LIST2("TABLE", "ALL TABLES");
+	/* Complete "CREATE PUBLICATION <name> FOR TABLE <table>" */
+	else if (Matches4("CREATE", "PUBLICATION", MatchAny, "FOR TABLE"))
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables, NULL);
+	/* Complete "CREATE PUBLICATION <name> [...] WITH" */
+	else if (HeadMatches2("CREATE", "PUBLICATION") && TailMatches2("WITH", "("))
+		COMPLETE_WITH_LIST2("PUBLISH", "NOPUBLISH");
+	else if (HeadMatches2("CREATE", "PUBLICATION") && TailMatches3("WITH", "(", MatchAny))
+		COMPLETE_WITH_LIST3("INSERT", "UPDATE", "DELETE");
+
 /* CREATE RULE */
 	/* Complete "CREATE RULE <sth>" with "AS ON" */
 	else if (Matches3("CREATE", "RULE", MatchAny))
@@ -2277,6 +2312,16 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH_LIST4("CONFIGURATION", "DICTIONARY", "PARSER", "TEMPLATE");
 	else if (Matches5("CREATE", "TEXT", "SEARCH", "CONFIGURATION", MatchAny))
 		COMPLETE_WITH_CONST("(");
+
+/* CREATE SUBSCRIPTION */
+	else if (Matches3("CREATE", "SUBSCRIPTION", MatchAny))
+		COMPLETE_WITH_CONST("CONNECTION");
+	else if (Matches5("CREATE", "SUBSCRIPTION", MatchAny, "CONNECTION",MatchAny))
+		COMPLETE_WITH_CONST("PUBLICATION");
+	/* Complete "CREATE SUBSCRIPTION <name> ...  WITH ( <opt>" */
+	else if (HeadMatches2("CREATE", "SUBSCRIPTION") && TailMatches2("WITH", "("))
+		COMPLETE_WITH_LIST5("ENABLED", "DISABLED", "CREATE SLOT",
+							"NOCREATE SLOT", "SLOT NAME");
 
 /* CREATE TRIGGER --- is allowed inside CREATE SCHEMA, so use TailMatches */
 	/* complete CREATE TRIGGER <name> with BEFORE,AFTER,INSTEAD OF */
@@ -2438,7 +2483,7 @@ psql_completion(const char *text, int start, int end)
 /* DROP */
 	/* Complete DROP object with CASCADE / RESTRICT */
 	else if (Matches3("DROP",
-					  "COLLATION|CONVERSION|DOMAIN|EXTENSION|LANGUAGE|SCHEMA|SEQUENCE|SERVER|TABLE|TYPE|VIEW",
+					  "COLLATION|CONVERSION|DOMAIN|EXTENSION|LANGUAGE|PUBLICATION|SCHEMA|SEQUENCE|SERVER|TABLE|TYPE|VIEW",
 					  MatchAny) ||
 			 Matches4("DROP", "ACCESS", "METHOD", MatchAny) ||
 			 (Matches4("DROP", "AGGREGATE|FUNCTION", MatchAny, MatchAny) &&

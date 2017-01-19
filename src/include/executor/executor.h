@@ -392,5 +392,22 @@ extern void check_exclusion_constraint(Relation heap, Relation index,
 						   Datum *values, bool *isnull,
 						   EState *estate, bool newIndex);
 
+/*
+ * prototypes from functions in execReplication.c
+ */
+extern bool RelationFindReplTupleByIndex(Relation rel, Oid idxoid,
+							 LockTupleMode lockmode,
+							 TupleTableSlot *searchslot,
+							 TupleTableSlot *outslot);
+extern bool RelationFindReplTupleSeq(Relation rel, LockTupleMode lockmode,
+						 TupleTableSlot *searchslot, TupleTableSlot *outslot);
+
+extern void ExecSimpleRelationInsert(EState *estate, TupleTableSlot *slot);
+extern void ExecSimpleRelationUpdate(EState *estate, EPQState *epqstate,
+						 TupleTableSlot *searchslot, TupleTableSlot *slot);
+extern void ExecSimpleRelationDelete(EState *estate, EPQState *epqstate,
+						 TupleTableSlot *searchslot);
+extern void CheckCmdReplicaIdentity(Relation rel, CmdType cmd);
+
 
 #endif   /* EXECUTOR_H  */

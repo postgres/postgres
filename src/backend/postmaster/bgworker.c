@@ -20,6 +20,7 @@
 #include "port/atomics.h"
 #include "postmaster/bgworker_internals.h"
 #include "postmaster/postmaster.h"
+#include "replication/logicallauncher.h"
 #include "storage/dsm.h"
 #include "storage/ipc.h"
 #include "storage/latch.h"
@@ -106,6 +107,15 @@ struct BackgroundWorkerHandle
 };
 
 static BackgroundWorkerArray *BackgroundWorkerData;
+
+/*
+ * List of workers that are allowed to be started outside of
+ * shared_preload_libraries.
+ */
+static const bgworker_main_type InternalBGWorkers[] = {
+	ApplyLauncherMain,
+	NULL
+};
 
 /*
  * Calculate shared memory needed.
@@ -761,12 +771,23 @@ RegisterBackgroundWorker(BackgroundWorker *worker)
 {
 	RegisteredBgWorker *rw;
 	static int	numworkers = 0;
+	bool		internal = false;
+	int			i;
 
 	if (!IsUnderPostmaster)
 		ereport(DEBUG1,
 		 (errmsg("registering background worker \"%s\"", worker->bgw_name)));
 
-	if (!process_shared_preload_libraries_in_progress)
+	for (i = 0; InternalBGWorkers[i]; i++)
+	{
+		if (worker->bgw_main == InternalBGWorkers[i])
+		{
+			internal = true;
+			break;
+		}
+	}
+
+	if (!process_shared_preload_libraries_in_progress && !internal)
 	{
 		if (!IsUnderPostmaster)
 			ereport(LOG,

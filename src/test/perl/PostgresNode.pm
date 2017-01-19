@@ -380,7 +380,9 @@ WAL archiving can be enabled on this node by passing the keyword parameter
 has_archiving => 1. This is disabled by default.
 
 postgresql.conf can be set up for replication by passing the keyword
-parameter allows_streaming => 1. This is disabled by default.
+parameter allows_streaming => 'logical' or 'physical' (passing 1 will also
+suffice for physical replication) depending on type of replication that
+should be enabled. This is disabled by default.
 
 The new node is set up in a fast but unsafe configuration where fsync is
 disabled.
@@ -415,7 +417,16 @@ sub init
 
 	if ($params{allows_streaming})
 	{
+		if ($params{allows_streaming} eq "logical")
+		{
+			print $conf "wal_level = logical\n";
+		}
+		else
+		{
+			print $conf "wal_level = replica\n";
+		}
 		print $conf "max_wal_senders = 5\n";
+		print $conf "max_replication_slots = 5\n";
 		print $conf "wal_keep_segments = 20\n";
 		print $conf "max_wal_size = 128MB\n";
 		print $conf "shared_buffers = 1MB\n";

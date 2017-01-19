@@ -42,6 +42,7 @@
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "replication/logical.h"
+#include "replication/logicallauncher.h"
 #include "replication/origin.h"
 #include "replication/syncrep.h"
 #include "replication/walsender.h"
@@ -2135,6 +2136,7 @@ CommitTransaction(void)
 	AtEOXact_HashTables(true);
 	AtEOXact_PgStat(true);
 	AtEOXact_Snapshot(true);
+	AtCommit_ApplyLauncher();
 	pgstat_report_xact_timestamp(0);
 
 	CurrentResourceOwner = NULL;

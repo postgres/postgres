@@ -375,11 +375,16 @@ AddRelcacheInvalidationMessage(InvalidationListHeader *hdr,
 {
 	SharedInvalidationMessage msg;
 
-	/* Don't add a duplicate item */
-	/* We assume dbId need not be checked because it will never change */
+	/*
+	 * Don't add a duplicate item.
+	 * We assume dbId need not be checked because it will never change.
+	 * InvalidOid for relId means all relations so we don't need to add
+	 * individual ones when it is present.
+	 */
 	ProcessMessageList(hdr->rclist,
 					   if (msg->rc.id == SHAREDINVALRELCACHE_ID &&
-						   msg->rc.relId == relId)
+						   (msg->rc.relId == relId ||
+							msg->rc.relId == InvalidOid))
 					   return);
 
 	/* OK, add the item */
@@ -509,8 +514,10 @@ RegisterRelcacheInvalidation(Oid dbId, Oid relId)
 	/*
 	 * If the relation being invalidated is one of those cached in the local
 	 * relcache init file, mark that we need to zap that file at commit.
+	 * Same is true when we are invalidating whole relcache.
 	 */
-	if (OidIsValid(dbId) && RelationIdIsInInitFile(relId))
+	if (OidIsValid(dbId) &&
+		(RelationIdIsInInitFile(relId) || relId == InvalidOid))
 		transInvalInfo->RelcacheInitFileInval = true;
 }
 
@@ -565,7 +572,10 @@ LocalExecuteInvalidationMessage(SharedInvalidationMessage *msg)
 		{
 			int			i;
 
-			RelationCacheInvalidateEntry(msg->rc.relId);
+			if (msg->rc.relId == InvalidOid)
+				RelationCacheInvalidate();
+			else
+				RelationCacheInvalidateEntry(msg->rc.relId);
 
 			for (i = 0; i < relcache_callback_count; i++)
 			{
@@ -1224,6 +1234,21 @@ CacheInvalidateRelcache(Relation relation)
 		databaseId = MyDatabaseId;
 
 	RegisterRelcacheInvalidation(databaseId, relationId);
+}
+
+/*
+ * CacheInvalidateRelcacheAll
+ *		Register invalidation of the whole relcache at the end of command.
+ *
+ * This is used by alter publication as changes in publications may affect
+ * large number of tables.
+ */
+void
+CacheInvalidateRelcacheAll(void)
+{
+	PrepareInvalidationState();
+
+	RegisterRelcacheInvalidation(InvalidOid, InvalidOid);
 }
 
 /*

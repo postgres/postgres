@@ -280,6 +280,8 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 		DropOwnedStmt ReassignOwnedStmt
 		AlterTSConfigurationStmt AlterTSDictionaryStmt
 		CreateMatViewStmt RefreshMatViewStmt CreateAmStmt
+		CreatePublicationStmt AlterPublicationStmt
+		CreateSubscriptionStmt AlterSubscriptionStmt DropSubscriptionStmt
 
 %type <node>	select_no_parens select_with_parens select_clause
 				simple_select values_clause
@@ -334,6 +336,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 				database_name access_method_clause access_method attr_name
 				name cursor_name file_name
 				index_name opt_index_name cluster_index_specification
+				def_key
 
 %type <list>	func_name handler_name qual_Op qual_all_Op subquery_Op
 				opt_class opt_inline_handler opt_validator validator_clause
@@ -391,10 +394,13 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 				relation_expr_list dostmt_opt_list
 				transform_element_list transform_type_list
 				TriggerTransitions TriggerReferencing
+				publication_name_list
 
 %type <list>	group_by_list
 %type <node>	group_by_item empty_grouping_set rollup_clause cube_clause
 %type <node>	grouping_sets_clause
+%type <node>	opt_publication_for_tables publication_for_tables
+%type <value>	publication_name_item
 
 %type <list>	opt_fdw_options fdw_options
 %type <defelt>	fdw_option
@@ -407,7 +413,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <fun_param_mode> arg_class
 %type <typnam>	func_return func_type
 
-%type <boolean>  opt_trusted opt_restart_seqs
+%type <boolean>  opt_trusted opt_restart_seqs opt_drop_slot
 %type <ival>	 OptTemp
 %type <ival>	 OptNoLog
 %type <oncommit> OnCommitOption
@@ -647,7 +653,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 
 	PARALLEL PARSER PARTIAL PARTITION PASSING PASSWORD PLACING PLANS POLICY
 	POSITION PRECEDING PRECISION PRESERVE PREPARE PREPARED PRIMARY
-	PRIOR PRIVILEGES PROCEDURAL PROCEDURE PROGRAM
+	PRIOR PRIVILEGES PROCEDURAL PROCEDURE PROGRAM PUBLICATION
 
 	QUOTE
 
@@ -658,9 +664,9 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 
 	SAVEPOINT SCHEMA SCROLL SEARCH SECOND_P SECURITY SELECT SEQUENCE SEQUENCES
 	SERIALIZABLE SERVER SESSION SESSION_USER SET SETS SETOF SHARE SHOW
-	SIMILAR SIMPLE SKIP SMALLINT SNAPSHOT SOME SQL_P STABLE STANDALONE_P START
-	STATEMENT STATISTICS STDIN STDOUT STORAGE STRICT_P STRIP_P SUBSTRING
-	SYMMETRIC SYSID SYSTEM_P
+	SIMILAR SIMPLE SKIP SLOT SMALLINT SNAPSHOT SOME SQL_P STABLE STANDALONE_P
+	START STATEMENT STATISTICS STDIN STDOUT STORAGE STRICT_P STRIP_P
+	SUBSCRIPTION SUBSTRING SYMMETRIC SYSID SYSTEM_P
 
 	TABLE TABLES TABLESAMPLE TABLESPACE TEMP TEMPLATE TEMPORARY TEXT_P THEN
 	TIME TIMESTAMP TO TRAILING TRANSACTION TRANSFORM TREAT TRIGGER TRIM TRUE_P
@@ -822,8 +828,10 @@ stmt :
 			| AlterTableStmt
 			| AlterTblSpcStmt
 			| AlterCompositeTypeStmt
+			| AlterPublicationStmt
 			| AlterRoleSetStmt
 			| AlterRoleStmt
+			| AlterSubscriptionStmt
 			| AlterTSConfigurationStmt
 			| AlterTSDictionaryStmt
 			| AlterUserMappingStmt
@@ -851,12 +859,14 @@ stmt :
 			| CreateMatViewStmt
 			| CreateOpClassStmt
 			| CreateOpFamilyStmt
+			| CreatePublicationStmt
 			| AlterOpFamilyStmt
 			| CreatePolicyStmt
 			| CreatePLangStmt
 			| CreateSchemaStmt
 			| CreateSeqStmt
 			| CreateStmt
+			| CreateSubscriptionStmt
 			| CreateTableSpaceStmt
 			| CreateTransformStmt
 			| CreateTrigStmt
@@ -883,6 +893,7 @@ stmt :
 			| DropPLangStmt
 			| DropRuleStmt
 			| DropStmt
+			| DropSubscriptionStmt
 			| DropTableSpaceStmt
 			| DropTransformStmt
 			| DropTrigStmt
@@ -5613,14 +5624,19 @@ def_list:	def_elem								{ $$ = list_make1($1); }
 			| def_list ',' def_elem					{ $$ = lappend($1, $3); }
 		;
 
-def_elem:	ColLabel '=' def_arg
+def_elem:	def_key '=' def_arg
 				{
 					$$ = makeDefElem($1, (Node *) $3, @1);
 				}
-			| ColLabel
+			| def_key
 				{
 					$$ = makeDefElem($1, NULL, @1);
 				}
+		;
+
+def_key:
+			ColLabel						{ $$ = $1; }
+			| ColLabel ColLabel				{ $$ = psprintf("%s %s", $1, $2); }
 		;
 
 /* Note: any simple identifier will be returned as a type name! */
@@ -6073,6 +6089,7 @@ drop_type:	TABLE									{ $$ = OBJECT_TABLE; }
 			| TEXT_P SEARCH DICTIONARY				{ $$ = OBJECT_TSDICTIONARY; }
 			| TEXT_P SEARCH TEMPLATE				{ $$ = OBJECT_TSTEMPLATE; }
 			| TEXT_P SEARCH CONFIGURATION			{ $$ = OBJECT_TSCONFIGURATION; }
+			| PUBLICATION							{ $$ = OBJECT_PUBLICATION; }
 		;
 
 any_name_list:
@@ -8933,8 +8950,236 @@ AlterOwnerStmt: ALTER AGGREGATE aggregate_with_argtypes OWNER TO RoleSpec
 					n->newowner = $7;
 					$$ = (Node *)n;
 				}
+			| ALTER PUBLICATION name OWNER TO RoleSpec
+				{
+					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
+					n->objectType = OBJECT_PUBLICATION;
+					n->object = list_make1(makeString($3));
+					n->newowner = $6;
+					$$ = (Node *)n;
+				}
+			| ALTER SUBSCRIPTION name OWNER TO RoleSpec
+				{
+					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
+					n->objectType = OBJECT_SUBSCRIPTION;
+					n->object = list_make1(makeString($3));
+					n->newowner = $6;
+					$$ = (Node *)n;
+				}
 		;
 
+
+/*****************************************************************************
+ *
+ * CREATE PUBLICATION name [ FOR TABLE ] [ WITH options ]
+ *
+ *****************************************************************************/
+
+CreatePublicationStmt:
+			CREATE PUBLICATION name opt_publication_for_tables opt_definition
+				{
+					CreatePublicationStmt *n = makeNode(CreatePublicationStmt);
+					n->pubname = $3;
+					n->options = $5;
+					if ($4 != NULL)
+					{
+						/* FOR TABLE */
+						if (IsA($4, List))
+							n->tables = (List *)$4;
+						/* FOR ALL TABLES */
+						else
+							n->for_all_tables = TRUE;
+					}
+					$$ = (Node *)n;
+				}
+		;
+
+opt_publication_for_tables:
+			publication_for_tables					{ $$ = $1; }
+			| /* EMPTY */							{ $$ = NULL; }
+		;
+
+publication_for_tables:
+			FOR TABLE relation_expr_list
+				{
+					$$ = (Node *) $3;
+				}
+			| FOR ALL TABLES
+				{
+					$$ = (Node *) makeInteger(TRUE);
+				}
+		;
+
+/*****************************************************************************
+ *
+ * ALTER PUBLICATION name [ WITH ] options
+ *
+ * ALTER PUBLICATION name ADD TABLE table [, table2]
+ *
+ * ALTER PUBLICATION name DROP TABLE table [, table2]
+ *
+ * ALTER PUBLICATION name SET TABLE table [, table2]
+ *
+ *****************************************************************************/
+
+AlterPublicationStmt:
+			ALTER PUBLICATION name WITH definition
+				{
+					AlterPublicationStmt *n = makeNode(AlterPublicationStmt);
+					n->pubname = $3;
+					n->options = $5;
+					$$ = (Node *)n;
+				}
+			| ALTER PUBLICATION name ADD_P TABLE relation_expr_list
+				{
+					AlterPublicationStmt *n = makeNode(AlterPublicationStmt);
+					n->pubname = $3;
+					n->tables = $6;
+					n->tableAction = DEFELEM_ADD;
+					$$ = (Node *)n;
+				}
+			| ALTER PUBLICATION name SET TABLE relation_expr_list
+				{
+					AlterPublicationStmt *n = makeNode(AlterPublicationStmt);
+					n->pubname = $3;
+					n->tables = $6;
+					n->tableAction = DEFELEM_SET;
+					$$ = (Node *)n;
+				}
+			| ALTER PUBLICATION name DROP TABLE relation_expr_list
+				{
+					AlterPublicationStmt *n = makeNode(AlterPublicationStmt);
+					n->pubname = $3;
+					n->tables = $6;
+					n->tableAction = DEFELEM_DROP;
+					$$ = (Node *)n;
+				}
+		;
+
+/*****************************************************************************
+ *
+ * CREATE SUBSCRIPTION name ...
+ *
+ *****************************************************************************/
+
+CreateSubscriptionStmt:
+			CREATE SUBSCRIPTION name CONNECTION Sconst PUBLICATION publication_name_list opt_definition
+				{
+					CreateSubscriptionStmt *n =
+						makeNode(CreateSubscriptionStmt);
+					n->subname = $3;
+					n->conninfo = $5;
+					n->publication = $7;
+					n->options = $8;
+					$$ = (Node *)n;
+				}
+		;
+
+publication_name_list:
+			publication_name_item
+				{
+					$$ = list_make1($1);
+				}
+			| publication_name_list ',' publication_name_item
+				{
+					$$ = lappend($1, $3);
+				}
+		;
+
+publication_name_item:
+			ColLabel			{ $$ = makeString($1); };
+
+/*****************************************************************************
+ *
+ * ALTER SUBSCRIPTION name [ WITH ] options
+ *
+ *****************************************************************************/
+
+AlterSubscriptionStmt:
+			ALTER SUBSCRIPTION name WITH definition
+				{
+					AlterSubscriptionStmt *n =
+						makeNode(AlterSubscriptionStmt);
+					n->subname = $3;
+					n->options = $5;
+					$$ = (Node *)n;
+				}
+			| ALTER SUBSCRIPTION name CONNECTION Sconst
+				{
+					AlterSubscriptionStmt *n =
+						makeNode(AlterSubscriptionStmt);
+					n->subname = $3;
+					n->options = list_make1(makeDefElem("conninfo",
+											(Node *)makeString($5), @1));
+					$$ = (Node *)n;
+				}
+			| ALTER SUBSCRIPTION name SET PUBLICATION publication_name_list
+				{
+					AlterSubscriptionStmt *n =
+						makeNode(AlterSubscriptionStmt);
+					n->subname = $3;
+					n->options = list_make1(makeDefElem("publication",
+											(Node *)$6, @1));
+					$$ = (Node *)n;
+				}
+			| ALTER SUBSCRIPTION name ENABLE_P
+				{
+					AlterSubscriptionStmt *n =
+						makeNode(AlterSubscriptionStmt);
+					n->subname = $3;
+					n->options = list_make1(makeDefElem("enabled",
+											(Node *)makeInteger(TRUE), @1));
+					$$ = (Node *)n;
+				}
+			| ALTER SUBSCRIPTION name DISABLE_P
+				{
+					AlterSubscriptionStmt *n =
+						makeNode(AlterSubscriptionStmt);
+					n->subname = $3;
+					n->options = list_make1(makeDefElem("enabled",
+											(Node *)makeInteger(FALSE), @1));
+					$$ = (Node *)n;
+				}		;
+
+/*****************************************************************************
+ *
+ * DROP SUBSCRIPTION [ IF EXISTS ] name
+ *
+ *****************************************************************************/
+
+DropSubscriptionStmt: DROP SUBSCRIPTION name opt_drop_slot
+				{
+					DropSubscriptionStmt *n = makeNode(DropSubscriptionStmt);
+					n->subname = $3;
+					n->drop_slot = $4;
+					n->missing_ok = false;
+					$$ = (Node *) n;
+				}
+				|  DROP SUBSCRIPTION IF_P EXISTS name opt_drop_slot
+				{
+					DropSubscriptionStmt *n = makeNode(DropSubscriptionStmt);
+					n->subname = $5;
+					n->drop_slot = $6;
+					n->missing_ok = true;
+					$$ = (Node *) n;
+				}
+		;
+
+opt_drop_slot:
+			IDENT SLOT
+				{
+					if (strcmp($1, "drop") == 0)
+						$$ = TRUE;
+					else if (strcmp($1, "nodrop") == 0)
+						$$ = FALSE;
+					else
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("unrecognized option \"%s\"", $1),
+										parser_errposition(@1)));
+				}
+			| /*EMPTY*/								{ $$ = TRUE; }
+		;
 
 /*****************************************************************************
  *
@@ -14201,6 +14446,7 @@ unreserved_keyword:
 			| PROCEDURAL
 			| PROCEDURE
 			| PROGRAM
+			| PUBLICATION
 			| QUOTE
 			| RANGE
 			| READ
@@ -14244,6 +14490,7 @@ unreserved_keyword:
 			| SHOW
 			| SIMPLE
 			| SKIP
+			| SLOT
 			| SNAPSHOT
 			| SQL_P
 			| STABLE
@@ -14256,6 +14503,7 @@ unreserved_keyword:
 			| STORAGE
 			| STRICT_P
 			| STRIP_P
+			| SUBSCRIPTION
 			| SYSID
 			| SYSTEM_P
 			| TABLES

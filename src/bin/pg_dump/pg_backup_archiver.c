@@ -172,6 +172,7 @@ dumpOptionsFromRestoreOptions(RestoreOptions *ropt)
 	dopt->include_everything = ropt->include_everything;
 	dopt->enable_row_security = ropt->enable_row_security;
 	dopt->sequence_data = ropt->sequence_data;
+	dopt->include_subscriptions = ropt->include_subscriptions;
 
 	return dopt;
 }
@@ -3266,6 +3267,8 @@ _getObjectDescription(PQExpBuffer buf, TocEntry *te, ArchiveHandle *AH)
 		strcmp(type, "SCHEMA") == 0 ||
 		strcmp(type, "FOREIGN DATA WRAPPER") == 0 ||
 		strcmp(type, "SERVER") == 0 ||
+		strcmp(type, "PUBLICATION") == 0 ||
+		strcmp(type, "SUBSCRIPTION") == 0 ||
 		strcmp(type, "USER MAPPING") == 0)
 	{
 		/* We already know that search_path was set properly */
@@ -3476,7 +3479,9 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, bool isData, bool acl_pass)
 			strcmp(te->desc, "TEXT SEARCH DICTIONARY") == 0 ||
 			strcmp(te->desc, "TEXT SEARCH CONFIGURATION") == 0 ||
 			strcmp(te->desc, "FOREIGN DATA WRAPPER") == 0 ||
-			strcmp(te->desc, "SERVER") == 0)
+			strcmp(te->desc, "SERVER") == 0 ||
+			strcmp(te->desc, "PUBLICATION") == 0 ||
+			strcmp(te->desc, "SUBSCRIPTION") == 0)
 		{
 			PQExpBuffer temp = createPQExpBuffer();
 

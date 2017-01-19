@@ -119,6 +119,7 @@ typedef struct _restoreOptions
 	bool	   *idWanted;		/* array showing which dump IDs to emit */
 	int			enable_row_security;
 	int			sequence_data;	/* dump sequence data even in schema-only mode */
+	int			include_subscriptions;
 } RestoreOptions;
 
 typedef struct _dumpOptions
@@ -152,6 +153,8 @@ typedef struct _dumpOptions
 	int			outputNoTablespaces;
 	int			use_setsessauth;
 	int			enable_row_security;
+	int			include_subscriptions;
+	int			no_create_subscription_slots;
 
 	/* default, if no "inclusion" switches appear, is to dump everything */
 	bool		include_everything;

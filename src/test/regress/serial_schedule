@@ -127,6 +127,8 @@ test: tsrf
 test: rules
 test: psql_crosstab
 test: select_parallel
+test: publication
+test: subscription
 test: amutils
 test: select_views
 test: portals_p2

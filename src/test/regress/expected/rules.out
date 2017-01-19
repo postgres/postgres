@@ -1417,6 +1417,14 @@ pg_prepared_xacts| SELECT p.transaction,
    FROM ((pg_prepared_xact() p(transaction, gid, prepared, ownerid, dbid)
      LEFT JOIN pg_authid u ON ((p.ownerid = u.oid)))
      LEFT JOIN pg_database d ON ((p.dbid = d.oid)));
+pg_publication_tables| SELECT p.pubname,
+    n.nspname AS schemaname,
+    c.relname AS tablename
+   FROM pg_publication p,
+    (pg_class c
+     JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
+  WHERE (c.oid IN ( SELECT pg_get_publication_tables.relid
+           FROM pg_get_publication_tables((p.pubname)::text) pg_get_publication_tables(relid)));
 pg_replication_origin_status| SELECT pg_show_replication_origin_status.local_id,
     pg_show_replication_origin_status.external_id,
     pg_show_replication_origin_status.remote_lsn,
@@ -1822,6 +1830,16 @@ pg_stat_ssl| SELECT s.pid,
     s.sslcompression AS compression,
     s.sslclientdn AS clientdn
    FROM pg_stat_get_activity(NULL::integer) s(datid, pid, usesysid, application_name, state, query, wait_event_type, wait_event, xact_start, query_start, backend_start, state_change, client_addr, client_hostname, client_port, backend_xid, backend_xmin, ssl, sslversion, sslcipher, sslbits, sslcompression, sslclientdn);
+pg_stat_subscription| SELECT su.oid AS subid,
+    su.subname,
+    st.pid,
+    st.received_lsn,
+    st.last_msg_send_time,
+    st.last_msg_receipt_time,
+    st.latest_end_lsn,
+    st.latest_end_time
+   FROM (pg_subscription su
+     LEFT JOIN pg_stat_get_subscription(NULL::oid) st(subid, pid, received_lsn, last_msg_send_time, last_msg_receipt_time, latest_end_lsn, latest_end_time) ON ((st.subid = su.oid)));
 pg_stat_sys_indexes| SELECT pg_stat_all_indexes.relid,
     pg_stat_all_indexes.indexrelid,
     pg_stat_all_indexes.schemaname,

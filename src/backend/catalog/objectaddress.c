@@ -45,7 +45,10 @@
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_policy.h"
+#include "catalog/pg_publication.h"
+#include "catalog/pg_publication_rel.h"
 #include "catalog/pg_rewrite.h"
+#include "catalog/pg_subscription.h"
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_transform.h"
 #include "catalog/pg_trigger.h"
@@ -450,6 +453,30 @@ static const ObjectPropertyType ObjectProperty[] =
 		Anum_pg_type_typacl,
 		ACL_KIND_TYPE,
 		true
+	},
+	{
+		PublicationRelationId,
+		PublicationObjectIndexId,
+		PUBLICATIONOID,
+		PUBLICATIONNAME,
+		Anum_pg_publication_pubname,
+		InvalidAttrNumber,
+		Anum_pg_publication_pubowner,
+		InvalidAttrNumber,
+		-1,
+		true
+	},
+	{
+		SubscriptionRelationId,
+		SubscriptionObjectIndexId,
+		SUBSCRIPTIONOID,
+		SUBSCRIPTIONNAME,
+		Anum_pg_subscription_subname,
+		InvalidAttrNumber,
+		Anum_pg_subscription_subowner,
+		InvalidAttrNumber,
+		-1,
+		true
 	}
 };
 
@@ -653,6 +680,18 @@ static const struct object_type_map
 	{
 		"policy", OBJECT_POLICY
 	},
+	/* OCLASS_PUBLICATION */
+	{
+		"publication", OBJECT_PUBLICATION
+	},
+	/* OCLASS_PUBLICATION_REL */
+	{
+		"publication relation", OBJECT_PUBLICATION_REL
+	},
+	/* OCLASS_SUBSCRIPTION */
+	{
+		"subscription", OBJECT_SUBSCRIPTION
+	},
 	/* OCLASS_TRANSFORM */
 	{
 		"transform", OBJECT_TRANSFORM
@@ -688,6 +727,9 @@ static ObjectAddress get_object_address_opf_member(ObjectType objtype,
 
 static ObjectAddress get_object_address_usermapping(List *objname,
 							   List *objargs, bool missing_ok);
+static ObjectAddress get_object_address_publication_rel(List *objname,
+								   List *objargs, Relation *relation,
+								   bool missing_ok);
 static ObjectAddress get_object_address_defacl(List *objname, List *objargs,
 						  bool missing_ok);
 static const ObjectPropertyType *get_object_property_data(Oid class_id);
@@ -812,6 +854,8 @@ get_object_address(ObjectType objtype, List *objname, List *objargs,
 			case OBJECT_FOREIGN_SERVER:
 			case OBJECT_EVENT_TRIGGER:
 			case OBJECT_ACCESS_METHOD:
+			case OBJECT_PUBLICATION:
+			case OBJECT_SUBSCRIPTION:
 				address = get_object_address_unqualified(objtype,
 														 objname, missing_ok);
 				break;
@@ -926,6 +970,10 @@ get_object_address(ObjectType objtype, List *objname, List *objargs,
 				address = get_object_address_usermapping(objname, objargs,
 														 missing_ok);
 				break;
+			case OBJECT_PUBLICATION_REL:
+				address = get_object_address_publication_rel(objname, objargs,
+															 &relation,
+															 missing_ok);
 			case OBJECT_DEFACL:
 				address = get_object_address_defacl(objname, objargs,
 													missing_ok);
@@ -1091,6 +1139,12 @@ get_object_address_unqualified(ObjectType objtype,
 			case OBJECT_EVENT_TRIGGER:
 				msg = gettext_noop("event trigger name cannot be qualified");
 				break;
+			case OBJECT_PUBLICATION:
+				msg = gettext_noop("publication name cannot be qualified");
+				break;
+			case OBJECT_SUBSCRIPTION:
+				msg = gettext_noop("subscription name cannot be qualified");
+				break;
 			default:
 				elog(ERROR, "unrecognized objtype: %d", (int) objtype);
 				msg = NULL;		/* placate compiler */
@@ -1154,6 +1208,16 @@ get_object_address_unqualified(ObjectType objtype,
 		case OBJECT_EVENT_TRIGGER:
 			address.classId = EventTriggerRelationId;
 			address.objectId = get_event_trigger_oid(name, missing_ok);
+			address.objectSubId = 0;
+			break;
+		case OBJECT_PUBLICATION:
+			address.classId = PublicationRelationId;
+			address.objectId = get_publication_oid(name, missing_ok);
+			address.objectSubId = 0;
+			break;
+		case OBJECT_SUBSCRIPTION:
+			address.classId = SubscriptionRelationId;
+			address.objectId = get_subscription_oid(name, missing_ok);
 			address.objectSubId = 0;
 			break;
 		default:
@@ -1744,6 +1808,51 @@ get_object_address_usermapping(List *objname, List *objargs, bool missing_ok)
 }
 
 /*
+ * Find the ObjectAddress for a publication relation.  The objname parameter
+ * is the relation name; objargs contains the publication name.
+ */
+static ObjectAddress
+get_object_address_publication_rel(List *objname, List *objargs,
+								   Relation *relation, bool missing_ok)
+{
+	ObjectAddress address;
+	char	   *pubname;
+	Publication *pub;
+
+	ObjectAddressSet(address, PublicationRelRelationId, InvalidOid);
+
+	*relation = relation_openrv_extended(makeRangeVarFromNameList(objname),
+										 AccessShareLock, missing_ok);
+	if (!relation)
+		return address;
+
+	/* fetch publication name from input list */
+	pubname = strVal(linitial(objargs));
+
+	/* Now look up the pg_publication tuple */
+	pub = GetPublicationByName(pubname, missing_ok);
+	if (!pub)
+		return address;
+
+	/* Find the publication relation mapping in syscache. */
+	address.objectId =
+		GetSysCacheOid2(PUBLICATIONRELMAP,
+						ObjectIdGetDatum(RelationGetRelid(*relation)),
+						ObjectIdGetDatum(pub->oid));
+	if (!OidIsValid(address.objectId))
+	{
+		if (!missing_ok)
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("publication relation \"%s\" in publication \"%s\" does not exist",
+							RelationGetRelationName(*relation), pubname)));
+		return address;
+	}
+
+	return address;
+}
+
+/*
  * Find the ObjectAddress for a default ACL.
  */
 static ObjectAddress
@@ -2002,6 +2111,7 @@ pg_get_object_address(PG_FUNCTION_ARGS)
 		case OBJECT_DOMCONSTRAINT:
 		case OBJECT_CAST:
 		case OBJECT_USER_MAPPING:
+		case OBJECT_PUBLICATION_REL:
 		case OBJECT_DEFACL:
 		case OBJECT_TRANSFORM:
 			if (list_length(args) != 1)
@@ -2182,6 +2292,16 @@ check_object_ownership(Oid roleid, ObjectType objtype, ObjectAddress address,
 									format_type_be(sourcetypeid),
 									format_type_be(targettypeid))));
 			}
+			break;
+		case OBJECT_PUBLICATION:
+			if (!pg_publication_ownercheck(address.objectId, roleid))
+				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_PUBLICATION,
+							   NameListToString(objname));
+			break;
+		case OBJECT_SUBSCRIPTION:
+			if (!pg_subscription_ownercheck(address.objectId, roleid))
+				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_SUBSCRIPTION,
+							   NameListToString(objname));
 			break;
 		case OBJECT_TRANSFORM:
 			{
@@ -3191,6 +3311,41 @@ getObjectDescription(const ObjectAddress *object)
 				break;
 			}
 
+		case OCLASS_PUBLICATION:
+			{
+				appendStringInfo(&buffer, _("publication %s"),
+								 get_publication_name(object->objectId));
+				break;
+			}
+
+		case OCLASS_PUBLICATION_REL:
+			{
+				HeapTuple	tup;
+				char	   *pubname;
+				Form_pg_publication_rel	prform;
+
+				tup = SearchSysCache1(PUBLICATIONREL,
+									  ObjectIdGetDatum(object->objectId));
+				if (!HeapTupleIsValid(tup))
+					elog(ERROR, "cache lookup failed for publication table %u",
+						 object->objectId);
+
+				prform = (Form_pg_publication_rel) GETSTRUCT(tup);
+				pubname = get_publication_name(prform->prpubid);
+
+				appendStringInfo(&buffer, _("publication table %s in publication %s"),
+								 get_rel_name(prform->prrelid), pubname);
+				ReleaseSysCache(tup);
+				break;
+			}
+
+		case OCLASS_SUBSCRIPTION:
+			{
+				appendStringInfo(&buffer, _("subscription %s"),
+								 get_subscription_name(object->objectId));
+				break;
+			}
+
 		default:
 			appendStringInfo(&buffer, "unrecognized object %u %u %d",
 							 object->classId,
@@ -3675,6 +3830,18 @@ getObjectTypeDescription(const ObjectAddress *object)
 
 		case OCLASS_AM:
 			appendStringInfoString(&buffer, "access method");
+			break;
+
+		case OCLASS_PUBLICATION:
+			appendStringInfoString(&buffer, "publication");
+			break;
+
+		case OCLASS_PUBLICATION_REL:
+			appendStringInfoString(&buffer, "publication table");
+			break;
+
+		case OCLASS_SUBSCRIPTION:
+			appendStringInfoString(&buffer, "subscription");
 			break;
 
 		default:
@@ -4647,6 +4814,58 @@ getObjectIdentityParts(const ObjectAddress *object,
 					*objname = list_make1(amname);
 			}
 			break;
+
+		case OCLASS_PUBLICATION:
+			{
+				char	   *pubname;
+
+				pubname = get_publication_name(object->objectId);
+				appendStringInfoString(&buffer,
+									   quote_identifier(pubname));
+				if (objname)
+					*objname = list_make1(pubname);
+				break;
+			}
+
+		case OCLASS_PUBLICATION_REL:
+			{
+				HeapTuple	tup;
+				char	   *pubname;
+				Form_pg_publication_rel	prform;
+
+				tup = SearchSysCache1(PUBLICATIONREL,
+									  ObjectIdGetDatum(object->objectId));
+				if (!HeapTupleIsValid(tup))
+					elog(ERROR, "cache lookup failed for publication table %u",
+						 object->objectId);
+
+				prform = (Form_pg_publication_rel) GETSTRUCT(tup);
+				pubname = get_publication_name(prform->prpubid);
+
+				appendStringInfo(&buffer, _("publication table %s in publication %s"),
+								 get_rel_name(prform->prrelid), pubname);
+
+				if (objname)
+				{
+					getRelationIdentity(&buffer, prform->prrelid, objname);
+					*objargs = list_make1(pubname);
+				}
+
+				ReleaseSysCache(tup);
+				break;
+			}
+
+		case OCLASS_SUBSCRIPTION:
+			{
+				char	   *subname;
+
+				subname = get_subscription_name(object->objectId);
+				appendStringInfoString(&buffer,
+									   quote_identifier(subname));
+				if (objname)
+					*objname = list_make1(subname);
+				break;
+			}
 
 		default:
 			appendStringInfo(&buffer, "unrecognized object %u %u %d",

@@ -3411,6 +3411,47 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
 
      </variablelist>
     </sect2>
+
+    <sect2 id="runtime-config-replication-subscriber">
+     <title>Subscribers</title>
+
+     <para>
+      These settings control the behavior of a logical replication subscriber.
+      Their values on the publisher are irrelevant.
+     </para>
+
+     <para>
+      Note that <varname>wal_receiver_timeout</varname> and
+      <varname>wal_retrieve_retry_interval</varname> configuration parameters
+      affect the logical replication workers as well.
+     </para>
+
+     <variablelist>
+
+     <varlistentry id="guc-max-logical-replication-workers" xreflabel="max_logical_replication_workers">
+      <term><varname>max_logical_replication_workers</varname> (<type>int</type>)
+      <indexterm>
+       <primary><varname>max_logical_replication_workers</> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Specifies maximum number of logical replication workers. This includes
+        both apply workers and table synchronization workers.
+       </para>
+       <para>
+        Logical replication workers are taken from the pool defined by
+        <varname>max_worker_processes</varname>.
+       </para>
+       <para>
+        The default value is 4.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     </variablelist>
+    </sect2>
+
    </sect1>
 
    <sect1 id="runtime-config-query">

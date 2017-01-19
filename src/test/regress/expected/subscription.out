@@ -1,0 +1,66 @@
+--
+-- SUBSCRIPTION
+--
+CREATE ROLE regress_subscription_user LOGIN SUPERUSER;
+SET SESSION AUTHORIZATION 'regress_subscription_user';
+-- fail - no publications
+CREATE SUBSCRIPTION testsub CONNECTION 'foo';
+ERROR:  syntax error at or near ";"
+LINE 1: CREATE SUBSCRIPTION testsub CONNECTION 'foo';
+                                                    ^
+-- fail - no connection
+CREATE SUBSCRIPTION testsub PUBLICATION foo;
+ERROR:  syntax error at or near "PUBLICATION"
+LINE 1: CREATE SUBSCRIPTION testsub PUBLICATION foo;
+                                    ^
+set client_min_messages to error;
+CREATE SUBSCRIPTION testsub CONNECTION 'testconn' PUBLICATION testpub;
+ERROR:  invalid connection string syntax: missing "=" after "testconn" in connection info string
+
+CREATE SUBSCRIPTION testsub CONNECTION 'dbname=doesnotexist' PUBLICATION testpub WITH (DISABLED, NOCREATE SLOT);
+reset client_min_messages;
+\dRs+
+                               List of subscriptions
+  Name   |           Owner           | Enabled | Publication |      Conninfo       
+---------+---------------------------+---------+-------------+---------------------
+ testsub | regress_subscription_user | f       | {testpub}   | dbname=doesnotexist
+(1 row)
+
+ALTER SUBSCRIPTION testsub SET PUBLICATION testpub2, testpub3;
+\dRs
+                        List of subscriptions
+  Name   |           Owner           | Enabled |     Publication     
+---------+---------------------------+---------+---------------------
+ testsub | regress_subscription_user | f       | {testpub2,testpub3}
+(1 row)
+
+ALTER SUBSCRIPTION testsub CONNECTION 'dbname=doesnotexist2';
+ALTER SUBSCRIPTION testsub SET PUBLICATION testpub, testpub1;
+\dRs+
+                                   List of subscriptions
+  Name   |           Owner           | Enabled |    Publication     |       Conninfo       
+---------+---------------------------+---------+--------------------+----------------------
+ testsub | regress_subscription_user | f       | {testpub,testpub1} | dbname=doesnotexist2
+(1 row)
+
+BEGIN;
+ALTER SUBSCRIPTION testsub ENABLE;
+\dRs
+                       List of subscriptions
+  Name   |           Owner           | Enabled |    Publication     
+---------+---------------------------+---------+--------------------
+ testsub | regress_subscription_user | t       | {testpub,testpub1}
+(1 row)
+
+ALTER SUBSCRIPTION testsub DISABLE;
+\dRs
+                       List of subscriptions
+  Name   |           Owner           | Enabled |    Publication     
+---------+---------------------------+---------+--------------------
+ testsub | regress_subscription_user | f       | {testpub,testpub1}
+(1 row)
+
+COMMIT;
+DROP SUBSCRIPTION testsub NODROP SLOT;
+RESET SESSION AUTHORIZATION;
+DROP ROLE regress_subscription_user;

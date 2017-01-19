@@ -50,6 +50,8 @@
 #include "catalog/pg_opfamily.h"
 #include "catalog/pg_partitioned_table.h"
 #include "catalog/pg_proc.h"
+#include "catalog/pg_publication.h"
+#include "catalog/pg_publication_rel.h"
 #include "catalog/pg_range.h"
 #include "catalog/pg_rewrite.h"
 #include "catalog/pg_seclabel.h"
@@ -59,6 +61,7 @@
 #include "catalog/pg_shseclabel.h"
 #include "catalog/pg_replication_origin.h"
 #include "catalog/pg_statistic.h"
+#include "catalog/pg_subscription.h"
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_transform.h"
 #include "catalog/pg_ts_config.h"
@@ -658,6 +661,50 @@ static const struct cachedesc cacheinfo[] = {
 		},
 		16
 	},
+	{PublicationRelationId,			/* PUBLICATIONOID */
+		PublicationObjectIndexId,
+		1,
+		{
+			ObjectIdAttributeNumber,
+			0,
+			0,
+			0
+		},
+		8
+	},
+	{PublicationRelationId,			/* PUBLICATIONNAME */
+		PublicationNameIndexId,
+		1,
+		{
+			Anum_pg_publication_pubname,
+			0,
+			0,
+			0
+		},
+		8
+	},
+	{PublicationRelRelationId,		/* PUBLICATIONREL */
+		PublicationRelObjectIndexId,
+		1,
+		{
+			ObjectIdAttributeNumber,
+			0,
+			0,
+			0
+		},
+		64
+	},
+	{PublicationRelRelationId,		/* PUBLICATIONRELMAP */
+		PublicationRelMapIndexId,
+		2,
+		{
+			Anum_pg_publication_rel_prrelid,
+			Anum_pg_publication_rel_prpubid,
+			0,
+			0
+		},
+		64
+	},
 	{RewriteRelationId,			/* RULERELNAME */
 		RewriteRelRulenameIndexId,
 		2,
@@ -690,6 +737,28 @@ static const struct cachedesc cacheinfo[] = {
 			0
 		},
 		128
+	},
+	{SubscriptionRelationId,		/* SUBSCRIPTIONOID */
+		SubscriptionObjectIndexId,
+		1,
+		{
+			ObjectIdAttributeNumber,
+			0,
+			0,
+			0
+		},
+		4
+	},
+	{SubscriptionRelationId,		/* SUBSCRIPTIONNAME */
+		SubscriptionNameIndexId,
+		2,
+		{
+			Anum_pg_subscription_subdbid,
+			Anum_pg_subscription_subname,
+			0,
+			0
+		},
+		4
 	},
 	{TableSpaceRelationId,		/* TABLESPACEOID */
 		TablespaceOidIndexId,

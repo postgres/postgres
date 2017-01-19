@@ -196,6 +196,7 @@ WalReceiverMain(void)
 	WalRcvData *walrcv = WalRcv;
 	TimestampTz last_recv_timestamp;
 	bool		ping_sent;
+	char	   *err;
 
 	/*
 	 * WalRcv should be set up already (if we are a backend, we inherit this
@@ -293,7 +294,10 @@ WalReceiverMain(void)
 
 	/* Establish the connection to the primary for XLOG streaming */
 	EnableWalRcvImmediateExit();
-	wrconn = walrcv_connect(conninfo, false, "walreceiver");
+	wrconn = walrcv_connect(conninfo, false, "walreceiver", &err);
+	if (!wrconn)
+		ereport(ERROR,
+				(errmsg("could not connect to the primary server: %s", err)));
 	DisableWalRcvImmediateExit();
 
 	/*
@@ -316,13 +320,16 @@ WalReceiverMain(void)
 	{
 		char	   *primary_sysid;
 		char		standby_sysid[32];
+		int			server_version;
+		WalRcvStreamOptions options;
 
 		/*
 		 * Check that we're connected to a valid server using the
-		 * IDENTIFY_SYSTEM replication command,
+		 * IDENTIFY_SYSTEM replication command.
 		 */
 		EnableWalRcvImmediateExit();
-		primary_sysid = walrcv_identify_system(wrconn, &primaryTLI);
+		primary_sysid = walrcv_identify_system(wrconn, &primaryTLI,
+											   &server_version);
 
 		snprintf(standby_sysid, sizeof(standby_sysid), UINT64_FORMAT,
 				 GetSystemIdentifier());
@@ -368,9 +375,12 @@ WalReceiverMain(void)
 		 * history file, bump recovery target timeline, and ask us to restart
 		 * on the new timeline.
 		 */
+		options.logical = false;
+		options.startpoint = startpoint;
+		options.slotname = slotname[0] != '\0' ? slotname : NULL;
+		options.proto.physical.startpointTLI = startpointTLI;
 		ThisTimeLineID = startpointTLI;
-		if (walrcv_startstreaming(wrconn, startpointTLI, startpoint,
-								  slotname[0] != '\0' ? slotname : NULL))
+		if (walrcv_startstreaming(wrconn, &options))
 		{
 			if (first_stream)
 				ereport(LOG,

@@ -39,6 +39,7 @@
 #include "catalog/pg_opfamily.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_shdepend.h"
+#include "catalog/pg_subscription.h"
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_ts_config.h"
 #include "catalog/pg_ts_dict.h"
@@ -53,7 +54,9 @@
 #include "commands/extension.h"
 #include "commands/policy.h"
 #include "commands/proclang.h"
+#include "commands/publicationcmds.h"
 #include "commands/schemacmds.h"
+#include "commands/subscriptioncmds.h"
 #include "commands/tablecmds.h"
 #include "commands/typecmds.h"
 #include "storage/lmgr.h"
@@ -1404,6 +1407,14 @@ shdepReassignOwned(List *roleids, Oid newrole)
 
 				case EventTriggerRelationId:
 					AlterEventTriggerOwner_oid(sdepForm->objid, newrole);
+					break;
+
+				case PublicationRelationId:
+					AlterPublicationOwner_oid(sdepForm->objid, newrole);
+					break;
+
+				case SubscriptionRelationId:
+					AlterSubscriptionOwner_oid(sdepForm->objid, newrole);
 					break;
 
 					/* Generic alter owner cases */

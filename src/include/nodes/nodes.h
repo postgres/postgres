@@ -411,6 +411,11 @@ typedef enum NodeTag
 	T_CreateTransformStmt,
 	T_CreateAmStmt,
 	T_PartitionCmd,
+	T_CreatePublicationStmt,
+	T_AlterPublicationStmt,
+	T_CreateSubscriptionStmt,
+	T_AlterSubscriptionStmt,
+	T_DropSubscriptionStmt,
 
 	/*
 	 * TAGS FOR PARSE TREE NODES (parsenodes.h)

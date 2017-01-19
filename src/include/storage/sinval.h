@@ -23,6 +23,7 @@
  *	* invalidate a specific tuple in a specific catcache
  *	* invalidate all catcache entries from a given system catalog
  *	* invalidate a relcache entry for a specific logical relation
+ *	* invalidate all relcache entries
  *	* invalidate an smgr cache entry for a specific physical relation
  *	* invalidate the mapped-relation mapping for a given database
  *	* invalidate any saved snapshot that might be used to scan a given relation
@@ -78,7 +79,7 @@ typedef struct
 {
 	int8		id;				/* type field --- must be first */
 	Oid			dbId;			/* database ID, or 0 if a shared relation */
-	Oid			relId;			/* relation ID */
+	Oid			relId;			/* relation ID, or 0 if whole relcache */
 } SharedInvalRelcacheMsg;
 
 #define SHAREDINVALSMGR_ID		(-3)

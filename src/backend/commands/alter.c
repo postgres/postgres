@@ -45,7 +45,9 @@
 #include "commands/extension.h"
 #include "commands/policy.h"
 #include "commands/proclang.h"
+#include "commands/publicationcmds.h"
 #include "commands/schemacmds.h"
+#include "commands/subscriptioncmds.h"
 #include "commands/tablecmds.h"
 #include "commands/tablespace.h"
 #include "commands/trigger.h"
@@ -768,6 +770,14 @@ ExecAlterOwnerStmt(AlterOwnerStmt *stmt)
 
 		case OBJECT_EVENT_TRIGGER:
 			return AlterEventTriggerOwner(strVal(linitial(stmt->object)),
+										  newowner);
+
+		case OBJECT_PUBLICATION:
+			return AlterPublicationOwner(strVal(linitial(stmt->object)),
+										 newowner);
+
+		case OBJECT_SUBSCRIPTION:
+			return AlterSubscriptionOwner(strVal(linitial(stmt->object)),
 										  newowner);
 
 			/* Generic cases */

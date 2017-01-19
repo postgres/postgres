@@ -1,0 +1,156 @@
+--
+-- PUBLICATION
+--
+CREATE ROLE regress_publication_user LOGIN SUPERUSER;
+SET SESSION AUTHORIZATION 'regress_publication_user';
+CREATE PUBLICATION testpub_default;
+CREATE PUBLICATION testpib_ins_trunct WITH (nopublish delete, nopublish update);
+ALTER PUBLICATION testpub_default WITH (nopublish insert, nopublish delete);
+\dRp
+                            List of publications
+        Name        |          Owner           | Inserts | Updates | Deletes 
+--------------------+--------------------------+---------+---------+---------
+ testpib_ins_trunct | regress_publication_user | t       | f       | f
+ testpub_default    | regress_publication_user | f       | t       | f
+(2 rows)
+
+ALTER PUBLICATION testpub_default WITH (publish insert, publish delete);
+\dRp
+                            List of publications
+        Name        |          Owner           | Inserts | Updates | Deletes 
+--------------------+--------------------------+---------+---------+---------
+ testpib_ins_trunct | regress_publication_user | t       | f       | f
+ testpub_default    | regress_publication_user | t       | t       | t
+(2 rows)
+
+--- adding tables
+CREATE SCHEMA pub_test;
+CREATE TABLE testpub_tbl1 (id serial primary key, data text);
+CREATE TABLE pub_test.testpub_nopk (foo int, bar int);
+CREATE VIEW testpub_view AS SELECT 1;
+CREATE PUBLICATION testpub_foralltables FOR ALL TABLES WITH (nopublish delete, nopublish update);
+ALTER PUBLICATION testpub_foralltables WITH (publish update);
+CREATE TABLE testpub_tbl2 (id serial primary key, data text);
+-- fail - can't add to for all tables publication
+ALTER PUBLICATION testpub_foralltables ADD TABLE testpub_tbl2;
+ERROR:  publication "testpub_foralltables" is defined as FOR ALL TABLES
+DETAIL:  Tables cannot be added to or dropped from FOR ALL TABLES publications.
+-- fail - can't drop from all tables publication
+ALTER PUBLICATION testpub_foralltables DROP TABLE testpub_tbl2;
+ERROR:  publication "testpub_foralltables" is defined as FOR ALL TABLES
+DETAIL:  Tables cannot be added to or dropped from FOR ALL TABLES publications.
+-- fail - can't add to for all tables publication
+ALTER PUBLICATION testpub_foralltables SET TABLE pub_test.testpub_nopk;
+ERROR:  publication "testpub_foralltables" is defined as FOR ALL TABLES
+DETAIL:  Tables cannot be added to or dropped from FOR ALL TABLES publications.
+SELECT pubname, puballtables FROM pg_publication WHERE pubname = 'testpub_foralltables';
+       pubname        | puballtables 
+----------------------+--------------
+ testpub_foralltables | t
+(1 row)
+
+\d+ testpub_tbl2
+                                                Table "public.testpub_tbl2"
+ Column |  Type   | Collation | Nullable |                 Default                  | Storage  | Stats target | Description 
+--------+---------+-----------+----------+------------------------------------------+----------+--------------+-------------
+ id     | integer |           | not null | nextval('testpub_tbl2_id_seq'::regclass) | plain    |              | 
+ data   | text    |           |          |                                          | extended |              | 
+Indexes:
+    "testpub_tbl2_pkey" PRIMARY KEY, btree (id)
+Publications:
+    "testpub_foralltables"
+
+DROP TABLE testpub_tbl2;
+DROP PUBLICATION testpub_foralltables;
+-- fail - view
+CREATE PUBLICATION testpub_fortbl FOR TABLE testpub_view;
+ERROR:  "testpub_view" is not a table
+DETAIL:  Only tables can be added to publications.
+CREATE PUBLICATION testpub_fortbl FOR TABLE testpub_tbl1, pub_test.testpub_nopk;
+-- fail - already added
+ALTER PUBLICATION testpub_fortbl ADD TABLE testpub_tbl1;
+ERROR:  relation "testpub_tbl1" is already member of publication "testpub_fortbl"
+-- fail - already added
+CREATE PUBLICATION testpub_fortbl FOR TABLE testpub_tbl1;
+ERROR:  publication "testpub_fortbl" already exists
+\dRp+ testpub_fortbl
+ Publication testpub_fortbl
+ Inserts | Updates | Deletes 
+---------+---------+---------
+ t       | t       | t
+Tables:
+    "pub_test.testpub_nopk"
+    "public.testpub_tbl1"
+
+-- fail - view
+ALTER PUBLICATION testpub_default ADD TABLE testpub_view;
+ERROR:  "testpub_view" is not a table
+DETAIL:  Only tables can be added to publications.
+ALTER PUBLICATION testpub_default ADD TABLE testpub_tbl1;
+ALTER PUBLICATION testpub_default SET TABLE testpub_tbl1;
+ALTER PUBLICATION testpub_default ADD TABLE pub_test.testpub_nopk;
+ALTER PUBLICATION testpib_ins_trunct ADD TABLE pub_test.testpub_nopk, testpub_tbl1;
+\d+ pub_test.testpub_nopk
+                              Table "pub_test.testpub_nopk"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ foo    | integer |           |          |         | plain   |              | 
+ bar    | integer |           |          |         | plain   |              | 
+Publications:
+    "testpib_ins_trunct"
+    "testpub_default"
+    "testpub_fortbl"
+
+\d+ testpub_tbl1
+                                                Table "public.testpub_tbl1"
+ Column |  Type   | Collation | Nullable |                 Default                  | Storage  | Stats target | Description 
+--------+---------+-----------+----------+------------------------------------------+----------+--------------+-------------
+ id     | integer |           | not null | nextval('testpub_tbl1_id_seq'::regclass) | plain    |              | 
+ data   | text    |           |          |                                          | extended |              | 
+Indexes:
+    "testpub_tbl1_pkey" PRIMARY KEY, btree (id)
+Publications:
+    "testpib_ins_trunct"
+    "testpub_default"
+    "testpub_fortbl"
+
+\dRp+ testpub_default
+ Publication testpub_default
+ Inserts | Updates | Deletes 
+---------+---------+---------
+ t       | t       | t
+Tables:
+    "pub_test.testpub_nopk"
+    "public.testpub_tbl1"
+
+ALTER PUBLICATION testpub_default DROP TABLE testpub_tbl1, pub_test.testpub_nopk;
+-- fail - nonexistent
+ALTER PUBLICATION testpub_default DROP TABLE pub_test.testpub_nopk;
+ERROR:  relation "testpub_nopk" is not part of the publication
+\d+ testpub_tbl1
+                                                Table "public.testpub_tbl1"
+ Column |  Type   | Collation | Nullable |                 Default                  | Storage  | Stats target | Description 
+--------+---------+-----------+----------+------------------------------------------+----------+--------------+-------------
+ id     | integer |           | not null | nextval('testpub_tbl1_id_seq'::regclass) | plain    |              | 
+ data   | text    |           |          |                                          | extended |              | 
+Indexes:
+    "testpub_tbl1_pkey" PRIMARY KEY, btree (id)
+Publications:
+    "testpib_ins_trunct"
+    "testpub_fortbl"
+
+DROP VIEW testpub_view;
+DROP TABLE testpub_tbl1;
+\dRp+ testpub_default
+ Publication testpub_default
+ Inserts | Updates | Deletes 
+---------+---------+---------
+ t       | t       | t
+(1 row)
+
+DROP PUBLICATION testpub_default;
+DROP PUBLICATION testpib_ins_trunct;
+DROP SCHEMA pub_test CASCADE;
+NOTICE:  drop cascades to table pub_test.testpub_nopk
+RESET SESSION AUTHORIZATION;
+DROP ROLE regress_publication_user;

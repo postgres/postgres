@@ -441,6 +441,10 @@ does_not_exist_skipping(ObjectType objtype, List *objname, List *objargs)
 				}
 			}
 			break;
+		case OBJECT_PUBLICATION:
+			msg = gettext_noop("publication \"%s\" does not exist, skipping");
+			name = NameListToString(objname);
+			break;
 		default:
 			elog(ERROR, "unrecognized object type: %d", (int) objtype);
 			break;

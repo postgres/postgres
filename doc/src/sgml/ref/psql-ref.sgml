@@ -1601,6 +1601,34 @@ testdb=&gt;
       </varlistentry>
 
       <varlistentry>
+        <term><literal>\dRp[+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <listitem>
+        <para>
+        Lists replication publications.
+        If <replaceable class="parameter">pattern</replaceable> is
+        specified, only those publications whose names match the pattern are
+        listed.
+        If <literal>+</literal> is appended to the command name, the tables
+        associated with each publication are shown as well.
+        </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><literal>\dRs[+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <listitem>
+        <para>
+        Lists replication subscriptions.
+        If <replaceable class="parameter">pattern</replaceable> is
+        specified, only those subscriptions whose names match the pattern are
+        listed.
+        If <literal>+</literal> is appended to the command name, additional
+        properties of the subscriptions are shown.
+        </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
         <term><literal>\dT[S+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>

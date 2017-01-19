@@ -1,0 +1,16 @@
+src/test/subscription/README
+
+Regression tests for subscription/logical replication
+=====================================================
+
+This directory contains a test suite for subscription/logical replication.
+
+Running the tests
+=================
+
+    make check
+
+NOTE: This creates a temporary installation, and some tests may
+create one or multiple nodes, for the purpose of the tests.
+
+NOTE: This requires the --enable-tap-tests argument to configure.

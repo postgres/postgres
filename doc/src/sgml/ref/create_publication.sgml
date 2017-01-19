@@ -1,0 +1,206 @@
+<!--
+doc/src/sgml/ref/create_publication.sgml
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-CREATEPUBLICATION">
+ <indexterm zone="sql-createpublication">
+  <primary>CREATE PUBLICATION</primary>
+ </indexterm>
+
+ <refmeta>
+  <refentrytitle>CREATE PUBLICATION</refentrytitle>
+  <manvolnum>7</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>CREATE PUBLICATION</refname>
+  <refpurpose>define a new publication</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+<synopsis>
+CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
+    [ FOR TABLE <replaceable class="parameter">table_name</replaceable> [, ...]
+      | FOR ALL TABLES ]
+    [ WITH ( <replaceable class="parameter">option</replaceable> [, ... ] ) ]
+
+<phrase>where <replaceable class="parameter">option</replaceable> can be:</phrase>
+
+      PUBLISH INSERT | NOPUBLISH INSERT
+    | PUBLISH UPDATE | NOPUBLISH UPDATE
+    | PUBLISH DELETE | NOPUBLISH DELETE
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>CREATE PUBLICATION</command> adds a new publication
+   into the current database.  The publication name must be distinct from
+   the name of any existing publication in the current database.
+  </para>
+
+  <para>
+   A publication is essentially a group of tables whose data changes are
+   intended to be replicated through logical replication.  See
+   <xref linkend="logical-replication-publication"> for details about how
+   publications fit into the logical replication setup.
+   </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="parameter">name</replaceable></term>
+    <listitem>
+     <para>
+      The name of the new publication.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>FOR TABLE</literal></term>
+    <listitem>
+     <para>
+      Specifies a list of tables to add to the publication.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>FOR ALL TABLES</literal></term>
+    <listitem>
+     <para>
+      Marks the publication as one that replicates changes for all tables in
+      the database, including tables created in the future.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>PUBLISH INSERT</literal></term>
+    <term><literal>NOPUBLISH INSERT</literal></term>
+    <listitem>
+     <para>
+      These clauses determine whether the new publication will send
+      the <command>INSERT</command> operations to the subscribers.
+      <literal>PUBLISH INSERT</literal> is the default.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>PUBLISH UPDATE</literal></term>
+    <term><literal>NOPUBLISH UPDATE</literal></term>
+    <listitem>
+     <para>
+      These clauses determine whether the new publication will send
+      the <command>UPDATE</command> operations to the subscribers.
+      <literal>PUBLISH UPDATE</literal> is the default.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>PUBLISH DELETE</literal></term>
+    <term><literal>NOPUBLISH DELETE</literal></term>
+    <listitem>
+     <para>
+      These clauses determine whether the new publication will send
+      the <command>DELETE</command> operations to the subscribers.
+      <literal>PUBLISH DELETE</literal> is the default.
+     </para>
+    </listitem>
+   </varlistentry>
+
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   If neither <literal>FOR TABLE</literal> nor <literal>FOR ALL
+   TABLES</literal> is specified, then the publication starts out with an
+   empty set of tables.  That is useful if tables are to be added later.
+  </para>
+
+  <para>
+   The creation of a publication does not start replication.  It only defines
+   a grouping and filtering logic for future subscribers.
+  </para>
+
+  <para>
+   To create a publication, the invoking user must have the
+   <literal>CREATE</> privilege for the current database.
+   (Of course, superusers bypass this check.)
+  </para>
+
+  <para>
+   To add a table to a publication, the invoking user must have
+   <command>SELECT</command> privilege on given table.  The
+   <command>FOR ALL TABLES</command> clause requires superuser.
+  </para>
+
+  <para>
+   The tables added to a publication that publishes <command>UPDATE</command>
+   and/or <command>DELETE</command> operations must have
+   <literal>REPLICA IDENTITY</> defined.  Otherwise those operations will be
+   disallowed on those tables.
+  </para>
+
+  <para>
+   For an <command>INSERT ... ON CONFLICT</> command, the publication will
+   publish the operation that actually results from the command.  So depending
+   of the outcome, it may be published as either <command>INSERT</command> or
+   <command>UPDATE</command>, or it may not be published at all.
+  </para>
+
+  <para>
+   <command>TRUNCATE</command> and other <acronym>DDL</acronym> operations
+   are not published.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   Create a simple publication that just publishes all DML for tables in it:
+<programlisting>
+CREATE PUBLICATION mypublication;
+</programlisting>
+  </para>
+
+  <para>
+   Create an insert-only publication:
+<programlisting>
+CREATE PUBLICATION insert_only WITH (NOPUBLISH UPDATE, NOPUBLISH DELETE);
+</programlisting>
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   <command>CREATE PUBLICATION</command> is a <productname>PostgreSQL</>
+   extension.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-alterpublication"></member>
+   <member><xref linkend="sql-droppublication"></member>
+  </simplelist>
+ </refsect1>
+</refentry>

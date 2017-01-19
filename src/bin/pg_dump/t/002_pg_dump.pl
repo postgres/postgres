@@ -301,7 +301,7 @@ my %tests = (
 
 	'ALTER FUNCTION dump_test.pltestlang_call_handler() OWNER TO' => {
 		all_runs => 1,
-		catch_all => 'ALTER ... OWNER commands (except LARGE OBJECTs)',
+		catch_all => 'ALTER ... OWNER commands (except LARGE OBJECTs and PUBLICATIONs)',
 		regexp => qr/^
 			\QALTER FUNCTION dump_test.pltestlang_call_handler() \E
 			\QOWNER TO \E
@@ -358,7 +358,7 @@ my %tests = (
 
 	'ALTER PROCEDURAL LANGUAGE pltestlang OWNER TO' => {
 		all_runs => 1,
-		catch_all => 'ALTER ... OWNER commands (except LARGE OBJECTs)',
+		catch_all => 'ALTER ... OWNER commands (except LARGE OBJECTs and PUBLICATIONs)',
 		regexp => qr/^ALTER PROCEDURAL LANGUAGE pltestlang OWNER TO .*;/m,
 		like   => {
 			binary_upgrade           => 1,
@@ -382,7 +382,7 @@ my %tests = (
 
 	'ALTER SCHEMA dump_test OWNER TO' => {
 		all_runs => 1,
-		catch_all => 'ALTER ... OWNER commands (except LARGE OBJECTs)',
+		catch_all => 'ALTER ... OWNER commands (except LARGE OBJECTs and PUBLICATIONs)',
 		regexp => qr/^ALTER SCHEMA dump_test OWNER TO .*;/m,
 		like   => {
 			binary_upgrade          => 1,
@@ -406,7 +406,7 @@ my %tests = (
 
 	'ALTER SCHEMA dump_test_second_schema OWNER TO' => {
 		all_runs => 1,
-		catch_all => 'ALTER ... OWNER commands (except LARGE OBJECTs)',
+		catch_all => 'ALTER ... OWNER commands (except LARGE OBJECTs and PUBLICATIONs)',
 		regexp => qr/^ALTER SCHEMA dump_test_second_schema OWNER TO .*;/m,
 		like   => {
 			binary_upgrade           => 1,
@@ -524,7 +524,7 @@ my %tests = (
 
 	'ALTER TABLE test_table OWNER TO' => {
 		all_runs => 1,
-		catch_all => 'ALTER ... OWNER commands (except LARGE OBJECTs)',
+		catch_all => 'ALTER ... OWNER commands (except LARGE OBJECTs and PUBLICATIONs)',
 		regexp => qr/^ALTER TABLE test_table OWNER TO .*;/m,
 		like   => {
 			binary_upgrade          => 1,
@@ -577,7 +577,7 @@ my %tests = (
 
 	'ALTER TABLE test_second_table OWNER TO' => {
 		all_runs => 1,
-		catch_all => 'ALTER ... OWNER commands (except LARGE OBJECTs)',
+		catch_all => 'ALTER ... OWNER commands (except LARGE OBJECTs and PUBLICATIONs)',
 		regexp => qr/^ALTER TABLE test_second_table OWNER TO .*;/m,
 		like   => {
 			binary_upgrade          => 1,
@@ -601,7 +601,7 @@ my %tests = (
 
 	'ALTER TABLE test_third_table OWNER TO' => {
 		all_runs => 1,
-		catch_all => 'ALTER ... OWNER commands (except LARGE OBJECTs)',
+		catch_all => 'ALTER ... OWNER commands (except LARGE OBJECTs and PUBLICATIONs)',
 		regexp => qr/^ALTER TABLE test_third_table OWNER TO .*;/m,
 		like   => {
 			binary_upgrade           => 1,
@@ -623,10 +623,10 @@ my %tests = (
 			only_dump_test_table   => 1,
 			test_schema_plus_blobs => 1, }, },
 
-	# catch-all for ALTER ... OWNER (except LARGE OBJECTs)
-	'ALTER ... OWNER commands (except LARGE OBJECTs)' => {
+	# catch-all for ALTER ... OWNER (except LARGE OBJECTs and PUBLICATIONs)
+	'ALTER ... OWNER commands (except LARGE OBJECTs and PUBLICATIONs)' => {
 		all_runs => 0, # catch-all
-		regexp => qr/^ALTER (?!LARGE OBJECT)(.*) OWNER TO .*;/m,
+		regexp => qr/^ALTER (?!LARGE OBJECT|PUBLICATION)(.*) OWNER TO .*;/m,
 		like   => {},    # use more-specific options above
 		unlike => {
 			column_inserts           => 1,
@@ -2217,6 +2217,62 @@ my %tests = (
 			pg_dumpall_globals_clean => 1,
 			role                     => 1,
 		    section_pre_data         => 1, }, },
+
+	'CREATE PUBLICATION pub1' => {
+		create_order => 50,
+		create_sql   => 'CREATE PUBLICATION pub1;',
+		regexp => qr/^
+			\QCREATE PUBLICATION pub1 WITH (PUBLISH INSERT, PUBLISH UPDATE, PUBLISH DELETE);\E
+			/xm,
+		like => {
+			binary_upgrade          => 1,
+			clean                   => 1,
+			clean_if_exists         => 1,
+			createdb                => 1,
+			defaults                => 1,
+			exclude_test_table_data => 1,
+			exclude_dump_test_schema => 1,
+			exclude_test_table       => 1,
+			no_privs                => 1,
+			no_owner                => 1,
+			only_dump_test_schema   => 1,
+			only_dump_test_table    => 1,
+			pg_dumpall_dbprivs      => 1,
+			schema_only             => 1,
+			section_post_data       => 1,
+			test_schema_plus_blobs  => 1, },
+		unlike => {
+			section_pre_data         => 1,
+			pg_dumpall_globals       => 1,
+			pg_dumpall_globals_clean => 1, }, },
+	'ALTER PUBLICATION pub1 ADD TABLE test_table' => {
+		create_order => 51,
+		create_sql   => 'ALTER PUBLICATION pub1 ADD TABLE dump_test.test_table;',
+		regexp => qr/^
+			\QALTER PUBLICATION pub1 ADD TABLE test_table;\E
+			/xm,
+		like => {
+			binary_upgrade          => 1,
+			clean                   => 1,
+			clean_if_exists         => 1,
+			createdb                => 1,
+			defaults                => 1,
+			exclude_test_table_data => 1,
+			no_privs                => 1,
+			no_owner                => 1,
+			only_dump_test_schema   => 1,
+			only_dump_test_table    => 1,
+			pg_dumpall_dbprivs      => 1,
+			schema_only             => 1,
+			section_post_data       => 1,
+			test_schema_plus_blobs  => 1, },
+		unlike => {
+			section_pre_data         => 1,
+			exclude_dump_test_schema => 1,
+			exclude_test_table       => 1,
+			pg_dumpall_globals       => 1,
+			pg_dumpall_globals_clean => 1, }, },
+
 	'CREATE SCHEMA dump_test' => {
 		all_runs => 1,
 		catch_all => 'CREATE ... commands',

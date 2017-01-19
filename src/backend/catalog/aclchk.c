@@ -45,6 +45,7 @@
 #include "catalog/pg_operator.h"
 #include "catalog/pg_opfamily.h"
 #include "catalog/pg_proc.h"
+#include "catalog/pg_subscription.h"
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_ts_config.h"
@@ -3390,6 +3391,10 @@ static const char *const not_owner_msg[MAX_ACL_KIND] =
 	gettext_noop("must be owner of event trigger %s"),
 	/* ACL_KIND_EXTENSION */
 	gettext_noop("must be owner of extension %s"),
+	/* ACL_KIND_PUBLICATION */
+	gettext_noop("must be owner of publication %s"),
+	/* ACL_KIND_SUBSCRIPTION */
+	gettext_noop("must be owner of subscription %s"),
 };
 
 
@@ -5067,6 +5072,58 @@ pg_extension_ownercheck(Oid ext_oid, Oid roleid)
 
 	systable_endscan(scan);
 	heap_close(pg_extension, AccessShareLock);
+
+	return has_privs_of_role(roleid, ownerId);
+}
+
+/*
+ * Ownership check for an publication (specified by OID).
+ */
+bool
+pg_publication_ownercheck(Oid pub_oid, Oid roleid)
+{
+	HeapTuple	tuple;
+	Oid			ownerId;
+
+	/* Superusers bypass all permission checking. */
+	if (superuser_arg(roleid))
+		return true;
+
+	tuple = SearchSysCache1(PUBLICATIONOID, ObjectIdGetDatum(pub_oid));
+	if (!HeapTupleIsValid(tuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("publication with OID %u does not exist", pub_oid)));
+
+	ownerId = ((Form_pg_publication) GETSTRUCT(tuple))->pubowner;
+
+	ReleaseSysCache(tuple);
+
+	return has_privs_of_role(roleid, ownerId);
+}
+
+/*
+ * Ownership check for an subscription (specified by OID).
+ */
+bool
+pg_subscription_ownercheck(Oid sub_oid, Oid roleid)
+{
+	HeapTuple	tuple;
+	Oid			ownerId;
+
+	/* Superusers bypass all permission checking. */
+	if (superuser_arg(roleid))
+		return true;
+
+	tuple = SearchSysCache1(SUBSCRIPTIONOID, ObjectIdGetDatum(sub_oid));
+	if (!HeapTupleIsValid(tuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("subscription with OID %u does not exist", sub_oid)));
+
+	ownerId = ((Form_pg_subscription) GETSTRUCT(tuple))->subowner;
+
+	ReleaseSysCache(tuple);
 
 	return has_privs_of_role(roleid, ownerId);
 }

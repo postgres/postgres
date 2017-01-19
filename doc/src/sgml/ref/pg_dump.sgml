@@ -756,6 +756,15 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--include-subscriptions</option></term>
+      <listitem>
+       <para>
+        Include logical replication subscriptions in the dump.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--inserts</option></term>
       <listitem>
        <para>
@@ -785,6 +794,18 @@ PostgreSQL documentation
         statement_timeout</>.  (Allowed formats vary depending on the server
         version you are dumping from, but an integer number of milliseconds
         is accepted by all versions.)
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--no-create-subscription-slots</option></term>
+      <listitem>
+       <para>
+        When dumping logical replication subscriptions,
+        generate <command>CREATE SUBSCRIPTION</command> commands that do not
+        create the remote replication slot.  That way, the dump can be
+        restored without requiring network access to the remote servers.
        </para>
       </listitem>
      </varlistentry>

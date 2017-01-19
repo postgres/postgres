@@ -36,6 +36,7 @@
 #include "catalog/pg_shdepend.h"
 #include "catalog/pg_shdescription.h"
 #include "catalog/pg_shseclabel.h"
+#include "catalog/pg_subscription.h"
 #include "catalog/pg_tablespace.h"
 #include "catalog/toasting.h"
 #include "miscadmin.h"
@@ -227,7 +228,8 @@ IsSharedRelation(Oid relationId)
 		relationId == SharedSecLabelRelationId ||
 		relationId == TableSpaceRelationId ||
 		relationId == DbRoleSettingRelationId ||
-		relationId == ReplicationOriginRelationId)
+		relationId == ReplicationOriginRelationId ||
+		relationId == SubscriptionRelationId)
 		return true;
 	/* These are their indexes (see indexing.h) */
 	if (relationId == AuthIdRolnameIndexId ||
@@ -245,7 +247,9 @@ IsSharedRelation(Oid relationId)
 		relationId == TablespaceNameIndexId ||
 		relationId == DbRoleSettingDatidRolidIndexId ||
 		relationId == ReplicationOriginIdentIndex ||
-		relationId == ReplicationOriginNameIndex)
+		relationId == ReplicationOriginNameIndex ||
+		relationId == SubscriptionObjectIndexId ||
+		relationId == SubscriptionNameIndexId)
 		return true;
 	/* These are their toast tables and toast indexes (see toasting.h) */
 	if (relationId == PgShdescriptionToastTable ||

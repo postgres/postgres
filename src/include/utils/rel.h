@@ -18,6 +18,7 @@
 #include "access/xlog.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_index.h"
+#include "catalog/pg_publication.h"
 #include "fmgr.h"
 #include "nodes/bitmapset.h"
 #include "rewrite/prs2lock.h"
@@ -132,12 +133,16 @@ typedef struct RelationData
 	/* data managed by RelationGetIndexList: */
 	List	   *rd_indexlist;	/* list of OIDs of indexes on relation */
 	Oid			rd_oidindex;	/* OID of unique index on OID, if any */
+	Oid			rd_pkindex;		/* OID of primary key, if any */
 	Oid			rd_replidindex; /* OID of replica identity index, if any */
 
 	/* data managed by RelationGetIndexAttrBitmap: */
 	Bitmapset  *rd_indexattr;	/* identifies columns used in indexes */
 	Bitmapset  *rd_keyattr;		/* cols that can be ref'd by foreign keys */
+	Bitmapset  *rd_pkattr;		/* cols included in primary key */
 	Bitmapset  *rd_idattr;		/* included in replica identity index */
+
+	PublicationActions  *rd_pubactions;	/* publication actions */
 
 	/*
 	 * rd_options is set whenever rd_rel is loaded into the relcache entry.
@@ -627,5 +632,6 @@ get_partition_col_typmod(PartitionKey key, int col)
 extern void RelationIncrementReferenceCount(Relation rel);
 extern void RelationDecrementReferenceCount(Relation rel);
 extern bool RelationHasUnloggedIndex(Relation rel);
+extern List *RelationGetRepsetList(Relation rel);
 
 #endif   /* REL_H */

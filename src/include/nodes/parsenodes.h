@@ -1547,10 +1547,13 @@ typedef enum ObjectType
 	OBJECT_OPERATOR,
 	OBJECT_OPFAMILY,
 	OBJECT_POLICY,
+	OBJECT_PUBLICATION,
+	OBJECT_PUBLICATION_REL,
 	OBJECT_ROLE,
 	OBJECT_RULE,
 	OBJECT_SCHEMA,
 	OBJECT_SEQUENCE,
+	OBJECT_SUBSCRIPTION,
 	OBJECT_TABCONSTRAINT,
 	OBJECT_TABLE,
 	OBJECT_TABLESPACE,
@@ -3247,5 +3250,53 @@ typedef struct AlterTSConfigurationStmt
 	bool		replace;		/* if true - replace dictionary by another */
 	bool		missing_ok;		/* for DROP - skip error if missing? */
 } AlterTSConfigurationStmt;
+
+
+typedef struct CreatePublicationStmt
+{
+	NodeTag		type;
+	char	   *pubname;		/* Name of of the publication */
+	List	   *options;		/* List of DefElem nodes */
+	List	   *tables;			/* Optional list of tables to add */
+	bool		for_all_tables;	/* Special publication for all tables in db */
+} CreatePublicationStmt;
+
+typedef struct AlterPublicationStmt
+{
+	NodeTag		type;
+	char	   *pubname;		/* Name of of the publication */
+
+	/* parameters used for ALTER PUBLICATION ... WITH */
+	List	   *options;		/* List of DefElem nodes */
+
+	/* parameters used for ALTER PUBLICATION ... ADD/DROP TABLE */
+	List	   *tables;			/* List of tables to add/drop */
+	bool		for_all_tables;	/* Special publication for all tables in db */
+	DefElemAction	tableAction; /* What action to perform with the tables */
+} AlterPublicationStmt;
+
+typedef struct CreateSubscriptionStmt
+{
+	NodeTag		type;
+	char	   *subname;		/* Name of of the subscription */
+	char	   *conninfo;		/* Connection string to publisher */
+	List	   *publication;	/* One or more publication to subscribe to */
+	List	   *options;		/* List of DefElem nodes */
+} CreateSubscriptionStmt;
+
+typedef struct AlterSubscriptionStmt
+{
+	NodeTag		type;
+	char	   *subname;		/* Name of of the subscription */
+	List	   *options;		/* List of DefElem nodes */
+} AlterSubscriptionStmt;
+
+typedef struct DropSubscriptionStmt
+{
+	NodeTag		type;
+	char	   *subname;		/* Name of of the subscription */
+	bool		drop_slot;		/* Should we drop the slot on remote side? */
+	bool		missing_ok;		/* Skip error if missing? */
+} DropSubscriptionStmt;
 
 #endif   /* PARSENODES_H */

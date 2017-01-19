@@ -241,6 +241,8 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  \\dO[S+] [PATTERN]      list collations\n"));
 	fprintf(output, _("  \\dp     [PATTERN]      list table, view, and sequence access privileges\n"));
 	fprintf(output, _("  \\drds [PATRN1 [PATRN2]] list per-database role settings\n"));
+	fprintf(output, _("  \\dRp[+] [PATTERN]      list replication publications\n"));
+	fprintf(output, _("  \\dRs[+] [PATTERN]      list replication subscriptions\n"));
 	fprintf(output, _("  \\ds[S+] [PATTERN]      list sequences\n"));
 	fprintf(output, _("  \\dt[S+] [PATTERN]      list tables\n"));
 	fprintf(output, _("  \\dT[S+] [PATTERN]      list data types\n"));

@@ -241,6 +241,16 @@
      </row>
 
      <row>
+      <entry><link linkend="catalog-pg-publication"><structname>pg_publication</structname></link></entry>
+      <entry>publications for logical replication</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="catalog-pg-publication-rel"><structname>pg_publication_rel</structname></link></entry>
+      <entry>relation to publication mapping</entry>
+     </row>
+
+     <row>
       <entry><link linkend="catalog-pg-range"><structname>pg_range</structname></link></entry>
       <entry>information about range types</entry>
      </row>
@@ -283,6 +293,11 @@
      <row>
       <entry><link linkend="catalog-pg-statistic"><structname>pg_statistic</structname></link></entry>
       <entry>planner statistics</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="catalog-pg-subscription"><structname>pg_subscription</structname></link></entry>
+      <entry>logical replication subscriptions</entry>
      </row>
 
      <row>
@@ -5271,6 +5286,137 @@
 
  </sect1>
 
+ <sect1 id="catalog-pg-publication">
+  <title><structname>pg_publication</structname></title>
+
+  <indexterm zone="catalog-pg-publication">
+   <primary>pg_publication</primary>
+  </indexterm>
+
+  <para>
+   The catalog <structname>pg_publication</structname> contains all
+   publications created in the database.  For more on publications see
+   <xref linkend="logical-replication-publication">.
+  </para>
+
+  <table>
+   <title><structname>pg_publication</structname> Columns</title>
+
+   <tgroup cols="4">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><structfield>oid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry></entry>
+      <entry>Row identifier (hidden attribute; must be explicitly selected)</entry>
+     </row>
+
+     <row>
+      <entry><structfield>pubname</structfield></entry>
+      <entry><type>Name</type></entry>
+      <entry></entry>
+      <entry>Name of the publication</entry>
+     </row>
+
+     <row>
+      <entry><structfield>pubowner</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
+      <entry>Owner of the publication</entry>
+     </row>
+
+     <row>
+      <entry><structfield>puballtables</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>If true, this publication automatically includes all tables
+       in the database, including any that will be created in the future.
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>pubinsert</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>If true, <command>INSERT</command> operations are replicated for
+       tables in the publication.</entry>
+     </row>
+
+     <row>
+      <entry><structfield>pubupdate</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>If true, <command>UPDATE</command> operations are replicated for
+       tables in the publication.</entry>
+     </row>
+
+     <row>
+      <entry><structfield>pubdelete</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>If true, <command>DELETE</command> operations are replicated for
+       tables in the publication.</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="catalog-pg-publication-rel">
+  <title><structname>pg_publication_rel</structname></title>
+
+  <indexterm zone="catalog-pg-publication-rel">
+   <primary>pg_publication_rel</primary>
+  </indexterm>
+
+  <para>
+   The catalog <structname>pg_publication_rel</structname> contains the
+   mapping between relations and publications in the database.  This is a
+   many-to-many mapping.  See also <xref linkend="view-pg-publication-tables">
+   for a more user-friendly view of this information.
+  </para>
+
+  <table>
+   <title><structname>pg_publication_rel</structname> Columns</title>
+
+   <tgroup cols="4">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><structfield>prpubid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-publication"><structname>pg_publication</structname></link>.oid</literal></entry>
+      <entry>Reference to publication</entry>
+     </row>
+
+     <row>
+      <entry><structfield>prrelid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
+      <entry>Reference to relation</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
  <sect1 id="catalog-pg-range">
   <title><structname>pg_range</structname></title>
 
@@ -6150,6 +6296,109 @@
 
  </sect1>
 
+ <sect1 id="catalog-pg-subscription">
+  <title><structname>pg_subscription</structname></title>
+
+  <indexterm zone="catalog-pg-subscription">
+   <primary>pg_subscription</primary>
+  </indexterm>
+
+  <para>
+   The catalog <structname>pg_subscription</structname> contains all existing
+   logical replication subscriptions.  For more information about logical
+   replication see <xref linkend="logical-replication">.
+  </para>
+
+  <para>
+   Unlike most system catalogs, <structname>pg_subscription</structname> is
+   shared across all databases of a cluster: There is only one copy
+   of <structname>pg_subscription</structname> per cluster, not one per
+   database.
+  </para>
+
+  <para>
+   Access to this catalog is restricted from normal users.  Normal users can
+   use the view <xref linkend="pg-stat-subscription"> to get some information
+   about subscriptions.
+  </para>
+
+  <table>
+   <title><structname>pg_subscription</structname> Columns</title>
+
+   <tgroup cols="4">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><structfield>oid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry></entry>
+      <entry>Row identifier (hidden attribute; must be explicitly selected)</entry>
+     </row>
+
+     <row>
+      <entry><structfield>subdbid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-database"><structname>pg_database</structname></link>.oid</literal></entry>
+      <entry>OID of the database which the subscription resides in</entry>
+     </row>
+
+     <row>
+      <entry><structfield>subname</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry>Name of the subscription</entry>
+     </row>
+
+     <row>
+      <entry><structfield>subowner</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
+      <entry>Owner of the subscription</entry>
+     </row>
+
+     <row>
+      <entry><structfield>subenabled</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>If true, the subscription is enabled and should be replicating.</entry>
+     </row>
+
+     <row>
+      <entry><structfield>subconninfo</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>Connection string to the upstream database</entry>
+     </row>
+
+     <row>
+      <entry><structfield>subslotname</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry>Name of the replication slot in the upstream database. Also used
+       for local replication origin name.</entry>
+     </row>
+
+     <row>
+      <entry><structfield>subpublications</structfield></entry>
+      <entry><type>text[]</type></entry>
+      <entry></entry>
+      <entry>Array of subscribed publication names. These reference the
+       publications on the publisher server. For more on publications
+       see <xref linkend="logical-replication-publication">.
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
 
  <sect1 id="catalog-pg-tablespace">
   <title><structname>pg_tablespace</structname></title>
@@ -7590,6 +7839,11 @@
      </row>
 
      <row>
+      <entry><link linkend="view-pg-publication-tables"><structname>pg_publication_tables</structname></link></entry>
+      <entry>publications and their associated tables</entry>
+     </row>
+
+     <row>
       <entry><link linkend="view-pg-replication-origin-status"><structname>pg_replication_origin_status</structname></link></entry>
       <entry>information about replication origins, including replication progress</entry>
      </row>
@@ -8869,6 +9123,61 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
    frequently accessed.
   </para>
 
+ </sect1>
+
+ <sect1 id="view-pg-publication-tables">
+  <title><structname>pg_publication_tables</structname></title>
+
+  <indexterm zone="view-pg-publication-tables">
+   <primary>pg_publication_tables</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_publication_tables</structname> provides
+   information about the mapping between publications and the tables they
+   contain.  Unlike the underlying
+   catalog <structname>pg_publication_rel</structname>, this view expands
+   publications defined as <literal>FOR ALL TABLES</literal>, so for such
+   publications there will be a row for each eligible table.
+  </para>
+
+  <table>
+   <title><structname>pg_publication_tables</structname> Columns</title>
+
+   <tgroup cols="4">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><structfield>pubname</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry><literal><link linkend="catalog-pg-publication"><structname>pg_publication</structname></link>.pubname</literal></entry>
+      <entry>Name of publication</entry>
+     </row>
+
+     <row>
+      <entry><structfield>schemaname</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry><literal><link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link>.nspname</literal></entry>
+      <entry>Name of schema containing table</entry>
+     </row>
+
+     <row>
+      <entry><structfield>tablename</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.relname</literal></entry>
+      <entry>Name of table</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
  </sect1>
 
   <sect1 id="view-pg-replication-origin-status">

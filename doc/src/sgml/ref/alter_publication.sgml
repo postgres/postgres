@@ -1,0 +1,139 @@
+<!--
+doc/src/sgml/ref/alter_publication.sgml
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-ALTERPUBLICATION">
+ <indexterm zone="sql-alterpublication">
+  <primary>ALTER PUBLICATION</primary>
+ </indexterm>
+
+ <refmeta>
+  <refentrytitle>ALTER PUBLICATION</refentrytitle>
+  <manvolnum>7</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>ALTER PUBLICATION</refname>
+  <refpurpose>change the definition of a publication</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+<synopsis>
+ALTER PUBLICATION <replaceable class="PARAMETER">name</replaceable> WITH ( <replaceable class="PARAMETER">option</replaceable> [, ... ] )
+
+<phrase>where <replaceable class="PARAMETER">option</replaceable> can be:</phrase>
+
+      PUBLISH INSERT | NOPUBLISH INSERT
+    | PUBLISH UPDATE | NOPUBLISH UPDATE
+    | PUBLISH DELETE | NOPUBLISH DELETE
+
+ALTER PUBLICATION <replaceable class="PARAMETER">name</replaceable> OWNER TO { <replaceable>new_owner</replaceable> | CURRENT_USER | SESSION_USER }
+ALTER PUBLICATION <replaceable class="PARAMETER">name</replaceable> ADD TABLE <replaceable class="PARAMETER">table_name</replaceable> [, ...]
+ALTER PUBLICATION <replaceable class="PARAMETER">name</replaceable> SET TABLE <replaceable class="PARAMETER">table_name</replaceable> [, ...]
+ALTER PUBLICATION <replaceable class="PARAMETER">name</replaceable> DROP TABLE <replaceable class="PARAMETER">table_name</replaceable> [, ...]
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   The first variant of this command listed in the synopsis can change
+   all of the publication properties specified in
+   <xref linkend="sql-createpublication">.  Properties not mentioned in the
+   command retain their previous settings.  Database superusers can change any
+   of these settings for any role.
+  </para>
+
+  <para>
+   To alter the owner, you must also be a direct or indirect member of the
+   new owning role. The new owner has to be a superuser
+  </para>
+
+  <para>
+   The other variants of this command deal with the table membership of the
+   publication.  The <literal>SET TABLE</literal> clause will replace the
+   list of tables in the publication with the specified one.
+   The <literal>ADD TABLE</literal> and
+   <literal>DROP TABLE</literal> will add and remove one or more tables from
+   the publication.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="parameter">name</replaceable></term>
+    <listitem>
+     <para>
+      The name of an existing publication whose definition is to be altered.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>PUBLISH INSERT</literal></term>
+    <term><literal>NOPUBLISH INSERT</literal></term>
+    <term><literal>PUBLISH UPDATE</literal></term>
+    <term><literal>NOPUBLISH UPDATE</literal></term>
+    <term><literal>PUBLISH DELETE</literal></term>
+    <term><literal>NOPUBLISH DELETE</literal></term>
+    <listitem>
+     <para>
+      These clauses alter properties originally set by
+      <xref linkend="SQL-CREATEPUBLICATION">.  See there for more information.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">table_name</replaceable></term>
+    <listitem>
+     <para>
+      Name of an existing table.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   Change the publication to not publish inserts:
+<programlisting>
+ALTER PUBLICATION noinsert WITH (NOPUBLISH INSERT);
+</programlisting>
+  </para>
+
+  <para>
+   Add some tables to the publication:
+<programlisting>
+ALTER PUBLICATION mypublication ADD TABLE users, departments;
+</programlisting>
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   <command>ALTER PUBLICATION</command> is a <productname>PostgreSQL</>
+   extension.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-createpublication"></member>
+   <member><xref linkend="sql-droppublication"></member>
+  </simplelist>
+ </refsect1>
+</refentry>

@@ -292,6 +292,18 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 		write_msg(NULL, "reading partition key information for interesting tables\n");
 	getTablePartitionKeyInfo(fout, tblinfo, numTables);
 
+	if (g_verbose)
+		write_msg(NULL, "reading publications\n");
+	getPublications(fout);
+
+	if (g_verbose)
+		write_msg(NULL, "reading publication membership\n");
+	getPublicationTables(fout, tblinfo, numTables);
+
+	if (g_verbose)
+		write_msg(NULL, "reading subscriptions\n");
+	getSubscriptions(fout);
+
 	*numTablesPtr = numTables;
 	return tblinfo;
 }

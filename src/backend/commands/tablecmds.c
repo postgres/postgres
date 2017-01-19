@@ -12056,6 +12056,18 @@ ATPrepChangePersistence(Relation rel, bool toLogged)
 	}
 
 	/*
+	 * Check that the table is not part any publication when changing to
+	 * UNLOGGED as UNLOGGED tables can't be published.
+	 */
+	if (!toLogged &&
+		list_length(GetRelationPublications(RelationGetRelid(rel))) > 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("cannot change table \"%s\" to unlogged because it is part of a publication",
+						RelationGetRelationName(rel)),
+				 errdetail("Unlogged relations cannot be replicated.")));
+
+	/*
 	 * Check existing foreign key constraints to preserve the invariant that
 	 * permanent tables cannot reference unlogged ones.  Self-referencing
 	 * foreign keys can safely be ignored.

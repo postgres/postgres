@@ -160,6 +160,7 @@
   &monitoring;
   &diskusage;
   &wal;
+  &logical-replication;
   &regress;
 
  </part>
