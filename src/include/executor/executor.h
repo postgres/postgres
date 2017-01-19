@@ -189,7 +189,6 @@ extern void CheckValidResultRel(Relation resultRel, CmdType operation);
 extern void InitResultRelInfo(ResultRelInfo *resultRelInfo,
 				  Relation resultRelationDesc,
 				  Index resultRelationIndex,
-				  bool load_partition_check,
 				  Relation partition_root,
 				  int instrument_options);
 extern ResultRelInfo *ExecGetTriggerResultRel(EState *estate, Oid relid);

@@ -221,5 +221,10 @@ alter table p add constraint check_b check (b = 3);
 -- after "(1, 2)" is routed to it
 insert into p values (1, 2);
 
+-- check that inserting into an internal partition successfully results in
+-- checking its partition constraint before inserting into the leaf partition
+-- selected by tuple-routing
+insert into p1 (a, b) values (2, 3);
+
 -- cleanup
 drop table p, p1, p11;

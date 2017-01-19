@@ -824,10 +824,10 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 
 			resultRelationOid = getrelid(resultRelationIndex, rangeTable);
 			resultRelation = heap_open(resultRelationOid, RowExclusiveLock);
+
 			InitResultRelInfo(resultRelInfo,
 							  resultRelation,
 							  resultRelationIndex,
-							  true,
 							  NULL,
 							  estate->es_instrument);
 			resultRelInfo++;
@@ -1218,10 +1218,11 @@ void
 InitResultRelInfo(ResultRelInfo *resultRelInfo,
 				  Relation resultRelationDesc,
 				  Index resultRelationIndex,
-				  bool load_partition_check,
 				  Relation partition_root,
 				  int instrument_options)
 {
+	List   *partition_check = NIL;
+
 	MemSet(resultRelInfo, 0, sizeof(ResultRelInfo));
 	resultRelInfo->type = T_ResultRelInfo;
 	resultRelInfo->ri_RangeTableIndex = resultRelationIndex;
@@ -1257,13 +1258,38 @@ InitResultRelInfo(ResultRelInfo *resultRelInfo,
 	resultRelInfo->ri_ConstraintExprs = NULL;
 	resultRelInfo->ri_junkFilter = NULL;
 	resultRelInfo->ri_projectReturning = NULL;
-	if (load_partition_check)
-		resultRelInfo->ri_PartitionCheck =
-							RelationGetPartitionQual(resultRelationDesc);
+
 	/*
-	 * The following gets set to NULL unless we are initializing leaf
-	 * partitions for tuple-routing.
+	 * If partition_root has been specified, that means we are builiding the
+	 * ResultRelationInfo for one of its leaf partitions.  In that case, we
+	 * need *not* initialize the leaf partition's constraint, but rather the
+	 * the partition_root's (if any).  We must do that explicitly like this,
+	 * because implicit partition constraints are not inherited like user-
+	 * defined constraints and would fail to be enforced by ExecConstraints()
+	 * after a tuple is routed to a leaf partition.
 	 */
+	if (partition_root)
+	{
+		/*
+		 * Root table itself may or may not be a partition; partition_check
+		 * would be NIL in the latter case.
+		 */
+		partition_check = RelationGetPartitionQual(partition_root);
+
+		/*
+		 * This is not our own partition constraint, but rather an ancestor's.
+		 * So any Vars in it bear the ancestor's attribute numbers.  We must
+		 * switch them to our own.
+		 */
+		if (partition_check != NIL)
+			partition_check = map_partition_varattnos(partition_check,
+													  resultRelationDesc,
+													  partition_root);
+	}
+	else
+		partition_check = RelationGetPartitionQual(resultRelationDesc);
+
+	resultRelInfo->ri_PartitionCheck = partition_check;
 	resultRelInfo->ri_PartitionRoot = partition_root;
 }
 
@@ -1327,7 +1353,6 @@ ExecGetTriggerResultRel(EState *estate, Oid relid)
 	InitResultRelInfo(rInfo,
 					  rel,
 					  0,		/* dummy rangetable index */
-					  true,
 					  NULL,
 					  estate->es_instrument);
 	estate->es_trig_target_relations =
@@ -3132,7 +3157,6 @@ ExecSetupPartitionTupleRouting(Relation rel,
 		InitResultRelInfo(leaf_part_rri,
 						  partrel,
 						  1,	 /* dummy */
-						  false,
 						  rel,
 						  0);
 

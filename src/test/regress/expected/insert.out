@@ -358,5 +358,11 @@ alter table p add constraint check_b check (b = 3);
 insert into p values (1, 2);
 ERROR:  new row for relation "p11" violates check constraint "check_b"
 DETAIL:  Failing row contains (1, 2).
+-- check that inserting into an internal partition successfully results in
+-- checking its partition constraint before inserting into the leaf partition
+-- selected by tuple-routing
+insert into p1 (a, b) values (2, 3);
+ERROR:  new row for relation "p11" violates partition constraint
+DETAIL:  Failing row contains (3, 2).
 -- cleanup
 drop table p, p1, p11;

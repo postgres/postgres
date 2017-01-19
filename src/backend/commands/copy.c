@@ -2432,7 +2432,6 @@ CopyFrom(CopyState cstate)
 	InitResultRelInfo(resultRelInfo,
 					  cstate->rel,
 					  1,		/* dummy rangetable index */
-					  true,		/* do load partition check expression */
 					  NULL,
 					  0);
 
