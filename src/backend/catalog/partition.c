@@ -917,32 +917,19 @@ List *
 map_partition_varattnos(List *expr, int target_varno,
 						Relation partrel, Relation parent)
 {
-	TupleDesc	tupdesc = RelationGetDescr(parent);
-	AttrNumber	attno;
 	AttrNumber *part_attnos;
 	bool		found_whole_row;
 
 	if (expr == NIL)
 		return NIL;
 
-	part_attnos = (AttrNumber *) palloc0(tupdesc->natts * sizeof(AttrNumber));
-	for (attno = 1; attno <= tupdesc->natts; attno++)
-	{
-		Form_pg_attribute attribute = tupdesc->attrs[attno - 1];
-		char	   *attname = NameStr(attribute->attname);
-		AttrNumber	part_attno;
-
-		if (attribute->attisdropped)
-			continue;
-
-		part_attno = get_attnum(RelationGetRelid(partrel), attname);
-		part_attnos[attno - 1] = part_attno;
-	}
-
+	part_attnos = convert_tuples_by_name_map(RelationGetDescr(partrel),
+											 RelationGetDescr(parent),
+								 gettext_noop("could not convert row type"));
 	expr = (List *) map_variable_attnos((Node *) expr,
 										target_varno, 0,
 										part_attnos,
-										tupdesc->natts,
+										RelationGetDescr(parent)->natts,
 										&found_whole_row);
 	/* There can never be a whole-row reference here */
 	if (found_whole_row)
