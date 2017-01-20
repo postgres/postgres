@@ -1559,7 +1559,8 @@ exec_bind_message(StringInfo input_message)
 	 * functions.
 	 */
 	if (IsAbortedTransactionBlockState() &&
-		(!IsTransactionExitStmt(psrc->raw_parse_tree->stmt) ||
+		(!(psrc->raw_parse_tree &&
+		   IsTransactionExitStmt(psrc->raw_parse_tree->stmt)) ||
 		 numParams != 0))
 		ereport(ERROR,
 				(errcode(ERRCODE_IN_FAILED_SQL_TRANSACTION),
