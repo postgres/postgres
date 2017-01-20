@@ -1898,6 +1898,8 @@ do_autovacuum(void)
 	ScanKeyData key;
 	TupleDesc	pg_class_desc;
 	int			effective_multixact_freeze_max_age;
+	bool		did_vacuum = false;
+	bool		found_concurrent_worker = false;
 
 	/*
 	 * StartTransactionCommand and CommitTransactionCommand will automatically
@@ -2307,6 +2309,7 @@ do_autovacuum(void)
 			if (worker->wi_tableoid == relid)
 			{
 				skipit = true;
+				found_concurrent_worker = true;
 				break;
 			}
 		}
@@ -2433,6 +2436,8 @@ do_autovacuum(void)
 		}
 		PG_END_TRY();
 
+		did_vacuum = true;
+
 		/* the PGXACT flags are reset at the next end of transaction */
 
 		/* be tidy */
@@ -2470,8 +2475,25 @@ deleted:
 	/*
 	 * Update pg_database.datfrozenxid, and truncate pg_clog if possible. We
 	 * only need to do this once, not after each table.
+	 *
+	 * Even if we didn't vacuum anything, it may still be important to do
+	 * this, because one indirect effect of vac_update_datfrozenxid() is to
+	 * update ShmemVariableCache->xidVacLimit.  That might need to be done
+	 * even if we haven't vacuumed anything, because relations with older
+	 * relfrozenxid values or other databases with older datfrozenxid values
+	 * might have been dropped, allowing xidVacLimit to advance.
+	 *
+	 * However, it's also important not to do this blindly in all cases,
+	 * because when autovacuum=off this will restart the autovacuum launcher.
+	 * If we're not careful, an infinite loop can result, where workers find
+	 * no work to do and restart the launcher, which starts another worker in
+	 * the same database that finds no work to do.  To prevent that, we skip
+	 * this if (1) we found no work to do and (2) we skipped at least one
+	 * table due to concurrent autovacuum activity.  In that case, the other
+	 * worker has already done it, or will do so when it finishes.
 	 */
-	vac_update_datfrozenxid();
+	if (did_vacuum || !found_concurrent_worker)
+		vac_update_datfrozenxid();
 
 	/* Finally close out the last transaction. */
 	CommitTransactionCommand();
