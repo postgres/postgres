@@ -624,15 +624,27 @@ partition_bounds_equal(PartitionKey key,
 		{
 			int32		cmpval;
 
+			/* For range partitions, the bounds might not be finite. */
+			if (b1->content != NULL)
+			{
+				/*
+				 * A finite bound always differs from an infinite bound, and
+				 * different kinds of infinities differ from each other.
+				 */
+				if (b1->content[i][j] != b2->content[i][j])
+					return false;
+
+				/* Non-finite bounds are equal without further examination. */
+				if (b1->content[i][j] != RANGE_DATUM_FINITE)
+					continue;
+			}
+
+			/* Compare the actual values */
 			cmpval = DatumGetInt32(FunctionCall2Coll(&key->partsupfunc[j],
 													 key->partcollation[j],
 													 b1->datums[i][j],
 													 b2->datums[i][j]));
 			if (cmpval != 0)
-				return false;
-
-			/* Range partitions can have infinite datums */
-			if (b1->content != NULL && b1->content[i][j] != b2->content[i][j])
 				return false;
 		}
 
