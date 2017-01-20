@@ -218,6 +218,8 @@ CreatePublication(CreatePublicationStmt *stmt)
 	CatalogUpdateIndexes(rel, tup);
 	heap_freetuple(tup);
 
+	recordDependencyOnOwner(PublicationRelationId, puboid, GetUserId());
+
 	ObjectAddressSet(myself, PublicationRelationId, puboid);
 
 	/* Make the changes visible. */

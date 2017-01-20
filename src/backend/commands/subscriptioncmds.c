@@ -210,6 +210,7 @@ CreateSubscription(CreateSubscriptionStmt *stmt)
 	Oid			subid;
 	bool		nulls[Natts_pg_subscription];
 	Datum		values[Natts_pg_subscription];
+	Oid			owner = GetUserId();
 	HeapTuple	tup;
 	bool		enabled_given;
 	bool		enabled;
@@ -263,7 +264,7 @@ CreateSubscription(CreateSubscriptionStmt *stmt)
 	values[Anum_pg_subscription_subdbid - 1] = ObjectIdGetDatum(MyDatabaseId);
 	values[Anum_pg_subscription_subname - 1] =
 		DirectFunctionCall1(namein, CStringGetDatum(stmt->subname));
-	values[Anum_pg_subscription_subowner - 1] = ObjectIdGetDatum(GetUserId());
+	values[Anum_pg_subscription_subowner - 1] = ObjectIdGetDatum(owner);
 	values[Anum_pg_subscription_subenabled - 1] = BoolGetDatum(enabled);
 	values[Anum_pg_subscription_subconninfo - 1] =
 		CStringGetTextDatum(conninfo);
@@ -278,6 +279,8 @@ CreateSubscription(CreateSubscriptionStmt *stmt)
 	subid = simple_heap_insert(rel, tup);
 	CatalogUpdateIndexes(rel, tup);
 	heap_freetuple(tup);
+
+	recordDependencyOnOwner(SubscriptionRelationId, subid, owner);
 
 	snprintf(originname, sizeof(originname), "pg_%u", subid);
 	replorigin_create(originname);
@@ -493,6 +496,9 @@ DropSubscription(DropSubscriptionStmt *stmt)
 
 	ReleaseSysCache(tup);
 
+	/* Clean up dependencies */
+	deleteSharedDependencyRecordsFor(SubscriptionRelationId, subid, 0);
+
 	/* Protect against launcher restarting the worker. */
 	LWLockAcquire(LogicalRepLauncherLock, LW_EXCLUSIVE);
 
@@ -530,7 +536,7 @@ DropSubscription(DropSubscriptionStmt *stmt)
 
 	if (!walrcv_command(wrconn, cmd.data, &err))
 		ereport(ERROR,
-				(errmsg("count not drop the replication slot \"%s\" on publisher",
+				(errmsg("could not drop the replication slot \"%s\" on publisher",
 						slotname),
 				 errdetail("The error was: %s", err)));
 	else
