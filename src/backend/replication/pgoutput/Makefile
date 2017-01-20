@@ -12,8 +12,6 @@ subdir = src/backend/replication/pgoutput
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
-override CPPFLAGS := -I$(srcdir) $(CPPFLAGS)
-
 OBJS = pgoutput.o $(WIN32RES)
 PGFILEDESC = "pgoutput - standard logical replication output plugin"
 NAME = pgoutput
