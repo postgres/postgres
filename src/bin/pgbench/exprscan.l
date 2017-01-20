@@ -66,6 +66,9 @@ space			[ \t\r\f\v]
 nonspace		[^ \t\r\f\v\n]
 newline			[\n]
 
+/* Line continuation marker */
+continuation	\\{newline}
+
 /* Exclusive states */
 %x EXPR
 
@@ -96,7 +99,19 @@ newline			[\n]
 					return 1;
 				}
 
+	/*
+	 * We need this rule to avoid returning "word\" instead of recognizing
+	 * a continuation marker just after a word:
+	 */
+{nonspace}+{continuation}	{
+					/* Found "word\\\n", emit and return just "word" */
+					psqlscan_emit(cur_state, yytext, yyleng - 2);
+					return 1;
+				}
+
 {space}+		{ /* ignore */ }
+
+{continuation}	{ /* ignore */ }
 
 {newline}		{
 					/* report end of command */
@@ -138,13 +153,15 @@ newline			[\n]
 					return FUNCTION;
 				}
 
+{space}+		{ /* ignore */ }
+
+{continuation}	{ /* ignore */ }
+
 {newline}		{
 					/* report end of command */
 					last_was_newline = true;
 					return 0;
 				}
-
-{space}+		{ /* ignore */ }
 
 .				{
 					/*

@@ -809,7 +809,8 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
 
   <para>
    Script file meta commands begin with a backslash (<literal>\</>) and
-   extend to the end of the line.
+   normally extend to the end of the line, although they can be continued
+   to additional lines by writing backslash-return.
    Arguments to a meta command are separated by white space.
    These meta commands are supported:
   </para>
@@ -838,7 +839,8 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
       Examples:
 <programlisting>
 \set ntellers 10 * :scale
-\set aid (1021 * random(1, 100000 * :scale)) % (100000 * :scale) + 1
+\set aid (1021 * random(1, 100000 * :scale)) % \
+           (100000 * :scale) + 1
 </programlisting></para>
     </listitem>
    </varlistentry>
