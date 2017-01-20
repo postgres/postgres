@@ -54,7 +54,7 @@ my $xid = $node_master->safe_psql(
 
 my $before_restart_ts = $node_master->safe_psql('postgres',
 	qq[SELECT pg_xact_commit_timestamp('$xid');]);
-ok($before_restart_ts != '' && $before_restart_ts != 'null',
+ok($before_restart_ts ne '' && $before_restart_ts ne 'null',
 	'commit timestamp recorded');
 
 $node_master->stop('immediate');
