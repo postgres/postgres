@@ -75,6 +75,7 @@ DROP TABLE testpub_tbl1;
 
 DROP PUBLICATION testpub_default;
 DROP PUBLICATION testpib_ins_trunct;
+DROP PUBLICATION testpub_fortbl;
 
 DROP SCHEMA pub_test CASCADE;
 
