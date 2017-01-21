@@ -26,6 +26,7 @@
 #include "utils/lsyscache.h"
 #include "utils/rls.h"
 #include "utils/syscache.h"
+#include "utils/varlena.h"
 
 
 /*

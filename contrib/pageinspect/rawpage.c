@@ -25,6 +25,7 @@
 #include "utils/builtins.h"
 #include "utils/pg_lsn.h"
 #include "utils/rel.h"
+#include "utils/varlena.h"
 
 PG_MODULE_MAGIC;
 

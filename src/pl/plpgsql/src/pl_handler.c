@@ -24,6 +24,7 @@
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
+#include "utils/varlena.h"
 
 
 static bool plpgsql_extra_checks_check_hook(char **newvalue, void **extra, GucSource source);

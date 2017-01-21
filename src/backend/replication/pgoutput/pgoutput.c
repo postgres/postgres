@@ -19,11 +19,11 @@
 #include "replication/origin.h"
 #include "replication/pgoutput.h"
 
-#include "utils/builtins.h"
 #include "utils/inval.h"
 #include "utils/int8.h"
 #include "utils/memutils.h"
 #include "utils/syscache.h"
+#include "utils/varlena.h"
 
 PG_MODULE_MAGIC;
 

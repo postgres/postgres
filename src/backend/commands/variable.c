@@ -30,6 +30,7 @@
 #include "utils/syscache.h"
 #include "utils/snapmgr.h"
 #include "utils/timestamp.h"
+#include "utils/varlena.h"
 #include "mb/pg_wchar.h"
 
 /*

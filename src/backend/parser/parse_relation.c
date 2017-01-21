@@ -31,6 +31,7 @@
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
+#include "utils/varlena.h"
 
 
 #define MAX_FUZZY_DISTANCE				3

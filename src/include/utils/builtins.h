@@ -16,9 +16,7 @@
 
 #include "fmgr.h"
 #include "nodes/nodes.h"
-#include "nodes/pg_list.h"
 #include "utils/fmgrprotos.h"
-#include "utils/sortsupport.h"
 
 
 /* bool.c */
@@ -74,17 +72,6 @@ extern Oid	oidparse(Node *node);
 extern char *regexp_fixed_prefix(text *text_re, bool case_insensitive,
 					Oid collation, bool *exact);
 
-/* regproc.c */
-extern List *stringToQualifiedNameList(const char *string);
-extern char *format_procedure(Oid procedure_oid);
-extern char *format_procedure_qualified(Oid procedure_oid);
-extern void format_procedure_parts(Oid operator_oid, List **objnames,
-					   List **objargs);
-extern char *format_operator(Oid operator_oid);
-extern char *format_operator_qualified(Oid operator_oid);
-extern void format_operator_parts(Oid operator_oid, List **objnames,
-					  List **objargs);
-
 /* ruleutils.c */
 extern bool quote_all_identifiers;
 extern const char *quote_identifier(const char *ident);
@@ -94,7 +81,7 @@ extern char *quote_qualified_identifier(const char *qualifier,
 /* varchar.c */
 extern int	bpchartruelen(char *s, int len);
 
-/* varlena.c */
+/* popular functions from varlena.c */
 extern text *cstring_to_text(const char *s);
 extern text *cstring_to_text_with_len(const char *s, int len);
 extern char *text_to_cstring(const text *t);
@@ -102,24 +89,6 @@ extern void text_to_cstring_buffer(const text *src, char *dst, size_t dst_len);
 
 #define CStringGetTextDatum(s) PointerGetDatum(cstring_to_text(s))
 #define TextDatumGetCString(d) text_to_cstring((text *) DatumGetPointer(d))
-
-extern int	varstr_cmp(char *arg1, int len1, char *arg2, int len2, Oid collid);
-extern void varstr_sortsupport(SortSupport ssup, Oid collid, bool bpchar);
-extern int varstr_levenshtein(const char *source, int slen,
-				   const char *target, int tlen,
-				   int ins_c, int del_c, int sub_c,
-				   bool trusted);
-extern int varstr_levenshtein_less_equal(const char *source, int slen,
-							  const char *target, int tlen,
-							  int ins_c, int del_c, int sub_c,
-							  int max_d, bool trusted);
-extern List *textToQualifiedNameList(text *textval);
-extern bool SplitIdentifierString(char *rawstring, char separator,
-					  List **namelist);
-extern bool SplitDirectoriesString(char *rawstring, char separator,
-					   List **namelist);
-extern text *replace_text_regexp(text *src_text, void *regexp,
-					text *replace_text, bool glob);
 
 /* xid.c */
 extern int	xidComparator(const void *arg1, const void *arg2);

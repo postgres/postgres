@@ -38,6 +38,7 @@
 #include "storage/bufmgr.h"
 #include "utils/builtins.h"
 #include "utils/rel.h"
+#include "utils/varlena.h"
 
 
 /*

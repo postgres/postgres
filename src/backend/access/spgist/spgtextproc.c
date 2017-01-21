@@ -45,6 +45,7 @@
 #include "utils/builtins.h"
 #include "utils/datum.h"
 #include "utils/pg_locale.h"
+#include "utils/varlena.h"
 
 
 /*

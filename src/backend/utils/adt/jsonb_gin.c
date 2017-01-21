@@ -20,6 +20,7 @@
 #include "catalog/pg_type.h"
 #include "utils/builtins.h"
 #include "utils/jsonb.h"
+#include "utils/varlena.h"
 
 typedef struct PathHashStack
 {

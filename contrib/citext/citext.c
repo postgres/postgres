@@ -7,6 +7,7 @@
 #include "catalog/pg_collation.h"
 #include "utils/builtins.h"
 #include "utils/formatting.h"
+#include "utils/varlena.h"
 
 #ifdef PG_MODULE_MAGIC
 PG_MODULE_MAGIC;

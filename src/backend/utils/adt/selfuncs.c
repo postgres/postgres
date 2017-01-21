@@ -141,6 +141,7 @@
 #include "utils/timestamp.h"
 #include "utils/tqual.h"
 #include "utils/typcache.h"
+#include "utils/varlena.h"
 
 
 /* Hooks for plugins to get control when we ask for stats */

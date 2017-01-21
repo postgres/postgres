@@ -41,6 +41,8 @@
 #include "utils/syscache.h"
 #include "utils/tqual.h"
 #include "utils/acl.h"
+#include "utils/regproc.h"
+#include "utils/varlena.h"
 
 static char *format_operator_internal(Oid operator_oid, bool force_qualify);
 static char *format_procedure_internal(Oid procedure_oid, bool force_qualify);

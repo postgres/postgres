@@ -42,6 +42,7 @@
 
 #include "mb/pg_wchar.h"
 #include "utils/builtins.h"
+#include "utils/varlena.h"
 
 PG_MODULE_MAGIC;
 

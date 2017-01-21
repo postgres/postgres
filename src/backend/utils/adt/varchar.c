@@ -22,6 +22,7 @@
 #include "nodes/nodeFuncs.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
+#include "utils/varlena.h"
 #include "mb/pg_wchar.h"
 
 

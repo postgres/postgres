@@ -20,6 +20,7 @@
 #include "tsearch/ts_locale.h"
 #include "tsearch/ts_public.h"
 #include "utils/builtins.h"
+#include "utils/regproc.h"
 
 PG_MODULE_MAGIC;
 

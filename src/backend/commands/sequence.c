@@ -41,6 +41,7 @@
 #include "utils/lsyscache.h"
 #include "utils/resowner.h"
 #include "utils/syscache.h"
+#include "utils/varlena.h"
 
 
 /*

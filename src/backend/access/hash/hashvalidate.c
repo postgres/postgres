@@ -25,6 +25,7 @@
 #include "parser/parse_coerce.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
+#include "utils/regproc.h"
 #include "utils/syscache.h"
 
 

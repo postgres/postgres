@@ -21,6 +21,7 @@
 #include "commands/defrem.h"
 #include "commands/extension.h"
 #include "utils/builtins.h"
+#include "utils/varlena.h"
 
 
 /*
