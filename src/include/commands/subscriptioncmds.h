@@ -15,6 +15,7 @@
 #ifndef SUBSCRIPTIONCMDS_H
 #define SUBSCRIPTIONCMDS_H
 
+#include "catalog/objectaddress.h"
 #include "nodes/parsenodes.h"
 
 extern ObjectAddress CreateSubscription(CreateSubscriptionStmt *stmt);

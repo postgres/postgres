@@ -12,6 +12,7 @@
 #define PG_SUBSCRIPTION_H
 
 #include "catalog/genbki.h"
+#include "nodes/pg_list.h"
 
 /* ----------------
  *		pg_subscription definition. cpp turns this into

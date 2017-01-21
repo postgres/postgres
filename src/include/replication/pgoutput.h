@@ -13,6 +13,7 @@
 #ifndef PGOUTPUT_H
 #define PGOUTPUT_H
 
+#include "nodes/pg_list.h"
 
 typedef struct PGOutputData
 {

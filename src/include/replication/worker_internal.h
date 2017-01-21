@@ -12,7 +12,9 @@
 #ifndef WORKER_INTERNAL_H
 #define WORKER_INTERNAL_H
 
+#include "access/xlogdefs.h"
 #include "catalog/pg_subscription.h"
+#include "datatype/timestamp.h"
 #include "storage/lock.h"
 
 typedef struct LogicalRepWorker

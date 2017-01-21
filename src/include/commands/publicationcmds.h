@@ -15,6 +15,7 @@
 #ifndef PUBLICATIONCMDS_H
 #define PUBLICATIONCMDS_H
 
+#include "catalog/objectaddress.h"
 #include "nodes/parsenodes.h"
 
 extern ObjectAddress CreatePublication(CreatePublicationStmt *stmt);
