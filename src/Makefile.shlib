@@ -193,7 +193,7 @@ ifeq ($(PORTNAME), hpux)
     # can't use the CC-syntax rpath pattern here, so instead:
     rpath =
     ifeq ($(enable_rpath), yes)
-      LINK.shared	+= +b '$(rpathdir)'
+      LINK.shared	+= +s +b '$(rpathdir)'
     endif
     # On HPUX platforms, gcc is usually configured to search for libraries
     # in /usr/local/lib, but ld won't do so.  Add an explicit -L switch so

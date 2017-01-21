@@ -83,6 +83,8 @@ if [ "$1" = '--install' ]; then
 	export DYLD_LIBRARY_PATH
 	LIBPATH=$libdir:$LIBPATH
 	export LIBPATH
+	SHLIB_PATH=$libdir:$SHLIB_PATH
+	export SHLIB_PATH
 	PATH=$libdir:$PATH
 
 	# We need to make it use psql from our temporary installation,

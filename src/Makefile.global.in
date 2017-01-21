@@ -344,7 +344,7 @@ endef
 
 # platform-specific environment variable to set shared library path
 define ld_library_path_var
-$(if $(filter $(PORTNAME),darwin),DYLD_LIBRARY_PATH,$(if $(filter $(PORTNAME),aix),LIBPATH,LD_LIBRARY_PATH))
+$(if $(filter $(PORTNAME),darwin),DYLD_LIBRARY_PATH,$(if $(filter $(PORTNAME),aix),LIBPATH,$(if $(filter $(PORTNAME),hpux),SHLIB_PATH,LD_LIBRARY_PATH)))
 endef
 
 define with_temp_install
