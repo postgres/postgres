@@ -975,6 +975,7 @@ get_object_address(ObjectType objtype, List *objname, List *objargs,
 				address = get_object_address_publication_rel(objname, objargs,
 															 &relation,
 															 missing_ok);
+				break;
 			case OBJECT_DEFACL:
 				address = get_object_address_defacl(objname, objargs,
 													missing_ok);
