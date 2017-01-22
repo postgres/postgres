@@ -135,8 +135,8 @@ ExecGather(GatherState *node)
 	/*
 	 * Initialize the parallel context and workers on first execution. We do
 	 * this on first execution rather than during node initialization, as it
-	 * needs to allocate large dynamic segment, so it is better to do if it is
-	 * really needed.
+	 * needs to allocate a large dynamic segment, so it is better to do it
+	 * only if it is really needed.
 	 */
 	if (!node->initialized)
 	{
@@ -201,32 +201,23 @@ ExecGather(GatherState *node)
 	 * any previous tuple returned by a TupleQueueReader; to make sure we
 	 * don't leave a dangling pointer around, clear the working slot first.
 	 */
-	ExecClearTuple(node->funnel_slot);
+	ExecClearTuple(fslot);
 	econtext = node->ps.ps_ExprContext;
 	ResetExprContext(econtext);
 
-	/* Get and return the next tuple, projecting if necessary. */
-	for (;;)
-	{
-		/*
-		 * Get next tuple, either from one of our workers, or by running the
-		 * plan ourselves.
-		 */
-		slot = gather_getnext(node);
-		if (TupIsNull(slot))
-			return NULL;
+	/*
+	 * Get next tuple, either from one of our workers, or by running the plan
+	 * ourselves.
+	 */
+	slot = gather_getnext(node);
+	if (TupIsNull(slot))
+		return NULL;
 
-		/*
-		 * form the result tuple using ExecProject(), and return it --- unless
-		 * the projection produces an empty set, in which case we must loop
-		 * back around for another tuple
-		 */
-		econtext->ecxt_outertuple = slot;
-
-		return ExecProject(node->ps.ps_ProjInfo);
-	}
-
-	return slot;
+	/*
+	 * Form the result tuple using ExecProject(), and return it.
+	 */
+	econtext->ecxt_outertuple = slot;
+	return ExecProject(node->ps.ps_ProjInfo);
 }
 
 /* ----------------------------------------------------------------
