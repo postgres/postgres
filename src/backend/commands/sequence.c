@@ -1353,7 +1353,7 @@ init_params(ParseState *pstate, List *options, bool isInit,
 	else if (isInit || max_value != NULL)
 	{
 		if (seqform->seqincrement > 0)
-			seqform->seqmax = SEQ_MAXVALUE;		/* ascending seq */
+			seqform->seqmax = PG_INT64_MAX;		/* ascending seq */
 		else
 			seqform->seqmax = -1;	/* descending seq */
 		seqdataform->log_cnt = 0;
@@ -1370,7 +1370,7 @@ init_params(ParseState *pstate, List *options, bool isInit,
 		if (seqform->seqincrement > 0)
 			seqform->seqmin = 1; /* ascending seq */
 		else
-			seqform->seqmin = SEQ_MINVALUE;		/* descending seq */
+			seqform->seqmin = PG_INT64_MIN;		/* descending seq */
 		seqdataform->log_cnt = 0;
 	}
 

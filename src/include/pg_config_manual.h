@@ -51,12 +51,6 @@
 #define PARTITION_MAX_KEYS	32
 
 /*
- * Set the upper and lower bounds of sequence values.
- */
-#define SEQ_MAXVALUE	PG_INT64_MAX
-#define SEQ_MINVALUE	(-SEQ_MAXVALUE)
-
-/*
  * When we don't have native spinlocks, we use semaphores to simulate them.
  * Decreasing this value reduces consumption of OS resources; increasing it
  * may improve performance, but supplying a real spinlock implementation is

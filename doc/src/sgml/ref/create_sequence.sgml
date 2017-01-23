@@ -133,7 +133,7 @@ SELECT * FROM <replaceable>name</replaceable>;
       the minimum value a sequence can generate. If this clause is not
       supplied or <option>NO MINVALUE</option> is specified, then
       defaults will be used.  The defaults are 1 and
-      -2<superscript>63</>-1 for ascending and descending sequences,
+      -2<superscript>63</> for ascending and descending sequences,
       respectively.
      </para>
     </listitem>
