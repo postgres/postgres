@@ -729,7 +729,7 @@ static ObjectAddress get_object_address_opf_member(ObjectType objtype,
 static ObjectAddress get_object_address_usermapping(List *objname,
 							   List *objargs, bool missing_ok);
 static ObjectAddress get_object_address_publication_rel(List *objname,
-								   List *objargs, Relation *relation,
+								   List *objargs, Relation *relp,
 								   bool missing_ok);
 static ObjectAddress get_object_address_defacl(List *objname, List *objargs,
 						  bool missing_ok);
@@ -1815,15 +1815,16 @@ get_object_address_usermapping(List *objname, List *objargs, bool missing_ok)
  */
 static ObjectAddress
 get_object_address_publication_rel(List *objname, List *objargs,
-								   Relation *relation, bool missing_ok)
+								   Relation *relp, bool missing_ok)
 {
 	ObjectAddress address;
+	Relation	relation;
 	char	   *pubname;
 	Publication *pub;
 
 	ObjectAddressSet(address, PublicationRelRelationId, InvalidOid);
 
-	*relation = relation_openrv_extended(makeRangeVarFromNameList(objname),
+	relation = relation_openrv_extended(makeRangeVarFromNameList(objname),
 										 AccessShareLock, missing_ok);
 	if (!relation)
 		return address;
@@ -1839,7 +1840,7 @@ get_object_address_publication_rel(List *objname, List *objargs,
 	/* Find the publication relation mapping in syscache. */
 	address.objectId =
 		GetSysCacheOid2(PUBLICATIONRELMAP,
-						ObjectIdGetDatum(RelationGetRelid(*relation)),
+						ObjectIdGetDatum(RelationGetRelid(relation)),
 						ObjectIdGetDatum(pub->oid));
 	if (!OidIsValid(address.objectId))
 	{
@@ -1847,10 +1848,11 @@ get_object_address_publication_rel(List *objname, List *objargs,
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("publication relation \"%s\" in publication \"%s\" does not exist",
-							RelationGetRelationName(*relation), pubname)));
+							RelationGetRelationName(relation), pubname)));
 		return address;
 	}
 
+	*relp = relation;
 	return address;
 }
 
