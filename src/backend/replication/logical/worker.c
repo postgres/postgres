@@ -1219,6 +1219,22 @@ reread_subscription(void)
 	newsub = GetSubscription(MyLogicalRepWorker->subid, true);
 
 	/*
+	 * Exit if the subscription was removed.
+	 * This normally should not happen as the worker gets killed
+	 * during DROP SUBSCRIPTION.
+	 */
+	if (!newsub)
+	{
+		ereport(LOG,
+				(errmsg("logical replication worker for subscription \"%s\" will "
+						"stop because the subscription was removed",
+						MySubscription->name)));
+
+		walrcv_disconnect(wrconn);
+		proc_exit(0);
+	}
+
+	/*
 	 * Exit if connection string was changed. The launcher will start
 	 * new worker.
 	 */
@@ -1242,22 +1258,6 @@ reread_subscription(void)
 		ereport(LOG,
 				(errmsg("logical replication worker for subscription \"%s\" will "
 						"restart because subscription's publications were changed",
-						MySubscription->name)));
-
-		walrcv_disconnect(wrconn);
-		proc_exit(0);
-	}
-
-	/*
-	 * Exit if the subscription was removed.
-	 * This normally should not happen as the worker gets killed
-	 * during DROP SUBSCRIPTION.
-	 */
-	if (!newsub)
-	{
-		ereport(LOG,
-				(errmsg("logical replication worker for subscription \"%s\" will "
-						"stop because the subscription was removed",
 						MySubscription->name)));
 
 		walrcv_disconnect(wrconn);

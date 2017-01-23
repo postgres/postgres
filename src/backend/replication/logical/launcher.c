@@ -349,10 +349,21 @@ logicalrep_worker_stop(Oid subid)
 
 		ResetLatch(&MyProc->procLatch);
 
-		/* Check if the worker has started. */
+		/* Check worker status. */
 		LWLockAcquire(LogicalRepWorkerLock, LW_SHARED);
-		worker = logicalrep_worker_find(subid);
-		if (!worker || worker->proc)
+
+		/*
+		 * Worker is no longer associated with subscription.  It must have
+		 * exited, nothing more for us to do.
+		 */
+		if (worker->subid == InvalidOid)
+		{
+			LWLockRelease(LogicalRepWorkerLock);
+			return;
+		}
+
+		/* Worker has assigned proc, so it has started. */
+		if (worker->proc)
 			break;
 	}
 
