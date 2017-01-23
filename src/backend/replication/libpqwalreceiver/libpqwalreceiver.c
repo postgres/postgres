@@ -304,17 +304,30 @@ libpqrcv_startstreaming(WalReceiverConn *conn,
 	{
 		char   *pubnames_str;
 		List   *pubnames;
+		char   *pubnames_literal;
 
 		appendStringInfoString(&cmd, " (");
+
 		appendStringInfo(&cmd, "proto_version '%u'",
 						 options->proto.logical.proto_version);
+
 		pubnames = options->proto.logical.publication_names;
 		pubnames_str = stringlist_to_identifierstr(conn->streamConn, pubnames);
-		appendStringInfo(&cmd, ", publication_names %s",
-						 PQescapeLiteral(conn->streamConn, pubnames_str,
-										 strlen(pubnames_str)));
-		appendStringInfoChar(&cmd, ')');
+		if (!pubnames_str)
+			ereport(ERROR,
+					(errmsg("could not start WAL streaming: %s",
+							PQerrorMessage(conn->streamConn))));
+		pubnames_literal = PQescapeLiteral(conn->streamConn, pubnames_str,
+										   strlen(pubnames_str));
+		if (!pubnames_literal)
+			ereport(ERROR,
+					(errmsg("could not start WAL streaming: %s",
+							PQerrorMessage(conn->streamConn))));
+		appendStringInfo(&cmd, ", publication_names %s", pubnames_literal);
+		PQfreemem(pubnames_literal);
 		pfree(pubnames_str);
+
+		appendStringInfoChar(&cmd, ')');
 	}
 	else
 		appendStringInfo(&cmd, " TIMELINE %u",
@@ -736,14 +749,21 @@ stringlist_to_identifierstr(PGconn *conn, List *strings)
 	foreach (lc, strings)
 	{
 		char *val = strVal(lfirst(lc));
+		char *val_escaped;
 
 		if (first)
 			first = false;
 		else
 			appendStringInfoChar(&res, ',');
 
-		appendStringInfoString(&res,
-							   PQescapeIdentifier(conn, val, strlen(val)));
+		val_escaped = PQescapeIdentifier(conn, val, strlen(val));
+		if (!val_escaped)
+		{
+			free(res.data);
+			return NULL;
+		}
+		appendStringInfoString(&res, val_escaped);
+		PQfreemem(val_escaped);
 	}
 
 	return res.data;
