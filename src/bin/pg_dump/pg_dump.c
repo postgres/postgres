@@ -3360,15 +3360,6 @@ getPublications(Archive *fout)
 
 	ntups = PQntuples(res);
 
-	if (ntups == 0)
-	{
-		/*
-		 * There are no publications defined. Clean up and return.
-		 */
-		PQclear(res);
-		return;
-	}
-
 	i_tableoid = PQfnumber(res, "tableoid");
 	i_oid = PQfnumber(res, "oid");
 	i_pubname = PQfnumber(res, "pubname");
@@ -3636,15 +3627,6 @@ getSubscriptions(Archive *fout)
 	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	ntups = PQntuples(res);
-
-	if (ntups == 0)
-	{
-		/*
-		 * There are no subscriptions defined. Clean up and return.
-		 */
-		PQclear(res);
-		return;
-	}
 
 	i_tableoid = PQfnumber(res, "tableoid");
 	i_oid = PQfnumber(res, "oid");
