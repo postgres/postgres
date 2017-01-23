@@ -139,7 +139,10 @@ storage/lmgr/lwlocknames.h: storage/lmgr/generate-lwlocknames.pl storage/lmgr/lw
 utils/errcodes.h: utils/generate-errcodes.pl utils/errcodes.txt
 	$(MAKE) -C utils errcodes.h
 
-utils/fmgroids.h utils/fmgrprotos.h: utils/Gen_fmgrtab.pl catalog/Catalog.pm $(top_srcdir)/src/include/catalog/pg_proc.h
+# see explanation in parser/Makefile
+utils/fmgrprotos.h: utils/fmgroids.h ;
+
+utils/fmgroids.h: utils/Gen_fmgrtab.pl catalog/Catalog.pm $(top_srcdir)/src/include/catalog/pg_proc.h
 	$(MAKE) -C utils $(notdir $@)
 
 utils/probes.h: utils/probes.d
