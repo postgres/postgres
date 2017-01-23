@@ -757,9 +757,8 @@ to create a plan like
         -> Seq Scan on SmallTable1 A
         NestLoop
             -> Seq Scan on SmallTable2 B
-            NestLoop
-                -> Index Scan using XYIndex on LargeTable C
-                      Index Condition: C.X = A.AID and C.Y = B.BID
+            -> Index Scan using XYIndex on LargeTable C
+                 Index Condition: C.X = A.AID and C.Y = B.BID
 
 so we should be willing to pass down A.AID through a join even though
 there is no join order constraint forcing the plan to look like this.
