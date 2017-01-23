@@ -339,7 +339,7 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 	}
 
 	if (count == 0)
-		ereport(ERROR,
+		ereport(WARNING,
 				(errmsg("no usable system locales were found")));
 #endif   /* not HAVE_LOCALE_T && not WIN32 */
 
