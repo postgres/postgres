@@ -28,6 +28,7 @@
 
 #include "postgres.h"
 
+#include "access/printsimple.h"
 #include "access/printtup.h"
 #include "access/xact.h"
 #include "commands/copy.h"
@@ -76,6 +77,11 @@ static DestReceiver debugtupDR = {
 	DestDebug
 };
 
+static DestReceiver printsimpleDR = {
+	printsimple, printsimple_startup, donothingCleanup, donothingCleanup,
+	DestRemoteSimple
+};
+
 static DestReceiver spi_printtupDR = {
 	spi_printtup, spi_dest_startup, donothingCleanup, donothingCleanup,
 	DestSPI
@@ -107,6 +113,9 @@ CreateDestReceiver(CommandDest dest)
 		case DestRemote:
 		case DestRemoteExecute:
 			return printtup_create_DR(dest);
+
+		case DestRemoteSimple:
+			return &printsimpleDR;
 
 		case DestNone:
 			return &donothingDR;
@@ -151,6 +160,7 @@ EndCommand(const char *commandTag, CommandDest dest)
 	{
 		case DestRemote:
 		case DestRemoteExecute:
+		case DestRemoteSimple:
 
 			/*
 			 * We assume the commandTag is plain ASCII and therefore requires
@@ -191,6 +201,7 @@ NullCommand(CommandDest dest)
 	{
 		case DestRemote:
 		case DestRemoteExecute:
+		case DestRemoteSimple:
 
 			/*
 			 * tell the fe that we saw an empty query string.  In protocols
@@ -233,6 +244,7 @@ ReadyForQuery(CommandDest dest)
 	{
 		case DestRemote:
 		case DestRemoteExecute:
+		case DestRemoteSimple:
 			if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 3)
 			{
 				StringInfoData buf;
