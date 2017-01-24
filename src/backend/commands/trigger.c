@@ -193,7 +193,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("\"%s\" is a partitioned table",
 							RelationGetRelationName(rel)),
-					 errdetail("Partitioned tables cannot have ROW triggers.")));
+				 errdetail("Partitioned tables cannot have ROW triggers.")));
 	}
 	else if (rel->rd_rel->relkind == RELKIND_VIEW)
 	{

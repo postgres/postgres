@@ -124,11 +124,11 @@ typedef struct RelationData
 	List	   *rd_fkeylist;	/* list of ForeignKeyCacheInfo (see below) */
 	bool		rd_fkeyvalid;	/* true if list has been computed */
 
-	MemoryContext		 rd_partkeycxt;	/* private memory cxt for the below */
-	struct PartitionKeyData *rd_partkey; /* partition key, or NULL */
-	MemoryContext 	rd_pdcxt;		/* private context for partdesc */
-	struct PartitionDescData *rd_partdesc;	/* partitions, or NULL */
-	List		   *rd_partcheck;	/* partition CHECK quals */
+	MemoryContext rd_partkeycxt;	/* private memory cxt for the below */
+	struct PartitionKeyData *rd_partkey;		/* partition key, or NULL */
+	MemoryContext rd_pdcxt;		/* private context for partdesc */
+	struct PartitionDescData *rd_partdesc;		/* partitions, or NULL */
+	List	   *rd_partcheck;	/* partition CHECK quals */
 
 	/* data managed by RelationGetIndexList: */
 	List	   *rd_indexlist;	/* list of OIDs of indexes on relation */

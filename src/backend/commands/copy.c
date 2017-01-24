@@ -163,10 +163,9 @@ typedef struct CopyStateData
 	List	   *range_table;
 
 	PartitionDispatch *partition_dispatch_info;
-	int			num_dispatch;		/* Number of entries in the above array */
-	int			num_partitions;		/* Number of members in the following
-									 * arrays */
-	ResultRelInfo  *partitions;		/* Per partition result relation */
+	int			num_dispatch;	/* Number of entries in the above array */
+	int			num_partitions; /* Number of members in the following arrays */
+	ResultRelInfo *partitions;	/* Per partition result relation */
 	TupleConversionMap **partition_tupconv_maps;
 	TupleTableSlot *partition_tuple_slot;
 
@@ -1416,12 +1415,12 @@ BeginCopy(ParseState *pstate,
 		/* Initialize state for CopyFrom tuple routing. */
 		if (is_from && rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 		{
-			PartitionDispatch  *partition_dispatch_info;
-			ResultRelInfo	   *partitions;
+			PartitionDispatch *partition_dispatch_info;
+			ResultRelInfo *partitions;
 			TupleConversionMap **partition_tupconv_maps;
-			TupleTableSlot	   *partition_tuple_slot;
-			int					num_parted,
-								num_partitions;
+			TupleTableSlot *partition_tuple_slot;
+			int			num_parted,
+						num_partitions;
 
 			ExecSetupPartitionTupleRouting(rel,
 										   &partition_dispatch_info,
@@ -2499,7 +2498,7 @@ CopyFrom(CopyState cstate)
 	for (;;)
 	{
 		TupleTableSlot *slot,
-					   *oldslot;
+				   *oldslot;
 		bool		skip_tuple;
 		Oid			loaded_oid = InvalidOid;
 

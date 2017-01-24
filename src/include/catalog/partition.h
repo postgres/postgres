@@ -32,9 +32,9 @@ typedef struct PartitionBoundInfoData *PartitionBoundInfo;
  */
 typedef struct PartitionDescData
 {
-	int					nparts;		/* Number of partitions */
-	Oid				   *oids;		/* OIDs of partitions */
-	PartitionBoundInfo	boundinfo;	/* collection of partition bounds */
+	int			nparts;			/* Number of partitions */
+	Oid		   *oids;			/* OIDs of partitions */
+	PartitionBoundInfo boundinfo;		/* collection of partition bounds */
 } PartitionDescData;
 
 typedef struct PartitionDescData *PartitionDesc;
@@ -59,13 +59,13 @@ typedef struct PartitionDescData *PartitionDesc;
  */
 typedef struct PartitionDispatchData
 {
-	Relation				reldesc;
-	PartitionKey			key;
-	List				   *keystate;	/* list of ExprState */
-	PartitionDesc			partdesc;
-	TupleTableSlot		   *tupslot;
-	TupleConversionMap	   *tupmap;
-	int					   *indexes;
+	Relation	reldesc;
+	PartitionKey key;
+	List	   *keystate;		/* list of ExprState */
+	PartitionDesc partdesc;
+	TupleTableSlot *tupslot;
+	TupleConversionMap *tupmap;
+	int		   *indexes;
 } PartitionDispatchData;
 
 typedef struct PartitionDispatchData *PartitionDispatch;
@@ -75,7 +75,7 @@ extern bool partition_bounds_equal(PartitionKey key,
 					   PartitionBoundInfo p1, PartitionBoundInfo p2);
 
 extern void check_new_partition_bound(char *relname, Relation parent, Node *bound);
-extern Oid get_partition_parent(Oid relid);
+extern Oid	get_partition_parent(Oid relid);
 extern List *get_qual_from_partbound(Relation rel, Relation parent, Node *bound);
 extern List *map_partition_varattnos(List *expr, int target_varno,
 						Relation partrel, Relation parent);
@@ -86,7 +86,7 @@ extern PartitionDispatch *RelationGetPartitionDispatchInfo(Relation rel,
 								 int lockmode, int *num_parted,
 								 List **leaf_part_oids);
 extern int get_partition_for_tuple(PartitionDispatch *pd,
-					TupleTableSlot *slot,
-					EState *estate,
-					Oid *failed_at);
+						TupleTableSlot *slot,
+						EState *estate,
+						Oid *failed_at);
 #endif   /* PARTITION_H */

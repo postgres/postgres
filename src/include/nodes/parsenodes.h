@@ -715,11 +715,11 @@ typedef struct XmlSerialize
 typedef struct PartitionElem
 {
 	NodeTag		type;
-	char	   *name;		/* name of column to partition on, or NULL */
-	Node	   *expr;		/* expression to partition on, or NULL */
-	List	   *collation;	/* name of collation; NIL = default */
-	List	   *opclass;	/* name of desired opclass; NIL = default */
-	int			location;	/* token location, or -1 if unknown */
+	char	   *name;			/* name of column to partition on, or NULL */
+	Node	   *expr;			/* expression to partition on, or NULL */
+	List	   *collation;		/* name of collation; NIL = default */
+	List	   *opclass;		/* name of desired opclass; NIL = default */
+	int			location;		/* token location, or -1 if unknown */
 } PartitionElem;
 
 /*
@@ -728,9 +728,9 @@ typedef struct PartitionElem
 typedef struct PartitionSpec
 {
 	NodeTag		type;
-	char	   *strategy;	/* partitioning strategy ('list' or 'range') */
-	List	   *partParams; /* List of PartitionElems */
-	int			location;	/* token location, or -1 if unknown */
+	char	   *strategy;		/* partitioning strategy ('list' or 'range') */
+	List	   *partParams;		/* List of PartitionElems */
+	int			location;		/* token location, or -1 if unknown */
 } PartitionSpec;
 
 #define PARTITION_STRATEGY_LIST		'l'
@@ -749,8 +749,8 @@ typedef struct PartitionBoundSpec
 	List	   *listdatums;
 
 	/*
-	 * Range partition lower and upper bounds; each member of the lists
-	 * is a PartitionRangeDatum (see below).
+	 * Range partition lower and upper bounds; each member of the lists is a
+	 * PartitionRangeDatum (see below).
 	 */
 	List	   *lowerdatums;
 	List	   *upperdatums;

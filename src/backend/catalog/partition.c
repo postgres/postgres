@@ -1069,7 +1069,7 @@ RelationGetPartitionDispatchInfo(Relation rel, int lockmode,
 		Relation	partrel = lfirst(lc1);
 		Relation	parent = lfirst(lc2);
 		PartitionKey partkey = RelationGetPartitionKey(partrel);
-		TupleDesc	 tupdesc = RelationGetDescr(partrel);
+		TupleDesc	tupdesc = RelationGetDescr(partrel);
 		PartitionDesc partdesc = RelationGetPartitionDesc(partrel);
 		int			j,
 					m;
@@ -1082,17 +1082,17 @@ RelationGetPartitionDispatchInfo(Relation rel, int lockmode,
 		if (parent != NULL)
 		{
 			/*
-			 * For every partitioned table other than root, we must store
-			 * a tuple table slot initialized with its tuple descriptor and
-			 * a tuple conversion map to convert a tuple from its parent's
-			 * rowtype to its own. That is to make sure that we are looking
-			 * at the correct row using the correct tuple descriptor when
+			 * For every partitioned table other than root, we must store a
+			 * tuple table slot initialized with its tuple descriptor and a
+			 * tuple conversion map to convert a tuple from its parent's
+			 * rowtype to its own. That is to make sure that we are looking at
+			 * the correct row using the correct tuple descriptor when
 			 * computing its partition key for tuple routing.
 			 */
 			pd[i]->tupslot = MakeSingleTupleTableSlot(tupdesc);
 			pd[i]->tupmap = convert_tuples_by_name(RelationGetDescr(parent),
 												   tupdesc,
-								gettext_noop("could not convert row type"));
+								 gettext_noop("could not convert row type"));
 		}
 		else
 		{
@@ -1574,10 +1574,10 @@ generate_partition_qual(Relation rel)
 		result = my_qual;
 
 	/*
-	 * Change Vars to have partition's attnos instead of the parent's.
-	 * We do this after we concatenate the parent's quals, because
-	 * we want every Var in it to bear this relation's attnos.
-	 * It's safe to assume varno = 1 here.
+	 * Change Vars to have partition's attnos instead of the parent's. We do
+	 * this after we concatenate the parent's quals, because we want every Var
+	 * in it to bear this relation's attnos. It's safe to assume varno = 1
+	 * here.
 	 */
 	result = map_partition_varattnos(result, 1, rel, parent);
 

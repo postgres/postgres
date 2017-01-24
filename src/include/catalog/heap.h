@@ -136,12 +136,12 @@ extern void CheckAttributeType(const char *attname,
 
 /* pg_partitioned_table catalog manipulation functions */
 extern void StorePartitionKey(Relation rel,
-					char strategy,
-					int16 partnatts,
-					AttrNumber *partattrs,
-					List *partexprs,
-					Oid *partopclass,
-					Oid *partcollation);
+				  char strategy,
+				  int16 partnatts,
+				  AttrNumber *partattrs,
+				  List *partexprs,
+				  Oid *partopclass,
+				  Oid *partcollation);
 extern void RemovePartitionKeyByRelId(Oid relid);
 extern void StorePartitionBound(Relation rel, Relation parent, Node *bound);
 

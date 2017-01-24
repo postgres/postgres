@@ -1431,7 +1431,7 @@ pg_get_partkeydef(PG_FUNCTION_ARGS)
 	Oid			relid = PG_GETARG_OID(0);
 
 	PG_RETURN_TEXT_P(string_to_text(pg_get_partkeydef_worker(relid,
-									PRETTYFLAG_INDENT)));
+														PRETTYFLAG_INDENT)));
 }
 
 /*
@@ -1440,7 +1440,7 @@ pg_get_partkeydef(PG_FUNCTION_ARGS)
 static char *
 pg_get_partkeydef_worker(Oid relid, int prettyFlags)
 {
-	Form_pg_partitioned_table	form;
+	Form_pg_partitioned_table form;
 	HeapTuple	tuple;
 	oidvector  *partclass;
 	oidvector  *partcollation;
@@ -1476,8 +1476,8 @@ pg_get_partkeydef_worker(Oid relid, int prettyFlags)
 
 	/*
 	 * Get the expressions, if any.  (NOTE: we do not use the relcache
-	 * versions of the expressions, because we want to display non-const-folded
-	 * expressions.)
+	 * versions of the expressions, because we want to display
+	 * non-const-folded expressions.)
 	 */
 	if (!heap_attisnull(tuple, Anum_pg_partitioned_table_partexprs))
 	{
@@ -1486,14 +1486,14 @@ pg_get_partkeydef_worker(Oid relid, int prettyFlags)
 		char	   *exprsString;
 
 		exprsDatum = SysCacheGetAttr(PARTRELID, tuple,
-									 Anum_pg_partitioned_table_partexprs, &isnull);
+							   Anum_pg_partitioned_table_partexprs, &isnull);
 		Assert(!isnull);
 		exprsString = TextDatumGetCString(exprsDatum);
 		partexprs = (List *) stringToNode(exprsString);
 
 		if (!IsA(partexprs, List))
 			elog(ERROR, "unexpected node type found in partexprs: %d",
-						(int) nodeTag(partexprs));
+				 (int) nodeTag(partexprs));
 
 		pfree(exprsString);
 	}
@@ -1515,7 +1515,7 @@ pg_get_partkeydef_worker(Oid relid, int prettyFlags)
 			break;
 		default:
 			elog(ERROR, "unexpected partition strategy: %d",
-						(int) form->partstrat);
+				 (int) form->partstrat);
 	}
 
 	appendStringInfo(&buf, " (");
@@ -8454,8 +8454,8 @@ get_rule_expr(Node *node, deparse_context *context,
 		case T_PartitionBoundSpec:
 			{
 				PartitionBoundSpec *spec = (PartitionBoundSpec *) node;
-				ListCell *cell;
-				char	 *sep;
+				ListCell   *cell;
+				char	   *sep;
 
 				switch (spec->strategy)
 				{
@@ -8465,9 +8465,9 @@ get_rule_expr(Node *node, deparse_context *context,
 						appendStringInfoString(buf, "FOR VALUES");
 						appendStringInfoString(buf, " IN (");
 						sep = "";
-						foreach (cell, spec->listdatums)
+						foreach(cell, spec->listdatums)
 						{
-							Const *val = lfirst(cell);
+							Const	   *val = lfirst(cell);
 
 							appendStringInfoString(buf, sep);
 							get_const_expr(val, context, -1);
@@ -8487,10 +8487,10 @@ get_rule_expr(Node *node, deparse_context *context,
 						appendStringInfoString(buf, " FROM");
 						appendStringInfoString(buf, " (");
 						sep = "";
-						foreach (cell, spec->lowerdatums)
+						foreach(cell, spec->lowerdatums)
 						{
 							PartitionRangeDatum *datum = lfirst(cell);
-							Const *val;
+							Const	   *val;
 
 							appendStringInfoString(buf, sep);
 							if (datum->infinite)
@@ -8507,10 +8507,10 @@ get_rule_expr(Node *node, deparse_context *context,
 						appendStringInfoString(buf, " TO");
 						appendStringInfoString(buf, " (");
 						sep = "";
-						foreach (cell, spec->upperdatums)
+						foreach(cell, spec->upperdatums)
 						{
 							PartitionRangeDatum *datum = lfirst(cell);
-							Const *val;
+							Const	   *val;
 
 							appendStringInfoString(buf, sep);
 							if (datum->infinite)

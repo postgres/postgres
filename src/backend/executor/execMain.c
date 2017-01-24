@@ -1222,7 +1222,7 @@ InitResultRelInfo(ResultRelInfo *resultRelInfo,
 				  Relation partition_root,
 				  int instrument_options)
 {
-	List   *partition_check = NIL;
+	List	   *partition_check = NIL;
 
 	MemSet(resultRelInfo, 0, sizeof(ResultRelInfo));
 	resultRelInfo->type = T_ResultRelInfo;
@@ -1754,10 +1754,10 @@ ExecPartitionCheck(ResultRelInfo *resultRelInfo, TupleTableSlot *slot,
 	 */
 	if (resultRelInfo->ri_PartitionCheckExpr == NULL)
 	{
-		List *qual = resultRelInfo->ri_PartitionCheck;
+		List	   *qual = resultRelInfo->ri_PartitionCheck;
 
 		resultRelInfo->ri_PartitionCheckExpr = (List *)
-									ExecPrepareExpr((Expr *) qual, estate);
+			ExecPrepareExpr((Expr *) qual, estate);
 	}
 
 	/*
@@ -1837,7 +1837,7 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 				ereport(ERROR,
 						(errcode(ERRCODE_NOT_NULL_VIOLATION),
 						 errmsg("null value in column \"%s\" violates not-null constraint",
-						  NameStr(orig_tupdesc->attrs[attrChk - 1]->attname)),
+						 NameStr(orig_tupdesc->attrs[attrChk - 1]->attname)),
 						 val_desc ? errdetail("Failing row contains %s.", val_desc) : 0,
 						 errtablecol(orig_rel, attrChk)));
 			}
@@ -1900,9 +1900,9 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 												 64);
 		ereport(ERROR,
 				(errcode(ERRCODE_CHECK_VIOLATION),
-				 errmsg("new row for relation \"%s\" violates partition constraint",
-						RelationGetRelationName(orig_rel)),
-		  val_desc ? errdetail("Failing row contains %s.", val_desc) : 0));
+		  errmsg("new row for relation \"%s\" violates partition constraint",
+				 RelationGetRelationName(orig_rel)),
+			val_desc ? errdetail("Failing row contains %s.", val_desc) : 0));
 	}
 }
 
@@ -3118,7 +3118,7 @@ ExecSetupPartitionTupleRouting(Relation rel,
 	*partitions = (ResultRelInfo *) palloc(*num_partitions *
 										   sizeof(ResultRelInfo));
 	*tup_conv_maps = (TupleConversionMap **) palloc0(*num_partitions *
-										   sizeof(TupleConversionMap *));
+											   sizeof(TupleConversionMap *));
 
 	/*
 	 * Initialize an empty slot that will be used to manipulate tuples of any
@@ -3157,7 +3157,7 @@ ExecSetupPartitionTupleRouting(Relation rel,
 
 		InitResultRelInfo(leaf_part_rri,
 						  partrel,
-						  1,	 /* dummy */
+						  1,	/* dummy */
 						  rel,
 						  0);
 
@@ -3190,8 +3190,8 @@ int
 ExecFindPartition(ResultRelInfo *resultRelInfo, PartitionDispatch *pd,
 				  TupleTableSlot *slot, EState *estate)
 {
-	int		result;
-	Oid		failed_at;
+	int			result;
+	Oid			failed_at;
 	ExprContext *econtext = GetPerTupleExprContext(estate);
 
 	econtext->ecxt_scantuple = slot;
@@ -3218,7 +3218,7 @@ ExecFindPartition(ResultRelInfo *resultRelInfo, PartitionDispatch *pd,
 				(errcode(ERRCODE_CHECK_VIOLATION),
 				 errmsg("no partition of relation \"%s\" found for row",
 						get_rel_name(failed_at)),
-		  val_desc ? errdetail("Failing row contains %s.", val_desc) : 0));
+			val_desc ? errdetail("Failing row contains %s.", val_desc) : 0));
 	}
 
 	return result;

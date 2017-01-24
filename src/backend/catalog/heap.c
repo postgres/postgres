@@ -1780,12 +1780,12 @@ heap_drop_with_catalog(Oid relid)
 
 	/*
 	 * If the relation is a partition, we must grab exclusive lock on its
-	 * parent because we need to update its partition descriptor. We must
-	 * take a table lock strong enough to prevent all queries on the parent
-	 * from proceeding until we commit and send out a shared-cache-inval
-	 * notice that will make them update their partition descriptor.
-	 * Sometimes, doing this is cycles spent uselessly, especially if the
-	 * parent will be dropped as part of the same command anyway.
+	 * parent because we need to update its partition descriptor. We must take
+	 * a table lock strong enough to prevent all queries on the parent from
+	 * proceeding until we commit and send out a shared-cache-inval notice
+	 * that will make them update their partition descriptor. Sometimes, doing
+	 * this is cycles spent uselessly, especially if the parent will be
+	 * dropped as part of the same command anyway.
 	 */
 	if (rel->rd_rel->relispartition)
 	{
@@ -2084,8 +2084,8 @@ StoreRelCheck(Relation rel, char *ccname, Node *expr,
 		rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-				 errmsg("cannot add NO INHERIT constraint to partitioned table \"%s\"",
-						 RelationGetRelationName(rel))));
+		errmsg("cannot add NO INHERIT constraint to partitioned table \"%s\"",
+			   RelationGetRelationName(rel))));
 
 	/*
 	 * Create the Check Constraint
@@ -3113,8 +3113,8 @@ StorePartitionKey(Relation rel,
 	HeapTuple	tuple;
 	Datum		values[Natts_pg_partitioned_table];
 	bool		nulls[Natts_pg_partitioned_table];
-	ObjectAddress   myself;
-	ObjectAddress   referenced;
+	ObjectAddress myself;
+	ObjectAddress referenced;
 
 	Assert(rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE);
 
@@ -3129,7 +3129,7 @@ StorePartitionKey(Relation rel,
 	/* Convert the expressions (if any) to a text datum */
 	if (partexprs)
 	{
-		char       *exprString;
+		char	   *exprString;
 
 		exprString = nodeToString(partexprs);
 		partexprDatum = CStringGetTextDatum(exprString);
@@ -3149,7 +3149,7 @@ StorePartitionKey(Relation rel,
 	values[Anum_pg_partitioned_table_partrelid - 1] = ObjectIdGetDatum(RelationGetRelid(rel));
 	values[Anum_pg_partitioned_table_partstrat - 1] = CharGetDatum(strategy);
 	values[Anum_pg_partitioned_table_partnatts - 1] = Int16GetDatum(partnatts);
-	values[Anum_pg_partitioned_table_partattrs - 1] =  PointerGetDatum(partattrs_vec);
+	values[Anum_pg_partitioned_table_partattrs - 1] = PointerGetDatum(partattrs_vec);
 	values[Anum_pg_partitioned_table_partclass - 1] = PointerGetDatum(partopclass_vec);
 	values[Anum_pg_partitioned_table_partcollation - 1] = PointerGetDatum(partcollation_vec);
 	values[Anum_pg_partitioned_table_partexprs - 1] = partexprDatum;
@@ -3185,8 +3185,8 @@ StorePartitionKey(Relation rel,
 
 	/*
 	 * Anything mentioned in the expressions.  We must ignore the column
-	 * references, which will depend on the table itself; there is no
-	 * separate partition key object.
+	 * references, which will depend on the table itself; there is no separate
+	 * partition key object.
 	 */
 	if (partexprs)
 		recordDependencyOnSingleRelExpr(&myself,
@@ -3204,7 +3204,7 @@ StorePartitionKey(Relation rel,
 }
 
 /*
- *  RemovePartitionKeyByRelId
+ *	RemovePartitionKeyByRelId
  *		Remove pg_partitioned_table entry for a relation
  */
 void
@@ -3240,9 +3240,9 @@ StorePartitionBound(Relation rel, Relation parent, Node *bound)
 	Relation	classRel;
 	HeapTuple	tuple,
 				newtuple;
-	Datum	new_val[Natts_pg_class];
-	bool	new_null[Natts_pg_class],
-			new_repl[Natts_pg_class];
+	Datum		new_val[Natts_pg_class];
+	bool		new_null[Natts_pg_class],
+				new_repl[Natts_pg_class];
 
 	/* Update pg_class tuple */
 	classRel = heap_open(RelationRelationId, RowExclusiveLock);
@@ -3254,8 +3254,8 @@ StorePartitionBound(Relation rel, Relation parent, Node *bound)
 
 #ifdef USE_ASSERT_CHECKING
 	{
-		Form_pg_class	classForm;
-		bool	isnull;
+		Form_pg_class classForm;
+		bool		isnull;
 
 		classForm = (Form_pg_class) GETSTRUCT(tuple);
 		Assert(!classForm->relispartition);
