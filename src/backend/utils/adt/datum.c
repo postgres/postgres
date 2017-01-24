@@ -209,6 +209,10 @@ datumTransfer(Datum value, bool typByVal, int typLen)
  * of say the representation of zero in one's complement arithmetic).
  * Also, it will probably not give the answer you want if either
  * datum has been "toasted".
+ *
+ * Do not try to make this any smarter than it currently is with respect
+ * to "toasted" datums, because some of the callers could be working in the
+ * context of an aborted transaction.
  *-------------------------------------------------------------------------
  */
 bool

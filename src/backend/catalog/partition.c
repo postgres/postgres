@@ -639,12 +639,20 @@ partition_bounds_equal(PartitionKey key,
 					continue;
 			}
 
-			/* Compare the actual values */
-			cmpval = DatumGetInt32(FunctionCall2Coll(&key->partsupfunc[j],
-													 key->partcollation[j],
-													 b1->datums[i][j],
-													 b2->datums[i][j]));
-			if (cmpval != 0)
+			/*
+			 * Compare the actual values. Note that it would be both incorrect
+			 * and unsafe to invoke the comparison operator derived from the
+			 * partitioning specification here.  It would be incorrect because
+			 * we want the relcache entry to be updated for ANY change to the
+			 * partition bounds, not just those that the partitioning operator
+			 * thinks are significant.  It would be unsafe because we might
+			 * reach this code in the context of an aborted transaction, and
+			 * an arbitrary partitioning operator might not be safe in that
+			 * context.  datumIsEqual() should be simple enough to be safe.
+			 */
+			if (!datumIsEqual(b1->datums[i][j], b2->datums[i][j],
+							  key->parttypbyval[j],
+							  key->parttyplen[j]))
 				return false;
 		}
 
