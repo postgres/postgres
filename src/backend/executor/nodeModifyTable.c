@@ -1778,6 +1778,46 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	}
 
 	/*
+	 * Build WITH CHECK OPTION constraints for each leaf partition rel.
+	 * Note that we didn't build the withCheckOptionList for each partition
+	 * within the planner, but simple translation of the varattnos for each
+	 * partition will suffice.  This only occurs for the INSERT case;
+	 * UPDATE/DELETE cases are handled above.
+	 */
+	if (node->withCheckOptionLists != NIL && mtstate->mt_num_partitions > 0)
+	{
+		List		*wcoList;
+
+		Assert(operation == CMD_INSERT);
+		resultRelInfo = mtstate->mt_partitions;
+		wcoList = linitial(node->withCheckOptionLists);
+		for (i = 0; i < mtstate->mt_num_partitions; i++)
+		{
+			Relation	partrel = resultRelInfo->ri_RelationDesc;
+			List	   *mapped_wcoList;
+			List	   *wcoExprs = NIL;
+			ListCell   *ll;
+
+			/* varno = node->nominalRelation */
+			mapped_wcoList = map_partition_varattnos(wcoList,
+													 node->nominalRelation,
+													 partrel, rel);
+			foreach(ll, mapped_wcoList)
+			{
+				WithCheckOption *wco = (WithCheckOption *) lfirst(ll);
+				ExprState  *wcoExpr = ExecInitExpr((Expr *) wco->qual,
+											   mtstate->mt_plans[i]);
+
+				wcoExprs = lappend(wcoExprs, wcoExpr);
+			}
+
+			resultRelInfo->ri_WithCheckOptions = mapped_wcoList;
+			resultRelInfo->ri_WithCheckOptionExprs = wcoExprs;
+			resultRelInfo++;
+		}
+	}
+
+	/*
 	 * Initialize RETURNING projections if needed.
 	 */
 	if (node->returningLists)

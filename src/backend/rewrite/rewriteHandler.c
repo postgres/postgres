@@ -2249,7 +2249,8 @@ view_query_is_auto_updatable(Query *viewquery, bool check_cols)
 	if (base_rte->rtekind != RTE_RELATION ||
 		(base_rte->relkind != RELKIND_RELATION &&
 		 base_rte->relkind != RELKIND_FOREIGN_TABLE &&
-		 base_rte->relkind != RELKIND_VIEW))
+		 base_rte->relkind != RELKIND_VIEW &&
+		 base_rte->relkind != RELKIND_PARTITIONED_TABLE))
 		return gettext_noop("Views that do not select from a single table or view are not automatically updatable.");
 
 	if (base_rte->tablesample)

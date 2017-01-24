@@ -2367,3 +2367,27 @@ ERROR:  new row violates check option for view "v1"
 DETAIL:  Failing row contains (-1, invalid).
 DROP VIEW v1;
 DROP TABLE t1;
+-- check that an auto-updatable view on a partitioned table works correctly
+create table p (a int, b int) partition by range (a, b);
+create table p1 (b int not null, a int not null) partition by range (b);
+create table p11 (like p1);
+alter table p11 drop a;
+alter table p11 add a int;
+alter table p11 drop a;
+alter table p11 add a int not null;
+alter table p1 attach partition p11 for values from (2) to (5);
+alter table p attach partition p1 for values from (1, 2) to (1, 10);
+create view pv as select * from p;
+insert into pv values (1, 2);
+select tableoid::regclass, * from p;
+ tableoid | a | b 
+----------+---+---
+ p11      | 1 | 2
+(1 row)
+
+create view pv_wco as select * from p where a = 0 with check option;
+insert into pv_wco values (1, 2);
+ERROR:  new row violates check option for view "pv_wco"
+DETAIL:  Failing row contains (2, 1).
+drop view pv, pv_wco;
+drop table p, p1, p11;
