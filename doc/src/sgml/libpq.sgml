@@ -943,7 +943,7 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
         Note that authentication is likely to fail if <literal>host</>
         is not the name of the server at network address <literal>hostaddr</>.
         Also, note that <literal>host</> rather than <literal>hostaddr</>
-        is used to identify the connection in <filename>~/.pgpass</> (see
+        is used to identify the connection in a password file (see
         <xref linkend="libpq-pgpass">).
        </para>
 
@@ -998,6 +998,19 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       <listitem>
       <para>
        Password to be used if the server demands password authentication.
+      </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="libpq-connect-passfile" xreflabel="passfile">
+      <term><literal>passfile</literal></term>
+      <listitem>
+      <para>
+       Specifies the name of the file used to store passwords
+       (see <xref linkend="libpq-pgpass">).
+       Defaults to <filename>~/.pgpass</filename>, or
+       <filename>%APPDATA%\postgresql\pgpass.conf</> on Microsoft Windows.
+       (No error is reported if this file does not exist.)
       </para>
       </listitem>
      </varlistentry>
@@ -6893,8 +6906,8 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       Use of this environment variable
       is not recommended for security reasons, as some operating systems
       allow non-root users to see process environment variables via
-      <application>ps</>; instead consider using the
-      <filename>~/.pgpass</> file (see <xref linkend="libpq-pgpass">).
+      <application>ps</>; instead consider using a password file
+      (see <xref linkend="libpq-pgpass">).
      </para>
     </listitem>
 
@@ -6903,9 +6916,8 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       <indexterm>
        <primary><envar>PGPASSFILE</envar></primary>
       </indexterm>
-      <envar>PGPASSFILE</envar> specifies the name of the password file to
-      use for lookups.  If not set, it defaults to <filename>~/.pgpass</>
-      (see <xref linkend="libpq-pgpass">).
+      <envar>PGPASSFILE</envar> behaves the same as the <xref
+      linkend="libpq-connect-passfile"> connection parameter.
      </para>
     </listitem>
 
@@ -7187,13 +7199,16 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
   </indexterm>
 
   <para>
-   The file <filename>.pgpass</filename> in a user's home directory or the
-   file referenced by <envar>PGPASSFILE</envar> can contain passwords to
+   The file <filename>.pgpass</filename> in a user's home directory can
+   contain passwords to
    be used if the connection requires a password (and no password has been
    specified  otherwise). On Microsoft Windows the file is named
    <filename>%APPDATA%\postgresql\pgpass.conf</> (where
    <filename>%APPDATA%</> refers to the Application Data subdirectory in
    the user's profile).
+   Alternatively, a password file can be specified
+   using the connection parameter <xref linkend="libpq-connect-passfile">
+   or the environment variable <envar>PGPASSFILE</envar>.
   </para>
 
   <para>
@@ -7219,8 +7234,8 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
   </para>
 
   <para>
-   On Unix systems, the permissions on <filename>.pgpass</filename> must
-   disallow any access to world or group; achieve this by the command
+   On Unix systems, the permissions on a password file must
+   disallow any access to world or group; achieve this by a command such as
    <command>chmod 0600 ~/.pgpass</command>.  If the permissions are less
    strict than this, the file will be ignored.  On Microsoft Windows, it
    is assumed that the file is stored in a directory that is secure, so

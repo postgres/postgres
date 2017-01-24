@@ -107,7 +107,6 @@ static int ldapServiceLookup(const char *purl, PQconninfoOption *options,
 #define DefaultTty		""
 #define DefaultOption	""
 #define DefaultAuthtype		  ""
-#define DefaultPassword		  ""
 #define DefaultTargetSessionAttrs	"any"
 #ifdef USE_SSL
 #define DefaultSSLMode "prefer"
@@ -184,6 +183,10 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 	{"password", "PGPASSWORD", NULL, NULL,
 		"Database-Password", "*", 20,
 	offsetof(struct pg_conn, pgpass)},
+
+	{"passfile", "PGPASSFILE", NULL, NULL,
+		"Database-Password-File", "", 64,
+	offsetof(struct pg_conn, pgpassfile)},
 
 	{"connect_timeout", "PGCONNECT_TIMEOUT", NULL, NULL,
 		"Connect-timeout", "", 10,		/* strlen(INT32_MAX) == 10 */
@@ -382,10 +385,9 @@ static int parseServiceFile(const char *serviceFile,
 				 PQExpBuffer errorMessage,
 				 bool *group_found);
 static char *pwdfMatchesString(char *buf, char *token);
-static char *PasswordFromFile(char *hostname, char *port, char *dbname,
-				 char *username);
-static bool getPgPassFilename(char *pgpassfile);
-static void dot_pg_pass_warning(PGconn *conn);
+static char *passwordFromFile(char *hostname, char *port, char *dbname,
+				 char *username, char *pgpassfile);
+static void pgpassfileWarning(PGconn *conn);
 static void default_threadlock(int acquire);
 
 
@@ -957,19 +959,40 @@ connectOptions2(PGconn *conn)
 	{
 		int		i;
 
-		if (conn->pgpass)
-			free(conn->pgpass);
-		conn->pgpass = strdup(DefaultPassword);
-		if (!conn->pgpass)
-			goto oom_error;
-		for (i = 0; i < conn->nconnhost; ++i)
+		if (conn->pgpassfile == NULL || conn->pgpassfile[0] == '\0')
 		{
+			/* Identify password file to use; fail if we can't */
+			char		homedir[MAXPGPATH];
+
+			if (!pqGetHomeDirectory(homedir, sizeof(homedir)))
+			{
+				conn->status = CONNECTION_BAD;
+				printfPQExpBuffer(&conn->errorMessage,
+								  libpq_gettext("could not get home directory to locate password file\n"));
+				return false;
+			}
+
+			if (conn->pgpassfile)
+				free(conn->pgpassfile);
+			conn->pgpassfile = malloc(MAXPGPATH);
+			if (!conn->pgpassfile)
+				goto oom_error;
+
+			snprintf(conn->pgpassfile, MAXPGPATH, "%s/%s", homedir, PGPASSFILE);
+		}
+
+		for (i = 0; i < conn->nconnhost; i++)
+		{
+			/* Try to get a password for this host from pgpassfile */
 			conn->connhost[i].password =
-				PasswordFromFile(conn->connhost[i].host,
+				passwordFromFile(conn->connhost[i].host,
 								 conn->connhost[i].port,
-								 conn->dbName, conn->pguser);
+								 conn->dbName,
+								 conn->pguser,
+								 conn->pgpassfile);
+			/* If we got one, set pgpassfile_used */
 			if (conn->connhost[i].password != NULL)
-				conn->dot_pgpass_used = true;
+				conn->pgpassfile_used = true;
 		}
 	}
 
@@ -3016,7 +3039,7 @@ keep_going:						/* We will come back to here until there is
 
 error_return:
 
-	dot_pg_pass_warning(conn);
+	pgpassfileWarning(conn);
 
 	/*
 	 * We used to close the socket at this point, but that makes it awkward
@@ -3147,7 +3170,7 @@ makeEmptyPGconn(void)
 	conn->sock = PGINVALID_SOCKET;
 	conn->auth_req_received = false;
 	conn->password_needed = false;
-	conn->dot_pgpass_used = false;
+	conn->pgpassfile_used = false;
 #ifdef USE_SSL
 	conn->allow_ssl_try = true;
 	conn->wait_ssl_try = false;
@@ -3256,6 +3279,8 @@ freePGconn(PGconn *conn)
 		free(conn->pguser);
 	if (conn->pgpass)
 		free(conn->pgpass);
+	if (conn->pgpassfile)
+		free(conn->pgpassfile);
 	if (conn->keepalives)
 		free(conn->keepalives);
 	if (conn->keepalives_idle)
@@ -5794,6 +5819,9 @@ PQpass(const PGconn *conn)
 		password = conn->connhost[conn->whichhost].password;
 	if (password == NULL)
 		password = conn->pgpass;
+	/* Historically we've returned "" not NULL for no password specified */
+	if (password == NULL)
+		password = "";
 	return password;
 }
 
@@ -6160,10 +6188,10 @@ pwdfMatchesString(char *buf, char *token)
 
 /* Get a password from the password file. Return value is malloc'd. */
 static char *
-PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
+passwordFromFile(char *hostname, char *port, char *dbname,
+				 char *username, char *pgpassfile)
 {
 	FILE	   *fp;
-	char		pgpassfile[MAXPGPATH];
 	struct stat stat_buf;
 
 #define LINELEN NAMEDATALEN*5
@@ -6189,9 +6217,6 @@ PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
 
 	if (port == NULL)
 		port = DEF_PGPORT_STR;
-
-	if (!getPgPassFilename(pgpassfile))
-		return NULL;
 
 	/* If password file cannot be opened, ignore it. */
 	if (stat(pgpassfile, &stat_buf) != 0)
@@ -6286,46 +6311,23 @@ PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
 }
 
 
-static bool
-getPgPassFilename(char *pgpassfile)
-{
-	char	   *passfile_env;
-
-	if ((passfile_env = getenv("PGPASSFILE")) != NULL)
-		/* use the literal path from the environment, if set */
-		strlcpy(pgpassfile, passfile_env, MAXPGPATH);
-	else
-	{
-		char		homedir[MAXPGPATH];
-
-		if (!pqGetHomeDirectory(homedir, sizeof(homedir)))
-			return false;
-		snprintf(pgpassfile, MAXPGPATH, "%s/%s", homedir, PGPASSFILE);
-	}
-	return true;
-}
-
 /*
  *	If the connection failed, we should mention if
- *	we got the password from .pgpass in case that
+ *	we got the password from the pgpassfile in case that
  *	password is wrong.
  */
 static void
-dot_pg_pass_warning(PGconn *conn)
+pgpassfileWarning(PGconn *conn)
 {
-	/* If it was 'invalid authorization', add .pgpass mention */
+	/* If it was 'invalid authorization', add pgpassfile mention */
 	/* only works with >= 9.0 servers */
-	if (conn->dot_pgpass_used && conn->password_needed && conn->result &&
+	if (conn->pgpassfile_used && conn->password_needed && conn->result &&
 		strcmp(PQresultErrorField(conn->result, PG_DIAG_SQLSTATE),
 			   ERRCODE_INVALID_PASSWORD) == 0)
 	{
-		char		pgpassfile[MAXPGPATH];
-
-		if (!getPgPassFilename(pgpassfile))
-			return;
 		appendPQExpBuffer(&conn->errorMessage,
 					  libpq_gettext("password retrieved from file \"%s\"\n"),
-						  pgpassfile);
+						  conn->pgpassfile);
 	}
 }
 

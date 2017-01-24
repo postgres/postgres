@@ -686,11 +686,12 @@ pg_fe_sendauth(AuthRequest areq, PGconn *conn)
 		case AUTH_REQ_MD5:
 		case AUTH_REQ_PASSWORD:
 			{
-				char   *password = conn->connhost[conn->whichhost].password;
+				char	   *password;
 
+				conn->password_needed = true;
+				password = conn->connhost[conn->whichhost].password;
 				if (password == NULL)
 					password = conn->pgpass;
-				conn->password_needed = true;
 				if (password == NULL || password[0] == '\0')
 				{
 					printfPQExpBuffer(&conn->errorMessage,
