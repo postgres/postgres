@@ -261,6 +261,7 @@ logicalrep_worker_launch(Oid dbid, Oid subid, const char *subname, Oid userid)
 	/* Bail if not found */
 	if (worker == NULL)
 	{
+		LWLockRelease(LogicalRepWorkerLock);
 		ereport(WARNING,
 				(errcode(ERRCODE_CONFIGURATION_LIMIT_EXCEEDED),
 				 errmsg("out of logical replication workers slots"),
