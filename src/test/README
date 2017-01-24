@@ -37,5 +37,8 @@ regress/
 ssl/
   Tests to exercise and verify SSL certificate handling
 
+subscription/
+  Tests for logical replication
+
 thread/
   A thread-safety-testing utility used by configure
