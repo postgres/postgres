@@ -2307,6 +2307,7 @@ CopyFrom(CopyState cstate)
 	uint64		processed = 0;
 	bool		useHeapMultiInsert;
 	int			nBufferedTuples = 0;
+	int			prev_leaf_part_index = -1;
 
 #define MAX_BUFFERED_TUPLES 1000
 	HeapTuple  *bufferedTuples = NULL;	/* initialize to silence warning */
@@ -2560,6 +2561,17 @@ CopyFrom(CopyState cstate)
 												estate);
 			Assert(leaf_part_index >= 0 &&
 				   leaf_part_index < cstate->num_partitions);
+
+			/*
+			 * If this tuple is mapped to a partition that is not same as the
+			 * previous one, we'd better make the bulk insert mechanism gets a
+			 * new buffer.
+			 */
+			if (prev_leaf_part_index != leaf_part_index)
+			{
+				ReleaseBulkInsertStatePin(bistate);
+				prev_leaf_part_index = leaf_part_index;
+			}
 
 			/*
 			 * Save the old ResultRelInfo and switch to the one corresponding

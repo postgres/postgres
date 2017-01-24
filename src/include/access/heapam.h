@@ -147,6 +147,7 @@ extern void setLastTid(const ItemPointer tid);
 
 extern BulkInsertState GetBulkInsertState(void);
 extern void FreeBulkInsertState(BulkInsertState);
+extern void ReleaseBulkInsertStatePin(BulkInsertState bistate);
 
 extern Oid heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 			int options, BulkInsertState bistate);

@@ -2324,6 +2324,17 @@ FreeBulkInsertState(BulkInsertState bistate)
 	pfree(bistate);
 }
 
+/*
+ * ReleaseBulkInsertStatePin - release a buffer currently held in bistate
+ */
+void
+ReleaseBulkInsertStatePin(BulkInsertState bistate)
+{
+	if (bistate->current_buf != InvalidBuffer)
+		ReleaseBuffer(bistate->current_buf);
+	bistate->current_buf = InvalidBuffer;
+}
+
 
 /*
  *	heap_insert		- insert tuple into a heap
