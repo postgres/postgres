@@ -193,7 +193,7 @@ drop table part_aa_bb, part_cc_dd, part_null, list_parted;
 
 -- more tests for certain multi-level partitioning scenarios
 create table p (a int, b int) partition by range (a, b);
-create table p1 (b int, a int not null) partition by range (b);
+create table p1 (b int not null, a int not null) partition by range ((b+0));
 create table p11 (like p1);
 alter table p11 drop a;
 alter table p11 add a int;

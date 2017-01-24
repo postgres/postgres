@@ -1679,7 +1679,10 @@ get_partition_for_tuple(PartitionDispatch *pd,
 	bool		isnull[PARTITION_MAX_KEYS];
 	int			cur_offset,
 				cur_index;
-	int			i;
+	int			i,
+				result;
+	ExprContext *ecxt = GetPerTupleExprContext(estate);
+	TupleTableSlot *ecxt_scantuple_old = ecxt->ecxt_scantuple;
 
 	/* start with the root partitioned table */
 	parent = pd[0];
@@ -1708,7 +1711,15 @@ get_partition_for_tuple(PartitionDispatch *pd,
 			slot = myslot;
 		}
 
-		/* Extract partition key from tuple */
+		/*
+		 * Extract partition key from tuple. Expression evaluation machinery
+		 * that FormPartitionKeyDatum() invokes expects ecxt_scantuple to
+		 * point to the correct tuple slot.  The slot might have changed from
+		 * what was used for the parent table if the table of the current
+		 * partitioning level has different tuple descriptor from the parent.
+		 * So update ecxt_scantuple accordingly.
+		 */
+		ecxt->ecxt_scantuple = slot;
 		FormPartitionKeyDatum(parent, slot, estate, values, isnull);
 
 		if (key->strategy == PARTITION_STRATEGY_RANGE)
@@ -1763,16 +1774,21 @@ get_partition_for_tuple(PartitionDispatch *pd,
 		 */
 		if (cur_index < 0)
 		{
+			result = -1;
 			*failed_at = RelationGetRelid(parent->reldesc);
-			return -1;
-		}
-		else if (parent->indexes[cur_index] < 0)
-			parent = pd[-parent->indexes[cur_index]];
-		else
 			break;
+		}
+		else if (parent->indexes[cur_index] >= 0)
+		{
+			result = parent->indexes[cur_index];
+			break;
+		}
+		else
+			parent = pd[-parent->indexes[cur_index]];
 	}
 
-	return parent->indexes[cur_index];
+	ecxt->ecxt_scantuple = ecxt_scantuple_old;
+	return result;
 }
 
 /*

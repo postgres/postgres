@@ -3192,9 +3192,7 @@ ExecFindPartition(ResultRelInfo *resultRelInfo, PartitionDispatch *pd,
 {
 	int			result;
 	Oid			failed_at;
-	ExprContext *econtext = GetPerTupleExprContext(estate);
 
-	econtext->ecxt_scantuple = slot;
 	result = get_partition_for_tuple(pd, slot, estate, &failed_at);
 	if (result < 0)
 	{
