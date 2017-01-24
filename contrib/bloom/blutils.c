@@ -138,6 +138,9 @@ blhandler(PG_FUNCTION_ARGS)
 	amroutine->amendscan = blendscan;
 	amroutine->ammarkpos = NULL;
 	amroutine->amrestrpos = NULL;
+	amroutine->amestimateparallelscan = NULL;
+	amroutine->aminitparallelscan = NULL;
+	amroutine->amparallelrescan = NULL;
 
 	PG_RETURN_POINTER(amroutine);
 }

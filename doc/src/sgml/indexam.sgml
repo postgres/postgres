@@ -131,6 +131,11 @@ typedef struct IndexAmRoutine
     amendscan_function amendscan;
     ammarkpos_function ammarkpos;       /* can be NULL */
     amrestrpos_function amrestrpos;     /* can be NULL */
+
+    /* interface functions to support parallel index scans */
+    amestimateparallelscan_function amestimateparallelscan;    /* can be NULL */
+    aminitparallelscan_function aminitparallelscan;    /* can be NULL */
+    amparallelrescan_function amparallelrescan;    /* can be NULL */
 } IndexAmRoutine;
 </programlisting>
   </para>
@@ -624,6 +629,68 @@ amrestrpos (IndexScanDesc scan);
    the <structfield>amrestrpos</> field in its <structname>IndexAmRoutine</>
    struct may be set to NULL.
   </para>
+
+  <para>
+   In addition to supporting ordinary index scans, some types of index
+   may wish to support <firstterm>parallel index scans</>, which allow
+   multiple backends to cooperate in performing an index scan.  The
+   index access method should arrange things so that each cooperating
+   process returns a subset of the tuples that would be performed by
+   an ordinary, non-parallel index scan, but in such a way that the
+   union of those subsets is equal to the set of tuples that would be
+   returned by an ordinary, non-parallel index scan.  Furthermore, while
+   there need not be any global ordering of tuples returned by a parallel
+   scan, the ordering of that subset of tuples returned within each
+   cooperating backend must match the requested ordering.  The following
+   functions may be implemented to support parallel index scans:
+  </para>
+
+  <para>
+<programlisting>
+Size
+amestimateparallelscan (void);
+</programlisting>
+   Estimate and return the number of bytes of dynamic shared memory which
+   the access method will be needed to perform a parallel scan.  (This number
+   is in addition to, not in lieu of, the amount of space needed for
+   AM-independent data in <structname>ParallelIndexScanDescData</>.)
+  </para>
+
+  <para>
+   It is not necessary to implement this function for access methods which
+   do not support parallel scans or for which the number of additional bytes
+   of storage required is zero.
+  </para>
+
+  <para>
+<programlisting>
+void
+aminitparallelscan (void *target);
+</programlisting>
+   This function will be called to initialize dynamic shared memory at the
+   beginning of a parallel scan.  <parameter>target</> will point to at least
+   the number of bytes previously returned by
+   <function>amestimateparallelscan</>, and this function may use that
+   amount of space to store whatever data it wishes.
+  </para>
+
+  <para>
+   It is not necessary to implement this function for access methods which
+   do not support parallel scans or in cases where the shared memory space
+   required needs no initialization.
+  </para>
+
+  <para>
+<programlisting>
+void
+amparallelrescan (IndexScanDesc scan);
+</programlisting>
+   This function, if implemented, will be called when a parallel index scan
+   must be restarted.  It should reset any shared state set up by
+   <function>aminitparallelscan</> such that the scan will be restarted from
+   the beginning.
+  </para>
+
  </sect1>
 
  <sect1 id="index-scanning">

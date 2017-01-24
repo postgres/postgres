@@ -527,6 +527,9 @@ typedef NameData *Name;
 #define PointerIsAligned(pointer, type) \
 		(((uintptr_t)(pointer) % (sizeof (type))) == 0)
 
+#define OffsetToPointer(base, offset) \
+		((void *)((char *) base + offset))
+
 #define OidIsValid(objectId)  ((bool) ((objectId) != InvalidOid))
 
 #define RegProcedureIsValid(p)	OidIsValid(p)

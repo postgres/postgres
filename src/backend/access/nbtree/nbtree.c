@@ -118,6 +118,9 @@ bthandler(PG_FUNCTION_ARGS)
 	amroutine->amendscan = btendscan;
 	amroutine->ammarkpos = btmarkpos;
 	amroutine->amrestrpos = btrestrpos;
+	amroutine->amestimateparallelscan = NULL;
+	amroutine->aminitparallelscan = NULL;
+	amroutine->amparallelrescan = NULL;
 
 	PG_RETURN_POINTER(amroutine);
 }

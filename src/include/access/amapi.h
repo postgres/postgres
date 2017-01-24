@@ -137,6 +137,18 @@ typedef void (*ammarkpos_function) (IndexScanDesc scan);
 /* restore marked scan position */
 typedef void (*amrestrpos_function) (IndexScanDesc scan);
 
+/*
+ * Callback function signatures - for parallel index scans.
+ */
+
+/* estimate size of parallel scan descriptor */
+typedef Size (*amestimateparallelscan_function) (void);
+
+/* prepare for parallel index scan */
+typedef void (*aminitparallelscan_function) (void *target);
+
+/* (re)start parallel index scan */
+typedef void (*amparallelrescan_function) (IndexScanDesc scan);
 
 /*
  * API struct for an index AM.  Note this must be stored in a single palloc'd
@@ -196,6 +208,11 @@ typedef struct IndexAmRoutine
 	amendscan_function amendscan;
 	ammarkpos_function ammarkpos;		/* can be NULL */
 	amrestrpos_function amrestrpos;		/* can be NULL */
+
+	/* interface functions to support parallel index scans */
+	amestimateparallelscan_function amestimateparallelscan;		/* can be NULL */
+	aminitparallelscan_function aminitparallelscan;		/* can be NULL */
+	amparallelrescan_function amparallelrescan; /* can be NULL */
 } IndexAmRoutine;
 
 

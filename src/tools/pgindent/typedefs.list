@@ -1264,6 +1264,8 @@ OverrideSearchPath
 OverrideStackEntry
 PACE_HEADER
 PACL
+ParallelIndexScanDesc
+ParallelIndexScanDescData
 PATH
 PBOOL
 PCtxtHandle
