@@ -1394,6 +1394,30 @@ The commands accepted in walsender mode are:
   </varlistentry>
 
   <varlistentry>
+    <term><literal>SHOW</literal> <replaceable class="parameter">name</replaceable>
+     <indexterm><primary>SHOW</primary></indexterm>
+    </term>
+    <listitem>
+     <para>
+      Requests the server to send the current setting of a run-time parameter.
+      This is similar to the SQL command <xref linkend="sql-show">.
+     </para>
+
+     <variablelist>
+      <varlistentry>
+       <term><replaceable class="parameter">name</></term>
+       <listitem>
+         <para>
+          The name of a run-time parameter. Available parameters are documented
+          in <xref linkend="runtime-config">.
+         </para>
+       </listitem>
+      </varlistentry>
+     </variablelist>
+    </listitem>
+  </varlistentry>
+
+  <varlistentry>
     <term><literal>TIMELINE_HISTORY</literal> <replaceable class="parameter">tli</replaceable>
      <indexterm><primary>TIMELINE_HISTORY</primary></indexterm>
     </term>

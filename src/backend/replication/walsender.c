@@ -43,6 +43,7 @@
 #include <signal.h>
 #include <unistd.h>
 
+#include "access/printtup.h"
 #include "access/timeline.h"
 #include "access/transam.h"
 #include "access/xact.h"
@@ -72,11 +73,13 @@
 #include "storage/pmsignal.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"
+#include "tcop/dest.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
 #include "utils/pg_lsn.h"
+#include "utils/portal.h"
 #include "utils/ps_status.h"
 #include "utils/resowner.h"
 #include "utils/timeout.h"
@@ -1363,6 +1366,15 @@ exec_replication_command(const char *cmd_string)
 
 		case T_TimeLineHistoryCmd:
 			SendTimeLineHistory((TimeLineHistoryCmd *) cmd_node);
+			break;
+
+		case T_VariableShowStmt:
+			{
+				DestReceiver *dest = CreateDestReceiver(DestRemoteSimple);
+				VariableShowStmt *n = (VariableShowStmt *) cmd_node;
+
+				GetPGVariable(n->name, dest);
+			}
 			break;
 
 		default:

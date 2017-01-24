@@ -61,6 +61,7 @@ Node *replication_parse_result;
 /* Keyword tokens. */
 %token K_BASE_BACKUP
 %token K_IDENTIFY_SYSTEM
+%token K_SHOW
 %token K_START_REPLICATION
 %token K_CREATE_REPLICATION_SLOT
 %token K_DROP_REPLICATION_SLOT
@@ -82,14 +83,14 @@ Node *replication_parse_result;
 %type <node>	command
 %type <node>	base_backup start_replication start_logical_replication
 				create_replication_slot drop_replication_slot identify_system
-				timeline_history
+				timeline_history show
 %type <list>	base_backup_opt_list
 %type <defelt>	base_backup_opt
 %type <uintval>	opt_timeline
 %type <list>	plugin_options plugin_opt_list
 %type <defelt>	plugin_opt_elem
 %type <node>	plugin_opt_arg
-%type <str>		opt_slot
+%type <str>		opt_slot var_name
 %type <boolval>	opt_reserve_wal opt_temporary
 
 %%
@@ -112,6 +113,7 @@ command:
 			| create_replication_slot
 			| drop_replication_slot
 			| timeline_history
+			| show
 			;
 
 /*
@@ -123,6 +125,22 @@ identify_system:
 					$$ = (Node *) makeNode(IdentifySystemCmd);
 				}
 			;
+
+/*
+ * SHOW setting
+ */
+show:
+			K_SHOW var_name
+				{
+					VariableShowStmt *n = makeNode(VariableShowStmt);
+					n->name = $2;
+					$$ = (Node *) n;
+				}
+
+var_name:	IDENT	{ $$ = $1; }
+			| var_name '.' IDENT
+				{ $$ = psprintf("%s.%s", $1, $3); }
+		;
 
 /*
  * BASE_BACKUP [LABEL '<label>'] [PROGRESS] [FAST] [WAL] [NOWAIT]

@@ -119,6 +119,13 @@ extern void TupleDescInitEntry(TupleDesc desc,
 				   int32 typmod,
 				   int attdim);
 
+extern void TupleDescInitBuiltinEntry(TupleDesc desc,
+						  AttrNumber attributeNumber,
+						  const char *attributeName,
+						  Oid oidtypeid,
+						  int32 typmod,
+						  int attdim);
+
 extern void TupleDescInitEntryCollation(TupleDesc desc,
 							AttrNumber attributeNumber,
 							Oid collationid);

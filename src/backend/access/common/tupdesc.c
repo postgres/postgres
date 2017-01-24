@@ -20,6 +20,7 @@
 #include "postgres.h"
 
 #include "access/htup_details.h"
+#include "catalog/pg_collation.h"
 #include "catalog/pg_type.h"
 #include "miscadmin.h"
 #include "parser/parse_type.h"
@@ -551,6 +552,84 @@ TupleDescInitEntry(TupleDesc desc,
 	att->attcollation = typeForm->typcollation;
 
 	ReleaseSysCache(tuple);
+}
+
+/*
+ * TupleDescInitBuiltinEntry
+ *		Initialize a tuple descriptor without catalog access.  Only
+ *		a limited range of builtin types are supported.
+ */
+void
+TupleDescInitBuiltinEntry(TupleDesc desc,
+						  AttrNumber attributeNumber,
+						  const char *attributeName,
+						  Oid oidtypeid,
+						  int32 typmod,
+						  int attdim)
+{
+	Form_pg_attribute att;
+
+	/* sanity checks */
+	AssertArg(PointerIsValid(desc));
+	AssertArg(attributeNumber >= 1);
+	AssertArg(attributeNumber <= desc->natts);
+
+	/* initialize the attribute fields */
+	att = desc->attrs[attributeNumber - 1];
+	att->attrelid = 0;			/* dummy value */
+
+	/* unlike TupleDescInitEntry, we require an attribute name */
+	Assert(attributeName != NULL);
+	namestrcpy(&(att->attname), attributeName);
+
+	att->attstattarget = -1;
+	att->attcacheoff = -1;
+	att->atttypmod = typmod;
+
+	att->attnum = attributeNumber;
+	att->attndims = attdim;
+
+	att->attnotnull = false;
+	att->atthasdef = false;
+	att->attisdropped = false;
+	att->attislocal = true;
+	att->attinhcount = 0;
+	/* attacl, attoptions and attfdwoptions are not present in tupledescs */
+
+	att->atttypid = oidtypeid;
+
+	/*
+	 * Our goal here is to support just enough types to let basic builtin
+	 * commands work without catalog access - e.g. so that we can do certain
+	 * things even in processes that are not connected to a database.
+	 */
+	switch (oidtypeid)
+	{
+		case TEXTOID:
+		case TEXTARRAYOID:
+			att->attlen = -1;
+			att->attbyval = false;
+			att->attalign = 'i';
+			att->attstorage = 'x';
+			att->attcollation = DEFAULT_COLLATION_OID;
+			break;
+
+		case BOOLOID:
+			att->attlen = 1;
+			att->attbyval = true;
+			att->attalign = 'c';
+			att->attstorage = 'p';
+			att->attcollation = InvalidOid;
+			break;
+
+		case INT4OID:
+			att->attlen = 4;
+			att->attbyval = true;
+			att->attalign = 'i';
+			att->attstorage = 'p';
+			att->attcollation = InvalidOid;
+			break;
+	}
 }
 
 /*
