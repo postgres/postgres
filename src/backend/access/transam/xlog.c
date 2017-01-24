@@ -617,8 +617,8 @@ static uint32 readRecordBufSize = 0;
 /* State information for XLOG reading */
 static XLogRecPtr ReadRecPtr;	/* start of last record read */
 static XLogRecPtr EndRecPtr;	/* end+1 of last record read */
-static TimeLineID lastPageTLI = 0;
-static TimeLineID lastSegmentTLI = 0;
+static XLogRecPtr latestPagePtr;	/* start of last page read */
+static TimeLineID latestPageTLI = 0;
 
 static XLogRecPtr minRecoveryPoint;		/* local copy of
 										 * ControlFile->minRecoveryPoint */
@@ -706,7 +706,7 @@ static void CleanupBackupHistory(void);
 static void UpdateMinRecoveryPoint(XLogRecPtr lsn, bool force);
 static XLogRecord *ReadRecord(XLogRecPtr *RecPtr, int emode, bool fetching_ckpt);
 static void CheckRecoveryConsistency(void);
-static bool ValidXLOGHeader(XLogPageHeader hdr, int emode, bool segmentonly);
+static bool ValidXLOGHeader(XLogPageHeader hdr, int emode);
 static XLogRecord *ReadCheckpointRecord(XLogRecPtr RecPtr, int whichChkpt);
 static List *readTimeLineHistory(TimeLineID targetTLI);
 static bool existsTimeLineHistory(TimeLineID probeTLI);
@@ -4021,14 +4021,6 @@ ReadRecord(XLogRecPtr *RecPtr, int emode, bool fetching_ckpt)
 					(errmsg("invalid record offset at %X/%X",
 							RecPtr->xlogid, RecPtr->xrecoff)));
 
-		/*
-		 * Since we are going to a random position in WAL, forget any prior
-		 * state about what timeline we were in, and allow it to be any
-		 * timeline in expectedTLIs.  We also set a flag to allow curFileTLI
-		 * to go backwards (but we can't reset that variable right here, since
-		 * we might not change files at all).
-		 */
-		lastPageTLI = lastSegmentTLI = 0;	/* see comment in ValidXLOGHeader */
 		randAccess = true;		/* allow curFileTLI to go backwards too */
 	}
 
@@ -4346,7 +4338,7 @@ next_record_is_invalid:
  * ReadRecord.  It's not intended for use from anywhere else.
  */
 static bool
-ValidXLOGHeader(XLogPageHeader hdr, int emode, bool segmentonly)
+ValidXLOGHeader(XLogPageHeader hdr, int emode)
 {
 	XLogRecPtr	recaddr;
 
@@ -4440,31 +4432,25 @@ ValidXLOGHeader(XLogPageHeader hdr, int emode, bool segmentonly)
 	 * immediate parent's TLI, we should never see TLI go backwards across
 	 * successive pages of a consistent WAL sequence.
 	 *
-	 * Of course this check should only be applied when advancing sequentially
-	 * across pages; therefore ReadRecord resets lastPageTLI and
-	 * lastSegmentTLI to zero when going to a random page.
-	 *
-	 * Sometimes we re-open a segment that's already been partially replayed.
-	 * In that case we cannot perform the normal TLI check: if there is a
-	 * timeline switch within the segment, the first page has a smaller TLI
-	 * than later pages following the timeline switch, and we might've read
-	 * them already. As a weaker test, we still check that it's not smaller
-	 * than the TLI we last saw at the beginning of a segment. Pass
-	 * segmentonly = true when re-validating the first page like that, and the
-	 * page you're actually interested in comes later.
+	 * Sometimes we re-read a segment that's already been (partially) read.
+	 * This can happen when we read WAL segments from parent's TLI during
+	 * archive recovery, refer XLogFileReadAnyTLI.  So we only verify TLIs
+	 * for pages that are later than the last remembered LSN.
 	 */
-	if (hdr->xlp_tli < (segmentonly ? lastSegmentTLI : lastPageTLI))
+	if (XLByteLT(latestPagePtr, recaddr))
 	{
-		ereport(emode_for_corrupt_record(emode, recaddr),
-				(errmsg("out-of-sequence timeline ID %u (after %u) in log file %u, segment %u, offset %u",
-						hdr->xlp_tli,
-						segmentonly ? lastSegmentTLI : lastPageTLI,
-						readId, readSeg, readOff)));
-		return false;
+		if (hdr->xlp_tli < latestPageTLI)
+		{
+			ereport(emode_for_corrupt_record(emode, recaddr),
+					(errmsg("out-of-sequence timeline ID %u (after %u) in log file %u, segment %u, offset %u",
+							hdr->xlp_tli,
+							latestPageTLI,
+							readId, readSeg, readOff)));
+			return false;
+		}
 	}
-	lastPageTLI = hdr->xlp_tli;
-	if (readOff == 0)
-		lastSegmentTLI = hdr->xlp_tli;
+	latestPagePtr = recaddr;
+	latestPageTLI = hdr->xlp_tli;
 
 	return true;
 }
@@ -10927,7 +10913,7 @@ retry:
 							readId, readSeg, readOff)));
 			goto next_record_is_invalid;
 		}
-		if (!ValidXLOGHeader((XLogPageHeader) readBuf, emode, true))
+		if (!ValidXLOGHeader((XLogPageHeader) readBuf, emode))
 			goto next_record_is_invalid;
 	}
 
@@ -10949,7 +10935,7 @@ retry:
 				readId, readSeg, readOff)));
 		goto next_record_is_invalid;
 	}
-	if (!ValidXLOGHeader((XLogPageHeader) readBuf, emode, false))
+	if (!ValidXLOGHeader((XLogPageHeader) readBuf, emode))
 		goto next_record_is_invalid;
 
 	Assert(targetId == readId);
