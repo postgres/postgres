@@ -622,8 +622,6 @@ partition_bounds_equal(PartitionKey key,
 
 		for (j = 0; j < key->partnatts; j++)
 		{
-			int32		cmpval;
-
 			/* For range partitions, the bounds might not be finite. */
 			if (b1->content != NULL)
 			{
