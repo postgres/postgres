@@ -328,7 +328,7 @@ findJsonbValueFromContainer(JsonbContainer *container, uint32 flags,
 							JsonbValue *key)
 {
 	JEntry	   *children = container->children;
-	int			count = (container->header & JB_CMASK);
+	int			count = JsonContainerSize(container);
 	JsonbValue *result;
 
 	Assert((flags & ~(JB_FARRAY | JB_FOBJECT)) == 0);
@@ -339,7 +339,7 @@ findJsonbValueFromContainer(JsonbContainer *container, uint32 flags,
 
 	result = palloc(sizeof(JsonbValue));
 
-	if (flags & JB_FARRAY & container->header)
+	if ((flags & JB_FARRAY) && JsonContainerIsArray(container))
 	{
 		char	   *base_addr = (char *) (children + count);
 		uint32		offset = 0;
@@ -358,7 +358,7 @@ findJsonbValueFromContainer(JsonbContainer *container, uint32 flags,
 			JBE_ADVANCE_OFFSET(offset, children[i]);
 		}
 	}
-	else if (flags & JB_FOBJECT & container->header)
+	else if ((flags & JB_FOBJECT) && JsonContainerIsObject(container))
 	{
 		/* Since this is an object, account for *Pairs* of Jentrys */
 		char	   *base_addr = (char *) (children + count * 2);
@@ -422,10 +422,10 @@ getIthJsonbValueFromContainer(JsonbContainer *container, uint32 i)
 	char	   *base_addr;
 	uint32		nelements;
 
-	if ((container->header & JB_FARRAY) == 0)
+	if (!JsonContainerIsArray(container))
 		elog(ERROR, "not a jsonb array");
 
-	nelements = container->header & JB_CMASK;
+	nelements = JsonContainerSize(container);
 	base_addr = (char *) &container->children[nelements];
 
 	if (i >= nelements)
@@ -904,7 +904,7 @@ iteratorFromContainer(JsonbContainer *container, JsonbIterator *parent)
 	it = palloc(sizeof(JsonbIterator));
 	it->container = container;
 	it->parent = parent;
-	it->nElems = container->header & JB_CMASK;
+	it->nElems = JsonContainerSize(container);
 
 	/* Array starts just after header */
 	it->children = container->children;
@@ -914,7 +914,7 @@ iteratorFromContainer(JsonbContainer *container, JsonbIterator *parent)
 		case JB_FARRAY:
 			it->dataProper =
 				(char *) it->children + it->nElems * sizeof(JEntry);
-			it->isScalar = (container->header & JB_FSCALAR) != 0;
+			it->isScalar = JsonContainerIsScalar(container);
 			/* This is either a "raw scalar", or an array */
 			Assert(!it->isScalar || it->nElems == 1);
 

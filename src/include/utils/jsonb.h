@@ -205,6 +205,12 @@ typedef struct JsonbContainer
 #define JB_FOBJECT				0x20000000
 #define JB_FARRAY				0x40000000
 
+/* convenience macros for accessing a JsonbContainer struct */
+#define JsonContainerSize(jc)		((jc)->header & JB_CMASK)
+#define JsonContainerIsScalar(jc)	(((jc)->header & JB_FSCALAR) != 0)
+#define JsonContainerIsObject(jc)	(((jc)->header & JB_FOBJECT) != 0)
+#define JsonContainerIsArray(jc)	(((jc)->header & JB_FARRAY) != 0)
+
 /* The top-level on-disk format for a jsonb datum. */
 typedef struct
 {
@@ -213,10 +219,10 @@ typedef struct
 } Jsonb;
 
 /* convenience macros for accessing the root container in a Jsonb datum */
-#define JB_ROOT_COUNT(jbp_)		( *(uint32*) VARDATA(jbp_) & JB_CMASK)
-#define JB_ROOT_IS_SCALAR(jbp_) ( *(uint32*) VARDATA(jbp_) & JB_FSCALAR)
-#define JB_ROOT_IS_OBJECT(jbp_) ( *(uint32*) VARDATA(jbp_) & JB_FOBJECT)
-#define JB_ROOT_IS_ARRAY(jbp_)	( *(uint32*) VARDATA(jbp_) & JB_FARRAY)
+#define JB_ROOT_COUNT(jbp_)		(*(uint32 *) VARDATA(jbp_) & JB_CMASK)
+#define JB_ROOT_IS_SCALAR(jbp_) ((*(uint32 *) VARDATA(jbp_) & JB_FSCALAR) != 0)
+#define JB_ROOT_IS_OBJECT(jbp_) ((*(uint32 *) VARDATA(jbp_) & JB_FOBJECT) != 0)
+#define JB_ROOT_IS_ARRAY(jbp_)	((*(uint32 *) VARDATA(jbp_) & JB_FARRAY) != 0)
 
 
 enum jbvType
@@ -241,7 +247,7 @@ enum jbvType
  */
 struct JsonbValue
 {
-	enum jbvType	type;			/* Influences sort order */
+	enum jbvType type;			/* Influences sort order */
 
 	union
 	{
