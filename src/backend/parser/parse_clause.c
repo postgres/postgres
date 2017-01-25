@@ -89,8 +89,7 @@ static int get_matching_location(int sortgroupref,
 static List *resolve_unique_index_expr(ParseState *pstate, InferClause *infer,
 						  Relation heapRel);
 static List *addTargetToGroupList(ParseState *pstate, TargetEntry *tle,
-					 List *grouplist, List *targetlist, int location,
-					 bool resolveUnknown);
+					 List *grouplist, List *targetlist, int location);
 static WindowClause *findWindowClause(List *wclist, const char *name);
 static Node *transformFrameOffset(ParseState *pstate, int frameOptions,
 					 Node *clause);
@@ -2011,8 +2010,7 @@ transformGroupClauseExpr(List **flatresult, Bitmapset *seen_local,
 	if (!found)
 		*flatresult = addTargetToGroupList(pstate, tle,
 										   *flatresult, *targetlist,
-										   exprLocation(gexpr),
-										   true);
+										   exprLocation(gexpr));
 
 	/*
 	 * _something_ must have assigned us a sortgroupref by now...
@@ -2300,7 +2298,6 @@ transformSortClause(ParseState *pstate,
 					List *orderlist,
 					List **targetlist,
 					ParseExprKind exprKind,
-					bool resolveUnknown,
 					bool useSQL99)
 {
 	List	   *sortlist = NIL;
@@ -2319,8 +2316,7 @@ transformSortClause(ParseState *pstate,
 										   targetlist, exprKind);
 
 		sortlist = addTargetToSortList(pstate, tle,
-									   sortlist, *targetlist, sortby,
-									   resolveUnknown);
+									   sortlist, *targetlist, sortby);
 	}
 
 	return sortlist;
@@ -2382,7 +2378,6 @@ transformWindowDefinitions(ParseState *pstate,
 										  windef->orderClause,
 										  targetlist,
 										  EXPR_KIND_WINDOW_ORDER,
-										  true /* fix unknowns */ ,
 										  true /* force SQL99 rules */ );
 		partitionClause = transformGroupClause(pstate,
 											   windef->partitionClause,
@@ -2553,8 +2548,7 @@ transformDistinctClause(ParseState *pstate,
 			continue;			/* ignore junk */
 		result = addTargetToGroupList(pstate, tle,
 									  result, *targetlist,
-									  exprLocation((Node *) tle->expr),
-									  true);
+									  exprLocation((Node *) tle->expr));
 	}
 
 	/*
@@ -2671,8 +2665,7 @@ transformDistinctOnClause(ParseState *pstate, List *distinctlist,
 					 parser_errposition(pstate, exprLocation(dexpr))));
 		result = addTargetToGroupList(pstate, tle,
 									  result, *targetlist,
-									  exprLocation(dexpr),
-									  true);
+									  exprLocation(dexpr));
 	}
 
 	/*
@@ -2906,17 +2899,11 @@ transformOnConflictArbiter(ParseState *pstate,
  *		list, add it to the end of the list, using the given sort ordering
  *		info.
  *
- * If resolveUnknown is TRUE, convert TLEs of type UNKNOWN to TEXT.  If not,
- * do nothing (which implies the search for a sort operator will fail).
- * pstate should be provided if resolveUnknown is TRUE, but can be NULL
- * otherwise.
- *
  * Returns the updated SortGroupClause list.
  */
 List *
 addTargetToSortList(ParseState *pstate, TargetEntry *tle,
-					List *sortlist, List *targetlist, SortBy *sortby,
-					bool resolveUnknown)
+					List *sortlist, List *targetlist, SortBy *sortby)
 {
 	Oid			restype = exprType((Node *) tle->expr);
 	Oid			sortop;
@@ -2927,7 +2914,7 @@ addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 	ParseCallbackState pcbstate;
 
 	/* if tlist item is an UNKNOWN literal, change it to TEXT */
-	if (restype == UNKNOWNOID && resolveUnknown)
+	if (restype == UNKNOWNOID)
 	{
 		tle->expr = (Expr *) coerce_type(pstate, (Node *) tle->expr,
 										 restype, TEXTOID, -1,
@@ -3055,22 +3042,16 @@ addTargetToSortList(ParseState *pstate, TargetEntry *tle,
  * to a SELECT item that matches the GROUP BY item; it'd be pretty confusing
  * to report such a location.
  *
- * If resolveUnknown is TRUE, convert TLEs of type UNKNOWN to TEXT.  If not,
- * do nothing (which implies the search for an equality operator will fail).
- * pstate should be provided if resolveUnknown is TRUE, but can be NULL
- * otherwise.
- *
  * Returns the updated SortGroupClause list.
  */
 static List *
 addTargetToGroupList(ParseState *pstate, TargetEntry *tle,
-					 List *grouplist, List *targetlist, int location,
-					 bool resolveUnknown)
+					 List *grouplist, List *targetlist, int location)
 {
 	Oid			restype = exprType((Node *) tle->expr);
 
 	/* if tlist item is an UNKNOWN literal, change it to TEXT */
-	if (restype == UNKNOWNOID && resolveUnknown)
+	if (restype == UNKNOWNOID)
 	{
 		tle->expr = (Expr *) coerce_type(pstate, (Node *) tle->expr,
 										 restype, TEXTOID, -1,

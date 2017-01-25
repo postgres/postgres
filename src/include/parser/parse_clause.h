@@ -31,7 +31,7 @@ extern List *transformGroupClause(ParseState *pstate, List *grouplist,
 					 ParseExprKind exprKind, bool useSQL99);
 extern List *transformSortClause(ParseState *pstate, List *orderlist,
 					List **targetlist, ParseExprKind exprKind,
-					bool resolveUnknown, bool useSQL99);
+					bool useSQL99);
 
 extern List *transformWindowDefinitions(ParseState *pstate,
 						   List *windowdefs,
@@ -47,8 +47,7 @@ extern void transformOnConflictArbiter(ParseState *pstate,
 						   Oid *constraint);
 
 extern List *addTargetToSortList(ParseState *pstate, TargetEntry *tle,
-					List *sortlist, List *targetlist, SortBy *sortby,
-					bool resolveUnknown);
+					List *sortlist, List *targetlist, SortBy *sortby);
 extern Index assignSortGroupRef(TargetEntry *tle, List *tlist);
 extern bool targetIsInSortList(TargetEntry *tle, Oid sortop, List *sortList);
 
