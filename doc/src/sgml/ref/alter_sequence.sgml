@@ -117,7 +117,7 @@ ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> S
         The optional clause <literal>MAXVALUE <replaceable
         class="parameter">maxvalue</replaceable></literal> determines
         the maximum value for the sequence. If <literal>NO
-        MAXVALUE</literal> is specified, the defaults are
+        MAXVALUE</literal> is specified, the defaults of
         2<superscript>63</>-1 and -1 for ascending and descending
         sequences, respectively, will be used.  If neither option is
         specified, the current maximum value will be maintained.
