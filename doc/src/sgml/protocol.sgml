@@ -668,7 +668,7 @@
      number of parameter symbols (<literal>$</><replaceable>n</>)
      used in the query string.  Another special case is that a parameter's
      type can be specified as <type>void</> (that is, the OID of the
-     <type>void</> pseudotype).  This is meant to allow parameter symbols
+     <type>void</> pseudo-type).  This is meant to allow parameter symbols
      to be used for function parameters that are actually OUT parameters.
      Ordinarily there is no context in which a <type>void</> parameter
      could be used, but if such a parameter symbol appears in a function's

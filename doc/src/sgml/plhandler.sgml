@@ -26,7 +26,7 @@
     language such as C, using the version-1 interface, and registered
     with <productname>PostgreSQL</productname> as taking no arguments
     and returning the type <type>language_handler</type>.  This
-    special pseudotype identifies the function as a call handler and
+    special pseudo-type identifies the function as a call handler and
     prevents it from being called directly in SQL commands.
     For more details on C language calling conventions and dynamic loading,
     see <xref linkend="xfunc-c">.

@@ -160,8 +160,8 @@ CREATE [ OR REPLACE ] FUNCTION
       </para>
       <para>
        Depending on the implementation language it might also be allowed
-       to specify <quote>pseudotypes</> such as <type>cstring</>.
-       Pseudotypes indicate that the actual argument type is either
+       to specify <quote>pseudo-types</> such as <type>cstring</>.
+       Pseudo-types indicate that the actual argument type is either
        incompletely specified, or outside the set of ordinary SQL data types.
       </para>
       <para>
@@ -199,7 +199,7 @@ CREATE [ OR REPLACE ] FUNCTION
        can be a base, composite, or domain type,
        or can reference the type of a table column.
        Depending on the implementation language it might also be allowed
-       to specify <quote>pseudotypes</> such as <type>cstring</>.
+       to specify <quote>pseudo-types</> such as <type>cstring</>.
        If the function is not supposed to return a value, specify
        <type>void</> as the return type.
       </para>

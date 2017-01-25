@@ -2579,7 +2579,7 @@ WHERE c.altitude &gt; 500 AND c.tableoid = p.oid;
 
   <para>
    Another way to get the same effect is to use the <type>regclass</>
-   pseudo-type, which will print the table OID symbolically:
+   alias type, which will print the table OID symbolically:
 
 <programlisting>
 SELECT c.tableoid::regclass, c.name, c.altitude

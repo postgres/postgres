@@ -4661,6 +4661,10 @@ SELECT * FROM pg_attribute
    </indexterm>
 
    <indexterm zone="datatype-pseudo">
+    <primary>unknown</primary>
+   </indexterm>
+
+   <indexterm zone="datatype-pseudo">
     <primary>opaque</primary>
    </indexterm>
 
@@ -4782,8 +4786,15 @@ SELECT * FROM pg_attribute
        </row>
 
        <row>
+        <entry><type>unknown</></entry>
+        <entry>Identifies a not-yet-resolved type, e.g. of an undecorated
+         string literal.</entry>
+       </row>
+
+       <row>
         <entry><type>opaque</></entry>
-        <entry>An obsolete type name that formerly served all the above purposes.</entry>
+        <entry>An obsolete type name that formerly served many of the above
+         purposes.</entry>
        </row>
       </tbody>
      </tgroup>

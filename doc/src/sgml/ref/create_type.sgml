@@ -824,7 +824,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
    In <productname>PostgreSQL</productname> versions before 7.3, it
    was customary to avoid creating a shell type at all, by replacing the
    functions' forward references to the type name with the placeholder
-   pseudotype <type>opaque</>.  The <type>cstring</> arguments and
+   pseudo-type <type>opaque</>.  The <type>cstring</> arguments and
    results also had to be declared as <type>opaque</> before 7.3.  To
    support loading of old dump files, <command>CREATE TYPE</> will
    accept I/O functions declared using <type>opaque</>, but it will issue

@@ -762,7 +762,7 @@ SELECT * FROM vw_getfoo;
      In some cases it is useful to define table functions that can
      return different column sets depending on how they are invoked.
      To support this, the table function can be declared as returning
-     the pseudotype <type>record</>.  When such a function is used in
+     the pseudo-type <type>record</>.  When such a function is used in
      a query, the expected row structure must be specified in the
      query itself, so that the system can know how to parse and plan
      the query.  This syntax looks like:

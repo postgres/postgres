@@ -53,7 +53,7 @@ WHERE (p1.typtype = 'c' AND p1.typrelid = 0) OR
 -- Look for types that should have an array type according to their typtype,
 -- but don't.  We exclude composites here because we have not bothered to
 -- make array types corresponding to the system catalogs' rowtypes.
--- NOTE: as of 9.1, this check finds pg_node_tree, smgr, and unknown.
+-- NOTE: as of v10, this check finds pg_node_tree and smgr.
 
 SELECT p1.oid, p1.typname
 FROM pg_type as p1

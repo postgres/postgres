@@ -490,8 +490,7 @@ CheckAttributeType(const char *attname,
 	char		att_typtype = get_typtype(atttypid);
 	Oid			att_typelem;
 
-	if (atttypid == UNKNOWNOID ||
-		att_typtype == TYPTYPE_PSEUDO)
+	if (att_typtype == TYPTYPE_PSEUDO)
 	{
 		/*
 		 * Refuse any attempt to create a pseudo-type column, except for a
