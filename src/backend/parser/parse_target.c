@@ -289,12 +289,41 @@ transformExpressionList(ParseState *pstate, List *exprlist,
 
 
 /*
+ * resolveTargetListUnknowns()
+ *		Convert any unknown-type targetlist entries to type TEXT.
+ *
+ * We do this after we've exhausted all other ways of identifying the output
+ * column types of a query.
+ */
+void
+resolveTargetListUnknowns(ParseState *pstate, List *targetlist)
+{
+	ListCell   *l;
+
+	foreach(l, targetlist)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(l);
+		Oid			restype = exprType((Node *) tle->expr);
+
+		if (restype == UNKNOWNOID)
+		{
+			tle->expr = (Expr *) coerce_type(pstate, (Node *) tle->expr,
+											 restype, TEXTOID, -1,
+											 COERCION_IMPLICIT,
+											 COERCE_IMPLICIT_CAST,
+											 -1);
+		}
+	}
+}
+
+
+/*
  * markTargetListOrigins()
  *		Mark targetlist columns that are simple Vars with the source
  *		table's OID and column number.
  *
- * Currently, this is done only for SELECT targetlists, since we only
- * need the info if we are going to send it to the frontend.
+ * Currently, this is done only for SELECT targetlists and RETURNING lists,
+ * since we only need the info if we are going to send it to the frontend.
  */
 void
 markTargetListOrigins(ParseState *pstate, List *targetlist)

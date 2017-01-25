@@ -69,14 +69,23 @@ SELECT * FROM t LIMIT 10;
 
 -- Test behavior with an unknown-type literal in the WITH
 WITH q AS (SELECT 'foo' AS x)
-SELECT x, x IS OF (unknown) as is_unknown FROM q;
+SELECT x, x IS OF (text) AS is_text FROM q;
 
 WITH RECURSIVE t(n) AS (
     SELECT 'foo'
 UNION ALL
     SELECT n || ' bar' FROM t WHERE length(n) < 20
 )
-SELECT n, n IS OF (text) as is_text FROM t;
+SELECT n, n IS OF (text) AS is_text FROM t;
+
+-- In a perfect world, this would work and resolve the literal as int ...
+-- but for now, we have to be content with resolving to text too soon.
+WITH RECURSIVE t(n) AS (
+    SELECT '7'
+UNION ALL
+    SELECT n+1 FROM t WHERE n < 10
+)
+SELECT n, n IS OF (int) AS is_int FROM t;
 
 --
 -- Some examples with a tree

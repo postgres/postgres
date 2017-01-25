@@ -156,13 +156,15 @@ parse_analyze_varparams(RawStmt *parseTree, const char *sourceText,
 Query *
 parse_sub_analyze(Node *parseTree, ParseState *parentParseState,
 				  CommonTableExpr *parentCTE,
-				  bool locked_from_parent)
+				  bool locked_from_parent,
+				  bool resolve_unknowns)
 {
 	ParseState *pstate = make_parsestate(parentParseState);
 	Query	   *query;
 
 	pstate->p_parent_cte = parentCTE;
 	pstate->p_locked_from_parent = locked_from_parent;
+	pstate->p_resolve_unknowns = resolve_unknowns;
 
 	query = transformStmt(pstate, parseTree);
 
@@ -570,10 +572,17 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 		 * otherwise the behavior of SELECT within INSERT might be different
 		 * from a stand-alone SELECT. (Indeed, Postgres up through 6.5 had
 		 * bugs of just that nature...)
+		 *
+		 * The sole exception is that we prevent resolving unknown-type
+		 * outputs as TEXT.  This does not change the semantics since if the
+		 * column type matters semantically, it would have been resolved to
+		 * something else anyway.  Doing this lets us resolve such outputs as
+		 * the target column's type, which we handle below.
 		 */
 		sub_pstate->p_rtable = sub_rtable;
 		sub_pstate->p_joinexprs = NIL;	/* sub_rtable has no joins */
 		sub_pstate->p_namespace = sub_namespace;
+		sub_pstate->p_resolve_unknowns = false;
 
 		selectQuery = transformStmt(sub_pstate, stmt->selectStmt);
 
@@ -1269,6 +1278,10 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 												   pstate->p_windowdefs,
 												   &qry->targetList);
 
+	/* resolve any still-unresolved output columns as being type text */
+	if (pstate->p_resolve_unknowns)
+		resolveTargetListUnknowns(pstate, qry->targetList);
+
 	qry->rtable = pstate->p_rtable;
 	qry->jointree = makeFromExpr(pstate->p_joinlist, qual);
 
@@ -1843,11 +1856,19 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 		/*
 		 * Transform SelectStmt into a Query.
 		 *
+		 * This works the same as SELECT transformation normally would, except
+		 * that we prevent resolving unknown-type outputs as TEXT.  This does
+		 * not change the subquery's semantics since if the column type
+		 * matters semantically, it would have been resolved to something else
+		 * anyway.  Doing this lets us resolve such outputs using
+		 * select_common_type(), below.
+		 *
 		 * Note: previously transformed sub-queries don't affect the parsing
 		 * of this sub-query, because they are not in the toplevel pstate's
 		 * namespace list.
 		 */
-		selectQuery = parse_sub_analyze((Node *) stmt, pstate, NULL, false);
+		selectQuery = parse_sub_analyze((Node *) stmt, pstate,
+										NULL, false, false);
 
 		/*
 		 * Check for bogus references to Vars on the current query level (but
@@ -2349,6 +2370,10 @@ transformReturningList(ParseState *pstate, List *returningList)
 
 	/* mark column origins */
 	markTargetListOrigins(pstate, rlist);
+
+	/* resolve any still-unresolved output columns as being type text */
+	if (pstate->p_resolve_unknowns)
+		resolveTargetListUnknowns(pstate, rlist);
 
 	/* restore state */
 	pstate->p_next_resno = save_next_resno;

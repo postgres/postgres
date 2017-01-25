@@ -133,9 +133,9 @@ SELECT * FROM t LIMIT 10;
 
 -- Test behavior with an unknown-type literal in the WITH
 WITH q AS (SELECT 'foo' AS x)
-SELECT x, x IS OF (unknown) as is_unknown FROM q;
-  x  | is_unknown 
------+------------
+SELECT x, x IS OF (text) AS is_text FROM q;
+  x  | is_text 
+-----+---------
  foo | t
 (1 row)
 
@@ -144,7 +144,7 @@ WITH RECURSIVE t(n) AS (
 UNION ALL
     SELECT n || ' bar' FROM t WHERE length(n) < 20
 )
-SELECT n, n IS OF (text) as is_text FROM t;
+SELECT n, n IS OF (text) AS is_text FROM t;
             n            | is_text 
 -------------------------+---------
  foo                     | t
@@ -155,6 +155,18 @@ SELECT n, n IS OF (text) as is_text FROM t;
  foo bar bar bar bar bar | t
 (6 rows)
 
+-- In a perfect world, this would work and resolve the literal as int ...
+-- but for now, we have to be content with resolving to text too soon.
+WITH RECURSIVE t(n) AS (
+    SELECT '7'
+UNION ALL
+    SELECT n+1 FROM t WHERE n < 10
+)
+SELECT n, n IS OF (int) AS is_int FROM t;
+ERROR:  operator does not exist: text + integer
+LINE 4:     SELECT n+1 FROM t WHERE n < 10
+                    ^
+HINT:  No operator matches the given name and argument type(s). You might need to add explicit type casts.
 --
 -- Some examples with a tree
 --

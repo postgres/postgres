@@ -59,7 +59,7 @@ CREATE FUNCTION test_atomic_ops()
 CREATE FUNCTION test1 (int) RETURNS int LANGUAGE SQL
     AS 'SELECT ''not an integer'';';
 ERROR:  return type mismatch in function declared to return integer
-DETAIL:  Actual return type is unknown.
+DETAIL:  Actual return type is text.
 CONTEXT:  SQL function "test1"
 CREATE FUNCTION test1 (int) RETURNS int LANGUAGE SQL
     AS 'not even SQL';

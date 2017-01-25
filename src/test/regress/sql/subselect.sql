@@ -80,6 +80,16 @@ SELECT '' AS five, f1 AS "Correlated Field"
   WHERE (f1, f2) IN (SELECT f2, CAST(f3 AS int4) FROM SUBSELECT_TBL
                      WHERE f3 IS NOT NULL);
 
+-- Unspecified-type literals in output columns should resolve as text
+
+SELECT *, pg_typeof(f1) FROM
+  (SELECT 'foo' AS f1 FROM generate_series(1,3)) ss ORDER BY 1;
+
+-- ... unless there's context to suggest differently
+
+explain verbose select '42' union all select '43';
+explain verbose select '42' union all select 43;
+
 --
 -- Use some existing tables in the regression test
 --

@@ -198,6 +198,14 @@ SELECT * FROM mvtest_mv_v_3;
 SELECT * FROM mvtest_mv_v_4;
 DROP TABLE mvtest_v CASCADE;
 
+-- Check that unknown literals are converted to "text" in CREATE MATVIEW,
+-- so that we don't end up with unknown-type columns.
+CREATE MATERIALIZED VIEW mv_unspecified_types AS
+  SELECT 42 as i, 42.5 as num, 'foo' as u, 'foo'::unknown as u2, null as n;
+\d+ mv_unspecified_types
+SELECT * FROM mv_unspecified_types;
+DROP MATERIALIZED VIEW mv_unspecified_types;
+
 -- make sure that create WITH NO DATA does not plan the query (bug #13907)
 create materialized view mvtest_error as select 1/0 as x;  -- fail
 create materialized view mvtest_error as select 1/0 as x with no data;

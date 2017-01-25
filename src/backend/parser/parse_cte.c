@@ -241,7 +241,7 @@ analyzeCTE(ParseState *pstate, CommonTableExpr *cte)
 	/* Analysis not done already */
 	Assert(!IsA(cte->ctequery, Query));
 
-	query = parse_sub_analyze(cte->ctequery, pstate, cte, false);
+	query = parse_sub_analyze(cte->ctequery, pstate, cte, false, true);
 	cte->ctequery = (Node *) query;
 
 	/*
@@ -393,11 +393,10 @@ analyzeCTETargetList(ParseState *pstate, CommonTableExpr *cte, List *tlist)
 
 		/*
 		 * If the CTE is recursive, force the exposed column type of any
-		 * "unknown" column to "text".  This corresponds to the fact that
-		 * SELECT 'foo' UNION SELECT 'bar' will ultimately produce text. We
-		 * might see "unknown" as a result of an untyped literal in the
-		 * non-recursive term's select list, and if we don't convert to text
-		 * then we'll have a mismatch against the UNION result.
+		 * "unknown" column to "text".  We must deal with this here because
+		 * we're called on the non-recursive term before there's been any
+		 * attempt to force unknown output columns to some other type.  We
+		 * have to resolve unknowns before looking at the recursive term.
 		 *
 		 * The column might contain 'foo' COLLATE "bar", so don't override
 		 * collation if it's already set.

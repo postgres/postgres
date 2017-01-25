@@ -51,6 +51,7 @@ make_parsestate(ParseState *parentParseState)
 
 	/* Fill in fields that don't start at null/false/zero */
 	pstate->p_next_resno = 1;
+	pstate->p_resolve_unknowns = true;
 
 	if (parentParseState)
 	{

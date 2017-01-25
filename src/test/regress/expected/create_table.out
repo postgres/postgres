@@ -199,6 +199,14 @@ CREATE TABLE array_index_op_test (
 CREATE TABLE testjsonb (
        j jsonb
 );
+CREATE TABLE unknowntab (
+	u unknown    -- fail
+);
+ERROR:  column "u" has pseudo-type unknown
+CREATE TYPE unknown_comptype AS (
+	u unknown    -- fail
+);
+ERROR:  column "u" has pseudo-type unknown
 CREATE TABLE IF NOT EXISTS test_tsvector(
 	t text,
 	a tsvector

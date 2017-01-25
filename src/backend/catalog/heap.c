@@ -490,18 +490,8 @@ CheckAttributeType(const char *attname,
 	char		att_typtype = get_typtype(atttypid);
 	Oid			att_typelem;
 
-	if (atttypid == UNKNOWNOID)
-	{
-		/*
-		 * Warn user, but don't fail, if column to be created has UNKNOWN type
-		 * (usually as a result of a 'retrieve into' - jolly)
-		 */
-		ereport(WARNING,
-				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-				 errmsg("column \"%s\" has type %s", attname, "unknown"),
-				 errdetail("Proceeding with relation creation anyway.")));
-	}
-	else if (att_typtype == TYPTYPE_PSEUDO)
+	if (atttypid == UNKNOWNOID ||
+		att_typtype == TYPTYPE_PSEUDO)
 	{
 		/*
 		 * Refuse any attempt to create a pseudo-type column, except for a

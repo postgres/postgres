@@ -251,9 +251,10 @@ CREATE VIEW [ <replaceable>schema</> . ] <replaceable>view_name</> AS WITH RECUR
 <programlisting>
 CREATE VIEW vista AS SELECT 'Hello World';
 </programlisting>
-    is bad form in two ways: the column name defaults to <literal>?column?</>,
-    and the column data type defaults to <type>unknown</>.  If you want a
-    string literal in a view's result, use something like:
+    is bad form because the column name defaults to <literal>?column?</>;
+    also, the column data type defaults to <type>text</>, which might not
+    be what you wanted.  Better style for a string literal in a view's
+    result is something like:
 <programlisting>
 CREATE VIEW vista AS SELECT text 'Hello World' AS hello;
 </programlisting>

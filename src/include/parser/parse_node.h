@@ -150,6 +150,9 @@ typedef Node *(*CoerceParamHook) (ParseState *pstate, Param *param,
  * p_locked_from_parent: true if parent query level applies FOR UPDATE/SHARE
  * to this subquery as a whole.
  *
+ * p_resolve_unknowns: resolve unknown-type SELECT output columns as type TEXT
+ * (this is true by default).
+ *
  * p_hasAggs, p_hasWindowFuncs, etc: true if we've found any of the indicated
  * constructs in the query.
  *
@@ -182,6 +185,8 @@ struct ParseState
 	List	   *p_locking_clause;		/* raw FOR UPDATE/FOR SHARE info */
 	bool		p_locked_from_parent;	/* parent has marked this subquery
 										 * with FOR UPDATE/FOR SHARE */
+	bool		p_resolve_unknowns;		/* resolve unknown-type SELECT outputs
+										 * as type text */
 
 	/* Flags telling about things found in the query: */
 	bool		p_hasAggs;

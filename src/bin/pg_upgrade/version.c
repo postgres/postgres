@@ -185,3 +185,100 @@ old_9_3_check_for_line_data_type_usage(ClusterInfo *cluster)
 	else
 		check_ok();
 }
+
+
+/*
+ * old_9_6_check_for_unknown_data_type_usage()
+ *	9.6 -> 10
+ *	It's no longer allowed to create tables or views with "unknown"-type
+ *	columns.  We do not complain about views with such columns, because
+ *	they should get silently converted to "text" columns during the DDL
+ *	dump and reload; it seems unlikely to be worth making users do that
+ *	by hand.  However, if there's a table with such a column, the DDL
+ *	reload will fail, so we should pre-detect that rather than failing
+ *	mid-upgrade.  Worse, if there's a matview with such a column, the
+ *	DDL reload will silently change it to "text" which won't match the
+ *	on-disk storage (which is like "cstring").  So we *must* reject that.
+ *	Also check composite types, in case they are used for table columns.
+ *	We needn't check indexes, because "unknown" has no opclasses.
+ */
+void
+old_9_6_check_for_unknown_data_type_usage(ClusterInfo *cluster)
+{
+	int			dbnum;
+	FILE	   *script = NULL;
+	bool		found = false;
+	char		output_path[MAXPGPATH];
+
+	prep_status("Checking for invalid \"unknown\" user columns");
+
+	snprintf(output_path, sizeof(output_path), "tables_using_unknown.txt");
+
+	for (dbnum = 0; dbnum < cluster->dbarr.ndbs; dbnum++)
+	{
+		PGresult   *res;
+		bool		db_used = false;
+		int			ntups;
+		int			rowno;
+		int			i_nspname,
+					i_relname,
+					i_attname;
+		DbInfo	   *active_db = &cluster->dbarr.dbs[dbnum];
+		PGconn	   *conn = connectToServer(cluster, active_db->db_name);
+
+		res = executeQueryOrDie(conn,
+								"SELECT n.nspname, c.relname, a.attname "
+								"FROM	pg_catalog.pg_class c, "
+								"		pg_catalog.pg_namespace n, "
+								"		pg_catalog.pg_attribute a "
+								"WHERE	c.oid = a.attrelid AND "
+								"		NOT a.attisdropped AND "
+								"		a.atttypid = 'pg_catalog.unknown'::pg_catalog.regtype AND "
+						   "		c.relkind IN ('r', 'c', 'm') AND "
+								"		c.relnamespace = n.oid AND "
+		/* exclude possible orphaned temp tables */
+								"		n.nspname !~ '^pg_temp_' AND "
+						 "		n.nspname !~ '^pg_toast_temp_' AND "
+								"		n.nspname NOT IN ('pg_catalog', 'information_schema')");
+
+		ntups = PQntuples(res);
+		i_nspname = PQfnumber(res, "nspname");
+		i_relname = PQfnumber(res, "relname");
+		i_attname = PQfnumber(res, "attname");
+		for (rowno = 0; rowno < ntups; rowno++)
+		{
+			found = true;
+			if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
+				pg_fatal("could not open file \"%s\": %s\n", output_path,
+						 strerror(errno));
+			if (!db_used)
+			{
+				fprintf(script, "Database: %s\n", active_db->db_name);
+				db_used = true;
+			}
+			fprintf(script, "  %s.%s.%s\n",
+					PQgetvalue(res, rowno, i_nspname),
+					PQgetvalue(res, rowno, i_relname),
+					PQgetvalue(res, rowno, i_attname));
+		}
+
+		PQclear(res);
+
+		PQfinish(conn);
+	}
+
+	if (script)
+		fclose(script);
+
+	if (found)
+	{
+		pg_log(PG_REPORT, "fatal\n");
+		pg_fatal("Your installation contains the \"unknown\" data type in user tables.  This\n"
+				 "data type is no longer allowed in tables, so this cluster cannot currently\n"
+				 "be upgraded.  You can remove the problem tables and restart the upgrade.\n"
+				 "A list of the problem columns is in the file:\n"
+				 "    %s\n\n", output_path);
+	}
+	else
+		check_ok();
+}

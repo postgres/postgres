@@ -984,7 +984,8 @@ domain's base type for all subsequent steps.
 <para>
 If all inputs are of type <type>unknown</type>, resolve as type
 <type>text</type> (the preferred type of the string category).
-Otherwise, <type>unknown</type> inputs are ignored.
+Otherwise, <type>unknown</type> inputs are ignored for the purposes
+of the remaining rules.
 </para>
 </step>
 
@@ -1076,6 +1077,53 @@ but <type>integer</> can be implicitly cast to <type>real</>, the union
 result type is resolved as <type>real</>.
 </para>
 </example>
+</sect1>
+
+<sect1 id="typeconv-select">
+<title><literal>SELECT</literal> Output Columns</title>
+
+<indexterm zone="typeconv-select">
+ <primary>SELECT</primary>
+ <secondary>determination of result type</secondary>
+</indexterm>
+
+<para>
+The rules given in the preceding sections will result in assignment
+of non-<type>unknown</> data types to all expressions in a SQL query,
+except for unspecified-type literals that appear as simple output
+columns of a <command>SELECT</> command.  For example, in
+
+<screen>
+SELECT 'Hello World';
+</screen>
+
+there is nothing to identify what type the string literal should be
+taken as.  In this situation <productname>PostgreSQL</> will fall back
+to resolving the literal's type as <type>text</>.
+</para>
+
+<para>
+When the <command>SELECT</> is one arm of a <literal>UNION</>
+(or <literal>INTERSECT</> or <literal>EXCEPT</>) construct, or when it
+appears within <command>INSERT ... SELECT</>, this rule is not applied
+since rules given in preceding sections take precedence.  The type of an
+unspecified-type literal can be taken from the other <literal>UNION</> arm
+in the first case, or from the destination column in the second case.
+</para>
+
+<para>
+<literal>RETURNING</> lists are treated the same as <command>SELECT</>
+output lists for this purpose.
+</para>
+
+<note>
+ <para>
+  Prior to <productname>PostgreSQL</> 10, this rule did not exist, and
+  unspecified-type literals in a <command>SELECT</> output list were
+  left as type <type>unknown</>.  That had assorted bad consequences,
+  so it's been changed.
+ </para>
+</note>
 
 </sect1>
 </chapter>

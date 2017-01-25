@@ -224,6 +224,14 @@ SELECT relname, relkind, reloptions FROM pg_class
                      'mysecview3'::regclass, 'mysecview4'::regclass)
        ORDER BY relname;
 
+-- Check that unknown literals are converted to "text" in CREATE VIEW,
+-- so that we don't end up with unknown-type columns.
+
+CREATE VIEW unspecified_types AS
+  SELECT 42 as i, 42.5 as num, 'foo' as u, 'foo'::unknown as u2, null as n;
+\d+ unspecified_types
+SELECT * FROM unspecified_types;
+
 -- This test checks that proper typmods are assigned in a multi-row VALUES
 
 CREATE VIEW tt1 AS

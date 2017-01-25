@@ -1846,7 +1846,7 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 	/*
 	 * OK, let's transform the sub-SELECT.
 	 */
-	qtree = parse_sub_analyze(sublink->subselect, pstate, NULL, false);
+	qtree = parse_sub_analyze(sublink->subselect, pstate, NULL, false, true);
 
 	/*
 	 * Check that we got a SELECT.  Anything else should be impossible given
