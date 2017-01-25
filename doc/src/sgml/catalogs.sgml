@@ -9319,7 +9319,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       <entry><structfield>temporary</structfield></entry>
       <entry><type>boolean</type></entry>
       <entry></entry>
-      <entry>True if this is temporary replication slot. Temporary slots are
+      <entry>True if this is a temporary replication slot. Temporary slots are
       not saved to disk and are automatically dropped on error or when
       the session has finished.</entry>
      </row>
