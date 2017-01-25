@@ -2,7 +2,7 @@
  * launcher.c
  *	   PostgreSQL logical replication worker launcher process
  *
- * Copyright (c) 2012-2016, PostgreSQL Global Development Group
+ * Copyright (c) 2016-2017, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/replication/logical/launcher.c
