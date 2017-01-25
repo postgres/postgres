@@ -1114,20 +1114,20 @@ DROP VIEW v1;
 DROP TABLE t1;
 
 -- check that an auto-updatable view on a partitioned table works correctly
-create table p (a int, b int) partition by range (a, b);
-create table p1 (b int not null, a int not null) partition by range (b);
-create table p11 (like p1);
-alter table p11 drop a;
-alter table p11 add a int;
-alter table p11 drop a;
-alter table p11 add a int not null;
-alter table p1 attach partition p11 for values from (2) to (5);
-alter table p attach partition p1 for values from (1, 2) to (1, 10);
+create table pt (a int, b int) partition by range (a, b);
+create table pt1 (b int not null, a int not null) partition by range (b);
+create table pt11 (like pt1);
+alter table pt11 drop a;
+alter table pt11 add a int;
+alter table pt11 drop a;
+alter table pt11 add a int not null;
+alter table pt1 attach partition pt11 for values from (2) to (5);
+alter table pt attach partition pt1 for values from (1, 2) to (1, 10);
 
-create view pv as select * from p;
-insert into pv values (1, 2);
-select tableoid::regclass, * from p;
-create view pv_wco as select * from p where a = 0 with check option;
-insert into pv_wco values (1, 2);
-drop view pv, pv_wco;
-drop table p, p1, p11;
+create view ptv as select * from pt;
+insert into ptv values (1, 2);
+select tableoid::regclass, * from pt;
+create view ptv_wco as select * from pt where a = 0 with check option;
+insert into ptv_wco values (1, 2);
+drop view ptv, ptv_wco;
+drop table pt, pt1, pt11;
