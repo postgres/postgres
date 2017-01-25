@@ -94,7 +94,7 @@ EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 1000;
    and the entry in this case is <function>scalarltsel</function>.
    The <function>scalarltsel</function> function retrieves the histogram for
    <structfield>unique1</structfield> from
-   <structname>pg_statistics</structname>.  For manual queries it is more
+   <structname>pg_statistic</structname>.  For manual queries it is more
    convenient to look in the simpler <structname>pg_stats</structname>
    view:
 

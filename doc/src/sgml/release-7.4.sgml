@@ -2614,7 +2614,7 @@ UPDATE pg_database SET datallowconn = false WHERE datname = 'template0';
 </para>
 
 <itemizedlist>
-<listitem><para>Fix <structname>pg_statistics</> alignment bug that could crash optimizer</para>
+<listitem><para>Fix <structname>pg_statistic</> alignment bug that could crash optimizer</para>
 <para>See above for details about this problem.</para></listitem>
 <listitem><para>Allow non-super users to update <structname>pg_settings</></para></listitem>
 <listitem><para>Fix several optimizer bugs, most of which led to

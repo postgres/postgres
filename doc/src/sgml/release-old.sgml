@@ -1650,7 +1650,7 @@ operations on bytea columns (Joe)</para></listitem>
 <listitem><para>Add variable db_user_namespace for database-local user names (Bruce)</para></listitem>
 <listitem><para>SSL improvements (Bear Giles)</para></listitem>
 <listitem><para>Make encryption of stored passwords the default (Bruce)</para></listitem>
-<listitem><para>Allow pg_statistics to be reset by calling pg_stat_reset() (Christopher)</para></listitem>
+<listitem><para>Allow pg_statistic to be reset by calling pg_stat_reset() (Christopher)</para></listitem>
 <listitem><para>Add log_duration parameter (Bruce)</para></listitem>
 <listitem><para>Rename debug_print_query to log_statement (Bruce)</para></listitem>
 <listitem><para>Rename show_query_stats to show_statement_stats (Bruce)</para></listitem>
@@ -3893,7 +3893,7 @@ Faster sorting by calling fewer functions (Tom)
 Create system indexes to match all system caches (Bruce, Hiroshi)
 Make system caches use system indexes (Bruce)
 Make all system indexes unique (Bruce)
-Improve pg_statistics management for VACUUM speed improvement (Tom)
+Improve pg_statistic management for VACUUM speed improvement (Tom)
 Flush backend cache less frequently (Tom, Hiroshi)
 COPY now reuses previous memory allocation, improving performance (Tom)
 Improve optimization cost estimation (Tom)

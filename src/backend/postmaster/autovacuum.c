@@ -2876,7 +2876,7 @@ relation_needs_vacanalyze(Oid relid,
 		*doanalyze = false;
 	}
 
-	/* ANALYZE refuses to work with pg_statistics */
+	/* ANALYZE refuses to work with pg_statistic */
 	if (relid == StatisticRelationId)
 		*doanalyze = false;
 }
