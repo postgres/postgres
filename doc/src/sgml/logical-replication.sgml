@@ -24,7 +24,7 @@
  </para>
 
  <para>
-  Logical replication sends the changes on the publisher to the subscriber as
+  Logical replication sends changes on the publisher to the subscriber as
   they occur in real-time.  The subscriber applies the data in the same order
   as the publisher so that transactional consistency is guaranteed for
   publications within a single subscription.  This method of data replication
@@ -44,7 +44,7 @@
 
    <listitem>
     <para>
-     Firing triggers for individual changes as they are incoming to
+     Firing triggers for individual changes as they arrive on the
      subscriber.
     </para>
    </listitem>
@@ -81,19 +81,19 @@
   instance and can be used as a publisher for other databases by defining its
   own publications.  When the subscriber is treated as read-only by
   application, there will be no conflicts from a single subscription.  On the
-  other hand, if there are other writes done either by application or other
-  subscribers to the same set of tables conflicts can arise.
+  other hand, if there are other writes done either by an application or by other
+  subscribers to the same set of tables, conflicts can arise.
  </para>
 
  <sect1 id="logical-replication-publication">
   <title>Publication</title>
 
   <para>
-   A <firstterm>publication</firstterm> object can be defined on any physical
+   A <firstterm>publication</firstterm> can be defined on any physical
    replication master.  The node where a publication is defined is referred to
    as <firstterm>publisher</firstterm>.  A publication is a set of changes
-   generated from a group of tables, and might also be described as a change
-   set or replication set.  Each publication exists in only one database.
+   generated from a table or a group of tables, and might also be described as
+   a change set or replication set.  Each publication exists in only one database.
   </para>
 
   <para>
@@ -105,9 +105,9 @@
   </para>
 
   <para>
-   Publications can choose to limit the changes they produce to show
+   Publications can choose to limit the changes they produce to
    any combination of <command>INSERT</command>, <command>UPDATE</command>, and
-   <command>DELETE</command> in a similar way to the way triggers are fired by
+   <command>DELETE</command>, similar to how triggers are fired by
    particular event types.  If a table without a <literal>REPLICA
    IDENTITY</literal> is added to a publication that
    replicates <command>UPDATE</command> or <command>DELETE</command>
@@ -121,7 +121,7 @@
 
   <para>
    A publication is created using the <xref linkend="sql-createpublication">
-   command and may be later altered or dropped using corresponding commands.
+   command and may later be altered or dropped using corresponding commands.
   </para>
 
   <para>
@@ -139,9 +139,9 @@
   <para>
    A <firstterm>subscription</firstterm> is the downstream side of logical
    replication.  The node where a subscription is defined is referred to as
-   the <firstterm>subscriber</firstterm>.  Subscription defines the connection
+   the <firstterm>subscriber</firstterm>.  A subscription defines the connection
    to another database and set of publications (one or more) to which it wants
-   to be subscribed.
+   to subscribe.
   </para>
 
   <para>
@@ -153,7 +153,7 @@
   <para>
    A subscriber node may have multiple subscriptions if desired.  It is
    possible to define multiple subscriptions between a single
-   publisher-subscriber pair, in which case extra care must be taken to ensure
+   publisher-subscriber pair, in which case care must be taken to ensure
    that the subscribed publication objects don't overlap.
   </para>
 
@@ -163,9 +163,9 @@
   </para>
 
   <para>
-   Subscriptions are not dumped by <command>pg_dump</command> by default but
-   can be requested using the command-line
-   option <option>--subscriptions</option>.
+   Subscriptions are not dumped by <command>pg_dump</command> by default, but
+   this can be requested using the command-line
+   option <option>--include-subscriptions</option>.
   </para>
 
   <para>
@@ -182,8 +182,8 @@
   </para>
 
   <para>
-   The schema definitions are not replicated and the published tables must
-   exist on the subsriber for replication to work.  Only regular tables may be
+   The schema definitions are not replicated, and the published tables must
+   exist on the subscriber.  Only regular tables may be
    the target of replication.  For example, you can't replicate to a view.
   </para>
 
@@ -203,9 +203,9 @@
   <title>Conflicts</title>
 
   <para>
-   The logical replication behaves similarly to normal DML operations in that
+   Logical replication behaves similarly to normal DML operations in that
    the data will be updated even if it was changed locally on the subscriber
-   node.  If the incoming data violates any constraints the replication will
+   node.  If incoming data violates any constraints the replication will
    stop.  This is referred to as a <firstterm>conflict</firstterm>.  When
    replicating <command>UPDATE</command> or <command>DELETE</command>
    operations, missing data will not produce a conflict and such operations
@@ -224,8 +224,8 @@
    transaction that conflicts with the existing data.  The transaction can be
    skipped by calling the <link linkend="pg-replication-origin-advance">
    <function>pg_replication_origin_advance()</function></link> function with
-   a <parameter>node_name</parameter> corresponding to the subscription name.
-   The current position of origins can be seen in the
+   a <parameter>node_name</parameter> corresponding to the subscription name,
+   and a position.  The current position of origins can be seen in the
    <link linkend="view-pg-replication-origin-status">
    <structname>pg_replication_origin_status</structname></link> system view.
   </para>
@@ -246,8 +246,8 @@
   <para>
    Logical replication is built with an architecture similar to physical
    streaming replication (see <xref linkend="streaming-replication">).  It is
-   implemented by <quote>walsender</quote> and the <quote>apply</quote>
-   processes.  The walsender starts logical decoding (described
+   implemented by <quote>walsender</quote> and <quote>apply</quote>
+   processes.  The walsender process starts logical decoding (described
    in <xref linkend="logicaldecoding">) of the WAL and loads the standard
    logical decoding plugin (pgoutput).  The plugin transforms the changes read
    from WAL to the logical replication protocol
@@ -255,7 +255,7 @@
    according to the publication specification.  The data is then continuously
    transferred using the streaming replication protocol to the apply worker,
    which maps the data to local tables and applies the individual changes as
-   they are received in exact transactional order.
+   they are received, in correct transactional order.
   </para>
 
   <para>
@@ -270,9 +270,9 @@
   <title>Monitoring</title>
 
   <para>
-   Because logical replication is based on similar architecture as
-   <link linkend="streaming-replication">physical streaming replication</link>
-   the monitoring on a publication node is very similar to monitoring of
+   Because logical replication is based on a similar architecture as
+   <link linkend="streaming-replication">physical streaming replication</link>,
+   the monitoring on a publication node is similar to monitoring of a
    physical replication master
    (see <xref linkend="streaming-replication-monitoring">).
   </para>
@@ -295,8 +295,8 @@
   <title>Security</title>
 
   <para>
-   Logical replication connections occur in the same way as physical streaming
-   replication.  It requires access to be specifically given using
+   Logical replication connections occur in the same way as with physical streaming
+   replication.  It requires access to be explicitly given using
    <filename>pg_hba.conf</filename>.  The role used for the replication
    connection must have the <literal>REPLICATION</literal> attribute.  This
    gives a role access to both logical and physical replication.
@@ -333,7 +333,7 @@
   <para>
    On the publisher side, <varname>wal_level</varname> must be set to
    <literal>logical</literal>, and <varname>max_replication_slots</varname>
-   has to be set to at least the number of subscriptions expected to connect.
+   must be set to at least the number of subscriptions expected to connect.
    And <varname>max_wal_senders</varname> should be set to at least the same
    as <varname>max_replication_slots</varname> plus the number of physical replicas
    that are connected at the same time.
@@ -343,7 +343,7 @@
    The subscriber also requires the <varname>max_replication_slots</varname>
    to be set.  In this case it should be set to at least the number of
    subscriptions that will be added to the subscriber.
-   <varname>max_logical_replication_workers</varname> has to be set to at
+   <varname>max_logical_replication_workers</varname> must be set to at
    least the number of subscriptions.  Additionally the
    <varname>max_worker_processes</varname> may need to be adjusted to
    accommodate for replication workers, at least
