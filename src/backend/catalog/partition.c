@@ -1700,12 +1700,11 @@ get_partition_for_tuple(PartitionDispatch *pd,
 			return -1;
 		}
 
-		if (myslot != NULL)
+		if (myslot != NULL && map != NULL)
 		{
 			HeapTuple	tuple = ExecFetchSlotTuple(slot);
 
 			ExecClearTuple(myslot);
-			Assert(map != NULL);
 			tuple = do_convert_tuple(tuple, map);
 			ExecStoreTuple(tuple, myslot, InvalidBuffer, true);
 			slot = myslot;
