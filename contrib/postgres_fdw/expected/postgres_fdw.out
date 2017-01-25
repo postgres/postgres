@@ -2685,9 +2685,9 @@ select sum(c1%3), sum(distinct c1%3 order by c1%3) filter (where c1%3 < 2), c2 f
 
 -- Outer query is aggregation query
 explain (verbose, costs off)
-select distinct (select count(*) filter (where t2.c2 = 6 and t2.c1 < 10) from ft1 t1 where t1.c1 = 6) from ft2 t2 order by 1;
-                                              QUERY PLAN                                               
--------------------------------------------------------------------------------------------------------
+select distinct (select count(*) filter (where t2.c2 = 6 and t2.c1 < 10) from ft1 t1 where t1.c1 = 6) from ft2 t2 where t2.c2 % 6 = 0 order by 1;
+                                                          QUERY PLAN                                                          
+------------------------------------------------------------------------------------------------------------------------------
  Unique
    Output: ((SubPlan 1))
    ->  Sort
@@ -2696,14 +2696,14 @@ select distinct (select count(*) filter (where t2.c2 = 6 and t2.c1 < 10) from ft
          ->  Foreign Scan
                Output: (SubPlan 1)
                Relations: Aggregate on (public.ft2 t2)
-               Remote SQL: SELECT count(*) FILTER (WHERE ((c2 = 6) AND ("C 1" < 10))) FROM "S 1"."T 1"
+               Remote SQL: SELECT count(*) FILTER (WHERE ((c2 = 6) AND ("C 1" < 10))) FROM "S 1"."T 1" WHERE (((c2 % 6) = 0))
                SubPlan 1
                  ->  Foreign Scan on public.ft1 t1
                        Output: (count(*) FILTER (WHERE ((t2.c2 = 6) AND (t2.c1 < 10))))
                        Remote SQL: SELECT NULL FROM "S 1"."T 1" WHERE (("C 1" = 6))
 (13 rows)
 
-select distinct (select count(*) filter (where t2.c2 = 6 and t2.c1 < 10) from ft1 t1 where t1.c1 = 6) from ft2 t2 order by 1;
+select distinct (select count(*) filter (where t2.c2 = 6 and t2.c1 < 10) from ft1 t1 where t1.c1 = 6) from ft2 t2 where t2.c2 % 6 = 0 order by 1;
  count 
 -------
      1
@@ -2711,7 +2711,7 @@ select distinct (select count(*) filter (where t2.c2 = 6 and t2.c1 < 10) from ft
 
 -- Inner query is aggregation query
 explain (verbose, costs off)
-select distinct (select count(t1.c1) filter (where t2.c2 = 6 and t2.c1 < 10) from ft1 t1 where t1.c1 = 6) from ft2 t2 order by 1;
+select distinct (select count(t1.c1) filter (where t2.c2 = 6 and t2.c1 < 10) from ft1 t1 where t1.c1 = 6) from ft2 t2 where t2.c2 % 6 = 0 order by 1;
                                                                       QUERY PLAN                                                                      
 ------------------------------------------------------------------------------------------------------------------------------------------------------
  Unique
@@ -2721,7 +2721,7 @@ select distinct (select count(t1.c1) filter (where t2.c2 = 6 and t2.c1 < 10) fro
          Sort Key: ((SubPlan 1))
          ->  Foreign Scan on public.ft2 t2
                Output: (SubPlan 1)
-               Remote SQL: SELECT "C 1", c2 FROM "S 1"."T 1"
+               Remote SQL: SELECT "C 1", c2 FROM "S 1"."T 1" WHERE (((c2 % 6) = 0))
                SubPlan 1
                  ->  Foreign Scan
                        Output: (count(t1.c1) FILTER (WHERE ((t2.c2 = 6) AND (t2.c1 < 10))))
@@ -2729,7 +2729,7 @@ select distinct (select count(t1.c1) filter (where t2.c2 = 6 and t2.c1 < 10) fro
                        Remote SQL: SELECT count("C 1") FILTER (WHERE (($1::integer = 6) AND ($2::integer < 10))) FROM "S 1"."T 1" WHERE (("C 1" = 6))
 (13 rows)
 
-select distinct (select count(t1.c1) filter (where t2.c2 = 6 and t2.c1 < 10) from ft1 t1 where t1.c1 = 6) from ft2 t2 order by 1;
+select distinct (select count(t1.c1) filter (where t2.c2 = 6 and t2.c1 < 10) from ft1 t1 where t1.c1 = 6) from ft2 t2 where t2.c2 % 6 = 0 order by 1;
  count 
 -------
      0
@@ -3086,7 +3086,7 @@ select sum(c2) * (random() <= 1)::int as sum from ft1 order by 1;
 -- LATERAL join, with parameterization
 set enable_hashagg to false;
 explain (verbose, costs off)
-select c2, sum from "S 1"."T 1" t1, lateral (select sum(t2.c1 + t1."C 1") sum from ft2 t2 group by t2.c1) qry where t1.c2 * 2 = qry.sum and t1.c2 < 10 order by 1;
+select c2, sum from "S 1"."T 1" t1, lateral (select sum(t2.c1 + t1."C 1") sum from ft2 t2 group by t2.c1) qry where t1.c2 * 2 = qry.sum and t1.c2 < 3 and t1."C 1" < 100 order by 1;
                                                 QUERY PLAN                                                
 ----------------------------------------------------------------------------------------------------------
  Sort
@@ -3094,9 +3094,10 @@ select c2, sum from "S 1"."T 1" t1, lateral (select sum(t2.c1 + t1."C 1") sum fr
    Sort Key: t1.c2
    ->  Nested Loop
          Output: t1.c2, qry.sum
-         ->  Seq Scan on "S 1"."T 1" t1
+         ->  Index Scan using t1_pkey on "S 1"."T 1" t1
                Output: t1."C 1", t1.c2, t1.c3, t1.c4, t1.c5, t1.c6, t1.c7, t1.c8
-               Filter: (t1.c2 < 10)
+               Index Cond: (t1."C 1" < 100)
+               Filter: (t1.c2 < 3)
          ->  Subquery Scan on qry
                Output: qry.sum, t2.c1
                Filter: ((t1.c2 * 2) = qry.sum)
@@ -3104,21 +3105,14 @@ select c2, sum from "S 1"."T 1" t1, lateral (select sum(t2.c1 + t1."C 1") sum fr
                      Output: (sum((t2.c1 + t1."C 1"))), t2.c1
                      Relations: Aggregate on (public.ft2 t2)
                      Remote SQL: SELECT sum(("C 1" + $1::integer)), "C 1" FROM "S 1"."T 1" GROUP BY "C 1"
-(15 rows)
+(16 rows)
 
-select c2, sum from "S 1"."T 1" t1, lateral (select sum(t2.c1 + t1."C 1") sum from ft2 t2 group by t2.c1) qry where t1.c2 * 2 = qry.sum and t1.c2 < 10 order by 1;
+select c2, sum from "S 1"."T 1" t1, lateral (select sum(t2.c1 + t1."C 1") sum from ft2 t2 group by t2.c1) qry where t1.c2 * 2 = qry.sum and t1.c2 < 3 and t1."C 1" < 100 order by 1;
  c2 | sum 
 ----+-----
   1 |   2
   2 |   4
-  3 |   6
-  4 |   8
-  5 |  10
-  6 |  12
-  7 |  14
-  8 |  16
-  9 |  18
-(9 rows)
+(2 rows)
 
 reset enable_hashagg;
 -- Check with placeHolderVars
