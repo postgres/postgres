@@ -102,7 +102,7 @@ ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> S
         class="parameter">minvalue</replaceable></literal> determines
         the minimum value a sequence can generate. If <literal>NO
         MINVALUE</literal> is specified, the defaults of 1 and
-        -2<superscript>63</>-1 for ascending and descending sequences,
+        -2<superscript>63</> for ascending and descending sequences,
         respectively, will be used.  If neither option is specified,
         the current minimum value will be maintained.
        </para>
