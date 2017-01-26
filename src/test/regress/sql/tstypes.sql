@@ -115,3 +115,6 @@ SELECT ts_rank_cd(' a:1 s:2 d g'::tsvector, 'a | s');
 SELECT ts_rank_cd(' a:1 s:2C d g'::tsvector, 'a & s');
 SELECT ts_rank_cd(' a:1 s:2B d g'::tsvector, 'a & s');
 SELECT ts_rank_cd(' a:1 s:2 d g'::tsvector, 'a & s');
+
+select to_tsvector('simple', 'x y q y') @@ '!foo' AS "true";
+select to_tsvector('simple', '') @@ '!foo' AS "true";
