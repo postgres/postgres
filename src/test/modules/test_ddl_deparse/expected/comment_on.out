@@ -21,5 +21,3 @@ COMMENT ON TRIGGER trigger_1 ON datatype_table IS 'TRIGGER test';
 NOTICE:  DDL test: type simple, tag COMMENT
 COMMENT ON RULE rule_1 IS 'RULE test';
 NOTICE:  DDL test: type simple, tag COMMENT
--- should not fire
-COMMENT ON DATABASE contrib_regression IS 'contrib regression';

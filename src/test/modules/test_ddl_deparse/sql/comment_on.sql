@@ -12,6 +12,3 @@ COMMENT ON VIEW datatype_view IS 'This is a view';
 COMMENT ON FUNCTION c_function_test() IS 'FUNCTION test';
 COMMENT ON TRIGGER trigger_1 ON datatype_table IS 'TRIGGER test';
 COMMENT ON RULE rule_1 IS 'RULE test';
-
--- should not fire
-COMMENT ON DATABASE contrib_regression IS 'contrib regression';
