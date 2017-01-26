@@ -36,6 +36,8 @@ ALTER DEFAULT PRIVILEGES FOR ROLE regress_addr_user REVOKE DELETE ON TABLES FROM
 CREATE TRANSFORM FOR int LANGUAGE SQL (
 	FROM SQL WITH FUNCTION varchar_transform(internal),
 	TO SQL WITH FUNCTION int4recv(internal));
+CREATE PUBLICATION addr_pub FOR TABLE addr_nsp.gentable;
+CREATE SUBSCRIPTION addr_sub CONNECTION '' PUBLICATION bar WITH (DISABLED, NOCREATE SLOT);
 -- test some error cases
 SELECT pg_get_object_address('stone', '{}', '{}');
 ERROR:  unrecognized object type "stone"
@@ -81,7 +83,8 @@ BEGIN
 		('text search parser'), ('text search dictionary'),
 		('text search template'), ('text search configuration'),
 		('policy'), ('user mapping'), ('default acl'), ('transform'),
-		('operator of access method'), ('function of access method')
+		('operator of access method'), ('function of access method'),
+		('publication relation')
 	LOOP
 		FOR names IN VALUES ('{eins}'), ('{addr_nsp, zwei}'), ('{eins, zwei, drei}')
 		LOOP
@@ -283,6 +286,12 @@ WARNING:  error for function of access method,{addr_nsp,zwei},{}: name list leng
 WARNING:  error for function of access method,{addr_nsp,zwei},{integer}: name list length must be at least 3
 WARNING:  error for function of access method,{eins,zwei,drei},{}: argument list length must be exactly 2
 WARNING:  error for function of access method,{eins,zwei,drei},{integer}: argument list length must be exactly 2
+WARNING:  error for publication relation,{eins},{}: argument list length must be exactly 1
+WARNING:  error for publication relation,{eins},{integer}: relation "eins" does not exist
+WARNING:  error for publication relation,{addr_nsp,zwei},{}: argument list length must be exactly 1
+WARNING:  error for publication relation,{addr_nsp,zwei},{integer}: relation "addr_nsp.zwei" does not exist
+WARNING:  error for publication relation,{eins,zwei,drei},{}: argument list length must be exactly 1
+WARNING:  error for publication relation,{eins,zwei,drei},{integer}: cross-database references are not implemented: "eins.zwei.drei"
 -- these object types cannot be qualified names
 SELECT pg_get_object_address('language', '{one}', '{}');
 ERROR:  language "one" does not exist
@@ -330,6 +339,14 @@ SELECT pg_get_object_address('access method', '{one}', '{}');
 ERROR:  access method "one" does not exist
 SELECT pg_get_object_address('access method', '{one,two}', '{}');
 ERROR:  access method name cannot be qualified
+SELECT pg_get_object_address('publication', '{one}', '{}');
+ERROR:  publication "one" does not exist
+SELECT pg_get_object_address('publication', '{one,two}', '{}');
+ERROR:  publication name cannot be qualified
+SELECT pg_get_object_address('subscription', '{one}', '{}');
+ERROR:  subscription "one" does not exist
+SELECT pg_get_object_address('subscription', '{one,two}', '{}');
+ERROR:  subscription name cannot be qualified
 -- test successful cases
 WITH objects (type, name, args) AS (VALUES
 				('table', '{addr_nsp, gentable}'::text[], '{}'::text[]),
@@ -379,7 +396,10 @@ WITH objects (type, name, args) AS (VALUES
 				-- event trigger
 				('policy', '{addr_nsp, gentable, genpol}', '{}'),
 				('transform', '{int}', '{sql}'),
-				('access method', '{btree}', '{}')
+				('access method', '{btree}', '{}'),
+				('publication', '{addr_pub}', '{}'),
+				('publication relation', '{addr_nsp, gentable}', '{addr_pub}'),
+				('subscription', '{addr_sub}', '{}')
         )
 SELECT (pg_identify_object(addr1.classid, addr1.objid, addr1.subobjid)).*,
 	-- test roundtrip through pg_identify_object_as_address
@@ -433,13 +453,18 @@ SELECT (pg_identify_object(addr1.classid, addr1.objid, addr1.subobjid)).*,
  text search parser        | addr_nsp   | addr_ts_prs       | addr_nsp.addr_ts_prs                                                 | t
  text search configuration | addr_nsp   | addr_ts_conf      | addr_nsp.addr_ts_conf                                                | t
  text search template      | addr_nsp   | addr_ts_temp      | addr_nsp.addr_ts_temp                                                | t
-(42 rows)
+ subscription              |            | addr_sub          | addr_sub                                                             | t
+ publication               |            | addr_pub          | addr_pub                                                             | t
+ publication relation      |            |                   | gentable in publication addr_pub                                     | t
+(45 rows)
 
 ---
 --- Cleanup resources
 ---
 SET client_min_messages TO 'warning';
 DROP FOREIGN DATA WRAPPER addr_fdw CASCADE;
+DROP PUBLICATION addr_pub;
+DROP SUBSCRIPTION addr_sub NODROP SLOT;
 DROP SCHEMA addr_nsp CASCADE;
 DROP OWNED BY regress_addr_user;
 DROP USER regress_addr_user;

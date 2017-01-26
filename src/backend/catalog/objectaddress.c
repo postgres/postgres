@@ -3841,7 +3841,7 @@ getObjectTypeDescription(const ObjectAddress *object)
 			break;
 
 		case OCLASS_PUBLICATION_REL:
-			appendStringInfoString(&buffer, "publication table");
+			appendStringInfoString(&buffer, "publication relation");
 			break;
 
 		case OCLASS_SUBSCRIPTION:
@@ -4846,7 +4846,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 				prform = (Form_pg_publication_rel) GETSTRUCT(tup);
 				pubname = get_publication_name(prform->prpubid);
 
-				appendStringInfo(&buffer, _("publication table %s in publication %s"),
+				appendStringInfo(&buffer, _("%s in publication %s"),
 								 get_rel_name(prform->prrelid), pubname);
 
 				if (objname)
