@@ -279,7 +279,7 @@ GRANT <replaceable class="PARAMETER">role_name</replaceable> [, ...] TO <replace
      <term>CREATE</term>
      <listitem>
       <para>
-       For databases, allows new schemas to be created within the database.
+       For databases, allows new schemas and publications to be created within the database.
       </para>
       <para>
        For schemas, allows new objects to be created within the schema.
