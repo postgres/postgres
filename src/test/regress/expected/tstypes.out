@@ -773,6 +773,18 @@ select to_tsvector('simple', 'x y q y') @@ '!x <-> y' AS "true";
  t
 (1 row)
 
+select to_tsvector('simple', 'x y q y') @@ '!foo' AS "true";
+ true 
+------
+ t
+(1 row)
+
+select to_tsvector('simple', '') @@ '!foo' AS "true";
+ true 
+------
+ t
+(1 row)
+
 --ranking
 SELECT ts_rank(' a:1 s:2C d g'::tsvector, 'a | s');
   ts_rank  

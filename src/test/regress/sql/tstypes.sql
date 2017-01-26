@@ -145,6 +145,8 @@ select to_tsvector('simple', 'x q') @@ '(x | y <-> !z) <-> q' AS "true";
 select to_tsvector('simple', 'x q') @@ '(!x | y <-> z) <-> q' AS "false";
 select to_tsvector('simple', 'z q') @@ '(!x | y <-> z) <-> q' AS "true";
 select to_tsvector('simple', 'x y q y') @@ '!x <-> y' AS "true";
+select to_tsvector('simple', 'x y q y') @@ '!foo' AS "true";
+select to_tsvector('simple', '') @@ '!foo' AS "true";
 
 --ranking
 SELECT ts_rank(' a:1 s:2C d g'::tsvector, 'a | s');
