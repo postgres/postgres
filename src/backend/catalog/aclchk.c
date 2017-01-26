@@ -3345,6 +3345,10 @@ static const char *const no_priv_msg[MAX_ACL_KIND] =
 	gettext_noop("permission denied for event trigger %s"),
 	/* ACL_KIND_EXTENSION */
 	gettext_noop("permission denied for extension %s"),
+	/* ACL_KIND_PUBLICATION */
+	gettext_noop("permission denied for publication %s"),
+	/* ACL_KIND_SUBSCRIPTION */
+	gettext_noop("permission denied for subscription %s"),
 };
 
 static const char *const not_owner_msg[MAX_ACL_KIND] =
