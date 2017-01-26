@@ -161,6 +161,8 @@ WaitExceedsMaxStandbyDelay(void)
 {
 	TimestampTz ltime;
 
+	CHECK_FOR_INTERRUPTS();
+
 	/* Are we past the limit time? */
 	ltime = GetStandbyLimitTime();
 	if (ltime && GetCurrentTimestamp() >= ltime)
