@@ -84,7 +84,9 @@ ALTER TABLE foo_seq RENAME TO foo_seq_new;
 SELECT * FROM foo_seq_new;
 SELECT nextval('foo_seq_new');
 SELECT nextval('foo_seq_new');
-SELECT * FROM foo_seq_new;
+-- log_cnt can be higher if there is a checkpoint just at the right
+-- time, so just test for the expected range
+SELECT last_value, log_cnt IN (31, 32) AS log_cnt_ok, is_called FROM foo_seq_new;
 DROP SEQUENCE foo_seq_new;
 
 -- renaming serial sequences

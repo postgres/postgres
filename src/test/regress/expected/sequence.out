@@ -190,10 +190,12 @@ SELECT nextval('foo_seq_new');
        2
 (1 row)
 
-SELECT * FROM foo_seq_new;
- last_value | log_cnt | is_called 
-------------+---------+-----------
-          2 |      31 | t
+-- log_cnt can be higher if there is a checkpoint just at the right
+-- time, so just test for the expected range
+SELECT last_value, log_cnt IN (31, 32) AS log_cnt_ok, is_called FROM foo_seq_new;
+ last_value | log_cnt_ok | is_called 
+------------+------------+-----------
+          2 | t          | t
 (1 row)
 
 DROP SEQUENCE foo_seq_new;
