@@ -625,3 +625,15 @@ SELECT ts_rank_cd(' a:1 s:2 d g'::tsvector, 'a & s');
         0.1
 (1 row)
 
+select to_tsvector('simple', 'x y q y') @@ '!foo' AS "true";
+ true 
+------
+ t
+(1 row)
+
+select to_tsvector('simple', '') @@ '!foo' AS "true";
+ true 
+------
+ t
+(1 row)
+
