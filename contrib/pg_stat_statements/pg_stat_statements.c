@@ -2382,9 +2382,8 @@ JumbleRangeTable(pgssJumbleState *jstate, List *rtable)
 
 	foreach(lc, rtable)
 	{
-		RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
+		RangeTblEntry *rte = castNode(RangeTblEntry, lfirst(lc));
 
-		Assert(IsA(rte, RangeTblEntry));
 		APP_JUMB(rte->rtekind);
 		switch (rte->rtekind)
 		{
@@ -2570,7 +2569,7 @@ JumbleExpr(pgssJumbleState *jstate, Node *node)
 				APP_JUMB(sublink->subLinkType);
 				APP_JUMB(sublink->subLinkId);
 				JumbleExpr(jstate, (Node *) sublink->testexpr);
-				JumbleQuery(jstate, (Query *) sublink->subselect);
+				JumbleQuery(jstate, castNode(Query, sublink->subselect));
 			}
 			break;
 		case T_FieldSelect:
@@ -2636,9 +2635,8 @@ JumbleExpr(pgssJumbleState *jstate, Node *node)
 				JumbleExpr(jstate, (Node *) caseexpr->arg);
 				foreach(temp, caseexpr->args)
 				{
-					CaseWhen   *when = (CaseWhen *) lfirst(temp);
+					CaseWhen   *when = castNode(CaseWhen, lfirst(temp));
 
-					Assert(IsA(when, CaseWhen));
 					JumbleExpr(jstate, (Node *) when->expr);
 					JumbleExpr(jstate, (Node *) when->result);
 				}
@@ -2850,7 +2848,7 @@ JumbleExpr(pgssJumbleState *jstate, Node *node)
 
 				/* we store the string name because RTE_CTE RTEs need it */
 				APP_JUMB_STRING(cte->ctename);
-				JumbleQuery(jstate, (Query *) cte->ctequery);
+				JumbleQuery(jstate, castNode(Query, cte->ctequery));
 			}
 			break;
 		case T_SetOperationStmt:

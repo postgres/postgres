@@ -510,8 +510,7 @@ ProcedureCreate(const char *procedureName,
 											 Anum_pg_proc_proargdefaults,
 											 &isnull);
 			Assert(!isnull);
-			oldDefaults = (List *) stringToNode(TextDatumGetCString(proargdefaults));
-			Assert(IsA(oldDefaults, List));
+			oldDefaults = castNode(List, stringToNode(TextDatumGetCString(proargdefaults)));
 			Assert(list_length(oldDefaults) == oldproc->pronargdefaults);
 
 			/* new list can have more defaults than old, advance over 'em */

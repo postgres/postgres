@@ -516,9 +516,8 @@ DefineView(ViewStmt *stmt, const char *queryString,
 
 		foreach(targetList, viewParse->targetList)
 		{
-			TargetEntry *te = (TargetEntry *) lfirst(targetList);
+			TargetEntry *te = castNode(TargetEntry, lfirst(targetList));
 
-			Assert(IsA(te, TargetEntry));
 			/* junk columns don't get aliases */
 			if (te->resjunk)
 				continue;

@@ -1493,25 +1493,25 @@ ExplainNode(PlanState *planstate, List *ancestors,
 										   planstate, es);
 			break;
 		case T_Agg:
-			show_agg_keys((AggState *) planstate, ancestors, es);
+			show_agg_keys(castNode(AggState, planstate), ancestors, es);
 			show_upper_qual(plan->qual, "Filter", planstate, ancestors, es);
 			if (plan->qual)
 				show_instrumentation_count("Rows Removed by Filter", 1,
 										   planstate, es);
 			break;
 		case T_Group:
-			show_group_keys((GroupState *) planstate, ancestors, es);
+			show_group_keys(castNode(GroupState, planstate), ancestors, es);
 			show_upper_qual(plan->qual, "Filter", planstate, ancestors, es);
 			if (plan->qual)
 				show_instrumentation_count("Rows Removed by Filter", 1,
 										   planstate, es);
 			break;
 		case T_Sort:
-			show_sort_keys((SortState *) planstate, ancestors, es);
-			show_sort_info((SortState *) planstate, es);
+			show_sort_keys(castNode(SortState, planstate), ancestors, es);
+			show_sort_info(castNode(SortState, planstate), es);
 			break;
 		case T_MergeAppend:
-			show_merge_append_keys((MergeAppendState *) planstate,
+			show_merge_append_keys(castNode(MergeAppendState, planstate),
 								   ancestors, es);
 			break;
 		case T_Result:
@@ -1523,11 +1523,11 @@ ExplainNode(PlanState *planstate, List *ancestors,
 										   planstate, es);
 			break;
 		case T_ModifyTable:
-			show_modifytable_info((ModifyTableState *) planstate, ancestors,
+			show_modifytable_info(castNode(ModifyTableState, planstate), ancestors,
 								  es);
 			break;
 		case T_Hash:
-			show_hash_info((HashState *) planstate, es);
+			show_hash_info(castNode(HashState, planstate), es);
 			break;
 		default:
 			break;
@@ -2183,7 +2183,6 @@ show_tablesample(TableSampleClause *tsc, PlanState *planstate,
 static void
 show_sort_info(SortState *sortstate, ExplainState *es)
 {
-	Assert(IsA(sortstate, SortState));
 	if (es->analyze && sortstate->sort_Done &&
 		sortstate->tuplesortstate != NULL)
 	{
@@ -2217,7 +2216,6 @@ show_hash_info(HashState *hashstate, ExplainState *es)
 {
 	HashJoinTable hashtable;
 
-	Assert(IsA(hashstate, HashState));
 	hashtable = hashstate->hashtable;
 
 	if (hashtable)

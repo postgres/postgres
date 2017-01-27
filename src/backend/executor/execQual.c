@@ -4640,10 +4640,9 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				cstate->arg = ExecInitExpr(caseexpr->arg, parent);
 				foreach(l, caseexpr->args)
 				{
-					CaseWhen   *when = (CaseWhen *) lfirst(l);
+					CaseWhen   *when = castNode(CaseWhen, lfirst(l));
 					CaseWhenState *wstate = makeNode(CaseWhenState);
 
-					Assert(IsA(when, CaseWhen));
 					wstate->xprstate.evalfunc = NULL;	/* not used */
 					wstate->xprstate.expr = (Expr *) when;
 					wstate->expr = ExecInitExpr(when->expr, parent);
@@ -5137,9 +5136,8 @@ ExecCleanTargetListLength(List *targetlist)
 
 	foreach(tl, targetlist)
 	{
-		TargetEntry *curTle = (TargetEntry *) lfirst(tl);
+		TargetEntry *curTle = castNode(TargetEntry, lfirst(tl));
 
-		Assert(IsA(curTle, TargetEntry));
 		if (!curTle->resjunk)
 			len++;
 	}

@@ -519,12 +519,9 @@ ExecInitHashJoin(HashJoin *node, EState *estate, int eflags)
 	hoperators = NIL;
 	foreach(l, hjstate->hashclauses)
 	{
-		FuncExprState *fstate = (FuncExprState *) lfirst(l);
-		OpExpr	   *hclause;
+		FuncExprState *fstate = castNode(FuncExprState, lfirst(l));
+		OpExpr	   *hclause = castNode(OpExpr, fstate->xprstate.expr);
 
-		Assert(IsA(fstate, FuncExprState));
-		hclause = (OpExpr *) fstate->xprstate.expr;
-		Assert(IsA(hclause, OpExpr));
 		lclauses = lappend(lclauses, linitial(fstate->args));
 		rclauses = lappend(rclauses, lsecond(fstate->args));
 		hoperators = lappend_oid(hoperators, hclause->opno);

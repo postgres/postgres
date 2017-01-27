@@ -160,10 +160,7 @@ ExecResetTupleTable(List *tupleTable,	/* tuple table */
 
 	foreach(lc, tupleTable)
 	{
-		TupleTableSlot *slot = (TupleTableSlot *) lfirst(lc);
-
-		/* Sanity checks */
-		Assert(IsA(slot, TupleTableSlot));
+		TupleTableSlot *slot = castNode(TupleTableSlot, lfirst(lc));
 
 		/* Always release resources and reset the slot to empty */
 		ExecClearTuple(slot);

@@ -35,8 +35,8 @@ ExecInitCustomScan(CustomScan *cscan, EState *estate, int eflags)
 	 * methods field correctly at this time.  Other standard fields should be
 	 * set to zero.
 	 */
-	css = (CustomScanState *) cscan->methods->CreateCustomScanState(cscan);
-	Assert(IsA(css, CustomScanState));
+	css = castNode(CustomScanState,
+				   cscan->methods->CreateCustomScanState(cscan));
 
 	/* ensure flags is filled correctly */
 	css->flags = cscan->flags;

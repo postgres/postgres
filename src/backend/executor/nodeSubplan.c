@@ -808,8 +808,7 @@ ExecInitSubPlan(SubPlan *subplan, PlanState *parent)
 		else if (and_clause((Node *) sstate->testexpr->expr))
 		{
 			/* multiple combining operators */
-			Assert(IsA(sstate->testexpr, BoolExprState));
-			oplist = ((BoolExprState *) sstate->testexpr)->args;
+			oplist = castNode(BoolExprState, sstate->testexpr)->args;
 		}
 		else
 		{
@@ -829,8 +828,8 @@ ExecInitSubPlan(SubPlan *subplan, PlanState *parent)
 		i = 1;
 		foreach(l, oplist)
 		{
-			FuncExprState *fstate = (FuncExprState *) lfirst(l);
-			OpExpr	   *opexpr = (OpExpr *) fstate->xprstate.expr;
+			FuncExprState *fstate = castNode(FuncExprState, lfirst(l));
+			OpExpr	   *opexpr = castNode(OpExpr, fstate->xprstate.expr);
 			ExprState  *exstate;
 			Expr	   *expr;
 			TargetEntry *tle;
@@ -839,8 +838,6 @@ ExecInitSubPlan(SubPlan *subplan, PlanState *parent)
 			Oid			left_hashfn;
 			Oid			right_hashfn;
 
-			Assert(IsA(fstate, FuncExprState));
-			Assert(IsA(opexpr, OpExpr));
 			Assert(list_length(fstate->args) == 2);
 
 			/* Process lefthand argument */
@@ -1218,10 +1215,8 @@ ExecAlternativeSubPlan(AlternativeSubPlanState *node,
 					   bool *isNull)
 {
 	/* Just pass control to the active subplan */
-	SubPlanState *activesp = (SubPlanState *) list_nth(node->subplans,
-													   node->active);
-
-	Assert(IsA(activesp, SubPlanState));
+	SubPlanState *activesp = castNode(SubPlanState,
+									  list_nth(node->subplans, node->active));
 
 	return ExecSubPlan(activesp, econtext, isNull);
 }

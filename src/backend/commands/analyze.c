@@ -722,9 +722,9 @@ compute_index_stats(Relation onerel, double totalrows,
 		econtext->ecxt_scantuple = slot;
 
 		/* Set up execution state for predicate. */
-		predicate = (List *)
-			ExecPrepareExpr((Expr *) indexInfo->ii_Predicate,
-							estate);
+		predicate = castNode(List,
+							 ExecPrepareExpr((Expr *) indexInfo->ii_Predicate,
+											 estate));
 
 		/* Compute and save index expression values */
 		exprvals = (Datum *) palloc(numrows * attr_cnt * sizeof(Datum));

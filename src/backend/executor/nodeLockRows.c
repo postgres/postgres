@@ -401,11 +401,9 @@ ExecInitLockRows(LockRows *node, EState *estate, int eflags)
 	epq_arowmarks = NIL;
 	foreach(lc, node->rowMarks)
 	{
-		PlanRowMark *rc = (PlanRowMark *) lfirst(lc);
+		PlanRowMark *rc = castNode(PlanRowMark, lfirst(lc));
 		ExecRowMark *erm;
 		ExecAuxRowMark *aerm;
-
-		Assert(IsA(rc, PlanRowMark));
 
 		/* ignore "parent" rowmarks; they are irrelevant at runtime */
 		if (rc->isParent)

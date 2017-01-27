@@ -1958,10 +1958,8 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	 */
 	foreach(l, node->rowMarks)
 	{
-		PlanRowMark *rc = (PlanRowMark *) lfirst(l);
+		PlanRowMark *rc = castNode(PlanRowMark, lfirst(l));
 		ExecRowMark *erm;
-
-		Assert(IsA(rc, PlanRowMark));
 
 		/* ignore "parent" rowmarks; they are irrelevant at runtime */
 		if (rc->isParent)

@@ -403,11 +403,12 @@ ExecSupportsMarkRestore(Path *pathnode)
 			return true;
 
 		case T_CustomScan:
-			Assert(IsA(pathnode, CustomPath));
-			if (((CustomPath *) pathnode)->flags & CUSTOMPATH_SUPPORT_MARK_RESTORE)
+		{
+			CustomPath *customPath = castNode(CustomPath, pathnode);
+			if (customPath->flags & CUSTOMPATH_SUPPORT_MARK_RESTORE)
 				return true;
 			return false;
-
+		}
 		case T_Result:
 
 			/*

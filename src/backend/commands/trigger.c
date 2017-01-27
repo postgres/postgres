@@ -340,9 +340,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 
 		foreach(lc, varList)
 		{
-			TriggerTransition   *tt = (TriggerTransition *) lfirst(lc);
-
-			Assert(IsA(tt, TriggerTransition));
+			TriggerTransition   *tt = castNode(TriggerTransition, lfirst(lc));
 
 			if (!(tt->isTable))
 				ereport(ERROR,

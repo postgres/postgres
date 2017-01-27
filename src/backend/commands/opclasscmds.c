@@ -462,13 +462,12 @@ DefineOpClass(CreateOpClassStmt *stmt)
 	 */
 	foreach(l, stmt->items)
 	{
-		CreateOpClassItem *item = lfirst(l);
+		CreateOpClassItem *item = castNode(CreateOpClassItem, lfirst(l));
 		Oid			operOid;
 		Oid			funcOid;
 		Oid			sortfamilyOid;
 		OpFamilyMember *member;
 
-		Assert(IsA(item, CreateOpClassItem));
 		switch (item->itemtype)
 		{
 			case OPCLASS_ITEM_OPERATOR:
@@ -847,13 +846,12 @@ AlterOpFamilyAdd(AlterOpFamilyStmt *stmt, Oid amoid, Oid opfamilyoid,
 	 */
 	foreach(l, items)
 	{
-		CreateOpClassItem *item = lfirst(l);
+		CreateOpClassItem *item = castNode(CreateOpClassItem, lfirst(l));
 		Oid			operOid;
 		Oid			funcOid;
 		Oid			sortfamilyOid;
 		OpFamilyMember *member;
 
-		Assert(IsA(item, CreateOpClassItem));
 		switch (item->itemtype)
 		{
 			case OPCLASS_ITEM_OPERATOR:
@@ -981,12 +979,11 @@ AlterOpFamilyDrop(AlterOpFamilyStmt *stmt, Oid amoid, Oid opfamilyoid,
 	 */
 	foreach(l, items)
 	{
-		CreateOpClassItem *item = lfirst(l);
+		CreateOpClassItem *item = castNode(CreateOpClassItem, lfirst(l));
 		Oid			lefttype,
 					righttype;
 		OpFamilyMember *member;
 
-		Assert(IsA(item, CreateOpClassItem));
 		switch (item->itemtype)
 		{
 			case OPCLASS_ITEM_OPERATOR:

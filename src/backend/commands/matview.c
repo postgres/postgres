@@ -264,8 +264,7 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 	 * The stored query was rewritten at the time of the MV definition, but
 	 * has not been scribbled on by the planner.
 	 */
-	dataQuery = (Query *) linitial(actions);
-	Assert(IsA(dataQuery, Query));
+	dataQuery = castNode(Query, linitial(actions));
 
 	/*
 	 * Check for active uses of the relation in the current transaction, such

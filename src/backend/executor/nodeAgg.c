@@ -2572,9 +2572,8 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 
 		if (phase > 0)
 		{
-			aggnode = list_nth(node->chain, phase - 1);
-			sortnode = (Sort *) aggnode->plan.lefttree;
-			Assert(IsA(sortnode, Sort));
+			aggnode = castNode(Agg, list_nth(node->chain, phase - 1));
+			sortnode = castNode(Sort, aggnode->plan.lefttree);
 		}
 		else
 		{
@@ -3010,10 +3009,9 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		 */
 		foreach(arg, pertrans->aggref->args)
 		{
-			TargetEntry *source_tle = (TargetEntry *) lfirst(arg);
+			TargetEntry *source_tle = castNode(TargetEntry, lfirst(arg));
 			TargetEntry *tle;
 
-			Assert(IsA(source_tle, TargetEntry));
 			tle = flatCopyTargetEntry(source_tle);
 			tle->resno += column_offset;
 

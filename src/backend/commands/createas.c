@@ -224,7 +224,7 @@ ObjectAddress
 ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 				  ParamListInfo params, char *completionTag)
 {
-	Query	   *query = (Query *) stmt->query;
+	Query	   *query = castNode(Query, stmt->query);
 	IntoClause *into = stmt->into;
 	bool		is_matview = (into->viewQuery != NULL);
 	DestReceiver *dest;
@@ -261,11 +261,10 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 	 * The contained Query could be a SELECT, or an EXECUTE utility command.
 	 * If the latter, we just pass it off to ExecuteQuery.
 	 */
-	Assert(IsA(query, Query));
 	if (query->commandType == CMD_UTILITY &&
 		IsA(query->utilityStmt, ExecuteStmt))
 	{
-		ExecuteStmt *estmt = (ExecuteStmt *) query->utilityStmt;
+		ExecuteStmt *estmt = castNode(ExecuteStmt, query->utilityStmt);
 
 		Assert(!is_matview);	/* excluded by syntax */
 		ExecuteQuery(estmt, into, queryString, params, dest, completionTag);

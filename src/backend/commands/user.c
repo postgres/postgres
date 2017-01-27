@@ -1396,10 +1396,8 @@ roleSpecsToIds(List *memberNames)
 
 	foreach(l, memberNames)
 	{
-		RoleSpec   *rolespec = (RoleSpec *) lfirst(l);
+		RoleSpec   *rolespec = castNode(RoleSpec, lfirst(l));
 		Oid			roleid;
-
-		Assert(IsA(rolespec, RoleSpec));
 
 		roleid = get_rolespec_oid(rolespec, false);
 		result = lappend_oid(result, roleid);

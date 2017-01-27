@@ -1026,7 +1026,7 @@ ProcessCopyOptions(ParseState *pstate,
 	/* Extract options from the statement node tree */
 	foreach(option, options)
 	{
-		DefElem    *defel = (DefElem *) lfirst(option);
+		DefElem    *defel = castNode(DefElem, lfirst(option));
 
 		if (strcmp(defel->defname, "format") == 0)
 		{
@@ -1139,7 +1139,7 @@ ProcessCopyOptions(ParseState *pstate,
 						 errmsg("conflicting or redundant options"),
 						 parser_errposition(pstate, defel->location)));
 			if (defel->arg && IsA(defel->arg, List))
-				cstate->force_notnull = (List *) defel->arg;
+				cstate->force_notnull = castNode(List, defel->arg);
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -1154,7 +1154,7 @@ ProcessCopyOptions(ParseState *pstate,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options")));
 			if (defel->arg && IsA(defel->arg, List))
-				cstate->force_null = (List *) defel->arg;
+				cstate->force_null = castNode(List, defel->arg);
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -1176,7 +1176,7 @@ ProcessCopyOptions(ParseState *pstate,
 						 parser_errposition(pstate, defel->location)));
 			cstate->convert_selectively = true;
 			if (defel->arg == NULL || IsA(defel->arg, List))
-				cstate->convert_select = (List *) defel->arg;
+				cstate->convert_select = castNode(List, defel->arg);
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -1479,7 +1479,7 @@ BeginCopy(ParseState *pstate,
 			/* examine queries to determine which error message to issue */
 			foreach(lc, rewritten)
 			{
-				Query	   *q = (Query *) lfirst(lc);
+				Query	   *q = castNode(Query, lfirst(lc));
 
 				if (q->querySource == QSRC_QUAL_INSTEAD_RULE)
 					ereport(ERROR,
@@ -1496,7 +1496,7 @@ BeginCopy(ParseState *pstate,
 					 errmsg("multi-statement DO INSTEAD rules are not supported for COPY")));
 		}
 
-		query = (Query *) linitial(rewritten);
+		query = castNode(Query, linitial(rewritten));
 
 		/* The grammar allows SELECT INTO, but we don't support that */
 		if (query->utilityStmt != NULL &&

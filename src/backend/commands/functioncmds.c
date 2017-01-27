@@ -578,9 +578,8 @@ update_proconfig_value(ArrayType *a, List *set_items)
 
 	foreach(l, set_items)
 	{
-		VariableSetStmt *sstmt = (VariableSetStmt *) lfirst(l);
+		VariableSetStmt *sstmt = castNode(VariableSetStmt, lfirst(l));
 
-		Assert(IsA(sstmt, VariableSetStmt));
 		if (sstmt->kind == VAR_RESET_ALL)
 			a = NULL;
 		else
@@ -971,9 +970,7 @@ CreateFunction(ParseState *pstate, CreateFunctionStmt *stmt)
 	{
 		ListCell   *lc;
 
-		Assert(IsA(transformDefElem, List));
-
-		foreach(lc, (List *) transformDefElem)
+		foreach(lc, castNode(List, transformDefElem))
 		{
 			Oid			typeid = typenameTypeId(NULL, lfirst(lc));
 			Oid			elt = get_base_element_type(typeid);

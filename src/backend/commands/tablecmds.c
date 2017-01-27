@@ -5932,12 +5932,11 @@ ATExecSetOptions(Relation rel, const char *colName, Node *options,
 						colName)));
 
 	/* Generate new proposed attoptions (text array) */
-	Assert(IsA(options, List));
 	datum = SysCacheGetAttr(ATTNAME, tuple, Anum_pg_attribute_attoptions,
 							&isnull);
 	newOptions = transformRelOptions(isnull ? (Datum) 0 : datum,
-									 (List *) options, NULL, NULL, false,
-									 isReset);
+									 castNode(List, options), NULL, NULL,
+									 false, isReset);
 	/* Validate new options */
 	(void) attribute_reloptions(newOptions, true);
 
@@ -7141,8 +7140,7 @@ ATExecAlterConstraint(Relation rel, AlterTableCmd *cmd,
 	bool		found = false;
 	ObjectAddress address;
 
-	Assert(IsA(cmd->def, Constraint));
-	cmdcon = (Constraint *) cmd->def;
+	cmdcon = castNode(Constraint, cmd->def);
 
 	conrel = heap_open(ConstraintRelationId, RowExclusiveLock);
 
@@ -9348,9 +9346,7 @@ ATPostAlterTypeParse(Oid oldId, Oid oldRelId, Oid refRelId, char *cmd,
 					IndexStmt  *indstmt;
 					Oid			indoid;
 
-					Assert(IsA(cmd->def, IndexStmt));
-
-					indstmt = (IndexStmt *) cmd->def;
+					indstmt = castNode(IndexStmt, cmd->def);
 					indoid = get_constraint_index(oldId);
 
 					if (!rewrite)
@@ -9373,9 +9369,7 @@ ATPostAlterTypeParse(Oid oldId, Oid oldRelId, Oid refRelId, char *cmd,
 				{
 					Constraint *con;
 
-					Assert(IsA(cmd->def, Constraint));
-
-					con = (Constraint *) cmd->def;
+					con = castNode(Constraint, cmd->def);
 					con->old_pktable_oid = refRelId;
 					/* rewriting neither side of a FK */
 					if (con->contype == CONSTR_FOREIGN &&

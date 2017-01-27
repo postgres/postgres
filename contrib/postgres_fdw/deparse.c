@@ -1315,10 +1315,7 @@ deparseExplicitTargetList(List *tlist, List **retrieved_attrs,
 
 	foreach(lc, tlist)
 	{
-		TargetEntry *tle = (TargetEntry *) lfirst(lc);
-
-		/* Extract expression if TargetEntry node */
-		Assert(IsA(tle, TargetEntry));
+		TargetEntry *tle = castNode(TargetEntry, lfirst(lc));
 
 		if (i > 0)
 			appendStringInfoString(buf, ", ");

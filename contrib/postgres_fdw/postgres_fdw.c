@@ -1159,9 +1159,7 @@ postgresGetForeignPlan(PlannerInfo *root,
 	 */
 	foreach(lc, scan_clauses)
 	{
-		RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
-
-		Assert(IsA(rinfo, RestrictInfo));
+		RestrictInfo *rinfo = castNode(RestrictInfo, lfirst(lc));
 
 		/* Ignore any pseudoconstants, they're dealt with elsewhere */
 		if (rinfo->pseudoconstant)
@@ -4958,14 +4956,12 @@ conversion_error_callback(void *arg)
 	{
 		/* error occurred in a scan against a foreign join */
 		ForeignScanState *fsstate = errpos->fsstate;
-		ForeignScan *fsplan = (ForeignScan *) fsstate->ss.ps.plan;
+		ForeignScan *fsplan = castNode(ForeignScan, fsstate->ss.ps.plan);
 		EState	   *estate = fsstate->ss.ps.state;
 		TargetEntry *tle;
 
-		Assert(IsA(fsplan, ForeignScan));
-		tle = (TargetEntry *) list_nth(fsplan->fdw_scan_tlist,
-									   errpos->cur_attno - 1);
-		Assert(IsA(tle, TargetEntry));
+		tle = castNode(TargetEntry, list_nth(fsplan->fdw_scan_tlist,
+											 errpos->cur_attno - 1));
 
 		/*
 		 * Target list can have Vars and expressions.  For Vars, we can get
