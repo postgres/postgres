@@ -975,7 +975,7 @@ BuildCachedPlan(CachedPlanSource *plansource, List *qlist,
 	is_transient = false;
 	foreach(lc, plist)
 	{
-		PlannedStmt *plannedstmt = (PlannedStmt *) lfirst(lc);
+		PlannedStmt *plannedstmt = castNode(PlannedStmt, lfirst(lc));
 
 		if (plannedstmt->commandType == CMD_UTILITY)
 			continue;			/* Ignore utility statements */
@@ -1070,7 +1070,7 @@ cached_plan_cost(CachedPlan *plan, bool include_planner)
 
 	foreach(lc, plan->stmt_list)
 	{
-		PlannedStmt *plannedstmt = (PlannedStmt *) lfirst(lc);
+		PlannedStmt *plannedstmt = castNode(PlannedStmt, lfirst(lc));
 
 		if (plannedstmt->commandType == CMD_UTILITY)
 			continue;			/* Ignore utility statements */
@@ -1457,9 +1457,7 @@ QueryListGetPrimaryStmt(List *stmts)
 
 	foreach(lc, stmts)
 	{
-		Query	   *stmt = (Query *) lfirst(lc);
-
-		Assert(IsA(stmt, Query));
+		Query	   *stmt = castNode(Query, lfirst(lc));
 
 		if (stmt->canSetTag)
 			return stmt;
@@ -1478,11 +1476,9 @@ AcquireExecutorLocks(List *stmt_list, bool acquire)
 
 	foreach(lc1, stmt_list)
 	{
-		PlannedStmt *plannedstmt = (PlannedStmt *) lfirst(lc1);
+		PlannedStmt *plannedstmt = castNode(PlannedStmt, lfirst(lc1));
 		int			rt_index;
 		ListCell   *lc2;
-
-		Assert(IsA(plannedstmt, PlannedStmt));
 
 		if (plannedstmt->commandType == CMD_UTILITY)
 		{
@@ -1549,9 +1545,7 @@ AcquirePlannerLocks(List *stmt_list, bool acquire)
 
 	foreach(lc, stmt_list)
 	{
-		Query	   *query = (Query *) lfirst(lc);
-
-		Assert(IsA(query, Query));
+		Query	   *query = castNode(Query, lfirst(lc));
 
 		if (query->commandType == CMD_UTILITY)
 		{
@@ -1618,9 +1612,9 @@ ScanQueryForLocks(Query *parsetree, bool acquire)
 	/* Recurse into subquery-in-WITH */
 	foreach(lc, parsetree->cteList)
 	{
-		CommonTableExpr *cte = (CommonTableExpr *) lfirst(lc);
+		CommonTableExpr *cte = castNode(CommonTableExpr, lfirst(lc));
 
-		ScanQueryForLocks((Query *) cte->ctequery, acquire);
+		ScanQueryForLocks(castNode(Query, cte->ctequery), acquire);
 	}
 
 	/*
@@ -1648,7 +1642,7 @@ ScanQueryWalker(Node *node, bool *acquire)
 		SubLink    *sub = (SubLink *) node;
 
 		/* Do what we came for */
-		ScanQueryForLocks((Query *) sub->subselect, *acquire);
+		ScanQueryForLocks(castNode(Query, sub->subselect), *acquire);
 		/* Fall through to process lefthand args of SubLink */
 	}
 
@@ -1676,8 +1670,7 @@ PlanCacheComputeResultDesc(List *stmt_list)
 	{
 		case PORTAL_ONE_SELECT:
 		case PORTAL_ONE_MOD_WITH:
-			query = (Query *) linitial(stmt_list);
-			Assert(IsA(query, Query));
+			query = castNode(Query, linitial(stmt_list));
 			return ExecCleanTypeFromTL(query->targetList, false);
 
 		case PORTAL_ONE_RETURNING:
@@ -1686,8 +1679,7 @@ PlanCacheComputeResultDesc(List *stmt_list)
 			return ExecCleanTypeFromTL(query->returningList, false);
 
 		case PORTAL_UTIL_SELECT:
-			query = (Query *) linitial(stmt_list);
-			Assert(IsA(query, Query));
+			query = castNode(Query, linitial(stmt_list));
 			Assert(query->utilityStmt);
 			return UtilityTupleDescriptor(query->utilityStmt);
 
@@ -1744,7 +1736,7 @@ PlanCacheRelCallback(Datum arg, Oid relid)
 
 			foreach(lc, plansource->gplan->stmt_list)
 			{
-				PlannedStmt *plannedstmt = (PlannedStmt *) lfirst(lc);
+				PlannedStmt *plannedstmt = castNode(PlannedStmt, lfirst(lc));
 
 				if (plannedstmt->commandType == CMD_UTILITY)
 					continue;	/* Ignore utility statements */
@@ -1817,7 +1809,7 @@ PlanCacheFuncCallback(Datum arg, int cacheid, uint32 hashvalue)
 		{
 			foreach(lc, plansource->gplan->stmt_list)
 			{
-				PlannedStmt *plannedstmt = (PlannedStmt *) lfirst(lc);
+				PlannedStmt *plannedstmt = castNode(PlannedStmt, lfirst(lc));
 				ListCell   *lc3;
 
 				if (plannedstmt->commandType == CMD_UTILITY)
@@ -1890,9 +1882,8 @@ ResetPlanCache(void)
 		 */
 		foreach(lc, plansource->query_list)
 		{
-			Query	   *query = (Query *) lfirst(lc);
+			Query	   *query = castNode(Query, lfirst(lc));
 
-			Assert(IsA(query, Query));
 			if (query->commandType != CMD_UTILITY ||
 				UtilityContainsQuery(query->utilityStmt))
 			{

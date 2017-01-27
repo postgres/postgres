@@ -962,7 +962,7 @@ exec_simple_query(const char *query_string)
 	 */
 	foreach(parsetree_item, parsetree_list)
 	{
-		RawStmt    *parsetree = (RawStmt *) lfirst(parsetree_item);
+		RawStmt    *parsetree = castNode(RawStmt, lfirst(parsetree_item));
 		bool		snapshot_set = false;
 		const char *commandTag;
 		char		completionTag[COMPLETION_TAG_BUFSIZE];
@@ -1286,7 +1286,7 @@ exec_parse_message(const char *query_string,	/* string to execute */
 		bool		snapshot_set = false;
 		int			i;
 
-		raw_parse_tree = (RawStmt *) linitial(parsetree_list);
+		raw_parse_tree = castNode(RawStmt, linitial(parsetree_list));
 
 		/*
 		 * Get the command name for possible use in status display.
@@ -2148,7 +2148,7 @@ errdetail_execute(List *raw_parsetree_list)
 
 	foreach(parsetree_item, raw_parsetree_list)
 	{
-		RawStmt    *parsetree = (RawStmt *) lfirst(parsetree_item);
+		RawStmt    *parsetree = castNode(RawStmt, lfirst(parsetree_item));
 
 		if (IsA(parsetree->stmt, ExecuteStmt))
 		{
@@ -2502,9 +2502,8 @@ IsTransactionExitStmtList(List *pstmts)
 {
 	if (list_length(pstmts) == 1)
 	{
-		PlannedStmt *pstmt = (PlannedStmt *) linitial(pstmts);
+		PlannedStmt *pstmt = castNode(PlannedStmt, linitial(pstmts));
 
-		Assert(IsA(pstmt, PlannedStmt));
 		if (pstmt->commandType == CMD_UTILITY &&
 			IsTransactionExitStmt(pstmt->utilityStmt))
 			return true;
@@ -2518,9 +2517,8 @@ IsTransactionStmtList(List *pstmts)
 {
 	if (list_length(pstmts) == 1)
 	{
-		PlannedStmt *pstmt = (PlannedStmt *) linitial(pstmts);
+		PlannedStmt *pstmt = castNode(PlannedStmt, linitial(pstmts));
 
-		Assert(IsA(pstmt, PlannedStmt));
 		if (pstmt->commandType == CMD_UTILITY &&
 			IsA(pstmt->utilityStmt, TransactionStmt))
 			return true;

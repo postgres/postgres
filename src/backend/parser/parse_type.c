@@ -720,7 +720,7 @@ typeStringToTypeName(const char *str)
 	 */
 	if (list_length(raw_parsetree_list) != 1)
 		goto fail;
-	stmt = (SelectStmt *) ((RawStmt *) linitial(raw_parsetree_list))->stmt;
+	stmt = (SelectStmt *) castNode(RawStmt, linitial(raw_parsetree_list))->stmt;
 	if (stmt == NULL ||
 		!IsA(stmt, SelectStmt) ||
 		stmt->distinctClause != NIL ||

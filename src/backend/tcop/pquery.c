@@ -487,7 +487,7 @@ PortalStart(Portal portal, ParamListInfo params,
 				 * Create QueryDesc in portal's context; for the moment, set
 				 * the destination to DestNone.
 				 */
-				queryDesc = CreateQueryDesc((PlannedStmt *) linitial(portal->stmts),
+				queryDesc = CreateQueryDesc(castNode(PlannedStmt, linitial(portal->stmts)),
 											portal->sourceText,
 											GetActiveSnapshot(),
 											InvalidSnapshot,
@@ -1020,7 +1020,7 @@ FillPortalStore(Portal portal, bool isTopLevel)
 			break;
 
 		case PORTAL_UTIL_SELECT:
-			PortalRunUtility(portal, (PlannedStmt *) linitial(portal->stmts),
+			PortalRunUtility(portal, castNode(PlannedStmt, linitial(portal->stmts)),
 							 isTopLevel, true, treceiver, completionTag);
 			break;
 
@@ -1215,7 +1215,7 @@ PortalRunMulti(Portal portal,
 	 */
 	foreach(stmtlist_item, portal->stmts)
 	{
-		PlannedStmt *pstmt = (PlannedStmt *) lfirst(stmtlist_item);
+		PlannedStmt *pstmt = castNode(PlannedStmt, lfirst(stmtlist_item));
 
 		/*
 		 * If we got a cancel signal in prior command, quit

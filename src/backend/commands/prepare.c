@@ -265,8 +265,7 @@ ExecuteQuery(ExecuteStmt *stmt, IntoClause *intoClause,
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("prepared statement is not a SELECT")));
-		pstmt = (PlannedStmt *) linitial(plan_list);
-		Assert(IsA(pstmt, PlannedStmt));
+		pstmt = castNode(PlannedStmt, linitial(plan_list));
 		if (pstmt->commandType != CMD_SELECT)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -670,9 +669,8 @@ ExplainExecuteQuery(ExecuteStmt *execstmt, IntoClause *into, ExplainState *es,
 	/* Explain each query */
 	foreach(p, plan_list)
 	{
-		PlannedStmt *pstmt = (PlannedStmt *) lfirst(p);
+		PlannedStmt *pstmt = castNode(PlannedStmt, lfirst(p));
 
-		Assert(IsA(pstmt, PlannedStmt));
 		if (pstmt->commandType != CMD_UTILITY)
 			ExplainOnePlan(pstmt, into, es, query_string, paramLI, NULL);
 		else

@@ -9281,7 +9281,7 @@ ATPostAlterTypeParse(Oid oldId, Oid oldRelId, Oid refRelId, char *cmd,
 	querytree_list = NIL;
 	foreach(list_item, raw_parsetree_list)
 	{
-		RawStmt    *rs = (RawStmt *) lfirst(list_item);
+		RawStmt    *rs = castNode(RawStmt, lfirst(list_item));
 		Node	   *stmt = rs->stmt;
 
 		if (IsA(stmt, IndexStmt))

@@ -707,7 +707,7 @@ init_sql_fcache(FmgrInfo *finfo, Oid collation, bool lazyEvalOK)
 	flat_query_list = NIL;
 	foreach(lc, raw_parsetree_list)
 	{
-		RawStmt    *parsetree = (RawStmt *) lfirst(lc);
+		RawStmt    *parsetree = castNode(RawStmt, lfirst(lc));
 		List	   *queryTree_sublist;
 
 		queryTree_sublist = pg_analyze_and_rewrite_params(parsetree,
@@ -1551,7 +1551,7 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 	parse = NULL;
 	foreach(lc, queryTreeList)
 	{
-		Query	   *q = (Query *) lfirst(lc);
+		Query	   *q = castNode(Query, lfirst(lc));
 
 		if (q->canSetTag)
 			parse = q;

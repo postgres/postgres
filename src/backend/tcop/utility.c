@@ -1829,22 +1829,19 @@ UtilityContainsQuery(Node *parsetree)
 	switch (nodeTag(parsetree))
 	{
 		case T_DeclareCursorStmt:
-			qry = (Query *) ((DeclareCursorStmt *) parsetree)->query;
-			Assert(IsA(qry, Query));
+			qry = castNode(Query, ((DeclareCursorStmt *) parsetree)->query);
 			if (qry->commandType == CMD_UTILITY)
 				return UtilityContainsQuery(qry->utilityStmt);
 			return qry;
 
 		case T_ExplainStmt:
-			qry = (Query *) ((ExplainStmt *) parsetree)->query;
-			Assert(IsA(qry, Query));
+			qry = castNode(Query, ((ExplainStmt *) parsetree)->query);
 			if (qry->commandType == CMD_UTILITY)
 				return UtilityContainsQuery(qry->utilityStmt);
 			return qry;
 
 		case T_CreateTableAsStmt:
-			qry = (Query *) ((CreateTableAsStmt *) parsetree)->query;
-			Assert(IsA(qry, Query));
+			qry = castNode(Query, ((CreateTableAsStmt *) parsetree)->query);
 			if (qry->commandType == CMD_UTILITY)
 				return UtilityContainsQuery(qry->utilityStmt);
 			return qry;

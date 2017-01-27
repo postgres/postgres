@@ -224,8 +224,7 @@ ExplainQuery(ParseState *pstate, ExplainStmt *stmt, const char *queryString,
 	 * executed repeatedly.  (See also the same hack in DECLARE CURSOR and
 	 * PREPARE.)  XXX FIXME someday.
 	 */
-	Assert(IsA(stmt->query, Query));
-	rewritten = QueryRewrite((Query *) copyObject(stmt->query));
+	rewritten = QueryRewrite(castNode(Query, copyObject(stmt->query)));
 
 	/* emit opening boilerplate */
 	ExplainBeginOutput(es);
@@ -246,7 +245,7 @@ ExplainQuery(ParseState *pstate, ExplainStmt *stmt, const char *queryString,
 		/* Explain every plan */
 		foreach(l, rewritten)
 		{
-			ExplainOneQuery((Query *) lfirst(l),
+			ExplainOneQuery(castNode(Query, lfirst(l)),
 							CURSOR_OPT_PARALLEL_OK, NULL, es,
 							queryString, params);
 
@@ -395,10 +394,9 @@ ExplainOneUtility(Node *utilityStmt, IntoClause *into, ExplainState *es,
 		CreateTableAsStmt *ctas = (CreateTableAsStmt *) utilityStmt;
 		List	   *rewritten;
 
-		Assert(IsA(ctas->query, Query));
-		rewritten = QueryRewrite((Query *) copyObject(ctas->query));
+		rewritten = QueryRewrite(castNode(Query, copyObject(ctas->query)));
 		Assert(list_length(rewritten) == 1);
-		ExplainOneQuery((Query *) linitial(rewritten),
+		ExplainOneQuery(castNode(Query, linitial(rewritten)),
 						0, ctas->into, es,
 						queryString, params);
 	}
@@ -415,10 +413,9 @@ ExplainOneUtility(Node *utilityStmt, IntoClause *into, ExplainState *es,
 		DeclareCursorStmt *dcs = (DeclareCursorStmt *) utilityStmt;
 		List	   *rewritten;
 
-		Assert(IsA(dcs->query, Query));
-		rewritten = QueryRewrite((Query *) copyObject(dcs->query));
+		rewritten = QueryRewrite(castNode(Query, copyObject(dcs->query)));
 		Assert(list_length(rewritten) == 1);
-		ExplainOneQuery((Query *) linitial(rewritten),
+		ExplainOneQuery(castNode(Query, linitial(rewritten)),
 						dcs->options, NULL, es,
 						queryString, params);
 	}

@@ -173,7 +173,7 @@ InsertRule(char *rulname,
 	if (event_qual != NULL)
 	{
 		/* Find query containing OLD/NEW rtable entries */
-		Query	   *qry = (Query *) linitial(action);
+		Query	   *qry = castNode(Query, linitial(action));
 
 		qry = getInsertSelectQuery(qry, NULL);
 		recordDependencyOnExpr(&myself, event_qual, qry->rtable,
@@ -286,7 +286,7 @@ DefineQueryRewrite(char *rulename,
 	 */
 	foreach(l, action)
 	{
-		query = (Query *) lfirst(l);
+		query = castNode(Query, lfirst(l));
 		if (query->resultRelation == 0)
 			continue;
 		/* Don't be fooled by INSERT/SELECT */
@@ -328,7 +328,7 @@ DefineQueryRewrite(char *rulename,
 		/*
 		 * ... the one action must be a SELECT, ...
 		 */
-		query = (Query *) linitial(action);
+		query = castNode(Query, linitial(action));
 		if (!is_instead ||
 			query->commandType != CMD_SELECT)
 			ereport(ERROR,
@@ -482,7 +482,7 @@ DefineQueryRewrite(char *rulename,
 
 		foreach(l, action)
 		{
-			query = (Query *) lfirst(l);
+			query = castNode(Query, lfirst(l));
 
 			if (!query->returningList)
 				continue;
@@ -813,7 +813,7 @@ setRuleCheckAsUser_Query(Query *qry, Oid userid)
 	{
 		CommonTableExpr *cte = (CommonTableExpr *) lfirst(l);
 
-		setRuleCheckAsUser_Query((Query *) cte->ctequery, userid);
+		setRuleCheckAsUser_Query(castNode(Query, cte->ctequery), userid);
 	}
 
 	/* If there are sublinks, search for them and process their RTEs */

@@ -788,7 +788,7 @@ stmtmulti:	stmtmulti ';' stmt
 					if ($1 != NIL)
 					{
 						/* update length of previous stmt */
-						updateRawStmtEnd((RawStmt *) llast($1), @2);
+						updateRawStmtEnd(castNode(RawStmt, llast($1)), @2);
 					}
 					if ($3 != NULL)
 						$$ = lappend($1, makeRawStmt($3, @2 + 1));

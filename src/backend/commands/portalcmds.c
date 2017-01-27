@@ -42,13 +42,11 @@ void
 PerformCursorOpen(DeclareCursorStmt *cstmt, ParamListInfo params,
 				  const char *queryString, bool isTopLevel)
 {
-	Query	   *query = (Query *) cstmt->query;
+	Query	   *query = castNode(Query, cstmt->query);
 	List	   *rewritten;
 	PlannedStmt *plan;
 	Portal		portal;
 	MemoryContext oldContext;
-
-	Assert(IsA(query, Query));	/* else parse analysis wasn't done */
 
 	/*
 	 * Disallow empty-string cursor name (conflicts with protocol-level
@@ -85,7 +83,7 @@ PerformCursorOpen(DeclareCursorStmt *cstmt, ParamListInfo params,
 	if (list_length(rewritten) != 1)
 		elog(ERROR, "non-SELECT statement in DECLARE CURSOR");
 
-	query = (Query *) linitial(rewritten);
+	query = castNode(Query, linitial(rewritten));
 
 	if (query->commandType != CMD_SELECT)
 		elog(ERROR, "non-SELECT statement in DECLARE CURSOR");

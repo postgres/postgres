@@ -713,7 +713,7 @@ execute_sql_string(const char *sql, const char *filename)
 	 */
 	foreach(lc1, raw_parsetree_list)
 	{
-		RawStmt    *parsetree = (RawStmt *) lfirst(lc1);
+		RawStmt    *parsetree = castNode(RawStmt, lfirst(lc1));
 		List	   *stmt_list;
 		ListCell   *lc2;
 
@@ -725,7 +725,7 @@ execute_sql_string(const char *sql, const char *filename)
 
 		foreach(lc2, stmt_list)
 		{
-			PlannedStmt *stmt = (PlannedStmt *) lfirst(lc2);
+			PlannedStmt *stmt = castNode(PlannedStmt, lfirst(lc2));
 
 			CommandCounterIncrement();
 

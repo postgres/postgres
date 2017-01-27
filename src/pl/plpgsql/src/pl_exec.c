@@ -3634,9 +3634,8 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 
 			foreach(l2, plansource->query_list)
 			{
-				Query	   *q = (Query *) lfirst(l2);
+				Query	   *q = castNode(Query, lfirst(l2));
 
-				Assert(IsA(q, Query));
 				if (q->canSetTag)
 				{
 					if (q->commandType == CMD_INSERT ||
@@ -6825,8 +6824,7 @@ exec_simple_recheck_plan(PLpgSQL_expr *expr, CachedPlan *cplan)
 	 */
 	if (list_length(cplan->stmt_list) != 1)
 		return;
-	stmt = (PlannedStmt *) linitial(cplan->stmt_list);
-	Assert(IsA(stmt, PlannedStmt));
+	stmt = castNode(PlannedStmt, linitial(cplan->stmt_list));
 
 	/*
 	 * 2. It must be a RESULT plan --> no scan's required

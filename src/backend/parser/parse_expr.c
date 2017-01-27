@@ -1502,8 +1502,7 @@ transformMultiAssignRef(ParseState *pstate, MultiAssignRef *maref)
 			sublink = (SubLink *) transformExprRecurse(pstate,
 													   (Node *) sublink);
 
-			qtree = (Query *) sublink->subselect;
-			Assert(IsA(qtree, Query));
+			qtree = castNode(Query, sublink->subselect);
 
 			/* Check subquery returns required number of columns */
 			if (count_nonjunk_tlist_entries(qtree->targetList) != maref->ncolumns)
@@ -1578,8 +1577,7 @@ transformMultiAssignRef(ParseState *pstate, MultiAssignRef *maref)
 
 		sublink = (SubLink *) tle->expr;
 		Assert(sublink->subLinkType == MULTIEXPR_SUBLINK);
-		qtree = (Query *) sublink->subselect;
-		Assert(IsA(qtree, Query));
+		qtree = castNode(Query, sublink->subselect);
 
 		/* Build a Param representing the current subquery output column */
 		tle = (TargetEntry *) list_nth(qtree->targetList, maref->colno - 1);

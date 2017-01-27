@@ -1572,7 +1572,7 @@ ImportForeignSchema(ImportForeignSchemaStmt *stmt)
 		 */
 		foreach(lc2, raw_parsetree_list)
 		{
-			RawStmt    *rs = (RawStmt *) lfirst(lc2);
+			RawStmt    *rs = castNode(RawStmt, lfirst(lc2));
 			CreateForeignTableStmt *cstmt = (CreateForeignTableStmt *) rs->stmt;
 			PlannedStmt *pstmt;
 
