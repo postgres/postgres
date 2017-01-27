@@ -311,13 +311,22 @@ CheckRestrictedOperation(const char *cmdname)
  *	completionTag: points to a buffer of size COMPLETION_TAG_BUFSIZE
  *		in which to store a command completion status string.
  *
- * Notes: as of PG 8.4, caller MUST supply a queryString; it is not
- * allowed anymore to pass NULL.  (If you really don't have source text,
- * you can pass a constant string, perhaps "(query not available)".)
+ * Caller MUST supply a queryString; it is not allowed (anymore) to pass NULL.
+ * If you really don't have source text, you can pass a constant string,
+ * perhaps "(query not available)".
  *
  * completionTag is only set nonempty if we want to return a nondefault status.
  *
  * completionTag may be NULL if caller doesn't want a status string.
+ *
+ * Note for users of ProcessUtility_hook: the same queryString may be passed
+ * to multiple invocations of ProcessUtility when processing a query string
+ * containing multiple semicolon-separated statements.  One should use
+ * pstmt->stmt_location and pstmt->stmt_len to identify the substring
+ * containing the current statement.  Keep in mind also that some utility
+ * statements (e.g., CREATE SCHEMA) will recurse to ProcessUtility to process
+ * sub-statements, often passing down the same queryString, stmt_location,
+ * and stmt_len that were given for the whole statement.
  */
 void
 ProcessUtility(PlannedStmt *pstmt,
