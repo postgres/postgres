@@ -846,7 +846,7 @@ pg_plan_queries(List *querytrees, int cursorOptions, ParamListInfo boundParams)
 
 	foreach(query_list, querytrees)
 	{
-		Query	   *query = (Query *) lfirst(query_list);
+		Query	   *query = castNode(Query, lfirst(query_list));
 		PlannedStmt *stmt;
 
 		if (query->commandType == CMD_UTILITY)
