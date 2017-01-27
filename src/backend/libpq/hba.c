@@ -66,7 +66,7 @@ typedef struct check_network_data
 #define token_matches(t, k)  (strcmp(t->string, k) == 0)
 
 /*
- * A single string token lexed from the HBA config file, together with whether
+ * A single string token lexed from a config file, together with whether
  * the token had been quoted.
  */
 typedef struct HbaToken
@@ -74,6 +74,19 @@ typedef struct HbaToken
 	char	   *string;
 	bool		quoted;
 } HbaToken;
+
+/*
+ * TokenizedLine represents one line lexed from a config file.
+ * Each item in the "fields" list is a sub-list of HbaTokens.
+ * We don't emit a TokenizedLine for empty or all-comment lines,
+ * so "fields" is never NIL (nor are any of its sub-lists).
+ */
+typedef struct TokenizedLine
+{
+	List	   *fields;			/* List of lists of HbaTokens */
+	int			line_num;		/* Line number */
+	char	   *raw_line;		/* Raw line text */
+} TokenizedLine;
 
 /*
  * pre-parsed content of HBA config file: list of HbaLine structs.
@@ -95,7 +108,7 @@ static MemoryContext parsed_ident_context = NULL;
 
 
 static MemoryContext tokenize_file(const char *filename, FILE *file,
-			  List **lines, List **line_nums, List **raw_lines);
+			  List **tok_lines);
 static List *tokenize_inc_file(List *tokens, const char *outer_filename,
 				  const char *inc_filename);
 static bool parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
@@ -305,7 +318,6 @@ tokenize_inc_file(List *tokens,
 	char	   *inc_fullname;
 	FILE	   *inc_file;
 	List	   *inc_lines;
-	List	   *inc_line_nums;
 	ListCell   *inc_line;
 	MemoryContext linecxt;
 
@@ -337,17 +349,18 @@ tokenize_inc_file(List *tokens,
 	}
 
 	/* There is possible recursion here if the file contains @ */
-	linecxt = tokenize_file(inc_fullname, inc_file, &inc_lines, &inc_line_nums, NULL);
+	linecxt = tokenize_file(inc_fullname, inc_file, &inc_lines);
 
 	FreeFile(inc_file);
 	pfree(inc_fullname);
 
+	/* Copy all tokens found in the file and append to the tokens list */
 	foreach(inc_line, inc_lines)
 	{
-		List	   *inc_fields = lfirst(inc_line);
+		TokenizedLine *tok_line = (TokenizedLine *) lfirst(inc_line);
 		ListCell   *inc_field;
 
-		foreach(inc_field, inc_fields)
+		foreach(inc_field, tok_line->fields)
 		{
 			List	   *inc_tokens = lfirst(inc_field);
 			ListCell   *inc_token;
@@ -366,23 +379,18 @@ tokenize_inc_file(List *tokens,
 }
 
 /*
- * Tokenize the given file, storing the resulting data into three Lists: a
- * List of lines, a List of line numbers, and a List of raw line contents.
+ * Tokenize the given file.
  *
- * The list of lines is a triple-nested List structure.  Each line is a List of
- * fields, and each field is a List of HbaTokens.
+ * The output is a list of TokenizedLine structs; see struct definition above.
  *
  * filename must be the absolute path to the target file.
  *
  * Return value is a memory context which contains all memory allocated by
- * this function.
+ * this function (it's a child of caller's context).
  */
 static MemoryContext
-tokenize_file(const char *filename, FILE *file,
-			  List **lines, List **line_nums, List **raw_lines)
+tokenize_file(const char *filename, FILE *file, List **tok_lines)
 {
-	List	   *current_line = NIL;
-	List	   *current_field = NIL;
 	int			line_number = 1;
 	MemoryContext linecxt;
 	MemoryContext oldcxt;
@@ -392,12 +400,13 @@ tokenize_file(const char *filename, FILE *file,
 									ALLOCSET_SMALL_SIZES);
 	oldcxt = MemoryContextSwitchTo(linecxt);
 
-	*lines = *line_nums = NIL;
+	*tok_lines = NIL;
 
 	while (!feof(file) && !ferror(file))
 	{
 		char		rawline[MAX_LINE];
 		char	   *lineptr;
+		List	   *current_line = NIL;
 
 		if (!fgets(rawline, sizeof(rawline), file))
 			break;
@@ -414,32 +423,30 @@ tokenize_file(const char *filename, FILE *file,
 		while (lineptr >= rawline && (*lineptr == '\n' || *lineptr == '\r'))
 			*lineptr-- = '\0';
 
+		/* Parse fields */
 		lineptr = rawline;
-		while (strlen(lineptr) > 0)
+		while (*lineptr)
 		{
-			current_field = next_field_expand(filename, &lineptr);
+			List	   *current_field;
 
-			/* add tokens to list, unless we are at EOL or comment start */
-			if (list_length(current_field) > 0)
-			{
-				if (current_line == NIL)
-				{
-					/* make a new line List, record its line number */
-					current_line = lappend(current_line, current_field);
-					*lines = lappend(*lines, current_line);
-					*line_nums = lappend_int(*line_nums, line_number);
-					if (raw_lines)
-						*raw_lines = lappend(*raw_lines, pstrdup(rawline));
-				}
-				else
-				{
-					/* append tokens to current line's list */
-					current_line = lappend(current_line, current_field);
-				}
-			}
+			current_field = next_field_expand(filename, &lineptr);
+			/* add field to line, unless we are at EOL or comment start */
+			if (current_field != NIL)
+				current_line = lappend(current_line, current_field);
 		}
-		/* we are at real or logical EOL, so force a new line List */
-		current_line = NIL;
+
+		/* Reached EOL; emit line to TokenizedLine list unless it's boring */
+		if (current_line != NIL)
+		{
+			TokenizedLine *tok_line;
+
+			tok_line = (TokenizedLine *) palloc(sizeof(TokenizedLine));
+			tok_line->fields = current_line;
+			tok_line->line_num = line_number;
+			tok_line->raw_line = pstrdup(rawline);
+			*tok_lines = lappend(*tok_lines, tok_line);
+		}
+
 		line_number++;
 	}
 
@@ -789,7 +796,7 @@ check_same_host_or_net(SockAddr *raddr, IPCompareMethod method)
 		ereport(LOG, \
 				(errcode(ERRCODE_CONFIG_FILE_ERROR), \
 				 errmsg("missing entry in file \"%s\" at end of line %d", \
-						IdentFileName, line_number))); \
+						IdentFileName, line_num))); \
 		return NULL; \
 	} \
 } while (0);
@@ -800,7 +807,7 @@ check_same_host_or_net(SockAddr *raddr, IPCompareMethod method)
 				(errcode(ERRCODE_CONFIG_FILE_ERROR), \
 				 errmsg("multiple values in ident field"), \
 				 errcontext("line %d of configuration file \"%s\"", \
-						line_number, IdentFileName))); \
+							line_num, IdentFileName))); \
 		return NULL; \
 	} \
 } while (0);
@@ -808,18 +815,18 @@ check_same_host_or_net(SockAddr *raddr, IPCompareMethod method)
 
 /*
  * Parse one tokenised line from the hba config file and store the result in a
- * HbaLine structure, or NULL if parsing fails.
+ * HbaLine structure.
  *
- * The tokenised line is a List of fields, each field being a List of
- * HbaTokens.
+ * Return NULL if parsing fails.
  *
  * Note: this function leaks memory when an error occurs.  Caller is expected
  * to have set a memory context that will be reset if this function returns
  * NULL.
  */
 static HbaLine *
-parse_hba_line(List *line, int line_num, char *raw_line)
+parse_hba_line(TokenizedLine *tok_line)
 {
+	int			line_num = tok_line->line_num;
 	char	   *str;
 	struct addrinfo *gai_result;
 	struct addrinfo hints;
@@ -834,10 +841,11 @@ parse_hba_line(List *line, int line_num, char *raw_line)
 
 	parsedline = palloc0(sizeof(HbaLine));
 	parsedline->linenumber = line_num;
-	parsedline->rawline = pstrdup(raw_line);
+	parsedline->rawline = pstrdup(tok_line->raw_line);
 
 	/* Check the record type. */
-	field = list_head(line);
+	Assert(tok_line->fields != NIL);
+	field = list_head(tok_line->fields);
 	tokens = lfirst(field);
 	if (tokens->length > 1)
 	{
@@ -1769,11 +1777,7 @@ load_hba(void)
 {
 	FILE	   *file;
 	List	   *hba_lines = NIL;
-	List	   *hba_line_nums = NIL;
-	List	   *hba_raw_lines = NIL;
-	ListCell   *line,
-			   *line_num,
-			   *raw_line;
+	ListCell   *line;
 	List	   *new_parsed_lines = NIL;
 	bool		ok = true;
 	MemoryContext linecxt;
@@ -1790,7 +1794,7 @@ load_hba(void)
 		return false;
 	}
 
-	linecxt = tokenize_file(HbaFileName, file, &hba_lines, &hba_line_nums, &hba_raw_lines);
+	linecxt = tokenize_file(HbaFileName, file, &hba_lines);
 	FreeFile(file);
 
 	/* Now parse all the lines */
@@ -1799,11 +1803,12 @@ load_hba(void)
 								   "hba parser context",
 								   ALLOCSET_SMALL_SIZES);
 	oldcxt = MemoryContextSwitchTo(hbacxt);
-	forthree(line, hba_lines, line_num, hba_line_nums, raw_line, hba_raw_lines)
+	foreach(line, hba_lines)
 	{
+		TokenizedLine *tok_line = (TokenizedLine *) lfirst(line);
 		HbaLine    *newline;
 
-		if ((newline = parse_hba_line(lfirst(line), lfirst_int(line_num), lfirst(raw_line))) == NULL)
+		if ((newline = parse_hba_line(tok_line)) == NULL)
 		{
 			/*
 			 * Parse error in the file, so indicate there's a problem.  NB: a
@@ -1861,9 +1866,9 @@ load_hba(void)
 
 /*
  * Parse one tokenised line from the ident config file and store the result in
- * an IdentLine structure, or NULL if parsing fails.
+ * an IdentLine structure.
  *
- * The tokenised line is a nested List of fields and tokens.
+ * Return NULL if parsing fails.
  *
  * If ident_user is a regular expression (ie. begins with a slash), it is
  * compiled and stored in IdentLine structure.
@@ -1873,18 +1878,19 @@ load_hba(void)
  * NULL.
  */
 static IdentLine *
-parse_ident_line(List *line, int line_number)
+parse_ident_line(TokenizedLine *tok_line)
 {
+	int			line_num = tok_line->line_num;
 	ListCell   *field;
 	List	   *tokens;
 	HbaToken   *token;
 	IdentLine  *parsedline;
 
-	Assert(line != NIL);
-	field = list_head(line);
+	Assert(tok_line->fields != NIL);
+	field = list_head(tok_line->fields);
 
 	parsedline = palloc0(sizeof(IdentLine));
-	parsedline->linenumber = line_number;
+	parsedline->linenumber = line_num;
 
 	/* Get the map token (must exist) */
 	tokens = lfirst(field);
@@ -2144,9 +2150,7 @@ load_ident(void)
 {
 	FILE	   *file;
 	List	   *ident_lines = NIL;
-	List	   *ident_line_nums = NIL;
 	ListCell   *line_cell,
-			   *num_cell,
 			   *parsed_line_cell;
 	List	   *new_parsed_lines = NIL;
 	bool		ok = true;
@@ -2166,7 +2170,7 @@ load_ident(void)
 		return false;
 	}
 
-	linecxt = tokenize_file(IdentFileName, file, &ident_lines, &ident_line_nums, NULL);
+	linecxt = tokenize_file(IdentFileName, file, &ident_lines);
 	FreeFile(file);
 
 	/* Now parse all the lines */
@@ -2175,9 +2179,11 @@ load_ident(void)
 										  "ident parser context",
 										  ALLOCSET_SMALL_SIZES);
 	oldcxt = MemoryContextSwitchTo(ident_context);
-	forboth(line_cell, ident_lines, num_cell, ident_line_nums)
+	foreach(line_cell, ident_lines)
 	{
-		if ((newline = parse_ident_line(lfirst(line_cell), lfirst_int(num_cell))) == NULL)
+		TokenizedLine *tok_line = (TokenizedLine *) lfirst(line_cell);
+
+		if ((newline = parse_ident_line(tok_line)) == NULL)
 		{
 			/*
 			 * Parse error in the file, so indicate there's a problem.  Free
