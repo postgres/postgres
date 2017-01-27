@@ -4216,7 +4216,7 @@ foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
 	/*
 	 * If user is willing to estimate cost for a scan of either of the joining
 	 * relations using EXPLAIN, he intends to estimate scans on that relation
-	 * more accurately. Then, it makes sense to estimate the cost the join
+	 * more accurately. Then, it makes sense to estimate the cost of the join
 	 * with that relation more accurately using EXPLAIN.
 	 */
 	fpinfo->use_remote_estimate = fpinfo_o->use_remote_estimate ||
