@@ -162,7 +162,7 @@ MainLoop(FILE *source)
 				/* This tries to mimic bash's IGNOREEOF feature. */
 				count_eof++;
 
-				if (count_eof < GetVariableNum(pset.vars, "IGNOREEOF", 0, 10, false))
+				if (count_eof < GetVariableNum(pset.vars, "IGNOREEOF", 0, 10))
 				{
 					if (!pset.quiet)
 						printf(_("Use \"\\q\" to leave %s.\n"), pset.progname);

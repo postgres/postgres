@@ -3078,10 +3078,8 @@ bar
     by <application>psql</application>. They represent certain option
     settings that can be changed at run time by altering the value of
     the variable, or in some cases represent changeable state of
-    <application>psql</application>. Although
-    you can use these variables for other purposes, this is not
-    recommended, as the program behavior might grow really strange
-    really quickly. By convention, all specially treated variables' names
+    <application>psql</application>.
+    By convention, all specially treated variables' names
     consist of all upper-case ASCII letters (and possibly digits and
     underscores). To ensure maximum compatibility in the future, avoid
     using such variable names for your own purposes. A list of all specially
@@ -3170,12 +3168,11 @@ bar
         start-up, use the switch <option>-a</option>. If set to
         <literal>queries</literal>,
         <application>psql</application> prints each query to standard output
-        as it is sent to the server. The switch for this is
+        as it is sent to the server. The switch to select this behavior is
         <option>-e</option>. If set to <literal>errors</literal>, then only
         failed queries are displayed on standard error output. The switch
-        for this is <option>-b</option>. If unset, or if set to
-        <literal>none</literal> (or any other value than those above) then
-        no queries are displayed.
+        for this behavior is <option>-b</option>. If unset, or if set to
+        <literal>none</literal>, then no queries are displayed.
         </para>
         </listitem>
       </varlistentry>
@@ -3201,6 +3198,9 @@ bar
         <listitem>
         <para>
         The current client character set encoding.
+        This is set every time you connect to a database (including
+        program start-up), and when you change the encoding
+        with <literal>\encoding</>, but it can be unset.
         </para>
         </listitem>
       </varlistentry>
@@ -3241,9 +3241,8 @@ bar
          list. If set to a value of <literal>ignoredups</literal>, lines
          matching the previous history line are not entered. A value of
          <literal>ignoreboth</literal> combines the two options. If
-         unset, or if set to <literal>none</literal> (or any other value
-         than those above), all lines read in interactive mode are
-         saved on the history list.
+         unset, or if set to <literal>none</literal> (the default), all lines
+         read in interactive mode are saved on the history list.
         </para>
         <note>
         <para>
@@ -3312,7 +3311,7 @@ bar
          to an interactive session of <application>psql</application>
          will terminate the application. If set to a numeric value,
          that many <acronym>EOF</> characters are ignored before the
-         application terminates.  If the variable is set but has no
+         application terminates.  If the variable is set but not to a
          numeric value, the default is 10.
         </para>
         <note>
@@ -3473,6 +3472,16 @@ bar
         of error reports.
         (See also <command>\errverbose</>, for use when you want a verbose
         version of the error you just got.)
+        </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><varname>VERSION</varname></term>
+        <listitem>
+        <para>
+        This variable is set at program start-up to
+        reflect <application>psql</>'s version.  It can be unset or changed.
         </para>
         </listitem>
       </varlistentry>

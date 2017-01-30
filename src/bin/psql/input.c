@@ -541,7 +541,7 @@ finishInput(void)
 	{
 		int			hist_size;
 
-		hist_size = GetVariableNum(pset.vars, "HISTSIZE", 500, -1, true);
+		hist_size = GetVariableNum(pset.vars, "HISTSIZE", 500, -1);
 		(void) saveHistory(psql_history, hist_size);
 		free(psql_history);
 		psql_history = NULL;

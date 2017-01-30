@@ -58,6 +58,11 @@ CreateVariableSpace(void)
 	return ptr;
 }
 
+/*
+ * Get string value of variable, or NULL if it's not defined.
+ *
+ * Note: result is valid until variable is next assigned to.
+ */
 const char *
 GetVariable(VariableSpace space, const char *name)
 {
@@ -79,94 +84,121 @@ GetVariable(VariableSpace space, const char *name)
 }
 
 /*
- * Try to interpret "value" as boolean value.
+ * Try to interpret "value" as a boolean value, and if successful,
+ * store it in *result.  Otherwise don't clobber *result.
  *
  * Valid values are: true, false, yes, no, on, off, 1, 0; as well as unique
  * prefixes thereof.
  *
  * "name" is the name of the variable we're assigning to, to use in error
  * report if any.  Pass name == NULL to suppress the error report.
+ *
+ * Return true when "value" is syntactically valid, false otherwise.
  */
 bool
-ParseVariableBool(const char *value, const char *name)
+ParseVariableBool(const char *value, const char *name, bool *result)
 {
 	size_t		len;
+	bool		valid = true;
 
 	if (value == NULL)
-		return false;			/* not set -> assume "off" */
+	{
+		*result = false;		/* not set -> assume "off" */
+		return valid;
+	}
 
 	len = strlen(value);
 
-	if (pg_strncasecmp(value, "true", len) == 0)
-		return true;
-	else if (pg_strncasecmp(value, "false", len) == 0)
-		return false;
-	else if (pg_strncasecmp(value, "yes", len) == 0)
-		return true;
-	else if (pg_strncasecmp(value, "no", len) == 0)
-		return false;
+	if (len > 0 && pg_strncasecmp(value, "true", len) == 0)
+		*result = true;
+	else if (len > 0 && pg_strncasecmp(value, "false", len) == 0)
+		*result = false;
+	else if (len > 0 && pg_strncasecmp(value, "yes", len) == 0)
+		*result = true;
+	else if (len > 0 && pg_strncasecmp(value, "no", len) == 0)
+		*result = false;
 	/* 'o' is not unique enough */
 	else if (pg_strncasecmp(value, "on", (len > 2 ? len : 2)) == 0)
-		return true;
+		*result = true;
 	else if (pg_strncasecmp(value, "off", (len > 2 ? len : 2)) == 0)
-		return false;
+		*result = false;
 	else if (pg_strcasecmp(value, "1") == 0)
-		return true;
+		*result = true;
 	else if (pg_strcasecmp(value, "0") == 0)
-		return false;
+		*result = false;
 	else
 	{
-		/* NULL is treated as false, so a non-matching value is 'true' */
+		/* string is not recognized; don't clobber *result */
 		if (name)
-			psql_error("unrecognized value \"%s\" for \"%s\"; assuming \"%s\"\n",
-					   value, name, "on");
-		return true;
+			psql_error("unrecognized value \"%s\" for \"%s\": boolean expected\n",
+					   value, name);
+		valid = false;
 	}
+	return valid;
 }
-
 
 /*
- * Read numeric variable, or defaultval if it is not set, or faultval if its
- * value is not a valid numeric string.  If allowtrail is false, this will
- * include the case where there are trailing characters after the number.
+ * Try to interpret "value" as an integer value, and if successful,
+ * store it in *result.  Otherwise don't clobber *result.
+ *
+ * "name" is the name of the variable we're assigning to, to use in error
+ * report if any.  Pass name == NULL to suppress the error report.
+ *
+ * Return true when "value" is syntactically valid, false otherwise.
  */
-int
-ParseVariableNum(const char *val,
-				 int defaultval,
-				 int faultval,
-				 bool allowtrail)
+bool
+ParseVariableNum(const char *value, const char *name, int *result)
 {
-	int			result;
+	char	   *end;
+	long		numval;
 
-	if (!val)
-		result = defaultval;
-	else if (!val[0])
-		result = faultval;
+	if (value == NULL)
+		return false;
+	errno = 0;
+	numval = strtol(value, &end, 0);
+	if (errno == 0 && *end == '\0' && end != value && numval == (int) numval)
+	{
+		*result = (int) numval;
+		return true;
+	}
 	else
 	{
-		char	   *end;
-
-		result = strtol(val, &end, 0);
-		if (!allowtrail && *end)
-			result = faultval;
+		/* string is not recognized; don't clobber *result */
+		if (name)
+			psql_error("invalid value \"%s\" for \"%s\": integer expected\n",
+					   value, name);
+		return false;
 	}
-
-	return result;
 }
 
+/*
+ * Read integer value of the numeric variable named "name".
+ *
+ * Return defaultval if it is not set, or faultval if its value is not a
+ * valid integer.  (No error message is issued.)
+ */
 int
 GetVariableNum(VariableSpace space,
 			   const char *name,
 			   int defaultval,
-			   int faultval,
-			   bool allowtrail)
+			   int faultval)
 {
 	const char *val;
+	int			result;
 
 	val = GetVariable(space, name);
-	return ParseVariableNum(val, defaultval, faultval, allowtrail);
+	if (!val)
+		return defaultval;
+
+	if (ParseVariableNum(val, NULL, &result))
+		return result;
+	else
+		return faultval;
 }
 
+/*
+ * Print values of all variables.
+ */
 void
 PrintVariables(VariableSpace space)
 {
@@ -184,17 +216,28 @@ PrintVariables(VariableSpace space)
 	}
 }
 
+/*
+ * Set the variable named "name" to value "value",
+ * or delete it if "value" is NULL.
+ *
+ * Returns true if successful, false if not; in the latter case a suitable
+ * error message has been printed, except for the unexpected case of
+ * space or name being NULL.
+ */
 bool
 SetVariable(VariableSpace space, const char *name, const char *value)
 {
 	struct _variable *current,
 			   *previous;
 
-	if (!space)
+	if (!space || !name)
 		return false;
 
 	if (!valid_variable_name(name))
+	{
+		psql_error("invalid variable name: \"%s\"\n", name);
 		return false;
+	}
 
 	if (!value)
 		return DeleteVariable(space, name);
@@ -205,13 +248,30 @@ SetVariable(VariableSpace space, const char *name, const char *value)
 	{
 		if (strcmp(current->name, name) == 0)
 		{
-			/* found entry, so update */
-			if (current->value)
-				free(current->value);
-			current->value = pg_strdup(value);
+			/*
+			 * Found entry, so update, unless hook returns false.  The hook
+			 * may need the passed value to have the same lifespan as the
+			 * variable, so allocate it right away, even though we'll have to
+			 * free it again if the hook returns false.
+			 */
+			char	   *new_value = pg_strdup(value);
+			bool		confirmed;
+
 			if (current->assign_hook)
-				(*current->assign_hook) (current->value);
-			return true;
+				confirmed = (*current->assign_hook) (new_value);
+			else
+				confirmed = true;
+
+			if (confirmed)
+			{
+				if (current->value)
+					pg_free(current->value);
+				current->value = new_value;
+			}
+			else
+				pg_free(new_value);		/* current->value is left unchanged */
+
+			return confirmed;
 		}
 	}
 
@@ -226,19 +286,29 @@ SetVariable(VariableSpace space, const char *name, const char *value)
 }
 
 /*
- * This both sets a hook function, and calls it on the current value (if any)
+ * Attach an assign hook function to the named variable.
+ *
+ * If the variable doesn't already exist, create it with value NULL,
+ * just so we have a place to store the hook function.  (Externally,
+ * this isn't different from it not being defined.)
+ *
+ * The hook is immediately called on the variable's current value.  This is
+ * meant to let it update any derived psql state.  If the hook doesn't like
+ * the current value, it will print a message to that effect, but we'll ignore
+ * it.  Generally we do not expect any such failure here, because this should
+ * get called before any user-supplied value is assigned.
  */
-bool
+void
 SetVariableAssignHook(VariableSpace space, const char *name, VariableAssignHook hook)
 {
 	struct _variable *current,
 			   *previous;
 
-	if (!space)
-		return false;
+	if (!space || !name)
+		return;
 
 	if (!valid_variable_name(name))
-		return false;
+		return;
 
 	for (previous = space, current = space->next;
 		 current;
@@ -248,8 +318,8 @@ SetVariableAssignHook(VariableSpace space, const char *name, VariableAssignHook 
 		{
 			/* found entry, so update */
 			current->assign_hook = hook;
-			(*hook) (current->value);
-			return true;
+			(void) (*hook) (current->value);
+			return;
 		}
 	}
 
@@ -260,16 +330,24 @@ SetVariableAssignHook(VariableSpace space, const char *name, VariableAssignHook 
 	current->assign_hook = hook;
 	current->next = NULL;
 	previous->next = current;
-	(*hook) (NULL);
-	return true;
+	(void) (*hook) (NULL);
 }
 
+/*
+ * Convenience function to set a variable's value to "on".
+ */
 bool
 SetVariableBool(VariableSpace space, const char *name)
 {
 	return SetVariable(space, name, "on");
 }
 
+/*
+ * Attempt to delete variable.
+ *
+ * If unsuccessful, print a message and return "false".
+ * Deleting a nonexistent variable is not an error.
+ */
 bool
 DeleteVariable(VariableSpace space, const char *name)
 {
@@ -277,7 +355,7 @@ DeleteVariable(VariableSpace space, const char *name)
 			   *previous;
 
 	if (!space)
-		return false;
+		return true;
 
 	for (previous = space, current = space->next;
 		 current;
@@ -285,14 +363,21 @@ DeleteVariable(VariableSpace space, const char *name)
 	{
 		if (strcmp(current->name, name) == 0)
 		{
-			if (current->value)
-				free(current->value);
-			current->value = NULL;
-			/* Physically delete only if no hook function to remember */
 			if (current->assign_hook)
-				(*current->assign_hook) (NULL);
+			{
+				/* Allow deletion only if hook is okay with NULL value */
+				if (!(*current->assign_hook) (NULL))
+					return false;		/* message printed by hook */
+				if (current->value)
+					free(current->value);
+				current->value = NULL;
+				/* Don't delete entry, or we'd forget the hook function */
+			}
 			else
 			{
+				/* We can delete the entry as well as its value */
+				if (current->value)
+					free(current->value);
 				previous->next = current->next;
 				free(current->name);
 				free(current);
@@ -302,4 +387,17 @@ DeleteVariable(VariableSpace space, const char *name)
 	}
 
 	return true;
+}
+
+/*
+ * Emit error with suggestions for variables or commands
+ * accepting enum-style arguments.
+ * This function just exists to standardize the wording.
+ * suggestions should follow the format "fee, fi, fo, fum".
+ */
+void
+PsqlVarEnumError(const char *name, const char *value, const char *suggestions)
+{
+	psql_error("unrecognized value \"%s\" for \"%s\"\nAvailable values are: %s.\n",
+			   value, name, suggestions);
 }

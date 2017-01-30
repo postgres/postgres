@@ -2,6 +2,15 @@
 -- Tests for psql features that aren't closely connected to any
 -- specific server features
 --
+-- \set
+-- fail: invalid name
+\set invalid/name foo
+invalid variable name: "invalid/name"
+-- fail: invalid value for special variable
+\set AUTOCOMMIT foo
+unrecognized value "foo" for "AUTOCOMMIT": boolean expected
+\set FETCH_COUNT foo
+invalid value "foo" for "FETCH_COUNT": integer expected
 -- \gset
 select 10 as test01, 20 as test02, 'Hello' as test03 \gset pref01_
 \echo :pref01_test01 :pref01_test02 :pref01_test03
@@ -9,7 +18,7 @@ select 10 as test01, 20 as test02, 'Hello' as test03 \gset pref01_
 -- should fail: bad variable name
 select 10 as "bad name"
 \gset
-could not set variable "bad name"
+invalid variable name: "bad name"
 -- multiple backslash commands in one line
 select 1 as x, 2 as y \gset pref01_ \\ \echo :pref01_x
 1

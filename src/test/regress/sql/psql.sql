@@ -3,6 +3,14 @@
 -- specific server features
 --
 
+-- \set
+
+-- fail: invalid name
+\set invalid/name foo
+-- fail: invalid value for special variable
+\set AUTOCOMMIT foo
+\set FETCH_COUNT foo
+
 -- \gset
 
 select 10 as test01, 20 as test02, 'Hello' as test03 \gset pref01_

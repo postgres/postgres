@@ -841,7 +841,6 @@ StoreQueryTuple(const PGresult *result)
 
 			if (!SetVariable(pset.vars, varname, value))
 			{
-				psql_error("could not set variable \"%s\"\n", varname);
 				free(varname);
 				success = false;
 				break;

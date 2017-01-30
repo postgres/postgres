@@ -588,11 +588,7 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 					{
 						*equal_loc = '\0';
 						if (!SetVariable(pset.vars, value, equal_loc + 1))
-						{
-							fprintf(stderr, _("%s: could not set variable \"%s\"\n"),
-									pset.progname, value);
 							exit(EXIT_FAILURE);
-						}
 					}
 
 					free(value);
@@ -786,43 +782,47 @@ showVersion(void)
  * This isn't an amazingly good place for them, but neither is anywhere else.
  */
 
-static void
+static bool
 autocommit_hook(const char *newval)
 {
-	pset.autocommit = ParseVariableBool(newval, "AUTOCOMMIT");
+	return ParseVariableBool(newval, "AUTOCOMMIT", &pset.autocommit);
 }
 
-static void
+static bool
 on_error_stop_hook(const char *newval)
 {
-	pset.on_error_stop = ParseVariableBool(newval, "ON_ERROR_STOP");
+	return ParseVariableBool(newval, "ON_ERROR_STOP", &pset.on_error_stop);
 }
 
-static void
+static bool
 quiet_hook(const char *newval)
 {
-	pset.quiet = ParseVariableBool(newval, "QUIET");
+	return ParseVariableBool(newval, "QUIET", &pset.quiet);
 }
 
-static void
+static bool
 singleline_hook(const char *newval)
 {
-	pset.singleline = ParseVariableBool(newval, "SINGLELINE");
+	return ParseVariableBool(newval, "SINGLELINE", &pset.singleline);
 }
 
-static void
+static bool
 singlestep_hook(const char *newval)
 {
-	pset.singlestep = ParseVariableBool(newval, "SINGLESTEP");
+	return ParseVariableBool(newval, "SINGLESTEP", &pset.singlestep);
 }
 
-static void
+static bool
 fetch_count_hook(const char *newval)
 {
-	pset.fetch_count = ParseVariableNum(newval, -1, -1, false);
+	if (newval == NULL)
+		pset.fetch_count = -1;	/* default value */
+	else if (!ParseVariableNum(newval, "FETCH_COUNT", &pset.fetch_count))
+		return false;
+	return true;
 }
 
-static void
+static bool
 echo_hook(const char *newval)
 {
 	if (newval == NULL)
@@ -837,39 +837,57 @@ echo_hook(const char *newval)
 		pset.echo = PSQL_ECHO_NONE;
 	else
 	{
-		psql_error("unrecognized value \"%s\" for \"%s\"; assuming \"%s\"\n",
-				   newval, "ECHO", "none");
-		pset.echo = PSQL_ECHO_NONE;
+		PsqlVarEnumError("ECHO", newval, "none, errors, queries, all");
+		return false;
 	}
+	return true;
 }
 
-static void
+static bool
 echo_hidden_hook(const char *newval)
 {
 	if (newval == NULL)
 		pset.echo_hidden = PSQL_ECHO_HIDDEN_OFF;
 	else if (pg_strcasecmp(newval, "noexec") == 0)
 		pset.echo_hidden = PSQL_ECHO_HIDDEN_NOEXEC;
-	else if (ParseVariableBool(newval, "ECHO_HIDDEN"))
-		pset.echo_hidden = PSQL_ECHO_HIDDEN_ON;
-	else	/* ParseVariableBool printed msg if needed */
-		pset.echo_hidden = PSQL_ECHO_HIDDEN_OFF;
+	else
+	{
+		bool		on_off;
+
+		if (ParseVariableBool(newval, NULL, &on_off))
+			pset.echo_hidden = on_off ? PSQL_ECHO_HIDDEN_ON : PSQL_ECHO_HIDDEN_OFF;
+		else
+		{
+			PsqlVarEnumError("ECHO_HIDDEN", newval, "on, off, noexec");
+			return false;
+		}
+	}
+	return true;
 }
 
-static void
+static bool
 on_error_rollback_hook(const char *newval)
 {
 	if (newval == NULL)
 		pset.on_error_rollback = PSQL_ERROR_ROLLBACK_OFF;
 	else if (pg_strcasecmp(newval, "interactive") == 0)
 		pset.on_error_rollback = PSQL_ERROR_ROLLBACK_INTERACTIVE;
-	else if (ParseVariableBool(newval, "ON_ERROR_ROLLBACK"))
-		pset.on_error_rollback = PSQL_ERROR_ROLLBACK_ON;
-	else	/* ParseVariableBool printed msg if needed */
-		pset.on_error_rollback = PSQL_ERROR_ROLLBACK_OFF;
+	else
+	{
+		bool		on_off;
+
+		if (ParseVariableBool(newval, NULL, &on_off))
+			pset.on_error_rollback = on_off ? PSQL_ERROR_ROLLBACK_ON : PSQL_ERROR_ROLLBACK_OFF;
+		else
+		{
+			PsqlVarEnumError("ON_ERROR_ROLLBACK", newval, "on, off, interactive");
+			return false;
+		}
+	}
+	return true;
 }
 
-static void
+static bool
 comp_keyword_case_hook(const char *newval)
 {
 	if (newval == NULL)
@@ -884,13 +902,14 @@ comp_keyword_case_hook(const char *newval)
 		pset.comp_case = PSQL_COMP_CASE_LOWER;
 	else
 	{
-		psql_error("unrecognized value \"%s\" for \"%s\"; assuming \"%s\"\n",
-				   newval, "COMP_KEYWORD_CASE", "preserve-upper");
-		pset.comp_case = PSQL_COMP_CASE_PRESERVE_UPPER;
+		PsqlVarEnumError("COMP_KEYWORD_CASE", newval,
+						 "lower, upper, preserve-lower, preserve-upper");
+		return false;
 	}
+	return true;
 }
 
-static void
+static bool
 histcontrol_hook(const char *newval)
 {
 	if (newval == NULL)
@@ -905,31 +924,35 @@ histcontrol_hook(const char *newval)
 		pset.histcontrol = hctl_none;
 	else
 	{
-		psql_error("unrecognized value \"%s\" for \"%s\"; assuming \"%s\"\n",
-				   newval, "HISTCONTROL", "none");
-		pset.histcontrol = hctl_none;
+		PsqlVarEnumError("HISTCONTROL", newval,
+						 "none, ignorespace, ignoredups, ignoreboth");
+		return false;
 	}
+	return true;
 }
 
-static void
+static bool
 prompt1_hook(const char *newval)
 {
 	pset.prompt1 = newval ? newval : "";
+	return true;
 }
 
-static void
+static bool
 prompt2_hook(const char *newval)
 {
 	pset.prompt2 = newval ? newval : "";
+	return true;
 }
 
-static void
+static bool
 prompt3_hook(const char *newval)
 {
 	pset.prompt3 = newval ? newval : "";
+	return true;
 }
 
-static void
+static bool
 verbosity_hook(const char *newval)
 {
 	if (newval == NULL)
@@ -942,16 +965,16 @@ verbosity_hook(const char *newval)
 		pset.verbosity = PQERRORS_VERBOSE;
 	else
 	{
-		psql_error("unrecognized value \"%s\" for \"%s\"; assuming \"%s\"\n",
-				   newval, "VERBOSITY", "default");
-		pset.verbosity = PQERRORS_DEFAULT;
+		PsqlVarEnumError("VERBOSITY", newval, "default, terse, verbose");
+		return false;
 	}
 
 	if (pset.db)
 		PQsetErrorVerbosity(pset.db, pset.verbosity);
+	return true;
 }
 
-static void
+static bool
 show_context_hook(const char *newval)
 {
 	if (newval == NULL)
@@ -964,13 +987,13 @@ show_context_hook(const char *newval)
 		pset.show_context = PQSHOW_CONTEXT_ALWAYS;
 	else
 	{
-		psql_error("unrecognized value \"%s\" for \"%s\"; assuming \"%s\"\n",
-				   newval, "SHOW_CONTEXT", "errors");
-		pset.show_context = PQSHOW_CONTEXT_ERRORS;
+		PsqlVarEnumError("SHOW_CONTEXT", newval, "never, errors, always");
+		return false;
 	}
 
 	if (pset.db)
 		PQsetErrorContextVisibility(pset.db, pset.show_context);
+	return true;
 }
 
 
