@@ -7809,6 +7809,11 @@
      </row>
 
      <row>
+      <entry><link linkend="view-pg-hba-file-rules"><structname>pg_hba_file_rules</structname></link></entry>
+      <entry>summary of client authentication configuration file contents</entry>
+     </row>
+
+     <row>
       <entry><link linkend="view-pg-indexes"><structname>pg_indexes</structname></link></entry>
       <entry>indexes</entry>
      </row>
@@ -8406,6 +8411,114 @@
    </tgroup>
   </table>
 
+ </sect1>
+
+ <sect1 id="view-pg-hba-file-rules">
+  <title><structname>pg_hba_file_rules</structname></title>
+
+  <indexterm zone="view-pg-hba-file-rules">
+   <primary>pg_hba_file_rules</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_hba_file_rules</structname> provides a summary of
+   the contents of the client authentication configuration
+   file, <filename>pg_hba.conf</>.  A row appears in this view for each
+   non-empty, non-comment line in the file, with annotations indicating
+   whether the rule could be applied successfully.
+  </para>
+
+  <para>
+   This view can be helpful for checking whether planned changes in the
+   authentication configuration file will work, or for diagnosing a previous
+   failure.  Note that this view reports on the <emphasis>current</> contents
+   of the file, not on what was last loaded by the server.
+  </para>
+
+  <para>
+   By default, the <structname>pg_hba_file_rules</structname> view can be read
+   only by superusers.
+  </para>
+
+  <table>
+   <title><structname>pg_hba_file_rules</> Columns</title>
+
+  <tgroup cols="3">
+   <thead>
+    <row>
+     <entry>Name</entry>
+     <entry>Type</entry>
+     <entry>Description</entry>
+    </row>
+   </thead>
+   <tbody>
+    <row>
+     <entry><structfield>line_number</structfield></entry>
+     <entry><structfield>integer</structfield></entry>
+     <entry>
+      Line number of this rule in <filename>pg_hba.conf</>
+     </entry>
+    </row>
+    <row>
+     <entry><structfield>type</structfield></entry>
+     <entry><structfield>text</structfield></entry>
+     <entry>Type of connection</entry>
+    </row>
+    <row>
+     <entry><structfield>database</structfield></entry>
+     <entry><structfield>text[]</structfield></entry>
+     <entry>List of database name(s) to which this rule applies</entry>
+    </row>
+    <row>
+     <entry><structfield>user_name</structfield></entry>
+     <entry><structfield>text[]</structfield></entry>
+     <entry>List of user and group name(s) to which this rule applies</entry>
+    </row>
+    <row>
+     <entry><structfield>address</structfield></entry>
+     <entry><structfield>text</structfield></entry>
+     <entry>
+      Host name or IP address, or one
+      of <literal>all</literal>, <literal>samehost</literal>,
+      or <literal>samenet</literal>, or null for local connections
+     </entry>
+    </row>
+    <row>
+     <entry><structfield>netmask</structfield></entry>
+     <entry><structfield>text</structfield></entry>
+     <entry>IP address mask, or null if not applicable</entry>
+    </row>
+    <row>
+     <entry><structfield>auth_method</structfield></entry>
+     <entry><type>text</type></entry>
+     <entry>Authentication method</entry>
+    </row>
+    <row>
+     <entry><structfield>options</structfield></entry>
+     <entry><type>text[]</type></entry>
+     <entry>Options specified for authentication method, if any</entry>
+    </row>
+    <row>
+     <entry><structfield>error</structfield></entry>
+     <entry><structfield>text</structfield></entry>
+     <entry>
+      If not null, an error message indicating why this
+      line could not be processed
+     </entry>
+    </row>
+   </tbody>
+  </tgroup>
+  </table>
+
+  <para>
+   Usually, a row reflecting an incorrect entry will have values for only
+   the <structfield>line_number</> and <structfield>error</> fields.
+  </para>
+
+  <para>
+   See <xref linkend="client-authentication"> for more information about
+   client authentication configuration.
+  </para>
  </sect1>
 
  <sect1 id="view-pg-indexes">

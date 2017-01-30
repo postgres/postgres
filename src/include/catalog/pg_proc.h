@@ -3076,6 +3076,8 @@ DATA(insert OID = 2084 (  pg_show_all_settings	PGNSP PGUID 12 1 1000 0 0 f f f f
 DESCR("SHOW ALL as a function");
 DATA(insert OID = 3329 (  pg_show_all_file_settings PGNSP PGUID 12 1 1000 0 0 f f f f t t v s 0 0 2249 "" "{25,23,23,25,25,16,25}" "{o,o,o,o,o,o,o}" "{sourcefile,sourceline,seqno,name,setting,applied,error}" _null_ _null_ show_all_file_settings _null_ _null_ _null_ ));
 DESCR("show config file settings");
+DATA(insert OID = 3401 (  pg_hba_file_rules PGNSP PGUID 12 1 1000 0 0 f f f f t t v s 0 0 2249 "" "{23,25,1009,1009,25,25,25,1009,25}" "{o,o,o,o,o,o,o,o,o}" "{line_number,type,database,user_name,address,netmask,auth_method,options,error}" _null_ _null_ pg_hba_file_rules _null_ _null_ _null_ ));
+DESCR("show pg_hba.conf rules");
 DATA(insert OID = 1371 (  pg_lock_status   PGNSP PGUID 12 1 1000 0 0 f f f f t t v s 0 0 2249 "" "{25,26,26,23,21,25,28,26,26,21,25,23,25,16,16}" "{o,o,o,o,o,o,o,o,o,o,o,o,o,o,o}" "{locktype,database,relation,page,tuple,virtualxid,transactionid,classid,objid,objsubid,virtualtransaction,pid,mode,granted,fastpath}" _null_ _null_ pg_lock_status _null_ _null_ _null_ ));
 DESCR("view system lock information");
 DATA(insert OID = 2561 (  pg_blocking_pids PGNSP PGUID 12 1 0 0 0 f f f f t f v s 1 0 1007 "23" _null_ _null_ _null_ _null_ _null_ pg_blocking_pids _null_ _null_ _null_ ));

@@ -1338,6 +1338,16 @@ pg_group| SELECT pg_authid.rolname AS groname,
           WHERE (pg_auth_members.roleid = pg_authid.oid)) AS grolist
    FROM pg_authid
   WHERE (NOT pg_authid.rolcanlogin);
+pg_hba_file_rules| SELECT a.line_number,
+    a.type,
+    a.database,
+    a.user_name,
+    a.address,
+    a.netmask,
+    a.auth_method,
+    a.options,
+    a.error
+   FROM pg_hba_file_rules() a(line_number, type, database, user_name, address, netmask, auth_method, options, error);
 pg_indexes| SELECT n.nspname AS schemaname,
     c.relname AS tablename,
     i.relname AS indexname,

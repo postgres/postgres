@@ -16,10 +16,16 @@
 #include "regex/regex.h"
 
 
+/*
+ * The following enum represents the authentication methods that
+ * are supported by PostgreSQL.
+ *
+ * Note: keep this in sync with the UserAuthName array in hba.c.
+ */
 typedef enum UserAuth
 {
 	uaReject,
-	uaImplicitReject,
+	uaImplicitReject,			/* Not a user-visible option */
 	uaTrust,
 	uaIdent,
 	uaPassword,
@@ -32,6 +38,7 @@ typedef enum UserAuth
 	uaCert,
 	uaRADIUS,
 	uaPeer
+#define USER_AUTH_LAST uaPeer	/* Must be last value of this enum */
 } UserAuth;
 
 typedef enum IPCompareMethod

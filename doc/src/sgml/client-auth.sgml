@@ -597,6 +597,24 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
    re-read the file.
   </para>
 
+  <note>
+   <para>
+    The preceding statement is not true on Microsoft Windows: there, any
+    changes in the <filename>pg_hba.conf</filename> file are immediately
+    applied by subsequent new connections.
+   </para>
+  </note>
+
+  <para>
+   The system view
+   <link linkend="view-pg-hba-file-rules"><structname>pg_hba_file_rules</structname></link>
+   can be helpful for pre-testing changes to the <filename>pg_hba.conf</>
+   file, or for diagnosing problems if loading of the file did not have the
+   desired effects.  Rows in the view with
+   non-null <structfield>error</structfield> fields indicate problems in the
+   corresponding lines of the file.
+  </para>
+ 
   <tip>
    <para>
     To connect to a particular database, a user must not only pass the

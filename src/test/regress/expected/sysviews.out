@@ -39,6 +39,13 @@ select count(*) >= 0 as ok from pg_file_settings;
  t
 (1 row)
 
+-- There will surely be at least one rule
+select count(*) > 0 as ok from pg_hba_file_rules;
+ ok 
+----
+ t
+(1 row)
+
 -- There will surely be at least one active lock
 select count(*) > 0 as ok from pg_locks;
  ok 
