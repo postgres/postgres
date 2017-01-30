@@ -23,14 +23,14 @@ DROP TABLE sequence_test_table;
 --- test creation of SERIAL column
 ---
 
-CREATE TABLE serialTest (f1 text, f2 serial);
+CREATE TABLE serialTest1 (f1 text, f2 serial);
 
-INSERT INTO serialTest VALUES ('foo');
-INSERT INTO serialTest VALUES ('bar');
-INSERT INTO serialTest VALUES ('force', 100);
-INSERT INTO serialTest VALUES ('wrong', NULL);
+INSERT INTO serialTest1 VALUES ('foo');
+INSERT INTO serialTest1 VALUES ('bar');
+INSERT INTO serialTest1 VALUES ('force', 100);
+INSERT INTO serialTest1 VALUES ('wrong', NULL);
 
-SELECT * FROM serialTest;
+SELECT * FROM serialTest1;
 
 -- test smallserial / bigserial
 CREATE TABLE serialTest2 (f1 text, f2 serial, f3 smallserial, f4 serial2,
@@ -111,9 +111,9 @@ SELECT last_value, log_cnt IN (31, 32) AS log_cnt_ok, is_called FROM foo_seq_new
 DROP SEQUENCE foo_seq_new;
 
 -- renaming serial sequences
-ALTER TABLE serialtest_f2_seq RENAME TO serialtest_f2_foo;
-INSERT INTO serialTest VALUES ('more');
-SELECT * FROM serialTest;
+ALTER TABLE serialtest1_f2_seq RENAME TO serialtest1_f2_foo;
+INSERT INTO serialTest1 VALUES ('more');
+SELECT * FROM serialTest1;
 
 --
 -- Check dependencies of serial and ordinary sequences
@@ -353,7 +353,7 @@ ALTER SEQUENCE sequence_test2 START WITH 1;
 ROLLBACK;
 
 -- Sequences should get wiped out as well:
-DROP TABLE serialTest, serialTest2;
+DROP TABLE serialTest1, serialTest2;
 
 -- Make sure sequences are gone:
 SELECT * FROM information_schema.sequences WHERE sequence_name IN
