@@ -123,6 +123,7 @@ test: psql
 test: async
 test: dbsize
 test: misc_functions
+test: sysviews
 test: tsrf
 test: rules
 test: psql_crosstab
