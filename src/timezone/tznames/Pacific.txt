@@ -94,8 +94,7 @@ TAHT   -36000    # Tahiti Time (IANA database says "TAHT", other sources "THAT")
                  #     (Pacific/Tahiti)
 TKT     Pacific/Fakaofo  # Tokelau Time
                  #     (Pacific/Fakaofo)
-TOT     46800    # Tonga Time
-                 #     (Pacific/Tongatapu)
+TOT     46800    # Tonga Time (obsolete)
 TRUT    36000    # Truk Time (IANA database used to say "TRUT", other sources say "TRUK")
                  #     (Pacific/Truk)
 TVT     43200    # Tuvalu Time
