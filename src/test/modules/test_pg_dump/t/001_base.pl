@@ -236,6 +236,30 @@ my %pgdump_runs = (
 # as the regexps are used for each run the test applies to.
 
 my %tests = (
+	'ALTER EXTENSION test_pg_dump' => {
+		create_order => 9,
+		create_sql   => 'ALTER EXTENSION test_pg_dump ADD TABLE regress_pg_dump_table_added;',
+		regexp => qr/^
+			\QCREATE TABLE regress_pg_dump_table_added (\E
+			\n\s+\Qcol1 integer NOT NULL,\E
+			\n\s+\Qcol2 integer\E
+			\n\);\n/xm,
+		like   => {
+			binary_upgrade      => 1,
+		},
+		unlike => {
+			clean               => 1,
+			clean_if_exists     => 1,
+			createdb            => 1,
+			defaults            => 1,
+			no_privs            => 1,
+			no_owner            => 1,
+			pg_dumpall_globals  => 1,
+			schema_only         => 1,
+			section_pre_data    => 1,
+			section_post_data   => 1,
+		 }, },
+
 	'CREATE EXTENSION test_pg_dump' => {
 		create_order => 2,
 		create_sql   => 'CREATE EXTENSION test_pg_dump;',
@@ -287,6 +311,30 @@ my %tests = (
                     \n\s+\QNO MAXVALUE\E
                     \n\s+\QCACHE 1;\E
                     \n/xm,
+		like   => {
+			binary_upgrade      => 1,
+		},
+		unlike => {
+			clean               => 1,
+			clean_if_exists     => 1,
+			createdb            => 1,
+			defaults            => 1,
+			no_privs            => 1,
+			no_owner            => 1,
+			pg_dumpall_globals  => 1,
+			schema_only         => 1,
+			section_pre_data    => 1,
+			section_post_data   => 1,
+		}, },
+
+	'CREATE TABLE regress_pg_dump_table_added' => {
+		create_order => 7,
+		create_sql => 'CREATE TABLE regress_pg_dump_table_added (col1 int not null, col2 int);',
+		regexp => qr/^
+			\QCREATE TABLE regress_pg_dump_table_added (\E
+			\n\s+\Qcol1 integer NOT NULL,\E
+			\n\s+\Qcol2 integer\E
+			\n\);\n/xm,
 		like   => {
 			binary_upgrade      => 1,
 		},
@@ -411,6 +459,50 @@ my %tests = (
 		unlike => {
 			pg_dumpall_globals  => 1,
 			section_post_data   => 1,
+		}, },
+
+	'GRANT SELECT regress_pg_dump_table_added pre-ALTER EXTENSION' => {
+		create_order => 8,
+		create_sql   => 'GRANT SELECT ON regress_pg_dump_table_added TO regress_dump_test_role;',
+		regexp => qr/^
+			\QGRANT SELECT ON TABLE regress_pg_dump_table_added TO regress_dump_test_role;\E
+			\n/xm,
+		like   => {
+			binary_upgrade => 1,
+		},
+		unlike => {
+			clean              => 1,
+			clean_if_exists    => 1,
+			createdb           => 1,
+			defaults           => 1,
+			no_privs           => 1,
+			no_owner           => 1,
+			pg_dumpall_globals => 1,
+			schema_only        => 1,
+			section_pre_data   => 1,
+			section_post_data  => 1,
+		}, },
+
+	'REVOKE SELECT regress_pg_dump_table_added post-ALTER EXTENSION' => {
+		create_order => 10,
+		create_sql   => 'REVOKE SELECT ON regress_pg_dump_table_added FROM regress_dump_test_role;',
+		regexp => qr/^
+			\QREVOKE SELECT ON TABLE regress_pg_dump_table_added FROM regress_dump_test_role;\E
+			\n/xm,
+		like => {
+			binary_upgrade     => 1,
+			clean              => 1,
+			clean_if_exists    => 1,
+			createdb           => 1,
+			defaults           => 1,
+			no_owner           => 1,
+			schema_only        => 1,
+			section_pre_data   => 1,
+		},
+		unlike   => {
+			no_privs           => 1,
+			pg_dumpall_globals => 1,
+			section_post_data  => 1,
 		}, },
 
 	'GRANT SELECT ON TABLE regress_pg_dump_table' => {
