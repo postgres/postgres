@@ -197,42 +197,32 @@ next_token(char **lineptr, char *buf, int bufsz,
 {
 	int			c;
 	char	   *start_buf = buf;
-	char	   *end_buf = buf + (bufsz - 2);
+	char	   *end_buf = buf + (bufsz - 1);
 	bool		in_quote = false;
 	bool		was_quote = false;
 	bool		saw_quote = false;
 
-	/* end_buf reserves two bytes to ensure we can append \n and \0 */
 	Assert(end_buf > start_buf);
 
 	*initial_quote = false;
 	*terminating_comma = false;
 
-	/* Move over initial whitespace and commas */
+	/* Move over any whitespace and commas preceding the next token */
 	while ((c = (*(*lineptr)++)) != '\0' && (pg_isblank(c) || c == ','))
 		;
 
-	if (c == '\0' || c == '\n')
-	{
-		*buf = '\0';
-		return false;
-	}
-
 	/*
-	 * Build a token in buf of next characters up to EOF, EOL, unquoted comma,
-	 * or unquoted whitespace.
+	 * Build a token in buf of next characters up to EOL, unquoted comma, or
+	 * unquoted whitespace.
 	 */
-	while (c != '\0' && c != '\n' &&
+	while (c != '\0' &&
 		   (!pg_isblank(c) || in_quote))
 	{
 		/* skip comments to EOL */
 		if (c == '#' && !in_quote)
 		{
-			while ((c = (*(*lineptr)++)) != '\0' && c != '\n')
+			while ((c = (*(*lineptr)++)) != '\0')
 				;
-			/* If only comment, consume EOL too; return EOL */
-			if (c != '\0' && buf == start_buf)
-				(*lineptr)++;
 			break;
 		}
 
@@ -245,12 +235,14 @@ next_token(char **lineptr, char *buf, int bufsz,
 					  start_buf)));
 			*err_msg = "authentication file token too long";
 			/* Discard remainder of line */
-			while ((c = (*(*lineptr)++)) != '\0' && c != '\n')
+			while ((c = (*(*lineptr)++)) != '\0')
 				;
+			/* Un-eat the '\0', in case we're called again */
+			(*lineptr)--;
 			return false;
 		}
 
-		/* we do not pass back the comma in the token */
+		/* we do not pass back a terminating comma in the token */
 		if (c == ',' && !in_quote)
 		{
 			*terminating_comma = true;
@@ -278,8 +270,8 @@ next_token(char **lineptr, char *buf, int bufsz,
 	}
 
 	/*
-	 * Put back the char right after the token (critical in case it is EOL,
-	 * since we need to detect end-of-line at next call).
+	 * Un-eat the char right after the token (critical in case it is '\0',
+	 * else next call will read past end of string).
 	 */
 	(*lineptr)--;
 
