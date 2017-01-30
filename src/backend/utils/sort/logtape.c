@@ -591,9 +591,9 @@ LogicalTapeRewindForRead(LogicalTapeSet *lts, int tapenum, size_t buffer_size)
  * Rewind logical tape and switch from reading to writing.
  *
  * NOTE: we assume the caller has read the tape to the end; otherwise
- * untouched data and indirect blocks will not have been freed. We
- * could add more code to free any unread blocks, but in current usage
- * of this module it'd be useless code.
+ * untouched data will not have been freed. We could add more code to free
+ * any unread blocks, but in current usage of this module it'd be useless
+ * code.
  */
 void
 LogicalTapeRewindForWrite(LogicalTapeSet *lts, int tapenum)
