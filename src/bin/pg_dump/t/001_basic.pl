@@ -49,11 +49,9 @@ command_exit_is(
 'pg_restore: options -s/--schema-only and -a/--data-only cannot be used together'
 );
 
-command_exit_is(
-	[ 'pg_restore', '-d', 'xxx', '-f', 'xxx' ],
+command_exit_is([ 'pg_restore', '-d', 'xxx', '-f', 'xxx' ],
 	1,
-'pg_restore: options -d/--dbname and -f/--file cannot be used together'
-);
+	'pg_restore: options -d/--dbname and -f/--file cannot be used together');
 
 command_exit_is(
 	[ 'pg_dump', '-c', '-a' ],
@@ -63,7 +61,7 @@ command_exit_is(
 command_exit_is(
 	[ 'pg_restore', '-c', '-a' ],
 	1,
-	'pg_restore: options -c/--clean and -a/--data-only cannot be used together');
+'pg_restore: options -c/--clean and -a/--data-only cannot be used together');
 
 command_exit_is(
 	[ 'pg_dump', '--inserts', '-o' ],
@@ -80,8 +78,10 @@ command_exit_is([ 'pg_dump', '-j' ],
 command_exit_is([ 'pg_dump', '-j3' ],
 	1, 'pg_dump: parallel backup only supported by the directory format');
 
-command_exit_is([ 'pg_restore', '--single-transaction', '-j3' ],
-	1, 'pg_restore: cannot specify both --single-transaction and multiple jobs');
+command_exit_is(
+	[ 'pg_restore', '--single-transaction', '-j3' ],
+	1,
+	'pg_restore: cannot specify both --single-transaction and multiple jobs');
 
 command_exit_is([ 'pg_restore', '--if-exists' ],
 	1, 'pg_restore: option --if-exists requires option -c/--clean');
