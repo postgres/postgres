@@ -539,6 +539,9 @@ typedef struct _defaultACLInfo
 	char	   *defaclrole;
 	char		defaclobjtype;
 	char	   *defaclacl;
+	char	   *rdefaclacl;
+	char	   *initdefaclacl;
+	char	   *initrdefaclacl;
 } DefaultACLInfo;
 
 typedef struct _blobInfo
