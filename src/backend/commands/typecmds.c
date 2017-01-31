@@ -2221,9 +2221,7 @@ AlterDomainDefault(List *names, Node *defaultRaw)
 								 new_record, new_record_nulls,
 								 new_record_repl);
 
-	simple_heap_update(rel, &tup->t_self, newtuple);
-
-	CatalogUpdateIndexes(rel, newtuple);
+	CatalogTupleUpdate(rel, &tup->t_self, newtuple);
 
 	/* Rebuild dependencies */
 	GenerateTypeDependencies(typTup->typnamespace,
@@ -2360,9 +2358,7 @@ AlterDomainNotNull(List *names, bool notNull)
 	 */
 	typTup->typnotnull = notNull;
 
-	simple_heap_update(typrel, &tup->t_self, tup);
-
-	CatalogUpdateIndexes(typrel, tup);
+	CatalogTupleUpdate(typrel, &tup->t_self, tup);
 
 	InvokeObjectPostAlterHook(TypeRelationId, domainoid, 0);
 
@@ -2662,8 +2658,7 @@ AlterDomainValidateConstraint(List *names, char *constrName)
 	copyTuple = heap_copytuple(tuple);
 	copy_con = (Form_pg_constraint) GETSTRUCT(copyTuple);
 	copy_con->convalidated = true;
-	simple_heap_update(conrel, &copyTuple->t_self, copyTuple);
-	CatalogUpdateIndexes(conrel, copyTuple);
+	CatalogTupleUpdate(conrel, &copyTuple->t_self, copyTuple);
 
 	InvokeObjectPostAlterHook(ConstraintRelationId,
 							  HeapTupleGetOid(copyTuple), 0);
@@ -3404,9 +3399,7 @@ AlterTypeOwnerInternal(Oid typeOid, Oid newOwnerId)
 	tup = heap_modify_tuple(tup, RelationGetDescr(rel), repl_val, repl_null,
 							repl_repl);
 
-	simple_heap_update(rel, &tup->t_self, tup);
-
-	CatalogUpdateIndexes(rel, tup);
+	CatalogTupleUpdate(rel, &tup->t_self, tup);
 
 	/* If it has an array type, update that too */
 	if (OidIsValid(typTup->typarray))
@@ -3566,8 +3559,7 @@ AlterTypeNamespaceInternal(Oid typeOid, Oid nspOid,
 		/* tup is a copy, so we can scribble directly on it */
 		typform->typnamespace = nspOid;
 
-		simple_heap_update(rel, &tup->t_self, tup);
-		CatalogUpdateIndexes(rel, tup);
+		CatalogTupleUpdate(rel, &tup->t_self, tup);
 	}
 
 	/*

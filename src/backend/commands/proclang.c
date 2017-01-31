@@ -378,7 +378,7 @@ create_proc_lang(const char *languageName, bool replace,
 
 		/* Okay, do it... */
 		tup = heap_modify_tuple(oldtup, tupDesc, values, nulls, replaces);
-		simple_heap_update(rel, &tup->t_self, tup);
+		CatalogTupleUpdate(rel, &tup->t_self, tup);
 
 		ReleaseSysCache(oldtup);
 		is_update = true;
@@ -387,12 +387,9 @@ create_proc_lang(const char *languageName, bool replace,
 	{
 		/* Creating a new language */
 		tup = heap_form_tuple(tupDesc, values, nulls);
-		simple_heap_insert(rel, tup);
+		CatalogTupleInsert(rel, tup);
 		is_update = false;
 	}
-
-	/* Need to update indexes for either the insert or update case */
-	CatalogUpdateIndexes(rel, tup);
 
 	/*
 	 * Create dependencies for the new language.  If we are updating an

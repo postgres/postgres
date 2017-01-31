@@ -518,8 +518,7 @@ AlterOperator(AlterOperatorStmt *stmt)
 	tup = heap_modify_tuple(tup, RelationGetDescr(catalog),
 							values, nulls, replaces);
 
-	simple_heap_update(catalog, &tup->t_self, tup);
-	CatalogUpdateIndexes(catalog, tup);
+	CatalogTupleUpdate(catalog, &tup->t_self, tup);
 
 	address = makeOperatorDependencies(tup, true);
 

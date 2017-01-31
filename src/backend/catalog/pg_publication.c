@@ -149,8 +149,7 @@ publication_add_relation(Oid pubid, Relation targetrel,
 	tup = heap_form_tuple(RelationGetDescr(rel), values, nulls);
 
 	/* Insert tuple into catalog. */
-	prrelid = simple_heap_insert(rel, tup);
-	CatalogUpdateIndexes(rel, tup);
+	prrelid = CatalogTupleInsert(rel, tup);
 	heap_freetuple(tup);
 
 	ObjectAddressSet(myself, PublicationRelRelationId, prrelid);

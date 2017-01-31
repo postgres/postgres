@@ -72,10 +72,7 @@ SetRelationRuleStatus(Oid relationId, bool relHasRules)
 		/* Do the update */
 		classForm->relhasrules = relHasRules;
 
-		simple_heap_update(relationRelation, &tuple->t_self, tuple);
-
-		/* Keep the catalog indexes up to date */
-		CatalogUpdateIndexes(relationRelation, tuple);
+		CatalogTupleUpdate(relationRelation, &tuple->t_self, tuple);
 	}
 	else
 	{

@@ -1589,17 +1589,14 @@ update_attstats(Oid relid, bool inh, int natts, VacAttrStats **vacattrstats)
 									 nulls,
 									 replaces);
 			ReleaseSysCache(oldtup);
-			simple_heap_update(sd, &stup->t_self, stup);
+			CatalogTupleUpdate(sd, &stup->t_self, stup);
 		}
 		else
 		{
 			/* No, insert new tuple */
 			stup = heap_form_tuple(RelationGetDescr(sd), values, nulls);
-			simple_heap_insert(sd, stup);
+			CatalogTupleInsert(sd, stup);
 		}
-
-		/* update indexes too */
-		CatalogUpdateIndexes(sd, stup);
 
 		heap_freetuple(stup);
 	}

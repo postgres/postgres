@@ -1252,7 +1252,7 @@ SetDefaultACL(InternalDefaultACL *iacls)
 			values[Anum_pg_default_acl_defaclacl - 1] = PointerGetDatum(new_acl);
 
 			newtuple = heap_form_tuple(RelationGetDescr(rel), values, nulls);
-			simple_heap_insert(rel, newtuple);
+			CatalogTupleInsert(rel, newtuple);
 		}
 		else
 		{
@@ -1262,11 +1262,8 @@ SetDefaultACL(InternalDefaultACL *iacls)
 
 			newtuple = heap_modify_tuple(tuple, RelationGetDescr(rel),
 										 values, nulls, replaces);
-			simple_heap_update(rel, &newtuple->t_self, newtuple);
+			CatalogTupleUpdate(rel, &newtuple->t_self, newtuple);
 		}
-
-		/* keep the catalog indexes up to date */
-		CatalogUpdateIndexes(rel, newtuple);
 
 		/* these dependencies don't change in an update */
 		if (isNew)
@@ -1697,10 +1694,7 @@ ExecGrant_Attribute(InternalGrant *istmt, Oid relOid, const char *relname,
 		newtuple = heap_modify_tuple(attr_tuple, RelationGetDescr(attRelation),
 									 values, nulls, replaces);
 
-		simple_heap_update(attRelation, &newtuple->t_self, newtuple);
-
-		/* keep the catalog indexes up to date */
-		CatalogUpdateIndexes(attRelation, newtuple);
+		CatalogTupleUpdate(attRelation, &newtuple->t_self, newtuple);
 
 		/* Update initial privileges for extensions */
 		recordExtensionInitPriv(relOid, RelationRelationId, attnum,
@@ -1963,10 +1957,7 @@ ExecGrant_Relation(InternalGrant *istmt)
 			newtuple = heap_modify_tuple(tuple, RelationGetDescr(relation),
 										 values, nulls, replaces);
 
-			simple_heap_update(relation, &newtuple->t_self, newtuple);
-
-			/* keep the catalog indexes up to date */
-			CatalogUpdateIndexes(relation, newtuple);
+			CatalogTupleUpdate(relation, &newtuple->t_self, newtuple);
 
 			/* Update initial privileges for extensions */
 			recordExtensionInitPriv(relOid, RelationRelationId, 0, new_acl);
@@ -2156,10 +2147,7 @@ ExecGrant_Database(InternalGrant *istmt)
 		newtuple = heap_modify_tuple(tuple, RelationGetDescr(relation), values,
 									 nulls, replaces);
 
-		simple_heap_update(relation, &newtuple->t_self, newtuple);
-
-		/* keep the catalog indexes up to date */
-		CatalogUpdateIndexes(relation, newtuple);
+		CatalogTupleUpdate(relation, &newtuple->t_self, newtuple);
 
 		/* Update the shared dependency ACL info */
 		updateAclDependencies(DatabaseRelationId, HeapTupleGetOid(tuple), 0,
@@ -2281,10 +2269,7 @@ ExecGrant_Fdw(InternalGrant *istmt)
 		newtuple = heap_modify_tuple(tuple, RelationGetDescr(relation), values,
 									 nulls, replaces);
 
-		simple_heap_update(relation, &newtuple->t_self, newtuple);
-
-		/* keep the catalog indexes up to date */
-		CatalogUpdateIndexes(relation, newtuple);
+		CatalogTupleUpdate(relation, &newtuple->t_self, newtuple);
 
 		/* Update initial privileges for extensions */
 		recordExtensionInitPriv(fdwid, ForeignDataWrapperRelationId, 0,
@@ -2410,10 +2395,7 @@ ExecGrant_ForeignServer(InternalGrant *istmt)
 		newtuple = heap_modify_tuple(tuple, RelationGetDescr(relation), values,
 									 nulls, replaces);
 
-		simple_heap_update(relation, &newtuple->t_self, newtuple);
-
-		/* keep the catalog indexes up to date */
-		CatalogUpdateIndexes(relation, newtuple);
+		CatalogTupleUpdate(relation, &newtuple->t_self, newtuple);
 
 		/* Update initial privileges for extensions */
 		recordExtensionInitPriv(srvid, ForeignServerRelationId, 0, new_acl);
@@ -2537,10 +2519,7 @@ ExecGrant_Function(InternalGrant *istmt)
 		newtuple = heap_modify_tuple(tuple, RelationGetDescr(relation), values,
 									 nulls, replaces);
 
-		simple_heap_update(relation, &newtuple->t_self, newtuple);
-
-		/* keep the catalog indexes up to date */
-		CatalogUpdateIndexes(relation, newtuple);
+		CatalogTupleUpdate(relation, &newtuple->t_self, newtuple);
 
 		/* Update initial privileges for extensions */
 		recordExtensionInitPriv(funcId, ProcedureRelationId, 0, new_acl);
@@ -2671,10 +2650,7 @@ ExecGrant_Language(InternalGrant *istmt)
 		newtuple = heap_modify_tuple(tuple, RelationGetDescr(relation), values,
 									 nulls, replaces);
 
-		simple_heap_update(relation, &newtuple->t_self, newtuple);
-
-		/* keep the catalog indexes up to date */
-		CatalogUpdateIndexes(relation, newtuple);
+		CatalogTupleUpdate(relation, &newtuple->t_self, newtuple);
 
 		/* Update initial privileges for extensions */
 		recordExtensionInitPriv(langId, LanguageRelationId, 0, new_acl);
@@ -2813,10 +2789,7 @@ ExecGrant_Largeobject(InternalGrant *istmt)
 		newtuple = heap_modify_tuple(tuple, RelationGetDescr(relation),
 									 values, nulls, replaces);
 
-		simple_heap_update(relation, &newtuple->t_self, newtuple);
-
-		/* keep the catalog indexes up to date */
-		CatalogUpdateIndexes(relation, newtuple);
+		CatalogTupleUpdate(relation, &newtuple->t_self, newtuple);
 
 		/* Update initial privileges for extensions */
 		recordExtensionInitPriv(loid, LargeObjectRelationId, 0, new_acl);
@@ -2941,10 +2914,7 @@ ExecGrant_Namespace(InternalGrant *istmt)
 		newtuple = heap_modify_tuple(tuple, RelationGetDescr(relation), values,
 									 nulls, replaces);
 
-		simple_heap_update(relation, &newtuple->t_self, newtuple);
-
-		/* keep the catalog indexes up to date */
-		CatalogUpdateIndexes(relation, newtuple);
+		CatalogTupleUpdate(relation, &newtuple->t_self, newtuple);
 
 		/* Update initial privileges for extensions */
 		recordExtensionInitPriv(nspid, NamespaceRelationId, 0, new_acl);
@@ -3068,10 +3038,7 @@ ExecGrant_Tablespace(InternalGrant *istmt)
 		newtuple = heap_modify_tuple(tuple, RelationGetDescr(relation), values,
 									 nulls, replaces);
 
-		simple_heap_update(relation, &newtuple->t_self, newtuple);
-
-		/* keep the catalog indexes up to date */
-		CatalogUpdateIndexes(relation, newtuple);
+		CatalogTupleUpdate(relation, &newtuple->t_self, newtuple);
 
 		/* Update the shared dependency ACL info */
 		updateAclDependencies(TableSpaceRelationId, tblId, 0,
@@ -3205,10 +3172,7 @@ ExecGrant_Type(InternalGrant *istmt)
 		newtuple = heap_modify_tuple(tuple, RelationGetDescr(relation), values,
 									 nulls, replaces);
 
-		simple_heap_update(relation, &newtuple->t_self, newtuple);
-
-		/* keep the catalog indexes up to date */
-		CatalogUpdateIndexes(relation, newtuple);
+		CatalogTupleUpdate(relation, &newtuple->t_self, newtuple);
 
 		/* Update initial privileges for extensions */
 		recordExtensionInitPriv(typId, TypeRelationId, 0, new_acl);
@@ -5751,10 +5715,7 @@ recordExtensionInitPrivWorker(Oid objoid, Oid classoid, int objsubid, Acl *new_a
 			oldtuple = heap_modify_tuple(oldtuple, RelationGetDescr(relation),
 										 values, nulls, replace);
 
-			simple_heap_update(relation, &oldtuple->t_self, oldtuple);
-
-			/* keep the catalog indexes up to date */
-			CatalogUpdateIndexes(relation, oldtuple);
+			CatalogTupleUpdate(relation, &oldtuple->t_self, oldtuple);
 		}
 		else
 			/* new_acl is NULL, so delete the entry we found. */
@@ -5788,10 +5749,7 @@ recordExtensionInitPrivWorker(Oid objoid, Oid classoid, int objsubid, Acl *new_a
 
 			tuple = heap_form_tuple(RelationGetDescr(relation), values, nulls);
 
-			simple_heap_insert(relation, tuple);
-
-			/* keep the catalog indexes up to date */
-			CatalogUpdateIndexes(relation, tuple);
+			CatalogTupleInsert(relation, tuple);
 		}
 	}
 

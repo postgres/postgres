@@ -299,8 +299,7 @@ replorigin_create(char *roname)
 			values[Anum_pg_replication_origin_roname - 1] = roname_d;
 
 			tuple = heap_form_tuple(RelationGetDescr(rel), values, nulls);
-			simple_heap_insert(rel, tuple);
-			CatalogUpdateIndexes(rel, tuple);
+			CatalogTupleInsert(rel, tuple);
 			CommandCounterIncrement();
 			break;
 		}

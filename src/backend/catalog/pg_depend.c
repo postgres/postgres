@@ -362,8 +362,7 @@ changeDependencyFor(Oid classId, Oid objectId,
 
 				depform->refobjid = newRefObjectId;
 
-				simple_heap_update(depRel, &tup->t_self, tup);
-				CatalogUpdateIndexes(depRel, tup);
+				CatalogTupleUpdate(depRel, &tup->t_self, tup);
 
 				heap_freetuple(tup);
 			}

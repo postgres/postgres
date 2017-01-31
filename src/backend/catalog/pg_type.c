@@ -142,9 +142,7 @@ TypeShellMake(const char *typeName, Oid typeNamespace, Oid ownerId)
 	/*
 	 * insert the tuple in the relation and get the tuple's oid.
 	 */
-	typoid = simple_heap_insert(pg_type_desc, tup);
-
-	CatalogUpdateIndexes(pg_type_desc, tup);
+	typoid = CatalogTupleInsert(pg_type_desc, tup);
 
 	/*
 	 * Create dependencies.  We can/must skip this in bootstrap mode.
@@ -430,7 +428,7 @@ TypeCreate(Oid newTypeOid,
 								nulls,
 								replaces);
 
-		simple_heap_update(pg_type_desc, &tup->t_self, tup);
+		CatalogTupleUpdate(pg_type_desc, &tup->t_self, tup);
 
 		typeObjectId = HeapTupleGetOid(tup);
 
@@ -458,11 +456,8 @@ TypeCreate(Oid newTypeOid,
 		}
 		/* else allow system to assign oid */
 
-		typeObjectId = simple_heap_insert(pg_type_desc, tup);
+		typeObjectId = CatalogTupleInsert(pg_type_desc, tup);
 	}
-
-	/* Update indexes */
-	CatalogUpdateIndexes(pg_type_desc, tup);
 
 	/*
 	 * Create dependencies.  We can/must skip this in bootstrap mode.
@@ -724,10 +719,7 @@ RenameTypeInternal(Oid typeOid, const char *newTypeName, Oid typeNamespace)
 	/* OK, do the rename --- tuple is a copy, so OK to scribble on it */
 	namestrcpy(&(typ->typname), newTypeName);
 
-	simple_heap_update(pg_type_desc, &tuple->t_self, tuple);
-
-	/* update the system catalog indexes */
-	CatalogUpdateIndexes(pg_type_desc, tuple);
+	CatalogTupleUpdate(pg_type_desc, &tuple->t_self, tuple);
 
 	InvokeObjectPostAlterHook(TypeRelationId, typeOid, 0);
 

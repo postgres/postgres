@@ -146,19 +146,49 @@ CatalogIndexInsert(CatalogIndexState indstate, HeapTuple heapTuple)
 }
 
 /*
- * CatalogUpdateIndexes - do all the indexing work for a new catalog tuple
+ * CatalogTupleInsert - do heap and indexing work for a new catalog tuple
  *
- * This is a convenience routine for the common case where we only need
- * to insert or update a single tuple in a system catalog.  Avoid using it for
- * multiple tuples, since opening the indexes and building the index info
- * structures is moderately expensive.
+ * This is a convenience routine for the common case of inserting a single
+ * tuple in a system catalog; it inserts a new heap tuple, keeping indexes
+ * current.  Avoid using it for multiple tuples, since opening the indexes and
+ * building the index info structures is moderately expensive.
+ *
+ * The Oid of the inserted tuple is returned.
+ */
+Oid
+CatalogTupleInsert(Relation heapRel, HeapTuple tup)
+{
+	CatalogIndexState indstate;
+	Oid		oid;
+
+	indstate = CatalogOpenIndexes(heapRel);
+
+	oid = simple_heap_insert(heapRel, tup);
+
+	CatalogIndexInsert(indstate, tup);
+	CatalogCloseIndexes(indstate);
+
+	return oid;
+}
+
+/*
+ * CatalogTupleUpdate - do heap and indexing work for updating a catalog tuple
+ *
+ * This is a convenience routine for the common case of updating a single
+ * tuple in a system catalog; it updates one heap tuple (identified by otid)
+ * with tup, keeping indexes current.  Avoid using it for multiple tuples,
+ * since opening the indexes and building the index info structures is
+ * moderately expensive.
  */
 void
-CatalogUpdateIndexes(Relation heapRel, HeapTuple heapTuple)
+CatalogTupleUpdate(Relation heapRel, ItemPointer otid, HeapTuple tup)
 {
 	CatalogIndexState indstate;
 
 	indstate = CatalogOpenIndexes(heapRel);
-	CatalogIndexInsert(indstate, heapTuple);
+
+	simple_heap_update(heapRel, otid, tup);
+
+	CatalogIndexInsert(indstate, tup);
 	CatalogCloseIndexes(indstate);
 }

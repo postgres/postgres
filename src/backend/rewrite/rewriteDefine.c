@@ -124,7 +124,7 @@ InsertRule(char *rulname,
 		tup = heap_modify_tuple(oldtup, RelationGetDescr(pg_rewrite_desc),
 								values, nulls, replaces);
 
-		simple_heap_update(pg_rewrite_desc, &tup->t_self, tup);
+		CatalogTupleUpdate(pg_rewrite_desc, &tup->t_self, tup);
 
 		ReleaseSysCache(oldtup);
 
@@ -135,11 +135,9 @@ InsertRule(char *rulname,
 	{
 		tup = heap_form_tuple(pg_rewrite_desc->rd_att, values, nulls);
 
-		rewriteObjectId = simple_heap_insert(pg_rewrite_desc, tup);
+		rewriteObjectId = CatalogTupleInsert(pg_rewrite_desc, tup);
 	}
 
-	/* Need to update indexes in either case */
-	CatalogUpdateIndexes(pg_rewrite_desc, tup);
 
 	heap_freetuple(tup);
 
@@ -613,8 +611,7 @@ DefineQueryRewrite(char *rulename,
 		classForm->relminmxid = InvalidMultiXactId;
 		classForm->relreplident = REPLICA_IDENTITY_NOTHING;
 
-		simple_heap_update(relationRelation, &classTup->t_self, classTup);
-		CatalogUpdateIndexes(relationRelation, classTup);
+		CatalogTupleUpdate(relationRelation, &classTup->t_self, classTup);
 
 		heap_freetuple(classTup);
 		heap_close(relationRelation, RowExclusiveLock);
@@ -866,10 +863,7 @@ EnableDisableRule(Relation rel, const char *rulename,
 	{
 		((Form_pg_rewrite) GETSTRUCT(ruletup))->ev_enabled =
 			CharGetDatum(fires_when);
-		simple_heap_update(pg_rewrite_desc, &ruletup->t_self, ruletup);
-
-		/* keep system catalog indexes current */
-		CatalogUpdateIndexes(pg_rewrite_desc, ruletup);
+		CatalogTupleUpdate(pg_rewrite_desc, &ruletup->t_self, ruletup);
 
 		changed = true;
 	}
@@ -985,10 +979,7 @@ RenameRewriteRule(RangeVar *relation, const char *oldName,
 	/* OK, do the update */
 	namestrcpy(&(ruleform->rulename), newName);
 
-	simple_heap_update(pg_rewrite_desc, &ruletup->t_self, ruletup);
-
-	/* keep system catalog indexes current */
-	CatalogUpdateIndexes(pg_rewrite_desc, ruletup);
+	CatalogTupleUpdate(pg_rewrite_desc, &ruletup->t_self, ruletup);
 
 	heap_freetuple(ruletup);
 	heap_close(pg_rewrite_desc, RowExclusiveLock);

@@ -674,9 +674,7 @@ AggregateCreate(const char *aggName,
 	tupDesc = aggdesc->rd_att;
 
 	tup = heap_form_tuple(tupDesc, values, nulls);
-	simple_heap_insert(aggdesc, tup);
-
-	CatalogUpdateIndexes(aggdesc, tup);
+	CatalogTupleInsert(aggdesc, tup);
 
 	heap_close(aggdesc, RowExclusiveLock);
 

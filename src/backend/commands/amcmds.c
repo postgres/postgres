@@ -87,8 +87,7 @@ CreateAccessMethod(CreateAmStmt *stmt)
 
 	tup = heap_form_tuple(RelationGetDescr(rel), values, nulls);
 
-	amoid = simple_heap_insert(rel, tup);
-	CatalogUpdateIndexes(rel, tup);
+	amoid = CatalogTupleInsert(rel, tup);
 	heap_freetuple(tup);
 
 	myself.classId = AccessMethodRelationId;

@@ -277,8 +277,7 @@ CreateSubscription(CreateSubscriptionStmt *stmt)
 	tup = heap_form_tuple(RelationGetDescr(rel), values, nulls);
 
 	/* Insert tuple into catalog. */
-	subid = simple_heap_insert(rel, tup);
-	CatalogUpdateIndexes(rel, tup);
+	subid = CatalogTupleInsert(rel, tup);
 	heap_freetuple(tup);
 
 	recordDependencyOnOwner(SubscriptionRelationId, subid, owner);
@@ -408,8 +407,7 @@ AlterSubscription(AlterSubscriptionStmt *stmt)
 							replaces);
 
 	/* Update the catalog. */
-	simple_heap_update(rel, &tup->t_self, tup);
-	CatalogUpdateIndexes(rel, tup);
+	CatalogTupleUpdate(rel, &tup->t_self, tup);
 
 	ObjectAddressSet(myself, SubscriptionRelationId, subid);
 
@@ -588,8 +586,7 @@ AlterSubscriptionOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 			 errhint("The owner of an subscription must be a superuser.")));
 
 	form->subowner = newOwnerId;
-	simple_heap_update(rel, &tup->t_self, tup);
-	CatalogUpdateIndexes(rel, tup);
+	CatalogTupleUpdate(rel, &tup->t_self, tup);
 
 	/* Update owner dependency reference */
 	changeDependencyOnOwner(SubscriptionRelationId,

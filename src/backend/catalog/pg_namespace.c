@@ -76,10 +76,8 @@ NamespaceCreate(const char *nspName, Oid ownerId, bool isTemp)
 
 	tup = heap_form_tuple(tupDesc, values, nulls);
 
-	nspoid = simple_heap_insert(nspdesc, tup);
+	nspoid = CatalogTupleInsert(nspdesc, tup);
 	Assert(OidIsValid(nspoid));
-
-	CatalogUpdateIndexes(nspdesc, tup);
 
 	heap_close(nspdesc, RowExclusiveLock);
 

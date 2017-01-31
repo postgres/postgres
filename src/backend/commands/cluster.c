@@ -523,8 +523,7 @@ mark_index_clustered(Relation rel, Oid indexOid, bool is_internal)
 		if (indexForm->indisclustered)
 		{
 			indexForm->indisclustered = false;
-			simple_heap_update(pg_index, &indexTuple->t_self, indexTuple);
-			CatalogUpdateIndexes(pg_index, indexTuple);
+			CatalogTupleUpdate(pg_index, &indexTuple->t_self, indexTuple);
 		}
 		else if (thisIndexOid == indexOid)
 		{
@@ -532,8 +531,7 @@ mark_index_clustered(Relation rel, Oid indexOid, bool is_internal)
 			if (!IndexIsValid(indexForm))
 				elog(ERROR, "cannot cluster on invalid index %u", indexOid);
 			indexForm->indisclustered = true;
-			simple_heap_update(pg_index, &indexTuple->t_self, indexTuple);
-			CatalogUpdateIndexes(pg_index, indexTuple);
+			CatalogTupleUpdate(pg_index, &indexTuple->t_self, indexTuple);
 		}
 
 		InvokeObjectPostAlterHookArg(IndexRelationId, thisIndexOid, 0,
@@ -1558,8 +1556,7 @@ finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 		relform->relfrozenxid = frozenXid;
 		relform->relminmxid = cutoffMulti;
 
-		simple_heap_update(relRelation, &reltup->t_self, reltup);
-		CatalogUpdateIndexes(relRelation, reltup);
+		CatalogTupleUpdate(relRelation, &reltup->t_self, reltup);
 
 		heap_close(relRelation, RowExclusiveLock);
 	}

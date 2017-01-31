@@ -199,7 +199,7 @@ CreateComments(Oid oid, Oid classoid, int32 subid, char *comment)
 		{
 			newtuple = heap_modify_tuple(oldtuple, RelationGetDescr(description), values,
 										 nulls, replaces);
-			simple_heap_update(description, &oldtuple->t_self, newtuple);
+			CatalogTupleUpdate(description, &oldtuple->t_self, newtuple);
 		}
 
 		break;					/* Assume there can be only one match */
@@ -213,15 +213,11 @@ CreateComments(Oid oid, Oid classoid, int32 subid, char *comment)
 	{
 		newtuple = heap_form_tuple(RelationGetDescr(description),
 								   values, nulls);
-		simple_heap_insert(description, newtuple);
+		CatalogTupleInsert(description, newtuple);
 	}
 
-	/* Update indexes, if necessary */
 	if (newtuple != NULL)
-	{
-		CatalogUpdateIndexes(description, newtuple);
 		heap_freetuple(newtuple);
-	}
 
 	/* Done */
 
@@ -293,7 +289,7 @@ CreateSharedComments(Oid oid, Oid classoid, char *comment)
 		{
 			newtuple = heap_modify_tuple(oldtuple, RelationGetDescr(shdescription),
 										 values, nulls, replaces);
-			simple_heap_update(shdescription, &oldtuple->t_self, newtuple);
+			CatalogTupleUpdate(shdescription, &oldtuple->t_self, newtuple);
 		}
 
 		break;					/* Assume there can be only one match */
@@ -307,15 +303,11 @@ CreateSharedComments(Oid oid, Oid classoid, char *comment)
 	{
 		newtuple = heap_form_tuple(RelationGetDescr(shdescription),
 								   values, nulls);
-		simple_heap_insert(shdescription, newtuple);
+		CatalogTupleInsert(shdescription, newtuple);
 	}
 
-	/* Update indexes, if necessary */
 	if (newtuple != NULL)
-	{
-		CatalogUpdateIndexes(shdescription, newtuple);
 		heap_freetuple(newtuple);
-	}
 
 	/* Done */
 

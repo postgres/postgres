@@ -262,9 +262,7 @@ OperatorShellMake(const char *operatorName,
 	/*
 	 * insert our "shell" operator tuple
 	 */
-	operatorObjectId = simple_heap_insert(pg_operator_desc, tup);
-
-	CatalogUpdateIndexes(pg_operator_desc, tup);
+	operatorObjectId = CatalogTupleInsert(pg_operator_desc, tup);
 
 	/* Add dependencies for the entry */
 	makeOperatorDependencies(tup, false);
@@ -526,7 +524,7 @@ OperatorCreate(const char *operatorName,
 								nulls,
 								replaces);
 
-		simple_heap_update(pg_operator_desc, &tup->t_self, tup);
+		CatalogTupleUpdate(pg_operator_desc, &tup->t_self, tup);
 	}
 	else
 	{
@@ -535,11 +533,8 @@ OperatorCreate(const char *operatorName,
 		tup = heap_form_tuple(RelationGetDescr(pg_operator_desc),
 							  values, nulls);
 
-		operatorObjectId = simple_heap_insert(pg_operator_desc, tup);
+		operatorObjectId = CatalogTupleInsert(pg_operator_desc, tup);
 	}
-
-	/* Must update the indexes in either case */
-	CatalogUpdateIndexes(pg_operator_desc, tup);
 
 	/* Add dependencies for the entry */
 	address = makeOperatorDependencies(tup, isUpdate);
@@ -695,8 +690,7 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId, bool isDelete)
 		/* If any columns were found to need modification, update tuple. */
 		if (update_commutator)
 		{
-			simple_heap_update(pg_operator_desc, &tup->t_self, tup);
-			CatalogUpdateIndexes(pg_operator_desc, tup);
+			CatalogTupleUpdate(pg_operator_desc, &tup->t_self, tup);
 
 			/*
 			 * Do CCI to make the updated tuple visible.  We must do this in
@@ -741,8 +735,7 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId, bool isDelete)
 		/* If any columns were found to need modification, update tuple. */
 		if (update_negator)
 		{
-			simple_heap_update(pg_operator_desc, &tup->t_self, tup);
-			CatalogUpdateIndexes(pg_operator_desc, tup);
+			CatalogTupleUpdate(pg_operator_desc, &tup->t_self, tup);
 
 			/*
 			 * In the deletion case, do CCI to make the updated tuple visible.

@@ -63,10 +63,8 @@ LargeObjectCreate(Oid loid)
 	if (OidIsValid(loid))
 		HeapTupleSetOid(ntup, loid);
 
-	loid_new = simple_heap_insert(pg_lo_meta, ntup);
+	loid_new = CatalogTupleInsert(pg_lo_meta, ntup);
 	Assert(!OidIsValid(loid) || loid == loid_new);
-
-	CatalogUpdateIndexes(pg_lo_meta, ntup);
 
 	heap_freetuple(ntup);
 

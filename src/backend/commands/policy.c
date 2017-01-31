@@ -614,10 +614,7 @@ RemoveRoleFromObjectPolicy(Oid roleid, Oid classid, Oid policy_id)
 		new_tuple = heap_modify_tuple(tuple,
 									  RelationGetDescr(pg_policy_rel),
 									  values, isnull, replaces);
-		simple_heap_update(pg_policy_rel, &new_tuple->t_self, new_tuple);
-
-		/* Update Catalog Indexes */
-		CatalogUpdateIndexes(pg_policy_rel, new_tuple);
+		CatalogTupleUpdate(pg_policy_rel, &new_tuple->t_self, new_tuple);
 
 		/* Remove all old dependencies. */
 		deleteDependencyRecordsFor(PolicyRelationId, policy_id, false);
@@ -823,10 +820,7 @@ CreatePolicy(CreatePolicyStmt *stmt)
 	policy_tuple = heap_form_tuple(RelationGetDescr(pg_policy_rel), values,
 								   isnull);
 
-	policy_id = simple_heap_insert(pg_policy_rel, policy_tuple);
-
-	/* Update Indexes */
-	CatalogUpdateIndexes(pg_policy_rel, policy_tuple);
+	policy_id = CatalogTupleInsert(pg_policy_rel, policy_tuple);
 
 	/* Record Dependencies */
 	target.classId = RelationRelationId;
@@ -1150,10 +1144,7 @@ AlterPolicy(AlterPolicyStmt *stmt)
 	new_tuple = heap_modify_tuple(policy_tuple,
 								  RelationGetDescr(pg_policy_rel),
 								  values, isnull, replaces);
-	simple_heap_update(pg_policy_rel, &new_tuple->t_self, new_tuple);
-
-	/* Update Catalog Indexes */
-	CatalogUpdateIndexes(pg_policy_rel, new_tuple);
+	CatalogTupleUpdate(pg_policy_rel, &new_tuple->t_self, new_tuple);
 
 	/* Update Dependencies. */
 	deleteDependencyRecordsFor(PolicyRelationId, policy_id, false);
@@ -1287,10 +1278,7 @@ rename_policy(RenameStmt *stmt)
 	namestrcpy(&((Form_pg_policy) GETSTRUCT(policy_tuple))->polname,
 			   stmt->newname);
 
-	simple_heap_update(pg_policy_rel, &policy_tuple->t_self, policy_tuple);
-
-	/* keep system catalog indexes current */
-	CatalogUpdateIndexes(pg_policy_rel, policy_tuple);
+	CatalogTupleUpdate(pg_policy_rel, &policy_tuple->t_self, policy_tuple);
 
 	InvokeObjectPostAlterHook(PolicyRelationId,
 							  HeapTupleGetOid(policy_tuple), 0);

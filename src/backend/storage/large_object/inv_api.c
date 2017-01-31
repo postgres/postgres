@@ -678,8 +678,7 @@ inv_write(LargeObjectDesc *obj_desc, const char *buf, int nbytes)
 			replace[Anum_pg_largeobject_data - 1] = true;
 			newtup = heap_modify_tuple(oldtuple, RelationGetDescr(lo_heap_r),
 									   values, nulls, replace);
-			simple_heap_update(lo_heap_r, &newtup->t_self, newtup);
-			CatalogIndexInsert(indstate, newtup);
+			CatalogTupleUpdate(lo_heap_r, &newtup->t_self, newtup);
 			heap_freetuple(newtup);
 
 			/*
@@ -721,8 +720,7 @@ inv_write(LargeObjectDesc *obj_desc, const char *buf, int nbytes)
 			values[Anum_pg_largeobject_pageno - 1] = Int32GetDatum(pageno);
 			values[Anum_pg_largeobject_data - 1] = PointerGetDatum(&workbuf);
 			newtup = heap_form_tuple(lo_heap_r->rd_att, values, nulls);
-			simple_heap_insert(lo_heap_r, newtup);
-			CatalogIndexInsert(indstate, newtup);
+			CatalogTupleInsert(lo_heap_r, newtup);
 			heap_freetuple(newtup);
 		}
 		pageno++;
@@ -850,8 +848,7 @@ inv_truncate(LargeObjectDesc *obj_desc, int64 len)
 		replace[Anum_pg_largeobject_data - 1] = true;
 		newtup = heap_modify_tuple(oldtuple, RelationGetDescr(lo_heap_r),
 								   values, nulls, replace);
-		simple_heap_update(lo_heap_r, &newtup->t_self, newtup);
-		CatalogIndexInsert(indstate, newtup);
+		CatalogTupleUpdate(lo_heap_r, &newtup->t_self, newtup);
 		heap_freetuple(newtup);
 	}
 	else
@@ -888,8 +885,7 @@ inv_truncate(LargeObjectDesc *obj_desc, int64 len)
 		values[Anum_pg_largeobject_pageno - 1] = Int32GetDatum(pageno);
 		values[Anum_pg_largeobject_data - 1] = PointerGetDatum(&workbuf);
 		newtup = heap_form_tuple(lo_heap_r->rd_att, values, nulls);
-		simple_heap_insert(lo_heap_r, newtup);
-		CatalogIndexInsert(indstate, newtup);
+		CatalogTupleInsert(lo_heap_r, newtup);
 		heap_freetuple(newtup);
 	}
 

@@ -226,10 +226,7 @@ CreateConstraintEntry(const char *constraintName,
 
 	tup = heap_form_tuple(RelationGetDescr(conDesc), values, nulls);
 
-	conOid = simple_heap_insert(conDesc, tup);
-
-	/* update catalog indexes */
-	CatalogUpdateIndexes(conDesc, tup);
+	conOid = CatalogTupleInsert(conDesc, tup);
 
 	conobject.classId = ConstraintRelationId;
 	conobject.objectId = conOid;
@@ -584,9 +581,7 @@ RemoveConstraintById(Oid conId)
 					 RelationGetRelationName(rel));
 			classForm->relchecks--;
 
-			simple_heap_update(pgrel, &relTup->t_self, relTup);
-
-			CatalogUpdateIndexes(pgrel, relTup);
+			CatalogTupleUpdate(pgrel, &relTup->t_self, relTup);
 
 			heap_freetuple(relTup);
 
@@ -666,10 +661,7 @@ RenameConstraintById(Oid conId, const char *newname)
 	/* OK, do the rename --- tuple is a copy, so OK to scribble on it */
 	namestrcpy(&(con->conname), newname);
 
-	simple_heap_update(conDesc, &tuple->t_self, tuple);
-
-	/* update the system catalog indexes */
-	CatalogUpdateIndexes(conDesc, tuple);
+	CatalogTupleUpdate(conDesc, &tuple->t_self, tuple);
 
 	InvokeObjectPostAlterHook(ConstraintRelationId, conId, 0);
 
@@ -736,8 +728,7 @@ AlterConstraintNamespaces(Oid ownerId, Oid oldNspId,
 
 			conform->connamespace = newNspId;
 
-			simple_heap_update(conRel, &tup->t_self, tup);
-			CatalogUpdateIndexes(conRel, tup);
+			CatalogTupleUpdate(conRel, &tup->t_self, tup);
 
 			/*
 			 * Note: currently, the constraint will not have its own
