@@ -1345,10 +1345,10 @@ _bt_steppage(IndexScanDesc scan, ScanDirection dir)
 			CHECK_FOR_INTERRUPTS();
 			/* step right one page */
 			so->currPos.buf = _bt_getbuf(rel, blkno, BT_READ);
-			/* check for deleted page */
 			page = BufferGetPage(so->currPos.buf);
 			TestForOldSnapshot(scan->xs_snapshot, rel, page);
 			opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+			/* check for deleted page */
 			if (!P_IGNORE(opaque))
 			{
 				PredicateLockPage(rel, blkno, scan->xs_snapshot);
