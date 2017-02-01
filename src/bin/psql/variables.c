@@ -52,6 +52,7 @@ CreateVariableSpace(void)
 	ptr = pg_malloc(sizeof *ptr);
 	ptr->name = NULL;
 	ptr->value = NULL;
+	ptr->substitute_hook = NULL;
 	ptr->assign_hook = NULL;
 	ptr->next = NULL;
 
@@ -101,11 +102,9 @@ ParseVariableBool(const char *value, const char *name, bool *result)
 	size_t		len;
 	bool		valid = true;
 
+	/* Treat "unset" as an empty string, which will lead to error below */
 	if (value == NULL)
-	{
-		*result = false;		/* not set -> assume "off" */
-		return valid;
-	}
+		value = "";
 
 	len = strlen(value);
 
@@ -152,8 +151,10 @@ ParseVariableNum(const char *value, const char *name, int *result)
 	char	   *end;
 	long		numval;
 
+	/* Treat "unset" as an empty string, which will lead to error below */
 	if (value == NULL)
-		return false;
+		value = "";
+
 	errno = 0;
 	numval = strtol(value, &end, 0);
 	if (errno == 0 && *end == '\0' && end != value && numval == (int) numval)
@@ -235,12 +236,12 @@ SetVariable(VariableSpace space, const char *name, const char *value)
 
 	if (!valid_variable_name(name))
 	{
+		/* Deletion of non-existent variable is not an error */
+		if (!value)
+			return true;
 		psql_error("invalid variable name: \"%s\"\n", name);
 		return false;
 	}
-
-	if (!value)
-		return DeleteVariable(space, name);
 
 	for (previous = space, current = space->next;
 		 current;
@@ -249,13 +250,19 @@ SetVariable(VariableSpace space, const char *name, const char *value)
 		if (strcmp(current->name, name) == 0)
 		{
 			/*
-			 * Found entry, so update, unless hook returns false.  The hook
-			 * may need the passed value to have the same lifespan as the
-			 * variable, so allocate it right away, even though we'll have to
-			 * free it again if the hook returns false.
+			 * Found entry, so update, unless assign hook returns false.
+			 *
+			 * We must duplicate the passed value to start with.  This
+			 * simplifies the API for substitute hooks.  Moreover, some assign
+			 * hooks assume that the passed value has the same lifespan as the
+			 * variable.  Having to free the string again on failure is a
+			 * small price to pay for keeping these APIs simple.
 			 */
-			char	   *new_value = pg_strdup(value);
+			char	   *new_value = value ? pg_strdup(value) : NULL;
 			bool		confirmed;
+
+			if (current->substitute_hook)
+				new_value = (*current->substitute_hook) (new_value);
 
 			if (current->assign_hook)
 				confirmed = (*current->assign_hook) (new_value);
@@ -267,39 +274,61 @@ SetVariable(VariableSpace space, const char *name, const char *value)
 				if (current->value)
 					pg_free(current->value);
 				current->value = new_value;
+
+				/*
+				 * If we deleted the value, and there are no hooks to
+				 * remember, we can discard the variable altogether.
+				 */
+				if (new_value == NULL &&
+					current->substitute_hook == NULL &&
+					current->assign_hook == NULL)
+				{
+					previous->next = current->next;
+					free(current->name);
+					free(current);
+				}
 			}
-			else
+			else if (new_value)
 				pg_free(new_value);		/* current->value is left unchanged */
 
 			return confirmed;
 		}
 	}
 
-	/* not present, make new entry */
-	current = pg_malloc(sizeof *current);
-	current->name = pg_strdup(name);
-	current->value = pg_strdup(value);
-	current->assign_hook = NULL;
-	current->next = NULL;
-	previous->next = current;
+	/* not present, make new entry ... unless we were asked to delete */
+	if (value)
+	{
+		current = pg_malloc(sizeof *current);
+		current->name = pg_strdup(name);
+		current->value = pg_strdup(value);
+		current->substitute_hook = NULL;
+		current->assign_hook = NULL;
+		current->next = NULL;
+		previous->next = current;
+	}
 	return true;
 }
 
 /*
- * Attach an assign hook function to the named variable.
+ * Attach substitute and/or assign hook functions to the named variable.
+ * If you need only one hook, pass NULL for the other.
  *
- * If the variable doesn't already exist, create it with value NULL,
- * just so we have a place to store the hook function.  (Externally,
- * this isn't different from it not being defined.)
+ * If the variable doesn't already exist, create it with value NULL, just so
+ * we have a place to store the hook function(s).  (The substitute hook might
+ * immediately change the NULL to something else; if not, this state is
+ * externally the same as the variable not being defined.)
  *
- * The hook is immediately called on the variable's current value.  This is
- * meant to let it update any derived psql state.  If the hook doesn't like
- * the current value, it will print a message to that effect, but we'll ignore
- * it.  Generally we do not expect any such failure here, because this should
- * get called before any user-supplied value is assigned.
+ * The substitute hook, if given, is immediately called on the variable's
+ * value.  Then the assign hook, if given, is called on the variable's value.
+ * This is meant to let it update any derived psql state.  If the assign hook
+ * doesn't like the current value, it will print a message to that effect,
+ * but we'll ignore it.  Generally we do not expect any such failure here,
+ * because this should get called before any user-supplied value is assigned.
  */
 void
-SetVariableAssignHook(VariableSpace space, const char *name, VariableAssignHook hook)
+SetVariableHooks(VariableSpace space, const char *name,
+				 VariableSubstituteHook shook,
+				 VariableAssignHook ahook)
 {
 	struct _variable *current,
 			   *previous;
@@ -317,8 +346,12 @@ SetVariableAssignHook(VariableSpace space, const char *name, VariableAssignHook 
 		if (strcmp(current->name, name) == 0)
 		{
 			/* found entry, so update */
-			current->assign_hook = hook;
-			(void) (*hook) (current->value);
+			current->substitute_hook = shook;
+			current->assign_hook = ahook;
+			if (shook)
+				current->value = (*shook) (current->value);
+			if (ahook)
+				(void) (*ahook) (current->value);
 			return;
 		}
 	}
@@ -327,10 +360,14 @@ SetVariableAssignHook(VariableSpace space, const char *name, VariableAssignHook 
 	current = pg_malloc(sizeof *current);
 	current->name = pg_strdup(name);
 	current->value = NULL;
-	current->assign_hook = hook;
+	current->substitute_hook = shook;
+	current->assign_hook = ahook;
 	current->next = NULL;
 	previous->next = current;
-	(void) (*hook) (NULL);
+	if (shook)
+		current->value = (*shook) (current->value);
+	if (ahook)
+		(void) (*ahook) (current->value);
 }
 
 /*
@@ -351,42 +388,7 @@ SetVariableBool(VariableSpace space, const char *name)
 bool
 DeleteVariable(VariableSpace space, const char *name)
 {
-	struct _variable *current,
-			   *previous;
-
-	if (!space)
-		return true;
-
-	for (previous = space, current = space->next;
-		 current;
-		 previous = current, current = current->next)
-	{
-		if (strcmp(current->name, name) == 0)
-		{
-			if (current->assign_hook)
-			{
-				/* Allow deletion only if hook is okay with NULL value */
-				if (!(*current->assign_hook) (NULL))
-					return false;		/* message printed by hook */
-				if (current->value)
-					free(current->value);
-				current->value = NULL;
-				/* Don't delete entry, or we'd forget the hook function */
-			}
-			else
-			{
-				/* We can delete the entry as well as its value */
-				if (current->value)
-					free(current->value);
-				previous->next = current->next;
-				free(current->name);
-				free(current);
-			}
-			return true;
-		}
-	}
-
-	return true;
+	return SetVariable(space, name, NULL);
 }
 
 /*

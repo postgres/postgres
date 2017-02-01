@@ -11,6 +11,23 @@ invalid variable name: "invalid/name"
 unrecognized value "foo" for "AUTOCOMMIT": boolean expected
 \set FETCH_COUNT foo
 invalid value "foo" for "FETCH_COUNT": integer expected
+-- check handling of built-in boolean variable
+\echo :ON_ERROR_ROLLBACK
+off
+\set ON_ERROR_ROLLBACK
+\echo :ON_ERROR_ROLLBACK
+on
+\set ON_ERROR_ROLLBACK foo
+unrecognized value "foo" for "ON_ERROR_ROLLBACK"
+Available values are: on, off, interactive.
+\echo :ON_ERROR_ROLLBACK
+on
+\set ON_ERROR_ROLLBACK on
+\echo :ON_ERROR_ROLLBACK
+on
+\unset ON_ERROR_ROLLBACK
+\echo :ON_ERROR_ROLLBACK
+off
 -- \gset
 select 10 as test01, 20 as test02, 'Hello' as test03 \gset pref01_
 \echo :pref01_test01 :pref01_test02 :pref01_test03

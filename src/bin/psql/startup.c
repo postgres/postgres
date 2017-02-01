@@ -166,10 +166,8 @@ main(int argc, char *argv[])
 
 	SetVariable(pset.vars, "VERSION", PG_VERSION_STR);
 
-	/* Default values for variables */
+	/* Default values for variables (that don't match the result of \unset) */
 	SetVariableBool(pset.vars, "AUTOCOMMIT");
-	SetVariable(pset.vars, "VERBOSITY", "default");
-	SetVariable(pset.vars, "SHOW_CONTEXT", "errors");
 	SetVariable(pset.vars, "PROMPT1", DEFAULT_PROMPT1);
 	SetVariable(pset.vars, "PROMPT2", DEFAULT_PROMPT2);
 	SetVariable(pset.vars, "PROMPT3", DEFAULT_PROMPT3);
@@ -578,17 +576,13 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 					if (!equal_loc)
 					{
 						if (!DeleteVariable(pset.vars, value))
-						{
-							fprintf(stderr, _("%s: could not delete variable \"%s\"\n"),
-									pset.progname, value);
-							exit(EXIT_FAILURE);
-						}
+							exit(EXIT_FAILURE); /* error already printed */
 					}
 					else
 					{
 						*equal_loc = '\0';
 						if (!SetVariable(pset.vars, value, equal_loc + 1))
-							exit(EXIT_FAILURE);
+							exit(EXIT_FAILURE); /* error already printed */
 					}
 
 					free(value);
@@ -777,10 +771,27 @@ showVersion(void)
 
 
 /*
- * Assign hooks for psql variables.
+ * Substitute hooks and assign hooks for psql variables.
  *
  * This isn't an amazingly good place for them, but neither is anywhere else.
  */
+
+static char *
+bool_substitute_hook(char *newval)
+{
+	if (newval == NULL)
+	{
+		/* "\unset FOO" becomes "\set FOO off" */
+		newval = pg_strdup("off");
+	}
+	else if (newval[0] == '\0')
+	{
+		/* "\set FOO" becomes "\set FOO on" */
+		pg_free(newval);
+		newval = pg_strdup("on");
+	}
+	return newval;
+}
 
 static bool
 autocommit_hook(const char *newval)
@@ -822,12 +833,19 @@ fetch_count_hook(const char *newval)
 	return true;
 }
 
+static char *
+echo_substitute_hook(char *newval)
+{
+	if (newval == NULL)
+		newval = pg_strdup("none");
+	return newval;
+}
+
 static bool
 echo_hook(const char *newval)
 {
-	if (newval == NULL)
-		pset.echo = PSQL_ECHO_NONE;
-	else if (pg_strcasecmp(newval, "queries") == 0)
+	Assert(newval != NULL);		/* else substitute hook messed up */
+	if (pg_strcasecmp(newval, "queries") == 0)
 		pset.echo = PSQL_ECHO_QUERIES;
 	else if (pg_strcasecmp(newval, "errors") == 0)
 		pset.echo = PSQL_ECHO_ERRORS;
@@ -846,9 +864,8 @@ echo_hook(const char *newval)
 static bool
 echo_hidden_hook(const char *newval)
 {
-	if (newval == NULL)
-		pset.echo_hidden = PSQL_ECHO_HIDDEN_OFF;
-	else if (pg_strcasecmp(newval, "noexec") == 0)
+	Assert(newval != NULL);		/* else substitute hook messed up */
+	if (pg_strcasecmp(newval, "noexec") == 0)
 		pset.echo_hidden = PSQL_ECHO_HIDDEN_NOEXEC;
 	else
 	{
@@ -868,9 +885,8 @@ echo_hidden_hook(const char *newval)
 static bool
 on_error_rollback_hook(const char *newval)
 {
-	if (newval == NULL)
-		pset.on_error_rollback = PSQL_ERROR_ROLLBACK_OFF;
-	else if (pg_strcasecmp(newval, "interactive") == 0)
+	Assert(newval != NULL);		/* else substitute hook messed up */
+	if (pg_strcasecmp(newval, "interactive") == 0)
 		pset.on_error_rollback = PSQL_ERROR_ROLLBACK_INTERACTIVE;
 	else
 	{
@@ -887,12 +903,19 @@ on_error_rollback_hook(const char *newval)
 	return true;
 }
 
+static char *
+comp_keyword_case_substitute_hook(char *newval)
+{
+	if (newval == NULL)
+		newval = pg_strdup("preserve-upper");
+	return newval;
+}
+
 static bool
 comp_keyword_case_hook(const char *newval)
 {
-	if (newval == NULL)
-		pset.comp_case = PSQL_COMP_CASE_PRESERVE_UPPER;
-	else if (pg_strcasecmp(newval, "preserve-upper") == 0)
+	Assert(newval != NULL);		/* else substitute hook messed up */
+	if (pg_strcasecmp(newval, "preserve-upper") == 0)
 		pset.comp_case = PSQL_COMP_CASE_PRESERVE_UPPER;
 	else if (pg_strcasecmp(newval, "preserve-lower") == 0)
 		pset.comp_case = PSQL_COMP_CASE_PRESERVE_LOWER;
@@ -909,12 +932,19 @@ comp_keyword_case_hook(const char *newval)
 	return true;
 }
 
+static char *
+histcontrol_substitute_hook(char *newval)
+{
+	if (newval == NULL)
+		newval = pg_strdup("none");
+	return newval;
+}
+
 static bool
 histcontrol_hook(const char *newval)
 {
-	if (newval == NULL)
-		pset.histcontrol = hctl_none;
-	else if (pg_strcasecmp(newval, "ignorespace") == 0)
+	Assert(newval != NULL);		/* else substitute hook messed up */
+	if (pg_strcasecmp(newval, "ignorespace") == 0)
 		pset.histcontrol = hctl_ignorespace;
 	else if (pg_strcasecmp(newval, "ignoredups") == 0)
 		pset.histcontrol = hctl_ignoredups;
@@ -952,12 +982,19 @@ prompt3_hook(const char *newval)
 	return true;
 }
 
+static char *
+verbosity_substitute_hook(char *newval)
+{
+	if (newval == NULL)
+		newval = pg_strdup("default");
+	return newval;
+}
+
 static bool
 verbosity_hook(const char *newval)
 {
-	if (newval == NULL)
-		pset.verbosity = PQERRORS_DEFAULT;
-	else if (pg_strcasecmp(newval, "default") == 0)
+	Assert(newval != NULL);		/* else substitute hook messed up */
+	if (pg_strcasecmp(newval, "default") == 0)
 		pset.verbosity = PQERRORS_DEFAULT;
 	else if (pg_strcasecmp(newval, "terse") == 0)
 		pset.verbosity = PQERRORS_TERSE;
@@ -974,12 +1011,19 @@ verbosity_hook(const char *newval)
 	return true;
 }
 
+static char *
+show_context_substitute_hook(char *newval)
+{
+	if (newval == NULL)
+		newval = pg_strdup("errors");
+	return newval;
+}
+
 static bool
 show_context_hook(const char *newval)
 {
-	if (newval == NULL)
-		pset.show_context = PQSHOW_CONTEXT_ERRORS;
-	else if (pg_strcasecmp(newval, "never") == 0)
+	Assert(newval != NULL);		/* else substitute hook messed up */
+	if (pg_strcasecmp(newval, "never") == 0)
 		pset.show_context = PQSHOW_CONTEXT_NEVER;
 	else if (pg_strcasecmp(newval, "errors") == 0)
 		pset.show_context = PQSHOW_CONTEXT_ERRORS;
@@ -1002,20 +1046,52 @@ EstablishVariableSpace(void)
 {
 	pset.vars = CreateVariableSpace();
 
-	SetVariableAssignHook(pset.vars, "AUTOCOMMIT", autocommit_hook);
-	SetVariableAssignHook(pset.vars, "ON_ERROR_STOP", on_error_stop_hook);
-	SetVariableAssignHook(pset.vars, "QUIET", quiet_hook);
-	SetVariableAssignHook(pset.vars, "SINGLELINE", singleline_hook);
-	SetVariableAssignHook(pset.vars, "SINGLESTEP", singlestep_hook);
-	SetVariableAssignHook(pset.vars, "FETCH_COUNT", fetch_count_hook);
-	SetVariableAssignHook(pset.vars, "ECHO", echo_hook);
-	SetVariableAssignHook(pset.vars, "ECHO_HIDDEN", echo_hidden_hook);
-	SetVariableAssignHook(pset.vars, "ON_ERROR_ROLLBACK", on_error_rollback_hook);
-	SetVariableAssignHook(pset.vars, "COMP_KEYWORD_CASE", comp_keyword_case_hook);
-	SetVariableAssignHook(pset.vars, "HISTCONTROL", histcontrol_hook);
-	SetVariableAssignHook(pset.vars, "PROMPT1", prompt1_hook);
-	SetVariableAssignHook(pset.vars, "PROMPT2", prompt2_hook);
-	SetVariableAssignHook(pset.vars, "PROMPT3", prompt3_hook);
-	SetVariableAssignHook(pset.vars, "VERBOSITY", verbosity_hook);
-	SetVariableAssignHook(pset.vars, "SHOW_CONTEXT", show_context_hook);
+	SetVariableHooks(pset.vars, "AUTOCOMMIT",
+					 bool_substitute_hook,
+					 autocommit_hook);
+	SetVariableHooks(pset.vars, "ON_ERROR_STOP",
+					 bool_substitute_hook,
+					 on_error_stop_hook);
+	SetVariableHooks(pset.vars, "QUIET",
+					 bool_substitute_hook,
+					 quiet_hook);
+	SetVariableHooks(pset.vars, "SINGLELINE",
+					 bool_substitute_hook,
+					 singleline_hook);
+	SetVariableHooks(pset.vars, "SINGLESTEP",
+					 bool_substitute_hook,
+					 singlestep_hook);
+	SetVariableHooks(pset.vars, "FETCH_COUNT",
+					 NULL,
+					 fetch_count_hook);
+	SetVariableHooks(pset.vars, "ECHO",
+					 echo_substitute_hook,
+					 echo_hook);
+	SetVariableHooks(pset.vars, "ECHO_HIDDEN",
+					 bool_substitute_hook,
+					 echo_hidden_hook);
+	SetVariableHooks(pset.vars, "ON_ERROR_ROLLBACK",
+					 bool_substitute_hook,
+					 on_error_rollback_hook);
+	SetVariableHooks(pset.vars, "COMP_KEYWORD_CASE",
+					 comp_keyword_case_substitute_hook,
+					 comp_keyword_case_hook);
+	SetVariableHooks(pset.vars, "HISTCONTROL",
+					 histcontrol_substitute_hook,
+					 histcontrol_hook);
+	SetVariableHooks(pset.vars, "PROMPT1",
+					 NULL,
+					 prompt1_hook);
+	SetVariableHooks(pset.vars, "PROMPT2",
+					 NULL,
+					 prompt2_hook);
+	SetVariableHooks(pset.vars, "PROMPT3",
+					 NULL,
+					 prompt3_hook);
+	SetVariableHooks(pset.vars, "VERBOSITY",
+					 verbosity_substitute_hook,
+					 verbosity_hook);
+	SetVariableHooks(pset.vars, "SHOW_CONTEXT",
+					 show_context_substitute_hook,
+					 show_context_hook);
 }
