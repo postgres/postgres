@@ -350,7 +350,7 @@ CheckMyDatabase(const char *name, bool am_superuser)
 		 */
 		if (dbform->datconnlimit >= 0 &&
 			!am_superuser &&
-			CountDBBackends(MyDatabaseId) > dbform->datconnlimit)
+			CountDBConnections(MyDatabaseId) > dbform->datconnlimit)
 			ereport(FATAL,
 					(errcode(ERRCODE_TOO_MANY_CONNECTIONS),
 					 errmsg("too many connections for database \"%s\"",

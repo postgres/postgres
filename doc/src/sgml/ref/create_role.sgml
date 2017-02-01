@@ -198,7 +198,10 @@ CREATE ROLE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replac
       <listitem>
        <para>
         If role can log in, this specifies how many concurrent connections
-        the role can make.  -1 (the default) means no limit.
+        the role can make.  -1 (the default) means no limit. Note that only
+        normal connections are counted towards this limit. Neither prepared
+        transactions nor background worker connections are counted towards
+        this limit.
        </para>
       </listitem>
      </varlistentry>

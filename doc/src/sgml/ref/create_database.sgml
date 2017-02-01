@@ -258,7 +258,8 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
    The <literal>CONNECTION LIMIT</> option is only enforced approximately;
    if two new sessions start at about the same time when just one
    connection <quote>slot</> remains for the database, it is possible that
-   both will fail.  Also, the limit is not enforced against superusers.
+   both will fail.  Also, the limit is not enforced against superusers or
+   background worker processes.
   </para>
  </refsect1>
 

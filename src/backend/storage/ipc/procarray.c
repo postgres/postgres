@@ -2745,6 +2745,38 @@ CountDBBackends(Oid databaseid)
 }
 
 /*
+ * CountDBConnections --- counts database backends ignoring any background
+ *		worker processes
+ */
+int
+CountDBConnections(Oid databaseid)
+{
+	ProcArrayStruct *arrayP = procArray;
+	int			count = 0;
+	int			index;
+
+	LWLockAcquire(ProcArrayLock, LW_SHARED);
+
+	for (index = 0; index < arrayP->numProcs; index++)
+	{
+		int			pgprocno = arrayP->pgprocnos[index];
+		volatile PGPROC *proc = &allProcs[pgprocno];
+
+		if (proc->pid == 0)
+			continue;			/* do not count prepared xacts */
+		if (proc->isBackgroundWorker)
+			continue;			/* do not count background workers */
+		if (!OidIsValid(databaseid) ||
+			proc->databaseId == databaseid)
+			count++;
+	}
+
+	LWLockRelease(ProcArrayLock);
+
+	return count;
+}
+
+/*
  * CancelDBBackends --- cancel backends that are using specified database
  */
 void
@@ -2803,6 +2835,8 @@ CountUserBackends(Oid roleid)
 
 		if (proc->pid == 0)
 			continue;			/* do not count prepared xacts */
+		if (proc->isBackgroundWorker)
+			continue;			/* do not count background workers */
 		if (proc->roleId == roleid)
 			count++;
 	}
