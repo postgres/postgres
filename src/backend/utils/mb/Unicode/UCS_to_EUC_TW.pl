@@ -55,7 +55,7 @@ foreach my $i (@$mapping)
 			code => ($i->{code} + 0x8ea10000),
 			rest => $i->{rest},
 			direction => 'to_unicode'
-		}
+		};
 	}
 }
 

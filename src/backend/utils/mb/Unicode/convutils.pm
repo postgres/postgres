@@ -168,20 +168,20 @@ sub print_from_utf8_map
 		   "static const pg_utf_to_local ULmap${charset}[ %d ] = {",
 		   scalar(@$table));
 	my $first = 1;
-	foreach my $i (sort {$$a{utf8} <=> $$b{utf8}} @$table)
+	foreach my $i (sort {$a->{utf8} <=> $b->{utf8}} @$table)
     {
 		print($out ",") if (!$first);
 		$first = 0;
 		print($out "\t/* $last_comment */") if ($verbose);
 
-		printf($out "\n  {0x%04x, 0x%04x}", $$i{utf8}, $$i{code});
+		printf($out "\n  {0x%04x, 0x%04x}", $i->{utf8}, $i->{code});
 		if ($verbose >= 2)
 		{
-			$last_comment = "$$i{f}:$$i{l} $$i{comment}";
+			$last_comment = "$i->{f}:$i->{l} $i->{comment}";
 		}
 		else
 		{
-			$last_comment = $$i{comment};
+			$last_comment = $i->{comment};
 		}
 	}
 	print($out "\t/* $last_comment */") if ($verbose);
@@ -202,14 +202,14 @@ sub print_from_utf8_combined_map
 		   "static const pg_utf_to_local_combined ULmap${charset}_combined[ %d ] = {",
 		   scalar(@$table));
 	my $first = 1;
-	foreach my $i (sort {$$a{utf8} <=> $$b{utf8}} @$table)
+	foreach my $i (sort {$a->{utf8} <=> $b->{utf8}} @$table)
     {
 		print($out ",") if (!$first);
 		$first = 0;
 		print($out "\t/* $last_comment */") if ($verbose);
 
-		printf($out "\n  {0x%08x, 0x%08x, 0x%04x}", $$i{utf8}, $$i{utf8_second}, $$i{code});
-		$last_comment = "$$i{comment}";
+		printf($out "\n  {0x%08x, 0x%08x, 0x%04x}", $i->{utf8}, $i->{utf8_second}, $i->{code});
+		$last_comment = "$i->{comment}";
 	}
 	print($out "\t/* $last_comment */") if ($verbose);
 	print $out "\n};\n";
@@ -230,20 +230,20 @@ sub print_to_utf8_map
 		   "static const pg_local_to_utf LUmap${charset}[ %d ] = {",
 		   scalar(@$table));
 	my $first = 1;
-	foreach my $i (sort {$$a{code} <=> $$b{code}} @$table)
+	foreach my $i (sort {$a->{code} <=> $b->{code}} @$table)
     {
 		print($out ",") if (!$first);
 		$first = 0;
 		print($out "\t/* $last_comment */") if ($verbose);
 
-		printf($out "\n  {0x%04x, 0x%x}", $$i{code}, $$i{utf8});
+		printf($out "\n  {0x%04x, 0x%x}", $i->{code}, $i->{utf8});
 		if ($verbose >= 2)
 		{
-			$last_comment = "$$i{f}:$$i{l} $$i{comment}";
+			$last_comment = "$i->{f}:$i->{l} $i->{comment}";
 		}
 		else
 		{
-			$last_comment = $$i{comment};
+			$last_comment = $i->{comment};
 		}
 	}
 	print($out "\t/* $last_comment */") if ($verbose);
@@ -265,14 +265,14 @@ sub print_to_utf8_combined_map
 		   "static const pg_local_to_utf_combined LUmap${charset}_combined[ %d ] = {",
 		   scalar(@$table));
 	my $first = 1;
-	foreach my $i (sort {$$a{code} <=> $$b{code}} @$table)
+	foreach my $i (sort {$a->{code} <=> $b->{code}} @$table)
     {
 		print($out ",") if (!$first);
 		$first = 0;
 		print($out "\t/* $last_comment */") if ($verbose);
 
-		printf($out "\n  {0x%04x, 0x%08x, 0x%08x}", $$i{code}, $$i{utf8}, $$i{utf8_second});
-		$last_comment = "$$i{comment}";
+		printf($out "\n  {0x%04x, 0x%08x, 0x%08x}", $i->{code}, $i->{utf8}, $i->{utf8_second});
+		$last_comment = "$i->{comment}";
 	}
 	print($out "\t/* $last_comment */") if ($verbose);
 	print $out "\n};\n";

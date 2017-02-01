@@ -69,7 +69,7 @@ while (<$in>)
 		ucs => $ucs,
 		code => $code,
 		direction => 'both'
-	}
+	};
 }
 close($in);
 

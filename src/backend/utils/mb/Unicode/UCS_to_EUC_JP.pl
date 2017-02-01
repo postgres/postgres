@@ -218,7 +218,7 @@ sub sjis2jis
 		$pos = $pos - ((31 * 0x5e) + 12);
 
 		# after 85-ku 82-ten needs to be moved 2 codepoints
-		$pos = $pos - 2 if ($pos >= 84 * 0x5c + 82)
+		$pos = $pos - 2 if ($pos >= 84 * 0x5c + 82);
 	}
 
 	my $hi2 = $pos / 0x5e;
