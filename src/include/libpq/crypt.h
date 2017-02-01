@@ -15,7 +15,24 @@
 
 #include "datatype/timestamp.h"
 
-extern int	get_role_password(const char *role, char **shadow_pass, char **logdetail);
+/*
+ * Types of password hashes or verifiers that can be stored in
+ * pg_authid.rolpassword.
+ *
+ * This is also used for the password_encryption GUC.
+ */
+typedef enum PasswordType
+{
+	PASSWORD_TYPE_PLAINTEXT = 0,
+	PASSWORD_TYPE_MD5
+} PasswordType;
+
+extern PasswordType get_password_type(const char *shadow_pass);
+extern char *encrypt_password(PasswordType target_type, const char *role,
+				 const char *password);
+
+extern int get_role_password(const char *role, char **shadow_pass,
+				  char **logdetail);
 
 extern int md5_crypt_verify(const char *role, const char *shadow_pass,
 				 const char *client_pass, const char *md5_salt,

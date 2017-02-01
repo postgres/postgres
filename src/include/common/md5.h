@@ -18,10 +18,6 @@
 
 #define MD5_PASSWD_LEN	35
 
-#define isMD5(passwd)	(strncmp(passwd, "md5", 3) == 0 && \
-						 strlen(passwd) == MD5_PASSWD_LEN)
-
-
 extern bool pg_md5_hash(const void *buff, size_t len, char *hexsum);
 extern bool pg_md5_binary(const void *buff, size_t len, void *outbuf);
 extern bool pg_md5_encrypt(const char *passwd, const char *salt,

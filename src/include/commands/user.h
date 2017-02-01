@@ -12,24 +12,15 @@
 #define USER_H
 
 #include "catalog/objectaddress.h"
+#include "libpq/crypt.h"
 #include "nodes/parsenodes.h"
 #include "parser/parse_node.h"
 
-
-/*
- * Types of password, for Password_encryption GUC and the password_type
- * argument of the check-password hook.
- */
-typedef enum PasswordType
-{
-	PASSWORD_TYPE_PLAINTEXT = 0,
-	PASSWORD_TYPE_MD5
-} PasswordType;
-
-extern int	Password_encryption;	/* GUC */
+/* GUC. Is actually of type PasswordType. */
+extern int	Password_encryption;
 
 /* Hook to check passwords in CreateRole() and AlterRole() */
-typedef void (*check_password_hook_type) (const char *username, const char *password, int password_type, Datum validuntil_time, bool validuntil_null);
+typedef void (*check_password_hook_type) (const char *username, const char *shadow_pass, PasswordType password_type, Datum validuntil_time, bool validuntil_null);
 
 extern PGDLLIMPORT check_password_hook_type check_password_hook;
 

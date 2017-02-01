@@ -29,7 +29,7 @@
 #include "commands/dbcommands.h"
 #include "commands/seclabel.h"
 #include "commands/user.h"
-#include "common/md5.h"
+#include "libpq/crypt.h"
 #include "miscadmin.h"
 #include "storage/lmgr.h"
 #include "utils/acl.h"
@@ -81,7 +81,6 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 	ListCell   *option;
 	char	   *password = NULL;	/* user password */
 	int			password_type = Password_encryption;
-	char		encrypted_password[MD5_PASSWD_LEN + 1];
 	bool		issuper = false;	/* Make the user a superuser? */
 	bool		inherit = true; /* Auto inherit privileges? */
 	bool		createrole = false;		/* Can this user create roles? */
@@ -370,7 +369,7 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 	if (check_password_hook && password)
 		(*check_password_hook) (stmt->role,
 								password,
-			   isMD5(password) ? PASSWORD_TYPE_MD5 : PASSWORD_TYPE_PLAINTEXT,
+								get_password_type(password),
 								validUntil_datum,
 								validUntil_null);
 
@@ -393,17 +392,12 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 
 	if (password)
 	{
-		if (password_type == PASSWORD_TYPE_PLAINTEXT || isMD5(password))
-			new_record[Anum_pg_authid_rolpassword - 1] =
-				CStringGetTextDatum(password);
-		else
-		{
-			if (!pg_md5_encrypt(password, stmt->role, strlen(stmt->role),
-								encrypted_password))
-				elog(ERROR, "password encryption failed");
-			new_record[Anum_pg_authid_rolpassword - 1] =
-				CStringGetTextDatum(encrypted_password);
-		}
+		/* Encrypt the password to the requested format. */
+		char	   *shadow_pass;
+
+		shadow_pass = encrypt_password(password_type, stmt->role, password);
+		new_record[Anum_pg_authid_rolpassword - 1] =
+			CStringGetTextDatum(shadow_pass);
 	}
 	else
 		new_record_nulls[Anum_pg_authid_rolpassword - 1] = true;
@@ -505,7 +499,6 @@ AlterRole(AlterRoleStmt *stmt)
 	char	   *rolename = NULL;
 	char	   *password = NULL;	/* user password */
 	int			password_type = Password_encryption;
-	char		encrypted_password[MD5_PASSWD_LEN + 1];
 	int			issuper = -1;	/* Make the user a superuser? */
 	int			inherit = -1;	/* Auto inherit privileges? */
 	int			createrole = -1;	/* Can this user create roles? */
@@ -744,7 +737,7 @@ AlterRole(AlterRoleStmt *stmt)
 	if (check_password_hook && password)
 		(*check_password_hook) (rolename,
 								password,
-			   isMD5(password) ? PASSWORD_TYPE_MD5 : PASSWORD_TYPE_PLAINTEXT,
+								get_password_type(password),
 								validUntil_datum,
 								validUntil_null);
 
@@ -803,17 +796,12 @@ AlterRole(AlterRoleStmt *stmt)
 	/* password */
 	if (password)
 	{
-		if (password_type == PASSWORD_TYPE_PLAINTEXT || isMD5(password))
-			new_record[Anum_pg_authid_rolpassword - 1] =
-				CStringGetTextDatum(password);
-		else
-		{
-			if (!pg_md5_encrypt(password, rolename, strlen(rolename),
-								encrypted_password))
-				elog(ERROR, "password encryption failed");
-			new_record[Anum_pg_authid_rolpassword - 1] =
-				CStringGetTextDatum(encrypted_password);
-		}
+		/* Encrypt the password to the requested format. */
+		char	   *shadow_pass;
+
+		shadow_pass = encrypt_password(password_type, rolename, password);
+		new_record[Anum_pg_authid_rolpassword - 1] =
+			CStringGetTextDatum(shadow_pass);
 		new_record_repl[Anum_pg_authid_rolpassword - 1] = true;
 	}
 
@@ -1228,7 +1216,7 @@ RenameRole(const char *oldname, const char *newname)
 
 	datum = heap_getattr(oldtuple, Anum_pg_authid_rolpassword, dsc, &isnull);
 
-	if (!isnull && isMD5(TextDatumGetCString(datum)))
+	if (!isnull && get_password_type(TextDatumGetCString(datum)) == PASSWORD_TYPE_MD5)
 	{
 		/* MD5 uses the username as salt, so just clear it on a rename */
 		repl_repl[Anum_pg_authid_rolpassword - 1] = true;
