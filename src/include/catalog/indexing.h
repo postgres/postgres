@@ -30,11 +30,14 @@ typedef struct ResultRelInfo *CatalogIndexState;
  */
 extern CatalogIndexState CatalogOpenIndexes(Relation heapRel);
 extern void CatalogCloseIndexes(CatalogIndexState indstate);
-extern void CatalogIndexInsert(CatalogIndexState indstate,
-				   HeapTuple heapTuple);
-extern Oid CatalogTupleInsert(Relation heapRel, HeapTuple tup);
+extern Oid	CatalogTupleInsert(Relation heapRel, HeapTuple tup);
+extern Oid CatalogTupleInsertWithInfo(Relation heapRel, HeapTuple tup,
+						   CatalogIndexState indstate);
 extern void CatalogTupleUpdate(Relation heapRel, ItemPointer otid,
 				   HeapTuple tup);
+extern void CatalogTupleUpdateWithInfo(Relation heapRel,
+						   ItemPointer otid, HeapTuple tup,
+						   CatalogIndexState indstate);
 extern void CatalogTupleDelete(Relation heapRel, ItemPointer tid);
 
 

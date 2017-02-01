@@ -1141,7 +1141,6 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 				relfilenode2;
 	Oid			swaptemp;
 	char		swptmpchr;
-	CatalogIndexState indstate;
 
 	/* We need writable copies of both pg_class tuples. */
 	relRelation = heap_open(RelationRelationId, RowExclusiveLock);
@@ -1285,13 +1284,13 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 	 */
 	if (!target_is_pg_class)
 	{
-		simple_heap_update(relRelation, &reltup1->t_self, reltup1);
-		simple_heap_update(relRelation, &reltup2->t_self, reltup2);
+		CatalogIndexState indstate;
 
-		/* Keep system catalogs current */
 		indstate = CatalogOpenIndexes(relRelation);
-		CatalogIndexInsert(indstate, reltup1);
-		CatalogIndexInsert(indstate, reltup2);
+		CatalogTupleUpdateWithInfo(relRelation, &reltup1->t_self, reltup1,
+								   indstate);
+		CatalogTupleUpdateWithInfo(relRelation, &reltup2->t_self, reltup2,
+								   indstate);
 		CatalogCloseIndexes(indstate);
 	}
 	else

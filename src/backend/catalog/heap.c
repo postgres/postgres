@@ -586,9 +586,10 @@ CheckAttributeType(const char *attname,
  * attribute to insert (but we ignore attacl and attoptions, which are always
  * initialized to NULL).
  *
- * indstate is the index state for CatalogIndexInsert.  It can be passed as
- * NULL, in which case we'll fetch the necessary info.  (Don't do this when
- * inserting multiple attributes, because it's a tad more expensive.)
+ * indstate is the index state for CatalogTupleInsertWithInfo.  It can be
+ * passed as NULL, in which case we'll fetch the necessary info.  (Don't do
+ * this when inserting multiple attributes, because it's a tad more
+ * expensive.)
  */
 void
 InsertPgAttributeTuple(Relation pg_attribute_rel,
@@ -630,18 +631,10 @@ InsertPgAttributeTuple(Relation pg_attribute_rel,
 	tup = heap_form_tuple(RelationGetDescr(pg_attribute_rel), values, nulls);
 
 	/* finally insert the new tuple, update the indexes, and clean up */
-	simple_heap_insert(pg_attribute_rel, tup);
-
 	if (indstate != NULL)
-		CatalogIndexInsert(indstate, tup);
+		CatalogTupleInsertWithInfo(pg_attribute_rel, tup, indstate);
 	else
-	{
-		CatalogIndexState indstate;
-
-		indstate = CatalogOpenIndexes(pg_attribute_rel);
-		CatalogIndexInsert(indstate, tup);
-		CatalogCloseIndexes(indstate);
-	}
+		CatalogTupleInsert(pg_attribute_rel, tup);
 
 	heap_freetuple(tup);
 }

@@ -68,7 +68,7 @@ CatalogCloseIndexes(CatalogIndexState indstate)
  *
  * This is effectively a cut-down version of ExecInsertIndexTuples.
  */
-void
+static void
 CatalogIndexInsert(CatalogIndexState indstate, HeapTuple heapTuple)
 {
 	int			i;
@@ -148,18 +148,20 @@ CatalogIndexInsert(CatalogIndexState indstate, HeapTuple heapTuple)
 /*
  * CatalogTupleInsert - do heap and indexing work for a new catalog tuple
  *
+ * Insert the tuple data in "tup" into the specified catalog relation.
+ * The Oid of the inserted tuple is returned.
+ *
  * This is a convenience routine for the common case of inserting a single
  * tuple in a system catalog; it inserts a new heap tuple, keeping indexes
- * current.  Avoid using it for multiple tuples, since opening the indexes and
- * building the index info structures is moderately expensive.
- *
- * The Oid of the inserted tuple is returned.
+ * current.  Avoid using it for multiple tuples, since opening the indexes
+ * and building the index info structures is moderately expensive.
+ * (Use CatalogTupleInsertWithInfo in such cases.)
  */
 Oid
 CatalogTupleInsert(Relation heapRel, HeapTuple tup)
 {
 	CatalogIndexState indstate;
-	Oid		oid;
+	Oid			oid;
 
 	indstate = CatalogOpenIndexes(heapRel);
 
@@ -172,13 +174,36 @@ CatalogTupleInsert(Relation heapRel, HeapTuple tup)
 }
 
 /*
+ * CatalogTupleInsertWithInfo - as above, but with caller-supplied index info
+ *
+ * This should be used when it's important to amortize CatalogOpenIndexes/
+ * CatalogCloseIndexes work across multiple insertions.  At some point we
+ * might cache the CatalogIndexState data somewhere (perhaps in the relcache)
+ * so that callers needn't trouble over this ... but we don't do so today.
+ */
+Oid
+CatalogTupleInsertWithInfo(Relation heapRel, HeapTuple tup,
+						   CatalogIndexState indstate)
+{
+	Oid			oid;
+
+	oid = simple_heap_insert(heapRel, tup);
+
+	CatalogIndexInsert(indstate, tup);
+
+	return oid;
+}
+
+/*
  * CatalogTupleUpdate - do heap and indexing work for updating a catalog tuple
  *
+ * Update the tuple identified by "otid", replacing it with the data in "tup".
+ *
  * This is a convenience routine for the common case of updating a single
- * tuple in a system catalog; it updates one heap tuple (identified by otid)
- * with tup, keeping indexes current.  Avoid using it for multiple tuples,
- * since opening the indexes and building the index info structures is
- * moderately expensive.
+ * tuple in a system catalog; it updates one heap tuple, keeping indexes
+ * current.  Avoid using it for multiple tuples, since opening the indexes
+ * and building the index info structures is moderately expensive.
+ * (Use CatalogTupleUpdateWithInfo in such cases.)
  */
 void
 CatalogTupleUpdate(Relation heapRel, ItemPointer otid, HeapTuple tup)
@@ -194,14 +219,36 @@ CatalogTupleUpdate(Relation heapRel, ItemPointer otid, HeapTuple tup)
 }
 
 /*
+ * CatalogTupleUpdateWithInfo - as above, but with caller-supplied index info
+ *
+ * This should be used when it's important to amortize CatalogOpenIndexes/
+ * CatalogCloseIndexes work across multiple updates.  At some point we
+ * might cache the CatalogIndexState data somewhere (perhaps in the relcache)
+ * so that callers needn't trouble over this ... but we don't do so today.
+ */
+void
+CatalogTupleUpdateWithInfo(Relation heapRel, ItemPointer otid, HeapTuple tup,
+						   CatalogIndexState indstate)
+{
+	simple_heap_update(heapRel, otid, tup);
+
+	CatalogIndexInsert(indstate, tup);
+}
+
+/*
  * CatalogTupleDelete - do heap and indexing work for deleting a catalog tuple
  *
- * Delete the tuple identified by tid in the specified catalog.
+ * Delete the tuple identified by "tid" in the specified catalog.
  *
  * With Postgres heaps, there is no index work to do at deletion time;
  * cleanup will be done later by VACUUM.  However, callers of this function
  * shouldn't have to know that; we'd like a uniform abstraction for all
  * catalog tuple changes.  Hence, provide this currently-trivial wrapper.
+ *
+ * The abstraction is a bit leaky in that we don't provide an optimized
+ * CatalogTupleDeleteWithInfo version, because there is currently nothing to
+ * optimize.  If we ever need that, rather than touching a lot of call sites,
+ * it might be better to do something about caching CatalogIndexState.
  */
 void
 CatalogTupleDelete(Relation heapRel, ItemPointer tid)

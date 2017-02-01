@@ -107,13 +107,11 @@ recordMultipleDependencies(const ObjectAddress *depender,
 
 			tup = heap_form_tuple(dependDesc->rd_att, values, nulls);
 
-			simple_heap_insert(dependDesc, tup);
-
-			/* keep indexes current */
+			/* fetch index info only when we know we need it */
 			if (indstate == NULL)
 				indstate = CatalogOpenIndexes(dependDesc);
 
-			CatalogIndexInsert(indstate, tup);
+			CatalogTupleInsertWithInfo(dependDesc, tup, indstate);
 
 			heap_freetuple(tup);
 		}
