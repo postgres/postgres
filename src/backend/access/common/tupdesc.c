@@ -629,6 +629,14 @@ TupleDescInitBuiltinEntry(TupleDesc desc,
 			att->attstorage = 'p';
 			att->attcollation = InvalidOid;
 			break;
+
+		case INT8OID:
+			att->attlen = 8;
+			att->attbyval = FLOAT8PASSBYVAL;
+			att->attalign = 'd';
+			att->attstorage = 'p';
+			att->attcollation = InvalidOid;
+			break;
 	}
 }
 

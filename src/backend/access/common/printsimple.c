@@ -22,6 +22,7 @@
 #include "catalog/pg_type.h"
 #include "fmgr.h"
 #include "libpq/pqformat.h"
+#include "utils/builtins.h"
 
 /*
  * At startup time, send a RowDescription message.
@@ -96,6 +97,26 @@ printsimple(TupleTableSlot *slot, DestReceiver *self)
 									   VARDATA_ANY(t),
 									   VARSIZE_ANY_EXHDR(t),
 									   false);
+				}
+				break;
+
+			case INT4OID:
+				{
+					int32	num = DatumGetInt32(value);
+					char	str[12];	/* sign, 10 digits and '\0' */
+
+					pg_ltoa(num, str);
+					pq_sendcountedtext(&buf, str, strlen(str), false);
+				}
+				break;
+
+			case INT8OID:
+				{
+					int64	num = DatumGetInt64(value);
+					char	str[23];	/* sign, 21 digits and '\0' */
+
+					pg_lltoa(num, str);
+					pq_sendcountedtext(&buf, str, strlen(str), false);
 				}
 				break;
 
