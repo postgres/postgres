@@ -1062,7 +1062,7 @@ deleteOneObject(const ObjectAddress *object, Relation *depRel, int flags)
 
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
 	{
-		simple_heap_delete(*depRel, &tup->t_self);
+		CatalogTupleDelete(*depRel, &tup->t_self);
 	}
 
 	systable_endscan(scan);
@@ -2467,7 +2467,7 @@ DeleteInitPrivs(const ObjectAddress *object)
 							  NULL, 3, key);
 
 	while (HeapTupleIsValid(oldtuple = systable_getnext(scan)))
-		simple_heap_delete(relation, &oldtuple->t_self);
+		CatalogTupleDelete(relation, &oldtuple->t_self);
 
 	systable_endscan(scan);
 

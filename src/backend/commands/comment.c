@@ -194,7 +194,7 @@ CreateComments(Oid oid, Oid classoid, int32 subid, char *comment)
 		/* Found the old tuple, so delete or update it */
 
 		if (comment == NULL)
-			simple_heap_delete(description, &oldtuple->t_self);
+			CatalogTupleDelete(description, &oldtuple->t_self);
 		else
 		{
 			newtuple = heap_modify_tuple(oldtuple, RelationGetDescr(description), values,
@@ -284,7 +284,7 @@ CreateSharedComments(Oid oid, Oid classoid, char *comment)
 		/* Found the old tuple, so delete or update it */
 
 		if (comment == NULL)
-			simple_heap_delete(shdescription, &oldtuple->t_self);
+			CatalogTupleDelete(shdescription, &oldtuple->t_self);
 		else
 		{
 			newtuple = heap_modify_tuple(oldtuple, RelationGetDescr(shdescription),
@@ -358,7 +358,7 @@ DeleteComments(Oid oid, Oid classoid, int32 subid)
 							NULL, nkeys, skey);
 
 	while ((oldtuple = systable_getnext(sd)) != NULL)
-		simple_heap_delete(description, &oldtuple->t_self);
+		CatalogTupleDelete(description, &oldtuple->t_self);
 
 	/* Done */
 
@@ -394,7 +394,7 @@ DeleteSharedComments(Oid oid, Oid classoid)
 							NULL, 2, skey);
 
 	while ((oldtuple = systable_getnext(sd)) != NULL)
-		simple_heap_delete(shdescription, &oldtuple->t_self);
+		CatalogTupleDelete(shdescription, &oldtuple->t_self);
 
 	/* Done */
 

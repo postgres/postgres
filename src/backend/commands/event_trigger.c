@@ -484,7 +484,7 @@ RemoveEventTriggerById(Oid trigOid)
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "cache lookup failed for event trigger %u", trigOid);
 
-	simple_heap_delete(tgrel, &tup->t_self);
+	CatalogTupleDelete(tgrel, &tup->t_self);
 
 	ReleaseSysCache(tup);
 

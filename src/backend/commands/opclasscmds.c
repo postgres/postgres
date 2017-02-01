@@ -1571,7 +1571,7 @@ RemoveOpFamilyById(Oid opfamilyOid)
 	if (!HeapTupleIsValid(tup)) /* should not happen */
 		elog(ERROR, "cache lookup failed for opfamily %u", opfamilyOid);
 
-	simple_heap_delete(rel, &tup->t_self);
+	CatalogTupleDelete(rel, &tup->t_self);
 
 	ReleaseSysCache(tup);
 
@@ -1590,7 +1590,7 @@ RemoveOpClassById(Oid opclassOid)
 	if (!HeapTupleIsValid(tup)) /* should not happen */
 		elog(ERROR, "cache lookup failed for opclass %u", opclassOid);
 
-	simple_heap_delete(rel, &tup->t_self);
+	CatalogTupleDelete(rel, &tup->t_self);
 
 	ReleaseSysCache(tup);
 
@@ -1620,7 +1620,7 @@ RemoveAmOpEntryById(Oid entryOid)
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "could not find tuple for amop entry %u", entryOid);
 
-	simple_heap_delete(rel, &tup->t_self);
+	CatalogTupleDelete(rel, &tup->t_self);
 
 	systable_endscan(scan);
 	heap_close(rel, RowExclusiveLock);
@@ -1649,7 +1649,7 @@ RemoveAmProcEntryById(Oid entryOid)
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "could not find tuple for amproc entry %u", entryOid);
 
-	simple_heap_delete(rel, &tup->t_self);
+	CatalogTupleDelete(rel, &tup->t_self);
 
 	systable_endscan(scan);
 	heap_close(rel, RowExclusiveLock);

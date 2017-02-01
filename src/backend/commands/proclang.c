@@ -536,7 +536,7 @@ DropProceduralLanguageById(Oid langOid)
 	if (!HeapTupleIsValid(langTup))		/* should not happen */
 		elog(ERROR, "cache lookup failed for language %u", langOid);
 
-	simple_heap_delete(rel, &langTup->t_self);
+	CatalogTupleDelete(rel, &langTup->t_self);
 
 	ReleaseSysCache(langTup);
 

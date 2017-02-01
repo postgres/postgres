@@ -461,7 +461,7 @@ RemovePublicationById(Oid pubid)
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "cache lookup failed for publication %u", pubid);
 
-	simple_heap_delete(rel, &tup->t_self);
+	CatalogTupleDelete(rel, &tup->t_self);
 
 	ReleaseSysCache(tup);
 
@@ -486,13 +486,12 @@ RemovePublicationRelById(Oid proid)
 		elog(ERROR, "cache lookup failed for publication table %u",
 			 proid);
 
-
 	pubrel = (Form_pg_publication_rel) GETSTRUCT(tup);
 
 	/* Invalidate relcache so that publication info is rebuilt. */
 	CacheInvalidateRelcacheByRelid(pubrel->prrelid);
 
-	simple_heap_delete(rel, &tup->t_self);
+	CatalogTupleDelete(rel, &tup->t_self);
 
 	ReleaseSysCache(tup);
 

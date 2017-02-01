@@ -697,7 +697,7 @@ RemoveTypeById(Oid typeOid)
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "cache lookup failed for type %u", typeOid);
 
-	simple_heap_delete(relation, &tup->t_self);
+	CatalogTupleDelete(relation, &tup->t_self);
 
 	/*
 	 * If it is an enum, delete the pg_enum entries too; we don't bother with

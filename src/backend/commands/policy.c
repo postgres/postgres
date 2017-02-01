@@ -397,7 +397,7 @@ RemovePolicyById(Oid policy_id)
 				 errmsg("permission denied: \"%s\" is a system catalog",
 						RelationGetRelationName(rel))));
 
-	simple_heap_delete(pg_policy_rel, &tuple->t_self);
+	CatalogTupleDelete(pg_policy_rel, &tuple->t_self);
 
 	systable_endscan(sscan);
 

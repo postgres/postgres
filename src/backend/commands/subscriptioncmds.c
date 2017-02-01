@@ -501,7 +501,7 @@ DropSubscription(DropSubscriptionStmt *stmt)
 	EventTriggerSQLDropAddObject(&myself, true, true);
 
 	/* Remove the tuple from catalog. */
-	simple_heap_delete(rel, &tup->t_self);
+	CatalogTupleDelete(rel, &tup->t_self);
 
 	ReleaseSysCache(tup);
 

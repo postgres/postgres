@@ -846,7 +846,7 @@ RemoveForeignDataWrapperById(Oid fdwId)
 	if (!HeapTupleIsValid(tp))
 		elog(ERROR, "cache lookup failed for foreign-data wrapper %u", fdwId);
 
-	simple_heap_delete(rel, &tp->t_self);
+	CatalogTupleDelete(rel, &tp->t_self);
 
 	ReleaseSysCache(tp);
 
@@ -1080,7 +1080,7 @@ RemoveForeignServerById(Oid srvId)
 	if (!HeapTupleIsValid(tp))
 		elog(ERROR, "cache lookup failed for foreign server %u", srvId);
 
-	simple_heap_delete(rel, &tp->t_self);
+	CatalogTupleDelete(rel, &tp->t_self);
 
 	ReleaseSysCache(tp);
 
@@ -1403,7 +1403,7 @@ RemoveUserMappingById(Oid umId)
 	if (!HeapTupleIsValid(tp))
 		elog(ERROR, "cache lookup failed for user mapping %u", umId);
 
-	simple_heap_delete(rel, &tp->t_self);
+	CatalogTupleDelete(rel, &tp->t_self);
 
 	ReleaseSysCache(tp);
 

@@ -377,7 +377,7 @@ replorigin_drop(RepOriginId roident)
 		elog(ERROR, "cache lookup failed for replication origin with oid %u",
 			 roident);
 
-	simple_heap_delete(rel, &tuple->t_self);
+	CatalogTupleDelete(rel, &tuple->t_self);
 	ReleaseSysCache(tuple);
 
 	CommandCounterIncrement();

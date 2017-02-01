@@ -368,7 +368,7 @@ RemoveOperatorById(Oid operOid)
 		}
 	}
 
-	simple_heap_delete(relation, &tup->t_self);
+	CatalogTupleDelete(relation, &tup->t_self);
 
 	ReleaseSysCache(tup);
 
