@@ -152,7 +152,17 @@ typedef struct LogicalTape
 struct LogicalTapeSet
 {
 	BufFile    *pfile;			/* underlying file for whole tape set */
-	long		nFileBlocks;	/* # of blocks used in underlying file */
+
+	/*
+	 * File size tracking.  nBlocksWritten is the size of the underlying file,
+	 * in BLCKSZ blocks.  nBlocksAllocated is the number of blocks allocated
+	 * by ltsGetFreeBlock(), and it is always greater than or equal to
+	 * nBlocksWritten.  Blocks between nBlocksAllocated and nBlocksWritten are
+	 * blocks that have been allocated for a tape, but have not been written
+	 * to the underlying file yet.
+	 */
+	long		nBlocksAllocated;		/* # of blocks allocated */
+	long		nBlocksWritten; /* # of blocks used in underlying file */
 
 	/*
 	 * We store the numbers of recycled-and-available blocks in freeBlocks[].
@@ -187,21 +197,43 @@ static void ltsReleaseBlock(LogicalTapeSet *lts, long blocknum);
 /*
  * Write a block-sized buffer to the specified block of the underlying file.
  *
- * NB: should not attempt to write beyond current end of file (ie, create
- * "holes" in file), since BufFile doesn't allow that.  The first write pass
- * must write blocks sequentially.
- *
  * No need for an error return convention; we ereport() on any error.
  */
 static void
 ltsWriteBlock(LogicalTapeSet *lts, long blocknum, void *buffer)
 {
+	/*
+	 * BufFile does not support "holes", so if we're about to write a block
+	 * that's past the current end of file, fill the space between the current
+	 * end of file and the target block with zeros.
+	 *
+	 * This should happen rarely, otherwise you are not writing very
+	 * sequentially.  In current use, this only happens when the sort ends
+	 * writing a run, and switches to another tape.  The last block of the
+	 * previous tape isn't flushed to disk until the end of the sort, so you
+	 * get one-block hole, where the last block of the previous tape will
+	 * later go.
+	 */
+	while (blocknum > lts->nBlocksWritten)
+	{
+		char		zerobuf[BLCKSZ];
+
+		MemSet(zerobuf, 0, sizeof(zerobuf));
+
+		ltsWriteBlock(lts, lts->nBlocksWritten, zerobuf);
+	}
+
+	/* Write the requested block */
 	if (BufFileSeekBlock(lts->pfile, blocknum) != 0 ||
 		BufFileWrite(lts->pfile, buffer, BLCKSZ) != BLCKSZ)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not write block %ld of temporary file: %m",
 						blocknum)));
+
+	/* Update nBlocksWritten, if we extended the file */
+	if (blocknum == lts->nBlocksWritten)
+		lts->nBlocksWritten++;
 }
 
 /*
@@ -281,9 +313,6 @@ freeBlocks_cmp(const void *a, const void *b)
 
 /*
  * Select a currently unused block for writing to.
- *
- * NB: should only be called when writer is ready to write immediately,
- * to ensure that first write pass is sequential.
  */
 static long
 ltsGetFreeBlock(LogicalTapeSet *lts)
@@ -304,7 +333,7 @@ ltsGetFreeBlock(LogicalTapeSet *lts)
 		return lts->freeBlocks[--lts->nFreeBlocks];
 	}
 	else
-		return lts->nFileBlocks++;
+		return lts->nBlocksAllocated++;
 }
 
 /*
@@ -360,7 +389,8 @@ LogicalTapeSetCreate(int ntapes)
 	lts = (LogicalTapeSet *) palloc(offsetof(LogicalTapeSet, tapes) +
 									ntapes * sizeof(LogicalTape));
 	lts->pfile = BufFileCreateTemp(false);
-	lts->nFileBlocks = 0L;
+	lts->nBlocksAllocated = 0L;
+	lts->nBlocksWritten = 0L;
 	lts->forgetFreeSpace = false;
 	lts->blocksSorted = true;	/* a zero-length array is sorted ... */
 	lts->freeBlocksLen = 32;	/* reasonable initial guess */
@@ -858,5 +888,5 @@ LogicalTapeTell(LogicalTapeSet *lts, int tapenum,
 long
 LogicalTapeSetBlocks(LogicalTapeSet *lts)
 {
-	return lts->nFileBlocks;
+	return lts->nBlocksAllocated;
 }
