@@ -43,6 +43,9 @@ valid_variable_name(const char *name)
 /*
  * A "variable space" is represented by an otherwise-unused struct _variable
  * that serves as list header.
+ *
+ * The list entries are kept in name order (according to strcmp).  This
+ * is mainly to make the results of PrintVariables() more pleasing.
  */
 VariableSpace
 CreateVariableSpace(void)
@@ -74,11 +77,15 @@ GetVariable(VariableSpace space, const char *name)
 
 	for (current = space->next; current; current = current->next)
 	{
-		if (strcmp(current->name, name) == 0)
+		int			cmp = strcmp(current->name, name);
+
+		if (cmp == 0)
 		{
 			/* this is correct answer when value is NULL, too */
 			return current->value;
 		}
+		if (cmp > 0)
+			break;				/* it's not there */
 	}
 
 	return NULL;
@@ -247,7 +254,9 @@ SetVariable(VariableSpace space, const char *name, const char *value)
 		 current;
 		 previous = current, current = current->next)
 	{
-		if (strcmp(current->name, name) == 0)
+		int			cmp = strcmp(current->name, name);
+
+		if (cmp == 0)
 		{
 			/*
 			 * Found entry, so update, unless assign hook returns false.
@@ -293,6 +302,8 @@ SetVariable(VariableSpace space, const char *name, const char *value)
 
 			return confirmed;
 		}
+		if (cmp > 0)
+			break;				/* it's not there */
 	}
 
 	/* not present, make new entry ... unless we were asked to delete */
@@ -303,7 +314,7 @@ SetVariable(VariableSpace space, const char *name, const char *value)
 		current->value = pg_strdup(value);
 		current->substitute_hook = NULL;
 		current->assign_hook = NULL;
-		current->next = NULL;
+		current->next = previous->next;
 		previous->next = current;
 	}
 	return true;
@@ -343,7 +354,9 @@ SetVariableHooks(VariableSpace space, const char *name,
 		 current;
 		 previous = current, current = current->next)
 	{
-		if (strcmp(current->name, name) == 0)
+		int			cmp = strcmp(current->name, name);
+
+		if (cmp == 0)
 		{
 			/* found entry, so update */
 			current->substitute_hook = shook;
@@ -354,6 +367,8 @@ SetVariableHooks(VariableSpace space, const char *name,
 				(void) (*ahook) (current->value);
 			return;
 		}
+		if (cmp > 0)
+			break;				/* it's not there */
 	}
 
 	/* not present, make new entry */
@@ -362,7 +377,7 @@ SetVariableHooks(VariableSpace space, const char *name,
 	current->value = NULL;
 	current->substitute_hook = shook;
 	current->assign_hook = ahook;
-	current->next = NULL;
+	current->next = previous->next;
 	previous->next = current;
 	if (shook)
 		current->value = (*shook) (current->value);
