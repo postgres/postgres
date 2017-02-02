@@ -40,7 +40,8 @@ WINMAPS = win866_to_utf8.map utf8_to_win866.map \
 
 GENERICMAPS = $(ISO8859MAPS) $(WINMAPS) \
 	gbk_to_utf8.map utf8_to_gbk.map \
-	koi8r_to_utf8.map utf8_to_koi8r.map
+	koi8r_to_utf8.map utf8_to_koi8r.map \
+	koi8u_to_utf8.map utf8_to_koi8u.map
 
 SPECIALMAPS = euc_cn_to_utf8.map utf8_to_euc_cn.map \
 	euc_jp_to_utf8.map utf8_to_euc_jp.map \
