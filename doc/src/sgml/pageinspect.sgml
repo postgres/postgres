@@ -493,4 +493,148 @@ test=# SELECT first_tid, nbytes, tids[0:5] AS some_tids
   </variablelist>
  </sect2>
 
+ <sect2>
+  <title>Hash Functions</title>
+
+  <variablelist>
+   <varlistentry>
+    <term>
+     <function>hash_page_type(page bytea) returns text</function>
+     <indexterm>
+      <primary>hash_page_type</primary>
+     </indexterm>
+    </term>
+
+    <listitem>
+     <para>
+      <function>hash_page_type</function> returns page type of
+      the given <acronym>HASH</acronym> index page.  For example:
+<screen>
+test=# SELECT hash_page_type(get_raw_page('con_hash_index', 0));
+ hash_page_type 
+----------------
+ metapage
+</screen>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     <function>hash_page_stats(page bytea) returns setof record</function>
+     <indexterm>
+      <primary>hash_page_stats</primary>
+     </indexterm>
+    </term>
+
+    <listitem>
+     <para>
+      <function>hash_page_stats</function> returns information about
+      a bucket or overflow page of a <acronym>HASH</acronym> index.
+      For example:
+<screen>
+test=# SELECT * FROM hash_page_stats(get_raw_page('con_hash_index', 1));
+-[ RECORD 1 ]---+-----------
+live_items      | 407
+dead_items      | 0
+page_size       | 8192
+free_size       | 8
+hasho_prevblkno | 4294967295
+hasho_nextblkno | 8474
+hasho_bucket    | 0
+hasho_flag      | 66
+hasho_page_id   | 65408
+</screen>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     <function>hash_page_items(page bytea) returns setof record</function>
+     <indexterm>
+      <primary>hash_page_items</primary>
+     </indexterm>
+    </term>
+
+    <listitem>
+     <para>
+      <function>hash_page_items</function> returns information about
+      the data stored in a bucket or overflow page of a <acronym>HASH</acronym>
+      index page.  For example:
+<screen>
+test=# SELECT * FROM hash_page_items(get_raw_page('con_hash_index', 1)) LIMIT 5;
+ itemoffset |   ctid    |    data    
+------------+-----------+------------
+          1 | (899,77)  | 1053474816
+          2 | (897,29)  | 1053474816
+          3 | (894,207) | 1053474816
+          4 | (892,159) | 1053474816
+          5 | (890,111) | 1053474816
+</screen>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     <function>hash_bitmap_info(index oid, blkno int) returns record</function>
+     <indexterm>
+      <primary>hash_bitmap_info</primary>
+     </indexterm>
+    </term>
+
+    <listitem>
+     <para>
+      <function>hash_bitmap_info</function> shows the status of a bit
+      in the bitmap page for a particular overflow page of <acronym>HASH</acronym>
+      index. For example:
+<screen>
+test=# SELECT * FROM hash_bitmap_info('con_hash_index', 2052);
+ bitmapblkno | bitmapbit | bitstatus 
+-------------+-----------+-----------
+          65 |         3 | t
+</screen>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     <function>hash_metapage_info(page bytea) returns record</function>
+     <indexterm>
+      <primary>hash_metapage_info</primary>
+     </indexterm>
+    </term>
+
+    <listitem>
+     <para>
+      <function>hash_metapage_info</function> returns information stored
+      in meta page of a <acronym>HASH</acronym> index.  For example:
+<screen>
+test=# SELECT * FROM hash_metapage_info(get_raw_page('con_hash_index', 0));
+-[ RECORD 1 ]-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+magic     | 105121344
+version   | 2
+ntuples   | 500500
+ffactor   | 40
+bsize     | 8152
+bmsize    | 4096
+bmshift   | 15
+maxbucket | 12512
+highmask  | 16383
+lowmask   | 8191
+ovflpoint | 14
+firstfree | 1204
+nmaps     | 1
+procid    | 450
+spares    | {0,0,0,0,0,0,1,1,1,1,1,4,59,704,1204,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
+mapp      | {65,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
+</screen>
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </sect2>
+
 </sect1>

@@ -58,6 +58,9 @@ typedef uint32 Bucket;
 #define LH_BUCKET_BEING_SPLIT	(1 << 5)
 #define LH_BUCKET_NEEDS_SPLIT_CLEANUP	(1 << 6)
 
+#define LH_PAGE_TYPE \
+	(LH_OVERFLOW_PAGE|LH_BUCKET_PAGE|LH_BITMAP_PAGE|LH_META_PAGE)
+
 typedef struct HashPageOpaqueData
 {
 	BlockNumber hasho_prevblkno;	/* previous ovfl (or bucket) blkno */
@@ -299,6 +302,7 @@ extern void _hash_squeezebucket(Relation rel,
 					Bucket bucket, BlockNumber bucket_blkno,
 					Buffer bucket_buf,
 					BufferAccessStrategy bstrategy);
+extern uint32 _hash_ovflblkno_to_bitno(HashMetaPage metap, BlockNumber ovflblkno);
 
 /* hashpage.c */
 extern Buffer _hash_getbuf(Relation rel, BlockNumber blkno,

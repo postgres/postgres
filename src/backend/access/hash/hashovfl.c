@@ -52,10 +52,12 @@ bitno_to_blkno(HashMetaPage metap, uint32 ovflbitnum)
 }
 
 /*
+ * _hash_ovflblkno_to_bitno
+ *
  * Convert overflow page block number to bit number for free-page bitmap.
  */
-static uint32
-blkno_to_bitno(HashMetaPage metap, BlockNumber ovflblkno)
+uint32
+_hash_ovflblkno_to_bitno(HashMetaPage metap, BlockNumber ovflblkno)
 {
 	uint32		splitnum = metap->hashm_ovflpoint;
 	uint32		i;
@@ -485,7 +487,7 @@ _hash_freeovflpage(Relation rel, Buffer ovflbuf, Buffer wbuf,
 	metap = HashPageGetMeta(BufferGetPage(metabuf));
 
 	/* Identify which bit to set */
-	ovflbitno = blkno_to_bitno(metap, ovflblkno);
+	ovflbitno = _hash_ovflblkno_to_bitno(metap, ovflblkno);
 
 	bitmappage = ovflbitno >> BMPG_SHIFT(metap);
 	bitmapbit = ovflbitno & BMPG_MASK(metap);

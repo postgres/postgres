@@ -1,0 +1,150 @@
+CREATE TABLE test_hash (a int, b text);
+INSERT INTO test_hash VALUES (1, 'one');
+CREATE INDEX test_hash_a_idx ON test_hash USING hash (a);
+WARNING:  hash indexes are not WAL-logged and their use is discouraged
+\x
+SELECT hash_page_type(get_raw_page('test_hash_a_idx', 0));
+-[ RECORD 1 ]--+---------
+hash_page_type | metapage
+
+SELECT hash_page_type(get_raw_page('test_hash_a_idx', 1));
+-[ RECORD 1 ]--+-------
+hash_page_type | bucket
+
+SELECT hash_page_type(get_raw_page('test_hash_a_idx', 2));
+-[ RECORD 1 ]--+-------
+hash_page_type | bucket
+
+SELECT hash_page_type(get_raw_page('test_hash_a_idx', 3));
+-[ RECORD 1 ]--+-------
+hash_page_type | bucket
+
+SELECT hash_page_type(get_raw_page('test_hash_a_idx', 4));
+-[ RECORD 1 ]--+-------
+hash_page_type | bucket
+
+SELECT hash_page_type(get_raw_page('test_hash_a_idx', 5));
+-[ RECORD 1 ]--+-------
+hash_page_type | bitmap
+
+SELECT hash_page_type(get_raw_page('test_hash_a_idx', 6));
+ERROR:  block number 6 is out of range for relation "test_hash_a_idx"
+SELECT * FROM hash_bitmap_info('test_hash_a_idx', 0);
+ERROR:  page is not an overflow page
+DETAIL:  Expected 00000001, got 00000008.
+SELECT * FROM hash_bitmap_info('test_hash_a_idx', 1);
+ERROR:  page is not an overflow page
+DETAIL:  Expected 00000001, got 00000002.
+SELECT * FROM hash_bitmap_info('test_hash_a_idx', 2);
+ERROR:  page is not an overflow page
+DETAIL:  Expected 00000001, got 00000002.
+SELECT * FROM hash_bitmap_info('test_hash_a_idx', 3);
+ERROR:  page is not an overflow page
+DETAIL:  Expected 00000001, got 00000002.
+SELECT * FROM hash_bitmap_info('test_hash_a_idx', 4);
+ERROR:  page is not an overflow page
+DETAIL:  Expected 00000001, got 00000002.
+SELECT * FROM hash_bitmap_info('test_hash_a_idx', 5);
+ERROR:  page is not an overflow page
+DETAIL:  Expected 00000001, got 00000004.
+SELECT * FROM hash_metapage_info(get_raw_page('test_hash_a_idx', 0));
+-[ RECORD 1 ]----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+magic     | 105121344
+version   | 2
+ntuples   | 1
+ffactor   | 307
+bsize     | 8152
+bmsize    | 4096
+bmshift   | 15
+maxbucket | 3
+highmask  | 7
+lowmask   | 3
+ovflpoint | 2
+firstfree | 0
+nmaps     | 1
+procid    | 450
+spares    | {0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
+mapp      | {5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
+
+SELECT * FROM hash_metapage_info(get_raw_page('test_hash_a_idx', 1));
+ERROR:  page is not a hash meta page
+SELECT * FROM hash_metapage_info(get_raw_page('test_hash_a_idx', 2));
+ERROR:  page is not a hash meta page
+SELECT * FROM hash_metapage_info(get_raw_page('test_hash_a_idx', 3));
+ERROR:  page is not a hash meta page
+SELECT * FROM hash_metapage_info(get_raw_page('test_hash_a_idx', 4));
+ERROR:  page is not a hash meta page
+SELECT * FROM hash_metapage_info(get_raw_page('test_hash_a_idx', 5));
+ERROR:  page is not a hash meta page
+SELECT * FROM hash_page_stats(get_raw_page('test_hash_a_idx', 0));
+ERROR:  page is not a hash bucket or overflow page
+SELECT * FROM hash_page_stats(get_raw_page('test_hash_a_idx', 1));
+-[ RECORD 1 ]---+-----------
+live_items      | 0
+dead_items      | 0
+page_size       | 8192
+free_size       | 8148
+hasho_prevblkno | 4294967295
+hasho_nextblkno | 4294967295
+hasho_bucket    | 0
+hasho_flag      | 2
+hasho_page_id   | 65408
+
+SELECT * FROM hash_page_stats(get_raw_page('test_hash_a_idx', 2));
+-[ RECORD 1 ]---+-----------
+live_items      | 0
+dead_items      | 0
+page_size       | 8192
+free_size       | 8148
+hasho_prevblkno | 4294967295
+hasho_nextblkno | 4294967295
+hasho_bucket    | 1
+hasho_flag      | 2
+hasho_page_id   | 65408
+
+SELECT * FROM hash_page_stats(get_raw_page('test_hash_a_idx', 3));
+-[ RECORD 1 ]---+-----------
+live_items      | 1
+dead_items      | 0
+page_size       | 8192
+free_size       | 8128
+hasho_prevblkno | 4294967295
+hasho_nextblkno | 4294967295
+hasho_bucket    | 2
+hasho_flag      | 2
+hasho_page_id   | 65408
+
+SELECT * FROM hash_page_stats(get_raw_page('test_hash_a_idx', 4));
+-[ RECORD 1 ]---+-----------
+live_items      | 0
+dead_items      | 0
+page_size       | 8192
+free_size       | 8148
+hasho_prevblkno | 4294967295
+hasho_nextblkno | 4294967295
+hasho_bucket    | 3
+hasho_flag      | 2
+hasho_page_id   | 65408
+
+SELECT * FROM hash_page_stats(get_raw_page('test_hash_a_idx', 5));
+ERROR:  page is not a hash bucket or overflow page
+SELECT * FROM hash_page_items(get_raw_page('test_hash_a_idx', 0));
+ERROR:  page is not a hash bucket or overflow page
+SELECT * FROM hash_page_items(get_raw_page('test_hash_a_idx', 1));
+(0 rows)
+
+SELECT * FROM hash_page_items(get_raw_page('test_hash_a_idx', 2));
+(0 rows)
+
+SELECT * FROM hash_page_items(get_raw_page('test_hash_a_idx', 3));
+-[ RECORD 1 ]----------
+itemoffset | 1
+ctid       | (0,1)
+data       | 2389907270
+
+SELECT * FROM hash_page_items(get_raw_page('test_hash_a_idx', 4));
+(0 rows)
+
+SELECT * FROM hash_page_items(get_raw_page('test_hash_a_idx', 5));
+ERROR:  page is not a hash bucket or overflow page
+DROP TABLE test_hash;
