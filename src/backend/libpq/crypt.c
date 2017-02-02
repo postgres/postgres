@@ -160,6 +160,7 @@ encrypt_password(PasswordType target_type, const char *role,
 	 * handle every combination of source and target password types.
 	 */
 	elog(ERROR, "cannot encrypt password to requested type");
+	return NULL;		/* keep compiler quiet */
 }
 
 /*
