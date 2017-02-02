@@ -1510,6 +1510,55 @@ The commands accepted in walsender mode are:
        </listitem>
       </varlistentry>
      </variablelist>
+
+     <para>
+      In response to this command, the server will send a one-row result set
+      containing the following fields:
+
+      <variablelist>
+       <varlistentry>
+        <term><literal>slot_name</literal> (<type>text</type>)</term>
+        <listitem>
+         <para>
+          The name of the newly-created replication slot.
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry>
+        <term><literal>consistent_point</literal> (<type>text</type>)</term>
+        <listitem>
+         <para>
+          The WAL position at which the slot became consistent.  This is the
+          earliest location from which streaming can start on this replication
+          slot.
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry>
+        <term><literal>snapshot_name</literal> (<type>text</type>)</term>
+        <listitem>
+         <para>
+          The identifier of the snapshot exported by the command.  The
+          snapshot is valid until a new command is executed on this connection
+          or the replication connection is closed.  Null if the created slot
+          is physical.
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry>
+        <term><literal>output_plugin</literal> (<type>text</type>)</term>
+        <listitem>
+         <para>
+          The name of the output plugin used by the newly-created replication
+          slot.  Null if the created slot is physical.
+         </para>
+        </listitem>
+       </varlistentry>
+      </variablelist>
+     </para>
     </listitem>
   </varlistentry>
 
