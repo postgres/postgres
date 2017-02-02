@@ -17,6 +17,11 @@ SELECT generate_series(1, generate_series(1, 3));
 -- srf, with two SRF arguments
 SELECT generate_series(generate_series(1,3), generate_series(2, 4));
 
+-- check proper nesting of SRFs in different expressions
+explain (verbose, costs off)
+SELECT generate_series(1, generate_series(1, 3)), generate_series(2, 4);
+SELECT generate_series(1, generate_series(1, 3)), generate_series(2, 4);
+
 CREATE TABLE few(id int, dataa text, datab text);
 INSERT INTO few VALUES(1, 'a', 'foo'),(2, 'a', 'bar'),(3, 'b', 'bar');
 
@@ -128,6 +133,19 @@ SELECT (SELECT generate_series(1,3) LIMIT 1 OFFSET g.i) FROM generate_series(0,3
 -- Operators can return sets too
 CREATE OPERATOR |@| (PROCEDURE = unnest, RIGHTARG = ANYARRAY);
 SELECT |@|ARRAY[1,2,3];
+
+-- Some fun cases involving duplicate SRF calls
+explain (verbose, costs off)
+select generate_series(1,3) as x, generate_series(1,3) + 1 as xp1;
+select generate_series(1,3) as x, generate_series(1,3) + 1 as xp1;
+explain (verbose, costs off)
+select generate_series(1,3)+1 order by generate_series(1,3);
+select generate_series(1,3)+1 order by generate_series(1,3);
+
+-- Check that SRFs of same nesting level run in lockstep
+explain (verbose, costs off)
+select generate_series(1,3) as x, generate_series(3,6) + 1 as y;
+select generate_series(1,3) as x, generate_series(3,6) + 1 as y;
 
 -- Clean up
 DROP TABLE few;

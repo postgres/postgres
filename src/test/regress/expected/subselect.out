@@ -853,7 +853,7 @@ select * from int4_tbl o where (f1, f1) in
                ->  Result
                      Output: i.f1, ((generate_series(1, 2)) / 10)
                      ->  ProjectSet
-                           Output: i.f1, generate_series(1, 2)
+                           Output: generate_series(1, 2), i.f1
                            ->  HashAggregate
                                  Output: i.f1
                                  Group Key: i.f1
