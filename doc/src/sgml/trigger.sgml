@@ -705,6 +705,7 @@ CREATE TABLE ttest (
     This is the source code of the trigger function:
 <programlisting><![CDATA[
 #include "postgres.h"
+#include "fmgr.h"
 #include "executor/spi.h"       /* this is what you need to work with SPI */
 #include "commands/trigger.h"   /* ... triggers ... */
 #include "utils/rel.h"          /* ... and relations */
