@@ -2419,7 +2419,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&bgwriter_lru_maxpages,
-		100, 0, 1000,
+		100, 0, INT_MAX / 2, /* Same upper limit as shared_buffers */
 		NULL, NULL, NULL
 	},
 
