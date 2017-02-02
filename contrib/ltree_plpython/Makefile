@@ -24,17 +24,12 @@ include $(top_srcdir)/contrib/contrib-global.mk
 endif
 
 # We must link libpython explicitly
-ifeq ($(PORTNAME), aix)
-rpathdir = $(pkglibdir):$(python_libdir)
-SHLIB_LINK += $(python_libspec) $(python_additional_libs)
-else
 ifeq ($(PORTNAME), win32)
 # ... see silliness in plpython Makefile ...
 SHLIB_LINK += $(sort $(wildcard ../../src/pl/plpython/libpython*.a))
 else
 rpathdir = $(python_libdir)
-SHLIB_LINK += $(python_libspec)
-endif
+SHLIB_LINK += $(python_libspec) $(python_additional_libs)
 endif
 
 REGRESS_OPTS += --load-extension=ltree

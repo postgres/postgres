@@ -24,10 +24,6 @@ include $(top_srcdir)/contrib/contrib-global.mk
 endif
 
 # We must link libperl explicitly
-ifeq ($(PORTNAME), aix)
-rpathdir = $(pkglibdir):$(perl_archlibexp)/CORE
-SHLIB_LINK += $(perl_embed_ldflags)
-else
 ifeq ($(PORTNAME), win32)
 # these settings are the same as for plperl
 override CPPFLAGS += -DPLPERL_HAVE_UID_GID -Wno-comment
@@ -36,7 +32,6 @@ SHLIB_LINK += $(sort $(wildcard ../../src/pl/plperl/libperl*.a))
 else
 rpathdir = $(perl_archlibexp)/CORE
 SHLIB_LINK += $(perl_embed_ldflags)
-endif
 endif
 
 # As with plperl we need to make sure that the CORE directory is included
