@@ -42,7 +42,8 @@ GENERICMAPS = $(ISO8859MAPS) $(WINMAPS) \
 	johab_to_utf8.map utf8_to_johab.map \
 	uhc_to_utf8.map utf8_to_uhc.map \
 	gbk_to_utf8.map utf8_to_gbk.map \
-	koi8r_to_utf8.map utf8_to_koi8r.map
+	koi8r_to_utf8.map utf8_to_koi8r.map \
+	koi8u_to_utf8.map utf8_to_koi8u.map
 
 SPECIALMAPS = euc_cn_to_utf8.map utf8_to_euc_cn.map \
 	euc_jp_to_utf8.map utf8_to_euc_jp.map \
