@@ -81,11 +81,6 @@ bool ParseVariableBool(const char *value, const char *name,
 bool ParseVariableNum(const char *value, const char *name,
 				 int *result);
 
-int GetVariableNum(VariableSpace space,
-			   const char *name,
-			   int defaultval,
-			   int faultval);
-
 void		PrintVariables(VariableSpace space);
 
 bool		SetVariable(VariableSpace space, const char *name, const char *value);

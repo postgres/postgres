@@ -3247,12 +3247,6 @@ bar
         fail after having already displayed some rows.
         </para>
 
-        <para>
-        <varname>FETCH_COUNT</varname> is ignored if it is unset or does not
-        have a positive value.  It cannot be set to a value that is not
-        syntactically an integer.
-        </para>
-
         <tip>
         <para>
         Although you can use any output format with this feature,
@@ -3316,10 +3310,8 @@ bar
         <term><varname>HISTSIZE</varname></term>
         <listitem>
         <para>
-        The maximum number of commands to store in the command history.
-        If unset, at most 500 commands are stored by default.
-        If set to a value that is negative or not an integer, no limit is
-        applied.
+        The maximum number of commands to store in the command history
+        (default 500).  If set to a negative value, no limit is applied.
         </para>
         <note>
         <para>
@@ -3345,13 +3337,13 @@ bar
         <term><varname>IGNOREEOF</varname></term>
         <listitem>
         <para>
-         If unset, sending an <acronym>EOF</> character (usually
+         If set to 1 or less, sending an <acronym>EOF</> character (usually
          <keycombo action="simul"><keycap>Control</><keycap>D</></>)
          to an interactive session of <application>psql</application>
-         will terminate the application. If set to a numeric value,
-         that many <acronym>EOF</> characters are ignored before the
-         application terminates.  If the variable is set but not to a
-         numeric value, the default is 10.
+         will terminate the application.  If set to a larger numeric value,
+         that many consecutive <acronym>EOF</> characters must be typed to
+         make an interactive session terminate.  If the variable is set to a
+         non-numeric value, it is interpreted as 10.
         </para>
         <note>
         <para>

@@ -539,10 +539,7 @@ finishInput(void)
 #ifdef USE_READLINE
 	if (useHistory && psql_history)
 	{
-		int			hist_size;
-
-		hist_size = GetVariableNum(pset.vars, "HISTSIZE", 500, -1);
-		(void) saveHistory(psql_history, hist_size);
+		(void) saveHistory(psql_history, pset.histsize);
 		free(psql_history);
 		psql_history = NULL;
 	}

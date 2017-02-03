@@ -180,31 +180,6 @@ ParseVariableNum(const char *value, const char *name, int *result)
 }
 
 /*
- * Read integer value of the numeric variable named "name".
- *
- * Return defaultval if it is not set, or faultval if its value is not a
- * valid integer.  (No error message is issued.)
- */
-int
-GetVariableNum(VariableSpace space,
-			   const char *name,
-			   int defaultval,
-			   int faultval)
-{
-	const char *val;
-	int			result;
-
-	val = GetVariable(space, name);
-	if (!val)
-		return defaultval;
-
-	if (ParseVariableNum(val, NULL, &result))
-		return result;
-	else
-		return faultval;
-}
-
-/*
  * Print values of all variables.
  */
 void

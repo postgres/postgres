@@ -774,6 +774,11 @@ showVersion(void)
  * Substitute hooks and assign hooks for psql variables.
  *
  * This isn't an amazingly good place for them, but neither is anywhere else.
+ *
+ * By policy, every special variable that controls any psql behavior should
+ * have one or both hooks, even if they're just no-ops.  This ensures that
+ * the variable will remain present in variables.c's list even when unset,
+ * which ensures that it's known to tab completion.
  */
 
 static char *
@@ -823,14 +828,69 @@ singlestep_hook(const char *newval)
 	return ParseVariableBool(newval, "SINGLESTEP", &pset.singlestep);
 }
 
+static char *
+fetch_count_substitute_hook(char *newval)
+{
+	if (newval == NULL)
+		newval = pg_strdup("0");
+	return newval;
+}
+
 static bool
 fetch_count_hook(const char *newval)
 {
-	if (newval == NULL)
-		pset.fetch_count = -1;	/* default value */
-	else if (!ParseVariableNum(newval, "FETCH_COUNT", &pset.fetch_count))
-		return false;
+	return ParseVariableNum(newval, "FETCH_COUNT", &pset.fetch_count);
+}
+
+static bool
+histfile_hook(const char *newval)
+{
+	/*
+	 * Someday we might try to validate the filename, but for now, this is
+	 * just a placeholder to ensure HISTFILE is known to tab completion.
+	 */
 	return true;
+}
+
+static char *
+histsize_substitute_hook(char *newval)
+{
+	if (newval == NULL)
+		newval = pg_strdup("500");
+	return newval;
+}
+
+static bool
+histsize_hook(const char *newval)
+{
+	return ParseVariableNum(newval, "HISTSIZE", &pset.histsize);
+}
+
+static char *
+ignoreeof_substitute_hook(char *newval)
+{
+	int			dummy;
+
+	/*
+	 * This tries to mimic the behavior of bash, to wit "If set, the value is
+	 * the number of consecutive EOF characters which must be typed as the
+	 * first characters on an input line before bash exits.  If the variable
+	 * exists but does not have a numeric value, or has no value, the default
+	 * value is 10.  If it does not exist, EOF signifies the end of input to
+	 * the shell."  Unlike bash, however, we insist on the stored value
+	 * actually being a valid integer.
+	 */
+	if (newval == NULL)
+		newval = pg_strdup("0");
+	else if (!ParseVariableNum(newval, NULL, &dummy))
+		newval = pg_strdup("10");
+	return newval;
+}
+
+static bool
+ignoreeof_hook(const char *newval)
+{
+	return ParseVariableNum(newval, "IGNOREEOF", &pset.ignoreeof);
 }
 
 static char *
@@ -1062,8 +1122,17 @@ EstablishVariableSpace(void)
 					 bool_substitute_hook,
 					 singlestep_hook);
 	SetVariableHooks(pset.vars, "FETCH_COUNT",
-					 NULL,
+					 fetch_count_substitute_hook,
 					 fetch_count_hook);
+	SetVariableHooks(pset.vars, "HISTFILE",
+					 NULL,
+					 histfile_hook);
+	SetVariableHooks(pset.vars, "HISTSIZE",
+					 histsize_substitute_hook,
+					 histsize_hook);
+	SetVariableHooks(pset.vars, "IGNOREEOF",
+					 ignoreeof_substitute_hook,
+					 ignoreeof_hook);
 	SetVariableHooks(pset.vars, "ECHO",
 					 echo_substitute_hook,
 					 echo_hook);
