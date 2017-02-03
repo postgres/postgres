@@ -221,6 +221,29 @@ from int8_tbl group by q1 order by q1;
  4567890123456789 |      0.6
 (2 rows)
 
+-- check materialization of an initplan reference (bug #14524)
+explain (verbose, costs off)
+select 1 = all (select (select 1));
+            QUERY PLAN             
+-----------------------------------
+ Result
+   Output: (SubPlan 2)
+   SubPlan 2
+     ->  Materialize
+           Output: ($0)
+           InitPlan 1 (returns $0)
+             ->  Result
+                   Output: 1
+           ->  Result
+                 Output: $0
+(10 rows)
+
+select 1 = all (select (select 1));
+ ?column? 
+----------
+ t
+(1 row)
+
 --
 -- Check EXISTS simplification with LIMIT
 --

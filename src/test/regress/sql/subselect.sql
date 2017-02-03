@@ -92,6 +92,11 @@ SELECT '' AS eight, ss.f1 AS "Correlated Field", ss.f3 AS "Second Field"
 select q1, float8(count(*)) / (select count(*) from int8_tbl)
 from int8_tbl group by q1 order by q1;
 
+-- check materialization of an initplan reference (bug #14524)
+explain (verbose, costs off)
+select 1 = all (select (select 1));
+select 1 = all (select (select 1));
+
 --
 -- Check EXISTS simplification with LIMIT
 --
