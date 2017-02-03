@@ -514,6 +514,8 @@ DropSubscription(DropSubscriptionStmt *stmt)
 	/* Kill the apply worker so that the slot becomes accessible. */
 	logicalrep_worker_stop(subid);
 
+	LWLockRelease(LogicalRepLauncherLock);
+
 	/* Remove the origin tracking if exists. */
 	snprintf(originname, sizeof(originname), "pg_%u", subid);
 	originid = replorigin_by_name(originname, true);
