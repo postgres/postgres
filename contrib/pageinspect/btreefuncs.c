@@ -27,6 +27,8 @@
 
 #include "postgres.h"
 
+#include "pageinspect.h"
+
 #include "access/nbtree.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_am.h"

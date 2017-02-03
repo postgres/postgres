@@ -19,6 +19,8 @@
 
 #include "postgres.h"
 
+#include "pageinspect.h"
+
 #include "funcapi.h"
 #include "lib/stringinfo.h"
 #include "miscadmin.h"

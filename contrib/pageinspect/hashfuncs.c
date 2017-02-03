@@ -10,6 +10,8 @@
 
 #include "postgres.h"
 
+#include "pageinspect.h"
+
 #include "access/hash.h"
 #include "access/htup_details.h"
 #include "catalog/pg_type.h"
@@ -48,26 +50,14 @@ typedef struct HashPageStat
 
 /*
  * Verify that the given bytea contains a HASH page, or die in the attempt.
- * A pointer to the page is returned.
+ * A pointer to a palloc'd, properly aligned copy of the page is returned.
  */
 static Page
 verify_hash_page(bytea *raw_page, int flags)
 {
-	Page		page;
-	int			raw_page_size;
+	Page		page = get_page_from_raw(raw_page);
 	int			pagetype;
 	HashPageOpaque pageopaque;
-
-	raw_page_size = VARSIZE(raw_page) - VARHDRSZ;
-
-	if (raw_page_size != BLCKSZ)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("invalid page size"),
-				 errdetail("Expected size %d, got %d",
-						   BLCKSZ, raw_page_size)));
-
-	page = VARDATA(raw_page);
 
 	if (PageIsNew(page))
 		ereport(ERROR,

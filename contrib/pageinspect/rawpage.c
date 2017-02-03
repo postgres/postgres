@@ -15,6 +15,8 @@
 
 #include "postgres.h"
 
+#include "pageinspect.h"
+
 #include "access/htup_details.h"
 #include "catalog/catalog.h"
 #include "catalog/namespace.h"
@@ -157,6 +159,42 @@ get_raw_page_internal(text *relname, ForkNumber forknum, BlockNumber blkno)
 
 	return raw_page;
 }
+
+
+/*
+ * get_page_from_raw
+ *
+ * Get a palloc'd, maxalign'ed page image from the result of get_raw_page()
+ *
+ * On machines with MAXALIGN = 8, the payload of a bytea is not maxaligned,
+ * since it will start 4 bytes into a palloc'd value.  On alignment-picky
+ * machines, this will cause failures in accesses to 8-byte-wide values
+ * within the page.  We don't need to worry if accessing only 4-byte or
+ * smaller fields, but when examining a struct that contains 8-byte fields,
+ * use this function for safety.
+ */
+Page
+get_page_from_raw(bytea *raw_page)
+{
+	Page		page;
+	int			raw_page_size;
+
+	raw_page_size = VARSIZE(raw_page) - VARHDRSZ;
+
+	if (raw_page_size != BLCKSZ)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("invalid page size"),
+				 errdetail("Expected %d bytes, got %d.",
+						   BLCKSZ, raw_page_size)));
+
+	page = palloc(raw_page_size);
+
+	memcpy(page, VARDATA(raw_page), raw_page_size);
+
+	return page;
+}
+
 
 /*
  * page_header

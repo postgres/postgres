@@ -9,6 +9,8 @@
  */
 #include "postgres.h"
 
+#include "pageinspect.h"
+
 #include "access/htup_details.h"
 #include "access/brin.h"
 #include "access/brin_internal.h"
