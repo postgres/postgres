@@ -316,21 +316,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	if (cursorOptions & CURSOR_OPT_SCROLL)
 	{
 		if (!ExecSupportsBackwardScan(top_plan))
-		{
-			Plan	   *sub_plan = top_plan;
-
-			top_plan = materialize_finished_plan(sub_plan);
-
-			/*
-			 * XXX horrid kluge: if there are any initPlans attached to the
-			 * formerly-top plan node, move them up to the Material node. This
-			 * prevents failure in SS_finalize_plan, which see for comments.
-			 * We don't bother adjusting the sub_plan's cost estimate for
-			 * this.
-			 */
-			top_plan->initPlan = sub_plan->initPlan;
-			sub_plan->initPlan = NIL;
-		}
+			top_plan = materialize_finished_plan(top_plan);
 	}
 
 	/*
