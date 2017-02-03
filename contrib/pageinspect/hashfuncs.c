@@ -346,11 +346,11 @@ hash_page_items(PG_FUNCTION_ARGS)
 		MemSet(nulls, 0, sizeof(nulls));
 
 		j = 0;
-		values[j++] = UInt16GetDatum(uargs->offset);
+		values[j++] = Int32GetDatum((int32) uargs->offset);
 		values[j++] = PointerGetDatum(&itup->t_tid);
 
 		hashkey = _hash_get_indextuple_hashkey(itup);
-		values[j] = UInt64GetDatum((uint64) hashkey);
+		values[j] = Int64GetDatum((int64) hashkey);
 
 		tuple = heap_form_tuple(fctx->attinmeta->tupdesc, values, nulls);
 		result = HeapTupleGetDatum(tuple);
@@ -466,7 +466,7 @@ hash_bitmap_info(PG_FUNCTION_ARGS)
 	MemSet(nulls, 0, sizeof(nulls));
 
 	j = 0;
-	values[j++] = UInt64GetDatum((uint64) bitmapblkno);
+	values[j++] = Int64GetDatum((int64) bitmapblkno);
 	values[j++] = Int32GetDatum(bitmapbit);
 	values[j++] = BoolGetDatum(bit);
 
@@ -515,30 +515,30 @@ hash_metapage_info(PG_FUNCTION_ARGS)
 	MemSet(nulls, 0, sizeof(nulls));
 
 	j = 0;
-	values[j++] = UInt64GetDatum(metad->hashm_magic);
-	values[j++] = UInt64GetDatum(metad->hashm_version);
+	values[j++] = Int64GetDatum((int64) metad->hashm_magic);
+	values[j++] = Int64GetDatum((int64) metad->hashm_version);
 	values[j++] = Float8GetDatum(metad->hashm_ntuples);
-	values[j++] = UInt32GetDatum(metad->hashm_ffactor);
-	values[j++] = UInt32GetDatum(metad->hashm_bsize);
-	values[j++] = UInt32GetDatum(metad->hashm_bmsize);
-	values[j++] = UInt32GetDatum(metad->hashm_bmshift);
-	values[j++] = UInt64GetDatum(metad->hashm_maxbucket);
-	values[j++] = UInt64GetDatum(metad->hashm_highmask);
-	values[j++] = UInt64GetDatum(metad->hashm_lowmask);
-	values[j++] = UInt64GetDatum(metad->hashm_ovflpoint);
-	values[j++] = UInt64GetDatum(metad->hashm_firstfree);
-	values[j++] = UInt64GetDatum(metad->hashm_nmaps);
-	values[j++] = UInt32GetDatum(metad->hashm_procid);
+	values[j++] = Int32GetDatum((int32) metad->hashm_ffactor);
+	values[j++] = Int32GetDatum((int32) metad->hashm_bsize);
+	values[j++] = Int32GetDatum((int32) metad->hashm_bmsize);
+	values[j++] = Int32GetDatum((int32) metad->hashm_bmshift);
+	values[j++] = Int64GetDatum((int64) metad->hashm_maxbucket);
+	values[j++] = Int64GetDatum((int64) metad->hashm_highmask);
+	values[j++] = Int64GetDatum((int64) metad->hashm_lowmask);
+	values[j++] = Int64GetDatum((int64) metad->hashm_ovflpoint);
+	values[j++] = Int64GetDatum((int64) metad->hashm_firstfree);
+	values[j++] = Int64GetDatum((int64) metad->hashm_nmaps);
+	values[j++] = ObjectIdGetDatum((Oid) metad->hashm_procid);
 
 	for (i = 0; i < HASH_MAX_SPLITPOINTS; i++)
-		spares[i] = UInt64GetDatum(metad->hashm_spares[i]);
+		spares[i] = Int64GetDatum((int8) metad->hashm_spares[i]);
 	values[j++] = PointerGetDatum(construct_array(spares,
 												  HASH_MAX_SPLITPOINTS,
 												  INT8OID,
 												  8, FLOAT8PASSBYVAL, 'd'));
 
 	for (i = 0; i < HASH_MAX_BITMAPS; i++)
-		mapp[i] = UInt64GetDatum(metad->hashm_mapp[i]);
+		mapp[i] = Int64GetDatum((int64) metad->hashm_mapp[i]);
 	values[j++] = PointerGetDatum(construct_array(mapp,
 												  HASH_MAX_BITMAPS,
 												  INT8OID,

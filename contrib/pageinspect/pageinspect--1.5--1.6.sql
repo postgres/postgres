@@ -35,7 +35,7 @@ LANGUAGE C STRICT PARALLEL SAFE;
 -- hash_page_items()
 --
 CREATE FUNCTION hash_page_items(IN page bytea,
-	OUT itemoffset smallint,
+	OUT itemoffset int4,
 	OUT ctid tid,
 	OUT data int8)
 RETURNS SETOF record
@@ -70,7 +70,7 @@ CREATE FUNCTION hash_metapage_info(IN page bytea,
     OUT ovflpoint int8,
     OUT firstfree int8,
     OUT nmaps int8,
-    OUT procid int4,
+    OUT procid oid,
     OUT spares int8[],
     OUT mapp int8[])
 AS 'MODULE_PATHNAME', 'hash_metapage_info'
