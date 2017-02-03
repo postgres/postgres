@@ -130,3 +130,11 @@ select * from pgstatginindex('test_ginidx');
        2 |             0 |              0
 (1 row)
 
+create index test_hashidx on test using hash (b);
+WARNING:  hash indexes are not WAL-logged and their use is discouraged
+select * from pgstathashindex('test_hashidx');
+ version | bucket_pages | overflow_pages | bitmap_pages | zero_pages | live_items | dead_items | free_percent 
+---------+--------------+----------------+--------------+------------+------------+------------+--------------
+       2 |            4 |              0 |            1 |          0 |          0 |          0 |          100
+(1 row)
+

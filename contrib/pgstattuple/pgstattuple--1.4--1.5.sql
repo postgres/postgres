@@ -109,3 +109,19 @@ AS 'MODULE_PATHNAME', 'pgstattuple_approx_v1_5'
 LANGUAGE C STRICT PARALLEL SAFE;
 
 REVOKE EXECUTE ON FUNCTION pgstattuple_approx(regclass) FROM PUBLIC;
+
+/* New stuff in 1.5 begins here */
+
+CREATE OR REPLACE FUNCTION pgstathashindex(IN relname regclass,
+	OUT version INTEGER,
+	OUT bucket_pages BIGINT,
+	OUT overflow_pages BIGINT,
+	OUT bitmap_pages BIGINT,
+	OUT zero_pages BIGINT,
+	OUT live_items BIGINT,
+	OUT dead_items BIGINT,
+	OUT free_percent FLOAT8)
+AS 'MODULE_PATHNAME', 'pgstathashindex'
+LANGUAGE C STRICT PARALLEL SAFE;
+
+REVOKE EXECUTE ON FUNCTION pgstathashindex(regclass) FROM PUBLIC;

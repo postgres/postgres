@@ -47,3 +47,7 @@ select pg_relpages(relname) from pg_class where relname = 'test_pkey';
 create index test_ginidx on test using gin (b);
 
 select * from pgstatginindex('test_ginidx');
+
+create index test_hashidx on test using hash (b);
+
+select * from pgstathashindex('test_hashidx');

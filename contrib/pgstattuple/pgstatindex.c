@@ -29,6 +29,7 @@
 
 #include "access/gin_private.h"
 #include "access/heapam.h"
+#include "access/hash.h"
 #include "access/htup_details.h"
 #include "access/nbtree.h"
 #include "catalog/namespace.h"
@@ -36,6 +37,7 @@
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
+#include "storage/lmgr.h"
 #include "utils/builtins.h"
 #include "utils/rel.h"
 #include "utils/varlena.h"
@@ -54,6 +56,7 @@ PG_FUNCTION_INFO_V1(pgstatindexbyid);
 PG_FUNCTION_INFO_V1(pg_relpages);
 PG_FUNCTION_INFO_V1(pg_relpagesbyid);
 PG_FUNCTION_INFO_V1(pgstatginindex);
+PG_FUNCTION_INFO_V1(pgstathashindex);
 
 PG_FUNCTION_INFO_V1(pgstatindex_v1_5);
 PG_FUNCTION_INFO_V1(pgstatindexbyid_v1_5);
@@ -66,6 +69,7 @@ Datum pgstatginindex_internal(Oid relid, FunctionCallInfo fcinfo);
 #define IS_INDEX(r) ((r)->rd_rel->relkind == RELKIND_INDEX)
 #define IS_BTREE(r) ((r)->rd_rel->relam == BTREE_AM_OID)
 #define IS_GIN(r) ((r)->rd_rel->relam == GIN_AM_OID)
+#define IS_HASH(r) ((r)->rd_rel->relam == HASH_AM_OID)
 
 /* ------------------------------------------------
  * A structure for a whole btree index statistics
@@ -102,7 +106,29 @@ typedef struct GinIndexStat
 	int64		pending_tuples;
 } GinIndexStat;
 
+/* ------------------------------------------------
+ * A structure for a whole HASH index statistics
+ * used by pgstathashindex().
+ * ------------------------------------------------
+ */
+typedef struct HashIndexStat
+{
+	int32	version;
+	int32	space_per_page;
+
+	BlockNumber	bucket_pages;
+	BlockNumber overflow_pages;
+	BlockNumber bitmap_pages;
+	BlockNumber zero_pages;
+
+	int64	live_items;
+	int64	dead_items;
+	uint64	free_space;
+} HashIndexStat;
+
 static Datum pgstatindex_impl(Relation rel, FunctionCallInfo fcinfo);
+static void GetHashPageStats(Page page, HashIndexStat *stats);
+
 
 /* ------------------------------------------------------
  * pgstatindex()
@@ -527,4 +553,173 @@ pgstatginindex_internal(Oid relid, FunctionCallInfo fcinfo)
 	result = HeapTupleGetDatum(tuple);
 
 	return (result);
+}
+
+/* ------------------------------------------------------
+ * pgstathashindex()
+ *
+ * Usage: SELECT * FROM pgstathashindex('hashindex');
+ * ------------------------------------------------------
+ */
+Datum
+pgstathashindex(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+	BlockNumber	nblocks;
+	BlockNumber	blkno;
+	Relation	rel;
+	HashIndexStat stats;
+	BufferAccessStrategy bstrategy;
+	HeapTuple	tuple;
+	TupleDesc	tupleDesc;
+	Datum		values[8];
+	bool		nulls[8];
+	Buffer		metabuf;
+	HashMetaPage	metap;
+	float8		free_percent;
+	uint64		total_space;
+
+	rel = index_open(relid, AccessShareLock);
+
+	if (!IS_HASH(rel))
+		elog(ERROR, "relation \"%s\" is not a HASH index",
+			 RelationGetRelationName(rel));
+
+	/*
+	 * Reject attempts to read non-local temporary relations; we would be
+	 * likely to get wrong data since we have no visibility into the owning
+	 * session's local buffers.
+	 */
+	if (RELATION_IS_OTHER_TEMP(rel))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			   errmsg("cannot access temporary indexes of other sessions")));
+
+	/* Get the information we need from the metapage. */
+	memset(&stats, 0, sizeof(stats));
+	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ, LH_META_PAGE);
+	metap = HashPageGetMeta(BufferGetPage(metabuf));
+	stats.version = metap->hashm_version;
+	stats.space_per_page = metap->hashm_bsize;
+	_hash_relbuf(rel, metabuf);
+
+	/* Get the current relation length */
+	nblocks = RelationGetNumberOfBlocks(rel);
+
+	/* prepare access strategy for this index */
+	bstrategy = GetAccessStrategy(BAS_BULKREAD);
+
+	/* Start from blkno 1 as 0th block is metapage */
+	for (blkno = 1; blkno < nblocks; blkno++)
+	{
+		Buffer		buf;
+		Page		page;
+		HashPageOpaque	opaque;
+
+		CHECK_FOR_INTERRUPTS();
+
+		buf = ReadBufferExtended(rel, MAIN_FORKNUM, blkno, RBM_NORMAL,
+								 bstrategy);
+		LockBuffer(buf, BUFFER_LOCK_SHARE);
+		page = (Page) BufferGetPage(buf);
+
+		if (PageIsNew(page))
+			stats.zero_pages++;
+		else if (PageGetSpecialSize(page) !=
+				 MAXALIGN(sizeof(HashPageOpaqueData)))
+			ereport(ERROR,
+					(errcode(ERRCODE_INDEX_CORRUPTED),
+					 errmsg("index \"%s\" contains corrupted page at block %u",
+							RelationGetRelationName(rel),
+							BufferGetBlockNumber(buf))));
+		else
+		{
+			opaque = (HashPageOpaque) PageGetSpecialPointer(page);
+			if (opaque->hasho_flag & LH_BUCKET_PAGE)
+			{
+				stats.bucket_pages++;
+				GetHashPageStats(page, &stats);
+			}
+			else if (opaque->hasho_flag & LH_OVERFLOW_PAGE)
+			{
+				stats.overflow_pages++;
+				GetHashPageStats(page, &stats);
+			}
+			else if (opaque->hasho_flag & LH_BITMAP_PAGE)
+				stats.bitmap_pages++;
+			else
+				ereport(ERROR,
+						(errcode(ERRCODE_INDEX_CORRUPTED),
+					errmsg("unexpected page type 0x%04X in HASH index \"%s\" block %u",
+							opaque->hasho_flag, RelationGetRelationName(rel),
+							BufferGetBlockNumber(buf))));
+		}
+		UnlockReleaseBuffer(buf);
+	}
+
+	/* Done accessing the index */
+	index_close(rel, AccessShareLock);
+
+	/* Count zero pages as free space. */
+	stats.free_space += stats.zero_pages * stats.space_per_page;
+
+	/*
+	 * Total space available for tuples excludes the metapage and the bitmap
+	 * pages.
+	 */
+	total_space = (nblocks - (stats.bitmap_pages + 1)) * stats.space_per_page;
+
+	if (total_space == 0)
+		free_percent = 0.0;
+	else
+		free_percent = 100.0 * stats.free_space / total_space;
+
+	/*
+	 * Build a tuple descriptor for our result type
+	 */
+	if (get_call_result_type(fcinfo, NULL, &tupleDesc) != TYPEFUNC_COMPOSITE)
+		elog(ERROR, "return type must be a row type");
+
+	tupleDesc = BlessTupleDesc(tupleDesc);
+
+	/*
+	 * Build and return the tuple
+	 */
+	MemSet(nulls, 0, sizeof(nulls));
+	values[0] = Int32GetDatum(stats.version);
+	values[1] = Int64GetDatum((int64) stats.bucket_pages);
+	values[2] = Int64GetDatum((int64) stats.overflow_pages);
+	values[3] = Int64GetDatum((int64) stats.bitmap_pages);
+	values[4] = Int64GetDatum((int64) stats.zero_pages);
+	values[5] = Int64GetDatum(stats.live_items);
+	values[6] = Int64GetDatum(stats.dead_items);
+	values[7] = Float8GetDatum(free_percent);
+	tuple = heap_form_tuple(tupleDesc, values, nulls);
+
+	PG_RETURN_DATUM(HeapTupleGetDatum(tuple));
+}
+
+/* -------------------------------------------------
+ * GetHashPageStatis()
+ *
+ * Collect statistics of single hash page
+ * -------------------------------------------------
+ */
+static void
+GetHashPageStats(Page page, HashIndexStat *stats)
+{
+	OffsetNumber maxoff = PageGetMaxOffsetNumber(page);
+	int off;
+
+	/* count live and dead tuples, and free space */
+	for (off = FirstOffsetNumber; off <= maxoff; off++)
+	{
+		ItemId      id = PageGetItemId(page, off);
+
+		if (!ItemIdIsDead(id))
+			stats->live_items++;
+		else
+			stats->dead_items++;
+	}
+	stats->free_space += PageGetExactFreeSpace(page);
 }

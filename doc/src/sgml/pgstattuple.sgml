@@ -355,6 +355,101 @@ pending_tuples | 0
    <varlistentry>
     <term>
      <indexterm>
+      <primary>pgstathashindex</primary>
+     </indexterm>
+     <function>pgstathashindex(regclass) returns record</>
+    </term>
+
+    <listitem>
+     <para>
+      <function>pgstathashindex</function> returns a record showing information
+      about a HASH index.  For example:
+<programlisting>
+test=&gt; select * from pgstathashindex('con_hash_index');
+-[ RECORD 1 ]--+-----------------
+version        | 2
+bucket_pages   | 33081
+overflow_pages | 0
+bitmap_pages   | 1
+zero_pages     | 32455
+live_items     | 10204006
+dead_items     | 0
+free_percent   | 61.8005949100872
+</programlisting>
+     </para>
+
+    <para>
+     The output columns are:
+
+    <informaltable>
+     <tgroup cols="3">
+      <thead>
+       <row>
+        <entry>Column</entry>
+        <entry>Type</entry>
+        <entry>Description</entry>
+       </row>
+      </thead>
+
+      <tbody>
+       <row>
+        <entry><structfield>version</structfield></entry>
+        <entry><type>integer</type></entry>
+        <entry>HASH version number</entry>
+       </row>
+
+       <row>
+        <entry><structfield>bucket_pages</structfield></entry>
+        <entry><type>bigint</type></entry>
+        <entry>Number of bucket pages</entry>
+       </row>
+
+       <row>
+        <entry><structfield>overflow_pages</structfield></entry>
+        <entry><type>bigint</type></entry>
+        <entry>Number of overflow pages</entry>
+       </row>
+
+       <row>
+        <entry><structfield>bitmap_pages</structfield></entry>
+        <entry><type>bigint</type></entry>
+        <entry>Number of bitmap pages</entry>
+       </row>
+
+       <row>
+        <entry><structfield>zero_pages</structfield></entry>
+        <entry><type>bigint</type></entry>
+        <entry>Number of new or zero pages</entry>
+       </row>
+
+       <row>
+        <entry><structfield>live_items</structfield></entry>
+        <entry><type>bigint</type></entry>
+        <entry>Number of live tuples</entry>
+       </row>
+
+       <row>
+        <entry><structfield>dead_tuples</structfield></entry>
+        <entry><type>bigint</type></entry>
+        <entry>Number of dead tuples</entry>
+       </row>
+
+       <row>
+        <entry><structfield>free_percent</structfield></entry>
+        <entry><type>float</type></entry>
+        <entry>Percentage of free space</entry>
+       </row>
+
+      </tbody>
+     </tgroup>
+    </informaltable>
+    </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     <indexterm>
       <primary>pg_relpages</primary>
      </indexterm>
      <function>pg_relpages(regclass) returns bigint</>
