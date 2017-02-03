@@ -19,14 +19,14 @@ LANGUAGE C STRICT PARALLEL SAFE;
 -- hash_page_stats()
 --
 CREATE FUNCTION hash_page_stats(IN page bytea,
-    OUT live_items smallint,
-    OUT dead_items smallint,
-    OUT page_size smallint,
-    OUT free_size smallint,
+    OUT live_items int4,
+    OUT dead_items int4,
+    OUT page_size int4,
+    OUT free_size int4,
     OUT hasho_prevblkno int8,
     OUT hasho_nextblkno int8,
     OUT hasho_bucket int8,
-	OUT hasho_flag smallint,
+	OUT hasho_flag int4,
 	OUT hasho_page_id int4)
 AS 'MODULE_PATHNAME', 'hash_page_stats'
 LANGUAGE C STRICT PARALLEL SAFE;

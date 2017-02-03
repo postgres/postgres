@@ -32,10 +32,10 @@ PG_FUNCTION_INFO_V1(hash_metapage_info);
  */
 typedef struct HashPageStat
 {
-	uint16		live_items;
-	uint16		dead_items;
-	uint16		page_size;
-	uint16		free_size;
+	int		live_items;
+	int		dead_items;
+	int		page_size;
+	int		free_size;
 
 	/* opaque data */
 	BlockNumber hasho_prevblkno;
@@ -256,15 +256,15 @@ hash_page_stats(PG_FUNCTION_ARGS)
 	MemSet(nulls, 0, sizeof(nulls));
 
 	j = 0;
-	values[j++] = UInt16GetDatum(stat.live_items);
-	values[j++] = UInt16GetDatum(stat.dead_items);
-	values[j++] = UInt16GetDatum(stat.page_size);
-	values[j++] = UInt16GetDatum(stat.free_size);
-	values[j++] = UInt32GetDatum(stat.hasho_prevblkno);
-	values[j++] = UInt32GetDatum(stat.hasho_nextblkno);
-	values[j++] = UInt32GetDatum(stat.hasho_bucket);
-	values[j++] = UInt16GetDatum(stat.hasho_flag);
-	values[j++] = UInt16GetDatum(stat.hasho_page_id);
+	values[j++] = Int32GetDatum(stat.live_items);
+	values[j++] = Int32GetDatum(stat.dead_items);
+	values[j++] = Int32GetDatum(stat.page_size);
+	values[j++] = Int32GetDatum(stat.free_size);
+	values[j++] = Int64GetDatum((int64) stat.hasho_prevblkno);
+	values[j++] = Int64GetDatum((int64) stat.hasho_nextblkno);
+	values[j++] = Int64GetDatum((int64) stat.hasho_bucket);
+	values[j++] = Int32GetDatum((int32) stat.hasho_flag);
+	values[j++] = Int32GetDatum((int32) stat.hasho_page_id);
 
 	tuple = heap_form_tuple(tupleDesc, values, nulls);
 
@@ -388,7 +388,7 @@ Datum
 hash_bitmap_info(PG_FUNCTION_ARGS)
 {
 	Oid			indexRelid = PG_GETARG_OID(0);
-	uint32		ovflblkno = PG_GETARG_UINT32(1);
+	BlockNumber ovflblkno = (BlockNumber) PG_GETARG_INT64(1);
 	HashMetaPage metap;
 	Buffer		buf,
 				metabuf;
