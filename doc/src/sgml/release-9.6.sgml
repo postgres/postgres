@@ -1,6 +1,1447 @@
 <!-- doc/src/sgml/release-9.6.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-9-6-2">
+  <title>Release 9.6.2</title>
+
+  <note>
+  <title>Release Date</title>
+  <simpara>2017-02-09</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 9.6.1.
+   For information about new features in the 9.6 major release, see
+   <xref linkend="release-9-6">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 9.6.2</title>
+
+   <para>
+    A dump/restore is not required for those running 9.6.X.
+   </para>
+
+   <para>
+    However, if you are upgrading from a version earlier than 9.6.1,
+    see <xref linkend="release-9-6-1">.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [ffaa44cb5] 2016-11-15 15:55:35 -0500
+Branch: REL9_6_STABLE [8aa3e4751] 2016-11-15 15:55:35 -0500
+Branch: REL9_5_STABLE [0bc3ed98c] 2016-11-15 15:55:35 -0500
+Branch: REL9_4_STABLE [3e844a34b] 2016-11-15 15:55:36 -0500
+-->
+     <para>
+      Ensure that the special snapshot used for catalog scans is not
+      invalidated by premature data pruning (Tom Lane)
+     </para>
+
+     <para>
+      Backends failed to account for this snapshot when advertising their
+      oldest xmin, potentially allowing concurrent vacuuming operations to
+      remove data that was still needed.  This led to transient failures
+      along the lines of <quote>cache lookup failed for relation 1255</>.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: master [7403561c0] 2017-01-09 18:19:29 -0300
+Branch: REL9_6_STABLE [4482c6a23] 2017-01-09 18:19:29 -0300
+Branch: REL9_5_STABLE [ed8e8b814] 2017-01-09 18:19:29 -0300
+-->
+     <para>
+      Fix incorrect WAL logging for BRIN indexes (Kuntal Ghosh)
+     </para>
+
+     <para>
+      The WAL record emitted for a BRIN <quote>revmap</> page when moving an
+      index tuple to a different page was incorrect.  Replay would make the
+      related portion of the index useless, forcing it to be recomputed.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Robert Haas <rhaas@postgresql.org>
+Branch: master [fa0f466d5] 2016-12-08 14:12:08 -0500
+Branch: REL9_6_STABLE [1ed3c6ff9] 2016-12-08 14:13:55 -0500
+Branch: REL9_5_STABLE [141ad6896] 2016-12-08 14:14:12 -0500
+Branch: REL9_4_STABLE [68e56eef6] 2016-12-08 14:14:27 -0500
+Branch: REL9_3_STABLE [8e403f215] 2016-12-08 14:16:47 -0500
+Branch: REL9_2_STABLE [a00ac6299] 2016-12-08 14:19:25 -0500
+-->
+     <para>
+      Unconditionally WAL-log creation of the <quote>init fork</> for an
+      unlogged table (Michael Paquier)
+     </para>
+
+     <para>
+      Previously, this was skipped when <xref linkend="guc-wal-level">
+      = <literal>minimal</>, but actually it's necessary even in that case
+      to ensure that the unlogged table is properly reset to empty after a
+      crash.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Fujii Masao <fujii@postgresql.org>
+Branch: REL9_2_STABLE [38bec1805] 2017-01-25 07:02:25 +0900
+-->
+     <para>
+      Fix WAL page header validation when re-reading segments (Takayuki
+      Tsunakawa, Amit Kapila)
+     </para>
+
+     <para>
+      In corner cases, a spurious <quote>out-of-sequence TLI</> error
+      could be reported during recovery.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: REL9_5_STABLE [c0db1ec26] 2016-11-17 13:31:30 -0300
+Branch: REL9_4_STABLE [30e3cb307] 2016-11-17 13:31:30 -0300
+-->
+     <para>
+      Reduce interlocking on standby servers during the replay of btree
+      index vacuuming operations (Simon Riggs)
+     </para>
+
+     <para>
+      This change avoids substantial replication delays that sometimes
+      occurred while replaying such operations.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Robert Haas <rhaas@postgresql.org>
+Branch: master [4f714b2fd] 2016-10-27 14:27:40 -0400
+Branch: REL9_6_STABLE [4a43a6244] 2016-10-27 14:54:35 -0400
+Branch: REL9_5_STABLE [0cbd199fd] 2016-10-27 14:54:39 -0400
+Branch: REL9_4_STABLE [4a8cfbdcb] 2016-10-27 14:56:37 -0400
+Branch: REL9_3_STABLE [e927f55ff] 2016-10-27 14:56:42 -0400
+Branch: REL9_2_STABLE [2be2838a7] 2016-10-27 14:56:53 -0400
+-->
+     <para>
+      If the stats collector dies during hot standby, restart it (Takayuki
+      Tsunakawa)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Simon Riggs <simon@2ndQuadrant.com>
+Branch: REL9_6_STABLE [95d1b4145] 2017-01-26 20:06:44 +0000
+Branch: REL9_5_STABLE [99289e506] 2017-01-26 20:09:18 +0000
+Branch: REL9_4_STABLE [800d89a98] 2017-01-26 20:10:19 +0000
+Branch: REL9_3_STABLE [048d44175] 2017-01-26 20:15:23 +0000
+-->
+     <para>
+      Ensure that hot standby feedback works correctly when it's enabled at
+      standby server start (Ants Aasma, Craig Ringer)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Simon Riggs <simon@2ndQuadrant.com>
+Branch: master [e8ee3d6b8] 2017-01-26 18:59:58 +0000
+Branch: REL9_6_STABLE [40b7800da] 2017-01-27 12:13:20 +0000
+Branch: REL9_5_STABLE [ace2cd80a] 2017-01-27 12:15:02 +0000
+Branch: REL9_4_STABLE [357e06128] 2017-01-27 12:16:18 +0000
+Branch: REL9_3_STABLE [332068a21] 2017-01-27 12:18:07 +0000
+Branch: REL9_2_STABLE [15c54e836] 2017-01-27 12:19:50 +0000
+-->
+     <para>
+      Check for interrupts while hot standby is waiting for a conflicting
+      query (Simon Riggs)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Robert Haas <rhaas@postgresql.org>
+Branch: master [c6a389792] 2017-01-20 15:55:45 -0500
+Branch: REL9_6_STABLE [746ba76f1] 2017-01-20 16:11:45 -0500
+Branch: REL9_5_STABLE [aeaaf62aa] 2017-01-20 16:14:11 -0500
+Branch: REL9_4_STABLE [806f9b3d7] 2017-01-20 16:16:46 -0500
+Branch: REL9_3_STABLE [5c5788e90] 2017-01-20 16:18:55 -0500
+Branch: REL9_2_STABLE [5dff230eb] 2017-01-20 16:26:39 -0500
+-->
+     <para>
+      Avoid constantly respawning the autovacuum launcher in a corner case
+      (Amit Khandekar)
+     </para>
+
+     <para>
+      This fix avoids problems when autovacuum is nominally off and there
+      are some tables that require freezing, but all such tables are
+      already being processed by autovacuum workers.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Fujii Masao <fujii@postgresql.org>
+Branch: master [93eb619cd] 2016-12-17 02:22:15 +0900
+Branch: REL9_6_STABLE [6c75fb6b3] 2016-12-17 02:25:47 +0900
+-->
+     <para>
+      Disallow setting the <replaceable>num_sync</> field to zero in
+      <xref linkend="guc-synchronous-standby-names"> (Fujii Masao)
+     </para>
+
+     <para>
+      The correct way to disable synchronous standby is to set the whole
+      value to an empty string.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Andrew Dunstan <andrew@dunslane.net>
+Branch: master [f1169ab50] 2017-02-01 18:02:43 -0500
+Branch: REL9_6_STABLE [13752743b] 2017-02-01 17:59:53 -0500
+-->
+     <para>
+      Don't count background worker processes against a user's connection
+      limit (David Rowley)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [182db0704] 2016-11-26 13:31:35 -0500
+Branch: REL9_6_STABLE [0cc8453ac] 2016-11-26 13:31:35 -0500
+Branch: REL9_5_STABLE [576bd360b] 2016-11-26 13:31:35 -0500
+Branch: REL9_4_STABLE [313786a74] 2016-11-26 13:31:35 -0500
+Branch: REL9_3_STABLE [2cbb62db1] 2016-11-26 13:31:35 -0500
+Branch: REL9_2_STABLE [a982b02a4] 2016-11-26 13:31:35 -0500
+-->
+     <para>
+      Fix check for when an extension member object can be dropped (Tom Lane)
+     </para>
+
+     <para>
+      Extension upgrade scripts should be able to drop member objects,
+      but this was disallowed for serial-column sequences, and possibly
+      other cases.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Stephen Frost <sfrost@snowman.net>
+Branch: master [e54f75722] 2017-01-29 23:05:07 -0500
+Branch: REL9_6_STABLE [20064c0ec] 2017-01-29 23:05:09 -0500
+-->
+     <para>
+      Fix tracking of initial privileges for extension member objects so
+      that it works correctly with <command>ALTER EXTENSION ... ADD/DROP</>
+      (Stephen Frost)
+     </para>
+
+     <para>
+      An object's current privileges at the time it is added to the
+      extension will now be considered its default privileges; only
+      later changes in its privileges will be dumped by
+      subsequent <application>pg_dump</> runs.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [bd673e8e8] 2016-11-23 13:45:55 -0500
+Branch: REL9_6_STABLE [4a5e1d370] 2016-11-23 13:45:56 -0500
+Branch: REL9_5_STABLE [e0375d77b] 2016-11-23 13:45:56 -0500
+Branch: REL9_4_STABLE [15f3e0cb1] 2016-11-23 13:45:56 -0500
+Branch: REL9_3_STABLE [8f67a6c22] 2016-11-23 13:45:56 -0500
+Branch: REL9_2_STABLE [05975ab0a] 2016-11-23 13:45:56 -0500
+-->
+     <para>
+      Make sure <command>ALTER TABLE</> preserves index tablespace
+      assignments when rebuilding indexes (Tom Lane, Michael Paquier)
+     </para>
+
+     <para>
+      Previously, non-default settings
+      of <xref linkend="guc-default-tablespace"> could result in broken
+      indexes.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [a522fc3d8] 2016-10-26 17:05:06 -0400
+Branch: REL9_6_STABLE [445035a6e] 2016-10-26 17:05:06 -0400
+Branch: REL9_5_STABLE [b53c841e5] 2016-10-26 17:05:06 -0400
+Branch: REL9_4_STABLE [3a9a8c408] 2016-10-26 17:05:06 -0400
+-->
+     <para>
+      Fix incorrect updating of trigger function properties when changing a
+      foreign-key constraint's deferrability properties with <command>ALTER
+      TABLE ... ALTER CONSTRAINT</> (Tom Lane)
+     </para>
+
+     <para>
+      This led to odd failures during subsequent exercise of the foreign
+      key, as the triggers were fired at the wrong times.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [4e026b32d] 2016-11-25 13:44:47 -0500
+Branch: REL9_6_STABLE [bf5fe7bfa] 2016-11-25 13:44:47 -0500
+Branch: REL9_5_STABLE [6cbe84c82] 2016-11-25 13:44:48 -0500
+Branch: REL9_4_STABLE [f7166ce24] 2016-11-25 13:44:48 -0500
+Branch: REL9_3_STABLE [05bef7b08] 2016-11-25 13:44:48 -0500
+Branch: REL9_2_STABLE [6a363a4c2] 2016-11-25 13:44:48 -0500
+-->
+     <para>
+      Prevent dropping a foreign-key constraint if there are pending
+      trigger events for the referenced relation (Tom Lane)
+     </para>
+
+     <para>
+      This avoids <quote>could not find trigger <replaceable>NNN</></quote>
+      or <quote>relation <replaceable>NNN</> has no triggers</quote> errors.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: master [3957b58b8] 2017-01-09 19:26:58 -0300
+Branch: REL9_6_STABLE [4e563a1f6] 2017-01-09 19:26:58 -0300
+Branch: REL9_5_STABLE [4d4ab6ccd] 2017-01-09 19:26:58 -0300
+-->
+     <para>
+      Fix <command>ALTER TABLE ... SET DATA TYPE ... USING</> when child
+      table has different column ordering than the parent
+      (&Aacute;lvaro Herrera)
+     </para>
+
+     <para>
+      Failure to adjust the column numbering in the <literal>USING</>
+      expression led to errors,
+      typically <quote>attribute <replaceable>N</> has wrong type</quote>.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [d86f40009] 2017-01-04 18:00:11 -0500
+Branch: REL9_6_STABLE [f64554b99] 2017-01-04 18:00:11 -0500
+Branch: REL9_5_STABLE [50c8196f9] 2017-01-04 18:00:11 -0500
+Branch: REL9_4_STABLE [696d40d30] 2017-01-04 18:00:11 -0500
+Branch: REL9_3_STABLE [5f89a9885] 2017-01-04 18:00:12 -0500
+Branch: REL9_2_STABLE [6c4cf2be8] 2017-01-04 18:00:12 -0500
+-->
+     <para>
+      Fix processing of OID column when a table with OIDs is associated to
+      a parent with OIDs via <command>ALTER TABLE ... INHERIT</> (Amit
+      Langote)
+     </para>
+
+     <para>
+      The OID column should be treated the same as regular user columns in
+      this case, but it wasn't, leading to odd behavior in later
+      inheritance changes.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [1ead0208b] 2016-12-22 16:23:38 -0500
+Branch: REL9_6_STABLE [68330c8b4] 2016-12-22 16:23:34 -0500
+-->
+     <para>
+      Ensure that <command>CREATE TABLE ... LIKE ... WITH OIDS</> creates
+      a table with OIDs, whether or not the <literal>LIKE</>-referenced
+      table(s) have OIDs (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Dean Rasheed <dean.a.rasheed@gmail.com>
+Branch: master [58b136264] 2016-12-21 16:58:18 +0000
+Branch: REL9_6_STABLE [a46ee6b30] 2016-12-21 17:01:52 +0000
+Branch: REL9_5_STABLE [78a98b767] 2016-12-21 17:02:47 +0000
+Branch: REL9_4_STABLE [cad24980e] 2016-12-21 17:03:54 +0000
+-->
+     <para>
+      Fix <command>CREATE OR REPLACE VIEW</> to update the view query
+      before attempting to apply the new view options (Dean Rasheed)
+     </para>
+
+     <para>
+      Previously the command would fail if the new options were
+      inconsistent with the old view definition.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Stephen Frost <sfrost@snowman.net>
+Branch: master [12bd7dd31] 2016-12-22 17:08:43 -0500
+Branch: REL9_6_STABLE [f0f2e56ac] 2016-12-22 17:08:47 -0500
+Branch: REL9_5_STABLE [e82369217] 2016-12-22 17:08:49 -0500
+Branch: REL9_4_STABLE [ac1ec9c1f] 2016-12-22 17:08:58 -0500
+Branch: REL9_3_STABLE [0e3aadb68] 2016-12-22 17:09:00 -0500
+-->
+     <para>
+      Report correct object identity during <command>ALTER TEXT SEARCH
+      CONFIGURATION</> (Artur Zakirov)
+     </para>
+
+     <para>
+      The wrong catalog OID was reported to extensions such as logical
+      decoding.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: master [4aaddf2f0] 2016-11-24 15:39:55 -0300
+Branch: REL9_6_STABLE [9b6634290] 2016-11-24 15:39:55 -0300
+Branch: REL9_5_STABLE [7816d1356] 2016-11-24 15:39:55 -0300
+-->
+     <para>
+      Fix commit timestamp mechanism to not fail when queried about
+      the special XIDs <literal>FrozenTransactionId</>
+      and <literal>BootstrapTransactionId</> (Craig Ringer)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Kevin Grittner <kgrittn@postgresql.org>
+Branch: REL9_5_STABLE [bed2a0b06] 2016-12-13 19:14:42 -0600
+Branch: REL9_4_STABLE [4b9d466c1] 2016-12-13 19:05:12 -0600
+Branch: REL9_3_STABLE [5d80171ad] 2016-12-13 19:05:35 -0600
+Branch: REL9_2_STABLE [60314e28e] 2016-12-13 19:08:09 -0600
+-->
+     <para>
+      Check for serializability conflicts before reporting
+      constraint-violation failures (Thomas Munro)
+     </para>
+
+     <para>
+      When using serializable transaction isolation, it is desirable
+      that any error due to concurrent transactions should manifest
+      as a serialization failure, thereby cueing the application that
+      a retry might succeed.  Unfortunately, this does not reliably
+      happen for duplicate-key failures caused by concurrent insertions.
+      This change ensures that such an error will be reported as a
+      serialization error if the application explicitly checked for
+      the presence of a conflicting key (and did not find it) earlier
+      in the transaction.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [e3e66d8a9] 2016-11-07 12:08:18 -0500
+Branch: REL9_6_STABLE [5ee3a7453] 2016-11-07 12:08:19 -0500
+Branch: REL9_5_STABLE [e2f5cd9cf] 2016-11-07 12:08:19 -0500
+Branch: master [530f80652] 2016-11-10 15:00:58 -0500
+Branch: REL9_6_STABLE [05a6e8728] 2016-11-10 15:00:58 -0500
+Branch: REL9_5_STABLE [6e00ba1e1] 2016-11-10 15:00:58 -0500
+-->
+     <para>
+      Fix incorrect use of view reloptions as regular table reloptions (Tom
+      Lane)
+     </para>
+
+     <para>
+      The symptom was spurious <quote>ON CONFLICT is not supported on table
+      ... used as a catalog table</> errors when the target
+      of <command>INSERT ... ON CONFLICT</> is a view with cascade option.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [385072320] 2016-12-04 15:02:45 -0500
+Branch: REL9_6_STABLE [da05d0ebc] 2016-12-04 15:02:46 -0500
+Branch: REL9_5_STABLE [25c06a1ed] 2016-12-04 15:02:48 -0500
+-->
+     <para>
+      Fix incorrect <quote>target lists can have at most <replaceable>N</>
+      entries</quote> complaint when using <literal>ON CONFLICT</> with
+      wide tables (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [da8f3ebf3] 2016-11-02 14:32:13 -0400
+Branch: REL9_6_STABLE [f4d865f22] 2016-11-02 14:32:13 -0400
+-->
+     <para>
+      Fix spurious <quote>query provides a value for a dropped column</>
+      errors during <command>INSERT</> or <command>UPDATE</> on a table
+      with a dropped column (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [c5f365f3a] 2016-11-20 14:26:19 -0500
+Branch: REL9_6_STABLE [90f8b4be5] 2016-11-20 14:26:19 -0500
+Branch: REL9_5_STABLE [aeb5e8242] 2016-11-20 14:26:19 -0500
+Branch: REL9_4_STABLE [44c8b4fcd] 2016-11-20 14:26:19 -0500
+Branch: REL9_3_STABLE [71db302ec] 2016-11-20 14:26:19 -0500
+-->
+     <para>
+      Prevent multicolumn expansion of <replaceable>foo</><literal>.*</> in
+      an <command>UPDATE</> source expression (Tom Lane)
+     </para>
+
+     <para>
+      This led to <quote>UPDATE target count mismatch --- internal
+      error</>.  Now the syntax is understood as a whole-row variable,
+      as it would be in other contexts.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: REL9_6_STABLE [cf22c8cb8] 2016-12-09 12:01:14 -0500
+Branch: REL9_5_STABLE [6a493adda] 2016-12-09 12:01:14 -0500
+Branch: REL9_4_STABLE [c7a62135a] 2016-12-09 12:01:14 -0500
+Branch: REL9_3_STABLE [2afe282a3] 2016-12-09 12:01:14 -0500
+Branch: REL9_2_STABLE [082d1fb9e] 2016-12-09 12:01:14 -0500
+-->
+     <para>
+      Ensure that column typmods are determined accurately for
+      multi-row <literal>VALUES</> constructs (Tom Lane)
+     </para>
+
+     <para>
+      This fixes problems occurring when the first value in a column has a
+      determinable typmod (e.g., length for a <type>varchar</> value) but
+      later values don't share the same limit.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [a8ae12322] 2016-12-21 17:39:32 -0500
+Branch: REL9_6_STABLE [88e1e91da] 2016-12-21 17:39:32 -0500
+Branch: REL9_5_STABLE [d5633af7b] 2016-12-21 17:39:32 -0500
+Branch: REL9_4_STABLE [d0f60e4cc] 2016-12-21 17:39:32 -0500
+Branch: REL9_3_STABLE [a57695d9a] 2016-12-21 17:39:33 -0500
+Branch: REL9_2_STABLE [6e2c21ec5] 2016-12-21 17:39:33 -0500
+-->
+     <para>
+      Throw error for an unfinished Unicode surrogate pair at the end of a
+      Unicode string (Tom Lane)
+     </para>
+
+     <para>
+      Normally, a Unicode surrogate leading character must be followed by a
+      Unicode surrogate trailing character, but the check for this was
+      missed if the leading character was the last character in a Unicode
+      string literal (<literal>U&amp;'...'</>) or Unicode identifier
+      (<literal>U&amp;"..."</>).
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
+Branch: master [db80acfc9] 2016-12-20 09:20:17 +0200
+Branch: REL9_6_STABLE [ce92fc4e2] 2016-12-20 09:20:30 +0200
+-->
+     <para>
+      Fix execution of <literal>DISTINCT</> and ordered aggregates when
+      multiple such aggregates are able to share the same transition state
+      (Heikki Linnakangas)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [89fcea1ac] 2016-12-21 15:18:39 -0500
+Branch: REL9_6_STABLE [4e2477b7b] 2016-12-21 15:18:40 -0500
+Branch: master [260443847] 2016-12-19 13:49:50 -0500
+Branch: REL9_6_STABLE [3f07eff10] 2016-12-19 13:49:45 -0500
+-->
+     <para>
+      Fix implementation of phrase search operators in <type>tsquery</>
+      (Tom Lane)
+     </para>
+
+     <para>
+      Remove incorrect, and inconsistently-applied, rewrite rules that
+      tried to transform away AND/OR/NOT operators appearing below a PHRASE
+      operator; instead upgrade the execution engine to handle such cases
+      correctly.  This fixes assorted strange behavior and possible crashes
+      for text search queries containing such combinations.  Also fix
+      nested PHRASE operators to work sanely in combinations other than
+      simple left-deep trees, correct the behavior when removing stopwords
+      from a phrase search clause, and make sure that index searches behave
+      consistently with simple sequential-scan application of such queries.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [9d4ca0131] 2017-01-26 12:18:07 -0500
+Branch: REL9_6_STABLE [2dfc12647] 2017-01-26 12:17:47 -0500
+Branch: REL9_5_STABLE [423ad86f4] 2017-01-26 12:17:47 -0500
+Branch: REL9_4_STABLE [2c1976a6c] 2017-01-26 12:17:47 -0500
+Branch: REL9_3_STABLE [2e024f83b] 2017-01-26 12:17:47 -0500
+Branch: REL9_2_STABLE [fe6120f9b] 2017-01-26 12:17:47 -0500
+-->
+     <para>
+      Ensure that a purely negative text search query, such
+      as <literal>!foo</>, matches empty <type>tsvector</>s (Tom Dunstan)
+     </para>
+
+     <para>
+      Such matches were found by GIN index searches, but not by sequential
+      scans or GiST index searches.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [0eaaaf00e] 2016-12-11 13:09:57 -0500
+Branch: REL9_6_STABLE [c8bfe055b] 2016-12-11 13:09:57 -0500
+Branch: REL9_5_STABLE [c6caa5200] 2016-12-11 13:09:57 -0500
+Branch: REL9_4_STABLE [6f5cb982e] 2016-12-11 13:09:57 -0500
+Branch: REL9_3_STABLE [79e1a9efa] 2016-12-11 13:09:57 -0500
+Branch: REL9_2_STABLE [f4ccee408] 2016-12-11 13:09:57 -0500
+-->
+     <para>
+      Prevent crash when <function>ts_rewrite()</> replaces a non-top-level
+      subtree with an empty query (Artur Zakirov)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [5ec81acee] 2016-10-30 17:35:42 -0400
+Branch: REL9_6_STABLE [464326e83] 2016-10-30 17:35:42 -0400
+Branch: REL9_5_STABLE [e0491c19d] 2016-10-30 17:35:42 -0400
+Branch: REL9_4_STABLE [514797a52] 2016-10-30 17:35:43 -0400
+Branch: REL9_3_STABLE [407d513df] 2016-10-30 17:35:43 -0400
+Branch: REL9_2_STABLE [606e16a7f] 2016-10-30 17:35:43 -0400
+-->
+     <para>
+      Fix performance problems in <function>ts_rewrite()</> (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [24ebc444c] 2016-10-30 15:24:40 -0400
+Branch: REL9_6_STABLE [2a2b439cc] 2016-10-30 15:24:40 -0400
+Branch: REL9_5_STABLE [de7387604] 2016-10-30 15:24:40 -0400
+Branch: REL9_4_STABLE [f0c2ce45e] 2016-10-30 15:24:40 -0400
+Branch: REL9_3_STABLE [77a22f898] 2016-10-30 15:24:40 -0400
+Branch: REL9_2_STABLE [b0f8a273e] 2016-10-30 15:24:40 -0400
+-->
+     <para>
+      Fix <function>ts_rewrite()</>'s handling of nested NOT operators
+      (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [9a00f03e4] 2016-10-30 12:27:41 -0400
+Branch: REL9_6_STABLE [48a6592da] 2016-10-30 12:27:41 -0400
+Branch: REL9_5_STABLE [7151e72d7] 2016-10-30 12:27:41 -0400
+-->
+     <para>
+      Improve speed of user-defined aggregates that
+      use <function>array_append()</> as transition function (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [82f8107b9] 2017-01-05 11:33:51 -0500
+Branch: REL9_6_STABLE [5b4f8f4c6] 2017-01-05 11:33:51 -0500
+Branch: REL9_5_STABLE [4555a375a] 2017-01-05 11:33:51 -0500
+Branch: REL9_4_STABLE [4e446563b] 2017-01-05 11:33:51 -0500
+Branch: REL9_3_STABLE [ee9cb284a] 2017-01-05 11:33:51 -0500
+Branch: REL9_2_STABLE [e0d59c6ef] 2017-01-05 11:33:51 -0500
+-->
+     <para>
+      Fix <function>array_fill()</> to handle empty arrays properly (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: master [a73491e5f] 2016-12-09 12:42:17 -0300
+Branch: REL9_6_STABLE [79c89f1f4] 2016-12-09 12:42:17 -0300
+Branch: REL9_5_STABLE [581b09c72] 2016-12-09 12:42:17 -0300
+-->
+     <para>
+      Fix possible crash in <function>array_position()</>
+      or <function>array_positions()</> when processing arrays of records
+      (Junseok Yang)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
+Branch: master [4f5182e18] 2016-12-16 12:53:04 +0200
+Branch: REL9_6_STABLE [0fe5a4cd7] 2016-12-16 12:52:50 +0200
+Branch: REL9_5_STABLE [595333ff4] 2016-12-16 12:53:12 +0200
+Branch: REL9_4_STABLE [779325478] 2016-12-16 12:53:16 +0200
+Branch: REL9_3_STABLE [e71fe8470] 2016-12-16 12:53:22 +0200
+Branch: REL9_2_STABLE [c8f8ed5c2] 2016-12-16 12:53:27 +0200
+-->
+     <para>
+      Fix one-byte buffer overrun in <function>quote_literal_cstr()</>
+      (Heikki Linnakangas)
+     </para>
+
+     <para>
+      The overrun occurred only if the input consisted entirely of single
+      quotes and/or backslashes.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Fujii Masao <fujii@postgresql.org>
+Branch: master [974ece58b] 2017-01-17 17:27:32 +0900
+Branch: REL9_6_STABLE [60a8b63d2] 2017-01-17 17:29:15 +0900
+Branch: REL9_5_STABLE [dfe348c1b] 2017-01-17 17:30:26 +0900
+Branch: REL9_4_STABLE [9e7f00d86] 2017-01-17 17:31:51 +0900
+Branch: REL9_3_STABLE [f64b11fa0] 2017-01-17 17:32:20 +0900
+Branch: REL9_2_STABLE [c73157ca0] 2017-01-17 17:32:45 +0900
+-->
+     <para>
+      Prevent multiple calls of <function>pg_start_backup()</>
+      and <function>pg_stop_backup()</> from running concurrently (Michael
+      Paquier)
+     </para>
+
+     <para>
+      This avoids an assertion failure, and possibly worse things, if
+      someone tries to run these functions in parallel.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [c22ecc656] 2017-01-18 15:22:07 -0500
+Branch: REL9_6_STABLE [b21e665f2] 2017-01-18 15:21:52 -0500
+Branch: REL9_5_STABLE [74e67bbad] 2017-01-18 15:21:52 -0500
+-->
+     <para>
+      Disable transform that attempted to remove no-op <literal>AT TIME
+      ZONE</> conversions (Tom Lane)
+     </para>
+
+     <para>
+      This resulted in wrong answers when the simplified expression was
+      used in an index condition.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [f0774abde] 2016-12-27 15:43:54 -0500
+Branch: REL9_6_STABLE [21e24eb9a] 2016-12-27 15:43:54 -0500
+Branch: REL9_5_STABLE [4efe7aa2d] 2016-12-27 15:43:54 -0500
+Branch: REL9_4_STABLE [0b947b692] 2016-12-27 15:43:54 -0500
+Branch: REL9_3_STABLE [583599839] 2016-12-27 15:43:54 -0500
+Branch: REL9_2_STABLE [beae7d5f0] 2016-12-27 15:43:55 -0500
+-->
+     <para>
+      Avoid discarding <type>interval</>-to-<type>interval</> casts
+      that aren't really no-ops (Tom Lane)
+     </para>
+
+     <para>
+      In some cases, a cast that should result in zeroing out
+      low-order <type>interval</> fields was mistakenly deemed to be a
+      no-op and discarded.  An example is that casting from <type>INTERVAL
+      MONTH</> to <type>INTERVAL YEAR</> failed to clear the months field.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Robert Haas <rhaas@postgresql.org>
+Branch: master [53c7cff72] 2016-12-05 15:54:28 -0500
+Branch: REL9_6_STABLE [06fa6670f] 2016-12-05 15:59:02 -0500
+-->
+     <para>
+      Fix crash if the number of workers available to a parallel query
+      decreases during a rescan (Andreas Seltenreich)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [13671b4b2] 2016-11-19 14:26:19 -0500
+Branch: REL9_6_STABLE [272c42660] 2016-11-19 14:26:19 -0500
+Branch: REL9_5_STABLE [b9ee42e70] 2016-11-19 14:26:20 -0500
+-->
+     <para>
+      Fix bugs in transmitting GUC parameter values to parallel workers
+      (Michael Paquier, Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Robert Haas <rhaas@postgresql.org>
+Branch: master [4212cb732] 2016-12-06 11:11:54 -0500
+Branch: REL9_6_STABLE [ebe5dc9e0] 2016-12-06 11:43:12 -0500
+-->
+     <para>
+      Allow statements prepared with <command>PREPARE</> to be given
+      parallel plans (Amit Kapila, Tobias Bussman)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [41e2b84ce] 2016-11-29 19:32:35 -0500
+Branch: REL9_6_STABLE [e5b8aa636] 2016-11-29 19:32:35 -0500
+-->
+     <para>
+      Fix incorrect generation of parallel plans for semi-joins (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Robert Haas <rhaas@postgresql.org>
+Branch: master [0c2070cef] 2017-01-13 13:34:10 -0500
+Branch: REL9_6_STABLE [2d443ae1b] 2017-01-13 13:36:09 -0500
+-->
+     <para>
+      Fix planner's cardinality estimates for parallel joins (Robert Haas)
+     </para>
+
+     <para>
+      Ensure that these estimates reflect the number of rows predicted to
+      be seen by each worker, rather than the total.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [ab77a5a45] 2016-11-25 16:20:12 -0500
+Branch: REL9_6_STABLE [474de765a] 2016-11-25 16:20:31 -0500
+Branch: master [f24cf960d] 2016-11-21 11:09:24 -0500
+Branch: REL9_6_STABLE [01f08cbbc] 2016-11-21 11:09:33 -0500
+-->
+     <para>
+      Fix planner to avoid trying to parallelize plan nodes containing
+      initplans or subplans (Tom Lane, Amit Kapila)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [c52d37c8b] 2017-01-06 14:12:52 -0500
+Branch: REL9_6_STABLE [4103a2f20] 2017-01-06 14:12:52 -0500
+Branch: REL9_5_STABLE [aaf12e577] 2017-01-06 14:12:52 -0500
+Branch: REL9_4_STABLE [e4380e4cf] 2017-01-06 14:12:52 -0500
+Branch: REL9_3_STABLE [a8191800a] 2017-01-06 14:12:52 -0500
+-->
+     <para>
+      Ensure that cached plans are invalidated by changes in foreign-table
+      options (Amit Langote, Etsuro Fujita, Ashutosh Bapat)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [e1b449bea] 2016-11-10 11:31:56 -0500
+Branch: REL9_6_STABLE [7defc3b97] 2016-11-10 11:31:56 -0500
+-->
+     <para>
+      Fix the plan generated for sorted partial aggregation with a constant
+      <literal>GROUP BY</> clause (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [1f542a2ea] 2016-12-13 13:20:37 -0500
+Branch: REL9_6_STABLE [997a2994e] 2016-12-13 13:20:16 -0500
+-->
+     <para>
+      Fix <quote>could not find plan for CTE</> planner error when dealing
+      with a <literal>UNION ALL</> containing CTE references (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [555494d1b] 2017-02-02 19:11:32 -0500
+Branch: REL9_6_STABLE [b971a98ce] 2017-02-02 19:11:27 -0500
+-->
+     <para>
+      Fix mishandling of initplans when forcibly adding a Material node to
+      a subplan (Tom Lane)
+     </para>
+
+     <para>
+      The typical consequence of this mistake was a <quote>plan should not
+      reference subplan's variable</> error.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [7fa93eec4] 2016-12-17 15:28:54 -0500
+Branch: REL9_6_STABLE [f4f195d15] 2016-12-17 15:28:54 -0500
+Branch: master [770671062] 2016-11-02 15:50:15 -0400
+Branch: REL9_6_STABLE [23c6c437f] 2016-11-02 15:50:21 -0400
+-->
+     <para>
+      Fix foreign-key-based join selectivity estimation for semi-joins and
+      anti-joins, as well as inheritance cases (Tom Lane)
+     </para>
+
+     <para>
+      The new code for taking the existence of a foreign key relationship
+      into account did the wrong thing in these cases, making the estimates
+      worse not better than the pre-9.6 code.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Stephen Frost <sfrost@snowman.net>
+Branch: master [bec96c82f] 2017-01-19 12:06:21 -0500
+Branch: REL9_6_STABLE [fd081cabf] 2017-01-19 12:06:27 -0500
+-->
+     <para>
+      Fix <application>pg_dump</> to emit the data of a sequence that is
+      marked as an extension configuration table (Michael Paquier)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Stephen Frost <sfrost@snowman.net>
+Branch: master [e2090d9d2] 2017-01-31 16:24:11 -0500
+Branch: REL9_6_STABLE [eb5e9d90d] 2017-01-31 16:24:14 -0500
+-->
+     <para>
+      Fix mishandling of <command>ALTER DEFAULT PRIVILEGES ... REVOKE</>
+      in <application>pg_dump</> (Stephen Frost)
+     </para>
+
+     <para>
+      <application>pg_dump</> missed issuing the
+      required <literal>REVOKE</> commands in cases where <command>ALTER
+      DEFAULT PRIVILEGES</> had been used to reduce privileges to less than
+      they would normally be.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Stephen Frost <sfrost@snowman.net>
+Branch: master [2259bf672] 2016-12-21 13:47:06 -0500
+Branch: REL9_6_STABLE [542975a14] 2016-12-21 13:47:13 -0500
+Branch: REL9_5_STABLE [1efc5dba0] 2016-12-21 13:47:18 -0500
+Branch: REL9_4_STABLE [13f51dacf] 2016-12-21 13:47:23 -0500
+Branch: REL9_3_STABLE [1f2cfd26f] 2016-12-21 13:47:28 -0500
+Branch: REL9_2_STABLE [da57166b7] 2016-12-21 13:47:32 -0500
+Branch: master [19990918d] 2016-12-21 13:47:06 -0500
+Branch: REL9_6_STABLE [e45319bb7] 2016-12-21 13:47:13 -0500
+Branch: REL9_5_STABLE [94476436a] 2016-12-21 13:47:18 -0500
+Branch: REL9_4_STABLE [107943f1a] 2016-12-21 13:47:23 -0500
+Branch: REL9_3_STABLE [fc03f7dd1] 2016-12-21 13:47:28 -0500
+Branch: REL9_2_STABLE [59a389891] 2016-12-21 13:47:32 -0500
+-->
+     <para>
+      Fix <application>pg_dump</> to dump user-defined casts and transforms
+      that use built-in functions (Stephen Frost)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [ac888986f] 2016-11-17 14:59:13 -0500
+Branch: REL9_6_STABLE [0eaa5118a] 2016-11-17 14:59:19 -0500
+Branch: REL9_5_STABLE [a7864037d] 2016-11-17 14:59:23 -0500
+Branch: REL9_4_STABLE [e69b532be] 2016-11-17 14:59:26 -0500
+-->
+     <para>
+      Fix <application>pg_restore</> with <option>--create --if-exists</>
+      to behave more sanely if an archive contains
+      unrecognized <command>DROP</> commands (Tom Lane)
+     </para>
+
+     <para>
+      This doesn't fix any live bug, but it may improve the behavior in
+      future if <application>pg_restore</> is used with an archive
+      generated by a later <application>pg_dump</> version.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Magnus Hagander <magnus@hagander.net>
+Branch: master [10238fad0] 2016-12-19 10:11:04 +0100
+Branch: REL9_6_STABLE [1c8ad594e] 2016-12-19 10:15:52 +0100
+Branch: REL9_5_STABLE [bc53d7130] 2016-12-19 10:16:02 +0100
+Branch: REL9_4_STABLE [f6508827a] 2016-12-19 10:16:12 +0100
+-->
+     <para>
+      Fix <application>pg_basebackup</>'s rate limiting in the presence of
+      slow I/O (Antonin Houska)
+     </para>
+
+     <para>
+      If disk I/O was transiently much slower than the specified rate
+      limit, the calculation overflowed, effectively disabling the rate
+      limit for the rest of the run.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Magnus Hagander <magnus@hagander.net>
+Branch: REL9_6_STABLE [b6a323a8c] 2016-11-07 14:47:30 +0100
+Branch: REL9_5_STABLE [6d779e05a] 2016-11-07 15:03:56 +0100
+Branch: REL9_4_STABLE [5556420d4] 2016-11-07 15:04:23 +0100
+-->
+     <para>
+      Fix <application>pg_basebackup</>'s handling of
+      symlinked <filename>pg_stat_tmp</> and <filename>pg_replslot</>
+      subdirectories (Magnus Hagander, Michael Paquier)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Robert Haas <rhaas@postgresql.org>
+Branch: master [f267c1c24] 2016-10-27 11:19:51 -0400
+Branch: REL9_6_STABLE [05e2293f4] 2016-10-27 11:34:28 -0400
+Branch: REL9_5_STABLE [ef18cb7da] 2016-10-27 11:53:14 -0400
+Branch: REL9_4_STABLE [d1e9c8269] 2016-10-27 11:59:08 -0400
+Branch: REL9_3_STABLE [92929a3e3] 2016-10-27 12:00:05 -0400
+Branch: REL9_2_STABLE [629575fa2] 2016-10-27 12:14:07 -0400
+-->
+     <para>
+      Fix possible <application>pg_basebackup</> failure on standby
+      server when including WAL files (Amit Kapila, Robert Haas)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [dbdfd114f] 2016-11-25 18:36:10 -0500
+Branch: REL9_6_STABLE [255bcd27f] 2016-11-25 18:36:10 -0500
+-->
+     <para>
+      Improve <application>initdb</> to insert the correct
+      platform-specific default values for
+      the <replaceable>xxx</><literal>_flush_after</> parameters
+      into <filename>postgresql.conf</> (Fabien Coelho, Tom Lane)
+     </para>
+
+     <para>
+      This is a cleaner way of documenting the default values than was used
+      previously.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [cd1b21569] 2016-12-22 15:01:37 -0500
+Branch: REL9_6_STABLE [77cd0dc7e] 2016-12-22 15:01:38 -0500
+Branch: REL9_5_STABLE [c472f2a33] 2016-12-22 15:01:39 -0500
+-->
+     <para>
+      Fix possible mishandling of expanded arrays in domain check
+      constraints and <literal>CASE</> execution (Tom Lane)
+     </para>
+
+     <para>
+      It was possible for a PL/pgSQL function invoked in these contexts to
+      modify or even delete an array value that needs to be preserved for
+      additional operations.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [fc8b81a29] 2016-11-06 12:09:36 -0500
+Branch: REL9_6_STABLE [a5b153ff5] 2016-11-06 12:09:36 -0500
+Branch: REL9_5_STABLE [674877e93] 2016-11-06 12:09:36 -0500
+-->
+     <para>
+      Fix nested uses of PL/pgSQL functions in contexts such as domain
+      check constraints evaluated during assignment to a PL/pgSQL variable
+      (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [9cda81f00] 2016-12-09 15:27:23 -0500
+Branch: REL9_6_STABLE [b90f2247e] 2016-12-09 15:27:23 -0500
+Branch: REL9_5_STABLE [00858728f] 2016-12-09 15:27:23 -0500
+Branch: REL9_4_STABLE [13a4b37b9] 2016-12-09 15:27:23 -0500
+Branch: REL9_3_STABLE [cea6de20b] 2016-12-09 15:27:23 -0500
+Branch: REL9_2_STABLE [981885d17] 2016-12-09 15:27:23 -0500
+-->
+     <para>
+      Ensure that the Python exception objects we create for PL/Python are
+      properly reference-counted (Rafa de la Torre, Tom Lane)
+     </para>
+
+     <para>
+      This avoids failures if the objects are used after a Python garbage
+      collection cycle has occurred.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [fd2664dcb] 2016-11-06 14:43:13 -0500
+Branch: REL9_6_STABLE [3af8467e9] 2016-11-06 14:43:13 -0500
+Branch: REL9_5_STABLE [abdc83998] 2016-11-06 14:43:13 -0500
+Branch: REL9_4_STABLE [110413a35] 2016-11-06 14:43:13 -0500
+Branch: REL9_3_STABLE [9c0b04f18] 2016-11-06 14:43:14 -0500
+Branch: REL9_2_STABLE [92b7b1058] 2016-11-06 14:43:14 -0500
+-->
+     <para>
+      Fix PL/Tcl to support triggers on tables that have <literal>.tupno</>
+      as a column name (Tom Lane)
+     </para>
+
+     <para>
+      This matches the (previously undocumented) behavior of
+      PL/Tcl's <command>spi_exec</> and <command>spi_execp</> commands,
+      namely that a magic <literal>.tupno</> column is inserted only if
+      there isn't a real column named that.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [0a7481930] 2016-11-15 16:17:19 -0500
+Branch: REL9_6_STABLE [a69e6d9a6] 2016-11-15 16:17:19 -0500
+Branch: REL9_5_STABLE [8951f92da] 2016-11-15 16:17:19 -0500
+Branch: REL9_4_STABLE [e9802122d] 2016-11-15 16:17:19 -0500
+Branch: REL9_3_STABLE [46b6f3fff] 2016-11-15 16:17:19 -0500
+Branch: REL9_2_STABLE [13aa9af37] 2016-11-15 16:17:19 -0500
+-->
+     <para>
+      Allow DOS-style line endings in <filename>~/.pgpass</> files,
+      even on Unix (Vik Fearing)
+     </para>
+
+     <para>
+      This change simplifies use of the same password file across Unix and
+      Windows machines.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Michael Meskes <meskes@postgresql.org>
+Branch: master [4032ef18d] 2016-12-22 08:28:13 +0100
+Branch: REL9_6_STABLE [fd2a5547c] 2016-12-22 08:29:13 +0100
+Branch: REL9_5_STABLE [a88c547f9] 2016-12-22 08:29:33 +0100
+Branch: REL9_4_STABLE [3af172f7b] 2016-12-22 08:30:06 +0100
+Branch: REL9_3_STABLE [1df8b3fe8] 2016-12-22 08:32:25 +0100
+Branch: REL9_2_STABLE [501c91074] 2016-12-22 08:34:07 +0100
+-->
+     <para>
+      Fix one-byte buffer overrun if <application>ecpg</> is given a file
+      name that ends with a dot (Takayuki Tsunakawa)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [a3aef88e6] 2016-12-25 16:04:45 -0500
+Branch: REL9_6_STABLE [6a8c67f50] 2016-12-25 16:04:47 -0500
+-->
+     <para>
+      Fix incorrect error reporting for duplicate data
+      in <application>psql</>'s <command>\crosstabview</> (Tom Lane)
+     </para>
+
+     <para>
+      <application>psql</> sometimes quoted the wrong row and/or column
+      values when complaining about multiple entries for the same crosstab
+      cell.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Stephen Frost <sfrost@snowman.net>
+Branch: master [f3fd531a5] 2016-12-23 21:01:29 -0500
+Branch: REL9_6_STABLE [dc61580bd] 2016-12-23 21:01:33 -0500
+Branch: REL9_5_STABLE [16a2efdb2] 2016-12-23 21:01:40 -0500
+Branch: REL9_4_STABLE [98f30a0e7] 2016-12-23 21:01:45 -0500
+Branch: REL9_3_STABLE [2022d594d] 2016-12-23 21:01:48 -0500
+Branch: REL9_2_STABLE [26b55d669] 2016-12-23 21:01:51 -0500
+-->
+     <para>
+      Fix <application>psql</>'s tab completion for <command>ALTER DEFAULT
+      PRIVILEGES</> (Gilles Darold, Stephen Frost)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [404e66758] 2016-11-28 11:51:30 -0500
+Branch: REL9_6_STABLE [28735cc72] 2016-11-28 11:51:35 -0500
+-->
+     <para>
+      Fix <application>psql</>'s tab completion for <command>ALTER TABLE t
+      ALTER c DROP ...</> (Kyotaro Horiguchi)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [18f8f784c] 2016-12-07 12:19:56 -0500
+Branch: REL9_6_STABLE [bb39f58f7] 2016-12-07 12:19:56 -0500
+Branch: REL9_5_STABLE [370c7a863] 2016-12-07 12:19:56 -0500
+Branch: REL9_4_STABLE [ccb84dae1] 2016-12-07 12:19:56 -0500
+Branch: REL9_3_STABLE [82eb5c514] 2016-12-07 12:19:56 -0500
+Branch: REL9_2_STABLE [1ec5cc025] 2016-12-07 12:19:57 -0500
+-->
+     <para>
+      In <application>psql</>, treat an empty or all-blank setting of
+      the <envar>PAGER</> environment variable as meaning <quote>no
+      pager</> (Tom Lane)
+     </para>
+
+     <para>
+      Previously, such a setting caused output intended for the pager to
+      vanish entirely.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Joe Conway <mail@joeconway.com>
+Branch: master [2f802d95b] 2016-12-22 09:48:55 -0800
+Branch: REL9_6_STABLE [51126ccdb] 2016-12-22 09:47:55 -0800
+Branch: REL9_5_STABLE [80ca22aa6] 2016-12-22 09:47:46 -0800
+Branch: REL9_4_STABLE [76943f54a] 2016-12-22 09:47:36 -0800
+Branch: REL9_3_STABLE [9b8507bfa] 2016-12-22 09:47:25 -0800
+Branch: REL9_2_STABLE [44de099f8] 2016-12-22 09:46:46 -0800
+-->
+     <para>
+      Improve <filename>contrib/dblink</>'s reporting of
+      low-level <application>libpq</> errors, such as out-of-memory
+      (Joe Conway)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Joe Conway <mail@joeconway.com>
+Branch: master [c44486838] 2016-12-22 09:20:35 -0800
+Branch: REL9_6_STABLE [150841fb9] 2016-12-22 09:19:34 -0800
+Branch: REL9_5_STABLE [d5c05f27a] 2016-12-22 09:19:18 -0800
+Branch: REL9_4_STABLE [cb687e0ac] 2016-12-22 09:19:08 -0800
+Branch: REL9_3_STABLE [bd46cce21] 2016-12-22 09:18:50 -0800
+-->
+     <para>
+      Teach <filename>contrib/dblink</> to ignore irrelevant server options
+      when it uses a <filename>contrib/postgres_fdw</> foreign server as
+      the source of connection options (Corey Huinker)
+     </para>
+
+     <para>
+      Previously, if the foreign server object had options that were not
+      also <application>libpq</> connection options, an error occurred.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: REL9_6_STABLE [4774f6183] 2016-11-04 12:37:29 -0400
+Branch: REL9_5_STABLE [56d34ba5f] 2016-11-04 12:37:29 -0400
+Branch: master [14ee35799] 2016-11-02 00:09:27 -0400
+Branch: REL9_6_STABLE [2a8783e44] 2016-11-02 00:09:28 -0400
+Branch: REL9_5_STABLE [af636d7b5] 2016-11-02 00:09:28 -0400
+-->
+     <para>
+      Fix portability problems in <filename>contrib/pageinspect</>'s
+      functions for GIN indexes (Peter Eisentraut, Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Robert Haas <rhaas@postgresql.org>
+Branch: master [3b790d256] 2016-12-21 11:01:48 -0500
+Branch: REL9_6_STABLE [b98e5513f] 2016-12-21 11:11:36 -0500
+-->
+     <para>
+      Fix possible miss of socket read events while waiting on Windows
+      (Amit Kapial)
+     </para>
+
+     <para>
+      This error was harmless for most uses, but it is known to cause hangs
+      when trying to use the pldebugger extension.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Noah Misch <noah@leadboat.com>
+Branch: master [95b9b8a39] 2016-12-03 15:46:36 -0500
+Branch: REL9_6_STABLE [784054579] 2016-12-03 15:46:42 -0500
+Branch: REL9_5_STABLE [5ab4b2ec4] 2016-12-03 15:46:48 -0500
+Branch: REL9_4_STABLE [b45a4949d] 2016-12-03 15:47:18 -0500
+Branch: REL9_3_STABLE [6c5d5918b] 2016-12-03 15:47:31 -0500
+Branch: REL9_2_STABLE [d83c94292] 2016-12-03 15:47:52 -0500
+Branch: master [b37da1e8a] 2016-12-03 15:46:35 -0500
+Branch: REL9_6_STABLE [056d62c5e] 2016-12-03 15:46:42 -0500
+Branch: REL9_5_STABLE [3cb8bdfef] 2016-12-03 15:46:48 -0500
+Branch: REL9_4_STABLE [ec7eacfae] 2016-12-03 15:47:12 -0500
+Branch: REL9_3_STABLE [4c3505eb4] 2016-12-03 15:47:31 -0500
+Branch: REL9_2_STABLE [a9265258a] 2016-12-03 15:47:49 -0500
+-->
+     <para>
+      On Windows, ensure that environment variable changes are propagated
+      to DLLs built with debug options (Christian Ullrich)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [93513d1b6] 2016-12-15 14:32:42 -0500
+Branch: REL9_6_STABLE [6f4d38dbe] 2016-12-15 14:32:58 -0500
+Branch: REL9_5_STABLE [492fe48f0] 2016-12-15 14:33:06 -0500
+Branch: REL9_4_STABLE [b95f4bf07] 2016-12-15 14:33:10 -0500
+Branch: REL9_3_STABLE [ccf24539b] 2016-12-15 14:33:14 -0500
+Branch: REL9_2_STABLE [2b7d715c0] 2016-12-15 14:33:19 -0500
+Branch: master [32416b0f9] 2016-11-06 10:45:58 -0500
+Branch: REL9_6_STABLE [20559a854] 2016-11-06 10:46:08 -0500
+Branch: REL9_5_STABLE [6e377ef0c] 2016-11-06 10:46:14 -0500
+Branch: REL9_4_STABLE [6651ab058] 2016-11-06 10:46:21 -0500
+Branch: REL9_3_STABLE [3a8f24abd] 2016-11-06 10:46:27 -0500
+Branch: REL9_2_STABLE [6653dbafd] 2016-11-06 10:46:34 -0500
+Branch: master [1f87181e1] 2016-11-03 22:24:34 -0400
+Branch: REL9_6_STABLE [7afafe8af] 2016-11-04 10:44:16 -0400
+Branch: REL9_5_STABLE [ac6fc1b55] 2016-11-04 10:44:16 -0400
+Branch: REL9_4_STABLE [c09478e15] 2016-11-04 10:44:16 -0400
+Branch: REL9_3_STABLE [22b1207a3] 2016-11-04 10:44:16 -0400
+Branch: REL9_2_STABLE [07bc2fc45] 2016-11-04 10:44:16 -0400
+-->
+     <para>
+      Sync our copy of the timezone library with IANA release tzcode2016j
+      (Tom Lane)
+     </para>
+
+     <para>
+      This fixes various issues, most notably that timezone data
+      installation failed if the target directory didn't support hard
+      links.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [308d86827] 2017-01-30 11:40:22 -0500
+Branch: REL9_6_STABLE [6da67b684] 2017-01-30 11:40:39 -0500
+Branch: REL9_5_STABLE [4c729f471] 2017-01-30 11:40:46 -0500
+Branch: REL9_4_STABLE [a7b5de3ba] 2017-01-30 11:40:54 -0500
+Branch: REL9_3_STABLE [2b133be04] 2017-01-30 11:41:02 -0500
+Branch: REL9_2_STABLE [ef878cc2c] 2017-01-30 11:41:09 -0500
+-->
+     <para>
+      Update time zone data files to <application>tzdata</> release 2016j
+      for DST law changes in northern Cyprus (adding a new zone
+      Asia/Famagusta), Russia (adding a new zone Europe/Saratov), Tonga,
+      and Antarctica/Casey.
+      Historical corrections for Italy, Kazakhstan, Malta, and Palestine.
+      Switch to preferring numeric zone abbreviations for Tonga.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-9-6-1">
   <title>Release 9.6.1</title>
 
