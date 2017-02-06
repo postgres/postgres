@@ -10850,7 +10850,7 @@ dumpCast(Archive *fout, CastInfo *cast)
 	{
 		funcInfo = findFuncByOid(cast->castfunc);
 		if (funcInfo == NULL)
-			exit_horribly(NULL, "unable to find function definition for OID %u",
+			exit_horribly(NULL, "could not find function definition for function with OID %u\n",
 						  cast->castfunc);
 	}
 
@@ -10955,14 +10955,14 @@ dumpTransform(Archive *fout, TransformInfo *transform)
 	{
 		fromsqlFuncInfo = findFuncByOid(transform->trffromsql);
 		if (fromsqlFuncInfo == NULL)
-			exit_horribly(NULL, "unable to find function definition for OID %u",
+			exit_horribly(NULL, "could not find function definition for function with OID %u\n",
 						  transform->trffromsql);
 	}
 	if (OidIsValid(transform->trftosql))
 	{
 		tosqlFuncInfo = findFuncByOid(transform->trftosql);
 		if (tosqlFuncInfo == NULL)
-			exit_horribly(NULL, "unable to find function definition for OID %u",
+			exit_horribly(NULL, "could not find function definition for function with OID %u\n",
 						  transform->trftosql);
 	}
 
