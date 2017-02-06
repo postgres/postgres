@@ -130,39 +130,6 @@ Branch: REL9_2_STABLE [a00ac6299] 2016-12-08 14:19:25 -0500
 
     <listitem>
 <!--
-Author: Fujii Masao <fujii@postgresql.org>
-Branch: REL9_2_STABLE [38bec1805] 2017-01-25 07:02:25 +0900
--->
-     <para>
-      Fix WAL page header validation when re-reading segments (Takayuki
-      Tsunakawa, Amit Kapila)
-     </para>
-
-     <para>
-      In corner cases, a spurious <quote>out-of-sequence TLI</> error
-      could be reported during recovery.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
-Branch: REL9_5_STABLE [c0db1ec26] 2016-11-17 13:31:30 -0300
-Branch: REL9_4_STABLE [30e3cb307] 2016-11-17 13:31:30 -0300
--->
-     <para>
-      Reduce interlocking on standby servers during the replay of btree
-      index vacuuming operations (Simon Riggs)
-     </para>
-
-     <para>
-      This change avoids substantial replication delays that sometimes
-      occurred while replaying such operations.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
 Author: Robert Haas <rhaas@postgresql.org>
 Branch: master [4f714b2fd] 2016-10-27 14:27:40 -0400
 Branch: REL9_6_STABLE [4a43a6244] 2016-10-27 14:54:35 -0400
@@ -180,6 +147,7 @@ Branch: REL9_2_STABLE [2be2838a7] 2016-10-27 14:56:53 -0400
     <listitem>
 <!--
 Author: Simon Riggs <simon@2ndQuadrant.com>
+Branch: master [ec4b97501] 2017-01-26 18:14:02 +0000
 Branch: REL9_6_STABLE [95d1b4145] 2017-01-26 20:06:44 +0000
 Branch: REL9_5_STABLE [99289e506] 2017-01-26 20:09:18 +0000
 Branch: REL9_4_STABLE [800d89a98] 2017-01-26 20:10:19 +0000
@@ -473,32 +441,6 @@ Branch: REL9_5_STABLE [7816d1356] 2016-11-24 15:39:55 -0300
 
     <listitem>
 <!--
-Author: Kevin Grittner <kgrittn@postgresql.org>
-Branch: REL9_5_STABLE [bed2a0b06] 2016-12-13 19:14:42 -0600
-Branch: REL9_4_STABLE [4b9d466c1] 2016-12-13 19:05:12 -0600
-Branch: REL9_3_STABLE [5d80171ad] 2016-12-13 19:05:35 -0600
-Branch: REL9_2_STABLE [60314e28e] 2016-12-13 19:08:09 -0600
--->
-     <para>
-      Check for serializability conflicts before reporting
-      constraint-violation failures (Thomas Munro)
-     </para>
-
-     <para>
-      When using serializable transaction isolation, it is desirable
-      that any error due to concurrent transactions should manifest
-      as a serialization failure, thereby cueing the application that
-      a retry might succeed.  Unfortunately, this does not reliably
-      happen for duplicate-key failures caused by concurrent insertions.
-      This change ensures that such an error will be reported as a
-      serialization error if the application explicitly checked for
-      the presence of a conflicting key (and did not find it) earlier
-      in the transaction.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 Branch: master [e3e66d8a9] 2016-11-07 12:08:18 -0500
 Branch: REL9_6_STABLE [5ee3a7453] 2016-11-07 12:08:19 -0500
@@ -570,6 +512,7 @@ Branch: REL9_3_STABLE [71db302ec] 2016-11-20 14:26:19 -0500
     <listitem>
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [0b78106cd] 2016-12-08 11:40:02 -0500
 Branch: REL9_6_STABLE [cf22c8cb8] 2016-12-09 12:01:14 -0500
 Branch: REL9_5_STABLE [6a493adda] 2016-12-09 12:01:14 -0500
 Branch: REL9_4_STABLE [c7a62135a] 2016-12-09 12:01:14 -0500
