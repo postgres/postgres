@@ -9882,7 +9882,10 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       <entry></entry>
       <entry>The last sequence value written to disk.  If caching is used,
        this value can be greater than the last value handed out from the
-       sequence.  Null if the sequence has not been read from yet.</entry>
+       sequence.  Null if the sequence has not been read from yet.  Also, if
+       the current user does not have <literal>USAGE</literal>
+       or <literal>SELECT</literal> privilege on the sequence, the value is
+       null.</entry>
      </row>
     </tbody>
    </tgroup>
