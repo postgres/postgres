@@ -2,7 +2,7 @@
 #
 # Small, simple test showing read-only anomalies.
 #
-# There are only four permuations which must cause a serialization failure.
+# There are only four permutations which must cause a serialization failure.
 # Required failure cases are where s2 overlaps both s1 and s3, but s1
 # commits before s3 executes its first SELECT.
 #

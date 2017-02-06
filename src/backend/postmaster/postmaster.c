@@ -4604,7 +4604,7 @@ PostmasterRandom(void)
 }
 
 /*
- * Count up number of child processes of specified types (dead_end chidren
+ * Count up number of child processes of specified types (dead_end children
  * are always excluded).
  */
 static int

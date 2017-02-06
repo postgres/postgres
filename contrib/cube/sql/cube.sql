@@ -224,13 +224,13 @@ SELECT cube_dim('(0)'::cube);
 SELECT cube_dim('(0,0)'::cube);
 SELECT cube_dim('(0,0,0)'::cube);
 
--- Test of cube_ll_coord function (retrieves LL coodinate values)
+-- Test of cube_ll_coord function (retrieves LL coordinate values)
 --
 SELECT cube_ll_coord('(-1,1),(2,-2)'::cube, 1);
 SELECT cube_ll_coord('(-1,1),(2,-2)'::cube, 2);
 SELECT cube_ll_coord('(-1,1),(2,-2)'::cube, 3);
 
--- Test of cube_ur_coord function (retrieves UR coodinate values)
+-- Test of cube_ur_coord function (retrieves UR coordinate values)
 --
 SELECT cube_ur_coord('(-1,1),(2,-2)'::cube, 1);
 SELECT cube_ur_coord('(-1,1),(2,-2)'::cube, 2);

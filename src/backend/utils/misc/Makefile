@@ -18,7 +18,7 @@ OBJS = guc.o help_config.o pg_rusage.o ps_status.o superuser.o tzparser.o \
        rbtree.o
 
 # This location might depend on the installation directories. Therefore
-# we can't subsitute it into pg_config.h.
+# we can't substitute it into pg_config.h.
 ifdef krb_srvtab
 override CPPFLAGS += -DPG_KRB_SRVTAB='"$(krb_srvtab)"'
 endif

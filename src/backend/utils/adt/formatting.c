@@ -2285,7 +2285,7 @@ seq_search(char *name, char **array, int type, int max, int *len)
 
 	for (last = 0, a = array; *a != NULL; a++)
 	{
-		/* comperate first chars */
+		/* compare first chars */
 		if (*name != **a)
 			continue;
 
