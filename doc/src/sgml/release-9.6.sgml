@@ -23,7 +23,13 @@
    </para>
 
    <para>
-    However, if you are upgrading from a version earlier than 9.6.1,
+    However, if your installation has been affected by the bug described in
+    the first changelog entry below, then after updating you may need
+    to take action to repair corrupted indexes.
+   </para>
+
+   <para>
+    Also, if you are upgrading from a version earlier than 9.6.1,
     see <xref linkend="release-9-6-1">.
    </para>
   </sect2>
@@ -32,6 +38,33 @@
    <title>Changes</title>
 
    <itemizedlist>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [2aaec6546] 2017-02-06 13:20:19 -0500
+Branch: REL9_6_STABLE [7fcddbdd0] 2017-02-06 13:20:20 -0500
+Branch: REL9_5_STABLE [e935696f4] 2017-02-06 13:20:21 -0500
+Branch: REL9_4_STABLE [5879958e1] 2017-02-06 13:20:23 -0500
+Branch: REL9_3_STABLE [32c893c8d] 2017-02-06 13:20:24 -0500
+Branch: REL9_2_STABLE [bcd7b47c2] 2017-02-06 13:20:25 -0500
+-->
+     <para>
+      Fix a race condition that could cause indexes built
+      with <command>CREATE INDEX CONCURRENTLY</> to be corrupt
+      (Pavan Deolasee, Tom Lane)
+     </para>
+
+     <para>
+      If <command>CREATE INDEX CONCURRENTLY</> was used to build an index
+      that depends on a column not previously indexed, then rows inserted
+      or updated by transactions that ran concurrently with
+      the <command>CREATE INDEX</> command could have received incorrect
+      index entries.  If you suspect this may have happened, the most
+      reliable solution is to rebuild affected indexes after installing
+      this update.
+     </para>
+    </listitem>
 
     <listitem>
 <!--
@@ -845,7 +878,7 @@ Branch: REL9_6_STABLE [ebe5dc9e0] 2016-12-06 11:43:12 -0500
 -->
      <para>
       Allow statements prepared with <command>PREPARE</> to be given
-      parallel plans (Amit Kapila, Tobias Bussman)
+      parallel plans (Amit Kapila, Tobias Bussmann)
      </para>
     </listitem>
 
@@ -1352,7 +1385,7 @@ Branch: REL9_6_STABLE [b98e5513f] 2016-12-21 11:11:36 -0500
 -->
      <para>
       Fix possible miss of socket read events while waiting on Windows
-      (Amit Kapial)
+      (Amit Kapila)
      </para>
 
      <para>
