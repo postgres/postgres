@@ -2057,7 +2057,7 @@ SELECT t1."C 1" FROM "S 1"."T 1" t1, LATERAL (SELECT DISTINCT t2.c1, t3.c1 FROM 
    1
 (10 rows)
 
--- non-Var items in targelist of the nullable rel of a join preventing
+-- non-Var items in targetlist of the nullable rel of a join preventing
 -- push-down in some cases
 -- unable to push {ft1, ft2}
 EXPLAIN (VERBOSE, COSTS OFF)

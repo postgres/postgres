@@ -803,7 +803,7 @@ pg_fe_getauthname(PQExpBuffer errorMessage)
  * be sent in cleartext if it is encrypted on the client side.  This is
  * good because it ensures the cleartext password won't end up in logs,
  * pg_stat displays, etc.  We export the function so that clients won't
- * be dependent on low-level details like whether the enceyption is MD5
+ * be dependent on low-level details like whether the encryption is MD5
  * or something else.
  *
  * Arguments are the cleartext password, and the SQL name of the user it

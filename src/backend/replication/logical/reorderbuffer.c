@@ -1714,7 +1714,7 @@ ReorderBufferCommit(ReorderBuffer *rb, TransactionId xid,
  *
  * NB: Transactions handled here have to have actively aborted (i.e. have
  * produced an abort record). Implicitly aborted transactions are handled via
- * ReorderBufferAbortOld(); transactions we're just not interesteded in, but
+ * ReorderBufferAbortOld(); transactions we're just not interested in, but
  * which have committed are handled in ReorderBufferForget().
  *
  * This function purges this transaction and its contents from memory and
@@ -1782,7 +1782,7 @@ ReorderBufferAbortOld(ReorderBuffer *rb, TransactionId oldestRunningXid)
  * toplevel xid.
  *
  * This is significantly different to ReorderBufferAbort() because
- * transactions that have committed need to be treated differenly from aborted
+ * transactions that have committed need to be treated differently from aborted
  * ones since they may have modified the catalog.
  *
  * Note that this is only allowed to be called in the moment a transaction
@@ -2660,7 +2660,7 @@ StartupReorderBuffer(void)
 
 		/*
 		 * ok, has to be a surviving logical slot, iterate and delete
-		 * everythign starting with xid-*
+		 * everything starting with xid-*
 		 */
 		sprintf(path, "pg_replslot/%s", logical_de->d_name);
 

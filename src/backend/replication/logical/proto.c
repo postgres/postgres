@@ -539,7 +539,7 @@ logicalrep_write_attrs(StringInfo out, Relation rel)
 		if (att->attisdropped)
 			continue;
 
-		/* REPLICA IDENTITY FULL means all colums are sent as part of key. */
+		/* REPLICA IDENTITY FULL means all columns are sent as part of key. */
 		if (replidentfull ||
 			bms_is_member(att->attnum - FirstLowInvalidHeapAttributeNumber,
 						  idattrs))

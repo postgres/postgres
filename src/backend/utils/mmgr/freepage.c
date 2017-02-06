@@ -318,7 +318,7 @@ sum_free_pages(FreePageManager *fpm)
 
 /*
  * Compute the size of the largest run of pages that the user could
- * succesfully get.
+ * successfully get.
  */
 static Size
 FreePageManagerLargestContiguous(FreePageManager *fpm)
@@ -360,7 +360,7 @@ FreePageManagerLargestContiguous(FreePageManager *fpm)
 
 /*
  * Recompute the size of the largest run of pages that the user could
- * succesfully get, if it has been marked dirty.
+ * successfully get, if it has been marked dirty.
  */
 static void
 FreePageManagerUpdateLargest(FreePageManager *fpm)
@@ -1704,7 +1704,7 @@ FreePageManagerPutInternal(FreePageManager *fpm, Size first_page, Size npages,
 			 * The act of allocating pages for use in constructing our btree
 			 * should never cause any page to become more full, so the new
 			 * split depth should be no greater than the old one, and perhaps
-			 * less if we fortutiously allocated a chunk that freed up a slot
+			 * less if we fortuitously allocated a chunk that freed up a slot
 			 * on the page we need to update.
 			 */
 			Assert(result.split_pages <= fpm->btree_recycle_count);

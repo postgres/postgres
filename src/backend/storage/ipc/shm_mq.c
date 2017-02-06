@@ -501,7 +501,7 @@ shm_mq_sendv(shm_mq_handle *mqh, shm_mq_iovec *iov, int iovcnt, bool nowait)
  * it will point to a temporary buffer.  This mostly avoids data copying in
  * the hoped-for case where messages are short compared to the buffer size,
  * while still allowing longer messages.  In either case, the return value
- * remains valid until the next receive operation is perfomed on the queue.
+ * remains valid until the next receive operation is performed on the queue.
  *
  * When nowait = false, we'll wait on our process latch when the ring buffer
  * is empty and we have not yet received a full message.  The sender will

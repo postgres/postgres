@@ -345,7 +345,7 @@ SH_GROW(SH_TYPE *tb, uint32 newsize)
 	 * we need. We neither want tb->members increased, nor do we need to do
 	 * deal with deleted elements, nor do we need to compare keys. So a
 	 * special-cased implementation is lot faster. As resizing can be time
-	 * consuming and frequent, that's worthwile to optimize.
+	 * consuming and frequent, that's worthwhile to optimize.
 	 *
 	 * To be able to simply move entries over, we have to start not at the
 	 * first bucket (i.e olddata[0]), but find the first bucket that's either
@@ -620,7 +620,7 @@ SH_DELETE(SH_TYPE *tb, SH_KEY_TYPE key)
 
 			/*
 			 * Backward shift following elements till either an empty element
-			 * or an element at its optimal position is encounterered.
+			 * or an element at its optimal position is encountered.
 			 *
 			 * While that sounds expensive, the average chain length is short,
 			 * and deletions would otherwise require toombstones.

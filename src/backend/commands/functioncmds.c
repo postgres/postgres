@@ -1040,7 +1040,7 @@ CreateFunction(ParseState *pstate, CreateFunctionStmt *stmt)
 	}
 	else
 	{
-		/* store SQL NULL instead of emtpy array */
+		/* store SQL NULL instead of empty array */
 		trftypes = NULL;
 	}
 
@@ -1441,7 +1441,7 @@ CreateCast(CreateCastStmt *stmt)
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("cast will be ignored because the target data type is a domain")));
 
-	/* Detemine the cast method */
+	/* Determine the cast method */
 	if (stmt->func != NULL)
 		castmethod = COERCION_METHOD_FUNCTION;
 	else if (stmt->inout)

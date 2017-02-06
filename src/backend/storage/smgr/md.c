@@ -1728,7 +1728,7 @@ _fdvec_resize(SMgrRelation reln,
 	else
 	{
 		/*
-		 * It doesn't seem worthwile complicating the code by having a more
+		 * It doesn't seem worthwhile complicating the code by having a more
 		 * aggressive growth strategy here; the number of segments doesn't
 		 * grow that fast, and the memory context internally will sometimes
 		 * avoid doing an actual reallocation.

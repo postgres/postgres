@@ -879,7 +879,7 @@ get_func_arg_info(HeapTuple procTup,
 /*
  * get_func_trftypes
  *
- * Returns a number of transformated types used by function.
+ * Returns the number of transformed types used by function.
  */
 int
 get_func_trftypes(HeapTuple procTup,

@@ -170,7 +170,7 @@ WaitForReplicationWorkerAttach(LogicalRepWorker *worker,
 
 		/*
 		 * Worker started and attached to our shmem. This check is safe
-		 * because only laucher ever starts the workers, so nobody can steal
+		 * because only launcher ever starts the workers, so nobody can steal
 		 * the worker slot.
 		 */
 		if (status == BGWH_STARTED && worker->proc)
@@ -180,7 +180,7 @@ WaitForReplicationWorkerAttach(LogicalRepWorker *worker,
 			return false;
 
 		/*
-		 * We need timeout because we generaly don't get notified via latch
+		 * We need timeout because we generally don't get notified via latch
 		 * about the worker attach.
 		 */
 		rc = WaitLatch(MyLatch,
@@ -533,7 +533,7 @@ AtCommit_ApplyLauncher(void)
 /*
  * Request wakeup of the launcher on commit of the transaction.
  *
- * This is used to send launcher signal to stop sleeping and proccess the
+ * This is used to send launcher signal to stop sleeping and process the
  * subscriptions when current transaction commits. Should be used when new
  * tuple was added to the pg_subscription catalog.
 */
@@ -638,7 +638,7 @@ ApplyLauncherMain(Datum main_arg)
 		else
 		{
 			/*
-			 * The wait in previous cycle was interruped in less than
+			 * The wait in previous cycle was interrupted in less than
 			 * wal_retrieve_retry_interval since last worker was started,
 			 * this usually means crash of the worker, so we should retry
 			 * in wal_retrieve_retry_interval again.

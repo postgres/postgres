@@ -474,7 +474,7 @@ DropSubscription(DropSubscriptionStmt *stmt)
 	InvokeObjectDropHook(SubscriptionRelationId, subid, 0);
 
 	/*
-	 * Lock the subscription so noboby else can do anything with it
+	 * Lock the subscription so nobody else can do anything with it
 	 * (including the replication workers).
 	 */
 	LockSharedObject(SubscriptionRelationId, subid, 0, AccessExclusiveLock);

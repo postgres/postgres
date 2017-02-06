@@ -41,7 +41,7 @@ typedef struct PartitionDescData *PartitionDesc;
 
 /*-----------------------
  * PartitionDispatch - information about one partitioned table in a partition
- * hiearchy required to route a tuple to one of its partitions
+ * hierarchy required to route a tuple to one of its partitions
  *
  *	reldesc		Relation descriptor of the table
  *	key			Partition key information of the table

@@ -418,7 +418,7 @@ SELECT attname, attnotnull FROM pg_attribute
 -- prevent a function referenced in partition key from being dropped
 DROP FUNCTION plusone(int);
 
--- partitioned table cannot partiticipate in regular inheritance
+-- partitioned table cannot participate in regular inheritance
 CREATE TABLE partitioned2 (
 	a int
 ) PARTITION BY LIST ((a+1));

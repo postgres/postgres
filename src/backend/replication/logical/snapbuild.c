@@ -614,7 +614,7 @@ SnapBuildGetOrBuildSnapshot(SnapBuild *builder, TransactionId xid)
 	if (builder->snapshot == NULL)
 	{
 		builder->snapshot = SnapBuildBuildSnapshot(builder, xid);
-		/* inrease refcount for the snapshot builder */
+		/* increase refcount for the snapshot builder */
 		SnapBuildSnapIncRefcount(builder->snapshot);
 	}
 
@@ -678,7 +678,7 @@ SnapBuildProcessChange(SnapBuild *builder, TransactionId xid, XLogRecPtr lsn)
 		if (builder->snapshot == NULL)
 		{
 			builder->snapshot = SnapBuildBuildSnapshot(builder, xid);
-			/* inrease refcount for the snapshot builder */
+			/* increase refcount for the snapshot builder */
 			SnapBuildSnapIncRefcount(builder->snapshot);
 		}
 
@@ -911,7 +911,7 @@ SnapBuildEndTxn(SnapBuild *builder, XLogRecPtr lsn, TransactionId xid)
 		{
 			/*
 			 * None of the originally running transaction is running anymore,
-			 * so our incrementaly built snapshot now is consistent.
+			 * so our incrementally built snapshot now is consistent.
 			 */
 			ereport(LOG,
 				  (errmsg("logical decoding found consistent point at %X/%X",

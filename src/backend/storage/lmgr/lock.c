@@ -2778,7 +2778,7 @@ GetLockConflicts(const LOCKTAG *locktag, LOCKMODE lockmode)
 		vxids = (VirtualTransactionId *)
 			palloc0(sizeof(VirtualTransactionId) * (MaxBackends + 1));
 
-	/* Compute hash code and partiton lock, and look up conflicting modes. */
+	/* Compute hash code and partition lock, and look up conflicting modes. */
 	hashcode = LockTagHashCode(locktag);
 	partitionLock = LockHashPartitionLock(hashcode);
 	conflictMask = lockMethodTable->conflictTab[lockmode];

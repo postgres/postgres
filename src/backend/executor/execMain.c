@@ -1261,7 +1261,7 @@ InitResultRelInfo(ResultRelInfo *resultRelInfo,
 	resultRelInfo->ri_projectReturning = NULL;
 
 	/*
-	 * If partition_root has been specified, that means we are builiding the
+	 * If partition_root has been specified, that means we are building the
 	 * ResultRelationInfo for one of its leaf partitions.  In that case, we
 	 * need *not* initialize the leaf partition's constraint, but rather the
 	 * the partition_root's (if any).  We must do that explicitly like this,

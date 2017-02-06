@@ -515,7 +515,7 @@ join_clause_is_movable_into(RestrictInfo *rinfo,
 							Relids currentrelids,
 							Relids current_and_outer)
 {
-	/* Clause must be evaluatable given available context */
+	/* Clause must be evaluable given available context */
 	if (!bms_is_subset(rinfo->clause_relids, current_and_outer))
 		return false;
 

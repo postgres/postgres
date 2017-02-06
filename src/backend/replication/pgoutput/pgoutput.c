@@ -172,7 +172,7 @@ pgoutput_startup(LogicalDecodingContext * ctx, OutputPluginOptions *opt,
 								&data->protocol_version,
 								&data->publication_names);
 
-		/* Check if we support requested protol */
+		/* Check if we support requested protocol */
 		if (data->protocol_version != LOGICALREP_PROTO_VERSION_NUM)
 			ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -424,7 +424,7 @@ publication_invalidation_cb(Datum arg, int cacheid, uint32 hashvalue)
 /*
  * Initialize the relation schema sync cache for a decoding session.
  *
- * The hash table is destoyed at the end of a decoding session. While
+ * The hash table is destroyed at the end of a decoding session. While
  * relcache invalidations still exist and will still be invoked, they
  * will just see the null hash table global and take no action.
  */
@@ -540,7 +540,7 @@ rel_sync_cache_relation_cb(Datum arg, Oid relid)
 
 	/*
 	 * We can get here if the plugin was used in SQL interface as the
-	 * RelSchemaSyncCache is detroyed when the decoding finishes, but there
+	 * RelSchemaSyncCache is destroyed when the decoding finishes, but there
 	 * is no way to unregister the relcache invalidation callback.
 	 */
 	if (RelationSyncCache == NULL)
@@ -580,7 +580,7 @@ rel_sync_cache_publication_cb(Datum arg, int cacheid, uint32 hashvalue)
 
 	/*
 	 * We can get here if the plugin was used in SQL interface as the
-	 * RelSchemaSyncCache is detroyed when the decoding finishes, but there
+	 * RelSchemaSyncCache is destroyed when the decoding finishes, but there
 	 * is no way to unregister the relcache invalidation callback.
 	 */
 	if (RelationSyncCache == NULL)

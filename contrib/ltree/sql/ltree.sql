@@ -209,7 +209,7 @@ SELECT 'a.b.c.d.e'::ltree ? '{A.b.c.d.e, a.*}';
 SELECT '{a.b.c.d.e,B.df}'::ltree[] ? '{A.b.c.d.e}';
 SELECT '{a.b.c.d.e,B.df}'::ltree[] ? '{A.b.c.d.e,*.df}';
 
---exractors
+--extractors
 SELECT ('{3456,1.2.3.34}'::ltree[] ?@> '1.2.3.4') is null;
 SELECT '{3456,1.2.3}'::ltree[] ?@> '1.2.3.4';
 SELECT '{3456,1.2.3.4}'::ltree[] ?<@ '1.2.3';

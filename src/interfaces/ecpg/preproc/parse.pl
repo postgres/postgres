@@ -550,7 +550,7 @@ sub dump_fields
 			if ($len == 1)
 			{
 
-				# Straight assignement
+				# Straight assignment
 				$str = ' $$ = ' . $flds_new[0] . ';';
 				add_to_buffer('rules', $str);
 			}

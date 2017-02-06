@@ -887,7 +887,7 @@ fi
 
 AC_PROG_INSTALL
 # When Autoconf chooses install-sh as install program it tries to generate
-# a relative path to it in each makefile where it subsitutes it. This clashes
+# a relative path to it in each makefile where it substitutes it. This clashes
 # with our Makefile.global concept. This workaround helps.
 case $INSTALL in
   *install-sh*) install_bin='';;
@@ -900,7 +900,7 @@ AC_PROG_LN_S
 AC_PROG_AWK
 AC_PROG_MKDIR_P
 # When Autoconf chooses install-sh as mkdir -p program it tries to generate
-# a relative path to it in each makefile where it subsitutes it. This clashes
+# a relative path to it in each makefile where it substitutes it. This clashes
 # with our Makefile.global concept. This workaround helps.
 case $MKDIR_P in
   *install-sh*) MKDIR_P='\${SHELL} \${top_srcdir}/config/install-sh -c -d';;

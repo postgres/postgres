@@ -377,7 +377,7 @@ $(shlib): $(OBJS) $(DLL_DEFFILE) | $(SHLIB_PREREQS)
 	$(CC) $(CFLAGS)  -shared -static-libgcc -o $@  $(OBJS) $(DLL_DEFFILE) $(LDFLAGS) $(LDFLAGS_SL) $(SHLIB_LINK) $(LIBS) -Wl,--out-implib=$(stlib)
 endif
 
-endif # PORTNAME == cgywin
+endif # PORTNAME == cygwin
 endif # PORTNAME == cygwin || PORTNAME == win32
 
 

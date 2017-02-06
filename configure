@@ -7088,7 +7088,7 @@ test -z "$INSTALL_SCRIPT" && INSTALL_SCRIPT='${INSTALL}'
 test -z "$INSTALL_DATA" && INSTALL_DATA='${INSTALL} -m 644'
 
 # When Autoconf chooses install-sh as install program it tries to generate
-# a relative path to it in each makefile where it subsitutes it. This clashes
+# a relative path to it in each makefile where it substitutes it. This clashes
 # with our Makefile.global concept. This workaround helps.
 case $INSTALL in
   *install-sh*) install_bin='';;
@@ -7232,7 +7232,7 @@ fi
 $as_echo "$MKDIR_P" >&6; }
 
 # When Autoconf chooses install-sh as mkdir -p program it tries to generate
-# a relative path to it in each makefile where it subsitutes it. This clashes
+# a relative path to it in each makefile where it substitutes it. This clashes
 # with our Makefile.global concept. This workaround helps.
 case $MKDIR_P in
   *install-sh*) MKDIR_P='\${SHELL} \${top_srcdir}/config/install-sh -c -d';;

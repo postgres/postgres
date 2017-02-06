@@ -424,7 +424,7 @@ DROP FUNCTION plusone(int);
 ERROR:  cannot drop function plusone(integer) because other objects depend on it
 DETAIL:  table partitioned depends on function plusone(integer)
 HINT:  Use DROP ... CASCADE to drop the dependent objects too.
--- partitioned table cannot partiticipate in regular inheritance
+-- partitioned table cannot participate in regular inheritance
 CREATE TABLE partitioned2 (
 	a int
 ) PARTITION BY LIST ((a+1));

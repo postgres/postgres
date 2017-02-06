@@ -3193,7 +3193,7 @@ ReleasePredicateLocks(bool isCommit)
 	/*
 	 * We can't trust XactReadOnly here, because a transaction which started
 	 * as READ WRITE can show as READ ONLY later, e.g., within
-	 * substransactions.  We want to flag a transaction as READ ONLY if it
+	 * subtransactions.  We want to flag a transaction as READ ONLY if it
 	 * commits without writing so that de facto READ ONLY transactions get the
 	 * benefit of some RO optimizations, so we will use this local variable to
 	 * get some cleanup logic right which is based on whether the transaction

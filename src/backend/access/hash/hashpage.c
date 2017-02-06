@@ -1077,7 +1077,7 @@ _hash_splitbucket_guts(Relation rel,
  * already moved before the split operation was previously interrupted.
  *
  * The caller must hold a pin, but no lock, on the metapage and old bucket's
- * primay page buffer.  The buffers are returned in the same state.  (The
+ * primary page buffer.  The buffers are returned in the same state.  (The
  * metapage is only touched if it becomes necessary to add or remove overflow
  * pages.)
  */

@@ -899,7 +899,7 @@ calc_rank_cd(const float4 *arrdata, TSVector txt, TSQuery query, int method)
 
 		/*
 		 * if doc are big enough then ext.q may be equal to ext.p due to limit
-		 * of posional information. In this case we approximate number of
+		 * of positional information. In this case we approximate number of
 		 * noise word as half cover's length
 		 */
 		nNoise = (ext.q - ext.p) - (ext.end - ext.begin);
@@ -908,7 +908,7 @@ calc_rank_cd(const float4 *arrdata, TSVector txt, TSQuery query, int method)
 		Wdoc += Cpos / ((double) (1 + nNoise));
 
 		CurExtPos = ((double) (ext.q + ext.p)) / 2.0;
-		if (NExtent > 0 && CurExtPos > PrevExtPos		/* prevent devision by
+		if (NExtent > 0 && CurExtPos > PrevExtPos		/* prevent division by
 														 * zero in a case of
 				multiple lexize */ )
 			SumDist += 1.0 / (CurExtPos - PrevExtPos);

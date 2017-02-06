@@ -195,7 +195,7 @@ query_planner(PlannerInfo *root, List *tlist,
 	/*
 	 * Now distribute "placeholders" to base rels as needed.  This has to be
 	 * done after join removal because removal could change whether a
-	 * placeholder is evaluatable at a base rel.
+	 * placeholder is evaluable at a base rel.
 	 */
 	add_placeholders_to_base_rels(root);
 

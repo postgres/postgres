@@ -967,7 +967,7 @@ LogStandbySnapshot(void)
  * similar. We keep them separate because xl_xact_running_xacts is a
  * contiguous chunk of memory and never exists fully until it is assembled in
  * WAL. The inserted records are marked as not being important for durability,
- * to avoid triggering superflous checkpoint / archiving activity.
+ * to avoid triggering superfluous checkpoint / archiving activity.
  */
 static XLogRecPtr
 LogCurrentRunningXacts(RunningTransactions CurrRunningXacts)

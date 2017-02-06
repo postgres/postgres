@@ -211,7 +211,7 @@ BackgroundWriterMain(void)
 		/* Flush any leaked data in the top-level context */
 		MemoryContextResetAndDeleteChildren(bgwriter_context);
 
-		/* re-initilialize to avoid repeated errors causing problems */
+		/* re-initialize to avoid repeated errors causing problems */
 		WritebackContextInit(&wb_context, &bgwriter_flush_after);
 
 		/* Now we can allow interrupts again */

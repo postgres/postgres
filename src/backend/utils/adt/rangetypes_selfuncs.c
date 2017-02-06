@@ -533,7 +533,7 @@ calc_hist_selectivity(TypeCacheEntry *typcache, VariableStatData *vardata,
 			{
 				/*
 				 * Lower bound no longer matters. Just estimate the fraction
-				 * with an upper bound <= const uppert bound
+				 * with an upper bound <= const upper bound
 				 */
 				hist_selec =
 					calc_hist_selectivity_scalar(typcache, &const_upper,

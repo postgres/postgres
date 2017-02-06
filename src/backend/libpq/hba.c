@@ -109,7 +109,7 @@ static MemoryContext parsed_hba_context = NULL;
  *
  * NOTE: the IdentLine structs can contain pre-compiled regular expressions
  * that live outside the memory context. Before destroying or resetting the
- * memory context, they need to be expliticly free'd.
+ * memory context, they need to be explicitly free'd.
  */
 static List *parsed_ident_lines = NIL;
 static MemoryContext parsed_ident_context = NULL;

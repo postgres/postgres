@@ -309,7 +309,7 @@ typedef struct pg_conn_host
 	char	   *host;			/* host name or address, or socket path */
 	pg_conn_host_type type;		/* type of host */
 	char	   *port;			/* port number for this host; if not NULL,
-								 * overrrides the PGConn's pgport */
+								 * overrides the PGConn's pgport */
 	char	   *password;		/* password for this host, read from the
 								 * password file.  only set if the PGconn's
 								 * pgpass field is NULL. */
@@ -666,7 +666,7 @@ extern void pq_reset_sigpipe(sigset_t *osigset, bool sigpipe_pending,
 #endif
 
 /*
- * The SSL implementatation provides these functions (fe-secure-openssl.c)
+ * The SSL implementation provides these functions (fe-secure-openssl.c)
  */
 extern void pgtls_init_library(bool do_ssl, int do_crypto);
 extern int	pgtls_init(PGconn *conn);

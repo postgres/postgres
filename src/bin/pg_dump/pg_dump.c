@@ -3500,7 +3500,7 @@ getPublicationTables(Archive *fout, TableInfo tblinfo[], int numTables)
 
 		resetPQExpBuffer(query);
 
-		/* Get the publication memebership for the table. */
+		/* Get the publication membership for the table. */
 		appendPQExpBuffer(query,
 						  "SELECT pr.tableoid, pr.oid, p.pubname "
 						  "FROM pg_catalog.pg_publication_rel pr,"

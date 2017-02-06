@@ -206,7 +206,7 @@ SELECT * FROM auth_tbl;	-- failed
 SELECT sepgsql_setcon(NULL);	-- end of session
 SELECT sepgsql_getcon();
 
--- the pooler cannot touch these tables directry
+-- the pooler cannot touch these tables directly
 SELECT * FROM foo_tbl;	-- failed
 
 SELECT * FROM var_tbl;	-- failed

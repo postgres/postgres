@@ -2687,7 +2687,7 @@ is_input_argument(int nth, const char *argmodes)
 }
 
 /*
- * Append used transformated types to specified buffer
+ * Append used transformed types to specified buffer
  */
 static void
 print_function_trftypes(StringInfo buf, HeapTuple proctup)

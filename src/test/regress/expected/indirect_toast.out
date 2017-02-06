@@ -23,7 +23,7 @@ UPDATE toasttest SET cnt = cnt +1 RETURNING substring(toasttest::text, 1, 200);
  ("one-toasted,one-null",1,,12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123
 (4 rows)
 
--- modification without modifying asigned value
+-- modification without modifying assigned value
 UPDATE toasttest SET cnt = cnt +1, f1 = f1 RETURNING substring(toasttest::text, 1, 200);
                                                                                                 substring                                                                                                 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -61,7 +61,7 @@ SELECT substring(toasttest::text, 1, 200) FROM toasttest;
  ("one-toasted,one-null",4,,12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123
 (4 rows)
 
--- check we didn't screw with main/toast tuple visiblity
+-- check we didn't screw with main/toast tuple visibility
 VACUUM FREEZE toasttest;
 SELECT substring(toasttest::text, 1, 200) FROM toasttest;
                                                                                                 substring                                                                                                 
@@ -95,7 +95,7 @@ UPDATE toasttest SET cnt = cnt +1 RETURNING substring(toasttest::text, 1, 200);
  ("one-toasted,one-null",5,,12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123
 (4 rows)
 
--- modification without modifying asigned value
+-- modification without modifying assigned value
 UPDATE toasttest SET cnt = cnt +1, f1 = f1 RETURNING substring(toasttest::text, 1, 200);
                                                                                                 substring                                                                                                 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -135,7 +135,7 @@ SELECT substring(toasttest::text, 1, 200) FROM toasttest;
  ("one-toasted,one-null, via indirect",0,1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
 (5 rows)
 
--- check we didn't screw with main/toast tuple visiblity
+-- check we didn't screw with main/toast tuple visibility
 VACUUM FREEZE toasttest;
 SELECT substring(toasttest::text, 1, 200) FROM toasttest;
                                                                                                 substring                                                                                                 

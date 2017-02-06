@@ -615,7 +615,7 @@ CommitTsParameterChange(bool newvalue, bool oldvalue)
 
 /*
  * Activate this module whenever necessary.
- *		This must happen during postmaster or standalong-backend startup,
+ *		This must happen during postmaster or standalone-backend startup,
  *		or during WAL replay anytime the track_commit_timestamp setting is
  *		changed in the master.
  *

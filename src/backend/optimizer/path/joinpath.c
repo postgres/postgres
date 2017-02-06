@@ -1618,7 +1618,7 @@ select_mergejoin_clauses(PlannerInfo *root,
 		/*
 		 * Insist that each side have a non-redundant eclass.  This
 		 * restriction is needed because various bits of the planner expect
-		 * that each clause in a merge be associatable with some pathkey in a
+		 * that each clause in a merge be associable with some pathkey in a
 		 * canonical pathkey list, but redundant eclasses can't appear in
 		 * canonical sort orderings.  (XXX it might be worth relaxing this,
 		 * but not enough time to address it for 8.3.)

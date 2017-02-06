@@ -304,7 +304,7 @@ typedef struct AggStatePerTransData
 	/*
 	 * Slots for holding the evaluated input arguments.  These are set up
 	 * during ExecInitAgg() and then used for each input row requiring
-	 * procesessing besides what's done in AggState->evalproj.
+	 * processing besides what's done in AggState->evalproj.
 	 */
 	TupleTableSlot *sortslot;	/* current input tuple */
 	TupleTableSlot *uniqslot;	/* used for multi-column DISTINCT */
