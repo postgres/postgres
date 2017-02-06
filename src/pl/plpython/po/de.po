@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.5\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2016-02-08 10:37+0000\n"
-"PO-Revision-Date: 2016-02-08 12:21-0500\n"
+"POT-Creation-Date: 2017-02-06 15:15+0000\n"
+"PO-Revision-Date: 2017-02-06 10:34-0500\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -61,7 +61,7 @@ msgstr "Lesen aus einem geschlossenen Cursor"
 msgid "closing a cursor in an aborted subtransaction"
 msgstr "Schließen eines Cursors in einer abgebrochenen Subtransaktion"
 
-#: plpy_elog.c:103 plpy_elog.c:104 plpy_plpymodule.c:419
+#: plpy_elog.c:108 plpy_elog.c:109 plpy_plpymodule.c:440
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -231,56 +231,61 @@ msgstr "anonymer PL/Python-Codeblock"
 msgid "plan.status takes no arguments"
 msgstr "plan.status nimmt keine Argumente"
 
-#: plpy_plpymodule.c:178 plpy_plpymodule.c:181
+#: plpy_plpymodule.c:181 plpy_plpymodule.c:184
 #, c-format
 msgid "could not import \"plpy\" module"
 msgstr "konnte Modul »plpy« nicht importieren"
 
-#: plpy_plpymodule.c:196
+#: plpy_plpymodule.c:199
+#, c-format
+msgid "could not create the spiexceptions module"
+msgstr "konnte das Modul »spiexceptions« nicht erzeugen"
+
+#: plpy_plpymodule.c:207
 #, c-format
 msgid "could not add the spiexceptions module"
 msgstr "konnte das Modul »spiexceptions« nicht hinzufügen"
 
-#: plpy_plpymodule.c:217
+#: plpy_plpymodule.c:236
 #, c-format
-msgid "could not create the base SPI exceptions"
-msgstr "konnte die SPI-Basisausnahmen nicht erzeugen"
+msgid "could not create exception \"%s\""
+msgstr "konnte Ausnahme »%s« nicht erzeugen"
 
-#: plpy_plpymodule.c:252 plpy_plpymodule.c:256
+#: plpy_plpymodule.c:271 plpy_plpymodule.c:275
 #, c-format
 msgid "could not generate SPI exceptions"
 msgstr "konnte SPI-Ausnahmen nicht erzeugen"
 
-#: plpy_plpymodule.c:387
+#: plpy_plpymodule.c:408
 #, c-format
 msgid "could not unpack arguments in plpy.elog"
 msgstr "konnte Argumente in plpy.elog nicht entpacken"
 
-#: plpy_plpymodule.c:395
+#: plpy_plpymodule.c:416
 msgid "could not parse error message in plpy.elog"
 msgstr "konnte Fehlermeldung in plpy.elog nicht parsen"
 
-#: plpy_procedure.c:213
+#: plpy_procedure.c:223
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "Triggerfunktionen können nur als Trigger aufgerufen werden"
 
-#: plpy_procedure.c:218
+#: plpy_procedure.c:228
 #, c-format
 msgid "PL/Python functions cannot return type %s"
 msgstr "PL/Python-Funktionen können keinen Rückgabetyp %s haben"
 
-#: plpy_procedure.c:300
+#: plpy_procedure.c:310
 #, c-format
 msgid "PL/Python functions cannot accept type %s"
 msgstr "PL/Python-Funktionen können Typ %s nicht annehmen"
 
-#: plpy_procedure.c:398
+#: plpy_procedure.c:408
 #, c-format
 msgid "could not compile PL/Python function \"%s\""
 msgstr "konnte PL/Python-Funktion »%s« nicht kompilieren"
 
-#: plpy_procedure.c:401
+#: plpy_procedure.c:411
 #, c-format
 msgid "could not compile anonymous PL/Python code block"
 msgstr "konnte anonymen PL/Python-Codeblock nicht kompilieren"
