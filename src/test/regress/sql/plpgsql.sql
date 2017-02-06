@@ -1350,7 +1350,7 @@ select * from WSlot order by slotname;
 
 --
 -- Install the central phone system and create the phone numbers.
--- They are weired on insert to the patchfields. Again the
+-- They are wired on insert to the patchfields. Again the
 -- triggers automatically tell the PSlots to update their
 -- backlink field.
 --

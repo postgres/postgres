@@ -23,7 +23,7 @@
  * When we ask SELinux whether the required privileges are allowed or not,
  * we use security_compute_av(3). It needs us to represent object classes
  * and access vectors using 'external' codes defined in the security policy.
- * It is determinded in the runtime, not build time. So, it needs an internal
+ * It is determined in the runtime, not build time. So, it needs an internal
  * service to translate object class/access vectors which we want to check
  * into the code which kernel want to be given.
  */

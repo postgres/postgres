@@ -7,7 +7,7 @@
 # be changed and a report of the closed day's receipts subsequently
 # run which will miss a receipt from the date which has been closed.
 #
-# There are only six permuations which must cause a serialization failure.
+# There are only six permutations which must cause a serialization failure.
 # Failure cases are where s1 overlaps both s2 and s3, but s2 commits before
 # s3 executes its first SELECT.
 #

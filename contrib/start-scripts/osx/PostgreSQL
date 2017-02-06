@@ -29,7 +29,7 @@
 # modified by Ray Aspeitia 12-03-2003 :
 # added log rotation script to db startup
 # modified StartupParameters.plist "Provides" parameter to make it easier to
-# start and stop with the SystemStarter utitlity
+# start and stop with the SystemStarter utility
 
 # use the below command in order to correctly start/stop/restart PG with log rotation script:
 # SystemStarter [start|stop|restart] PostgreSQL

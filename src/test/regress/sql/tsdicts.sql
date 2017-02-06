@@ -48,7 +48,7 @@ SELECT ts_lexize('hunspell', 'footballklubber');
 SELECT ts_lexize('hunspell', 'ballyklubber');
 SELECT ts_lexize('hunspell', 'footballyklubber');
 
--- Synonim dictionary
+-- Synonym dictionary
 CREATE TEXT SEARCH DICTIONARY synonym (
 						Template=synonym,
 						Synonyms=synonym_sample

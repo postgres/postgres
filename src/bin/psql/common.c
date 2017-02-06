@@ -598,7 +598,7 @@ StoreQueryTuple(const PGresult *result)
 			char	   *varname;
 			char	   *value;
 
-			/* concate prefix and column name */
+			/* concatenate prefix and column name */
 			varname = pg_malloc(strlen(pset.gset_prefix) + strlen(colname) + 1);
 			strcpy(varname, pset.gset_prefix);
 			strcat(varname, colname);
