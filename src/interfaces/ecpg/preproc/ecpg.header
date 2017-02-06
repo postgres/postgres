@@ -207,7 +207,7 @@ create_questionmarks(char *name, bool array)
 
 	/* In case we have a struct, we have to print as many "?" as there are attributes in the struct
 	 * An array is only allowed together with an element argument
-	 * This is essantially only used for inserts, but using a struct as input parameter is an error anywhere else
+	 * This is essentially only used for inserts, but using a struct as input parameter is an error anywhere else
 	 * so we don't have to worry here. */
 
 	if (p->type->type == ECPGt_struct || (array && p->type->type == ECPGt_array && p->type->u.element->type == ECPGt_struct))

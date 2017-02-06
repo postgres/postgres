@@ -209,7 +209,7 @@ typedef struct RewriteMappingFile
 } RewriteMappingFile;
 
 /*
- * A single In-Memeory logical rewrite mapping, hanging of
+ * A single In-Memory logical rewrite mapping, hanging off
  * RewriteMappingFile->mappings.
  */
 typedef struct RewriteMappingDataEntry

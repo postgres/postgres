@@ -674,7 +674,7 @@ createdb(const CreatedbStmt *stmt)
 
 		/*
 		 * Force synchronous commit, thus minimizing the window between
-		 * creation of the database files and commital of the transaction. If
+		 * creation of the database files and committal of the transaction. If
 		 * we crash before committing, we'll have a DB that's taking up disk
 		 * space but is not in pg_database, which is not good.
 		 */
@@ -928,7 +928,7 @@ dropdb(const char *dbname, bool missing_ok)
 
 	/*
 	 * Force synchronous commit, thus minimizing the window between removal of
-	 * the database files and commital of the transaction. If we crash before
+	 * the database files and committal of the transaction. If we crash before
 	 * committing, we'll have a DB that's gone on disk but still there
 	 * according to pg_database, which is not good.
 	 */
@@ -1286,7 +1286,7 @@ movedb(const char *dbname, const char *tblspcname)
 
 		/*
 		 * Force synchronous commit, thus minimizing the window between
-		 * copying the database files and commital of the transaction. If we
+		 * copying the database files and committal of the transaction. If we
 		 * crash before committing, we'll leave an orphaned set of files on
 		 * disk, which is not fatal but not good either.
 		 */

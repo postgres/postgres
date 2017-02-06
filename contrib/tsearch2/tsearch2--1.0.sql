@@ -414,7 +414,7 @@ CREATE FUNCTION stat(text,text)
 	LANGUAGE INTERNAL
 	RETURNS NULL ON NULL INPUT;
 
---reset - just for debuging
+--reset - just for debugging
 CREATE FUNCTION reset_tsearch()
         RETURNS void
         as 'MODULE_PATHNAME', 'tsa_reset_tsearch'

@@ -32,7 +32,7 @@
 
 #include "win32.h"
 
-/* Declared here to avoid pulling in all includes, which causes name collissions */
+/* Declared here to avoid pulling in all includes, which causes name collisions */
 #ifdef ENABLE_NLS
 extern char *libpq_gettext(const char *msgid) pg_attribute_format_arg(1);
 #else

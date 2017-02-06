@@ -354,7 +354,7 @@ advance_windowaggregate(WindowAggState *winstate,
 
 	/*
 	 * We must track the number of rows included in transValue, since to
-	 * remove the last input, advance_windowaggregate_base() musn't call the
+	 * remove the last input, advance_windowaggregate_base() mustn't call the
 	 * inverse transition function, but simply reset transValue back to its
 	 * initial value.
 	 */

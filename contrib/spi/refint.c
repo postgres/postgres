@@ -89,7 +89,7 @@ check_primary_key(PG_FUNCTION_ARGS)
 		/* internal error */
 		elog(ERROR, "check_primary_key: cannot process DELETE events");
 
-	/* If UPDATion the must check new Tuple, not old one */
+	/* If UPDATE, then must check new Tuple, not old one */
 	else
 		tuple = trigdata->tg_newtuple;
 

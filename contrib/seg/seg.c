@@ -888,7 +888,7 @@ restore(char *result, float val, int n)
 		if (Abs(exp) <= 4)
 		{
 			/*
-			 * remove the decimal point from the mantyssa and write the digits
+			 * remove the decimal point from the mantissa and write the digits
 			 * to the buf array
 			 */
 			for (p = result + sign, i = 10, dp = 0; *p != 'e'; p++, i++)

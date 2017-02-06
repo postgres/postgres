@@ -311,7 +311,7 @@ pullf_read_max(PullFilter *pf, int len, uint8 **data_p, uint8 *tmpbuf)
 }
 
 /*
- * caller wants exatly len bytes and dont bother with references
+ * caller wants exactly len bytes and don't bother with references
  */
 int
 pullf_read_fixed(PullFilter *src, int len, uint8 *dst)
