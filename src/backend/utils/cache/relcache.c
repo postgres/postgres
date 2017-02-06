@@ -4327,9 +4327,10 @@ RelationGetFKeyList(Relation relation)
  * it is the pg_class OID of a unique index on OID when the relation has one,
  * and InvalidOid if there is no such index.
  *
- * In exactly the same way, we update rd_replidindex, which is the pg_class
- * OID of an index to be used as the relation's replication identity index,
- * or InvalidOid if there is no such index.
+ * In exactly the same way, we update rd_pkindex, which is the OID of the
+ * relation's primary key index if any, else InvalidOid; and rd_replidindex,
+ * which is the pg_class OID of an index to be used as the relation's
+ * replication identity index, or InvalidOid if there is no such index.
  */
 List *
 RelationGetIndexList(Relation relation)
@@ -4797,7 +4798,7 @@ RelationGetIndexAttrBitmap(Relation relation, IndexAttrBitmapKind attrKind)
 		return NULL;
 
 	/*
-	 * Copy the rd_pkindex and rd_replidindex value computed by
+	 * Copy the rd_pkindex and rd_replidindex values computed by
 	 * RelationGetIndexList before proceeding.  This is needed because a
 	 * relcache flush could occur inside index_open below, resetting the
 	 * fields managed by RelationGetIndexList. (The values we're computing
