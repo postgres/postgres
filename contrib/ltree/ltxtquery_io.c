@@ -197,7 +197,7 @@ pushval_asis(QPRS_STATE *state, int type, char *strval, int lenval, uint16 flag)
 
 #define STACKDEPTH		32
 /*
- * make polish notaion of query
+ * make polish notation of query
  */
 static int32
 makepol(QPRS_STATE *state)

@@ -323,8 +323,8 @@ PGTYPESdate_fmt_asc(date dDate, const char *fmtstring, char *outbuf)
  * PGTYPESdate_defmt_asc
  *
  * function works as follows:
- *	 - first we analyze the paramters
- *	 - if this is a special case with no delimiters, add delimters
+ *	 - first we analyze the parameters
+ *	 - if this is a special case with no delimiters, add delimiters
  *	 - find the tokens. First we look for numerical values. If we have found
  *	   less than 3 tokens, we check for the months' names and thereafter for
  *	   the abbreviations of the months' names.

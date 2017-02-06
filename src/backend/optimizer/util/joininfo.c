@@ -24,7 +24,7 @@
  *		Detect whether there is a joinclause that involves
  *		the two given relations.
  *
- * Note: the joinclause does not have to be evaluatable with only these two
+ * Note: the joinclause does not have to be evaluable with only these two
  * relations.  This is intentional.  For example consider
  *		SELECT * FROM a, b, c WHERE a.x = (b.y + c.z)
  * If a is much larger than the other tables, it may be worthwhile to

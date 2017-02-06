@@ -355,7 +355,7 @@ ECPGExecuteImmediateStmt: EXECUTE IMMEDIATE execstring
 			  $$ = $3;
 			};
 /*
- * variable decalartion outside exec sql declare block
+ * variable declaration outside exec sql declare block
  */
 ECPGVarDeclaration: single_vt_declaration;
 
@@ -707,7 +707,7 @@ struct_union_type_with_symbol: s_struct_union_symbol
 			free(forward_name);
 			forward_name = NULL;
 
-			/* This is essantially a typedef but needs the keyword struct/union as well.
+			/* This is essentially a typedef but needs the keyword struct/union as well.
 			 * So we create the typedef for each struct definition with symbol */
 			for (ptr = types; ptr != NULL; ptr = ptr->next)
 			{
@@ -1275,7 +1275,7 @@ descriptor_item:	SQL_CARDINALITY			{ $$ = ECPGd_cardinality; }
 		;
 
 /*
- * set/reset the automatic transaction mode, this needs a differnet handling
+ * set/reset the automatic transaction mode, this needs a different handling
  * as the other set commands
  */
 ECPGSetAutocommit:	SET SQL_AUTOCOMMIT '=' on_off	{ $$ = $4; }
@@ -1287,7 +1287,7 @@ on_off: ON				{ $$ = mm_strdup("on"); }
 		;
 
 /*
- * set the actual connection, this needs a differnet handling as the other
+ * set the actual connection, this needs a different handling as the other
  * set commands
  */
 ECPGSetConnection:	SET CONNECTION TO connection_object { $$ = $4; }
