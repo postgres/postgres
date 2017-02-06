@@ -1,10 +1,10 @@
 # translation of ecpglib.po to fr_fr
 # french message translation file for ecpglib
 #
-# Use these quotes: « %s »
+# Use these quotes: Â« %s Â»
 #
 # Guillaume Lelarge <guillaume@lelarge.info>, 2009.
-# Stéphane Schildknecht <stephane.schildknecht@dalibo.com>, 2009.
+# StÃ©phane Schildknecht <stephane.schildknecht@dalibo.com>, 2009.
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.6\n"
@@ -15,7 +15,7 @@ msgstr ""
 "Language-Team: PostgreSQLfr <pgsql-fr-generale@postgresql.org>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=ISO-8859-15\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
 #: connect.c:226
@@ -26,22 +26,22 @@ msgstr "texte du message vide"
 #: connect.c:407
 #: connect.c:520
 msgid "<DEFAULT>"
-msgstr "<DÉFAUT>"
+msgstr "<DÃ‰FAUT>"
 
 #: error.c:29
 #, c-format
 msgid "no data found on line %d"
-msgstr "aucune donnée trouvée sur la ligne %d"
+msgstr "aucune donnÃ©e trouvÃ©e sur la ligne %d"
 
 #: error.c:39
 #, c-format
 msgid "out of memory on line %d"
-msgstr "mémoire épuisée à la ligne %d"
+msgstr "mÃ©moire Ã©puisÃ©e Ã  la ligne %d"
 
 #: error.c:49
 #, c-format
 msgid "unsupported type \"%s\" on line %d"
-msgstr "type « %s » non supporté sur la ligne %d"
+msgstr "type Â« %s Â» non supportÃ© sur la ligne %d"
 
 #: error.c:59
 #, c-format
@@ -56,34 +56,34 @@ msgstr "trop peu d'arguments sur la ligne %d"
 #: error.c:79
 #, c-format
 msgid "invalid input syntax for type int: \"%s\", on line %d"
-msgstr "syntaxe invalide en entrée pour le type int : « %s » sur la ligne %d"
+msgstr "syntaxe invalide en entrÃ©e pour le type int : Â« %s Â» sur la ligne %d"
 
 #: error.c:89
 #, c-format
 msgid "invalid input syntax for type unsigned int: \"%s\", on line %d"
-msgstr "syntaxe invalide en entrée pour le type unisgned int : « %s » sur la ligne %d"
+msgstr "syntaxe invalide en entrÃ©e pour le type unisgned int : Â« %s Â» sur la ligne %d"
 
 #: error.c:99
 #, c-format
 msgid "invalid input syntax for floating-point type: \"%s\", on line %d"
-msgstr "syntaxe invalide en entrée pour le type float : « %s » sur la ligne %d"
+msgstr "syntaxe invalide en entrÃ©e pour le type float : Â« %s Â» sur la ligne %d"
 
 #: error.c:110
 #, c-format
 msgid "invalid syntax for type boolean: \"%s\", on line %d"
-msgstr "syntaxe invalide en entrée pour le type booléen : « %s » sur la ligne %d"
+msgstr "syntaxe invalide en entrÃ©e pour le type boolÃ©en : Â« %s Â» sur la ligne %d"
 
 #: error.c:118
 #, c-format
 msgid "could not convert boolean value: size mismatch, on line %d"
 msgstr ""
-"n'a pas pu convertir la valeur booléenne : différence de taille sur la\n"
+"n'a pas pu convertir la valeur boolÃ©enne : diffÃ©rence de taille sur la\n"
 "ligne %d"
 
 #: error.c:128
 #, c-format
 msgid "empty query on line %d"
-msgstr "requête vide sur la ligne %d"
+msgstr "requÃªte vide sur la ligne %d"
 
 #: error.c:138
 #, c-format
@@ -98,42 +98,42 @@ msgstr "la valeur n'a pas de type tableau sur la ligne %d"
 #: error.c:158
 #, c-format
 msgid "data read from server is not an array on line %d"
-msgstr "la donnée lue du serveur n'est pas un tableau sur la ligne %d"
+msgstr "la donnÃ©e lue du serveur n'est pas un tableau sur la ligne %d"
 
 #: error.c:168
 #, c-format
 msgid "inserting an array of variables is not supported on line %d"
-msgstr "l'insertion d'un tableau de variables n'est pas supportée, sur la ligne %d"
+msgstr "l'insertion d'un tableau de variables n'est pas supportÃ©e, sur la ligne %d"
 
 #: error.c:178
 #, c-format
 msgid "connection \"%s\" does not exist on line %d"
-msgstr "la connexion « %s » n'existe pas en ligne %d"
+msgstr "la connexion Â« %s Â» n'existe pas en ligne %d"
 
 #: error.c:188
 #, c-format
 msgid "not connected to connection \"%s\" on line %d"
-msgstr "non connecté à la connexion « %s » en ligne %d"
+msgstr "non connectÃ© Ã  la connexion Â« %s Â» en ligne %d"
 
 #: error.c:198
 #, c-format
 msgid "invalid statement name \"%s\" on line %d"
-msgstr "nom d'instruction « %s » invalide sur la ligne %d"
+msgstr "nom d'instruction Â« %s Â» invalide sur la ligne %d"
 
 #: error.c:208
 #, c-format
 msgid "descriptor \"%s\" not found on line %d"
-msgstr "descripteur « %s » introuvable sur la ligne %d"
+msgstr "descripteur Â« %s Â» introuvable sur la ligne %d"
 
 #: error.c:218
 #, c-format
 msgid "descriptor index out of range on line %d"
-msgstr "index de descripteur hors d'échelle sur la ligne %d"
+msgstr "index de descripteur hors d'Ã©chelle sur la ligne %d"
 
 #: error.c:228
 #, c-format
 msgid "unrecognized descriptor item \"%s\" on line %d"
-msgstr "élément descripteur « %s » non reconnu sur la ligne %d"
+msgstr "Ã©lÃ©ment descripteur Â« %s Â» non reconnu sur la ligne %d"
 
 #: error.c:238
 #, c-format
@@ -143,7 +143,7 @@ msgstr "la variable n'est pas de type numeric sur la ligne %d"
 #: error.c:248
 #, c-format
 msgid "variable does not have a character type on line %d"
-msgstr "la variable n'est pas de type caractère sur la ligne %d"
+msgstr "la variable n'est pas de type caractÃ¨re sur la ligne %d"
 
 #: error.c:258
 #, c-format
@@ -153,7 +153,7 @@ msgstr "erreur dans le traitement de la transaction en ligne %d"
 #: error.c:268
 #, c-format
 msgid "could not connect to database \"%s\" on line %d"
-msgstr "n'a pas pu se connecter à la base de données « %s » en ligne %d"
+msgstr "n'a pas pu se connecter Ã  la base de donnÃ©es Â« %s Â» en ligne %d"
 
 #: error.c:278
 #, c-format
@@ -162,7 +162,7 @@ msgstr "erreur SQL %d en ligne %d"
 
 #: error.c:316
 msgid "the connection to the server was lost"
-msgstr "la connexion au serveur a été perdue"
+msgstr "la connexion au serveur a Ã©tÃ© perdue"
 
 #: error.c:402
 #, c-format

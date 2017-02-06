@@ -1,15 +1,14 @@
 # Russian message translation file for plpython
 # Copyright (C) 2012-2016 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2016.
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2016, 2017.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: plpython (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2016-09-20 18:07+0000\n"
-"PO-Revision-Date: 2016-09-20 12:00+0300\n"
-"Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
+"POT-Creation-Date: 2017-02-01 23:07+0000\n"
+"PO-Revision-Date: 2017-02-02 15:21+0300\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -17,6 +16,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
+"Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 
 #: plpy_cursorobject.c:101
 #, c-format
@@ -67,7 +67,7 @@ msgstr ""
 msgid "closing a cursor in an aborted subtransaction"
 msgstr "закрытие курсора в прерванной подтранзакции"
 
-#: plpy_elog.c:127 plpy_elog.c:128 plpy_plpymodule.c:527
+#: plpy_elog.c:127 plpy_elog.c:128 plpy_plpymodule.c:548
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -236,46 +236,51 @@ msgstr "анонимный блок кода PL/Python"
 msgid "plan.status takes no arguments"
 msgstr "plan.status не принимает аргументы"
 
-#: plpy_plpymodule.c:178 plpy_plpymodule.c:181
+#: plpy_plpymodule.c:181 plpy_plpymodule.c:184
 #, c-format
 msgid "could not import \"plpy\" module"
 msgstr "не удалось импортировать модуль \"plpy\""
 
-#: plpy_plpymodule.c:196
+#: plpy_plpymodule.c:199
+#, c-format
+msgid "could not create the spiexceptions module"
+msgstr "не удалось создать модуль spiexceptions"
+
+#: plpy_plpymodule.c:207
 #, c-format
 msgid "could not add the spiexceptions module"
 msgstr "не удалось добавить модуль spiexceptions"
 
-#: plpy_plpymodule.c:217
+#: plpy_plpymodule.c:236
 #, c-format
-msgid "could not create the base SPI exceptions"
-msgstr "не удалось создать базовые объекты исключений SPI"
+msgid "could not create exception \"%s\""
+msgstr "не удалось сгенерировать исключение \"%s\""
 
-#: plpy_plpymodule.c:252 plpy_plpymodule.c:256
+#: plpy_plpymodule.c:271 plpy_plpymodule.c:275
 #, c-format
 msgid "could not generate SPI exceptions"
 msgstr "не удалось сгенерировать исключения SPI"
 
-#: plpy_plpymodule.c:422
+#: plpy_plpymodule.c:443
 #, c-format
 msgid "could not unpack arguments in plpy.elog"
 msgstr "не удалось распаковать аргументы в plpy.elog"
 
-#: plpy_plpymodule.c:431
+#: plpy_plpymodule.c:452
 msgid "could not parse error message in plpy.elog"
 msgstr "не удалось разобрать сообщение об ошибке в plpy.elog"
 
-#: plpy_plpymodule.c:448
+#: plpy_plpymodule.c:469
 #, c-format
 msgid "Argument 'message' given by name and position"
 msgstr "Аргумент 'message' задан и по имени, и по позиции"
 
-#: plpy_plpymodule.c:475
+#: plpy_plpymodule.c:496
 #, c-format
 msgid "'%s' is an invalid keyword argument for this function"
 msgstr "'%s' - недопустимое ключевое слово (аргумент) для этой функции"
 
-#: plpy_plpymodule.c:486 plpy_plpymodule.c:492
+#: plpy_plpymodule.c:507 plpy_plpymodule.c:513
 #, c-format
 msgid "invalid SQLSTATE code"
 msgstr "неверный код SQLSTATE"
@@ -464,6 +469,9 @@ msgstr "не удалось преобразовать объект Python Unico
 #, c-format
 msgid "could not extract bytes from encoded string"
 msgstr "не удалось извлечь байты из кодированной строки"
+
+#~ msgid "could not create the base SPI exceptions"
+#~ msgstr "не удалось создать базовые объекты исключений SPI"
 
 #~ msgid "the message is already specified"
 #~ msgstr "сообщение уже указано"

@@ -12,8 +12,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_ctl (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2016-09-20 18:14+0000\n"
-"PO-Revision-Date: 2016-09-20 12:00+0300\n"
+"POT-Creation-Date: 2017-02-01 23:13+0000\n"
+"PO-Revision-Date: 2016-11-24 11:51+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -194,7 +194,7 @@ msgid ""
 msgstr ""
 "Программа \"%s\" необходима для %s, но не найдена\n"
 "в каталоге \"%s\".\n"
-"Проверьте вашу установку PostgreSQL.\n"
+"Проверьте правильность установки СУБД.\n"
 
 #: pg_ctl.c:827
 #, c-format
@@ -205,7 +205,7 @@ msgid ""
 msgstr ""
 "Программа \"%s\" найдена в \"%s\",\n"
 "но её версия отличается от версии %s.\n"
-"Проверьте вашу установку PostgreSQL.\n"
+"Проверьте правильность установки СУБД.\n"
 
 #: pg_ctl.c:860
 #, c-format

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pltcl (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2016-09-20 18:07+0000\n"
+"POT-Creation-Date: 2016-11-23 19:07+0000\n"
 "PO-Revision-Date: 2016-09-20 12:00+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -38,22 +38,22 @@ msgstr "разложить возвращаемое из триггера зна
 msgid "trigger's return list must have even number of elements"
 msgstr "в возвращаемом триггером списке должно быть чётное число элементов"
 
-#: pltcl.c:1109
+#: pltcl.c:1110
 #, c-format
 msgid "unrecognized attribute \"%s\""
 msgstr "нераспознанный атрибут \"%s\""
 
-#: pltcl.c:1114
+#: pltcl.c:1116
 #, c-format
 msgid "cannot set system attribute \"%s\""
 msgstr "установить системный атрибут \"%s\" нельзя"
 
-#: pltcl.c:1230 pltcl.c:1655
+#: pltcl.c:1232 pltcl.c:1657
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pltcl.c:1231
+#: pltcl.c:1233
 #, c-format
 msgid ""
 "%s\n"
@@ -62,32 +62,32 @@ msgstr ""
 "%s\n"
 "в функции PL/Tcl \"%s\""
 
-#: pltcl.c:1338 pltcl.c:1345
+#: pltcl.c:1340 pltcl.c:1347
 #, c-format
 msgid "out of memory"
 msgstr "нехватка памяти"
 
-#: pltcl.c:1393
+#: pltcl.c:1395
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "триггерные функции могут вызываться только в триггерах"
 
-#: pltcl.c:1402
+#: pltcl.c:1404
 #, c-format
 msgid "PL/Tcl functions cannot return type %s"
 msgstr "функции PL/Tcl не могут возвращать тип %s"
 
-#: pltcl.c:1414
+#: pltcl.c:1416
 #, c-format
 msgid "PL/Tcl functions cannot return composite types"
 msgstr "функции PL/Tcl не могут возвращать составные типы"
 
-#: pltcl.c:1453
+#: pltcl.c:1455
 #, c-format
 msgid "PL/Tcl functions cannot accept type %s"
 msgstr "функции PL/Tcl не могут принимать тип %s"
 
-#: pltcl.c:1576
+#: pltcl.c:1578
 #, c-format
 msgid "could not create internal procedure \"%s\": %s"
 msgstr "не удалось создать внутреннюю процедуру \"%s\": %s"

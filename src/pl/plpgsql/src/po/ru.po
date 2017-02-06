@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: plpgsql (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2016-09-20 18:07+0000\n"
-"PO-Revision-Date: 2016-09-20 12:00+0300\n"
+"POT-Creation-Date: 2017-02-01 23:08+0000\n"
+"PO-Revision-Date: 2016-11-24 11:24+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -413,7 +413,7 @@ msgstr "в запросе нет назначения для данных рез
 msgid "If you want to discard the results of a SELECT, use PERFORM instead."
 msgstr "Если вам нужно отбросить результаты SELECT, используйте PERFORM."
 
-#: pl_exec.c:3685 pl_exec.c:7126
+#: pl_exec.c:3685 pl_exec.c:7130
 #, c-format
 msgid "query string argument of EXECUTE is null"
 msgstr "в качестве текста запроса в EXECUTE передан NULL"
@@ -423,6 +423,7 @@ msgstr "в качестве текста запроса в EXECUTE переда�
 msgid "EXECUTE of SELECT ... INTO is not implemented"
 msgstr "возможность выполнения SELECT ... INTO в EXECUTE не реализована"
 
+# skip-rule: space-before-ellipsis
 #: pl_exec.c:3742
 #, c-format
 msgid ""

@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2016-10-24 02:44+0000\n"
-"PO-Revision-Date: 2016-09-20 12:00+0300\n"
+"POT-Creation-Date: 2017-02-01 23:13+0000\n"
+"PO-Revision-Date: 2016-11-24 14:26+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -53,26 +53,26 @@ msgstr[0] "(%lu строка)"
 msgstr[1] "(%lu строки)"
 msgstr[2] "(%lu строк)"
 
-#: ../../fe_utils/print.c:2906
+#: ../../fe_utils/print.c:2914
 #, c-format
 msgid "Interrupted\n"
 msgstr "Прерывание\n"
 
-#: ../../fe_utils/print.c:2970
+#: ../../fe_utils/print.c:2978
 #, c-format
 msgid "Cannot add header to table content: column count of %d exceeded.\n"
 msgstr ""
 "Добавить заголовок к содержимому таблицы нельзя: число столбцов превышает "
 "%d.\n"
 
-#: ../../fe_utils/print.c:3010
+#: ../../fe_utils/print.c:3018
 #, c-format
 msgid "Cannot add cell to table content: total cell count of %d exceeded.\n"
 msgstr ""
 "Добавить ячейку к содержимому таблицы нельзя: общее число ячеек превышает "
 "%d.\n"
 
-#: ../../fe_utils/print.c:3259
+#: ../../fe_utils/print.c:3267
 #, c-format
 msgid "invalid output format (internal error): %d"
 msgstr "неверный формат вывода (внутренняя ошибка): %d"
@@ -102,7 +102,7 @@ msgstr "%s: нельзя кластеризовать все базы и одн�
 #: clusterdb.c:147
 #, c-format
 msgid "%s: cannot cluster specific table(s) in all databases\n"
-msgstr "%s: нельзя  кластеризовать указанную таблицу(ы) во всех базах\n"
+msgstr "%s: нельзя кластеризовать указанную таблицу(ы) во всех базах\n"
 
 #: clusterdb.c:212
 #, c-format
@@ -359,6 +359,7 @@ msgstr ""
 msgid "  %s [OPTION]... [DBNAME] [DESCRIPTION]\n"
 msgstr "  %s [ПАРАМЕТР]... [ИМЯ_БД] [ОПИСАНИЕ]\n"
 
+# well-spelled: ПРОСТР
 #: createdb.c:255
 #, c-format
 msgid "  -D, --tablespace=TABLESPACE  default tablespace for the database\n"

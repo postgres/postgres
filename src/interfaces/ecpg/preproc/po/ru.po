@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecpg (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2016-10-24 02:38+0000\n"
-"PO-Revision-Date: 2016-09-25 17:55+0300\n"
+"POT-Creation-Date: 2017-02-01 23:08+0000\n"
+"PO-Revision-Date: 2016-11-24 16:01+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -28,7 +28,7 @@ msgstr "переменная \"%s\" должна иметь числовой т�
 msgid "descriptor \"%s\" does not exist"
 msgstr "дескриптор \"%s\" не существует"
 
-#: descriptor.c:161 descriptor.c:212
+#: descriptor.c:161 descriptor.c:213
 #, c-format
 msgid "descriptor header item \"%d\" does not exist"
 msgstr "заголовок дескриптора не содержит элемент \"%d\""
@@ -43,12 +43,12 @@ msgstr "NULLABLE всегда равно 1"
 msgid "key_member is always 0"
 msgstr "KEY_MEMBER всегда равно 0"
 
-#: descriptor.c:279
+#: descriptor.c:280
 #, c-format
 msgid "descriptor item \"%s\" is not implemented"
 msgstr "поле \"%s\" в дескрипторе не реализовано"
 
-#: descriptor.c:289
+#: descriptor.c:290
 #, c-format
 msgid "descriptor item \"%s\" cannot be set"
 msgstr "установить поле \"%s\" в дескрипторе нельзя"
@@ -156,6 +156,7 @@ msgstr "  -V, --version  показать версию и выйти\n"
 msgid "  -?, --help     show this help, then exit\n"
 msgstr "  -?, --help     показать эту справку и выйти\n"
 
+# skip-rule: space-before-period
 #: ecpg.c:59
 #, c-format
 msgid ""
@@ -181,7 +182,7 @@ msgstr ""
 msgid "%s: could not locate my own executable path\n"
 msgstr "%s: не удалось найти свой путь к исполняемым файлам\n"
 
-#: ecpg.c:175 ecpg.c:326 ecpg.c:336
+#: ecpg.c:175 ecpg.c:327 ecpg.c:337
 #, c-format
 msgid "%s: could not open file \"%s\": %s\n"
 msgstr "%s: не удалось открыть файл \"%s\": %s\n"
@@ -217,102 +218,102 @@ msgstr "конец списка поиска\n"
 msgid "%s: no input files specified\n"
 msgstr "%s: нет входных файлов\n"
 
-#: ecpg.c:459
+#: ecpg.c:460
 #, c-format
 msgid "cursor \"%s\" has been declared but not opened"
 msgstr "курсор \"%s\" был объявлен, но не открыт"
 
-#: ecpg.c:472 preproc.y:127
+#: ecpg.c:473 preproc.y:127
 #, c-format
 msgid "could not remove output file \"%s\"\n"
 msgstr "ошибка при удалении выходного файла \"%s\"\n"
 
-#: pgc.l:440
+#: pgc.l:432
 #, c-format
 msgid "unterminated /* comment"
 msgstr "незавершённый комментарий /*"
 
-#: pgc.l:453
+#: pgc.l:445
 #, c-format
 msgid "invalid bit string literal"
 msgstr "неверная битовая строка"
 
-#: pgc.l:462
+#: pgc.l:454
 #, c-format
 msgid "unterminated bit string literal"
 msgstr "оборванная битовая строка"
 
-#: pgc.l:478
+#: pgc.l:470
 #, c-format
 msgid "unterminated hexadecimal string literal"
 msgstr "оборванная шестнадцатеричная строка"
 
-#: pgc.l:556
+#: pgc.l:548
 #, c-format
 msgid "unterminated quoted string"
 msgstr "незавершённая строка в кавычках"
 
-#: pgc.l:613 pgc.l:626
+#: pgc.l:605 pgc.l:618
 #, c-format
 msgid "zero-length delimited identifier"
 msgstr "пустой идентификатор в кавычках"
 
-#: pgc.l:634
+#: pgc.l:626
 #, c-format
 msgid "unterminated quoted identifier"
 msgstr "незавершённый идентификатор в кавычках"
 
-#: pgc.l:889
+#: pgc.l:881
 #, c-format
 msgid "nested /* ... */ comments"
 msgstr "вложенные комментарии /* ... */"
 
-#: pgc.l:982
+#: pgc.l:974
 #, c-format
 msgid "missing identifier in EXEC SQL UNDEF command"
 msgstr "в команде EXEC SQL UNDEF отсутствует идентификатор"
 
-#: pgc.l:1028 pgc.l:1042
+#: pgc.l:1020 pgc.l:1034
 #, c-format
 msgid "missing matching \"EXEC SQL IFDEF\" / \"EXEC SQL IFNDEF\""
 msgstr "нет соответствующего \"EXEC SQL IFDEF\" / \"EXEC SQL IFNDEF\""
 
-#: pgc.l:1031 pgc.l:1044 pgc.l:1220
+#: pgc.l:1023 pgc.l:1036 pgc.l:1212
 #, c-format
 msgid "missing \"EXEC SQL ENDIF;\""
 msgstr "отсутствует \"EXEC SQL ENDIF;\""
 
-#: pgc.l:1060 pgc.l:1079
+#: pgc.l:1052 pgc.l:1071
 #, c-format
 msgid "more than one EXEC SQL ELSE"
 msgstr "неоднократная команда EXEC SQL ELSE"
 
-#: pgc.l:1101 pgc.l:1115
+#: pgc.l:1093 pgc.l:1107
 #, c-format
 msgid "unmatched EXEC SQL ENDIF"
 msgstr "непарная команда EXEC SQL ENDIF"
 
-#: pgc.l:1135
+#: pgc.l:1127
 #, c-format
 msgid "too many nested EXEC SQL IFDEF conditions"
 msgstr "слишком много вложенных условий EXEC SQL IFDEF"
 
-#: pgc.l:1168
+#: pgc.l:1160
 #, c-format
 msgid "missing identifier in EXEC SQL IFDEF command"
 msgstr "в команде EXEC SQL IFDEF отсутствует идентификатор"
 
-#: pgc.l:1177
+#: pgc.l:1169
 #, c-format
 msgid "missing identifier in EXEC SQL DEFINE command"
 msgstr "в команде EXEC SQL DEFINE отсутствует идентификатор"
 
-#: pgc.l:1210
+#: pgc.l:1202
 #, c-format
 msgid "syntax error in EXEC SQL INCLUDE command"
 msgstr "ошибка синтаксиса в команде EXEC SQL INCLUDE"
 
-#: pgc.l:1259
+#: pgc.l:1251
 #, c-format
 msgid ""
 "internal error: unreachable state; please report this to <pgsql-"
@@ -321,14 +322,14 @@ msgstr ""
 "внутренняя ошибка: недостижимое состояние; пожалуйста, сообщите в <pgsql-"
 "bugs@postgresql.org>"
 
-#: pgc.l:1383
+#: pgc.l:1375
 #, c-format
 msgid "Error: include path \"%s/%s\" is too long on line %d, skipping\n"
 msgstr ""
 "Ошибка: путь включаемых файлов \"%s/%s\" в строке %d слишком длинный, "
 "пропускается\n"
 
-#: pgc.l:1406
+#: pgc.l:1398
 #, c-format
 msgid "could not open include file \"%s\" on line %d"
 msgstr "не удалось открыть включаемый файл \"%s\" (строка %d)"

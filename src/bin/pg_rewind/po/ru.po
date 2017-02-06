@@ -7,8 +7,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2016-10-24 02:44+0000\n"
-"PO-Revision-Date: 2016-10-24 10:16+0300\n"
+"POT-Creation-Date: 2017-02-01 23:14+0000\n"
+"PO-Revision-Date: 2016-11-24 14:26+0300\n"
+"Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -16,7 +17,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
-"Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
 #: ../../common/fe_memutils.c:98 parsexlog.c:74 parsexlog.c:127 parsexlog.c:179
@@ -256,7 +256,7 @@ msgstr "исходный сервер должен быть в режиме во
 #: libpq_fetch.c:79
 #, c-format
 msgid "full_page_writes must be enabled in the source server\n"
-msgstr "на исходном сервере должен быть включен режим full_page_writes\n"
+msgstr "на исходном сервере должен быть включён режим full_page_writes\n"
 
 #: libpq_fetch.c:91
 #, c-format
@@ -481,6 +481,7 @@ msgstr ""
 "      --source-pgdata=КАТАЛОГ    исходный каталог, с которым будет проведена "
 "синхронизация\n"
 
+# well-spelled: ПОДКЛ
 #: pg_rewind.c:69
 #, c-format
 msgid "      --source-server=CONNSTR    source server to synchronize with\n"
@@ -705,7 +706,7 @@ msgid ""
 msgstr ""
 "Для %s необходима программа \"initdb\", но она не найдена\n"
 "в каталоге \"%s\".\n"
-"Проверьте вашу установку PostgreSQL.\n"
+"Проверьте правильность установки СУБД.\n"
 
 #: pg_rewind.c:700
 #, c-format
@@ -716,7 +717,7 @@ msgid ""
 msgstr ""
 "Программа \"initdb\" найдена в \"%s\",\n"
 "но её версия отличается от версии %s.\n"
-"Проверьте вашу установку PostgreSQL.\n"
+"Проверьте правильность установки СУБД.\n"
 
 #: pg_rewind.c:718
 #, c-format

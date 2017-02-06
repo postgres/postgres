@@ -10,9 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_controldata (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2016-09-20 18:14+0000\n"
-"PO-Revision-Date: 2016-09-20 12:00+0300\n"
-"Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
+"POT-Creation-Date: 2017-02-01 23:14+0000\n"
+"PO-Revision-Date: 2016-12-20 18:28+0300\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -20,6 +19,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 
 #: ../../common/controldata_utils.c:56
 #, c-format
@@ -207,36 +207,43 @@ msgstr "Состояние кластера БД:                %s\n"
 msgid "pg_control last modified:             %s\n"
 msgstr "Последнее обновление pg_control:      %s\n"
 
+# skip-rule: capital-letter-first
 #: pg_controldata.c:200
 #, c-format
 msgid "Latest checkpoint location:           %X/%X\n"
 msgstr "Положение последней конт. точки:      %X/%X\n"
 
+# skip-rule: capital-letter-first
 #: pg_controldata.c:203
 #, c-format
 msgid "Prior checkpoint location:            %X/%X\n"
 msgstr "Положение предыдущей конт. точки:     %X/%X\n"
 
+# skip-rule: capital-letter-first
 #: pg_controldata.c:206
 #, c-format
 msgid "Latest checkpoint's REDO location:    %X/%X\n"
 msgstr "Положение REDO последней конт. точки: %X/%X\n"
 
+# skip-rule: capital-letter-first
 #: pg_controldata.c:209
 #, c-format
 msgid "Latest checkpoint's REDO WAL file:    %s\n"
-msgstr "Файл WAL c REDO последней к.т.:       %s\n"
+msgstr "Файл WAL c REDO последней к. т.:      %s\n"
 
+# skip-rule: capital-letter-first
 #: pg_controldata.c:211
 #, c-format
 msgid "Latest checkpoint's TimeLineID:       %u\n"
 msgstr "Линия времени последней конт. точки:  %u\n"
 
+# skip-rule: capital-letter-first
 #: pg_controldata.c:213
 #, c-format
 msgid "Latest checkpoint's PrevTimeLineID:   %u\n"
-msgstr "Пред. линия времени последней к.т.:   %u\n"
+msgstr "Пред. линия времени последней к. т.:  %u\n"
 
+# skip-rule: no-space-after-period
 #: pg_controldata.c:215
 #, c-format
 msgid "Latest checkpoint's full_page_writes: %s\n"
@@ -250,56 +257,67 @@ msgstr "выкл."
 msgid "on"
 msgstr "вкл."
 
+# skip-rule: capital-letter-first
 #: pg_controldata.c:217
 #, c-format
 msgid "Latest checkpoint's NextXID:          %u:%u\n"
 msgstr "NextXID последней конт. точки:        %u:%u\n"
 
+# skip-rule: capital-letter-first
 #: pg_controldata.c:220
 #, c-format
 msgid "Latest checkpoint's NextOID:          %u\n"
 msgstr "NextOID последней конт. точки:        %u\n"
 
+# skip-rule: capital-letter-first
 #: pg_controldata.c:222
 #, c-format
 msgid "Latest checkpoint's NextMultiXactId:  %u\n"
 msgstr "NextMultiXactId послед. конт. точки:  %u\n"
 
+# skip-rule: capital-letter-first
 #: pg_controldata.c:224
 #, c-format
 msgid "Latest checkpoint's NextMultiOffset:  %u\n"
 msgstr "NextMultiOffset послед. конт. точки:  %u\n"
 
+# skip-rule: capital-letter-first
 #: pg_controldata.c:226
 #, c-format
 msgid "Latest checkpoint's oldestXID:        %u\n"
 msgstr "oldestXID последней конт. точки:      %u\n"
 
+# skip-rule: capital-letter-first
 #: pg_controldata.c:228
 #, c-format
 msgid "Latest checkpoint's oldestXID's DB:   %u\n"
 msgstr "БД с oldestXID последней конт. точки: %u\n"
 
+# skip-rule: capital-letter-first
 #: pg_controldata.c:230
 #, c-format
 msgid "Latest checkpoint's oldestActiveXID:  %u\n"
-msgstr "oldestActiveXID последней к.т.:       %u\n"
+msgstr "oldestActiveXID последней к. т.:      %u\n"
 
+# skip-rule: capital-letter-first
 #: pg_controldata.c:232
 #, c-format
 msgid "Latest checkpoint's oldestMultiXid:   %u\n"
 msgstr "oldestMultiXid последней конт. точки: %u\n"
 
+# skip-rule: double-space, capital-letter-first
 #: pg_controldata.c:234
 #, c-format
 msgid "Latest checkpoint's oldestMulti's DB: %u\n"
-msgstr "БД с oldestMulti последней к.т.:      %u\n"
+msgstr "БД с oldestMulti последней к. т.:     %u\n"
 
+# skip-rule: double-space, capital-letter-first
 #: pg_controldata.c:236
 #, c-format
 msgid "Latest checkpoint's oldestCommitTsXid:%u\n"
 msgstr "oldestCommitTsXid последней к. т.:    %u\n"
 
+# skip-rule: capital-letter-first, double-space
 #: pg_controldata.c:238
 #, c-format
 msgid "Latest checkpoint's newestCommitTsXid:%u\n"
@@ -310,6 +328,8 @@ msgstr "newestCommitTsXid последней к. т.:    %u\n"
 msgid "Time of latest checkpoint:            %s\n"
 msgstr "Время последней контрольной точки:    %s\n"
 
+# skip-rule: capital-letter-first
+# well-spelled: нежурналир
 #: pg_controldata.c:242
 #, c-format
 msgid "Fake LSN counter for unlogged rels:   %X/%X\n"
@@ -320,10 +340,11 @@ msgstr "Фиктивный LSN для нежурналир. таблиц: %X/%X\
 msgid "Minimum recovery ending location:     %X/%X\n"
 msgstr "Мин. положение конца восстановления:  %X/%X\n"
 
+# skip-rule: capital-letter-first
 #: pg_controldata.c:248
 #, c-format
 msgid "Min recovery ending loc's timeline:   %u\n"
-msgstr "Линия времени мин. положения к.в.:    %u\n"
+msgstr "Линия времени мин. положения к. в.:   %u\n"
 
 #: pg_controldata.c:250
 #, c-format
@@ -393,6 +414,7 @@ msgstr "Макс. предел выравнивания данных:     %u\n"
 msgid "Database block size:                  %u\n"
 msgstr "Размер блока БД:                      %u\n"
 
+# skip-rule: double-space
 #: pg_controldata.c:277
 #, c-format
 msgid "Blocks per segment of large relation: %u\n"
@@ -416,7 +438,7 @@ msgstr "Максимальная длина идентификаторов:   %u
 #: pg_controldata.c:285
 #, c-format
 msgid "Maximum columns in an index:          %u\n"
-msgstr "Максимальное число столбцов в индексе: %u\n"
+msgstr "Макс. число столбцов в индексе:       %u\n"
 
 #: pg_controldata.c:287
 #, c-format

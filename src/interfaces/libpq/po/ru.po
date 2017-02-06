@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2016-10-24 02:38+0000\n"
+"POT-Creation-Date: 2016-11-23 19:08+0000\n"
 "PO-Revision-Date: 2016-09-20 12:00+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -461,7 +461,7 @@ msgstr ""
 "ПРЕДУПРЕЖДЕНИЕ: к файлу паролей \"%s\" имеют доступ все или группа; права "
 "должны быть u=rw (0600) или более ограниченные\n"
 
-#: fe-connect.c:5864
+#: fe-connect.c:5872
 #, c-format
 msgid "password retrieved from file \"%s\"\n"
 msgstr "пароль получен из файла \"%s\"\n"

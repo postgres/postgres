@@ -11,9 +11,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_resetxlog (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2016-09-20 18:14+0000\n"
-"PO-Revision-Date: 2016-09-20 12:00+0300\n"
-"Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
+"POT-Creation-Date: 2017-02-01 23:13+0000\n"
+"PO-Revision-Date: 2016-12-20 18:26+0300\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -21,6 +20,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 
 #: ../../common/restricted_token.c:68
 #, c-format
@@ -237,11 +237,13 @@ msgstr "Номер версии каталога:                %u\n"
 msgid "Database system identifier:           %s\n"
 msgstr "Идентификатор системы баз данных:     %s\n"
 
+# skip-rule: capital-letter-first
 #: pg_resetxlog.c:645
 #, c-format
 msgid "Latest checkpoint's TimeLineID:       %u\n"
 msgstr "Линия времени последней конт. точки:  %u\n"
 
+# skip-rule: no-space-after-period
 #: pg_resetxlog.c:647
 #, c-format
 msgid "Latest checkpoint's full_page_writes: %s\n"
@@ -255,56 +257,67 @@ msgstr "выкл."
 msgid "on"
 msgstr "вкл."
 
+# skip-rule: capital-letter-first
 #: pg_resetxlog.c:649
 #, c-format
 msgid "Latest checkpoint's NextXID:          %u:%u\n"
 msgstr "NextXID последней конт. точки:        %u:%u\n"
 
+# skip-rule: capital-letter-first
 #: pg_resetxlog.c:652
 #, c-format
 msgid "Latest checkpoint's NextOID:          %u\n"
 msgstr "NextOID последней конт. точки:        %u\n"
 
+# skip-rule: capital-letter-first
 #: pg_resetxlog.c:654
 #, c-format
 msgid "Latest checkpoint's NextMultiXactId:  %u\n"
 msgstr "NextMultiXactId послед. конт. точки:  %u\n"
 
+# skip-rule: capital-letter-first
 #: pg_resetxlog.c:656
 #, c-format
 msgid "Latest checkpoint's NextMultiOffset:  %u\n"
 msgstr "NextMultiOffset послед. конт. точки:  %u\n"
 
+# skip-rule: capital-letter-first
 #: pg_resetxlog.c:658
 #, c-format
 msgid "Latest checkpoint's oldestXID:        %u\n"
 msgstr "oldestXID последней конт. точки:      %u\n"
 
+# skip-rule: capital-letter-first
 #: pg_resetxlog.c:660
 #, c-format
 msgid "Latest checkpoint's oldestXID's DB:   %u\n"
 msgstr "БД с oldestXID последней конт. точки: %u\n"
 
+# skip-rule: capital-letter-first
 #: pg_resetxlog.c:662
 #, c-format
 msgid "Latest checkpoint's oldestActiveXID:  %u\n"
-msgstr "oldestActiveXID последней к.т.:       %u\n"
+msgstr "oldestActiveXID последней к. т.:      %u\n"
 
+# skip-rule: capital-letter-first
 #: pg_resetxlog.c:664
 #, c-format
 msgid "Latest checkpoint's oldestMultiXid:   %u\n"
 msgstr "oldestMultiXid последней конт. точки: %u\n"
 
+# skip-rule: capital-letter-first, double-space
 #: pg_resetxlog.c:666
 #, c-format
 msgid "Latest checkpoint's oldestMulti's DB: %u\n"
-msgstr "БД с oldestMulti последней к.т.:      %u\n"
+msgstr "БД с oldestMulti последней к. т.:     %u\n"
 
+# skip-rule: capital-letter-first, double-space
 #: pg_resetxlog.c:668
 #, c-format
 msgid "Latest checkpoint's oldestCommitTsXid:%u\n"
 msgstr "oldestCommitTsXid последней к. т.:    %u\n"
 
+# skip-rule: capital-letter-first, double-space
 #: pg_resetxlog.c:670
 #, c-format
 msgid "Latest checkpoint's newestCommitTsXid:%u\n"
@@ -320,6 +333,7 @@ msgstr "Макс. предел выравнивания данных:     %u\n"
 msgid "Database block size:                  %u\n"
 msgstr "Размер блока БД:                      %u\n"
 
+# skip-rule: double-space
 #: pg_resetxlog.c:677
 #, c-format
 msgid "Blocks per segment of large relation: %u\n"
@@ -534,7 +548,7 @@ msgid ""
 "  %s [OPTION]... DATADIR\n"
 "\n"
 msgstr ""
-"Usage:\n"
+"Использование:\n"
 "  %s [ПАРАМЕТР]... КАТ_ДАННЫХ\n"
 "\n"
 
