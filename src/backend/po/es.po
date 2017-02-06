@@ -59,7 +59,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL server 9.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2015-10-03 16:45+0000\n"
-"PO-Revision-Date: 2016-07-22 19:04-0400\n"
+"PO-Revision-Date: 2017-01-10 16:46-0300\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL Español <pgsql-es-ayuda@postgresql.org>\n"
 "Language: es\n"
@@ -7808,7 +7808,7 @@ msgstr "el registro a ser actualizado ya fue modificado por una operación dispa
 #: executor/nodeModifyTable.c:713
 #, c-format
 msgid "Consider using an AFTER trigger instead of a BEFORE trigger to propagate changes to other rows."
-msgstr "Considere usar un disparador ANTES en lugar de un disparador BEFORE para propagar cambios a otros registros."
+msgstr "Considere usar un disparador AFTER en lugar de un disparador BEFORE para propagar cambios a otros registros."
 
 #: commands/trigger.c:2747 executor/execMain.c:2173
 #: executor/nodeLockRows.c:165 executor/nodeModifyTable.c:447

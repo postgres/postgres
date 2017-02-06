@@ -12,8 +12,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: initdb (PostgreSQL 9)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2016-09-20 18:27+0000\n"
-"PO-Revision-Date: 2016-09-20 12:00+0300\n"
+"POT-Creation-Date: 2017-01-30 17:28+0000\n"
+"PO-Revision-Date: 2016-11-24 16:53+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -330,7 +330,8 @@ msgid ""
 "Check your installation or specify the correct path using the option -L.\n"
 msgstr ""
 "%s: входной файл \"%s\" не принадлежит PostgreSQL %s\n"
-"Проверьте вашу установку или укажите правильный путь в параметре -L.\n"
+"Проверьте правильность установки или укажите корректный путь в параметре -"
+"L.\n"
 
 #: initdb.c:1539
 msgid "initializing pg_authid ... "
@@ -476,7 +477,7 @@ msgstr "%s: ошибочное имя локали \"%s\"\n"
 msgid ""
 "%s: invalid locale settings; check LANG and LC_* environment variables\n"
 msgstr ""
-"%s: неверные настройки локали; проверьте переменные окружения LANG и LC_*\n"
+"%s: неверные установки локали; проверьте переменные окружения LANG и LC_*\n"
 
 #: initdb.c:2654
 #, c-format
@@ -686,7 +687,7 @@ msgstr ""
 #: initdb.c:2865
 #, c-format
 msgid "  -s, --show                show internal settings\n"
-msgstr "  -s, --show                показать внутренние настройки\n"
+msgstr "  -s, --show                показать внутренние установки\n"
 
 #: initdb.c:2866
 #, c-format
@@ -778,7 +779,7 @@ msgid ""
 "will reside.  Do this with either the invocation option -D or the\n"
 "environment variable PGDATA.\n"
 msgstr ""
-"%s: каталог данных не определён\n"
+"%s: каталог данных не определён.\n"
 "Вы должны указать, где будут располагаться данные этой СУБД.\n"
 "Это можно сделать, добавив ключ -D или установив переменную\n"
 "окружения PGDATA.\n"
@@ -792,7 +793,7 @@ msgid ""
 msgstr ""
 "Программа \"postgres\" нужна для %s, но она не найдена\n"
 "в каталоге \"%s\".\n"
-"Проверьте вашу установку PostgreSQL.\n"
+"Проверьте правильность установки СУБД.\n"
 
 #: initdb.c:3035
 #, c-format
@@ -803,7 +804,7 @@ msgid ""
 msgstr ""
 "Программа \"postgres\" найдена в \"%s\",\n"
 "но её версия отличается от версии %s.\n"
-"Проверьте вашу установку PostgreSQL.\n"
+"Проверьте правильность установки СУБД.\n"
 
 #: initdb.c:3054
 #, c-format
@@ -1041,12 +1042,12 @@ msgstr ""
 #: initdb.c:3792
 #, c-format
 msgid "Data page checksums are enabled.\n"
-msgstr "Контроль целостности страниц данных включен.\n"
+msgstr "Контроль целостности страниц данных включён.\n"
 
 #: initdb.c:3794
 #, c-format
 msgid "Data page checksums are disabled.\n"
-msgstr "Контроль целостности страниц данных отключен.\n"
+msgstr "Контроль целостности страниц данных отключён.\n"
 
 #: initdb.c:3803
 #, c-format

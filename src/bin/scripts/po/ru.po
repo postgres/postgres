@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL 9)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2016-09-20 18:27+0000\n"
-"PO-Revision-Date: 2016-09-20 12:00+0300\n"
+"POT-Creation-Date: 2017-01-30 17:28+0000\n"
+"PO-Revision-Date: 2016-11-24 18:04+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -70,7 +70,7 @@ msgstr "%s: нельзя кластеризовать все базы и одн�
 #: clusterdb.c:146
 #, c-format
 msgid "%s: cannot cluster specific table(s) in all databases\n"
-msgstr "%s: нельзя  кластеризовать указанную таблицу(ы) во всех базах\n"
+msgstr "%s: нельзя кластеризовать указанную таблицу(ы) во всех базах\n"
 
 #: clusterdb.c:211
 #, c-format
@@ -327,6 +327,7 @@ msgstr ""
 msgid "  %s [OPTION]... [DBNAME] [DESCRIPTION]\n"
 msgstr "  %s [ПАРАМЕТР]... [ИМЯ_БД] [ОПИСАНИЕ]\n"
 
+# well-spelled: ПРОСТР
 #: createdb.c:255
 #, c-format
 msgid "  -D, --tablespace=TABLESPACE  default tablespace for the database\n"

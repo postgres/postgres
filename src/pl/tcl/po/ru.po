@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pltcl (PostgreSQL 9)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2016-09-20 18:22+0000\n"
+"POT-Creation-Date: 2016-11-23 19:23+0000\n"
 "PO-Revision-Date: 2016-09-20 12:00+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -18,12 +18,12 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
-#: pltcl.c:1210
+#: pltcl.c:1212
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pltcl.c:1211
+#: pltcl.c:1213
 #, c-format
 msgid ""
 "%s\n"
@@ -32,27 +32,27 @@ msgstr ""
 "%s\n"
 "в функции PL/Tcl \"%s\""
 
-#: pltcl.c:1319 pltcl.c:1326
+#: pltcl.c:1321 pltcl.c:1328
 #, c-format
 msgid "out of memory"
 msgstr "нехватка памяти"
 
-#: pltcl.c:1374
+#: pltcl.c:1376
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "триггерные функции могут вызываться только в триггерах"
 
-#: pltcl.c:1383
+#: pltcl.c:1385
 #, c-format
 msgid "PL/Tcl functions cannot return type %s"
 msgstr "функции PL/Tcl не могут возвращать тип %s"
 
-#: pltcl.c:1395
+#: pltcl.c:1397
 #, c-format
 msgid "PL/Tcl functions cannot return composite types"
 msgstr "функции PL/Tcl не могут возвращать составные типы"
 
-#: pltcl.c:1434
+#: pltcl.c:1436
 #, c-format
 msgid "PL/Tcl functions cannot accept type %s"
 msgstr "функции PL/Tcl не могут принимать тип %s"
