@@ -1257,7 +1257,7 @@ pg_replication_origin_session_is_setup(PG_FUNCTION_ARGS)
  * Return the replication progress for origin setup in the current session.
  *
  * If 'flush' is set to true it is ensured that the returned value corresponds
- * to a local transaction that has been flushed. this is useful if asychronous
+ * to a local transaction that has been flushed. this is useful if asynchronous
  * commits are used when replaying replicated transactions.
  */
 Datum
@@ -1343,7 +1343,7 @@ pg_replication_origin_advance(PG_FUNCTION_ARGS)
  * Return the replication progress for an individual replication origin.
  *
  * If 'flush' is set to true it is ensured that the returned value corresponds
- * to a local transaction that has been flushed. this is useful if asychronous
+ * to a local transaction that has been flushed. this is useful if asynchronous
  * commits are used when replaying replicated transactions.
  */
 Datum

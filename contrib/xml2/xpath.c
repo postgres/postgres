@@ -610,7 +610,7 @@ xpath_table(PG_FUNCTION_ARGS)
 
 	/*
 	 * At the moment we assume that the returned attributes make sense for the
-	 * XPath specififed (i.e. we trust the caller). It's not fatal if they get
+	 * XPath specified (i.e. we trust the caller). It's not fatal if they get
 	 * it wrong - the input function for the column type will raise an error
 	 * if the path result can't be converted into the correct binary
 	 * representation.

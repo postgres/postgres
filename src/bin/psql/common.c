@@ -776,7 +776,7 @@ StoreQueryTuple(const PGresult *result)
 			char	   *varname;
 			char	   *value;
 
-			/* concate prefix and column name */
+			/* concatenate prefix and column name */
 			varname = psprintf("%s%s", pset.gset_prefix, colname);
 
 			if (!PQgetisnull(result, 0, i))

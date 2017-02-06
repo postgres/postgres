@@ -342,7 +342,7 @@ window_lag(PG_FUNCTION_ARGS)
 
 /*
  * lag_with_offset
- * returns the value of VE evelulated on a row that is OFFSET
+ * returns the value of VE evaluated on a row that is OFFSET
  * rows before the current row within a partition,
  * per spec.
  */

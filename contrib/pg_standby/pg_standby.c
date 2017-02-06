@@ -779,7 +779,7 @@ main(int argc, char **argv)
 		{
 			/*
 			 * Once we have restored this file successfully we can remove some
-			 * prior WAL files. If this restore fails we musn't remove any
+			 * prior WAL files. If this restore fails we mustn't remove any
 			 * file because some of them will be requested again immediately
 			 * after the failed restore, or when we restart recovery.
 			 */

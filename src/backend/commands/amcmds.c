@@ -34,7 +34,7 @@ static const char *get_am_type_string(char amtype);
 
 
 /*
- * CreateAcessMethod
+ * CreateAccessMethod
  *		Registers a new access method.
  */
 ObjectAddress

@@ -7,7 +7,7 @@
 # - ssl/root+client_ca.crt as the CA root for validating client certs.
 # - reject non-SSL connections
 # - a database called trustdb that lets anyone in
-# - another database called certdb that uses certificate authentiction, ie.
+# - another database called certdb that uses certificate authentication, ie.
 #   the client must present a valid certificate signed by the client CA
 # - two users, called ssltestuser and anotheruser.
 #

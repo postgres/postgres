@@ -634,7 +634,7 @@ extern void pq_reset_sigpipe(sigset_t *osigset, bool sigpipe_pending,
 #endif
 
 /*
- * The SSL implementatation provides these functions (fe-secure-openssl.c)
+ * The SSL implementation provides these functions (fe-secure-openssl.c)
  */
 extern void pgtls_init_library(bool do_ssl, int do_crypto);
 extern int	pgtls_init(PGconn *conn);

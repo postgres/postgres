@@ -303,7 +303,7 @@ PLy_traceback(PyObject *e, PyObject *v, PyObject *tb,
 			long		plain_lineno;
 
 			/*
-			 * The second frame points at the internal function, but to mimick
+			 * The second frame points at the internal function, but to mimic
 			 * Python error reporting we want to say <module>.
 			 */
 			if (*tb_depth == 1)

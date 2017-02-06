@@ -65,7 +65,7 @@ typedef enum
 										 * apply */
 }	SyncCommitLevel;
 
-/* Define the default setting for synchonous_commit */
+/* Define the default setting for synchronous_commit */
 #define SYNCHRONOUS_COMMIT_ON	SYNCHRONOUS_COMMIT_REMOTE_FLUSH
 
 /* Synchronous commit level */

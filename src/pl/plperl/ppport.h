@@ -79,7 +79,7 @@ to be installed on your system.
 If this option is given, a copy of each file will be saved with
 the given suffix that contains the suggested changes. This does
 not require any external programs. Note that this does not
-automagially add a dot between the original filename and the
+automagically add a dot between the original filename and the
 suffix. If you want the dot, you have to include it in the option
 argument.
 
@@ -4364,9 +4364,9 @@ DPPP_(my_vload_module)(U32 flags, SV *name, SV *ver, va_list *args)
 
     OP * const modname = newSVOP(OP_CONST, 0, name);
     /* 5.005 has a somewhat hacky force_normal that doesn't croak on
-       SvREADONLY() if PL_compling is true. Current perls take care in
+       SvREADONLY() if PL_compiling is true. Current perls take care in
        ck_require() to correctly turn off SvREADONLY before calling
-       force_normal_flags(). This seems a better fix than fudging PL_compling
+       force_normal_flags(). This seems a better fix than fudging PL_compiling
      */
     SvREADONLY_off(((SVOP*)modname)->op_sv);
     modname->op_private |= OPpCONST_BARE;

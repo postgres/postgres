@@ -138,7 +138,7 @@ insert into insertconflicttest values (12, 'Date') on conflict (lower(fruit), ke
 drop index comp_key_index;
 
 --
--- Partial index tests, no inference predicate specificied
+-- Partial index tests, no inference predicate specified
 --
 create unique index part_comp_key_index on insertconflicttest(key, fruit) where key < 5;
 create unique index expr_part_comp_key_index on insertconflicttest(key, lower(fruit)) where key < 5;

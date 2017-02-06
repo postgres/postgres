@@ -11,7 +11,7 @@ CREATE FUNCTION earth() RETURNS float8
 LANGUAGE SQL IMMUTABLE PARALLEL SAFE
 AS 'SELECT ''6378168''::float8';
 
--- Astromers may want to change the earth function so that distances will be
+-- Astronomers may want to change the earth function so that distances will be
 -- returned in degrees. To do this comment out the above definition and
 -- uncomment the one below. Note that doing this will break the regression
 -- tests.

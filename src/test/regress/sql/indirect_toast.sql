@@ -11,7 +11,7 @@ SELECT descr, substring(make_tuple_indirect(toasttest)::text, 1, 200) FROM toast
 -- modification without changing varlenas
 UPDATE toasttest SET cnt = cnt +1 RETURNING substring(toasttest::text, 1, 200);
 
--- modification without modifying asigned value
+-- modification without modifying assigned value
 UPDATE toasttest SET cnt = cnt +1, f1 = f1 RETURNING substring(toasttest::text, 1, 200);
 
 -- modification modifying, but effectively not changing
@@ -20,7 +20,7 @@ UPDATE toasttest SET cnt = cnt +1, f1 = f1||'' RETURNING substring(toasttest::te
 UPDATE toasttest SET cnt = cnt +1, f1 = '-'||f1||'-' RETURNING substring(toasttest::text, 1, 200);
 
 SELECT substring(toasttest::text, 1, 200) FROM toasttest;
--- check we didn't screw with main/toast tuple visiblity
+-- check we didn't screw with main/toast tuple visibility
 VACUUM FREEZE toasttest;
 SELECT substring(toasttest::text, 1, 200) FROM toasttest;
 
@@ -42,7 +42,7 @@ CREATE TRIGGER toasttest_update_indirect
 -- modification without changing varlenas
 UPDATE toasttest SET cnt = cnt +1 RETURNING substring(toasttest::text, 1, 200);
 
--- modification without modifying asigned value
+-- modification without modifying assigned value
 UPDATE toasttest SET cnt = cnt +1, f1 = f1 RETURNING substring(toasttest::text, 1, 200);
 
 -- modification modifying, but effectively not changing
@@ -53,7 +53,7 @@ UPDATE toasttest SET cnt = cnt +1, f1 = '-'||f1||'-' RETURNING substring(toastte
 INSERT INTO toasttest(descr, f1, f2) VALUES('one-toasted,one-null, via indirect', repeat('1234567890',30000), NULL);
 
 SELECT substring(toasttest::text, 1, 200) FROM toasttest;
--- check we didn't screw with main/toast tuple visiblity
+-- check we didn't screw with main/toast tuple visibility
 VACUUM FREEZE toasttest;
 SELECT substring(toasttest::text, 1, 200) FROM toasttest;
 

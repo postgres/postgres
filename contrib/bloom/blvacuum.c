@@ -51,7 +51,7 @@ blbulkdelete(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 	initBloomState(&state, index);
 
 	/*
-	 * Interate over the pages. We don't care about concurrently added pages,
+	 * Iterate over the pages. We don't care about concurrently added pages,
 	 * they can't contain tuples to delete.
 	 */
 	npages = RelationGetNumberOfBlocks(index);

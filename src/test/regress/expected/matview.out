@@ -292,7 +292,7 @@ SELECT * FROM mvtest_tvvm;
 -- test diemv when the mv does not exist
 DROP MATERIALIZED VIEW IF EXISTS no_such_mv;
 NOTICE:  materialized view "no_such_mv" does not exist, skipping
--- make sure invalid comination of options is prohibited
+-- make sure invalid combination of options is prohibited
 REFRESH MATERIALIZED VIEW CONCURRENTLY mvtest_tvmm WITH NO DATA;
 ERROR:  CONCURRENTLY and WITH NO DATA options cannot be used together
 -- no tuple locks on materialized views

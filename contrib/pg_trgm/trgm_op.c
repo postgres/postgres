@@ -413,7 +413,7 @@ comp_ptrgm(const void *v1, const void *v2)
  * ulen1: count of unique trigrams of array "trg1".
  * len2: length of array "trg2" and array "trg2indexes".
  * len: length of the array "found".
- * check_only: if true then only check existaince of similar search pattern in
+ * check_only: if true then only check existence of similar search pattern in
  *			   text.
  *
  * Returns word similarity.
@@ -456,7 +456,7 @@ iterate_word_similarity(int *trg2indexes,
 			lastpos[trgindex] = i;
 		}
 
-		/* Adjust lower bound if this trigram is present in required substing */
+		/* Adjust lower bound if this trigram is present in required substring */
 		if (found[trgindex])
 		{
 			int			prev_lower,
@@ -547,7 +547,7 @@ iterate_word_similarity(int *trg2indexes,
  *
  * str1: search pattern string, of length slen1 bytes.
  * str2: text in which we are looking for a word, of length slen2 bytes.
- * check_only: if true then only check existaince of similar search pattern in
+ * check_only: if true then only check existence of similar search pattern in
  *			   text.
  *
  * Returns word similarity.

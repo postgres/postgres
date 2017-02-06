@@ -147,7 +147,7 @@ typedef struct
 } CMPDAffix;
 
 /*
- * Type of encoding affix flags in Hunspel dictionaries
+ * Type of encoding affix flags in Hunspell dictionaries
  */
 typedef enum
 {

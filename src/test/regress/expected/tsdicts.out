@@ -383,7 +383,7 @@ SELECT ts_lexize('hunspell_num', 'footballyklubber');
  {foot,ball,klubber}
 (1 row)
 
--- Synonim dictionary
+-- Synonym dictionary
 CREATE TEXT SEARCH DICTIONARY synonym (
 						Template=synonym,
 						Synonyms=synonym_sample
