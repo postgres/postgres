@@ -438,7 +438,7 @@ SELECT sepgsql_getcon();
  unconfined_u:unconfined_r:sepgsql_regtest_pool_t:s0
 (1 row)
 
--- the pooler cannot touch these tables directry
+-- the pooler cannot touch these tables directly
 SELECT * FROM foo_tbl;	-- failed
 ERROR:  SELinux: security policy violation
 SELECT * FROM var_tbl;	-- failed
