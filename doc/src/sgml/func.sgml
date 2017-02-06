@@ -11723,6 +11723,10 @@ nextval('foo'::text)      <lineannotation><literal>foo</literal> is looked up at
         </para>
        </important>
 
+       <para>
+        This function requires <literal>USAGE</literal>
+        or <literal>UPDATE</literal> privilege on the sequence.
+       </para>
       </listitem>
      </varlistentry>
 
@@ -11737,6 +11741,11 @@ nextval('foo'::text)      <lineannotation><literal>foo</literal> is looked up at
         a session-local value, it gives a predictable answer whether or not
         other sessions have executed <function>nextval</function> since the
         current session did.
+       </para>
+
+       <para>
+        This function requires <literal>USAGE</literal>
+        or <literal>SELECT</literal> privilege on the sequence.
        </para>
       </listitem>
      </varlistentry>
@@ -11753,6 +11762,11 @@ nextval('foo'::text)      <lineannotation><literal>foo</literal> is looked up at
         in the current session. It is an error to call
         <function>lastval</function> if <function>nextval</function>
         has not yet been called in the current session.
+       </para>
+
+       <para>
+        This function requires <literal>USAGE</literal>
+        or <literal>SELECT</literal> privilege on the last used sequence.
        </para>
       </listitem>
      </varlistentry>
@@ -11792,6 +11806,11 @@ SELECT setval('foo', 42, false);    <lineannotation>Next <function>nextval</> wi
          back.
         </para>
        </important>
+
+       <para>
+        This function requires <literal>UPDATE</literal> privilege on the
+        sequence.
+       </para>
       </listitem>
      </varlistentry>
     </variablelist>
