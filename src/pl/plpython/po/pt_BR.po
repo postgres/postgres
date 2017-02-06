@@ -1,13 +1,13 @@
 # Brazilian Portuguese message translation file for plpython
 # Copyright (C) 2009 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Euler Taveira de Oliveira <euler@timbira.com>, 2009-2016.
+# Euler Taveira de Oliveira <euler@timbira.com>, 2009-2017.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.2\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2016-02-13 12:59-0300\n"
+"POT-Creation-Date: 2017-02-02 13:47-0300\n"
 "PO-Revision-Date: 2009-05-10 01:15-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
 "Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
@@ -59,7 +59,7 @@ msgstr "busca em um cursor fechado"
 msgid "closing a cursor in an aborted subtransaction"
 msgstr "fechando um cursor em uma subtransação abortada"
 
-#: plpy_elog.c:103 plpy_elog.c:104 plpy_plpymodule.c:420
+#: plpy_elog.c:108 plpy_elog.c:109 plpy_plpymodule.c:441
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -229,56 +229,61 @@ msgstr "bloco de código PL/Python anônimo"
 msgid "plan.status takes no arguments"
 msgstr "plan.status não contém argumentos"
 
-#: plpy_plpymodule.c:178 plpy_plpymodule.c:181
+#: plpy_plpymodule.c:181 plpy_plpymodule.c:184
 #, c-format
 msgid "could not import \"plpy\" module"
 msgstr "não pôde importar módulo \"plpy\""
 
-#: plpy_plpymodule.c:196
+#: plpy_plpymodule.c:199
+#, c-format
+msgid "could not create the spiexceptions module"
+msgstr "não pôde criar o módulo spiexceptions"
+
+#: plpy_plpymodule.c:207
 #, c-format
 msgid "could not add the spiexceptions module"
 msgstr "não pôde adicionar o módulo spiexceptions"
 
-#: plpy_plpymodule.c:217
+#: plpy_plpymodule.c:237
 #, c-format
-msgid "could not create the base SPI exceptions"
-msgstr "não pôde criar as exceções base da SPI"
+msgid "could not create exception \"%s\""
+msgstr "não pôde criar exceção \"%s\""
 
-#: plpy_plpymodule.c:253 plpy_plpymodule.c:257
+#: plpy_plpymodule.c:272 plpy_plpymodule.c:276
 #, c-format
 msgid "could not generate SPI exceptions"
 msgstr "não pôde gerar exceções da SPI"
 
-#: plpy_plpymodule.c:388
+#: plpy_plpymodule.c:409
 #, c-format
 msgid "could not unpack arguments in plpy.elog"
 msgstr "não pode desempacotar argumentos em plpy.elog"
 
-#: plpy_plpymodule.c:396
+#: plpy_plpymodule.c:417
 msgid "could not parse error message in plpy.elog"
 msgstr "não pode analisar mensagem de erro em plpy.elog"
 
-#: plpy_procedure.c:199
+#: plpy_procedure.c:209
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "funções de gatilho só podem ser chamadas como gatilhos"
 
-#: plpy_procedure.c:204 plpy_typeio.c:406
+#: plpy_procedure.c:214 plpy_typeio.c:406
 #, c-format
 msgid "PL/Python functions cannot return type %s"
 msgstr "funções PL/Python não podem retornar tipo %s"
 
-#: plpy_procedure.c:286
+#: plpy_procedure.c:296
 #, c-format
 msgid "PL/Python functions cannot accept type %s"
 msgstr "funções PL/Python não podem aceitar tipo %s"
 
-#: plpy_procedure.c:382
+#: plpy_procedure.c:392
 #, c-format
 msgid "could not compile PL/Python function \"%s\""
 msgstr "não pôde compilar função PL/Python \"%s\""
 
-#: plpy_procedure.c:385
+#: plpy_procedure.c:395
 #, c-format
 msgid "could not compile anonymous PL/Python code block"
 msgstr "não pôde compilar bloco de código PL/Python anônimo"

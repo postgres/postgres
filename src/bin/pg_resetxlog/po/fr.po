@@ -1,10 +1,10 @@
 # translation of pg_resetxlog.po to fr_fr
 # french message translation file for pg_resetxlog
 #
-# Use these quotes: « %s »
+# Use these quotes: Â« %s Â»
 #
 # Guillaume Lelarge <guillaume@lelarge.info>, 2003-2009.
-# Stéphane Schildknecht <stephane.schildknecht@dalibo.com>, 2009.
+# StÃ©phane Schildknecht <stephane.schildknecht@dalibo.com>, 2009.
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.2\n"
@@ -15,7 +15,7 @@ msgstr ""
 "Language-Team: PostgreSQLfr <pgsql-fr-generale@postgresql.org>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=ISO-8859-15\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 1.5.4\n"
 
@@ -29,13 +29,13 @@ msgstr "%s : argument invalide pour l'option -e\n"
 #: pg_resetxlog.c:239 pg_resetxlog.c:247
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Essayer « %s --help » pour plus d'informations.\n"
+msgstr "Essayer Â« %s --help Â» pour plus d'informations.\n"
 
 #: pg_resetxlog.c:149
 #, c-format
 msgid "%s: transaction ID epoch (-e) must not be -1\n"
 msgstr ""
-"%s : la valeur epoch de l'identifiant de transaction (-e) ne doit pas être\n"
+"%s : la valeur epoch de l'identifiant de transaction (-e) ne doit pas Ãªtre\n"
 "-1\n"
 
 #: pg_resetxlog.c:158
@@ -46,7 +46,7 @@ msgstr "%s : argument invalide pour l'option -x\n"
 #: pg_resetxlog.c:164
 #, c-format
 msgid "%s: transaction ID (-x) must not be 0\n"
-msgstr "%s : l'identifiant de la transaction (-x) ne doit pas être 0\n"
+msgstr "%s : l'identifiant de la transaction (-x) ne doit pas Ãªtre 0\n"
 
 #: pg_resetxlog.c:173
 #, c-format
@@ -56,7 +56,7 @@ msgstr "%s : argument invalide pour l'option -o\n"
 #: pg_resetxlog.c:179
 #, c-format
 msgid "%s: OID (-o) must not be 0\n"
-msgstr "%s : l'OID (-o) ne doit pas être 0\n"
+msgstr "%s : l'OID (-o) ne doit pas Ãªtre 0\n"
 
 #: pg_resetxlog.c:188
 #, c-format
@@ -66,7 +66,7 @@ msgstr "%s : argument invalide pour l'option -m\n"
 #: pg_resetxlog.c:194
 #, c-format
 msgid "%s: multitransaction ID (-m) must not be 0\n"
-msgstr "%s : l'identifiant de multi-transaction (-m) ne doit pas être 0\n"
+msgstr "%s : l'identifiant de multi-transaction (-m) ne doit pas Ãªtre 0\n"
 
 #: pg_resetxlog.c:203
 #, c-format
@@ -76,7 +76,7 @@ msgstr "%s : argument invalide pour l'option -O\n"
 #: pg_resetxlog.c:209
 #, c-format
 msgid "%s: multitransaction offset (-O) must not be -1\n"
-msgstr "%s : le décalage de multi-transaction (-O) ne doit pas être -1\n"
+msgstr "%s : le dÃ©calage de multi-transaction (-O) ne doit pas Ãªtre -1\n"
 
 #: pg_resetxlog.c:218 pg_resetxlog.c:225 pg_resetxlog.c:232
 #, c-format
@@ -86,27 +86,27 @@ msgstr "%s : argument invalide pour l'option -l\n"
 #: pg_resetxlog.c:246
 #, c-format
 msgid "%s: no data directory specified\n"
-msgstr "%s : aucun répertoire de données indiqué\n"
+msgstr "%s : aucun rÃ©pertoire de donnÃ©es indiquÃ©\n"
 
 #: pg_resetxlog.c:260
 #, c-format
 msgid "%s: cannot be executed by \"root\"\n"
-msgstr "%s : ne peut pas être exécuté par « root »\n"
+msgstr "%s : ne peut pas Ãªtre exÃ©cutÃ© par Â« root Â»\n"
 
 #: pg_resetxlog.c:262
 #, c-format
 msgid "You must run %s as the PostgreSQL superuser.\n"
-msgstr "Vous devez exécuter %s en tant que super-utilisateur PostgreSQL.\n"
+msgstr "Vous devez exÃ©cuter %s en tant que super-utilisateur PostgreSQL.\n"
 
 #: pg_resetxlog.c:273
 #, c-format
 msgid "%s: could not change directory to \"%s\": %s\n"
-msgstr "%s : n'a pas pu accéder au répertoire « %s » : %s\n"
+msgstr "%s : n'a pas pu accÃ©der au rÃ©pertoire Â« %s Â» : %s\n"
 
 #: pg_resetxlog.c:286 pg_resetxlog.c:429
 #, c-format
 msgid "%s: could not open file \"%s\" for reading: %s\n"
-msgstr "%s : n'a pas pu ouvrir le fichier « %s » en lecture : %s\n"
+msgstr "%s : n'a pas pu ouvrir le fichier Â« %s Â» en lecture : %s\n"
 
 #: pg_resetxlog.c:293
 #, c-format
@@ -114,8 +114,8 @@ msgid ""
 "%s: lock file \"%s\" exists\n"
 "Is a server running?  If not, delete the lock file and try again.\n"
 msgstr ""
-"%s : le verrou « %s » existe\n"
-"Le serveur est-il démarré ? Sinon, supprimer le fichier verrou et réessayer.\n"
+"%s : le verrou Â« %s Â» existe\n"
+"Le serveur est-il dÃ©marrÃ© ? Sinon, supprimer le fichier verrou et rÃ©essayer.\n"
 
 #: pg_resetxlog.c:363
 #, c-format
@@ -125,7 +125,7 @@ msgid ""
 msgstr ""
 "\n"
 "Si ces valeurs semblent acceptables, utiliser -f pour forcer la\n"
-"réinitialisation.\n"
+"rÃ©initialisation.\n"
 
 #: pg_resetxlog.c:375
 #, c-format
@@ -134,21 +134,21 @@ msgid ""
 "Resetting the transaction log might cause data to be lost.\n"
 "If you want to proceed anyway, use -f to force reset.\n"
 msgstr ""
-"Le serveur de bases de données n'a pas été arrêté proprement.\n"
-"Ré-initialiser le journal des transactions peut occasionner des pertes de\n"
-"données.\n"
-"Pour continuer malgré tout, utiliser -f pour forcer la\n"
-"réinitialisation.\n"
+"Le serveur de bases de donnÃ©es n'a pas Ã©tÃ© arrÃªtÃ© proprement.\n"
+"RÃ©-initialiser le journal des transactions peut occasionner des pertes de\n"
+"donnÃ©es.\n"
+"Pour continuer malgrÃ© tout, utiliser -f pour forcer la\n"
+"rÃ©initialisation.\n"
 
 #: pg_resetxlog.c:389
 #, c-format
 msgid "Transaction log reset\n"
-msgstr "Réinitialisation du journal des transactions\n"
+msgstr "RÃ©initialisation du journal des transactions\n"
 
 #: pg_resetxlog.c:401
 #, c-format
 msgid "out of memory\n"
-msgstr "mémoire épuisée\n"
+msgstr "mÃ©moire Ã©puisÃ©e\n"
 
 #: pg_resetxlog.c:432
 #, c-format
@@ -157,24 +157,24 @@ msgid ""
 "  touch %s\n"
 "and try again.\n"
 msgstr ""
-"Si le chemin du répertoire de données est correct, exécuter\n"
+"Si le chemin du rÃ©pertoire de donnÃ©es est correct, exÃ©cuter\n"
 "  touch %s\n"
-"et réessayer.\n"
+"et rÃ©essayer.\n"
 
 #: pg_resetxlog.c:445
 #, c-format
 msgid "%s: could not read file \"%s\": %s\n"
-msgstr "%s : n'a pas pu lire le fichier « %s » : %s\n"
+msgstr "%s : n'a pas pu lire le fichier Â« %s Â» : %s\n"
 
 #: pg_resetxlog.c:468
 #, c-format
 msgid "%s: pg_control exists but has invalid CRC; proceed with caution\n"
-msgstr "%s : pg_control existe mais son CRC est invalide ; agir avec précaution\n"
+msgstr "%s : pg_control existe mais son CRC est invalide ; agir avec prÃ©caution\n"
 
 #: pg_resetxlog.c:477
 #, c-format
 msgid "%s: pg_control exists but is broken or unknown version; ignoring it\n"
-msgstr "%s : pg_control existe mais est corrompu ou de version inconnue ; ignoré\n"
+msgstr "%s : pg_control existe mais est corrompu ou de version inconnue ; ignorÃ©\n"
 
 #: pg_resetxlog.c:572
 #, c-format
@@ -182,7 +182,7 @@ msgid ""
 "Guessed pg_control values:\n"
 "\n"
 msgstr ""
-"Valeurs de pg_control devinées :\n"
+"Valeurs de pg_control devinÃ©es :\n"
 "\n"
 
 #: pg_resetxlog.c:574
@@ -197,90 +197,90 @@ msgstr ""
 #: pg_resetxlog.c:583
 #, c-format
 msgid "First log file ID after reset:        %u\n"
-msgstr "Premier identifiant du journal après réinitialisation : %u\n"
+msgstr "Premier identifiant du journal aprÃ¨s rÃ©initialisation : %u\n"
 
 #: pg_resetxlog.c:585
 #, c-format
 msgid "First log file segment after reset:   %u\n"
-msgstr "Premier segment du journal après réinitialisation :     %u\n"
+msgstr "Premier segment du journal aprÃ¨s rÃ©initialisation :     %u\n"
 
 #: pg_resetxlog.c:587
 #, c-format
 msgid "pg_control version number:            %u\n"
-msgstr "Numéro de version de pg_control :                       %u\n"
+msgstr "NumÃ©ro de version de pg_control :                       %u\n"
 
 #: pg_resetxlog.c:589
 #, c-format
 msgid "Catalog version number:               %u\n"
-msgstr "Numéro de version du catalogue :                        %u\n"
+msgstr "NumÃ©ro de version du catalogue :                        %u\n"
 
 #: pg_resetxlog.c:591
 #, c-format
 msgid "Database system identifier:           %s\n"
-msgstr "Identifiant du système de base de données :             %s\n"
+msgstr "Identifiant du systÃ¨me de base de donnÃ©es :             %s\n"
 
 #: pg_resetxlog.c:593
 #, c-format
 msgid "Latest checkpoint's TimeLineID:       %u\n"
-msgstr "Dernier TimeLineID du point de contrôle :               %u\n"
+msgstr "Dernier TimeLineID du point de contrÃ´le :               %u\n"
 
 #: pg_resetxlog.c:595
 #, c-format
 msgid "Latest checkpoint's full_page_writes: %s\n"
-msgstr "Dernier full_page_writes du point de contrôle :         %s\n"
+msgstr "Dernier full_page_writes du point de contrÃ´le :         %s\n"
 
 #: pg_resetxlog.c:596
 msgid "off"
-msgstr "désactivé"
+msgstr "dÃ©sactivÃ©"
 
 #: pg_resetxlog.c:596
 msgid "on"
-msgstr "activé"
+msgstr "activÃ©"
 
 #: pg_resetxlog.c:597
 #, c-format
 msgid "Latest checkpoint's NextXID:          %u/%u\n"
-msgstr "Dernier NextXID du point de contrôle :                  %u/%u\n"
+msgstr "Dernier NextXID du point de contrÃ´le :                  %u/%u\n"
 
 #: pg_resetxlog.c:600
 #, c-format
 msgid "Latest checkpoint's NextOID:          %u\n"
-msgstr "Dernier NextOID du point de contrôle :                  %u\n"
+msgstr "Dernier NextOID du point de contrÃ´le :                  %u\n"
 
 #: pg_resetxlog.c:602
 #, c-format
 msgid "Latest checkpoint's NextMultiXactId:  %u\n"
-msgstr "Dernier NextMultiXactId du point de contrôle :          %u\n"
+msgstr "Dernier NextMultiXactId du point de contrÃ´le :          %u\n"
 
 #: pg_resetxlog.c:604
 #, c-format
 msgid "Latest checkpoint's NextMultiOffset:  %u\n"
-msgstr "Dernier NextMultiOffset du point de contrôle :          %u\n"
+msgstr "Dernier NextMultiOffset du point de contrÃ´le :          %u\n"
 
 #: pg_resetxlog.c:606
 #, c-format
 msgid "Latest checkpoint's oldestXID:        %u\n"
-msgstr "Dernier oldestXID du point de contrôle :                %u\n"
+msgstr "Dernier oldestXID du point de contrÃ´le :                %u\n"
 
 #: pg_resetxlog.c:608
 #, c-format
 msgid "Latest checkpoint's oldestXID's DB:   %u\n"
-msgstr "Dernier oldestXID du point de contrôle de la base :     %u\n"
+msgstr "Dernier oldestXID du point de contrÃ´le de la base :     %u\n"
 
 #: pg_resetxlog.c:610
 #, c-format
 msgid "Latest checkpoint's oldestActiveXID:  %u\n"
-msgstr "Dernier oldestActiveXID du point de contrôle :          %u\n"
+msgstr "Dernier oldestActiveXID du point de contrÃ´le :          %u\n"
 
 #: pg_resetxlog.c:612
 #, c-format
 msgid "Maximum data alignment:               %u\n"
-msgstr "Alignement maximal des données :                        %u\n"
+msgstr "Alignement maximal des donnÃ©es :                        %u\n"
 
 #: pg_resetxlog.c:615
 #, c-format
 msgid "Database block size:                  %u\n"
-msgstr "Taille du bloc de la base de données :                  %u\n"
+msgstr "Taille du bloc de la base de donnÃ©es :                  %u\n"
 
 #: pg_resetxlog.c:617
 #, c-format
@@ -323,7 +323,7 @@ msgstr "entiers 64-bits"
 
 #: pg_resetxlog.c:630
 msgid "floating-point numbers"
-msgstr "nombres à virgule flottante"
+msgstr "nombres Ã  virgule flottante"
 
 #: pg_resetxlog.c:631
 #, c-format
@@ -332,7 +332,7 @@ msgstr "Passage d'argument float4 :                             %s\n"
 
 #: pg_resetxlog.c:632 pg_resetxlog.c:634
 msgid "by reference"
-msgstr "par référence"
+msgstr "par rÃ©fÃ©rence"
 
 #: pg_resetxlog.c:632 pg_resetxlog.c:634
 msgid "by value"
@@ -353,12 +353,12 @@ msgstr ""
 #: pg_resetxlog.c:714
 #, c-format
 msgid "%s: could not create pg_control file: %s\n"
-msgstr "%s : n'a pas pu créer le fichier pg_control : %s\n"
+msgstr "%s : n'a pas pu crÃ©er le fichier pg_control : %s\n"
 
 #: pg_resetxlog.c:725
 #, c-format
 msgid "%s: could not write pg_control file: %s\n"
-msgstr "%s : n'a pas pu écrire le fichier pg_control : %s\n"
+msgstr "%s : n'a pas pu Ã©crire le fichier pg_control : %s\n"
 
 #: pg_resetxlog.c:732 pg_resetxlog.c:1042
 #, c-format
@@ -368,37 +368,37 @@ msgstr "%s : erreur fsync : %s\n"
 #: pg_resetxlog.c:770 pg_resetxlog.c:846 pg_resetxlog.c:903
 #, c-format
 msgid "%s: could not open directory \"%s\": %s\n"
-msgstr "%s : n'a pas pu ouvrir le répertoire « %s » : %s\n"
+msgstr "%s : n'a pas pu ouvrir le rÃ©pertoire Â« %s Â» : %s\n"
 
 #: pg_resetxlog.c:809 pg_resetxlog.c:874 pg_resetxlog.c:932
 #, c-format
 msgid "%s: could not read directory \"%s\": %s\n"
-msgstr "%s : n'a pas pu lire le répertoire « %s » : %s\n"
+msgstr "%s : n'a pas pu lire le rÃ©pertoire Â« %s Â» : %s\n"
 
 #: pg_resetxlog.c:816 pg_resetxlog.c:881 pg_resetxlog.c:939
 #, c-format
 msgid "%s: could not close directory \"%s\": %s\n"
-msgstr "%s : n'a pas pu fermer le répertoire « %s » : %s\n"
+msgstr "%s : n'a pas pu fermer le rÃ©pertoire Â« %s Â» : %s\n"
 
 #: pg_resetxlog.c:859 pg_resetxlog.c:917
 #, c-format
 msgid "%s: could not delete file \"%s\": %s\n"
-msgstr "%s : n'a pas pu supprimer le fichier « %s » : %s\n"
+msgstr "%s : n'a pas pu supprimer le fichier Â« %s Â» : %s\n"
 
 #: pg_resetxlog.c:1009
 #, c-format
 msgid "%s: could not open file \"%s\": %s\n"
-msgstr "%s : n'a pas pu ouvrir le fichier « %s » : %s\n"
+msgstr "%s : n'a pas pu ouvrir le fichier Â« %s Â» : %s\n"
 
 #: pg_resetxlog.c:1020 pg_resetxlog.c:1034
 #, c-format
 msgid "%s: could not write file \"%s\": %s\n"
-msgstr "%s : n'a pas pu écrire le fichier « %s » : %s\n"
+msgstr "%s : n'a pas pu Ã©crire le fichier Â« %s Â» : %s\n"
 
 #: pg_resetxlog.c:1088
 #, c-format
 msgid "%s: WARNING: cannot create restricted tokens on this platform\n"
-msgstr "%s : ATTENTION : ne peut pas crér les jetons restreints sur cette plateforme\n"
+msgstr "%s : ATTENTION : ne peut pas crÃ©r les jetons restreints sur cette plateforme\n"
 
 #: pg_resetxlog.c:1097
 #, c-format
@@ -413,22 +413,22 @@ msgstr "%s : n'a pas pu allouer les SID : code d'erreur %lu\n"
 #: pg_resetxlog.c:1129
 #, c-format
 msgid "%s: could not create restricted token: error code %lu\n"
-msgstr "%s : n'a pas pu créer le jeton restreint : code d'erreur %lu\n"
+msgstr "%s : n'a pas pu crÃ©er le jeton restreint : code d'erreur %lu\n"
 
 #: pg_resetxlog.c:1150
 #, c-format
 msgid "%s: could not start process for command \"%s\": error code %lu\n"
-msgstr "%s : n'a pas pu démarrer le processus pour la commande « %s » : code d'erreur %lu\n"
+msgstr "%s : n'a pas pu dÃ©marrer le processus pour la commande Â« %s Â» : code d'erreur %lu\n"
 
 #: pg_resetxlog.c:1182
 #, c-format
 msgid "%s: could not re-execute with restricted token: error code %lu\n"
-msgstr "%s : n'a pas pu ré-exécuter le jeton restreint : code d'erreur %lu\n"
+msgstr "%s : n'a pas pu rÃ©-exÃ©cuter le jeton restreint : code d'erreur %lu\n"
 
 #: pg_resetxlog.c:1197
 #, c-format
 msgid "%s: could not get exit code from subprocess: error code %lu\n"
-msgstr "%s : n'a pas pu récupérer le code de statut du sous-processus : code d'erreur %lu\n"
+msgstr "%s : n'a pas pu rÃ©cupÃ©rer le code de statut du sous-processus : code d'erreur %lu\n"
 
 #: pg_resetxlog.c:1209
 #, c-format
@@ -436,7 +436,7 @@ msgid ""
 "%s resets the PostgreSQL transaction log.\n"
 "\n"
 msgstr ""
-"%s réinitialise le journal des transactions PostgreSQL.\n"
+"%s rÃ©initialise le journal des transactions PostgreSQL.\n"
 "\n"
 
 #: pg_resetxlog.c:1210
@@ -447,7 +447,7 @@ msgid ""
 "\n"
 msgstr ""
 "Usage :\n"
-"  %s [OPTION]... RÉP_DONNÉES\n"
+"  %s [OPTION]... RÃ‰P_DONNÃ‰ES\n"
 "\n"
 
 #: pg_resetxlog.c:1211
@@ -465,13 +465,13 @@ msgstr ""
 #: pg_resetxlog.c:1213
 #, c-format
 msgid "  -f               force update to be done\n"
-msgstr "  -f              force la mise à jour\n"
+msgstr "  -f              force la mise Ã  jour\n"
 
 #: pg_resetxlog.c:1214
 #, c-format
 msgid "  -l TLI,FILE,SEG  force minimum WAL starting location for new transaction log\n"
 msgstr ""
-"  -l TLI,FILE,SEG force l'emplacement minimal de début des WAL du nouveau\n"
+"  -l TLI,FILE,SEG force l'emplacement minimal de dÃ©but des WAL du nouveau\n"
 "                  journal de transactions\n"
 
 #: pg_resetxlog.c:1215
@@ -483,8 +483,8 @@ msgstr "  -m XID          fixe le prochain identifiant multi-transaction\n"
 #, c-format
 msgid "  -n               no update, just show extracted control values (for testing)\n"
 msgstr ""
-"  -n              pas de mise à jour, affiche simplement les valeurs de\n"
-"                  contrôle extraites (pour test)\n"
+"  -n              pas de mise Ã  jour, affiche simplement les valeurs de\n"
+"                  contrÃ´le extraites (pour test)\n"
 
 #: pg_resetxlog.c:1217
 #, c-format
@@ -494,7 +494,7 @@ msgstr "  -o OID          fixe le prochain OID\n"
 #: pg_resetxlog.c:1218
 #, c-format
 msgid "  -O OFFSET        set next multitransaction offset\n"
-msgstr "  -O DÉCALAGE     fixe le décalage de la prochaine multi-transaction\n"
+msgstr "  -O DÃ‰CALAGE     fixe le dÃ©calage de la prochaine multi-transaction\n"
 
 #: pg_resetxlog.c:1219
 #, c-format
@@ -518,10 +518,10 @@ msgid ""
 "Report bugs to <pgsql-bugs@postgresql.org>.\n"
 msgstr ""
 "\n"
-"Rapporter les bogues à <pgsql-bugs@postgresql.org>.\n"
+"Rapporter les bogues Ã  <pgsql-bugs@postgresql.org>.\n"
 
 #~ msgid "%s: could not read from directory \"%s\": %s\n"
-#~ msgstr "%s : n'a pas pu lire le répertoire « %s » : %s\n"
+#~ msgstr "%s : n'a pas pu lire le rÃ©pertoire Â« %s Â» : %s\n"
 
 #~ msgid "  --version       output version information, then exit\n"
 #~ msgstr "  --version       afficherla version et quitte\n"

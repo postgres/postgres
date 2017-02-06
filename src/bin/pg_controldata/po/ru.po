@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_controldata (PostgreSQL 9)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2016-09-20 18:38+0000\n"
-"PO-Revision-Date: 2016-09-20 12:00+0300\n"
+"POT-Creation-Date: 2017-01-30 17:39+0000\n"
+"PO-Revision-Date: 2016-11-24 17:08+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -182,31 +182,37 @@ msgstr "Идентификатор системы баз данных:     %s\n"
 msgid "Database cluster state:               %s\n"
 msgstr "Состояние кластера БД:                %s\n"
 
+# skip-rule: capital-letter-first
 #: pg_controldata.c:193
 #, c-format
 msgid "pg_control last modified:             %s\n"
 msgstr "Последнее обновление pg_control:      %s\n"
 
+# skip-rule: capital-letter-first
 #: pg_controldata.c:195
 #, c-format
 msgid "Latest checkpoint location:           %X/%X\n"
 msgstr "Положение последней конт. точки:      %X/%X\n"
 
+# skip-rule: capital-letter-first
 #: pg_controldata.c:198
 #, c-format
 msgid "Prior checkpoint location:            %X/%X\n"
 msgstr "Положение предыдущей конт. точки:     %X/%X\n"
 
+# skip-rule: capital-letter-first
 #: pg_controldata.c:201
 #, c-format
 msgid "Latest checkpoint's REDO location:    %X/%X\n"
 msgstr "Положение REDO последней конт. точки: %X/%X\n"
 
+# skip-rule: capital-letter-first
 #: pg_controldata.c:204
 #, c-format
 msgid "Latest checkpoint's TimeLineID:       %u\n"
 msgstr "Линия времени последней конт. точки:  %u\n"
 
+# skip-rule: no-space-after-period
 #: pg_controldata.c:206
 #, c-format
 msgid "Latest checkpoint's full_page_writes: %s\n"
@@ -220,40 +226,47 @@ msgstr "выкл."
 msgid "on"
 msgstr "вкл."
 
+# skip-rule: capital-letter-first
 #: pg_controldata.c:208
 #, c-format
 msgid "Latest checkpoint's NextXID:          %u/%u\n"
 msgstr "NextXID последней конт. точки:        %u/%u\n"
 
+# skip-rule: capital-letter-first
 #: pg_controldata.c:211
 #, c-format
 msgid "Latest checkpoint's NextOID:          %u\n"
 msgstr "NextOID последней конт. точки:        %u\n"
 
+# skip-rule: capital-letter-first
 #: pg_controldata.c:213
 #, c-format
 msgid "Latest checkpoint's NextMultiXactId:  %u\n"
 msgstr "NextMultiXactId послед. конт. точки:  %u\n"
 
+# skip-rule: capital-letter-first
 #: pg_controldata.c:215
 #, c-format
 msgid "Latest checkpoint's NextMultiOffset:  %u\n"
 msgstr "NextMultiOffset послед. конт. точки:  %u\n"
 
+# skip-rule: capital-letter-first
 #: pg_controldata.c:217
 #, c-format
 msgid "Latest checkpoint's oldestXID:        %u\n"
 msgstr "oldestXID последней конт. точки:      %u\n"
 
+# skip-rule: capital-letter-first
 #: pg_controldata.c:219
 #, c-format
 msgid "Latest checkpoint's oldestXID's DB:   %u\n"
 msgstr "БД с oldestXID последней конт. точки: %u\n"
 
+# skip-rule: capital-letter-first
 #: pg_controldata.c:221
 #, c-format
 msgid "Latest checkpoint's oldestActiveXID:  %u\n"
-msgstr "oldestActiveXID последней к.т.:       %u\n"
+msgstr "oldestActiveXID последней к. т.:      %u\n"
 
 #: pg_controldata.c:223
 #, c-format
@@ -318,6 +331,7 @@ msgstr "Макс. предел выравнивания данных:     %u\n"
 msgid "Database block size:                  %u\n"
 msgstr "Размер блока БД:                      %u\n"
 
+# skip-rule: double-space
 #: pg_controldata.c:249
 #, c-format
 msgid "Blocks per segment of large relation: %u\n"
