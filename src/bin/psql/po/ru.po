@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psql (PostgreSQL 9)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2016-09-20 18:32+0000\n"
-"PO-Revision-Date: 2016-09-20 12:00+0300\n"
+"POT-Creation-Date: 2017-01-30 17:33+0000\n"
+"PO-Revision-Date: 2016-11-24 18:24+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -236,7 +236,7 @@ msgstr "требуется имя функции\n"
 
 #: command.c:1348
 msgid "Timing is on."
-msgstr "Секундомер включен."
+msgstr "Секундомер включён."
 
 #: command.c:1350
 msgid "Timing is off."
@@ -773,6 +773,7 @@ msgstr "\\df принимает в качестве параметров тол�
 msgid "\\df does not take a \"w\" option with server version %s\n"
 msgstr "\\df не поддерживает параметр \"w\" с сервером версии %s\n"
 
+# well-spelled: агр
 #. translator: "agg" is short for "aggregate"
 #: describe.c:269 describe.c:315 describe.c:332
 msgid "agg"
@@ -809,7 +810,7 @@ msgstr "Безопасность"
 
 #: describe.c:352
 msgid "immutable"
-msgstr "постоянная "
+msgstr "постоянная"
 
 #: describe.c:353
 msgid "stable"
@@ -1042,6 +1043,7 @@ msgstr "Значение"
 msgid "Definition"
 msgstr "Определение"
 
+# well-spelled: ОСД
 #: describe.c:1439 describe.c:3945 describe.c:4029 describe.c:4100
 #: describe.c:4164
 msgid "FDW Options"
@@ -1132,7 +1134,7 @@ msgstr "Правила:"
 
 #: describe.c:1965
 msgid "Disabled rules:"
-msgstr "Отключенные правила:"
+msgstr "Отключённые правила:"
 
 #: describe.c:1968
 msgid "Rules firing always:"
@@ -1152,7 +1154,7 @@ msgstr "Триггеры:"
 
 #: describe.c:2121
 msgid "Disabled triggers:"
-msgstr "Отключенные триггеры:"
+msgstr "Отключённые триггеры:"
 
 #: describe.c:2124
 msgid "Triggers firing always:"
@@ -1301,6 +1303,7 @@ msgstr "Список параметров"
 msgid "index"
 msgstr "индекс"
 
+# skip-rule: capital-letter-first
 #: describe.c:2682
 msgid "special"
 msgstr "спец. отношение"
@@ -1397,7 +1400,7 @@ msgstr "отключён"
 
 #: describe.c:3055
 msgid "Enabled"
-msgstr "Включен"
+msgstr "Включён"
 
 #: describe.c:3056
 msgid "Procedure"
@@ -1994,6 +1997,7 @@ msgstr "Об ошибках сообщайте по адресу <pgsql-bugs@pos
 msgid "General\n"
 msgstr "Общие\n"
 
+# skip-rule: copyright
 #: help.c:173
 #, c-format
 msgid ""
@@ -2135,7 +2139,8 @@ msgstr "Информационные\n"
 #, c-format
 msgid "  (options: S = show system objects, + = additional detail)\n"
 msgstr ""
-"  (опции: S = показывать системные объекты, + = дополнительные подробности)\n"
+"  (дополнения: S = показывать системные объекты, + = дополнительные "
+"подробности)\n"
 
 #: help.c:203
 #, c-format
@@ -2286,10 +2291,11 @@ msgstr ""
 "  \\dp     [МАСКА]        список прав доступа к таблицам, представлениям и\n"
 "                         последовательностям\n"
 
+# well-spelled: МАСК
 #: help.c:230
 #, c-format
 msgid "  \\drds [PATRN1 [PATRN2]] list per-database role settings\n"
-msgstr "  \\drds [МAСК1 [МАСК2]]  список параметров роли на уровне БД\n"
+msgstr "  \\drds [МАСК1 [МАСК2]]  список параметров роли на уровне БД\n"
 
 #: help.c:231
 #, c-format
@@ -2607,6 +2613,7 @@ msgstr "Чтобы выйти из %s, введите \"\\q\".\n"
 msgid "You are using psql, the command-line interface to PostgreSQL."
 msgstr "Вы используете psql - интерфейс командной строки к PostgreSQL."
 
+# skip-rule: copyright
 #: mainloop.c:190
 #, c-format
 msgid ""
@@ -2635,24 +2642,24 @@ msgstr[2] "(%lu строк)"
 msgid "(No rows)\n"
 msgstr "(Нет записей)\n"
 
-#: print.c:2241
+#: print.c:2251
 #, c-format
 msgid "Interrupted\n"
 msgstr "Прервано\n"
 
-#: print.c:2307
+#: print.c:2317
 #, c-format
 msgid "Cannot add header to table content: column count of %d exceeded.\n"
 msgstr ""
 "Ошибка добавления заголовка таблицы: превышен предел числа колонок (%d).\n"
 
-#: print.c:2347
+#: print.c:2357
 #, c-format
 msgid "Cannot add cell to table content: total cell count of %d exceeded.\n"
 msgstr ""
 "Ошибка добавления ячейки в таблицу: превышен предел числа ячеек (%d).\n"
 
-#: print.c:2573
+#: print.c:2583
 #, c-format
 msgid "invalid output format (internal error): %d"
 msgstr "неверный формат вывода (внутренняя ошибка): %d"
@@ -2868,10 +2875,12 @@ msgstr "элемент_объект"
 msgid "where member_object is:"
 msgstr "где элемент_объект:"
 
+# well-spelled: агр
 #: sql_help.c:277 sql_help.c:1199 sql_help.c:3052
 msgid "agg_name"
 msgstr "агр_функция"
 
+# well-spelled: агр
 #: sql_help.c:278 sql_help.c:1200 sql_help.c:3053
 msgid "agg_type"
 msgstr "агр_тип"
@@ -4510,7 +4519,7 @@ msgstr "%s: предупреждение: лишний аргумент \"%s\" �
 msgid "unrecognized value \"%s\" for \"%s\"; assuming \"%s\"\n"
 msgstr "нераспознанное значение \"%s\" для \"%s\"; подразумевается \"%s\"\n"
 
-#: tab-complete.c:3952
+#: tab-complete.c:3960
 #, c-format
 msgid ""
 "tab completion query failed: %s\n"
