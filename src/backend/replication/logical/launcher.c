@@ -73,7 +73,7 @@ static void logicalrep_worker_onexit(int code, Datum arg);
 static void logicalrep_worker_detach(void);
 
 bool		got_SIGTERM = false;
-static bool	on_commit_laucher_wakeup = false;
+static bool	on_commit_launcher_wakeup = false;
 
 Datum pg_stat_get_subscription(PG_FUNCTION_ARGS);
 
@@ -526,7 +526,7 @@ ApplyLauncherShmemInit(void)
 void
 AtCommit_ApplyLauncher(void)
 {
-	if (on_commit_laucher_wakeup)
+	if (on_commit_launcher_wakeup)
 		ApplyLauncherWakeup();
 }
 
@@ -540,8 +540,8 @@ AtCommit_ApplyLauncher(void)
 void
 ApplyLauncherWakeupAtCommit(void)
 {
-	if (!on_commit_laucher_wakeup)
-		on_commit_laucher_wakeup = true;
+	if (!on_commit_launcher_wakeup)
+		on_commit_launcher_wakeup = true;
 }
 
 void
