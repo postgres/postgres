@@ -61,10 +61,21 @@ typedef uint32 Bucket;
 #define LH_PAGE_TYPE \
 	(LH_OVERFLOW_PAGE|LH_BUCKET_PAGE|LH_BITMAP_PAGE|LH_META_PAGE)
 
+/*
+ * In an overflow page, hasho_prevblkno stores the block number of the previous
+ * page in the bucket chain; in a bucket page, hasho_prevblkno stores the
+ * hashm_maxbucket value as of the last time the bucket was last split, or
+ * else as of the time the bucket was created.  The latter convention is used
+ * to determine whether a cached copy of the metapage is too stale to be used
+ * without needing to lock or pin the metapage.
+ *
+ * hasho_nextblkno is always the block number of the next page in the
+ * bucket chain, or InvalidBlockNumber if there are no more such pages.
+ */
 typedef struct HashPageOpaqueData
 {
-	BlockNumber hasho_prevblkno;	/* previous ovfl (or bucket) blkno */
-	BlockNumber hasho_nextblkno;	/* next ovfl blkno */
+	BlockNumber hasho_prevblkno;	/* see above */
+	BlockNumber hasho_nextblkno;	/* see above */
 	Bucket		hasho_bucket;	/* bucket number this pg belongs to */
 	uint16		hasho_flag;		/* page type code, see above */
 	uint16		hasho_page_id;	/* for identification of hash indexes */
@@ -309,6 +320,11 @@ extern Buffer _hash_getbuf(Relation rel, BlockNumber blkno,
 			 int access, int flags);
 extern Buffer _hash_getbuf_with_condlock_cleanup(Relation rel,
 								   BlockNumber blkno, int flags);
+extern HashMetaPage _hash_getcachedmetap(Relation rel, Buffer *metabuf,
+					 bool force_refresh);
+extern Buffer _hash_getbucketbuf_from_hashkey(Relation rel, uint32 hashkey,
+								int access,
+								HashMetaPage *cachedmetap);
 extern Buffer _hash_getinitbuf(Relation rel, BlockNumber blkno);
 extern Buffer _hash_getnewbuf(Relation rel, BlockNumber blkno,
 				ForkNumber forkNum);

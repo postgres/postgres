@@ -98,7 +98,7 @@ hash_page_stats(get_raw_page('test_hash_a_idx', 1));
 live_items      | 0
 dead_items      | 0
 page_size       | 8192
-hasho_prevblkno | 4294967295
+hasho_prevblkno | 3
 hasho_nextblkno | 4294967295
 hasho_bucket    | 0
 hasho_flag      | 2
@@ -111,7 +111,7 @@ hash_page_stats(get_raw_page('test_hash_a_idx', 2));
 live_items      | 0
 dead_items      | 0
 page_size       | 8192
-hasho_prevblkno | 4294967295
+hasho_prevblkno | 3
 hasho_nextblkno | 4294967295
 hasho_bucket    | 1
 hasho_flag      | 2
@@ -124,7 +124,7 @@ hash_page_stats(get_raw_page('test_hash_a_idx', 3));
 live_items      | 1
 dead_items      | 0
 page_size       | 8192
-hasho_prevblkno | 4294967295
+hasho_prevblkno | 3
 hasho_nextblkno | 4294967295
 hasho_bucket    | 2
 hasho_flag      | 2
@@ -137,7 +137,7 @@ hash_page_stats(get_raw_page('test_hash_a_idx', 4));
 live_items      | 0
 dead_items      | 0
 page_size       | 8192
-hasho_prevblkno | 4294967295
+hasho_prevblkno | 3
 hasho_nextblkno | 4294967295
 hasho_bucket    | 3
 hasho_flag      | 2

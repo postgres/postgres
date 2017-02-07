@@ -507,28 +507,24 @@ hashbulkdelete(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 	Bucket		orig_maxbucket;
 	Bucket		cur_maxbucket;
 	Bucket		cur_bucket;
-	Buffer		metabuf;
+	Buffer		metabuf = InvalidBuffer;
 	HashMetaPage metap;
-	HashMetaPageData local_metapage;
+	HashMetaPage cachedmetap;
 
 	tuples_removed = 0;
 	num_index_tuples = 0;
 
 	/*
-	 * Read the metapage to fetch original bucket and tuple counts.  Also, we
-	 * keep a copy of the last-seen metapage so that we can use its
-	 * hashm_spares[] values to compute bucket page addresses.  This is a bit
-	 * hokey but perfectly safe, since the interesting entries in the spares
-	 * array cannot change under us; and it beats rereading the metapage for
-	 * each bucket.
+	 * We need a copy of the metapage so that we can use its hashm_spares[]
+	 * values to compute bucket page addresses, but a cached copy should be
+	 * good enough.  (If not, we'll detect that further down and refresh the
+	 * cache as necessary.)
 	 */
-	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ, LH_META_PAGE);
-	metap = HashPageGetMeta(BufferGetPage(metabuf));
-	orig_maxbucket = metap->hashm_maxbucket;
-	orig_ntuples = metap->hashm_ntuples;
-	memcpy(&local_metapage, metap, sizeof(local_metapage));
-	/* release the lock, but keep pin */
-	LockBuffer(metabuf, BUFFER_LOCK_UNLOCK);
+	cachedmetap = _hash_getcachedmetap(rel, &metabuf, false);
+	Assert(cachedmetap != NULL);
+
+	orig_maxbucket = cachedmetap->hashm_maxbucket;
+	orig_ntuples = cachedmetap->hashm_ntuples;
 
 	/* Scan the buckets that we know exist */
 	cur_bucket = 0;
@@ -546,7 +542,7 @@ loop_top:
 		bool		split_cleanup = false;
 
 		/* Get address of bucket's start page */
-		bucket_blkno = BUCKET_TO_BLKNO(&local_metapage, cur_bucket);
+		bucket_blkno = BUCKET_TO_BLKNO(cachedmetap, cur_bucket);
 
 		blkno = bucket_blkno;
 
@@ -577,20 +573,27 @@ loop_top:
 			 * hashm_lowmask might be old enough to cause us to fail to remove
 			 * tuples left behind by the most recent split.  To prevent that,
 			 * now that the primary page of the target bucket has been locked
-			 * (and thus can't be further split), update our cached metapage
-			 * data.
+			 * (and thus can't be further split), check whether we need to
+			 * update our cached metapage data.
+			 *
+			 * NB: The check for InvalidBlockNumber is only needed for
+			 * on-disk compatibility with indexes created before we started
+			 * storing hashm_maxbucket in the primary page's hasho_prevblkno.
 			 */
-			LockBuffer(metabuf, BUFFER_LOCK_SHARE);
-			memcpy(&local_metapage, metap, sizeof(local_metapage));
-			LockBuffer(metabuf, BUFFER_LOCK_UNLOCK);
+			if (bucket_opaque->hasho_prevblkno != InvalidBlockNumber &&
+				bucket_opaque->hasho_prevblkno > cachedmetap->hashm_maxbucket)
+			{
+				cachedmetap = _hash_getcachedmetap(rel, &metabuf, true);
+				Assert(cachedmetap != NULL);
+			}
 		}
 
 		bucket_buf = buf;
 
 		hashbucketcleanup(rel, cur_bucket, bucket_buf, blkno, info->strategy,
-						  local_metapage.hashm_maxbucket,
-						  local_metapage.hashm_highmask,
-						  local_metapage.hashm_lowmask, &tuples_removed,
+						  cachedmetap->hashm_maxbucket,
+						  cachedmetap->hashm_highmask,
+						  cachedmetap->hashm_lowmask, &tuples_removed,
 						  &num_index_tuples, split_cleanup,
 						  callback, callback_state);
 
@@ -600,6 +603,9 @@ loop_top:
 		cur_bucket++;
 	}
 
+	if (BufferIsInvalid(metabuf))
+		metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_NOLOCK, LH_META_PAGE);
+
 	/* Write-lock metapage and check for split since we started */
 	LockBuffer(metabuf, BUFFER_LOCK_EXCLUSIVE);
 	metap = HashPageGetMeta(BufferGetPage(metabuf));
@@ -607,9 +613,10 @@ loop_top:
 	if (cur_maxbucket != metap->hashm_maxbucket)
 	{
 		/* There's been a split, so process the additional bucket(s) */
-		cur_maxbucket = metap->hashm_maxbucket;
-		memcpy(&local_metapage, metap, sizeof(local_metapage));
 		LockBuffer(metabuf, BUFFER_LOCK_UNLOCK);
+		cachedmetap = _hash_getcachedmetap(rel, &metabuf, true);
+		Assert(cachedmetap != NULL);
+		cur_maxbucket = cachedmetap->hashm_maxbucket;
 		goto loop_top;
 	}
 

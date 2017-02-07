@@ -32,9 +32,7 @@ _hash_doinsert(Relation rel, IndexTuple itup)
 	Buffer		bucket_buf;
 	Buffer		metabuf;
 	HashMetaPage metap;
-	BlockNumber blkno;
-	BlockNumber oldblkno;
-	bool		retry;
+	HashMetaPage usedmetap = NULL;
 	Page		metapage;
 	Page		page;
 	HashPageOpaque pageopaque;
@@ -42,9 +40,6 @@ _hash_doinsert(Relation rel, IndexTuple itup)
 	bool		do_expand;
 	uint32		hashkey;
 	Bucket		bucket;
-	uint32		maxbucket;
-	uint32		highmask;
-	uint32		lowmask;
 
 	/*
 	 * Get the hash key for the item (it's stored in the index tuple itself).
@@ -57,10 +52,14 @@ _hash_doinsert(Relation rel, IndexTuple itup)
 								 * need to be consistent */
 
 restart_insert:
-	/* Read the metapage */
-	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ, LH_META_PAGE);
+
+	/*
+	 * Read the metapage.  We don't lock it yet; HashMaxItemSize() will
+	 * examine pd_pagesize_version, but that can't change so we can examine
+	 * it without a lock.
+	 */
+	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_NOLOCK, LH_META_PAGE);
 	metapage = BufferGetPage(metabuf);
-	metap = HashPageGetMeta(metapage);
 
 	/*
 	 * Check whether the item can fit on a hash page at all. (Eventually, we
@@ -76,66 +75,17 @@ restart_insert:
 						itemsz, HashMaxItemSize(metapage)),
 			errhint("Values larger than a buffer page cannot be indexed.")));
 
-	oldblkno = InvalidBlockNumber;
-	retry = false;
-
-	/*
-	 * Loop until we get a lock on the correct target bucket.
-	 */
-	for (;;)
-	{
-		/*
-		 * Compute the target bucket number, and convert to block number.
-		 */
-		bucket = _hash_hashkey2bucket(hashkey,
-									  metap->hashm_maxbucket,
-									  metap->hashm_highmask,
-									  metap->hashm_lowmask);
-
-		blkno = BUCKET_TO_BLKNO(metap, bucket);
-
-		/*
-		 * Copy bucket mapping info now; refer the comment in
-		 * _hash_expandtable where we copy this information before calling
-		 * _hash_splitbucket to see why this is okay.
-		 */
-		maxbucket = metap->hashm_maxbucket;
-		highmask = metap->hashm_highmask;
-		lowmask = metap->hashm_lowmask;
-
-		/* Release metapage lock, but keep pin. */
-		LockBuffer(metabuf, BUFFER_LOCK_UNLOCK);
-
-		/*
-		 * If the previous iteration of this loop locked the primary page of
-		 * what is still the correct target bucket, we are done.  Otherwise,
-		 * drop any old lock before acquiring the new one.
-		 */
-		if (retry)
-		{
-			if (oldblkno == blkno)
-				break;
-			_hash_relbuf(rel, buf);
-		}
-
-		/* Fetch and lock the primary bucket page for the target bucket */
-		buf = _hash_getbuf(rel, blkno, HASH_WRITE, LH_BUCKET_PAGE);
-
-		/*
-		 * Reacquire metapage lock and check that no bucket split has taken
-		 * place while we were awaiting the bucket lock.
-		 */
-		LockBuffer(metabuf, BUFFER_LOCK_SHARE);
-		oldblkno = blkno;
-		retry = true;
-	}
+	/* Lock the primary bucket page for the target bucket. */
+	buf = _hash_getbucketbuf_from_hashkey(rel, hashkey, HASH_WRITE,
+										  &usedmetap);
+	Assert(usedmetap != NULL);
 
 	/* remember the primary bucket buffer to release the pin on it at end. */
 	bucket_buf = buf;
 
 	page = BufferGetPage(buf);
 	pageopaque = (HashPageOpaque) PageGetSpecialPointer(page);
-	Assert(pageopaque->hasho_bucket == bucket);
+	bucket = pageopaque->hasho_bucket;
 
 	/*
 	 * If this bucket is in the process of being split, try to finish the
@@ -151,8 +101,10 @@ restart_insert:
 		/* release the lock on bucket buffer, before completing the split. */
 		LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 
-		_hash_finish_split(rel, metabuf, buf, pageopaque->hasho_bucket,
-						   maxbucket, highmask, lowmask);
+		_hash_finish_split(rel, metabuf, buf, bucket,
+						   usedmetap->hashm_maxbucket,
+						   usedmetap->hashm_highmask,
+						   usedmetap->hashm_lowmask);
 
 		/* release the pin on old and meta buffer.  retry for insert. */
 		_hash_dropbuf(rel, buf);
@@ -225,6 +177,7 @@ restart_insert:
 	 */
 	LockBuffer(metabuf, BUFFER_LOCK_EXCLUSIVE);
 
+	metap = HashPageGetMeta(metapage);
 	metap->hashm_ntuples += 1;
 
 	/* Make sure this stays in sync with _hash_expandtable() */

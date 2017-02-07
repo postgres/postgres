@@ -539,7 +539,7 @@ live_items      | 407
 dead_items      | 0
 page_size       | 8192
 free_size       | 8
-hasho_prevblkno | 4294967295
+hasho_prevblkno | 4096
 hasho_nextblkno | 8474
 hasho_bucket    | 0
 hasho_flag      | 66

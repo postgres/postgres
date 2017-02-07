@@ -149,6 +149,50 @@ We choose to always lock the lower-numbered bucket first.  The metapage is
 only ever locked after all bucket locks have been taken.
 
 
+Metapage Caching
+----------------
+
+Both scanning the index and inserting tuples require locating the bucket
+where a given tuple ought to be located.  To do this, we need the bucket
+count, highmask, and lowmask from the metapage; however, it's undesirable
+for performance reasons to have to have to lock and pin the metapage for
+every such operation.  Instead, we retain a cached copy of the metapage
+in each each backend's relcache entry.  This will produce the correct
+bucket mapping as long as the target bucket hasn't been split since the
+last cache refresh.
+
+To guard against the possibility that such a split has occurred, the
+primary page of each bucket chain stores the number of buckets that
+existed as of the time the bucket was last split, or if never split as
+of the time it was created, in the space normally used for the
+previous block number (that is, hasho_prevblkno).  This doesn't cost
+anything because the primary bucket page is always the first page in
+the chain, and the previous block number is therefore always, in
+reality, InvalidBlockNumber.
+
+After computing the ostensibly-correct bucket number based on our cached
+copy of the metapage, we lock the corresponding primary bucket page and
+check whether the bucket count stored in hasho_prevblkno is greater than
+our the number of buckets stored in our cached copy of the metapage.  If
+so, the bucket has certainly been split, because the must originally
+have been less than the number of buckets that existed at that time and
+can't have increased except due to a split.  If not, the bucket can't have
+been split, because a split would have created a new bucket with a higher
+bucket number than any we'd seen previously.  In the latter case, we've
+locked the correct bucket and can proceed; in the former case, we must
+release the lock on this bucket, lock the metapage, update our cache,
+unlock the metapage, and retry.
+
+Needing to retry occasionally might seem expensive, but the number of times
+any given bucket can be split is limited to a few dozen no matter how
+many times the hash index is accessed, because the total number of
+buckets is limited to less than 2^32.  On the other hand, the number of
+times we access a bucket is unbounded and will be several orders of
+magnitude larger even in unsympathetic cases.
+
+(The metapage cache is new in v10.  Older hash indexes had the primary
+bucket page's hasho_prevblkno initialized to InvalidBuffer.)
+
 Pseudocode Algorithms
 ---------------------
 
@@ -188,17 +232,7 @@ track of available overflow pages.
 
 The reader algorithm is:
 
-	pin meta page and take buffer content lock in shared mode
-	loop:
-		compute bucket number for target hash key
-		release meta page buffer content lock
-		if (correct bucket page is already locked)
-			break
-		release any existing bucket page buffer content lock (if a concurrent
-         split happened)
-		take the buffer content lock on bucket page in shared mode
-		retake meta page buffer content lock in shared mode
-	release pin on metapage
+    lock the primary bucket page of the target bucket
 	if the target bucket is still being populated by a split:
 		release the buffer content lock on current bucket page
 		pin and acquire the buffer content lock on old bucket in shared mode
@@ -238,17 +272,7 @@ which this bucket is formed by split.
 
 The insertion algorithm is rather similar:
 
-	pin meta page and take buffer content lock in shared mode
-	loop:
-		compute bucket number for target hash key
-		release meta page buffer content lock
-		if (correct bucket page is already locked)
-			break
-		release any existing bucket page buffer content lock (if a concurrent
-         split happened)
-		take the buffer content lock on bucket page in exclusive mode
-		retake meta page buffer content lock in shared mode
-	release pin on metapage
+    lock the primary bucket page of the target bucket
 -- (so far same as reader, except for acquisition of buffer content lock in
 	exclusive mode on primary bucket page)
 	if the bucket-being-split flag is set for a bucket and pin count on it is
