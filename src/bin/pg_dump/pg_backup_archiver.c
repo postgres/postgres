@@ -780,6 +780,7 @@ NewRestoreOptions(void)
 	opts->format = archUnknown;
 	opts->promptPassword = TRI_DEFAULT;
 	opts->dumpSections = DUMP_UNSECTIONED;
+	opts->number_of_jobs = 1;
 
 	return opts;
 }
