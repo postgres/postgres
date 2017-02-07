@@ -294,13 +294,13 @@ DECLARE
 	r record;
 	r2 record;
 	cond text;
+	idx_ctids tid[];
+	ss_ctids tid[];
 	count int;
-	mismatch bool;
 	plan_ok bool;
 	plan_line text;
 BEGIN
 	FOR r IN SELECT colname, oper, typ, value[ordinality], matches[ordinality] FROM brinopers, unnest(op) WITH ORDINALITY AS oper LOOP
-		mismatch := false;
 
 		-- prepare the condition
 		IF r.value IS NULL THEN
@@ -310,13 +310,12 @@ BEGIN
 		END IF;
 
 		-- run the query using the brin index
-		CREATE TEMP TABLE brin_result (cid tid);
 		SET enable_seqscan = 0;
 		SET enable_bitmapscan = 1;
 
 		plan_ok := false;
-		FOR plan_line IN EXECUTE format($y$EXPLAIN SELECT ctid FROM brintest WHERE %s $y$, cond) LOOP
-			IF plan_line LIKE 'Bitmap Heap Scan on brintest%' THEN
+		FOR plan_line IN EXECUTE format($y$EXPLAIN SELECT array_agg(ctid) FROM brintest WHERE %s $y$, cond) LOOP
+			IF plan_line LIKE '%Bitmap Heap Scan on brintest%' THEN
 				plan_ok := true;
 			END IF;
 		END LOOP;
@@ -324,16 +323,16 @@ BEGIN
 			RAISE WARNING 'did not get bitmap indexscan plan for %', r;
 		END IF;
 
-		EXECUTE format($y$INSERT INTO brin_result SELECT ctid FROM brintest WHERE %s $y$, cond);
+		EXECUTE format($y$SELECT array_agg(ctid) FROM brintest WHERE %s $y$, cond)
+			INTO idx_ctids;
 
 		-- run the query using a seqscan
-		CREATE TEMP TABLE brin_result_ss (cid tid);
 		SET enable_seqscan = 1;
 		SET enable_bitmapscan = 0;
 
 		plan_ok := false;
-		FOR plan_line IN EXECUTE format($y$EXPLAIN SELECT ctid FROM brintest WHERE %s $y$, cond) LOOP
-			IF plan_line LIKE 'Seq Scan on brintest%' THEN
+		FOR plan_line IN EXECUTE format($y$EXPLAIN SELECT array_agg(ctid) FROM brintest WHERE %s $y$, cond) LOOP
+			IF plan_line LIKE '%Seq Scan on brintest%' THEN
 				plan_ok := true;
 			END IF;
 		END LOOP;
@@ -341,22 +340,16 @@ BEGIN
 			RAISE WARNING 'did not get seqscan plan for %', r;
 		END IF;
 
-		EXECUTE format($y$INSERT INTO brin_result_ss SELECT ctid FROM brintest WHERE %s $y$, cond);
+		EXECUTE format($y$SELECT array_agg(ctid) FROM brintest WHERE %s $y$, cond)
+			INTO ss_ctids;
 
 		-- make sure both return the same results
-		PERFORM * FROM brin_result EXCEPT ALL SELECT * FROM brin_result_ss;
-		GET DIAGNOSTICS count = ROW_COUNT;
-		IF count <> 0 THEN
-			mismatch = true;
-		END IF;
-		PERFORM * FROM brin_result_ss EXCEPT ALL SELECT * FROM brin_result;
-		GET DIAGNOSTICS count = ROW_COUNT;
-		IF count <> 0 THEN
-			mismatch = true;
-		END IF;
+		count := array_length(idx_ctids, 1);
 
-		-- report the results of each scan to make the differences obvious
-		IF mismatch THEN
+		IF NOT (count = array_length(ss_ctids, 1) AND
+				idx_ctids @> ss_ctids AND
+				idx_ctids <@ ss_ctids) THEN
+			-- report the results of each scan to make the differences obvious
 			RAISE WARNING 'something not right in %: count %', r, count;
 			SET enable_seqscan = 1;
 			SET enable_bitmapscan = 0;
@@ -372,12 +365,7 @@ BEGIN
 		END IF;
 
 		-- make sure we found expected number of matches
-		SELECT count(*) INTO count FROM brin_result;
 		IF count != r.matches THEN RAISE WARNING 'unexpected number of results % for %', count, r; END IF;
-
-		-- drop the temporary tables
-		DROP TABLE brin_result;
-		DROP TABLE brin_result_ss;
 	END LOOP;
 END;
 $x$;
