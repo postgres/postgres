@@ -23,6 +23,8 @@
  *	  - SH_DEFINE - if defined function definitions are generated
  *	  - SH_SCOPE - in which scope (e.g. extern, static inline) do function
  *		declarations reside
+ *    - SH_USE_NONDEFAULT_ALLOCATOR - if defined no element allocator functions
+ *      are defined, so you can supply your own
  *	  The following parameters are only relevant when SH_DEFINE is defined:
  *	  - SH_KEY - name of the element in SH_ELEMENT_TYPE containing the hash key
  *	  - SH_EQUAL(table, a, b) - compare two table keys
@@ -77,6 +79,8 @@
 #define SH_START_ITERATE SH_MAKE_NAME(start_iterate)
 #define SH_START_ITERATE_AT SH_MAKE_NAME(start_iterate_at)
 #define SH_ITERATE SH_MAKE_NAME(iterate)
+#define SH_ALLOCATE SH_MAKE_NAME(allocate)
+#define SH_FREE SH_MAKE_NAME(free)
 #define SH_STAT SH_MAKE_NAME(stat)
 
 /* internal helper functions (no externally visible prototypes) */
@@ -86,13 +90,6 @@
 #define SH_DISTANCE_FROM_OPTIMAL SH_MAKE_NAME(distance)
 #define SH_INITIAL_BUCKET SH_MAKE_NAME(initial_bucket)
 #define SH_ENTRY_HASH SH_MAKE_NAME(entry_hash)
-
-/* Allocation function for hash table elements */
-#ifndef SIMPLEHASH_TYPEDEFS
-#define SIMPLEHASH_TYPEDEFS
-typedef void *(*simplehash_allocate) (Size size, void *args);
-typedef void (*simplehash_free) (void *pointer, void *args);
-#endif
 
 /* generate forward declarations necessary to use the hash table */
 #ifdef SH_DECLARE
@@ -119,11 +116,6 @@ typedef struct SH_TYPE
 	/* hash buckets */
 	SH_ELEMENT_TYPE *data;
 
-	/* Allocation and free functions, and the associated context. */
-	simplehash_allocate element_alloc;
-	simplehash_free element_free;
-	void	   *element_args;
-
 	/* memory context to use for allocations */
 	MemoryContext ctx;
 
@@ -145,8 +137,7 @@ typedef struct SH_ITERATOR
 } SH_ITERATOR;
 
 /* externally visible function prototypes */
-SH_SCOPE SH_TYPE *SH_CREATE(MemoryContext ctx, uint32 nelements,
-		simplehash_allocate allocfunc, simplehash_free freefunc, void *args);
+SH_SCOPE SH_TYPE *SH_CREATE(MemoryContext ctx, uint32 nelements);
 SH_SCOPE void SH_DESTROY(SH_TYPE *tb);
 SH_SCOPE void SH_GROW(SH_TYPE *tb, uint32 newsize);
 SH_SCOPE SH_ELEMENT_TYPE *SH_INSERT(SH_TYPE *tb, SH_KEY_TYPE key, bool *found);
@@ -289,22 +280,24 @@ SH_ENTRY_HASH(SH_TYPE *tb, SH_ELEMENT_TYPE * entry)
 #endif
 }
 
-/* default memory allocator function */
-static void *
-SH_DEFAULT_ALLOC(Size size, void *args)
-{
-	MemoryContext context = (MemoryContext) args;
+#ifndef SH_USE_NONDEFAULT_ALLOCATOR
 
-	return MemoryContextAllocExtended(context, size,
+/* default memory allocator function */
+static inline void *
+SH_ALLOCATE(SH_TYPE *type, Size size)
+{
+	return MemoryContextAllocExtended(type->ctx, size,
 									  MCXT_ALLOC_HUGE | MCXT_ALLOC_ZERO);
 }
 
 /* default memory free function */
-static void
-SH_DEFAULT_FREE(void *pointer, void *args)
+static inline void
+SH_FREE(SH_TYPE *type, void *pointer)
 {
 	pfree(pointer);
 }
+
+#endif
 
 /*
  * Create a hash table with enough space for `nelements` distinct members.
@@ -316,8 +309,7 @@ SH_DEFAULT_FREE(void *pointer, void *args)
  * the passed-in context.
  */
 SH_SCOPE SH_TYPE *
-SH_CREATE(MemoryContext ctx, uint32 nelements, simplehash_allocate allocfunc,
-		  simplehash_free freefunc, void *args)
+SH_CREATE(MemoryContext ctx, uint32 nelements)
 {
 	SH_TYPE    *tb;
 	uint64		size;
@@ -330,22 +322,7 @@ SH_CREATE(MemoryContext ctx, uint32 nelements, simplehash_allocate allocfunc,
 
 	SH_COMPUTE_PARAMETERS(tb, size);
 
-	if (allocfunc == NULL)
-	{
-		tb->element_alloc = SH_DEFAULT_ALLOC;
-		tb->element_free = SH_DEFAULT_FREE;
-		tb->element_args = ctx;
-	}
-	else
-	{
-		tb->element_alloc = allocfunc;
-		tb->element_free = freefunc;
-
-		tb->element_args = args;
-	}
-
-	tb->data = tb->element_alloc(sizeof(SH_ELEMENT_TYPE) * tb->size,
-								 tb->element_args);
+	tb->data = SH_ALLOCATE(tb, sizeof(SH_ELEMENT_TYPE) * tb->size);
 
 	return tb;
 }
@@ -354,7 +331,7 @@ SH_CREATE(MemoryContext ctx, uint32 nelements, simplehash_allocate allocfunc,
 SH_SCOPE void
 SH_DESTROY(SH_TYPE *tb)
 {
-	tb->element_free(tb->data, tb->element_args);
+	SH_FREE(tb, tb->data);
 	pfree(tb);
 }
 
@@ -382,8 +359,7 @@ SH_GROW(SH_TYPE *tb, uint32 newsize)
 	/* compute parameters for new table */
 	SH_COMPUTE_PARAMETERS(tb, newsize);
 
-	tb->data = tb->element_alloc(sizeof(SH_ELEMENT_TYPE) * tb->size,
-								 tb->element_args);
+	tb->data = SH_ALLOCATE(tb, sizeof(SH_ELEMENT_TYPE) * tb->size);
 
 	newdata = tb->data;
 
@@ -469,7 +445,7 @@ SH_GROW(SH_TYPE *tb, uint32 newsize)
 		}
 	}
 
-	tb->element_free(olddata, tb->element_args);
+	SH_FREE(tb, olddata);
 }
 
 /*
@@ -888,6 +864,7 @@ SH_STAT(SH_TYPE *tb)
 #undef SH_DEFINE
 #undef SH_GET_HASH
 #undef SH_STORE_HASH
+#undef SH_USE_NONDEFAULT_ALLOCATOR
 
 /* undefine locally declared macros */
 #undef SH_MAKE_PREFIX
@@ -914,6 +891,8 @@ SH_STAT(SH_TYPE *tb)
 #undef SH_START_ITERATE
 #undef SH_START_ITERATE_AT
 #undef SH_ITERATE
+#undef SH_ALLOCATE
+#undef SH_FREE
 #undef SH_STAT
 
 /* internal function names */
