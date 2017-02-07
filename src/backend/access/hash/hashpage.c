@@ -1220,7 +1220,7 @@ _hash_getcachedmetap(Relation rel, Buffer *metabuf, bool force_refresh)
 	Assert(metabuf);
 	if (force_refresh || rel->rd_amcache == NULL)
 	{
-		char   *cache;
+		char   *cache = NULL;
 
 		/*
 		 * It's important that we don't set rd_amcache to an invalid
