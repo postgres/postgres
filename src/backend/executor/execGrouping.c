@@ -330,7 +330,8 @@ BuildTupleHashTable(int numCols, AttrNumber *keyColIdx,
 	else
 		hashtable->hash_iv = 0;
 
-	hashtable->hashtab = tuplehash_create(tablecxt, nbuckets);
+	hashtable->hashtab =
+			tuplehash_create(tablecxt, nbuckets, NULL, NULL, NULL);
 	hashtable->hashtab->private_data = hashtable;
 
 	return hashtable;

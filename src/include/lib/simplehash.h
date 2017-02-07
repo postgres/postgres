@@ -87,6 +87,10 @@
 #define SH_INITIAL_BUCKET SH_MAKE_NAME(initial_bucket)
 #define SH_ENTRY_HASH SH_MAKE_NAME(entry_hash)
 
+/* Allocation function for hash table elements */
+typedef void *(*simplehash_allocate) (Size size, void *args);
+typedef void (*simplehash_free) (void *pointer, void *args);
+
 /* generate forward declarations necessary to use the hash table */
 #ifdef SH_DECLARE
 
@@ -112,6 +116,11 @@ typedef struct SH_TYPE
 	/* hash buckets */
 	SH_ELEMENT_TYPE *data;
 
+	/* Allocation and free functions, and the associated context. */
+	simplehash_allocate element_alloc;
+	simplehash_free element_free;
+	void	   *element_args;
+
 	/* memory context to use for allocations */
 	MemoryContext ctx;
 
@@ -133,7 +142,8 @@ typedef struct SH_ITERATOR
 } SH_ITERATOR;
 
 /* externally visible function prototypes */
-SH_SCOPE SH_TYPE *SH_CREATE(MemoryContext ctx, uint32 nelements);
+SH_SCOPE SH_TYPE *SH_CREATE(MemoryContext ctx, uint32 nelements,
+		simplehash_allocate allocfunc, simplehash_free freefunc, void *args);
 SH_SCOPE void SH_DESTROY(SH_TYPE *tb);
 SH_SCOPE void SH_GROW(SH_TYPE *tb, uint32 newsize);
 SH_SCOPE SH_ELEMENT_TYPE *SH_INSERT(SH_TYPE *tb, SH_KEY_TYPE key, bool *found);
@@ -276,12 +286,35 @@ SH_ENTRY_HASH(SH_TYPE *tb, SH_ELEMENT_TYPE * entry)
 #endif
 }
 
+/* default memory allocator function */
+static void *
+SH_DEFAULT_ALLOC(Size size, void *args)
+{
+	MemoryContext context = (MemoryContext) args;
+
+	return MemoryContextAllocExtended(context, size,
+									  MCXT_ALLOC_HUGE | MCXT_ALLOC_ZERO);
+}
+
+/* default memory free function */
+static void
+SH_DEFAULT_FREE(void *pointer, void *args)
+{
+	pfree(pointer);
+}
+
 /*
- * Create a hash table with enough space for `nelements` distinct members,
- * allocating required memory in the passed-in context.
+ * Create a hash table with enough space for `nelements` distinct members.
+ * Memory for the hash table is allocated from the passed-in context.  If
+ * desired, the array of elements can be allocated using a passed-in allocator;
+ * this could be useful in order to place the array of elements in a shared
+ * memory, or in a context that will outlive the rest of the hash table.
+ * Memory other than for the array of elements will still be allocated from
+ * the passed-in context.
  */
 SH_SCOPE SH_TYPE *
-SH_CREATE(MemoryContext ctx, uint32 nelements)
+SH_CREATE(MemoryContext ctx, uint32 nelements, simplehash_allocate allocfunc,
+		  simplehash_free freefunc, void *args)
 {
 	SH_TYPE    *tb;
 	uint64		size;
@@ -294,9 +327,22 @@ SH_CREATE(MemoryContext ctx, uint32 nelements)
 
 	SH_COMPUTE_PARAMETERS(tb, size);
 
-	tb->data = MemoryContextAllocExtended(tb->ctx,
-										  sizeof(SH_ELEMENT_TYPE) * tb->size,
-										  MCXT_ALLOC_HUGE | MCXT_ALLOC_ZERO);
+	if (allocfunc == NULL)
+	{
+		tb->element_alloc = SH_DEFAULT_ALLOC;
+		tb->element_free = SH_DEFAULT_FREE;
+		tb->element_args = ctx;
+	}
+	else
+	{
+		tb->element_alloc = allocfunc;
+		tb->element_free = freefunc;
+
+		tb->element_args = args;
+	}
+
+	tb->data = tb->element_alloc(sizeof(SH_ELEMENT_TYPE) * tb->size,
+								 tb->element_args);
 
 	return tb;
 }
@@ -305,7 +351,7 @@ SH_CREATE(MemoryContext ctx, uint32 nelements)
 SH_SCOPE void
 SH_DESTROY(SH_TYPE *tb)
 {
-	pfree(tb->data);
+	tb->element_free(tb->data, tb->element_args);
 	pfree(tb);
 }
 
@@ -333,9 +379,8 @@ SH_GROW(SH_TYPE *tb, uint32 newsize)
 	/* compute parameters for new table */
 	SH_COMPUTE_PARAMETERS(tb, newsize);
 
-	tb->data = MemoryContextAllocExtended(
-								 tb->ctx, sizeof(SH_ELEMENT_TYPE) * tb->size,
-										  MCXT_ALLOC_HUGE | MCXT_ALLOC_ZERO);
+	tb->data = tb->element_alloc(sizeof(SH_ELEMENT_TYPE) * tb->size,
+								 tb->element_args);
 
 	newdata = tb->data;
 
@@ -421,7 +466,7 @@ SH_GROW(SH_TYPE *tb, uint32 newsize)
 		}
 	}
 
-	pfree(olddata);
+	tb->element_free(olddata, tb->element_args);
 }
 
 /*
