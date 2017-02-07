@@ -88,8 +88,11 @@
 #define SH_ENTRY_HASH SH_MAKE_NAME(entry_hash)
 
 /* Allocation function for hash table elements */
+#ifndef SIMPLEHASH_TYPEDEFS
+#define SIMPLEHASH_TYPEDEFS
 typedef void *(*simplehash_allocate) (Size size, void *args);
 typedef void (*simplehash_free) (void *pointer, void *args);
+#endif
 
 /* generate forward declarations necessary to use the hash table */
 #ifdef SH_DECLARE
