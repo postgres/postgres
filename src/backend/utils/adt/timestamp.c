@@ -1538,12 +1538,14 @@ make_interval(PG_FUNCTION_ARGS)
 	result->month = years * MONTHS_PER_YEAR + months;
 	result->day = weeks * 7 + days;
 
-	secs += hours * (double) SECS_PER_HOUR + mins * (double) SECS_PER_MINUTE;
-
 #ifdef HAVE_INT64_TIMESTAMP
-	result->time = (int64) (secs * USECS_PER_SEC);
+	result->time = hours * ((int64) SECS_PER_HOUR * USECS_PER_SEC) +
+		mins * ((int64) SECS_PER_MINUTE * USECS_PER_SEC) +
+		(int64) rint(secs * USECS_PER_SEC);
 #else
-	result->time = secs;
+	result->time = hours * (double) SECS_PER_HOUR +
+		mins * (double) SECS_PER_MINUTE +
+		secs;
 #endif
 
 	PG_RETURN_INTERVAL_P(result);
