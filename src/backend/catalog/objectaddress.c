@@ -1835,7 +1835,10 @@ get_object_address_publication_rel(List *objname, List *objargs,
 	/* Now look up the pg_publication tuple */
 	pub = GetPublicationByName(pubname, missing_ok);
 	if (!pub)
+	{
+		relation_close(relation, AccessShareLock);
 		return address;
+	}
 
 	/* Find the publication relation mapping in syscache. */
 	address.objectId =
@@ -1849,6 +1852,7 @@ get_object_address_publication_rel(List *objname, List *objargs,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("publication relation \"%s\" in publication \"%s\" does not exist",
 							RelationGetRelationName(relation), pubname)));
+		relation_close(relation, AccessShareLock);
 		return address;
 	}
 
