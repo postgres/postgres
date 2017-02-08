@@ -76,7 +76,8 @@ CREATE SUBSCRIPTION <replaceable class="PARAMETER">subscription_name</replaceabl
     <term><literal>CONNECTION '<replaceable class="parameter">conninfo</replaceable>'</literal></term>
     <listitem>
      <para>
-      The connection string to the publisher.
+      The connection string to the publisher.  For details
+      see <xref linkend="libpq-connstring">.
      </para>
     </listitem>
    </varlistentry>
@@ -127,6 +128,16 @@ CREATE SUBSCRIPTION <replaceable class="PARAMETER">subscription_name</replaceabl
  </refsect1>
 
  <refsect1>
+  <title>Notes</title>
+
+  <para>
+   See <xref linkend="streaming-replication-authentication"> for details on
+   how to configure access control between the subscription and the
+   publication instance.
+  </para>
+ </refsect1>
+
+ <refsect1>
   <title>Examples</title>
 
   <para>
@@ -136,7 +147,7 @@ CREATE SUBSCRIPTION <replaceable class="PARAMETER">subscription_name</replaceabl
    commit:
 <programlisting>
 CREATE SUBSCRIPTION mysub
-         CONNECTION 'host=192.168.1.50 port=5432 user=foo dbname=foodb password=foopass'
+         CONNECTION 'host=192.168.1.50 port=5432 user=foo dbname=foodb'
         PUBLICATION mypublication, insert_only;
 </programlisting>
   </para>
@@ -147,7 +158,7 @@ CREATE SUBSCRIPTION mysub
    until enabled at a later time.
 <programlisting>
 CREATE SUBSCRIPTION mysub
-         CONNECTION 'host=192.168.1.50 port=5432 user=foo dbname=foodb password=foopass'
+         CONNECTION 'host=192.168.1.50 port=5432 user=foo dbname=foodb'
         PUBLICATION insert_only
                WITH (DISABLED);
 </programlisting>
