@@ -421,10 +421,12 @@ XLogInsert(RmgrId rmid, uint8 info)
 		elog(ERROR, "XLogBeginInsert was not called");
 
 	/*
-	 * The caller can set rmgr bits and XLR_SPECIAL_REL_UPDATE; the rest are
-	 * reserved for use by me.
+	 * The caller can set rmgr bits, XLR_SPECIAL_REL_UPDATE and
+	 * XLR_CHECK_CONSISTENCY; the rest are reserved for use by me.
 	 */
-	if ((info & ~(XLR_RMGR_INFO_MASK | XLR_SPECIAL_REL_UPDATE)) != 0)
+	if ((info & ~(XLR_RMGR_INFO_MASK |
+				  XLR_SPECIAL_REL_UPDATE |
+				  XLR_CHECK_CONSISTENCY)) != 0)
 		elog(PANIC, "invalid xlog info mask %02X", info);
 
 	TRACE_POSTGRESQL_XLOG_INSERT(rmid, info);
@@ -505,6 +507,15 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 	hdr_rdt.data = hdr_scratch;
 
 	/*
+	 * Enforce consistency checks for this record if user is looking for
+	 * it. Do this before at the beginning of this routine to give the
+	 * possibility for callers of XLogInsert() to pass XLR_CHECK_CONSISTENCY
+	 * directly for a record.
+	 */
+	if (wal_consistency_checking[rmid])
+		info |= XLR_CHECK_CONSISTENCY;
+
+	/*
 	 * Make an rdata chain containing all the data portions of all block
 	 * references. This includes the data for full-page images. Also append
 	 * the headers for the block references in the scratch buffer.
@@ -520,6 +531,7 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 		XLogRecordBlockCompressHeader cbimg = {0};
 		bool		samerel;
 		bool		is_compressed = false;
+		bool		include_image;
 
 		if (!regbuf->in_use)
 			continue;
@@ -563,7 +575,14 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 		if ((regbuf->flags & REGBUF_WILL_INIT) == REGBUF_WILL_INIT)
 			bkpb.fork_flags |= BKPBLOCK_WILL_INIT;
 
-		if (needs_backup)
+		/*
+		 * If needs_backup is true or WAL checking is enabled for
+		 * current resource manager, log a full-page write for the current
+		 * block.
+		 */
+		include_image = needs_backup || (info & XLR_CHECK_CONSISTENCY) != 0;
+
+		if (include_image)
 		{
 			Page		page = regbuf->page;
 			uint16		compressed_len;
@@ -624,6 +643,15 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 			rdt_datas_last = rdt_datas_last->next;
 
 			bimg.bimg_info = (cbimg.hole_length == 0) ? 0 : BKPIMAGE_HAS_HOLE;
+
+			/*
+			 * If WAL consistency checking is enabled for the resource manager of
+			 * this WAL record, a full-page image is included in the record
+			 * for the block modified. During redo, the full-page is replayed
+			 * only if BKPIMAGE_APPLY is set.
+			 */
+			if (needs_backup)
+				bimg.bimg_info |= BKPIMAGE_APPLY;
 
 			if (is_compressed)
 			{
@@ -687,7 +715,7 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 		/* Ok, copy the header to the scratch buffer */
 		memcpy(scratch, &bkpb, SizeOfXLogRecordBlockHeader);
 		scratch += SizeOfXLogRecordBlockHeader;
-		if (needs_backup)
+		if (include_image)
 		{
 			memcpy(scratch, &bimg, SizeOfXLogRecordBlockImageHeader);
 			scratch += SizeOfXLogRecordBlockImageHeader;

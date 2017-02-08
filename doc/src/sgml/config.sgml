@@ -8184,6 +8184,38 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-wal-consistency-checking" xreflabel="wal_consistency_checking">
+      <term><varname>wal_consistency_checking</varname> (<type>string</type>)
+      <indexterm>
+       <primary><varname>wal_consistency_checking</> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        This parameter is intended to be used to check for bugs in the WAL
+        redo routines.  When enabled, full-page images of any buffers modified
+        in conjunction with the WAL record are added to the record.
+        If the record is subsequently replayed, the system will first apply
+        each record and then test whether the buffers modified by the record
+        match the stored images.  In certain cases (such as hint bits), minor
+        variations are acceptable, and will be ignored.  Any unexpected
+        differences will result in a fatal error, terminating recovery.
+       </para>
+
+       <para>
+        The default value of this setting is the empty string, which disables
+        the feature.  It can be set to <literal>all</literal> to check all
+        records, or to a comma-separated list of resource managers to check
+        only records originating from those resource managers.  Currently,
+        the supported resource managers are <literal>heap</>,
+        <literal>heap2</>, <literal>btree</>, <literal>gin</>,
+        <literal>gist</>, <literal>sequence</>, <literal>spgist</>,
+        <literal>brin</>, and <literal>generic</>. Only
+        superusers can change this setting.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-wal-debug" xreflabel="wal_debug">
       <term><varname>wal_debug</varname> (<type>boolean</type>)
       <indexterm>

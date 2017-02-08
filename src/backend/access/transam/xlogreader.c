@@ -997,6 +997,7 @@ ResetDecoder(XLogReaderState *state)
 		state->blocks[block_id].in_use = false;
 		state->blocks[block_id].has_image = false;
 		state->blocks[block_id].has_data = false;
+		state->blocks[block_id].apply_image = false;
 	}
 	state->max_block_id = -1;
 }
@@ -1089,6 +1090,7 @@ DecodeXLogRecord(XLogReaderState *state, XLogRecord *record, char **errormsg)
 
 			blk = &state->blocks[block_id];
 			blk->in_use = true;
+			blk->apply_image = false;
 
 			COPY_HEADER_FIELD(&fork_flags, sizeof(uint8));
 			blk->forknum = fork_flags & BKPBLOCK_FORK_MASK;
@@ -1120,6 +1122,9 @@ DecodeXLogRecord(XLogReaderState *state, XLogRecord *record, char **errormsg)
 				COPY_HEADER_FIELD(&blk->bimg_len, sizeof(uint16));
 				COPY_HEADER_FIELD(&blk->hole_offset, sizeof(uint16));
 				COPY_HEADER_FIELD(&blk->bimg_info, sizeof(uint8));
+
+				blk->apply_image = ((blk->bimg_info & BKPIMAGE_APPLY) != 0);
+
 				if (blk->bimg_info & BKPIMAGE_IS_COMPRESSED)
 				{
 					if (blk->bimg_info & BKPIMAGE_HAS_HOLE)
@@ -1243,6 +1248,9 @@ DecodeXLogRecord(XLogReaderState *state, XLogRecord *record, char **errormsg)
 
 		if (!blk->in_use)
 			continue;
+
+		Assert(blk->has_image || !blk->apply_image);
+
 		if (blk->has_image)
 		{
 			blk->bkp_image = ptr;

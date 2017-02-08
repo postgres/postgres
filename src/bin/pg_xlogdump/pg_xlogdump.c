@@ -465,7 +465,12 @@ XLogDumpDisplayRecord(XLogDumpConfig *config, XLogReaderState *record)
 					   rnode.spcNode, rnode.dbNode, rnode.relNode,
 					   blk);
 			if (XLogRecHasBlockImage(record, block_id))
-				printf(" FPW");
+			{
+				if (XLogRecBlockImageApply(record, block_id))
+					printf(" FPW");
+				else
+					printf(" FPW for WAL verification");
+			}
 		}
 		putchar('\n');
 	}
@@ -489,7 +494,10 @@ XLogDumpDisplayRecord(XLogDumpConfig *config, XLogReaderState *record)
 				if (record->blocks[block_id].bimg_info &
 					BKPIMAGE_IS_COMPRESSED)
 				{
-					printf(" (FPW); hole: offset: %u, length: %u, compression saved: %u\n",
+					printf(" (FPW%s); hole: offset: %u, length: %u, "
+						   "compression saved: %u\n",
+						   XLogRecBlockImageApply(record, block_id) ?
+						   "" : " for WAL verification",
 						   record->blocks[block_id].hole_offset,
 						   record->blocks[block_id].hole_length,
 						   BLCKSZ -
@@ -498,7 +506,9 @@ XLogDumpDisplayRecord(XLogDumpConfig *config, XLogReaderState *record)
 				}
 				else
 				{
-					printf(" (FPW); hole: offset: %u, length: %u\n",
+					printf(" (FPW%s); hole: offset: %u, length: %u\n",
+						   XLogRecBlockImageApply(record, block_id) ?
+						   "" : " for WAL verification",
 						   record->blocks[block_id].hole_offset,
 						   record->blocks[block_id].hole_length);
 				}

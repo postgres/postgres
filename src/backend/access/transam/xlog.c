@@ -95,6 +95,8 @@ bool		EnableHotStandby = false;
 bool		fullPageWrites = true;
 bool		wal_log_hints = false;
 bool		wal_compression = false;
+char	   *wal_consistency_checking_string = NULL;
+bool	   *wal_consistency_checking = NULL;
 bool		log_checkpoints = false;
 int			sync_method = DEFAULT_SYNC_METHOD;
 int			wal_level = WAL_LEVEL_MINIMAL;
@@ -244,6 +246,10 @@ bool		InArchiveRecovery = false;
 
 /* Was the last xlog file restored from archive, or local? */
 static bool restoredFromArchive = false;
+
+/* Buffers dedicated to consistency checks of size BLCKSZ */
+static char *replay_image_masked = NULL;
+static char *master_image_masked = NULL;
 
 /* options taken from recovery.conf for archive recovery */
 char	   *recoveryRestoreCommand = NULL;
@@ -903,6 +909,7 @@ static char *GetXLogBuffer(XLogRecPtr ptr);
 static XLogRecPtr XLogBytePosToRecPtr(uint64 bytepos);
 static XLogRecPtr XLogBytePosToEndRecPtr(uint64 bytepos);
 static uint64 XLogRecPtrToBytePos(XLogRecPtr ptr);
+static void checkXLogConsistency(XLogReaderState *record);
 
 static void WALInsertLockAcquire(void);
 static void WALInsertLockAcquireExclusive(void);
@@ -1312,6 +1319,103 @@ ReserveXLogSwitch(XLogRecPtr *StartPos, XLogRecPtr *EndPos, XLogRecPtr *PrevPtr)
 	Assert(XLogRecPtrToBytePos(*PrevPtr) == prevbytepos);
 
 	return true;
+}
+
+/*
+ * Checks whether the current buffer page and backup page stored in the
+ * WAL record are consistent or not. Before comparing the two pages, a
+ * masking can be applied to the pages to ignore certain areas like hint bits,
+ * unused space between pd_lower and pd_upper among other things. This
+ * function should be called once WAL replay has been completed for a
+ * given record.
+ */
+static void
+checkXLogConsistency(XLogReaderState *record)
+{
+	RmgrId		rmid = XLogRecGetRmid(record);
+	RelFileNode rnode;
+	ForkNumber	forknum;
+	BlockNumber blkno;
+	int			block_id;
+
+	/* Records with no backup blocks have no need for consistency checks. */
+	if (!XLogRecHasAnyBlockRefs(record))
+		return;
+
+	Assert((XLogRecGetInfo(record) & XLR_CHECK_CONSISTENCY) != 0);
+
+	for (block_id = 0; block_id <= record->max_block_id; block_id++)
+	{
+		Buffer		buf;
+		Page		page;
+
+		if (!XLogRecGetBlockTag(record, block_id, &rnode, &forknum, &blkno))
+		{
+			/*
+			 * WAL record doesn't contain a block reference with the given id.
+			 * Do nothing.
+			 */
+			continue;
+		}
+
+		Assert(XLogRecHasBlockImage(record, block_id));
+
+		/*
+		 * Read the contents from the current buffer and store it in a
+		 * temporary page.
+		 */
+		buf = XLogReadBufferExtended(rnode, forknum, blkno,
+									 RBM_NORMAL_NO_LOG);
+		if (!BufferIsValid(buf))
+			continue;
+
+		LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
+		page = BufferGetPage(buf);
+
+		/*
+		 * Take a copy of the local page where WAL has been applied to have a
+		 * comparison base before masking it...
+		 */
+		memcpy(replay_image_masked, page, BLCKSZ);
+
+		/* No need for this page anymore now that a copy is in. */
+		UnlockReleaseBuffer(buf);
+
+		/*
+		 * If the block LSN is already ahead of this WAL record, we can't
+		 * expect contents to match.  This can happen if recovery is restarted.
+		 */
+		if (PageGetLSN(replay_image_masked) > record->EndRecPtr)
+			continue;
+
+		/*
+		 * Read the contents from the backup copy, stored in WAL record and
+		 * store it in a temporary page. There is not need to allocate a new
+		 * page here, a local buffer is fine to hold its contents and a mask
+		 * can be directly applied on it.
+		 */
+		if (!RestoreBlockImage(record, block_id, master_image_masked))
+			elog(ERROR, "failed to restore block image");
+
+		/*
+		 * If masking function is defined, mask both the master and replay
+		 * images
+		 */
+		if (RmgrTable[rmid].rm_mask != NULL)
+		{
+			RmgrTable[rmid].rm_mask(replay_image_masked, blkno);
+			RmgrTable[rmid].rm_mask(master_image_masked, blkno);
+		}
+
+		/* Time to compare the master and replay images. */
+		if (memcmp(replay_image_masked, master_image_masked, BLCKSZ) != 0)
+		{
+			elog(FATAL,
+			   "inconsistent page found, rel %u/%u/%u, forknum %u, blkno %u",
+				 rnode.spcNode, rnode.dbNode, rnode.relNode,
+				 forknum, blkno);
+		}
+	}
 }
 
 /*
@@ -6200,6 +6304,13 @@ StartupXLOG(void)
 		   errdetail("Failed while allocating an XLog reading processor.")));
 	xlogreader->system_identifier = ControlFile->system_identifier;
 
+	/*
+	 * Allocate pages dedicated to WAL consistency checks, those had better
+	 * be aligned.
+	 */
+	replay_image_masked = (char *) palloc(BLCKSZ);
+	master_image_masked = (char *) palloc(BLCKSZ);
+
 	if (read_backup_label(&checkPointLoc, &backupEndRequired,
 						  &backupFromStandby))
 	{
@@ -6999,6 +7110,15 @@ StartupXLOG(void)
 
 				/* Now apply the WAL record itself */
 				RmgrTable[record->xl_rmid].rm_redo(xlogreader);
+
+				/*
+				 * After redo, check whether the backup pages associated with
+				 * the WAL record are consistent with the existing pages. This
+				 * check is done only if consistency check is enabled for this
+				 * record.
+				 */
+				if ((record->xl_info & XLR_CHECK_CONSISTENCY) != 0)
+					checkXLogConsistency(xlogreader);
 
 				/* Pop the error context stack */
 				error_context_stack = errcallback.previous;

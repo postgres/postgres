@@ -31,7 +31,7 @@
 /*
  * Each page of XLOG file has a header like this:
  */
-#define XLOG_PAGE_MAGIC 0xD094	/* can be used as WAL version indicator */
+#define XLOG_PAGE_MAGIC 0xD095	/* can be used as WAL version indicator */
 
 typedef struct XLogPageHeaderData
 {
@@ -266,6 +266,9 @@ typedef enum
  * "VACUUM". rm_desc can then be called to obtain additional detail for the
  * record, if available (e.g. the last block).
  *
+ * rm_mask takes as input a page modified by the resource manager and masks
+ * out bits that shouldn't be flagged by wal_consistency_checking.
+ *
  * RmgrTable[] is indexed by RmgrId values (see rmgrlist.h).
  */
 typedef struct RmgrData
@@ -276,6 +279,7 @@ typedef struct RmgrData
 	const char *(*rm_identify) (uint8 info);
 	void		(*rm_startup) (void);
 	void		(*rm_cleanup) (void);
+	void		(*rm_mask) (char *pagedata, BlockNumber blkno);
 } RmgrData;
 
 extern const RmgrData RmgrTable[];

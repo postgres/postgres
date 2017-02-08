@@ -13,6 +13,7 @@
 #include "access/brin_page.h"
 #include "access/brin_pageops.h"
 #include "access/brin_xlog.h"
+#include "access/bufmask.h"
 #include "access/xlogutils.h"
 
 
@@ -277,5 +278,24 @@ brin_redo(XLogReaderState *record)
 			break;
 		default:
 			elog(PANIC, "brin_redo: unknown op code %u", info);
+	}
+}
+
+/*
+ * Mask a BRIN page before doing consistency checks.
+ */
+void
+brin_mask(char *pagedata, BlockNumber blkno)
+{
+	Page		page = (Page) pagedata;
+
+	mask_page_lsn(page);
+
+	mask_page_hint_bits(page);
+
+	if (BRIN_IS_REGULAR_PAGE(page))
+	{
+		/* Regular brin pages contain unused space which needs to be masked. */
+		mask_unused_space(page);
 	}
 }

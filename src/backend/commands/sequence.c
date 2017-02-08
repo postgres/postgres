@@ -14,6 +14,7 @@
  */
 #include "postgres.h"
 
+#include "access/bufmask.h"
 #include "access/htup_details.h"
 #include "access/multixact.h"
 #include "access/transam.h"
@@ -1739,4 +1740,15 @@ ResetSequenceCaches(void)
 	}
 
 	last_used_seq = NULL;
+}
+
+/*
+ * Mask a Sequence page before performing consistency checks on it.
+ */
+void
+seq_mask(char *page, BlockNumber blkno)
+{
+	mask_page_lsn(page);
+
+	mask_unused_space(page);
 }

@@ -14,6 +14,7 @@
  */
 #include "postgres.h"
 
+#include "access/bufmask.h"
 #include "access/heapam_xlog.h"
 #include "access/nbtree.h"
 #include "access/transam.h"
@@ -1027,4 +1028,53 @@ btree_redo(XLogReaderState *record)
 		default:
 			elog(PANIC, "btree_redo: unknown op code %u", info);
 	}
+}
+
+/*
+ * Mask a btree page before performing consistency checks on it.
+ */
+void
+btree_mask(char *pagedata, BlockNumber blkno)
+{
+	Page		page = (Page) pagedata;
+	BTPageOpaque maskopaq;
+
+	mask_page_lsn(page);
+
+	mask_page_hint_bits(page);
+	mask_unused_space(page);
+
+	maskopaq = (BTPageOpaque) PageGetSpecialPointer(page);
+
+	if (P_ISDELETED(maskopaq))
+	{
+		/*
+		 * Mask page content on a DELETED page since it will be re-initialized
+		 * during replay. See btree_xlog_unlink_page() for details.
+		 */
+		mask_page_content(page);
+	}
+	else if (P_ISLEAF(maskopaq))
+	{
+		/*
+		 * In btree leaf pages, it is possible to modify the LP_FLAGS without
+		 * emitting any WAL record. Hence, mask the line pointer flags. See
+		 * _bt_killitems(), _bt_check_unique() for details.
+		 */
+		mask_lp_flags(page);
+	}
+
+	/*
+	 * BTP_HAS_GARBAGE is just an un-logged hint bit. So, mask it. See
+	 * _bt_killitems(), _bt_check_unique() for details.
+	 */
+	maskopaq->btpo_flags &= ~BTP_HAS_GARBAGE;
+
+	/*
+	 * During replay of a btree page split, we don't set the BTP_SPLIT_END
+	 * flag of the right sibling and initialize the cycle_id to 0 for the same
+	 * page. See btree_xlog_split() for details.
+	 */
+	maskopaq->btpo_flags &= ~BTP_SPLIT_END;
+	maskopaq->btpo_cycleid = 0;
 }

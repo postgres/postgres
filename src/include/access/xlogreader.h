@@ -51,7 +51,8 @@ typedef struct
 	uint8		flags;
 
 	/* Information on full-page image, if any */
-	bool		has_image;
+	bool		has_image;		/* has image, even for consistency checking */
+	bool		apply_image;	/* has image that should be restored */
 	char	   *bkp_image;
 	uint16		hole_offset;
 	uint16		hole_length;
@@ -205,6 +206,8 @@ extern bool DecodeXLogRecord(XLogReaderState *state, XLogRecord *record,
 	((decoder)->blocks[block_id].in_use)
 #define XLogRecHasBlockImage(decoder, block_id) \
 	((decoder)->blocks[block_id].has_image)
+#define XLogRecBlockImageApply(decoder, block_id) \
+	((decoder)->blocks[block_id].apply_image)
 
 extern bool RestoreBlockImage(XLogReaderState *recoder, uint8 block_id, char *dst);
 extern char *XLogRecGetBlockData(XLogReaderState *record, uint8 block_id, Size *len);

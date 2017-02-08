@@ -105,7 +105,12 @@ gin_desc(StringInfo buf, XLogReaderState *record)
 									 leftChildBlkno, rightChildBlkno);
 				}
 				if (XLogRecHasBlockImage(record, 0))
-					appendStringInfoString(buf, " (full page image)");
+				{
+					if (XLogRecBlockImageApply(record, 0))
+						appendStringInfoString(buf, " (full page image)");
+					else
+						appendStringInfoString(buf, " (full page image, for WAL verification)");
+				}
 				else
 				{
 					char	   *payload = XLogRecGetBlockData(record, 0, NULL);
@@ -145,7 +150,12 @@ gin_desc(StringInfo buf, XLogReaderState *record)
 		case XLOG_GIN_VACUUM_DATA_LEAF_PAGE:
 			{
 				if (XLogRecHasBlockImage(record, 0))
-					appendStringInfoString(buf, " (full page image)");
+				{
+					if (XLogRecBlockImageApply(record, 0))
+						appendStringInfoString(buf, " (full page image)");
+					else
+						appendStringInfoString(buf, " (full page image, for WAL verification)");
+				}
 				else
 				{
 					ginxlogVacuumDataLeafPage *xlrec =
