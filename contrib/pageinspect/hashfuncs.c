@@ -380,21 +380,22 @@ hash_bitmap_info(PG_FUNCTION_ARGS)
 	Oid			indexRelid = PG_GETARG_OID(0);
 	uint64		ovflblkno = PG_GETARG_INT64(1);
 	HashMetaPage metap;
-	Buffer		buf,
-				metabuf;
+	Buffer		metabuf,
+				mapbuf;
 	BlockNumber bitmapblkno;
-	Page		page;
+	Page		mappage;
 	bool		bit = false;
-	HashPageOpaque	opaque;
 	TupleDesc	tupleDesc;
 	Relation	indexRel;
 	uint32		ovflbitno;
 	int32		bitmappage,
 				bitmapbit;
 	HeapTuple	tuple;
-	int			j;
+	int			i,
+				j;
 	Datum		values[3];
 	bool		nulls[3];
+	uint32	   *freep;
 
 	if (!superuser())
 		ereport(ERROR,
@@ -418,30 +419,30 @@ hash_bitmap_info(PG_FUNCTION_ARGS)
 				 errmsg("block number " UINT64_FORMAT " is out of range for relation \"%s\"",
 						ovflblkno, RelationGetRelationName(indexRel))));
 
-	buf = ReadBufferExtended(indexRel, MAIN_FORKNUM, (BlockNumber) ovflblkno,
-							 RBM_NORMAL, NULL);
-	LockBuffer(buf, BUFFER_LOCK_SHARE);
-	_hash_checkpage(indexRel, buf, LH_PAGE_TYPE);
-	page = BufferGetPage(buf);
-	opaque = (HashPageOpaque) PageGetSpecialPointer(page);
-
-	if (opaque->hasho_flag != LH_OVERFLOW_PAGE)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("page is not an overflow page"),
-				 errdetail("Expected %08x, got %08x.",
-							LH_OVERFLOW_PAGE, opaque->hasho_flag)));
-
-	if (BlockNumberIsValid(opaque->hasho_prevblkno))
-		bit = true;
-
-	UnlockReleaseBuffer(buf);
-
 	/* Read the metapage so we can determine which bitmap page to use */
 	metabuf = _hash_getbuf(indexRel, HASH_METAPAGE, HASH_READ, LH_META_PAGE);
 	metap = HashPageGetMeta(BufferGetPage(metabuf));
 
-	/* Identify overflow bit number */
+	/*
+	 * Reject attempt to read the bit for a metapage or bitmap page; this is
+	 * only meaningful for overflow pages.
+	 */
+	if (ovflblkno == 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("invalid overflow block number %u",
+						(BlockNumber) ovflblkno)));
+	for (i = 0; i < metap->hashm_nmaps; i++)
+		if (metap->hashm_mapp[i] == ovflblkno)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("invalid overflow block number %u",
+							(BlockNumber) ovflblkno)));
+
+	/*
+	 * Identify overflow bit number.  This will error out for primary bucket
+	 * pages, and we've already rejected the metapage and bitmap pages above.
+	 */
 	ovflbitno = _hash_ovflblkno_to_bitno(metap, (BlockNumber) ovflblkno);
 
 	bitmappage = ovflbitno >> BMPG_SHIFT(metap);
@@ -450,12 +451,21 @@ hash_bitmap_info(PG_FUNCTION_ARGS)
 	if (bitmappage >= metap->hashm_nmaps)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("invalid overflow bit number %u", ovflbitno)));
+				 errmsg("invalid overflow block number %u",
+						(BlockNumber) ovflblkno)));
 
 	bitmapblkno = metap->hashm_mapp[bitmappage];
 
 	_hash_relbuf(indexRel, metabuf);
 
+	/* Check the status of bitmap bit for overflow page */
+	mapbuf = _hash_getbuf(indexRel, bitmapblkno, HASH_READ, LH_BITMAP_PAGE);
+	mappage = BufferGetPage(mapbuf);
+	freep = HashPageGetBitmap(mappage);
+
+	bit = ISSET(freep, bitmapbit) != 0;
+
+	_hash_relbuf(indexRel, mapbuf);
 	index_close(indexRel, AccessShareLock);
 
 	/* Build a tuple descriptor for our result type */

@@ -69,11 +69,20 @@ _hash_ovflblkno_to_bitno(HashMetaPage metap, BlockNumber ovflblkno)
 		if (ovflblkno <= (BlockNumber) (1 << i))
 			break;				/* oops */
 		bitnum = ovflblkno - (1 << i);
-		if (bitnum <= metap->hashm_spares[i])
+
+		/*
+		 * bitnum has to be greater than number of overflow page added in
+		 * previous split point. The overflow page at this splitnum (i) if any
+		 * should start from ((2 ^ i) + metap->hashm_spares[i - 1] + 1).
+		 */
+		if (bitnum > metap->hashm_spares[i - 1] &&
+			bitnum <= metap->hashm_spares[i])
 			return bitnum - 1;	/* -1 to convert 1-based to 0-based */
 	}
 
-	elog(ERROR, "invalid overflow block number %u", ovflblkno);
+	ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			 errmsg("invalid overflow block number %u", ovflblkno)));
 	return 0;					/* keep compiler quiet */
 }
 

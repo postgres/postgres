@@ -30,23 +30,17 @@ hash_page_type | bitmap
 SELECT hash_page_type(get_raw_page('test_hash_a_idx', 6));
 ERROR:  block number 6 is out of range for relation "test_hash_a_idx"
 SELECT * FROM hash_bitmap_info('test_hash_a_idx', 0);
-ERROR:  page is not an overflow page
-DETAIL:  Expected 00000001, got 00000008.
+ERROR:  invalid overflow block number 0
 SELECT * FROM hash_bitmap_info('test_hash_a_idx', 1);
-ERROR:  page is not an overflow page
-DETAIL:  Expected 00000001, got 00000002.
+ERROR:  invalid overflow block number 1
 SELECT * FROM hash_bitmap_info('test_hash_a_idx', 2);
-ERROR:  page is not an overflow page
-DETAIL:  Expected 00000001, got 00000002.
+ERROR:  invalid overflow block number 2
 SELECT * FROM hash_bitmap_info('test_hash_a_idx', 3);
-ERROR:  page is not an overflow page
-DETAIL:  Expected 00000001, got 00000002.
+ERROR:  invalid overflow block number 3
 SELECT * FROM hash_bitmap_info('test_hash_a_idx', 4);
-ERROR:  page is not an overflow page
-DETAIL:  Expected 00000001, got 00000002.
+ERROR:  invalid overflow block number 4
 SELECT * FROM hash_bitmap_info('test_hash_a_idx', 5);
-ERROR:  page is not an overflow page
-DETAIL:  Expected 00000001, got 00000004.
+ERROR:  invalid overflow block number 5
 SELECT magic, version, ntuples, bsize, bmsize, bmshift, maxbucket, highmask,
 lowmask, ovflpoint, firstfree, nmaps, procid, spares, mapp FROM
 hash_metapage_info(get_raw_page('test_hash_a_idx', 0));
