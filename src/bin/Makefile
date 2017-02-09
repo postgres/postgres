@@ -21,12 +21,12 @@ SUBDIRS = \
 	pg_controldata \
 	pg_ctl \
 	pg_dump \
-	pg_resetxlog \
+	pg_resetwal \
 	pg_rewind \
 	pg_test_fsync \
 	pg_test_timing \
 	pg_upgrade \
-	pg_xlogdump \
+	pg_waldump \
 	pgbench \
 	psql \
 	scripts

@@ -237,7 +237,7 @@ extern void FreeAccessStrategy(BufferAccessStrategy strategy);
 
 /*
  * Although this header file is nominally backend-only, certain frontend
- * programs like pg_xlogdump include it.  For compilers that emit static
+ * programs like pg_waldump include it.  For compilers that emit static
  * inline functions even when they're unused, that leads to unsatisfied
  * external references; hence hide these with #ifndef FRONTEND.
  */

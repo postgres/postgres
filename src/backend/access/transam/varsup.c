@@ -399,7 +399,7 @@ SetTransactionIdLimit(TransactionId oldest_datfrozenxid, Oid oldest_datoid)
  *
  * We primarily check whether oldestXidDB is valid.  The cases we have in
  * mind are that that database was dropped, or the field was reset to zero
- * by pg_resetxlog.  In either case we should force recalculation of the
+ * by pg_resetwal.  In either case we should force recalculation of the
  * wrap limit.  Also do it if oldestXid is old enough to be forcing
  * autovacuums or other actions; this ensures we update our state as soon
  * as possible once extra overhead is being incurred.

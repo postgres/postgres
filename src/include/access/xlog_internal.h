@@ -9,7 +9,7 @@
  * So the XLogRecord typedef and associated stuff appear in xlogrecord.h.
  *
  * Note: This file must be includable in both frontend and backend contexts,
- * to allow stand-alone tools like pg_receivexlog to deal with WAL files.
+ * to allow stand-alone tools like pg_receivewal to deal with WAL files.
  *
  * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -153,7 +153,7 @@ typedef XLogLongPageHeaderData *XLogLongPageHeader;
 	 strspn(fname, "0123456789ABCDEF") == XLOG_FNAME_LEN)
 
 /*
- * XLOG segment with .partial suffix.  Used by pg_receivexlog and at end of
+ * XLOG segment with .partial suffix.  Used by pg_receivewal and at end of
  * archive recovery, when we want to archive a WAL segment but it might not
  * be complete yet.
  */

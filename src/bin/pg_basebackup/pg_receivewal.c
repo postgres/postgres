@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * pg_receivexlog.c - receive streaming transaction log data and write it
+ * pg_receivewal.c - receive streaming transaction log data and write it
  *					  to a local file.
  *
  * Author: Magnus Hagander <magnus@hagander.net>
@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *		  src/bin/pg_basebackup/pg_receivexlog.c
+ *		  src/bin/pg_basebackup/pg_receivewal.c
  *-------------------------------------------------------------------------
  */
 
@@ -494,7 +494,7 @@ main(int argc, char **argv)
 		else if (strcmp(argv[1], "-V") == 0 ||
 				 strcmp(argv[1], "--version") == 0)
 		{
-			puts("pg_receivexlog (PostgreSQL) " PG_VERSION);
+			puts("pg_receivewal (PostgreSQL) " PG_VERSION);
 			exit(0);
 		}
 	}

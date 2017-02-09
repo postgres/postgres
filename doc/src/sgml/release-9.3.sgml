@@ -10080,7 +10080,7 @@ ALTER EXTENSION hstore UPDATE;
       <listitem>
        <para>
         Allow tools like <link
-        linkend="app-pgreceivexlog"><application>pg_receivexlog</></link>
+        linkend="app-pgreceivewal"><application>pg_receivexlog</></link>
         to run on computers with different architectures (Heikki
         Linnakangas)
        </para>
@@ -10110,7 +10110,7 @@ ALTER EXTENSION hstore UPDATE;
       <listitem>
        <para>
         Allow <link
-        linkend="app-pgreceivexlog"><application>pg_receivexlog</></link>
+        linkend="app-pgreceivewal"><application>pg_receivexlog</></link>
         and <link
         linkend="app-pgbasebackup"><application>pg_basebackup</></link>
         <option>--xlog-method</> to handle streaming timeline switches
@@ -10713,7 +10713,7 @@ ALTER EXTENSION hstore UPDATE;
         linkend="APP-PG-DUMPALL"><application>pg_dumpall</></link>, <link
         linkend="app-pgbasebackup"><application>pg_basebackup</></link>, and
         <link
-        linkend="app-pgreceivexlog"><application>pg_receivexlog</></link>
+        linkend="app-pgreceivewal"><application>pg_receivexlog</></link>
         to allow specifying a connection string (Amit Kapila)
        </para>
       </listitem>
@@ -11250,7 +11250,7 @@ ALTER EXTENSION hstore UPDATE;
 
       <listitem>
        <para>
-        Add <link linkend="pgxlogdump"><application>pg_xlogdump</></link>
+        Add <link linkend="pgwaldump"><application>pg_xlogdump</></link>
         contrib program (Andres Freund)
        </para>
       </listitem>

@@ -1473,7 +1473,7 @@ SnapBuildSerialize(SnapBuild *builder, XLogRecPtr lsn)
 	/*
 	 * We identify snapshots by the LSN they are valid for. We don't need to
 	 * include timelines in the name as each LSN maps to exactly one timeline
-	 * unless the user used pg_resetxlog or similar. If a user did so, there's
+	 * unless the user used pg_resetwal or similar. If a user did so, there's
 	 * no hope continuing to decode anyway.
 	 */
 	sprintf(path, "pg_logical/snapshots/%X-%X.snap",

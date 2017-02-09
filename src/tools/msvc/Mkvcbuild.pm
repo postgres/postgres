@@ -54,11 +54,11 @@ my @frontend_uselibpq = ('pg_ctl', 'pg_upgrade', 'pgbench', 'psql', 'initdb');
 my @frontend_uselibpgport = (
 	'pg_archivecleanup', 'pg_test_fsync',
 	'pg_test_timing',    'pg_upgrade',
-	'pg_xlogdump',       'pgbench');
+	'pg_waldump',       'pgbench');
 my @frontend_uselibpgcommon = (
 	'pg_archivecleanup', 'pg_test_fsync',
 	'pg_test_timing',    'pg_upgrade',
-	'pg_xlogdump',       'pgbench');
+	'pg_waldump',       'pgbench');
 my $frontend_extralibs = {
 	'initdb'     => ['ws2_32.lib'],
 	'pg_restore' => ['ws2_32.lib'],
@@ -73,7 +73,7 @@ my $frontend_extrasource = {
 	  [ 'src/bin/pgbench/exprscan.l', 'src/bin/pgbench/exprparse.y' ] };
 my @frontend_excludes = (
 	'pgevent',     'pg_basebackup', 'pg_rewind', 'pg_dump',
-	'pg_xlogdump', 'scripts');
+	'pg_waldump', 'scripts');
 
 sub mkvcbuild
 {
@@ -324,10 +324,10 @@ sub mkvcbuild
 	$pgbasebackup->AddFile('src/bin/pg_basebackup/pg_basebackup.c');
 	$pgbasebackup->AddLibrary('ws2_32.lib');
 
-	my $pgreceivexlog = AddSimpleFrontend('pg_basebackup', 1);
-	$pgreceivexlog->{name} = 'pg_receivexlog';
-	$pgreceivexlog->AddFile('src/bin/pg_basebackup/pg_receivexlog.c');
-	$pgreceivexlog->AddLibrary('ws2_32.lib');
+	my $pgreceivewal = AddSimpleFrontend('pg_basebackup', 1);
+	$pgreceivewal->{name} = 'pg_receivewal';
+	$pgreceivewal->AddFile('src/bin/pg_basebackup/pg_receivewal.c');
+	$pgreceivewal->AddLibrary('ws2_32.lib');
 
 	my $pgrecvlogical = AddSimpleFrontend('pg_basebackup', 1);
 	$pgrecvlogical->{name} = 'pg_recvlogical';
@@ -631,15 +631,15 @@ sub mkvcbuild
 	$pgregress->AddDirResourceFile('src/test/regress');
 	$pgregress->AddReference($libpgcommon, $libpgport);
 
-	# fix up pg_xlogdump once it's been set up
+	# fix up pg_waldump once it's been set up
 	# files symlinked on Unix are copied on windows
-	my $pg_xlogdump = AddSimpleFrontend('pg_xlogdump');
-	$pg_xlogdump->AddDefine('FRONTEND');
+	my $pg_waldump = AddSimpleFrontend('pg_waldump');
+	$pg_waldump->AddDefine('FRONTEND');
 	foreach my $xf (glob('src/backend/access/rmgrdesc/*desc.c'))
 	{
-		$pg_xlogdump->AddFile($xf);
+		$pg_waldump->AddFile($xf);
 	}
-	$pg_xlogdump->AddFile('src/backend/access/transam/xlogreader.c');
+	$pg_waldump->AddFile('src/backend/access/transam/xlogreader.c');
 
 	$solution->Save();
 	return $solution->{vcver};

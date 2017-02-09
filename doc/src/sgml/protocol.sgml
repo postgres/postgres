@@ -1321,7 +1321,7 @@ the connection to be used for logical replication from that database.
 psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
 </programlisting>
  However, it is often more useful to use
- <xref linkend="app-pgreceivexlog"> (for physical replication) or
+ <xref linkend="app-pgreceivewal"> (for physical replication) or
  <xref linkend="app-pgrecvlogical"> (for logical replication).
 </para>
 

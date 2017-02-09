@@ -24,7 +24,7 @@ my @client_program_files = (
 	'dropdb',        'droplang',       'dropuser',   'ecpg',
 	'libecpg',       'libecpg_compat', 'libpgtypes', 'libpq',
 	'pg_basebackup', 'pg_config',      'pg_dump',    'pg_dumpall',
-	'pg_isready',    'pg_receivexlog', 'pg_recvlogical', 'pg_restore',
+	'pg_isready',    'pg_receivewal', 'pg_recvlogical', 'pg_restore',
 	'psql', 'reindexdb',     'vacuumdb',       @client_contribs);
 
 sub lcopy

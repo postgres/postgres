@@ -2639,7 +2639,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&autovacuum_freeze_max_age,
-		/* see pg_resetxlog if you change the upper-limit value */
+		/* see pg_resetwal if you change the upper-limit value */
 		200000000, 100000, 2000000000,
 		NULL, NULL, NULL
 	},

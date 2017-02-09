@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * pg_resetxlog.c
+ * pg_resetwal.c
  *	  A utility to "zero out" the xlog when it's corrupt beyond recovery.
  *	  Can also rebuild pg_control if needed.
  *
@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * src/bin/pg_resetxlog/pg_resetxlog.c
+ * src/bin/pg_resetwal/pg_resetwal.c
  *
  *-------------------------------------------------------------------------
  */
@@ -96,7 +96,7 @@ main(int argc, char *argv[])
 	char	   *DataDir = NULL;
 	int			fd;
 
-	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_resetxlog"));
+	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_resetwal"));
 
 	progname = get_progname(argv[0]);
 
@@ -109,7 +109,7 @@ main(int argc, char *argv[])
 		}
 		if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)
 		{
-			puts("pg_resetxlog (PostgreSQL) " PG_VERSION);
+			puts("pg_resetwal (PostgreSQL) " PG_VERSION);
 			exit(0);
 		}
 	}
@@ -295,7 +295,7 @@ main(int argc, char *argv[])
 	}
 
 	/*
-	 * Don't allow pg_resetxlog to be run as root, to avoid overwriting the
+	 * Don't allow pg_resetwal to be run as root, to avoid overwriting the
 	 * ownership of files in the data directory. We need only check for root
 	 * -- any other user won't have sufficient permissions to modify files in
 	 * the data directory.
@@ -915,7 +915,7 @@ FindEndOfXLOG(void)
 			/*
 			 * Note: We don't use XLogFromFileName here, because we want to
 			 * use the segment size from the control file, not the size the
-			 * pg_resetxlog binary was compiled with
+			 * pg_resetwal binary was compiled with
 			 */
 			sscanf(xlde->d_name, "%08X%08X%08X", &tli, &log, &seg);
 			segno = ((uint64) log) * segs_per_xlogid + seg;

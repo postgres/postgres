@@ -335,7 +335,7 @@ check_bin_dir(ClusterInfo *cluster)
 
 	validate_exec(cluster->bindir, "postgres");
 	validate_exec(cluster->bindir, "pg_ctl");
-	validate_exec(cluster->bindir, "pg_resetxlog");
+	validate_exec(cluster->bindir, "pg_resetwal");
 	if (cluster == &new_cluster)
 	{
 		/* these are only needed in the new cluster */

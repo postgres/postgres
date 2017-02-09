@@ -1,27 +1,27 @@
 <!--
-doc/src/sgml/ref/pg_resetxlog.sgml
+doc/src/sgml/ref/pg_resetwal.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="APP-PGRESETXLOG">
- <indexterm zone="app-pgresetxlog">
-  <primary>pg_resetxlog</primary>
+<refentry id="APP-PGRESETWAL">
+ <indexterm zone="app-pgresetwal">
+  <primary>pg_resetwal</primary>
  </indexterm>
 
  <refmeta>
-  <refentrytitle><application>pg_resetxlog</application></refentrytitle>
+  <refentrytitle><application>pg_resetwal</application></refentrytitle>
   <manvolnum>1</manvolnum>
   <refmiscinfo>Application</refmiscinfo>
  </refmeta>
 
  <refnamediv>
-  <refname>pg_resetxlog</refname>
+  <refname>pg_resetwal</refname>
   <refpurpose>reset the write-ahead log and other control information of a <productname>PostgreSQL</productname> database cluster</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
   <cmdsynopsis>
-   <command>pg_resetxlog</command>
+   <command>pg_resetwal</command>
    <arg choice="opt"><option>-f</option></arg>
    <arg choice="opt"><option>-n</option></arg>
    <arg rep="repeat"><replaceable>option</replaceable></arg>
@@ -29,10 +29,10 @@ PostgreSQL documentation
   </cmdsynopsis>
  </refsynopsisdiv>
 
- <refsect1 id="R1-APP-PGRESETXLOG-1">
+ <refsect1 id="R1-APP-PGRESETWAL-1">
   <title>Description</title>
   <para>
-   <command>pg_resetxlog</command> clears the write-ahead log (WAL) and
+   <command>pg_resetwal</command> clears the write-ahead log (WAL) and
    optionally resets some other control information stored in the
    <filename>pg_control</> file.  This function is sometimes needed
    if these files have become corrupted.  It should be used only as a
@@ -51,12 +51,12 @@ PostgreSQL documentation
    This utility can only be run by the user who installed the server, because
    it requires read/write access to the data directory.
    For safety reasons, you must specify the data directory on the command line.
-   <command>pg_resetxlog</command> does not use the environment variable
+   <command>pg_resetwal</command> does not use the environment variable
    <envar>PGDATA</>.
   </para>
 
   <para>
-   If <command>pg_resetxlog</command> complains that it cannot determine
+   If <command>pg_resetwal</command> complains that it cannot determine
    valid data for <filename>pg_control</>, you can force it to proceed anyway
    by specifying the <option>-f</> (force) option.  In this case plausible
    values will be substituted for the missing data.  Most of the fields can be
@@ -80,7 +80,7 @@ PostgreSQL documentation
     <term><option>-f</option></term>
     <listitem>
      <para>
-      Force <command>pg_resetxlog</command> to proceed even if it cannot determine
+      Force <command>pg_resetwal</command> to proceed even if it cannot determine
       valid data for <filename>pg_control</>, as explained above.
      </para>
     </listitem>
@@ -91,10 +91,10 @@ PostgreSQL documentation
     <listitem>
      <para>
       The <option>-n</> (no operation) option instructs
-      <command>pg_resetxlog</command> to print the values reconstructed from
+      <command>pg_resetwal</command> to print the values reconstructed from
       <filename>pg_control</> and values about to be changed, and then exit
       without modifying anything. This is mainly a debugging tool, but can be
-      useful as a sanity check before allowing <command>pg_resetxlog</command>
+      useful as a sanity check before allowing <command>pg_resetwal</command>
       to proceed for real.
      </para>
     </listitem>
@@ -115,7 +115,7 @@ PostgreSQL documentation
 
   <para>
    The following options are only needed when
-   <command>pg_resetxlog</command> is unable to determine appropriate values
+   <command>pg_resetwal</command> is unable to determine appropriate values
    by reading <filename>pg_control</>.  Safe values can be determined as
    described below.  For values that take numeric arguments, hexadecimal
    values can be specified by using the prefix <literal>0x</literal>.
@@ -152,7 +152,7 @@ PostgreSQL documentation
 
      <para>
       The transaction ID epoch is not actually stored anywhere in the database
-      except in the field that is set by <command>pg_resetxlog</command>,
+      except in the field that is set by <command>pg_resetwal</command>,
       so any value will work so far as the database itself is concerned.
       You might need to adjust this value to ensure that replication
       systems such as <application>Slony-I</> and
@@ -164,7 +164,7 @@ PostgreSQL documentation
    </varlistentry>
 
    <varlistentry>
-    <term><option>-l</option> <replaceable class="parameter">xlogfile</replaceable></term>
+    <term><option>-l</option> <replaceable class="parameter">walfile</replaceable></term>
     <listitem>
      <para>
       Manually set the WAL starting address.
@@ -182,7 +182,7 @@ PostgreSQL documentation
 
      <note>
       <para>
-       <command>pg_resetxlog</command> itself looks at the files in
+       <command>pg_resetwal</command> itself looks at the files in
        <filename>pg_wal</> and chooses a default <option>-l</> setting
        beyond the last existing file name.  Therefore, manual adjustment of
        <option>-l</> should only be needed if you are aware of WAL segment
@@ -274,11 +274,11 @@ PostgreSQL documentation
 
   <para>
    This command must not be used when the server is
-   running.  <command>pg_resetxlog</command> will refuse to start up if
+   running.  <command>pg_resetwal</command> will refuse to start up if
    it finds a server lock file in the data directory.  If the
    server crashed then a lock file might have been left
    behind; in that case you can remove the lock file to allow
-   <command>pg_resetxlog</command> to run.  But before you do
+   <command>pg_resetwal</command> to run.  But before you do
    so, make doubly certain that there is no server process still alive.
   </para>
  </refsect1>

@@ -1,13 +1,13 @@
-# src/bin/pg_xlogdump/Makefile
+# src/bin/pg_waldump/Makefile
 
-PGFILEDESC = "pg_xlogdump - decode and display WAL"
+PGFILEDESC = "pg_waldump - decode and display WAL"
 PGAPPICON=win32
 
-subdir = src/bin/pg_xlogdump
+subdir = src/bin/pg_waldump
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS = pg_xlogdump.o compat.o xlogreader.o rmgrdesc.o \
+OBJS = pg_waldump.o compat.o xlogreader.o rmgrdesc.o \
 	$(RMGRDESCOBJS) $(WIN32RES)
 
 override CPPFLAGS := -DFRONTEND $(CPPFLAGS)
@@ -16,9 +16,9 @@ RMGRDESCSOURCES = $(sort $(notdir $(wildcard $(top_srcdir)/src/backend/access/rm
 RMGRDESCOBJS = $(patsubst %.c,%.o,$(RMGRDESCSOURCES))
 
 
-all: pg_xlogdump
+all: pg_waldump
 
-pg_xlogdump: $(OBJS) | submake-libpgport
+pg_waldump: $(OBJS) | submake-libpgport
 	$(CC) $(CFLAGS) $^ $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
 xlogreader.c: % : $(top_srcdir)/src/backend/access/transam/%
@@ -28,13 +28,13 @@ $(RMGRDESCSOURCES): % : $(top_srcdir)/src/backend/access/rmgrdesc/%
 	rm -f $@ && $(LN_S) $< .
 
 install: all installdirs
-	$(INSTALL_PROGRAM) pg_xlogdump$(X) '$(DESTDIR)$(bindir)/pg_xlogdump$(X)'
+	$(INSTALL_PROGRAM) pg_waldump$(X) '$(DESTDIR)$(bindir)/pg_waldump$(X)'
 
 installdirs:
 	$(MKDIR_P) '$(DESTDIR)$(bindir)'
 
 uninstall:
-	rm -f '$(DESTDIR)$(bindir)/pg_xlogdump$(X)'
+	rm -f '$(DESTDIR)$(bindir)/pg_waldump$(X)'
 
 clean distclean maintainer-clean:
-	rm -f pg_xlogdump$(X) $(OBJS) $(RMGRDESCSOURCES) xlogreader.c
+	rm -f pg_waldump$(X) $(OBJS) $(RMGRDESCSOURCES) xlogreader.c

@@ -245,7 +245,7 @@
    &pgDump;
    &pgDumpall;
    &pgIsready;
-   &pgReceivexlog;
+   &pgReceivewal;
    &pgRecvlogical;
    &pgRestore;
    &psqlRef;
@@ -271,12 +271,12 @@
    &pgarchivecleanup;
    &pgControldata;
    &pgCtl;
-   &pgResetxlog;
+   &pgResetwal;
    &pgRewind;
    &pgtestfsync;
    &pgtesttiming;
    &pgupgrade;
-   &pgxlogdump;
+   &pgwaldump;
    &postgres;
    &postmaster;
 

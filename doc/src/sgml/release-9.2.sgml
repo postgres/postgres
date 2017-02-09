@@ -8069,7 +8069,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
       <listitem>
        <para>
         Add a <link
-        linkend="app-pgreceivexlog"><application>pg_receivexlog</></link>
+        linkend="app-pgreceivewal"><application>pg_receivexlog</></link>
         tool to archive WAL file changes as they are written
        </para>
       </listitem>
@@ -9231,7 +9231,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
       <listitem>
        <para>
         Add a <link
-        linkend="app-pgreceivexlog"><application>pg_receivexlog</></link>
+        linkend="app-pgreceivewal"><application>pg_receivexlog</></link>
         tool to archive WAL file changes as they are written, rather
         than waiting for completed WAL files (Magnus Hagander)
        </para>

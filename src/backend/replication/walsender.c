@@ -2435,7 +2435,7 @@ WalSndDone(WalSndSendDataCallback send_data)
 
 	/*
 	 * To figure out whether all WAL has successfully been replicated, check
-	 * flush location if valid, write otherwise. Tools like pg_receivexlog
+	 * flush location if valid, write otherwise. Tools like pg_receivewal
 	 * will usually (unless in synchronous mode) return an invalid flush
 	 * location.
 	 */

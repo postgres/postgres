@@ -6265,7 +6265,7 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
        linkend="pgarchivecleanup"><application>pg_archivecleanup</></>,
        <link linkend="pgtestfsync"><application>pg_test_fsync</></>,
        <link linkend="pgtesttiming"><application>pg_test_timing</></>,
-       and <link linkend="pgxlogdump"><application>pg_xlogdump</></>
+       and <link linkend="pgwaldump"><application>pg_xlogdump</></>
        from <filename>contrib</> to <filename>src/bin</> (Peter Eisentraut)
       </para>
 
@@ -6292,7 +6292,7 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
 -->
       <para>
        Allow <link
-       linkend="app-pgreceivexlog"><application>pg_receivexlog</></>
+       linkend="app-pgreceivewal"><application>pg_receivexlog</></>
        to manage physical replication slots (Michael Paquier)
       </para>
 
@@ -6308,7 +6308,7 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
 -->
       <para>
        Allow <link
-       linkend="app-pgreceivexlog"><application>pg_receivexlog</></>
+       linkend="app-pgreceivewal"><application>pg_receivexlog</></>
        to synchronously flush <acronym>WAL</> to storage using new
        <option>--synchronous</> option (Furuya Osamu, Fujii Masao)
       </para>
@@ -6368,7 +6368,7 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
 2014-09-19 [bdd5726] Andres..: Add the capability to display summary statistic..
 -->
       <para>
-       Add <link linkend="pgxlogdump"><application>pg_xlogdump</></> option
+       Add <link linkend="pgwaldump"><application>pg_xlogdump</></> option
        <option>--stats</> to display summary statistics (Abhijit Menon-Sen)
       </para>
      </listitem>

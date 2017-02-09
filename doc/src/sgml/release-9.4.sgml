@@ -8917,8 +8917,9 @@ Branch: REL9_4_STABLE [c2b06ab17] 2015-01-30 22:45:58 -0500
 
       <listitem>
        <para>
-        Make <xref linkend="APP-PGRESETXLOG"> with option <option>-n</>
-        output current and potentially changed values (Rajeev Rastogi)
+        Make <link linkend="app-pgresetwal"><application>pg_resetxlog</></>
+        with option <option>-n</> output current and potentially changed
+        values (Rajeev Rastogi)
        </para>
       </listitem>
 
@@ -9518,8 +9519,9 @@ Branch: REL9_4_STABLE [c2b06ab17] 2015-01-30 22:45:58 -0500
 
       <listitem>
        <para>
-        Allow <xref linkend="pgxlogdump"> to report a live log stream
-        with <option>--follow</> (Heikki Linnakangas)
+        Allow <link linkend="pgwaldump"><application>pg_xlogdump</></>
+        to report a live log stream with <option>--follow</>
+        (Heikki Linnakangas)
        </para>
       </listitem>
 

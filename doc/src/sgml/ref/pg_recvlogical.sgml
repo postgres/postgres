@@ -35,7 +35,7 @@ PostgreSQL documentation
 
   <para>
    It creates a replication-mode connection, so it is subject to the same
-   constraints as <xref linkend="app-pgreceivexlog">, plus those for logical
+   constraints as <xref linkend="app-pgreceivewal">, plus those for logical
    replication (see <xref linkend="logicaldecoding">).
   </para>
 
@@ -238,7 +238,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         This option has the same effect as the option of the same name
-        in <xref linkend="app-pgreceivexlog">.  See the description there.
+        in <xref linkend="app-pgreceivewal">.  See the description there.
        </para>
       </listitem>
      </varlistentry>
@@ -411,7 +411,7 @@ PostgreSQL documentation
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="app-pgreceivexlog"></member>
+   <member><xref linkend="app-pgreceivewal"></member>
   </simplelist>
  </refsect1>
 </refentry>

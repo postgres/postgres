@@ -647,7 +647,7 @@ XLogTruncateRelation(RelFileNode rnode, ForkNumber forkNum,
  * always be one descriptor left open until the process ends, but never
  * more than one.
  *
- * XXX This is very similar to pg_xlogdump's XLogDumpXLogRead and to XLogRead
+ * XXX This is very similar to pg_waldump's XLogDumpXLogRead and to XLogRead
  * in walsender.c but for small differences (such as lack of elog() in
  * frontend).  Probably these should be merged at some point.
  */

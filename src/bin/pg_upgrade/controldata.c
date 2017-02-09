@@ -18,16 +18,16 @@
  *
  * gets pg_control information in "ctrl". Assumes that bindir and
  * datadir are valid absolute paths to postgresql bin and pgdata
- * directories respectively *and* pg_resetxlog is version compatible
+ * directories respectively *and* pg_resetwal is version compatible
  * with datadir. The main purpose of this function is to get pg_control
  * data in a version independent manner.
  *
- * The approach taken here is to invoke pg_resetxlog with -n option
+ * The approach taken here is to invoke pg_resetwal with -n option
  * and then pipe its output. With little string parsing we get the
- * pg_control data.  pg_resetxlog cannot be run while the server is running
+ * pg_control data.  pg_resetwal cannot be run while the server is running
  * so we use pg_controldata;  pg_controldata doesn't provide all the fields
  * we need to actually perform the upgrade, but it provides enough for
- * check mode.  We do not implement pg_resetxlog -n because it is hard to
+ * check mode.  We do not implement pg_resetwal -n because it is hard to
  * return valid xid data for a running server.
  */
 void
@@ -73,7 +73,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 
 
 	/*
-	 * Because we test the pg_resetxlog output as strings, it has to be in
+	 * Because we test the pg_resetwal output as strings, it has to be in
 	 * English.  Copied from pg_regress.c.
 	 */
 	if (getenv("LC_COLLATE"))
@@ -113,7 +113,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 
 	snprintf(cmd, sizeof(cmd), "\"%s/%s \"%s\"",
 			 cluster->bindir,
-			 live_check ? "pg_controldata\"" : "pg_resetxlog\" -n",
+			 live_check ? "pg_controldata\"" : "pg_resetwal\" -n",
 			 cluster->pgdata);
 	fflush(stdout);
 	fflush(stderr);
@@ -139,7 +139,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			p = strchr(p, ':');
 
 			if (p == NULL || strlen(p) <= 1)
-				pg_fatal("%d: pg_resetxlog problem\n", __LINE__);
+				pg_fatal("%d: pg_resetwal problem\n", __LINE__);
 
 			p++;				/* remove ':' char */
 			cluster->controldata.ctrl_ver = str2uint(p);
@@ -440,7 +440,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 	pg_free(lc_messages);
 
 	/*
-	 * Before 9.3, pg_resetxlog reported the xlogid and segno of the first log
+	 * Before 9.3, pg_resetwal reported the xlogid and segno of the first log
 	 * file after reset as separate lines. Starting with 9.3, it reports the
 	 * WAL file name. If the old cluster is older than 9.3, we construct the
 	 * WAL file name from the xlogid and segno.

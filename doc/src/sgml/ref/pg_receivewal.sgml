@@ -1,27 +1,27 @@
 <!--
-doc/src/sgml/ref/pg_receivexlog.sgml
+doc/src/sgml/ref/pg_receivewal.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="app-pgreceivexlog">
- <indexterm zone="app-pgreceivexlog">
-  <primary>pg_receivexlog</primary>
+<refentry id="app-pgreceivewal">
+ <indexterm zone="app-pgreceivewal">
+  <primary>pg_receivewal</primary>
  </indexterm>
 
  <refmeta>
-  <refentrytitle>pg_receivexlog</refentrytitle>
+  <refentrytitle>pg_receivewal</refentrytitle>
   <manvolnum>1</manvolnum>
   <refmiscinfo>Application</refmiscinfo>
  </refmeta>
 
  <refnamediv>
-  <refname>pg_receivexlog</refname>
+  <refname>pg_receivewal</refname>
   <refpurpose>stream transaction logs from a <productname>PostgreSQL</productname> server</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
   <cmdsynopsis>
-   <command>pg_receivexlog</command>
+   <command>pg_receivewal</command>
    <arg rep="repeat"><replaceable>option</></arg>
   </cmdsynopsis>
  </refsynopsisdiv>
@@ -31,7 +31,7 @@ PostgreSQL documentation
    Description
   </title>
   <para>
-   <application>pg_receivexlog</application> is used to stream the transaction log
+   <application>pg_receivewal</application> is used to stream the transaction log
    from a running <productname>PostgreSQL</productname> cluster. The transaction
    log is streamed using the streaming replication protocol, and is written
    to a local directory of files. This directory can be used as the archive
@@ -40,16 +40,16 @@ PostgreSQL documentation
   </para>
 
   <para>
-   <application>pg_receivexlog</application> streams the transaction
+   <application>pg_receivewal</application> streams the transaction
    log in real time as it's being generated on the server, and does not wait
    for segments to complete like <xref linkend="guc-archive-command"> does.
    For this reason, it is not necessary to set
    <xref linkend="guc-archive-timeout"> when using
-    <application>pg_receivexlog</application>.
+    <application>pg_receivewal</application>.
   </para>
 
   <para>
-   Unlike the WAL receiver of a PostgreSQL standby server, <application>pg_receivexlog</>
+   Unlike the WAL receiver of a PostgreSQL standby server, <application>pg_receivewal</>
    by default flushes WAL data only when a WAL file is closed.
    The option <option>--synchronous</> must be specified to flush WAL data
    in real time.
@@ -68,7 +68,7 @@ PostgreSQL documentation
 
   <para>
    If the connection is lost, or if it cannot be initially established,
-   with a non-fatal error, <application>pg_receivexlog</application> will
+   with a non-fatal error, <application>pg_receivewal</application> will
    retry the connection indefinitely, and reestablish streaming as soon
    as possible. To avoid this behavior, use the <literal>-n</literal>
    parameter.
@@ -132,9 +132,9 @@ PostgreSQL documentation
       <term><option>--slot=<replaceable class="parameter">slotname</replaceable></option></term>
       <listitem>
         <para>
-         Require <application>pg_receivexlog</application> to use an existing
+         Require <application>pg_receivewal</application> to use an existing
          replication slot (see <xref linkend="streaming-replication-slots">).
-         When this option is used, <application>pg_receivexlog</> will report
+         When this option is used, <application>pg_receivewal</> will report
          a flush position to the server, indicating when each segment has been
          synchronized to disk so that the server can remove that segment if it
          is not otherwise needed.
@@ -142,7 +142,7 @@ PostgreSQL documentation
 
         <para>
          When the replication client
-         of <application>pg_receivexlog</application> is configured on the
+         of <application>pg_receivewal</application> is configured on the
          server as a synchronous standby, then using a replication slot will
          report the flush position to the server, but only when a WAL file is
          closed.  Therefore, that configuration will cause transactions on the
@@ -164,7 +164,7 @@ PostgreSQL documentation
 
        <para>
         This option should be specified if the replication client
-        of <application>pg_receivexlog</application> is configured on the
+        of <application>pg_receivewal</application> is configured on the
         server as a synchronous standby, to ensure that timely feedback is
         sent to the server.
        </para>
@@ -209,7 +209,7 @@ PostgreSQL documentation
        </para>
        <para>
         The option is called <literal>--dbname</> for consistency with other
-        client applications, but because <application>pg_receivexlog</application>
+        client applications, but because <application>pg_receivewal</application>
         doesn't connect to any particular database in the cluster, database
         name in the connection string will be ignored.
        </para>
@@ -273,15 +273,15 @@ PostgreSQL documentation
       <term><option>--password</option></term>
       <listitem>
        <para>
-        Force <application>pg_receivexlog</application> to prompt for a
+        Force <application>pg_receivewal</application> to prompt for a
         password before connecting to a database.
        </para>
 
        <para>
         This option is never essential, since
-        <application>pg_receivexlog</application> will automatically prompt
+        <application>pg_receivewal</application> will automatically prompt
         for a password if the server demands password authentication.
-        However, <application>pg_receivexlog</application> will waste a
+        However, <application>pg_receivewal</application> will waste a
         connection attempt finding out that the server wants a password.
         In some cases it is worth typing <option>-W</> to avoid the extra
         connection attempt.
@@ -292,7 +292,7 @@ PostgreSQL documentation
    </para>
 
    <para>
-    <application>pg_receivexlog</application> can perform one of the two
+    <application>pg_receivewal</application> can perform one of the two
     following actions in order to control physical replication slots:
 
     <variablelist>
@@ -327,7 +327,7 @@ PostgreSQL documentation
        <term><option>--version</></term>
        <listitem>
        <para>
-       Print the <application>pg_receivexlog</application> version and exit.
+       Print the <application>pg_receivewal</application> version and exit.
        </para>
        </listitem>
      </varlistentry>
@@ -337,7 +337,7 @@ PostgreSQL documentation
        <term><option>--help</></term>
        <listitem>
        <para>
-       Show help about <application>pg_receivexlog</application> command line
+       Show help about <application>pg_receivewal</application> command line
        arguments, and exit.
        </para>
        </listitem>
@@ -363,7 +363,7 @@ PostgreSQL documentation
   <title>Notes</title>
 
   <para>
-   When using <application>pg_receivexlog</application> instead of
+   When using <application>pg_receivewal</application> instead of
    <xref linkend="guc-archive-command"> as the main WAL backup method, it is
    strongly recommended to use replication slots.  Otherwise, the server is
    free to recycle or remove transaction log files before they are backed up,
@@ -384,7 +384,7 @@ PostgreSQL documentation
    <literal>mydbserver</literal> and store it in the local directory
    <filename>/usr/local/pgsql/archive</filename>:
 <screen>
-<prompt>$</prompt> <userinput>pg_receivexlog -h mydbserver -D /usr/local/pgsql/archive</userinput>
+<prompt>$</prompt> <userinput>pg_receivewal -h mydbserver -D /usr/local/pgsql/archive</userinput>
 </screen></para>
  </refsect1>
 
