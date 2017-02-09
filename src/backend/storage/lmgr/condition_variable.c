@@ -71,14 +71,17 @@ ConditionVariablePrepareToSleep(ConditionVariable *cv)
 						  &MyProc->procLatch, NULL);
 	}
 
+	/*
+	 * Reset my latch before adding myself to the queue and before entering
+	 * the caller's predicate loop.
+	 */
+	ResetLatch(&MyProc->procLatch);
+
 	/* Add myself to the wait queue. */
 	SpinLockAcquire(&cv->mutex);
 	if (!proclist_contains(&cv->wakeup, pgprocno, cvWaitLink))
 		proclist_push_tail(&cv->wakeup, pgprocno, cvWaitLink);
 	SpinLockRelease(&cv->mutex);
-
-	/* Reset my latch before entering the caller's predicate loop. */
-	ResetLatch(&MyProc->procLatch);
 }
 
 /*--------------------------------------------------------------------------
