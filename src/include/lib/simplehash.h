@@ -137,7 +137,8 @@ typedef struct SH_ITERATOR
 } SH_ITERATOR;
 
 /* externally visible function prototypes */
-SH_SCOPE SH_TYPE *SH_CREATE(MemoryContext ctx, uint32 nelements);
+SH_SCOPE SH_TYPE *SH_CREATE(MemoryContext ctx, uint32 nelements,
+							void *private_data);
 SH_SCOPE void SH_DESTROY(SH_TYPE *tb);
 SH_SCOPE void SH_GROW(SH_TYPE *tb, uint32 newsize);
 SH_SCOPE SH_ELEMENT_TYPE *SH_INSERT(SH_TYPE *tb, SH_KEY_TYPE key, bool *found);
@@ -280,6 +281,10 @@ SH_ENTRY_HASH(SH_TYPE *tb, SH_ELEMENT_TYPE * entry)
 #endif
 }
 
+/* default memory allocator function */
+static inline void *SH_ALLOCATE(SH_TYPE *type, Size size);
+static inline void SH_FREE(SH_TYPE *type, void *pointer);
+
 #ifndef SH_USE_NONDEFAULT_ALLOCATOR
 
 /* default memory allocator function */
@@ -309,13 +314,14 @@ SH_FREE(SH_TYPE *type, void *pointer)
  * the passed-in context.
  */
 SH_SCOPE SH_TYPE *
-SH_CREATE(MemoryContext ctx, uint32 nelements)
+SH_CREATE(MemoryContext ctx, uint32 nelements, void *private_data)
 {
 	SH_TYPE    *tb;
 	uint64		size;
 
 	tb = MemoryContextAllocZero(ctx, sizeof(SH_TYPE));
 	tb->ctx = ctx;
+	tb->private_data = private_data;
 
 	/* increase nelements by fillfactor, want to store nelements elements */
 	size = Min((double) SH_MAX_SIZE, ((double) nelements) / SH_FILLFACTOR);

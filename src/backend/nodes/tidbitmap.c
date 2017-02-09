@@ -244,7 +244,7 @@ tbm_create_pagetable(TIDBitmap *tbm)
 	Assert(tbm->status != TBM_HASH);
 	Assert(tbm->pagetable == NULL);
 
-	tbm->pagetable = pagetable_create(tbm->mcxt, 128);
+	tbm->pagetable = pagetable_create(tbm->mcxt, 128, NULL);
 
 	/* If entry1 is valid, push it into the hashtable */
 	if (tbm->status == TBM_ONE_PAGE)
