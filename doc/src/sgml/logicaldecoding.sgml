@@ -56,7 +56,7 @@
 <programlisting>
 postgres=# -- Create a slot named 'regression_slot' using the output plugin 'test_decoding'
 postgres=# SELECT * FROM pg_create_logical_replication_slot('regression_slot', 'test_decoding');
-    slot_name    | xlog_position
+    slot_name    | wal_position
 -----------------+---------------
  regression_slot | 0/16B1970
 (1 row)

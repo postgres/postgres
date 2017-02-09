@@ -15,7 +15,7 @@ select length(txid_current_snapshot()::text) >= 4;
 select pg_start_backup('should fail');
 ERROR:  recovery is in progress
 HINT:  WAL control functions cannot be executed during recovery.
-select pg_switch_xlog();
+select pg_switch_wal();
 ERROR:  recovery is in progress
 HINT:  WAL control functions cannot be executed during recovery.
 select pg_stop_backup();

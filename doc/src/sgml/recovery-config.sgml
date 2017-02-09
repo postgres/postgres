@@ -321,7 +321,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         to be executed against the database to check if this recovery target
         is the most desirable point for recovery.
         The paused state can be resumed by
-        using <function>pg_xlog_replay_resume()</> (see
+        using <function>pg_wal_replay_resume()</> (see
         <xref linkend="functions-recovery-control-table">), which then
         causes recovery to end. If this recovery target is not the
         desired stopping point, then shut down the server, change the

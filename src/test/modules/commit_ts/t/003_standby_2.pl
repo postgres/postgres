@@ -30,9 +30,9 @@ $master->append_conf('postgresql.conf', 'track_commit_timestamp = off');
 $master->restart;
 $master->safe_psql('postgres', 'checkpoint');
 my $master_lsn =
-  $master->safe_psql('postgres', 'select pg_current_xlog_location()');
+  $master->safe_psql('postgres', 'select pg_current_wal_location()');
 $standby->poll_query_until('postgres',
-	qq{SELECT '$master_lsn'::pg_lsn <= pg_last_xlog_replay_location()})
+	qq{SELECT '$master_lsn'::pg_lsn <= pg_last_wal_replay_location()})
   or die "slave never caught up";
 
 $standby->safe_psql('postgres', 'checkpoint');

@@ -16,7 +16,7 @@ sub test_index_replay
 	# Wait for standby to catch up
 	my $applname = $node_standby->name;
 	my $caughtup_query =
-"SELECT pg_current_xlog_location() <= write_location FROM pg_stat_replication WHERE application_name = '$applname';";
+"SELECT pg_current_wal_location() <= write_location FROM pg_stat_replication WHERE application_name = '$applname';";
 	$node_master->poll_query_until('postgres', $caughtup_query)
 	  or die "Timed out while waiting for standby 1 to catch up";
 

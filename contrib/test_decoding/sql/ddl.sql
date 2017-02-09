@@ -29,7 +29,7 @@ SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot', 'test_d
 SELECT slot_name, plugin, slot_type, active,
     NOT catalog_xmin IS NULL AS catalog_xmin_set,
     xmin IS NULl  AS data_xmin_not_set,
-    pg_xlog_location_diff(restart_lsn, '0/01000000') > 0 AS some_wal
+    pg_wal_location_diff(restart_lsn, '0/01000000') > 0 AS some_wal
 FROM pg_replication_slots;
 
 /*

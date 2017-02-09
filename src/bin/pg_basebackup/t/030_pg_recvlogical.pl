@@ -39,7 +39,7 @@ isnt($slot->{'restart_lsn'}, '', 'restart lsn is defined for new slot');
 
 $node->psql('postgres', 'CREATE TABLE test_table(x integer)');
 $node->psql('postgres', 'INSERT INTO test_table(x) SELECT y FROM generate_series(1, 10) a(y);');
-my $nextlsn = $node->safe_psql('postgres', 'SELECT pg_current_xlog_insert_location()');
+my $nextlsn = $node->safe_psql('postgres', 'SELECT pg_current_wal_insert_location()');
 chomp($nextlsn);
 
 $node->command_ok(['pg_recvlogical', '-S', 'test', '-d', $node->connstr('postgres'), '--start', '--endpos', "$nextlsn", '--no-loop', '-f', '-'],

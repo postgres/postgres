@@ -726,7 +726,7 @@ test ! -f /mnt/server/archivedir/00000001000000A900000065 &amp;&amp; cp pg_wal/0
 
    <para>
     Also, you can force a segment switch manually with
-    <function>pg_switch_xlog</> if you want to ensure that a
+    <function>pg_switch_wal</> if you want to ensure that a
     just-finished transaction is archived as soon as possible.  Other utility
     functions related to WAL management are listed in <xref
     linkend="functions-admin-backup-table">.

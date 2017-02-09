@@ -33,10 +33,10 @@ $node_standby->start;
 $node_master->safe_psql('postgres',
 	"CREATE TABLE tab_int AS SELECT generate_series(1,1000) AS a");
 my $current_lsn =
-  $node_master->safe_psql('postgres', "SELECT pg_current_xlog_location();");
+  $node_master->safe_psql('postgres', "SELECT pg_current_wal_location();");
 
 # Force archiving of WAL file to make it present on master
-$node_master->safe_psql('postgres', "SELECT pg_switch_xlog()");
+$node_master->safe_psql('postgres', "SELECT pg_switch_wal()");
 
 # Add some more content, it should not be present on standby
 $node_master->safe_psql('postgres',
@@ -44,7 +44,7 @@ $node_master->safe_psql('postgres',
 
 # Wait until necessary replay has been done on standby
 my $caughtup_query =
-  "SELECT '$current_lsn'::pg_lsn <= pg_last_xlog_replay_location()";
+  "SELECT '$current_lsn'::pg_lsn <= pg_last_wal_replay_location()";
 $node_standby->poll_query_until('postgres', $caughtup_query)
   or die "Timed out while waiting for standby to catch up";
 

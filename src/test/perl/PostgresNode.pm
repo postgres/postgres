@@ -1358,11 +1358,11 @@ mode must be specified.
 sub lsn
 {
 	my ($self, $mode) = @_;
-	my %modes = ('insert' => 'pg_current_xlog_insert_location()',
-				 'flush' => 'pg_current_xlog_flush_location()',
-				 'write' => 'pg_current_xlog_location()',
-				 'receive' => 'pg_last_xlog_receive_location()',
-				 'replay' => 'pg_last_xlog_replay_location()');
+	my %modes = ('insert' => 'pg_current_wal_insert_location()',
+				 'flush' => 'pg_current_wal_flush_location()',
+				 'write' => 'pg_current_wal_location()',
+				 'receive' => 'pg_last_wal_receive_location()',
+				 'replay' => 'pg_last_wal_replay_location()');
 
 	$mode = '<undef>' if !defined($mode);
 	die "unknown mode for 'lsn': '$mode', valid modes are " . join(', ', keys %modes)

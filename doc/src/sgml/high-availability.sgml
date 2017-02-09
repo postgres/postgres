@@ -853,8 +853,8 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
      standby. You can calculate this lag by comparing the current WAL write
      location on the primary with the last WAL location received by the
      standby. They can be retrieved using
-     <function>pg_current_xlog_location</> on the primary and the
-     <function>pg_last_xlog_receive_location</> on the standby,
+     <function>pg_current_wal_location</> on the primary and the
+     <function>pg_last_wal_receive_location</> on the standby,
      respectively (see <xref linkend="functions-admin-backup-table"> and
      <xref linkend="functions-recovery-info-table"> for details).
      The last WAL receive location in the standby is also displayed in the
@@ -865,10 +865,10 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
      You can retrieve a list of WAL sender processes via the
      <link linkend="monitoring-stats-views-table">
      <literal>pg_stat_replication</></link> view. Large differences between
-     <function>pg_current_xlog_location</> and <literal>sent_location</> field
+     <function>pg_current_wal_location</> and <literal>sent_location</> field
      might indicate that the master server is under heavy load, while
      differences between <literal>sent_location</> and
-     <function>pg_last_xlog_receive_location</> on the standby might indicate
+     <function>pg_last_wal_receive_location</> on the standby might indicate
      network delay, or that the standby is under heavy load.
     </para>
    </sect3>
@@ -929,7 +929,7 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
      You can create a replication slot like this:
 <programlisting>
 postgres=# SELECT * FROM pg_create_physical_replication_slot('node_a_slot');
-  slot_name  | xlog_position
+  slot_name  | wal_position
 -------------+---------------
  node_a_slot |
 
@@ -1587,7 +1587,7 @@ if (!triggered)
    </para>
 
    <para>
-    An external program can call the <function>pg_xlogfile_name_offset()</>
+    An external program can call the <function>pg_walfile_name_offset()</>
     function (see <xref linkend="functions-admin">)
     to find out the file name and the exact byte offset within it of
     the current end of WAL.  It can then access the WAL file directly
@@ -2225,7 +2225,7 @@ LOG:  database system is ready to accept read only connections
 
    <para>
     WAL file control commands will not work during recovery,
-    e.g. <function>pg_start_backup</>, <function>pg_switch_xlog</> etc.
+    e.g. <function>pg_start_backup</>, <function>pg_switch_wal</> etc.
    </para>
 
    <para>

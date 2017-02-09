@@ -98,7 +98,7 @@
 #
 # If recovery_target_action = 'pause', recovery will pause when the
 # recovery target is reached. The pause state will continue until
-# pg_xlog_replay_resume() is called. This setting has no effect if
+# pg_wal_replay_resume() is called. This setting has no effect if
 # no recovery target is set. If hot_standby is not enabled then the
 # server will shutdown instead, though you may request this in
 # any case by specifying 'shutdown'.

@@ -156,7 +156,7 @@ sub promote_standby
 
 	# Wait for the standby to receive and write all WAL.
 	my $wal_received_query =
-"SELECT pg_current_xlog_location() = write_location FROM pg_stat_replication WHERE application_name = 'rewind_standby';";
+"SELECT pg_current_wal_location() = write_location FROM pg_stat_replication WHERE application_name = 'rewind_standby';";
 	$node_master->poll_query_until('postgres', $wal_received_query)
 	  or die "Timed out while waiting for standby to receive and write WAL";
 
