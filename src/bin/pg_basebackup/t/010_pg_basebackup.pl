@@ -93,7 +93,7 @@ isnt(slurp_file("$tempdir/backup/backup_label"), 'DONOTCOPY',
 	 'existing backup_label not copied');
 
 $node->command_ok(
-	[   'pg_basebackup', '-D', "$tempdir/backup2", '--xlogdir',
+	[   'pg_basebackup', '-D', "$tempdir/backup2", '--waldir',
 		"$tempdir/xlog2" ],
 	'separate xlog directory');
 ok(-f "$tempdir/backup2/PG_VERSION", 'backup was created');

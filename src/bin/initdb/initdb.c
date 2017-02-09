@@ -2255,7 +2255,7 @@ usage(const char *progname)
 		 "                            default text search configuration\n"));
 	printf(_("  -U, --username=NAME       database superuser name\n"));
 	printf(_("  -W, --pwprompt            prompt for a password for the new superuser\n"));
-	printf(_("  -X, --xlogdir=XLOGDIR     location for the transaction log directory\n"));
+	printf(_("  -X, --waldir=WALDIR       location for the write-ahead log directory\n"));
 	printf(_("\nLess commonly used options:\n"));
 	printf(_("  -d, --debug               generate lots of debugging output\n"));
 	printf(_("  -k, --data-checksums      use data page checksums\n"));
@@ -2941,7 +2941,7 @@ main(int argc, char *argv[])
 		{"nosync", no_argument, NULL, 'N'},  /* for backwards compatibility */
 		{"no-sync", no_argument, NULL, 'N'},
 		{"sync-only", no_argument, NULL, 'S'},
-		{"xlogdir", required_argument, NULL, 'X'},
+		{"waldir", required_argument, NULL, 'X'},
 		{"data-checksums", no_argument, NULL, 'k'},
 		{NULL, 0, NULL, 0}
 	};

@@ -296,11 +296,11 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>--xlogdir=<replaceable class="parameter">xlogdir</replaceable></option></term>
+      <term><option>--waldir=<replaceable class="parameter">waldir</replaceable></option></term>
       <listitem>
        <para>
         Specifies the location for the transaction log directory.
-        <replaceable>xlogdir</replaceable> must be an absolute path.
+        <replaceable>waldir</replaceable> must be an absolute path.
         The transaction log directory can only be specified when
         the backup is in plain mode.
        </para>
@@ -309,7 +309,7 @@ PostgreSQL documentation
 
      <varlistentry>
       <term><option>-X <replaceable class="parameter">method</replaceable></option></term>
-      <term><option>--xlog-method=<replaceable class="parameter">method</replaceable></option></term>
+      <term><option>--wal-method=<replaceable class="parameter">method</replaceable></option></term>
       <listitem>
        <para>
         Includes the required transaction log files (WAL files) in the

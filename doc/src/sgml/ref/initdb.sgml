@@ -311,7 +311,7 @@ PostgreSQL documentation
 
      <varlistentry>
       <term><option>-X <replaceable class="parameter">directory</replaceable></option></term>
-      <term><option>--xlogdir=<replaceable class="parameter">directory</replaceable></option></term>
+      <term><option>--waldir=<replaceable class="parameter">directory</replaceable></option></term>
       <listitem>
        <para>
         This option specifies the directory where the transaction log
