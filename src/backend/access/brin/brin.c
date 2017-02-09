@@ -131,14 +131,15 @@ brinhandler(PG_FUNCTION_ARGS)
 bool
 brininsert(Relation idxRel, Datum *values, bool *nulls,
 		   ItemPointer heaptid, Relation heapRel,
-		   IndexUniqueCheck checkUnique)
+		   IndexUniqueCheck checkUnique,
+		   IndexInfo *indexInfo)
 {
 	BlockNumber pagesPerRange;
-	BrinDesc   *bdesc = NULL;
+	BrinDesc   *bdesc = (BrinDesc *) indexInfo->ii_AmCache;
 	BrinRevmap *revmap;
 	Buffer		buf = InvalidBuffer;
 	MemoryContext tupcxt = NULL;
-	MemoryContext oldcxt = NULL;
+	MemoryContext oldcxt = CurrentMemoryContext;
 
 	revmap = brinRevmapInitialize(idxRel, &pagesPerRange, NULL);
 
@@ -163,14 +164,21 @@ brininsert(Relation idxRel, Datum *values, bool *nulls,
 		if (!brtup)
 			break;
 
-		/* First time through? */
+		/* First time through in this statement? */
 		if (bdesc == NULL)
 		{
+			MemoryContextSwitchTo(indexInfo->ii_Context);
 			bdesc = brin_build_desc(idxRel);
+			indexInfo->ii_AmCache = (void *) bdesc;
+			MemoryContextSwitchTo(oldcxt);
+		}
+		/* First time through in this brininsert call? */
+		if (tupcxt == NULL)
+		{
 			tupcxt = AllocSetContextCreate(CurrentMemoryContext,
 										   "brininsert cxt",
 										   ALLOCSET_DEFAULT_SIZES);
-			oldcxt = MemoryContextSwitchTo(tupcxt);
+			MemoryContextSwitchTo(tupcxt);
 		}
 
 		dtup = brin_deform_tuple(bdesc, brtup);
@@ -261,12 +269,9 @@ brininsert(Relation idxRel, Datum *values, bool *nulls,
 	brinRevmapTerminate(revmap);
 	if (BufferIsValid(buf))
 		ReleaseBuffer(buf);
-	if (bdesc != NULL)
-	{
-		brin_free_desc(bdesc);
-		MemoryContextSwitchTo(oldcxt);
+	MemoryContextSwitchTo(oldcxt);
+	if (tupcxt != NULL)
 		MemoryContextDelete(tupcxt);
-	}
 
 	return false;
 }

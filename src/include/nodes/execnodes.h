@@ -52,6 +52,8 @@
  *		ReadyForInserts		is it valid for inserts?
  *		Concurrent			are we doing a concurrent index build?
  *		BrokenHotChain		did we detect any broken HOT chains?
+ *		AmCache				private cache area for index AM
+ *		Context				memory context holding this IndexInfo
  *
  * ii_Concurrent and ii_BrokenHotChain are used only during index build;
  * they're conventionally set to false otherwise.
@@ -76,6 +78,8 @@ typedef struct IndexInfo
 	bool		ii_ReadyForInserts;
 	bool		ii_Concurrent;
 	bool		ii_BrokenHotChain;
+	void	   *ii_AmCache;
+	MemoryContext ii_Context;
 } IndexInfo;
 
 /* ----------------

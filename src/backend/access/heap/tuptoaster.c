@@ -1604,7 +1604,9 @@ toast_save_datum(Relation rel, Datum value,
 		 * Create the index entry.  We cheat a little here by not using
 		 * FormIndexDatum: this relies on the knowledge that the index columns
 		 * are the same as the initial columns of the table for all the
-		 * indexes.
+		 * indexes.  We also cheat by not providing an IndexInfo: this is okay
+		 * for now because btree doesn't need one, but we might have to be
+		 * more honest someday.
 		 *
 		 * Note also that there had better not be any user-created index on
 		 * the TOAST table, since we don't bother to update anything else.
@@ -1617,7 +1619,8 @@ toast_save_datum(Relation rel, Datum value,
 							 &(toasttup->t_self),
 							 toastrel,
 							 toastidxs[i]->rd_index->indisunique ?
-							 UNIQUE_CHECK_YES : UNIQUE_CHECK_NO);
+							 UNIQUE_CHECK_YES : UNIQUE_CHECK_NO,
+							 NULL);
 		}
 
 		/*

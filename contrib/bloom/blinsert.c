@@ -190,7 +190,9 @@ blbuildempty(Relation index)
  */
 bool
 blinsert(Relation index, Datum *values, bool *isnull,
-		 ItemPointer ht_ctid, Relation heapRel, IndexUniqueCheck checkUnique)
+		 ItemPointer ht_ctid, Relation heapRel,
+		 IndexUniqueCheck checkUnique,
+		 IndexInfo *indexInfo)
 {
 	BloomState	blstate;
 	BloomTuple *itup;

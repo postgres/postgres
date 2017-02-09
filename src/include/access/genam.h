@@ -21,6 +21,9 @@
 #include "utils/relcache.h"
 #include "utils/snapshot.h"
 
+/* We don't want this file to depend on execnodes.h. */
+struct IndexInfo;
+
 /*
  * Struct for statistics returned by ambuild
  */
@@ -131,7 +134,8 @@ extern bool index_insert(Relation indexRelation,
 			 Datum *values, bool *isnull,
 			 ItemPointer heap_t_ctid,
 			 Relation heapRelation,
-			 IndexUniqueCheck checkUnique);
+			 IndexUniqueCheck checkUnique,
+			 struct IndexInfo *indexInfo);
 
 extern IndexScanDesc index_beginscan(Relation heapRelation,
 				Relation indexRelation,

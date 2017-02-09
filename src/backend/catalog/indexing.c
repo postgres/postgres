@@ -139,7 +139,8 @@ CatalogIndexInsert(CatalogIndexState indstate, HeapTuple heapTuple)
 					 &(heapTuple->t_self),		/* tid of heap tuple */
 					 heapRelation,
 					 relationDescs[i]->rd_index->indisunique ?
-					 UNIQUE_CHECK_YES : UNIQUE_CHECK_NO);
+					 UNIQUE_CHECK_YES : UNIQUE_CHECK_NO,
+					 indexInfo);
 	}
 
 	ExecDropSingleTupleTableSlot(slot);

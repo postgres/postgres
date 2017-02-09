@@ -18,6 +18,7 @@
 #include "access/gistscan.h"
 #include "catalog/pg_collation.h"
 #include "miscadmin.h"
+#include "nodes/execnodes.h"
 #include "utils/builtins.h"
 #include "utils/index_selfuncs.h"
 #include "utils/memutils.h"
@@ -144,21 +145,23 @@ gistbuildempty(Relation index)
 bool
 gistinsert(Relation r, Datum *values, bool *isnull,
 		   ItemPointer ht_ctid, Relation heapRel,
-		   IndexUniqueCheck checkUnique)
+		   IndexUniqueCheck checkUnique,
+		   IndexInfo *indexInfo)
 {
+	GISTSTATE  *giststate = (GISTSTATE *) indexInfo->ii_AmCache;
 	IndexTuple	itup;
-	GISTSTATE  *giststate;
 	MemoryContext oldCxt;
 
-	giststate = initGISTstate(r);
+	/* Initialize GISTSTATE cache if first call in this statement */
+	if (giststate == NULL)
+	{
+		oldCxt = MemoryContextSwitchTo(indexInfo->ii_Context);
+		giststate = initGISTstate(r);
+		giststate->tempCxt = createTempGistContext();
+		indexInfo->ii_AmCache = (void *) giststate;
+		MemoryContextSwitchTo(oldCxt);
+	}
 
-	/*
-	 * We use the giststate's scan context as temp context too.  This means
-	 * that any memory leaked by the support functions is not reclaimed until
-	 * end of insert.  In most cases, we aren't going to call the support
-	 * functions very many times before finishing the insert, so this seems
-	 * cheaper than resetting a temp context for each function call.
-	 */
 	oldCxt = MemoryContextSwitchTo(giststate->tempCxt);
 
 	itup = gistFormTuple(giststate, r,
@@ -169,7 +172,7 @@ gistinsert(Relation r, Datum *values, bool *isnull,
 
 	/* cleanup */
 	MemoryContextSwitchTo(oldCxt);
-	freeGISTstate(giststate);
+	MemoryContextReset(giststate->tempCxt);
 
 	return false;
 }

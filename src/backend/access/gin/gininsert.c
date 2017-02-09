@@ -482,12 +482,23 @@ ginHeapTupleInsert(GinState *ginstate, OffsetNumber attnum,
 bool
 gininsert(Relation index, Datum *values, bool *isnull,
 		  ItemPointer ht_ctid, Relation heapRel,
-		  IndexUniqueCheck checkUnique)
+		  IndexUniqueCheck checkUnique,
+		  IndexInfo *indexInfo)
 {
-	GinState	ginstate;
+	GinState   *ginstate = (GinState *) indexInfo->ii_AmCache;
 	MemoryContext oldCtx;
 	MemoryContext insertCtx;
 	int			i;
+
+	/* Initialize GinState cache if first call in this statement */
+	if (ginstate == NULL)
+	{
+		oldCtx = MemoryContextSwitchTo(indexInfo->ii_Context);
+		ginstate = (GinState *) palloc(sizeof(GinState));
+		initGinState(ginstate, index);
+		indexInfo->ii_AmCache = (void *) ginstate;
+		MemoryContextSwitchTo(oldCtx);
+	}
 
 	insertCtx = AllocSetContextCreate(CurrentMemoryContext,
 									  "Gin insert temporary context",
@@ -495,26 +506,24 @@ gininsert(Relation index, Datum *values, bool *isnull,
 
 	oldCtx = MemoryContextSwitchTo(insertCtx);
 
-	initGinState(&ginstate, index);
-
 	if (GinGetUseFastUpdate(index))
 	{
 		GinTupleCollector collector;
 
 		memset(&collector, 0, sizeof(GinTupleCollector));
 
-		for (i = 0; i < ginstate.origTupdesc->natts; i++)
-			ginHeapTupleFastCollect(&ginstate, &collector,
+		for (i = 0; i < ginstate->origTupdesc->natts; i++)
+			ginHeapTupleFastCollect(ginstate, &collector,
 									(OffsetNumber) (i + 1),
 									values[i], isnull[i],
 									ht_ctid);
 
-		ginHeapTupleFastInsert(&ginstate, &collector);
+		ginHeapTupleFastInsert(ginstate, &collector);
 	}
 	else
 	{
-		for (i = 0; i < ginstate.origTupdesc->natts; i++)
-			ginHeapTupleInsert(&ginstate, (OffsetNumber) (i + 1),
+		for (i = 0; i < ginstate->origTupdesc->natts; i++)
+			ginHeapTupleInsert(ginstate, (OffsetNumber) (i + 1),
 							   values[i], isnull[i],
 							   ht_ctid);
 	}

@@ -1687,6 +1687,10 @@ BuildIndexInfo(Relation index)
 	ii->ii_Concurrent = false;
 	ii->ii_BrokenHotChain = false;
 
+	/* set up for possible use by index AM */
+	ii->ii_AmCache = NULL;
+	ii->ii_Context = CurrentMemoryContext;
+
 	return ii;
 }
 
@@ -3158,7 +3162,8 @@ validate_index_heapscan(Relation heapRelation,
 						 &rootTuple,
 						 heapRelation,
 						 indexInfo->ii_Unique ?
-						 UNIQUE_CHECK_YES : UNIQUE_CHECK_NO);
+						 UNIQUE_CHECK_YES : UNIQUE_CHECK_NO,
+						 indexInfo);
 
 			state->tups_inserted += 1;
 		}

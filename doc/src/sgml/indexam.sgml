@@ -259,7 +259,8 @@ aminsert (Relation indexRelation,
           bool *isnull,
           ItemPointer heap_tid,
           Relation heapRelation,
-          IndexUniqueCheck checkUnique);
+          IndexUniqueCheck checkUnique,
+          IndexInfo *indexInfo);
 </programlisting>
    Insert a new tuple into an existing index.  The <literal>values</> and
    <literal>isnull</> arrays give the key values to be indexed, and
@@ -285,6 +286,14 @@ aminsert (Relation indexRelation,
   <para>
    Some indexes might not index all tuples.  If the tuple is not to be
    indexed, <function>aminsert</> should just return without doing anything.
+  </para>
+
+  <para>
+   If the index AM wishes to cache data across successive index insertions
+   within a SQL statement, it can allocate space
+   in <literal>indexInfo-&gt;ii_Context</literal> and store a pointer to the
+   data in <literal>indexInfo-&gt;ii_AmCache</literal> (which will be NULL
+   initially).
   </para>
 
   <para>

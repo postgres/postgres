@@ -617,7 +617,8 @@ extern IndexBuildResult *ginbuild(Relation heap, Relation index,
 extern void ginbuildempty(Relation index);
 extern bool gininsert(Relation index, Datum *values, bool *isnull,
 		  ItemPointer ht_ctid, Relation heapRel,
-		  IndexUniqueCheck checkUnique);
+		  IndexUniqueCheck checkUnique,
+		  struct IndexInfo *indexInfo);
 extern void ginEntryInsert(GinState *ginstate,
 			   OffsetNumber attnum, Datum key, GinNullCategory category,
 			   ItemPointerData *items, uint32 nitem,

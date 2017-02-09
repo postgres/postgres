@@ -276,7 +276,8 @@ btbuildempty(Relation index)
 bool
 btinsert(Relation rel, Datum *values, bool *isnull,
 		 ItemPointer ht_ctid, Relation heapRel,
-		 IndexUniqueCheck checkUnique)
+		 IndexUniqueCheck checkUnique,
+		 IndexInfo *indexInfo)
 {
 	bool		result;
 	IndexTuple	itup;
