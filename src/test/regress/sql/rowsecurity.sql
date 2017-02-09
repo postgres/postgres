@@ -178,12 +178,12 @@ ALTER TABLE category ENABLE ROW LEVEL SECURITY;
 
 -- cannot delete PK referenced by invisible FK
 SET SESSION AUTHORIZATION regress_rls_bob;
-SELECT * FROM document d FULL OUTER JOIN category c on d.cid = c.cid;
+SELECT * FROM document d FULL OUTER JOIN category c on d.cid = c.cid ORDER BY d.did, c.cid;
 DELETE FROM category WHERE cid = 33;    -- fails with FK violation
 
 -- can insert FK referencing invisible PK
 SET SESSION AUTHORIZATION regress_rls_carol;
-SELECT * FROM document d FULL OUTER JOIN category c on d.cid = c.cid;
+SELECT * FROM document d FULL OUTER JOIN category c on d.cid = c.cid ORDER BY d.did, c.cid;
 INSERT INTO document VALUES (11, 33, 1, current_user, 'hoge');
 
 -- UNIQUE or PRIMARY KEY constraint violation DOES reveal presence of row

@@ -448,15 +448,15 @@ CREATE POLICY p2 ON category
 ALTER TABLE category ENABLE ROW LEVEL SECURITY;
 -- cannot delete PK referenced by invisible FK
 SET SESSION AUTHORIZATION regress_rls_bob;
-SELECT * FROM document d FULL OUTER JOIN category c on d.cid = c.cid;
+SELECT * FROM document d FULL OUTER JOIN category c on d.cid = c.cid ORDER BY d.did, c.cid;
  did | cid | dlevel |     dauthor     |       dtitle       | cid |   cname    
 -----+-----+--------+-----------------+--------------------+-----+------------
-   2 |  11 |      2 | regress_rls_bob | my second novel    |  11 | novel
    1 |  11 |      1 | regress_rls_bob | my first novel     |  11 | novel
-     |     |        |                 |                    |  33 | technology
-   5 |  44 |      2 | regress_rls_bob | my second manga    |     | 
-   4 |  44 |      1 | regress_rls_bob | my first manga     |     | 
+   2 |  11 |      2 | regress_rls_bob | my second novel    |  11 | novel
    3 |  22 |      2 | regress_rls_bob | my science fiction |     | 
+   4 |  44 |      1 | regress_rls_bob | my first manga     |     | 
+   5 |  44 |      2 | regress_rls_bob | my second manga    |     | 
+     |     |        |                 |                    |  33 | technology
 (6 rows)
 
 DELETE FROM category WHERE cid = 33;    -- fails with FK violation
@@ -464,12 +464,12 @@ ERROR:  update or delete on table "category" violates foreign key constraint "do
 DETAIL:  Key is still referenced from table "document".
 -- can insert FK referencing invisible PK
 SET SESSION AUTHORIZATION regress_rls_carol;
-SELECT * FROM document d FULL OUTER JOIN category c on d.cid = c.cid;
+SELECT * FROM document d FULL OUTER JOIN category c on d.cid = c.cid ORDER BY d.did, c.cid;
  did | cid | dlevel |      dauthor      |        dtitle         | cid |      cname      
 -----+-----+--------+-------------------+-----------------------+-----+-----------------
    6 |  22 |      1 | regress_rls_carol | great science fiction |  22 | science fiction
-   8 |  44 |      1 | regress_rls_carol | great manga           |  44 | manga
    7 |  33 |      2 | regress_rls_carol | great technology book |     | 
+   8 |  44 |      1 | regress_rls_carol | great manga           |  44 | manga
 (3 rows)
 
 INSERT INTO document VALUES (11, 33, 1, current_user, 'hoge');
