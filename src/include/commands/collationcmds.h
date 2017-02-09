@@ -18,7 +18,7 @@
 #include "catalog/objectaddress.h"
 #include "nodes/parsenodes.h"
 
-extern ObjectAddress DefineCollation(ParseState *pstate, List *names, List *parameters);
+extern ObjectAddress DefineCollation(ParseState *pstate, List *names, List *parameters, bool if_not_exists);
 extern void IsThereCollationInNamespace(const char *collname, Oid nspOid);
 
 #endif   /* COLLATIONCMDS_H */

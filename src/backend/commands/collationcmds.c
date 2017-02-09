@@ -37,7 +37,7 @@
  * CREATE COLLATION
  */
 ObjectAddress
-DefineCollation(ParseState *pstate, List *names, List *parameters)
+DefineCollation(ParseState *pstate, List *names, List *parameters, bool if_not_exists)
 {
 	char	   *collName;
 	Oid			collNamespace;
@@ -137,7 +137,7 @@ DefineCollation(ParseState *pstate, List *names, List *parameters)
 							 GetDatabaseEncoding(),
 							 collcollate,
 							 collctype,
-							 false);
+							 if_not_exists);
 
 	if (!OidIsValid(newoid))
 		return InvalidObjectAddress;

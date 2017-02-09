@@ -325,6 +325,8 @@ BEGIN
 END
 $$;
 CREATE COLLATION test0 FROM "C"; -- fail, duplicate name
+CREATE COLLATION IF NOT EXISTS test0 FROM "C"; -- ok, skipped
+CREATE COLLATION IF NOT EXISTS test0 (locale = 'foo'); -- ok, skipped
 do $$
 BEGIN
   EXECUTE 'CREATE COLLATION test1 (lc_collate = ' ||

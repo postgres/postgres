@@ -5610,6 +5610,16 @@ DefineStmt:
 					n->definition = $4;
 					$$ = (Node *)n;
 				}
+			| CREATE COLLATION IF_P NOT EXISTS any_name definition
+				{
+					DefineStmt *n = makeNode(DefineStmt);
+					n->kind = OBJECT_COLLATION;
+					n->args = NIL;
+					n->defnames = $6;
+					n->definition = $7;
+					n->if_not_exists = true;
+					$$ = (Node *)n;
+				}
 			| CREATE COLLATION any_name FROM any_name
 				{
 					DefineStmt *n = makeNode(DefineStmt);
@@ -5617,6 +5627,16 @@ DefineStmt:
 					n->args = NIL;
 					n->defnames = $3;
 					n->definition = list_make1(makeDefElem("from", (Node *) $5, @5));
+					$$ = (Node *)n;
+				}
+			| CREATE COLLATION IF_P NOT EXISTS any_name FROM any_name
+				{
+					DefineStmt *n = makeNode(DefineStmt);
+					n->kind = OBJECT_COLLATION;
+					n->args = NIL;
+					n->defnames = $6;
+					n->definition = list_make1(makeDefElem("from", (Node *) $8, @8));
+					n->if_not_exists = true;
 					$$ = (Node *)n;
 				}
 		;

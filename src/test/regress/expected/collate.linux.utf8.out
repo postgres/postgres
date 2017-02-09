@@ -963,6 +963,10 @@ END
 $$;
 CREATE COLLATION test0 FROM "C"; -- fail, duplicate name
 ERROR:  collation "test0" for encoding "UTF8" already exists
+CREATE COLLATION IF NOT EXISTS test0 FROM "C"; -- ok, skipped
+NOTICE:  collation "test0" for encoding "UTF8" already exists, skipping
+CREATE COLLATION IF NOT EXISTS test0 (locale = 'foo'); -- ok, skipped
+NOTICE:  collation "test0" for encoding "UTF8" already exists, skipping
 do $$
 BEGIN
   EXECUTE 'CREATE COLLATION test1 (lc_collate = ' ||

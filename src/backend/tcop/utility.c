@@ -1271,7 +1271,8 @@ ProcessUtilitySlow(ParseState *pstate,
 							Assert(stmt->args == NIL);
 							address = DefineCollation(pstate,
 													  stmt->defnames,
-													  stmt->definition);
+													  stmt->definition,
+													  stmt->if_not_exists);
 							break;
 						default:
 							elog(ERROR, "unrecognized define stmt type: %d",

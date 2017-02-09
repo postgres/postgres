@@ -2380,6 +2380,7 @@ typedef struct DefineStmt
 	List	   *defnames;		/* qualified name (list of Value strings) */
 	List	   *args;			/* a list of TypeName (if needed) */
 	List	   *definition;		/* a list of DefElem */
+	bool		if_not_exists;	/* just do nothing if it already exists? */
 } DefineStmt;
 
 /* ----------------------
