@@ -1114,7 +1114,7 @@ XLogInsertRecord(XLogRecData *rdata,
 	 */
 	if (isLogSwitch)
 	{
-		TRACE_POSTGRESQL_XLOG_SWITCH();
+		TRACE_POSTGRESQL_WAL_SWITCH();
 		XLogFlush(EndPos);
 
 		/*

@@ -429,7 +429,7 @@ XLogInsert(RmgrId rmid, uint8 info)
 				  XLR_CHECK_CONSISTENCY)) != 0)
 		elog(PANIC, "invalid xlog info mask %02X", info);
 
-	TRACE_POSTGRESQL_XLOG_INSERT(rmid, info);
+	TRACE_POSTGRESQL_WAL_INSERT(rmid, info);
 
 	/*
 	 * In bootstrap mode, we don't actually log anything but XLOG resources;

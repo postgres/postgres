@@ -3349,14 +3349,14 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
      <entry>Probe that fires when a dirty WAL buffer write is complete.</entry>
     </row>
     <row>
-     <entry><literal>xlog-insert</literal></entry>
+     <entry><literal>wal-insert</literal></entry>
      <entry><literal>(unsigned char, unsigned char)</literal></entry>
      <entry>Probe that fires when a WAL record is inserted.
       arg0 is the resource manager (rmid) for the record.
       arg1 contains the info flags.</entry>
     </row>
     <row>
-     <entry><literal>xlog-switch</literal></entry>
+     <entry><literal>wal-switch</literal></entry>
      <entry><literal>()</literal></entry>
      <entry>Probe that fires when a WAL segment switch is requested.</entry>
     </row>

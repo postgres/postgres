@@ -87,8 +87,8 @@ provider postgresql {
 	probe smgr__md__write__start(ForkNumber, BlockNumber, Oid, Oid, Oid, int);
 	probe smgr__md__write__done(ForkNumber, BlockNumber, Oid, Oid, Oid, int, int, int);
 
-	probe xlog__insert(unsigned char, unsigned char);
-	probe xlog__switch();
+	probe wal__insert(unsigned char, unsigned char);
+	probe wal__switch();
 	probe wal__buffer__write__dirty__start();
 	probe wal__buffer__write__dirty__done();
 };
