@@ -85,8 +85,8 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
 
 <phrase>and <replaceable class="PARAMETER">partition_bound_spec</replaceable> is:</phrase>
 
-{ IN ( <replaceable class="PARAMETER">expression</replaceable> [, ...] ) |
-  FROM ( { <replaceable class="PARAMETER">expression</replaceable> | UNBOUNDED } [, ...] ) TO ( { <replaceable class="PARAMETER">expression</replaceable> | UNBOUNDED } [, ...] ) }
+{ IN ( { <replaceable class="PARAMETER">bound_literal</replaceable> | NULL } [, ...] ) |
+  FROM ( { <replaceable class="PARAMETER">bound_literal</replaceable> | UNBOUNDED } [, ...] ) TO ( { <replaceable class="PARAMETER">bound_literal</replaceable> | UNBOUNDED } [, ...] ) }
 
 <phrase><replaceable class="PARAMETER">index_parameters</replaceable> in <literal>UNIQUE</literal>, <literal>PRIMARY KEY</literal>, and <literal>EXCLUDE</literal> constraints are:</phrase>
 
@@ -261,10 +261,48 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
       any existing partition of that parent.
      </para>
 
+     <note>
+      <para>
+       Each of the values specified in the partition bound specification is
+       a literal, <literal>NULL</literal>, or <literal>UNBOUNDED</literal>.
+       A literal is either a numeric constant or a string constant that is
+       coercable to the corresponding partition key column's type.
+      </para>
+
+      <para>
+       When creating a range partition, the lower bound specified with
+       <literal>FROM</literal> is an inclusive bound, whereas the upper bound
+       specified with <literal>TO</literal> is an exclusive bound.  That is,
+       the values specified in the <literal>FROM</literal> list are accepted
+       values of the corresponding partition key columns in a given partition,
+       whereas those in the <literal>TO</literal> list are not.  To be precise,
+       this applies only to the first of the partition key columns for which
+       the corresponding values in the <literal>FROM</literal> and
+       <literal>TO</literal> lists are not equal.  All rows in a given
+       partition contain the same values for all preceding columns, equal to
+       those specified in <literal>FROM</literal> and <literal>TO</literal>
+       lists.  On the other hand, any subsequent columns are insignificant
+       as far as implicit partition constraint is concerned.
+
+       Specifying <literal>UNBOUNDED</literal> in <literal>FROM</literal>
+       signifies <literal>-infinity</literal> as the lower bound of the
+       corresponding column, whereas it signifies <literal>+infinity</literal>
+       as the upper bound when specified in <literal>TO</literal>.
+      </para>
+
+      <para>
+       When creating a list partition, <literal>NULL</literal> can be specified
+       to signify that the partition allows the partition key column to be null.
+       However, there cannot be more than one such list partitions for a given
+       parent table.  <literal>NULL</literal> cannot specified for range
+       partitions.
+      </para>
+     </note>
+
      <para>
       A partition cannot have columns other than those inherited from the
-      parent.  That includes the <structfield>oid</> column, which can be
-      specified using the <literal>WITH (OIDS)</literal> clause.
+      parent.  If the parent is specified <literal>WITH OIDS</literal> then
+      the partitions must also explicitly specify <literal>WITH OIDS</literal>.
       Defaults and constraints can optionally be specified for each of the
       inherited columns.  One can also specify table constraints in addition
       to those inherited from the parent.  If a check constraint with the name
@@ -386,11 +424,12 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
       <firstterm>partitioned</firstterm> table.  The parenthesized list of
       columns or expressions forms the <firstterm>partition key</firstterm>
       for the table.  When using range partitioning, the partition key can
-      include multiple columns or expressions, but for list partitioning, the
-      partition key must consist of a single column or expression.  If no
-      btree operator class is specified when creating a partitioned table,
-      the default btree operator class for the datatype will be used.  If
-      there is none, an error will be reported.
+      include multiple columns or expressions (up to 32, but this limit can
+      altered when building <productname>PostgreSQL</productname>.), but for
+      list partitioning, the partition key must consist of a single column or
+      expression.  If no btree operator class is specified when creating a
+      partitioned table, the default btree operator class for the datatype will
+      be used.  If there is none, an error will be reported.
      </para>
 
      <para>
@@ -1485,6 +1524,16 @@ CREATE TABLE measurement (
 </programlisting></para>
 
   <para>
+   Create a range partitioned table with multiple columns in the partition key:
+<programlisting>
+CREATE TABLE measurement_year_month (
+    logdate         date not null,
+    peaktemp        int,
+    unitsales       int
+) PARTITION BY RANGE (EXTRACT(YEAR FROM logdate), EXTRACT(MONTH FROM logdate));
+</programlisting></para>
+
+  <para>
    Create a list partitioned table:
 <programlisting>
 CREATE TABLE cities (
@@ -1501,6 +1550,27 @@ CREATE TABLE measurement_y2016m07
     PARTITION OF measurement (
     unitsales DEFAULT 0
 ) FOR VALUES FROM ('2016-07-01') TO ('2016-08-01');
+</programlisting></para>
+
+  <para>
+   Create a few partitions of a range partitioned table with multiple
+   columns in the partition key:
+<programlisting>
+CREATE TABLE measurement_ym_older
+    PARTITION OF measurement_year_month
+    FOR VALUES FROM (unbounded, unbounded) TO (2016, 11);
+
+CREATE TABLE measurement_ym_y2016m11
+    PARTITION OF measurement_year_month
+    FOR VALUES FROM (2016, 11) TO (2016, 12);
+
+CREATE TABLE measurement_ym_y2016m12
+    PARTITION OF measurement_year_month
+    FOR VALUES FROM (2016, 12) TO (2017, 01);
+
+CREATE TABLE measurement_ym_y2017m01
+    PARTITION OF measurement_year_month
+    FOR VALUES FROM (2017, 01) TO (2017, 02);
 </programlisting></para>
 
   <para>
@@ -1705,6 +1775,25 @@ CREATE TABLE cities_ab_10000_to_100000
     effect can be had using the OID feature.
    </para>
   </refsect2>
+
+  <refsect2>
+   <title><literal>PARTITION BY</> Clause</title>
+
+   <para>
+    The <literal>PARTITION BY</> clause is a
+    <productname>PostgreSQL</productname> extension.
+   </para>
+  </refsect2>
+
+  <refsect2>
+   <title><literal>PARTITION OF</> Clause</title>
+
+   <para>
+    The <literal>PARTITION OF</> clause is a
+    <productname>PostgreSQL</productname> extension.
+   </para>
+  </refsect2>
+
  </refsect1>
 
 
