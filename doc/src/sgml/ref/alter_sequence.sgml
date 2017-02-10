@@ -23,7 +23,9 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [ INCREMENT [ BY ] <replaceable class="parameter">increment</replaceable> ]
+ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
+    [ AS <replaceable class="parameter">data_type</replaceable> ]
+    [ INCREMENT [ BY ] <replaceable class="parameter">increment</replaceable> ]
     [ MINVALUE <replaceable class="parameter">minvalue</replaceable> | NO MINVALUE ] [ MAXVALUE <replaceable class="parameter">maxvalue</replaceable> | NO MAXVALUE ]
     [ START [ WITH ] <replaceable class="parameter">start</replaceable> ]
     [ RESTART [ [ WITH ] <replaceable class="parameter">restart</replaceable> ] ]
@@ -81,6 +83,26 @@ ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> S
      </varlistentry>
 
      <varlistentry>
+      <term><replaceable class="parameter">data_type</replaceable></term>
+      <listitem>
+       <para>
+        The optional
+        clause <literal>AS <replaceable class="parameter">data_type</replaceable></literal>
+        changes the data type of the sequence.  Valid types are
+        are <literal>smallint</literal>, <literal>integer</literal>,
+        and <literal>bigint</literal>.
+       </para>
+
+       <para>
+        Note that changing the data type does not automatically change the
+        minimum and maximum values.  You can use the clauses <literal>NO
+        MINVALUE</literal> and <literal>NO MAXVALUE</literal> to adjust the
+        minimum and maximum values to the range of the new data type.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><replaceable class="parameter">increment</replaceable></term>
       <listitem>
        <para>
@@ -102,7 +124,7 @@ ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> S
         class="parameter">minvalue</replaceable></literal> determines
         the minimum value a sequence can generate. If <literal>NO
         MINVALUE</literal> is specified, the defaults of 1 and
-        -2<superscript>63</> for ascending and descending sequences,
+        the minimum value of the data type for ascending and descending sequences,
         respectively, will be used.  If neither option is specified,
         the current minimum value will be maintained.
        </para>
@@ -118,7 +140,7 @@ ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> S
         class="parameter">maxvalue</replaceable></literal> determines
         the maximum value for the sequence. If <literal>NO
         MAXVALUE</literal> is specified, the defaults of
-        2<superscript>63</>-1 and -1 for ascending and descending
+        the maximum value of the data type and -1 for ascending and descending
         sequences, respectively, will be used.  If neither option is
         specified, the current maximum value will be maintained.
        </para>
@@ -300,7 +322,7 @@ ALTER SEQUENCE serial RESTART WITH 105;
 
   <para>
    <command>ALTER SEQUENCE</command> conforms to the <acronym>SQL</acronym>
-   standard, except for the <literal>START WITH</>,
+   standard, except for the <literal>AS</literal>, <literal>START WITH</>,
    <literal>OWNED BY</>, <literal>OWNER TO</>, <literal>RENAME TO</>, and
    <literal>SET SCHEMA</literal> clauses, which are
    <productname>PostgreSQL</productname> extensions.

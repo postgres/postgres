@@ -5774,10 +5774,11 @@
      </row>
 
      <row>
-      <entry><structfield>seqcycle</structfield></entry>
-      <entry><type>bool</type></entry>
+      <entry><structfield>seqtypid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
       <entry></entry>
-      <entry>Whether the sequence cycles</entry>
+      <entry>Data type of the sequence</entry>
      </row>
 
      <row>
@@ -5813,6 +5814,13 @@
       <entry><type>int8</type></entry>
       <entry></entry>
       <entry>Cache size of the sequence</entry>
+     </row>
+
+     <row>
+      <entry><structfield>seqcycle</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>Whether the sequence cycles</entry>
      </row>
     </tbody>
    </tgroup>
@@ -9839,6 +9847,12 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       <entry><type>name</type></entry>
       <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.rolname</literal></entry>
       <entry>Name of sequence's owner</entry>
+     </row>
+     <row>
+      <entry><structfield>data_type</structfield></entry>
+      <entry><type>regtype</type></entry>
+      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_type</structname></link>.oid</literal></entry>
+      <entry>Data type of the sequence</entry>
      </row>
      <row>
       <entry><structfield>start_value</structfield></entry>

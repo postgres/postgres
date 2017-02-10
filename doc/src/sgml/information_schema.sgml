@@ -4653,9 +4653,7 @@ ORDER BY c.ordinal_position;
       <entry><literal>data_type</literal></entry>
       <entry><type>character_data</type></entry>
       <entry>
-       The data type of the sequence.  In
-       <productname>PostgreSQL</productname>, this is currently always
-       <literal>bigint</literal>.
+       The data type of the sequence.
       </entry>
      </row>
 

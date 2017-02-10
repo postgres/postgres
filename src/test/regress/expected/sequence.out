@@ -28,6 +28,23 @@ CREATE TABLE sequence_test_table (a int);
 CREATE SEQUENCE sequence_testx OWNED BY sequence_test_table.b;  -- wrong column
 ERROR:  column "b" of relation "sequence_test_table" does not exist
 DROP TABLE sequence_test_table;
+-- sequence data types
+CREATE SEQUENCE sequence_test5 AS integer;
+CREATE SEQUENCE sequence_test6 AS smallint;
+CREATE SEQUENCE sequence_test7 AS bigint;
+CREATE SEQUENCE sequence_testx AS text;
+ERROR:  sequence type must be smallint, integer, or bigint
+CREATE SEQUENCE sequence_testx AS nosuchtype;
+ERROR:  type "nosuchtype" does not exist
+LINE 1: CREATE SEQUENCE sequence_testx AS nosuchtype;
+                                          ^
+ALTER SEQUENCE sequence_test5 AS smallint;  -- fails
+ERROR:  MAXVALUE (2147483647) is out of range for sequence data type smallint
+ALTER SEQUENCE sequence_test5 AS smallint NO MINVALUE NO MAXVALUE;
+CREATE SEQUENCE sequence_testx AS smallint MAXVALUE 100000;
+ERROR:  MAXVALUE (100000) is out of range for sequence data type smallint
+CREATE SEQUENCE sequence_testx AS smallint MINVALUE -100000;
+ERROR:  MINVALUE (-100000) is out of range for sequence data type smallint
 ---
 --- test creation of SERIAL column
 ---
@@ -445,13 +462,16 @@ SELECT * FROM information_schema.sequences
  regression       | public          | sequence_test2     | bigint    |                64 |                       2 |             0 | 32          | 5                    | 36                  | 4         | YES
  regression       | public          | sequence_test3     | bigint    |                64 |                       2 |             0 | 1           | 1                    | 9223372036854775807 | 1         | NO
  regression       | public          | sequence_test4     | bigint    |                64 |                       2 |             0 | -1          | -9223372036854775808 | -1                  | -1        | NO
- regression       | public          | serialtest1_f2_foo | bigint    |                64 |                       2 |             0 | 1           | 1                    | 9223372036854775807 | 1         | NO
- regression       | public          | serialtest2_f2_seq | bigint    |                64 |                       2 |             0 | 1           | 1                    | 9223372036854775807 | 1         | NO
- regression       | public          | serialtest2_f3_seq | bigint    |                64 |                       2 |             0 | 1           | 1                    | 9223372036854775807 | 1         | NO
- regression       | public          | serialtest2_f4_seq | bigint    |                64 |                       2 |             0 | 1           | 1                    | 9223372036854775807 | 1         | NO
+ regression       | public          | sequence_test5     | smallint  |                16 |                       2 |             0 | 1           | 1                    | 32767               | 1         | NO
+ regression       | public          | sequence_test6     | smallint  |                16 |                       2 |             0 | 1           | 1                    | 32767               | 1         | NO
+ regression       | public          | sequence_test7     | bigint    |                64 |                       2 |             0 | 1           | 1                    | 9223372036854775807 | 1         | NO
+ regression       | public          | serialtest1_f2_foo | integer   |                32 |                       2 |             0 | 1           | 1                    | 2147483647          | 1         | NO
+ regression       | public          | serialtest2_f2_seq | integer   |                32 |                       2 |             0 | 1           | 1                    | 2147483647          | 1         | NO
+ regression       | public          | serialtest2_f3_seq | smallint  |                16 |                       2 |             0 | 1           | 1                    | 32767               | 1         | NO
+ regression       | public          | serialtest2_f4_seq | smallint  |                16 |                       2 |             0 | 1           | 1                    | 32767               | 1         | NO
  regression       | public          | serialtest2_f5_seq | bigint    |                64 |                       2 |             0 | 1           | 1                    | 9223372036854775807 | 1         | NO
  regression       | public          | serialtest2_f6_seq | bigint    |                64 |                       2 |             0 | 1           | 1                    | 9223372036854775807 | 1         | NO
-(9 rows)
+(12 rows)
 
 SELECT schemaname, sequencename, start_value, min_value, max_value, increment_by, cycle, cache_size, last_value
 FROM pg_sequences
@@ -462,18 +482,21 @@ WHERE sequencename ~ ANY(ARRAY['sequence_test', 'serialtest'])
  public     | sequence_test2     |          32 |                    5 |                  36 |            4 | t     |          1 |          5
  public     | sequence_test3     |           1 |                    1 | 9223372036854775807 |            1 | f     |          1 |           
  public     | sequence_test4     |          -1 | -9223372036854775808 |                  -1 |           -1 | f     |          1 |         -1
- public     | serialtest1_f2_foo |           1 |                    1 | 9223372036854775807 |            1 | f     |          1 |          3
- public     | serialtest2_f2_seq |           1 |                    1 | 9223372036854775807 |            1 | f     |          1 |          2
- public     | serialtest2_f3_seq |           1 |                    1 | 9223372036854775807 |            1 | f     |          1 |          2
- public     | serialtest2_f4_seq |           1 |                    1 | 9223372036854775807 |            1 | f     |          1 |          2
+ public     | sequence_test5     |           1 |                    1 |               32767 |            1 | f     |          1 |           
+ public     | sequence_test6     |           1 |                    1 |               32767 |            1 | f     |          1 |           
+ public     | sequence_test7     |           1 |                    1 | 9223372036854775807 |            1 | f     |          1 |           
+ public     | serialtest1_f2_foo |           1 |                    1 |          2147483647 |            1 | f     |          1 |          3
+ public     | serialtest2_f2_seq |           1 |                    1 |          2147483647 |            1 | f     |          1 |          2
+ public     | serialtest2_f3_seq |           1 |                    1 |               32767 |            1 | f     |          1 |          2
+ public     | serialtest2_f4_seq |           1 |                    1 |               32767 |            1 | f     |          1 |          2
  public     | serialtest2_f5_seq |           1 |                    1 | 9223372036854775807 |            1 | f     |          1 |          2
  public     | serialtest2_f6_seq |           1 |                    1 | 9223372036854775807 |            1 | f     |          1 |          2
-(9 rows)
+(12 rows)
 
 SELECT * FROM pg_sequence_parameters('sequence_test4'::regclass);
- start_value |    minimum_value     | maximum_value | increment | cycle_option | cache_size 
--------------+----------------------+---------------+-----------+--------------+------------
-          -1 | -9223372036854775808 |            -1 |        -1 | f            |          1
+ start_value |    minimum_value     | maximum_value | increment | cycle_option | cache_size | data_type 
+-------------+----------------------+---------------+-----------+--------------+------------+-----------
+          -1 | -9223372036854775808 |            -1 |        -1 | f            |          1 |        20
 (1 row)
 
 -- Test comments

@@ -2494,6 +2494,7 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 		catch_all => 'CREATE ... commands',
 		regexp    => qr/^
 			\QCREATE SEQUENCE test_table_col1_seq\E
+			\n\s+\QAS integer\E
 			\n\s+\QSTART WITH 1\E
 			\n\s+\QINCREMENT BY 1\E
 			\n\s+\QNO MINVALUE\E
@@ -2529,6 +2530,7 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 		catch_all => 'CREATE ... commands',
 		regexp    => qr/^
 			\QCREATE SEQUENCE test_third_table_col1_seq\E
+			\n\s+\QAS integer\E
 			\n\s+\QSTART WITH 1\E
 			\n\s+\QINCREMENT BY 1\E
 			\n\s+\QNO MINVALUE\E

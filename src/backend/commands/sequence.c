@@ -34,6 +34,7 @@
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
+#include "parser/parse_type.h"
 #include "storage/lmgr.h"
 #include "storage/proc.h"
 #include "storage/smgr.h"
@@ -229,12 +230,13 @@ DefineSequence(ParseState *pstate, CreateSeqStmt *seq)
 	memset(pgs_nulls, 0, sizeof(pgs_nulls));
 
 	pgs_values[Anum_pg_sequence_seqrelid - 1] = ObjectIdGetDatum(seqoid);
-	pgs_values[Anum_pg_sequence_seqcycle - 1] = BoolGetDatum(seqform.seqcycle);
+	pgs_values[Anum_pg_sequence_seqtypid - 1] = ObjectIdGetDatum(seqform.seqtypid);
 	pgs_values[Anum_pg_sequence_seqstart - 1] = Int64GetDatumFast(seqform.seqstart);
 	pgs_values[Anum_pg_sequence_seqincrement - 1] = Int64GetDatumFast(seqform.seqincrement);
 	pgs_values[Anum_pg_sequence_seqmax - 1] = Int64GetDatumFast(seqform.seqmax);
 	pgs_values[Anum_pg_sequence_seqmin - 1] = Int64GetDatumFast(seqform.seqmin);
 	pgs_values[Anum_pg_sequence_seqcache - 1] = Int64GetDatumFast(seqform.seqcache);
+	pgs_values[Anum_pg_sequence_seqcycle - 1] = BoolGetDatum(seqform.seqcycle);
 
 	tuple = heap_form_tuple(tupDesc, pgs_values, pgs_nulls);
 	CatalogTupleInsert(rel, tuple);
@@ -622,11 +624,11 @@ nextval_internal(Oid relid)
 	if (!HeapTupleIsValid(pgstuple))
 		elog(ERROR, "cache lookup failed for sequence %u", relid);
 	pgsform = (Form_pg_sequence) GETSTRUCT(pgstuple);
-	cycle = pgsform->seqcycle;
 	incby = pgsform->seqincrement;
 	maxv = pgsform->seqmax;
 	minv = pgsform->seqmin;
 	cache = pgsform->seqcache;
+	cycle = pgsform->seqcycle;
 	ReleaseSysCache(pgstuple);
 
 	/* lock page' buffer and read tuple */
@@ -1221,6 +1223,7 @@ init_params(ParseState *pstate, List *options, bool isInit,
 			Form_pg_sequence seqform,
 			Form_pg_sequence_data seqdataform, List **owned_by)
 {
+	DefElem    *as_type = NULL;
 	DefElem    *start_value = NULL;
 	DefElem    *restart_value = NULL;
 	DefElem    *increment_by = NULL;
@@ -1236,7 +1239,16 @@ init_params(ParseState *pstate, List *options, bool isInit,
 	{
 		DefElem    *defel = (DefElem *) lfirst(option);
 
-		if (strcmp(defel->defname, "increment") == 0)
+		if (strcmp(defel->defname, "as") == 0)
+		{
+			if (as_type)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options"),
+						 parser_errposition(pstate, defel->location)));
+			as_type = defel;
+		}
+		else if (strcmp(defel->defname, "increment") == 0)
 		{
 			if (increment_by)
 				ereport(ERROR,
@@ -1320,6 +1332,20 @@ init_params(ParseState *pstate, List *options, bool isInit,
 	if (isInit)
 		seqdataform->log_cnt = 0;
 
+	/* AS type */
+	if (as_type != NULL)
+	{
+		seqform->seqtypid = typenameTypeId(pstate, defGetTypeName(as_type));
+		if (seqform->seqtypid != INT2OID &&
+			seqform->seqtypid != INT4OID &&
+			seqform->seqtypid != INT8OID)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("sequence type must be smallint, integer, or bigint")));
+	}
+	else if (isInit)
+		seqform->seqtypid = INT8OID;
+
 	/* INCREMENT BY */
 	if (increment_by != NULL)
 	{
@@ -1352,10 +1378,32 @@ init_params(ParseState *pstate, List *options, bool isInit,
 	else if (isInit || max_value != NULL)
 	{
 		if (seqform->seqincrement > 0)
-			seqform->seqmax = PG_INT64_MAX;		/* ascending seq */
+		{
+			/* ascending seq */
+			if (seqform->seqtypid == INT2OID)
+				seqform->seqmax = PG_INT16_MAX;
+			else if (seqform->seqtypid == INT4OID)
+				seqform->seqmax = PG_INT32_MAX;
+			else
+				seqform->seqmax = PG_INT64_MAX;
+		}
 		else
 			seqform->seqmax = -1;	/* descending seq */
 		seqdataform->log_cnt = 0;
+	}
+
+	if ((seqform->seqtypid == INT2OID && (seqform->seqmax < PG_INT16_MIN || seqform->seqmax > PG_INT16_MAX))
+		|| (seqform->seqtypid == INT4OID && (seqform->seqmax < PG_INT32_MIN || seqform->seqmax > PG_INT32_MAX))
+		|| (seqform->seqtypid == INT8OID && (seqform->seqmax < PG_INT64_MIN || seqform->seqmax > PG_INT64_MAX)))
+	{
+		char		bufx[100];
+
+		snprintf(bufx, sizeof(bufx), INT64_FORMAT, seqform->seqmax);
+
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("MAXVALUE (%s) is out of range for sequence data type %s",
+						bufx, format_type_be(seqform->seqtypid))));
 	}
 
 	/* MINVALUE (null arg means NO MINVALUE) */
@@ -1369,8 +1417,30 @@ init_params(ParseState *pstate, List *options, bool isInit,
 		if (seqform->seqincrement > 0)
 			seqform->seqmin = 1; /* ascending seq */
 		else
-			seqform->seqmin = PG_INT64_MIN;		/* descending seq */
+		{
+			/* descending seq */
+			if (seqform->seqtypid == INT2OID)
+				seqform->seqmin = PG_INT16_MIN;
+			else if (seqform->seqtypid == INT4OID)
+				seqform->seqmin = PG_INT32_MIN;
+			else
+				seqform->seqmin = PG_INT64_MIN;
+		}
 		seqdataform->log_cnt = 0;
+	}
+
+	if ((seqform->seqtypid == INT2OID && (seqform->seqmin < PG_INT16_MIN || seqform->seqmin > PG_INT16_MAX))
+		|| (seqform->seqtypid == INT4OID && (seqform->seqmin < PG_INT32_MIN || seqform->seqmin > PG_INT32_MAX))
+		|| (seqform->seqtypid == INT8OID && (seqform->seqmin < PG_INT64_MIN || seqform->seqmin > PG_INT64_MAX)))
+	{
+		char		bufm[100];
+
+		snprintf(bufm, sizeof(bufm), INT64_FORMAT, seqform->seqmin);
+
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("MINVALUE (%s) is out of range for sequence data type %s",
+						bufm, format_type_be(seqform->seqtypid))));
 	}
 
 	/* crosscheck min/max */
@@ -1590,8 +1660,8 @@ pg_sequence_parameters(PG_FUNCTION_ARGS)
 {
 	Oid			relid = PG_GETARG_OID(0);
 	TupleDesc	tupdesc;
-	Datum		values[6];
-	bool		isnull[6];
+	Datum		values[7];
+	bool		isnull[7];
 	HeapTuple	pgstuple;
 	Form_pg_sequence pgsform;
 
@@ -1601,7 +1671,7 @@ pg_sequence_parameters(PG_FUNCTION_ARGS)
 				 errmsg("permission denied for sequence %s",
 						get_rel_name(relid))));
 
-	tupdesc = CreateTemplateTupleDesc(6, false);
+	tupdesc = CreateTemplateTupleDesc(7, false);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "start_value",
 					   INT8OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "minimum_value",
@@ -1614,6 +1684,8 @@ pg_sequence_parameters(PG_FUNCTION_ARGS)
 					   BOOLOID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 6, "cache_size",
 					   INT8OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 7, "data_type",
+					   OIDOID, -1, 0);
 
 	BlessTupleDesc(tupdesc);
 
@@ -1630,6 +1702,7 @@ pg_sequence_parameters(PG_FUNCTION_ARGS)
 	values[3] = Int64GetDatum(pgsform->seqincrement);
 	values[4] = BoolGetDatum(pgsform->seqcycle);
 	values[5] = Int64GetDatum(pgsform->seqcache);
+	values[6] = ObjectIdGetDatum(pgsform->seqtypid);
 
 	ReleaseSysCache(pgstuple);
 

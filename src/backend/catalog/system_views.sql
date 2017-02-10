@@ -169,6 +169,7 @@ CREATE OR REPLACE VIEW pg_sequences AS
         N.nspname AS schemaname,
         C.relname AS sequencename,
         pg_get_userbyid(C.relowner) AS sequenceowner,
+        S.seqtypid::regtype AS data_type,
         S.seqstart AS start_value,
         S.seqmin AS min_value,
         S.seqmax AS max_value,

@@ -241,6 +241,7 @@ my %tests = (
 	'CREATE SEQUENCE regress_pg_dump_table_col1_seq' => {
 		regexp => qr/^
                     \QCREATE SEQUENCE regress_pg_dump_table_col1_seq\E
+                    \n\s+\QAS integer\E
                     \n\s+\QSTART WITH 1\E
                     \n\s+\QINCREMENT BY 1\E
                     \n\s+\QNO MINVALUE\E

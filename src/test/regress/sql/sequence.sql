@@ -19,6 +19,19 @@ CREATE TABLE sequence_test_table (a int);
 CREATE SEQUENCE sequence_testx OWNED BY sequence_test_table.b;  -- wrong column
 DROP TABLE sequence_test_table;
 
+-- sequence data types
+CREATE SEQUENCE sequence_test5 AS integer;
+CREATE SEQUENCE sequence_test6 AS smallint;
+CREATE SEQUENCE sequence_test7 AS bigint;
+CREATE SEQUENCE sequence_testx AS text;
+CREATE SEQUENCE sequence_testx AS nosuchtype;
+
+ALTER SEQUENCE sequence_test5 AS smallint;  -- fails
+ALTER SEQUENCE sequence_test5 AS smallint NO MINVALUE NO MAXVALUE;
+
+CREATE SEQUENCE sequence_testx AS smallint MAXVALUE 100000;
+CREATE SEQUENCE sequence_testx AS smallint MINVALUE -100000;
+
 ---
 --- test creation of SERIAL column
 ---

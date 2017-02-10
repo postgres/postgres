@@ -21,7 +21,9 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE [ TEMPORARY | TEMP ] SEQUENCE [ IF NOT EXISTS ] <replaceable class="parameter">name</replaceable> [ INCREMENT [ BY ] <replaceable class="parameter">increment</replaceable> ]
+CREATE [ TEMPORARY | TEMP ] SEQUENCE [ IF NOT EXISTS ] <replaceable class="parameter">name</replaceable>
+    [ AS <replaceable class="parameter">data_type</replaceable> ]
+    [ INCREMENT [ BY ] <replaceable class="parameter">increment</replaceable> ]
     [ MINVALUE <replaceable class="parameter">minvalue</replaceable> | NO MINVALUE ] [ MAXVALUE <replaceable class="parameter">maxvalue</replaceable> | NO MAXVALUE ]
     [ START [ WITH ] <replaceable class="parameter">start</replaceable> ] [ CACHE <replaceable class="parameter">cache</replaceable> ] [ [ NO ] CYCLE ]
     [ OWNED BY { <replaceable class="parameter">table_name</replaceable>.<replaceable class="parameter">column_name</replaceable> | NONE } ]
@@ -111,6 +113,21 @@ SELECT * FROM <replaceable>name</replaceable>;
    </varlistentry>
 
    <varlistentry>
+    <term><replaceable class="parameter">data_type</replaceable></term>
+    <listitem>
+     <para>
+      The optional
+      clause <literal>AS <replaceable class="parameter">data_type</replaceable></literal>
+      specifies the data type of the sequence.  Valid types are
+      are <literal>smallint</literal>, <literal>integer</literal>,
+      and <literal>bigint</literal>.  <literal>bigint</literal> is the
+      default.  The data type determines the default minimum and maximum
+      values of the sequence.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><replaceable class="parameter">increment</replaceable></term>
     <listitem>
      <para>
@@ -132,9 +149,8 @@ SELECT * FROM <replaceable>name</replaceable>;
       class="parameter">minvalue</replaceable></literal> determines
       the minimum value a sequence can generate. If this clause is not
       supplied or <option>NO MINVALUE</option> is specified, then
-      defaults will be used.  The defaults are 1 and
-      -2<superscript>63</> for ascending and descending sequences,
-      respectively.
+      defaults will be used.  The default for an ascending sequence is 1.  The
+      default for a descending sequence is the minimum value of the data type.
      </para>
     </listitem>
    </varlistentry>
@@ -148,9 +164,9 @@ SELECT * FROM <replaceable>name</replaceable>;
       class="parameter">maxvalue</replaceable></literal> determines
       the maximum value for the sequence. If this clause is not
       supplied or <option>NO MAXVALUE</option> is specified, then
-      default values will be used.  The defaults are
-      2<superscript>63</>-1 and -1 for ascending and descending
-      sequences, respectively.
+      default values will be used.  The default for an ascending sequence is
+      the maximum value of the data type.  The default for a descending
+      sequence is -1.
      </para>
     </listitem>
    </varlistentry>
@@ -347,12 +363,6 @@ END;
    <command>CREATE SEQUENCE</command> conforms to the <acronym>SQL</acronym>
    standard, with the following exceptions:
    <itemizedlist>
-    <listitem>
-     <para>
-      The standard's <literal>AS <replaceable>data_type</></literal> expression is not
-      supported.
-     </para>
-    </listitem>
     <listitem>
      <para>
       Obtaining the next value is done using the <function>nextval()</>

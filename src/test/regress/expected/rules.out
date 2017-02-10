@@ -1641,6 +1641,7 @@ UNION ALL
 pg_sequences| SELECT n.nspname AS schemaname,
     c.relname AS sequencename,
     pg_get_userbyid(c.relowner) AS sequenceowner,
+    (s.seqtypid)::regtype AS data_type,
     s.seqstart AS start_value,
     s.seqmin AS min_value,
     s.seqmax AS max_value,
