@@ -336,6 +336,13 @@
     <entry></entry>
    </row>
    <row>
+    <entry><token>ATTACH</token></entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
     <entry><token>ATTRIBUTE</token></entry>
     <entry>non-reserved</entry>
     <entry>non-reserved</entry>
@@ -1363,6 +1370,13 @@
     <entry>non-reserved</entry>
     <entry>non-reserved</entry>
     <entry>reserved</entry>
+   </row>
+   <row>
+    <entry><token>DETACH</token></entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
+    <entry></entry>
    </row>
    <row>
     <entry><token>DETERMINISTIC</token></entry>
@@ -2552,6 +2566,13 @@
     <entry></entry>
     <entry>non-reserved</entry>
     <entry>non-reserved</entry>
+    <entry></entry>
+   </row>
+   <row>
+    <entry><token>LIST</token></entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
     <entry></entry>
    </row>
    <row>
