@@ -221,10 +221,16 @@ DROP TABLESPACE regress_tblspace;
 ERROR:  tablespace "regress_tblspace" is not empty
 CREATE ROLE regress_tablespace_user1 login;
 CREATE ROLE regress_tablespace_user2 login;
+GRANT USAGE ON SCHEMA testschema TO regress_tablespace_user2;
 ALTER TABLESPACE regress_tblspace OWNER TO regress_tablespace_user1;
+CREATE TABLE testschema.tablespace_acl (c int);
+-- new owner lacks permission to create this index from scratch
+CREATE INDEX k ON testschema.tablespace_acl (c) TABLESPACE regress_tblspace;
+ALTER TABLE testschema.tablespace_acl OWNER TO regress_tablespace_user2;
 SET SESSION ROLE regress_tablespace_user2;
 CREATE TABLE tablespace_table (i int) TABLESPACE regress_tblspace; -- fail
 ERROR:  permission denied for tablespace regress_tblspace
+ALTER TABLE testschema.tablespace_acl ALTER c TYPE bigint;
 RESET ROLE;
 ALTER TABLESPACE regress_tblspace RENAME TO regress_tblspace_renamed;
 ALTER TABLE ALL IN TABLESPACE regress_tblspace_renamed SET TABLESPACE pg_default;
@@ -235,10 +241,11 @@ NOTICE:  no matching relations in tablespace "regress_tblspace_renamed" found
 -- Should succeed
 DROP TABLESPACE regress_tblspace_renamed;
 DROP SCHEMA testschema CASCADE;
-NOTICE:  drop cascades to 4 other objects
+NOTICE:  drop cascades to 5 other objects
 DETAIL:  drop cascades to table testschema.foo
 drop cascades to table testschema.asselect
 drop cascades to table testschema.asexecute
 drop cascades to table testschema.atable
+drop cascades to table testschema.tablespace_acl
 DROP ROLE regress_tablespace_user1;
 DROP ROLE regress_tablespace_user2;

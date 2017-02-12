@@ -109,11 +109,18 @@ DROP TABLESPACE regress_tblspace;
 
 CREATE ROLE regress_tablespace_user1 login;
 CREATE ROLE regress_tablespace_user2 login;
+GRANT USAGE ON SCHEMA testschema TO regress_tablespace_user2;
 
 ALTER TABLESPACE regress_tblspace OWNER TO regress_tablespace_user1;
 
+CREATE TABLE testschema.tablespace_acl (c int);
+-- new owner lacks permission to create this index from scratch
+CREATE INDEX k ON testschema.tablespace_acl (c) TABLESPACE regress_tblspace;
+ALTER TABLE testschema.tablespace_acl OWNER TO regress_tablespace_user2;
+
 SET SESSION ROLE regress_tablespace_user2;
 CREATE TABLE tablespace_table (i int) TABLESPACE regress_tblspace; -- fail
+ALTER TABLE testschema.tablespace_acl ALTER c TYPE bigint;
 RESET ROLE;
 
 ALTER TABLESPACE regress_tblspace RENAME TO regress_tblspace_renamed;
