@@ -97,11 +97,18 @@ DROP TABLESPACE testspace;
 
 CREATE ROLE tablespace_testuser1 login;
 CREATE ROLE tablespace_testuser2 login;
+GRANT USAGE ON SCHEMA testschema TO tablespace_testuser2;
 
 ALTER TABLESPACE testspace OWNER TO tablespace_testuser1;
 
+CREATE TABLE testschema.tablespace_acl (c int);
+-- new owner lacks permission to create this index from scratch
+CREATE INDEX k ON testschema.tablespace_acl (c) TABLESPACE testspace;
+ALTER TABLE testschema.tablespace_acl OWNER TO tablespace_testuser2;
+
 SET SESSION ROLE tablespace_testuser2;
 CREATE TABLE tablespace_table (i int) TABLESPACE testspace; -- fail
+ALTER TABLE testschema.tablespace_acl ALTER c TYPE bigint;
 RESET ROLE;
 
 ALTER TABLESPACE testspace RENAME TO testspace_renamed;
