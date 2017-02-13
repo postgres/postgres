@@ -142,7 +142,6 @@ CREATE EXTENSION <replaceable>module_name</> FROM unpackaged;
  &tablefunc;
  &tcn;
  &test-decoding;
- &tsearch2;
  &tsm-system-rows;
  &tsm-system-time;
  &unaccent;

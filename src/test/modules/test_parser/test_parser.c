@@ -28,7 +28,6 @@ typedef struct
 	int			pos;			/* position of the parser */
 } ParserState;
 
-/* copy-paste from wparser.h of tsearch2 */
 typedef struct
 {
 	int			lexid;
