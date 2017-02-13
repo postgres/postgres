@@ -295,11 +295,9 @@
   <title>Security</title>
 
   <para>
-   Logical replication connections occur in the same way as with physical streaming
-   replication.  It requires access to be explicitly given using
-   <filename>pg_hba.conf</filename>.  The role used for the replication
-   connection must have the <literal>REPLICATION</literal> attribute.  This
-   gives a role access to both logical and physical replication.
+   The role used for the replication connection must have
+   the <literal>REPLICATION</literal> attribute.  Access for the role must be
+   configured in <filename>pg_hba.conf</filename>.
   </para>
 
   <para>

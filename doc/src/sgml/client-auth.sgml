@@ -193,7 +193,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        members of the role, directly or indirectly, and not just by
        virtue of being a superuser.
        The value <literal>replication</> specifies that the record
-       matches if a replication connection is requested (note that
+       matches if a physical replication connection is requested (note that
        replication connections do not specify any particular database).
        Otherwise, this is the name of
        a specific <productname>PostgreSQL</productname> database.

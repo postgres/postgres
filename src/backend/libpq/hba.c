@@ -612,9 +612,9 @@ check_db(const char *dbname, const char *role, Oid roleid, List *tokens)
 	foreach(cell, tokens)
 	{
 		tok = lfirst(cell);
-		if (am_walsender)
+		if (am_walsender && !am_db_walsender)
 		{
-			/* walsender connections can only match replication keyword */
+			/* physical replication walsender connections can only match replication keyword */
 			if (token_is_keyword(tok, "replication"))
 				return true;
 		}
