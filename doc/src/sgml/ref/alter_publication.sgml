@@ -48,8 +48,11 @@ ALTER PUBLICATION <replaceable class="PARAMETER">name</replaceable> DROP TABLE <
   </para>
 
   <para>
-   To alter the owner, you must also be a direct or indirect member of the
-   new owning role. The new owner has to be a superuser
+   To alter the owner, you must also be a direct or indirect member of the new
+   owning role. The new owner must have <literal>CREATE</literal> privilege on
+   the database.  Also, the new owner of a <literal>FOR ALL TABLES</literal>
+   publication must be a superuser.  However, a superuser can change the
+   ownership of a publication while circumventing these restrictions.
   </para>
 
   <para>
