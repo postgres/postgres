@@ -810,7 +810,7 @@ data. Empty in ordinary tables.</entry>
    <entry>pd_lsn</entry>
    <entry>PageXLogRecPtr</entry>
    <entry>8 bytes</entry>
-   <entry>LSN: next byte after last byte of xlog record for last change
+   <entry>LSN: next byte after last byte of WAL record for last change
    to this page</entry>
   </row>
   <row>

@@ -22,7 +22,7 @@
    <arg rep="repeat"><replaceable>option</replaceable></arg>
    <arg choice="plain"><replaceable>archivelocation</replaceable></arg>
    <arg choice="plain"><replaceable>nextwalfile</replaceable></arg>
-   <arg choice="plain"><replaceable>xlogfilepath</replaceable></arg>
+   <arg choice="plain"><replaceable>walfilepath</replaceable></arg>
    <arg choice="opt"><replaceable>restartwalfile</replaceable></arg>
   </cmdsynopsis>
  </refsynopsisdiv>
