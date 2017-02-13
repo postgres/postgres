@@ -5777,7 +5777,6 @@
       <entry><structfield>seqtypid</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
-      <entry></entry>
       <entry>Data type of the sequence</entry>
      </row>
 
