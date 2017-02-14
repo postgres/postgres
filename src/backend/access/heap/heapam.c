@@ -9167,7 +9167,6 @@ heap_mask(char *pagedata, BlockNumber blkno)
 
 		if (ItemIdIsNormal(iid))
 		{
-
 			HeapTupleHeader page_htup = (HeapTupleHeader) page_item;
 
 			/*
