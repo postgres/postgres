@@ -1917,6 +1917,11 @@ ALTER TABLE partitioned ALTER COLUMN b TYPE char(5);
 -- cannot drop NOT NULL on columns in the range partition key
 ALTER TABLE partitioned ALTER COLUMN a DROP NOT NULL;
 
+-- it's fine however to drop one on the list partition key column
+CREATE TABLE list_partitioned (a int not null) partition by list (a);
+ALTER TABLE list_partitioned ALTER a DROP NOT NULL;
+DROP TABLE list_partitioned;
+
 -- partitioned table cannot participate in regular inheritance
 CREATE TABLE foo (
 	a int,

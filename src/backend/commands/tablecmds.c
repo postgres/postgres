@@ -5593,18 +5593,22 @@ ATExecDropNotNull(Relation rel, const char *colName, LOCKMODE lockmode)
 	if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 	{
 		PartitionKey key = RelationGetPartitionKey(rel);
-		int			partnatts = get_partition_natts(key),
-					i;
 
-		for (i = 0; i < partnatts; i++)
+		if (get_partition_strategy(key) == PARTITION_STRATEGY_RANGE)
 		{
-			AttrNumber	partattnum = get_partition_col_attnum(key, i);
+			int			partnatts = get_partition_natts(key),
+						i;
 
-			if (partattnum == attnum)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-						 errmsg("column \"%s\" is in range partition key",
-								colName)));
+			for (i = 0; i < partnatts; i++)
+			{
+				AttrNumber	partattnum = get_partition_col_attnum(key, i);
+
+				if (partattnum == attnum)
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+							 errmsg("column \"%s\" is in range partition key",
+									colName)));
+			}
 		}
 	}
 
