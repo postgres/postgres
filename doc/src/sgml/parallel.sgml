@@ -284,44 +284,41 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
 
   <para>
     The driving table may be joined to one or more other tables using nested
-    loops or hash joins.  The outer side of the join may be any kind of
+    loops or hash joins.  The inner side of the join may be any kind of
     non-parallel plan that is otherwise supported by the planner provided that
     it is safe to run within a parallel worker.  For example, it may be an
-    index scan which looks up a value based on a column taken from the inner
-    table. Each worker will execute the outer side of the plan in full, which
-    is why merge joins are not supported here. The outer side of a merge join
-    will often involve sorting the entire inner table; even if it involves an
-    index, it is unlikely to be productive to have multiple processes each
-    conduct a full index scan of the inner table.
+    index scan which looks up a value taken from the outer side of the join.
+    Each worker will execute the inner side of the join in full,  which for
+    hash join means that an identical hash table is built in each worker
+    process.
   </para>
  </sect2>
 
  <sect2 id="parallel-aggregation">
   <title>Parallel Aggregation</title>
   <para>
-    It is not possible to perform the aggregation portion of a query entirely
-    in parallel.  For example, if a query involves selecting
-    <literal>COUNT(*)</>, each worker could compute a total, but those totals
-    would need to combined in order to produce a final answer.  If the query
-    involved a <literal>GROUP BY</> clause, a separate total would need to
-    be computed for each group.  Even though aggregation can't be done entirely
-    in parallel, queries involving aggregation are often excellent candidates
-    for parallel query, because they typically read many rows but return only
-    a few rows to the client.  Queries that return many rows to the client
-    are often limited by the speed at which the client can read the data,
-    in which case parallel query cannot help very much.
-  </para>
-
-  <para>
-    <productname>PostgreSQL</> supports parallel aggregation by aggregating
-    twice.  First, each process participating in the parallel portion of the
-    query performs an aggregation step, producing a partial result for each
-    group of which that process is aware.  This is reflected in the plan as
-    a <literal>PartialAggregate</> node.  Second, the partial results are
+    <productname>PostgreSQL</> supports parallel aggregation by aggregating in
+    two stages.  First, each process participating in the parallel portion of
+    the query performs an aggregation step, producing a partial result for
+    each group of which that process is aware.  This is reflected in the plan
+    as a <literal>Partial Aggregate</> node.  Second, the partial results are
     transferred to the leader via the <literal>Gather</> node.  Finally, the
     leader re-aggregates the results across all workers in order to produce
     the final result.  This is reflected in the plan as a
-    <literal>FinalizeAggregate</> node.
+    <literal>Finalize Aggregate</> node.
+  </para>
+  
+  <para>
+    Because the <literal>Finalize Aggregate</> node runs on the leader
+    process, queries which produce a relatively large number of groups in
+    comparison to the number of input rows will appear less favorable to the
+    query planner. For example, in the worst-case scenario the number of
+    groups seen by the <literal>Finalize Aggregate</> node could be as many as
+    the number of input rows which were seen by all worker processes in the
+    <literal>Partial Aggregate</> stage. For such cases, there is clearly
+    going to be no performance benefit to using parallel aggregation. The
+    query planner takes this into account during the planning process and is
+    unlikely to choose parallel aggregate in this scenario.
   </para>
 
   <para>
@@ -330,10 +327,11 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
     have a combine function.  If the aggregate has a transition state of type
     <literal>internal</>, it must have serialization and deserialization
     functions.  See <xref linkend="sql-createaggregate"> for more details.
-    Parallel aggregation is not supported for ordered set aggregates or when
-    the query involves <literal>GROUPING SETS</>.  It can only be used when
-    all joins involved in the query are also part of the parallel portion
-    of the plan.
+    Parallel aggregation is not supported if any aggregate function call
+    contains <literal>DISTINCT</> or <literal>ORDER BY</> clause and is also
+    not supported for ordered set aggregates or when  the query involves
+    <literal>GROUPING SETS</>.  It can only be used when all joins involved in
+    the query are also part of the parallel portion of the plan.
   </para>
 
  </sect2>
