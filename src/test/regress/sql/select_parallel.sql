@@ -39,6 +39,15 @@ explain (costs off)
 	select  sum(parallel_restricted(unique1)) from tenk1
 	group by(parallel_restricted(unique1));
 
+-- test parallel plans for queries containing un-correlated subplans.
+alter table tenk2 set (parallel_workers = 0);
+explain (costs off)
+	select count(*) from tenk1 where (two, four) not in
+	(select hundred, thousand from tenk2 where thousand > 100);
+select count(*) from tenk1 where (two, four) not in
+	(select hundred, thousand from tenk2 where thousand > 100);
+alter table tenk2 reset (parallel_workers);
+
 set force_parallel_mode=1;
 
 explain (costs off)

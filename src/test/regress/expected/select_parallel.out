@@ -99,6 +99,32 @@ explain (costs off)
    ->  Index Only Scan using tenk1_unique1 on tenk1
 (3 rows)
 
+-- test parallel plans for queries containing un-correlated subplans.
+alter table tenk2 set (parallel_workers = 0);
+explain (costs off)
+	select count(*) from tenk1 where (two, four) not in
+	(select hundred, thousand from tenk2 where thousand > 100);
+                      QUERY PLAN                      
+------------------------------------------------------
+ Finalize Aggregate
+   ->  Gather
+         Workers Planned: 4
+         ->  Partial Aggregate
+               ->  Parallel Seq Scan on tenk1
+                     Filter: (NOT (hashed SubPlan 1))
+                     SubPlan 1
+                       ->  Seq Scan on tenk2
+                             Filter: (thousand > 100)
+(9 rows)
+
+select count(*) from tenk1 where (two, four) not in
+	(select hundred, thousand from tenk2 where thousand > 100);
+ count 
+-------
+ 10000
+(1 row)
+
+alter table tenk2 reset (parallel_workers);
 set force_parallel_mode=1;
 explain (costs off)
   select stringu1::int2 from tenk1 where unique1 = 1;

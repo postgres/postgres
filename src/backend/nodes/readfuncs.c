@@ -2233,6 +2233,7 @@ _readSubPlan(void)
 	READ_OID_FIELD(firstColCollation);
 	READ_BOOL_FIELD(useHashTable);
 	READ_BOOL_FIELD(unknownEqFalse);
+	READ_BOOL_FIELD(parallel_safe);
 	READ_NODE_FIELD(setParam);
 	READ_NODE_FIELD(parParam);
 	READ_NODE_FIELD(args);

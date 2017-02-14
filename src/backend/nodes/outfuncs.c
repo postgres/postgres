@@ -1226,6 +1226,7 @@ _outSubPlan(StringInfo str, const SubPlan *node)
 	WRITE_OID_FIELD(firstColCollation);
 	WRITE_BOOL_FIELD(useHashTable);
 	WRITE_BOOL_FIELD(unknownEqFalse);
+	WRITE_BOOL_FIELD(parallel_safe);
 	WRITE_NODE_FIELD(setParam);
 	WRITE_NODE_FIELD(parParam);
 	WRITE_NODE_FIELD(args);

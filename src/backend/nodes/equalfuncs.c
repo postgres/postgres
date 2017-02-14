@@ -423,6 +423,7 @@ _equalSubPlan(const SubPlan *a, const SubPlan *b)
 	COMPARE_SCALAR_FIELD(firstColCollation);
 	COMPARE_SCALAR_FIELD(useHashTable);
 	COMPARE_SCALAR_FIELD(unknownEqFalse);
+	COMPARE_SCALAR_FIELD(parallel_safe);
 	COMPARE_NODE_FIELD(setParam);
 	COMPARE_NODE_FIELD(parParam);
 	COMPARE_NODE_FIELD(args);
