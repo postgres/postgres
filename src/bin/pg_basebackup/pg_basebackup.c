@@ -2170,7 +2170,7 @@ main(int argc, char **argv)
 				else
 				{
 					fprintf(stderr,
-							_("%s: invalid xlog-method option \"%s\", must be \"fetch\", \"stream\" or \"none\"\n"),
+							_("%s: invalid wal-method option \"%s\", must be \"fetch\", \"stream\" or \"none\"\n"),
 							progname, optarg);
 					exit(1);
 				}
