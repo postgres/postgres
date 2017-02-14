@@ -14,8 +14,8 @@
 #ifndef HASH_XLOG_H
 #define HASH_XLOG_H
 
-#include "access/hash.h"
 #include "access/xlogreader.h"
+#include "lib/stringinfo.h"
 
 
 extern void hash_redo(XLogReaderState *record);

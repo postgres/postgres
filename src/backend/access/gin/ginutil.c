@@ -15,6 +15,7 @@
 #include "postgres.h"
 
 #include "access/gin_private.h"
+#include "access/ginxlog.h"
 #include "access/reloptions.h"
 #include "access/xloginsert.h"
 #include "catalog/pg_collation.h"

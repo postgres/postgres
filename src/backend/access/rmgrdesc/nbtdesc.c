@@ -14,7 +14,7 @@
  */
 #include "postgres.h"
 
-#include "access/nbtree.h"
+#include "access/nbtxlog.h"
 
 void
 btree_desc(StringInfo buf, XLogReaderState *record)

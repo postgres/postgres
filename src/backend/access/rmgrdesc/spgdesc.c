@@ -14,7 +14,7 @@
  */
 #include "postgres.h"
 
-#include "access/spgist_private.h"
+#include "access/spgxlog.h"
 
 void
 spg_desc(StringInfo buf, XLogReaderState *record)

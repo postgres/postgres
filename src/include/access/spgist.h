@@ -214,12 +214,4 @@ extern IndexBulkDeleteResult *spgvacuumcleanup(IndexVacuumInfo *info,
 /* spgvalidate.c */
 extern bool spgvalidate(Oid opclassoid);
 
-/* spgxlog.c */
-extern void spg_redo(XLogReaderState *record);
-extern void spg_desc(StringInfo buf, XLogReaderState *record);
-extern const char *spg_identify(uint8 info);
-extern void spg_xlog_startup(void);
-extern void spg_xlog_cleanup(void);
-extern void spg_mask(char *pagedata, BlockNumber blkno);
-
 #endif   /* SPGIST_H */

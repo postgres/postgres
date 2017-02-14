@@ -14,7 +14,7 @@
  */
 #include "postgres.h"
 
-#include "access/gin_private.h"
+#include "access/ginxlog.h"
 #include "access/xlogutils.h"
 #include "lib/stringinfo.h"
 #include "storage/relfilenode.h"

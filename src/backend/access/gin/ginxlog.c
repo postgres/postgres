@@ -15,6 +15,7 @@
 
 #include "access/bufmask.h"
 #include "access/gin_private.h"
+#include "access/ginxlog.h"
 #include "access/xlogutils.h"
 #include "utils/memutils.h"
 
