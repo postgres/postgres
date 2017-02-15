@@ -857,6 +857,13 @@ ExecHashJoinGetSavedTuple(HashJoinState *hjstate,
 	MinimalTuple tuple;
 
 	/*
+	 * We check for interrupts here because this is typically taken as an
+	 * alternative code path to an ExecProcNode() call, which would include
+	 * such a check.
+	 */
+	CHECK_FOR_INTERRUPTS();
+
+	/*
 	 * Since both the hash value and the MinimalTuple length word are uint32,
 	 * we can read them both in one BufFileRead() call without any type
 	 * cheating.
