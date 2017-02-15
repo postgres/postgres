@@ -410,6 +410,24 @@ PostgresPollingStatusType PQconnectPoll(PGconn *conn);
           </para>
          </listitem>
         </varlistentry>
+
+        <varlistentry id="libpq-connection-check-writable">
+         <term><symbol>CONNECTION_CHECK_WRITABLE</symbol></term>
+         <listitem>
+          <para>
+           Checking if connection is able to handle write transactions.
+          </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="libpq-connection-consume">
+         <term><symbol>CONNECTION_CONSUME</symbol></term>
+         <listitem>
+          <para>
+           Consuming any remaining response messages on connection.
+          </para>
+         </listitem>
+        </varlistentry>
        </variablelist>
 
        Note that, although these constants will remain (in order to maintain
