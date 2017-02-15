@@ -724,6 +724,9 @@ ExecHashIncreaseNumBatches(HashJoinTable hashtable)
 
 			/* next tuple in this chunk */
 			idx += MAXALIGN(hashTupleSize);
+
+			/* allow this loop to be cancellable */
+			CHECK_FOR_INTERRUPTS();
 		}
 
 		/* we're done with this chunk - free it and proceed to the next one */
@@ -1602,6 +1605,9 @@ ExecHashRemoveNextSkewBucket(HashJoinTable hashtable)
 		}
 
 		hashTuple = nextHashTuple;
+
+		/* allow this loop to be cancellable */
+		CHECK_FOR_INTERRUPTS();
 	}
 
 	/*
