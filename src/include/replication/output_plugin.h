@@ -41,43 +41,36 @@ typedef void (*LogicalOutputPluginInit) (struct OutputPluginCallbacks *cb);
  * "is_init" will be set to "true" if the decoding slot just got defined. When
  * the same slot is used from there one, it will be "false".
  */
-typedef void (*LogicalDecodeStartupCB) (
-										  struct LogicalDecodingContext *ctx,
+typedef void (*LogicalDecodeStartupCB) (struct LogicalDecodingContext *ctx,
 												OutputPluginOptions *options,
-													bool is_init
-);
+													bool is_init);
 
 /*
  * Callback called for every (explicit or implicit) BEGIN of a successful
  * transaction.
  */
-typedef void (*LogicalDecodeBeginCB) (
-											 struct LogicalDecodingContext *,
+typedef void (*LogicalDecodeBeginCB) (struct LogicalDecodingContext *ctx,
 												  ReorderBufferTXN *txn);
 
 /*
  * Callback for every individual change in a successful transaction.
  */
-typedef void (*LogicalDecodeChangeCB) (
-											 struct LogicalDecodingContext *,
+typedef void (*LogicalDecodeChangeCB) (struct LogicalDecodingContext *ctx,
 												   ReorderBufferTXN *txn,
 												   Relation relation,
-												   ReorderBufferChange *change
-);
+												ReorderBufferChange *change);
 
 /*
  * Called for every (explicit or implicit) COMMIT of a successful transaction.
  */
-typedef void (*LogicalDecodeCommitCB) (
-											 struct LogicalDecodingContext *,
+typedef void (*LogicalDecodeCommitCB) (struct LogicalDecodingContext *ctx,
 												   ReorderBufferTXN *txn,
 												   XLogRecPtr commit_lsn);
 
 /*
  * Called for the generic logical decoding messages.
  */
-typedef void (*LogicalDecodeMessageCB) (
-											 struct LogicalDecodingContext *,
+typedef void (*LogicalDecodeMessageCB) (struct LogicalDecodingContext *ctx,
 													ReorderBufferTXN *txn,
 													XLogRecPtr message_lsn,
 													bool transactional,
@@ -88,16 +81,13 @@ typedef void (*LogicalDecodeMessageCB) (
 /*
  * Filter changes by origin.
  */
-typedef bool (*LogicalDecodeFilterByOriginCB) (
-											 struct LogicalDecodingContext *,
+typedef bool (*LogicalDecodeFilterByOriginCB) (struct LogicalDecodingContext *ctx,
 													  RepOriginId origin_id);
 
 /*
  * Called to shutdown an output plugin.
  */
-typedef void (*LogicalDecodeShutdownCB) (
-											  struct LogicalDecodingContext *
-);
+typedef void (*LogicalDecodeShutdownCB) (struct LogicalDecodingContext *ctx);
 
 /*
  * Output plugin callbacks
@@ -113,7 +103,8 @@ typedef struct OutputPluginCallbacks
 	LogicalDecodeShutdownCB shutdown_cb;
 } OutputPluginCallbacks;
 
-void		OutputPluginPrepareWrite(struct LogicalDecodingContext *ctx, bool last_write);
-void		OutputPluginWrite(struct LogicalDecodingContext *ctx, bool last_write);
+/* Functions in replication/logical/logical.c */
+extern void OutputPluginPrepareWrite(struct LogicalDecodingContext *ctx, bool last_write);
+extern void OutputPluginWrite(struct LogicalDecodingContext *ctx, bool last_write);
 
 #endif   /* OUTPUT_PLUGIN_H */
