@@ -36,7 +36,7 @@ INSERT INTO <replaceable class="PARAMETER">table_name</replaceable> [ AS <replac
 
     DO NOTHING
     DO UPDATE SET { <replaceable class="PARAMETER">column_name</replaceable> = { <replaceable class="PARAMETER">expression</replaceable> | DEFAULT } |
-                    ( <replaceable class="PARAMETER">column_name</replaceable> [, ...] ) = ( { <replaceable class="PARAMETER">expression</replaceable> | DEFAULT } [, ...] ) |
+                    ( <replaceable class="PARAMETER">column_name</replaceable> [, ...] ) = [ ROW ] ( { <replaceable class="PARAMETER">expression</replaceable> | DEFAULT } [, ...] ) |
                     ( <replaceable class="PARAMETER">column_name</replaceable> [, ...] ) = ( <replaceable class="PARAMETER">sub-SELECT</replaceable> )
                   } [, ...]
               [ WHERE <replaceable class="PARAMETER">condition</replaceable> ]
@@ -174,9 +174,9 @@ INSERT INTO <replaceable class="PARAMETER">table_name</replaceable> [ AS <replac
         A substitute name for <replaceable
         class="PARAMETER">table_name</replaceable>.  When an alias is
         provided, it completely hides the actual name of the table.
-        This is particularly useful when <literal>ON CONFLICT DO
-        UPDATE</literal> targets a table named excluded, since that's
-        also the name of the special table representing rows proposed
+        This is particularly useful when <literal>ON CONFLICT DO UPDATE</>
+        targets a table named <varname>excluded</>, since that will otherwise
+        be taken as the name of the special table representing rows proposed
         for insertion.
        </para>
       </listitem>
