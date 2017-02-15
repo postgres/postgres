@@ -383,6 +383,8 @@ typedef struct BTScanOpaqueData
 	ScanKey		arrayKeyData;	/* modified copy of scan->keyData */
 	int			numArrayKeys;	/* number of equality-type array keys (-1 if
 								 * there are any unsatisfiable array keys) */
+	int			arrayKeyCount;	/* count indicating number of array scan keys
+								 * processed */
 	BTArrayKeyInfo *arrayKeys;	/* info about each equality-type array key */
 	MemoryContext arrayContext; /* scan-lifespan context for array data */
 
@@ -426,7 +428,7 @@ typedef BTScanOpaqueData *BTScanOpaque;
 #define SK_BT_NULLS_FIRST	(INDOPTION_NULLS_FIRST << SK_BT_INDOPTION_SHIFT)
 
 /*
- * prototypes for functions in nbtree.c (external entry points for btree)
+ * external entry points for btree, in nbtree.c
  */
 extern IndexBuildResult *btbuild(Relation heap, Relation index,
 		struct IndexInfo *indexInfo);
@@ -436,10 +438,13 @@ extern bool btinsert(Relation rel, Datum *values, bool *isnull,
 		 IndexUniqueCheck checkUnique,
 		 struct IndexInfo *indexInfo);
 extern IndexScanDesc btbeginscan(Relation rel, int nkeys, int norderbys);
+extern Size btestimateparallelscan(void);
+extern void btinitparallelscan(void *target);
 extern bool btgettuple(IndexScanDesc scan, ScanDirection dir);
 extern int64 btgetbitmap(IndexScanDesc scan, TIDBitmap *tbm);
 extern void btrescan(IndexScanDesc scan, ScanKey scankey, int nscankeys,
 		 ScanKey orderbys, int norderbys);
+extern void btparallelrescan(IndexScanDesc scan);
 extern void btendscan(IndexScanDesc scan);
 extern void btmarkpos(IndexScanDesc scan);
 extern void btrestrpos(IndexScanDesc scan);
@@ -450,6 +455,14 @@ extern IndexBulkDeleteResult *btbulkdelete(IndexVacuumInfo *info,
 extern IndexBulkDeleteResult *btvacuumcleanup(IndexVacuumInfo *info,
 				IndexBulkDeleteResult *stats);
 extern bool btcanreturn(Relation index, int attno);
+
+/*
+ * prototypes for internal functions in nbtree.c
+ */
+extern bool _bt_parallel_seize(IndexScanDesc scan, BlockNumber *pageno);
+extern void _bt_parallel_release(IndexScanDesc scan, BlockNumber scan_page);
+extern void _bt_parallel_done(IndexScanDesc scan);
+extern void _bt_parallel_advance_array_keys(IndexScanDesc scan);
 
 /*
  * prototypes for functions in nbtinsert.c

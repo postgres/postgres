@@ -1207,13 +1207,17 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
          <entry>Waiting in an extension.</entry>
         </row>
         <row>
-         <entry morerows="9"><literal>IPC</></entry>
+         <entry morerows="10"><literal>IPC</></entry>
          <entry><literal>BgWorkerShutdown</></entry>
          <entry>Waiting for background worker to shut down.</entry>
         </row>
         <row>
          <entry><literal>BgWorkerStartup</></entry>
          <entry>Waiting for background worker to start up.</entry>
+        </row>
+        <row>
+         <entry><literal>BtreePage</></entry>
+         <entry>Waiting for the page number needed to continue a parallel btree scan to become available.</entry>
         </row>
         <row>
          <entry><literal>ExecuteGather</></entry>
