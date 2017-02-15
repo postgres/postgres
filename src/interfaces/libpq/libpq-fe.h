@@ -63,8 +63,10 @@ typedef enum
 	CONNECTION_SETENV,			/* Negotiating environment. */
 	CONNECTION_SSL_STARTUP,		/* Negotiating SSL. */
 	CONNECTION_NEEDED,			/* Internal state: connect() needed */
-	CONNECTION_CHECK_WRITABLE	/* Check if we could make a writable
+	CONNECTION_CHECK_WRITABLE,	/* Check if we could make a writable
 								 * connection. */
+	CONNECTION_CONSUME			/* Wait for any pending message and
+								 * consume them. */
 } ConnStatusType;
 
 typedef enum
