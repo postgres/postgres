@@ -12764,7 +12764,10 @@ c_expr:		columnref								{ $$ = $1; }
 						 * AEXPR_PAREN nodes wrapping all explicitly
 						 * parenthesized subexpressions; this prevents bogus
 						 * warnings from being issued when the ordering has
-						 * been forced by parentheses.
+						 * been forced by parentheses.  Take care that an
+						 * AEXPR_PAREN node has the same exprLocation as its
+						 * child, so as not to cause surprising changes in
+						 * error cursor positioning.
 						 *
 						 * In principle we should not be relying on a GUC to
 						 * decide whether to insert AEXPR_PAREN nodes.
@@ -12773,7 +12776,8 @@ c_expr:		columnref								{ $$ = $1; }
 						 * we'd just as soon not waste cycles on dummy parse
 						 * nodes if we don't have to.
 						 */
-						$$ = (Node *) makeA_Expr(AEXPR_PAREN, NIL, $2, NULL, @1);
+						$$ = (Node *) makeA_Expr(AEXPR_PAREN, NIL, $2, NULL,
+												 exprLocation($2));
 					}
 					else
 						$$ = $2;
