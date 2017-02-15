@@ -22,7 +22,8 @@
  */
 extern bool enable_geqo;
 extern int	geqo_threshold;
-extern int	min_parallel_relation_size;
+extern int	min_parallel_table_scan_size;
+extern int	min_parallel_index_scan_size;
 
 /* Hook for plugins to get control in set_rel_pathlist() */
 typedef void (*set_rel_pathlist_hook_type) (PlannerInfo *root,

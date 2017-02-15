@@ -2407,8 +2407,8 @@ and many others in the same vein
         is available through other new configuration parameters
         <xref linkend="guc-force-parallel-mode">,
         <xref linkend="guc-parallel-setup-cost">, <xref
-        linkend="guc-parallel-tuple-cost">, and <xref
-        linkend="guc-min-parallel-relation-size">.
+        linkend="guc-parallel-tuple-cost">, and
+        <literal>min_parallel_relation_size</literal>.
        </para>
       </listitem>
 

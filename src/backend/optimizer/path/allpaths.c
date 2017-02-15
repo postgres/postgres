@@ -57,7 +57,8 @@ typedef struct pushdown_safety_info
 /* These parameters are set by GUC */
 bool		enable_geqo = false;	/* just in case GUC doesn't set it */
 int			geqo_threshold;
-int			min_parallel_relation_size;
+int			min_parallel_table_scan_size;
+int			min_parallel_index_scan_size;
 
 /* Hook for plugins to get control in set_rel_pathlist() */
 set_rel_pathlist_hook_type set_rel_pathlist_hook = NULL;
@@ -126,7 +127,8 @@ static void subquery_push_qual(Query *subquery,
 static void recurse_push_qual(Node *setOp, Query *topquery,
 				  RangeTblEntry *rte, Index rti, Node *qual);
 static void remove_unused_subquery_outputs(Query *subquery, RelOptInfo *rel);
-static int	compute_parallel_worker(RelOptInfo *rel, BlockNumber pages);
+static int compute_parallel_worker(RelOptInfo *rel, BlockNumber heap_pages,
+						BlockNumber index_pages);
 
 
 /*
@@ -679,7 +681,7 @@ create_plain_partial_paths(PlannerInfo *root, RelOptInfo *rel)
 {
 	int			parallel_workers;
 
-	parallel_workers = compute_parallel_worker(rel, rel->pages);
+	parallel_workers = compute_parallel_worker(rel, rel->pages, 0);
 
 	/* If any limit was set to zero, the user doesn't want a parallel scan. */
 	if (parallel_workers <= 0)
@@ -2876,13 +2878,20 @@ remove_unused_subquery_outputs(Query *subquery, RelOptInfo *rel)
 
 /*
  * Compute the number of parallel workers that should be used to scan a
- * relation.  "pages" is the number of pages from the relation that we
- * expect to scan.
+ * relation.  We compute the parallel workers based on the size of the heap to
+ * be scanned and the size of the index to be scanned, then choose a minimum
+ * of those.
+ *
+ * "heap_pages" is the number of pages from the table that we expect to scan.
+ * "index_pages" is the number of pages from the index that we expect to scan.
  */
 static int
-compute_parallel_worker(RelOptInfo *rel, BlockNumber pages)
+compute_parallel_worker(RelOptInfo *rel, BlockNumber heap_pages,
+						BlockNumber index_pages)
 {
-	int			parallel_workers;
+	int			parallel_workers = 0;
+	int			heap_parallel_workers = 1;
+	int			index_parallel_workers = 1;
 
 	/*
 	 * If the user has set the parallel_workers reloption, use that; otherwise
@@ -2892,7 +2901,8 @@ compute_parallel_worker(RelOptInfo *rel, BlockNumber pages)
 		parallel_workers = rel->rel_parallel_workers;
 	else
 	{
-		int			parallel_threshold;
+		int			heap_parallel_threshold;
+		int			index_parallel_threshold;
 
 		/*
 		 * If this relation is too small to be worth a parallel scan, just
@@ -2901,25 +2911,48 @@ compute_parallel_worker(RelOptInfo *rel, BlockNumber pages)
 		 * might not be worthwhile just for this relation, but when combined
 		 * with all of its inheritance siblings it may well pay off.
 		 */
-		if (pages < (BlockNumber) min_parallel_relation_size &&
+		if (heap_pages < (BlockNumber) min_parallel_table_scan_size &&
+			index_pages < (BlockNumber) min_parallel_index_scan_size &&
 			rel->reloptkind == RELOPT_BASEREL)
 			return 0;
 
-		/*
-		 * Select the number of workers based on the log of the size of the
-		 * relation.  This probably needs to be a good deal more
-		 * sophisticated, but we need something here for now.  Note that the
-		 * upper limit of the min_parallel_relation_size GUC is chosen to
-		 * prevent overflow here.
-		 */
-		parallel_workers = 1;
-		parallel_threshold = Max(min_parallel_relation_size, 1);
-		while (pages >= (BlockNumber) (parallel_threshold * 3))
+		if (heap_pages > 0)
 		{
-			parallel_workers++;
-			parallel_threshold *= 3;
-			if (parallel_threshold > INT_MAX / 3)
-				break;			/* avoid overflow */
+			/*
+			 * Select the number of workers based on the log of the size of
+			 * the relation.  This probably needs to be a good deal more
+			 * sophisticated, but we need something here for now.  Note that
+			 * the upper limit of the min_parallel_table_scan_size GUC is
+			 * chosen to prevent overflow here.
+			 */
+			heap_parallel_threshold = Max(min_parallel_table_scan_size, 1);
+			while (heap_pages >= (BlockNumber) (heap_parallel_threshold * 3))
+			{
+				heap_parallel_workers++;
+				heap_parallel_threshold *= 3;
+				if (heap_parallel_threshold > INT_MAX / 3)
+					break;		/* avoid overflow */
+			}
+
+			parallel_workers = heap_parallel_workers;
+		}
+
+		if (index_pages > 0)
+		{
+			/* same calculation as for heap_pages above */
+			index_parallel_threshold = Max(min_parallel_index_scan_size, 1);
+			while (index_pages >= (BlockNumber) (index_parallel_threshold * 3))
+			{
+				index_parallel_workers++;
+				index_parallel_threshold *= 3;
+				if (index_parallel_threshold > INT_MAX / 3)
+					break;		/* avoid overflow */
+			}
+
+			if (parallel_workers > 0)
+				parallel_workers = Min(parallel_workers, index_parallel_workers);
+			else
+				parallel_workers = index_parallel_workers;
 		}
 	}
 

@@ -3835,16 +3835,37 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-min-parallel-relation-size" xreflabel="min_parallel_relation_size">
-      <term><varname>min_parallel_relation_size</varname> (<type>integer</type>)
+     <varlistentry id="guc-min-parallel-table-scan-size" xreflabel="min_parallel_table_scan_size">
+      <term><varname>min_parallel_table_scan_size</varname> (<type>integer</type>)
       <indexterm>
-       <primary><varname>min_parallel_relation_size</> configuration parameter</primary>
+       <primary><varname>min_parallel_table_scan_size</> configuration parameter</primary>
       </indexterm>
       </term>
       <listitem>
        <para>
-        Sets the minimum size of relations to be considered for parallel scan.
-        The default is 8 megabytes (<literal>8MB</>).
+        Sets the minimum amount of table data that must be scanned in order
+        for a parallel scan to be considered.  For a parallel sequential scan,
+        the amount of table data scanned is always equal to the size of the
+        table, but when indexes are used the amount of table data
+        scanned will normally be less.  The default is 8
+        megabytes (<literal>8MB</>).
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-min-parallel-index-scan-size" xreflabel="min_parallel_index_scan_size">
+      <term><varname>min_parallel_index_scan_size</varname> (<type>integer</type>)
+      <indexterm>
+       <primary><varname>min_parallel_index_scan_size</> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Sets the minimum amount of index data that must be scanned in order
+        for a parallel scan to be considered.  Note that a parallel index scan
+        typically won't touch the entire index; it is the number of pages
+        which the planner believes will actually be touched by the scan which
+        is relevant.  The default is 512 kilobytes (<literal>512kB</>).
        </para>
       </listitem>
      </varlistentry>
