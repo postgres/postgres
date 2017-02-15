@@ -26,7 +26,6 @@ static void check_for_isn_and_int8_passing_mismatch(ClusterInfo *cluster);
 static void check_for_reg_data_type_usage(ClusterInfo *cluster);
 static void check_for_jsonb_9_4_usage(ClusterInfo *cluster);
 static void check_for_pg_role_prefix(ClusterInfo *cluster);
-static void get_bin_version(ClusterInfo *cluster);
 static char *get_canonical_locale_name(int category, const char *locale);
 
 
@@ -240,10 +239,6 @@ check_cluster_versions(void)
 	 */
 	if (old_cluster.major_version > new_cluster.major_version)
 		pg_fatal("This utility cannot be used to downgrade to older major PostgreSQL versions.\n");
-
-	/* get old and new binary versions */
-	get_bin_version(&old_cluster);
-	get_bin_version(&new_cluster);
 
 	/* Ensure binaries match the designated data directories */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) !=
@@ -1078,34 +1073,6 @@ check_for_pg_role_prefix(ClusterInfo *cluster)
 	PQfinish(conn);
 
 	check_ok();
-}
-
-static void
-get_bin_version(ClusterInfo *cluster)
-{
-	char		cmd[MAXPGPATH],
-				cmd_output[MAX_STRING];
-	FILE	   *output;
-	int			pre_dot = 0,
-				post_dot = 0;
-
-	snprintf(cmd, sizeof(cmd), "\"%s/pg_ctl\" --version", cluster->bindir);
-
-	if ((output = popen(cmd, "r")) == NULL ||
-		fgets(cmd_output, sizeof(cmd_output), output) == NULL)
-		pg_fatal("could not get pg_ctl version data using %s: %s\n",
-				 cmd, strerror(errno));
-
-	pclose(output);
-
-	/* Remove trailing newline */
-	if (strchr(cmd_output, '\n') != NULL)
-		*strchr(cmd_output, '\n') = '\0';
-
-	if (sscanf(cmd_output, "%*s %*s %d.%d", &pre_dot, &post_dot) < 1)
-		pg_fatal("could not get version from %s\n", cmd);
-
-	cluster->bin_version = (pre_dot * 100 + post_dot) * 100;
 }
 
 

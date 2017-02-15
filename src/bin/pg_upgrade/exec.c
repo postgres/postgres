@@ -16,11 +16,46 @@
 
 static void check_data_dir(ClusterInfo *cluster);
 static void check_bin_dir(ClusterInfo *cluster);
+static void get_bin_version(ClusterInfo *cluster);
 static void validate_exec(const char *dir, const char *cmdName);
 
 #ifdef WIN32
 static int	win32_check_directory_write_permissions(void);
 #endif
+
+
+/*
+ * get_bin_version
+ *
+ *	Fetch versions of binaries for cluster.
+ */
+static void
+get_bin_version(ClusterInfo *cluster)
+{
+	char		cmd[MAXPGPATH],
+				cmd_output[MAX_STRING];
+	FILE	   *output;
+	int			pre_dot = 0,
+				post_dot = 0;
+
+	snprintf(cmd, sizeof(cmd), "\"%s/pg_ctl\" --version", cluster->bindir);
+
+	if ((output = popen(cmd, "r")) == NULL ||
+		fgets(cmd_output, sizeof(cmd_output), output) == NULL)
+		pg_fatal("could not get pg_ctl version data using %s: %s\n",
+				 cmd, strerror(errno));
+
+	pclose(output);
+
+	/* Remove trailing newline */
+	if (strchr(cmd_output, '\n') != NULL)
+		*strchr(cmd_output, '\n') = '\0';
+
+	if (sscanf(cmd_output, "%*s %*s %d.%d", &pre_dot, &post_dot) < 1)
+		pg_fatal("could not get version from %s\n", cmd);
+
+	cluster->bin_version = (pre_dot * 100 + post_dot) * 100;
+}
 
 
 /*
@@ -335,7 +370,20 @@ check_bin_dir(ClusterInfo *cluster)
 
 	validate_exec(cluster->bindir, "postgres");
 	validate_exec(cluster->bindir, "pg_ctl");
-	validate_exec(cluster->bindir, "pg_resetwal");
+
+	/*
+	 * Fetch the binary versions after checking for the existence of pg_ctl,
+	 * this gives a correct error if the binary used itself for the version
+	 * fetching is broken.
+	 */
+	get_bin_version(&old_cluster);
+	get_bin_version(&new_cluster);
+
+	/* pg_resetxlog has been renamed to pg_resetwal in version 10 */
+	if (GET_MAJOR_VERSION(cluster->bin_version) < 1000)
+		validate_exec(cluster->bindir, "pg_resetxlog");
+	else
+		validate_exec(cluster->bindir, "pg_resetwal");
 	if (cluster == &new_cluster)
 	{
 		/* these are only needed in the new cluster */

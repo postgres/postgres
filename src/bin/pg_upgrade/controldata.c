@@ -70,6 +70,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 	uint32		tli = 0;
 	uint32		logid = 0;
 	uint32		segno = 0;
+	char	   *resetwal_bin;
 
 
 	/*
@@ -111,9 +112,14 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 	pg_putenv("LC_ALL", NULL);
 	pg_putenv("LC_MESSAGES", "C");
 
+	/* pg_resetxlog has been renamed to pg_resetwal in version 10 */
+	if (GET_MAJOR_VERSION(cluster->bin_version) < 1000)
+		resetwal_bin = "pg_resetxlog\" -n";
+	else
+		resetwal_bin = "pg_resetwal\" -n";
 	snprintf(cmd, sizeof(cmd), "\"%s/%s \"%s\"",
 			 cluster->bindir,
-			 live_check ? "pg_controldata\"" : "pg_resetwal\" -n",
+			 live_check ? "pg_controldata\"" : resetwal_bin,
 			 cluster->pgdata);
 	fflush(stdout);
 	fflush(stderr);
