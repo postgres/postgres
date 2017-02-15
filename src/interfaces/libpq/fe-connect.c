@@ -2908,7 +2908,7 @@ keep_going:						/* We will come back to here until there is
 			}
 
 			/*
-			 * If a read-write connection is requisted check for same.
+			 * If a read-write connection is requested check for same.
 			 */
 			if (conn->target_session_attrs != NULL &&
 				strcmp(conn->target_session_attrs, "read-write") == 0)
