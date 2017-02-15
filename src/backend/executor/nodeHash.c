@@ -667,6 +667,9 @@ ExecHashIncreaseNumBatches(HashJoinTable hashtable)
 			}
 
 			tuple = nexttuple;
+
+			/* allow this loop to be cancellable */
+			CHECK_FOR_INTERRUPTS();
 		}
 	}
 
@@ -1438,6 +1441,9 @@ ExecHashRemoveNextSkewBucket(HashJoinTable hashtable)
 		}
 
 		hashTuple = nextHashTuple;
+
+		/* allow this loop to be cancellable */
+		CHECK_FOR_INTERRUPTS();
 	}
 
 	/*
