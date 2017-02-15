@@ -380,7 +380,7 @@ typedef struct OutputPluginCallbacks
     LogicalDecodeShutdownCB shutdown_cb;
 } OutputPluginCallbacks;
 
-typedef void (*LogicalOutputPluginInit)(struct OutputPluginCallbacks *cb);
+typedef void (*LogicalOutputPluginInit) (struct OutputPluginCallbacks *cb);
 </programlisting>
      The <function>begin_cb</function>, <function>change_cb</function>
      and <function>commit_cb</function> callbacks are required,
@@ -465,11 +465,9 @@ CREATE TABLE another_catalog_table(data text) WITH (user_catalog_table = true);
       a replication slot is created or asked to stream changes, independent
       of the number of changes that are ready to be put out.
 <programlisting>
-typedef void (*LogicalDecodeStartupCB) (
-    struct LogicalDecodingContext *ctx,
-    OutputPluginOptions *options,
-    bool is_init
-);
+typedef void (*LogicalDecodeStartupCB) (struct LogicalDecodingContext *ctx,
+                                        OutputPluginOptions *options,
+                                        bool is_init);
 </programlisting>
       The <literal>is_init</literal> parameter will be true when the
       replication slot is being created and false
@@ -504,9 +502,7 @@ typedef struct OutputPluginOptions
       be used to deallocate resources private to the output plugin. The slot
       isn't necessarily being dropped, streaming is just being stopped.
 <programlisting>
-typedef void (*LogicalDecodeShutdownCB) (
-    struct LogicalDecodingContext *ctx
-);
+typedef void (*LogicalDecodeShutdownCB) (struct LogicalDecodingContext *ctx);
 </programlisting>
      </para>
     </sect3>
@@ -519,10 +515,8 @@ typedef void (*LogicalDecodeShutdownCB) (
       start of a committed transaction has been decoded. Aborted transactions
       and their contents never get decoded.
 <programlisting>
-typedef void (*LogicalDecodeBeginCB) (
-    struct LogicalDecodingContext *,
-    ReorderBufferTXN *txn
-);
+typedef void (*LogicalDecodeBeginCB) (struct LogicalDecodingContext *ctx,
+                                      ReorderBufferTXN *txn);
 </programlisting>
       The <parameter>txn</parameter> parameter contains meta information about
       the transaction, like the time stamp at which it has been committed and
@@ -540,10 +534,9 @@ typedef void (*LogicalDecodeBeginCB) (
       rows will have been called before this, if there have been any modified
       rows.
 <programlisting>
-typedef void (*LogicalDecodeCommitCB) (
-    struct LogicalDecodingContext *,
-    ReorderBufferTXN *txn
-);
+typedef void (*LogicalDecodeCommitCB) (struct LogicalDecodingContext *ctx,
+                                       ReorderBufferTXN *txn,
+                                       XLogRecPtr commit_lsn);
 </programlisting>
      </para>
     </sect3>
@@ -559,12 +552,10 @@ typedef void (*LogicalDecodeCommitCB) (
       several rows at once the callback will be called individually for each
       row.
 <programlisting>
-typedef void (*LogicalDecodeChangeCB) (
-    struct LogicalDecodingContext *ctx,
-    ReorderBufferTXN *txn,
-    Relation relation,
-    ReorderBufferChange *change
-);
+typedef void (*LogicalDecodeChangeCB) (struct LogicalDecodingContext *ctx,
+                                       ReorderBufferTXN *txn,
+                                       Relation relation,
+                                       ReorderBufferChange *change);
 </programlisting>
       The <parameter>ctx</parameter> and <parameter>txn</parameter> parameters
       have the same contents as for the <function>begin_cb</function>
@@ -594,10 +585,8 @@ typedef void (*LogicalDecodeChangeCB) (
        from <parameter>origin_id</parameter> is of interest to the
        output plugin.
 <programlisting>
-typedef bool (*LogicalDecodeFilterByOriginCB) (
-    struct LogicalDecodingContext *ctx,
-    RepNodeId origin_id
-);
+typedef bool (*LogicalDecodeFilterByOriginCB) (struct LogicalDecodingContext *ctx,
+                                               RepOriginId origin_id);
 </programlisting>
       The <parameter>ctx</parameter> parameter has the same contents
       as for the other callbacks. No information but the origin is
@@ -623,15 +612,13 @@ typedef bool (*LogicalDecodeFilterByOriginCB) (
       The optional <function>message_cb</function> callback is called whenever
       a logical decoding message has been decoded.
 <programlisting>
-typedef void (*LogicalDecodeMessageCB) (
-    struct LogicalDecodingContext *,
-    ReorderBufferTXN *txn,
-    XLogRecPtr message_lsn,
-    bool transactional,
-    const char *prefix,
-    Size message_size,
-    const char *message
-);
+typedef void (*LogicalDecodeMessageCB) (struct LogicalDecodingContext *ctx,
+                                        ReorderBufferTXN *txn,
+                                        XLogRecPtr message_lsn,
+                                        bool transactional,
+                                        const char *prefix,
+                                        Size message_size,
+                                        const char *message);
 </programlisting>
       The <parameter>txn</parameter> parameter contains meta information about
       the transaction, like the time stamp at which it has been committed and
