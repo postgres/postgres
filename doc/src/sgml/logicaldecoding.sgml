@@ -419,7 +419,7 @@ CREATE TABLE another_catalog_table(data text) WITH (user_catalog_table = true);
      data in a data type that can contain arbitrary data (e.g., <type>bytea</type>) is
      cumbersome. If the output plugin only outputs textual data in the
      server's encoding, it can declare that by
-     setting <literal>OutputPluginOptions.output_mode</>
+     setting <literal>OutputPluginOptions.output_type</>
      to <literal>OUTPUT_PLUGIN_TEXTUAL_OUTPUT</> instead
      of <literal>OUTPUT_PLUGIN_BINARY_OUTPUT</> in
      the <link linkend="logicaldecoding-output-plugin-startup">startup
