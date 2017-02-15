@@ -127,8 +127,6 @@ static void subquery_push_qual(Query *subquery,
 static void recurse_push_qual(Node *setOp, Query *topquery,
 				  RangeTblEntry *rte, Index rti, Node *qual);
 static void remove_unused_subquery_outputs(Query *subquery, RelOptInfo *rel);
-static int compute_parallel_worker(RelOptInfo *rel, BlockNumber heap_pages,
-						BlockNumber index_pages);
 
 
 /*
@@ -2885,7 +2883,7 @@ remove_unused_subquery_outputs(Query *subquery, RelOptInfo *rel)
  * "heap_pages" is the number of pages from the table that we expect to scan.
  * "index_pages" is the number of pages from the index that we expect to scan.
  */
-static int
+int
 compute_parallel_worker(RelOptInfo *rel, BlockNumber heap_pages,
 						BlockNumber index_pages)
 {

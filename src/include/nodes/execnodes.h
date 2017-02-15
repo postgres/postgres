@@ -1363,6 +1363,7 @@ typedef struct
  *		SortSupport		   for reordering ORDER BY exprs
  *		OrderByTypByVals   is the datatype of order by expression pass-by-value?
  *		OrderByTypLens	   typlens of the datatypes of order by expressions
+ *		pscan_len		   size of parallel index scan descriptor
  * ----------------
  */
 typedef struct IndexScanState
@@ -1389,6 +1390,7 @@ typedef struct IndexScanState
 	SortSupport iss_SortSupport;
 	bool	   *iss_OrderByTypByVals;
 	int16	   *iss_OrderByTypLens;
+	Size		iss_PscanLen;
 } IndexScanState;
 
 /* ----------------

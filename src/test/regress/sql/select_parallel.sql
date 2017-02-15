@@ -48,6 +48,17 @@ select count(*) from tenk1 where (two, four) not in
 	(select hundred, thousand from tenk2 where thousand > 100);
 alter table tenk2 reset (parallel_workers);
 
+-- test parallel index scans.
+set enable_seqscan to off;
+set enable_bitmapscan to off;
+
+explain (costs off)
+	select  count((unique1)) from tenk1 where hundred > 1;
+select  count((unique1)) from tenk1 where hundred > 1;
+
+reset enable_seqscan;
+reset enable_bitmapscan;
+
 set force_parallel_mode=1;
 
 explain (costs off)

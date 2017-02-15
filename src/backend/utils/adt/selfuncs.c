@@ -6471,7 +6471,8 @@ add_predicate_to_quals(IndexOptInfo *index, List *indexQuals)
 void
 btcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 			   Cost *indexStartupCost, Cost *indexTotalCost,
-			   Selectivity *indexSelectivity, double *indexCorrelation)
+			   Selectivity *indexSelectivity, double *indexCorrelation,
+			   double *indexPages)
 {
 	IndexOptInfo *index = path->indexinfo;
 	List	   *qinfos;
@@ -6761,12 +6762,14 @@ btcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 	*indexTotalCost = costs.indexTotalCost;
 	*indexSelectivity = costs.indexSelectivity;
 	*indexCorrelation = costs.indexCorrelation;
+	*indexPages = costs.numIndexPages;
 }
 
 void
 hashcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 				 Cost *indexStartupCost, Cost *indexTotalCost,
-				 Selectivity *indexSelectivity, double *indexCorrelation)
+				 Selectivity *indexSelectivity, double *indexCorrelation,
+				 double *indexPages)
 {
 	List	   *qinfos;
 	GenericCosts costs;
@@ -6807,12 +6810,14 @@ hashcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 	*indexTotalCost = costs.indexTotalCost;
 	*indexSelectivity = costs.indexSelectivity;
 	*indexCorrelation = costs.indexCorrelation;
+	*indexPages = costs.numIndexPages;
 }
 
 void
 gistcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 				 Cost *indexStartupCost, Cost *indexTotalCost,
-				 Selectivity *indexSelectivity, double *indexCorrelation)
+				 Selectivity *indexSelectivity, double *indexCorrelation,
+				 double *indexPages)
 {
 	IndexOptInfo *index = path->indexinfo;
 	List	   *qinfos;
@@ -6866,12 +6871,14 @@ gistcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 	*indexTotalCost = costs.indexTotalCost;
 	*indexSelectivity = costs.indexSelectivity;
 	*indexCorrelation = costs.indexCorrelation;
+	*indexPages = costs.numIndexPages;
 }
 
 void
 spgcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 				Cost *indexStartupCost, Cost *indexTotalCost,
-				Selectivity *indexSelectivity, double *indexCorrelation)
+				Selectivity *indexSelectivity, double *indexCorrelation,
+				double *indexPages)
 {
 	IndexOptInfo *index = path->indexinfo;
 	List	   *qinfos;
@@ -6925,6 +6932,7 @@ spgcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 	*indexTotalCost = costs.indexTotalCost;
 	*indexSelectivity = costs.indexSelectivity;
 	*indexCorrelation = costs.indexCorrelation;
+	*indexPages = costs.numIndexPages;
 }
 
 
@@ -7222,7 +7230,8 @@ gincost_scalararrayopexpr(PlannerInfo *root,
 void
 gincostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 				Cost *indexStartupCost, Cost *indexTotalCost,
-				Selectivity *indexSelectivity, double *indexCorrelation)
+				Selectivity *indexSelectivity, double *indexCorrelation,
+				double *indexPages)
 {
 	IndexOptInfo *index = path->indexinfo;
 	List	   *indexQuals = path->indexquals;
@@ -7537,6 +7546,7 @@ gincostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 	*indexStartupCost += qual_arg_cost;
 	*indexTotalCost += qual_arg_cost;
 	*indexTotalCost += (numTuples * *indexSelectivity) * (cpu_index_tuple_cost + qual_op_cost);
+	*indexPages = dataPagesFetched;
 }
 
 /*
@@ -7545,7 +7555,8 @@ gincostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 void
 brincostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 				 Cost *indexStartupCost, Cost *indexTotalCost,
-				 Selectivity *indexSelectivity, double *indexCorrelation)
+				 Selectivity *indexSelectivity, double *indexCorrelation,
+				 double *indexPages)
 {
 	IndexOptInfo *index = path->indexinfo;
 	List	   *indexQuals = path->indexquals;
@@ -7597,6 +7608,7 @@ brincostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 	*indexStartupCost += qual_arg_cost;
 	*indexTotalCost += qual_arg_cost;
 	*indexTotalCost += (numTuples * *indexSelectivity) * (cpu_index_tuple_cost + qual_op_cost);
+	*indexPages = index->pages;
 
 	/* XXX what about pages_per_range? */
 }

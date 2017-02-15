@@ -24,7 +24,8 @@
 void
 blcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 			   Cost *indexStartupCost, Cost *indexTotalCost,
-			   Selectivity *indexSelectivity, double *indexCorrelation)
+			   Selectivity *indexSelectivity, double *indexCorrelation,
+			   double *indexPages)
 {
 	IndexOptInfo *index = path->indexinfo;
 	List	   *qinfos;
@@ -45,4 +46,5 @@ blcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 	*indexTotalCost = costs.indexTotalCost;
 	*indexSelectivity = costs.indexSelectivity;
 	*indexCorrelation = costs.indexCorrelation;
+	*indexPages = costs.numIndexPages;
 }

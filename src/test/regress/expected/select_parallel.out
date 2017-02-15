@@ -125,6 +125,29 @@ select count(*) from tenk1 where (two, four) not in
 (1 row)
 
 alter table tenk2 reset (parallel_workers);
+-- test parallel index scans.
+set enable_seqscan to off;
+set enable_bitmapscan to off;
+explain (costs off)
+	select  count((unique1)) from tenk1 where hundred > 1;
+                             QUERY PLAN                             
+--------------------------------------------------------------------
+ Finalize Aggregate
+   ->  Gather
+         Workers Planned: 4
+         ->  Partial Aggregate
+               ->  Parallel Index Scan using tenk1_hundred on tenk1
+                     Index Cond: (hundred > 1)
+(6 rows)
+
+select  count((unique1)) from tenk1 where hundred > 1;
+ count 
+-------
+  9800
+(1 row)
+
+reset enable_seqscan;
+reset enable_bitmapscan;
 set force_parallel_mode=1;
 explain (costs off)
   select stringu1::int2 from tenk1 where unique1 = 1;

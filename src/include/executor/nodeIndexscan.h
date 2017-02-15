@@ -14,6 +14,7 @@
 #ifndef NODEINDEXSCAN_H
 #define NODEINDEXSCAN_H
 
+#include "access/parallel.h"
 #include "nodes/execnodes.h"
 
 extern IndexScanState *ExecInitIndexScan(IndexScan *node, EState *estate, int eflags);
@@ -22,6 +23,9 @@ extern void ExecEndIndexScan(IndexScanState *node);
 extern void ExecIndexMarkPos(IndexScanState *node);
 extern void ExecIndexRestrPos(IndexScanState *node);
 extern void ExecReScanIndexScan(IndexScanState *node);
+extern void ExecIndexScanEstimate(IndexScanState *node, ParallelContext *pcxt);
+extern void ExecIndexScanInitializeDSM(IndexScanState *node, ParallelContext *pcxt);
+extern void ExecIndexScanInitializeWorker(IndexScanState *node, shm_toc *toc);
 
 /*
  * These routines are exported to share code with nodeIndexonlyscan.c and

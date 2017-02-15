@@ -47,7 +47,8 @@ extern IndexPath *create_index_path(PlannerInfo *root,
 				  ScanDirection indexscandir,
 				  bool indexonly,
 				  Relids required_outer,
-				  double loop_count);
+				  double loop_count,
+				  bool partial_path);
 extern BitmapHeapPath *create_bitmap_heap_path(PlannerInfo *root,
 						RelOptInfo *rel,
 						Path *bitmapqual,

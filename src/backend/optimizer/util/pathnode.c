@@ -744,10 +744,9 @@ add_path_precheck(RelOptInfo *parent_rel,
  *	  As with add_path, we pfree paths that are found to be dominated by
  *	  another partial path; this requires that there be no other references to
  *	  such paths yet.  Hence, GatherPaths must not be created for a rel until
- *	  we're done creating all partial paths for it.  We do not currently build
- *	  partial indexscan paths, so there is no need for an exception for
- *	  IndexPaths here; for safety, we instead Assert that a path to be freed
- *	  isn't an IndexPath.
+ *	  we're done creating all partial paths for it.  Unlike add_path, we don't
+ *	  take an exception for IndexPaths as partial index paths won't be
+ *	  referenced by partial BitmapHeapPaths.
  */
 void
 add_partial_path(RelOptInfo *parent_rel, Path *new_path)
@@ -826,8 +825,6 @@ add_partial_path(RelOptInfo *parent_rel, Path *new_path)
 		{
 			parent_rel->partial_pathlist =
 				list_delete_cell(parent_rel->partial_pathlist, p1, p1_prev);
-			/* we should not see IndexPaths here, so always safe to delete */
-			Assert(!IsA(old_path, IndexPath));
 			pfree(old_path);
 			/* p1_prev does not advance */
 		}
@@ -860,8 +857,6 @@ add_partial_path(RelOptInfo *parent_rel, Path *new_path)
 	}
 	else
 	{
-		/* we should not see IndexPaths here, so always safe to delete */
-		Assert(!IsA(new_path, IndexPath));
 		/* Reject and recycle the new path */
 		pfree(new_path);
 	}
@@ -1005,6 +1000,7 @@ create_samplescan_path(PlannerInfo *root, RelOptInfo *rel, Relids required_outer
  * 'required_outer' is the set of outer relids for a parameterized path.
  * 'loop_count' is the number of repetitions of the indexscan to factor into
  *		estimates of caching behavior.
+ * 'partial_path' is true if constructing a parallel index scan path.
  *
  * Returns the new path node.
  */
@@ -1019,7 +1015,8 @@ create_index_path(PlannerInfo *root,
 				  ScanDirection indexscandir,
 				  bool indexonly,
 				  Relids required_outer,
-				  double loop_count)
+				  double loop_count,
+				  bool partial_path)
 {
 	IndexPath  *pathnode = makeNode(IndexPath);
 	RelOptInfo *rel = index->rel;
@@ -1049,7 +1046,7 @@ create_index_path(PlannerInfo *root,
 	pathnode->indexorderbycols = indexorderbycols;
 	pathnode->indexscandir = indexscandir;
 
-	cost_index(pathnode, root, loop_count);
+	cost_index(pathnode, root, loop_count, partial_path);
 
 	return pathnode;
 }
@@ -3247,7 +3244,7 @@ reparameterize_path(PlannerInfo *root, Path *path,
 				memcpy(newpath, ipath, sizeof(IndexPath));
 				newpath->path.param_info =
 					get_baserel_parampathinfo(root, rel, required_outer);
-				cost_index(newpath, root, loop_count);
+				cost_index(newpath, root, loop_count, false);
 				return (Path *) newpath;
 			}
 		case T_BitmapHeapScan:
