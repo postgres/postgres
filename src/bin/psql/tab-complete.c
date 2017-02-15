@@ -675,9 +675,9 @@ static const SchemaQuery Query_for_list_of_matviews = {
 #define Query_for_list_of_alter_system_set_vars \
 "SELECT name FROM "\
 " (SELECT pg_catalog.lower(name) AS name FROM pg_catalog.pg_settings "\
-"  WHERE context != 'internal') ss "\
-" WHERE substring(name,1,%d)='%s'"\
-" UNION ALL SELECT 'all' ss"
+"  WHERE context != 'internal' "\
+"  UNION ALL SELECT 'all') ss "\
+" WHERE substring(name,1,%d)='%s'"
 
 #define Query_for_list_of_set_vars \
 "SELECT name FROM "\
@@ -1661,9 +1661,10 @@ psql_completion(const char *text, int start, int end)
 	/* ALTER SYSTEM SET, RESET, RESET ALL */
 	else if (Matches2("ALTER", "SYSTEM"))
 		COMPLETE_WITH_LIST2("SET", "RESET");
-	/* ALTER SYSTEM SET|RESET <name> */
 	else if (Matches3("ALTER", "SYSTEM", "SET|RESET"))
 		COMPLETE_WITH_QUERY(Query_for_list_of_alter_system_set_vars);
+	else if (Matches4("ALTER", "SYSTEM", "SET", MatchAny))
+		COMPLETE_WITH_CONST("TO");
 	/* ALTER VIEW <name> */
 	else if (Matches3("ALTER", "VIEW", MatchAny))
 		COMPLETE_WITH_LIST4("ALTER COLUMN", "OWNER TO", "RENAME TO",
