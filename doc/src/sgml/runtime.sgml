@@ -1165,6 +1165,85 @@ project.max-msg-ids=(priv,4096,deny)
 
   </sect2>
 
+  <sect2 id="systemd-removeipc">
+   <title>systemd RemoveIPC</title>
+
+   <indexterm>
+    <primary>systemd</primary>
+    <secondary>RemoveIPC</secondary>
+   </indexterm>
+
+   <para>
+    If <productname>systemd</productname> is in use, some care must be taken
+    that IPC resources (shared memory and semaphores) are not prematurely
+    removed by the operating system.  This is especially of concern when
+    installing PostgreSQL from source.  Users of distribution packages of
+    PostgreSQL are less likely to be affected, as
+    the <literal>postgres</literal> user is then normally created as a system
+    user.
+   </para>
+
+   <para>
+    The setting <literal>RemoveIPC</literal>
+    in <filename>logind.conf</filename> controls whether IPC objects are
+    removed when a user fully logs out.  System users are exempt.  This
+    setting defaults to on in stock <productname>systemd</productname>, but
+    some operating system distributions default it to off.
+   </para>
+
+   <para>
+    A typical observed effect when this setting is on is that the semaphore
+    objects used by a PostgreSQL server are removed at apparently random
+    times, leading to the server crashing with log messages like
+<screen>
+LOG: semctl(1234567890, 0, IPC_RMID, ...) failed: Invalid argument
+</screen>
+    Different types of IPC objects (shared memory vs. semaphores, System V
+    vs. POSIX) are treated slightly differently
+    by <productname>systemd</productname>, so one might observe that some IPC
+    resources are not removed in the same way as others.  But it is not
+    advisable to rely on these subtle differences.
+   </para>
+
+   <para>
+    A <quote>user logging out</quote> might happen as part of a maintenance
+    job or manually when an administrator logs in as
+    the <literal>postgres</literal> user or something similar, so it is hard
+    to prevent in general.
+   </para>
+
+   <para>
+    What is a <quote>system user</quote> is determined
+    at <productname>systemd</productname> compile time from
+    the <symbol>SYS_UID_MAX</symbol> setting
+    in <filename>/etc/login.defs</filename>.
+   </para>
+
+   <para>
+    Packaging and deployment scripts should be careful to create
+    the <literal>postgres</literal> user as a system user by
+    using <literal>useradd -r</literal>, <literal>adduser --system</literal>,
+    or equivalent.
+   </para>
+
+   <para>
+    Alternatively, if the user account was created incorrectly or cannot be
+    changed, it is recommended to set
+<programlisting>
+RemoveIPC=no
+</programlisting>
+    in <filename>/etc/systemd/logind.conf</filename> or another appropriate
+    configuration file.
+   </para>
+
+   <caution>
+    <para>
+     At least one of these two things has to be ensured, or the PostgreSQL
+     server will be very unreliable.
+    </para>
+   </caution>
+  </sect2>
+
   <sect2>
    <title>Resource Limits</title>
 
