@@ -106,6 +106,7 @@ extern void dsa_set_size_limit(dsa_area *area, Size limit);
 extern Size dsa_minimum_size(void);
 extern dsa_handle dsa_get_handle(dsa_area *area);
 extern dsa_pointer dsa_allocate(dsa_area *area, Size size);
+extern dsa_pointer dsa_allocate0(dsa_area *area, Size size);
 extern void dsa_free(dsa_area *area, dsa_pointer dp);
 extern void *dsa_get_address(dsa_area *area, dsa_pointer dp);
 extern void dsa_trim(dsa_area *area);

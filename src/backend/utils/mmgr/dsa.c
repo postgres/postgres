@@ -756,6 +756,22 @@ dsa_allocate(dsa_area *area, Size size)
 }
 
 /*
+ * As dsa_allocate, but zeroes the allocated memory.
+ */
+dsa_pointer
+dsa_allocate0(dsa_area *area, Size size)
+{
+	dsa_pointer dp;
+	char	   *object;
+
+	dp = dsa_allocate(area, size);
+	object = dsa_get_address(area, dp);
+	memset(object, 0, size);
+
+	return dp;
+}
+
+/*
  * Free memory obtained with dsa_allocate.
  */
 void
