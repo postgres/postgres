@@ -1699,9 +1699,6 @@ SELECT string_agg(a ORDER BY a, ',') FROM table;  -- incorrect
    <para>
     <indexterm>
      <primary>median</primary>
-    </indexterm>
-    <indexterm>
-     <primary>median</primary>
      <seealso>percentile</seealso>
     </indexterm>
     An example of an ordered-set aggregate call is:
