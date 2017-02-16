@@ -133,7 +133,7 @@ static void transformConstraintAttrs(CreateStmtContext *cxt,
 						 List *constraintList);
 static void transformColumnType(CreateStmtContext *cxt, ColumnDef *column);
 static void setSchemaName(char *context_schema, char **stmt_schema_name);
-static void transformAttachPartition(CreateStmtContext *cxt, PartitionCmd *cmd);
+static void transformPartitionCmd(CreateStmtContext *cxt, PartitionCmd *cmd);
 
 
 /*
@@ -2654,12 +2654,12 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 				}
 
 			case AT_AttachPartition:
+			case AT_DetachPartition:
 				{
 					PartitionCmd *partcmd = (PartitionCmd *) cmd->def;
 
-					transformAttachPartition(&cxt, partcmd);
-
-					/* assign transformed values */
+					transformPartitionCmd(&cxt, partcmd);
+					/* assign transformed value of the partition bound */
 					partcmd->bound = cxt.partbound;
 				}
 
@@ -3032,28 +3032,29 @@ setSchemaName(char *context_schema, char **stmt_schema_name)
 }
 
 /*
- * transformAttachPartition
- *		Analyze ATTACH PARTITION ... FOR VALUES ...
+ * transformPartitionCmd
+ *		Analyze the ATTACH/DETACH PARTITION command
+ *
+ * In case of the ATTACH PARTITION command, cxt->partbound is set to the
+ * transformed value of cmd->bound.
  */
 static void
-transformAttachPartition(CreateStmtContext *cxt, PartitionCmd *cmd)
+transformPartitionCmd(CreateStmtContext *cxt, PartitionCmd *cmd)
 {
 	Relation	parentRel = cxt->rel;
 
-	/*
-	 * We are going to try to validate the partition bound specification
-	 * against the partition key of rel, so it better have one.
-	 */
+	/* the table must be partitioned */
 	if (parentRel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 				 errmsg("\"%s\" is not partitioned",
 						RelationGetRelationName(parentRel))));
 
-	/* transform the values */
+	/* transform the partition bound, if any */
 	Assert(RelationGetPartitionKey(parentRel) != NULL);
-	cxt->partbound = transformPartitionBound(cxt->pstate, parentRel,
-											 cmd->bound);
+	if (cmd->bound != NULL)
+		cxt->partbound = transformPartitionBound(cxt->pstate, parentRel,
+												 cmd->bound);
 }
 
 /*

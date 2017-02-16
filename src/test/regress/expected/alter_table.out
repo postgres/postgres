@@ -3259,6 +3259,11 @@ DETAIL:  "list_parted2" is already a child of "list_parted2".
 --
 -- DETACH PARTITION
 --
+-- check that the table is partitioned at all
+CREATE TABLE regular_table (a int);
+ALTER TABLE regular_table DETACH PARTITION any_name;
+ERROR:  "regular_table" is not partitioned
+DROP TABLE regular_table;
 -- check that the partition being detached exists at all
 ALTER TABLE list_parted2 DETACH PARTITION part_4;
 ERROR:  relation "part_4" does not exist

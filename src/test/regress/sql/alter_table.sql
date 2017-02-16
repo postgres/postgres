@@ -2139,6 +2139,11 @@ ALTER TABLE list_parted2 ATTACH PARTITION list_parted2 FOR VALUES IN (0);
 -- DETACH PARTITION
 --
 
+-- check that the table is partitioned at all
+CREATE TABLE regular_table (a int);
+ALTER TABLE regular_table DETACH PARTITION any_name;
+DROP TABLE regular_table;
+
 -- check that the partition being detached exists at all
 ALTER TABLE list_parted2 DETACH PARTITION part_4;
 
