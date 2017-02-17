@@ -70,15 +70,5 @@ distclean maintainer-clean:
 	$(MAKE) -C test/thread $@
 	rm -f Makefile.port Makefile.global
 
-coverage:
-	$(MAKE) -C timezone $@
-	$(MAKE) -C backend $@
-	$(MAKE) -C backend/utils/mb/conversion_procs $@
-	$(MAKE) -C backend/snowball $@
-	$(MAKE) -C interfaces $@
-	$(MAKE) -C backend/replication/libpqwalreceiver $@
-	$(MAKE) -C bin $@
-	$(MAKE) -C pl $@
-
 
 .PHONY: install-local installdirs-local uninstall-local
