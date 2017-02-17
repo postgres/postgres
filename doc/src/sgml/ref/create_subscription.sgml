@@ -142,7 +142,7 @@ CREATE SUBSCRIPTION <replaceable class="PARAMETER">subscription_name</replaceabl
 
   <para>
    Create a subscription to a remote server that replicates tables in
-   the publications <literal>mypubclication</literal> and
+   the publications <literal>mypublication</literal> and
    <literal>insert_only</literal> and starts replicating immediately on
    commit:
 <programlisting>

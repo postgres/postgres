@@ -1539,7 +1539,7 @@ CREATE TABLE measurement_year_month (
 CREATE TABLE cities (
     city_id      bigserial not null,
     name         text not null,
-    population   bigint,
+    population   bigint
 ) PARTITION BY LIST (left(lower(name), 1));
 </programlisting></para>
 
