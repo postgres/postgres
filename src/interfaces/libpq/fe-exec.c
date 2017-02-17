@@ -2897,7 +2897,7 @@ PQoidStatus(const PGresult *res)
 
 	size_t		len;
 
-	if (!res || !res->cmdStatus || strncmp(res->cmdStatus, "INSERT ", 7) != 0)
+	if (!res || strncmp(res->cmdStatus, "INSERT ", 7) != 0)
 		return "";
 
 	len = strspn(res->cmdStatus + 7, "0123456789");
@@ -2921,7 +2921,6 @@ PQoidValue(const PGresult *res)
 	unsigned long result;
 
 	if (!res ||
-		!res->cmdStatus ||
 		strncmp(res->cmdStatus, "INSERT ", 7) != 0 ||
 		res->cmdStatus[7] < '0' ||
 		res->cmdStatus[7] > '9')
