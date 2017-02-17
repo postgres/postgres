@@ -23,7 +23,7 @@ typedef struct LogicalRepRelMapEntry
 	Relation			localrel;		/* relcache entry */
 	AttrNumber         *attrmap;		/* map of local attributes to
 										 * remote ones */
-	bool				updatable;		/* Can apply updates/detetes? */
+	bool				updatable;		/* Can apply updates/deletes? */
 
 	/* Sync state. */
 	char				state;
