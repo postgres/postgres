@@ -1494,6 +1494,26 @@ su - postgres
      </variablelist>
     </para>
 
+    <para>
+     Sometimes it is useful to add compiler flags after-the-fact to the set
+     that were chosen by <filename>configure</>.  An important example is
+     that <application>gcc</>'s <option>-Werror</> option cannot be included
+     in the <envar>CFLAGS</envar> passed to <filename>configure</>, because
+     it will break many of <filename>configure</>'s built-in tests.  To add
+     such flags, include them in the <envar>COPT</envar> environment variable
+     while running <filename>make</>.  The contents of <envar>COPT</envar>
+     are added to both the <envar>CFLAGS</envar> and <envar>LDFLAGS</envar>
+     options set up by <filename>configure</>.  For example, you could do
+<screen>
+<userinput>make COPT='-Werror'</>
+</screen>
+     or
+<screen>
+<userinput>export COPT='-Werror'</>
+<userinput>make</>
+</screen>
+    </para>
+
     <note>
      <para>
       When developing code inside the server, it is recommended to
@@ -1513,6 +1533,14 @@ su - postgres
       optimized code, recompile the specific files of interest with
       <option>-O0</>.  An easy way to do this is by passing an option
       to <application>make</>: <command>make PROFILE=-O0 file.o</>.
+     </para>
+
+     <para>
+      The <envar>COPT</> and <envar>PROFILE</> environment variables are
+      actually handled identically by the <productname>PostgreSQL</>
+      makefiles.  Which to use is a matter of preference, but a common habit
+      among developers is to use <envar>PROFILE</> for one-time flag
+      adjustments, while <envar>COPT</> might be kept set all the time.
      </para>
     </note>
    </step>
