@@ -337,7 +337,7 @@ usage(void)
 	printf(_("  -r, --max-rate=RATE    maximum transfer rate to transfer data directory\n"
 	  "                         (in kB/s, or use suffix \"k\" or \"M\")\n"));
 	printf(_("  -R, --write-recovery-conf\n"
-			 "                         write recovery.conf after backup\n"));
+			 "                         write recovery.conf for replication\n"));
 	printf(_("  -S, --slot=SLOTNAME    replication slot to use\n"));
 	printf(_("      --no-slot          prevent creation of temporary replication slot\n"));
 	printf(_("  -T, --tablespace-mapping=OLDDIR=NEWDIR\n"
