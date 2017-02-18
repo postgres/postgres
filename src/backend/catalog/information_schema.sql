@@ -801,8 +801,8 @@ CREATE VIEW constraint_column_usage AS
           WHERE nr.oid = r.relnamespace
             AND r.oid = a.attrelid
             AND nc.oid = c.connamespace
-            AND (CASE WHEN c.contype = 'f' THEN r.oid = c.confrelid AND a.attnum = ANY (c.confkey)
-                      ELSE r.oid = c.conrelid AND a.attnum = ANY (c.conkey) END)
+            AND r.oid = CASE c.contype WHEN 'f' THEN c.confrelid ELSE c.conrelid END
+            AND a.attnum = ANY (CASE c.contype WHEN 'f' THEN c.confkey ELSE c.conkey END)
             AND NOT a.attisdropped
             AND c.contype IN ('p', 'u', 'f')
             AND r.relkind IN ('r', 'P')
