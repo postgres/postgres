@@ -136,7 +136,7 @@ usage(void)
 	printf(_("  -D, --pgdata=DIRECTORY receive base backup into directory\n"));
 	printf(_("  -F, --format=p|t       output format (plain (default), tar)\n"));
 	printf(_("  -R, --write-recovery-conf\n"
-			 "                         write recovery.conf after backup\n"));
+			 "                         write recovery.conf for replication\n"));
 	printf(_("  -x, --xlog             include required WAL files in backup (fetch mode)\n"));
 	printf(_("  -X, --xlog-method=fetch|stream\n"
 			 "                         include required WAL files with specified method\n"));
