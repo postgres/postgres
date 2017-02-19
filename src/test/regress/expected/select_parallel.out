@@ -92,12 +92,14 @@ explain (costs off)
 explain (costs off)
 	select  sum(parallel_restricted(unique1)) from tenk1
 	group by(parallel_restricted(unique1));
-                     QUERY PLAN                     
-----------------------------------------------------
+                            QUERY PLAN                             
+-------------------------------------------------------------------
  HashAggregate
    Group Key: parallel_restricted(unique1)
-   ->  Index Only Scan using tenk1_unique1 on tenk1
-(3 rows)
+   ->  Gather
+         Workers Planned: 4
+         ->  Parallel Index Only Scan using tenk1_unique1 on tenk1
+(5 rows)
 
 -- test parallel plans for queries containing un-correlated subplans.
 alter table tenk2 set (parallel_workers = 0);
@@ -144,6 +146,25 @@ select  count((unique1)) from tenk1 where hundred > 1;
  count 
 -------
   9800
+(1 row)
+
+-- test parallel index-only scans.
+explain (costs off)
+	select  count(*) from tenk1 where thousand > 95;
+                                   QUERY PLAN                                   
+--------------------------------------------------------------------------------
+ Finalize Aggregate
+   ->  Gather
+         Workers Planned: 4
+         ->  Partial Aggregate
+               ->  Parallel Index Only Scan using tenk1_thous_tenthous on tenk1
+                     Index Cond: (thousand > 95)
+(6 rows)
+
+select  count(*) from tenk1 where thousand > 95;
+ count 
+-------
+  9040
 (1 row)
 
 reset enable_seqscan;

@@ -56,6 +56,11 @@ explain (costs off)
 	select  count((unique1)) from tenk1 where hundred > 1;
 select  count((unique1)) from tenk1 where hundred > 1;
 
+-- test parallel index-only scans.
+explain (costs off)
+	select  count(*) from tenk1 where thousand > 95;
+select  count(*) from tenk1 where thousand > 95;
+
 reset enable_seqscan;
 reset enable_bitmapscan;
 

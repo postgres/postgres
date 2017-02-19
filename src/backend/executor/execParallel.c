@@ -29,6 +29,7 @@
 #include "executor/nodeForeignscan.h"
 #include "executor/nodeSeqscan.h"
 #include "executor/nodeIndexscan.h"
+#include "executor/nodeIndexonlyscan.h"
 #include "executor/tqueue.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/planmain.h"
@@ -202,6 +203,10 @@ ExecParallelEstimate(PlanState *planstate, ExecParallelEstimateContext *e)
 				ExecIndexScanEstimate((IndexScanState *) planstate,
 									  e->pcxt);
 				break;
+			case T_IndexOnlyScanState:
+				ExecIndexOnlyScanEstimate((IndexOnlyScanState *) planstate,
+										  e->pcxt);
+				break;
 			case T_ForeignScanState:
 				ExecForeignScanEstimate((ForeignScanState *) planstate,
 										e->pcxt);
@@ -257,6 +262,10 @@ ExecParallelInitializeDSM(PlanState *planstate,
 			case T_IndexScanState:
 				ExecIndexScanInitializeDSM((IndexScanState *) planstate,
 										   d->pcxt);
+				break;
+			case T_IndexOnlyScanState:
+				ExecIndexOnlyScanInitializeDSM((IndexOnlyScanState *) planstate,
+											   d->pcxt);
 				break;
 			case T_ForeignScanState:
 				ExecForeignScanInitializeDSM((ForeignScanState *) planstate,
@@ -736,6 +745,9 @@ ExecParallelInitializeWorker(PlanState *planstate, shm_toc *toc)
 				break;
 			case T_IndexScanState:
 				ExecIndexScanInitializeWorker((IndexScanState *) planstate, toc);
+				break;
+			case T_IndexOnlyScanState:
+				ExecIndexOnlyScanInitializeWorker((IndexOnlyScanState *) planstate, toc);
 				break;
 			case T_ForeignScanState:
 				ExecForeignScanInitializeWorker((ForeignScanState *) planstate,
