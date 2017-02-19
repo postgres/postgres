@@ -642,17 +642,38 @@ dsa_pin_mapping(dsa_area *area)
 /*
  * Allocate memory in this storage area.  The return value is a dsa_pointer
  * that can be passed to other processes, and converted to a local pointer
- * with dsa_get_address.  If no memory is available, returns
- * InvalidDsaPointer.
+ * with dsa_get_address.  'flags' is a bitmap which should be constructed
+ * from the following values:
+ *
+ * DSA_ALLOC_HUGE allows allocations >= 1GB.  Otherwise, such allocations
+ * will result in an ERROR.
+ *
+ * DSA_ALLOC_NO_OOM causes this function to return InvalidDsaPointer when
+ * no memory is available or a size limit establed by set_dsa_size_limit
+ * would be exceeded.  Otherwise, such allocations will result in an ERROR.
+ *
+ * DSA_ALLOC_ZERO causes the allocated memory to be zeroed.  Otherwise, the
+ * contents of newly-allocated memory are indeterminate.
+ *
+ * These flags correspond to similarly named flags used by
+ * MemoryContextAllocExtended().  See also the macros dsa_allocate and
+ * dsa_allocate0 which expand to a call to this function with commonly used
+ * flags.
  */
 dsa_pointer
-dsa_allocate(dsa_area *area, Size size)
+dsa_allocate_extended(dsa_area *area, Size size, int flags)
 {
 	uint16		size_class;
 	dsa_pointer start_pointer;
 	dsa_segment_map *segment_map;
+	dsa_pointer result;
 
 	Assert(size > 0);
+
+	/* Sanity check on huge individual allocation size. */
+	if (((flags & DSA_ALLOC_HUGE) != 0 && !AllocHugeSizeIsValid(size)) ||
+		((flags & DSA_ALLOC_HUGE) == 0 && !AllocSizeIsValid(size)))
+		elog(ERROR, "invalid DSA memory alloc request size %zu", size);
 
 	/*
 	 * If bigger than the largest size class, just grab a run of pages from
@@ -684,6 +705,14 @@ dsa_allocate(dsa_area *area, Size size)
 			/* Can't make any more segments: game over. */
 			LWLockRelease(DSA_AREA_LOCK(area));
 			dsa_free(area, span_pointer);
+
+			/* Raise error unless asked not to. */
+			if ((flags & MCXT_ALLOC_NO_OOM) == 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_OUT_OF_MEMORY),
+						 errmsg("out of memory"),
+						 errdetail("Failed on DSA request of size %zu.",
+								   size)));
 			return InvalidDsaPointer;
 		}
 
@@ -709,6 +738,10 @@ dsa_allocate(dsa_area *area, Size size)
 				  DSA_SCLASS_SPAN_LARGE);
 		segment_map->pagemap[first_page] = span_pointer;
 		LWLockRelease(DSA_SCLASS_LOCK(area, DSA_SCLASS_SPAN_LARGE));
+
+		/* Zero-initialize the memory if requested. */
+		if ((flags & DSA_ALLOC_ZERO) != 0)
+			memset(dsa_get_address(area, start_pointer), 0, size);
 
 		return start_pointer;
 	}
@@ -748,27 +781,28 @@ dsa_allocate(dsa_area *area, Size size)
 	Assert(size <= dsa_size_classes[size_class]);
 	Assert(size_class == 0 || size > dsa_size_classes[size_class - 1]);
 
-	/*
-	 * Attempt to allocate an object from the appropriate pool.  This might
-	 * return InvalidDsaPointer if there's no space available.
-	 */
-	return alloc_object(area, size_class);
-}
+	/* Attempt to allocate an object from the appropriate pool. */
+	result = alloc_object(area, size_class);
 
-/*
- * As dsa_allocate, but zeroes the allocated memory.
- */
-dsa_pointer
-dsa_allocate0(dsa_area *area, Size size)
-{
-	dsa_pointer dp;
-	char	   *object;
+	/* Check for failure to allocate. */
+	if (!DsaPointerIsValid(result))
+	{
+		/* Raise error unless asked not to. */
+		if ((flags & DSA_ALLOC_NO_OOM) == 0)
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory"),
+					 errdetail("Failed on DSA request of size %zu.", size)));
+		}
+		return InvalidDsaPointer;
+	}
 
-	dp = dsa_allocate(area, size);
-	object = dsa_get_address(area, dp);
-	memset(object, 0, size);
+	/* Zero-initialize the memory if requested. */
+	if ((flags & DSA_ALLOC_ZERO) != 0)
+		memset(dsa_get_address(area, result), 0, size);
 
-	return dp;
+	return result;
 }
 
 /*

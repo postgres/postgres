@@ -71,11 +71,24 @@ typedef pg_atomic_uint64 dsa_pointer_atomic;
 #define DSA_POINTER_FORMAT "%016" INT64_MODIFIER "x"
 #endif
 
+/* Flags for dsa_allocate_extended. */
+#define DSA_ALLOC_HUGE		0x01	/* allow huge allocation (> 1 GB) */
+#define DSA_ALLOC_NO_OOM	0x02	/* no failure if out-of-memory */
+#define DSA_ALLOC_ZERO		0x04	/* zero allocated memory */
+
 /* A sentinel value for dsa_pointer used to indicate failure to allocate. */
 #define InvalidDsaPointer ((dsa_pointer) 0)
 
 /* Check if a dsa_pointer value is valid. */
 #define DsaPointerIsValid(x) ((x) != InvalidDsaPointer)
+
+/* Allocate uninitialized memory with error on out-of-memory. */
+#define dsa_allocate(area, size) \
+	dsa_allocate_extended(area, size, 0)
+
+/* Allocate zero-initialized memory with error on out-of-memory. */
+#define dsa_allocate0(area, size) \
+	dsa_allocate_extended(area, size, DSA_ALLOC_ZERO)
 
 /*
  * The type used for dsa_area handles.  dsa_handle values can be shared with
@@ -105,8 +118,7 @@ extern void dsa_unpin(dsa_area *area);
 extern void dsa_set_size_limit(dsa_area *area, Size limit);
 extern Size dsa_minimum_size(void);
 extern dsa_handle dsa_get_handle(dsa_area *area);
-extern dsa_pointer dsa_allocate(dsa_area *area, Size size);
-extern dsa_pointer dsa_allocate0(dsa_area *area, Size size);
+extern dsa_pointer dsa_allocate_extended(dsa_area *area, Size size, int flags);
 extern void dsa_free(dsa_area *area, dsa_pointer dp);
 extern void *dsa_get_address(dsa_area *area, dsa_pointer dp);
 extern void dsa_trim(dsa_area *area);
