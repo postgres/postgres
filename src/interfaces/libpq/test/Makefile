@@ -18,5 +18,5 @@ installcheck: all
 		   $(PERL) $(top_srcdir)/$(subdir)/regress.pl
 
 clean distclean maintainer-clean:
-	rm -f $(PROGS)
+	rm -f $(PROGS) *.o
 	rm -f regress.out regress.diff
