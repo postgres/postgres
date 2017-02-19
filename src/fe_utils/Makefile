@@ -29,11 +29,7 @@ libpgfeutils.a: $(OBJS)
 
 psqlscan.c: FLEXFLAGS = -Cfe -p -p
 psqlscan.c: FLEX_NO_BACKUP=yes
-
-# Latest flex causes warnings in this file.
-ifeq ($(GCC),yes)
-psqlscan.o: CFLAGS += -Wno-error
-endif
+psqlscan.c: FLEX_FIX_WARNING=yes
 
 distprep: psqlscan.c
 

@@ -20,12 +20,6 @@ OBJS= analyze.o gram.o scan.o parser.o \
 include $(top_srcdir)/src/backend/common.mk
 
 
-# Latest flex causes warnings in this file.
-ifeq ($(GCC),yes)
-scan.o: CFLAGS += -Wno-error
-endif
-
-
 # There is no correct way to write a rule that generates two files.
 # Rules with two targets don't have that meaning, they are merely
 # shorthand for two otherwise separate rules.  To be safe for parallel
@@ -41,6 +35,7 @@ gram.c: BISON_CHECK_CMD = $(PERL) $(srcdir)/check_keywords.pl $< $(top_srcdir)/s
 
 scan.c: FLEXFLAGS = -CF -p -p
 scan.c: FLEX_NO_BACKUP=yes
+scan.c: FLEX_FIX_WARNING=yes
 
 
 # Force these dependencies to be known even without dependency info built:

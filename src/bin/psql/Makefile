@@ -41,11 +41,7 @@ sql_help.h: create_help.pl $(wildcard $(REFDOCDIR)/*.sgml)
 
 psqlscanslash.c: FLEXFLAGS = -Cfe -p -p
 psqlscanslash.c: FLEX_NO_BACKUP=yes
-
-# Latest flex causes warnings in this file.
-ifeq ($(GCC),yes)
-psqlscanslash.o: CFLAGS += -Wno-error
-endif
+psqlscanslash.c: FLEX_FIX_WARNING=yes
 
 distprep: sql_help.h psqlscanslash.c
 
