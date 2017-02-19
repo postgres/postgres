@@ -493,15 +493,17 @@ DROP TABLE temp_parted;
 CREATE TABLE no_oids_parted (
 	a int
 ) PARTITION BY RANGE (a) WITHOUT OIDS;
-CREATE TABLE fail_part PARTITION OF no_oids_parted FOR VALUES FROM (1) TO (10 )WITH OIDS;
+CREATE TABLE fail_part PARTITION OF no_oids_parted FOR VALUES FROM (1) TO (10) WITH OIDS;
 DROP TABLE no_oids_parted;
 
--- likewise, the reverse if also true
+-- If the partitioned table has oids, then the partition must have them.
+-- If the WITHOUT OIDS option is specified for partition, it is overridden.
 CREATE TABLE oids_parted (
 	a int
 ) PARTITION BY RANGE (a) WITH OIDS;
-CREATE TABLE fail_part PARTITION OF oids_parted FOR VALUES FROM (1) TO (10 ) WITHOUT OIDS;
-DROP TABLE oids_parted;
+CREATE TABLE part_forced_oids PARTITION OF oids_parted FOR VALUES FROM (1) TO (10) WITHOUT OIDS;
+\d+ part_forced_oids
+DROP TABLE oids_parted, part_forced_oids;
 
 -- check for partition bound overlap and other invalid specifications
 

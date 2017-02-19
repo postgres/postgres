@@ -300,14 +300,18 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
      </note>
 
      <para>
-      A partition cannot have columns other than those inherited from the
-      parent.  If the parent is specified <literal>WITH OIDS</literal> then
-      the partitions must also explicitly specify <literal>WITH OIDS</literal>.
-      Defaults and constraints can optionally be specified for each of the
-      inherited columns.  One can also specify table constraints in addition
-      to those inherited from the parent.  If a check constraint with the name
-      matching one of the parent's constraint is specified, it is merged with
-      the latter, provided the specified condition is same.
+      A partition must have the same column names and types as the partitioned
+      table to which it belongs.  If the parent is specified <literal>WITH
+      OIDS</literal> then all partitions must have OIDs; the parent's OID
+      column will be inherited by all partitions just like any other column.
+      Modifications to the column names or types of a partitioned table, or
+      the addition or removal of an OID column, will automatically propagate
+      to all partitions.  <literal>CHECK</> constraints will be inherited
+      automatically by every partition, but an individual partition may specify
+      additional <literal>CHECK</> constraints; additional constraints with
+      the same name and condition as in the parent will be merged with the
+      parent constraint.  Defaults may be specified separately for each
+      partition.
      </para>
 
      <para>
@@ -318,15 +322,11 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
      </para>
 
      <para>
-      A partition must have the same column names and types as the table of
-      which it is a partition.  Therefore, modifications to the column names
-      or types of the partitioned table will automatically propagate to all
-      children, as will operations such as TRUNCATE which normally affect a
-      table and all of its inheritance children.  It is also possible to
-      TRUNCATE a partition individually, just as for an inheritance child.
-      Note that dropping a partition with <literal>DROP TABLE</literal>
-      requires taking an <literal>ACCESS EXCLUSIVE</literal> lock on the
-      parent table.
+      Operations such as TRUNCATE which normally affect a table and all of its
+      inheritance children will cascade to all partitions, but may also be
+      performed on an individual partition.  Note that dropping a partition
+      with <literal>DROP TABLE</literal> requires taking an <literal>ACCESS
+      EXCLUSIVE</literal> lock on the parent table.
      </para>
     </listitem>
    </varlistentry>

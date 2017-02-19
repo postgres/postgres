@@ -2863,14 +2863,6 @@ VALUES ('Albany', NULL, NULL, 'NY');
 
      <listitem>
       <para>
-       If the partitioned table specified <literal>WITH OIDS</literal> then
-       each partition must also specify <literal>WITH OIDS</literal>. Oids
-       are not automatically inherited by partitions.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
        One cannot drop a <literal>NOT NULL</literal> constraint on a
        partition's column, if the constraint is present in the parent table.
       </para>
