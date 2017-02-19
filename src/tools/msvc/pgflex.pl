@@ -60,7 +60,7 @@ if ($? == 0)
 	{
 		# Reentrant scanners usually need a fix to prevent
 		# "unused variable" warnings with older flex versions.
-		system("perl src\\tools\\fix-flex-warning.pl $output");
+		system("perl src\\tools\\fix-old-flex-code.pl $output");
 	}
 	else
 	{

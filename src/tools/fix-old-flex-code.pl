@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 #----------------------------------------------------------------------
 #
-# fix-flex-warning.pl
+# fix-old-flex-code.pl
 #
 # flex versions before 2.5.36, with certain option combinations, produce
 # code that causes an "unused variable" warning.  That's annoying, so
@@ -11,7 +11,7 @@
 # Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# src/tools/fix-flex-warning.pl
+# src/tools/fix-old-flex-code.pl
 #
 #----------------------------------------------------------------------
 
@@ -55,9 +55,9 @@ exit 0;
 sub usage
 {
 	die <<EOM;
-Usage: fix-flex-warning.pl c-file-name
+Usage: fix-old-flex-code.pl c-file-name
 
-fix-flex-warning.pl modifies a flex output file to suppress
+fix-old-flex-code.pl modifies a flex output file to suppress
 an unused-variable warning that occurs with older flex versions.
 
 Report bugs to <pgsql-bugs\@postgresql.org>.
