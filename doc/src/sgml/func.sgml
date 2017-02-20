@@ -6062,15 +6062,18 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
        </row>
        <row>
         <entry><literal>TZ</literal></entry>
-        <entry>upper case time-zone name</entry>
+        <entry>upper case time-zone abbreviation
+         (only supported in <function>to_char</>)</entry>
        </row>
        <row>
         <entry><literal>tz</literal></entry>
-        <entry>lower case time-zone name</entry>
+        <entry>lower case time-zone abbreviation
+         (only supported in <function>to_char</>)</entry>
        </row>
        <row>
         <entry><literal>OF</literal></entry>
-        <entry>time-zone offset</entry>
+        <entry>time-zone offset from UTC
+         (only supported in <function>to_char</>)</entry>
        </row>
       </tbody>
      </tgroup>
