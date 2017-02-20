@@ -3031,7 +3031,9 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out)
 			case DCH_OF:
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("\"TZ\"/\"tz\"/\"OF\" format patterns are not supported in to_date")));
+				errmsg("formatting field \"%s\" is only supported in to_char",
+					   n->key->name)));
+				break;
 			case DCH_A_D:
 			case DCH_B_C:
 			case DCH_a_d:
