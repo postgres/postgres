@@ -7594,6 +7594,11 @@ python_configdir=`${PYTHON} -c "import distutils.sysconfig; print(' '.join(filte
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $python_configdir" >&5
 $as_echo "$python_configdir" >&6; }
 
+# Reject unsupported Python versions as soon as practical.
+if test "$python_majorversion" -lt 3 -a "$python_minorversion" -lt 4; then
+  as_fn_error $? "Python version $python_version is too old (version 2.4 or later is required)" "$LINENO" 5
+fi
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking Python include directories" >&5
 $as_echo_n "checking Python include directories... " >&6; }
 python_includespec=`${PYTHON} -c "
@@ -7699,9 +7704,6 @@ $as_echo "${python_libspec} ${python_additional_libs}" >&6; }
 
 
 
-  if test "$python_majorversion" -lt 3 -a "$python_minorversion" -lt 4; then
-    as_fn_error $? "Python version $python_version is too old (version 2.4 or later is required)" "$LINENO" 5
-  fi
 fi
 
 if test "$cross_compiling" = yes && test -z "$with_system_tzdata"; then
