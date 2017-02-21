@@ -1923,17 +1923,17 @@ ALTER TABLE list_partitioned ALTER a DROP NOT NULL;
 DROP TABLE list_partitioned;
 
 -- partitioned table cannot participate in regular inheritance
-CREATE TABLE foo (
+CREATE TABLE nonpartitioned (
 	a int,
 	b int
 );
-ALTER TABLE partitioned INHERIT foo;
-ALTER TABLE foo INHERIT partitioned;
+ALTER TABLE partitioned INHERIT nonpartitioned;
+ALTER TABLE nonpartitioned INHERIT partitioned;
 
 -- cannot add NO INHERIT constraint to partitioned tables
 ALTER TABLE partitioned ADD CONSTRAINT chk_a CHECK (a > 0) NO INHERIT;
 
-DROP TABLE partitioned, foo;
+DROP TABLE partitioned, nonpartitioned;
 
 --
 -- ATTACH PARTITION
