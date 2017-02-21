@@ -15,9 +15,6 @@
  *	  launcher for every enabled subscription in a database. It uses
  *	  walsender protocol to communicate with publisher.
  *
- *	  The apply worker may spawn additional workers (sync) for initial data
- *	  synchronization of tables.
- *
  *	  This module includes server facing code and shares libpqwalreceiver
  *	  module with walreceiver for providing the libpq specific functionality.
  *
