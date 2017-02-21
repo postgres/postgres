@@ -63,7 +63,7 @@
   <title>Index Maintenance</title>
 
   <para>
-   At the time of creation, all existing index pages are scanned and a
+   At the time of creation, all existing heap pages are scanned and a
    summary index tuple is created for each range, including the
    possibly-incomplete range at the end.
    As new pages are filled with data, page ranges that are already
