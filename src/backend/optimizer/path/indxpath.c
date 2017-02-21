@@ -1313,7 +1313,7 @@ generate_bitmap_or_paths(PlannerInfo *root, RelOptInfo *rel,
 				List	   *orargs;
 
 				Assert(!restriction_is_or_clause(rinfo));
-				orargs = list_make1(orarg);
+				orargs = list_make1(rinfo);
 
 				indlist = build_paths_for_OR(root, rel,
 											 orargs,
