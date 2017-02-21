@@ -55,12 +55,8 @@ kwargs = {
     "column_name": _column_name, "datatype_name": _datatype_name,
     "constraint_name": _constraint_name
 }
-# ignore None values - should work on Python2.3
-dict = {}
-for k in kwargs:
-    if kwargs[k] is not None:
-        dict[k] = kwargs[k]
-plpy.error(**dict)
+# ignore None values
+plpy.error(**dict((k, v) for k, v in iter(kwargs.items()) if v))
 $$ LANGUAGE plpythonu;
 
 SELECT raise_exception('hello', 'world');

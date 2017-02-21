@@ -927,6 +927,9 @@ fi
 if test "$with_python" = yes; then
   PGAC_PATH_PYTHON
   PGAC_CHECK_PYTHON_EMBED_SETUP
+  if test "$python_majorversion" -lt 3 -a "$python_minorversion" -lt 4; then
+    AC_MSG_ERROR([Python version $python_version is too old (version 2.4 or later is required)])
+  fi
 fi
 
 if test "$cross_compiling" = yes && test -z "$with_system_tzdata"; then

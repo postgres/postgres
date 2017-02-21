@@ -31,6 +31,7 @@ else
 fi
 AC_MSG_CHECKING([Python configuration directory])
 python_majorversion=`${PYTHON} -c "import sys; print(sys.version[[0]])"`
+python_minorversion=`${PYTHON} -c "import sys; print(sys.version[[2]])"`
 python_version=`${PYTHON} -c "import sys; print(sys.version[[:3]])"`
 python_configdir=`${PYTHON} -c "import distutils.sysconfig; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('LIBPL'))))"`
 AC_MSG_RESULT([$python_configdir])

@@ -521,15 +521,9 @@ PLy_input_datum_func2(PLyDatumToOb *arg, MemoryContext arg_mcxt, Oid typeOid, He
 static PyObject *
 PLyBool_FromBool(PLyDatumToOb *arg, Datum d)
 {
-	/*
-	 * We would like to use Py_RETURN_TRUE and Py_RETURN_FALSE here for
-	 * generating SQL from trigger functions, but those are only supported in
-	 * Python >= 2.4, and we support older versions.
-	 * http://docs.python.org/api/boolObjects.html
-	 */
 	if (DatumGetBool(d))
-		return PyBool_FromLong(1);
-	return PyBool_FromLong(0);
+		Py_RETURN_TRUE;
+	Py_RETURN_FALSE;
 }
 
 static PyObject *
