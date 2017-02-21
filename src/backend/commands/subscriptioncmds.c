@@ -548,7 +548,7 @@ DropSubscription(DropSubscriptionStmt *stmt)
 	if (!walrcv_command(wrconn, cmd.data, &err))
 	{
 		/* Close the connection in case of failure */
-		walrcv_disconnect(wrconn);		
+		walrcv_disconnect(wrconn);
 		ereport(ERROR,
 				(errmsg("could not drop the replication slot \"%s\" on publisher",
 						slotname),
