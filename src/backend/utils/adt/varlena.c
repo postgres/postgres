@@ -69,7 +69,7 @@ typedef struct
 	int			last_returned;	/* Last comparison result (cache) */
 	bool		cache_blob;		/* Does buf2 contain strxfrm() blob, etc? */
 	bool		collate_c;
-	bool		bpchar;			/* Sorting pbchar, not varchar/text/bytea? */
+	bool		bpchar;			/* Sorting bpchar, not varchar/text/bytea? */
 	hyperLogLogState abbr_card; /* Abbreviated key cardinality state */
 	hyperLogLogState full_card; /* Full key cardinality state */
 	double		prop_card;		/* Required cardinality proportion */
