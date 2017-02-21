@@ -478,9 +478,8 @@ TypeNameListToString(List *typenames)
 	initStringInfo(&string);
 	foreach(l, typenames)
 	{
-		TypeName   *typeName = (TypeName *) lfirst(l);
+		TypeName   *typeName = castNode(TypeName, lfirst(l));
 
-		Assert(IsA(typeName, TypeName));
 		if (l != list_head(typenames))
 			appendStringInfoChar(&string, ',');
 		appendTypeNameToBuffer(typeName, &string);

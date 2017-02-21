@@ -514,8 +514,7 @@ assign_collations_walker(Node *node, assign_collations_context *context)
 
 				if (qtree->targetList == NIL)
 					return false;
-				tent = (TargetEntry *) linitial(qtree->targetList);
-				Assert(IsA(tent, TargetEntry));
+				tent = castNode(TargetEntry, linitial(qtree->targetList));
 				if (tent->resjunk)
 					return false;
 
@@ -650,9 +649,7 @@ assign_collations_walker(Node *node, assign_collations_context *context)
 
 							foreach(lc, expr->args)
 							{
-								CaseWhen   *when = (CaseWhen *) lfirst(lc);
-
-								Assert(IsA(when, CaseWhen));
+								CaseWhen   *when = castNode(CaseWhen, lfirst(lc));
 
 								/*
 								 * The condition expressions mustn't affect
@@ -868,9 +865,8 @@ assign_aggregate_collations(Aggref *aggref,
 	/* Process aggregated args, holding resjunk ones at arm's length */
 	foreach(lc, aggref->args)
 	{
-		TargetEntry *tle = (TargetEntry *) lfirst(lc);
+		TargetEntry *tle = castNode(TargetEntry, lfirst(lc));
 
-		Assert(IsA(tle, TargetEntry));
 		if (tle->resjunk)
 			assign_expr_collations(loccontext->pstate, (Node *) tle);
 		else
@@ -913,9 +909,8 @@ assign_ordered_set_collations(Aggref *aggref,
 	/* Process aggregated args appropriately */
 	foreach(lc, aggref->args)
 	{
-		TargetEntry *tle = (TargetEntry *) lfirst(lc);
+		TargetEntry *tle = castNode(TargetEntry, lfirst(lc));
 
-		Assert(IsA(tle, TargetEntry));
 		if (merge_sort_collations)
 			(void) assign_collations_walker((Node *) tle, loccontext);
 		else

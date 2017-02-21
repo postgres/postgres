@@ -2700,9 +2700,8 @@ eval_const_expressions_mutator(Node *node,
 						 * Since the underlying operator is "=", must negate
 						 * its result
 						 */
-						Const	   *csimple = (Const *) simple;
+						Const	   *csimple = castNode(Const, simple);
 
-						Assert(IsA(csimple, Const));
 						csimple->constvalue =
 							BoolGetDatum(!DatumGetBool(csimple->constvalue));
 						return (Node *) csimple;
@@ -3091,11 +3090,9 @@ eval_const_expressions_mutator(Node *node,
 				const_true_cond = false;
 				foreach(arg, caseexpr->args)
 				{
-					CaseWhen   *oldcasewhen = (CaseWhen *) lfirst(arg);
+					CaseWhen   *oldcasewhen = castNode(CaseWhen, lfirst(arg));
 					Node	   *casecond;
 					Node	   *caseresult;
-
-					Assert(IsA(oldcasewhen, CaseWhen));
 
 					/* Simplify this alternative's test condition */
 					casecond = eval_const_expressions_mutator((Node *) oldcasewhen->expr,
@@ -4081,8 +4078,7 @@ fetch_function_defaults(HeapTuple func_tuple)
 	if (isnull)
 		elog(ERROR, "not enough default arguments");
 	str = TextDatumGetCString(proargdefaults);
-	defaults = (List *) stringToNode(str);
-	Assert(IsA(defaults, List));
+	defaults = castNode(List, stringToNode(str));
 	pfree(str);
 	return defaults;
 }

@@ -824,8 +824,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 		AttrNumber	attr_num;
 		TargetEntry *tle;
 
-		col = (ResTarget *) lfirst(icols);
-		Assert(IsA(col, ResTarget));
+		col = castNode(ResTarget, lfirst(icols));
 		attr_num = (AttrNumber) lfirst_int(attnos);
 
 		tle = makeTargetEntry(expr,
@@ -950,8 +949,7 @@ transformInsertRow(ParseState *pstate, List *exprlist,
 		Expr	   *expr = (Expr *) lfirst(lc);
 		ResTarget  *col;
 
-		col = (ResTarget *) lfirst(icols);
-		Assert(IsA(col, ResTarget));
+		col = castNode(ResTarget, lfirst(icols));
 
 		expr = transformAssignedExpr(pstate, expr,
 									 EXPR_KIND_INSERT_TARGET,
@@ -1633,10 +1631,9 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	/*
 	 * Recursively transform the components of the tree.
 	 */
-	sostmt = (SetOperationStmt *) transformSetOperationTree(pstate, stmt,
-															true,
-															NULL);
-	Assert(sostmt && IsA(sostmt, SetOperationStmt));
+	sostmt = castNode(SetOperationStmt,
+					  transformSetOperationTree(pstate, stmt, true,	NULL));
+	Assert(sostmt);
 	qry->setOperations = (Node *) sostmt;
 
 	/*
@@ -2298,8 +2295,7 @@ transformUpdateTargetList(ParseState *pstate, List *origTlist)
 		}
 		if (orig_tl == NULL)
 			elog(ERROR, "UPDATE target count mismatch --- internal error");
-		origTarget = (ResTarget *) lfirst(orig_tl);
-		Assert(IsA(origTarget, ResTarget));
+		origTarget = castNode(ResTarget, lfirst(orig_tl));
 
 		attrno = attnameAttNum(pstate->p_target_relation,
 							   origTarget->name, true);

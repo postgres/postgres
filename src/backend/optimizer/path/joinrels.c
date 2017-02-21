@@ -1230,9 +1230,8 @@ restriction_is_constant_false(List *restrictlist, bool only_pushed_down)
 	 */
 	foreach(lc, restrictlist)
 	{
-		RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
+		RestrictInfo *rinfo = castNode(RestrictInfo, lfirst(lc));
 
-		Assert(IsA(rinfo, RestrictInfo));
 		if (only_pushed_down && !rinfo->is_pushed_down)
 			continue;
 

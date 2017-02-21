@@ -2382,8 +2382,8 @@ subquery_is_pushdown_safe(Query *subquery, Query *topquery,
 		if (subquery->setOperations != NULL)
 			return false;
 		/* Check whether setop component output types match top level */
-		topop = (SetOperationStmt *) topquery->setOperations;
-		Assert(topop && IsA(topop, SetOperationStmt));
+		topop = castNode(SetOperationStmt, topquery->setOperations);
+		Assert(topop);
 		compare_tlist_datatypes(subquery->targetList,
 								topop->colTypes,
 								safetyInfo);

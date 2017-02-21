@@ -335,9 +335,7 @@ get_actual_clauses(List *restrictinfo_list)
 
 	foreach(l, restrictinfo_list)
 	{
-		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
-
-		Assert(IsA(rinfo, RestrictInfo));
+		RestrictInfo *rinfo = castNode(RestrictInfo, lfirst(l));
 
 		Assert(!rinfo->pseudoconstant);
 
@@ -361,9 +359,7 @@ extract_actual_clauses(List *restrictinfo_list,
 
 	foreach(l, restrictinfo_list)
 	{
-		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
-
-		Assert(IsA(rinfo, RestrictInfo));
+		RestrictInfo *rinfo = castNode(RestrictInfo, lfirst(l));
 
 		if (rinfo->pseudoconstant == pseudoconstant)
 			result = lappend(result, rinfo->clause);
@@ -393,9 +389,7 @@ extract_actual_join_clauses(List *restrictinfo_list,
 
 	foreach(l, restrictinfo_list)
 	{
-		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
-
-		Assert(IsA(rinfo, RestrictInfo));
+		RestrictInfo *rinfo = castNode(RestrictInfo, lfirst(l));
 
 		if (rinfo->is_pushed_down)
 		{

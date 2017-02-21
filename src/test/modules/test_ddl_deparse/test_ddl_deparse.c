@@ -94,10 +94,8 @@ get_altertable_subcmdtypes(PG_FUNCTION_ARGS)
 	foreach(cell, cmd->d.alterTable.subcmds)
 	{
 		CollectedATSubcmd *sub = lfirst(cell);
-		AlterTableCmd *subcmd = (AlterTableCmd *) sub->parsetree;
+		AlterTableCmd *subcmd = castNode(AlterTableCmd, sub->parsetree);
 		const char *strtype;
-
-		Assert(IsA(subcmd, AlterTableCmd));
 
 		switch (subcmd->subtype)
 		{

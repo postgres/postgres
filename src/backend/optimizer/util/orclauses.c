@@ -188,9 +188,8 @@ extract_or_clause(RestrictInfo *or_rinfo, RelOptInfo *rel)
 
 			foreach(lc2, andargs)
 			{
-				RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc2);
+				RestrictInfo *rinfo = castNode(RestrictInfo, lfirst(lc2));
 
-				Assert(IsA(rinfo, RestrictInfo));
 				if (restriction_is_or_clause(rinfo))
 				{
 					/*
@@ -211,11 +210,11 @@ extract_or_clause(RestrictInfo *or_rinfo, RelOptInfo *rel)
 		}
 		else
 		{
-			Assert(IsA(orarg, RestrictInfo));
-			Assert(!restriction_is_or_clause((RestrictInfo *) orarg));
-			if (is_safe_restriction_clause_for((RestrictInfo *) orarg, rel))
-				subclauses = lappend(subclauses,
-									 ((RestrictInfo *) orarg)->clause);
+			RestrictInfo *rinfo = castNode(RestrictInfo, orarg);
+
+			Assert(!restriction_is_or_clause(rinfo));
+			if (is_safe_restriction_clause_for(rinfo, rel))
+				subclauses = lappend(subclauses, rinfo->clause);
 		}
 
 		/*

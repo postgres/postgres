@@ -129,7 +129,7 @@ RelOptInfo *
 plan_set_operations(PlannerInfo *root)
 {
 	Query	   *parse = root->parse;
-	SetOperationStmt *topop = (SetOperationStmt *) parse->setOperations;
+	SetOperationStmt *topop = castNode(SetOperationStmt, parse->setOperations);
 	Node	   *node;
 	RangeTblEntry *leftmostRTE;
 	Query	   *leftmostQuery;
@@ -137,7 +137,7 @@ plan_set_operations(PlannerInfo *root)
 	Path	   *path;
 	List	   *top_tlist;
 
-	Assert(topop && IsA(topop, SetOperationStmt));
+	Assert(topop);
 
 	/* check for unsupported stuff */
 	Assert(parse->jointree->fromlist == NIL);
@@ -1701,12 +1701,11 @@ translate_col_privs(const Bitmapset *parent_privs,
 	attno = InvalidAttrNumber;
 	foreach(lc, translated_vars)
 	{
-		Var		   *var = (Var *) lfirst(lc);
+		Var		   *var = castNode(Var, lfirst(lc));
 
 		attno++;
 		if (var == NULL)		/* ignore dropped columns */
 			continue;
-		Assert(IsA(var, Var));
 		if (whole_row ||
 			bms_is_member(attno - FirstLowInvalidHeapAttributeNumber,
 						  parent_privs))

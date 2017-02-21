@@ -917,13 +917,11 @@ transformAExprOp(ParseState *pstate, A_Expr *a)
 		/* ROW() op ROW() is handled specially */
 		lexpr = transformExprRecurse(pstate, lexpr);
 		rexpr = transformExprRecurse(pstate, rexpr);
-		Assert(IsA(lexpr, RowExpr));
-		Assert(IsA(rexpr, RowExpr));
 
 		result = make_row_comparison_op(pstate,
 										a->name,
-										((RowExpr *) lexpr)->args,
-										((RowExpr *) rexpr)->args,
+										castNode(RowExpr, lexpr)->args,
+										castNode(RowExpr, rexpr)->args,
 										a->location);
 	}
 	else
@@ -1296,8 +1294,7 @@ transformAExprBetween(ParseState *pstate, A_Expr *a)
 
 	/* Deconstruct A_Expr into three subexprs */
 	aexpr = a->lexpr;
-	Assert(IsA(a->rexpr, List));
-	args = (List *) a->rexpr;
+	args = castNode(List, a->rexpr);
 	Assert(list_length(args) == 2);
 	bexpr = (Node *) linitial(args);
 	cexpr = (Node *) lsecond(args);
@@ -1672,11 +1669,9 @@ transformCaseExpr(ParseState *pstate, CaseExpr *c)
 	resultexprs = NIL;
 	foreach(l, c->args)
 	{
-		CaseWhen   *w = (CaseWhen *) lfirst(l);
+		CaseWhen   *w = castNode(CaseWhen, lfirst(l));
 		CaseWhen   *neww = makeNode(CaseWhen);
 		Node	   *warg;
-
-		Assert(IsA(w, CaseWhen));
 
 		warg = (Node *) w->expr;
 		if (placeholder)
@@ -2339,11 +2334,9 @@ transformXmlExpr(ParseState *pstate, XmlExpr *x)
 
 	foreach(lc, x->named_args)
 	{
-		ResTarget  *r = (ResTarget *) lfirst(lc);
+		ResTarget  *r = castNode(ResTarget, lfirst(lc));
 		Node	   *expr;
 		char	   *argname;
-
-		Assert(IsA(r, ResTarget));
 
 		expr = transformExprRecurse(pstate, r->val);
 
@@ -2800,8 +2793,7 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 		Node	   *rarg = (Node *) lfirst(r);
 		OpExpr	   *cmp;
 
-		cmp = (OpExpr *) make_op(pstate, opname, larg, rarg, location);
-		Assert(IsA(cmp, OpExpr));
+		cmp = castNode(OpExpr, make_op(pstate, opname, larg, rarg, location));
 
 		/*
 		 * We don't use coerce_to_boolean here because we insist on the

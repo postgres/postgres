@@ -4591,11 +4591,10 @@ CheckDateTokenTables(void)
 Node *
 TemporalTransform(int32 max_precis, Node *node)
 {
-	FuncExpr   *expr = (FuncExpr *) node;
+	FuncExpr   *expr = castNode(FuncExpr, node);
 	Node	   *ret = NULL;
 	Node	   *typmod;
 
-	Assert(IsA(expr, FuncExpr));
 	Assert(list_length(expr->args) >= 2);
 
 	typmod = (Node *) lsecond(expr->args);

@@ -596,7 +596,7 @@ rel_is_distinct_for(PlannerInfo *root, RelOptInfo *rel, List *clause_list)
 		 */
 		foreach(l, clause_list)
 		{
-			RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
+			RestrictInfo *rinfo = castNode(RestrictInfo, lfirst(l));
 			Oid			op;
 			Var		   *var;
 
@@ -608,8 +608,7 @@ rel_is_distinct_for(PlannerInfo *root, RelOptInfo *rel, List *clause_list)
 			 * caller's mergejoinability test should have selected only
 			 * OpExprs.
 			 */
-			Assert(IsA(rinfo->clause, OpExpr));
-			op = ((OpExpr *) rinfo->clause)->opno;
+			op = castNode(OpExpr, rinfo->clause)->opno;
 
 			/* caller identified the inner side for us */
 			if (rinfo->outer_is_left)
@@ -782,9 +781,8 @@ query_is_distinct_for(Query *query, List *colnos, List *opids)
 	 */
 	if (query->setOperations)
 	{
-		SetOperationStmt *topop = (SetOperationStmt *) query->setOperations;
+		SetOperationStmt *topop = castNode(SetOperationStmt, query->setOperations);
 
-		Assert(IsA(topop, SetOperationStmt));
 		Assert(topop->op != SETOP_NONE);
 
 		if (!topop->all)
