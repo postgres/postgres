@@ -773,8 +773,6 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 							  cmd->temporary ? RS_TEMPORARY : RS_EPHEMERAL);
 	}
 
-	initStringInfo(&output_message);
-
 	if (cmd->kind == REPLICATION_KIND_LOGICAL)
 	{
 		LogicalDecodingContext *ctx;
@@ -1258,6 +1256,14 @@ exec_replication_command(const char *cmd_string)
 
 	cmd_node = replication_parse_result;
 
+	/*
+	 * Allocate buffers that will be used for each outgoing and incoming
+	 * message.  We do this just once per command to reduce palloc overhead.
+	 */
+	initStringInfo(&output_message);
+	initStringInfo(&reply_message);
+	initStringInfo(&tmpbuf);
+
 	switch (cmd_node->type)
 	{
 		case T_IdentifySystemCmd:
@@ -1736,14 +1742,6 @@ WalSndCheckTimeOut(TimestampTz now)
 static void
 WalSndLoop(WalSndSendDataCallback send_data)
 {
-	/*
-	 * Allocate buffers that will be used for each outgoing and incoming
-	 * message.  We do this just once to reduce palloc overhead.
-	 */
-	initStringInfo(&output_message);
-	initStringInfo(&reply_message);
-	initStringInfo(&tmpbuf);
-
 	/*
 	 * Initialize the last reply timestamp. That enables timeout processing
 	 * from hereon.
