@@ -263,10 +263,10 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 		CreateUserStmt CreateUserMappingStmt CreateRoleStmt CreatePolicyStmt
 		CreatedbStmt DeclareCursorStmt DefineStmt DeleteStmt DiscardStmt DoStmt
 		DropGroupStmt DropOpClassStmt DropOpFamilyStmt DropPLangStmt DropStmt
-		DropAssertStmt DropTrigStmt DropRuleStmt DropCastStmt DropRoleStmt
-		DropPolicyStmt DropUserStmt DropdbStmt DropTableSpaceStmt DropFdwStmt
+		DropAssertStmt DropCastStmt DropRoleStmt
+		DropUserStmt DropdbStmt DropTableSpaceStmt
 		DropTransformStmt
-		DropForeignServerStmt DropUserMappingStmt ExplainStmt FetchStmt
+		DropUserMappingStmt ExplainStmt FetchStmt
 		GrantStmt GrantRoleStmt ImportForeignSchemaStmt IndexStmt InsertStmt
 		ListenStmt LoadStmt LockStmt NotifyStmt ExplainableStmt PreparableStmt
 		CreateFunctionStmt AlterFunctionStmt ReindexStmt RemoveAggrStmt
@@ -440,7 +440,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <boolean> copy_from opt_program
 
 %type <ival>	opt_column event cursor_options opt_hold opt_set_data
-%type <objtype>	drop_type_any_name drop_type_name
+%type <objtype>	drop_type_any_name drop_type_name drop_type_name_on_any_name
 				comment_type_any_name comment_type_name
 				security_label_type_any_name security_label_type_name
 
@@ -885,20 +885,15 @@ stmt :
 			| DoStmt
 			| DropAssertStmt
 			| DropCastStmt
-			| DropFdwStmt
-			| DropForeignServerStmt
 			| DropGroupStmt
 			| DropOpClassStmt
 			| DropOpFamilyStmt
 			| DropOwnedStmt
-			| DropPolicyStmt
 			| DropPLangStmt
-			| DropRuleStmt
 			| DropStmt
 			| DropSubscriptionStmt
 			| DropTableSpaceStmt
 			| DropTransformStmt
-			| DropTrigStmt
 			| DropRoleStmt
 			| DropUserStmt
 			| DropUserMappingStmt
@@ -4514,35 +4509,6 @@ opt_fdw_options:
 /*****************************************************************************
  *
  *		QUERY :
- *				DROP FOREIGN DATA WRAPPER name
- *
- ****************************************************************************/
-
-DropFdwStmt: DROP FOREIGN DATA_P WRAPPER name opt_drop_behavior
-				{
-					DropStmt *n = makeNode(DropStmt);
-					n->removeType = OBJECT_FDW;
-					n->objects = list_make1(makeString($5));
-					n->missing_ok = false;
-					n->behavior = $6;
-					n->concurrent = false;
-					$$ = (Node *) n;
-				}
-				|  DROP FOREIGN DATA_P WRAPPER IF_P EXISTS name opt_drop_behavior
-				{
-					DropStmt *n = makeNode(DropStmt);
-					n->removeType = OBJECT_FDW;
-					n->objects = list_make1(makeString($7));
-					n->missing_ok = true;
-					n->behavior = $8;
-					n->concurrent = false;
-					$$ = (Node *) n;
-				}
-		;
-
-/*****************************************************************************
- *
- *		QUERY :
  *				ALTER FOREIGN DATA WRAPPER name options
  *
  ****************************************************************************/
@@ -4669,35 +4635,6 @@ foreign_server_version:
 opt_foreign_server_version:
 			foreign_server_version	{ $$ = $1; }
 			| /*EMPTY*/				{ $$ = NULL; }
-		;
-
-/*****************************************************************************
- *
- *		QUERY :
- *				DROP SERVER name
- *
- ****************************************************************************/
-
-DropForeignServerStmt: DROP SERVER name opt_drop_behavior
-				{
-					DropStmt *n = makeNode(DropStmt);
-					n->removeType = OBJECT_FOREIGN_SERVER;
-					n->objects = list_make1(makeString($3));
-					n->missing_ok = false;
-					n->behavior = $4;
-					n->concurrent = false;
-					$$ = (Node *) n;
-				}
-				|  DROP SERVER IF_P EXISTS name opt_drop_behavior
-				{
-					DropStmt *n = makeNode(DropStmt);
-					n->removeType = OBJECT_FOREIGN_SERVER;
-					n->objects = list_make1(makeString($5));
-					n->missing_ok = true;
-					n->behavior = $6;
-					n->concurrent = false;
-					$$ = (Node *) n;
-				}
 		;
 
 /*****************************************************************************
@@ -4975,7 +4912,6 @@ AlterUserMappingStmt: ALTER USER MAPPING FOR auth_ident SERVER name alter_generi
  *					[USING (qual)] [WITH CHECK (with check qual)]
  *				ALTER POLICY name ON table [TO role, ...]
  *					[USING (qual)] [WITH CHECK (with check qual)]
- *				DROP POLICY name ON table
  *
  *****************************************************************************/
 
@@ -5006,29 +4942,6 @@ AlterPolicyStmt:
 					n->roles = $6;
 					n->qual = $7;
 					n->with_check = $8;
-					$$ = (Node *) n;
-				}
-		;
-
-DropPolicyStmt:
-			DROP POLICY name ON any_name opt_drop_behavior
-				{
-					DropStmt *n = makeNode(DropStmt);
-					n->removeType = OBJECT_POLICY;
-					n->objects = list_make1(lappend($5, makeString($3)));
-					n->behavior = $6;
-					n->missing_ok = false;
-					n->concurrent = false;
-					$$ = (Node *) n;
-				}
-			| DROP POLICY IF_P EXISTS name ON any_name opt_drop_behavior
-				{
-					DropStmt *n = makeNode(DropStmt);
-					n->removeType = OBJECT_POLICY;
-					n->objects = list_make1(lappend($7, makeString($5)));
-					n->behavior = $8;
-					n->missing_ok = true;
-					n->concurrent = false;
 					$$ = (Node *) n;
 				}
 		;
@@ -5105,7 +5018,6 @@ CreateAmStmt: CREATE ACCESS METHOD name TYPE_P INDEX HANDLER handler_name
  *
  *		QUERIES :
  *				CREATE TRIGGER ...
- *				DROP TRIGGER ...
  *
  *****************************************************************************/
 
@@ -5329,30 +5241,6 @@ ConstraintAttributeElem:
 			| INITIALLY DEFERRED			{ $$ = CAS_INITIALLY_DEFERRED; }
 			| NOT VALID						{ $$ = CAS_NOT_VALID; }
 			| NO INHERIT					{ $$ = CAS_NO_INHERIT; }
-		;
-
-
-DropTrigStmt:
-			DROP TRIGGER name ON any_name opt_drop_behavior
-				{
-					DropStmt *n = makeNode(DropStmt);
-					n->removeType = OBJECT_TRIGGER;
-					n->objects = list_make1(lappend($5, makeString($3)));
-					n->behavior = $6;
-					n->missing_ok = false;
-					n->concurrent = false;
-					$$ = (Node *) n;
-				}
-			| DROP TRIGGER IF_P EXISTS name ON any_name opt_drop_behavior
-				{
-					DropStmt *n = makeNode(DropStmt);
-					n->removeType = OBJECT_TRIGGER;
-					n->objects = list_make1(lappend($7, makeString($5)));
-					n->behavior = $8;
-					n->missing_ok = true;
-					n->concurrent = false;
-					$$ = (Node *) n;
-				}
 		;
 
 
@@ -6034,6 +5922,26 @@ DropStmt:	DROP drop_type_any_name IF_P EXISTS any_name_list opt_drop_behavior
 					n->concurrent = false;
 					$$ = (Node *)n;
 				}
+			| DROP drop_type_name_on_any_name name ON any_name opt_drop_behavior
+				{
+					DropStmt *n = makeNode(DropStmt);
+					n->removeType = $2;
+					n->objects = list_make1(lappend($5, makeString($3)));
+					n->behavior = $6;
+					n->missing_ok = false;
+					n->concurrent = false;
+					$$ = (Node *) n;
+				}
+			| DROP drop_type_name_on_any_name IF_P EXISTS name ON any_name opt_drop_behavior
+				{
+					DropStmt *n = makeNode(DropStmt);
+					n->removeType = $2;
+					n->objects = list_make1(lappend($7, makeString($5)));
+					n->behavior = $8;
+					n->missing_ok = true;
+					n->concurrent = false;
+					$$ = (Node *) n;
+				}
 			| DROP TYPE_P type_name_list opt_drop_behavior
 				{
 					DropStmt *n = makeNode(DropStmt);
@@ -6117,8 +6025,17 @@ drop_type_name:
 			ACCESS METHOD							{ $$ = OBJECT_ACCESS_METHOD; }
 			| EVENT TRIGGER							{ $$ = OBJECT_EVENT_TRIGGER; }
 			| EXTENSION								{ $$ = OBJECT_EXTENSION; }
+			| FOREIGN DATA_P WRAPPER				{ $$ = OBJECT_FDW; }
 			| PUBLICATION							{ $$ = OBJECT_PUBLICATION; }
 			| SCHEMA								{ $$ = OBJECT_SCHEMA; }
+			| SERVER								{ $$ = OBJECT_FOREIGN_SERVER; }
+		;
+
+/* object types attached to a table */
+drop_type_name_on_any_name:
+			POLICY									{ $$ = OBJECT_POLICY; }
+			| RULE									{ $$ = OBJECT_RULE; }
+			| TRIGGER								{ $$ = OBJECT_TRIGGER; }
 		;
 
 any_name_list:
@@ -9274,30 +9191,6 @@ opt_instead:
 			INSTEAD									{ $$ = TRUE; }
 			| ALSO									{ $$ = FALSE; }
 			| /*EMPTY*/								{ $$ = FALSE; }
-		;
-
-
-DropRuleStmt:
-			DROP RULE name ON any_name opt_drop_behavior
-				{
-					DropStmt *n = makeNode(DropStmt);
-					n->removeType = OBJECT_RULE;
-					n->objects = list_make1(lappend($5, makeString($3)));
-					n->behavior = $6;
-					n->missing_ok = false;
-					n->concurrent = false;
-					$$ = (Node *) n;
-				}
-			| DROP RULE IF_P EXISTS name ON any_name opt_drop_behavior
-				{
-					DropStmt *n = makeNode(DropStmt);
-					n->removeType = OBJECT_RULE;
-					n->objects = list_make1(lappend($7, makeString($5)));
-					n->behavior = $8;
-					n->missing_ok = true;
-					n->concurrent = false;
-					$$ = (Node *) n;
-				}
 		;
 
 
