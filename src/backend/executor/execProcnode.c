@@ -815,6 +815,8 @@ ExecShutdownNode(PlanState *node)
 	if (node == NULL)
 		return false;
 
+	planstate_tree_walker(node, ExecShutdownNode, NULL);
+
 	switch (nodeTag(node))
 	{
 		case T_GatherState:
@@ -824,5 +826,5 @@ ExecShutdownNode(PlanState *node)
 			break;
 	}
 
-	return planstate_tree_walker(node, ExecShutdownNode, NULL);
+	return false;
 }

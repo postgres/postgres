@@ -229,10 +229,10 @@ ExecGather(GatherState *node)
 void
 ExecEndGather(GatherState *node)
 {
+	ExecEndNode(outerPlanState(node));		/* let children clean up first */
 	ExecShutdownGather(node);
 	ExecFreeExprContext(&node->ps);
 	ExecClearTuple(node->ps.ps_ResultTupleSlot);
-	ExecEndNode(outerPlanState(node));
 }
 
 /*
