@@ -139,6 +139,7 @@ CreateExecutorState(void)
 	estate->es_epqTuple = NULL;
 	estate->es_epqTupleSet = NULL;
 	estate->es_epqScanDone = NULL;
+	estate->es_sourceText = NULL;
 
 	/*
 	 * Return the executor state structure

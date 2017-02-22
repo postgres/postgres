@@ -190,6 +190,8 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
 		estate->es_param_exec_vals = (ParamExecData *)
 			palloc0(queryDesc->plannedstmt->nParamExec * sizeof(ParamExecData));
 
+	estate->es_sourceText = queryDesc->sourceText;
+
 	/*
 	 * If non-read-only query, set the command ID to mark output tuples with
 	 */
