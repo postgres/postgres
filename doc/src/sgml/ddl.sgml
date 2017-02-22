@@ -2899,7 +2899,7 @@ VALUES ('Albany', NULL, NULL, 'NY');
 
      <listitem>
       <para>
-       Since primary keys are not supported on partitioned tables
+       Since primary keys are not supported on partitioned tables,
        foreign keys referencing partitioned tables are not supported, nor
        are foreign key references from a partitioned table to some other table.
       </para>
