@@ -383,6 +383,15 @@ SELECT row_to_json(row((select array_agg(x) as d from generate_series(5,10) x)),
  {"f1":[5,6,7,8,9,10]}
 (1 row)
 
+-- anyarray column
+select to_json(histogram_bounds) histogram_bounds
+from pg_stats
+where attname = 'tmplname' and tablename = 'pg_pltemplate';
+                                   histogram_bounds                                    
+---------------------------------------------------------------------------------------
+ ["plperl","plperlu","plpgsql","plpython2u","plpython3u","plpythonu","pltcl","pltclu"]
+(1 row)
+
 -- to_json, timestamps
 select to_json(timestamp '2014-05-28 12:22:35.614298');
            to_json            

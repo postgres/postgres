@@ -279,6 +279,15 @@ SELECT array_to_json(ARRAY [jsonb '{"a":1}', jsonb '{"b":[2,3]}']);
  [{"a": 1},{"b": [2, 3]}]
 (1 row)
 
+-- anyarray column
+select to_jsonb(histogram_bounds) histogram_bounds
+from pg_stats
+where attname = 'tmplname' and tablename = 'pg_pltemplate';
+                                       histogram_bounds                                       
+----------------------------------------------------------------------------------------------
+ ["plperl", "plperlu", "plpgsql", "plpython2u", "plpython3u", "plpythonu", "pltcl", "pltclu"]
+(1 row)
+
 -- to_jsonb, timestamps
 select to_jsonb(timestamp '2014-05-28 12:22:35.614298');
            to_jsonb           
