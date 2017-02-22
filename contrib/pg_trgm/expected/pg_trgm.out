@@ -1202,6 +1202,12 @@ select t <-> 'q0987wertyu0988', t from test_trgm order by t <-> 'q0987wertyu0988
       0.5 | qwertyu0987
 (2 rows)
 
+select count(*) from test_trgm where t ~ '[qwerty]{2}-?[qwerty]{2}';
+ count 
+-------
+  1000
+(1 row)
+
 create index trgm_idx on test_trgm using gist (t gist_trgm_ops);
 set enable_seqscan=off;
 select t,similarity(t,'qwertyu0988') as sml from test_trgm where t % 'qwertyu0988' order by sml desc, t;
@@ -2346,6 +2352,12 @@ select t <-> 'q0987wertyu0988', t from test_trgm order by t <-> 'q0987wertyu0988
       0.5 | qwertyu0987
 (2 rows)
 
+select count(*) from test_trgm where t ~ '[qwerty]{2}-?[qwerty]{2}';
+ count 
+-------
+  1000
+(1 row)
+
 drop index trgm_idx;
 create index trgm_idx on test_trgm using gin (t gin_trgm_ops);
 set enable_seqscan=off;
@@ -3473,6 +3485,12 @@ select t,similarity(t,'gwertyu1988') as sml from test_trgm where t % 'gwertyu198
       t      |   sml    
 -------------+----------
  qwertyu0988 | 0.333333
+(1 row)
+
+select count(*) from test_trgm where t ~ '[qwerty]{2}-?[qwerty]{2}';
+ count 
+-------
+  1000
 (1 row)
 
 create table test2(t text COLLATE "C");
