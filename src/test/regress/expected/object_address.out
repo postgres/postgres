@@ -214,8 +214,8 @@ WARNING:  error for operator family,{addr_nsp,zwei},{}: access method "addr_nsp"
 WARNING:  error for operator family,{addr_nsp,zwei},{integer}: access method "addr_nsp" does not exist
 WARNING:  error for operator family,{eins,zwei,drei},{}: access method "eins" does not exist
 WARNING:  error for operator family,{eins,zwei,drei},{integer}: access method "eins" does not exist
-WARNING:  error for rule,{eins},{}: rule "eins" does not exist
-WARNING:  error for rule,{eins},{integer}: rule "eins" does not exist
+WARNING:  error for rule,{eins},{}: must specify relation and object name
+WARNING:  error for rule,{eins},{integer}: must specify relation and object name
 WARNING:  error for rule,{addr_nsp,zwei},{}: relation "addr_nsp" does not exist
 WARNING:  error for rule,{addr_nsp,zwei},{integer}: relation "addr_nsp" does not exist
 WARNING:  error for rule,{eins,zwei,drei},{}: schema "eins" does not exist

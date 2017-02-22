@@ -6283,16 +6283,6 @@ CommentStmt:
 					n->comment = $8;
 					$$ = (Node *) n;
 				}
-			| COMMENT ON RULE name IS comment_text
-				{
-					/* Obsolete syntax supported for awhile for compatibility */
-					CommentStmt *n = makeNode(CommentStmt);
-					n->objtype = OBJECT_RULE;
-					n->objname = list_make1(makeString($4));
-					n->objargs = NIL;
-					n->comment = $6;
-					$$ = (Node *) n;
-				}
 			| COMMENT ON TRANSFORM FOR Typename LANGUAGE name IS comment_text
 				{
 					CommentStmt *n = makeNode(CommentStmt);

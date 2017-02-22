@@ -19,5 +19,5 @@ COMMENT ON FUNCTION c_function_test() IS 'FUNCTION test';
 ERROR:  function c_function_test() does not exist
 COMMENT ON TRIGGER trigger_1 ON datatype_table IS 'TRIGGER test';
 NOTICE:  DDL test: type simple, tag COMMENT
-COMMENT ON RULE rule_1 IS 'RULE test';
+COMMENT ON RULE rule_1 ON datatype_table IS 'RULE test';
 NOTICE:  DDL test: type simple, tag COMMENT
