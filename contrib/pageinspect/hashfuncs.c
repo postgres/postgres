@@ -541,7 +541,7 @@ hash_metapage_info(PG_FUNCTION_ARGS)
 	values[j++] = ObjectIdGetDatum((Oid) metad->hashm_procid);
 
 	for (i = 0; i < HASH_MAX_SPLITPOINTS; i++)
-		spares[i] = Int64GetDatum((int8) metad->hashm_spares[i]);
+		spares[i] = Int64GetDatum((int64) metad->hashm_spares[i]);
 	values[j++] = PointerGetDatum(construct_array(spares,
 												  HASH_MAX_SPLITPOINTS,
 												  INT8OID,
