@@ -1507,11 +1507,7 @@ static struct config_bool ConfigureNamesBool[] =
 			GUC_REPORT | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
 		&integer_datetimes,
-#ifdef HAVE_INT64_TIMESTAMP
 		true,
-#else
-		false,
-#endif
 		NULL, NULL, NULL
 	},
 

@@ -179,11 +179,7 @@ gbt_timetz_compress(PG_FUNCTION_ARGS)
 		retval = palloc(sizeof(GISTENTRY));
 
 		/* We are using the time + zone only to compress */
-#ifdef HAVE_INT64_TIMESTAMP
 		tmp = tz->time + (tz->zone * INT64CONST(1000000));
-#else
-		tmp = (tz->time + tz->zone);
-#endif
 		r->lower = r->upper = tmp;
 		gistentryinit(*retval, PointerGetDatum(r),
 					  entry->rel, entry->page,
@@ -259,11 +255,7 @@ gbt_timetz_consistent(PG_FUNCTION_ARGS)
 	/* All cases served by this function are inexact */
 	*recheck = true;
 
-#ifdef HAVE_INT64_TIMESTAMP
 	qqq = query->time + (query->zone * INT64CONST(1000000));
-#else
-	qqq = (query->time + query->zone);
-#endif
 
 	key.lower = (GBT_NUMKEY *) &kkk->lower;
 	key.upper = (GBT_NUMKEY *) &kkk->upper;

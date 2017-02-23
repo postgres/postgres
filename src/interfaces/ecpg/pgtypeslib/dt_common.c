@@ -783,19 +783,10 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, bool print_tz, int tz, const char *t
 			/*
 			 * Print fractional seconds if any.  The field widths here should
 			 * be at least equal to MAX_TIMESTAMP_PRECISION.
-			 *
-			 * In float mode, don't print fractional seconds before 1 AD,
-			 * since it's unlikely there's any precision left ...
 			 */
-#ifdef HAVE_INT64_TIMESTAMP
 			if (fsec != 0)
 			{
 				sprintf(str + strlen(str), ":%02d.%06d", tm->tm_sec, fsec);
-#else
-			if ((fsec != 0) && (tm->tm_year > 0))
-			{
-				sprintf(str + strlen(str), ":%09.6f", tm->tm_sec + fsec);
-#endif
 				TrimTrailingZeros(str);
 			}
 			else
@@ -830,19 +821,10 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, bool print_tz, int tz, const char *t
 			/*
 			 * Print fractional seconds if any.  The field widths here should
 			 * be at least equal to MAX_TIMESTAMP_PRECISION.
-			 *
-			 * In float mode, don't print fractional seconds before 1 AD,
-			 * since it's unlikely there's any precision left ...
 			 */
-#ifdef HAVE_INT64_TIMESTAMP
 			if (fsec != 0)
 			{
 				sprintf(str + strlen(str), ":%02d.%06d", tm->tm_sec, fsec);
-#else
-			if (fsec != 0 && tm->tm_year > 0)
-			{
-				sprintf(str + strlen(str), ":%09.6f", tm->tm_sec + fsec);
-#endif
 				TrimTrailingZeros(str);
 			}
 			else
@@ -885,19 +867,10 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, bool print_tz, int tz, const char *t
 			/*
 			 * Print fractional seconds if any.  The field widths here should
 			 * be at least equal to MAX_TIMESTAMP_PRECISION.
-			 *
-			 * In float mode, don't print fractional seconds before 1 AD,
-			 * since it's unlikely there's any precision left ...
 			 */
-#ifdef HAVE_INT64_TIMESTAMP
 			if (fsec != 0)
 			{
 				sprintf(str + strlen(str), ":%02d.%06d", tm->tm_sec, fsec);
-#else
-			if (fsec != 0 && tm->tm_year > 0)
-			{
-				sprintf(str + strlen(str), ":%09.6f", tm->tm_sec + fsec);
-#endif
 				TrimTrailingZeros(str);
 			}
 			else
@@ -942,19 +915,10 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, bool print_tz, int tz, const char *t
 			/*
 			 * Print fractional seconds if any.  The field widths here should
 			 * be at least equal to MAX_TIMESTAMP_PRECISION.
-			 *
-			 * In float mode, don't print fractional seconds before 1 AD,
-			 * since it's unlikely there's any precision left ...
 			 */
-#ifdef HAVE_INT64_TIMESTAMP
 			if (fsec != 0)
 			{
 				sprintf(str + strlen(str), ":%02d.%06d", tm->tm_sec, fsec);
-#else
-			if (fsec != 0 && tm->tm_year > 0)
-			{
-				sprintf(str + strlen(str), ":%09.6f", tm->tm_sec + fsec);
-#endif
 				TrimTrailingZeros(str);
 			}
 			else
@@ -1110,28 +1074,15 @@ GetCurrentDateTime(struct tm * tm)
 void
 dt2time(double jd, int *hour, int *min, int *sec, fsec_t *fsec)
 {
-#ifdef HAVE_INT64_TIMESTAMP
 	int64		time;
-#else
-	double		time;
-#endif
 
 	time = jd;
-#ifdef HAVE_INT64_TIMESTAMP
 	*hour = time / USECS_PER_HOUR;
 	time -= (*hour) * USECS_PER_HOUR;
 	*min = time / USECS_PER_MINUTE;
 	time -= (*min) * USECS_PER_MINUTE;
 	*sec = time / USECS_PER_SEC;
 	*fsec = time - (*sec * USECS_PER_SEC);
-#else
-	*hour = time / SECS_PER_HOUR;
-	time -= (*hour) * SECS_PER_HOUR;
-	*min = time / SECS_PER_MINUTE;
-	time -= (*min) * SECS_PER_MINUTE;
-	*sec = time;
-	*fsec = time - *sec;
-#endif
 }	/* dt2time() */
 
 
@@ -1153,7 +1104,6 @@ DecodeNumberField(int len, char *str, int fmask,
 	 */
 	if ((cp = strchr(str, '.')) != NULL)
 	{
-#ifdef HAVE_INT64_TIMESTAMP
 		char		fstr[7];
 		int			i;
 
@@ -1164,16 +1114,13 @@ DecodeNumberField(int len, char *str, int fmask,
 		 * string with those digits, zero-padded on the right, and then do the
 		 * conversion to an integer.
 		 *
-		 * XXX This truncates the seventh digit, unlike rounding it as do the
-		 * backend and the !HAVE_INT64_TIMESTAMP case.
+		 * XXX This truncates the seventh digit, unlike rounding it as the
+		 * backend does.
 		 */
 		for (i = 0; i < 6; i++)
 			fstr[i] = *cp != '\0' ? *cp++ : '0';
 		fstr[i] = '\0';
 		*fsec = strtol(fstr, NULL, 10);
-#else
-		*fsec = strtod(cp, NULL);
-#endif
 		*cp = '\0';
 		len = strlen(str);
 	}
@@ -1520,7 +1467,6 @@ DecodeTime(char *str, int *tmask, struct tm * tm, fsec_t *fsec)
 			*fsec = 0;
 		else if (*cp == '.')
 		{
-#ifdef HAVE_INT64_TIMESTAMP
 			char		fstr[7];
 			int			i;
 
@@ -1531,17 +1477,13 @@ DecodeTime(char *str, int *tmask, struct tm * tm, fsec_t *fsec)
 			 * string with those digits, zero-padded on the right, and then do
 			 * the conversion to an integer.
 			 *
-			 * XXX This truncates the seventh digit, unlike rounding it as do
-			 * the backend and the !HAVE_INT64_TIMESTAMP case.
+			 * XXX This truncates the seventh digit, unlike rounding it as the
+			 * backend does.
 			 */
 			for (i = 0; i < 6; i++)
 				fstr[i] = *cp != '\0' ? *cp++ : '0';
 			fstr[i] = '\0';
 			*fsec = strtol(fstr, &cp, 10);
-#else
-			str = cp;
-			*fsec = strtod(str, &cp);
-#endif
 			if (*cp != '\0')
 				return -1;
 		}
@@ -1550,15 +1492,9 @@ DecodeTime(char *str, int *tmask, struct tm * tm, fsec_t *fsec)
 	}
 
 	/* do a sanity check */
-#ifdef HAVE_INT64_TIMESTAMP
 	if (tm->tm_hour < 0 || tm->tm_min < 0 || tm->tm_min > 59 ||
 		tm->tm_sec < 0 || tm->tm_sec > 59 || *fsec >= USECS_PER_SEC)
 		return -1;
-#else
-	if (tm->tm_hour < 0 || tm->tm_min < 0 || tm->tm_min > 59 ||
-		tm->tm_sec < 0 || tm->tm_sec > 59 || *fsec >= 1)
-		return -1;
-#endif
 
 	return 0;
 }	/* DecodeTime() */
@@ -2105,11 +2041,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 								frac = strtod(cp, &cp);
 								if (*cp != '\0')
 									return -1;
-#ifdef HAVE_INT64_TIMESTAMP
 								*fsec = frac * 1000000;
-#else
-								*fsec = frac;
-#endif
 							}
 							break;
 
@@ -2135,11 +2067,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 									return -1;
 
 								tmask |= DTK_TIME_M;
-#ifdef HAVE_INT64_TIMESTAMP
 								dt2time((time * USECS_PER_DAY), &tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
-#else
-								dt2time((time * SECS_PER_DAY), &tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
-#endif
 							}
 							break;
 

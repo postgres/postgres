@@ -208,8 +208,8 @@ GetConnection(void)
 		PQconninfoFree(conn_opts);
 
 	/*
-	 * Ensure we have the same value of integer timestamps as the server we
-	 * are connecting to.
+	 * Ensure we have the same value of integer_datetimes (now always "on") as
+	 * the server we are connecting to.
 	 */
 	tmpparam = PQparameterStatus(tmpconn, "integer_datetimes");
 	if (!tmpparam)
@@ -221,11 +221,7 @@ GetConnection(void)
 		exit(1);
 	}
 
-#ifdef HAVE_INT64_TIMESTAMP
 	if (strcmp(tmpparam, "on") != 0)
-#else
-	if (strcmp(tmpparam, "off") != 0)
-#endif
 	{
 		fprintf(stderr,
 			 _("%s: integer_datetimes compile flag does not match server\n"),

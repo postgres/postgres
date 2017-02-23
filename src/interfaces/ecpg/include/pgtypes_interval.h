@@ -25,11 +25,7 @@ typedef long long int int64;
 
 typedef struct
 {
-#ifdef HAVE_INT64_TIMESTAMP
 	int64		time;			/* all time units other than months and years */
-#else
-	double		time;			/* all time units other than months and years */
-#endif
 	long		month;			/* months and years, after time for alignment */
 }	interval;
 

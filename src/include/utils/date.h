@@ -21,11 +21,7 @@
 
 typedef int32 DateADT;
 
-#ifdef HAVE_INT64_TIMESTAMP
 typedef int64 TimeADT;
-#else
-typedef float8 TimeADT;
-#endif
 
 typedef struct
 {
@@ -48,11 +44,9 @@ typedef struct
 /*
  * Macros for fmgr-callable functions.
  *
- * For TimeADT, we make use of the same support routines as for float8 or int64.
- * Therefore TimeADT is pass-by-reference if and only if float8 or int64 is!
+ * For TimeADT, we make use of the same support routines as for int64.
+ * Therefore TimeADT is pass-by-reference if and only if int64 is!
  */
-#ifdef HAVE_INT64_TIMESTAMP
-
 #define MAX_TIME_PRECISION 6
 
 #define DatumGetDateADT(X)	  ((DateADT) DatumGetInt32(X))
@@ -62,22 +56,6 @@ typedef struct
 #define DateADTGetDatum(X)	  Int32GetDatum(X)
 #define TimeADTGetDatum(X)	  Int64GetDatum(X)
 #define TimeTzADTPGetDatum(X) PointerGetDatum(X)
-#else							/* !HAVE_INT64_TIMESTAMP */
-
-#define MAX_TIME_PRECISION 10
-
-/* round off to MAX_TIME_PRECISION decimal places */
-#define TIME_PREC_INV 10000000000.0
-#define TIMEROUND(j) (rint(((double) (j)) * TIME_PREC_INV) / TIME_PREC_INV)
-
-#define DatumGetDateADT(X)	  ((DateADT) DatumGetInt32(X))
-#define DatumGetTimeADT(X)	  ((TimeADT) DatumGetFloat8(X))
-#define DatumGetTimeTzADTP(X) ((TimeTzADT *) DatumGetPointer(X))
-
-#define DateADTGetDatum(X)	  Int32GetDatum(X)
-#define TimeADTGetDatum(X)	  Float8GetDatum(X)
-#define TimeTzADTPGetDatum(X) PointerGetDatum(X)
-#endif   /* HAVE_INT64_TIMESTAMP */
 
 #define PG_GETARG_DATEADT(n)	 DatumGetDateADT(PG_GETARG_DATUM(n))
 #define PG_GETARG_TIMEADT(n)	 DatumGetTimeADT(PG_GETARG_DATUM(n))

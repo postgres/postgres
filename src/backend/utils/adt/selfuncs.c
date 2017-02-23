@@ -4212,31 +4212,17 @@ convert_timevalue_to_scalar(Datum value, Oid typid)
 				 * average month length of 365.25/12.0 days.  Not too
 				 * accurate, but plenty good enough for our purposes.
 				 */
-#ifdef HAVE_INT64_TIMESTAMP
 				return interval->time + interval->day * (double) USECS_PER_DAY +
 					interval->month * ((DAYS_PER_YEAR / (double) MONTHS_PER_YEAR) * USECS_PER_DAY);
-#else
-				return interval->time + interval->day * SECS_PER_DAY +
-					interval->month * ((DAYS_PER_YEAR / (double) MONTHS_PER_YEAR) * (double) SECS_PER_DAY);
-#endif
 			}
 		case RELTIMEOID:
-#ifdef HAVE_INT64_TIMESTAMP
 			return (DatumGetRelativeTime(value) * 1000000.0);
-#else
-			return DatumGetRelativeTime(value);
-#endif
 		case TINTERVALOID:
 			{
 				TimeInterval tinterval = DatumGetTimeInterval(value);
 
-#ifdef HAVE_INT64_TIMESTAMP
 				if (tinterval->status != 0)
 					return ((tinterval->data[1] - tinterval->data[0]) * 1000000.0);
-#else
-				if (tinterval->status != 0)
-					return tinterval->data[1] - tinterval->data[0];
-#endif
 				return 0;		/* for lack of a better idea */
 			}
 		case TIMEOID:
@@ -4246,11 +4232,7 @@ convert_timevalue_to_scalar(Datum value, Oid typid)
 				TimeTzADT  *timetz = DatumGetTimeTzADTP(value);
 
 				/* use GMT-equivalent time */
-#ifdef HAVE_INT64_TIMESTAMP
 				return (double) (timetz->time + (timetz->zone * 1000000.0));
-#else
-				return (double) (timetz->time + timetz->zone);
-#endif
 			}
 	}
 

@@ -308,11 +308,7 @@ check_timezone(char **newval, void **extra, GucSource source)
 		}
 
 		/* Here we change from SQL to Unix sign convention */
-#ifdef HAVE_INT64_TIMESTAMP
 		gmtoffset = -(interval->time / USECS_PER_SEC);
-#else
-		gmtoffset = -interval->time;
-#endif
 		new_tz = pg_tzset_offset(gmtoffset);
 
 		pfree(interval);

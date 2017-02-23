@@ -82,17 +82,10 @@ typedef struct
  * (as a double).  Here because we need it for time/timetz as well as
  * interval.  See interval_cmp_internal for comparison.
  */
-#ifdef HAVE_INT64_TIMESTAMP
 #define INTERVAL_TO_SEC(ivp) \
 	(((double) (ivp)->time) / ((double) USECS_PER_SEC) + \
 	 (ivp)->day * (24.0 * SECS_PER_HOUR) + \
 	 (ivp)->month * (30.0 * SECS_PER_DAY))
-#else
-#define INTERVAL_TO_SEC(ivp) \
-	((ivp)->time + \
-	 (ivp)->day * (24.0 * SECS_PER_HOUR) + \
-	 (ivp)->month * (30.0 * SECS_PER_DAY))
-#endif
 
 #define GET_FLOAT_DISTANCE(t, arg1, arg2)	Abs( ((float8) *((const t *) (arg1))) - ((float8) *((const t *) (arg2))) )
 

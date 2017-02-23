@@ -6,13 +6,8 @@
 /* pgtypes_interval.h includes ecpg_config.h */
 #include <pgtypes_interval.h>
 
-#ifdef HAVE_INT64_TIMESTAMP
 typedef int64 timestamp;
 typedef int64 TimestampTz;
-#else
-typedef double timestamp;
-typedef double TimestampTz;
-#endif
 
 #ifdef __cplusplus
 extern		"C"

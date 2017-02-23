@@ -18,28 +18,16 @@
 #include "pgtypes_date.h"
 
 
-#ifdef HAVE_INT64_TIMESTAMP
 static int64
 time2t(const int hour, const int min, const int sec, const fsec_t fsec)
 {
 	return (((((hour * MINS_PER_HOUR) + min) * SECS_PER_MINUTE) + sec) * USECS_PER_SEC) + fsec;
 }	/* time2t() */
-#else
-static double
-time2t(const int hour, const int min, const int sec, const fsec_t fsec)
-{
-	return (((hour * MINS_PER_HOUR) + min) * SECS_PER_MINUTE) + sec + fsec;
-}	/* time2t() */
-#endif
 
 static timestamp
 dt2local(timestamp dt, int tz)
 {
-#ifdef HAVE_INT64_TIMESTAMP
 	dt -= (tz * USECS_PER_SEC);
-#else
-	dt -= tz;
-#endif
 	return dt;
 }	/* dt2local() */
 
@@ -53,13 +41,8 @@ dt2local(timestamp dt, int tz)
 int
 tm2timestamp(struct tm * tm, fsec_t fsec, int *tzp, timestamp * result)
 {
-#ifdef HAVE_INT64_TIMESTAMP
 	int			dDate;
 	int64		time;
-#else
-	double		dDate,
-				time;
-#endif
 
 	/* Prevent overflow in Julian-day routines */
 	if (!IS_VALID_JULIAN(tm->tm_year, tm->tm_mon, tm->tm_mday))
@@ -67,7 +50,6 @@ tm2timestamp(struct tm * tm, fsec_t fsec, int *tzp, timestamp * result)
 
 	dDate = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(2000, 1, 1);
 	time = time2t(tm->tm_hour, tm->tm_min, tm->tm_sec, fsec);
-#ifdef HAVE_INT64_TIMESTAMP
 	*result = (dDate * USECS_PER_DAY) + time;
 	/* check for major overflow */
 	if ((*result - time) / USECS_PER_DAY != dDate)
@@ -77,9 +59,6 @@ tm2timestamp(struct tm * tm, fsec_t fsec, int *tzp, timestamp * result)
 	if ((*result < 0 && dDate > 0) ||
 		(*result > 0 && dDate < -1))
 		return -1;
-#else
-	*result = dDate * SECS_PER_DAY + time;
-#endif
 	if (tzp != NULL)
 		*result = dt2local(*result, -(*tzp));
 
@@ -93,11 +72,7 @@ tm2timestamp(struct tm * tm, fsec_t fsec, int *tzp, timestamp * result)
 static timestamp
 SetEpochTimestamp(void)
 {
-#ifdef HAVE_INT64_TIMESTAMP
 	int64		noresult = 0;
-#else
-	double		noresult = 0.0;
-#endif
 	timestamp	dt;
 	struct tm	tt,
 			   *tm = &tt;
@@ -123,15 +98,9 @@ SetEpochTimestamp(void)
 static int
 timestamp2tm(timestamp dt, int *tzp, struct tm * tm, fsec_t *fsec, const char **tzn)
 {
-#ifdef HAVE_INT64_TIMESTAMP
 	int64		dDate,
 				date0;
 	int64		time;
-#else
-	double		dDate,
-				date0;
-	double		time;
-#endif
 #if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
 	time_t		utime;
 	struct tm  *tx;
@@ -139,7 +108,6 @@ timestamp2tm(timestamp dt, int *tzp, struct tm * tm, fsec_t *fsec, const char **
 
 	date0 = date2j(2000, 1, 1);
 
-#ifdef HAVE_INT64_TIMESTAMP
 	time = dt;
 	TMODULO(time, dDate, USECS_PER_DAY);
 
@@ -158,42 +126,6 @@ timestamp2tm(timestamp dt, int *tzp, struct tm * tm, fsec_t *fsec, const char **
 
 	j2date((int) dDate, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
 	dt2time(time, &tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
-#else
-	time = dt;
-	TMODULO(time, dDate, (double) SECS_PER_DAY);
-
-	if (time < 0)
-	{
-		time += SECS_PER_DAY;
-		dDate -= 1;
-	}
-
-	/* add offset to go from J2000 back to standard Julian date */
-	dDate += date0;
-
-recalc_d:
-	/* Julian day routine does not work for negative Julian days */
-	if (dDate < 0 || dDate > (timestamp) INT_MAX)
-		return -1;
-
-	j2date((int) dDate, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
-recalc_t:
-	dt2time(time, &tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
-
-	*fsec = TSROUND(*fsec);
-	/* roundoff may need to propagate to higher-order fields */
-	if (*fsec >= 1.0)
-	{
-		time = ceil(time);
-		if (time >= (double) SECS_PER_DAY)
-		{
-			time = 0;
-			dDate += 1;
-			goto recalc_d;
-		}
-		goto recalc_t;
-	}
-#endif
 
 	if (tzp != NULL)
 	{
@@ -205,12 +137,8 @@ recalc_t:
 		{
 #if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
 
-#ifdef HAVE_INT64_TIMESTAMP
 			utime = dt / USECS_PER_SEC +
 				((date0 - date2j(1970, 1, 1)) * INT64CONST(86400));
-#else
-			utime = dt + (date0 - date2j(1970, 1, 1)) * SECS_PER_DAY;
-#endif
 
 			tx = localtime(&utime);
 			tm->tm_year = tx->tm_year + 1900;
@@ -281,12 +209,7 @@ timestamp
 PGTYPEStimestamp_from_asc(char *str, char **endptr)
 {
 	timestamp	result;
-
-#ifdef HAVE_INT64_TIMESTAMP
 	int64		noresult = 0;
-#else
-	double		noresult = 0.0;
-#endif
 	fsec_t		fsec;
 	struct tm	tt,
 			   *tm = &tt;
@@ -633,13 +556,8 @@ dttofmtasc_replace(timestamp * ts, date dDate, int dow, struct tm * tm,
 					break;
 					/* The number of seconds since the Epoch (1970-01-01) */
 				case 's':
-#ifdef HAVE_INT64_TIMESTAMP
 					replace_val.int64_val = (*ts - SetEpochTimestamp()) / 1000000.0;
 					replace_type = PGTYPES_TYPE_INT64;
-#else
-					replace_val.double_val = *ts - SetEpochTimestamp();
-					replace_type = PGTYPES_TYPE_DOUBLE_NF;
-#endif
 					break;
 					/* seconds as a decimal number with leading zeroes */
 				case 'S':

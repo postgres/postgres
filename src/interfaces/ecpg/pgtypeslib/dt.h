@@ -7,18 +7,7 @@
 
 #define MAXTZLEN			 10
 
-#ifdef HAVE_INT64_TIMESTAMP
-
 typedef int32 fsec_t;
-#else
-
-typedef double fsec_t;
-
-/* round off to MAX_TIMESTAMP_PRECISION decimal places */
-/* note: this is also used for rounding off intervals */
-#define TS_PREC_INV 1000000.0
-#define TSROUND(j) (rint(((double) (j)) * TS_PREC_INV) / TS_PREC_INV)
-#endif
 
 #define USE_POSTGRES_DATES				0
 #define USE_ISO_DATES					1
@@ -232,23 +221,15 @@ do { \
 } while(0)
 
 /* TMODULO()
- * Like FMODULO(), but work on the timestamp datatype (either int64 or float8).
+ * Like FMODULO(), but work on the timestamp datatype (now always int64).
  * We assume that int64 follows the C99 semantics for division (negative
  * quotients truncate towards zero).
  */
-#ifdef HAVE_INT64_TIMESTAMP
 #define TMODULO(t,q,u) \
 do { \
 	(q) = ((t) / (u)); \
 	if ((q) != 0) (t) -= ((q) * (u)); \
 } while(0)
-#else
-#define TMODULO(t,q,u) \
-do { \
-	(q) = (((t) < 0) ? ceil((t) / (u)): floor((t) / (u))); \
-	if ((q) != 0) (t) -= rint((q) * (u)); \
-} while(0)
-#endif
 
 /* in both timestamp.h and ecpg/dt.h */
 #define DAYS_PER_YEAR	365.25	/* assumes leap year every four years */
@@ -274,12 +255,10 @@ do { \
 #define SECS_PER_MINUTE 60
 #define MINS_PER_HOUR	60
 
-#ifdef HAVE_INT64_TIMESTAMP
 #define USECS_PER_DAY	INT64CONST(86400000000)
 #define USECS_PER_HOUR	INT64CONST(3600000000)
 #define USECS_PER_MINUTE INT64CONST(60000000)
 #define USECS_PER_SEC	INT64CONST(1000000)
-#endif
 
 /*
  * Date/time validation
@@ -304,13 +283,8 @@ do { \
 	 ((y) < JULIAN_MAXYEAR || \
 	  ((y) == JULIAN_MAXYEAR && ((m) < JULIAN_MAXMONTH))))
 
-#ifdef HAVE_INT64_TIMESTAMP
 #define MIN_TIMESTAMP	INT64CONST(-211813488000000000)
 #define END_TIMESTAMP	INT64CONST(9223371331200000000)
-#else
-#define MIN_TIMESTAMP	(-211813488000.0)
-#define END_TIMESTAMP	185330760393600.0
-#endif
 
 #define IS_VALID_TIMESTAMP(t)  (MIN_TIMESTAMP <= (t) && (t) < END_TIMESTAMP)
 
@@ -328,20 +302,8 @@ do { \
  || (((y) == UTIME_MAXYEAR) && (((m) < UTIME_MAXMONTH) \
   || (((m) == UTIME_MAXMONTH) && ((d) <= UTIME_MAXDAY))))))
 
-#ifdef HAVE_INT64_TIMESTAMP
-
 #define DT_NOBEGIN		(-INT64CONST(0x7fffffffffffffff) - 1)
 #define DT_NOEND		(INT64CONST(0x7fffffffffffffff))
-#else
-
-#ifdef HUGE_VAL
-#define DT_NOBEGIN		(-HUGE_VAL)
-#define DT_NOEND		(HUGE_VAL)
-#else
-#define DT_NOBEGIN		(-DBL_MAX)
-#define DT_NOEND		(DBL_MAX)
-#endif
-#endif   /* HAVE_INT64_TIMESTAMP */
 
 #define TIMESTAMP_NOBEGIN(j)	do {(j) = DT_NOBEGIN;} while (0)
 #define TIMESTAMP_NOEND(j)			do {(j) = DT_NOEND;} while (0)

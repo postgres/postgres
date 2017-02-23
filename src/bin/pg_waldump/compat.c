@@ -29,13 +29,8 @@ timestamptz_to_time_t(TimestampTz t)
 {
 	pg_time_t	result;
 
-#ifdef HAVE_INT64_TIMESTAMP
 	result = (pg_time_t) (t / USECS_PER_SEC +
 				 ((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY));
-#else
-	result = (pg_time_t) (t +
-				 ((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY));
-#endif
 	return result;
 }
 
@@ -63,11 +58,7 @@ timestamptz_to_str(TimestampTz dt)
 	strftime(ts, sizeof(ts), "%Y-%m-%d %H:%M:%S", ltime);
 	strftime(zone, sizeof(zone), "%Z", ltime);
 
-#ifdef HAVE_INT64_TIMESTAMP
 	sprintf(buf, "%s.%06d %s", ts, (int) (dt % USECS_PER_SEC), zone);
-#else
-	sprintf(buf, "%s.%.6f %s", ts, fabs(dt - floor(dt)), zone);
-#endif
 
 	return buf;
 }

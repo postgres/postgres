@@ -37,13 +37,8 @@ PGTYPESdate_from_timestamp(timestamp dt)
 
 	if (!TIMESTAMP_NOT_FINITE(dt))
 	{
-#ifdef HAVE_INT64_TIMESTAMP
 		/* Microseconds to days */
 		dDate = (dt / USECS_PER_DAY);
-#else
-		/* Seconds to days */
-		dDate = (dt / (double) SECS_PER_DAY);
-#endif
 	}
 
 	return dDate;

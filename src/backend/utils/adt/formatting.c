@@ -2434,23 +2434,13 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				s += strlen(s);
 				break;
 			case DCH_MS:		/* millisecond */
-#ifdef HAVE_INT64_TIMESTAMP
 				sprintf(s, "%03d", (int) (in->fsec / INT64CONST(1000)));
-#else
-				/* No rint() because we can't overflow and we might print US */
-				sprintf(s, "%03d", (int) (in->fsec * 1000));
-#endif
 				if (S_THth(n->suffix))
 					str_numth(s, s, S_TH_TYPE(n->suffix));
 				s += strlen(s);
 				break;
 			case DCH_US:		/* microsecond */
-#ifdef HAVE_INT64_TIMESTAMP
 				sprintf(s, "%06d", (int) in->fsec);
-#else
-				/* don't use rint() because we can't overflow 1000 */
-				sprintf(s, "%06d", (int) (in->fsec * 1000000));
-#endif
 				if (S_THth(n->suffix))
 					str_numth(s, s, S_TH_TYPE(n->suffix));
 				s += strlen(s);
@@ -3793,17 +3783,10 @@ do_to_timestamp(text *date_txt, text *fmt,
 		}
 	}
 
-#ifdef HAVE_INT64_TIMESTAMP
 	if (tmfc.ms)
 		*fsec += tmfc.ms * 1000;
 	if (tmfc.us)
 		*fsec += tmfc.us;
-#else
-	if (tmfc.ms)
-		*fsec += (double) tmfc.ms / 1000;
-	if (tmfc.us)
-		*fsec += (double) tmfc.us / 1000000;
-#endif
 
 	/* Range-check date fields according to bit mask computed above */
 	if (fmask != 0)
@@ -3826,12 +3809,7 @@ do_to_timestamp(text *date_txt, text *fmt,
 	if (tm->tm_hour < 0 || tm->tm_hour >= HOURS_PER_DAY ||
 		tm->tm_min < 0 || tm->tm_min >= MINS_PER_HOUR ||
 		tm->tm_sec < 0 || tm->tm_sec >= SECS_PER_MINUTE ||
-#ifdef HAVE_INT64_TIMESTAMP
-		*fsec < INT64CONST(0) || *fsec >= USECS_PER_SEC
-#else
-		*fsec < 0 || *fsec >= 1
-#endif
-		)
+		*fsec < INT64CONST(0) || *fsec >= USECS_PER_SEC)
 		DateTimeParseError(DTERR_FIELD_OVERFLOW, date_str, "timestamp");
 
 	DEBUG_TM(tm);

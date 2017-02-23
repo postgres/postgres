@@ -234,9 +234,6 @@ timestamp_out(PG_FUNCTION_ARGS)
 
 /*
  *		timestamp_recv			- converts external binary format to timestamp
- *
- * We make no attempt to provide compatibility between int and float
- * timestamp representations ...
  */
 Datum
 timestamp_recv(PG_FUNCTION_ARGS)
@@ -252,16 +249,7 @@ timestamp_recv(PG_FUNCTION_ARGS)
 			   *tm = &tt;
 	fsec_t		fsec;
 
-#ifdef HAVE_INT64_TIMESTAMP
 	timestamp = (Timestamp) pq_getmsgint64(buf);
-#else
-	timestamp = (Timestamp) pq_getmsgfloat8(buf);
-
-	if (isnan(timestamp))
-		ereport(ERROR,
-				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-				 errmsg("timestamp cannot be NaN")));
-#endif
 
 	/* range check: see if timestamp_out would like it */
 	if (TIMESTAMP_NOT_FINITE(timestamp))
@@ -287,11 +275,7 @@ timestamp_send(PG_FUNCTION_ARGS)
 	StringInfoData buf;
 
 	pq_begintypsend(&buf);
-#ifdef HAVE_INT64_TIMESTAMP
 	pq_sendint64(&buf, timestamp);
-#else
-	pq_sendfloat8(&buf, timestamp);
-#endif
 	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
 
@@ -348,7 +332,6 @@ timestamp_scale(PG_FUNCTION_ARGS)
 static void
 AdjustTimestampForTypmod(Timestamp *time, int32 typmod)
 {
-#ifdef HAVE_INT64_TIMESTAMP
 	static const int64 TimestampScales[MAX_TIMESTAMP_PRECISION + 1] = {
 		INT64CONST(1000000),
 		INT64CONST(100000),
@@ -368,17 +351,6 @@ AdjustTimestampForTypmod(Timestamp *time, int32 typmod)
 		INT64CONST(5),
 		INT64CONST(0)
 	};
-#else
-	static const double TimestampScales[MAX_TIMESTAMP_PRECISION + 1] = {
-		1,
-		10,
-		100,
-		1000,
-		10000,
-		100000,
-		1000000
-	};
-#endif
 
 	if (!TIMESTAMP_NOT_FINITE(*time)
 		&& (typmod != -1) && (typmod != MAX_TIMESTAMP_PRECISION))
@@ -389,14 +361,6 @@ AdjustTimestampForTypmod(Timestamp *time, int32 typmod)
 				  errmsg("timestamp(%d) precision must be between %d and %d",
 						 typmod, 0, MAX_TIMESTAMP_PRECISION)));
 
-		/*
-		 * Note: this round-to-nearest code is not completely consistent about
-		 * rounding values that are exactly halfway between integral values.
-		 * On most platforms, rint() will implement round-to-nearest-even, but
-		 * the integer code always rounds up (away from zero).  Is it worth
-		 * trying to be consistent?
-		 */
-#ifdef HAVE_INT64_TIMESTAMP
 		if (*time >= INT64CONST(0))
 		{
 			*time = ((*time + TimestampOffsets[typmod]) / TimestampScales[typmod]) *
@@ -407,9 +371,6 @@ AdjustTimestampForTypmod(Timestamp *time, int32 typmod)
 			*time = -((((-*time) + TimestampOffsets[typmod]) / TimestampScales[typmod])
 					  * TimestampScales[typmod]);
 		}
-#else
-		*time = rint((double) *time * TimestampScales[typmod]) / TimestampScales[typmod];
-#endif
 	}
 }
 
@@ -628,7 +589,6 @@ make_timestamp_internal(int year, int month, int day,
 						hour, min, sec)));
 
 	/* This should match tm2time */
-#ifdef HAVE_INT64_TIMESTAMP
 	time = (((hour * MINS_PER_HOUR + min) * SECS_PER_MINUTE)
 			* USECS_PER_SEC) + rint(sec * USECS_PER_SEC);
 
@@ -650,10 +610,6 @@ make_timestamp_internal(int year, int month, int day,
 				 errmsg("timestamp out of range: %d-%02d-%02d %d:%02d:%02g",
 						year, month, day,
 						hour, min, sec)));
-#else
-	time = ((hour * MINS_PER_HOUR + min) * SECS_PER_MINUTE) + sec;
-	result = date * SECS_PER_DAY + time;
-#endif
 
 	/* final range check catches just-out-of-range timestamps */
 	if (!IS_VALID_TIMESTAMP(result))
@@ -783,12 +739,8 @@ float8_timestamptz(PG_FUNCTION_ARGS)
 		/* Convert UNIX epoch to Postgres epoch */
 		seconds -= ((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY);
 
-#ifdef HAVE_INT64_TIMESTAMP
 		seconds = rint(seconds * USECS_PER_SEC);
 		result = (int64) seconds;
-#else
-		result = seconds;
-#endif
 
 		/* Recheck in case roundoff produces something just out of range */
 		if (!IS_VALID_TIMESTAMP(result))
@@ -831,9 +783,6 @@ timestamptz_out(PG_FUNCTION_ARGS)
 
 /*
  *		timestamptz_recv			- converts external binary format to timestamptz
- *
- * We make no attempt to provide compatibility between int and float
- * timestamp representations ...
  */
 Datum
 timestamptz_recv(PG_FUNCTION_ARGS)
@@ -850,11 +799,7 @@ timestamptz_recv(PG_FUNCTION_ARGS)
 			   *tm = &tt;
 	fsec_t		fsec;
 
-#ifdef HAVE_INT64_TIMESTAMP
 	timestamp = (TimestampTz) pq_getmsgint64(buf);
-#else
-	timestamp = (TimestampTz) pq_getmsgfloat8(buf);
-#endif
 
 	/* range check: see if timestamptz_out would like it */
 	if (TIMESTAMP_NOT_FINITE(timestamp))
@@ -880,11 +825,7 @@ timestamptz_send(PG_FUNCTION_ARGS)
 	StringInfoData buf;
 
 	pq_begintypsend(&buf);
-#ifdef HAVE_INT64_TIMESTAMP
 	pq_sendint64(&buf, timestamp);
-#else
-	pq_sendfloat8(&buf, timestamp);
-#endif
 	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
 
@@ -1047,11 +988,7 @@ interval_recv(PG_FUNCTION_ARGS)
 
 	interval = (Interval *) palloc(sizeof(Interval));
 
-#ifdef HAVE_INT64_TIMESTAMP
 	interval->time = pq_getmsgint64(buf);
-#else
-	interval->time = pq_getmsgfloat8(buf);
-#endif
 	interval->day = pq_getmsgint(buf, sizeof(interval->day));
 	interval->month = pq_getmsgint(buf, sizeof(interval->month));
 
@@ -1070,11 +1007,7 @@ interval_send(PG_FUNCTION_ARGS)
 	StringInfoData buf;
 
 	pq_begintypsend(&buf);
-#ifdef HAVE_INT64_TIMESTAMP
 	pq_sendint64(&buf, interval->time);
-#else
-	pq_sendfloat8(&buf, interval->time);
-#endif
 	pq_sendint(&buf, interval->day, sizeof(interval->day));
 	pq_sendint(&buf, interval->month, sizeof(interval->month));
 	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
@@ -1385,7 +1318,6 @@ interval_scale(PG_FUNCTION_ARGS)
 static void
 AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 {
-#ifdef HAVE_INT64_TIMESTAMP
 	static const int64 IntervalScales[MAX_INTERVAL_PRECISION + 1] = {
 		INT64CONST(1000000),
 		INT64CONST(100000),
@@ -1405,17 +1337,6 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 		INT64CONST(5),
 		INT64CONST(0)
 	};
-#else
-	static const double IntervalScales[MAX_INTERVAL_PRECISION + 1] = {
-		1,
-		10,
-		100,
-		1000,
-		10000,
-		100000,
-		1000000
-	};
-#endif
 
 	/*
 	 * Unspecified range and precision? Then not necessary to adjust. Setting
@@ -1473,21 +1394,13 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 		}
 		else if (range == INTERVAL_MASK(HOUR))
 		{
-#ifdef HAVE_INT64_TIMESTAMP
 			interval->time = (interval->time / USECS_PER_HOUR) *
 				USECS_PER_HOUR;
-#else
-			interval->time = ((int) (interval->time / SECS_PER_HOUR)) * (double) SECS_PER_HOUR;
-#endif
 		}
 		else if (range == INTERVAL_MASK(MINUTE))
 		{
-#ifdef HAVE_INT64_TIMESTAMP
 			interval->time = (interval->time / USECS_PER_MINUTE) *
 				USECS_PER_MINUTE;
-#else
-			interval->time = ((int) (interval->time / SECS_PER_MINUTE)) * (double) SECS_PER_MINUTE;
-#endif
 		}
 		else if (range == INTERVAL_MASK(SECOND))
 		{
@@ -1497,24 +1410,16 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 		else if (range == (INTERVAL_MASK(DAY) |
 						   INTERVAL_MASK(HOUR)))
 		{
-#ifdef HAVE_INT64_TIMESTAMP
 			interval->time = (interval->time / USECS_PER_HOUR) *
 				USECS_PER_HOUR;
-#else
-			interval->time = ((int) (interval->time / SECS_PER_HOUR)) * (double) SECS_PER_HOUR;
-#endif
 		}
 		/* DAY TO MINUTE */
 		else if (range == (INTERVAL_MASK(DAY) |
 						   INTERVAL_MASK(HOUR) |
 						   INTERVAL_MASK(MINUTE)))
 		{
-#ifdef HAVE_INT64_TIMESTAMP
 			interval->time = (interval->time / USECS_PER_MINUTE) *
 				USECS_PER_MINUTE;
-#else
-			interval->time = ((int) (interval->time / SECS_PER_MINUTE)) * (double) SECS_PER_MINUTE;
-#endif
 		}
 		/* DAY TO SECOND */
 		else if (range == (INTERVAL_MASK(DAY) |
@@ -1528,12 +1433,8 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 		else if (range == (INTERVAL_MASK(HOUR) |
 						   INTERVAL_MASK(MINUTE)))
 		{
-#ifdef HAVE_INT64_TIMESTAMP
 			interval->time = (interval->time / USECS_PER_MINUTE) *
 				USECS_PER_MINUTE;
-#else
-			interval->time = ((int) (interval->time / SECS_PER_MINUTE)) * (double) SECS_PER_MINUTE;
-#endif
 		}
 		/* HOUR TO SECOND */
 		else if (range == (INTERVAL_MASK(HOUR) |
@@ -1560,14 +1461,6 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 				   errmsg("interval(%d) precision must be between %d and %d",
 						  precision, 0, MAX_INTERVAL_PRECISION)));
 
-			/*
-			 * Note: this round-to-nearest code is not completely consistent
-			 * about rounding values that are exactly halfway between integral
-			 * values.  On most platforms, rint() will implement
-			 * round-to-nearest-even, but the integer code always rounds up
-			 * (away from zero).  Is it worth trying to be consistent?
-			 */
-#ifdef HAVE_INT64_TIMESTAMP
 			if (interval->time >= INT64CONST(0))
 			{
 				interval->time = ((interval->time +
@@ -1582,11 +1475,6 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 									IntervalScales[precision]) *
 								   IntervalScales[precision]);
 			}
-#else
-			interval->time = rint(((double) interval->time) *
-								  IntervalScales[precision]) /
-				IntervalScales[precision];
-#endif
 		}
 	}
 }
@@ -1619,16 +1507,10 @@ make_interval(PG_FUNCTION_ARGS)
 	result->month = years * MONTHS_PER_YEAR + months;
 	result->day = weeks * 7 + days;
 
-#ifdef HAVE_INT64_TIMESTAMP
 	secs = rint(secs * USECS_PER_SEC);
 	result->time = hours * ((int64) SECS_PER_HOUR * USECS_PER_SEC) +
 		mins * ((int64) SECS_PER_MINUTE * USECS_PER_SEC) +
 		(int64) secs;
-#else
-	result->time = hours * (double) SECS_PER_HOUR +
-		mins * (double) SECS_PER_MINUTE +
-		secs;
-#endif
 
 	PG_RETURN_INTERVAL_P(result);
 }
@@ -1693,59 +1575,10 @@ GetCurrentTimestamp(void)
 
 	result = (TimestampTz) tp.tv_sec -
 		((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY);
-
-#ifdef HAVE_INT64_TIMESTAMP
-	result = (result * USECS_PER_SEC) + tp.tv_usec;
-#else
-	result = result + (tp.tv_usec / 1000000.0);
-#endif
-
-	return result;
-}
-
-/*
- * GetCurrentIntegerTimestamp -- get the current operating system time as int64
- *
- * Result is the number of microseconds since the Postgres epoch. If compiled
- * with --enable-integer-datetimes, this is identical to GetCurrentTimestamp(),
- * and is implemented as a macro.
- */
-#ifndef HAVE_INT64_TIMESTAMP
-int64
-GetCurrentIntegerTimestamp(void)
-{
-	int64		result;
-	struct timeval tp;
-
-	gettimeofday(&tp, NULL);
-
-	result = (int64) tp.tv_sec -
-		((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY);
-
 	result = (result * USECS_PER_SEC) + tp.tv_usec;
 
 	return result;
 }
-#endif
-
-/*
- * IntegerTimestampToTimestampTz -- convert an int64 timestamp to native format
- *
- * When compiled with --enable-integer-datetimes, this is implemented as a
- * no-op macro.
- */
-#ifndef HAVE_INT64_TIMESTAMP
-TimestampTz
-IntegerTimestampToTimestampTz(int64 timestamp)
-{
-	TimestampTz result;
-
-	result = timestamp / USECS_PER_SEC;
-	result += (timestamp % USECS_PER_SEC) / 1000000.0;
-
-	return result;
-}
-#endif
 
 /*
  * GetSQLCurrentTimestamp -- implements CURRENT_TIMESTAMP, CURRENT_TIMESTAMP(n)
@@ -1799,13 +1632,8 @@ TimestampDifference(TimestampTz start_time, TimestampTz stop_time,
 	}
 	else
 	{
-#ifdef HAVE_INT64_TIMESTAMP
 		*secs = (long) (diff / USECS_PER_SEC);
 		*microsecs = (int) (diff % USECS_PER_SEC);
-#else
-		*secs = (long) diff;
-		*microsecs = (int) ((diff - *secs) * 1000000.0);
-#endif
 	}
 }
 
@@ -1823,11 +1651,7 @@ TimestampDifferenceExceeds(TimestampTz start_time,
 {
 	TimestampTz diff = stop_time - start_time;
 
-#ifdef HAVE_INT64_TIMESTAMP
 	return (diff >= msec * INT64CONST(1000));
-#else
-	return (diff * 1000.0 >= msec);
-#endif
 }
 
 /*
@@ -1848,10 +1672,7 @@ time_t_to_timestamptz(pg_time_t tm)
 
 	result = (TimestampTz) tm -
 		((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY);
-
-#ifdef HAVE_INT64_TIMESTAMP
 	result *= USECS_PER_SEC;
-#endif
 
 	return result;
 }
@@ -1871,13 +1692,8 @@ timestamptz_to_time_t(TimestampTz t)
 {
 	pg_time_t	result;
 
-#ifdef HAVE_INT64_TIMESTAMP
 	result = (pg_time_t) (t / USECS_PER_SEC +
 				 ((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY));
-#else
-	result = (pg_time_t) (t +
-				 ((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY));
-#endif
 
 	return result;
 }
@@ -1917,21 +1733,12 @@ dt2time(Timestamp jd, int *hour, int *min, int *sec, fsec_t *fsec)
 
 	time = jd;
 
-#ifdef HAVE_INT64_TIMESTAMP
 	*hour = time / USECS_PER_HOUR;
 	time -= (*hour) * USECS_PER_HOUR;
 	*min = time / USECS_PER_MINUTE;
 	time -= (*min) * USECS_PER_MINUTE;
 	*sec = time / USECS_PER_SEC;
 	*fsec = time - (*sec * USECS_PER_SEC);
-#else
-	*hour = time / SECS_PER_HOUR;
-	time -= (*hour) * SECS_PER_HOUR;
-	*min = time / SECS_PER_MINUTE;
-	time -= (*min) * SECS_PER_MINUTE;
-	*sec = time;
-	*fsec = time - *sec;
-#endif
 }	/* dt2time() */
 
 
@@ -1957,7 +1764,6 @@ timestamp2tm(Timestamp dt, int *tzp, struct pg_tm * tm, fsec_t *fsec, const char
 	if (attimezone == NULL)
 		attimezone = session_timezone;
 
-#ifdef HAVE_INT64_TIMESTAMP
 	time = dt;
 	TMODULO(time, date, USECS_PER_DAY);
 
@@ -1976,42 +1782,6 @@ timestamp2tm(Timestamp dt, int *tzp, struct pg_tm * tm, fsec_t *fsec, const char
 
 	j2date((int) date, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
 	dt2time(time, &tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
-#else
-	time = dt;
-	TMODULO(time, date, (double) SECS_PER_DAY);
-
-	if (time < 0)
-	{
-		time += SECS_PER_DAY;
-		date -= 1;
-	}
-
-	/* add offset to go from J2000 back to standard Julian date */
-	date += POSTGRES_EPOCH_JDATE;
-
-recalc_d:
-	/* Julian day routine does not work for negative Julian days */
-	if (date < 0 || date > (Timestamp) INT_MAX)
-		return -1;
-
-	j2date((int) date, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
-recalc_t:
-	dt2time(time, &tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
-
-	*fsec = TSROUND(*fsec);
-	/* roundoff may need to propagate to higher-order fields */
-	if (*fsec >= 1.0)
-	{
-		time = ceil(time);
-		if (time >= (double) SECS_PER_DAY)
-		{
-			time = 0;
-			date += 1;
-			goto recalc_d;
-		}
-		goto recalc_t;
-	}
-#endif
 
 	/* Done if no TZ conversion wanted */
 	if (tzp == NULL)
@@ -2034,13 +1804,8 @@ recalc_t:
 	 * coding avoids hardwiring any assumptions about the width of pg_time_t,
 	 * so it should behave sanely on machines without int64.
 	 */
-#ifdef HAVE_INT64_TIMESTAMP
 	dt = (dt - *fsec) / USECS_PER_SEC +
 		(POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY;
-#else
-	dt = rint(dt - *fsec +
-			  (POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY);
-#endif
 	utime = (pg_time_t) dt;
 	if ((Timestamp) utime == dt)
 	{
@@ -2100,7 +1865,6 @@ tm2timestamp(struct pg_tm * tm, fsec_t fsec, int *tzp, Timestamp *result)
 	date = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - POSTGRES_EPOCH_JDATE;
 	time = time2t(tm->tm_hour, tm->tm_min, tm->tm_sec, fsec);
 
-#ifdef HAVE_INT64_TIMESTAMP
 	*result = date * USECS_PER_DAY + time;
 	/* check for major overflow */
 	if ((*result - time) / USECS_PER_DAY != date)
@@ -2116,9 +1880,6 @@ tm2timestamp(struct pg_tm * tm, fsec_t fsec, int *tzp, Timestamp *result)
 		*result = 0;			/* keep compiler quiet */
 		return -1;
 	}
-#else
-	*result = date * SECS_PER_DAY + time;
-#endif
 	if (tzp != NULL)
 		*result = dt2local(*result, -(*tzp));
 
@@ -2147,7 +1908,6 @@ interval2tm(Interval span, struct pg_tm * tm, fsec_t *fsec)
 	tm->tm_mday = span.day;
 	time = span.time;
 
-#ifdef HAVE_INT64_TIMESTAMP
 	tfrac = time / USECS_PER_HOUR;
 	time -= tfrac * USECS_PER_HOUR;
 	tm->tm_hour = tfrac;
@@ -2161,23 +1921,6 @@ interval2tm(Interval span, struct pg_tm * tm, fsec_t *fsec)
 	tfrac = time / USECS_PER_SEC;
 	*fsec = time - (tfrac * USECS_PER_SEC);
 	tm->tm_sec = tfrac;
-#else
-recalc:
-	TMODULO(time, tfrac, (double) SECS_PER_HOUR);
-	tm->tm_hour = tfrac;		/* could overflow ... */
-	TMODULO(time, tfrac, (double) SECS_PER_MINUTE);
-	tm->tm_min = tfrac;
-	TMODULO(time, tfrac, 1.0);
-	tm->tm_sec = tfrac;
-	time = TSROUND(time);
-	/* roundoff may need to propagate to higher-order fields */
-	if (time >= 1.0)
-	{
-		time = ceil(span.time);
-		goto recalc;
-	}
-	*fsec = time;
-#endif
 
 	return 0;
 }
@@ -2191,15 +1934,9 @@ tm2interval(struct pg_tm * tm, fsec_t fsec, Interval *span)
 		return -1;
 	span->month = total_months;
 	span->day = tm->tm_mday;
-#ifdef HAVE_INT64_TIMESTAMP
 	span->time = (((((tm->tm_hour * INT64CONST(60)) +
 					 tm->tm_min) * INT64CONST(60)) +
 				   tm->tm_sec) * USECS_PER_SEC) + fsec;
-#else
-	span->time = (((tm->tm_hour * (double) MINS_PER_HOUR) +
-				   tm->tm_min) * (double) SECS_PER_MINUTE) +
-		tm->tm_sec + fsec;
-#endif
 
 	return 0;
 }
@@ -2207,21 +1944,13 @@ tm2interval(struct pg_tm * tm, fsec_t fsec, Interval *span)
 static TimeOffset
 time2t(const int hour, const int min, const int sec, const fsec_t fsec)
 {
-#ifdef HAVE_INT64_TIMESTAMP
 	return (((((hour * MINS_PER_HOUR) + min) * SECS_PER_MINUTE) + sec) * USECS_PER_SEC) + fsec;
-#else
-	return (((hour * MINS_PER_HOUR) + min) * SECS_PER_MINUTE) + sec + fsec;
-#endif
 }
 
 static Timestamp
 dt2local(Timestamp dt, int tz)
 {
-#ifdef HAVE_INT64_TIMESTAMP
 	dt -= (tz * USECS_PER_SEC);
-#else
-	dt -= tz;
-#endif
 	return dt;
 }
 
@@ -2288,44 +2017,11 @@ SetEpochTimestamp(void)
  * The comparison functions are among them. - thomas 2001-09-25
  *
  *		timestamp_relop - is timestamp1 relop timestamp2
- *
- *		collate invalid timestamp at the end
  */
 int
 timestamp_cmp_internal(Timestamp dt1, Timestamp dt2)
 {
-#ifdef HAVE_INT64_TIMESTAMP
 	return (dt1 < dt2) ? -1 : ((dt1 > dt2) ? 1 : 0);
-#else
-
-	/*
-	 * When using float representation, we have to be wary of NaNs.
-	 *
-	 * We consider all NANs to be equal and larger than any non-NAN. This is
-	 * somewhat arbitrary; the important thing is to have a consistent sort
-	 * order.
-	 */
-	if (isnan(dt1))
-	{
-		if (isnan(dt2))
-			return 0;			/* NAN = NAN */
-		else
-			return 1;			/* NAN > non-NAN */
-	}
-	else if (isnan(dt2))
-	{
-		return -1;				/* non-NAN < NAN */
-	}
-	else
-	{
-		if (dt1 > dt2)
-			return 1;
-		else if (dt1 < dt2)
-			return -1;
-		else
-			return 0;
-	}
-#endif
 }
 
 Datum
@@ -2413,12 +2109,7 @@ timestamp_sortsupport(PG_FUNCTION_ARGS)
 Datum
 timestamp_hash(PG_FUNCTION_ARGS)
 {
-	/* We can use either hashint8 or hashfloat8 directly */
-#ifdef HAVE_INT64_TIMESTAMP
 	return hashint8(fcinfo);
-#else
-	return hashfloat8(fcinfo);
-#endif
 }
 
 
@@ -2597,8 +2288,6 @@ timestamptz_cmp_timestamp(PG_FUNCTION_ARGS)
 
 /*
  *		interval_relop	- is interval1 relop interval2
- *
- *		collate invalid interval at the end
  */
 static inline TimeOffset
 interval_cmp_value(const Interval *interval)
@@ -2606,14 +2295,8 @@ interval_cmp_value(const Interval *interval)
 	TimeOffset	span;
 
 	span = interval->time;
-
-#ifdef HAVE_INT64_TIMESTAMP
 	span += interval->month * INT64CONST(30) * USECS_PER_DAY;
 	span += interval->day * INT64CONST(24) * USECS_PER_HOUR;
-#else
-	span += interval->month * ((double) DAYS_PER_MONTH * SECS_PER_DAY);
-	span += interval->day * ((double) HOURS_PER_DAY * SECS_PER_HOUR);
-#endif
 
 	return span;
 }
@@ -2695,7 +2378,7 @@ interval_cmp(PG_FUNCTION_ARGS)
  *
  * We must produce equal hashvals for values that interval_cmp_internal()
  * considers equal.  So, compute the net span the same way it does,
- * and then hash that, using either int64 or float8 hashing.
+ * and then hash that.
  */
 Datum
 interval_hash(PG_FUNCTION_ARGS)
@@ -2703,11 +2386,7 @@ interval_hash(PG_FUNCTION_ARGS)
 	Interval   *interval = PG_GETARG_INTERVAL_P(0);
 	TimeOffset	span = interval_cmp_value(interval);
 
-#ifdef HAVE_INT64_TIMESTAMP
 	return DirectFunctionCall1(hashint8, Int64GetDatumFast(span));
-#else
-	return DirectFunctionCall1(hashfloat8, Float8GetDatumFast(span));
-#endif
 }
 
 /* overlaps_timestamp() --- implements the SQL OVERLAPS operator.
@@ -2946,11 +2625,7 @@ interval_justify_interval(PG_FUNCTION_ARGS)
 	result->day = span->day;
 	result->time = span->time;
 
-#ifdef HAVE_INT64_TIMESTAMP
 	TMODULO(result->time, wholeday, USECS_PER_DAY);
-#else
-	TMODULO(result->time, wholeday, (double) SECS_PER_DAY);
-#endif
 	result->day += wholeday;	/* could overflow... */
 
 	wholemonth = result->day / DAYS_PER_MONTH;
@@ -2972,20 +2647,12 @@ interval_justify_interval(PG_FUNCTION_ARGS)
 
 	if (result->day > 0 && result->time < 0)
 	{
-#ifdef HAVE_INT64_TIMESTAMP
 		result->time += USECS_PER_DAY;
-#else
-		result->time += (double) SECS_PER_DAY;
-#endif
 		result->day--;
 	}
 	else if (result->day < 0 && result->time > 0)
 	{
-#ifdef HAVE_INT64_TIMESTAMP
 		result->time -= USECS_PER_DAY;
-#else
-		result->time -= (double) SECS_PER_DAY;
-#endif
 		result->day++;
 	}
 
@@ -3012,29 +2679,17 @@ interval_justify_hours(PG_FUNCTION_ARGS)
 	result->day = span->day;
 	result->time = span->time;
 
-#ifdef HAVE_INT64_TIMESTAMP
 	TMODULO(result->time, wholeday, USECS_PER_DAY);
-#else
-	TMODULO(result->time, wholeday, (double) SECS_PER_DAY);
-#endif
 	result->day += wholeday;	/* could overflow... */
 
 	if (result->day > 0 && result->time < 0)
 	{
-#ifdef HAVE_INT64_TIMESTAMP
 		result->time += USECS_PER_DAY;
-#else
-		result->time += (double) SECS_PER_DAY;
-#endif
 		result->day--;
 	}
 	else if (result->day < 0 && result->time > 0)
 	{
-#ifdef HAVE_INT64_TIMESTAMP
 		result->time -= USECS_PER_DAY;
-#else
-		result->time -= (double) SECS_PER_DAY;
-#endif
 		result->day++;
 	}
 
@@ -3492,16 +3147,12 @@ interval_mul(PG_FUNCTION_ARGS)
 
 	/* cascade units down */
 	result->day += (int32) month_remainder_days;
-#ifdef HAVE_INT64_TIMESTAMP
 	result_double = rint(span->time * factor + sec_remainder * USECS_PER_SEC);
 	if (result_double > PG_INT64_MAX || result_double < PG_INT64_MIN)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("interval out of range")));
 	result->time = (int64) result_double;
-#else
-	result->time = span->time * factor + sec_remainder;
-#endif
 
 	PG_RETURN_INTERVAL_P(result);
 }
@@ -3553,12 +3204,7 @@ interval_div(PG_FUNCTION_ARGS)
 
 	/* cascade units down */
 	result->day += (int32) month_remainder_days;
-#ifdef HAVE_INT64_TIMESTAMP
 	result->time = rint(span->time / factor + sec_remainder * USECS_PER_SEC);
-#else
-	/* See TSROUND comment in interval_mul(). */
-	result->time = span->time / factor + sec_remainder;
-#endif
 
 	PG_RETURN_INTERVAL_P(result);
 }
@@ -3571,11 +3217,6 @@ interval_div(PG_FUNCTION_ARGS)
  * intervals, where the first is the running sum and the second contains
  * the number of values so far in its 'time' field.  This is a bit ugly
  * but it beats inventing a specialized datatype for the purpose.
- *
- * NOTE: The inverse transition function cannot guarantee exact results
- * when using float8 timestamps.  However, int8 timestamps are now the
- * norm, and the probable range of values is not so wide that disastrous
- * cancellation is likely even with float8, so we'll ignore the risk.
  */
 
 Datum
@@ -3776,11 +3417,7 @@ timestamp_age(PG_FUNCTION_ARGS)
 		/* propagate any negative fields into the next higher field */
 		while (fsec < 0)
 		{
-#ifdef HAVE_INT64_TIMESTAMP
 			fsec += USECS_PER_SEC;
-#else
-			fsec += 1.0;
-#endif
 			tm->tm_sec--;
 		}
 
@@ -3901,11 +3538,7 @@ timestamptz_age(PG_FUNCTION_ARGS)
 		/* propagate any negative fields into the next higher field */
 		while (fsec < 0)
 		{
-#ifdef HAVE_INT64_TIMESTAMP
 			fsec += USECS_PER_SEC;
-#else
-			fsec += 1.0;
-#endif
 			tm->tm_sec--;
 		}
 
@@ -4076,17 +3709,10 @@ timestamp_trunc(PG_FUNCTION_ARGS)
 				break;
 
 			case DTK_MILLISEC:
-#ifdef HAVE_INT64_TIMESTAMP
 				fsec = (fsec / 1000) * 1000;
-#else
-				fsec = floor(fsec * 1000) / 1000;
-#endif
 				break;
 
 			case DTK_MICROSEC:
-#ifndef HAVE_INT64_TIMESTAMP
-				fsec = floor(fsec * 1000000) / 1000000;
-#endif
 				break;
 
 			default:
@@ -4229,18 +3855,10 @@ timestamptz_trunc(PG_FUNCTION_ARGS)
 			case DTK_SECOND:
 				fsec = 0;
 				break;
-
 			case DTK_MILLISEC:
-#ifdef HAVE_INT64_TIMESTAMP
 				fsec = (fsec / 1000) * 1000;
-#else
-				fsec = floor(fsec * 1000) / 1000;
-#endif
 				break;
 			case DTK_MICROSEC:
-#ifndef HAVE_INT64_TIMESTAMP
-				fsec = floor(fsec * 1000000) / 1000000;
-#endif
 				break;
 
 			default:
@@ -4326,18 +3944,10 @@ interval_trunc(PG_FUNCTION_ARGS)
 				case DTK_SECOND:
 					fsec = 0;
 					break;
-
 				case DTK_MILLISEC:
-#ifdef HAVE_INT64_TIMESTAMP
 					fsec = (fsec / 1000) * 1000;
-#else
-					fsec = floor(fsec * 1000) / 1000;
-#endif
 					break;
 				case DTK_MICROSEC:
-#ifndef HAVE_INT64_TIMESTAMP
-					fsec = floor(fsec * 1000000) / 1000000;
-#endif
 					break;
 
 				default:
@@ -4669,27 +4279,15 @@ timestamp_part(PG_FUNCTION_ARGS)
 		switch (val)
 		{
 			case DTK_MICROSEC:
-#ifdef HAVE_INT64_TIMESTAMP
 				result = tm->tm_sec * 1000000.0 + fsec;
-#else
-				result = (tm->tm_sec + fsec) * 1000000;
-#endif
 				break;
 
 			case DTK_MILLISEC:
-#ifdef HAVE_INT64_TIMESTAMP
 				result = tm->tm_sec * 1000.0 + fsec / 1000.0;
-#else
-				result = (tm->tm_sec + fsec) * 1000;
-#endif
 				break;
 
 			case DTK_SECOND:
-#ifdef HAVE_INT64_TIMESTAMP
 				result = tm->tm_sec + fsec / 1000000.0;
-#else
-				result = tm->tm_sec + fsec;
-#endif
 				break;
 
 			case DTK_MINUTE:
@@ -4762,13 +4360,8 @@ timestamp_part(PG_FUNCTION_ARGS)
 
 			case DTK_JULIAN:
 				result = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday);
-#ifdef HAVE_INT64_TIMESTAMP
 				result += ((((tm->tm_hour * MINS_PER_HOUR) + tm->tm_min) * SECS_PER_MINUTE) +
 					tm->tm_sec + (fsec / 1000000.0)) / (double) SECS_PER_DAY;
-#else
-				result += ((((tm->tm_hour * MINS_PER_HOUR) + tm->tm_min) * SECS_PER_MINUTE) +
-						   tm->tm_sec + fsec) / (double) SECS_PER_DAY;
-#endif
 				break;
 
 			case DTK_ISOYEAR:
@@ -4812,15 +4405,11 @@ timestamp_part(PG_FUNCTION_ARGS)
 		{
 			case DTK_EPOCH:
 				epoch = SetEpochTimestamp();
-#ifdef HAVE_INT64_TIMESTAMP
 				/* try to avoid precision loss in subtraction */
 				if (timestamp < (PG_INT64_MAX + epoch))
 					result = (timestamp - epoch) / 1000000.0;
 				else
 					result = ((float8) timestamp - epoch) / 1000000.0;
-#else
-				result = timestamp - epoch;
-#endif
 				break;
 
 			default:
@@ -4906,27 +4495,15 @@ timestamptz_part(PG_FUNCTION_ARGS)
 				break;
 
 			case DTK_MICROSEC:
-#ifdef HAVE_INT64_TIMESTAMP
 				result = tm->tm_sec * 1000000.0 + fsec;
-#else
-				result = (tm->tm_sec + fsec) * 1000000;
-#endif
 				break;
 
 			case DTK_MILLISEC:
-#ifdef HAVE_INT64_TIMESTAMP
 				result = tm->tm_sec * 1000.0 + fsec / 1000.0;
-#else
-				result = (tm->tm_sec + fsec) * 1000;
-#endif
 				break;
 
 			case DTK_SECOND:
-#ifdef HAVE_INT64_TIMESTAMP
 				result = tm->tm_sec + fsec / 1000000.0;
-#else
-				result = tm->tm_sec + fsec;
-#endif
 				break;
 
 			case DTK_MINUTE:
@@ -4987,13 +4564,8 @@ timestamptz_part(PG_FUNCTION_ARGS)
 
 			case DTK_JULIAN:
 				result = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday);
-#ifdef HAVE_INT64_TIMESTAMP
 				result += ((((tm->tm_hour * MINS_PER_HOUR) + tm->tm_min) * SECS_PER_MINUTE) +
 					tm->tm_sec + (fsec / 1000000.0)) / (double) SECS_PER_DAY;
-#else
-				result += ((((tm->tm_hour * MINS_PER_HOUR) + tm->tm_min) * SECS_PER_MINUTE) +
-						   tm->tm_sec + fsec) / (double) SECS_PER_DAY;
-#endif
 				break;
 
 			case DTK_ISOYEAR:
@@ -5035,15 +4607,11 @@ timestamptz_part(PG_FUNCTION_ARGS)
 		{
 			case DTK_EPOCH:
 				epoch = SetEpochTimestamp();
-#ifdef HAVE_INT64_TIMESTAMP
 				/* try to avoid precision loss in subtraction */
 				if (timestamp < (PG_INT64_MAX + epoch))
 					result = (timestamp - epoch) / 1000000.0;
 				else
 					result = ((float8) timestamp - epoch) / 1000000.0;
-#else
-				result = timestamp - epoch;
-#endif
 				break;
 
 			default:
@@ -5099,27 +4667,15 @@ interval_part(PG_FUNCTION_ARGS)
 			switch (val)
 			{
 				case DTK_MICROSEC:
-#ifdef HAVE_INT64_TIMESTAMP
 					result = tm->tm_sec * 1000000.0 + fsec;
-#else
-					result = (tm->tm_sec + fsec) * 1000000;
-#endif
 					break;
 
 				case DTK_MILLISEC:
-#ifdef HAVE_INT64_TIMESTAMP
 					result = tm->tm_sec * 1000.0 + fsec / 1000.0;
-#else
-					result = (tm->tm_sec + fsec) * 1000;
-#endif
 					break;
 
 				case DTK_SECOND:
-#ifdef HAVE_INT64_TIMESTAMP
 					result = tm->tm_sec + fsec / 1000000.0;
-#else
-					result = tm->tm_sec + fsec;
-#endif
 					break;
 
 				case DTK_MINUTE:
@@ -5178,11 +4734,7 @@ interval_part(PG_FUNCTION_ARGS)
 	}
 	else if (type == RESERV && val == DTK_EPOCH)
 	{
-#ifdef HAVE_INT64_TIMESTAMP
 		result = interval->time / 1000000.0;
-#else
-		result = interval->time;
-#endif
 		result += ((double) DAYS_PER_YEAR * SECS_PER_DAY) * (interval->month / MONTHS_PER_YEAR);
 		result += ((double) DAYS_PER_MONTH * SECS_PER_DAY) * (interval->month % MONTHS_PER_YEAR);
 		result += ((double) SECS_PER_DAY) * interval->day;
@@ -5338,11 +4890,7 @@ timestamp_izone(PG_FUNCTION_ARGS)
 				 DatumGetCString(DirectFunctionCall1(interval_out,
 												  PointerGetDatum(zone))))));
 
-#ifdef HAVE_INT64_TIMESTAMP
 	tz = zone->time / USECS_PER_SEC;
-#else
-	tz = zone->time;
-#endif
 
 	result = dt2local(timestamp, tz);
 
@@ -5539,11 +5087,7 @@ timestamptz_izone(PG_FUNCTION_ARGS)
 				 DatumGetCString(DirectFunctionCall1(interval_out,
 												  PointerGetDatum(zone))))));
 
-#ifdef HAVE_INT64_TIMESTAMP
 	tz = -(zone->time / USECS_PER_SEC);
-#else
-	tz = -zone->time;
-#endif
 
 	result = dt2local(timestamp, tz);
 

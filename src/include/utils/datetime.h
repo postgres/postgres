@@ -244,23 +244,15 @@ do { \
 } while(0)
 
 /* TMODULO()
- * Like FMODULO(), but work on the timestamp datatype (either int64 or float8).
+ * Like FMODULO(), but work on the timestamp datatype (now always int64).
  * We assume that int64 follows the C99 semantics for division (negative
  * quotients truncate towards zero).
  */
-#ifdef HAVE_INT64_TIMESTAMP
 #define TMODULO(t,q,u) \
 do { \
 	(q) = ((t) / (u)); \
 	if ((q) != 0) (t) -= ((q) * (u)); \
 } while(0)
-#else
-#define TMODULO(t,q,u) \
-do { \
-	(q) = (((t) < 0) ? ceil((t) / (u)) : floor((t) / (u))); \
-	if ((q) != 0) (t) -= rint((q) * (u)); \
-} while(0)
-#endif
 
 /*
  * Date/time validation

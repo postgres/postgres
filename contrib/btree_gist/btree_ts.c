@@ -153,11 +153,7 @@ ts_dist(PG_FUNCTION_ARGS)
 
 		p->day = INT_MAX;
 		p->month = INT_MAX;
-#ifdef HAVE_INT64_TIMESTAMP
 		p->time = PG_INT64_MAX;
-#else
-		p->time = DBL_MAX;
-#endif
 		PG_RETURN_INTERVAL_P(p);
 	}
 	else
@@ -181,11 +177,7 @@ tstz_dist(PG_FUNCTION_ARGS)
 
 		p->day = INT_MAX;
 		p->month = INT_MAX;
-#ifdef HAVE_INT64_TIMESTAMP
 		p->time = PG_INT64_MAX;
-#else
-		p->time = DBL_MAX;
-#endif
 		PG_RETURN_INTERVAL_P(p);
 	}
 
