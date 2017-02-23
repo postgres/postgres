@@ -956,28 +956,6 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term><option>--disable-integer-datetimes</option></term>
-       <listitem>
-        <para>
-         Disable support for 64-bit integer storage for timestamps and
-         intervals, and store datetime values as floating-point
-         numbers instead. Floating-point datetime storage was the
-         default in <productname>PostgreSQL</productname> releases
-         prior to 8.4, but it is now deprecated, because it does not
-         support microsecond precision for the full range of
-         <type>timestamp</type> values. However, integer-based
-         datetime storage requires a 64-bit integer type. Therefore,
-         this option can be used when no such type is available, or
-         for compatibility with applications written for prior
-         versions of <productname>PostgreSQL</productname>. See
-         <![%standalone-include[the documentation about datetime datatypes]]>
-         <![%standalone-ignore[<xref linkend="datatype-datetime">]]>
-         for more information.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
        <term><option>--disable-float4-byval</option></term>
        <listitem>
         <para>

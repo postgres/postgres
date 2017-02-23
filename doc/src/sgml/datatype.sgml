@@ -1580,7 +1580,7 @@ SELECT E'\\xDEADBEEF';
         <entry>both date and time (no time zone)</entry>
         <entry>4713 BC</entry>
         <entry>294276 AD</entry>
-        <entry>1 microsecond / 14 digits</entry>
+        <entry>1 microsecond</entry>
        </row>
        <row>
         <entry><type>timestamp [ (<replaceable>p</replaceable>) ] with time zone</type></entry>
@@ -1588,7 +1588,7 @@ SELECT E'\\xDEADBEEF';
         <entry>both date and time, with time zone</entry>
         <entry>4713 BC</entry>
         <entry>294276 AD</entry>
-        <entry>1 microsecond / 14 digits</entry>
+        <entry>1 microsecond</entry>
        </row>
        <row>
         <entry><type>date</type></entry>
@@ -1604,15 +1604,15 @@ SELECT E'\\xDEADBEEF';
         <entry>time of day (no date)</entry>
         <entry>00:00:00</entry>
         <entry>24:00:00</entry>
-        <entry>1 microsecond / 14 digits</entry>
+        <entry>1 microsecond</entry>
        </row>
        <row>
         <entry><type>time [ (<replaceable>p</replaceable>) ] with time zone</type></entry>
         <entry>12 bytes</entry>
-        <entry>times of day only, with time zone</entry>
+        <entry>time of day (no date), with time zone</entry>
         <entry>00:00:00+1459</entry>
         <entry>24:00:00-1459</entry>
-        <entry>1 microsecond / 14 digits</entry>
+        <entry>1 microsecond</entry>
        </row>
        <row>
         <entry><type>interval [ <replaceable>fields</replaceable> ] [ (<replaceable>p</replaceable>) ]</type></entry>
@@ -1620,7 +1620,7 @@ SELECT E'\\xDEADBEEF';
         <entry>time interval</entry>
         <entry>-178000000 years</entry>
         <entry>178000000 years</entry>
-        <entry>1 microsecond / 14 digits</entry>
+        <entry>1 microsecond</entry>
        </row>
       </tbody>
      </tgroup>
@@ -1643,41 +1643,7 @@ SELECT E'\\xDEADBEEF';
     <replaceable>p</replaceable> which specifies the number of
     fractional digits retained in the seconds field. By default, there
     is no explicit bound on precision.  The allowed range of
-    <replaceable>p</replaceable> is from 0 to 6 for the
-    <type>timestamp</type> and <type>interval</type> types.
-   </para>
-
-   <note>
-   <para>
-    When <type>timestamp</> values are stored as eight-byte integers
-    (currently the default), microsecond precision is available over
-    the full range of values.  In this case, the internal representation
-    is the number of microseconds before or after midnight 2000-01-01.
-    When <type>timestamp</> values are stored as double precision
-    floating-point numbers (a deprecated compile-time option), the
-    internal representation is the number of seconds before or after
-    midnight 2000-01-01.  With this representation, the effective limit
-    of precision might be less than 6; in practice,
-    microsecond precision is achieved for dates within a few
-    years of 2000-01-01, but the precision degrades for dates further
-    away. Note that using floating-point datetimes allows a larger
-    range of <type>timestamp</type> values to be represented than
-    shown above: from 4713 BC up to 5874897 AD.
-   </para>
-
-   <para>
-    The same compile-time option also determines whether
-    <type>time</type> and <type>interval</type> values are stored as
-    floating-point numbers or eight-byte integers.  In the
-    floating-point case, large <type>interval</type> values degrade in
-    precision as the size of the interval increases.
-   </para>
-   </note>
-
-   <para>
-    For the <type>time</type> types, the allowed range of
-    <replaceable>p</replaceable> is from 0 to 6 when eight-byte integer
-    storage is used, or from 0 to 10 when floating-point storage is used.
+    <replaceable>p</replaceable> is from 0 to 6.
    </para>
 
    <para>
@@ -1760,9 +1726,10 @@ MINUTE TO SECOND
      specification giving the number of
      fractional digits in the seconds field. Precision can be
      specified for <type>time</type>, <type>timestamp</type>, and
-     <type>interval</type> types.  The allowed values are mentioned
-     above.  If no precision is specified in a constant specification,
-     it defaults to the precision of the literal value.
+     <type>interval</type> types, and can range from 0 to 6.
+     If no precision is specified in a constant specification,
+     it defaults to the precision of the literal value (but not
+     more than 6 digits).
     </para>
 
     <sect3>

@@ -625,10 +625,6 @@
 /* Define to use /dev/urandom for random number generation */
 /* #undef USE_DEV_URANDOM */
 
-/* Define to 1 if you want 64-bit integer timestamp and interval support.
-   (--enable-integer-datetimes) */
-/* #undef USE_INTEGER_DATETIMES */
-
 /* Define to 1 to build with LDAP support. (--with-ldap) */
 /* #undef USE_LDAP */
 

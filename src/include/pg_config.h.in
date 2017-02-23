@@ -831,10 +831,6 @@
    (--enable-float8-byval) */
 #undef USE_FLOAT8_BYVAL
 
-/* Define to 1 if you want 64-bit integer timestamp and interval support.
-   (--enable-integer-datetimes) */
-#undef USE_INTEGER_DATETIMES
-
 /* Define to 1 to build with LDAP support. (--with-ldap) */
 #undef USE_LDAP
 

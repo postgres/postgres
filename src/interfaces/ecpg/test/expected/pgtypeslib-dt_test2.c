@@ -145,10 +145,8 @@ main(void)
 				sprintf(t, "%s %s", dates[i], times[j]);
 				ts1 = PGTYPEStimestamp_from_asc(t, NULL);
 				text = PGTYPEStimestamp_to_asc(ts1);
-				/* skip outputs sensitive to USE_INTEGER_DATETIMES */
-				if (i != 19 || (j != 3 && j != 4))
-					printf("TS[%d,%d]: %s\n",
-						i, j, errno ? "-" : text);
+				printf("TS[%d,%d]: %s\n",
+				       i, j, errno ? "-" : text);
 				free(text);
 				free(t);
 			}

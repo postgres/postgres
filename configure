@@ -1473,7 +1473,7 @@ Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --disable-integer-datetimes
-                          disable 64-bit integer date/time support
+                          obsolete option, no longer supported
   --enable-nls[=LANGUAGES]
                           enable Native Language Support
   --disable-rpath         do not embed shared library search path in
@@ -2984,10 +2984,10 @@ fi
 
 
 #
-# 64-bit integer date/time storage: enabled by default.
+# 64-bit integer date/time storage is now the only option, but to avoid
+# unnecessary breakage of build scripts, continue to accept an explicit
+# "--enable-integer-datetimes" switch.
 #
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to build with 64-bit integer date/time support" >&5
-$as_echo_n "checking whether to build with 64-bit integer date/time support... " >&6; }
 
 
 # Check whether --enable-integer-datetimes was given.
@@ -2995,12 +2995,10 @@ if test "${enable_integer_datetimes+set}" = set; then :
   enableval=$enable_integer_datetimes;
   case $enableval in
     yes)
-
-$as_echo "#define USE_INTEGER_DATETIMES 1" >>confdefs.h
-
+      :
       ;;
     no)
-      :
+      as_fn_error $? "--disable-integer-datetimes is no longer supported" "$LINENO" 5
       ;;
     *)
       as_fn_error $? "no argument expected for --enable-integer-datetimes option" "$LINENO" 5
@@ -3010,13 +3008,9 @@ $as_echo "#define USE_INTEGER_DATETIMES 1" >>confdefs.h
 else
   enable_integer_datetimes=yes
 
-$as_echo "#define USE_INTEGER_DATETIMES 1" >>confdefs.h
-
 fi
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_integer_datetimes" >&5
-$as_echo "$enable_integer_datetimes" >&6; }
 
 
 #

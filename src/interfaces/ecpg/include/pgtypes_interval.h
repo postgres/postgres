@@ -20,9 +20,7 @@ typedef long long int int64;
 #error must have a working 64-bit integer datatype
 #endif
 
-#ifdef USE_INTEGER_DATETIMES
 #define HAVE_INT64_TIMESTAMP
-#endif
 #endif   /* C_H */
 
 typedef struct

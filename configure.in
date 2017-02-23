@@ -122,13 +122,13 @@ PGAC_ARG_REQ(with, libs,      [DIRS], [alternative spelling of --with-libraries]
 
 
 #
-# 64-bit integer date/time storage: enabled by default.
+# 64-bit integer date/time storage is now the only option, but to avoid
+# unnecessary breakage of build scripts, continue to accept an explicit
+# "--enable-integer-datetimes" switch.
 #
-AC_MSG_CHECKING([whether to build with 64-bit integer date/time support])
-PGAC_ARG_BOOL(enable, integer-datetimes, yes, [disable 64-bit integer date/time support],
-              [AC_DEFINE([USE_INTEGER_DATETIMES], 1,
-                         [Define to 1 if you want 64-bit integer timestamp and interval support. (--enable-integer-datetimes)])])
-AC_MSG_RESULT([$enable_integer_datetimes])
+PGAC_ARG_BOOL(enable, integer-datetimes, yes, [obsolete option, no longer supported],
+              [],
+              [AC_MSG_ERROR([--disable-integer-datetimes is no longer supported])])
 
 
 #
