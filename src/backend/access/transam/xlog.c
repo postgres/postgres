@@ -4379,11 +4379,6 @@ WriteControlFile(void)
 	ControlFile->toast_max_chunk_size = TOAST_MAX_CHUNK_SIZE;
 	ControlFile->loblksize = LOBLKSIZE;
 
-#ifdef HAVE_INT64_TIMESTAMP
-	ControlFile->enableIntTimes = true;
-#else
-	ControlFile->enableIntTimes = false;
-#endif
 	ControlFile->float4ByVal = FLOAT4PASSBYVAL;
 	ControlFile->float8ByVal = FLOAT8PASSBYVAL;
 
@@ -4578,22 +4573,6 @@ ReadControlFile(void)
 					" but the server was compiled with LOBLKSIZE %d.",
 					ControlFile->loblksize, (int) LOBLKSIZE),
 				 errhint("It looks like you need to recompile or initdb.")));
-
-#ifdef HAVE_INT64_TIMESTAMP
-	if (ControlFile->enableIntTimes != true)
-		ereport(FATAL,
-				(errmsg("database files are incompatible with server"),
-				 errdetail("The database cluster was initialized without HAVE_INT64_TIMESTAMP"
-				  " but the server was compiled with HAVE_INT64_TIMESTAMP."),
-				 errhint("It looks like you need to recompile or initdb.")));
-#else
-	if (ControlFile->enableIntTimes != false)
-		ereport(FATAL,
-				(errmsg("database files are incompatible with server"),
-				 errdetail("The database cluster was initialized with HAVE_INT64_TIMESTAMP"
-			   " but the server was compiled without HAVE_INT64_TIMESTAMP."),
-				 errhint("It looks like you need to recompile or initdb.")));
-#endif
 
 #ifdef USE_FLOAT4_BYVAL
 	if (ControlFile->float4ByVal != true)
