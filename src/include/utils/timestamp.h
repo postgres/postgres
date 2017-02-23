@@ -76,13 +76,6 @@ extern bool TimestampDifferenceExceeds(TimestampTz start_time,
 						   TimestampTz stop_time,
 						   int msec);
 
-/*
- * Prototypes for functions to deal with integer timestamps, when the native
- * format is float timestamps.
- */
-#define GetCurrentIntegerTimestamp()	GetCurrentTimestamp()
-#define IntegerTimestampToTimestampTz(timestamp) (timestamp)
-
 extern TimestampTz time_t_to_timestamptz(pg_time_t tm);
 extern pg_time_t timestamptz_to_time_t(TimestampTz t);
 

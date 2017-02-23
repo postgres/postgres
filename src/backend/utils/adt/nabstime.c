@@ -19,6 +19,7 @@
 #include <ctype.h>
 #include <float.h>
 #include <limits.h>
+#include <math.h>
 #include <time.h>
 #include <sys/time.h>
 

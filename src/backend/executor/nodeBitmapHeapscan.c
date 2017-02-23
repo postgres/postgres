@@ -35,6 +35,8 @@
  */
 #include "postgres.h"
 
+#include <math.h>
+
 #include "access/relscan.h"
 #include "access/transam.h"
 #include "executor/execdebug.h"

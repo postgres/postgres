@@ -15,6 +15,8 @@
 
 #include "postgres.h"
 
+#include <limits.h>
+
 #include "access/xact.h"
 #include "commands/prepare.h"
 #include "executor/tstoreReceiver.h"

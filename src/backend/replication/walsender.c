@@ -823,12 +823,13 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 	dest = CreateDestReceiver(DestRemoteSimple);
 	MemSet(nulls, false, sizeof(nulls));
 
-	/*
+	/*----------
 	 * Need a tuple descriptor representing four columns:
 	 * - first field: the slot name
 	 * - second field: LSN at which we became consistent
 	 * - third field: exported snapshot's name
 	 * - fourth field: output plugin
+	 *----------
 	 */
 	tupdesc = CreateTemplateTupleDesc(4, false);
 	TupleDescInitBuiltinEntry(tupdesc, (AttrNumber) 1, "slot_name",
@@ -1014,7 +1015,7 @@ WalSndWriteData(LogicalDecodingContext *ctx, XLogRecPtr lsn, TransactionId xid,
 	 * several releases by streaming physical replication.
 	 */
 	resetStringInfo(&tmpbuf);
-	pq_sendint64(&tmpbuf, GetCurrentIntegerTimestamp());
+	pq_sendint64(&tmpbuf, GetCurrentTimestamp());
 	memcpy(&ctx->out->data[1 + sizeof(int64) + sizeof(int64)],
 		   tmpbuf.data, sizeof(int64));
 
@@ -2334,7 +2335,7 @@ XLogSendPhysical(void)
 	 * Fill the send timestamp last, so that it is taken as late as possible.
 	 */
 	resetStringInfo(&tmpbuf);
-	pq_sendint64(&tmpbuf, GetCurrentIntegerTimestamp());
+	pq_sendint64(&tmpbuf, GetCurrentTimestamp());
 	memcpy(&output_message.data[1 + sizeof(int64) + sizeof(int64)],
 		   tmpbuf.data, sizeof(int64));
 
@@ -2842,7 +2843,7 @@ WalSndKeepalive(bool requestReply)
 	resetStringInfo(&output_message);
 	pq_sendbyte(&output_message, 'k');
 	pq_sendint64(&output_message, sentPtr);
-	pq_sendint64(&output_message, GetCurrentIntegerTimestamp());
+	pq_sendint64(&output_message, GetCurrentTimestamp());
 	pq_sendbyte(&output_message, requestReply ? 1 : 0);
 
 	/* ... and send it wrapped in CopyData */

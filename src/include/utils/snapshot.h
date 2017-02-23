@@ -15,6 +15,7 @@
 
 #include "access/htup.h"
 #include "access/xlogdefs.h"
+#include "datatype/timestamp.h"
 #include "lib/pairingheap.h"
 #include "storage/buf.h"
 
@@ -107,7 +108,7 @@ typedef struct SnapshotData
 	uint32		regd_count;		/* refcount on RegisteredSnapshots */
 	pairingheap_node ph_node;	/* link in the RegisteredSnapshots heap */
 
-	int64		whenTaken;		/* timestamp when snapshot was taken */
+	TimestampTz whenTaken;		/* timestamp when snapshot was taken */
 	XLogRecPtr	lsn;			/* position in the WAL stream when taken */
 } SnapshotData;
 

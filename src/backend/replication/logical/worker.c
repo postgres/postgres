@@ -981,12 +981,11 @@ ApplyLoop(void)
 					{
 						XLogRecPtr	start_lsn;
 						XLogRecPtr	end_lsn;
-						TimestampTz	send_time;
+						TimestampTz send_time;
 
 						start_lsn = pq_getmsgint64(&s);
 						end_lsn = pq_getmsgint64(&s);
-						send_time =
-							IntegerTimestampToTimestampTz(pq_getmsgint64(&s));
+						send_time = pq_getmsgint64(&s);
 
 						if (last_received < start_lsn)
 							last_received = start_lsn;
@@ -1000,13 +999,12 @@ ApplyLoop(void)
 					}
 					else if (c == 'k')
 					{
-						XLogRecPtr endpos;
-						TimestampTz	timestamp;
-						bool reply_requested;
+						XLogRecPtr	endpos;
+						TimestampTz timestamp;
+						bool		reply_requested;
 
 						endpos = pq_getmsgint64(&s);
-						timestamp =
-							IntegerTimestampToTimestampTz(pq_getmsgint64(&s));
+						timestamp = pq_getmsgint64(&s);
 						reply_requested = pq_getmsgbyte(&s);
 
 						send_feedback(endpos, reply_requested, false);

@@ -11,6 +11,8 @@
  */
 #include "postgres.h"
 
+#include <limits.h>
+
 #include "libpq/auth.h"
 #include "port.h"
 #include "utils/guc.h"

@@ -15,6 +15,8 @@
 
 #include "postgres.h"
 
+#include <float.h>
+
 #include "access/gist_private.h"
 #include "access/hash.h"
 #include "access/htup_details.h"

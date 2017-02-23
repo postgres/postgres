@@ -892,8 +892,7 @@ XLogWalRcvProcessMsg(unsigned char type, char *buf, Size len)
 				/* read the fields */
 				dataStart = pq_getmsgint64(&incoming_message);
 				walEnd = pq_getmsgint64(&incoming_message);
-				sendTime = IntegerTimestampToTimestampTz(
-										  pq_getmsgint64(&incoming_message));
+				sendTime = pq_getmsgint64(&incoming_message);
 				ProcessWalSndrMessage(walEnd, sendTime);
 
 				buf += hdrlen;
@@ -913,8 +912,7 @@ XLogWalRcvProcessMsg(unsigned char type, char *buf, Size len)
 
 				/* read the fields */
 				walEnd = pq_getmsgint64(&incoming_message);
-				sendTime = IntegerTimestampToTimestampTz(
-										  pq_getmsgint64(&incoming_message));
+				sendTime = pq_getmsgint64(&incoming_message);
 				replyRequested = pq_getmsgbyte(&incoming_message);
 
 				ProcessWalSndrMessage(walEnd, sendTime);
@@ -1149,7 +1147,7 @@ XLogWalRcvSendReply(bool force, bool requestReply)
 	pq_sendint64(&reply_message, writePtr);
 	pq_sendint64(&reply_message, flushPtr);
 	pq_sendint64(&reply_message, applyPtr);
-	pq_sendint64(&reply_message, GetCurrentIntegerTimestamp());
+	pq_sendint64(&reply_message, GetCurrentTimestamp());
 	pq_sendbyte(&reply_message, requestReply ? 1 : 0);
 
 	/* Send it */
@@ -1241,7 +1239,7 @@ XLogWalRcvSendHSFeedback(bool immed)
 	/* Construct the message and send it. */
 	resetStringInfo(&reply_message);
 	pq_sendbyte(&reply_message, 'h');
-	pq_sendint64(&reply_message, GetCurrentIntegerTimestamp());
+	pq_sendint64(&reply_message, GetCurrentTimestamp());
 	pq_sendint(&reply_message, xmin, 4);
 	pq_sendint(&reply_message, nextEpoch, 4);
 	walrcv_send(wrconn, reply_message.data, reply_message.len);

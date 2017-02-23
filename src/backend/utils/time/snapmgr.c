@@ -83,13 +83,13 @@ typedef struct OldSnapshotControlData
 	 * only allowed to move forward.
 	 */
 	slock_t		mutex_current;	/* protect current_timestamp */
-	int64		current_timestamp;		/* latest snapshot timestamp */
+	TimestampTz current_timestamp;		/* latest snapshot timestamp */
 	slock_t		mutex_latest_xmin;		/* protect latest_xmin and
 										 * next_map_update */
 	TransactionId latest_xmin;	/* latest snapshot xmin */
-	int64		next_map_update;	/* latest snapshot valid up to */
+	TimestampTz next_map_update;	/* latest snapshot valid up to */
 	slock_t		mutex_threshold;	/* protect threshold fields */
-	int64		threshold_timestamp;	/* earlier snapshot is old */
+	TimestampTz threshold_timestamp;	/* earlier snapshot is old */
 	TransactionId threshold_xid;	/* earlier xid may be gone */
 
 	/*
@@ -121,7 +121,7 @@ typedef struct OldSnapshotControlData
 	 * Persistence is not needed.
 	 */
 	int			head_offset;	/* subscript of oldest tracked time */
-	int64		head_timestamp; /* time corresponding to head xid */
+	TimestampTz head_timestamp; /* time corresponding to head xid */
 	int			count_used;		/* how many slots are in use */
 	TransactionId xid_by_minute[FLEXIBLE_ARRAY_MEMBER];
 } OldSnapshotControlData;
@@ -219,7 +219,7 @@ static Snapshot FirstXactSnapshot = NULL;
 static List *exportedSnapshots = NIL;
 
 /* Prototypes for local functions */
-static int64 AlignTimestampToMinuteBoundary(int64 ts);
+static TimestampTz AlignTimestampToMinuteBoundary(TimestampTz ts);
 static Snapshot CopySnapshot(Snapshot snapshot);
 static void FreeSnapshot(Snapshot snapshot);
 static void SnapshotResetXmin(void);
@@ -239,7 +239,7 @@ typedef struct SerializedSnapshotData
 	bool		suboverflowed;
 	bool		takenDuringRecovery;
 	CommandId	curcid;
-	int64		whenTaken;
+	TimestampTz whenTaken;
 	XLogRecPtr	lsn;
 } SerializedSnapshotData;
 
@@ -1611,26 +1611,29 @@ ThereAreNoPriorRegisteredSnapshots(void)
 
 
 /*
- * Return an int64 timestamp which is exactly on a minute boundary.
+ * Return a timestamp that is exactly on a minute boundary.
  *
  * If the argument is already aligned, return that value, otherwise move to
  * the next minute boundary following the given time.
  */
-static int64
-AlignTimestampToMinuteBoundary(int64 ts)
+static TimestampTz
+AlignTimestampToMinuteBoundary(TimestampTz ts)
 {
-	int64		retval = ts + (USECS_PER_MINUTE - 1);
+	TimestampTz retval = ts + (USECS_PER_MINUTE - 1);
 
 	return retval - (retval % USECS_PER_MINUTE);
 }
 
 /*
- * Get current timestamp for snapshots as int64 that never moves backward.
+ * Get current timestamp for snapshots
+ *
+ * This is basically GetCurrentTimestamp(), but with a guarantee that
+ * the result never moves backward.
  */
-int64
+TimestampTz
 GetSnapshotCurrentTimestamp(void)
 {
-	int64		now = GetCurrentIntegerTimestamp();
+	TimestampTz now = GetCurrentTimestamp();
 
 	/*
 	 * Don't let time move backward; if it hasn't advanced, use the old value.
@@ -1652,10 +1655,10 @@ GetSnapshotCurrentTimestamp(void)
  * XXX: So far, we never trust that a 64-bit value can be read atomically; if
  * that ever changes, we could get rid of the spinlock here.
  */
-int64
+TimestampTz
 GetOldSnapshotThresholdTimestamp(void)
 {
-	int64		threshold_timestamp;
+	TimestampTz threshold_timestamp;
 
 	SpinLockAcquire(&oldSnapshotControl->mutex_threshold);
 	threshold_timestamp = oldSnapshotControl->threshold_timestamp;
@@ -1665,7 +1668,7 @@ GetOldSnapshotThresholdTimestamp(void)
 }
 
 static void
-SetOldSnapshotThresholdTimestamp(int64 ts, TransactionId xlimit)
+SetOldSnapshotThresholdTimestamp(TimestampTz ts, TransactionId xlimit)
 {
 	SpinLockAcquire(&oldSnapshotControl->mutex_threshold);
 	oldSnapshotControl->threshold_timestamp = ts;
@@ -1690,10 +1693,10 @@ TransactionIdLimitedForOldSnapshots(TransactionId recentXmin,
 		&& old_snapshot_threshold >= 0
 		&& RelationAllowsEarlyPruning(relation))
 	{
-		int64		ts = GetSnapshotCurrentTimestamp();
+		TimestampTz ts = GetSnapshotCurrentTimestamp();
 		TransactionId xlimit = recentXmin;
 		TransactionId latest_xmin;
-		int64		update_ts;
+		TimestampTz update_ts;
 		bool		same_ts_as_threshold = false;
 
 		SpinLockAcquire(&oldSnapshotControl->mutex_latest_xmin);
@@ -1790,11 +1793,11 @@ TransactionIdLimitedForOldSnapshots(TransactionId recentXmin,
  * Take care of the circular buffer that maps time to xid.
  */
 void
-MaintainOldSnapshotTimeMapping(int64 whenTaken, TransactionId xmin)
+MaintainOldSnapshotTimeMapping(TimestampTz whenTaken, TransactionId xmin)
 {
-	int64		ts;
+	TimestampTz ts;
 	TransactionId latest_xmin;
-	int64		update_ts;
+	TimestampTz update_ts;
 	bool		map_update_required = false;
 
 	/* Never call this function when old snapshot checking is disabled. */

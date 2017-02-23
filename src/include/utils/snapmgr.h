@@ -51,8 +51,8 @@ extern PGDLLIMPORT int old_snapshot_threshold;
 
 extern Size SnapMgrShmemSize(void);
 extern void SnapMgrInit(void);
-extern int64 GetSnapshotCurrentTimestamp(void);
-extern int64 GetOldSnapshotThresholdTimestamp(void);
+extern TimestampTz GetSnapshotCurrentTimestamp(void);
+extern TimestampTz GetOldSnapshotThresholdTimestamp(void);
 
 extern bool FirstSnapshotSet;
 
@@ -93,7 +93,8 @@ extern void DeleteAllExportedSnapshotFiles(void);
 extern bool ThereAreNoPriorRegisteredSnapshots(void);
 extern TransactionId TransactionIdLimitedForOldSnapshots(TransactionId recentXmin,
 									Relation relation);
-extern void MaintainOldSnapshotTimeMapping(int64 whenTaken, TransactionId xmin);
+extern void MaintainOldSnapshotTimeMapping(TimestampTz whenTaken,
+							   TransactionId xmin);
 
 extern char *ExportSnapshot(Snapshot snapshot);
 

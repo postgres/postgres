@@ -57,7 +57,7 @@ static int	outfd = -1;
 static volatile sig_atomic_t time_to_abort = false;
 static volatile sig_atomic_t output_reopen = false;
 static bool output_isfile;
-static int64 output_last_fsync = -1;
+static TimestampTz output_last_fsync = -1;
 static bool output_needs_fsync = false;
 static XLogRecPtr output_written_lsn = InvalidXLogRecPtr;
 static XLogRecPtr output_fsync_lsn = InvalidXLogRecPtr;
@@ -112,7 +112,7 @@ usage(void)
  * Send a Standby Status Update message to server.
  */
 static bool
-sendFeedback(PGconn *conn, int64 now, bool force, bool replyRequested)
+sendFeedback(PGconn *conn, TimestampTz now, bool force, bool replyRequested)
 {
 	static XLogRecPtr last_written_lsn = InvalidXLogRecPtr;
 	static XLogRecPtr last_fsync_lsn = InvalidXLogRecPtr;
@@ -175,7 +175,7 @@ disconnect_and_exit(int code)
 }
 
 static bool
-OutputFsync(int64 now)
+OutputFsync(TimestampTz now)
 {
 	output_last_fsync = now;
 
@@ -212,7 +212,7 @@ StreamLogicalLog(void)
 {
 	PGresult   *res;
 	char	   *copybuf = NULL;
-	int64		last_status = -1;
+	TimestampTz last_status = -1;
 	int			i;
 	PQExpBuffer query;
 
@@ -285,7 +285,7 @@ StreamLogicalLog(void)
 		int			r;
 		int			bytes_left;
 		int			bytes_written;
-		int64		now;
+		TimestampTz now;
 		int			hdr_len;
 		XLogRecPtr	cur_record_lsn = InvalidXLogRecPtr;
 
@@ -365,8 +365,8 @@ StreamLogicalLog(void)
 			 * response back to the client.
 			 */
 			fd_set		input_mask;
-			int64		message_target = 0;
-			int64		fsync_target = 0;
+			TimestampTz message_target = 0;
+			TimestampTz fsync_target = 0;
 			struct timeval timeout;
 			struct timeval *timeoutptr = NULL;
 
@@ -394,7 +394,7 @@ StreamLogicalLog(void)
 			/* Now compute when to wakeup. */
 			if (message_target > 0 || fsync_target > 0)
 			{
-				int64		targettime;
+				TimestampTz targettime;
 				long		secs;
 				int			usecs;
 
@@ -622,7 +622,7 @@ StreamLogicalLog(void)
 
 	if (outfd != -1 && strcmp(outfile, "-") != 0)
 	{
-		int64		t = feGetCurrentTimestamp();
+		TimestampTz t = feGetCurrentTimestamp();
 
 		/* no need to jump to error on failure here, we're finishing anyway */
 		OutputFsync(t);

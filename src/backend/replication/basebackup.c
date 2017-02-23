@@ -92,10 +92,10 @@ static uint64 throttling_sample;
 static int64 throttling_counter;
 
 /* The minimum time required to transfer throttling_sample bytes. */
-static int64 elapsed_min_unit;
+static TimeOffset elapsed_min_unit;
 
 /* The last check of the transfer rate. */
-static int64 throttled_last;
+static TimestampTz throttled_last;
 
 /*
  * The contents of these directories are removed or recreated during server
@@ -254,7 +254,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 			throttling_counter = 0;
 
 			/* The 'real data' starts now (header was ignored). */
-			throttled_last = GetCurrentIntegerTimestamp();
+			throttled_last = GetCurrentTimestamp();
 		}
 		else
 		{
@@ -1333,7 +1333,7 @@ _tarWriteDir(const char *pathbuf, int basepathlen, struct stat *statbuf,
 static void
 throttle(size_t increment)
 {
-	int64		elapsed,
+	TimeOffset	elapsed,
 				elapsed_min,
 				sleep;
 	int			wait_result;
@@ -1346,7 +1346,7 @@ throttle(size_t increment)
 		return;
 
 	/* Time elapsed since the last measurement (and possible wake up). */
-	elapsed = GetCurrentIntegerTimestamp() - throttled_last;
+	elapsed = GetCurrentTimestamp() - throttled_last;
 	/* How much should have elapsed at minimum? */
 	elapsed_min = elapsed_min_unit * (throttling_counter / throttling_sample);
 	sleep = elapsed_min - elapsed;
@@ -1381,5 +1381,5 @@ throttle(size_t increment)
 	 * Time interval for the remaining amount and possible next increments
 	 * starts now.
 	 */
-	throttled_last = GetCurrentIntegerTimestamp();
+	throttled_last = GetCurrentTimestamp();
 }

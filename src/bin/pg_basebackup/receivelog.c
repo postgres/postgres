@@ -42,15 +42,15 @@ static PGresult *HandleCopyStream(PGconn *conn, StreamCtl *stream,
 static int	CopyStreamPoll(PGconn *conn, long timeout_ms);
 static int	CopyStreamReceive(PGconn *conn, long timeout, char **buffer);
 static bool ProcessKeepaliveMsg(PGconn *conn, StreamCtl *stream, char *copybuf,
-					int len, XLogRecPtr blockpos, int64 *last_status);
+					int len, XLogRecPtr blockpos, TimestampTz *last_status);
 static bool ProcessXLogDataMsg(PGconn *conn, StreamCtl *stream, char *copybuf, int len,
 				   XLogRecPtr *blockpos);
 static PGresult *HandleEndOfCopyStream(PGconn *conn, StreamCtl *stream, char *copybuf,
 					  XLogRecPtr blockpos, XLogRecPtr *stoppos);
 static bool CheckCopyStreamStop(PGconn *conn, StreamCtl *stream, XLogRecPtr blockpos,
 					XLogRecPtr *stoppos);
-static long CalculateCopyStreamSleeptime(int64 now, int standby_message_timeout,
-							 int64 last_status);
+static long CalculateCopyStreamSleeptime(TimestampTz now, int standby_message_timeout,
+							 TimestampTz last_status);
 
 static bool ReadEndOfStreamingResult(PGresult *res, XLogRecPtr *startpos,
 						 uint32 *timeline);
@@ -319,7 +319,7 @@ writeTimeLineHistoryFile(StreamCtl *stream, char *filename, char *content)
  * Send a Standby Status Update message to server.
  */
 static bool
-sendFeedback(PGconn *conn, XLogRecPtr blockpos, int64 now, bool replyRequested)
+sendFeedback(PGconn *conn, XLogRecPtr blockpos, TimestampTz now, bool replyRequested)
 {
 	char		replybuf[1 + 8 + 8 + 8 + 8 + 1];
 	int			len = 0;
@@ -761,7 +761,7 @@ HandleCopyStream(PGconn *conn, StreamCtl *stream,
 				 XLogRecPtr *stoppos)
 {
 	char	   *copybuf = NULL;
-	int64		last_status = -1;
+	TimestampTz last_status = -1;
 	XLogRecPtr	blockpos = stream->startpos;
 
 	still_sending = true;
@@ -769,7 +769,7 @@ HandleCopyStream(PGconn *conn, StreamCtl *stream,
 	while (1)
 	{
 		int			r;
-		int64		now;
+		TimestampTz now;
 		long		sleeptime;
 
 		/*
@@ -994,11 +994,11 @@ CopyStreamReceive(PGconn *conn, long timeout, char **buffer)
  */
 static bool
 ProcessKeepaliveMsg(PGconn *conn, StreamCtl *stream, char *copybuf, int len,
-					XLogRecPtr blockpos, int64 *last_status)
+					XLogRecPtr blockpos, TimestampTz *last_status)
 {
 	int			pos;
 	bool		replyRequested;
-	int64		now;
+	TimestampTz now;
 
 	/*
 	 * Parse the keepalive message, enclosed in the CopyData message. We just
@@ -1253,10 +1253,10 @@ CheckCopyStreamStop(PGconn *conn, StreamCtl *stream, XLogRecPtr blockpos,
  * Calculate how long send/receive loops should sleep
  */
 static long
-CalculateCopyStreamSleeptime(int64 now, int standby_message_timeout,
-							 int64 last_status)
+CalculateCopyStreamSleeptime(TimestampTz now, int standby_message_timeout,
+							 TimestampTz last_status)
 {
-	int64		status_targettime = 0;
+	TimestampTz status_targettime = 0;
 	long		sleeptime;
 
 	if (standby_message_timeout && still_sending)

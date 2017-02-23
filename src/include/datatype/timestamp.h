@@ -15,10 +15,6 @@
 #ifndef DATATYPE_TIMESTAMP_H
 #define DATATYPE_TIMESTAMP_H
 
-#include <math.h>
-#include <limits.h>
-#include <float.h>
-
 /*
  * Timestamp represents absolute time.
  *
