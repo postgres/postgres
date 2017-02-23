@@ -444,7 +444,7 @@ logicalrep_write_tuple(StringInfo out, Relation rel, HeapTuple tuple)
 		outputstr = OidOutputFunctionCall(typclass->typoutput, values[i]);
 		len = strlen(outputstr) + 1;	/* null terminated */
 		pq_sendint(out, len, 4);		/* length */
-		appendBinaryStringInfo(out, outputstr, len); /* data */
+		pq_sendstring(out, outputstr);	/* data */
 
 		pfree(outputstr);
 

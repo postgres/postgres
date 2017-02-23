@@ -22,6 +22,7 @@
 #include "libpq-fe.h"
 #include "pqexpbuffer.h"
 #include "access/xlog.h"
+#include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "replication/logicalproto.h"
@@ -134,8 +135,15 @@ libpqrcv_connect(const char *conninfo, bool logical, const char *appname,
 	}
 	keys[++i] = "fallback_application_name";
 	vals[i] = appname;
+	if (logical)
+	{
+		keys[++i] = "client_encoding";
+		vals[i] = GetDatabaseEncodingName();
+	}
 	keys[++i] = NULL;
 	vals[i] = NULL;
+
+	Assert(i < sizeof(keys));
 
 	conn = palloc0(sizeof(WalReceiverConn));
 	conn->streamConn = PQconnectdbParams(keys, vals, /* expand_dbname = */ true);
