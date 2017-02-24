@@ -263,6 +263,15 @@ enum_cmp_internal(Oid arg1, Oid arg2, FunctionCallInfo fcinfo)
 {
 	TypeCacheEntry *tcache;
 
+	/*
+	 * We don't need the typcache except in the hopefully-uncommon case that
+	 * one or both Oids are odd.  This means that cursory testing of code that
+	 * fails to pass flinfo to an enum comparison function might not disclose
+	 * the oversight.  To make such errors more obvious, Assert that we have a
+	 * place to cache even when we take a fast-path exit.
+	 */
+	Assert(fcinfo->flinfo != NULL);
+
 	/* Equal OIDs are equal no matter what */
 	if (arg1 == arg2)
 		return 0;
@@ -381,12 +390,7 @@ enum_cmp(PG_FUNCTION_ARGS)
 	Oid			a = PG_GETARG_OID(0);
 	Oid			b = PG_GETARG_OID(1);
 
-	if (a == b)
-		PG_RETURN_INT32(0);
-	else if (enum_cmp_internal(a, b, fcinfo) > 0)
-		PG_RETURN_INT32(1);
-	else
-		PG_RETURN_INT32(-1);
+	PG_RETURN_INT32(enum_cmp_internal(a, b, fcinfo));
 }
 
 /* Enum programming support functions */
