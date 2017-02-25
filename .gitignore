@@ -26,6 +26,7 @@ lib*.pc
 
 # Local excludes in root directory
 /GNUmakefile
+/config.cache
 /config.log
 /config.status
 /pgsql.sln
