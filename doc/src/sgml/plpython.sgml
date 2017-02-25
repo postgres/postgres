@@ -1047,6 +1047,14 @@ rv = plpy.execute(plan, ["name"], 5)
      </para>
 
      <para>
+      Alternatively, you can call the <function>execute</function> method on
+      the plan object:
+<programlisting>
+rv = plan.execute(["name"], 5)
+</programlisting>
+     </para>
+
+     <para>
       Query parameters and result row fields are converted between PostgreSQL
       and Python data types as described in <xref linkend="plpython-data">.
      </para>
@@ -1081,7 +1089,9 @@ $$ LANGUAGE plpythonu;
       as <literal>plpy.execute</literal> (except for the row limit) and returns
       a cursor object, which allows you to process large result sets in smaller
       chunks.  As with <literal>plpy.execute</literal>, either a query string
-      or a plan object along with a list of arguments can be used.
+      or a plan object along with a list of arguments can be used, or
+      the <function>cursor</function> function can be called as a method of
+      the plan object.
      </para>
 
      <para>
@@ -1125,7 +1135,7 @@ $$ LANGUAGE plpythonu;
 CREATE FUNCTION count_odd_prepared() RETURNS integer AS $$
 odd = 0
 plan = plpy.prepare("select num from largetable where num % $1 &lt;&gt; 0", ["integer"])
-rows = list(plpy.cursor(plan, [2]))
+rows = list(plpy.cursor(plan, [2]))  # or: = list(plan.cursor([2]))
 
 return len(rows)
 $$ LANGUAGE plpythonu;

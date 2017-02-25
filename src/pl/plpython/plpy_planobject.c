@@ -10,11 +10,15 @@
 
 #include "plpy_planobject.h"
 
+#include "plpy_cursorobject.h"
 #include "plpy_elog.h"
+#include "plpy_spi.h"
 #include "utils/memutils.h"
 
 
 static void PLy_plan_dealloc(PyObject *arg);
+static PyObject *PLy_plan_cursor(PyObject *self, PyObject *args);
+static PyObject *PLy_plan_execute(PyObject *self, PyObject *args);
 static PyObject *PLy_plan_status(PyObject *self, PyObject *args);
 
 static char PLy_plan_doc[] = {
@@ -22,6 +26,8 @@ static char PLy_plan_doc[] = {
 };
 
 static PyMethodDef PLy_plan_methods[] = {
+	{"cursor", PLy_plan_cursor, METH_VARARGS, NULL},
+	{"execute", PLy_plan_execute, METH_VARARGS, NULL},
 	{"status", PLy_plan_status, METH_VARARGS, NULL},
 	{NULL, NULL, 0, NULL}
 };
@@ -108,6 +114,31 @@ PLy_plan_dealloc(PyObject *arg)
 		ob->mcxt = NULL;
 	}
 	arg->ob_type->tp_free(arg);
+}
+
+
+static PyObject *
+PLy_plan_cursor(PyObject *self, PyObject *args)
+{
+	PyObject   *planargs = NULL;
+
+	if (!PyArg_ParseTuple(args, "|O", &planargs))
+		return NULL;
+
+	return PLy_cursor_plan(self, planargs);
+}
+
+
+static PyObject *
+PLy_plan_execute(PyObject *self, PyObject *args)
+{
+	PyObject   *list = NULL;
+	long		limit = 0;
+
+	if (!PyArg_ParseTuple(args, "|Ol", &list, &limit))
+		return NULL;
+
+	return PLy_spi_execute_plan(self, list, limit);
 }
 
 

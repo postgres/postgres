@@ -37,6 +37,20 @@ return None
 '
 	LANGUAGE plpythonu;
 
+CREATE FUNCTION spi_prepared_plan_test_two(a text) RETURNS text
+	AS
+'if "myplan" not in SD:
+	q = "SELECT count(*) FROM users WHERE lname = $1"
+	SD["myplan"] = plpy.prepare(q, [ "text" ])
+try:
+	rv = SD["myplan"].execute([a])
+	return "there are " + str(rv[0]["count"]) + " " + str(a) + "s"
+except Exception, ex:
+	plpy.error(str(ex))
+return None
+'
+	LANGUAGE plpythonu;
+
 CREATE FUNCTION spi_prepared_plan_test_nested(a text) RETURNS text
 	AS
 'if "myplan" not in SD:
@@ -79,7 +93,7 @@ return a + r
 --
 select nested_call_one('pass this along');
 select spi_prepared_plan_test_one('doe');
-select spi_prepared_plan_test_one('smith');
+select spi_prepared_plan_test_two('smith');
 select spi_prepared_plan_test_nested('smith');
 
 SELECT join_sequences(sequences) FROM sequences;
@@ -275,7 +289,7 @@ plan = plpy.prepare(
     ["text"])
 for row in plpy.cursor(plan, ["w"]):
     yield row['fname']
-for row in plpy.cursor(plan, ["j"]):
+for row in plan.cursor(["j"]):
     yield row['fname']
 $$ LANGUAGE plpythonu;
 

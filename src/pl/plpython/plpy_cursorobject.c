@@ -25,7 +25,6 @@
 
 
 static PyObject *PLy_cursor_query(const char *query);
-static PyObject *PLy_cursor_plan(PyObject *ob, PyObject *args);
 static void PLy_cursor_dealloc(PyObject *arg);
 static PyObject *PLy_cursor_iternext(PyObject *self);
 static PyObject *PLy_cursor_fetch(PyObject *self, PyObject *args);
@@ -160,7 +159,7 @@ PLy_cursor_query(const char *query)
 	return (PyObject *) cursor;
 }
 
-static PyObject *
+PyObject *
 PLy_cursor_plan(PyObject *ob, PyObject *args)
 {
 	PLyCursorObject *cursor;

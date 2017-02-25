@@ -30,7 +30,6 @@
 
 
 static PyObject *PLy_spi_execute_query(char *query, long limit);
-static PyObject *PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit);
 static PyObject *PLy_spi_execute_fetch_result(SPITupleTable *tuptable,
 							 uint64 rows, int status);
 static void PLy_spi_exception_set(PyObject *excclass, ErrorData *edata);
@@ -193,7 +192,7 @@ PLy_spi_execute(PyObject *self, PyObject *args)
 	return NULL;
 }
 
-static PyObject *
+PyObject *
 PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 {
 	volatile int nargs;

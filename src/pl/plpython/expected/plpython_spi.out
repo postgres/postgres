@@ -31,6 +31,19 @@ except Exception, ex:
 return None
 '
 	LANGUAGE plpythonu;
+CREATE FUNCTION spi_prepared_plan_test_two(a text) RETURNS text
+	AS
+'if "myplan" not in SD:
+	q = "SELECT count(*) FROM users WHERE lname = $1"
+	SD["myplan"] = plpy.prepare(q, [ "text" ])
+try:
+	rv = SD["myplan"].execute([a])
+	return "there are " + str(rv[0]["count"]) + " " + str(a) + "s"
+except Exception, ex:
+	plpy.error(str(ex))
+return None
+'
+	LANGUAGE plpythonu;
 CREATE FUNCTION spi_prepared_plan_test_nested(a text) RETURNS text
 	AS
 'if "myplan" not in SD:
@@ -80,8 +93,8 @@ select spi_prepared_plan_test_one('doe');
  there are 3 does
 (1 row)
 
-select spi_prepared_plan_test_one('smith');
- spi_prepared_plan_test_one 
+select spi_prepared_plan_test_two('smith');
+ spi_prepared_plan_test_two 
 ----------------------------
  there are 1 smiths
 (1 row)
@@ -372,7 +385,7 @@ plan = plpy.prepare(
     ["text"])
 for row in plpy.cursor(plan, ["w"]):
     yield row['fname']
-for row in plpy.cursor(plan, ["j"]):
+for row in plan.cursor(["j"]):
     yield row['fname']
 $$ LANGUAGE plpythonu;
 CREATE FUNCTION cursor_plan_wrong_args() RETURNS SETOF text AS $$
