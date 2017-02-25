@@ -14,9 +14,7 @@
 
 #include <ctype.h>
 #include <time.h>
-#ifdef HAVE_PWD_H
 #include <pwd.h>
-#endif
 #ifndef WIN32
 #include <sys/stat.h>			/* for stat() */
 #include <fcntl.h>				/* open() flags */

@@ -14,9 +14,6 @@ dnl       #define ACCEPT_TYPE_ARG1 int
 dnl       #define ACCEPT_TYPE_ARG2 struct sockaddr *
 dnl       #define ACCEPT_TYPE_ARG3 socklen_t
 dnl
-dnl This macro requires AC_CHECK_HEADERS to have already verified the
-dnl presence or absence of sys/types.h and sys/socket.h.
-dnl
 dnl NOTE: This is just a modified version of the AC_FUNC_SELECT_ARGTYPES
 dnl macro. Credit for that one goes to David MacKenzie et. al.
 dnl
@@ -51,12 +48,8 @@ AC_DEFUN([AC_FUNC_ACCEPT_ARGTYPES],
        for ac_cv_func_accept_arg2 in 'struct sockaddr *' 'const struct sockaddr *' 'void *'; do
         for ac_cv_func_accept_arg3 in 'int' 'size_t' 'socklen_t' 'unsigned int' 'void'; do
          AC_COMPILE_IFELSE([AC_LANG_SOURCE(
-[#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
-#ifdef HAVE_SYS_SOCKET_H
+[#include <sys/types.h>
 #include <sys/socket.h>
-#endif
 extern $ac_cv_func_accept_return accept ($ac_cv_func_accept_arg1, $ac_cv_func_accept_arg2, $ac_cv_func_accept_arg3 *);])],
          [ac_not_found=no; break 4], [ac_not_found=yes])
        done

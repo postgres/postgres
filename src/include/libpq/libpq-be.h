@@ -18,9 +18,7 @@
 #ifndef LIBPQ_BE_H
 #define LIBPQ_BE_H
 
-#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
-#endif
 #ifdef USE_OPENSSL
 #include <openssl/ssl.h>
 #include <openssl/err.h>

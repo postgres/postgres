@@ -111,8 +111,12 @@ fi
 AC_DEFUN([PGAC_UNION_SEMUN],
 [AC_CHECK_TYPES([union semun], [], [],
 [#include <sys/types.h>
+#ifdef HAVE_SYS_IPC_H
 #include <sys/ipc.h>
-#include <sys/sem.h>])])# PGAC_UNION_SEMUN
+#endif
+#ifdef HAVE_SYS_SEM_H
+#include <sys/sem.h>
+#endif])])# PGAC_UNION_SEMUN
 
 
 # PGAC_STRUCT_SOCKADDR_UN
@@ -135,9 +139,7 @@ AC_DEFUN([PGAC_STRUCT_SOCKADDR_UN],
 AC_DEFUN([PGAC_STRUCT_SOCKADDR_STORAGE],
 [AC_CHECK_TYPES([struct sockaddr_storage], [], [],
 [#include <sys/types.h>
-#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
-#endif
 ])])# PGAC_STRUCT_SOCKADDR_STORAGE
 
 # PGAC_STRUCT_SOCKADDR_STORAGE_MEMBERS
@@ -154,9 +156,7 @@ AC_DEFUN([PGAC_STRUCT_SOCKADDR_STORAGE_MEMBERS],
 		   struct sockaddr_storage.__ss_len,
 		   struct sockaddr.sa_len], [], [],
 [#include <sys/types.h>
-#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
-#endif
 ])])# PGAC_STRUCT_SOCKADDR_STORAGE_MEMBERS
 
 

@@ -252,9 +252,6 @@
 /* Define to 1 if you have the `mkdtemp' function. */
 /* #undef HAVE_MKDTEMP */
 
-/* Define to 1 if you have the <netinet/in.h> header file. */
-#define HAVE_NETINET_IN_H 1
-
 /* Define to 1 if you have the <netinet/tcp.h> header file. */
 /* #undef HAVE_NETINET_TCP_H */
 
@@ -272,9 +269,6 @@
 
 /* Define to 1 if the PS_STRINGS thing exists. */
 /* #undef HAVE_PS_STRINGS */
-
-/* Define to 1 if you have the <pwd.h> header file. */
-#define HAVE_PWD_H 1
 
 /* Define to 1 if you have the `random' function. */
 /* #undef HAVE_RANDOM */
@@ -435,14 +429,8 @@
 /* Define to 1 if you have the <sys/shm.h> header file. */
 /* #undef HAVE_SYS_SHM_H */
 
-/* Define to 1 if you have the <sys/socket.h> header file. */
-#define HAVE_SYS_SOCKET_H 1
-
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #define HAVE_SYS_STAT_H 1
-
-/* Define to 1 if you have the <sys/time.h> header file. */
-#define HAVE_SYS_TIME_H 1
 
 /* Define to 1 if you have the <sys/types.h> header file. */
 #define HAVE_SYS_TYPES_H 1

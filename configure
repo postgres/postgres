@@ -10332,7 +10332,7 @@ fi
 ## Header files
 ##
 
-for ac_header in atomic.h crypt.h dld.h fp_class.h getopt.h ieeefp.h ifaddrs.h langinfo.h mbarrier.h poll.h pwd.h sys/epoll.h sys/ioctl.h sys/ipc.h sys/poll.h sys/pstat.h sys/resource.h sys/select.h sys/sem.h sys/shm.h sys/socket.h sys/sockio.h sys/tas.h sys/time.h sys/un.h termios.h ucred.h utime.h wchar.h wctype.h
+for ac_header in atomic.h crypt.h dld.h fp_class.h getopt.h ieeefp.h ifaddrs.h langinfo.h mbarrier.h poll.h sys/epoll.h sys/ipc.h sys/poll.h sys/pstat.h sys/resource.h sys/select.h sys/sem.h sys/shm.h sys/sockio.h sys/tas.h sys/un.h termios.h ucred.h utime.h wchar.h wctype.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
@@ -10351,9 +10351,7 @@ done
 for ac_header in net/if.h
 do :
   ac_fn_c_check_header_compile "$LINENO" "net/if.h" "ac_cv_header_net_if_h" "$ac_includes_default
-#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
-#endif
 
 "
 if test "x$ac_cv_header_net_if_h" = xyes; then :
@@ -10386,24 +10384,10 @@ done
 
 # At least on IRIX, test for netinet/tcp.h will fail unless
 # netinet/in.h is included first.
-for ac_header in netinet/in.h
-do :
-  ac_fn_c_check_header_mongrel "$LINENO" "netinet/in.h" "ac_cv_header_netinet_in_h" "$ac_includes_default"
-if test "x$ac_cv_header_netinet_in_h" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_NETINET_IN_H 1
-_ACEOF
-
-fi
-
-done
-
 for ac_header in netinet/tcp.h
 do :
   ac_fn_c_check_header_compile "$LINENO" "netinet/tcp.h" "ac_cv_header_netinet_tcp_h" "$ac_includes_default
-#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
-#endif
 
 "
 if test "x$ac_cv_header_netinet_tcp_h" = xyes; then :
@@ -11671,8 +11655,12 @@ $as_echo "#define HAVE_TZNAME 1" >>confdefs.h
 fi
 
 ac_fn_c_check_type "$LINENO" "union semun" "ac_cv_type_union_semun" "#include <sys/types.h>
+#ifdef HAVE_SYS_IPC_H
 #include <sys/ipc.h>
+#endif
+#ifdef HAVE_SYS_SEM_H
 #include <sys/sem.h>
+#endif
 "
 if test "x$ac_cv_type_union_semun" = xyes; then :
 
@@ -11696,9 +11684,7 @@ $as_echo "#define HAVE_UNIX_SOCKETS 1" >>confdefs.h
 fi
 
 ac_fn_c_check_type "$LINENO" "struct sockaddr_storage" "ac_cv_type_struct_sockaddr_storage" "#include <sys/types.h>
-#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
-#endif
 
 "
 if test "x$ac_cv_type_struct_sockaddr_storage" = xyes; then :
@@ -11711,9 +11697,7 @@ _ACEOF
 fi
 
 ac_fn_c_check_member "$LINENO" "struct sockaddr_storage" "ss_family" "ac_cv_member_struct_sockaddr_storage_ss_family" "#include <sys/types.h>
-#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
-#endif
 
 "
 if test "x$ac_cv_member_struct_sockaddr_storage_ss_family" = xyes; then :
@@ -11725,9 +11709,7 @@ _ACEOF
 
 fi
 ac_fn_c_check_member "$LINENO" "struct sockaddr_storage" "__ss_family" "ac_cv_member_struct_sockaddr_storage___ss_family" "#include <sys/types.h>
-#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
-#endif
 
 "
 if test "x$ac_cv_member_struct_sockaddr_storage___ss_family" = xyes; then :
@@ -11739,9 +11721,7 @@ _ACEOF
 
 fi
 ac_fn_c_check_member "$LINENO" "struct sockaddr_storage" "ss_len" "ac_cv_member_struct_sockaddr_storage_ss_len" "#include <sys/types.h>
-#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
-#endif
 
 "
 if test "x$ac_cv_member_struct_sockaddr_storage_ss_len" = xyes; then :
@@ -11753,9 +11733,7 @@ _ACEOF
 
 fi
 ac_fn_c_check_member "$LINENO" "struct sockaddr_storage" "__ss_len" "ac_cv_member_struct_sockaddr_storage___ss_len" "#include <sys/types.h>
-#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
-#endif
 
 "
 if test "x$ac_cv_member_struct_sockaddr_storage___ss_len" = xyes; then :
@@ -11767,9 +11745,7 @@ _ACEOF
 
 fi
 ac_fn_c_check_member "$LINENO" "struct sockaddr" "sa_len" "ac_cv_member_struct_sockaddr_sa_len" "#include <sys/types.h>
-#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
-#endif
 
 "
 if test "x$ac_cv_member_struct_sockaddr_sa_len" = xyes; then :
@@ -12427,12 +12403,8 @@ else
         for ac_cv_func_accept_arg3 in 'int' 'size_t' 'socklen_t' 'unsigned int' 'void'; do
          cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
-#endif
-#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
-#endif
 extern $ac_cv_func_accept_return accept ($ac_cv_func_accept_arg1, $ac_cv_func_accept_arg2, $ac_cv_func_accept_arg3 *);
 _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :

@@ -1162,16 +1162,13 @@ AC_SUBST(UUID_LIBS)
 ## Header files
 ##
 
-dnl sys/socket.h is required by AC_FUNC_ACCEPT_ARGTYPES
-AC_CHECK_HEADERS([atomic.h crypt.h dld.h fp_class.h getopt.h ieeefp.h ifaddrs.h langinfo.h mbarrier.h poll.h pwd.h sys/epoll.h sys/ioctl.h sys/ipc.h sys/poll.h sys/pstat.h sys/resource.h sys/select.h sys/sem.h sys/shm.h sys/socket.h sys/sockio.h sys/tas.h sys/time.h sys/un.h termios.h ucred.h utime.h wchar.h wctype.h])
+AC_CHECK_HEADERS([atomic.h crypt.h dld.h fp_class.h getopt.h ieeefp.h ifaddrs.h langinfo.h mbarrier.h poll.h sys/epoll.h sys/ipc.h sys/poll.h sys/pstat.h sys/resource.h sys/select.h sys/sem.h sys/shm.h sys/sockio.h sys/tas.h sys/un.h termios.h ucred.h utime.h wchar.h wctype.h])
 
 # On BSD, test for net/if.h will fail unless sys/socket.h
 # is included first.
 AC_CHECK_HEADERS(net/if.h, [], [],
 [AC_INCLUDES_DEFAULT
-#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
-#endif
 ])
 
 # On OpenBSD, test for sys/ucred.h will fail unless sys/param.h
@@ -1183,12 +1180,9 @@ AC_CHECK_HEADERS(sys/ucred.h, [], [],
 
 # At least on IRIX, test for netinet/tcp.h will fail unless
 # netinet/in.h is included first.
-AC_CHECK_HEADERS(netinet/in.h)
 AC_CHECK_HEADERS(netinet/tcp.h, [], [],
 [AC_INCLUDES_DEFAULT
-#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
-#endif
 ])
 
 if expr x"$pgac_cv_check_readline" : 'x-lreadline' >/dev/null ; then

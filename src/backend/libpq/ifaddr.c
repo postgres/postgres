@@ -322,9 +322,7 @@ pg_foreach_ifaddr(PgIfAddrCallback callback, void *cb_data)
 }
 #else							/* !HAVE_GETIFADDRS && !WIN32 */
 
-#ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
-#endif
 
 #ifdef HAVE_NET_IF_H
 #include <net/if.h>
