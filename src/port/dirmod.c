@@ -34,6 +34,7 @@
 #ifndef __CYGWIN__
 #include <winioctl.h>
 #else
+#include <windows.h>
 #include <w32api/winioctl.h>
 #endif
 #endif
