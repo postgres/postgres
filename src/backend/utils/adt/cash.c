@@ -21,7 +21,6 @@
 #include <limits.h>
 #include <ctype.h>
 #include <math.h>
-#include <locale.h>
 
 #include "libpq/pqformat.h"
 #include "utils/builtins.h"

@@ -9,16 +9,13 @@
 
 #include "postgres_fe.h"
 
-#include "pg_upgrade.h"
-
-#include <stdlib.h>
-#include <string.h>
-#include <sys/types.h>
 #include <sys/wait.h>
-
 #ifdef WIN32
 #include <io.h>
 #endif
+
+#include "pg_upgrade.h"
+
 
 static int	parallel_jobs;
 

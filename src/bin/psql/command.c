@@ -18,7 +18,6 @@
 #include <pwd.h>
 #endif
 #ifndef WIN32
-#include <sys/types.h>			/* for umask() */
 #include <sys/stat.h>			/* for stat() */
 #include <fcntl.h>				/* open() flags */
 #include <unistd.h>				/* for geteuid(), getpid(), stat() */
@@ -27,7 +26,6 @@
 #include <io.h>
 #include <fcntl.h>
 #include <direct.h>
-#include <sys/types.h>			/* for umask() */
 #include <sys/stat.h>			/* for stat() */
 #endif
 

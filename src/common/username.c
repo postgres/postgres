@@ -18,10 +18,8 @@
 #include "postgres_fe.h"
 #endif
 
-#include <errno.h>
 #include <pwd.h>
 #include <unistd.h>
-#include <sys/types.h>
 
 #include "common/username.h"
 

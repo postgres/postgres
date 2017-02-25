@@ -9,16 +9,15 @@
 
 #include "postgres_fe.h"
 
+#include <time.h>
+#ifdef WIN32
+#include <io.h>
+#endif
+
 #include "miscadmin.h"
 #include "getopt_long.h"
 
 #include "pg_upgrade.h"
-
-#include <time.h>
-#include <sys/types.h>
-#ifdef WIN32
-#include <io.h>
-#endif
 
 
 static void usage(void);

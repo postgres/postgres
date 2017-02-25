@@ -51,7 +51,6 @@
 
 #include "postgres.h"
 
-#include <locale.h>
 #include <time.h>
 
 #include "access/htup_details.h"

@@ -7,8 +7,6 @@
  */
 #include "postgres_fe.h"
 
-#include <string.h>
-
 #include "common.h"
 #include "crosstabview.h"
 #include "pqexpbuffer.h"

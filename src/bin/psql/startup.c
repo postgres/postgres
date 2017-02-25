@@ -7,8 +7,6 @@
  */
 #include "postgres_fe.h"
 
-#include <sys/types.h>
-
 #ifndef WIN32
 #include <unistd.h>
 #else							/* WIN32 */
@@ -17,8 +15,6 @@
 #endif   /* WIN32 */
 
 #include "getopt_long.h"
-
-#include <locale.h>
 
 #include "command.h"
 #include "common.h"

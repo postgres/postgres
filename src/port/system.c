@@ -44,7 +44,6 @@
 #include "postgres_fe.h"
 #endif
 
-#include <windows.h>
 #include <fcntl.h>
 
 #undef system

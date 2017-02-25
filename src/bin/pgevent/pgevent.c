@@ -10,15 +10,9 @@
  *
  *-------------------------------------------------------------------------
  */
-
-
 #include "postgres_fe.h"
 
-#include <windows.h>
 #include <olectl.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
 
 /* Global variables */
 HANDLE		g_module = NULL;	/* hModule of DLL */

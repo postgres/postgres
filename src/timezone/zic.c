@@ -9,7 +9,6 @@
 #include "postgres_fe.h"
 
 #include <fcntl.h>
-#include <locale.h>
 #include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>

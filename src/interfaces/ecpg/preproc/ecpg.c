@@ -6,7 +6,7 @@
 #include "postgres_fe.h"
 
 #include <unistd.h>
-#include <string.h>
+
 #include "getopt_long.h"
 
 #include "extern.h"

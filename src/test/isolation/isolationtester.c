@@ -7,9 +7,6 @@
 
 #include "postgres_fe.h"
 
-#ifdef WIN32
-#include <windows.h>
-#endif
 #include <sys/time.h>
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>

@@ -12,7 +12,6 @@
 
 #include "postgres_fe.h"
 
-#include <windows.h>
 #include "pthread-win32.h"
 
 DWORD

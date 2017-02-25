@@ -3,8 +3,6 @@
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
 
-#include <stdlib.h>
-#include <string.h>
 #include <float.h>
 #include <math.h>
 

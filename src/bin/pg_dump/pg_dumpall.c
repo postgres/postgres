@@ -18,10 +18,6 @@
 #include <time.h>
 #include <unistd.h>
 
-#ifdef ENABLE_NLS
-#include <locale.h>
-#endif
-
 #include "getopt_long.h"
 
 #include "dumputils.h"

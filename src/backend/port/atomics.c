@@ -21,7 +21,6 @@
 #ifdef WIN32
 #error "barriers are required (and provided) on WIN32 platforms"
 #endif
-#include <sys/types.h>
 #include <signal.h>
 #endif
 

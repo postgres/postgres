@@ -9,10 +9,9 @@
 
 #include "postgres_fe.h"
 
-#include "pg_upgrade.h"
-
 #include <fcntl.h>
-#include <sys/types.h>
+
+#include "pg_upgrade.h"
 
 static void check_data_dir(ClusterInfo *cluster);
 static void check_bin_dir(ClusterInfo *cluster);

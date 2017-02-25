@@ -19,7 +19,6 @@
 #include "postgres_fe.h"
 
 #include <ctype.h>
-#include <sys/types.h>
 #include <limits.h>
 
 #include "extern.h"

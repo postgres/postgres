@@ -17,7 +17,6 @@
  *-------------------------------------------------------------------------
  */
 #include <intrin.h>
-#include <windows.h>
 
 /* intentionally no include guards, should only be included by atomics.h */
 #ifndef INSIDE_ATOMICS_H

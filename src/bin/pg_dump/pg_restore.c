@@ -40,21 +40,16 @@
  */
 #include "postgres_fe.h"
 
+#include <ctype.h>
+#ifdef HAVE_TERMIOS_H
+#include <termios.h>
+#endif
+
 #include "getopt_long.h"
 
 #include "dumputils.h"
 #include "parallel.h"
 #include "pg_backup_utils.h"
-
-#include <ctype.h>
-
-#ifdef HAVE_TERMIOS_H
-#include <termios.h>
-#endif
-
-#ifdef ENABLE_NLS
-#include <locale.h>
-#endif
 
 
 static void usage(const char *progname);

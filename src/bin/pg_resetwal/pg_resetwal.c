@@ -39,7 +39,6 @@
 
 #include <dirent.h>
 #include <fcntl.h>
-#include <locale.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <time.h>

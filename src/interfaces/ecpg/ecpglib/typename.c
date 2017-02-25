@@ -3,7 +3,6 @@
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
 
-#include <stdlib.h>
 #include "ecpgtype.h"
 #include "ecpglib.h"
 #include "extern.h"

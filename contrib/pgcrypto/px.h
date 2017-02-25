@@ -32,7 +32,6 @@
 #ifndef __PX_H
 #define __PX_H
 
-#include <sys/types.h>
 #include <sys/param.h>
 
 /* keep debug messages? */

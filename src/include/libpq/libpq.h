@@ -14,7 +14,6 @@
 #ifndef LIBPQ_H
 #define LIBPQ_H
 
-#include <sys/types.h>
 #include <netinet/in.h>
 
 #include "lib/stringinfo.h"

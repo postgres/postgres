@@ -11,8 +11,6 @@
 
 #include "pg_upgrade.h"
 
-#include <sys/types.h>
-
 static void get_tablespace_paths(void);
 static void set_tablespace_directory_suffix(ClusterInfo *cluster);
 

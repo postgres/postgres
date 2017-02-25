@@ -18,7 +18,6 @@
 #include "postgres_fe.h"
 
 #include <limits.h>
-#include <locale.h>
 #include <math.h>
 #include <signal.h>
 #include <unistd.h>

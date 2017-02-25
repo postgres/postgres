@@ -14,7 +14,6 @@
 #ifndef PORT_PROTOS_H
 #define PORT_PROTOS_H
 
-#include <sys/types.h>
 #include <nlist.h>
 #include <link.h>
 #include <dlfcn.h>

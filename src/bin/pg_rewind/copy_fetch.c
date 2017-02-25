@@ -9,12 +9,10 @@
  */
 #include "postgres_fe.h"
 
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <string.h>
 
 #include "datapagemap.h"
 #include "fetch.h"

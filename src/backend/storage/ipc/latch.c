@@ -40,7 +40,6 @@
 #include <signal.h>
 #include <unistd.h>
 #include <sys/time.h>
-#include <sys/types.h>
 #ifdef HAVE_SYS_EPOLL_H
 #include <sys/epoll.h>
 #endif

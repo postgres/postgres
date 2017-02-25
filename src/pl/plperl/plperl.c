@@ -13,7 +13,6 @@
 #include <ctype.h>
 #include <fcntl.h>
 #include <limits.h>
-#include <locale.h>
 #include <unistd.h>
 
 /* postgreSQL stuff */

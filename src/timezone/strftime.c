@@ -41,7 +41,6 @@
 #include "postgres.h"
 
 #include <fcntl.h>
-#include <locale.h>
 
 #include "private.h"
 #include "tzfile.h"

@@ -19,11 +19,6 @@
 #include "postgres_fe.h"
 #endif
 
-#if defined(WIN32) && (_MSC_VER >= 1900)
-#include <windows.h>
-#endif
-
-#include <locale.h>
 #ifdef HAVE_LANGINFO_H
 #include <langinfo.h>
 #endif

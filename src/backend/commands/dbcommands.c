@@ -20,7 +20,6 @@
 #include "postgres.h"
 
 #include <fcntl.h>
-#include <locale.h>
 #include <unistd.h>
 #include <sys/stat.h>
 

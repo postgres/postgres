@@ -11,7 +11,6 @@
 
 #include "pg_upgrade.h"
 
-#include <sys/types.h>
 #include "fe_utils/string_utils.h"
 
 

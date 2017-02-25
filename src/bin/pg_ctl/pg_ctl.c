@@ -19,16 +19,9 @@
 
 #include "postgres_fe.h"
 
-#include "catalog/pg_control.h"
-#include "common/controldata_utils.h"
-#include "libpq-fe.h"
-#include "pqexpbuffer.h"
-
 #include <fcntl.h>
-#include <locale.h>
 #include <signal.h>
 #include <time.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -38,8 +31,12 @@
 #include <sys/resource.h>
 #endif
 
+#include "catalog/pg_control.h"
+#include "common/controldata_utils.h"
 #include "getopt_long.h"
+#include "libpq-fe.h"
 #include "miscadmin.h"
+#include "pqexpbuffer.h"
 
 /* PID can be negative for standalone backend */
 typedef long pgpid_t;

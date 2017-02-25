@@ -17,7 +17,6 @@
 #include <dirent.h>
 #include <signal.h>
 #include <sys/stat.h>
-#include <sys/types.h>
 #include <unistd.h>
 
 #include "libpq-fe.h"
