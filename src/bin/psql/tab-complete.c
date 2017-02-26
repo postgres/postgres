@@ -463,6 +463,21 @@ static const SchemaQuery Query_for_list_of_tables = {
 	NULL
 };
 
+static const SchemaQuery Query_for_list_of_partitioned_tables = {
+	/* catname */
+	"pg_catalog.pg_class c",
+	/* selcondition */
+	"c.relkind IN ('P')",
+	/* viscondition */
+	"pg_catalog.pg_table_is_visible(c.oid)",
+	/* namespace */
+	"c.relnamespace",
+	/* result */
+	"pg_catalog.quote_ident(c.relname)",
+	/* qualresult */
+	NULL
+};
+
 static const SchemaQuery Query_for_list_of_constraints_with_schema = {
 	/* catname */
 	"pg_catalog.pg_constraint c",
@@ -912,6 +927,16 @@ static const SchemaQuery Query_for_list_of_matviews = {
 "    UNION ALL " \
 "   SELECT 'DEFAULT' ) ss "\
 "  WHERE pg_catalog.substring(name,1,%%d)='%%s'"
+
+/* the silly-looking length condition is just to eat up the current word */
+#define Query_for_partition_of_table \
+"SELECT pg_catalog.quote_ident(c2.relname) "\
+"  FROM pg_catalog.pg_class c1, pg_catalog.pg_class c2, pg_catalog.pg_inherits i"\
+" WHERE c1.oid=i.inhparent and i.inhrelid=c2.oid"\
+"       and (%d = pg_catalog.length('%s'))"\
+"       and pg_catalog.quote_ident(c1.relname)='%s'"\
+"       and pg_catalog.pg_table_is_visible(c2.oid)"\
+"       and c2.relispartition = 'true'"
 
 /*
  * This is a list of all "things" in Pgsql, which can show up after CREATE or
@@ -1742,7 +1767,8 @@ psql_completion(const char *text, int start, int end)
 		static const char *const list_ALTER2[] =
 		{"ADD", "ALTER", "CLUSTER ON", "DISABLE", "DROP", "ENABLE", "INHERIT",
 			"NO INHERIT", "RENAME", "RESET", "OWNER TO", "SET",
-		"VALIDATE CONSTRAINT", "REPLICA IDENTITY", NULL};
+		"VALIDATE CONSTRAINT", "REPLICA IDENTITY", "ATTACH PARTITION",
+		"DETACH PARTITION", NULL};
 
 		COMPLETE_WITH_LIST(list_ALTER2);
 	}
@@ -1923,6 +1949,26 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH_LIST4("FULL", "NOTHING", "DEFAULT", "USING");
 	else if (Matches4("ALTER", "TABLE", MatchAny, "REPLICA"))
 		COMPLETE_WITH_CONST("IDENTITY");
+	/*
+	 * If we have ALTER TABLE <foo> ATTACH PARTITION, provide a list of
+	 * tables.
+	 */
+	else if (Matches5("ALTER", "TABLE", MatchAny, "ATTACH", "PARTITION"))
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables, "");
+	/* Limited completion support for partition bound specification */
+	else if (TailMatches3("ATTACH", "PARTITION", MatchAny))
+		COMPLETE_WITH_CONST("FOR VALUES");
+	else if (TailMatches2("FOR", "VALUES"))
+		COMPLETE_WITH_LIST2("FROM (", "IN (");
+	/*
+	 * If we have ALTER TABLE <foo> DETACH PARTITION, provide a list of
+	 * partitions of <foo>.
+	 */
+	else if (Matches5("ALTER", "TABLE", MatchAny, "DETACH", "PARTITION"))
+	{
+		completion_info_charp = prev3_wd;
+		COMPLETE_WITH_QUERY(Query_for_partition_of_table);
+	}
 
 	/* ALTER TABLESPACE <foo> with RENAME TO, OWNER TO, SET, RESET */
 	else if (Matches3("ALTER", "TABLESPACE", MatchAny))
@@ -2300,6 +2346,15 @@ psql_completion(const char *text, int start, int end)
 	/* Complete "CREATE UNLOGGED" with TABLE or MATVIEW */
 	else if (TailMatches2("CREATE", "UNLOGGED"))
 		COMPLETE_WITH_LIST2("TABLE", "MATERIALIZED VIEW");
+	/* Complete PARTITION BY with RANGE ( or LIST ( or ... */
+	else if (TailMatches2("PARTITION", "BY"))
+		COMPLETE_WITH_LIST2("RANGE (", "LIST (");
+	/* If we have xxx PARTITION OF, provide a list of partitioned tables */
+	else if (TailMatches2("PARTITION", "OF"))
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_partitioned_tables, "");
+	/* Limited completion support for partition bound specification */
+	else if (TailMatches3("PARTITION", "OF", MatchAny))
+		COMPLETE_WITH_CONST("FOR VALUES");
 
 /* CREATE TABLESPACE */
 	else if (Matches3("CREATE", "TABLESPACE", MatchAny))
