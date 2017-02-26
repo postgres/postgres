@@ -1753,6 +1753,14 @@ BaseBackup(void)
 	if (maxrate > 0)
 		maxrate_clause = psprintf("MAX_RATE %u", maxrate);
 
+	if (verbose)
+		fprintf(stderr,
+				_("%s: initiating base backup, waiting for checkpoint to complete\n"),
+				progname);
+
+	if (showprogress && !verbose)
+		fprintf(stderr, "waiting for checkpoint\n");
+
 	basebkp =
 		psprintf("BASE_BACKUP LABEL '%s' %s %s %s %s %s %s",
 				 escaped_label,
@@ -1789,6 +1797,9 @@ BaseBackup(void)
 	}
 
 	strlcpy(xlogstart, PQgetvalue(res, 0, 0), sizeof(xlogstart));
+
+	if (verbose)
+		fprintf(stderr, _("%s: checkpoint completed\n"), progname);
 
 	/*
 	 * 9.3 and later sends the TLI of the starting point. With older servers,
