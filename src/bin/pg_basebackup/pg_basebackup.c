@@ -1814,8 +1814,8 @@ BaseBackup(void)
 	MemSet(xlogend, 0, sizeof(xlogend));
 
 	if (verbose && includewal != NO_WAL)
-		fprintf(stderr, _("transaction log start point: %s on timeline %u\n"),
-				xlogstart, starttli);
+		fprintf(stderr, _("%s: transaction log start point: %s on timeline %u\n"),
+				progname, xlogstart, starttli);
 
 	/*
 	 * Get the header
@@ -1917,7 +1917,7 @@ BaseBackup(void)
 	}
 	strlcpy(xlogend, PQgetvalue(res, 0, 0), sizeof(xlogend));
 	if (verbose && includewal != NO_WAL)
-		fprintf(stderr, "transaction log end point: %s\n", xlogend);
+		fprintf(stderr, _("%s: transaction log end point: %s\n"), progname, xlogend);
 	PQclear(res);
 
 	res = PQgetResult(conn);
@@ -2058,7 +2058,7 @@ BaseBackup(void)
 	}
 
 	if (verbose)
-		fprintf(stderr, "%s: base backup completed\n", progname);
+		fprintf(stderr, _("%s: base backup completed\n"), progname);
 }
 
 
