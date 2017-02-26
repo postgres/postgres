@@ -28,5 +28,6 @@ extern void ExecForeignScanInitializeDSM(ForeignScanState *node,
 							 ParallelContext *pcxt);
 extern void ExecForeignScanInitializeWorker(ForeignScanState *node,
 								shm_toc *toc);
+extern void ExecShutdownForeignScan(ForeignScanState *node);
 
 #endif   /* NODEFOREIGNSCAN_H */

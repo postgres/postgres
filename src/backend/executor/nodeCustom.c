@@ -202,3 +202,12 @@ ExecCustomScanInitializeWorker(CustomScanState *node, shm_toc *toc)
 		methods->InitializeWorkerCustomScan(node, toc, coordinate);
 	}
 }
+
+void
+ExecShutdownCustomScan(CustomScanState *node)
+{
+	const CustomExecMethods *methods = node->methods;
+
+	if (methods->ShutdownCustomScan)
+		methods->ShutdownCustomScan(node);
+}

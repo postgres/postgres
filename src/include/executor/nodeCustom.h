@@ -37,5 +37,6 @@ extern void ExecCustomScanInitializeDSM(CustomScanState *node,
 							ParallelContext *pcxt);
 extern void ExecCustomScanInitializeWorker(CustomScanState *node,
 							   shm_toc *toc);
+extern void ExecShutdownCustomScan(CustomScanState *node);
 
 #endif   /* NODECUSTOM_H */

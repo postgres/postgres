@@ -353,3 +353,19 @@ ExecForeignScanInitializeWorker(ForeignScanState *node, shm_toc *toc)
 		fdwroutine->InitializeWorkerForeignScan(node, toc, coordinate);
 	}
 }
+
+/* ----------------------------------------------------------------
+ *		ExecShutdownForeignScan
+ *
+ *		Gives FDW chance to stop asynchronous resource consumption
+ *		and release any resources still held.
+ * ----------------------------------------------------------------
+ */
+void
+ExecShutdownForeignScan(ForeignScanState *node)
+{
+	FdwRoutine *fdwroutine = node->fdwroutine;
+
+	if (fdwroutine->ShutdownForeignScan)
+		fdwroutine->ShutdownForeignScan(node);
+}

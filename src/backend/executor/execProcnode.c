@@ -822,6 +822,12 @@ ExecShutdownNode(PlanState *node)
 		case T_GatherState:
 			ExecShutdownGather((GatherState *) node);
 			break;
+		case T_ForeignScanState:
+			ExecShutdownForeignScan((ForeignScanState *) node);
+			break;
+		case T_CustomScanState:
+			ExecShutdownCustomScan((CustomScanState *) node);
+			break;
 		default:
 			break;
 	}

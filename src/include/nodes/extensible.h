@@ -139,6 +139,7 @@ typedef struct CustomExecMethods
 	void		(*InitializeWorkerCustomScan) (CustomScanState *node,
 														   shm_toc *toc,
 														   void *coordinate);
+	void		(*ShutdownCustomScan) (CustomScanState *node);
 
 	/* Optional: print additional information in EXPLAIN */
 	void		(*ExplainCustomScan) (CustomScanState *node,

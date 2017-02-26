@@ -151,6 +151,7 @@ typedef void (*InitializeDSMForeignScan_function) (ForeignScanState *node,
 typedef void (*InitializeWorkerForeignScan_function) (ForeignScanState *node,
 																shm_toc *toc,
 														   void *coordinate);
+typedef void (*ShutdownForeignScan_function) (ForeignScanState *node);
 typedef bool (*IsForeignScanParallelSafe_function) (PlannerInfo *root,
 															 RelOptInfo *rel,
 														 RangeTblEntry *rte);
@@ -224,6 +225,7 @@ typedef struct FdwRoutine
 	EstimateDSMForeignScan_function EstimateDSMForeignScan;
 	InitializeDSMForeignScan_function InitializeDSMForeignScan;
 	InitializeWorkerForeignScan_function InitializeWorkerForeignScan;
+	ShutdownForeignScan_function ShutdownForeignScan;
 } FdwRoutine;
 
 
