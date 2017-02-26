@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 24;
+use Test::More tests => 28;
 
 # Initialize master node
 my $node_master = get_new_node('master');
@@ -58,6 +58,54 @@ is($node_standby_1->psql('postgres', 'INSERT INTO tab_int VALUES (1)'),
 	3, 'read-only queries on standby 1');
 is($node_standby_2->psql('postgres', 'INSERT INTO tab_int VALUES (1)'),
 	3, 'read-only queries on standby 2');
+
+# Tests for connection parameter target_session_attrs
+diag "testing connection parameter \"target_session_attrs\"";
+
+# Routine designed to run tests on the connection parameter
+# target_session_attrs with multiple nodes.
+sub test_target_session_attrs
+{
+	my $node1 = shift;
+	my $node2 = shift;
+	my $target_node = shift;
+	my $mode = shift;
+	my $status = shift;
+
+	my $node1_host = $node1->host;
+	my $node1_port = $node1->port;
+	my $node1_name = $node1->name;
+	my $node2_host = $node2->host;
+	my $node2_port = $node2->port;
+	my $node2_name = $node2->name;
+
+	my $target_name = $target_node->name;
+
+	# Build connection string for connection attempt.
+	my $connstr = "host=$node1_host,$node2_host ";
+	$connstr .= "port=$node1_port,$node2_port ";
+	$connstr .= "target_session_attrs=$mode";
+
+	# The client used for the connection does not matter, only the backend
+	# point does.
+	my ($ret, $stdout, $stderr) =
+		$node1->psql('postgres', 'SHOW port;', extra_params => ['-d', $connstr]);
+	is($status == $ret && $stdout eq $target_node->port, 1,
+	   "connect to node $target_name if mode \"$mode\" and $node1_name,$node2_name listed");
+}
+
+# Connect to master in "read-write" mode with master,standby1 list.
+test_target_session_attrs($node_master, $node_standby_1, $node_master,
+						  "read-write", 0);
+# Connect to master in "read-write" mode with standby1,master list.
+test_target_session_attrs($node_standby_1, $node_master, $node_master,
+						  "read-write", 0);
+# Connect to master in "any" mode with master,standby1 list.
+test_target_session_attrs($node_master, $node_standby_1, $node_master,
+						  "any", 0);
+# Connect to standby1 in "any" mode with standby1,master list.
+test_target_session_attrs($node_standby_1, $node_master, $node_standby_1,
+						  "any", 0);
 
 diag "switching to physical replication slot";
 # Switch to using a physical replication slot. We can do this without a new
