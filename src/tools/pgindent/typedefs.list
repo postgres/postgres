@@ -1941,6 +1941,9 @@ SimpleStringList
 SimpleStringListCell
 SingleBoundSortItem
 Size
+SlabBlock
+SlabContext
+SlabChunk
 SlabSlot
 SlotNumber
 SlruCtl
