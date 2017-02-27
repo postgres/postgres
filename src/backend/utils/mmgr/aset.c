@@ -41,46 +41,6 @@
  *	chunks as chunks.  Anything "large" is passed off to malloc().  Change
  *	the number of freelists to change the small/large boundary.
  *
- *
- *	About CLOBBER_FREED_MEMORY:
- *
- *	If this symbol is defined, all freed memory is overwritten with 0x7F's.
- *	This is useful for catching places that reference already-freed memory.
- *
- *	About MEMORY_CONTEXT_CHECKING:
- *
- *	Since we usually round request sizes up to the next power of 2, there
- *	is often some unused space immediately after a requested data area.
- *	Thus, if someone makes the common error of writing past what they've
- *	requested, the problem is likely to go unnoticed ... until the day when
- *	there *isn't* any wasted space, perhaps because of different memory
- *	alignment on a new platform, or some other effect.  To catch this sort
- *	of problem, the MEMORY_CONTEXT_CHECKING option stores 0x7E just beyond
- *	the requested space whenever the request is less than the actual chunk
- *	size, and verifies that the byte is undamaged when the chunk is freed.
- *
- *
- *	About USE_VALGRIND and Valgrind client requests:
- *
- *	Valgrind provides "client request" macros that exchange information with
- *	the host Valgrind (if any).  Under !USE_VALGRIND, memdebug.h stubs out
- *	currently-used macros.
- *
- *	When running under Valgrind, we want a NOACCESS memory region both before
- *	and after the allocation.  The chunk header is tempting as the preceding
- *	region, but mcxt.c expects to able to examine the standard chunk header
- *	fields.  Therefore, we use, when available, the requested_size field and
- *	any subsequent padding.  requested_size is made NOACCESS before returning
- *	a chunk pointer to a caller.  However, to reduce client request traffic,
- *	it is kept DEFINED in chunks on the free list.
- *
- *	The rounded-up capacity of the chunk usually acts as a post-allocation
- *	NOACCESS region.  If the request consumes precisely the entire chunk,
- *	there is no such region; another chunk header may immediately follow.  In
- *	that case, Valgrind will not detect access beyond the end of the chunk.
- *
- *	See also the cooperating Valgrind client requests in mcxt.c.
- *
  *-------------------------------------------------------------------------
  */
 
@@ -296,10 +256,10 @@ static const unsigned char LogTable256[256] =
  */
 #ifdef HAVE_ALLOCINFO
 #define AllocFreeInfo(_cxt, _chunk) \
-			fprintf(stderr, "AllocFree: %s: %p, %d\n", \
+			fprintf(stderr, "AllocFree: %s: %p, %zu\n", \
 				(_cxt)->header.name, (_chunk), (_chunk)->size)
 #define AllocAllocInfo(_cxt, _chunk) \
-			fprintf(stderr, "AllocAlloc: %s: %p, %d\n", \
+			fprintf(stderr, "AllocAlloc: %s: %p, %zu\n", \
 				(_cxt)->header.name, (_chunk), (_chunk)->size)
 #else
 #define AllocFreeInfo(_cxt, _chunk)
@@ -344,77 +304,6 @@ AllocSetFreeIndex(Size size)
 
 	return idx;
 }
-
-#ifdef CLOBBER_FREED_MEMORY
-
-/* Wipe freed memory for debugging purposes */
-static void
-wipe_mem(void *ptr, size_t size)
-{
-	VALGRIND_MAKE_MEM_UNDEFINED(ptr, size);
-	memset(ptr, 0x7F, size);
-	VALGRIND_MAKE_MEM_NOACCESS(ptr, size);
-}
-#endif
-
-#ifdef MEMORY_CONTEXT_CHECKING
-static void
-set_sentinel(void *base, Size offset)
-{
-	char	   *ptr = (char *) base + offset;
-
-	VALGRIND_MAKE_MEM_UNDEFINED(ptr, 1);
-	*ptr = 0x7E;
-	VALGRIND_MAKE_MEM_NOACCESS(ptr, 1);
-}
-
-static bool
-sentinel_ok(const void *base, Size offset)
-{
-	const char *ptr = (const char *) base + offset;
-	bool		ret;
-
-	VALGRIND_MAKE_MEM_DEFINED(ptr, 1);
-	ret = *ptr == 0x7E;
-	VALGRIND_MAKE_MEM_NOACCESS(ptr, 1);
-
-	return ret;
-}
-#endif
-
-#ifdef RANDOMIZE_ALLOCATED_MEMORY
-
-/*
- * Fill a just-allocated piece of memory with "random" data.  It's not really
- * very random, just a repeating sequence with a length that's prime.  What
- * we mainly want out of it is to have a good probability that two palloc's
- * of the same number of bytes start out containing different data.
- *
- * The region may be NOACCESS, so make it UNDEFINED first to avoid errors as
- * we fill it.  Filling the region makes it DEFINED, so make it UNDEFINED
- * again afterward.  Whether to finally make it UNDEFINED or NOACCESS is
- * fairly arbitrary.  UNDEFINED is more convenient for AllocSetRealloc(), and
- * other callers have no preference.
- */
-static void
-randomize_mem(char *ptr, size_t size)
-{
-	static int	save_ctr = 1;
-	size_t		remaining = size;
-	int			ctr;
-
-	ctr = save_ctr;
-	VALGRIND_MAKE_MEM_UNDEFINED(ptr, size);
-	while (remaining-- > 0)
-	{
-		*ptr++ = ctr;
-		if (++ctr > 251)
-			ctr = 1;
-	}
-	VALGRIND_MAKE_MEM_UNDEFINED(ptr - size, size);
-	save_ctr = ctr;
-}
-#endif   /* RANDOMIZE_ALLOCATED_MEMORY */
 
 
 /*
