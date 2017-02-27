@@ -226,21 +226,11 @@ connect_pg_server(ForeignServer *server, UserMapping *user)
 
 		conn = PQconnectdbParams(keywords, values, false);
 		if (!conn || PQstatus(conn) != CONNECTION_OK)
-		{
-			char	   *connmessage;
-			int			msglen;
-
-			/* libpq typically appends a newline, strip that */
-			connmessage = pstrdup(PQerrorMessage(conn));
-			msglen = strlen(connmessage);
-			if (msglen > 0 && connmessage[msglen - 1] == '\n')
-				connmessage[msglen - 1] = '\0';
 			ereport(ERROR,
 			   (errcode(ERRCODE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION),
 				errmsg("could not connect to server \"%s\"",
 					   server->servername),
-				errdetail_internal("%s", connmessage)));
-		}
+				errdetail_internal("%s", pchomp(PQerrorMessage(conn)))));
 
 		/*
 		 * Check that non-superuser has used password to establish connection;
@@ -563,7 +553,7 @@ pgfdw_report_error(int elevel, PGresult *res, PGconn *conn,
 		 * return NULL, not a PGresult at all.
 		 */
 		if (message_primary == NULL)
-			message_primary = PQerrorMessage(conn);
+			message_primary = pchomp(PQerrorMessage(conn));
 
 		ereport(elevel,
 				(errcode(sqlstate),

@@ -166,7 +166,7 @@ typedef struct remoteConnHashEnt
 
 #define DBLINK_RES_INTERNALERROR(p2) \
 	do { \
-			msg = pstrdup(PQerrorMessage(conn)); \
+			msg = pchomp(PQerrorMessage(conn)); \
 			if (res) \
 				PQclear(res); \
 			elog(ERROR, "%s: %s", p2, msg); \
@@ -204,7 +204,7 @@ typedef struct remoteConnHashEnt
 				conn = PQconnectdb(connstr); \
 				if (PQstatus(conn) == CONNECTION_BAD) \
 				{ \
-					msg = pstrdup(PQerrorMessage(conn)); \
+					msg = pchomp(PQerrorMessage(conn)); \
 					PQfinish(conn); \
 					ereport(ERROR, \
 							(errcode(ERRCODE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION), \
@@ -278,7 +278,7 @@ dblink_connect(PG_FUNCTION_ARGS)
 
 	if (PQstatus(conn) == CONNECTION_BAD)
 	{
-		msg = pstrdup(PQerrorMessage(conn));
+		msg = pchomp(PQerrorMessage(conn));
 		PQfinish(conn);
 		if (rconn)
 			pfree(rconn);
@@ -651,7 +651,7 @@ dblink_send_query(PG_FUNCTION_ARGS)
 	/* async query send */
 	retval = PQsendQuery(conn, sql);
 	if (retval != 1)
-		elog(NOTICE, "could not send query: %s", PQerrorMessage(conn));
+		elog(NOTICE, "could not send query: %s", pchomp(PQerrorMessage(conn)));
 
 	PG_RETURN_INT32(retval);
 }
@@ -1087,7 +1087,7 @@ storeQueryResult(volatile storeInfo *sinfo, PGconn *conn, const char *sql)
 	PGresult   *res;
 
 	if (!PQsendQuery(conn, sql))
-		elog(ERROR, "could not send query: %s", PQerrorMessage(conn));
+		elog(ERROR, "could not send query: %s", pchomp(PQerrorMessage(conn)));
 
 	if (!PQsetSingleRowMode(conn))		/* shouldn't fail */
 		elog(ERROR, "failed to set single-row mode for dblink query");
@@ -1370,7 +1370,7 @@ dblink_error_message(PG_FUNCTION_ARGS)
 	if (msg == NULL || msg[0] == '\0')
 		PG_RETURN_TEXT_P(cstring_to_text("OK"));
 	else
-		PG_RETURN_TEXT_P(cstring_to_text(msg));
+		PG_RETURN_TEXT_P(cstring_to_text(pchomp(msg)));
 }
 
 /*
@@ -2709,7 +2709,7 @@ dblink_res_error(PGconn *conn, const char *conname, PGresult *res,
 	 * return NULL, not a PGresult at all.
 	 */
 	if (message_primary == NULL)
-		message_primary = PQerrorMessage(conn);
+		message_primary = pchomp(PQerrorMessage(conn));
 
 	if (res)
 		PQclear(res);

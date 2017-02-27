@@ -149,7 +149,7 @@ libpqrcv_connect(const char *conninfo, bool logical, const char *appname,
 	conn->streamConn = PQconnectdbParams(keys, vals, /* expand_dbname = */ true);
 	if (PQstatus(conn->streamConn) != CONNECTION_OK)
 	{
-		*err = pstrdup(PQerrorMessage(conn->streamConn));
+		*err = pchomp(PQerrorMessage(conn->streamConn));
 		return NULL;
 	}
 
@@ -247,7 +247,7 @@ libpqrcv_identify_system(WalReceiverConn *conn, TimeLineID *primary_tli,
 		ereport(ERROR,
 				(errmsg("could not receive database system identifier and timeline ID from "
 						"the primary server: %s",
-						PQerrorMessage(conn->streamConn))));
+						pchomp(PQerrorMessage(conn->streamConn)))));
 	}
 	if (PQnfields(res) < 3 || PQntuples(res) != 1)
 	{
@@ -324,13 +324,13 @@ libpqrcv_startstreaming(WalReceiverConn *conn,
 		if (!pubnames_str)
 			ereport(ERROR,
 					(errmsg("could not start WAL streaming: %s",
-							PQerrorMessage(conn->streamConn))));
+							pchomp(PQerrorMessage(conn->streamConn)))));
 		pubnames_literal = PQescapeLiteral(conn->streamConn, pubnames_str,
 										   strlen(pubnames_str));
 		if (!pubnames_literal)
 			ereport(ERROR,
 					(errmsg("could not start WAL streaming: %s",
-							PQerrorMessage(conn->streamConn))));
+							pchomp(PQerrorMessage(conn->streamConn)))));
 		appendStringInfo(&cmd, ", publication_names %s", pubnames_literal);
 		PQfreemem(pubnames_literal);
 		pfree(pubnames_str);
@@ -355,7 +355,7 @@ libpqrcv_startstreaming(WalReceiverConn *conn,
 		PQclear(res);
 		ereport(ERROR,
 				(errmsg("could not start WAL streaming: %s",
-						PQerrorMessage(conn->streamConn))));
+						pchomp(PQerrorMessage(conn->streamConn)))));
 	}
 	PQclear(res);
 	return true;
@@ -374,7 +374,7 @@ libpqrcv_endstreaming(WalReceiverConn *conn, TimeLineID *next_tli)
 		PQflush(conn->streamConn))
 		ereport(ERROR,
 			(errmsg("could not send end-of-streaming message to primary: %s",
-					PQerrorMessage(conn->streamConn))));
+					pchomp(PQerrorMessage(conn->streamConn)))));
 
 	*next_tli = 0;
 
@@ -418,7 +418,7 @@ libpqrcv_endstreaming(WalReceiverConn *conn, TimeLineID *next_tli)
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 		ereport(ERROR,
 				(errmsg("error reading result of streaming command: %s",
-						PQerrorMessage(conn->streamConn))));
+						pchomp(PQerrorMessage(conn->streamConn)))));
 	PQclear(res);
 
 	/* Verify that there are no more results */
@@ -426,7 +426,7 @@ libpqrcv_endstreaming(WalReceiverConn *conn, TimeLineID *next_tli)
 	if (res != NULL)
 		ereport(ERROR,
 				(errmsg("unexpected result after CommandComplete: %s",
-						PQerrorMessage(conn->streamConn))));
+						pchomp(PQerrorMessage(conn->streamConn)))));
 }
 
 /*
@@ -453,7 +453,7 @@ libpqrcv_readtimelinehistoryfile(WalReceiverConn *conn,
 		ereport(ERROR,
 				(errmsg("could not receive timeline history file from "
 						"the primary server: %s",
-						PQerrorMessage(conn->streamConn))));
+						pchomp(PQerrorMessage(conn->streamConn)))));
 	}
 	if (PQnfields(res) != 2 || PQntuples(res) != 1)
 	{
@@ -611,7 +611,7 @@ libpqrcv_receive(WalReceiverConn *conn, char **buffer,
 		if (PQconsumeInput(conn->streamConn) == 0)
 			ereport(ERROR,
 					(errmsg("could not receive data from WAL stream: %s",
-							PQerrorMessage(conn->streamConn))));
+							pchomp(PQerrorMessage(conn->streamConn)))));
 
 		/* Now that we've consumed some input, try again */
 		rawlen = PQgetCopyData(conn->streamConn, &conn->recvBuf, 1);
@@ -638,13 +638,13 @@ libpqrcv_receive(WalReceiverConn *conn, char **buffer,
 			PQclear(res);
 			ereport(ERROR,
 					(errmsg("could not receive data from WAL stream: %s",
-							PQerrorMessage(conn->streamConn))));
+							pchomp(PQerrorMessage(conn->streamConn)))));
 		}
 	}
 	if (rawlen < -1)
 		ereport(ERROR,
 				(errmsg("could not receive data from WAL stream: %s",
-						PQerrorMessage(conn->streamConn))));
+						pchomp(PQerrorMessage(conn->streamConn)))));
 
 	/* Return received messages to caller */
 	*buffer = conn->recvBuf;
@@ -663,7 +663,7 @@ libpqrcv_send(WalReceiverConn *conn, const char *buffer, int nbytes)
 		PQflush(conn->streamConn))
 		ereport(ERROR,
 				(errmsg("could not send data to WAL stream: %s",
-						PQerrorMessage(conn->streamConn))));
+						pchomp(PQerrorMessage(conn->streamConn)))));
 }
 
 /*
@@ -697,7 +697,7 @@ libpqrcv_create_slot(WalReceiverConn *conn, const char *slotname,
 		PQclear(res);
 		ereport(ERROR,
 				(errmsg("could not create replication slot \"%s\": %s",
-						slotname, PQerrorMessage(conn->streamConn))));
+						slotname, pchomp(PQerrorMessage(conn->streamConn)))));
 	}
 
 	*lsn = DatumGetLSN(DirectFunctionCall1Coll(pg_lsn_in, InvalidOid,
@@ -728,7 +728,7 @@ libpqrcv_command(WalReceiverConn *conn, const char *cmd, char **err)
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
 		PQclear(res);
-		*err = pstrdup(PQerrorMessage(conn->streamConn));
+		*err = pchomp(PQerrorMessage(conn->streamConn));
 		return false;
 	}
 

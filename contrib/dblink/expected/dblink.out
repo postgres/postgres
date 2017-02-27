@@ -377,7 +377,6 @@ FROM dblink('myconn','SELECT * FROM foo') AS t(a int, b text, c text[])
 WHERE t.a > 7;
 ERROR:  could not establish connection
 DETAIL:  missing "=" after "myconn" in connection info string
-
 -- create a named persistent connection
 SELECT dblink_connect('myconn',connection_parameters());
  dblink_connect 
@@ -604,7 +603,6 @@ FROM dblink('myconn','SELECT * FROM foo') AS t(a int, b text, c text[])
 WHERE t.a > 7;
 ERROR:  could not establish connection
 DETAIL:  missing "=" after "myconn" in connection info string
-
 -- create a named persistent connection
 SELECT dblink_connect('myconn',connection_parameters());
  dblink_connect 
