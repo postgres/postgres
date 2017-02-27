@@ -255,7 +255,6 @@ void		_PG_init(void);
 
 static void pltcl_init_interp(pltcl_interp_desc *interp_desc, bool pltrusted);
 static pltcl_interp_desc *pltcl_fetch_interp(bool pltrusted);
-static void pltcl_init_load_unknown(Tcl_Interp *interp);
 
 static Datum pltcl_handler(PG_FUNCTION_ARGS, bool pltrusted);
 
@@ -491,11 +490,6 @@ pltcl_init_interp(pltcl_interp_desc *interp_desc, bool pltrusted)
 						 pltcl_SPI_execute_plan, NULL, NULL);
 	Tcl_CreateObjCommand(interp, "spi_lastoid",
 						 pltcl_SPI_lastoid, NULL, NULL);
-
-	/************************************************************
-	 * Try to load the unknown procedure from pltcl_modules
-	 ************************************************************/
-	pltcl_init_load_unknown(interp);
 }
 
 /**********************************************************************
@@ -524,126 +518,6 @@ pltcl_fetch_interp(bool pltrusted)
 		pltcl_init_interp(interp_desc, pltrusted);
 
 	return interp_desc;
-}
-
-/**********************************************************************
- * pltcl_init_load_unknown()	- Load the unknown procedure from
- *				  table pltcl_modules (if it exists)
- **********************************************************************/
-static void
-pltcl_init_load_unknown(Tcl_Interp *interp)
-{
-	Relation	pmrel;
-	char	   *pmrelname,
-			   *nspname;
-	char	   *buf;
-	int			buflen;
-	int			spi_rc;
-	int			tcl_rc;
-	Tcl_DString unknown_src;
-	char	   *part;
-	uint64		i;
-	int			fno;
-
-	/************************************************************
-	 * Check if table pltcl_modules exists
-	 *
-	 * We allow the table to be found anywhere in the search_path.
-	 * This is for backwards compatibility.  To ensure that the table
-	 * is trustworthy, we require it to be owned by a superuser.
-	 ************************************************************/
-	pmrel = relation_openrv_extended(makeRangeVar(NULL, "pltcl_modules", -1),
-									 AccessShareLock, true);
-	if (pmrel == NULL)
-		return;
-	/* sanity-check the relation kind */
-	if (!(pmrel->rd_rel->relkind == RELKIND_RELATION ||
-		  pmrel->rd_rel->relkind == RELKIND_MATVIEW ||
-		  pmrel->rd_rel->relkind == RELKIND_VIEW))
-	{
-		relation_close(pmrel, AccessShareLock);
-		return;
-	}
-	/* must be owned by superuser, else ignore */
-	if (!superuser_arg(pmrel->rd_rel->relowner))
-	{
-		relation_close(pmrel, AccessShareLock);
-		return;
-	}
-	/* get fully qualified table name for use in select command */
-	nspname = get_namespace_name(RelationGetNamespace(pmrel));
-	if (!nspname)
-		elog(ERROR, "cache lookup failed for namespace %u",
-			 RelationGetNamespace(pmrel));
-	pmrelname = quote_qualified_identifier(nspname,
-										   RelationGetRelationName(pmrel));
-
-	/************************************************************
-	 * Read all the rows from it where modname = 'unknown',
-	 * in the order of modseq
-	 ************************************************************/
-	buflen = strlen(pmrelname) + 100;
-	buf = (char *) palloc(buflen);
-	snprintf(buf, buflen,
-		   "select modsrc from %s where modname = 'unknown' order by modseq",
-			 pmrelname);
-
-	spi_rc = SPI_execute(buf, false, 0);
-	if (spi_rc != SPI_OK_SELECT)
-		elog(ERROR, "select from pltcl_modules failed");
-
-	pfree(buf);
-
-	/************************************************************
-	 * If there's nothing, module unknown doesn't exist
-	 ************************************************************/
-	if (SPI_processed == 0)
-	{
-		SPI_freetuptable(SPI_tuptable);
-		ereport(WARNING,
-				(errmsg("module \"unknown\" not found in pltcl_modules")));
-		relation_close(pmrel, AccessShareLock);
-		return;
-	}
-
-	/************************************************************
-	 * There is a module named unknown. Reassemble the
-	 * source from the modsrc attributes and evaluate
-	 * it in the Tcl interpreter
-	 *
-	 * leave this code as DString - it's only executed once per session
-	 ************************************************************/
-	fno = SPI_fnumber(SPI_tuptable->tupdesc, "modsrc");
-	Assert(fno > 0);
-
-	Tcl_DStringInit(&unknown_src);
-
-	for (i = 0; i < SPI_processed; i++)
-	{
-		part = SPI_getvalue(SPI_tuptable->vals[i],
-							SPI_tuptable->tupdesc, fno);
-		if (part != NULL)
-		{
-			UTF_BEGIN;
-			Tcl_DStringAppend(&unknown_src, UTF_E2U(part), -1);
-			UTF_END;
-			pfree(part);
-		}
-	}
-	tcl_rc = Tcl_EvalEx(interp, Tcl_DStringValue(&unknown_src),
-						Tcl_DStringLength(&unknown_src),
-						TCL_EVAL_GLOBAL);
-
-	Tcl_DStringFree(&unknown_src);
-	SPI_freetuptable(SPI_tuptable);
-
-	if (tcl_rc != TCL_OK)
-		ereport(ERROR,
-				(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
-				 errmsg("could not load module \"unknown\": %s",
-						utf_u2e(Tcl_GetStringResult(interp)))));
-
-	relation_close(pmrel, AccessShareLock);
 }
 
 

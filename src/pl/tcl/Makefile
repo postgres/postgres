@@ -53,7 +53,6 @@ include $(top_srcdir)/src/Makefile.shlib
 
 
 all: all-lib
-	$(MAKE) -C modules $@
 
 # Force this dependency to be known even without dependency info built:
 pltcl.o: pltclerrcodes.h
@@ -65,14 +64,11 @@ pltclerrcodes.h: $(top_srcdir)/src/backend/utils/errcodes.txt generate-pltclerrc
 distprep: pltclerrcodes.h
 
 install: all install-lib install-data
-	$(MAKE) -C modules $@
 
 installdirs: installdirs-lib
 	$(MKDIR_P) '$(DESTDIR)$(datadir)/extension'
-	$(MAKE) -C modules $@
 
 uninstall: uninstall-lib uninstall-data
-	$(MAKE) -C modules $@
 
 install-data: installdirs
 	$(INSTALL_DATA) $(addprefix $(srcdir)/, $(DATA)) '$(DESTDIR)$(datadir)/extension/'
@@ -100,7 +96,6 @@ clean distclean: clean-lib
 ifeq ($(PORTNAME), win32)
 	rm -f $(tclwithver).def
 endif
-	$(MAKE) -C modules $@
 
 maintainer-clean: distclean
 	rm -f pltclerrcodes.h

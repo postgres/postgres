@@ -902,51 +902,6 @@ if {[catch { spi_exec $sql_command }]} {
     </para>
    </sect1>
 
-   <sect1 id="pltcl-unknown">
-       <title>Modules and the <function>unknown</> Command</title>
-       <para>
-        PL/Tcl has support for autoloading Tcl code when used.
-        It recognizes a special table, <literal>pltcl_modules</>, which
-        is presumed to contain modules of Tcl code.  If this table
-        exists, the module <literal>unknown</> is fetched from the table
-        and loaded into the Tcl interpreter immediately before the first
-        execution of a PL/Tcl function in a database session.  (This
-        happens separately for each Tcl interpreter, if more than one is
-        used in a session; see <xref linkend="pltcl-global">.)
-       </para>
-       <para>
-        While the <literal>unknown</> module could actually contain any
-        initialization script you need, it normally defines a Tcl
-        <function>unknown</> procedure that is invoked whenever Tcl does
-        not recognize an invoked procedure name.  <application>PL/Tcl</>'s standard version
-        of this procedure tries to find a module in <literal>pltcl_modules</>
-        that will define the required procedure.  If one is found, it is
-        loaded into the interpreter, and then execution is allowed to
-        proceed with the originally attempted procedure call.  A
-        secondary table <literal>pltcl_modfuncs</> provides an index of
-        which functions are defined by which modules, so that the lookup
-        is reasonably quick.
-       </para>
-       <para>
-        The <productname>PostgreSQL</productname> distribution includes
-        support scripts to maintain these tables:
-        <command>pltcl_loadmod</>, <command>pltcl_listmod</>,
-        <command>pltcl_delmod</>, as well as source for the standard
-        <literal>unknown</> module in <filename>share/unknown.pltcl</>.  This module
-        must be loaded
-        into each database initially to support the autoloading mechanism.
-       </para>
-       <para>
-        The tables <literal>pltcl_modules</> and <literal>pltcl_modfuncs</>
-        must be readable by all, but it is wise to make them owned and
-        writable only by the database administrator.  As a security
-        precaution, PL/Tcl will ignore <literal>pltcl_modules</> (and thus,
-        not attempt to load the <literal>unknown</> module) unless it is
-        owned by a superuser.  But update privileges on this table can be
-        granted to other users, if you trust them sufficiently.
-       </para>
-   </sect1>
-
    <sect1 id="pltcl-procnames">
     <title>Tcl Procedure Names</title>
 
