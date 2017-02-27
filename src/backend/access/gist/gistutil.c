@@ -624,9 +624,9 @@ gistFetchAtt(GISTSTATE *giststate, int nkey, Datum k, Relation r)
 
 /*
  * Fetch all keys in tuple.
- * returns new IndexTuple that contains GISTENTRY with fetched data
+ * Returns a new HeapTuple containing the originally-indexed data.
  */
-IndexTuple
+HeapTuple
 gistFetchTuple(GISTSTATE *giststate, Relation r, IndexTuple tuple)
 {
 	MemoryContext oldcxt = MemoryContextSwitchTo(giststate->tempCxt);
@@ -660,7 +660,7 @@ gistFetchTuple(GISTSTATE *giststate, Relation r, IndexTuple tuple)
 	}
 	MemoryContextSwitchTo(oldcxt);
 
-	return index_form_tuple(giststate->fetchTupdesc, fetchatt, isnull);
+	return heap_form_tuple(giststate->fetchTupdesc, fetchatt, isnull);
 }
 
 float

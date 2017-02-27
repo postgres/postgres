@@ -155,7 +155,7 @@ gistrescan(IndexScanDesc scan, ScanKey key, int nkeys,
 	 * tuple descriptor to represent the returned index tuples and create a
 	 * memory context to hold them during the scan.
 	 */
-	if (scan->xs_want_itup && !scan->xs_itupdesc)
+	if (scan->xs_want_itup && !scan->xs_hitupdesc)
 	{
 		int			natts;
 		int			attno;
@@ -174,8 +174,9 @@ gistrescan(IndexScanDesc scan, ScanKey key, int nkeys,
 							   scan->indexRelation->rd_opcintype[attno - 1],
 							   -1, 0);
 		}
-		scan->xs_itupdesc = so->giststate->fetchTupdesc;
+		scan->xs_hitupdesc = so->giststate->fetchTupdesc;
 
+		/* Also create a memory context that will hold the returned tuples */
 		so->pageDataCxt = AllocSetContextCreate(so->giststate->scanCxt,
 												"GiST page data context",
 												ALLOCSET_DEFAULT_SIZES);

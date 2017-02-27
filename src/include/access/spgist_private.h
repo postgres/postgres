@@ -159,7 +159,7 @@ typedef struct SpGistScanOpaqueData
 	int			iPtr;			/* index for scanning through same */
 	ItemPointerData heapPtrs[MaxIndexTuplesPerPage];	/* TIDs from cur page */
 	bool		recheck[MaxIndexTuplesPerPage]; /* their recheck flags */
-	IndexTuple	indexTups[MaxIndexTuplesPerPage];		/* reconstructed tuples */
+	HeapTuple	reconTups[MaxIndexTuplesPerPage];		/* reconstructed tuples */
 
 	/*
 	 * Note: using MaxIndexTuplesPerPage above is a bit hokey since

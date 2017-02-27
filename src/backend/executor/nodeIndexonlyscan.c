@@ -149,9 +149,26 @@ IndexOnlyNext(IndexOnlyScanState *node)
 		}
 
 		/*
-		 * Fill the scan tuple slot with data from the index.
+		 * Fill the scan tuple slot with data from the index.  This might be
+		 * provided in either HeapTuple or IndexTuple format.  Conceivably an
+		 * index AM might fill both fields, in which case we prefer the heap
+		 * format, since it's probably a bit cheaper to fill a slot from.
 		 */
-		StoreIndexTuple(slot, scandesc->xs_itup, scandesc->xs_itupdesc);
+		if (scandesc->xs_hitup)
+		{
+			/*
+			 * We don't take the trouble to verify that the provided tuple has
+			 * exactly the slot's format, but it seems worth doing a quick
+			 * check on the number of fields.
+			 */
+			Assert(slot->tts_tupleDescriptor->natts ==
+				   scandesc->xs_hitupdesc->natts);
+			ExecStoreTuple(scandesc->xs_hitup, slot, InvalidBuffer, false);
+		}
+		else if (scandesc->xs_itup)
+			StoreIndexTuple(slot, scandesc->xs_itup, scandesc->xs_itupdesc);
+		else
+			elog(ERROR, "no data returned for index-only scan");
 
 		/*
 		 * If the index was lossy, we have to recheck the index quals.

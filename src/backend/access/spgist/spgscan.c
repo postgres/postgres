@@ -92,11 +92,11 @@ resetSpGistScanOpaque(SpGistScanOpaque so)
 
 	if (so->want_itup)
 	{
-		/* Must pfree IndexTuples to avoid memory leak */
+		/* Must pfree reconstructed tuples to avoid memory leak */
 		int			i;
 
 		for (i = 0; i < so->nPtrs; i++)
-			pfree(so->indexTups[i]);
+			pfree(so->reconTups[i]);
 	}
 	so->iPtr = so->nPtrs = 0;
 }
@@ -195,8 +195,8 @@ spgbeginscan(Relation rel, int keysz, int orderbysz)
 										"SP-GiST search temporary context",
 										ALLOCSET_DEFAULT_SIZES);
 
-	/* Set up indexTupDesc and xs_itupdesc in case it's an index-only scan */
-	so->indexTupDesc = scan->xs_itupdesc = RelationGetDescr(rel);
+	/* Set up indexTupDesc and xs_hitupdesc in case it's an index-only scan */
+	so->indexTupDesc = scan->xs_hitupdesc = RelationGetDescr(rel);
 
 	scan->opaque = so;
 
@@ -591,12 +591,12 @@ storeGettuple(SpGistScanOpaque so, ItemPointer heapPtr,
 	if (so->want_itup)
 	{
 		/*
-		 * Reconstruct desired IndexTuple.  We have to copy the datum out of
-		 * the temp context anyway, so we may as well create the tuple here.
+		 * Reconstruct index data.  We have to copy the datum out of the temp
+		 * context anyway, so we may as well create the tuple here.
 		 */
-		so->indexTups[so->nPtrs] = index_form_tuple(so->indexTupDesc,
-													&leafValue,
-													&isnull);
+		so->reconTups[so->nPtrs] = heap_form_tuple(so->indexTupDesc,
+												   &leafValue,
+												   &isnull);
 	}
 	so->nPtrs++;
 }
@@ -619,18 +619,18 @@ spggettuple(IndexScanDesc scan, ScanDirection dir)
 			/* continuing to return tuples from a leaf page */
 			scan->xs_ctup.t_self = so->heapPtrs[so->iPtr];
 			scan->xs_recheck = so->recheck[so->iPtr];
-			scan->xs_itup = so->indexTups[so->iPtr];
+			scan->xs_hitup = so->reconTups[so->iPtr];
 			so->iPtr++;
 			return true;
 		}
 
 		if (so->want_itup)
 		{
-			/* Must pfree IndexTuples to avoid memory leak */
+			/* Must pfree reconstructed tuples to avoid memory leak */
 			int			i;
 
 			for (i = 0; i < so->nPtrs; i++)
-				pfree(so->indexTups[i]);
+				pfree(so->reconTups[i]);
 		}
 		so->iPtr = so->nPtrs = 0;
 

@@ -104,9 +104,16 @@ typedef struct IndexScanDescData
 	/* index access method's private state */
 	void	   *opaque;			/* access-method-specific info */
 
-	/* in an index-only scan, this is valid after a successful amgettuple */
+	/*
+	 * In an index-only scan, a successful amgettuple call must fill either
+	 * xs_itup (and xs_itupdesc) or xs_hitup (and xs_hitupdesc) to provide the
+	 * data returned by the scan.  It can fill both, in which case the heap
+	 * format will be used.
+	 */
 	IndexTuple	xs_itup;		/* index tuple returned by AM */
 	TupleDesc	xs_itupdesc;	/* rowtype descriptor of xs_itup */
+	HeapTuple	xs_hitup;		/* index data returned by AM, as HeapTuple */
+	TupleDesc	xs_hitupdesc;	/* rowtype descriptor of xs_hitup */
 
 	/* xs_ctup/xs_cbuf/xs_recheck are valid after a successful index_getnext */
 	HeapTupleData xs_ctup;		/* current heap tuple, if any */

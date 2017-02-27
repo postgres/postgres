@@ -551,15 +551,19 @@ amgettuple (IndexScanDesc scan,
   <para>
    If the index supports <link linkend="indexes-index-only-scans">index-only
    scans</link> (i.e., <function>amcanreturn</function> returns TRUE for it),
-   then on success the AM must also check
-   <literal>scan-&gt;xs_want_itup</>, and if that is true it must return
-   the original indexed data for the index entry, in the form of an
+   then on success the AM must also check <literal>scan-&gt;xs_want_itup</>,
+   and if that is true it must return the originally indexed data for the
+   index entry.  The data can be returned in the form of an
    <structname>IndexTuple</> pointer stored at <literal>scan-&gt;xs_itup</>,
-   with tuple descriptor <literal>scan-&gt;xs_itupdesc</>.
-   (Management of the data referenced by the pointer is the access method's
+   with tuple descriptor <literal>scan-&gt;xs_itupdesc</>; or in the form of
+   a <structname>HeapTuple</> pointer stored at <literal>scan-&gt;xs_hitup</>,
+   with tuple descriptor <literal>scan-&gt;xs_hitupdesc</>.  (The latter
+   format should be used when reconstructing data that might possibly not fit
+   into an IndexTuple.)  In either case,
+   management of the data referenced by the pointer is the access method's
    responsibility.  The data must remain good at least until the next
    <function>amgettuple</>, <function>amrescan</>, or <function>amendscan</>
-   call for the scan.)
+   call for the scan.
   </para>
 
   <para>

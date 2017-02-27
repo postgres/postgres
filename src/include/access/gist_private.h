@@ -119,7 +119,7 @@ typedef struct GISTSearchHeapItem
 	ItemPointerData heapPtr;
 	bool		recheck;		/* T if quals must be rechecked */
 	bool		recheckDistances;		/* T if distances must be rechecked */
-	IndexTuple	ftup;			/* data fetched back from the index, used in
+	HeapTuple	recontup;		/* data reconstructed from the index, used in
 								 * index-only scans */
 	OffsetNumber offnum;		/* track offset in page to mark tuple as
 								 * LP_DEAD */
@@ -477,7 +477,7 @@ extern void gistMakeUnionItVec(GISTSTATE *giststate, IndexTuple *itvec, int len,
 extern bool gistKeyIsEQ(GISTSTATE *giststate, int attno, Datum a, Datum b);
 extern void gistDeCompressAtt(GISTSTATE *giststate, Relation r, IndexTuple tuple, Page p,
 				  OffsetNumber o, GISTENTRY *attdata, bool *isnull);
-extern IndexTuple gistFetchTuple(GISTSTATE *giststate, Relation r,
+extern HeapTuple gistFetchTuple(GISTSTATE *giststate, Relation r,
 			   IndexTuple tuple);
 extern void gistMakeUnionKey(GISTSTATE *giststate, int attno,
 				 GISTENTRY *entry1, bool isnull1,

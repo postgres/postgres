@@ -441,12 +441,13 @@ gistScanPage(IndexScanDesc scan, GISTSearchItem *pageItem, double *myDistances,
 			so->pageData[so->nPageData].offnum = i;
 
 			/*
-			 * In an index-only scan, also fetch the data from the tuple.
+			 * In an index-only scan, also fetch the data from the tuple.  The
+			 * reconstructed tuples are stored in pageDataCxt.
 			 */
 			if (scan->xs_want_itup)
 			{
 				oldcxt = MemoryContextSwitchTo(so->pageDataCxt);
-				so->pageData[so->nPageData].ftup =
+				so->pageData[so->nPageData].recontup =
 					gistFetchTuple(giststate, r, it);
 				MemoryContextSwitchTo(oldcxt);
 			}
@@ -478,7 +479,7 @@ gistScanPage(IndexScanDesc scan, GISTSearchItem *pageItem, double *myDistances,
 				 * In an index-only scan, also fetch the data from the tuple.
 				 */
 				if (scan->xs_want_itup)
-					item->data.heap.ftup = gistFetchTuple(giststate, r, it);
+					item->data.heap.recontup = gistFetchTuple(giststate, r, it);
 			}
 			else
 			{
@@ -540,11 +541,11 @@ getNextNearest(IndexScanDesc scan)
 	bool		res = false;
 	int			i;
 
-	if (scan->xs_itup)
+	if (scan->xs_hitup)
 	{
 		/* free previously returned tuple */
-		pfree(scan->xs_itup);
-		scan->xs_itup = NULL;
+		pfree(scan->xs_hitup);
+		scan->xs_hitup = NULL;
 	}
 
 	do
@@ -601,7 +602,7 @@ getNextNearest(IndexScanDesc scan)
 
 			/* in an index-only scan, also return the reconstructed tuple. */
 			if (scan->xs_want_itup)
-				scan->xs_itup = item->data.heap.ftup;
+				scan->xs_hitup = item->data.heap.recontup;
 			res = true;
 		}
 		else
@@ -685,7 +686,7 @@ gistgettuple(IndexScanDesc scan, ScanDirection dir)
 
 				/* in an index-only scan, also return the reconstructed tuple */
 				if (scan->xs_want_itup)
-					scan->xs_itup = so->pageData[so->curPageData].ftup;
+					scan->xs_hitup = so->pageData[so->curPageData].recontup;
 
 				so->curPageData++;
 
