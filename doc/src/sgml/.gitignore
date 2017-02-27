@@ -7,6 +7,7 @@
 /man-stamp
 # Other popular build targets
 /INSTALL
+/INSTALL.xml
 /postgres-US.pdf
 /postgres-A4.pdf
 /postgres.html

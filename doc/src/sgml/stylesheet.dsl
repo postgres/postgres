@@ -4,7 +4,6 @@
 <!-- must turn on one of these with -i on the jade command line -->
 <!ENTITY % output-html          "IGNORE">
 <!ENTITY % output-print         "IGNORE">
-<!ENTITY % output-text          "IGNORE">
 
 <![ %output-html; [
 <!ENTITY dbstyle PUBLIC "-//Norman Walsh//DOCUMENT DocBook HTML Stylesheet//EN" CDATA DSSSL>
@@ -12,10 +11,6 @@
 
 <![ %output-print; [
 <!ENTITY dbstyle PUBLIC "-//Norman Walsh//DOCUMENT DocBook Print Stylesheet//EN" CDATA DSSSL>
-]]>
-
-<![ %output-text; [
-<!ENTITY dbstyle PUBLIC "-//Norman Walsh//DOCUMENT DocBook HTML Stylesheet//EN" CDATA DSSSL>
 ]]>
 
 ]>
@@ -795,44 +790,6 @@
         (empty-sosofo))))
 
 ]]> <!-- %output-print -->
-
-
-<!-- Plain text output customization ............................... -->
-
-<!--
-This is used for making the INSTALL file and others.  We customize the
-HTML stylesheets to be suitable for dumping plain text (via Netscape,
-Lynx, or similar).
--->
-
-<![ %output-text; [
-
-(define %section-autolabel% #f)
-(define %chapter-autolabel% #f)
-(define $generate-chapter-toc$ (lambda () #f))
-
-;; For text output, produce "ASCII markup" for emphasis and such.
-
-(define ($asterix-seq$ #!optional (sosofo (process-children)))
-  (make sequence
-    (literal "*")
-    sosofo
-    (literal "*")))
-
-(define ($dquote-seq$ #!optional (sosofo (process-children)))
-  (make sequence
-    (literal (gentext-start-quote))
-    sosofo
-    (literal (gentext-end-quote))))
-
-(element (para command) ($dquote-seq$))
-(element (para emphasis) ($asterix-seq$))
-(element (para filename) ($dquote-seq$))
-(element (para option) ($dquote-seq$))
-(element (para replaceable) ($dquote-seq$))
-(element (para userinput) ($dquote-seq$))
-
-]]> <!-- %output-text -->
 
   </style-specification-body>
  </style-specification>

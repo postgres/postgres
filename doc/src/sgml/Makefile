@@ -217,10 +217,9 @@ postgres.pdf:
 
 
 ##
-## Semi-automatic generation of some text files.
+## Generation of some text files.
 ##
 
-JADE.text = $(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -i output-text -t sgml
 ICONV = iconv
 LYNX = lynx
 
@@ -233,10 +232,15 @@ LYNX = lynx
 # locale support and is very picky about locale name spelling.  The
 # below has been finely tuned to run on FreeBSD and Linux/glibc.
 INSTALL: % : %.html
-	$(PERL) -p -e 's/<H(1|2)$$/<H\1 align=center/g' $< | LC_ALL=en_US.ISO8859-1 $(LYNX) -force_html -dump -nolist -stdin | $(ICONV) -f latin1 -t us-ascii//TRANSLIT > $@
+	$(PERL) -p -e 's,<h(1|2) class="title",<h\1 align=center,g' $< | LC_ALL=en_US.ISO8859-1 $(LYNX) -force_html -dump -nolist -stdin | $(ICONV) -f latin1 -t us-ascii//TRANSLIT > $@
 
-INSTALL.html: standalone-install.sgml installation.sgml version.sgml
-	$(JADE.text) -V nochunks standalone-install.sgml installation.sgml > $@
+INSTALL.html: %.html : stylesheet-text.xsl %.xml
+	$(XMLLINT) --noout --valid $*.xml
+	$(XSLTPROC) $(XSLTPROCFLAGS) $(XSLTPROC_HTML_FLAGS) $^ >$@
+
+INSTALL.xml: standalone-install.sgml installation.sgml version.sgml
+	$(OSX) -D. -x lower $(filter-out version.sgml,$^) >$@.tmp
+	$(call mangle-xml,chapter)
 
 
 ##
@@ -247,12 +251,15 @@ INSTALL.html: standalone-install.sgml installation.sgml version.sgml
 # if we try to do "make all" in a VPATH build without the explicit
 # $(srcdir) on the postgres.sgml dependency in this rule.  GNU make bug?
 postgres.xml: $(srcdir)/postgres.sgml $(ALMOSTALLSGML)
-	$(OSX) -D. -x lower -i include-xslt-index $< >postgres.xmltmp
-	$(PERL) -p -e 's/\[(aacute|acirc|aelig|agrave|amp|aring|atilde|auml|bull|copy|eacute|egrave|gt|iacute|lt|mdash|nbsp|ntilde|oacute|ocirc|oslash|ouml|pi|quot|scaron|uuml) *\]/\&\1;/gi;' \
-	           -e '$$_ .= qq{<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">\n} if $$. == 1;' \
-	  <postgres.xmltmp > $@
-	rm postgres.xmltmp
-# ' hello Emacs
+	$(OSX) -D. -x lower -i include-xslt-index $< >$@.tmp
+	$(call mangle-xml,book)
+
+define mangle-xml
+$(PERL) -p -e 's/\[(aacute|acirc|aelig|agrave|amp|aring|atilde|auml|bull|copy|eacute|egrave|gt|iacute|lt|mdash|nbsp|ntilde|oacute|ocirc|oslash|ouml|pi|quot|scaron|uuml) *\]/\&\1;/gi;' \
+           -e '$$_ .= qq{<!DOCTYPE $(1) PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">\n} if $$. == 1;' \
+  <$@.tmp > $@
+rm $@.tmp
+endef
 
 ifeq ($(STYLE),website)
 XSLTPROC_HTML_FLAGS += --param website.stylesheet 1
@@ -386,13 +393,13 @@ check-tabs:
 # This allows removing some files from the distribution tarballs while
 # keeping the dependencies satisfied.
 .SECONDARY: postgres.xml $(GENERATED_SGML) HTML.index
-.SECONDARY: INSTALL.html
+.SECONDARY: INSTALL.html INSTALL.xml
 .SECONDARY: %-A4.tex-ps %-US.tex-ps %-A4.tex-pdf %-US.tex-pdf
 
 clean:
 # text --- these are shipped, but not in this directory
 	rm -f INSTALL
-	rm -f INSTALL.html
+	rm -f INSTALL.html INSTALL.xml
 # single-page output
 	rm -f postgres.html postgres.txt
 # print
@@ -400,7 +407,7 @@ clean:
 # index
 	rm -f HTML.index $(GENERATED_SGML)
 # XSLT
-	rm -f postgres.xml postgres.xmltmp htmlhelp.hhp toc.hhc index.hhk *.fo
+	rm -f postgres.xml *.tmp htmlhelp.hhp toc.hhc index.hhk *.fo
 # EPUB
 	rm -f postgres.epub
 # Texinfo
