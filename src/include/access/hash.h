@@ -313,6 +313,7 @@ extern BlockNumber _hash_freeovflpage(Relation rel, Buffer bucketbuf, Buffer ovf
 			 Size *tups_size, uint16 nitups, BufferAccessStrategy bstrategy);
 extern void _hash_initbitmap(Relation rel, HashMetaPage metap,
 				 BlockNumber blkno, ForkNumber forkNum);
+extern void _hash_initbitmapbuffer(Buffer buf, uint16 bmsize, bool initpage);
 extern void _hash_squeezebucket(Relation rel,
 					Bucket bucket, BlockNumber bucket_blkno,
 					Buffer bucket_buf,

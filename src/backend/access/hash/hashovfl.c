@@ -21,7 +21,6 @@
 #include "utils/rel.h"
 
 
-static Buffer _hash_getovflpage(Relation rel, Buffer metabuf);
 static uint32 _hash_firstfreebit(uint32 map);
 
 
@@ -113,13 +112,30 @@ _hash_addovflpage(Relation rel, Buffer metabuf, Buffer buf, bool retain_pin)
 	Page		ovflpage;
 	HashPageOpaque pageopaque;
 	HashPageOpaque ovflopaque;
-
-	/* allocate and lock an empty overflow page */
-	ovflbuf = _hash_getovflpage(rel, metabuf);
+	HashMetaPage metap;
+	Buffer		mapbuf = InvalidBuffer;
+	Buffer		newmapbuf = InvalidBuffer;
+	BlockNumber blkno;
+	uint32		orig_firstfree;
+	uint32		splitnum;
+	uint32	   *freep = NULL;
+	uint32		max_ovflpg;
+	uint32		bit;
+	uint32		bitmap_page_bit;
+	uint32		first_page;
+	uint32		last_bit;
+	uint32		last_page;
+	uint32		i,
+				j;
+	bool		page_found = false;
 
 	/*
-	 * Write-lock the tail page.  It is okay to hold two buffer locks here
-	 * since there cannot be anyone else contending for access to ovflbuf.
+	 * Write-lock the tail page.  Here, we need to maintain locking order such
+	 * that, first acquire the lock on tail page of bucket, then on meta page
+	 * to find and lock the bitmap page and if it is found, then lock on meta
+	 * page is released, then finally acquire the lock on new overflow buffer.
+	 * We need this locking order to avoid deadlock with backends that are
+	 * doing inserts.
 	 */
 	LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 
@@ -152,60 +168,6 @@ _hash_addovflpage(Relation rel, Buffer metabuf, Buffer buf, bool retain_pin)
 
 		buf = _hash_getbuf(rel, nextblkno, HASH_WRITE, LH_OVERFLOW_PAGE);
 	}
-
-	/* now that we have correct backlink, initialize new overflow page */
-	ovflpage = BufferGetPage(ovflbuf);
-	ovflopaque = (HashPageOpaque) PageGetSpecialPointer(ovflpage);
-	ovflopaque->hasho_prevblkno = BufferGetBlockNumber(buf);
-	ovflopaque->hasho_nextblkno = InvalidBlockNumber;
-	ovflopaque->hasho_bucket = pageopaque->hasho_bucket;
-	ovflopaque->hasho_flag = LH_OVERFLOW_PAGE;
-	ovflopaque->hasho_page_id = HASHO_PAGE_ID;
-
-	MarkBufferDirty(ovflbuf);
-
-	/* logically chain overflow page to previous page */
-	pageopaque->hasho_nextblkno = BufferGetBlockNumber(ovflbuf);
-	MarkBufferDirty(buf);
-	if (retain_pin)
-	{
-		/* pin will be retained only for the primary bucket page */
-		Assert(pageopaque->hasho_flag & LH_BUCKET_PAGE);
-		LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-	}
-	else
-		_hash_relbuf(rel, buf);
-
-	return ovflbuf;
-}
-
-/*
- *	_hash_getovflpage()
- *
- *	Find an available overflow page and return it.  The returned buffer
- *	is pinned and write-locked, and has had _hash_pageinit() applied,
- *	but it is caller's responsibility to fill the special space.
- *
- * The caller must hold a pin, but no lock, on the metapage buffer.
- * That buffer is left in the same state at exit.
- */
-static Buffer
-_hash_getovflpage(Relation rel, Buffer metabuf)
-{
-	HashMetaPage metap;
-	Buffer		mapbuf = 0;
-	Buffer		newbuf;
-	BlockNumber blkno;
-	uint32		orig_firstfree;
-	uint32		splitnum;
-	uint32	   *freep = NULL;
-	uint32		max_ovflpg;
-	uint32		bit;
-	uint32		first_page;
-	uint32		last_bit;
-	uint32		last_page;
-	uint32		i,
-				j;
 
 	/* Get exclusive lock on the meta page */
 	LockBuffer(metabuf, BUFFER_LOCK_EXCLUSIVE);
@@ -255,11 +217,31 @@ _hash_getovflpage(Relation rel, Buffer metabuf)
 		for (; bit <= last_inpage; j++, bit += BITS_PER_MAP)
 		{
 			if (freep[j] != ALL_SET)
+			{
+				page_found = true;
+
+				/* Reacquire exclusive lock on the meta page */
+				LockBuffer(metabuf, BUFFER_LOCK_EXCLUSIVE);
+
+				/* convert bit to bit number within page */
+				bit += _hash_firstfreebit(freep[j]);
+				bitmap_page_bit = bit;
+
+				/* convert bit to absolute bit number */
+				bit += (i << BMPG_SHIFT(metap));
+				/* Calculate address of the recycled overflow page */
+				blkno = bitno_to_blkno(metap, bit);
+
+				/* Fetch and init the recycled page */
+				ovflbuf = _hash_getinitbuf(rel, blkno);
+
 				goto found;
+			}
 		}
 
 		/* No free space here, try to advance to next map page */
 		_hash_relbuf(rel, mapbuf);
+		mapbuf = InvalidBuffer;
 		i++;
 		j = 0;					/* scan from start of next map page */
 		bit = 0;
@@ -283,8 +265,15 @@ _hash_getovflpage(Relation rel, Buffer metabuf)
 		 * convenient to pre-mark them as "in use" too.
 		 */
 		bit = metap->hashm_spares[splitnum];
-		_hash_initbitmap(rel, metap, bitno_to_blkno(metap, bit), MAIN_FORKNUM);
-		metap->hashm_spares[splitnum]++;
+
+		/* metapage already has a write lock */
+		if (metap->hashm_nmaps >= HASH_MAX_BITMAPS)
+			ereport(ERROR,
+					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+					 errmsg("out of overflow pages in hash index \"%s\"",
+							RelationGetRelationName(rel))));
+
+		newmapbuf = _hash_getnewbuf(rel, bitno_to_blkno(metap, bit), MAIN_FORKNUM);
 	}
 	else
 	{
@@ -295,7 +284,8 @@ _hash_getovflpage(Relation rel, Buffer metabuf)
 	}
 
 	/* Calculate address of the new overflow page */
-	bit = metap->hashm_spares[splitnum];
+	bit = BufferIsValid(newmapbuf) ?
+		metap->hashm_spares[splitnum] + 1 : metap->hashm_spares[splitnum];
 	blkno = bitno_to_blkno(metap, bit);
 
 	/*
@@ -303,62 +293,89 @@ _hash_getovflpage(Relation rel, Buffer metabuf)
 	 * relation length stays in sync with ours.  XXX It's annoying to do this
 	 * with metapage write lock held; would be better to use a lock that
 	 * doesn't block incoming searches.
+	 *
+	 * It is okay to hold two buffer locks here (one on tail page of bucket
+	 * and other on new overflow page) since there cannot be anyone else
+	 * contending for access to ovflbuf.
 	 */
-	newbuf = _hash_getnewbuf(rel, blkno, MAIN_FORKNUM);
-
-	metap->hashm_spares[splitnum]++;
-
-	/*
-	 * Adjust hashm_firstfree to avoid redundant searches.  But don't risk
-	 * changing it if someone moved it while we were searching bitmap pages.
-	 */
-	if (metap->hashm_firstfree == orig_firstfree)
-		metap->hashm_firstfree = bit + 1;
-
-	/* Write updated metapage and release lock, but not pin */
-	MarkBufferDirty(metabuf);
-	LockBuffer(metabuf, BUFFER_LOCK_UNLOCK);
-
-	return newbuf;
+	ovflbuf = _hash_getnewbuf(rel, blkno, MAIN_FORKNUM);
 
 found:
-	/* convert bit to bit number within page */
-	bit += _hash_firstfreebit(freep[j]);
-
-	/* mark page "in use" in the bitmap */
-	SETBIT(freep, bit);
-	MarkBufferDirty(mapbuf);
-	_hash_relbuf(rel, mapbuf);
-
-	/* Reacquire exclusive lock on the meta page */
-	LockBuffer(metabuf, BUFFER_LOCK_EXCLUSIVE);
-
-	/* convert bit to absolute bit number */
-	bit += (i << BMPG_SHIFT(metap));
-
-	/* Calculate address of the recycled overflow page */
-	blkno = bitno_to_blkno(metap, bit);
 
 	/*
-	 * Adjust hashm_firstfree to avoid redundant searches.  But don't risk
-	 * changing it if someone moved it while we were searching bitmap pages.
+	 * Do the update.
 	 */
-	if (metap->hashm_firstfree == orig_firstfree)
+	if (page_found)
 	{
-		metap->hashm_firstfree = bit + 1;
+		Assert(BufferIsValid(mapbuf));
 
-		/* Write updated metapage and release lock, but not pin */
-		MarkBufferDirty(metabuf);
-		LockBuffer(metabuf, BUFFER_LOCK_UNLOCK);
+		/* mark page "in use" in the bitmap */
+		SETBIT(freep, bitmap_page_bit);
+		MarkBufferDirty(mapbuf);
 	}
 	else
 	{
-		/* We didn't change the metapage, so no need to write */
-		LockBuffer(metabuf, BUFFER_LOCK_UNLOCK);
+		/* update the count to indicate new overflow page is added */
+		metap->hashm_spares[splitnum]++;
+
+		if (BufferIsValid(newmapbuf))
+		{
+			_hash_initbitmapbuffer(newmapbuf, metap->hashm_bmsize, false);
+			MarkBufferDirty(newmapbuf);
+
+			/* add the new bitmap page to the metapage's list of bitmaps */
+			metap->hashm_mapp[metap->hashm_nmaps] = BufferGetBlockNumber(newmapbuf);
+			metap->hashm_nmaps++;
+			metap->hashm_spares[splitnum]++;
+			MarkBufferDirty(metabuf);
+		}
+
+		/*
+		 * for new overflow page, we don't need to explicitly set the bit in
+		 * bitmap page, as by default that will be set to "in use".
+		 */
 	}
 
-	/* Fetch, init, and return the recycled page */
-	return _hash_getinitbuf(rel, blkno);
+	/*
+	 * Adjust hashm_firstfree to avoid redundant searches.  But don't risk
+	 * changing it if someone moved it while we were searching bitmap pages.
+	 */
+	if (metap->hashm_firstfree == orig_firstfree)
+	{
+		metap->hashm_firstfree = bit + 1;
+		MarkBufferDirty(metabuf);
+	}
+
+	/* initialize new overflow page */
+	ovflpage = BufferGetPage(ovflbuf);
+	ovflopaque = (HashPageOpaque) PageGetSpecialPointer(ovflpage);
+	ovflopaque->hasho_prevblkno = BufferGetBlockNumber(buf);
+	ovflopaque->hasho_nextblkno = InvalidBlockNumber;
+	ovflopaque->hasho_bucket = pageopaque->hasho_bucket;
+	ovflopaque->hasho_flag = LH_OVERFLOW_PAGE;
+	ovflopaque->hasho_page_id = HASHO_PAGE_ID;
+
+	MarkBufferDirty(ovflbuf);
+
+	/* logically chain overflow page to previous page */
+	pageopaque->hasho_nextblkno = BufferGetBlockNumber(ovflbuf);
+
+	MarkBufferDirty(buf);
+
+	if (retain_pin)
+		LockBuffer(buf, BUFFER_LOCK_UNLOCK);
+	else
+		_hash_relbuf(rel, buf);
+
+	if (BufferIsValid(mapbuf))
+		_hash_relbuf(rel, mapbuf);
+
+	LockBuffer(metabuf, BUFFER_LOCK_UNLOCK);
+
+	if (BufferIsValid(newmapbuf))
+		_hash_relbuf(rel, newmapbuf);
+
+	return ovflbuf;
 }
 
 /*
@@ -612,6 +629,42 @@ _hash_initbitmap(Relation rel, HashMetaPage metap, BlockNumber blkno,
 	metap->hashm_mapp[metap->hashm_nmaps] = blkno;
 
 	metap->hashm_nmaps++;
+}
+
+
+/*
+ *	_hash_initbitmapbuffer()
+ *
+ *	 Initialize a new bitmap page.  All bits in the new bitmap page are set to
+ *	 "1", indicating "in use".
+ */
+void
+_hash_initbitmapbuffer(Buffer buf, uint16 bmsize, bool initpage)
+{
+	Page		pg;
+	HashPageOpaque op;
+	uint32	   *freep;
+
+	pg = BufferGetPage(buf);
+
+	/* initialize the page */
+	if (initpage)
+		_hash_pageinit(pg, BufferGetPageSize(buf));
+
+	/* initialize the page's special space */
+	op = (HashPageOpaque) PageGetSpecialPointer(pg);
+	op->hasho_prevblkno = InvalidBlockNumber;
+	op->hasho_nextblkno = InvalidBlockNumber;
+	op->hasho_bucket = -1;
+	op->hasho_flag = LH_BITMAP_PAGE;
+	op->hasho_page_id = HASHO_PAGE_ID;
+
+	/* set all of the bits to 1 */
+	freep = HashPageGetBitmap(pg);
+	MemSet(freep, 0xFF, bmsize);
+
+	/* Set pd_lower just past the end of the bitmap page data. */
+	((PageHeader) pg)->pd_lower = ((char *) freep + bmsize) - (char *) pg;
 }
 
 
