@@ -228,3 +228,44 @@ _hash_pgaddtup(Relation rel, Buffer buf, Size itemsize, IndexTuple itup)
 
 	return itup_off;
 }
+
+/*
+ *	_hash_pgaddmultitup() -- add a tuple vector to a particular page in the
+ *							 index.
+ *
+ * This routine has same requirements for locking and tuple ordering as
+ * _hash_pgaddtup().
+ *
+ * Returns the offset number array at which the tuples were inserted.
+ */
+void
+_hash_pgaddmultitup(Relation rel, Buffer buf, IndexTuple *itups,
+					OffsetNumber *itup_offsets, uint16 nitups)
+{
+	OffsetNumber itup_off;
+	Page		page;
+	uint32		hashkey;
+	int			i;
+
+	_hash_checkpage(rel, buf, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
+	page = BufferGetPage(buf);
+
+	for (i = 0; i < nitups; i++)
+	{
+		Size		itemsize;
+
+		itemsize = IndexTupleDSize(*itups[i]);
+		itemsize = MAXALIGN(itemsize);
+
+		/* Find where to insert the tuple (preserving page's hashkey ordering) */
+		hashkey = _hash_get_indextuple_hashkey(itups[i]);
+		itup_off = _hash_binsearch(page, hashkey);
+
+		itup_offsets[i] = itup_off;
+
+		if (PageAddItem(page, (Item) itups[i], itemsize, itup_off, false, false)
+			== InvalidOffsetNumber)
+			elog(ERROR, "failed to add index item to \"%s\"",
+				 RelationGetRelationName(rel));
+	}
+}

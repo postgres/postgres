@@ -470,7 +470,6 @@ _hash_metapinit(Relation rel, double num_tuples, ForkNumber forkNum)
 void
 _hash_pageinit(Page page, Size size)
 {
-	Assert(PageIsNew(page));
 	PageInit(page, size, sizeof(HashPageOpaqueData));
 }
 

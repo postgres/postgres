@@ -303,11 +303,14 @@ extern Datum hash_uint32(uint32 k);
 extern void _hash_doinsert(Relation rel, IndexTuple itup);
 extern OffsetNumber _hash_pgaddtup(Relation rel, Buffer buf,
 			   Size itemsize, IndexTuple itup);
+extern void _hash_pgaddmultitup(Relation rel, Buffer buf, IndexTuple *itups,
+					OffsetNumber *itup_offsets, uint16 nitups);
 
 /* hashovfl.c */
 extern Buffer _hash_addovflpage(Relation rel, Buffer metabuf, Buffer buf, bool retain_pin);
-extern BlockNumber _hash_freeovflpage(Relation rel, Buffer ovflbuf, Buffer wbuf,
-				   BufferAccessStrategy bstrategy);
+extern BlockNumber _hash_freeovflpage(Relation rel, Buffer bucketbuf, Buffer ovflbuf,
+				   Buffer wbuf, IndexTuple *itups, OffsetNumber *itup_offsets,
+			 Size *tups_size, uint16 nitups, BufferAccessStrategy bstrategy);
 extern void _hash_initbitmap(Relation rel, HashMetaPage metap,
 				 BlockNumber blkno, ForkNumber forkNum);
 extern void _hash_squeezebucket(Relation rel,
