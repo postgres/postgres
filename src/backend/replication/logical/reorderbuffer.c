@@ -156,10 +156,7 @@ static const Size max_changes_in_memory = 4096;
  * major bottleneck, especially when spilling to disk while decoding batch
  * workloads.
  */
-static const Size max_cached_changes = 4096 * 2;
 static const Size max_cached_tuplebufs = 4096 * 2;		/* ~8MB */
-static const Size max_cached_transactions = 512;
-
 
 /* ---------------------------------------
  * primary reorderbuffer support routines
@@ -241,6 +238,16 @@ ReorderBufferAllocate(void)
 
 	buffer->context = new_ctx;
 
+	buffer->change_context = SlabContextCreate(new_ctx,
+											   "Change",
+											   SLAB_DEFAULT_BLOCK_SIZE,
+											   sizeof(ReorderBufferChange));
+
+	buffer->txn_context = SlabContextCreate(new_ctx,
+											"TXN",
+											SLAB_DEFAULT_BLOCK_SIZE,
+											sizeof(ReorderBufferTXN));
+
 	hash_ctl.keysize = sizeof(TransactionId);
 	hash_ctl.entrysize = sizeof(ReorderBufferTXNByIdEnt);
 	hash_ctl.hcxt = buffer->context;
@@ -251,8 +258,6 @@ ReorderBufferAllocate(void)
 	buffer->by_txn_last_xid = InvalidTransactionId;
 	buffer->by_txn_last_txn = NULL;
 
-	buffer->nr_cached_transactions = 0;
-	buffer->nr_cached_changes = 0;
 	buffer->nr_cached_tuplebufs = 0;
 
 	buffer->outbuf = NULL;
@@ -261,8 +266,6 @@ ReorderBufferAllocate(void)
 	buffer->current_restart_decoding_lsn = InvalidXLogRecPtr;
 
 	dlist_init(&buffer->toplevel_by_lsn);
-	dlist_init(&buffer->cached_transactions);
-	dlist_init(&buffer->cached_changes);
 	slist_init(&buffer->cached_tuplebufs);
 
 	return buffer;
@@ -291,19 +294,8 @@ ReorderBufferGetTXN(ReorderBuffer *rb)
 {
 	ReorderBufferTXN *txn;
 
-	/* check the slab cache */
-	if (rb->nr_cached_transactions > 0)
-	{
-		rb->nr_cached_transactions--;
-		txn = (ReorderBufferTXN *)
-			dlist_container(ReorderBufferTXN, node,
-							dlist_pop_head_node(&rb->cached_transactions));
-	}
-	else
-	{
-		txn = (ReorderBufferTXN *)
-			MemoryContextAlloc(rb->context, sizeof(ReorderBufferTXN));
-	}
+	txn = (ReorderBufferTXN *)
+		MemoryContextAlloc(rb->txn_context, sizeof(ReorderBufferTXN));
 
 	memset(txn, 0, sizeof(ReorderBufferTXN));
 
@@ -344,18 +336,7 @@ ReorderBufferReturnTXN(ReorderBuffer *rb, ReorderBufferTXN *txn)
 		txn->invalidations = NULL;
 	}
 
-	/* check whether to put into the slab cache */
-	if (rb->nr_cached_transactions < max_cached_transactions)
-	{
-		rb->nr_cached_transactions++;
-		dlist_push_head(&rb->cached_transactions, &txn->node);
-		VALGRIND_MAKE_MEM_UNDEFINED(txn, sizeof(ReorderBufferTXN));
-		VALGRIND_MAKE_MEM_DEFINED(&txn->node, sizeof(txn->node));
-	}
-	else
-	{
-		pfree(txn);
-	}
+	pfree(txn);
 }
 
 /*
@@ -366,19 +347,8 @@ ReorderBufferGetChange(ReorderBuffer *rb)
 {
 	ReorderBufferChange *change;
 
-	/* check the slab cache */
-	if (rb->nr_cached_changes)
-	{
-		rb->nr_cached_changes--;
-		change = (ReorderBufferChange *)
-			dlist_container(ReorderBufferChange, node,
-							dlist_pop_head_node(&rb->cached_changes));
-	}
-	else
-	{
-		change = (ReorderBufferChange *)
-			MemoryContextAlloc(rb->context, sizeof(ReorderBufferChange));
-	}
+	change = (ReorderBufferChange *)
+		MemoryContextAlloc(rb->change_context, sizeof(ReorderBufferChange));
 
 	memset(change, 0, sizeof(ReorderBufferChange));
 	return change;
@@ -434,20 +404,8 @@ ReorderBufferReturnChange(ReorderBuffer *rb, ReorderBufferChange *change)
 			break;
 	}
 
-	/* check whether to put into the slab cache */
-	if (rb->nr_cached_changes < max_cached_changes)
-	{
-		rb->nr_cached_changes++;
-		dlist_push_head(&rb->cached_changes, &change->node);
-		VALGRIND_MAKE_MEM_UNDEFINED(change, sizeof(ReorderBufferChange));
-		VALGRIND_MAKE_MEM_DEFINED(&change->node, sizeof(change->node));
-	}
-	else
-	{
-		pfree(change);
-	}
+	pfree(change);
 }
-
 
 /*
  * Get an unused, possibly preallocated, ReorderBufferTupleBuf fitting at

@@ -331,6 +331,12 @@ struct ReorderBuffer
 	MemoryContext context;
 
 	/*
+	 * Memory contexts for specific types objects
+	 */
+	MemoryContext change_context;
+	MemoryContext txn_context;
+
+	/*
 	 * Data structure slab cache.
 	 *
 	 * We allocate/deallocate some structures very frequently, to avoid bigger
@@ -339,14 +345,6 @@ struct ReorderBuffer
 	 * The maximum number of cached entries is controlled by const variables
 	 * on top of reorderbuffer.c
 	 */
-
-	/* cached ReorderBufferTXNs */
-	dlist_head	cached_transactions;
-	Size		nr_cached_transactions;
-
-	/* cached ReorderBufferChanges */
-	dlist_head	cached_changes;
-	Size		nr_cached_changes;
 
 	/* cached ReorderBufferTupleBufs */
 	slist_head	cached_tuplebufs;
