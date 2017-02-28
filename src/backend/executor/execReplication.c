@@ -176,7 +176,7 @@ retry:
 
 		res = heap_lock_tuple(rel, &locktup, GetCurrentCommandId(false),
 							  lockmode,
-							  false /* wait */,
+							  LockWaitBlock,
 							  false /* don't follow updates */,
 							  &buf, &hufd);
 		/* the tuple slot already has the buffer pinned */
@@ -323,7 +323,7 @@ retry:
 
 		res = heap_lock_tuple(rel, &locktup, GetCurrentCommandId(false),
 							  lockmode,
-							  false /* wait */,
+							  LockWaitBlock,
 							  false /* don't follow updates */,
 							  &buf, &hufd);
 		/* the tuple slot already has the buffer pinned */
