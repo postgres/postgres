@@ -694,7 +694,7 @@ nextval_internal(Oid relid)
 
 					snprintf(buf, sizeof(buf), INT64_FORMAT, maxv);
 					ereport(ERROR,
-						  (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						  (errcode(ERRCODE_SEQUENCE_GENERATOR_LIMIT_EXCEEDED),
 						   errmsg("nextval: reached maximum value of sequence \"%s\" (%s)",
 								  RelationGetRelationName(seqrel), buf)));
 				}
@@ -717,7 +717,7 @@ nextval_internal(Oid relid)
 
 					snprintf(buf, sizeof(buf), INT64_FORMAT, minv);
 					ereport(ERROR,
-						  (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						  (errcode(ERRCODE_SEQUENCE_GENERATOR_LIMIT_EXCEEDED),
 						   errmsg("nextval: reached minimum value of sequence \"%s\" (%s)",
 								  RelationGetRelationName(seqrel), buf)));
 				}

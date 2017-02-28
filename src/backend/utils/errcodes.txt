@@ -188,6 +188,7 @@ Section: Class 22 - Data Exception
 22004    E    ERRCODE_NULL_VALUE_NOT_ALLOWED                                 null_value_not_allowed
 22002    E    ERRCODE_NULL_VALUE_NO_INDICATOR_PARAMETER                      null_value_no_indicator_parameter
 22003    E    ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE                             numeric_value_out_of_range
+2200H    E    ERRCODE_SEQUENCE_GENERATOR_LIMIT_EXCEEDED                      sequence_generator_limit_exceeded
 22026    E    ERRCODE_STRING_DATA_LENGTH_MISMATCH                            string_data_length_mismatch
 22001    E    ERRCODE_STRING_DATA_RIGHT_TRUNCATION                           string_data_right_truncation
 22011    E    ERRCODE_SUBSTRING_ERROR                                        substring_error
