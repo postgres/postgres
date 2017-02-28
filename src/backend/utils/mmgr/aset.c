@@ -97,20 +97,7 @@
  */
 
 #define ALLOC_BLOCKHDRSZ	MAXALIGN(sizeof(AllocBlockData))
-#define ALLOC_CHUNKHDRSZ	MAXALIGN(sizeof(AllocChunkData))
-
-/* Portion of ALLOC_CHUNKHDRSZ examined outside aset.c. */
-#define ALLOC_CHUNK_PUBLIC	\
-	(offsetof(AllocChunkData, size) + sizeof(Size))
-
-/* Portion of ALLOC_CHUNKHDRSZ excluding trailing padding. */
-#ifdef MEMORY_CONTEXT_CHECKING
-#define ALLOC_CHUNK_USED	\
-	(offsetof(AllocChunkData, requested_size) + sizeof(Size))
-#else
-#define ALLOC_CHUNK_USED	\
-	(offsetof(AllocChunkData, size) + sizeof(Size))
-#endif
+#define ALLOC_CHUNKHDRSZ	sizeof(struct AllocChunkData)
 
 typedef struct AllocBlockData *AllocBlock;		/* forward reference */
 typedef struct AllocChunkData *AllocChunk;
@@ -169,20 +156,25 @@ typedef struct AllocBlockData
 /*
  * AllocChunk
  *		The prefix of each piece of memory in an AllocBlock
- *
- * NB: this MUST match StandardChunkHeader as defined by utils/memutils.h.
  */
 typedef struct AllocChunkData
 {
-	/* aset is the owning aset if allocated, or the freelist link if free */
-	void	   *aset;
 	/* size is always the size of the usable space in the chunk */
 	Size		size;
 #ifdef MEMORY_CONTEXT_CHECKING
 	/* when debugging memory usage, also store actual requested size */
 	/* this is zero in a free chunk */
 	Size		requested_size;
+#if MAXIMUM_ALIGNOF > 4 && SIZEOF_VOID_P == 4
+	Size		padding;
 #endif
+
+#endif   /* MEMORY_CONTEXT_CHECKING */
+
+	/* aset is the owning aset if allocated, or the freelist link if free */
+	void	   *aset;
+
+	/* there must not be any padding to reach a MAXALIGN boundary here! */
 }	AllocChunkData;
 
 /*
@@ -333,6 +325,10 @@ AllocSetContextCreate(MemoryContext parent,
 					  Size maxBlockSize)
 {
 	AllocSet	set;
+
+	StaticAssertStmt(offsetof(AllocChunkData, aset) + sizeof(MemoryContext) ==
+					 MAXALIGN(sizeof(AllocChunkData)),
+					 "padding calculation in AllocChunkData is wrong");
 
 	/*
 	 * First, validate allocation parameters.  (If we're going to throw an
@@ -616,13 +612,13 @@ AllocSetAlloc(MemoryContext context, Size size)
 		AllocAllocInfo(set, chunk);
 
 		/*
-		 * Chunk header public fields remain DEFINED.  The requested
-		 * allocation itself can be NOACCESS or UNDEFINED; our caller will
-		 * soon make it UNDEFINED.  Make extra space at the end of the chunk,
-		 * if any, NOACCESS.
+		 * Chunk's metadata fields remain DEFINED.  The requested allocation
+		 * itself can be NOACCESS or UNDEFINED; our caller will soon make it
+		 * UNDEFINED.  Make extra space at the end of the chunk, if any,
+		 * NOACCESS.
 		 */
-		VALGRIND_MAKE_MEM_NOACCESS((char *) chunk + ALLOC_CHUNK_PUBLIC,
-						 chunk_size + ALLOC_CHUNKHDRSZ - ALLOC_CHUNK_PUBLIC);
+		VALGRIND_MAKE_MEM_NOACCESS((char *) chunk + ALLOC_CHUNKHDRSZ,
+								   chunk_size - ALLOC_CHUNKHDRSZ);
 
 		return AllocChunkGetPointer(chunk);
 	}
@@ -709,7 +705,7 @@ AllocSetAlloc(MemoryContext context, Size size)
 				chunk = (AllocChunk) (block->freeptr);
 
 				/* Prepare to initialize the chunk header. */
-				VALGRIND_MAKE_MEM_UNDEFINED(chunk, ALLOC_CHUNK_USED);
+				VALGRIND_MAKE_MEM_UNDEFINED(chunk, ALLOC_CHUNKHDRSZ);
 
 				block->freeptr += (availchunk + ALLOC_CHUNKHDRSZ);
 				availspace -= (availchunk + ALLOC_CHUNKHDRSZ);
@@ -799,7 +795,7 @@ AllocSetAlloc(MemoryContext context, Size size)
 	chunk = (AllocChunk) (block->freeptr);
 
 	/* Prepare to initialize the chunk header. */
-	VALGRIND_MAKE_MEM_UNDEFINED(chunk, ALLOC_CHUNK_USED);
+	VALGRIND_MAKE_MEM_UNDEFINED(chunk, ALLOC_CHUNKHDRSZ);
 
 	block->freeptr += (chunk_size + ALLOC_CHUNKHDRSZ);
 	Assert(block->freeptr <= block->endptr);

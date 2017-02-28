@@ -45,27 +45,6 @@
 
 #define AllocHugeSizeIsValid(size)	((Size) (size) <= MaxAllocHugeSize)
 
-/*
- * All chunks allocated by any memory context manager are required to be
- * preceded by a StandardChunkHeader at a spacing of STANDARDCHUNKHEADERSIZE.
- * A currently-allocated chunk must contain a backpointer to its owning
- * context as well as the allocated size of the chunk.  The backpointer is
- * used by pfree() and repalloc() to find the context to call.  The allocated
- * size is not absolutely essential, but it's expected to be needed by any
- * reasonable implementation.
- */
-typedef struct StandardChunkHeader
-{
-	MemoryContext context;		/* owning context */
-	Size		size;			/* size of data space allocated in chunk */
-#ifdef MEMORY_CONTEXT_CHECKING
-	/* when debugging memory usage, also store actual requested size */
-	Size		requested_size;
-#endif
-} StandardChunkHeader;
-
-#define STANDARDCHUNKHEADERSIZE  MAXALIGN(sizeof(StandardChunkHeader))
-
 
 /*
  * Standard top-level memory contexts.
@@ -100,7 +79,6 @@ extern void MemoryContextDeleteChildren(MemoryContext context);
 extern void MemoryContextSetParent(MemoryContext context,
 					   MemoryContext new_parent);
 extern Size GetMemoryChunkSpace(void *pointer);
-extern MemoryContext GetMemoryChunkContext(void *pointer);
 extern MemoryContext MemoryContextGetParent(MemoryContext context);
 extern bool MemoryContextIsEmpty(MemoryContext context);
 extern void MemoryContextStats(MemoryContext context);
@@ -112,6 +90,42 @@ extern void MemoryContextAllowInCriticalSection(MemoryContext context,
 extern void MemoryContextCheck(MemoryContext context);
 #endif
 extern bool MemoryContextContains(MemoryContext context, void *pointer);
+
+/*
+ * GetMemoryChunkContext
+ *		Given a currently-allocated chunk, determine the context
+ *		it belongs to.
+ *
+ * All chunks allocated by any memory context manager are required to be
+ * preceded by the corresponding MemoryContext stored, without padding, in the
+ * preceding sizeof(void*) bytes.  A currently-allocated chunk must contain a
+ * backpointer to its owning context.  The backpointer is used by pfree() and
+ * repalloc() to find the context to call.
+ */
+#ifndef FRONTEND
+static inline MemoryContext
+GetMemoryChunkContext(void *pointer)
+{
+	MemoryContext context;
+
+	/*
+	 * Try to detect bogus pointers handed to us, poorly though we can.
+	 * Presumably, a pointer that isn't MAXALIGNED isn't pointing at an
+	 * allocated chunk.
+	 */
+	Assert(pointer != NULL);
+	Assert(pointer == (void *) MAXALIGN(pointer));
+
+	/*
+	 * OK, it's probably safe to look at the context.
+	 */
+	context = *(MemoryContext *) (((char *) pointer) - sizeof(void *));
+
+	AssertArg(MemoryContextIsValid(context));
+
+	return context;
+}
+#endif
 
 /*
  * This routine handles the context-type-independent part of memory

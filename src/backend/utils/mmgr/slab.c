@@ -57,12 +57,6 @@
 #include "lib/ilist.h"
 
 
-#define SLAB_CHUNKHDRSZ MAXALIGN(sizeof(SlabChunk))
-
-/* Portion of SLAB_CHUNKHDRSZ excluding trailing padding. */
-#define SLAB_CHUNK_USED \
-	(offsetof(SlabChunk, header) + sizeof(StandardChunkHeader))
-
 /*
  * SlabContext is a specialized implementation of MemoryContext.
  */
@@ -103,17 +97,15 @@ typedef struct SlabChunk
 {
 	/* block owning this chunk */
 	void	   *block;
-
-	/* include StandardChunkHeader because mcxt.c expects that */
-	StandardChunkHeader header;
-
+	SlabContext *slab;			/* owning context */
+	/* there must not be any padding to reach a MAXALIGN boundary here! */
 } SlabChunk;
 
 
 #define SlabPointerGetChunk(ptr)	\
-	((SlabChunk *)(((char *)(ptr)) - SLAB_CHUNKHDRSZ))
+	((SlabChunk *)(((char *)(ptr)) - sizeof(SlabChunk)))
 #define SlabChunkGetPointer(chk)	\
-	((void *)(((char *)(chk)) + SLAB_CHUNKHDRSZ))
+	((void *)(((char *)(chk)) + sizeof(SlabChunk)))
 #define SlabBlockGetChunk(slab, block, idx) \
 	((SlabChunk *) ((char *) (block) + sizeof(SlabBlock)	\
 					+ (idx * slab->fullChunkSize)))
@@ -198,6 +190,10 @@ SlabContextCreate(MemoryContext parent,
 	Size		freelistSize;
 	SlabContext *slab;
 
+	StaticAssertStmt(offsetof(SlabChunk, slab) +sizeof(MemoryContext) ==
+					 MAXALIGN(sizeof(SlabChunk)),
+					 "padding calculation in SlabChunk is wrong");
+
 	/* otherwise the linked list inside freed chunk isn't guaranteed to fit */
 	StaticAssertStmt(MAXIMUM_ALIGNOF >= sizeof(int),
 					 "MAXALIGN too small to fit int32");
@@ -207,7 +203,7 @@ SlabContextCreate(MemoryContext parent,
 
 	/* Make sure the block can store at least one chunk. */
 	if (blockSize - sizeof(SlabBlock) < fullChunkSize)
-		elog(ERROR, "block size %ld for slab is too small for %ld chunks",
+		elog(ERROR, "block size %zu for slab is too small for %zu chunks",
 			 blockSize, chunkSize);
 
 	/* Compute maximum number of chunks per block */
@@ -333,7 +329,7 @@ SlabAlloc(MemoryContext context, Size size)
 
 	/* make sure we only allow correct request size */
 	if (size != slab->chunkSize)
-		elog(ERROR, "unexpected alloc chunk size %ld (expected %ld)",
+		elog(ERROR, "unexpected alloc chunk size %zu (expected %zu)",
 			 size, slab->chunkSize);
 
 	/*
@@ -445,20 +441,21 @@ SlabAlloc(MemoryContext context, Size size)
 		slab->minFreeChunks = 0;
 
 	/* Prepare to initialize the chunk header. */
-	VALGRIND_MAKE_MEM_UNDEFINED(chunk, SLAB_CHUNK_USED);
+	VALGRIND_MAKE_MEM_UNDEFINED(chunk, sizeof(SlabChunk));
 
 	chunk->block = (void *) block;
-
-	chunk->header.context = (MemoryContext) slab;
-	chunk->header.size = MAXALIGN(size);
+	chunk->slab = slab;
 
 #ifdef MEMORY_CONTEXT_CHECKING
-	chunk->header.requested_size = size;
-	VALGRIND_MAKE_MEM_NOACCESS(&chunk->header.requested_size,
-							   sizeof(chunk->header.requested_size));
 	/* slab mark to catch clobber of "unused" space */
-	if (size < chunk->header.size)
+	if (slab->chunkSize < (slab->fullChunkSize - sizeof(SlabChunk)))
+	{
 		set_sentinel(SlabChunkGetPointer(chunk), size);
+		VALGRIND_MAKE_MEM_NOACCESS(((char *) chunk) +
+								   sizeof(SlabChunk) + slab->chunkSize,
+								   slab->fullChunkSize -
+								   (slab->chunkSize + sizeof(SlabChunk)));
+	}
 #endif
 #ifdef RANDOMIZE_ALLOCATED_MEMORY
 	/* fill the allocated space with junk */
@@ -484,11 +481,9 @@ SlabFree(MemoryContext context, void *pointer)
 	SlabFreeInfo(slab, chunk);
 
 #ifdef MEMORY_CONTEXT_CHECKING
-	VALGRIND_MAKE_MEM_DEFINED(&chunk->header.requested_size,
-							  sizeof(chunk->header.requested_size));
 	/* Test for someone scribbling on unused space in chunk */
-	if (chunk->header.requested_size < chunk->header.size)
-		if (!sentinel_ok(pointer, chunk->header.requested_size))
+	if (slab->chunkSize < (slab->fullChunkSize - sizeof(SlabChunk)))
+		if (!sentinel_ok(pointer, slab->chunkSize))
 			elog(WARNING, "detected write past chunk end in %s %p",
 				 slab->header.name, chunk);
 #endif
@@ -507,12 +502,7 @@ SlabFree(MemoryContext context, void *pointer)
 #ifdef CLOBBER_FREED_MEMORY
 	/* XXX don't wipe the int32 index, used for block-level freelist */
 	wipe_mem((char *) pointer + sizeof(int32),
-			 chunk->header.size - sizeof(int32));
-#endif
-
-#ifdef MEMORY_CONTEXT_CHECKING
-	/* Reset requested_size to 0 in chunks that are on freelist */
-	chunk->header.requested_size = 0;
+			 slab->chunkSize - sizeof(int32));
 #endif
 
 	/* remove the block from a freelist */
@@ -590,9 +580,11 @@ SlabRealloc(MemoryContext context, void *pointer, Size size)
 static Size
 SlabGetChunkSpace(MemoryContext context, void *pointer)
 {
-	SlabChunk  *chunk = SlabPointerGetChunk(pointer);
+	SlabContext *slab = castNode(SlabContext, context);
 
-	return chunk->header.size + SLAB_CHUNKHDRSZ;
+	Assert(slab);
+
+	return slab->fullChunkSize;
 }
 
 /*
@@ -742,37 +734,20 @@ SlabCheck(MemoryContext context)
 				{
 					SlabChunk  *chunk = SlabBlockGetChunk(slab, block, j);
 
-					VALGRIND_MAKE_MEM_DEFINED(&chunk->header.requested_size,
-									   sizeof(chunk->header.requested_size));
-
-					/* we're in a no-freelist branch */
-					VALGRIND_MAKE_MEM_NOACCESS(&chunk->header.requested_size,
-									   sizeof(chunk->header.requested_size));
-
 					/* chunks have both block and slab pointers, so check both */
 					if (chunk->block != block)
 						elog(WARNING, "problem in slab %s: bogus block link in block %p, chunk %p",
 							 name, block, chunk);
 
-					if (chunk->header.context != (MemoryContext) slab)
+					if (chunk->slab != slab)
 						elog(WARNING, "problem in slab %s: bogus slab link in block %p, chunk %p",
 							 name, block, chunk);
 
-					/* now make sure the chunk size is correct */
-					if (chunk->header.size != MAXALIGN(slab->chunkSize))
-						elog(WARNING, "problem in slab %s: bogus chunk size in block %p, chunk %p",
-							 name, block, chunk);
-
-					/* now make sure the chunk size is correct */
-					if (chunk->header.requested_size != slab->chunkSize)
-						elog(WARNING, "problem in slab %s: bogus chunk requested size in block %p, chunk %p",
-							 name, block, chunk);
-
 					/* there might be sentinel (thanks to alignment) */
-					if (chunk->header.requested_size < chunk->header.size &&
-						!sentinel_ok(chunk, SLAB_CHUNKHDRSZ + chunk->header.requested_size))
-						elog(WARNING, "problem in slab %s: detected write past chunk end in block %p, chunk %p",
-							 name, block, chunk);
+					if (slab->chunkSize < (slab->fullChunkSize - sizeof(SlabChunk)))
+						if (!sentinel_ok(chunk, slab->chunkSize))
+							elog(WARNING, "problem in slab %s: detected write past chunk end in block %p, chunk %p",
+								 name, block, chunk);
 				}
 			}
 

@@ -2001,7 +2001,6 @@ SplitLR
 SplitVar
 SplitedPageLayout
 StackElem
-StandardChunkHeader
 StartBlobPtr
 StartBlobsPtr
 StartDataPtr
