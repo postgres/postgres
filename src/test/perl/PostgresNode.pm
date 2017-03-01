@@ -1139,7 +1139,7 @@ sub psql
 			# IPC::Run::run threw an exception. re-throw unless it's a
 			# timeout, which we'll handle by testing is_expired
 			die $exc_save
-			  if (blessed($exc_save) || $exc_save ne $timeout_exception);
+			  if (blessed($exc_save) || $exc_save !~ /^\Q$timeout_exception\E/);
 
 			$ret = undef;
 
