@@ -331,6 +331,20 @@ oidparse(Node *node)
 	return InvalidOid;			/* keep compiler quiet */
 }
 
+/* qsort comparison function for Oids */
+int
+oid_cmp(const void *p1, const void *p2)
+{
+	Oid			v1 = *((const Oid *) p1);
+	Oid			v2 = *((const Oid *) p2);
+
+	if (v1 < v2)
+		return -1;
+	if (v1 > v2)
+		return 1;
+	return 0;
+}
+
 
 /*****************************************************************************
  *	 PUBLIC ROUTINES														 *

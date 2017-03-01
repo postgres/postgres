@@ -88,7 +88,6 @@ static void check_circularity(const Acl *old_acl, const AclItem *mod_aip,
 				  Oid ownerId);
 static Acl *recursive_revoke(Acl *acl, Oid grantee, AclMode revoke_privs,
 				 Oid ownerId, DropBehavior behavior);
-static int	oidComparator(const void *arg1, const void *arg2);
 
 static AclMode convert_priv_string(text *priv_type_text);
 static AclMode convert_any_priv_string(text *priv_type_text,
@@ -1490,7 +1489,7 @@ aclmembers(const Acl *acl, Oid **roleids)
 	}
 
 	/* Sort the array */
-	qsort(list, j, sizeof(Oid), oidComparator);
+	qsort(list, j, sizeof(Oid), oid_cmp);
 
 	/* Remove duplicates from the array */
 	k = 0;
@@ -1507,23 +1506,6 @@ aclmembers(const Acl *acl, Oid **roleids)
 	*roleids = list;
 
 	return k + 1;
-}
-
-/*
- * oidComparator
- *		qsort comparison function for Oids
- */
-static int
-oidComparator(const void *arg1, const void *arg2)
-{
-	Oid			oid1 = *(const Oid *) arg1;
-	Oid			oid2 = *(const Oid *) arg2;
-
-	if (oid1 > oid2)
-		return 1;
-	if (oid1 < oid2)
-		return -1;
-	return 0;
 }
 
 

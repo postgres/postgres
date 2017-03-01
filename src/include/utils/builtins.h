@@ -67,6 +67,7 @@ extern int	float8_cmp_internal(float8 a, float8 b);
 /* oid.c */
 extern oidvector *buildoidvector(const Oid *oids, int n);
 extern Oid	oidparse(Node *node);
+extern int	oid_cmp(const void *p1, const void *p2);
 
 /* regexp.c */
 extern char *regexp_fixed_prefix(text *text_re, bool case_insensitive,

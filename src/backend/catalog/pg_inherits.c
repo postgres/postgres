@@ -27,11 +27,10 @@
 #include "catalog/pg_inherits_fn.h"
 #include "parser/parse_type.h"
 #include "storage/lmgr.h"
+#include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"
-
-static int	oid_cmp(const void *p1, const void *p2);
 
 
 /*
@@ -356,19 +355,4 @@ typeInheritsFrom(Oid subclassTypeId, Oid superclassTypeId)
 	list_free(queue);
 
 	return result;
-}
-
-
-/* qsort comparison function */
-static int
-oid_cmp(const void *p1, const void *p2)
-{
-	Oid			v1 = *((const Oid *) p1);
-	Oid			v2 = *((const Oid *) p2);
-
-	if (v1 < v2)
-		return -1;
-	if (v1 > v2)
-		return 1;
-	return 0;
 }
