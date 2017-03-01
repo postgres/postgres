@@ -40,12 +40,9 @@ static void _hash_splitbucket(Relation rel, Buffer metabuf,
 				  Bucket obucket, Bucket nbucket,
 				  Buffer obuf,
 				  Buffer nbuf,
+				  HTAB *htab,
 				  uint32 maxbucket,
 				  uint32 highmask, uint32 lowmask);
-static void _hash_splitbucket_guts(Relation rel, Buffer metabuf,
-					   Bucket obucket, Bucket nbucket, Buffer obuf,
-					   Buffer nbuf, HTAB *htab, uint32 maxbucket,
-					   uint32 highmask, uint32 lowmask);
 
 
 /*
@@ -497,7 +494,9 @@ _hash_expandtable(Relation rel, Buffer metabuf)
 	Buffer		buf_nblkno;
 	Buffer		buf_oblkno;
 	Page		opage;
+	Page		npage;
 	HashPageOpaque oopaque;
+	HashPageOpaque nopaque;
 	uint32		maxbucket;
 	uint32		highmask;
 	uint32		lowmask;
@@ -685,18 +684,18 @@ restart_expand:
 		goto fail;
 	}
 
-
 	/*
-	 * Okay to proceed with split.  Update the metapage bucket mapping info.
-	 *
-	 * Since we are scribbling on the metapage data right in the shared
-	 * buffer, any failure in this next little bit leaves us with a big
+	 * Since we are scribbling on the pages in the shared buffers, establish a
+	 * critical section.  Any failure in this next code leaves us with a big
 	 * problem: the metapage is effectively corrupt but could get written back
 	 * to disk.  We don't really expect any failure, but just to be sure,
 	 * establish a critical section.
 	 */
 	START_CRIT_SECTION();
 
+	/*
+	 * Okay to proceed with split.  Update the metapage bucket mapping info.
+	 */
 	metap->hashm_maxbucket = new_bucket;
 
 	if (new_bucket > metap->hashm_highmask)
@@ -718,8 +717,7 @@ restart_expand:
 		metap->hashm_ovflpoint = spare_ndx;
 	}
 
-	/* Done mucking with metapage */
-	END_CRIT_SECTION();
+	MarkBufferDirty(metabuf);
 
 	/*
 	 * Copy bucket mapping info now; this saves re-accessing the meta page
@@ -732,15 +730,50 @@ restart_expand:
 	highmask = metap->hashm_highmask;
 	lowmask = metap->hashm_lowmask;
 
-	/* Write out the metapage and drop lock, but keep pin */
-	MarkBufferDirty(metabuf);
+	opage = BufferGetPage(buf_oblkno);
+	oopaque = (HashPageOpaque) PageGetSpecialPointer(opage);
+
+	/*
+	 * Mark the old bucket to indicate that split is in progress.  (At
+	 * operation end, we will clear the split-in-progress flag.)  Also,
+	 * for a primary bucket page, hasho_prevblkno stores the number of
+	 * buckets that existed as of the last split, so we must update that
+	 * value here.
+	 */
+	oopaque->hasho_flag |= LH_BUCKET_BEING_SPLIT;
+	oopaque->hasho_prevblkno = maxbucket;
+
+	MarkBufferDirty(buf_oblkno);
+
+	npage = BufferGetPage(buf_nblkno);
+
+	/*
+	 * initialize the new bucket's primary page and mark it to indicate that
+	 * split is in progress.
+	 */
+	nopaque = (HashPageOpaque) PageGetSpecialPointer(npage);
+	nopaque->hasho_prevblkno = maxbucket;
+	nopaque->hasho_nextblkno = InvalidBlockNumber;
+	nopaque->hasho_bucket = new_bucket;
+	nopaque->hasho_flag = LH_BUCKET_PAGE | LH_BUCKET_BEING_POPULATED;
+	nopaque->hasho_page_id = HASHO_PAGE_ID;
+
+	MarkBufferDirty(buf_nblkno);
+
+	END_CRIT_SECTION();
+
+	/* drop lock, but keep pin */
 	LockBuffer(metabuf, BUFFER_LOCK_UNLOCK);
 
 	/* Relocate records to the new bucket */
 	_hash_splitbucket(rel, metabuf,
 					  old_bucket, new_bucket,
-					  buf_oblkno, buf_nblkno,
+					  buf_oblkno, buf_nblkno, NULL,
 					  maxbucket, highmask, lowmask);
+
+	/* all done, now release the locks and pins on primary buckets. */
+	_hash_relbuf(rel, buf_oblkno);
+	_hash_relbuf(rel, buf_nblkno);
 
 	return;
 
@@ -803,10 +836,16 @@ _hash_alloc_buckets(Relation rel, BlockNumber firstblock, uint32 nblocks)
 /*
  * _hash_splitbucket -- split 'obucket' into 'obucket' and 'nbucket'
  *
+ * This routine is used to partition the tuples between old and new bucket and
+ * is used to finish the incomplete split operations.  To finish the previously
+ * interrupted split operation, the caller needs to fill htab.  If htab is set,
+ * then we skip the movement of tuples that exists in htab, otherwise NULL
+ * value of htab indicates movement of all the tuples that belong to the new
+ * bucket.
+ *
  * We are splitting a bucket that consists of a base bucket page and zero
  * or more overflow (bucket chain) pages.  We must relocate tuples that
- * belong in the new bucket, and compress out any free space in the old
- * bucket.
+ * belong in the new bucket.
  *
  * The caller must hold cleanup locks on both buckets to ensure that
  * no one else is trying to access them (see README).
@@ -832,72 +871,10 @@ _hash_splitbucket(Relation rel,
 				  Bucket nbucket,
 				  Buffer obuf,
 				  Buffer nbuf,
+				  HTAB *htab,
 				  uint32 maxbucket,
 				  uint32 highmask,
 				  uint32 lowmask)
-{
-	Page		opage;
-	Page		npage;
-	HashPageOpaque oopaque;
-	HashPageOpaque nopaque;
-
-	opage = BufferGetPage(obuf);
-	oopaque = (HashPageOpaque) PageGetSpecialPointer(opage);
-
-	/*
-	 * Mark the old bucket to indicate that split is in progress.  (At
-	 * operation end, we will clear the split-in-progress flag.)  Also,
-	 * for a primary bucket page, hasho_prevblkno stores the number of
-	 * buckets that existed as of the last split, so we must update that
-	 * value here.
-	 */
-	oopaque->hasho_flag |= LH_BUCKET_BEING_SPLIT;
-	oopaque->hasho_prevblkno = maxbucket;
-
-	npage = BufferGetPage(nbuf);
-
-	/*
-	 * initialize the new bucket's primary page and mark it to indicate that
-	 * split is in progress.
-	 */
-	nopaque = (HashPageOpaque) PageGetSpecialPointer(npage);
-	nopaque->hasho_prevblkno = maxbucket;
-	nopaque->hasho_nextblkno = InvalidBlockNumber;
-	nopaque->hasho_bucket = nbucket;
-	nopaque->hasho_flag = LH_BUCKET_PAGE | LH_BUCKET_BEING_POPULATED;
-	nopaque->hasho_page_id = HASHO_PAGE_ID;
-
-	_hash_splitbucket_guts(rel, metabuf, obucket,
-						   nbucket, obuf, nbuf, NULL,
-						   maxbucket, highmask, lowmask);
-
-	/* all done, now release the locks and pins on primary buckets. */
-	_hash_relbuf(rel, obuf);
-	_hash_relbuf(rel, nbuf);
-}
-
-/*
- * _hash_splitbucket_guts -- Helper function to perform the split operation
- *
- * This routine is used to partition the tuples between old and new bucket and
- * to finish incomplete split operations.  To finish the previously
- * interrupted split operation, caller needs to fill htab.  If htab is set, then
- * we skip the movement of tuples that exists in htab, otherwise NULL value of
- * htab indicates movement of all the tuples that belong to new bucket.
- *
- * Caller needs to lock and unlock the old and new primary buckets.
- */
-static void
-_hash_splitbucket_guts(Relation rel,
-					   Buffer metabuf,
-					   Bucket obucket,
-					   Bucket nbucket,
-					   Buffer obuf,
-					   Buffer nbuf,
-					   HTAB *htab,
-					   uint32 maxbucket,
-					   uint32 highmask,
-					   uint32 lowmask)
 {
 	Buffer		bucket_obuf;
 	Buffer		bucket_nbuf;
@@ -987,6 +964,7 @@ _hash_splitbucket_guts(Relation rel,
 				{
 					/* write out nbuf and drop lock, but keep pin */
 					MarkBufferDirty(nbuf);
+					/* drop lock, but keep pin */
 					LockBuffer(nbuf, BUFFER_LOCK_UNLOCK);
 					/* chain to a new overflow page */
 					nbuf = _hash_addovflpage(rel, metabuf, nbuf, (nbuf == bucket_nbuf) ? true : false);
@@ -1025,7 +1003,14 @@ _hash_splitbucket_guts(Relation rel,
 
 		/* Exit loop if no more overflow pages in old bucket */
 		if (!BlockNumberIsValid(oblkno))
+		{
+			MarkBufferDirty(nbuf);
+			if (nbuf == bucket_nbuf)
+				LockBuffer(nbuf, BUFFER_LOCK_UNLOCK);
+			else
+				_hash_relbuf(rel, nbuf);
 			break;
+		}
 
 		/* Else, advance to next old page */
 		obuf = _hash_getbuf(rel, oblkno, HASH_READ, LH_OVERFLOW_PAGE);
@@ -1041,17 +1026,6 @@ _hash_splitbucket_guts(Relation rel,
 	 * To avoid deadlocks due to locking order of buckets, first lock the old
 	 * bucket and then the new bucket.
 	 */
-	if (nbuf == bucket_nbuf)
-	{
-		MarkBufferDirty(bucket_nbuf);
-		LockBuffer(bucket_nbuf, BUFFER_LOCK_UNLOCK);
-	}
-	else
-	{
-		MarkBufferDirty(nbuf);
-		_hash_relbuf(rel, nbuf);
-	}
-
 	LockBuffer(bucket_obuf, BUFFER_LOCK_EXCLUSIVE);
 	opage = BufferGetPage(bucket_obuf);
 	oopaque = (HashPageOpaque) PageGetSpecialPointer(opage);
@@ -1192,9 +1166,9 @@ _hash_finish_split(Relation rel, Buffer metabuf, Buffer obuf, Bucket obucket,
 	npageopaque = (HashPageOpaque) PageGetSpecialPointer(npage);
 	nbucket = npageopaque->hasho_bucket;
 
-	_hash_splitbucket_guts(rel, metabuf, obucket,
-						   nbucket, obuf, bucket_nbuf, tidhtab,
-						   maxbucket, highmask, lowmask);
+	_hash_splitbucket(rel, metabuf, obucket,
+					  nbucket, obuf, bucket_nbuf, tidhtab,
+					  maxbucket, highmask, lowmask);
 
 	_hash_relbuf(rel, bucket_nbuf);
 	LockBuffer(obuf, BUFFER_LOCK_UNLOCK);
