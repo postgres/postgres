@@ -885,7 +885,7 @@ SH_STAT(SH_TYPE *tb)
 #undef SH_STATUS
 #undef SH_STATUS_EMPTY
 #undef SH_STATUS_IN_USE
-#undef SH_ITERTOR
+#undef SH_ITERATOR
 
 /* external function names */
 #undef SH_CREATE
