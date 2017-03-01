@@ -19,8 +19,6 @@
 #include "libpq-fe.h"
 #include "pqexpbuffer.h"
 
-#define atooid(x)  ((Oid) strtoul((x), NULL, 10))
-
 /* Global variables controlling behavior of fmtId() and fmtQualifiedId() */
 extern int	quote_all_identifiers;
 extern PQExpBuffer (*getLocalPQExpBuffer) (void);

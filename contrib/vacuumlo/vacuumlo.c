@@ -24,8 +24,6 @@
 #include "libpq-fe.h"
 #include "pg_getopt.h"
 
-#define atooid(x)  ((Oid) strtoul((x), NULL, 10))
-
 #define BUFSIZE			1024
 
 enum trivalue

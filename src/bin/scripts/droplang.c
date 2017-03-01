@@ -14,8 +14,6 @@
 #include "common.h"
 #include "fe_utils/print.h"
 
-#define atooid(x)  ((Oid) strtoul((x), NULL, 10))
-
 
 static void help(const char *progname);
 

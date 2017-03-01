@@ -39,6 +39,10 @@ typedef unsigned int Oid;
 #define OID_MAX  UINT_MAX
 /* you will need to include <limits.h> to use the above #define */
 
+#define atooid(x) ((Oid) strtoul((x), NULL, 10))
+/* the above needs <stdlib.h> */
+
+
 /* Define a signed 64-bit integer type for use in client API declarations. */
 typedef PG_INT64_TYPE pg_int64;
 

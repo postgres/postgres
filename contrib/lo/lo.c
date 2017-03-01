@@ -14,8 +14,6 @@
 
 PG_MODULE_MAGIC;
 
-#define atooid(x)  ((Oid) strtoul((x), NULL, 10))
-
 
 /*
  * This is the trigger that protects us from orphaned large objects

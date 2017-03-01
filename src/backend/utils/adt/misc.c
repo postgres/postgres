@@ -44,8 +44,6 @@
 #include "utils/builtins.h"
 #include "utils/timestamp.h"
 
-#define atooid(x)  ((Oid) strtoul((x), NULL, 10))
-
 
 /*
  * Common subroutine for num_nulls() and num_nonnulls().

@@ -52,9 +52,6 @@
 #endif
 
 
-#define atooid(x)  ((Oid) strtoul((x), NULL, 10))
-#define atoxid(x)  ((TransactionId) strtoul((x), NULL, 10))
-
 #define MAX_TOKEN	256
 #define MAX_LINE	8192
 

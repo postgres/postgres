@@ -51,8 +51,6 @@
 #include "tcop/dest.h"
 #include "utils/rel.h"
 
-#define atooid(x)	((Oid) strtoul((x), NULL, 10))
-
 
 /*
  * Bison doesn't allocate anything that needs to live across parser calls,

@@ -97,8 +97,6 @@ extern char *output_files[];
 #define CLUSTER_NAME(cluster)	((cluster) == &old_cluster ? "old" : \
 								 (cluster) == &new_cluster ? "new" : "none")
 
-#define atooid(x)  ((Oid) strtoul((x), NULL, 10))
-
 /* OID system catalog preservation added during PG 9.0 development */
 #define TABLE_SPACE_SUBDIRS_CAT_VER 201001111
 /* postmaster/postgres -b (binary_upgrade) flag added during PG 9.1 development */
