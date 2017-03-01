@@ -3468,7 +3468,7 @@ pg_describe_object(PG_FUNCTION_ARGS)
 {
 	Oid			classid = PG_GETARG_OID(0);
 	Oid			objid = PG_GETARG_OID(1);
-	int32		subobjid = PG_GETARG_INT32(2);
+	int32		objsubid = PG_GETARG_INT32(2);
 	char	   *description;
 	ObjectAddress address;
 
@@ -3478,7 +3478,7 @@ pg_describe_object(PG_FUNCTION_ARGS)
 
 	address.classId = classid;
 	address.objectId = objid;
-	address.objectSubId = subobjid;
+	address.objectSubId = objsubid;
 
 	description = getObjectDescription(&address);
 	PG_RETURN_TEXT_P(cstring_to_text(description));
@@ -3492,7 +3492,7 @@ pg_identify_object(PG_FUNCTION_ARGS)
 {
 	Oid			classid = PG_GETARG_OID(0);
 	Oid			objid = PG_GETARG_OID(1);
-	int32		subobjid = PG_GETARG_INT32(2);
+	int32		objsubid = PG_GETARG_INT32(2);
 	Oid			schema_oid = InvalidOid;
 	const char *objname = NULL;
 	ObjectAddress address;
@@ -3503,7 +3503,7 @@ pg_identify_object(PG_FUNCTION_ARGS)
 
 	address.classId = classid;
 	address.objectId = objid;
-	address.objectSubId = subobjid;
+	address.objectSubId = objsubid;
 
 	/*
 	 * Construct a tuple descriptor for the result row.  This must match this
@@ -3608,7 +3608,7 @@ pg_identify_object_as_address(PG_FUNCTION_ARGS)
 {
 	Oid			classid = PG_GETARG_OID(0);
 	Oid			objid = PG_GETARG_OID(1);
-	int32		subobjid = PG_GETARG_INT32(2);
+	int32		objsubid = PG_GETARG_INT32(2);
 	ObjectAddress address;
 	char	   *identity;
 	List	   *names;
@@ -3620,7 +3620,7 @@ pg_identify_object_as_address(PG_FUNCTION_ARGS)
 
 	address.classId = classid;
 	address.objectId = objid;
-	address.objectSubId = subobjid;
+	address.objectSubId = objsubid;
 
 	/*
 	 * Construct a tuple descriptor for the result row.  This must match this
