@@ -10328,10 +10328,6 @@ SELECT xml_is_well_formed_document('<pg:foo xmlns:pg="http://postgresql.org/stuf
   <sect2 id="functions-xml-processing">
    <title>Processing XML</title>
 
-   <indexterm>
-    <primary>XPath</primary>
-   </indexterm>
-
    <para>
     To process values of data type <type>xml</type>, PostgreSQL offers
     the functions <function>xpath</function> and
@@ -10339,39 +10335,46 @@ SELECT xml_is_well_formed_document('<pg:foo xmlns:pg="http://postgresql.org/stuf
     expressions.
    </para>
 
+   <sect3 id="functions-xml-processing-xpath">
+    <title><literal>xpath</literal></title>
+
+    <indexterm>
+     <primary>XPath</primary>
+    </indexterm>
+
 <synopsis>
 <function>xpath</function>(<replaceable>xpath</replaceable>, <replaceable>xml</replaceable> <optional>, <replaceable>nsarray</replaceable></optional>)
 </synopsis>
 
-   <para>
-    The function <function>xpath</function> evaluates the XPath
-    expression <replaceable>xpath</replaceable> (a <type>text</> value)
-    against the XML value
-    <replaceable>xml</replaceable>.  It returns an array of XML values
-    corresponding to the node set produced by the XPath expression.
-    If the XPath expression returns a scalar value rather than a node set,
-    a single-element array is returned.
-   </para>
+    <para>
+     The function <function>xpath</function> evaluates the XPath
+     expression <replaceable>xpath</replaceable> (a <type>text</> value)
+     against the XML value
+     <replaceable>xml</replaceable>.  It returns an array of XML values
+     corresponding to the node set produced by the XPath expression.
+     If the XPath expression returns a scalar value rather than a node set,
+     a single-element array is returned.
+    </para>
 
-  <para>
-    The second argument must be a well formed XML document. In particular,
-    it must have a single root node element.
-  </para>
+    <para>
+     The second argument must be a well formed XML document. In particular,
+     it must have a single root node element.
+    </para>
 
-   <para>
-    The optional third argument of the function is an array of namespace
-    mappings.  This array should be a two-dimensional <type>text</> array with
-    the length of the second axis being equal to 2 (i.e., it should be an
-    array of arrays, each of which consists of exactly 2 elements).
-    The first element of each array entry is the namespace name (alias), the
-    second the namespace URI. It is not required that aliases provided in
-    this array be the same as those being used in the XML document itself (in
-    other words, both in the XML document and in the <function>xpath</function>
-    function context, aliases are <emphasis>local</>).
-   </para>
+    <para>
+     The optional third argument of the function is an array of namespace
+     mappings.  This array should be a two-dimensional <type>text</> array with
+     the length of the second axis being equal to 2 (i.e., it should be an
+     array of arrays, each of which consists of exactly 2 elements).
+     The first element of each array entry is the namespace name (alias), the
+     second the namespace URI. It is not required that aliases provided in
+     this array be the same as those being used in the XML document itself (in
+     other words, both in the XML document and in the <function>xpath</function>
+     function context, aliases are <emphasis>local</>).
+    </para>
 
-   <para>
-    Example:
+    <para>
+     Example:
 <screen><![CDATA[
 SELECT xpath('/my:a/text()', '<my:a xmlns:my="http://example.com">test</my:a>',
              ARRAY[ARRAY['my', 'http://example.com']]);
@@ -10381,10 +10384,10 @@ SELECT xpath('/my:a/text()', '<my:a xmlns:my="http://example.com">test</my:a>',
  {test}
 (1 row)
 ]]></screen>
-   </para>
+    </para>
 
-   <para>
-    To deal with default (anonymous) namespaces, do something like this:
+    <para>
+     To deal with default (anonymous) namespaces, do something like this:
 <screen><![CDATA[
 SELECT xpath('//mydefns:b/text()', '<a xmlns="http://example.com"><b>test</b></a>',
              ARRAY[ARRAY['mydefns', 'http://example.com']]);
@@ -10394,27 +10397,31 @@ SELECT xpath('//mydefns:b/text()', '<a xmlns="http://example.com"><b>test</b></a
  {test}
 (1 row)
 ]]></screen>
-   </para>
+    </para>
+   </sect3>
 
-   <indexterm>
-    <primary>xpath_exists</primary>
-   </indexterm>
+   <sect3 id="functions-xml-processing-xpath-exists">
+    <title><literal>xpath_exists</literal></title>
+
+    <indexterm>
+     <primary>xpath_exists</primary>
+    </indexterm>
 
 <synopsis>
 <function>xpath_exists</function>(<replaceable>xpath</replaceable>, <replaceable>xml</replaceable> <optional>, <replaceable>nsarray</replaceable></optional>)
 </synopsis>
 
-   <para>
-    The function <function>xpath_exists</function> is a specialized form
-    of the <function>xpath</function> function.  Instead of returning the
-    individual XML values that satisfy the XPath, this function returns a
-    Boolean indicating whether the query was satisfied or not.  This
-    function is equivalent to the standard <literal>XMLEXISTS</> predicate,
-    except that it also offers support for a namespace mapping argument.
-   </para>
+    <para>
+     The function <function>xpath_exists</function> is a specialized form
+     of the <function>xpath</function> function.  Instead of returning the
+     individual XML values that satisfy the XPath, this function returns a
+     Boolean indicating whether the query was satisfied or not.  This
+     function is equivalent to the standard <literal>XMLEXISTS</> predicate,
+     except that it also offers support for a namespace mapping argument.
+    </para>
 
-   <para>
-    Example:
+    <para>
+     Example:
 <screen><![CDATA[
 SELECT xpath_exists('/my:a/text()', '<my:a xmlns:my="http://example.com">test</my:a>',
                      ARRAY[ARRAY['my', 'http://example.com']]);
@@ -10424,7 +10431,8 @@ SELECT xpath_exists('/my:a/text()', '<my:a xmlns:my="http://example.com">test</m
  t
 (1 row)
 ]]></screen>
-   </para>
+    </para>
+   </sect3>
   </sect2>
 
   <sect2 id="functions-xml-mapping">
