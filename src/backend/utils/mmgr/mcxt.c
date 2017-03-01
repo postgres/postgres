@@ -566,7 +566,24 @@ MemoryContextCheck(MemoryContext context)
 bool
 MemoryContextContains(MemoryContext context, void *pointer)
 {
-	MemoryContext ptr_context = GetMemoryChunkContext(pointer);
+	MemoryContext ptr_context;
+
+	/*
+	 * NB: Can't use GetMemoryChunkContext() here - that performs assertions
+	 * that aren't acceptable here since we might be passed memory not
+	 * allocated by any memory context.
+	 *
+	 * Try to detect bogus pointers handed to us, poorly though we can.
+	 * Presumably, a pointer that isn't MAXALIGNED isn't pointing at an
+	 * allocated chunk.
+	 */
+	if (pointer == NULL || pointer != (void *) MAXALIGN(pointer))
+		return false;
+
+	/*
+	 * OK, it's probably safe to look at the context.
+	 */
+	ptr_context = *(MemoryContext *) (((char *) pointer) - sizeof(void *));
 
 	return ptr_context == context;
 }
