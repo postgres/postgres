@@ -2509,6 +2509,10 @@ psql_completion(const char *text, int start, int end)
 	else if (Matches5("CREATE", "EVENT", "TRIGGER", MatchAny, "ON"))
 		COMPLETE_WITH_LIST3("ddl_command_start", "ddl_command_end", "sql_drop");
 
+/* DEALLOCATE */
+	else if (Matches1("DEALLOCATE"))
+		COMPLETE_WITH_QUERY(Query_for_list_of_prepared_statements);
+
 /* DECLARE */
 	else if (Matches2("DECLARE", MatchAny))
 		COMPLETE_WITH_LIST5("BINARY", "INSENSITIVE", "SCROLL", "NO SCROLL",
