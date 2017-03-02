@@ -1858,8 +1858,8 @@ index_update_stats(Relation rel,
 	 * 1. In bootstrap mode, we have no choice --- UPDATE wouldn't work.
 	 *
 	 * 2. We could be reindexing pg_class itself, in which case we can't move
-	 * its pg_class row because CatalogUpdateIndexes might not know about all
-	 * the indexes yet (see reindex_relation).
+	 * its pg_class row because CatalogTupleInsert/CatalogTupleUpdate might
+	 * not know about all the indexes yet (see reindex_relation).
 	 *
 	 * 3. Because we execute CREATE INDEX with just share lock on the parent
 	 * rel (to allow concurrent index creations), an ordinary update could
@@ -3542,9 +3542,9 @@ reindex_relation(Oid relid, int flags, int options)
 	 * that the updates do not try to insert index entries into indexes we
 	 * have not processed yet.  (When we are trying to recover from corrupted
 	 * indexes, that could easily cause a crash.) We can accomplish this
-	 * because CatalogUpdateIndexes will use the relcache's index list to know
-	 * which indexes to update. We just force the index list to be only the
-	 * stuff we've processed.
+	 * because CatalogTupleInsert/CatalogTupleUpdate will use the relcache's
+	 * index list to know which indexes to update. We just force the index
+	 * list to be only the stuff we've processed.
 	 *
 	 * It is okay to not insert entries into the indexes we have not processed
 	 * yet because all of this is transaction-safe.  If we fail partway
