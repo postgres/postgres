@@ -9618,7 +9618,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         </entry>
         <entry><type>tsquery</type></entry>
         <entry>make query that searches for <replaceable>query1</> followed by
-         <replaceable>query2</> at maximum distance <replaceable>distance</></entry>
+         <replaceable>query2</> at distance <replaceable>distance</></entry>
         <entry><literal>tsquery_phrase(to_tsquery('fat'), to_tsquery('cat'), 10)</literal></entry>
         <entry><literal>'fat' &lt;10&gt; 'cat'</literal></entry>
        </row>
