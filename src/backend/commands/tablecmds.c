@@ -1349,6 +1349,10 @@ ExecuteTruncate(TruncateStmt *stmt)
 	{
 		Relation	rel = (Relation) lfirst(cell);
 
+		/* Skip partitioned tables as there is nothing to do */
+		if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+			continue;
+
 		/*
 		 * Normally, we need a transaction-safe truncation here.  However, if
 		 * the table was either created in the current (sub)transaction or has
@@ -1459,7 +1463,11 @@ truncate_check_rel(Relation rel)
 {
 	AclResult	aclresult;
 
-	/* Only allow truncate on regular tables */
+	/*
+	 * Only allow truncate on regular tables and partitioned tables (although,
+	 * the latter are only being included here for the following checks; no
+	 * physical truncation will occur in their case.)
+	 */
 	if (rel->rd_rel->relkind != RELKIND_RELATION &&
 		rel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
 		ereport(ERROR,
@@ -4006,8 +4014,9 @@ ATRewriteTables(AlterTableStmt *parsetree, List **wqueue, LOCKMODE lockmode)
 	{
 		AlteredTableInfo *tab = (AlteredTableInfo *) lfirst(ltab);
 
-		/* Foreign tables have no storage. */
-		if (tab->relkind == RELKIND_FOREIGN_TABLE)
+		/* Foreign tables have no storage, nor do partitioned tables. */
+		if (tab->relkind == RELKIND_FOREIGN_TABLE ||
+			tab->relkind == RELKIND_PARTITIONED_TABLE)
 			continue;
 
 		/*

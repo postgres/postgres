@@ -153,7 +153,9 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">
     <listitem>
      <para>
       The name (optionally schema-qualified) of a specific table to
-      vacuum. Defaults to all tables in the current database.
+      vacuum.  If omitted, all regular tables and materialized views in the
+      current database are vacuumed.  If the specified table is a partitioned
+      table, all of its leaf partitions are vacuumed.
      </para>
     </listitem>
    </varlistentry>

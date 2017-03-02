@@ -3792,8 +3792,7 @@ UNION ALL SELECT * FROM measurement_y2008m01;
    <title>Caveats</title>
 
    <para>
-    The following caveats apply to partitioned tables implemented using either
-    method (unless noted otherwise):
+    The following caveats apply to using inheritance to implement partitioning:
    <itemizedlist>
     <listitem>
      <para>
@@ -3802,13 +3801,6 @@ UNION ALL SELECT * FROM measurement_y2008m01;
       exclusive.  It is safer to create code that generates
       partitions and creates and/or modifies associated objects than
       to write each by hand.
-     </para>
-
-     <para>
-      This is not a problem with partitioned tables though, as trying to
-      create a partition that overlaps with one of the existing partitions
-      results in an error, so it is impossible to end up with partitions
-      that overlap one another.
      </para>
     </listitem>
 
@@ -3822,14 +3814,6 @@ UNION ALL SELECT * FROM measurement_y2008m01;
       on the partition tables, but it makes management of the structure
       much more complicated.
      </para>
-
-     <para>
-      This problem exists even for partitioned tables.  An <command>UPDATE</>
-      that causes a row to move from one partition to another fails, because
-      the new value of the row fails to satisfy the implicit partition
-      constraint of the original partition.  This might change in future
-      releases.
-     </para>
     </listitem>
 
     <listitem>
@@ -3840,8 +3824,7 @@ UNION ALL SELECT * FROM measurement_y2008m01;
 <programlisting>
 ANALYZE measurement;
 </programlisting>
-      will only process the master table.  This is true even for partitioned
-      tables.
+      will only process the master table.
      </para>
     </listitem>
 
@@ -3852,11 +3835,27 @@ ANALYZE measurement;
       action is only taken in case of unique violations on the specified
       target relation, not its child relations.
      </para>
+    </listitem>
+   </itemizedlist>
+   </para>
 
+   <para>
+    The following caveats apply to partitioned tables created with the
+    explicit syntax:
+   <itemizedlist>
+    <listitem>
+     <para>
+      An <command>UPDATE</> that causes a row to move from one partition to
+      another fails, because the new value of the row fails to satisfy the
+      implicit partition constraint of the original partition.  This might
+      change in future releases.
+     </para>
+    </listitem>
+
+    <listitem>
      <para>
       <command>INSERT</command> statements with <literal>ON CONFLICT</>
-      clause are currently not allowed on partitioned tables, that is,
-      cause error when specified.
+      clause are currently not allowed on partitioned tables.
      </para>
     </listitem>
 
@@ -3864,7 +3863,8 @@ ANALYZE measurement;
    </para>
 
    <para>
-    The following caveats apply to constraint exclusion:
+    The following caveats apply to constraint exclusion, which is currently
+    used by both inheritance and partitioned tables:
 
    <itemizedlist>
     <listitem>
@@ -3898,8 +3898,7 @@ ANALYZE measurement;
       during constraint exclusion, so large numbers of partitions are likely
       to increase query planning time considerably.  Partitioning using
       these techniques will work well with up to perhaps a hundred partitions;
-      don't try to use many thousands of partitions. This restriction applies
-      both to inheritance and explicit partitioning syntax.
+      don't try to use many thousands of partitions.
      </para>
     </listitem>
 
