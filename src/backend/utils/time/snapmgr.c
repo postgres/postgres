@@ -2015,34 +2015,37 @@ EstimateSnapshotSpace(Snapshot snap)
 void
 SerializeSnapshot(Snapshot snapshot, char *start_address)
 {
-	SerializedSnapshotData *serialized_snapshot;
+	SerializedSnapshotData serialized_snapshot;
 
 	Assert(snapshot->subxcnt >= 0);
 
-	serialized_snapshot = (SerializedSnapshotData *) start_address;
-
 	/* Copy all required fields */
-	serialized_snapshot->xmin = snapshot->xmin;
-	serialized_snapshot->xmax = snapshot->xmax;
-	serialized_snapshot->xcnt = snapshot->xcnt;
-	serialized_snapshot->subxcnt = snapshot->subxcnt;
-	serialized_snapshot->suboverflowed = snapshot->suboverflowed;
-	serialized_snapshot->takenDuringRecovery = snapshot->takenDuringRecovery;
-	serialized_snapshot->curcid = snapshot->curcid;
-	serialized_snapshot->whenTaken = snapshot->whenTaken;
-	serialized_snapshot->lsn = snapshot->lsn;
+	serialized_snapshot.xmin = snapshot->xmin;
+	serialized_snapshot.xmax = snapshot->xmax;
+	serialized_snapshot.xcnt = snapshot->xcnt;
+	serialized_snapshot.subxcnt = snapshot->subxcnt;
+	serialized_snapshot.suboverflowed = snapshot->suboverflowed;
+	serialized_snapshot.takenDuringRecovery = snapshot->takenDuringRecovery;
+	serialized_snapshot.curcid = snapshot->curcid;
+	serialized_snapshot.whenTaken = snapshot->whenTaken;
+	serialized_snapshot.lsn = snapshot->lsn;
 
 	/*
 	 * Ignore the SubXID array if it has overflowed, unless the snapshot was
 	 * taken during recovey - in that case, top-level XIDs are in subxip as
 	 * well, and we mustn't lose them.
 	 */
-	if (serialized_snapshot->suboverflowed && !snapshot->takenDuringRecovery)
-		serialized_snapshot->subxcnt = 0;
+	if (serialized_snapshot.suboverflowed && !snapshot->takenDuringRecovery)
+		serialized_snapshot.subxcnt = 0;
+
+	/* Copy struct to possibly-unaligned buffer */
+	memcpy(start_address,
+		   &serialized_snapshot, sizeof(SerializedSnapshotData));
 
 	/* Copy XID array */
 	if (snapshot->xcnt > 0)
-		memcpy((TransactionId *) (serialized_snapshot + 1),
+		memcpy((TransactionId *) (start_address +
+								  sizeof(SerializedSnapshotData)),
 			   snapshot->xip, snapshot->xcnt * sizeof(TransactionId));
 
 	/*
@@ -2051,12 +2054,12 @@ SerializeSnapshot(Snapshot snapshot, char *start_address)
 	 * snapshot taken during recovery; all the top-level XIDs are in subxip as
 	 * well in that case, so we mustn't lose them.
 	 */
-	if (serialized_snapshot->subxcnt > 0)
+	if (serialized_snapshot.subxcnt > 0)
 	{
 		Size		subxipoff = sizeof(SerializedSnapshotData) +
 		snapshot->xcnt * sizeof(TransactionId);
 
-		memcpy((TransactionId *) ((char *) serialized_snapshot + subxipoff),
+		memcpy((TransactionId *) (start_address + subxipoff),
 			   snapshot->subxip, snapshot->subxcnt * sizeof(TransactionId));
 	}
 }
@@ -2071,50 +2074,51 @@ SerializeSnapshot(Snapshot snapshot, char *start_address)
 Snapshot
 RestoreSnapshot(char *start_address)
 {
-	SerializedSnapshotData *serialized_snapshot;
+	SerializedSnapshotData serialized_snapshot;
 	Size		size;
 	Snapshot	snapshot;
 	TransactionId *serialized_xids;
 
-	serialized_snapshot = (SerializedSnapshotData *) start_address;
+	memcpy(&serialized_snapshot, start_address,
+		   sizeof(SerializedSnapshotData));
 	serialized_xids = (TransactionId *)
 		(start_address + sizeof(SerializedSnapshotData));
 
 	/* We allocate any XID arrays needed in the same palloc block. */
 	size = sizeof(SnapshotData)
-		+ serialized_snapshot->xcnt * sizeof(TransactionId)
-		+ serialized_snapshot->subxcnt * sizeof(TransactionId);
+		+ serialized_snapshot.xcnt * sizeof(TransactionId)
+		+ serialized_snapshot.subxcnt * sizeof(TransactionId);
 
 	/* Copy all required fields */
 	snapshot = (Snapshot) MemoryContextAlloc(TopTransactionContext, size);
 	snapshot->satisfies = HeapTupleSatisfiesMVCC;
-	snapshot->xmin = serialized_snapshot->xmin;
-	snapshot->xmax = serialized_snapshot->xmax;
+	snapshot->xmin = serialized_snapshot.xmin;
+	snapshot->xmax = serialized_snapshot.xmax;
 	snapshot->xip = NULL;
-	snapshot->xcnt = serialized_snapshot->xcnt;
+	snapshot->xcnt = serialized_snapshot.xcnt;
 	snapshot->subxip = NULL;
-	snapshot->subxcnt = serialized_snapshot->subxcnt;
-	snapshot->suboverflowed = serialized_snapshot->suboverflowed;
-	snapshot->takenDuringRecovery = serialized_snapshot->takenDuringRecovery;
-	snapshot->curcid = serialized_snapshot->curcid;
-	snapshot->whenTaken = serialized_snapshot->whenTaken;
-	snapshot->lsn = serialized_snapshot->lsn;
+	snapshot->subxcnt = serialized_snapshot.subxcnt;
+	snapshot->suboverflowed = serialized_snapshot.suboverflowed;
+	snapshot->takenDuringRecovery = serialized_snapshot.takenDuringRecovery;
+	snapshot->curcid = serialized_snapshot.curcid;
+	snapshot->whenTaken = serialized_snapshot.whenTaken;
+	snapshot->lsn = serialized_snapshot.lsn;
 
 	/* Copy XIDs, if present. */
-	if (serialized_snapshot->xcnt > 0)
+	if (serialized_snapshot.xcnt > 0)
 	{
 		snapshot->xip = (TransactionId *) (snapshot + 1);
 		memcpy(snapshot->xip, serialized_xids,
-			   serialized_snapshot->xcnt * sizeof(TransactionId));
+			   serialized_snapshot.xcnt * sizeof(TransactionId));
 	}
 
 	/* Copy SubXIDs, if present. */
-	if (serialized_snapshot->subxcnt > 0)
+	if (serialized_snapshot.subxcnt > 0)
 	{
 		snapshot->subxip = ((TransactionId *) (snapshot + 1)) +
-			serialized_snapshot->xcnt;
-		memcpy(snapshot->subxip, serialized_xids + serialized_snapshot->xcnt,
-			   serialized_snapshot->subxcnt * sizeof(TransactionId));
+			serialized_snapshot.xcnt;
+		memcpy(snapshot->subxip, serialized_xids + serialized_snapshot.xcnt,
+			   serialized_snapshot.subxcnt * sizeof(TransactionId));
 	}
 
 	/* Set the copied flag so that the caller will set refcounts correctly. */
