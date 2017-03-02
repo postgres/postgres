@@ -53,6 +53,11 @@
 
 static TupleTableSlot *BitmapHeapNext(BitmapHeapScanState *node);
 static void bitgetpage(HeapScanDesc scan, TBMIterateResult *tbmres);
+static inline void BitmapAdjustPrefetchIterator(BitmapHeapScanState *node,
+							 TBMIterateResult *tbmres);
+static inline void BitmapAdjustPrefetchTarget(BitmapHeapScanState *node);
+static inline void BitmapPrefetch(BitmapHeapScanState *node,
+			   HeapScanDesc scan);
 
 
 /* ----------------------------------------------------------------
@@ -69,10 +74,6 @@ BitmapHeapNext(BitmapHeapScanState *node)
 	TIDBitmap  *tbm;
 	TBMIterator *tbmiterator;
 	TBMIterateResult *tbmres;
-
-#ifdef USE_PREFETCH
-	TBMIterator *prefetch_iterator;
-#endif
 	OffsetNumber targoffset;
 	TupleTableSlot *slot;
 
@@ -85,9 +86,6 @@ BitmapHeapNext(BitmapHeapScanState *node)
 	tbm = node->tbm;
 	tbmiterator = node->tbmiterator;
 	tbmres = node->tbmres;
-#ifdef USE_PREFETCH
-	prefetch_iterator = node->prefetch_iterator;
-#endif
 
 	/*
 	 * If we haven't yet performed the underlying index scan, do it, and begin
@@ -115,7 +113,7 @@ BitmapHeapNext(BitmapHeapScanState *node)
 #ifdef USE_PREFETCH
 		if (node->prefetch_maximum > 0)
 		{
-			node->prefetch_iterator = prefetch_iterator = tbm_begin_iterate(tbm);
+			node->prefetch_iterator = tbm_begin_iterate(tbm);
 			node->prefetch_pages = 0;
 			node->prefetch_target = -1;
 		}
@@ -139,21 +137,7 @@ BitmapHeapNext(BitmapHeapScanState *node)
 				break;
 			}
 
-#ifdef USE_PREFETCH
-			if (node->prefetch_pages > 0)
-			{
-				/* The main iterator has closed the distance by one page */
-				node->prefetch_pages--;
-			}
-			else if (prefetch_iterator)
-			{
-				/* Do not let the prefetch iterator get behind the main one */
-				TBMIterateResult *tbmpre = tbm_iterate(prefetch_iterator);
-
-				if (tbmpre == NULL || tbmpre->blockno != tbmres->blockno)
-					elog(ERROR, "prefetch and main iterators are out of sync");
-			}
-#endif   /* USE_PREFETCH */
+			BitmapAdjustPrefetchIterator(node, tbmres);
 
 			/*
 			 * Ignore any claimed entries past what we think is the end of the
@@ -182,23 +166,8 @@ BitmapHeapNext(BitmapHeapScanState *node)
 			 */
 			scan->rs_cindex = 0;
 
-#ifdef USE_PREFETCH
-
-			/*
-			 * Increase prefetch target if it's not yet at the max.  Note that
-			 * we will increase it to zero after fetching the very first
-			 * page/tuple, then to one after the second tuple is fetched, then
-			 * it doubles as later pages are fetched.
-			 */
-			if (node->prefetch_target >= node->prefetch_maximum)
-				 /* don't increase any further */ ;
-			else if (node->prefetch_target >= node->prefetch_maximum / 2)
-				node->prefetch_target = node->prefetch_maximum;
-			else if (node->prefetch_target > 0)
-				node->prefetch_target *= 2;
-			else
-				node->prefetch_target++;
-#endif   /* USE_PREFETCH */
+			/* Adjust the prefetch target */
+			BitmapAdjustPrefetchTarget(node);
 		}
 		else
 		{
@@ -227,8 +196,6 @@ BitmapHeapNext(BitmapHeapScanState *node)
 			continue;
 		}
 
-#ifdef USE_PREFETCH
-
 		/*
 		 * We issue prefetch requests *after* fetching the current page to try
 		 * to avoid having prefetching interfere with the main I/O. Also, this
@@ -236,24 +203,7 @@ BitmapHeapNext(BitmapHeapScanState *node)
 		 * to do on the current page, else we may uselessly prefetch the same
 		 * page we are just about to request for real.
 		 */
-		if (prefetch_iterator)
-		{
-			while (node->prefetch_pages < node->prefetch_target)
-			{
-				TBMIterateResult *tbmpre = tbm_iterate(prefetch_iterator);
-
-				if (tbmpre == NULL)
-				{
-					/* No more pages to prefetch */
-					tbm_end_iterate(prefetch_iterator);
-					node->prefetch_iterator = prefetch_iterator = NULL;
-					break;
-				}
-				node->prefetch_pages++;
-				PrefetchBuffer(scan->rs_rd, MAIN_FORKNUM, tbmpre->blockno);
-			}
-		}
-#endif   /* USE_PREFETCH */
+		BitmapPrefetch(node, scan);
 
 		/*
 		 * Okay to fetch the tuple
@@ -409,6 +359,84 @@ bitgetpage(HeapScanDesc scan, TBMIterateResult *tbmres)
 
 	Assert(ntup <= MaxHeapTuplesPerPage);
 	scan->rs_ntuples = ntup;
+}
+
+/*
+ *	BitmapAdjustPrefetchIterator - Adjust the prefetch iterator
+ */
+static inline void
+BitmapAdjustPrefetchIterator(BitmapHeapScanState *node,
+							 TBMIterateResult *tbmres)
+{
+#ifdef USE_PREFETCH
+	TBMIterator *prefetch_iterator = node->prefetch_iterator;
+
+	if (node->prefetch_pages > 0)
+	{
+		/* The main iterator has closed the distance by one page */
+		node->prefetch_pages--;
+	}
+	else if (prefetch_iterator)
+	{
+		/* Do not let the prefetch iterator get behind the main one */
+		TBMIterateResult *tbmpre = tbm_iterate(prefetch_iterator);
+
+		if (tbmpre == NULL || tbmpre->blockno != tbmres->blockno)
+			elog(ERROR, "prefetch and main iterators are out of sync");
+	}
+#endif   /* USE_PREFETCH */
+}
+
+/*
+ * BitmapAdjustPrefetchTarget - Adjust the prefetch target
+ *
+ * Increase prefetch target if it's not yet at the max.  Note that
+ * we will increase it to zero after fetching the very first
+ * page/tuple, then to one after the second tuple is fetched, then
+ * it doubles as later pages are fetched.
+ */
+static inline void
+BitmapAdjustPrefetchTarget(BitmapHeapScanState *node)
+{
+#ifdef USE_PREFETCH
+	if (node->prefetch_target >= node->prefetch_maximum)
+		 /* don't increase any further */ ;
+	else if (node->prefetch_target >= node->prefetch_maximum / 2)
+		node->prefetch_target = node->prefetch_maximum;
+	else if (node->prefetch_target > 0)
+		node->prefetch_target *= 2;
+	else
+		node->prefetch_target++;
+#endif   /* USE_PREFETCH */
+}
+
+/*
+ * BitmapPrefetch - Prefetch, if prefetch_pages are behind prefetch_target
+ */
+static inline void
+BitmapPrefetch(BitmapHeapScanState *node, HeapScanDesc scan)
+{
+#ifdef USE_PREFETCH
+	TBMIterator *prefetch_iterator = node->prefetch_iterator;
+
+	if (prefetch_iterator)
+	{
+		while (node->prefetch_pages < node->prefetch_target)
+		{
+			TBMIterateResult *tbmpre = tbm_iterate(prefetch_iterator);
+
+			if (tbmpre == NULL)
+			{
+				/* No more pages to prefetch */
+				tbm_end_iterate(prefetch_iterator);
+				node->prefetch_iterator = NULL;
+				break;
+			}
+			node->prefetch_pages++;
+			PrefetchBuffer(scan->rs_rd, MAIN_FORKNUM, tbmpre->blockno);
+		}
+	}
+#endif   /* USE_PREFETCH */
 }
 
 /*
