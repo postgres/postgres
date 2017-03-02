@@ -1650,7 +1650,7 @@ operations on bytea columns (Joe)</para></listitem>
 <listitem><para>Add variable db_user_namespace for database-local user names (Bruce)</para></listitem>
 <listitem><para>SSL improvements (Bear Giles)</para></listitem>
 <listitem><para>Make encryption of stored passwords the default (Bruce)</para></listitem>
-<listitem><para>Allow pg_statistic to be reset by calling pg_stat_reset() (Christopher)</para></listitem>
+<listitem><para>Allow statistics collector to be reset by calling pg_stat_reset() (Christopher)</para></listitem>
 <listitem><para>Add log_duration parameter (Bruce)</para></listitem>
 <listitem><para>Rename debug_print_query to log_statement (Bruce)</para></listitem>
 <listitem><para>Rename show_query_stats to show_statement_stats (Bruce)</para></listitem>
