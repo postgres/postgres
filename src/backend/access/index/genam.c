@@ -168,6 +168,10 @@ IndexScanEnd(IndexScanDesc scan)
  * The passed-in values/nulls arrays are the "raw" input to the index AM,
  * e.g. results of FormIndexDatum --- this is not necessarily what is stored
  * in the index, but it's what the user perceives to be stored.
+ *
+ * Note: if you change anything here, check whether
+ * ExecBuildSlotPartitionKeyDescription() in execMain.c needs a similar
+ * change.
  */
 char *
 BuildIndexValueDescription(Relation indexRelation,

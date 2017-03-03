@@ -85,8 +85,14 @@ extern List *RelationGetPartitionQual(Relation rel);
 extern PartitionDispatch *RelationGetPartitionDispatchInfo(Relation rel,
 								 int lockmode, int *num_parted,
 								 List **leaf_part_oids);
+extern void FormPartitionKeyDatum(PartitionDispatch pd,
+					  TupleTableSlot *slot,
+					  EState *estate,
+					  Datum *values,
+					  bool *isnull);
 extern int get_partition_for_tuple(PartitionDispatch *pd,
 						TupleTableSlot *slot,
 						EState *estate,
-						Oid *failed_at);
+						PartitionDispatchData **failed_at,
+						TupleTableSlot **failed_slot);
 #endif   /* PARTITION_H */

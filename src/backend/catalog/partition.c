@@ -140,13 +140,6 @@ static int partition_bound_bsearch(PartitionKey key,
 						PartitionBoundInfo boundinfo,
 						void *probe, bool probe_is_bound, bool *is_equal);
 
-/* Support get_partition_for_tuple() */
-static void FormPartitionKeyDatum(PartitionDispatch pd,
-					  TupleTableSlot *slot,
-					  EState *estate,
-					  Datum *values,
-					  bool *isnull);
-
 /*
  * RelationBuildPartitionDesc
  *		Form rel's partition descriptor
@@ -1608,7 +1601,7 @@ generate_partition_qual(Relation rel)
  * the heap tuple passed in.
  * ----------------
  */
-static void
+void
 FormPartitionKeyDatum(PartitionDispatch pd,
 					  TupleTableSlot *slot,
 					  EState *estate,
@@ -1672,7 +1665,8 @@ int
 get_partition_for_tuple(PartitionDispatch *pd,
 						TupleTableSlot *slot,
 						EState *estate,
-						Oid *failed_at)
+						PartitionDispatchData **failed_at,
+						TupleTableSlot **failed_slot)
 {
 	PartitionDispatch parent;
 	Datum		values[PARTITION_MAX_KEYS];
@@ -1693,13 +1687,6 @@ get_partition_for_tuple(PartitionDispatch *pd,
 		TupleTableSlot *myslot = parent->tupslot;
 		TupleConversionMap *map = parent->tupmap;
 
-		/* Quick exit */
-		if (partdesc->nparts == 0)
-		{
-			*failed_at = RelationGetRelid(parent->reldesc);
-			return -1;
-		}
-
 		if (myslot != NULL && map != NULL)
 		{
 			HeapTuple	tuple = ExecFetchSlotTuple(slot);
@@ -1708,6 +1695,14 @@ get_partition_for_tuple(PartitionDispatch *pd,
 			tuple = do_convert_tuple(tuple, map);
 			ExecStoreTuple(tuple, myslot, InvalidBuffer, true);
 			slot = myslot;
+		}
+
+		/* Quick exit */
+		if (partdesc->nparts == 0)
+		{
+			*failed_at = parent;
+			*failed_slot = slot;
+			return -1;
 		}
 
 		/*
@@ -1774,7 +1769,8 @@ get_partition_for_tuple(PartitionDispatch *pd,
 		if (cur_index < 0)
 		{
 			result = -1;
-			*failed_at = RelationGetRelid(parent->reldesc);
+			*failed_at = parent;
+			*failed_slot = slot;
 			break;
 		}
 		else if (parent->indexes[cur_index] >= 0)

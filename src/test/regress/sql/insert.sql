@@ -215,6 +215,9 @@ alter table p attach partition p1 for values from (1, 2) to (1, 10);
 insert into p values (1, 2);
 select tableoid::regclass, * from p;
 
+-- check that proper message is shown after failure to route through p1
+insert into p (a, b) values (1, 5);
+
 truncate p;
 alter table p add constraint check_b check (b = 3);
 -- check that correct input row is shown when constraint check_b fails on p11
@@ -239,6 +242,33 @@ alter table p attach partition p4 for values from (1, 30) to (1, 40);
 with ins (a, b, c) as
   (insert into p (b, a) select s.a, 1 from generate_series(2, 39) s(a) returning tableoid::regclass, *)
   select a, b, min(c), max(c) from ins group by a, b order by 1;
+
+-- check that message shown after failure to find a partition shows the
+-- appropriate key description (or none) in various situations
+create table key_desc (a int, b int) partition by list ((a+0));
+create table key_desc_1 partition of key_desc for values in (1) partition by range (b);
+
+create user someone_else;
+grant select (a) on key_desc_1 to someone_else;
+grant insert on key_desc to someone_else;
+
+set role someone_else;
+-- no key description is shown
+insert into key_desc values (1, 1);
+
+reset role;
+grant select (b) on key_desc_1 to someone_else;
+set role someone_else;
+-- key description (b)=(1) is now shown
+insert into key_desc values (1, 1);
+
+-- key description is not shown if key contains expression
+insert into key_desc values (2, 1);
+reset role;
+revoke all on key_desc from someone_else;
+revoke all on key_desc_1 from someone_else;
+drop role someone_else;
+drop table key_desc, key_desc_1;
 
 -- cleanup
 drop table p, p1, p11, p12, p2, p3, p4;

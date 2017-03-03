@@ -317,7 +317,8 @@ static char *pg_get_indexdef_worker(Oid indexrelid, int colno,
 					   const Oid *excludeOps,
 					   bool attrsOnly, bool showTblSpc,
 					   int prettyFlags, bool missing_ok);
-static char *pg_get_partkeydef_worker(Oid relid, int prettyFlags);
+static char *pg_get_partkeydef_worker(Oid relid, int prettyFlags,
+						 bool attrsOnly);
 static char *pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 							int prettyFlags, bool missing_ok);
 static text *pg_get_expr_worker(text *expr, Oid relid, const char *relname,
@@ -1431,14 +1432,26 @@ pg_get_partkeydef(PG_FUNCTION_ARGS)
 	Oid			relid = PG_GETARG_OID(0);
 
 	PG_RETURN_TEXT_P(string_to_text(pg_get_partkeydef_worker(relid,
-														PRETTYFLAG_INDENT)));
+														PRETTYFLAG_INDENT,
+															 false)));
+}
+
+/* Internal version that just reports the column definitions */
+char *
+pg_get_partkeydef_columns(Oid relid, bool pretty)
+{
+	int			prettyFlags;
+
+	prettyFlags = pretty ? PRETTYFLAG_PAREN | PRETTYFLAG_INDENT : PRETTYFLAG_INDENT;
+	return pg_get_partkeydef_worker(relid, prettyFlags, true);
 }
 
 /*
  * Internal workhorse to decompile a partition key definition.
  */
 static char *
-pg_get_partkeydef_worker(Oid relid, int prettyFlags)
+pg_get_partkeydef_worker(Oid relid, int prettyFlags,
+						 bool attrsOnly)
 {
 	Form_pg_partitioned_table form;
 	HeapTuple	tuple;
@@ -1508,17 +1521,20 @@ pg_get_partkeydef_worker(Oid relid, int prettyFlags)
 	switch (form->partstrat)
 	{
 		case PARTITION_STRATEGY_LIST:
-			appendStringInfo(&buf, "LIST");
+			if (!attrsOnly)
+				appendStringInfo(&buf, "LIST");
 			break;
 		case PARTITION_STRATEGY_RANGE:
-			appendStringInfo(&buf, "RANGE");
+			if (!attrsOnly)
+				appendStringInfo(&buf, "RANGE");
 			break;
 		default:
 			elog(ERROR, "unexpected partition strategy: %d",
 				 (int) form->partstrat);
 	}
 
-	appendStringInfo(&buf, " (");
+	if (!attrsOnly)
+		appendStringInfo(&buf, " (");
 	sep = "";
 	for (keyno = 0; keyno < form->partnatts; keyno++)
 	{
@@ -1561,14 +1577,17 @@ pg_get_partkeydef_worker(Oid relid, int prettyFlags)
 
 		/* Add collation, if not default for column */
 		partcoll = partcollation->values[keyno];
-		if (OidIsValid(partcoll) && partcoll != keycolcollation)
+		if (!attrsOnly && OidIsValid(partcoll) && partcoll != keycolcollation)
 			appendStringInfo(&buf, " COLLATE %s",
 							 generate_collation_name((partcoll)));
 
 		/* Add the operator class name, if not default */
-		get_opclass_name(partclass->values[keyno], keycoltype, &buf);
+		if (!attrsOnly)
+			get_opclass_name(partclass->values[keyno], keycoltype, &buf);
 	}
-	appendStringInfoChar(&buf, ')');
+
+	if (!attrsOnly)
+		appendStringInfoChar(&buf, ')');
 
 	/* Clean up */
 	ReleaseSysCache(tuple);

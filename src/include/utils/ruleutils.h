@@ -21,6 +21,8 @@
 extern char *pg_get_indexdef_string(Oid indexrelid);
 extern char *pg_get_indexdef_columns(Oid indexrelid, bool pretty);
 
+extern char *pg_get_partkeydef_columns(Oid relid, bool pretty);
+
 extern char *pg_get_constraintdef_command(Oid constraintId);
 extern char *deparse_expression(Node *expr, List *dpcontext,
 				   bool forceprefix, bool showimplicit);
