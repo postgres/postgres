@@ -1260,6 +1260,21 @@ reread_subscription(void)
 	}
 
 	/*
+	 * Exit if subscription name was changed (it's used for
+	 * fallback_application_name). The launcher will start new worker.
+	 */
+	if (strcmp(newsub->name, MySubscription->name) != 0)
+	{
+		ereport(LOG,
+				(errmsg("logical replication worker for subscription \"%s\" will "
+						"restart because subscription was renamed",
+						MySubscription->name)));
+
+		walrcv_disconnect(wrconn);
+		proc_exit(0);
+	}
+
+	/*
 	 * Exit if publication list was changed. The launcher will start
 	 * new worker.
 	 */
@@ -1292,7 +1307,6 @@ reread_subscription(void)
 
 	/* Check for other changes that should never happen too. */
 	if (newsub->dbid != MySubscription->dbid ||
-		strcmp(newsub->name, MySubscription->name) != 0 ||
 		strcmp(newsub->slotname, MySubscription->slotname) != 0)
 	{
 		elog(ERROR, "subscription %u changed unexpectedly",

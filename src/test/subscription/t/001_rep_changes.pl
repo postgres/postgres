@@ -169,8 +169,17 @@ $result =
   $node_subscriber->safe_psql('postgres', "SELECT count(*), min(a), max(a) FROM tab_full");
 is($result, qq(11|0|100), 'check replicated insert after alter publication');
 
+# check restart on rename
+$oldpid = $node_publisher->safe_psql('postgres',
+	"SELECT pid FROM pg_stat_replication WHERE application_name = '$appname';");
+$node_subscriber->safe_psql('postgres',
+	"ALTER SUBSCRIPTION tap_sub RENAME TO tap_sub_renamed");
+$node_publisher->poll_query_until('postgres',
+	"SELECT pid != $oldpid FROM pg_stat_replication WHERE application_name = '$appname';")
+  or die "Timed out while waiting for apply to restart";
+
 # check all the cleanup
-$node_subscriber->safe_psql('postgres', "DROP SUBSCRIPTION tap_sub");
+$node_subscriber->safe_psql('postgres', "DROP SUBSCRIPTION tap_sub_renamed");
 
 $result =
   $node_subscriber->safe_psql('postgres', "SELECT count(*) FROM pg_subscription");

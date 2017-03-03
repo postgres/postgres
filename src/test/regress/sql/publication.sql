@@ -73,7 +73,11 @@ DROP TABLE testpub_tbl1;
 
 \dRp+ testpub_default
 
-DROP PUBLICATION testpub_default;
+ALTER PUBLICATION testpub_default RENAME TO testpub_foo;
+
+\dRp testpub_foo
+
+DROP PUBLICATION testpub_foo;
 DROP PUBLICATION testpib_ins_trunct;
 DROP PUBLICATION testpub_fortbl;
 

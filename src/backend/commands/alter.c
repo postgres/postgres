@@ -32,6 +32,7 @@
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_opfamily.h"
 #include "catalog/pg_proc.h"
+#include "catalog/pg_subscription.h"
 #include "catalog/pg_ts_config.h"
 #include "catalog/pg_ts_dict.h"
 #include "catalog/pg_ts_parser.h"
@@ -89,6 +90,12 @@ report_name_conflict(Oid classId, const char *name)
 			break;
 		case LanguageRelationId:
 			msgfmt = gettext_noop("language \"%s\" already exists");
+			break;
+		case PublicationRelationId:
+			msgfmt = gettext_noop("publication \"%s\" already exists");
+			break;
+		case SubscriptionRelationId:
+			msgfmt = gettext_noop("subscription \"%s\" already exists");
 			break;
 		default:
 			elog(ERROR, "unsupported object class %u", classId);
@@ -256,6 +263,12 @@ AlterObjectRename_internal(Relation rel, Oid objectId, const char *new_name)
 		IsThereOpFamilyInNamespace(new_name, opf->opfmethod,
 								   opf->opfnamespace);
 	}
+	else if (classId == SubscriptionRelationId)
+	{
+		if (SearchSysCacheExists2(SUBSCRIPTIONNAME, MyDatabaseId,
+								  CStringGetDatum(new_name)))
+			report_name_conflict(classId, new_name);
+	}
 	else if (nameCacheId >= 0)
 	{
 		if (OidIsValid(namespaceId))
@@ -364,6 +377,8 @@ ExecRenameStmt(RenameStmt *stmt)
 		case OBJECT_TSDICTIONARY:
 		case OBJECT_TSPARSER:
 		case OBJECT_TSTEMPLATE:
+		case OBJECT_PUBLICATION:
+		case OBJECT_SUBSCRIPTION:
 			{
 				ObjectAddress address;
 				Relation	catalog;

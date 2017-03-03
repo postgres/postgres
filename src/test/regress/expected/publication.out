@@ -148,7 +148,15 @@ DROP TABLE testpub_tbl1;
  t       | t       | t
 (1 row)
 
-DROP PUBLICATION testpub_default;
+ALTER PUBLICATION testpub_default RENAME TO testpub_foo;
+\dRp testpub_foo
+                         List of publications
+    Name     |          Owner           | Inserts | Updates | Deletes 
+-------------+--------------------------+---------+---------+---------
+ testpub_foo | regress_publication_user | t       | t       | t
+(1 row)
+
+DROP PUBLICATION testpub_foo;
 DROP PUBLICATION testpib_ins_trunct;
 DROP PUBLICATION testpub_fortbl;
 DROP SCHEMA pub_test CASCADE;

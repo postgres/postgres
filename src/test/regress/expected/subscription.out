@@ -61,6 +61,14 @@ ALTER SUBSCRIPTION testsub DISABLE;
 (1 row)
 
 COMMIT;
-DROP SUBSCRIPTION testsub NODROP SLOT;
+ALTER SUBSCRIPTION testsub RENAME TO testsub_foo;
+\dRs
+                         List of subscriptions
+    Name     |           Owner           | Enabled |    Publication     
+-------------+---------------------------+---------+--------------------
+ testsub_foo | regress_subscription_user | f       | {testpub,testpub1}
+(1 row)
+
+DROP SUBSCRIPTION testsub_foo NODROP SLOT;
 RESET SESSION AUTHORIZATION;
 DROP ROLE regress_subscription_user;
