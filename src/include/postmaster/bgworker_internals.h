@@ -42,6 +42,7 @@ extern void BackgroundWorkerShmemInit(void);
 extern void BackgroundWorkerStateChange(void);
 extern void ForgetBackgroundWorker(slist_mutable_iter *cur);
 extern void ReportBackgroundWorkerPID(RegisteredBgWorker *);
+extern void ReportBackgroundWorkerExit(slist_mutable_iter *cur);
 extern void BackgroundWorkerStopNotifications(pid_t pid);
 extern void ResetBackgroundWorkerCrashTimes(void);
 

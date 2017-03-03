@@ -430,6 +430,39 @@ ReportBackgroundWorkerPID(RegisteredBgWorker *rw)
 }
 
 /*
+ * Report that the PID of a background worker is now zero because a
+ * previously-running background worker has exited.
+ *
+ * This function should only be called from the postmaster.
+ */
+void
+ReportBackgroundWorkerExit(slist_mutable_iter *cur)
+{
+	RegisteredBgWorker *rw;
+	BackgroundWorkerSlot *slot;
+
+	rw = slist_container(RegisteredBgWorker, rw_lnode, cur->cur);
+
+	Assert(rw->rw_shmem_slot < max_worker_processes);
+	slot = &BackgroundWorkerData->slot[rw->rw_shmem_slot];
+	slot->pid = rw->rw_pid;
+
+	/*
+	 * If this worker is slated for deregistration, do that before notifying
+	 * the process which started it.  Otherwise, if that process tries to
+	 * reuse the slot immediately, it might not be available yet.  In theory
+	 * that could happen anyway if the process checks slot->pid at just the
+	 * wrong moment, but this makes the window narrower.
+	 */
+	if (rw->rw_terminate ||
+		rw->rw_worker.bgw_restart_time == BGW_NEVER_RESTART)
+		ForgetBackgroundWorker(cur);
+
+	if (rw->rw_worker.bgw_notify_pid != 0)
+		kill(rw->rw_worker.bgw_notify_pid, SIGUSR1);
+}
+
+/*
  * Cancel SIGUSR1 notifications for a PID belonging to an exiting backend.
  *
  * This function should only be called from the postmaster.
