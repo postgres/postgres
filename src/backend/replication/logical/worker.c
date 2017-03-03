@@ -173,6 +173,9 @@ create_estate_for_relation(LogicalRepRelMapEntry *rel)
 	if (resultRelInfo->ri_TrigDesc)
 		estate->es_trig_tuple_slot = ExecInitExtraTupleSlot(estate);
 
+	/* Prepare to catch AFTER triggers. */
+	AfterTriggerBeginQuery();
+
 	return estate;
 }
 
@@ -533,6 +536,10 @@ apply_handle_insert(StringInfo s)
 	/* Cleanup. */
 	ExecCloseIndices(estate->es_result_relation_info);
 	PopActiveSnapshot();
+
+	/* Handle queued AFTER triggers. */
+	AfterTriggerEndQuery(estate);
+
 	ExecResetTupleTable(estate->es_tupleTable, false);
 	FreeExecutorState(estate);
 
@@ -673,6 +680,10 @@ apply_handle_update(StringInfo s)
 	/* Cleanup. */
 	ExecCloseIndices(estate->es_result_relation_info);
 	PopActiveSnapshot();
+
+	/* Handle queued AFTER triggers. */
+	AfterTriggerEndQuery(estate);
+
 	EvalPlanQualEnd(&epqstate);
 	ExecResetTupleTable(estate->es_tupleTable, false);
 	FreeExecutorState(estate);
@@ -760,6 +771,10 @@ apply_handle_delete(StringInfo s)
 	/* Cleanup. */
 	ExecCloseIndices(estate->es_result_relation_info);
 	PopActiveSnapshot();
+
+	/* Handle queued AFTER triggers. */
+	AfterTriggerEndQuery(estate);
+
 	EvalPlanQualEnd(&epqstate);
 	ExecResetTupleTable(estate->es_tupleTable, false);
 	FreeExecutorState(estate);
