@@ -380,10 +380,11 @@ lazy_vacuum_rel(Relation onerel, int options, VacuumParams *params,
 							 vacrelstats->pinskipped_pages,
 							 vacrelstats->frozenskipped_pages);
 			appendStringInfo(&buf,
-							 _("tuples: %.0f removed, %.0f remain, %.0f are dead but not yet removable\n"),
+							 _("tuples: %.0f removed, %.0f remain, %.0f are dead but not yet removable, oldest xmin: %u\n"),
 							 vacrelstats->tuples_deleted,
 							 vacrelstats->new_rel_tuples,
-							 vacrelstats->new_dead_tuples);
+							 vacrelstats->new_dead_tuples,
+							 OldestXmin);
 			appendStringInfo(&buf,
 						 _("buffer usage: %d hits, %d misses, %d dirtied\n"),
 							 VacuumPageHit,
@@ -1329,8 +1330,8 @@ lazy_scan_heap(Relation onerel, int options, LVRelStats *vacrelstats,
 	 */
 	initStringInfo(&buf);
 	appendStringInfo(&buf,
-					 _("%.0f dead row versions cannot be removed yet.\n"),
-					 nkeep);
+					 _("%.0f dead row versions cannot be removed yet, oldest xmin: %u\n"),
+					 nkeep, OldestXmin);
 	appendStringInfo(&buf, _("There were %.0f unused item pointers.\n"),
 					 nunused);
 	appendStringInfo(&buf, ngettext("Skipped %u page due to buffer pins.\n",
