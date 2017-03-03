@@ -10555,10 +10555,10 @@ ATExecEnableDisableTrigger(Relation rel, char *trigname,
  * We just pass this off to rewriteDefine.c.
  */
 static void
-ATExecEnableDisableRule(Relation rel, char *trigname,
+ATExecEnableDisableRule(Relation rel, char *rulename,
 						char fires_when, LOCKMODE lockmode)
 {
-	EnableDisableRule(rel, trigname, fires_when);
+	EnableDisableRule(rel, rulename, fires_when);
 }
 
 /*
