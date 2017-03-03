@@ -4280,6 +4280,11 @@ SELECT * FROM parent WHERE key = 2400;
       <primary>where to log</primary>
      </indexterm>
 
+     <indexterm>
+       <primary>current_logfiles</primary>
+       <secondary>and the log_destination configuration parameter</secondary>
+     </indexterm>
+
      <variablelist>
 
      <varlistentry id="guc-log-destination" xreflabel="log_destination">
@@ -4309,6 +4314,27 @@ SELECT * FROM parent WHERE key = 2400;
         See <xref linkend="runtime-config-logging-csvlog"> for details.
         <xref linkend="guc-logging-collector"> must be enabled to generate
         CSV-format log output.
+       </para>
+       <para>
+        When either <systemitem>stderr</systemitem> or
+        <systemitem>csvlog</systemitem> are included, the file
+        <filename>current_logfiles</> is created to record the location
+        of the log file(s) currently in use by the logging collector and the
+        associated logging destination. This provides a convenient way to
+        find the logs currently in use by the instance. Here is an example of
+        this file's content:
+<programlisting>
+stderr pg_log/postgresql.log
+csvlog pg_log/postgresql.csv
+</programlisting>
+
+        <filename>current_logfiles</filename> is recreated when a new log file
+        is created as an effect of rotation, and
+        when <varname>log_destination</> is reloaded.  It is removed when
+        neither <systemitem>stderr</systemitem>
+        nor <systemitem>csvlog</systemitem> are included
+        in <varname>log_destination</>, and when the logging collector is
+        disabled.
        </para>
 
        <note>

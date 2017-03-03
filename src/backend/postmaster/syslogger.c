@@ -146,6 +146,7 @@ static char *logfile_getname(pg_time_t timestamp, const char *suffix);
 static void set_next_rotation_time(void);
 static void sigHupHandler(SIGNAL_ARGS);
 static void sigUsr1Handler(SIGNAL_ARGS);
+static void update_metainfo_datafile(void);
 
 
 /*
@@ -282,6 +283,7 @@ SysLoggerMain(int argc, char *argv[])
 	currentLogRotationAge = Log_RotationAge;
 	/* set next planned rotation time */
 	set_next_rotation_time();
+	update_metainfo_datafile();
 
 	/* main worker loop */
 	for (;;)
@@ -348,6 +350,13 @@ SysLoggerMain(int argc, char *argv[])
 				rotation_disabled = false;
 				rotation_requested = true;
 			}
+
+			/*
+			 * Force rewriting last log filename when reloading configuration.
+			 * Even if rotation_requested is false, log_destination may have
+			 * been changed and we don't want to wait the next file rotation.
+			 */
+			update_metainfo_datafile();
 		}
 
 		if (Log_RotationAge > 0 && !rotation_disabled)
@@ -1098,6 +1107,8 @@ open_csvlogfile(void)
 		pfree(last_csv_file_name);
 
 	last_csv_file_name = filename;
+
+	update_metainfo_datafile();
 }
 
 /*
@@ -1268,6 +1279,8 @@ logfile_rotate(bool time_based_rotation, int size_rotation_for)
 	if (csvfilename)
 		pfree(csvfilename);
 
+	update_metainfo_datafile();
+
 	set_next_rotation_time();
 }
 
@@ -1335,6 +1348,72 @@ set_next_rotation_time(void)
 	now += rotinterval;
 	now -= tm->tm_gmtoff;
 	next_rotation_time = now;
+}
+
+/*
+ * Store the name of the file(s) where the log collector, when enabled, writes
+ * log messages.  Useful for finding the name(s) of the current log file(s)
+ * when there is time-based logfile rotation.  Filenames are stored in a
+ * temporary file and which is renamed into the final destination for
+ * atomicity.
+ */
+static void
+update_metainfo_datafile(void)
+{
+	FILE    *fh;
+
+	if (!(Log_destination & LOG_DESTINATION_STDERR) &&
+		!(Log_destination & LOG_DESTINATION_CSVLOG))
+	{
+		if (unlink(LOG_METAINFO_DATAFILE) < 0 && errno != ENOENT)
+			ereport(LOG,
+					(errcode_for_file_access(),
+					 errmsg("could not remove file \"%s\": %m",
+						LOG_METAINFO_DATAFILE)));
+		return;
+	}
+
+	if ((fh = logfile_open(LOG_METAINFO_DATAFILE_TMP, "w", true)) == NULL)
+	{
+		ereport(LOG,
+				(errcode_for_file_access(),
+				 errmsg("could not open file \"%s\": %m",
+					LOG_METAINFO_DATAFILE_TMP)));
+		return;
+	}
+
+	if (last_file_name && (Log_destination & LOG_DESTINATION_STDERR))
+	{
+		if (fprintf(fh, "stderr %s\n", last_file_name) < 0)
+		{
+			ereport(LOG,
+					(errcode_for_file_access(),
+					errmsg("could not write file \"%s\": %m",
+							LOG_METAINFO_DATAFILE_TMP)));
+			fclose(fh);
+			return;
+		}
+	}
+
+	if (last_csv_file_name && (Log_destination & LOG_DESTINATION_CSVLOG))
+	{
+		if (fprintf(fh, "csvlog %s\n", last_csv_file_name) < 0)
+		{
+			ereport(LOG,
+					(errcode_for_file_access(),
+					errmsg("could not write file \"%s\": %m",
+							LOG_METAINFO_DATAFILE_TMP)));
+			fclose(fh);
+			return;
+		}
+	}
+	fclose(fh);
+
+	if (rename(LOG_METAINFO_DATAFILE_TMP, LOG_METAINFO_DATAFILE) != 0)
+		ereport(LOG,
+				(errcode_for_file_access(),
+				errmsg("could not rename file \"%s\" to \"%s\": %m",
+					   LOG_METAINFO_DATAFILE_TMP, LOG_METAINFO_DATAFILE)));
 }
 
 /* --------------------------------

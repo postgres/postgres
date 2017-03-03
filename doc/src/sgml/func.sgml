@@ -15479,6 +15479,13 @@ SELECT * FROM pg_ls_dir('.') WITH ORDINALITY AS t(ls,n);
       </row>
 
       <row>
+       <entry><literal><function>pg_current_logfile(<optional><type>text</></optional>)</function></literal></entry>
+       <entry><type>text</type></entry>
+       <entry>Primary log file name, or log in the requested format,
+       currently in use by the logging collector</entry>
+      </row>
+
+      <row>
        <entry><literal><function>pg_my_temp_schema()</function></literal></entry>
        <entry><type>oid</type></entry>
        <entry>OID of session's temporary schema, or 0 if none</entry>
@@ -15694,6 +15701,45 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
     when the session itself re-read the configuration files, so the
     reading will vary a little in different sessions.  Otherwise it is
     the time when the postmaster process re-read the configuration files.)
+   </para>
+
+   <indexterm>
+    <primary>pg_current_logfile</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>Logging</primary>
+    <secondary>pg_current_logfile function</secondary>
+   </indexterm>
+
+   <indexterm>
+     <primary>current_logfiles</primary>
+     <secondary>and the pg_current_logfile function</secondary>
+   </indexterm>
+
+   <indexterm>
+    <primary>Logging</primary>
+    <secondary>current_logfiles file and the pg_current_logfile
+    function</secondary>
+   </indexterm>
+
+   <para>
+    <function>pg_current_logfile</function> returns, as <type>text</type>,
+    the path of the log file(s) currently in use by the logging collector.
+    The path includes the <xref linkend="guc-log-directory"> directory
+    and the log file name.  Log collection must be enabled or the return value
+    is <literal>NULL</literal>.  When multiple log files exist, each in a
+    different format, <function>pg_current_logfile</function> called
+    without arguments returns the path of the file having the first format
+    found in the ordered list: <systemitem>stderr</>, <systemitem>csvlog</>.
+    <literal>NULL</literal> is returned when no log file has any of these
+    formats.  To request a specific file format supply, as <type>text</type>,
+    either <systemitem>csvlog</> or <systemitem>stderr</> as the value of the
+    optional parameter. The return value is <literal>NULL</literal> when the
+    log format requested is not a configured
+    <xref linkend="guc-log-destination">.  The
+    <function>pg_current_logfiles</function> reflects the contents of the
+    <filename>current_logfiles</> file.
    </para>
 
    <indexterm>

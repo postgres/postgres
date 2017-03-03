@@ -885,3 +885,106 @@ parse_ident(PG_FUNCTION_ARGS)
 
 	PG_RETURN_DATUM(makeArrayResult(astate, CurrentMemoryContext));
 }
+
+/*
+ * pg_current_logfile
+ *
+ * Report current log file used by log collector by scanning current_logfiles.
+ */
+Datum
+pg_current_logfile(PG_FUNCTION_ARGS)
+{
+	FILE	   *fd;
+	char		lbuffer[MAXPGPATH];
+	char	   *logfmt;
+	char	   *log_filepath;
+	char	   *log_format = lbuffer;
+	char	   *nlpos;
+
+	/* The log format parameter is optional */
+	if (PG_NARGS() == 0 || PG_ARGISNULL(0))
+		logfmt = NULL;
+	else
+	{
+		logfmt = text_to_cstring(PG_GETARG_TEXT_PP(0));
+
+		if (strcmp(logfmt, "stderr") != 0 && strcmp(logfmt, "csvlog") != 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("log format \"%s\" is not supported", logfmt),
+					 errhint("The supported log formats are \"stderr\" and \"csvlog\".")));
+	}
+
+	fd = AllocateFile(LOG_METAINFO_DATAFILE, "r");
+	if (fd == NULL)
+	{
+		if (errno != ENOENT)
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not read file \"%s\": %m",
+							LOG_METAINFO_DATAFILE)));
+		PG_RETURN_NULL();
+	}
+
+	/*
+	 * Read the file to gather current log filename(s) registered by the
+	 * syslogger.
+	 */
+	while (fgets(lbuffer, sizeof(lbuffer), fd) != NULL)
+	{
+		/*
+		 * Extract log format and log file path from the line; lbuffer ==
+		 * log_format, they share storage.
+		 */
+		log_filepath = strchr(lbuffer, ' ');
+		if (log_filepath == NULL)
+		{
+			/*
+			 * No space found, file content is corrupted.  Return NULL to the
+			 * caller and inform him on the situation.
+			 */
+			elog(ERROR,
+				 "missing space character in \"%s\"", LOG_METAINFO_DATAFILE);
+			break;
+		}
+
+		*log_filepath = '\0';
+		log_filepath++;
+		nlpos = strchr(log_filepath, '\n');
+		if (nlpos == NULL)
+		{
+			/*
+			 * No newlinei found, file content is corrupted.  Return NULL to
+			 * the caller and inform him on the situation.
+			 */
+			elog(ERROR,
+			   "missing newline character in \"%s\"", LOG_METAINFO_DATAFILE);
+			break;
+		}
+		*nlpos = '\0';
+
+		if (logfmt == NULL || strcmp(logfmt, log_format) == 0)
+		{
+			FreeFile(fd);
+			PG_RETURN_TEXT_P(cstring_to_text(log_filepath));
+		}
+	}
+
+	/* Close the current log filename file. */
+	FreeFile(fd);
+
+	PG_RETURN_NULL();
+}
+
+/*
+ * Report current log file used by log collector (1 argument version)
+ *
+ * note: this wrapper is necessary to pass the sanity check in opr_sanity,
+ * which checks that all built-in functions that share the implementing C
+ * function take the same number of arguments
+ */
+Datum
+pg_current_logfile_1arg(PG_FUNCTION_ARGS)
+{
+	return pg_current_logfile(fcinfo);
+}

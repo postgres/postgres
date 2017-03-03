@@ -61,6 +61,12 @@ Item
 </row>
 
 <row>
+ <entry><filename>current_logfiles</></entry>
+ <entry>File recording the log file(s) currently written to by the logging
+  collector</entry>
+</row>
+
+<row>
  <entry><filename>global</></entry>
  <entry>Subdirectory containing cluster-wide tables, such as
  <structname>pg_database</></entry>

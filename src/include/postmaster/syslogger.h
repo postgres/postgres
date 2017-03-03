@@ -87,4 +87,11 @@ extern void write_syslogger_file(const char *buffer, int count, int dest);
 extern void SysLoggerMain(int argc, char *argv[]) pg_attribute_noreturn();
 #endif
 
+/*
+ * Name of files saving meta-data information about the log
+ * files currently in use by the syslogger
+ */
+#define LOG_METAINFO_DATAFILE  "current_logfiles"
+#define LOG_METAINFO_DATAFILE_TMP  LOG_METAINFO_DATAFILE ".tmp"
+
 #endif   /* _SYSLOGGER_H */

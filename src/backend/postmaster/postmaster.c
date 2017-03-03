@@ -1232,6 +1232,13 @@ PostmasterMain(int argc, char *argv[])
 	 */
 	RemovePromoteSignalFiles();
 
+	/* Remove any outdated file holding the current log filenames. */
+	if (unlink(LOG_METAINFO_DATAFILE) < 0 && errno != ENOENT)
+		ereport(LOG,
+				(errcode_for_file_access(),
+				 errmsg("could not remove file \"%s\": %m",
+					LOG_METAINFO_DATAFILE)));
+
 	/*
 	 * If enabled, start up syslogger collection subprocess
 	 */
