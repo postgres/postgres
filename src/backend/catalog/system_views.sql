@@ -900,7 +900,11 @@ CREATE VIEW pg_replication_origin_status AS
 
 REVOKE ALL ON pg_replication_origin_status FROM public;
 
+-- All columns of pg_subscription except subconninfo are readable.
 REVOKE ALL ON pg_subscription FROM public;
+GRANT SELECT (subdbid, subname, subowner, subenabled, subslotname, subpublications)
+    ON pg_subscription TO public;
+
 
 --
 -- We have a few function definitions in here, too.

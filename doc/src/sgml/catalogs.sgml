@@ -6324,9 +6324,8 @@
   </para>
 
   <para>
-   Access to this catalog is restricted from normal users.  Normal users can
-   use the view <xref linkend="pg-stat-subscription"> to get some information
-   about subscriptions.
+   Access to the column <structfield>subconninfo</structfield> is revoked from
+   normal users, because it could contain plain-text passwords.
   </para>
 
   <table>
