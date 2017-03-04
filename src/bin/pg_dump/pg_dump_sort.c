@@ -26,6 +26,9 @@ static const char *modulename = gettext_noop("sorter");
  * Sort priority for database object types.
  * Objects are sorted by type, and within a type by name.
  *
+ * Because materialized views can potentially reference system views,
+ * DO_REFRESH_MATVIEW should always be the last thing on the list.
+ *
  * NOTE: object-type priorities must match the section assignments made in
  * pg_dump.c; that is, PRE_DATA objects must sort before DO_PRE_DATA_BOUNDARY,
  * POST_DATA objects must sort after DO_POST_DATA_BOUNDARY, and DATA objects
@@ -70,11 +73,11 @@ static const int dbObjectTypePriority[] =
 	22,							/* DO_PRE_DATA_BOUNDARY */
 	26,							/* DO_POST_DATA_BOUNDARY */
 	33,							/* DO_EVENT_TRIGGER */
-	34,							/* DO_REFRESH_MATVIEW */
-	35,							/* DO_POLICY */
-	36,							/* DO_PUBLICATION */
-	37,							/* DO_PUBLICATION_REL */
-	38							/* DO_SUBSCRIPTION */
+	38,							/* DO_REFRESH_MATVIEW */
+	34,							/* DO_POLICY */
+	35,							/* DO_PUBLICATION */
+	36,							/* DO_PUBLICATION_REL */
+	37							/* DO_SUBSCRIPTION */
 };
 
 static DumpId preDataBoundId;
