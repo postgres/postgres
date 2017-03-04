@@ -557,6 +557,7 @@ rebuild_relation(Relation OldHeap, Oid indexOid, bool verbose)
 	Oid			tableOid = RelationGetRelid(OldHeap);
 	Oid			tableSpace = OldHeap->rd_rel->reltablespace;
 	Oid			OIDNewHeap;
+	char		relpersistence;
 	bool		is_system_catalog;
 	bool		swap_toast_by_content;
 	TransactionId frozenXid;
@@ -566,7 +567,8 @@ rebuild_relation(Relation OldHeap, Oid indexOid, bool verbose)
 	if (OidIsValid(indexOid))
 		mark_index_clustered(OldHeap, indexOid, true);
 
-	/* Remember if it's a system catalog */
+	/* Remember info about rel before closing OldHeap */
+	relpersistence = OldHeap->rd_rel->relpersistence;
 	is_system_catalog = IsSystemRelation(OldHeap);
 
 	/* Close relcache entry, but keep lock until transaction commit */
@@ -574,7 +576,7 @@ rebuild_relation(Relation OldHeap, Oid indexOid, bool verbose)
 
 	/* Create the transient table that will receive the re-ordered data */
 	OIDNewHeap = make_new_heap(tableOid, tableSpace,
-							   OldHeap->rd_rel->relpersistence,
+							   relpersistence,
 							   AccessExclusiveLock);
 
 	/* Copy the heap data into the new table in the desired order */
@@ -588,7 +590,7 @@ rebuild_relation(Relation OldHeap, Oid indexOid, bool verbose)
 	finish_heap_swap(tableOid, OIDNewHeap, is_system_catalog,
 					 swap_toast_by_content, false, true,
 					 frozenXid, cutoffMulti,
-					 OldHeap->rd_rel->relpersistence);
+					 relpersistence);
 }
 
 
