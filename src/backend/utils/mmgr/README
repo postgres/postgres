@@ -98,7 +98,7 @@ invoked to handle the operation, regardless.
 -----------------------------
 
 If all contexts were independent, it'd be hard to keep track of them,
-especially in error cases.  That is solved this by creating a tree of
+especially in error cases.  That is solved by creating a tree of
 "parent" and "child" contexts.  When creating a memory context, the
 new context can be specified to be a child of some existing context.
 A context can have many children, but only one parent.  In this way
@@ -383,8 +383,8 @@ precede the MemoryContext.  This means the only overhead implied by
 the memory context mechanism is a pointer to its context, so we're not
 constraining context-type designers very much.
 
-Given this, routines like pfree their corresponding context with an
-operation like (although that is usually encapsulated in
+Given this, routines like pfree determine their corresponding context
+with an operation like (although that is usually encapsulated in
 GetMemoryChunkContext())
 
     MemoryContext context = *(MemoryContext*) (((char *) pointer) - sizeof(void *));
