@@ -18,6 +18,7 @@
 
 #include "access/heapam.h"
 #include "access/htup_details.h"
+#include "access/xact.h"
 
 #include "catalog/indexing.h"
 #include "catalog/objectaccess.h"
@@ -204,7 +205,7 @@ publicationListToArray(List *publist)
  * Create new subscription.
  */
 ObjectAddress
-CreateSubscription(CreateSubscriptionStmt *stmt)
+CreateSubscription(CreateSubscriptionStmt *stmt, bool isTopLevel)
 {
 	Relation	rel;
 	ObjectAddress myself;
@@ -220,6 +221,23 @@ CreateSubscription(CreateSubscriptionStmt *stmt)
 	char		originname[NAMEDATALEN];
 	bool		create_slot;
 	List	   *publications;
+
+	/*
+	 * Parse and check options.
+	 * Connection and publication should not be specified here.
+	 */
+	parse_subscription_options(stmt->options, NULL, NULL,
+							   &enabled_given, &enabled,
+							   &create_slot, &slotname);
+
+	/*
+	 * Since creating a replication slot is not transactional, rolling back
+	 * the transaction leaves the created replication slot.  So we cannot run
+	 * CREATE SUBSCRIPTION inside a transaction block if creating a
+	 * replication slot.
+	 */
+	if (create_slot)
+		PreventTransactionChain(isTopLevel, "CREATE SUBSCRIPTION ... CREATE SLOT");
 
 	if (!superuser())
 		ereport(ERROR,
@@ -239,13 +257,6 @@ CreateSubscription(CreateSubscriptionStmt *stmt)
 						stmt->subname)));
 	}
 
-	/*
-	 * Parse and check options.
-	 * Connection and publication should not be specified here.
-	 */
-	parse_subscription_options(stmt->options, NULL, NULL,
-							   &enabled_given, &enabled,
-							   &create_slot, &slotname);
 	if (slotname == NULL)
 		slotname = stmt->subname;
 
@@ -424,7 +435,7 @@ AlterSubscription(AlterSubscriptionStmt *stmt)
  * Drop a subscription
  */
 void
-DropSubscription(DropSubscriptionStmt *stmt)
+DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 {
 	Relation	rel;
 	ObjectAddress myself;
@@ -440,6 +451,15 @@ DropSubscription(DropSubscriptionStmt *stmt)
 	RepOriginId	originid;
 	WalReceiverConn	   *wrconn = NULL;
 	StringInfoData		cmd;
+
+	/*
+	 * Since dropping a replication slot is not transactional, the replication
+	 * slot stays dropped even if the transaction rolls back.  So we cannot
+	 * run DROP SUBSCRIPTION inside a transaction block if dropping the
+	 * replication slot.
+	 */
+	if (stmt->drop_slot)
+		PreventTransactionChain(isTopLevel, "DROP SUBSCRIPTION ... DROP SLOT");
 
 	rel = heap_open(SubscriptionRelationId, RowExclusiveLock);
 

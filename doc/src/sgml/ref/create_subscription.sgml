@@ -52,6 +52,11 @@ CREATE SUBSCRIPTION <replaceable class="PARAMETER">subscription_name</replaceabl
   </para>
 
   <para>
+   <command>CREATE SUBSCRIPTION</command> cannot be executed inside a
+   transaction block when <literal>CREATE SLOT</literal> is specified.
+  </para>
+
+  <para>
    Additional info about subscriptions and logical replication as a whole
    can is available at <xref linkend="logical-replication-subscription"> and
    <xref linkend="logical-replication">.

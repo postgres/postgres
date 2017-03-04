@@ -38,8 +38,8 @@ DROP SUBSCRIPTION [ IF EXISTS ] <replaceable class="parameter">name</replaceable
   </para>
 
   <para>
-   The replication worker associated with the subscription will not stop until
-   after the transaction that issued this command has committed.
+   <command>DROP SUBSCRIPTION</command> cannot be executed inside a
+   transaction block when <literal>DROP SLOT</literal> is specified.
   </para>
  </refsect1>
 
