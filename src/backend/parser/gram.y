@@ -9196,11 +9196,13 @@ DropSubscriptionStmt: DROP SUBSCRIPTION name opt_drop_slot
 		;
 
 opt_drop_slot:
-			IDENT SLOT
+			DROP SLOT
 				{
-					if (strcmp($1, "drop") == 0)
-						$$ = TRUE;
-					else if (strcmp($1, "nodrop") == 0)
+					$$ = TRUE;
+				}
+			| IDENT SLOT
+				{
+					if (strcmp($1, "nodrop") == 0)
 						$$ = FALSE;
 					else
 						ereport(ERROR,
