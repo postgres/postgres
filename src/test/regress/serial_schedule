@@ -112,6 +112,7 @@ test: replica_identity
 test: rowsecurity
 test: object_address
 test: tablesample
+test: large_object
 test: alter_generic
 test: misc
 test: psql
