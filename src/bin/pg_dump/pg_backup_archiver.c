@@ -2874,7 +2874,15 @@ _tocEntryRequired(TocEntry *te, teSection curSection, RestoreOptions *ropt)
 	/* Mask it if we only want schema */
 	if (ropt->schemaOnly)
 	{
-		if (!(ropt->sequence_data && strcmp(te->desc, "SEQUENCE SET") == 0))
+		/*
+		 * In binary-upgrade mode, even with schema-only set, we do not mask
+		 * out large objects.  Only large object definitions, comments and
+		 * other information should be generated in binary-upgrade mode (not
+		 * the actual data).
+		 */
+		if (!(ropt->sequence_data && strcmp(te->desc, "SEQUENCE SET") == 0) &&
+			!(ropt->binary_upgrade && strcmp(te->desc, "BLOB") == 0) &&
+		!(ropt->binary_upgrade && strncmp(te->tag, "LARGE OBJECT ", 13) == 0))
 			res = res & REQ_SCHEMA;
 	}
 

@@ -120,6 +120,7 @@ typedef struct _restoreOptions
 	int			enable_row_security;
 	int			sequence_data;	/* dump sequence data even in schema-only mode */
 	int			include_subscriptions;
+	int			binary_upgrade;
 } RestoreOptions;
 
 typedef struct _dumpOptions
