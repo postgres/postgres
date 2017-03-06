@@ -126,4 +126,4 @@ update range_parted set b = b - 1 where b = 10;
 update range_parted set b = b + 1 where b = 10;
 
 -- cleanup
-drop table range_parted cascade;
+drop table range_parted;

@@ -1843,23 +1843,5 @@ explain (costs off) select * from range_list_parted where a >= 30;
          Filter: (a >= 30)
 (11 rows)
 
-drop table list_parted cascade;
-NOTICE:  drop cascades to 3 other objects
-DETAIL:  drop cascades to table part_ab_cd
-drop cascades to table part_ef_gh
-drop cascades to table part_null_xy
-drop table range_list_parted cascade;
-NOTICE:  drop cascades to 13 other objects
-DETAIL:  drop cascades to table part_1_10
-drop cascades to table part_1_10_ab
-drop cascades to table part_1_10_cd
-drop cascades to table part_10_20
-drop cascades to table part_10_20_ab
-drop cascades to table part_10_20_cd
-drop cascades to table part_21_30
-drop cascades to table part_21_30_ab
-drop cascades to table part_21_30_cd
-drop cascades to table part_40_inf
-drop cascades to table part_40_inf_ab
-drop cascades to table part_40_inf_cd
-drop cascades to table part_40_inf_null
+drop table list_parted;
+drop table range_list_parted;

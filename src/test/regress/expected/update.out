@@ -219,9 +219,4 @@ DETAIL:  Failing row contains (b, 9).
 -- ok
 update range_parted set b = b + 1 where b = 10;
 -- cleanup
-drop table range_parted cascade;
-NOTICE:  drop cascades to 4 other objects
-DETAIL:  drop cascades to table part_a_1_a_10
-drop cascades to table part_a_10_a_20
-drop cascades to table part_b_1_b_10
-drop cascades to table part_b_10_b_20
+drop table range_parted;

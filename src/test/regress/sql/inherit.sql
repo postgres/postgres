@@ -612,5 +612,5 @@ explain (costs off) select * from range_list_parted where b is null;
 explain (costs off) select * from range_list_parted where a is not null and a < 67;
 explain (costs off) select * from range_list_parted where a >= 30;
 
-drop table list_parted cascade;
-drop table range_list_parted cascade;
+drop table list_parted;
+drop table range_list_parted;

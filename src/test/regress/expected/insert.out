@@ -314,10 +314,7 @@ select tableoid::regclass::text, a, min(b) as min_b, max(b) as max_b from list_p
 (9 rows)
 
 -- cleanup
-drop table part1, part2, part3, part4, range_parted;
-drop table part_ee_ff3_1, part_ee_ff3_2, part_ee_ff1, part_ee_ff2, part_ee_ff3;
-drop table part_ee_ff, part_gg2_2, part_gg2_1, part_gg2, part_gg1, part_gg;
-drop table part_aa_bb, part_cc_dd, part_null, list_parted;
+drop table range_parted, list_parted;
 -- more tests for certain multi-level partitioning scenarios
 create table p (a int, b int) partition by range (a, b);
 create table p1 (b int not null, a int not null) partition by range ((b+0));
@@ -417,4 +414,4 @@ revoke all on key_desc_1 from someone_else;
 drop role someone_else;
 drop table key_desc, key_desc_1;
 -- cleanup
-drop table p, p1, p11, p12, p2, p3, p4;
+drop table p;

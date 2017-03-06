@@ -289,9 +289,11 @@ static List *MergeAttributes(List *schema, List *supers, char relpersistence,
 static bool MergeCheckConstraint(List *constraints, char *name, Node *expr);
 static void MergeAttributesIntoExisting(Relation child_rel, Relation parent_rel);
 static void MergeConstraintsIntoExisting(Relation child_rel, Relation parent_rel);
-static void StoreCatalogInheritance(Oid relationId, List *supers);
+static void StoreCatalogInheritance(Oid relationId, List *supers,
+						bool child_is_partition);
 static void StoreCatalogInheritance1(Oid relationId, Oid parentOid,
-						 int16 seqNumber, Relation inhRelation);
+						 int16 seqNumber, Relation inhRelation,
+						 bool child_is_partition);
 static int	findAttrByName(const char *attributeName, List *schema);
 static void AlterIndexNamespaces(Relation classRel, Relation rel,
 				   Oid oldNspOid, Oid newNspOid, ObjectAddresses *objsMoved);
@@ -725,7 +727,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 										  typaddress);
 
 	/* Store inheritance information for new rel. */
-	StoreCatalogInheritance(relationId, inheritOids);
+	StoreCatalogInheritance(relationId, inheritOids, stmt->partbound != NULL);
 
 	/*
 	 * We must bump the command counter to make the newly-created relation
@@ -2248,7 +2250,8 @@ MergeCheckConstraint(List *constraints, char *name, Node *expr)
  * supers is a list of the OIDs of the new relation's direct ancestors.
  */
 static void
-StoreCatalogInheritance(Oid relationId, List *supers)
+StoreCatalogInheritance(Oid relationId, List *supers,
+						bool child_is_partition)
 {
 	Relation	relation;
 	int16		seqNumber;
@@ -2278,7 +2281,8 @@ StoreCatalogInheritance(Oid relationId, List *supers)
 	{
 		Oid			parentOid = lfirst_oid(entry);
 
-		StoreCatalogInheritance1(relationId, parentOid, seqNumber, relation);
+		StoreCatalogInheritance1(relationId, parentOid, seqNumber, relation,
+								 child_is_partition);
 		seqNumber++;
 	}
 
@@ -2291,7 +2295,8 @@ StoreCatalogInheritance(Oid relationId, List *supers)
  */
 static void
 StoreCatalogInheritance1(Oid relationId, Oid parentOid,
-						 int16 seqNumber, Relation inhRelation)
+						 int16 seqNumber, Relation inhRelation,
+						 bool child_is_partition)
 {
 	TupleDesc	desc = RelationGetDescr(inhRelation);
 	Datum		values[Natts_pg_inherits];
@@ -2325,7 +2330,14 @@ StoreCatalogInheritance1(Oid relationId, Oid parentOid,
 	childobject.objectId = relationId;
 	childobject.objectSubId = 0;
 
-	recordDependencyOn(&childobject, &parentobject, DEPENDENCY_NORMAL);
+	/*
+	 * Partition tables are expected to be dropped when the parent partitioned
+	 * table gets dropped.
+	 */
+	if (child_is_partition)
+		recordDependencyOn(&childobject, &parentobject, DEPENDENCY_AUTO);
+	else
+		recordDependencyOn(&childobject, &parentobject, DEPENDENCY_NORMAL);
 
 	/*
 	 * Post creation hook of this inheritance. Since object_access_hook
@@ -10753,7 +10765,9 @@ CreateInheritance(Relation child_rel, Relation parent_rel)
 	StoreCatalogInheritance1(RelationGetRelid(child_rel),
 							 RelationGetRelid(parent_rel),
 							 inhseqno + 1,
-							 catalogRelation);
+							 catalogRelation,
+							 parent_rel->rd_rel->relkind ==
+											RELKIND_PARTITIONED_TABLE);
 
 	/* Now we're done with pg_inherits */
 	heap_close(catalogRelation, RowExclusiveLock);
