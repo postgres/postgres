@@ -155,12 +155,16 @@ libpqrcv_connect(const char *conninfo, bool logical, const char *appname,
 		return NULL;
 	}
 
-	/* Poll connection. */
-	do
+	/*
+	 * Poll connection until we have OK or FAILED status.
+	 *
+	 * Note that the initial state after PQconnectStartParams is
+	 * PGRES_POLLING_WRITING.
+	 */
+	for (status = PGRES_POLLING_WRITING;
+		 status != PGRES_POLLING_OK && status != PGRES_POLLING_FAILED;
+		 status = PQconnectPoll(conn->streamConn))
 	{
-		/* Determine current state of the connection. */
-		status = PQconnectPoll(conn->streamConn);
-
 		/* Sleep a bit if waiting for socket. */
 		if (status == PGRES_POLLING_READING ||
 			status == PGRES_POLLING_WRITING)
@@ -188,9 +192,7 @@ libpqrcv_connect(const char *conninfo, bool logical, const char *appname,
 			if (rc & WL_LATCH_SET)
 				CHECK_FOR_INTERRUPTS();
 		}
-
-		/* Otherwise loop until we have OK or FAILED status. */
-	} while (status != PGRES_POLLING_OK && status != PGRES_POLLING_FAILED);
+	}
 
 	if (PQstatus(conn->streamConn) != CONNECTION_OK)
 	{
