@@ -938,7 +938,8 @@ DoCopy(const CopyStmt *stmt, const char *queryString, uint64 *processed)
 			 * relation which we have opened and locked.
 			 */
 			from = makeRangeVar(get_namespace_name(RelationGetNamespace(rel)),
-								RelationGetRelationName(rel), -1);
+								pstrdup(RelationGetRelationName(rel)),
+								-1);
 
 			/* Build query */
 			select = makeNode(SelectStmt);
