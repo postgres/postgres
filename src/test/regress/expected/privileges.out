@@ -12,7 +12,7 @@ DROP ROLE IF EXISTS regressuser3;
 DROP ROLE IF EXISTS regressuser4;
 DROP ROLE IF EXISTS regressuser5;
 DROP ROLE IF EXISTS regressuser6;
-SELECT lo_unlink(oid) FROM pg_largeobject_metadata;
+SELECT lo_unlink(oid) FROM pg_largeobject_metadata WHERE oid >= 1000 AND oid < 3000 ORDER BY oid;
  lo_unlink 
 -----------
 (0 rows)
@@ -1143,11 +1143,11 @@ SELECT lo_unlink(2002);
 
 \c -
 -- confirm ACL setting
-SELECT oid, pg_get_userbyid(lomowner) ownername, lomacl FROM pg_largeobject_metadata;
+SELECT oid, pg_get_userbyid(lomowner) ownername, lomacl FROM pg_largeobject_metadata WHERE oid >= 1000 AND oid < 3000 ORDER BY oid;
  oid  |  ownername   |                                          lomacl                                          
 ------+--------------+------------------------------------------------------------------------------------------
- 1002 | regressuser1 | 
  1001 | regressuser1 | {regressuser1=rw/regressuser1,=rw/regressuser1}
+ 1002 | regressuser1 | 
  1003 | regressuser1 | {regressuser1=rw/regressuser1,regressuser2=r/regressuser1}
  1004 | regressuser1 | {regressuser1=rw/regressuser1,regressuser2=rw/regressuser1}
  1005 | regressuser1 | {regressuser1=rw/regressuser1,regressuser2=r*w/regressuser1,regressuser3=r/regressuser2}
@@ -1488,7 +1488,7 @@ DROP TABLE atest6;
 DROP TABLE atestc;
 DROP TABLE atestp1;
 DROP TABLE atestp2;
-SELECT lo_unlink(oid) FROM pg_largeobject_metadata;
+SELECT lo_unlink(oid) FROM pg_largeobject_metadata WHERE oid >= 1000 AND oid < 3000 ORDER BY oid;
  lo_unlink 
 -----------
          1
