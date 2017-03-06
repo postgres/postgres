@@ -440,12 +440,14 @@ ReportBackgroundWorkerExit(slist_mutable_iter *cur)
 {
 	RegisteredBgWorker *rw;
 	BackgroundWorkerSlot *slot;
+	int		notify_pid;
 
 	rw = slist_container(RegisteredBgWorker, rw_lnode, cur->cur);
 
 	Assert(rw->rw_shmem_slot < max_worker_processes);
 	slot = &BackgroundWorkerData->slot[rw->rw_shmem_slot];
 	slot->pid = rw->rw_pid;
+	notify_pid = rw->rw_worker.bgw_notify_pid;
 
 	/*
 	 * If this worker is slated for deregistration, do that before notifying
@@ -458,8 +460,8 @@ ReportBackgroundWorkerExit(slist_mutable_iter *cur)
 		rw->rw_worker.bgw_restart_time == BGW_NEVER_RESTART)
 		ForgetBackgroundWorker(cur);
 
-	if (rw->rw_worker.bgw_notify_pid != 0)
-		kill(rw->rw_worker.bgw_notify_pid, SIGUSR1);
+	if (notify_pid != 0)
+		kill(notify_pid, SIGUSR1);
 }
 
 /*
