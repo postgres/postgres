@@ -568,10 +568,17 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
       That can be done with <link linkend="SQL-VACUUM">VACUUM
       FULL</>, <xref linkend="SQL-CLUSTER"> or one of the forms
       of <command>ALTER TABLE</> that forces a table rewrite.
+      For planner related parameters, changes will take effect from the next
+      time the table is locked so currently executing queries will not be
+      affected.
      </para>
 
      <para>
-      Changing fillfactor and autovacuum storage parameters acquires a <literal>SHARE UPDATE EXCLUSIVE</literal> lock.
+      <literal>SHARE UPDATE EXCLUSIVE</literal> lock will be taken for 
+      fillfactor and autovacuum storage parameters, as well as the
+      following planner related parameters:
+      effective_io_concurrency, parallel_workers, seq_page_cost
+      random_page_cost, n_distinct and n_distinct_inherited.
      </para>
 
      <note>
