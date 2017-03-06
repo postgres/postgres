@@ -779,7 +779,15 @@ main(int argc, char **argv)
 			getTableDataFKConstraints();
 	}
 
-	if (outputBlobs)
+	/*
+	 * In binary-upgrade mode, we do not have to worry about the actual blob
+	 * data or the associated metadata that resides in the pg_largeobject and
+	 * pg_largeobject_metadata tables, respectivly.
+	 *
+	 * However, we do need to collect blob information as there may be
+	 * comments or other information on blobs that we do need to dump out.
+	 */
+	if (outputBlobs || binary_upgrade)
 		getBlobs(fout);
 
 	/*
@@ -853,6 +861,7 @@ main(int argc, char **argv)
 	ropt->noTablespace = outputNoTablespaces;
 	ropt->disable_triggers = disable_triggers;
 	ropt->use_setsessauth = use_setsessauth;
+	ropt->binary_upgrade = binary_upgrade;
 
 	if (compressLevel == -1)
 		ropt->compression = 0;
@@ -2808,8 +2817,14 @@ dumpBlob(Archive *fout, BlobInfo *binfo)
 				 NULL, binfo->rolname,
 				 binfo->dobj.catId, 0, binfo->dobj.dumpId);
 
-	/* Dump ACL if any */
-	if (binfo->blobacl)
+	/*
+	 * Dump ACL if any
+	 *
+	 * Do not dump the ACL in binary-upgrade mode, however, as the ACL will be
+	 * copied over by pg_upgrade as it is part of the pg_largeobject_metadata
+	 * table.
+	 */
+	if (binfo->blobacl && !binary_upgrade)
 		dumpACL(fout, binfo->dobj.catId, binfo->dobj.dumpId, "LARGE OBJECT",
 				binfo->dobj.name, NULL, cquery->data,
 				NULL, binfo->rolname, binfo->blobacl);
@@ -2833,6 +2848,13 @@ dumpBlobs(Archive *fout, void *arg)
 	int			ntups;
 	int			i;
 	int			cnt;
+
+	/*
+	 * Do not dump out blob data in binary-upgrade mode, pg_upgrade will copy
+	 * the pg_largeobject table over entirely from the old cluster.
+	 */
+	if (binary_upgrade)
+		return 1;
 
 	if (g_verbose)
 		write_msg(NULL, "saving large objects\n");
@@ -7642,7 +7664,8 @@ dumpComment(Archive *fout, const char *target,
 	}
 	else
 	{
-		if (schemaOnly)
+		/* We do dump blob comments in binary-upgrade mode */
+		if (schemaOnly && !binary_upgrade)
 			return;
 	}
 
@@ -12811,7 +12834,8 @@ dumpSecLabel(Archive *fout, const char *target,
 	}
 	else
 	{
-		if (schemaOnly)
+		/* We do dump blob security labels in binary-upgrade mode */
+		if (schemaOnly && !binary_upgrade)
 			return;
 	}
 
