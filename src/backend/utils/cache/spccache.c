@@ -173,6 +173,10 @@ get_tablespace(Oid spcid)
 /*
  * get_tablespace_page_costs
  *		Return random and/or sequential page costs for a given tablespace.
+ *
+ *		This value is not locked by the transaction, so this value may
+ *		be changed while a SELECT that has used these values for planning
+ *		is still executing.
  */
 void
 get_tablespace_page_costs(Oid spcid,
@@ -200,6 +204,13 @@ get_tablespace_page_costs(Oid spcid,
 	}
 }
 
+/*
+ * get_tablespace_io_concurrency
+ *
+ *		This value is not locked by the transaction, so this value may
+ *		be changed while a SELECT that has used these values for planning
+ *		is still executing.
+ */
 int
 get_tablespace_io_concurrency(Oid spcid)
 {

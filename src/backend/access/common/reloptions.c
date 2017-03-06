@@ -48,10 +48,46 @@
  * (iii) add it to the appropriate options struct (perhaps StdRdOptions)
  * (iv) add it to the appropriate handling routine (perhaps
  * default_reloptions)
- * (v) don't forget to document the option
+ * (v) make sure the lock level is set correctly for that operation
+ * (vi) don't forget to document the option
  *
  * Note that we don't handle "oids" in relOpts because it is handled by
  * interpretOidsOption().
+ *
+ * The default choice for any new option should be AccessExclusiveLock.
+ * In some cases the lock level can be reduced from there, but the lock
+ * level chosen should always conflict with itself to ensure that multiple
+ * changes aren't lost when we attempt concurrent changes.
+ * The choice of lock level depends completely upon how that parameter
+ * is used within the server, not upon how and when you'd like to change it.
+ * Safety first. Existing choices are documented here, and elsewhere in
+ * backend code where the parameters are used.
+ *
+ * In general, anything that affects the results obtained from a SELECT must be
+ * protected by AccessExclusiveLock.
+ *
+ * Autovacuum related parameters can be set at ShareUpdateExclusiveLock
+ * since they are only used by the AV procs and don't change anything
+ * currently executing.
+ *
+ * Fillfactor can be set because it applies only to subsequent changes made to
+ * data blocks, as documented in heapio.c
+ *
+ * n_distinct options can be set at ShareUpdateExclusiveLock because they
+ * are only used during ANALYZE, which uses a ShareUpdateExclusiveLock,
+ * so the ANALYZE will not be affected by in-flight changes. Changing those
+ * values has no affect until the next ANALYZE, so no need for stronger lock.
+ *
+ * Planner-related parameters can be set with ShareUpdateExclusiveLock because
+ * they only affect planning and not the correctness of the execution. Plans
+ * cannot be changed in mid-flight, so changes here could not easily result in
+ * new improved plans in any case. So we allow existing queries to continue
+ * and existing plans to survive, a small price to pay for allowing better
+ * plans to be introduced concurrently without interfering with users.
+ *
+ * Setting parallel_workers is safe, since it acts the same as
+ * max_parallel_workers_per_gather which is a USERSET parameter that doesn't
+ * affect existing plans or queries.
  */
 
 static relopt_bool boolRelOpts[] =
@@ -267,7 +303,7 @@ static relopt_int intRelOpts[] =
 			"effective_io_concurrency",
 			"Number of simultaneous requests that can be handled efficiently by the disk subsystem.",
 			RELOPT_KIND_TABLESPACE,
-			AccessExclusiveLock
+			ShareUpdateExclusiveLock
 		},
 #ifdef USE_PREFETCH
 		-1, 0, MAX_IO_CONCURRENCY
@@ -280,7 +316,7 @@ static relopt_int intRelOpts[] =
 			"parallel_workers",
 			"Number of parallel processes that can be used per executor node for this relation.",
 			RELOPT_KIND_HEAP,
-			AccessExclusiveLock
+			ShareUpdateExclusiveLock
 		},
 		-1, 0, 1024
 	},
@@ -314,7 +350,7 @@ static relopt_real realRelOpts[] =
 			"seq_page_cost",
 			"Sets the planner's estimate of the cost of a sequentially fetched disk page.",
 			RELOPT_KIND_TABLESPACE,
-			AccessExclusiveLock
+			ShareUpdateExclusiveLock
 		},
 		-1, 0.0, DBL_MAX
 	},
@@ -323,7 +359,7 @@ static relopt_real realRelOpts[] =
 			"random_page_cost",
 			"Sets the planner's estimate of the cost of a nonsequentially fetched disk page.",
 			RELOPT_KIND_TABLESPACE,
-			AccessExclusiveLock
+			ShareUpdateExclusiveLock
 		},
 		-1, 0.0, DBL_MAX
 	},
@@ -332,7 +368,7 @@ static relopt_real realRelOpts[] =
 			"n_distinct",
 			"Sets the planner's estimate of the number of distinct values appearing in a column (excluding child relations).",
 			RELOPT_KIND_ATTRIBUTE,
-			AccessExclusiveLock
+			ShareUpdateExclusiveLock
 		},
 		0, -1.0, DBL_MAX
 	},
@@ -341,7 +377,7 @@ static relopt_real realRelOpts[] =
 			"n_distinct_inherited",
 			"Sets the planner's estimate of the number of distinct values appearing in a column (including child relations).",
 			RELOPT_KIND_ATTRIBUTE,
-			AccessExclusiveLock
+			ShareUpdateExclusiveLock
 		},
 		0, -1.0, DBL_MAX
 	},
