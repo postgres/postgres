@@ -4005,12 +4005,32 @@ getNamespaces(Archive *fout, int *numNamespaces)
 						  "LEFT JOIN pg_init_privs pip "
 						  "ON (n.oid = pip.objoid "
 						  "AND pip.classoid = 'pg_namespace'::regclass "
-						  "AND pip.objsubid = 0) ",
+						  "AND pip.objsubid = 0",
 						  username_subquery,
 						  acl_subquery->data,
 						  racl_subquery->data,
 						  init_acl_subquery->data,
 						  init_racl_subquery->data);
+
+		/*
+		 * When we are doing a 'clean' run, we will be dropping and recreating
+		 * the 'public' schema (the only object which has that kind of
+		 * treatment in the backend and which has an entry in pg_init_privs)
+		 * and therefore we should not consider any initial privileges in
+		 * pg_init_privs in that case.
+		 *
+		 * See pg_backup_archiver.c:_printTocEntry() for the details on why
+		 * the public schema is special in this regard.
+		 *
+		 * Note that if the public schema is dropped and re-created, this is
+		 * essentially a no-op because the new public schema won't have an
+		 * entry in pg_init_privs anyway, as the entry will be removed when
+		 * the public schema is dropped.
+		 */
+		if (dopt->outputClean)
+			appendPQExpBuffer(query," AND pip.objoid <> 'public'::regnamespace");
+
+		appendPQExpBuffer(query,") ");
 
 		destroyPQExpBuffer(acl_subquery);
 		destroyPQExpBuffer(racl_subquery);
