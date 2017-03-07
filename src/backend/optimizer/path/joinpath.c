@@ -936,7 +936,8 @@ generate_mergejoin_paths(PlannerInfo *root,
 		innerpath = get_cheapest_path_for_pathkeys(innerrel->pathlist,
 												   trialsortkeys,
 												   NULL,
-												   TOTAL_COST);
+												   TOTAL_COST,
+												   false);
 		if (innerpath != NULL &&
 			(cheapest_total_inner == NULL ||
 			 compare_path_costs(innerpath, cheapest_total_inner,
@@ -971,7 +972,8 @@ generate_mergejoin_paths(PlannerInfo *root,
 		innerpath = get_cheapest_path_for_pathkeys(innerrel->pathlist,
 												   trialsortkeys,
 												   NULL,
-												   STARTUP_COST);
+												   STARTUP_COST,
+												   false);
 		if (innerpath != NULL &&
 			(cheapest_startup_inner == NULL ||
 			 compare_path_costs(innerpath, cheapest_startup_inner,
@@ -1517,21 +1519,8 @@ hash_inner_and_outer(PlannerInfo *root,
 			if (cheapest_total_inner->parallel_safe)
 				cheapest_safe_inner = cheapest_total_inner;
 			else if (save_jointype != JOIN_UNIQUE_INNER)
-			{
-				ListCell   *lc;
-
-				foreach(lc, innerrel->pathlist)
-				{
-					Path	   *innerpath = (Path *) lfirst(lc);
-
-					if (innerpath->parallel_safe &&
-						bms_is_empty(PATH_REQ_OUTER(innerpath)))
-					{
-						cheapest_safe_inner = innerpath;
-						break;
-					}
-				}
-			}
+				cheapest_safe_inner =
+					get_cheapest_parallel_safe_total_inner(innerrel->pathlist);
 
 			if (cheapest_safe_inner != NULL)
 				try_partial_hashjoin_path(root, joinrel,

@@ -1447,12 +1447,14 @@ generate_mergeappend_paths(PlannerInfo *root, RelOptInfo *rel,
 				get_cheapest_path_for_pathkeys(childrel->pathlist,
 											   pathkeys,
 											   NULL,
-											   STARTUP_COST);
+											   STARTUP_COST,
+											   false);
 			cheapest_total =
 				get_cheapest_path_for_pathkeys(childrel->pathlist,
 											   pathkeys,
 											   NULL,
-											   TOTAL_COST);
+											   TOTAL_COST,
+											   false);
 
 			/*
 			 * If we can't find any paths with the right order just use the
@@ -1517,7 +1519,8 @@ get_cheapest_parameterized_child_path(PlannerInfo *root, RelOptInfo *rel,
 	cheapest = get_cheapest_path_for_pathkeys(rel->pathlist,
 											  NIL,
 											  required_outer,
-											  TOTAL_COST);
+											  TOTAL_COST,
+											  false);
 	Assert(cheapest != NULL);
 	if (bms_equal(PATH_REQ_OUTER(cheapest), required_outer))
 		return cheapest;
