@@ -333,6 +333,19 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--no-role-passwords</option></term>
+      <listitem>
+       <para>
+        Do not dump passwords for roles. When restored, roles will have a NULL
+        password and authentication will always fail until the password is reset.
+        Since password values aren't needed when this option is specified we
+        use the catalog view pg_roles in preference to pg_authid, since access
+        to pg_authid may be restricted by security policy.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--no-security-labels</option></term>
       <listitem>
        <para>

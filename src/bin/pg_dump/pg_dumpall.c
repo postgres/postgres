@@ -74,7 +74,12 @@ static int	no_tablespaces = 0;
 static int	use_setsessauth = 0;
 static int	no_security_labels = 0;
 static int	no_unlogged_table_data = 0;
+static int	no_role_passwords = 0;
 static int	server_version;
+
+static char role_catalog[10];
+#define PG_AUTHID "pg_authid"
+#define PG_ROLES  "pg_roles "
 
 static FILE *OPF;
 static char *filename = NULL;
@@ -123,6 +128,7 @@ main(int argc, char *argv[])
 		{"use-set-session-authorization", no_argument, &use_setsessauth, 1},
 		{"no-security-labels", no_argument, &no_security_labels, 1},
 		{"no-unlogged-table-data", no_argument, &no_unlogged_table_data, 1},
+		{"no-role-passwords", no_argument, &no_role_passwords, 1},
 
 		{NULL, 0, NULL, 0}
 	};
@@ -341,6 +347,25 @@ main(int argc, char *argv[])
 				progname);
 		exit_nicely(1);
 	}
+
+	if (no_role_passwords && binary_upgrade)
+	{
+		fprintf(stderr, _("%s: options --no-role-passwords and --binary-upgrade cannot be used together\n"),
+				progname);
+		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
+				progname);
+		exit_nicely(1);
+	}
+
+	/*
+	 * If password values are not required in the dump, switch to
+	 * using pg_roles which is equally useful, just more likely
+	 * to have unrestricted access than pg_authid.
+	 */
+	if (no_role_passwords)
+		sprintf(role_catalog, "%s", PG_ROLES);
+	else
+		sprintf(role_catalog, "%s", PG_AUTHID);
 
 	/* Add long options to the pg_dump argument list */
 	if (binary_upgrade)
@@ -563,6 +588,7 @@ help(void)
 	printf(_("  --no-security-labels         do not dump security label assignments\n"));
 	printf(_("  --no-tablespaces             do not dump tablespace assignments\n"));
 	printf(_("  --no-unlogged-table-data     do not dump unlogged table data\n"));
+	printf(_("  --no-role-passwords          do not dump passwords for roles\n"));
 	printf(_("  --quote-all-identifiers      quote all identifiers, even if not key words\n"));
 	printf(_("  --use-set-session-authorization\n"
 			 "                               use SET SESSION AUTHORIZATION commands instead of\n"
@@ -590,29 +616,32 @@ help(void)
 static void
 dropRoles(PGconn *conn)
 {
+	PQExpBuffer buf = createPQExpBuffer();
 	PGresult   *res;
 	int			i_rolname;
 	int			i;
 
 	if (server_version >= 90600)
-		res = executeQuery(conn,
+		printfPQExpBuffer(buf,
 						   "SELECT rolname "
-						   "FROM pg_authid "
+						   "FROM %s "
 						   "WHERE rolname !~ '^pg_' "
-						   "ORDER BY 1");
+						   "ORDER BY 1", role_catalog);
 	else if (server_version >= 80100)
-		res = executeQuery(conn,
+		printfPQExpBuffer(buf,
 						   "SELECT rolname "
-						   "FROM pg_authid "
-						   "ORDER BY 1");
+						   "FROM %s "
+						   "ORDER BY 1", role_catalog);
 	else
-		res = executeQuery(conn,
+		printfPQExpBuffer(buf,
 						   "SELECT usename as rolname "
 						   "FROM pg_shadow "
 						   "UNION "
 						   "SELECT groname as rolname "
 						   "FROM pg_group "
 						   "ORDER BY 1");
+
+	res = executeQuery(conn, buf->data);
 
 	i_rolname = PQfnumber(res, "rolname");
 
@@ -631,6 +660,7 @@ dropRoles(PGconn *conn)
 	}
 
 	PQclear(res);
+	destroyPQExpBuffer(buf);
 
 	fprintf(OPF, "\n\n");
 }
@@ -666,21 +696,21 @@ dumpRoles(PGconn *conn)
 						  "rolcreaterole, rolcreatedb, "
 						  "rolcanlogin, rolconnlimit, rolpassword, "
 						  "rolvaliduntil, rolreplication, rolbypassrls, "
-			 "pg_catalog.shobj_description(oid, 'pg_authid') as rolcomment, "
+			 "pg_catalog.shobj_description(oid, '%s') as rolcomment, "
 						  "rolname = current_user AS is_current_user "
-						  "FROM pg_authid "
+						  "FROM %s "
 						  "WHERE rolname !~ '^pg_' "
-						  "ORDER BY 2");
+						  "ORDER BY 2", role_catalog, role_catalog);
 	else if (server_version >= 90500)
 		printfPQExpBuffer(buf,
 						  "SELECT oid, rolname, rolsuper, rolinherit, "
 						  "rolcreaterole, rolcreatedb, "
 						  "rolcanlogin, rolconnlimit, rolpassword, "
 						  "rolvaliduntil, rolreplication, rolbypassrls, "
-			 "pg_catalog.shobj_description(oid, 'pg_authid') as rolcomment, "
+			 "pg_catalog.shobj_description(oid, '%s') as rolcomment, "
 						  "rolname = current_user AS is_current_user "
-						  "FROM pg_authid "
-						  "ORDER BY 2");
+						  "FROM %s "
+						  "ORDER BY 2", role_catalog, role_catalog);
 	else if (server_version >= 90100)
 		printfPQExpBuffer(buf,
 						  "SELECT oid, rolname, rolsuper, rolinherit, "
@@ -688,10 +718,10 @@ dumpRoles(PGconn *conn)
 						  "rolcanlogin, rolconnlimit, rolpassword, "
 						  "rolvaliduntil, rolreplication, "
 						  "false as rolbypassrls, "
-			 "pg_catalog.shobj_description(oid, 'pg_authid') as rolcomment, "
+			 "pg_catalog.shobj_description(oid, '%s') as rolcomment, "
 						  "rolname = current_user AS is_current_user "
-						  "FROM pg_authid "
-						  "ORDER BY 2");
+						  "FROM %s "
+						  "ORDER BY 2", role_catalog, role_catalog);
 	else if (server_version >= 80200)
 		printfPQExpBuffer(buf,
 						  "SELECT oid, rolname, rolsuper, rolinherit, "
@@ -699,10 +729,10 @@ dumpRoles(PGconn *conn)
 						  "rolcanlogin, rolconnlimit, rolpassword, "
 						  "rolvaliduntil, false as rolreplication, "
 						  "false as rolbypassrls, "
-			 "pg_catalog.shobj_description(oid, 'pg_authid') as rolcomment, "
+			 "pg_catalog.shobj_description(oid, '%s') as rolcomment, "
 						  "rolname = current_user AS is_current_user "
-						  "FROM pg_authid "
-						  "ORDER BY 2");
+						  "FROM %s "
+						  "ORDER BY 2", role_catalog, role_catalog);
 	else if (server_version >= 80100)
 		printfPQExpBuffer(buf,
 						  "SELECT oid, rolname, rolsuper, rolinherit, "
@@ -712,8 +742,8 @@ dumpRoles(PGconn *conn)
 						  "false as rolbypassrls, "
 						  "null as rolcomment, "
 						  "rolname = current_user AS is_current_user "
-						  "FROM pg_authid "
-						  "ORDER BY 2");
+						  "FROM %s "
+						  "ORDER BY 2", role_catalog);
 	else
 		printfPQExpBuffer(buf,
 						  "SELECT 0 as oid, usename as rolname, "
@@ -846,7 +876,8 @@ dumpRoles(PGconn *conn)
 			appendPQExpBuffer(buf, " CONNECTION LIMIT %s",
 							  PQgetvalue(res, i, i_rolconnlimit));
 
-		if (!PQgetisnull(res, i, i_rolpassword))
+
+		if (!PQgetisnull(res, i, i_rolpassword) && !no_role_passwords)
 		{
 			appendPQExpBufferStr(buf, " PASSWORD ");
 			appendStringLiteralConn(buf, PQgetvalue(res, i, i_rolpassword), conn);
@@ -897,19 +928,21 @@ dumpRoles(PGconn *conn)
 static void
 dumpRoleMembership(PGconn *conn)
 {
+	PQExpBuffer buf = createPQExpBuffer();
 	PGresult   *res;
 	int			i;
 
-	res = executeQuery(conn, "SELECT ur.rolname AS roleid, "
+	printfPQExpBuffer(buf, "SELECT ur.rolname AS roleid, "
 					   "um.rolname AS member, "
 					   "a.admin_option, "
 					   "ug.rolname AS grantor "
 					   "FROM pg_auth_members a "
-					   "LEFT JOIN pg_authid ur on ur.oid = a.roleid "
-					   "LEFT JOIN pg_authid um on um.oid = a.member "
-					   "LEFT JOIN pg_authid ug on ug.oid = a.grantor "
+					   "LEFT JOIN %s ur on ur.oid = a.roleid "
+					   "LEFT JOIN %s um on um.oid = a.member "
+					   "LEFT JOIN %s ug on ug.oid = a.grantor "
 					"WHERE NOT (ur.rolname ~ '^pg_' AND um.rolname ~ '^pg_')"
-					   "ORDER BY 1,2,3");
+					   "ORDER BY 1,2,3", role_catalog, role_catalog, role_catalog);
+	res = executeQuery(conn, buf->data);
 
 	if (PQntuples(res) > 0)
 		fprintf(OPF, "--\n-- Role memberships\n--\n\n");
@@ -939,6 +972,7 @@ dumpRoleMembership(PGconn *conn)
 	}
 
 	PQclear(res);
+	destroyPQExpBuffer(buf);
 
 	fprintf(OPF, "\n\n");
 }
@@ -1298,9 +1332,9 @@ dumpCreateDB(PGconn *conn)
 	 * databases.
 	 */
 	if (server_version >= 90600)
-		res = executeQuery(conn,
+		printfPQExpBuffer(buf,
 						   "SELECT datname, "
-						   "coalesce(rolname, (select rolname from pg_authid where oid=(select datdba from pg_database where datname='template0'))), "
+						   "coalesce(rolname, (select rolname from %s where oid=(select datdba from pg_database where datname='template0'))), "
 						   "pg_encoding_to_char(d.encoding), "
 						   "datcollate, datctype, datfrozenxid, datminmxid, "
 						   "datistemplate, "
@@ -1314,43 +1348,43 @@ dumpCreateDB(PGconn *conn)
 						   "AS rdatacl, "
 						   "datconnlimit, "
 						   "(SELECT spcname FROM pg_tablespace t WHERE t.oid = d.dattablespace) AS dattablespace "
-			  "FROM pg_database d LEFT JOIN pg_authid u ON (datdba = u.oid) "
-						   "WHERE datallowconn ORDER BY 1");
+			  "FROM pg_database d LEFT JOIN %s u ON (datdba = u.oid) "
+						   "WHERE datallowconn ORDER BY 1", role_catalog, role_catalog);
 	else if (server_version >= 90300)
-		res = executeQuery(conn,
+		printfPQExpBuffer(buf,
 						   "SELECT datname, "
-						   "coalesce(rolname, (select rolname from pg_authid where oid=(select datdba from pg_database where datname='template0'))), "
+						   "coalesce(rolname, (select rolname from %s where oid=(select datdba from pg_database where datname='template0'))), "
 						   "pg_encoding_to_char(d.encoding), "
 						   "datcollate, datctype, datfrozenxid, datminmxid, "
 						   "datistemplate, datacl, '' as rdatacl, "
 						   "datconnlimit, "
 						   "(SELECT spcname FROM pg_tablespace t WHERE t.oid = d.dattablespace) AS dattablespace "
-			  "FROM pg_database d LEFT JOIN pg_authid u ON (datdba = u.oid) "
-						   "WHERE datallowconn ORDER BY 1");
+			  "FROM pg_database d LEFT JOIN %s u ON (datdba = u.oid) "
+						   "WHERE datallowconn ORDER BY 1", role_catalog, role_catalog);
 	else if (server_version >= 80400)
-		res = executeQuery(conn,
+		printfPQExpBuffer(buf,
 						   "SELECT datname, "
-						   "coalesce(rolname, (select rolname from pg_authid where oid=(select datdba from pg_database where datname='template0'))), "
+						   "coalesce(rolname, (select rolname from %s where oid=(select datdba from pg_database where datname='template0'))), "
 						   "pg_encoding_to_char(d.encoding), "
 					  "datcollate, datctype, datfrozenxid, 0 AS datminmxid, "
 						   "datistemplate, datacl, '' as rdatacl, "
 						   "datconnlimit, "
 						   "(SELECT spcname FROM pg_tablespace t WHERE t.oid = d.dattablespace) AS dattablespace "
-			  "FROM pg_database d LEFT JOIN pg_authid u ON (datdba = u.oid) "
-						   "WHERE datallowconn ORDER BY 1");
+			  "FROM pg_database d LEFT JOIN %s u ON (datdba = u.oid) "
+						   "WHERE datallowconn ORDER BY 1", role_catalog, role_catalog);
 	else if (server_version >= 80100)
-		res = executeQuery(conn,
+		printfPQExpBuffer(buf,
 						   "SELECT datname, "
-						   "coalesce(rolname, (select rolname from pg_authid where oid=(select datdba from pg_database where datname='template0'))), "
+						   "coalesce(rolname, (select rolname from %s where oid=(select datdba from pg_database where datname='template0'))), "
 						   "pg_encoding_to_char(d.encoding), "
 						   "null::text AS datcollate, null::text AS datctype, datfrozenxid, 0 AS datminmxid, "
 						   "datistemplate, datacl, '' as rdatacl, "
 						   "datconnlimit, "
 						   "(SELECT spcname FROM pg_tablespace t WHERE t.oid = d.dattablespace) AS dattablespace "
-			  "FROM pg_database d LEFT JOIN pg_authid u ON (datdba = u.oid) "
-						   "WHERE datallowconn ORDER BY 1");
+			  "FROM pg_database d LEFT JOIN %s u ON (datdba = u.oid) "
+						   "WHERE datallowconn ORDER BY 1", role_catalog, role_catalog);
 	else
-		res = executeQuery(conn,
+		printfPQExpBuffer(buf,
 						   "SELECT datname, "
 						   "coalesce(usename, (select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), "
 						   "pg_encoding_to_char(d.encoding), "
@@ -1360,6 +1394,8 @@ dumpCreateDB(PGconn *conn)
 						   "(SELECT spcname FROM pg_tablespace t WHERE t.oid = d.dattablespace) AS dattablespace "
 		   "FROM pg_database d LEFT JOIN pg_shadow u ON (datdba = usesysid) "
 						   "WHERE datallowconn ORDER BY 1");
+
+	res = executeQuery(conn, buf->data);
 
 	for (i = 0; i < PQntuples(res); i++)
 	{
@@ -1557,9 +1593,9 @@ dumpUserConfig(PGconn *conn, const char *username)
 		if (server_version >= 90000)
 			printfPQExpBuffer(buf, "SELECT setconfig[%d] FROM pg_db_role_setting WHERE "
 							  "setdatabase = 0 AND setrole = "
-					   "(SELECT oid FROM pg_authid WHERE rolname = ", count);
+					   "(SELECT oid FROM %s WHERE rolname = ", count, role_catalog);
 		else if (server_version >= 80100)
-			printfPQExpBuffer(buf, "SELECT rolconfig[%d] FROM pg_authid WHERE rolname = ", count);
+			printfPQExpBuffer(buf, "SELECT rolconfig[%d] FROM %s WHERE rolname = ", count, role_catalog);
 		else
 			printfPQExpBuffer(buf, "SELECT useconfig[%d] FROM pg_shadow WHERE usename = ", count);
 		appendStringLiteralConn(buf, username, conn);
@@ -1597,8 +1633,8 @@ dumpDbRoleConfig(PGconn *conn)
 	int			i;
 
 	printfPQExpBuffer(buf, "SELECT rolname, datname, unnest(setconfig) "
-					  "FROM pg_db_role_setting, pg_authid, pg_database "
-		  "WHERE setrole = pg_authid.oid AND setdatabase = pg_database.oid");
+					  "FROM pg_db_role_setting, %s u, pg_database "
+		  "WHERE setrole = u.oid AND setdatabase = pg_database.oid", role_catalog);
 	res = executeQuery(conn, buf->data);
 
 	if (PQntuples(res) > 0)
