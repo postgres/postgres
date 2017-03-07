@@ -3610,7 +3610,7 @@ main(int argc, char **argv)
 {
 	static struct option long_options[] = {
 		/* systematic long/short named options */
-		{"tpc-b", no_argument, NULL, 'b'},
+		{"builtin", required_argument, NULL, 'b'},
 		{"client", required_argument, NULL, 'c'},
 		{"connect", no_argument, NULL, 'C'},
 		{"debug", no_argument, NULL, 'd'},
