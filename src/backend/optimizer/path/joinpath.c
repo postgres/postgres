@@ -1510,9 +1510,9 @@ hash_inner_and_outer(PlannerInfo *root,
 			/*
 			 * Normally, given that the joinrel is parallel-safe, the cheapest
 			 * total inner path will also be parallel-safe, but if not, we'll
-			 * have to search cheapest_parameterized_paths for the cheapest
-			 * safe, unparameterized inner path.  If doing JOIN_UNIQUE_INNER,
-			 * we can't use any alternative inner path.
+			 * have to search for the cheapest safe, unparameterized inner
+			 * path.  If doing JOIN_UNIQUE_INNER, we can't use any alternative
+			 * inner path.
 			 */
 			if (cheapest_total_inner->parallel_safe)
 				cheapest_safe_inner = cheapest_total_inner;
@@ -1520,7 +1520,7 @@ hash_inner_and_outer(PlannerInfo *root,
 			{
 				ListCell   *lc;
 
-				foreach(lc, innerrel->cheapest_parameterized_paths)
+				foreach(lc, innerrel->pathlist)
 				{
 					Path	   *innerpath = (Path *) lfirst(lc);
 
