@@ -10189,10 +10189,10 @@ dumpProcLang(Archive *fout, ProcLangInfo *plang)
 
 	/* Dump Proc Lang Comments and Security Labels */
 	dumpComment(fout, labelq->data,
-				NULL, "",
+				lanschema, plang->lanowner,
 				plang->dobj.catId, 0, plang->dobj.dumpId);
 	dumpSecLabel(fout, labelq->data,
-				 NULL, "",
+				 lanschema, plang->lanowner,
 				 plang->dobj.catId, 0, plang->dobj.dumpId);
 
 	if (plang->lanpltrusted)
@@ -10947,7 +10947,7 @@ dumpCast(Archive *fout, CastInfo *cast)
 
 	/* Dump Cast Comments */
 	dumpComment(fout, labelq->data,
-				NULL, "",
+				"pg_catalog", "",
 				cast->dobj.catId, 0, cast->dobj.dumpId);
 
 	destroyPQExpBuffer(defqry);
@@ -11067,7 +11067,7 @@ dumpTransform(Archive *fout, TransformInfo *transform)
 
 	/* Dump Transform Comments */
 	dumpComment(fout, labelq->data,
-				NULL, "",
+				"pg_catalog", "",
 				transform->dobj.catId, 0, transform->dobj.dumpId);
 
 	free(lanname);
@@ -11829,7 +11829,7 @@ dumpOpclass(Archive *fout, OpclassInfo *opcinfo)
 
 	/* Dump Operator Class Comments */
 	dumpComment(fout, labelq->data,
-				NULL, opcinfo->rolname,
+				opcinfo->dobj.namespace->dobj.name, opcinfo->rolname,
 				opcinfo->dobj.catId, 0, opcinfo->dobj.dumpId);
 
 	free(amname);
@@ -12100,7 +12100,7 @@ dumpOpfamily(Archive *fout, OpfamilyInfo *opfinfo)
 
 	/* Dump Operator Family Comments */
 	dumpComment(fout, labelq->data,
-				NULL, opfinfo->rolname,
+				opfinfo->dobj.namespace->dobj.name, opfinfo->rolname,
 				opfinfo->dobj.catId, 0, opfinfo->dobj.dumpId);
 
 	free(amname);
@@ -12788,7 +12788,7 @@ dumpTSParser(Archive *fout, TSParserInfo *prsinfo)
 
 	/* Dump Parser Comments */
 	dumpComment(fout, labelq->data,
-				NULL, "",
+				prsinfo->dobj.namespace->dobj.name, "",
 				prsinfo->dobj.catId, 0, prsinfo->dobj.dumpId);
 
 	destroyPQExpBuffer(q);
@@ -12876,7 +12876,7 @@ dumpTSDictionary(Archive *fout, TSDictInfo *dictinfo)
 
 	/* Dump Dictionary Comments */
 	dumpComment(fout, labelq->data,
-				NULL, dictinfo->rolname,
+				dictinfo->dobj.namespace->dobj.name, dictinfo->rolname,
 				dictinfo->dobj.catId, 0, dictinfo->dobj.dumpId);
 
 	destroyPQExpBuffer(q);
@@ -12943,7 +12943,7 @@ dumpTSTemplate(Archive *fout, TSTemplateInfo *tmplinfo)
 
 	/* Dump Template Comments */
 	dumpComment(fout, labelq->data,
-				NULL, "",
+				tmplinfo->dobj.namespace->dobj.name, "",
 				tmplinfo->dobj.catId, 0, tmplinfo->dobj.dumpId);
 
 	destroyPQExpBuffer(q);
@@ -13072,7 +13072,7 @@ dumpTSConfig(Archive *fout, TSConfigInfo *cfginfo)
 
 	/* Dump Configuration Comments */
 	dumpComment(fout, labelq->data,
-				NULL, cfginfo->rolname,
+				cfginfo->dobj.namespace->dobj.name, cfginfo->rolname,
 				cfginfo->dobj.catId, 0, cfginfo->dobj.dumpId);
 
 	destroyPQExpBuffer(q);
