@@ -37,7 +37,7 @@
  * to the encoding being used, whatever that is.  We cannot avoid that in
  * general, after logging in, but let's do what we can here.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/backend/libpq/auth-scram.c

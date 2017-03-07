@@ -3,10 +3,10 @@
  * scram-common.h
  *		Declarations for helper functions used for SCRAM authentication
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * src/include/common/relpath.h
+ * src/include/common/scram-common.h
  *
  *-------------------------------------------------------------------------
  */
