@@ -9,7 +9,7 @@ VACUUM;
 \a\t
 SELECT relname, relhasindex
    FROM pg_class c LEFT JOIN pg_namespace n ON n.oid = relnamespace
-   WHERE relkind = 'r' AND (nspname ~ '^pg_temp_') IS NOT TRUE
+   WHERE relkind IN ('r', 'P') AND (nspname ~ '^pg_temp_') IS NOT TRUE
    ORDER BY relname;
 a|f
 a_star|f
@@ -70,6 +70,13 @@ line_tbl|f
 log_table|f
 lseg_tbl|f
 main_table|f
+mlparted|f
+mlparted1|f
+mlparted11|f
+mlparted12|f
+mlparted2|f
+mlparted3|f
+mlparted4|f
 money_data|f
 num_data|f
 num_exp_add|t

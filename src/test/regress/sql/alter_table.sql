@@ -2227,3 +2227,4 @@ alter table p attach partition p1 for values from (1, 2) to (1, 10);
 
 -- cleanup
 drop table p;
+drop table p1;

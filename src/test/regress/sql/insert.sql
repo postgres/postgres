@@ -189,55 +189,55 @@ select tableoid::regclass::text, a, min(b) as min_b, max(b) as max_b from list_p
 drop table range_parted, list_parted;
 
 -- more tests for certain multi-level partitioning scenarios
-create table p (a int, b int) partition by range (a, b);
-create table p1 (b int not null, a int not null) partition by range ((b+0));
-create table p11 (like p1);
-alter table p11 drop a;
-alter table p11 add a int;
-alter table p11 drop a;
-alter table p11 add a int not null;
--- attnum for key attribute 'a' is different in p, p1, and p11
+create table mlparted (a int, b int) partition by range (a, b);
+create table mlparted1 (b int not null, a int not null) partition by range ((b+0));
+create table mlparted11 (like mlparted1);
+alter table mlparted11 drop a;
+alter table mlparted11 add a int;
+alter table mlparted11 drop a;
+alter table mlparted11 add a int not null;
+-- attnum for key attribute 'a' is different in mlparted, mlparted1, and mlparted11
 select attrelid::regclass, attname, attnum
 from pg_attribute
 where attname = 'a'
- and (attrelid = 'p'::regclass
-   or attrelid = 'p1'::regclass
-   or attrelid = 'p11'::regclass)
+ and (attrelid = 'mlparted'::regclass
+   or attrelid = 'mlparted1'::regclass
+   or attrelid = 'mlparted11'::regclass)
 order by attrelid::regclass::text;
 
-alter table p1 attach partition p11 for values from (2) to (5);
-alter table p attach partition p1 for values from (1, 2) to (1, 10);
+alter table mlparted1 attach partition mlparted11 for values from (2) to (5);
+alter table mlparted attach partition mlparted1 for values from (1, 2) to (1, 10);
 
--- check that "(1, 2)" is correctly routed to p11.
-insert into p values (1, 2);
-select tableoid::regclass, * from p;
+-- check that "(1, 2)" is correctly routed to mlparted11.
+insert into mlparted values (1, 2);
+select tableoid::regclass, * from mlparted;
 
--- check that proper message is shown after failure to route through p1
-insert into p (a, b) values (1, 5);
+-- check that proper message is shown after failure to route through mlparted1
+insert into mlparted (a, b) values (1, 5);
 
-truncate p;
-alter table p add constraint check_b check (b = 3);
--- check that correct input row is shown when constraint check_b fails on p11
+truncate mlparted;
+alter table mlparted add constraint check_b check (b = 3);
+-- check that correct input row is shown when constraint check_b fails on mlparted11
 -- after "(1, 2)" is routed to it
-insert into p values (1, 2);
+insert into mlparted values (1, 2);
 
 -- check that inserting into an internal partition successfully results in
 -- checking its partition constraint before inserting into the leaf partition
 -- selected by tuple-routing
-insert into p1 (a, b) values (2, 3);
+insert into mlparted1 (a, b) values (2, 3);
 
 -- check that RETURNING works correctly with tuple-routing
-alter table p drop constraint check_b;
-create table p12 partition of p1 for values from (5) to (10);
-create table p2 (b int not null, a int not null);
-alter table p attach partition p2 for values from (1, 10) to (1, 20);
-create table p3 partition of p for values from (1, 20) to (1, 30);
-create table p4 (like p);
-alter table p4 drop a;
-alter table p4 add a int not null;
-alter table p attach partition p4 for values from (1, 30) to (1, 40);
+alter table mlparted drop constraint check_b;
+create table mlparted12 partition of mlparted1 for values from (5) to (10);
+create table mlparted2 (b int not null, a int not null);
+alter table mlparted attach partition mlparted2 for values from (1, 10) to (1, 20);
+create table mlparted3 partition of mlparted for values from (1, 20) to (1, 30);
+create table mlparted4 (like mlparted);
+alter table mlparted4 drop a;
+alter table mlparted4 add a int not null;
+alter table mlparted attach partition mlparted4 for values from (1, 30) to (1, 40);
 with ins (a, b, c) as
-  (insert into p (b, a) select s.a, 1 from generate_series(2, 39) s(a) returning tableoid::regclass, *)
+  (insert into mlparted (b, a) select s.a, 1 from generate_series(2, 39) s(a) returning tableoid::regclass, *)
   select a, b, min(c), max(c) from ins group by a, b order by 1;
 
 -- check that message shown after failure to find a partition shows the
@@ -266,6 +266,3 @@ revoke all on key_desc from someone_else;
 revoke all on key_desc_1 from someone_else;
 drop role someone_else;
 drop table key_desc, key_desc_1;
-
--- cleanup
-drop table p;

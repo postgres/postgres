@@ -3371,3 +3371,4 @@ alter table p attach partition p1 for values from (1, 2) to (1, 10);
 ERROR:  partition constraint is violated by some row
 -- cleanup
 drop table p;
+drop table p1;
