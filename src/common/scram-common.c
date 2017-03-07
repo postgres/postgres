@@ -15,10 +15,13 @@
  */
 #ifndef FRONTEND
 #include "postgres.h"
-#include "utils/memutils.h"
 #else
 #include "postgres_fe.h"
 #endif
+
+/* for htonl */
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include "common/scram-common.h"
 
@@ -145,10 +148,13 @@ scram_H(const uint8 *input, int len, uint8 *result)
 }
 
 /*
- * Normalize a password for SCRAM authentication.
+ * Encrypt password for SCRAM authentication. This basically applies the
+ * normalization of the password and a hash calculation using the salt
+ * value given by caller.
  */
 static void
-scram_Normalize(const char *password, char *result)
+scram_SaltedPassword(const char *password, const char *salt, int saltlen, int iterations,
+					 uint8 *result)
 {
 	/*
 	 * XXX: Here SASLprep should be applied on password. However, per RFC5802,
@@ -158,24 +164,8 @@ scram_Normalize(const char *password, char *result)
 	 * the frontend in order to be able to encode properly this string, and
 	 * then apply SASLprep on it.
 	 */
-	memcpy(result, password, strlen(password) + 1);
-}
 
-/*
- * Encrypt password for SCRAM authentication. This basically applies the
- * normalization of the password and a hash calculation using the salt
- * value given by caller.
- */
-static void
-scram_SaltedPassword(const char *password, const char *salt, int saltlen, int iterations,
-					 uint8 *result)
-{
-	char	   *pwbuf;
-
-	pwbuf = (char *) malloc(strlen(password) + 1);
-	scram_Normalize(password, pwbuf);
-	scram_Hi(pwbuf, salt, saltlen, iterations, result);
-	free(pwbuf);
+	scram_Hi(password, salt, saltlen, iterations, result);
 }
 
 /*

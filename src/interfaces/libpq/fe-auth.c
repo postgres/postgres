@@ -445,12 +445,13 @@ pg_SASL_init(PGconn *conn, const char *auth_mechanism)
 	 */
 	if (strcmp(auth_mechanism, SCRAM_SHA256_NAME) == 0)
 	{
-		char	   *password = conn->connhost[conn->whichhost].password;
+		char	   *password;
 
+		conn->password_needed = true;
+		password = conn->connhost[conn->whichhost].password;
 		if (password == NULL)
 			password = conn->pgpass;
-		conn->password_needed = true;
-		if (password == NULL || password == '\0')
+		if (password == NULL || password[0] == '\0')
 		{
 			printfPQExpBuffer(&conn->errorMessage,
 							  PQnoPasswordSupplied);
