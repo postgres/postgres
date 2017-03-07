@@ -756,7 +756,7 @@ sort_inner_and_outer(PlannerInfo *root,
 	JoinType	save_jointype = jointype;
 	Path	   *outer_path;
 	Path	   *inner_path;
-	Path	   *cheapest_partial_outer;
+	Path	   *cheapest_partial_outer = NULL;
 	Path	   *cheapest_safe_inner = NULL;
 	List	   *all_pathkeys;
 	ListCell   *l;
