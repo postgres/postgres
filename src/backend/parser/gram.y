@@ -513,7 +513,6 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 				Bit ConstBit BitWithLength BitWithoutLength
 %type <str>		character
 %type <str>		extract_arg
-%type <str>		opt_charset
 %type <boolean> opt_varying opt_timezone opt_no_inherit
 
 %type <ival>	Iconst SignedIconst
@@ -11923,28 +11922,20 @@ ConstCharacter:  CharacterWithLength
 				}
 		;
 
-CharacterWithLength:  character '(' Iconst ')' opt_charset
+CharacterWithLength:  character '(' Iconst ')'
 				{
-					if (($5 != NULL) && (strcmp($5, "sql_text") != 0))
-						$1 = psprintf("%s_%s", $1, $5);
-
 					$$ = SystemTypeName($1);
 					$$->typmods = list_make1(makeIntConst($3, @3));
 					$$->location = @1;
 				}
 		;
 
-CharacterWithoutLength:	 character opt_charset
+CharacterWithoutLength:	 character
 				{
-					if (($2 != NULL) && (strcmp($2, "sql_text") != 0))
-						$1 = psprintf("%s_%s", $1, $2);
-
 					$$ = SystemTypeName($1);
-
 					/* char defaults to char(1), varchar to no limit */
 					if (strcmp($1, "bpchar") == 0)
 						$$->typmods = list_make1(makeIntConst(1, -1));
-
 					$$->location = @1;
 				}
 		;
@@ -11966,11 +11957,6 @@ character:	CHARACTER opt_varying
 opt_varying:
 			VARYING									{ $$ = TRUE; }
 			| /*EMPTY*/								{ $$ = FALSE; }
-		;
-
-opt_charset:
-			CHARACTER SET ColId						{ $$ = $3; }
-			| /*EMPTY*/								{ $$ = NULL; }
 		;
 
 /*
