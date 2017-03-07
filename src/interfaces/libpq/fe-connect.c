@@ -2720,6 +2720,49 @@ keep_going:						/* We will come back to here until there is
 					}
 				}
 #endif
+				/* Get additional payload for SASL, if any */
+				if ((areq == AUTH_REQ_SASL ||
+					 areq == AUTH_REQ_SASL_CONT) &&
+					msgLength > 4)
+				{
+					int			llen = msgLength - 4;
+
+					/*
+					 * We can be called repeatedly for the same buffer. Avoid
+					 * re-allocating the buffer in this case - just re-use the
+					 * old buffer.
+					 */
+					if (llen != conn->auth_req_inlen)
+					{
+						if (conn->auth_req_inbuf)
+						{
+							free(conn->auth_req_inbuf);
+							conn->auth_req_inbuf = NULL;
+						}
+
+						conn->auth_req_inlen = llen;
+						conn->auth_req_inbuf = malloc(llen + 1);
+						if (!conn->auth_req_inbuf)
+						{
+							printfPQExpBuffer(&conn->errorMessage,
+											  libpq_gettext("out of memory allocating SASL buffer (%d)"),
+											  llen);
+							goto error_return;
+						}
+					}
+
+					if (pqGetnchar(conn->auth_req_inbuf, llen, conn))
+					{
+						/* We'll come back when there is more data. */
+						return PGRES_POLLING_READING;
+					}
+
+					/*
+					 * For safety and convenience, always ensure the in-buffer
+					 * is NULL-terminated.
+					 */
+					conn->auth_req_inbuf[llen] = '\0';
+				}
 
 				/*
 				 * OK, we successfully read the message; mark data consumed
@@ -3506,6 +3549,15 @@ closePGconn(PGconn *conn)
 		conn->sspictx = NULL;
 	}
 #endif
+	if (conn->sasl_state)
+	{
+		/*
+		 * XXX: if support for more authentication mechanisms is added, this
+		 * needs to call the right 'free' function.
+		 */
+		pg_fe_scram_free(conn->sasl_state);
+		conn->sasl_state = NULL;
+	}
 }
 
 /*

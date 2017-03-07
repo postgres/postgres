@@ -1193,9 +1193,10 @@ include_dir 'conf.d'
         password is to be encrypted. The default value is <literal>md5</>, which
         stores the password as an MD5 hash. Setting this to <literal>plain</> stores
         it in plaintext. <literal>on</> and <literal>off</> are also accepted, as
-        aliases for <literal>md5</> and <literal>plain</>, respectively.
-       </para>
-
+        aliases for <literal>md5</> and <literal>plain</>, respectively.  Setting
+        this parameter to <literal>scram</> will encrypt the password with
+        SCRAM-SHA-256.
+       </para>       
       </listitem>
      </varlistentry>
 

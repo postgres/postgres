@@ -30,10 +30,12 @@
 #include "libpq/crypt.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
+#include "libpq/scram.h"
 #include "miscadmin.h"
 #include "replication/walsender.h"
 #include "storage/ipc.h"
 #include "utils/backend_random.h"
+#include "utils/timestamp.h"
 
 
 /*----------------------------------------------------------------
@@ -197,6 +199,12 @@ static int pg_SSPI_make_upn(char *accountname,
 static int	CheckRADIUSAuth(Port *port);
 
 
+/*----------------------------------------------------------------
+ * SASL authentication
+ *----------------------------------------------------------------
+ */
+static int	CheckSASLAuth(Port *port, char **logdetail);
+
 /*
  * Maximum accepted size of GSS and SSPI authentication tokens.
  *
@@ -212,6 +220,13 @@ static int	CheckRADIUSAuth(Port *port);
  */
 #define PG_MAX_AUTH_TOKEN_LENGTH	65535
 
+/*
+ * Maximum accepted size of SASL messages.
+ *
+ * The messages that the server or libpq generate are much smaller than this,
+ * but have some headroom.
+ */
+#define PG_MAX_SASL_MESSAGE_LENGTH	1024
 
 /*----------------------------------------------------------------
  * Global authentication functions
@@ -275,6 +290,7 @@ auth_failed(Port *port, int status, char *logdetail)
 			break;
 		case uaPassword:
 		case uaMD5:
+		case uaSASL:
 			errstr = gettext_noop("password authentication failed for user \"%s\"");
 			/* We use it to indicate if a .pgpass password failed. */
 			errcode_return = ERRCODE_INVALID_PASSWORD;
@@ -542,6 +558,10 @@ ClientAuthentication(Port *port)
 			status = CheckPasswordAuth(port, &logdetail);
 			break;
 
+		case uaSASL:
+			status = CheckSASLAuth(port, &logdetail);
+			break;
+
 		case uaPAM:
 #ifdef USE_PAM
 			status = CheckPAMAuth(port, port->user_name, "");
@@ -762,6 +782,122 @@ CheckPasswordAuth(Port *port, char **logdetail)
 	return result;
 }
 
+/*----------------------------------------------------------------
+ * SASL authentication system
+ *----------------------------------------------------------------
+ */
+static int
+CheckSASLAuth(Port *port, char **logdetail)
+{
+	int			mtype;
+	StringInfoData buf;
+	void	   *scram_opaq;
+	char	   *output = NULL;
+	int			outputlen = 0;
+	int			result;
+	char	   *shadow_pass;
+	bool		doomed = false;
+
+	/*
+	 * SASL auth is not supported for protocol versions before 3, because it
+	 * relies on the overall message length word to determine the SASL payload
+	 * size in AuthenticationSASLContinue and PasswordMessage messages.  (We
+	 * used to have a hard rule that protocol messages must be parsable
+	 * without relying on the length word, but we hardly care about older
+	 * protocol version anymore.)
+	 */
+	if (PG_PROTOCOL_MAJOR(FrontendProtocol) < 3)
+		ereport(FATAL,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("SASL authentication is not supported in protocol version 2")));
+
+	/*
+	 * Send first the authentication request to user.
+	 */
+	sendAuthRequest(port, AUTH_REQ_SASL, SCRAM_SHA256_NAME,
+					strlen(SCRAM_SHA256_NAME) + 1);
+
+	/*
+	 * If the user doesn't exist, or doesn't have a valid password, or it's
+	 * expired, we still go through the motions of SASL authentication, but
+	 * tell the authentication method that the authentication is "doomed".
+	 * That is, it's going to fail, no matter what.
+	 *
+	 * This is because we don't want to reveal to an attacker what usernames
+	 * are valid, nor which users have a valid password.
+	 */
+	if (get_role_password(port->user_name, &shadow_pass, logdetail) != STATUS_OK)
+		doomed = true;
+
+	/* Initialize the status tracker for message exchanges */
+	scram_opaq = pg_be_scram_init(port->user_name, shadow_pass, doomed);
+
+	/*
+	 * Loop through SASL message exchange.  This exchange can consist of
+	 * multiple messages sent in both directions.  First message is always
+	 * from the client.  All messages from client to server are password
+	 * packets (type 'p').
+	 */
+	do
+	{
+		pq_startmsgread();
+		mtype = pq_getbyte();
+		if (mtype != 'p')
+		{
+			/* Only log error if client didn't disconnect. */
+			if (mtype != EOF)
+			{
+				ereport(COMMERROR,
+						(errcode(ERRCODE_PROTOCOL_VIOLATION),
+						 errmsg("expected SASL response, got message type %d",
+								mtype)));
+				return STATUS_ERROR;
+			}
+			else
+				return STATUS_EOF;
+		}
+
+		/* Get the actual SASL message */
+		initStringInfo(&buf);
+		if (pq_getmessage(&buf, PG_MAX_SASL_MESSAGE_LENGTH))
+		{
+			/* EOF - pq_getmessage already logged error */
+			pfree(buf.data);
+			return STATUS_ERROR;
+		}
+
+		elog(DEBUG4, "Processing received SASL token of length %d", buf.len);
+
+		/*
+		 * we pass 'logdetail' as NULL when doing a mock authentication,
+		 * because we should already have a better error message in that case
+		 */
+		result = pg_be_scram_exchange(scram_opaq, buf.data, buf.len,
+									  &output, &outputlen,
+									  doomed ? NULL : logdetail);
+
+		/* input buffer no longer used */
+		pfree(buf.data);
+
+		if (outputlen > 0)
+		{
+			/*
+			 * Negotiation generated data to be sent to the client.
+			 */
+			elog(DEBUG4, "sending SASL response token of length %u", outputlen);
+
+			sendAuthRequest(port, AUTH_REQ_SASL_CONT, output, outputlen);
+		}
+	} while (result == SASL_EXCHANGE_CONTINUE);
+
+	/* Oops, Something bad happened */
+	if (result != SASL_EXCHANGE_SUCCESS)
+	{
+		return STATUS_ERROR;
+	}
+
+	return STATUS_OK;
+}
 
 
 /*----------------------------------------------------------------

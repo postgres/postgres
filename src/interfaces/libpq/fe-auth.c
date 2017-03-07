@@ -40,6 +40,7 @@
 
 #include "common/md5.h"
 #include "libpq-fe.h"
+#include "libpq/scram.h"
 #include "fe-auth.h"
 
 
@@ -433,6 +434,87 @@ pg_SSPI_startup(PGconn *conn, int use_negotiate)
 #endif   /* ENABLE_SSPI */
 
 /*
+ * Initialize SASL authentication exchange.
+ */
+static bool
+pg_SASL_init(PGconn *conn, const char *auth_mechanism)
+{
+	/*
+	 * Check the authentication mechanism (only SCRAM-SHA-256 is supported at
+	 * the moment.)
+	 */
+	if (strcmp(auth_mechanism, SCRAM_SHA256_NAME) == 0)
+	{
+		char	   *password = conn->connhost[conn->whichhost].password;
+
+		if (password == NULL)
+			password = conn->pgpass;
+		conn->password_needed = true;
+		if (password == NULL || password == '\0')
+		{
+			printfPQExpBuffer(&conn->errorMessage,
+							  PQnoPasswordSupplied);
+			return STATUS_ERROR;
+		}
+
+		conn->sasl_state = pg_fe_scram_init(conn->pguser, password);
+		if (!conn->sasl_state)
+		{
+			printfPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("out of memory\n"));
+			return STATUS_ERROR;
+		}
+
+		return STATUS_OK;
+	}
+	else
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+		   libpq_gettext("SASL authentication mechanism %s not supported\n"),
+						  (char *) conn->auth_req_inbuf);
+		return STATUS_ERROR;
+	}
+}
+
+/*
+ * Exchange a message for SASL communication protocol with the backend.
+ * This should be used after calling pg_SASL_init to set up the status of
+ * the protocol.
+ */
+static int
+pg_SASL_exchange(PGconn *conn)
+{
+	char	   *output;
+	int			outputlen;
+	bool		done;
+	bool		success;
+	int			res;
+
+	pg_fe_scram_exchange(conn->sasl_state,
+						 conn->auth_req_inbuf, conn->auth_req_inlen,
+						 &output, &outputlen,
+						 &done, &success, &conn->errorMessage);
+	if (outputlen != 0)
+	{
+		/*
+		 * Send the SASL response to the server. We don't care if it's the
+		 * first or subsequent packet, just send the same kind of password
+		 * packet.
+		 */
+		res = pqPacketSend(conn, 'p', output, outputlen);
+		free(output);
+
+		if (res != STATUS_OK)
+			return STATUS_ERROR;
+	}
+
+	if (done && !success)
+		return STATUS_ERROR;
+
+	return STATUS_OK;
+}
+
+/*
  * Respond to AUTH_REQ_SCM_CREDS challenge.
  *
  * Note: this is dead code as of Postgres 9.1, because current backends will
@@ -706,6 +788,36 @@ pg_fe_sendauth(AuthRequest areq, PGconn *conn)
 				}
 				break;
 			}
+
+		case AUTH_REQ_SASL:
+
+			/*
+			 * The request contains the name (as assigned by IANA) of the
+			 * authentication mechanism.
+			 */
+			if (pg_SASL_init(conn, conn->auth_req_inbuf) != STATUS_OK)
+			{
+				/* pg_SASL_init already set the error message */
+				return STATUS_ERROR;
+			}
+			/* fall through */
+
+		case AUTH_REQ_SASL_CONT:
+			if (conn->sasl_state == NULL)
+			{
+				printfPQExpBuffer(&conn->errorMessage,
+								  "fe_sendauth: invalid authentication request from server: AUTH_REQ_SASL_CONT without AUTH_REQ_SASL\n");
+				return STATUS_ERROR;
+			}
+			if (pg_SASL_exchange(conn) != STATUS_OK)
+			{
+				/* Use error message, if set already */
+				if (conn->errorMessage.len == 0)
+					printfPQExpBuffer(&conn->errorMessage,
+							  "fe_sendauth: error in SASL authentication\n");
+				return STATUS_ERROR;
+			}
+			break;
 
 		case AUTH_REQ_SCM_CREDS:
 			if (pg_local_sendauth(conn) != STATUS_OK)

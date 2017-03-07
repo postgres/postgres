@@ -1334,14 +1334,8 @@
       <entry><structfield>rolpassword</structfield></entry>
       <entry><type>text</type></entry>
       <entry>
-       Password (possibly encrypted); null if none.  If the password
-       is encrypted, this column will begin with the string <literal>md5</>
-       followed by a 32-character hexadecimal MD5 hash.  The MD5 hash
-       will be of the user's password concatenated to their user name.
-       For example, if user <literal>joe</> has password <literal>xyzzy</>,
-       <productname>PostgreSQL</> will store the md5 hash of
-       <literal>xyzzyjoe</>.  A password that does not follow that
-       format is assumed to be unencrypted.
+       Password (possibly encrypted); null if none. The format depends
+       on the form of encryption used.
       </entry>
      </row>
 
@@ -1355,6 +1349,21 @@
    </tgroup>
   </table>
 
+  <para>
+   For an MD5 encrypted password, <structfield>rolpassword</structfield>
+   column will begin with the string <literal>md5</> followed by a
+   32-character hexadecimal MD5 hash. The MD5 hash will be of the user's
+   password concatenated to their user name. For example, if user
+   <literal>joe</> has password <literal>xyzzy</>, <productname>PostgreSQL</>
+   will store the md5 hash of <literal>xyzzyjoe</>.  If the password is
+   encrypted with SCRAM-SHA-256, it consists of 5 fields separated by colons.
+   The first field is the constant <literal>scram-sha-256</literal>, to
+   identify the password as a SCRAM-SHA-256 verifier. The second field is a
+   salt, Base64-encoded, and the third field is the number of iterations used
+   to generate the password.  The fourth field and fifth field are the stored
+   key and server key, respectively, in hexadecimal format. A password that
+   does not follow either of those formats is assumed to be unencrypted.
+  </para>
  </sect1>
 
 

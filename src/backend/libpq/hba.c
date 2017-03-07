@@ -125,6 +125,7 @@ static const char *const UserAuthName[] =
 	"ident",
 	"password",
 	"md5",
+	"scram",
 	"gss",
 	"sspi",
 	"pam",
@@ -1323,6 +1324,8 @@ parse_hba_line(TokenizedLine *tok_line, int elevel)
 		}
 		parsedline->auth_method = uaMD5;
 	}
+	else if (strcmp(token->string, "scram") == 0)
+		parsedline->auth_method = uaSASL;
 	else if (strcmp(token->string, "pam") == 0)
 #ifdef USE_PAM
 		parsedline->auth_method = uaPAM;

@@ -409,6 +409,7 @@ static const struct config_enum_entry force_parallel_mode_options[] = {
 static const struct config_enum_entry password_encryption_options[] = {
 	{"plain", PASSWORD_TYPE_PLAINTEXT, false},
 	{"md5", PASSWORD_TYPE_MD5, false},
+	{"scram", PASSWORD_TYPE_SCRAM, false},
 	{"off", PASSWORD_TYPE_PLAINTEXT, false},
 	{"on", PASSWORD_TYPE_MD5, false},
 	{"true", PASSWORD_TYPE_MD5, true},

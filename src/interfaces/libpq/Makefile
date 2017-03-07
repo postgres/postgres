@@ -31,7 +31,7 @@ LIBS := $(LIBS:-lpgport=)
 
 # We can't use Makefile variables here because the MSVC build system scrapes
 # OBJS from this file.
-OBJS=	fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
+OBJS=	fe-auth.o fe-auth-scram.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
 	fe-protocol2.o fe-protocol3.o pqexpbuffer.o fe-secure.o \
 	libpq-events.o
 # libpgport C files we always use
@@ -39,13 +39,22 @@ OBJS += chklocale.o inet_net_ntop.o noblock.o pgstrcasecmp.o pqsignal.o \
 	thread.o
 # libpgport C files that are needed if identified by configure
 OBJS += $(filter crypt.o getaddrinfo.o getpeereid.o inet_aton.o open.o system.o snprintf.o strerror.o strlcpy.o win32error.o win32setlocale.o, $(LIBOBJS))
+
+ifeq ($(enable_strong_random), yes)
+OBJS += pg_strong_random.o
+else
+OBJS += erand48.o
+endif
+
 # src/backend/utils/mb
 OBJS += encnames.o wchar.o
 # src/common
-OBJS += ip.o md5.o
+OBJS += base64.o ip.o md5.o scram-common.o
 
 ifeq ($(with_openssl),yes)
-OBJS += fe-secure-openssl.o
+OBJS += fe-secure-openssl.o sha2_openssl.o
+else
+OBJS += sha2.o
 endif
 
 ifeq ($(PORTNAME), cygwin)
@@ -93,13 +102,16 @@ backend_src = $(top_srcdir)/src/backend
 # For some libpgport modules, this only happens if configure decides
 # the module is needed (see filter hack in OBJS, above).
 
-chklocale.c crypt.c getaddrinfo.c getpeereid.c inet_aton.c inet_net_ntop.c noblock.c open.c system.c pgsleep.c pgstrcasecmp.c pqsignal.c snprintf.c strerror.c strlcpy.c thread.c win32error.c win32setlocale.c: % : $(top_srcdir)/src/port/%
+chklocale.c crypt.c erand48.c getaddrinfo.c getpeereid.c inet_aton.c inet_net_ntop.c noblock.c open.c system.c pgsleep.c pg_strong_random.c pgstrcasecmp.c pqsignal.c snprintf.c strerror.c strlcpy.c thread.c win32error.c win32setlocale.c: % : $(top_srcdir)/src/port/%
 	rm -f $@ && $(LN_S) $< .
 
 ip.c md5.c: % : $(top_srcdir)/src/common/%
 	rm -f $@ && $(LN_S) $< .
 
 encnames.c wchar.c: % : $(backend_src)/utils/mb/%
+	rm -f $@ && $(LN_S) $< .
+
+base64.c scram-common.c sha2.c sha2_openssl.c: % : $(top_srcdir)/src/common/%
 	rm -f $@ && $(LN_S) $< .
 
 

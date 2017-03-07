@@ -139,7 +139,12 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 						 parser_errposition(pstate, defel->location)));
 			dpassword = defel;
 			if (strcmp(defel->defname, "encryptedPassword") == 0)
-				password_type = PASSWORD_TYPE_MD5;
+			{
+				if (Password_encryption == PASSWORD_TYPE_SCRAM)
+					password_type = PASSWORD_TYPE_SCRAM;
+				else
+					password_type = PASSWORD_TYPE_MD5;
+			}
 			else if (strcmp(defel->defname, "unencryptedPassword") == 0)
 				password_type = PASSWORD_TYPE_PLAINTEXT;
 		}
@@ -542,7 +547,12 @@ AlterRole(AlterRoleStmt *stmt)
 						 errmsg("conflicting or redundant options")));
 			dpassword = defel;
 			if (strcmp(defel->defname, "encryptedPassword") == 0)
-				password_type = PASSWORD_TYPE_MD5;
+			{
+				if (Password_encryption == PASSWORD_TYPE_SCRAM)
+					password_type = PASSWORD_TYPE_SCRAM;
+				else
+					password_type = PASSWORD_TYPE_MD5;
+			}
 			else if (strcmp(defel->defname, "unencryptedPassword") == 0)
 				password_type = PASSWORD_TYPE_PLAINTEXT;
 		}

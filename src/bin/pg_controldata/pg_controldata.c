@@ -92,11 +92,13 @@ main(int argc, char *argv[])
 	char		pgctime_str[128];
 	char		ckpttime_str[128];
 	char		sysident_str[32];
+	char		mock_auth_nonce_str[MOCK_AUTH_NONCE_LEN * 2 + 1];
 	const char *strftime_fmt = "%c";
 	const char *progname;
 	XLogSegNo	segno;
 	char		xlogfilename[MAXFNAMELEN];
 	int			c;
+	int			i;
 
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_controldata"));
 
@@ -186,11 +188,15 @@ main(int argc, char *argv[])
 	XLogFileName(xlogfilename, ControlFile->checkPointCopy.ThisTimeLineID, segno);
 
 	/*
-	 * Format system_identifier separately to keep platform-dependent format
-	 * code out of the translatable message string.
+	 * Format system_identifier and mock_authentication_nonce separately to
+	 * keep platform-dependent format code out of the translatable message
+	 * string.
 	 */
 	snprintf(sysident_str, sizeof(sysident_str), UINT64_FORMAT,
 			 ControlFile->system_identifier);
+	for (i = 0; i < MOCK_AUTH_NONCE_LEN; i++)
+		snprintf(&mock_auth_nonce_str[i * 2], 3, "%02x",
+				 (unsigned char) ControlFile->mock_authentication_nonce[i]);
 
 	printf(_("pg_control version number:            %u\n"),
 		   ControlFile->pg_control_version);
@@ -302,5 +308,7 @@ main(int argc, char *argv[])
 		   (ControlFile->float8ByVal ? _("by value") : _("by reference")));
 	printf(_("Data page checksum version:           %u\n"),
 		   ControlFile->data_checksum_version);
+	printf(_("Mock authentication nonce:            %s\n"),
+		   mock_auth_nonce_str);
 	return 0;
 }

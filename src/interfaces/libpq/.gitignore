@@ -1,4 +1,5 @@
 /exports.list
+/base64.c
 /chklocale.c
 /crypt.c
 /getaddrinfo.c
@@ -7,8 +8,12 @@
 /inet_net_ntop.c
 /noblock.c
 /open.c
+/pg_strong_random.c
 /pgstrcasecmp.c
 /pqsignal.c
+/scram-common.c
+/sha2.c
+/sha2_openssl.c
 /snprintf.c
 /strerror.c
 /strlcpy.c

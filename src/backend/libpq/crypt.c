@@ -21,6 +21,7 @@
 #include "catalog/pg_authid.h"
 #include "common/md5.h"
 #include "libpq/crypt.h"
+#include "libpq/scram.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
@@ -111,6 +112,8 @@ get_password_type(const char *shadow_pass)
 {
 	if (strncmp(shadow_pass, "md5", 3) == 0 && strlen(shadow_pass) == MD5_PASSWD_LEN)
 		return PASSWORD_TYPE_MD5;
+	if (strncmp(shadow_pass, "scram-sha-256:", strlen("scram-sha-256:")) == 0)
+		return PASSWORD_TYPE_SCRAM;
 	return PASSWORD_TYPE_PLAINTEXT;
 }
 
@@ -150,7 +153,29 @@ encrypt_password(PasswordType target_type, const char *role,
 						elog(ERROR, "password encryption failed");
 					return encrypted_password;
 
+				case PASSWORD_TYPE_SCRAM:
+
+					/*
+					 * cannot convert a SCRAM verifier to an MD5 hash, so fall
+					 * through to save the SCRAM verifier instead.
+					 */
 				case PASSWORD_TYPE_MD5:
+					return pstrdup(password);
+			}
+
+		case PASSWORD_TYPE_SCRAM:
+			switch (guessed_type)
+			{
+				case PASSWORD_TYPE_PLAINTEXT:
+					return scram_build_verifier(role, password, 0);
+
+				case PASSWORD_TYPE_MD5:
+
+					/*
+					 * cannot convert an MD5 hash to a SCRAM verifier, so fall
+					 * through to save the MD5 hash instead.
+					 */
+				case PASSWORD_TYPE_SCRAM:
 					return pstrdup(password);
 			}
 	}
@@ -160,7 +185,7 @@ encrypt_password(PasswordType target_type, const char *role,
 	 * handle every combination of source and target password types.
 	 */
 	elog(ERROR, "cannot encrypt password to requested type");
-	return NULL;		/* keep compiler quiet */
+	return NULL;				/* keep compiler quiet */
 }
 
 /*

@@ -1,7 +1,3 @@
-# Source file copied from src/common
-/sha2.c
-/sha2_openssl.c
-
 # Generated subdirectories
 /log/
 /results/

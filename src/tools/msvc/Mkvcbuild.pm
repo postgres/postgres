@@ -110,9 +110,9 @@ sub mkvcbuild
 	}
 
 	our @pgcommonallfiles = qw(
-	  config_info.c controldata_utils.c exec.c ip.c keywords.c
+	  base64.c config_info.c controldata_utils.c exec.c ip.c keywords.c
 	  md5.c pg_lzcompress.c pgfnames.c psprintf.c relpath.c rmtree.c
-	  string.c username.c wait_error.c);
+	  scram-common.c string.c username.c wait_error.c);
 
 	if ($solution->{options}->{openssl})
 	{
@@ -233,10 +233,16 @@ sub mkvcbuild
 	$libpq->AddReference($libpgport);
 
    # The OBJS scraper doesn't know about ifdefs, so remove fe-secure-openssl.c
-   # if building without OpenSSL
+   # and sha2_openssl.c if building without OpenSSL, and remove sha2.c if
+   # building with OpenSSL.
 	if (!$solution->{options}->{openssl})
 	{
 		$libpq->RemoveFile('src/interfaces/libpq/fe-secure-openssl.c');
+		$libpq->RemoveFile('src/common/sha2_openssl.c');
+	}
+	else
+	{
+		$libpq->RemoveFile('src/common/sha2.c');
 	}
 
 	my $libpqwalreceiver =

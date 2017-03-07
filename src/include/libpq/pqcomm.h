@@ -172,6 +172,8 @@ extern bool Db_user_namespace;
 #define AUTH_REQ_GSS		7	/* GSSAPI without wrap() */
 #define AUTH_REQ_GSS_CONT	8	/* Continue GSS exchanges */
 #define AUTH_REQ_SSPI		9	/* SSPI negotiate without wrap() */
+#define AUTH_REQ_SASL	   10	/* SASL */
+#define AUTH_REQ_SASL_CONT 11	/* continue SASL exchange */
 
 typedef uint32 AuthRequest;
 

@@ -231,12 +231,17 @@ CREATE ROLE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replac
         encrypted in the system catalogs.  (If neither is specified,
         the default behavior is determined by the configuration
         parameter <xref linkend="guc-password-encryption">.)  If the
-        presented password string is already in MD5-encrypted format,
-        then it is stored encrypted as-is, regardless of whether
-        <literal>ENCRYPTED</> or <literal>UNENCRYPTED</> is specified
-        (since the system cannot decrypt the specified encrypted
-        password string).  This allows reloading of encrypted
-        passwords during dump/restore.
+        presented password string is already in MD5-encrypted or
+        SCRAM-encrypted format, then it is stored encrypted as-is,
+        regardless of whether <literal>ENCRYPTED</> or <literal>UNENCRYPTED</>
+        is specified (since the system cannot decrypt the specified encrypted
+        password string).  This allows reloading of encrypted passwords
+        during dump/restore.
+       </para>
+
+       <para>
+        Note that older clients might lack support for the SCRAM
+        authentication mechanism.
        </para>
       </listitem>
      </varlistentry>
