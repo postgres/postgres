@@ -532,11 +532,32 @@
 
   <para>
    <filename>postgres_fdw</> likewise establishes remote session settings
-   for the parameters <xref linkend="guc-timezone">,
-   <xref linkend="guc-datestyle">, <xref linkend="guc-intervalstyle">,
-   and <xref linkend="guc-extra-float-digits">.  These are less likely
-   to be problematic than <varname>search_path</>, but can be handled
-   with function <literal>SET</> options if the need arises.
+   for various parameters: 
+   <itemizedlist spacing="compact">
+    <listitem>
+     <para>
+      <xref linkend="guc-timezone"> is set to <literal>UTC</>
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <xref linkend="guc-datestyle"> is set to <literal>ISO</>
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <xref linkend="guc-intervalstyle"> is set to <literal>postgres</>
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <xref linkend="guc-extra-float-digits"> is set to <literal>3</> for remote
+      servers 9.0 and newer and is set to <literal>2</> for older versions
+     </para>
+    </listitem>
+   </itemizedlist>
+   These are less likely to be problematic than <varname>search_path</>, but 
+   can be handled with function <literal>SET</> options if the need arises.
   </para>
 
   <para>
