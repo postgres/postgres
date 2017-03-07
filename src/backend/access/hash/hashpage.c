@@ -157,6 +157,36 @@ _hash_getinitbuf(Relation rel, BlockNumber blkno)
 }
 
 /*
+ *	_hash_initbuf() -- Get and initialize a buffer by bucket number.
+ */
+void
+_hash_initbuf(Buffer buf, uint32 max_bucket, uint32 num_bucket, uint32 flag,
+			  bool initpage)
+{
+	HashPageOpaque pageopaque;
+	Page		page;
+
+	page = BufferGetPage(buf);
+
+	/* initialize the page */
+	if (initpage)
+		_hash_pageinit(page, BufferGetPageSize(buf));
+
+	pageopaque = (HashPageOpaque) PageGetSpecialPointer(page);
+
+	/*
+	 * Set hasho_prevblkno with current hashm_maxbucket. This value will
+	 * be used to validate cached HashMetaPageData. See
+	 * _hash_getbucketbuf_from_hashkey().
+	 */
+	pageopaque->hasho_prevblkno = max_bucket;
+	pageopaque->hasho_nextblkno = InvalidBlockNumber;
+	pageopaque->hasho_bucket = num_bucket;
+	pageopaque->hasho_flag = flag;
+	pageopaque->hasho_page_id = HASHO_PAGE_ID;
+}
+
+/*
  *	_hash_getnewbuf() -- Get a new page at the end of the index.
  *
  *		This has the same API as _hash_getinitbuf, except that we are adding
@@ -288,7 +318,7 @@ _hash_dropscanbuf(Relation rel, HashScanOpaque so)
 
 
 /*
- *	_hash_metapinit() -- Initialize the metadata page of a hash index,
+ *	_hash_init() -- Initialize the metadata page of a hash index,
  *				the initial buckets, and the initial bitmap page.
  *
  * The initial number of buckets is dependent on num_tuples, an estimate
@@ -300,19 +330,18 @@ _hash_dropscanbuf(Relation rel, HashScanOpaque so)
  * multiple buffer locks is ignored.
  */
 uint32
-_hash_metapinit(Relation rel, double num_tuples, ForkNumber forkNum)
+_hash_init(Relation rel, double num_tuples, ForkNumber forkNum)
 {
-	HashMetaPage metap;
-	HashPageOpaque pageopaque;
 	Buffer		metabuf;
 	Buffer		buf;
+	Buffer		bitmapbuf;
 	Page		pg;
+	HashMetaPage metap;
+	RegProcedure procid;
 	int32		data_width;
 	int32		item_width;
 	int32		ffactor;
-	double		dnumbuckets;
 	uint32		num_buckets;
-	uint32		log2_num_buckets;
 	uint32		i;
 
 	/* safety check */
@@ -334,6 +363,96 @@ _hash_metapinit(Relation rel, double num_tuples, ForkNumber forkNum)
 	if (ffactor < 10)
 		ffactor = 10;
 
+	procid = index_getprocid(rel, 1, HASHPROC);
+
+	/*
+	 * We initialize the metapage, the first N bucket pages, and the first
+	 * bitmap page in sequence, using _hash_getnewbuf to cause smgrextend()
+	 * calls to occur.  This ensures that the smgr level has the right idea of
+	 * the physical index length.
+	 *
+	 * Critical section not required, because on error the creation of the
+	 * whole relation will be rolled back.
+	 */
+	metabuf = _hash_getnewbuf(rel, HASH_METAPAGE, forkNum);
+	_hash_init_metabuffer(metabuf, num_tuples, procid, ffactor, false);
+	MarkBufferDirty(metabuf);
+
+	pg = BufferGetPage(metabuf);
+	metap = HashPageGetMeta(pg);
+
+	num_buckets = metap->hashm_maxbucket + 1;
+
+	/*
+	 * Release buffer lock on the metapage while we initialize buckets.
+	 * Otherwise, we'll be in interrupt holdoff and the CHECK_FOR_INTERRUPTS
+	 * won't accomplish anything.  It's a bad idea to hold buffer locks for
+	 * long intervals in any case, since that can block the bgwriter.
+	 */
+	LockBuffer(metabuf, BUFFER_LOCK_UNLOCK);
+
+	/*
+	 * Initialize and WAL Log the first N buckets
+	 */
+	for (i = 0; i < num_buckets; i++)
+	{
+		BlockNumber blkno;
+
+		/* Allow interrupts, in case N is huge */
+		CHECK_FOR_INTERRUPTS();
+
+		blkno = BUCKET_TO_BLKNO(metap, i);
+		buf = _hash_getnewbuf(rel, blkno, forkNum);
+		_hash_initbuf(buf, metap->hashm_maxbucket, i, LH_BUCKET_PAGE, false);
+		MarkBufferDirty(buf);
+		_hash_relbuf(rel, buf);
+	}
+
+	/* Now reacquire buffer lock on metapage */
+	LockBuffer(metabuf, BUFFER_LOCK_EXCLUSIVE);
+
+	/*
+	 * Initialize bitmap page
+	 */
+	bitmapbuf = _hash_getnewbuf(rel, num_buckets + 1, forkNum);
+	_hash_initbitmapbuffer(bitmapbuf, metap->hashm_bmsize, false);
+	MarkBufferDirty(bitmapbuf);
+
+	/* add the new bitmap page to the metapage's list of bitmaps */
+	/* metapage already has a write lock */
+	if (metap->hashm_nmaps >= HASH_MAX_BITMAPS)
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("out of overflow pages in hash index \"%s\"",
+						RelationGetRelationName(rel))));
+
+	metap->hashm_mapp[metap->hashm_nmaps] = num_buckets + 1;
+
+	metap->hashm_nmaps++;
+	MarkBufferDirty(metabuf);
+
+	/* all done */
+	_hash_relbuf(rel, bitmapbuf);
+	_hash_relbuf(rel, metabuf);
+
+	return num_buckets;
+}
+
+/*
+ *	_hash_init_metabuffer() -- Initialize the metadata page of a hash index.
+ */
+void
+_hash_init_metabuffer(Buffer buf, double num_tuples, RegProcedure procid,
+					  uint16 ffactor, bool initpage)
+{
+	HashMetaPage metap;
+	HashPageOpaque pageopaque;
+	Page		page;
+	double		dnumbuckets;
+	uint32		num_buckets;
+	uint32		log2_num_buckets;
+	uint32		i;
+
 	/*
 	 * Choose the number of initial bucket pages to match the fill factor
 	 * given the estimated number of tuples.  We round up the result to the
@@ -353,30 +472,25 @@ _hash_metapinit(Relation rel, double num_tuples, ForkNumber forkNum)
 	Assert(num_buckets == (((uint32) 1) << log2_num_buckets));
 	Assert(log2_num_buckets < HASH_MAX_SPLITPOINTS);
 
-	/*
-	 * We initialize the metapage, the first N bucket pages, and the first
-	 * bitmap page in sequence, using _hash_getnewbuf to cause smgrextend()
-	 * calls to occur.  This ensures that the smgr level has the right idea of
-	 * the physical index length.
-	 */
-	metabuf = _hash_getnewbuf(rel, HASH_METAPAGE, forkNum);
-	pg = BufferGetPage(metabuf);
+	page = BufferGetPage(buf);
+	if (initpage)
+		_hash_pageinit(page, BufferGetPageSize(buf));
 
-	pageopaque = (HashPageOpaque) PageGetSpecialPointer(pg);
+	pageopaque = (HashPageOpaque) PageGetSpecialPointer(page);
 	pageopaque->hasho_prevblkno = InvalidBlockNumber;
 	pageopaque->hasho_nextblkno = InvalidBlockNumber;
 	pageopaque->hasho_bucket = -1;
 	pageopaque->hasho_flag = LH_META_PAGE;
 	pageopaque->hasho_page_id = HASHO_PAGE_ID;
 
-	metap = HashPageGetMeta(pg);
+	metap = HashPageGetMeta(page);
 
 	metap->hashm_magic = HASH_MAGIC;
 	metap->hashm_version = HASH_VERSION;
 	metap->hashm_ntuples = 0;
 	metap->hashm_nmaps = 0;
 	metap->hashm_ffactor = ffactor;
-	metap->hashm_bsize = HashGetMaxBitmapSize(pg);
+	metap->hashm_bsize = HashGetMaxBitmapSize(page);
 	/* find largest bitmap array size that will fit in page size */
 	for (i = _hash_log2(metap->hashm_bsize); i > 0; --i)
 	{
@@ -393,7 +507,7 @@ _hash_metapinit(Relation rel, double num_tuples, ForkNumber forkNum)
 	 * pretty useless for normal operation (in fact, hashm_procid is not used
 	 * anywhere), but it might be handy for forensic purposes so we keep it.
 	 */
-	metap->hashm_procid = index_getprocid(rel, 1, HASHPROC);
+	metap->hashm_procid = procid;
 
 	/*
 	 * We initialize the index with N buckets, 0 .. N-1, occupying physical
@@ -411,54 +525,9 @@ _hash_metapinit(Relation rel, double num_tuples, ForkNumber forkNum)
 	metap->hashm_ovflpoint = log2_num_buckets;
 	metap->hashm_firstfree = 0;
 
-	/*
-	 * Release buffer lock on the metapage while we initialize buckets.
-	 * Otherwise, we'll be in interrupt holdoff and the CHECK_FOR_INTERRUPTS
-	 * won't accomplish anything.  It's a bad idea to hold buffer locks for
-	 * long intervals in any case, since that can block the bgwriter.
-	 */
-	MarkBufferDirty(metabuf);
-	LockBuffer(metabuf, BUFFER_LOCK_UNLOCK);
-
-	/*
-	 * Initialize the first N buckets
-	 */
-	for (i = 0; i < num_buckets; i++)
-	{
-		/* Allow interrupts, in case N is huge */
-		CHECK_FOR_INTERRUPTS();
-
-		buf = _hash_getnewbuf(rel, BUCKET_TO_BLKNO(metap, i), forkNum);
-		pg = BufferGetPage(buf);
-		pageopaque = (HashPageOpaque) PageGetSpecialPointer(pg);
-
-		/*
-		 * Set hasho_prevblkno with current hashm_maxbucket. This value will
-		 * be used to validate cached HashMetaPageData. See
-		 * _hash_getbucketbuf_from_hashkey().
-		 */
-		pageopaque->hasho_prevblkno = metap->hashm_maxbucket;
-		pageopaque->hasho_nextblkno = InvalidBlockNumber;
-		pageopaque->hasho_bucket = i;
-		pageopaque->hasho_flag = LH_BUCKET_PAGE;
-		pageopaque->hasho_page_id = HASHO_PAGE_ID;
-		MarkBufferDirty(buf);
-		_hash_relbuf(rel, buf);
-	}
-
-	/* Now reacquire buffer lock on metapage */
-	LockBuffer(metabuf, BUFFER_LOCK_EXCLUSIVE);
-
-	/*
-	 * Initialize first bitmap page
-	 */
-	_hash_initbitmap(rel, metap, num_buckets + 1, forkNum);
-
-	/* all done */
-	MarkBufferDirty(metabuf);
-	_hash_relbuf(rel, metabuf);
-
-	return num_buckets;
+	/* Set pd_lower just past the end of the metadata. */
+	((PageHeader) page)->pd_lower =
+		((char *) metap + sizeof(HashMetaPageData)) - (char *) page;
 }
 
 /*
@@ -535,7 +604,7 @@ restart_expand:
 	 * than a disk block then this would be an independent constraint.
 	 *
 	 * If you change this, see also the maximum initial number of buckets in
-	 * _hash_metapinit().
+	 * _hash_init().
 	 */
 	if (metap->hashm_maxbucket >= (uint32) 0x7FFFFFFE)
 		goto fail;

@@ -571,68 +571,6 @@ _hash_freeovflpage(Relation rel, Buffer bucketbuf, Buffer ovflbuf,
 
 
 /*
- *	_hash_initbitmap()
- *
- *	 Initialize a new bitmap page.  The metapage has a write-lock upon
- *	 entering the function, and must be written by caller after return.
- *
- * 'blkno' is the block number of the new bitmap page.
- *
- * All bits in the new bitmap page are set to "1", indicating "in use".
- */
-void
-_hash_initbitmap(Relation rel, HashMetaPage metap, BlockNumber blkno,
-				 ForkNumber forkNum)
-{
-	Buffer		buf;
-	Page		pg;
-	HashPageOpaque op;
-	uint32	   *freep;
-
-	/*
-	 * It is okay to write-lock the new bitmap page while holding metapage
-	 * write lock, because no one else could be contending for the new page.
-	 * Also, the metapage lock makes it safe to extend the index using
-	 * _hash_getnewbuf.
-	 *
-	 * There is some loss of concurrency in possibly doing I/O for the new
-	 * page while holding the metapage lock, but this path is taken so seldom
-	 * that it's not worth worrying about.
-	 */
-	buf = _hash_getnewbuf(rel, blkno, forkNum);
-	pg = BufferGetPage(buf);
-
-	/* initialize the page's special space */
-	op = (HashPageOpaque) PageGetSpecialPointer(pg);
-	op->hasho_prevblkno = InvalidBlockNumber;
-	op->hasho_nextblkno = InvalidBlockNumber;
-	op->hasho_bucket = -1;
-	op->hasho_flag = LH_BITMAP_PAGE;
-	op->hasho_page_id = HASHO_PAGE_ID;
-
-	/* set all of the bits to 1 */
-	freep = HashPageGetBitmap(pg);
-	MemSet(freep, 0xFF, BMPGSZ_BYTE(metap));
-
-	/* dirty the new bitmap page, and release write lock and pin */
-	MarkBufferDirty(buf);
-	_hash_relbuf(rel, buf);
-
-	/* add the new bitmap page to the metapage's list of bitmaps */
-	/* metapage already has a write lock */
-	if (metap->hashm_nmaps >= HASH_MAX_BITMAPS)
-		ereport(ERROR,
-				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("out of overflow pages in hash index \"%s\"",
-						RelationGetRelationName(rel))));
-
-	metap->hashm_mapp[metap->hashm_nmaps] = blkno;
-
-	metap->hashm_nmaps++;
-}
-
-
-/*
  *	_hash_initbitmapbuffer()
  *
  *	 Initialize a new bitmap page.  All bits in the new bitmap page are set to

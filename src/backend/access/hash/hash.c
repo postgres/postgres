@@ -120,7 +120,7 @@ hashbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 	estimate_rel_size(heap, NULL, &relpages, &reltuples, &allvisfrac);
 
 	/* Initialize the hash index metadata page and initial buckets */
-	num_buckets = _hash_metapinit(index, reltuples, MAIN_FORKNUM);
+	num_buckets = _hash_init(index, reltuples, MAIN_FORKNUM);
 
 	/*
 	 * If we just insert the tuples into the index in scan order, then
@@ -182,7 +182,7 @@ hashbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 void
 hashbuildempty(Relation index)
 {
-	_hash_metapinit(index, 0, INIT_FORKNUM);
+	_hash_init(index, 0, INIT_FORKNUM);
 }
 
 /*
