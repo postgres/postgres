@@ -939,7 +939,7 @@ pg_current_logfile(PG_FUNCTION_ARGS)
 		log_filepath = strchr(lbuffer, ' ');
 		if (log_filepath == NULL)
 		{
-			/* Uh oh.  No newline found, so file content is corrupted. */
+			/* Uh oh.  No space found, so file content is corrupted. */
 			elog(ERROR,
 				 "missing space character in \"%s\"", LOG_METAINFO_DATAFILE);
 			break;
