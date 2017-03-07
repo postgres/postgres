@@ -15,6 +15,7 @@
 
 #include "access/htup_details.h"
 #include "access/xact.h"
+#include "catalog/objectaccess.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "commands/event_trigger.h"
@@ -25,11 +26,14 @@
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
+#include "parser/parse_func.h"
 #include "parser/parse_type.h"
+#include "pgstat.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
+#include "utils/regproc.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
 #include "utils/typcache.h"
@@ -226,6 +230,8 @@ typedef struct pltcl_call_state
 /**********************************************************************
  * Global data
  **********************************************************************/
+static char *pltcl_start_proc = NULL;
+static char *pltclu_start_proc = NULL;
 static bool pltcl_pm_init_done = false;
 static Tcl_Interp *pltcl_hold_interp = NULL;
 static HTAB *pltcl_interp_htab = NULL;
@@ -253,8 +259,11 @@ static const TclExceptionNameMap exception_name_map[] = {
  **********************************************************************/
 void		_PG_init(void);
 
-static void pltcl_init_interp(pltcl_interp_desc *interp_desc, bool pltrusted);
-static pltcl_interp_desc *pltcl_fetch_interp(bool pltrusted);
+static void pltcl_init_interp(pltcl_interp_desc *interp_desc,
+				  Oid prolang, bool pltrusted);
+static pltcl_interp_desc *pltcl_fetch_interp(Oid prolang, bool pltrusted);
+static void call_pltcl_start_proc(Oid prolang, bool pltrusted);
+static void start_proc_error_callback(void *arg);
 
 static Datum pltcl_handler(PG_FUNCTION_ARGS, bool pltrusted);
 
@@ -441,6 +450,24 @@ _PG_init(void)
 								  &hash_ctl,
 								  HASH_ELEM | HASH_BLOBS);
 
+	/************************************************************
+	 * Define PL/Tcl's custom GUCs
+	 ************************************************************/
+	DefineCustomStringVariable("pltcl.start_proc",
+	  gettext_noop("PL/Tcl function to call once when pltcl is first used."),
+							   NULL,
+							   &pltcl_start_proc,
+							   NULL,
+							   PGC_SUSET, 0,
+							   NULL, NULL, NULL);
+	DefineCustomStringVariable("pltclu.start_proc",
+	gettext_noop("PL/TclU function to call once when pltclu is first used."),
+							   NULL,
+							   &pltclu_start_proc,
+							   NULL,
+							   PGC_SUSET, 0,
+							   NULL, NULL, NULL);
+
 	pltcl_pm_init_done = true;
 }
 
@@ -448,7 +475,7 @@ _PG_init(void)
  * pltcl_init_interp() - initialize a new Tcl interpreter
  **********************************************************************/
 static void
-pltcl_init_interp(pltcl_interp_desc *interp_desc, bool pltrusted)
+pltcl_init_interp(pltcl_interp_desc *interp_desc, Oid prolang, bool pltrusted)
 {
 	Tcl_Interp *interp;
 	char		interpname[32];
@@ -462,7 +489,6 @@ pltcl_init_interp(pltcl_interp_desc *interp_desc, bool pltrusted)
 	if ((interp = Tcl_CreateSlave(pltcl_hold_interp, interpname,
 								  pltrusted ? 1 : 0)) == NULL)
 		elog(ERROR, "could not create slave Tcl interpreter");
-	interp_desc->interp = interp;
 
 	/************************************************************
 	 * Initialize the query hash table associated with interpreter
@@ -490,16 +516,35 @@ pltcl_init_interp(pltcl_interp_desc *interp_desc, bool pltrusted)
 						 pltcl_SPI_execute_plan, NULL, NULL);
 	Tcl_CreateObjCommand(interp, "spi_lastoid",
 						 pltcl_SPI_lastoid, NULL, NULL);
+
+	/************************************************************
+	 * Call the appropriate start_proc, if there is one.
+	 *
+	 * We must set interp_desc->interp before the call, else the start_proc
+	 * won't find the interpreter it's supposed to use.  But, if the
+	 * start_proc fails, we want to abandon use of the interpreter.
+	 ************************************************************/
+	PG_TRY();
+	{
+		interp_desc->interp = interp;
+		call_pltcl_start_proc(prolang, pltrusted);
+	}
+	PG_CATCH();
+	{
+		interp_desc->interp = NULL;
+		Tcl_DeleteInterp(interp);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
 }
 
 /**********************************************************************
  * pltcl_fetch_interp() - fetch the Tcl interpreter to use for a function
  *
  * This also takes care of any on-first-use initialization required.
- * Note: we assume caller has already connected to SPI.
  **********************************************************************/
 static pltcl_interp_desc *
-pltcl_fetch_interp(bool pltrusted)
+pltcl_fetch_interp(Oid prolang, bool pltrusted)
 {
 	Oid			user_id;
 	pltcl_interp_desc *interp_desc;
@@ -515,9 +560,114 @@ pltcl_fetch_interp(bool pltrusted)
 							  HASH_ENTER,
 							  &found);
 	if (!found)
-		pltcl_init_interp(interp_desc, pltrusted);
+		interp_desc->interp = NULL;
+
+	/* If we haven't yet successfully made an interpreter, try to do that */
+	if (!interp_desc->interp)
+		pltcl_init_interp(interp_desc, prolang, pltrusted);
 
 	return interp_desc;
+}
+
+
+/**********************************************************************
+ * call_pltcl_start_proc()	 - Call user-defined initialization proc, if any
+ **********************************************************************/
+static void
+call_pltcl_start_proc(Oid prolang, bool pltrusted)
+{
+	char	   *start_proc;
+	const char *gucname;
+	ErrorContextCallback errcallback;
+	List	   *namelist;
+	Oid			fargtypes[1];	/* dummy */
+	Oid			procOid;
+	HeapTuple	procTup;
+	Form_pg_proc procStruct;
+	AclResult	aclresult;
+	FmgrInfo	finfo;
+	FunctionCallInfoData fcinfo;
+	PgStat_FunctionCallUsage fcusage;
+
+	/* select appropriate GUC */
+	start_proc = pltrusted ? pltcl_start_proc : pltclu_start_proc;
+	gucname = pltrusted ? "pltcl.start_proc" : "pltclu.start_proc";
+
+	/* Nothing to do if it's empty or unset */
+	if (start_proc == NULL || start_proc[0] == '\0')
+		return;
+
+	/* Set up errcontext callback to make errors more helpful */
+	errcallback.callback = start_proc_error_callback;
+	errcallback.arg = (void *) gucname;
+	errcallback.previous = error_context_stack;
+	error_context_stack = &errcallback;
+
+	/* Parse possibly-qualified identifier and look up the function */
+	namelist = stringToQualifiedNameList(start_proc);
+	procOid = LookupFuncName(namelist, 0, fargtypes, false);
+
+	/* Current user must have permission to call function */
+	aclresult = pg_proc_aclcheck(procOid, GetUserId(), ACL_EXECUTE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, ACL_KIND_PROC, start_proc);
+
+	/* Get the function's pg_proc entry */
+	procTup = SearchSysCache1(PROCOID, ObjectIdGetDatum(procOid));
+	if (!HeapTupleIsValid(procTup))
+		elog(ERROR, "cache lookup failed for function %u", procOid);
+	procStruct = (Form_pg_proc) GETSTRUCT(procTup);
+
+	/* It must be same language as the function we're currently calling */
+	if (procStruct->prolang != prolang)
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("function \"%s\" is in the wrong language",
+						start_proc)));
+
+	/*
+	 * It must not be SECURITY DEFINER, either.  This together with the
+	 * language match check ensures that the function will execute in the same
+	 * Tcl interpreter we just finished initializing.
+	 */
+	if (procStruct->prosecdef)
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("function \"%s\" must not be SECURITY DEFINER",
+						start_proc)));
+
+	/* A-OK */
+	ReleaseSysCache(procTup);
+
+	/*
+	 * Call the function using the normal SQL function call mechanism.  We
+	 * could perhaps cheat and jump directly to pltcl_handler(), but it seems
+	 * better to do it this way so that the call is exposed to, eg, call
+	 * statistics collection.
+	 */
+	InvokeFunctionExecuteHook(procOid);
+	fmgr_info(procOid, &finfo);
+	InitFunctionCallInfoData(fcinfo, &finfo,
+							 0,
+							 InvalidOid, NULL, NULL);
+	pgstat_init_function_usage(&fcinfo, &fcusage);
+	(void) FunctionCallInvoke(&fcinfo);
+	pgstat_end_function_usage(&fcusage, true);
+
+	/* Pop the error context stack */
+	error_context_stack = errcallback.previous;
+}
+
+/*
+ * Error context callback for errors occurring during start_proc processing.
+ */
+static void
+start_proc_error_callback(void *arg)
+{
+	const char *gucname = (const char *) arg;
+
+	/* translator: %s is "pltcl.start_proc" or "pltclu.start_proc" */
+	errcontext("processing %s parameter", gucname);
 }
 
 
@@ -1319,7 +1469,8 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid,
 		/************************************************************
 		 * Identify the interpreter to use for the function
 		 ************************************************************/
-		prodesc->interp_desc = pltcl_fetch_interp(prodesc->lanpltrusted);
+		prodesc->interp_desc = pltcl_fetch_interp(procStruct->prolang,
+												  prodesc->lanpltrusted);
 		interp = prodesc->interp_desc->interp;
 
 		/************************************************************

@@ -902,6 +902,80 @@ if {[catch { spi_exec $sql_command }]} {
     </para>
    </sect1>
 
+   <sect1 id="pltcl-config">
+    <title>PL/Tcl Configuration</title>
+
+    <para>
+     This section lists configuration parameters that
+     affect <application>PL/Tcl</>.
+    </para>
+
+    <variablelist>
+
+     <varlistentry id="guc-pltcl-start-proc" xreflabel="pltcl.start_proc">
+      <term>
+       <varname>pltcl.start_proc</varname> (<type>string</type>)
+       <indexterm>
+        <primary><varname>pltcl.start_proc</> configuration parameter</primary>
+       </indexterm>
+      </term>
+      <listitem>
+       <para>
+        This parameter, if set to a nonempty string, specifies the name
+        (possibly schema-qualified) of a parameterless PL/Tcl function that
+        is to be executed whenever a new Tcl interpreter is created for
+        PL/Tcl.  Such a function can perform per-session initialization, such
+        as loading additional Tcl code.  A new Tcl interpreter is created
+        when a PL/Tcl function is first executed in a database session, or
+        when an additional interpreter has to be created because a PL/Tcl
+        function is called by a new SQL role.
+       </para>
+
+       <para>
+        The referenced function must be written in the <literal>pltcl</>
+        language, and must not be marked <literal>SECURITY DEFINER</>.
+        (These restrictions ensure that it runs in the interpreter it's
+        supposed to initialize.)  The current user must have permission to
+        call it, too.
+       </para>
+
+       <para>
+        If the function fails with an error it will abort the function call
+        that caused the new interpreter to be created and propagate out to
+        the calling query, causing the current transaction or subtransaction
+        to be aborted.  Any actions already done within Tcl won't be undone;
+        however, that interpreter won't be used again.  If the language is
+        used again the initialization will be attempted again within a fresh
+        Tcl interpreter.
+       </para>
+
+       <para>
+        Only superusers can change this setting.  Although this setting
+        can be changed within a session, such changes will not affect Tcl
+        interpreters that have already been created.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-pltclu-start-proc" xreflabel="pltclu.start_proc">
+      <term>
+       <varname>pltclu.start_proc</varname> (<type>string</type>)
+       <indexterm>
+        <primary><varname>pltclu.start_proc</> configuration parameter</primary>
+       </indexterm>
+      </term>
+      <listitem>
+       <para>
+        This parameter is exactly like <varname>pltcl.start_proc</varname>,
+        except that it applies to PL/TclU.  The referenced function must
+        be written in the <literal>pltclu</> language.
+       </para>
+      </listitem>
+     </varlistentry>
+
+    </variablelist>
+   </sect1>
+
    <sect1 id="pltcl-procnames">
     <title>Tcl Procedure Names</title>
 
