@@ -1360,11 +1360,14 @@ acquire_inherited_sample_rows(Relation onerel, int elevel,
 		else
 		{
 			/*
-			 * ignore, but release the lock on it.  could be a partitioned
-			 * table.
+			 * ignore, but release the lock on it.  don't try to unlock the
+			 * passed-in relation
 			 */
+			Assert(childrel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE);
 			if (childrel != onerel)
 				heap_close(childrel, AccessShareLock);
+			else
+				heap_close(childrel, NoLock);
 			continue;
 		}
 

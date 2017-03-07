@@ -215,3 +215,10 @@ SELECT * FROM truncate_a;
 DROP TABLE truncate_a;
 
 SELECT nextval('truncate_a_id1'); -- fail, seq should have been dropped
+
+-- partitioned table
+CREATE TABLE truncparted (a int, b char) PARTITION BY LIST (a);
+CREATE TABLE truncparted1 PARTITION OF truncparted FOR VALUES IN (1);
+INSERT INTO truncparted VALUES (1, 'a');
+TRUNCATE truncparted;
+DROP TABLE truncparted;
