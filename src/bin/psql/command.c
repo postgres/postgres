@@ -906,8 +906,11 @@ exec_command(const char *cmd,
 		free(fname);
 	}
 
-	/* \g [filename] -- send query, optionally with output to file/pipe */
-	else if (strcmp(cmd, "g") == 0)
+	/*
+	 * \g [filename] -- send query, optionally with output to file/pipe
+	 * \gx [filename] -- same as \g, with expanded mode forced
+	 */
+	else if (strcmp(cmd, "g") == 0 || strcmp(cmd, "gx") == 0)
 	{
 		char	   *fname = psql_scan_slash_option(scan_state,
 												   OT_FILEPIPE, NULL, false);
@@ -920,6 +923,8 @@ exec_command(const char *cmd,
 			pset.gfname = pg_strdup(fname);
 		}
 		free(fname);
+		if (strcmp(cmd, "gx") == 0)
+			pset.g_expanded = true;
 		status = PSQL_CMD_SEND;
 	}
 

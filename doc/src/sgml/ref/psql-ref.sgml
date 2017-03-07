@@ -1891,6 +1891,18 @@ Tue Oct 26 21:40:57 CEST 1999
 
 
       <varlistentry>
+        <term><literal>\gx [ <replaceable class="parameter">filename</replaceable> ]</literal></term>
+        <term><literal>\gx [ |<replaceable class="parameter">command</replaceable> ]</literal></term>
+        <listitem>
+        <para>
+        <literal>\gx</literal> is equivalent to <literal>\g</literal>, but
+        forces expanded output mode for this query.  See <literal>\x</literal>.
+        </para>
+        </listitem>
+      </varlistentry>
+
+
+      <varlistentry>
         <term><literal>\gexec</literal></term>
 
         <listitem>

@@ -770,6 +770,10 @@ PrintQueryTuples(const PGresult *results)
 {
 	printQueryOpt my_popt = pset.popt;
 
+	/* one-shot expanded output requested via \gx */
+	if (pset.g_expanded)
+		my_popt.topt.expanded = 1;
+
 	/* write output to \g argument, if any */
 	if (pset.gfname)
 	{
@@ -1409,6 +1413,9 @@ sendquery_cleanup:
 		free(pset.gfname);
 		pset.gfname = NULL;
 	}
+
+	/* reset \gx's expanded-mode flag */
+	pset.g_expanded = false;
 
 	/* reset \gset trigger */
 	if (pset.gset_prefix)

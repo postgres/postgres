@@ -1375,11 +1375,12 @@ psql_completion(const char *text, int start, int end)
 		"\\dm", "\\dn", "\\do", "\\dO", "\\dp", "\\drds", "\\ds", "\\dS",
 		"\\dt", "\\dT", "\\dv", "\\du", "\\dx", "\\dy",
 		"\\e", "\\echo", "\\ef", "\\encoding", "\\errverbose", "\\ev",
-		"\\f", "\\g", "\\gexec", "\\gset", "\\h", "\\help", "\\H", "\\i", "\\ir", "\\l",
-		"\\lo_import", "\\lo_export", "\\lo_list", "\\lo_unlink",
-		"\\o", "\\p", "\\password", "\\prompt", "\\pset", "\\q", "\\qecho", "\\r",
-		"\\s", "\\set", "\\setenv", "\\sf", "\\sv", "\\t", "\\T",
-		"\\timing", "\\unset", "\\x", "\\w", "\\watch", "\\z", "\\!", NULL
+		"\\f", "\\g", "\\gexec", "\\gset", "\\gx", "\\h", "\\help", "\\H",
+		"\\i", "\\ir", "\\l", "\\lo_import", "\\lo_export", "\\lo_list",
+		"\\lo_unlink", "\\o", "\\p", "\\password", "\\prompt", "\\pset", "\\q",
+		"\\qecho", "\\r", "\\s", "\\set", "\\setenv", "\\sf", "\\sv", "\\t",
+		"\\T", "\\timing", "\\unset", "\\x", "\\w", "\\watch", "\\z", "\\!",
+		NULL
 	};
 
 	(void) end;					/* "end" is not used */

@@ -91,6 +91,7 @@ typedef struct _psqlSettings
 	printQueryOpt popt;
 
 	char	   *gfname;			/* one-shot file output argument for \g */
+	bool		g_expanded;		/* one-shot expanded output requested via \gx */
 	char	   *gset_prefix;	/* one-shot prefix argument for \gset */
 	bool		gexec_flag;		/* one-shot flag to execute query's results */
 	bool		crosstab_flag;	/* one-shot request to crosstab results */

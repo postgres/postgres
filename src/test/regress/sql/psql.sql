@@ -21,6 +21,13 @@
 \unset ON_ERROR_ROLLBACK
 \echo :ON_ERROR_ROLLBACK
 
+-- \g and \gx
+
+SELECT 1 as one, 2 as two \g
+\gx
+SELECT 3 as three, 4 as four \gx
+\g
+
 -- \gset
 
 select 10 as test01, 20 as test02, 'Hello' as test03 \gset pref01_
