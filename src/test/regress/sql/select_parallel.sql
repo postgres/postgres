@@ -64,6 +64,16 @@ select  count(*) from tenk1 where thousand > 95;
 reset enable_seqscan;
 reset enable_bitmapscan;
 
+-- test parallel merge join path.
+set enable_hashjoin to off;
+set enable_nestloop to off;
+
+explain (costs off)
+	select  count(*) from tenk1, tenk2 where tenk1.unique1 = tenk2.unique1;
+select  count(*) from tenk1, tenk2 where tenk1.unique1 = tenk2.unique1;
+
+reset enable_hashjoin;
+reset enable_nestloop;
 set force_parallel_mode=1;
 
 explain (costs off)

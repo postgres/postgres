@@ -169,6 +169,31 @@ select  count(*) from tenk1 where thousand > 95;
 
 reset enable_seqscan;
 reset enable_bitmapscan;
+-- test parallel merge join path.
+set enable_hashjoin to off;
+set enable_nestloop to off;
+explain (costs off)
+	select  count(*) from tenk1, tenk2 where tenk1.unique1 = tenk2.unique1;
+                                  QUERY PLAN                                   
+-------------------------------------------------------------------------------
+ Finalize Aggregate
+   ->  Gather
+         Workers Planned: 4
+         ->  Partial Aggregate
+               ->  Merge Join
+                     Merge Cond: (tenk1.unique1 = tenk2.unique1)
+                     ->  Parallel Index Only Scan using tenk1_unique1 on tenk1
+                     ->  Index Only Scan using tenk2_unique1 on tenk2
+(8 rows)
+
+select  count(*) from tenk1, tenk2 where tenk1.unique1 = tenk2.unique1;
+ count 
+-------
+ 10000
+(1 row)
+
+reset enable_hashjoin;
+reset enable_nestloop;
 set force_parallel_mode=1;
 explain (costs off)
   select stringu1::int2 from tenk1 where unique1 = 1;
