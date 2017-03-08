@@ -25,6 +25,7 @@
 
 #include "executor/execParallel.h"
 #include "executor/executor.h"
+#include "executor/nodeBitmapHeapscan.h"
 #include "executor/nodeCustom.h"
 #include "executor/nodeForeignscan.h"
 #include "executor/nodeSeqscan.h"
@@ -217,6 +218,10 @@ ExecParallelEstimate(PlanState *planstate, ExecParallelEstimateContext *e)
 				ExecCustomScanEstimate((CustomScanState *) planstate,
 									   e->pcxt);
 				break;
+			case T_BitmapHeapScanState:
+				ExecBitmapHeapEstimate((BitmapHeapScanState *) planstate,
+									   e->pcxt);
+				break;
 			default:
 				break;
 		}
@@ -277,6 +282,11 @@ ExecParallelInitializeDSM(PlanState *planstate,
 				ExecCustomScanInitializeDSM((CustomScanState *) planstate,
 											d->pcxt);
 				break;
+			case T_BitmapHeapScanState:
+				ExecBitmapHeapInitializeDSM((BitmapHeapScanState *) planstate,
+											d->pcxt);
+				break;
+
 			default:
 				break;
 		}
@@ -774,6 +784,10 @@ ExecParallelInitializeWorker(PlanState *planstate, shm_toc *toc)
 			case T_CustomScanState:
 				ExecCustomScanInitializeWorker((CustomScanState *) planstate,
 											   toc);
+				break;
+			case T_BitmapHeapScanState:
+				ExecBitmapHeapInitializeWorker(
+									 (BitmapHeapScanState *) planstate, toc);
 				break;
 			default:
 				break;

@@ -129,7 +129,9 @@ MultiExecBitmapOr(BitmapOrState *node)
 			if (result == NULL) /* first subplan */
 			{
 				/* XXX should we use less than work_mem for this? */
-				result = tbm_create(work_mem * 1024L, NULL);
+				result = tbm_create(work_mem * 1024L,
+									((BitmapOr *) node->ps.plan)->isshared ?
+									node->ps.state->es_query_dsa : NULL);
 			}
 
 			((BitmapIndexScanState *) subnode)->biss_result = result;

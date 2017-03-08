@@ -169,6 +169,25 @@ select  count(*) from tenk1 where thousand > 95;
 
 reset enable_seqscan;
 reset enable_bitmapscan;
+-- test parallel bitmap heap scan.
+set enable_seqscan to off;
+set enable_indexscan to off;
+explain (costs off)
+	select  count((unique1)) from tenk1 where hundred > 1;
+                         QUERY PLAN                         
+------------------------------------------------------------
+ Finalize Aggregate
+   ->  Gather
+         Workers Planned: 4
+         ->  Partial Aggregate
+               ->  Parallel Bitmap Heap Scan on tenk1
+                     Recheck Cond: (hundred > 1)
+                     ->  Bitmap Index Scan on tenk1_hundred
+                           Index Cond: (hundred > 1)
+(8 rows)
+
+reset enable_seqscan;
+reset enable_indexscan;
 -- test parallel merge join path.
 set enable_hashjoin to off;
 set enable_nestloop to off;

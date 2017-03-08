@@ -2912,6 +2912,30 @@ remove_unused_subquery_outputs(Query *subquery, RelOptInfo *rel)
 }
 
 /*
+ * create_partial_bitmap_paths
+ *	  Build partial bitmap heap path for the relation
+ */
+void
+create_partial_bitmap_paths(PlannerInfo *root, RelOptInfo *rel,
+							Path *bitmapqual)
+{
+	int			parallel_workers;
+	double		pages_fetched;
+
+	/* Compute heap pages for bitmap heap scan */
+	pages_fetched = compute_bitmap_pages(root, rel, bitmapqual, 1.0,
+										 NULL, NULL);
+
+	parallel_workers = compute_parallel_worker(rel, pages_fetched, 0);
+
+	if (parallel_workers <= 0)
+		return;
+
+	add_partial_path(rel, (Path *) create_bitmap_heap_path(root, rel,
+					bitmapqual, rel->lateral_relids, 1.0, parallel_workers));
+}
+
+/*
  * Compute the number of parallel workers that should be used to scan a
  * relation.  We compute the parallel workers based on the size of the heap to
  * be scanned and the size of the index to be scanned, then choose a minimum
