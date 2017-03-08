@@ -22,6 +22,11 @@
 #ifndef SNOWBALL_HEADR_H
 #define SNOWBALL_HEADR_H
 
+/*
+ * It's against Postgres coding conventions to include postgres.h in a
+ * header file, but we allow the violation here because the alternative is
+ * to modify the machine-generated .c files provided by the Snowball project.
+ */
 #include "postgres.h"
 
 /* Some platforms define MAXINT and/or MININT, causing conflicts */

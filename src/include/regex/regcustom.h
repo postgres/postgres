@@ -29,6 +29,13 @@
  */
 
 /* headers if any */
+
+/*
+ * It's against Postgres coding conventions to include postgres.h in a
+ * header file, but we allow the violation here because the regexp library
+ * files specifically intend this file to supply application-dependent
+ * headers, and are careful to include this file before anything else.
+ */
 #include "postgres.h"
 
 #include <ctype.h>
@@ -46,6 +53,8 @@
 #endif
 
 #include "mb/pg_wchar.h"
+
+#include "miscadmin.h"			/* needed by rcancelrequested/rstacktoodeep */
 
 
 /* overrides for regguts.h definitions, if any */

@@ -34,8 +34,6 @@
 
 #include "regex/regguts.h"
 
-#include "miscadmin.h"			/* needed by rcancelrequested/rstacktoodeep */
-
 /*
  * forward declarations, up here so forward datatypes etc. are defined early
  */
