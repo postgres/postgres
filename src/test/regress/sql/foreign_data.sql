@@ -684,6 +684,77 @@ REASSIGN OWNED BY regress_test_role TO regress_test_role2;
 DROP OWNED BY regress_test_role2;
 DROP OWNED BY regress_test_role2 CASCADE;
 
+-- Foreign partition DDL stuff
+CREATE TABLE pt2 (
+	c1 integer NOT NULL,
+	c2 text,
+	c3 date
+) PARTITION BY LIST (c1);
+CREATE FOREIGN TABLE pt2_1 PARTITION OF pt2 FOR VALUES IN (1)
+  SERVER s0 OPTIONS (delimiter ',', quote '"', "be quoted" 'value');
+\d+ pt2
+\d+ pt2_1
+
+-- partition cannot have additional columns
+DROP FOREIGN TABLE pt2_1;
+CREATE FOREIGN TABLE pt2_1 (
+	c1 integer NOT NULL,
+	c2 text,
+	c3 date,
+	c4 char
+) SERVER s0 OPTIONS (delimiter ',', quote '"', "be quoted" 'value');
+\d+ pt2_1
+ALTER TABLE pt2 ATTACH PARTITION pt2_1 FOR VALUES IN (1);       -- ERROR
+
+DROP FOREIGN TABLE pt2_1;
+\d+ pt2
+CREATE FOREIGN TABLE pt2_1 (
+	c1 integer NOT NULL,
+	c2 text,
+	c3 date
+) SERVER s0 OPTIONS (delimiter ',', quote '"', "be quoted" 'value');
+\d+ pt2_1
+-- no attach partition validation occurs for foreign tables
+ALTER TABLE pt2 ATTACH PARTITION pt2_1 FOR VALUES IN (1);
+\d+ pt2
+\d+ pt2_1
+
+-- cannot add column to a partition
+ALTER TABLE pt2_1 ADD c4 char;
+
+-- ok to have a partition's own constraints though
+ALTER TABLE pt2_1 ALTER c3 SET NOT NULL;
+ALTER TABLE pt2_1 ADD CONSTRAINT p21chk CHECK (c2 <> '');
+\d+ pt2
+\d+ pt2_1
+
+-- cannot drop inherited NOT NULL constraint from a partition
+ALTER TABLE pt2_1 ALTER c1 DROP NOT NULL;
+
+-- partition must have parent's constraints
+ALTER TABLE pt2 DETACH PARTITION pt2_1;
+ALTER TABLE pt2 ALTER c2 SET NOT NULL;
+\d+ pt2
+\d+ pt2_1
+ALTER TABLE pt2 ATTACH PARTITION pt2_1 FOR VALUES IN (1);       -- ERROR
+ALTER FOREIGN TABLE pt2_1 ALTER c2 SET NOT NULL;
+ALTER TABLE pt2 ATTACH PARTITION pt2_1 FOR VALUES IN (1);
+
+ALTER TABLE pt2 DETACH PARTITION pt2_1;
+ALTER TABLE pt2 ADD CONSTRAINT pt2chk1 CHECK (c1 > 0);
+\d+ pt2
+\d+ pt2_1
+ALTER TABLE pt2 ATTACH PARTITION pt2_1 FOR VALUES IN (1);       -- ERROR
+ALTER FOREIGN TABLE pt2_1 ADD CONSTRAINT pt2chk1 CHECK (c1 > 0);
+ALTER TABLE pt2 ATTACH PARTITION pt2_1 FOR VALUES IN (1);
+
+-- TRUNCATE doesn't work on foreign tables, either directly or recursively
+TRUNCATE pt2_1;  -- ERROR
+TRUNCATE pt2;  -- ERROR
+
+DROP FOREIGN TABLE pt2_1;
+DROP TABLE pt2;
+
 -- Cleanup
 DROP SCHEMA foreign_schema CASCADE;
 DROP ROLE regress_test_role;                                -- ERROR
