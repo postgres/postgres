@@ -48,5 +48,4 @@ ReplicationOriginLock				40
 MultiXactTruncationLock				41
 OldSnapshotTimeMapLock				42
 BackendRandomLock					43
-LogicalRepLauncherLock				44
-LogicalRepWorkerLock				45
+LogicalRepWorkerLock				44
