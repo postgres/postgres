@@ -76,8 +76,8 @@ BitmapHeapNext(BitmapHeapScanState *node)
 	ExprContext *econtext;
 	HeapScanDesc scan;
 	TIDBitmap  *tbm;
-	TBMIterator *tbmiterator;
-	TBMSharedIterator *shared_tbmiterator;
+	TBMIterator *tbmiterator = NULL;
+	TBMSharedIterator *shared_tbmiterator = NULL;
 	TBMIterateResult *tbmres;
 	OffsetNumber targoffset;
 	TupleTableSlot *slot;
