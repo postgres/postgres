@@ -148,7 +148,8 @@ typedef AllocSetContext *AllocSet;
 typedef struct AllocBlockData
 {
 	AllocSet	aset;			/* aset that owns this block */
-	AllocBlock	next;			/* next block in aset's blocks list */
+	AllocBlock	prev;			/* prev block in aset's blocks list, if any */
+	AllocBlock	next;			/* next block in aset's blocks list, if any */
 	char	   *freeptr;		/* start of free space in this block */
 	char	   *endptr;			/* end of space in this block */
 }	AllocBlockData;
@@ -407,7 +408,10 @@ AllocSetContextCreate(MemoryContext parent,
 		block->aset = set;
 		block->freeptr = ((char *) block) + ALLOC_BLOCKHDRSZ;
 		block->endptr = ((char *) block) + blksize;
+		block->prev = NULL;
 		block->next = set->blocks;
+		if (block->next)
+			block->next->prev = block;
 		set->blocks = block;
 		/* Mark block as not to be released at reset time */
 		set->keeper = block;
@@ -489,6 +493,7 @@ AllocSetReset(MemoryContext context)
 			VALGRIND_MAKE_MEM_NOACCESS(datastart, block->freeptr - datastart);
 #endif
 			block->freeptr = datastart;
+			block->prev = NULL;
 			block->next = NULL;
 		}
 		else
@@ -595,16 +600,20 @@ AllocSetAlloc(MemoryContext context, Size size)
 #endif
 
 		/*
-		 * Stick the new block underneath the active allocation block, so that
-		 * we don't lose the use of the space remaining therein.
+		 * Stick the new block underneath the active allocation block, if any,
+		 * so that we don't lose the use of the space remaining therein.
 		 */
 		if (set->blocks != NULL)
 		{
+			block->prev = set->blocks;
 			block->next = set->blocks->next;
+			if (block->next)
+				block->next->prev = block;
 			set->blocks->next = block;
 		}
 		else
 		{
+			block->prev = NULL;
 			block->next = NULL;
 			set->blocks = block;
 		}
@@ -785,7 +794,10 @@ AllocSetAlloc(MemoryContext context, Size size)
 		VALGRIND_MAKE_MEM_NOACCESS(block->freeptr,
 								   blksize - ALLOC_BLOCKHDRSZ);
 
+		block->prev = NULL;
 		block->next = set->blocks;
+		if (block->next)
+			block->next->prev = block;
 		set->blocks = block;
 	}
 
@@ -845,29 +857,28 @@ AllocSetFree(MemoryContext context, void *pointer)
 	{
 		/*
 		 * Big chunks are certain to have been allocated as single-chunk
-		 * blocks.  Find the containing block and return it to malloc().
+		 * blocks.  Just unlink that block and return it to malloc().
 		 */
-		AllocBlock	block = set->blocks;
-		AllocBlock	prevblock = NULL;
+		AllocBlock	block = (AllocBlock) (((char *) chunk) - ALLOC_BLOCKHDRSZ);
 
-		while (block != NULL)
-		{
-			if (chunk == (AllocChunk) (((char *) block) + ALLOC_BLOCKHDRSZ))
-				break;
-			prevblock = block;
-			block = block->next;
-		}
-		if (block == NULL)
+		/*
+		 * Try to verify that we have a sane block pointer: it should
+		 * reference the correct aset, and freeptr and endptr should point
+		 * just past the chunk.
+		 */
+		if (block->aset != set ||
+			block->freeptr != block->endptr ||
+			block->freeptr != ((char *) block) +
+			(chunk->size + ALLOC_BLOCKHDRSZ + ALLOC_CHUNKHDRSZ))
 			elog(ERROR, "could not find block containing chunk %p", chunk);
-		/* let's just make sure chunk is the only one in the block */
-		Assert(block->freeptr == ((char *) block) +
-			   (chunk->size + ALLOC_BLOCKHDRSZ + ALLOC_CHUNKHDRSZ));
 
 		/* OK, remove block from aset's list and free it */
-		if (prevblock == NULL)
-			set->blocks = block->next;
+		if (block->prev)
+			block->prev->next = block->next;
 		else
-			prevblock->next = block->next;
+			set->blocks = block->next;
+		if (block->next)
+			block->next->prev = block->prev;
 #ifdef CLOBBER_FREED_MEMORY
 		wipe_mem(block, block->freeptr - ((char *) block));
 #endif
@@ -973,27 +984,24 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 	if (oldsize > set->allocChunkLimit)
 	{
 		/*
-		 * The chunk must have been allocated as a single-chunk block.  Find
-		 * the containing block and use realloc() to make it bigger with
-		 * minimum space wastage.
+		 * The chunk must have been allocated as a single-chunk block.  Use
+		 * realloc() to make the containing block bigger with minimum space
+		 * wastage.
 		 */
-		AllocBlock	block = set->blocks;
-		AllocBlock	prevblock = NULL;
+		AllocBlock	block = (AllocBlock) (((char *) chunk) - ALLOC_BLOCKHDRSZ);
 		Size		chksize;
 		Size		blksize;
 
-		while (block != NULL)
-		{
-			if (chunk == (AllocChunk) (((char *) block) + ALLOC_BLOCKHDRSZ))
-				break;
-			prevblock = block;
-			block = block->next;
-		}
-		if (block == NULL)
+		/*
+		 * Try to verify that we have a sane block pointer: it should
+		 * reference the correct aset, and freeptr and endptr should point
+		 * just past the chunk.
+		 */
+		if (block->aset != set ||
+			block->freeptr != block->endptr ||
+			block->freeptr != ((char *) block) +
+			(chunk->size + ALLOC_BLOCKHDRSZ + ALLOC_CHUNKHDRSZ))
 			elog(ERROR, "could not find block containing chunk %p", chunk);
-		/* let's just make sure chunk is the only one in the block */
-		Assert(block->freeptr == ((char *) block) +
-			   (chunk->size + ALLOC_BLOCKHDRSZ + ALLOC_CHUNKHDRSZ));
 
 		/* Do the realloc */
 		chksize = MAXALIGN(size);
@@ -1006,10 +1014,12 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 		/* Update pointers since block has likely been moved */
 		chunk = (AllocChunk) (((char *) block) + ALLOC_BLOCKHDRSZ);
 		pointer = AllocChunkGetPointer(chunk);
-		if (prevblock == NULL)
-			set->blocks = block;
+		if (block->prev)
+			block->prev->next = block;
 		else
-			prevblock->next = block;
+			set->blocks = block;
+		if (block->next)
+			block->next->prev = block;
 		chunk->size = chksize;
 
 #ifdef MEMORY_CONTEXT_CHECKING
@@ -1033,7 +1043,7 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 
 		/* set mark to catch clobber of "unused" space */
 		if (size < chunk->size)
-			set_sentinel(AllocChunkGetPointer(chunk), size);
+			set_sentinel(pointer, size);
 #else							/* !MEMORY_CONTEXT_CHECKING */
 
 		/*
@@ -1046,7 +1056,8 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 
 		/* Make any trailing alignment padding NOACCESS. */
 		VALGRIND_MAKE_MEM_NOACCESS((char *) pointer + size, chksize - size);
-		return AllocChunkGetPointer(chunk);
+
+		return pointer;
 	}
 	else
 	{
@@ -1200,9 +1211,12 @@ AllocSetCheck(MemoryContext context)
 {
 	AllocSet	set = (AllocSet) context;
 	char	   *name = set->header.name;
+	AllocBlock	prevblock;
 	AllocBlock	block;
 
-	for (block = set->blocks; block != NULL; block = block->next)
+	for (prevblock = NULL, block = set->blocks;
+		 block != NULL;
+		 prevblock = block, block = block->next)
 	{
 		char	   *bpoz = ((char *) block) + ALLOC_BLOCKHDRSZ;
 		long		blk_used = block->freeptr - bpoz;
@@ -1218,6 +1232,16 @@ AllocSetCheck(MemoryContext context)
 				elog(WARNING, "problem in alloc set %s: empty block %p",
 					 name, block);
 		}
+
+		/*
+		 * Check block header fields
+		 */
+		if (block->aset != set ||
+			block->prev != prevblock ||
+			block->freeptr < bpoz ||
+			block->freeptr > block->endptr)
+			elog(WARNING, "problem in alloc set %s: corrupt header in block %p",
+				 name, block);
 
 		/*
 		 * Chunk walker
