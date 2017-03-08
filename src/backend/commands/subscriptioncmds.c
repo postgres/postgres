@@ -565,19 +565,25 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 						"drop the replication slot \"%s\"", slotname),
 				 errdetail("The error was: %s", err)));
 
-	if (!walrcv_command(wrconn, cmd.data, &err))
+	PG_TRY();
+	{
+		if (!walrcv_command(wrconn, cmd.data, &err))
+			ereport(ERROR,
+					(errmsg("could not drop the replication slot \"%s\" on publisher",
+							slotname),
+					 errdetail("The error was: %s", err)));
+		else
+			ereport(NOTICE,
+					(errmsg("dropped replication slot \"%s\" on publisher",
+							slotname)));
+	}
+	PG_CATCH();
 	{
 		/* Close the connection in case of failure */
 		walrcv_disconnect(wrconn);
-		ereport(ERROR,
-				(errmsg("could not drop the replication slot \"%s\" on publisher",
-						slotname),
-				 errdetail("The error was: %s", err)));
+		PG_RE_THROW();
 	}
-	else
-		ereport(NOTICE,
-				(errmsg("dropped replication slot \"%s\" on publisher",
-						slotname)));
+	PG_END_TRY();
 
 	walrcv_disconnect(wrconn);
 
