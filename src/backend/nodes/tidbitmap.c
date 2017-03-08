@@ -787,8 +787,8 @@ tbm_prepare_shared_iterate(TIDBitmap *tbm)
 	dsa_pointer dp;
 	TBMSharedIteratorState *istate;
 	PTEntryArray *ptbase;
-	PTIterationArray *ptpages;
-	PTIterationArray *ptchunks;
+	PTIterationArray *ptpages = NULL;
+	PTIterationArray *ptchunks = NULL;
 
 	Assert(tbm->dsa != NULL);
 	Assert(tbm->iterating != TBM_ITERATING_PRIVATE);
