@@ -78,6 +78,38 @@ IndexOnlyNext(IndexOnlyScanState *node)
 	econtext = node->ss.ps.ps_ExprContext;
 	slot = node->ss.ss_ScanTupleSlot;
 
+	if (scandesc == NULL)
+	{
+		/*
+		 * We reach here if the index only scan is not parallel, or if we're
+		 * executing a index only scan that was intended to be parallel
+		 * serially.
+		 */
+		scandesc = index_beginscan(node->ss.ss_currentRelation,
+								   node->ioss_RelationDesc,
+								   estate->es_snapshot,
+								   node->ioss_NumScanKeys,
+								   node->ioss_NumOrderByKeys);
+
+		node->ioss_ScanDesc = scandesc;
+
+
+		/* Set it up for index-only scan */
+		node->ioss_ScanDesc->xs_want_itup = true;
+		node->ioss_VMBuffer = InvalidBuffer;
+
+		/*
+		 * If no run-time keys to calculate or they are ready, go ahead and
+		 * pass the scankeys to the index AM.
+		 */
+		if (node->ioss_NumRuntimeKeys == 0 || node->ioss_RuntimeKeysReady)
+			index_rescan(scandesc,
+						 node->ioss_ScanKeys,
+						 node->ioss_NumScanKeys,
+						 node->ioss_OrderByKeys,
+						 node->ioss_NumOrderByKeys);
+	}
+
 	/*
 	 * OK, now that we have what we need, fetch the next tuple.
 	 */
@@ -572,34 +604,6 @@ ExecInitIndexOnlyScan(IndexOnlyScan *node, EState *estate, int eflags)
 	}
 
 	/*
-	 * Initialize scan descriptor.
-	 */
-	if (!node->scan.plan.parallel_aware)
-	{
-		indexstate->ioss_ScanDesc = index_beginscan(currentRelation,
-											   indexstate->ioss_RelationDesc,
-													estate->es_snapshot,
-												indexstate->ioss_NumScanKeys,
-											indexstate->ioss_NumOrderByKeys);
-
-
-		/* Set it up for index-only scan */
-		indexstate->ioss_ScanDesc->xs_want_itup = true;
-		indexstate->ioss_VMBuffer = InvalidBuffer;
-
-		/*
-		 * If no run-time keys to calculate, go ahead and pass the scankeys to
-		 * the index AM.
-		 */
-		if (indexstate->ioss_NumRuntimeKeys == 0)
-			index_rescan(indexstate->ioss_ScanDesc,
-						 indexstate->ioss_ScanKeys,
-						 indexstate->ioss_NumScanKeys,
-						 indexstate->ioss_OrderByKeys,
-						 indexstate->ioss_NumOrderByKeys);
-	}
-
-	/*
 	 * all done.
 	 */
 	return indexstate;
@@ -657,10 +661,10 @@ ExecIndexOnlyScanInitializeDSM(IndexOnlyScanState *node,
 	node->ioss_VMBuffer = InvalidBuffer;
 
 	/*
-	 * If no run-time keys to calculate, go ahead and pass the scankeys to
-	 * the index AM.
+	 * If no run-time keys to calculate or they are ready, go ahead and pass
+	 * the scankeys to the index AM.
 	 */
-	if (node->ioss_NumRuntimeKeys == 0)
+	if (node->ioss_NumRuntimeKeys == 0 || node->ioss_RuntimeKeysReady)
 		index_rescan(node->ioss_ScanDesc,
 					 node->ioss_ScanKeys, node->ioss_NumScanKeys,
 					 node->ioss_OrderByKeys, node->ioss_NumOrderByKeys);
@@ -687,10 +691,10 @@ ExecIndexOnlyScanInitializeWorker(IndexOnlyScanState *node, shm_toc *toc)
 	node->ioss_ScanDesc->xs_want_itup = true;
 
 	/*
-	 * If no run-time keys to calculate, go ahead and pass the scankeys to the
-	 * index AM.
+	 * If no run-time keys to calculate or they are ready, go ahead and pass
+	 * the scankeys to the index AM.
 	 */
-	if (node->ioss_NumRuntimeKeys == 0)
+	if (node->ioss_NumRuntimeKeys == 0 || node->ioss_RuntimeKeysReady)
 		index_rescan(node->ioss_ScanDesc,
 					 node->ioss_ScanKeys, node->ioss_NumScanKeys,
 					 node->ioss_OrderByKeys, node->ioss_NumOrderByKeys);

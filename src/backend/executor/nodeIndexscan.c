@@ -102,6 +102,30 @@ IndexNext(IndexScanState *node)
 	econtext = node->ss.ps.ps_ExprContext;
 	slot = node->ss.ss_ScanTupleSlot;
 
+	if (scandesc == NULL)
+	{
+		/*
+		 * We reach here if the index scan is not parallel, or if we're
+		 * executing a index scan that was intended to be parallel serially.
+		 */
+		scandesc = index_beginscan(node->ss.ss_currentRelation,
+								   node->iss_RelationDesc,
+								   estate->es_snapshot,
+								   node->iss_NumScanKeys,
+								   node->iss_NumOrderByKeys);
+
+		node->iss_ScanDesc = scandesc;
+
+		/*
+		 * If no run-time keys to calculate or they are ready, go ahead and
+		 * pass the scankeys to the index AM.
+		 */
+		if (node->iss_NumRuntimeKeys == 0 || node->iss_RuntimeKeysReady)
+			index_rescan(scandesc,
+						 node->iss_ScanKeys, node->iss_NumScanKeys,
+						 node->iss_OrderByKeys, node->iss_NumOrderByKeys);
+	}
+
 	/*
 	 * ok, now that we have what we need, fetch the next tuple.
 	 */
@@ -154,6 +178,7 @@ IndexNext(IndexScanState *node)
 static TupleTableSlot *
 IndexNextWithReorder(IndexScanState *node)
 {
+	EState	   *estate;
 	ExprContext *econtext;
 	IndexScanDesc scandesc;
 	HeapTuple	tuple;
@@ -163,6 +188,8 @@ IndexNextWithReorder(IndexScanState *node)
 	Datum	   *lastfetched_vals;
 	bool	   *lastfetched_nulls;
 	int			cmp;
+
+	estate = node->ss.ps.state;
 
 	/*
 	 * Only forward scan is supported with reordering.  Note: we can get away
@@ -174,11 +201,35 @@ IndexNextWithReorder(IndexScanState *node)
 	 * explicitly.
 	 */
 	Assert(!ScanDirectionIsBackward(((IndexScan *) node->ss.ps.plan)->indexorderdir));
-	Assert(ScanDirectionIsForward(node->ss.ps.state->es_direction));
+	Assert(ScanDirectionIsForward(estate->es_direction));
 
 	scandesc = node->iss_ScanDesc;
 	econtext = node->ss.ps.ps_ExprContext;
 	slot = node->ss.ss_ScanTupleSlot;
+
+	if (scandesc == NULL)
+	{
+		/*
+		 * We reach here if the index scan is not parallel, or if we're
+		 * executing a index scan that was intended to be parallel serially.
+		 */
+		scandesc = index_beginscan(node->ss.ss_currentRelation,
+								   node->iss_RelationDesc,
+								   estate->es_snapshot,
+								   node->iss_NumScanKeys,
+								   node->iss_NumOrderByKeys);
+
+		node->iss_ScanDesc = scandesc;
+
+		/*
+		 * If no run-time keys to calculate or they are ready, go ahead and
+		 * pass the scankeys to the index AM.
+		 */
+		if (node->iss_NumRuntimeKeys == 0 || node->iss_RuntimeKeysReady)
+			index_rescan(scandesc,
+						 node->iss_ScanKeys, node->iss_NumScanKeys,
+						 node->iss_OrderByKeys, node->iss_NumOrderByKeys);
+	}
 
 	for (;;)
 	{
@@ -1039,31 +1090,6 @@ ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
 	}
 
 	/*
-	 * for parallel-aware node, we initialize the scan descriptor after
-	 * initializing the shared memory for parallel execution.
-	 */
-	if (!node->scan.plan.parallel_aware)
-	{
-		/*
-		 * Initialize scan descriptor.
-		 */
-		indexstate->iss_ScanDesc = index_beginscan(currentRelation,
-												indexstate->iss_RelationDesc,
-												   estate->es_snapshot,
-												 indexstate->iss_NumScanKeys,
-											 indexstate->iss_NumOrderByKeys);
-
-		/*
-		 * If no run-time keys to calculate, go ahead and pass the scankeys to
-		 * the index AM.
-		 */
-		if (indexstate->iss_NumRuntimeKeys == 0)
-			index_rescan(indexstate->iss_ScanDesc,
-					   indexstate->iss_ScanKeys, indexstate->iss_NumScanKeys,
-				indexstate->iss_OrderByKeys, indexstate->iss_NumOrderByKeys);
-	}
-
-	/*
 	 * all done.
 	 */
 	return indexstate;
@@ -1674,10 +1700,10 @@ ExecIndexScanInitializeDSM(IndexScanState *node,
 								 piscan);
 
 	/*
-	 * If no run-time keys to calculate, go ahead and pass the scankeys to the
-	 * index AM.
+	 * If no run-time keys to calculate or they are ready, go ahead and pass
+	 * the scankeys to the index AM.
 	 */
-	if (node->iss_NumRuntimeKeys == 0)
+	if (node->iss_NumRuntimeKeys == 0 || node->iss_RuntimeKeysReady)
 		index_rescan(node->iss_ScanDesc,
 					 node->iss_ScanKeys, node->iss_NumScanKeys,
 					 node->iss_OrderByKeys, node->iss_NumOrderByKeys);
@@ -1703,10 +1729,10 @@ ExecIndexScanInitializeWorker(IndexScanState *node, shm_toc *toc)
 								 piscan);
 
 	/*
-	 * If no run-time keys to calculate, go ahead and pass the scankeys to the
-	 * index AM.
+	 * If no run-time keys to calculate or they are ready, go ahead and pass
+	 * the scankeys to the index AM.
 	 */
-	if (node->iss_NumRuntimeKeys == 0)
+	if (node->iss_NumRuntimeKeys == 0 || node->iss_RuntimeKeysReady)
 		index_rescan(node->iss_ScanDesc,
 					 node->iss_ScanKeys, node->iss_NumScanKeys,
 					 node->iss_OrderByKeys, node->iss_NumOrderByKeys);
