@@ -4431,7 +4431,7 @@ XmlTableGetValue(TableFuncScanState *state, int colnum,
 	PG_TRY();
 	{
 		/* Set current node as entry point for XPath evaluation */
-		xmlXPathSetContextNode(cur, xtCxt->xpathcxt);
+		xtCxt->xpathcxt->node = cur;
 
 		/* Evaluate column path */
 		xpathobj = xmlXPathCompiledEval(xtCxt->xpathscomp[colnum], xtCxt->xpathcxt);
