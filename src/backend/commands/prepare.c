@@ -638,6 +638,10 @@ ExplainExecuteQuery(ExecuteStmt *execstmt, IntoClause *into, ExplainState *es,
 	ListCell   *p;
 	ParamListInfo paramLI = NULL;
 	EState	   *estate = NULL;
+	instr_time	planstart;
+	instr_time	planduration;
+
+	INSTR_TIME_SET_CURRENT(planstart);
 
 	/* Look it up in the hash table */
 	entry = FetchPreparedStatement(execstmt->name, true);
@@ -666,6 +670,9 @@ ExplainExecuteQuery(ExecuteStmt *execstmt, IntoClause *into, ExplainState *es,
 	/* Replan if needed, and acquire a transient refcount */
 	cplan = GetCachedPlan(entry->plansource, paramLI, true);
 
+	INSTR_TIME_SET_CURRENT(planduration);
+	INSTR_TIME_SUBTRACT(planduration, planstart);
+
 	plan_list = cplan->stmt_list;
 
 	/* Explain each query */
@@ -674,7 +681,7 @@ ExplainExecuteQuery(ExecuteStmt *execstmt, IntoClause *into, ExplainState *es,
 		PlannedStmt *pstmt = castNode(PlannedStmt, lfirst(p));
 
 		if (pstmt->commandType != CMD_UTILITY)
-			ExplainOnePlan(pstmt, into, es, query_string, paramLI, NULL);
+			ExplainOnePlan(pstmt, into, es, query_string, paramLI, &planduration);
 		else
 			ExplainOneUtility(pstmt->utilityStmt, into, es, query_string, paramLI);
 

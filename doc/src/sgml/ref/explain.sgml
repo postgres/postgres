@@ -41,6 +41,7 @@ EXPLAIN [ ANALYZE ] [ VERBOSE ] <replaceable class="parameter">statement</replac
     COSTS [ <replaceable class="parameter">boolean</replaceable> ]
     BUFFERS [ <replaceable class="parameter">boolean</replaceable> ]
     TIMING [ <replaceable class="parameter">boolean</replaceable> ]
+    SUMMARY [ <replaceable class="parameter">boolean</replaceable> ]
     FORMAT { TEXT | XML | JSON | YAML }
 </synopsis>
  </refsynopsisdiv>
@@ -192,6 +193,21 @@ ROLLBACK;
       option.
       This parameter may only be used when <literal>ANALYZE</literal> is also
       enabled.  It defaults to <literal>TRUE</literal>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>SUMMARY</literal></term>
+    <listitem>
+     <para>
+      Include summary information (eg: totalled timing information) after the
+      query plan.  Summary information is included by default when
+      <literal>ANALYZE</literal> is used but otherwise is not included by
+      default, but can be enabled using this option.  Planning time in
+      <command>EXPLAIN EXECUTE</command> includes the time required to fetch
+      the plan from the cache and the time required for re-planning, if
+      necessary.
      </para>
     </listitem>
    </varlistentry>

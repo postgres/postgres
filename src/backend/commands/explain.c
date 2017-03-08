@@ -149,6 +149,7 @@ ExplainQuery(ParseState *pstate, ExplainStmt *stmt, const char *queryString,
 	List	   *rewritten;
 	ListCell   *lc;
 	bool		timing_set = false;
+	bool		summary_set = false;
 
 	/* Parse options list. */
 	foreach(lc, stmt->options)
@@ -167,6 +168,11 @@ ExplainQuery(ParseState *pstate, ExplainStmt *stmt, const char *queryString,
 		{
 			timing_set = true;
 			es->timing = defGetBoolean(opt);
+		}
+		else if (strcmp(opt->defname, "summary") == 0)
+		{
+			summary_set = true;
+			es->summary = defGetBoolean(opt);
 		}
 		else if (strcmp(opt->defname, "format") == 0)
 		{
@@ -209,8 +215,8 @@ ExplainQuery(ParseState *pstate, ExplainStmt *stmt, const char *queryString,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("EXPLAIN option TIMING requires ANALYZE")));
 
-	/* currently, summary option is not exposed to users; just set it */
-	es->summary = es->analyze;
+	/* if the summary was not set explicitly, set default value */
+	es->summary = (summary_set) ? es->summary : es->analyze;
 
 	/*
 	 * Parse analysis was done already, but we still have to run the rule
@@ -571,7 +577,13 @@ ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
 
 	totaltime += elapsed_time(&starttime);
 
-	if (es->summary)
+	/*
+	 * We only report execution time if we actually ran the query (that is,
+	 * the user specified ANALYZE), and if summary reporting is enabled (the
+	 * user can set SUMMARY OFF to not have the timing information included in
+	 * the output).  By default, ANALYZE sets SUMMARY to true.
+	 */
+	if (es->summary && es->analyze)
 	{
 		if (es->format == EXPLAIN_FORMAT_TEXT)
 			appendStringInfo(es->str, "Execution time: %.3f ms\n",
