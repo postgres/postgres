@@ -4389,9 +4389,8 @@ XmlTableFetchRow(TableFuncScanState *state)
 	return false;
 #else
 	NO_XML_SUPPORT();
-#endif   /* not USE_LIBXML */
-
 	return false;
+#endif   /* not USE_LIBXML */
 }
 
 /*
@@ -4561,6 +4560,7 @@ XmlTableGetValue(TableFuncScanState *state, int colnum,
 	return result;
 #else
 	NO_XML_SUPPORT();
+	return 0;
 #endif   /* not USE_LIBXML */
 }
 
