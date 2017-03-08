@@ -1059,7 +1059,7 @@ main(int argc, char **argv)
 		XLogDumpDisplayStats(&config, &stats);
 
 	if (errormsg)
-		fatal_error("error in WAL record at %X/%X: %s\n",
+		fatal_error("error in WAL record at %X/%X: %s",
 					(uint32) (xlogreader_state->ReadRecPtr >> 32),
 					(uint32) xlogreader_state->ReadRecPtr,
 					errormsg);
