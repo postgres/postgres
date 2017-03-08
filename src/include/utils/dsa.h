@@ -14,8 +14,6 @@
 #ifndef DSA_H
 #define DSA_H
 
-#include "postgres.h"
-
 #include "port/atomics.h"
 #include "storage/dsm.h"
 

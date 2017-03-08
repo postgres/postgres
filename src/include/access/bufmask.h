@@ -17,7 +17,6 @@
 #ifndef BUFMASK_H
 #define BUFMASK_H
 
-#include "postgres.h"
 #include "storage/block.h"
 #include "storage/bufmgr.h"
 
