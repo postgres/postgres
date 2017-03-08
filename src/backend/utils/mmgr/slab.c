@@ -547,14 +547,14 @@ SlabFree(MemoryContext context, void *pointer)
 
 /*
  * SlabRealloc
- *		As Slab is designed for allocating equally-sized chunks of memory, it
- *		can't really do an actual realloc.
+ *		Change the allocated size of a chunk.
  *
- * We try to be gentle and allow calls with exactly the same size as in that
- * case we can simply return the same chunk. When the size differs, we fail
- * with assert failure or return NULL.
+ * As Slab is designed for allocating equally-sized chunks of memory, it can't
+ * do an actual chunk size change.  We try to be gentle and allow calls with
+ * exactly the same size, as in that case we can simply return the same
+ * chunk.  When the size differs, we throw an error.
  *
- * We might be even support cases with (size < chunkSize). That however seems
+ * We could also allow requests with size < chunkSize.  That however seems
  * rather pointless - Slab is meant for chunks of constant size, and moreover
  * realloc is usually used to enlarge the chunk.
  */
@@ -570,6 +570,7 @@ SlabRealloc(MemoryContext context, void *pointer, Size size)
 		return pointer;
 
 	elog(ERROR, "slab allocator does not support realloc()");
+	return NULL;				/* keep compiler quiet */
 }
 
 /*
