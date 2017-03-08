@@ -91,6 +91,11 @@ extern RangeTblEntry *addRangeTableEntryForValues(ParseState *pstate,
 							Alias *alias,
 							bool lateral,
 							bool inFromCl);
+extern RangeTblEntry *addRangeTableEntryForTableFunc(ParseState *pstate,
+							   TableFunc *tf,
+							   Alias *alias,
+							   bool lateral,
+							   bool inFromCl);
 extern RangeTblEntry *addRangeTableEntryForJoin(ParseState *pstate,
 						  List *colnames,
 						  JoinType jointype,

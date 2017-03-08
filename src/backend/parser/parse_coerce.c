@@ -1096,9 +1096,9 @@ coerce_to_boolean(ParseState *pstate, Node *node,
 }
 
 /*
- * coerce_to_specific_type()
- *		Coerce an argument of a construct that requires a specific data type.
- *		Also check that input is not a set.
+ * coerce_to_specific_type_typmod()
+ *		Coerce an argument of a construct that requires a specific data type,
+ *		with a specific typmod.  Also check that input is not a set.
  *
  * Returns the possibly-transformed node tree.
  *
@@ -1106,9 +1106,9 @@ coerce_to_boolean(ParseState *pstate, Node *node,
  * processing is wanted.
  */
 Node *
-coerce_to_specific_type(ParseState *pstate, Node *node,
-						Oid targetTypeId,
-						const char *constructName)
+coerce_to_specific_type_typmod(ParseState *pstate, Node *node,
+							   Oid targetTypeId, int32 targetTypmod,
+							   const char *constructName)
 {
 	Oid			inputTypeId = exprType(node);
 
@@ -1117,7 +1117,7 @@ coerce_to_specific_type(ParseState *pstate, Node *node,
 		Node	   *newnode;
 
 		newnode = coerce_to_target_type(pstate, node, inputTypeId,
-										targetTypeId, -1,
+										targetTypeId, targetTypmod,
 										COERCION_ASSIGNMENT,
 										COERCE_IMPLICIT_CAST,
 										-1);
@@ -1144,6 +1144,25 @@ coerce_to_specific_type(ParseState *pstate, Node *node,
 	return node;
 }
 
+/*
+ * coerce_to_specific_type()
+ *		Coerce an argument of a construct that requires a specific data type.
+ *		Also check that input is not a set.
+ *
+ * Returns the possibly-transformed node tree.
+ *
+ * As with coerce_type, pstate may be NULL if no special unknown-Param
+ * processing is wanted.
+ */
+Node *
+coerce_to_specific_type(ParseState *pstate, Node *node,
+						Oid targetTypeId,
+						const char *constructName)
+{
+	return coerce_to_specific_type_typmod(pstate, node,
+										  targetTypeId, -1,
+										  constructName);
+}
 
 /*
  * parser_coercion_errposition - report coercion error location, if possible

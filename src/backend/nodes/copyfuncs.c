@@ -588,6 +588,27 @@ _copyFunctionScan(const FunctionScan *from)
 }
 
 /*
+ * _copyTableFuncScan
+ */
+static TableFuncScan *
+_copyTableFuncScan(const TableFuncScan *from)
+{
+	TableFuncScan *newnode = makeNode(TableFuncScan);
+
+	/*
+	 * copy node superclass fields
+	 */
+	CopyScanFields((const Scan *) from, (Scan *) newnode);
+
+	/*
+	 * copy remainder of node
+	 */
+	COPY_NODE_FIELD(tablefunc);
+
+	return newnode;
+}
+
+/*
  * _copyValuesScan
  */
 static ValuesScan *
@@ -1133,6 +1154,31 @@ _copyRangeVar(const RangeVar *from)
 	COPY_SCALAR_FIELD(inh);
 	COPY_SCALAR_FIELD(relpersistence);
 	COPY_NODE_FIELD(alias);
+	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+/*
+ * _copyTableFunc
+ */
+static TableFunc *
+_copyTableFunc(const TableFunc *from)
+{
+	TableFunc  *newnode = makeNode(TableFunc);
+
+	COPY_NODE_FIELD(ns_names);
+	COPY_NODE_FIELD(ns_uris);
+	COPY_NODE_FIELD(docexpr);
+	COPY_NODE_FIELD(rowexpr);
+	COPY_NODE_FIELD(colnames);
+	COPY_NODE_FIELD(coltypes);
+	COPY_NODE_FIELD(coltypmods);
+	COPY_NODE_FIELD(colcollations);
+	COPY_NODE_FIELD(colexprs);
+	COPY_NODE_FIELD(coldefexprs);
+	COPY_BITMAPSET_FIELD(notnulls);
+	COPY_SCALAR_FIELD(ordinalitycol);
 	COPY_LOCATION_FIELD(location);
 
 	return newnode;
@@ -2169,6 +2215,7 @@ _copyRangeTblEntry(const RangeTblEntry *from)
 	COPY_NODE_FIELD(joinaliasvars);
 	COPY_NODE_FIELD(functions);
 	COPY_SCALAR_FIELD(funcordinality);
+	COPY_NODE_FIELD(tablefunc);
 	COPY_NODE_FIELD(values_lists);
 	COPY_STRING_FIELD(ctename);
 	COPY_SCALAR_FIELD(ctelevelsup);
@@ -2585,6 +2632,38 @@ _copyRangeTableSample(const RangeTableSample *from)
 	COPY_NODE_FIELD(method);
 	COPY_NODE_FIELD(args);
 	COPY_NODE_FIELD(repeatable);
+	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+static RangeTableFunc *
+_copyRangeTableFunc(const RangeTableFunc *from)
+{
+	RangeTableFunc *newnode = makeNode(RangeTableFunc);
+
+	COPY_SCALAR_FIELD(lateral);
+	COPY_NODE_FIELD(docexpr);
+	COPY_NODE_FIELD(rowexpr);
+	COPY_NODE_FIELD(namespaces);
+	COPY_NODE_FIELD(columns);
+	COPY_NODE_FIELD(alias);
+	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+static RangeTableFuncCol *
+_copyRangeTableFuncCol(const RangeTableFuncCol *from)
+{
+	RangeTableFuncCol *newnode = makeNode(RangeTableFuncCol);
+
+	COPY_STRING_FIELD(colname);
+	COPY_NODE_FIELD(typeName);
+	COPY_SCALAR_FIELD(for_ordinality);
+	COPY_SCALAR_FIELD(is_not_null);
+	COPY_NODE_FIELD(colexpr);
+	COPY_NODE_FIELD(coldefexpr);
 	COPY_LOCATION_FIELD(location);
 
 	return newnode;
@@ -4540,6 +4619,9 @@ copyObject(const void *from)
 		case T_FunctionScan:
 			retval = _copyFunctionScan(from);
 			break;
+		case T_TableFuncScan:
+			retval = _copyTableFuncScan(from);
+			break;
 		case T_ValuesScan:
 			retval = _copyValuesScan(from);
 			break;
@@ -4615,6 +4697,9 @@ copyObject(const void *from)
 			break;
 		case T_RangeVar:
 			retval = _copyRangeVar(from);
+			break;
+		case T_TableFunc:
+			retval = _copyTableFunc(from);
 			break;
 		case T_IntoClause:
 			retval = _copyIntoClause(from);
@@ -5209,6 +5294,12 @@ copyObject(const void *from)
 			break;
 		case T_RangeTableSample:
 			retval = _copyRangeTableSample(from);
+			break;
+		case T_RangeTableFunc:
+			retval = _copyRangeTableFunc(from);
+			break;
+		case T_RangeTableFuncCol:
+			retval = _copyRangeTableFuncCol(from);
 			break;
 		case T_TypeName:
 			retval = _copyTypeName(from);

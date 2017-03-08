@@ -210,10 +210,10 @@ makeWholeRowVar(RangeTblEntry *rte,
 		default:
 
 			/*
-			 * RTE is a join, subselect, or VALUES.  We represent this as a
-			 * whole-row Var of RECORD type. (Note that in most cases the Var
-			 * will be expanded to a RowExpr during planning, but that is not
-			 * our concern here.)
+			 * RTE is a join, subselect, tablefunc, or VALUES.  We represent
+			 * this as a whole-row Var of RECORD type. (Note that in most
+			 * cases the Var will be expanded to a RowExpr during planning,
+			 * but that is not our concern here.)
 			 */
 			result = makeVar(varno,
 							 InvalidAttrNumber,

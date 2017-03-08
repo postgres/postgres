@@ -827,3 +827,478 @@ SELECT XMLPARSE(DOCUMENT '<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
 HINT:  You need to rebuild PostgreSQL using --with-libxml.
+-- XMLPATH tests
+CREATE TABLE xmldata(data xml);
+INSERT INTO xmldata VALUES('<ROWS>
+<ROW id="1">
+  <COUNTRY_ID>AU</COUNTRY_ID>
+  <COUNTRY_NAME>Australia</COUNTRY_NAME>
+  <REGION_ID>3</REGION_ID>
+</ROW>
+<ROW id="2">
+  <COUNTRY_ID>CN</COUNTRY_ID>
+  <COUNTRY_NAME>China</COUNTRY_NAME>
+  <REGION_ID>3</REGION_ID>
+</ROW>
+<ROW id="3">
+  <COUNTRY_ID>HK</COUNTRY_ID>
+  <COUNTRY_NAME>HongKong</COUNTRY_NAME>
+  <REGION_ID>3</REGION_ID>
+</ROW>
+<ROW id="4">
+  <COUNTRY_ID>IN</COUNTRY_ID>
+  <COUNTRY_NAME>India</COUNTRY_NAME>
+  <REGION_ID>3</REGION_ID>
+</ROW>
+<ROW id="5">
+  <COUNTRY_ID>JP</COUNTRY_ID>
+  <COUNTRY_NAME>Japan</COUNTRY_NAME>
+  <REGION_ID>3</REGION_ID><PREMIER_NAME>Sinzo Abe</PREMIER_NAME>
+</ROW>
+<ROW id="6">
+  <COUNTRY_ID>SG</COUNTRY_ID>
+  <COUNTRY_NAME>Singapore</COUNTRY_NAME>
+  <REGION_ID>3</REGION_ID><SIZE unit="km">791</SIZE>
+</ROW>
+</ROWS>');
+ERROR:  unsupported XML feature
+LINE 1: INSERT INTO xmldata VALUES('<ROWS>
+                                   ^
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+-- XMLTABLE with columns
+SELECT  xmltable.*
+   FROM (SELECT data FROM xmldata) x,
+        LATERAL XMLTABLE('/ROWS/ROW'
+                         PASSING data
+                         COLUMNS id int PATH '@id',
+                                  _id FOR ORDINALITY,
+                                  country_name text PATH 'COUNTRY_NAME' NOT NULL,
+                                  country_id text PATH 'COUNTRY_ID',
+                                  region_id int PATH 'REGION_ID',
+                                  size float PATH 'SIZE',
+                                  unit text PATH 'SIZE/@unit',
+                                  premier_name text PATH 'PREMIER_NAME' DEFAULT 'not specified');
+ id | _id | country_name | country_id | region_id | size | unit | premier_name 
+----+-----+--------------+------------+-----------+------+------+--------------
+(0 rows)
+
+CREATE VIEW xmltableview1 AS SELECT  xmltable.*
+   FROM (SELECT data FROM xmldata) x,
+        LATERAL XMLTABLE('/ROWS/ROW'
+                         PASSING data
+                         COLUMNS id int PATH '@id',
+                                  _id FOR ORDINALITY,
+                                  country_name text PATH 'COUNTRY_NAME' NOT NULL,
+                                  country_id text PATH 'COUNTRY_ID',
+                                  region_id int PATH 'REGION_ID',
+                                  size float PATH 'SIZE',
+                                  unit text PATH 'SIZE/@unit',
+                                  premier_name text PATH 'PREMIER_NAME' DEFAULT 'not specified');
+SELECT * FROM xmltableview1;
+ id | _id | country_name | country_id | region_id | size | unit | premier_name 
+----+-----+--------------+------------+-----------+------+------+--------------
+(0 rows)
+
+\sv xmltableview1
+CREATE OR REPLACE VIEW public.xmltableview1 AS
+ SELECT "xmltable".id,
+    "xmltable"._id,
+    "xmltable".country_name,
+    "xmltable".country_id,
+    "xmltable".region_id,
+    "xmltable".size,
+    "xmltable".unit,
+    "xmltable".premier_name
+   FROM ( SELECT xmldata.data
+           FROM xmldata) x,
+    LATERAL XMLTABLE(('/ROWS/ROW'::text) PASSING (x.data) COLUMNS id integer PATH ('@id'::text), _id FOR ORDINALITY, country_name text PATH ('COUNTRY_NAME'::text) NOT NULL, country_id text PATH ('COUNTRY_ID'::text), region_id integer PATH ('REGION_ID'::text), size double precision PATH ('SIZE'::text), unit text PATH ('SIZE/@unit'::text), premier_name text DEFAULT ('not specified'::text) PATH ('PREMIER_NAME'::text))
+EXPLAIN (COSTS OFF) SELECT * FROM xmltableview1;
+               QUERY PLAN                
+-----------------------------------------
+ Nested Loop
+   ->  Seq Scan on xmldata
+   ->  Table Function Scan on "xmltable"
+(3 rows)
+
+EXPLAIN (COSTS OFF, VERBOSE) SELECT * FROM xmltableview1;
+                                                                                                                                                                                                                        QUERY PLAN                                                                                                                                                                                                                         
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Nested Loop
+   Output: "xmltable".id, "xmltable"._id, "xmltable".country_name, "xmltable".country_id, "xmltable".region_id, "xmltable".size, "xmltable".unit, "xmltable".premier_name
+   ->  Seq Scan on public.xmldata
+         Output: xmldata.data
+   ->  Table Function Scan on "xmltable"
+         Output: "xmltable".id, "xmltable"._id, "xmltable".country_name, "xmltable".country_id, "xmltable".region_id, "xmltable".size, "xmltable".unit, "xmltable".premier_name
+         Table Function Call: XMLTABLE(('/ROWS/ROW'::text) PASSING (xmldata.data) COLUMNS id integer PATH ('@id'::text), _id FOR ORDINALITY, country_name text PATH ('COUNTRY_NAME'::text) NOT NULL, country_id text PATH ('COUNTRY_ID'::text), region_id integer PATH ('REGION_ID'::text), size double precision PATH ('SIZE'::text), unit text PATH ('SIZE/@unit'::text), premier_name text DEFAULT ('not specified'::text) PATH ('PREMIER_NAME'::text))
+(7 rows)
+
+-- XMLNAMESPACES tests
+SELECT * FROM XMLTABLE(XMLNAMESPACES('http://x.y' AS zz),
+                      '/zz:rows/zz:row'
+                      PASSING '<rows xmlns="http://x.y"><row><a>10</a></row></rows>'
+                      COLUMNS a int PATH 'zz:a');
+ERROR:  unsupported XML feature
+LINE 3:                       PASSING '<rows xmlns="http://x.y"><row...
+                                      ^
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+CREATE VIEW xmltableview2 AS SELECT * FROM XMLTABLE(XMLNAMESPACES('http://x.y' AS zz),
+                      '/zz:rows/zz:row'
+                      PASSING '<rows xmlns="http://x.y"><row><a>10</a></row></rows>'
+                      COLUMNS a int PATH 'zz:a');
+ERROR:  unsupported XML feature
+LINE 3:                       PASSING '<rows xmlns="http://x.y"><row...
+                                      ^
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+SELECT * FROM xmltableview2;
+ERROR:  relation "xmltableview2" does not exist
+LINE 1: SELECT * FROM xmltableview2;
+                      ^
+SELECT * FROM XMLTABLE(XMLNAMESPACES(DEFAULT 'http://x.y'),
+                      '/rows/row'
+                      PASSING '<rows xmlns="http://x.y"><row><a>10</a></row></rows>'
+                      COLUMNS a int PATH 'a');
+ERROR:  unsupported XML feature
+LINE 3:                       PASSING '<rows xmlns="http://x.y"><row...
+                                      ^
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+-- used in prepare statements
+PREPARE pp AS
+SELECT  xmltable.*
+   FROM (SELECT data FROM xmldata) x,
+        LATERAL XMLTABLE('/ROWS/ROW'
+                         PASSING data
+                         COLUMNS id int PATH '@id',
+                                  _id FOR ORDINALITY,
+                                  country_name text PATH 'COUNTRY_NAME' NOT NULL,
+                                  country_id text PATH 'COUNTRY_ID',
+                                  region_id int PATH 'REGION_ID',
+                                  size float PATH 'SIZE',
+                                  unit text PATH 'SIZE/@unit',
+                                  premier_name text PATH 'PREMIER_NAME' DEFAULT 'not specified');
+EXECUTE pp;
+ id | _id | country_name | country_id | region_id | size | unit | premier_name 
+----+-----+--------------+------------+-----------+------+------+--------------
+(0 rows)
+
+SELECT xmltable.* FROM xmldata, LATERAL xmltable('/ROWS/ROW[COUNTRY_NAME="Japan" or COUNTRY_NAME="India"]' PASSING data COLUMNS "COUNTRY_NAME" text, "REGION_ID" int);
+ COUNTRY_NAME | REGION_ID 
+--------------+-----------
+(0 rows)
+
+SELECT xmltable.* FROM xmldata, LATERAL xmltable('/ROWS/ROW[COUNTRY_NAME="Japan" or COUNTRY_NAME="India"]' PASSING data COLUMNS id FOR ORDINALITY, "COUNTRY_NAME" text, "REGION_ID" int);
+ id | COUNTRY_NAME | REGION_ID 
+----+--------------+-----------
+(0 rows)
+
+SELECT xmltable.* FROM xmldata, LATERAL xmltable('/ROWS/ROW[COUNTRY_NAME="Japan" or COUNTRY_NAME="India"]' PASSING data COLUMNS id int PATH '@id', "COUNTRY_NAME" text, "REGION_ID" int);
+ id | COUNTRY_NAME | REGION_ID 
+----+--------------+-----------
+(0 rows)
+
+SELECT xmltable.* FROM xmldata, LATERAL xmltable('/ROWS/ROW[COUNTRY_NAME="Japan" or COUNTRY_NAME="India"]' PASSING data COLUMNS id int PATH '@id');
+ id 
+----
+(0 rows)
+
+SELECT xmltable.* FROM xmldata, LATERAL xmltable('/ROWS/ROW[COUNTRY_NAME="Japan" or COUNTRY_NAME="India"]' PASSING data COLUMNS id FOR ORDINALITY);
+ id 
+----
+(0 rows)
+
+SELECT xmltable.* FROM xmldata, LATERAL xmltable('/ROWS/ROW[COUNTRY_NAME="Japan" or COUNTRY_NAME="India"]' PASSING data COLUMNS id int PATH '@id', "COUNTRY_NAME" text, "REGION_ID" int, rawdata xml PATH '.');
+ id | COUNTRY_NAME | REGION_ID | rawdata 
+----+--------------+-----------+---------
+(0 rows)
+
+SELECT xmltable.* FROM xmldata, LATERAL xmltable('/ROWS/ROW[COUNTRY_NAME="Japan" or COUNTRY_NAME="India"]' PASSING data COLUMNS id int PATH '@id', "COUNTRY_NAME" text, "REGION_ID" int, rawdata xml PATH './*');
+ id | COUNTRY_NAME | REGION_ID | rawdata 
+----+--------------+-----------+---------
+(0 rows)
+
+SELECT * FROM xmltable('/root' passing '<root><element>a1a<!-- aaaa -->a2a<?aaaaa?> <!--z-->  bbbb<x>xxx</x>cccc</element></root>' COLUMNS element text);
+ERROR:  unsupported XML feature
+LINE 1: SELECT * FROM xmltable('/root' passing '<root><element>a1a<!...
+                                               ^
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+SELECT * FROM xmltable('/root' passing '<root><element>a1a<!-- aaaa -->a2a<?aaaaa?> <!--z-->  bbbb<x>xxx</x>cccc</element></root>' COLUMNS element text PATH 'element/text()'); -- should fail
+ERROR:  unsupported XML feature
+LINE 1: SELECT * FROM xmltable('/root' passing '<root><element>a1a<!...
+                                               ^
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+-- CDATA test
+select * from xmltable('r' passing '<d><r><c><![CDATA[<hello> &"<>!<a>foo</a>]]></c></r><r><c>2</c></r></d>' columns c text);
+ERROR:  unsupported XML feature
+LINE 1: select * from xmltable('r' passing '<d><r><c><![CDATA[<hello...
+                                           ^
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+-- XML builtin entities
+SELECT * FROM xmltable('/x/a' PASSING '<x><a><ent>&apos;</ent></a><a><ent>&quot;</ent></a><a><ent>&amp;</ent></a><a><ent>&lt;</ent></a><a><ent>&gt;</ent></a></x>' COLUMNS ent text);
+ERROR:  unsupported XML feature
+LINE 1: SELECT * FROM xmltable('/x/a' PASSING '<x><a><ent>&apos;</en...
+                                              ^
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+SELECT * FROM xmltable('/x/a' PASSING '<x><a><ent>&apos;</ent></a><a><ent>&quot;</ent></a><a><ent>&amp;</ent></a><a><ent>&lt;</ent></a><a><ent>&gt;</ent></a></x>' COLUMNS ent xml);
+ERROR:  unsupported XML feature
+LINE 1: SELECT * FROM xmltable('/x/a' PASSING '<x><a><ent>&apos;</en...
+                                              ^
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT  xmltable.*
+   FROM (SELECT data FROM xmldata) x,
+        LATERAL XMLTABLE('/ROWS/ROW'
+                         PASSING data
+                         COLUMNS id int PATH '@id',
+                                  _id FOR ORDINALITY,
+                                  country_name text PATH 'COUNTRY_NAME' NOT NULL,
+                                  country_id text PATH 'COUNTRY_ID',
+                                  region_id int PATH 'REGION_ID',
+                                  size float PATH 'SIZE',
+                                  unit text PATH 'SIZE/@unit',
+                                  premier_name text PATH 'PREMIER_NAME' DEFAULT 'not specified');
+                                                                                                                                                                                                                        QUERY PLAN                                                                                                                                                                                                                         
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Nested Loop
+   Output: "xmltable".id, "xmltable"._id, "xmltable".country_name, "xmltable".country_id, "xmltable".region_id, "xmltable".size, "xmltable".unit, "xmltable".premier_name
+   ->  Seq Scan on public.xmldata
+         Output: xmldata.data
+   ->  Table Function Scan on "xmltable"
+         Output: "xmltable".id, "xmltable"._id, "xmltable".country_name, "xmltable".country_id, "xmltable".region_id, "xmltable".size, "xmltable".unit, "xmltable".premier_name
+         Table Function Call: XMLTABLE(('/ROWS/ROW'::text) PASSING (xmldata.data) COLUMNS id integer PATH ('@id'::text), _id FOR ORDINALITY, country_name text PATH ('COUNTRY_NAME'::text) NOT NULL, country_id text PATH ('COUNTRY_ID'::text), region_id integer PATH ('REGION_ID'::text), size double precision PATH ('SIZE'::text), unit text PATH ('SIZE/@unit'::text), premier_name text DEFAULT ('not specified'::text) PATH ('PREMIER_NAME'::text))
+(7 rows)
+
+-- test qual
+SELECT xmltable.* FROM xmldata, LATERAL xmltable('/ROWS/ROW[COUNTRY_NAME="Japan" or COUNTRY_NAME="India"]' PASSING data COLUMNS "COUNTRY_NAME" text, "REGION_ID" int) WHERE "COUNTRY_NAME" = 'Japan';
+ COUNTRY_NAME | REGION_ID 
+--------------+-----------
+(0 rows)
+
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT xmltable.* FROM xmldata, LATERAL xmltable('/ROWS/ROW[COUNTRY_NAME="Japan" or COUNTRY_NAME="India"]' PASSING data COLUMNS "COUNTRY_NAME" text, "REGION_ID" int) WHERE "COUNTRY_NAME" = 'Japan';
+                                                                                    QUERY PLAN                                                                                    
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Nested Loop
+   Output: "xmltable"."COUNTRY_NAME", "xmltable"."REGION_ID"
+   ->  Seq Scan on public.xmldata
+         Output: xmldata.data
+   ->  Table Function Scan on "xmltable"
+         Output: "xmltable"."COUNTRY_NAME", "xmltable"."REGION_ID"
+         Table Function Call: XMLTABLE(('/ROWS/ROW[COUNTRY_NAME="Japan" or COUNTRY_NAME="India"]'::text) PASSING (xmldata.data) COLUMNS "COUNTRY_NAME" text, "REGION_ID" integer)
+         Filter: ("xmltable"."COUNTRY_NAME" = 'Japan'::text)
+(8 rows)
+
+-- should to work with more data
+INSERT INTO xmldata VALUES('<ROWS>
+<ROW id="10">
+  <COUNTRY_ID>CZ</COUNTRY_ID>
+  <COUNTRY_NAME>Czech Republic</COUNTRY_NAME>
+  <REGION_ID>2</REGION_ID><PREMIER_NAME>Milos Zeman</PREMIER_NAME>
+</ROW>
+<ROW id="11">
+  <COUNTRY_ID>DE</COUNTRY_ID>
+  <COUNTRY_NAME>Germany</COUNTRY_NAME>
+  <REGION_ID>2</REGION_ID>
+</ROW>
+<ROW id="12">
+  <COUNTRY_ID>FR</COUNTRY_ID>
+  <COUNTRY_NAME>France</COUNTRY_NAME>
+  <REGION_ID>2</REGION_ID>
+</ROW>
+</ROWS>');
+ERROR:  unsupported XML feature
+LINE 1: INSERT INTO xmldata VALUES('<ROWS>
+                                   ^
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+INSERT INTO xmldata VALUES('<ROWS>
+<ROW id="20">
+  <COUNTRY_ID>EG</COUNTRY_ID>
+  <COUNTRY_NAME>Egypt</COUNTRY_NAME>
+  <REGION_ID>1</REGION_ID>
+</ROW>
+<ROW id="21">
+  <COUNTRY_ID>SD</COUNTRY_ID>
+  <COUNTRY_NAME>Sudan</COUNTRY_NAME>
+  <REGION_ID>1</REGION_ID>
+</ROW>
+</ROWS>');
+ERROR:  unsupported XML feature
+LINE 1: INSERT INTO xmldata VALUES('<ROWS>
+                                   ^
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+SELECT  xmltable.*
+   FROM (SELECT data FROM xmldata) x,
+        LATERAL XMLTABLE('/ROWS/ROW'
+                         PASSING data
+                         COLUMNS id int PATH '@id',
+                                  _id FOR ORDINALITY,
+                                  country_name text PATH 'COUNTRY_NAME' NOT NULL,
+                                  country_id text PATH 'COUNTRY_ID',
+                                  region_id int PATH 'REGION_ID',
+                                  size float PATH 'SIZE',
+                                  unit text PATH 'SIZE/@unit',
+                                  premier_name text PATH 'PREMIER_NAME' DEFAULT 'not specified');
+ id | _id | country_name | country_id | region_id | size | unit | premier_name 
+----+-----+--------------+------------+-----------+------+------+--------------
+(0 rows)
+
+SELECT  xmltable.*
+   FROM (SELECT data FROM xmldata) x,
+        LATERAL XMLTABLE('/ROWS/ROW'
+                         PASSING data
+                         COLUMNS id int PATH '@id',
+                                  _id FOR ORDINALITY,
+                                  country_name text PATH 'COUNTRY_NAME' NOT NULL,
+                                  country_id text PATH 'COUNTRY_ID',
+                                  region_id int PATH 'REGION_ID',
+                                  size float PATH 'SIZE',
+                                  unit text PATH 'SIZE/@unit',
+                                  premier_name text PATH 'PREMIER_NAME' DEFAULT 'not specified')
+  WHERE region_id = 2;
+ id | _id | country_name | country_id | region_id | size | unit | premier_name 
+----+-----+--------------+------------+-----------+------+------+--------------
+(0 rows)
+
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT  xmltable.*
+   FROM (SELECT data FROM xmldata) x,
+        LATERAL XMLTABLE('/ROWS/ROW'
+                         PASSING data
+                         COLUMNS id int PATH '@id',
+                                  _id FOR ORDINALITY,
+                                  country_name text PATH 'COUNTRY_NAME' NOT NULL,
+                                  country_id text PATH 'COUNTRY_ID',
+                                  region_id int PATH 'REGION_ID',
+                                  size float PATH 'SIZE',
+                                  unit text PATH 'SIZE/@unit',
+                                  premier_name text PATH 'PREMIER_NAME' DEFAULT 'not specified')
+  WHERE region_id = 2;
+                                                                                                                                                                                                                        QUERY PLAN                                                                                                                                                                                                                         
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Nested Loop
+   Output: "xmltable".id, "xmltable"._id, "xmltable".country_name, "xmltable".country_id, "xmltable".region_id, "xmltable".size, "xmltable".unit, "xmltable".premier_name
+   ->  Seq Scan on public.xmldata
+         Output: xmldata.data
+   ->  Table Function Scan on "xmltable"
+         Output: "xmltable".id, "xmltable"._id, "xmltable".country_name, "xmltable".country_id, "xmltable".region_id, "xmltable".size, "xmltable".unit, "xmltable".premier_name
+         Table Function Call: XMLTABLE(('/ROWS/ROW'::text) PASSING (xmldata.data) COLUMNS id integer PATH ('@id'::text), _id FOR ORDINALITY, country_name text PATH ('COUNTRY_NAME'::text) NOT NULL, country_id text PATH ('COUNTRY_ID'::text), region_id integer PATH ('REGION_ID'::text), size double precision PATH ('SIZE'::text), unit text PATH ('SIZE/@unit'::text), premier_name text DEFAULT ('not specified'::text) PATH ('PREMIER_NAME'::text))
+         Filter: ("xmltable".region_id = 2)
+(8 rows)
+
+-- should fail, NULL value
+SELECT  xmltable.*
+   FROM (SELECT data FROM xmldata) x,
+        LATERAL XMLTABLE('/ROWS/ROW'
+                         PASSING data
+                         COLUMNS id int PATH '@id',
+                                  _id FOR ORDINALITY,
+                                  country_name text PATH 'COUNTRY_NAME' NOT NULL,
+                                  country_id text PATH 'COUNTRY_ID',
+                                  region_id int PATH 'REGION_ID',
+                                  size float PATH 'SIZE' NOT NULL,
+                                  unit text PATH 'SIZE/@unit',
+                                  premier_name text PATH 'PREMIER_NAME' DEFAULT 'not specified');
+ id | _id | country_name | country_id | region_id | size | unit | premier_name 
+----+-----+--------------+------------+-----------+------+------+--------------
+(0 rows)
+
+-- if all is ok, then result is empty
+-- one line xml test
+WITH
+   x AS (SELECT proname, proowner, procost::numeric, pronargs,
+                array_to_string(proargnames,',') as proargnames,
+                case when proargtypes <> '' then array_to_string(proargtypes::oid[],',') end as proargtypes
+           FROM pg_proc WHERE proname = 'f_leak'),
+   y AS (SELECT xmlelement(name proc,
+                           xmlforest(proname, proowner,
+                                     procost, pronargs,
+                                     proargnames, proargtypes)) as proc
+           FROM x),
+   z AS (SELECT xmltable.*
+           FROM y,
+                LATERAL xmltable('/proc' PASSING proc
+                                 COLUMNS proname name,
+                                         proowner oid,
+                                         procost float,
+                                         pronargs int,
+                                         proargnames text,
+                                         proargtypes text))
+   SELECT * FROM z
+   EXCEPT SELECT * FROM x;
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+-- multi line xml test, result should be empty too
+WITH
+   x AS (SELECT proname, proowner, procost::numeric, pronargs,
+                array_to_string(proargnames,',') as proargnames,
+                case when proargtypes <> '' then array_to_string(proargtypes::oid[],',') end as proargtypes
+           FROM pg_proc),
+   y AS (SELECT xmlelement(name data,
+                           xmlagg(xmlelement(name proc,
+                                             xmlforest(proname, proowner, procost,
+                                                       pronargs, proargnames, proargtypes)))) as doc
+           FROM x),
+   z AS (SELECT xmltable.*
+           FROM y,
+                LATERAL xmltable('/data/proc' PASSING doc
+                                 COLUMNS proname name,
+                                         proowner oid,
+                                         procost float,
+                                         pronargs int,
+                                         proargnames text,
+                                         proargtypes text))
+   SELECT * FROM z
+   EXCEPT SELECT * FROM x;
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+CREATE TABLE xmltest2(x xml, _path text);
+INSERT INTO xmltest2 VALUES('<d><r><ac>1</ac></r></d>', 'A');
+ERROR:  unsupported XML feature
+LINE 1: INSERT INTO xmltest2 VALUES('<d><r><ac>1</ac></r></d>', 'A')...
+                                    ^
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+INSERT INTO xmltest2 VALUES('<d><r><bc>2</bc></r></d>', 'B');
+ERROR:  unsupported XML feature
+LINE 1: INSERT INTO xmltest2 VALUES('<d><r><bc>2</bc></r></d>', 'B')...
+                                    ^
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+INSERT INTO xmltest2 VALUES('<d><r><cc>3</cc></r></d>', 'C');
+ERROR:  unsupported XML feature
+LINE 1: INSERT INTO xmltest2 VALUES('<d><r><cc>3</cc></r></d>', 'C')...
+                                    ^
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+INSERT INTO xmltest2 VALUES('<d><r><dc>2</dc></r></d>', 'D');
+ERROR:  unsupported XML feature
+LINE 1: INSERT INTO xmltest2 VALUES('<d><r><dc>2</dc></r></d>', 'D')...
+                                    ^
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+SELECT xmltable.* FROM xmltest2, LATERAL xmltable('/d/r' PASSING x COLUMNS a int PATH '' || lower(_path) || 'c');
+ a 
+---
+(0 rows)
+
+SELECT xmltable.* FROM xmltest2, LATERAL xmltable(('/d/r/' || lower(_path) || 'c') PASSING x COLUMNS a int PATH '.');
+ a 
+---
+(0 rows)
+
+SELECT xmltable.* FROM xmltest2, LATERAL xmltable(('/d/r/' || lower(_path) || 'c') PASSING x COLUMNS a int PATH 'x' DEFAULT ascii(_path) - 54);
+ a 
+---
+(0 rows)
+

@@ -555,6 +555,39 @@ typedef struct RangeFunction
 } RangeFunction;
 
 /*
+ * RangeTableFunc - raw form of "table functions" such as XMLTABLE
+ */
+typedef struct RangeTableFunc
+{
+	NodeTag		type;
+	bool		lateral;		/* does it have LATERAL prefix? */
+	Node	   *docexpr;		/* document expression */
+	Node	   *rowexpr;		/* row generator expression */
+	List	   *namespaces;		/* list of namespaces as ResTarget */
+	List	   *columns;		/* list of RangeTableFuncCol */
+	Alias	   *alias;			/* table alias & optional column aliases */
+	int			location;		/* token location, or -1 if unknown */
+} RangeTableFunc;
+
+/*
+ * RangeTableFuncCol - one column in a RangeTableFunc->columns
+ *
+ * If for_ordinality is true (FOR ORDINALITY), then the column is an int4
+ * column and the rest of the fields are ignored.
+ */
+typedef struct RangeTableFuncCol
+{
+	NodeTag		type;
+	char	   *colname;		/* name of generated column */
+	TypeName   *typeName;		/* type of generated column */
+	bool		for_ordinality; /* does it have FOR ORDINALITY? */
+	bool		is_not_null;	/* does it have NOT NULL? */
+	Node	   *colexpr;		/* column filter expression */
+	Node	   *coldefexpr;		/* column default value expression */
+	int			location;		/* token location, or -1 if unknown */
+} RangeTableFuncCol;
+
+/*
  * RangeTableSample - TABLESAMPLE appearing in a raw FROM clause
  *
  * This node, appearing only in raw parse trees, represents
@@ -871,6 +904,7 @@ typedef enum RTEKind
 	RTE_SUBQUERY,				/* subquery in FROM */
 	RTE_JOIN,					/* join */
 	RTE_FUNCTION,				/* function in FROM */
+	RTE_TABLEFUNC,				/* TableFunc(.., column list) */
 	RTE_VALUES,					/* VALUES (<exprlist>), (<exprlist>), ... */
 	RTE_CTE						/* common table expr (WITH list element) */
 } RTEKind;
@@ -930,6 +964,11 @@ typedef struct RangeTblEntry
 	 */
 	List	   *functions;		/* list of RangeTblFunction nodes */
 	bool		funcordinality; /* is this called WITH ORDINALITY? */
+
+	/*
+	 * Fields valid for a TableFunc RTE (else NULL):
+	 */
+	TableFunc  *tablefunc;
 
 	/*
 	 * Fields valid for a values RTE (else NIL):

@@ -22,6 +22,7 @@
 #include "catalog/catalog.h"
 #include "catalog/heap.h"
 #include "catalog/pg_am.h"
+#include "catalog/pg_collation.h"
 #include "catalog/pg_constraint_fn.h"
 #include "catalog/pg_type.h"
 #include "commands/defrem.h"
@@ -65,6 +66,8 @@ static RangeTblEntry *transformRangeSubselect(ParseState *pstate,
 						RangeSubselect *r);
 static RangeTblEntry *transformRangeFunction(ParseState *pstate,
 					   RangeFunction *r);
+static RangeTblEntry *transformRangeTableFunc(ParseState *pstate,
+					   RangeTableFunc *t);
 static TableSampleClause *transformRangeTableSample(ParseState *pstate,
 						  RangeTableSample *rts);
 static Node *transformFromClauseItem(ParseState *pstate, Node *n,
@@ -693,6 +696,229 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 }
 
 /*
+ * transformRangeTableFunc -
+ *			Transform a raw RangeTableFunc into TableFunc.
+ *
+ * Transform the namespace clauses, the document-generating expression, the
+ * row-generating expression, the column-generating expressions, and the
+ * default value expressions.
+ */
+static RangeTblEntry *
+transformRangeTableFunc(ParseState *pstate, RangeTableFunc *rtf)
+{
+	TableFunc  *tf = makeNode(TableFunc);
+	const char *constructName;
+	Oid			docType;
+	RangeTblEntry *rte;
+	bool		is_lateral;
+	ListCell   *col;
+	char	  **names;
+	int			colno;
+
+	/* Currently only XMLTABLE is supported */
+	constructName = "XMLTABLE";
+	docType = XMLOID;
+
+	/*
+	 * We make lateral_only names of this level visible, whether or not the
+	 * RangeTableFunc is explicitly marked LATERAL.  This is needed for SQL
+	 * spec compliance and seems useful on convenience grounds for all
+	 * functions in FROM.
+	 *
+	 * (LATERAL can't nest within a single pstate level, so we don't need
+	 * save/restore logic here.)
+	 */
+	Assert(!pstate->p_lateral_active);
+	pstate->p_lateral_active = true;
+
+	/* Transform and apply typecast to the row-generating expression ... */
+	Assert(rtf->rowexpr != NULL);
+	tf->rowexpr = coerce_to_specific_type(pstate,
+										  transformExpr(pstate, rtf->rowexpr, EXPR_KIND_FROM_FUNCTION),
+										  TEXTOID,
+										  constructName);
+	assign_expr_collations(pstate, tf->rowexpr);
+
+	/* ... and to the document itself */
+	Assert(rtf->docexpr != NULL);
+	tf->docexpr = coerce_to_specific_type(pstate,
+										  transformExpr(pstate, rtf->docexpr, EXPR_KIND_FROM_FUNCTION),
+										  docType,
+										  constructName);
+	assign_expr_collations(pstate, tf->docexpr);
+
+	/* undef ordinality column number */
+	tf->ordinalitycol = -1;
+
+
+	names = palloc(sizeof(char *) * list_length(rtf->columns));
+
+	colno = 0;
+	foreach(col, rtf->columns)
+	{
+		RangeTableFuncCol *rawc = (RangeTableFuncCol *) lfirst(col);
+		Oid			typid;
+		int32		typmod;
+		Node	   *colexpr;
+		Node	   *coldefexpr;
+		int			j;
+
+		tf->colnames = lappend(tf->colnames,
+							   makeString(pstrdup(rawc->colname)));
+
+		/*
+		 * Determine the type and typmod for the new column. FOR
+		 * ORDINALITY columns are INTEGER per spec; the others are
+		 * user-specified.
+		 */
+		if (rawc->for_ordinality)
+		{
+			if (tf->ordinalitycol != -1)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("only one FOR ORDINALITY column is allowed"),
+						 parser_errposition(pstate, rawc->location)));
+
+			typid = INT4OID;
+			typmod = -1;
+			tf->ordinalitycol = colno;
+		}
+		else
+		{
+			if (rawc->typeName->setof)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+						 errmsg("column \"%s\" cannot be declared SETOF",
+								rawc->colname),
+						 parser_errposition(pstate, rawc->location)));
+
+			typenameTypeIdAndMod(pstate, rawc->typeName,
+								 &typid, &typmod);
+		}
+
+		tf->coltypes = lappend_oid(tf->coltypes, typid);
+		tf->coltypmods = lappend_int(tf->coltypmods, typmod);
+		tf->colcollations = lappend_oid(tf->colcollations,
+										type_is_collatable(typid) ? DEFAULT_COLLATION_OID : InvalidOid);
+
+		/* Transform the PATH and DEFAULT expressions */
+		if (rawc->colexpr)
+		{
+			colexpr = coerce_to_specific_type(pstate,
+											  transformExpr(pstate, rawc->colexpr,
+															EXPR_KIND_FROM_FUNCTION),
+											  TEXTOID,
+											  constructName);
+			assign_expr_collations(pstate, colexpr);
+		}
+		else
+			colexpr = NULL;
+
+		if (rawc->coldefexpr)
+		{
+			coldefexpr = coerce_to_specific_type_typmod(pstate,
+														transformExpr(pstate, rawc->coldefexpr,
+																	  EXPR_KIND_FROM_FUNCTION),
+														typid, typmod,
+														constructName);
+			assign_expr_collations(pstate, coldefexpr);
+		}
+		else
+			coldefexpr = NULL;
+
+		tf->colexprs = lappend(tf->colexprs, colexpr);
+		tf->coldefexprs = lappend(tf->coldefexprs, coldefexpr);
+
+		if (rawc->is_not_null)
+			tf->notnulls = bms_add_member(tf->notnulls, colno);
+
+		/* make sure column names are unique */
+		for (j = 0; j < colno; j++)
+			if (strcmp(names[j], rawc->colname) == 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("column name \"%s\" is not unique",
+								rawc->colname),
+						 parser_errposition(pstate, rawc->location)));
+		names[colno] = rawc->colname;
+
+		colno++;
+	}
+	pfree(names);
+
+	/* Namespaces, if any, also need to be transformed */
+	if (rtf->namespaces != NIL)
+	{
+		ListCell   *ns;
+		ListCell   *lc2;
+		List	   *ns_uris = NIL;
+		List	   *ns_names = NIL;
+		bool		default_ns_seen = false;
+
+		foreach(ns, rtf->namespaces)
+		{
+			ResTarget  *r = (ResTarget *) lfirst(ns);
+			Node	   *ns_uri;
+
+			Assert(IsA(r, ResTarget));
+			ns_uri = transformExpr(pstate, r->val, EXPR_KIND_FROM_FUNCTION);
+			ns_uri = coerce_to_specific_type(pstate, ns_uri,
+											 TEXTOID, constructName);
+			assign_expr_collations(pstate, ns_uri);
+			ns_uris = lappend(ns_uris, ns_uri);
+
+			/* Verify consistency of name list: no dupes, only one DEFAULT */
+			if (r->name != NULL)
+			{
+				foreach(lc2, ns_names)
+				{
+					char	   *name = strVal(lfirst(lc2));
+
+					if (name == NULL)
+						continue;
+					if (strcmp(name, r->name) == 0)
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("namespace name \"%s\" is not unique",
+										name),
+								 parser_errposition(pstate, r->location)));
+				}
+			}
+			else
+			{
+				if (default_ns_seen)
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("only one default namespace is allowed"),
+							 parser_errposition(pstate, r->location)));
+				default_ns_seen = true;
+			}
+
+			/* Note the string may be NULL */
+			ns_names = lappend(ns_names, makeString(r->name));
+		}
+
+		tf->ns_uris = ns_uris;
+		tf->ns_names = ns_names;
+	}
+
+	tf->location = rtf->location;
+
+	pstate->p_lateral_active = false;
+
+	/*
+	 * Mark the RTE as LATERAL if the user said LATERAL explicitly, or if
+	 * there are any lateral cross-references in it.
+	 */
+	is_lateral = rtf->lateral || contain_vars_of_level((Node *) tf, 0);
+
+	rte = addRangeTableEntryForTableFunc(pstate,
+										 tf, rtf->alias, is_lateral, true);
+
+	return rte;
+}
+
+/*
  * transformRangeTableSample --- transform a TABLESAMPLE clause
  *
  * Caller has already transformed rts->relation, we just have to validate
@@ -795,7 +1021,6 @@ transformRangeTableSample(ParseState *pstate, RangeTableSample *rts)
 	return tablesample;
 }
 
-
 /*
  * transformFromClauseItem -
  *	  Transform a FROM-clause item, adding any required entries to the
@@ -881,6 +1106,24 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 		int			rtindex;
 
 		rte = transformRangeFunction(pstate, (RangeFunction *) n);
+		/* assume new rte is at end */
+		rtindex = list_length(pstate->p_rtable);
+		Assert(rte == rt_fetch(rtindex, pstate->p_rtable));
+		*top_rte = rte;
+		*top_rti = rtindex;
+		*namespace = list_make1(makeDefaultNSItem(rte));
+		rtr = makeNode(RangeTblRef);
+		rtr->rtindex = rtindex;
+		return (Node *) rtr;
+	}
+	else if (IsA(n, RangeTableFunc))
+	{
+		/* table function is like a plain relation */
+		RangeTblRef *rtr;
+		RangeTblEntry *rte;
+		int			rtindex;
+
+		rte = transformRangeTableFunc(pstate, (RangeTableFunc *) n);
 		/* assume new rte is at end */
 		rtindex = list_length(pstate->p_rtable);
 		Assert(rte == rt_fetch(rtindex, pstate->p_rtable));

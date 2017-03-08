@@ -10332,7 +10332,8 @@ SELECT xml_is_well_formed_document('<pg:foo xmlns:pg="http://postgresql.org/stuf
     To process values of data type <type>xml</type>, PostgreSQL offers
     the functions <function>xpath</function> and
     <function>xpath_exists</function>, which evaluate XPath 1.0
-    expressions.
+    expressions, and the <function>XMLTABLE</function>
+    table function.
    </para>
 
    <sect3 id="functions-xml-processing-xpath">
@@ -10430,6 +10431,206 @@ SELECT xpath_exists('/my:a/text()', '<my:a xmlns:my="http://example.com">test</m
 --------------
  t
 (1 row)
+]]></screen>
+    </para>
+   </sect3>
+
+   <sect3 id="functions-xml-processing-xmltable">
+    <title><literal>xmltable</literal></title>
+
+    <indexterm>
+     <primary>xmltable</primary>
+    </indexterm>
+
+    <indexterm zone="functions-xml-processing-xmltable">
+     <primary>table function</primary>
+     <secondary>XMLTABLE</secondary>
+    </indexterm>
+
+<synopsis>
+<function>xmltable</function>( <optional>XMLNAMESPACES(<replaceable>namespace uri</replaceable> AS <replaceable>namespace name</replaceable><optional>, ...</optional>)</optional>
+          <replaceable>row_expression</replaceable> PASSING <optional>BY REF</optional> <replaceable>document_expression</replaceable> <optional>BY REF</optional>
+          COLUMNS <replaceable>name</replaceable> { <replaceable>type</replaceable> <optional>PATH <replaceable>column_expression</replaceable></optional> <optional>DEFAULT <replaceable>default_expression</replaceable></optional> <optional>NOT NULL | NULL</optional>
+                        | FOR ORDINALITY }
+                   <optional>, ...</optional>
+)
+</synopsis>
+
+    <para>
+     The <function>xmltable</function> function produces a table based
+     on the given XML value, an XPath filter to extract rows, and an
+     optional set of column definitions.
+    </para>
+
+    <para>
+     The optional <literal>XMLNAMESPACES</> clause is a comma-separated
+     list of namespaces.  It specifies the XML namespaces used in
+     the document and their aliases. A default namespace specification
+     is not currently supported.
+    </para>
+
+    <para>
+     The required <replaceable>row_expression</> argument is an XPath
+     expression that is evaluated against the supplied XML document to
+     obtain an ordered sequence of XML nodes. This sequence is what
+     <function>xmltable</> transforms into output rows.
+    </para>
+
+    <para>
+     <replaceable>document_expression</> provides the XML document to
+     operate on.
+     The <literal>BY REF</literal> clauses have no effect in PostgreSQL,
+     but are allowed for SQL conformance and compatibility with other
+     implementations.
+     The argument must be a well-formed XML document; fragments/forests
+     are not accepted.
+    </para>
+
+    <para>
+     The mandatory <literal>COLUMNS</literal> clause specifies the list
+     of columns in the output table.
+     If the <literal>COLUMNS</> clause is omitted, the rows in the result
+     set contain a single column of type <literal>xml</> containing the
+     data matched by <replaceable>row_expression</>.
+     If <literal>COLUMNS</literal> is specified, each entry describes a
+     single column.
+     See the syntax summary above for the format.
+     The column name and type are required; the path, default and
+     nullability clauses are optional.
+    </para>
+
+    <para>
+     A column marked <literal>FOR ORDINALITY</literal> will be populated
+     with row numbers matching the order in which the
+     output rows appeared in the original input XML document.
+     At most one column may be marked <literal>FOR ORDINALITY</literal>.
+    </para>
+
+    <para>
+     The <literal>column_expression</> for a column is an XPath expression
+     that is evaluated for each row, relative to the result of the
+     <replaceable>row_expression</>, to find the value of the column.
+     If no <literal>column_expression</> is given, then the column name
+     is used as an implicit path.
+    </para>
+
+    <para>
+     If a column's XPath expression returns multiple elements, an error
+     is raised.
+     If the expression matches an empty tag, the result is an
+     empty string (not <literal>NULL</>).
+     Any <literal>xsi:nil</> attributes are ignored.
+    </para>
+
+    <para>
+     The text body of the XML matched by the <replaceable>column_expression</>
+     is used as the column value. Multiple <literal>text()</literal> nodes
+     within an element are concatenated in order. Any child elements,
+     processing instructions, and comments are ignored, but the text contents
+     of child elements are concatenated to the result.
+     Note that the whitespace-only <literal>text()</> node between two non-text
+     elements is preserved, and that leading whitespace on a <literal>text()</>
+     node is not flattened.
+    </para>
+
+    <para>
+     If the path expression does not match for a given row but
+     <replaceable>default_expression</> is specified, the value resulting
+     from evaluating that expression is used.
+     If no <literal>DEFAULT</> clause is given for the column,
+     the field will be set to <literal>NULL</>.
+     It is possible for a <replaceable>default_expression</> to reference
+     the value of output columns that appear prior to it in the column list,
+     so the default of one column may be based on the value of another
+     column.
+    </para>
+
+    <para>
+     Columns may be marked <literal>NOT NULL</>. If the
+     <replaceable>column_expression</> for a <literal>NOT NULL</> column
+     does not match anything and there is no <literal>DEFAULT</> or the
+     <replaceable>default_expression</> also evaluates to null, an error
+     is reported.
+    </para>
+
+    <para>
+     Unlike regular PostgreSQL functions, <replaceable>column_expression</>
+     and <replaceable>default_expression</> are not evaluated to a simple
+     value before calling the function.
+     <replaceable>column_expression</> is normally evaluated
+     exactly once per input row, and <replaceable>default_expression</>
+     is evaluated each time a default is needed for a field.
+     If the expression qualifies as stable or immutable the repeat
+     evaluation may be skipped.
+     Effectively <function>xmltable</> behaves more like a subquery than a
+     function call.
+     This means that you can usefully use volatile functions like
+     <function>nextval</> in <replaceable>default_expression</>, and
+     <replaceable>column_expression</> may depend on other parts of the
+     XML document.
+    </para>
+
+    <para>
+     Examples:
+  <screen><![CDATA[
+CREATE TABLE xmldata AS SELECT
+xml $$
+<ROWS>
+  <ROW id="1">
+    <COUNTRY_ID>AU</COUNTRY_ID>
+    <COUNTRY_NAME>Australia</COUNTRY_NAME>
+  </ROW>
+  <ROW id="5">
+    <COUNTRY_ID>JP</COUNTRY_ID>
+    <COUNTRY_NAME>Japan</COUNTRY_NAME>
+    <PREMIER_NAME>Shinzo Abe</PREMIER_NAME>
+    <SIZE unit="sq_mi">145935</SIZE>
+  </ROW>
+  <ROW id="6">
+    <COUNTRY_ID>SG</COUNTRY_ID>
+    <COUNTRY_NAME>Singapore</COUNTRY_NAME>
+    <SIZE unit="sq_km">697</SIZE>
+  </ROW>
+</ROWS>
+$$ AS data;
+
+SELECT xmltable.*
+  FROM xmldata,
+       XMLTABLE('//ROWS/ROW'
+                PASSING data
+                COLUMNS id int PATH '@id',
+                        ordinality FOR ORDINALITY,
+                        "COUNTRY_NAME" text,
+                        country_id text PATH 'COUNTRY_ID',
+                        size_sq_km float PATH 'SIZE[@unit = "sq_km"]',
+                        size_other text PATH
+                             'concat(SIZE[@unit!="sq_km"], " ", SIZE[@unit!="sq_km"]/@unit)',
+                        premier_name text PATH 'PREMIER_NAME' DEFAULT 'not specified') ;
+
+ id | ordinality | COUNTRY_NAME | country_id | size_sq_km |  size_other  | premier_name  
+----+------------+--------------+------------+------------+--------------+---------------
+  1 |          1 | Australia    | AU         |            |              | not specified
+  5 |          2 | Japan        | JP         |            | 145935 sq_mi | Shinzo Abe
+  6 |          3 | Singapore    | SG         |        697 |              | not specified
+]]></screen>
+
+     The following example shows concatenation of multiple text() nodes,
+     usage of the column name as XPath filter, and the treatment of whitespace,
+     XML comments and processing instructions:
+
+  <screen><![CDATA[
+CREATE TABLE xmlelements AS SELECT
+xml $$
+  <root>
+   <element>  Hello<!-- xyxxz -->2a2<?aaaaa?> <!--x-->  bbb<x>xxx</x>CC  </element>
+  </root>
+$$ AS data;
+
+SELECT xmltable.*
+  FROM xmlelements, XMLTABLE('/root' PASSING data COLUMNS element text);
+       element        
+----------------------
+   Hello2a2   bbbCC  
 ]]></screen>
     </para>
    </sect3>

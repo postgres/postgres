@@ -1628,6 +1628,69 @@ addRangeTableEntryForFunction(ParseState *pstate,
 }
 
 /*
+ * Add an entry for a table function to the pstate's range table (p_rtable).
+ *
+ * This is much like addRangeTableEntry() except that it makes a tablefunc RTE.
+ */
+RangeTblEntry *
+addRangeTableEntryForTableFunc(ParseState *pstate,
+							   TableFunc *tf,
+							   Alias *alias,
+							   bool lateral,
+							   bool inFromCl)
+{
+	RangeTblEntry *rte = makeNode(RangeTblEntry);
+	char	   *refname = alias ? alias->aliasname : pstrdup("xmltable");
+	Alias	   *eref;
+	int			numaliases;
+
+	Assert(pstate != NULL);
+
+	rte->rtekind = RTE_TABLEFUNC;
+	rte->relid = InvalidOid;
+	rte->subquery = NULL;
+	rte->tablefunc = tf;
+	rte->coltypes = tf->coltypes;
+	rte->coltypmods = tf->coltypmods;
+	rte->colcollations = tf->colcollations;
+	rte->alias = alias;
+
+	eref = alias ? copyObject(alias) : makeAlias(refname, NIL);
+	numaliases = list_length(eref->colnames);
+
+	/* fill in any unspecified alias columns */
+	if (numaliases < list_length(tf->colnames))
+		eref->colnames = list_concat(eref->colnames,
+								   list_copy_tail(tf->colnames, numaliases));
+
+	rte->eref = eref;
+
+	/*
+	 * Set flags and access permissions.
+	 *
+	 * Tablefuncs are never checked for access rights (at least, not by the
+	 * RTE permissions mechanism).
+	 */
+	rte->lateral = lateral;
+	rte->inh = false;			/* never true for tablefunc RTEs */
+	rte->inFromCl = inFromCl;
+
+	rte->requiredPerms = 0;
+	rte->checkAsUser = InvalidOid;
+	rte->selectedCols = NULL;
+	rte->insertedCols = NULL;
+	rte->updatedCols = NULL;
+
+	/*
+	 * Add completed RTE to pstate's range table list, but not to join list
+	 * nor namespace --- caller must do that if appropriate.
+	 */
+	pstate->p_rtable = lappend(pstate->p_rtable, rte);
+
+	return rte;
+}
+
+/*
  * Add an entry for a VALUES list to the pstate's range table (p_rtable).
  *
  * This is much like addRangeTableEntry() except that it makes a values RTE.
@@ -2226,10 +2289,11 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 				}
 			}
 			break;
+		case RTE_TABLEFUNC:
 		case RTE_VALUES:
 		case RTE_CTE:
 			{
-				/* Values or CTE RTE */
+				/* Tablefunc, Values or CTE RTE */
 				ListCell   *aliasp_item = list_head(rte->eref->colnames);
 				ListCell   *lct;
 				ListCell   *lcm;
@@ -2638,10 +2702,14 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 				*varcollid = exprCollation(aliasvar);
 			}
 			break;
+		case RTE_TABLEFUNC:
 		case RTE_VALUES:
 		case RTE_CTE:
 			{
-				/* VALUES or CTE RTE --- get type info from lists in the RTE */
+				/*
+				 * tablefunc, VALUES or CTE RTE --- get type info from lists
+				 * in the RTE
+				 */
 				Assert(attnum > 0 && attnum <= list_length(rte->coltypes));
 				*vartype = list_nth_oid(rte->coltypes, attnum - 1);
 				*vartypmod = list_nth_int(rte->coltypmods, attnum - 1);
@@ -2684,9 +2752,14 @@ get_rte_attribute_is_dropped(RangeTblEntry *rte, AttrNumber attnum)
 			}
 			break;
 		case RTE_SUBQUERY:
+		case RTE_TABLEFUNC:
 		case RTE_VALUES:
 		case RTE_CTE:
-			/* Subselect, Values, CTE RTEs never have dropped columns */
+
+			/*
+			 * Subselect, Table Functions, Values, CTE RTEs never have dropped
+			 * columns
+			 */
 			result = false;
 			break;
 		case RTE_JOIN:

@@ -1118,6 +1118,7 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 				case RTE_SUBQUERY:
 				case RTE_FUNCTION:
 				case RTE_VALUES:
+				case RTE_TABLEFUNC:
 					child_rte->lateral = true;
 					break;
 				case RTE_JOIN:
@@ -1962,6 +1963,11 @@ replace_vars_in_jointree(Node *jtnode,
 					case RTE_FUNCTION:
 						rte->functions = (List *)
 							pullup_replace_vars((Node *) rte->functions,
+												context);
+						break;
+					case RTE_TABLEFUNC:
+						rte->tablefunc = (TableFunc *)
+							pullup_replace_vars((Node *) rte->tablefunc,
 												context);
 						break;
 					case RTE_VALUES:

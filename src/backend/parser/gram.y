@@ -464,7 +464,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <defelt>	def_elem reloption_elem old_aggr_elem operator_def_elem
 %type <node>	def_arg columnElem where_clause where_or_current_clause
 				a_expr b_expr c_expr AexprConst indirection_el opt_slice_bound
-				columnref in_expr having_clause func_table array_expr
+				columnref in_expr having_clause func_table xmltable array_expr
 				ExclusionWhereClause
 %type <list>	rowsfrom_item rowsfrom_list opt_col_def_list
 %type <boolean> opt_ordinality
@@ -550,6 +550,11 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <node>	xmlexists_argument
 %type <ival>	document_or_content
 %type <boolean> xml_whitespace_option
+%type <list>	xmltable_column_list xmltable_column_option_list
+%type <node>	xmltable_column_el
+%type <defelt>	xmltable_column_option_el
+%type <list>	xml_namespace_list
+%type <target>	xml_namespace_el
 
 %type <node>	func_application func_expr_common_subexpr
 %type <node>	func_expr func_expr_windowless
@@ -607,7 +612,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 
 	CACHE CALLED CASCADE CASCADED CASE CAST CATALOG_P CHAIN CHAR_P
 	CHARACTER CHARACTERISTICS CHECK CHECKPOINT CLASS CLOSE
-	CLUSTER COALESCE COLLATE COLLATION COLUMN COMMENT COMMENTS COMMIT
+	CLUSTER COALESCE COLLATE COLLATION COLUMN COLUMNS COMMENT COMMENTS COMMIT
 	COMMITTED CONCURRENTLY CONFIGURATION CONFLICT CONNECTION CONSTRAINT
 	CONSTRAINTS CONTENT_P CONTINUE_P CONVERSION_P COPY COST CREATE
 	CROSS CSV CUBE CURRENT_P
@@ -681,8 +686,8 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 
 	WHEN WHERE WHITESPACE_P WINDOW WITH WITHIN WITHOUT WORK WRAPPER WRITE
 
-	XML_P XMLATTRIBUTES XMLCONCAT XMLELEMENT XMLEXISTS XMLFOREST XMLPARSE
-	XMLPI XMLROOT XMLSERIALIZE
+	XML_P XMLATTRIBUTES XMLCONCAT XMLELEMENT XMLEXISTS XMLFOREST XMLNAMESPACES
+	XMLPARSE XMLPI XMLROOT XMLSERIALIZE XMLTABLE
 
 	YEAR_P YES_P
 
@@ -11187,6 +11192,19 @@ table_ref:	relation_expr opt_alias_clause
 					n->coldeflist = lsecond($3);
 					$$ = (Node *) n;
 				}
+			| xmltable opt_alias_clause
+				{
+					RangeTableFunc *n = (RangeTableFunc *) $1;
+					n->alias = $2;
+					$$ = (Node *) n;
+				}
+			| LATERAL_P xmltable opt_alias_clause
+				{
+					RangeTableFunc *n = (RangeTableFunc *) $2;
+					n->lateral = true;
+					n->alias = $3;
+					$$ = (Node *) n;
+				}
 			| select_with_parens opt_alias_clause
 				{
 					RangeSubselect *n = makeNode(RangeSubselect);
@@ -11623,6 +11641,166 @@ TableFuncElement:	ColId Typename opt_collate_clause
 					n->constraints = NIL;
 					n->location = @1;
 					$$ = (Node *)n;
+				}
+		;
+
+/*
+ * XMLTABLE
+ */
+xmltable:
+			XMLTABLE '(' c_expr xmlexists_argument COLUMNS xmltable_column_list ')'
+				{
+					RangeTableFunc *n = makeNode(RangeTableFunc);
+					n->rowexpr = $3;
+					n->docexpr = $4;
+					n->columns = $6;
+					n->namespaces = NIL;
+					n->location = @1;
+					$$ = (Node *)n;
+				}
+			| XMLTABLE '(' XMLNAMESPACES '(' xml_namespace_list ')' ','
+				c_expr xmlexists_argument COLUMNS xmltable_column_list ')'
+				{
+					RangeTableFunc *n = makeNode(RangeTableFunc);
+					n->rowexpr = $8;
+					n->docexpr = $9;
+					n->columns = $11;
+					n->namespaces = $5;
+					n->location = @1;
+					$$ = (Node *)n;
+				}
+		;
+
+xmltable_column_list: xmltable_column_el					{ $$ = list_make1($1); }
+			| xmltable_column_list ',' xmltable_column_el	{ $$ = lappend($1, $3); }
+		;
+
+xmltable_column_el:
+			ColId Typename
+				{
+					RangeTableFuncCol	   *fc = makeNode(RangeTableFuncCol);
+
+					fc->colname = $1;
+					fc->for_ordinality = false;
+					fc->typeName = $2;
+					fc->is_not_null = false;
+					fc->colexpr = NULL;
+					fc->coldefexpr = NULL;
+					fc->location = @1;
+
+					$$ = (Node *) fc;
+				}
+			| ColId Typename xmltable_column_option_list
+				{
+					RangeTableFuncCol	   *fc = makeNode(RangeTableFuncCol);
+					ListCell		   *option;
+					bool				nullability_seen = false;
+
+					fc->colname = $1;
+					fc->typeName = $2;
+					fc->for_ordinality = false;
+					fc->is_not_null = false;
+					fc->colexpr = NULL;
+					fc->coldefexpr = NULL;
+					fc->location = @1;
+
+					foreach(option, $3)
+					{
+						DefElem   *defel = (DefElem *) lfirst(option);
+
+						if (strcmp(defel->defname, "default") == 0)
+						{
+							if (fc->coldefexpr != NULL)
+								ereport(ERROR,
+										(errcode(ERRCODE_SYNTAX_ERROR),
+										 errmsg("only one DEFAULT value is allowed"),
+										 parser_errposition(defel->location)));
+							fc->coldefexpr = defel->arg;
+						}
+						else if (strcmp(defel->defname, "path") == 0)
+						{
+							if (fc->colexpr != NULL)
+								ereport(ERROR,
+										(errcode(ERRCODE_SYNTAX_ERROR),
+										 errmsg("only one PATH value per column is allowed"),
+										 parser_errposition(defel->location)));
+							fc->colexpr = defel->arg;
+						}
+						else if (strcmp(defel->defname, "is_not_null") == 0)
+						{
+							if (nullability_seen)
+								ereport(ERROR,
+										(errcode(ERRCODE_SYNTAX_ERROR),
+										 errmsg("conflicting or redundant NULL / NOT NULL declarations for column \"%s\"", fc->colname),
+										 parser_errposition(defel->location)));
+							fc->is_not_null = intVal(defel->arg);
+							nullability_seen = true;
+						}
+						else
+						{
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("unrecognized column option \"%s\"",
+											defel->defname),
+									 parser_errposition(defel->location)));
+						}
+					}
+					$$ = (Node *) fc;
+				}
+			| ColId FOR ORDINALITY
+				{
+					RangeTableFuncCol	   *fc = makeNode(RangeTableFuncCol);
+
+					fc->colname = $1;
+					fc->for_ordinality = true;
+					/* other fields are ignored, initialized by makeNode */
+					fc->location = @1;
+
+					$$ = (Node *) fc;
+				}
+		;
+
+xmltable_column_option_list:
+			xmltable_column_option_el
+				{ $$ = list_make1($1); }
+			| xmltable_column_option_list xmltable_column_option_el
+				{ $$ = lappend($1, $2); }
+		;
+
+xmltable_column_option_el:
+			IDENT b_expr
+				{ $$ = makeDefElem($1, $2, @1); }
+			| DEFAULT b_expr
+				{ $$ = makeDefElem("default", $2, @1); }
+			| NOT NULL_P
+				{ $$ = makeDefElem("is_not_null", (Node *) makeInteger(true), @1); }
+			| NULL_P
+				{ $$ = makeDefElem("is_not_null", (Node *) makeInteger(false), @1); }
+		;
+
+xml_namespace_list:
+			xml_namespace_el
+				{ $$ = list_make1($1); }
+			| xml_namespace_list ',' xml_namespace_el
+				{ $$ = lappend($1, $3); }
+		;
+
+xml_namespace_el:
+			b_expr AS ColLabel
+				{
+					$$ = makeNode(ResTarget);
+					$$->name = $3;
+					$$->indirection = NIL;
+					$$->val = $1;
+					$$->location = @1;
+				}
+			| DEFAULT b_expr
+				{
+					$$ = makeNode(ResTarget);
+					$$->name = NULL;
+					$$->indirection = NIL;
+					$$->val = $2;
+					$$->location = @1;
 				}
 		;
 
@@ -14205,6 +14383,7 @@ unreserved_keyword:
 			| CLASS
 			| CLOSE
 			| CLUSTER
+			| COLUMNS
 			| COMMENT
 			| COMMENTS
 			| COMMIT
@@ -14510,10 +14689,12 @@ col_name_keyword:
 			| XMLELEMENT
 			| XMLEXISTS
 			| XMLFOREST
+			| XMLNAMESPACES
 			| XMLPARSE
 			| XMLPI
 			| XMLROOT
 			| XMLSERIALIZE
+			| XMLTABLE
 		;
 
 /* Type/function identifier --- keywords that can be type or function names.

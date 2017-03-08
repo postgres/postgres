@@ -73,6 +73,7 @@
 #include "commands/dbcommands.h"
 #include "executor/executor.h"
 #include "executor/spi.h"
+#include "executor/tablefunc.h"
 #include "fmgr.h"
 #include "lib/stringinfo.h"
 #include "libpq/pqformat.h"
@@ -145,6 +146,7 @@ static text *xml_xmlnodetoxmltype(xmlNodePtr cur, PgXmlErrorContext *xmlerrcxt);
 static int xml_xpathobjtoxmlarray(xmlXPathObjectPtr xpathobj,
 					   ArrayBuildState *astate,
 					   PgXmlErrorContext *xmlerrcxt);
+static xmlChar *pg_xmlCharStrndup(char *str, size_t len);
 #endif   /* USE_LIBXML */
 
 static StringInfo query_to_xml_internal(const char *query, char *tablename,
@@ -164,6 +166,49 @@ static const char *map_sql_type_to_xmlschema_type(Oid typeoid, int typmod);
 static void SPI_sql_row_to_xmlelement(uint64 rownum, StringInfo result,
 						  char *tablename, bool nulls, bool tableforest,
 						  const char *targetns, bool top_level);
+
+/* XMLTABLE support */
+#ifdef USE_LIBXML
+/* random number to identify XmlTableContext */
+#define XMLTABLE_CONTEXT_MAGIC	46922182
+typedef struct XmlTableBuilderData
+{
+	int			magic;
+	int			natts;
+	long int	row_count;
+	PgXmlErrorContext *xmlerrcxt;
+	xmlParserCtxtPtr ctxt;
+	xmlDocPtr	doc;
+	xmlXPathContextPtr xpathcxt;
+	xmlXPathCompExprPtr xpathcomp;
+	xmlXPathObjectPtr xpathobj;
+	xmlXPathCompExprPtr *xpathscomp;
+} XmlTableBuilderData;
+#endif
+
+static void XmlTableInitOpaque(struct TableFuncScanState *state, int natts);
+static void XmlTableSetDocument(struct TableFuncScanState *state, Datum value);
+static void XmlTableSetNamespace(struct TableFuncScanState *state, char *name,
+					 char *uri);
+static void XmlTableSetRowFilter(struct TableFuncScanState *state, char *path);
+static void XmlTableSetColumnFilter(struct TableFuncScanState *state,
+						char *path, int colnum);
+static bool XmlTableFetchRow(struct TableFuncScanState *state);
+static Datum XmlTableGetValue(struct TableFuncScanState *state, int colnum,
+				 Oid typid, int32 typmod, bool *isnull);
+static void XmlTableDestroyOpaque(struct TableFuncScanState *state);
+
+const TableFuncRoutine XmlTableRoutine =
+{
+	XmlTableInitOpaque,
+	XmlTableSetDocument,
+	XmlTableSetNamespace,
+	XmlTableSetRowFilter,
+	XmlTableSetColumnFilter,
+	XmlTableFetchRow,
+	XmlTableGetValue,
+	XmlTableDestroyOpaque
+};
 
 #define NO_XML_SUPPORT() \
 	ereport(ERROR, \
@@ -1110,6 +1155,19 @@ xml_pnstrdup(const xmlChar *str, size_t len)
 	result = (xmlChar *) palloc((len + 1) * sizeof(xmlChar));
 	memcpy(result, str, len * sizeof(xmlChar));
 	result[len] = 0;
+	return result;
+}
+
+/* Ditto, except input is char* */
+static xmlChar *
+pg_xmlCharStrndup(char *str, size_t len)
+{
+	xmlChar    *result;
+
+	result = (xmlChar *) palloc((len + 1) * sizeof(xmlChar));
+	memcpy(result, str, len);
+	result[len] = '\0';
+
 	return result;
 }
 
@@ -3811,13 +3869,8 @@ xpath_internal(text *xpath_expr_text, xmltype *data, ArrayType *namespaces,
 				(errcode(ERRCODE_DATA_EXCEPTION),
 				 errmsg("empty XPath expression")));
 
-	string = (xmlChar *) palloc((len + 1) * sizeof(xmlChar));
-	memcpy(string, datastr, len);
-	string[len] = '\0';
-
-	xpath_expr = (xmlChar *) palloc((xpath_len + 1) * sizeof(xmlChar));
-	memcpy(xpath_expr, VARDATA(xpath_expr_text), xpath_len);
-	xpath_expr[xpath_len] = '\0';
+	string = pg_xmlCharStrndup(datastr, len);
+	xpath_expr = pg_xmlCharStrndup(VARDATA(xpath_expr_text), xpath_len);
 
 	xmlerrcxt = pg_xml_init(PG_XML_STRICTNESS_ALL);
 
@@ -4063,5 +4116,496 @@ xml_is_well_formed_content(PG_FUNCTION_ARGS)
 #else
 	NO_XML_SUPPORT();
 	return 0;
+#endif   /* not USE_LIBXML */
+}
+
+/*
+ * support functions for XMLTABLE
+ *
+ */
+#ifdef USE_LIBXML
+
+/*
+ * Returns private data from executor state. Ensure validity by check with
+ * MAGIC number.
+ */
+static inline XmlTableBuilderData *
+GetXmlTableBuilderPrivateData(TableFuncScanState *state, const char *fname)
+{
+	XmlTableBuilderData *result;
+
+	if (!IsA(state, TableFuncScanState))
+		elog(ERROR, "%s called with invalid TableFuncScanState", fname);
+	result = (XmlTableBuilderData *) state->opaque;
+	if (result->magic != XMLTABLE_CONTEXT_MAGIC)
+		elog(ERROR, "%s called with invalid TableFuncScanState", fname);
+
+	return result;
+}
+#endif
+
+/*
+ * XmlTableInitOpaque
+ *		Fill in TableFuncScanState->opaque for XmlTable processor; initialize
+ *		the XML parser.
+ *
+ * Note: Because we call pg_xml_init() here and pg_xml_done() in
+ * XmlTableDestroyOpaque, it is critical for robustness that no other
+ * executor nodes run until this node is processed to completion.  Caller
+ * must execute this to completion (probably filling a tuplestore to exhaust
+ * this node in a single pass) instead of using row-per-call mode.
+ */
+static void
+XmlTableInitOpaque(TableFuncScanState *state, int natts)
+{
+#ifdef USE_LIBXML
+	volatile xmlParserCtxtPtr ctxt = NULL;
+	XmlTableBuilderData *xtCxt;
+	PgXmlErrorContext *xmlerrcxt;
+
+	xtCxt = palloc0(sizeof(XmlTableBuilderData));
+	xtCxt->magic = XMLTABLE_CONTEXT_MAGIC;
+	xtCxt->natts = natts;
+	xtCxt->xpathscomp = palloc0(sizeof(xmlXPathCompExprPtr) * natts);
+
+	xmlerrcxt = pg_xml_init(PG_XML_STRICTNESS_ALL);
+
+	PG_TRY();
+	{
+		xmlInitParser();
+
+		ctxt = xmlNewParserCtxt();
+		if (ctxt == NULL || xmlerrcxt->err_occurred)
+			xml_ereport(xmlerrcxt, ERROR, ERRCODE_OUT_OF_MEMORY,
+						"could not allocate parser context");
+	}
+	PG_CATCH();
+	{
+		if (ctxt != NULL)
+			xmlFreeParserCtxt(ctxt);
+
+		pg_xml_done(xmlerrcxt, true);
+
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+
+	xtCxt->xmlerrcxt = xmlerrcxt;
+	xtCxt->ctxt = ctxt;
+
+	state->opaque = xtCxt;
+#else
+	NO_XML_SUPPORT();
+#endif   /* not USE_LIBXML */
+}
+
+/*
+ * XmlTableSetDocument
+ *		Install the input document
+ */
+static void
+XmlTableSetDocument(TableFuncScanState *state, Datum value)
+{
+#ifdef USE_LIBXML
+	XmlTableBuilderData *xtCxt;
+	xmltype    *xmlval = DatumGetXmlP(value);
+	char	   *str;
+	xmlChar    *xstr;
+	int			length;
+	volatile xmlDocPtr doc = NULL;
+	volatile xmlXPathContextPtr xpathcxt = NULL;
+
+	xtCxt = GetXmlTableBuilderPrivateData(state, "XmlTableSetDocument");
+
+	/*
+	 * Use out function for casting to string (remove encoding property). See
+	 * comment in xml_out.
+	 */
+	str = xml_out_internal(xmlval, 0);
+
+	length = strlen(str);
+	xstr = pg_xmlCharStrndup(str, length);
+
+	PG_TRY();
+	{
+		doc = xmlCtxtReadMemory(xtCxt->ctxt, (char *) xstr, length, NULL, NULL, 0);
+		if (doc == NULL || xtCxt->xmlerrcxt->err_occurred)
+			xml_ereport(xtCxt->xmlerrcxt, ERROR, ERRCODE_INVALID_XML_DOCUMENT,
+						"could not parse XML document");
+		xpathcxt = xmlXPathNewContext(doc);
+		if (xpathcxt == NULL || xtCxt->xmlerrcxt->err_occurred)
+			xml_ereport(xtCxt->xmlerrcxt, ERROR, ERRCODE_OUT_OF_MEMORY,
+						"could not allocate XPath context");
+		xpathcxt->node = xmlDocGetRootElement(doc);
+		if (xpathcxt->node == NULL || xtCxt->xmlerrcxt->err_occurred)
+			xml_ereport(xtCxt->xmlerrcxt, ERROR, ERRCODE_INTERNAL_ERROR,
+						"could not find root XML element");
+	}
+	PG_CATCH();
+	{
+		if (xpathcxt != NULL)
+			xmlXPathFreeContext(xpathcxt);
+		if (doc != NULL)
+			xmlFreeDoc(doc);
+
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+
+	xtCxt->doc = doc;
+	xtCxt->xpathcxt = xpathcxt;
+#else
+	NO_XML_SUPPORT();
+#endif   /* not USE_LIBXML */
+}
+
+/*
+ * XmlTableSetNamespace
+ *		Add a namespace declaration
+ */
+static void
+XmlTableSetNamespace(TableFuncScanState *state, char *name, char *uri)
+{
+#ifdef USE_LIBXML
+	XmlTableBuilderData *xtCxt;
+
+	if (name == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("DEFAULT namespace is not supported")));
+	xtCxt = GetXmlTableBuilderPrivateData(state, "XmlTableSetNamespace");
+
+	if (xmlXPathRegisterNs(xtCxt->xpathcxt,
+						   pg_xmlCharStrndup(name, strlen(name)),
+						   pg_xmlCharStrndup(uri, strlen(uri))))
+		xml_ereport(xtCxt->xmlerrcxt, ERROR, ERRCODE_DATA_EXCEPTION,
+					"could not set XML namespace");
+#else
+	NO_XML_SUPPORT();
+#endif   /* not USE_LIBXML */
+}
+
+/*
+ * XmlTableSetRowFilter
+ *		Install the row-filter Xpath expression.
+ */
+static void
+XmlTableSetRowFilter(TableFuncScanState *state, char *path)
+{
+#ifdef USE_LIBXML
+	XmlTableBuilderData *xtCxt;
+	xmlChar    *xstr;
+
+	xtCxt = GetXmlTableBuilderPrivateData(state, "XmlTableSetRowFilter");
+
+	if (*path == '\0')
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_EXCEPTION),
+				 errmsg("row path filter must not be empty string")));
+
+	xstr = pg_xmlCharStrndup(path, strlen(path));
+
+	xtCxt->xpathcomp = xmlXPathCompile(xstr);
+	if (xtCxt->xpathcomp == NULL || xtCxt->xmlerrcxt->err_occurred)
+		xml_ereport(xtCxt->xmlerrcxt, ERROR, ERRCODE_SYNTAX_ERROR,
+					"invalid XPath expression");
+#else
+	NO_XML_SUPPORT();
+#endif   /* not USE_LIBXML */
+}
+
+/*
+ * XmlTableSetColumnFilter
+ *		Install the column-filter Xpath expression, for the given column.
+ */
+static void
+XmlTableSetColumnFilter(TableFuncScanState *state, char *path, int colnum)
+{
+#ifdef USE_LIBXML
+	XmlTableBuilderData *xtCxt;
+	xmlChar    *xstr;
+
+	AssertArg(PointerIsValid(path));
+
+	xtCxt = GetXmlTableBuilderPrivateData(state, "XmlTableSetColumnFilter");
+
+	if (*path == '\0')
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_EXCEPTION),
+				 errmsg("column path filter must not be empty string")));
+
+	xstr = pg_xmlCharStrndup(path, strlen(path));
+
+	xtCxt->xpathscomp[colnum] = xmlXPathCompile(xstr);
+	if (xtCxt->xpathscomp[colnum] == NULL || xtCxt->xmlerrcxt->err_occurred)
+		xml_ereport(xtCxt->xmlerrcxt, ERROR, ERRCODE_DATA_EXCEPTION,
+					"invalid XPath expression");
+#else
+	NO_XML_SUPPORT();
+#endif   /* not USE_LIBXML */
+}
+
+/*
+ * XmlTableFetchRow
+ *		Prepare the next "current" tuple for upcoming GetValue calls.
+ *		Returns FALSE if the row-filter expression returned no more rows.
+ */
+static bool
+XmlTableFetchRow(TableFuncScanState *state)
+{
+#ifdef USE_LIBXML
+	XmlTableBuilderData *xtCxt;
+
+	xtCxt = GetXmlTableBuilderPrivateData(state, "XmlTableFetchRow");
+
+	/*
+	 * XmlTable returns table - set of composite values. The error context, is
+	 * used for producement more values, between two calls, there can be
+	 * created and used another libxml2 error context. It is libxml2 global
+	 * value, so it should be refreshed any time before any libxml2 usage,
+	 * that is finished by returning some value.
+	 */
+	xmlSetStructuredErrorFunc((void *) xtCxt->xmlerrcxt, xml_errorHandler);
+
+	if (xtCxt->xpathobj == NULL)
+	{
+		xtCxt->xpathobj = xmlXPathCompiledEval(xtCxt->xpathcomp, xtCxt->xpathcxt);
+		if (xtCxt->xpathobj == NULL || xtCxt->xmlerrcxt->err_occurred)
+			xml_ereport(xtCxt->xmlerrcxt, ERROR, ERRCODE_INTERNAL_ERROR,
+						"could not create XPath object");
+
+		xtCxt->row_count = 0;
+	}
+
+	if (xtCxt->xpathobj->type == XPATH_NODESET)
+	{
+		if (xtCxt->xpathobj->nodesetval != NULL)
+		{
+			if (xtCxt->row_count++ < xtCxt->xpathobj->nodesetval->nodeNr)
+				return true;
+		}
+	}
+
+	return false;
+#else
+	NO_XML_SUPPORT();
+#endif   /* not USE_LIBXML */
+
+	return false;
+}
+
+/*
+ * XmlTableGetValue
+ *		Return the value for column number 'colnum' for the current row.  If
+ *		column -1 is requested, return representation of the whole row.
+ *
+ * This leaks memory, so be sure to reset often the context in which it's
+ * called.
+ */
+static Datum
+XmlTableGetValue(TableFuncScanState *state, int colnum,
+				 Oid typid, int32 typmod, bool *isnull)
+{
+#ifdef USE_LIBXML
+	XmlTableBuilderData *xtCxt;
+	Datum		result = (Datum) 0;
+	xmlNodePtr	cur;
+	char	   *cstr = NULL;
+	volatile xmlXPathObjectPtr xpathobj = NULL;
+
+	xtCxt = GetXmlTableBuilderPrivateData(state, "XmlTableGetValue");
+
+	Assert(xtCxt->xpathobj &&
+		   xtCxt->xpathobj->type == XPATH_NODESET &&
+		   xtCxt->xpathobj->nodesetval != NULL);
+
+	/* Propagate context related error context to libxml2 */
+	xmlSetStructuredErrorFunc((void *) xtCxt->xmlerrcxt, xml_errorHandler);
+
+	*isnull = false;
+
+	cur = xtCxt->xpathobj->nodesetval->nodeTab[xtCxt->row_count - 1];
+
+	Assert(xtCxt->xpathscomp[colnum] != NULL);
+
+	PG_TRY();
+	{
+		/* Set current node as entry point for XPath evaluation */
+		xmlXPathSetContextNode(cur, xtCxt->xpathcxt);
+
+		/* Evaluate column path */
+		xpathobj = xmlXPathCompiledEval(xtCxt->xpathscomp[colnum], xtCxt->xpathcxt);
+		if (xpathobj == NULL || xtCxt->xmlerrcxt->err_occurred)
+			xml_ereport(xtCxt->xmlerrcxt, ERROR, ERRCODE_INTERNAL_ERROR,
+						"could not create XPath object");
+
+		/*
+		 * There are four possible cases, depending on the number of nodes
+		 * returned by the XPath expression and the type of the target column:
+		 * a) XPath returns no nodes.  b) One node is returned, and column is
+		 * of type XML.  c) One node, column type other than XML.  d) Multiple
+		 * nodes are returned.
+		 */
+		if (xpathobj->type == XPATH_NODESET)
+		{
+			int			count = 0;
+
+			if (xpathobj->nodesetval != NULL)
+				count = xpathobj->nodesetval->nodeNr;
+
+			if (xpathobj->nodesetval == NULL || count == 0)
+			{
+				*isnull = true;
+			}
+			else if (count == 1 && typid == XMLOID)
+			{
+				text	   *textstr;
+
+				/* simple case, result is one value */
+				textstr = xml_xmlnodetoxmltype(xpathobj->nodesetval->nodeTab[0],
+											   xtCxt->xmlerrcxt);
+				cstr = text_to_cstring(textstr);
+			}
+			else if (count == 1)
+			{
+				xmlChar    *str;
+
+				str = xmlNodeListGetString(xtCxt->doc,
+						   xpathobj->nodesetval->nodeTab[0]->xmlChildrenNode,
+										   1);
+
+				if (str != NULL)
+				{
+					PG_TRY();
+					{
+						cstr = pstrdup((char *) str);
+					}
+					PG_CATCH();
+					{
+						xmlFree(str);
+						PG_RE_THROW();
+					}
+					PG_END_TRY();
+					xmlFree(str);
+				}
+				else
+				{
+					/*
+					 * This line ensure mapping of empty tags to PostgreSQL
+					 * value. Usually we would to map a empty tag to empty
+					 * string. But this mapping can create empty string when
+					 * user doesn't expect it - when empty tag is enforced
+					 * by libxml2 - when user uses a text() function for
+					 * example.
+					 */
+					cstr = "";
+				}
+			}
+			else
+			{
+				StringInfoData str;
+				int			i;
+
+				Assert(count > 1);
+
+				/*
+				 * When evaluating the XPath expression returns multiple
+				 * nodes, the result is the concatenation of them all. The
+				 * target type must be XML.
+				 */
+				if (typid != XMLOID)
+					ereport(ERROR,
+							(errcode(ERRCODE_CARDINALITY_VIOLATION),
+							 errmsg("more than one value returned by column XPath expression")));
+
+				/* Concatenate serialized values */
+				initStringInfo(&str);
+				for (i = 0; i < count; i++)
+				{
+					appendStringInfoText(&str,
+					   xml_xmlnodetoxmltype(xpathobj->nodesetval->nodeTab[i],
+											xtCxt->xmlerrcxt));
+				}
+				cstr = str.data;
+			}
+		}
+		else if (xpathobj->type == XPATH_STRING)
+		{
+			cstr = (char *) xpathobj->stringval;
+		}
+		else
+			elog(ERROR, "unexpected XPath object type %u", xpathobj->type);
+
+		/*
+		 * By here, either cstr contains the result value, or the isnull flag
+		 * has been set.
+		 */
+		Assert(cstr || *isnull);
+
+		if (!*isnull)
+			result = InputFunctionCall(&state->in_functions[colnum],
+									   cstr,
+									   state->typioparams[colnum],
+									   typmod);
+	}
+	PG_CATCH();
+	{
+		if (xpathobj != NULL)
+			xmlXPathFreeObject(xpathobj);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+
+	xmlXPathFreeObject(xpathobj);
+
+	return result;
+#else
+	NO_XML_SUPPORT();
+#endif   /* not USE_LIBXML */
+}
+
+/*
+ * XmlTableDestroyOpaque
+ *		Release all libxml2 resources
+ */
+static void
+XmlTableDestroyOpaque(TableFuncScanState *state)
+{
+#ifdef USE_LIBXML
+	XmlTableBuilderData *xtCxt;
+
+	xtCxt = GetXmlTableBuilderPrivateData(state, "XmlTableDestroyOpaque");
+
+	/* Propagate context related error context to libxml2 */
+	xmlSetStructuredErrorFunc((void *) xtCxt->xmlerrcxt, xml_errorHandler);
+
+	if (xtCxt->xpathscomp != NULL)
+	{
+		int			i;
+
+		for (i = 0; i < xtCxt->natts; i++)
+			if (xtCxt->xpathscomp[i] != NULL)
+				xmlXPathFreeCompExpr(xtCxt->xpathscomp[i]);
+	}
+
+	if (xtCxt->xpathobj != NULL)
+		xmlXPathFreeObject(xtCxt->xpathobj);
+	if (xtCxt->xpathcomp != NULL)
+		xmlXPathFreeCompExpr(xtCxt->xpathcomp);
+	if (xtCxt->xpathcxt != NULL)
+		xmlXPathFreeContext(xtCxt->xpathcxt);
+	if (xtCxt->doc != NULL)
+		xmlFreeDoc(xtCxt->doc);
+	if (xtCxt->ctxt != NULL)
+		xmlFreeParserCtxt(xtCxt->ctxt);
+
+	pg_xml_done(xtCxt->xmlerrcxt, true);
+
+	/* not valid anymore */
+	xtCxt->magic = 0;
+	state->opaque = NULL;
+
+#else
+	NO_XML_SUPPORT();
 #endif   /* not USE_LIBXML */
 }

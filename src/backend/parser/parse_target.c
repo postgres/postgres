@@ -396,6 +396,7 @@ markTargetListOrigin(ParseState *pstate, TargetEntry *tle,
 			break;
 		case RTE_FUNCTION:
 		case RTE_VALUES:
+		case RTE_TABLEFUNC:
 			/* not a simple relation, leave it unmarked */
 			break;
 		case RTE_CTE:
@@ -1555,6 +1556,12 @@ expandRecordVariable(ParseState *pstate, Var *var, int levelsup)
 			/*
 			 * We couldn't get here unless a function is declared with one of
 			 * its result columns as RECORD, which is not allowed.
+			 */
+			break;
+		case RTE_TABLEFUNC:
+
+			/*
+			 * Table function cannot have columns with RECORD type.
 			 */
 			break;
 		case RTE_CTE:

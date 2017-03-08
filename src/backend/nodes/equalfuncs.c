@@ -117,6 +117,26 @@ _equalRangeVar(const RangeVar *a, const RangeVar *b)
 }
 
 static bool
+_equalTableFunc(const TableFunc *a, const TableFunc *b)
+{
+	COMPARE_NODE_FIELD(ns_names);
+	COMPARE_NODE_FIELD(ns_uris);
+	COMPARE_NODE_FIELD(docexpr);
+	COMPARE_NODE_FIELD(rowexpr);
+	COMPARE_NODE_FIELD(colnames);
+	COMPARE_NODE_FIELD(coltypes);
+	COMPARE_NODE_FIELD(coltypes);
+	COMPARE_NODE_FIELD(colcollations);
+	COMPARE_NODE_FIELD(colexprs);
+	COMPARE_NODE_FIELD(coldefexprs);
+	COMPARE_BITMAPSET_FIELD(notnulls);
+	COMPARE_SCALAR_FIELD(ordinalitycol);
+	COMPARE_LOCATION_FIELD(location);
+
+	return true;
+}
+
+static bool
 _equalIntoClause(const IntoClause *a, const IntoClause *b)
 {
 	COMPARE_NODE_FIELD(rel);
@@ -2420,6 +2440,36 @@ _equalRangeTableSample(const RangeTableSample *a, const RangeTableSample *b)
 }
 
 static bool
+_equalRangeTableFunc(const RangeTableFunc *a, const RangeTableFunc *b)
+{
+	COMPARE_SCALAR_FIELD(lateral);
+	COMPARE_NODE_FIELD(docexpr);
+	COMPARE_NODE_FIELD(rowexpr);
+	COMPARE_NODE_FIELD(namespaces);
+	COMPARE_NODE_FIELD(columns);
+	COMPARE_NODE_FIELD(alias);
+	COMPARE_LOCATION_FIELD(location);
+
+	return true;
+}
+
+static bool
+_equalRangeTableFuncCol(const RangeTableFuncCol *a, const RangeTableFuncCol *b)
+{
+	COMPARE_STRING_FIELD(colname);
+	COMPARE_NODE_FIELD(typeName);
+	COMPARE_SCALAR_FIELD(for_ordinality);
+	COMPARE_NODE_FIELD(typeName);
+	COMPARE_SCALAR_FIELD(is_not_null);
+	COMPARE_NODE_FIELD(colexpr);
+	COMPARE_NODE_FIELD(coldefexpr);
+	COMPARE_LOCATION_FIELD(location);
+
+	return true;
+}
+
+
+static bool
 _equalIndexElem(const IndexElem *a, const IndexElem *b)
 {
 	COMPARE_STRING_FIELD(name);
@@ -2521,6 +2571,7 @@ _equalRangeTblEntry(const RangeTblEntry *a, const RangeTblEntry *b)
 	COMPARE_SCALAR_FIELD(jointype);
 	COMPARE_NODE_FIELD(joinaliasvars);
 	COMPARE_NODE_FIELD(functions);
+	COMPARE_NODE_FIELD(tablefunc);
 	COMPARE_SCALAR_FIELD(funcordinality);
 	COMPARE_NODE_FIELD(values_lists);
 	COMPARE_STRING_FIELD(ctename);
@@ -2886,6 +2937,9 @@ equal(const void *a, const void *b)
 			break;
 		case T_RangeVar:
 			retval = _equalRangeVar(a, b);
+			break;
+		case T_TableFunc:
+			retval = _equalTableFunc(a, b);
 			break;
 		case T_IntoClause:
 			retval = _equalIntoClause(a, b);
@@ -3467,6 +3521,12 @@ equal(const void *a, const void *b)
 			break;
 		case T_RangeTableSample:
 			retval = _equalRangeTableSample(a, b);
+			break;
+		case T_RangeTableFunc:
+			retval = _equalRangeTableFunc(a, b);
+			break;
+		case T_RangeTableFuncCol:
+			retval = _equalRangeTableFuncCol(a, b);
 			break;
 		case T_TypeName:
 			retval = _equalTypeName(a, b);

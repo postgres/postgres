@@ -2400,6 +2400,9 @@ JumbleRangeTable(pgssJumbleState *jstate, List *rtable)
 			case RTE_FUNCTION:
 				JumbleExpr(jstate, (Node *) rte->functions);
 				break;
+			case RTE_TABLEFUNC:
+				JumbleExpr(jstate, (Node *) rte->tablefunc);
+				break;
 			case RTE_VALUES:
 				JumbleExpr(jstate, (Node *) rte->values_lists);
 				break;
@@ -2866,6 +2869,15 @@ JumbleExpr(pgssJumbleState *jstate, Node *node)
 				RangeTblFunction *rtfunc = (RangeTblFunction *) node;
 
 				JumbleExpr(jstate, rtfunc->funcexpr);
+			}
+			break;
+		case T_TableFunc:
+			{
+				TableFunc	*tablefunc = (TableFunc *) node;
+
+				JumbleExpr(jstate, tablefunc->docexpr);
+				JumbleExpr(jstate, tablefunc->rowexpr);
+				JumbleExpr(jstate, (Node *) tablefunc->colexprs);
 			}
 			break;
 		case T_TableSampleClause:

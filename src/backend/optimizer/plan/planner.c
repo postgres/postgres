@@ -69,17 +69,19 @@ create_upper_paths_hook_type create_upper_paths_hook = NULL;
 
 
 /* Expression kind codes for preprocess_expression */
-#define EXPRKIND_QUAL			0
-#define EXPRKIND_TARGET			1
-#define EXPRKIND_RTFUNC			2
-#define EXPRKIND_RTFUNC_LATERAL 3
-#define EXPRKIND_VALUES			4
-#define EXPRKIND_VALUES_LATERAL 5
-#define EXPRKIND_LIMIT			6
-#define EXPRKIND_APPINFO		7
-#define EXPRKIND_PHV			8
-#define EXPRKIND_TABLESAMPLE	9
-#define EXPRKIND_ARBITER_ELEM	10
+#define EXPRKIND_QUAL				0
+#define EXPRKIND_TARGET				1
+#define EXPRKIND_RTFUNC				2
+#define EXPRKIND_RTFUNC_LATERAL 	3
+#define EXPRKIND_VALUES				4
+#define EXPRKIND_VALUES_LATERAL 	5
+#define EXPRKIND_LIMIT				6
+#define EXPRKIND_APPINFO			7
+#define EXPRKIND_PHV				8
+#define EXPRKIND_TABLESAMPLE		9
+#define EXPRKIND_ARBITER_ELEM		10
+#define EXPRKIND_TABLEFUNC			11
+#define EXPRKIND_TABLEFUNC_LATERAL	12
 
 /* Passthrough data for standard_qp_callback */
 typedef struct
@@ -685,7 +687,15 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 		{
 			/* Preprocess the function expression(s) fully */
 			kind = rte->lateral ? EXPRKIND_RTFUNC_LATERAL : EXPRKIND_RTFUNC;
-			rte->functions = (List *) preprocess_expression(root, (Node *) rte->functions, kind);
+			rte->functions = (List *)
+				preprocess_expression(root, (Node *) rte->functions, kind);
+		}
+		else if (rte->rtekind == RTE_TABLEFUNC)
+		{
+			/* Preprocess the function expression(s) fully */
+			kind = rte->lateral ? EXPRKIND_TABLEFUNC_LATERAL : EXPRKIND_TABLEFUNC;
+			rte->tablefunc = (TableFunc *)
+				preprocess_expression(root, (Node *) rte->tablefunc, kind);
 		}
 		else if (rte->rtekind == RTE_VALUES)
 		{
@@ -844,7 +854,8 @@ preprocess_expression(PlannerInfo *root, Node *expr, int kind)
 	if (root->hasJoinRTEs &&
 		!(kind == EXPRKIND_RTFUNC ||
 		  kind == EXPRKIND_VALUES ||
-		  kind == EXPRKIND_TABLESAMPLE))
+		  kind == EXPRKIND_TABLESAMPLE ||
+		  kind == EXPRKIND_TABLEFUNC))
 		expr = flatten_join_alias_vars(root, expr);
 
 	/*
