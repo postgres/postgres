@@ -569,7 +569,7 @@
    removes the rest. The estimate is based on a moving average of the number
    of WAL files used in previous checkpoint cycles. The moving average
    is increased immediately if the actual usage exceeds the estimate, so it
-   accommodates peak usage rather average usage to some extent.
+   accommodates peak usage rather than average usage to some extent.
    <varname>min_wal_size</> puts a minimum on the amount of WAL files
    recycled for future usage; that much WAL is always recycled for future use,
    even if the system is idle and the WAL usage estimate suggests that little
