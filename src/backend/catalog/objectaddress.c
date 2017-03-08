@@ -464,7 +464,7 @@ static const ObjectPropertyType ObjectProperty[] =
 		InvalidAttrNumber,
 		Anum_pg_publication_pubowner,
 		InvalidAttrNumber,
-		-1,
+		ACL_KIND_PUBLICATION,
 		true
 	},
 	{
@@ -476,7 +476,7 @@ static const ObjectPropertyType ObjectProperty[] =
 		InvalidAttrNumber,
 		Anum_pg_subscription_subowner,
 		InvalidAttrNumber,
-		-1,
+		ACL_KIND_SUBSCRIPTION,
 		true
 	}
 };

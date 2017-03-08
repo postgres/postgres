@@ -3,6 +3,7 @@
 --
 
 CREATE ROLE regress_subscription_user LOGIN SUPERUSER;
+CREATE ROLE regress_subscription_user_dummy LOGIN NOSUPERUSER;
 SET SESSION AUTHORIZATION 'regress_subscription_user';
 
 -- fail - no publications
@@ -43,6 +44,11 @@ ALTER SUBSCRIPTION testsub DISABLE;
 
 COMMIT;
 
+-- fail - must be owner of subscription
+SET ROLE regress_subscription_user_dummy;
+ALTER SUBSCRIPTION testsub RENAME TO testsub_dummy;
+RESET ROLE;
+
 ALTER SUBSCRIPTION testsub RENAME TO testsub_foo;
 
 \dRs
@@ -58,3 +64,4 @@ COMMIT;
 
 RESET SESSION AUTHORIZATION;
 DROP ROLE regress_subscription_user;
+DROP ROLE regress_subscription_user_dummy;
