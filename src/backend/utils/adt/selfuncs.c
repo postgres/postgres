@@ -98,6 +98,7 @@
 #include "postgres.h"
 
 #include <ctype.h>
+#include <float.h>
 #include <math.h>
 
 #include "access/gin.h"

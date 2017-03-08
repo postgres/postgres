@@ -14,6 +14,7 @@
  */
 #include "postgres.h"
 
+#include <float.h>
 #include <math.h>
 
 #include "catalog/pg_aggregate.h"
