@@ -13,9 +13,11 @@
  *-------------------------------------------------------------------------
  */
 
-#include "plpgsql.h"
+#include "postgres.h"
 
 #include "utils/memutils.h"
+
+#include "plpgsql.h"
 
 
 /* ----------

@@ -13,7 +13,7 @@
  *-------------------------------------------------------------------------
  */
 
-#include "plpgsql.h"
+#include "postgres.h"
 
 #include "access/htup_details.h"
 #include "catalog/pg_proc.h"
@@ -25,6 +25,8 @@
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "utils/varlena.h"
+
+#include "plpgsql.h"
 
 
 static bool plpgsql_extra_checks_check_hook(char **newvalue, void **extra, GucSource source);

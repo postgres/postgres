@@ -13,12 +13,14 @@
  *
  *-------------------------------------------------------------------------
  */
-#include "plpgsql.h"
+#include "postgres.h"
 
 #include "mb/pg_wchar.h"
 #include "parser/scanner.h"
 
+#include "plpgsql.h"
 #include "pl_gram.h"			/* must be after parser/scanner.h */
+
 
 #define PG_KEYWORD(a,b,c) {a,b,c},
 

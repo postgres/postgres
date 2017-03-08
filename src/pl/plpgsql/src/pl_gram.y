@@ -13,7 +13,7 @@
  *-------------------------------------------------------------------------
  */
 
-#include "plpgsql.h"
+#include "postgres.h"
 
 #include "catalog/namespace.h"
 #include "catalog/pg_type.h"
@@ -22,6 +22,8 @@
 #include "parser/scanner.h"
 #include "parser/scansup.h"
 #include "utils/builtins.h"
+
+#include "plpgsql.h"
 
 
 /* Location tracking support --- simpler than bison's default */
