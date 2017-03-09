@@ -4004,9 +4004,9 @@ adjust_rowcompare_for_index(RowCompareExpr *clause,
 									   matching_cols);
 		rc->inputcollids = list_truncate(list_copy(clause->inputcollids),
 										 matching_cols);
-		rc->largs = list_truncate((List *) copyObject(clause->largs),
+		rc->largs = list_truncate(copyObject(clause->largs),
 								  matching_cols);
-		rc->rargs = list_truncate((List *) copyObject(clause->rargs),
+		rc->rargs = list_truncate(copyObject(clause->rargs),
 								  matching_cols);
 		return (Expr *) rc;
 	}

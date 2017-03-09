@@ -1255,7 +1255,7 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 			/* ROW() op ROW() is handled specially */
 			cmp = make_row_comparison_op(pstate,
 										 a->name,
-							  (List *) copyObject(((RowExpr *) lexpr)->args),
+										 copyObject(((RowExpr *) lexpr)->args),
 										 ((RowExpr *) rexpr)->args,
 										 a->location);
 		}

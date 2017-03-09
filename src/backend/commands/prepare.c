@@ -352,7 +352,7 @@ EvaluateParams(PreparedStatement *pstmt, List *params,
 	 * We have to run parse analysis for the expressions.  Since the parser is
 	 * not cool about scribbling on its input, copy first.
 	 */
-	params = (List *) copyObject(params);
+	params = copyObject(params);
 
 	pstate = make_parsestate(NULL);
 	pstate->p_sourcetext = queryString;
@@ -554,7 +554,7 @@ FetchPreparedStatementTargetList(PreparedStatement *stmt)
 	tlist = CachedPlanGetTargetList(stmt->plansource);
 
 	/* Copy into caller's context in case plan gets invalidated */
-	return (List *) copyObject(tlist);
+	return copyObject(tlist);
 }
 
 /*

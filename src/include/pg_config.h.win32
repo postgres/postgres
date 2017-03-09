@@ -454,6 +454,9 @@
 /* Define to 1 if you have the `towlower' function. */
 #define HAVE_TOWLOWER 1
 
+/* Define to 1 if your compiler understands `typeof' or something similar. */
+#define HAVE_TYPEOF 1
+
 /* Define to 1 if you have the external array `tzname'. */
 /* #undef HAVE_TZNAME */
 
@@ -682,3 +685,6 @@
 
 /* Define to empty if the C compiler does not understand signed types. */
 /* #undef signed */
+
+/* Define to how the compiler spells `typeof'. */
+#define typeof decltype

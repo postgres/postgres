@@ -15599,7 +15599,7 @@ TableFuncTypeName(List *columns)
 	{
 		FunctionParameter *p = (FunctionParameter *) linitial(columns);
 
-		result = (TypeName *) copyObject(p->argType);
+		result = copyObject(p->argType);
 	}
 	else
 		result = SystemTypeName("record");

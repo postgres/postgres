@@ -1274,7 +1274,7 @@ generate_append_tlist(List *colTypes, List *colCollations,
 static List *
 generate_setop_grouplist(SetOperationStmt *op, List *targetlist)
 {
-	List	   *grouplist = (List *) copyObject(op->groupClauses);
+	List	   *grouplist = copyObject(op->groupClauses);
 	ListCell   *lg;
 	ListCell   *lt;
 
@@ -1879,7 +1879,7 @@ adjust_appendrel_attrs_mutator(Node *node,
 
 					rte = rt_fetch(appinfo->parent_relid,
 								   context->root->parse->rtable);
-					fields = (List *) copyObject(appinfo->translated_vars);
+					fields = copyObject(appinfo->translated_vars);
 					rowexpr = makeNode(RowExpr);
 					rowexpr->args = fields;
 					rowexpr->row_typeid = var->vartype;

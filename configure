@@ -11668,6 +11668,46 @@ if test x"$pgac_cv__static_assert" = xyes ; then
 $as_echo "#define HAVE__STATIC_ASSERT 1" >>confdefs.h
 
 fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for typeof" >&5
+$as_echo_n "checking for typeof... " >&6; }
+if ${pgac_cv_c_typeof+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  pgac_cv_c_typeof=no
+for pgac_kw in typeof __typeof__ decltype; do
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+int x = 0;
+$pgac_kw(x) y;
+y = x;
+return y;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  pgac_cv_c_typeof=$pgac_kw
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  test "$pgac_cv_c_typeof" != no && break
+done
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_c_typeof" >&5
+$as_echo "$pgac_cv_c_typeof" >&6; }
+if test "$pgac_cv_c_typeof" != no; then
+
+$as_echo "#define HAVE_TYPEOF 1" >>confdefs.h
+
+  if test "$pgac_cv_c_typeof" != typeof; then
+
+$as_echo "#define typeof \$pgac_cv_c_typeof" >>confdefs.h
+
+  fi
+fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __builtin_types_compatible_p" >&5
 $as_echo_n "checking for __builtin_types_compatible_p... " >&6; }
 if ${pgac_cv__types_compatible+:} false; then :

@@ -125,7 +125,7 @@ assign_param_for_var(PlannerInfo *root, Var *var)
 	}
 
 	/* Nope, so make a new one */
-	var = (Var *) copyObject(var);
+	var = copyObject(var);
 	var->varlevelsup = 0;
 
 	pitem = makeNode(PlannerParamItem);
@@ -224,7 +224,7 @@ assign_param_for_placeholdervar(PlannerInfo *root, PlaceHolderVar *phv)
 	}
 
 	/* Nope, so make a new one */
-	phv = (PlaceHolderVar *) copyObject(phv);
+	phv = copyObject(phv);
 	if (phv->phlevelsup != 0)
 	{
 		IncrementVarSublevelsUp((Node *) phv, -((int) phv->phlevelsup), 0);
@@ -316,7 +316,7 @@ replace_outer_agg(PlannerInfo *root, Aggref *agg)
 	 * It does not seem worthwhile to try to match duplicate outer aggs. Just
 	 * make a new slot every time.
 	 */
-	agg = (Aggref *) copyObject(agg);
+	agg = copyObject(agg);
 	IncrementVarSublevelsUp((Node *) agg, -((int) agg->agglevelsup), 0);
 	Assert(agg->agglevelsup == 0);
 
@@ -358,7 +358,7 @@ replace_outer_grouping(PlannerInfo *root, GroupingFunc *grp)
 	 * It does not seem worthwhile to try to match duplicate outer aggs. Just
 	 * make a new slot every time.
 	 */
-	grp = (GroupingFunc *) copyObject(grp);
+	grp = copyObject(grp);
 	IncrementVarSublevelsUp((Node *) grp, -((int) grp->agglevelsup), 0);
 	Assert(grp->agglevelsup == 0);
 
@@ -491,7 +491,7 @@ make_subplan(PlannerInfo *root, Query *orig_subquery,
 	 * same sub-Query node, but the planner wants to scribble on the Query.
 	 * Try to clean this up when we do querytree redesign...
 	 */
-	subquery = (Query *) copyObject(orig_subquery);
+	subquery = copyObject(orig_subquery);
 
 	/*
 	 * If it's an EXISTS subplan, we might be able to simplify it.
@@ -568,7 +568,7 @@ make_subplan(PlannerInfo *root, Query *orig_subquery,
 		List	   *paramIds;
 
 		/* Make a second copy of the original subquery */
-		subquery = (Query *) copyObject(orig_subquery);
+		subquery = copyObject(orig_subquery);
 		/* and re-simplify */
 		simple_exists = simplify_EXISTS_query(root, subquery);
 		Assert(simple_exists);
@@ -1431,7 +1431,7 @@ convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	 * Copy the subquery so we can modify it safely (see comments in
 	 * make_subplan).
 	 */
-	subselect = (Query *) copyObject(subselect);
+	subselect = copyObject(subselect);
 
 	/*
 	 * See if the subquery can be simplified based on the knowledge that it's

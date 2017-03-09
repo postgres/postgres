@@ -180,7 +180,7 @@ preprocess_targetlist(PlannerInfo *root, List *tlist)
 				var->varno == result_relation)
 				continue;		/* don't need it */
 
-			if (tlist_member((Node *) var, tlist))
+			if (tlist_member((Expr *) var, tlist))
 				continue;		/* already got it */
 
 			tle = makeTargetEntry((Expr *) var,

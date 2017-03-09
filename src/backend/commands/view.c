@@ -373,7 +373,7 @@ UpdateRangeTableOfViewParse(Oid viewOid, Query *viewParse)
 	 * Var node twice.  copyObject will expand any multiply-referenced subtree
 	 * into multiple copies.
 	 */
-	viewParse = (Query *) copyObject(viewParse);
+	viewParse = copyObject(viewParse);
 
 	/* Create a dummy ParseState for addRangeTableEntryForRelation */
 	pstate = make_parsestate(NULL);

@@ -1157,7 +1157,7 @@ inheritance_planner(PlannerInfo *root)
 		 * executor doesn't need to see the modified copies --- we can just
 		 * pass it the original rowMarks list.)
 		 */
-		subroot->rowMarks = (List *) copyObject(root->rowMarks);
+		subroot->rowMarks = copyObject(root->rowMarks);
 
 		/*
 		 * The append_rel_list likewise might contain references to subquery
@@ -1179,7 +1179,7 @@ inheritance_planner(PlannerInfo *root)
 				AppendRelInfo *appinfo2 = (AppendRelInfo *) lfirst(lc2);
 
 				if (bms_is_member(appinfo2->child_relid, modifiableARIindexes))
-					appinfo2 = (AppendRelInfo *) copyObject(appinfo2);
+					appinfo2 = copyObject(appinfo2);
 
 				subroot->append_rel_list = lappend(subroot->append_rel_list,
 												   appinfo2);

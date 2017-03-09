@@ -1412,11 +1412,11 @@ ReplaceVarsFromTargetList_callback(Var *var,
 	else
 	{
 		/* Make a copy of the tlist item to return */
-		Node	   *newnode = copyObject(tle->expr);
+		Expr	   *newnode = copyObject(tle->expr);
 
 		/* Must adjust varlevelsup if tlist item is from higher query */
 		if (var->varlevelsup > 0)
-			IncrementVarSublevelsUp(newnode, var->varlevelsup, 0);
+			IncrementVarSublevelsUp((Node *) newnode, var->varlevelsup, 0);
 
 		/*
 		 * Check to see if the tlist item contains a PARAM_MULTIEXPR Param,
@@ -1428,12 +1428,12 @@ ReplaceVarsFromTargetList_callback(Var *var,
 		 * create semantic oddities that users of rules would probably prefer
 		 * not to cope with.  So treat it as an unimplemented feature.
 		 */
-		if (contains_multiexpr_param(newnode, NULL))
+		if (contains_multiexpr_param((Node *) newnode, NULL))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("NEW variables in ON UPDATE rules cannot reference columns that are part of a multiple assignment in the subject UPDATE command")));
 
-		return newnode;
+		return (Node *) newnode;
 	}
 }
 

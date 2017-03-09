@@ -361,7 +361,7 @@ CompleteCachedPlan(CachedPlanSource *plansource,
 												  "CachedPlanQuery",
 												  ALLOCSET_START_SMALL_SIZES);
 		MemoryContextSwitchTo(querytree_context);
-		querytree_list = (List *) copyObject(querytree_list);
+		querytree_list = copyObject(querytree_list);
 	}
 
 	plansource->query_context = querytree_context;
@@ -734,7 +734,7 @@ RevalidateCachedQuery(CachedPlanSource *plansource)
 											  ALLOCSET_START_SMALL_SIZES);
 	oldcxt = MemoryContextSwitchTo(querytree_context);
 
-	qlist = (List *) copyObject(tlist);
+	qlist = copyObject(tlist);
 
 	/*
 	 * Use the planner machinery to extract dependencies.  Data is saved in
@@ -909,7 +909,7 @@ BuildCachedPlan(CachedPlanSource *plansource, List *qlist,
 	if (qlist == NIL)
 	{
 		if (!plansource->is_oneshot)
-			qlist = (List *) copyObject(plansource->query_list);
+			qlist = copyObject(plansource->query_list);
 		else
 			qlist = plansource->query_list;
 	}
@@ -953,7 +953,7 @@ BuildCachedPlan(CachedPlanSource *plansource, List *qlist,
 		 */
 		MemoryContextSwitchTo(plan_context);
 
-		plist = (List *) copyObject(plist);
+		plist = copyObject(plist);
 	}
 	else
 		plan_context = CurrentMemoryContext;
@@ -1367,9 +1367,9 @@ CopyCachedPlan(CachedPlanSource *plansource)
 											  "CachedPlanQuery",
 											  ALLOCSET_START_SMALL_SIZES);
 	MemoryContextSwitchTo(querytree_context);
-	newsource->query_list = (List *) copyObject(plansource->query_list);
-	newsource->relationOids = (List *) copyObject(plansource->relationOids);
-	newsource->invalItems = (List *) copyObject(plansource->invalItems);
+	newsource->query_list = copyObject(plansource->query_list);
+	newsource->relationOids = copyObject(plansource->relationOids);
+	newsource->invalItems = copyObject(plansource->invalItems);
 	if (plansource->search_path)
 		newsource->search_path = CopyOverrideSearchPath(plansource->search_path);
 	newsource->query_context = querytree_context;

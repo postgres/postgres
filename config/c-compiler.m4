@@ -178,6 +178,33 @@ fi])# PGAC_C_STATIC_ASSERT
 
 
 
+# PGAC_C_TYPEOF
+# -------------
+# Check if the C compiler understands typeof or a variant.  Define
+# HAVE_TYPEOF if so, and define 'typeof' to the actual key word.
+#
+AC_DEFUN([PGAC_C_TYPEOF],
+[AC_CACHE_CHECK(for typeof, pgac_cv_c_typeof,
+[pgac_cv_c_typeof=no
+for pgac_kw in typeof __typeof__ decltype; do
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],
+[int x = 0;
+$pgac_kw(x) y;
+y = x;
+return y;])],
+[pgac_cv_c_typeof=$pgac_kw])
+  test "$pgac_cv_c_typeof" != no && break
+done])
+if test "$pgac_cv_c_typeof" != no; then
+  AC_DEFINE(HAVE_TYPEOF, 1,
+            [Define to 1 if your compiler understands `typeof' or something similar.])
+  if test "$pgac_cv_c_typeof" != typeof; then
+    AC_DEFINE(typeof, $pgac_cv_c_typeof, [Define to how the compiler spells `typeof'.])
+  fi
+fi])# PGAC_C_TYPEOF
+
+
+
 # PGAC_C_TYPES_COMPATIBLE
 # -----------------------
 # Check if the C compiler understands __builtin_types_compatible_p,

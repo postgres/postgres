@@ -369,11 +369,11 @@ build_minmax_path(PlannerInfo *root, MinMaxAggInfo *mminfo,
 	subroot->outer_params = NULL;
 	subroot->init_plans = NIL;
 
-	subroot->parse = parse = (Query *) copyObject(root->parse);
+	subroot->parse = parse = copyObject(root->parse);
 	IncrementVarSublevelsUp((Node *) parse, 1, 1);
 
 	/* append_rel_list might contain outer Vars? */
-	subroot->append_rel_list = (List *) copyObject(root->append_rel_list);
+	subroot->append_rel_list = copyObject(root->append_rel_list);
 	IncrementVarSublevelsUp((Node *) subroot->append_rel_list, 1, 1);
 	/* There shouldn't be any OJ info to translate, as yet */
 	Assert(subroot->join_info_list == NIL);

@@ -4697,7 +4697,7 @@ RelationGetIndexExpressions(Relation relation)
 
 	/* Quick exit if we already computed the result. */
 	if (relation->rd_indexprs)
-		return (List *) copyObject(relation->rd_indexprs);
+		return copyObject(relation->rd_indexprs);
 
 	/* Quick exit if there is nothing to do. */
 	if (relation->rd_indextuple == NULL ||
@@ -4733,7 +4733,7 @@ RelationGetIndexExpressions(Relation relation)
 
 	/* Now save a copy of the completed tree in the relcache entry. */
 	oldcxt = MemoryContextSwitchTo(relation->rd_indexcxt);
-	relation->rd_indexprs = (List *) copyObject(result);
+	relation->rd_indexprs = copyObject(result);
 	MemoryContextSwitchTo(oldcxt);
 
 	return result;
@@ -4760,7 +4760,7 @@ RelationGetIndexPredicate(Relation relation)
 
 	/* Quick exit if we already computed the result. */
 	if (relation->rd_indpred)
-		return (List *) copyObject(relation->rd_indpred);
+		return copyObject(relation->rd_indpred);
 
 	/* Quick exit if there is nothing to do. */
 	if (relation->rd_indextuple == NULL ||
@@ -4802,7 +4802,7 @@ RelationGetIndexPredicate(Relation relation)
 
 	/* Now save a copy of the completed tree in the relcache entry. */
 	oldcxt = MemoryContextSwitchTo(relation->rd_indexcxt);
-	relation->rd_indpred = (List *) copyObject(result);
+	relation->rd_indpred = copyObject(result);
 	MemoryContextSwitchTo(oldcxt);
 
 	return result;

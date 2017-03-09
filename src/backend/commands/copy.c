@@ -1470,7 +1470,7 @@ BeginCopy(ParseState *pstate,
 		 * function and is executed repeatedly.  (See also the same hack in
 		 * DECLARE CURSOR and PREPARE.)  XXX FIXME someday.
 		 */
-		rewritten = pg_analyze_and_rewrite((RawStmt *) copyObject(raw_query),
+		rewritten = pg_analyze_and_rewrite(copyObject(raw_query),
 										   pstate->p_sourcetext, NULL, 0);
 
 		/* check that we got back something we can work with */

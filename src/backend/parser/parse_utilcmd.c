@@ -167,7 +167,7 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	 * We must not scribble on the passed-in CreateStmt, so copy it.  (This is
 	 * overkill, but easy.)
 	 */
-	stmt = (CreateStmt *) copyObject(stmt);
+	stmt = copyObject(stmt);
 
 	/* Set up pstate */
 	pstate = make_parsestate(NULL);
@@ -2107,7 +2107,7 @@ transformIndexStmt(Oid relid, IndexStmt *stmt, const char *queryString)
 	 * We must not scribble on the passed-in IndexStmt, so copy it.  (This is
 	 * overkill, but easy.)
 	 */
-	stmt = (IndexStmt *) copyObject(stmt);
+	stmt = copyObject(stmt);
 
 	/* Set up pstate */
 	pstate = make_parsestate(NULL);
@@ -2521,7 +2521,7 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 	 * We must not scribble on the passed-in AlterTableStmt, so copy it. (This
 	 * is overkill, but easy.)
 	 */
-	stmt = (AlterTableStmt *) copyObject(stmt);
+	stmt = copyObject(stmt);
 
 	/* Caller is responsible for locking the relation */
 	rel = relation_open(relid, NoLock);

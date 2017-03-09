@@ -2306,8 +2306,8 @@ process_implied_equality(PlannerInfo *root,
 	clause = make_opclause(opno,
 						   BOOLOID,		/* opresulttype */
 						   false,		/* opretset */
-						   (Expr *) copyObject(item1),
-						   (Expr *) copyObject(item2),
+						   copyObject(item1),
+						   copyObject(item2),
 						   InvalidOid,
 						   collation);
 
@@ -2369,8 +2369,8 @@ build_implied_join_equality(Oid opno,
 	clause = make_opclause(opno,
 						   BOOLOID,		/* opresulttype */
 						   false,		/* opretset */
-						   (Expr *) copyObject(item1),
-						   (Expr *) copyObject(item2),
+						   copyObject(item1),
+						   copyObject(item2),
 						   InvalidOid,
 						   collation);
 
