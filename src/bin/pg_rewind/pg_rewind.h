@@ -11,8 +11,6 @@
 #ifndef PG_REWIND_H
 #define PG_REWIND_H
 
-#include "c.h"
-
 #include "datapagemap.h"
 
 #include "access/timeline.h"

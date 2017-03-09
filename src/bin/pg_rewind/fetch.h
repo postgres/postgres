@@ -15,8 +15,6 @@
 #ifndef FETCH_H
 #define FETCH_H
 
-#include "c.h"
-
 #include "access/xlogdefs.h"
 
 #include "filemap.h"
