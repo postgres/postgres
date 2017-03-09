@@ -1678,8 +1678,7 @@ SELECT '' AS to_char_11, to_char(d1, 'FMIYYY FMIYY FMIY FMI FMIW FMIDDD FMID')
 --
 -- Test behavior with a dynamic (time-varying) timezone abbreviation.
 -- These tests rely on the knowledge that MSK (Europe/Moscow standard time)
--- moved forwards in Mar 2011 and that VET (America/Caracas standard time)
--- moved backwards in Dec 2007.
+-- moved forwards in Mar 2011 and backwards again in Oct 2014.
 --
 SET TimeZone to 'UTC';
 SELECT '2011-03-27 00:00:00 Europe/Moscow'::timestamptz;
@@ -1790,100 +1789,64 @@ SELECT '2011-03-27 04:00:00 MSK'::timestamptz;
  Sun Mar 27 00:00:00 2011 UTC
 (1 row)
 
-SELECT '2007-12-09 02:00:00 America/Caracas'::timestamptz;
+SELECT '2014-10-26 00:00:00 Europe/Moscow'::timestamptz;
          timestamptz          
 ------------------------------
- Sun Dec 09 06:00:00 2007 UTC
+ Sat Oct 25 20:00:00 2014 UTC
 (1 row)
 
-SELECT '2007-12-09 02:29:59 America/Caracas'::timestamptz;
+SELECT '2014-10-26 00:59:59 Europe/Moscow'::timestamptz;
          timestamptz          
 ------------------------------
- Sun Dec 09 06:29:59 2007 UTC
+ Sat Oct 25 20:59:59 2014 UTC
 (1 row)
 
-SELECT '2007-12-09 02:30:00 America/Caracas'::timestamptz;
+SELECT '2014-10-26 01:00:00 Europe/Moscow'::timestamptz;
          timestamptz          
 ------------------------------
- Sun Dec 09 07:00:00 2007 UTC
+ Sat Oct 25 22:00:00 2014 UTC
 (1 row)
 
-SELECT '2007-12-09 02:30:01 America/Caracas'::timestamptz;
+SELECT '2014-10-26 01:00:01 Europe/Moscow'::timestamptz;
          timestamptz          
 ------------------------------
- Sun Dec 09 07:00:01 2007 UTC
+ Sat Oct 25 22:00:01 2014 UTC
 (1 row)
 
-SELECT '2007-12-09 02:59:59 America/Caracas'::timestamptz;
+SELECT '2014-10-26 02:00:00 Europe/Moscow'::timestamptz;
          timestamptz          
 ------------------------------
- Sun Dec 09 07:29:59 2007 UTC
+ Sat Oct 25 23:00:00 2014 UTC
 (1 row)
 
-SELECT '2007-12-09 03:00:00 America/Caracas'::timestamptz;
+SELECT '2014-10-26 00:00:00 MSK'::timestamptz;
          timestamptz          
 ------------------------------
- Sun Dec 09 07:30:00 2007 UTC
+ Sat Oct 25 20:00:00 2014 UTC
 (1 row)
 
-SELECT '2007-12-09 03:00:01 America/Caracas'::timestamptz;
+SELECT '2014-10-26 00:59:59 MSK'::timestamptz;
          timestamptz          
 ------------------------------
- Sun Dec 09 07:30:01 2007 UTC
+ Sat Oct 25 20:59:59 2014 UTC
 (1 row)
 
-SELECT '2007-12-09 04:00:00 America/Caracas'::timestamptz;
+SELECT '2014-10-26 01:00:00 MSK'::timestamptz;
          timestamptz          
 ------------------------------
- Sun Dec 09 08:30:00 2007 UTC
+ Sat Oct 25 22:00:00 2014 UTC
 (1 row)
 
-SELECT '2007-12-09 02:00:00 VET'::timestamptz;
+SELECT '2014-10-26 01:00:01 MSK'::timestamptz;
          timestamptz          
 ------------------------------
- Sun Dec 09 06:00:00 2007 UTC
+ Sat Oct 25 22:00:01 2014 UTC
 (1 row)
 
-SELECT '2007-12-09 02:29:59 VET'::timestamptz;
+SELECT '2014-10-26 02:00:00 MSK'::timestamptz;
          timestamptz          
 ------------------------------
- Sun Dec 09 06:29:59 2007 UTC
-(1 row)
-
-SELECT '2007-12-09 02:30:00 VET'::timestamptz;
-         timestamptz          
-------------------------------
- Sun Dec 09 07:00:00 2007 UTC
-(1 row)
-
-SELECT '2007-12-09 02:30:01 VET'::timestamptz;
-         timestamptz          
-------------------------------
- Sun Dec 09 07:00:01 2007 UTC
-(1 row)
-
-SELECT '2007-12-09 02:59:59 VET'::timestamptz;
-         timestamptz          
-------------------------------
- Sun Dec 09 07:29:59 2007 UTC
-(1 row)
-
-SELECT '2007-12-09 03:00:00 VET'::timestamptz;
-         timestamptz          
-------------------------------
- Sun Dec 09 07:30:00 2007 UTC
-(1 row)
-
-SELECT '2007-12-09 03:00:01 VET'::timestamptz;
-         timestamptz          
-------------------------------
- Sun Dec 09 07:30:01 2007 UTC
-(1 row)
-
-SELECT '2007-12-09 04:00:00 VET'::timestamptz;
-         timestamptz          
-------------------------------
- Sun Dec 09 08:30:00 2007 UTC
+ Sat Oct 25 23:00:00 2014 UTC
 (1 row)
 
 SELECT '2011-03-27 00:00:00'::timestamp AT TIME ZONE 'Europe/Moscow';
@@ -1994,100 +1957,64 @@ SELECT '2011-03-27 04:00:00'::timestamp AT TIME ZONE 'MSK';
  Sun Mar 27 00:00:00 2011 UTC
 (1 row)
 
-SELECT '2007-12-09 02:00:00'::timestamp AT TIME ZONE 'America/Caracas';
+SELECT '2014-10-26 00:00:00'::timestamp AT TIME ZONE 'Europe/Moscow';
            timezone           
 ------------------------------
- Sun Dec 09 06:00:00 2007 UTC
+ Sat Oct 25 20:00:00 2014 UTC
 (1 row)
 
-SELECT '2007-12-09 02:29:59'::timestamp AT TIME ZONE 'America/Caracas';
+SELECT '2014-10-26 00:59:59'::timestamp AT TIME ZONE 'Europe/Moscow';
            timezone           
 ------------------------------
- Sun Dec 09 06:29:59 2007 UTC
+ Sat Oct 25 20:59:59 2014 UTC
 (1 row)
 
-SELECT '2007-12-09 02:30:00'::timestamp AT TIME ZONE 'America/Caracas';
+SELECT '2014-10-26 01:00:00'::timestamp AT TIME ZONE 'Europe/Moscow';
            timezone           
 ------------------------------
- Sun Dec 09 07:00:00 2007 UTC
+ Sat Oct 25 22:00:00 2014 UTC
 (1 row)
 
-SELECT '2007-12-09 02:30:01'::timestamp AT TIME ZONE 'America/Caracas';
+SELECT '2014-10-26 01:00:01'::timestamp AT TIME ZONE 'Europe/Moscow';
            timezone           
 ------------------------------
- Sun Dec 09 07:00:01 2007 UTC
+ Sat Oct 25 22:00:01 2014 UTC
 (1 row)
 
-SELECT '2007-12-09 02:59:59'::timestamp AT TIME ZONE 'America/Caracas';
+SELECT '2014-10-26 02:00:00'::timestamp AT TIME ZONE 'Europe/Moscow';
            timezone           
 ------------------------------
- Sun Dec 09 07:29:59 2007 UTC
+ Sat Oct 25 23:00:00 2014 UTC
 (1 row)
 
-SELECT '2007-12-09 03:00:00'::timestamp AT TIME ZONE 'America/Caracas';
+SELECT '2014-10-26 00:00:00'::timestamp AT TIME ZONE 'MSK';
            timezone           
 ------------------------------
- Sun Dec 09 07:30:00 2007 UTC
+ Sat Oct 25 20:00:00 2014 UTC
 (1 row)
 
-SELECT '2007-12-09 03:00:01'::timestamp AT TIME ZONE 'America/Caracas';
+SELECT '2014-10-26 00:59:59'::timestamp AT TIME ZONE 'MSK';
            timezone           
 ------------------------------
- Sun Dec 09 07:30:01 2007 UTC
+ Sat Oct 25 20:59:59 2014 UTC
 (1 row)
 
-SELECT '2007-12-09 04:00:00'::timestamp AT TIME ZONE 'America/Caracas';
+SELECT '2014-10-26 01:00:00'::timestamp AT TIME ZONE 'MSK';
            timezone           
 ------------------------------
- Sun Dec 09 08:30:00 2007 UTC
+ Sat Oct 25 22:00:00 2014 UTC
 (1 row)
 
-SELECT '2007-12-09 02:00:00'::timestamp AT TIME ZONE 'VET';
+SELECT '2014-10-26 01:00:01'::timestamp AT TIME ZONE 'MSK';
            timezone           
 ------------------------------
- Sun Dec 09 06:00:00 2007 UTC
+ Sat Oct 25 22:00:01 2014 UTC
 (1 row)
 
-SELECT '2007-12-09 02:29:59'::timestamp AT TIME ZONE 'VET';
+SELECT '2014-10-26 02:00:00'::timestamp AT TIME ZONE 'MSK';
            timezone           
 ------------------------------
- Sun Dec 09 06:29:59 2007 UTC
-(1 row)
-
-SELECT '2007-12-09 02:30:00'::timestamp AT TIME ZONE 'VET';
-           timezone           
-------------------------------
- Sun Dec 09 07:00:00 2007 UTC
-(1 row)
-
-SELECT '2007-12-09 02:30:01'::timestamp AT TIME ZONE 'VET';
-           timezone           
-------------------------------
- Sun Dec 09 07:00:01 2007 UTC
-(1 row)
-
-SELECT '2007-12-09 02:59:59'::timestamp AT TIME ZONE 'VET';
-           timezone           
-------------------------------
- Sun Dec 09 07:29:59 2007 UTC
-(1 row)
-
-SELECT '2007-12-09 03:00:00'::timestamp AT TIME ZONE 'VET';
-           timezone           
-------------------------------
- Sun Dec 09 07:30:00 2007 UTC
-(1 row)
-
-SELECT '2007-12-09 03:00:01'::timestamp AT TIME ZONE 'VET';
-           timezone           
-------------------------------
- Sun Dec 09 07:30:01 2007 UTC
-(1 row)
-
-SELECT '2007-12-09 04:00:00'::timestamp AT TIME ZONE 'VET';
-           timezone           
-------------------------------
- Sun Dec 09 08:30:00 2007 UTC
+ Sat Oct 25 23:00:00 2014 UTC
 (1 row)
 
 SET TimeZone to 'Europe/Moscow';
@@ -2133,47 +2060,34 @@ SELECT '2011-03-27 00:00:00 UTC'::timestamptz;
  Sun Mar 27 04:00:00 2011 MSK
 (1 row)
 
-SET TimeZone to 'America/Caracas';
-SELECT '2007-12-09 06:00:00 UTC'::timestamptz;
+SELECT '2014-10-25 21:00:00 UTC'::timestamptz;
          timestamptz          
 ------------------------------
- Sun Dec 09 02:00:00 2007 VET
+ Sun Oct 26 01:00:00 2014 MSK
 (1 row)
 
-SELECT '2007-12-09 06:30:00 UTC'::timestamptz;
+SELECT '2014-10-25 21:59:59 UTC'::timestamptz;
          timestamptz          
 ------------------------------
- Sun Dec 09 02:30:00 2007 VET
+ Sun Oct 26 01:59:59 2014 MSK
 (1 row)
 
-SELECT '2007-12-09 06:59:59 UTC'::timestamptz;
+SELECT '2014-10-25 22:00:00 UTC'::timestamptz;
          timestamptz          
 ------------------------------
- Sun Dec 09 02:59:59 2007 VET
+ Sun Oct 26 01:00:00 2014 MSK
 (1 row)
 
-SELECT '2007-12-09 07:00:00 UTC'::timestamptz;
+SELECT '2014-10-25 22:00:01 UTC'::timestamptz;
          timestamptz          
 ------------------------------
- Sun Dec 09 02:30:00 2007 VET
+ Sun Oct 26 01:00:01 2014 MSK
 (1 row)
 
-SELECT '2007-12-09 07:00:01 UTC'::timestamptz;
+SELECT '2014-10-25 23:00:00 UTC'::timestamptz;
          timestamptz          
 ------------------------------
- Sun Dec 09 02:30:01 2007 VET
-(1 row)
-
-SELECT '2007-12-09 07:29:59 UTC'::timestamptz;
-         timestamptz          
-------------------------------
- Sun Dec 09 02:59:59 2007 VET
-(1 row)
-
-SELECT '2007-12-09 07:30:00 UTC'::timestamptz;
-         timestamptz          
-------------------------------
- Sun Dec 09 03:00:00 2007 VET
+ Sun Oct 26 02:00:00 2014 MSK
 (1 row)
 
 RESET TimeZone;
@@ -2219,46 +2133,34 @@ SELECT '2011-03-27 00:00:00 UTC'::timestamptz AT TIME ZONE 'Europe/Moscow';
  Sun Mar 27 04:00:00 2011
 (1 row)
 
-SELECT '2007-12-09 06:00:00 UTC'::timestamptz AT TIME ZONE 'America/Caracas';
+SELECT '2014-10-25 21:00:00 UTC'::timestamptz AT TIME ZONE 'Europe/Moscow';
          timezone         
 --------------------------
- Sun Dec 09 02:00:00 2007
+ Sun Oct 26 01:00:00 2014
 (1 row)
 
-SELECT '2007-12-09 06:30:00 UTC'::timestamptz AT TIME ZONE 'America/Caracas';
+SELECT '2014-10-25 21:59:59 UTC'::timestamptz AT TIME ZONE 'Europe/Moscow';
          timezone         
 --------------------------
- Sun Dec 09 02:30:00 2007
+ Sun Oct 26 01:59:59 2014
 (1 row)
 
-SELECT '2007-12-09 06:59:59 UTC'::timestamptz AT TIME ZONE 'America/Caracas';
+SELECT '2014-10-25 22:00:00 UTC'::timestamptz AT TIME ZONE 'Europe/Moscow';
          timezone         
 --------------------------
- Sun Dec 09 02:59:59 2007
+ Sun Oct 26 01:00:00 2014
 (1 row)
 
-SELECT '2007-12-09 07:00:00 UTC'::timestamptz AT TIME ZONE 'America/Caracas';
+SELECT '2014-10-25 22:00:01 UTC'::timestamptz AT TIME ZONE 'Europe/Moscow';
          timezone         
 --------------------------
- Sun Dec 09 02:30:00 2007
+ Sun Oct 26 01:00:01 2014
 (1 row)
 
-SELECT '2007-12-09 07:00:01 UTC'::timestamptz AT TIME ZONE 'America/Caracas';
+SELECT '2014-10-25 23:00:00 UTC'::timestamptz AT TIME ZONE 'Europe/Moscow';
          timezone         
 --------------------------
- Sun Dec 09 02:30:01 2007
-(1 row)
-
-SELECT '2007-12-09 07:29:59 UTC'::timestamptz AT TIME ZONE 'America/Caracas';
-         timezone         
---------------------------
- Sun Dec 09 02:59:59 2007
-(1 row)
-
-SELECT '2007-12-09 07:30:00 UTC'::timestamptz AT TIME ZONE 'America/Caracas';
-         timezone         
---------------------------
- Sun Dec 09 03:00:00 2007
+ Sun Oct 26 02:00:00 2014
 (1 row)
 
 SELECT '2011-03-26 21:00:00 UTC'::timestamptz AT TIME ZONE 'MSK';
@@ -2303,46 +2205,34 @@ SELECT '2011-03-27 00:00:00 UTC'::timestamptz AT TIME ZONE 'MSK';
  Sun Mar 27 04:00:00 2011
 (1 row)
 
-SELECT '2007-12-09 06:00:00 UTC'::timestamptz AT TIME ZONE 'VET';
+SELECT '2014-10-25 21:00:00 UTC'::timestamptz AT TIME ZONE 'MSK';
          timezone         
 --------------------------
- Sun Dec 09 02:00:00 2007
+ Sun Oct 26 01:00:00 2014
 (1 row)
 
-SELECT '2007-12-09 06:30:00 UTC'::timestamptz AT TIME ZONE 'VET';
+SELECT '2014-10-25 21:59:59 UTC'::timestamptz AT TIME ZONE 'MSK';
          timezone         
 --------------------------
- Sun Dec 09 02:30:00 2007
+ Sun Oct 26 01:59:59 2014
 (1 row)
 
-SELECT '2007-12-09 06:59:59 UTC'::timestamptz AT TIME ZONE 'VET';
+SELECT '2014-10-25 22:00:00 UTC'::timestamptz AT TIME ZONE 'MSK';
          timezone         
 --------------------------
- Sun Dec 09 02:59:59 2007
+ Sun Oct 26 01:00:00 2014
 (1 row)
 
-SELECT '2007-12-09 07:00:00 UTC'::timestamptz AT TIME ZONE 'VET';
+SELECT '2014-10-25 22:00:01 UTC'::timestamptz AT TIME ZONE 'MSK';
          timezone         
 --------------------------
- Sun Dec 09 02:30:00 2007
+ Sun Oct 26 01:00:01 2014
 (1 row)
 
-SELECT '2007-12-09 07:00:01 UTC'::timestamptz AT TIME ZONE 'VET';
+SELECT '2014-10-25 23:00:00 UTC'::timestamptz AT TIME ZONE 'MSK';
          timezone         
 --------------------------
- Sun Dec 09 02:30:01 2007
-(1 row)
-
-SELECT '2007-12-09 07:29:59 UTC'::timestamptz AT TIME ZONE 'VET';
-         timezone         
---------------------------
- Sun Dec 09 02:59:59 2007
-(1 row)
-
-SELECT '2007-12-09 07:30:00 UTC'::timestamptz AT TIME ZONE 'VET';
-         timezone         
---------------------------
- Sun Dec 09 03:00:00 2007
+ Sun Oct 26 02:00:00 2014
 (1 row)
 
 --
