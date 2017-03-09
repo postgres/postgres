@@ -1103,13 +1103,12 @@ tbm_shared_iterate(TBMSharedIterator *iterator)
 	if (istate->schunkptr < istate->nchunks)
 	{
 		PagetableEntry *chunk = &ptbase[idxchunks[istate->schunkptr]];
-		PagetableEntry *page = &ptbase[idxpages[istate->spageptr]];
 		BlockNumber chunk_blockno;
 
 		chunk_blockno = chunk->blockno + istate->schunkbit;
 
 		if (istate->spageptr >= istate->npages ||
-			chunk_blockno < page->blockno)
+			chunk_blockno < ptbase[idxpages[istate->spageptr]].blockno)
 		{
 			/* Return a lossy page indicator from the chunk */
 			output->blockno = chunk_blockno;
