@@ -128,7 +128,7 @@ typedef struct HashIndexStat
 
 static Datum pgstatindex_impl(Relation rel, FunctionCallInfo fcinfo);
 static void GetHashPageStats(Page page, HashIndexStat *stats);
-
+static void check_relation_relkind(Relation rel);
 
 /* ------------------------------------------------------
  * pgstatindex()
@@ -221,8 +221,10 @@ pgstatindex_impl(Relation rel, FunctionCallInfo fcinfo)
 	BufferAccessStrategy bstrategy = GetAccessStrategy(BAS_BULKREAD);
 
 	if (!IS_INDEX(rel) || !IS_BTREE(rel))
-		elog(ERROR, "relation \"%s\" is not a btree index",
-			 RelationGetRelationName(rel));
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("relation \"%s\" is not a btree index",
+						RelationGetRelationName(rel))));
 
 	/*
 	 * Reject attempts to read non-local temporary relations; we would be
@@ -388,6 +390,9 @@ pg_relpages(PG_FUNCTION_ARGS)
 	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
 	rel = relation_openrv(relrv, AccessShareLock);
 
+	/* only some relkinds have storage */
+	check_relation_relkind(rel);
+
 	/* note: this will work OK on non-local temp tables */
 
 	relpages = RelationGetNumberOfBlocks(rel);
@@ -408,6 +413,9 @@ pg_relpages_v1_5(PG_FUNCTION_ARGS)
 
 	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
 	rel = relation_openrv(relrv, AccessShareLock);
+
+	/* only some relkinds have storage */
+	check_relation_relkind(rel);
 
 	/* note: this will work OK on non-local temp tables */
 
@@ -433,6 +441,9 @@ pg_relpagesbyid(PG_FUNCTION_ARGS)
 
 	rel = relation_open(relid, AccessShareLock);
 
+	/* only some relkinds have storage */
+	check_relation_relkind(rel);
+
 	/* note: this will work OK on non-local temp tables */
 
 	relpages = RelationGetNumberOfBlocks(rel);
@@ -451,6 +462,9 @@ pg_relpagesbyid_v1_5(PG_FUNCTION_ARGS)
 	Relation	rel;
 
 	rel = relation_open(relid, AccessShareLock);
+
+	/* only some relkinds have storage */
+	check_relation_relkind(rel);
 
 	/* note: this will work OK on non-local temp tables */
 
@@ -508,8 +522,10 @@ pgstatginindex_internal(Oid relid, FunctionCallInfo fcinfo)
 	rel = relation_open(relid, AccessShareLock);
 
 	if (!IS_INDEX(rel) || !IS_GIN(rel))
-		elog(ERROR, "relation \"%s\" is not a GIN index",
-			 RelationGetRelationName(rel));
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("relation \"%s\" is not a GIN index",
+						RelationGetRelationName(rel))));
 
 	/*
 	 * Reject attempts to read non-local temporary relations; we would be
@@ -581,9 +597,13 @@ pgstathashindex(PG_FUNCTION_ARGS)
 
 	rel = index_open(relid, AccessShareLock);
 
+	/* index_open() checks that it's an index */
 	if (!IS_HASH(rel))
-		elog(ERROR, "relation \"%s\" is not a HASH index",
-			 RelationGetRelationName(rel));
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("relation \"%s\" is not a HASH index",
+						RelationGetRelationName(rel))));
+
 
 	/*
 	 * Reject attempts to read non-local temporary relations; we would be
@@ -722,4 +742,22 @@ GetHashPageStats(Page page, HashIndexStat *stats)
 			stats->dead_items++;
 	}
 	stats->free_space += PageGetExactFreeSpace(page);
+}
+
+/*
+ * check_relation_relkind - convenience routine to check that relation
+ * is of the relkind supported by the callers
+ */
+static void
+check_relation_relkind(Relation rel)
+{
+	if (rel->rd_rel->relkind != RELKIND_RELATION &&
+		rel->rd_rel->relkind != RELKIND_INDEX &&
+		rel->rd_rel->relkind != RELKIND_MATVIEW &&
+		rel->rd_rel->relkind != RELKIND_SEQUENCE &&
+		rel->rd_rel->relkind != RELKIND_TOASTVALUE)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not a table, index, materialized view, sequence, or TOAST table",
+						RelationGetRelationName(rel))));
 }

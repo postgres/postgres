@@ -123,6 +123,11 @@ get_raw_page_internal(text *relname, ForkNumber forknum, BlockNumber blkno)
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("cannot get raw page from foreign table \"%s\"",
 						RelationGetRelationName(rel))));
+	if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("cannot get raw page from partitioned table \"%s\"",
+						RelationGetRelationName(rel))));
 
 	/*
 	 * Reject attempts to read non-local temporary relations; we would be

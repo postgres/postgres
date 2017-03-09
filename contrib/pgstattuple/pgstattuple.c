@@ -293,6 +293,9 @@ pgstat_relation(Relation rel, FunctionCallInfo fcinfo)
 		case RELKIND_FOREIGN_TABLE:
 			err = "foreign table";
 			break;
+		case RELKIND_PARTITIONED_TABLE:
+			err = "partitioned table";
+			break;
 		default:
 			err = "unknown";
 			break;

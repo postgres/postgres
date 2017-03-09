@@ -138,3 +138,110 @@ select * from pgstathashindex('test_hashidx');
        2 |            4 |              0 |            1 |          0 |          0 |          0 |          100
 (1 row)
 
+-- these should error with the wrong type
+select pgstatginindex('test_pkey');
+ERROR:  relation "test_pkey" is not a GIN index
+select pgstathashindex('test_pkey');
+ERROR:  relation "test_pkey" is not a HASH index
+select pgstatindex('test_ginidx');
+ERROR:  relation "test_ginidx" is not a btree index
+select pgstathashindex('test_ginidx');
+ERROR:  relation "test_ginidx" is not a HASH index
+select pgstatindex('test_hashidx');
+ERROR:  relation "test_hashidx" is not a btree index
+select pgstatginindex('test_hashidx');
+ERROR:  relation "test_hashidx" is not a GIN index
+-- check that using any of these functions with unsupported relations will fail
+create table test_partitioned (a int) partition by range (a);
+-- these should all fail
+select pgstattuple('test_partitioned');
+ERROR:  "test_partitioned" (partitioned table) is not supported
+select pgstattuple_approx('test_partitioned');
+ERROR:  "test_partitioned" is not a table or materialized view
+select pg_relpages('test_partitioned');
+ERROR:  "test_partitioned" is not a table, index, materialized view, sequence, or TOAST table
+select pgstatindex('test_partitioned');
+ERROR:  relation "test_partitioned" is not a btree index
+select pgstatginindex('test_partitioned');
+ERROR:  relation "test_partitioned" is not a GIN index
+select pgstathashindex('test_partitioned');
+ERROR:  "test_partitioned" is not an index
+create view test_view as select 1;
+-- these should all fail
+select pgstattuple('test_view');
+ERROR:  "test_view" (view) is not supported
+select pgstattuple_approx('test_view');
+ERROR:  "test_view" is not a table or materialized view
+select pg_relpages('test_view');
+ERROR:  "test_view" is not a table, index, materialized view, sequence, or TOAST table
+select pgstatindex('test_view');
+ERROR:  relation "test_view" is not a btree index
+select pgstatginindex('test_view');
+ERROR:  relation "test_view" is not a GIN index
+select pgstathashindex('test_view');
+ERROR:  "test_view" is not an index
+create foreign data wrapper dummy;
+create server dummy_server foreign data wrapper dummy;
+create foreign table test_foreign_table () server dummy_server;
+-- these should all fail
+select pgstattuple('test_foreign_table');
+ERROR:  "test_foreign_table" (foreign table) is not supported
+select pgstattuple_approx('test_foreign_table');
+ERROR:  "test_foreign_table" is not a table or materialized view
+select pg_relpages('test_foreign_table');
+ERROR:  "test_foreign_table" is not a table, index, materialized view, sequence, or TOAST table
+select pgstatindex('test_foreign_table');
+ERROR:  relation "test_foreign_table" is not a btree index
+select pgstatginindex('test_foreign_table');
+ERROR:  relation "test_foreign_table" is not a GIN index
+select pgstathashindex('test_foreign_table');
+ERROR:  "test_foreign_table" is not an index
+-- a partition of a partitioned table should work though
+create table test_partition partition of test_partitioned for values from (1) to (100);
+select pgstattuple('test_partition');
+     pgstattuple     
+---------------------
+ (0,0,0,0,0,0,0,0,0)
+(1 row)
+
+select pgstattuple_approx('test_partition');
+  pgstattuple_approx   
+-----------------------
+ (0,0,0,0,0,0,0,0,0,0)
+(1 row)
+
+select pg_relpages('test_partition');
+ pg_relpages 
+-------------
+           0
+(1 row)
+
+-- not for the index calls though, of course
+select pgstatindex('test_partition');
+ERROR:  relation "test_partition" is not a btree index
+select pgstatginindex('test_partition');
+ERROR:  relation "test_partition" is not a GIN index
+select pgstathashindex('test_partition');
+ERROR:  "test_partition" is not an index
+-- an actual index of a partitiond table should work though
+create index test_partition_idx on test_partition(a);
+create index test_partition_hash_idx on test_partition using hash (a);
+WARNING:  hash indexes are not WAL-logged and their use is discouraged
+-- these should work
+select pgstatindex('test_partition_idx');
+         pgstatindex          
+------------------------------
+ (2,0,8192,0,0,0,0,0,NaN,NaN)
+(1 row)
+
+select pgstathashindex('test_partition_hash_idx');
+   pgstathashindex   
+---------------------
+ (2,8,0,1,0,0,0,100)
+(1 row)
+
+drop table test_partitioned;
+drop view test_view;
+drop foreign table test_foreign_table;
+drop server dummy_server;
+drop foreign data wrapper dummy;
