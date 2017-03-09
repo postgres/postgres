@@ -176,7 +176,7 @@ static TwoPhaseStateData *TwoPhaseState;
 /*
  * Global transaction entry currently locked by us, if any.
  */
-static GlobalTransaction MyLockedGxact = NULL;
+GlobalTransaction MyLockedGxact = NULL;
 
 static bool twophaseExitRegistered = false;
 

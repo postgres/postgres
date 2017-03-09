@@ -24,6 +24,8 @@
  */
 typedef struct GlobalTransactionData *GlobalTransaction;
 
+extern GlobalTransaction MyLockedGxact;
+
 /* GUC variable */
 extern int	max_prepared_xacts;
 
@@ -35,6 +37,17 @@ extern void PostPrepare_Twophase(void);
 
 extern PGPROC *TwoPhaseGetDummyProc(TransactionId xid);
 extern BackendId TwoPhaseGetDummyBackendId(TransactionId xid);
+
+/*
+ * IsGXactActive
+ *		Return true if there is a Global transaction entry currently
+ *		locked by us.
+ */
+static inline bool
+IsGXactActive(void)
+{
+	return MyLockedGxact ? true : false;
+}
 
 extern GlobalTransaction MarkAsPreparing(TransactionId xid, const char *gid,
 				TimestampTz prepared_at,
