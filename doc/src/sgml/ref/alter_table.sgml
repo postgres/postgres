@@ -743,18 +743,25 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
      </para>
 
      <para>
-      A full table scan is performed on the table being attached to check that
-      no existing row in the table violates the partition constraint.  It is
-      possible to avoid this scan by adding a valid <literal>CHECK</literal>
-      constraint to the table that would allow only the rows satisfying the
-      desired partition constraint before running this command.  It will be
-      determined using such a constraint that the table need not be scanned
-      to validate the partition constraint.  This does not work, however, if
-      any of the partition keys is an expression and the partition does not
-      accept <literal>NULL</literal> values.  If attaching a list partition
-      that will not accept <literal>NULL</literal> values, also add
-      <literal>NOT NULL</literal> constraint to the partition key column,
-      unless it's an expression.
+      If the new partition is a regular table, a full table scan is performed
+      to check that no existing row in the table violates the partition
+      constraint.  It is possible to avoid this scan by adding a valid
+      <literal>CHECK</literal> constraint to the table that would allow only
+      the rows satisfying the desired partition constraint before running this
+      command.  It will be determined using such a constraint that the table
+      need not be scanned to validate the partition constraint.  This does not
+      work, however, if any of the partition keys is an expression and the
+      partition does not accept <literal>NULL</literal> values.  If attaching
+      a list partition that will not accept <literal>NULL</literal> values,
+      also add <literal>NOT NULL</literal> constraint to the partition key
+      column, unless it's an expression.
+     </para>
+
+     <para>
+      If the new partition is a foreign table, nothing is done to verify
+      that all the rows in the foreign table obey the partition constraint.
+      (See the discussion in <xref linkend="SQL-CREATEFOREIGNTABLE"> about
+      constraints on the foreign table.)
      </para>
     </listitem>
    </varlistentry>
