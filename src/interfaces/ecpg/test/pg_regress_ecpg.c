@@ -16,9 +16,12 @@
  *-------------------------------------------------------------------------
  */
 
+#include "postgres_fe.h"
+
 #include "pg_regress.h"
 
 #define LINEBUFSIZE 300
+
 static void
 ecpg_filter(const char *sourcefile, const char *outfile)
 {

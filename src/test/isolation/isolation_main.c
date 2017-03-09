@@ -10,6 +10,8 @@
  *-------------------------------------------------------------------------
  */
 
+#include "postgres_fe.h"
+
 #include "pg_regress.h"
 
 char		saved_argv0[MAXPGPATH];

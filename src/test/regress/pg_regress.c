@@ -16,7 +16,7 @@
  *-------------------------------------------------------------------------
  */
 
-#include "pg_regress.h"
+#include "postgres_fe.h"
 
 #include <ctype.h>
 #include <sys/stat.h>
@@ -28,6 +28,8 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #endif
+
+#include "pg_regress.h"
 
 #include "common/restricted_token.h"
 #include "common/username.h"

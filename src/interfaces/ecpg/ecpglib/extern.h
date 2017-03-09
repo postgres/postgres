@@ -3,12 +3,12 @@
 #ifndef _ECPG_LIB_EXTERN_H
 #define _ECPG_LIB_EXTERN_H
 
-#include "postgres_fe.h"
 #include "libpq-fe.h"
 #include "sqlca.h"
 #include "sqlda-native.h"
 #include "sqlda-compat.h"
 #include "ecpg_config.h"
+
 #ifndef CHAR_BIT
 #include <limits.h>
 #endif
