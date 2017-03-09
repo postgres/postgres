@@ -149,6 +149,8 @@
 /*
  * CppAsString
  *		Convert the argument to a string, using the C preprocessor.
+ * CppAsString2
+ *		Convert the argument to a string, after one round of macro expansion.
  * CppConcat
  *		Concatenate two arguments together, using the C preprocessor.
  *
@@ -157,6 +159,7 @@
  * backward compatibility with existing PostgreSQL code.
  */
 #define CppAsString(identifier) #identifier
+#define CppAsString2(x)			CppAsString(x)
 #define CppConcat(x, y)			x##y
 
 /*
@@ -1002,10 +1005,6 @@ typedef NameData *Name;
  *
  * Make sure this matches the installation rules in nls-global.mk.
  */
-
-/* need a second indirection because we want to stringize the macro value, not the name */
-#define CppAsString2(x) CppAsString(x)
-
 #ifdef SO_MAJOR_VERSION
 #define PG_TEXTDOMAIN(domain) (domain CppAsString2(SO_MAJOR_VERSION) "-" PG_MAJORVERSION)
 #else
