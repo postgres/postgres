@@ -2084,39 +2084,51 @@ set_worktable_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 
 /*
  * generate_gather_paths
- *		Generate parallel access paths for a relation by pushing a Gather on
- *		top of a partial path.
+ *		Generate parallel access paths for a relation by pushing a Gather or
+ *		Gather Merge on top of a partial path.
  *
  * This must not be called until after we're done creating all partial paths
  * for the specified relation.  (Otherwise, add_partial_path might delete a
- * path that some GatherPath has a reference to.)
+ * path that some GatherPath or GatherMergePath has a reference to.)
  */
 void
 generate_gather_paths(PlannerInfo *root, RelOptInfo *rel)
 {
 	Path	   *cheapest_partial_path;
 	Path	   *simple_gather_path;
+	ListCell   *lc;
 
 	/* If there are no partial paths, there's nothing to do here. */
 	if (rel->partial_pathlist == NIL)
 		return;
 
 	/*
-	 * The output of Gather is currently always unsorted, so there's only one
-	 * partial path of interest: the cheapest one.  That will be the one at
-	 * the front of partial_pathlist because of the way add_partial_path
-	 * works.
-	 *
-	 * Eventually, we should have a Gather Merge operation that can merge
-	 * multiple tuple streams together while preserving their ordering.  We
-	 * could usefully generate such a path from each partial path that has
-	 * non-NIL pathkeys.
+	 * The output of Gather is always unsorted, so there's only one partial
+	 * path of interest: the cheapest one.  That will be the one at the front
+	 * of partial_pathlist because of the way add_partial_path works.
 	 */
 	cheapest_partial_path = linitial(rel->partial_pathlist);
 	simple_gather_path = (Path *)
 		create_gather_path(root, rel, cheapest_partial_path, rel->reltarget,
 						   NULL, NULL);
 	add_path(rel, simple_gather_path);
+
+	/*
+	 * For each useful ordering, we can consider an order-preserving Gather
+	 * Merge.
+	 */
+	foreach (lc, rel->partial_pathlist)
+	{
+		Path   *subpath = (Path *) lfirst(lc);
+		GatherMergePath   *path;
+
+		if (subpath->pathkeys == NIL)
+			continue;
+
+		path = create_gather_merge_path(root, rel, subpath, rel->reltarget,
+										subpath->pathkeys, NULL, NULL);
+		add_path(rel, &path->path);
+	}
 }
 
 /*

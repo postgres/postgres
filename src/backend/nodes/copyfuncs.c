@@ -360,6 +360,31 @@ _copyGather(const Gather *from)
 	return newnode;
 }
 
+/*
+ * _copyGatherMerge
+ */
+static GatherMerge *
+_copyGatherMerge(const GatherMerge *from)
+{
+	GatherMerge	   *newnode = makeNode(GatherMerge);
+
+	/*
+	 * copy node superclass fields
+	 */
+	CopyPlanFields((const Plan *) from, (Plan *) newnode);
+
+	/*
+	 * copy remainder of node
+	 */
+	COPY_SCALAR_FIELD(num_workers);
+	COPY_SCALAR_FIELD(numCols);
+	COPY_POINTER_FIELD(sortColIdx, from->numCols * sizeof(AttrNumber));
+	COPY_POINTER_FIELD(sortOperators, from->numCols * sizeof(Oid));
+	COPY_POINTER_FIELD(collations, from->numCols * sizeof(Oid));
+	COPY_POINTER_FIELD(nullsFirst, from->numCols * sizeof(bool));
+
+	return newnode;
+}
 
 /*
  * CopyScanFields
@@ -4593,6 +4618,9 @@ copyObject(const void *from)
 			break;
 		case T_Gather:
 			retval = _copyGather(from);
+			break;
+		case T_GatherMerge:
+			retval = _copyGatherMerge(from);
 			break;
 		case T_SeqScan:
 			retval = _copySeqScan(from);

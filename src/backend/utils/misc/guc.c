@@ -902,6 +902,15 @@ static struct config_bool ConfigureNamesBool[] =
 		true,
 		NULL, NULL, NULL
 	},
+	{
+		{"enable_gathermerge", PGC_USERSET, QUERY_TUNING_METHOD,
+			gettext_noop("Enables the planner's use of gather merge plans."),
+			NULL
+		},
+		&enable_gathermerge,
+		true,
+		NULL, NULL, NULL
+	},
 
 	{
 		{"geqo", PGC_USERSET, QUERY_TUNING_GEQO,

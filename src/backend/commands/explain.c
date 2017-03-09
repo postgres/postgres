@@ -918,6 +918,9 @@ ExplainNode(PlanState *planstate, List *ancestors,
 		case T_Gather:
 			pname = sname = "Gather";
 			break;
+		case T_GatherMerge:
+			pname = sname = "Gather Merge";
+			break;
 		case T_IndexScan:
 			pname = sname = "Index Scan";
 			break;
@@ -1409,6 +1412,26 @@ ExplainNode(PlanState *planstate, List *ancestors,
 				}
 				if (gather->single_copy || es->format != EXPLAIN_FORMAT_TEXT)
 					ExplainPropertyBool("Single Copy", gather->single_copy, es);
+			}
+			break;
+		case T_GatherMerge:
+			{
+				GatherMerge *gm = (GatherMerge *) plan;
+
+				show_scan_qual(plan->qual, "Filter", planstate, ancestors, es);
+				if (plan->qual)
+					show_instrumentation_count("Rows Removed by Filter", 1,
+											   planstate, es);
+				ExplainPropertyInteger("Workers Planned",
+									   gm->num_workers, es);
+				if (es->analyze)
+				{
+					int			nworkers;
+
+					nworkers = ((GatherMergeState *) planstate)->nworkers_launched;
+					ExplainPropertyInteger("Workers Launched",
+										   nworkers, es);
+				}
 			}
 			break;
 		case T_FunctionScan:

@@ -2095,6 +2095,35 @@ typedef struct GatherState
 } GatherState;
 
 /* ----------------
+ * GatherMergeState information
+ *
+ *		Gather merge nodes launch 1 or more parallel workers, run a
+ *		subplan which produces sorted output in each worker, and then
+ *		merge the results into a single sorted stream.
+ * ----------------
+ */
+struct GMReaderTuple;
+
+typedef struct GatherMergeState
+{
+	PlanState	ps;				/* its first field is NodeTag */
+	bool		initialized;
+	struct ParallelExecutorInfo *pei;
+	int			nreaders;
+	int			nworkers_launched;
+	struct TupleQueueReader **reader;
+	TupleDesc	tupDesc;
+	TupleTableSlot **gm_slots;
+	struct binaryheap *gm_heap; /* binary heap of slot indices */
+	bool		gm_initialized; /* gather merge initilized ? */
+	bool		need_to_scan_locally;
+	int			gm_nkeys;
+	SortSupport gm_sortkeys;	/* array of length ms_nkeys */
+	struct GMReaderTupleBuffer *gm_tuple_buffers;		/* tuple buffer per
+														 * reader */
+} GatherMergeState;
+
+/* ----------------
  *	 HashState information
  * ----------------
  */

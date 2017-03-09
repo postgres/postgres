@@ -2138,6 +2138,26 @@ _readGather(void)
 }
 
 /*
+ * _readGatherMerge
+ */
+static GatherMerge *
+_readGatherMerge(void)
+{
+	READ_LOCALS(GatherMerge);
+
+	ReadCommonPlan(&local_node->plan);
+
+	READ_INT_FIELD(num_workers);
+	READ_INT_FIELD(numCols);
+	READ_ATTRNUMBER_ARRAY(sortColIdx, local_node->numCols);
+	READ_OID_ARRAY(sortOperators, local_node->numCols);
+	READ_OID_ARRAY(collations, local_node->numCols);
+	READ_BOOL_ARRAY(nullsFirst, local_node->numCols);
+
+	READ_DONE();
+}
+
+/*
  * _readHash
  */
 static Hash *
@@ -2577,6 +2597,8 @@ parseNodeString(void)
 		return_value = _readUnique();
 	else if (MATCH("GATHER", 6))
 		return_value = _readGather();
+	else if (MATCH("GATHERMERGE", 11))
+		return_value = _readGatherMerge();
 	else if (MATCH("HASH", 4))
 		return_value = _readHash();
 	else if (MATCH("SETOP", 5))

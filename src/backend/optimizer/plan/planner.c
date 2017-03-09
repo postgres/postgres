@@ -3663,8 +3663,7 @@ create_grouping_paths(PlannerInfo *root,
 
 		/*
 		 * Now generate a complete GroupAgg Path atop of the cheapest partial
-		 * path. We need only bother with the cheapest path here, as the
-		 * output of Gather is never sorted.
+		 * path.  We can do this using either Gather or Gather Merge.
 		 */
 		if (grouped_rel->partial_pathlist)
 		{
@@ -3711,6 +3710,70 @@ create_grouping_paths(PlannerInfo *root,
 										   parse->groupClause,
 										   (List *) parse->havingQual,
 										   dNumGroups));
+
+			/*
+			 * The point of using Gather Merge rather than Gather is that it
+			 * can preserve the ordering of the input path, so there's no
+			 * reason to try it unless (1) it's possible to produce more than
+			 * one output row and (2) we want the output path to be ordered.
+			 */
+			if (parse->groupClause != NIL && root->group_pathkeys != NIL)
+			{
+				foreach(lc, grouped_rel->partial_pathlist)
+				{
+					Path	   *subpath = (Path *) lfirst(lc);
+					Path	   *gmpath;
+					double		total_groups;
+
+					/*
+					 * It's useful to consider paths that are already properly
+					 * ordered for Gather Merge, because those don't need a
+					 * sort.  It's also useful to consider the cheapest path,
+					 * because sorting it in parallel and then doing Gather
+					 * Merge may be better than doing an unordered Gather
+					 * followed by a sort.  But there's no point in
+					 * considering non-cheapest paths that aren't already
+					 * sorted correctly.
+					 */
+					if (path != subpath &&
+						!pathkeys_contained_in(root->group_pathkeys,
+											   subpath->pathkeys))
+						continue;
+
+					total_groups = subpath->rows * subpath->parallel_workers;
+
+					gmpath = (Path *)
+						create_gather_merge_path(root,
+												 grouped_rel,
+												 subpath,
+												 NULL,
+												 root->group_pathkeys,
+												 NULL,
+												 &total_groups);
+
+					if (parse->hasAggs)
+						add_path(grouped_rel, (Path *)
+								 create_agg_path(root,
+												 grouped_rel,
+												 gmpath,
+												 target,
+								 parse->groupClause ? AGG_SORTED : AGG_PLAIN,
+												 AGGSPLIT_FINAL_DESERIAL,
+												 parse->groupClause,
+												 (List *) parse->havingQual,
+												 &agg_final_costs,
+												 dNumGroups));
+					else
+						add_path(grouped_rel, (Path *)
+								 create_group_path(root,
+												   grouped_rel,
+												   gmpath,
+												   target,
+												   parse->groupClause,
+												   (List *) parse->havingQual,
+												   dNumGroups));
+				}
+			}
 		}
 	}
 
@@ -3807,6 +3870,16 @@ create_grouping_paths(PlannerInfo *root,
 
 	/* Now choose the best path(s) */
 	set_cheapest(grouped_rel);
+
+	/*
+	 * We've been using the partial pathlist for the grouped relation to hold
+	 * partially aggregated paths, but that's actually a little bit bogus
+	 * because it's unsafe for later planning stages -- like ordered_rel ---
+	 * to get the idea that they can use these partial paths as if they didn't
+	 * need a FinalizeAggregate step.  Zap the partial pathlist at this stage
+	 * so we don't get confused.
+	 */
+	grouped_rel->partial_pathlist = NIL;
 
 	return grouped_rel;
 }
@@ -4265,6 +4338,56 @@ create_ordered_paths(PlannerInfo *root,
 												 root->sort_pathkeys,
 												 limit_tuples);
 			}
+
+			/* Add projection step if needed */
+			if (path->pathtarget != target)
+				path = apply_projection_to_path(root, ordered_rel,
+												path, target);
+
+			add_path(ordered_rel, path);
+		}
+	}
+
+	/*
+	 * generate_gather_paths() will have already generated a simple Gather
+	 * path for the best parallel path, if any, and the loop above will have
+	 * considered sorting it.  Similarly, generate_gather_paths() will also
+	 * have generated order-preserving Gather Merge plans which can be used
+	 * without sorting if they happen to match the sort_pathkeys, and the loop
+	 * above will have handled those as well.  However, there's one more
+	 * possibility: it may make sense to sort the cheapest partial path
+	 * according to the required output order and then use Gather Merge.
+	 */
+	if (ordered_rel->consider_parallel && root->sort_pathkeys != NIL &&
+		input_rel->partial_pathlist != NIL)
+	{
+		Path	   *cheapest_partial_path;
+
+		cheapest_partial_path = linitial(input_rel->partial_pathlist);
+
+		/*
+		 * If cheapest partial path doesn't need a sort, this is redundant
+		 * with what's already been tried.
+		 */
+		if (!pathkeys_contained_in(root->sort_pathkeys,
+								   cheapest_partial_path->pathkeys))
+		{
+			Path	   *path;
+			double		total_groups;
+
+			path = (Path *) create_sort_path(root,
+											 ordered_rel,
+											 cheapest_partial_path,
+											 root->sort_pathkeys,
+											 limit_tuples);
+
+			total_groups = cheapest_partial_path->rows *
+				cheapest_partial_path->parallel_workers;
+			path = (Path *)
+				create_gather_merge_path(root, ordered_rel,
+										 path,
+										 target, root->sort_pathkeys, NULL,
+										 &total_groups);
 
 			/* Add projection step if needed */
 			if (path->pathtarget != target)

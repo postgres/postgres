@@ -1628,6 +1628,66 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 }
 
 /*
+ * create_gather_merge_path
+ *
+ *	  Creates a path corresponding to a gather merge scan, returning
+ *	  the pathnode.
+ */
+GatherMergePath *
+create_gather_merge_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
+						 PathTarget *target, List *pathkeys,
+						 Relids required_outer, double *rows)
+{
+	GatherMergePath *pathnode = makeNode(GatherMergePath);
+	Cost			 input_startup_cost = 0;
+	Cost			 input_total_cost = 0;
+
+	Assert(subpath->parallel_safe);
+	Assert(pathkeys);
+
+	pathnode->path.pathtype = T_GatherMerge;
+	pathnode->path.parent = rel;
+	pathnode->path.param_info = get_baserel_parampathinfo(root, rel,
+														  required_outer);
+	pathnode->path.parallel_aware = false;
+
+	pathnode->subpath = subpath;
+	pathnode->num_workers = subpath->parallel_workers;
+	pathnode->path.pathkeys = pathkeys;
+	pathnode->path.pathtarget = target ? target : rel->reltarget;
+	pathnode->path.rows += subpath->rows;
+
+	if (pathkeys_contained_in(pathkeys, subpath->pathkeys))
+	{
+		/* Subpath is adequately ordered, we won't need to sort it */
+		input_startup_cost += subpath->startup_cost;
+		input_total_cost += subpath->total_cost;
+	}
+	else
+	{
+		/* We'll need to insert a Sort node, so include cost for that */
+		Path		sort_path;		/* dummy for result of cost_sort */
+
+		cost_sort(&sort_path,
+				  root,
+				  pathkeys,
+				  subpath->total_cost,
+				  subpath->rows,
+				  subpath->pathtarget->width,
+				  0.0,
+				  work_mem,
+				  -1);
+		input_startup_cost += sort_path.startup_cost;
+		input_total_cost += sort_path.total_cost;
+	}
+
+	cost_gather_merge(pathnode, root, rel, pathnode->path.param_info,
+					  input_startup_cost, input_total_cost, rows);
+
+	return pathnode;
+}
+
+/*
  * translate_sub_tlist - get subquery column numbers represented by tlist
  *
  * The given targetlist usually contains only Vars referencing the given relid.

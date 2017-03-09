@@ -3497,6 +3497,20 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-enable-gathermerge" xreflabel="enable_gathermerge">
+      <term><varname>enable_gathermerge</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>enable_gathermerge</> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Enables or disables the query planner's use of gather
+        merge plan types. The default is <literal>on</>.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-enable-hashagg" xreflabel="enable_hashagg">
       <term><varname>enable_hashagg</varname> (<type>boolean</type>)
       <indexterm>

@@ -84,6 +84,17 @@ select  count(*) from tenk1, tenk2 where tenk1.unique1 = tenk2.unique1;
 
 reset enable_hashjoin;
 reset enable_nestloop;
+
+--test gather merge
+set enable_hashagg to off;
+
+explain (costs off)
+   select  string4, count((unique2)) from tenk1 group by string4 order by string4;
+
+select  string4, count((unique2)) from tenk1 group by string4 order by string4;
+
+reset enable_hashagg;
+
 set force_parallel_mode=1;
 
 explain (costs off)

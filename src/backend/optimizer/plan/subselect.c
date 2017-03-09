@@ -2700,6 +2700,7 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 		case T_Sort:
 		case T_Unique:
 		case T_Gather:
+		case T_GatherMerge:
 		case T_SetOp:
 		case T_Group:
 			/* no node-type-specific fields need fixing */

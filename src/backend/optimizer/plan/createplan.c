@@ -277,6 +277,8 @@ static ModifyTable *make_modifytable(PlannerInfo *root,
 				 List *resultRelations, List *subplans,
 				 List *withCheckOptionLists, List *returningLists,
 				 List *rowMarks, OnConflictExpr *onconflict, int epqParam);
+static GatherMerge *create_gather_merge_plan(PlannerInfo *root,
+						 GatherMergePath *best_path);
 
 
 /*
@@ -474,6 +476,10 @@ create_plan_recurse(PlannerInfo *root, Path *best_path, int flags)
 			plan = (Plan *) create_limit_plan(root,
 											  (LimitPath *) best_path,
 											  flags);
+			break;
+		case T_GatherMerge:
+			plan = (Plan *) create_gather_merge_plan(root,
+											  (GatherMergePath *) best_path);
 			break;
 		default:
 			elog(ERROR, "unrecognized node type: %d",
@@ -1449,6 +1455,86 @@ create_gather_plan(PlannerInfo *root, GatherPath *best_path)
 	root->glob->parallelModeNeeded = true;
 
 	return gather_plan;
+}
+
+/*
+ * create_gather_merge_plan
+ *
+ *	  Create a Gather Merge plan for 'best_path' and (recursively)
+ *	  plans for its subpaths.
+ */
+static GatherMerge *
+create_gather_merge_plan(PlannerInfo *root, GatherMergePath *best_path)
+{
+	GatherMerge *gm_plan;
+	Plan	   *subplan;
+	List	   *pathkeys = best_path->path.pathkeys;
+	int			numsortkeys;
+	AttrNumber *sortColIdx;
+	Oid		   *sortOperators;
+	Oid		   *collations;
+	bool	   *nullsFirst;
+
+	/* As with Gather, it's best to project away columns in the workers. */
+	subplan = create_plan_recurse(root, best_path->subpath, CP_EXACT_TLIST);
+
+	/* See create_merge_append_plan for why there's no make_xxx function */
+	gm_plan = makeNode(GatherMerge);
+	gm_plan->plan.targetlist = subplan->targetlist;
+	gm_plan->num_workers = best_path->num_workers;
+	copy_generic_path_info(&gm_plan->plan, &best_path->path);
+
+	/* Gather Merge is pointless with no pathkeys; use Gather instead. */
+	Assert(pathkeys != NIL);
+
+	/* Compute sort column info, and adjust GatherMerge tlist as needed */
+	(void) prepare_sort_from_pathkeys(&gm_plan->plan, pathkeys,
+									  best_path->path.parent->relids,
+									  NULL,
+									  true,
+									  &gm_plan->numCols,
+									  &gm_plan->sortColIdx,
+									  &gm_plan->sortOperators,
+									  &gm_plan->collations,
+									  &gm_plan->nullsFirst);
+
+
+	/* Compute sort column info, and adjust subplan's tlist as needed */
+	subplan = prepare_sort_from_pathkeys(subplan, pathkeys,
+										 best_path->subpath->parent->relids,
+										 gm_plan->sortColIdx,
+										 false,
+										 &numsortkeys,
+										 &sortColIdx,
+										 &sortOperators,
+										 &collations,
+										 &nullsFirst);
+
+	/* As for MergeAppend, check that we got the same sort key information. */
+	Assert(numsortkeys == gm_plan->numCols);
+	if (memcmp(sortColIdx, gm_plan->sortColIdx,
+			   numsortkeys * sizeof(AttrNumber)) != 0)
+		elog(ERROR, "GatherMerge child's targetlist doesn't match GatherMerge");
+	Assert(memcmp(sortOperators, gm_plan->sortOperators,
+				  numsortkeys * sizeof(Oid)) == 0);
+	Assert(memcmp(collations, gm_plan->collations,
+				  numsortkeys * sizeof(Oid)) == 0);
+	Assert(memcmp(nullsFirst, gm_plan->nullsFirst,
+				  numsortkeys * sizeof(bool)) == 0);
+
+	/* Now, insert a Sort node if subplan isn't sufficiently ordered */
+	if (!pathkeys_contained_in(pathkeys, best_path->subpath->pathkeys))
+		subplan = (Plan *) make_sort(subplan, numsortkeys,
+									 sortColIdx, sortOperators,
+									 collations, nullsFirst);
+
+	/* Now insert the subplan under GatherMerge. */
+	gm_plan->plan.lefttree = subplan;
+
+	/* use parallel mode for parallel plans. */
+	root->glob->parallelModeNeeded = true;
+
+	return gm_plan;
 }
 
 /*

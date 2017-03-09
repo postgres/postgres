@@ -1204,6 +1204,19 @@ typedef struct GatherPath
 } GatherPath;
 
 /*
+ * GatherMergePath runs several copies of a plan in parallel and
+ * collects the results. For gather merge parallel leader always execute the
+ * plan.
+ */
+typedef struct GatherMergePath
+{
+	Path		path;
+	Path	   *subpath;		/* path for each worker */
+	int			num_workers;	/* number of workers sought to help */
+} GatherMergePath;
+
+
+/*
  * All join-type paths share these fields.
  */
 

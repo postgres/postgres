@@ -797,6 +797,22 @@ typedef struct Gather
 	bool		invisible;		/* suppress EXPLAIN display (for testing)? */
 } Gather;
 
+/* ------------
+ *		gather merge node
+ * ------------
+ */
+typedef struct GatherMerge
+{
+	Plan		plan;
+	int			num_workers;
+	/* remaining fields are just like the sort-key info in struct Sort */
+	int			numCols;		/* number of sort-key columns */
+	AttrNumber *sortColIdx;		/* their indexes in the target list */
+	Oid		   *sortOperators;	/* OIDs of operators to sort them by */
+	Oid		   *collations;		/* OIDs of collations */
+	bool	   *nullsFirst;		/* NULLS FIRST/LAST directions */
+} GatherMerge;
+
 /* ----------------
  *		hash build node
  *

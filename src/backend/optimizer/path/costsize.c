@@ -126,6 +126,7 @@ bool		enable_nestloop = true;
 bool		enable_material = true;
 bool		enable_mergejoin = true;
 bool		enable_hashjoin = true;
+bool		enable_gathermerge = true;
 
 typedef struct
 {
@@ -370,6 +371,73 @@ cost_gather(GatherPath *path, PlannerInfo *root,
 
 	path->path.startup_cost = startup_cost;
 	path->path.total_cost = (startup_cost + run_cost);
+}
+
+/*
+ * cost_gather_merge
+ *	  Determines and returns the cost of gather merge path.
+ *
+ * GatherMerge merges several pre-sorted input streams, using a heap that at
+ * any given instant holds the next tuple from each stream. If there are N
+ * streams, we need about N*log2(N) tuple comparisons to construct the heap at
+ * startup, and then for each output tuple, about log2(N) comparisons to
+ * replace the top heap entry with the next tuple from the same stream.
+ */
+void
+cost_gather_merge(GatherMergePath *path, PlannerInfo *root,
+				  RelOptInfo *rel, ParamPathInfo *param_info,
+				  Cost input_startup_cost, Cost input_total_cost,
+				  double *rows)
+{
+	Cost		startup_cost = 0;
+	Cost		run_cost = 0;
+	Cost		comparison_cost;
+	double		N;
+	double		logN;
+
+	/* Mark the path with the correct row estimate */
+	if (rows)
+		path->path.rows = *rows;
+	else if (param_info)
+		path->path.rows = param_info->ppi_rows;
+	else
+		path->path.rows = rel->rows;
+
+	if (!enable_gathermerge)
+		startup_cost += disable_cost;
+
+	/*
+	 * Add one to the number of workers to account for the leader.  This might
+	 * be overgenerous since the leader will do less work than other workers
+	 * in typical cases, but we'll go with it for now.
+	 */
+	Assert(path->num_workers > 0);
+	N = (double) path->num_workers + 1;
+	logN = LOG2(N);
+
+	/* Assumed cost per tuple comparison */
+	comparison_cost = 2.0 * cpu_operator_cost;
+
+	/* Heap creation cost */
+	startup_cost += comparison_cost * N * logN;
+
+	/* Per-tuple heap maintenance cost */
+	run_cost += path->path.rows * comparison_cost * logN;
+
+	/* small cost for heap management, like cost_merge_append */
+	run_cost += cpu_operator_cost * path->path.rows;
+
+	/*
+	 * Parallel setup and communication cost.  Since Gather Merge, unlike
+	 * Gather, requires us to block until a tuple is available from every
+	 * worker, we bump the IPC cost up a little bit as compared with Gather.
+	 * For lack of a better idea, charge an extra 5%.
+	 */
+	startup_cost += parallel_setup_cost;
+	run_cost += parallel_tuple_cost * path->path.rows * 1.05;
+
+	path->path.startup_cost = startup_cost + input_startup_cost;
+	path->path.total_cost = (startup_cost + run_cost + input_total_cost);
 }
 
 /*
