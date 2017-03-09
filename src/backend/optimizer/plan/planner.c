@@ -3746,7 +3746,7 @@ create_grouping_paths(PlannerInfo *root,
 						create_gather_merge_path(root,
 												 grouped_rel,
 												 subpath,
-												 NULL,
+												 partial_grouping_target,
 												 root->group_pathkeys,
 												 NULL,
 												 &total_groups);

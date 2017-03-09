@@ -1474,13 +1474,14 @@ create_gather_merge_plan(PlannerInfo *root, GatherMergePath *best_path)
 	Oid		   *sortOperators;
 	Oid		   *collations;
 	bool	   *nullsFirst;
+	List	   *tlist = build_path_tlist(root, &best_path->path);
 
 	/* As with Gather, it's best to project away columns in the workers. */
 	subplan = create_plan_recurse(root, best_path->subpath, CP_EXACT_TLIST);
 
 	/* See create_merge_append_plan for why there's no make_xxx function */
 	gm_plan = makeNode(GatherMerge);
-	gm_plan->plan.targetlist = subplan->targetlist;
+	gm_plan->plan.targetlist = tlist;
 	gm_plan->num_workers = best_path->num_workers;
 	copy_generic_path_info(&gm_plan->plan, &best_path->path);
 
