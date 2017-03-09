@@ -268,14 +268,43 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
   <title>Parallel Scans</title>
 
   <para>
-    Currently, the only type of scan which has been modified to work with
-    parallel query is a sequential scan.  Therefore, the driving table in
-    a parallel plan will always be scanned using a
-    <literal>Parallel Seq Scan</>.  The relation's blocks will be divided
-    among the cooperating processes.  Blocks are handed out one at a
-    time, so that access to the relation remains sequential.  Each process
-    will visit every tuple on the page assigned to it before requesting a new
-    page.
+    The following types of parallel-aware table scans are currently supported.
+
+  <itemizedlist>
+    <listitem>
+      <para>
+        In a <emphasis>parallel sequential scan</>, the table's blocks will
+        be divided among the cooperating processes.  Blocks are handed out one
+        at a time, so that access to the table remains sequential. 
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        In a <emphasis>parallel bitmap heap scan</>, one process is chosen
+        as the leader.  That process performs a scan of one or more indexes
+        and builds a bitmap indicating which table blocks need to be visited.
+        These blocks are then divided among the cooperating processes as in
+        a parallel sequential scan.  In other words, the heap scan is performed
+        in parallel, but the underlying index scan is not.
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        In a <emphasis>parallel index scan</> or <emphasis>parallel index-only
+        scan</>, the cooperating processes take turns reading data from the
+        index.  Currently, parallel index scans are supported only for
+        btree indexes.  Each process will claim a single index block and will
+        scan and return all tuples referenced by that block; other process can
+        at the same time be returning tuples from a different index block.
+        The results of a parallel btree scan are returned in sorted order
+        within each worker process.
+      </para>
+    </listitem>
+  </itemizedlist>
+
+    Only the scan types listed above may be used for a scan on the driving
+    table within a parallel plan.  Other scan types, such as parallel scans of
+    non-btree indexes, may be supported in the future.
   </para>
  </sect2>
 
@@ -283,14 +312,26 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
   <title>Parallel Joins</title>
 
   <para>
-    The driving table may be joined to one or more other tables using nested
-    loops or hash joins.  The inner side of the join may be any kind of
-    non-parallel plan that is otherwise supported by the planner provided that
-    it is safe to run within a parallel worker.  For example, it may be an
-    index scan which looks up a value taken from the outer side of the join.
-    Each worker will execute the inner side of the join in full,  which for
-    hash join means that an identical hash table is built in each worker
-    process.
+    Just as in a non-parallel plan, the driving table may be joined to one or
+    more other tables using a nested loop, hash join, or merge join.  The
+    inner side of the join may be any kind of non-parallel plan that is
+    otherwise supported by the planner provided that it is safe to run within
+    a parallel worker.  For example, if a nested loop join is chosen, the
+    inner plan may be an index scan which looks up a value taken from the outer
+    side of the join.
+  </para>
+
+  <para>
+    Each worker will execute the inner side of the join in full.  This is
+    typically not a problem for nested loops, but may be inefficient for
+    cases involving hash or merge joins.  For example, for a hash join, this
+    restriction means that an identical hash table is built in each worker
+    process, which works fine for joins against small tables but may not be
+    efficient when the inner table is large.  For a merge join, it might mean
+    that each worker performs a separate sort of the inner relation, which
+    could be slow.  Of course, in cases where a parallel plan of this type
+    would be inefficient, the query planner will normally choose some other
+    plan (possibly one which does not use parallelism) instead.
   </para>
  </sect2>
 
