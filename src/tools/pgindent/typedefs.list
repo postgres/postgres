@@ -244,6 +244,8 @@ BrinRevmap
 BrinSpecialSpace
 BrinTuple
 BrinValues
+BtreeCheckState
+BtreeLevel
 Bucket
 BufFile
 Buffer

@@ -107,6 +107,7 @@
 <!-- contrib information -->
 <!ENTITY contrib         SYSTEM "contrib.sgml">
 <!ENTITY adminpack       SYSTEM "adminpack.sgml">
+<!ENTITY amcheck         SYSTEM "amcheck.sgml">
 <!ENTITY auth-delay      SYSTEM "auth-delay.sgml">
 <!ENTITY auto-explain    SYSTEM "auto-explain.sgml">
 <!ENTITY bloom           SYSTEM "bloom.sgml">
