@@ -4,7 +4,7 @@ use Cwd;
 use Config;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 73;
+use Test::More tests => 72;
 
 program_help_ok('pg_basebackup');
 program_version_ok('pg_basebackup');
@@ -15,15 +15,12 @@ my $tempdir = TestLib::tempdir;
 my $node = get_new_node('main');
 
 # Initialize node without replication settings
-$node->init(hba_permit_replication => 0);
+$node->init;
 $node->start;
 my $pgdata = $node->data_dir;
 
 $node->command_fails(['pg_basebackup'],
 	'pg_basebackup needs target directory specified');
-$node->command_fails(
-	[ 'pg_basebackup', '-D', "$tempdir/backup" ],
-	'pg_basebackup fails because of hba');
 
 # Some Windows ANSI code pages may reject this filename, in which case we
 # quietly proceed without this bit of test coverage.

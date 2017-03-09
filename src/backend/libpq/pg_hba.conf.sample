@@ -84,6 +84,6 @@ host    all             all             127.0.0.1/32            @authmethodhost@
 host    all             all             ::1/128                 @authmethodhost@
 # Allow replication connections from localhost, by a user with the
 # replication privilege.
-@remove-line-for-nolocal@#local   replication     @default_username@                                @authmethodlocal@
-#host    replication     @default_username@        127.0.0.1/32            @authmethodhost@
-#host    replication     @default_username@        ::1/128                 @authmethodhost@
+@remove-line-for-nolocal@local   replication     all                                     @authmethodlocal@
+host    replication     all             127.0.0.1/32            @authmethodhost@
+host    replication     all             ::1/128                 @authmethodhost@

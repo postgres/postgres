@@ -120,11 +120,17 @@ PostgreSQL documentation
       <term><option>--auth=<replaceable class="parameter">authmethod</replaceable></option></term>
       <listitem>
        <para>
-        This option specifies the authentication method for local users used
-        in <filename>pg_hba.conf</> (<literal>host</literal>
-        and <literal>local</literal> lines).  Do not use <literal>trust</>
-        unless you trust all local users on your system.  <literal>trust</> is
-        the default for ease of installation.
+        This option specifies the default authentication method for local
+        users used in <filename>pg_hba.conf</> (<literal>host</literal>
+        and <literal>local</literal> lines).  <command>initdb</command> will
+        prepopulate <filename>pg_hba.conf</filename> entries using the
+        specified authentication method for non-replication as well as
+        replication connections.
+       </para>
+
+       <para>
+        Do not use <literal>trust</> unless you trust all local users on your
+        system.  <literal>trust</> is the default for ease of installation.
        </para>
       </listitem>
      </varlistentry>
