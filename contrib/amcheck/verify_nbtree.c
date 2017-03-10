@@ -55,8 +55,8 @@ typedef struct BtreeCheckState
 
 	/* B-Tree Index Relation */
 	Relation	rel;
-	/* ExclusiveLock held? */
-	bool		exclusivelylocked;
+	/* ShareLock held on heap/index, rather than AccessShareLock? */
+	bool		readonly;
 	/* Per-page context */
 	MemoryContext targetcontext;
 	/* Buffer access strategy */
@@ -94,7 +94,7 @@ PG_FUNCTION_INFO_V1(bt_index_parent_check);
 
 static void bt_index_check_internal(Oid indrelid, bool parentcheck);
 static inline void btree_index_checkable(Relation rel);
-static void bt_check_every_level(Relation rel, bool exclusivelylocked);
+static void bt_check_every_level(Relation rel, bool readonly);
 static BtreeLevel bt_check_level_from_leftmost(BtreeCheckState *state,
 							 BtreeLevel level);
 static void bt_target_page_check(BtreeCheckState *state);
@@ -256,23 +256,23 @@ btree_index_checkable(Relation rel)
  * logical order, verifying invariants as it goes.
  *
  * It is the caller's responsibility to acquire appropriate heavyweight lock on
- * the index relation, and advise us if extra checks are safe when an
- * ExclusiveLock is held.
+ * the index relation, and advise us if extra checks are safe when a ShareLock
+ * is held.
  *
- * An ExclusiveLock is generally assumed to prevent any kind of physical
+ * A ShareLock is generally assumed to prevent any kind of physical
  * modification to the index structure, including modifications that VACUUM may
  * make.  This does not include setting of the LP_DEAD bit by concurrent index
  * scans, although that is just metadata that is not able to directly affect
  * any check performed here.  Any concurrent process that might act on the
  * LP_DEAD bit being set (recycle space) requires a heavyweight lock that
- * cannot be held while we hold an ExclusiveLock.  (Besides, even if that could
+ * cannot be held while we hold a ShareLock.  (Besides, even if that could
  * happen, the ad-hoc recycling when a page might otherwise split is performed
  * per-page, and requires an exclusive buffer lock, which wouldn't cause us
  * trouble.  _bt_delitems_vacuum() may only delete leaf items, and so the extra
  * parent/child check cannot be affected.)
  */
 static void
-bt_check_every_level(Relation rel, bool exclusivelylocked)
+bt_check_every_level(Relation rel, bool readonly)
 {
 	BtreeCheckState *state;
 	Page		metapage;
@@ -291,7 +291,7 @@ bt_check_every_level(Relation rel, bool exclusivelylocked)
 	 */
 	state = palloc(sizeof(BtreeCheckState));
 	state->rel = rel;
-	state->exclusivelylocked = exclusivelylocked;
+	state->readonly = readonly;
 	/* Create context for page */
 	state->targetcontext = AllocSetContextCreate(CurrentMemoryContext,
 												 "amcheck context",
@@ -353,7 +353,7 @@ bt_check_every_level(Relation rel, bool exclusivelylocked)
 
 /*
  * Given a left-most block at some level, move right, verifying each page
- * individually (with more verification across pages for "exclusivelylocked"
+ * individually (with more verification across pages for "readonly"
  * callers).  Caller should pass the true root page as the leftmost initially,
  * working their way down by passing what is returned for the last call here
  * until level 0 (leaf page level) was reached.
@@ -428,7 +428,7 @@ bt_check_level_from_leftmost(BtreeCheckState *state, BtreeLevel level)
 			 * locking, check that the first valid page meets caller's
 			 * expectations.
 			 */
-			if (state->exclusivelylocked)
+			if (state->readonly)
 			{
 				if (!P_LEFTMOST(opaque))
 					ereport(ERROR,
@@ -482,7 +482,7 @@ bt_check_level_from_leftmost(BtreeCheckState *state, BtreeLevel level)
 			 */
 		}
 
-		if (state->exclusivelylocked && opaque->btpo_prev != leftcurrent)
+		if (state->readonly && opaque->btpo_prev != leftcurrent)
 			ereport(ERROR,
 					(errcode(ERRCODE_INDEX_CORRUPTED),
 					 errmsg("left link/right link pair in index \"%s\" not in agreement",
@@ -541,7 +541,7 @@ nextpage:
  *	 "real" data item on the page to the right (if such a first item is
  *	 available).
  *
- * Furthermore, when state passed shows ExclusiveLock held, and target page is
+ * Furthermore, when state passed shows ShareLock held, and target page is
  * internal page, function also checks:
  *
  * - That all child pages respect downlinks lower bound.
@@ -597,8 +597,8 @@ bt_target_page_check(BtreeCheckState *state)
 		 * page items.
 		 *
 		 * We prefer to check all items against high key rather than checking
-		 * just the first and trusting that the operator class obeys the
-		 * transitive law (which implies that all subsequent items also
+		 * just the last and trusting that the operator class obeys the
+		 * transitive law (which implies that all previous items also
 		 * respected the high key invariant if they pass the item order
 		 * check).
 		 *
@@ -705,12 +705,12 @@ bt_target_page_check(BtreeCheckState *state)
 			{
 				/*
 				 * As explained at length in bt_right_page_check_scankey(),
-				 * there is a known !exclusivelylocked race that could account
-				 * for apparent violation of invariant, which we must check
-				 * for before actually proceeding with raising error.  Our
-				 * canary condition is that target page was deleted.
+				 * there is a known !readonly race that could account for
+				 * apparent violation of invariant, which we must check for
+				 * before actually proceeding with raising error.  Our canary
+				 * condition is that target page was deleted.
 				 */
-				if (!state->exclusivelylocked)
+				if (!state->readonly)
 				{
 					/* Get fresh copy of target page */
 					state->target = palloc_btree_page(state, state->targetblock);
@@ -718,8 +718,7 @@ bt_target_page_check(BtreeCheckState *state)
 					topaque = (BTPageOpaque) PageGetSpecialPointer(state->target);
 
 					/*
-					 * All !exclusivelylocked checks now performed; just
-					 * return
+					 * All !readonly checks now performed; just return
 					 */
 					if (P_IGNORE(topaque))
 						return;
@@ -740,11 +739,11 @@ bt_target_page_check(BtreeCheckState *state)
 		 * * Downlink check *
 		 *
 		 * Additional check of child items iff this is an internal page and
-		 * caller holds an ExclusiveLock.  This happens for every downlink
-		 * (item) in target excluding the negative-infinity downlink (again,
-		 * this is because it has no useful value to compare).
+		 * caller holds a ShareLock.  This happens for every downlink (item)
+		 * in target excluding the negative-infinity downlink (again, this is
+		 * because it has no useful value to compare).
 		 */
-		if (!P_ISLEAF(topaque) && state->exclusivelylocked)
+		if (!P_ISLEAF(topaque) && state->readonly)
 		{
 			BlockNumber childblock = ItemPointerGetBlockNumber(&(itup->t_tid));
 
@@ -766,7 +765,7 @@ bt_target_page_check(BtreeCheckState *state)
  * with different parent page).  If no such valid item is available, return
  * NULL instead.
  *
- * Note that !exclusivelylocked callers must reverify that target page has not
+ * Note that !readonly callers must reverify that target page has not
  * been concurrently deleted.
  */
 static ScanKey
@@ -833,14 +832,14 @@ bt_right_page_check_scankey(BtreeCheckState *state)
 	}
 
 	/*
-	 * No ExclusiveLock held case -- why it's safe to proceed.
+	 * No ShareLock held case -- why it's safe to proceed.
 	 *
 	 * Problem:
 	 *
 	 * We must avoid false positive reports of corruption when caller treats
 	 * item returned here as an upper bound on target's last item.  In
 	 * general, false positives are disallowed.  Avoiding them here when
-	 * caller is !exclusivelylocked is subtle.
+	 * caller is !readonly is subtle.
 	 *
 	 * A concurrent page deletion by VACUUM of the target page can result in
 	 * the insertion of items on to this right sibling page that would
@@ -892,7 +891,7 @@ bt_right_page_check_scankey(BtreeCheckState *state)
 	 *
 	 * Top level tree walk caller moves on to next page (makes it the new
 	 * target) following recovery from this race.  (cf.  The rationale for
-	 * child/downlink verification needing an ExclusiveLock within
+	 * child/downlink verification needing a ShareLock within
 	 * bt_downlink_check(), where page deletion is also the main source of
 	 * trouble.)
 	 *
@@ -984,7 +983,7 @@ bt_downlink_check(BtreeCheckState *state, BlockNumber childblock,
 	BTPageOpaque copaque;
 
 	/*
-	 * Caller must have ExclusiveLock on target relation, because of
+	 * Caller must have ShareLock on target relation, because of
 	 * considerations around page deletion by VACUUM.
 	 *
 	 * NB: In general, page deletion deletes the right sibling's downlink, not
@@ -994,8 +993,8 @@ bt_downlink_check(BtreeCheckState *state, BlockNumber childblock,
 	 * page's rightmost child unless it is the last child page, and we intend
 	 * to also delete the parent itself.)
 	 *
-	 * If this verification happened without an ExclusiveLock, the following
-	 * race condition could cause false positives:
+	 * If this verification happened without a ShareLock, the following race
+	 * condition could cause false positives:
 	 *
 	 * In general, concurrent page deletion might occur, including deletion of
 	 * the left sibling of the child page that is examined here.  If such a
@@ -1009,11 +1008,11 @@ bt_downlink_check(BtreeCheckState *state, BlockNumber childblock,
 	 * part of deletion's first phase.)
 	 *
 	 * Note that while the cross-page-same-level last item check uses a trick
-	 * that allows it to perform verification for !exclusivelylocked callers,
-	 * a similar trick seems difficult here.  The trick that that other check
-	 * uses is, in essence, to lock down race conditions to those that occur
-	 * due to concurrent page deletion of the target; that's a race that can
-	 * be reliably detected before actually reporting corruption.
+	 * that allows it to perform verification for !readonly callers, a similar
+	 * trick seems difficult here.  The trick that that other check uses is,
+	 * in essence, to lock down race conditions to those that occur due to
+	 * concurrent page deletion of the target; that's a race that can be
+	 * reliably detected before actually reporting corruption.
 	 *
 	 * On the other hand, we'd need to lock down race conditions involving
 	 * deletion of child's left page, for long enough to read the child page
@@ -1021,7 +1020,7 @@ bt_downlink_check(BtreeCheckState *state, BlockNumber childblock,
 	 * locks on both child and left-of-child pages).  That's unacceptable for
 	 * amcheck functions on general principle, though.
 	 */
-	Assert(state->exclusivelylocked);
+	Assert(state->readonly);
 
 	/*
 	 * Verify child page has the downlink key from target page (its parent) as
