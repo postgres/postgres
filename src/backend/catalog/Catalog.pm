@@ -66,6 +66,9 @@ sub Catalogs
 				redo;
 			}
 
+			# Remember input line number for later.
+			my $input_line_number = $.;
+
 			# Strip useless whitespace and trailing semicolons.
 			chomp;
 			s/^\s+//;
@@ -80,7 +83,7 @@ sub Catalogs
 			elsif (/^DATA\(insert(\s+OID\s+=\s+(\d+))?\s+\(\s*(.*)\s*\)\s*\)$/)
 			{
 				check_natts($filename, $catalog{natts}, $3,
-							$input_file, INPUT_FILE->input_line_number);
+							$input_file, $input_line_number);
 
 				push @{ $catalog{data} }, { oid => $2, bki_values => $3 };
 			}
@@ -242,4 +245,5 @@ sub check_natts
 		$file, $line, $natts, scalar @atts
 	  unless $natts == @atts;
 }
+
 1;
