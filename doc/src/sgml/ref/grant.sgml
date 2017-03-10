@@ -55,7 +55,7 @@ GRANT { USAGE | ALL [ PRIVILEGES ] }
     TO <replaceable class="PARAMETER">role_specification</replaceable> [, ...] [ WITH GRANT OPTION ]
 
 GRANT { EXECUTE | ALL [ PRIVILEGES ] }
-    ON { FUNCTION <replaceable>function_name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">arg_name</replaceable> ] <replaceable class="parameter">arg_type</replaceable> [, ...] ] ) [, ...]
+    ON { FUNCTION <replaceable>function_name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">arg_name</replaceable> ] <replaceable class="parameter">arg_type</replaceable> [, ...] ] ) ] [, ...]
          | ALL FUNCTIONS IN SCHEMA <replaceable class="PARAMETER">schema_name</replaceable> [, ...] }
     TO <replaceable class="PARAMETER">role_specification</replaceable> [, ...] [ WITH GRANT OPTION ]
 

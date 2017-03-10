@@ -1811,6 +1811,9 @@ typedef struct ObjectWithArgs
 	NodeTag		type;
 	List	   *objname;		/* qualified name of function/operator */
 	List	   *objargs;		/* list of Typename nodes */
+	bool		args_unspecified; /* argument list was omitted, so name must
+								   * be unique (note that objargs == NIL means
+								   * zero args) */
 } ObjectWithArgs;
 
 /*

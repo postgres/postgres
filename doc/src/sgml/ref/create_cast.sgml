@@ -19,7 +19,7 @@
  <refsynopsisdiv>
 <synopsis>
 CREATE CAST (<replaceable>source_type</replaceable> AS <replaceable>target_type</replaceable>)
-    WITH FUNCTION <replaceable>function_name</replaceable> (<replaceable>argument_type</replaceable> [, ...])
+    WITH FUNCTION <replaceable>function_name</replaceable> [ (<replaceable>argument_type</replaceable> [, ...]) ]
     [ AS ASSIGNMENT | AS IMPLICIT ]
 
 CREATE CAST (<replaceable>source_type</replaceable> AS <replaceable>target_type</replaceable>)
@@ -192,7 +192,7 @@ SELECT CAST ( 2 AS numeric ) + 4.0;
     </varlistentry>
 
     <varlistentry>
-     <term><replaceable>function_name</replaceable>(<replaceable>argument_type</replaceable> [, ...])</term>
+     <term><literal><replaceable>function_name</replaceable>[(<replaceable>argument_type</replaceable> [, ...])]</literal></term>
 
      <listitem>
       <para>
@@ -200,6 +200,8 @@ SELECT CAST ( 2 AS numeric ) + 4.0;
        be schema-qualified.  If it is not, the function will be looked
        up in the schema search path.  The function's result data type must
        match the target type of the cast.   Its arguments are discussed below.
+       If no argument list is specified, the function name must be unique in
+       its schema.
       </para>
      </listitem>
     </varlistentry>

@@ -1119,6 +1119,7 @@ _equalObjectWithArgs(const ObjectWithArgs *a, const ObjectWithArgs *b)
 {
 	COMPARE_NODE_FIELD(objname);
 	COMPARE_NODE_FIELD(objargs);
+	COMPARE_SCALAR_FIELD(args_unspecified);
 
 	return true;
 }

@@ -1895,8 +1895,10 @@ func_signature_string(List *funcname, int nargs,
 
 /*
  * LookupFuncName
- *		Given a possibly-qualified function name and a set of argument types,
- *		look up the function.
+ *
+ * Given a possibly-qualified function name and optionally a set of argument
+ * types, look up the function.  Pass nargs == -1 to indicate that no argument
+ * types are specified.
  *
  * If the function name is not schema-qualified, it is sought in the current
  * namespace search path.
@@ -1913,6 +1915,35 @@ LookupFuncName(List *funcname, int nargs, const Oid *argtypes, bool noError)
 	Assert(argtypes);
 
 	clist = FuncnameGetCandidates(funcname, nargs, NIL, false, false, noError);
+
+	/*
+	 * If no arguments were specified, the name must yield a unique candidate.
+	 */
+	if (nargs == -1)
+	{
+		if (clist)
+		{
+			if (clist->next)
+			{
+				if (!noError)
+					ereport(ERROR,
+							(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
+							 errmsg("function name \"%s\" is not unique",
+									NameListToString(funcname)),
+							 errhint("Specify the argument list to select the function unambiguously.")));
+			}
+			else
+				return clist->oid;
+		}
+		else
+		{
+			if (!noError)
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_FUNCTION),
+						 errmsg("could not find a function named \"%s\"",
+								NameListToString(funcname))));
+		}
+	}
 
 	while (clist)
 	{
@@ -1962,7 +1993,7 @@ LookupFuncWithArgs(ObjectWithArgs *func, bool noError)
 		args_item = lnext(args_item);
 	}
 
-	return LookupFuncName(func->objname, argcount, argoids, noError);
+	return LookupFuncName(func->objname, func->args_unspecified ? -1 : argcount, argoids, noError);
 }
 
 /*

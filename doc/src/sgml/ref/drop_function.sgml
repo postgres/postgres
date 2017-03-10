@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP FUNCTION [ IF EXISTS ] <replaceable class="parameter">name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) [, ...]
+DROP FUNCTION [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ] [, ...]
     [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
@@ -56,7 +56,8 @@ DROP FUNCTION [ IF EXISTS ] <replaceable class="parameter">name</replaceable> ( 
     <term><replaceable class="parameter">name</replaceable></term>
     <listitem>
      <para>
-      The name (optionally schema-qualified) of an existing function.
+      The name (optionally schema-qualified) of an existing function.  If no
+      argument list is specified, the name must be unique in its schema.
      </para>
     </listitem>
    </varlistentry>
@@ -141,14 +142,40 @@ DROP FUNCTION sqrt(integer);
 <programlisting>
 DROP FUNCTION sqrt(integer), sqrt(bigint);
 </programlisting></para>
+
+  <para>
+   If the function name is unique in its schema, it can be referred to without
+   an argument list:
+<programlisting>
+DROP FUNCTION update_employee_salaries;
+</programlisting>
+   Note that this is different from
+<programlisting>
+DROP FUNCTION update_employee_salaries();
+</programlisting>
+   which refers to a function with zero arguments, whereas the first variant
+   can refer to a function with any number of arguments, including zero, as
+   long as the name is unique.
+  </para>
  </refsect1>
 
  <refsect1 id="SQL-DROPFUNCTION-compatibility">
   <title>Compatibility</title>
 
   <para>
-   A <command>DROP FUNCTION</command> statement is defined in the SQL
-   standard, but it is not compatible with this command.
+   This command conforms to the SQL standard, with
+   these <productname>PostgreSQL</productname> extensions:
+   <itemizedlist>
+    <listitem>
+     <para>The standard only allows one function to be dropped per command.</para>
+    </listitem>
+    <listitem>
+     <para>The <literal>IF EXISTS</literal> option</para>
+    </listitem>
+    <listitem>
+     <para>The ability to specify argument modes and names</para>
+    </listitem>
+   </itemizedlist>
   </para>
  </refsect1>
 

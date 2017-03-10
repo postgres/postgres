@@ -7202,6 +7202,33 @@ function_with_argtypes:
 					n->objargs = extractArgTypes($2);
 					$$ = n;
 				}
+			/*
+			 * Because of reduce/reduce conflicts, we can't use func_name
+			 * below, but we can write it out the long way, which actually
+			 * allows more cases.
+			 */
+			| type_func_name_keyword
+				{
+					ObjectWithArgs *n = makeNode(ObjectWithArgs);
+					n->objname = list_make1(makeString(pstrdup($1)));
+					n->args_unspecified = true;
+					$$ = n;
+				}
+			| ColId
+				{
+					ObjectWithArgs *n = makeNode(ObjectWithArgs);
+					n->objname = list_make1(makeString($1));
+					n->args_unspecified = true;
+					$$ = n;
+				}
+			| ColId indirection
+				{
+					ObjectWithArgs *n = makeNode(ObjectWithArgs);
+					n->objname = check_func_name(lcons(makeString($1), $2),
+												  yyscanner);
+					n->args_unspecified = true;
+					$$ = n;
+				}
 		;
 
 /*

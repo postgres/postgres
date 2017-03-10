@@ -218,13 +218,21 @@ SELECT routine_name, ordinal_position, parameter_name, parameter_default
 (7 rows)
 
 DROP FUNCTION functest_IS_1(int, int, text), functest_IS_2(int), functest_IS_3(int);
+-- overload
+CREATE FUNCTION functest_B_2(bigint) RETURNS bool LANGUAGE 'sql'
+       IMMUTABLE AS 'SELECT $1 > 0';
+DROP FUNCTION functest_b_1;
+DROP FUNCTION functest_b_1;  -- error, not found
+ERROR:  could not find a function named "functest_b_1"
+DROP FUNCTION functest_b_2;  -- error, ambiguous
+ERROR:  function name "functest_b_2" is not unique
+HINT:  Specify the argument list to select the function unambiguously.
 -- Cleanups
 DROP SCHEMA temp_func_test CASCADE;
 NOTICE:  drop cascades to 16 other objects
 DETAIL:  drop cascades to function functest_a_1(text,date)
 drop cascades to function functest_a_2(text[])
 drop cascades to function functest_a_3()
-drop cascades to function functest_b_1(integer)
 drop cascades to function functest_b_2(integer)
 drop cascades to function functest_b_3(integer)
 drop cascades to function functest_b_4(integer)
@@ -237,5 +245,6 @@ drop cascades to function functext_f_1(integer)
 drop cascades to function functext_f_2(integer)
 drop cascades to function functext_f_3(integer)
 drop cascades to function functext_f_4(integer)
+drop cascades to function functest_b_2(bigint)
 DROP USER regress_unpriv_user;
 RESET search_path;

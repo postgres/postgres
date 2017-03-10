@@ -37,7 +37,7 @@ COMMENT ON
   EVENT TRIGGER <replaceable class="PARAMETER">object_name</replaceable> |
   FOREIGN DATA WRAPPER <replaceable class="PARAMETER">object_name</replaceable> |
   FOREIGN TABLE <replaceable class="PARAMETER">object_name</replaceable> |
-  FUNCTION <replaceable class="PARAMETER">function_name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) |
+  FUNCTION <replaceable class="PARAMETER">function_name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ] |
   INDEX <replaceable class="PARAMETER">object_name</replaceable> |
   LARGE OBJECT <replaceable class="PARAMETER">large_object_oid</replaceable> |
   MATERIALIZED VIEW <replaceable class="PARAMETER">object_name</replaceable> |
