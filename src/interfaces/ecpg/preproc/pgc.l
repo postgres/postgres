@@ -565,6 +565,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 				{
 					addlit(yytext, yyleng);
 					free(dolqstart);
+					dolqstart = NULL;
 					BEGIN(SQL);
 					base_yylval.str = mm_strdup(literalbuf);
 					return DOLCONST;
