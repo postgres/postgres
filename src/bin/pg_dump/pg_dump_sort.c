@@ -19,6 +19,8 @@
 #include "pg_backup_utils.h"
 #include "pg_dump.h"
 
+#include "catalog/pg_class.h"
+
 /* translator: this is a module name */
 static const char *modulename = gettext_noop("sorter");
 
@@ -968,8 +970,8 @@ repairDependencyLoop(DumpableObject **loop,
 	if (nLoop == 2 &&
 		loop[0]->objType == DO_TABLE &&
 		loop[1]->objType == DO_RULE &&
-		(((TableInfo *) loop[0])->relkind == 'v' ||		/* RELKIND_VIEW */
-		 ((TableInfo *) loop[0])->relkind == 'm') &&	/* RELKIND_MATVIEW */
+		(((TableInfo *) loop[0])->relkind == RELKIND_VIEW ||
+		 ((TableInfo *) loop[0])->relkind == RELKIND_MATVIEW) &&
 		((RuleInfo *) loop[1])->ev_type == '1' &&
 		((RuleInfo *) loop[1])->is_instead &&
 		((RuleInfo *) loop[1])->ruletable == (TableInfo *) loop[0])
@@ -980,8 +982,8 @@ repairDependencyLoop(DumpableObject **loop,
 	if (nLoop == 2 &&
 		loop[1]->objType == DO_TABLE &&
 		loop[0]->objType == DO_RULE &&
-		(((TableInfo *) loop[1])->relkind == 'v' ||		/* RELKIND_VIEW */
-		 ((TableInfo *) loop[1])->relkind == 'm') &&	/* RELKIND_MATVIEW */
+		(((TableInfo *) loop[1])->relkind == RELKIND_VIEW ||
+		 ((TableInfo *) loop[1])->relkind == RELKIND_MATVIEW) &&
 		((RuleInfo *) loop[0])->ev_type == '1' &&
 		((RuleInfo *) loop[0])->is_instead &&
 		((RuleInfo *) loop[0])->ruletable == (TableInfo *) loop[1])
@@ -996,7 +998,7 @@ repairDependencyLoop(DumpableObject **loop,
 		for (i = 0; i < nLoop; i++)
 		{
 			if (loop[i]->objType == DO_TABLE &&
-				((TableInfo *) loop[i])->relkind == 'v')		/* RELKIND_VIEW */
+				((TableInfo *) loop[i])->relkind == RELKIND_VIEW)
 			{
 				for (j = 0; j < nLoop; j++)
 				{
@@ -1019,7 +1021,7 @@ repairDependencyLoop(DumpableObject **loop,
 		for (i = 0; i < nLoop; i++)
 		{
 			if (loop[i]->objType == DO_TABLE &&
-				((TableInfo *) loop[i])->relkind == 'm')		/* RELKIND_MATVIEW */
+				((TableInfo *) loop[i])->relkind == RELKIND_MATVIEW)
 			{
 				for (j = 0; j < nLoop; j++)
 				{

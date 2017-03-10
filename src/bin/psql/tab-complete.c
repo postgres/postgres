@@ -40,6 +40,9 @@
 #ifdef USE_READLINE
 
 #include <ctype.h>
+
+#include "catalog/pg_class.h"
+
 #include "libpq-fe.h"
 #include "pqexpbuffer.h"
 #include "common.h"
@@ -85,8 +88,9 @@ typedef struct SchemaQuery
 	/*
 	 * Selection condition --- only rows meeting this condition are candidates
 	 * to display.  If catname mentions multiple tables, include the necessary
-	 * join condition here.  For example, "c.relkind = 'r'". Write NULL (not
-	 * an empty string) if not needed.
+	 * join condition here.  For example, this might look like "c.relkind = "
+	 * CppAsString2(RELKIND_RELATION).  Write NULL (not an empty string) if
+	 * not needed.
 	 */
 	const char *selcondition;
 
@@ -361,7 +365,8 @@ static const SchemaQuery Query_for_list_of_datatypes = {
 	"pg_catalog.pg_type t",
 	/* selcondition --- ignore table rowtypes and array types */
 	"(t.typrelid = 0 "
-	" OR (SELECT c.relkind = 'c' FROM pg_catalog.pg_class c WHERE c.oid = t.typrelid)) "
+	" OR (SELECT c.relkind = " CppAsString2(RELKIND_COMPOSITE_TYPE)
+	"     FROM pg_catalog.pg_class c WHERE c.oid = t.typrelid)) "
 	"AND t.typname !~ '^_'",
 	/* viscondition */
 	"pg_catalog.pg_type_is_visible(t.oid)",
@@ -407,7 +412,7 @@ static const SchemaQuery Query_for_list_of_indexes = {
 	/* catname */
 	"pg_catalog.pg_class c",
 	/* selcondition */
-	"c.relkind IN ('i')",
+	"c.relkind IN (" CppAsString2(RELKIND_INDEX) ")",
 	/* viscondition */
 	"pg_catalog.pg_table_is_visible(c.oid)",
 	/* namespace */
@@ -422,7 +427,7 @@ static const SchemaQuery Query_for_list_of_sequences = {
 	/* catname */
 	"pg_catalog.pg_class c",
 	/* selcondition */
-	"c.relkind IN ('S')",
+	"c.relkind IN (" CppAsString2(RELKIND_SEQUENCE) ")",
 	/* viscondition */
 	"pg_catalog.pg_table_is_visible(c.oid)",
 	/* namespace */
@@ -437,7 +442,7 @@ static const SchemaQuery Query_for_list_of_foreign_tables = {
 	/* catname */
 	"pg_catalog.pg_class c",
 	/* selcondition */
-	"c.relkind IN ('f')",
+	"c.relkind IN (" CppAsString2(RELKIND_FOREIGN_TABLE) ")",
 	/* viscondition */
 	"pg_catalog.pg_table_is_visible(c.oid)",
 	/* namespace */
@@ -452,7 +457,8 @@ static const SchemaQuery Query_for_list_of_tables = {
 	/* catname */
 	"pg_catalog.pg_class c",
 	/* selcondition */
-	"c.relkind IN ('r', 'P')",
+	"c.relkind IN (" CppAsString2(RELKIND_RELATION) ", "
+	CppAsString2(RELKIND_PARTITIONED_TABLE) ")",
 	/* viscondition */
 	"pg_catalog.pg_table_is_visible(c.oid)",
 	/* namespace */
@@ -467,7 +473,7 @@ static const SchemaQuery Query_for_list_of_partitioned_tables = {
 	/* catname */
 	"pg_catalog.pg_class c",
 	/* selcondition */
-	"c.relkind IN ('P')",
+	"c.relkind IN (" CppAsString2(RELKIND_PARTITIONED_TABLE) ")",
 	/* viscondition */
 	"pg_catalog.pg_table_is_visible(c.oid)",
 	/* namespace */
@@ -498,7 +504,10 @@ static const SchemaQuery Query_for_list_of_updatables = {
 	/* catname */
 	"pg_catalog.pg_class c",
 	/* selcondition */
-	"c.relkind IN ('r', 'f', 'v', 'P')",
+	"c.relkind IN (" CppAsString2(RELKIND_RELATION) ", "
+	CppAsString2(RELKIND_FOREIGN_TABLE) ", "
+	CppAsString2(RELKIND_VIEW) ", "
+	CppAsString2(RELKIND_PARTITIONED_TABLE) ")",
 	/* viscondition */
 	"pg_catalog.pg_table_is_visible(c.oid)",
 	/* namespace */
@@ -528,7 +537,12 @@ static const SchemaQuery Query_for_list_of_tsvmf = {
 	/* catname */
 	"pg_catalog.pg_class c",
 	/* selcondition */
-	"c.relkind IN ('r', 'S', 'v', 'm', 'f', 'P')",
+	"c.relkind IN (" CppAsString2(RELKIND_RELATION) ", "
+	CppAsString2(RELKIND_SEQUENCE) ", "
+	CppAsString2(RELKIND_VIEW) ", "
+	CppAsString2(RELKIND_MATVIEW) ", "
+	CppAsString2(RELKIND_FOREIGN_TABLE) ", "
+	CppAsString2(RELKIND_PARTITIONED_TABLE) ")",
 	/* viscondition */
 	"pg_catalog.pg_table_is_visible(c.oid)",
 	/* namespace */
@@ -543,7 +557,9 @@ static const SchemaQuery Query_for_list_of_tmf = {
 	/* catname */
 	"pg_catalog.pg_class c",
 	/* selcondition */
-	"c.relkind IN ('r', 'm', 'f')",
+	"c.relkind IN (" CppAsString2(RELKIND_RELATION) ", "
+	CppAsString2(RELKIND_MATVIEW) ", "
+	CppAsString2(RELKIND_FOREIGN_TABLE) ")",
 	/* viscondition */
 	"pg_catalog.pg_table_is_visible(c.oid)",
 	/* namespace */
@@ -558,7 +574,8 @@ static const SchemaQuery Query_for_list_of_tm = {
 	/* catname */
 	"pg_catalog.pg_class c",
 	/* selcondition */
-	"c.relkind IN ('r', 'm')",
+	"c.relkind IN (" CppAsString2(RELKIND_RELATION) ", "
+	CppAsString2(RELKIND_MATVIEW) ")",
 	/* viscondition */
 	"pg_catalog.pg_table_is_visible(c.oid)",
 	/* namespace */
@@ -573,7 +590,7 @@ static const SchemaQuery Query_for_list_of_views = {
 	/* catname */
 	"pg_catalog.pg_class c",
 	/* selcondition */
-	"c.relkind IN ('v')",
+	"c.relkind IN (" CppAsString2(RELKIND_VIEW) ")",
 	/* viscondition */
 	"pg_catalog.pg_table_is_visible(c.oid)",
 	/* namespace */
@@ -588,7 +605,7 @@ static const SchemaQuery Query_for_list_of_matviews = {
 	/* catname */
 	"pg_catalog.pg_class c",
 	/* selcondition */
-	"c.relkind IN ('m')",
+	"c.relkind IN (" CppAsString2(RELKIND_MATVIEW) ")",
 	/* viscondition */
 	"pg_catalog.pg_table_is_visible(c.oid)",
 	/* namespace */

@@ -10,6 +10,8 @@
 #include "postgres_fe.h"
 
 #include "pg_upgrade.h"
+
+#include "catalog/pg_class.h"
 #include "fe_utils/string_utils.h"
 
 
@@ -234,7 +236,10 @@ old_9_6_check_for_unknown_data_type_usage(ClusterInfo *cluster)
 								"WHERE	c.oid = a.attrelid AND "
 								"		NOT a.attisdropped AND "
 								"		a.atttypid = 'pg_catalog.unknown'::pg_catalog.regtype AND "
-						   "		c.relkind IN ('r', 'c', 'm') AND "
+								"		c.relkind IN ("
+								CppAsString2(RELKIND_RELATION) ", "
+								CppAsString2(RELKIND_COMPOSITE_TYPE) ", "
+								CppAsString2(RELKIND_MATVIEW) ") AND "
 								"		c.relnamespace = n.oid AND "
 		/* exclude possible orphaned temp tables */
 								"		n.nspname !~ '^pg_temp_' AND "

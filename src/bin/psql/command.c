@@ -27,6 +27,7 @@
 #include <sys/stat.h>			/* for stat() */
 #endif
 
+#include "catalog/pg_class.h"
 #include "portability/instr_time.h"
 
 #include "libpq-fe.h"
@@ -3465,11 +3466,11 @@ get_create_object_cmd(EditableObjectType obj_type, Oid oid,
 					switch (relkind[0])
 					{
 #ifdef NOT_USED
-						case 'm':
+						case RELKIND_MATVIEW:
 							appendPQExpBufferStr(buf, "CREATE OR REPLACE MATERIALIZED VIEW ");
 							break;
 #endif
-						case 'v':
+						case RELKIND_VIEW:
 							appendPQExpBufferStr(buf, "CREATE OR REPLACE VIEW ");
 							break;
 						default:

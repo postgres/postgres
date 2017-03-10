@@ -12,6 +12,7 @@
 #include "pg_upgrade.h"
 
 #include "access/transam.h"
+#include "catalog/pg_class.h"
 
 
 static void create_rel_filename_map(const char *old_data, const char *new_data,
@@ -444,7 +445,8 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 			 "  SELECT c.oid, 0::oid, 0::oid "
 			 "  FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n "
 			 "         ON c.relnamespace = n.oid "
-			 "  WHERE relkind IN ('r', 'm') AND "
+			 "  WHERE relkind IN (" CppAsString2(RELKIND_RELATION) ", "
+			 CppAsString2(RELKIND_MATVIEW) ") AND "
 	/* exclude possible orphaned temp tables */
 			 "    ((n.nspname !~ '^pg_temp_' AND "
 			 "      n.nspname !~ '^pg_toast_temp_' AND "

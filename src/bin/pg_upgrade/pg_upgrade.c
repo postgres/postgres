@@ -37,6 +37,7 @@
 #include "postgres_fe.h"
 
 #include "pg_upgrade.h"
+#include "catalog/pg_class.h"
 #include "common/restricted_token.h"
 #include "fe_utils/string_utils.h"
 
@@ -565,7 +566,10 @@ set_frozenxids(bool minmxid_only)
 									  "UPDATE	pg_catalog.pg_class "
 									  "SET	relfrozenxid = '%u' "
 			/* only heap, materialized view, and TOAST are vacuumed */
-									  "WHERE	relkind IN ('r', 'm', 't')",
+									  "WHERE	relkind IN ("
+									  CppAsString2(RELKIND_RELATION) ", "
+									  CppAsString2(RELKIND_MATVIEW) ", "
+									  CppAsString2(RELKIND_TOASTVALUE) ")",
 									  old_cluster.controldata.chkpnt_nxtxid));
 
 		/* set pg_class.relminmxid */
@@ -573,7 +577,10 @@ set_frozenxids(bool minmxid_only)
 								  "UPDATE	pg_catalog.pg_class "
 								  "SET	relminmxid = '%u' "
 		/* only heap, materialized view, and TOAST are vacuumed */
-								  "WHERE	relkind IN ('r', 'm', 't')",
+								  "WHERE	relkind IN ("
+								  CppAsString2(RELKIND_RELATION) ", "
+								  CppAsString2(RELKIND_MATVIEW) ", "
+								  CppAsString2(RELKIND_TOASTVALUE) ")",
 								  old_cluster.controldata.chkpnt_nxtmulti));
 		PQfinish(conn);
 
