@@ -319,6 +319,8 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 	char		portNumberStr[32];
 	const char *familyDesc;
 	char		familyDescBuf[64];
+	const char *addrDesc;
+	char		addrBuf[NI_MAXHOST];
 	char	   *service;
 	struct addrinfo *addrs = NULL,
 			   *addr;
@@ -407,7 +409,7 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 			break;
 		}
 
-		/* set up family name for possible error messages */
+		/* set up address family name for log messages */
 		switch (addr->ai_family)
 		{
 			case AF_INET:
@@ -431,13 +433,28 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 				break;
 		}
 
+		/* set up text form of address for log messages */
+#ifdef HAVE_UNIX_SOCKETS
+		if (addr->ai_family == AF_UNIX)
+			addrDesc = unixSocketPath;
+		else
+#endif
+		{
+			pg_getnameinfo_all((const struct sockaddr_storage *) addr->ai_addr,
+							   addr->ai_addrlen,
+							   addrBuf, sizeof(addrBuf),
+							   NULL, 0,
+							   NI_NUMERICHOST);
+			addrDesc = addrBuf;
+		}
+
 		if ((fd = socket(addr->ai_family, SOCK_STREAM, 0)) == PGINVALID_SOCKET)
 		{
 			ereport(LOG,
 					(errcode_for_socket_access(),
-			/* translator: %s is IPv4, IPv6, or Unix */
-					 errmsg("could not create %s socket: %m",
-							familyDesc)));
+			/* translator: first %s is IPv4, IPv6, or Unix */
+				  errmsg("could not create %s socket for address \"%s\": %m",
+						 familyDesc, addrDesc)));
 			continue;
 		}
 
@@ -461,7 +478,9 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 			{
 				ereport(LOG,
 						(errcode_for_socket_access(),
-						 errmsg("setsockopt(SO_REUSEADDR) failed: %m")));
+				/* translator: first %s is IPv4, IPv6, or Unix */
+						 errmsg("setsockopt(SO_REUSEADDR) failed for %s address \"%s\": %m",
+								familyDesc, addrDesc)));
 				closesocket(fd);
 				continue;
 			}
@@ -476,7 +495,9 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 			{
 				ereport(LOG,
 						(errcode_for_socket_access(),
-						 errmsg("setsockopt(IPV6_V6ONLY) failed: %m")));
+				/* translator: first %s is IPv4, IPv6, or Unix */
+						 errmsg("setsockopt(IPV6_V6ONLY) failed for %s address \"%s\": %m",
+								familyDesc, addrDesc)));
 				closesocket(fd);
 				continue;
 			}
@@ -494,9 +515,9 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 		{
 			ereport(LOG,
 					(errcode_for_socket_access(),
-			/* translator: %s is IPv4, IPv6, or Unix */
-					 errmsg("could not bind %s socket: %m",
-							familyDesc),
+			/* translator: first %s is IPv4, IPv6, or Unix */
+					 errmsg("could not bind %s address \"%s\": %m",
+							familyDesc, addrDesc),
 					 (IS_AF_UNIX(addr->ai_family)) ?
 				  errhint("Is another postmaster already running on port %d?"
 						  " If not, remove socket file \"%s\" and retry.",
@@ -533,12 +554,18 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 		{
 			ereport(LOG,
 					(errcode_for_socket_access(),
-			/* translator: %s is IPv4, IPv6, or Unix */
-					 errmsg("could not listen on %s socket: %m",
-							familyDesc)));
+			/* translator: first %s is IPv4, IPv6, or Unix */
+					 errmsg("could not listen on %s address \"%s\": %m",
+							familyDesc, addrDesc)));
 			closesocket(fd);
 			continue;
 		}
+
+		ereport(LOG,
+		/* translator: first %s is IPv4, IPv6, or Unix */
+				(errmsg("listening on %s address \"%s\"",
+						familyDesc, addrDesc)));
+
 		ListenSocket[listen_index] = fd;
 		added++;
 	}

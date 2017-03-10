@@ -464,9 +464,9 @@ su - postgres -c "/usr/local/pgsql/bin/pg_ctl start -l logfile -D /usr/local/pgs
 
     <para>
 <screen>
-LOG:  could not bind IPv4 socket: Address already in use
+LOG:  could not bind IPv4 address "127.0.0.1": Address already in use
 HINT:  Is another postmaster already running on port 5432? If not, wait a few seconds and retry.
-FATAL:  could not create TCP/IP listen socket
+FATAL:  could not create any TCP/IP sockets
 </screen>
      This usually means just what it suggests: you tried to start
      another server on the same port where one is already running.
@@ -476,9 +476,9 @@ FATAL:  could not create TCP/IP listen socket
      on a reserved port number might draw something like:
 <screen>
 $ <userinput>postgres -p 666</userinput>
-LOG:  could not bind IPv4 socket: Permission denied
+LOG:  could not bind IPv4 address "127.0.0.1": Permission denied
 HINT:  Is another postmaster already running on port 666? If not, wait a few seconds and retry.
-FATAL:  could not create TCP/IP listen socket
+FATAL:  could not create any TCP/IP sockets
 </screen>
     </para>
 
