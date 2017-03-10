@@ -2286,6 +2286,34 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 			exclude_test_table       => 1,
 			pg_dumpall_globals       => 1,
 			pg_dumpall_globals_clean => 1, }, },
+	'ALTER PUBLICATION pub1 ADD TABLE test_second_table' => {
+		create_order => 52,
+		create_sql =>
+		  'ALTER PUBLICATION pub1 ADD TABLE dump_test.test_second_table;',
+		regexp => qr/^
+			\QALTER PUBLICATION pub1 ADD TABLE test_second_table;\E
+			/xm,
+		like => {
+			binary_upgrade          => 1,
+			clean                   => 1,
+			clean_if_exists         => 1,
+			createdb                => 1,
+			defaults                => 1,
+			exclude_test_table      => 1,
+			exclude_test_table_data => 1,
+			no_privs                => 1,
+			no_owner                => 1,
+			only_dump_test_schema   => 1,
+			pg_dumpall_dbprivs      => 1,
+			schema_only             => 1,
+			section_post_data       => 1,
+			test_schema_plus_blobs  => 1, },
+		unlike => {
+			section_pre_data         => 1,
+			exclude_dump_test_schema => 1,
+			only_dump_test_table     => 1,
+			pg_dumpall_globals       => 1,
+			pg_dumpall_globals_clean => 1, }, },
 
 	'CREATE SCHEMA dump_test' => {
 		all_runs     => 1,
