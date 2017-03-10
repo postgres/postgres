@@ -9,6 +9,8 @@
  */
 #include "postgres_fe.h"
 
+#include "catalog/pg_class.h"
+
 #include "libpq-fe.h"
 #include "pg_getopt.h"
 
@@ -433,11 +435,12 @@ sql_exec_dumpalltables(PGconn *conn, struct options * opts)
 
 	snprintf(todo, sizeof(todo),
 			 "SELECT pg_catalog.pg_relation_filenode(c.oid) as \"Filenode\", relname as \"Table Name\" %s "
-			 "FROM pg_class c "
+			 "FROM pg_catalog.pg_class c "
 		   "	LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace "
 			 "	LEFT JOIN pg_catalog.pg_database d ON d.datname = pg_catalog.current_database(),"
 			 "	pg_catalog.pg_tablespace t "
-			 "WHERE relkind IN ('r', 'm'%s%s) AND "
+			 "WHERE relkind IN (" CppAsString2(RELKIND_RELATION) ","
+			 CppAsString2(RELKIND_MATVIEW) "%s%s) AND "
 			 "	%s"
 			 "		t.oid = CASE"
 			 "			WHEN reltablespace <> 0 THEN reltablespace"
@@ -445,8 +448,8 @@ sql_exec_dumpalltables(PGconn *conn, struct options * opts)
 			 "		END "
 			 "ORDER BY relname",
 			 opts->extended ? addfields : "",
-			 opts->indexes ? ", 'i', 'S'" : "",
-			 opts->systables ? ", 't'" : "",
+			 opts->indexes ? "," CppAsString2(RELKIND_INDEX) "," CppAsString2(RELKIND_SEQUENCE) : "",
+			 opts->systables ? "," CppAsString2(RELKIND_TOASTVALUE) : "",
 			 opts->systables ? "" : "n.nspname NOT IN ('pg_catalog', 'information_schema') AND n.nspname !~ '^pg_toast' AND");
 
 	sql_exec(conn, todo, opts->quiet);
@@ -507,7 +510,11 @@ sql_exec_searchtables(PGconn *conn, struct options * opts)
 		"	LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace \n"
 					"	LEFT JOIN pg_catalog.pg_database d ON d.datname = pg_catalog.current_database(),\n"
 					"	pg_catalog.pg_tablespace t \n"
-					"WHERE relkind IN ('r', 'm', 'i', 'S', 't') AND \n"
+					"WHERE relkind IN (" CppAsString2(RELKIND_RELATION) ","
+					CppAsString2(RELKIND_MATVIEW) ","
+					CppAsString2(RELKIND_INDEX) ","
+					CppAsString2(RELKIND_SEQUENCE) ","
+					CppAsString2(RELKIND_TOASTVALUE) ") AND \n"
 					"		t.oid = CASE\n"
 			"			WHEN reltablespace <> 0 THEN reltablespace\n"
 					"			ELSE dattablespace\n"

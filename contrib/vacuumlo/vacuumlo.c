@@ -21,6 +21,8 @@
 #include <termios.h>
 #endif
 
+#include "catalog/pg_class.h"
+
 #include "libpq-fe.h"
 #include "pg_getopt.h"
 
@@ -209,7 +211,7 @@ vacuumlo(const char *database, const struct _param * param)
 	strcat(buf, "      AND a.atttypid = t.oid ");
 	strcat(buf, "      AND c.relnamespace = s.oid ");
 	strcat(buf, "      AND t.typname in ('oid', 'lo') ");
-	strcat(buf, "      AND c.relkind in ('r', 'm')");
+	strcat(buf, "      AND c.relkind in (" CppAsString2(RELKIND_RELATION) ", " CppAsString2(RELKIND_MATVIEW) ")");
 	strcat(buf, "      AND s.nspname !~ '^pg_'");
 	res = PQexec(conn, buf);
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
