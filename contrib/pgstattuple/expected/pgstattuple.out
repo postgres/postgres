@@ -223,7 +223,7 @@ select pgstatginindex('test_partition');
 ERROR:  relation "test_partition" is not a GIN index
 select pgstathashindex('test_partition');
 ERROR:  "test_partition" is not an index
--- an actual index of a partitiond table should work though
+-- an actual index of a partitioned table should work though
 create index test_partition_idx on test_partition(a);
 create index test_partition_hash_idx on test_partition using hash (a);
 WARNING:  hash indexes are not WAL-logged and their use is discouraged

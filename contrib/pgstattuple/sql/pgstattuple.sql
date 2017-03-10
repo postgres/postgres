@@ -103,7 +103,7 @@ select pgstatindex('test_partition');
 select pgstatginindex('test_partition');
 select pgstathashindex('test_partition');
 
--- an actual index of a partitiond table should work though
+-- an actual index of a partitioned table should work though
 create index test_partition_idx on test_partition(a);
 create index test_partition_hash_idx on test_partition using hash (a);
 -- these should work
