@@ -2721,12 +2721,14 @@ get_connect_string(const char *servername)
 	ForeignServer *foreign_server = NULL;
 	UserMapping *user_mapping;
 	ListCell   *cell;
-	StringInfo	buf = makeStringInfo();
+	StringInfoData	buf;
 	ForeignDataWrapper *fdw;
 	AclResult	aclresult;
 	char	   *srvname;
 
 	static const PQconninfoOption *options = NULL;
+
+	initStringInfo(&buf);
 
 	/*
 	 * Get list of valid libpq options.
@@ -2769,7 +2771,7 @@ get_connect_string(const char *servername)
 			DefElem    *def = lfirst(cell);
 
 			if (is_valid_dblink_option(options, def->defname, ForeignDataWrapperRelationId))
-				appendStringInfo(buf, "%s='%s' ", def->defname,
+				appendStringInfo(&buf, "%s='%s' ", def->defname,
 								 escape_param_str(strVal(def->arg)));
 		}
 
@@ -2778,7 +2780,7 @@ get_connect_string(const char *servername)
 			DefElem    *def = lfirst(cell);
 
 			if (is_valid_dblink_option(options, def->defname, ForeignServerRelationId))
-				appendStringInfo(buf, "%s='%s' ", def->defname,
+				appendStringInfo(&buf, "%s='%s' ", def->defname,
 								 escape_param_str(strVal(def->arg)));
 		}
 
@@ -2788,11 +2790,11 @@ get_connect_string(const char *servername)
 			DefElem    *def = lfirst(cell);
 
 			if (is_valid_dblink_option(options, def->defname, UserMappingRelationId))
-				appendStringInfo(buf, "%s='%s' ", def->defname,
+				appendStringInfo(&buf, "%s='%s' ", def->defname,
 								 escape_param_str(strVal(def->arg)));
 		}
 
-		return buf->data;
+		return buf.data;
 	}
 	else
 		return NULL;
@@ -2807,16 +2809,18 @@ static char *
 escape_param_str(const char *str)
 {
 	const char *cp;
-	StringInfo	buf = makeStringInfo();
+	StringInfoData	buf;
+
+	initStringInfo(&buf);
 
 	for (cp = str; *cp; cp++)
 	{
 		if (*cp == '\\' || *cp == '\'')
-			appendStringInfoChar(buf, '\\');
-		appendStringInfoChar(buf, *cp);
+			appendStringInfoChar(&buf, '\\');
+		appendStringInfoChar(&buf, *cp);
 	}
 
-	return buf->data;
+	return buf.data;
 }
 
 /*
