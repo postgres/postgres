@@ -412,7 +412,7 @@ AutoVacLauncherMain(int argc, char *argv[])
 	/* Identify myself via ps */
 	init_ps_display("autovacuum launcher process", "", "", "");
 
-	ereport(LOG,
+	ereport(DEBUG1,
 			(errmsg("autovacuum launcher started")));
 
 	if (PostAuthDelay)
@@ -776,7 +776,7 @@ AutoVacLauncherMain(int argc, char *argv[])
 
 	/* Normal exit from the autovac launcher is here */
 shutdown:
-	ereport(LOG,
+	ereport(DEBUG1,
 			(errmsg("autovacuum launcher shutting down")));
 	AutoVacuumShmem->av_launcherpid = 0;
 

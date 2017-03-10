@@ -552,7 +552,7 @@ ApplyLauncherWakeup(void)
 void
 ApplyLauncherMain(Datum main_arg)
 {
-	ereport(LOG,
+	ereport(DEBUG1,
 			(errmsg("logical replication launcher started")));
 
 	/* Establish signal handlers. */
@@ -652,7 +652,7 @@ ApplyLauncherMain(Datum main_arg)
 	LogicalRepCtx->launcher_pid = 0;
 
 	/* ... and if it returns, we're done */
-	ereport(LOG,
+	ereport(DEBUG1,
 			(errmsg("logical replication launcher shutting down")));
 
 	proc_exit(0);
