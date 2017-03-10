@@ -1481,7 +1481,7 @@ pg_seclabels| SELECT l.objoid,
     l.classoid,
     l.objsubid,
         CASE
-            WHEN (rel.relkind = ANY (ARRAY['r'::"char", 'P'::"char"])) THEN 'table'::text
+            WHEN (rel.relkind = ANY (ARRAY['r'::"char", 'p'::"char"])) THEN 'table'::text
             WHEN (rel.relkind = 'v'::"char") THEN 'view'::text
             WHEN (rel.relkind = 'm'::"char") THEN 'materialized view'::text
             WHEN (rel.relkind = 'S'::"char") THEN 'sequence'::text
@@ -2171,7 +2171,7 @@ pg_tables| SELECT n.nspname AS schemaname,
    FROM ((pg_class c
      LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
      LEFT JOIN pg_tablespace t ON ((t.oid = c.reltablespace)))
-  WHERE (c.relkind = ANY (ARRAY['r'::"char", 'P'::"char"]));
+  WHERE (c.relkind = ANY (ARRAY['r'::"char", 'p'::"char"]));
 pg_timezone_abbrevs| SELECT pg_timezone_abbrevs.abbrev,
     pg_timezone_abbrevs.utc_offset,
     pg_timezone_abbrevs.is_dst

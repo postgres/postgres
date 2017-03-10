@@ -136,7 +136,7 @@ CREATE VIEW pg_tables AS
         C.relrowsecurity AS rowsecurity
     FROM pg_class C LEFT JOIN pg_namespace N ON (N.oid = C.relnamespace)
          LEFT JOIN pg_tablespace T ON (T.oid = C.reltablespace)
-    WHERE C.relkind IN ('r', 'P');
+    WHERE C.relkind IN ('r', 'p');
 
 CREATE VIEW pg_matviews AS
     SELECT
@@ -294,7 +294,7 @@ CREATE VIEW pg_prepared_statements AS
 CREATE VIEW pg_seclabels AS
 SELECT
 	l.objoid, l.classoid, l.objsubid,
-	CASE WHEN rel.relkind IN ('r', 'P') THEN 'table'::text
+	CASE WHEN rel.relkind IN ('r', 'p') THEN 'table'::text
 		 WHEN rel.relkind = 'v' THEN 'view'::text
 		 WHEN rel.relkind = 'm' THEN 'materialized view'::text
 		 WHEN rel.relkind = 'S' THEN 'sequence'::text

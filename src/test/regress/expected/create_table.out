@@ -404,7 +404,7 @@ CREATE TABLE partitioned (
 SELECT relkind FROM pg_class WHERE relname = 'partitioned';
  relkind 
 ---------
- P
+ p
 (1 row)
 
 -- check that range partition key columns are marked NOT NULL

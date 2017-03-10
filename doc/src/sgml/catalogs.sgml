@@ -1758,12 +1758,15 @@
       <entry><type>char</type></entry>
       <entry></entry>
       <entry>
-       <literal>r</> = ordinary table, <literal>P</> = partitioned table,
-       <literal>i</> = index
-       <literal>S</> = sequence, <literal>v</> = view,
+       <literal>r</> = ordinary table,
+       <literal>i</> = index,
+       <literal>S</> = sequence,
+       <literal>t</> = TOAST table,
+       <literal>v</> = view,
        <literal>m</> = materialized view,
-       <literal>c</> = composite type, <literal>t</> = TOAST table,
-       <literal>f</> = foreign table
+       <literal>c</> = composite type,
+       <literal>f</> = foreign table,
+       <literal>p</> = partitioned table
       </entry>
      </row>
 
