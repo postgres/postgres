@@ -72,6 +72,14 @@ SELECT '6' AS "One",
  6   |                     6
 (1 row)
 
+SELECT '7' AS "None",
+   CASE WHEN random() < 0 THEN 1
+   END AS "NULL on no matches";
+ None | NULL on no matches 
+------+--------------------
+ 7    |                   
+(1 row)
+
 -- Constant-expression folding shouldn't evaluate unreachable subexpressions
 SELECT CASE WHEN 1=0 THEN 1/0 WHEN 1=1 THEN 1 ELSE 2/0 END;
  case 

@@ -187,6 +187,44 @@ select ('[0:2][0:2]={{1,2,3},{4,5,6},{7,8,9}}'::int[])[1:2][2];
  {{5,6},{8,9}}
 (1 row)
 
+--
+-- check subscription corner cases
+--
+-- More subscripts than MAXDIMS(6)
+SELECT ('{}'::int[])[1][2][3][4][5][6][7];
+ERROR:  number of array dimensions (7) exceeds the maximum allowed (6)
+-- NULL index yields NULL when selecting
+SELECT ('{{{1},{2},{3}},{{4},{5},{6}}}'::int[])[1][NULL][1];
+ int4 
+------
+     
+(1 row)
+
+SELECT ('{{{1},{2},{3}},{{4},{5},{6}}}'::int[])[1][NULL:1][1];
+ int4 
+------
+ 
+(1 row)
+
+SELECT ('{{{1},{2},{3}},{{4},{5},{6}}}'::int[])[1][1:NULL][1];
+ int4 
+------
+ 
+(1 row)
+
+-- NULL index in assignment is an error
+UPDATE arrtest
+  SET c[NULL] = '{"can''t assign"}'
+  WHERE array_dims(c) is not null;
+ERROR:  array subscript in assignment must not be null
+UPDATE arrtest
+  SET c[NULL:1] = '{"can''t assign"}'
+  WHERE array_dims(c) is not null;
+ERROR:  array subscript in assignment must not be null
+UPDATE arrtest
+  SET c[1:NULL] = '{"can''t assign"}'
+  WHERE array_dims(c) is not null;
+ERROR:  array subscript in assignment must not be null
 -- test slices with empty lower and/or upper index
 CREATE TEMP TABLE arrtest_s (
   a       int2[],
@@ -263,6 +301,36 @@ SELECT f1[:1] FROM POINT_TBL;
 ERROR:  slices of fixed-length arrays not implemented
 SELECT f1[:] FROM POINT_TBL;
 ERROR:  slices of fixed-length arrays not implemented
+-- subscript assignments to fixed-width result in NULL if previous value is NULL
+UPDATE point_tbl SET f1[0] = 10 WHERE f1 IS NULL RETURNING *;
+ f1 
+----
+ 
+(1 row)
+
+INSERT INTO point_tbl(f1[0]) VALUES(0) RETURNING *;
+ f1 
+----
+ 
+(1 row)
+
+-- NULL assignments get ignored
+UPDATE point_tbl SET f1[0] = NULL WHERE f1::text = '(10,10)'::point::text RETURNING *;
+   f1    
+---------
+ (10,10)
+(1 row)
+
+-- but non-NULL subscript assignments work
+UPDATE point_tbl SET f1[0] = -10, f1[1] = -10 WHERE f1::text = '(10,10)'::point::text RETURNING *;
+    f1     
+-----------
+ (-10,-10)
+(1 row)
+
+-- but not to expand the range
+UPDATE point_tbl SET f1[3] = 10 WHERE f1::text = '(-10,-10)'::point::text RETURNING *;
+ERROR:  array subscript out of range
 --
 -- test array extension
 --
@@ -1099,6 +1167,12 @@ SELECT CAST(ARRAY[[[[[['a','bb','ccc']]]]]] as text[]) as "{{{{{{a,bb,ccc}}}}}}"
  {{{{{{a,bb,ccc}}}}}}
 (1 row)
 
+SELECT NULL::text[]::int[] AS "NULL";
+ NULL 
+------
+ 
+(1 row)
+
 -- scalar op any/all (array)
 select 33 = any ('{1,2,3}');
  ?column? 
@@ -1209,6 +1283,13 @@ select 33 = all ('{1,null,3}');
 (1 row)
 
 select 33 = all ('{33,null,33}');
+ ?column? 
+----------
+ 
+(1 row)
+
+-- nulls later in the bitmap
+SELECT -1 != ALL(ARRAY(SELECT NULLIF(g.i, 900) FROM generate_series(1,1000) g(i)));
  ?column? 
 ----------
  

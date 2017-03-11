@@ -711,3 +711,43 @@ select r, r is null as isnull, r is not null as isnotnull from r;
  (,)         | t      | f
 (6 rows)
 
+--
+-- Tests for component access / FieldSelect
+--
+CREATE TABLE compositetable(a text, b text) WITH OIDS;
+INSERT INTO compositetable(a, b) VALUES('fa', 'fb');
+-- composite type columns can't directly be accessed (error)
+SELECT d.a FROM (SELECT compositetable AS d FROM compositetable) s;
+ERROR:  missing FROM-clause entry for table "d"
+LINE 1: SELECT d.a FROM (SELECT compositetable AS d FROM compositeta...
+               ^
+-- but can be accessed with proper parens
+SELECT (d).a, (d).b FROM (SELECT compositetable AS d FROM compositetable) s;
+ a  | b  
+----+----
+ fa | fb
+(1 row)
+
+-- oids can't be accessed in composite types (error)
+SELECT (d).oid FROM (SELECT compositetable AS d FROM compositetable) s;
+ERROR:  column "oid" not found in data type compositetable
+LINE 1: SELECT (d).oid FROM (SELECT compositetable AS d FROM composi...
+                ^
+-- accessing non-existing column in NULL datum errors out
+SELECT (NULL::compositetable).nonexistant;
+ERROR:  column "nonexistant" not found in data type compositetable
+LINE 1: SELECT (NULL::compositetable).nonexistant;
+                ^
+-- existing column in a NULL composite yield NULL
+SELECT (NULL::compositetable).a;
+ a 
+---
+ 
+(1 row)
+
+-- oids can't be accessed in composite types (error)
+SELECT (NULL::compositetable).oid;
+ERROR:  column "oid" not found in data type compositetable
+LINE 1: SELECT (NULL::compositetable).oid;
+                ^
+DROP TABLE compositetable;

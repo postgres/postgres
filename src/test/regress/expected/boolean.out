@@ -443,6 +443,29 @@ SELECT '' AS "Not True", f1
 (4 rows)
 
 --
+-- Tests for BooleanTest
+--
+CREATE TABLE BOOLTBL3 (d text, b bool, o int);
+INSERT INTO BOOLTBL3 (d, b, o) VALUES ('true', true, 1);
+INSERT INTO BOOLTBL3 (d, b, o) VALUES ('false', false, 2);
+INSERT INTO BOOLTBL3 (d, b, o) VALUES ('null', null, 3);
+SELECT
+    d,
+    b IS TRUE AS istrue,
+    b IS NOT TRUE AS isnottrue,
+    b IS FALSE AS isfalse,
+    b IS NOT FALSE AS isnotfalse,
+    b IS UNKNOWN AS isunknown,
+    b IS NOT UNKNOWN AS isnotunknown
+FROM booltbl3 ORDER BY o;
+   d   | istrue | isnottrue | isfalse | isnotfalse | isunknown | isnotunknown 
+-------+--------+-----------+---------+------------+-----------+--------------
+ true  | t      | f         | f       | t          | f         | t
+ false | f      | t         | t       | f          | f         | t
+ null  | f      | t         | f       | t          | t         | f
+(3 rows)
+
+--
 -- Clean up
 -- Many tables are retained by the regression test, but these do not seem
 --  particularly useful so just get rid of them for now.
@@ -450,3 +473,4 @@ SELECT '' AS "Not True", f1
 --
 DROP TABLE  BOOLTBL1;
 DROP TABLE  BOOLTBL2;
+DROP TABLE  BOOLTBL3;

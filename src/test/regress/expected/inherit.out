@@ -710,6 +710,12 @@ select derived::base from derived;
  (0)
 (1 row)
 
+select NULL::derived::base;
+ base 
+------
+ 
+(1 row)
+
 drop table derived;
 drop table base;
 create table p1(ff1 int);

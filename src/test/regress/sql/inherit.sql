@@ -194,6 +194,7 @@ create table base (i integer);
 create table derived () inherits (base);
 insert into derived (i) values (0);
 select derived::base from derived;
+select NULL::derived::base;
 drop table derived;
 drop table base;
 

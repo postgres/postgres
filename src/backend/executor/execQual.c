@@ -392,6 +392,7 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 			}
 			else
 			{
+				/* this is currently unreachable */
 				econtext->caseValue_datum =
 					array_get_slice(array_source, i,
 									upper.indx, lower.indx,

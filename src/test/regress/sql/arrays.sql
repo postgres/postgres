@@ -103,6 +103,26 @@ select ('{{1,2,3},{4,5,6},{7,8,9}}'::int[])[1:2][2];
 select '[0:2][0:2]={{1,2,3},{4,5,6},{7,8,9}}'::int[];
 select ('[0:2][0:2]={{1,2,3},{4,5,6},{7,8,9}}'::int[])[1:2][2];
 
+--
+-- check subscription corner cases
+--
+-- More subscripts than MAXDIMS(6)
+SELECT ('{}'::int[])[1][2][3][4][5][6][7];
+-- NULL index yields NULL when selecting
+SELECT ('{{{1},{2},{3}},{{4},{5},{6}}}'::int[])[1][NULL][1];
+SELECT ('{{{1},{2},{3}},{{4},{5},{6}}}'::int[])[1][NULL:1][1];
+SELECT ('{{{1},{2},{3}},{{4},{5},{6}}}'::int[])[1][1:NULL][1];
+-- NULL index in assignment is an error
+UPDATE arrtest
+  SET c[NULL] = '{"can''t assign"}'
+  WHERE array_dims(c) is not null;
+UPDATE arrtest
+  SET c[NULL:1] = '{"can''t assign"}'
+  WHERE array_dims(c) is not null;
+UPDATE arrtest
+  SET c[1:NULL] = '{"can''t assign"}'
+  WHERE array_dims(c) is not null;
+
 -- test slices with empty lower and/or upper index
 CREATE TEMP TABLE arrtest_s (
   a       int2[],
@@ -133,6 +153,16 @@ SELECT f1[0:1] FROM POINT_TBL;
 SELECT f1[0:] FROM POINT_TBL;
 SELECT f1[:1] FROM POINT_TBL;
 SELECT f1[:] FROM POINT_TBL;
+
+-- subscript assignments to fixed-width result in NULL if previous value is NULL
+UPDATE point_tbl SET f1[0] = 10 WHERE f1 IS NULL RETURNING *;
+INSERT INTO point_tbl(f1[0]) VALUES(0) RETURNING *;
+-- NULL assignments get ignored
+UPDATE point_tbl SET f1[0] = NULL WHERE f1::text = '(10,10)'::point::text RETURNING *;
+-- but non-NULL subscript assignments work
+UPDATE point_tbl SET f1[0] = -10, f1[1] = -10 WHERE f1::text = '(10,10)'::point::text RETURNING *;
+-- but not to expand the range
+UPDATE point_tbl SET f1[3] = 10 WHERE f1::text = '(-10,-10)'::point::text RETURNING *;
 
 --
 -- test array extension
@@ -316,6 +346,7 @@ SELECT ARRAY[1,2,3]::text[]::int[]::float8[] is of (float8[]) as "TRUE";
 SELECT ARRAY[['a','bc'],['def','hijk']]::text[]::varchar[] AS "{{a,bc},{def,hijk}}";
 SELECT ARRAY[['a','bc'],['def','hijk']]::text[]::varchar[] is of (varchar[]) as "TRUE";
 SELECT CAST(ARRAY[[[[[['a','bb','ccc']]]]]] as text[]) as "{{{{{{a,bb,ccc}}}}}}";
+SELECT NULL::text[]::int[] AS "NULL";
 
 -- scalar op any/all (array)
 select 33 = any ('{1,2,3}');
@@ -341,6 +372,8 @@ select 33 = all (null::int[]);
 select null::int = all ('{1,2,3}');
 select 33 = all ('{1,null,3}');
 select 33 = all ('{33,null,33}');
+-- nulls later in the bitmap
+SELECT -1 != ALL(ARRAY(SELECT NULLIF(g.i, 900) FROM generate_series(1,1000) g(i)));
 
 -- test indexes on arrays
 create temp table arr_tbl (f1 int[] unique);
