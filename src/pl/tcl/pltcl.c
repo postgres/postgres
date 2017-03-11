@@ -306,6 +306,8 @@ static int pltcl_SPI_execute_plan(ClientData cdata, Tcl_Interp *interp,
 					   int objc, Tcl_Obj *const objv[]);
 static int pltcl_SPI_lastoid(ClientData cdata, Tcl_Interp *interp,
 				  int objc, Tcl_Obj *const objv[]);
+static int pltcl_subtransaction(ClientData cdata, Tcl_Interp *interp,
+					 int objc, Tcl_Obj *const objv[]);
 
 static void pltcl_subtrans_begin(MemoryContext oldcontext,
 					 ResourceOwner oldowner);
@@ -516,6 +518,8 @@ pltcl_init_interp(pltcl_interp_desc *interp_desc, Oid prolang, bool pltrusted)
 						 pltcl_SPI_execute_plan, NULL, NULL);
 	Tcl_CreateObjCommand(interp, "spi_lastoid",
 						 pltcl_SPI_lastoid, NULL, NULL);
+	Tcl_CreateObjCommand(interp, "subtransaction",
+						 pltcl_subtransaction, NULL, NULL);
 
 	/************************************************************
 	 * Call the appropriate start_proc, if there is one.
@@ -2847,6 +2851,55 @@ pltcl_SPI_lastoid(ClientData cdata, Tcl_Interp *interp,
 
 	Tcl_SetObjResult(interp, Tcl_NewWideIntObj(SPI_lastoid));
 	return TCL_OK;
+}
+
+
+/**********************************************************************
+ * pltcl_subtransaction()	- Execute some Tcl code in a subtransaction
+ *
+ * The subtransaction is aborted if the Tcl code fragment returns TCL_ERROR,
+ * otherwise it's subcommitted.
+ **********************************************************************/
+static int
+pltcl_subtransaction(ClientData cdata, Tcl_Interp *interp,
+					 int objc, Tcl_Obj *const objv[])
+{
+	MemoryContext oldcontext = CurrentMemoryContext;
+	ResourceOwner oldowner = CurrentResourceOwner;
+	int			retcode;
+
+	if (objc != 2)
+	{
+		Tcl_WrongNumArgs(interp, 1, objv, "command");
+		return TCL_ERROR;
+	}
+
+	/*
+	 * Note: we don't use pltcl_subtrans_begin and friends here because we
+	 * don't want the error handling in pltcl_subtrans_abort.  But otherwise
+	 * the processing should be about the same as in those functions.
+	 */
+	BeginInternalSubTransaction(NULL);
+	MemoryContextSwitchTo(oldcontext);
+
+	retcode = Tcl_EvalObjEx(interp, objv[1], 0);
+
+	if (retcode == TCL_ERROR)
+	{
+		/* Rollback the subtransaction */
+		RollbackAndReleaseCurrentSubTransaction();
+	}
+	else
+	{
+		/* Commit the subtransaction */
+		ReleaseCurrentSubTransaction();
+	}
+
+	/* In either case, restore previous memory context and resource owner */
+	MemoryContextSwitchTo(oldcontext);
+	CurrentResourceOwner = oldowner;
+
+	return retcode;
 }
 
 

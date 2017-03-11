@@ -28,7 +28,7 @@ DATA = pltcl.control pltcl--1.0.sql pltcl--unpackaged--1.0.sql \
        pltclu.control pltclu--1.0.sql pltclu--unpackaged--1.0.sql
 
 REGRESS_OPTS = --dbname=$(PL_TESTDB) --load-extension=pltcl
-REGRESS = pltcl_setup pltcl_queries pltcl_start_proc pltcl_unicode
+REGRESS = pltcl_setup pltcl_queries pltcl_start_proc pltcl_subxact pltcl_unicode
 
 # Tcl on win32 ships with import libraries only for Microsoft Visual C++,
 # which are not compatible with mingw gcc. Therefore we need to build a

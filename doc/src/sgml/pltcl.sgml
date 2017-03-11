@@ -477,6 +477,20 @@ $$ LANGUAGE pltcl;
      </varlistentry>
 
      <varlistentry>
+      <term><function>subtransaction</function> <replaceable>command</replaceable></term>
+      <listitem>
+       <para>
+        The Tcl script contained in <replaceable>command</replaceable> is
+        executed within a SQL subtransaction.  If the script returns an
+        error, that entire subtransaction is rolled back before returning the
+        error out to the surrounding Tcl code.
+        See <xref linkend="pltcl-subtransactions"> for more details and an
+        example.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><function>quote</> <replaceable>string</replaceable></term>
       <listitem>
        <para>
@@ -844,18 +858,22 @@ CREATE EVENT TRIGGER tcl_a_snitch ON ddl_command_start EXECUTE PROCEDURE tclsnit
      either by executing some invalid operation or by generating an error
      using the Tcl <function>error</function> command or
      PL/Tcl's <function>elog</function> command.  Such errors can be caught
-     within Tcl using the Tcl <function>catch</function> command.  If they
-     are not caught but are allowed to propagate out to the top level of
-     execution of the PL/Tcl function, they turn into database errors.
+     within Tcl using the Tcl <function>catch</function> command.  If an
+     error is not caught but is allowed to propagate out to the top level of
+     execution of the PL/Tcl function, it is reported as a SQL error in the
+     function's calling query.
     </para>
 
     <para>
-     Conversely, database errors that occur within PL/Tcl's
+     Conversely, SQL errors that occur within PL/Tcl's
      <function>spi_exec</function>, <function>spi_prepare</function>,
      and <function>spi_execp</function> commands are reported as Tcl errors,
      so they are catchable by Tcl's <function>catch</function> command.
-     Again, if they propagate out to the top level without being caught,
-     they turn back into database errors.
+     (Each of these PL/Tcl commands runs its SQL operation in a
+     subtransaction, which is rolled back on error, so that any
+     partially-completed operation is automatically cleaned up.)
+     Again, if an error propagates out to the top level without being caught,
+     it turns back into a SQL error.
     </para>
 
     <para>
@@ -899,6 +917,88 @@ if {[catch { spi_exec $sql_command }]} {
 </programlisting>
      (The double colons explicitly specify that <varname>errorCode</varname>
      is a global variable.)
+    </para>
+   </sect1>
+
+   <sect1 id="pltcl-subtransactions">
+    <title>Explicit Subtransactions in PL/Tcl</title>
+
+    <indexterm>
+     <primary>subtransactions</primary>
+     <secondary>in PL/Tcl</secondary>
+    </indexterm>
+
+    <para>
+     Recovering from errors caused by database access as described in
+     <xref linkend="pltcl-error-handling"> can lead to an undesirable
+     situation where some operations succeed before one of them fails,
+     and after recovering from that error the data is left in an
+     inconsistent state.  PL/Tcl offers a solution to this problem in
+     the form of explicit subtransactions.
+    </para>
+
+    <para>
+     Consider a function that implements a transfer between two accounts:
+<programlisting>
+CREATE FUNCTION transfer_funds() RETURNS void AS $$
+    if [catch {
+        spi_exec "UPDATE accounts SET balance = balance - 100 WHERE account_name = 'joe'"
+        spi_exec "UPDATE accounts SET balance = balance + 100 WHERE account_name = 'mary'"
+    } errormsg] {
+        set result [format "error transferring funds: %s" $errormsg]
+    } else {
+        set result "funds transferred successfully"
+    }
+    spi_exec "INSERT INTO operations (result) VALUES ('[quote $result]')"
+$$ LANGUAGE pltcl;
+</programlisting>
+     If the second <command>UPDATE</command> statement results in an
+     exception being raised, this function will log the failure, but
+     the result of the first <command>UPDATE</command> will
+     nevertheless be committed.  In other words, the funds will be
+     withdrawn from Joe's account, but will not be transferred to
+     Mary's account.  This happens because each <function>spi_exec</function>
+     is a separate subtransaction, and only one of those subtransactions
+     got rolled back.
+    </para>
+
+    <para>
+     To handle such cases, you can wrap multiple database operations in an
+     explicit subtransaction, which will succeed or roll back as a whole.
+     PL/Tcl provides a <function>subtransaction</function> command to manage
+     this.  We can rewrite our function as:
+<programlisting>
+CREATE FUNCTION transfer_funds2() RETURNS void AS $$
+    if [catch {
+        subtransaction {
+            spi_exec "UPDATE accounts SET balance = balance - 100 WHERE account_name = 'joe'"
+            spi_exec "UPDATE accounts SET balance = balance + 100 WHERE account_name = 'mary'"
+        }
+    } errormsg] {
+        set result [format "error transferring funds: %s" $errormsg]
+    } else {
+        set result "funds transferred successfully"
+    }
+    spi_exec "INSERT INTO operations (result) VALUES ('[quote $result]')"
+$$ LANGUAGE pltcl;
+</programlisting>
+     Note that use of <function>catch</function> is still required for this
+     purpose.  Otherwise the error would propagate to the top level of the
+     function, preventing the desired insertion into
+     the <structname>operations</structname> table.
+     The <function>subtransaction</function> command does not trap errors, it
+     only assures that all database operations executed inside its scope will
+     be rolled back together when an error is reported.
+    </para>
+
+    <para>
+     A rollback of an explicit subtransaction occurs on any error reported
+     by the contained Tcl code, not only errors originating from database
+     access.  Thus a regular Tcl exception raised inside
+     a <function>subtransaction</function> command will also cause the
+     subtransaction to be rolled back.  However, non-error exits out of the
+     contained Tcl code (for instance, due to <function>return</function>) do
+     not cause a rollback.
     </para>
    </sect1>
 
