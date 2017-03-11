@@ -304,7 +304,11 @@ dblink_connect(PG_FUNCTION_ARGS)
 		createNewConnection(connname, rconn);
 	}
 	else
+	{
+		if (pconn->conn)
+			PQfinish(pconn->conn);
 		pconn->conn = conn;
+	}
 
 	PG_RETURN_TEXT_P(cstring_to_text("OK"));
 }
