@@ -423,8 +423,8 @@ reread:
 }
 
 /*
- * Clear out a slot in the tuple table for each gather merge
- * slot and return the clear cleared slot.
+ * Clear out the tuple table slots for each gather merge input,
+ * and return a cleared slot.
  */
 static TupleTableSlot *
 gather_merge_clear_slots(GatherMergeState *gm_state)
@@ -456,19 +456,21 @@ gather_merge_getnext(GatherMergeState *gm_state)
 {
 	int			i;
 
-	/*
-	 * First time through: pull the first tuple from each participate, and set
-	 * up the heap.
-	 */
-	if (gm_state->gm_initialized == false)
+	if (!gm_state->gm_initialized)
+	{
+		/*
+		 * First time through: pull the first tuple from each participant, and
+		 * set up the heap.
+		 */
 		gather_merge_init(gm_state);
+	}
 	else
 	{
 		/*
 		 * Otherwise, pull the next tuple from whichever participant we
-		 * returned from last time, and reinsert the index into the heap,
-		 * because it might now compare differently against the existing
-		 * elements of the heap.
+		 * returned from last time, and reinsert that participant's index into
+		 * the heap, because it might now compare differently against the
+		 * other elements of the heap.
 		 */
 		i = DatumGetInt32(binaryheap_first(gm_state->gm_heap));
 
@@ -485,11 +487,10 @@ gather_merge_getnext(GatherMergeState *gm_state)
 	}
 	else
 	{
+		/* Return next tuple from whichever participant has the leading one */
 		i = DatumGetInt32(binaryheap_first(gm_state->gm_heap));
 		return gm_state->gm_slots[i];
 	}
-
-	return gather_merge_clear_slots(gm_state);
 }
 
 /*
