@@ -162,6 +162,7 @@ encrypt_password(PasswordType target_type, const char *role,
 				case PASSWORD_TYPE_MD5:
 					return pstrdup(password);
 			}
+			break;
 
 		case PASSWORD_TYPE_SCRAM:
 			switch (guessed_type)
@@ -178,6 +179,7 @@ encrypt_password(PasswordType target_type, const char *role,
 				case PASSWORD_TYPE_SCRAM:
 					return pstrdup(password);
 			}
+			break;
 	}
 
 	/*
