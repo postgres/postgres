@@ -123,7 +123,7 @@ ts_token_type_byname(PG_FUNCTION_ARGS)
 
 	if (SRF_IS_FIRSTCALL())
 	{
-		text	   *prsname = PG_GETARG_TEXT_P(0);
+		text	   *prsname = PG_GETARG_TEXT_PP(0);
 		Oid			prsId;
 
 		funcctx = SRF_FIRSTCALL_INIT();
@@ -172,8 +172,8 @@ prs_setup_firstcall(FuncCallContext *funcctx, Oid prsid, text *txt)
 	st->list = (LexemeEntry *) palloc(sizeof(LexemeEntry) * st->len);
 
 	prsdata = (void *) DatumGetPointer(FunctionCall2(&prs->prsstart,
-											   PointerGetDatum(VARDATA(txt)),
-									Int32GetDatum(VARSIZE(txt) - VARHDRSZ)));
+										   PointerGetDatum(VARDATA_ANY(txt)),
+									 Int32GetDatum(VARSIZE_ANY_EXHDR(txt))));
 
 	while ((type = DatumGetInt32(FunctionCall3(&prs->prstoken,
 											   PointerGetDatum(prsdata),
@@ -248,7 +248,7 @@ ts_parse_byid(PG_FUNCTION_ARGS)
 
 	if (SRF_IS_FIRSTCALL())
 	{
-		text	   *txt = PG_GETARG_TEXT_P(1);
+		text	   *txt = PG_GETARG_TEXT_PP(1);
 
 		funcctx = SRF_FIRSTCALL_INIT();
 		prs_setup_firstcall(funcctx, PG_GETARG_OID(0), txt);
@@ -270,8 +270,8 @@ ts_parse_byname(PG_FUNCTION_ARGS)
 
 	if (SRF_IS_FIRSTCALL())
 	{
-		text	   *prsname = PG_GETARG_TEXT_P(0);
-		text	   *txt = PG_GETARG_TEXT_P(1);
+		text	   *prsname = PG_GETARG_TEXT_PP(0);
+		text	   *txt = PG_GETARG_TEXT_PP(1);
 		Oid			prsId;
 
 		funcctx = SRF_FIRSTCALL_INIT();
@@ -289,9 +289,9 @@ ts_parse_byname(PG_FUNCTION_ARGS)
 Datum
 ts_headline_byid_opt(PG_FUNCTION_ARGS)
 {
-	text	   *in = PG_GETARG_TEXT_P(1);
+	text	   *in = PG_GETARG_TEXT_PP(1);
 	TSQuery		query = PG_GETARG_TSQUERY(2);
-	text	   *opt = (PG_NARGS() > 3 && PG_GETARG_POINTER(3)) ? PG_GETARG_TEXT_P(3) : NULL;
+	text	   *opt = (PG_NARGS() > 3 && PG_GETARG_POINTER(3)) ? PG_GETARG_TEXT_PP(3) : NULL;
 	HeadlineParsedText prs;
 	List	   *prsoptions;
 	text	   *out;
@@ -310,7 +310,8 @@ ts_headline_byid_opt(PG_FUNCTION_ARGS)
 	prs.lenwords = 32;
 	prs.words = (HeadlineWordEntry *) palloc(sizeof(HeadlineWordEntry) * prs.lenwords);
 
-	hlparsetext(cfg->cfgId, &prs, query, VARDATA(in), VARSIZE(in) - VARHDRSZ);
+	hlparsetext(cfg->cfgId, &prs, query,
+				VARDATA_ANY(in), VARSIZE_ANY_EXHDR(in));
 
 	if (opt)
 		prsoptions = deserialize_deflist(PointerGetDatum(opt));

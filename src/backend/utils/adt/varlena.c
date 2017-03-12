@@ -2662,7 +2662,7 @@ bytea_catenate(bytea *t1, bytea *t2)
 }
 
 #define PG_STR_GET_BYTEA(str_) \
-	DatumGetByteaP(DirectFunctionCall1(byteain, CStringGetDatum(str_)))
+	DatumGetByteaPP(DirectFunctionCall1(byteain, CStringGetDatum(str_)))
 
 /*
  * bytea_substr()
@@ -2934,25 +2934,18 @@ byteaGetBit(PG_FUNCTION_ARGS)
 Datum
 byteaSetByte(PG_FUNCTION_ARGS)
 {
-	bytea	   *v = PG_GETARG_BYTEA_P(0);
+	bytea	   *res = PG_GETARG_BYTEA_P_COPY(0);
 	int32		n = PG_GETARG_INT32(1);
 	int32		newByte = PG_GETARG_INT32(2);
 	int			len;
-	bytea	   *res;
 
-	len = VARSIZE(v) - VARHDRSZ;
+	len = VARSIZE(res) - VARHDRSZ;
 
 	if (n < 0 || n >= len)
 		ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 				 errmsg("index %d out of valid range, 0..%d",
 						n, len - 1)));
-
-	/*
-	 * Make a copy of the original varlena.
-	 */
-	res = (bytea *) palloc(VARSIZE(v));
-	memcpy((char *) res, (char *) v, VARSIZE(v));
 
 	/*
 	 * Now set the byte.
@@ -2973,17 +2966,16 @@ byteaSetByte(PG_FUNCTION_ARGS)
 Datum
 byteaSetBit(PG_FUNCTION_ARGS)
 {
-	bytea	   *v = PG_GETARG_BYTEA_P(0);
+	bytea	   *res = PG_GETARG_BYTEA_P_COPY(0);
 	int32		n = PG_GETARG_INT32(1);
 	int32		newBit = PG_GETARG_INT32(2);
-	bytea	   *res;
 	int			len;
 	int			oldByte,
 				newByte;
 	int			byteNo,
 				bitNo;
 
-	len = VARSIZE(v) - VARHDRSZ;
+	len = VARSIZE(res) - VARHDRSZ;
 
 	if (n < 0 || n >= len * 8)
 		ereport(ERROR,
@@ -3001,12 +2993,6 @@ byteaSetBit(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("new bit must be 0 or 1")));
-
-	/*
-	 * Make a copy of the original varlena.
-	 */
-	res = (bytea *) palloc(VARSIZE(v));
-	memcpy((char *) res, (char *) v, VARSIZE(v));
 
 	/*
 	 * Update the byte.

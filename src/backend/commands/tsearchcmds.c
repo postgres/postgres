@@ -1561,9 +1561,9 @@ serialize_deflist(List *deflist)
 List *
 deserialize_deflist(Datum txt)
 {
-	text	   *in = DatumGetTextP(txt);		/* in case it's toasted */
+	text	   *in = DatumGetTextPP(txt);		/* in case it's toasted */
 	List	   *result = NIL;
-	int			len = VARSIZE(in) - VARHDRSZ;
+	int			len = VARSIZE_ANY_EXHDR(in);
 	char	   *ptr,
 			   *endptr,
 			   *workspace,
@@ -1583,7 +1583,7 @@ deserialize_deflist(Datum txt)
 	ds_state	state = CS_WAITKEY;
 
 	workspace = (char *) palloc(len + 1);		/* certainly enough room */
-	ptr = VARDATA(in);
+	ptr = VARDATA_ANY(in);
 	endptr = ptr + len;
 	for (; ptr < endptr; ptr++)
 	{

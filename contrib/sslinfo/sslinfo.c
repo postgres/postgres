@@ -225,7 +225,7 @@ PG_FUNCTION_INFO_V1(ssl_client_dn_field);
 Datum
 ssl_client_dn_field(PG_FUNCTION_ARGS)
 {
-	text	   *fieldname = PG_GETARG_TEXT_P(0);
+	text	   *fieldname = PG_GETARG_TEXT_PP(0);
 	Datum		result;
 
 	if (!(MyProcPort->peer))
@@ -260,7 +260,7 @@ PG_FUNCTION_INFO_V1(ssl_issuer_field);
 Datum
 ssl_issuer_field(PG_FUNCTION_ARGS)
 {
-	text	   *fieldname = PG_GETARG_TEXT_P(0);
+	text	   *fieldname = PG_GETARG_TEXT_PP(0);
 	Datum		result;
 
 	if (!(MyProcPort->peer))

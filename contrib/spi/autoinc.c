@@ -106,7 +106,7 @@ autoinc(PG_FUNCTION_ARGS)
 			newvals[chnattrs] = Int32GetDatum((int32) DatumGetInt64(newvals[chnattrs]));
 		}
 		newnulls[chnattrs] = false;
-		pfree(DatumGetTextP(seqname));
+		pfree(DatumGetTextPP(seqname));
 		chnattrs++;
 		i++;
 	}

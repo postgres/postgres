@@ -557,8 +557,8 @@ tsvector_delete_str(PG_FUNCTION_ARGS)
 {
 	TSVector	tsin = PG_GETARG_TSVECTOR(0),
 				tsout;
-	text	   *tlexeme = PG_GETARG_TEXT_P(1);
-	char	   *lexeme = VARDATA(tlexeme);
+	text	   *tlexeme = PG_GETARG_TEXT_PP(1);
+	char	   *lexeme = VARDATA_ANY(tlexeme);
 	int			lexeme_len = VARSIZE_ANY_EXHDR(tlexeme),
 				skip_index;
 
@@ -2320,8 +2320,8 @@ ts_stat_sql(MemoryContext persistentContext, text *txt, text *ws)
 	{
 		char	   *buf;
 
-		buf = VARDATA(ws);
-		while (buf - VARDATA(ws) < VARSIZE(ws) - VARHDRSZ)
+		buf = VARDATA_ANY(ws);
+		while (buf - VARDATA_ANY(ws) < VARSIZE_ANY_EXHDR(ws))
 		{
 			if (pg_mblen(buf) == 1)
 			{
@@ -2384,7 +2384,7 @@ ts_stat1(PG_FUNCTION_ARGS)
 	if (SRF_IS_FIRSTCALL())
 	{
 		TSVectorStat *stat;
-		text	   *txt = PG_GETARG_TEXT_P(0);
+		text	   *txt = PG_GETARG_TEXT_PP(0);
 
 		funcctx = SRF_FIRSTCALL_INIT();
 		SPI_connect();
@@ -2409,8 +2409,8 @@ ts_stat2(PG_FUNCTION_ARGS)
 	if (SRF_IS_FIRSTCALL())
 	{
 		TSVectorStat *stat;
-		text	   *txt = PG_GETARG_TEXT_P(0);
-		text	   *ws = PG_GETARG_TEXT_P(1);
+		text	   *txt = PG_GETARG_TEXT_PP(0);
+		text	   *ws = PG_GETARG_TEXT_PP(1);
 
 		funcctx = SRF_FIRSTCALL_INIT();
 		SPI_connect();
@@ -2570,9 +2570,9 @@ tsvector_update_trigger(PG_FUNCTION_ARGS, bool config_column)
 		if (isnull)
 			continue;
 
-		txt = DatumGetTextP(datum);
+		txt = DatumGetTextPP(datum);
 
-		parsetext(cfgId, &prs, VARDATA(txt), VARSIZE(txt) - VARHDRSZ);
+		parsetext(cfgId, &prs, VARDATA_ANY(txt), VARSIZE_ANY_EXHDR(txt));
 
 		if (txt != (text *) DatumGetPointer(datum))
 			pfree(txt);

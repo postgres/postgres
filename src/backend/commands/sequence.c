@@ -538,7 +538,7 @@ DeleteSequenceTuple(Oid relid)
 Datum
 nextval(PG_FUNCTION_ARGS)
 {
-	text	   *seqin = PG_GETARG_TEXT_P(0);
+	text	   *seqin = PG_GETARG_TEXT_PP(0);
 	RangeVar   *sequence;
 	Oid			relid;
 

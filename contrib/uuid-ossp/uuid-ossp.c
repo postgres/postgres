@@ -503,13 +503,13 @@ Datum
 uuid_generate_v3(PG_FUNCTION_ARGS)
 {
 	pg_uuid_t  *ns = PG_GETARG_UUID_P(0);
-	text	   *name = PG_GETARG_TEXT_P(1);
+	text	   *name = PG_GETARG_TEXT_PP(1);
 
 #ifdef HAVE_UUID_OSSP
 	return uuid_generate_v35_internal(UUID_MAKE_V3, ns, name);
 #else
 	return uuid_generate_internal(UUID_MAKE_V3, (unsigned char *) ns,
-								  VARDATA(name), VARSIZE(name) - VARHDRSZ);
+								  VARDATA_ANY(name), VARSIZE_ANY_EXHDR(name));
 #endif
 }
 
@@ -525,12 +525,12 @@ Datum
 uuid_generate_v5(PG_FUNCTION_ARGS)
 {
 	pg_uuid_t  *ns = PG_GETARG_UUID_P(0);
-	text	   *name = PG_GETARG_TEXT_P(1);
+	text	   *name = PG_GETARG_TEXT_PP(1);
 
 #ifdef HAVE_UUID_OSSP
 	return uuid_generate_v35_internal(UUID_MAKE_V5, ns, name);
 #else
 	return uuid_generate_internal(UUID_MAKE_V5, (unsigned char *) ns,
-								  VARDATA(name), VARSIZE(name) - VARHDRSZ);
+								  VARDATA_ANY(name), VARSIZE_ANY_EXHDR(name));
 #endif
 }

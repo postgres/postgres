@@ -79,7 +79,7 @@ pg_prewarm(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 (errmsg("prewarm type cannot be null"))));
-	type = PG_GETARG_TEXT_P(1);
+	type = PG_GETARG_TEXT_PP(1);
 	ttype = text_to_cstring(type);
 	if (strcmp(ttype, "prefetch") == 0)
 		ptype = PREWARM_PREFETCH;
@@ -99,7 +99,7 @@ pg_prewarm(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 (errmsg("relation fork cannot be null"))));
-	forkName = PG_GETARG_TEXT_P(2);
+	forkName = PG_GETARG_TEXT_PP(2);
 	forkString = text_to_cstring(forkName);
 	forkNumber = forkname_to_number(forkString);
 

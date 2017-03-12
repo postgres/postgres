@@ -433,7 +433,7 @@ xml_send(PG_FUNCTION_ARGS)
 static void
 appendStringInfoText(StringInfo str, const text *t)
 {
-	appendBinaryStringInfo(str, VARDATA(t), VARSIZE(t) - VARHDRSZ);
+	appendBinaryStringInfo(str, VARDATA_ANY(t), VARSIZE_ANY_EXHDR(t));
 }
 #endif
 
@@ -466,9 +466,9 @@ Datum
 xmlcomment(PG_FUNCTION_ARGS)
 {
 #ifdef USE_LIBXML
-	text	   *arg = PG_GETARG_TEXT_P(0);
-	char	   *argdata = VARDATA(arg);
-	int			len = VARSIZE(arg) - VARHDRSZ;
+	text	   *arg = PG_GETARG_TEXT_PP(0);
+	char	   *argdata = VARDATA_ANY(arg);
+	int			len = VARSIZE_ANY_EXHDR(arg);
 	StringInfoData buf;
 	int			i;
 
@@ -590,7 +590,7 @@ xmlconcat2(PG_FUNCTION_ARGS)
 Datum
 texttoxml(PG_FUNCTION_ARGS)
 {
-	text	   *data = PG_GETARG_TEXT_P(0);
+	text	   *data = PG_GETARG_TEXT_PP(0);
 
 	PG_RETURN_XML_P(xmlparse(data, xmloption, true));
 }
@@ -1402,7 +1402,7 @@ xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
 	volatile xmlParserCtxtPtr ctxt = NULL;
 	volatile xmlDocPtr doc = NULL;
 
-	len = VARSIZE(data) - VARHDRSZ;		/* will be useful later */
+	len = VARSIZE_ANY_EXHDR(data);		/* will be useful later */
 	string = xml_text2xmlChar(data);
 
 	utf8string = pg_do_encoding_conversion(string,
@@ -3876,14 +3876,14 @@ xpath_internal(text *xpath_expr_text, xmltype *data, ArrayType *namespaces,
 
 	datastr = VARDATA(data);
 	len = VARSIZE(data) - VARHDRSZ;
-	xpath_len = VARSIZE(xpath_expr_text) - VARHDRSZ;
+	xpath_len = VARSIZE_ANY_EXHDR(xpath_expr_text);
 	if (xpath_len == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_EXCEPTION),
 				 errmsg("empty XPath expression")));
 
 	string = pg_xmlCharStrndup(datastr, len);
-	xpath_expr = pg_xmlCharStrndup(VARDATA(xpath_expr_text), xpath_len);
+	xpath_expr = pg_xmlCharStrndup(VARDATA_ANY(xpath_expr_text), xpath_len);
 
 	xmlerrcxt = pg_xml_init(PG_XML_STRICTNESS_ALL);
 
@@ -4001,7 +4001,7 @@ Datum
 xpath(PG_FUNCTION_ARGS)
 {
 #ifdef USE_LIBXML
-	text	   *xpath_expr_text = PG_GETARG_TEXT_P(0);
+	text	   *xpath_expr_text = PG_GETARG_TEXT_PP(0);
 	xmltype    *data = PG_GETARG_XML_P(1);
 	ArrayType  *namespaces = PG_GETARG_ARRAYTYPE_P(2);
 	ArrayBuildState *astate;
@@ -4024,7 +4024,7 @@ Datum
 xmlexists(PG_FUNCTION_ARGS)
 {
 #ifdef USE_LIBXML
-	text	   *xpath_expr_text = PG_GETARG_TEXT_P(0);
+	text	   *xpath_expr_text = PG_GETARG_TEXT_PP(0);
 	xmltype    *data = PG_GETARG_XML_P(1);
 	int			res_nitems;
 
@@ -4047,7 +4047,7 @@ Datum
 xpath_exists(PG_FUNCTION_ARGS)
 {
 #ifdef USE_LIBXML
-	text	   *xpath_expr_text = PG_GETARG_TEXT_P(0);
+	text	   *xpath_expr_text = PG_GETARG_TEXT_PP(0);
 	xmltype    *data = PG_GETARG_XML_P(1);
 	ArrayType  *namespaces = PG_GETARG_ARRAYTYPE_P(2);
 	int			res_nitems;
@@ -4097,7 +4097,7 @@ Datum
 xml_is_well_formed(PG_FUNCTION_ARGS)
 {
 #ifdef USE_LIBXML
-	text	   *data = PG_GETARG_TEXT_P(0);
+	text	   *data = PG_GETARG_TEXT_PP(0);
 
 	PG_RETURN_BOOL(wellformed_xml(data, xmloption));
 #else
@@ -4110,7 +4110,7 @@ Datum
 xml_is_well_formed_document(PG_FUNCTION_ARGS)
 {
 #ifdef USE_LIBXML
-	text	   *data = PG_GETARG_TEXT_P(0);
+	text	   *data = PG_GETARG_TEXT_PP(0);
 
 	PG_RETURN_BOOL(wellformed_xml(data, XMLOPTION_DOCUMENT));
 #else
@@ -4123,7 +4123,7 @@ Datum
 xml_is_well_formed_content(PG_FUNCTION_ARGS)
 {
 #ifdef USE_LIBXML
-	text	   *data = PG_GETARG_TEXT_P(0);
+	text	   *data = PG_GETARG_TEXT_PP(0);
 
 	PG_RETURN_BOOL(wellformed_xml(data, XMLOPTION_CONTENT));
 #else

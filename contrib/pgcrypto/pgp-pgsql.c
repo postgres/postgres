@@ -67,9 +67,9 @@ PG_FUNCTION_INFO_V1(pgp_armor_headers);
 static text *
 convert_charset(text *src, int cset_from, int cset_to)
 {
-	int			src_len = VARSIZE(src) - VARHDRSZ;
+	int			src_len = VARSIZE_ANY_EXHDR(src);
 	unsigned char *dst;
-	unsigned char *csrc = (unsigned char *) VARDATA(src);
+	unsigned char *csrc = (unsigned char *) VARDATA_ANY(src);
 	text	   *res;
 
 	dst = pg_do_encoding_conversion(csrc, src_len, cset_from, cset_to);
@@ -109,7 +109,7 @@ string_is_ascii(const char *str)
 static void
 clear_and_pfree(text *p)
 {
-	px_memset(p, 0, VARSIZE(p));
+	px_memset(p, 0, VARSIZE_ANY(p));
 	pfree(p);
 }
 
@@ -356,8 +356,8 @@ parse_args(PGP_Context *ctx, uint8 *args, int arg_len,
 static MBuf *
 create_mbuf_from_vardata(text *data)
 {
-	return mbuf_create_from_data((uint8 *) VARDATA(data),
-								 VARSIZE(data) - VARHDRSZ);
+	return mbuf_create_from_data((uint8 *) VARDATA_ANY(data),
+								 VARSIZE_ANY_EXHDR(data));
 }
 
 static void
@@ -369,8 +369,8 @@ init_work(PGP_Context **ctx_p, int is_text,
 	fill_expect(ex, is_text);
 
 	if (err == 0 && args != NULL)
-		err = parse_args(*ctx_p, (uint8 *) VARDATA(args),
-						 VARSIZE(args) - VARHDRSZ, ex);
+		err = parse_args(*ctx_p, (uint8 *) VARDATA_ANY(args),
+						 VARSIZE_ANY_EXHDR(args), ex);
 
 	if (err)
 		px_THROW_ERROR(err);
@@ -408,7 +408,7 @@ encrypt_internal(int is_pubenc, int is_text,
 	}
 
 	src = create_mbuf_from_vardata(data);
-	dst = mbuf_create(VARSIZE(data) + 128);
+	dst = mbuf_create(VARSIZE_ANY(data) + 128);
 
 	/*
 	 * reserve room for header
@@ -427,8 +427,8 @@ encrypt_internal(int is_pubenc, int is_text,
 		mbuf_free(kbuf);
 	}
 	else
-		err = pgp_set_symkey(ctx, (uint8 *) VARDATA(key),
-							 VARSIZE(key) - VARHDRSZ);
+		err = pgp_set_symkey(ctx, (uint8 *) VARDATA_ANY(key),
+							 VARSIZE_ANY_EXHDR(key));
 
 	/*
 	 * encrypt
@@ -485,9 +485,9 @@ decrypt_internal(int is_pubenc, int need_text, text *data,
 
 	init_work(&ctx, need_text, args, &ex);
 
-	src = mbuf_create_from_data((uint8 *) VARDATA(data),
-								VARSIZE(data) - VARHDRSZ);
-	dst = mbuf_create(VARSIZE(data) + 2048);
+	src = mbuf_create_from_data((uint8 *) VARDATA_ANY(data),
+								VARSIZE_ANY_EXHDR(data));
+	dst = mbuf_create(VARSIZE_ANY(data) + 2048);
 
 	/*
 	 * reserve room for header
@@ -505,16 +505,16 @@ decrypt_internal(int is_pubenc, int need_text, text *data,
 
 		if (keypsw)
 		{
-			psw = (uint8 *) VARDATA(keypsw);
-			psw_len = VARSIZE(keypsw) - VARHDRSZ;
+			psw = (uint8 *) VARDATA_ANY(keypsw);
+			psw_len = VARSIZE_ANY_EXHDR(keypsw);
 		}
 		kbuf = create_mbuf_from_vardata(key);
 		err = pgp_set_pubkey(ctx, kbuf, psw, psw_len, 1);
 		mbuf_free(kbuf);
 	}
 	else
-		err = pgp_set_symkey(ctx, (uint8 *) VARDATA(key),
-							 VARSIZE(key) - VARHDRSZ);
+		err = pgp_set_symkey(ctx, (uint8 *) VARDATA_ANY(key),
+							 VARSIZE_ANY_EXHDR(key));
 
 	/* decrypt */
 	if (err >= 0)
@@ -571,10 +571,10 @@ pgp_sym_encrypt_bytea(PG_FUNCTION_ARGS)
 	text	   *arg = NULL;
 	text	   *res;
 
-	data = PG_GETARG_BYTEA_P(0);
-	key = PG_GETARG_BYTEA_P(1);
+	data = PG_GETARG_BYTEA_PP(0);
+	key = PG_GETARG_BYTEA_PP(1);
 	if (PG_NARGS() > 2)
-		arg = PG_GETARG_BYTEA_P(2);
+		arg = PG_GETARG_BYTEA_PP(2);
 
 	res = encrypt_internal(0, 0, data, key, arg);
 
@@ -593,10 +593,10 @@ pgp_sym_encrypt_text(PG_FUNCTION_ARGS)
 	text	   *arg = NULL;
 	text	   *res;
 
-	data = PG_GETARG_BYTEA_P(0);
-	key = PG_GETARG_BYTEA_P(1);
+	data = PG_GETARG_BYTEA_PP(0);
+	key = PG_GETARG_BYTEA_PP(1);
 	if (PG_NARGS() > 2)
-		arg = PG_GETARG_BYTEA_P(2);
+		arg = PG_GETARG_BYTEA_PP(2);
 
 	res = encrypt_internal(0, 1, data, key, arg);
 
@@ -616,10 +616,10 @@ pgp_sym_decrypt_bytea(PG_FUNCTION_ARGS)
 	text	   *arg = NULL;
 	text	   *res;
 
-	data = PG_GETARG_BYTEA_P(0);
-	key = PG_GETARG_BYTEA_P(1);
+	data = PG_GETARG_BYTEA_PP(0);
+	key = PG_GETARG_BYTEA_PP(1);
 	if (PG_NARGS() > 2)
-		arg = PG_GETARG_BYTEA_P(2);
+		arg = PG_GETARG_BYTEA_PP(2);
 
 	res = decrypt_internal(0, 0, data, key, NULL, arg);
 
@@ -638,10 +638,10 @@ pgp_sym_decrypt_text(PG_FUNCTION_ARGS)
 	text	   *arg = NULL;
 	text	   *res;
 
-	data = PG_GETARG_BYTEA_P(0);
-	key = PG_GETARG_BYTEA_P(1);
+	data = PG_GETARG_BYTEA_PP(0);
+	key = PG_GETARG_BYTEA_PP(1);
 	if (PG_NARGS() > 2)
-		arg = PG_GETARG_BYTEA_P(2);
+		arg = PG_GETARG_BYTEA_PP(2);
 
 	res = decrypt_internal(0, 1, data, key, NULL, arg);
 
@@ -664,10 +664,10 @@ pgp_pub_encrypt_bytea(PG_FUNCTION_ARGS)
 	text	   *arg = NULL;
 	text	   *res;
 
-	data = PG_GETARG_BYTEA_P(0);
-	key = PG_GETARG_BYTEA_P(1);
+	data = PG_GETARG_BYTEA_PP(0);
+	key = PG_GETARG_BYTEA_PP(1);
 	if (PG_NARGS() > 2)
-		arg = PG_GETARG_BYTEA_P(2);
+		arg = PG_GETARG_BYTEA_PP(2);
 
 	res = encrypt_internal(1, 0, data, key, arg);
 
@@ -686,10 +686,10 @@ pgp_pub_encrypt_text(PG_FUNCTION_ARGS)
 	text	   *arg = NULL;
 	text	   *res;
 
-	data = PG_GETARG_BYTEA_P(0);
-	key = PG_GETARG_BYTEA_P(1);
+	data = PG_GETARG_BYTEA_PP(0);
+	key = PG_GETARG_BYTEA_PP(1);
 	if (PG_NARGS() > 2)
-		arg = PG_GETARG_BYTEA_P(2);
+		arg = PG_GETARG_BYTEA_PP(2);
 
 	res = encrypt_internal(1, 1, data, key, arg);
 
@@ -710,12 +710,12 @@ pgp_pub_decrypt_bytea(PG_FUNCTION_ARGS)
 			   *arg = NULL;
 	text	   *res;
 
-	data = PG_GETARG_BYTEA_P(0);
-	key = PG_GETARG_BYTEA_P(1);
+	data = PG_GETARG_BYTEA_PP(0);
+	key = PG_GETARG_BYTEA_PP(1);
 	if (PG_NARGS() > 2)
-		psw = PG_GETARG_BYTEA_P(2);
+		psw = PG_GETARG_BYTEA_PP(2);
 	if (PG_NARGS() > 3)
-		arg = PG_GETARG_BYTEA_P(3);
+		arg = PG_GETARG_BYTEA_PP(3);
 
 	res = decrypt_internal(1, 0, data, key, psw, arg);
 
@@ -737,12 +737,12 @@ pgp_pub_decrypt_text(PG_FUNCTION_ARGS)
 			   *arg = NULL;
 	text	   *res;
 
-	data = PG_GETARG_BYTEA_P(0);
-	key = PG_GETARG_BYTEA_P(1);
+	data = PG_GETARG_BYTEA_PP(0);
+	key = PG_GETARG_BYTEA_PP(1);
 	if (PG_NARGS() > 2)
-		psw = PG_GETARG_BYTEA_P(2);
+		psw = PG_GETARG_BYTEA_PP(2);
 	if (PG_NARGS() > 3)
-		arg = PG_GETARG_BYTEA_P(3);
+		arg = PG_GETARG_BYTEA_PP(3);
 
 	res = decrypt_internal(1, 1, data, key, psw, arg);
 
@@ -865,8 +865,8 @@ pg_armor(PG_FUNCTION_ARGS)
 	char	  **keys = NULL,
 			  **values = NULL;
 
-	data = PG_GETARG_BYTEA_P(0);
-	data_len = VARSIZE(data) - VARHDRSZ;
+	data = PG_GETARG_BYTEA_PP(0);
+	data_len = VARSIZE_ANY_EXHDR(data);
 	if (PG_NARGS() == 3)
 	{
 		num_headers = parse_key_value_arrays(PG_GETARG_ARRAYTYPE_P(1),
@@ -880,7 +880,7 @@ pg_armor(PG_FUNCTION_ARGS)
 
 	initStringInfo(&buf);
 
-	pgp_armor_encode((uint8 *) VARDATA(data), data_len, &buf,
+	pgp_armor_encode((uint8 *) VARDATA_ANY(data), data_len, &buf,
 					 num_headers, keys, values);
 
 	res = palloc(VARHDRSZ + buf.len);
@@ -901,12 +901,12 @@ pg_dearmor(PG_FUNCTION_ARGS)
 	int			ret;
 	StringInfoData buf;
 
-	data = PG_GETARG_TEXT_P(0);
-	data_len = VARSIZE(data) - VARHDRSZ;
+	data = PG_GETARG_TEXT_PP(0);
+	data_len = VARSIZE_ANY_EXHDR(data);
 
 	initStringInfo(&buf);
 
-	ret = pgp_armor_decode((uint8 *) VARDATA(data), data_len, &buf);
+	ret = pgp_armor_decode((uint8 *) VARDATA_ANY(data), data_len, &buf);
 	if (ret < 0)
 		px_THROW_ERROR(ret);
 	res = palloc(VARHDRSZ + buf.len);
@@ -1004,7 +1004,7 @@ pgp_key_id_w(PG_FUNCTION_ARGS)
 	int			res_len;
 	MBuf	   *buf;
 
-	data = PG_GETARG_BYTEA_P(0);
+	data = PG_GETARG_BYTEA_PP(0);
 	buf = create_mbuf_from_vardata(data);
 	res = palloc(VARHDRSZ + 17);
 

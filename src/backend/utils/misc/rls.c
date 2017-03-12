@@ -154,7 +154,7 @@ Datum
 row_security_active_name(PG_FUNCTION_ARGS)
 {
 	/* By qualified name */
-	text	   *tablename = PG_GETARG_TEXT_P(0);
+	text	   *tablename = PG_GETARG_TEXT_PP(0);
 	RangeVar   *tablerel;
 	Oid			tableoid;
 	int			rls_status;

@@ -94,7 +94,7 @@ pgrowlocks(PG_FUNCTION_ARGS)
 		attinmeta = TupleDescGetAttInMetadata(tupdesc);
 		funcctx->attinmeta = attinmeta;
 
-		relname = PG_GETARG_TEXT_P(0);
+		relname = PG_GETARG_TEXT_PP(0);
 		relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
 		rel = heap_openrv(relrv, AccessShareLock);
 

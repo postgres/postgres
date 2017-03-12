@@ -72,7 +72,7 @@ nonexclusive_base_backup_cleanup(int code, Datum arg)
 Datum
 pg_start_backup(PG_FUNCTION_ARGS)
 {
-	text	   *backupid = PG_GETARG_TEXT_P(0);
+	text	   *backupid = PG_GETARG_TEXT_PP(0);
 	bool		fast = PG_GETARG_BOOL(1);
 	bool		exclusive = PG_GETARG_BOOL(2);
 	char	   *backupidstr;
@@ -309,7 +309,7 @@ pg_switch_wal(PG_FUNCTION_ARGS)
 Datum
 pg_create_restore_point(PG_FUNCTION_ARGS)
 {
-	text	   *restore_name = PG_GETARG_TEXT_P(0);
+	text	   *restore_name = PG_GETARG_TEXT_PP(0);
 	char	   *restore_name_str;
 	XLogRecPtr	restorepoint;
 

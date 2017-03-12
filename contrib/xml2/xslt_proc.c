@@ -49,8 +49,8 @@ xslt_process(PG_FUNCTION_ARGS)
 {
 #ifdef USE_LIBXSLT
 
-	text	   *doct = PG_GETARG_TEXT_P(0);
-	text	   *ssheet = PG_GETARG_TEXT_P(1);
+	text	   *doct = PG_GETARG_TEXT_PP(0);
+	text	   *ssheet = PG_GETARG_TEXT_PP(1);
 	text	   *result;
 	text	   *paramstr;
 	const char **params;
@@ -66,7 +66,7 @@ xslt_process(PG_FUNCTION_ARGS)
 
 	if (fcinfo->nargs == 3)
 	{
-		paramstr = PG_GETARG_TEXT_P(2);
+		paramstr = PG_GETARG_TEXT_PP(2);
 		params = parse_params(paramstr);
 	}
 	else
@@ -85,16 +85,16 @@ xslt_process(PG_FUNCTION_ARGS)
 		bool		xslt_sec_prefs_error;
 
 		/* Parse document */
-		doctree = xmlParseMemory((char *) VARDATA(doct),
-								 VARSIZE(doct) - VARHDRSZ);
+		doctree = xmlParseMemory((char *) VARDATA_ANY(doct),
+								 VARSIZE_ANY_EXHDR(doct));
 
 		if (doctree == NULL)
 			xml_ereport(xmlerrcxt, ERROR, ERRCODE_EXTERNAL_ROUTINE_EXCEPTION,
 						"error parsing XML document");
 
 		/* Same for stylesheet */
-		ssdoc = xmlParseMemory((char *) VARDATA(ssheet),
-							   VARSIZE(ssheet) - VARHDRSZ);
+		ssdoc = xmlParseMemory((char *) VARDATA_ANY(ssheet),
+							   VARSIZE_ANY_EXHDR(ssheet));
 
 		if (ssdoc == NULL)
 			xml_ereport(xmlerrcxt, ERROR, ERRCODE_EXTERNAL_ROUTINE_EXCEPTION,

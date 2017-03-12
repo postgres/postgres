@@ -3440,7 +3440,7 @@ ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
 				value = ExecEvalExpr(e, econtext, &isnull);
 				if (isnull)
 					return (Datum) 0;
-				data = DatumGetTextP(value);
+				data = DatumGetTextPP(value);
 
 				e = (ExprState *) lsecond(xmlExpr->args);
 				value = ExecEvalExpr(e, econtext, &isnull);
@@ -3471,7 +3471,7 @@ ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
 					if (isnull)
 						arg = NULL;
 					else
-						arg = DatumGetTextP(value);
+						arg = DatumGetTextPP(value);
 				}
 				else
 				{
@@ -3504,7 +3504,7 @@ ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
 				if (isnull)
 					version = NULL;
 				else
-					version = DatumGetTextP(value);
+					version = DatumGetTextPP(value);
 
 				e = (ExprState *) lthird(xmlExpr->args);
 				value = ExecEvalExpr(e, econtext, &isnull);

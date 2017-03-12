@@ -568,8 +568,9 @@ spg_text_leaf_consistent(PG_FUNCTION_ARGS)
 
 	leafValue = DatumGetTextPP(in->leafDatum);
 
+	/* As above, in->reconstructedValue isn't toasted or short. */
 	if (DatumGetPointer(in->reconstructedValue))
-		reconstrValue = DatumGetTextP(in->reconstructedValue);
+		reconstrValue = (text *) DatumGetPointer(in->reconstructedValue);
 
 	Assert(reconstrValue == NULL ? level == 0 :
 		   VARSIZE_ANY_EXHDR(reconstrValue) == level);

@@ -384,14 +384,14 @@ unaccent_dict(PG_FUNCTION_ARGS)
 		dictOid = PG_GETARG_OID(0);
 		strArg = 1;
 	}
-	str = PG_GETARG_TEXT_P(strArg);
+	str = PG_GETARG_TEXT_PP(strArg);
 
 	dict = lookup_ts_dictionary_cache(dictOid);
 
 	res = (TSLexeme *) DatumGetPointer(FunctionCall4(&(dict->lexize),
 											 PointerGetDatum(dict->dictData),
-											   PointerGetDatum(VARDATA(str)),
-									  Int32GetDatum(VARSIZE(str) - VARHDRSZ),
+										   PointerGetDatum(VARDATA_ANY(str)),
+									   Int32GetDatum(VARSIZE_ANY_EXHDR(str)),
 													 PointerGetDatum(NULL)));
 
 	PG_FREE_IF_COPY(str, strArg);

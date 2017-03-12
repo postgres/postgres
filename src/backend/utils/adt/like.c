@@ -175,14 +175,14 @@ Generic_Text_IC_like(text *str, text *pat, Oid collation)
 	if (pg_database_encoding_max_length() > 1)
 	{
 		/* lower's result is never packed, so OK to use old macros here */
-		pat = DatumGetTextP(DirectFunctionCall1Coll(lower, collation,
-													PointerGetDatum(pat)));
-		p = VARDATA(pat);
-		plen = (VARSIZE(pat) - VARHDRSZ);
-		str = DatumGetTextP(DirectFunctionCall1Coll(lower, collation,
-													PointerGetDatum(str)));
-		s = VARDATA(str);
-		slen = (VARSIZE(str) - VARHDRSZ);
+		pat = DatumGetTextPP(DirectFunctionCall1Coll(lower, collation,
+													 PointerGetDatum(pat)));
+		p = VARDATA_ANY(pat);
+		plen = VARSIZE_ANY_EXHDR(pat);
+		str = DatumGetTextPP(DirectFunctionCall1Coll(lower, collation,
+													 PointerGetDatum(str)));
+		s = VARDATA_ANY(str);
+		slen = VARSIZE_ANY_EXHDR(str);
 		if (GetDatabaseEncoding() == PG_UTF8)
 			return UTF8_MatchText(s, slen, p, plen, 0, true);
 		else
@@ -365,8 +365,8 @@ nameiclike(PG_FUNCTION_ARGS)
 	bool		result;
 	text	   *strtext;
 
-	strtext = DatumGetTextP(DirectFunctionCall1(name_text,
-												NameGetDatum(str)));
+	strtext = DatumGetTextPP(DirectFunctionCall1(name_text,
+												 NameGetDatum(str)));
 	result = (Generic_Text_IC_like(strtext, pat, PG_GET_COLLATION()) == LIKE_TRUE);
 
 	PG_RETURN_BOOL(result);
@@ -380,8 +380,8 @@ nameicnlike(PG_FUNCTION_ARGS)
 	bool		result;
 	text	   *strtext;
 
-	strtext = DatumGetTextP(DirectFunctionCall1(name_text,
-												NameGetDatum(str)));
+	strtext = DatumGetTextPP(DirectFunctionCall1(name_text,
+												 NameGetDatum(str)));
 	result = (Generic_Text_IC_like(strtext, pat, PG_GET_COLLATION()) != LIKE_TRUE);
 
 	PG_RETURN_BOOL(result);

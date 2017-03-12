@@ -404,7 +404,7 @@ range_constructor3(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_DATA_EXCEPTION),
 			   errmsg("range constructor flags argument must not be null")));
 
-	flags = range_parse_flags(text_to_cstring(PG_GETARG_TEXT_P(2)));
+	flags = range_parse_flags(text_to_cstring(PG_GETARG_TEXT_PP(2)));
 
 	lower.val = PG_ARGISNULL(0) ? (Datum) 0 : arg1;
 	lower.infinite = PG_ARGISNULL(0);

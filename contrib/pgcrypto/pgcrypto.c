@@ -62,7 +62,7 @@ pg_digest(PG_FUNCTION_ARGS)
 	PX_MD	   *md;
 	bytea	   *res;
 
-	name = PG_GETARG_TEXT_P(1);
+	name = PG_GETARG_TEXT_PP(1);
 
 	/* will give error if fails */
 	md = find_provider(name, (PFN) px_find_digest, "Digest", 0);
@@ -72,10 +72,10 @@ pg_digest(PG_FUNCTION_ARGS)
 	res = (text *) palloc(hlen + VARHDRSZ);
 	SET_VARSIZE(res, hlen + VARHDRSZ);
 
-	arg = PG_GETARG_BYTEA_P(0);
-	len = VARSIZE(arg) - VARHDRSZ;
+	arg = PG_GETARG_BYTEA_PP(0);
+	len = VARSIZE_ANY_EXHDR(arg);
 
-	px_md_update(md, (uint8 *) VARDATA(arg), len);
+	px_md_update(md, (uint8 *) VARDATA_ANY(arg), len);
 	px_md_finish(md, (uint8 *) VARDATA(res));
 	px_md_free(md);
 
@@ -100,7 +100,7 @@ pg_hmac(PG_FUNCTION_ARGS)
 	PX_HMAC    *h;
 	bytea	   *res;
 
-	name = PG_GETARG_TEXT_P(2);
+	name = PG_GETARG_TEXT_PP(2);
 
 	/* will give error if fails */
 	h = find_provider(name, (PFN) px_find_hmac, "HMAC", 0);
@@ -110,13 +110,13 @@ pg_hmac(PG_FUNCTION_ARGS)
 	res = (text *) palloc(hlen + VARHDRSZ);
 	SET_VARSIZE(res, hlen + VARHDRSZ);
 
-	arg = PG_GETARG_BYTEA_P(0);
-	key = PG_GETARG_BYTEA_P(1);
-	len = VARSIZE(arg) - VARHDRSZ;
-	klen = VARSIZE(key) - VARHDRSZ;
+	arg = PG_GETARG_BYTEA_PP(0);
+	key = PG_GETARG_BYTEA_PP(1);
+	len = VARSIZE_ANY_EXHDR(arg);
+	klen = VARSIZE_ANY_EXHDR(key);
 
-	px_hmac_init(h, (uint8 *) VARDATA(key), klen);
-	px_hmac_update(h, (uint8 *) VARDATA(arg), len);
+	px_hmac_init(h, (uint8 *) VARDATA_ANY(key), klen);
+	px_hmac_update(h, (uint8 *) VARDATA_ANY(arg), len);
 	px_hmac_finish(h, (uint8 *) VARDATA(res));
 	px_hmac_free(h);
 
@@ -228,20 +228,20 @@ pg_encrypt(PG_FUNCTION_ARGS)
 				klen,
 				rlen;
 
-	type = PG_GETARG_TEXT_P(2);
+	type = PG_GETARG_TEXT_PP(2);
 	c = find_provider(type, (PFN) px_find_combo, "Cipher", 0);
 
-	data = PG_GETARG_BYTEA_P(0);
-	key = PG_GETARG_BYTEA_P(1);
-	dlen = VARSIZE(data) - VARHDRSZ;
-	klen = VARSIZE(key) - VARHDRSZ;
+	data = PG_GETARG_BYTEA_PP(0);
+	key = PG_GETARG_BYTEA_PP(1);
+	dlen = VARSIZE_ANY_EXHDR(data);
+	klen = VARSIZE_ANY_EXHDR(key);
 
 	rlen = px_combo_encrypt_len(c, dlen);
 	res = palloc(VARHDRSZ + rlen);
 
-	err = px_combo_init(c, (uint8 *) VARDATA(key), klen, NULL, 0);
+	err = px_combo_init(c, (uint8 *) VARDATA_ANY(key), klen, NULL, 0);
 	if (!err)
-		err = px_combo_encrypt(c, (uint8 *) VARDATA(data), dlen,
+		err = px_combo_encrypt(c, (uint8 *) VARDATA_ANY(data), dlen,
 							   (uint8 *) VARDATA(res), &rlen);
 	px_combo_free(c);
 
@@ -277,20 +277,20 @@ pg_decrypt(PG_FUNCTION_ARGS)
 				klen,
 				rlen;
 
-	type = PG_GETARG_TEXT_P(2);
+	type = PG_GETARG_TEXT_PP(2);
 	c = find_provider(type, (PFN) px_find_combo, "Cipher", 0);
 
-	data = PG_GETARG_BYTEA_P(0);
-	key = PG_GETARG_BYTEA_P(1);
-	dlen = VARSIZE(data) - VARHDRSZ;
-	klen = VARSIZE(key) - VARHDRSZ;
+	data = PG_GETARG_BYTEA_PP(0);
+	key = PG_GETARG_BYTEA_PP(1);
+	dlen = VARSIZE_ANY_EXHDR(data);
+	klen = VARSIZE_ANY_EXHDR(key);
 
 	rlen = px_combo_decrypt_len(c, dlen);
 	res = palloc(VARHDRSZ + rlen);
 
-	err = px_combo_init(c, (uint8 *) VARDATA(key), klen, NULL, 0);
+	err = px_combo_init(c, (uint8 *) VARDATA_ANY(key), klen, NULL, 0);
 	if (!err)
-		err = px_combo_decrypt(c, (uint8 *) VARDATA(data), dlen,
+		err = px_combo_decrypt(c, (uint8 *) VARDATA_ANY(data), dlen,
 							   (uint8 *) VARDATA(res), &rlen);
 
 	px_combo_free(c);
@@ -327,23 +327,23 @@ pg_encrypt_iv(PG_FUNCTION_ARGS)
 				ivlen,
 				rlen;
 
-	type = PG_GETARG_TEXT_P(3);
+	type = PG_GETARG_TEXT_PP(3);
 	c = find_provider(type, (PFN) px_find_combo, "Cipher", 0);
 
-	data = PG_GETARG_BYTEA_P(0);
-	key = PG_GETARG_BYTEA_P(1);
-	iv = PG_GETARG_BYTEA_P(2);
-	dlen = VARSIZE(data) - VARHDRSZ;
-	klen = VARSIZE(key) - VARHDRSZ;
-	ivlen = VARSIZE(iv) - VARHDRSZ;
+	data = PG_GETARG_BYTEA_PP(0);
+	key = PG_GETARG_BYTEA_PP(1);
+	iv = PG_GETARG_BYTEA_PP(2);
+	dlen = VARSIZE_ANY_EXHDR(data);
+	klen = VARSIZE_ANY_EXHDR(key);
+	ivlen = VARSIZE_ANY_EXHDR(iv);
 
 	rlen = px_combo_encrypt_len(c, dlen);
 	res = palloc(VARHDRSZ + rlen);
 
-	err = px_combo_init(c, (uint8 *) VARDATA(key), klen,
-						(uint8 *) VARDATA(iv), ivlen);
+	err = px_combo_init(c, (uint8 *) VARDATA_ANY(key), klen,
+						(uint8 *) VARDATA_ANY(iv), ivlen);
 	if (!err)
-		err = px_combo_encrypt(c, (uint8 *) VARDATA(data), dlen,
+		err = px_combo_encrypt(c, (uint8 *) VARDATA_ANY(data), dlen,
 							   (uint8 *) VARDATA(res), &rlen);
 
 	px_combo_free(c);
@@ -381,23 +381,23 @@ pg_decrypt_iv(PG_FUNCTION_ARGS)
 				rlen,
 				ivlen;
 
-	type = PG_GETARG_TEXT_P(3);
+	type = PG_GETARG_TEXT_PP(3);
 	c = find_provider(type, (PFN) px_find_combo, "Cipher", 0);
 
-	data = PG_GETARG_BYTEA_P(0);
-	key = PG_GETARG_BYTEA_P(1);
-	iv = PG_GETARG_BYTEA_P(2);
-	dlen = VARSIZE(data) - VARHDRSZ;
-	klen = VARSIZE(key) - VARHDRSZ;
-	ivlen = VARSIZE(iv) - VARHDRSZ;
+	data = PG_GETARG_BYTEA_PP(0);
+	key = PG_GETARG_BYTEA_PP(1);
+	iv = PG_GETARG_BYTEA_PP(2);
+	dlen = VARSIZE_ANY_EXHDR(data);
+	klen = VARSIZE_ANY_EXHDR(key);
+	ivlen = VARSIZE_ANY_EXHDR(iv);
 
 	rlen = px_combo_decrypt_len(c, dlen);
 	res = palloc(VARHDRSZ + rlen);
 
-	err = px_combo_init(c, (uint8 *) VARDATA(key), klen,
-						(uint8 *) VARDATA(iv), ivlen);
+	err = px_combo_init(c, (uint8 *) VARDATA_ANY(key), klen,
+						(uint8 *) VARDATA_ANY(iv), ivlen);
 	if (!err)
-		err = px_combo_decrypt(c, (uint8 *) VARDATA(data), dlen,
+		err = px_combo_decrypt(c, (uint8 *) VARDATA_ANY(data), dlen,
 							   (uint8 *) VARDATA(res), &rlen);
 
 	px_combo_free(c);
@@ -480,8 +480,8 @@ find_provider(text *name,
 	char	   *buf;
 	int			err;
 
-	buf = downcase_truncate_identifier(VARDATA(name),
-									   VARSIZE(name) - VARHDRSZ,
+	buf = downcase_truncate_identifier(VARDATA_ANY(name),
+									   VARSIZE_ANY_EXHDR(name),
 									   false);
 
 	err = provider_lookup(buf, &res);

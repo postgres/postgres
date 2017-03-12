@@ -2317,7 +2317,7 @@ Datum
 pg_extension_config_dump(PG_FUNCTION_ARGS)
 {
 	Oid			tableoid = PG_GETARG_OID(0);
-	text	   *wherecond = PG_GETARG_TEXT_P(1);
+	text	   *wherecond = PG_GETARG_TEXT_PP(1);
 	char	   *tablename;
 	Relation	extRel;
 	ScanKeyData key[1];

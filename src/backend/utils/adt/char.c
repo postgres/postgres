@@ -175,7 +175,7 @@ i4tochar(PG_FUNCTION_ARGS)
 Datum
 text_char(PG_FUNCTION_ARGS)
 {
-	text	   *arg1 = PG_GETARG_TEXT_P(0);
+	text	   *arg1 = PG_GETARG_TEXT_PP(0);
 	char		result;
 
 	/*
@@ -183,8 +183,8 @@ text_char(PG_FUNCTION_ARGS)
 	 * If the input is longer than one character, the excess data is silently
 	 * discarded.
 	 */
-	if (VARSIZE(arg1) > VARHDRSZ)
-		result = *(VARDATA(arg1));
+	if (VARSIZE_ANY_EXHDR(arg1) > 0)
+		result = *(VARDATA_ANY(arg1));
 	else
 		result = '\0';
 

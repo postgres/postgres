@@ -299,8 +299,8 @@ json_recv(PG_FUNCTION_ARGS)
 JsonLexContext *
 makeJsonLexContext(text *json, bool need_escapes)
 {
-	return makeJsonLexContextCstringLen(VARDATA(json),
-										VARSIZE(json) - VARHDRSZ,
+	return makeJsonLexContextCstringLen(VARDATA_ANY(json),
+										VARSIZE_ANY_EXHDR(json),
 										need_escapes);
 }
 
@@ -1570,7 +1570,7 @@ datum_to_json(Datum val, bool is_null, StringInfo result,
 			break;
 		case JSONTYPE_CAST:
 			/* outfuncoid refers to a cast function, not an output function */
-			jsontext = DatumGetTextP(OidFunctionCall1(outfuncoid, val));
+			jsontext = DatumGetTextPP(OidFunctionCall1(outfuncoid, val));
 			outputstr = text_to_cstring(jsontext);
 			appendStringInfoString(result, outputstr);
 			pfree(outputstr);
@@ -2492,7 +2492,7 @@ json_typeof(PG_FUNCTION_ARGS)
 	JsonTokenType tok;
 	char	   *type;
 
-	json = PG_GETARG_TEXT_P(0);
+	json = PG_GETARG_TEXT_PP(0);
 	lex = makeJsonLexContext(json, false);
 
 	/* Lex exactly one token from the input and check its type. */

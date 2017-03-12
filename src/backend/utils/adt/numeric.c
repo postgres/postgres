@@ -3601,7 +3601,7 @@ numeric_avg_serialize(PG_FUNCTION_ARGS)
 
 	temp = DirectFunctionCall1(numeric_send,
 							   NumericGetDatum(make_result(&tmp_var)));
-	sumX = DatumGetByteaP(temp);
+	sumX = DatumGetByteaPP(temp);
 	free_var(&tmp_var);
 
 	pq_begintypsend(&buf);
@@ -3610,7 +3610,7 @@ numeric_avg_serialize(PG_FUNCTION_ARGS)
 	pq_sendint64(&buf, state->N);
 
 	/* sumX */
-	pq_sendbytes(&buf, VARDATA(sumX), VARSIZE(sumX) - VARHDRSZ);
+	pq_sendbytes(&buf, VARDATA_ANY(sumX), VARSIZE_ANY_EXHDR(sumX));
 
 	/* maxScale */
 	pq_sendint(&buf, state->maxScale, 4);
@@ -3643,14 +3643,15 @@ numeric_avg_deserialize(PG_FUNCTION_ARGS)
 	if (!AggCheckCallContext(fcinfo, NULL))
 		elog(ERROR, "aggregate function called in non-aggregate context");
 
-	sstate = PG_GETARG_BYTEA_P(0);
+	sstate = PG_GETARG_BYTEA_PP(0);
 
 	/*
 	 * Copy the bytea into a StringInfo so that we can "receive" it using the
 	 * standard recv-function infrastructure.
 	 */
 	initStringInfo(&buf);
-	appendBinaryStringInfo(&buf, VARDATA(sstate), VARSIZE(sstate) - VARHDRSZ);
+	appendBinaryStringInfo(&buf,
+						   VARDATA_ANY(sstate), VARSIZE_ANY_EXHDR(sstate));
 
 	result = makeNumericAggStateCurrentContext(false);
 
@@ -3713,12 +3714,12 @@ numeric_serialize(PG_FUNCTION_ARGS)
 	accum_sum_final(&state->sumX, &tmp_var);
 	temp = DirectFunctionCall1(numeric_send,
 							   NumericGetDatum(make_result(&tmp_var)));
-	sumX = DatumGetByteaP(temp);
+	sumX = DatumGetByteaPP(temp);
 
 	accum_sum_final(&state->sumX2, &tmp_var);
 	temp = DirectFunctionCall1(numeric_send,
 							   NumericGetDatum(make_result(&tmp_var)));
-	sumX2 = DatumGetByteaP(temp);
+	sumX2 = DatumGetByteaPP(temp);
 
 	free_var(&tmp_var);
 
@@ -3728,10 +3729,10 @@ numeric_serialize(PG_FUNCTION_ARGS)
 	pq_sendint64(&buf, state->N);
 
 	/* sumX */
-	pq_sendbytes(&buf, VARDATA(sumX), VARSIZE(sumX) - VARHDRSZ);
+	pq_sendbytes(&buf, VARDATA_ANY(sumX), VARSIZE_ANY_EXHDR(sumX));
 
 	/* sumX2 */
-	pq_sendbytes(&buf, VARDATA(sumX2), VARSIZE(sumX2) - VARHDRSZ);
+	pq_sendbytes(&buf, VARDATA_ANY(sumX2), VARSIZE_ANY_EXHDR(sumX2));
 
 	/* maxScale */
 	pq_sendint(&buf, state->maxScale, 4);
@@ -3765,14 +3766,15 @@ numeric_deserialize(PG_FUNCTION_ARGS)
 	if (!AggCheckCallContext(fcinfo, NULL))
 		elog(ERROR, "aggregate function called in non-aggregate context");
 
-	sstate = PG_GETARG_BYTEA_P(0);
+	sstate = PG_GETARG_BYTEA_PP(0);
 
 	/*
 	 * Copy the bytea into a StringInfo so that we can "receive" it using the
 	 * standard recv-function infrastructure.
 	 */
 	initStringInfo(&buf);
-	appendBinaryStringInfo(&buf, VARDATA(sstate), VARSIZE(sstate) - VARHDRSZ);
+	appendBinaryStringInfo(&buf,
+						   VARDATA_ANY(sstate), VARSIZE_ANY_EXHDR(sstate));
 
 	result = makeNumericAggStateCurrentContext(false);
 
@@ -4114,7 +4116,7 @@ numeric_poly_serialize(PG_FUNCTION_ARGS)
 #endif
 		temp = DirectFunctionCall1(numeric_send,
 								   NumericGetDatum(make_result(&num)));
-		sumX = DatumGetByteaP(temp);
+		sumX = DatumGetByteaPP(temp);
 
 #ifdef HAVE_INT128
 		int128_to_numericvar(state->sumX2, &num);
@@ -4123,7 +4125,7 @@ numeric_poly_serialize(PG_FUNCTION_ARGS)
 #endif
 		temp = DirectFunctionCall1(numeric_send,
 								   NumericGetDatum(make_result(&num)));
-		sumX2 = DatumGetByteaP(temp);
+		sumX2 = DatumGetByteaPP(temp);
 
 		free_var(&num);
 	}
@@ -4134,10 +4136,10 @@ numeric_poly_serialize(PG_FUNCTION_ARGS)
 	pq_sendint64(&buf, state->N);
 
 	/* sumX */
-	pq_sendbytes(&buf, VARDATA(sumX), VARSIZE(sumX) - VARHDRSZ);
+	pq_sendbytes(&buf, VARDATA_ANY(sumX), VARSIZE_ANY_EXHDR(sumX));
 
 	/* sumX2 */
-	pq_sendbytes(&buf, VARDATA(sumX2), VARSIZE(sumX2) - VARHDRSZ);
+	pq_sendbytes(&buf, VARDATA_ANY(sumX2), VARSIZE_ANY_EXHDR(sumX2));
 
 	result = pq_endtypsend(&buf);
 
@@ -4163,14 +4165,15 @@ numeric_poly_deserialize(PG_FUNCTION_ARGS)
 	if (!AggCheckCallContext(fcinfo, NULL))
 		elog(ERROR, "aggregate function called in non-aggregate context");
 
-	sstate = PG_GETARG_BYTEA_P(0);
+	sstate = PG_GETARG_BYTEA_PP(0);
 
 	/*
 	 * Copy the bytea into a StringInfo so that we can "receive" it using the
 	 * standard recv-function infrastructure.
 	 */
 	initStringInfo(&buf);
-	appendBinaryStringInfo(&buf, VARDATA(sstate), VARSIZE(sstate) - VARHDRSZ);
+	appendBinaryStringInfo(&buf,
+						   VARDATA_ANY(sstate), VARSIZE_ANY_EXHDR(sstate));
 
 	result = makePolyNumAggStateCurrentContext(false);
 
@@ -4338,7 +4341,7 @@ int8_avg_serialize(PG_FUNCTION_ARGS)
 #endif
 		temp = DirectFunctionCall1(numeric_send,
 								   NumericGetDatum(make_result(&num)));
-		sumX = DatumGetByteaP(temp);
+		sumX = DatumGetByteaPP(temp);
 
 		free_var(&num);
 	}
@@ -4349,7 +4352,7 @@ int8_avg_serialize(PG_FUNCTION_ARGS)
 	pq_sendint64(&buf, state->N);
 
 	/* sumX */
-	pq_sendbytes(&buf, VARDATA(sumX), VARSIZE(sumX) - VARHDRSZ);
+	pq_sendbytes(&buf, VARDATA_ANY(sumX), VARSIZE_ANY_EXHDR(sumX));
 
 	result = pq_endtypsend(&buf);
 
@@ -4372,14 +4375,15 @@ int8_avg_deserialize(PG_FUNCTION_ARGS)
 	if (!AggCheckCallContext(fcinfo, NULL))
 		elog(ERROR, "aggregate function called in non-aggregate context");
 
-	sstate = PG_GETARG_BYTEA_P(0);
+	sstate = PG_GETARG_BYTEA_PP(0);
 
 	/*
 	 * Copy the bytea into a StringInfo so that we can "receive" it using the
 	 * standard recv-function infrastructure.
 	 */
 	initStringInfo(&buf);
-	appendBinaryStringInfo(&buf, VARDATA(sstate), VARSIZE(sstate) - VARHDRSZ);
+	appendBinaryStringInfo(&buf,
+						   VARDATA_ANY(sstate), VARSIZE_ANY_EXHDR(sstate));
 
 	result = makePolyNumAggStateCurrentContext(false);
 

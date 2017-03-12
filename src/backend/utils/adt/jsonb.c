@@ -857,7 +857,7 @@ datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
 					/* parse the json right into the existing result object */
 					JsonLexContext *lex;
 					JsonSemAction sem;
-					text	   *json = DatumGetTextP(val);
+					text	   *json = DatumGetTextPP(val);
 
 					lex = makeJsonLexContext(json, true);
 

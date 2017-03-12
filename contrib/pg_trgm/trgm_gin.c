@@ -35,7 +35,7 @@ gin_extract_trgm(PG_FUNCTION_ARGS)
 Datum
 gin_extract_value_trgm(PG_FUNCTION_ARGS)
 {
-	text	   *val = (text *) PG_GETARG_TEXT_P(0);
+	text	   *val = (text *) PG_GETARG_TEXT_PP(0);
 	int32	   *nentries = (int32 *) PG_GETARG_POINTER(1);
 	Datum	   *entries = NULL;
 	TRGM	   *trg;
@@ -43,7 +43,7 @@ gin_extract_value_trgm(PG_FUNCTION_ARGS)
 
 	*nentries = 0;
 
-	trg = generate_trgm(VARDATA(val), VARSIZE(val) - VARHDRSZ);
+	trg = generate_trgm(VARDATA_ANY(val), VARSIZE_ANY_EXHDR(val));
 	trglen = ARRNELEM(trg);
 
 	if (trglen > 0)
@@ -70,7 +70,7 @@ gin_extract_value_trgm(PG_FUNCTION_ARGS)
 Datum
 gin_extract_query_trgm(PG_FUNCTION_ARGS)
 {
-	text	   *val = (text *) PG_GETARG_TEXT_P(0);
+	text	   *val = (text *) PG_GETARG_TEXT_PP(0);
 	int32	   *nentries = (int32 *) PG_GETARG_POINTER(1);
 	StrategyNumber strategy = PG_GETARG_UINT16(2);
 
@@ -90,7 +90,7 @@ gin_extract_query_trgm(PG_FUNCTION_ARGS)
 	{
 		case SimilarityStrategyNumber:
 		case WordSimilarityStrategyNumber:
-			trg = generate_trgm(VARDATA(val), VARSIZE(val) - VARHDRSZ);
+			trg = generate_trgm(VARDATA_ANY(val), VARSIZE_ANY_EXHDR(val));
 			break;
 		case ILikeStrategyNumber:
 #ifndef IGNORECASE
@@ -103,7 +103,8 @@ gin_extract_query_trgm(PG_FUNCTION_ARGS)
 			 * For wildcard search we extract all the trigrams that every
 			 * potentially-matching string must include.
 			 */
-			trg = generate_wildcard_trgm(VARDATA(val), VARSIZE(val) - VARHDRSZ);
+			trg = generate_wildcard_trgm(VARDATA_ANY(val),
+										 VARSIZE_ANY_EXHDR(val));
 			break;
 		case RegExpICaseStrategyNumber:
 #ifndef IGNORECASE
@@ -170,7 +171,7 @@ gin_trgm_consistent(PG_FUNCTION_ARGS)
 	bool	   *check = (bool *) PG_GETARG_POINTER(0);
 	StrategyNumber strategy = PG_GETARG_UINT16(1);
 
-	/* text    *query = PG_GETARG_TEXT_P(2); */
+	/* text    *query = PG_GETARG_TEXT_PP(2); */
 	int32		nkeys = PG_GETARG_INT32(3);
 	Pointer    *extra_data = (Pointer *) PG_GETARG_POINTER(4);
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(5);
@@ -268,7 +269,7 @@ gin_trgm_triconsistent(PG_FUNCTION_ARGS)
 	GinTernaryValue *check = (GinTernaryValue *) PG_GETARG_POINTER(0);
 	StrategyNumber strategy = PG_GETARG_UINT16(1);
 
-	/* text    *query = PG_GETARG_TEXT_P(2); */
+	/* text    *query = PG_GETARG_TEXT_PP(2); */
 	int32		nkeys = PG_GETARG_INT32(3);
 	Pointer    *extra_data = (Pointer *) PG_GETARG_POINTER(4);
 	GinTernaryValue res = GIN_MAYBE;

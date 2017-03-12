@@ -590,7 +590,7 @@ PG_FUNCTION_INFO_V1(sepgsql_mcstrans_in);
 Datum
 sepgsql_mcstrans_in(PG_FUNCTION_ARGS)
 {
-	text	   *label = PG_GETARG_TEXT_P(0);
+	text	   *label = PG_GETARG_TEXT_PP(0);
 	char	   *raw_label;
 	char	   *result;
 
@@ -630,7 +630,7 @@ PG_FUNCTION_INFO_V1(sepgsql_mcstrans_out);
 Datum
 sepgsql_mcstrans_out(PG_FUNCTION_ARGS)
 {
-	text	   *label = PG_GETARG_TEXT_P(0);
+	text	   *label = PG_GETARG_TEXT_PP(0);
 	char	   *qual_label;
 	char	   *result;
 

@@ -1673,13 +1673,13 @@ RelationBuildTriggers(Relation relation)
 			bytea	   *val;
 			char	   *p;
 
-			val = DatumGetByteaP(fastgetattr(htup,
-											 Anum_pg_trigger_tgargs,
-											 tgrel->rd_att, &isnull));
+			val = DatumGetByteaPP(fastgetattr(htup,
+											  Anum_pg_trigger_tgargs,
+											  tgrel->rd_att, &isnull));
 			if (isnull)
 				elog(ERROR, "tgargs is null in trigger for relation \"%s\"",
 					 RelationGetRelationName(relation));
-			p = (char *) VARDATA(val);
+			p = (char *) VARDATA_ANY(val);
 			build->tgargs = (char **) palloc(build->tgnargs * sizeof(char *));
 			for (i = 0; i < build->tgnargs; i++)
 			{

@@ -308,7 +308,7 @@ Datum
 pg_relation_size(PG_FUNCTION_ARGS)
 {
 	Oid			relOid = PG_GETARG_OID(0);
-	text	   *forkName = PG_GETARG_TEXT_P(1);
+	text	   *forkName = PG_GETARG_TEXT_PP(1);
 	Relation	rel;
 	int64		size;
 

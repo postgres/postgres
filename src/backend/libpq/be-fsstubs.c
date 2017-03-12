@@ -399,12 +399,12 @@ Datum
 be_lowrite(PG_FUNCTION_ARGS)
 {
 	int32		fd = PG_GETARG_INT32(0);
-	bytea	   *wbuf = PG_GETARG_BYTEA_P(1);
+	bytea	   *wbuf = PG_GETARG_BYTEA_PP(1);
 	int			bytestowrite;
 	int			totalwritten;
 
-	bytestowrite = VARSIZE(wbuf) - VARHDRSZ;
-	totalwritten = lo_write(fd, VARDATA(wbuf), bytestowrite);
+	bytestowrite = VARSIZE_ANY_EXHDR(wbuf);
+	totalwritten = lo_write(fd, VARDATA_ANY(wbuf), bytestowrite);
 	PG_RETURN_INT32(totalwritten);
 }
 

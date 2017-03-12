@@ -45,7 +45,7 @@ PG_FUNCTION_INFO_V1(get_raw_page);
 Datum
 get_raw_page(PG_FUNCTION_ARGS)
 {
-	text	   *relname = PG_GETARG_TEXT_P(0);
+	text	   *relname = PG_GETARG_TEXT_PP(0);
 	uint32		blkno = PG_GETARG_UINT32(1);
 	bytea	   *raw_page;
 
@@ -74,8 +74,8 @@ PG_FUNCTION_INFO_V1(get_raw_page_fork);
 Datum
 get_raw_page_fork(PG_FUNCTION_ARGS)
 {
-	text	   *relname = PG_GETARG_TEXT_P(0);
-	text	   *forkname = PG_GETARG_TEXT_P(1);
+	text	   *relname = PG_GETARG_TEXT_PP(0);
+	text	   *forkname = PG_GETARG_TEXT_PP(1);
 	uint32		blkno = PG_GETARG_UINT32(2);
 	bytea	   *raw_page;
 	ForkNumber	forknum;
@@ -184,7 +184,7 @@ get_page_from_raw(bytea *raw_page)
 	Page		page;
 	int			raw_page_size;
 
-	raw_page_size = VARSIZE(raw_page) - VARHDRSZ;
+	raw_page_size = VARSIZE_ANY_EXHDR(raw_page);
 
 	if (raw_page_size != BLCKSZ)
 		ereport(ERROR,
@@ -195,7 +195,7 @@ get_page_from_raw(bytea *raw_page)
 
 	page = palloc(raw_page_size);
 
-	memcpy(page, VARDATA(raw_page), raw_page_size);
+	memcpy(page, VARDATA_ANY(raw_page), raw_page_size);
 
 	return page;
 }

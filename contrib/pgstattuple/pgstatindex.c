@@ -143,7 +143,7 @@ static void check_relation_relkind(Relation rel);
 Datum
 pgstatindex(PG_FUNCTION_ARGS)
 {
-	text	   *relname = PG_GETARG_TEXT_P(0);
+	text	   *relname = PG_GETARG_TEXT_PP(0);
 	Relation	rel;
 	RangeVar   *relrv;
 
@@ -168,7 +168,7 @@ pgstatindex(PG_FUNCTION_ARGS)
 Datum
 pgstatindex_v1_5(PG_FUNCTION_ARGS)
 {
-	text	   *relname = PG_GETARG_TEXT_P(0);
+	text	   *relname = PG_GETARG_TEXT_PP(0);
 	Relation	rel;
 	RangeVar   *relrv;
 
@@ -377,7 +377,7 @@ pgstatindex_impl(Relation rel, FunctionCallInfo fcinfo)
 Datum
 pg_relpages(PG_FUNCTION_ARGS)
 {
-	text	   *relname = PG_GETARG_TEXT_P(0);
+	text	   *relname = PG_GETARG_TEXT_PP(0);
 	int64		relpages;
 	Relation	rel;
 	RangeVar   *relrv;
@@ -406,7 +406,7 @@ pg_relpages(PG_FUNCTION_ARGS)
 Datum
 pg_relpages_v1_5(PG_FUNCTION_ARGS)
 {
-	text	   *relname = PG_GETARG_TEXT_P(0);
+	text	   *relname = PG_GETARG_TEXT_PP(0);
 	int64		relpages;
 	Relation	rel;
 	RangeVar   *relrv;

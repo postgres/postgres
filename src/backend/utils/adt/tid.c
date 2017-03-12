@@ -368,7 +368,7 @@ currtid_byreloid(PG_FUNCTION_ARGS)
 Datum
 currtid_byrelname(PG_FUNCTION_ARGS)
 {
-	text	   *relname = PG_GETARG_TEXT_P(0);
+	text	   *relname = PG_GETARG_TEXT_PP(0);
 	ItemPointer tid = PG_GETARG_ITEMPOINTER(1);
 	ItemPointer result;
 	RangeVar   *relrv;

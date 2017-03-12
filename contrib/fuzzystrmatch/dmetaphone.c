@@ -139,7 +139,7 @@ dmetaphone(PG_FUNCTION_ARGS)
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 #endif
-	arg = PG_GETARG_TEXT_P(0);
+	arg = PG_GETARG_TEXT_PP(0);
 	aptr = text_to_cstring(arg);
 
 	DoubleMetaphone(aptr, codes);
@@ -168,7 +168,7 @@ dmetaphone_alt(PG_FUNCTION_ARGS)
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 #endif
-	arg = PG_GETARG_TEXT_P(0);
+	arg = PG_GETARG_TEXT_PP(0);
 	aptr = text_to_cstring(arg);
 
 	DoubleMetaphone(aptr, codes);

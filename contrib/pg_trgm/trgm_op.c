@@ -878,14 +878,14 @@ trgm2int(trgm *ptr)
 Datum
 show_trgm(PG_FUNCTION_ARGS)
 {
-	text	   *in = PG_GETARG_TEXT_P(0);
+	text	   *in = PG_GETARG_TEXT_PP(0);
 	TRGM	   *trg;
 	Datum	   *d;
 	ArrayType  *a;
 	trgm	   *ptr;
 	int			i;
 
-	trg = generate_trgm(VARDATA(in), VARSIZE(in) - VARHDRSZ);
+	trg = generate_trgm(VARDATA_ANY(in), VARSIZE_ANY_EXHDR(in));
 	d = (Datum *) palloc(sizeof(Datum) * (1 + ARRNELEM(trg)));
 
 	for (i = 0, ptr = GETARR(trg); i < ARRNELEM(trg); i++, ptr++)
@@ -1053,14 +1053,14 @@ trgm_presence_map(TRGM *query, TRGM *key)
 Datum
 similarity(PG_FUNCTION_ARGS)
 {
-	text	   *in1 = PG_GETARG_TEXT_P(0);
-	text	   *in2 = PG_GETARG_TEXT_P(1);
+	text	   *in1 = PG_GETARG_TEXT_PP(0);
+	text	   *in2 = PG_GETARG_TEXT_PP(1);
 	TRGM	   *trg1,
 			   *trg2;
 	float4		res;
 
-	trg1 = generate_trgm(VARDATA(in1), VARSIZE(in1) - VARHDRSZ);
-	trg2 = generate_trgm(VARDATA(in2), VARSIZE(in2) - VARHDRSZ);
+	trg1 = generate_trgm(VARDATA_ANY(in1), VARSIZE_ANY_EXHDR(in1));
+	trg2 = generate_trgm(VARDATA_ANY(in2), VARSIZE_ANY_EXHDR(in2));
 
 	res = cnt_sml(trg1, trg2, false);
 

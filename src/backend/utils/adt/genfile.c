@@ -187,7 +187,7 @@ read_text_file(const char *filename, int64 seek_offset, int64 bytes_to_read,
 Datum
 pg_read_file(PG_FUNCTION_ARGS)
 {
-	text	   *filename_t = PG_GETARG_TEXT_P(0);
+	text	   *filename_t = PG_GETARG_TEXT_PP(0);
 	int64		seek_offset = 0;
 	int64		bytes_to_read = -1;
 	bool		missing_ok = false;
@@ -228,7 +228,7 @@ pg_read_file(PG_FUNCTION_ARGS)
 Datum
 pg_read_binary_file(PG_FUNCTION_ARGS)
 {
-	text	   *filename_t = PG_GETARG_TEXT_P(0);
+	text	   *filename_t = PG_GETARG_TEXT_PP(0);
 	int64		seek_offset = 0;
 	int64		bytes_to_read = -1;
 	bool		missing_ok = false;
@@ -303,7 +303,7 @@ pg_read_binary_file_all(PG_FUNCTION_ARGS)
 Datum
 pg_stat_file(PG_FUNCTION_ARGS)
 {
-	text	   *filename_t = PG_GETARG_TEXT_P(0);
+	text	   *filename_t = PG_GETARG_TEXT_PP(0);
 	char	   *filename;
 	struct stat fst;
 	Datum		values[6];
@@ -421,7 +421,7 @@ pg_ls_dir(PG_FUNCTION_ARGS)
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		fctx = palloc(sizeof(directory_fctx));
-		fctx->location = convert_and_check_filename(PG_GETARG_TEXT_P(0));
+		fctx->location = convert_and_check_filename(PG_GETARG_TEXT_PP(0));
 
 		fctx->include_dot_dirs = include_dot_dirs;
 		fctx->dirdesc = AllocateDir(fctx->location);

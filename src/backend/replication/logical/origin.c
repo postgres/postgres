@@ -1307,7 +1307,7 @@ pg_replication_origin_xact_reset(PG_FUNCTION_ARGS)
 Datum
 pg_replication_origin_advance(PG_FUNCTION_ARGS)
 {
-	text	   *name = PG_GETARG_TEXT_P(0);
+	text	   *name = PG_GETARG_TEXT_PP(0);
 	XLogRecPtr	remote_commit = PG_GETARG_LSN(1);
 	RepOriginId node;
 

@@ -371,7 +371,7 @@ json_object_keys(PG_FUNCTION_ARGS)
 
 	if (SRF_IS_FIRSTCALL())
 	{
-		text	   *json = PG_GETARG_TEXT_P(0);
+		text	   *json = PG_GETARG_TEXT_PP(0);
 		JsonLexContext *lex = makeJsonLexContext(json, true);
 		JsonSemAction *sem;
 		MemoryContext oldcontext;
@@ -482,7 +482,7 @@ okeys_scalar(void *state, char *token, JsonTokenType tokentype)
 Datum
 json_object_field(PG_FUNCTION_ARGS)
 {
-	text	   *json = PG_GETARG_TEXT_P(0);
+	text	   *json = PG_GETARG_TEXT_PP(0);
 	text	   *fname = PG_GETARG_TEXT_PP(1);
 	char	   *fnamestr = text_to_cstring(fname);
 	text	   *result;
@@ -518,7 +518,7 @@ jsonb_object_field(PG_FUNCTION_ARGS)
 Datum
 json_object_field_text(PG_FUNCTION_ARGS)
 {
-	text	   *json = PG_GETARG_TEXT_P(0);
+	text	   *json = PG_GETARG_TEXT_PP(0);
 	text	   *fname = PG_GETARG_TEXT_PP(1);
 	char	   *fnamestr = text_to_cstring(fname);
 	text	   *result;
@@ -585,7 +585,7 @@ jsonb_object_field_text(PG_FUNCTION_ARGS)
 Datum
 json_array_element(PG_FUNCTION_ARGS)
 {
-	text	   *json = PG_GETARG_TEXT_P(0);
+	text	   *json = PG_GETARG_TEXT_PP(0);
 	int			element = PG_GETARG_INT32(1);
 	text	   *result;
 
@@ -628,7 +628,7 @@ jsonb_array_element(PG_FUNCTION_ARGS)
 Datum
 json_array_element_text(PG_FUNCTION_ARGS)
 {
-	text	   *json = PG_GETARG_TEXT_P(0);
+	text	   *json = PG_GETARG_TEXT_PP(0);
 	int			element = PG_GETARG_INT32(1);
 	text	   *result;
 
@@ -717,7 +717,7 @@ json_extract_path_text(PG_FUNCTION_ARGS)
 static Datum
 get_path_all(FunctionCallInfo fcinfo, bool as_text)
 {
-	text	   *json = PG_GETARG_TEXT_P(0);
+	text	   *json = PG_GETARG_TEXT_PP(0);
 	ArrayType  *path = PG_GETARG_ARRAYTYPE_P(1);
 	text	   *result;
 	Datum	   *pathtext;
@@ -1338,7 +1338,7 @@ get_jsonb_path_all(FunctionCallInfo fcinfo, bool as_text)
 Datum
 json_array_length(PG_FUNCTION_ARGS)
 {
-	text	   *json = PG_GETARG_TEXT_P(0);
+	text	   *json = PG_GETARG_TEXT_PP(0);
 	AlenState  *state;
 	JsonLexContext *lex;
 	JsonSemAction *sem;
@@ -1592,7 +1592,7 @@ each_worker_jsonb(FunctionCallInfo fcinfo, const char *funcname, bool as_text)
 static Datum
 each_worker(FunctionCallInfo fcinfo, bool as_text)
 {
-	text	   *json = PG_GETARG_TEXT_P(0);
+	text	   *json = PG_GETARG_TEXT_PP(0);
 	JsonLexContext *lex;
 	JsonSemAction *sem;
 	ReturnSetInfo *rsi;
@@ -1906,7 +1906,7 @@ json_array_elements_text(PG_FUNCTION_ARGS)
 static Datum
 elements_worker(FunctionCallInfo fcinfo, const char *funcname, bool as_text)
 {
-	text	   *json = PG_GETARG_TEXT_P(0);
+	text	   *json = PG_GETARG_TEXT_PP(0);
 
 	/* elements only needs escaped strings when as_text */
 	JsonLexContext *lex = makeJsonLexContext(json, as_text);
@@ -2177,7 +2177,7 @@ populate_record_worker(FunctionCallInfo fcinfo, const char *funcname,
 	if (jtype == JSONOID)
 	{
 		/* just get the text */
-		json = PG_GETARG_TEXT_P(json_arg_num);
+		json = PG_GETARG_TEXT_PP(json_arg_num);
 
 		json_hash = get_json_object_as_hash(json, funcname);
 
@@ -2767,7 +2767,7 @@ populate_recordset_worker(FunctionCallInfo fcinfo, const char *funcname,
 
 	if (jtype == JSONOID)
 	{
-		text	   *json = PG_GETARG_TEXT_P(json_arg_num);
+		text	   *json = PG_GETARG_TEXT_PP(json_arg_num);
 		JsonLexContext *lex;
 		JsonSemAction *sem;
 
@@ -3193,7 +3193,7 @@ sn_scalar(void *state, char *token, JsonTokenType tokentype)
 Datum
 json_strip_nulls(PG_FUNCTION_ARGS)
 {
-	text	   *json = PG_GETARG_TEXT_P(0);
+	text	   *json = PG_GETARG_TEXT_PP(0);
 	StripnullState *state;
 	JsonLexContext *lex;
 	JsonSemAction *sem;

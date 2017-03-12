@@ -603,9 +603,9 @@ PLyLong_FromOid(PLyDatumToOb *arg, Datum d)
 static PyObject *
 PLyBytes_FromBytea(PLyDatumToOb *arg, Datum d)
 {
-	text	   *txt = DatumGetByteaP(d);
-	char	   *str = VARDATA(txt);
-	size_t		size = VARSIZE(txt) - VARHDRSZ;
+	text	   *txt = DatumGetByteaPP(d);
+	char	   *str = VARDATA_ANY(txt);
+	size_t		size = VARSIZE_ANY_EXHDR(txt);
 
 	return PyBytes_FromStringAndSize(str, size);
 }

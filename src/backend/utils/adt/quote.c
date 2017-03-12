@@ -76,17 +76,17 @@ quote_literal_internal(char *dst, const char *src, size_t len)
 Datum
 quote_literal(PG_FUNCTION_ARGS)
 {
-	text	   *t = PG_GETARG_TEXT_P(0);
+	text	   *t = PG_GETARG_TEXT_PP(0);
 	text	   *result;
 	char	   *cp1;
 	char	   *cp2;
 	int			len;
 
-	len = VARSIZE(t) - VARHDRSZ;
+	len = VARSIZE_ANY_EXHDR(t);
 	/* We make a worst-case result area; wasting a little space is OK */
 	result = (text *) palloc(len * 2 + 3 + VARHDRSZ);
 
-	cp1 = VARDATA(t);
+	cp1 = VARDATA_ANY(t);
 	cp2 = VARDATA(result);
 
 	SET_VARSIZE(result, VARHDRSZ + quote_literal_internal(cp2, cp1, len));

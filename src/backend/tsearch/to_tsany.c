@@ -216,19 +216,19 @@ Datum
 to_tsvector_byid(PG_FUNCTION_ARGS)
 {
 	Oid			cfgId = PG_GETARG_OID(0);
-	text	   *in = PG_GETARG_TEXT_P(1);
+	text	   *in = PG_GETARG_TEXT_PP(1);
 	ParsedText	prs;
 	TSVector	out;
 
-	prs.lenwords = (VARSIZE(in) - VARHDRSZ) / 6;		/* just estimation of
-														 * word's number */
+	prs.lenwords = VARSIZE_ANY_EXHDR(in) / 6;	/* just estimation of word's
+												 * number */
 	if (prs.lenwords == 0)
 		prs.lenwords = 2;
 	prs.curwords = 0;
 	prs.pos = 0;
 	prs.words = (ParsedWord *) palloc(sizeof(ParsedWord) * prs.lenwords);
 
-	parsetext(cfgId, &prs, VARDATA(in), VARSIZE(in) - VARHDRSZ);
+	parsetext(cfgId, &prs, VARDATA_ANY(in), VARSIZE_ANY_EXHDR(in));
 	PG_FREE_IF_COPY(in, 1);
 
 	if (prs.curwords)
@@ -247,7 +247,7 @@ to_tsvector_byid(PG_FUNCTION_ARGS)
 Datum
 to_tsvector(PG_FUNCTION_ARGS)
 {
-	text	   *in = PG_GETARG_TEXT_P(0);
+	text	   *in = PG_GETARG_TEXT_PP(0);
 	Oid			cfgId;
 
 	cfgId = getTSCurrentConfig(true);
@@ -362,7 +362,7 @@ pushval_morph(Datum opaque, TSQueryParserState state, char *strval, int lenval, 
 Datum
 to_tsquery_byid(PG_FUNCTION_ARGS)
 {
-	text	   *in = PG_GETARG_TEXT_P(1);
+	text	   *in = PG_GETARG_TEXT_PP(1);
 	TSQuery		query;
 	MorphOpaque data;
 
@@ -380,7 +380,7 @@ to_tsquery_byid(PG_FUNCTION_ARGS)
 Datum
 to_tsquery(PG_FUNCTION_ARGS)
 {
-	text	   *in = PG_GETARG_TEXT_P(0);
+	text	   *in = PG_GETARG_TEXT_PP(0);
 	Oid			cfgId;
 
 	cfgId = getTSCurrentConfig(true);
@@ -392,7 +392,7 @@ to_tsquery(PG_FUNCTION_ARGS)
 Datum
 plainto_tsquery_byid(PG_FUNCTION_ARGS)
 {
-	text	   *in = PG_GETARG_TEXT_P(1);
+	text	   *in = PG_GETARG_TEXT_PP(1);
 	TSQuery		query;
 	MorphOpaque data;
 
@@ -410,7 +410,7 @@ plainto_tsquery_byid(PG_FUNCTION_ARGS)
 Datum
 plainto_tsquery(PG_FUNCTION_ARGS)
 {
-	text	   *in = PG_GETARG_TEXT_P(0);
+	text	   *in = PG_GETARG_TEXT_PP(0);
 	Oid			cfgId;
 
 	cfgId = getTSCurrentConfig(true);
@@ -423,7 +423,7 @@ plainto_tsquery(PG_FUNCTION_ARGS)
 Datum
 phraseto_tsquery_byid(PG_FUNCTION_ARGS)
 {
-	text	   *in = PG_GETARG_TEXT_P(1);
+	text	   *in = PG_GETARG_TEXT_PP(1);
 	TSQuery		query;
 	MorphOpaque data;
 
@@ -441,7 +441,7 @@ phraseto_tsquery_byid(PG_FUNCTION_ARGS)
 Datum
 phraseto_tsquery(PG_FUNCTION_ARGS)
 {
-	text	   *in = PG_GETARG_TEXT_P(0);
+	text	   *in = PG_GETARG_TEXT_PP(0);
 	Oid			cfgId;
 
 	cfgId = getTSCurrentConfig(true);

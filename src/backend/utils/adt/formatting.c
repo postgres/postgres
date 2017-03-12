@@ -3380,13 +3380,13 @@ Datum
 timestamp_to_char(PG_FUNCTION_ARGS)
 {
 	Timestamp	dt = PG_GETARG_TIMESTAMP(0);
-	text	   *fmt = PG_GETARG_TEXT_P(1),
+	text	   *fmt = PG_GETARG_TEXT_PP(1),
 			   *res;
 	TmToChar	tmtc;
 	struct pg_tm *tm;
 	int			thisdate;
 
-	if ((VARSIZE(fmt) - VARHDRSZ) <= 0 || TIMESTAMP_NOT_FINITE(dt))
+	if (VARSIZE_ANY_EXHDR(fmt) <= 0 || TIMESTAMP_NOT_FINITE(dt))
 		PG_RETURN_NULL();
 
 	ZERO_tmtc(&tmtc);
@@ -3411,14 +3411,14 @@ Datum
 timestamptz_to_char(PG_FUNCTION_ARGS)
 {
 	TimestampTz dt = PG_GETARG_TIMESTAMP(0);
-	text	   *fmt = PG_GETARG_TEXT_P(1),
+	text	   *fmt = PG_GETARG_TEXT_PP(1),
 			   *res;
 	TmToChar	tmtc;
 	int			tz;
 	struct pg_tm *tm;
 	int			thisdate;
 
-	if ((VARSIZE(fmt) - VARHDRSZ) <= 0 || TIMESTAMP_NOT_FINITE(dt))
+	if (VARSIZE_ANY_EXHDR(fmt) <= 0 || TIMESTAMP_NOT_FINITE(dt))
 		PG_RETURN_NULL();
 
 	ZERO_tmtc(&tmtc);
@@ -3448,12 +3448,12 @@ Datum
 interval_to_char(PG_FUNCTION_ARGS)
 {
 	Interval   *it = PG_GETARG_INTERVAL_P(0);
-	text	   *fmt = PG_GETARG_TEXT_P(1),
+	text	   *fmt = PG_GETARG_TEXT_PP(1),
 			   *res;
 	TmToChar	tmtc;
 	struct pg_tm *tm;
 
-	if ((VARSIZE(fmt) - VARHDRSZ) <= 0)
+	if (VARSIZE_ANY_EXHDR(fmt) <= 0)
 		PG_RETURN_NULL();
 
 	ZERO_tmtc(&tmtc);
@@ -3481,8 +3481,8 @@ interval_to_char(PG_FUNCTION_ARGS)
 Datum
 to_timestamp(PG_FUNCTION_ARGS)
 {
-	text	   *date_txt = PG_GETARG_TEXT_P(0);
-	text	   *fmt = PG_GETARG_TEXT_P(1);
+	text	   *date_txt = PG_GETARG_TEXT_PP(0);
+	text	   *fmt = PG_GETARG_TEXT_PP(1);
 	Timestamp	result;
 	int			tz;
 	struct pg_tm tm;
@@ -3508,8 +3508,8 @@ to_timestamp(PG_FUNCTION_ARGS)
 Datum
 to_date(PG_FUNCTION_ARGS)
 {
-	text	   *date_txt = PG_GETARG_TEXT_P(0);
-	text	   *fmt = PG_GETARG_TEXT_P(1);
+	text	   *date_txt = PG_GETARG_TEXT_PP(0);
+	text	   *fmt = PG_GETARG_TEXT_PP(1);
 	DateADT		result;
 	struct pg_tm tm;
 	fsec_t		fsec;
@@ -5038,8 +5038,8 @@ do { \
 Datum
 numeric_to_number(PG_FUNCTION_ARGS)
 {
-	text	   *value = PG_GETARG_TEXT_P(0);
-	text	   *fmt = PG_GETARG_TEXT_P(1);
+	text	   *value = PG_GETARG_TEXT_PP(0);
+	text	   *fmt = PG_GETARG_TEXT_PP(1);
 	NUMDesc		Num;
 	Datum		result;
 	FormatNode *format;
@@ -5049,7 +5049,7 @@ numeric_to_number(PG_FUNCTION_ARGS)
 	int			scale,
 				precision;
 
-	len = VARSIZE(fmt) - VARHDRSZ;
+	len = VARSIZE_ANY_EXHDR(fmt);
 
 	if (len <= 0 || len >= INT_MAX / NUM_MAX_ITEM_SIZ)
 		PG_RETURN_NULL();
@@ -5058,8 +5058,8 @@ numeric_to_number(PG_FUNCTION_ARGS)
 
 	numstr = (char *) palloc((len * NUM_MAX_ITEM_SIZ) + 1);
 
-	NUM_processor(format, &Num, VARDATA(value), numstr,
-				  VARSIZE(value) - VARHDRSZ, 0, 0, false, PG_GET_COLLATION());
+	NUM_processor(format, &Num, VARDATA_ANY(value), numstr,
+				  VARSIZE_ANY_EXHDR(value), 0, 0, false, PG_GET_COLLATION());
 
 	scale = Num.post;
 	precision = Num.pre + Num.multi + scale;
@@ -5100,7 +5100,7 @@ Datum
 numeric_to_char(PG_FUNCTION_ARGS)
 {
 	Numeric		value = PG_GETARG_NUMERIC(0);
-	text	   *fmt = PG_GETARG_TEXT_P(1);
+	text	   *fmt = PG_GETARG_TEXT_PP(1);
 	NUMDesc		Num;
 	FormatNode *format;
 	text	   *result;
@@ -5224,7 +5224,7 @@ Datum
 int4_to_char(PG_FUNCTION_ARGS)
 {
 	int32		value = PG_GETARG_INT32(0);
-	text	   *fmt = PG_GETARG_TEXT_P(1);
+	text	   *fmt = PG_GETARG_TEXT_PP(1);
 	NUMDesc		Num;
 	FormatNode *format;
 	text	   *result;
@@ -5319,7 +5319,7 @@ Datum
 int8_to_char(PG_FUNCTION_ARGS)
 {
 	int64		value = PG_GETARG_INT64(0);
-	text	   *fmt = PG_GETARG_TEXT_P(1);
+	text	   *fmt = PG_GETARG_TEXT_PP(1);
 	NUMDesc		Num;
 	FormatNode *format;
 	text	   *result;
@@ -5429,7 +5429,7 @@ Datum
 float4_to_char(PG_FUNCTION_ARGS)
 {
 	float4		value = PG_GETARG_FLOAT4(0);
-	text	   *fmt = PG_GETARG_TEXT_P(1);
+	text	   *fmt = PG_GETARG_TEXT_PP(1);
 	NUMDesc		Num;
 	FormatNode *format;
 	text	   *result;
@@ -5535,7 +5535,7 @@ Datum
 float8_to_char(PG_FUNCTION_ARGS)
 {
 	float8		value = PG_GETARG_FLOAT8(0);
-	text	   *fmt = PG_GETARG_TEXT_P(1);
+	text	   *fmt = PG_GETARG_TEXT_PP(1);
 	NUMDesc		Num;
 	FormatNode *format;
 	text	   *result;

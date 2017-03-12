@@ -1810,7 +1810,7 @@ regnamespacesend(PG_FUNCTION_ARGS)
 Datum
 text_regclass(PG_FUNCTION_ARGS)
 {
-	text	   *relname = PG_GETARG_TEXT_P(0);
+	text	   *relname = PG_GETARG_TEXT_PP(0);
 	Oid			result;
 	RangeVar   *rv;
 
