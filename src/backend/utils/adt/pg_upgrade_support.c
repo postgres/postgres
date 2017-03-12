@@ -163,8 +163,7 @@ binary_upgrade_create_empty_extension(PG_FUNCTION_ARGS)
 						  &textDatums, NULL, &ndatums);
 		for (i = 0; i < ndatums; i++)
 		{
-			text	   *txtname = DatumGetTextPP(textDatums[i]);
-			char	   *extName = text_to_cstring(txtname);
+			char	   *extName = TextDatumGetCString(textDatums[i]);
 			Oid			extOid = get_extension_oid(extName, false);
 
 			requiredExtensions = lappend_oid(requiredExtensions, extOid);

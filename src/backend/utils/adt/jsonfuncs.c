@@ -1240,8 +1240,8 @@ get_jsonb_path_all(FunctionCallInfo fcinfo, bool as_text)
 		{
 			jbvp = findJsonbValueFromContainerLen(container,
 												  JB_FOBJECT,
-												  VARDATA_ANY(pathtext[i]),
-											 VARSIZE_ANY_EXHDR(pathtext[i]));
+												  VARDATA(pathtext[i]),
+											VARSIZE(pathtext[i]) - VARHDRSZ);
 		}
 		else if (have_array)
 		{

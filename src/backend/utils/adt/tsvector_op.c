@@ -323,7 +323,7 @@ tsvector_setweight_by_filter(PG_FUNCTION_ARGS)
 					 errmsg("lexeme array may not contain nulls")));
 
 		lex = VARDATA(dlexemes[i]);
-		lex_len = VARSIZE_ANY_EXHDR(dlexemes[i]);
+		lex_len = VARSIZE(dlexemes[i]) - VARHDRSZ;
 		lex_pos = tsvector_bsearch(tsout, lex, lex_len);
 
 		if (lex_pos >= 0 && (j = POSDATALEN(tsout, entry + lex_pos)) != 0)
@@ -609,8 +609,8 @@ tsvector_delete_arr(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 					 errmsg("lexeme array may not contain nulls")));
 
-		lex = VARDATA_ANY(dlexemes[i]);
-		lex_len = VARSIZE_ANY_EXHDR(dlexemes[i]);
+		lex = VARDATA(dlexemes[i]);
+		lex_len = VARSIZE(dlexemes[i]) - VARHDRSZ;
 		lex_pos = tsvector_bsearch(tsin, lex, lex_len);
 
 		if (lex_pos >= 0)
@@ -793,7 +793,7 @@ array_to_tsvector(PG_FUNCTION_ARGS)
 
 	/* Calculate space needed for surviving lexemes. */
 	for (i = 0; i < nitems; i++)
-		datalen += VARSIZE_ANY_EXHDR(dlexemes[i]);
+		datalen += VARSIZE(dlexemes[i]) - VARHDRSZ;
 	tslen = CALCDATASIZE(nitems, datalen);
 
 	/* Allocate and fill tsvector. */
@@ -805,8 +805,8 @@ array_to_tsvector(PG_FUNCTION_ARGS)
 	cur = STRPTR(tsout);
 	for (i = 0; i < nitems; i++)
 	{
-		char	   *lex = VARDATA_ANY(dlexemes[i]);
-		int			lex_len = VARSIZE_ANY_EXHDR(dlexemes[i]);
+		char	   *lex = VARDATA(dlexemes[i]);
+		int			lex_len = VARSIZE(dlexemes[i]) - VARHDRSZ;
 
 		memcpy(cur, lex, lex_len);
 		arrout[i].haspos = 0;
