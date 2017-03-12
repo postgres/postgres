@@ -136,10 +136,10 @@ pg_file_write(PG_FUNCTION_ARGS)
 					(ERRCODE_DUPLICATE_FILE,
 					 errmsg("file \"%s\" exists", filename)));
 
-		f = fopen(filename, "wb");
+		f = AllocateFile(filename, "wb");
 	}
 	else
-		f = fopen(filename, "ab");
+		f = AllocateFile(filename, "ab");
 
 	if (!f)
 		ereport(ERROR,
@@ -147,16 +147,11 @@ pg_file_write(PG_FUNCTION_ARGS)
 				 errmsg("could not open file \"%s\" for writing: %m",
 						filename)));
 
-	if (VARSIZE(data) != 0)
-	{
-		count = fwrite(VARDATA(data), 1, VARSIZE(data) - VARHDRSZ, f);
-
-		if (count != VARSIZE(data) - VARHDRSZ)
-			ereport(ERROR,
-					(errcode_for_file_access(),
-					 errmsg("could not write file \"%s\": %m", filename)));
-	}
-	fclose(f);
+	count = fwrite(VARDATA(data), 1, VARSIZE(data) - VARHDRSZ, f);
+	if (count != VARSIZE(data) - VARHDRSZ || FreeFile(f))
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not write file \"%s\": %m", filename)));
 
 	PG_RETURN_INT64(count);
 }
