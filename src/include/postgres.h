@@ -287,20 +287,18 @@ typedef struct
 /* Externally visible macros */
 
 /*
- * VARDATA, VARSIZE, and SET_VARSIZE are the recommended API for most code
- * for varlena datatypes.  Note that they only work on untoasted,
- * 4-byte-header Datums!
+ * In consumers oblivious to data alignment, call PG_DETOAST_DATUM_PACKED(),
+ * VARDATA_ANY(), VARSIZE_ANY() and VARSIZE_ANY_EXHDR().  Elsewhere, call
+ * PG_DETOAST_DATUM(), VARDATA() and VARSIZE().  Directly fetching an int16,
+ * int32 or wider field in the struct representing the datum layout requires
+ * aligned data.  memcpy() is alignment-oblivious, as are most operations on
+ * datatypes, such as text, whose layout struct contains only char fields.
  *
- * Code that wants to use 1-byte-header values without detoasting should
- * use VARSIZE_ANY/VARSIZE_ANY_EXHDR/VARDATA_ANY.  The other macros here
- * should usually be used only by tuple assembly/disassembly code and
- * code that specifically wants to work with still-toasted Datums.
+ * Code assembling a new datum should call VARDATA() and SET_VARSIZE().
+ * (Datums begin life untoasted.)
  *
- * WARNING: It is only safe to use VARDATA_ANY() -- typically with
- * PG_DETOAST_DATUM_PACKED() -- if you really don't care about the alignment.
- * Either because you're working with something like text where the alignment
- * doesn't matter or because you're not going to access its constituent parts
- * and just use things like memcpy on it anyways.
+ * Other macros here should usually be used only by tuple assembly/disassembly
+ * code and code that specifically wants to work with still-toasted Datums.
  */
 #define VARDATA(PTR)						VARDATA_4B(PTR)
 #define VARSIZE(PTR)						VARSIZE_4B(PTR)

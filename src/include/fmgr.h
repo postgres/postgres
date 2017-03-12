@@ -178,11 +178,12 @@ extern void fmgr_info_copy(FmgrInfo *dstinfo, FmgrInfo *srcinfo,
  * The resulting datum can be accessed using VARSIZE_ANY() and VARDATA_ANY()
  * (beware of multiple evaluations in those macros!)
  *
- * WARNING: It is only safe to use pg_detoast_datum_packed() and
- * VARDATA_ANY() if you really don't care about the alignment. Either because
- * you're working with something like text where the alignment doesn't matter
- * or because you're not going to access its constituent parts and just use
- * things like memcpy on it anyways.
+ * In consumers oblivious to data alignment, call PG_DETOAST_DATUM_PACKED(),
+ * VARDATA_ANY(), VARSIZE_ANY() and VARSIZE_ANY_EXHDR().  Elsewhere, call
+ * PG_DETOAST_DATUM(), VARDATA() and VARSIZE().  Directly fetching an int16,
+ * int32 or wider field in the struct representing the datum layout requires
+ * aligned data.  memcpy() is alignment-oblivious, as are most operations on
+ * datatypes, such as text, whose layout struct contains only char fields.
  *
  * Note: it'd be nice if these could be macros, but I see no way to do that
  * without evaluating the arguments multiple times, which is NOT acceptable.
@@ -243,13 +244,9 @@ extern struct varlena *pg_detoast_datum_packed(struct varlena * datum);
 /* and this if you can handle 1-byte-header datums: */
 #define PG_GETARG_VARLENA_PP(n) PG_DETOAST_DATUM_PACKED(PG_GETARG_DATUM(n))
 /* DatumGetFoo macros for varlena types will typically look like this: */
-#define DatumGetByteaP(X)			((bytea *) PG_DETOAST_DATUM(X))
 #define DatumGetByteaPP(X)			((bytea *) PG_DETOAST_DATUM_PACKED(X))
-#define DatumGetTextP(X)			((text *) PG_DETOAST_DATUM(X))
 #define DatumGetTextPP(X)			((text *) PG_DETOAST_DATUM_PACKED(X))
-#define DatumGetBpCharP(X)			((BpChar *) PG_DETOAST_DATUM(X))
 #define DatumGetBpCharPP(X)			((BpChar *) PG_DETOAST_DATUM_PACKED(X))
-#define DatumGetVarCharP(X)			((VarChar *) PG_DETOAST_DATUM(X))
 #define DatumGetVarCharPP(X)		((VarChar *) PG_DETOAST_DATUM_PACKED(X))
 #define DatumGetHeapTupleHeader(X)	((HeapTupleHeader) PG_DETOAST_DATUM(X))
 /* And we also offer variants that return an OK-to-write copy */
@@ -264,13 +261,9 @@ extern struct varlena *pg_detoast_datum_packed(struct varlena * datum);
 #define DatumGetBpCharPSlice(X,m,n) ((BpChar *) PG_DETOAST_DATUM_SLICE(X,m,n))
 #define DatumGetVarCharPSlice(X,m,n) ((VarChar *) PG_DETOAST_DATUM_SLICE(X,m,n))
 /* GETARG macros for varlena types will typically look like this: */
-#define PG_GETARG_BYTEA_P(n)		DatumGetByteaP(PG_GETARG_DATUM(n))
 #define PG_GETARG_BYTEA_PP(n)		DatumGetByteaPP(PG_GETARG_DATUM(n))
-#define PG_GETARG_TEXT_P(n)			DatumGetTextP(PG_GETARG_DATUM(n))
 #define PG_GETARG_TEXT_PP(n)		DatumGetTextPP(PG_GETARG_DATUM(n))
-#define PG_GETARG_BPCHAR_P(n)		DatumGetBpCharP(PG_GETARG_DATUM(n))
 #define PG_GETARG_BPCHAR_PP(n)		DatumGetBpCharPP(PG_GETARG_DATUM(n))
-#define PG_GETARG_VARCHAR_P(n)		DatumGetVarCharP(PG_GETARG_DATUM(n))
 #define PG_GETARG_VARCHAR_PP(n)		DatumGetVarCharPP(PG_GETARG_DATUM(n))
 #define PG_GETARG_HEAPTUPLEHEADER(n)	DatumGetHeapTupleHeader(PG_GETARG_DATUM(n))
 /* And we also offer variants that return an OK-to-write copy */
@@ -284,6 +277,21 @@ extern struct varlena *pg_detoast_datum_packed(struct varlena * datum);
 #define PG_GETARG_TEXT_P_SLICE(n,a,b)  DatumGetTextPSlice(PG_GETARG_DATUM(n),a,b)
 #define PG_GETARG_BPCHAR_P_SLICE(n,a,b) DatumGetBpCharPSlice(PG_GETARG_DATUM(n),a,b)
 #define PG_GETARG_VARCHAR_P_SLICE(n,a,b) DatumGetVarCharPSlice(PG_GETARG_DATUM(n),a,b)
+/*
+ * Obsolescent variants that guarantee INT alignment for the return value.
+ * Few operations on these particular types need alignment, mainly operations
+ * that cast the VARDATA pointer to a type like int16[].  Most code should use
+ * the ...PP(X) counterpart.  Nonetheless, these appear frequently in code
+ * predating the PostgreSQL 8.3 introduction of the ...PP(X) variants.
+ */
+#define DatumGetByteaP(X)			((bytea *) PG_DETOAST_DATUM(X))
+#define DatumGetTextP(X)			((text *) PG_DETOAST_DATUM(X))
+#define DatumGetBpCharP(X)			((BpChar *) PG_DETOAST_DATUM(X))
+#define DatumGetVarCharP(X)			((VarChar *) PG_DETOAST_DATUM(X))
+#define PG_GETARG_BYTEA_P(n)		DatumGetByteaP(PG_GETARG_DATUM(n))
+#define PG_GETARG_TEXT_P(n)			DatumGetTextP(PG_GETARG_DATUM(n))
+#define PG_GETARG_BPCHAR_P(n)		DatumGetBpCharP(PG_GETARG_DATUM(n))
+#define PG_GETARG_VARCHAR_P(n)		DatumGetVarCharP(PG_GETARG_DATUM(n))
 
 /* To return a NULL do this: */
 #define PG_RETURN_NULL()  \
