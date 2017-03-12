@@ -2331,7 +2331,7 @@ check_need_password(const char *authmethodlocal, const char *authmethodhost)
 		 strcmp(authmethodlocal, "scram") == 0) &&
 		(strcmp(authmethodhost, "md5") == 0 ||
 		 strcmp(authmethodhost, "password") == 0 ||
-		 strcmp(authmethodlocal, "scram") == 0) &&
+		 strcmp(authmethodhost, "scram") == 0) &&
 		!(pwprompt || pwfilename))
 	{
 		fprintf(stderr, _("%s: must specify a password for the superuser to enable %s authentication\n"), progname,
