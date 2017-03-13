@@ -700,7 +700,8 @@ other			.
 					if (cur_state->callbacks->get_variable)
 						value = cur_state->callbacks->get_variable(varname,
 																   false,
-																   false);
+																   false,
+																   cur_state->cb_passthrough);
 					else
 						value = NULL;
 
@@ -920,6 +921,19 @@ psql_scan_destroy(PsqlScanState state)
 	yylex_destroy(state->scanner);
 
 	free(state);
+}
+
+/*
+ * Set the callback passthrough pointer for the lexer.
+ *
+ * This could have been integrated into psql_scan_create, but keeping it
+ * separate allows the application to change the pointer later, which might
+ * be useful.
+ */
+void
+psql_scan_set_passthrough(PsqlScanState state, void *passthrough)
+{
+	state->cb_passthrough = passthrough;
 }
 
 /*
@@ -1409,7 +1423,8 @@ psqlscan_escape_variable(PsqlScanState state, const char *txt, int len,
 	/* Variable lookup. */
 	varname = psqlscan_extract_substring(state, txt + 2, len - 3);
 	if (state->callbacks->get_variable)
-		value = state->callbacks->get_variable(varname, true, as_ident);
+		value = state->callbacks->get_variable(varname, true, as_ident,
+											   state->cb_passthrough);
 	else
 		value = NULL;
 	free(varname);

@@ -119,9 +119,13 @@ setQFout(const char *fname)
  * If "escape" is true, return the value suitably quoted and escaped,
  * as an identifier or string literal depending on "as_ident".
  * (Failure in escaping should lead to returning NULL.)
+ *
+ * "passthrough" is the pointer previously given to psql_scan_set_passthrough.
+ * psql currently doesn't use this.
  */
 char *
-psql_get_variable(const char *varname, bool escape, bool as_ident)
+psql_get_variable(const char *varname, bool escape, bool as_ident,
+				  void *passthrough)
 {
 	char	   *result;
 	const char *value;

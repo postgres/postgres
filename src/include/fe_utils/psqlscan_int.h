@@ -115,9 +115,11 @@ typedef struct PsqlScanStateData
 	char	   *dolqstart;		/* current $foo$ quote start string */
 
 	/*
-	 * Callback functions provided by the program making use of the lexer.
+	 * Callback functions provided by the program making use of the lexer,
+	 * plus a void* callback passthrough argument.
 	 */
 	const PsqlScanCallbacks *callbacks;
+	void	   *cb_passthrough;
 } PsqlScanStateData;
 
 

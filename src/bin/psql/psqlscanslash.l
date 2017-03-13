@@ -243,7 +243,8 @@ other			.
 															 yyleng - 1);
 						value = cur_state->callbacks->get_variable(varname,
 																   false,
-																   false);
+																   false,
+																   cur_state->cb_passthrough);
 						free(varname);
 
 						/*
