@@ -1151,7 +1151,7 @@ SnapBuildProcessRunningXacts(SnapBuild *builder, XLogRecPtr lsn, xl_running_xact
 		 running->oldestRunningXid);
 
 	/*
-	 * Inrease shared memory limits, so vacuum can work on tuples we prevented
+	 * Increase shared memory limits, so vacuum can work on tuples we prevented
 	 * from being pruned till now.
 	 */
 	LogicalIncreaseXminForSlot(lsn, running->oldestRunningXid);
