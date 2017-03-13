@@ -213,9 +213,15 @@ ECPGtrans(int lineno, const char *connection_name, const char *transaction)
 		 * If we got a transaction command but have no open transaction, we
 		 * have to start one, unless we are in autocommit, where the
 		 * developers have to take care themselves. However, if the command is
-		 * a begin statement, we just execute it once.
+		 * a begin statement, we just execute it once. And if the command is
+		 * commit or rollback prepared, we don't execute it.
 		 */
-		if (PQtransactionStatus(con->connection) == PQTRANS_IDLE && !con->autocommit && strncmp(transaction, "begin", 5) != 0 && strncmp(transaction, "start", 5) != 0)
+		if (PQtransactionStatus(con->connection) == PQTRANS_IDLE &&
+			!con->autocommit &&
+			strncmp(transaction, "begin", 5) != 0 &&
+			strncmp(transaction, "start", 5) != 0 &&
+			strncmp(transaction, "commit prepared", 15) != 0 &&
+			strncmp(transaction, "rollback prepared", 17) != 0)
 		{
 			res = PQexec(con->connection, "begin transaction");
 			if (!ecpg_check_PQresult(res, lineno, con->connection, ECPG_COMPAT_PGSQL))
