@@ -4458,8 +4458,10 @@ set_subquery_size_estimates(PlannerInfo *root, RelOptInfo *rel)
 
 	/* Should only be applied to base relations that are subqueries */
 	Assert(rel->relid > 0);
+#ifdef USE_ASSERT_CHECKING
 	rte = planner_rt_fetch(rel->relid, root);
 	Assert(rte->rtekind == RTE_SUBQUERY);
+#endif
 
 	/*
 	 * Copy raw number of output rows from subquery.  All of its paths should
@@ -4571,12 +4573,14 @@ set_function_size_estimates(PlannerInfo *root, RelOptInfo *rel)
 void
 set_tablefunc_size_estimates(PlannerInfo *root, RelOptInfo *rel)
 {
-	RangeTblEntry *rte;
+	RangeTblEntry *rte PG_USED_FOR_ASSERTS_ONLY;
 
 	/* Should only be applied to base relations that are functions */
 	Assert(rel->relid > 0);
+#ifdef USE_ASSERT_CHECKING
 	rte = planner_rt_fetch(rel->relid, root);
 	Assert(rte->rtekind == RTE_TABLEFUNC);
+#endif
 
 	rel->tuples = 100;
 
