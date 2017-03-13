@@ -507,6 +507,35 @@ EXEC SQL COMMIT;
       </listitem>
      </varlistentry>
 
+    <variablelist>
+     <varlistentry>
+      <term><literal>EXEC SQL PREPARE TRANSACTION </literal><replaceable class="PARAMETER">transaction_id</></term>
+      <listitem>
+       <para>
+        Prepare the current transaction for two-phase commit.
+       </para>
+      </listitem>
+     </varlistentry>
+
+    <variablelist>
+     <varlistentry>
+      <term><literal>EXEC SQL COMMIT PREPARED </literal><replaceable class="PARAMETER">transaction_id</></term>
+      <listitem>
+       <para>
+        Commit a transaction that is in prepared state.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>EXEC SQL ROLLBACK PREPARED </literal><replaceable class="PARAMETER">transaction_id</></term>
+      <listitem>
+       <para>
+        Roll back a transaction that is in prepared state.
+       </para>
+      </listitem>
+     </varlistentry>
+     
      <varlistentry>
       <term><literal>EXEC SQL SET AUTOCOMMIT TO ON</literal></term>
       <listitem>
