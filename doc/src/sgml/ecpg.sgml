@@ -507,7 +507,6 @@ EXEC SQL COMMIT;
       </listitem>
      </varlistentry>
 
-    <variablelist>
      <varlistentry>
       <term><literal>EXEC SQL PREPARE TRANSACTION </literal><replaceable class="PARAMETER">transaction_id</></term>
       <listitem>
@@ -517,7 +516,6 @@ EXEC SQL COMMIT;
       </listitem>
      </varlistentry>
 
-    <variablelist>
      <varlistentry>
       <term><literal>EXEC SQL COMMIT PREPARED </literal><replaceable class="PARAMETER">transaction_id</></term>
       <listitem>
