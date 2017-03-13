@@ -515,7 +515,7 @@ sub print_radix_table
 	###
 	### Print the struct and array.
 	###
-	printf $out "static const $datatype ${tblname}_table[];\n";
+	printf $out "static const $datatype ${tblname}_table[$tblsize];\n";
 	printf $out "\n";
 	printf $out "static const pg_mb_radix_tree $tblname =\n";
 	printf $out "{\n";
