@@ -132,7 +132,7 @@ gb-18030-2000.xml windows-949-2000.xml:
 GB2312.TXT:
 	$(DOWNLOAD) 'http://trac.greenstone.org/browser/trunk/gsdl/unicode/MAPPINGS/EASTASIA/GB/GB2312.TXT?rev=1842&format=txt'
 
-JIS0201.TXT JIS0208.TXT JIS0212.TXT:
+JIS0212.TXT:
 	$(DOWNLOAD) http://ftp.unicode.org/Public/MAPPINGS/OBSOLETE/EASTASIA/JIS/$(@F)
 
 JOHAB.TXT KSX1001.TXT:

@@ -57,8 +57,11 @@ sub read_source
 
 		next if (/^0x([0-9A-F]+)\s+(#.*)$/);
 
-		# Skip the first column for JIS0208.TXT
-		if (!/^0x([0-9A-Fa-f]+)\s+0x([0-9A-Fa-f]+)\s+(?:0x([0-9A-Fa-f]+)\s+)?(#.*)$/)
+		# The Unicode source files have three columns
+		# 1: The "foreign" code (in hex)
+		# 2: Unicode code point (in hex)
+		# 3: Unicode name
+		if (!/^0x([0-9A-Fa-f]+)\s+0x([0-9A-Fa-f]+)\s+(#.*)$/)
 		{
 			print STDERR "READ ERROR at line $. in $fname: $_\n";
 			exit;
