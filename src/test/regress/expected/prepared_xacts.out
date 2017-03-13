@@ -195,9 +195,8 @@ SELECT gid FROM pg_prepared_xacts;
 
 -- pxtest3 should be locked because of the pending DROP
 begin;
-set statement_timeout to 2000;
-SELECT * FROM pxtest3;
-ERROR:  canceling statement due to statement timeout
+lock table pxtest3 in access share mode nowait;
+ERROR:  could not obtain lock on relation "pxtest3"
 rollback;
 -- Disconnect, we will continue testing in a different backend
 \c -
@@ -211,9 +210,8 @@ SELECT gid FROM pg_prepared_xacts;
 
 -- pxtest3 should still be locked because of the pending DROP
 begin;
-set statement_timeout to 2000;
-SELECT * FROM pxtest3;
-ERROR:  canceling statement due to statement timeout
+lock table pxtest3 in access share mode nowait;
+ERROR:  could not obtain lock on relation "pxtest3"
 rollback;
 -- Commit table creation
 COMMIT PREPARED 'regress-one';
