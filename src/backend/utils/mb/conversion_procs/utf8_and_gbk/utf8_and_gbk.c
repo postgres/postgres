@@ -42,7 +42,7 @@ gbk_to_utf8(PG_FUNCTION_ARGS)
 	CHECK_ENCODING_CONVERSION_ARGS(PG_GBK, PG_UTF8);
 
 	LocalToUtf(src, len, dest,
-			   LUmapGBK, lengthof(LUmapGBK),
+			   &gbk_to_unicode_tree,
 			   NULL, 0,
 			   NULL,
 			   PG_GBK);
@@ -60,7 +60,7 @@ utf8_to_gbk(PG_FUNCTION_ARGS)
 	CHECK_ENCODING_CONVERSION_ARGS(PG_UTF8, PG_GBK);
 
 	UtfToLocal(src, len, dest,
-			   ULmapGBK, lengthof(ULmapGBK),
+			   &gbk_from_unicode_tree,
 			   NULL, 0,
 			   NULL,
 			   PG_GBK);

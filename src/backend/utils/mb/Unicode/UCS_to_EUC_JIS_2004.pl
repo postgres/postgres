@@ -8,7 +8,9 @@
 # "euc-jis-2004-std.txt" (http://x0213.org)
 
 use strict;
-require convutils;
+use convutils;
+
+my $this_script = $0;
 
 # first generate UTF-8 --> EUC_JIS_2004 table
 
@@ -29,12 +31,14 @@ while (my $line = <$in>)
 		my $ucs1 = hex($u1);
 		my $ucs2 = hex($u2);
 
-		push @all, { direction => 'both',
+		push @all, { direction => BOTH,
 					 ucs => $ucs1,
 					 ucs_second => $ucs2,
 					 code => $code,
-					 comment => $rest };
-		next;
+					 comment => $rest,
+					 f => $in_file,
+					 l => $.
+		};
 	}
 	elsif ($line =~ /^0x(.*)[ \t]*U\+(.*)[ \t]*#(.*)$/)
 	{
@@ -45,9 +49,15 @@ while (my $line = <$in>)
 
 		next if ($code < 0x80 && $ucs < 0x80);
 
-		push @all, { direction => 'both', ucs => $ucs, code => $code, comment => $rest };
+		push @all, { direction => BOTH,
+					 ucs => $ucs,
+					 code => $code,
+					 comment => $rest,
+					 f => $in_file,
+					 l => $.
+		};
 	}
 }
 close($in);
 
-print_tables("EUC_JIS_2004", \@all, 1);
+print_conversion_tables($this_script, "EUC_JIS_2004", \@all);

@@ -14,7 +14,9 @@
 # and the "b" field is the hex byte sequence for UHC
 
 use strict;
-require convutils;
+use convutils;
+
+my $this_script = $0;
 
 # Read the input
 
@@ -39,13 +41,15 @@ while (<$in>)
 		push @mapping, {
 			ucs => $ucs,
 			code => $code,
-			direction => 'both'
+			direction => BOTH,
+			f => $in_file,
+			l => $.
 		};
 	}
 }
 close($in);
 
 # One extra character that's not in the source file.
-push @mapping, { direction => 'both', code => 0xa2e8, ucs => 0x327e, comment => 'CIRCLED HANGUL IEUNG U' };
+push @mapping, { direction => BOTH, code => 0xa2e8, ucs => 0x327e, comment => 'CIRCLED HANGUL IEUNG U', f => $this_script, l => __LINE__ };
 
-print_tables("UHC", \@mapping);
+print_conversion_tables($this_script, "UHC", \@mapping);

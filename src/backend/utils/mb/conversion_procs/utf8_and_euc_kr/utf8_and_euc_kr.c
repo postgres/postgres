@@ -42,7 +42,7 @@ euc_kr_to_utf8(PG_FUNCTION_ARGS)
 	CHECK_ENCODING_CONVERSION_ARGS(PG_EUC_KR, PG_UTF8);
 
 	LocalToUtf(src, len, dest,
-			   LUmapEUC_KR, lengthof(LUmapEUC_KR),
+			   &euc_kr_to_unicode_tree,
 			   NULL, 0,
 			   NULL,
 			   PG_EUC_KR);
@@ -60,7 +60,7 @@ utf8_to_euc_kr(PG_FUNCTION_ARGS)
 	CHECK_ENCODING_CONVERSION_ARGS(PG_UTF8, PG_EUC_KR);
 
 	UtfToLocal(src, len, dest,
-			   ULmapEUC_KR, lengthof(ULmapEUC_KR),
+			   &euc_kr_from_unicode_tree,
 			   NULL, 0,
 			   NULL,
 			   PG_EUC_KR);

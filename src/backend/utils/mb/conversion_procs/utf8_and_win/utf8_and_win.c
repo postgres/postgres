@@ -56,46 +56,22 @@ PG_FUNCTION_INFO_V1(utf8_to_win);
 typedef struct
 {
 	pg_enc		encoding;
-	const pg_local_to_utf *map1;	/* to UTF8 map name */
-	const pg_utf_to_local *map2;	/* from UTF8 map name */
-	int			size1;			/* size of map1 */
-	int			size2;			/* size of map2 */
+	const pg_mb_radix_tree *map1;	/* to UTF8 map name */
+	const pg_mb_radix_tree *map2;	/* from UTF8 map name */
 } pg_conv_map;
 
 static const pg_conv_map maps[] = {
-	{PG_WIN866, LUmapWIN866, ULmapWIN866,
-		lengthof(LUmapWIN866),
-	lengthof(ULmapWIN866)},
-	{PG_WIN874, LUmapWIN874, ULmapWIN874,
-		lengthof(LUmapWIN874),
-	lengthof(ULmapWIN874)},
-	{PG_WIN1250, LUmapWIN1250, ULmapWIN1250,
-		lengthof(LUmapWIN1250),
-	lengthof(ULmapWIN1250)},
-	{PG_WIN1251, LUmapWIN1251, ULmapWIN1251,
-		lengthof(LUmapWIN1251),
-	lengthof(ULmapWIN1251)},
-	{PG_WIN1252, LUmapWIN1252, ULmapWIN1252,
-		lengthof(LUmapWIN1252),
-	lengthof(ULmapWIN1252)},
-	{PG_WIN1253, LUmapWIN1253, ULmapWIN1253,
-		lengthof(LUmapWIN1253),
-	lengthof(ULmapWIN1253)},
-	{PG_WIN1254, LUmapWIN1254, ULmapWIN1254,
-		lengthof(LUmapWIN1254),
-	lengthof(ULmapWIN1254)},
-	{PG_WIN1255, LUmapWIN1255, ULmapWIN1255,
-		lengthof(LUmapWIN1255),
-	lengthof(ULmapWIN1255)},
-	{PG_WIN1256, LUmapWIN1256, ULmapWIN1256,
-		lengthof(LUmapWIN1256),
-	lengthof(ULmapWIN1256)},
-	{PG_WIN1257, LUmapWIN1257, ULmapWIN1257,
-		lengthof(LUmapWIN1257),
-	lengthof(ULmapWIN1257)},
-	{PG_WIN1258, LUmapWIN1258, ULmapWIN1258,
-		lengthof(LUmapWIN1258),
-	lengthof(ULmapWIN1258)},
+	{PG_WIN866,  &win866_to_unicode_tree,  &win866_from_unicode_tree},
+	{PG_WIN874,  &win874_to_unicode_tree,  &win874_from_unicode_tree},
+	{PG_WIN1250, &win1250_to_unicode_tree, &win1250_from_unicode_tree},
+	{PG_WIN1251, &win1251_to_unicode_tree, &win1251_from_unicode_tree},
+	{PG_WIN1252, &win1252_to_unicode_tree, &win1252_from_unicode_tree},
+	{PG_WIN1253, &win1253_to_unicode_tree, &win1253_from_unicode_tree},
+	{PG_WIN1254, &win1254_to_unicode_tree, &win1254_from_unicode_tree},
+	{PG_WIN1255, &win1255_to_unicode_tree, &win1255_from_unicode_tree},
+	{PG_WIN1256, &win1256_to_unicode_tree, &win1256_from_unicode_tree},
+	{PG_WIN1257, &win1257_to_unicode_tree, &win1257_from_unicode_tree},
+	{PG_WIN1258, &win1258_to_unicode_tree, &win1258_from_unicode_tree},
 };
 
 Datum
@@ -114,7 +90,7 @@ win_to_utf8(PG_FUNCTION_ARGS)
 		if (encoding == maps[i].encoding)
 		{
 			LocalToUtf(src, len, dest,
-					   maps[i].map1, maps[i].size1,
+					   maps[i].map1,
 					   NULL, 0,
 					   NULL,
 					   encoding);
@@ -146,7 +122,7 @@ utf8_to_win(PG_FUNCTION_ARGS)
 		if (encoding == maps[i].encoding)
 		{
 			UtfToLocal(src, len, dest,
-					   maps[i].map2, maps[i].size2,
+					   maps[i].map2,
 					   NULL, 0,
 					   NULL,
 					   encoding);

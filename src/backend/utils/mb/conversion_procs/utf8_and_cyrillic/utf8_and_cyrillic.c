@@ -48,7 +48,7 @@ utf8_to_koi8r(PG_FUNCTION_ARGS)
 	CHECK_ENCODING_CONVERSION_ARGS(PG_UTF8, PG_KOI8R);
 
 	UtfToLocal(src, len, dest,
-			   ULmapKOI8R, lengthof(ULmapKOI8R),
+			   &koi8r_from_unicode_tree,
 			   NULL, 0,
 			   NULL,
 			   PG_KOI8R);
@@ -66,7 +66,7 @@ koi8r_to_utf8(PG_FUNCTION_ARGS)
 	CHECK_ENCODING_CONVERSION_ARGS(PG_KOI8R, PG_UTF8);
 
 	LocalToUtf(src, len, dest,
-			   LUmapKOI8R, lengthof(LUmapKOI8R),
+			   &koi8r_to_unicode_tree,
 			   NULL, 0,
 			   NULL,
 			   PG_KOI8R);
@@ -84,7 +84,7 @@ utf8_to_koi8u(PG_FUNCTION_ARGS)
 	CHECK_ENCODING_CONVERSION_ARGS(PG_UTF8, PG_KOI8U);
 
 	UtfToLocal(src, len, dest,
-			   ULmapKOI8U, lengthof(ULmapKOI8U),
+			   &koi8u_from_unicode_tree,
 			   NULL, 0,
 			   NULL,
 			   PG_KOI8U);
@@ -102,7 +102,7 @@ koi8u_to_utf8(PG_FUNCTION_ARGS)
 	CHECK_ENCODING_CONVERSION_ARGS(PG_KOI8U, PG_UTF8);
 
 	LocalToUtf(src, len, dest,
-			   LUmapKOI8U, lengthof(LUmapKOI8U),
+			   &koi8u_to_unicode_tree,
 			   NULL, 0,
 			   NULL,
 			   PG_KOI8U);

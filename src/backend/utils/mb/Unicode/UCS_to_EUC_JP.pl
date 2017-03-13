@@ -12,7 +12,9 @@
 # organization's ftp site.
 
 use strict;
-require convutils;
+use convutils;
+
+my $this_script = $0;
 
 # Load JIS0212.TXT
 my $jis0212 = &read_source("JIS0212.TXT");
@@ -23,12 +25,12 @@ foreach my $i (@$jis0212) {
 	# We have a different mapping for this in the EUC_JP to UTF-8 direction.
 	if ($i->{code} == 0x2243)
 	{
-		$i->{direction} = "from_unicode";
+		$i->{direction} = FROM_UNICODE;
 	}
 
 	if ($i->{code} == 0x2271)
 	{
-		$i->{direction} = "to_unicode";
+		$i->{direction} = TO_UNICODE;
 	}
 
 	if ($i->{ucs} >= 0x080)
@@ -79,14 +81,14 @@ foreach my $i (@mapping) {
 		$sjis >= 0xfa54 && $sjis <= 0xfa56 ||
 		$sjis >= 0xfa58 && $sjis <= 0xfc4b)
 	{
-		$i->{direction} = "none";
+		$i->{direction} = NONE;
 		next;
 	}
 
 	# These SJIS characters are only in the UTF-8 to EUC_JP table
 	if ($sjis == 0xeefa || $sjis == 0xeefb || $sjis == 0xeefc)
 	{
-		$i->{direction} = "from_unicode";
+		$i->{direction} = FROM_UNICODE;
 		next;
 	}
 
@@ -95,103 +97,104 @@ foreach my $i (@mapping) {
 		$sjis == 0x879a || $sjis == 0x879b || $sjis == 0x879c ||
 		($sjis >= 0xfa4a && $sjis <= 0xfa53))
 	{
-		$i->{direction} = "to_unicode";
+		$i->{direction} = TO_UNICODE;
 		next;
 	}
 }
 
 push @mapping, (
-	 {direction => 'both', ucs => 0x4efc, code => 0x8ff4af, comment => '# CJK(4EFC)'},
-	 {direction => 'both', ucs => 0x50f4, code => 0x8ff4b0, comment => '# CJK(50F4)'},
-	 {direction => 'both', ucs => 0x51EC, code => 0x8ff4b1, comment => '# CJK(51EC)'},
-	 {direction => 'both', ucs => 0x5307, code => 0x8ff4b2, comment => '# CJK(5307)'},
-	 {direction => 'both', ucs => 0x5324, code => 0x8ff4b3, comment => '# CJK(5324)'},
-	 {direction => 'both', ucs => 0x548A, code => 0x8ff4b5, comment => '# CJK(548A)'},
-	 {direction => 'both', ucs => 0x5759, code => 0x8ff4b6, comment => '# CJK(5759)'},
-	 {direction => 'both', ucs => 0x589E, code => 0x8ff4b9, comment => '# CJK(589E)'},
-	 {direction => 'both', ucs => 0x5BEC, code => 0x8ff4ba, comment => '# CJK(5BEC)'},
-	 {direction => 'both', ucs => 0x5CF5, code => 0x8ff4bb, comment => '# CJK(5CF5)'},
-	 {direction => 'both', ucs => 0x5D53, code => 0x8ff4bc, comment => '# CJK(5D53)'},
-	 {direction => 'both', ucs => 0x5FB7, code => 0x8ff4be, comment => '# CJK(5FB7)'},
-	 {direction => 'both', ucs => 0x6085, code => 0x8ff4bf, comment => '# CJK(6085)'},
-	 {direction => 'both', ucs => 0x6120, code => 0x8ff4c0, comment => '# CJK(6120)'},
-	 {direction => 'both', ucs => 0x654E, code => 0x8ff4c1, comment => '# CJK(654E)'},
-	 {direction => 'both', ucs => 0x663B, code => 0x8ff4c2, comment => '# CJK(663B)'},
-	 {direction => 'both', ucs => 0x6665, code => 0x8ff4c3, comment => '# CJK(6665)'},
-	 {direction => 'both', ucs => 0x6801, code => 0x8ff4c6, comment => '# CJK(6801)'},
-	 {direction => 'both', ucs => 0x6A6B, code => 0x8ff4c9, comment => '# CJK(6A6B)'},
-	 {direction => 'both', ucs => 0x6AE2, code => 0x8ff4ca, comment => '# CJK(6AE2)'},
-	 {direction => 'both', ucs => 0x6DF2, code => 0x8ff4cc, comment => '# CJK(6DF2)'},
-	 {direction => 'both', ucs => 0x6DF8, code => 0x8ff4cb, comment => '# CJK(6DF8)'},
-	 {direction => 'both', ucs => 0x7028, code => 0x8ff4cd, comment => '# CJK(7028)'},
-	 {direction => 'both', ucs => 0x70BB, code => 0x8ff4ae, comment => '# CJK(70BB)'},
-	 {direction => 'both', ucs => 0x7501, code => 0x8ff4d0, comment => '# CJK(7501)'},
-	 {direction => 'both', ucs => 0x7682, code => 0x8ff4d1, comment => '# CJK(7682)'},
-	 {direction => 'both', ucs => 0x769E, code => 0x8ff4d2, comment => '# CJK(769E)'},
-	 {direction => 'both', ucs => 0x7930, code => 0x8ff4d4, comment => '# CJK(7930)'},
-	 {direction => 'both', ucs => 0x7AE7, code => 0x8ff4d9, comment => '# CJK(7AE7)'},
-	 {direction => 'both', ucs => 0x7DA0, code => 0x8ff4dc, comment => '# CJK(7DA0)'},
-	 {direction => 'both', ucs => 0x7DD6, code => 0x8ff4dd, comment => '# CJK(7DD6)'},
-	 {direction => 'both', ucs => 0x8362, code => 0x8ff4df, comment => '# CJK(8362)'},
-	 {direction => 'both', ucs => 0x85B0, code => 0x8ff4e1, comment => '# CJK(85B0)'},
-	 {direction => 'both', ucs => 0x8807, code => 0x8ff4e4, comment => '# CJK(8807)'},
-	 {direction => 'both', ucs => 0x8B7F, code => 0x8ff4e6, comment => '# CJK(8B7F)'},
-	 {direction => 'both', ucs => 0x8CF4, code => 0x8ff4e7, comment => '# CJK(8CF4)'},
-	 {direction => 'both', ucs => 0x8D76, code => 0x8ff4e8, comment => '# CJK(8D76)'},
-	 {direction => 'both', ucs => 0x90DE, code => 0x8ff4ec, comment => '# CJK(90DE)'},
-	 {direction => 'both', ucs => 0x9115, code => 0x8ff4ee, comment => '# CJK(9115)'},
-	 {direction => 'both', ucs => 0x9592, code => 0x8ff4f1, comment => '# CJK(9592)'},
-	 {direction => 'both', ucs => 0x973B, code => 0x8ff4f4, comment => '# CJK(973B)'},
-	 {direction => 'both', ucs => 0x974D, code => 0x8ff4f5, comment => '# CJK(974D)'},
-	 {direction => 'both', ucs => 0x9751, code => 0x8ff4f6, comment => '# CJK(9751)'},
-	 {direction => 'both', ucs => 0x999E, code => 0x8ff4fa, comment => '# CJK(999E)'},
-	 {direction => 'both', ucs => 0x9AD9, code => 0x8ff4fb, comment => '# CJK(9AD9)'},
-	 {direction => 'both', ucs => 0x9B72, code => 0x8ff4fc, comment => '# CJK(9B72)'},
-	 {direction => 'both', ucs => 0x9ED1, code => 0x8ff4fe, comment => '# CJK(9ED1)'},
-	 {direction => 'both', ucs => 0xF929, code => 0x8ff4c5, comment => '# CJK COMPATIBILITY IDEOGRAPH-F929'},
-	 {direction => 'both', ucs => 0xF9DC, code => 0x8ff4f2, comment => '# CJK COMPATIBILITY IDEOGRAPH-F9DC'},
-	 {direction => 'both', ucs => 0xFA0E, code => 0x8ff4b4, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA0E'},
-	 {direction => 'both', ucs => 0xFA0F, code => 0x8ff4b7, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA0F'},
-	 {direction => 'both', ucs => 0xFA10, code => 0x8ff4b8, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA10'},
-	 {direction => 'both', ucs => 0xFA11, code => 0x8ff4bd, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA11'},
-	 {direction => 'both', ucs => 0xFA12, code => 0x8ff4c4, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA12'},
-	 {direction => 'both', ucs => 0xFA13, code => 0x8ff4c7, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA13'},
-	 {direction => 'both', ucs => 0xFA14, code => 0x8ff4c8, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA14'},
-	 {direction => 'both', ucs => 0xFA15, code => 0x8ff4ce, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA15'},
-	 {direction => 'both', ucs => 0xFA16, code => 0x8ff4cf, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA16'},
-	 {direction => 'both', ucs => 0xFA17, code => 0x8ff4d3, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA17'},
-	 {direction => 'both', ucs => 0xFA18, code => 0x8ff4d5, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA18'},
-	 {direction => 'both', ucs => 0xFA19, code => 0x8ff4d6, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA19'},
-	 {direction => 'both', ucs => 0xFA1A, code => 0x8ff4d7, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA1A'},
-	 {direction => 'both', ucs => 0xFA1B, code => 0x8ff4d8, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA1B'},
-	 {direction => 'both', ucs => 0xFA1C, code => 0x8ff4da, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA1C'},
-	 {direction => 'both', ucs => 0xFA1D, code => 0x8ff4db, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA1D'},
-	 {direction => 'both', ucs => 0xFA1E, code => 0x8ff4de, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA1E'},
-	 {direction => 'both', ucs => 0xFA1F, code => 0x8ff4e0, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA1F'},
-	 {direction => 'both', ucs => 0xFA20, code => 0x8ff4e2, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA20'},
-	 {direction => 'both', ucs => 0xFA21, code => 0x8ff4e3, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA21'},
-	 {direction => 'both', ucs => 0xFA22, code => 0x8ff4e5, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA22'},
-	 {direction => 'both', ucs => 0xFA23, code => 0x8ff4e9, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA23'},
-	 {direction => 'both', ucs => 0xFA24, code => 0x8ff4ea, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA24'},
-	 {direction => 'both', ucs => 0xFA25, code => 0x8ff4eb, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA25'},
-	 {direction => 'both', ucs => 0xFA26, code => 0x8ff4ed, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA26'},
-	 {direction => 'both', ucs => 0xFA27, code => 0x8ff4ef, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA27'},
-	 {direction => 'both', ucs => 0xFA28, code => 0x8ff4f0, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA28'},
-	 {direction => 'both', ucs => 0xFA29, code => 0x8ff4f3, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA29'},
-	 {direction => 'both', ucs => 0xFA2A, code => 0x8ff4f7, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA2A'},
-	 {direction => 'both', ucs => 0xFA2B, code => 0x8ff4f8, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA2B'},
-	 {direction => 'both', ucs => 0xFA2C, code => 0x8ff4f9, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA2C'},
-	 {direction => 'both', ucs => 0xFA2D, code => 0x8ff4fd, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA2D'},
-	 {direction => 'both', ucs => 0xFF07, code => 0x8ff4a9, comment => '# FULLWIDTH APOSTROPHE'},
-	 {direction => 'both', ucs => 0xFFE4, code => 0x8fa2c3, comment => '# FULLWIDTH BROKEN BAR'},
+	 {direction => BOTH, ucs => 0x4efc, code => 0x8ff4af, comment => '# CJK(4EFC)'},
+	 {direction => BOTH, ucs => 0x50f4, code => 0x8ff4b0, comment => '# CJK(50F4)'},
+	 {direction => BOTH, ucs => 0x51EC, code => 0x8ff4b1, comment => '# CJK(51EC)'},
+	 {direction => BOTH, ucs => 0x5307, code => 0x8ff4b2, comment => '# CJK(5307)'},
+	 {direction => BOTH, ucs => 0x5324, code => 0x8ff4b3, comment => '# CJK(5324)'},
+	 {direction => BOTH, ucs => 0x548A, code => 0x8ff4b5, comment => '# CJK(548A)'},
+	 {direction => BOTH, ucs => 0x5759, code => 0x8ff4b6, comment => '# CJK(5759)'},
+	 {direction => BOTH, ucs => 0x589E, code => 0x8ff4b9, comment => '# CJK(589E)'},
+	 {direction => BOTH, ucs => 0x5BEC, code => 0x8ff4ba, comment => '# CJK(5BEC)'},
+	 {direction => BOTH, ucs => 0x5CF5, code => 0x8ff4bb, comment => '# CJK(5CF5)'},
+	 {direction => BOTH, ucs => 0x5D53, code => 0x8ff4bc, comment => '# CJK(5D53)'},
+	 {direction => BOTH, ucs => 0x5FB7, code => 0x8ff4be, comment => '# CJK(5FB7)'},
+	 {direction => BOTH, ucs => 0x6085, code => 0x8ff4bf, comment => '# CJK(6085)'},
+	 {direction => BOTH, ucs => 0x6120, code => 0x8ff4c0, comment => '# CJK(6120)'},
+	 {direction => BOTH, ucs => 0x654E, code => 0x8ff4c1, comment => '# CJK(654E)'},
+	 {direction => BOTH, ucs => 0x663B, code => 0x8ff4c2, comment => '# CJK(663B)'},
+	 {direction => BOTH, ucs => 0x6665, code => 0x8ff4c3, comment => '# CJK(6665)'},
+	 {direction => BOTH, ucs => 0x6801, code => 0x8ff4c6, comment => '# CJK(6801)'},
+	 {direction => BOTH, ucs => 0x6A6B, code => 0x8ff4c9, comment => '# CJK(6A6B)'},
+	 {direction => BOTH, ucs => 0x6AE2, code => 0x8ff4ca, comment => '# CJK(6AE2)'},
+	 {direction => BOTH, ucs => 0x6DF2, code => 0x8ff4cc, comment => '# CJK(6DF2)'},
+	 {direction => BOTH, ucs => 0x6DF8, code => 0x8ff4cb, comment => '# CJK(6DF8)'},
+	 {direction => BOTH, ucs => 0x7028, code => 0x8ff4cd, comment => '# CJK(7028)'},
+	 {direction => BOTH, ucs => 0x70BB, code => 0x8ff4ae, comment => '# CJK(70BB)'},
+	 {direction => BOTH, ucs => 0x7501, code => 0x8ff4d0, comment => '# CJK(7501)'},
+	 {direction => BOTH, ucs => 0x7682, code => 0x8ff4d1, comment => '# CJK(7682)'},
+	 {direction => BOTH, ucs => 0x769E, code => 0x8ff4d2, comment => '# CJK(769E)'},
+	 {direction => BOTH, ucs => 0x7930, code => 0x8ff4d4, comment => '# CJK(7930)'},
+	 {direction => BOTH, ucs => 0x7AE7, code => 0x8ff4d9, comment => '# CJK(7AE7)'},
+	 {direction => BOTH, ucs => 0x7DA0, code => 0x8ff4dc, comment => '# CJK(7DA0)'},
+	 {direction => BOTH, ucs => 0x7DD6, code => 0x8ff4dd, comment => '# CJK(7DD6)'},
+	 {direction => BOTH, ucs => 0x8362, code => 0x8ff4df, comment => '# CJK(8362)'},
+	 {direction => BOTH, ucs => 0x85B0, code => 0x8ff4e1, comment => '# CJK(85B0)'},
+	 {direction => BOTH, ucs => 0x8807, code => 0x8ff4e4, comment => '# CJK(8807)'},
+	 {direction => BOTH, ucs => 0x8B7F, code => 0x8ff4e6, comment => '# CJK(8B7F)'},
+	 {direction => BOTH, ucs => 0x8CF4, code => 0x8ff4e7, comment => '# CJK(8CF4)'},
+	 {direction => BOTH, ucs => 0x8D76, code => 0x8ff4e8, comment => '# CJK(8D76)'},
+	 {direction => BOTH, ucs => 0x90DE, code => 0x8ff4ec, comment => '# CJK(90DE)'},
+	 {direction => BOTH, ucs => 0x9115, code => 0x8ff4ee, comment => '# CJK(9115)'},
+	 {direction => BOTH, ucs => 0x9592, code => 0x8ff4f1, comment => '# CJK(9592)'},
+	 {direction => BOTH, ucs => 0x973B, code => 0x8ff4f4, comment => '# CJK(973B)'},
+	 {direction => BOTH, ucs => 0x974D, code => 0x8ff4f5, comment => '# CJK(974D)'},
+	 {direction => BOTH, ucs => 0x9751, code => 0x8ff4f6, comment => '# CJK(9751)'},
+	 {direction => BOTH, ucs => 0x999E, code => 0x8ff4fa, comment => '# CJK(999E)'},
+	 {direction => BOTH, ucs => 0x9AD9, code => 0x8ff4fb, comment => '# CJK(9AD9)'},
+	 {direction => BOTH, ucs => 0x9B72, code => 0x8ff4fc, comment => '# CJK(9B72)'},
+	 {direction => BOTH, ucs => 0x9ED1, code => 0x8ff4fe, comment => '# CJK(9ED1)'},
+	 {direction => BOTH, ucs => 0xF929, code => 0x8ff4c5, comment => '# CJK COMPATIBILITY IDEOGRAPH-F929'},
+	 {direction => BOTH, ucs => 0xF9DC, code => 0x8ff4f2, comment => '# CJK COMPATIBILITY IDEOGRAPH-F9DC'},
+	 {direction => BOTH, ucs => 0xFA0E, code => 0x8ff4b4, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA0E'},
+	 {direction => BOTH, ucs => 0xFA0F, code => 0x8ff4b7, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA0F'},
+	 {direction => BOTH, ucs => 0xFA10, code => 0x8ff4b8, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA10'},
+	 {direction => BOTH, ucs => 0xFA11, code => 0x8ff4bd, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA11'},
+	 {direction => BOTH, ucs => 0xFA12, code => 0x8ff4c4, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA12'},
+	 {direction => BOTH, ucs => 0xFA13, code => 0x8ff4c7, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA13'},
+	 {direction => BOTH, ucs => 0xFA14, code => 0x8ff4c8, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA14'},
+	 {direction => BOTH, ucs => 0xFA15, code => 0x8ff4ce, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA15'},
+	 {direction => BOTH, ucs => 0xFA16, code => 0x8ff4cf, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA16'},
+	 {direction => BOTH, ucs => 0xFA17, code => 0x8ff4d3, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA17'},
+	 {direction => BOTH, ucs => 0xFA18, code => 0x8ff4d5, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA18'},
+	 {direction => BOTH, ucs => 0xFA19, code => 0x8ff4d6, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA19'},
+	 {direction => BOTH, ucs => 0xFA1A, code => 0x8ff4d7, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA1A'},
+	 {direction => BOTH, ucs => 0xFA1B, code => 0x8ff4d8, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA1B'},
+	 {direction => BOTH, ucs => 0xFA1C, code => 0x8ff4da, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA1C'},
+	 {direction => BOTH, ucs => 0xFA1D, code => 0x8ff4db, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA1D'},
+	 {direction => BOTH, ucs => 0xFA1E, code => 0x8ff4de, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA1E'},
+	 {direction => BOTH, ucs => 0xFA1F, code => 0x8ff4e0, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA1F'},
+	 {direction => BOTH, ucs => 0xFA20, code => 0x8ff4e2, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA20'},
+	 {direction => BOTH, ucs => 0xFA21, code => 0x8ff4e3, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA21'},
+	 {direction => BOTH, ucs => 0xFA22, code => 0x8ff4e5, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA22'},
+	 {direction => BOTH, ucs => 0xFA23, code => 0x8ff4e9, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA23'},
+	 {direction => BOTH, ucs => 0xFA24, code => 0x8ff4ea, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA24'},
+	 {direction => BOTH, ucs => 0xFA25, code => 0x8ff4eb, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA25'},
+	 {direction => BOTH, ucs => 0xFA26, code => 0x8ff4ed, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA26'},
+	 {direction => BOTH, ucs => 0xFA27, code => 0x8ff4ef, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA27'},
+	 {direction => BOTH, ucs => 0xFA28, code => 0x8ff4f0, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA28'},
+	 {direction => BOTH, ucs => 0xFA29, code => 0x8ff4f3, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA29'},
+	 {direction => BOTH, ucs => 0xFA2A, code => 0x8ff4f7, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA2A'},
+	 {direction => BOTH, ucs => 0xFA2B, code => 0x8ff4f8, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA2B'},
+	 {direction => BOTH, ucs => 0xFA2C, code => 0x8ff4f9, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA2C'},
+	 {direction => BOTH, ucs => 0xFA2D, code => 0x8ff4fd, comment => '# CJK COMPATIBILITY IDEOGRAPH-FA2D'},
+	 {direction => BOTH, ucs => 0xFF07, code => 0x8ff4a9, comment => '# FULLWIDTH APOSTROPHE'},
+	 {direction => BOTH, ucs => 0xFFE4, code => 0x8fa2c3, comment => '# FULLWIDTH BROKEN BAR'},
 
 	 # additional conversions for EUC_JP -> UTF-8 conversion
-	 {direction => 'to_unicode', ucs => 0x2116, code => 0x8ff4ac, comment => '# NUMERO SIGN'},
-	 {direction => 'to_unicode', ucs => 0x2121, code => 0x8ff4ad, comment => '# TELEPHONE SIGN'},
-	 {direction => 'to_unicode', ucs => 0x3231, code => 0x8ff4ab, comment => '# PARENTHESIZED IDEOGRAPH STOCK'}
+	 {direction => TO_UNICODE, ucs => 0x2116, code => 0x8ff4ac, comment => '# NUMERO SIGN'},
+	 {direction => TO_UNICODE, ucs => 0x2121, code => 0x8ff4ad, comment => '# TELEPHONE SIGN'},
+	 {direction => TO_UNICODE, ucs => 0x3231, code => 0x8ff4ab, comment => '# PARENTHESIZED IDEOGRAPH STOCK'}
 	);
 
-print_tables("EUC_JP", \@mapping);
+print_conversion_tables($this_script, "EUC_JP", \@mapping);
+
 
 #######################################################################
 # sjis2jis ; SJIS => JIS conversion

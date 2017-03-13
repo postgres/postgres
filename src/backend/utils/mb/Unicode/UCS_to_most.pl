@@ -16,7 +16,9 @@
 #		 # and Unicode name (not used in this script)
 
 use strict;
-require convutils;
+use convutils;
+
+my $this_script = $0;
 
 my %filename = (
 	'WIN866'     => 'CP866.TXT',
@@ -54,5 +56,5 @@ foreach my $charset (@charsets)
 {
 	my $mapping = &read_source($filename{$charset});
 
-	print_tables($charset, $mapping);
+	print_conversion_tables($this_script, $charset, $mapping);
 }

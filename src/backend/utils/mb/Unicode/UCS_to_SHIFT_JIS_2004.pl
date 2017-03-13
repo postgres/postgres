@@ -8,9 +8,11 @@
 # "sjis-0213-2004-std.txt" (http://x0213.org)
 
 use strict;
-require convutils;
+use convutils;
 
 # first generate UTF-8 --> SHIFT_JIS_2004 table
+
+my $this_script = $0;
 
 my $in_file = "sjis-0213-2004-std.txt";
 
@@ -34,9 +36,10 @@ while (my $line = <$in>)
 			ucs => $ucs1,
 			ucs_second => $ucs2,
 			comment => $rest,
-			direction => 'both'
+			direction => BOTH,
+			f => $in_file,
+			l => $.
 		};
-		next;
 	}
 	elsif ($line =~ /^0x(.*)[ \t]*U\+(.*)[ \t]*#(.*)$/)
 	{
@@ -52,25 +55,27 @@ while (my $line = <$in>)
 		}
 		elsif ($code < 0x80)
 		{
-			$direction = 'from_unicode';
+			$direction = FROM_UNICODE;
 		}
 		elsif ($ucs < 0x80)
 		{
-			$direction = 'to_unicode';
+			$direction = TO_UNICODE;
 		}
 		else
 		{
-			$direction = 'both';
+			$direction = BOTH;
 		}
 
 		push @mapping, {
 			code => $code,
 			ucs => $ucs,
 			comment => $rest,
-			direction => $direction
+			direction => $direction,
+			f => $in_file,
+			l => $.
 		};
 	}
 }
 close($in);
 
-print_tables("SHIFT_JIS_2004", \@mapping, 1);
+print_conversion_tables($this_script, "SHIFT_JIS_2004", \@mapping);

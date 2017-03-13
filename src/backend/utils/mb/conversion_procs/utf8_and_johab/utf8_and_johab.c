@@ -42,7 +42,7 @@ johab_to_utf8(PG_FUNCTION_ARGS)
 	CHECK_ENCODING_CONVERSION_ARGS(PG_JOHAB, PG_UTF8);
 
 	LocalToUtf(src, len, dest,
-			   LUmapJOHAB, lengthof(LUmapJOHAB),
+			   &johab_to_unicode_tree,
 			   NULL, 0,
 			   NULL,
 			   PG_JOHAB);
@@ -60,7 +60,7 @@ utf8_to_johab(PG_FUNCTION_ARGS)
 	CHECK_ENCODING_CONVERSION_ARGS(PG_UTF8, PG_JOHAB);
 
 	UtfToLocal(src, len, dest,
-			   ULmapJOHAB, lengthof(ULmapJOHAB),
+			   &johab_from_unicode_tree,
 			   NULL, 0,
 			   NULL,
 			   PG_JOHAB);

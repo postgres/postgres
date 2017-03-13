@@ -14,7 +14,9 @@
 # and the "b" field is the hex byte sequence for GB18030
 
 use strict;
-require convutils;
+use convutils;
+
+my $this_script = $0;
 
 # Read the input
 
@@ -68,9 +70,11 @@ while (<$in>)
 	push @mapping, {
 		ucs => $ucs,
 		code => $code,
-		direction => 'both'
+		direction => BOTH,
+		f => $in_file,
+		l => $.
 	};
 }
 close($in);
 
-print_tables("EUC_CN", \@mapping);
+print_conversion_tables($this_script, "EUC_CN", \@mapping);

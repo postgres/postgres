@@ -42,7 +42,7 @@ euc_cn_to_utf8(PG_FUNCTION_ARGS)
 	CHECK_ENCODING_CONVERSION_ARGS(PG_EUC_CN, PG_UTF8);
 
 	LocalToUtf(src, len, dest,
-			   LUmapEUC_CN, lengthof(LUmapEUC_CN),
+			   &euc_cn_to_unicode_tree,
 			   NULL, 0,
 			   NULL,
 			   PG_EUC_CN);
@@ -60,7 +60,7 @@ utf8_to_euc_cn(PG_FUNCTION_ARGS)
 	CHECK_ENCODING_CONVERSION_ARGS(PG_UTF8, PG_EUC_CN);
 
 	UtfToLocal(src, len, dest,
-			   ULmapEUC_CN, lengthof(ULmapEUC_CN),
+			   &euc_cn_from_unicode_tree,
 			   NULL, 0,
 			   NULL,
 			   PG_EUC_CN);

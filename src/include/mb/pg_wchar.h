@@ -372,25 +372,81 @@ extern const pg_wchar_tbl pg_wchar_table[];
  * characters up to 4 bytes long.  For example, the byte sequence 0xC2 0x89
  * would be represented by 0x0000C289, and 0xE8 0xA2 0xB4 by 0x00E8A2B4.
  *
- * Maps are arrays of these structs, which must be in order by the lookup key
- * (so that bsearch() can be used).
+ * There are three possible ways a character can be mapped:
  *
- * UTF-8 to local code conversion map
+ * 1. Using a radix tree, from source to destination code.
+ * 2. Using a sorted array of source -> destination code pairs. This
+ *    method is used for "combining" characters. There are so few of
+ *    them that building a radix tree would be wasteful.
+ * 3. Using a conversion function.
  */
-typedef struct
-{
-	uint32		utf;			/* UTF-8 */
-	uint32		code;			/* local code */
-} pg_utf_to_local;
 
 /*
- * local code to UTF-8 conversion map
+ * Radix tree for character conversion.
+ *
+ * Logically, this is actually four different radix trees, for 1-byte,
+ * 2-byte, 3-byte and 4-byte inputs. The 1-byte tree is a simple lookup
+ * table from source to target code. The 2-byte tree consists of two levels:
+ * one lookup table for the first byte, where the value in the lookup table
+ * points to a lookup table for the second byte. And so on.
+ *
+ * Physically, all the trees are stored in one big array, in 'chars16' or
+ * 'chars32', depending on the maximum value that needs to be reprented. For
+ * each level in each tree, we also store lower and upper bound of allowed
+ * values - values outside those bounds are considered invalid, and are left
+ * out of the tables.
+ *
+ * In the intermediate levels of the trees, the values stored are offsets
+ * into the chars[16|32] array.
+ *
+ * In the beginning of the chars[16|32] array, there is always a number of
+ * zeros, so that you safely follow an index from an intermediate table
+ * without explicitly checking for a zero. Following a zero any number of
+ * times will always bring you to the dummy, all-zeros table in the
+ * beginning. This helps to shave some cycles when looking up values.
  */
 typedef struct
 {
-	uint32		code;			/* local code */
-	uint32		utf;			/* UTF-8 */
-} pg_local_to_utf;
+	/*
+	 * Array containing all the values. Only one of chars16 or chars32 is
+	 * used, depending on how wide the values we need to represent are.
+	 */
+	const uint16 *chars16;
+	const uint32 *chars32;
+
+	/* Radix tree for 1-byte inputs */
+	uint32		b1root;		/* offset of table in the chars[16|32] array */
+	uint8		b1_lower;	/* min allowed value for a single byte input */
+	uint8		b1_upper;	/* max allowed value for a single byte input */
+
+	/* Radix tree for 2-byte inputs */
+	uint32		b2root;		/* offset of 1st byte's table */
+	uint8		b2_1_lower; /* min/max allowed value for 1st input byte */
+	uint8		b2_1_upper;
+	uint8		b2_2_lower; /* min/max allowed value for 2nd input byte */
+	uint8		b2_2_upper;
+
+	/* Radix tree for 3-byte inputs */
+	uint32		b3root;		/* offset of 1st byte's table */
+	uint8		b3_1_lower; /* min/max allowed value for 1st input byte */
+	uint8		b3_1_upper;
+	uint8		b3_2_lower; /* min/max allowed value for 2nd input byte */
+	uint8		b3_2_upper;
+	uint8		b3_3_lower; /* min/max allowed value for 3rd input byte */
+	uint8		b3_3_upper;
+
+	/* Radix tree for 4-byte inputs */
+	uint32		b4root;		/* offset of 1st byte's table */
+	uint8		b4_1_lower; /* min/max allowed value for 1st input byte */
+	uint8		b4_1_upper;
+	uint8		b4_2_lower; /* min/max allowed value for 2nd input byte */
+	uint8		b4_2_upper;
+	uint8		b4_3_lower; /* min/max allowed value for 3rd input byte */
+	uint8		b4_3_upper;
+	uint8		b4_4_lower; /* min/max allowed value for 4th input byte */
+	uint8		b4_4_upper;
+
+} pg_mb_radix_tree;
 
 /*
  * UTF-8 to local code conversion map (for combined characters)
@@ -510,13 +566,13 @@ extern unsigned short CNStoBIG5(unsigned short cns, unsigned char lc);
 
 extern void UtfToLocal(const unsigned char *utf, int len,
 		   unsigned char *iso,
-		   const pg_utf_to_local *map, int mapsize,
+		   const pg_mb_radix_tree *map,
 		   const pg_utf_to_local_combined *cmap, int cmapsize,
 		   utf_local_conversion_func conv_func,
 		   int encoding);
 extern void LocalToUtf(const unsigned char *iso, int len,
 		   unsigned char *utf,
-		   const pg_local_to_utf *map, int mapsize,
+		   const pg_mb_radix_tree *map,
 		   const pg_local_to_utf_combined *cmap, int cmapsize,
 		   utf_local_conversion_func conv_func,
 		   int encoding);
