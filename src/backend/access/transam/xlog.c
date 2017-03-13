@@ -6315,7 +6315,7 @@ StartupXLOG(void)
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of memory"),
-		   errdetail("Failed while allocating an XLog reading processor.")));
+		   errdetail("Failed while allocating a WAL reading processor.")));
 	xlogreader->system_identifier = ControlFile->system_identifier;
 
 	/*
@@ -11246,8 +11246,8 @@ rm_redo_error_callback(void *arg)
 	initStringInfo(&buf);
 	xlog_outdesc(&buf, record);
 
-	/* translator: %s is an XLog record description */
-	errcontext("xlog redo at %X/%X for %s",
+	/* translator: %s is a WAL record description */
+	errcontext("WAL redo at %X/%X for %s",
 			   (uint32) (record->ReadRecPtr >> 32),
 			   (uint32) record->ReadRecPtr,
 			   buf.data);
