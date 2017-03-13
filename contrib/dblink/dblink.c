@@ -225,8 +225,9 @@ dblink_get_named_conn(const char *conname)
 	remoteConn *rconn = getConnectionByName(conname);
 	if (rconn)
 		return rconn->conn;
-	else
-		dblink_conn_not_avail(conname);
+
+	dblink_conn_not_avail(conname);
+	return NULL;		/* keep compiler quiet */
 }
 
 static void
