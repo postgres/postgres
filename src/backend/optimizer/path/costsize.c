@@ -663,14 +663,21 @@ cost_index(IndexPath *path, PlannerInfo *root, double loop_count,
 	if (partial_path)
 	{
 		/*
+		 * For index only scans compute workers based on number of index pages
+		 * fetched; the number of heap pages we fetch might be so small as
+		 * to effectively rule out parallelism, which we don't want to do.
+		 */
+		if (indexonly)
+			rand_heap_pages = -1;
+
+		/*
 		 * Estimate the number of parallel workers required to scan index. Use
 		 * the number of heap pages computed considering heap fetches won't be
 		 * sequential as for parallel scans the pages are accessed in random
 		 * order.
 		 */
 		path->path.parallel_workers = compute_parallel_worker(baserel,
-											   (BlockNumber) rand_heap_pages,
-												  (BlockNumber) index_pages);
+											   rand_heap_pages, index_pages);
 
 		/*
 		 * Fall out if workers can't be assigned for parallel scan, because in

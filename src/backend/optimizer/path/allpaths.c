@@ -692,7 +692,7 @@ create_plain_partial_paths(PlannerInfo *root, RelOptInfo *rel)
 {
 	int			parallel_workers;
 
-	parallel_workers = compute_parallel_worker(rel, rel->pages, 0);
+	parallel_workers = compute_parallel_worker(rel, rel->pages, -1);
 
 	/* If any limit was set to zero, the user doesn't want a parallel scan. */
 	if (parallel_workers <= 0)
@@ -2938,7 +2938,7 @@ create_partial_bitmap_paths(PlannerInfo *root, RelOptInfo *rel,
 	pages_fetched = compute_bitmap_pages(root, rel, bitmapqual, 1.0,
 										 NULL, NULL);
 
-	parallel_workers = compute_parallel_worker(rel, pages_fetched, 0);
+	parallel_workers = compute_parallel_worker(rel, pages_fetched, -1);
 
 	if (parallel_workers <= 0)
 		return;
@@ -2953,16 +2953,16 @@ create_partial_bitmap_paths(PlannerInfo *root, RelOptInfo *rel,
  * be scanned and the size of the index to be scanned, then choose a minimum
  * of those.
  *
- * "heap_pages" is the number of pages from the table that we expect to scan.
- * "index_pages" is the number of pages from the index that we expect to scan.
+ * "heap_pages" is the number of pages from the table that we expect to scan, or
+ * -1 if we don't expect to scan any.
+ *
+ * "index_pages" is the number of pages from the index that we expect to scan, or
+ * -1 if we don't expect to scan any.
  */
 int
-compute_parallel_worker(RelOptInfo *rel, BlockNumber heap_pages,
-						BlockNumber index_pages)
+compute_parallel_worker(RelOptInfo *rel, double heap_pages, double index_pages)
 {
 	int			parallel_workers = 0;
-	int			heap_parallel_workers = 1;
-	int			index_parallel_workers = 1;
 
 	/*
 	 * If the user has set the parallel_workers reloption, use that; otherwise
@@ -2972,23 +2972,24 @@ compute_parallel_worker(RelOptInfo *rel, BlockNumber heap_pages,
 		parallel_workers = rel->rel_parallel_workers;
 	else
 	{
-		int			heap_parallel_threshold;
-		int			index_parallel_threshold;
-
 		/*
-		 * If this relation is too small to be worth a parallel scan, just
-		 * return without doing anything ... unless it's an inheritance child.
-		 * In that case, we want to generate a parallel path here anyway.  It
-		 * might not be worthwhile just for this relation, but when combined
-		 * with all of its inheritance siblings it may well pay off.
+		 * If the number of pages being scanned is insufficient to justify a
+		 * parallel scan, just return zero ... unless it's an inheritance
+		 * child. In that case, we want to generate a parallel path here
+		 * anyway.  It might not be worthwhile just for this relation, but
+		 * when combined with all of its inheritance siblings it may well pay
+		 * off.
 		 */
-		if (heap_pages < (BlockNumber) min_parallel_table_scan_size &&
-			index_pages < (BlockNumber) min_parallel_index_scan_size &&
-			rel->reloptkind == RELOPT_BASEREL)
+		if (rel->reloptkind == RELOPT_BASEREL &&
+			((heap_pages >= 0 && heap_pages < min_parallel_table_scan_size) ||
+		   (index_pages >= 0 && index_pages < min_parallel_index_scan_size)))
 			return 0;
 
-		if (heap_pages > 0)
+		if (heap_pages >= 0)
 		{
+			int			heap_parallel_threshold;
+			int			heap_parallel_workers = 1;
+
 			/*
 			 * Select the number of workers based on the log of the size of
 			 * the relation.  This probably needs to be a good deal more
@@ -3008,8 +3009,11 @@ compute_parallel_worker(RelOptInfo *rel, BlockNumber heap_pages,
 			parallel_workers = heap_parallel_workers;
 		}
 
-		if (index_pages > 0)
+		if (index_pages >= 0)
 		{
+			int			index_parallel_workers = 1;
+			int			index_parallel_threshold;
+
 			/* same calculation as for heap_pages above */
 			index_parallel_threshold = Max(min_parallel_index_scan_size, 1);
 			while (index_pages >= (BlockNumber) (index_parallel_threshold * 3))
