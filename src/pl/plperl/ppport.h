@@ -6205,10 +6205,10 @@ DPPP_(my_grok_number)(pTHX_ const char *pv, STRLEN len, UV *valuep)
     /* UVs are at least 32 bits, so the first 9 decimal digits cannot
        overflow.  */
     UV value = *s - '0';
-    /* This construction seems to be more optimiser friendly.
+    /* This construction seems to be more optimizer friendly.
        (without it gcc does the isDIGIT test and the *s - '0' separately)
        With it gcc on arm is managing 6 instructions (6 cycles) per digit.
-       In theory the optimiser could deduce how far to unroll the loop
+       In theory the optimizer could deduce how far to unroll the loop
        before checking for overflow.  */
     if (++s < send) {
       int digit = *s - '0';
@@ -6606,7 +6606,7 @@ DPPP_(my_grok_oct)(pTHX_ const char *start, STRLEN *len_p, I32 *flags, NV *resul
     bool overflowed = FALSE;
 
     for (; len-- && *s; s++) {
-         /* gcc 2.95 optimiser not smart enough to figure that this subtraction
+         /* gcc 2.95 optimizer not smart enough to figure that this subtraction
             out front allows slicker code.  */
         int digit = *s - '0';
         if (digit >= 0 && digit <= 7) {

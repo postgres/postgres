@@ -2332,7 +2332,7 @@ get_typavgwidth(Oid typid, int32 typmod)
 	}
 
 	/*
-	 * Ooops, we have no idea ... wild guess time.
+	 * Oops, we have no idea ... wild guess time.
 	 */
 	return 32;
 }

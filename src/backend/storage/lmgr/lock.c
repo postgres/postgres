@@ -1125,7 +1125,7 @@ SetupLockInTable(LockMethod lockMethodTable, PGPROC *proc,
 														&found);
 	if (!proclock)
 	{
-		/* Ooops, not enough shmem for the proclock */
+		/* Oops, not enough shmem for the proclock */
 		if (lock->nRequested == 0)
 		{
 			/*
@@ -4046,7 +4046,7 @@ lock_twophase_recover(TransactionId xid, uint16 info,
 														&found);
 	if (!proclock)
 	{
-		/* Ooops, not enough shmem for the proclock */
+		/* Oops, not enough shmem for the proclock */
 		if (lock->nRequested == 0)
 		{
 			/*

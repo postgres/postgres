@@ -140,7 +140,7 @@ select *
   from (values (1),(2)) v(x),
        lateral (select a, b, sum(v.x) from gstest_data(v.x) group by rollup (a,b)) s;
 
--- min max optimisation should still work with GROUP BY ()
+-- min max optimization should still work with GROUP BY ()
 explain (costs off)
   select min(unique1) from tenk1 GROUP BY ();
 

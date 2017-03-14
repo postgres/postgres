@@ -2406,7 +2406,7 @@ CopyFrom(CopyState cstate)
 	 * earlier scan or command. This ensures that if this subtransaction
 	 * aborts then the frozen rows won't be visible after xact cleanup. Note
 	 * that the stronger test of exactly which subtransaction created it is
-	 * crucial for correctness of this optimisation.
+	 * crucial for correctness of this optimization.
 	 */
 	if (cstate->freeze)
 	{
@@ -2973,7 +2973,7 @@ BeginCopyFrom(ParseState *pstate,
 				 * the special case of when the default expression is the
 				 * nextval() of a sequence which in this specific case is
 				 * known to be safe for use with the multi-insert
-				 * optimisation. Hence we use this special case function
+				 * optimization. Hence we use this special case function
 				 * checker rather than the standard check for
 				 * contain_volatile_functions().
 				 */

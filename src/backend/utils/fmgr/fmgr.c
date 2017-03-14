@@ -877,7 +877,7 @@ struct fmgr_security_definer_cache
  * To execute a call, we temporarily replace the flinfo with the cached
  * and looked-up one, while keeping the outer fcinfo (which contains all
  * the actual arguments, etc.) intact.  This is not re-entrant, but then
- * the fcinfo itself can't be used re-entrantly anyway.
+ * the fcinfo itself can't be used reentrantly anyway.
  */
 static Datum
 fmgr_security_definer(PG_FUNCTION_ARGS)

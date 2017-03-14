@@ -5543,7 +5543,7 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 			exec_check_rw_parameter(expr, expr->rwparam);
 		if (expr->expr_simple_expr == NULL)
 		{
-			/* Ooops, release refcount and fail */
+			/* Oops, release refcount and fail */
 			ReleaseCachedPlan(cplan, true);
 			return false;
 		}

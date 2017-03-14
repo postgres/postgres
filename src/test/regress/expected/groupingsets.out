@@ -375,7 +375,7 @@ select *
 ERROR:  aggregate functions are not allowed in FROM clause of their own query level
 LINE 3:        lateral (select a, b, sum(v.x) from gstest_data(v.x) ...
                                      ^
--- min max optimisation should still work with GROUP BY ()
+-- min max optimization should still work with GROUP BY ()
 explain (costs off)
   select min(unique1) from tenk1 GROUP BY ();
                          QUERY PLAN                         

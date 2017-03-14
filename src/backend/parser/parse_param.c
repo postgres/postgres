@@ -210,7 +210,7 @@ variable_coerce_param_hook(ParseState *pstate, Param *param,
 		}
 		else
 		{
-			/* Ooops */
+			/* Oops */
 			ereport(ERROR,
 					(errcode(ERRCODE_AMBIGUOUS_PARAMETER),
 					 errmsg("inconsistent types deduced for parameter $%d",

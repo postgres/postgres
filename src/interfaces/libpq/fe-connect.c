@@ -2136,7 +2136,7 @@ keep_going:						/* We will come back to here until there is
 				}				/* loop over addresses */
 
 				/*
-				 * Ooops, no more addresses.  An appropriate error message is
+				 * Oops, no more addresses.  An appropriate error message is
 				 * already set up, so just set the right status.
 				 */
 				goto error_return;

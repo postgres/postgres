@@ -122,7 +122,7 @@ PLy_procedure_get(Oid fn_oid, Oid fn_rel, bool is_trigger)
 	}
 	PG_CATCH();
 	{
-		/* Do not leave an uninitialised entry in the cache */
+		/* Do not leave an uninitialized entry in the cache */
 		if (use_cache)
 			hash_search(PLy_procedure_cache, &key, HASH_REMOVE, NULL);
 		PG_RE_THROW();

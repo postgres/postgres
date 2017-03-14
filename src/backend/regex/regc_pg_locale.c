@@ -224,7 +224,7 @@ static const unsigned char pg_char_properties[128] = {
  * pg_set_regex_collation: set collation for these functions to obey
  *
  * This is called when beginning compilation or execution of a regexp.
- * Since there's no need for re-entrancy of regexp operations, it's okay
+ * Since there's no need for reentrancy of regexp operations, it's okay
  * to store the results in static variables.
  */
 void

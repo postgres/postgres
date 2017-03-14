@@ -51,7 +51,7 @@ static EPlan *find_plan(char *ident, EPlan **eplan, int *nplans);
  *			and stop_date eq INFINITY [ and update_user eq current user ]
  *			and all other column values as in new tuple, and insert tuple
  *			with old data and stop_date eq current date
- *			ELSE - skip updation of tuple.
+ *			ELSE - skip updating of tuple.
  *		2.  IF a delete affects tuple with stop_date eq INFINITY
  *			then insert the same tuple with stop_date eq current date
  *			[ and delete_user eq current user ]

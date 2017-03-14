@@ -802,7 +802,7 @@ merge_collation_state(Oid collation,
 					else if (collation != DEFAULT_COLLATION_OID)
 					{
 						/*
-						 * Ooops, we have a conflict.  We cannot throw error
+						 * Oops, we have a conflict.  We cannot throw error
 						 * here, since the conflict could be resolved by a
 						 * later sibling CollateExpr, or the parent might not
 						 * care about collation anyway.  Return enough info to
@@ -821,7 +821,7 @@ merge_collation_state(Oid collation,
 				if (collation != context->collation)
 				{
 					/*
-					 * Ooops, we have a conflict of explicit COLLATE clauses.
+					 * Oops, we have a conflict of explicit COLLATE clauses.
 					 * Here we choose to throw error immediately; that is what
 					 * the SQL standard says to do, and there's no good reason
 					 * to be less strict.

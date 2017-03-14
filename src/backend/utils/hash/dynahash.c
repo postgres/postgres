@@ -72,7 +72,7 @@
  * when combined with HASH_DEBUG, these are displayed by hdestroy().
  *
  * Problems & fixes to ejp@ausmelb.oz. WARNING: relies on pre-processor
- * concatenation property, in probably unnecessary code 'optimisation'.
+ * concatenation property, in probably unnecessary code 'optimization'.
  *
  * Modified margo@postgres.berkeley.edu February 1990
  *		added multiple table interface

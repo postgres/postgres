@@ -280,7 +280,7 @@ ProcArrayAdd(PGPROC *proc)
 	if (arrayP->numProcs >= arrayP->maxProcs)
 	{
 		/*
-		 * Ooops, no room.  (This really shouldn't happen, since there is a
+		 * Oops, no room.  (This really shouldn't happen, since there is a
 		 * fixed supply of PGPROC structs too, and so we should have failed
 		 * earlier.)
 		 */
@@ -370,7 +370,7 @@ ProcArrayRemove(PGPROC *proc, TransactionId latestXid)
 		}
 	}
 
-	/* Ooops */
+	/* Oops */
 	LWLockRelease(ProcArrayLock);
 
 	elog(LOG, "failed to find proc %p in ProcArray", proc);

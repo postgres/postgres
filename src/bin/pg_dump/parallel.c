@@ -92,7 +92,7 @@ struct ParallelSlot
 
 	/* These fields are valid if workerStatus == WRKR_WORKING: */
 	ParallelCompletionPtr callback;		/* function to call on completion */
-	void	   *callback_data;	/* passthru data for it */
+	void	   *callback_data;	/* passthrough data for it */
 
 	ArchiveHandle *AH;			/* Archive data worker is using */
 

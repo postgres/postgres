@@ -724,7 +724,7 @@ GetExistingLocalJoinPath(RelOptInfo *joinrel)
 		Path	   *path = (Path *) lfirst(lc);
 		JoinPath   *joinpath = NULL;
 
-		/* Skip parameterised paths. */
+		/* Skip parameterized paths. */
 		if (path->param_info != NULL)
 			continue;
 

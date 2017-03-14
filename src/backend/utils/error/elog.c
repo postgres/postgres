@@ -318,7 +318,7 @@ errstart(int elevel, const char *filename, int lineno,
 	 */
 	if (ErrorContext == NULL)
 	{
-		/* Ooops, hard crash time; very little we can do safely here */
+		/* Oops, hard crash time; very little we can do safely here */
 		write_stderr("error occurred at %s:%d before error message processing is available\n",
 					 filename ? filename : "(unknown file)", lineno);
 		exit(2);
@@ -331,7 +331,7 @@ errstart(int elevel, const char *filename, int lineno,
 	if (recursion_depth++ > 0 && elevel >= ERROR)
 	{
 		/*
-		 * Ooops, error during error processing.  Clear ErrorContext as
+		 * Oops, error during error processing.  Clear ErrorContext as
 		 * discussed at top of file.  We will not return to the original
 		 * error's reporter or handler, so we don't need it.
 		 */
@@ -1302,7 +1302,7 @@ elog_start(const char *filename, int lineno, const char *funcname)
 	/* Make sure that memory context initialization has finished */
 	if (ErrorContext == NULL)
 	{
-		/* Ooops, hard crash time; very little we can do safely here */
+		/* Oops, hard crash time; very little we can do safely here */
 		write_stderr("error occurred at %s:%d before error message processing is available\n",
 					 filename ? filename : "(unknown file)", lineno);
 		exit(2);

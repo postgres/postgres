@@ -827,7 +827,7 @@ PLyObject_ToComposite(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inar
 
 	/*
 	 * This will set up the dummy PLyTypeInfo's output conversion routines,
-	 * since we left is_rowtype as 2. A future optimisation could be caching
+	 * since we left is_rowtype as 2. A future optimization could be caching
 	 * that info instead of looking it up every time a tuple is returned from
 	 * the function.
 	 */

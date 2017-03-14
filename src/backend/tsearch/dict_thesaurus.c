@@ -23,7 +23,7 @@
 
 
 /*
- * Temporay we use TSLexeme.flags for inner use...
+ * Temporary we use TSLexeme.flags for inner use...
  */
 #define DT_USEASIS		0x1000
 
