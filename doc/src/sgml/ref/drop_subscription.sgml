@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP SUBSCRIPTION [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [ <replaceable class="parameter">DROP SLOT</replaceable> | <replaceable class="parameter">NODROP SLOT</replaceable> ]
+DROP SUBSCRIPTION [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [ DROP SLOT | NODROP SLOT ]
 </synopsis>
  </refsynopsisdiv>
 
