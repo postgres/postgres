@@ -2353,12 +2353,6 @@ LOG:  database system is ready to accept read only connections
   <itemizedlist>
    <listitem>
     <para>
-     Operations on hash indexes are not presently WAL-logged, so
-     replay will not update these indexes.
-    </para>
-   </listitem>
-   <listitem>
-    <para>
      Full knowledge of running transactions is required before snapshots
      can be taken. Transactions that use large numbers of subtransactions
      (currently greater than 64) will delay the start of read only

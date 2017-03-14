@@ -510,19 +510,6 @@ Indexes:
    they can be useful.
   </para>
 
-  <caution>
-   <para>
-    Hash index operations are not presently WAL-logged,
-    so hash indexes might need to be rebuilt with <command>REINDEX</>
-    after a database crash if there were unwritten changes.
-    Also, changes to hash indexes are not replicated over streaming or
-    file-based replication after the initial base backup, so they
-    give wrong answers to queries that subsequently use them.
-    Hash indexes are also not properly restored during point-in-time
-    recovery.  For these reasons, hash index use is presently discouraged.
-   </para>
-  </caution>
-
   <para>
    Currently, only the B-tree, GiST, GIN, and BRIN index methods support
    multicolumn indexes. Up to 32 fields can be specified by default.

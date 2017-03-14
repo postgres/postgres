@@ -201,7 +201,6 @@ SELECT h.seqno AS f20000
 --
 CREATE TABLE hash_split_heap (keycol INT);
 CREATE INDEX hash_split_index on hash_split_heap USING HASH (keycol);
-WARNING:  hash indexes are not WAL-logged and their use is discouraged
 INSERT INTO hash_split_heap SELECT 1 FROM generate_series(1, 70000) a;
 VACUUM FULL hash_split_heap;
 -- Let's do a backward scan.
@@ -230,5 +229,4 @@ DROP TABLE hash_temp_heap CASCADE;
 CREATE TABLE hash_heap_float4 (x float4, y int);
 INSERT INTO hash_heap_float4 VALUES (1.1,1);
 CREATE INDEX hash_idx ON hash_heap_float4 USING hash (x);
-WARNING:  hash indexes are not WAL-logged and their use is discouraged
 DROP TABLE hash_heap_float4 CASCADE;

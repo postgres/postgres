@@ -18,6 +18,8 @@
 #include "postgres.h"
 
 #include "access/hash.h"
+#include "access/hash_xlog.h"
+#include "miscadmin.h"
 #include "utils/rel.h"
 
 
@@ -136,6 +138,13 @@ _hash_addovflpage(Relation rel, Buffer metabuf, Buffer buf, bool retain_pin)
 	 * page is released, then finally acquire the lock on new overflow buffer.
 	 * We need this locking order to avoid deadlock with backends that are
 	 * doing inserts.
+	 *
+	 * Note: We could have avoided locking many buffers here if we made two
+	 * WAL records for acquiring an overflow page (one to allocate an overflow
+	 * page and another to add it to overflow bucket chain).  However, doing
+	 * so can leak an overflow page, if the system crashes after allocation.
+	 * Needless to say, it is better to have a single record from a
+	 * performance point of view as well.
 	 */
 	LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 
@@ -303,8 +312,12 @@ _hash_addovflpage(Relation rel, Buffer metabuf, Buffer buf, bool retain_pin)
 found:
 
 	/*
-	 * Do the update.
+	 * Do the update.  No ereport(ERROR) until changes are logged. We want to
+	 * log the changes for bitmap page and overflow page together to avoid
+	 * loss of pages in case the new page is added.
 	 */
+	START_CRIT_SECTION();
+
 	if (page_found)
 	{
 		Assert(BufferIsValid(mapbuf));
@@ -362,6 +375,51 @@ found:
 
 	MarkBufferDirty(buf);
 
+	/* XLOG stuff */
+	if (RelationNeedsWAL(rel))
+	{
+		XLogRecPtr	recptr;
+		xl_hash_add_ovfl_page xlrec;
+
+		xlrec.bmpage_found = page_found;
+		xlrec.bmsize = metap->hashm_bmsize;
+
+		XLogBeginInsert();
+		XLogRegisterData((char *) &xlrec, SizeOfHashAddOvflPage);
+
+		XLogRegisterBuffer(0, ovflbuf, REGBUF_WILL_INIT);
+		XLogRegisterBufData(0, (char *) &pageopaque->hasho_bucket, sizeof(Bucket));
+
+		XLogRegisterBuffer(1, buf, REGBUF_STANDARD);
+
+		if (BufferIsValid(mapbuf))
+		{
+			XLogRegisterBuffer(2, mapbuf, REGBUF_STANDARD);
+			XLogRegisterBufData(2, (char *) &bitmap_page_bit, sizeof(uint32));
+		}
+
+		if (BufferIsValid(newmapbuf))
+			XLogRegisterBuffer(3, newmapbuf, REGBUF_WILL_INIT);
+
+		XLogRegisterBuffer(4, metabuf, REGBUF_STANDARD);
+		XLogRegisterBufData(4, (char *) &metap->hashm_firstfree, sizeof(uint32));
+
+		recptr = XLogInsert(RM_HASH_ID, XLOG_HASH_ADD_OVFL_PAGE);
+
+		PageSetLSN(BufferGetPage(ovflbuf), recptr);
+		PageSetLSN(BufferGetPage(buf), recptr);
+
+		if (BufferIsValid(mapbuf))
+			PageSetLSN(BufferGetPage(mapbuf), recptr);
+
+		if (BufferIsValid(newmapbuf))
+			PageSetLSN(BufferGetPage(newmapbuf), recptr);
+
+		PageSetLSN(BufferGetPage(metabuf), recptr);
+	}
+
+	END_CRIT_SECTION();
+
 	if (retain_pin)
 		LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 	else
@@ -408,7 +466,11 @@ _hash_firstfreebit(uint32 map)
  *	Remove this overflow page from its bucket's chain, and mark the page as
  *	free.  On entry, ovflbuf is write-locked; it is released before exiting.
  *
- *	Add the tuples (itups) to wbuf.
+ *	Add the tuples (itups) to wbuf in this function.  We could do that in the
+ *	caller as well, but the advantage of doing it here is we can easily write
+ *	the WAL for XLOG_HASH_SQUEEZE_PAGE operation.  Addition of tuples and
+ *	removal of overflow page has to done as an atomic operation, otherwise
+ *	during replay on standby users might find duplicate records.
  *
  *	Since this function is invoked in VACUUM, we provide an access strategy
  *	parameter that controls fetches of the bucket pages.
@@ -430,8 +492,6 @@ _hash_freeovflpage(Relation rel, Buffer bucketbuf, Buffer ovflbuf,
 	HashMetaPage metap;
 	Buffer		metabuf;
 	Buffer		mapbuf;
-	Buffer		prevbuf = InvalidBuffer;
-	Buffer		nextbuf = InvalidBuffer;
 	BlockNumber ovflblkno;
 	BlockNumber prevblkno;
 	BlockNumber blkno;
@@ -445,6 +505,9 @@ _hash_freeovflpage(Relation rel, Buffer bucketbuf, Buffer ovflbuf,
 	int32		bitmappage,
 				bitmapbit;
 	Bucket bucket PG_USED_FOR_ASSERTS_ONLY;
+	Buffer		prevbuf = InvalidBuffer;
+	Buffer		nextbuf = InvalidBuffer;
+	bool		update_metap = false;
 
 	/* Get information from the doomed page */
 	_hash_checkpage(rel, ovflbuf, LH_OVERFLOW_PAGE);
@@ -508,6 +571,12 @@ _hash_freeovflpage(Relation rel, Buffer bucketbuf, Buffer ovflbuf,
 	/* Get write-lock on metapage to update firstfree */
 	LockBuffer(metabuf, BUFFER_LOCK_EXCLUSIVE);
 
+	/* This operation needs to log multiple tuples, prepare WAL for that */
+	if (RelationNeedsWAL(rel))
+		XLogEnsureRecordSpace(HASH_XLOG_FREE_OVFL_BUFS, 4 + nitups);
+
+	START_CRIT_SECTION();
+
 	/*
 	 * we have to insert tuples on the "write" page, being careful to preserve
 	 * hashkey ordering.  (If we insert many tuples into the same "write" page
@@ -519,7 +588,11 @@ _hash_freeovflpage(Relation rel, Buffer bucketbuf, Buffer ovflbuf,
 		MarkBufferDirty(wbuf);
 	}
 
-	/* Initialize the freed overflow page. */
+	/*
+	 * Initialize the freed overflow page.  Just zeroing the page won't work,
+	 * because WAL replay routines expect pages to be initialized. See
+	 * explanation of RBM_NORMAL mode atop XLogReadBufferExtended.
+	 */
 	_hash_pageinit(ovflpage, BufferGetPageSize(ovflbuf));
 	MarkBufferDirty(ovflbuf);
 
@@ -550,8 +623,82 @@ _hash_freeovflpage(Relation rel, Buffer bucketbuf, Buffer ovflbuf,
 	if (ovflbitno < metap->hashm_firstfree)
 	{
 		metap->hashm_firstfree = ovflbitno;
+		update_metap = true;
 		MarkBufferDirty(metabuf);
 	}
+
+	/* XLOG stuff */
+	if (RelationNeedsWAL(rel))
+	{
+		xl_hash_squeeze_page xlrec;
+		XLogRecPtr	recptr;
+		int			i;
+
+		xlrec.prevblkno = prevblkno;
+		xlrec.nextblkno = nextblkno;
+		xlrec.ntups = nitups;
+		xlrec.is_prim_bucket_same_wrt = (wbuf == bucketbuf);
+		xlrec.is_prev_bucket_same_wrt = (wbuf == prevbuf);
+
+		XLogBeginInsert();
+		XLogRegisterData((char *) &xlrec, SizeOfHashSqueezePage);
+
+		/*
+		 * bucket buffer needs to be registered to ensure that we can acquire
+		 * a cleanup lock on it during replay.
+		 */
+		if (!xlrec.is_prim_bucket_same_wrt)
+			XLogRegisterBuffer(0, bucketbuf, REGBUF_STANDARD | REGBUF_NO_IMAGE);
+
+		XLogRegisterBuffer(1, wbuf, REGBUF_STANDARD);
+		if (xlrec.ntups > 0)
+		{
+			XLogRegisterBufData(1, (char *) itup_offsets,
+								nitups * sizeof(OffsetNumber));
+			for (i = 0; i < nitups; i++)
+				XLogRegisterBufData(1, (char *) itups[i], tups_size[i]);
+		}
+
+		XLogRegisterBuffer(2, ovflbuf, REGBUF_STANDARD);
+
+		/*
+		 * If prevpage and the writepage (block in which we are moving tuples
+		 * from overflow) are same, then no need to separately register
+		 * prevpage.  During replay, we can directly update the nextblock in
+		 * writepage.
+		 */
+		if (BufferIsValid(prevbuf) && !xlrec.is_prev_bucket_same_wrt)
+			XLogRegisterBuffer(3, prevbuf, REGBUF_STANDARD);
+
+		if (BufferIsValid(nextbuf))
+			XLogRegisterBuffer(4, nextbuf, REGBUF_STANDARD);
+
+		XLogRegisterBuffer(5, mapbuf, REGBUF_STANDARD);
+		XLogRegisterBufData(5, (char *) &bitmapbit, sizeof(uint32));
+
+		if (update_metap)
+		{
+			XLogRegisterBuffer(6, metabuf, REGBUF_STANDARD);
+			XLogRegisterBufData(6, (char *) &metap->hashm_firstfree, sizeof(uint32));
+		}
+
+		recptr = XLogInsert(RM_HASH_ID, XLOG_HASH_SQUEEZE_PAGE);
+
+		PageSetLSN(BufferGetPage(wbuf), recptr);
+		PageSetLSN(BufferGetPage(ovflbuf), recptr);
+
+		if (BufferIsValid(prevbuf) && !xlrec.is_prev_bucket_same_wrt)
+			PageSetLSN(BufferGetPage(prevbuf), recptr);
+		if (BufferIsValid(nextbuf))
+			PageSetLSN(BufferGetPage(nextbuf), recptr);
+
+		PageSetLSN(BufferGetPage(mapbuf), recptr);
+
+		if (update_metap)
+			PageSetLSN(BufferGetPage(metabuf), recptr);
+	}
+
+	END_CRIT_SECTION();
 
 	/* release previous bucket if it is not same as write bucket */
 	if (BufferIsValid(prevbuf) && prevblkno != writeblkno)
@@ -601,7 +748,11 @@ _hash_initbitmapbuffer(Buffer buf, uint16 bmsize, bool initpage)
 	freep = HashPageGetBitmap(pg);
 	MemSet(freep, 0xFF, bmsize);
 
-	/* Set pd_lower just past the end of the bitmap page data. */
+	/*
+	 * Set pd_lower just past the end of the bitmap page data.  We could even
+	 * set pd_lower equal to pd_upper, but this is more precise and makes the
+	 * page look compressible to xlog.c.
+	 */
 	((PageHeader) pg)->pd_lower = ((char *) freep + bmsize) - (char *) pg;
 }
 
@@ -761,6 +912,15 @@ readpage:
 					Assert(nitups == ndeletable);
 
 					/*
+					 * This operation needs to log multiple tuples, prepare
+					 * WAL for that.
+					 */
+					if (RelationNeedsWAL(rel))
+						XLogEnsureRecordSpace(0, 3 + nitups);
+
+					START_CRIT_SECTION();
+
+					/*
 					 * we have to insert tuples on the "write" page, being
 					 * careful to preserve hashkey ordering.  (If we insert
 					 * many tuples into the same "write" page it would be
@@ -772,6 +932,43 @@ readpage:
 					/* Delete tuples we already moved off read page */
 					PageIndexMultiDelete(rpage, deletable, ndeletable);
 					MarkBufferDirty(rbuf);
+
+					/* XLOG stuff */
+					if (RelationNeedsWAL(rel))
+					{
+						XLogRecPtr	recptr;
+						xl_hash_move_page_contents xlrec;
+
+						xlrec.ntups = nitups;
+						xlrec.is_prim_bucket_same_wrt = (wbuf == bucket_buf) ? true : false;
+
+						XLogBeginInsert();
+						XLogRegisterData((char *) &xlrec, SizeOfHashMovePageContents);
+
+						/*
+						 * bucket buffer needs to be registered to ensure that
+						 * we can acquire a cleanup lock on it during replay.
+						 */
+						if (!xlrec.is_prim_bucket_same_wrt)
+							XLogRegisterBuffer(0, bucket_buf, REGBUF_STANDARD | REGBUF_NO_IMAGE);
+
+						XLogRegisterBuffer(1, wbuf, REGBUF_STANDARD);
+						XLogRegisterBufData(1, (char *) itup_offsets,
+											nitups * sizeof(OffsetNumber));
+						for (i = 0; i < nitups; i++)
+							XLogRegisterBufData(1, (char *) itups[i], tups_size[i]);
+
+						XLogRegisterBuffer(2, rbuf, REGBUF_STANDARD);
+						XLogRegisterBufData(2, (char *) deletable,
+										  ndeletable * sizeof(OffsetNumber));
+
+						recptr = XLogInsert(RM_HASH_ID, XLOG_HASH_MOVE_PAGE_CONTENTS);
+
+						PageSetLSN(BufferGetPage(wbuf), recptr);
+						PageSetLSN(BufferGetPage(rbuf), recptr);
+					}
+
+					END_CRIT_SECTION();
 
 					tups_moved = true;
 				}

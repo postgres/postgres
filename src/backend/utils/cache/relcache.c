@@ -5880,13 +5880,10 @@ RelationIdIsInInitFile(Oid relationId)
 /*
  * Tells whether any index for the relation is unlogged.
  *
- * Any index using the hash AM is implicitly unlogged.
- *
  * Note: There doesn't seem to be any way to have an unlogged index attached
- * to a permanent table except to create a hash index, but it seems best to
- * keep this general so that it returns sensible results even when they seem
- * obvious (like for an unlogged table) and to handle possible future unlogged
- * indexes on permanent tables.
+ * to a permanent table, but it seems best to keep this general so that it
+ * returns sensible results even when they seem obvious (like for an unlogged
+ * table) and to handle possible future unlogged indexes on permanent tables.
  */
 bool
 RelationHasUnloggedIndex(Relation rel)
@@ -5908,8 +5905,7 @@ RelationHasUnloggedIndex(Relation rel)
 			elog(ERROR, "cache lookup failed for relation %u", indexoid);
 		reltup = (Form_pg_class) GETSTRUCT(tp);
 
-		if (reltup->relpersistence == RELPERSISTENCE_UNLOGGED
-			|| reltup->relam == HASH_AM_OID)
+		if (reltup->relpersistence == RELPERSISTENCE_UNLOGGED)
 			result = true;
 
 		ReleaseSysCache(tp);

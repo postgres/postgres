@@ -2153,10 +2153,9 @@ include_dir 'conf.d'
          has materialized a result set, no error will be generated even if the
          underlying rows in the referenced table have been vacuumed away.
          Some tables cannot safely be vacuumed early, and so will not be
-         affected by this setting.  Examples include system catalogs and any
-         table which has a hash index.  For such tables this setting will
-         neither reduce bloat nor create a possibility of a <literal>snapshot
-         too old</> error on scanning.
+         affected by this setting, such as system catalogs.  For such tables
+         this setting will neither reduce bloat nor create a possibility
+         of a <literal>snapshot too old</> error on scanning.
         </para>
        </listitem>
       </varlistentry>

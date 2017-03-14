@@ -16,6 +16,8 @@
 #include "postgres.h"
 
 #include "access/hash.h"
+#include "access/hash_xlog.h"
+#include "miscadmin.h"
 #include "utils/rel.h"
 
 
@@ -40,6 +42,7 @@ _hash_doinsert(Relation rel, IndexTuple itup)
 	bool		do_expand;
 	uint32		hashkey;
 	Bucket		bucket;
+	OffsetNumber itup_off;
 
 	/*
 	 * Get the hash key for the item (it's stored in the index tuple itself).
@@ -158,25 +161,20 @@ restart_insert:
 		Assert(pageopaque->hasho_bucket == bucket);
 	}
 
-	/* found page with enough space, so add the item here */
-	(void) _hash_pgaddtup(rel, buf, itemsz, itup);
-
-	/*
-	 * dirty and release the modified page.  if the page we modified was an
-	 * overflow page, we also need to separately drop the pin we retained on
-	 * the primary bucket page.
-	 */
-	MarkBufferDirty(buf);
-	_hash_relbuf(rel, buf);
-	if (buf != bucket_buf)
-		_hash_dropbuf(rel, bucket_buf);
-
 	/*
 	 * Write-lock the metapage so we can increment the tuple count. After
 	 * incrementing it, check to see if it's time for a split.
 	 */
 	LockBuffer(metabuf, BUFFER_LOCK_EXCLUSIVE);
 
+	/* Do the update.  No ereport(ERROR) until changes are logged */
+	START_CRIT_SECTION();
+
+	/* found page with enough space, so add the item here */
+	itup_off = _hash_pgaddtup(rel, buf, itemsz, itup);
+	MarkBufferDirty(buf);
+
+	/* metapage operations */
 	metap = HashPageGetMeta(metapage);
 	metap->hashm_ntuples += 1;
 
@@ -184,9 +182,42 @@ restart_insert:
 	do_expand = metap->hashm_ntuples >
 		(double) metap->hashm_ffactor * (metap->hashm_maxbucket + 1);
 
-	/* Write out the metapage and drop lock, but keep pin */
 	MarkBufferDirty(metabuf);
+
+	/* XLOG stuff */
+	if (RelationNeedsWAL(rel))
+	{
+		xl_hash_insert xlrec;
+		XLogRecPtr	recptr;
+
+		xlrec.offnum = itup_off;
+
+		XLogBeginInsert();
+		XLogRegisterData((char *) &xlrec, SizeOfHashInsert);
+
+		XLogRegisterBuffer(1, metabuf, REGBUF_STANDARD);
+
+		XLogRegisterBuffer(0, buf, REGBUF_STANDARD);
+		XLogRegisterBufData(0, (char *) itup, IndexTupleDSize(*itup));
+
+		recptr = XLogInsert(RM_HASH_ID, XLOG_HASH_INSERT);
+
+		PageSetLSN(BufferGetPage(buf), recptr);
+		PageSetLSN(BufferGetPage(metabuf), recptr);
+	}
+
+	END_CRIT_SECTION();
+
+	/* drop lock on metapage, but keep pin */
 	LockBuffer(metabuf, BUFFER_LOCK_UNLOCK);
+
+	/*
+	 * Release the modified page and ensure to release the pin on primary
+	 * page.
+	 */
+	_hash_relbuf(rel, buf);
+	if (buf != bucket_buf)
+		_hash_dropbuf(rel, bucket_buf);
 
 	/* Attempt to split if a split is needed */
 	if (do_expand)

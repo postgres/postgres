@@ -29,6 +29,7 @@
 #include "postgres.h"
 
 #include "access/hash.h"
+#include "access/hash_xlog.h"
 #include "miscadmin.h"
 #include "storage/lmgr.h"
 #include "storage/smgr.h"
@@ -43,6 +44,7 @@ static void _hash_splitbucket(Relation rel, Buffer metabuf,
 				  HTAB *htab,
 				  uint32 maxbucket,
 				  uint32 highmask, uint32 lowmask);
+static void log_split_page(Relation rel, Buffer buf);
 
 
 /*
@@ -381,6 +383,25 @@ _hash_init(Relation rel, double num_tuples, ForkNumber forkNum)
 	pg = BufferGetPage(metabuf);
 	metap = HashPageGetMeta(pg);
 
+	/* XLOG stuff */
+	if (RelationNeedsWAL(rel))
+	{
+		xl_hash_init_meta_page xlrec;
+		XLogRecPtr	recptr;
+
+		xlrec.num_tuples = num_tuples;
+		xlrec.procid = metap->hashm_procid;
+		xlrec.ffactor = metap->hashm_ffactor;
+
+		XLogBeginInsert();
+		XLogRegisterData((char *) &xlrec, SizeOfHashInitMetaPage);
+		XLogRegisterBuffer(0, metabuf, REGBUF_WILL_INIT);
+
+		recptr = XLogInsert(RM_HASH_ID, XLOG_HASH_INIT_META_PAGE);
+
+		PageSetLSN(BufferGetPage(metabuf), recptr);
+	}
+
 	num_buckets = metap->hashm_maxbucket + 1;
 
 	/*
@@ -405,6 +426,12 @@ _hash_init(Relation rel, double num_tuples, ForkNumber forkNum)
 		buf = _hash_getnewbuf(rel, blkno, forkNum);
 		_hash_initbuf(buf, metap->hashm_maxbucket, i, LH_BUCKET_PAGE, false);
 		MarkBufferDirty(buf);
+
+		log_newpage(&rel->rd_node,
+					forkNum,
+					blkno,
+					BufferGetPage(buf),
+					true);
 		_hash_relbuf(rel, buf);
 	}
 
@@ -430,6 +457,31 @@ _hash_init(Relation rel, double num_tuples, ForkNumber forkNum)
 
 	metap->hashm_nmaps++;
 	MarkBufferDirty(metabuf);
+
+	/* XLOG stuff */
+	if (RelationNeedsWAL(rel))
+	{
+		xl_hash_init_bitmap_page xlrec;
+		XLogRecPtr	recptr;
+
+		xlrec.bmsize = metap->hashm_bmsize;
+
+		XLogBeginInsert();
+		XLogRegisterData((char *) &xlrec, SizeOfHashInitBitmapPage);
+		XLogRegisterBuffer(0, bitmapbuf, REGBUF_WILL_INIT);
+
+		/*
+		 * This is safe only because nobody else can be modifying the index at
+		 * this stage; it's only visible to the transaction that is creating
+		 * it.
+		 */
+		XLogRegisterBuffer(1, metabuf, REGBUF_STANDARD);
+
+		recptr = XLogInsert(RM_HASH_ID, XLOG_HASH_INIT_BITMAP_PAGE);
+
+		PageSetLSN(BufferGetPage(bitmapbuf), recptr);
+		PageSetLSN(BufferGetPage(metabuf), recptr);
+	}
 
 	/* all done */
 	_hash_relbuf(rel, bitmapbuf);
@@ -525,7 +577,10 @@ _hash_init_metabuffer(Buffer buf, double num_tuples, RegProcedure procid,
 	metap->hashm_ovflpoint = log2_num_buckets;
 	metap->hashm_firstfree = 0;
 
-	/* Set pd_lower just past the end of the metadata. */
+	/*
+	 * Set pd_lower just past the end of the metadata.  This is to log full
+	 * page image of metapage in xloginsert.c.
+	 */
 	((PageHeader) page)->pd_lower =
 		((char *) metap + sizeof(HashMetaPageData)) - (char *) page;
 }
@@ -569,6 +624,8 @@ _hash_expandtable(Relation rel, Buffer metabuf)
 	uint32		maxbucket;
 	uint32		highmask;
 	uint32		lowmask;
+	bool		metap_update_masks = false;
+	bool		metap_update_splitpoint = false;
 
 restart_expand:
 
@@ -728,7 +785,11 @@ restart_expand:
 		 * The number of buckets in the new splitpoint is equal to the total
 		 * number already in existence, i.e. new_bucket.  Currently this maps
 		 * one-to-one to blocks required, but someday we may need a more
-		 * complicated calculation here.
+		 * complicated calculation here.  We treat allocation of buckets as a
+		 * separate WAL-logged action.  Even if we fail after this operation,
+		 * won't leak bucket pages; rather, the next split will consume this
+		 * space. In any case, even without failure we don't use all the space
+		 * in one split operation.
 		 */
 		if (!_hash_alloc_buckets(rel, start_nblkno, new_bucket))
 		{
@@ -757,8 +818,7 @@ restart_expand:
 	 * Since we are scribbling on the pages in the shared buffers, establish a
 	 * critical section.  Any failure in this next code leaves us with a big
 	 * problem: the metapage is effectively corrupt but could get written back
-	 * to disk.  We don't really expect any failure, but just to be sure,
-	 * establish a critical section.
+	 * to disk.
 	 */
 	START_CRIT_SECTION();
 
@@ -772,6 +832,7 @@ restart_expand:
 		/* Starting a new doubling */
 		metap->hashm_lowmask = metap->hashm_highmask;
 		metap->hashm_highmask = new_bucket | metap->hashm_lowmask;
+		metap_update_masks = true;
 	}
 
 	/*
@@ -784,6 +845,7 @@ restart_expand:
 	{
 		metap->hashm_spares[spare_ndx] = metap->hashm_spares[metap->hashm_ovflpoint];
 		metap->hashm_ovflpoint = spare_ndx;
+		metap_update_splitpoint = true;
 	}
 
 	MarkBufferDirty(metabuf);
@@ -828,6 +890,49 @@ restart_expand:
 	nopaque->hasho_page_id = HASHO_PAGE_ID;
 
 	MarkBufferDirty(buf_nblkno);
+
+	/* XLOG stuff */
+	if (RelationNeedsWAL(rel))
+	{
+		xl_hash_split_allocate_page xlrec;
+		XLogRecPtr	recptr;
+
+		xlrec.new_bucket = maxbucket;
+		xlrec.old_bucket_flag = oopaque->hasho_flag;
+		xlrec.new_bucket_flag = nopaque->hasho_flag;
+		xlrec.flags = 0;
+
+		XLogBeginInsert();
+
+		XLogRegisterBuffer(0, buf_oblkno, REGBUF_STANDARD);
+		XLogRegisterBuffer(1, buf_nblkno, REGBUF_WILL_INIT);
+		XLogRegisterBuffer(2, metabuf, REGBUF_STANDARD);
+
+		if (metap_update_masks)
+		{
+			xlrec.flags |= XLH_SPLIT_META_UPDATE_MASKS;
+			XLogRegisterBufData(2, (char *) &metap->hashm_lowmask, sizeof(uint32));
+			XLogRegisterBufData(2, (char *) &metap->hashm_highmask, sizeof(uint32));
+		}
+
+		if (metap_update_splitpoint)
+		{
+			xlrec.flags |= XLH_SPLIT_META_UPDATE_SPLITPOINT;
+			XLogRegisterBufData(2, (char *) &metap->hashm_ovflpoint,
+								sizeof(uint32));
+			XLogRegisterBufData(2,
+					   (char *) &metap->hashm_spares[metap->hashm_ovflpoint],
+								sizeof(uint32));
+		}
+
+		XLogRegisterData((char *) &xlrec, SizeOfHashSplitAllocPage);
+
+		recptr = XLogInsert(RM_HASH_ID, XLOG_HASH_SPLIT_ALLOCATE_PAGE);
+
+		PageSetLSN(BufferGetPage(buf_oblkno), recptr);
+		PageSetLSN(BufferGetPage(buf_nblkno), recptr);
+		PageSetLSN(BufferGetPage(metabuf), recptr);
+	}
 
 	END_CRIT_SECTION();
 
@@ -883,6 +988,7 @@ _hash_alloc_buckets(Relation rel, BlockNumber firstblock, uint32 nblocks)
 {
 	BlockNumber lastblock;
 	char		zerobuf[BLCKSZ];
+	Page		page;
 
 	lastblock = firstblock + nblocks - 1;
 
@@ -893,7 +999,20 @@ _hash_alloc_buckets(Relation rel, BlockNumber firstblock, uint32 nblocks)
 	if (lastblock < firstblock || lastblock == InvalidBlockNumber)
 		return false;
 
-	MemSet(zerobuf, 0, sizeof(zerobuf));
+	page = (Page) zerobuf;
+
+	/*
+	 * Initialize the freed overflow page.  Just zeroing the page won't work,
+	 * See _hash_freeovflpage for similar usage.
+	 */
+	_hash_pageinit(page, BLCKSZ);
+
+	if (RelationNeedsWAL(rel))
+		log_newpage(&rel->rd_node,
+					MAIN_FORKNUM,
+					lastblock,
+					zerobuf,
+					true);
 
 	RelationOpenSmgr(rel);
 	smgrextend(rel->rd_smgr, MAIN_FORKNUM, lastblock, zerobuf, false);
@@ -951,6 +1070,11 @@ _hash_splitbucket(Relation rel,
 	Page		npage;
 	HashPageOpaque oopaque;
 	HashPageOpaque nopaque;
+	OffsetNumber itup_offsets[MaxIndexTuplesPerPage];
+	IndexTuple	itups[MaxIndexTuplesPerPage];
+	Size		all_tups_size = 0;
+	int			i;
+	uint16		nitups = 0;
 
 	bucket_obuf = obuf;
 	opage = BufferGetPage(obuf);
@@ -1029,29 +1153,38 @@ _hash_splitbucket(Relation rel,
 				itemsz = IndexTupleDSize(*new_itup);
 				itemsz = MAXALIGN(itemsz);
 
-				if (PageGetFreeSpace(npage) < itemsz)
+				if (PageGetFreeSpaceForMultipleTuples(npage, nitups + 1) < (all_tups_size + itemsz))
 				{
-					/* write out nbuf and drop lock, but keep pin */
+					/*
+					 * Change the shared buffer state in critical section,
+					 * otherwise any error could make it unrecoverable.
+					 */
+					START_CRIT_SECTION();
+
+					_hash_pgaddmultitup(rel, nbuf, itups, itup_offsets, nitups);
 					MarkBufferDirty(nbuf);
+					/* log the split operation before releasing the lock */
+					log_split_page(rel, nbuf);
+
+					END_CRIT_SECTION();
+
 					/* drop lock, but keep pin */
 					LockBuffer(nbuf, BUFFER_LOCK_UNLOCK);
+
+					/* be tidy */
+					for (i = 0; i < nitups; i++)
+						pfree(itups[i]);
+					nitups = 0;
+					all_tups_size = 0;
+
 					/* chain to a new overflow page */
 					nbuf = _hash_addovflpage(rel, metabuf, nbuf, (nbuf == bucket_nbuf) ? true : false);
 					npage = BufferGetPage(nbuf);
 					nopaque = (HashPageOpaque) PageGetSpecialPointer(npage);
 				}
 
-				/*
-				 * Insert tuple on new page, using _hash_pgaddtup to ensure
-				 * correct ordering by hashkey.  This is a tad inefficient
-				 * since we may have to shuffle itempointers repeatedly.
-				 * Possible future improvement: accumulate all the items for
-				 * the new page and qsort them before insertion.
-				 */
-				(void) _hash_pgaddtup(rel, nbuf, itemsz, new_itup);
-
-				/* be tidy */
-				pfree(new_itup);
+				itups[nitups++] = new_itup;
+				all_tups_size += itemsz;
 			}
 			else
 			{
@@ -1073,11 +1206,27 @@ _hash_splitbucket(Relation rel,
 		/* Exit loop if no more overflow pages in old bucket */
 		if (!BlockNumberIsValid(oblkno))
 		{
+			/*
+			 * Change the shared buffer state in critical section, otherwise
+			 * any error could make it unrecoverable.
+			 */
+			START_CRIT_SECTION();
+
+			_hash_pgaddmultitup(rel, nbuf, itups, itup_offsets, nitups);
 			MarkBufferDirty(nbuf);
+			/* log the split operation before releasing the lock */
+			log_split_page(rel, nbuf);
+
+			END_CRIT_SECTION();
+
 			if (nbuf == bucket_nbuf)
 				LockBuffer(nbuf, BUFFER_LOCK_UNLOCK);
 			else
 				_hash_relbuf(rel, nbuf);
+
+			/* be tidy */
+			for (i = 0; i < nitups; i++)
+				pfree(itups[i]);
 			break;
 		}
 
@@ -1103,6 +1252,8 @@ _hash_splitbucket(Relation rel,
 	npage = BufferGetPage(bucket_nbuf);
 	nopaque = (HashPageOpaque) PageGetSpecialPointer(npage);
 
+	START_CRIT_SECTION();
+
 	oopaque->hasho_flag &= ~LH_BUCKET_BEING_SPLIT;
 	nopaque->hasho_flag &= ~LH_BUCKET_BEING_POPULATED;
 
@@ -1119,6 +1270,29 @@ _hash_splitbucket(Relation rel,
 	 */
 	MarkBufferDirty(bucket_obuf);
 	MarkBufferDirty(bucket_nbuf);
+
+	if (RelationNeedsWAL(rel))
+	{
+		XLogRecPtr	recptr;
+		xl_hash_split_complete xlrec;
+
+		xlrec.old_bucket_flag = oopaque->hasho_flag;
+		xlrec.new_bucket_flag = nopaque->hasho_flag;
+
+		XLogBeginInsert();
+
+		XLogRegisterData((char *) &xlrec, SizeOfHashSplitComplete);
+
+		XLogRegisterBuffer(0, bucket_obuf, REGBUF_STANDARD);
+		XLogRegisterBuffer(1, bucket_nbuf, REGBUF_STANDARD);
+
+		recptr = XLogInsert(RM_HASH_ID, XLOG_HASH_SPLIT_COMPLETE);
+
+		PageSetLSN(BufferGetPage(bucket_obuf), recptr);
+		PageSetLSN(BufferGetPage(bucket_nbuf), recptr);
+	}
+
+	END_CRIT_SECTION();
 }
 
 /*
@@ -1242,6 +1416,32 @@ _hash_finish_split(Relation rel, Buffer metabuf, Buffer obuf, Bucket obucket,
 	_hash_relbuf(rel, bucket_nbuf);
 	LockBuffer(obuf, BUFFER_LOCK_UNLOCK);
 	hash_destroy(tidhtab);
+}
+
+/*
+ *	log_split_page() -- Log the split operation
+ *
+ *	We log the split operation when the new page in new bucket gets full,
+ *	so we log the entire page.
+ *
+ *	'buf' must be locked by the caller which is also responsible for unlocking
+ *	it.
+ */
+static void
+log_split_page(Relation rel, Buffer buf)
+{
+	if (RelationNeedsWAL(rel))
+	{
+		XLogRecPtr	recptr;
+
+		XLogBeginInsert();
+
+		XLogRegisterBuffer(0, buf, REGBUF_FORCE_IMAGE | REGBUF_STANDARD);
+
+		recptr = XLogInsert(RM_HASH_ID, XLOG_HASH_SPLIT_PAGE);
+
+		PageSetLSN(BufferGetPage(buf), recptr);
+	}
 }
 
 /*

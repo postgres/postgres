@@ -1,7 +1,6 @@
 CREATE TABLE test_hash (a int, b text);
 INSERT INTO test_hash VALUES (1, 'one');
 CREATE INDEX test_hash_a_idx ON test_hash USING hash (a);
-WARNING:  hash indexes are not WAL-logged and their use is discouraged
 \x
 SELECT hash_page_type(get_raw_page('test_hash_a_idx', 0));
 -[ RECORD 1 ]--+---------

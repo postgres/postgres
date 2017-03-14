@@ -1538,19 +1538,6 @@ archive_command = 'local_backup_script.sh "%p" "%f"'
   <itemizedlist>
    <listitem>
     <para>
-     Operations on hash indexes are not presently WAL-logged, so
-     replay will not update these indexes.  This will mean that any new inserts
-     will be ignored by the index, updated rows will apparently disappear and
-     deleted rows will still retain pointers. In other words, if you modify a
-     table with a hash index on it then you will get incorrect query results
-     on a standby server.  When recovery completes it is recommended that you
-     manually <xref linkend="sql-reindex">
-     each such index after completing a recovery operation.
-    </para>
-   </listitem>
-
-   <listitem>
-    <para>
      If a <xref linkend="sql-createdatabase">
      command is executed while a base backup is being taken, and then
      the template database that the <command>CREATE DATABASE</> copied

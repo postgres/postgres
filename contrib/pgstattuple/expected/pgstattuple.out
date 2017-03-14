@@ -131,7 +131,6 @@ select * from pgstatginindex('test_ginidx');
 (1 row)
 
 create index test_hashidx on test using hash (b);
-WARNING:  hash indexes are not WAL-logged and their use is discouraged
 select * from pgstathashindex('test_hashidx');
  version | bucket_pages | overflow_pages | bitmap_pages | zero_pages | live_items | dead_items | free_percent 
 ---------+--------------+----------------+--------------+------------+------------+------------+--------------
@@ -226,7 +225,6 @@ ERROR:  "test_partition" is not an index
 -- an actual index of a partitioned table should work though
 create index test_partition_idx on test_partition(a);
 create index test_partition_hash_idx on test_partition using hash (a);
-WARNING:  hash indexes are not WAL-logged and their use is discouraged
 -- these should work
 select pgstatindex('test_partition_idx');
          pgstatindex          

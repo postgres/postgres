@@ -213,7 +213,7 @@ this flag must be clear before splitting a bucket; thus, a bucket can't be
 split again until the previous split is totally complete.
 
 The moved-by-split flag on a tuple indicates that tuple is moved from old to
-new bucket.  Concurrent scans can skip such tuples till the split operation
+new bucket.  Concurrent scans will skip such tuples until the split operation
 is finished.  Once the tuple is marked as moved-by-split, it will remain so
 forever but that does no harm.  We have intentionally not cleared it as that
 can generate an additional I/O which is not necessary.
@@ -287,13 +287,17 @@ The insertion algorithm is rather similar:
 	if current page is full, release lock but not pin, read/exclusive-lock
      next page; repeat as needed
 	>> see below if no space in any page of bucket
+	take buffer content lock in exclusive mode on metapage
 	insert tuple at appropriate place in page
-	mark current page dirty and release buffer content lock and pin
-	if the current page is not a bucket page, release the pin on bucket page
-	pin meta page and take buffer content lock in exclusive mode
+	mark current page dirty
 	increment tuple count, decide if split needed
-	mark meta page dirty and release buffer content lock and pin
-	done if no split needed, else enter Split algorithm below
+	mark meta page dirty
+	write WAL for insertion of tuple
+	release the buffer content lock on metapage
+	release buffer content lock on current page
+	if current page is not a bucket page, release the pin on bucket page
+	if split is needed, enter Split algorithm below
+	release the pin on metapage
 
 To speed searches, the index entries within any individual index page are
 kept sorted by hash code; the insertion code must take care to insert new
@@ -328,12 +332,17 @@ existing bucket in two, thereby lowering the fill ratio:
        try to finish the split and the cleanup work
        if that succeeds, start over; if it fails, give up
 	mark the old and new buckets indicating split is in progress
+	mark both old and new buckets as dirty
+	write WAL for allocation of new page for split
 	copy the tuples that belongs to new bucket from old bucket, marking
      them as moved-by-split
+	write WAL record for moving tuples to new page once the new page is full
+	or all the pages of old bucket are finished
 	release lock but not pin for primary bucket page of old bucket,
 	 read/shared-lock next page; repeat as needed
 	clear the bucket-being-split and bucket-being-populated flags
 	mark the old bucket indicating split-cleanup
+	write WAL for changing the flags on both old and new buckets
 
 The split operation's attempt to acquire cleanup-lock on the old bucket number
 could fail if another process holds any lock or pin on it.  We do not want to
@@ -369,6 +378,8 @@ The fourth operation is garbage collection (bulk deletion):
 		acquire cleanup lock on primary bucket page
 		loop:
 			scan and remove tuples
+			mark the target page dirty
+			write WAL for deleting tuples from target page
 			if this is the last bucket page, break out of loop
 			pin and x-lock next page
 			release prior lock and pin (except keep pin on primary bucket page)
@@ -383,7 +394,8 @@ The fourth operation is garbage collection (bulk deletion):
 	check if number of buckets changed
 	if so, release content lock and pin and return to for-each-bucket loop
 	else update metapage tuple count
-	mark meta page dirty and release buffer content lock and pin
+	mark meta page dirty and write WAL for update of metapage
+	release buffer content lock and pin
 
 Note that this is designed to allow concurrent splits and scans.  If a split
 occurs, tuples relocated into the new bucket will be visited twice by the
@@ -425,18 +437,16 @@ Obtaining an overflow page:
 	search for a free page (zero bit in bitmap)
 	if found:
 		set bit in bitmap
-		mark bitmap page dirty and release content lock
+		mark bitmap page dirty
 		take metapage buffer content lock in exclusive mode
 		if first-free-bit value did not change,
 			update it and mark meta page dirty
-		release meta page buffer content lock
-		return page number
 	else (not found):
 	release bitmap page buffer content lock
 	loop back to try next bitmap page, if any
 -- here when we have checked all bitmap pages; we hold meta excl. lock
 	extend index to add another overflow page; update meta information
-	mark meta page dirty and release buffer content lock
+	mark meta page dirty
 	return page number
 
 It is slightly annoying to release and reacquire the metapage lock
@@ -456,12 +466,17 @@ like this:
 
 	-- having determined that no space is free in the target bucket:
 	remember last page of bucket, drop write lock on it
-	call free-page-acquire routine
 	re-write-lock last page of bucket
 	if it is not last anymore, step to the last page
-	update (former) last page to point to new page
+	execute free-page-acquire (obtaining an overflow page) mechanism
+      described above
+	update (former) last page to point to the new page and mark buffer dirty
 	write-lock and initialize new page, with back link to former last page
-	write and release former last page
+	write WAL for addition of overflow page
+	release the locks on meta page and bitmap page acquired in
+      free-page-acquire algorithm
+	release the lock on former last page
+	release the lock on new overflow page
 	insert tuple into new page
 	-- etc.
 
@@ -488,12 +503,14 @@ accessors of pages in the bucket.  The algorithm is:
 	determine which bitmap page contains the free space bit for page
 	release meta page buffer content lock
 	pin bitmap page and take buffer content lock in exclusive mode
-	update bitmap bit
-	mark bitmap page dirty and release buffer content lock and pin
-	if page number is less than what we saw as first-free-bit in meta:
 	retake meta page buffer content lock in exclusive mode
+	move (insert) tuples that belong to the overflow page being freed
+	update bitmap bit
+	mark bitmap page dirty
 	if page number is still less than first-free-bit,
 		update first-free-bit field and mark meta page dirty
+	write WAL for delinking overflow page operation
+	release buffer content lock and pin
 	release meta page buffer content lock and pin
 
 We have to do it this way because we must clear the bitmap bit before
@@ -504,8 +521,91 @@ page acquirer will scan more bitmap bits than he needs to.  What must be
 avoided is having first-free-bit greater than the actual first free bit,
 because then that free page would never be found by searchers.
 
-All the freespace operations should be called while holding no buffer
-locks.  Since they need no lmgr locks, deadlock is not possible.
+The reason of moving tuples from overflow page while delinking the later is
+to make that as an atomic operation.  Not doing so could lead to spurious reads
+on standby.  Basically, the user might see the same tuple twice.
+
+
+WAL Considerations
+------------------
+
+The hash index operations like create index, insert, delete, bucket split,
+allocate overflow page, and squeeze in themselves don't guarantee hash index
+consistency after a crash.  To provide robustness, we write WAL for each of
+these operations.
+
+CREATE INDEX writes multiple WAL records.  First, we write a record to cover
+the initializatoin of the metapage, followed by one for each new bucket
+created, followed by one for the initial bitmap page.  It's not important for
+index creation to appear atomic, because the index isn't yet visible to any
+other transaction, and the creating transaction will roll back in the event of
+a crash.  It would be difficult to cover the whole operation with a single
+write-ahead log record anyway, because we can log only a fixed number of
+pages, as given by XLR_MAX_BLOCK_ID (32), with current XLog machinery.
+
+Ordinary item insertions (that don't force a page split or need a new overflow
+page) are single WAL entries.  They touch a single bucket page and the
+metapage.  The metapage is updated during replay as it is updated during
+original operation.
+
+If an insertion causes the addition of an overflow page, there will be one
+WAL entry for the new overflow page and second entry for insert itself.
+
+If an insertion causes a bucket split, there will be one WAL entry for insert
+itself, followed by a WAL entry for allocating a new bucket, followed by a WAL
+entry for each overflow bucket page in the new bucket to which the tuples are
+moved from old bucket, followed by a WAL entry to indicate that split is
+complete for both old and new buckets.  A split operation which requires
+overflow pages to complete the operation will need to write a WAL record for
+each new allocation of an overflow page.
+
+As splitting involves multiple atomic actions, it's possible that the system
+crashes between moving tuples from bucket pages of the old bucket to new
+bucket.  In such a case, after recovery, the old and new buckets will be
+marked with bucket-being-split and bucket-being-populated flags respectively
+which indicates that split is in progress for those buckets.  The reader
+algorithm works correctly, as it will scan both the old and new buckets when
+the split is in progress as explained in the reader algorithm section above.
+
+We finish the split at next insert or split operation on the old bucket as
+explained in insert and split algorithm above.  It could be done during
+searches, too, but it seems best not to put any extra updates in what would
+otherwise be a read-only operation (updating is not possible in hot standby
+mode anyway).  It would seem natural to complete the split in VACUUM, but since
+splitting a bucket might require allocating a new page, it might fail if you
+run out of disk space.  That would be bad during VACUUM - the reason for
+running VACUUM in the first place might be that you run out of disk space,
+and now VACUUM won't finish because you're out of disk space.  In contrast,
+an insertion can require enlarging the physical file anyway.
+
+Deletion of tuples from a bucket is performed for two reasons: to remove dead
+tuples, and to remove tuples that were moved by a bucket split.  A WAL entry
+is made for each bucket page from which tuples are removed, and then another
+WAL entry is made when we clear the needs-split-cleanup flag.  If dead tuples
+are removed, a separate WAL entry is made to update the metapage.
+
+As deletion involves multiple atomic operations, it is quite possible that
+system crashes after (a) removing tuples from some of the bucket pages, (b)
+before clearing the garbage flag, or (c) before updating the metapage.  If the
+system crashes before completing (b), it will again try to clean the bucket
+during next vacuum or insert after recovery which can have some performance
+impact, but it will work fine. If the system crashes before completing (c),
+after recovery there could be some additional splits until the next vacuum
+updates the metapage, but the other operations like insert, delete and scan
+will work correctly.  We can fix this problem by actually updating the
+metapage based on delete operation during replay, but it's not clear whether
+it's worth the complication.
+
+A squeeze operation moves tuples from one of the buckets later in the chain to
+one of the bucket earlier in chain and writes WAL record when either the
+bucket to which it is writing tuples is filled or bucket from which it
+is removing the tuples becomes empty.
+
+As a squeeze operation involves writing multiple atomic operations, it is
+quite possible that the system crashes before completing the operation on
+entire bucket.  After recovery, the operations will work correctly, but
+the index will remain bloated and this can impact performance of read and
+insert operations until the next vacuum squeeze the bucket completely.
 
 
 Other Notes
