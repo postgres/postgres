@@ -3116,7 +3116,7 @@ and many others in the same vein
 
        <para>
         This view exposes the same information available from
-        the <application>pg_config</> comand-line utility,
+        the <application>pg_config</> command-line utility,
         namely assorted compile-time configuration information for
         <productname>PostgreSQL</>.
        </para>
