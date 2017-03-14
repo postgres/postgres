@@ -6968,7 +6968,7 @@ Branch: REL8_4_STABLE [b6e143458] 2014-03-01 15:21:13 -0500
 
      <para>
       This prevents scenarios wherein a pathological regular expression
-      could lock up a server process uninterruptably for a long time.
+      could lock up a server process uninterruptibly for a long time.
      </para>
     </listitem>
 

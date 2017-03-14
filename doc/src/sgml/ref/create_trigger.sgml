@@ -295,7 +295,7 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
     <term><literal>REFERENCING</literal></term>
     <listitem>
      <para>
-      This immediately preceeds the declaration of one or two relations which
+      This immediately precedes the declaration of one or two relations which
       can be used to read the before and/or after images of all rows directly
       affected by the triggering statement.  An <literal>AFTER EACH ROW</>
       trigger is allowed to use both these transition relation names and the

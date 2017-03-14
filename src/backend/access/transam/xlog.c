@@ -859,7 +859,7 @@ static bool InstallXLogFileSegment(XLogSegNo *segno, char *tmppath,
 					   bool find_free, XLogSegNo max_segno,
 					   bool use_lock);
 static int XLogFileRead(XLogSegNo segno, int emode, TimeLineID tli,
-			 int source, bool notexistOk);
+			 int source, bool notfoundOk);
 static int	XLogFileReadAnyTLI(XLogSegNo segno, int emode, int source);
 static int XLogPageRead(XLogReaderState *xlogreader, XLogRecPtr targetPagePtr,
 			 int reqLen, XLogRecPtr targetRecPtr, char *readBuf,

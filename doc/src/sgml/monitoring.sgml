@@ -1233,7 +1233,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
         </row>
         <row>
          <entry><literal>MessageQueuePutMessage</></entry>
-         <entry>Waiting to write a protoocol message to a shared message queue.</entry>
+         <entry>Waiting to write a protocol message to a shared message queue.</entry>
         </row>
         <row>
          <entry><literal>MessageQueueReceive</></entry>

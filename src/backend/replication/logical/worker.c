@@ -575,7 +575,7 @@ check_relation_updatable(LogicalRepRelMapEntry *rel)
 	ereport(ERROR,
 			(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 			 errmsg("logical replication target relation \"%s.%s\" has "
-					"neither REPLICA IDENTIY index nor PRIMARY "
+					"neither REPLICA IDENTITY index nor PRIMARY "
 					"KEY and published relation does not have "
 					"REPLICA IDENTITY FULL",
 					rel->remoterel.nspname, rel->remoterel.relname)));

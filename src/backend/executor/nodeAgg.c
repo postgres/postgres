@@ -486,7 +486,7 @@ static void agg_fill_hash_table(AggState *aggstate);
 static TupleTableSlot *agg_retrieve_hash_table(AggState *aggstate);
 static Datum GetAggInitVal(Datum textInitVal, Oid transtype);
 static void build_pertrans_for_aggref(AggStatePerTrans pertrans,
-						  AggState *aggsate, EState *estate,
+						  AggState *aggstate, EState *estate,
 						  Aggref *aggref, Oid aggtransfn, Oid aggtranstype,
 						  Oid aggserialfn, Oid aggdeserialfn,
 						  Datum initValue, bool initValueIsNull,

@@ -8899,7 +8899,7 @@ Branch: REL9_4_STABLE [c2b06ab17] 2015-01-30 22:45:58 -0500
       <listitem>
        <para>
         Add <xref linkend="APP-CREATEUSER"> option <option>-g</>
-        to specify role membership (Chistopher Browne)
+        to specify role membership (Christopher Browne)
        </para>
       </listitem>
 

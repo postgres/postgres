@@ -568,10 +568,10 @@ SELECT to_tsvector('thesaurus_tst', 'one postgres one two one two three one');
  '1':1,5 '12':3 '123':4 'pgsql':2
 (1 row)
 
-SELECT to_tsvector('thesaurus_tst', 'Supernovae star is very new star and usually called supernovae (abbrevation SN)');
-                         to_tsvector                         
--------------------------------------------------------------
- 'abbrev':10 'call':8 'new':4 'sn':1,9,11 'star':5 'usual':7
+SELECT to_tsvector('thesaurus_tst', 'Supernovae star is very new star and usually called supernovae (abbreviation SN)');
+                         to_tsvector                          
+--------------------------------------------------------------
+ 'abbrevi':10 'call':8 'new':4 'sn':1,9,11 'star':5 'usual':7
 (1 row)
 
 SELECT to_tsvector('thesaurus_tst', 'Booking tickets is looking like a booking a tickets');

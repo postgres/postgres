@@ -6019,7 +6019,7 @@ TupleData
 </term>
 <listitem>
 <para>
-                Idenfifies the data as NULL value.
+                Identifies the data as NULL value.
 </para>
 </listitem>
 </varlistentry>
@@ -6032,7 +6032,7 @@ TupleData
 </term>
 <listitem>
 <para>
-                Idenfifies unchanged TOASTed value (the actual value is not
+                Identifies unchanged TOASTed value (the actual value is not
                 sent).
 </para>
 </listitem>
@@ -6046,7 +6046,7 @@ TupleData
 </term>
 <listitem>
 <para>
-                Idenfifies the data as text formatted value.
+                Identifies the data as text formatted value.
 </para>
 </listitem>
 </varlistentry>
