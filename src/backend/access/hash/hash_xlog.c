@@ -14,6 +14,7 @@
  */
 #include "postgres.h"
 
+#include "access/bufmask.h"
 #include "access/hash.h"
 #include "access/hash_xlog.h"
 #include "access/xlogutils.h"
@@ -959,5 +960,40 @@ hash_redo(XLogReaderState *record)
 			break;
 		default:
 			elog(PANIC, "hash_redo: unknown op code %u", info);
+	}
+}
+
+/*
+ * Mask a hash page before performing consistency checks on it.
+ */
+void
+hash_mask(char *pagedata, BlockNumber blkno)
+{
+	Page		page = (Page) pagedata;
+	HashPageOpaque opaque;
+
+	mask_page_lsn(page);
+
+	mask_page_hint_bits(page);
+	mask_unused_space(page);
+
+	opaque = (HashPageOpaque) PageGetSpecialPointer(page);
+
+	if (opaque->hasho_flag & LH_UNUSED_PAGE)
+	{
+		/*
+		 * Mask everything on a UNUSED page.
+		 */
+		mask_page_content(page);
+	}
+	else if ((opaque->hasho_flag & LH_BUCKET_PAGE) ||
+			 (opaque->hasho_flag & LH_OVERFLOW_PAGE))
+	{
+		/*
+		 * In hash bucket and overflow pages, it is possible to modify the
+		 * LP_FLAGS without emitting any WAL record. Hence, mask the line
+		 * pointer flags. See hashgettuple() for details.
+		 */
+		mask_lp_flags(page);
 	}
 }

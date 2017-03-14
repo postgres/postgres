@@ -253,5 +253,6 @@ typedef struct xl_hash_init_bitmap_page
 extern void hash_redo(XLogReaderState *record);
 extern void hash_desc(StringInfo buf, XLogReaderState *record);
 extern const char *hash_identify(uint8 info);
+extern void hash_mask(char *pagedata, BlockNumber blkno);
 
 #endif   /* HASH_XLOG_H */

@@ -8267,9 +8267,9 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
         records, or to a comma-separated list of resource managers to check
         only records originating from those resource managers.  Currently,
         the supported resource managers are <literal>heap</>,
-        <literal>heap2</>, <literal>btree</>, <literal>gin</>,
-        <literal>gist</>, <literal>sequence</>, <literal>spgist</>,
-        <literal>brin</>, and <literal>generic</>. Only
+        <literal>heap2</>, <literal>btree</>, <literal>hash</>,
+        <literal>gin</>, <literal>gist</>, <literal>sequence</>,
+        <literal>spgist</>, <literal>brin</>, and <literal>generic</>. Only
         superusers can change this setting.
        </para>
       </listitem>
