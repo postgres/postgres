@@ -1826,16 +1826,12 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 	winstate->temp_slot_1 = ExecInitExtraTupleSlot(estate);
 	winstate->temp_slot_2 = ExecInitExtraTupleSlot(estate);
 
-	winstate->ss.ps.targetlist = (List *)
-		ExecInitExpr((Expr *) node->plan.targetlist,
-					 (PlanState *) winstate);
-
 	/*
 	 * WindowAgg nodes never have quals, since they can only occur at the
 	 * logical top level of a query (ie, after any WHERE or HAVING filters)
 	 */
 	Assert(node->plan.qual == NIL);
-	winstate->ss.ps.qual = NIL;
+	winstate->ss.ps.qual = NULL;
 
 	/*
 	 * initialize child nodes
@@ -1894,7 +1890,7 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 	foreach(l, winstate->funcs)
 	{
 		WindowFuncExprState *wfuncstate = (WindowFuncExprState *) lfirst(l);
-		WindowFunc *wfunc = (WindowFunc *) wfuncstate->xprstate.expr;
+		WindowFunc *wfunc = wfuncstate->wfunc;
 		WindowStatePerFunc perfuncstate;
 		AclResult	aclresult;
 		int			i;

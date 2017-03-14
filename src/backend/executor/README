@@ -44,21 +44,171 @@ Plan Trees and State Trees
 --------------------------
 
 The plan tree delivered by the planner contains a tree of Plan nodes (struct
-types derived from struct Plan).  Each Plan node may have expression trees
-associated with it, to represent its target list, qualification conditions,
-etc.  During executor startup we build a parallel tree of identical structure
-containing executor state nodes --- every plan and expression node type has
-a corresponding executor state node type.  Each node in the state tree has a
-pointer to its corresponding node in the plan tree, plus executor state data
-as needed to implement that node type.  This arrangement allows the plan
-tree to be completely read-only as far as the executor is concerned: all data
-that is modified during execution is in the state tree.  Read-only plan trees
-make life much simpler for plan caching and reuse.
+types derived from struct Plan).  During executor startup we build a parallel
+tree of identical structure containing executor state nodes --- every plan
+node type has a corresponding executor state node type.  Each node in the
+state tree has a pointer to its corresponding node in the plan tree, plus
+executor state data as needed to implement that node type.  This arrangement
+allows the plan tree to be completely read-only so far as the executor is
+concerned: all data that is modified during execution is in the state tree.
+Read-only plan trees make life much simpler for plan caching and reuse.
+
+Each Plan node may have expression trees associated with it, to represent
+its target list, qualification conditions, etc.  These trees are also
+read-only to the executor, but the executor state for expression evaluation
+does not mirror the Plan expression's tree shape, as explained below.
+Rather, there's just one ExprState node per expression tree, although this
+may have sub-nodes for some complex expression node types.
 
 Altogether there are four classes of nodes used in these trees: Plan nodes,
-their corresponding PlanState nodes, Expr nodes, and their corresponding
-ExprState nodes.  (Actually, there are also List nodes, which are used as
-"glue" in all four kinds of tree.)
+their corresponding PlanState nodes, Expr nodes, and ExprState nodes.
+(Actually, there are also List nodes, which are used as "glue" in all
+three tree-based representations.)
+
+
+Expression Trees and ExprState nodes
+------------------------------------
+
+Expression trees, in contrast to Plan trees, are not mirrored into a
+corresponding tree of state nodes.  Instead each separately executable
+expression tree (e.g. a Plan's qual or targetlist) is represented by one
+ExprState node.  The ExprState node contains the information needed to
+evaluate the expression in a compact, linear form.  That compact form is
+stored as a flat array in ExprState->steps[] (an array of ExprEvalStep,
+not ExprEvalStep *).
+
+The reasons for choosing such a representation include:
+- commonly the amount of work needed to evaluate one Expr-type node is
+  small enough that the overhead of having to perform a tree-walk
+  during evaluation is significant.
+- the flat representation can be evaluated non-recursively within a single
+  function, reducing stack depth and function call overhead.
+- such a representation is usable both for fast interpreted execution,
+  and for compiling into native code.
+
+The Plan-tree representation of an expression is compiled into an
+ExprState node by ExecInitExpr().  As much complexity as possible should
+be handled by ExecInitExpr() (and helpers), instead of execution time
+where both interpreted and compiled versions would need to deal with the
+complexity.  Besides duplicating effort between execution approaches,
+runtime initialization checks also have a small but noticeable cost every
+time the expression is evaluated.  Therefore, we allow ExecInitExpr() to
+precompute information that we do not expect to vary across execution of a
+single query, for example the set of CHECK constraint expressions to be
+applied to a domain type.  This could not be done at plan time without
+greatly increasing the number of events that require plan invalidation.
+(Previously, some information of this kind was rechecked on each
+expression evaluation, but that seems like unnecessary overhead.)
+
+
+Expression Initialization
+-------------------------
+
+During ExecInitExpr() and similar routines, Expr trees are converted
+into the flat representation.  Each Expr node might be represented by
+zero, one, or more ExprEvalSteps.
+
+Each ExprEvalStep's work is determined by its opcode (of enum ExprEvalOp)
+and it stores the result of its work into the Datum variable and boolean
+null flag variable pointed to by ExprEvalStep->resvalue/resnull.
+Complex expressions are performed by chaining together several steps.
+For example, "a + b" (one OpExpr, with two Var expressions) would be
+represented as two steps to fetch the Var values, and one step for the
+evaluation of the function underlying the + operator.  The steps for the
+Vars would have their resvalue/resnull pointing directly to the appropriate
+arg[] and argnull[] array elements in the FunctionCallInfoData struct that
+is used by the function evaluation step, thus avoiding extra work to copy
+the result values around.
+
+The last entry in a completed ExprState->steps array is always an
+EEOP_DONE step; this removes the need to test for end-of-array while
+iterating.  Also, if the expression contains any variable references (to
+user columns of the ExprContext's INNER, OUTER, or SCAN tuples), the steps
+array begins with EEOP_*_FETCHSOME steps that ensure that the relevant
+tuples have been deconstructed to make the required columns directly
+available (cf. slot_getsomeattrs()).  This allows individual Var-fetching
+steps to be little more than an array lookup.
+
+Most of ExecInitExpr()'s work is done by the recursive function
+ExecInitExprRec() and its subroutines.  ExecInitExprRec() maps one Expr
+node into the steps required for execution, recursing as needed for
+sub-expressions.
+
+Each ExecInitExprRec() call has to specify where that subexpression's
+results are to be stored (via the resv/resnull parameters).  This allows
+the above scenario of evaluating a (sub-)expression directly into
+fcinfo->arg/argnull, but also requires some care: target Datum/isnull
+variables may not be shared with another ExecInitExprRec() unless the
+results are only needed by steps executing before further usages of those
+target Datum/isnull variables.  Due to the non-recursiveness of the
+ExprEvalStep representation that's usually easy to guarantee.
+
+ExecInitExprRec() pushes new operations into the ExprState->steps array
+using ExprEvalPushStep().  To keep the steps as a consecutively laid out
+array, ExprEvalPushStep() has to repalloc the entire array when there's
+not enough space.  Because of that it is *not* allowed to point directly
+into any of the steps during expression initialization.  Therefore, the
+resv/resnull for a subexpression usually point to some storage that is
+palloc'd separately from the steps array.  For instance, the
+FunctionCallInfoData for a function call step is separately allocated
+rather than being part of the ExprEvalStep array.  The overall result
+of a complete expression is typically returned into the resvalue/resnull
+fields of the ExprState node itself.
+
+Some steps, e.g. boolean expressions, allow skipping evaluation of
+certain subexpressions.  In the flat representation this amounts to
+jumping to some later step rather than just continuing consecutively
+with the next step.  The target for such a jump is represented by
+the integer index in the ExprState->steps array of the step to execute
+next.  (Compare the EEO_NEXT and EEO_JUMP macros in execExprInterp.c.)
+
+Typically, ExecInitExprRec() has to push a jumping step into the steps
+array, then recursively generate steps for the subexpression that might
+get skipped over, then go back and fix up the jump target index using
+the now-known length of the subexpression's steps.  This is handled by
+adjust_jumps lists in execExpr.c.
+
+The last step in constructing an ExprState is to apply ExecReadyExpr(),
+which readies it for execution using whichever execution method has been
+selected.
+
+
+Expression Evaluation
+---------------------
+
+To allow for different methods of expression evaluation, and for
+better branch/jump target prediction, expressions are evaluated by
+calling ExprState->evalfunc (via ExprEvalExpr() and friends).
+
+ExprReadyExpr() can choose the method of interpretation by setting
+evalfunc to an appropriate function.  The default execution function,
+ExecInterpExpr, is implemented in execExprInterp.c; see its header
+comment for details.  Special-case evalfuncs are used for certain
+especially-simple expressions.
+
+Note that a lot of the more complex expression evaluation steps, which are
+less performance-critical than the simpler ones, are implemented as
+separate functions outside the fast-path of expression execution, allowing
+their implementation to be shared between interpreted and compiled
+expression evaluation.  This means that these helper functions are not
+allowed to perform expression step dispatch themselves, as the method of
+dispatch will vary based on the caller.  The helpers therefore cannot call
+for the execution of subexpressions; all subexpression results they need
+must be computed by earlier steps.  And dispatch to the following
+expression step must be performed after returning from the helper.
+
+
+Targetlist Evaluation
+---------------------
+
+ExecBuildProjectionInfo builds an ExprState that has the effect of
+evaluating a targetlist into ExprState->resultslot.  A generic targetlist
+expression is executed by evaluating it as discussed above (storing the
+result into the ExprState's resvalue/resnull fields) and then using an
+EEOP_ASSIGN_TMP step to move the result into the appropriate tts_values[]
+and tts_isnull[] array elements of the result slot.  There are special
+fast-path step types (EEOP_ASSIGN_*_VAR) to handle targetlist entries that
+are simple Vars using only one step instead of two.
 
 
 Memory Management

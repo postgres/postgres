@@ -398,15 +398,12 @@ DROP FUNCTION testfunc1(int); -- ok
 -- restore to sanity
 GRANT ALL PRIVILEGES ON LANGUAGE sql TO PUBLIC;
 
--- verify privilege checks on coercions
+-- verify privilege checks on array-element coercions
 BEGIN;
-SELECT NULL::int4[]::int8[];
 SELECT '{1}'::int4[]::int8[];
 REVOKE ALL ON FUNCTION int8(integer) FROM PUBLIC;
-SELECT NULL::int4[]::int8[];
 SELECT '{1}'::int4[]::int8[]; --superuser, suceed
 SET SESSION AUTHORIZATION regress_user4;
-SELECT NULL::int4[]::int8[];  --other user, no elements to convert
 SELECT '{1}'::int4[]::int8[]; --other user, fail
 ROLLBACK;
 

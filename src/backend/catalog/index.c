@@ -1658,7 +1658,7 @@ BuildIndexInfo(Relation index)
 
 	/* fetch index predicate if any */
 	ii->ii_Predicate = RelationGetIndexPredicate(index);
-	ii->ii_PredicateState = NIL;
+	ii->ii_PredicateState = NULL;
 
 	/* fetch exclusion constraint info if any */
 	if (indexStruct->indisexclusion)
@@ -1774,9 +1774,8 @@ FormIndexDatum(IndexInfo *indexInfo,
 		indexInfo->ii_ExpressionsState == NIL)
 	{
 		/* First time through, set up expression evaluation state */
-		indexInfo->ii_ExpressionsState = (List *)
-			ExecPrepareExpr((Expr *) indexInfo->ii_Expressions,
-							estate);
+		indexInfo->ii_ExpressionsState =
+			ExecPrepareExprList(indexInfo->ii_Expressions, estate);
 		/* Check caller has set up context correctly */
 		Assert(GetPerTupleExprContext(estate)->ecxt_scantuple == slot);
 	}
@@ -2208,7 +2207,7 @@ IndexBuildHeapRangeScan(Relation heapRelation,
 	Datum		values[INDEX_MAX_KEYS];
 	bool		isnull[INDEX_MAX_KEYS];
 	double		reltuples;
-	List	   *predicate;
+	ExprState  *predicate;
 	TupleTableSlot *slot;
 	EState	   *estate;
 	ExprContext *econtext;
@@ -2247,9 +2246,7 @@ IndexBuildHeapRangeScan(Relation heapRelation,
 	econtext->ecxt_scantuple = slot;
 
 	/* Set up execution state for predicate, if any. */
-	predicate = (List *)
-		ExecPrepareExpr((Expr *) indexInfo->ii_Predicate,
-						estate);
+	predicate = ExecPrepareQual(indexInfo->ii_Predicate, estate);
 
 	/*
 	 * Prepare for scan of the base relation.  In a normal index build, we use
@@ -2552,9 +2549,9 @@ IndexBuildHeapRangeScan(Relation heapRelation,
 		 * In a partial index, discard tuples that don't satisfy the
 		 * predicate.
 		 */
-		if (predicate != NIL)
+		if (predicate != NULL)
 		{
-			if (!ExecQual(predicate, econtext, false))
+			if (!ExecQual(predicate, econtext))
 				continue;
 		}
 
@@ -2619,7 +2616,7 @@ IndexBuildHeapRangeScan(Relation heapRelation,
 
 	/* These may have been pointing to the now-gone estate */
 	indexInfo->ii_ExpressionsState = NIL;
-	indexInfo->ii_PredicateState = NIL;
+	indexInfo->ii_PredicateState = NULL;
 
 	return reltuples;
 }
@@ -2646,7 +2643,7 @@ IndexCheckExclusion(Relation heapRelation,
 	HeapTuple	heapTuple;
 	Datum		values[INDEX_MAX_KEYS];
 	bool		isnull[INDEX_MAX_KEYS];
-	List	   *predicate;
+	ExprState  *predicate;
 	TupleTableSlot *slot;
 	EState	   *estate;
 	ExprContext *econtext;
@@ -2672,9 +2669,7 @@ IndexCheckExclusion(Relation heapRelation,
 	econtext->ecxt_scantuple = slot;
 
 	/* Set up execution state for predicate, if any. */
-	predicate = (List *)
-		ExecPrepareExpr((Expr *) indexInfo->ii_Predicate,
-						estate);
+	predicate = ExecPrepareQual(indexInfo->ii_Predicate, estate);
 
 	/*
 	 * Scan all live tuples in the base relation.
@@ -2699,9 +2694,9 @@ IndexCheckExclusion(Relation heapRelation,
 		/*
 		 * In a partial index, ignore tuples that don't satisfy the predicate.
 		 */
-		if (predicate != NIL)
+		if (predicate != NULL)
 		{
-			if (!ExecQual(predicate, econtext, false))
+			if (!ExecQual(predicate, econtext))
 				continue;
 		}
 
@@ -2732,7 +2727,7 @@ IndexCheckExclusion(Relation heapRelation,
 
 	/* These may have been pointing to the now-gone estate */
 	indexInfo->ii_ExpressionsState = NIL;
-	indexInfo->ii_PredicateState = NIL;
+	indexInfo->ii_PredicateState = NULL;
 }
 
 
@@ -2962,7 +2957,7 @@ validate_index_heapscan(Relation heapRelation,
 	HeapTuple	heapTuple;
 	Datum		values[INDEX_MAX_KEYS];
 	bool		isnull[INDEX_MAX_KEYS];
-	List	   *predicate;
+	ExprState  *predicate;
 	TupleTableSlot *slot;
 	EState	   *estate;
 	ExprContext *econtext;
@@ -2992,9 +2987,7 @@ validate_index_heapscan(Relation heapRelation,
 	econtext->ecxt_scantuple = slot;
 
 	/* Set up execution state for predicate, if any. */
-	predicate = (List *)
-		ExecPrepareExpr((Expr *) indexInfo->ii_Predicate,
-						estate);
+	predicate = ExecPrepareQual(indexInfo->ii_Predicate, estate);
 
 	/*
 	 * Prepare for scan of the base relation.  We need just those tuples
@@ -3121,9 +3114,9 @@ validate_index_heapscan(Relation heapRelation,
 			 * In a partial index, discard tuples that don't satisfy the
 			 * predicate.
 			 */
-			if (predicate != NIL)
+			if (predicate != NULL)
 			{
-				if (!ExecQual(predicate, econtext, false))
+				if (!ExecQual(predicate, econtext))
 					continue;
 			}
 
@@ -3177,7 +3170,7 @@ validate_index_heapscan(Relation heapRelation,
 
 	/* These may have been pointing to the now-gone estate */
 	indexInfo->ii_ExpressionsState = NIL;
-	indexInfo->ii_PredicateState = NIL;
+	indexInfo->ii_PredicateState = NULL;
 }
 
 

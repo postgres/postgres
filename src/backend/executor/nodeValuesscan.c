@@ -120,7 +120,7 @@ ValuesNext(ValuesScanState *node)
 		 * is a SubPlan, and there shouldn't be any (any subselects in the
 		 * VALUES list should be InitPlans).
 		 */
-		exprstatelist = (List *) ExecInitExpr((Expr *) exprlist, NULL);
+		exprstatelist = ExecInitExprList(exprlist, NULL);
 
 		/* parser should have checked all sublists are the same length */
 		Assert(list_length(exprstatelist) == slot->tts_tupleDescriptor->natts);
@@ -242,12 +242,8 @@ ExecInitValuesScan(ValuesScan *node, EState *estate, int eflags)
 	/*
 	 * initialize child expressions
 	 */
-	scanstate->ss.ps.targetlist = (List *)
-		ExecInitExpr((Expr *) node->scan.plan.targetlist,
-					 (PlanState *) scanstate);
-	scanstate->ss.ps.qual = (List *)
-		ExecInitExpr((Expr *) node->scan.plan.qual,
-					 (PlanState *) scanstate);
+	scanstate->ss.ps.qual =
+		ExecInitQual(node->scan.plan.qual, (PlanState *) scanstate);
 
 	/*
 	 * get info about values list

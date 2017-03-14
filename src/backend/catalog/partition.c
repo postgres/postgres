@@ -1618,8 +1618,7 @@ FormPartitionKeyDatum(PartitionDispatch pd,
 			   GetPerTupleExprContext(estate)->ecxt_scantuple == slot);
 
 		/* First time through, set up expression evaluation state */
-		pd->keystate = (List *) ExecPrepareExpr((Expr *) pd->key->partexprs,
-												estate);
+		pd->keystate = ExecPrepareExprList(pd->key->partexprs, estate);
 	}
 
 	partexpr_item = list_head(pd->keystate);

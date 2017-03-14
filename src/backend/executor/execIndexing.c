@@ -327,23 +327,21 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 		/* Check for partial index */
 		if (indexInfo->ii_Predicate != NIL)
 		{
-			List	   *predicate;
+			ExprState  *predicate;
 
 			/*
 			 * If predicate state not set up yet, create it (in the estate's
 			 * per-query context)
 			 */
 			predicate = indexInfo->ii_PredicateState;
-			if (predicate == NIL)
+			if (predicate == NULL)
 			{
-				predicate = (List *)
-					ExecPrepareExpr((Expr *) indexInfo->ii_Predicate,
-									estate);
+				predicate = ExecPrepareQual(indexInfo->ii_Predicate, estate);
 				indexInfo->ii_PredicateState = predicate;
 			}
 
 			/* Skip this index-update if the predicate isn't satisfied */
-			if (!ExecQual(predicate, econtext, false))
+			if (!ExecQual(predicate, econtext))
 				continue;
 		}
 
@@ -551,23 +549,21 @@ ExecCheckIndexConstraints(TupleTableSlot *slot,
 		/* Check for partial index */
 		if (indexInfo->ii_Predicate != NIL)
 		{
-			List	   *predicate;
+			ExprState  *predicate;
 
 			/*
 			 * If predicate state not set up yet, create it (in the estate's
 			 * per-query context)
 			 */
 			predicate = indexInfo->ii_PredicateState;
-			if (predicate == NIL)
+			if (predicate == NULL)
 			{
-				predicate = (List *)
-					ExecPrepareExpr((Expr *) indexInfo->ii_Predicate,
-									estate);
+				predicate = ExecPrepareQual(indexInfo->ii_Predicate, estate);
 				indexInfo->ii_PredicateState = predicate;
 			}
 
 			/* Skip this index-update if the predicate isn't satisfied */
-			if (!ExecQual(predicate, econtext, false))
+			if (!ExecQual(predicate, econtext))
 				continue;
 		}
 

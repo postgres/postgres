@@ -452,14 +452,14 @@ static TupleTableSlot *
 MJFillOuter(MergeJoinState *node)
 {
 	ExprContext *econtext = node->js.ps.ps_ExprContext;
-	List	   *otherqual = node->js.ps.qual;
+	ExprState  *otherqual = node->js.ps.qual;
 
 	ResetExprContext(econtext);
 
 	econtext->ecxt_outertuple = node->mj_OuterTupleSlot;
 	econtext->ecxt_innertuple = node->mj_NullInnerTupleSlot;
 
-	if (ExecQual(otherqual, econtext, false))
+	if (ExecQual(otherqual, econtext))
 	{
 		/*
 		 * qualification succeeded.  now form the desired projection tuple and
@@ -483,14 +483,14 @@ static TupleTableSlot *
 MJFillInner(MergeJoinState *node)
 {
 	ExprContext *econtext = node->js.ps.ps_ExprContext;
-	List	   *otherqual = node->js.ps.qual;
+	ExprState  *otherqual = node->js.ps.qual;
 
 	ResetExprContext(econtext);
 
 	econtext->ecxt_outertuple = node->mj_NullOuterTupleSlot;
 	econtext->ecxt_innertuple = node->mj_InnerTupleSlot;
 
-	if (ExecQual(otherqual, econtext, false))
+	if (ExecQual(otherqual, econtext))
 	{
 		/*
 		 * qualification succeeded.  now form the desired projection tuple and
@@ -598,8 +598,8 @@ ExecMergeTupleDump(MergeJoinState *mergestate)
 TupleTableSlot *
 ExecMergeJoin(MergeJoinState *node)
 {
-	List	   *joinqual;
-	List	   *otherqual;
+	ExprState  *joinqual;
+	ExprState  *otherqual;
 	bool		qualResult;
 	int			compareResult;
 	PlanState  *innerPlan;
@@ -785,8 +785,8 @@ ExecMergeJoin(MergeJoinState *node)
 				innerTupleSlot = node->mj_InnerTupleSlot;
 				econtext->ecxt_innertuple = innerTupleSlot;
 
-				qualResult = (joinqual == NIL ||
-							  ExecQual(joinqual, econtext, false));
+				qualResult = (joinqual == NULL ||
+							  ExecQual(joinqual, econtext));
 				MJ_DEBUG_QUAL(joinqual, qualResult);
 
 				if (qualResult)
@@ -808,8 +808,8 @@ ExecMergeJoin(MergeJoinState *node)
 					if (node->js.jointype == JOIN_SEMI)
 						node->mj_JoinState = EXEC_MJ_NEXTOUTER;
 
-					qualResult = (otherqual == NIL ||
-								  ExecQual(otherqual, econtext, false));
+					qualResult = (otherqual == NULL ||
+								  ExecQual(otherqual, econtext));
 					MJ_DEBUG_QUAL(otherqual, qualResult);
 
 					if (qualResult)
@@ -1455,16 +1455,11 @@ ExecInitMergeJoin(MergeJoin *node, EState *estate, int eflags)
 	/*
 	 * initialize child expressions
 	 */
-	mergestate->js.ps.targetlist = (List *)
-		ExecInitExpr((Expr *) node->join.plan.targetlist,
-					 (PlanState *) mergestate);
-	mergestate->js.ps.qual = (List *)
-		ExecInitExpr((Expr *) node->join.plan.qual,
-					 (PlanState *) mergestate);
+	mergestate->js.ps.qual =
+		ExecInitQual(node->join.plan.qual, (PlanState *) mergestate);
 	mergestate->js.jointype = node->join.jointype;
-	mergestate->js.joinqual = (List *)
-		ExecInitExpr((Expr *) node->join.joinqual,
-					 (PlanState *) mergestate);
+	mergestate->js.joinqual =
+		ExecInitQual(node->join.joinqual, (PlanState *) mergestate);
 	mergestate->mj_ConstFalseJoin = false;
 	/* mergeclauses are handled below */
 

@@ -64,8 +64,8 @@ ExecNestLoop(NestLoopState *node)
 	PlanState  *outerPlan;
 	TupleTableSlot *outerTupleSlot;
 	TupleTableSlot *innerTupleSlot;
-	List	   *joinqual;
-	List	   *otherqual;
+	ExprState  *joinqual;
+	ExprState  *otherqual;
 	ExprContext *econtext;
 	ListCell   *lc;
 
@@ -176,7 +176,7 @@ ExecNestLoop(NestLoopState *node)
 
 				ENL1_printf("testing qualification for outer-join tuple");
 
-				if (otherqual == NIL || ExecQual(otherqual, econtext, false))
+				if (otherqual == NULL || ExecQual(otherqual, econtext))
 				{
 					/*
 					 * qualification was satisfied so we project and return
@@ -207,7 +207,7 @@ ExecNestLoop(NestLoopState *node)
 		 */
 		ENL1_printf("testing qualification");
 
-		if (ExecQual(joinqual, econtext, false))
+		if (ExecQual(joinqual, econtext))
 		{
 			node->nl_MatchedOuter = true;
 
@@ -225,7 +225,7 @@ ExecNestLoop(NestLoopState *node)
 			if (node->js.jointype == JOIN_SEMI)
 				node->nl_NeedNewOuter = true;
 
-			if (otherqual == NIL || ExecQual(otherqual, econtext, false))
+			if (otherqual == NULL || ExecQual(otherqual, econtext))
 			{
 				/*
 				 * qualification was satisfied so we project and return the
@@ -282,16 +282,11 @@ ExecInitNestLoop(NestLoop *node, EState *estate, int eflags)
 	/*
 	 * initialize child expressions
 	 */
-	nlstate->js.ps.targetlist = (List *)
-		ExecInitExpr((Expr *) node->join.plan.targetlist,
-					 (PlanState *) nlstate);
-	nlstate->js.ps.qual = (List *)
-		ExecInitExpr((Expr *) node->join.plan.qual,
-					 (PlanState *) nlstate);
+	nlstate->js.ps.qual =
+		ExecInitQual(node->join.plan.qual, (PlanState *) nlstate);
 	nlstate->js.jointype = node->join.jointype;
-	nlstate->js.joinqual = (List *)
-		ExecInitExpr((Expr *) node->join.joinqual,
-					 (PlanState *) nlstate);
+	nlstate->js.joinqual =
+		ExecInitQual(node->join.joinqual, (PlanState *) nlstate);
 
 	/*
 	 * initialize child nodes

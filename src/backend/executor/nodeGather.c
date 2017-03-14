@@ -81,12 +81,8 @@ ExecInitGather(Gather *node, EState *estate, int eflags)
 	/*
 	 * initialize child expressions
 	 */
-	gatherstate->ps.targetlist = (List *)
-		ExecInitExpr((Expr *) node->plan.targetlist,
-					 (PlanState *) gatherstate);
-	gatherstate->ps.qual = (List *)
-		ExecInitExpr((Expr *) node->plan.qual,
-					 (PlanState *) gatherstate);
+	gatherstate->ps.qual =
+		ExecInitQual(node->plan.qual, (PlanState *) gatherstate);
 
 	/*
 	 * tuple table initialization

@@ -713,7 +713,7 @@ compute_index_stats(Relation onerel, double totalrows,
 		TupleTableSlot *slot;
 		EState	   *estate;
 		ExprContext *econtext;
-		List	   *predicate;
+		ExprState  *predicate;
 		Datum	   *exprvals;
 		bool	   *exprnulls;
 		int			numindexrows,
@@ -739,9 +739,7 @@ compute_index_stats(Relation onerel, double totalrows,
 		econtext->ecxt_scantuple = slot;
 
 		/* Set up execution state for predicate. */
-		predicate = castNode(List,
-							 ExecPrepareExpr((Expr *) indexInfo->ii_Predicate,
-											 estate));
+		predicate = ExecPrepareQual(indexInfo->ii_Predicate, estate);
 
 		/* Compute and save index expression values */
 		exprvals = (Datum *) palloc(numrows * attr_cnt * sizeof(Datum));
@@ -764,9 +762,9 @@ compute_index_stats(Relation onerel, double totalrows,
 			ExecStoreTuple(heapTuple, slot, InvalidBuffer, false);
 
 			/* If index is partial, check predicate */
-			if (predicate != NIL)
+			if (predicate != NULL)
 			{
-				if (!ExecQual(predicate, econtext, false))
+				if (!ExecQual(predicate, econtext))
 					continue;
 			}
 			numindexrows++;

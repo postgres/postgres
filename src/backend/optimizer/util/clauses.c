@@ -3395,7 +3395,7 @@ eval_const_expressions_mutator(Node *node,
 						 * Else, make a scalar (argisrow == false) NullTest
 						 * for this field.  Scalar semantics are required
 						 * because IS [NOT] NULL doesn't recurse; see comments
-						 * in ExecEvalNullTest().
+						 * in ExecEvalRowNullInt().
 						 */
 						newntest = makeNode(NullTest);
 						newntest->arg = (Expr *) relem;
@@ -3539,8 +3539,8 @@ eval_const_expressions_mutator(Node *node,
  *		FALSE: drop (does not affect result)
  *		TRUE: force result to TRUE
  *		NULL: keep only one
- * We must keep one NULL input because ExecEvalOr returns NULL when no input
- * is TRUE and at least one is NULL.  We don't actually include the NULL
+ * We must keep one NULL input because OR expressions evaluate to NULL when no
+ * input is TRUE and at least one is NULL.  We don't actually include the NULL
  * here, that's supposed to be done by the caller.
  *
  * The output arguments *haveNull and *forceTrue must be initialized FALSE
@@ -3651,9 +3651,9 @@ simplify_or_arguments(List *args,
  *		TRUE: drop (does not affect result)
  *		FALSE: force result to FALSE
  *		NULL: keep only one
- * We must keep one NULL input because ExecEvalAnd returns NULL when no input
- * is FALSE and at least one is NULL.  We don't actually include the NULL
- * here, that's supposed to be done by the caller.
+ * We must keep one NULL input because AND expressions evaluate to NULL when
+ * no input is FALSE and at least one is NULL.  We don't actually include the
+ * NULL here, that's supposed to be done by the caller.
  *
  * The output arguments *haveNull and *forceFalse must be initialized FALSE
  * by the caller.  They will be set TRUE if a null constant or false constant,

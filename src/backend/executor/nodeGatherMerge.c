@@ -86,12 +86,8 @@ ExecInitGatherMerge(GatherMerge *node, EState *estate, int eflags)
 	/*
 	 * initialize child expressions
 	 */
-	gm_state->ps.targetlist = (List *)
-		ExecInitExpr((Expr *) node->plan.targetlist,
-					 (PlanState *) gm_state);
-	gm_state->ps.qual = (List *)
-		ExecInitExpr((Expr *) node->plan.qual,
-					 (PlanState *) gm_state);
+	gm_state->ps.qual =
+		ExecInitQual(node->plan.qual, &gm_state->ps);
 
 	/*
 	 * tuple table initialization

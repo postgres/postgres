@@ -49,12 +49,8 @@ ExecInitCustomScan(CustomScan *cscan, EState *estate, int eflags)
 	ExecAssignExprContext(estate, &css->ss.ps);
 
 	/* initialize child expressions */
-	css->ss.ps.targetlist = (List *)
-		ExecInitExpr((Expr *) cscan->scan.plan.targetlist,
-					 (PlanState *) css);
-	css->ss.ps.qual = (List *)
-		ExecInitExpr((Expr *) cscan->scan.plan.qual,
-					 (PlanState *) css);
+	css->ss.ps.qual =
+		ExecInitQual(cscan->scan.plan.qual, (PlanState *) css);
 
 	/* tuple table initialization */
 	ExecInitScanTupleSlot(estate, &css->ss);

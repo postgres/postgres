@@ -120,7 +120,7 @@ ArrayMapState
 ArrayMetaState
 ArrayParseState
 ArrayRef
-ArrayRefExprState
+ArrayRefState
 ArrayRemapInfo
 ArrayType
 AsyncQueueControl
@@ -578,6 +578,8 @@ ExprContext_CB
 ExprDoneCond
 ExprState
 ExprStateEvalFunc
+ExprEvalOp
+ExprEvalStep
 ExtensibleNode
 ExtensibleNodeEntry
 ExtensibleNodeMethods
@@ -1073,6 +1075,7 @@ LWLockPadded
 LWLockTranche
 LabelProvider
 LargeObjectDesc
+LastAttnumInfo
 Latch
 LerpFunc
 LexDescr
@@ -1908,6 +1911,7 @@ Session
 SetConstraintState
 SetConstraintStateData
 SetConstraintTriggerData
+SetExprState
 SetFunctionReturnMode
 SetOp
 SetOpCmd

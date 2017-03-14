@@ -166,7 +166,7 @@ SELECT * FROM CASE_TBL;
 --
 
 -- This test exercises a bug caused by aliasing econtext->caseValue_isNull
--- with the isNull argument of the inner CASE's ExecEvalCase() call.  After
+-- with the isNull argument of the inner CASE's CaseExpr evaluation.  After
 -- evaluating the vol(null) expression in the inner CASE's second WHEN-clause,
 -- the isNull flag for the case test value incorrectly became true, causing
 -- the third WHEN-clause not to match.  The volatile function calls are needed

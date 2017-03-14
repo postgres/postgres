@@ -391,7 +391,7 @@ EvaluateParams(PreparedStatement *pstmt, List *params,
 	}
 
 	/* Prepare the expressions for execution */
-	exprstates = (List *) ExecPrepareExpr((Expr *) params, estate);
+	exprstates = ExecPrepareExprList(params, estate);
 
 	paramLI = (ParamListInfo)
 		palloc(offsetof(ParamListInfoData, params) +
@@ -407,7 +407,7 @@ EvaluateParams(PreparedStatement *pstmt, List *params,
 	i = 0;
 	foreach(l, exprstates)
 	{
-		ExprState  *n = lfirst(l);
+		ExprState  *n = (ExprState *) lfirst(l);
 		ParamExternData *prm = &paramLI->params[i];
 
 		prm->ptype = param_types[i];

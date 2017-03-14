@@ -132,6 +132,7 @@ typedef struct DomainConstraintRef
 	List	   *constraints;	/* list of DomainConstraintState nodes */
 	MemoryContext refctx;		/* context holding DomainConstraintRef */
 	TypeCacheEntry *tcache;		/* typcache entry for domain type */
+	bool		need_exprstate; /* does caller need check_exprstate? */
 
 	/* Management data --- treat these fields as private to typcache.c */
 	DomainConstraintCache *dcc; /* current constraints, or NULL if none */
@@ -142,7 +143,7 @@ typedef struct DomainConstraintRef
 extern TypeCacheEntry *lookup_type_cache(Oid type_id, int flags);
 
 extern void InitDomainConstraintRef(Oid type_id, DomainConstraintRef *ref,
-						MemoryContext refctx);
+						MemoryContext refctx, bool need_exprstate);
 
 extern void UpdateDomainConstraintRef(DomainConstraintRef *ref);
 

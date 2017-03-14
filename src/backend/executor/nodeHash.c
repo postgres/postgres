@@ -190,12 +190,8 @@ ExecInitHash(Hash *node, EState *estate, int eflags)
 	/*
 	 * initialize child expressions
 	 */
-	hashstate->ps.targetlist = (List *)
-		ExecInitExpr((Expr *) node->plan.targetlist,
-					 (PlanState *) hashstate);
-	hashstate->ps.qual = (List *)
-		ExecInitExpr((Expr *) node->plan.qual,
-					 (PlanState *) hashstate);
+	hashstate->ps.qual =
+		ExecInitQual(node->plan.qual, (PlanState *) hashstate);
 
 	/*
 	 * initialize child nodes
@@ -1063,7 +1059,7 @@ bool
 ExecScanHashBucket(HashJoinState *hjstate,
 				   ExprContext *econtext)
 {
-	List	   *hjclauses = hjstate->hashclauses;
+	ExprState  *hjclauses = hjstate->hashclauses;
 	HashJoinTable hashtable = hjstate->hj_HashTable;
 	HashJoinTuple hashTuple = hjstate->hj_CurTuple;
 	uint32		hashvalue = hjstate->hj_CurHashValue;
@@ -1097,7 +1093,7 @@ ExecScanHashBucket(HashJoinState *hjstate,
 			/* reset temp memory each time to avoid leaks from qual expr */
 			ResetExprContext(econtext);
 
-			if (ExecQual(hjclauses, econtext, false))
+			if (ExecQual(hjclauses, econtext))
 			{
 				hjstate->hj_CurTuple = hashTuple;
 				return true;

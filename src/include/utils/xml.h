@@ -61,7 +61,9 @@ extern void xml_ereport(PgXmlErrorContext *errcxt, int level, int sqlcode,
 			const char *msg);
 
 extern xmltype *xmlconcat(List *args);
-extern xmltype *xmlelement(XmlExprState *xmlExpr, ExprContext *econtext);
+extern xmltype *xmlelement(XmlExpr *xexpr,
+		   Datum *named_argvalue, bool *named_argnull,
+		   Datum *argvalue, bool *argnull);
 extern xmltype *xmlparse(text *data, XmlOptionType xmloption, bool preserve_whitespace);
 extern xmltype *xmlpi(char *target, text *arg, bool arg_is_null, bool *result_is_null);
 extern xmltype *xmlroot(xmltype *data, text *version, int standalone);

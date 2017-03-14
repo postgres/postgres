@@ -164,19 +164,12 @@ ExecInitSampleScan(SampleScan *node, EState *estate, int eflags)
 	/*
 	 * initialize child expressions
 	 */
-	scanstate->ss.ps.targetlist = (List *)
-		ExecInitExpr((Expr *) node->scan.plan.targetlist,
-					 (PlanState *) scanstate);
-	scanstate->ss.ps.qual = (List *)
-		ExecInitExpr((Expr *) node->scan.plan.qual,
-					 (PlanState *) scanstate);
+	scanstate->ss.ps.qual =
+		ExecInitQual(node->scan.plan.qual, (PlanState *) scanstate);
 
-	scanstate->args = (List *)
-		ExecInitExpr((Expr *) tsc->args,
-					 (PlanState *) scanstate);
+	scanstate->args = ExecInitExprList(tsc->args, (PlanState *) scanstate);
 	scanstate->repeatable =
-		ExecInitExpr(tsc->repeatable,
-					 (PlanState *) scanstate);
+		ExecInitExpr(tsc->repeatable, (PlanState *) scanstate);
 
 	/*
 	 * tuple table initialization

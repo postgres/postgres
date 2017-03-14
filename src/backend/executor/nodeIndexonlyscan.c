@@ -211,7 +211,7 @@ IndexOnlyNext(IndexOnlyScanState *node)
 		{
 			econtext->ecxt_scantuple = slot;
 			ResetExprContext(econtext);
-			if (!ExecQual(node->indexqual, econtext, false))
+			if (!ExecQual(node->indexqual, econtext))
 			{
 				/* Fails recheck, so drop it and loop back for another */
 				InstrCountFiltered2(node, 1);
@@ -488,15 +488,10 @@ ExecInitIndexOnlyScan(IndexOnlyScan *node, EState *estate, int eflags)
 	 * Note: we don't initialize all of the indexorderby expression, only the
 	 * sub-parts corresponding to runtime keys (see below).
 	 */
-	indexstate->ss.ps.targetlist = (List *)
-		ExecInitExpr((Expr *) node->scan.plan.targetlist,
-					 (PlanState *) indexstate);
-	indexstate->ss.ps.qual = (List *)
-		ExecInitExpr((Expr *) node->scan.plan.qual,
-					 (PlanState *) indexstate);
-	indexstate->indexqual = (List *)
-		ExecInitExpr((Expr *) node->indexqual,
-					 (PlanState *) indexstate);
+	indexstate->ss.ps.qual =
+		ExecInitQual(node->scan.plan.qual, (PlanState *) indexstate);
+	indexstate->indexqual =
+		ExecInitQual(node->indexqual, (PlanState *) indexstate);
 
 	/*
 	 * tuple table initialization

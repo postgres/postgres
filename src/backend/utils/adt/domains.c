@@ -107,7 +107,7 @@ domain_state_setup(Oid domainType, bool binary, MemoryContext mcxt)
 	fmgr_info_cxt(my_extra->typiofunc, &my_extra->proc, mcxt);
 
 	/* Look up constraints for domain */
-	InitDomainConstraintRef(domainType, &my_extra->constraint_ref, mcxt);
+	InitDomainConstraintRef(domainType, &my_extra->constraint_ref, mcxt, true);
 
 	/* We don't make an ExprContext until needed */
 	my_extra->econtext = NULL;
@@ -122,7 +122,9 @@ domain_state_setup(Oid domainType, bool binary, MemoryContext mcxt)
 /*
  * domain_check_input - apply the cached checks.
  *
- * This is extremely similar to ExecEvalCoerceToDomain in execQual.c.
+ * This is roughly similar to the handling of CoerceToDomain nodes in
+ * execExpr*.c, but we execute each constraint separately, rather than
+ * compiling them in-line within a larger expression.
  */
 static void
 domain_check_input(Datum value, bool isnull, DomainIOData *my_extra)
@@ -149,9 +151,6 @@ domain_check_input(Datum value, bool isnull, DomainIOData *my_extra)
 				break;
 			case DOM_CONSTRAINT_CHECK:
 				{
-					Datum		conResult;
-					bool		conIsNull;
-
 					/* Make the econtext if we didn't already */
 					if (econtext == NULL)
 					{
@@ -165,24 +164,20 @@ domain_check_input(Datum value, bool isnull, DomainIOData *my_extra)
 
 					/*
 					 * Set up value to be returned by CoerceToDomainValue
-					 * nodes.  Unlike ExecEvalCoerceToDomain, this econtext
-					 * couldn't be shared with anything else, so no need to
-					 * save and restore fields.  But we do need to protect the
-					 * passed-in value against being changed by called
-					 * functions.  (It couldn't be a R/W expanded object for
-					 * most uses, but that seems possible for domain_check().)
+					 * nodes.  Unlike in the generic expression case, this
+					 * econtext couldn't be shared with anything else, so no
+					 * need to save and restore fields.  But we do need to
+					 * protect the passed-in value against being changed by
+					 * called functions.  (It couldn't be a R/W expanded
+					 * object for most uses, but that seems possible for
+					 * domain_check().)
 					 */
 					econtext->domainValue_datum =
 						MakeExpandedObjectReadOnly(value, isnull,
 									my_extra->constraint_ref.tcache->typlen);
 					econtext->domainValue_isNull = isnull;
 
-					conResult = ExecEvalExprSwitchContext(con->check_expr,
-														  econtext,
-														  &conIsNull);
-
-					if (!conIsNull &&
-						!DatumGetBool(conResult))
+					if (!ExecCheck(con->check_exprstate, econtext))
 						ereport(ERROR,
 								(errcode(ERRCODE_CHECK_VIOLATION),
 								 errmsg("value for domain %s violates check constraint \"%s\"",

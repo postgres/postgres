@@ -1152,7 +1152,7 @@ ExecOnConflictUpdate(ModifyTableState *mtstate,
 {
 	ExprContext *econtext = mtstate->ps.ps_ExprContext;
 	Relation	relation = resultRelInfo->ri_RelationDesc;
-	List	   *onConflictSetWhere = resultRelInfo->ri_onConflictSetWhere;
+	ExprState  *onConflictSetWhere = resultRelInfo->ri_onConflictSetWhere;
 	HeapTupleData tuple;
 	HeapUpdateFailureData hufd;
 	LockTupleMode lockmode;
@@ -1271,7 +1271,7 @@ ExecOnConflictUpdate(ModifyTableState *mtstate,
 	econtext->ecxt_innertuple = excludedSlot;
 	econtext->ecxt_outertuple = NULL;
 
-	if (!ExecQual(onConflictSetWhere, econtext, false))
+	if (!ExecQual(onConflictSetWhere, econtext))
 	{
 		ReleaseBuffer(buffer);
 		InstrCountFiltered1(&mtstate->ps, 1);
@@ -1646,7 +1646,6 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	mtstate = makeNode(ModifyTableState);
 	mtstate->ps.plan = (Plan *) node;
 	mtstate->ps.state = estate;
-	mtstate->ps.targetlist = NIL;		/* not actually used */
 
 	mtstate->operation = operation;
 	mtstate->canSetTag = node->canSetTag;
@@ -1778,7 +1777,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		foreach(ll, wcoList)
 		{
 			WithCheckOption *wco = (WithCheckOption *) lfirst(ll);
-			ExprState  *wcoExpr = ExecInitExpr((Expr *) wco->qual,
+			ExprState  *wcoExpr = ExecInitQual((List *) wco->qual,
 											   mtstate->mt_plans[i]);
 
 			wcoExprs = lappend(wcoExprs, wcoExpr);
@@ -1818,8 +1817,8 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 			foreach(ll, mapped_wcoList)
 			{
 				WithCheckOption *wco = (WithCheckOption *) lfirst(ll);
-				ExprState  *wcoExpr = ExecInitExpr((Expr *) wco->qual,
-											   mtstate->mt_plans[i]);
+				ExprState  *wcoExpr = ExecInitQual((List *) wco->qual,
+												   mtstate->mt_plans[i]);
 
 				wcoExprs = lappend(wcoExprs, wcoExpr);
 			}
@@ -1852,8 +1851,9 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		slot = mtstate->ps.ps_ResultTupleSlot;
 
 		/* Need an econtext too */
-		econtext = CreateExprContext(estate);
-		mtstate->ps.ps_ExprContext = econtext;
+		if (mtstate->ps.ps_ExprContext == NULL)
+			ExecAssignExprContext(estate, &mtstate->ps);
+		econtext = mtstate->ps.ps_ExprContext;
 
 		/*
 		 * Build a projection for each result rel.
@@ -1862,11 +1862,9 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		foreach(l, node->returningLists)
 		{
 			List	   *rlist = (List *) lfirst(l);
-			List	   *rliststate;
 
-			rliststate = (List *) ExecInitExpr((Expr *) rlist, &mtstate->ps);
 			resultRelInfo->ri_projectReturning =
-				ExecBuildProjectionInfo(rliststate, econtext, slot,
+				ExecBuildProjectionInfo(rlist, econtext, slot, &mtstate->ps,
 									 resultRelInfo->ri_RelationDesc->rd_att);
 			resultRelInfo++;
 		}
@@ -1883,16 +1881,14 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		for (i = 0; i < mtstate->mt_num_partitions; i++)
 		{
 			Relation	partrel = resultRelInfo->ri_RelationDesc;
-			List	   *rlist,
-					   *rliststate;
+			List	   *rlist;
 
 			/* varno = node->nominalRelation */
 			rlist = map_partition_varattnos(returningList,
 											node->nominalRelation,
 											partrel, rel);
-			rliststate = (List *) ExecInitExpr((Expr *) rlist, &mtstate->ps);
 			resultRelInfo->ri_projectReturning =
-				ExecBuildProjectionInfo(rliststate, econtext, slot,
+				ExecBuildProjectionInfo(rlist, econtext, slot, &mtstate->ps,
 									 resultRelInfo->ri_RelationDesc->rd_att);
 			resultRelInfo++;
 		}
@@ -1922,7 +1918,6 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	if (node->onConflictAction == ONCONFLICT_UPDATE)
 	{
 		ExprContext *econtext;
-		ExprState  *setexpr;
 		TupleDesc	tupDesc;
 
 		/* insert may only have one plan, inheritance is not expanded */
@@ -1948,11 +1943,10 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		mtstate->mt_conflproj = ExecInitExtraTupleSlot(mtstate->ps.state);
 		ExecSetSlotDescriptor(mtstate->mt_conflproj, tupDesc);
 
-		/* build UPDATE SET expression and projection state */
-		setexpr = ExecInitExpr((Expr *) node->onConflictSet, &mtstate->ps);
+		/* build UPDATE SET projection state */
 		resultRelInfo->ri_onConflictSetProj =
-			ExecBuildProjectionInfo((List *) setexpr, econtext,
-									mtstate->mt_conflproj,
+			ExecBuildProjectionInfo(node->onConflictSet, econtext,
+									mtstate->mt_conflproj, &mtstate->ps,
 									resultRelInfo->ri_RelationDesc->rd_att);
 
 		/* build DO UPDATE WHERE clause expression */
@@ -1960,10 +1954,10 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		{
 			ExprState  *qualexpr;
 
-			qualexpr = ExecInitExpr((Expr *) node->onConflictWhere,
+			qualexpr = ExecInitQual((List *) node->onConflictWhere,
 									&mtstate->ps);
 
-			resultRelInfo->ri_onConflictSetWhere = (List *) qualexpr;
+			resultRelInfo->ri_onConflictSetWhere = qualexpr;
 		}
 	}
 

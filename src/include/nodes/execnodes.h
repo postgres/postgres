@@ -31,6 +31,72 @@
 
 
 /* ----------------
+ *		ExprState node
+ *
+ * ExprState is the top-level node for expression evaluation.
+ * It contains instructions (in ->steps) to evaluate the expression.
+ * ----------------
+ */
+struct ExprState;				/* forward references in this file */
+struct ExprContext;
+struct ExprEvalStep;			/* avoid including execExpr.h everywhere */
+
+typedef Datum (*ExprStateEvalFunc) (struct ExprState *expression,
+												struct ExprContext *econtext,
+												bool *isNull);
+
+/* Bits in ExprState->flags (see also execExpr.h for private flag bits): */
+/* expression is for use with ExecQual() */
+#define EEO_FLAG_IS_QUAL					(1 << 0)
+
+typedef struct ExprState
+{
+	Node		tag;
+
+	uint8		flags;			/* bitmask of EEO_FLAG_* bits, see above */
+
+	/*
+	 * Storage for result value of a scalar expression, or for individual
+	 * column results within expressions built by ExecBuildProjectionInfo().
+	 */
+	bool		resnull;
+	Datum		resvalue;
+
+	/*
+	 * If projecting a tuple result, this slot holds the result; else NULL.
+	 */
+	TupleTableSlot *resultslot;
+
+	/*
+	 * Instructions to compute expression's return value.
+	 */
+	struct ExprEvalStep *steps;
+
+	/*
+	 * Function that actually evaluates the expression.  This can be set to
+	 * different values depending on the complexity of the expression.
+	 */
+	ExprStateEvalFunc evalfunc;
+
+	/* original expression tree, for debugging only */
+	Expr	   *expr;
+
+	/*
+	 * XXX: following only needed during "compilation", could be thrown away.
+	 */
+
+	int			steps_len;		/* number of steps currently */
+	int			steps_alloc;	/* allocated length of steps array */
+
+	Datum	   *innermost_caseval;
+	bool	   *innermost_casenull;
+
+	Datum	   *innermost_domainval;
+	bool	   *innermost_domainnull;
+} ExprState;
+
+
+/* ----------------
  *	  IndexInfo information
  *
  *		this struct holds the information needed to construct new index
@@ -69,7 +135,7 @@ typedef struct IndexInfo
 	List	   *ii_Expressions; /* list of Expr */
 	List	   *ii_ExpressionsState;	/* list of ExprState */
 	List	   *ii_Predicate;	/* list of Expr */
-	List	   *ii_PredicateState;		/* list of ExprState */
+	ExprState  *ii_PredicateState;
 	Oid		   *ii_ExclusionOps;	/* array with one entry per column */
 	Oid		   *ii_ExclusionProcs;		/* array with one entry per column */
 	uint16	   *ii_ExclusionStrats;		/* array with one entry per column */
@@ -214,51 +280,21 @@ typedef struct ReturnSetInfo
  *		that is, form new tuples by evaluation of targetlist expressions.
  *		Nodes which need to do projections create one of these.
  *
+ *		The target tuple slot is kept in ProjectionInfo->pi_state.resultslot.
  *		ExecProject() evaluates the tlist, forms a tuple, and stores it
  *		in the given slot.  Note that the result will be a "virtual" tuple
  *		unless ExecMaterializeSlot() is then called to force it to be
  *		converted to a physical tuple.  The slot must have a tupledesc
  *		that matches the output of the tlist!
- *
- *		The planner very often produces tlists that consist entirely of
- *		simple Var references (lower levels of a plan tree almost always
- *		look like that).  And top-level tlists are often mostly Vars too.
- *		We therefore optimize execution of simple-Var tlist entries.
- *		The pi_targetlist list actually contains only the tlist entries that
- *		aren't simple Vars, while those that are Vars are processed using the
- *		varSlotOffsets/varNumbers/varOutputCols arrays.
- *
- *		The lastXXXVar fields are used to optimize fetching of fields from
- *		input tuples: they let us do a slot_getsomeattrs() call to ensure
- *		that all needed attributes are extracted in one pass.
- *
- *		targetlist		target list for projection (non-Var expressions only)
- *		exprContext		expression context in which to evaluate targetlist
- *		slot			slot to place projection result in
- *		directMap		true if varOutputCols[] is an identity map
- *		numSimpleVars	number of simple Vars found in original tlist
- *		varSlotOffsets	array indicating which slot each simple Var is from
- *		varNumbers		array containing input attr numbers of simple Vars
- *		varOutputCols	array containing output attr numbers of simple Vars
- *		lastInnerVar	highest attnum from inner tuple slot (0 if none)
- *		lastOuterVar	highest attnum from outer tuple slot (0 if none)
- *		lastScanVar		highest attnum from scan tuple slot (0 if none)
  * ----------------
  */
 typedef struct ProjectionInfo
 {
 	NodeTag		type;
-	List	   *pi_targetlist;
+	/* instructions to evaluate projection */
+	ExprState	pi_state;
+	/* expression context in which to evaluate expression */
 	ExprContext *pi_exprContext;
-	TupleTableSlot *pi_slot;
-	bool		pi_directMap;
-	int			pi_numSimpleVars;
-	int		   *pi_varSlotOffsets;
-	int		   *pi_varNumbers;
-	int		   *pi_varOutputCols;
-	int			pi_lastInnerVar;
-	int			pi_lastOuterVar;
-	int			pi_lastScanVar;
 } ProjectionInfo;
 
 /* ----------------
@@ -340,20 +376,20 @@ typedef struct ResultRelInfo
 	IndexInfo **ri_IndexRelationInfo;
 	TriggerDesc *ri_TrigDesc;
 	FmgrInfo   *ri_TrigFunctions;
-	List	  **ri_TrigWhenExprs;
+	ExprState **ri_TrigWhenExprs;
 	Instrumentation *ri_TrigInstrument;
 	struct FdwRoutine *ri_FdwRoutine;
 	void	   *ri_FdwState;
 	bool		ri_usesFdwDirectModify;
 	List	   *ri_WithCheckOptions;
 	List	   *ri_WithCheckOptionExprs;
-	List	  **ri_ConstraintExprs;
+	ExprState **ri_ConstraintExprs;
 	JunkFilter *ri_junkFilter;
 	ProjectionInfo *ri_projectReturning;
 	ProjectionInfo *ri_onConflictSetProj;
-	List	   *ri_onConflictSetWhere;
+	ExprState  *ri_onConflictSetWhere;
 	List	   *ri_PartitionCheck;
-	List	   *ri_PartitionCheckExpr;
+	ExprState  *ri_PartitionCheckExpr;
 	Relation	ri_PartitionRoot;
 } ResultRelInfo;
 
@@ -564,67 +600,16 @@ typedef tuplehash_iterator TupleHashIterator;
 
 
 /* ----------------------------------------------------------------
- *				 Expression State Trees
+ *				 Expression State Nodes
  *
- * Each executable expression tree has a parallel ExprState tree.
- *
- * Unlike PlanState, there is not an exact one-for-one correspondence between
- * ExprState node types and Expr node types.  Many Expr node types have no
- * need for node-type-specific run-time state, and so they can use plain
- * ExprState or GenericExprState as their associated ExprState node type.
+ * Formerly, there was a separate executor expression state node corresponding
+ * to each node in a planned expression tree.  That's no longer the case; for
+ * common expression node types, all the execution info is embedded into
+ * step(s) in a single ExprState node.  But we still have a few executor state
+ * node types for selected expression node types, mostly those in which info
+ * has to be shared with other parts of the execution state tree.
  * ----------------------------------------------------------------
  */
-
-/* ----------------
- *		ExprState node
- *
- * ExprState is the common superclass for all ExprState-type nodes.
- *
- * It can also be instantiated directly for leaf Expr nodes that need no
- * local run-time state (such as Var, Const, or Param).
- *
- * To save on dispatch overhead, each ExprState node contains a function
- * pointer to the routine to execute to evaluate the node.
- * ----------------
- */
-
-typedef struct ExprState ExprState;
-
-typedef Datum (*ExprStateEvalFunc) (ExprState *expression,
-												ExprContext *econtext,
-												bool *isNull);
-
-struct ExprState
-{
-	NodeTag		type;
-	Expr	   *expr;			/* associated Expr node */
-	ExprStateEvalFunc evalfunc; /* routine to run to execute node */
-};
-
-/* ----------------
- *		GenericExprState node
- *
- * This is used for Expr node types that need no local run-time state,
- * but have one child Expr node.
- * ----------------
- */
-typedef struct GenericExprState
-{
-	ExprState	xprstate;
-	ExprState  *arg;			/* state of my child node */
-} GenericExprState;
-
-/* ----------------
- *		WholeRowVarExprState node
- * ----------------
- */
-typedef struct WholeRowVarExprState
-{
-	ExprState	xprstate;
-	struct PlanState *parent;	/* parent PlanState, or NULL if none */
-	TupleDesc	wrv_tupdesc;	/* descriptor for resulting tuples */
-	JunkFilter *wrv_junkFilter; /* JunkFilter to remove resjunk cols */
-} WholeRowVarExprState;
 
 /* ----------------
  *		AggrefExprState node
@@ -632,25 +617,10 @@ typedef struct WholeRowVarExprState
  */
 typedef struct AggrefExprState
 {
-	ExprState	xprstate;
+	NodeTag		type;
+	Aggref	   *aggref;			/* expression plan node */
 	int			aggno;			/* ID number for agg within its plan node */
 } AggrefExprState;
-
-/* ----------------
- *		GroupingFuncExprState node
- *
- * The list of column numbers refers to the input tuples of the Agg node to
- * which the GroupingFunc belongs, and may contain 0 for references to columns
- * that are only present in grouping sets processed by different Agg nodes (and
- * which are therefore always considered "grouping" here).
- * ----------------
- */
-typedef struct GroupingFuncExprState
-{
-	ExprState	xprstate;
-	struct AggState *aggstate;
-	List	   *clauses;		/* integer list of column numbers */
-} GroupingFuncExprState;
 
 /* ----------------
  *		WindowFuncExprState node
@@ -658,45 +628,35 @@ typedef struct GroupingFuncExprState
  */
 typedef struct WindowFuncExprState
 {
-	ExprState	xprstate;
-	List	   *args;			/* states of argument expressions */
+	NodeTag		type;
+	WindowFunc *wfunc;			/* expression plan node */
+	List	   *args;			/* ExprStates for argument expressions */
 	ExprState  *aggfilter;		/* FILTER expression */
 	int			wfuncno;		/* ID number for wfunc within its plan node */
 } WindowFuncExprState;
 
-/* ----------------
- *		ArrayRefExprState node
- *
- * Note: array types can be fixed-length (typlen > 0), but only when the
- * element type is itself fixed-length.  Otherwise they are varlena structures
- * and have typlen = -1.  In any case, an array type is never pass-by-value.
- * ----------------
- */
-typedef struct ArrayRefExprState
-{
-	ExprState	xprstate;
-	List	   *refupperindexpr;	/* states for child nodes */
-	List	   *reflowerindexpr;
-	ExprState  *refexpr;
-	ExprState  *refassgnexpr;
-	int16		refattrlength;	/* typlen of array type */
-	int16		refelemlength;	/* typlen of the array element type */
-	bool		refelembyval;	/* is the element type pass-by-value? */
-	char		refelemalign;	/* typalign of the element type */
-} ArrayRefExprState;
 
 /* ----------------
- *		FuncExprState node
+ *		SetExprState node
  *
- * Although named for FuncExpr, this is also used for OpExpr, DistinctExpr,
- * and NullIf nodes; be careful to check what xprstate.expr is actually
- * pointing at!
+ * State for evaluating a potentially set-returning expression (like FuncExpr
+ * or OpExpr).  In some cases, like some of the expressions in ROWS FROM(...)
+ * the expression might not be a SRF, but nonetheless it uses the same
+ * machinery as SRFs; it will be treated as a SRF returning a single row.
  * ----------------
  */
-typedef struct FuncExprState
+typedef struct SetExprState
 {
-	ExprState	xprstate;
-	List	   *args;			/* states of argument expressions */
+	NodeTag		type;
+	Expr	   *expr;			/* expression plan node */
+	List	   *args;			/* ExprStates for argument expressions */
+
+	/*
+	 * In ROWS FROM, functions can be inlined, removing the FuncExpr normally
+	 * inside.  In such a case this is the compiled expression (which cannot
+	 * return a set), which'll be evaluated using regular ExecEvalExpr().
+	 */
+	ExprState  *elidedFuncState;
 
 	/*
 	 * Function manager's lookup info for the target function.  If func.fn_oid
@@ -738,7 +698,7 @@ typedef struct FuncExprState
 
 	/*
 	 * Flag to remember whether we have registered a shutdown callback for
-	 * this FuncExprState.  We do so only if funcResultStore or setArgsValid
+	 * this SetExprState.  We do so only if funcResultStore or setArgsValid
 	 * has been set at least once (since all the callback is for is to release
 	 * the tuplestore or clear setArgsValid).
 	 */
@@ -750,33 +710,7 @@ typedef struct FuncExprState
 	 * argument values between calls, when setArgsValid is true.
 	 */
 	FunctionCallInfoData fcinfo_data;
-} FuncExprState;
-
-/* ----------------
- *		ScalarArrayOpExprState node
- *
- * This is a FuncExprState plus some additional data.
- * ----------------
- */
-typedef struct ScalarArrayOpExprState
-{
-	FuncExprState fxprstate;
-	/* Cached info about array element type */
-	Oid			element_type;
-	int16		typlen;
-	bool		typbyval;
-	char		typalign;
-} ScalarArrayOpExprState;
-
-/* ----------------
- *		BoolExprState node
- * ----------------
- */
-typedef struct BoolExprState
-{
-	ExprState	xprstate;
-	List	   *args;			/* states of argument expression(s) */
-} BoolExprState;
+} SetExprState;
 
 /* ----------------
  *		SubPlanState node
@@ -784,7 +718,8 @@ typedef struct BoolExprState
  */
 typedef struct SubPlanState
 {
-	ExprState	xprstate;
+	NodeTag		type;
+	SubPlan    *subplan;		/* expression plan node */
 	struct PlanState *planstate;	/* subselect plan's state tree */
 	struct PlanState *parent;	/* parent plan node's state tree */
 	ExprState  *testexpr;		/* state of combining expression */
@@ -814,203 +749,18 @@ typedef struct SubPlanState
  */
 typedef struct AlternativeSubPlanState
 {
-	ExprState	xprstate;
-	List	   *subplans;		/* states of alternative subplans */
+	NodeTag		type;
+	AlternativeSubPlan *subplan;	/* expression plan node */
+	List	   *subplans;		/* SubPlanStates of alternative subplans */
 	int			active;			/* list index of the one we're using */
 } AlternativeSubPlanState;
-
-/* ----------------
- *		FieldSelectState node
- * ----------------
- */
-typedef struct FieldSelectState
-{
-	ExprState	xprstate;
-	ExprState  *arg;			/* input expression */
-	TupleDesc	argdesc;		/* tupdesc for most recent input */
-} FieldSelectState;
-
-/* ----------------
- *		FieldStoreState node
- * ----------------
- */
-typedef struct FieldStoreState
-{
-	ExprState	xprstate;
-	ExprState  *arg;			/* input tuple value */
-	List	   *newvals;		/* new value(s) for field(s) */
-	TupleDesc	argdesc;		/* tupdesc for most recent input */
-} FieldStoreState;
-
-/* ----------------
- *		CoerceViaIOState node
- * ----------------
- */
-typedef struct CoerceViaIOState
-{
-	ExprState	xprstate;
-	ExprState  *arg;			/* input expression */
-	FmgrInfo	outfunc;		/* lookup info for source output function */
-	FmgrInfo	infunc;			/* lookup info for result input function */
-	Oid			intypioparam;	/* argument needed for input function */
-} CoerceViaIOState;
-
-/* ----------------
- *		ArrayCoerceExprState node
- * ----------------
- */
-typedef struct ArrayCoerceExprState
-{
-	ExprState	xprstate;
-	ExprState  *arg;			/* input array value */
-	Oid			resultelemtype; /* element type of result array */
-	FmgrInfo	elemfunc;		/* lookup info for element coercion function */
-	/* use struct pointer to avoid including array.h here */
-	struct ArrayMapState *amstate;		/* workspace for array_map */
-} ArrayCoerceExprState;
-
-/* ----------------
- *		ConvertRowtypeExprState node
- * ----------------
- */
-typedef struct ConvertRowtypeExprState
-{
-	ExprState	xprstate;
-	ExprState  *arg;			/* input tuple value */
-	TupleDesc	indesc;			/* tupdesc for source rowtype */
-	TupleDesc	outdesc;		/* tupdesc for result rowtype */
-	/* use "struct" so we needn't include tupconvert.h here */
-	struct TupleConversionMap *map;
-	bool		initialized;
-} ConvertRowtypeExprState;
-
-/* ----------------
- *		CaseExprState node
- * ----------------
- */
-typedef struct CaseExprState
-{
-	ExprState	xprstate;
-	ExprState  *arg;			/* implicit equality comparison argument */
-	List	   *args;			/* the arguments (list of WHEN clauses) */
-	ExprState  *defresult;		/* the default result (ELSE clause) */
-	int16		argtyplen;		/* if arg is provided, its typlen */
-} CaseExprState;
-
-/* ----------------
- *		CaseWhenState node
- * ----------------
- */
-typedef struct CaseWhenState
-{
-	ExprState	xprstate;
-	ExprState  *expr;			/* condition expression */
-	ExprState  *result;			/* substitution result */
-} CaseWhenState;
-
-/* ----------------
- *		ArrayExprState node
- *
- * Note: ARRAY[] expressions always produce varlena arrays, never fixed-length
- * arrays.
- * ----------------
- */
-typedef struct ArrayExprState
-{
-	ExprState	xprstate;
-	List	   *elements;		/* states for child nodes */
-	int16		elemlength;		/* typlen of the array element type */
-	bool		elembyval;		/* is the element type pass-by-value? */
-	char		elemalign;		/* typalign of the element type */
-} ArrayExprState;
-
-/* ----------------
- *		RowExprState node
- * ----------------
- */
-typedef struct RowExprState
-{
-	ExprState	xprstate;
-	List	   *args;			/* the arguments */
-	TupleDesc	tupdesc;		/* descriptor for result tuples */
-} RowExprState;
-
-/* ----------------
- *		RowCompareExprState node
- * ----------------
- */
-typedef struct RowCompareExprState
-{
-	ExprState	xprstate;
-	List	   *largs;			/* the left-hand input arguments */
-	List	   *rargs;			/* the right-hand input arguments */
-	FmgrInfo   *funcs;			/* array of comparison function info */
-	Oid		   *collations;		/* array of collations to use */
-} RowCompareExprState;
-
-/* ----------------
- *		CoalesceExprState node
- * ----------------
- */
-typedef struct CoalesceExprState
-{
-	ExprState	xprstate;
-	List	   *args;			/* the arguments */
-} CoalesceExprState;
-
-/* ----------------
- *		MinMaxExprState node
- * ----------------
- */
-typedef struct MinMaxExprState
-{
-	ExprState	xprstate;
-	List	   *args;			/* the arguments */
-	FmgrInfo	cfunc;			/* lookup info for comparison func */
-} MinMaxExprState;
-
-/* ----------------
- *		XmlExprState node
- * ----------------
- */
-typedef struct XmlExprState
-{
-	ExprState	xprstate;
-	List	   *named_args;		/* ExprStates for named arguments */
-	List	   *args;			/* ExprStates for other arguments */
-} XmlExprState;
-
-/* ----------------
- *		NullTestState node
- * ----------------
- */
-typedef struct NullTestState
-{
-	ExprState	xprstate;
-	ExprState  *arg;			/* input expression */
-	/* used only if input is of composite type: */
-	TupleDesc	argdesc;		/* tupdesc for most recent input */
-} NullTestState;
-
-/* ----------------
- *		CoerceToDomainState node
- * ----------------
- */
-typedef struct CoerceToDomainState
-{
-	ExprState	xprstate;
-	ExprState  *arg;			/* input expression */
-	/* Cached set of constraints that need to be checked */
-	/* use struct pointer to avoid including typcache.h here */
-	struct DomainConstraintRef *constraint_ref;
-} CoerceToDomainState;
 
 /*
  * DomainConstraintState - one item to check during CoerceToDomain
  *
- * Note: this is just a Node, and not an ExprState, because it has no
- * corresponding Expr to link to.  Nonetheless it is part of an ExprState
- * tree, so we give it a name following the xxxState convention.
+ * Note: we consider this to be part of an ExprState tree, so we give it
+ * a name following the xxxState convention.  But there's no directly
+ * associated plan-tree node.
  */
 typedef enum DomainConstraintType
 {
@@ -1023,7 +773,8 @@ typedef struct DomainConstraintState
 	NodeTag		type;
 	DomainConstraintType constrainttype;		/* constraint type */
 	char	   *name;			/* name of constraint (for error msgs) */
-	ExprState  *check_expr;		/* for CHECK, a boolean expression */
+	Expr	   *check_expr;		/* for CHECK, a boolean expression */
+	ExprState  *check_exprstate;	/* check_expr's eval state, or NULL */
 } DomainConstraintState;
 
 
@@ -1060,8 +811,7 @@ typedef struct PlanState
 	 * state trees parallel links in the associated plan tree (except for the
 	 * subPlan list, which does not exist in the plan tree).
 	 */
-	List	   *targetlist;		/* target list to be computed at this node */
-	List	   *qual;			/* implicitly-ANDed qual conditions */
+	ExprState  *qual;			/* boolean qual condition */
 	struct PlanState *lefttree; /* input plan tree(s) */
 	struct PlanState *righttree;
 	List	   *initPlan;		/* Init SubPlanState nodes (un-correlated expr
@@ -1133,11 +883,15 @@ typedef struct ResultState
 
 /* ----------------
  *	 ProjectSetState information
+ *
+ * Note: at least one of the "elems" will be a SetExprState; the rest are
+ * regular ExprStates.
  * ----------------
  */
 typedef struct ProjectSetState
 {
 	PlanState	ps;				/* its first field is NodeTag */
+	Node	  **elems;			/* array of expression states */
 	ExprDoneCond *elemdone;		/* array of per-SRF is-done states */
 	int			nelems;			/* length of elemdone[] array */
 	bool		pending_srf_tuples;		/* still evaluating srfs in tlist? */
@@ -1372,7 +1126,7 @@ typedef struct
 typedef struct IndexScanState
 {
 	ScanState	ss;				/* its first field is NodeTag */
-	List	   *indexqualorig;
+	ExprState  *indexqualorig;
 	List	   *indexorderbyorig;
 	ScanKey		iss_ScanKeys;
 	int			iss_NumScanKeys;
@@ -1418,7 +1172,7 @@ typedef struct IndexScanState
 typedef struct IndexOnlyScanState
 {
 	ScanState	ss;				/* its first field is NodeTag */
-	List	   *indexqual;
+	ExprState  *indexqual;
 	ScanKey		ioss_ScanKeys;
 	int			ioss_NumScanKeys;
 	ScanKey		ioss_OrderByKeys;
@@ -1534,7 +1288,7 @@ typedef struct ParallelBitmapHeapState
 typedef struct BitmapHeapScanState
 {
 	ScanState	ss;				/* its first field is NodeTag */
-	List	   *bitmapqualorig;
+	ExprState  *bitmapqualorig;
 	TIDBitmap  *tbm;
 	TBMIterator *tbmiterator;
 	TBMIterateResult *tbmres;
@@ -1554,16 +1308,18 @@ typedef struct BitmapHeapScanState
 /* ----------------
  *	 TidScanState information
  *
+ *		tidexprs	   list of TidExpr structs (see nodeTidscan.c)
  *		isCurrentOf    scan has a CurrentOfExpr qual
  *		NumTids		   number of tids in this scan
  *		TidPtr		   index of currently fetched tid
  *		TidList		   evaluated item pointers (array of size NumTids)
+ *		htup		   currently-fetched tuple, if any
  * ----------------
  */
 typedef struct TidScanState
 {
 	ScanState	ss;				/* its first field is NodeTag */
-	List	   *tss_tidquals;	/* list of ExprState nodes */
+	List	   *tss_tidexprs;
 	bool		tss_isCurrentOf;
 	int			tss_NumTids;
 	int			tss_TidPtr;
@@ -1712,7 +1468,7 @@ typedef struct WorkTableScanState
 typedef struct ForeignScanState
 {
 	ScanState	ss;				/* its first field is NodeTag */
-	List	   *fdw_recheck_quals;		/* original quals not in ss.ps.qual */
+	ExprState  *fdw_recheck_quals;		/* original quals not in ss.ps.qual */
 	Size		pscan_len;		/* size of parallel coordination information */
 	/* use struct pointer to avoid including fdwapi.h here */
 	struct FdwRoutine *fdwroutine;
@@ -1759,7 +1515,7 @@ typedef struct JoinState
 {
 	PlanState	ps;
 	JoinType	jointype;
-	List	   *joinqual;		/* JOIN quals (in addition to ps.qual) */
+	ExprState  *joinqual;		/* JOIN quals (in addition to ps.qual) */
 } JoinState;
 
 /* ----------------
@@ -1857,7 +1613,7 @@ typedef struct HashJoinTableData *HashJoinTable;
 typedef struct HashJoinState
 {
 	JoinState	js;				/* its first field is NodeTag */
-	List	   *hashclauses;	/* list of ExprState nodes */
+	ExprState  *hashclauses;
 	List	   *hj_OuterHashKeys;		/* list of ExprState nodes */
 	List	   *hj_InnerHashKeys;		/* list of ExprState nodes */
 	List	   *hj_HashOperators;		/* list of operator OIDs */

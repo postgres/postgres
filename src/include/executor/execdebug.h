@@ -38,13 +38,6 @@
  */
 
 /* ----------------
- *		EXEC_EVALDEBUG is a flag which turns on debugging of
- *		ExecEval and ExecTargetList() stuff by EV_printf() in execQual.c
- * ----------------
-#undef EXEC_EVALDEBUG
- */
-
-/* ----------------
  *		EXEC_SORTDEBUG is a flag which turns on debugging of
  *		the ExecSort() stuff by SO_printf() in nodeSort.c
  * ----------------
@@ -84,20 +77,6 @@
 #define NL1_printf(s, a)
 #define ENL1_printf(message)
 #endif   /* EXEC_NESTLOOPDEBUG */
-
-/* ----------------
- *		exec eval / target list debugging defines
- * ----------------
- */
-#ifdef EXEC_EVALDEBUG
-#define EV_nodeDisplay(l)				nodeDisplay(l)
-#define EV_printf(s)					printf(s)
-#define EV1_printf(s, a)				printf(s, a)
-#else
-#define EV_nodeDisplay(l)
-#define EV_printf(s)
-#define EV1_printf(s, a)
-#endif   /* EXEC_EVALDEBUG */
 
 /* ----------------
  *		sort node debugging defines
@@ -146,4 +125,4 @@
 #define MJ_DEBUG_PROC_NODE(slot)
 #endif   /* EXEC_MERGEJOINDEBUG */
 
-#endif   /* ExecDebugIncluded */
+#endif   /* EXECDEBUG_H */

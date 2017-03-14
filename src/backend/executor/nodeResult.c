@@ -77,9 +77,7 @@ ExecResult(ResultState *node)
 	 */
 	if (node->rs_checkqual)
 	{
-		bool		qualResult = ExecQual((List *) node->resconstantqual,
-										  econtext,
-										  false);
+		bool		qualResult = ExecQual(node->resconstantqual, econtext);
 
 		node->rs_checkqual = false;
 		if (!qualResult)
@@ -209,14 +207,10 @@ ExecInitResult(Result *node, EState *estate, int eflags)
 	/*
 	 * initialize child expressions
 	 */
-	resstate->ps.targetlist = (List *)
-		ExecInitExpr((Expr *) node->plan.targetlist,
-					 (PlanState *) resstate);
-	resstate->ps.qual = (List *)
-		ExecInitExpr((Expr *) node->plan.qual,
-					 (PlanState *) resstate);
-	resstate->resconstantqual = ExecInitExpr((Expr *) node->resconstantqual,
-											 (PlanState *) resstate);
+	resstate->ps.qual =
+		ExecInitQual(node->plan.qual, (PlanState *) resstate);
+	resstate->resconstantqual =
+		ExecInitQual((List *) node->resconstantqual, (PlanState *) resstate);
 
 	/*
 	 * initialize child nodes

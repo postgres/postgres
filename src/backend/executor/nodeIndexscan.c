@@ -149,7 +149,7 @@ IndexNext(IndexScanState *node)
 		{
 			econtext->ecxt_scantuple = slot;
 			ResetExprContext(econtext);
-			if (!ExecQual(node->indexqualorig, econtext, false))
+			if (!ExecQual(node->indexqualorig, econtext))
 			{
 				/* Fails recheck, so drop it and loop back for another */
 				InstrCountFiltered2(node, 1);
@@ -295,7 +295,7 @@ next_indextuple:
 		{
 			econtext->ecxt_scantuple = slot;
 			ResetExprContext(econtext);
-			if (!ExecQual(node->indexqualorig, econtext, false))
+			if (!ExecQual(node->indexqualorig, econtext))
 			{
 				/* Fails recheck, so drop it and loop back for another */
 				InstrCountFiltered2(node, 1);
@@ -415,7 +415,7 @@ IndexRecheck(IndexScanState *node, TupleTableSlot *slot)
 
 	ResetExprContext(econtext);
 
-	return ExecQual(node->indexqualorig, econtext, false);
+	return ExecQual(node->indexqualorig, econtext);
 }
 
 
@@ -921,18 +921,12 @@ ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
 	 * would be nice to improve that.  (Problem is that any SubPlans present
 	 * in the expression must be found now...)
 	 */
-	indexstate->ss.ps.targetlist = (List *)
-		ExecInitExpr((Expr *) node->scan.plan.targetlist,
-					 (PlanState *) indexstate);
-	indexstate->ss.ps.qual = (List *)
-		ExecInitExpr((Expr *) node->scan.plan.qual,
-					 (PlanState *) indexstate);
-	indexstate->indexqualorig = (List *)
-		ExecInitExpr((Expr *) node->indexqualorig,
-					 (PlanState *) indexstate);
-	indexstate->indexorderbyorig = (List *)
-		ExecInitExpr((Expr *) node->indexorderbyorig,
-					 (PlanState *) indexstate);
+	indexstate->ss.ps.qual =
+		ExecInitQual(node->scan.plan.qual, (PlanState *) indexstate);
+	indexstate->indexqualorig =
+		ExecInitQual(node->indexqualorig, (PlanState *) indexstate);
+	indexstate->indexorderbyorig =
+		ExecInitExprList(node->indexorderbyorig, (PlanState *) indexstate);
 
 	/*
 	 * tuple table initialization

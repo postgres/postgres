@@ -2890,7 +2890,7 @@ ExplainSubPlans(List *plans, List *ancestors,
 	foreach(lst, plans)
 	{
 		SubPlanState *sps = (SubPlanState *) lfirst(lst);
-		SubPlan    *sp = (SubPlan *) sps->xprstate.expr;
+		SubPlan    *sp = sps->subplan;
 
 		/*
 		 * There can be multiple SubPlan nodes referencing the same physical

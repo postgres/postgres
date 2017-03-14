@@ -139,12 +139,8 @@ ExecInitTableFuncScan(TableFuncScan *node, EState *estate, int eflags)
 	/*
 	 * initialize child expressions
 	 */
-	scanstate->ss.ps.targetlist = (List *)
-		ExecInitExpr((Expr *) node->scan.plan.targetlist,
-					 (PlanState *) scanstate);
-	scanstate->ss.ps.qual = (List *)
-		ExecInitExpr((Expr *) node->scan.plan.qual,
-					 (PlanState *) scanstate);
+	scanstate->ss.ps.qual =
+		ExecInitQual(node->scan.plan.qual, &scanstate->ss.ps);
 
 	/*
 	 * tuple table initialization
@@ -179,16 +175,16 @@ ExecInitTableFuncScan(TableFuncScan *node, EState *estate, int eflags)
 
 	scanstate->ns_names = tf->ns_names;
 
-	scanstate->ns_uris = (List *)
-		ExecInitExpr((Expr *) tf->ns_uris, (PlanState *) scanstate);
+	scanstate->ns_uris =
+		ExecInitExprList(tf->ns_uris, (PlanState *) scanstate);
 	scanstate->docexpr =
 		ExecInitExpr((Expr *) tf->docexpr, (PlanState *) scanstate);
 	scanstate->rowexpr =
 		ExecInitExpr((Expr *) tf->rowexpr, (PlanState *) scanstate);
-	scanstate->colexprs = (List *)
-		ExecInitExpr((Expr *) tf->colexprs, (PlanState *) scanstate);
-	scanstate->coldefexprs = (List *)
-		ExecInitExpr((Expr *) tf->coldefexprs, (PlanState *) scanstate);
+	scanstate->colexprs =
+		ExecInitExprList(tf->colexprs, (PlanState *) scanstate);
+	scanstate->coldefexprs =
+		ExecInitExprList(tf->coldefexprs, (PlanState *) scanstate);
 
 	scanstate->notnulls = tf->notnulls;
 

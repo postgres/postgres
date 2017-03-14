@@ -586,14 +586,8 @@ ERROR:  must be owner of function testfunc1
 DROP FUNCTION testfunc1(int); -- ok
 -- restore to sanity
 GRANT ALL PRIVILEGES ON LANGUAGE sql TO PUBLIC;
--- verify privilege checks on coercions
+-- verify privilege checks on array-element coercions
 BEGIN;
-SELECT NULL::int4[]::int8[];
- int8 
-------
- 
-(1 row)
-
 SELECT '{1}'::int4[]::int8[];
  int8 
 ------
@@ -601,12 +595,6 @@ SELECT '{1}'::int4[]::int8[];
 (1 row)
 
 REVOKE ALL ON FUNCTION int8(integer) FROM PUBLIC;
-SELECT NULL::int4[]::int8[];
- int8 
-------
- 
-(1 row)
-
 SELECT '{1}'::int4[]::int8[]; --superuser, suceed
  int8 
 ------
@@ -614,12 +602,6 @@ SELECT '{1}'::int4[]::int8[]; --superuser, suceed
 (1 row)
 
 SET SESSION AUTHORIZATION regress_user4;
-SELECT NULL::int4[]::int8[];  --other user, no elements to convert
- int8 
-------
- 
-(1 row)
-
 SELECT '{1}'::int4[]::int8[]; --other user, fail
 ERROR:  permission denied for function int8
 ROLLBACK;

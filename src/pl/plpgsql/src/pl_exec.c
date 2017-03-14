@@ -145,7 +145,7 @@ typedef struct					/* cast_hash table entry */
 {
 	plpgsql_CastHashKey key;	/* hash key --- MUST BE FIRST */
 	Expr	   *cast_expr;		/* cast expression, or NULL if no-op cast */
-	/* The ExprState tree is valid only when cast_lxid matches current LXID */
+	/* ExprState is valid only when cast_lxid matches current LXID */
 	ExprState  *cast_exprstate; /* expression's eval tree */
 	bool		cast_in_use;	/* true while we're executing eval tree */
 	LocalTransactionId cast_lxid;
@@ -4710,7 +4710,8 @@ exec_assign_value(PLpgSQL_execstate *estate,
 
 				/*
 				 * Evaluate the subscripts, switch into left-to-right order.
-				 * Like ExecEvalArrayRef(), complain if any subscript is null.
+				 * Like the expression built by ExecInitArrayRef(), complain
+				 * if any subscript is null.
 				 */
 				for (i = 0; i < nsubscripts; i++)
 				{

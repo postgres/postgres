@@ -3501,7 +3501,7 @@ cost_qual_eval_walker(Node *node, cost_qual_eval_context *context)
 		/*
 		 * Aggref and WindowFunc nodes are (and should be) treated like Vars,
 		 * ie, zero execution cost in the current model, because they behave
-		 * essentially like Vars in execQual.c.  We disregard the costs of
+		 * essentially like Vars at execution.  We disregard the costs of
 		 * their input expressions for the same reason.  The actual execution
 		 * costs of the aggregate/window functions and their arguments have to
 		 * be factored into plan-node-specific costing of the Agg or WindowAgg

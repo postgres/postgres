@@ -1639,7 +1639,7 @@ project_aggregates(AggState *aggstate)
 	/*
 	 * Check the qual (HAVING clause); if the group does not match, ignore it.
 	 */
-	if (ExecQual(aggstate->ss.ps.qual, econtext, false))
+	if (ExecQual(aggstate->ss.ps.qual, econtext))
 	{
 		/*
 		 * Form and return projection tuple using the aggregate results and
@@ -2501,18 +2501,17 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	/*
 	 * initialize child expressions
 	 *
-	 * Note: ExecInitExpr finds Aggrefs for us, and also checks that no aggs
-	 * contain other agg calls in their arguments.  This would make no sense
-	 * under SQL semantics anyway (and it's forbidden by the spec). Because
-	 * that is true, we don't need to worry about evaluating the aggs in any
-	 * particular order.
+	 * We rely on the parser to have checked that no aggs contain other agg
+	 * calls in their arguments.  This would make no sense under SQL semantics
+	 * (and it's forbidden by the spec).  Because it is true, we don't need to
+	 * worry about evaluating the aggs in any particular order.
+	 *
+	 * Note: execExpr.c finds Aggrefs for us, and adds their AggrefExprState
+	 * nodes to aggstate->aggs.  Aggrefs in the qual are found here; Aggrefs
+	 * in the targetlist are found during ExecAssignProjectionInfo, below.
 	 */
-	aggstate->ss.ps.targetlist = (List *)
-		ExecInitExpr((Expr *) node->plan.targetlist,
-					 (PlanState *) aggstate);
-	aggstate->ss.ps.qual = (List *)
-		ExecInitExpr((Expr *) node->plan.qual,
-					 (PlanState *) aggstate);
+	aggstate->ss.ps.qual =
+		ExecInitQual(node->plan.qual, (PlanState *) aggstate);
 
 	/*
 	 * Initialize child nodes.
@@ -2540,7 +2539,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	ExecAssignProjectionInfo(&aggstate->ss.ps, NULL);
 
 	/*
-	 * get the count of aggregates in targetlist and quals
+	 * We should now have found all Aggrefs in the targetlist and quals.
 	 */
 	numaggs = aggstate->numaggs;
 	Assert(numaggs == list_length(aggstate->aggs));
@@ -2724,7 +2723,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	foreach(l, aggstate->aggs)
 	{
 		AggrefExprState *aggrefstate = (AggrefExprState *) lfirst(l);
-		Aggref	   *aggref = (Aggref *) aggrefstate->xprstate.expr;
+		Aggref	   *aggref = aggrefstate->aggref;
 		AggStatePerAgg peragg;
 		AggStatePerTrans pertrans;
 		int			existing_aggno;
@@ -3024,11 +3023,10 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	/* and then create a projection for that targetlist */
 	aggstate->evaldesc = ExecTypeFromTL(combined_inputeval, false);
 	aggstate->evalslot = ExecInitExtraTupleSlot(estate);
-	combined_inputeval = (List *) ExecInitExpr((Expr *) combined_inputeval,
-											   (PlanState *) aggstate);
 	aggstate->evalproj = ExecBuildProjectionInfo(combined_inputeval,
 												 aggstate->tmpcontext,
 												 aggstate->evalslot,
+												 &aggstate->ss.ps,
 												 NULL);
 	ExecSetSlotDescriptor(aggstate->evalslot, aggstate->evaldesc);
 
@@ -3206,8 +3204,8 @@ build_pertrans_for_aggref(AggStatePerTrans pertrans,
 	naggs = aggstate->numaggs;
 	pertrans->aggfilter = ExecInitExpr(aggref->aggfilter,
 									   (PlanState *) aggstate);
-	pertrans->aggdirectargs = (List *) ExecInitExpr((Expr *) aggref->aggdirectargs,
-													(PlanState *) aggstate);
+	pertrans->aggdirectargs = ExecInitExprList(aggref->aggdirectargs,
+											   (PlanState *) aggstate);
 
 	/*
 	 * Complain if the aggregate's arguments contain any aggregates; nested

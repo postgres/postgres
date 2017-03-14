@@ -3057,7 +3057,7 @@ TriggerEnabled(EState *estate, ResultRelInfo *relinfo,
 	if (trigger->tgqual)
 	{
 		TupleDesc	tupdesc = RelationGetDescr(relinfo->ri_RelationDesc);
-		List	  **predicate;
+		ExprState **predicate;
 		ExprContext *econtext;
 		TupleTableSlot *oldslot = NULL;
 		TupleTableSlot *newslot = NULL;
@@ -3078,7 +3078,7 @@ TriggerEnabled(EState *estate, ResultRelInfo *relinfo,
 		 * nodetrees for it.  Keep them in the per-query memory context so
 		 * they'll survive throughout the query.
 		 */
-		if (*predicate == NIL)
+		if (*predicate == NULL)
 		{
 			Node	   *tgqual;
 
@@ -3087,9 +3087,9 @@ TriggerEnabled(EState *estate, ResultRelInfo *relinfo,
 			/* Change references to OLD and NEW to INNER_VAR and OUTER_VAR */
 			ChangeVarNodes(tgqual, PRS2_OLD_VARNO, INNER_VAR, 0);
 			ChangeVarNodes(tgqual, PRS2_NEW_VARNO, OUTER_VAR, 0);
-			/* ExecQual wants implicit-AND form */
+			/* ExecPrepareQual wants implicit-AND form */
 			tgqual = (Node *) make_ands_implicit((Expr *) tgqual);
-			*predicate = (List *) ExecPrepareExpr((Expr *) tgqual, estate);
+			*predicate = ExecPrepareQual((List *) tgqual, estate);
 			MemoryContextSwitchTo(oldContext);
 		}
 
@@ -3137,7 +3137,7 @@ TriggerEnabled(EState *estate, ResultRelInfo *relinfo,
 		 */
 		econtext->ecxt_innertuple = oldslot;
 		econtext->ecxt_outertuple = newslot;
-		if (!ExecQual(*predicate, econtext, false))
+		if (!ExecQual(*predicate, econtext))
 			return false;
 	}
 

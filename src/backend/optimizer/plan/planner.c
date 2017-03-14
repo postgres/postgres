@@ -5013,7 +5013,7 @@ make_pathkeys_for_window(PlannerInfo *root, WindowClause *wc,
  * bloat the sort dataset, and because it might cause unexpected output order
  * if the sort isn't stable.  However there's a constraint on that: all SRFs
  * in the tlist should be evaluated at the same plan step, so that they can
- * run in sync in ExecTargetList.  So if any SRFs are in sort columns, we
+ * run in sync in nodeProjectSet.  So if any SRFs are in sort columns, we
  * mustn't postpone any SRFs.  (Note that in principle that policy should
  * probably get applied to the group/window input targetlists too, but we
  * have not done that historically.)  Lastly, expensive expressions are

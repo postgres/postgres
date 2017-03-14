@@ -35,7 +35,7 @@
  */
 typedef struct FunctionScanPerFuncState
 {
-	ExprState  *funcexpr;		/* state of the expression being evaluated */
+	SetExprState *setexpr;		/* state of the expression being evaluated */
 	TupleDesc	tupdesc;		/* desc of the function result type */
 	int			colcount;		/* expected number of result columns */
 	Tuplestorestate *tstore;	/* holds the function result set */
@@ -92,7 +92,7 @@ FunctionNext(FunctionScanState *node)
 		if (tstore == NULL)
 		{
 			node->funcstates[0].tstore = tstore =
-				ExecMakeTableFunctionResult(node->funcstates[0].funcexpr,
+				ExecMakeTableFunctionResult(node->funcstates[0].setexpr,
 											node->ss.ps.ps_ExprContext,
 											node->argcontext,
 											node->funcstates[0].tupdesc,
@@ -151,7 +151,7 @@ FunctionNext(FunctionScanState *node)
 		if (fs->tstore == NULL)
 		{
 			fs->tstore =
-				ExecMakeTableFunctionResult(fs->funcexpr,
+				ExecMakeTableFunctionResult(fs->setexpr,
 											node->ss.ps.ps_ExprContext,
 											node->argcontext,
 											fs->tupdesc,
@@ -340,12 +340,8 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 	/*
 	 * initialize child expressions
 	 */
-	scanstate->ss.ps.targetlist = (List *)
-		ExecInitExpr((Expr *) node->scan.plan.targetlist,
-					 (PlanState *) scanstate);
-	scanstate->ss.ps.qual = (List *)
-		ExecInitExpr((Expr *) node->scan.plan.qual,
-					 (PlanState *) scanstate);
+	scanstate->ss.ps.qual =
+		ExecInitQual(node->scan.plan.qual, (PlanState *) scanstate);
 
 	scanstate->funcstates = palloc(nfuncs * sizeof(FunctionScanPerFuncState));
 
@@ -361,7 +357,10 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 		Oid			funcrettype;
 		TupleDesc	tupdesc;
 
-		fs->funcexpr = ExecInitExpr((Expr *) funcexpr, (PlanState *) scanstate);
+		fs->setexpr =
+			ExecInitTableFunctionResult((Expr *) funcexpr,
+										scanstate->ss.ps.ps_ExprContext,
+										&scanstate->ss.ps);
 
 		/*
 		 * Don't allocate the tuplestores; the actual calls to the functions

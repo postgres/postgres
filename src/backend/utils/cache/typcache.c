@@ -96,11 +96,11 @@ static TypeCacheEntry *firstDomainTypeEntry = NULL;
  * this struct for the common case of a constraint-less domain; we just set
  * domainData to NULL to indicate that.
  *
- * Within a DomainConstraintCache, we abuse the DomainConstraintState node
- * type a bit: check_expr fields point to expression plan trees, not plan
- * state trees.  When needed, expression state trees are built by flat-copying
- * the DomainConstraintState nodes and applying ExecInitExpr to check_expr.
- * Such a state tree is not part of the DomainConstraintCache, but is
+ * Within a DomainConstraintCache, we store expression plan trees, but the
+ * check_exprstate fields of the DomainConstraintState nodes are just NULL.
+ * When needed, expression evaluation nodes are built by flat-copying the
+ * DomainConstraintState nodes and applying ExecInitExpr to check_expr.
+ * Such a node tree is not part of the DomainConstraintCache, but is
  * considered to belong to a DomainConstraintRef.
  */
 struct DomainConstraintCache
@@ -779,8 +779,8 @@ load_domaintype_info(TypeCacheEntry *typentry)
 			r = makeNode(DomainConstraintState);
 			r->constrainttype = DOM_CONSTRAINT_CHECK;
 			r->name = pstrdup(NameStr(c->conname));
-			/* Must cast here because we're not storing an expr state node */
-			r->check_expr = (ExprState *) check_expr;
+			r->check_expr = check_expr;
+			r->check_exprstate = NULL;
 
 			MemoryContextSwitchTo(oldcxt);
 
@@ -859,6 +859,7 @@ load_domaintype_info(TypeCacheEntry *typentry)
 		r->constrainttype = DOM_CONSTRAINT_NOTNULL;
 		r->name = pstrdup("NOT NULL");
 		r->check_expr = NULL;
+		r->check_exprstate = NULL;
 
 		/* lcons to apply the nullness check FIRST */
 		dcc->constraints = lcons(r, dcc->constraints);
@@ -946,8 +947,8 @@ prep_domain_constraints(List *constraints, MemoryContext execctx)
 		newr = makeNode(DomainConstraintState);
 		newr->constrainttype = r->constrainttype;
 		newr->name = r->name;
-		/* Must cast here because cache items contain expr plan trees */
-		newr->check_expr = ExecInitExpr((Expr *) r->check_expr, NULL);
+		newr->check_expr = r->check_expr;
+		newr->check_exprstate = ExecInitExpr(r->check_expr, NULL);
 
 		result = lappend(result, newr);
 	}
@@ -962,13 +963,18 @@ prep_domain_constraints(List *constraints, MemoryContext execctx)
  *
  * Caller must tell us the MemoryContext in which the DomainConstraintRef
  * lives.  The ref will be cleaned up when that context is reset/deleted.
+ *
+ * Caller must also tell us whether it wants check_exprstate fields to be
+ * computed in the DomainConstraintState nodes attached to this ref.
+ * If it doesn't, we need not make a copy of the DomainConstraintState list.
  */
 void
 InitDomainConstraintRef(Oid type_id, DomainConstraintRef *ref,
-						MemoryContext refctx)
+						MemoryContext refctx, bool need_exprstate)
 {
 	/* Look up the typcache entry --- we assume it survives indefinitely */
 	ref->tcache = lookup_type_cache(type_id, TYPECACHE_DOMAIN_INFO);
+	ref->need_exprstate = need_exprstate;
 	/* For safety, establish the callback before acquiring a refcount */
 	ref->refctx = refctx;
 	ref->dcc = NULL;
@@ -980,8 +986,11 @@ InitDomainConstraintRef(Oid type_id, DomainConstraintRef *ref,
 	{
 		ref->dcc = ref->tcache->domainData;
 		ref->dcc->dccRefCount++;
-		ref->constraints = prep_domain_constraints(ref->dcc->constraints,
-												   ref->refctx);
+		if (ref->need_exprstate)
+			ref->constraints = prep_domain_constraints(ref->dcc->constraints,
+													   ref->refctx);
+		else
+			ref->constraints = ref->dcc->constraints;
 	}
 	else
 		ref->constraints = NIL;
@@ -1032,8 +1041,11 @@ UpdateDomainConstraintRef(DomainConstraintRef *ref)
 		{
 			ref->dcc = dcc;
 			dcc->dccRefCount++;
-			ref->constraints = prep_domain_constraints(dcc->constraints,
-													   ref->refctx);
+			if (ref->need_exprstate)
+				ref->constraints = prep_domain_constraints(dcc->constraints,
+														   ref->refctx);
+			else
+				ref->constraints = dcc->constraints;
 		}
 	}
 }

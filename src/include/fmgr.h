@@ -49,6 +49,9 @@ typedef Datum (*PGFunction) (FunctionCallInfo fcinfo);
  * arguments, rather than about the function itself.  But it's convenient
  * to store it here rather than in FunctionCallInfoData, where it might more
  * logically belong.
+ *
+ * fn_extra is available for use by the called function; all other fields
+ * should be treated as read-only after the struct is created.
  */
 typedef struct FmgrInfo
 {
@@ -65,6 +68,11 @@ typedef struct FmgrInfo
 
 /*
  * This struct is the data actually passed to an fmgr-called function.
+ *
+ * The called function is expected to set isnull, and possibly resultinfo or
+ * fields in whatever resultinfo points to.  It should not change any other
+ * fields.  (In particular, scribbling on the argument arrays is a bad idea,
+ * since some callers assume they can re-call with the same arguments.)
  */
 typedef struct FunctionCallInfoData
 {

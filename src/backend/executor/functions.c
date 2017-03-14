@@ -1279,7 +1279,7 @@ fmgr_sql(PG_FUNCTION_ARGS)
 			rsi->returnMode = SFRM_Materialize;
 			rsi->setResult = fcache->tstore;
 			fcache->tstore = NULL;
-			/* must copy desc because execQual will free it */
+			/* must copy desc because execSRF.c will free it */
 			if (fcache->junkFilter)
 				rsi->setDesc = CreateTupleDescCopy(fcache->junkFilter->jf_cleanTupType);
 
