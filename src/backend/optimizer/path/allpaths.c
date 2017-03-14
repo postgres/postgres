@@ -129,6 +129,8 @@ static void subquery_push_qual(Query *subquery,
 static void recurse_push_qual(Node *setOp, Query *topquery,
 				  RangeTblEntry *rte, Index rti, Node *qual);
 static void remove_unused_subquery_outputs(Query *subquery, RelOptInfo *rel);
+static void add_paths_to_append_rel(PlannerInfo *root, RelOptInfo *rel,
+						List *live_childrels);
 
 
 /*
@@ -1182,19 +1184,11 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 {
 	int			parentRTindex = rti;
 	List	   *live_childrels = NIL;
-	List	   *subpaths = NIL;
-	bool		subpaths_valid = true;
-	List	   *partial_subpaths = NIL;
-	bool		partial_subpaths_valid = true;
-	List	   *all_child_pathkeys = NIL;
-	List	   *all_child_outers = NIL;
 	ListCell   *l;
 
 	/*
 	 * Generate access paths for each member relation, and remember the
-	 * cheapest path for each one.  Also, identify all pathkeys (orderings)
-	 * and parameterizations (required_outer sets) available for the member
-	 * relations.
+	 * non-dummy children.
 	 */
 	foreach(l, root->append_rel_list)
 	{
@@ -1202,7 +1196,6 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		int			childRTindex;
 		RangeTblEntry *childRTE;
 		RelOptInfo *childrel;
-		ListCell   *lcp;
 
 		/* append_rel_list contains all append rels; ignore others */
 		if (appinfo->parent_relid != parentRTindex)
@@ -1237,6 +1230,45 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		 * Child is live, so add it to the live_childrels list for use below.
 		 */
 		live_childrels = lappend(live_childrels, childrel);
+	}
+
+	/* Add paths to the "append" relation. */
+	add_paths_to_append_rel(root, rel, live_childrels);
+}
+
+
+/*
+ * add_paths_to_append_rel
+ *		Generate paths for given "append" relation given the set of non-dummy
+ *		child rels.
+ *
+ * The function collects all parameterizations and orderings supported by the
+ * non-dummy children. For every such parameterization or ordering, it creates
+ * an append path collecting one path from each non-dummy child with given
+ * parameterization or ordering. Similarly it collects partial paths from
+ * non-dummy children to create partial append paths.
+ */
+static void
+add_paths_to_append_rel(PlannerInfo *root, RelOptInfo *rel,
+						List *live_childrels)
+{
+	List	   *subpaths = NIL;
+	bool		subpaths_valid = true;
+	List	   *partial_subpaths = NIL;
+	bool		partial_subpaths_valid = true;
+	List	   *all_child_pathkeys = NIL;
+	List	   *all_child_outers = NIL;
+	ListCell   *l;
+
+	/*
+	 * For every non-dummy child, remember the cheapest path.  Also, identify
+	 * all pathkeys (orderings) and parameterizations (required_outer sets)
+	 * available for the non-dummy member relations.
+	 */
+	foreach(l, live_childrels)
+	{
+		RelOptInfo *childrel = lfirst(l);
+		ListCell   *lcp;
 
 		/*
 		 * If child has an unparameterized cheapest-total path, add that to
