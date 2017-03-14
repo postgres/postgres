@@ -49,7 +49,9 @@ BEGIN;
 SELECT bt_index_check('bttest_a_idx');
 SELECT bt_index_parent_check('bttest_b_idx');
 -- make sure we don't have any leftover locks
-SELECT * FROM pg_locks WHERE relation IN ('bttest_a_idx'::regclass, 'bttest_b_idx'::regclass);
+SELECT * FROM pg_locks
+WHERE relation = ANY(ARRAY['bttest_a', 'bttest_a_idx', 'bttest_b', 'bttest_b_idx']::regclass[])
+    AND pid = pg_backend_pid();
 COMMIT;
 
 -- cleanup
