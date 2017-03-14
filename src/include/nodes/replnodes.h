@@ -56,7 +56,7 @@ typedef struct CreateReplicationSlotCmd
 	ReplicationKind kind;
 	char	   *plugin;
 	bool		temporary;
-	bool		reserve_wal;
+	List	   *options;
 } CreateReplicationSlotCmd;
 
 

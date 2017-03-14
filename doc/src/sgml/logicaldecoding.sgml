@@ -271,8 +271,9 @@ $ pg_recvlogical -d postgres --slot test --drop-slot
    <sect2>
     <title>Exported Snapshots</title>
     <para>
-     When a new replication slot is created using the streaming replication interface,
-     a snapshot is exported
+     When a new replication slot is created using the streaming replication
+     interface (see <xref linkend="protocol-replication-create-slot">), a
+     snapshot is exported
      (see <xref linkend="functions-snapshot-synchronization">), which will show
      exactly the state of the database after which all changes will be
      included in the change stream. This can be used to create a new replica by
@@ -281,6 +282,12 @@ $ pg_recvlogical -d postgres --slot test --drop-slot
      the slot was created. This transaction can then be used to dump the
      database's state at that point in time, which afterwards can be updated
      using the slot's contents without losing any changes.
+    </para>
+    <para>
+     Creation of a snapshot is not always possible.  In particular, it will
+     fail when connected to a hot standby.  Applications that do not require
+     snapshot export may suppress it with the <literal>NOEXPORT_SNAPSHOT</>
+     option.
     </para>
    </sect2>
   </sect1>

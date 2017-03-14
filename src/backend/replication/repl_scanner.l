@@ -100,6 +100,8 @@ RESERVE_WAL			{ return K_RESERVE_WAL; }
 LOGICAL				{ return K_LOGICAL; }
 SLOT				{ return K_SLOT; }
 TEMPORARY			{ return K_TEMPORARY; }
+EXPORT_SNAPSHOT		{ return K_EXPORT_SNAPSHOT; }
+NOEXPORT_SNAPSHOT	{ return K_NOEXPORT_SNAPSHOT; }
 
 ","				{ return ','; }
 ";"				{ return ';'; }

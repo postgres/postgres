@@ -68,6 +68,7 @@ static void libpqrcv_send(WalReceiverConn *conn, const char *buffer,
 static char *libpqrcv_create_slot(WalReceiverConn *conn,
 								  const char *slotname,
 								  bool temporary,
+								  bool export_snapshot,
 								  XLogRecPtr *lsn);
 static bool libpqrcv_command(WalReceiverConn *conn,
 							 const char *cmd, char **err);
@@ -720,7 +721,7 @@ libpqrcv_send(WalReceiverConn *conn, const char *buffer, int nbytes)
  */
 static char *
 libpqrcv_create_slot(WalReceiverConn *conn, const char *slotname,
-					 bool temporary, XLogRecPtr *lsn)
+					 bool temporary, bool export_snapshot, XLogRecPtr *lsn)
 {
 	PGresult	   *res;
 	StringInfoData	cmd;
@@ -728,13 +729,19 @@ libpqrcv_create_slot(WalReceiverConn *conn, const char *slotname,
 
 	initStringInfo(&cmd);
 
-	appendStringInfo(&cmd, "CREATE_REPLICATION_SLOT \"%s\" ", slotname);
+	appendStringInfo(&cmd, "CREATE_REPLICATION_SLOT \"%s\"", slotname);
 
 	if (temporary)
-		appendStringInfo(&cmd, "TEMPORARY ");
+		appendStringInfo(&cmd, " TEMPORARY");
 
 	if (conn->logical)
-		appendStringInfo(&cmd, "LOGICAL pgoutput");
+	{
+		appendStringInfo(&cmd, " LOGICAL pgoutput");
+		if (export_snapshot)
+			appendStringInfo(&cmd, " EXPORT_SNAPSHOT");
+		else
+			appendStringInfo(&cmd, " NOEXPORT_SNAPSHOT");
+	}
 
 	res = libpqrcv_PQexec(conn->streamConn, cmd.data);
 	pfree(cmd.data);

@@ -314,7 +314,11 @@ CreateSubscription(CreateSubscriptionStmt *stmt, bool isTopLevel)
 
 		PG_TRY();
 		{
-			walrcv_create_slot(wrconn, slotname, false, &lsn);
+			/*
+			 * Create permanent slot for the subscription.  We won't use the
+			 * initial snapshot for anything, so no need to export it.
+			 */
+			walrcv_create_slot(wrconn, slotname, false, false, &lsn);
 			ereport(NOTICE,
 					(errmsg("created replication slot \"%s\" on publisher",
 							slotname)));

@@ -183,7 +183,7 @@ typedef void (*walrcv_send_fn) (WalReceiverConn *conn, const char *buffer,
 								int nbytes);
 typedef char *(*walrcv_create_slot_fn) (WalReceiverConn *conn,
 										const char *slotname, bool temporary,
-										XLogRecPtr *lsn);
+										bool export_snapshot, XLogRecPtr *lsn);
 typedef bool (*walrcv_command_fn) (WalReceiverConn *conn, const char *cmd,
 								   char **err);
 typedef void (*walrcv_disconnect_fn) (WalReceiverConn *conn);
@@ -224,8 +224,8 @@ extern PGDLLIMPORT WalReceiverFunctionsType *WalReceiverFunctions;
 	WalReceiverFunctions->walrcv_receive(conn, buffer, wait_fd)
 #define walrcv_send(conn, buffer, nbytes) \
 	WalReceiverFunctions->walrcv_send(conn, buffer, nbytes)
-#define walrcv_create_slot(conn, slotname, temporary, lsn) \
-	WalReceiverFunctions->walrcv_create_slot(conn, slotname, temporary, lsn)
+#define walrcv_create_slot(conn, slotname, temporary, export_snapshot, lsn) \
+	WalReceiverFunctions->walrcv_create_slot(conn, slotname, temporary, export_snapshot, lsn)
 #define walrcv_command(conn, cmd, err) \
 	WalReceiverFunctions->walrcv_command(conn, cmd, err)
 #define walrcv_disconnect(conn) \

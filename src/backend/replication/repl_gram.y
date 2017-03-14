@@ -79,6 +79,8 @@ Node *replication_parse_result;
 %token K_SLOT
 %token K_RESERVE_WAL
 %token K_TEMPORARY
+%token K_EXPORT_SNAPSHOT
+%token K_NOEXPORT_SNAPSHOT
 
 %type <node>	command
 %type <node>	base_backup start_replication start_logical_replication
@@ -91,7 +93,9 @@ Node *replication_parse_result;
 %type <defelt>	plugin_opt_elem
 %type <node>	plugin_opt_arg
 %type <str>		opt_slot var_name
-%type <boolval>	opt_reserve_wal opt_temporary
+%type <boolval>	opt_temporary
+%type <list>	create_slot_opt_list
+%type <defelt>	create_slot_opt
 
 %%
 
@@ -202,18 +206,18 @@ base_backup_opt:
 
 create_replication_slot:
 			/* CREATE_REPLICATION_SLOT slot TEMPORARY PHYSICAL RESERVE_WAL */
-			K_CREATE_REPLICATION_SLOT IDENT opt_temporary K_PHYSICAL opt_reserve_wal
+			K_CREATE_REPLICATION_SLOT IDENT opt_temporary K_PHYSICAL create_slot_opt_list
 				{
 					CreateReplicationSlotCmd *cmd;
 					cmd = makeNode(CreateReplicationSlotCmd);
 					cmd->kind = REPLICATION_KIND_PHYSICAL;
 					cmd->slotname = $2;
 					cmd->temporary = $3;
-					cmd->reserve_wal = $5;
+					cmd->options = $5;
 					$$ = (Node *) cmd;
 				}
 			/* CREATE_REPLICATION_SLOT slot TEMPORARY LOGICAL plugin */
-			| K_CREATE_REPLICATION_SLOT IDENT opt_temporary K_LOGICAL IDENT
+			| K_CREATE_REPLICATION_SLOT IDENT opt_temporary K_LOGICAL IDENT create_slot_opt_list
 				{
 					CreateReplicationSlotCmd *cmd;
 					cmd = makeNode(CreateReplicationSlotCmd);
@@ -221,7 +225,33 @@ create_replication_slot:
 					cmd->slotname = $2;
 					cmd->temporary = $3;
 					cmd->plugin = $5;
+					cmd->options = $6;
 					$$ = (Node *) cmd;
+				}
+			;
+
+create_slot_opt_list:
+			create_slot_opt_list create_slot_opt
+				{ $$ = lappend($1, $2); }
+			| /* EMPTY */
+				{ $$ = NIL; }
+			;
+
+create_slot_opt:
+			K_EXPORT_SNAPSHOT
+				{
+				  $$ = makeDefElem("export_snapshot",
+								   (Node *)makeInteger(TRUE), -1);
+				}
+			| K_NOEXPORT_SNAPSHOT
+				{
+				  $$ = makeDefElem("export_snapshot",
+								   (Node *)makeInteger(FALSE), -1);
+				}
+			| K_RESERVE_WAL
+				{
+				  $$ = makeDefElem("reserve_wal",
+								   (Node *)makeInteger(TRUE), -1);
 				}
 			;
 
@@ -289,11 +319,6 @@ timeline_history:
 opt_physical:
 			K_PHYSICAL
 			| /* EMPTY */
-			;
-
-opt_reserve_wal:
-			K_RESERVE_WAL					{ $$ = true; }
-			| /* EMPTY */					{ $$ = false; }
 			;
 
 opt_temporary:

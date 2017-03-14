@@ -338,8 +338,13 @@ CreateReplicationSlot(PGconn *conn, const char *slot_name, const char *plugin,
 		appendPQExpBuffer(query, "CREATE_REPLICATION_SLOT \"%s\" PHYSICAL",
 						  slot_name);
 	else
+	{
 		appendPQExpBuffer(query, "CREATE_REPLICATION_SLOT \"%s\" LOGICAL \"%s\"",
 						  slot_name, plugin);
+		if (PQserverVersion(conn) >= 100000)
+			/* pg_recvlogical doesn't use an exported snapshot, so suppress */
+			appendPQExpBuffer(query, " NOEXPORT_SNAPSHOT");
+	}
 
 	res = PQexec(conn, query->data);
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
