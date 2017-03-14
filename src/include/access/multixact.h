@@ -127,7 +127,8 @@ extern void StartupMultiXact(void);
 extern void TrimMultiXact(void);
 extern void ShutdownMultiXact(void);
 extern void SetMultiXactIdLimit(MultiXactId oldest_datminmxid,
-					Oid oldest_datoid);
+					Oid oldest_datoid,
+					bool is_startup);
 extern void MultiXactGetCheckptMulti(bool is_shutdown,
 						 MultiXactId *nextMulti,
 						 MultiXactOffset *nextMultiOffset,

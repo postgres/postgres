@@ -363,7 +363,7 @@ static void ExtendMultiXactOffset(MultiXactId multi);
 static void ExtendMultiXactMember(MultiXactOffset offset, int nmembers);
 static bool MultiXactOffsetWouldWrap(MultiXactOffset boundary,
 						 MultiXactOffset start, uint32 distance);
-static bool SetOffsetVacuumLimit(void);
+static bool SetOffsetVacuumLimit(bool is_startup);
 static bool find_multixact_start(MultiXactId multi, MultiXactOffset *result);
 static void WriteMZeroPageXlogRec(int pageno, uint8 info);
 static void WriteMTruncateXlogRec(Oid oldestMultiDB,
@@ -2095,7 +2095,7 @@ TrimMultiXact(void)
 	LWLockRelease(MultiXactGenLock);
 
 	/* Now compute how far away the next members wraparound is. */
-	SetMultiXactIdLimit(oldestMXact, oldestMXactDB);
+	SetMultiXactIdLimit(oldestMXact, oldestMXactDB, true);
 }
 
 /*
@@ -2186,9 +2186,13 @@ MultiXactSetNextMXact(MultiXactId nextMulti,
  * Determine the last safe MultiXactId to allocate given the currently oldest
  * datminmxid (ie, the oldest MultiXactId that might exist in any database
  * of our cluster), and the OID of the (or a) database with that value.
+ *
+ * is_startup is true when we are just starting the cluster, false when we
+ * are updating state in a running cluster.  This only affects log messages.
  */
 void
-SetMultiXactIdLimit(MultiXactId oldest_datminmxid, Oid oldest_datoid)
+SetMultiXactIdLimit(MultiXactId oldest_datminmxid, Oid oldest_datoid,
+					bool is_startup)
 {
 	MultiXactId multiVacLimit;
 	MultiXactId multiWarnLimit;
@@ -2277,7 +2281,7 @@ SetMultiXactIdLimit(MultiXactId oldest_datminmxid, Oid oldest_datoid)
 	Assert(!InRecovery);
 
 	/* Set limits for offset vacuum. */
-	needs_offset_vacuum = SetOffsetVacuumLimit();
+	needs_offset_vacuum = SetOffsetVacuumLimit(is_startup);
 
 	/*
 	 * If past the autovacuum force point, immediately signal an autovac
@@ -2370,7 +2374,7 @@ MultiXactAdvanceOldest(MultiXactId oldestMulti, Oid oldestMultiDB)
 	Assert(InRecovery);
 
 	if (MultiXactIdPrecedes(MultiXactState->oldestMultiXactId, oldestMulti))
-		SetMultiXactIdLimit(oldestMulti, oldestMultiDB);
+		SetMultiXactIdLimit(oldestMulti, oldestMultiDB, false);
 }
 
 /*
@@ -2537,7 +2541,7 @@ GetOldestMultiXactId(void)
  * otherwise.
  */
 static bool
-SetOffsetVacuumLimit(void)
+SetOffsetVacuumLimit(bool is_startup)
 {
 	MultiXactId oldestMultiXactId;
 	MultiXactId nextMXact;
@@ -2619,9 +2623,10 @@ SetOffsetVacuumLimit(void)
 		/* always leave one segment before the wraparound point */
 		offsetStopLimit -= (MULTIXACT_MEMBERS_PER_PAGE * SLRU_PAGES_PER_SEGMENT);
 
-		if (!prevOldestOffsetKnown && IsUnderPostmaster)
+		if (!prevOldestOffsetKnown && !is_startup)
 			ereport(LOG,
 					(errmsg("MultiXact member wraparound protections are now enabled")));
+
 		ereport(DEBUG1,
 		(errmsg("MultiXact member stop limit is now %u based on MultiXact %u",
 				offsetStopLimit, oldestMultiXactId)));
@@ -3312,7 +3317,7 @@ multixact_redo(XLogReaderState *record)
 		 * Advance the horizon values, so they're current at the end of
 		 * recovery.
 		 */
-		SetMultiXactIdLimit(xlrec.endTruncOff, xlrec.oldestMultiDB);
+		SetMultiXactIdLimit(xlrec.endTruncOff, xlrec.oldestMultiDB, false);
 
 		PerformMembersTruncation(xlrec.startTruncMemb, xlrec.endTruncMemb);
 

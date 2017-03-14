@@ -1205,7 +1205,7 @@ vac_truncate_clog(TransactionId frozenXID,
 	 * signalling twice?
 	 */
 	SetTransactionIdLimit(frozenXID, oldestxid_datoid);
-	SetMultiXactIdLimit(minMulti, minmulti_datoid);
+	SetMultiXactIdLimit(minMulti, minmulti_datoid, false);
 }
 
 
