@@ -96,7 +96,7 @@ gettoken_query(QPRS_STATE *state, int32 *val, int32 *lenval, char **strval, uint
 					if (*flag)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("modificators syntax error")));
+								 errmsg("modifiers syntax error")));
 					*lenval += charlen;
 				}
 				else if (charlen == 1 && t_iseq(state->buf, '%'))

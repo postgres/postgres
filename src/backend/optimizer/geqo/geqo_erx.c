@@ -458,7 +458,7 @@ edge_failure(PlannerInfo *root, Gene *gene, int index, Edge *edge_table, int num
 			if (edge_table[i].unused_edges >= 0)
 				return (Gene) i;
 
-		elog(LOG, "no edge found via looking for the last ununsed point");
+		elog(LOG, "no edge found via looking for the last unused point");
 	}
 
 
