@@ -124,7 +124,7 @@ char *
 pg_dlerror(void)
 {
 #ifndef HAVE_DLD_H
-	return "dynaloader unspported";
+	return "dynaloader unsupported";
 #else
 	return dld_strerror(dld_errno);
 #endif

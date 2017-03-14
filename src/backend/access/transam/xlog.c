@@ -684,7 +684,7 @@ static bool InstallXLogFileSegment(uint32 *log, uint32 *seg, char *tmppath,
 					   bool find_free, int *max_advance,
 					   bool use_lock);
 static int XLogFileRead(uint32 log, uint32 seg, int emode, TimeLineID tli,
-			 int source, bool notexistOk);
+			 int source, bool notfoundOk);
 static int XLogFileReadAnyTLI(uint32 log, uint32 seg, int emode,
 				   int sources);
 static bool XLogPageRead(XLogRecPtr *RecPtr, int emode, bool fetching_ckpt,
