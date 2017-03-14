@@ -39,7 +39,7 @@
 #define BM_PIN_COUNT_WAITER		(1 << 6)		/* have waiter for sole pin */
 #define BM_CHECKPOINT_NEEDED	(1 << 7)		/* must write for checkpoint */
 #define BM_PERMANENT			(1 << 8)		/* permanent relation (not
-												 * unlogged) */
+												 * unlogged, or init fork) */
 
 typedef bits16 BufFlags;
 
