@@ -561,10 +561,17 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 			continue;
 		}
 
-		ereport(LOG,
-		/* translator: first %s is IPv4, IPv6, or Unix */
-				(errmsg("listening on %s address \"%s\"",
-						familyDesc, addrDesc)));
+#ifdef HAVE_UNIX_SOCKETS
+		if (addr->ai_family == AF_UNIX)
+			ereport(LOG,
+					(errmsg("listening on Unix socket \"%s\"",
+							addrDesc)));
+		else
+#endif
+			ereport(LOG,
+			/* translator: first %s is IPv4 or IPv6 */
+					(errmsg("listening on %s address \"%s\", port %d",
+							familyDesc, addrDesc, (int) portNumber)));
 
 		ListenSocket[listen_index] = fd;
 		added++;
