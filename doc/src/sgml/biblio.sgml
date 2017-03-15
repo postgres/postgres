@@ -18,7 +18,6 @@
 
   <bibliodiv>
    <title><acronym>SQL</acronym> Reference Books</title>
-   <para>Reference texts for <acronym>SQL</acronym> features.</para>
 
    <biblioentry id="BOWMAN01">
     <title>The Practical <acronym>SQL</acronym> Handbook</title>
@@ -165,7 +164,6 @@
 
   <bibliodiv>
    <title>PostgreSQL-specific Documentation</title>
-   <para>This section is for related documentation.</para>
 
    <biblioentry id="SIM98">
     <title>Enhancement of the ANSI SQL Implementation of PostgreSQL</title>
@@ -256,7 +254,6 @@ ssimkovi@ag.or.at
 
   <bibliodiv>
    <title>Proceedings and Articles</title>
-   <para>This section is for articles and newsletters.</para>
 
    <biblioentry id="OLSON93">
     <title>Partial indexing in POSTGRES: research project</title>
