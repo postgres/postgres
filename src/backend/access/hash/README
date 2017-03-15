@@ -365,9 +365,6 @@ try to split the bucket again until the prior split is finished.  In other
 words, a bucket can be in the middle of being split for some time, but it can't
 be in the middle of two splits at the same time.
 
-Although we can survive a failure to split a bucket, a crash is likely to
-corrupt the index, since hash indexes are not yet WAL-logged.
-
 The fourth operation is garbage collection (bulk deletion):
 
 	next bucket := 0

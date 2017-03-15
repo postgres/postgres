@@ -975,7 +975,7 @@ fail:
  * hash indexes sequentially anyway, that probably doesn't matter.
  *
  * XXX It's annoying that this code is executed with the metapage lock held.
- * We need to interlock against _hash_getovflpage() adding a new overflow page
+ * We need to interlock against _hash_addovflpage() adding a new overflow page
  * concurrently, but it'd likely be better to use LockRelationForExtension
  * for the purpose.  OTOH, adding a splitpoint is a very infrequent operation,
  * so it may not be worth worrying about.
