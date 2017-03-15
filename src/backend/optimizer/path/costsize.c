@@ -2147,7 +2147,12 @@ final_cost_nestloop(PlannerInfo *root, NestPath *path,
 
 	/* For partial paths, scale row estimate. */
 	if (path->path.parallel_workers > 0)
-		path->path.rows /= get_parallel_divisor(&path->path);
+	{
+		double	parallel_divisor = get_parallel_divisor(&path->path);
+
+		path->path.rows =
+			clamp_row_est(path->path.rows / parallel_divisor);
+	}
 
 	/*
 	 * We could include disable_cost in the preliminary estimate, but that
@@ -2569,7 +2574,12 @@ final_cost_mergejoin(PlannerInfo *root, MergePath *path,
 
 	/* For partial paths, scale row estimate. */
 	if (path->jpath.path.parallel_workers > 0)
-		path->jpath.path.rows /= get_parallel_divisor(&path->jpath.path);
+	{
+		double	parallel_divisor = get_parallel_divisor(&path->jpath.path);
+
+		path->jpath.path.rows =
+			clamp_row_est(path->jpath.path.rows / parallel_divisor);
+	}
 
 	/*
 	 * We could include disable_cost in the preliminary estimate, but that
@@ -2952,7 +2962,12 @@ final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 
 	/* For partial paths, scale row estimate. */
 	if (path->jpath.path.parallel_workers > 0)
-		path->jpath.path.rows /= get_parallel_divisor(&path->jpath.path);
+	{
+		double	parallel_divisor = get_parallel_divisor(&path->jpath.path);
+
+		path->jpath.path.rows =
+			clamp_row_est(path->jpath.path.rows / parallel_divisor);
+	}
 
 	/*
 	 * We could include disable_cost in the preliminary estimate, but that
