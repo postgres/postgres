@@ -63,6 +63,18 @@ section   toc
 set       toc,title
 </xsl:param>
 
+<xsl:param name="generate.section.toc.level" select="1"></xsl:param>
+
+<!-- include refentry under sect1 in tocs -->
+<xsl:template match="sect1" mode="toc">
+  <xsl:param name="toc-context" select="."/>
+  <xsl:call-template name="subtoc">
+    <xsl:with-param name="toc-context" select="$toc-context"/>
+    <xsl:with-param name="nodes" select="sect2|refentry
+                                         |bridgehead[$bridgehead.in.toc != 0]"/>
+  </xsl:call-template>
+</xsl:template>
+
 
 <!-- Put index "quicklinks" (A | B | C | ...) at the top of the bookindex page. -->
 
