@@ -4,7 +4,7 @@
 # we have to clean those result files explicitly
 EXTRA_CLEAN = $(pg_regress_clean_files)
 
-ISOLATIONCHECKS=sto_using_cursor sto_using_select
+ISOLATIONCHECKS=sto_using_cursor sto_using_select sto_using_hash_index
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config

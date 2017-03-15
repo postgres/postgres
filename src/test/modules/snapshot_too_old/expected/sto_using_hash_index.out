@@ -1,0 +1,15 @@
+Parsed test spec with 2 sessions
+
+starting permutation: noseq s1f1 s2sleep s2u s1f2
+step noseq: SET enable_seqscan = false;
+step s1f1: SELECT c FROM sto1 where c = 1000;
+c              
+
+1000           
+step s2sleep: SELECT setting, pg_sleep(6) FROM pg_settings WHERE name = 'old_snapshot_threshold';
+setting        pg_sleep       
+
+0                             
+step s2u: UPDATE sto1 SET c = 1001 WHERE c = 1000;
+step s1f2: SELECT c FROM sto1 where c = 1001;
+ERROR:  snapshot too old
