@@ -34,7 +34,7 @@
  * xid. That is we keep a list of transactions between snapshot->(xmin, xmax)
  * that we consider committed, everything else is considered aborted/in
  * progress. That also allows us not to care about subtransactions before they
- * have committed which means this modules, in contrast to HS, doesn't have to
+ * have committed which means this module, in contrast to HS, doesn't have to
  * care about suboverflowed subtransactions and similar.
  *
  * One complexity of doing this is that to e.g. handle mixed DDL/DML
@@ -82,7 +82,7 @@
  * Initially the machinery is in the START stage. When an xl_running_xacts
  * record is read that is sufficiently new (above the safe xmin horizon),
  * there's a state transition. If there were no running xacts when the
- * runnign_xacts record was generated, we'll directly go into CONSISTENT
+ * running_xacts record was generated, we'll directly go into CONSISTENT
  * state, otherwise we'll switch to the FULL_SNAPSHOT state. Having a full
  * snapshot means that all transactions that start henceforth can be decoded
  * in their entirety, but transactions that started previously can't. In
@@ -273,7 +273,7 @@ static bool SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn);
 /*
  * Allocate a new snapshot builder.
  *
- * xmin_horizon is the xid >=which we can be sure no catalog rows have been
+ * xmin_horizon is the xid >= which we can be sure no catalog rows have been
  * removed, start_lsn is the LSN >= we want to replay commits.
  */
 SnapBuild *
@@ -1840,7 +1840,7 @@ CheckPointSnapBuild(void)
 	char		path[MAXPGPATH];
 
 	/*
-	 * We start of with a minimum of the last redo pointer. No new replication
+	 * We start off with a minimum of the last redo pointer. No new replication
 	 * slot will start before that, so that's a safe upper bound for removal.
 	 */
 	redo = GetRedoRecPtr();
@@ -1898,7 +1898,7 @@ CheckPointSnapBuild(void)
 			/*
 			 * It's not particularly harmful, though strange, if we can't
 			 * remove the file here. Don't prevent the checkpoint from
-			 * completing, that'd be cure worse than the disease.
+			 * completing, that'd be a cure worse than the disease.
 			 */
 			if (unlink(path) < 0)
 			{
