@@ -308,6 +308,12 @@
   </para>
 
   <para>
+   To add tables to a publication, the user must have ownership rights on the
+   table.  To create a publication that publishes all tables automatically,
+   the user must be a superuser.
+  </para>
+
+  <para>
    To create a subscription, the user must be a superuser.
   </para>
 

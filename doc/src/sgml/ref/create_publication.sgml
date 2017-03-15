@@ -143,9 +143,9 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
   </para>
 
   <para>
-   To add a table to a publication, the invoking user must have
-   <command>SELECT</command> privilege on given table.  The
-   <command>FOR ALL TABLES</command> clause requires superuser.
+   To add a table to a publication, the invoking user must have ownership
+   rights on the table.  The <command>FOR ALL TABLES</command> clause requires
+   the invoking user to be a superuser.
   </para>
 
   <para>
