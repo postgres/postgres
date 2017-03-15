@@ -441,6 +441,9 @@ DESCR("IP address/netmask, host address, netmask optional");
 DATA(insert OID = 650 ( cidr	   PGNSP PGUID	-1 f b I f t \054 0 0 651 cidr_in cidr_out cidr_recv cidr_send - - - i m f 0 -1 0 0 _null_ _null_ _null_ ));
 DESCR("network IP address/netmask, network address");
 #define CIDROID 650
+DATA(insert OID = 774 ( macaddr8	PGNSP PGUID 8 f b U f t \054 0 0 775 macaddr8_in macaddr8_out macaddr8_recv macaddr8_send - - - i p f 0 -1 0 0 _null_ _null_ _null_ ));
+DESCR("XX:XX:XX:XX:XX:XX:XX:XX, MAC address");
+#define MACADDR8OID 774
 
 /* OIDS 900 - 999 */
 
@@ -482,6 +485,7 @@ DESCR("access control list");
 #define ACLITEMOID		1033
 DATA(insert OID = 1034 (  _aclitem	 PGNSP PGUID -1 f b A f t \054 0 1033 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
 DATA(insert OID = 1040 (  _macaddr	 PGNSP PGUID -1 f b A f t \054 0  829 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 775  (  _macaddr8  PGNSP PGUID -1 f b A f t \054 0  774 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
 DATA(insert OID = 1041 (  _inet		 PGNSP PGUID -1 f b A f t \054 0  869 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
 DATA(insert OID = 651  (  _cidr		 PGNSP PGUID -1 f b A f t \054 0  650 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
 DATA(insert OID = 1263 (  _cstring	 PGNSP PGUID -1 f b A f t \054 0 2275 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));

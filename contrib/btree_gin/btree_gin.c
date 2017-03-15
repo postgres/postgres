@@ -323,6 +323,16 @@ leftmostvalue_macaddr(void)
 GIN_SUPPORT(macaddr, false, leftmostvalue_macaddr, macaddr_cmp)
 
 static Datum
+leftmostvalue_macaddr8(void)
+{
+	macaddr8   *v = palloc0(sizeof(macaddr8));
+
+	return Macaddr8PGetDatum(v);
+}
+
+GIN_SUPPORT(macaddr8, false, leftmostvalue_macaddr8, macaddr8_cmp)
+
+static Datum
 leftmostvalue_inet(void)
 {
 	return DirectFunctionCall1(inet_in, CStringGetDatum("0.0.0.0/0"));

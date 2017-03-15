@@ -304,6 +304,12 @@ DATA(insert (  718	603 1480 e f ));
 DATA(insert (  718	604 1544 e f ));
 
 /*
+ * MAC address category
+ */
+DATA(insert (  829	774    4123 i f ));
+DATA(insert (  774	829    4124 i f ));
+
+/*
  * INET category
  */
 DATA(insert (  650	869    0 i b ));

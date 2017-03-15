@@ -282,6 +282,17 @@
      </entry>
     </row>
     <row>
+     <entry><literal>macaddr8_minmax_ops</literal></entry>
+     <entry><type>macaddr8</type></entry>
+     <entry>
+      <literal>&lt;</literal>
+      <literal>&lt;=</literal>
+      <literal>=</literal>
+      <literal>&gt;=</literal>
+      <literal>&gt;</literal>
+     </entry>
+    </row>
+    <row>
      <entry><literal>name_minmax_ops</literal></entry>
      <entry><type>name</type></entry>
      <entry>

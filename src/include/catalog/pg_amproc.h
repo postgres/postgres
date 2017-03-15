@@ -142,6 +142,7 @@ DATA(insert (	2968   2950 2950 2 3300 ));
 DATA(insert (	2994   2249 2249 1 2987 ));
 DATA(insert (	3194   2249 2249 1 3187 ));
 DATA(insert (	3253   3220 3220 1 3251 ));
+DATA(insert (	3371   774 774 1 4119 ));
 DATA(insert (	3522   3500 3500 1 3514 ));
 DATA(insert (	3626   3614 3614 1 3622 ));
 DATA(insert (	3683   3615 3615 1 3668 ));
@@ -182,6 +183,7 @@ DATA(insert (	2231   1042 1042 1 1080 ));
 DATA(insert (	2235   1033 1033 1 329 ));
 DATA(insert (	2969   2950 2950 1 2963 ));
 DATA(insert (	3254   3220 3220 1 3252 ));
+DATA(insert (	3372   774 774 1 328 ));
 DATA(insert (	3523   3500 3500 1 3515 ));
 DATA(insert (	3903   3831 3831 1 3902 ));
 DATA(insert (	4034   3802 3802 1 4045 ));
@@ -414,6 +416,11 @@ DATA(insert (	4074   829	 829  1  3383 ));
 DATA(insert (	4074   829	 829  2  3384 ));
 DATA(insert (	4074   829	 829  3  3385 ));
 DATA(insert (	4074   829	 829  4  3386 ));
+/* minmax macaddr8 */
+DATA(insert (	4109   774	 774  1  3383 ));
+DATA(insert (	4109   774	 774  2  3384 ));
+DATA(insert (	4109   774	 774  3  3385 ));
+DATA(insert (	4109   774	 774  4  3386 ));
 /* minmax inet */
 DATA(insert (	4075   869	 869  1  3383 ));
 DATA(insert (	4075   869	 869  2  3384 ));

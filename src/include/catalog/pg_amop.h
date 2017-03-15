@@ -373,6 +373,16 @@ DATA(insert (	1984   829 829 4 s 1225 403 0 ));
 DATA(insert (	1984   829 829 5 s 1224 403 0 ));
 
 /*
+ *	btree macaddr8
+ */
+
+DATA(insert (	3371   774 774 1 s 3364 403 0 ));
+DATA(insert (	3371   774 774 2 s 3365 403 0 ));
+DATA(insert (	3371   774 774 3 s 3362 403 0 ));
+DATA(insert (	3371   774 774 4 s 3367 403 0 ));
+DATA(insert (	3371   774 774 5 s 3366 403 0 ));
+
+/*
  *	btree network
  */
 
@@ -553,6 +563,8 @@ DATA(insert (	1977   20 23 1 s	416  405 0 ));
 DATA(insert (	1983   1186 1186 1 s 1330 405 0 ));
 /* macaddr_ops */
 DATA(insert (	1985   829 829 1 s 1220 405 0 ));
+/* macaddr8_ops */
+DATA(insert (	3372   774 774 1 s 3362 405 0 ));
 /* name_ops */
 DATA(insert (	1987   19 19 1 s	93	405 0 ));
 /* oid_ops */
@@ -999,6 +1011,12 @@ DATA(insert (	4074	829  829 2 s	  1223	  3580 0 ));
 DATA(insert (	4074	829  829 3 s	  1220	  3580 0 ));
 DATA(insert (	4074	829  829 4 s	  1225	  3580 0 ));
 DATA(insert (	4074	829  829 5 s	  1224	  3580 0 ));
+/* minmax macaddr8 */
+DATA(insert (	4109	774  774 1 s	  3364	  3580 0 ));
+DATA(insert (	4109	774  774 2 s	  3365	  3580 0 ));
+DATA(insert (	4109	774  774 3 s	  3362	  3580 0 ));
+DATA(insert (	4109	774  774 4 s	  3367	  3580 0 ));
+DATA(insert (	4109	774  774 5 s	  3366	  3580 0 ));
 /* minmax inet */
 DATA(insert (	4075	869  869 1 s	  1203	  3580 0 ));
 DATA(insert (	4075	869  869 2 s	  1204	  3580 0 ));

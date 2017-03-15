@@ -27,6 +27,7 @@ enum gbtree_type
 	gbt_t_date,
 	gbt_t_intv,
 	gbt_t_macad,
+	gbt_t_macad8,
 	gbt_t_text,
 	gbt_t_bpchar,
 	gbt_t_bytea,

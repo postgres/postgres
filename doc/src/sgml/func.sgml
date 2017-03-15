@@ -9228,6 +9228,62 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
     for NOT, AND and OR.
    </para>
 
+   <para>
+   <xref linkend="macaddr8-functions-table"> shows the functions
+   available for use with the <type>macaddr8</type> type.  The function
+   <literal><function>trunc(<type>macaddr8</type>)</function></literal> returns a MAC
+   address with the last 5 bytes set to zero.  This can be used to
+   associate the remaining prefix with a manufacturer.
+  </para>
+
+    <table id="macaddr8-functions-table">
+     <title><type>macaddr8</type> Functions</title>
+     <tgroup cols="5">
+      <thead>
+       <row>
+        <entry>Function</entry>
+        <entry>Return Type</entry>
+        <entry>Description</entry>
+        <entry>Example</entry>
+        <entry>Result</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+        <entry>
+         <indexterm>
+          <primary>trunc</primary>
+         </indexterm>
+         <literal><function>trunc(<type>macaddr8</type>)</function></literal>
+        </entry>
+        <entry><type>macaddr8</type></entry>
+        <entry>set last 5 bytes to zero</entry>
+        <entry><literal>trunc(macaddr8 '12:34:56:78:90:ab:cd:ef')</literal></entry>
+        <entry><literal>12:34:56:00:00:00:00:00</literal></entry>
+       </row>
+       <row>
+        <entry>
+         <indexterm>
+          <primary>macaddr8_set7bit</primary>
+         </indexterm>
+         <literal><function>macaddr8_set7bit(<type>macaddr8</type>)</function></literal>
+        </entry>
+        <entry><type>macaddr8</type></entry>
+        <entry>set 7th bit to one, also known as modified EUI-64, for inclusion in an IPv6 address</entry>
+        <entry><literal>macaddr8_set7bit(macaddr8 '00:34:56:ab:cd:ef')</literal></entry>
+        <entry><literal>02:34:56:ff:fe:ab:cd:ef</literal></entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+
+   <para>
+    The <type>macaddr8</type> type also supports the standard relational
+    operators (<literal>&gt;</literal>, <literal>&lt;=</literal>, etc.) for
+    ordering, and the bitwise arithmetic operators (<literal>~</literal>,
+    <literal>&amp;</literal> and <literal>|</literal>) for NOT, AND and OR.
+   </para>
+
   </sect1>
 
 

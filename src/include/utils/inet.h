@@ -102,6 +102,21 @@ typedef struct macaddr
 } macaddr;
 
 /*
+ *	This is the internal storage format for MAC8 addresses:
+ */
+typedef struct macaddr8
+{
+	unsigned char a;
+	unsigned char b;
+	unsigned char c;
+	unsigned char d;
+	unsigned char e;
+	unsigned char f;
+	unsigned char g;
+	unsigned char h;
+} macaddr8;
+
+/*
  * fmgr interface macros
  */
 #define DatumGetInetPP(X)	((inet *) PG_DETOAST_DATUM_PACKED(X))
@@ -111,11 +126,18 @@ typedef struct macaddr
 /* obsolescent variants */
 #define DatumGetInetP(X)	((inet *) PG_DETOAST_DATUM(X))
 #define PG_GETARG_INET_P(n) DatumGetInetP(PG_GETARG_DATUM(n))
+
 /* macaddr is a fixed-length pass-by-reference datatype */
 #define DatumGetMacaddrP(X)    ((macaddr *) DatumGetPointer(X))
 #define MacaddrPGetDatum(X)    PointerGetDatum(X)
 #define PG_GETARG_MACADDR_P(n) DatumGetMacaddrP(PG_GETARG_DATUM(n))
 #define PG_RETURN_MACADDR_P(x) return MacaddrPGetDatum(x)
+
+/* macaddr8 is a fixed-length pass-by-reference datatype */
+#define DatumGetMacaddr8P(X)	((macaddr8 *) DatumGetPointer(X))
+#define Macaddr8PGetDatum(X)	PointerGetDatum(X)
+#define PG_GETARG_MACADDR8_P(n) DatumGetMacaddr8P(PG_GETARG_DATUM(n))
+#define PG_RETURN_MACADDR8_P(x) return Macaddr8PGetDatum(x)
 
 /*
  * Support functions in network.c

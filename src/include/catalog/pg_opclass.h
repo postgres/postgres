@@ -127,6 +127,8 @@ DATA(insert (	403		interval_ops		PGNSP PGUID 1982 1186 t 0 ));
 DATA(insert (	405		interval_ops		PGNSP PGUID 1983 1186 t 0 ));
 DATA(insert (	403		macaddr_ops			PGNSP PGUID 1984  829 t 0 ));
 DATA(insert (	405		macaddr_ops			PGNSP PGUID 1985  829 t 0 ));
+DATA(insert (	403		macaddr8_ops		PGNSP PGUID 3371  774 t 0 ));
+DATA(insert (	405		macaddr8_ops		PGNSP PGUID 3372  774 t 0 ));
 /*
  * Here's an ugly little hack to save space in the system catalog indexes.
  * btree doesn't ordinarily allow a storage type different from input type;
@@ -224,6 +226,7 @@ DATA(insert (	3580	float8_minmax_ops		PGNSP PGUID 4070   701 t 701 ));
 DATA(insert (	3580	abstime_minmax_ops		PGNSP PGUID 4072   702 t 702 ));
 DATA(insert (	3580	reltime_minmax_ops		PGNSP PGUID 4073   703 t 703 ));
 DATA(insert (	3580	macaddr_minmax_ops		PGNSP PGUID 4074   829 t 829 ));
+DATA(insert (	3580	macaddr8_minmax_ops		PGNSP PGUID 4109   774 t 774 ));
 DATA(insert (	3580	inet_minmax_ops			PGNSP PGUID 4075   869 f 869 ));
 DATA(insert (	3580	inet_inclusion_ops		PGNSP PGUID 4102   869 t 869 ));
 DATA(insert (	3580	bpchar_minmax_ops		PGNSP PGUID 4076  1042 t 1042 ));

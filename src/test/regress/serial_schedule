@@ -41,6 +41,7 @@ test: reltime
 test: tinterval
 test: inet
 test: macaddr
+test: macaddr8
 test: tstypes
 test: comments
 test: geometry

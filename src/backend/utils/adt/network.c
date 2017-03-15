@@ -934,6 +934,16 @@ convert_network_to_scalar(Datum value, Oid typid)
 				res += (mac->d << 16) | (mac->e << 8) | (mac->f);
 				return res;
 			}
+		case MACADDR8OID:
+			{
+				macaddr8   *mac = DatumGetMacaddr8P(value);
+				double		res;
+
+				res = (mac->a << 24) | (mac->b << 16) | (mac->c << 8) | (mac->d);
+				res *= ((double) 256) * 256 * 256 * 256;
+				res += (mac->e << 24) | (mac->f << 16) | (mac->g << 8) | (mac->h);
+				return res;
+			}
 	}
 
 	/*

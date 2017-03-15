@@ -1119,7 +1119,7 @@ DESCR("equal");
 DATA(insert OID = 1617 (  "#"	  PGNSP PGUID b f f  628	628  600 1617  0 line_interpt - - ));
 DESCR("intersection point");
 
-/* MAC type */
+/* MACADDR type */
 DATA(insert OID = 1220 (  "="	   PGNSP PGUID b t t 829 829	 16 1220 1221 macaddr_eq eqsel eqjoinsel ));
 DESCR("equal");
 DATA(insert OID = 1221 (  "<>"	   PGNSP PGUID b f f 829 829	 16 1221 1220 macaddr_ne neqsel neqjoinsel ));
@@ -1138,6 +1138,27 @@ DESCR("bitwise not");
 DATA(insert OID = 3148 (  "&"	   PGNSP PGUID b f f	829 829 829 0 0 macaddr_and - - ));
 DESCR("bitwise and");
 DATA(insert OID = 3149 (  "|"	   PGNSP PGUID b f f	829 829 829 0 0 macaddr_or - - ));
+DESCR("bitwise or");
+
+/* MACADDR8 type */
+DATA(insert OID = 3362 (  "="	   PGNSP PGUID b t t 774 774	 16 3362 3363 macaddr8_eq eqsel eqjoinsel ));
+DESCR("equal");
+DATA(insert OID = 3363 (  "<>"	   PGNSP PGUID b f f 774 774	 16 3363 3362 macaddr8_ne neqsel neqjoinsel ));
+DESCR("not equal");
+DATA(insert OID = 3364 (  "<"	   PGNSP PGUID b f f 774 774	 16 3366 3367 macaddr8_lt scalarltsel scalarltjoinsel ));
+DESCR("less than");
+DATA(insert OID = 3365 (  "<="	   PGNSP PGUID b f f 774 774	 16 3367 3366 macaddr8_le scalarltsel scalarltjoinsel ));
+DESCR("less than or equal");
+DATA(insert OID = 3366 (  ">"	   PGNSP PGUID b f f 774 774	 16 3364 3365 macaddr8_gt scalargtsel scalargtjoinsel ));
+DESCR("greater than");
+DATA(insert OID = 3367 (  ">="	   PGNSP PGUID b f f 774 774	 16 3365 3364 macaddr8_ge scalargtsel scalargtjoinsel ));
+DESCR("greater than or equal");
+
+DATA(insert OID = 3368 (  "~"	   PGNSP PGUID l f f	  0 774 774 0 0 macaddr8_not - - ));
+DESCR("bitwise not");
+DATA(insert OID = 3369 (  "&"	   PGNSP PGUID b f f	774 774 774 0 0 macaddr8_and - - ));
+DESCR("bitwise and");
+DATA(insert OID = 3370 (  "|"	   PGNSP PGUID b f f	774 774 774 0 0 macaddr8_or - - ));
 DESCR("bitwise or");
 
 /* INET type (these also support CIDR via implicit cast) */

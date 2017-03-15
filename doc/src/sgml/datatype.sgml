@@ -167,6 +167,12 @@
       </row>
 
       <row>
+       <entry><type>macaddr8</type></entry>
+       <entry></entry>
+       <entry>MAC (Media Access Control) address (EUI-64 format)</entry>
+      </row>
+
+      <row>
        <entry><type>money</type></entry>
        <entry></entry>
        <entry>currency amount</entry>
@@ -3428,6 +3434,12 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
         <entry>MAC addresses</entry>
        </row>
 
+       <row>
+        <entry><type>macaddr8</type></entry>
+        <entry>8 bytes</entry>
+        <entry>MAC addresses (EUI-64 format)</entry>
+       </row>
+
       </tbody>
      </tgroup>
     </table>
@@ -3666,6 +3678,77 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
     <para>
      The remaining five input formats are not part of any standard.
     </para>
+   </sect2>
+
+   <sect2 id="datatype-macaddr8">
+    <title><type>macaddr8</type></title>
+
+    <indexterm>
+     <primary>macaddr8 (data type)</primary>
+    </indexterm>
+
+    <indexterm>
+     <primary>MAC address (EUI-64 format)</primary>
+     <see>macaddr</see>
+    </indexterm>
+
+    <para>
+     The <type>macaddr8</> type stores MAC addresses in EUI-64
+     format, known for example from Ethernet card hardware addresses
+     (although MAC addresses are used for other purposes as well).
+     This type can accept both 6 and 8 byte length MAC addresses
+     and stores them in 8 byte length format.  MAC addresses given
+     in 6 byte format will be stored in 8 byte length format with the
+     4th and 5th bytes set to FF and FE, respectively.
+
+     Note that IPv6 uses a modified EUI-64 format where the 7th bit
+     should be set to one after the conversion from EUI-48.  The
+     function <function>macaddr8_set7bit</> is provided to make this
+     change.
+
+     Generally speaking, any input which is comprised of pairs of hex
+     digits (on byte boundaries), optionally separated consistently by
+     one of <literal>':'</>, <literal>'-'</> or <literal>'.'</>, is
+     accepted.  The number of hex digits must be either 16 (8 bytes) or
+     12 (6 bytes).  Leading and trailing whitespace is ignored.
+
+     The following are examples of input formats that are accepted:
+
+     <simplelist>
+      <member><literal>'08:00:2b:01:02:03:04:05'</></member>
+      <member><literal>'08-00-2b-01-02-03-04-05'</></member>
+      <member><literal>'08002b:0102030405'</></member>
+      <member><literal>'08002b-0102030405'</></member>
+      <member><literal>'0800.2b01.0203.0405'</></member>
+      <member><literal>'0800-2b01-0203-0405'</></member>
+      <member><literal>'08002b01:02030405'</></member>
+      <member><literal>'08002b0102030405'</></member>
+     </simplelist>
+
+     These examples would all specify the same address.  Upper and
+     lower case is accepted for the digits
+     <literal>a</> through <literal>f</>.  Output is always in the
+     first of the forms shown.
+
+     The last six input formats that are mentioned above are not part
+     of any standard.
+
+     To convert a traditional 48 bit MAC address in EUI-48 format to
+     modified EUI-64 format to be included as the host portion of an
+     IPv6 address, use <function>macaddr8_set7bit</> as shown:
+
+<programlisting>
+SELECT macaddr8_set7bit('08:00:2b:01:02:03');
+<computeroutput>
+    macaddr8_set7bit     
+-------------------------
+ 0a:00:2b:ff:fe:01:02:03
+(1 row)
+</computeroutput>
+</programlisting>
+
+    </para>
+
    </sect2>
 
   </sect1>
