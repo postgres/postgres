@@ -53,13 +53,16 @@ ALTER SUBSCRIPTION testsub RENAME TO testsub_foo;
 
 \dRs
 
+-- rename back to keep the rest simple
+ALTER SUBSCRIPTION testsub_foo RENAME TO testsub;
+
 -- fail - cannot do DROP SUBSCRIPTION DROP SLOT inside transaction block
 BEGIN;
 DROP SUBSCRIPTION testsub DROP SLOT;
 COMMIT;
 
 BEGIN;
-DROP SUBSCRIPTION testsub_foo NODROP SLOT;
+DROP SUBSCRIPTION testsub NODROP SLOT;
 COMMIT;
 
 RESET SESSION AUTHORIZATION;

@@ -80,13 +80,15 @@ ALTER SUBSCRIPTION testsub RENAME TO testsub_foo;
  testsub_foo | regress_subscription_user | f       | {testpub,testpub1}
 (1 row)
 
+-- rename back to keep the rest simple
+ALTER SUBSCRIPTION testsub_foo RENAME TO testsub;
 -- fail - cannot do DROP SUBSCRIPTION DROP SLOT inside transaction block
 BEGIN;
 DROP SUBSCRIPTION testsub DROP SLOT;
 ERROR:  DROP SUBSCRIPTION ... DROP SLOT cannot run inside a transaction block
 COMMIT;
 BEGIN;
-DROP SUBSCRIPTION testsub_foo NODROP SLOT;
+DROP SUBSCRIPTION testsub NODROP SLOT;
 COMMIT;
 RESET SESSION AUTHORIZATION;
 DROP ROLE regress_subscription_user;

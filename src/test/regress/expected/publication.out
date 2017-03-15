@@ -180,7 +180,9 @@ ALTER PUBLICATION testpub_default RENAME TO testpub_foo;
  testpub_foo | regress_publication_user | t       | t       | t
 (1 row)
 
-DROP PUBLICATION testpub_foo;
+-- rename back to keep the rest simple
+ALTER PUBLICATION testpub_foo RENAME TO testpub_default;
+DROP PUBLICATION testpub_default;
 DROP PUBLICATION testpib_ins_trunct;
 DROP PUBLICATION testpub_fortbl;
 DROP SCHEMA pub_test CASCADE;

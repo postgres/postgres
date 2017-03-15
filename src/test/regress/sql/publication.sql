@@ -105,7 +105,10 @@ ALTER PUBLICATION testpub_default RENAME TO testpub_foo;
 
 \dRp testpub_foo
 
-DROP PUBLICATION testpub_foo;
+-- rename back to keep the rest simple
+ALTER PUBLICATION testpub_foo RENAME TO testpub_default;
+
+DROP PUBLICATION testpub_default;
 DROP PUBLICATION testpib_ins_trunct;
 DROP PUBLICATION testpub_fortbl;
 
