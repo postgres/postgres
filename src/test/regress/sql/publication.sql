@@ -96,7 +96,7 @@ DROP TABLE testpub_tbl1;
 
 \dRp+ testpub_default
 
--- faile - must be owner of publication
+-- fail - must be owner of publication
 SET ROLE regress_publication_user_dummy;
 ALTER PUBLICATION testpub_default RENAME TO testpub_dummy;
 RESET ROLE;
