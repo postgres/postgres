@@ -19646,7 +19646,8 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
     database cluster directory and the <varname>log_directory</> can be
     accessed.  Use a relative path for files in the cluster directory,
     and a path matching the <varname>log_directory</> configuration setting
-    for log files.  Use of these functions is restricted to superusers.
+    for log files.  Use of these functions is restricted to superusers
+    except where stated otherwise.
    </para>
 
    <table id="functions-admin-genfile-table">
@@ -19665,6 +19666,26 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
        <entry><type>setof text</type></entry>
        <entry>
         List the contents of a directory.
+       </entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_ls_logdir()</function></literal>
+       </entry>
+       <entry><type>setof record</type></entry>
+       <entry>
+        List the name, size, and last modification time of files in the log
+        directory.  Access may be granted to non-superuser roles.
+       </entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_ls_waldir()</function></literal>
+       </entry>
+       <entry><type>setof record</type></entry>
+       <entry>
+        List the name, size, and last modification time of files in the WAL
+        directory.  Access may be granted to non-superuser roles.
        </entry>
       </row>
       <row>
@@ -19699,7 +19720,7 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
    </table>
 
    <para>
-    All of these functions take an optional <parameter>missing_ok</> parameter,
+    Some of these functions take an optional <parameter>missing_ok</> parameter,
     which specifies the behavior when the file or directory does not exist.
     If <literal>true</literal>, the function returns NULL (except
     <function>pg_ls_dir</>, which returns an empty result set). If
@@ -19717,6 +19738,26 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
     (<literal>false</>), but including them can be useful when
     <parameter>missing_ok</> is <literal>true</literal>, to distinguish an
     empty directory from an non-existent directory.
+   </para>
+
+   <indexterm>
+    <primary>pg_ls_logdir</primary>
+   </indexterm>
+   <para>
+    <function>pg_ls_logdir</> returns the name, size, and last modified time
+    (mtime) of each file in the log directory. By default, only superusers
+    can use this function, but access may be granted to others using
+    <command>GRANT</command>.
+   </para>
+
+   <indexterm>
+    <primary>pg_ls_waldir</primary>
+   </indexterm>
+   <para>
+    <function>pg_ls_waldir</> returns the name, size, and last modified time
+    (mtime) of each file in the write ahead log (WAL) directory. By
+    default only superusers can use this function, but access may be granted
+    to others using <command>GRANT</command>.
    </para>
 
    <indexterm>

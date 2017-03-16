@@ -1102,3 +1102,6 @@ REVOKE EXECUTE ON FUNCTION pg_stat_reset() FROM public;
 REVOKE EXECUTE ON FUNCTION pg_stat_reset_shared(text) FROM public;
 REVOKE EXECUTE ON FUNCTION pg_stat_reset_single_table_counters(oid) FROM public;
 REVOKE EXECUTE ON FUNCTION pg_stat_reset_single_function_counters(oid) FROM public;
+
+REVOKE EXECUTE ON FUNCTION pg_ls_logdir() FROM public;
+REVOKE EXECUTE ON FUNCTION pg_ls_waldir() FROM public;

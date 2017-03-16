@@ -21,6 +21,7 @@
 #include <dirent.h>
 
 #include "access/htup_details.h"
+#include "access/xlog_internal.h"
 #include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "mb/pg_wchar.h"
@@ -472,4 +473,97 @@ Datum
 pg_ls_dir_1arg(PG_FUNCTION_ARGS)
 {
 	return pg_ls_dir(fcinfo);
+}
+
+/* Generic function to return a directory listing of files */
+static Datum
+pg_ls_dir_files(FunctionCallInfo fcinfo, char *dir)
+{
+	FuncCallContext *funcctx;
+	struct dirent *de;
+	directory_fctx *fctx;
+
+	if (SRF_IS_FIRSTCALL())
+	{
+		MemoryContext oldcontext;
+		TupleDesc       tupdesc;
+
+		funcctx = SRF_FIRSTCALL_INIT();
+		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+
+		fctx = palloc(sizeof(directory_fctx));
+
+		tupdesc = CreateTemplateTupleDesc(3, false);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "name",
+						   TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "size",
+						   INT8OID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "modification",
+						   TIMESTAMPTZOID, -1, 0);
+		funcctx->tuple_desc = BlessTupleDesc(tupdesc);
+
+		fctx->location = pstrdup(dir);
+		fctx->dirdesc = AllocateDir(fctx->location);
+
+		if (!fctx->dirdesc)
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not read directory \"%s\": %m",
+							fctx->location)));
+
+		funcctx->user_fctx = fctx;
+		MemoryContextSwitchTo(oldcontext);
+	}
+
+	funcctx = SRF_PERCALL_SETUP();
+	fctx = (directory_fctx *) funcctx->user_fctx;
+
+	while ((de = ReadDir(fctx->dirdesc, fctx->location)) != NULL)
+	{
+		Datum		values[3];
+		bool		nulls[3];
+		char		path[MAXPGPATH];
+		struct		stat attrib;
+		HeapTuple	tuple;
+
+		/* Skip hidden files */
+		if (de->d_name[0] == '.')
+			continue;
+
+		/* Get the file info */
+		snprintf(path, MAXPGPATH, "%s/%s", fctx->location, de->d_name);
+		if (stat(path, &attrib) < 0)
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not stat directory \"%s\": %m", dir)));
+
+		/* Ignore anything but regular files */
+		if (!S_ISREG(attrib.st_mode))
+			continue;
+
+		values[0] = CStringGetTextDatum(de->d_name);
+		values[1] = Int64GetDatum((int64) attrib.st_size);
+		values[2] = TimestampTzGetDatum(time_t_to_timestamptz(attrib.st_mtime));
+		memset(nulls, 0, sizeof(nulls));
+
+		tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
+		SRF_RETURN_NEXT(funcctx, HeapTupleGetDatum(tuple));
+	}
+
+	FreeDir(fctx->dirdesc);
+	SRF_RETURN_DONE(funcctx);
+}
+
+/* Function to return the list of files in the log directory */
+Datum
+pg_ls_logdir(PG_FUNCTION_ARGS)
+{
+	return pg_ls_dir_files(fcinfo, Log_directory);
+}
+
+/* Function to return the list of files in the WAL directory */
+Datum
+pg_ls_waldir(PG_FUNCTION_ARGS)
+{
+	return pg_ls_dir_files(fcinfo, XLOGDIR);
 }
