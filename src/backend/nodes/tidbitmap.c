@@ -302,6 +302,10 @@ tbm_create(long maxbytes, dsa_area *dsa)
 	tbm->maxentries = (int) nbuckets;
 	tbm->lossify_start = 0;
 	tbm->dsa = dsa;
+	tbm->dsapagetable = InvalidDsaPointer;
+	tbm->dsapagetableold = InvalidDsaPointer;
+	tbm->ptpages = InvalidDsaPointer;
+	tbm->ptchunks = InvalidDsaPointer;
 
 	return tbm;
 }
@@ -363,20 +367,23 @@ void
 tbm_free_shared_area(dsa_area *dsa, dsa_pointer dp)
 {
 	TBMSharedIteratorState *istate = dsa_get_address(dsa, dp);
-	PTEntryArray *ptbase = dsa_get_address(dsa, istate->pagetable);
+	PTEntryArray *ptbase;
 	PTIterationArray *ptpages;
 	PTIterationArray *ptchunks;
 
-	if (pg_atomic_sub_fetch_u32(&ptbase->refcount, 1) == 0)
-		dsa_free(dsa, istate->pagetable);
-
-	if (istate->spages)
+	if (DsaPointerIsValid(istate->pagetable))
+	{
+		ptbase = dsa_get_address(dsa, istate->pagetable);
+		if (pg_atomic_sub_fetch_u32(&ptbase->refcount, 1) == 0)
+			dsa_free(dsa, istate->pagetable);
+	}
+	if (DsaPointerIsValid(istate->spages))
 	{
 		ptpages = dsa_get_address(dsa, istate->spages);
 		if (pg_atomic_sub_fetch_u32(&ptpages->refcount, 1) == 0)
 			dsa_free(dsa, istate->spages);
 	}
-	if (istate->schunks)
+	if (DsaPointerIsValid(istate->schunks))
 	{
 		ptchunks = dsa_get_address(dsa, istate->schunks);
 		if (pg_atomic_sub_fetch_u32(&ptchunks->refcount, 1) == 0)
@@ -786,7 +793,7 @@ tbm_prepare_shared_iterate(TIDBitmap *tbm)
 {
 	dsa_pointer dp;
 	TBMSharedIteratorState *istate;
-	PTEntryArray *ptbase;
+	PTEntryArray *ptbase = NULL;
 	PTIterationArray *ptpages = NULL;
 	PTIterationArray *ptchunks = NULL;
 
@@ -797,7 +804,7 @@ tbm_prepare_shared_iterate(TIDBitmap *tbm)
 	 * Allocate TBMSharedIteratorState from DSA to hold the shared members and
 	 * lock, this will also be used by multiple worker for shared iterate.
 	 */
-	dp = dsa_allocate(tbm->dsa, sizeof(TBMSharedIteratorState));
+	dp = dsa_allocate0(tbm->dsa, sizeof(TBMSharedIteratorState));
 	istate = dsa_get_address(tbm->dsa, dp);
 
 	/*
@@ -856,7 +863,7 @@ tbm_prepare_shared_iterate(TIDBitmap *tbm)
 			Assert(npages == tbm->npages);
 			Assert(nchunks == tbm->nchunks);
 		}
-		else
+		else if (tbm->status == TBM_ONE_PAGE)
 		{
 			/*
 			 * In one page mode allocate the space for one pagetable entry and
@@ -868,8 +875,8 @@ tbm_prepare_shared_iterate(TIDBitmap *tbm)
 			ptpages->index[0] = 0;
 		}
 
-		pg_atomic_init_u32(&ptbase->refcount, 0);
-
+		if (ptbase != NULL)
+			pg_atomic_init_u32(&ptbase->refcount, 0);
 		if (npages > 1)
 			qsort_arg((void *) (ptpages->index), npages, sizeof(int),
 					  tbm_shared_comparator, (void *) ptbase->ptentry);
@@ -899,10 +906,11 @@ tbm_prepare_shared_iterate(TIDBitmap *tbm)
 	 * increase the refcount by 1 so that while freeing the shared iterator
 	 * we don't free pagetable and iterator array until its refcount becomes 0.
 	 */
-	pg_atomic_add_fetch_u32(&ptbase->refcount, 1);
-	if (ptpages)
+	if (ptbase != NULL)
+		pg_atomic_add_fetch_u32(&ptbase->refcount, 1);
+	if (ptpages != NULL)
 		pg_atomic_add_fetch_u32(&ptpages->refcount, 1);
-	if (ptchunks)
+	if (ptchunks != NULL)
 		pg_atomic_add_fetch_u32(&ptchunks->refcount, 1);
 
 	/* Initialize the iterator lock */
@@ -1069,9 +1077,16 @@ tbm_shared_iterate(TBMSharedIterator *iterator)
 {
 	TBMIterateResult *output = &iterator->output;
 	TBMSharedIteratorState *istate = iterator->state;
-	PagetableEntry *ptbase = iterator->ptbase->ptentry;
-	int		   *idxpages = iterator->ptpages->index;
-	int		   *idxchunks = iterator->ptchunks->index;
+	PagetableEntry *ptbase = NULL;
+	int		   *idxpages = NULL;
+	int		   *idxchunks = NULL;
+
+	if (iterator->ptbase != NULL)
+		ptbase = iterator->ptbase->ptentry;
+	if (iterator->ptpages != NULL)
+		idxpages = iterator->ptpages->index;
+	if (iterator->ptchunks != NULL)
+		idxchunks = iterator->ptchunks->index;
 
 	/* Acquire the LWLock before accessing the shared members */
 	LWLockAcquire(&istate->lock, LW_EXCLUSIVE);
@@ -1480,7 +1495,7 @@ tbm_attach_shared_iterate(dsa_area *dsa, dsa_pointer dp)
 	 * Create the TBMSharedIterator struct, with enough trailing space to
 	 * serve the needs of the TBMIterateResult sub-struct.
 	 */
-	iterator = (TBMSharedIterator *) palloc(sizeof(TBMSharedIterator) +
+	iterator = (TBMSharedIterator *) palloc0(sizeof(TBMSharedIterator) +
 								 MAX_TUPLES_PER_PAGE * sizeof(OffsetNumber));
 
 	istate = (TBMSharedIteratorState *) dsa_get_address(dsa, dp);
