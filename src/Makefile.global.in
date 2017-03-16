@@ -552,23 +552,27 @@ pg_regress_check = \
     $(top_builddir)/src/test/regress/pg_regress \
     --temp-instance=./tmp_check \
     --inputdir=$(srcdir) \
+    --bindir= \
     $(TEMP_CONF) \
-    --bindir= $(pg_regress_locale_flags) $(EXTRA_REGRESS_OPTS)
+    $(pg_regress_locale_flags) $(EXTRA_REGRESS_OPTS)
 pg_regress_installcheck = \
     $(top_builddir)/src/test/regress/pg_regress \
     --inputdir=$(srcdir) \
-    --bindir='$(bindir)' $(pg_regress_locale_flags) $(EXTRA_REGRESS_OPTS)
+    --bindir='$(bindir)' \
+    $(pg_regress_locale_flags) $(EXTRA_REGRESS_OPTS)
 
 pg_isolation_regress_check = \
     $(with_temp_install) \
     $(top_builddir)/src/test/isolation/pg_isolation_regress \
     --temp-instance=./tmp_check_iso \
     --inputdir=$(srcdir) --outputdir=output_iso \
+    --bindir= \
     $(TEMP_CONF) \
-    --bindir= $(pg_regress_locale_flags) $(EXTRA_REGRESS_OPTS)
+    $(pg_regress_locale_flags) $(EXTRA_REGRESS_OPTS)
 pg_isolation_regress_installcheck = \
     $(top_builddir)/src/test/isolation/pg_isolation_regress \
     --inputdir=$(srcdir) \
+    --bindir='$(bindir)' \
     $(pg_regress_locale_flags) $(EXTRA_REGRESS_OPTS)
 
 ##########################################################################
