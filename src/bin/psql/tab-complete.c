@@ -982,10 +982,11 @@ typedef struct
 
 #define THING_NO_CREATE		(1 << 0)	/* should not show up after CREATE */
 #define THING_NO_DROP		(1 << 1)	/* should not show up after DROP */
-#define THING_NO_SHOW		(THING_NO_CREATE | THING_NO_DROP)
+#define THING_NO_ALTER		(1 << 2)	/* should not show up after ALTER */
+#define THING_NO_SHOW		(THING_NO_CREATE | THING_NO_DROP | THING_NO_ALTER)
 
 static const pgsql_thing_t words_after_create[] = {
-	{"ACCESS METHOD", NULL, NULL},
+	{"ACCESS METHOD", NULL, NULL, THING_NO_ALTER},
 	{"AGGREGATE", NULL, &Query_for_list_of_aggregates},
 	{"CAST", NULL, NULL},		/* Casts have complex structures for names, so
 								 * skip it */
@@ -999,6 +1000,7 @@ static const pgsql_thing_t words_after_create[] = {
 	{"CONVERSION", "SELECT pg_catalog.quote_ident(conname) FROM pg_catalog.pg_conversion WHERE substring(pg_catalog.quote_ident(conname),1,%d)='%s'"},
 	{"DATABASE", Query_for_list_of_databases},
 	{"DICTIONARY", Query_for_list_of_ts_dictionaries, NULL, THING_NO_SHOW},
+	{"DEFAULT PRIVILEGES", NULL, NULL, THING_NO_CREATE | THING_NO_DROP},
 	{"DOMAIN", NULL, &Query_for_list_of_domains},
 	{"EVENT TRIGGER", NULL, NULL},
 	{"EXTENSION", Query_for_list_of_extensions},
@@ -1006,12 +1008,13 @@ static const pgsql_thing_t words_after_create[] = {
 	{"FOREIGN TABLE", NULL, NULL},
 	{"FUNCTION", NULL, &Query_for_list_of_functions},
 	{"GROUP", Query_for_list_of_roles},
-	{"LANGUAGE", Query_for_list_of_languages},
 	{"INDEX", NULL, &Query_for_list_of_indexes},
+	{"LANGUAGE", Query_for_list_of_languages},
+	{"LARGE OBJECT", NULL, NULL, THING_NO_CREATE | THING_NO_DROP},
 	{"MATERIALIZED VIEW", NULL, &Query_for_list_of_matviews},
 	{"OPERATOR", NULL, NULL},	/* Querying for this is probably not such a
 								 * good idea. */
-	{"OWNED", NULL, NULL, THING_NO_CREATE},		/* for DROP OWNED BY ... */
+	{"OWNED", NULL, NULL, THING_NO_CREATE | THING_NO_ALTER},		/* for DROP OWNED BY ... */
 	{"PARSER", Query_for_list_of_ts_parsers, NULL, THING_NO_SHOW},
 	{"POLICY", NULL, NULL},
 	{"PUBLICATION", Query_for_list_of_publications},
@@ -1021,15 +1024,18 @@ static const pgsql_thing_t words_after_create[] = {
 	{"SEQUENCE", NULL, &Query_for_list_of_sequences},
 	{"SERVER", Query_for_list_of_servers},
 	{"SUBSCRIPTION", Query_for_list_of_subscriptions},
+	{"SYSTEM", NULL, NULL, THING_NO_CREATE | THING_NO_DROP},
 	{"TABLE", NULL, &Query_for_list_of_tables},
 	{"TABLESPACE", Query_for_list_of_tablespaces},
-	{"TEMP", NULL, NULL, THING_NO_DROP},		/* for CREATE TEMP TABLE ... */
+	{"TEMP", NULL, NULL, THING_NO_DROP | THING_NO_ALTER},		/* for CREATE TEMP TABLE ... */
 	{"TEMPLATE", Query_for_list_of_ts_templates, NULL, THING_NO_SHOW},
+	{"TEMPORARY", NULL, NULL, THING_NO_DROP | THING_NO_ALTER},		/* for CREATE TEMPORARY TABLE ... */
 	{"TEXT SEARCH", NULL, NULL},
+	{"TRANSFORM", NULL, NULL},
 	{"TRIGGER", "SELECT pg_catalog.quote_ident(tgname) FROM pg_catalog.pg_trigger WHERE substring(pg_catalog.quote_ident(tgname),1,%d)='%s' AND NOT tgisinternal"},
 	{"TYPE", NULL, &Query_for_list_of_datatypes},
-	{"UNIQUE", NULL, NULL, THING_NO_DROP},		/* for CREATE UNIQUE INDEX ... */
-	{"UNLOGGED", NULL, NULL, THING_NO_DROP},	/* for CREATE UNLOGGED TABLE
+	{"UNIQUE", NULL, NULL, THING_NO_DROP | THING_NO_ALTER},		/* for CREATE UNIQUE INDEX ... */
+	{"UNLOGGED", NULL, NULL, THING_NO_DROP | THING_NO_ALTER},	/* for CREATE UNLOGGED TABLE
 												 * ... */
 	{"USER", Query_for_list_of_roles},
 	{"USER MAPPING FOR", NULL, NULL},
@@ -1042,6 +1048,7 @@ static const pgsql_thing_t words_after_create[] = {
 static char **psql_completion(const char *text, int start, int end);
 static char *create_command_generator(const char *text, int state);
 static char *drop_command_generator(const char *text, int state);
+static char *alter_command_generator(const char *text, int state);
 static char *complete_from_query(const char *text, int state);
 static char *complete_from_schema_query(const char *text, int state);
 static char *_complete_from_query(int is_schema_query,
@@ -1316,6 +1323,17 @@ psql_completion(const char *text, int start, int end)
 	(previous_words_count >= 2 && \
 	 word_matches_cs(p1, prev_wd) && \
 	 word_matches_cs(p2, prev2_wd))
+#define TailMatchesCS3(p3, p2, p1) \
+	(previous_words_count >= 3 && \
+	 word_matches_cs(p1, prev_wd) && \
+	 word_matches_cs(p2, prev2_wd) && \
+	 word_matches_cs(p3, prev3_wd))
+#define TailMatchesCS4(p4, p3, p2, p1) \
+	(previous_words_count >= 4 && \
+	 word_matches_cs(p1, prev_wd) && \
+	 word_matches_cs(p2, prev2_wd) && \
+	 word_matches_cs(p3, prev3_wd) && \
+	 word_matches_cs(p4, prev4_wd))
 
 	/*
 	 * Macros for matching N words beginning at the start of the line,
@@ -1459,17 +1477,7 @@ psql_completion(const char *text, int start, int end)
 
 	/* ALTER something */
 	else if (Matches1("ALTER"))
-	{
-		static const char *const list_ALTER[] =
-		{"AGGREGATE", "COLLATION", "CONVERSION", "DATABASE", "DEFAULT PRIVILEGES", "DOMAIN",
-			"EVENT TRIGGER", "EXTENSION", "FOREIGN DATA WRAPPER", "FOREIGN TABLE", "FUNCTION",
-			"GROUP", "INDEX", "LANGUAGE", "LARGE OBJECT", "MATERIALIZED VIEW", "OPERATOR",
-			"POLICY", "PUBLICATION", "ROLE", "RULE", "SCHEMA", "SERVER", "SEQUENCE",
-			"SUBSCRIPTION", "SYSTEM", "TABLE", "TABLESPACE", "TEXT SEARCH", "TRIGGER", "TYPE",
-		"USER", "USER MAPPING FOR", "VIEW", NULL};
-
-		COMPLETE_WITH_LIST(list_ALTER);
-	}
+		matches = completion_matches(text, alter_command_generator);
 	/* ALTER TABLE,INDEX,MATERIALIZED VIEW ALL IN TABLESPACE xxx */
 	else if (TailMatches4("ALL", "IN", "TABLESPACE", MatchAny))
 		COMPLETE_WITH_LIST2("SET TABLESPACE", "OWNED BY");
@@ -2622,6 +2630,7 @@ psql_completion(const char *text, int start, int end)
 	else if (Matches3("DROP", "OWNED", "BY"))
 		COMPLETE_WITH_QUERY(Query_for_list_of_roles);
 
+	/* DROP TEXT SEARCH */
 	else if (Matches3("DROP", "TEXT", "SEARCH"))
 		COMPLETE_WITH_LIST4("CONFIGURATION", "DICTIONARY", "PARSER", "TEMPLATE");
 
@@ -3353,8 +3362,45 @@ psql_completion(const char *text, int start, int end)
 
 	else if (TailMatchesCS1("\\encoding"))
 		COMPLETE_WITH_QUERY(Query_for_list_of_encodings);
-	else if (TailMatchesCS1("\\h") || TailMatchesCS1("\\help"))
+	else if (TailMatchesCS1("\\h|\\help"))
 		COMPLETE_WITH_LIST(sql_commands);
+	else if (TailMatchesCS2("\\h|\\help", MatchAny))
+	{
+		if (TailMatches1("DROP"))
+			matches = completion_matches(text, drop_command_generator);
+		else if (TailMatches1("ALTER"))
+			matches = completion_matches(text, alter_command_generator);
+		/* CREATE is recognized by tail match elsewhere, so doesn't need to be
+		 * repeated here */
+	}
+	else if (TailMatchesCS3("\\h|\\help", MatchAny, MatchAny))
+	{
+		if (TailMatches2("CREATE|DROP", "ACCESS"))
+			COMPLETE_WITH_CONST("METHOD");
+		else if (TailMatches2("ALTER", "DEFAULT"))
+			COMPLETE_WITH_CONST("PRIVILEGES");
+		else if (TailMatches2("CREATE|ALTER|DROP", "EVENT"))
+			COMPLETE_WITH_CONST("TRIGGER");
+		else if (TailMatches2("CREATE|ALTER|DROP", "FOREIGN"))
+			COMPLETE_WITH_LIST2("DATA WRAPPER", "TABLE");
+		else if (TailMatches2("ALTER", "LARGE"))
+			COMPLETE_WITH_CONST("OBJECT");
+		else if (TailMatches2("CREATE|ALTER|DROP", "MATERIALIZED"))
+			COMPLETE_WITH_CONST("VIEW");
+		else if (TailMatches2("CREATE|ALTER|DROP", "TEXT"))
+			COMPLETE_WITH_CONST("SEARCH");
+		else if (TailMatches2("CREATE|ALTER|DROP", "USER"))
+			COMPLETE_WITH_CONST("MAPPING FOR");
+	}
+	else if (TailMatchesCS4("\\h|\\help", MatchAny, MatchAny, MatchAny))
+	{
+		if (TailMatches3("CREATE|ALTER|DROP", "FOREIGN", "DATA"))
+			COMPLETE_WITH_CONST("WRAPPER");
+		else if (TailMatches3("CREATE|ALTER|DROP", "TEXT", "SEARCH"))
+			COMPLETE_WITH_LIST4("CONFIGURATION", "DICTIONARY", "PARSER", "TEMPLATE");
+		else if (TailMatches3("CREATE|ALTER|DROP", "USER", "MAPPING"))
+			COMPLETE_WITH_CONST("FOR");
+	}
 	else if (TailMatchesCS1("\\l*") && !TailMatchesCS1("\\lo*"))
 		COMPLETE_WITH_QUERY(Query_for_list_of_databases);
 	else if (TailMatchesCS1("\\password"))
@@ -3534,6 +3580,15 @@ static char *
 drop_command_generator(const char *text, int state)
 {
 	return create_or_drop_command_generator(text, state, THING_NO_DROP);
+}
+
+/*
+ * This function gives you a list of things you can put after an ALTER command.
+ */
+static char *
+alter_command_generator(const char *text, int state)
+{
+	return create_or_drop_command_generator(text, state, THING_NO_ALTER);
 }
 
 /* The following two functions are wrappers for _complete_from_query */
