@@ -1217,25 +1217,16 @@ SELECT t1.c1, t2.c1 FROM ft4 t1 FULL JOIN ft5 t2 ON (t1.c1 = t2.c1) ORDER BY t1.
 (10 rows)
 
 -- full outer join with restrictions on the joining relations
+-- a. the joining relations are both base relations
 EXPLAIN (VERBOSE, COSTS OFF)
 SELECT t1.c1, t2.c1 FROM (SELECT c1 FROM ft4 WHERE c1 between 50 and 60) t1 FULL JOIN (SELECT c1 FROM ft5 WHERE c1 between 50 and 60) t2 ON (t1.c1 = t2.c1) ORDER BY t1.c1, t2.c1;
-                                           QUERY PLAN                                           
-------------------------------------------------------------------------------------------------
- Sort
+                                                                                                                                  QUERY PLAN                                                                                                                                   
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Foreign Scan
    Output: ft4.c1, ft5.c1
-   Sort Key: ft4.c1, ft5.c1
-   ->  Hash Full Join
-         Output: ft4.c1, ft5.c1
-         Hash Cond: (ft4.c1 = ft5.c1)
-         ->  Foreign Scan on public.ft4
-               Output: ft4.c1, ft4.c2, ft4.c3
-               Remote SQL: SELECT c1 FROM "S 1"."T 3" WHERE ((c1 >= 50)) AND ((c1 <= 60))
-         ->  Hash
-               Output: ft5.c1
-               ->  Foreign Scan on public.ft5
-                     Output: ft5.c1
-                     Remote SQL: SELECT c1 FROM "S 1"."T 4" WHERE ((c1 >= 50)) AND ((c1 <= 60))
-(14 rows)
+   Relations: (public.ft4) FULL JOIN (public.ft5)
+   Remote SQL: SELECT s4.c1, s5.c1 FROM ((SELECT c1 FROM "S 1"."T 3" WHERE ((c1 >= 50)) AND ((c1 <= 60))) s4(c1) FULL JOIN (SELECT c1 FROM "S 1"."T 4" WHERE ((c1 >= 50)) AND ((c1 <= 60))) s5(c1) ON (((s4.c1 = s5.c1)))) ORDER BY s4.c1 ASC NULLS LAST, s5.c1 ASC NULLS LAST
+(4 rows)
 
 SELECT t1.c1, t2.c1 FROM (SELECT c1 FROM ft4 WHERE c1 between 50 and 60) t1 FULL JOIN (SELECT c1 FROM ft5 WHERE c1 between 50 and 60) t2 ON (t1.c1 = t2.c1) ORDER BY t1.c1, t2.c1;
  c1 | c1 
@@ -1248,6 +1239,125 @@ SELECT t1.c1, t2.c1 FROM (SELECT c1 FROM ft4 WHERE c1 between 50 and 60) t1 FULL
  60 | 60
     | 51
     | 57
+(8 rows)
+
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT 1 FROM (SELECT c1 FROM ft4 WHERE c1 between 50 and 60) t1 FULL JOIN (SELECT c1 FROM ft5 WHERE c1 between 50 and 60) t2 ON (TRUE) OFFSET 10 LIMIT 10;
+                                                                                               QUERY PLAN                                                                                               
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   Output: 1
+   ->  Foreign Scan
+         Output: 1
+         Relations: (public.ft4) FULL JOIN (public.ft5)
+         Remote SQL: SELECT NULL FROM ((SELECT NULL FROM "S 1"."T 3" WHERE ((c1 >= 50)) AND ((c1 <= 60))) s4 FULL JOIN (SELECT NULL FROM "S 1"."T 4" WHERE ((c1 >= 50)) AND ((c1 <= 60))) s5 ON (TRUE))
+(6 rows)
+
+SELECT 1 FROM (SELECT c1 FROM ft4 WHERE c1 between 50 and 60) t1 FULL JOIN (SELECT c1 FROM ft5 WHERE c1 between 50 and 60) t2 ON (TRUE) OFFSET 10 LIMIT 10;
+ ?column? 
+----------
+        1
+        1
+        1
+        1
+        1
+        1
+        1
+        1
+        1
+        1
+(10 rows)
+
+-- b. one of the joining relations is a base relation and the other is a join
+-- relation
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT t1.c1, ss.a, ss.b FROM (SELECT c1 FROM ft4 WHERE c1 between 50 and 60) t1 FULL JOIN (SELECT t2.c1, t3.c1 FROM ft4 t2 LEFT JOIN ft5 t3 ON (t2.c1 = t3.c1) WHERE (t2.c1 between 50 and 60)) ss(a, b) ON (t1.c1 = ss.a) ORDER BY t1.c1, ss.a, ss.b;
+                                                                                                                                                                                     QUERY PLAN                                                                                                                                                                                      
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Foreign Scan
+   Output: ft4.c1, t2.c1, t3.c1
+   Relations: (public.ft4) FULL JOIN ((public.ft4 t2) LEFT JOIN (public.ft5 t3))
+   Remote SQL: SELECT s4.c1, s8.c1, s8.c2 FROM ((SELECT c1 FROM "S 1"."T 3" WHERE ((c1 >= 50)) AND ((c1 <= 60))) s4(c1) FULL JOIN (SELECT r5.c1, r6.c1 FROM ("S 1"."T 3" r5 LEFT JOIN "S 1"."T 4" r6 ON (((r5.c1 = r6.c1)))) WHERE ((r5.c1 >= 50)) AND ((r5.c1 <= 60))) s8(c1, c2) ON (((s4.c1 = s8.c1)))) ORDER BY s4.c1 ASC NULLS LAST, s8.c1 ASC NULLS LAST, s8.c2 ASC NULLS LAST
+(4 rows)
+
+SELECT t1.c1, ss.a, ss.b FROM (SELECT c1 FROM ft4 WHERE c1 between 50 and 60) t1 FULL JOIN (SELECT t2.c1, t3.c1 FROM ft4 t2 LEFT JOIN ft5 t3 ON (t2.c1 = t3.c1) WHERE (t2.c1 between 50 and 60)) ss(a, b) ON (t1.c1 = ss.a) ORDER BY t1.c1, ss.a, ss.b;
+ c1 | a  | b  
+----+----+----
+ 50 | 50 |   
+ 52 | 52 |   
+ 54 | 54 | 54
+ 56 | 56 |   
+ 58 | 58 |   
+ 60 | 60 | 60
+(6 rows)
+
+-- c. test deparsing the remote query as nested subqueries
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT t1.c1, ss.a, ss.b FROM (SELECT c1 FROM ft4 WHERE c1 between 50 and 60) t1 FULL JOIN (SELECT t2.c1, t3.c1 FROM (SELECT c1 FROM ft4 WHERE c1 between 50 and 60) t2 FULL JOIN (SELECT c1 FROM ft5 WHERE c1 between 50 and 60) t3 ON (t2.c1 = t3.c1) WHERE t2.c1 IS NULL OR t2.c1 IS NOT NULL) ss(a, b) ON (t1.c1 = ss.a) ORDER BY t1.c1, ss.a, ss.b;
+                                                                                                                                                                                                                                                     QUERY PLAN                                                                                                                                                                                                                                                     
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Foreign Scan
+   Output: ft4.c1, ft4_1.c1, ft5.c1
+   Relations: (public.ft4) FULL JOIN ((public.ft4) FULL JOIN (public.ft5))
+   Remote SQL: SELECT s4.c1, s10.c1, s10.c2 FROM ((SELECT c1 FROM "S 1"."T 3" WHERE ((c1 >= 50)) AND ((c1 <= 60))) s4(c1) FULL JOIN (SELECT s8.c1, s9.c1 FROM ((SELECT c1 FROM "S 1"."T 3" WHERE ((c1 >= 50)) AND ((c1 <= 60))) s8(c1) FULL JOIN (SELECT c1 FROM "S 1"."T 4" WHERE ((c1 >= 50)) AND ((c1 <= 60))) s9(c1) ON (((s8.c1 = s9.c1)))) WHERE (((s8.c1 IS NULL) OR (s8.c1 IS NOT NULL)))) s10(c1, c2) ON (((s4.c1 = s10.c1)))) ORDER BY s4.c1 ASC NULLS LAST, s10.c1 ASC NULLS LAST, s10.c2 ASC NULLS LAST
+(4 rows)
+
+SELECT t1.c1, ss.a, ss.b FROM (SELECT c1 FROM ft4 WHERE c1 between 50 and 60) t1 FULL JOIN (SELECT t2.c1, t3.c1 FROM (SELECT c1 FROM ft4 WHERE c1 between 50 and 60) t2 FULL JOIN (SELECT c1 FROM ft5 WHERE c1 between 50 and 60) t3 ON (t2.c1 = t3.c1) WHERE t2.c1 IS NULL OR t2.c1 IS NOT NULL) ss(a, b) ON (t1.c1 = ss.a) ORDER BY t1.c1, ss.a, ss.b;
+ c1 | a  | b  
+----+----+----
+ 50 | 50 |   
+ 52 | 52 |   
+ 54 | 54 | 54
+ 56 | 56 |   
+ 58 | 58 |   
+ 60 | 60 | 60
+    |    | 51
+    |    | 57
+(8 rows)
+
+-- d. test deparsing rowmarked relations as subqueries
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT t1.c1, ss.a, ss.b FROM (SELECT c1 FROM "S 1"."T 3" WHERE c1 = 50) t1 INNER JOIN (SELECT t2.c1, t3.c1 FROM (SELECT c1 FROM ft4 WHERE c1 between 50 and 60) t2 FULL JOIN (SELECT c1 FROM ft5 WHERE c1 between 50 and 60) t3 ON (t2.c1 = t3.c1) WHERE t2.c1 IS NULL OR t2.c1 IS NOT NULL) ss(a, b) ON (TRUE) ORDER BY t1.c1, ss.a, ss.b FOR UPDATE OF t1;
+                                                                                                                                                                                             QUERY PLAN                                                                                                                                                                                             
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ LockRows
+   Output: "T 3".c1, ft4.c1, ft5.c1, "T 3".ctid, ft4.*, ft5.*
+   ->  Nested Loop
+         Output: "T 3".c1, ft4.c1, ft5.c1, "T 3".ctid, ft4.*, ft5.*
+         ->  Foreign Scan
+               Output: ft4.c1, ft4.*, ft5.c1, ft5.*
+               Relations: (public.ft4) FULL JOIN (public.ft5)
+               Remote SQL: SELECT s8.c1, s8.c2, s9.c1, s9.c2 FROM ((SELECT c1, ROW(c1, c2, c3) FROM "S 1"."T 3" WHERE ((c1 >= 50)) AND ((c1 <= 60))) s8(c1, c2) FULL JOIN (SELECT c1, ROW(c1, c2, c3) FROM "S 1"."T 4" WHERE ((c1 >= 50)) AND ((c1 <= 60))) s9(c1, c2) ON (((s8.c1 = s9.c1)))) WHERE (((s8.c1 IS NULL) OR (s8.c1 IS NOT NULL))) ORDER BY s8.c1 ASC NULLS LAST, s9.c1 ASC NULLS LAST
+               ->  Hash Full Join
+                     Output: ft4.c1, ft4.*, ft5.c1, ft5.*
+                     Hash Cond: (ft4.c1 = ft5.c1)
+                     Filter: ((ft4.c1 IS NULL) OR (ft4.c1 IS NOT NULL))
+                     ->  Foreign Scan on public.ft4
+                           Output: ft4.c1, ft4.*
+                           Remote SQL: SELECT c1, c2, c3 FROM "S 1"."T 3" WHERE ((c1 >= 50)) AND ((c1 <= 60))
+                     ->  Hash
+                           Output: ft5.c1, ft5.*
+                           ->  Foreign Scan on public.ft5
+                                 Output: ft5.c1, ft5.*
+                                 Remote SQL: SELECT c1, c2, c3 FROM "S 1"."T 4" WHERE ((c1 >= 50)) AND ((c1 <= 60))
+         ->  Materialize
+               Output: "T 3".c1, "T 3".ctid
+               ->  Seq Scan on "S 1"."T 3"
+                     Output: "T 3".c1, "T 3".ctid
+                     Filter: ("T 3".c1 = 50)
+(25 rows)
+
+SELECT t1.c1, ss.a, ss.b FROM (SELECT c1 FROM "S 1"."T 3" WHERE c1 = 50) t1 INNER JOIN (SELECT t2.c1, t3.c1 FROM (SELECT c1 FROM ft4 WHERE c1 between 50 and 60) t2 FULL JOIN (SELECT c1 FROM ft5 WHERE c1 between 50 and 60) t3 ON (t2.c1 = t3.c1) WHERE t2.c1 IS NULL OR t2.c1 IS NOT NULL) ss(a, b) ON (TRUE) ORDER BY t1.c1, ss.a, ss.b FOR UPDATE OF t1;
+ c1 | a  | b  
+----+----+----
+ 50 | 50 |   
+ 50 | 52 |   
+ 50 | 54 | 54
+ 50 | 56 |   
+ 50 | 58 |   
+ 50 | 60 | 60
+ 50 |    | 51
+ 50 |    | 57
 (8 rows)
 
 -- full outer join + inner join
@@ -3061,6 +3171,24 @@ select avg(t1.c1), sum(t2.c1) from ft4 t1 full join ft5 t2 on (t1.c1 = t2.c1) gr
                      |   3
                      |   9
 (3 rows)
+
+-- Aggregate over FULL join needing to deparse the joining relations as
+-- subqueries.
+explain (verbose, costs off)
+select count(*), sum(t1.c1), avg(t2.c1) from (select c1 from ft4 where c1 between 50 and 60) t1 full join (select c1 from ft5 where c1 between 50 and 60) t2 on (t1.c1 = t2.c1);
+                                                                                                                  QUERY PLAN                                                                                                                   
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Foreign Scan
+   Output: (count(*)), (sum(ft4.c1)), (avg(ft5.c1))
+   Relations: Aggregate on ((public.ft4) FULL JOIN (public.ft5))
+   Remote SQL: SELECT count(*), sum(s4.c1), avg(s5.c1) FROM ((SELECT c1 FROM "S 1"."T 3" WHERE ((c1 >= 50)) AND ((c1 <= 60))) s4(c1) FULL JOIN (SELECT c1 FROM "S 1"."T 4" WHERE ((c1 >= 50)) AND ((c1 <= 60))) s5(c1) ON (((s4.c1 = s5.c1))))
+(4 rows)
+
+select count(*), sum(t1.c1), avg(t2.c1) from (select c1 from ft4 where c1 between 50 and 60) t1 full join (select c1 from ft5 where c1 between 50 and 60) t2 on (t1.c1 = t2.c1);
+ count | sum |         avg         
+-------+-----+---------------------
+     8 | 330 | 55.5000000000000000
+(1 row)
 
 -- ORDER BY expression is part of the target list but not pushed down to
 -- foreign server.

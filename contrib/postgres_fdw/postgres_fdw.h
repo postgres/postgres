@@ -95,6 +95,20 @@ typedef struct PgFdwRelationInfo
 
 	/* Grouping information */
 	List	   *grouped_tlist;
+
+	/* Subquery information */
+	bool		make_outerrel_subquery;	/* do we deparse outerrel as a
+										 * subquery? */
+	bool		make_innerrel_subquery;	/* do we deparse innerrel as a
+										 * subquery? */
+	Relids		lower_subquery_rels;	/* all relids appearing in lower
+										 * subqueries */
+
+	/*
+	 * Index of the relation.  It is used to create an alias to a subquery
+	 * representing the relation.
+	 */
+	int			relation_index;
 } PgFdwRelationInfo;
 
 /* in postgres_fdw.c */
@@ -161,7 +175,7 @@ extern Expr *find_em_expr_for_rel(EquivalenceClass *ec, RelOptInfo *rel);
 extern List *build_tlist_to_deparse(RelOptInfo *foreignrel);
 extern void deparseSelectStmtForRel(StringInfo buf, PlannerInfo *root,
 						RelOptInfo *foreignrel, List *tlist,
-						List *remote_conds, List *pathkeys,
+						List *remote_conds, List *pathkeys, bool is_subquery,
 						List **retrieved_attrs, List **params_list);
 
 /* in shippable.c */

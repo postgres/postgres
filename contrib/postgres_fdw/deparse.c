@@ -109,6 +109,8 @@ typedef struct deparse_expr_cxt
 /* Handy macro to add relation name qualification */
 #define ADD_REL_QUALIFIER(buf, varno)	\
 		appendStringInfo((buf), "%s%d.", REL_ALIAS_PREFIX, (varno))
+#define SUBQUERY_REL_ALIAS_PREFIX	"s"
+#define SUBQUERY_COL_ALIAS_PREFIX	"c"
 
 /*
  * Functions to determine whether an expression can be evaluated safely on
@@ -132,6 +134,7 @@ static void deparseTargetList(StringInfo buf,
 				  List **retrieved_attrs);
 static void deparseExplicitTargetList(List *tlist, List **retrieved_attrs,
 						  deparse_expr_cxt *context);
+static void deparseSubqueryTargetList(deparse_expr_cxt *context);
 static void deparseReturningList(StringInfo buf, PlannerInfo *root,
 					 Index rtindex, Relation rel,
 					 bool trig_after_row,
@@ -159,7 +162,7 @@ static void printRemoteParam(int paramindex, Oid paramtype, int32 paramtypmod,
 				 deparse_expr_cxt *context);
 static void printRemotePlaceholder(Oid paramtype, int32 paramtypmod,
 					   deparse_expr_cxt *context);
-static void deparseSelectSql(List *tlist, List **retrieved_attrs,
+static void deparseSelectSql(List *tlist, bool is_subquery, List **retrieved_attrs,
 				 deparse_expr_cxt *context);
 static void deparseLockingClause(deparse_expr_cxt *context);
 static void appendOrderByClause(List *pathkeys, deparse_expr_cxt *context);
@@ -167,6 +170,9 @@ static void appendConditions(List *exprs, deparse_expr_cxt *context);
 static void deparseFromExprForRel(StringInfo buf, PlannerInfo *root,
 					RelOptInfo *joinrel, bool use_alias, List **params_list);
 static void deparseFromExpr(List *quals, deparse_expr_cxt *context);
+static void deparseRangeTblRef(StringInfo buf, PlannerInfo *root,
+							   RelOptInfo *foreignrel, bool make_subquery,
+							   List **params_list);
 static void deparseAggref(Aggref *node, deparse_expr_cxt *context);
 static void appendGroupByClause(List *tlist, deparse_expr_cxt *context);
 static void appendAggOrderBy(List *orderList, List *targetList,
@@ -174,6 +180,14 @@ static void appendAggOrderBy(List *orderList, List *targetList,
 static void appendFunctionName(Oid funcid, deparse_expr_cxt *context);
 static Node *deparseSortGroupClause(Index ref, List *tlist,
 					   deparse_expr_cxt *context);
+
+/*
+ * Helper functions
+ */
+static bool is_subquery_var(Var *node, RelOptInfo *foreignrel,
+							int *relno, int *colno);
+static void get_relation_column_alias_ids(Var *node, RelOptInfo *foreignrel,
+										  int *relno, int *colno);
 
 
 /*
@@ -896,12 +910,16 @@ build_tlist_to_deparse(RelOptInfo *foreignrel)
  *
  * pathkeys is the list of pathkeys to order the result by.
  *
+ * is_subquery is the flag to indicate whether to deparse the specified
+ * relation as a subquery.
+ *
  * List of columns selected is returned in retrieved_attrs.
  */
 extern void
 deparseSelectStmtForRel(StringInfo buf, PlannerInfo *root, RelOptInfo *rel,
 						List *tlist, List *remote_conds, List *pathkeys,
-						List **retrieved_attrs, List **params_list)
+						bool is_subquery, List **retrieved_attrs,
+						List **params_list)
 {
 	deparse_expr_cxt context;
 	PgFdwRelationInfo *fpinfo = (PgFdwRelationInfo *) rel->fdw_private;
@@ -925,7 +943,7 @@ deparseSelectStmtForRel(StringInfo buf, PlannerInfo *root, RelOptInfo *rel,
 	context.params_list = params_list;
 
 	/* Construct SELECT clause */
-	deparseSelectSql(tlist, retrieved_attrs, &context);
+	deparseSelectSql(tlist, is_subquery, retrieved_attrs, &context);
 
 	/*
 	 * For upper relations, the WHERE clause is built from the remote
@@ -972,13 +990,16 @@ deparseSelectStmtForRel(StringInfo buf, PlannerInfo *root, RelOptInfo *rel,
  * contains just "SELECT ... ".
  *
  * We also create an integer List of the columns being retrieved, which is
- * returned to *retrieved_attrs.
+ * returned to *retrieved_attrs, unless we deparse the specified relation
+ * as a subquery.
  *
- * tlist is the list of desired columns. Read prologue of
- * deparseSelectStmtForRel() for details.
+ * tlist is the list of desired columns.  is_subquery is the flag to
+ * indicate whether to deparse the specified relation as a subquery.
+ * Read prologue of deparseSelectStmtForRel() for details.
  */
 static void
-deparseSelectSql(List *tlist, List **retrieved_attrs, deparse_expr_cxt *context)
+deparseSelectSql(List *tlist, bool is_subquery, List **retrieved_attrs,
+				 deparse_expr_cxt *context)
 {
 	StringInfo	buf = context->buf;
 	RelOptInfo *foreignrel = context->foreignrel;
@@ -990,10 +1011,22 @@ deparseSelectSql(List *tlist, List **retrieved_attrs, deparse_expr_cxt *context)
 	 */
 	appendStringInfoString(buf, "SELECT ");
 
-	if (foreignrel->reloptkind == RELOPT_JOINREL ||
-		foreignrel->reloptkind == RELOPT_UPPER_REL)
+	if (is_subquery)
 	{
-		/* For a join relation use the input tlist */
+		/*
+		 * For a relation that is deparsed as a subquery, emit expressions
+		 * specified in the relation's reltarget.  Note that since this is
+		 * for the subquery, no need to care about *retrieved_attrs.
+		 */
+		deparseSubqueryTargetList(context);
+	}
+	else if (foreignrel->reloptkind == RELOPT_JOINREL ||
+			 foreignrel->reloptkind == RELOPT_UPPER_REL)
+	{
+		/*
+		 * For a join or upper relation the input tlist gives the list of
+		 * columns required to be fetched from the foreign server.
+		 */
 		deparseExplicitTargetList(tlist, retrieved_attrs, context);
 	}
 	else
@@ -1155,10 +1188,18 @@ deparseLockingClause(deparse_expr_cxt *context)
 	StringInfo	buf = context->buf;
 	PlannerInfo *root = context->root;
 	RelOptInfo *rel = context->scanrel;
+	PgFdwRelationInfo *fpinfo = (PgFdwRelationInfo *) rel->fdw_private;
 	int			relid = -1;
 
 	while ((relid = bms_next_member(rel->relids, relid)) >= 0)
 	{
+		/*
+		 * Ignore relation if it appears in a lower subquery.  Locking clause
+		 * for such a relation is included in the subquery if necessary.
+		 */
+		if (bms_is_member(relid, fpinfo->lower_subquery_rels))
+			continue;
+
 		/*
 		 * Add FOR UPDATE/SHARE if appropriate.  We apply locking during the
 		 * initial row fetch, rather than later on as is done for local
@@ -1330,6 +1371,40 @@ deparseExplicitTargetList(List *tlist, List **retrieved_attrs,
 }
 
 /*
+ * Emit expressions specified in the given relation's reltarget.
+ *
+ * This is used for deparsing the given relation as a subquery.
+ */
+static void
+deparseSubqueryTargetList(deparse_expr_cxt *context)
+{
+	StringInfo	buf = context->buf;
+	RelOptInfo *foreignrel = context->foreignrel;
+	bool		first;
+	ListCell   *lc;
+
+	/* Should only be called in these cases. */
+	Assert(foreignrel->reloptkind == RELOPT_BASEREL ||
+		   foreignrel->reloptkind == RELOPT_JOINREL);
+
+	first = true;
+	foreach(lc, foreignrel->reltarget->exprs)
+	{
+		Node	   *node = (Node *) lfirst(lc);
+
+		if (!first)
+			appendStringInfoString(buf, ", ");
+		first = false;
+
+		deparseExpr((Expr *) node, context);
+	}
+
+	/* Don't generate bad syntax if no expressions */
+	if (first)
+		appendStringInfoString(buf, "NULL");
+}
+
+/*
  * Construct FROM clause for given relation
  *
  * The function constructs ... JOIN ... ON ... for join relation. For a base
@@ -1344,18 +1419,18 @@ deparseFromExprForRel(StringInfo buf, PlannerInfo *root, RelOptInfo *foreignrel,
 
 	if (foreignrel->reloptkind == RELOPT_JOINREL)
 	{
-		RelOptInfo *rel_o = fpinfo->outerrel;
-		RelOptInfo *rel_i = fpinfo->innerrel;
 		StringInfoData join_sql_o;
 		StringInfoData join_sql_i;
 
 		/* Deparse outer relation */
 		initStringInfo(&join_sql_o);
-		deparseFromExprForRel(&join_sql_o, root, rel_o, true, params_list);
+		deparseRangeTblRef(&join_sql_o, root, fpinfo->outerrel,
+						   fpinfo->make_outerrel_subquery, params_list);
 
 		/* Deparse inner relation */
 		initStringInfo(&join_sql_i);
-		deparseFromExprForRel(&join_sql_i, root, rel_i, true, params_list);
+		deparseRangeTblRef(&join_sql_i, root, fpinfo->innerrel,
+						   fpinfo->make_innerrel_subquery, params_list);
 
 		/*
 		 * For a join relation FROM clause entry is deparsed as
@@ -1408,6 +1483,63 @@ deparseFromExprForRel(StringInfo buf, PlannerInfo *root, RelOptInfo *foreignrel,
 
 		heap_close(rel, NoLock);
 	}
+}
+
+/*
+ * Append FROM clause entry for the given relation into buf.
+ */
+static void
+deparseRangeTblRef(StringInfo buf, PlannerInfo *root, RelOptInfo *foreignrel,
+				   bool make_subquery, List **params_list)
+{
+	PgFdwRelationInfo *fpinfo = (PgFdwRelationInfo *) foreignrel->fdw_private;
+
+	/* Should only be called in these cases. */
+	Assert(foreignrel->reloptkind == RELOPT_BASEREL ||
+		   foreignrel->reloptkind == RELOPT_JOINREL);
+
+	Assert(fpinfo->local_conds == NIL);
+
+	/* If make_subquery is true, deparse the relation as a subquery. */
+	if (make_subquery)
+	{
+		List	   *retrieved_attrs;
+		int			ncols;
+
+		/* Deparse the subquery representing the relation. */
+		appendStringInfoChar(buf, '(');
+		deparseSelectStmtForRel(buf, root, foreignrel, NIL,
+								fpinfo->remote_conds, NIL, true,
+								&retrieved_attrs, params_list);
+		appendStringInfoChar(buf, ')');
+
+		/* Append the relation alias. */
+		appendStringInfo(buf, " %s%d", SUBQUERY_REL_ALIAS_PREFIX,
+						 fpinfo->relation_index);
+
+		/*
+		 * Append the column aliases if needed.  Note that the subquery emits
+		 * expressions specified in the relation's reltarget (see
+		 * deparseSubqueryTargetList).
+		 */
+		ncols = list_length(foreignrel->reltarget->exprs);
+		if (ncols > 0)
+		{
+			int			i;
+
+			appendStringInfoChar(buf, '(');
+			for (i = 1; i <= ncols; i++)
+			{
+				if (i > 1)
+					appendStringInfoString(buf, ", ");
+
+				appendStringInfo(buf, "%s%d", SUBQUERY_COL_ALIAS_PREFIX, i);
+			}
+			appendStringInfoChar(buf, ')');
+		}
+	}
+	else
+		deparseFromExprForRel(buf, root, foreignrel, true, params_list);
 }
 
 /*
@@ -2054,9 +2186,24 @@ static void
 deparseVar(Var *node, deparse_expr_cxt *context)
 {
 	Relids		relids = context->scanrel->relids;
+	int			relno;
+	int			colno;
 
 	/* Qualify columns when multiple relations are involved. */
 	bool		qualify_col = (bms_num_members(relids) > 1);
+
+	/*
+	 * If the Var belongs to the foreign relation that is deparsed as a
+	 * subquery, use the relation and column alias to the Var provided
+	 * by the subquery, instead of the remote name.
+	 */
+	if (is_subquery_var(node, context->scanrel, &relno, &colno))
+	{
+		appendStringInfo(context->buf, "%s%d.%s%d",
+						 SUBQUERY_REL_ALIAS_PREFIX, relno,
+						 SUBQUERY_COL_ALIAS_PREFIX, colno);
+		return;
+	}
 
 	if (bms_is_member(node->varno, relids) && node->varlevelsup == 0)
 		deparseColumnRef(context->buf, node->varno, node->varattno,
@@ -2934,4 +3081,101 @@ deparseSortGroupClause(Index ref, List *tlist, deparse_expr_cxt *context)
 	}
 
 	return (Node *) expr;
+}
+
+
+/*
+ * Returns true if given Var is deparsed as a subquery output column, in
+ * which case, *relno and *colno are set to the IDs for the relation and
+ * column alias to the Var provided by the subquery.
+ */
+static bool
+is_subquery_var(Var *node, RelOptInfo *foreignrel, int *relno, int *colno)
+{
+	PgFdwRelationInfo *fpinfo = (PgFdwRelationInfo *) foreignrel->fdw_private;
+	RelOptInfo *outerrel = fpinfo->outerrel;
+	RelOptInfo *innerrel = fpinfo->innerrel;
+
+	/* Should only be called in these cases. */
+	Assert(foreignrel->reloptkind == RELOPT_BASEREL ||
+		   foreignrel->reloptkind == RELOPT_JOINREL ||
+		   foreignrel->reloptkind == RELOPT_OTHER_MEMBER_REL);
+
+	/*
+	 * If the given relation isn't a join relation, it doesn't have any lower
+	 * subqueries, so the Var isn't a subquery output column.
+	 */
+	if (foreignrel->reloptkind != RELOPT_JOINREL)
+		return false;
+
+	/*
+	 * If the Var doesn't belong to any lower subqueries, it isn't a subquery
+	 * output column.
+	 */
+	if (!bms_is_member(node->varno, fpinfo->lower_subquery_rels))
+		return false;
+
+	if (bms_is_member(node->varno, outerrel->relids))
+	{
+		/*
+		 * If outer relation is deparsed as a subquery, the Var is an output
+		 * column of the subquery; get the IDs for the relation/column alias.
+		 */
+		if (fpinfo->make_outerrel_subquery)
+		{
+			get_relation_column_alias_ids(node, outerrel, relno, colno);
+			return true;
+		}
+
+		/* Otherwise, recurse into the outer relation. */
+		return is_subquery_var(node, outerrel, relno, colno);
+	}
+	else
+	{
+		Assert(bms_is_member(node->varno, innerrel->relids));
+
+		/*
+		 * If inner relation is deparsed as a subquery, the Var is an output
+		 * column of the subquery; get the IDs for the relation/column alias.
+		 */
+		if (fpinfo->make_innerrel_subquery)
+		{
+			get_relation_column_alias_ids(node, innerrel, relno, colno);
+			return true;
+		}
+
+		/* Otherwise, recurse into the inner relation. */
+		return is_subquery_var(node, innerrel, relno, colno);
+	}
+}
+
+/*
+ * Get the IDs for the relation and column alias to given Var belonging to
+ * given relation, which are returned into *relno and *colno.
+ */
+static void
+get_relation_column_alias_ids(Var *node, RelOptInfo *foreignrel,
+							  int *relno, int *colno)
+{
+	PgFdwRelationInfo *fpinfo = (PgFdwRelationInfo *) foreignrel->fdw_private;
+	int			i;
+	ListCell   *lc;
+
+	/* Get the relation alias ID */
+	*relno = fpinfo->relation_index;
+
+	/* Get the column alias ID */
+	i = 1;
+	foreach(lc, foreignrel->reltarget->exprs)
+	{
+		if (equal(lfirst(lc), (Node *) node))
+		{
+			*colno = i;
+			return;
+		}
+		i++;
+	}
+
+	/* Shouldn't get here */
+	elog(ERROR, "unexpected expression in subquery output");
 }
