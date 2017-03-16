@@ -44,6 +44,7 @@
 #define XLOG_HASH_UPDATE_META_PAGE	0xB0		/* update meta page after
 												 * vacuum */
 
+#define XLOG_HASH_VACUUM_ONE_PAGE	0xC0	/* remove dead tuples from index page */
 
 /*
  * xl_hash_split_allocate_page flag values, 8 bits are available.
@@ -249,6 +250,24 @@ typedef struct xl_hash_init_bitmap_page
 
 #define SizeOfHashInitBitmapPage	\
 	(offsetof(xl_hash_init_bitmap_page, bmsize) + sizeof(uint16))
+
+/*
+ * This is what we need for index tuple deletion and to
+ * update the meta page.
+ *
+ * This data record is used for XLOG_HASH_VACUUM_ONE_PAGE
+ *
+ * Backup Blk 0: bucket page
+ * Backup Blk 1: meta page
+ */
+typedef struct xl_hash_vacuum_one_page
+{
+	RelFileNode	hnode;
+	double		ntuples;
+}	xl_hash_vacuum_one_page;
+
+#define SizeOfHashVacuumOnePage	\
+	(offsetof(xl_hash_vacuum_one_page, ntuples) + sizeof(double))
 
 extern void hash_redo(XLogReaderState *record);
 extern void hash_desc(StringInfo buf, XLogReaderState *record);

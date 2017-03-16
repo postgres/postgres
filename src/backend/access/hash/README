@@ -284,7 +284,10 @@ The insertion algorithm is rather similar:
 		if we get the lock on both the buckets
 			finish the split using algorithm mentioned below for split
 		release the pin on old bucket and restart the insert from beginning.
-	if current page is full, release lock but not pin, read/exclusive-lock
+	if current page is full, first check if this page contains any dead tuples.
+	if yes, remove dead tuples from the current page and again check for the
+	availability of the space. If enough space found, insert the tuple else
+	release lock but not pin, read/exclusive-lock
      next page; repeat as needed
 	>> see below if no space in any page of bucket
 	take buffer content lock in exclusive mode on metapage

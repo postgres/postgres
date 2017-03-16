@@ -36,6 +36,7 @@ typedef struct
 {
 	HSpool	   *spool;			/* NULL if not using spooling */
 	double		indtuples;		/* # tuples accepted into index */
+	Relation	heapRel;		/* heap relation descriptor */
 } HashBuildState;
 
 static void hashbuildCallback(Relation index,
@@ -154,6 +155,7 @@ hashbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 
 	/* prepare to build the index */
 	buildstate.indtuples = 0;
+	buildstate.heapRel = heap;
 
 	/* do the heap scan */
 	reltuples = IndexBuildHeapScan(heap, index, indexInfo, true,
@@ -162,7 +164,7 @@ hashbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 	if (buildstate.spool)
 	{
 		/* sort the tuples and insert them into the index */
-		_h_indexbuild(buildstate.spool);
+		_h_indexbuild(buildstate.spool, buildstate.heapRel);
 		_h_spooldestroy(buildstate.spool);
 	}
 
@@ -218,7 +220,7 @@ hashbuildCallback(Relation index,
 		itup = index_form_tuple(RelationGetDescr(index),
 								index_values, index_isnull);
 		itup->t_tid = htup->t_self;
-		_hash_doinsert(index, itup);
+		_hash_doinsert(index, itup, buildstate->heapRel);
 		pfree(itup);
 	}
 
@@ -251,7 +253,7 @@ hashinsert(Relation rel, Datum *values, bool *isnull,
 	itup = index_form_tuple(RelationGetDescr(rel), index_values, index_isnull);
 	itup->t_tid = *ht_ctid;
 
-	_hash_doinsert(rel, itup);
+	_hash_doinsert(rel, itup, heapRel);
 
 	pfree(itup);
 
@@ -331,14 +333,24 @@ hashgettuple(IndexScanDesc scan, ScanDirection dir)
 		if (scan->kill_prior_tuple)
 		{
 			/*
-			 * Yes, so mark it by setting the LP_DEAD state in the item flags.
+			 * Yes, so remember it for later. (We'll deal with all such
+			 * tuples at once right after leaving the index page or at
+			 * end of scan.) In case if caller reverses the indexscan
+			 * direction it is quite possible that the same item might
+			 * get entered multiple times. But, we don't detect that;
+			 * instead, we just forget any excess entries.
 			 */
-			ItemIdMarkDead(PageGetItemId(page, offnum));
+			if (so->killedItems == NULL)
+				so->killedItems = palloc(MaxIndexTuplesPerPage *
+										 sizeof(HashScanPosItem));
 
-			/*
-			 * Since this can be redone later if needed, mark as a hint.
-			 */
-			MarkBufferDirtyHint(buf, true);
+			if (so->numKilled < MaxIndexTuplesPerPage)
+			{
+				so->killedItems[so->numKilled].heapTid = so->hashso_heappos;
+				so->killedItems[so->numKilled].indexOffset =
+							ItemPointerGetOffsetNumber(&(so->hashso_curpos));
+				so->numKilled++;
+			}
 		}
 
 		/*
@@ -446,6 +458,9 @@ hashbeginscan(Relation rel, int nkeys, int norderbys)
 	so->hashso_buc_populated = false;
 	so->hashso_buc_split = false;
 
+	so->killedItems = NULL;
+	so->numKilled = 0;
+
 	scan->opaque = so;
 
 	return scan;
@@ -460,6 +475,10 @@ hashrescan(IndexScanDesc scan, ScanKey scankey, int nscankeys,
 {
 	HashScanOpaque so = (HashScanOpaque) scan->opaque;
 	Relation	rel = scan->indexRelation;
+
+	/* Before leaving current page, deal with any killed items */
+	if (so->numKilled > 0)
+		_hash_kill_items(scan);
 
 	_hash_dropscanbuf(rel, so);
 
@@ -488,8 +507,14 @@ hashendscan(IndexScanDesc scan)
 	HashScanOpaque so = (HashScanOpaque) scan->opaque;
 	Relation	rel = scan->indexRelation;
 
+	/* Before leaving current page, deal with any killed items */
+	if (so->numKilled > 0)
+		_hash_kill_items(scan);
+
 	_hash_dropscanbuf(rel, so);
 
+	if (so->killedItems != NULL)
+		pfree(so->killedItems);
 	pfree(so);
 	scan->opaque = NULL;
 }
@@ -848,6 +873,16 @@ hashbucketcleanup(Relation rel, Bucket cur_bucket, Buffer bucket_buf,
 
 			PageIndexMultiDelete(page, deletable, ndeletable);
 			bucket_dirty = true;
+
+			/*
+			 * Let us mark the page as clean if vacuum removes the DEAD tuples
+			 * from an index page. We do this by clearing LH_PAGE_HAS_DEAD_TUPLES
+			 * flag. Clearing this flag is just a hint; replay won't redo this.
+			 */
+			if (tuples_removed && *tuples_removed > 0 &&
+				opaque->hasho_flag & LH_PAGE_HAS_DEAD_TUPLES)
+				opaque->hasho_flag &= ~LH_PAGE_HAS_DEAD_TUPLES;
+
 			MarkBufferDirty(buf);
 
 			/* XLOG stuff */

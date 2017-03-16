@@ -57,6 +57,7 @@ typedef uint32 Bucket;
 #define LH_BUCKET_BEING_POPULATED	(1 << 4)
 #define LH_BUCKET_BEING_SPLIT	(1 << 5)
 #define LH_BUCKET_NEEDS_SPLIT_CLEANUP	(1 << 6)
+#define LH_PAGE_HAS_DEAD_TUPLES	(1 << 7)
 
 #define LH_PAGE_TYPE \
 	(LH_OVERFLOW_PAGE|LH_BUCKET_PAGE|LH_BITMAP_PAGE|LH_META_PAGE)
@@ -86,6 +87,7 @@ typedef HashPageOpaqueData *HashPageOpaque;
 #define H_NEEDS_SPLIT_CLEANUP(opaque)	((opaque)->hasho_flag & LH_BUCKET_NEEDS_SPLIT_CLEANUP)
 #define H_BUCKET_BEING_SPLIT(opaque)	((opaque)->hasho_flag & LH_BUCKET_BEING_SPLIT)
 #define H_BUCKET_BEING_POPULATED(opaque)	((opaque)->hasho_flag & LH_BUCKET_BEING_POPULATED)
+#define H_HAS_DEAD_TUPLES(opaque)		((opaque)->hasho_flag & LH_PAGE_HAS_DEAD_TUPLES)
 
 /*
  * The page ID is for the convenience of pg_filedump and similar utilities,
@@ -94,6 +96,13 @@ typedef HashPageOpaqueData *HashPageOpaque;
  * less "free" due to alignment considerations.
  */
 #define HASHO_PAGE_ID		0xFF80
+
+typedef struct HashScanPosItem    /* what we remember about each match */
+{
+	ItemPointerData heapTid;	/* TID of referenced heap item */
+	OffsetNumber indexOffset;	/* index item's location within page */
+} HashScanPosItem;
+
 
 /*
  *	HashScanOpaqueData is private state for a hash index scan.
@@ -135,6 +144,9 @@ typedef struct HashScanOpaqueData
 	 * referred only when hashso_buc_populated is true.
 	 */
 	bool		hashso_buc_split;
+	/* info about killed items if any (killedItems is NULL if never used) */
+	HashScanPosItem	*killedItems;	/* tids and offset numbers of killed items */
+	int			numKilled;			/* number of currently stored items */
 } HashScanOpaqueData;
 
 typedef HashScanOpaqueData *HashScanOpaque;
@@ -300,7 +312,7 @@ extern Datum hash_uint32(uint32 k);
 /* private routines */
 
 /* hashinsert.c */
-extern void _hash_doinsert(Relation rel, IndexTuple itup);
+extern void _hash_doinsert(Relation rel, IndexTuple itup, Relation heapRel);
 extern OffsetNumber _hash_pgaddtup(Relation rel, Buffer buf,
 			   Size itemsize, IndexTuple itup);
 extern void _hash_pgaddmultitup(Relation rel, Buffer buf, IndexTuple *itups,
@@ -361,7 +373,7 @@ extern HSpool *_h_spoolinit(Relation heap, Relation index, uint32 num_buckets);
 extern void _h_spooldestroy(HSpool *hspool);
 extern void _h_spool(HSpool *hspool, ItemPointer self,
 		 Datum *values, bool *isnull);
-extern void _h_indexbuild(HSpool *hspool);
+extern void _h_indexbuild(HSpool *hspool, Relation heapRel);
 
 /* hashutil.c */
 extern bool _hash_checkqual(IndexScanDesc scan, IndexTuple itup);
@@ -381,6 +393,7 @@ extern BlockNumber _hash_get_oldblock_from_newbucket(Relation rel, Bucket new_bu
 extern BlockNumber _hash_get_newblock_from_oldbucket(Relation rel, Bucket old_bucket);
 extern Bucket _hash_get_newbucket_from_oldbucket(Relation rel, Bucket old_bucket,
 								   uint32 lowmask, uint32 maxbucket);
+extern void _hash_kill_items(IndexScanDesc scan);
 
 /* hash.c */
 extern void hashbucketcleanup(Relation rel, Bucket cur_bucket,

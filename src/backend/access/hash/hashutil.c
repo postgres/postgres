@@ -19,6 +19,7 @@
 #include "access/relscan.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
+#include "storage/buf_internals.h"
 
 #define CALC_NEW_BUCKET(old_bucket, lowmask) \
 			old_bucket | (lowmask + 1)
@@ -445,4 +446,71 @@ _hash_get_newbucket_from_oldbucket(Relation rel, Bucket old_bucket,
 	}
 
 	return new_bucket;
+}
+
+/*
+ * _hash_kill_items - set LP_DEAD state for items an indexscan caller has
+ * told us were killed.
+ *
+ * scan->opaque, referenced locally through so, contains information about the
+ * current page and killed tuples thereon (generally, this should only be
+ * called if so->numKilled > 0).
+ *
+ * We match items by heap TID before assuming they are the right ones to
+ * delete.
+ */
+void
+_hash_kill_items(IndexScanDesc scan)
+{
+	HashScanOpaque	so = (HashScanOpaque) scan->opaque;
+	Page	page;
+	HashPageOpaque	opaque;
+	OffsetNumber	offnum, maxoff;
+	int	numKilled = so->numKilled;
+	int		i;
+	bool	killedsomething = false;
+
+	Assert(so->numKilled > 0);
+	Assert(so->killedItems != NULL);
+
+	/*
+	 * Always reset the scan state, so we don't look for same
+	 * items on other pages.
+	 */
+	so->numKilled = 0;
+
+	page = BufferGetPage(so->hashso_curbuf);
+	opaque = (HashPageOpaque) PageGetSpecialPointer(page);
+	maxoff = PageGetMaxOffsetNumber(page);
+
+	for (i = 0; i < numKilled; i++)
+	{
+		offnum = so->killedItems[i].indexOffset;
+
+		while (offnum <= maxoff)
+		{
+			ItemId	iid = PageGetItemId(page, offnum);
+			IndexTuple	ituple = (IndexTuple) PageGetItem(page, iid);
+
+			if (ItemPointerEquals(&ituple->t_tid, &so->killedItems[i].heapTid))
+			{
+				/* found the item */
+				ItemIdMarkDead(iid);
+				killedsomething = true;
+				break;		/* out of inner search loop */
+			}
+			offnum = OffsetNumberNext(offnum);
+		}
+	}
+
+	/*
+	 * Since this can be redone later if needed, mark as dirty hint.
+	 * Whenever we mark anything LP_DEAD, we also set the page's
+	 * LH_PAGE_HAS_DEAD_TUPLES flag, which is likewise just a hint.
+	 */
+	if (killedsomething)
+	{
+		opaque->hasho_flag |= LH_PAGE_HAS_DEAD_TUPLES;
+		MarkBufferDirtyHint(so->hashso_curbuf, true);
+	}
 }

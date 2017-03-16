@@ -101,7 +101,7 @@ _h_spool(HSpool *hspool, ItemPointer self, Datum *values, bool *isnull)
  * create an entire index.
  */
 void
-_h_indexbuild(HSpool *hspool)
+_h_indexbuild(HSpool *hspool, Relation heapRel)
 {
 	IndexTuple	itup;
 #ifdef USE_ASSERT_CHECKING
@@ -126,6 +126,6 @@ _h_indexbuild(HSpool *hspool)
 		Assert(hashkey >= lasthashkey);
 #endif
 
-		_hash_doinsert(hspool->index, itup);
+		_hash_doinsert(hspool->index, itup, heapRel);
 	}
 }

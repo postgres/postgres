@@ -154,6 +154,8 @@ hash_identify(uint8 info)
 		case XLOG_HASH_UPDATE_META_PAGE:
 			id = "UPDATE_META_PAGE";
 			break;
+		case XLOG_HASH_VACUUM_ONE_PAGE:
+			id = "VACUUM_ONE_PAGE";
 	}
 
 	return id;

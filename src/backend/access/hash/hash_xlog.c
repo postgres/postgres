@@ -14,10 +14,15 @@
  */
 #include "postgres.h"
 
+#include "access/heapam_xlog.h"
 #include "access/bufmask.h"
 #include "access/hash.h"
 #include "access/hash_xlog.h"
 #include "access/xlogutils.h"
+#include "access/xlog.h"
+#include "access/transam.h"
+#include "storage/procarray.h"
+#include "miscadmin.h"
 
 /*
  * replay a hash index meta page
@@ -915,6 +920,235 @@ hash_xlog_update_meta_page(XLogReaderState *record)
 		UnlockReleaseBuffer(metabuf);
 }
 
+/*
+ * Get the latestRemovedXid from the heap pages pointed at by the index
+ * tuples being deleted. See also btree_xlog_delete_get_latestRemovedXid,
+ * on which this function is based.
+ */
+static TransactionId
+hash_xlog_vacuum_get_latestRemovedXid(XLogReaderState *record)
+{
+	xl_hash_vacuum_one_page	*xlrec;
+	OffsetNumber	*unused;
+	Buffer		ibuffer,
+				hbuffer;
+	Page		ipage,
+				hpage;
+	RelFileNode	rnode;
+	BlockNumber	blkno;
+	ItemId		iitemid,
+				hitemid;
+	IndexTuple	itup;
+	HeapTupleHeader	htuphdr;
+	BlockNumber	hblkno;
+	OffsetNumber	hoffnum;
+	TransactionId	latestRemovedXid = InvalidTransactionId;
+	int		i;
+	char *ptr;
+	Size len;
+
+	xlrec = (xl_hash_vacuum_one_page *) XLogRecGetData(record);
+
+	/*
+	 * If there's nothing running on the standby we don't need to derive a
+	 * full latestRemovedXid value, so use a fast path out of here.  This
+	 * returns InvalidTransactionId, and so will conflict with all HS
+	 * transactions; but since we just worked out that that's zero people,
+	 * it's OK.
+	 *
+	 * XXX There is a race condition here, which is that a new backend might
+	 * start just after we look.  If so, it cannot need to conflict, but this
+	 * coding will result in throwing a conflict anyway.
+	 */
+	if (CountDBBackends(InvalidOid) == 0)
+		return latestRemovedXid;
+
+	/*
+	 * Get index page.  If the DB is consistent, this should not fail, nor
+	 * should any of the heap page fetches below.  If one does, we return
+	 * InvalidTransactionId to cancel all HS transactions.  That's probably
+	 * overkill, but it's safe, and certainly better than panicking here.
+	 */
+	XLogRecGetBlockTag(record, 1, &rnode, NULL, &blkno);
+	ibuffer = XLogReadBufferExtended(rnode, MAIN_FORKNUM, blkno, RBM_NORMAL);
+
+	if (!BufferIsValid(ibuffer))
+		return InvalidTransactionId;
+	LockBuffer(ibuffer, HASH_READ);
+	ipage = (Page) BufferGetPage(ibuffer);
+
+	/*
+	 * Loop through the deleted index items to obtain the TransactionId from
+	 * the heap items they point to.
+	 */
+	ptr = XLogRecGetBlockData(record, 1, &len);
+
+	unused = (OffsetNumber *) ptr;
+
+	for (i = 0; i < xlrec->ntuples; i++)
+	{
+		/*
+		 * Identify the index tuple about to be deleted.
+		 */
+		iitemid = PageGetItemId(ipage, unused[i]);
+		itup = (IndexTuple) PageGetItem(ipage, iitemid);
+
+		/*
+		 * Locate the heap page that the index tuple points at
+		 */
+		hblkno = ItemPointerGetBlockNumber(&(itup->t_tid));
+		hbuffer = XLogReadBufferExtended(xlrec->hnode, MAIN_FORKNUM,
+										 hblkno, RBM_NORMAL);
+
+		if (!BufferIsValid(hbuffer))
+		{
+			UnlockReleaseBuffer(ibuffer);
+			return InvalidTransactionId;
+		}
+		LockBuffer(hbuffer, HASH_READ);
+		hpage = (Page) BufferGetPage(hbuffer);
+
+		/*
+		 * Look up the heap tuple header that the index tuple points at by
+		 * using the heap node supplied with the xlrec. We can't use
+		 * heap_fetch, since it uses ReadBuffer rather than XLogReadBuffer.
+		 * Note that we are not looking at tuple data here, just headers.
+		 */
+		hoffnum = ItemPointerGetOffsetNumber(&(itup->t_tid));
+		hitemid = PageGetItemId(hpage, hoffnum);
+
+		/*
+		 * Follow any redirections until we find something useful.
+		 */
+		while (ItemIdIsRedirected(hitemid))
+		{
+			hoffnum = ItemIdGetRedirect(hitemid);
+			hitemid = PageGetItemId(hpage, hoffnum);
+			CHECK_FOR_INTERRUPTS();
+		}
+
+		/*
+		 * If the heap item has storage, then read the header and use that to
+		 * set latestRemovedXid.
+		 *
+		 * Some LP_DEAD items may not be accessible, so we ignore them.
+		 */
+		if (ItemIdHasStorage(hitemid))
+		{
+			htuphdr = (HeapTupleHeader) PageGetItem(hpage, hitemid);
+			HeapTupleHeaderAdvanceLatestRemovedXid(htuphdr, &latestRemovedXid);
+		}
+		else if (ItemIdIsDead(hitemid))
+		{
+			/*
+			 * Conjecture: if hitemid is dead then it had xids before the xids
+			 * marked on LP_NORMAL items. So we just ignore this item and move
+			 * onto the next, for the purposes of calculating
+			 * latestRemovedxids.
+			 */
+		}
+		else
+			Assert(!ItemIdIsUsed(hitemid));
+
+		UnlockReleaseBuffer(hbuffer);
+	}
+
+	UnlockReleaseBuffer(ibuffer);
+
+	/*
+	 * If all heap tuples were LP_DEAD then we will be returning
+	 * InvalidTransactionId here, which avoids conflicts. This matches
+	 * existing logic which assumes that LP_DEAD tuples must already be older
+	 * than the latestRemovedXid on the cleanup record that set them as
+	 * LP_DEAD, hence must already have generated a conflict.
+	 */
+	return latestRemovedXid;
+}
+
+/*
+ * replay delete operation in hash index to remove
+ * tuples marked as DEAD during index tuple insertion.
+ */
+static void
+hash_xlog_vacuum_one_page(XLogReaderState *record)
+{
+	XLogRecPtr lsn = record->EndRecPtr;
+	xl_hash_vacuum_one_page *xldata;
+	Buffer buffer;
+	Buffer metabuf;
+	Page page;
+	XLogRedoAction action;
+
+	xldata = (xl_hash_vacuum_one_page *) XLogRecGetData(record);
+
+	/*
+	 * If we have any conflict processing to do, it must happen before we
+	 * update the page.
+	 *
+	 * Hash index records that are marked as LP_DEAD and being removed during
+	 * hash index tuple insertion can conflict with standby queries. You might
+	 * think that vacuum records would conflict as well, but we've handled
+	 * that already.  XLOG_HEAP2_CLEANUP_INFO records provide the highest xid
+	 * cleaned by the vacuum of the heap and so we can resolve any conflicts
+	 * just once when that arrives.  After that we know that no conflicts
+	 * exist from individual hash index vacuum records on that index.
+	 */
+	if (InHotStandby)
+	{
+		TransactionId latestRemovedXid =
+					hash_xlog_vacuum_get_latestRemovedXid(record);
+		RelFileNode rnode;
+
+		XLogRecGetBlockTag(record, 0, &rnode, NULL, NULL);
+		ResolveRecoveryConflictWithSnapshot(latestRemovedXid, rnode);
+	}
+
+	action = XLogReadBufferForRedoExtended(record, 0, RBM_NORMAL, true, &buffer);
+
+	if (action == BLK_NEEDS_REDO)
+	{
+		char *ptr;
+		Size len;
+
+		ptr = XLogRecGetBlockData(record, 0, &len);
+
+		page = (Page) BufferGetPage(buffer);
+
+		if (len > 0)
+		{
+			OffsetNumber *unused;
+			OffsetNumber *unend;
+
+			unused = (OffsetNumber *) ptr;
+			unend = (OffsetNumber *) ((char *) ptr + len);
+
+			if ((unend - unused) > 0)
+				PageIndexMultiDelete(page, unused, unend - unused);
+		}
+
+		PageSetLSN(page, lsn);
+		MarkBufferDirty(buffer);
+	}
+	if (BufferIsValid(buffer))
+		UnlockReleaseBuffer(buffer);
+
+	if (XLogReadBufferForRedo(record, 1, &metabuf) == BLK_NEEDS_REDO)
+	{
+		Page metapage;
+		HashMetaPage metap;
+
+		metapage = BufferGetPage(metabuf);
+		metap = HashPageGetMeta(metapage);
+
+		metap->hashm_ntuples -= xldata->ntuples;
+
+		PageSetLSN(metapage, lsn);
+		MarkBufferDirty(metabuf);
+	}
+	if (BufferIsValid(metabuf))
+		UnlockReleaseBuffer(metabuf);
+}
+
 void
 hash_redo(XLogReaderState *record)
 {
@@ -957,6 +1191,9 @@ hash_redo(XLogReaderState *record)
 			break;
 		case XLOG_HASH_UPDATE_META_PAGE:
 			hash_xlog_update_meta_page(record);
+			break;
+		case XLOG_HASH_VACUUM_ONE_PAGE:
+			hash_xlog_vacuum_one_page(record);
 			break;
 		default:
 			elog(PANIC, "hash_redo: unknown op code %u", info);
