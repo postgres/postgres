@@ -35,9 +35,9 @@
 #define lobits(addr) \
   ((unsigned long)(((addr)->e<<24) | ((addr)->f<<16) | ((addr)->g<<8) | ((addr)->h)))
 
-static unsigned char hex2_to_uchar(const char *str, const char *ptr);
+static unsigned char hex2_to_uchar(const unsigned char *str, const unsigned char *ptr);
 
-static const char hexlookup[128] = {
+static const signed char hexlookup[128] = {
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -58,16 +58,16 @@ static const char hexlookup[128] = {
  * the entire string, which is used only for error reporting.
  */
 static inline unsigned char
-hex2_to_uchar(const char *ptr, const char *str)
+hex2_to_uchar(const unsigned char *ptr, const unsigned char *str)
 {
 	unsigned char ret = 0;
-	char		lookup;
+	signed char lookup;
 
 	/* Handle the first character */
-	if (*ptr < 0)
+	if (*ptr > 127)
 		goto invalid_input;
 
-	lookup = hexlookup[(unsigned char) *ptr];
+	lookup = hexlookup[*ptr];
 	if (lookup < 0)
 		goto invalid_input;
 
@@ -76,10 +76,10 @@ hex2_to_uchar(const char *ptr, const char *str)
 	/* Move to the second character */
 	ptr++;
 
-	if (*ptr < 0)
+	if (*ptr > 127)
 		goto invalid_input;
 
-	lookup = hexlookup[(unsigned char) *ptr];
+	lookup = hexlookup[*ptr];
 	if (lookup < 0)
 		goto invalid_input;
 
@@ -103,8 +103,8 @@ invalid_input:
 Datum
 macaddr8_in(PG_FUNCTION_ARGS)
 {
-	const char *str = PG_GETARG_CSTRING(0);
-	const char *ptr = str;
+	const unsigned char *str = (unsigned char*) PG_GETARG_CSTRING(0);
+	const unsigned char *ptr = str;
 	macaddr8   *result;
 	unsigned char a = 0,
 				b = 0,
@@ -115,10 +115,10 @@ macaddr8_in(PG_FUNCTION_ARGS)
 				g = 0,
 				h = 0;
 	int			count = 0;
-	char		spacer = '\0';
+	unsigned char spacer = '\0';
 
 	/* skip leading spaces */
-	while (*ptr && isspace((unsigned char) *ptr))
+	while (*ptr && isspace(*ptr))
 		ptr++;
 
 	/* digits must always come in pairs */
@@ -191,9 +191,9 @@ macaddr8_in(PG_FUNCTION_ARGS)
 		/* allow trailing whitespace after if we have 6 or 8 bytes */
 		if (count == 6 || count == 8)
 		{
-			if (isspace((unsigned char) *ptr))
+			if (isspace(*ptr))
 			{
-				while (*++ptr && isspace((unsigned char) *ptr));
+				while (*++ptr && isspace(*ptr));
 
 				/* If we found a space and then non-space, it's invalid */
 				if (*ptr)
