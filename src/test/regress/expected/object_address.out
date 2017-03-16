@@ -67,6 +67,15 @@ WARNING:  error for sequence column: unsupported object type "sequence column"
 WARNING:  error for toast table column: unsupported object type "toast table column"
 WARNING:  error for view column: unsupported object type "view column"
 WARNING:  error for materialized view column: unsupported object type "materialized view column"
+-- miscellaneous other errors
+select * from pg_get_object_address('operator of access method', '{btree,integer_ops,1}', '{int4,bool}');
+ERROR:  operator 1 (int4, bool) of operator family integer_ops for access method btree does not exist
+select * from pg_get_object_address('operator of access method', '{btree,integer_ops,99}', '{int4,int4}');
+ERROR:  operator 99 (int4, int4) of operator family integer_ops for access method btree does not exist
+select * from pg_get_object_address('function of access method', '{btree,integer_ops,1}', '{int4,bool}');
+ERROR:  function 1 (int4, bool) of operator family integer_ops for access method btree does not exist
+select * from pg_get_object_address('function of access method', '{btree,integer_ops,99}', '{int4,int4}');
+ERROR:  function 99 (int4, int4) of operator family integer_ops for access method btree does not exist
 DO $$
 DECLARE
 	objtype text;

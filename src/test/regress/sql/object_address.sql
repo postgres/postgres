@@ -64,6 +64,12 @@ BEGIN
 END;
 $$;
 
+-- miscellaneous other errors
+select * from pg_get_object_address('operator of access method', '{btree,integer_ops,1}', '{int4,bool}');
+select * from pg_get_object_address('operator of access method', '{btree,integer_ops,99}', '{int4,int4}');
+select * from pg_get_object_address('function of access method', '{btree,integer_ops,1}', '{int4,bool}');
+select * from pg_get_object_address('function of access method', '{btree,integer_ops,99}', '{int4,int4}');
+
 DO $$
 DECLARE
 	objtype text;

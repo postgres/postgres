@@ -1552,7 +1552,7 @@ get_object_address_opf_member(ObjectType objtype,
 	ObjectAddress address;
 	ListCell   *cell;
 	List	   *copy;
-	char	   *typenames[2];
+	TypeName   *typenames[2];
 	Oid			typeoids[2];
 	int			membernum;
 	int			i;
@@ -1574,8 +1574,8 @@ get_object_address_opf_member(ObjectType objtype,
 	{
 		ObjectAddress typaddr;
 
-		typenames[i] = strVal(lfirst(cell));
-		typaddr = get_object_address_type(OBJECT_TYPE, castNode(TypeName, lfirst(cell)), missing_ok);
+		typenames[i] = castNode(TypeName, lfirst(cell));
+		typaddr = get_object_address_type(OBJECT_TYPE, typenames[i], missing_ok);
 		typeoids[i] = typaddr.objectId;
 		if (++i >= 2)
 			break;
@@ -1601,7 +1601,9 @@ get_object_address_opf_member(ObjectType objtype,
 						ereport(ERROR,
 								(errcode(ERRCODE_UNDEFINED_OBJECT),
 						  errmsg("operator %d (%s, %s) of %s does not exist",
-								 membernum, typenames[0], typenames[1],
+								 membernum,
+								 TypeNameToString(typenames[0]),
+								 TypeNameToString(typenames[1]),
 								 getObjectDescription(&famaddr))));
 				}
 				else
@@ -1630,7 +1632,9 @@ get_object_address_opf_member(ObjectType objtype,
 						ereport(ERROR,
 								(errcode(ERRCODE_UNDEFINED_OBJECT),
 						  errmsg("function %d (%s, %s) of %s does not exist",
-								 membernum, typenames[0], typenames[1],
+								 membernum,
+								 TypeNameToString(typenames[0]),
+								 TypeNameToString(typenames[1]),
 								 getObjectDescription(&famaddr))));
 				}
 				else
@@ -2023,7 +2027,7 @@ pg_get_object_address(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * get_object_name is pretty sensitive to the length its input lists;
+	 * get_object_address is pretty sensitive to the length its input lists;
 	 * check that they're what it wants.
 	 */
 	switch (type)
@@ -2064,7 +2068,7 @@ pg_get_object_address(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * Now build the Node type that get_object_name() expects for the given
+	 * Now build the Node type that get_object_address() expects for the given
 	 * type.
 	 */
 	switch (type)
