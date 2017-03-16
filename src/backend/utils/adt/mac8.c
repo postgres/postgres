@@ -35,9 +35,9 @@
 #define lobits(addr) \
   ((unsigned long)(((addr)->e<<24) | ((addr)->f<<16) | ((addr)->g<<8) | ((addr)->h)))
 
-static unsigned char hex2_to_uchar(const char *str, int offset);
+static unsigned char hex2_to_uchar(const char *str, const char *ptr);
 
-static const int hexlookup[128] = {
+static const char hexlookup[128] = {
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -48,19 +48,27 @@ static const int hexlookup[128] = {
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 };
 
+/*
+ * hex2_to_uchar - convert 2 hex digits to a byte (unsigned char)
+ *
+ * This will ereport() if the end of the string is reached ('\0' found), or if
+ * either character is not a valid hex digit.
+ *
+ * ptr is the pointer to where the digits to convert are in the string, str is
+ * the entire string, which is used only for error reporting.
+ */
 static inline unsigned char
-hex2_to_uchar(const char *str, int offset)
+hex2_to_uchar(const char *ptr, const char *str)
 {
 	unsigned char ret = 0;
-	int			lookup;
-	const char *ptr = str + offset;
+	char		lookup;
 
 	/* Handle the first character */
-	if (*ptr < 0 || *ptr >= 127)
+	if (*ptr < 0)
 		goto invalid_input;
 
 	lookup = hexlookup[(unsigned char) *ptr];
-	if (lookup < 0 || lookup > 15)
+	if (lookup < 0)
 		goto invalid_input;
 
 	ret = lookup << 4;
@@ -68,11 +76,11 @@ hex2_to_uchar(const char *str, int offset)
 	/* Move to the second character */
 	ptr++;
 
-	if (*ptr < 0 || *ptr > 127)
+	if (*ptr < 0)
 		goto invalid_input;
 
 	lookup = hexlookup[(unsigned char) *ptr];
-	if (lookup < 0 || lookup > 15)
+	if (lookup < 0)
 		goto invalid_input;
 
 	ret += lookup;
@@ -128,28 +136,28 @@ macaddr8_in(PG_FUNCTION_ARGS)
 		switch (count)
 		{
 			case 1:
-				a = hex2_to_uchar(str, ptr - str);
+				a = hex2_to_uchar(ptr, str);
 				break;
 			case 2:
-				b = hex2_to_uchar(str, ptr - str);
+				b = hex2_to_uchar(ptr, str);
 				break;
 			case 3:
-				c = hex2_to_uchar(str, ptr - str);
+				c = hex2_to_uchar(ptr, str);
 				break;
 			case 4:
-				d = hex2_to_uchar(str, ptr - str);
+				d = hex2_to_uchar(ptr, str);
 				break;
 			case 5:
-				e = hex2_to_uchar(str, ptr - str);
+				e = hex2_to_uchar(ptr, str);
 				break;
 			case 6:
-				f = hex2_to_uchar(str, ptr - str);
+				f = hex2_to_uchar(ptr, str);
 				break;
 			case 7:
-				g = hex2_to_uchar(str, ptr - str);
+				g = hex2_to_uchar(ptr, str);
 				break;
 			case 8:
-				h = hex2_to_uchar(str, ptr - str);
+				h = hex2_to_uchar(ptr, str);
 				break;
 			default:
 				/* must be trailing garbage... */
