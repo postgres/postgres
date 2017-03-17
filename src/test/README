@@ -8,6 +8,9 @@ individual contrib/ modules and in src/bin.
 Not all these tests get run by "make check". Check src/test/Makefile to see
 which tests get run automatically.
 
+authentication/
+  Tests for authentication
+
 examples/
   Demonstration programs for libpq that double as regression tests via
   "make check"
