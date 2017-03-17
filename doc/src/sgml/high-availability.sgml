@@ -76,9 +76,7 @@
 
  <para>
   The remainder of this section outlines various failover, replication,
-  and load balancing solutions.  A <ulink
-  url="http://www.postgres-r.org/documentation/terms">glossary</ulink> is
-  also available.
+  and load balancing solutions.
  </para>
 
  <sect1 id="different-replication-solutions">
