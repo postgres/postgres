@@ -14,10 +14,6 @@
 #include "postgres.h"
 
 
-static BOOL pgwin32_get_dynamic_tokeninfo(HANDLE token,
-							TOKEN_INFORMATION_CLASS class, char **InfoBuffer,
-							  char *errbuf, int errsize);
-
 /*
  * Returns nonzero if the current user has administrative privileges,
  * or zero if not.
@@ -28,33 +24,11 @@ static BOOL pgwin32_get_dynamic_tokeninfo(HANDLE token,
 int
 pgwin32_is_admin(void)
 {
-	HANDLE		AccessToken;
-	char	   *InfoBuffer = NULL;
-	char		errbuf[256];
-	PTOKEN_GROUPS Groups;
 	PSID		AdministratorsSid;
 	PSID		PowerUsersSid;
 	SID_IDENTIFIER_AUTHORITY NtAuthority = {SECURITY_NT_AUTHORITY};
-	UINT		x;
-	BOOL		success;
-
-	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_READ, &AccessToken))
-	{
-		write_stderr("could not open process token: error code %lu\n",
-					 GetLastError());
-		exit(1);
-	}
-
-	if (!pgwin32_get_dynamic_tokeninfo(AccessToken, TokenGroups,
-									   &InfoBuffer, errbuf, sizeof(errbuf)))
-	{
-		write_stderr("%s", errbuf);
-		exit(1);
-	}
-
-	Groups = (PTOKEN_GROUPS) InfoBuffer;
-
-	CloseHandle(AccessToken);
+	BOOL		IsAdministrators;
+	BOOL		IsPowerUsers;
 
 	if (!AllocateAndInitializeSid(&NtAuthority, 2,
 		 SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0,
@@ -74,31 +48,34 @@ pgwin32_is_admin(void)
 		exit(1);
 	}
 
-	success = FALSE;
-
-	for (x = 0; x < Groups->GroupCount; x++)
+	if (!CheckTokenMembership(NULL, AdministratorsSid, &IsAdministrators) ||
+		!CheckTokenMembership(NULL, PowerUsersSid, &IsPowerUsers))
 	{
-		if ((EqualSid(AdministratorsSid, Groups->Groups[x].Sid) && (Groups->Groups[x].Attributes & SE_GROUP_ENABLED)) ||
-			(EqualSid(PowerUsersSid, Groups->Groups[x].Sid) && (Groups->Groups[x].Attributes & SE_GROUP_ENABLED)))
-		{
-			success = TRUE;
-			break;
-		}
+		write_stderr("could not check access token membership: error code %lu\n",
+					 GetLastError());
+		exit(1);
 	}
 
-	free(InfoBuffer);
 	FreeSid(AdministratorsSid);
 	FreeSid(PowerUsersSid);
-	return success;
+
+	if (IsAdministrators || IsPowerUsers)
+		return 1;
+	else
+		return 0;
 }
 
 /*
  * We consider ourselves running as a service if one of the following is
  * true:
  *
- * 1) We are running as Local System (only used by services)
+ * 1) We are running as LocalSystem (only used by services)
  * 2) Our token contains SECURITY_SERVICE_RID (automatically added to the
  *	  process token by the SCM when starting a service)
+ *
+ * The check for LocalSystem is needed, because surprisingly, if a service
+ * is running as LocalSystem, it does not have SECURITY_SERVICE_RID in its
+ * process token.
  *
  * Return values:
  *	 0 = Not service
@@ -113,136 +90,62 @@ int
 pgwin32_is_service(void)
 {
 	static int	_is_service = -1;
-	HANDLE		AccessToken;
-	char	   *InfoBuffer = NULL;
-	char		errbuf[256];
-	PTOKEN_GROUPS Groups;
-	PTOKEN_USER User;
+	BOOL		IsMember;
 	PSID		ServiceSid;
 	PSID		LocalSystemSid;
 	SID_IDENTIFIER_AUTHORITY NtAuthority = {SECURITY_NT_AUTHORITY};
-	UINT		x;
 
 	/* Only check the first time */
 	if (_is_service != -1)
 		return _is_service;
 
-	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_READ, &AccessToken))
-	{
-		fprintf(stderr, "could not open process token: error code %lu\n",
-				GetLastError());
-		return -1;
-	}
-
-	/* First check for local system */
-	if (!pgwin32_get_dynamic_tokeninfo(AccessToken, TokenUser, &InfoBuffer,
-									   errbuf, sizeof(errbuf)))
-	{
-		fprintf(stderr, "%s", errbuf);
-		return -1;
-	}
-
-	User = (PTOKEN_USER) InfoBuffer;
-
+	/* First check for LocalSystem */
 	if (!AllocateAndInitializeSid(&NtAuthority, 1,
 							  SECURITY_LOCAL_SYSTEM_RID, 0, 0, 0, 0, 0, 0, 0,
 								  &LocalSystemSid))
 	{
 		fprintf(stderr, "could not get SID for local system account\n");
-		CloseHandle(AccessToken);
 		return -1;
 	}
 
-	if (EqualSid(LocalSystemSid, User->User.Sid))
+	if (!CheckTokenMembership(NULL, LocalSystemSid, &IsMember))
 	{
+		fprintf(stderr, "could not check access token membership: error code %lu\n",
+				GetLastError());
 		FreeSid(LocalSystemSid);
-		free(InfoBuffer);
-		CloseHandle(AccessToken);
+		return -1;
+	}
+	FreeSid(LocalSystemSid);
+
+	if (IsMember)
+	{
 		_is_service = 1;
 		return _is_service;
 	}
 
-	FreeSid(LocalSystemSid);
-	free(InfoBuffer);
-
-	/* Now check for group SID */
-	if (!pgwin32_get_dynamic_tokeninfo(AccessToken, TokenGroups, &InfoBuffer,
-									   errbuf, sizeof(errbuf)))
-	{
-		fprintf(stderr, "%s", errbuf);
-		return -1;
-	}
-
-	Groups = (PTOKEN_GROUPS) InfoBuffer;
-
+	/* Check for service group membership */
 	if (!AllocateAndInitializeSid(&NtAuthority, 1,
 								  SECURITY_SERVICE_RID, 0, 0, 0, 0, 0, 0, 0,
 								  &ServiceSid))
 	{
-		fprintf(stderr, "could not get SID for service group\n");
-		free(InfoBuffer);
-		CloseHandle(AccessToken);
+		fprintf(stderr, "could not get SID for service group: error code %lu\n",
+				GetLastError());
 		return -1;
 	}
 
-	_is_service = 0;
-	for (x = 0; x < Groups->GroupCount; x++)
+	if (!CheckTokenMembership(NULL, ServiceSid, &IsMember))
 	{
-		if (EqualSid(ServiceSid, Groups->Groups[x].Sid))
-		{
-			_is_service = 1;
-			break;
-		}
+		fprintf(stderr, "could not check access token membership: error code %lu\n",
+				GetLastError());
+		FreeSid(ServiceSid);
+		return -1;
 	}
-
-	free(InfoBuffer);
 	FreeSid(ServiceSid);
 
-	CloseHandle(AccessToken);
+	if (IsMember)
+		_is_service = 1;
+	else
+		_is_service = 0;
 
 	return _is_service;
-}
-
-
-/*
- * Call GetTokenInformation() on a token and return a dynamically sized
- * buffer with the information in it. This buffer must be free():d by
- * the calling function!
- */
-static BOOL
-pgwin32_get_dynamic_tokeninfo(HANDLE token, TOKEN_INFORMATION_CLASS class,
-							  char **InfoBuffer, char *errbuf, int errsize)
-{
-	DWORD		InfoBufferSize;
-
-	if (GetTokenInformation(token, class, NULL, 0, &InfoBufferSize))
-	{
-		snprintf(errbuf, errsize, "could not get token information: got zero size\n");
-		return FALSE;
-	}
-
-	if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
-	{
-		snprintf(errbuf, errsize, "could not get token information: error code %lu\n",
-				 GetLastError());
-		return FALSE;
-	}
-
-	*InfoBuffer = malloc(InfoBufferSize);
-	if (*InfoBuffer == NULL)
-	{
-		snprintf(errbuf, errsize, "could not allocate %d bytes for token information\n",
-				 (int) InfoBufferSize);
-		return FALSE;
-	}
-
-	if (!GetTokenInformation(token, class, *InfoBuffer,
-							 InfoBufferSize, &InfoBufferSize))
-	{
-		snprintf(errbuf, errsize, "could not get token information: error code %lu\n",
-				 GetLastError());
-		return FALSE;
-	}
-
-	return TRUE;
 }
