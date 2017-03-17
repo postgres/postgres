@@ -24,6 +24,7 @@
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
+#include "storage/checksum.h"
 #include "utils/builtins.h"
 #include "utils/pg_lsn.h"
 #include "utils/rel.h"
@@ -279,4 +280,40 @@ page_header(PG_FUNCTION_ARGS)
 	result = HeapTupleGetDatum(tuple);
 
 	PG_RETURN_DATUM(result);
+}
+
+/*
+ * page_checksum
+ *
+ * Compute checksum of a raw page
+ */
+
+PG_FUNCTION_INFO_V1(page_checksum);
+
+Datum
+page_checksum(PG_FUNCTION_ARGS)
+{
+	bytea	   *raw_page = PG_GETARG_BYTEA_P(0);
+	uint32		blkno = PG_GETARG_INT32(1);
+	int			raw_page_size;
+	PageHeader	page;
+
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 (errmsg("must be superuser to use raw page functions"))));
+
+	raw_page_size = VARSIZE(raw_page) - VARHDRSZ;
+
+	/*
+	 * Check that the supplied page is of the right size.
+	 */
+	if (raw_page_size != BLCKSZ)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("incorrect size of input page (%d bytes)", raw_page_size)));
+
+	page = (PageHeader) VARDATA(raw_page);
+
+	PG_RETURN_INT16(pg_checksum_page((char *)page, blkno));
 }
