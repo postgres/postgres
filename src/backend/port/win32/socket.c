@@ -523,11 +523,16 @@ pgwin32_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, c
 	FD_ZERO(&outwritefds);
 
 	/*
-	 * Write FDs are different in the way that it is only flagged by
-	 * WSASelectEvent() if we have tried to write to them first. So try an
-	 * empty write
+	 * Windows does not guarantee to log an FD_WRITE network event indicating
+	 * that more data can be sent unless the previous send() failed with
+	 * WSAEWOULDBLOCK.  While our caller might well have made such a call, we
+	 * cannot assume that here.  Therefore, if waiting for write-ready, force
+	 * the issue by doing a dummy send().  If the dummy send() succeeds,
+	 * assume that the socket is in fact write-ready, and return immediately.
+	 * Also, if it fails with something other than WSAEWOULDBLOCK, return a
+	 * write-ready indication to let our caller deal with the error condition.
 	 */
-	if (writefds)
+	if (writefds != NULL)
 	{
 		for (i = 0; i < writefds->fd_count; i++)
 		{
@@ -539,20 +544,11 @@ pgwin32_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, c
 			buf.len = 0;
 
 			r = WSASend(writefds->fd_array[i], &buf, 1, &sent, 0, NULL, NULL);
-			if (r == 0)			/* Completed - means things are fine! */
+			if (r == 0 || WSAGetLastError() != WSAEWOULDBLOCK)
 				FD_SET(writefds->fd_array[i], &outwritefds);
-
-			else
-			{					/* Not completed */
-				if (WSAGetLastError() != WSAEWOULDBLOCK)
-
-					/*
-					 * Not completed, and not just "would block", so an error
-					 * occurred
-					 */
-					FD_SET(writefds->fd_array[i], &outwritefds);
-			}
 		}
+
+		/* If we found any write-ready sockets, just return them immediately */
 		if (outwritefds.fd_count > 0)
 		{
 			memcpy(writefds, &outwritefds, sizeof(fd_set));

@@ -1401,6 +1401,38 @@ WaitEventSetWaitBlock(WaitEventSet *set, int cur_timeout,
 			WaitEventAdjustWin32(set, cur_event);
 			cur_event->reset = false;
 		}
+
+		/*
+		 * Windows does not guarantee to log an FD_WRITE network event
+		 * indicating that more data can be sent unless the previous send()
+		 * failed with WSAEWOULDBLOCK.  While our caller might well have made
+		 * such a call, we cannot assume that here.  Therefore, if waiting for
+		 * write-ready, force the issue by doing a dummy send().  If the dummy
+		 * send() succeeds, assume that the socket is in fact write-ready, and
+		 * return immediately.  Also, if it fails with something other than
+		 * WSAEWOULDBLOCK, return a write-ready indication to let our caller
+		 * deal with the error condition.
+		 */
+		if (cur_event->events & WL_SOCKET_WRITEABLE)
+		{
+			char		c;
+			WSABUF		buf;
+			DWORD		sent;
+			int			r;
+
+			buf.buf = &c;
+			buf.len = 0;
+
+			r = WSASend(cur_event->fd, &buf, 1, &sent, 0, NULL, NULL);
+			if (r == 0 || WSAGetLastError() != WSAEWOULDBLOCK)
+			{
+				occurred_events->pos = cur_event->pos;
+				occurred_events->user_data = cur_event->user_data;
+				occurred_events->events = WL_SOCKET_WRITEABLE;
+				occurred_events->fd = cur_event->fd;
+				return 1;
+			}
+		}
 	}
 
 	/*
