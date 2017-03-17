@@ -364,6 +364,52 @@ scram_build_verifier(const char *username, const char *password,
 	return psprintf("scram-sha-256:%s:%d:%s:%s", encoded_salt, iterations, storedkey_hex, serverkey_hex);
 }
 
+/*
+ * Verify a plaintext password against a SCRAM verifier.  This is used when
+ * performing plaintext password authentication for a user that has a SCRAM
+ * verifier stored in pg_authid.
+ */
+bool
+scram_verify_plain_password(const char *username, const char *password,
+							const char *verifier)
+{
+	char	   *encoded_salt;
+	char	   *salt;
+	int			saltlen;
+	int			iterations;
+	uint8		stored_key[SCRAM_KEY_LEN];
+	uint8		server_key[SCRAM_KEY_LEN];
+	uint8		computed_key[SCRAM_KEY_LEN];
+
+	if (!parse_scram_verifier(verifier, &encoded_salt, &iterations,
+							  stored_key, server_key))
+	{
+		/*
+		 * The password looked like a SCRAM verifier, but could not be
+		 * parsed.
+		 */
+		elog(LOG, "invalid SCRAM verifier for user \"%s\"", username);
+		return false;
+	}
+
+	salt = palloc(pg_b64_dec_len(strlen(encoded_salt)));
+	saltlen = pg_b64_decode(encoded_salt, strlen(encoded_salt), salt);
+	if (saltlen == -1)
+	{
+		elog(LOG, "invalid SCRAM verifier for user \"%s\"", username);
+		return false;
+	}
+
+	/* Compute Server key based on the user-supplied plaintext password */
+	scram_ClientOrServerKey(password, salt, saltlen, iterations,
+							SCRAM_SERVER_KEY_NAME, computed_key);
+
+	/*
+	 * Compare the verifier's Server Key with the one computed from the
+	 * user-supplied password.
+	 */
+	return memcmp(computed_key, server_key, SCRAM_KEY_LEN) == 0;
+}
 
 /*
  * Check if given verifier can be used for SCRAM authentication.

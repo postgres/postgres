@@ -31,5 +31,7 @@ extern char *scram_build_verifier(const char *username,
 					 const char *password,
 					 int iterations);
 extern bool is_scram_verifier(const char *verifier);
+extern bool scram_verify_plain_password(const char *username,
+							const char *password, const char *verifier);
 
 #endif   /* PG_SCRAM_H */
