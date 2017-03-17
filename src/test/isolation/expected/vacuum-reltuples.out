@@ -3,7 +3,6 @@ Parsed test spec with 2 sessions
 starting permutation: modify vac stats
 step modify: 
     insert into smalltbl select max(id)+1 from smalltbl;
-    delete from smalltbl where id in (select min(id) from smalltbl);
 
 step vac: 
     vacuum smalltbl;
@@ -14,23 +13,22 @@ step stats:
 
 relpages       reltuples      
 
-1              20             
+1              21             
 
 starting permutation: modify open fetch1 vac close stats
 step modify: 
     insert into smalltbl select max(id)+1 from smalltbl;
-    delete from smalltbl where id in (select min(id) from smalltbl);
 
 step open: 
     begin;
-    declare c1 cursor for select * from smalltbl;
+    declare c1 cursor for select 1 as dummy from smalltbl;
 
 step fetch1: 
     fetch next from c1;
 
-id             
+dummy          
 
-2              
+1              
 step vac: 
     vacuum smalltbl;
 
@@ -48,7 +46,6 @@ relpages       reltuples
 starting permutation: modify vac stats
 step modify: 
     insert into smalltbl select max(id)+1 from smalltbl;
-    delete from smalltbl where id in (select min(id) from smalltbl);
 
 step vac: 
     vacuum smalltbl;
@@ -59,4 +56,4 @@ step stats:
 
 relpages       reltuples      
 
-1              20             
+1              21             
