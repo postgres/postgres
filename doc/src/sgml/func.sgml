@@ -18163,7 +18163,7 @@ SELECT set_config('log_statement_stats', 'off', false);
     The functions shown in <xref
     linkend="functions-admin-signal-table"> send control signals to
     other server processes.  Use of these functions is restricted to
-    superusers by default but access may be granted to others with the
+    superusers by default but access may be granted to others using
     <command>GRANT</command>, with noted exceptions.
    </para>
 
