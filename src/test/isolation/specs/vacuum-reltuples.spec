@@ -1,6 +1,10 @@
 # Test for vacuum's handling of reltuples when pages are skipped due
 # to page pins. We absolutely need to avoid setting reltuples=0 in
 # such cases, since that interferes badly with planning.
+#
+# Expected result in second permutation is 20 tuples rather than 21 as
+# for the others, because vacuum should leave the previous result
+# (from before the insert) in place.
 
 setup {
     create table smalltbl
@@ -18,7 +22,7 @@ teardown {
 session "worker"
 step "open" {
     begin;
-    declare c1 cursor for select * from smalltbl;
+    declare c1 cursor for select 1 as dummy from smalltbl;
 }
 step "fetch1" {
     fetch next from c1;
@@ -37,7 +41,6 @@ step "vac" {
 }
 step "modify" {
     insert into smalltbl select max(id)+1 from smalltbl;
-    delete from smalltbl where id in (select min(id) from smalltbl);
 }
 
 permutation "modify" "vac" "stats"
