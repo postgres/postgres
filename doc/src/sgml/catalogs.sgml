@@ -1893,7 +1893,7 @@
        All transaction IDs before this one have been replaced with a permanent
        (<quote>frozen</>) transaction ID in this table.  This is used to track
        whether the table needs to be vacuumed in order to prevent transaction
-       ID wraparound or to allow <literal>pg_clog</> to be shrunk.  Zero
+       ID wraparound or to allow <literal>pg_xact</> to be shrunk.  Zero
        (<symbol>InvalidTransactionId</symbol>) if the relation is not a table.
       </entry>
      </row>
@@ -2570,7 +2570,7 @@
        All transaction IDs before this one have been replaced with a permanent
        (<quote>frozen</>) transaction ID in this database.  This is used to
        track whether the database needs to be vacuumed in order to prevent
-       transaction ID wraparound or to allow <literal>pg_clog</> to be shrunk.
+       transaction ID wraparound or to allow <literal>pg_xact</> to be shrunk.
        It is the minimum of the per-table
        <structname>pg_class</>.<structfield>relfrozenxid</> values.
       </entry>

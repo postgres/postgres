@@ -256,12 +256,12 @@ PostgreSQL documentation
 
      <para>
       A safe value can be determined by looking for the numerically largest
-      file name in the directory <filename>pg_clog</> under the data directory,
+      file name in the directory <filename>pg_xact</> under the data directory,
       adding one,
       and then multiplying by 1048576 (0x100000).  Note that the file names are in
       hexadecimal.  It is usually easiest to specify the option value in
       hexadecimal too. For example, if <filename>0011</> is the largest entry
-      in <filename>pg_clog</>, <literal>-x 0x1200000</> will work (five
+      in <filename>pg_xact</>, <literal>-x 0x1200000</> will work (five
       trailing zeroes provide the proper multiplier).
      </para>
     </listitem>

@@ -1379,7 +1379,7 @@ FinishPreparedTransaction(const char *gid, bool isCommit)
 	/*
 	 * The order of operations here is critical: make the XLOG entry for
 	 * commit or abort, then mark the transaction committed or aborted in
-	 * pg_clog, then remove its PGPROC from the global ProcArray (which means
+	 * pg_xact, then remove its PGPROC from the global ProcArray (which means
 	 * TransactionIdIsInProgress will stop saying the prepared xact is in
 	 * progress), then run the post-commit or post-abort callbacks. The
 	 * callbacks will release the locks the transaction held.
@@ -2093,7 +2093,7 @@ RecordTransactionCommitPrepared(TransactionId xid,
 	/* Flush XLOG to disk */
 	XLogFlush(recptr);
 
-	/* Mark the transaction committed in pg_clog */
+	/* Mark the transaction committed in pg_xact */
 	TransactionIdCommitTree(xid, nchildren, children);
 
 	/* Checkpoint can proceed now */

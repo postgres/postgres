@@ -331,17 +331,17 @@ of the xid fields is atomic, so assuming it for xmin as well is no extra
 risk.
 
 
-pg_clog and pg_subtrans
+pg_xact and pg_subtrans
 -----------------------
 
-pg_clog and pg_subtrans are permanent (on-disk) storage of transaction related
+pg_xact and pg_subtrans are permanent (on-disk) storage of transaction related
 information.  There is a limited number of pages of each kept in memory, so
 in many cases there is no need to actually read from disk.  However, if
 there's a long running transaction or a backend sitting idle with an open
 transaction, it may be necessary to be able to read and write this information
 from disk.  They also allow information to be permanent across server restarts.
 
-pg_clog records the commit status for each transaction that has been assigned
+pg_xact records the commit status for each transaction that has been assigned
 an XID.  A transaction can be in progress, committed, aborted, or
 "sub-committed".  This last state means that it's a subtransaction that's no
 longer running, but its parent has not updated its state yet.  It is not
@@ -381,9 +381,9 @@ each transaction we keep a "cache" of Xids that are known to be part of the
 transaction tree, so we can skip looking at pg_subtrans unless we know the
 cache has been overflowed.  See storage/ipc/procarray.c for the gory details.
 
-slru.c is the supporting mechanism for both pg_clog and pg_subtrans.  It
+slru.c is the supporting mechanism for both pg_xact and pg_subtrans.  It
 implements the LRU policy for in-memory buffer pages.  The high-level routines
-for pg_clog are implemented in transam.c, while the low-level functions are in
+for pg_xact are implemented in transam.c, while the low-level functions are in
 clog.c.  pg_subtrans is contained completely in subtrans.c.
 
 

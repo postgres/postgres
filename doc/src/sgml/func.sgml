@@ -15616,7 +15616,7 @@ SELECT * FROM pg_ls_dir('.') WITH ORDINALITY AS t(ls,n);
  postmaster.pid  |  9
  pg_ident.conf   | 10
  global          | 11
- pg_clog         | 12
+ pg_xact         | 12
  pg_snapshots    | 13
  pg_multixact    | 14
  PG_VERSION      | 15

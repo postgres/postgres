@@ -197,7 +197,6 @@ static const char *backend_options = "--single -F -O -j -c search_path=pg_catalo
 static const char *const subdirs[] = {
 	"global",
 	"pg_wal/archive_status",
-	"pg_clog",
 	"pg_commit_ts",
 	"pg_dynshmem",
 	"pg_notify",
@@ -214,6 +213,7 @@ static const char *const subdirs[] = {
 	"pg_tblspc",
 	"pg_stat",
 	"pg_stat_tmp",
+	"pg_xact",
 	"pg_logical",
 	"pg_logical/snapshots",
 	"pg_logical/mappings"

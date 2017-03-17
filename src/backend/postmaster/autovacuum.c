@@ -2472,7 +2472,7 @@ deleted:
 	 */
 
 	/*
-	 * Update pg_database.datfrozenxid, and truncate pg_clog if possible. We
+	 * Update pg_database.datfrozenxid, and truncate pg_xact if possible. We
 	 * only need to do this once, not after each table.
 	 *
 	 * Even if we didn't vacuum anything, it may still be important to do

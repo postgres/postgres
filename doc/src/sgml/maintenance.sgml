@@ -527,18 +527,18 @@
    <para>
     The sole disadvantage of increasing <varname>autovacuum_freeze_max_age</>
     (and <varname>vacuum_freeze_table_age</> along with it)
-    is that the <filename>pg_clog</> subdirectory of the database cluster
+    is that the <filename>pg_xact</> subdirectory of the database cluster
     will take more space, because it must store the commit status of all
     transactions back to the <varname>autovacuum_freeze_max_age</> horizon.
     The commit status uses two bits per transaction, so if
     <varname>autovacuum_freeze_max_age</> is set to its maximum allowed
-    value of two billion, <filename>pg_clog</> can be expected to
+    value of two billion, <filename>pg_xact</> can be expected to
     grow to about half a gigabyte.  If this is trivial compared to your
     total database size, setting <varname>autovacuum_freeze_max_age</> to
     its maximum allowed value is recommended.  Otherwise, set it depending
-    on what you are willing to allow for <filename>pg_clog</> storage.
+    on what you are willing to allow for <filename>pg_xact</> storage.
     (The default, 200 million transactions, translates to about 50MB of
-    <filename>pg_clog</> storage.)
+    <filename>pg_xact</> storage.)
    </para>
 
    <para>

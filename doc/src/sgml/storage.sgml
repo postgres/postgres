@@ -78,11 +78,6 @@ Item
 </row>
 
 <row>
- <entry><filename>pg_clog</></entry>
- <entry>Subdirectory containing transaction commit status data</entry>
-</row>
-
-<row>
  <entry><filename>pg_dynshmem</></entry>
  <entry>Subdirectory containing files used by the dynamic shared memory
   subsystem</entry>
@@ -149,6 +144,11 @@ Item
 <row>
  <entry><filename>pg_wal</></entry>
  <entry>Subdirectory containing WAL (Write Ahead Log) files</entry>
+</row>
+
+<row>
+ <entry><filename>pg_xact</></entry>
+ <entry>Subdirectory containing transaction commit status data</entry>
 </row>
 
 <row>

@@ -229,7 +229,7 @@ PostgreSQL documentation
     </step>
     <step>
      <para>
-      Copy all other files such as <filename>pg_clog</filename> and
+      Copy all other files such as <filename>pg_xact</filename> and
       configuration files from the source cluster to the target cluster
       (everything except the relation files).
      </para>

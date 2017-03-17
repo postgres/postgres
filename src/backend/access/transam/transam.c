@@ -224,7 +224,7 @@ TransactionIdDidAbort(TransactionId transactionId)
  *		True iff transaction associated with the identifier is currently
  *		known to have either committed or aborted.
  *
- * This does NOT look into pg_clog but merely probes our local cache
+ * This does NOT look into pg_xact but merely probes our local cache
  * (and so it's not named TransactionIdDidComplete, which would be the
  * appropriate name for a function that worked that way).  The intended
  * use is just to short-circuit TransactionIdIsInProgress calls when doing

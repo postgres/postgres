@@ -382,10 +382,10 @@ tar -cf backup.tar /usr/local/pgsql/data
       directories. This will <emphasis>not</> work because the
       information contained in these files is not usable without
       the commit log files,
-      <filename>pg_clog/*</filename>, which contain the commit status of
+      <filename>pg_xact/*</filename>, which contain the commit status of
       all transactions. A table file is only usable with this
       information. Of course it is also impossible to restore only a
-      table and the associated <filename>pg_clog</filename> data
+      table and the associated <filename>pg_xact</filename> data
       because that would render all other tables in the database
       cluster useless.  So file system backups only work for complete
       backup and restoration of an entire database cluster.

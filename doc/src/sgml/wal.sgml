@@ -201,7 +201,7 @@
     </listitem>
     <listitem>
      <para>
-      Internal data structures such as <filename>pg_clog</filename>, <filename>pg_subtrans</filename>, <filename>pg_multixact</filename>,
+      Internal data structures such as <filename>pg_xact</filename>, <filename>pg_subtrans</filename>, <filename>pg_multixact</filename>,
       <filename>pg_serial</filename>, <filename>pg_notify</filename>, <filename>pg_stat</filename>, <filename>pg_snapshots</filename> are not directly
       checksummed, nor are pages protected by full page writes. However, where
       such data structures are persistent, WAL records are written that allow

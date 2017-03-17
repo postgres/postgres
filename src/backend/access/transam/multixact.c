@@ -3,7 +3,7 @@
  * multixact.c
  *		PostgreSQL multi-transaction-log manager
  *
- * The pg_multixact manager is a pg_clog-like manager that stores an array of
+ * The pg_multixact manager is a pg_xact-like manager that stores an array of
  * MultiXactMember for each MultiXactId.  It is a fundamental part of the
  * shared-row-lock implementation.  Each MultiXactMember is comprised of a
  * TransactionId and a set of flag bits.  The name is a bit historical:

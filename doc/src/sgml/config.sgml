@@ -6004,7 +6004,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
 
        <para>
         Vacuum also allows removal of old files from the
-        <filename>pg_clog</> subdirectory, which is why the default
+        <filename>pg_xact</> subdirectory, which is why the default
         is a relatively low 200 million transactions.
         This parameter can only be set at server start, but the setting
         can be reduced for individual tables by

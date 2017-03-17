@@ -338,11 +338,17 @@ check_data_dir(ClusterInfo *cluster)
 	check_single_dir(pg_data, "pg_tblspc");
 	check_single_dir(pg_data, "pg_twophase");
 
-	/* pg_xlog has been renamed to pg_wal in post-10 cluster */
+	/* pg_xlog has been renamed to pg_wal in v10 */
 	if (GET_MAJOR_VERSION(cluster->major_version) < 1000)
 		check_single_dir(pg_data, "pg_xlog");
 	else
 		check_single_dir(pg_data, "pg_wal");
+
+	/* pg_clog has been renamed to pg_xact in v10 */
+	if (GET_MAJOR_VERSION(cluster->major_version) < 1000)
+		check_single_dir(pg_data, "pg_clog");
+	else
+		check_single_dir(pg_data, "pg_xact");
 }
 
 
