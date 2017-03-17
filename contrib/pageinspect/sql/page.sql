@@ -22,6 +22,8 @@ SELECT octet_length(get_raw_page('test1', 'xxx', 0));
 
 SELECT get_raw_page('test1', 0) = get_raw_page('test1', 'main', 0);
 
+SELECT pagesize, version FROM page_header(get_raw_page('test1', 0));
+
 SELECT tuple_data_split('test1'::regclass, t_data, t_infomask, t_infomask2, t_bits)
     FROM heap_page_items(get_raw_page('test1', 0));
 
