@@ -220,4 +220,12 @@ TRUNCATE othertable CASCADE;
    considered and compared with other implementations if necessary.
   </para>
  </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-delete"></member>
+  </simplelist>
+ </refsect1>
 </refentry>
