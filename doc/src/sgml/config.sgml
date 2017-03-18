@@ -1187,7 +1187,7 @@ include_dir 'conf.d'
       </term>
       <listitem>
        <para>
-        When a password is specified in <xref linkend="sql-createuser"> or
+        When a password is specified in <xref linkend="sql-createrole"> or
         <xref linkend="sql-alterrole"> without writing either <literal>ENCRYPTED</>
         or <literal>UNENCRYPTED</>, this parameter determines whether the
         password is to be encrypted. The default value is <literal>md5</>, which
@@ -1196,7 +1196,7 @@ include_dir 'conf.d'
         aliases for <literal>md5</> and <literal>plain</>, respectively.  Setting
         this parameter to <literal>scram</> will encrypt the password with
         SCRAM-SHA-256.
-       </para>       
+       </para>
       </listitem>
      </varlistentry>
 
