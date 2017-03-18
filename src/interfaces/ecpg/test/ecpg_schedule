@@ -46,7 +46,6 @@ test: sql/indicators
 test: sql/oldexec
 test: sql/quote
 test: sql/show
-test: sql/twophase
 test: sql/insupd
 test: sql/parser
 test: thread/thread
