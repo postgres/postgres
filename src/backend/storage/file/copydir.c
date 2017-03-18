@@ -25,7 +25,7 @@
 #include "storage/copydir.h"
 #include "storage/fd.h"
 #include "miscadmin.h"
-
+#include "pgstat.h"
 
 /*
  * copydir: copy a directory
@@ -169,7 +169,9 @@ copy_file(char *fromfile, char *tofile)
 		/* If we got a cancel signal during the copy of the file, quit */
 		CHECK_FOR_INTERRUPTS();
 
+		pgstat_report_wait_start(WAIT_EVENT_COPY_FILE_READ);
 		nbytes = read(srcfd, buffer, COPY_BUF_SIZE);
+		pgstat_report_wait_end();
 		if (nbytes < 0)
 			ereport(ERROR,
 					(errcode_for_file_access(),
@@ -177,8 +179,10 @@ copy_file(char *fromfile, char *tofile)
 		if (nbytes == 0)
 			break;
 		errno = 0;
+		pgstat_report_wait_start(WAIT_EVENT_COPY_FILE_WRITE);
 		if ((int) write(dstfd, buffer, nbytes) != nbytes)
 		{
+			pgstat_report_wait_end();
 			/* if write didn't set errno, assume problem is no disk space */
 			if (errno == 0)
 				errno = ENOSPC;
@@ -186,6 +190,7 @@ copy_file(char *fromfile, char *tofile)
 					(errcode_for_file_access(),
 					 errmsg("could not write to file \"%s\": %m", tofile)));
 		}
+		pgstat_report_wait_end();
 
 		/*
 		 * We fsync the files later but first flush them to avoid spamming the

@@ -119,6 +119,8 @@
 
 #include "lib/ilist.h"
 
+#include "pgstat.h"
+
 #include "replication/logical.h"
 #include "replication/slot.h"
 
@@ -916,7 +918,8 @@ logical_heap_rewrite_flush_mappings(RewriteState state)
 		 * Note that we deviate from the usual WAL coding practices here,
 		 * check the above "Logical rewrite support" comment for reasoning.
 		 */
-		written = FileWrite(src->vfd, waldata_start, len);
+		written = FileWrite(src->vfd, waldata_start, len,
+							WAIT_EVENT_LOGICAL_REWRITE_WRITE);
 		if (written != len)
 			ereport(ERROR,
 					(errcode_for_file_access(),
@@ -957,7 +960,7 @@ logical_end_heap_rewrite(RewriteState state)
 	hash_seq_init(&seq_status, state->rs_logical_mappings);
 	while ((src = (RewriteMappingFile *) hash_seq_search(&seq_status)) != NULL)
 	{
-		if (FileSync(src->vfd) != 0)
+		if (FileSync(src->vfd, WAIT_EVENT_LOGICAL_REWRITE_SYNC) != 0)
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not fsync file \"%s\": %m", src->path)));
@@ -1141,11 +1144,13 @@ heap_xlog_logical_rewrite(XLogReaderState *r)
 	 * Truncate all data that's not guaranteed to have been safely fsynced (by
 	 * previous record or by the last checkpoint).
 	 */
+	pgstat_report_wait_start(WAIT_EVENT_LOGICAL_REWRITE_TRUNCATE);
 	if (ftruncate(fd, xlrec->offset) != 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not truncate file \"%s\" to %u: %m",
 						path, (uint32) xlrec->offset)));
+	pgstat_report_wait_end();
 
 	/* now seek to the position we want to write our data to */
 	if (lseek(fd, xlrec->offset, SEEK_SET) != xlrec->offset)
@@ -1159,20 +1164,24 @@ heap_xlog_logical_rewrite(XLogReaderState *r)
 	len = xlrec->num_mappings * sizeof(LogicalRewriteMappingData);
 
 	/* write out tail end of mapping file (again) */
+	pgstat_report_wait_start(WAIT_EVENT_LOGICAL_REWRITE_MAPPING_WRITE);
 	if (write(fd, data, len) != len)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not write to file \"%s\": %m", path)));
+	pgstat_report_wait_end();
 
 	/*
 	 * Now fsync all previously written data. We could improve things and only
 	 * do this for the last write to a file, but the required bookkeeping
 	 * doesn't seem worth the trouble.
 	 */
+	pgstat_report_wait_start(WAIT_EVENT_LOGICAL_REWRITE_MAPPING_SYNC);
 	if (pg_fsync(fd) != 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not fsync file \"%s\": %m", path)));
+	pgstat_report_wait_end();
 
 	CloseTransientFile(fd);
 }
@@ -1266,10 +1275,12 @@ CheckPointLogicalRewriteHeap(void)
 			 * changed or have only been created since the checkpoint's start,
 			 * but it's currently not deemed worth the effort.
 			 */
-			else if (pg_fsync(fd) != 0)
+			pgstat_report_wait_start(WAIT_EVENT_LOGICAL_REWRITE_CHECKPOINT_SYNC);
+			if (pg_fsync(fd) != 0)
 				ereport(ERROR,
 						(errcode_for_file_access(),
 						 errmsg("could not fsync file \"%s\": %m", path)));
+			pgstat_report_wait_end();
 			CloseTransientFile(fd);
 		}
 	}

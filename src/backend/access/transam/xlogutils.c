@@ -24,6 +24,7 @@
 #include "access/xlogutils.h"
 #include "catalog/catalog.h"
 #include "miscadmin.h"
+#include "pgstat.h"
 #include "storage/smgr.h"
 #include "utils/guc.h"
 #include "utils/hsearch.h"
@@ -728,7 +729,9 @@ XLogRead(char *buf, TimeLineID tli, XLogRecPtr startptr, Size count)
 		else
 			segbytes = nbytes;
 
+		pgstat_report_wait_start(WAIT_EVENT_WAL_READ);
 		readbytes = read(sendFile, p, segbytes);
+		pgstat_report_wait_end();
 		if (readbytes <= 0)
 		{
 			char		path[MAXPGPATH];

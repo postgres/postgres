@@ -1200,8 +1200,10 @@ ReadTwoPhaseFile(TransactionId xid, bool give_warnings)
 	 */
 	buf = (char *) palloc(stat.st_size);
 
+	pgstat_report_wait_start(WAIT_EVENT_TWOPHASE_FILE_READ);
 	if (read(fd, buf, stat.st_size) != stat.st_size)
 	{
+		pgstat_report_wait_end();
 		CloseTransientFile(fd);
 		if (give_warnings)
 			ereport(WARNING,
@@ -1212,6 +1214,7 @@ ReadTwoPhaseFile(TransactionId xid, bool give_warnings)
 		return NULL;
 	}
 
+	pgstat_report_wait_end();
 	CloseTransientFile(fd);
 
 	hdr = (TwoPhaseFileHeader *) buf;
@@ -1542,8 +1545,10 @@ RecreateTwoPhaseFile(TransactionId xid, void *content, int len)
 						path)));
 
 	/* Write content and CRC */
+	pgstat_report_wait_start(WAIT_EVENT_TWOPHASE_FILE_WRITE);
 	if (write(fd, content, len) != len)
 	{
+		pgstat_report_wait_end();
 		CloseTransientFile(fd);
 		ereport(ERROR,
 				(errcode_for_file_access(),
@@ -1551,16 +1556,19 @@ RecreateTwoPhaseFile(TransactionId xid, void *content, int len)
 	}
 	if (write(fd, &statefile_crc, sizeof(pg_crc32c)) != sizeof(pg_crc32c))
 	{
+		pgstat_report_wait_end();
 		CloseTransientFile(fd);
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not write two-phase state file: %m")));
 	}
+	pgstat_report_wait_end();
 
 	/*
 	 * We must fsync the file because the end-of-replay checkpoint will not do
 	 * so, there being no GXACT in shared memory yet to tell it to.
 	 */
+	pgstat_report_wait_start(WAIT_EVENT_TWOPHASE_FILE_SYNC);
 	if (pg_fsync(fd) != 0)
 	{
 		CloseTransientFile(fd);
@@ -1568,6 +1576,7 @@ RecreateTwoPhaseFile(TransactionId xid, void *content, int len)
 				(errcode_for_file_access(),
 				 errmsg("could not fsync two-phase state file: %m")));
 	}
+	pgstat_report_wait_end();
 
 	if (CloseTransientFile(fd) != 0)
 		ereport(ERROR,

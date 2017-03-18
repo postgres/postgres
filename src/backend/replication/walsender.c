@@ -463,7 +463,9 @@ SendTimeLineHistory(TimeLineHistoryCmd *cmd)
 		char		rbuf[BLCKSZ];
 		int			nread;
 
+		pgstat_report_wait_start(WAIT_EVENT_WALSENDER_TIMELINE_HISTORY_READ);
 		nread = read(fd, rbuf, sizeof(rbuf));
+		pgstat_report_wait_end();
 		if (nread <= 0)
 			ereport(ERROR,
 					(errcode_for_file_access(),
@@ -2126,7 +2128,9 @@ retry:
 		else
 			segbytes = nbytes;
 
+		pgstat_report_wait_start(WAIT_EVENT_WAL_READ);
 		readbytes = read(sendFile, p, segbytes);
+		pgstat_report_wait_end();
 		if (readbytes <= 0)
 		{
 			ereport(ERROR,

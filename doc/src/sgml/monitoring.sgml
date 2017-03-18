@@ -716,6 +716,12 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
           point.
          </para>
         </listitem>
+        <listitem>
+         <para>
+          <literal>IO</>: The server process is waiting for a IO to complete.
+          <literal>wait_event</> will identify the specific wait point.
+         </para>
+        </listitem>
        </itemizedlist>
       </entry>
      </row>
@@ -1271,6 +1277,271 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
         <row>
          <entry><literal>RecoveryApplyDelay</></entry>
          <entry>Waiting to apply WAL at recovery because it is delayed.</entry>
+        </row>
+        <row>
+         <entry morerows="66"><literal>IO</></entry>
+         <entry><literal>BufFileRead</></entry>
+         <entry>Waiting for a read from a buffered file.</entry>
+        </row>
+        <row>
+         <entry><literal>BufFileWrite</></entry>
+         <entry>Waiting for a write to a buffered file.</entry>
+        </row>
+        <row>
+         <entry><literal>ControlFileRead</></entry>
+         <entry>Waiting for a read from the control file.</entry>
+        </row>
+        <row>
+         <entry><literal>ControlFileSync</></entry>
+         <entry>Waiting for the control file to reach stable storage.</entry>
+        </row>
+        <row>
+         <entry><literal>ControlFileSyncUpdate</></entry>
+         <entry>Waiting for an update to the control file to reach stable storage.</entry>
+        </row>
+        <row>
+         <entry><literal>ControlFileWrite</></entry>
+         <entry>Waiting for a write to the control file.</entry>
+        </row>
+        <row>
+         <entry><literal>ControlFileWriteUpdate</></entry>
+         <entry>Waiting for a write to update the control file.</entry>
+        </row>
+        <row>
+         <entry><literal>CopyFileRead</></entry>
+         <entry>Waiting for a read during a file copy operation.</entry>
+        </row>
+        <row>
+         <entry><literal>CopyFileWrite</></entry>
+         <entry>Waiting for a write during a file copy operation.</entry>
+        </row>
+        <row>
+         <entry><literal>DataFileExtend</></entry>
+         <entry>Waiting for a relation data file to be extended.</entry>
+        </row>
+        <row>
+         <entry><literal>DataFileFlush</></entry>
+         <entry>Waiting for a relation data file to reach stable storage.</entry>
+        </row>
+        <row>
+         <entry><literal>DataFileImmediateSync</></entry>
+         <entry>Waiting for an immediate synchronization of a relation data file to stable storage.</entry>
+        </row>
+        <row>
+         <entry><literal>DataFilePrefetch</></entry>
+         <entry>Waiting for an asynchronous prefetch from a relation data file.</entry>
+        </row>
+        <row>
+         <entry><literal>DataFileRead</></entry>
+         <entry>Waiting for a read from a relation data file.</entry>
+        </row>
+        <row>
+         <entry><literal>DataFileSync</></entry>
+         <entry>Waiting for changes to a relation data file to reach stable storage.</entry>
+        </row>
+        <row>
+         <entry><literal>DataFileTruncate</></entry>
+         <entry>Waiting for a relation data file to be truncated.</entry>
+        </row>
+        <row>
+         <entry><literal>DataFileWrite</></entry>
+         <entry>Waiting for a write to a relation data file.</entry>
+        </row>
+        <row>
+         <entry><literal>DSMFillZeroWrite</></entry>
+         <entry>Waiting to write zero bytes to a dynamic shared memory backing file.</entry>
+        </row>
+        <row>
+         <entry><literal>LockFileAddToDataDirRead</></entry>
+         <entry>Waiting for a read while adding a line to the data directory lock file.</entry>
+        </row>
+        <row>
+         <entry><literal>LockFileAddToDataDirSync</></entry>
+         <entry>Waiting for data to reach stable storage while adding a line to the data directory lock file.</entry>
+        </row>
+        <row>
+         <entry><literal>LockFileAddToDataDirWrite</></entry>
+         <entry>Waiting for a write while adding a line to the data directory lock file.</entry>
+        </row>
+        <row>
+         <entry><literal>LockFileCreateRead</></entry>
+         <entry>Waiting to read while creating the data directory lock file.</entry>
+        </row>
+        <row>
+         <entry><literal>LockFileCreateSync</></entry>
+         <entry>Waiting for data to reach stable storage while creating the data directory lock file.</entry>
+        </row>
+        <row>
+         <entry><literal>LockFileCreateWrite</></entry>
+         <entry>Waiting for a write while creating the data directory lock file.</entry>
+        </row>
+        <row>
+         <entry><literal>LockFileReCheckDataDirRead</></entry>
+         <entry>Waiting for a read during recheck of the data directory lock file.</entry>
+        </row>
+        <row>
+         <entry><literal>LogicalRewriteCheckpointSync</></entry>
+         <entry>Waiting for logical rewrite mappings to reach stable storage during a checkpoint.</entry>
+        </row>
+        <row>
+         <entry><literal>LogicalRewriteMappingSync</></entry>
+         <entry>Waiting for mapping data to reach stable storage during a logical rewrite.</entry>
+        </row>
+        <row>
+         <entry><literal>LogicalRewriteMappingWrite</></entry>
+         <entry>Waiting for a write of mapping data during a logical rewrite.</entry>
+        </row>
+        <row>
+         <entry><literal>LogicalRewriteSync</></entry>
+         <entry>Waiting for logical rewrite mappings to reach stable storage.</entry>
+        </row>
+        <row>
+         <entry><literal>LogicalRewriteWrite</></entry>
+         <entry>Waiting for a write of logical rewrite mappings.</entry>
+        </row>
+        <row>
+         <entry><literal>RelationMapRead</></entry>
+         <entry>Waiting for a read of the relation map file.</entry>
+        </row>
+        <row>
+         <entry><literal>RelationMapSync</></entry>
+         <entry>Waiting for the relation map file to reach stable storage.</entry>
+        </row>
+        <row>
+         <entry><literal>RelationMapWrite</></entry>
+         <entry>Waiting for a write to the relation map file.</entry>
+        </row>
+        <row>
+         <entry><literal>ReorderBufferRead</></entry>
+         <entry>Waiting for a read during reorder buffer management.</entry>
+        </row>
+        <row>
+         <entry><literal>ReorderBufferWrite</></entry>
+         <entry>Waiting for a write during reorder buffer management.</entry>
+        </row>
+        <row>
+         <entry><literal>ReorderLogicalMappingRead</></entry>
+         <entry>Waiting for a read of a logical mapping during reorder buffer management.</entry>
+        </row>
+        <row>
+         <entry><literal>ReplicationSlotRead</></entry>
+         <entry>Waiting for a read from a replication slot control file.</entry>
+        </row>
+        <row>
+         <entry><literal>ReplicationSlotRestoreSync</></entry>
+         <entry>Waiting for a replication slot control file to reach stable storage while restoring it to memory.</entry>
+        </row>
+        <row>
+         <entry><literal>ReplicationSlotSync</></entry>
+         <entry>Waiting for a replication slot control file to reach stable storage.</entry>
+        </row>
+        <row>
+         <entry><literal>ReplicationSlotWrite</></entry>
+         <entry>Waiting for a write to a replication slot control file.</entry>
+        </row>
+        <row>
+         <entry><literal>SLRUFlushSync</></entry>
+         <entry>Waiting for SLRU data to reach stable storage during a checkpoint or database shutdown.</entry>
+        </row>
+        <row>
+         <entry><literal>SLRURead</></entry>
+         <entry>Waiting for a read of an SLRU page.</entry>
+        </row>
+        <row>
+         <entry><literal>SLRUSync</></entry>
+         <entry>Waiting for SLRU data to reach stable storage following a page write.</entry>
+        </row>
+        <row>
+         <entry><literal>SLRUWrite</></entry>
+         <entry>Waiting for a write of an SLRU page.</entry>
+        </row>
+        <row>
+         <entry><literal>SnapbuildRead</></entry>
+         <entry>Waiting for a read of a serialized historical catalog snapshot.</entry>
+        </row>
+        <row>
+         <entry><literal>SnapbuildSync</></entry>
+         <entry>Waiting for a serialized historical catalog snapshot to reach stable storage.</entry>
+        </row>
+        <row>
+         <entry><literal>SnapbuildWrite</></entry>
+         <entry>Waiting for a write of a serialized historical catalog snapshot.</entry>
+        </row>
+        <row>
+         <entry><literal>TimelineHistoryFileSync</></entry>
+         <entry>Waiting for a timeline history file received via streaming replication to reach stable storage.</entry>
+        </row>
+        <row>
+         <entry><literal>TimelineHistoryFileWrite</></entry>
+         <entry>Waiting for a write of a timeline history file received via streaming replication.</entry>
+        </row>
+        <row>
+         <entry><literal>TimelineHistoryRead</></entry>
+         <entry>Waiting for a read of a timeline history file.</entry>
+        </row>
+        <row>
+         <entry><literal>TimelineHistorySync</></entry>
+         <entry>Waiting for a newly created timeline history file to reach stable storage.</entry>
+        </row>
+        <row>
+         <entry><literal>TimelineHistoryWrite</></entry>
+         <entry>Waiting for a write of a newly created timeline history file.</entry>
+        </row>
+        <row>
+         <entry><literal>TwophaseFileRead</></entry>
+         <entry>Waiting for a read of a two phase state file.</entry>
+        </row>
+        <row>
+         <entry><literal>TwophaseFileSync</></entry>
+         <entry>Waiting for a two phase state file to reach stable storage.</entry>
+        </row>
+        <row>
+         <entry><literal>TwophaseFileWrite</></entry>
+         <entry>Waiting for a write of a two phase state file.</entry>
+        </row>
+        <row>
+         <entry><literal>WALBootstrapSync</></entry>
+         <entry>Waiting for WAL to reach stable storage during bootstrapping.</entry>
+        </row>
+        <row>
+         <entry><literal>WALBootstrapWrite</></entry>
+         <entry>Waiting for a write of a WAL page during bootstrapping.</entry>
+        </row>
+        <row>
+         <entry><literal>WALCopyRead</></entry>
+         <entry>Waiting for a read when creating a new WAL segment by copying an existing one.</entry>
+        </row>
+        <row>
+         <entry><literal>WALCopySync</></entry>
+         <entry>Waiting a new WAL segment created by copying an existing one to reach stable storage.</entry>
+        </row>
+        <row>
+         <entry><literal>WALCopyWrite</></entry>
+         <entry>Waiting for a write when creating a new WAL segment by copying an existing one.</entry>
+        </row>
+        <row>
+         <entry><literal>WALInitSync</></entry>
+         <entry>Waiting for a newly initialized WAL file to reach stable storage.</entry>
+        </row>
+        <row>
+         <entry><literal>WALInitWrite</></entry>
+         <entry>Waiting for a write while initializing a new WAL file.</entry>
+        </row>
+        <row>
+         <entry><literal>WALRead</></entry>
+         <entry>Waiting for a read from a WAL file.</entry>
+        </row>
+        <row>
+         <entry><literal>WALSenderTimelineHistoryRead</></entry>
+         <entry>Waiting for a read from a timeline history file during walsender timeline command.</entry>
+        </row>
+        <row>
+         <entry><literal>WALSyncMethodAssign</></entry>
+         <entry>Waiting for data to reach stable storage while assigning WAL sync method.</entry>
+        </row>
+        <row>
+         <entry><literal>WALWrite</></entry>
+         <entry>Waiting for a write to a WAL file.</entry>
         </row>
       </tbody>
      </tgroup>
