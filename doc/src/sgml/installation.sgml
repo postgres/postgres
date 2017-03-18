@@ -1080,7 +1080,7 @@ su - postgres
          protocols, as well as some routines in the
          <![%standalone-include[pgcrypto]]>
          <![%standalone-ignore[<xref linkend="pgcrypto">]]>
-         module. --disable-strong-random disables functionality that
+         module. <option>--disable-strong-random</option> disables functionality that
          requires cryptographically strong random numbers, and substitutes
          a weak pseudo-random-number-generator for the generation of
          authentication salt values and query cancel keys. It may make
