@@ -326,8 +326,6 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 	if (!stmt->skipData)
 		processed = refresh_matview_datafill(dest, dataQuery, queryString);
 
-	heap_close(matviewRel, NoLock);
-
 	/* Make the matview match the newly generated data. */
 	if (concurrent)
 	{
@@ -360,6 +358,8 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 		if (!stmt->skipData)
 			pgstat_count_heap_insert(matviewRel, processed);
 	}
+
+	heap_close(matviewRel, NoLock);
 
 	/* Roll back any GUC changes */
 	AtEOXact_GUC(false, save_nestlevel);
