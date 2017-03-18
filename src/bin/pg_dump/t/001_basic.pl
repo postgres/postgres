@@ -82,11 +82,6 @@ command_fails_like(
 	'pg_dump: option --if-exists requires option -c/--clean');
 
 command_fails_like(
-	[ 'pg_dump', '-j' ],
-	qr/\Qpg_dump: option requires an argument -- 'j'\E/,
-	'pg_dump: option requires an argument -- \'j\'');
-
-command_fails_like(
 	[ 'pg_dump', '-j3' ],
 	qr/\Qpg_dump: parallel backup only supported by the directory format\E/,
 	'pg_dump: parallel backup only supported by the directory format');
