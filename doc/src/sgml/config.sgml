@@ -532,10 +532,10 @@ include_dir 'conf.d'
       </term>
       <listitem>
        <para>
-         Specifies the configuration file for
-         <xref linkend="auth-username-maps"> user name mapping
+         Specifies the configuration file for user name mapping
          (customarily called <filename>pg_ident.conf</>).
          This parameter can only be set at server start.
+         See also <xref linkend="auth-username-maps">.
        </para>
       </listitem>
      </varlistentry>
