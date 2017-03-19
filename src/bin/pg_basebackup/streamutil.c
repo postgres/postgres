@@ -317,8 +317,7 @@ RunIdentifySystem(PGconn *conn, char **sysid, TimeLineID *starttli,
 
 /*
  * Create a replication slot for the given connection. This function
- * returns true in case of success as well as the start position
- * obtained after the slot creation.
+ * returns true in case of success.
  */
 bool
 CreateReplicationSlot(PGconn *conn, const char *slot_name, const char *plugin,
