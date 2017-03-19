@@ -207,7 +207,7 @@ protocol to make nodes agree on a serializable transactional order.
      middleware.  Care must also be taken that all
      transactions either commit or abort on all servers, perhaps
      using two-phase commit (<xref linkend="sql-prepare-transaction">
-     and <xref linkend="sql-commit-prepared">.
+     and <xref linkend="sql-commit-prepared">).
      <productname>Pgpool-II</> and <productname>Continuent Tungsten</>
      are examples of this type of replication.
     </para>
