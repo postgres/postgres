@@ -427,6 +427,7 @@ my %tests = (
 		catch_all =>
 		  'ALTER ... OWNER commands (except LARGE OBJECTs and PUBLICATIONs)',
 		regexp => qr/^ALTER COLLATION test0 OWNER TO .*;/m,
+		collation => 1,
 		like   => {
 			binary_upgrade           => 1,
 			clean                    => 1,
@@ -1707,6 +1708,7 @@ my %tests = (
 		create_sql   => 'COMMENT ON COLLATION test0
 					   IS \'comment on test0 collation\';',
 		regexp => qr/^COMMENT ON COLLATION test0 IS 'comment on test0 collation';/m,
+		collation => 1,
 		like   => {
 			binary_upgrade           => 1,
 			clean                    => 1,
@@ -2423,6 +2425,7 @@ qr/^\QINSERT INTO test_fifth_table (col1, col2, col3, col4, col5) VALUES (NULL, 
 		regexp =>
 		  qr/^
 		  \QCREATE COLLATION test0 (lc_collate = 'C', lc_ctype = 'C');\E/xm,
+	    collation => 1,
 		like => {
 			binary_upgrade           => 1,
 			clean                    => 1,
@@ -6090,6 +6093,17 @@ $node->start;
 
 my $port = $node->port;
 
+# We need to see if this system supports CREATE COLLATION or not
+# If it doesn't then we will skip all the COLLATION-related tests.
+my $collation_support = 0;
+my $collation_check_stderr;
+$node->psql('postgres',"CREATE COLLATION testing FROM \"C\"; DROP COLLATION testing;", on_error_stop => 0, stderr => \$collation_check_stderr);
+
+if ($collation_check_stderr !~ /ERROR: /)
+{
+	$collation_support = 1;
+}
+
 # Start with number of command_fails_like()*2 tests below (each
 # command_fails_like is actually 2 tests)
 my $num_tests = 12;
@@ -6115,6 +6129,11 @@ foreach my $run (sort keys %pgdump_runs)
 	# Then count all the tests run against each run
 	foreach my $test (sort keys %tests)
 	{
+		# Skip any collation-related commands if there is no collation support
+		if (!$collation_support && defined($tests{$test}->{collation})) {
+			next;
+		}
+
 		if ($tests{$test}->{like}->{$test_key})
 		{
 			$num_tests++;
@@ -6181,6 +6200,11 @@ foreach my $test (
 {
 	if ($tests{$test}->{create_sql})
 	{
+		# Skip any collation-related commands if there is no collation support
+		if (!$collation_support && defined($tests{$test}->{collation})) {
+			next;
+		}
+
 		$create_sql .= $tests{$test}->{create_sql};
 	}
 }
@@ -6258,6 +6282,11 @@ foreach my $run (sort keys %pgdump_runs)
 
 	foreach my $test (sort keys %tests)
 	{
+		# Skip any collation-related commands if there is no collation support
+		if (!$collation_support && defined($tests{$test}->{collation})) {
+			next;
+		}
+
 		if ($tests{$test}->{like}->{$test_key})
 		{
 			like($output_file, $tests{$test}->{regexp}, "$run: dumps $test");
