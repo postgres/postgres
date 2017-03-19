@@ -1189,7 +1189,7 @@ EXEC SQL END DECLARE SECTION;
       There are two use cases for arrays as host variables.  The first
       is a way to store some text string in <type>char[]</type>
       or <type>VARCHAR[]</type>, as
-      explained <xref linkend="ecpg-char">.  The second use case is to
+      explained in <xref linkend="ecpg-char">.  The second use case is to
       retrieve multiple rows from a query result without using a
       cursor.  Without an array, to process a query result consisting
       of multiple rows, it is required to use a cursor and

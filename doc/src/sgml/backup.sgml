@@ -878,7 +878,7 @@ SELECT pg_start_backup('label', false, false);
      <application>pg_dump</application> or
      <application>pg_dumpall</application>).  It is neither
      necessary nor desirable to stop normal operation of the database
-     while you do this. See section
+     while you do this. See
      <xref linkend="backup-lowlevel-base-backup-data"> for things to
      consider during this backup.
     </para>
@@ -988,7 +988,7 @@ SELECT pg_start_backup('label', true);
      <application>pg_dump</application> or
      <application>pg_dumpall</application>).  It is neither
      necessary nor desirable to stop normal operation of the database
-     while you do this. See section
+     while you do this. See
      <xref linkend="backup-lowlevel-base-backup-data"> for things to
      consider during this backup.
     </para>

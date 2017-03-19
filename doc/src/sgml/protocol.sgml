@@ -2296,8 +2296,8 @@ The commands accepted in walsender mode are:
 
   <para>
    The individual protocol messages are discussed in the following
-   subsections. Individual messages are describer in
-   <xref linkend="protocol-logicalrep-message-formats"> section.
+   subsections. Individual messages are described in
+   <xref linkend="protocol-logicalrep-message-formats">.
   </para>
 
   <para>
