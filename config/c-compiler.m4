@@ -273,6 +273,30 @@ fi])# PGAC_C_BUILTIN_UNREACHABLE
 
 
 
+# PGAC_C_COMPUTED_GOTO
+# -----------------------
+# Check if the C compiler knows computed gotos (gcc extension, also
+# available in at least clang).  If so, define HAVE_COMPUTED_GOTO.
+#
+# Checking whether computed gotos are supported syntax-wise ought to
+# be enough, as the syntax is otherwise illegal.
+AC_DEFUN([PGAC_C_COMPUTED_GOTO],
+[AC_CACHE_CHECK(for computed goto support, pgac_cv_computed_goto,
+[AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],
+[[void *labeladdrs[] = {&&my_label};
+  goto *labeladdrs[0];
+  my_label:
+  return 1;
+]])],
+[pgac_cv_computed_goto=yes],
+[pgac_cv_computed_goto=no])])
+if test x"$pgac_cv_computed_goto" = xyes ; then
+AC_DEFINE(HAVE_COMPUTED_GOTO, 1,
+          [Define to 1 if your compiler handles computed gotos.])
+fi])# PGAC_C_COMPUTED_GOTO
+
+
+
 # PGAC_C_VA_ARGS
 # --------------
 # Check if the C compiler understands C99-style variadic macros,

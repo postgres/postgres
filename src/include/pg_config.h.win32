@@ -78,6 +78,9 @@
 /* Define to 1 if you have the `clock_gettime' function. */
 /* #undef HAVE_CLOCK_GETTIME */
 
+/* Define to 1 if your compiler handles computed gotos. */
+/* #undef HAVE_COMPUTED_GOTO */
+
 /* Define to 1 if you have the `crypt' function. */
 /* #undef HAVE_CRYPT */
 
