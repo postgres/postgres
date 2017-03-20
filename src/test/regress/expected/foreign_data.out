@@ -556,7 +556,7 @@ CREATE USER MAPPING FOR current_user SERVER s1;             -- ERROR
 ERROR:  server "s1" does not exist
 CREATE USER MAPPING FOR current_user SERVER s4;
 CREATE USER MAPPING FOR user SERVER s4;                     -- ERROR duplicate
-ERROR:  user mapping "regress_foreign_data_user" already exists for server s4
+ERROR:  user mapping for "regress_foreign_data_user" already exists for server s4
 CREATE USER MAPPING FOR public SERVER s4 OPTIONS ("this mapping" 'is public');
 CREATE USER MAPPING FOR user SERVER s8 OPTIONS (username 'test', password 'secret');    -- ERROR
 ERROR:  invalid option "username"
@@ -596,7 +596,7 @@ ERROR:  role "regress_test_missing_role" does not exist
 ALTER USER MAPPING FOR user SERVER ss4 OPTIONS (gotcha 'true'); -- ERROR
 ERROR:  server "ss4" does not exist
 ALTER USER MAPPING FOR public SERVER s5 OPTIONS (gotcha 'true');            -- ERROR
-ERROR:  user mapping "public" does not exist for the server
+ERROR:  user mapping for "public" does not exist for the server
 ALTER USER MAPPING FOR current_user SERVER s8 OPTIONS (username 'test');    -- ERROR
 ERROR:  invalid option "username"
 HINT:  Valid options in this context are: user, password
@@ -626,13 +626,13 @@ ERROR:  role "regress_test_missing_role" does not exist
 DROP USER MAPPING FOR user SERVER ss4;
 ERROR:  server "ss4" does not exist
 DROP USER MAPPING FOR public SERVER s7;                     -- ERROR
-ERROR:  user mapping "public" does not exist for the server
+ERROR:  user mapping for "public" does not exist for the server
 DROP USER MAPPING IF EXISTS FOR regress_test_missing_role SERVER s4;
 NOTICE:  role "regress_test_missing_role" does not exist, skipping
 DROP USER MAPPING IF EXISTS FOR user SERVER ss4;
 NOTICE:  server does not exist, skipping
 DROP USER MAPPING IF EXISTS FOR public SERVER s7;
-NOTICE:  user mapping "public" does not exist for the server, skipping
+NOTICE:  user mapping for "public" does not exist for the server, skipping
 CREATE USER MAPPING FOR public SERVER s8;
 SET ROLE regress_test_role;
 DROP USER MAPPING FOR public SERVER s8;                     -- ERROR

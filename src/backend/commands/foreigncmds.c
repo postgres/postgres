@@ -1155,7 +1155,7 @@ CreateUserMapping(CreateUserMappingStmt *stmt)
 	if (OidIsValid(umId))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
-				 errmsg("user mapping \"%s\" already exists for server %s",
+				 errmsg("user mapping for \"%s\" already exists for server %s",
 						MappingUserName(useId),
 						stmt->servername)));
 
@@ -1247,7 +1247,7 @@ AlterUserMapping(AlterUserMappingStmt *stmt)
 	if (!OidIsValid(umId))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("user mapping \"%s\" does not exist for the server",
+				 errmsg("user mapping for \"%s\" does not exist for the server",
 						MappingUserName(useId))));
 
 	user_mapping_ddl_aclcheck(useId, srv->serverid, stmt->servername);
@@ -1362,12 +1362,12 @@ RemoveUserMapping(DropUserMappingStmt *stmt)
 		if (!stmt->missing_ok)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
-				  errmsg("user mapping \"%s\" does not exist for the server",
+				  errmsg("user mapping for \"%s\" does not exist for the server",
 						 MappingUserName(useId))));
 
 		/* IF EXISTS specified, just note it */
 		ereport(NOTICE,
-		(errmsg("user mapping \"%s\" does not exist for the server, skipping",
+		(errmsg("user mapping for \"%s\" does not exist for the server, skipping",
 				MappingUserName(useId))));
 		return InvalidOid;
 	}
