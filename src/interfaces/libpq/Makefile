@@ -101,17 +101,15 @@ backend_src = $(top_srcdir)/src/backend
 # Instead, symlink the source files in here and build our own object files.
 # For some libpgport modules, this only happens if configure decides
 # the module is needed (see filter hack in OBJS, above).
+# When you add a file here, remember to add it in the "clean" target below.
 
 chklocale.c crypt.c erand48.c getaddrinfo.c getpeereid.c inet_aton.c inet_net_ntop.c noblock.c open.c system.c pgsleep.c pg_strong_random.c pgstrcasecmp.c pqsignal.c snprintf.c strerror.c strlcpy.c thread.c win32error.c win32setlocale.c: % : $(top_srcdir)/src/port/%
 	rm -f $@ && $(LN_S) $< .
 
-ip.c md5.c: % : $(top_srcdir)/src/common/%
+ip.c md5.c base64.c scram-common.c sha2.c sha2_openssl.c: % : $(top_srcdir)/src/common/%
 	rm -f $@ && $(LN_S) $< .
 
 encnames.c wchar.c: % : $(backend_src)/utils/mb/%
-	rm -f $@ && $(LN_S) $< .
-
-base64.c scram-common.c sha2.c sha2_openssl.c: % : $(top_srcdir)/src/common/%
 	rm -f $@ && $(LN_S) $< .
 
 
@@ -156,10 +154,9 @@ clean distclean: clean-lib
 	rm -f $(OBJS) pthread.h libpq.rc
 # Might be left over from a Win32 client-only build
 	rm -f pg_config_paths.h
-	rm -f inet_net_ntop.c noblock.c pgstrcasecmp.c pqsignal.c thread.c
-	rm -f chklocale.c crypt.c getaddrinfo.c getpeereid.c inet_aton.c open.c system.c snprintf.c strerror.c strlcpy.c win32error.c win32setlocale.c
-	rm -f pgsleep.c
-	rm -f md5.c ip.c
+# Remove files we (may have) symlinked in from src/port and other places
+	rm -f chklocale.c crypt.c erand48.c getaddrinfo.c getpeereid.c inet_aton.c inet_net_ntop.c noblock.c open.c system.c pgsleep.c pg_strong_random.c pgstrcasecmp.c pqsignal.c snprintf.c strerror.c strlcpy.c thread.c win32error.c win32setlocale.c
+	rm -f md5.c ip.c base64.c scram-common.c sha2.c sha2_openssl.c
 	rm -f encnames.c wchar.c
 
 maintainer-clean: distclean maintainer-clean-lib
