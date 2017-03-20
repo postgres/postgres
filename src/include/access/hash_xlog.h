@@ -197,6 +197,8 @@ typedef struct xl_hash_squeeze_page
  */
 typedef struct xl_hash_delete
 {
+	bool		clear_dead_marking;		/* TRUE if this operation clears
+										 * LH_PAGE_HAS_DEAD_TUPLES flag */
 	bool		is_primary_bucket_page; /* TRUE if the operation is for
 										 * primary bucket page */
 }	xl_hash_delete;

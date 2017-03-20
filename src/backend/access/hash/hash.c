@@ -790,6 +790,7 @@ hashbucketcleanup(Relation rel, Bucket cur_bucket, Buffer bucket_buf,
 		OffsetNumber deletable[MaxOffsetNumber];
 		int			ndeletable = 0;
 		bool		retain_pin = false;
+		bool		clear_dead_marking = false;
 
 		vacuum_delay_point();
 
@@ -877,11 +878,14 @@ hashbucketcleanup(Relation rel, Bucket cur_bucket, Buffer bucket_buf,
 			/*
 			 * Let us mark the page as clean if vacuum removes the DEAD tuples
 			 * from an index page. We do this by clearing LH_PAGE_HAS_DEAD_TUPLES
-			 * flag. Clearing this flag is just a hint; replay won't redo this.
+			 * flag.
 			 */
 			if (tuples_removed && *tuples_removed > 0 &&
 				opaque->hasho_flag & LH_PAGE_HAS_DEAD_TUPLES)
+			{
 				opaque->hasho_flag &= ~LH_PAGE_HAS_DEAD_TUPLES;
+				clear_dead_marking = true;
+			}
 
 			MarkBufferDirty(buf);
 
@@ -891,6 +895,7 @@ hashbucketcleanup(Relation rel, Bucket cur_bucket, Buffer bucket_buf,
 				xl_hash_delete xlrec;
 				XLogRecPtr	recptr;
 
+				xlrec.clear_dead_marking = clear_dead_marking;
 				xlrec.is_primary_bucket_page = (buf == bucket_buf) ? true : false;
 
 				XLogBeginInsert();

@@ -374,6 +374,14 @@ _hash_vacuum_one_page(Relation rel, Buffer metabuf, Buffer buf,
 
 		PageIndexMultiDelete(page, deletable, ndeletable);
 
+		/*
+		 * Mark the page as not containing any LP_DEAD items. This is not
+		 * certainly true (there might be some that have recently been marked,
+		 * but weren't included in our target-item list), but it will almost
+		 * always be true and it doesn't seem worth an additional page scan
+		 * to check it. Remember that LH_PAGE_HAS_DEAD_TUPLES is only a hint
+		 * anyway.
+		 */
 		pageopaque = (HashPageOpaque) PageGetSpecialPointer(page);
 		pageopaque->hasho_flag &= ~LH_PAGE_HAS_DEAD_TUPLES;
 
