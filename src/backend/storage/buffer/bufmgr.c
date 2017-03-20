@@ -1595,9 +1595,21 @@ PinBuffer(BufferDesc *buf, BufferAccessStrategy strategy)
 			/* increase refcount */
 			buf_state += BUF_REFCOUNT_ONE;
 
-			/* increase usagecount unless already max */
-			if (BUF_STATE_GET_USAGECOUNT(buf_state) != BM_MAX_USAGE_COUNT)
-				buf_state += BUF_USAGECOUNT_ONE;
+			if (strategy == NULL)
+			{
+				/* Default case: increase usagecount unless already max. */
+				if (BUF_STATE_GET_USAGECOUNT(buf_state) < BM_MAX_USAGE_COUNT)
+					buf_state += BUF_USAGECOUNT_ONE;
+			}
+			else
+			{
+				/*
+				 * Ring buffers shouldn't evict others from pool.  Thus we
+				 * don't make usagecount more than 1.
+				 */
+				if (BUF_STATE_GET_USAGECOUNT(buf_state) == 0)
+					buf_state += BUF_USAGECOUNT_ONE;
+			}
 
 			if (pg_atomic_compare_exchange_u32(&buf->state, &old_buf_state,
 											   buf_state))
