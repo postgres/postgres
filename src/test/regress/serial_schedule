@@ -129,6 +129,7 @@ test: dbsize
 test: misc_functions
 test: sysviews
 test: tsrf
+test: tidscan
 test: rules
 test: psql_crosstab
 test: select_parallel

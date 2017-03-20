@@ -1,0 +1,179 @@
+-- tests for tidscans
+CREATE TABLE tidscan(id integer);
+-- only insert a few rows, we don't want to spill onto a second table page
+INSERT INTO tidscan VALUES (1), (2), (3);
+-- show ctids
+SELECT ctid, * FROM tidscan;
+ ctid  | id 
+-------+----
+ (0,1) |  1
+ (0,2) |  2
+ (0,3) |  3
+(3 rows)
+
+-- ctid equality - implemented as tidscan
+EXPLAIN (COSTS OFF)
+SELECT ctid, * FROM tidscan WHERE ctid = '(0,1)';
+            QUERY PLAN             
+-----------------------------------
+ Tid Scan on tidscan
+   TID Cond: (ctid = '(0,1)'::tid)
+(2 rows)
+
+SELECT ctid, * FROM tidscan WHERE ctid = '(0,1)';
+ ctid  | id 
+-------+----
+ (0,1) |  1
+(1 row)
+
+EXPLAIN (COSTS OFF)
+SELECT ctid, * FROM tidscan WHERE '(0,1)' = ctid;
+            QUERY PLAN             
+-----------------------------------
+ Tid Scan on tidscan
+   TID Cond: ('(0,1)'::tid = ctid)
+(2 rows)
+
+SELECT ctid, * FROM tidscan WHERE '(0,1)' = ctid;
+ ctid  | id 
+-------+----
+ (0,1) |  1
+(1 row)
+
+-- ctid = ScalarArrayOp - implemented as tidscan
+EXPLAIN (COSTS OFF)
+SELECT ctid, * FROM tidscan WHERE ctid = ANY(ARRAY['(0,1)', '(0,2)']::tid[]);
+                      QUERY PLAN                       
+-------------------------------------------------------
+ Tid Scan on tidscan
+   TID Cond: (ctid = ANY ('{"(0,1)","(0,2)"}'::tid[]))
+(2 rows)
+
+SELECT ctid, * FROM tidscan WHERE ctid = ANY(ARRAY['(0,1)', '(0,2)']::tid[]);
+ ctid  | id 
+-------+----
+ (0,1) |  1
+ (0,2) |  2
+(2 rows)
+
+-- ctid != ScalarArrayOp - can't be implemented as tidscan
+EXPLAIN (COSTS OFF)
+SELECT ctid, * FROM tidscan WHERE ctid != ANY(ARRAY['(0,1)', '(0,2)']::tid[]);
+                      QUERY PLAN                      
+------------------------------------------------------
+ Seq Scan on tidscan
+   Filter: (ctid <> ANY ('{"(0,1)","(0,2)"}'::tid[]))
+(2 rows)
+
+SELECT ctid, * FROM tidscan WHERE ctid != ANY(ARRAY['(0,1)', '(0,2)']::tid[]);
+ ctid  | id 
+-------+----
+ (0,1) |  1
+ (0,2) |  2
+ (0,3) |  3
+(3 rows)
+
+-- tid equality extracted from sub-AND clauses
+EXPLAIN (COSTS OFF)
+SELECT ctid, * FROM tidscan
+WHERE (id = 3 AND ctid IN ('(0,2)', '(0,3)')) OR (ctid = '(0,1)' AND id = 1);
+                                                  QUERY PLAN                                                  
+--------------------------------------------------------------------------------------------------------------
+ Tid Scan on tidscan
+   TID Cond: ((ctid = ANY ('{"(0,2)","(0,3)"}'::tid[])) OR (ctid = '(0,1)'::tid))
+   Filter: (((id = 3) AND (ctid = ANY ('{"(0,2)","(0,3)"}'::tid[]))) OR ((ctid = '(0,1)'::tid) AND (id = 1)))
+(3 rows)
+
+SELECT ctid, * FROM tidscan
+WHERE (id = 3 AND ctid IN ('(0,2)', '(0,3)')) OR (ctid = '(0,1)' AND id = 1);
+ ctid  | id 
+-------+----
+ (0,1) |  1
+ (0,3) |  3
+(2 rows)
+
+-- exercise backward scan and rewind
+BEGIN;
+DECLARE c CURSOR FOR
+SELECT ctid, * FROM tidscan WHERE ctid = ANY(ARRAY['(0,1)', '(0,2)']::tid[]);
+FETCH ALL FROM c;
+ ctid  | id 
+-------+----
+ (0,1) |  1
+ (0,2) |  2
+(2 rows)
+
+FETCH BACKWARD 1 FROM c;
+ ctid  | id 
+-------+----
+ (0,2) |  2
+(1 row)
+
+FETCH FIRST FROM c;
+ ctid  | id 
+-------+----
+ (0,1) |  1
+(1 row)
+
+ROLLBACK;
+-- tidscan via CURRENT OF
+BEGIN;
+DECLARE c CURSOR FOR SELECT ctid, * FROM tidscan;
+FETCH NEXT FROM c; -- skip one row
+ ctid  | id 
+-------+----
+ (0,1) |  1
+(1 row)
+
+FETCH NEXT FROM c;
+ ctid  | id 
+-------+----
+ (0,2) |  2
+(1 row)
+
+-- perform update
+EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF)
+UPDATE tidscan SET id = -id WHERE CURRENT OF c RETURNING *;
+                    QUERY PLAN                     
+---------------------------------------------------
+ Update on tidscan (actual rows=1 loops=1)
+   ->  Tid Scan on tidscan (actual rows=1 loops=1)
+         TID Cond: CURRENT OF c
+(3 rows)
+
+FETCH NEXT FROM c;
+ ctid  | id 
+-------+----
+ (0,3) |  3
+(1 row)
+
+-- perform update
+EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF)
+UPDATE tidscan SET id = -id WHERE CURRENT OF c RETURNING *;
+                    QUERY PLAN                     
+---------------------------------------------------
+ Update on tidscan (actual rows=1 loops=1)
+   ->  Tid Scan on tidscan (actual rows=1 loops=1)
+         TID Cond: CURRENT OF c
+(3 rows)
+
+SELECT * FROM tidscan;
+ id 
+----
+  1
+ -2
+ -3
+(3 rows)
+
+-- position cursor past any rows
+FETCH NEXT FROM c;
+ ctid | id 
+------+----
+(0 rows)
+
+-- should error out
+EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF)
+UPDATE tidscan SET id = -id WHERE CURRENT OF c RETURNING *;
+ERROR:  cursor "c" is not positioned on a row
+ROLLBACK;
+DROP TABLE tidscan;
