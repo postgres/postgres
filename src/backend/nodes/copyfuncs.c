@@ -3917,6 +3917,7 @@ _copyCreateForeignServerStmt(const CreateForeignServerStmt *from)
 	COPY_STRING_FIELD(version);
 	COPY_STRING_FIELD(fdwname);
 	COPY_NODE_FIELD(options);
+	COPY_SCALAR_FIELD(if_not_exists);
 
 	return newnode;
 }
@@ -3942,6 +3943,7 @@ _copyCreateUserMappingStmt(const CreateUserMappingStmt *from)
 	COPY_NODE_FIELD(user);
 	COPY_STRING_FIELD(servername);
 	COPY_NODE_FIELD(options);
+	COPY_SCALAR_FIELD(if_not_exists);
 
 	return newnode;
 }
