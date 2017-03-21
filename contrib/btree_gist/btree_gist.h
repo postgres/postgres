@@ -33,7 +33,8 @@ enum gbtree_type
 	gbt_t_bytea,
 	gbt_t_bit,
 	gbt_t_inet,
-	gbt_t_uuid
+	gbt_t_uuid,
+	gbt_t_enum
 };
 
 #endif

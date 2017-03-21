@@ -48,6 +48,7 @@ gbt_num_compress(GISTENTRY *entry, const gbtree_ninfo *tinfo)
 				leaf = &v.i8;
 				break;
 			case gbt_t_oid:
+			case gbt_t_enum:
 				v.i4 = DatumGetObjectId(entry->key);
 				leaf = &v.i4;
 				break;
@@ -122,6 +123,7 @@ gbt_num_fetch(GISTENTRY *entry, const gbtree_ninfo *tinfo)
 			datum = Int64GetDatum(*(int64 *) entry->key);
 			break;
 		case gbt_t_oid:
+		case gbt_t_enum:
 			datum = ObjectIdGetDatum(*(Oid *) entry->key);
 			break;
 		case gbt_t_float4:
