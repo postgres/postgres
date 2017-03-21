@@ -286,12 +286,28 @@ lower2D(RangeBox *range_box, Range *query)
 		FPlt(range_box->right.low, query->low);
 }
 
+/* Can any range from range_box not extend to the right side of the query? */
+static bool
+overLower2D(RangeBox *range_box, Range *query)
+{
+	return FPle(range_box->left.low, query->high) &&
+		FPle(range_box->right.low, query->high);
+}
+
 /* Can any range from range_box to be higher than this argument? */
 static bool
 higher2D(RangeBox *range_box, Range *query)
 {
 	return FPgt(range_box->left.high, query->high) &&
 		FPgt(range_box->right.high, query->high);
+}
+
+/* Can any range from range_box not extend to the left side of the query? */
+static bool
+overHigher2D(RangeBox *range_box, Range *query)
+{
+	return FPge(range_box->left.high, query->low) &&
+		FPge(range_box->right.high, query->low);
 }
 
 /* Can any rectangle from rect_box be left of this argument? */
@@ -305,7 +321,7 @@ left4D(RectBox *rect_box, RangeBox *query)
 static bool
 overLeft4D(RectBox *rect_box, RangeBox *query)
 {
-	return lower2D(&rect_box->range_box_x, &query->right);
+	return overLower2D(&rect_box->range_box_x, &query->left);
 }
 
 /* Can any rectangle from rect_box be right of this argument? */
@@ -319,7 +335,7 @@ right4D(RectBox *rect_box, RangeBox *query)
 static bool
 overRight4D(RectBox *rect_box, RangeBox *query)
 {
-	return higher2D(&rect_box->range_box_x, &query->right);
+	return overHigher2D(&rect_box->range_box_x, &query->left);
 }
 
 /* Can any rectangle from rect_box be below of this argument? */
@@ -333,7 +349,7 @@ below4D(RectBox *rect_box, RangeBox *query)
 static bool
 overBelow4D(RectBox *rect_box, RangeBox *query)
 {
-	return lower2D(&rect_box->range_box_y, &query->left);
+	return overLower2D(&rect_box->range_box_y, &query->right);
 }
 
 /* Can any rectangle from rect_box be above of this argument? */
@@ -347,7 +363,7 @@ above4D(RectBox *rect_box, RangeBox *query)
 static bool
 overAbove4D(RectBox *rect_box, RangeBox *query)
 {
-	return higher2D(&rect_box->range_box_y, &query->right);
+	return overHigher2D(&rect_box->range_box_y, &query->right);
 }
 
 /*

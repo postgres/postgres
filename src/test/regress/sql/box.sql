@@ -179,3 +179,50 @@ EXPLAIN (COSTS OFF) SELECT * FROM box_temp WHERE f1 ~= '(20,20),(40,40)';
 RESET enable_seqscan;
 
 DROP INDEX box_spgist;
+
+--
+-- Test the SP-GiST index on the larger volume of data
+--
+CREATE TABLE quad_box_tbl (b box);
+
+INSERT INTO quad_box_tbl
+	SELECT box(point(x * 10, y * 10), point(x * 10 + 5, y * 10 + 5))
+	FROM generate_series(1, 100) x,
+		 generate_series(1, 100) y;
+
+-- insert repeating data to test allTheSame
+INSERT INTO quad_box_tbl
+	SELECT '((200, 300),(210, 310))'
+	FROM generate_series(1, 1000);
+
+INSERT INTO quad_box_tbl
+	VALUES
+		(NULL),
+		(NULL),
+		('((-infinity,-infinity),(infinity,infinity))'),
+		('((-infinity,100),(-infinity,500))'),
+		('((-infinity,-infinity),(700,infinity))');
+
+CREATE INDEX quad_box_tbl_idx ON quad_box_tbl USING spgist(b);
+
+SET enable_seqscan = OFF;
+SET enable_indexscan = ON;
+SET enable_bitmapscan = ON;
+
+SELECT count(*) FROM quad_box_tbl WHERE b <<  box '((100,200),(300,500))';
+SELECT count(*) FROM quad_box_tbl WHERE b &<  box '((100,200),(300,500))';
+SELECT count(*) FROM quad_box_tbl WHERE b &&  box '((100,200),(300,500))';
+SELECT count(*) FROM quad_box_tbl WHERE b &>  box '((100,200),(300,500))';
+SELECT count(*) FROM quad_box_tbl WHERE b >>  box '((100,200),(300,500))';
+SELECT count(*) FROM quad_box_tbl WHERE b >>  box '((100,200),(300,500))';
+SELECT count(*) FROM quad_box_tbl WHERE b <<| box '((100,200),(300,500))';
+SELECT count(*) FROM quad_box_tbl WHERE b &<| box '((100,200),(300,500))';
+SELECT count(*) FROM quad_box_tbl WHERE b |&> box '((100,200),(300,500))';
+SELECT count(*) FROM quad_box_tbl WHERE b |>> box '((100,200),(300,500))';
+SELECT count(*) FROM quad_box_tbl WHERE b @>  box '((201,301),(202,303))';
+SELECT count(*) FROM quad_box_tbl WHERE b <@  box '((100,200),(300,500))';
+SELECT count(*) FROM quad_box_tbl WHERE b ~=  box '((200,300),(205,305))';
+
+RESET enable_seqscan;
+RESET enable_indexscan;
+RESET enable_bitmapscan;
