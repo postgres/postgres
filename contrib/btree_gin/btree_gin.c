@@ -25,7 +25,6 @@ typedef struct QueryInfo
 	Datum		(*typecmp) (FunctionCallInfo);
 } QueryInfo;
 
-
 /*** GIN support functions shared by all datatypes ***/
 
 static Datum
@@ -112,13 +111,14 @@ gin_btree_compare_prefix(FunctionCallInfo fcinfo)
 	int32		res,
 				cmp;
 
-	cmp = DatumGetInt32(DirectFunctionCall2Coll(
-												data->typecmp,
-												PG_GET_COLLATION(),
-								   (data->strategy == BTLessStrategyNumber ||
-								 data->strategy == BTLessEqualStrategyNumber)
-												? data->datum : a,
-												b));
+	cmp = DatumGetInt32(CallerFInfoFunctionCall2(
+							data->typecmp,
+							fcinfo->flinfo,
+							PG_GET_COLLATION(),
+							(data->strategy == BTLessStrategyNumber ||
+							 data->strategy == BTLessEqualStrategyNumber)
+							? data->datum : a,
+							b));
 
 	switch (data->strategy)
 	{
@@ -426,3 +426,54 @@ leftmostvalue_numeric(void)
 }
 
 GIN_SUPPORT(numeric, true, leftmostvalue_numeric, gin_numeric_cmp)
+
+/*
+ * Use a similar trick to that used for numeric for enums, since we don't
+ * actually know the leftmost value of any enum without knowing the concrete
+ * type, so we use a dummy leftmost value of InvalidOid.
+ *
+ * Note that we use CallerFInfoFunctionCall2 here so that enum_cmp
+ * gets a valid fn_extra to work with. Unlike most other type comparison
+ * routines it needs it, so we can't use DirectFunctionCall2.
+ */
+
+
+#define ENUM_IS_LEFTMOST(x)	((x) == InvalidOid)
+
+PG_FUNCTION_INFO_V1(gin_enum_cmp);
+
+Datum
+gin_enum_cmp(PG_FUNCTION_ARGS)
+{
+	Oid		a = PG_GETARG_OID(0);
+	Oid		b = PG_GETARG_OID(1);
+	int		res = 0;
+
+	if (ENUM_IS_LEFTMOST(a))
+	{
+		res = (ENUM_IS_LEFTMOST(b)) ? 0 : -1;
+	}
+	else if (ENUM_IS_LEFTMOST(b))
+	{
+		res = 1;
+	}
+	else
+	{
+		res = DatumGetInt32(CallerFInfoFunctionCall2(
+								enum_cmp,
+								fcinfo->flinfo,
+								PG_GET_COLLATION(),
+								ObjectIdGetDatum(a),
+								ObjectIdGetDatum(b)));
+	}
+
+	PG_RETURN_INT32(res);
+}
+
+static Datum
+leftmostvalue_enum(void)
+{
+	return ObjectIdGetDatum(InvalidOid);
+}
+
+GIN_SUPPORT(anyenum, false, leftmostvalue_enum, gin_enum_cmp)
