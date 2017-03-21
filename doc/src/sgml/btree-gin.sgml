@@ -17,7 +17,7 @@
   <type>oid</>, <type>money</>, <type>"char"</>,
   <type>varchar</>, <type>text</>, <type>bytea</>, <type>bit</>,
   <type>varbit</>, <type>macaddr</>, <type>macaddr8</>, <type>inet</>,
-  and <type>cidr</>.
+  <type>cidr</>, and all <type>enum</> types.
  </para>
 
  <para>
