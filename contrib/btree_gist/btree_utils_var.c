@@ -25,6 +25,7 @@ typedef struct
 {
 	const gbtree_vinfo *tinfo;
 	Oid			collation;
+	FmgrInfo *flinfo;
 } gbt_vsrt_arg;
 
 
@@ -103,12 +104,12 @@ gbt_var_key_copy(const GBT_VARKEY_R *u)
 
 
 static GBT_VARKEY *
-gbt_var_leaf2node(GBT_VARKEY *leaf, const gbtree_vinfo *tinfo)
+gbt_var_leaf2node(GBT_VARKEY *leaf, const gbtree_vinfo *tinfo, FmgrInfo *flinfo)
 {
 	GBT_VARKEY *out = leaf;
 
 	if (tinfo->f_l2n)
-		out = (*tinfo->f_l2n) (leaf);
+		out = (*tinfo->f_l2n) (leaf, flinfo);
 
 	return out;
 }
@@ -232,7 +233,7 @@ gbt_var_node_truncate(const GBT_VARKEY *node, int32 cpf_length, const gbtree_vin
 
 void
 gbt_var_bin_union(Datum *u, GBT_VARKEY *e, Oid collation,
-				  const gbtree_vinfo *tinfo)
+				  const gbtree_vinfo *tinfo, FmgrInfo *flinfo)
 {
 	GBT_VARKEY_R eo = gbt_var_key_readable(e);
 	GBT_VARKEY_R nr;
@@ -241,7 +242,7 @@ gbt_var_bin_union(Datum *u, GBT_VARKEY *e, Oid collation,
 	{
 		GBT_VARKEY *tmp;
 
-		tmp = gbt_var_leaf2node(e, tinfo);
+		tmp = gbt_var_leaf2node(e, tinfo, flinfo);
 		if (tmp != e)
 			eo = gbt_var_key_readable(tmp);
 	}
@@ -254,13 +255,13 @@ gbt_var_bin_union(Datum *u, GBT_VARKEY *e, Oid collation,
 		nr.lower = ro.lower;
 		nr.upper = ro.upper;
 
-		if ((*tinfo->f_cmp) (ro.lower, eo.lower, collation) > 0)
+		if ((*tinfo->f_cmp) (ro.lower, eo.lower, collation, flinfo) > 0)
 		{
 			nr.lower = eo.lower;
 			update = true;
 		}
 
-		if ((*tinfo->f_cmp) (ro.upper, eo.upper, collation) < 0)
+		if ((*tinfo->f_cmp) (ro.upper, eo.upper, collation, flinfo) < 0)
 		{
 			nr.upper = eo.upper;
 			update = true;
@@ -321,7 +322,7 @@ gbt_var_fetch(PG_FUNCTION_ARGS)
 
 GBT_VARKEY *
 gbt_var_union(const GistEntryVector *entryvec, int32 *size, Oid collation,
-			  const gbtree_vinfo *tinfo)
+			  const gbtree_vinfo *tinfo, FmgrInfo *flinfo)
 {
 	int			i = 0,
 				numranges = entryvec->n;
@@ -338,7 +339,7 @@ gbt_var_union(const GistEntryVector *entryvec, int32 *size, Oid collation,
 	for (i = 1; i < numranges; i++)
 	{
 		cur = (GBT_VARKEY *) DatumGetPointer(entryvec->vector[i].key);
-		gbt_var_bin_union(&out, cur, collation, tinfo);
+		gbt_var_bin_union(&out, cur, collation, tinfo, flinfo);
 	}
 
 
@@ -360,7 +361,7 @@ gbt_var_union(const GistEntryVector *entryvec, int32 *size, Oid collation,
 
 bool
 gbt_var_same(Datum d1, Datum d2, Oid collation,
-			 const gbtree_vinfo *tinfo)
+			 const gbtree_vinfo *tinfo, FmgrInfo *flinfo)
 {
 	GBT_VARKEY *t1 = (GBT_VARKEY *) DatumGetPointer(d1);
 	GBT_VARKEY *t2 = (GBT_VARKEY *) DatumGetPointer(d2);
@@ -370,14 +371,14 @@ gbt_var_same(Datum d1, Datum d2, Oid collation,
 	r1 = gbt_var_key_readable(t1);
 	r2 = gbt_var_key_readable(t2);
 
-	return ((*tinfo->f_cmp) (r1.lower, r2.lower, collation) == 0 &&
-			(*tinfo->f_cmp) (r1.upper, r2.upper, collation) == 0);
+	return ((*tinfo->f_cmp) (r1.lower, r2.lower, collation, flinfo) == 0 &&
+			(*tinfo->f_cmp) (r1.upper, r2.upper, collation, flinfo) == 0);
 }
 
 
 float *
 gbt_var_penalty(float *res, const GISTENTRY *o, const GISTENTRY *n,
-				Oid collation, const gbtree_vinfo *tinfo)
+				Oid collation, const gbtree_vinfo *tinfo, FmgrInfo *flinfo)
 {
 	GBT_VARKEY *orge = (GBT_VARKEY *) DatumGetPointer(o->key);
 	GBT_VARKEY *newe = (GBT_VARKEY *) DatumGetPointer(n->key);
@@ -391,7 +392,7 @@ gbt_var_penalty(float *res, const GISTENTRY *o, const GISTENTRY *n,
 	{
 		GBT_VARKEY *tmp;
 
-		tmp = gbt_var_leaf2node(newe, tinfo);
+		tmp = gbt_var_leaf2node(newe, tinfo, flinfo);
 		if (tmp != newe)
 			nk = gbt_var_key_readable(tmp);
 	}
@@ -399,9 +400,9 @@ gbt_var_penalty(float *res, const GISTENTRY *o, const GISTENTRY *n,
 
 	if ((VARSIZE(ok.lower) - VARHDRSZ) == 0 && (VARSIZE(ok.upper) - VARHDRSZ) == 0)
 		*res = 0.0;
-	else if (!(((*tinfo->f_cmp) (nk.lower, ok.lower, collation) >= 0 ||
+	else if (!(((*tinfo->f_cmp) (nk.lower, ok.lower, collation, flinfo) >= 0 ||
 				gbt_bytea_pf_match(ok.lower, nk.lower, tinfo)) &&
-			   ((*tinfo->f_cmp) (nk.upper, ok.upper, collation) <= 0 ||
+			   ((*tinfo->f_cmp) (nk.upper, ok.upper, collation, flinfo) <= 0 ||
 				gbt_bytea_pf_match(ok.upper, nk.upper, tinfo))))
 	{
 		Datum		d = PointerGetDatum(0);
@@ -409,9 +410,9 @@ gbt_var_penalty(float *res, const GISTENTRY *o, const GISTENTRY *n,
 		int32		ol,
 					ul;
 
-		gbt_var_bin_union(&d, orge, collation, tinfo);
+		gbt_var_bin_union(&d, orge, collation, tinfo, flinfo);
 		ol = gbt_var_node_cp_len((GBT_VARKEY *) DatumGetPointer(d), tinfo);
-		gbt_var_bin_union(&d, newe, collation, tinfo);
+		gbt_var_bin_union(&d, newe, collation, tinfo, flinfo);
 		ul = gbt_var_node_cp_len((GBT_VARKEY *) DatumGetPointer(d), tinfo);
 
 		if (ul < ol)
@@ -448,16 +449,16 @@ gbt_vsrt_cmp(const void *a, const void *b, void *arg)
 	const gbt_vsrt_arg *varg = (const gbt_vsrt_arg *) arg;
 	int			res;
 
-	res = (*varg->tinfo->f_cmp) (ar.lower, br.lower, varg->collation);
+	res = (*varg->tinfo->f_cmp) (ar.lower, br.lower, varg->collation, varg->flinfo);
 	if (res == 0)
-		return (*varg->tinfo->f_cmp) (ar.upper, br.upper, varg->collation);
+		return (*varg->tinfo->f_cmp) (ar.upper, br.upper, varg->collation, varg->flinfo);
 
 	return res;
 }
 
 GIST_SPLITVEC *
 gbt_var_picksplit(const GistEntryVector *entryvec, GIST_SPLITVEC *v,
-				  Oid collation, const gbtree_vinfo *tinfo)
+				  Oid collation, const gbtree_vinfo *tinfo, FmgrInfo *flinfo)
 {
 	OffsetNumber i,
 				maxoff = entryvec->n - 1;
@@ -489,7 +490,7 @@ gbt_var_picksplit(const GistEntryVector *entryvec, GIST_SPLITVEC *v,
 		ro = gbt_var_key_readable((GBT_VARKEY *) cur);
 		if (ro.lower == ro.upper)		/* leaf */
 		{
-			sv[svcntr] = gbt_var_leaf2node((GBT_VARKEY *) cur, tinfo);
+			sv[svcntr] = gbt_var_leaf2node((GBT_VARKEY *) cur, tinfo, flinfo);
 			arr[i].t = sv[svcntr];
 			if (sv[svcntr] != (GBT_VARKEY *) cur)
 				svcntr++;
@@ -502,6 +503,7 @@ gbt_var_picksplit(const GistEntryVector *entryvec, GIST_SPLITVEC *v,
 	/* sort */
 	varg.tinfo = tinfo;
 	varg.collation = collation;
+	varg.flinfo = flinfo;
 	qsort_arg((void *) &arr[FirstOffsetNumber],
 			  maxoff - FirstOffsetNumber + 1,
 			  sizeof(Vsrt),
@@ -514,13 +516,13 @@ gbt_var_picksplit(const GistEntryVector *entryvec, GIST_SPLITVEC *v,
 	{
 		if (i <= (maxoff - FirstOffsetNumber + 1) / 2)
 		{
-			gbt_var_bin_union(&v->spl_ldatum, arr[i].t, collation, tinfo);
+			gbt_var_bin_union(&v->spl_ldatum, arr[i].t, collation, tinfo, flinfo);
 			v->spl_left[v->spl_nleft] = arr[i].i;
 			v->spl_nleft++;
 		}
 		else
 		{
-			gbt_var_bin_union(&v->spl_rdatum, arr[i].t, collation, tinfo);
+			gbt_var_bin_union(&v->spl_rdatum, arr[i].t, collation, tinfo, flinfo);
 			v->spl_right[v->spl_nright] = arr[i].i;
 			v->spl_nright++;
 		}
@@ -556,7 +558,8 @@ gbt_var_consistent(GBT_VARKEY_R *key,
 				   StrategyNumber strategy,
 				   Oid collation,
 				   bool is_leaf,
-				   const gbtree_vinfo *tinfo)
+				   const gbtree_vinfo *tinfo,
+				   FmgrInfo *flinfo)
 {
 	bool		retval = FALSE;
 
@@ -564,44 +567,44 @@ gbt_var_consistent(GBT_VARKEY_R *key,
 	{
 		case BTLessEqualStrategyNumber:
 			if (is_leaf)
-				retval = (*tinfo->f_ge) (query, key->lower, collation);
+				retval = (*tinfo->f_ge) (query, key->lower, collation, flinfo);
 			else
-				retval = (*tinfo->f_cmp) (query, key->lower, collation) >= 0
+				retval = (*tinfo->f_cmp) (query, key->lower, collation, flinfo) >= 0
 					|| gbt_var_node_pf_match(key, query, tinfo);
 			break;
 		case BTLessStrategyNumber:
 			if (is_leaf)
-				retval = (*tinfo->f_gt) (query, key->lower, collation);
+				retval = (*tinfo->f_gt) (query, key->lower, collation, flinfo);
 			else
-				retval = (*tinfo->f_cmp) (query, key->lower, collation) >= 0
+				retval = (*tinfo->f_cmp) (query, key->lower, collation, flinfo) >= 0
 					|| gbt_var_node_pf_match(key, query, tinfo);
 			break;
 		case BTEqualStrategyNumber:
 			if (is_leaf)
-				retval = (*tinfo->f_eq) (query, key->lower, collation);
+				retval = (*tinfo->f_eq) (query, key->lower, collation, flinfo);
 			else
 				retval =
-					((*tinfo->f_cmp) (key->lower, query, collation) <= 0 &&
-					 (*tinfo->f_cmp) (query, key->upper, collation) <= 0) ||
+					((*tinfo->f_cmp) (key->lower, query, collation, flinfo) <= 0 &&
+					 (*tinfo->f_cmp) (query, key->upper, collation, flinfo) <= 0) ||
 					gbt_var_node_pf_match(key, query, tinfo);
 			break;
 		case BTGreaterStrategyNumber:
 			if (is_leaf)
-				retval = (*tinfo->f_lt) (query, key->upper, collation);
+				retval = (*tinfo->f_lt) (query, key->upper, collation, flinfo);
 			else
-				retval = (*tinfo->f_cmp) (query, key->upper, collation) <= 0
+				retval = (*tinfo->f_cmp) (query, key->upper, collation, flinfo) <= 0
 					|| gbt_var_node_pf_match(key, query, tinfo);
 			break;
 		case BTGreaterEqualStrategyNumber:
 			if (is_leaf)
-				retval = (*tinfo->f_le) (query, key->upper, collation);
+				retval = (*tinfo->f_le) (query, key->upper, collation, flinfo);
 			else
-				retval = (*tinfo->f_cmp) (query, key->upper, collation) <= 0
+				retval = (*tinfo->f_cmp) (query, key->upper, collation, flinfo) <= 0
 					|| gbt_var_node_pf_match(key, query, tinfo);
 			break;
 		case BtreeGistNotEqualStrategyNumber:
-			retval = !((*tinfo->f_eq) (query, key->lower, collation) &&
-					   (*tinfo->f_eq) (query, key->upper, collation));
+			retval = !((*tinfo->f_eq) (query, key->lower, collation, flinfo) &&
+					   (*tinfo->f_eq) (query, key->upper, collation, flinfo));
 			break;
 		default:
 			retval = FALSE;

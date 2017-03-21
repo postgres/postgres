@@ -24,7 +24,7 @@ PG_FUNCTION_INFO_V1(gbt_bit_same);
 /* define for comparison */
 
 static bool
-gbt_bitgt(const void *a, const void *b, Oid collation)
+gbt_bitgt(const void *a, const void *b, Oid collation, FmgrInfo *flinfo)
 {
 	return DatumGetBool(DirectFunctionCall2(bitgt,
 											PointerGetDatum(a),
@@ -32,7 +32,7 @@ gbt_bitgt(const void *a, const void *b, Oid collation)
 }
 
 static bool
-gbt_bitge(const void *a, const void *b, Oid collation)
+gbt_bitge(const void *a, const void *b, Oid collation, FmgrInfo *flinfo)
 {
 	return DatumGetBool(DirectFunctionCall2(bitge,
 											PointerGetDatum(a),
@@ -40,7 +40,7 @@ gbt_bitge(const void *a, const void *b, Oid collation)
 }
 
 static bool
-gbt_biteq(const void *a, const void *b, Oid collation)
+gbt_biteq(const void *a, const void *b, Oid collation, FmgrInfo *flinfo)
 {
 	return DatumGetBool(DirectFunctionCall2(biteq,
 											PointerGetDatum(a),
@@ -48,7 +48,7 @@ gbt_biteq(const void *a, const void *b, Oid collation)
 }
 
 static bool
-gbt_bitle(const void *a, const void *b, Oid collation)
+gbt_bitle(const void *a, const void *b, Oid collation, FmgrInfo *flinfo)
 {
 	return DatumGetBool(DirectFunctionCall2(bitle,
 											PointerGetDatum(a),
@@ -56,7 +56,7 @@ gbt_bitle(const void *a, const void *b, Oid collation)
 }
 
 static bool
-gbt_bitlt(const void *a, const void *b, Oid collation)
+gbt_bitlt(const void *a, const void *b, Oid collation, FmgrInfo *flinfo)
 {
 	return DatumGetBool(DirectFunctionCall2(bitlt,
 											PointerGetDatum(a),
@@ -64,7 +64,7 @@ gbt_bitlt(const void *a, const void *b, Oid collation)
 }
 
 static int32
-gbt_bitcmp(const void *a, const void *b, Oid collation)
+gbt_bitcmp(const void *a, const void *b, Oid collation, FmgrInfo *flinfo)
 {
 	return DatumGetInt32(DirectFunctionCall2(byteacmp,
 											 PointerGetDatum(a),
@@ -92,7 +92,7 @@ gbt_bit_xfrm(bytea *leaf)
 
 
 static GBT_VARKEY *
-gbt_bit_l2n(GBT_VARKEY *leaf)
+gbt_bit_l2n(GBT_VARKEY *leaf, FmgrInfo *flinfo)
 {
 	GBT_VARKEY *out = leaf;
 	GBT_VARKEY_R r = gbt_var_key_readable(leaf);
@@ -152,13 +152,13 @@ gbt_bit_consistent(PG_FUNCTION_ARGS)
 
 	if (GIST_LEAF(entry))
 		retval = gbt_var_consistent(&r, query, strategy, PG_GET_COLLATION(),
-									TRUE, &tinfo);
+									TRUE, &tinfo, fcinfo->flinfo);
 	else
 	{
 		bytea	   *q = gbt_bit_xfrm((bytea *) query);
 
 		retval = gbt_var_consistent(&r, q, strategy, PG_GET_COLLATION(),
-									FALSE, &tinfo);
+									FALSE, &tinfo, fcinfo->flinfo);
 	}
 	PG_RETURN_BOOL(retval);
 }
@@ -172,7 +172,7 @@ gbt_bit_union(PG_FUNCTION_ARGS)
 	int32	   *size = (int *) PG_GETARG_POINTER(1);
 
 	PG_RETURN_POINTER(gbt_var_union(entryvec, size, PG_GET_COLLATION(),
-									&tinfo));
+									&tinfo, fcinfo->flinfo));
 }
 
 
@@ -183,7 +183,7 @@ gbt_bit_picksplit(PG_FUNCTION_ARGS)
 	GIST_SPLITVEC *v = (GIST_SPLITVEC *) PG_GETARG_POINTER(1);
 
 	gbt_var_picksplit(entryvec, v, PG_GET_COLLATION(),
-					  &tinfo);
+					  &tinfo, fcinfo->flinfo);
 	PG_RETURN_POINTER(v);
 }
 
@@ -194,7 +194,7 @@ gbt_bit_same(PG_FUNCTION_ARGS)
 	Datum		d2 = PG_GETARG_DATUM(1);
 	bool	   *result = (bool *) PG_GETARG_POINTER(2);
 
-	*result = gbt_var_same(d1, d2, PG_GET_COLLATION(), &tinfo);
+	*result = gbt_var_same(d1, d2, PG_GET_COLLATION(), &tinfo, fcinfo->flinfo);
 	PG_RETURN_POINTER(result);
 }
 
@@ -207,5 +207,5 @@ gbt_bit_penalty(PG_FUNCTION_ARGS)
 	float	   *result = (float *) PG_GETARG_POINTER(2);
 
 	PG_RETURN_POINTER(gbt_var_penalty(result, o, n, PG_GET_COLLATION(),
-									  &tinfo));
+									  &tinfo, fcinfo->flinfo));
 }
