@@ -483,6 +483,19 @@ extern Datum DirectFunctionCall9Coll(PGFunction func, Oid collation,
 						Datum arg6, Datum arg7, Datum arg8,
 						Datum arg9);
 
+/*
+ * These functions work like the DirectFunctionCall functions except that
+ * they use the flinfo parameter to initialise the fcinfo for the call.
+ * It's recommended that the callee only use the fn_extra and fn_mcxt
+ * fields, as other fields will typically describe the calling function
+ * not the callee.  Conversely, the calling function should not have
+ * used fn_extra, unless its use is known to be compatible with the callee's.
+ */
+extern Datum CallerFInfoFunctionCall1(PGFunction func, FmgrInfo *flinfo,
+						 Oid collation, Datum arg1);
+extern Datum CallerFInfoFunctionCall2(PGFunction func, FmgrInfo *flinfo,
+						 Oid collation, Datum arg1, Datum arg2);
+
 /* These are for invocation of a previously-looked-up function with a
  * directly-computed parameter list.  Note that neither arguments nor result
  * are allowed to be NULL.
