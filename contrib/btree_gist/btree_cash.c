@@ -26,33 +26,33 @@ PG_FUNCTION_INFO_V1(gbt_cash_penalty);
 PG_FUNCTION_INFO_V1(gbt_cash_same);
 
 static bool
-gbt_cashgt(const void *a, const void *b)
+gbt_cashgt(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	return (*((const Cash *) a) > *((const Cash *) b));
 }
 static bool
-gbt_cashge(const void *a, const void *b)
+gbt_cashge(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	return (*((const Cash *) a) >= *((const Cash *) b));
 }
 static bool
-gbt_casheq(const void *a, const void *b)
+gbt_casheq(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	return (*((const Cash *) a) == *((const Cash *) b));
 }
 static bool
-gbt_cashle(const void *a, const void *b)
+gbt_cashle(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	return (*((const Cash *) a) <= *((const Cash *) b));
 }
 static bool
-gbt_cashlt(const void *a, const void *b)
+gbt_cashlt(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	return (*((const Cash *) a) < *((const Cash *) b));
 }
 
 static int
-gbt_cashkey_cmp(const void *a, const void *b)
+gbt_cashkey_cmp(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	cashKEY    *ia = (cashKEY *) (((const Nsrt *) a)->t);
 	cashKEY    *ib = (cashKEY *) (((const Nsrt *) b)->t);
@@ -69,7 +69,7 @@ gbt_cashkey_cmp(const void *a, const void *b)
 }
 
 static float8
-gbt_cash_dist(const void *a, const void *b)
+gbt_cash_dist(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	return GET_FLOAT_DISTANCE(Cash, a, b);
 }
@@ -151,7 +151,7 @@ gbt_cash_consistent(PG_FUNCTION_ARGS)
 	key.upper = (GBT_NUMKEY *) &kkk->upper;
 
 	PG_RETURN_BOOL(
-				   gbt_num_consistent(&key, (void *) &query, &strategy, GIST_LEAF(entry), &tinfo)
+				   gbt_num_consistent(&key, (void *) &query, &strategy, GIST_LEAF(entry), &tinfo, fcinfo->flinfo)
 		);
 }
 
@@ -170,7 +170,7 @@ gbt_cash_distance(PG_FUNCTION_ARGS)
 	key.upper = (GBT_NUMKEY *) &kkk->upper;
 
 	PG_RETURN_FLOAT8(
-			gbt_num_distance(&key, (void *) &query, GIST_LEAF(entry), &tinfo)
+			gbt_num_distance(&key, (void *) &query, GIST_LEAF(entry), &tinfo, fcinfo->flinfo)
 		);
 }
 
@@ -182,7 +182,7 @@ gbt_cash_union(PG_FUNCTION_ARGS)
 	void	   *out = palloc(sizeof(cashKEY));
 
 	*(int *) PG_GETARG_POINTER(1) = sizeof(cashKEY);
-	PG_RETURN_POINTER(gbt_num_union((void *) out, entryvec, &tinfo));
+	PG_RETURN_POINTER(gbt_num_union((void *) out, entryvec, &tinfo, fcinfo->flinfo));
 }
 
 
@@ -205,7 +205,7 @@ gbt_cash_picksplit(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(gbt_num_picksplit(
 									(GistEntryVector *) PG_GETARG_POINTER(0),
 									  (GIST_SPLITVEC *) PG_GETARG_POINTER(1),
-										&tinfo
+										&tinfo, fcinfo->flinfo
 										));
 }
 
@@ -216,6 +216,6 @@ gbt_cash_same(PG_FUNCTION_ARGS)
 	cashKEY    *b2 = (cashKEY *) PG_GETARG_POINTER(1);
 	bool	   *result = (bool *) PG_GETARG_POINTER(2);
 
-	*result = gbt_num_same((void *) b1, (void *) b2, &tinfo);
+	*result = gbt_num_same((void *) b1, (void *) b2, &tinfo, fcinfo->flinfo);
 	PG_RETURN_POINTER(result);
 }

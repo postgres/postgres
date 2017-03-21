@@ -28,37 +28,37 @@ PG_FUNCTION_INFO_V1(gbt_macad8_same);
 
 
 static bool
-gbt_macad8gt(const void *a, const void *b)
+gbt_macad8gt(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	return DatumGetBool(DirectFunctionCall2(macaddr8_gt, PointerGetDatum(a), PointerGetDatum(b)));
 }
 static bool
-gbt_macad8ge(const void *a, const void *b)
+gbt_macad8ge(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	return DatumGetBool(DirectFunctionCall2(macaddr8_ge, PointerGetDatum(a), PointerGetDatum(b)));
 }
 
 static bool
-gbt_macad8eq(const void *a, const void *b)
+gbt_macad8eq(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	return DatumGetBool(DirectFunctionCall2(macaddr8_eq, PointerGetDatum(a), PointerGetDatum(b)));
 }
 
 static bool
-gbt_macad8le(const void *a, const void *b)
+gbt_macad8le(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	return DatumGetBool(DirectFunctionCall2(macaddr8_le, PointerGetDatum(a), PointerGetDatum(b)));
 }
 
 static bool
-gbt_macad8lt(const void *a, const void *b)
+gbt_macad8lt(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	return DatumGetBool(DirectFunctionCall2(macaddr8_lt, PointerGetDatum(a), PointerGetDatum(b)));
 }
 
 
 static int
-gbt_macad8key_cmp(const void *a, const void *b)
+gbt_macad8key_cmp(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	mac8KEY    *ia = (mac8KEY *) (((const Nsrt *) a)->t);
 	mac8KEY    *ib = (mac8KEY *) (((const Nsrt *) b)->t);
@@ -142,7 +142,7 @@ gbt_macad8_consistent(PG_FUNCTION_ARGS)
 	key.upper = (GBT_NUMKEY *) &kkk->upper;
 
 	PG_RETURN_BOOL(
-				   gbt_num_consistent(&key, (void *) query, &strategy, GIST_LEAF(entry), &tinfo)
+				   gbt_num_consistent(&key, (void *) query, &strategy, GIST_LEAF(entry), &tinfo, fcinfo->flinfo)
 		);
 }
 
@@ -154,7 +154,7 @@ gbt_macad8_union(PG_FUNCTION_ARGS)
 	void	   *out = palloc0(sizeof(mac8KEY));
 
 	*(int *) PG_GETARG_POINTER(1) = sizeof(mac8KEY);
-	PG_RETURN_POINTER(gbt_num_union((void *) out, entryvec, &tinfo));
+	PG_RETURN_POINTER(gbt_num_union((void *) out, entryvec, &tinfo, fcinfo->flinfo));
 }
 
 
@@ -184,7 +184,7 @@ gbt_macad8_picksplit(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(gbt_num_picksplit(
 									(GistEntryVector *) PG_GETARG_POINTER(0),
 									  (GIST_SPLITVEC *) PG_GETARG_POINTER(1),
-										&tinfo
+										&tinfo, fcinfo->flinfo
 										));
 }
 
@@ -195,6 +195,6 @@ gbt_macad8_same(PG_FUNCTION_ARGS)
 	mac8KEY    *b2 = (mac8KEY *) PG_GETARG_POINTER(1);
 	bool	   *result = (bool *) PG_GETARG_POINTER(2);
 
-	*result = gbt_num_same((void *) b1, (void *) b2, &tinfo);
+	*result = gbt_num_same((void *) b1, (void *) b2, &tinfo, fcinfo->flinfo);
 	PG_RETURN_POINTER(result);
 }

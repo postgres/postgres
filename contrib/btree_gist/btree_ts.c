@@ -40,7 +40,7 @@ PG_FUNCTION_INFO_V1(gbt_ts_same);
 
 
 static bool
-gbt_tsgt(const void *a, const void *b)
+gbt_tsgt(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	const Timestamp *aa = (const Timestamp *) a;
 	const Timestamp *bb = (const Timestamp *) b;
@@ -51,7 +51,7 @@ gbt_tsgt(const void *a, const void *b)
 }
 
 static bool
-gbt_tsge(const void *a, const void *b)
+gbt_tsge(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	const Timestamp *aa = (const Timestamp *) a;
 	const Timestamp *bb = (const Timestamp *) b;
@@ -62,7 +62,7 @@ gbt_tsge(const void *a, const void *b)
 }
 
 static bool
-gbt_tseq(const void *a, const void *b)
+gbt_tseq(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	const Timestamp *aa = (const Timestamp *) a;
 	const Timestamp *bb = (const Timestamp *) b;
@@ -73,7 +73,7 @@ gbt_tseq(const void *a, const void *b)
 }
 
 static bool
-gbt_tsle(const void *a, const void *b)
+gbt_tsle(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	const Timestamp *aa = (const Timestamp *) a;
 	const Timestamp *bb = (const Timestamp *) b;
@@ -84,7 +84,7 @@ gbt_tsle(const void *a, const void *b)
 }
 
 static bool
-gbt_tslt(const void *a, const void *b)
+gbt_tslt(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	const Timestamp *aa = (const Timestamp *) a;
 	const Timestamp *bb = (const Timestamp *) b;
@@ -96,7 +96,7 @@ gbt_tslt(const void *a, const void *b)
 
 
 static int
-gbt_tskey_cmp(const void *a, const void *b)
+gbt_tskey_cmp(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	tsKEY	   *ia = (tsKEY *) (((const Nsrt *) a)->t);
 	tsKEY	   *ib = (tsKEY *) (((const Nsrt *) b)->t);
@@ -110,7 +110,7 @@ gbt_tskey_cmp(const void *a, const void *b)
 }
 
 static float8
-gbt_ts_dist(const void *a, const void *b)
+gbt_ts_dist(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	const Timestamp *aa = (const Timestamp *) a;
 	const Timestamp *bb = (const Timestamp *) b;
@@ -265,7 +265,7 @@ gbt_ts_consistent(PG_FUNCTION_ARGS)
 	key.upper = (GBT_NUMKEY *) &kkk->upper;
 
 	PG_RETURN_BOOL(
-				   gbt_num_consistent(&key, (void *) &query, &strategy, GIST_LEAF(entry), &tinfo)
+				   gbt_num_consistent(&key, (void *) &query, &strategy, GIST_LEAF(entry), &tinfo, fcinfo->flinfo)
 		);
 }
 
@@ -283,7 +283,7 @@ gbt_ts_distance(PG_FUNCTION_ARGS)
 	key.upper = (GBT_NUMKEY *) &kkk->upper;
 
 	PG_RETURN_FLOAT8(
-			gbt_num_distance(&key, (void *) &query, GIST_LEAF(entry), &tinfo)
+			gbt_num_distance(&key, (void *) &query, GIST_LEAF(entry), &tinfo, fcinfo->flinfo)
 		);
 }
 
@@ -308,7 +308,7 @@ gbt_tstz_consistent(PG_FUNCTION_ARGS)
 	qqq = tstz_to_ts_gmt(query);
 
 	PG_RETURN_BOOL(
-				   gbt_num_consistent(&key, (void *) &qqq, &strategy, GIST_LEAF(entry), &tinfo)
+				   gbt_num_consistent(&key, (void *) &qqq, &strategy, GIST_LEAF(entry), &tinfo, fcinfo->flinfo)
 		);
 }
 
@@ -328,7 +328,7 @@ gbt_tstz_distance(PG_FUNCTION_ARGS)
 	qqq = tstz_to_ts_gmt(query);
 
 	PG_RETURN_FLOAT8(
-			  gbt_num_distance(&key, (void *) &qqq, GIST_LEAF(entry), &tinfo)
+			  gbt_num_distance(&key, (void *) &qqq, GIST_LEAF(entry), &tinfo, fcinfo->flinfo)
 		);
 }
 
@@ -340,7 +340,7 @@ gbt_ts_union(PG_FUNCTION_ARGS)
 	void	   *out = palloc(sizeof(tsKEY));
 
 	*(int *) PG_GETARG_POINTER(1) = sizeof(tsKEY);
-	PG_RETURN_POINTER(gbt_num_union((void *) out, entryvec, &tinfo));
+	PG_RETURN_POINTER(gbt_num_union((void *) out, entryvec, &tinfo, fcinfo->flinfo));
 }
 
 
@@ -389,7 +389,7 @@ gbt_ts_picksplit(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(gbt_num_picksplit(
 									(GistEntryVector *) PG_GETARG_POINTER(0),
 									  (GIST_SPLITVEC *) PG_GETARG_POINTER(1),
-										&tinfo
+										&tinfo, fcinfo->flinfo
 										));
 }
 
@@ -400,6 +400,6 @@ gbt_ts_same(PG_FUNCTION_ARGS)
 	tsKEY	   *b2 = (tsKEY *) PG_GETARG_POINTER(1);
 	bool	   *result = (bool *) PG_GETARG_POINTER(2);
 
-	*result = gbt_num_same((void *) b1, (void *) b2, &tinfo);
+	*result = gbt_num_same((void *) b1, (void *) b2, &tinfo, fcinfo->flinfo);
 	PG_RETURN_POINTER(result);
 }

@@ -30,37 +30,37 @@ PG_FUNCTION_INFO_V1(gbt_intv_same);
 
 
 static bool
-gbt_intvgt(const void *a, const void *b)
+gbt_intvgt(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	return DatumGetBool(DirectFunctionCall2(interval_gt, IntervalPGetDatum(a), IntervalPGetDatum(b)));
 }
 
 static bool
-gbt_intvge(const void *a, const void *b)
+gbt_intvge(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	return DatumGetBool(DirectFunctionCall2(interval_ge, IntervalPGetDatum(a), IntervalPGetDatum(b)));
 }
 
 static bool
-gbt_intveq(const void *a, const void *b)
+gbt_intveq(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	return DatumGetBool(DirectFunctionCall2(interval_eq, IntervalPGetDatum(a), IntervalPGetDatum(b)));
 }
 
 static bool
-gbt_intvle(const void *a, const void *b)
+gbt_intvle(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	return DatumGetBool(DirectFunctionCall2(interval_le, IntervalPGetDatum(a), IntervalPGetDatum(b)));
 }
 
 static bool
-gbt_intvlt(const void *a, const void *b)
+gbt_intvlt(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	return DatumGetBool(DirectFunctionCall2(interval_lt, IntervalPGetDatum(a), IntervalPGetDatum(b)));
 }
 
 static int
-gbt_intvkey_cmp(const void *a, const void *b)
+gbt_intvkey_cmp(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	intvKEY    *ia = (intvKEY *) (((const Nsrt *) a)->t);
 	intvKEY    *ib = (intvKEY *) (((const Nsrt *) b)->t);
@@ -81,7 +81,7 @@ intr2num(const Interval *i)
 }
 
 static float8
-gbt_intv_dist(const void *a, const void *b)
+gbt_intv_dist(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	return (float8) Abs(intr2num((const Interval *) a) - intr2num((const Interval *) b));
 }
@@ -226,7 +226,7 @@ gbt_intv_consistent(PG_FUNCTION_ARGS)
 	key.upper = (GBT_NUMKEY *) &kkk->upper;
 
 	PG_RETURN_BOOL(
-				   gbt_num_consistent(&key, (void *) query, &strategy, GIST_LEAF(entry), &tinfo)
+				   gbt_num_consistent(&key, (void *) query, &strategy, GIST_LEAF(entry), &tinfo, fcinfo->flinfo)
 		);
 }
 
@@ -245,7 +245,7 @@ gbt_intv_distance(PG_FUNCTION_ARGS)
 	key.upper = (GBT_NUMKEY *) &kkk->upper;
 
 	PG_RETURN_FLOAT8(
-			 gbt_num_distance(&key, (void *) query, GIST_LEAF(entry), &tinfo)
+			 gbt_num_distance(&key, (void *) query, GIST_LEAF(entry), &tinfo, fcinfo->flinfo)
 		);
 }
 
@@ -257,7 +257,7 @@ gbt_intv_union(PG_FUNCTION_ARGS)
 	void	   *out = palloc(sizeof(intvKEY));
 
 	*(int *) PG_GETARG_POINTER(1) = sizeof(intvKEY);
-	PG_RETURN_POINTER(gbt_num_union((void *) out, entryvec, &tinfo));
+	PG_RETURN_POINTER(gbt_num_union((void *) out, entryvec, &tinfo, fcinfo->flinfo));
 }
 
 
@@ -287,7 +287,7 @@ gbt_intv_picksplit(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(gbt_num_picksplit(
 									(GistEntryVector *) PG_GETARG_POINTER(0),
 									  (GIST_SPLITVEC *) PG_GETARG_POINTER(1),
-										&tinfo
+										&tinfo, fcinfo->flinfo
 										));
 }
 
@@ -298,6 +298,6 @@ gbt_intv_same(PG_FUNCTION_ARGS)
 	intvKEY    *b2 = (intvKEY *) PG_GETARG_POINTER(1);
 	bool	   *result = (bool *) PG_GETARG_POINTER(2);
 
-	*result = gbt_num_same((void *) b1, (void *) b2, &tinfo);
+	*result = gbt_num_same((void *) b1, (void *) b2, &tinfo, fcinfo->flinfo);
 	PG_RETURN_POINTER(result);
 }

@@ -34,37 +34,37 @@ uuid_internal_cmp(const pg_uuid_t *arg1, const pg_uuid_t *arg2)
 }
 
 static bool
-gbt_uuidgt(const void *a, const void *b)
+gbt_uuidgt(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	return uuid_internal_cmp((const pg_uuid_t *) a, (const pg_uuid_t *) b) > 0;
 }
 
 static bool
-gbt_uuidge(const void *a, const void *b)
+gbt_uuidge(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	return uuid_internal_cmp((const pg_uuid_t *) a, (const pg_uuid_t *) b) >= 0;
 }
 
 static bool
-gbt_uuideq(const void *a, const void *b)
+gbt_uuideq(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	return uuid_internal_cmp((const pg_uuid_t *) a, (const pg_uuid_t *) b) == 0;
 }
 
 static bool
-gbt_uuidle(const void *a, const void *b)
+gbt_uuidle(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	return uuid_internal_cmp((const pg_uuid_t *) a, (const pg_uuid_t *) b) <= 0;
 }
 
 static bool
-gbt_uuidlt(const void *a, const void *b)
+gbt_uuidlt(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	return uuid_internal_cmp((const pg_uuid_t *) a, (const pg_uuid_t *) b) < 0;
 }
 
 static int
-gbt_uuidkey_cmp(const void *a, const void *b)
+gbt_uuidkey_cmp(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	uuidKEY    *ia = (uuidKEY *) (((const Nsrt *) a)->t);
 	uuidKEY    *ib = (uuidKEY *) (((const Nsrt *) b)->t);
@@ -150,7 +150,7 @@ gbt_uuid_consistent(PG_FUNCTION_ARGS)
 
 	PG_RETURN_BOOL(
 				   gbt_num_consistent(&key, (void *) query, &strategy,
-									  GIST_LEAF(entry), &tinfo)
+									  GIST_LEAF(entry), &tinfo, fcinfo->flinfo)
 		);
 }
 
@@ -161,7 +161,7 @@ gbt_uuid_union(PG_FUNCTION_ARGS)
 	void	   *out = palloc(sizeof(uuidKEY));
 
 	*(int *) PG_GETARG_POINTER(1) = sizeof(uuidKEY);
-	PG_RETURN_POINTER(gbt_num_union((void *) out, entryvec, &tinfo));
+	PG_RETURN_POINTER(gbt_num_union((void *) out, entryvec, &tinfo, fcinfo->flinfo));
 }
 
 /*
@@ -222,7 +222,7 @@ gbt_uuid_picksplit(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(gbt_num_picksplit(
 									(GistEntryVector *) PG_GETARG_POINTER(0),
 									  (GIST_SPLITVEC *) PG_GETARG_POINTER(1),
-										&tinfo
+										&tinfo, fcinfo->flinfo
 										));
 }
 
@@ -233,6 +233,6 @@ gbt_uuid_same(PG_FUNCTION_ARGS)
 	uuidKEY    *b2 = (uuidKEY *) PG_GETARG_POINTER(1);
 	bool	   *result = (bool *) PG_GETARG_POINTER(2);
 
-	*result = gbt_num_same((void *) b1, (void *) b2, &tinfo);
+	*result = gbt_num_same((void *) b1, (void *) b2, &tinfo, fcinfo->flinfo);
 	PG_RETURN_POINTER(result);
 }

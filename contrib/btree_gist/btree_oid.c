@@ -26,33 +26,33 @@ PG_FUNCTION_INFO_V1(gbt_oid_same);
 
 
 static bool
-gbt_oidgt(const void *a, const void *b)
+gbt_oidgt(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	return (*((const Oid *) a) > *((const Oid *) b));
 }
 static bool
-gbt_oidge(const void *a, const void *b)
+gbt_oidge(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	return (*((const Oid *) a) >= *((const Oid *) b));
 }
 static bool
-gbt_oideq(const void *a, const void *b)
+gbt_oideq(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	return (*((const Oid *) a) == *((const Oid *) b));
 }
 static bool
-gbt_oidle(const void *a, const void *b)
+gbt_oidle(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	return (*((const Oid *) a) <= *((const Oid *) b));
 }
 static bool
-gbt_oidlt(const void *a, const void *b)
+gbt_oidlt(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	return (*((const Oid *) a) < *((const Oid *) b));
 }
 
 static int
-gbt_oidkey_cmp(const void *a, const void *b)
+gbt_oidkey_cmp(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	oidKEY	   *ia = (oidKEY *) (((const Nsrt *) a)->t);
 	oidKEY	   *ib = (oidKEY *) (((const Nsrt *) b)->t);
@@ -69,7 +69,7 @@ gbt_oidkey_cmp(const void *a, const void *b)
 }
 
 static float8
-gbt_oid_dist(const void *a, const void *b)
+gbt_oid_dist(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	Oid			aa = *(const Oid *) a;
 	Oid			bb = *(const Oid *) b;
@@ -152,7 +152,7 @@ gbt_oid_consistent(PG_FUNCTION_ARGS)
 	key.upper = (GBT_NUMKEY *) &kkk->upper;
 
 	PG_RETURN_BOOL(
-				   gbt_num_consistent(&key, (void *) &query, &strategy, GIST_LEAF(entry), &tinfo)
+				   gbt_num_consistent(&key, (void *) &query, &strategy, GIST_LEAF(entry), &tinfo, fcinfo->flinfo)
 		);
 }
 
@@ -171,7 +171,7 @@ gbt_oid_distance(PG_FUNCTION_ARGS)
 	key.upper = (GBT_NUMKEY *) &kkk->upper;
 
 	PG_RETURN_FLOAT8(
-			gbt_num_distance(&key, (void *) &query, GIST_LEAF(entry), &tinfo)
+			gbt_num_distance(&key, (void *) &query, GIST_LEAF(entry), &tinfo, fcinfo->flinfo)
 		);
 }
 
@@ -183,7 +183,7 @@ gbt_oid_union(PG_FUNCTION_ARGS)
 	void	   *out = palloc(sizeof(oidKEY));
 
 	*(int *) PG_GETARG_POINTER(1) = sizeof(oidKEY);
-	PG_RETURN_POINTER(gbt_num_union((void *) out, entryvec, &tinfo));
+	PG_RETURN_POINTER(gbt_num_union((void *) out, entryvec, &tinfo, fcinfo->flinfo));
 }
 
 
@@ -205,7 +205,7 @@ gbt_oid_picksplit(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(gbt_num_picksplit(
 									(GistEntryVector *) PG_GETARG_POINTER(0),
 									  (GIST_SPLITVEC *) PG_GETARG_POINTER(1),
-										&tinfo
+										&tinfo, fcinfo->flinfo
 										));
 }
 
@@ -216,6 +216,6 @@ gbt_oid_same(PG_FUNCTION_ARGS)
 	oidKEY	   *b2 = (oidKEY *) PG_GETARG_POINTER(1);
 	bool	   *result = (bool *) PG_GETARG_POINTER(2);
 
-	*result = gbt_num_same((void *) b1, (void *) b2, &tinfo);
+	*result = gbt_num_same((void *) b1, (void *) b2, &tinfo, fcinfo->flinfo);
 	PG_RETURN_POINTER(result);
 }

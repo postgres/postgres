@@ -27,33 +27,33 @@ PG_FUNCTION_INFO_V1(gbt_inet_same);
 
 
 static bool
-gbt_inetgt(const void *a, const void *b)
+gbt_inetgt(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	return (*((const double *) a) > *((const double *) b));
 }
 static bool
-gbt_inetge(const void *a, const void *b)
+gbt_inetge(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	return (*((const double *) a) >= *((const double *) b));
 }
 static bool
-gbt_ineteq(const void *a, const void *b)
+gbt_ineteq(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	return (*((const double *) a) == *((const double *) b));
 }
 static bool
-gbt_inetle(const void *a, const void *b)
+gbt_inetle(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	return (*((const double *) a) <= *((const double *) b));
 }
 static bool
-gbt_inetlt(const void *a, const void *b)
+gbt_inetlt(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	return (*((const double *) a) < *((const double *) b));
 }
 
 static int
-gbt_inetkey_cmp(const void *a, const void *b)
+gbt_inetkey_cmp(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	inetKEY    *ia = (inetKEY *) (((const Nsrt *) a)->t);
 	inetKEY    *ib = (inetKEY *) (((const Nsrt *) b)->t);
@@ -133,7 +133,7 @@ gbt_inet_consistent(PG_FUNCTION_ARGS)
 	key.upper = (GBT_NUMKEY *) &kkk->upper;
 
 	PG_RETURN_BOOL(gbt_num_consistent(&key, (void *) &query,
-									  &strategy, GIST_LEAF(entry), &tinfo));
+									  &strategy, GIST_LEAF(entry), &tinfo, fcinfo->flinfo));
 }
 
 
@@ -144,7 +144,7 @@ gbt_inet_union(PG_FUNCTION_ARGS)
 	void	   *out = palloc(sizeof(inetKEY));
 
 	*(int *) PG_GETARG_POINTER(1) = sizeof(inetKEY);
-	PG_RETURN_POINTER(gbt_num_union((void *) out, entryvec, &tinfo));
+	PG_RETURN_POINTER(gbt_num_union((void *) out, entryvec, &tinfo, fcinfo->flinfo));
 }
 
 
@@ -167,7 +167,7 @@ gbt_inet_picksplit(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(gbt_num_picksplit(
 									(GistEntryVector *) PG_GETARG_POINTER(0),
 									  (GIST_SPLITVEC *) PG_GETARG_POINTER(1),
-										&tinfo
+										&tinfo, fcinfo->flinfo
 										));
 }
 
@@ -178,6 +178,6 @@ gbt_inet_same(PG_FUNCTION_ARGS)
 	inetKEY    *b2 = (inetKEY *) PG_GETARG_POINTER(1);
 	bool	   *result = (bool *) PG_GETARG_POINTER(2);
 
-	*result = gbt_num_same((void *) b1, (void *) b2, &tinfo);
+	*result = gbt_num_same((void *) b1, (void *) b2, &tinfo, fcinfo->flinfo);
 	PG_RETURN_POINTER(result);
 }

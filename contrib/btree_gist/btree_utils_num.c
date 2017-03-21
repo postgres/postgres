@@ -159,7 +159,7 @@ gbt_num_fetch(GISTENTRY *entry, const gbtree_ninfo *tinfo)
 */
 
 void *
-gbt_num_union(GBT_NUMKEY *out, const GistEntryVector *entryvec, const gbtree_ninfo *tinfo)
+gbt_num_union(GBT_NUMKEY *out, const GistEntryVector *entryvec, const gbtree_ninfo *tinfo, FmgrInfo *flinfo)
 {
 	int			i,
 				numranges;
@@ -181,9 +181,9 @@ gbt_num_union(GBT_NUMKEY *out, const GistEntryVector *entryvec, const gbtree_nin
 		cur = (GBT_NUMKEY *) DatumGetPointer((entryvec->vector[i].key));
 		c.lower = &cur[0];
 		c.upper = &cur[tinfo->size];
-		if ((*tinfo->f_gt) (o.lower, c.lower))	/* out->lower > cur->lower */
+		if ((*tinfo->f_gt) (o.lower, c.lower, flinfo))	/* out->lower > cur->lower */
 			memcpy((void *) o.lower, (void *) c.lower, tinfo->size);
-		if ((*tinfo->f_lt) (o.upper, c.upper))	/* out->upper < cur->upper */
+		if ((*tinfo->f_lt) (o.upper, c.upper, flinfo))	/* out->upper < cur->upper */
 			memcpy((void *) o.upper, (void *) c.upper, tinfo->size);
 	}
 
@@ -197,7 +197,7 @@ gbt_num_union(GBT_NUMKEY *out, const GistEntryVector *entryvec, const gbtree_nin
 */
 
 bool
-gbt_num_same(const GBT_NUMKEY *a, const GBT_NUMKEY *b, const gbtree_ninfo *tinfo)
+gbt_num_same(const GBT_NUMKEY *a, const GBT_NUMKEY *b, const gbtree_ninfo *tinfo, FmgrInfo *flinfo)
 {
 	GBT_NUMKEY_R b1,
 				b2;
@@ -207,13 +207,13 @@ gbt_num_same(const GBT_NUMKEY *a, const GBT_NUMKEY *b, const gbtree_ninfo *tinfo
 	b2.lower = &(((GBT_NUMKEY *) b)[0]);
 	b2.upper = &(((GBT_NUMKEY *) b)[tinfo->size]);
 
-	return ((*tinfo->f_eq) (b1.lower, b2.lower) &&
-			(*tinfo->f_eq) (b1.upper, b2.upper));
+	return ((*tinfo->f_eq) (b1.lower, b2.lower, flinfo) &&
+			(*tinfo->f_eq) (b1.upper, b2.upper, flinfo));
 }
 
 
 void
-gbt_num_bin_union(Datum *u, GBT_NUMKEY *e, const gbtree_ninfo *tinfo)
+gbt_num_bin_union(Datum *u, GBT_NUMKEY *e, const gbtree_ninfo *tinfo, FmgrInfo *flinfo)
 {
 	GBT_NUMKEY_R rd;
 
@@ -232,9 +232,9 @@ gbt_num_bin_union(Datum *u, GBT_NUMKEY *e, const gbtree_ninfo *tinfo)
 
 		ur.lower = &(((GBT_NUMKEY *) DatumGetPointer(*u))[0]);
 		ur.upper = &(((GBT_NUMKEY *) DatumGetPointer(*u))[tinfo->size]);
-		if ((*tinfo->f_gt) ((void *) ur.lower, (void *) rd.lower))
+		if ((*tinfo->f_gt) ((void *) ur.lower, (void *) rd.lower, flinfo))
 			memcpy((void *) ur.lower, (void *) rd.lower, tinfo->size);
-		if ((*tinfo->f_lt) ((void *) ur.upper, (void *) rd.upper))
+		if ((*tinfo->f_lt) ((void *) ur.upper, (void *) rd.upper, flinfo))
 			memcpy((void *) ur.upper, (void *) rd.upper, tinfo->size);
 	}
 }
@@ -252,39 +252,40 @@ gbt_num_consistent(const GBT_NUMKEY_R *key,
 				   const void *query,
 				   const StrategyNumber *strategy,
 				   bool is_leaf,
-				   const gbtree_ninfo *tinfo)
+				   const gbtree_ninfo *tinfo,
+				   FmgrInfo *flinfo)
 {
 	bool		retval;
 
 	switch (*strategy)
 	{
 		case BTLessEqualStrategyNumber:
-			retval = (*tinfo->f_ge) (query, key->lower);
+			retval = (*tinfo->f_ge) (query, key->lower, flinfo);
 			break;
 		case BTLessStrategyNumber:
 			if (is_leaf)
-				retval = (*tinfo->f_gt) (query, key->lower);
+				retval = (*tinfo->f_gt) (query, key->lower, flinfo);
 			else
-				retval = (*tinfo->f_ge) (query, key->lower);
+				retval = (*tinfo->f_ge) (query, key->lower, flinfo);
 			break;
 		case BTEqualStrategyNumber:
 			if (is_leaf)
-				retval = (*tinfo->f_eq) (query, key->lower);
+				retval = (*tinfo->f_eq) (query, key->lower, flinfo);
 			else
-				retval = ((*tinfo->f_le) (key->lower, query) && (*tinfo->f_le) (query, key->upper)) ? true : false;
+				retval = ((*tinfo->f_le) (key->lower, query, flinfo) && (*tinfo->f_le) (query, key->upper, flinfo)) ? true : false;
 			break;
 		case BTGreaterStrategyNumber:
 			if (is_leaf)
-				retval = (*tinfo->f_lt) (query, key->upper);
+				retval = (*tinfo->f_lt) (query, key->upper, flinfo);
 			else
-				retval = (*tinfo->f_le) (query, key->upper);
+				retval = (*tinfo->f_le) (query, key->upper, flinfo);
 			break;
 		case BTGreaterEqualStrategyNumber:
-			retval = (*tinfo->f_le) (query, key->upper);
+			retval = (*tinfo->f_le) (query, key->upper, flinfo);
 			break;
 		case BtreeGistNotEqualStrategyNumber:
-			retval = (!((*tinfo->f_eq) (query, key->lower) &&
-						(*tinfo->f_eq) (query, key->upper))) ? true : false;
+			retval = (!((*tinfo->f_eq) (query, key->lower, flinfo) &&
+						(*tinfo->f_eq) (query, key->upper, flinfo))) ? true : false;
 			break;
 		default:
 			retval = false;
@@ -302,17 +303,18 @@ float8
 gbt_num_distance(const GBT_NUMKEY_R *key,
 				 const void *query,
 				 bool is_leaf,
-				 const gbtree_ninfo *tinfo)
+				 const gbtree_ninfo *tinfo,
+				 FmgrInfo *flinfo)
 {
 	float8		retval;
 
 	if (tinfo->f_dist == NULL)
 		elog(ERROR, "KNN search is not supported for btree_gist type %d",
 			 (int) tinfo->t);
-	if (tinfo->f_le(query, key->lower))
-		retval = tinfo->f_dist(query, key->lower);
-	else if (tinfo->f_ge(query, key->upper))
-		retval = tinfo->f_dist(query, key->upper);
+	if (tinfo->f_le(query, key->lower, flinfo))
+		retval = tinfo->f_dist(query, key->lower, flinfo);
+	else if (tinfo->f_ge(query, key->upper, flinfo))
+		retval = tinfo->f_dist(query, key->upper, flinfo);
 	else
 		retval = 0.0;
 
@@ -322,7 +324,7 @@ gbt_num_distance(const GBT_NUMKEY_R *key,
 
 GIST_SPLITVEC *
 gbt_num_picksplit(const GistEntryVector *entryvec, GIST_SPLITVEC *v,
-				  const gbtree_ninfo *tinfo)
+				  const gbtree_ninfo *tinfo, FmgrInfo *flinfo)
 {
 	OffsetNumber i,
 				maxoff = entryvec->n - 1;
@@ -345,7 +347,7 @@ gbt_num_picksplit(const GistEntryVector *entryvec, GIST_SPLITVEC *v,
 		arr[i].t = (GBT_NUMKEY *) DatumGetPointer((entryvec->vector[i].key));
 		arr[i].i = i;
 	}
-	qsort((void *) &arr[FirstOffsetNumber], maxoff - FirstOffsetNumber + 1, sizeof(Nsrt), tinfo->f_cmp);
+	qsort_arg((void *) &arr[FirstOffsetNumber], maxoff - FirstOffsetNumber + 1, sizeof(Nsrt), (qsort_arg_comparator) tinfo->f_cmp, (void *) flinfo);
 
 	/* We do simply create two parts */
 
@@ -353,13 +355,13 @@ gbt_num_picksplit(const GistEntryVector *entryvec, GIST_SPLITVEC *v,
 	{
 		if (i <= (maxoff - FirstOffsetNumber + 1) / 2)
 		{
-			gbt_num_bin_union(&v->spl_ldatum, arr[i].t, tinfo);
+			gbt_num_bin_union(&v->spl_ldatum, arr[i].t, tinfo, flinfo);
 			v->spl_left[v->spl_nleft] = arr[i].i;
 			v->spl_nleft++;
 		}
 		else
 		{
-			gbt_num_bin_union(&v->spl_rdatum, arr[i].t, tinfo);
+			gbt_num_bin_union(&v->spl_rdatum, arr[i].t, tinfo, flinfo);
 			v->spl_right[v->spl_nright] = arr[i].i;
 			v->spl_nright++;
 		}

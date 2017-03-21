@@ -38,7 +38,7 @@ PG_FUNCTION_INFO_V1(gbt_time_same);
 
 
 static bool
-gbt_timegt(const void *a, const void *b)
+gbt_timegt(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	const TimeADT *aa = (const TimeADT *) a;
 	const TimeADT *bb = (const TimeADT *) b;
@@ -49,7 +49,7 @@ gbt_timegt(const void *a, const void *b)
 }
 
 static bool
-gbt_timege(const void *a, const void *b)
+gbt_timege(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	const TimeADT *aa = (const TimeADT *) a;
 	const TimeADT *bb = (const TimeADT *) b;
@@ -60,7 +60,7 @@ gbt_timege(const void *a, const void *b)
 }
 
 static bool
-gbt_timeeq(const void *a, const void *b)
+gbt_timeeq(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	const TimeADT *aa = (const TimeADT *) a;
 	const TimeADT *bb = (const TimeADT *) b;
@@ -71,7 +71,7 @@ gbt_timeeq(const void *a, const void *b)
 }
 
 static bool
-gbt_timele(const void *a, const void *b)
+gbt_timele(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	const TimeADT *aa = (const TimeADT *) a;
 	const TimeADT *bb = (const TimeADT *) b;
@@ -82,7 +82,7 @@ gbt_timele(const void *a, const void *b)
 }
 
 static bool
-gbt_timelt(const void *a, const void *b)
+gbt_timelt(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	const TimeADT *aa = (const TimeADT *) a;
 	const TimeADT *bb = (const TimeADT *) b;
@@ -95,7 +95,7 @@ gbt_timelt(const void *a, const void *b)
 
 
 static int
-gbt_timekey_cmp(const void *a, const void *b)
+gbt_timekey_cmp(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	timeKEY    *ia = (timeKEY *) (((const Nsrt *) a)->t);
 	timeKEY    *ib = (timeKEY *) (((const Nsrt *) b)->t);
@@ -109,7 +109,7 @@ gbt_timekey_cmp(const void *a, const void *b)
 }
 
 static float8
-gbt_time_dist(const void *a, const void *b)
+gbt_time_dist(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	const TimeADT *aa = (const TimeADT *) a;
 	const TimeADT *bb = (const TimeADT *) b;
@@ -217,7 +217,7 @@ gbt_time_consistent(PG_FUNCTION_ARGS)
 	key.upper = (GBT_NUMKEY *) &kkk->upper;
 
 	PG_RETURN_BOOL(
-				   gbt_num_consistent(&key, (void *) &query, &strategy, GIST_LEAF(entry), &tinfo)
+				   gbt_num_consistent(&key, (void *) &query, &strategy, GIST_LEAF(entry), &tinfo, fcinfo->flinfo)
 		);
 }
 
@@ -235,7 +235,7 @@ gbt_time_distance(PG_FUNCTION_ARGS)
 	key.upper = (GBT_NUMKEY *) &kkk->upper;
 
 	PG_RETURN_FLOAT8(
-			gbt_num_distance(&key, (void *) &query, GIST_LEAF(entry), &tinfo)
+			gbt_num_distance(&key, (void *) &query, GIST_LEAF(entry), &tinfo, fcinfo->flinfo)
 		);
 }
 
@@ -261,7 +261,7 @@ gbt_timetz_consistent(PG_FUNCTION_ARGS)
 	key.upper = (GBT_NUMKEY *) &kkk->upper;
 
 	PG_RETURN_BOOL(
-				   gbt_num_consistent(&key, (void *) &qqq, &strategy, GIST_LEAF(entry), &tinfo)
+				   gbt_num_consistent(&key, (void *) &qqq, &strategy, GIST_LEAF(entry), &tinfo, fcinfo->flinfo)
 		);
 }
 
@@ -273,7 +273,7 @@ gbt_time_union(PG_FUNCTION_ARGS)
 	void	   *out = palloc(sizeof(timeKEY));
 
 	*(int *) PG_GETARG_POINTER(1) = sizeof(timeKEY);
-	PG_RETURN_POINTER(gbt_num_union((void *) out, entryvec, &tinfo));
+	PG_RETURN_POINTER(gbt_num_union((void *) out, entryvec, &tinfo, fcinfo->flinfo));
 }
 
 
@@ -326,7 +326,7 @@ gbt_time_picksplit(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(gbt_num_picksplit(
 									(GistEntryVector *) PG_GETARG_POINTER(0),
 									  (GIST_SPLITVEC *) PG_GETARG_POINTER(1),
-										&tinfo
+										&tinfo, fcinfo->flinfo
 										));
 }
 
@@ -337,6 +337,6 @@ gbt_time_same(PG_FUNCTION_ARGS)
 	timeKEY    *b2 = (timeKEY *) PG_GETARG_POINTER(1);
 	bool	   *result = (bool *) PG_GETARG_POINTER(2);
 
-	*result = gbt_num_same((void *) b1, (void *) b2, &tinfo);
+	*result = gbt_num_same((void *) b1, (void *) b2, &tinfo, fcinfo->flinfo);
 	PG_RETURN_POINTER(result);
 }

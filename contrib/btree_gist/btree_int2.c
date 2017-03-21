@@ -25,33 +25,33 @@ PG_FUNCTION_INFO_V1(gbt_int2_penalty);
 PG_FUNCTION_INFO_V1(gbt_int2_same);
 
 static bool
-gbt_int2gt(const void *a, const void *b)
+gbt_int2gt(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	return (*((const int16 *) a) > *((const int16 *) b));
 }
 static bool
-gbt_int2ge(const void *a, const void *b)
+gbt_int2ge(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	return (*((const int16 *) a) >= *((const int16 *) b));
 }
 static bool
-gbt_int2eq(const void *a, const void *b)
+gbt_int2eq(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	return (*((const int16 *) a) == *((const int16 *) b));
 }
 static bool
-gbt_int2le(const void *a, const void *b)
+gbt_int2le(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	return (*((const int16 *) a) <= *((const int16 *) b));
 }
 static bool
-gbt_int2lt(const void *a, const void *b)
+gbt_int2lt(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	return (*((const int16 *) a) < *((const int16 *) b));
 }
 
 static int
-gbt_int2key_cmp(const void *a, const void *b)
+gbt_int2key_cmp(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	int16KEY   *ia = (int16KEY *) (((const Nsrt *) a)->t);
 	int16KEY   *ib = (int16KEY *) (((const Nsrt *) b)->t);
@@ -68,7 +68,7 @@ gbt_int2key_cmp(const void *a, const void *b)
 }
 
 static float8
-gbt_int2_dist(const void *a, const void *b)
+gbt_int2_dist(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	return GET_FLOAT_DISTANCE(int16, a, b);
 }
@@ -151,7 +151,7 @@ gbt_int2_consistent(PG_FUNCTION_ARGS)
 	key.upper = (GBT_NUMKEY *) &kkk->upper;
 
 	PG_RETURN_BOOL(
-				   gbt_num_consistent(&key, (void *) &query, &strategy, GIST_LEAF(entry), &tinfo)
+				   gbt_num_consistent(&key, (void *) &query, &strategy, GIST_LEAF(entry), &tinfo, fcinfo->flinfo)
 		);
 }
 
@@ -170,7 +170,7 @@ gbt_int2_distance(PG_FUNCTION_ARGS)
 	key.upper = (GBT_NUMKEY *) &kkk->upper;
 
 	PG_RETURN_FLOAT8(
-			gbt_num_distance(&key, (void *) &query, GIST_LEAF(entry), &tinfo)
+			gbt_num_distance(&key, (void *) &query, GIST_LEAF(entry), &tinfo, fcinfo->flinfo)
 		);
 }
 
@@ -182,7 +182,7 @@ gbt_int2_union(PG_FUNCTION_ARGS)
 	void	   *out = palloc(sizeof(int16KEY));
 
 	*(int *) PG_GETARG_POINTER(1) = sizeof(int16KEY);
-	PG_RETURN_POINTER(gbt_num_union((void *) out, entryvec, &tinfo));
+	PG_RETURN_POINTER(gbt_num_union((void *) out, entryvec, &tinfo, fcinfo->flinfo));
 }
 
 
@@ -204,7 +204,7 @@ gbt_int2_picksplit(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(gbt_num_picksplit(
 									(GistEntryVector *) PG_GETARG_POINTER(0),
 									  (GIST_SPLITVEC *) PG_GETARG_POINTER(1),
-										&tinfo
+										&tinfo, fcinfo->flinfo
 										));
 }
 
@@ -215,6 +215,6 @@ gbt_int2_same(PG_FUNCTION_ARGS)
 	int16KEY   *b2 = (int16KEY *) PG_GETARG_POINTER(1);
 	bool	   *result = (bool *) PG_GETARG_POINTER(2);
 
-	*result = gbt_num_same((void *) b1, (void *) b2, &tinfo);
+	*result = gbt_num_same((void *) b1, (void *) b2, &tinfo, fcinfo->flinfo);
 	PG_RETURN_POINTER(result);
 }
