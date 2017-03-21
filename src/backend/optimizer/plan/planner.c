@@ -212,6 +212,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	glob->finalrtable = NIL;
 	glob->finalrowmarks = NIL;
 	glob->resultRelations = NIL;
+	glob->nonleafResultRelations = NIL;
 	glob->relationOids = NIL;
 	glob->invalItems = NIL;
 	glob->nParamExec = 0;
@@ -380,6 +381,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	Assert(glob->finalrtable == NIL);
 	Assert(glob->finalrowmarks == NIL);
 	Assert(glob->resultRelations == NIL);
+	Assert(glob->nonleafResultRelations == NIL);
 	top_plan = set_plan_references(root, top_plan);
 	/* ... and the subplans (both regular subplans and initplans) */
 	Assert(list_length(glob->subplans) == list_length(glob->subroots));
@@ -405,6 +407,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	result->planTree = top_plan;
 	result->rtable = glob->finalrtable;
 	result->resultRelations = glob->resultRelations;
+	result->nonleafResultRelations = glob->nonleafResultRelations;
 	result->subplans = glob->subplans;
 	result->rewindPlanIDs = glob->rewindPlanIDs;
 	result->rowMarks = glob->finalrowmarks;
@@ -474,6 +477,7 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	root->multiexpr_params = NIL;
 	root->eq_classes = NIL;
 	root->append_rel_list = NIL;
+	root->pcinfo_list = NIL;
 	root->rowMarks = NIL;
 	memset(root->upper_rels, 0, sizeof(root->upper_rels));
 	memset(root->upper_targets, 0, sizeof(root->upper_targets));
@@ -1007,6 +1011,8 @@ inheritance_planner(PlannerInfo *root)
 	RelOptInfo *final_rel;
 	ListCell   *lc;
 	Index		rti;
+	RangeTblEntry *parent_rte;
+	List		  *partitioned_rels = NIL;
 
 	Assert(parse->commandType != CMD_INSERT);
 
@@ -1065,13 +1071,24 @@ inheritance_planner(PlannerInfo *root)
 	}
 
 	/*
+	 * If the parent RTE is a partitioned table, we should use that as the
+	 * nominal relation, because the RTEs added for partitioned tables
+	 * (including the root parent) as child members of the inheritance set
+	 * do not appear anywhere else in the plan.  The situation is exactly
+	 * the opposite in the case of non-partitioned inheritance parent as
+	 * described below.
+	 */
+	parent_rte = rt_fetch(parentRTindex, root->parse->rtable);
+	if (parent_rte->relkind == RELKIND_PARTITIONED_TABLE)
+		nominalRelation = parentRTindex;
+
+	/*
 	 * And now we can get on with generating a plan for each child table.
 	 */
 	foreach(lc, root->append_rel_list)
 	{
 		AppendRelInfo *appinfo = (AppendRelInfo *) lfirst(lc);
 		PlannerInfo *subroot;
-		RangeTblEntry *parent_rte;
 		RangeTblEntry *child_rte;
 		RelOptInfo *sub_final_rel;
 		Path	   *subpath;
@@ -1216,15 +1233,25 @@ inheritance_planner(PlannerInfo *root)
 		grouping_planner(subroot, true, 0.0 /* retrieve all tuples */ );
 
 		/*
-		 * We'll use the first child relation (even if it's excluded) as the
-		 * nominal target relation of the ModifyTable node.  Because of the
-		 * way expand_inherited_rtentry works, this should always be the RTE
-		 * representing the parent table in its role as a simple member of the
-		 * inheritance set.  (It would be logically cleaner to use the
-		 * inheritance parent RTE as the nominal target; but since that RTE
-		 * will not be otherwise referenced in the plan, doing so would give
-		 * rise to confusing use of multiple aliases in EXPLAIN output for
-		 * what the user will think is the "same" table.)
+		 * Set the nomimal target relation of the ModifyTable node if not
+		 * already done.  We use the inheritance parent RTE as the nominal
+		 * target relation if it's a partitioned table (see just above this
+		 * loop).  In the non-partitioned parent case, we'll use the first
+		 * child relation (even if it's excluded) as the nominal target
+		 * relation.  Because of the way expand_inherited_rtentry works, the
+		 * latter should be the RTE representing the parent table in its role
+		 * as a simple member of the inheritance set.
+		 *
+		 * It would be logically cleaner to *always* use the inheritance
+		 * parent RTE as the nominal relation; but that RTE is not otherwise
+		 * referenced in the plan in the non-partitioned inheritance case.
+		 * Instead the duplicate child RTE created by expand_inherited_rtentry
+		 * is used elsewhere in the plan, so using the original parent RTE
+		 * would give rise to confusing use of multiple aliases in EXPLAIN
+		 * output for what the user will think is the "same" table.  OTOH,
+		 * it's not a problem in the partitioned inheritance case, because
+		 * the duplicate child RTE added for the parent does not appear
+		 * anywhere else in the plan tree.
 		 */
 		if (nominalRelation < 0)
 			nominalRelation = appinfo->child_relid;
@@ -1298,6 +1325,13 @@ inheritance_planner(PlannerInfo *root)
 		Assert(!parse->onConflict);
 	}
 
+	if (parent_rte->relkind == RELKIND_PARTITIONED_TABLE)
+	{
+		partitioned_rels = get_partitioned_child_rels(root, parentRTindex);
+		/* The root partitioned table is included as a child rel */
+		Assert(list_length(partitioned_rels) >= 1);
+	}
+
 	/* Result path must go into outer query's FINAL upperrel */
 	final_rel = fetch_upper_rel(root, UPPERREL_FINAL, NULL);
 
@@ -1351,6 +1385,7 @@ inheritance_planner(PlannerInfo *root)
 									 parse->commandType,
 									 parse->canSetTag,
 									 nominalRelation,
+									 partitioned_rels,
 									 resultRelations,
 									 subpaths,
 									 subroots,
@@ -2046,6 +2081,7 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 										parse->commandType,
 										parse->canSetTag,
 										parse->resultRelation,
+										NIL,
 										list_make1_int(parse->resultRelation),
 										list_make1(path),
 										list_make1(root),
@@ -3348,7 +3384,8 @@ create_grouping_paths(PlannerInfo *root,
 				create_append_path(grouped_rel,
 								   paths,
 								   NULL,
-								   0);
+								   0,
+								   NIL);
 			path->pathtarget = target;
 		}
 		else
@@ -5469,4 +5506,34 @@ plan_cluster_use_sort(Oid tableOid, Oid indexOid)
 									  NULL, 1.0, false);
 
 	return (seqScanAndSortPath.total_cost < indexScanPath->path.total_cost);
+}
+
+/*
+ * get_partitioned_child_rels
+ *		Returns a list of the RT indexes of the partitioned child relations
+ *		with rti as the root parent RT index.
+ *
+ * Note: Only call this function on RTEs known to be partitioned tables.
+ */
+List *
+get_partitioned_child_rels(PlannerInfo *root, Index rti)
+{
+	List	   *result = NIL;
+	ListCell   *l;
+
+	foreach(l, root->pcinfo_list)
+	{
+		PartitionedChildRelInfo	*pc = lfirst(l);
+
+		if (pc->parent_relid == rti)
+		{
+			result = pc->child_rels;
+			break;
+		}
+	}
+
+	/* The root partitioned table is included as a child rel */
+	Assert(list_length(result) >= 1);
+
+	return result;
 }

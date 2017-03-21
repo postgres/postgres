@@ -161,6 +161,7 @@ ExecSerializePlan(Plan *plan, EState *estate)
 	pstmt->planTree = plan;
 	pstmt->rtable = estate->es_range_table;
 	pstmt->resultRelations = NIL;
+	pstmt->nonleafResultRelations = NIL;
 	pstmt->subplans = estate->es_plannedstmt->subplans;
 	pstmt->rewindPlanIDs = NULL;
 	pstmt->rowMarks = NIL;

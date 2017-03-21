@@ -1217,7 +1217,7 @@ mark_dummy_rel(RelOptInfo *rel)
 	rel->partial_pathlist = NIL;
 
 	/* Set up the dummy path */
-	add_path(rel, (Path *) create_append_path(rel, NIL, NULL, 0));
+	add_path(rel, (Path *) create_append_path(rel, NIL, NULL, 0, NIL));
 
 	/* Set or update cheapest_total_path and related fields */
 	set_cheapest(rel);

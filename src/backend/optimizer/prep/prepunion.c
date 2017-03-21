@@ -566,7 +566,7 @@ generate_union_path(SetOperationStmt *op, PlannerInfo *root,
 	/*
 	 * Append the child results together.
 	 */
-	path = (Path *) create_append_path(result_rel, pathlist, NULL, 0);
+	path = (Path *) create_append_path(result_rel, pathlist, NULL, 0, NIL);
 
 	/* We have to manually jam the right tlist into the path; ick */
 	path->pathtarget = create_pathtarget(root, tlist);
@@ -678,7 +678,7 @@ generate_nonunion_path(SetOperationStmt *op, PlannerInfo *root,
 	/*
 	 * Append the child results together.
 	 */
-	path = (Path *) create_append_path(result_rel, pathlist, NULL, 0);
+	path = (Path *) create_append_path(result_rel, pathlist, NULL, 0, NIL);
 
 	/* We have to manually jam the right tlist into the path; ick */
 	path->pathtarget = create_pathtarget(root, tlist);
@@ -1364,6 +1364,9 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 	List	   *inhOIDs;
 	List	   *appinfos;
 	ListCell   *l;
+	bool		need_append;
+	PartitionedChildRelInfo *pcinfo;
+	List	   *partitioned_child_rels = NIL;
 
 	/* Does RT entry allow inheritance? */
 	if (!rte->inh)
@@ -1435,6 +1438,7 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 
 	/* Scan the inheritance set and expand it */
 	appinfos = NIL;
+	need_append = false;
 	foreach(l, inhOIDs)
 	{
 		Oid			childOID = lfirst_oid(l);
@@ -1483,36 +1487,46 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 		childRTindex = list_length(parse->rtable);
 
 		/*
-		 * Build an AppendRelInfo for this parent and child.
+		 * Build an AppendRelInfo for this parent and child, unless the child
+		 * is a partitioned table.
 		 */
-		appinfo = makeNode(AppendRelInfo);
-		appinfo->parent_relid = rti;
-		appinfo->child_relid = childRTindex;
-		appinfo->parent_reltype = oldrelation->rd_rel->reltype;
-		appinfo->child_reltype = newrelation->rd_rel->reltype;
-		make_inh_translation_list(oldrelation, newrelation, childRTindex,
-								  &appinfo->translated_vars);
-		appinfo->parent_reloid = parentOID;
-		appinfos = lappend(appinfos, appinfo);
-
-		/*
-		 * Translate the column permissions bitmaps to the child's attnums (we
-		 * have to build the translated_vars list before we can do this). But
-		 * if this is the parent table, leave copyObject's result alone.
-		 *
-		 * Note: we need to do this even though the executor won't run any
-		 * permissions checks on the child RTE.  The insertedCols/updatedCols
-		 * bitmaps may be examined for trigger-firing purposes.
-		 */
-		if (childOID != parentOID)
+		if (childrte->relkind != RELKIND_PARTITIONED_TABLE)
 		{
-			childrte->selectedCols = translate_col_privs(rte->selectedCols,
+			need_append = true;
+			appinfo = makeNode(AppendRelInfo);
+			appinfo->parent_relid = rti;
+			appinfo->child_relid = childRTindex;
+			appinfo->parent_reltype = oldrelation->rd_rel->reltype;
+			appinfo->child_reltype = newrelation->rd_rel->reltype;
+			make_inh_translation_list(oldrelation, newrelation, childRTindex,
+									  &appinfo->translated_vars);
+			appinfo->parent_reloid = parentOID;
+			appinfos = lappend(appinfos, appinfo);
+
+			/*
+			 * Translate the column permissions bitmaps to the child's attnums
+			 * (we have to build the translated_vars list before we can do
+			 * this). But if this is the parent table, leave copyObject's
+			 * result alone.
+			 *
+			 * Note: we need to do this even though the executor won't run any
+			 * permissions checks on the child RTE.  The
+			 * insertedCols/updatedCols bitmaps may be examined for
+			 * trigger-firing purposes.
+			 */
+			if (childOID != parentOID)
+			{
+				childrte->selectedCols = translate_col_privs(rte->selectedCols,
 												   appinfo->translated_vars);
-			childrte->insertedCols = translate_col_privs(rte->insertedCols,
+				childrte->insertedCols = translate_col_privs(rte->insertedCols,
 												   appinfo->translated_vars);
-			childrte->updatedCols = translate_col_privs(rte->updatedCols,
+				childrte->updatedCols = translate_col_privs(rte->updatedCols,
 												   appinfo->translated_vars);
+			}
 		}
+		else
+			partitioned_child_rels = lappend_int(partitioned_child_rels,
+												 childRTindex);
 
 		/*
 		 * Build a PlanRowMark if parent is marked FOR UPDATE/SHARE.
@@ -1529,7 +1543,13 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 			newrc->allMarkTypes = (1 << newrc->markType);
 			newrc->strength = oldrc->strength;
 			newrc->waitPolicy = oldrc->waitPolicy;
-			newrc->isParent = false;
+
+			/*
+			 * We mark RowMarks for partitioned child tables as parent RowMarks
+			 * so that the executor ignores them (except their existence means
+			 * that the child tables be locked using appropriate mode).
+			 */
+			newrc->isParent = (childrte->relkind == RELKIND_PARTITIONED_TABLE);
 
 			/* Include child's rowmark type in parent's allMarkTypes */
 			oldrc->allMarkTypes |= newrc->allMarkTypes;
@@ -1545,16 +1565,35 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 	heap_close(oldrelation, NoLock);
 
 	/*
-	 * If all the children were temp tables, pretend it's a non-inheritance
-	 * situation.  The duplicate RTE we added for the parent table is
-	 * harmless, so we don't bother to get rid of it; ditto for the useless
-	 * PlanRowMark node.
+	 * If all the children were temp tables or a partitioned parent did not
+	 * have any leaf partitions, pretend it's a non-inheritance situation; we
+	 * don't need Append node in that case.  The duplicate RTE we added for
+	 * the parent table is harmless, so we don't bother to get rid of it;
+	 * ditto for the useless PlanRowMark node.
 	 */
-	if (list_length(appinfos) < 2)
+	if (!need_append)
 	{
 		/* Clear flag before returning */
 		rte->inh = false;
 		return;
+	}
+
+	/*
+	 * We keep a list of objects in root, each of which maps a partitioned
+	 * parent RT index to the list of RT indexes of its partitioned child
+	 * tables.  When creating an Append or a ModifyTable path for the parent,
+	 * we copy the child RT index list verbatim to the path so that it could
+	 * be carried over to the executor so that the latter could identify
+	 * the partitioned child tables.
+	 */
+	if (partitioned_child_rels != NIL)
+	{
+		pcinfo = makeNode(PartitionedChildRelInfo);
+
+		Assert(rte->relkind == RELKIND_PARTITIONED_TABLE);
+		pcinfo->parent_relid = rti;
+		pcinfo->child_rels = partitioned_child_rels;
+		root->pcinfo_list = lappend(root->pcinfo_list, pcinfo);
 	}
 
 	/* Otherwise, OK to add to root->append_rel_list */

@@ -1201,7 +1201,7 @@ create_tidscan_path(PlannerInfo *root, RelOptInfo *rel, List *tidquals,
  */
 AppendPath *
 create_append_path(RelOptInfo *rel, List *subpaths, Relids required_outer,
-				   int parallel_workers)
+				   int parallel_workers, List *partitioned_rels)
 {
 	AppendPath *pathnode = makeNode(AppendPath);
 	ListCell   *l;
@@ -1216,6 +1216,7 @@ create_append_path(RelOptInfo *rel, List *subpaths, Relids required_outer,
 	pathnode->path.parallel_workers = parallel_workers;
 	pathnode->path.pathkeys = NIL;		/* result is always considered
 										 * unsorted */
+	pathnode->partitioned_rels = partitioned_rels;
 	pathnode->subpaths = subpaths;
 
 	/*
@@ -1258,7 +1259,8 @@ create_merge_append_path(PlannerInfo *root,
 						 RelOptInfo *rel,
 						 List *subpaths,
 						 List *pathkeys,
-						 Relids required_outer)
+						 Relids required_outer,
+						 List *partitioned_rels)
 {
 	MergeAppendPath *pathnode = makeNode(MergeAppendPath);
 	Cost		input_startup_cost;
@@ -1274,6 +1276,7 @@ create_merge_append_path(PlannerInfo *root,
 	pathnode->path.parallel_safe = rel->consider_parallel;
 	pathnode->path.parallel_workers = 0;
 	pathnode->path.pathkeys = pathkeys;
+	pathnode->partitioned_rels = partitioned_rels;
 	pathnode->subpaths = subpaths;
 
 	/*
@@ -3105,7 +3108,7 @@ create_lockrows_path(PlannerInfo *root, RelOptInfo *rel,
 ModifyTablePath *
 create_modifytable_path(PlannerInfo *root, RelOptInfo *rel,
 						CmdType operation, bool canSetTag,
-						Index nominalRelation,
+						Index nominalRelation, List *partitioned_rels,
 						List *resultRelations, List *subpaths,
 						List *subroots,
 						List *withCheckOptionLists, List *returningLists,
@@ -3172,6 +3175,7 @@ create_modifytable_path(PlannerInfo *root, RelOptInfo *rel,
 	pathnode->operation = operation;
 	pathnode->canSetTag = canSetTag;
 	pathnode->nominalRelation = nominalRelation;
+	pathnode->partitioned_rels = partitioned_rels;
 	pathnode->resultRelations = resultRelations;
 	pathnode->subpaths = subpaths;
 	pathnode->subroots = subroots;

@@ -322,12 +322,10 @@ explain (costs off)
                 QUERY PLAN                 
 -------------------------------------------
  Append
-   ->  Sample Scan on parted_sample
-         Sampling: bernoulli ('100'::real)
    ->  Sample Scan on parted_sample_1
          Sampling: bernoulli ('100'::real)
    ->  Sample Scan on parted_sample_2
          Sampling: bernoulli ('100'::real)
-(7 rows)
+(5 rows)
 
 drop table parted_sample, parted_sample_1, parted_sample_2;

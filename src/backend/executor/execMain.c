@@ -844,6 +844,22 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 		estate->es_num_result_relations = numResultRelations;
 		/* es_result_relation_info is NULL except when within ModifyTable */
 		estate->es_result_relation_info = NULL;
+
+		/*
+		 * In the partitioned result relation case, lock the non-leaf result
+		 * relations too.  We don't however need ResultRelInfos for them.
+		 */
+		if (plannedstmt->nonleafResultRelations)
+		{
+			foreach(l, plannedstmt->nonleafResultRelations)
+			{
+				Index		resultRelationIndex = lfirst_int(l);
+				Oid			resultRelationOid;
+
+				resultRelationOid = getrelid(resultRelationIndex, rangeTable);
+				LockRelationOid(resultRelationOid, RowExclusiveLock);
+			}
+		}
 	}
 	else
 	{
@@ -858,7 +874,11 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	/*
 	 * Similarly, we have to lock relations selected FOR [KEY] UPDATE/SHARE
 	 * before we initialize the plan tree, else we'd be risking lock upgrades.
-	 * While we are at it, build the ExecRowMark list.
+	 * While we are at it, build the ExecRowMark list.  Any partitioned child
+	 * tables are ignored here (because isParent=true) and will be locked by
+	 * the first Append or MergeAppend node that references them.  (Note that
+	 * the RowMarks corresponding to partitioned child tables are present in
+	 * the same list as the rest, i.e., plannedstmt->rowMarks.)
 	 */
 	estate->es_rowMarks = NIL;
 	foreach(l, plannedstmt->rowMarks)

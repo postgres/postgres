@@ -199,7 +199,7 @@ static CteScan *make_ctescan(List *qptlist, List *qpqual,
 			 Index scanrelid, int ctePlanId, int cteParam);
 static WorkTableScan *make_worktablescan(List *qptlist, List *qpqual,
 				   Index scanrelid, int wtParam);
-static Append *make_append(List *appendplans, List *tlist);
+static Append *make_append(List *appendplans, List *tlist, List *partitioned_rels);
 static RecursiveUnion *make_recursive_union(List *tlist,
 					 Plan *lefttree,
 					 Plan *righttree,
@@ -273,7 +273,7 @@ static Result *make_result(List *tlist, Node *resconstantqual, Plan *subplan);
 static ProjectSet *make_project_set(List *tlist, Plan *subplan);
 static ModifyTable *make_modifytable(PlannerInfo *root,
 				 CmdType operation, bool canSetTag,
-				 Index nominalRelation,
+				 Index nominalRelation, List *partitioned_rels,
 				 List *resultRelations, List *subplans,
 				 List *withCheckOptionLists, List *returningLists,
 				 List *rowMarks, OnConflictExpr *onconflict, int epqParam);
@@ -1026,7 +1026,7 @@ create_append_plan(PlannerInfo *root, AppendPath *best_path)
 	 * parent-rel Vars it'll be asked to emit.
 	 */
 
-	plan = make_append(subplans, tlist);
+	plan = make_append(subplans, tlist, best_path->partitioned_rels);
 
 	copy_generic_path_info(&plan->plan, (Path *) best_path);
 
@@ -1134,6 +1134,7 @@ create_merge_append_plan(PlannerInfo *root, MergeAppendPath *best_path)
 		subplans = lappend(subplans, subplan);
 	}
 
+	node->partitioned_rels = best_path->partitioned_rels;
 	node->mergeplans = subplans;
 
 	return (Plan *) node;
@@ -2314,6 +2315,7 @@ create_modifytable_plan(PlannerInfo *root, ModifyTablePath *best_path)
 							best_path->operation,
 							best_path->canSetTag,
 							best_path->nominalRelation,
+							best_path->partitioned_rels,
 							best_path->resultRelations,
 							subplans,
 							best_path->withCheckOptionLists,
@@ -5161,7 +5163,7 @@ make_foreignscan(List *qptlist,
 }
 
 static Append *
-make_append(List *appendplans, List *tlist)
+make_append(List *appendplans, List *tlist, List *partitioned_rels)
 {
 	Append	   *node = makeNode(Append);
 	Plan	   *plan = &node->plan;
@@ -5170,6 +5172,7 @@ make_append(List *appendplans, List *tlist)
 	plan->qual = NIL;
 	plan->lefttree = NULL;
 	plan->righttree = NULL;
+	node->partitioned_rels = partitioned_rels;
 	node->appendplans = appendplans;
 
 	return node;
@@ -6282,7 +6285,7 @@ make_project_set(List *tlist,
 static ModifyTable *
 make_modifytable(PlannerInfo *root,
 				 CmdType operation, bool canSetTag,
-				 Index nominalRelation,
+				 Index nominalRelation, List *partitioned_rels,
 				 List *resultRelations, List *subplans,
 				 List *withCheckOptionLists, List *returningLists,
 				 List *rowMarks, OnConflictExpr *onconflict, int epqParam)
@@ -6308,6 +6311,7 @@ make_modifytable(PlannerInfo *root,
 	node->operation = operation;
 	node->canSetTag = canSetTag;
 	node->nominalRelation = nominalRelation;
+	node->partitioned_rels = partitioned_rels;
 	node->resultRelations = resultRelations;
 	node->resultRelIndex = -1;	/* will be set correctly in setrefs.c */
 	node->plans = subplans;

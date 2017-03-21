@@ -835,6 +835,10 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 				splan->nominalRelation += rtoffset;
 				splan->exclRelRTI += rtoffset;
 
+				foreach(l, splan->partitioned_rels)
+				{
+					lfirst_int(l) += rtoffset;
+				}
 				foreach(l, splan->resultRelations)
 				{
 					lfirst_int(l) += rtoffset;
@@ -863,6 +867,15 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 				root->glob->resultRelations =
 					list_concat(root->glob->resultRelations,
 								list_copy(splan->resultRelations));
+
+				/*
+				 * If the main target relation is a partitioned table, the
+				 * following list contains the RT indexes of partitioned child
+				 * relations, which are not included in the above list.
+				 */
+				root->glob->nonleafResultRelations =
+					list_concat(root->glob->nonleafResultRelations,
+								list_copy(splan->partitioned_rels));
 			}
 			break;
 		case T_Append:
@@ -875,6 +888,10 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 				 */
 				set_dummy_tlist_references(plan, rtoffset);
 				Assert(splan->plan.qual == NIL);
+				foreach(l, splan->partitioned_rels)
+				{
+					lfirst_int(l) += rtoffset;
+				}
 				foreach(l, splan->appendplans)
 				{
 					lfirst(l) = set_plan_refs(root,
@@ -893,6 +910,10 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 				 */
 				set_dummy_tlist_references(plan, rtoffset);
 				Assert(splan->plan.qual == NIL);
+				foreach(l, splan->partitioned_rels)
+				{
+					lfirst_int(l) += rtoffset;
+				}
 				foreach(l, splan->mergeplans)
 				{
 					lfirst(l) = set_plan_refs(root,

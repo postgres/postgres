@@ -65,6 +65,9 @@ typedef struct PlannedStmt
 	/* rtable indexes of target relations for INSERT/UPDATE/DELETE */
 	List	   *resultRelations;	/* integer list of RT indexes, or NIL */
 
+	/* rtable indexes of non-leaf target relations for INSERT/UPDATE/DELETE */
+	List	   *nonleafResultRelations;
+
 	List	   *subplans;		/* Plan trees for SubPlan expressions */
 
 	Bitmapset  *rewindPlanIDs;	/* indices of subplans that require REWIND */
@@ -202,6 +205,8 @@ typedef struct ModifyTable
 	CmdType		operation;		/* INSERT, UPDATE, or DELETE */
 	bool		canSetTag;		/* do we set the command tag/es_processed? */
 	Index		nominalRelation;	/* Parent RT index for use of EXPLAIN */
+	/* RT indexes of non-leaf tables in a partition tree */
+	List	   *partitioned_rels;
 	List	   *resultRelations;	/* integer list of RT indexes */
 	int			resultRelIndex; /* index of first resultRel in plan's list */
 	List	   *plans;			/* plan(s) producing source data */
@@ -227,6 +232,8 @@ typedef struct ModifyTable
 typedef struct Append
 {
 	Plan		plan;
+	/* RT indexes of non-leaf tables in a partition tree */
+	List	   *partitioned_rels;
 	List	   *appendplans;
 } Append;
 
@@ -238,6 +245,8 @@ typedef struct Append
 typedef struct MergeAppend
 {
 	Plan		plan;
+	/* RT indexes of non-leaf tables in a partition tree */
+	List	   *partitioned_rels;
 	List	   *mergeplans;
 	/* remaining fields are just like the sort-key info in struct Sort */
 	int			numCols;		/* number of sort-key columns */
@@ -937,11 +946,12 @@ typedef enum RowMarkType
  * When the planner discovers that a relation is the root of an inheritance
  * tree, it sets isParent true, and adds an additional PlanRowMark to the
  * list for each child relation (including the target rel itself in its role
- * as a child).  The child entries have rti == child rel's RT index and
- * prti == parent's RT index, and can therefore be recognized as children by
- * the fact that prti != rti.  The parent's allMarkTypes field gets the OR
- * of (1<<markType) across all its children (this definition allows children
- * to use different markTypes).
+ * as a child).  isParent is also set to true for the partitioned child
+ * relations, which are not scanned just like the root parent.  The child
+ * entries have rti == child rel's RT index and prti == parent's RT index,
+ * and can therefore be recognized as children by the fact that prti != rti.
+ * The parent's allMarkTypes field gets the OR of (1<<markType) across all
+ * its children (this definition allows children to use different markTypes).
  *
  * The planner also adds resjunk output columns to the plan that carry
  * information sufficient to identify the locked or fetched rows.  When

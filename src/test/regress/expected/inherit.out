@@ -588,6 +588,45 @@ select tableoid::regclass::text as relname, bar.* from bar order by 1,2;
  bar2    |  4 | 104
 (8 rows)
 
+-- Check UPDATE with *partitioned* inherited target and an appendrel subquery
+create table some_tab (a int);
+insert into some_tab values (0);
+create table some_tab_child () inherits (some_tab);
+insert into some_tab_child values (1);
+create table parted_tab (a int, b char) partition by list (a);
+create table parted_tab_part1 partition of parted_tab for values in (1);
+create table parted_tab_part2 partition of parted_tab for values in (2);
+create table parted_tab_part3 partition of parted_tab for values in (3);
+insert into parted_tab values (1, 'a'), (2, 'a'), (3, 'a');
+update parted_tab set b = 'b'
+from
+  (select a from some_tab union all select a+1 from some_tab) ss (a)
+where parted_tab.a = ss.a;
+select tableoid::regclass::text as relname, parted_tab.* from parted_tab order by 1,2;
+     relname      | a | b 
+------------------+---+---
+ parted_tab_part1 | 1 | b
+ parted_tab_part2 | 2 | b
+ parted_tab_part3 | 3 | a
+(3 rows)
+
+truncate parted_tab;
+insert into parted_tab values (1, 'a'), (2, 'a'), (3, 'a');
+update parted_tab set b = 'b'
+from
+  (select 0 from parted_tab union all select 1 from parted_tab) ss (a)
+where parted_tab.a = ss.a;
+select tableoid::regclass::text as relname, parted_tab.* from parted_tab order by 1,2;
+     relname      | a | b 
+------------------+---+---
+ parted_tab_part1 | 1 | b
+ parted_tab_part2 | 2 | a
+ parted_tab_part3 | 3 | a
+(3 rows)
+
+drop table parted_tab;
+drop table some_tab cascade;
+NOTICE:  drop cascades to table some_tab_child
 /* Test multiple inheritance of column defaults */
 CREATE TABLE firstparent (tomorrow date default now()::date + 1);
 CREATE TABLE secondparent (tomorrow date default  now() :: date  +  1);
@@ -1611,71 +1650,60 @@ explain (costs off) select * from list_parted;
            QUERY PLAN           
 --------------------------------
  Append
-   ->  Seq Scan on list_parted
    ->  Seq Scan on part_ab_cd
    ->  Seq Scan on part_ef_gh
    ->  Seq Scan on part_null_xy
-(5 rows)
+(4 rows)
 
 explain (costs off) select * from list_parted where a is null;
            QUERY PLAN           
 --------------------------------
  Append
-   ->  Seq Scan on list_parted
-         Filter: (a IS NULL)
    ->  Seq Scan on part_null_xy
          Filter: (a IS NULL)
-(5 rows)
+(3 rows)
 
 explain (costs off) select * from list_parted where a is not null;
            QUERY PLAN            
 ---------------------------------
  Append
-   ->  Seq Scan on list_parted
-         Filter: (a IS NOT NULL)
    ->  Seq Scan on part_ab_cd
          Filter: (a IS NOT NULL)
    ->  Seq Scan on part_ef_gh
          Filter: (a IS NOT NULL)
    ->  Seq Scan on part_null_xy
          Filter: (a IS NOT NULL)
-(9 rows)
+(7 rows)
 
 explain (costs off) select * from list_parted where a in ('ab', 'cd', 'ef');
                         QUERY PLAN                        
 ----------------------------------------------------------
  Append
-   ->  Seq Scan on list_parted
-         Filter: ((a)::text = ANY ('{ab,cd,ef}'::text[]))
    ->  Seq Scan on part_ab_cd
          Filter: ((a)::text = ANY ('{ab,cd,ef}'::text[]))
    ->  Seq Scan on part_ef_gh
          Filter: ((a)::text = ANY ('{ab,cd,ef}'::text[]))
-(7 rows)
+(5 rows)
 
 explain (costs off) select * from list_parted where a = 'ab' or a in (null, 'cd');
                                       QUERY PLAN                                       
 ---------------------------------------------------------------------------------------
  Append
-   ->  Seq Scan on list_parted
-         Filter: (((a)::text = 'ab'::text) OR ((a)::text = ANY ('{NULL,cd}'::text[])))
    ->  Seq Scan on part_ab_cd
          Filter: (((a)::text = 'ab'::text) OR ((a)::text = ANY ('{NULL,cd}'::text[])))
    ->  Seq Scan on part_ef_gh
          Filter: (((a)::text = 'ab'::text) OR ((a)::text = ANY ('{NULL,cd}'::text[])))
    ->  Seq Scan on part_null_xy
          Filter: (((a)::text = 'ab'::text) OR ((a)::text = ANY ('{NULL,cd}'::text[])))
-(9 rows)
+(7 rows)
 
 explain (costs off) select * from list_parted where a = 'ab';
                 QUERY PLAN                
 ------------------------------------------
  Append
-   ->  Seq Scan on list_parted
-         Filter: ((a)::text = 'ab'::text)
    ->  Seq Scan on part_ab_cd
          Filter: ((a)::text = 'ab'::text)
-(5 rows)
+(3 rows)
 
 create table range_list_parted (
 	a	int,
@@ -1695,14 +1723,9 @@ create table part_40_inf_ab partition of part_40_inf for values in ('ab');
 create table part_40_inf_cd partition of part_40_inf for values in ('cd');
 create table part_40_inf_null partition of part_40_inf for values in (null);
 explain (costs off) select * from range_list_parted;
-             QUERY PLAN              
--------------------------------------
+             QUERY PLAN             
+------------------------------------
  Append
-   ->  Seq Scan on range_list_parted
-   ->  Seq Scan on part_1_10
-   ->  Seq Scan on part_10_20
-   ->  Seq Scan on part_21_30
-   ->  Seq Scan on part_40_inf
    ->  Seq Scan on part_1_10_ab
    ->  Seq Scan on part_1_10_cd
    ->  Seq Scan on part_10_20_ab
@@ -1712,36 +1735,22 @@ explain (costs off) select * from range_list_parted;
    ->  Seq Scan on part_40_inf_ab
    ->  Seq Scan on part_40_inf_cd
    ->  Seq Scan on part_40_inf_null
-(15 rows)
+(10 rows)
 
 explain (costs off) select * from range_list_parted where a = 5;
-             QUERY PLAN              
--------------------------------------
+           QUERY PLAN           
+--------------------------------
  Append
-   ->  Seq Scan on range_list_parted
-         Filter: (a = 5)
-   ->  Seq Scan on part_1_10
-         Filter: (a = 5)
    ->  Seq Scan on part_1_10_ab
          Filter: (a = 5)
    ->  Seq Scan on part_1_10_cd
          Filter: (a = 5)
-(9 rows)
+(5 rows)
 
 explain (costs off) select * from range_list_parted where b = 'ab';
-             QUERY PLAN              
--------------------------------------
+             QUERY PLAN             
+------------------------------------
  Append
-   ->  Seq Scan on range_list_parted
-         Filter: (b = 'ab'::bpchar)
-   ->  Seq Scan on part_1_10
-         Filter: (b = 'ab'::bpchar)
-   ->  Seq Scan on part_10_20
-         Filter: (b = 'ab'::bpchar)
-   ->  Seq Scan on part_21_30
-         Filter: (b = 'ab'::bpchar)
-   ->  Seq Scan on part_40_inf
-         Filter: (b = 'ab'::bpchar)
    ->  Seq Scan on part_1_10_ab
          Filter: (b = 'ab'::bpchar)
    ->  Seq Scan on part_10_20_ab
@@ -1750,27 +1759,19 @@ explain (costs off) select * from range_list_parted where b = 'ab';
          Filter: (b = 'ab'::bpchar)
    ->  Seq Scan on part_40_inf_ab
          Filter: (b = 'ab'::bpchar)
-(19 rows)
+(9 rows)
 
 explain (costs off) select * from range_list_parted where a between 3 and 23 and b in ('ab');
                            QUERY PLAN                            
 -----------------------------------------------------------------
  Append
-   ->  Seq Scan on range_list_parted
-         Filter: ((a >= 3) AND (a <= 23) AND (b = 'ab'::bpchar))
-   ->  Seq Scan on part_1_10
-         Filter: ((a >= 3) AND (a <= 23) AND (b = 'ab'::bpchar))
-   ->  Seq Scan on part_10_20
-         Filter: ((a >= 3) AND (a <= 23) AND (b = 'ab'::bpchar))
-   ->  Seq Scan on part_21_30
-         Filter: ((a >= 3) AND (a <= 23) AND (b = 'ab'::bpchar))
    ->  Seq Scan on part_1_10_ab
          Filter: ((a >= 3) AND (a <= 23) AND (b = 'ab'::bpchar))
    ->  Seq Scan on part_10_20_ab
          Filter: ((a >= 3) AND (a <= 23) AND (b = 'ab'::bpchar))
    ->  Seq Scan on part_21_30_ab
          Filter: ((a >= 3) AND (a <= 23) AND (b = 'ab'::bpchar))
-(15 rows)
+(7 rows)
 
 /* Should select no rows because range partition key cannot be null */
 explain (costs off) select * from range_list_parted where a is null;
@@ -1782,37 +1783,17 @@ explain (costs off) select * from range_list_parted where a is null;
 
 /* Should only select rows from the null-accepting partition */
 explain (costs off) select * from range_list_parted where b is null;
-             QUERY PLAN              
--------------------------------------
+             QUERY PLAN             
+------------------------------------
  Append
-   ->  Seq Scan on range_list_parted
-         Filter: (b IS NULL)
-   ->  Seq Scan on part_1_10
-         Filter: (b IS NULL)
-   ->  Seq Scan on part_10_20
-         Filter: (b IS NULL)
-   ->  Seq Scan on part_21_30
-         Filter: (b IS NULL)
-   ->  Seq Scan on part_40_inf
-         Filter: (b IS NULL)
    ->  Seq Scan on part_40_inf_null
          Filter: (b IS NULL)
-(13 rows)
+(3 rows)
 
 explain (costs off) select * from range_list_parted where a is not null and a < 67;
                    QUERY PLAN                   
 ------------------------------------------------
  Append
-   ->  Seq Scan on range_list_parted
-         Filter: ((a IS NOT NULL) AND (a < 67))
-   ->  Seq Scan on part_1_10
-         Filter: ((a IS NOT NULL) AND (a < 67))
-   ->  Seq Scan on part_10_20
-         Filter: ((a IS NOT NULL) AND (a < 67))
-   ->  Seq Scan on part_21_30
-         Filter: ((a IS NOT NULL) AND (a < 67))
-   ->  Seq Scan on part_40_inf
-         Filter: ((a IS NOT NULL) AND (a < 67))
    ->  Seq Scan on part_1_10_ab
          Filter: ((a IS NOT NULL) AND (a < 67))
    ->  Seq Scan on part_1_10_cd
@@ -1831,23 +1812,19 @@ explain (costs off) select * from range_list_parted where a is not null and a < 
          Filter: ((a IS NOT NULL) AND (a < 67))
    ->  Seq Scan on part_40_inf_null
          Filter: ((a IS NOT NULL) AND (a < 67))
-(29 rows)
+(19 rows)
 
 explain (costs off) select * from range_list_parted where a >= 30;
-             QUERY PLAN              
--------------------------------------
+             QUERY PLAN             
+------------------------------------
  Append
-   ->  Seq Scan on range_list_parted
-         Filter: (a >= 30)
-   ->  Seq Scan on part_40_inf
-         Filter: (a >= 30)
    ->  Seq Scan on part_40_inf_ab
          Filter: (a >= 30)
    ->  Seq Scan on part_40_inf_cd
          Filter: (a >= 30)
    ->  Seq Scan on part_40_inf_null
          Filter: (a >= 30)
-(11 rows)
+(7 rows)
 
 drop table list_parted;
 drop table range_list_parted;

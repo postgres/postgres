@@ -64,12 +64,14 @@ extern BitmapOrPath *create_bitmap_or_path(PlannerInfo *root,
 extern TidPath *create_tidscan_path(PlannerInfo *root, RelOptInfo *rel,
 					List *tidquals, Relids required_outer);
 extern AppendPath *create_append_path(RelOptInfo *rel, List *subpaths,
-				   Relids required_outer, int parallel_workers);
+				   Relids required_outer, int parallel_workers,
+				   List *partitioned_rels);
 extern MergeAppendPath *create_merge_append_path(PlannerInfo *root,
 						 RelOptInfo *rel,
 						 List *subpaths,
 						 List *pathkeys,
-						 Relids required_outer);
+						 Relids required_outer,
+						 List *partitioned_rels);
 extern ResultPath *create_result_path(PlannerInfo *root, RelOptInfo *rel,
 				   PathTarget *target, List *resconstantqual);
 extern MaterialPath *create_material_path(RelOptInfo *rel, Path *subpath);
@@ -232,7 +234,7 @@ extern LockRowsPath *create_lockrows_path(PlannerInfo *root, RelOptInfo *rel,
 extern ModifyTablePath *create_modifytable_path(PlannerInfo *root,
 						RelOptInfo *rel,
 						CmdType operation, bool canSetTag,
-						Index nominalRelation,
+						Index nominalRelation, List *partitioned_rels,
 						List *resultRelations, List *subpaths,
 						List *subroots,
 						List *withCheckOptionLists, List *returningLists,

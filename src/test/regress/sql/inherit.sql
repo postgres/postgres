@@ -128,6 +128,34 @@ where bar.f1 = ss.f1;
 
 select tableoid::regclass::text as relname, bar.* from bar order by 1,2;
 
+-- Check UPDATE with *partitioned* inherited target and an appendrel subquery
+create table some_tab (a int);
+insert into some_tab values (0);
+create table some_tab_child () inherits (some_tab);
+insert into some_tab_child values (1);
+create table parted_tab (a int, b char) partition by list (a);
+create table parted_tab_part1 partition of parted_tab for values in (1);
+create table parted_tab_part2 partition of parted_tab for values in (2);
+create table parted_tab_part3 partition of parted_tab for values in (3);
+insert into parted_tab values (1, 'a'), (2, 'a'), (3, 'a');
+
+update parted_tab set b = 'b'
+from
+  (select a from some_tab union all select a+1 from some_tab) ss (a)
+where parted_tab.a = ss.a;
+select tableoid::regclass::text as relname, parted_tab.* from parted_tab order by 1,2;
+
+truncate parted_tab;
+insert into parted_tab values (1, 'a'), (2, 'a'), (3, 'a');
+update parted_tab set b = 'b'
+from
+  (select 0 from parted_tab union all select 1 from parted_tab) ss (a)
+where parted_tab.a = ss.a;
+select tableoid::regclass::text as relname, parted_tab.* from parted_tab order by 1,2;
+
+drop table parted_tab;
+drop table some_tab cascade;
+
 /* Test multiple inheritance of column defaults */
 
 CREATE TABLE firstparent (tomorrow date default now()::date + 1);

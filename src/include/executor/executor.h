@@ -375,6 +375,7 @@ extern void RegisterExprContextCallback(ExprContext *econtext,
 extern void UnregisterExprContextCallback(ExprContext *econtext,
 							  ExprContextCallbackFunction function,
 							  Datum arg);
+extern void ExecLockNonLeafAppendTables(List *partitioned_rels, EState *estate);
 
 /*
  * prototypes from functions in execIndexing.c

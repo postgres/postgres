@@ -1514,7 +1514,8 @@ AcquireExecutorLocks(List *stmt_list, bool acquire)
 			 * fail if it's been dropped entirely --- we'll just transiently
 			 * acquire a non-conflicting lock.
 			 */
-			if (list_member_int(plannedstmt->resultRelations, rt_index))
+			if (list_member_int(plannedstmt->resultRelations, rt_index) ||
+				list_member_int(plannedstmt->nonleafResultRelations, rt_index))
 				lockmode = RowExclusiveLock;
 			else if ((rc = get_plan_rowmark(plannedstmt->rowMarks, rt_index)) != NULL &&
 					 RowMarkRequiresRowShareLock(rc->markType))
