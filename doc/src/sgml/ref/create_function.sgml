@@ -401,7 +401,7 @@ CREATE [ OR REPLACE ] FUNCTION
       is to be executed with the privileges of the user that calls it.
       That is the default.  <literal>SECURITY DEFINER</literal>
       specifies that the function is to be executed with the
-      privileges of the user that created it.
+      privileges of the user that owns it.
      </para>
 
      <para>
@@ -747,7 +747,7 @@ SELECT * FROM dup(42);
 
    <para>
     Because a <literal>SECURITY DEFINER</literal> function is executed
-    with the privileges of the user that created it, care is needed to
+    with the privileges of the user that owns it, care is needed to
     ensure that the function cannot be misused.  For security,
     <xref linkend="guc-search-path"> should be set to exclude any schemas
     writable by untrusted users.  This prevents
