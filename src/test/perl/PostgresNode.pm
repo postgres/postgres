@@ -1505,6 +1505,84 @@ sub slot
 
 =pod
 
+=item $node->pg_recvlogical_upto(self, dbname, slot_name, endpos, timeout_secs, ...)
+
+Invoke pg_recvlogical to read from slot_name on dbname until LSN endpos, which
+corresponds to pg_recvlogical --endpos.  Gives up after timeout (if nonzero).
+
+Disallows pg_recvlogical from internally retrying on error by passing --no-loop.
+
+Plugin options are passed as additional keyword arguments.
+
+If called in scalar context, returns stdout, and die()s on timeout or nonzero return.
+
+If called in array context, returns a tuple of (retval, stdout, stderr, timeout).
+timeout is the IPC::Run::Timeout object whose is_expired method can be tested
+to check for timeout. retval is undef on timeout.
+
+=cut
+
+sub pg_recvlogical_upto
+{
+	my ($self, $dbname, $slot_name, $endpos, $timeout_secs, %plugin_options) = @_;
+	my ($stdout, $stderr);
+
+	my $timeout_exception = 'pg_recvlogical timed out';
+
+	die 'slot name must be specified' unless defined($slot_name);
+	die 'endpos must be specified' unless defined($endpos);
+
+	my @cmd = ('pg_recvlogical', '-S', $slot_name, '--dbname', $self->connstr($dbname));
+	push @cmd, '--endpos', $endpos;
+	push @cmd, '-f', '-', '--no-loop', '--start';
+
+	while (my ($k, $v) = each %plugin_options)
+	{
+		die "= is not permitted to appear in replication option name" if ($k =~ qr/=/);
+		push @cmd, "-o", "$k=$v";
+	}
+
+	my $timeout;
+	$timeout = IPC::Run::timeout($timeout_secs, exception => $timeout_exception ) if $timeout_secs;
+	my $ret = 0;
+
+	do {
+		local $@;
+		eval {
+			IPC::Run::run(\@cmd, ">", \$stdout, "2>", \$stderr, $timeout);
+			$ret = $?;
+		};
+		my $exc_save = $@;
+		if ($exc_save)
+		{
+			# IPC::Run::run threw an exception. re-throw unless it's a
+			# timeout, which we'll handle by testing is_expired
+			die $exc_save
+			  if (blessed($exc_save) || $exc_save !~ qr/$timeout_exception/);
+
+			$ret = undef;
+
+			die "Got timeout exception '$exc_save' but timer not expired?!"
+			  unless $timeout->is_expired;
+
+			die "$exc_save waiting for endpos $endpos with stdout '$stdout', stderr '$stderr'"
+				unless wantarray;
+		}
+	};
+
+	if (wantarray)
+	{
+		return ($ret, $stdout, $stderr, $timeout);
+	}
+	else
+	{
+		die "pg_recvlogical exited with code '$ret', stdout '$stdout' and stderr '$stderr'" if $ret;
+		return $stdout;
+	}
+}
+
+=pod
+
 =back
 
 =cut
