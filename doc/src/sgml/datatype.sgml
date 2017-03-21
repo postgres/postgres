@@ -756,7 +756,7 @@ FROM generate_series(-3.5, 3.5, 1) as x;
      floating-point arithmetic does not follow IEEE 754, these values
      will probably not work as expected.)  When writing these values
      as constants in an SQL command, you must put quotes around them,
-     for example <literal>UPDATE table SET x = 'Infinity'</>.  On input,
+     for example <literal>UPDATE table SET x = '-Infinity'</>.  On input,
      these strings are recognized in a case-insensitive manner.
     </para>
 
