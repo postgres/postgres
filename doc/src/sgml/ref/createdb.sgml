@@ -363,11 +363,11 @@ PostgreSQL documentation
    <para>
     To create the database <literal>demo</literal> using the
     server on host <literal>eden</>, port 5000, using the
-    <literal>LATIN1</literal> encoding scheme with a look at the
-    underlying command:
+    <literal>template0</literal> template database,  here is the
+    command-line command and the underlying SQL command:
 <screen>
-<prompt>$ </prompt><userinput>createdb -p 5000 -h eden -E LATIN1 -e demo</userinput>
-<computeroutput>CREATE DATABASE demo ENCODING 'LATIN1';</computeroutput>
+<prompt>$ </prompt><userinput>createdb -p 5000 -h eden -T template0 -e demo</userinput>
+<computeroutput>CREATE DATABASE demo TEMPLATE template0;</computeroutput>
 </screen></para>
  </refsect1>
 
