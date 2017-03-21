@@ -248,7 +248,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
    </varlistentry>
 
    <varlistentry>
-    <term><literal>PARTITION OF <replaceable class="PARAMETER">parent_table</replaceable></literal> FOR VALUES <replaceable class="PARAMETER">partition_bound_spec</replaceable></term>
+    <term><literal>PARTITION OF <replaceable class="PARAMETER">parent_table</replaceable> FOR VALUES <replaceable class="PARAMETER">partition_bound_spec</replaceable></literal></term>
     <listitem>
      <para>
       Creates the table as <firstterm>partition</firstterm> of the specified
