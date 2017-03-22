@@ -4416,7 +4416,7 @@ create_ordered_paths(PlannerInfo *root,
 											 ordered_rel,
 											 cheapest_partial_path,
 											 root->sort_pathkeys,
-											 limit_tuples);
+											 -1.0);
 
 			total_groups = cheapest_partial_path->rows *
 				cheapest_partial_path->parallel_workers;
