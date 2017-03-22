@@ -163,7 +163,7 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
   </para>
 
   <para>
-   <command>TRUNCATE</command> and other <acronym>DDL</acronym> operations
+   <command>TRUNCATE</command> and <acronym>DDL</acronym> operations
    are not published.
   </para>
  </refsect1>
@@ -172,16 +172,25 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
   <title>Examples</title>
 
   <para>
-   Create a simple publication that just publishes all DML for tables in it:
+   Create a publication that publishes all changes in two tables:
 <programlisting>
-CREATE PUBLICATION mypublication;
+CREATE PUBLICATION mypublication FOR TABLE users, departments;
 </programlisting>
   </para>
 
   <para>
-   Create an insert-only publication:
+   Create a publication that publishes all changes in all tables:
 <programlisting>
-CREATE PUBLICATION insert_only WITH (NOPUBLISH UPDATE, NOPUBLISH DELETE);
+CREATE PUBLICATION alltables FOR ALL TABLES;
+</programlisting>
+  </para>
+
+  <para>
+   Create a publication that only publishes <command>INSERT</command>
+   operations in one table:
+<programlisting>
+CREATE PUBLICATION insert_only FOR TABLE mydata
+    WITH (NOPUBLISH UPDATE, NOPUBLISH DELETE);
 </programlisting>
   </para>
  </refsect1>
