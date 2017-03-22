@@ -1294,6 +1294,7 @@ TransactionIdIsActive(TransactionId xid)
  * in the master but are still being replayed on the standby, thus possibly
  * making the GetOldestXmin reading go backwards.  In this case there is a
  * possibility that we lose data that the standby would like to have, but
+ * unless the standby uses a replication slot to make its xmin persistent
  * there is little we can do about that --- data is only protected if the
  * walsender runs continuously while queries are executed on the standby.
  * (The Hot Standby code deals with such cases by failing standby queries
