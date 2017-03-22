@@ -127,10 +127,10 @@ ginVacuumPostingTreeLeaves(GinVacuumState *gvs, BlockNumber blkno, bool isRoot, 
 	 * again). New scan can't start but previously started ones work
 	 * concurrently.
 	 */
-	if (isRoot)
-		LockBufferForCleanup(buffer);
-	else
+	if (GinPageIsLeaf(page))
 		LockBuffer(buffer, GIN_EXCLUSIVE);
+	else
+		LockBuffer(buffer, GIN_SHARE);
 
 	Assert(GinPageIsData(page));
 
@@ -144,19 +144,30 @@ ginVacuumPostingTreeLeaves(GinVacuumState *gvs, BlockNumber blkno, bool isRoot, 
 		/* if root is a leaf page, we don't desire further processing */
 		if (!isRoot && !hasVoidPage && GinDataLeafPageIsEmpty(page))
 			hasVoidPage = TRUE;
+
+		UnlockReleaseBuffer(buffer);
 	}
 	else
 	{
 		OffsetNumber i;
 		bool		isChildHasVoid = FALSE;
+		OffsetNumber maxoff = GinPageGetOpaque(page)->maxoff;
+		BlockNumber* children = palloc(sizeof(BlockNumber) * maxoff);
 
-		for (i = FirstOffsetNumber; i <= GinPageGetOpaque(page)->maxoff; i++)
+		for (i = FirstOffsetNumber; i <= maxoff; i++)
 		{
 			PostingItem *pitem = GinDataPageGetPostingItem(page, i);
 
-			if (ginVacuumPostingTreeLeaves(gvs, PostingItemGetBlockNumber(pitem), FALSE, NULL))
-				isChildHasVoid = TRUE;
+			children[i] = PostingItemGetBlockNumber(pitem);
 		}
+
+		UnlockReleaseBuffer(buffer);
+
+		for (i = FirstOffsetNumber; i <= maxoff; i++)
+				{
+					if (ginVacuumPostingTreeLeaves(gvs, children[i], FALSE, NULL))
+						isChildHasVoid = TRUE;
+				}
 
 		if (isChildHasVoid)
 			hasVoidPage = TRUE;
@@ -166,9 +177,11 @@ ginVacuumPostingTreeLeaves(GinVacuumState *gvs, BlockNumber blkno, bool isRoot, 
 	 * if we have root and there are empty pages in tree, then we don't
 	 * release lock to go further processing and guarantee that tree is unused
 	 */
+
+	hasVoidPage = false;
+
 	if (!(isRoot && hasVoidPage))
 	{
-		UnlockReleaseBuffer(buffer);
 	}
 	else
 	{
