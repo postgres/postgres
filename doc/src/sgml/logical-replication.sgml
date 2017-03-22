@@ -374,7 +374,7 @@ wal_level = logical
    (the values here depend on your actual network configuration and user you
    want to use for connecting):
 <programlisting>
-host    replication     repuser     0.0.0.0/0       md5
+host     all     repuser     0.0.0.0/0     md5
 </programlisting>
   </para>
 
