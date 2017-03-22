@@ -255,6 +255,19 @@ yum install docbook-dtds docbook-style-dsssl docbook-style-xsl libxslt openjade
    </para>
 
    <para>
+    To install the required packages with <command>pkg</command>, use:
+<programlisting>
+pkg install docbook-sgml docbook-xml docbook-xsl dsssl-docbook-modular libxslt openjade
+</programlisting>
+   </para>
+
+   <para>
+    When building the documentation from the <filename>doc</filename>
+    directory you'll need to use <command>gmake</command>, because the
+    makefile provided is not suitable for FreeBSD's <command>make</command>.
+   </para>
+
+   <para>
     More information about the FreeBSD documentation tools can be
     found in the <ulink url="http://www.freebsd.org/doc/en_US.ISO8859-1/books/fdp-primer/tools.html">
     FreeBSD Documentation Project's instructions</ulink>.
