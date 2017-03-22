@@ -1622,6 +1622,23 @@ selectDumpableExtension(ExtensionInfo *extinfo, DumpOptions *dopt)
 }
 
 /*
+ * selectDumpablePublicationTable: policy-setting subroutine
+ *		Mark a publication table as to be dumped or not
+ *
+ * Publication tables have schemas, but those are ignored in decision making,
+ * because publications are only dumped when we are dumping everything.
+ */
+static void
+selectDumpablePublicationTable(DumpableObject *dobj, Archive *fout)
+{
+	if (checkExtensionMembership(dobj, fout))
+		return;					/* extension membership overrides all else */
+
+	dobj->dump = fout->dopt->include_everything ?
+		DUMP_COMPONENT_ALL : DUMP_COMPONENT_NONE;
+}
+
+/*
  * selectDumpableObject: policy-setting subroutine
  *		Mark a generic dumpable object as to be dumped or not
  *
@@ -3414,6 +3431,9 @@ getPublications(Archive *fout)
 		if (strlen(pubinfo[i].rolname) == 0)
 			write_msg(NULL, "WARNING: owner of publication \"%s\" appears to be invalid\n",
 					  pubinfo[i].dobj.name);
+
+		/* Decide whether we want to dump it */
+		selectDumpableObject(&(pubinfo[i].dobj), fout);
 	}
 	PQclear(res);
 
@@ -3427,11 +3447,10 @@ getPublications(Archive *fout)
 static void
 dumpPublication(Archive *fout, PublicationInfo *pubinfo)
 {
-	DumpOptions *dopt = fout->dopt;
 	PQExpBuffer delq;
 	PQExpBuffer query;
 
-	if (dopt->dataOnly)
+	if (!(pubinfo->dobj.dump & DUMP_COMPONENT_DEFINITION))
 		return;
 
 	delq = createPQExpBuffer();
@@ -3560,6 +3579,9 @@ getPublicationTables(Archive *fout, TableInfo tblinfo[], int numTables)
 			pubrinfo[j].dobj.name = tbinfo->dobj.name;
 			pubrinfo[j].pubname = pg_strdup(PQgetvalue(res, j, i_pubname));
 			pubrinfo[j].pubtable = tbinfo;
+
+			/* Decide whether we want to dump it */
+			selectDumpablePublicationTable(&(pubrinfo[j].dobj), fout);
 		}
 		PQclear(res);
 	}
@@ -3573,12 +3595,11 @@ getPublicationTables(Archive *fout, TableInfo tblinfo[], int numTables)
 static void
 dumpPublicationTable(Archive *fout, PublicationRelInfo *pubrinfo)
 {
-	DumpOptions *dopt = fout->dopt;
 	TableInfo  *tbinfo = pubrinfo->pubtable;
 	PQExpBuffer query;
 	char	   *tag;
 
-	if (dopt->dataOnly)
+	if (!(pubrinfo->dobj.dump & DUMP_COMPONENT_DEFINITION))
 		return;
 
 	tag = psprintf("%s %s", pubrinfo->pubname, tbinfo->dobj.name);
