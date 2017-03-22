@@ -54,7 +54,8 @@ static const char *modulename = gettext_noop("archiver");
 
 
 static ArchiveHandle *_allocAH(const char *FileSpec, const ArchiveFormat fmt,
-	 const int compression, ArchiveMode mode, SetupWorkerPtr setupWorkerPtr);
+	 const int compression, bool dosync, ArchiveMode mode,
+	 SetupWorkerPtr setupWorkerPtr);
 static void _getObjectDescription(PQExpBuffer buf, TocEntry *te,
 					  ArchiveHandle *AH);
 static void _printTocEntry(ArchiveHandle *AH, TocEntry *te, bool isData, bool acl_pass);
@@ -202,10 +203,12 @@ setupRestoreWorker(Archive *AHX)
 /* Public */
 Archive *
 CreateArchive(const char *FileSpec, const ArchiveFormat fmt,
-	 const int compression, ArchiveMode mode, SetupWorkerPtr setupDumpWorker)
+			  const int compression, bool dosync, ArchiveMode mode,
+			  SetupWorkerPtr setupDumpWorker)
 
 {
-	ArchiveHandle *AH = _allocAH(FileSpec, fmt, compression, mode, setupDumpWorker);
+	ArchiveHandle *AH = _allocAH(FileSpec, fmt, compression, dosync,
+								 mode, setupDumpWorker);
 
 	return (Archive *) AH;
 }
@@ -215,7 +218,7 @@ CreateArchive(const char *FileSpec, const ArchiveFormat fmt,
 Archive *
 OpenArchive(const char *FileSpec, const ArchiveFormat fmt)
 {
-	ArchiveHandle *AH = _allocAH(FileSpec, fmt, 0, archModeRead, setupRestoreWorker);
+	ArchiveHandle *AH = _allocAH(FileSpec, fmt, 0, true, archModeRead, setupRestoreWorker);
 
 	return (Archive *) AH;
 }
@@ -2269,7 +2272,8 @@ _discoverArchiveFormat(ArchiveHandle *AH)
  */
 static ArchiveHandle *
 _allocAH(const char *FileSpec, const ArchiveFormat fmt,
-	  const int compression, ArchiveMode mode, SetupWorkerPtr setupWorkerPtr)
+		 const int compression, bool dosync, ArchiveMode mode,
+		 SetupWorkerPtr setupWorkerPtr)
 {
 	ArchiveHandle *AH;
 
@@ -2323,6 +2327,7 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 
 	AH->mode = mode;
 	AH->compression = compression;
+	AH->dosync = dosync;
 
 	memset(&(AH->sqlparse), 0, sizeof(AH->sqlparse));
 

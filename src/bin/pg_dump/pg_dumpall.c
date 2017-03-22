@@ -22,6 +22,7 @@
 
 #include "dumputils.h"
 #include "pg_backup.h"
+#include "common/file_utils.h"
 #include "fe_utils/string_utils.h"
 
 /* version string we expect back from pg_dump */
@@ -63,6 +64,7 @@ static PQExpBuffer pgdumpopts;
 static char *connstr = "";
 static bool skip_acls = false;
 static bool verbose = false;
+static bool dosync = true;
 
 static int	binary_upgrade = 0;
 static int	column_inserts = 0;
@@ -127,6 +129,7 @@ main(int argc, char *argv[])
 		{"role", required_argument, NULL, 3},
 		{"use-set-session-authorization", no_argument, &use_setsessauth, 1},
 		{"no-security-labels", no_argument, &no_security_labels, 1},
+		{"no-sync", no_argument, NULL, 4},
 		{"no-unlogged-table-data", no_argument, &no_unlogged_table_data, 1},
 		{"no-role-passwords", no_argument, &no_role_passwords, 1},
 
@@ -295,6 +298,11 @@ main(int argc, char *argv[])
 				use_role = pg_strdup(optarg);
 				appendPQExpBufferStr(pgdumpopts, " --role ");
 				appendShellString(pgdumpopts, use_role);
+				break;
+
+			case 4:
+				dosync = false;
+				appendPQExpBufferStr(pgdumpopts, " --no-sync");
 				break;
 
 			default:
@@ -549,7 +557,13 @@ main(int argc, char *argv[])
 	fprintf(OPF, "--\n-- PostgreSQL database cluster dump complete\n--\n\n");
 
 	if (filename)
+	{
 		fclose(OPF);
+
+		/* sync the resulting file, errors are not fatal */
+		if (dosync)
+			(void) fsync_fname(filename, false, progname);
+	}
 
 	exit_nicely(0);
 }
@@ -586,6 +600,7 @@ help(void)
 	printf(_("  --if-exists                  use IF EXISTS when dropping objects\n"));
 	printf(_("  --inserts                    dump data as INSERT commands, rather than COPY\n"));
 	printf(_("  --no-security-labels         do not dump security label assignments\n"));
+	printf(_("  --no-sync                    do not wait for changes to be written safely to disk\n"));
 	printf(_("  --no-tablespaces             do not dump tablespace assignments\n"));
 	printf(_("  --no-unlogged-table-data     do not dump unlogged table data\n"));
 	printf(_("  --no-role-passwords          do not dump passwords for roles\n"));

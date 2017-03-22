@@ -276,7 +276,7 @@ extern Archive *OpenArchive(const char *FileSpec, const ArchiveFormat fmt);
 
 /* Create a new archive */
 extern Archive *CreateArchive(const char *FileSpec, const ArchiveFormat fmt,
-			  const int compression, ArchiveMode mode,
+			  const int compression, bool dosync, ArchiveMode mode,
 			  SetupWorkerPtr setupDumpWorker);
 
 /* The --list option */

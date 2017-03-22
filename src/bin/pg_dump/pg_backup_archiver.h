@@ -312,6 +312,7 @@ struct _archiveHandle
 								 * values for compression: -1
 								 * Z_DEFAULT_COMPRESSION 0	COMPRESSION_NONE
 								 * 1-9 levels for gzip compression */
+	bool		dosync;			/* data requested to be synced on sight */
 	ArchiveMode mode;			/* File mode - r or w */
 	void	   *formatData;		/* Header data specific to file format */
 
