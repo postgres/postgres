@@ -21,13 +21,16 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE SUBSCRIPTION <replaceable class="PARAMETER">subscription_name</replaceable> CONNECTION 'conninfo' PUBLICATION { publication_name [, ...] } [ WITH ( <replaceable class="PARAMETER">option</replaceable> [, ... ] ) ]
+CREATE SUBSCRIPTION <replaceable class="PARAMETER">subscription_name</replaceable>
+    CONNECTION '<replaceable class="PARAMETER">conninfo</replaceable>'
+    PUBLICATION { <replaceable class="PARAMETER">publication_name</replaceable> [, ...] }
+    [ WITH ( <replaceable class="PARAMETER">option</replaceable> [, ... ] ) ]
 
 <phrase>where <replaceable class="PARAMETER">option</replaceable> can be:</phrase>
 
     | ENABLED | DISABLED
     | CREATE SLOT | NOCREATE SLOT
-    | SLOT NAME = slot_name
+    | SLOT NAME = <replaceable class="PARAMETER">slot_name</replaceable>
 </synopsis>
  </refsynopsisdiv>
 

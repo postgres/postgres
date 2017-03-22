@@ -25,11 +25,11 @@ ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> WITH ( <rep
 
 <phrase>where <replaceable class="PARAMETER">option</replaceable> can be:</phrase>
 
-  SLOT NAME = slot_name
+  SLOT NAME = <replaceable class="PARAMETER">slot_name</replaceable>
 
 ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> OWNER TO { <replaceable>new_owner</replaceable> | CURRENT_USER | SESSION_USER }
-ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> CONNECTION 'conninfo'
-ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> SET PUBLICATION publication_name [, ...]
+ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> CONNECTION '<replaceable>conninfo</replaceable>'
+ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> SET PUBLICATION <replaceable>publication_name</replaceable> [, ...]
 ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> ENABLE
 ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> DISABLE
 </synopsis>

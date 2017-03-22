@@ -57,8 +57,8 @@ DROP SUBSCRIPTION [ IF EXISTS ] <replaceable class="parameter">name</replaceable
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">DROP SLOT</replaceable></term>
-    <term><replaceable class="parameter">NODROP SLOT</replaceable></term>
+    <term><literal>DROP SLOT</literal></term>
+    <term><literal>NODROP SLOT</literal></term>
     <listitem>
      <para>
       Specifies whether to drop the replication slot on the publisher.  The
