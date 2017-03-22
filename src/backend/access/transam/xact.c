@@ -109,12 +109,13 @@ int			nParallelCurrentXids = 0;
 TransactionId *ParallelCurrentXids;
 
 /*
- * MyXactAccessedTempRel is set when a temporary relation is accessed.
- * We don't allow PREPARE TRANSACTION in that case.  (This is global
- * so that it can be set from heapam.c.)
+ * Miscellaneous flag bits to record events which occur on the top level
+ * transaction. These flags are only persisted in MyXactFlags and are intended
+ * so we remember to do certain things later on in the transaction. This is
+ * globally accessible, so can be set from anywhere in the code that requires
+ * recording flags.
  */
-bool		MyXactAccessedTempRel = false;
-
+int  MyXactFlags;
 
 /*
  *	transaction states - transaction state from server perspective
@@ -1231,6 +1232,7 @@ RecordTransactionCommit(void)
 							nchildren, children, nrels, rels,
 							nmsgs, invalMessages,
 							RelcacheInitFileInval, forceSyncCommit,
+							MyXactFlags,
 							InvalidTransactionId /* plain commit */ );
 
 		if (replorigin)
@@ -1583,7 +1585,7 @@ RecordTransactionAbort(bool isSubXact)
 	XactLogAbortRecord(xact_time,
 					   nchildren, children,
 					   nrels, rels,
-					   InvalidTransactionId);
+					   MyXactFlags, InvalidTransactionId);
 
 	/*
 	 * Report the latest async abort LSN, so that the WAL writer knows to
@@ -1845,7 +1847,7 @@ StartTransaction(void)
 	XactDeferrable = DefaultXactDeferrable;
 	XactIsoLevel = DefaultXactIsoLevel;
 	forceSyncCommit = false;
-	MyXactAccessedTempRel = false;
+	MyXactFlags = 0;
 
 	/*
 	 * reinitialize within-transaction counters
@@ -2260,7 +2262,7 @@ PrepareTransaction(void)
 	 * cases, such as a temp table created and dropped all within the
 	 * transaction.  That seems to require much more bookkeeping though.
 	 */
-	if (MyXactAccessedTempRel)
+	if ((MyXactFlags & XACT_FLAGS_ACCESSEDTEMPREL))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot PREPARE a transaction that has operated on temporary tables")));
@@ -5108,7 +5110,7 @@ XactLogCommitRecord(TimestampTz commit_time,
 					int nrels, RelFileNode *rels,
 					int nmsgs, SharedInvalidationMessage *msgs,
 					bool relcacheInval, bool forceSync,
-					TransactionId twophase_xid)
+					int xactflags, TransactionId twophase_xid)
 {
 	xl_xact_commit xlrec;
 	xl_xact_xinfo xl_xinfo;
@@ -5139,6 +5141,8 @@ XactLogCommitRecord(TimestampTz commit_time,
 		xl_xinfo.xinfo |= XACT_COMPLETION_UPDATE_RELCACHE_FILE;
 	if (forceSyncCommit)
 		xl_xinfo.xinfo |= XACT_COMPLETION_FORCE_SYNC_COMMIT;
+	if ((xactflags & XACT_FLAGS_ACQUIREDACCESSEXCLUSIVELOCK))
+		xl_xinfo.xinfo |= XACT_XINFO_HAS_AE_LOCKS;
 
 	/*
 	 * Check if the caller would like to ask standbys for immediate feedback
@@ -5251,7 +5255,7 @@ XLogRecPtr
 XactLogAbortRecord(TimestampTz abort_time,
 				   int nsubxacts, TransactionId *subxacts,
 				   int nrels, RelFileNode *rels,
-				   TransactionId twophase_xid)
+				   int xactflags, TransactionId twophase_xid)
 {
 	xl_xact_abort xlrec;
 	xl_xact_xinfo xl_xinfo;
@@ -5275,6 +5279,9 @@ XactLogAbortRecord(TimestampTz abort_time,
 	/* First figure out and collect all the information needed */
 
 	xlrec.xact_time = abort_time;
+
+	if ((xactflags & XACT_FLAGS_ACQUIREDACCESSEXCLUSIVELOCK))
+		xl_xinfo.xinfo |= XACT_XINFO_HAS_AE_LOCKS;
 
 	if (nsubxacts > 0)
 	{
@@ -5427,7 +5434,8 @@ xact_redo_commit(xl_xact_parsed_commit *parsed,
 		 * via their top-level xid only, so no need to provide subxact list,
 		 * which will save time when replaying commits.
 		 */
-		StandbyReleaseLockTree(xid, 0, NULL);
+		if (parsed->xinfo & XACT_XINFO_HAS_AE_LOCKS)
+			StandbyReleaseLockTree(xid, 0, NULL);
 	}
 
 	if (parsed->xinfo & XACT_XINFO_HAS_ORIGIN)
@@ -5563,7 +5571,8 @@ xact_redo_abort(xl_xact_parsed_abort *parsed, TransactionId xid)
 		/*
 		 * Release locks, if any. There are no invalidations to send.
 		 */
-		StandbyReleaseLockTree(xid, parsed->nsubxacts, parsed->subxacts);
+		if (parsed->xinfo & XACT_XINFO_HAS_AE_LOCKS)
+			StandbyReleaseLockTree(xid, parsed->nsubxacts, parsed->subxacts);
 	}
 
 	/* Make sure files supposed to be dropped are dropped */

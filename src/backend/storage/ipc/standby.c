@@ -1063,6 +1063,7 @@ LogAccessExclusiveLock(Oid dbOid, Oid relOid)
 	xlrec.relOid = relOid;
 
 	LogAccessExclusiveLocks(1, &xlrec);
+	MyXactFlags |= XACT_FLAGS_ACQUIREDACCESSEXCLUSIVELOCK;
 }
 
 /*

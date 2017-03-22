@@ -1132,7 +1132,7 @@ relation_open(Oid relationId, LOCKMODE lockmode)
 
 	/* Make note that we've accessed a temporary relation */
 	if (RelationUsesLocalBuffers(r))
-		MyXactAccessedTempRel = true;
+		MyXactFlags |= XACT_FLAGS_ACCESSEDTEMPREL;
 
 	pgstat_initstats(r);
 
@@ -1178,7 +1178,7 @@ try_relation_open(Oid relationId, LOCKMODE lockmode)
 
 	/* Make note that we've accessed a temporary relation */
 	if (RelationUsesLocalBuffers(r))
-		MyXactAccessedTempRel = true;
+		MyXactFlags |= XACT_FLAGS_ACCESSEDTEMPREL;
 
 	pgstat_initstats(r);
 

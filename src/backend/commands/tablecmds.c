@@ -12471,7 +12471,7 @@ PreCommit_on_commit_actions(void)
 				 * relations, we can skip truncating ON COMMIT DELETE ROWS
 				 * tables, as they must still be empty.
 				 */
-				if (MyXactAccessedTempRel)
+				if ((MyXactFlags & XACT_FLAGS_ACCESSEDTEMPREL))
 					oids_to_truncate = lappend_oid(oids_to_truncate, oc->relid);
 				break;
 			case ONCOMMIT_DROP:

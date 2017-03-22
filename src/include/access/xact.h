@@ -71,8 +71,27 @@ typedef enum
 /* Synchronous commit level */
 extern int	synchronous_commit;
 
-/* Kluge for 2PC support */
-extern bool MyXactAccessedTempRel;
+/*
+ * Miscellaneous flag bits to record events which occur on the top level
+ * transaction. These flags are only persisted in MyXactFlags and are intended
+ * so we remember to do certain things later in the transaction. This is
+ * globally accessible, so can be set from anywhere in the code which requires
+ * recording flags.
+ */
+extern int  MyXactFlags;
+
+/*
+ * XACT_FLAGS_ACCESSEDTEMPREL - set when a temporary relation is accessed. We
+ * don't allow PREPARE TRANSACTION in that case.
+ */
+#define XACT_FLAGS_ACCESSEDTEMPREL				(1U << 0)
+
+/*
+ * XACT_FLAGS_ACQUIREDACCESSEXCLUSIVELOCK - records whether the top level xact
+ * logged any Access Exclusive Locks.
+ */
+#define XACT_FLAGS_ACQUIREDACCESSEXCLUSIVELOCK	(1U << 1)
+
 
 /*
  *	start- and end-of-transaction callbacks for dynamically loaded modules
@@ -137,6 +156,7 @@ typedef void (*SubXactCallback) (SubXactEvent event, SubTransactionId mySubid,
 #define XACT_XINFO_HAS_INVALS			(1U << 3)
 #define XACT_XINFO_HAS_TWOPHASE			(1U << 4)
 #define XACT_XINFO_HAS_ORIGIN			(1U << 5)
+#define XACT_XINFO_HAS_AE_LOCKS			(1U << 6)
 
 /*
  * Also stored in xinfo, these indicating a variety of additional actions that
@@ -364,12 +384,13 @@ extern XLogRecPtr XactLogCommitRecord(TimestampTz commit_time,
 					int nrels, RelFileNode *rels,
 					int nmsgs, SharedInvalidationMessage *msgs,
 					bool relcacheInval, bool forceSync,
+					int xactflags,
 					TransactionId twophase_xid);
 
 extern XLogRecPtr XactLogAbortRecord(TimestampTz abort_time,
 				   int nsubxacts, TransactionId *subxacts,
 				   int nrels, RelFileNode *rels,
-				   TransactionId twophase_xid);
+				   int xactflags, TransactionId twophase_xid);
 extern void xact_redo(XLogReaderState *record);
 
 /* xactdesc.c */
