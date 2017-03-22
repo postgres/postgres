@@ -1221,7 +1221,7 @@ XLogWalRcvSendHSFeedback(bool immed)
 	 * everything else has been checked.
 	 */
 	if (hot_standby_feedback)
-		xmin = GetOldestXmin(NULL, false);
+		xmin = GetOldestXmin(NULL, PROCARRAY_FLAGS_DEFAULT);
 	else
 		xmin = InvalidTransactionId;
 
