@@ -1622,23 +1622,35 @@ host ... ldap ldapurl="ldap://ldap.example.net/dc=example,dc=net?uid?sub"
    </para>
 
    <para>
+    Multiple RADIUS servers can be specified, in which case they will
+    be tried sequentially. If a negative response is received from
+    a server, the authentication will fail. If no response is received,
+    the next server in the list will be tried. To specify multiple
+    servers, put the names within quotes and separate the server names
+    with a comma. If multiple servers are specified, all other RADIUS
+    options can also be given as a comma separate list, to apply
+    individual values to each server. They can also be specified as
+    a single value, in which case this value will apply to all servers.
+   </para>
+
+   <para>
     The following configuration options are supported for RADIUS:
      <variablelist>
       <varlistentry>
-       <term><literal>radiusserver</literal></term>
+       <term><literal>radiusservers</literal></term>
        <listitem>
         <para>
-         The name or IP address of the RADIUS server to connect to.
+         The name or IP addresses of the RADIUS servers to connect to.
          This parameter is required.
         </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
-       <term><literal>radiussecret</literal></term>
+       <term><literal>radiussecrets</literal></term>
        <listitem>
         <para>
-         The shared secret used when talking securely to the RADIUS
+         The shared secrets used when talking securely to the RADIUS
          server. This must have exactly the same value on the PostgreSQL
          and RADIUS servers. It is recommended that this be a string of
          at least 16 characters. This parameter is required.
@@ -1656,17 +1668,17 @@ host ... ldap ldapurl="ldap://ldap.example.net/dc=example,dc=net?uid?sub"
       </varlistentry>
 
       <varlistentry>
-       <term><literal>radiusport</literal></term>
+       <term><literal>radiusports</literal></term>
        <listitem>
         <para>
-         The port number on the RADIUS server to connect to. If no port
+         The port number on the RADIUS servers to connect to. If no port
          is specified, the default port <literal>1812</> will be used.
         </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
-       <term><literal>radiusidentifier</literal></term>
+       <term><literal>radiusidentifiers</literal></term>
        <listitem>
         <para>
          The string used as <literal>NAS Identifier</> in the RADIUS

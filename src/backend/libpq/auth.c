@@ -197,6 +197,7 @@ static int pg_SSPI_make_upn(char *accountname,
  *----------------------------------------------------------------
  */
 static int	CheckRADIUSAuth(Port *port);
+static int	PerformRadiusTransaction(char *server, char *secret, char *portstr, char *identifier, char *user_name, char *passwd);
 
 
 /*----------------------------------------------------------------
@@ -2591,76 +2592,28 @@ static int
 CheckRADIUSAuth(Port *port)
 {
 	char	   *passwd;
-	char	   *identifier = "postgresql";
-	char		radius_buffer[RADIUS_BUFFER_SIZE];
-	char		receive_buffer[RADIUS_BUFFER_SIZE];
-	radius_packet *packet = (radius_packet *) radius_buffer;
-	radius_packet *receivepacket = (radius_packet *) receive_buffer;
-	int32		service = htonl(RADIUS_AUTHENTICATE_ONLY);
-	uint8	   *cryptvector;
-	int			encryptedpasswordlen;
-	uint8		encryptedpassword[RADIUS_MAX_PASSWORD_LENGTH];
-	uint8	   *md5trailer;
-	int			packetlength;
-	pgsocket	sock;
-
-#ifdef HAVE_IPV6
-	struct sockaddr_in6 localaddr;
-	struct sockaddr_in6 remoteaddr;
-#else
-	struct sockaddr_in localaddr;
-	struct sockaddr_in remoteaddr;
-#endif
-	struct addrinfo hint;
-	struct addrinfo *serveraddrs;
-	char		portstr[128];
-	ACCEPT_TYPE_ARG3 addrsize;
-	fd_set		fdset;
-	struct timeval endtime;
-	int			i,
-				j,
-				r;
+	ListCell   *server,
+			   *secrets,
+			   *radiusports,
+			   *identifiers;
 
 	/* Make sure struct alignment is correct */
 	Assert(offsetof(radius_packet, vector) == 4);
 
 	/* Verify parameters */
-	if (!port->hba->radiusserver || port->hba->radiusserver[0] == '\0')
+	if (list_length(port->hba->radiusservers) < 1)
 	{
 		ereport(LOG,
 				(errmsg("RADIUS server not specified")));
 		return STATUS_ERROR;
 	}
 
-	if (!port->hba->radiussecret || port->hba->radiussecret[0] == '\0')
+	if (list_length(port->hba->radiussecrets) < 1)
 	{
 		ereport(LOG,
 				(errmsg("RADIUS secret not specified")));
 		return STATUS_ERROR;
 	}
-
-	if (port->hba->radiusport == 0)
-		port->hba->radiusport = 1812;
-
-	MemSet(&hint, 0, sizeof(hint));
-	hint.ai_socktype = SOCK_DGRAM;
-	hint.ai_family = AF_UNSPEC;
-	snprintf(portstr, sizeof(portstr), "%d", port->hba->radiusport);
-
-	r = pg_getaddrinfo_all(port->hba->radiusserver, portstr, &hint, &serveraddrs);
-	if (r || !serveraddrs)
-	{
-		ereport(LOG,
-				(errmsg("could not translate RADIUS server name \"%s\" to address: %s",
-						port->hba->radiusserver, gai_strerror(r))));
-		if (serveraddrs)
-			pg_freeaddrinfo_all(hint.ai_family, serveraddrs);
-		return STATUS_ERROR;
-	}
-	/* XXX: add support for multiple returned addresses? */
-
-	if (port->hba->radiusidentifier && port->hba->radiusidentifier[0])
-		identifier = port->hba->radiusidentifier;
 
 	/* Send regular password request to client, and get the response */
 	sendAuthRequest(port, AUTH_REQ_PASSWORD, NULL, 0);
@@ -2683,6 +2636,104 @@ CheckRADIUSAuth(Port *port)
 		return STATUS_ERROR;
 	}
 
+	/*
+	 * Loop over and try each server in order.
+	 */
+	secrets = list_head(port->hba->radiussecrets);
+	radiusports = list_head(port->hba->radiusports);
+	identifiers = list_head(port->hba->radiusidentifiers);
+	foreach(server, port->hba->radiusservers)
+	{
+		int			ret = PerformRadiusTransaction(lfirst(server),
+												   lfirst(secrets),
+									radiusports ? lfirst(radiusports) : NULL,
+									identifiers ? lfirst(identifiers) : NULL,
+												   port->user_name,
+												   passwd);
+
+		/*------
+		 * STATUS_OK = Login OK
+		 * STATUS_ERROR = Login not OK, but try next server
+		 * STATUS_EOF = Login not OK, and don't try next server
+		 *------
+		 */
+		if (ret == STATUS_OK)
+			return STATUS_OK;
+		else if (ret == STATUS_EOF)
+			return STATUS_ERROR;
+
+		/*
+		 * secret, port and identifiers either have length 0 (use default),
+		 * length 1 (use the same everywhere) or the same length as servers.
+		 * So if the length is >1, we advance one step. In other cases, we
+		 * don't and will then reuse the correct value.
+		 */
+		if (list_length(port->hba->radiussecrets) > 1)
+			secrets = lnext(secrets);
+		if (list_length(port->hba->radiusports) > 1)
+			radiusports = lnext(radiusports);
+		if (list_length(port->hba->radiusidentifiers) > 1)
+			identifiers = lnext(identifiers);
+	}
+
+	/* No servers left to try, so give up */
+	return STATUS_ERROR;
+}
+
+static int
+PerformRadiusTransaction(char *server, char *secret, char *portstr, char *identifier, char *user_name, char *passwd)
+{
+	char		radius_buffer[RADIUS_BUFFER_SIZE];
+	char		receive_buffer[RADIUS_BUFFER_SIZE];
+	radius_packet *packet = (radius_packet *) radius_buffer;
+	radius_packet *receivepacket = (radius_packet *) receive_buffer;
+	int32		service = htonl(RADIUS_AUTHENTICATE_ONLY);
+	uint8	   *cryptvector;
+	int			encryptedpasswordlen;
+	uint8		encryptedpassword[RADIUS_MAX_PASSWORD_LENGTH];
+	uint8	   *md5trailer;
+	int			packetlength;
+	pgsocket	sock;
+
+#ifdef HAVE_IPV6
+	struct sockaddr_in6 localaddr;
+	struct sockaddr_in6 remoteaddr;
+#else
+	struct sockaddr_in localaddr;
+	struct sockaddr_in remoteaddr;
+#endif
+	struct addrinfo hint;
+	struct addrinfo *serveraddrs;
+	int			port;
+	ACCEPT_TYPE_ARG3 addrsize;
+	fd_set		fdset;
+	struct timeval endtime;
+	int			i,
+				j,
+				r;
+
+	/* Assign default values */
+	if (portstr == NULL)
+		portstr = "1812";
+	if (identifier == NULL)
+		identifier = "postgresql";
+
+	MemSet(&hint, 0, sizeof(hint));
+	hint.ai_socktype = SOCK_DGRAM;
+	hint.ai_family = AF_UNSPEC;
+	port = atoi(portstr);
+
+	r = pg_getaddrinfo_all(server, portstr, &hint, &serveraddrs);
+	if (r || !serveraddrs)
+	{
+		ereport(LOG,
+				(errmsg("could not translate RADIUS server name \"%s\" to address: %s",
+						server, gai_strerror(r))));
+		if (serveraddrs)
+			pg_freeaddrinfo_all(hint.ai_family, serveraddrs);
+		return STATUS_ERROR;
+	}
+	/* XXX: add support for multiple returned addresses? */
 
 	/* Construct RADIUS packet */
 	packet->code = RADIUS_ACCESS_REQUEST;
@@ -2695,7 +2746,7 @@ CheckRADIUSAuth(Port *port)
 	}
 	packet->id = packet->vector[0];
 	radius_add_attribute(packet, RADIUS_SERVICE_TYPE, (unsigned char *) &service, sizeof(service));
-	radius_add_attribute(packet, RADIUS_USER_NAME, (unsigned char *) port->user_name, strlen(port->user_name));
+	radius_add_attribute(packet, RADIUS_USER_NAME, (unsigned char *) user_name, strlen(user_name));
 	radius_add_attribute(packet, RADIUS_NAS_IDENTIFIER, (unsigned char *) identifier, strlen(identifier));
 
 	/*
@@ -2705,14 +2756,14 @@ CheckRADIUSAuth(Port *port)
 	 * (if necessary)
 	 */
 	encryptedpasswordlen = ((strlen(passwd) + RADIUS_VECTOR_LENGTH - 1) / RADIUS_VECTOR_LENGTH) * RADIUS_VECTOR_LENGTH;
-	cryptvector = palloc(strlen(port->hba->radiussecret) + RADIUS_VECTOR_LENGTH);
-	memcpy(cryptvector, port->hba->radiussecret, strlen(port->hba->radiussecret));
+	cryptvector = palloc(strlen(secret) + RADIUS_VECTOR_LENGTH);
+	memcpy(cryptvector, secret, strlen(secret));
 
 	/* for the first iteration, we use the Request Authenticator vector */
 	md5trailer = packet->vector;
 	for (i = 0; i < encryptedpasswordlen; i += RADIUS_VECTOR_LENGTH)
 	{
-		memcpy(cryptvector + strlen(port->hba->radiussecret), md5trailer, RADIUS_VECTOR_LENGTH);
+		memcpy(cryptvector + strlen(secret), md5trailer, RADIUS_VECTOR_LENGTH);
 
 		/*
 		 * .. and for subsequent iterations the result of the previous XOR
@@ -2720,7 +2771,7 @@ CheckRADIUSAuth(Port *port)
 		 */
 		md5trailer = encryptedpassword + i;
 
-		if (!pg_md5_binary(cryptvector, strlen(port->hba->radiussecret) + RADIUS_VECTOR_LENGTH, encryptedpassword + i))
+		if (!pg_md5_binary(cryptvector, strlen(secret) + RADIUS_VECTOR_LENGTH, encryptedpassword + i))
 		{
 			ereport(LOG,
 					(errmsg("could not perform MD5 encryption of password")));
@@ -2812,7 +2863,8 @@ CheckRADIUSAuth(Port *port)
 		if (timeoutval <= 0)
 		{
 			ereport(LOG,
-					(errmsg("timeout waiting for RADIUS response")));
+					(errmsg("timeout waiting for RADIUS response from %s",
+							server)));
 			closesocket(sock);
 			return STATUS_ERROR;
 		}
@@ -2837,7 +2889,8 @@ CheckRADIUSAuth(Port *port)
 		if (r == 0)
 		{
 			ereport(LOG,
-					(errmsg("timeout waiting for RADIUS response")));
+					(errmsg("timeout waiting for RADIUS response from %s",
+							server)));
 			closesocket(sock);
 			return STATUS_ERROR;
 		}
@@ -2864,19 +2917,19 @@ CheckRADIUSAuth(Port *port)
 		}
 
 #ifdef HAVE_IPV6
-		if (remoteaddr.sin6_port != htons(port->hba->radiusport))
+		if (remoteaddr.sin6_port != htons(port))
 #else
-		if (remoteaddr.sin_port != htons(port->hba->radiusport))
+		if (remoteaddr.sin_port != htons(port))
 #endif
 		{
 #ifdef HAVE_IPV6
 			ereport(LOG,
-				  (errmsg("RADIUS response was sent from incorrect port: %d",
-						  ntohs(remoteaddr.sin6_port))));
+					(errmsg("RADIUS response from %s was sent from incorrect port: %d",
+							server, ntohs(remoteaddr.sin6_port))));
 #else
 			ereport(LOG,
-				  (errmsg("RADIUS response was sent from incorrect port: %d",
-						  ntohs(remoteaddr.sin_port))));
+					(errmsg("RADIUS response from %s was sent from incorrect port: %d",
+							server, ntohs(remoteaddr.sin_port))));
 #endif
 			continue;
 		}
@@ -2884,23 +2937,23 @@ CheckRADIUSAuth(Port *port)
 		if (packetlength < RADIUS_HEADER_LENGTH)
 		{
 			ereport(LOG,
-					(errmsg("RADIUS response too short: %d", packetlength)));
+					(errmsg("RADIUS response from %s too short: %d", server, packetlength)));
 			continue;
 		}
 
 		if (packetlength != ntohs(receivepacket->length))
 		{
 			ereport(LOG,
-					(errmsg("RADIUS response has corrupt length: %d (actual length %d)",
-							ntohs(receivepacket->length), packetlength)));
+					(errmsg("RADIUS response from %s has corrupt length: %d (actual length %d)",
+					   server, ntohs(receivepacket->length), packetlength)));
 			continue;
 		}
 
 		if (packet->id != receivepacket->id)
 		{
 			ereport(LOG,
-					(errmsg("RADIUS response is to a different request: %d (should be %d)",
-							receivepacket->id, packet->id)));
+					(errmsg("RADIUS response from %s is to a different request: %d (should be %d)",
+							server, receivepacket->id, packet->id)));
 			continue;
 		}
 
@@ -2908,7 +2961,7 @@ CheckRADIUSAuth(Port *port)
 		 * Verify the response authenticator, which is calculated as
 		 * MD5(Code+ID+Length+RequestAuthenticator+Attributes+Secret)
 		 */
-		cryptvector = palloc(packetlength + strlen(port->hba->radiussecret));
+		cryptvector = palloc(packetlength + strlen(secret));
 
 		memcpy(cryptvector, receivepacket, 4);	/* code+id+length */
 		memcpy(cryptvector + 4, packet->vector, RADIUS_VECTOR_LENGTH);	/* request
@@ -2917,10 +2970,10 @@ CheckRADIUSAuth(Port *port)
 		if (packetlength > RADIUS_HEADER_LENGTH)		/* there may be no
 														 * attributes at all */
 			memcpy(cryptvector + RADIUS_HEADER_LENGTH, receive_buffer + RADIUS_HEADER_LENGTH, packetlength - RADIUS_HEADER_LENGTH);
-		memcpy(cryptvector + packetlength, port->hba->radiussecret, strlen(port->hba->radiussecret));
+		memcpy(cryptvector + packetlength, secret, strlen(secret));
 
 		if (!pg_md5_binary(cryptvector,
-						   packetlength + strlen(port->hba->radiussecret),
+						   packetlength + strlen(secret),
 						   encryptedpassword))
 		{
 			ereport(LOG,
@@ -2933,7 +2986,8 @@ CheckRADIUSAuth(Port *port)
 		if (memcmp(receivepacket->vector, encryptedpassword, RADIUS_VECTOR_LENGTH) != 0)
 		{
 			ereport(LOG,
-					(errmsg("RADIUS response has incorrect MD5 signature")));
+			   (errmsg("RADIUS response from %s has incorrect MD5 signature",
+					   server)));
 			continue;
 		}
 
@@ -2945,13 +2999,13 @@ CheckRADIUSAuth(Port *port)
 		else if (receivepacket->code == RADIUS_ACCESS_REJECT)
 		{
 			closesocket(sock);
-			return STATUS_ERROR;
+			return STATUS_EOF;
 		}
 		else
 		{
 			ereport(LOG,
-			 (errmsg("RADIUS response has invalid code (%d) for user \"%s\"",
-					 receivepacket->code, port->user_name)));
+					(errmsg("RADIUS response from %s has invalid code (%d) for user \"%s\"",
+							server, receivepacket->code, user_name)));
 			continue;
 		}
 	}							/* while (true) */
