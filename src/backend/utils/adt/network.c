@@ -1095,7 +1095,7 @@ network_scan_first(Datum in)
 
 /*
  * return "last" IP on a given network. It's the broadcast address,
- * however, masklen has to be set to its max btis, since
+ * however, masklen has to be set to its max bits, since
  * 192.168.0.255/24 is considered less than 192.168.0.255/32
  *
  * inet_set_masklen() hacked to max out the masklength to 128 for IPv6
