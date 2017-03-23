@@ -194,7 +194,7 @@ Generic_Text_IC_like(text *str, text *pat, Oid collation)
 	 * long way.
 	 */
 
-	if (pg_database_encoding_max_length() > 1 || locale->provider == COLLPROVIDER_ICU)
+	if (pg_database_encoding_max_length() > 1 || (locale && locale->provider == COLLPROVIDER_ICU))
 	{
 		/* lower's result is never packed, so OK to use old macros here */
 		pat = DatumGetTextPP(DirectFunctionCall1Coll(lower, collation,
