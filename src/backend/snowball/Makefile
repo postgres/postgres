@@ -14,7 +14,8 @@ top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
 override CPPFLAGS := -I$(top_srcdir)/src/include/snowball \
-	-I$(top_srcdir)/src/include/snowball/libstemmer $(CPPFLAGS)
+	-I$(top_srcdir)/src/include/snowball/libstemmer $(CPPFLAGS) \
+	$(ICU_CFLAGS)
 
 OBJS= $(WIN32RES) dict_snowball.o api.o utilities.o \
 	stem_ISO_8859_1_danish.o \
