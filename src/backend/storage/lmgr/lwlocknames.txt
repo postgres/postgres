@@ -49,3 +49,4 @@ MultiXactTruncationLock				41
 OldSnapshotTimeMapLock				42
 BackendRandomLock					43
 LogicalRepWorkerLock				44
+CLogTruncationLock					45

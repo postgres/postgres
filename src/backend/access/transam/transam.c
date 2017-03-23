@@ -119,7 +119,7 @@ TransactionLogFetch(TransactionId transactionId)
  *		True iff transaction associated with the identifier did commit.
  *
  * Note:
- *		Assumes transaction identifier is valid.
+ *		Assumes transaction identifier is valid and exists in clog.
  */
 bool							/* true if given transaction committed */
 TransactionIdDidCommit(TransactionId transactionId)
@@ -175,7 +175,7 @@ TransactionIdDidCommit(TransactionId transactionId)
  *		True iff transaction associated with the identifier did abort.
  *
  * Note:
- *		Assumes transaction identifier is valid.
+ *		Assumes transaction identifier is valid and exists in clog.
  */
 bool							/* true if given transaction aborted */
 TransactionIdDidAbort(TransactionId transactionId)

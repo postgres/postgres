@@ -259,7 +259,28 @@ ReadNewTransactionId(void)
 }
 
 /*
- * Determine the last safe XID to allocate given the currently oldest
+ * Advance the cluster-wide value for the oldest valid clog entry.
+ *
+ * We must acquire CLogTruncationLock to advance the oldestClogXid. It's not
+ * necessary to hold the lock during the actual clog truncation, only when we
+ * advance the limit, as code looking up arbitrary xids is required to hold
+ * CLogTruncationLock from when it tests oldestClogXid through to when it
+ * completes the clog lookup.
+ */
+void
+AdvanceOldestClogXid(TransactionId oldest_datfrozenxid)
+{
+	LWLockAcquire(CLogTruncationLock, LW_EXCLUSIVE);
+	if (TransactionIdPrecedes(ShmemVariableCache->oldestClogXid,
+		oldest_datfrozenxid))
+	{
+		ShmemVariableCache->oldestClogXid = oldest_datfrozenxid;
+	}
+	LWLockRelease(CLogTruncationLock);
+}
+
+/*
+ * Determine the last safe XID to allocate using the currently oldest
  * datfrozenxid (ie, the oldest XID that might exist in any database
  * of our cluster), and the OID of the (or a) database with that value.
  */

@@ -134,6 +134,12 @@ typedef struct VariableCacheData
 	 */
 	TransactionId latestCompletedXid;	/* newest XID that has committed or
 										 * aborted */
+
+	/*
+	 * These fields are protected by CLogTruncationLock
+	 */
+	TransactionId oldestClogXid;	/* oldest it's safe to look up in clog */
+
 } VariableCacheData;
 
 typedef VariableCacheData *VariableCache;
@@ -173,6 +179,7 @@ extern TransactionId GetNewTransactionId(bool isSubXact);
 extern TransactionId ReadNewTransactionId(void);
 extern void SetTransactionIdLimit(TransactionId oldest_datfrozenxid,
 					  Oid oldest_datoid);
+extern void AdvanceOldestClogXid(TransactionId oldest_datfrozenxid);
 extern bool ForceTransactionIdLimitUpdate(void);
 extern Oid	GetNewObjectId(void);
 

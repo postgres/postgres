@@ -28,6 +28,12 @@ typedef int XidStatus;
 #define TRANSACTION_STATUS_ABORTED			0x02
 #define TRANSACTION_STATUS_SUB_COMMITTED	0x03
 
+typedef struct xl_clog_truncate
+{
+	int pageno;
+	TransactionId oldestXact;
+	Oid oldestXactDb;
+} xl_clog_truncate;
 
 extern void TransactionIdSetTreeStatus(TransactionId xid, int nsubxids,
 				   TransactionId *subxids, XidStatus status, XLogRecPtr lsn);
@@ -42,7 +48,7 @@ extern void TrimCLOG(void);
 extern void ShutdownCLOG(void);
 extern void CheckPointCLOG(void);
 extern void ExtendCLOG(TransactionId newestXact);
-extern void TruncateCLOG(TransactionId oldestXact);
+extern void TruncateCLOG(TransactionId oldestXact, Oid oldestxid_datoid);
 
 /* XLOG stuff */
 #define CLOG_ZEROPAGE		0x00

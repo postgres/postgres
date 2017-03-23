@@ -1018,6 +1018,10 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
          <entry>Waiting to read or update old snapshot control information.</entry>
         </row>
         <row>
+         <entry><literal>CLogTruncationLock</></entry>
+         <entry>Waiting to truncate the transaction log or waiting for transaction log truncation to finish.</entry>
+        </row>
+        <row>
          <entry><literal>clog</></entry>
          <entry>Waiting for I/O on a clog (transaction status) buffer.</entry>
         </row>
