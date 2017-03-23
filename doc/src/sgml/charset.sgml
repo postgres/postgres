@@ -730,6 +730,7 @@ CREATE COLLATION "de-DE-x-icu" FROM "de-x-icu";
     User-defined collations should be created in user schemas.  This also
     ensures that they are saved by <command>pg_dump</command>.
    </para>
+   </sect3>
   </sect2>
  </sect1>
 
