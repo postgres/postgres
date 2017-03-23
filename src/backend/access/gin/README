@@ -314,10 +314,17 @@ deleted.
 The previous paragraph's reasoning only applies to searches, and only to
 posting trees. To protect from inserters following a downlink to a deleted
 page, vacuum simply locks out all concurrent insertions to the posting tree,
-by holding a super-exclusive lock on the posting tree root. Inserters hold a
-pin on the root page, but searches do not, so while new searches cannot begin
-while root page is locked, any already-in-progress scans can continue
-concurrently with vacuum. In the entry tree, we never delete pages.
+by holding a super-exclusive lock on the parent page of subtree with deletable
+pages. Inserters hold a pin on the root page, but searches do not, so while
+new searches cannot begin while root page is locked, any already-in-progress
+scans can continue concurrently with vacuum in corresponding subtree of
+posting tree. To exclude interference with readers vacuum takes exclusive
+locks in a depth-first scan in left-to-right order of page tuples. Leftmost
+page is never deleted. Thus before deleting any page we obtain exclusive
+lock on any left page, effectively excluding deadlock with any reader, despite
+taking parent lock before current and left lock after current. We take left
+lock not for a concurrency reasons, but rather in need to mark page dirty.
+In the entry tree, we never delete pages.
 
 (This is quite different from the mechanism the btree indexam uses to make
 page-deletions safe; it stamps the deleted pages with an XID and keeps the

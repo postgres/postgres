@@ -31,7 +31,7 @@ static void ginFinishSplit(GinBtree btree, GinBtreeStack *stack,
 /*
  * Lock buffer by needed method for search.
  */
-static int
+int
 ginTraverseLock(Buffer buffer, bool searchMode)
 {
 	Page		page;

@@ -471,4 +471,6 @@ ginCompareItemPointers(ItemPointer a, ItemPointer b)
 		return -1;
 }
 
+extern int ginTraverseLock(Buffer buffer, bool searchMode);
+
 #endif   /* GIN_PRIVATE_H */
