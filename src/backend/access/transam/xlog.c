@@ -10944,7 +10944,8 @@ do_pg_stop_backup(char *labelfile, bool waitforarchive, TimeLineID *stoptli_p)
 	 *
 	 * We wait forever, since archive_command is supposed to work and we
 	 * assume the admin wanted his backup to work completely. If you don't
-	 * wish to wait, you can set statement_timeout.  Also, some notices are
+	 * wish to wait, then either waitforarchive should be passed in as false,
+	 * or you can set statement_timeout.  Also, some notices are
 	 * issued to clue in anyone who might be doing this interactively.
 	 */
 	if (waitforarchive && XLogArchivingActive())

@@ -175,6 +175,13 @@ pg_stop_backup(PG_FUNCTION_ARGS)
  * the backup label and tablespace map files as text fields in as part of the
  * resultset.
  *
+ * The first parameter (variable 'exclusive') allows the user to tell us if
+ * this is an exclusive or a non-exclusive backup.
+ *
+ * The second paramter (variable 'waitforarchive'), which is optional,
+ * allows the user to choose if they want to wait for the WAL to be archived
+ * or if we should just return as soon as the WAL record is written.
+ *
  * Permission checking for this function is managed through the normal
  * GRANT system.
  */
@@ -190,6 +197,7 @@ pg_stop_backup_v2(PG_FUNCTION_ARGS)
 	bool		nulls[3];
 
 	bool		exclusive = PG_GETARG_BOOL(0);
+	bool		waitforarchive = PG_GETARG_BOOL(1);
 	XLogRecPtr	stoppoint;
 
 	/* check to see if caller supports us returning a tuplestore */
@@ -232,7 +240,7 @@ pg_stop_backup_v2(PG_FUNCTION_ARGS)
 		 * Stop the exclusive backup, and since we're in an exclusive backup
 		 * return NULL for both backup_label and tablespace_map.
 		 */
-		stoppoint = do_pg_stop_backup(NULL, true, NULL);
+		stoppoint = do_pg_stop_backup(NULL, waitforarchive, NULL);
 		exclusive_backup_running = false;
 
 		nulls[1] = true;
@@ -250,7 +258,7 @@ pg_stop_backup_v2(PG_FUNCTION_ARGS)
 		 * Stop the non-exclusive backup. Return a copy of the backup label
 		 * and tablespace map so they can be written to disk by the caller.
 		 */
-		stoppoint = do_pg_stop_backup(label_file->data, true, NULL);
+		stoppoint = do_pg_stop_backup(label_file->data, waitforarchive, NULL);
 		nonexclusive_backup_running = false;
 		cancel_before_shmem_exit(nonexclusive_base_backup_cleanup, (Datum) 0);
 

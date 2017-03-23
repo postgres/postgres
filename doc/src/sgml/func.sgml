@@ -18355,7 +18355,7 @@ SELECT set_config('log_statement_stats', 'off', false);
       </row>
       <row>
        <entry>
-        <literal><function>pg_stop_backup(<parameter>exclusive</> <type>boolean</>)</function></literal>
+        <literal><function>pg_stop_backup(<parameter>exclusive</> <type>boolean</> <optional>, <parameter>wait_for_archive</> <type>boolean</> </optional>)</function></literal>
         </entry>
        <entry><type>setof record</type></entry>
        <entry>Finish performing exclusive or non-exclusive on-line backup (restricted to superusers by default, but other users can be granted EXECUTE to run the function)</entry>
@@ -18439,7 +18439,13 @@ postgres=# select pg_start_backup('label_goes_here');
     <function>pg_start_backup</>. In a non-exclusive backup, the contents of
     the <filename>backup_label</> and <filename>tablespace_map</> are returned
     in the result of the function, and should be written to files in the
-    backup (and not in the data directory).
+    backup (and not in the data directory).  There is an optional second
+    parameter of type boolean.  If false, the <function>pg_stop_backup</>
+    will return immediately after the backup is completed without waiting for
+    WAL to be archived.  This behavior is only useful for backup
+    software which independently monitors WAL archiving. Otherwise, WAL
+    required to make the backup consistent might be missing and make the backup
+    useless.
    </para>
 
    <para>

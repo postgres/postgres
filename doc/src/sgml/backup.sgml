@@ -887,7 +887,7 @@ SELECT pg_start_backup('label', false, false);
     <para>
      In the same connection as before, issue the command:
 <programlisting>
-SELECT * FROM pg_stop_backup(false);
+SELECT * FROM pg_stop_backup(false, true);
 </programlisting>
      This terminates the backup mode and performs an automatic switch to
      the next WAL segment.  The reason for the switch is to arrange for
@@ -923,6 +923,17 @@ SELECT * FROM pg_stop_backup(false);
      <varname>statement_timeout</varname> value, but make note that if
      <function>pg_stop_backup</> terminates because of this your backup
      may not be valid.
+    </para>
+    <para>
+     If the backup process monitors and ensures that all WAL segment files
+     required for the backup are successfully archived then the second
+     parameter (which defaults to true) can be set to false to have
+     <function>pg_stop_backup</> return as soon as the stop backup record is
+     written to the WAL.  By default, <function>pg_stop_backup</> will wait
+     until all WAL has been archived, which can take some time.  This option
+     must be used with caution: if WAL archiving is not monitored correctly
+     then the backup might not include all of the WAL files and will
+     therefore be incomplete and not able to be restored.
     </para>
    </listitem>
   </orderedlist>
