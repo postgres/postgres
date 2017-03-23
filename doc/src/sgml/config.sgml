@@ -3449,6 +3449,31 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-max-sync-workers-per-subscription" xreflabel="max_sync_workers_per_subscription">
+      <term><varname>max_sync_workers_per_subscription</varname> (<type>integer</type>)
+      <indexterm>
+       <primary><varname>max_sync_workers_per_subscription</> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Maximum number of synchronization workers per subscription. This
+        parameter controls the amount of paralelism of the initial data copy
+        during the subscription initialization or when new tables are added.
+       </para>
+       <para>
+        Currently, there can be only one synchronization worker per table.
+       </para>
+       <para>
+        The synchronization workers are taken from the pool defined by
+        <varname>max_logical_replication_workers</varname>.
+       </para>
+       <para>
+        The default value is 2.
+       </para>
+      </listitem>
+     </varlistentry>
+
      </variablelist>
     </sect2>
 

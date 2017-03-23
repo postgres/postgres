@@ -33,6 +33,9 @@ typedef struct LogicalRepWorker
 
 	/* Used for initial table synchronization. */
 	Oid		relid;
+	char	relstate;
+	XLogRecPtr	relstate_lsn;
+	slock_t		relmutex;
 
 	/* Stats. */
 	XLogRecPtr	last_lsn;
@@ -41,6 +44,9 @@ typedef struct LogicalRepWorker
 	XLogRecPtr	reply_lsn;
 	TimestampTz	reply_time;
 } LogicalRepWorker;
+
+/* Memory context for cached variables in apply worker. */
+MemoryContext			ApplyCacheContext;
 
 /* libpqreceiver connection */
 extern struct WalReceiverConn	   *wrconn;
@@ -53,12 +59,26 @@ extern bool	in_remote_transaction;
 extern bool	got_SIGTERM;
 
 extern void logicalrep_worker_attach(int slot);
-extern LogicalRepWorker *logicalrep_worker_find(Oid subid);
-extern int logicalrep_worker_count(Oid subid);
-extern void logicalrep_worker_launch(Oid dbid, Oid subid, const char *subname, Oid userid);
-extern void logicalrep_worker_stop(Oid subid);
-extern void logicalrep_worker_wakeup(Oid subid);
+extern LogicalRepWorker *logicalrep_worker_find(Oid subid, Oid relid,
+												bool only_running);
+extern void logicalrep_worker_launch(Oid dbid, Oid subid, const char *subname,
+									 Oid userid, Oid relid);
+extern void logicalrep_worker_stop(Oid subid, Oid relid);
+extern void logicalrep_worker_wakeup(Oid subid, Oid relid);
+extern void logicalrep_worker_wakeup_ptr(LogicalRepWorker *worker);
+
+extern int logicalrep_sync_worker_count(Oid subid);
 
 extern void logicalrep_worker_sigterm(SIGNAL_ARGS);
+extern char *LogicalRepSyncTableStart(XLogRecPtr *origin_startpos);
+void process_syncing_tables(XLogRecPtr current_lsn);
+void invalidate_syncing_table_states(Datum arg, int cacheid,
+									 uint32 hashvalue);
+
+static inline bool
+am_tablesync_worker(void)
+{
+	return OidIsValid(MyLogicalRepWorker->relid);
+}
 
 #endif   /* WORKER_INTERNAL_H */

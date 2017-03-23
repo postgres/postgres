@@ -982,3 +982,23 @@ pg_current_logfile_1arg(PG_FUNCTION_ARGS)
 {
 	return pg_current_logfile(fcinfo);
 }
+
+/*
+ * SQL wrapper around RelationGetReplicaIndex().
+ */
+Datum
+pg_get_replica_identity_index(PG_FUNCTION_ARGS)
+{
+	Oid			reloid = PG_GETARG_OID(0);
+	Oid			idxoid;
+	Relation	rel;
+
+	rel = heap_open(reloid, AccessShareLock);
+	idxoid = RelationGetReplicaIndex(rel);
+	heap_close(rel, AccessShareLock);
+
+	if (OidIsValid(idxoid))
+		PG_RETURN_OID(idxoid);
+	else
+		PG_RETURN_NULL();
+}

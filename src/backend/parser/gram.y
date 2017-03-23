@@ -651,7 +651,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 	MAPPING MATCH MATERIALIZED MAXVALUE METHOD MINUTE_P MINVALUE MODE MONTH_P MOVE
 
 	NAME_P NAMES NATIONAL NATURAL NCHAR NEW NEXT NO NONE
-	NOT NOTHING NOTIFY NOTNULL NOWAIT NULL_P NULLIF
+	NOREFRESH NOT NOTHING NOTIFY NOTNULL NOWAIT NULL_P NULLIF
 	NULLS_P NUMERIC
 
 	OBJECT_P OF OFF OFFSET OIDS OLD ON ONLY OPERATOR OPTION OPTIONS OR
@@ -9095,6 +9095,7 @@ AlterSubscriptionStmt:
 				{
 					AlterSubscriptionStmt *n =
 						makeNode(AlterSubscriptionStmt);
+					n->kind = ALTER_SUBSCRIPTION_OPTIONS;
 					n->subname = $3;
 					n->options = $5;
 					$$ = (Node *)n;
@@ -9103,24 +9104,45 @@ AlterSubscriptionStmt:
 				{
 					AlterSubscriptionStmt *n =
 						makeNode(AlterSubscriptionStmt);
+					n->kind = ALTER_SUBSCRIPTION_CONNECTION;
 					n->subname = $3;
-					n->options = list_make1(makeDefElem("conninfo",
-											(Node *)makeString($5), @1));
+					n->conninfo = $5;
 					$$ = (Node *)n;
 				}
-			| ALTER SUBSCRIPTION name SET PUBLICATION publication_name_list
+			| ALTER SUBSCRIPTION name REFRESH PUBLICATION opt_definition
 				{
 					AlterSubscriptionStmt *n =
 						makeNode(AlterSubscriptionStmt);
+					n->kind = ALTER_SUBSCRIPTION_REFRESH;
 					n->subname = $3;
-					n->options = list_make1(makeDefElem("publication",
-											(Node *)$6, @1));
+					n->options = $6;
+					$$ = (Node *)n;
+				}
+			| ALTER SUBSCRIPTION name SET PUBLICATION publication_name_list REFRESH opt_definition
+				{
+					AlterSubscriptionStmt *n =
+						makeNode(AlterSubscriptionStmt);
+					n->kind = ALTER_SUBSCRIPTION_PUBLICATION_REFRESH;
+					n->subname = $3;
+					n->publication = $6;
+					n->options = $8;
+					$$ = (Node *)n;
+				}
+			| ALTER SUBSCRIPTION name SET PUBLICATION publication_name_list NOREFRESH
+				{
+					AlterSubscriptionStmt *n =
+						makeNode(AlterSubscriptionStmt);
+					n->kind = ALTER_SUBSCRIPTION_PUBLICATION;
+					n->subname = $3;
+					n->publication = $6;
+					n->options = NIL;
 					$$ = (Node *)n;
 				}
 			| ALTER SUBSCRIPTION name ENABLE_P
 				{
 					AlterSubscriptionStmt *n =
 						makeNode(AlterSubscriptionStmt);
+					n->kind = ALTER_SUBSCRIPTION_ENABLED;
 					n->subname = $3;
 					n->options = list_make1(makeDefElem("enabled",
 											(Node *)makeInteger(TRUE), @1));
@@ -9130,11 +9152,13 @@ AlterSubscriptionStmt:
 				{
 					AlterSubscriptionStmt *n =
 						makeNode(AlterSubscriptionStmt);
+					n->kind = ALTER_SUBSCRIPTION_ENABLED;
 					n->subname = $3;
 					n->options = list_make1(makeDefElem("enabled",
 											(Node *)makeInteger(FALSE), @1));
 					$$ = (Node *)n;
-				}		;
+				}
+		;
 
 /*****************************************************************************
  *
@@ -14548,6 +14572,7 @@ unreserved_keyword:
 			| NEW
 			| NEXT
 			| NO
+			| NOREFRESH
 			| NOTHING
 			| NOTIFY
 			| NOWAIT

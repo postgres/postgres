@@ -16,6 +16,16 @@
 
 #include "fmgr.h"
 
+/*
+ * What to do with a snapshot in create replication slot command.
+ */
+typedef enum
+{
+	CRS_EXPORT_SNAPSHOT,
+	CRS_NOEXPORT_SNAPSHOT,
+	CRS_USE_SNAPSHOT
+} CRSSnapshotAction;
+
 /* global state */
 extern bool am_walsender;
 extern bool am_cascading_walsender;
@@ -28,7 +38,7 @@ extern int	wal_sender_timeout;
 extern bool log_replication_commands;
 
 extern void InitWalSender(void);
-extern void exec_replication_command(const char *query_string);
+extern bool exec_replication_command(const char *query_string);
 extern void WalSndErrorCleanup(void);
 extern void WalSndSignals(void);
 extern Size WalSndShmemSize(void);

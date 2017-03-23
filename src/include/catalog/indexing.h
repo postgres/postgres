@@ -340,14 +340,17 @@ DECLARE_UNIQUE_INDEX(pg_publication_pubname_index, 6111, on pg_publication using
 DECLARE_UNIQUE_INDEX(pg_publication_rel_oid_index, 6112, on pg_publication_rel using btree(oid oid_ops));
 #define PublicationRelObjectIndexId 6112
 
-DECLARE_UNIQUE_INDEX(pg_publication_rel_map_index, 6113, on pg_publication_rel using btree(prrelid oid_ops, prpubid oid_ops));
-#define PublicationRelMapIndexId 6113
+DECLARE_UNIQUE_INDEX(pg_publication_rel_prrelid_prpubid_index, 6113, on pg_publication_rel using btree(prrelid oid_ops, prpubid oid_ops));
+#define PublicationRelPrrelidPrpubidIndexId 6113
 
 DECLARE_UNIQUE_INDEX(pg_subscription_oid_index, 6114, on pg_subscription using btree(oid oid_ops));
 #define SubscriptionObjectIndexId 6114
 
 DECLARE_UNIQUE_INDEX(pg_subscription_subname_index, 6115, on pg_subscription using btree(subdbid oid_ops, subname name_ops));
 #define SubscriptionNameIndexId 6115
+
+DECLARE_UNIQUE_INDEX(pg_subscription_rel_srrelid_srsubid_index, 6117, on pg_subscription_rel using btree(srrelid oid_ops, srsubid oid_ops));
+#define SubscriptionRelSrrelidSrsubidIndexId 6117
 
 /* last step of initialization script: build the indexes declared above */
 BUILD_INDICES

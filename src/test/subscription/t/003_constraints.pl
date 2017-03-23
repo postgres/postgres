@@ -34,7 +34,7 @@ $node_publisher->safe_psql('postgres',
 
 my $appname = 'tap_sub';
 $node_subscriber->safe_psql('postgres',
-	"CREATE SUBSCRIPTION tap_sub CONNECTION '$publisher_connstr application_name=$appname' PUBLICATION tap_pub;");
+	"CREATE SUBSCRIPTION tap_sub CONNECTION '$publisher_connstr application_name=$appname' PUBLICATION tap_pub WITH (NOCOPY DATA)");
 
 # Wait for subscriber to finish initialization
 my $caughtup_query =

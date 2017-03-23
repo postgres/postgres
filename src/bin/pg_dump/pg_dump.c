@@ -351,8 +351,8 @@ main(int argc, char **argv)
 		{"snapshot", required_argument, NULL, 6},
 		{"strict-names", no_argument, &strict_names, 1},
 		{"use-set-session-authorization", no_argument, &dopt.use_setsessauth, 1},
-		{"no-create-subscription-slots", no_argument, &dopt.no_create_subscription_slots, 1},
 		{"no-security-labels", no_argument, &dopt.no_security_labels, 1},
+		{"no-subscription-connect", no_argument, &dopt.no_subscription_connect, 1},
 		{"no-synchronized-snapshots", no_argument, &dopt.no_synchronized_snapshots, 1},
 		{"no-unlogged-table-data", no_argument, &dopt.no_unlogged_table_data, 1},
 		{"no-sync", no_argument, NULL, 7},
@@ -951,9 +951,8 @@ help(const char *progname)
 	printf(_("  --if-exists                  use IF EXISTS when dropping objects\n"));
 	printf(_("  --include-subscriptions      dump logical replication subscriptions\n"));
 	printf(_("  --inserts                    dump data as INSERT commands, rather than COPY\n"));
-	printf(_("  --no-create-subscription-slots\n"
-			 "                               do not create replication slots for subscriptions\n"));
 	printf(_("  --no-security-labels         do not dump security label assignments\n"));
+	printf(_("  --no-subscription-connect    dump subscriptions so they don't connect on restore\n"));
 	printf(_("  --no-synchronized-snapshots  do not use synchronized snapshots in parallel jobs\n"));
 	printf(_("  --no-tablespaces             do not dump tablespace assignments\n"));
 	printf(_("  --no-unlogged-table-data     do not dump unlogged table data\n"));
@@ -3774,8 +3773,8 @@ dumpSubscription(Archive *fout, SubscriptionInfo *subinfo)
 	appendPQExpBufferStr(query, ", SLOT NAME = ");
 	appendStringLiteralAH(query, subinfo->subslotname, fout);
 
-	if (dopt->no_create_subscription_slots)
-		appendPQExpBufferStr(query, ", NOCREATE SLOT");
+	if (dopt->no_subscription_connect)
+		appendPQExpBufferStr(query, ", NOCONNECT");
 
 	appendPQExpBufferStr(query, ");\n");
 

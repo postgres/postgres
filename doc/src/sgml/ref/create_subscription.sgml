@@ -31,6 +31,8 @@ CREATE SUBSCRIPTION <replaceable class="PARAMETER">subscription_name</replaceabl
     | ENABLED | DISABLED
     | CREATE SLOT | NOCREATE SLOT
     | SLOT NAME = <replaceable class="PARAMETER">slot_name</replaceable>
+    | COPY DATA | NOCOPY DATA
+    | NOCONNECT
 </synopsis>
  </refsynopsisdiv>
 
@@ -129,6 +131,42 @@ CREATE SUBSCRIPTION <replaceable class="PARAMETER">subscription_name</replaceabl
      <para>
       Name of the replication slot to use. The default behavior is to use
       <literal>subscription_name</> for slot name.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>COPY DATA</term>
+    <term>NOCOPY DATA</term>
+    <listitem>
+     <para>
+      Specifies if the existing data in the publications that are being
+      subscribed to should be copied once the replication starts.
+      <literal>COPY DATA</literal> is the default.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>NOCONNECT</term>
+    <listitem>
+     <para>
+      Instructs <command>CREATE SUBSCRIPTION</command> to skip the initial
+      connection to the provider. This will change default values of other
+      options to <literal>DISABLED</literal>,
+      <literal>NOCREATE SLOT</literal>, and <literal>NOCOPY DATA</literal>.
+     </para>
+     <para>
+      It's not allowed to combine <literal>NOCONNECT</literal> and
+      <literal>ENABLED</literal>, <literal>CREATE SLOT</literal>, or
+      <literal>COPY DATA</literal>.
+     </para>
+     <para>
+      Since no connection is made when this option is specified, the tables
+      are not subscribed, so after you enable the subscription nothing will
+      be replicated. It is required to run
+      <literal>ALTER SUBSCRIPTION ... REFRESH PUBLICATION</> in order for
+      tables to be subscribed.
      </para>
     </listitem>
    </varlistentry>

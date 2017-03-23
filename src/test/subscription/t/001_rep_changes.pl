@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 11;
+use Test::More tests => 14;
 
 # Initialize publisher node
 my $node_publisher = get_new_node('publisher');
@@ -19,7 +19,7 @@ $node_subscriber->start;
 $node_publisher->safe_psql('postgres',
 	"CREATE TABLE tab_notrep AS SELECT generate_series(1,10) AS a");
 $node_publisher->safe_psql('postgres',
-	"CREATE TABLE tab_ins (a int)");
+	"CREATE TABLE tab_ins AS SELECT generate_series(1,1002) AS a");
 $node_publisher->safe_psql('postgres',
 	"CREATE TABLE tab_full AS SELECT generate_series(1,10) AS a");
 $node_publisher->safe_psql('postgres',
@@ -56,9 +56,19 @@ my $caughtup_query =
 $node_publisher->poll_query_until('postgres', $caughtup_query)
   or die "Timed out while waiting for subscriber to catch up";
 
+# Also wait for initial table sync to finish
+my $synced_query =
+"SELECT count(1) = 0 FROM pg_subscription_rel WHERE srsubstate NOT IN ('r', 's');";
+$node_subscriber->poll_query_until('postgres', $synced_query)
+  or die "Timed out while waiting for subscriber to synchronize data";
+
 my $result =
   $node_subscriber->safe_psql('postgres', "SELECT count(*) FROM tab_notrep");
 is($result, qq(0), 'check non-replicated table is empty on subscriber');
+
+$result =
+  $node_subscriber->safe_psql('postgres', "SELECT count(*) FROM tab_ins");
+is($result, qq(1002), 'check initial data was copied to subscriber');
 
 $node_publisher->safe_psql('postgres',
 	"INSERT INTO tab_ins SELECT generate_series(1,50)");
@@ -79,7 +89,7 @@ $node_publisher->poll_query_until('postgres', $caughtup_query)
 
 $result =
   $node_subscriber->safe_psql('postgres', "SELECT count(*), min(a), max(a) FROM tab_ins");
-is($result, qq(50|1|50), 'check replicated inserts on subscriber');
+is($result, qq(1052|1|1002), 'check replicated inserts on subscriber');
 
 $result =
   $node_subscriber->safe_psql('postgres', "SELECT count(*), min(a), max(a) FROM tab_rep");
@@ -109,7 +119,7 @@ $node_publisher->poll_query_until('postgres', $caughtup_query)
 
 $result =
   $node_subscriber->safe_psql('postgres', "SELECT count(*), min(a), max(a) FROM tab_full");
-is($result, qq(10|1|100), 'update works with REPLICA IDENTITY FULL and duplicate tuples');
+is($result, qq(20|1|100), 'update works with REPLICA IDENTITY FULL and duplicate tuples');
 
 # check that change of connection string and/or publication list causes
 # restart of subscription workers. Not all of these are registered as tests
@@ -126,7 +136,7 @@ $node_publisher->poll_query_until('postgres',
 $oldpid = $node_publisher->safe_psql('postgres',
 	"SELECT pid FROM pg_stat_replication WHERE application_name = '$appname';");
 $node_subscriber->safe_psql('postgres',
-	"ALTER SUBSCRIPTION tap_sub SET PUBLICATION tap_pub_ins_only");
+	"ALTER SUBSCRIPTION tap_sub SET PUBLICATION tap_pub_ins_only REFRESH WITH (NOCOPY DATA)");
 $node_publisher->poll_query_until('postgres',
 	"SELECT pid != $oldpid FROM pg_stat_replication WHERE application_name = '$appname';")
   or die "Timed out while waiting for apply to restart";
@@ -141,7 +151,7 @@ $node_publisher->poll_query_until('postgres', $caughtup_query)
 
 $result =
   $node_subscriber->safe_psql('postgres', "SELECT count(*), min(a), max(a) FROM tab_ins");
-is($result, qq(150|1|1100), 'check replicated inserts after subscription publication change');
+is($result, qq(1152|1|1100), 'check replicated inserts after subscription publication change');
 
 $result =
   $node_subscriber->safe_psql('postgres', "SELECT count(*), min(a), max(a) FROM tab_rep");
@@ -154,6 +164,8 @@ $node_publisher->safe_psql('postgres',
 	"ALTER PUBLICATION tap_pub_ins_only ADD TABLE tab_full");
 $node_publisher->safe_psql('postgres',
 	"DELETE FROM tab_ins WHERE a > 0");
+$node_subscriber->safe_psql('postgres',
+	"ALTER SUBSCRIPTION tap_sub REFRESH PUBLICATION WITH (NOCOPY DATA)");
 $node_publisher->safe_psql('postgres',
 	"INSERT INTO tab_full VALUES(0)");
 
@@ -163,11 +175,11 @@ $node_publisher->poll_query_until('postgres', $caughtup_query)
 # note that data are different on provider and subscriber
 $result =
   $node_subscriber->safe_psql('postgres', "SELECT count(*), min(a), max(a) FROM tab_ins");
-is($result, qq(50|1|50), 'check replicated deletes after alter publication');
+is($result, qq(1052|1|1002), 'check replicated deletes after alter publication');
 
 $result =
   $node_subscriber->safe_psql('postgres', "SELECT count(*), min(a), max(a) FROM tab_full");
-is($result, qq(11|0|100), 'check replicated insert after alter publication');
+is($result, qq(21|0|100), 'check replicated insert after alter publication');
 
 # check restart on rename
 $oldpid = $node_publisher->safe_psql('postgres',
@@ -184,6 +196,14 @@ $node_subscriber->safe_psql('postgres', "DROP SUBSCRIPTION tap_sub_renamed DROP 
 $result =
   $node_subscriber->safe_psql('postgres', "SELECT count(*) FROM pg_subscription");
 is($result, qq(0), 'check subscription was dropped on subscriber');
+
+$result =
+  $node_publisher->safe_psql('postgres', "SELECT count(*) FROM pg_replication_slots");
+is($result, qq(0), 'check replication slot was dropped on publisher');
+
+$result =
+  $node_subscriber->safe_psql('postgres', "SELECT count(*) FROM pg_subscription_rel");
+is($result, qq(0), 'check subscription relation status was dropped on subscriber');
 
 $result =
   $node_publisher->safe_psql('postgres', "SELECT count(*) FROM pg_replication_slots");

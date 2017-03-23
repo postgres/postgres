@@ -753,7 +753,7 @@ logical_read_xlog_page(XLogReaderState *state, XLogRecPtr targetPagePtr, int req
 static void
 parseCreateReplSlotOptions(CreateReplicationSlotCmd *cmd,
 						   bool *reserve_wal,
-						   bool *export_snapshot)
+						   CRSSnapshotAction *snapshot_action)
 {
 	ListCell   *lc;
 	bool		snapshot_action_given = false;
@@ -772,7 +772,18 @@ parseCreateReplSlotOptions(CreateReplicationSlotCmd *cmd,
 						 errmsg("conflicting or redundant options")));
 
 			snapshot_action_given = true;
-			*export_snapshot = defGetBoolean(defel);
+			*snapshot_action = defGetBoolean(defel) ? CRS_EXPORT_SNAPSHOT :
+				CRS_NOEXPORT_SNAPSHOT;
+		}
+		else if (strcmp(defel->defname, "use_snapshot") == 0)
+		{
+			if (snapshot_action_given || cmd->kind != REPLICATION_KIND_LOGICAL)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
+
+			snapshot_action_given = true;
+			*snapshot_action = CRS_USE_SNAPSHOT;
 		}
 		else if (strcmp(defel->defname, "reserve_wal") == 0)
 		{
@@ -799,7 +810,7 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 	char		xpos[MAXFNAMELEN];
 	char	   *slot_name;
 	bool		reserve_wal = false;
-	bool		export_snapshot = true;
+	CRSSnapshotAction snapshot_action = CRS_EXPORT_SNAPSHOT;
 	DestReceiver *dest;
 	TupOutputState *tstate;
 	TupleDesc	tupdesc;
@@ -808,7 +819,7 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 
 	Assert(!MyReplicationSlot);
 
-	parseCreateReplSlotOptions(cmd, &reserve_wal, &export_snapshot);
+	parseCreateReplSlotOptions(cmd, &reserve_wal, &snapshot_action);
 
 	/* setup state for XLogReadPage */
 	sendTimeLineIsHistoric = false;
@@ -838,6 +849,40 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 	{
 		LogicalDecodingContext *ctx;
 
+		/*
+		 * Do options check early so that we can bail before calling the
+		 * DecodingContextFindStartpoint which can take long time.
+		 */
+		if (snapshot_action == CRS_EXPORT_SNAPSHOT)
+		{
+			if (IsTransactionBlock())
+				ereport(ERROR,
+						(errmsg("CREATE_REPLICATION_SLOT ... EXPORT_SNAPSHOT "
+								"must not be called inside a transaction")));
+		}
+		else if (snapshot_action == CRS_USE_SNAPSHOT)
+		{
+			if (!IsTransactionBlock())
+				ereport(ERROR,
+						(errmsg("CREATE_REPLICATION_SLOT ... USE_SNAPSHOT "
+								"must be called inside a transaction")));
+
+			if (XactIsoLevel != XACT_REPEATABLE_READ)
+				ereport(ERROR,
+						(errmsg("CREATE_REPLICATION_SLOT ... USE_SNAPSHOT "
+								"must be called in REPEATABLE READ isolation mode transaction")));
+
+			if (FirstSnapshotSet)
+				ereport(ERROR,
+						(errmsg("CREATE_REPLICATION_SLOT ... USE_SNAPSHOT "
+								"must be called before any query")));
+
+			if (IsSubTransaction())
+				ereport(ERROR,
+						(errmsg("CREATE_REPLICATION_SLOT ... USE_SNAPSHOT "
+								"must not be called in a subtransaction")));
+		}
+
 		ctx = CreateInitDecodingContext(cmd->plugin, NIL,
 										logical_read_xlog_page,
 										WalSndPrepareWrite, WalSndWriteData);
@@ -855,13 +900,22 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 		DecodingContextFindStartpoint(ctx);
 
 		/*
-		 * Export the snapshot if we've been asked to do so.
+		 * Export or use the snapshot if we've been asked to do so.
 		 *
 		 * NB. We will convert the snapbuild.c kind of snapshot to normal
 		 * snapshot when doing this.
 		 */
-		if (export_snapshot)
+		if (snapshot_action == CRS_EXPORT_SNAPSHOT)
+		{
 			snapshot_name = SnapBuildExportSnapshot(ctx->snapshot_builder);
+		}
+		else if (snapshot_action == CRS_USE_SNAPSHOT)
+		{
+			Snapshot	snap;
+
+			snap = SnapBuildInitalSnapshot(ctx->snapshot_builder);
+			RestoreTransactionSnapshot(snap, MyProc);
+		}
 
 		/* don't need the decoding context anymore */
 		FreeDecodingContext(ctx);
@@ -1277,8 +1331,11 @@ WalSndWaitForWal(XLogRecPtr loc)
 
 /*
  * Execute an incoming replication command.
+ *
+ * Returns true if the cmd_string was recognized as WalSender command, false
+ * if not.
  */
-void
+bool
 exec_replication_command(const char *cmd_string)
 {
 	int			parse_rc;
@@ -1318,6 +1375,25 @@ exec_replication_command(const char *cmd_string)
 	cmd_node = replication_parse_result;
 
 	/*
+	 * CREATE_REPLICATION_SLOT ... LOGICAL exports a snapshot. If it was
+	 * called outside of transaction the snapshot should be cleared here.
+	 */
+	if (!IsTransactionBlock())
+		SnapBuildClearExportedSnapshot();
+
+	/*
+	 * For aborted transactions, don't allow anything except pure SQL,
+	 * the exec_simple_query() will handle it correctly.
+	 */
+	if (IsAbortedTransactionBlockState() && !IsA(cmd_node, SQLCmd))
+		ereport(ERROR,
+				(errcode(ERRCODE_IN_FAILED_SQL_TRANSACTION),
+				 errmsg("current transaction is aborted, "
+						"commands ignored until end of transaction block")));
+
+	CHECK_FOR_INTERRUPTS();
+
+	/*
 	 * Allocate buffers that will be used for each outgoing and incoming
 	 * message.  We do this just once per command to reduce palloc overhead.
 	 */
@@ -1332,6 +1408,7 @@ exec_replication_command(const char *cmd_string)
 			break;
 
 		case T_BaseBackupCmd:
+			PreventTransactionChain(true, "BASE_BACKUP");
 			SendBaseBackup((BaseBackupCmd *) cmd_node);
 			break;
 
@@ -1347,6 +1424,8 @@ exec_replication_command(const char *cmd_string)
 			{
 				StartReplicationCmd *cmd = (StartReplicationCmd *) cmd_node;
 
+				PreventTransactionChain(true, "START_REPLICATION");
+
 				if (cmd->kind == REPLICATION_KIND_PHYSICAL)
 					StartReplication(cmd);
 				else
@@ -1355,6 +1434,7 @@ exec_replication_command(const char *cmd_string)
 			}
 
 		case T_TimeLineHistoryCmd:
+			PreventTransactionChain(true, "TIMELINE_HISTORY");
 			SendTimeLineHistory((TimeLineHistoryCmd *) cmd_node);
 			break;
 
@@ -1367,6 +1447,14 @@ exec_replication_command(const char *cmd_string)
 			}
 			break;
 
+		case T_SQLCmd:
+			if (MyDatabaseId == InvalidOid)
+				ereport(ERROR,
+						(errmsg("not connected to database")));
+
+			/* Tell the caller that this wasn't a WalSender command. */
+			return false;
+
 		default:
 			elog(ERROR, "unrecognized replication command node tag: %u",
 				 cmd_node->type);
@@ -1378,6 +1466,8 @@ exec_replication_command(const char *cmd_string)
 
 	/* Send CommandComplete message */
 	EndCommand("SELECT", DestRemote);
+
+	return true;
 }
 
 /*

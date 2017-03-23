@@ -2498,6 +2498,18 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
+		{"max_sync_workers_per_subscription",
+			PGC_SIGHUP,
+			RESOURCES_ASYNCHRONOUS,
+			gettext_noop("Maximum number of table synchronization workers per subscription."),
+			NULL,
+		},
+		&max_sync_workers_per_subscription,
+		2, 0, MAX_BACKENDS,
+		NULL, NULL, NULL
+	},
+
+	{
 		{"log_rotation_age", PGC_SIGHUP, LOGGING_WHERE,
 			gettext_noop("Automatic log file rotation will occur after N minutes."),
 			NULL,

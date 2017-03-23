@@ -21,15 +21,21 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> WITH ( <replaceable class="PARAMETER">option</replaceable> [, ... ] ) ]
+ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> WITH ( <replaceable class="PARAMETER">suboption</replaceable> [, ... ] ) ]
 
-<phrase>where <replaceable class="PARAMETER">option</replaceable> can be:</phrase>
+<phrase>where <replaceable class="PARAMETER">suboption</replaceable> can be:</phrase>
 
-  SLOT NAME = <replaceable class="PARAMETER">slot_name</replaceable>
+    SLOT NAME = <replaceable class="PARAMETER">slot_name</replaceable>
+
+ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> SET PUBLICATION <replaceable class="PARAMETER">publication_name</replaceable> [, ...] { REFRESH WITH ( <replaceable class="PARAMETER">puboption</replaceable> [, ... ] ) | NOREFRESH }
+ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> REFRESH PUBLICATION WITH ( <replaceable class="PARAMETER">puboption</replaceable> [, ... ] )
+
+<phrase>where <replaceable class="PARAMETER">puboption</replaceable> can be:</phrase>
+
+    COPY DATA | NOCOPY DATA
 
 ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> OWNER TO { <replaceable>new_owner</replaceable> | CURRENT_USER | SESSION_USER }
 ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> CONNECTION '<replaceable>conninfo</replaceable>'
-ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> SET PUBLICATION <replaceable>publication_name</replaceable> [, ...]
 ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> ENABLE
 ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> DISABLE
 </synopsis>
@@ -65,13 +71,46 @@ ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> DISABLE
 
    <varlistentry>
     <term><literal>CONNECTION '<replaceable class="parameter">conninfo</replaceable>'</literal></term>
-    <term><literal>SET PUBLICATION <replaceable class="parameter">publication_name</replaceable></literal></term>
     <term><literal>SLOT NAME = <replaceable class="parameter">slot_name</replaceable></literal></term>
     <listitem>
      <para>
       These clauses alter properties originally set by
       <xref linkend="SQL-CREATESUBSCRIPTION">.  See there for more
       information.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>SET PUBLICATION <replaceable class="parameter">publication_name</replaceable></literal></term>
+    <listitem>
+     <para>
+      Changes list of subscribed publications. See
+      <xref linkend="SQL-CREATESUBSCRIPTION"> for more information.
+     </para>
+     <para>
+      When <literal>REFRESH</literal> is specified, this command will also
+      act like <literal>REFRESH PUBLICATION</literal>. When
+      <literal>NOREFRESH</literal> is specified, the comamnd will not try to
+      refresh table information.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>REFRESH PUBLICATION</term>
+    <listitem>
+     <para>
+      Fetch missing table information from publisher. This will start
+      replication of tables that were added to the subscribed-to publications
+      since the last invocation of <command>REFRESH PUBLICATION</command> or
+      since <command>CREATE SUBSCRIPTION</command>.
+     </para>
+     <para>
+      The <literal>COPY DATA</literal> and <literal>NOCOPY DATA</literal>
+      options specify if the existing data in the publications that are being
+      subscribed to should be copied. <literal>COPY DATA</literal> is the
+      default.
      </para>
     </listitem>
    </varlistentry>
@@ -95,6 +134,7 @@ ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> DISABLE
      </para>
     </listitem>
    </varlistentry>
+
   </variablelist>
  </refsect1>
 

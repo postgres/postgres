@@ -155,7 +155,7 @@ typedef struct _dumpOptions
 	int			use_setsessauth;
 	int			enable_row_security;
 	int			include_subscriptions;
-	int			no_create_subscription_slots;
+	int			no_subscription_connect;
 
 	/* default, if no "inclusion" switches appear, is to dump everything */
 	bool		include_everything;

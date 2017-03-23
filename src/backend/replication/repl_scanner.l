@@ -102,6 +102,7 @@ SLOT				{ return K_SLOT; }
 TEMPORARY			{ return K_TEMPORARY; }
 EXPORT_SNAPSHOT		{ return K_EXPORT_SNAPSHOT; }
 NOEXPORT_SNAPSHOT	{ return K_NOEXPORT_SNAPSHOT; }
+USE_SNAPSHOT		{ return K_USE_SNAPSHOT; }
 
 ","				{ return ','; }
 ";"				{ return ';'; }
@@ -180,9 +181,7 @@ NOEXPORT_SNAPSHOT	{ return K_NOEXPORT_SNAPSHOT; }
 				}
 
 .				{
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("syntax error: unexpected character \"%s\"", yytext)));
+					return T_WORD;
 				}
 %%
 

@@ -301,6 +301,11 @@
      </row>
 
      <row>
+      <entry><link linkend="catalog-pg-subscription-rel"><structname>pg_subscription_rel</structname></link></entry>
+      <entry>relation state for subscriptions</entry>
+     </row>
+
+     <row>
       <entry><link linkend="catalog-pg-tablespace"><structname>pg_tablespace</structname></link></entry>
       <entry>tablespaces within this database cluster</entry>
      </row>
@@ -6411,6 +6416,79 @@
       <entry>Array of subscribed publication names. These reference the
        publications on the publisher server. For more on publications
        see <xref linkend="logical-replication-publication">.
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="catalog-pg-subscription-rel">
+  <title><structname>pg_subscription_rel</structname></title>
+
+  <indexterm zone="catalog-pg-subscription-rel">
+   <primary>pg_subscription_rel</primary>
+  </indexterm>
+
+  <para>
+   The catalog <structname>pg_subscription_rel</structname> contains the
+   state for each replicated relation in each subscription.  This is a
+   many-to-many mapping.
+  </para>
+
+  <para>
+   This catalog only contains tables known to the subscription after running
+   either <command>CREATE SUBSCRIPTION</command> or
+   <command>ALTER SUBSCRIPTION ... REFRESH</command>.
+  </para>
+
+  <table>
+   <title><structname>pg_subscription_rel</structname> Columns</title>
+
+   <tgroup cols="4">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><structfield>srsubid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-subscription"><structname>pg_subscription</structname></link>.oid</literal></entry>
+      <entry>Reference to subscription</entry>
+     </row>
+
+     <row>
+      <entry><structfield>srrelid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
+      <entry>Reference to relation</entry>
+     </row>
+
+     <row>
+      <entry><structfield>srsubstate</structfield></entry>
+      <entry><type>char</type></entry>
+      <entry></entry>
+      <entry>
+       State code:
+       <literal>i</> = initialize,
+       <literal>d</> = data is being copied,
+       <literal>s</> = synchronized,
+       <literal>r</> = ready (normal replication)
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>srsublsn</structfield></entry>
+      <entry><type>pg_lsn</type></entry>
+      <entry></entry>
+      <entry>
+       End LSN for <literal>s</> and <literal>r</> states.
       </entry>
      </row>
     </tbody>

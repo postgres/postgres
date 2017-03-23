@@ -40,7 +40,7 @@ CREATE TRANSFORM FOR int LANGUAGE SQL (
 	FROM SQL WITH FUNCTION varchar_transform(internal),
 	TO SQL WITH FUNCTION int4recv(internal));
 CREATE PUBLICATION addr_pub FOR TABLE addr_nsp.gentable;
-CREATE SUBSCRIPTION addr_sub CONNECTION '' PUBLICATION bar WITH (DISABLED, NOCREATE SLOT);
+CREATE SUBSCRIPTION addr_sub CONNECTION '' PUBLICATION bar WITH (DISABLED, NOCONNECT);
 
 -- test some error cases
 SELECT pg_get_object_address('stone', '{}', '{}');

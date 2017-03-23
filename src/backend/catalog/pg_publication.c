@@ -221,8 +221,8 @@ GetPublicationRelations(Oid pubid)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(pubid));
 
-	scan = systable_beginscan(pubrelsrel, PublicationRelMapIndexId, true,
-							  NULL, 1, &scankey);
+	scan = systable_beginscan(pubrelsrel, PublicationRelPrrelidPrpubidIndexId,
+							  true, NULL, 1, &scankey);
 
 	result = NIL;
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))

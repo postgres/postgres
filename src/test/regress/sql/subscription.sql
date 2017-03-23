@@ -12,24 +12,19 @@ CREATE SUBSCRIPTION testsub CONNECTION 'foo';
 -- fail - no connection
 CREATE SUBSCRIPTION testsub PUBLICATION foo;
 
-set client_min_messages to error;
 -- fail - cannot do CREATE SUBSCRIPTION CREATE SLOT inside transaction block
 BEGIN;
 CREATE SUBSCRIPTION testsub CONNECTION 'testconn' PUBLICATION testpub WITH (CREATE SLOT);
 COMMIT;
 
 CREATE SUBSCRIPTION testsub CONNECTION 'testconn' PUBLICATION testpub;
-CREATE SUBSCRIPTION testsub CONNECTION 'dbname=doesnotexist' PUBLICATION testpub WITH (DISABLED, NOCREATE SLOT);
-reset client_min_messages;
+
+CREATE SUBSCRIPTION testsub CONNECTION 'dbname=doesnotexist' PUBLICATION testpub WITH (NOCONNECT);
 
 \dRs+
 
-ALTER SUBSCRIPTION testsub SET PUBLICATION testpub2, testpub3;
-
-\dRs
-
+ALTER SUBSCRIPTION testsub SET PUBLICATION testpub2, testpub3 NOREFRESH;
 ALTER SUBSCRIPTION testsub CONNECTION 'dbname=doesnotexist2';
-ALTER SUBSCRIPTION testsub SET PUBLICATION testpub, testpub1;
 
 \dRs+
 

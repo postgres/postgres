@@ -799,22 +799,23 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>--no-create-subscription-slots</option></term>
+      <term><option>--no-security-labels</option></term>
       <listitem>
        <para>
-        When dumping logical replication subscriptions,
-        generate <command>CREATE SUBSCRIPTION</command> commands that do not
-        create the remote replication slot.  That way, the dump can be
-        restored without requiring network access to the remote servers.
+        Do not dump security labels.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><option>--no-security-labels</option></term>
+      <term><option>--no-subscription-connect</option></term>
       <listitem>
        <para>
-        Do not dump security labels.
+        When dumping logical replication subscriptions,
+        generate <command>CREATE SUBSCRIPTION</command> commands that do not
+        make remote connections for creating replication slot or initial table
+        copy.  That way, the dump can be restored without requiring network
+        access to the remote servers.
        </para>
       </listitem>
      </varlistentry>

@@ -96,4 +96,13 @@ typedef struct TimeLineHistoryCmd
 	TimeLineID	timeline;
 } TimeLineHistoryCmd;
 
+/* ----------------------
+ *		SQL commands
+ * ----------------------
+ */
+typedef struct SQLCmd
+{
+	NodeTag		type;
+} SQLCmd;
+
 #endif   /* REPLNODES_H */

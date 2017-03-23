@@ -488,6 +488,7 @@ typedef enum NodeTag
 	T_DropReplicationSlotCmd,
 	T_StartReplicationCmd,
 	T_TimeLineHistoryCmd,
+	T_SQLCmd,
 
 	/*
 	 * TAGS FOR RANDOM OTHER STUFF

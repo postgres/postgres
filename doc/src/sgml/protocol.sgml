@@ -1487,7 +1487,7 @@ The commands accepted in walsender mode are:
   </varlistentry>
 
   <varlistentry id="protocol-replication-create-slot" xreflabel="CREATE_REPLICATION_SLOT">
-   <term><literal>CREATE_REPLICATION_SLOT</literal> <replaceable class="parameter">slot_name</> [ <literal>TEMPORARY</> ] { <literal>PHYSICAL</> [ <literal>RESERVE_WAL</> ] | <literal>LOGICAL</> <replaceable class="parameter">output_plugin</> [ <literal>EXPORT_SNAPSHOT</> | <literal>NOEXPORT_SNAPSHOT</> ] }
+   <term><literal>CREATE_REPLICATION_SLOT</literal> <replaceable class="parameter">slot_name</> [ <literal>TEMPORARY</> ] { <literal>PHYSICAL</> [ <literal>RESERVE_WAL</> ] | <literal>LOGICAL</> <replaceable class="parameter">output_plugin</> [ <literal>EXPORT_SNAPSHOT</> | <literal>NOEXPORT_SNAPSHOT</> | <literal>USE_SNAPSHOT</> ] }
      <indexterm><primary>CREATE_REPLICATION_SLOT</primary></indexterm>
     </term>
     <listitem>
@@ -1542,12 +1542,17 @@ The commands accepted in walsender mode are:
       <varlistentry>
        <term><literal>EXPORT_SNAPSHOT</></term>
        <term><literal>NOEXPORT_SNAPSHOT</></term>
+       <term><literal>USE_SNAPSHOT</></term>
        <listitem>
         <para>
          Decides what to do with the snapshot created during logical slot
          initialization. <literal>EXPORT_SNAPSHOT</>, which is the default,
          will export the snapshot for use in other sessions. This option can't
-         be used inside a transaction.  <literal>NOEXPORT_SNAPSHOT</> will
+         be used inside a transaction.  <literal>USE_SNAPSHOT</> will use the
+         snapshot for the current transaction executing the command. This
+         option must be used in a transaction, and
+         <literal>CREATE_REPLICATION_SLOT</literal> must be the first command
+         run in that transaction.  Finally, <literal>NOEXPORT_SNAPSHOT</> will
          just use the snapshot for logical decoding as normal but won't do
          anything else with it.
         </para>

@@ -14,7 +14,6 @@ CREATE SUBSCRIPTION testsub PUBLICATION foo;
 ERROR:  syntax error at or near "PUBLICATION"
 LINE 1: CREATE SUBSCRIPTION testsub PUBLICATION foo;
                                     ^
-set client_min_messages to error;
 -- fail - cannot do CREATE SUBSCRIPTION CREATE SLOT inside transaction block
 BEGIN;
 CREATE SUBSCRIPTION testsub CONNECTION 'testconn' PUBLICATION testpub WITH (CREATE SLOT);
@@ -23,8 +22,8 @@ COMMIT;
 CREATE SUBSCRIPTION testsub CONNECTION 'testconn' PUBLICATION testpub;
 ERROR:  invalid connection string syntax: missing "=" after "testconn" in connection info string
 
-CREATE SUBSCRIPTION testsub CONNECTION 'dbname=doesnotexist' PUBLICATION testpub WITH (DISABLED, NOCREATE SLOT);
-reset client_min_messages;
+CREATE SUBSCRIPTION testsub CONNECTION 'dbname=doesnotexist' PUBLICATION testpub WITH (NOCONNECT);
+WARNING:  tables were not subscribed, you will have to run ALTER SUBSCRIPTION ... REFRESH PUBLICATION to subscribe the tables
 \dRs+
                                List of subscriptions
   Name   |           Owner           | Enabled | Publication |      Conninfo       
@@ -32,38 +31,30 @@ reset client_min_messages;
  testsub | regress_subscription_user | f       | {testpub}   | dbname=doesnotexist
 (1 row)
 
-ALTER SUBSCRIPTION testsub SET PUBLICATION testpub2, testpub3;
-\dRs
-                        List of subscriptions
-  Name   |           Owner           | Enabled |     Publication     
----------+---------------------------+---------+---------------------
- testsub | regress_subscription_user | f       | {testpub2,testpub3}
-(1 row)
-
+ALTER SUBSCRIPTION testsub SET PUBLICATION testpub2, testpub3 NOREFRESH;
 ALTER SUBSCRIPTION testsub CONNECTION 'dbname=doesnotexist2';
-ALTER SUBSCRIPTION testsub SET PUBLICATION testpub, testpub1;
 \dRs+
                                    List of subscriptions
-  Name   |           Owner           | Enabled |    Publication     |       Conninfo       
----------+---------------------------+---------+--------------------+----------------------
- testsub | regress_subscription_user | f       | {testpub,testpub1} | dbname=doesnotexist2
+  Name   |           Owner           | Enabled |     Publication     |       Conninfo       
+---------+---------------------------+---------+---------------------+----------------------
+ testsub | regress_subscription_user | f       | {testpub2,testpub3} | dbname=doesnotexist2
 (1 row)
 
 BEGIN;
 ALTER SUBSCRIPTION testsub ENABLE;
 \dRs
-                       List of subscriptions
-  Name   |           Owner           | Enabled |    Publication     
----------+---------------------------+---------+--------------------
- testsub | regress_subscription_user | t       | {testpub,testpub1}
+                        List of subscriptions
+  Name   |           Owner           | Enabled |     Publication     
+---------+---------------------------+---------+---------------------
+ testsub | regress_subscription_user | t       | {testpub2,testpub3}
 (1 row)
 
 ALTER SUBSCRIPTION testsub DISABLE;
 \dRs
-                       List of subscriptions
-  Name   |           Owner           | Enabled |    Publication     
----------+---------------------------+---------+--------------------
- testsub | regress_subscription_user | f       | {testpub,testpub1}
+                        List of subscriptions
+  Name   |           Owner           | Enabled |     Publication     
+---------+---------------------------+---------+---------------------
+ testsub | regress_subscription_user | f       | {testpub2,testpub3}
 (1 row)
 
 COMMIT;
@@ -74,10 +65,10 @@ ERROR:  must be owner of subscription testsub
 RESET ROLE;
 ALTER SUBSCRIPTION testsub RENAME TO testsub_foo;
 \dRs
-                         List of subscriptions
-    Name     |           Owner           | Enabled |    Publication     
--------------+---------------------------+---------+--------------------
- testsub_foo | regress_subscription_user | f       | {testpub,testpub1}
+                          List of subscriptions
+    Name     |           Owner           | Enabled |     Publication     
+-------------+---------------------------+---------+---------------------
+ testsub_foo | regress_subscription_user | f       | {testpub2,testpub3}
 (1 row)
 
 -- rename back to keep the rest simple

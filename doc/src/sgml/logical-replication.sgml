@@ -24,9 +24,11 @@
  </para>
 
  <para>
-  Logical replication sends changes on the publisher to the subscriber as
-  they occur in real-time.  The subscriber applies the data in the same order
-  as the publisher so that transactional consistency is guaranteed for
+  Logical replication of a table typically starts with a taking a snapshot
+  of the data on the publisher database and copying that to the subscriber.
+  Once that is done, the changes on the publisher are sent to the subscriber
+  as they occur in real-time.  The subscriber applies the data in the same
+  order as the publisher so that transactional consistency is guaranteed for
   publications within a single subscription.  This method of data replication
   is sometimes referred to as transactional replication.
  </para>
@@ -159,7 +161,9 @@
 
   <para>
    Each subscription will receive changes via one replication slot (see
-   <xref linkend="streaming-replication-slots">).
+   <xref linkend="streaming-replication-slots">).  Additional temporary
+   replication slots may be required for the initial data synchronization
+   of pre-existing table data.
   </para>
 
   <para>
@@ -264,9 +268,25 @@
    to <literal>replica</literal>, which produces the usual effects on triggers
    and constraints.
   </para>
+
+  <sect2 id="logical-replication-snapshot">
+    <title>Initial Snapshot</title>
+    <para>
+      The initial data in existing subscribed tables are snapshotted and
+      copied in a parallel instance of a special kind of apply process.
+      This process will create its own temporary replication slot and
+      copy the existing data. Once existing data is copied, the worker
+      enters synchronization mode, which ensures that the table is brought
+      up to a synchronized state with the main apply process by streaming
+      any changes that happened during the initial data copy using standard
+      logical replication. Once the synchronization is done, the control
+      of the replication of the table is given back to the main apply
+      process where the replication continues as normal.
+    </para>
+  </sect2>
  </sect1>
 
-  <sect1 id="logical-replication-monitoring">
+ <sect1 id="logical-replication-monitoring">
   <title>Monitoring</title>
 
   <para>
@@ -287,7 +307,9 @@
   <para>
    Normally, there is a single apply process running for an enabled
    subscription.  A disabled subscription or a crashed subscription will have
-   zero rows in this view.
+   zero rows in this view.  If the initial data synchronization of any
+   table is in progress, there will be additional workers for the tables
+   being synchronized.
   </para>
  </sect1>
 
@@ -337,10 +359,11 @@
   <para>
    On the publisher side, <varname>wal_level</varname> must be set to
    <literal>logical</literal>, and <varname>max_replication_slots</varname>
-   must be set to at least the number of subscriptions expected to connect.
-   And <varname>max_wal_senders</varname> should be set to at least the same
-   as <varname>max_replication_slots</varname> plus the number of physical replicas
-   that are connected at the same time.
+   must be set to at least the number of subscriptions expected to connect,
+   plus some reserve for table synchronization.  And
+   <varname>max_wal_senders</varname> should be set to at least the same as
+   <varname>max_replication_slots</varname> plus the number of physical
+   replicas that are connected at the same time.
   </para>
 
   <para>
@@ -348,9 +371,9 @@
    to be set.  In this case it should be set to at least the number of
    subscriptions that will be added to the subscriber.
    <varname>max_logical_replication_workers</varname> must be set to at
-   least the number of subscriptions.  Additionally the
-   <varname>max_worker_processes</varname> may need to be adjusted to
-   accommodate for replication workers, at least
+   least the number of subscriptions, again plus some reserve for the table
+   synchronization.  Additionally the <varname>max_worker_processes</varname>
+   may need to be adjusted to accommodate for replication workers, at least
    (<varname>max_logical_replication_workers</varname>
    + <literal>1</literal>).  Note that some extensions and parallel queries
    also take worker slots from <varname>max_worker_processes</varname>.
@@ -393,8 +416,10 @@ CREATE SUBSCRIPTION mysub CONNECTION 'dbname=foo host=bar user=repuser' PUBLICAT
   </para>
 
   <para>
-   The above will start the replication process of changes to
-   <literal>users</literal> and <literal>departments</literal> tables.
+   The above will start the replication process, which synchronizes the
+   initial table contents of the tables <literal>users</literal> and
+   <literal>departments</literal> and then starts replicating
+   incremental changes to those tables.
   </para>
  </sect1>
 </chapter>

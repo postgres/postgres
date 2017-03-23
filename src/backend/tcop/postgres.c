@@ -4061,7 +4061,10 @@ PostgresMain(int argc, char *argv[],
 					pq_getmsgend(&input_message);
 
 					if (am_walsender)
-						exec_replication_command(query_string);
+					{
+						if (!exec_replication_command(query_string))
+							exec_simple_query(query_string);
+					}
 					else
 						exec_simple_query(query_string);
 

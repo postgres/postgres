@@ -111,6 +111,12 @@ my $caughtup_query =
 $node_publisher->poll_query_until('postgres', $caughtup_query)
   or die "Timed out while waiting for subscriber to catch up";
 
+# Wait for initial sync to finish as well
+my $synced_query =
+"SELECT count(1) = 0 FROM pg_subscription_rel WHERE srsubstate NOT IN ('s', 'r');";
+$node_subscriber->poll_query_until('postgres', $synced_query)
+  or die "Timed out while waiting for subscriber to synchronize data";
+
 # Insert initial test data
 $node_publisher->safe_psql('postgres', qq(
 	-- test_tbl_one_array_col

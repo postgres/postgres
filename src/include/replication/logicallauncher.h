@@ -13,6 +13,7 @@
 #define LOGICALLAUNCHER_H
 
 extern int max_logical_replication_workers;
+extern int max_sync_workers_per_subscription;
 
 extern void ApplyLauncherRegister(void);
 extern void ApplyLauncherMain(Datum main_arg);

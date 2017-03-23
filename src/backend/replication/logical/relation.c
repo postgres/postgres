@@ -19,6 +19,7 @@
 #include "access/heapam.h"
 #include "access/sysattr.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_subscription_rel.h"
 #include "nodes/makefuncs.h"
 #include "replication/logicalrelation.h"
 #include "replication/worker_internal.h"
@@ -356,6 +357,12 @@ logicalrep_rel_open(LogicalRepRelId remoteid, LOCKMODE lockmode)
 	}
 	else
 		entry->localrel = heap_open(entry->localreloid, lockmode);
+
+	if (entry->state != SUBREL_STATE_READY)
+		entry->state = GetSubscriptionRelState(MySubscription->oid,
+											   entry->localreloid,
+											   &entry->statelsn,
+											   true);
 
 	return entry;
 }

@@ -15,9 +15,12 @@
 #include "access/xlog.h"
 #include "access/xlogdefs.h"
 #include "fmgr.h"
+#include "replication/logicalproto.h"
+#include "replication/walsender.h"
 #include "storage/latch.h"
 #include "storage/spin.h"
 #include "pgtime.h"
+#include "utils/tuplestore.h"
 
 /* user-settable parameters */
 extern int	wal_receiver_status_interval;
@@ -160,6 +163,33 @@ typedef struct
 struct WalReceiverConn;
 typedef struct WalReceiverConn WalReceiverConn;
 
+/*
+ * Status of walreceiver query execution.
+ *
+ * We only define statuses that are currently used.
+ */
+typedef enum
+{
+	WALRCV_ERROR,				/* There was error when executing the query. */
+	WALRCV_OK_COMMAND,			/* Query executed utility or replication command. */
+	WALRCV_OK_TUPLES,			/* Query returned tuples. */
+	WALRCV_OK_COPY_IN,			/* Query started COPY FROM. */
+	WALRCV_OK_COPY_OUT,			/* Query started COPY TO. */
+	WALRCV_OK_COPY_BOTH,		/* Query started COPY BOTH replication protocol. */
+} WalRcvExecStatus;
+
+/*
+ * Return value for walrcv_query, returns the status of the execution and
+ * tuples if any.
+ */
+typedef struct WalRcvExecResult
+{
+	WalRcvExecStatus	status;
+	char			   *err;
+	Tuplestorestate	   *tuplestore;
+	TupleDesc			tupledesc;
+} WalRcvExecResult;
+
 /* libpqwalreceiver hooks */
 typedef WalReceiverConn *(*walrcv_connect_fn) (const char *conninfo, bool logical,
 											   const char *appname,
@@ -183,9 +213,12 @@ typedef void (*walrcv_send_fn) (WalReceiverConn *conn, const char *buffer,
 								int nbytes);
 typedef char *(*walrcv_create_slot_fn) (WalReceiverConn *conn,
 										const char *slotname, bool temporary,
-										bool export_snapshot, XLogRecPtr *lsn);
-typedef bool (*walrcv_command_fn) (WalReceiverConn *conn, const char *cmd,
-								   char **err);
+										CRSSnapshotAction snapshot_action,
+										XLogRecPtr *lsn);
+typedef WalRcvExecResult *(*walrcv_exec_fn) (WalReceiverConn *conn,
+											 const char *query,
+											 const int nRetTypes,
+											 const Oid *retTypes);
 typedef void (*walrcv_disconnect_fn) (WalReceiverConn *conn);
 
 typedef struct WalReceiverFunctionsType
@@ -200,7 +233,7 @@ typedef struct WalReceiverFunctionsType
 	walrcv_receive_fn					walrcv_receive;
 	walrcv_send_fn						walrcv_send;
 	walrcv_create_slot_fn				walrcv_create_slot;
-	walrcv_command_fn					walrcv_command;
+	walrcv_exec_fn						walrcv_exec;
 	walrcv_disconnect_fn				walrcv_disconnect;
 } WalReceiverFunctionsType;
 
@@ -224,12 +257,30 @@ extern PGDLLIMPORT WalReceiverFunctionsType *WalReceiverFunctions;
 	WalReceiverFunctions->walrcv_receive(conn, buffer, wait_fd)
 #define walrcv_send(conn, buffer, nbytes) \
 	WalReceiverFunctions->walrcv_send(conn, buffer, nbytes)
-#define walrcv_create_slot(conn, slotname, temporary, export_snapshot, lsn) \
-	WalReceiverFunctions->walrcv_create_slot(conn, slotname, temporary, export_snapshot, lsn)
-#define walrcv_command(conn, cmd, err) \
-	WalReceiverFunctions->walrcv_command(conn, cmd, err)
+#define walrcv_create_slot(conn, slotname, temporary, snapshot_action, lsn) \
+	WalReceiverFunctions->walrcv_create_slot(conn, slotname, temporary, snapshot_action, lsn)
+#define walrcv_exec(conn, exec, nRetTypes, retTypes) \
+	WalReceiverFunctions->walrcv_exec(conn, exec, nRetTypes, retTypes)
 #define walrcv_disconnect(conn) \
 	WalReceiverFunctions->walrcv_disconnect(conn)
+
+static inline void
+walrcv_clear_result(WalRcvExecResult *walres)
+{
+	if (!walres)
+		return;
+
+	if (walres->err)
+		pfree(walres->err);
+
+	if (walres->tuplestore)
+		tuplestore_end(walres->tuplestore);
+
+	if (walres->tupledesc)
+		FreeTupleDesc(walres->tupledesc);
+
+	pfree(walres);
+}
 
 /* prototypes for functions in walreceiver.c */
 extern void WalReceiverMain(void) pg_attribute_noreturn();
