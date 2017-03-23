@@ -2199,7 +2199,10 @@ static bool
 _equalAlterSubscriptionStmt(const AlterSubscriptionStmt *a,
 							const AlterSubscriptionStmt *b)
 {
+	COMPARE_SCALAR_FIELD(kind);
 	COMPARE_STRING_FIELD(subname);
+	COMPARE_STRING_FIELD(conninfo);
+	COMPARE_NODE_FIELD(publication);
 	COMPARE_NODE_FIELD(options);
 
 	return true;

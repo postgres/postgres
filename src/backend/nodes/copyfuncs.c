@@ -4450,7 +4450,10 @@ _copyAlterSubscriptionStmt(const AlterSubscriptionStmt *from)
 {
 	AlterSubscriptionStmt *newnode = makeNode(AlterSubscriptionStmt);
 
+	COPY_SCALAR_FIELD(kind);
 	COPY_STRING_FIELD(subname);
+	COPY_STRING_FIELD(conninfo);
+	COPY_NODE_FIELD(publication);
 	COPY_NODE_FIELD(options);
 
 	return newnode;

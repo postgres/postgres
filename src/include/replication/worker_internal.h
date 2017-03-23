@@ -46,7 +46,7 @@ typedef struct LogicalRepWorker
 } LogicalRepWorker;
 
 /* Memory context for cached variables in apply worker. */
-MemoryContext			ApplyCacheContext;
+extern MemoryContext				ApplyCacheContext;
 
 /* libpqreceiver connection */
 extern struct WalReceiverConn	   *wrconn;
