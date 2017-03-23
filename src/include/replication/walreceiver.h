@@ -175,7 +175,7 @@ typedef enum
 	WALRCV_OK_TUPLES,			/* Query returned tuples. */
 	WALRCV_OK_COPY_IN,			/* Query started COPY FROM. */
 	WALRCV_OK_COPY_OUT,			/* Query started COPY TO. */
-	WALRCV_OK_COPY_BOTH,		/* Query started COPY BOTH replication protocol. */
+	WALRCV_OK_COPY_BOTH			/* Query started COPY BOTH replication protocol. */
 } WalRcvExecStatus;
 
 /*
