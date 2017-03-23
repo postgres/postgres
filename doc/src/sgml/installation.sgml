@@ -2256,17 +2256,17 @@ hosts=local4,bind4
      memory management.  You can have a server with many multiples of
      gigabytes of RAM free, but still get out of memory or address
      space errors when running applications.  One example
-     is <command>createlang</command> failing with unusual errors.
+     is loading of extensions failing with unusual errors.
      For example, running as the owner of the PostgreSQL installation:
 <screen>
--bash-3.00$ createlang plperl template1
-createlang: language installation failed: ERROR:  could not load library "/opt/dbs/pgsql748/lib/plperl.so": A memory address is not in the address space for the process.
+=# CREATE EXTENSION plperl;
+ERROR:  could not load library "/opt/dbs/pgsql/lib/plperl.so": A memory address is not in the address space for the process.
 </screen>
     Running as a non-owner in the group possessing the PostgreSQL
     installation:
 <screen>
--bash-3.00$ createlang plperl template1
-createlang: language installation failed: ERROR:  could not load library "/opt/dbs/pgsql748/lib/plperl.so": Bad address
+=# CREATE EXTENSION plperl;
+ERROR:  could not load library "/opt/dbs/pgsql/lib/plperl.so": Bad address
 </screen>
      Another example is out of memory errors in the PostgreSQL server
      logs, with every memory allocation near or greater than 256 MB
@@ -2284,7 +2284,7 @@ createlang: language installation failed: ERROR:  could not load library "/opt/d
     </para>
 
     <para>
-     In the case of the <command>createlang</command> example, above,
+     In the case of the <literal>plperl</literal> example, above,
      check your umask and the permissions of the binaries in your
      PostgreSQL installation.  The binaries involved in that example
      were 32-bit and installed as mode 750 instead of 755.  Due to the

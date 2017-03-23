@@ -10860,9 +10860,7 @@ SELECT * FROM places ORDER BY location <-> point '(101,456)' LIMIT 10;
 
      <listitem>
       <para>
-        Mark <link
-        linkend="APP-CREATELANG"><application>createlang</></link>
-        and <link linkend="APP-DROPLANG"><application>droplang</></link>
+        Mark <application>createlang</> and <application>droplang</>
         as deprecated now that they just invoke extension commands (Tom
         Lane)
       </para>

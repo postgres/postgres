@@ -66,10 +66,9 @@
     directory if Tcl support is specified in the configuration step of
     the installation procedure.  To install <application>PL/Tcl</>
     and/or <application>PL/TclU</> in a particular database, use the
-    <command>CREATE EXTENSION</> command or the
-    <command>createlang</command> program, for example
-    <literal>createlang pltcl <replaceable>dbname</></literal> or
-    <literal>createlang pltclu <replaceable>dbname</></literal>.
+    <command>CREATE EXTENSION</> command, for example
+    <literal>CREATE EXTENSION pltcl</literal> or
+    <literal>CREATE EXTENSION pltclu</literal>.
    </para>
   </sect1>
 

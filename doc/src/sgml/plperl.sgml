@@ -27,8 +27,7 @@
 
   <para>
    To install PL/Perl in a particular database, use
-   <literal>CREATE EXTENSION plperl</>, or from the shell command line use
-   <literal>createlang plperl <replaceable>dbname</></literal>.
+   <literal>CREATE EXTENSION plperl</>.
   </para>
 
   <tip>

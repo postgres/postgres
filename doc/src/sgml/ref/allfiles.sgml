@@ -182,10 +182,8 @@ Complete list of usable sgml source files in this directory.
 <!-- applications and utilities -->
 <!ENTITY clusterdb          SYSTEM "clusterdb.sgml">
 <!ENTITY createdb           SYSTEM "createdb.sgml">
-<!ENTITY createlang         SYSTEM "createlang.sgml">
 <!ENTITY createuser         SYSTEM "createuser.sgml">
 <!ENTITY dropdb             SYSTEM "dropdb.sgml">
-<!ENTITY droplang           SYSTEM "droplang.sgml">
 <!ENTITY dropuser           SYSTEM "dropuser.sgml">
 <!ENTITY ecpgRef            SYSTEM "ecpg-ref.sgml">
 <!ENTITY initdb             SYSTEM "initdb.sgml">

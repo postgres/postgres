@@ -1,9 +1,7 @@
 /clusterdb
 /createdb
-/createlang
 /createuser
 /dropdb
-/droplang
 /dropuser
 /reindexdb
 /vacuumdb

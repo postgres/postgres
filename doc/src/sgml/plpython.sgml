@@ -14,8 +14,7 @@
 
  <para>
   To install PL/Python in a particular database, use
-  <literal>CREATE EXTENSION plpythonu</>, or from the shell command line use
-  <literal>createlang plpythonu <replaceable>dbname</></literal> (but
+  <literal>CREATE EXTENSION plpythonu</> (but
   see also <xref linkend="plpython-python23">).
  </para>
 

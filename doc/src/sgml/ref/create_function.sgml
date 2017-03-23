@@ -847,7 +847,6 @@ COMMIT;
    <member><xref linkend="sql-grant"></member>
    <member><xref linkend="sql-load"></member>
    <member><xref linkend="sql-revoke"></member>
-   <member><xref linkend="app-createlang"></member>
   </simplelist>
  </refsect1>
 
