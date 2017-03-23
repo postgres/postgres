@@ -5401,6 +5401,9 @@ DESCR("pg_controldata init state information as a function");
 DATA(insert OID = 3445 ( pg_import_system_collations PGNSP PGUID 12 100 0 0 0 f f f f t f v r 2 0 2278 "16 4089" _null_ _null_ "{if_not_exists,schema}" _null_ _null_ pg_import_system_collations _null_ _null_ _null_ ));
 DESCR("import collations from operating system");
 
+DATA(insert OID = 3448 ( pg_collation_actual_version PGNSP PGUID 12 100 0 0 0 f f f f t f v s 1 0 25 "26" _null_ _null_ _null_ _null_ _null_ pg_collation_actual_version _null_ _null_ _null_ ));
+DESCR("import collations from operating system");
+
 /* system management/monitoring related functions */
 DATA(insert OID = 3353 (  pg_ls_logdir               PGNSP PGUID 12 10 20 0 0 f f f f t t v s 0 0 2249 "" "{25,20,1184}" "{o,o,o}" "{name,size,modification}" _null_ _null_ pg_ls_logdir _null_ _null_ _null_ ));
 DESCR("list files in the log directory");

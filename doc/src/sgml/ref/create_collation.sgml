@@ -21,7 +21,9 @@
 CREATE COLLATION [ IF NOT EXISTS ] <replaceable>name</replaceable> (
     [ LOCALE = <replaceable>locale</replaceable>, ]
     [ LC_COLLATE = <replaceable>lc_collate</replaceable>, ]
-    [ LC_CTYPE = <replaceable>lc_ctype</replaceable> ]
+    [ LC_CTYPE = <replaceable>lc_ctype</replaceable>, ]
+    [ PROVIDER = <replaceable>provider</replaceable>, ]
+    [ VERSION = <replaceable>version</replaceable> ]
 )
 CREATE COLLATION [ IF NOT EXISTS ] <replaceable>name</replaceable> FROM <replaceable>existing_collation</replaceable>
 </synopsis>
@@ -109,6 +111,39 @@ CREATE COLLATION [ IF NOT EXISTS ] <replaceable>name</replaceable> FROM <replace
        must be applicable to the current database encoding.
        (See <xref linkend="sql-createdatabase"> for the precise
        rules.)
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>provider</replaceable></term>
+
+     <listitem>
+      <para>
+       Specifies the provider to use for locale services associated with this
+       collation.  Possible values
+       are: <literal>icu</literal>,<indexterm><primary>ICU</></> <literal>libc</literal>.
+       The available choices depend on the operating system and build options.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>version</replaceable></term>
+
+     <listitem>
+      <para>
+       Specifies the version string to store with the collation.  Normally,
+       this should be omitted, which will cause the version to be computed
+       from the actual version of the collation as provided by the operating
+       system.  This option is intended to be used
+       by <command>pg_upgrade</command> for copying the version from an
+       existing installation.
+      </para>
+
+      <para>
+       See also <xref linkend="sql-altercollation"> for how to handle
+       collation version mismatches.
       </para>
      </listitem>
     </varlistentry>

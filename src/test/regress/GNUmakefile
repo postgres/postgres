@@ -125,6 +125,9 @@ tablespace-setup:
 ##
 
 REGRESS_OPTS = --dlpath=. $(EXTRA_REGRESS_OPTS)
+ifeq ($(with_icu),yes)
+override EXTRA_TESTS := collate.icu $(EXTRA_TESTS)
+endif
 
 check: all tablespace-setup
 	$(pg_regress_check) $(REGRESS_OPTS) --schedule=$(srcdir)/parallel_schedule $(MAXCONNOPT) $(EXTRA_TESTS)

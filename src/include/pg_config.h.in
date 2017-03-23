@@ -606,6 +606,9 @@
 /* Define to 1 if you have the external array `tzname'. */
 #undef HAVE_TZNAME
 
+/* Define to 1 if you have the `ucol_strcollUTF8' function. */
+#undef HAVE_UCOL_STRCOLLUTF8
+
 /* Define to 1 if you have the <ucred.h> header file. */
 #undef HAVE_UCRED_H
 
@@ -818,6 +821,9 @@
 /* Define to 1 if you want float8, int8, etc values to be passed by value.
    (--enable-float8-byval) */
 #undef USE_FLOAT8_BYVAL
+
+/* Define to build with ICU support. (--with-icu) */
+#undef USE_ICU
 
 /* Define to 1 to build with LDAP support. (--with-ldap) */
 #undef USE_LDAP

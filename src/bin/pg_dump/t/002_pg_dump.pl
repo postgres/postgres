@@ -2424,7 +2424,7 @@ qr/^\QINSERT INTO test_fifth_table (col1, col2, col3, col4, col5) VALUES (NULL, 
 		  'CREATE COLLATION test0 FROM "C";',
 		regexp =>
 		  qr/^
-		  \QCREATE COLLATION test0 (lc_collate = 'C', lc_ctype = 'C');\E/xm,
+		  \QCREATE COLLATION test0 (provider = libc, locale = 'C');\E/xm,
 	    collation => 1,
 		like => {
 			binary_upgrade           => 1,

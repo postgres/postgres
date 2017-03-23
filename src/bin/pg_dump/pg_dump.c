@@ -12834,8 +12834,10 @@ dumpCollation(Archive *fout, CollInfo *collinfo)
 	PQExpBuffer delq;
 	PQExpBuffer labelq;
 	PGresult   *res;
+	int			i_collprovider;
 	int			i_collcollate;
 	int			i_collctype;
+	const char *collprovider;
 	const char *collcollate;
 	const char *collctype;
 
@@ -12852,18 +12854,32 @@ dumpCollation(Archive *fout, CollInfo *collinfo)
 	selectSourceSchema(fout, collinfo->dobj.namespace->dobj.name);
 
 	/* Get collation-specific details */
-	appendPQExpBuffer(query, "SELECT "
-					  "collcollate, "
-					  "collctype "
-					  "FROM pg_catalog.pg_collation c "
-					  "WHERE c.oid = '%u'::pg_catalog.oid",
-					  collinfo->dobj.catId.oid);
+	if (fout->remoteVersion >= 100000)
+		appendPQExpBuffer(query, "SELECT "
+						  "collprovider, "
+						  "collcollate, "
+						  "collctype, "
+						  "collversion "
+						  "FROM pg_catalog.pg_collation c "
+						  "WHERE c.oid = '%u'::pg_catalog.oid",
+						  collinfo->dobj.catId.oid);
+	else
+		appendPQExpBuffer(query, "SELECT "
+						  "'p'::char AS collprovider, "
+						  "collcollate, "
+						  "collctype, "
+						  "NULL AS collversion "
+						  "FROM pg_catalog.pg_collation c "
+						  "WHERE c.oid = '%u'::pg_catalog.oid",
+						  collinfo->dobj.catId.oid);
 
 	res = ExecuteSqlQueryForSingleRow(fout, query->data);
 
+	i_collprovider = PQfnumber(res, "collprovider");
 	i_collcollate = PQfnumber(res, "collcollate");
 	i_collctype = PQfnumber(res, "collctype");
 
+	collprovider = PQgetvalue(res, 0, i_collprovider);
 	collcollate = PQgetvalue(res, 0, i_collcollate);
 	collctype = PQgetvalue(res, 0, i_collctype);
 
@@ -12875,11 +12891,50 @@ dumpCollation(Archive *fout, CollInfo *collinfo)
 	appendPQExpBuffer(delq, ".%s;\n",
 					  fmtId(collinfo->dobj.name));
 
-	appendPQExpBuffer(q, "CREATE COLLATION %s (lc_collate = ",
+	appendPQExpBuffer(q, "CREATE COLLATION %s (",
 					  fmtId(collinfo->dobj.name));
-	appendStringLiteralAH(q, collcollate, fout);
-	appendPQExpBufferStr(q, ", lc_ctype = ");
-	appendStringLiteralAH(q, collctype, fout);
+
+	appendPQExpBufferStr(q, "provider = ");
+	if (collprovider[0] == 'c')
+		appendPQExpBufferStr(q, "libc");
+	else if (collprovider[0] == 'i')
+		appendPQExpBufferStr(q, "icu");
+	else
+		exit_horribly(NULL,
+					  "unrecognized collation provider: %s\n",
+					  collprovider);
+
+	if (strcmp(collcollate, collctype) == 0)
+	{
+		appendPQExpBufferStr(q, ", locale = ");
+		appendStringLiteralAH(q, collcollate, fout);
+	}
+	else
+	{
+		appendPQExpBufferStr(q, ", lc_collate = ");
+		appendStringLiteralAH(q, collcollate, fout);
+		appendPQExpBufferStr(q, ", lc_ctype = ");
+		appendStringLiteralAH(q, collctype, fout);
+	}
+
+	/*
+	 * For binary upgrade, carry over the collation version.  For normal
+	 * dump/restore, omit the version, so that it is computed upon restore.
+	 */
+	if (dopt->binary_upgrade)
+	{
+		int			i_collversion;
+
+		i_collversion = PQfnumber(res, "collversion");
+		if (!PQgetisnull(res, 0, i_collversion))
+		{
+			appendPQExpBufferStr(q, ", version = ");
+			appendStringLiteralAH(q,
+								  PQgetvalue(res, 0, i_collversion),
+								  fout);
+		}
+	}
+
 	appendPQExpBufferStr(q, ");\n");
 
 	appendPQExpBuffer(labelq, "COLLATION %s", fmtId(collinfo->dobj.name));

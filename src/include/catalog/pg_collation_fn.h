@@ -16,8 +16,10 @@
 
 extern Oid CollationCreate(const char *collname, Oid collnamespace,
 				Oid collowner,
+				char collprovider,
 				int32 collencoding,
 				const char *collcollate, const char *collctype,
+				const char *collversion,
 				bool if_not_exists);
 extern void RemoveCollationById(Oid collationOid);
 

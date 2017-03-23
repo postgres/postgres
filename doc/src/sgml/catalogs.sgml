@@ -2021,6 +2021,14 @@
      </row>
 
      <row>
+      <entry><structfield>collprovider</structfield></entry>
+      <entry><type>char</type></entry>
+      <entry></entry>
+      <entry>Provider of the collation: <literal>d</literal> = database
+       default, <literal>c</literal> = libc, <literal>i</literal> = icu</entry>
+     </row>
+
+     <row>
       <entry><structfield>collencoding</structfield></entry>
       <entry><type>int4</type></entry>
       <entry></entry>
@@ -2040,6 +2048,17 @@
       <entry><type>name</type></entry>
       <entry></entry>
       <entry><symbol>LC_CTYPE</> for this collation object</entry>
+     </row>
+
+     <row>
+      <entry><structfield>collversion</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>
+       Provider-specific version of the collation.  This is recorded when the
+       collation is created and then checked when it is used, to detect
+       changes in the collation definition that could lead to data corruption.
+      </entry>
      </row>
     </tbody>
    </tgroup>

@@ -179,6 +179,7 @@ pgxsdir = $(pkglibdir)/pgxs
 #
 # Records the choice of the various --enable-xxx and --with-xxx options.
 
+with_icu	= @with_icu@
 with_perl	= @with_perl@
 with_python	= @with_python@
 with_tcl	= @with_tcl@
@@ -207,6 +208,9 @@ python_majorversion	= @python_majorversion@
 python_version		= @python_version@
 
 krb_srvtab = @krb_srvtab@
+
+ICU_CFLAGS		= @ICU_CFLAGS@
+ICU_LIBS		= @ICU_LIBS@
 
 TCLSH			= @TCLSH@
 TCL_LIBS		= @TCL_LIBS@

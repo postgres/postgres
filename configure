@@ -715,6 +715,12 @@ krb_srvtab
 with_python
 with_perl
 with_tcl
+ICU_LIBS
+ICU_CFLAGS
+PKG_CONFIG_LIBDIR
+PKG_CONFIG_PATH
+PKG_CONFIG
+with_icu
 enable_thread_safety
 INCLUDES
 autodepend
@@ -821,6 +827,7 @@ with_CC
 enable_depend
 enable_cassert
 enable_thread_safety
+with_icu
 with_tcl
 with_tclconfig
 with_perl
@@ -856,6 +863,11 @@ LDFLAGS
 LIBS
 CPPFLAGS
 CPP
+PKG_CONFIG
+PKG_CONFIG_PATH
+PKG_CONFIG_LIBDIR
+ICU_CFLAGS
+ICU_LIBS
 LDFLAGS_EX
 LDFLAGS_SL
 DOCBOOKSTYLE'
@@ -1511,6 +1523,7 @@ Optional Packages:
   --with-wal-segsize=SEGSIZE
                           set WAL segment size in MB [16]
   --with-CC=CMD           set compiler (deprecated)
+  --with-icu              build with ICU support
   --with-tcl              build Tcl modules (PL/Tcl)
   --with-tclconfig=DIR    tclConfig.sh is in DIR
   --with-perl             build Perl modules (PL/Perl)
@@ -1546,6 +1559,13 @@ Some influential environment variables:
   CPPFLAGS    (Objective) C/C++ preprocessor flags, e.g. -I<include dir> if
               you have headers in a nonstandard directory <include dir>
   CPP         C preprocessor
+  PKG_CONFIG  path to pkg-config utility
+  PKG_CONFIG_PATH
+              directories to add to pkg-config's search path
+  PKG_CONFIG_LIBDIR
+              path overriding pkg-config's built-in search path
+  ICU_CFLAGS  C compiler flags for ICU, overriding pkg-config
+  ICU_LIBS    linker flags for ICU, overriding pkg-config
   LDFLAGS_EX  extra linker flags for linking executables only
   LDFLAGS_SL  extra linker flags for linking shared libraries only
   DOCBOOKSTYLE
@@ -5360,6 +5380,255 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_thread_safety" >&5
 $as_echo "$enable_thread_safety" >&6; }
 
+
+#
+# ICU
+#
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to build with ICU support" >&5
+$as_echo_n "checking whether to build with ICU support... " >&6; }
+
+
+
+# Check whether --with-icu was given.
+if test "${with_icu+set}" = set; then :
+  withval=$with_icu;
+  case $withval in
+    yes)
+
+$as_echo "#define USE_ICU 1" >>confdefs.h
+
+      ;;
+    no)
+      :
+      ;;
+    *)
+      as_fn_error $? "no argument expected for --with-icu option" "$LINENO" 5
+      ;;
+  esac
+
+else
+  with_icu=no
+
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $with_icu" >&5
+$as_echo "$with_icu" >&6; }
+
+
+if test "$with_icu" = yes; then
+
+
+
+
+
+
+
+if test "x$ac_cv_env_PKG_CONFIG_set" != "xset"; then
+	if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}pkg-config", so it can be a program name with args.
+set dummy ${ac_tool_prefix}pkg-config; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_PKG_CONFIG+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $PKG_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PKG_CONFIG="$PKG_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_PKG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+PKG_CONFIG=$ac_cv_path_PKG_CONFIG
+if test -n "$PKG_CONFIG"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PKG_CONFIG" >&5
+$as_echo "$PKG_CONFIG" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+fi
+if test -z "$ac_cv_path_PKG_CONFIG"; then
+  ac_pt_PKG_CONFIG=$PKG_CONFIG
+  # Extract the first word of "pkg-config", so it can be a program name with args.
+set dummy pkg-config; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_ac_pt_PKG_CONFIG+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $ac_pt_PKG_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_ac_pt_PKG_CONFIG="$ac_pt_PKG_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_ac_pt_PKG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+ac_pt_PKG_CONFIG=$ac_cv_path_ac_pt_PKG_CONFIG
+if test -n "$ac_pt_PKG_CONFIG"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_pt_PKG_CONFIG" >&5
+$as_echo "$ac_pt_PKG_CONFIG" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+  if test "x$ac_pt_PKG_CONFIG" = x; then
+    PKG_CONFIG=""
+  else
+    case $cross_compiling:$ac_tool_warned in
+yes:)
+{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
+$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
+ac_tool_warned=yes ;;
+esac
+    PKG_CONFIG=$ac_pt_PKG_CONFIG
+  fi
+else
+  PKG_CONFIG="$ac_cv_path_PKG_CONFIG"
+fi
+
+fi
+if test -n "$PKG_CONFIG"; then
+	_pkg_min_version=0.9.0
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking pkg-config is at least version $_pkg_min_version" >&5
+$as_echo_n "checking pkg-config is at least version $_pkg_min_version... " >&6; }
+	if $PKG_CONFIG --atleast-pkgconfig-version $_pkg_min_version; then
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	else
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+		PKG_CONFIG=""
+	fi
+fi
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for icu-uc icu-i18n" >&5
+$as_echo_n "checking for icu-uc icu-i18n... " >&6; }
+
+if test -n "$ICU_CFLAGS"; then
+    pkg_cv_ICU_CFLAGS="$ICU_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"icu-uc icu-i18n\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "icu-uc icu-i18n") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_ICU_CFLAGS=`$PKG_CONFIG --cflags "icu-uc icu-i18n" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$ICU_LIBS"; then
+    pkg_cv_ICU_LIBS="$ICU_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"icu-uc icu-i18n\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "icu-uc icu-i18n") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_ICU_LIBS=`$PKG_CONFIG --libs "icu-uc icu-i18n" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        ICU_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "icu-uc icu-i18n" 2>&1`
+        else
+	        ICU_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "icu-uc icu-i18n" 2>&1`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$ICU_PKG_ERRORS" >&5
+
+	as_fn_error $? "Package requirements (icu-uc icu-i18n) were not met:
+
+$ICU_PKG_ERRORS
+
+Consider adjusting the PKG_CONFIG_PATH environment variable if you
+installed software in a non-standard prefix.
+
+Alternatively, you may set the environment variables ICU_CFLAGS
+and ICU_LIBS to avoid the need to call pkg-config.
+See the pkg-config man page for more details." "$LINENO" 5
+elif test $pkg_failed = untried; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	{ { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "The pkg-config script could not be found or is too old.  Make sure it
+is in your PATH or set the PKG_CONFIG environment variable to the full
+path to pkg-config.
+
+Alternatively, you may set the environment variables ICU_CFLAGS
+and ICU_LIBS to avoid the need to call pkg-config.
+See the pkg-config man page for more details.
+
+To get pkg-config, see <http://pkg-config.freedesktop.org/>.
+See \`config.log' for more details" "$LINENO" 5; }
+else
+	ICU_CFLAGS=$pkg_cv_ICU_CFLAGS
+	ICU_LIBS=$pkg_cv_ICU_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+fi
+fi
 
 #
 # Optionally build Tcl modules (PL/Tcl)
@@ -13466,6 +13735,50 @@ _ACEOF
 fi
 done
 
+
+if test "$with_icu" = yes; then
+  # ICU functions are macros, so we need to do this the long way.
+
+  # ucol_strcollUTF8() appeared in ICU 50.
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ucol_strcollUTF8" >&5
+$as_echo_n "checking for ucol_strcollUTF8... " >&6; }
+if ${pgac_cv_func_ucol_strcollUTF8+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$ICU_CFLAGS $CPPFLAGS"
+ac_save_LIBS=$LIBS
+LIBS="$ICU_LIBS $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <unicode/ucol.h>
+
+int
+main ()
+{
+ucol_strcollUTF8(NULL, NULL, 0, NULL, 0, NULL);
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  pgac_cv_func_ucol_strcollUTF8=yes
+else
+  pgac_cv_func_ucol_strcollUTF8=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+CPPFLAGS=$ac_save_CPPFLAGS
+LIBS=$ac_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_func_ucol_strcollUTF8" >&5
+$as_echo "$pgac_cv_func_ucol_strcollUTF8" >&6; }
+  if test "$pgac_cv_func_ucol_strcollUTF8" = yes ; then
+
+$as_echo "#define HAVE_UCOL_STRCOLLUTF8 1" >>confdefs.h
+
+  fi
+fi
 
 # Lastly, restore full LIBS list and check for readline/libedit symbols
 LIBS="$LIBS_including_readline"

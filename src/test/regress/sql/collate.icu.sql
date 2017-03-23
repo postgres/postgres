@@ -1,7 +1,5 @@
 /*
- * This test is for Linux/glibc systems and assumes that a full set of
- * locales is installed.  It must be run in a database with UTF-8 encoding,
- * because other encodings don't support all the characters used.
+ * This test is for ICU collations.
  */
 
 SET client_encoding TO UTF8;
@@ -12,23 +10,23 @@ SET search_path = collate_tests;
 
 CREATE TABLE collate_test1 (
     a int,
-    b text COLLATE "en_US" NOT NULL
+    b text COLLATE "en-x-icu" NOT NULL
 );
 
 \d collate_test1
 
 CREATE TABLE collate_test_fail (
     a int,
-    b text COLLATE "ja_JP.eucjp"
+    b text COLLATE "ja_JP.eucjp-x-icu"
 );
 
 CREATE TABLE collate_test_fail (
     a int,
-    b text COLLATE "foo"
+    b text COLLATE "foo-x-icu"
 );
 
 CREATE TABLE collate_test_fail (
-    a int COLLATE "en_US",
+    a int COLLATE "en-x-icu",
     b text
 );
 
@@ -40,7 +38,7 @@ CREATE TABLE collate_test_like (
 
 CREATE TABLE collate_test2 (
     a int,
-    b text COLLATE "sv_SE"
+    b text COLLATE "sv-x-icu"
 );
 
 CREATE TABLE collate_test3 (
@@ -60,11 +58,11 @@ SELECT * FROM collate_test3 WHERE b >= 'BBC';
 SELECT * FROM collate_test1 WHERE b COLLATE "C" >= 'bbc';
 SELECT * FROM collate_test1 WHERE b >= 'bbc' COLLATE "C";
 SELECT * FROM collate_test1 WHERE b COLLATE "C" >= 'bbc' COLLATE "C";
-SELECT * FROM collate_test1 WHERE b COLLATE "C" >= 'bbc' COLLATE "en_US";
+SELECT * FROM collate_test1 WHERE b COLLATE "C" >= 'bbc' COLLATE "en-x-icu";
 
 
-CREATE DOMAIN testdomain_sv AS text COLLATE "sv_SE";
-CREATE DOMAIN testdomain_i AS int COLLATE "sv_SE"; -- fails
+CREATE DOMAIN testdomain_sv AS text COLLATE "sv-x-icu";
+CREATE DOMAIN testdomain_i AS int COLLATE "sv-x-icu"; -- fails
 CREATE TABLE collate_test4 (
     a int,
     b testdomain_sv
@@ -74,7 +72,7 @@ SELECT a, b FROM collate_test4 ORDER BY b;
 
 CREATE TABLE collate_test5 (
     a int,
-    b testdomain_sv COLLATE "en_US"
+    b testdomain_sv COLLATE "en-x-icu"
 );
 INSERT INTO collate_test5 SELECT * FROM collate_test1;
 SELECT a, b FROM collate_test5 ORDER BY b;
@@ -92,15 +90,15 @@ SELECT * FROM collate_test2 ORDER BY b;
 SELECT * FROM collate_test3 ORDER BY b;
 
 -- constant expression folding
-SELECT 'bbc' COLLATE "en_US" > 'äbc' COLLATE "en_US" AS "true";
-SELECT 'bbc' COLLATE "sv_SE" > 'äbc' COLLATE "sv_SE" AS "false";
+SELECT 'bbc' COLLATE "en-x-icu" > 'äbc' COLLATE "en-x-icu" AS "true";
+SELECT 'bbc' COLLATE "sv-x-icu" > 'äbc' COLLATE "sv-x-icu" AS "false";
 
 -- upper/lower
 
 CREATE TABLE collate_test10 (
     a int,
-    x text COLLATE "en_US",
-    y text COLLATE "tr_TR"
+    x text COLLATE "en-x-icu",
+    y text COLLATE "tr-x-icu"
 );
 
 INSERT INTO collate_test10 VALUES (1, 'hij', 'hij'), (2, 'HIJ', 'HIJ');
@@ -119,11 +117,11 @@ SELECT * FROM collate_test1 WHERE b ILIKE 'abc';
 SELECT * FROM collate_test1 WHERE b ILIKE 'abc%';
 SELECT * FROM collate_test1 WHERE b ILIKE '%bc%';
 
-SELECT 'Türkiye' COLLATE "en_US" ILIKE '%KI%' AS "true";
-SELECT 'Türkiye' COLLATE "tr_TR" ILIKE '%KI%' AS "false";
+SELECT 'Türkiye' COLLATE "en-x-icu" ILIKE '%KI%' AS "true";
+SELECT 'Türkiye' COLLATE "tr-x-icu" ILIKE '%KI%' AS "false";
 
-SELECT 'bıt' ILIKE 'BIT' COLLATE "en_US" AS "false";
-SELECT 'bıt' ILIKE 'BIT' COLLATE "tr_TR" AS "true";
+SELECT 'bıt' ILIKE 'BIT' COLLATE "en-x-icu" AS "false";
+SELECT 'bıt' ILIKE 'BIT' COLLATE "tr-x-icu" AS "true";
 
 -- The following actually exercises the selectivity estimation for ILIKE.
 SELECT relname FROM pg_class WHERE relname ILIKE 'abc%';
@@ -139,7 +137,7 @@ SELECT * FROM collate_test1 WHERE b ~* 'bc';
 
 CREATE TABLE collate_test6 (
     a int,
-    b text COLLATE "en_US"
+    b text COLLATE "en-x-icu"
 );
 INSERT INTO collate_test6 VALUES (1, 'abc'), (2, 'ABC'), (3, '123'), (4, 'ab1'),
                                  (5, 'a1!'), (6, 'a c'), (7, '!.;'), (8, '   '),
@@ -156,21 +154,23 @@ SELECT b,
        b ~ '^[[:space:]]+$' AS is_space
 FROM collate_test6;
 
-SELECT 'Türkiye' COLLATE "en_US" ~* 'KI' AS "true";
-SELECT 'Türkiye' COLLATE "tr_TR" ~* 'KI' AS "false";
+SELECT 'Türkiye' COLLATE "en-x-icu" ~* 'KI' AS "true";
+SELECT 'Türkiye' COLLATE "tr-x-icu" ~* 'KI' AS "true";  -- true with ICU
 
-SELECT 'bıt' ~* 'BIT' COLLATE "en_US" AS "false";
-SELECT 'bıt' ~* 'BIT' COLLATE "tr_TR" AS "true";
+SELECT 'bıt' ~* 'BIT' COLLATE "en-x-icu" AS "false";
+SELECT 'bıt' ~* 'BIT' COLLATE "tr-x-icu" AS "false";  -- false with ICU
 
 -- The following actually exercises the selectivity estimation for ~*.
 SELECT relname FROM pg_class WHERE relname ~* '^abc';
 
 
+/* not run by default because it requires tr_TR system locale
 -- to_char
 
 SET lc_time TO 'tr_TR';
 SELECT to_char(date '2010-04-01', 'DD TMMON YYYY');
-SELECT to_char(date '2010-04-01', 'DD TMMON YYYY' COLLATE "tr_TR");
+SELECT to_char(date '2010-04-01', 'DD TMMON YYYY' COLLATE "tr-x-icu");
+*/
 
 
 -- backwards parsing
@@ -240,9 +240,9 @@ select x, y from collate_test10 order by x || y; -- not so ok
 
 -- collation mismatch between recursive and non-recursive term
 WITH RECURSIVE foo(x) AS
-   (SELECT x FROM (VALUES('a' COLLATE "en_US"),('b')) t(x)
+   (SELECT x FROM (VALUES('a' COLLATE "en-x-icu"),('b')) t(x)
    UNION ALL
-   SELECT (x || 'c') COLLATE "de_DE" FROM foo WHERE length(x) < 10)
+   SELECT (x || 'c') COLLATE "de-x-icu" FROM foo WHERE length(x) < 10)
 SELECT * FROM foo;
 
 
@@ -290,7 +290,7 @@ begin
 end
 $$;
 
-SELECT mylt2('a', 'B' collate "en_US") as t, mylt2('a', 'B' collate "C") as f;
+SELECT mylt2('a', 'B' collate "en-x-icu") as t, mylt2('a', 'B' collate "C") as f;
 
 CREATE OR REPLACE FUNCTION
   mylt2 (x text, y text) RETURNS boolean LANGUAGE plpgsql AS $$
@@ -342,24 +342,21 @@ CREATE SCHEMA test_schema;
 -- We need to do this this way to cope with varying names for encodings:
 do $$
 BEGIN
-  EXECUTE 'CREATE COLLATION test0 (locale = ' ||
+  EXECUTE 'CREATE COLLATION test0 (provider = icu, locale = ' ||
           quote_literal(current_setting('lc_collate')) || ');';
 END
 $$;
 CREATE COLLATION test0 FROM "C"; -- fail, duplicate name
-CREATE COLLATION IF NOT EXISTS test0 FROM "C"; -- ok, skipped
-CREATE COLLATION IF NOT EXISTS test0 (locale = 'foo'); -- ok, skipped
 do $$
 BEGIN
-  EXECUTE 'CREATE COLLATION test1 (lc_collate = ' ||
+  EXECUTE 'CREATE COLLATION test1 (provider = icu, lc_collate = ' ||
           quote_literal(current_setting('lc_collate')) ||
           ', lc_ctype = ' ||
           quote_literal(current_setting('lc_ctype')) || ');';
 END
 $$;
-CREATE COLLATION test3 (lc_collate = 'en_US.utf8'); -- fail, need lc_ctype
-CREATE COLLATION testx (locale = 'nonsense'); -- fail
-CREATE COLLATION testy (locale = 'en_US.utf8', version = 'foo'); -- fail, no versions for libc
+CREATE COLLATION test3 (provider = icu, lc_collate = 'en_US.utf8'); -- fail, need lc_ctype
+CREATE COLLATION testx (provider = icu, locale = 'nonsense'); /* never fails with ICU */  DROP COLLATION testx;
 
 CREATE COLLATION test4 FROM nonsense;
 CREATE COLLATION test5 FROM test0;
@@ -393,7 +390,7 @@ DROP ROLE regress_test_role;
 
 -- ALTER
 
-ALTER COLLATION "en_US" REFRESH VERSION;
+ALTER COLLATION "en-x-icu" REFRESH VERSION;
 
 
 -- dependencies
@@ -419,7 +416,7 @@ DROP TYPE collate_dep_test2;
 -- test range types and collations
 
 create type textrange_c as range(subtype=text, collation="C");
-create type textrange_en_us as range(subtype=text, collation="en_US");
+create type textrange_en_us as range(subtype=text, collation="en-x-icu");
 
 select textrange_c('A','Z') @> 'b'::text;
 select textrange_en_us('A','Z') @> 'b'::text;
@@ -430,3 +427,7 @@ drop type textrange_en_us;
 
 -- cleanup
 DROP SCHEMA collate_tests CASCADE;
+RESET search_path;
+
+-- leave a collation for pg_upgrade test
+CREATE COLLATION coll_icu_upgrade FROM "und-x-icu";

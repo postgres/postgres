@@ -614,6 +614,19 @@ AC_MSG_RESULT([$enable_thread_safety])
 AC_SUBST(enable_thread_safety)
 
 #
+# ICU
+#
+AC_MSG_CHECKING([whether to build with ICU support])
+PGAC_ARG_BOOL(with, icu, no, [build with ICU support],
+              [AC_DEFINE([USE_ICU], 1, [Define to build with ICU support. (--with-icu)])])
+AC_MSG_RESULT([$with_icu])
+AC_SUBST(with_icu)
+
+if test "$with_icu" = yes; then
+  PKG_CHECK_MODULES(ICU, icu-uc icu-i18n)
+fi
+
+#
 # Optionally build Tcl modules (PL/Tcl)
 #
 AC_MSG_CHECKING([whether to build with Tcl])
@@ -1634,6 +1647,28 @@ fi
 
 AC_CHECK_FUNCS([strtoll strtoq], [break])
 AC_CHECK_FUNCS([strtoull strtouq], [break])
+
+if test "$with_icu" = yes; then
+  # ICU functions are macros, so we need to do this the long way.
+
+  # ucol_strcollUTF8() appeared in ICU 50.
+  AC_CACHE_CHECK([for ucol_strcollUTF8], [pgac_cv_func_ucol_strcollUTF8],
+[ac_save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$ICU_CFLAGS $CPPFLAGS"
+ac_save_LIBS=$LIBS
+LIBS="$ICU_LIBS $LIBS"
+AC_LINK_IFELSE([AC_LANG_PROGRAM(
+[#include <unicode/ucol.h>
+],
+[ucol_strcollUTF8(NULL, NULL, 0, NULL, 0, NULL);])],
+[pgac_cv_func_ucol_strcollUTF8=yes],
+[pgac_cv_func_ucol_strcollUTF8=no])
+CPPFLAGS=$ac_save_CPPFLAGS
+LIBS=$ac_save_LIBS])
+  if test "$pgac_cv_func_ucol_strcollUTF8" = yes ; then
+    AC_DEFINE([HAVE_UCOL_STRCOLLUTF8], 1, [Define to 1 if you have the `ucol_strcollUTF8' function.])
+  fi
+fi
 
 # Lastly, restore full LIBS list and check for readline/libedit symbols
 LIBS="$LIBS_including_readline"

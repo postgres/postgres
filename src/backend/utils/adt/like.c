@@ -96,7 +96,7 @@ SB_lower_char(unsigned char c, pg_locale_t locale, bool locale_is_c)
 		return pg_ascii_tolower(c);
 #ifdef HAVE_LOCALE_T
 	else if (locale)
-		return tolower_l(c, locale);
+		return tolower_l(c, locale->info.lt);
 #endif
 	else
 		return pg_tolower(c);
@@ -165,14 +165,36 @@ Generic_Text_IC_like(text *str, text *pat, Oid collation)
 			   *p;
 	int			slen,
 				plen;
+	pg_locale_t locale = 0;
+	bool		locale_is_c = false;
+
+	if (lc_ctype_is_c(collation))
+		locale_is_c = true;
+	else if (collation != DEFAULT_COLLATION_OID)
+	{
+		if (!OidIsValid(collation))
+		{
+			/*
+			 * This typically means that the parser could not resolve a
+			 * conflict of implicit collations, so report it that way.
+			 */
+			ereport(ERROR,
+					(errcode(ERRCODE_INDETERMINATE_COLLATION),
+					 errmsg("could not determine which collation to use for ILIKE"),
+					 errhint("Use the COLLATE clause to set the collation explicitly.")));
+		}
+		locale = pg_newlocale_from_collation(collation);
+	}
 
 	/*
 	 * For efficiency reasons, in the single byte case we don't call lower()
 	 * on the pattern and text, but instead call SB_lower_char on each
-	 * character.  In the multi-byte case we don't have much choice :-(
+	 * character.  In the multi-byte case we don't have much choice :-(.
+	 * Also, ICU does not support single-character case folding, so we go the
+	 * long way.
 	 */
 
-	if (pg_database_encoding_max_length() > 1)
+	if (pg_database_encoding_max_length() > 1 || locale->provider == COLLPROVIDER_ICU)
 	{
 		/* lower's result is never packed, so OK to use old macros here */
 		pat = DatumGetTextPP(DirectFunctionCall1Coll(lower, collation,
@@ -190,31 +212,6 @@ Generic_Text_IC_like(text *str, text *pat, Oid collation)
 	}
 	else
 	{
-		/*
-		 * Here we need to prepare locale information for SB_lower_char. This
-		 * should match the methods used in str_tolower().
-		 */
-		pg_locale_t locale = 0;
-		bool		locale_is_c = false;
-
-		if (lc_ctype_is_c(collation))
-			locale_is_c = true;
-		else if (collation != DEFAULT_COLLATION_OID)
-		{
-			if (!OidIsValid(collation))
-			{
-				/*
-				 * This typically means that the parser could not resolve a
-				 * conflict of implicit collations, so report it that way.
-				 */
-				ereport(ERROR,
-						(errcode(ERRCODE_INDETERMINATE_COLLATION),
-						 errmsg("could not determine which collation to use for ILIKE"),
-						 errhint("Use the COLLATE clause to set the collation explicitly.")));
-			}
-			locale = pg_newlocale_from_collation(collation);
-		}
-
 		p = VARDATA_ANY(pat);
 		plen = VARSIZE_ANY_EXHDR(pat);
 		s = VARDATA_ANY(str);

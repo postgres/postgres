@@ -967,7 +967,8 @@ ERROR:  could not serialize access due to read/write dependencies among transact
         </para>
 
         <para>
-         Acquired by <command>CREATE TRIGGER</command> and many forms of
+         Acquired by <command>CREATE COLLATION</command>,
+         <command>CREATE TRIGGER</command>, and many forms of
          <command>ALTER TABLE</command> (see <xref linkend="SQL-ALTERTABLE">).
         </para>
        </listitem>

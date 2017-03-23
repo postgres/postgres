@@ -500,19 +500,45 @@ SELECT * FROM test1 ORDER BY a || b COLLATE "fr_FR";
    <title>Managing Collations</title>
 
    <para>
-    A collation is an SQL schema object that maps an SQL name to
-    operating system locales.  In particular, it maps to a combination
-    of <symbol>LC_COLLATE</symbol> and <symbol>LC_CTYPE</symbol>.  (As
+    A collation is an SQL schema object that maps an SQL name to locales
+    provided by libraries installed in the operating system.  A collation
+    definition has a <firstterm>provider</firstterm> that specifies which
+    library supplies the locale data.  One standard provider name
+    is <literal>libc</literal>, which uses the locales provided by the
+    operating system C library.  These are the locales that most tools
+    provided by the operating system use.  Another provider
+    is <literal>icu</literal>, which uses the external
+    ICU<indexterm><primary>ICU</></> library.  Support for ICU has to be
+    configured when PostgreSQL is built.
+   </para>
+
+   <para>
+    A collation object provided by <literal>libc</literal> maps to a
+    combination of <symbol>LC_COLLATE</symbol> and <symbol>LC_CTYPE</symbol>
+    settings.  (As
     the name would suggest, the main purpose of a collation is to set
     <symbol>LC_COLLATE</symbol>, which controls the sort order.  But
     it is rarely necessary in practice to have an
     <symbol>LC_CTYPE</symbol> setting that is different from
     <symbol>LC_COLLATE</symbol>, so it is more convenient to collect
     these under one concept than to create another infrastructure for
-    setting <symbol>LC_CTYPE</symbol> per expression.)  Also, a collation
+    setting <symbol>LC_CTYPE</symbol> per expression.)  Also,
+    a <literal>libc</literal> collation
     is tied to a character set encoding (see <xref linkend="multibyte">).
     The same collation name may exist for different encodings.
    </para>
+
+   <para>
+    A collation provided by <literal>icu</literal> maps to a named collator
+    provided by the ICU library.  ICU does not support
+    separate <quote>collate</quote> and <quote>ctype</quote> settings, so they
+    are always the same.  Also, ICU collations are independent of the
+    encoding, so there is always only one ICU collation for a given name in a
+    database.
+   </para>
+
+   <sect3>
+    <title>Standard Collations</title>
 
    <para>
     On all platforms, the collations named <literal>default</>,
@@ -528,12 +554,36 @@ SELECT * FROM test1 ORDER BY a || b COLLATE "fr_FR";
    </para>
 
    <para>
+    Additionally, the SQL standard collation name <literal>ucs_basic</literal>
+    is available for encoding <literal>UTF8</literal>.  It is equivalent
+    to <literal>C</literal> and sorts by Unicode code point.
+   </para>
+  </sect3>
+
+  <sect3>
+   <title>Predefined Collations</title>
+
+   <para>
     If the operating system provides support for using multiple locales
     within a single program (<function>newlocale</> and related functions),
+    or support for ICU is configured,
     then when a database cluster is initialized, <command>initdb</command>
     populates the system catalog <literal>pg_collation</literal> with
     collations based on all the locales it finds on the operating
-    system at the time.  For example, the operating system might
+    system at the time.
+   </para>
+
+   <para>
+    To inspect the currently available locales, use the query <literal>SELECT
+    * FROM pg_collation</literal>, or the command <command>\dOS+</command>
+    in <application>psql</application>.
+   </para>
+
+  <sect4>
+   <title>libc collations</title>
+
+   <para>
+    For example, the operating system might
     provide a locale named <literal>de_DE.utf8</literal>.
     <command>initdb</command> would then create a collation named
     <literal>de_DE.utf8</literal> for encoding <literal>UTF8</literal>
@@ -548,13 +598,14 @@ SELECT * FROM test1 ORDER BY a || b COLLATE "fr_FR";
    </para>
 
    <para>
-    In case a collation is needed that has different values for
-    <symbol>LC_COLLATE</symbol> and <symbol>LC_CTYPE</symbol>, a new
-    collation may be created using
-    the <xref linkend="sql-createcollation"> command.  That command
-    can also be used to create a new collation from an existing
-    collation, which can be useful to be able to use
-    operating-system-independent collation names in applications.
+    The default set of collations provided by <literal>libc</literal> map
+    directly to the locales installed in the operating system, which can be
+    listed using the command <literal>locale -a</literal>.  In case
+    a <literal>libc</literal> collation is needed that has different values
+    for <symbol>LC_COLLATE</symbol> and <symbol>LC_CTYPE</symbol>, or new
+    locales are installed in the operating system after the database system
+    was initialized, then a new collation may be created using
+    the <xref linkend="sql-createcollation"> command.
    </para>
 
    <para>
@@ -566,8 +617,8 @@ SELECT * FROM test1 ORDER BY a || b COLLATE "fr_FR";
     Use of the stripped collation names is recommended, since it will
     make one less thing you need to change if you decide to change to
     another database encoding.  Note however that the <literal>default</>,
-    <literal>C</>, and <literal>POSIX</> collations can be used
-    regardless of the database encoding.
+    <literal>C</>, and <literal>POSIX</> collations, as well as all collations
+    provided by ICU can be used regardless of the database encoding.
    </para>
 
    <para>
@@ -580,6 +631,104 @@ SELECT a COLLATE "C" &lt; b COLLATE "POSIX" FROM test1;
     will draw an error even though the <literal>C</> and <literal>POSIX</>
     collations have identical behaviors.  Mixing stripped and non-stripped
     collation names is therefore not recommended.
+   </para>
+  </sect4>
+
+  <sect4>
+   <title>ICU collations</title>
+
+   <para>
+    Collations provided by ICU are created with names in BCP 47 language tag
+    format, with a <quote>private use</quote>
+    extension <literal>-x-icu</literal> appended, to distinguish them from
+    libc locales.  So <literal>de-x-icu</literal> would be an example.
+   </para>
+
+   <para>
+    With ICU, it is not sensible to enumerate all possible locale names.  ICU
+    uses a particular naming system for locales, but there are many more ways
+    to name a locale than there are actually distinct locales.  (In fact, any
+    string will be accepted as a locale name.)
+    See <ulink url="http://userguide.icu-project.org/locale"></ulink> for
+    information on ICU locale naming.  <command>initdb</command> uses the ICU
+    APIs to extract a set of locales with distinct collation rules to populate
+    the initial set of collations.  Here are some examples collations that
+    might be created:
+
+    <variablelist>
+     <varlistentry>
+      <term><literal>de-x-icu</literal></term>
+      <listitem>
+       <para>German collation, default variant</para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>de-u-co-phonebk-x-icu</literal></term>
+      <listitem>
+       <para>German collation, phone book variant</para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>de-AT-x-icu</literal></term>
+      <listitem>
+       <para>German collation for Austria, default variant</para>
+       <para>
+        (Note that as of this writing, there is no,
+        say, <literal>de-DE-x-icu</literal> or <literal>de-CH-x-icu</literal>,
+        because those are equivalent to <literal>de-x-icu</literal>.)
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>de-AT-u-co-phonebk-x-icu</literal></term>
+      <listitem>
+       <para>German collation for Austria, phone book variant</para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><literal>und-x-icu</literal> (for <quote>undefined</quote>)</term>
+      <listitem>
+       <para>
+        ICU <quote>root</quote> collation.  Use this to get a reasonable
+        language-agnostic sort order.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+
+   <para>
+    Some (less frequently used) encodings are not supported by ICU.  If the
+    database cluster was initialized with such an encoding, no ICU collations
+    will be predefined.
+   </para>
+   </sect4>
+   </sect3>
+
+   <sect3>
+   <title>Copying Collations</title>
+
+   <para>
+    The command <xref linkend="sql-createcollation"> can also be used to
+    create a new collation from an existing collation, which can be useful to
+    be able to use operating-system-independent collation names in
+    applications, create compatibility names, or use an ICU-provided collation
+    under a more readable name.  For example:
+<programlisting>
+CREATE COLLATION german FROM "de_DE";
+CREATE COLLATION french FROM "fr-x-icu";
+CREATE COLLATION "de-DE-x-icu" FROM "de-x-icu";
+</programlisting>
+   </para>
+
+   <para>
+    The standard and predefined collations are in the
+    schema <literal>pg_catalog</literal>, like all predefined objects.
+    User-defined collations should be created in user schemas.  This also
+    ensures that they are saved by <command>pg_dump</command>.
    </para>
   </sect2>
  </sect1>

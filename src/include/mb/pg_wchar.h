@@ -333,6 +333,12 @@ typedef struct pg_enc2gettext
 extern const pg_enc2gettext pg_enc2gettext_tbl[];
 
 /*
+ * Encoding names for ICU
+ */
+extern bool is_encoding_supported_by_icu(int encoding);
+extern const char *get_encoding_name_for_icu(int encoding);
+
+/*
  * pg_wchar stuff
  */
 typedef int (*mb2wchar_with_len_converter) (const unsigned char *from,
