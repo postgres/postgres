@@ -1696,6 +1696,36 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
       standby server</entry>
     </row>
     <row>
+     <entry><structfield>write_lag</></entry>
+     <entry><type>interval</></entry>
+     <entry>Time elapsed between flushing recent WAL locally and receiving
+      notification that this standby server has written it (but not yet
+      flushed it or applied it).  This can be used to gauge the delay that
+      <literal>synchronous_commit</literal> level
+      <literal>remote_write</literal> incurred while committing if this
+      server was configured as a synchronous standby.</entry>
+    </row>
+    <row>
+     <entry><structfield>flush_lag</></entry>
+     <entry><type>interval</></entry>
+     <entry>Time elapsed between flushing recent WAL locally and receiving
+      notification that this standby server has written and flushed it
+      (but not yet applied it).  This can be used to gauge the delay that
+      <literal>synchronous_commit</literal> level
+      <literal>remote_flush</literal> incurred while committing if this
+      server was configured as a synchronous standby.</entry>
+    </row>
+    <row>
+     <entry><structfield>replay_lag</></entry>
+     <entry><type>interval</></entry>
+     <entry>Time elapsed between flushing recent WAL locally and receiving
+      notification that this standby server has written, flushed and
+      applied it.  This can be used to gauge the delay that
+      <literal>synchronous_commit</literal> level
+      <literal>remote_apply</literal> incurred while committing if this
+      server was configured as a synchronous standby.</entry>
+    </row>
+    <row>
      <entry><structfield>sync_priority</></entry>
      <entry><type>integer</></entry>
      <entry>Priority of this standby server for being chosen as the
@@ -1744,6 +1774,45 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
    sender's connected standby server.  Only directly connected standbys are
    listed; no information is available about downstream standby servers.
   </para>
+
+  <para>
+   The lag times reported in the <structname>pg_stat_replication</structname>
+   view are measurements of the time taken for recent WAL to be written,
+   flushed and replayed and for the sender to know about it.  These times
+   represent the commit delay that was (or would have been) introduced by each
+   synchronous commit level, if the remote server was configured as a
+   synchronous standby.  For an asynchronous standby, the
+   <structfield>replay_lag</structfield> column approximates the delay
+   before recent transactions became visible to queries.  If the standby
+   server has entirely caught up with the sending server and there is no more
+   WAL activity, the most recently measured lag times will continue to be
+   displayed for a short time and then show NULL.
+  </para>
+
+  <para>
+   Lag times work automatically for physical replication. Logical decoding
+   plugins may optionally emit tracking messages; if they do not, the tracking
+   mechanism will simply display NULL lag.
+  </para>
+
+  <note>
+   <para>
+    The reported lag times are not predictions of how long it will take for
+    the standby to catch up with the sending server assuming the current
+    rate of replay.  Such a system would show similar times while new WAL is
+    being generated, but would differ when the sender becomes idle.  In
+    particular, when the standby has caught up completely, 
+    <structname>pg_stat_replication</structname> shows the time taken to
+    write, flush and replay the most recent reported WAL position rather than
+    zero as some users might expect.  This is consistent with the goal of
+    measuring synchronous commit and transaction visibility delays for
+    recent write transactions.
+    To reduce confusion for users expecting a different model of lag, the
+    lag columns revert to NULL after a short time on a fully replayed idle
+    system. Monitoring systems should choose whether to represent this
+    as missing data, zero or continue to display the last known value.
+   </para>
+  </note>
 
   <table id="pg-stat-wal-receiver-view" xreflabel="pg_stat_wal_receiver">
    <title><structname>pg_stat_wal_receiver</structname> View</title>

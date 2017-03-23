@@ -11555,6 +11555,7 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 {
 	static TimestampTz last_fail_time = 0;
 	TimestampTz now;
+	bool		streaming_reply_sent = false;
 
 	/*-------
 	 * Standby mode is implemented by a state machine:
@@ -11875,6 +11876,19 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 						 */
 						lastSourceFailed = true;
 						break;
+					}
+
+					/*
+					 * Since we have replayed everything we have received so
+					 * far and are about to start waiting for more WAL, let's
+					 * tell the upstream server our replay location now so
+					 * that pg_stat_replication doesn't show stale
+					 * information.
+					 */
+					if (!streaming_reply_sent)
+					{
+						WalRcvForceReply();
+						streaming_reply_sent = true;
 					}
 
 					/*

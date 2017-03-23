@@ -47,6 +47,11 @@ typedef struct WalSnd
 	XLogRecPtr	flush;
 	XLogRecPtr	apply;
 
+	/* Measured lag times, or -1 for unknown/none. */
+	TimeOffset	writeLag;
+	TimeOffset	flushLag;
+	TimeOffset	applyLag;
+
 	/* Protects shared variables shown above. */
 	slock_t		mutex;
 
