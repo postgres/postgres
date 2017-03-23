@@ -85,7 +85,8 @@ static void ExecutePlan(EState *estate, PlanState *planstate,
 			bool sendTuples,
 			uint64 numberTuples,
 			ScanDirection direction,
-			DestReceiver *dest);
+			DestReceiver *dest,
+			bool execute_once);
 static bool ExecCheckRTEPerms(RangeTblEntry *rte);
 static bool ExecCheckRTEPermsModified(Oid relOid, Oid userid,
 						  Bitmapset *modifiedCols,
@@ -288,17 +289,18 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
  */
 void
 ExecutorRun(QueryDesc *queryDesc,
-			ScanDirection direction, uint64 count)
+			ScanDirection direction, uint64 count,
+			bool execute_once)
 {
 	if (ExecutorRun_hook)
-		(*ExecutorRun_hook) (queryDesc, direction, count);
+		(*ExecutorRun_hook) (queryDesc, direction, count, execute_once);
 	else
-		standard_ExecutorRun(queryDesc, direction, count);
+		standard_ExecutorRun(queryDesc, direction, count, execute_once);
 }
 
 void
 standard_ExecutorRun(QueryDesc *queryDesc,
-					 ScanDirection direction, uint64 count)
+					 ScanDirection direction, uint64 count, bool execute_once)
 {
 	EState	   *estate;
 	CmdType		operation;
@@ -345,6 +347,11 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 	 * run plan
 	 */
 	if (!ScanDirectionIsNoMovement(direction))
+	{
+		if (execute_once && queryDesc->already_executed)
+			elog(ERROR, "can't re-execute query flagged for single execution");
+		queryDesc->already_executed = true;
+
 		ExecutePlan(estate,
 					queryDesc->planstate,
 					queryDesc->plannedstmt->parallelModeNeeded,
@@ -352,7 +359,9 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 					sendTuples,
 					count,
 					direction,
-					dest);
+					dest,
+					execute_once);
+	}
 
 	/*
 	 * shutdown tuple receiver, if we started it
@@ -1595,7 +1604,8 @@ ExecutePlan(EState *estate,
 			bool sendTuples,
 			uint64 numberTuples,
 			ScanDirection direction,
-			DestReceiver *dest)
+			DestReceiver *dest,
+			bool execute_once)
 {
 	TupleTableSlot *slot;
 	uint64		current_tuple_count;
@@ -1611,12 +1621,12 @@ ExecutePlan(EState *estate,
 	estate->es_direction = direction;
 
 	/*
-	 * If a tuple count was supplied, we must force the plan to run without
-	 * parallelism, because we might exit early.  Also disable parallelism
-	 * when writing into a relation, because no database changes are allowed
-	 * in parallel mode.
+	 * If the plan might potentially be executed multiple times, we must force
+	 * it to run without parallelism, because we might exit early.  Also
+	 * disable parallelism when writing into a relation, because no database
+	 * changes are allowed in parallel mode.
 	 */
-	if (numberTuples || dest->mydest == DestIntoRel)
+	if (!execute_once || dest->mydest == DestIntoRel)
 		use_parallel_mode = false;
 
 	if (use_parallel_mode)
@@ -1687,7 +1697,11 @@ ExecutePlan(EState *estate,
 		 */
 		current_tuple_count++;
 		if (numberTuples && numberTuples == current_tuple_count)
+		{
+			/* Allow nodes to release or shut down resources. */
+			(void) ExecShutdownNode(planstate);
 			break;
+		}
 	}
 
 	if (use_parallel_mode)

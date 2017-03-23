@@ -90,6 +90,9 @@ CreateQueryDesc(PlannedStmt *plannedstmt,
 	qd->planstate = NULL;
 	qd->totaltime = NULL;
 
+	/* not yet executed */
+	qd->already_executed = false;
+
 	return qd;
 }
 
@@ -152,7 +155,7 @@ ProcessQuery(PlannedStmt *plan,
 	/*
 	 * Run the plan to completion.
 	 */
-	ExecutorRun(queryDesc, ForwardScanDirection, 0L);
+	ExecutorRun(queryDesc, ForwardScanDirection, 0L, true);
 
 	/*
 	 * Build command completion status string, if caller wants one.
@@ -679,7 +682,7 @@ PortalSetResultFormat(Portal portal, int nFormats, int16 *formats)
  * suspended due to exhaustion of the count parameter.
  */
 bool
-PortalRun(Portal portal, long count, bool isTopLevel,
+PortalRun(Portal portal, long count, bool isTopLevel, bool run_once,
 		  DestReceiver *dest, DestReceiver *altdest,
 		  char *completionTag)
 {
@@ -711,6 +714,10 @@ PortalRun(Portal portal, long count, bool isTopLevel,
 	 * Check for improper portal use, and mark portal active.
 	 */
 	MarkPortalActive(portal);
+
+	/* Set run_once flag.  Shouldn't be clear if previously set. */
+	Assert(!portal->run_once || run_once);
+	portal->run_once = run_once;
 
 	/*
 	 * Set up global portal context pointers.
@@ -918,7 +925,8 @@ PortalRunSelect(Portal portal,
 		else
 		{
 			PushActiveSnapshot(queryDesc->snapshot);
-			ExecutorRun(queryDesc, direction, (uint64) count);
+			ExecutorRun(queryDesc, direction, (uint64) count,
+						portal->run_once);
 			nprocessed = queryDesc->estate->es_processed;
 			PopActiveSnapshot();
 		}
@@ -957,7 +965,8 @@ PortalRunSelect(Portal portal,
 		else
 		{
 			PushActiveSnapshot(queryDesc->snapshot);
-			ExecutorRun(queryDesc, direction, (uint64) count);
+			ExecutorRun(queryDesc, direction, (uint64) count,
+						portal->run_once);
 			nprocessed = queryDesc->estate->es_processed;
 			PopActiveSnapshot();
 		}
@@ -1393,6 +1402,9 @@ PortalRunFetch(Portal portal,
 	 * Check for improper portal use, and mark portal active.
 	 */
 	MarkPortalActive(portal);
+
+	/* If supporting FETCH, portal can't be run-once. */
+	Assert(!portal->run_once);
 
 	/*
 	 * Set up global portal context pointers.

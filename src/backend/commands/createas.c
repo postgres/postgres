@@ -347,7 +347,7 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 		ExecutorStart(queryDesc, GetIntoRelEFlags(into));
 
 		/* run the plan to completion */
-		ExecutorRun(queryDesc, ForwardScanDirection, 0L);
+		ExecutorRun(queryDesc, ForwardScanDirection, 0L, true);
 
 		/* save the rowcount if we're given a completionTag to fill */
 		if (completionTag)

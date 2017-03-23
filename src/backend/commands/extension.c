@@ -742,7 +742,7 @@ execute_sql_string(const char *sql, const char *filename)
 										dest, NULL, 0);
 
 				ExecutorStart(qdesc, 0);
-				ExecutorRun(qdesc, ForwardScanDirection, 0);
+				ExecutorRun(qdesc, ForwardScanDirection, 0, true);
 				ExecutorFinish(qdesc);
 				ExecutorEnd(qdesc);
 
