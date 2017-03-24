@@ -1,0 +1,155 @@
+-- Generic extended statistics support
+-- Ensure stats are dropped sanely
+CREATE TABLE ab1 (a INTEGER, b INTEGER, c INTEGER);
+CREATE STATISTICS ab1_a_b_stats ON (a, b) FROM ab1;
+DROP STATISTICS ab1_a_b_stats;
+CREATE SCHEMA regress_schema_2;
+CREATE STATISTICS regress_schema_2.ab1_a_b_stats ON (a, b) FROM ab1;
+DROP STATISTICS regress_schema_2.ab1_a_b_stats;
+-- Ensure statistics are dropped when columns are
+CREATE STATISTICS ab1_b_c_stats ON (b, c) FROM ab1;
+CREATE STATISTICS ab1_a_b_c_stats ON (a, b, c) FROM ab1;
+CREATE STATISTICS ab1_a_b_stats ON (a, b) FROM ab1;
+ALTER TABLE ab1 DROP COLUMN a;
+\d ab1
+                Table "public.ab1"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ b      | integer |           |          | 
+ c      | integer |           |          | 
+Statistics:
+    "public.ab1_b_c_stats" WITH (ndistinct) ON (b, c)
+
+DROP TABLE ab1;
+-- Ensure things work sanely with SET STATISTICS 0
+CREATE TABLE ab1 (a INTEGER, b INTEGER);
+ALTER TABLE ab1 ALTER a SET STATISTICS 0;
+INSERT INTO ab1 SELECT a, a%23 FROM generate_series(1, 1000) a;
+CREATE STATISTICS ab1_a_b_stats ON (a, b) FROM ab1;
+ANALYZE ab1;
+ERROR:  extended statistics could not be collected for column "a" of relation public.ab1
+HINT:  Consider ALTER TABLE "public"."ab1" ALTER "a" SET STATISTICS -1
+ALTER TABLE ab1 ALTER a SET STATISTICS -1;
+ANALYZE ab1;
+DROP TABLE ab1;
+-- n-distinct tests
+CREATE TABLE ndistinct (
+    filler1 TEXT,
+    filler2 NUMERIC,
+    a INT,
+    b INT,
+    filler3 DATE,
+    c INT,
+    d INT
+);
+-- unknown column
+CREATE STATISTICS s10 ON (unknown_column) FROM ndistinct;
+ERROR:  column "unknown_column" referenced in statistics does not exist
+-- single column
+CREATE STATISTICS s10 ON (a) FROM ndistinct;
+ERROR:  statistics require at least 2 columns
+-- single column, duplicated
+CREATE STATISTICS s10 ON (a,a) FROM ndistinct;
+ERROR:  duplicate column name in statistics definition
+-- two columns, one duplicated
+CREATE STATISTICS s10 ON (a, a, b) FROM ndistinct;
+ERROR:  duplicate column name in statistics definition
+-- correct command
+CREATE STATISTICS s10 ON (a, b, c) FROM ndistinct;
+-- perfectly correlated groups
+INSERT INTO ndistinct (a, b, c, filler1)
+     SELECT i/100, i/100, i/100, cash_words(i::money)
+       FROM generate_series(1,10000) s(i);
+ANALYZE ndistinct;
+SELECT staenabled, standistinct
+  FROM pg_statistic_ext WHERE starelid = 'ndistinct'::regclass;
+ staenabled |                                          standistinct                                          
+------------+------------------------------------------------------------------------------------------------
+ {d}        | [{(b 3 4), 101.000000}, {(b 3 6), 101.000000}, {(b 4 6), 101.000000}, {(b 3 4 6), 101.000000}]
+(1 row)
+
+EXPLAIN (COSTS off)
+ SELECT COUNT(*) FROM ndistinct GROUP BY a, b;
+         QUERY PLAN          
+-----------------------------
+ HashAggregate
+   Group Key: a, b
+   ->  Seq Scan on ndistinct
+(3 rows)
+
+EXPLAIN (COSTS off)
+ SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c;
+         QUERY PLAN          
+-----------------------------
+ HashAggregate
+   Group Key: a, b, c
+   ->  Seq Scan on ndistinct
+(3 rows)
+
+EXPLAIN (COSTS off)
+ SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c, d;
+         QUERY PLAN          
+-----------------------------
+ HashAggregate
+   Group Key: a, b, c, d
+   ->  Seq Scan on ndistinct
+(3 rows)
+
+TRUNCATE TABLE ndistinct;
+-- partially correlated groups
+INSERT INTO ndistinct (a, b, c)
+     SELECT i/50, i/100, i/200 FROM generate_series(1,10000) s(i);
+ANALYZE ndistinct;
+SELECT staenabled, standistinct
+  FROM pg_statistic_ext WHERE starelid = 'ndistinct'::regclass;
+ staenabled |                                          standistinct                                          
+------------+------------------------------------------------------------------------------------------------
+ {d}        | [{(b 3 4), 201.000000}, {(b 3 6), 201.000000}, {(b 4 6), 101.000000}, {(b 3 4 6), 201.000000}]
+(1 row)
+
+EXPLAIN
+ SELECT COUNT(*) FROM ndistinct GROUP BY a, b;
+                             QUERY PLAN                              
+---------------------------------------------------------------------
+ HashAggregate  (cost=225.00..227.01 rows=201 width=16)
+   Group Key: a, b
+   ->  Seq Scan on ndistinct  (cost=0.00..150.00 rows=10000 width=8)
+(3 rows)
+
+EXPLAIN
+ SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c;
+                              QUERY PLAN                              
+----------------------------------------------------------------------
+ HashAggregate  (cost=250.00..252.01 rows=201 width=20)
+   Group Key: a, b, c
+   ->  Seq Scan on ndistinct  (cost=0.00..150.00 rows=10000 width=12)
+(3 rows)
+
+EXPLAIN
+ SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c, d;
+                              QUERY PLAN                              
+----------------------------------------------------------------------
+ HashAggregate  (cost=275.00..285.00 rows=1000 width=24)
+   Group Key: a, b, c, d
+   ->  Seq Scan on ndistinct  (cost=0.00..150.00 rows=10000 width=16)
+(3 rows)
+
+EXPLAIN
+ SELECT COUNT(*) FROM ndistinct GROUP BY b, c, d;
+                              QUERY PLAN                              
+----------------------------------------------------------------------
+ HashAggregate  (cost=250.00..260.00 rows=1000 width=20)
+   Group Key: b, c, d
+   ->  Seq Scan on ndistinct  (cost=0.00..150.00 rows=10000 width=12)
+(3 rows)
+
+EXPLAIN
+ SELECT COUNT(*) FROM ndistinct GROUP BY a, d;
+                             QUERY PLAN                              
+---------------------------------------------------------------------
+ HashAggregate  (cost=225.00..235.00 rows=1000 width=16)
+   Group Key: a, d
+   ->  Seq Scan on ndistinct  (cost=0.00..150.00 rows=10000 width=8)
+(3 rows)
+
+DROP TABLE ndistinct;
