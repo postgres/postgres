@@ -498,7 +498,7 @@ dsa_get_handle(dsa_area *area)
 
 /*
  * Attach to an area given a handle generated (possibly in another process) by
- * dsa_get_area_handle.  The area must have been created with dsa_create (not
+ * dsa_get_handle.  The area must have been created with dsa_create (not
  * dsa_create_in_place).
  */
 dsa_area *
