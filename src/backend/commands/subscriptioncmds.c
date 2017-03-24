@@ -399,7 +399,7 @@ CreateSubscription(CreateSubscriptionStmt *stmt, bool isTopLevel)
 				RangeVar   *rv = (RangeVar *) lfirst(lc);
 				Oid			relid;
 
-				relid = RangeVarGetRelid(rv, AccessShareLock, true);
+				relid = RangeVarGetRelid(rv, AccessShareLock, false);
 
 				SetSubscriptionRelState(subid, relid, table_state,
 										InvalidXLogRecPtr);
