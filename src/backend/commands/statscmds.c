@@ -230,6 +230,12 @@ CreateStatistics(CreateStatsStmt *stmt)
 	statoid = HeapTupleGetOid(htup);
 	heap_freetuple(htup);
 	heap_close(statrel, RowExclusiveLock);
+
+	/*
+	 * Invalidate relcache so that others see the new statistics.
+	 */
+	CacheInvalidateRelcache(rel);
+
 	relation_close(rel, NoLock);
 
 	/*
@@ -249,11 +255,6 @@ CreateStatistics(CreateStatsStmt *stmt)
 	recordDependencyOn(&childobject, &parentobject, DEPENDENCY_AUTO);
 
 	ObjectAddressSet(address, StatisticExtRelationId, statoid);
-
-	/*
-	 * Invalidate relcache so that others see the new statistics.
-	 */
-	CacheInvalidateRelcache(rel);
 
 	return address;
 }
