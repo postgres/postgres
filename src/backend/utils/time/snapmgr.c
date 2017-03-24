@@ -954,12 +954,7 @@ xmin_cmp(const pairingheap_node *a, const pairingheap_node *b, void *arg)
  *
  * If there are no more snapshots, we can reset our PGXACT->xmin to InvalidXid.
  * Note we can do this without locking because we assume that storing an Xid
- * is atomic. We do this because it will allow multi-statement transactions to
- * reset their xmin and prevent us from holding back removal of dead rows;
- * this has little purpose when we are dealing with very fast statements in
- * read committed mode since the xmin will advance quickly anyway. It has no
- * use at all when we are running single statement transactions since the xmin
- * is reset as part of end of transaction anyway.
+ * is atomic.
  *
  * Even if there are some remaining snapshots, we may be able to advance our
  * PGXACT->xmin to some degree.  This typically happens when a portal is
@@ -1056,7 +1051,7 @@ AtSubAbort_Snapshot(int level)
  *		Snapshot manager's cleanup function for end of transaction
  */
 void
-AtEOXact_Snapshot(bool isCommit, bool isPrepare)
+AtEOXact_Snapshot(bool isCommit)
 {
 	/*
 	 * In transaction-snapshot mode we must release our privately-managed
@@ -1141,17 +1136,7 @@ AtEOXact_Snapshot(bool isCommit, bool isPrepare)
 
 	FirstSnapshotSet = false;
 
-	/*
-	 * During normal commit and abort processing, we call
-	 * ProcArrayEndTransaction() or ProcArrayClearTransaction() to
-	 * reset the PgXact->xmin. That call happens prior to the call to
-	 * AtEOXact_Snapshot(), so we need not touch xmin here at all,
-	 * accept when we are preparing a transaction.
-	 */
-	if (isPrepare)
-		SnapshotResetXmin();
-
-	Assert(MyPgXact->xmin == 0);
+	SnapshotResetXmin();
 }
 
 
