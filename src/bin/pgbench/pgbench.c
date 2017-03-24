@@ -1967,7 +1967,6 @@ top:
 		st->listen = false;
 		st->sleeping = false;
 		st->throttling = false;
-		st->is_throttled = false;
 		memset(st->prepared, 0, sizeof(st->prepared));
 	}
 
@@ -4344,6 +4343,12 @@ threadRun(void *arg)
 					if (!doCustom(thread, st, &aggs))
 						remains--;		/* I've aborted */
 				}
+			}
+			else if (is_connect && st->sleeping)
+			{
+				/* it is sleeping for throttling, maybe it is done, let us try */
+				if (!doCustom(thread, st, &aggs))
+					remains--;
 			}
 
 			if (st->ecnt > prev_ecnt && commands[st->state]->type == META_COMMAND)
