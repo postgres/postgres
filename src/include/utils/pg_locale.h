@@ -80,6 +80,7 @@ struct pg_locale_t
 			UCollator *ucol;
 		} icu;
 #endif
+		int			dummy;		/* in case we have neither LOCALE_T nor ICU */
 	} info;
 };
 
