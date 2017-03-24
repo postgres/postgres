@@ -31,25 +31,18 @@
 /*
  * Fetch stored password for a user, for authentication.
  *
- * Returns STATUS_OK on success.  On error, returns STATUS_ERROR, and stores
- * a palloc'd string describing the reason, for the postmaster log, in
- * *logdetail.  The error reason should *not* be sent to the client, to avoid
- * giving away user information!
- *
- * If the password is expired, it is still returned in *shadow_pass, but the
- * return code is STATUS_ERROR.  On other errors, *shadow_pass is set to
- * NULL.
+ * On error, returns NULL, and stores a palloc'd string describing the reason,
+ * for the postmaster log, in *logdetail.  The error reason should *not* be
+ * sent to the client, to avoid giving away user information!
  */
-int
-get_role_password(const char *role, char **shadow_pass, char **logdetail)
+char *
+get_role_password(const char *role, char **logdetail)
 {
-	int			retval = STATUS_ERROR;
 	TimestampTz vuntil = 0;
 	HeapTuple	roleTup;
 	Datum		datum;
 	bool		isnull;
-
-	*shadow_pass = NULL;
+	char	   *shadow_pass;
 
 	/* Get role info from pg_authid */
 	roleTup = SearchSysCache1(AUTHNAME, PointerGetDatum(role));
@@ -57,7 +50,7 @@ get_role_password(const char *role, char **shadow_pass, char **logdetail)
 	{
 		*logdetail = psprintf(_("Role \"%s\" does not exist."),
 							  role);
-		return STATUS_ERROR;	/* no such user */
+		return NULL;	/* no such user */
 	}
 
 	datum = SysCacheGetAttr(AUTHNAME, roleTup,
@@ -67,9 +60,9 @@ get_role_password(const char *role, char **shadow_pass, char **logdetail)
 		ReleaseSysCache(roleTup);
 		*logdetail = psprintf(_("User \"%s\" has no password assigned."),
 							  role);
-		return STATUS_ERROR;	/* user has no password */
+		return NULL;	/* user has no password */
 	}
-	*shadow_pass = TextDatumGetCString(datum);
+	shadow_pass = TextDatumGetCString(datum);
 
 	datum = SysCacheGetAttr(AUTHNAME, roleTup,
 							Anum_pg_authid_rolvaliduntil, &isnull);
@@ -78,30 +71,25 @@ get_role_password(const char *role, char **shadow_pass, char **logdetail)
 
 	ReleaseSysCache(roleTup);
 
-	if (**shadow_pass == '\0')
+	if (*shadow_pass == '\0')
 	{
 		*logdetail = psprintf(_("User \"%s\" has an empty password."),
 							  role);
-		pfree(*shadow_pass);
-		*shadow_pass = NULL;
-		return STATUS_ERROR;	/* empty password */
+		pfree(shadow_pass);
+		return NULL;	/* empty password */
 	}
 
 	/*
-	 * Password OK, now check to be sure we are not past rolvaliduntil
+	 * Password OK, but check to be sure we are not past rolvaliduntil
 	 */
-	if (isnull)
-		retval = STATUS_OK;
-	else if (vuntil < GetCurrentTimestamp())
+	if (!isnull && vuntil < GetCurrentTimestamp())
 	{
 		*logdetail = psprintf(_("User \"%s\" has an expired password."),
 							  role);
-		retval = STATUS_ERROR;
+		return NULL;
 	}
-	else
-		retval = STATUS_OK;
 
-	return retval;
+	return shadow_pass;
 }
 
 /*

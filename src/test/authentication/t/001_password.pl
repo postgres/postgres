@@ -75,10 +75,10 @@ SKIP:
 	test_role($node, 'md5_role', 'scram', 2);
 	test_role($node, 'plain_role', 'scram', 0);
 
-	# For "md5" method, users "plain_role" and "md5_role" should be able to
-	# connect.
+	# For "md5" method, all users should be able to connect (SCRAM
+	# authentication will be performed for the user with a scram verifier.)
 	reset_pg_hba($node, 'md5');
-	test_role($node, 'scram_role', 'md5', 2);
+	test_role($node, 'scram_role', 'md5', 0);
 	test_role($node, 'md5_role', 'md5', 0);
 	test_role($node, 'plain_role', 'md5', 0);
 }

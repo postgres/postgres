@@ -30,7 +30,7 @@ typedef enum UserAuth
 	uaIdent,
 	uaPassword,
 	uaMD5,
-	uaSASL,
+	uaSCRAM,
 	uaGSS,
 	uaSSPI,
 	uaPAM,

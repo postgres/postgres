@@ -22,7 +22,7 @@
 #define SASL_EXCHANGE_FAILURE		2
 
 /* Routines dedicated to authentication */
-extern void *pg_be_scram_init(const char *username, const char *shadow_pass, bool doomed);
+extern void *pg_be_scram_init(const char *username, const char *shadow_pass);
 extern int pg_be_scram_exchange(void *opaq, char *input, int inputlen,
 					 char **output, int *outputlen, char **logdetail);
 
