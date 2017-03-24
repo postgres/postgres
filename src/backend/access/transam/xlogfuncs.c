@@ -43,8 +43,6 @@
  */
 static StringInfo label_file;
 static StringInfo tblspc_map_file;
-static bool exclusive_backup_running = false;
-static bool nonexclusive_backup_running = false;
 
 /*
  * Called when the backend exits with a running non-exclusive base backup,
@@ -79,10 +77,11 @@ pg_start_backup(PG_FUNCTION_ARGS)
 	char	   *backupidstr;
 	XLogRecPtr	startpoint;
 	DIR		   *dir;
+	SessionBackupState status = get_backup_status();
 
 	backupidstr = text_to_cstring(backupid);
 
-	if (exclusive_backup_running || nonexclusive_backup_running)
+	if (status == SESSION_BACKUP_NON_EXCLUSIVE)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("a backup is already in progress in this session")));
@@ -97,7 +96,6 @@ pg_start_backup(PG_FUNCTION_ARGS)
 	{
 		startpoint = do_pg_start_backup(backupidstr, fast, NULL, NULL,
 										dir, NULL, NULL, false, true);
-		exclusive_backup_running = true;
 	}
 	else
 	{
@@ -114,7 +112,6 @@ pg_start_backup(PG_FUNCTION_ARGS)
 
 		startpoint = do_pg_start_backup(backupidstr, fast, NULL, label_file,
 									dir, NULL, tblspc_map_file, false, true);
-		nonexclusive_backup_running = true;
 
 		before_shmem_exit(nonexclusive_base_backup_cleanup, (Datum) 0);
 	}
@@ -148,8 +145,9 @@ Datum
 pg_stop_backup(PG_FUNCTION_ARGS)
 {
 	XLogRecPtr	stoppoint;
+	SessionBackupState status = get_backup_status();
 
-	if (nonexclusive_backup_running)
+	if (status == SESSION_BACKUP_NON_EXCLUSIVE)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("non-exclusive backup in progress"),
@@ -157,13 +155,11 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 
 	/*
 	 * Exclusive backups were typically started in a different connection, so
-	 * don't try to verify that exclusive_backup_running is set in this one.
-	 * Actual verification that an exclusive backup is in fact running is
-	 * handled inside do_pg_stop_backup.
+	 * don't try to verify that status of backup is set to
+	 * SESSION_BACKUP_EXCLUSIVE in this function. Actual verification that an
+	 * exclusive backup is in fact running is handled inside do_pg_stop_backup.
 	 */
 	stoppoint = do_pg_stop_backup(NULL, true, NULL);
-
-	exclusive_backup_running = false;
 
 	PG_RETURN_LSN(stoppoint);
 }
@@ -192,6 +188,7 @@ pg_stop_backup_v2(PG_FUNCTION_ARGS)
 
 	bool		exclusive = PG_GETARG_BOOL(0);
 	XLogRecPtr	stoppoint;
+	SessionBackupState status = get_backup_status();
 
 	/* check to see if caller supports us returning a tuplestore */
 	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
@@ -223,7 +220,7 @@ pg_stop_backup_v2(PG_FUNCTION_ARGS)
 
 	if (exclusive)
 	{
-		if (nonexclusive_backup_running)
+		if (status == SESSION_BACKUP_NON_EXCLUSIVE)
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 					 errmsg("non-exclusive backup in progress"),
@@ -234,14 +231,13 @@ pg_stop_backup_v2(PG_FUNCTION_ARGS)
 		 * return NULL for both backup_label and tablespace_map.
 		 */
 		stoppoint = do_pg_stop_backup(NULL, true, NULL);
-		exclusive_backup_running = false;
 
 		nulls[1] = true;
 		nulls[2] = true;
 	}
 	else
 	{
-		if (!nonexclusive_backup_running)
+		if (status != SESSION_BACKUP_NON_EXCLUSIVE)
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 					 errmsg("non-exclusive backup is not in progress"),
@@ -252,7 +248,6 @@ pg_stop_backup_v2(PG_FUNCTION_ARGS)
 		 * and tablespace map so they can be written to disk by the caller.
 		 */
 		stoppoint = do_pg_stop_backup(label_file->data, true, NULL);
-		nonexclusive_backup_running = false;
 		cancel_before_shmem_exit(nonexclusive_base_backup_cleanup, (Datum) 0);
 
 		values[1] = CStringGetTextDatum(label_file->data);
