@@ -21,6 +21,7 @@
 
 #include "postgres.h"
 
+#include "access/clog.h"
 #include "access/transam.h"
 #include "access/xact.h"
 #include "access/xlog.h"
@@ -28,6 +29,7 @@
 #include "miscadmin.h"
 #include "libpq/pqformat.h"
 #include "postmaster/postmaster.h"
+#include "storage/lwlock.h"
 #include "utils/builtins.h"
 #include "utils/memutils.h"
 #include "utils/snapmgr.h"
@@ -90,6 +92,70 @@ static void
 load_xid_epoch(TxidEpoch *state)
 {
 	GetNextXidAndEpoch(&state->last_xid, &state->epoch);
+}
+
+/*
+ * Helper to get a TransactionId from a 64-bit xid with wraparound detection.
+ *
+ * It is an ERROR if the xid is in the future.  Otherwise, returns true if
+ * the transaction is still new enough that we can determine whether it
+ * committed and false otherwise.  If *extracted_xid is not NULL, it is set
+ * to the low 32 bits of the transaction ID (i.e. the actual XID, without the
+ * epoch).
+ *
+ * The caller must hold CLogTruncationLock since it's dealing with arbitrary
+ * XIDs, and must continue to hold it until it's done with any clog lookups
+ * relating to those XIDs.
+ */
+static bool
+TransactionIdInRecentPast(uint64 xid_with_epoch, TransactionId *extracted_xid)
+{
+	uint32		xid_epoch = (uint32) (xid_with_epoch >> 32);
+	TransactionId xid = (TransactionId) xid_with_epoch;
+	uint32		now_epoch;
+	TransactionId now_epoch_last_xid;
+
+	GetNextXidAndEpoch(&now_epoch_last_xid, &now_epoch);
+
+	if (extracted_xid != NULL)
+		*extracted_xid = xid;
+
+	if (!TransactionIdIsValid(xid))
+		return false;
+
+	/* For non-normal transaction IDs, we can ignore the epoch. */
+	if (!TransactionIdIsNormal(xid))
+		return true;
+
+	/* If the transaction ID is in the future, throw an error. */
+	if (xid_epoch > now_epoch
+		|| (xid_epoch == now_epoch && xid > now_epoch_last_xid))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("transaction ID " UINT64_FORMAT " is in the future",
+						xid_with_epoch)));
+
+	/*
+	 * ShmemVariableCache->oldestClogXid is protected by CLogTruncationLock,
+	 * but we don't acquire that lock here.  Instead, we require the caller to
+	 * acquire it, because the caller is presumably going to look up the
+	 * returned XID.  If we took and released the lock within this function, a
+	 * CLOG truncation could occur before the caller finished with the XID.
+	 */
+	Assert(LWLockHeldByMe(CLogTruncationLock));
+
+	/*
+	 * If the transaction ID has wrapped around, it's definitely too old to
+	 * determine the commit status.  Otherwise, we can compare it to
+	 * ShmemVariableCache->oldestClogXid to determine whether the relevant CLOG
+	 * entry is guaranteed to still exist.
+	 */
+	if (xid_epoch + 1 < now_epoch
+		|| (xid_epoch + 1 == now_epoch && xid < now_epoch_last_xid)
+		|| TransactionIdPrecedes(xid, ShmemVariableCache->oldestClogXid))
+		return false;
+
+	return true;
 }
 
 /*
@@ -354,6 +420,9 @@ bad_format:
  *
  *	Return the current toplevel transaction ID as TXID
  *	If the current transaction does not have one, one is assigned.
+ *
+ *	This value has the epoch as the high 32 bits and the 32-bit xid
+ *	as the low 32 bits.
  */
 Datum
 txid_current(PG_FUNCTION_ARGS)
@@ -657,4 +726,67 @@ txid_snapshot_xip(PG_FUNCTION_ARGS)
 	{
 		SRF_RETURN_DONE(fctx);
 	}
+}
+
+/*
+ * Report the status of a recent transaction ID, or null for wrapped,
+ * truncated away or otherwise too old XIDs.
+ *
+ * The passed epoch-qualified xid is treated as a normal xid, not a
+ * multixact id.
+ *
+ * If it points to a committed subxact the result is the subxact status even
+ * though the parent xact may still be in progress or may have aborted.
+ */
+Datum
+txid_status(PG_FUNCTION_ARGS)
+{
+	const char	   *status;
+	uint64			xid_with_epoch = PG_GETARG_INT64(0);
+	TransactionId	xid;
+
+	/*
+	 * We must protect against concurrent truncation of clog entries to avoid
+	 * an I/O error on SLRU lookup.
+	 */
+	LWLockAcquire(CLogTruncationLock, LW_SHARED);
+	if (TransactionIdInRecentPast(xid_with_epoch, &xid))
+	{
+		Assert(TransactionIdIsValid(xid));
+
+		if (TransactionIdIsCurrentTransactionId(xid))
+			status = gettext_noop("in progress");
+		else if (TransactionIdDidCommit(xid))
+			status = gettext_noop("committed");
+		else if (TransactionIdDidAbort(xid))
+			status = gettext_noop("aborted");
+		else
+		{
+			/*
+			 * The xact is not marked as either committed or aborted in clog.
+			 *
+			 * It could be a transaction that ended without updating clog or
+			 * writing an abort record due to a crash. We can safely assume
+			 * it's aborted if it isn't committed and is older than our
+			 * snapshot xmin.
+			 *
+			 * Otherwise it must be in-progress (or have been at the time
+			 * we checked commit/abort status).
+			 */
+			if (TransactionIdPrecedes(xid, GetActiveSnapshot()->xmin))
+				status = gettext_noop("aborted");
+			else
+				status = gettext_noop("in progress");
+		}
+	}
+	else
+	{
+		status = NULL;
+	}
+	LWLockRelease(CLogTruncationLock);
+
+	if (status == NULL)
+		PG_RETURN_NULL();
+	else
+		PG_RETURN_TEXT_P(cstring_to_text(status));
 }

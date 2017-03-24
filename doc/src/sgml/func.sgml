@@ -17523,6 +17523,10 @@ SELECT collation for ('foo' COLLATE "de_DE");
     <primary>txid_visible_in_snapshot</primary>
    </indexterm>
 
+   <indexterm>
+    <primary>txid_status</primary>
+   </indexterm>
+
    <para>
     The functions shown in <xref linkend="functions-txid-snapshot">
     provide server transaction information in an exportable form.  The main
@@ -17572,6 +17576,11 @@ SELECT collation for ('foo' COLLATE "de_DE");
        <entry><literal><function>txid_visible_in_snapshot(<parameter>bigint</parameter>, <parameter>txid_snapshot</parameter>)</function></literal></entry>
        <entry><type>boolean</type></entry>
        <entry>is transaction ID visible in snapshot? (do not use with subtransaction ids)</entry>
+      </row>
+      <row>
+       <entry><literal><function>txid_status(<parameter>bigint</parameter>)</function></literal></entry>
+       <entry><type>txid_status</type></entry>
+       <entry>report the status of the given xact - <literal>committed</literal>, <literal>aborted</literal>, <literal>in progress</literal>, or NULL if the txid is too old</entry>
       </row>
      </tbody>
     </tgroup>
@@ -17640,6 +17649,24 @@ SELECT collation for ('foo' COLLATE "de_DE");
     <literal><replaceable>xmin</>:<replaceable>xmax</>:<replaceable>xip_list</></literal>.
     For example <literal>10:20:10,14,15</literal> means
     <literal>xmin=10, xmax=20, xip_list=10, 14, 15</literal>.
+   </para>
+
+   <para>
+    <function>txid_status(bigint)</> reports the commit status of a recent
+    transaction.  Applications may use it to determine whether a transaction
+    committed or aborted when the application and database server become
+    disconnected while a <literal>COMMIT</literal> is in progress.
+    The status of a transaction will be reported as either
+    <literal>in progress</>,
+    <literal>committed</>, or <literal>aborted</>, provided that the
+    transaction is recent enough that the system retains the commit status
+    of that transaction.  If is old enough that no references to that
+    transaction survive in the system and the commit status information has
+    been discarded, this function will return NULL.  Note that prepared
+    transactions are reported as <literal>in progress</>; applications must
+    check <link
+    linkend="view-pg-prepared-xacts"><literal>pg_prepared_xacts</></> if they
+    need to determine whether the txid is a prepared transaction.
    </para>
 
    <para>

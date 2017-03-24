@@ -254,3 +254,71 @@ SELECT txid_current_if_assigned() IS NOT DISTINCT FROM BIGINT :'txid_current';
 (1 row)
 
 COMMIT;
+-- test xid status functions
+BEGIN;
+SELECT txid_current() AS committed \gset
+COMMIT;
+BEGIN;
+SELECT txid_current() AS rolledback \gset
+ROLLBACK;
+BEGIN;
+SELECT txid_current() AS inprogress \gset
+SELECT txid_status(:committed) AS committed;
+ committed 
+-----------
+ committed
+(1 row)
+
+SELECT txid_status(:rolledback) AS rolledback;
+ rolledback 
+------------
+ aborted
+(1 row)
+
+SELECT txid_status(:inprogress) AS inprogress;
+ inprogress  
+-------------
+ in progress
+(1 row)
+
+SELECT txid_status(1); -- BootstrapTransactionId is always committed
+ txid_status 
+-------------
+ committed
+(1 row)
+
+SELECT txid_status(2); -- FrozenTransactionId is always committed
+ txid_status 
+-------------
+ committed
+(1 row)
+
+SELECT txid_status(3); -- in regress testing FirstNormalTransactionId will always be behind oldestXmin
+ txid_status 
+-------------
+ 
+(1 row)
+
+COMMIT;
+BEGIN;
+CREATE FUNCTION test_future_xid_status(bigint)
+RETURNS void
+LANGUAGE plpgsql
+AS
+$$
+BEGIN
+  PERFORM txid_status($1);
+  RAISE EXCEPTION 'didn''t ERROR at xid in the future as expected';
+EXCEPTION
+  WHEN invalid_parameter_value THEN
+    RAISE NOTICE 'Got expected error for xid in the future';
+END;
+$$;
+SELECT test_future_xid_status(:inprogress + 10000);
+NOTICE:  Got expected error for xid in the future
+ test_future_xid_status 
+------------------------
+ 
+(1 row)
+
+ROLLBACK;
