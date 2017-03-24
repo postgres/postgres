@@ -2137,7 +2137,7 @@ CommitTransaction(void)
 	AtEOXact_ComboCid();
 	AtEOXact_HashTables(true);
 	AtEOXact_PgStat(true);
-	AtEOXact_Snapshot(true);
+	AtEOXact_Snapshot(true, false);
 	AtCommit_ApplyLauncher();
 	pgstat_report_xact_timestamp(0);
 
@@ -2409,7 +2409,7 @@ PrepareTransaction(void)
 	AtEOXact_ComboCid();
 	AtEOXact_HashTables(true);
 	/* don't call AtEOXact_PgStat here; we fixed pgstat state above */
-	AtEOXact_Snapshot(true);
+	AtEOXact_Snapshot(true, true);
 	pgstat_report_xact_timestamp(0);
 
 	CurrentResourceOwner = NULL;
@@ -2640,7 +2640,7 @@ CleanupTransaction(void)
 	 * do abort cleanup processing
 	 */
 	AtCleanup_Portals();		/* now safe to release portal memory */
-	AtEOXact_Snapshot(false);	/* and release the transaction's snapshots */
+	AtEOXact_Snapshot(false, false); /* and release the transaction's snapshots */
 
 	CurrentResourceOwner = NULL;	/* and resource owner */
 	if (TopTransactionResourceOwner)
