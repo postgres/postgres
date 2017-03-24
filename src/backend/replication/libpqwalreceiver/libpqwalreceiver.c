@@ -803,10 +803,6 @@ libpqrcv_processTuples(PGresult *pgres, WalRcvExecResult *walres,
 	MemoryContext	rowcontext;
 	MemoryContext	oldcontext;
 
-	/* No point in doing anything here if there were no tuples returned. */
-	if (PQntuples(pgres) == 0)
-		return;
-
 	/* Make sure we got expected number of fields. */
 	if (nfields != nRetTypes)
 		ereport(ERROR,
@@ -823,6 +819,10 @@ libpqrcv_processTuples(PGresult *pgres, WalRcvExecResult *walres,
 		TupleDescInitEntry(walres->tupledesc, (AttrNumber) coln + 1,
 						   PQfname(pgres, coln), retTypes[coln], -1, 0);
 	attinmeta = TupleDescGetAttInMetadata(walres->tupledesc);
+
+	/* No point in doing more here if there were no tuples returned. */
+	if (PQntuples(pgres) == 0)
+		return;
 
 	/* Create temporary context for local allocations. */
 	rowcontext = AllocSetContextCreate(CurrentMemoryContext,
