@@ -1335,6 +1335,18 @@ _equalIndexStmt(const IndexStmt *a, const IndexStmt *b)
 }
 
 static bool
+_equalCreateStatsStmt(const CreateStatsStmt *a, const CreateStatsStmt *b)
+{
+	COMPARE_NODE_FIELD(defnames);
+	COMPARE_NODE_FIELD(relation);
+	COMPARE_NODE_FIELD(keys);
+	COMPARE_NODE_FIELD(options);
+	COMPARE_SCALAR_FIELD(if_not_exists);
+
+	return true;
+}
+
+static bool
 _equalCreateFunctionStmt(const CreateFunctionStmt *a, const CreateFunctionStmt *b)
 {
 	COMPARE_SCALAR_FIELD(replace);
@@ -3235,6 +3247,9 @@ equal(const void *a, const void *b)
 			break;
 		case T_IndexStmt:
 			retval = _equalIndexStmt(a, b);
+			break;
+		case T_CreateStatsStmt:
+			retval = _equalCreateStatsStmt(a, b);
 			break;
 		case T_CreateFunctionStmt:
 			retval = _equalCreateFunctionStmt(a, b);

@@ -77,6 +77,10 @@ extern ObjectAddress DefineOperator(List *names, List *parameters);
 extern void RemoveOperatorById(Oid operOid);
 extern ObjectAddress AlterOperator(AlterOperatorStmt *stmt);
 
+/* commands/statscmds.c */
+extern ObjectAddress CreateStatistics(CreateStatsStmt *stmt);
+extern void RemoveStatisticsById(Oid statsOid);
+
 /* commands/aggregatecmds.c */
 extern ObjectAddress DefineAggregate(ParseState *pstate, List *name, List *args, bool oldstyle,
 				List *parameters);

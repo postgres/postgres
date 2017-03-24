@@ -39,6 +39,7 @@ extern void RelationClose(Relation relation);
  */
 extern List *RelationGetFKeyList(Relation relation);
 extern List *RelationGetIndexList(Relation relation);
+extern List *RelationGetStatExtList(Relation relation);
 extern Oid	RelationGetOidIndex(Relation relation);
 extern Oid	RelationGetPrimaryKeyIndex(Relation relation);
 extern Oid	RelationGetReplicaIndex(Relation relation);

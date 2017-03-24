@@ -119,9 +119,12 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
      <para>
       This form drops a column from a table.  Indexes and
       table constraints involving the column will be automatically
-      dropped as well.  You will need to say <literal>CASCADE</> if
-      anything outside the table depends on the column, for example,
-      foreign key references or views.
+      dropped as well.
+      Multivariate statistics referencing the dropped column will also be
+      removed if the removal of the column would cause the statistics to
+      contain data for only a single column.
+      You will need to say <literal>CASCADE</> if anything outside the table
+      depends on the column, for example, foreign key references or views.
       If <literal>IF EXISTS</literal> is specified and the column
       does not exist, no error is thrown. In this case a notice
       is issued instead.

@@ -29,6 +29,7 @@
 #include "catalog/heap.h"
 #include "catalog/partition.h"
 #include "catalog/pg_am.h"
+#include "catalog/pg_statistic_ext.h"
 #include "foreign/fdwapi.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
@@ -40,8 +41,11 @@
 #include "parser/parse_relation.h"
 #include "parser/parsetree.h"
 #include "rewrite/rewriteManip.h"
+#include "statistics/statistics.h"
 #include "storage/bufmgr.h"
+#include "utils/builtins.h"
 #include "utils/lsyscache.h"
+#include "utils/syscache.h"
 #include "utils/rel.h"
 #include "utils/snapmgr.h"
 
@@ -63,7 +67,7 @@ static List *get_relation_constraints(PlannerInfo *root,
 						 bool include_notnull);
 static List *build_index_tlist(PlannerInfo *root, IndexOptInfo *index,
 				  Relation heapRelation);
-
+static List *get_relation_statistics(RelOptInfo *rel, Relation relation);
 
 /*
  * get_relation_info -
@@ -397,6 +401,8 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 	}
 
 	rel->indexlist = indexinfos;
+
+	rel->statlist = get_relation_statistics(rel, relation);
 
 	/* Grab foreign-table info using the relcache, while we have it */
 	if (relation->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
@@ -1251,6 +1257,65 @@ get_relation_constraints(PlannerInfo *root,
 	return result;
 }
 
+/*
+ * get_relation_statistics
+ *		Retrieve extended statistics defined on the table.
+ *
+ * Returns a List (possibly empty) of StatisticExtInfo objects describing
+ * the statistics.  Note that this doesn't load the actual statistics data,
+ * just the identifying metadata.  Only stats actually built are considered.
+ */
+static List *
+get_relation_statistics(RelOptInfo *rel, Relation relation)
+{
+	List	   *statoidlist;
+	List	   *stainfos = NIL;
+	ListCell   *l;
+
+	statoidlist = RelationGetStatExtList(relation);
+
+	foreach(l, statoidlist)
+	{
+		Oid			statOid = lfirst_oid(l);
+		Form_pg_statistic_ext staForm;
+		HeapTuple	htup;
+		Bitmapset  *keys = NULL;
+		int			i;
+
+		htup = SearchSysCache1(STATEXTOID, ObjectIdGetDatum(statOid));
+		if (!htup)
+			elog(ERROR, "cache lookup failed for statistics %u", statOid);
+		staForm = (Form_pg_statistic_ext) GETSTRUCT(htup);
+
+		/*
+		 * First, build the array of columns covered.  This is ultimately
+		 * wasted if no stats are actually built, but it doesn't seem worth
+		 * troubling over that case.
+		 */
+		for (i = 0; i < staForm->stakeys.dim1; i++)
+			keys = bms_add_member(keys, staForm->stakeys.values[i]);
+
+		/* add one StatisticExtInfo for each kind built */
+		if (statext_is_kind_built(htup, STATS_EXT_NDISTINCT))
+		{
+			StatisticExtInfo *info = makeNode(StatisticExtInfo);
+
+			info->statOid = statOid;
+			info->rel = rel;
+			info->kind = STATS_EXT_NDISTINCT;
+			info->keys = bms_copy(keys);
+
+			stainfos = lcons(info, stainfos);
+		}
+
+		ReleaseSysCache(htup);
+		bms_free(keys);
+	}
+
+	list_free(statoidlist);
+
+	return stainfos;
+}
 
 /*
  * relation_excluded_by_constraints

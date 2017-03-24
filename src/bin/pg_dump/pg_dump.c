@@ -192,6 +192,7 @@ static void dumpAttrDef(Archive *fout, AttrDefInfo *adinfo);
 static void dumpSequence(Archive *fout, TableInfo *tbinfo);
 static void dumpSequenceData(Archive *fout, TableDataInfo *tdinfo);
 static void dumpIndex(Archive *fout, IndxInfo *indxinfo);
+static void dumpStatisticsExt(Archive *fout, StatsExtInfo *statsextinfo);
 static void dumpConstraint(Archive *fout, ConstraintInfo *coninfo);
 static void dumpTableConstraintComment(Archive *fout, ConstraintInfo *coninfo);
 static void dumpTSParser(Archive *fout, TSParserInfo *prsinfo);
@@ -6583,6 +6584,99 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 }
 
 /*
+ * getExtendedStatistics
+ *	  get information about extended statistics on a dumpable table
+ *	  or materialized view.
+ *
+ * Note: extended statistics data is not returned directly to the caller, but
+ * it does get entered into the DumpableObject tables.
+ */
+void
+getExtendedStatistics(Archive *fout, TableInfo tblinfo[], int numTables)
+{
+	int				i,
+					j;
+	PQExpBuffer		query;
+	PGresult	   *res;
+	StatsExtInfo   *statsextinfo;
+	int				ntups;
+	int				i_tableoid;
+	int				i_oid;
+	int				i_staname;
+	int				i_stadef;
+
+	/* Extended statistics were new in v10 */
+	if (fout->remoteVersion < 100000)
+		return;
+
+	query = createPQExpBuffer();
+
+	for (i = 0; i < numTables; i++)
+	{
+		TableInfo  *tbinfo = &tblinfo[i];
+
+		/* Only plain tables and materialized views can have extended statistics. */
+		if (tbinfo->relkind != RELKIND_RELATION &&
+			tbinfo->relkind != RELKIND_MATVIEW)
+			continue;
+
+		/*
+		 * Ignore extended statistics of tables whose definitions are not to
+		 * be dumped.
+		 */
+		if (!(tbinfo->dobj.dump & DUMP_COMPONENT_DEFINITION))
+			continue;
+
+		if (g_verbose)
+			write_msg(NULL, "reading extended statistics for table \"%s.%s\"\n",
+					  tbinfo->dobj.namespace->dobj.name,
+					  tbinfo->dobj.name);
+
+		/* Make sure we are in proper schema so stadef is right */
+		selectSourceSchema(fout, tbinfo->dobj.namespace->dobj.name);
+
+		resetPQExpBuffer(query);
+
+		appendPQExpBuffer(query,
+						  "SELECT "
+							"tableoid, "
+							"oid, "
+							"staname, "
+						  "pg_catalog.pg_get_statisticsextdef(oid) AS stadef "
+						  "FROM pg_statistic_ext "
+						  "WHERE starelid = '%u' "
+						  "ORDER BY staname", tbinfo->dobj.catId.oid);
+
+		res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
+
+		ntups = PQntuples(res);
+
+		i_tableoid = PQfnumber(res, "tableoid");
+		i_oid = PQfnumber(res, "oid");
+		i_staname = PQfnumber(res, "staname");
+		i_stadef = PQfnumber(res, "stadef");
+
+		statsextinfo = (StatsExtInfo *) pg_malloc(ntups * sizeof(StatsExtInfo));
+
+		for (j = 0; j < ntups; j++)
+		{
+			statsextinfo[j].dobj.objType = DO_STATSEXT;
+			statsextinfo[j].dobj.catId.tableoid = atooid(PQgetvalue(res, j, i_tableoid));
+			statsextinfo[j].dobj.catId.oid = atooid(PQgetvalue(res, j, i_oid));
+			AssignDumpId(&statsextinfo[j].dobj);
+			statsextinfo[j].dobj.name = pg_strdup(PQgetvalue(res, j, i_staname));
+			statsextinfo[j].dobj.namespace = tbinfo->dobj.namespace;
+			statsextinfo[j].statsexttable = tbinfo;
+			statsextinfo[j].statsextdef = pg_strdup(PQgetvalue(res, j, i_stadef));
+		}
+
+		PQclear(res);
+	}
+
+	destroyPQExpBuffer(query);
+}
+
+/*
  * getConstraints
  *
  * Get info about constraints on dumpable tables.
@@ -9233,6 +9327,9 @@ dumpDumpableObject(Archive *fout, DumpableObject *dobj)
 			break;
 		case DO_INDEX:
 			dumpIndex(fout, (IndxInfo *) dobj);
+			break;
+		case DO_STATSEXT:
+			dumpStatisticsExt(fout, (StatsExtInfo *) dobj);
 			break;
 		case DO_REFRESH_MATVIEW:
 			refreshMatViewData(fout, (TableDataInfo *) dobj);
@@ -15729,6 +15826,61 @@ dumpIndex(Archive *fout, IndxInfo *indxinfo)
 }
 
 /*
+ * dumpStatisticsExt
+ *	  write out to fout an extended statistics object
+ */
+static void
+dumpStatisticsExt(Archive *fout, StatsExtInfo *statsextinfo)
+{
+	DumpOptions *dopt = fout->dopt;
+	TableInfo  *tbinfo = statsextinfo->statsexttable;
+	PQExpBuffer q;
+	PQExpBuffer delq;
+	PQExpBuffer labelq;
+
+	if (dopt->dataOnly)
+		return;
+
+	q = createPQExpBuffer();
+	delq = createPQExpBuffer();
+	labelq = createPQExpBuffer();
+
+	appendPQExpBuffer(labelq, "STATISTICS %s",
+					  fmtId(statsextinfo->dobj.name));
+
+	appendPQExpBuffer(q, "%s;\n", statsextinfo->statsextdef);
+
+	appendPQExpBuffer(delq, "DROP STATISTICS %s.",
+						  fmtId(tbinfo->dobj.namespace->dobj.name));
+	appendPQExpBuffer(delq, "%s;\n",
+						  fmtId(statsextinfo->dobj.name));
+
+	if (statsextinfo->dobj.dump & DUMP_COMPONENT_DEFINITION)
+			ArchiveEntry(fout, statsextinfo->dobj.catId,
+						 statsextinfo->dobj.dumpId,
+						 statsextinfo->dobj.name,
+						 tbinfo->dobj.namespace->dobj.name,
+						 NULL,
+						 tbinfo->rolname, false,
+						 "STATISTICS", SECTION_POST_DATA,
+						 q->data, delq->data, NULL,
+						 NULL, 0,
+						 NULL, NULL);
+
+	/* Dump Statistics Comments */
+	if (statsextinfo->dobj.dump & DUMP_COMPONENT_COMMENT)
+		dumpComment(fout, labelq->data,
+					tbinfo->dobj.namespace->dobj.name,
+					tbinfo->rolname,
+					statsextinfo->dobj.catId, 0,
+					statsextinfo->dobj.dumpId);
+
+	destroyPQExpBuffer(q);
+	destroyPQExpBuffer(delq);
+	destroyPQExpBuffer(labelq);
+}
+
+/*
  * dumpConstraint
  *	  write out to fout a user-defined constraint
  */
@@ -17266,6 +17418,7 @@ addBoundaryDependencies(DumpableObject **dobjs, int numObjs,
 				addObjectDependency(postDataBound, dobj->dumpId);
 				break;
 			case DO_INDEX:
+			case DO_STATSEXT:
 			case DO_REFRESH_MATVIEW:
 			case DO_TRIGGER:
 			case DO_EVENT_TRIGGER:

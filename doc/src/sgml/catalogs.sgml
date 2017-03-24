@@ -296,6 +296,11 @@
      </row>
 
      <row>
+      <entry><link linkend="catalog-pg-statistic-ext"><structname>pg_statistic_ext</structname></link></entry>
+      <entry>extended planner statistics</entry>
+     </row>
+
+     <row>
       <entry><link linkend="catalog-pg-subscription"><structname>pg_subscription</structname></link></entry>
       <entry>logical replication subscriptions</entry>
      </row>
@@ -4239,6 +4244,98 @@
        <xref linkend="sql-grant"> and
        <xref linkend="sql-revoke">
        for details
+      </entry>
+     </row>
+
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="catalog-pg-statistic-ext">
+  <title><structname>pg_statistic_ext</structname></title>
+
+  <indexterm zone="catalog-pg-statistic-ext">
+   <primary>pg_statistic_ext</primary>
+  </indexterm>
+
+  <para>
+   The catalog <structname>pg_statistic_ext</structname>
+   holds extended planner statistics.
+  </para>
+
+  <table>
+   <title><structname>pg_statistic_ext</> Columns</title>
+
+   <tgroup cols="4">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+
+     <row>
+      <entry><structfield>starelid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
+      <entry>The table that the described columns belongs to</entry>
+     </row>
+
+     <row>
+      <entry><structfield>staname</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry>Name of the statistic.</entry>
+     </row>
+
+     <row>
+      <entry><structfield>stanamespace</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link>.oid</literal></entry>
+      <entry>
+       The OID of the namespace that contains this statistic
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>staowner</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
+      <entry>Owner of the statistic</entry>
+     </row>
+
+     <row>
+      <entry><structfield>staenabled</structfield></entry>
+      <entry><type>char[]</type></entry>
+      <entry></entry>
+      <entry>
+        An array with the modes of the enabled statistic types, encoded as
+        <literal>d</literal> for ndistinct coefficients.
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>stakeys</structfield></entry>
+      <entry><type>int2vector</type></entry>
+      <entry><literal><link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.attnum</literal></entry>
+      <entry>
+       This is an array of values that indicate which table columns this
+       statistic covers. For example a value of <literal>1 3</literal> would
+       mean that the first and the third table columns make up the statistic key.
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>standistinct</structfield></entry>
+      <entry><type>pg_ndistinct</type></entry>
+      <entry></entry>
+      <entry>
+       N-distinct coefficients, serialized as <structname>pg_ndistinct</> type.
       </entry>
      </row>
 

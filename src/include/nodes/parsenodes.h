@@ -1593,6 +1593,7 @@ typedef enum ObjectType
 	OBJECT_SCHEMA,
 	OBJECT_SEQUENCE,
 	OBJECT_SUBSCRIPTION,
+	OBJECT_STATISTIC_EXT,
 	OBJECT_TABCONSTRAINT,
 	OBJECT_TABLE,
 	OBJECT_TABLESPACE,
@@ -2655,6 +2656,20 @@ typedef struct IndexStmt
 	bool		concurrent;		/* should this be a concurrent index build? */
 	bool		if_not_exists;	/* just do nothing if index already exists? */
 } IndexStmt;
+
+/* ----------------------
+ *		Create Statistics Statement
+ * ----------------------
+ */
+typedef struct CreateStatsStmt
+{
+	NodeTag		type;
+	List	   *defnames;		/* qualified name (list of Value strings) */
+	RangeVar   *relation;		/* relation to build statistics on */
+	List	   *keys;			/* String nodes naming referenced columns */
+	List	   *options;		/* list of DefElem */
+	bool		if_not_exists;	/* do nothing if statistics already exists */
+} CreateStatsStmt;
 
 /* ----------------------
  *		Create Function Statement

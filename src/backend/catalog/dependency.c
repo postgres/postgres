@@ -51,6 +51,7 @@
 #include "catalog/pg_publication.h"
 #include "catalog/pg_publication_rel.h"
 #include "catalog/pg_rewrite.h"
+#include "catalog/pg_statistic_ext.h"
 #include "catalog/pg_subscription.h"
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_transform.h"
@@ -154,6 +155,7 @@ static const Oid object_classes[] = {
 	RewriteRelationId,			/* OCLASS_REWRITE */
 	TriggerRelationId,			/* OCLASS_TRIGGER */
 	NamespaceRelationId,		/* OCLASS_SCHEMA */
+	StatisticExtRelationId,		/* OCLASS_STATISTIC_EXT */
 	TSParserRelationId,			/* OCLASS_TSPARSER */
 	TSDictionaryRelationId,		/* OCLASS_TSDICT */
 	TSTemplateRelationId,		/* OCLASS_TSTEMPLATE */
@@ -1261,6 +1263,10 @@ doDeletion(const ObjectAddress *object, int flags)
 
 		case OCLASS_TRANSFORM:
 			DropTransformById(object->objectId);
+			break;
+
+		case OCLASS_STATISTIC_EXT:
+			RemoveStatisticsById(object->objectId);
 			break;
 
 		default:
@@ -2376,6 +2382,9 @@ getObjectClass(const ObjectAddress *object)
 
 		case NamespaceRelationId:
 			return OCLASS_SCHEMA;
+
+		case StatisticExtRelationId:
+			return OCLASS_STATISTIC_EXT;
 
 		case TSParserRelationId:
 			return OCLASS_TSPARSER;

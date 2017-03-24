@@ -39,6 +39,7 @@
 #include "catalog/pg_opfamily.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_shdepend.h"
+#include "catalog/pg_statistic_ext.h"
 #include "catalog/pg_subscription.h"
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_ts_config.h"
@@ -1415,6 +1416,7 @@ shdepReassignOwned(List *roleids, Oid newrole)
 				case OperatorFamilyRelationId:
 				case OperatorClassRelationId:
 				case ExtensionRelationId:
+				case StatisticExtRelationId:
 				case TableSpaceRelationId:
 				case DatabaseRelationId:
 				case TSConfigRelationId:

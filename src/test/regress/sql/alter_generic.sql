@@ -433,6 +433,37 @@ ALTER OPERATOR FAMILY alt_opf18 USING btree ADD
 ALTER OPERATOR FAMILY alt_opf18 USING btree DROP FUNCTION 2 (int4, int4);
 DROP OPERATOR FAMILY alt_opf18 USING btree;
 
+--
+-- Statistics
+--
+SET SESSION AUTHORIZATION regress_alter_user1;
+CREATE TABLE alt_regress_1 (a INTEGER, b INTEGER);
+CREATE STATISTICS alt_stat1 ON (a, b) FROM alt_regress_1;
+CREATE STATISTICS alt_stat2 ON (a, b) FROM alt_regress_1;
+
+ALTER STATISTICS alt_stat1 RENAME TO alt_stat2;   -- failed (name conflict)
+ALTER STATISTICS alt_stat1 RENAME TO alt_stat3;   -- failed (name conflict)
+ALTER STATISTICS alt_stat2 OWNER TO regress_alter_user2;  -- failed (no role membership)
+ALTER STATISTICS alt_stat2 OWNER TO regress_alter_user3;  -- OK
+ALTER STATISTICS alt_stat2 SET SCHEMA alt_nsp2;    -- OK
+
+SET SESSION AUTHORIZATION regress_alter_user2;
+CREATE STATISTICS alt_stat1 ON (a, b) FROM alt_regress_1;
+CREATE STATISTICS alt_stat2 ON (a, b) FROM alt_regress_1;
+
+ALTER STATISTICS alt_stat3 RENAME TO alt_stat4;    -- failed (not owner)
+ALTER STATISTICS alt_stat1 RENAME TO alt_stat4;    -- OK
+ALTER STATISTICS alt_stat3 OWNER TO regress_alter_user2; -- failed (not owner)
+ALTER STATISTICS alt_stat2 OWNER TO regress_alter_user3; -- failed (no role membership)
+ALTER STATISTICS alt_stat3 SET SCHEMA alt_nsp2;		-- failed (not owner)
+ALTER STATISTICS alt_stat2 SET SCHEMA alt_nsp2;		-- failed (name conflict)
+
+RESET SESSION AUTHORIZATION;
+SELECT nspname, staname, rolname
+  FROM pg_statistic_ext s, pg_namespace n, pg_authid a
+ WHERE s.stanamespace = n.oid AND s.staowner = a.oid
+   AND n.nspname in ('alt_nsp1', 'alt_nsp2')
+ ORDER BY nspname, staname;
 
 --
 -- Text Search Dictionary

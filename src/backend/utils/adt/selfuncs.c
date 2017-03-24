@@ -110,6 +110,7 @@
 #include "catalog/pg_operator.h"
 #include "catalog/pg_opfamily.h"
 #include "catalog/pg_statistic.h"
+#include "catalog/pg_statistic_ext.h"
 #include "catalog/pg_type.h"
 #include "executor/executor.h"
 #include "mb/pg_wchar.h"
@@ -126,6 +127,7 @@
 #include "parser/parse_clause.h"
 #include "parser/parse_coerce.h"
 #include "parser/parsetree.h"
+#include "statistics/statistics.h"
 #include "utils/builtins.h"
 #include "utils/bytea.h"
 #include "utils/date.h"
@@ -164,6 +166,8 @@ static double eqjoinsel_inner(Oid operator,
 static double eqjoinsel_semi(Oid operator,
 			   VariableStatData *vardata1, VariableStatData *vardata2,
 			   RelOptInfo *inner_rel);
+static bool estimate_multivariate_ndistinct(PlannerInfo *root,
+			   RelOptInfo *rel, List **varinfos, double *ndistinct);
 static bool convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 				  Datum lobound, Datum hibound, Oid boundstypid,
 				  double *scaledlobound, double *scaledhibound);
@@ -3398,30 +3402,67 @@ estimate_num_groups(PlannerInfo *root, List *groupExprs, double input_rows,
 	{
 		GroupVarInfo *varinfo1 = (GroupVarInfo *) linitial(varinfos);
 		RelOptInfo *rel = varinfo1->rel;
-		double		reldistinct = varinfo1->ndistinct;
+		double		reldistinct = 1;
 		double		relmaxndistinct = reldistinct;
 		int			relvarcount = 1;
 		List	   *newvarinfos = NIL;
+		List	   *relvarinfos = NIL;
 
 		/*
-		 * Get the product of numdistinct estimates of the Vars for this rel.
-		 * Also, construct new varinfos list of remaining Vars.
+		 * Split the list of varinfos in two - one for the current rel,
+		 * one for remaining Vars on other rels.
 		 */
+		relvarinfos = lcons(varinfo1, relvarinfos);
 		for_each_cell(l, lnext(list_head(varinfos)))
 		{
 			GroupVarInfo *varinfo2 = (GroupVarInfo *) lfirst(l);
 
 			if (varinfo2->rel == varinfo1->rel)
 			{
-				reldistinct *= varinfo2->ndistinct;
-				if (relmaxndistinct < varinfo2->ndistinct)
-					relmaxndistinct = varinfo2->ndistinct;
-				relvarcount++;
+				/* varinfos on current rel */
+				relvarinfos = lcons(varinfo2, relvarinfos);
 			}
 			else
 			{
 				/* not time to process varinfo2 yet */
 				newvarinfos = lcons(varinfo2, newvarinfos);
+			}
+		}
+
+		/*
+		 * Get the numdistinct estimate for the Vars of this rel.  We
+		 * iteratively search for multivariate n-distinct with maximum number
+		 * of vars; assuming that each var group is independent of the others,
+		 * we multiply them together.  Any remaining relvarinfos after
+		 * no more multivariate matches are found are assumed independent too,
+		 * so their individual ndistinct estimates are multiplied also.
+		 */
+		while (relvarinfos)
+		{
+			double		mvndistinct;
+
+			if (estimate_multivariate_ndistinct(root, rel, &relvarinfos,
+												&mvndistinct))
+			{
+				reldistinct *= mvndistinct;
+				if (relmaxndistinct < mvndistinct)
+					relmaxndistinct = mvndistinct;
+				relvarcount++;	/* inaccurate, but doesn't matter */
+			}
+			else
+			{
+				foreach (l, relvarinfos)
+				{
+					GroupVarInfo *varinfo2 = (GroupVarInfo *) lfirst(l);
+
+					reldistinct *= varinfo2->ndistinct;
+					if (relmaxndistinct < varinfo2->ndistinct)
+						relmaxndistinct = varinfo2->ndistinct;
+					relvarcount++;
+				}
+
+				/* we're done with this relation */
+				relvarinfos = NIL;
 			}
 		}
 
@@ -3666,6 +3707,132 @@ estimate_hash_bucketsize(PlannerInfo *root, Node *hashkey, double nbuckets)
  *
  *-------------------------------------------------------------------------
  */
+
+/*
+ * Find applicable ndistinct statistics for the given list of VarInfos (which
+ * must all belong to the given rel), and update *ndistinct to the estimate of
+ * the MVNDistinctItem that best matches.  If a match it found, *varinfos is
+ * updated to remove the list of matched varinfos.
+ *
+ * Varinfos that aren't for simple Vars are ignored.
+ *
+ * Return TRUE if we're able to find a match, FALSE otherwise.
+ */
+static bool
+estimate_multivariate_ndistinct(PlannerInfo *root, RelOptInfo *rel,
+								List **varinfos, double *ndistinct)
+{
+	ListCell   *lc;
+	Bitmapset  *attnums = NULL;
+	int			nmatches;
+	Oid			statOid = InvalidOid;
+	MVNDistinct *stats;
+	Bitmapset  *matched = NULL;
+
+	/* bail out immediately if the table has no extended statistics */
+	if (!rel->statlist)
+		return false;
+
+	/* Determine the attnums we're looking for */
+	foreach(lc, *varinfos)
+	{
+		GroupVarInfo *varinfo = (GroupVarInfo *) lfirst(lc);
+
+		Assert(varinfo->rel == rel);
+
+		if (IsA(varinfo->var, Var))
+		{
+			attnums = bms_add_member(attnums,
+									 ((Var *) varinfo->var)->varattno);
+		}
+	}
+
+	/* look for the ndistinct statistics matching the most vars */
+	nmatches = 1; /* we require at least two matches */
+	foreach(lc, rel->statlist)
+	{
+		StatisticExtInfo *info = (StatisticExtInfo *) lfirst(lc);
+		Bitmapset  *shared;
+
+		/* skip statistics of other kinds */
+		if (info->kind != STATS_EXT_NDISTINCT)
+			continue;
+
+		/* compute attnums shared by the vars and the statistic */
+		shared = bms_intersect(info->keys, attnums);
+
+		/*
+		 * Does this statistics matches more columns than the currently
+		 * best statistic?  If so, use this one instead.
+		 *
+		 * XXX This should break ties using name of the statistic, or
+		 * something like that, to make the outcome stable.
+		 */
+		if (bms_num_members(shared) > nmatches)
+		{
+			statOid = info->statOid;
+			nmatches = bms_num_members(shared);
+			matched = shared;
+		}
+	}
+
+	/* No match? */
+	if (statOid == InvalidOid)
+		return false;
+	Assert(nmatches > 1 && matched != NULL);
+
+	stats = statext_ndistinct_load(statOid);
+
+	/*
+	 * If we have a match, search it for the specific item that matches (there
+	 * must be one), and construct the output values.
+	 */
+	if (stats)
+	{
+		int		i;
+		List   *newlist = NIL;
+		MVNDistinctItem *item = NULL;
+
+		/* Find the specific item that exactly matches the combination */
+		for (i = 0; i < stats->nitems; i++)
+		{
+			MVNDistinctItem *tmpitem = &stats->items[i];
+
+			if (bms_subset_compare(tmpitem->attrs, matched) == BMS_EQUAL)
+			{
+				item = tmpitem;
+				break;
+			}
+		}
+
+		/* make sure we found an item */
+		if (!item)
+			elog(ERROR, "corrupt MVNDistinct entry");
+
+		/* Form the output varinfo list, keeping only unmatched ones */
+		foreach(lc, *varinfos)
+		{
+			GroupVarInfo *varinfo = (GroupVarInfo *) lfirst(lc);
+			AttrNumber	attnum;
+
+			if (!IsA(varinfo->var, Var))
+			{
+				newlist = lappend(newlist, varinfo);
+				continue;
+			}
+
+			attnum = ((Var *) varinfo->var)->varattno;
+			if (!bms_is_member(attnum, matched))
+				newlist = lappend(newlist, varinfo);
+		}
+
+		*varinfos = newlist;
+		*ndistinct = item->ndistinct;
+		return true;
+	}
+
+	return false;
+}
 
 /*
  * convert_to_scalar

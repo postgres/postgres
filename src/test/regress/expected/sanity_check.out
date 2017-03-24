@@ -142,6 +142,7 @@ pg_shdepend|t
 pg_shdescription|t
 pg_shseclabel|t
 pg_statistic|t
+pg_statistic_ext|t
 pg_subscription|t
 pg_subscription_rel|t
 pg_tablespace|t

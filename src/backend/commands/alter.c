@@ -33,6 +33,7 @@
 #include "catalog/pg_opfamily.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_subscription.h"
+#include "catalog/pg_statistic_ext.h"
 #include "catalog/pg_ts_config.h"
 #include "catalog/pg_ts_dict.h"
 #include "catalog/pg_ts_parser.h"
@@ -119,6 +120,10 @@ report_namespace_conflict(Oid classId, const char *name, Oid nspOid)
 		case ConversionRelationId:
 			Assert(OidIsValid(nspOid));
 			msgfmt = gettext_noop("conversion \"%s\" already exists in schema \"%s\"");
+			break;
+		case StatisticExtRelationId:
+			Assert(OidIsValid(nspOid));
+			msgfmt = gettext_noop("statistics \"%s\" already exists in schema \"%s\"");
 			break;
 		case TSParserRelationId:
 			Assert(OidIsValid(nspOid));
@@ -373,6 +378,7 @@ ExecRenameStmt(RenameStmt *stmt)
 		case OBJECT_OPCLASS:
 		case OBJECT_OPFAMILY:
 		case OBJECT_LANGUAGE:
+		case OBJECT_STATISTIC_EXT:
 		case OBJECT_TSCONFIGURATION:
 		case OBJECT_TSDICTIONARY:
 		case OBJECT_TSPARSER:
@@ -489,6 +495,7 @@ ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt,
 		case OBJECT_OPERATOR:
 		case OBJECT_OPCLASS:
 		case OBJECT_OPFAMILY:
+		case OBJECT_STATISTIC_EXT:
 		case OBJECT_TSCONFIGURATION:
 		case OBJECT_TSDICTIONARY:
 		case OBJECT_TSPARSER:
@@ -803,6 +810,7 @@ ExecAlterOwnerStmt(AlterOwnerStmt *stmt)
 		case OBJECT_OPERATOR:
 		case OBJECT_OPCLASS:
 		case OBJECT_OPFAMILY:
+		case OBJECT_STATISTIC_EXT:
 		case OBJECT_TABLESPACE:
 		case OBJECT_TSDICTIONARY:
 		case OBJECT_TSCONFIGURATION:

@@ -53,10 +53,11 @@ static const int dbObjectTypePriority[] =
 	18,							/* DO_TABLE */
 	20,							/* DO_ATTRDEF */
 	28,							/* DO_INDEX */
-	29,							/* DO_RULE */
-	30,							/* DO_TRIGGER */
+	29,							/* DO_STATSEXT */
+	30,							/* DO_RULE */
+	31,							/* DO_TRIGGER */
 	27,							/* DO_CONSTRAINT */
-	31,							/* DO_FK_CONSTRAINT */
+	32,							/* DO_FK_CONSTRAINT */
 	2,							/* DO_PROCLANG */
 	10,							/* DO_CAST */
 	23,							/* DO_TABLE_DATA */
@@ -1289,6 +1290,11 @@ describeDumpableObject(DumpableObject *obj, char *buf, int bufsize)
 		case DO_INDEX:
 			snprintf(buf, bufsize,
 					 "INDEX %s  (ID %d OID %u)",
+					 obj->name, obj->dumpId, obj->catId.oid);
+			return;
+		case DO_STATSEXT:
+			snprintf(buf, bufsize,
+					 "STATISTICS %s  (ID %d OID %u)",
 					 obj->name, obj->dumpId, obj->catId.oid);
 			return;
 		case DO_REFRESH_MATVIEW:

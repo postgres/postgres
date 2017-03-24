@@ -56,6 +56,7 @@ typedef enum
 	DO_TABLE,
 	DO_ATTRDEF,
 	DO_INDEX,
+	DO_STATSEXT,
 	DO_RULE,
 	DO_TRIGGER,
 	DO_CONSTRAINT,
@@ -361,6 +362,13 @@ typedef struct _indxInfo
 	DumpId		indexconstraint;
 	int			relpages;		/* relpages of the underlying table */
 } IndxInfo;
+
+typedef struct _statsExtInfo
+{
+	DumpableObject dobj;
+	TableInfo  *statsexttable;	/* link to table the stats ext is for */
+	char	   *statsextdef;
+} StatsExtInfo;
 
 typedef struct _ruleInfo
 {
@@ -682,6 +690,7 @@ extern void getOwnedSeqs(Archive *fout, TableInfo tblinfo[], int numTables);
 extern InhInfo *getInherits(Archive *fout, int *numInherits);
 extern PartInfo *getPartitions(Archive *fout, int *numPartitions);
 extern void getIndexes(Archive *fout, TableInfo tblinfo[], int numTables);
+extern void getExtendedStatistics(Archive *fout, TableInfo tblinfo[], int numTables);
 extern void getConstraints(Archive *fout, TableInfo tblinfo[], int numTables);
 extern RuleInfo *getRules(Archive *fout, int *numRules);
 extern void getTriggers(Archive *fout, TableInfo tblinfo[], int numTables);

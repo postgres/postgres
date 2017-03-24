@@ -141,6 +141,8 @@ extern Oid	get_collation_oid(List *collname, bool missing_ok);
 extern Oid	get_conversion_oid(List *conname, bool missing_ok);
 extern Oid	FindDefaultConversionProc(int32 for_encoding, int32 to_encoding);
 
+extern Oid	get_statistics_oid(List *names, bool missing_ok);
+
 /* initialization & transaction cleanup code */
 extern void InitializeSearchPath(void);
 extern void AtEOXact_Namespace(bool isCommit, bool parallel);

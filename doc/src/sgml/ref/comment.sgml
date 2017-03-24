@@ -51,6 +51,7 @@ COMMENT ON
   SCHEMA <replaceable class="PARAMETER">object_name</replaceable> |
   SEQUENCE <replaceable class="PARAMETER">object_name</replaceable> |
   SERVER <replaceable class="PARAMETER">object_name</replaceable> |
+  STATISTICS <replaceable class="PARAMETER">object_name</replaceable> |
   TABLE <replaceable class="PARAMETER">object_name</replaceable> |
   TABLESPACE <replaceable class="PARAMETER">object_name</replaceable> |
   TEXT SEARCH CONFIGURATION <replaceable class="PARAMETER">object_name</replaceable> |
@@ -125,8 +126,8 @@ COMMENT ON
       The name of the object to be commented.  Names of tables,
       aggregates, collations, conversions, domains, foreign tables, functions,
       indexes, operators, operator classes, operator families, sequences,
-      text search objects, types, and views can be schema-qualified.
-      When commenting on a column,
+      statistics, text search objects, types, and views can be
+      schema-qualified. When commenting on a column,
       <replaceable class="parameter">relation_name</replaceable> must refer
       to a table, view, composite type, or foreign table.
      </para>
@@ -327,6 +328,7 @@ COMMENT ON RULE my_rule ON my_table IS 'Logs updates of employee records';
 COMMENT ON SCHEMA my_schema IS 'Departmental data';
 COMMENT ON SEQUENCE my_sequence IS 'Used to generate primary keys';
 COMMENT ON SERVER myserver IS 'my foreign server';
+COMMENT ON STATISTICS my_statistics IS 'Improves planner row estimations';
 COMMENT ON TABLE my_schema.my_table IS 'Employee Information';
 COMMENT ON TABLESPACE my_tablespace IS 'Tablespace for indexes';
 COMMENT ON TEXT SEARCH CONFIGURATION my_config IS 'Special word filtering';

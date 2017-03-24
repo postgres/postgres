@@ -1,0 +1,155 @@
+<!--
+doc/src/sgml/ref/create_statistics.sgml
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-CREATESTATISTICS">
+ <indexterm zone="sql-createstatistics">
+  <primary>CREATE STATISTICS</primary>
+ </indexterm>
+
+ <refmeta>
+  <refentrytitle>CREATE STATISTICS</refentrytitle>
+  <manvolnum>7</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>CREATE STATISTICS</refname>
+  <refpurpose>define extended statistics</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+<synopsis>
+CREATE STATISTICS [ IF NOT EXISTS ] <replaceable class="PARAMETER">statistics_name</replaceable> ON (
+  <replaceable class="PARAMETER">column_name</replaceable>, <replaceable class="PARAMETER">column_name</replaceable> [, ...])
+  FROM <replaceable class="PARAMETER">table_name</replaceable>
+</synopsis>
+
+ </refsynopsisdiv>
+
+ <refsect1 id="SQL-CREATESTATISTICS-description">
+  <title>Description</title>
+
+  <para>
+   <command>CREATE STATISTICS</command> will create a new extended statistics
+   object on the specified table.
+   The statistics will be created in the current database and
+   will be owned by the user issuing the command.
+  </para>
+
+  <para>
+   If a schema name is given (for example, <literal>CREATE STATISTICS
+   myschema.mystat ...</>) then the statistics is created in the specified
+   schema.  Otherwise it is created in the current schema.  The name of
+   the statistics must be distinct from the name of any other statistics in the
+   same schema.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+
+   <varlistentry>
+    <term><literal>IF NOT EXISTS</></term>
+    <listitem>
+     <para>
+      Do not throw an error if a statistics with the same name already exists.
+      A notice is issued in this case.  Note that only the name of the
+      statistics object is considered here. The definition of the statistics is
+      not considered.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">statistics_name</replaceable></term>
+    <listitem>
+     <para>
+      The name (optionally schema-qualified) of the statistics to be created.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">column_name</replaceable></term>
+    <listitem>
+     <para>
+      The name of a column to be included in the statistics.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">table_name</replaceable></term>
+    <listitem>
+     <para>
+      The name (optionally schema-qualified) of the table the statistics should
+      be created on.
+     </para>
+    </listitem>
+   </varlistentry>
+
+  </variablelist>
+
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   You must be the owner of a table to create or change statistics on it.
+  </para>
+ </refsect1>
+
+ <refsect1 id="SQL-CREATESTATISTICS-examples">
+  <title>Examples</title>
+
+  <para>
+   Create table <structname>t1</> with two functionally dependent columns, i.e.
+   knowledge of a value in the first column is sufficient for determining the
+   value in the other column. Then functional dependencies are built on those
+   columns:
+
+<programlisting>
+CREATE TABLE t1 (
+    a   int,
+    b   int
+);
+
+INSERT INTO t1 SELECT i/100, i/500
+                 FROM generate_series(1,1000000) s(i);
+
+CREATE STATISTICS s1 ON (a, b) FROM t1;
+
+ANALYZE t1;
+
+-- valid combination of values
+EXPLAIN ANALYZE SELECT * FROM t1 WHERE (a = 1) AND (b = 0);
+
+-- invalid combination of values
+EXPLAIN ANALYZE SELECT * FROM t1 WHERE (a = 1) AND (b = 1);
+</programlisting>
+  </para>
+
+ </refsect1>
+
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   There's no <command>CREATE STATISTICS</command> command in the SQL standard.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-alterstatistics"></member>
+   <member><xref linkend="sql-dropstatistics"></member>
+  </simplelist>
+ </refsect1>
+</refentry>

@@ -254,6 +254,10 @@ DATA(insert (	23	 18   78 e f ));
 /* pg_node_tree can be coerced to, but not from, text */
 DATA(insert (  194	 25    0 i b ));
 
+/* pg_ndistinct can be coerced to, but not from, bytea and text */
+DATA(insert (  3361  17    0 i b ));
+DATA(insert (  3361  25    0 i i ));
+
 /*
  * Datetime category
  */

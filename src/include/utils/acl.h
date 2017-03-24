@@ -192,6 +192,7 @@ typedef enum AclObjectKind
 	ACL_KIND_OPFAMILY,			/* pg_opfamily */
 	ACL_KIND_COLLATION,			/* pg_collation */
 	ACL_KIND_CONVERSION,		/* pg_conversion */
+	ACL_KIND_STATISTICS,		/* pg_statistic_ext */
 	ACL_KIND_TABLESPACE,		/* pg_tablespace */
 	ACL_KIND_TSDICTIONARY,		/* pg_ts_dict */
 	ACL_KIND_TSCONFIGURATION,	/* pg_ts_config */
@@ -326,6 +327,7 @@ extern bool pg_event_trigger_ownercheck(Oid et_oid, Oid roleid);
 extern bool pg_extension_ownercheck(Oid ext_oid, Oid roleid);
 extern bool pg_publication_ownercheck(Oid pub_oid, Oid roleid);
 extern bool pg_subscription_ownercheck(Oid sub_oid, Oid roleid);
+extern bool pg_statistics_ownercheck(Oid stat_oid, Oid roleid);
 extern bool has_createrole_privilege(Oid roleid);
 extern bool has_bypassrls_privilege(Oid roleid);
 

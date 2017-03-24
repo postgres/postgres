@@ -1,0 +1,34 @@
+Extended statistics
+===================
+
+When estimating various quantities (e.g. condition selectivities) the default
+approach relies on the assumption of independence. In practice that's often
+not true, resulting in estimation errors.
+
+Extended statistics track different types of dependencies between the columns,
+hopefully improving the estimates and producing better plans.
+
+Currently we only have one type of extended statistics - ndistinct
+coefficients, and we use it to improve estimates of grouping queries. See
+README.ndistinct for details.
+
+
+Size of sample in ANALYZE
+-------------------------
+When performing ANALYZE, the number of rows to sample is determined as
+
+    (300 * statistics_target)
+
+That works reasonably well for statistics on individual columns, but perhaps
+it's not enough for extended statistics. Papers analyzing estimation errors
+all use samples proportional to the table (usually finding that 1-3% of the
+table is enough to build accurate stats).
+
+The requested accuracy (number of MCV items or histogram bins) should also
+be considered when determining the sample size, and in extended statistics
+those are not necessarily limited by statistics_target.
+
+This however merits further discussion, because collecting the sample is quite
+expensive and increasing it further would make ANALYZE even more painful.
+Judging by the experiments with the current implementation, the fixed size
+seems to work reasonably well for now, so we leave this as a future work.

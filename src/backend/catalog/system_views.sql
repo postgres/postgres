@@ -186,6 +186,16 @@ CREATE OR REPLACE VIEW pg_sequences AS
     WHERE NOT pg_is_other_temp_schema(N.oid)
           AND relkind = 'S';
 
+CREATE VIEW pg_stats_ext AS
+    SELECT
+        N.nspname AS schemaname,
+        C.relname AS tablename,
+        S.staname AS staname,
+        S.stakeys AS attnums,
+        length(s.standistinct) AS ndistbytes
+    FROM (pg_statistic_ext S JOIN pg_class C ON (C.oid = S.starelid))
+        LEFT JOIN pg_namespace N ON (N.oid = C.relnamespace);
+
 CREATE VIEW pg_stats WITH (security_barrier) AS
     SELECT
         nspname AS schemaname,

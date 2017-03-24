@@ -147,6 +147,7 @@ typedef enum ObjectClass
 	OCLASS_REWRITE,				/* pg_rewrite */
 	OCLASS_TRIGGER,				/* pg_trigger */
 	OCLASS_SCHEMA,				/* pg_namespace */
+	OCLASS_STATISTIC_EXT,		/* pg_statistic_ext */
 	OCLASS_TSPARSER,			/* pg_ts_parser */
 	OCLASS_TSDICT,				/* pg_ts_dict */
 	OCLASS_TSTEMPLATE,			/* pg_ts_template */

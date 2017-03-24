@@ -41,6 +41,7 @@ CREATE TRANSFORM FOR int LANGUAGE SQL (
 	TO SQL WITH FUNCTION int4recv(internal));
 CREATE PUBLICATION addr_pub FOR TABLE addr_nsp.gentable;
 CREATE SUBSCRIPTION addr_sub CONNECTION '' PUBLICATION bar WITH (DISABLED, NOCONNECT);
+CREATE STATISTICS addr_nsp.gentable_stat ON (a,b) FROM addr_nsp.gentable;
 
 -- test some error cases
 SELECT pg_get_object_address('stone', '{}', '{}');
@@ -185,7 +186,8 @@ WITH objects (type, name, args) AS (VALUES
 				('access method', '{btree}', '{}'),
 				('publication', '{addr_pub}', '{}'),
 				('publication relation', '{addr_nsp, gentable}', '{addr_pub}'),
-				('subscription', '{addr_sub}', '{}')
+				('subscription', '{addr_sub}', '{}'),
+				('statistics', '{addr_nsp, gentable_stat}', '{}')
         )
 SELECT (pg_identify_object(addr1.classid, addr1.objid, addr1.objsubid)).*,
 	-- test roundtrip through pg_identify_object_as_address

@@ -529,6 +529,7 @@ typedef struct RelOptInfo
 	List	   *lateral_vars;	/* LATERAL Vars and PHVs referenced by rel */
 	Relids		lateral_referencers;	/* rels that reference me laterally */
 	List	   *indexlist;		/* list of IndexOptInfo */
+	List	   *statlist;		/* list of StatisticExtInfo */
 	BlockNumber pages;			/* size estimates derived from pg_class */
 	double		tuples;
 	double		allvisfrac;
@@ -668,6 +669,24 @@ typedef struct ForeignKeyOptInfo
 	List	   *rinfos[INDEX_MAX_KEYS];
 } ForeignKeyOptInfo;
 
+/*
+ * StatisticExtInfo
+ *		Information about extended statistics for planning/optimization
+ *
+ * This contains information about which columns are covered by the
+ * statistics (stakeys), which options were requested while adding the
+ * statistics (*_enabled), and which kinds of statistics were actually
+ * built and are available for the optimizer (*_built).
+ */
+typedef struct StatisticExtInfo
+{
+	NodeTag		type;
+
+	Oid			statOid;		/* OID of the statistics row */
+	RelOptInfo *rel;			/* back-link to index's table */
+	char		kind;			/* statistic kind of this entry */
+	Bitmapset  *keys;			/* attnums of the columns covered */
+} StatisticExtInfo;
 
 /*
  * EquivalenceClasses

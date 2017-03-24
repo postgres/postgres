@@ -16721,6 +16721,10 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
    </indexterm>
 
    <indexterm>
+    <primary>pg_get_statisticsextdef</primary>
+   </indexterm>
+
+   <indexterm>
     <primary>pg_get_triggerdef</primary>
    </indexterm>
 
@@ -16890,6 +16894,11 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
        uses</entry>
       </row>
       <row>
+       <entry><literal><function>pg_get_statisticsextdef(<parameter>statext_oid</parameter>)</function></literal></entry>
+       <entry><type>text</type></entry>
+       <entry>get <command>CREATE STATISTICS</> command for extended statistics objects</entry>
+      </row>
+      <row>
        <entry><function>pg_get_triggerdef</function>(<parameter>trigger_oid</parameter>)</entry>
        <entry><type>text</type></entry>
        <entry>get <command>CREATE [ CONSTRAINT ] TRIGGER</> command for trigger</entry>
@@ -17034,19 +17043,20 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
   <para>
    <function>pg_get_constraintdef</function>,
    <function>pg_get_indexdef</function>, <function>pg_get_ruledef</function>,
-   and <function>pg_get_triggerdef</function>, respectively reconstruct the
-   creating command for a constraint, index, rule, or trigger. (Note that this
-   is a decompiled reconstruction, not the original text of the command.)
-   <function>pg_get_expr</function> decompiles the internal form of an
-   individual expression, such as the default value for a column.  It can be
-   useful when examining the contents of system catalogs.  If the expression
-   might contain Vars, specify the OID of the relation they refer to as the
-   second parameter; if no Vars are expected, zero is sufficient.
-   <function>pg_get_viewdef</function> reconstructs the <command>SELECT</>
-   query that defines a view. Most of these functions come in two variants,
-   one of which can optionally <quote>pretty-print</> the result.  The
-   pretty-printed format is more readable, but the default format is more
-   likely to be interpreted the same way by future versions of
+   <function>pg_get_statisticsextdef</function>, and
+   <function>pg_get_triggerdef</function>, respectively reconstruct the
+   creating command for a constraint, index, rule, extended statistics object,
+   or trigger. (Note that this is a decompiled reconstruction, not the
+   original text of the command.) <function>pg_get_expr</function> decompiles
+   the internal form of an individual expression, such as the default value
+   for a column.  It can be useful when examining the contents of system
+   catalogs.  If the expression might contain Vars, specify the OID of the
+   relation they refer to as the second parameter; if no Vars are expected,
+   zero is sufficient. <function>pg_get_viewdef</function> reconstructs the
+   <command>SELECT</> query that defines a view. Most of these functions come
+   in two variants, one of which can optionally <quote>pretty-print</> the
+   result.  The pretty-printed format is more readable, but the default format
+   is more likely to be interpreted the same way by future versions of
    <productname>PostgreSQL</>; avoid using pretty-printed output for dump
    purposes.  Passing <literal>false</> for the pretty-print parameter yields
    the same result as the variant that does not have the parameter at all.
