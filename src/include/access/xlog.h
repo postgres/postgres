@@ -288,8 +288,26 @@ extern void assign_max_wal_size(int newval, void *extra);
 extern void assign_checkpoint_completion_target(double newval, void *extra);
 
 /*
- * Starting/stopping a base backup
+ * Routines to start, stop, and get status of a base backup.
  */
+
+/*
+ * Session-level status of base backups
+ *
+ * This is used in parallel with the shared memory status to control parallel
+ * execution of base backup functions for a given session, be it a backend
+ * dedicated to replication or a normal backend connected to a database. The
+ * update of the session-level status happens at the same time as the shared
+ * memory counters to keep a consistent global and local state of the backups
+ * running.
+ */
+typedef enum SessionBackupState
+{
+	SESSION_BACKUP_NONE,
+	SESSION_BACKUP_EXCLUSIVE,
+	SESSION_BACKUP_NON_EXCLUSIVE
+} SessionBackupState;
+
 extern XLogRecPtr do_pg_start_backup(const char *backupidstr, bool fast,
 				TimeLineID *starttli_p, StringInfo labelfile, DIR *tblspcdir,
 			  List **tablespaces, StringInfo tblspcmapfile, bool infotbssize,
@@ -297,6 +315,7 @@ extern XLogRecPtr do_pg_start_backup(const char *backupidstr, bool fast,
 extern XLogRecPtr do_pg_stop_backup(char *labelfile, bool waitforarchive,
 				  TimeLineID *stoptli_p);
 extern void do_pg_abort_backup(void);
+extern SessionBackupState get_backup_status(void);
 
 /* File path names (all relative to $PGDATA) */
 #define BACKUP_LABEL_FILE		"backup_label"
