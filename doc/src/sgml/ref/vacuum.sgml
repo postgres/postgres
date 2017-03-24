@@ -273,7 +273,7 @@ DETAIL:  CPU: user: 0.06 s, system: 0.01 s, elapsed: 0.07 s.
 INFO:  "onek": found 3000 removable, 1000 nonremovable tuples in 143 pages
 DETAIL:  0 dead tuples cannot be removed yet.
 There were 0 unused item pointers.
-Skipped 0 pages due to buffer pins.
+Skipped 0 pages due to buffer pins, 0 frozen pages.
 0 pages are entirely empty.
 CPU: user: 0.39 s, system: 0.07 s, elapsed: 1.56 s.
 INFO:  analyzing "public.onek"

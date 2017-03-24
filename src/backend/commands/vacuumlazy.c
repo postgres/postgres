@@ -1341,10 +1341,14 @@ lazy_scan_heap(Relation onerel, int options, LVRelStats *vacrelstats,
 					 nkeep, OldestXmin);
 	appendStringInfo(&buf, _("There were %.0f unused item pointers.\n"),
 					 nunused);
-	appendStringInfo(&buf, ngettext("Skipped %u page due to buffer pins.\n",
-									"Skipped %u pages due to buffer pins.\n",
+	appendStringInfo(&buf, ngettext("Skipped %u page due to buffer pins, ",
+									"Skipped %u pages due to buffer pins, ",
 									vacrelstats->pinskipped_pages),
 					 vacrelstats->pinskipped_pages);
+	appendStringInfo(&buf, ngettext("%u frozen page.\n",
+									"%u frozen pages.\n",
+									vacrelstats->frozenskipped_pages),
+					 vacrelstats->frozenskipped_pages);
 	appendStringInfo(&buf, ngettext("%u page is entirely empty.\n",
 									"%u pages are entirely empty.\n",
 									empty_pages),
