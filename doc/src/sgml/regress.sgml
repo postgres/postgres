@@ -264,10 +264,12 @@ make check EXTRA_TESTS=numeric_big
 </screen>
     To run the collation tests:
 <screen>
-make check EXTRA_TESTS=collate.linux.utf8 LANG=en_US.utf8
+make check EXTRA_TESTS='collate.icu.utf8 collate.linux.utf8' LANG=en_US.utf8
 </screen>
     The <literal>collate.linux.utf8</> test works only on Linux/glibc
-    platforms, and only when run in a database that uses UTF-8 encoding.
+    platforms.  The <literal>collate.icu.utf8</literal> test only works when
+    support for ICU was built.  Both tests will only succeed when run in a
+    database that uses UTF-8 encoding.
    </para>
   </sect2>
 
