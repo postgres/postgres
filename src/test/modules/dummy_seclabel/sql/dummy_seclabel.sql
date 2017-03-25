@@ -108,5 +108,8 @@ DROP EVENT TRIGGER always_start, always_end, always_drop, always_rewrite;
 DROP VIEW dummy_seclabel_view1;
 DROP TABLE dummy_seclabel_tbl1, dummy_seclabel_tbl2;
 
+DROP SUBSCRIPTION dummy_sub NODROP SLOT;
+DROP PUBLICATION dummy_pub;
+
 DROP ROLE regress_dummy_seclabel_user1;
 DROP ROLE regress_dummy_seclabel_user2;
