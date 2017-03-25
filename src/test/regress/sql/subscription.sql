@@ -92,4 +92,5 @@ DROP SUBSCRIPTION testsub NODROP SLOT;  -- fail
 
 RESET SESSION AUTHORIZATION;
 DROP ROLE regress_subscription_user;
+DROP ROLE regress_subscription_user2;
 DROP ROLE regress_subscription_user_dummy;
