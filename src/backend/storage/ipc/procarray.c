@@ -1264,6 +1264,10 @@ TransactionIdIsActive(TransactionId xid)
  * corresponding flags is set. Typically, if you want to ignore ones with
  * PROC_IN_VACUUM flag, you can use PROCARRAY_FLAGS_VACUUM.
  *
+ * PROCARRAY_SLOTS_XMIN causes GetOldestXmin to ignore the xmin and
+ * catalog_xmin of any replication slots that exist in the system when
+ * calculating the oldest xmin.
+ *
  * This is used by VACUUM to decide which deleted tuples must be preserved in
  * the passed in table. For shared relations backends in all databases must be
  * considered, but for non-shared relations that's not required, since only
@@ -1342,7 +1346,7 @@ GetOldestXmin(Relation rel, int flags)
 		volatile PGPROC *proc = &allProcs[pgprocno];
 		volatile PGXACT *pgxact = &allPgXact[pgprocno];
 
-		if (pgxact->vacuumFlags & flags)
+		if (pgxact->vacuumFlags & (flags & PROCARRAY_PROC_FLAGS_MASK))
 			continue;
 
 		if (allDbs ||
@@ -1418,7 +1422,8 @@ GetOldestXmin(Relation rel, int flags)
 	/*
 	 * Check whether there are replication slots requiring an older xmin.
 	 */
-	if (TransactionIdIsValid(replication_slot_xmin) &&
+	if (!(flags & PROCARRAY_SLOTS_XMIN) &&
+		TransactionIdIsValid(replication_slot_xmin) &&
 		NormalTransactionIdPrecedes(replication_slot_xmin, result))
 		result = replication_slot_xmin;
 
@@ -1428,7 +1433,8 @@ GetOldestXmin(Relation rel, int flags)
 	 * possible. We need to do so if we're computing the global limit (rel =
 	 * NULL) or if the passed relation is a catalog relation of some kind.
 	 */
-	if ((rel == NULL ||
+	if (!(flags & PROCARRAY_SLOTS_XMIN) &&
+		(rel == NULL ||
 		 RelationIsAccessibleInLogicalDecoding(rel)) &&
 		TransactionIdIsValid(replication_slot_catalog_xmin) &&
 		NormalTransactionIdPrecedes(replication_slot_catalog_xmin, result))

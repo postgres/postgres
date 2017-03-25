@@ -32,6 +32,17 @@
 #define		PROCARRAY_LOGICAL_DECODING_FLAG	0x10	/* currently doing logical
 													 * decoding outside xact */
 
+#define		PROCARRAY_SLOTS_XMIN			0x20	/* replication slot xmin,
+													 * catalog_xmin */
+/*
+ * Only flags in PROCARRAY_PROC_FLAGS_MASK are considered when matching
+ * PGXACT->vacuumFlags. Other flags are used for different purposes and
+ * have no corresponding PROC flag equivalent.
+ */
+#define		PROCARRAY_PROC_FLAGS_MASK	(PROCARRAY_VACUUM_FLAG | \
+										 PROCARRAY_ANALYZE_FLAG | \
+										 PROCARRAY_LOGICAL_DECODING_FLAG)
+
 /* Use the following flags as an input "flags" to GetOldestXmin function */
 /* Consider all backends except for logical decoding ones which manage xmin separately */
 #define		PROCARRAY_FLAGS_DEFAULT			PROCARRAY_LOGICAL_DECODING_FLAG
