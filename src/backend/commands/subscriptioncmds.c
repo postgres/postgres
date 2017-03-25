@@ -228,7 +228,7 @@ publicationListToArray(List *publist)
 		/* Check for duplicates. */
 		foreach(pcell, publist)
 		{
-			char	   *pname = strVal(lfirst(cell));
+			char	   *pname = strVal(lfirst(pcell));
 
 			if (name == pname)
 				break;

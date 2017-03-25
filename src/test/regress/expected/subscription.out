@@ -2,6 +2,7 @@
 -- SUBSCRIPTION
 --
 CREATE ROLE regress_subscription_user LOGIN SUPERUSER;
+CREATE ROLE regress_subscription_user2;
 CREATE ROLE regress_subscription_user_dummy LOGIN NOSUPERUSER;
 SET SESSION AUTHORIZATION 'regress_subscription_user';
 -- fail - no publications
@@ -19,11 +20,24 @@ BEGIN;
 CREATE SUBSCRIPTION testsub CONNECTION 'testconn' PUBLICATION testpub WITH (CREATE SLOT);
 ERROR:  CREATE SUBSCRIPTION ... CREATE SLOT cannot run inside a transaction block
 COMMIT;
+-- fail - invalid connection string
 CREATE SUBSCRIPTION testsub CONNECTION 'testconn' PUBLICATION testpub;
 ERROR:  invalid connection string syntax: missing "=" after "testconn" in connection info string
 
+-- fail - duplicate publications
+CREATE SUBSCRIPTION testsub CONNECTION 'dbname=doesnotexist' PUBLICATION foo, testpub, foo WITH (NOCONNECT);
+ERROR:  publication name "foo" used more than once
+-- ok
 CREATE SUBSCRIPTION testsub CONNECTION 'dbname=doesnotexist' PUBLICATION testpub WITH (NOCONNECT);
 WARNING:  tables were not subscribed, you will have to run ALTER SUBSCRIPTION ... REFRESH PUBLICATION to subscribe the tables
+-- fail - name already exists
+CREATE SUBSCRIPTION testsub CONNECTION 'dbname=doesnotexist' PUBLICATION testpub WITH (NOCONNECT);
+ERROR:  subscription "testsub" already exists
+-- fail - must be superuser
+SET SESSION AUTHORIZATION 'regress_subscription_user2';
+CREATE SUBSCRIPTION testsub2 CONNECTION 'dbname=doesnotexist' PUBLICATION foo WITH (NOCONNECT);
+ERROR:  must be superuser to create subscriptions
+SET SESSION AUTHORIZATION 'regress_subscription_user';
 \dRs+
                                List of subscriptions
   Name   |           Owner           | Enabled | Publication |      Conninfo       
@@ -33,6 +47,10 @@ WARNING:  tables were not subscribed, you will have to run ALTER SUBSCRIPTION ..
 
 ALTER SUBSCRIPTION testsub SET PUBLICATION testpub2, testpub3 NOREFRESH;
 ALTER SUBSCRIPTION testsub CONNECTION 'dbname=doesnotexist2';
+ALTER SUBSCRIPTION testsub WITH (SLOT NAME = 'newname');
+-- fail
+ALTER SUBSCRIPTION doesnotexist CONNECTION 'dbname=doesnotexist2';
+ERROR:  subscription "doesnotexist" does not exist
 \dRs+
                                    List of subscriptions
   Name   |           Owner           | Enabled |     Publication     |       Conninfo       
@@ -73,6 +91,13 @@ ALTER SUBSCRIPTION testsub RENAME TO testsub_foo;
 
 -- rename back to keep the rest simple
 ALTER SUBSCRIPTION testsub_foo RENAME TO testsub;
+-- fail - new owner must be superuser
+ALTER SUBSCRIPTION testsub OWNER TO regress_subscription_user2;
+ERROR:  permission denied to change owner of subscription "testsub"
+HINT:  The owner of an subscription must be a superuser.
+ALTER ROLE regress_subscription_user2 SUPERUSER;
+-- now it works
+ALTER SUBSCRIPTION testsub OWNER TO regress_subscription_user2;
 -- fail - cannot do DROP SUBSCRIPTION DROP SLOT inside transaction block
 BEGIN;
 DROP SUBSCRIPTION testsub DROP SLOT;
@@ -81,6 +106,10 @@ COMMIT;
 BEGIN;
 DROP SUBSCRIPTION testsub NODROP SLOT;
 COMMIT;
+DROP SUBSCRIPTION IF EXISTS testsub NODROP SLOT;
+NOTICE:  subscription "testsub" does not exist, skipping
+DROP SUBSCRIPTION testsub NODROP SLOT;  -- fail
+ERROR:  subscription "testsub" does not exist
 RESET SESSION AUTHORIZATION;
 DROP ROLE regress_subscription_user;
 DROP ROLE regress_subscription_user_dummy;
