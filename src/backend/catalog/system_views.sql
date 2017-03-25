@@ -425,6 +425,28 @@ WHERE
 	l.objsubid = 0
 UNION ALL
 SELECT
+	l.objoid, l.classoid, l.objsubid,
+	'publication'::text AS objtype,
+	NULL::oid AS objnamespace,
+	quote_ident(p.pubname) AS objname,
+	l.provider, l.label
+FROM
+	pg_seclabel l
+	JOIN pg_publication p ON l.classoid = p.tableoid AND l.objoid = p.oid
+WHERE
+	l.objsubid = 0
+UNION ALL
+SELECT
+	l.objoid, l.classoid, 0::int4 AS objsubid,
+	'subscription'::text AS objtype,
+	NULL::oid AS objnamespace,
+	quote_ident(s.subname) AS objname,
+	l.provider, l.label
+FROM
+	pg_shseclabel l
+	JOIN pg_subscription s ON l.classoid = s.tableoid AND l.objoid = s.oid
+UNION ALL
+SELECT
 	l.objoid, l.classoid, 0::int4 AS objsubid,
 	'database'::text AS objtype,
 	NULL::oid AS objnamespace,

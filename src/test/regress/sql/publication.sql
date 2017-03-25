@@ -8,6 +8,9 @@ SET SESSION AUTHORIZATION 'regress_publication_user';
 
 CREATE PUBLICATION testpub_default;
 
+COMMENT ON PUBLICATION testpub_default IS 'test publication';
+SELECT obj_description(p.oid, 'pg_publication') FROM pg_publication p;
+
 CREATE PUBLICATION testpib_ins_trunct WITH (nopublish delete, nopublish update);
 
 ALTER PUBLICATION testpub_default WITH (nopublish insert, nopublish delete);

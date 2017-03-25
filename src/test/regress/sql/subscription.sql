@@ -27,6 +27,9 @@ CREATE SUBSCRIPTION testsub CONNECTION 'dbname=doesnotexist' PUBLICATION foo, te
 -- ok
 CREATE SUBSCRIPTION testsub CONNECTION 'dbname=doesnotexist' PUBLICATION testpub WITH (NOCONNECT);
 
+COMMENT ON SUBSCRIPTION testsub IS 'test subscription';
+SELECT obj_description(s.oid, 'pg_subscription') FROM pg_subscription s;
+
 -- fail - name already exists
 CREATE SUBSCRIPTION testsub CONNECTION 'dbname=doesnotexist' PUBLICATION testpub WITH (NOCONNECT);
 

@@ -6340,9 +6340,11 @@ comment_type_name:
 			| EXTENSION							{ $$ = OBJECT_EXTENSION; }
 			| FOREIGN DATA_P WRAPPER			{ $$ = OBJECT_FDW; }
 			| opt_procedural LANGUAGE			{ $$ = OBJECT_LANGUAGE; }
+			| PUBLICATION						{ $$ = OBJECT_PUBLICATION; }
 			| ROLE								{ $$ = OBJECT_ROLE; }
 			| SCHEMA							{ $$ = OBJECT_SCHEMA; }
 			| SERVER							{ $$ = OBJECT_FOREIGN_SERVER; }
+			| SUBSCRIPTION						{ $$ = OBJECT_SUBSCRIPTION; }
 			| TABLESPACE						{ $$ = OBJECT_TABLESPACE; }
 		;
 
@@ -6453,8 +6455,10 @@ security_label_type_name:
 			DATABASE							{ $$ = OBJECT_DATABASE; }
 			| EVENT TRIGGER						{ $$ = OBJECT_EVENT_TRIGGER; }
 			| opt_procedural LANGUAGE			{ $$ = OBJECT_LANGUAGE; }
+			| PUBLICATION						{ $$ = OBJECT_PUBLICATION; }
 			| ROLE								{ $$ = OBJECT_ROLE; }
 			| SCHEMA							{ $$ = OBJECT_SCHEMA; }
+			| SUBSCRIPTION						{ $$ = OBJECT_SUBSCRIPTION; }
 			| TABLESPACE						{ $$ = OBJECT_TABLESPACE; }
 		;
 

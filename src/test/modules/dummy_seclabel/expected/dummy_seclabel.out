@@ -67,20 +67,28 @@ SECURITY LABEL ON FUNCTION dummy_seclabel_four() IS 'classified';		-- OK
 SECURITY LABEL ON DOMAIN dummy_seclabel_domain IS 'classified';		-- OK
 CREATE SCHEMA dummy_seclabel_test;
 SECURITY LABEL ON SCHEMA dummy_seclabel_test IS 'unclassified';		-- OK
+SET client_min_messages = error;
+CREATE PUBLICATION dummy_pub;
+CREATE SUBSCRIPTION dummy_sub CONNECTION '' PUBLICATION foo WITH (NOCONNECT);
+RESET client_min_messages;
+SECURITY LABEL ON PUBLICATION dummy_pub IS 'classified';
+SECURITY LABEL ON SUBSCRIPTION dummy_sub IS 'classified';
 SELECT objtype, objname, provider, label FROM pg_seclabels
 	ORDER BY objtype, objname;
- objtype  |           objname            | provider |    label     
-----------+------------------------------+----------+--------------
- column   | dummy_seclabel_tbl1.a        | dummy    | unclassified
- domain   | dummy_seclabel_domain        | dummy    | classified
- function | dummy_seclabel_four()        | dummy    | classified
- role     | regress_dummy_seclabel_user1 | dummy    | classified
- role     | regress_dummy_seclabel_user2 | dummy    | unclassified
- schema   | dummy_seclabel_test          | dummy    | unclassified
- table    | dummy_seclabel_tbl1          | dummy    | top secret
- table    | dummy_seclabel_tbl2          | dummy    | classified
- view     | dummy_seclabel_view1         | dummy    | classified
-(9 rows)
+   objtype    |           objname            | provider |    label     
+--------------+------------------------------+----------+--------------
+ column       | dummy_seclabel_tbl1.a        | dummy    | unclassified
+ domain       | dummy_seclabel_domain        | dummy    | classified
+ function     | dummy_seclabel_four()        | dummy    | classified
+ publication  | dummy_pub                    | dummy    | classified
+ role         | regress_dummy_seclabel_user1 | dummy    | classified
+ role         | regress_dummy_seclabel_user2 | dummy    | unclassified
+ schema       | dummy_seclabel_test          | dummy    | unclassified
+ subscription | dummy_sub                    | dummy    | classified
+ table        | dummy_seclabel_tbl1          | dummy    | top secret
+ table        | dummy_seclabel_tbl2          | dummy    | classified
+ view         | dummy_seclabel_view1         | dummy    | classified
+(11 rows)
 
 -- check for event trigger
 CREATE FUNCTION event_trigger_test()
