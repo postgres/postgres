@@ -1490,7 +1490,7 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2, Oid collid)
 			errno = 0;
 #ifdef HAVE_LOCALE_T
 			if (mylocale)
-				result = wcscoll_l((LPWSTR) a1p, (LPWSTR) a2p, mylocale);
+				result = wcscoll_l((LPWSTR) a1p, (LPWSTR) a2p, mylocale->info.lt);
 			else
 #endif
 				result = wcscoll((LPWSTR) a1p, (LPWSTR) a2p);
