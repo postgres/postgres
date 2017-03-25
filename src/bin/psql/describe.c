@@ -2472,7 +2472,7 @@ describeOneTableDetails(const char *schemaname,
 			printfPQExpBuffer(&buf,
 							  "SELECT pub.pubname\n"
 							  " FROM pg_catalog.pg_publication pub\n"
-							  " LEFT JOIN pg_publication_rel pr\n"
+							  " LEFT JOIN pg_catalog.pg_publication_rel pr\n"
 							  "      ON (pr.prpubid = pub.oid)\n"
 							  "WHERE pr.prrelid = '%s' OR pub.puballtables\n"
 							  "ORDER BY 1;",
