@@ -12,7 +12,9 @@
 #ifndef PG_SUBSCRIPTION_REL_H
 #define PG_SUBSCRIPTION_REL_H
 
+#include "access/xlogdefs.h"
 #include "catalog/genbki.h"
+#include "nodes/pg_list.h"
 
 /* ----------------
  *		pg_subscription_rel definition. cpp turns this into
