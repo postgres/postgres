@@ -2292,6 +2292,7 @@ CreateCommandTag(Node *parsetree)
 					break;
 				case OBJECT_PUBLICATION:
 					tag = "DROP PUBLICATION";
+					break;
 				case OBJECT_STATISTIC_EXT:
 					tag = "DROP STATISTICS";
 					break;
