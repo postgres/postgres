@@ -1385,20 +1385,12 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 					state->steps[whenstep].d.jump.jumpdone = state->steps_len;
 				}
 
-				if (caseExpr->defresult)
-				{
-					/* evaluate ELSE expr into CASE's result variables */
-					ExecInitExprRec(caseExpr->defresult, parent, state,
-									resv, resnull);
-				}
-				else
-				{
-					/* default ELSE is to return NULL */
-					scratch.opcode = EEOP_CONST;
-					scratch.d.constval.value = (Datum) 0;
-					scratch.d.constval.isnull = true;
-					ExprEvalPushStep(state, &scratch);
-				}
+				/* transformCaseExpr always adds a default */
+				Assert(caseExpr->defresult);
+
+				/* evaluate ELSE expr into CASE's result variables */
+				ExecInitExprRec(caseExpr->defresult, parent, state,
+								resv, resnull);
 
 				/* adjust jump targets */
 				foreach(lc, adjust_jumps)
