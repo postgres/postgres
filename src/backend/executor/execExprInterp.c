@@ -958,10 +958,11 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 		EEO_CASE(EEOP_BOOLTEST_IS_TRUE)
 		{
 			if (*op->resnull)
+			{
 				*op->resvalue = BoolGetDatum(false);
-			else
-				*op->resvalue = *op->resvalue;
-			*op->resnull = false;
+				*op->resnull = false;
+			}
+			/* else, input value is the correct output as well */
 
 			EEO_NEXT();
 		}
@@ -969,10 +970,12 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 		EEO_CASE(EEOP_BOOLTEST_IS_NOT_TRUE)
 		{
 			if (*op->resnull)
+			{
 				*op->resvalue = BoolGetDatum(true);
+				*op->resnull = false;
+			}
 			else
 				*op->resvalue = BoolGetDatum(!DatumGetBool(*op->resvalue));
-			*op->resnull = false;
 
 			EEO_NEXT();
 		}
@@ -980,10 +983,12 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 		EEO_CASE(EEOP_BOOLTEST_IS_FALSE)
 		{
 			if (*op->resnull)
+			{
 				*op->resvalue = BoolGetDatum(false);
+				*op->resnull = false;
+			}
 			else
 				*op->resvalue = BoolGetDatum(!DatumGetBool(*op->resvalue));
-			*op->resnull = false;
 
 			EEO_NEXT();
 		}
@@ -991,10 +996,11 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 		EEO_CASE(EEOP_BOOLTEST_IS_NOT_FALSE)
 		{
 			if (*op->resnull)
+			{
 				*op->resvalue = BoolGetDatum(true);
-			else
-				*op->resvalue = *op->resvalue;
-			*op->resnull = false;
+				*op->resnull = false;
+			}
+			/* else, input value is the correct output as well */
 
 			EEO_NEXT();
 		}
