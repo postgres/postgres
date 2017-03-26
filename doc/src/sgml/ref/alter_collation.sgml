@@ -93,7 +93,8 @@ ALTER COLLATION <replaceable>name</replaceable> SET SCHEMA <replaceable>new_sche
     <listitem>
      <para>
       Updated the collation version.
-      See <xref linkend="sql-altercollation-notes"> below.
+      See <xref linkend="sql-altercollation-notes"
+      endterm="sql-altercollation-notes"> below.
      </para>
     </listitem>
    </varlistentry>
