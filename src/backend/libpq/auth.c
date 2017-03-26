@@ -2793,6 +2793,7 @@ PerformRadiusTransaction(char *server, char *secret, char *portstr, char *identi
 	{
 		ereport(LOG,
 				(errmsg("could not generate random encryption vector")));
+		pg_freeaddrinfo_all(hint.ai_family, serveraddrs);
 		return STATUS_ERROR;
 	}
 	packet->id = packet->vector[0];
@@ -2827,6 +2828,7 @@ PerformRadiusTransaction(char *server, char *secret, char *portstr, char *identi
 			ereport(LOG,
 					(errmsg("could not perform MD5 encryption of password")));
 			pfree(cryptvector);
+			pg_freeaddrinfo_all(hint.ai_family, serveraddrs);
 			return STATUS_ERROR;
 		}
 
@@ -2842,7 +2844,7 @@ PerformRadiusTransaction(char *server, char *secret, char *portstr, char *identi
 
 	radius_add_attribute(packet, RADIUS_PASSWORD, encryptedpassword, encryptedpasswordlen);
 
-	/* Length need to be in network order on the wire */
+	/* Length needs to be in network order on the wire */
 	packetlength = packet->length;
 	packet->length = htons(packet->length);
 
@@ -2868,6 +2870,7 @@ PerformRadiusTransaction(char *server, char *secret, char *portstr, char *identi
 	localaddr.sin_addr.s_addr = INADDR_ANY;
 	addrsize = sizeof(struct sockaddr_in);
 #endif
+
 	if (bind(sock, (struct sockaddr *) & localaddr, addrsize))
 	{
 		ereport(LOG,
@@ -2964,6 +2967,7 @@ PerformRadiusTransaction(char *server, char *secret, char *portstr, char *identi
 		{
 			ereport(LOG,
 					(errmsg("could not read RADIUS response: %m")));
+			closesocket(sock);
 			return STATUS_ERROR;
 		}
 
