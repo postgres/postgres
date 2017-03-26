@@ -194,6 +194,17 @@ extern Datum toast_flatten_tuple_to_datum(HeapTupleHeader tup,
 							 TupleDesc tupleDesc);
 
 /* ----------
+ * toast_build_flattened_tuple -
+ *
+ *	Build a tuple containing no out-of-line toasted fields.
+ *	(This does not eliminate compressed or short-header datums.)
+ * ----------
+ */
+extern HeapTuple toast_build_flattened_tuple(TupleDesc tupleDesc,
+							Datum *values,
+							bool *isnull);
+
+/* ----------
  * toast_compress_datum -
  *
  *	Create a compressed version of a varlena datum, if possible

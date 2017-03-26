@@ -58,7 +58,7 @@
  */
 #include "postgres.h"
 
-#include "access/htup_details.h"
+#include "access/tuptoaster.h"
 #include "catalog/pg_type.h"
 #include "executor/execExpr.h"
 #include "executor/nodeSubplan.h"
@@ -3508,24 +3508,24 @@ ExecEvalWholeRowVar(ExprState *state, ExprEvalStep *op, ExprContext *econtext)
 	}
 
 	/*
-	 * Copy the slot tuple and make sure any toasted fields get detoasted.
+	 * Build a composite datum, making sure any toasted fields get detoasted.
 	 *
-	 * (The intermediate copy is a tad annoying here, but we currently have no
-	 * primitive that will do the right thing.  Note it is critical that we
-	 * not change the slot's state, so we can't use ExecFetchSlotTupleDatum.)
+	 * (Note: it is critical that we not change the slot's state here.)
 	 */
-	tuple = ExecCopySlotTuple(slot);
-	dtuple = (HeapTupleHeader)
-		DatumGetPointer(heap_copy_tuple_as_datum(tuple,
-												 slot->tts_tupleDescriptor));
-	heap_freetuple(tuple);
+	tuple = toast_build_flattened_tuple(slot->tts_tupleDescriptor,
+										slot->tts_values,
+										slot->tts_isnull);
+	dtuple = tuple->t_data;
 
 	/*
 	 * Label the datum with the composite type info we identified before.
+	 *
+	 * (Note: we could skip doing this by passing op->d.wholerow.tupdesc to
+	 * the tuple build step; but that seems a tad risky so let's not.)
 	 */
 	HeapTupleHeaderSetTypeId(dtuple, op->d.wholerow.tupdesc->tdtypeid);
 	HeapTupleHeaderSetTypMod(dtuple, op->d.wholerow.tupdesc->tdtypmod);
 
-	*op->resnull = false;
 	*op->resvalue = PointerGetDatum(dtuple);
+	*op->resnull = false;
 }

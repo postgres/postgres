@@ -1289,6 +1289,74 @@ toast_flatten_tuple_to_datum(HeapTupleHeader tup,
 
 
 /* ----------
+ * toast_build_flattened_tuple -
+ *
+ *	Build a tuple containing no out-of-line toasted fields.
+ *	(This does not eliminate compressed or short-header datums.)
+ *
+ *	This is essentially just like heap_form_tuple, except that it will
+ *	expand any external-data pointers beforehand.
+ *
+ *	It's not very clear whether it would be preferable to decompress
+ *	in-line compressed datums while at it.  For now, we don't.
+ * ----------
+ */
+HeapTuple
+toast_build_flattened_tuple(TupleDesc tupleDesc,
+							Datum *values,
+							bool *isnull)
+{
+	HeapTuple	new_tuple;
+	Form_pg_attribute *att = tupleDesc->attrs;
+	int			numAttrs = tupleDesc->natts;
+	int			num_to_free;
+	int			i;
+	Datum		new_values[MaxTupleAttributeNumber];
+	Pointer		freeable_values[MaxTupleAttributeNumber];
+
+	/*
+	 * We can pass the caller's isnull array directly to heap_form_tuple, but
+	 * we potentially need to modify the values array.
+	 */
+	Assert(numAttrs <= MaxTupleAttributeNumber);
+	memcpy(new_values, values, numAttrs * sizeof(Datum));
+
+	num_to_free = 0;
+	for (i = 0; i < numAttrs; i++)
+	{
+		/*
+		 * Look at non-null varlena attributes
+		 */
+		if (!isnull[i] && att[i]->attlen == -1)
+		{
+			struct varlena *new_value;
+
+			new_value = (struct varlena *) DatumGetPointer(new_values[i]);
+			if (VARATT_IS_EXTERNAL(new_value))
+			{
+				new_value = heap_tuple_fetch_attr(new_value);
+				new_values[i] = PointerGetDatum(new_value);
+				freeable_values[num_to_free++] = (Pointer) new_value;
+			}
+		}
+	}
+
+	/*
+	 * Form the reconfigured tuple.
+	 */
+	new_tuple = heap_form_tuple(tupleDesc, new_values, isnull);
+
+	/*
+	 * Free allocated temp values
+	 */
+	for (i = 0; i < num_to_free; i++)
+		pfree(freeable_values[i]);
+
+	return new_tuple;
+}
+
+
+/* ----------
  * toast_compress_datum -
  *
  *	Create a compressed version of a varlena datum
