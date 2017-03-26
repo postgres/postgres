@@ -40,6 +40,27 @@
   <xsl:call-template name="inline.monoseq"/>
 </xsl:template>
 
+<xsl:template match="confgroup" mode="bibliography.mode">
+  <span>
+    <xsl:call-template name="common.html.attributes"/>
+    <xsl:call-template name="id.attribute"/>
+    <xsl:apply-templates select="conftitle/text()" mode="bibliography.mode"/>
+    <xsl:text>, </xsl:text>
+    <xsl:apply-templates select="confdates/text()" mode="bibliography.mode"/>
+    <xsl:copy-of select="$biblioentry.item.separator"/>
+  </span>
+</xsl:template>
+
+<xsl:template match="isbn" mode="bibliography.mode">
+  <span>
+    <xsl:call-template name="common.html.attributes"/>
+    <xsl:call-template name="id.attribute"/>
+    <xsl:text>ISBN </xsl:text>
+    <xsl:apply-templates mode="bibliography.mode"/>
+    <xsl:copy-of select="$biblioentry.item.separator"/>
+  </span>
+</xsl:template>
+
 
 <!-- table of contents configuration -->
 

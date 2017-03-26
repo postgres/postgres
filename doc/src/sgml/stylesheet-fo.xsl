@@ -24,6 +24,23 @@
   <xsl:call-template name="inline.monoseq"/>
 </xsl:template>
 
+<xsl:template match="confgroup" mode="bibliography.mode">
+  <fo:inline>
+    <xsl:apply-templates select="conftitle/text()" mode="bibliography.mode"/>
+    <xsl:text>, </xsl:text>
+    <xsl:apply-templates select="confdates/text()" mode="bibliography.mode"/>
+    <xsl:value-of select="$biblioentry.item.separator"/>
+  </fo:inline>
+</xsl:template>
+
+<xsl:template match="isbn" mode="bibliography.mode">
+  <fo:inline>
+    <xsl:text>ISBN </xsl:text>
+    <xsl:apply-templates mode="bibliography.mode"/>
+    <xsl:value-of select="$biblioentry.item.separator"/>
+  </fo:inline>
+</xsl:template>
+
 <!-- bug fix from <https://sourceforge.net/p/docbook/bugs/1360/#831b> -->
 
 <xsl:template match="varlistentry/term" mode="xref-to">
