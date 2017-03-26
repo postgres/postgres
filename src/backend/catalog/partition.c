@@ -921,8 +921,12 @@ get_qual_from_partbound(Relation rel, Relation parent, Node *bound)
  * map_partition_varattnos - maps varattno of any Vars in expr from the
  * parent attno to partition attno.
  *
- * We must allow for a case where physical attnos of a partition can be
+ * We must allow for cases where physical attnos of a partition can be
  * different from the parent's.
+ *
+ * Note: this will work on any node tree, so really the argument and result
+ * should be declared "Node *".  But a substantial majority of the callers
+ * are working on Lists, so it's less messy to do the casts internally.
  */
 List *
 map_partition_varattnos(List *expr, int target_varno,
