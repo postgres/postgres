@@ -66,7 +66,7 @@ extern void cache_locale_time(void);
  * fake version of the standard type locale_t in the global namespace.
  * pg_locale_t is occasionally checked for truth, so make it a pointer.
  */
-struct pg_locale_t
+struct pg_locale_struct
 {
 	char	provider;
 	union
@@ -84,7 +84,7 @@ struct pg_locale_t
 	} info;
 };
 
-typedef struct pg_locale_t *pg_locale_t;
+typedef struct pg_locale_struct *pg_locale_t;
 
 extern pg_locale_t pg_newlocale_from_collation(Oid collid);
 
