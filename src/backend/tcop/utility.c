@@ -1996,6 +1996,7 @@ AlterObjectTypeCommandTag(ObjectType objtype)
 			break;
 		case OBJECT_SUBSCRIPTION:
 			tag = "ALTER SUBSCRIPTION";
+			break;
 		case OBJECT_STATISTIC_EXT:
 			tag = "ALTER STATISTICS";
 			break;
