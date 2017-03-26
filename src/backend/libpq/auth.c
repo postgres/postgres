@@ -2570,13 +2570,15 @@ CheckCertAuth(Port *port)
  */
 
 /*
- * RADIUS authentication is described in RFC2865 (and several
- * others).
+ * RADIUS authentication is described in RFC2865 (and several others).
  */
 
 #define RADIUS_VECTOR_LENGTH 16
 #define RADIUS_HEADER_LENGTH 20
 #define RADIUS_MAX_PASSWORD_LENGTH 128
+
+/* Maximum size of a RADIUS packet we will create or accept */
+#define RADIUS_BUFFER_SIZE 1024
 
 typedef struct
 {
@@ -2591,6 +2593,8 @@ typedef struct
 	uint8		id;
 	uint16		length;
 	uint8		vector[RADIUS_VECTOR_LENGTH];
+	/* this is a bit longer than strictly necessary: */
+	char		pad[RADIUS_BUFFER_SIZE - RADIUS_VECTOR_LENGTH];
 } radius_packet;
 
 /* RADIUS packet types */
@@ -2606,9 +2610,6 @@ typedef struct
 
 /* RADIUS service types */
 #define RADIUS_AUTHENTICATE_ONLY	8
-
-/* Maximum size of a RADIUS packet we will create or accept */
-#define RADIUS_BUFFER_SIZE 1024
 
 /* Seconds to wait - XXX: should be in a config variable! */
 #define RADIUS_TIMEOUT 3
@@ -2734,10 +2735,12 @@ CheckRADIUSAuth(Port *port)
 static int
 PerformRadiusTransaction(char *server, char *secret, char *portstr, char *identifier, char *user_name, char *passwd)
 {
-	char		radius_buffer[RADIUS_BUFFER_SIZE];
-	char		receive_buffer[RADIUS_BUFFER_SIZE];
-	radius_packet *packet = (radius_packet *) radius_buffer;
-	radius_packet *receivepacket = (radius_packet *) receive_buffer;
+	radius_packet radius_send_pack;
+	radius_packet radius_recv_pack;
+	radius_packet *packet = &radius_send_pack;
+	radius_packet *receivepacket = &radius_recv_pack;
+	char	   *radius_buffer = (char *) &radius_send_pack;
+	char	   *receive_buffer = (char *) &radius_recv_pack;
 	int32		service = htonl(RADIUS_AUTHENTICATE_ONLY);
 	uint8	   *cryptvector;
 	int			encryptedpasswordlen;
