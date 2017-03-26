@@ -499,14 +499,14 @@ SnapBuildBuildSnapshot(SnapBuild *builder, TransactionId xid)
 }
 
 /*
- * Build the initial slot snapshot and convert it to normal snapshot that
+ * Build the initial slot snapshot and convert it to a normal snapshot that
  * is understood by HeapTupleSatisfiesMVCC.
  *
  * The snapshot will be usable directly in current transaction or exported
  * for loading in different transaction.
  */
 Snapshot
-SnapBuildInitalSnapshot(SnapBuild *builder)
+SnapBuildInitialSnapshot(SnapBuild *builder)
 {
 	Snapshot	snap;
 	TransactionId xid;
@@ -514,7 +514,7 @@ SnapBuildInitalSnapshot(SnapBuild *builder)
 	int			newxcnt = 0;
 
 	Assert(!FirstSnapshotSet);
-	Assert(XactIsoLevel = XACT_REPEATABLE_READ);
+	Assert(XactIsoLevel == XACT_REPEATABLE_READ);
 
 	if (builder->state != SNAPBUILD_CONSISTENT)
 		elog(ERROR, "cannot build an initial slot snapshot before reaching a consistent state");
@@ -604,7 +604,7 @@ SnapBuildExportSnapshot(SnapBuild *builder)
 	XactIsoLevel = XACT_REPEATABLE_READ;
 	XactReadOnly = true;
 
-	snap = SnapBuildInitalSnapshot(builder);
+	snap = SnapBuildInitialSnapshot(builder);
 
 	/*
 	 * now that we've built a plain snapshot, make it active and use the
