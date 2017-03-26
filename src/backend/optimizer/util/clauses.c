@@ -354,8 +354,8 @@ make_and_qual(Node *qual1, Node *qual2)
 }
 
 /*
- * Sometimes (such as in the input of ExecQual), we use lists of expression
- * nodes with implicit AND semantics.
+ * The planner frequently prefers to represent qualification expressions
+ * as lists of boolean expressions with implicit AND semantics.
  *
  * These functions convert between an AND-semantics expression list and the
  * ordinary representation of a boolean expression.

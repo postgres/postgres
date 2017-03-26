@@ -4743,7 +4743,7 @@ RelationGetIndexExpressions(Relation relation)
  * RelationGetIndexPredicate -- get the index predicate for an index
  *
  * We cache the result of transforming pg_index.indpred into an implicit-AND
- * node tree (suitable for ExecQual).
+ * node tree (suitable for use in planning).
  * If the rel is not an index or has no predicate, we return NIL.
  * Otherwise, the returned tree is copied into the caller's memory context.
  * (We don't want to return a pointer to the relcache copy, since it could
