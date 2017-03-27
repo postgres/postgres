@@ -3404,7 +3404,7 @@ estimate_num_groups(PlannerInfo *root, List *groupExprs, double input_rows,
 		RelOptInfo *rel = varinfo1->rel;
 		double		reldistinct = 1;
 		double		relmaxndistinct = reldistinct;
-		int			relvarcount = 1;
+		int			relvarcount = 0;
 		List	   *newvarinfos = NIL;
 		List	   *relvarinfos = NIL;
 
@@ -3436,6 +3436,10 @@ estimate_num_groups(PlannerInfo *root, List *groupExprs, double input_rows,
 		 * we multiply them together.  Any remaining relvarinfos after
 		 * no more multivariate matches are found are assumed independent too,
 		 * so their individual ndistinct estimates are multiplied also.
+		 *
+		 * While iterating, count how many separate numdistinct values we
+		 * apply.  We apply a fudge factor below, but only if we multiplied
+		 * more than one such values.
 		 */
 		while (relvarinfos)
 		{
@@ -3447,7 +3451,7 @@ estimate_num_groups(PlannerInfo *root, List *groupExprs, double input_rows,
 				reldistinct *= mvndistinct;
 				if (relmaxndistinct < mvndistinct)
 					relmaxndistinct = mvndistinct;
-				relvarcount++;	/* inaccurate, but doesn't matter */
+				relvarcount++;
 			}
 			else
 			{
