@@ -1,4 +1,10 @@
 -- Generic extended statistics support
+-- We will be checking execution plans without/with statistics, so
+-- let's make sure we get simple non-parallel plans. Also set the
+-- work_mem low so that we can use small amounts of data.
+SET max_parallel_workers = 0;
+SET max_parallel_workers_per_gather = 0;
+SET work_mem = '128kB';
 -- Ensure stats are dropped sanely
 CREATE TABLE ab1 (a INTEGER, b INTEGER, c INTEGER);
 CREATE STATISTICS ab1_a_b_stats ON (a, b) FROM ab1;
@@ -49,6 +55,67 @@ CREATE TABLE ndistinct (
     c INT,
     d INT
 );
+-- over-estimates when using only per-column statistics
+INSERT INTO ndistinct (a, b, c, filler1)
+     SELECT i/100, i/100, i/100, cash_words((i/100)::money)
+       FROM generate_series(1,30000) s(i);
+ANALYZE ndistinct;
+-- Group Aggregate, due to over-estimate of the number of groups
+EXPLAIN (COSTS off)
+ SELECT COUNT(*) FROM ndistinct GROUP BY a, b;
+            QUERY PLAN             
+-----------------------------------
+ GroupAggregate
+   Group Key: a, b
+   ->  Sort
+         Sort Key: a, b
+         ->  Seq Scan on ndistinct
+(5 rows)
+
+EXPLAIN (COSTS off)
+ SELECT COUNT(*) FROM ndistinct GROUP BY b, c;
+            QUERY PLAN             
+-----------------------------------
+ GroupAggregate
+   Group Key: b, c
+   ->  Sort
+         Sort Key: b, c
+         ->  Seq Scan on ndistinct
+(5 rows)
+
+EXPLAIN (COSTS off)
+ SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c;
+            QUERY PLAN             
+-----------------------------------
+ GroupAggregate
+   Group Key: a, b, c
+   ->  Sort
+         Sort Key: a, b, c
+         ->  Seq Scan on ndistinct
+(5 rows)
+
+EXPLAIN (COSTS off)
+ SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c, d;
+            QUERY PLAN             
+-----------------------------------
+ GroupAggregate
+   Group Key: a, b, c, d
+   ->  Sort
+         Sort Key: a, b, c, d
+         ->  Seq Scan on ndistinct
+(5 rows)
+
+EXPLAIN (COSTS off)
+ SELECT COUNT(*) FROM ndistinct GROUP BY b, c, d;
+            QUERY PLAN             
+-----------------------------------
+ GroupAggregate
+   Group Key: b, c, d
+   ->  Sort
+         Sort Key: b, c, d
+         ->  Seq Scan on ndistinct
+(5 rows)
+
 -- unknown column
 CREATE STATISTICS s10 ON (unknown_column) FROM ndistinct;
 ERROR:  column "unknown_column" referenced in statistics does not exist
@@ -63,100 +130,184 @@ CREATE STATISTICS s10 ON (a, a, b) FROM ndistinct;
 ERROR:  duplicate column name in statistics definition
 -- correct command
 CREATE STATISTICS s10 ON (a, b, c) FROM ndistinct;
--- perfectly correlated groups
+ANALYZE ndistinct;
+SELECT staenabled, standistinct
+  FROM pg_statistic_ext WHERE starelid = 'ndistinct'::regclass;
+ staenabled |                                          standistinct                                          
+------------+------------------------------------------------------------------------------------------------
+ {d}        | [{(b 3 4), 301.000000}, {(b 3 6), 301.000000}, {(b 4 6), 301.000000}, {(b 3 4 6), 301.000000}]
+(1 row)
+
+-- Hash Aggregate, thanks to estimates improved by the statistic
+EXPLAIN (COSTS off)
+ SELECT COUNT(*) FROM ndistinct GROUP BY a, b;
+         QUERY PLAN          
+-----------------------------
+ HashAggregate
+   Group Key: a, b
+   ->  Seq Scan on ndistinct
+(3 rows)
+
+EXPLAIN (COSTS off)
+ SELECT COUNT(*) FROM ndistinct GROUP BY b, c;
+         QUERY PLAN          
+-----------------------------
+ HashAggregate
+   Group Key: b, c
+   ->  Seq Scan on ndistinct
+(3 rows)
+
+EXPLAIN (COSTS off)
+ SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c;
+         QUERY PLAN          
+-----------------------------
+ HashAggregate
+   Group Key: a, b, c
+   ->  Seq Scan on ndistinct
+(3 rows)
+
+-- last two plans keep using Group Aggregate, because 'd' is not covered
+-- by the statistic and while it's NULL-only we assume 200 values for it
+EXPLAIN (COSTS off)
+ SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c, d;
+            QUERY PLAN             
+-----------------------------------
+ GroupAggregate
+   Group Key: a, b, c, d
+   ->  Sort
+         Sort Key: a, b, c, d
+         ->  Seq Scan on ndistinct
+(5 rows)
+
+EXPLAIN (COSTS off)
+ SELECT COUNT(*) FROM ndistinct GROUP BY b, c, d;
+            QUERY PLAN             
+-----------------------------------
+ GroupAggregate
+   Group Key: b, c, d
+   ->  Sort
+         Sort Key: b, c, d
+         ->  Seq Scan on ndistinct
+(5 rows)
+
+TRUNCATE TABLE ndistinct;
+-- under-estimates when using only per-column statistics
 INSERT INTO ndistinct (a, b, c, filler1)
-     SELECT i/100, i/100, i/100, cash_words(i::money)
+     SELECT mod(i,50), mod(i,51), mod(i,32),
+            cash_words(mod(i,33)::int::money)
        FROM generate_series(1,10000) s(i);
 ANALYZE ndistinct;
 SELECT staenabled, standistinct
   FROM pg_statistic_ext WHERE starelid = 'ndistinct'::regclass;
- staenabled |                                          standistinct                                          
-------------+------------------------------------------------------------------------------------------------
- {d}        | [{(b 3 4), 101.000000}, {(b 3 6), 101.000000}, {(b 4 6), 101.000000}, {(b 3 4 6), 101.000000}]
+ staenabled |                                            standistinct                                            
+------------+----------------------------------------------------------------------------------------------------
+ {d}        | [{(b 3 4), 2550.000000}, {(b 3 6), 800.000000}, {(b 4 6), 1632.000000}, {(b 3 4 6), 10000.000000}]
 (1 row)
 
+-- plans using Group Aggregate, thanks to using correct esimates
 EXPLAIN (COSTS off)
  SELECT COUNT(*) FROM ndistinct GROUP BY a, b;
-         QUERY PLAN          
------------------------------
- HashAggregate
+            QUERY PLAN             
+-----------------------------------
+ GroupAggregate
    Group Key: a, b
-   ->  Seq Scan on ndistinct
-(3 rows)
+   ->  Sort
+         Sort Key: a, b
+         ->  Seq Scan on ndistinct
+(5 rows)
 
 EXPLAIN (COSTS off)
  SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c;
+            QUERY PLAN             
+-----------------------------------
+ GroupAggregate
+   Group Key: a, b, c
+   ->  Sort
+         Sort Key: a, b, c
+         ->  Seq Scan on ndistinct
+(5 rows)
+
+EXPLAIN (COSTS off)
+ SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c, d;
+            QUERY PLAN             
+-----------------------------------
+ GroupAggregate
+   Group Key: a, b, c, d
+   ->  Sort
+         Sort Key: a, b, c, d
+         ->  Seq Scan on ndistinct
+(5 rows)
+
+EXPLAIN (COSTS off)
+ SELECT COUNT(*) FROM ndistinct GROUP BY b, c, d;
          QUERY PLAN          
 -----------------------------
  HashAggregate
-   Group Key: a, b, c
+   Group Key: b, c, d
    ->  Seq Scan on ndistinct
 (3 rows)
 
 EXPLAIN (COSTS off)
- SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c, d;
+ SELECT COUNT(*) FROM ndistinct GROUP BY a, d;
          QUERY PLAN          
 -----------------------------
  HashAggregate
-   Group Key: a, b, c, d
+   Group Key: a, d
    ->  Seq Scan on ndistinct
 (3 rows)
 
-TRUNCATE TABLE ndistinct;
--- partially correlated groups
-INSERT INTO ndistinct (a, b, c)
-     SELECT i/50, i/100, i/200 FROM generate_series(1,10000) s(i);
-ANALYZE ndistinct;
+DROP STATISTICS s10;
 SELECT staenabled, standistinct
   FROM pg_statistic_ext WHERE starelid = 'ndistinct'::regclass;
- staenabled |                                          standistinct                                          
-------------+------------------------------------------------------------------------------------------------
- {d}        | [{(b 3 4), 201.000000}, {(b 3 6), 201.000000}, {(b 4 6), 101.000000}, {(b 3 4 6), 201.000000}]
-(1 row)
+ staenabled | standistinct 
+------------+--------------
+(0 rows)
 
-EXPLAIN
+-- dropping the statistics switches the plans to Hash Aggregate,
+-- due to under-estimates
+EXPLAIN (COSTS off)
  SELECT COUNT(*) FROM ndistinct GROUP BY a, b;
-                             QUERY PLAN                              
----------------------------------------------------------------------
- HashAggregate  (cost=230.00..232.01 rows=201 width=16)
+         QUERY PLAN          
+-----------------------------
+ HashAggregate
    Group Key: a, b
-   ->  Seq Scan on ndistinct  (cost=0.00..155.00 rows=10000 width=8)
+   ->  Seq Scan on ndistinct
 (3 rows)
 
-EXPLAIN
+EXPLAIN (COSTS off)
  SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c;
-                              QUERY PLAN                              
-----------------------------------------------------------------------
- HashAggregate  (cost=255.00..257.01 rows=201 width=20)
+         QUERY PLAN          
+-----------------------------
+ HashAggregate
    Group Key: a, b, c
-   ->  Seq Scan on ndistinct  (cost=0.00..155.00 rows=10000 width=12)
+   ->  Seq Scan on ndistinct
 (3 rows)
 
-EXPLAIN
+EXPLAIN (COSTS off)
  SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c, d;
-                              QUERY PLAN                              
-----------------------------------------------------------------------
- HashAggregate  (cost=280.00..290.00 rows=1000 width=24)
+         QUERY PLAN          
+-----------------------------
+ HashAggregate
    Group Key: a, b, c, d
-   ->  Seq Scan on ndistinct  (cost=0.00..155.00 rows=10000 width=16)
+   ->  Seq Scan on ndistinct
 (3 rows)
 
-EXPLAIN
+EXPLAIN (COSTS off)
  SELECT COUNT(*) FROM ndistinct GROUP BY b, c, d;
-                              QUERY PLAN                              
-----------------------------------------------------------------------
- HashAggregate  (cost=255.00..265.00 rows=1000 width=20)
+         QUERY PLAN          
+-----------------------------
+ HashAggregate
    Group Key: b, c, d
-   ->  Seq Scan on ndistinct  (cost=0.00..155.00 rows=10000 width=12)
+   ->  Seq Scan on ndistinct
 (3 rows)
 
-EXPLAIN
+EXPLAIN (COSTS off)
  SELECT COUNT(*) FROM ndistinct GROUP BY a, d;
-                             QUERY PLAN                              
----------------------------------------------------------------------
- HashAggregate  (cost=230.00..240.00 rows=1000 width=16)
+         QUERY PLAN          
+-----------------------------
+ HashAggregate
    Group Key: a, d
-   ->  Seq Scan on ndistinct  (cost=0.00..155.00 rows=10000 width=8)
+   ->  Seq Scan on ndistinct
 (3 rows)
 
 DROP TABLE ndistinct;

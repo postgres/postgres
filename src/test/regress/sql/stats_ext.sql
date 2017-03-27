@@ -1,5 +1,12 @@
 -- Generic extended statistics support
 
+-- We will be checking execution plans without/with statistics, so
+-- let's make sure we get simple non-parallel plans. Also set the
+-- work_mem low so that we can use small amounts of data.
+SET max_parallel_workers = 0;
+SET max_parallel_workers_per_gather = 0;
+SET work_mem = '128kB';
+
 -- Ensure stats are dropped sanely
 CREATE TABLE ab1 (a INTEGER, b INTEGER, c INTEGER);
 CREATE STATISTICS ab1_a_b_stats ON (a, b) FROM ab1;
@@ -43,6 +50,29 @@ CREATE TABLE ndistinct (
     d INT
 );
 
+-- over-estimates when using only per-column statistics
+INSERT INTO ndistinct (a, b, c, filler1)
+     SELECT i/100, i/100, i/100, cash_words((i/100)::money)
+       FROM generate_series(1,30000) s(i);
+
+ANALYZE ndistinct;
+
+-- Group Aggregate, due to over-estimate of the number of groups
+EXPLAIN (COSTS off)
+ SELECT COUNT(*) FROM ndistinct GROUP BY a, b;
+
+EXPLAIN (COSTS off)
+ SELECT COUNT(*) FROM ndistinct GROUP BY b, c;
+
+EXPLAIN (COSTS off)
+ SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c;
+
+EXPLAIN (COSTS off)
+ SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c, d;
+
+EXPLAIN (COSTS off)
+ SELECT COUNT(*) FROM ndistinct GROUP BY b, c, d;
+
 -- unknown column
 CREATE STATISTICS s10 ON (unknown_column) FROM ndistinct;
 
@@ -58,9 +88,35 @@ CREATE STATISTICS s10 ON (a, a, b) FROM ndistinct;
 -- correct command
 CREATE STATISTICS s10 ON (a, b, c) FROM ndistinct;
 
--- perfectly correlated groups
+ANALYZE ndistinct;
+
+SELECT staenabled, standistinct
+  FROM pg_statistic_ext WHERE starelid = 'ndistinct'::regclass;
+
+-- Hash Aggregate, thanks to estimates improved by the statistic
+EXPLAIN (COSTS off)
+ SELECT COUNT(*) FROM ndistinct GROUP BY a, b;
+
+EXPLAIN (COSTS off)
+ SELECT COUNT(*) FROM ndistinct GROUP BY b, c;
+
+EXPLAIN (COSTS off)
+ SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c;
+
+-- last two plans keep using Group Aggregate, because 'd' is not covered
+-- by the statistic and while it's NULL-only we assume 200 values for it
+EXPLAIN (COSTS off)
+ SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c, d;
+
+EXPLAIN (COSTS off)
+ SELECT COUNT(*) FROM ndistinct GROUP BY b, c, d;
+
+TRUNCATE TABLE ndistinct;
+
+-- under-estimates when using only per-column statistics
 INSERT INTO ndistinct (a, b, c, filler1)
-     SELECT i/100, i/100, i/100, cash_words(i::money)
+     SELECT mod(i,50), mod(i,51), mod(i,32),
+            cash_words(mod(i,33)::int::money)
        FROM generate_series(1,10000) s(i);
 
 ANALYZE ndistinct;
@@ -68,6 +124,7 @@ ANALYZE ndistinct;
 SELECT staenabled, standistinct
   FROM pg_statistic_ext WHERE starelid = 'ndistinct'::regclass;
 
+-- plans using Group Aggregate, thanks to using correct esimates
 EXPLAIN (COSTS off)
  SELECT COUNT(*) FROM ndistinct GROUP BY a, b;
 
@@ -77,30 +134,32 @@ EXPLAIN (COSTS off)
 EXPLAIN (COSTS off)
  SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c, d;
 
-TRUNCATE TABLE ndistinct;
+EXPLAIN (COSTS off)
+ SELECT COUNT(*) FROM ndistinct GROUP BY b, c, d;
 
--- partially correlated groups
-INSERT INTO ndistinct (a, b, c)
-     SELECT i/50, i/100, i/200 FROM generate_series(1,10000) s(i);
+EXPLAIN (COSTS off)
+ SELECT COUNT(*) FROM ndistinct GROUP BY a, d;
 
-ANALYZE ndistinct;
+DROP STATISTICS s10;
 
 SELECT staenabled, standistinct
   FROM pg_statistic_ext WHERE starelid = 'ndistinct'::regclass;
 
-EXPLAIN
+-- dropping the statistics switches the plans to Hash Aggregate,
+-- due to under-estimates
+EXPLAIN (COSTS off)
  SELECT COUNT(*) FROM ndistinct GROUP BY a, b;
 
-EXPLAIN
+EXPLAIN (COSTS off)
  SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c;
 
-EXPLAIN
+EXPLAIN (COSTS off)
  SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c, d;
 
-EXPLAIN
+EXPLAIN (COSTS off)
  SELECT COUNT(*) FROM ndistinct GROUP BY b, c, d;
 
-EXPLAIN
+EXPLAIN (COSTS off)
  SELECT COUNT(*) FROM ndistinct GROUP BY a, d;
 
 DROP TABLE ndistinct;
