@@ -1002,8 +1002,8 @@ _hash_alloc_buckets(Relation rel, BlockNumber firstblock, uint32 nblocks)
 	page = (Page) zerobuf;
 
 	/*
-	 * Initialize the freed overflow page.  Just zeroing the page won't work,
-	 * See _hash_freeovflpage for similar usage.
+	 * Initialize the page.  Just zeroing the page won't work; see
+	 * _hash_freeovflpage for similar usage.
 	 */
 	_hash_pageinit(page, BLCKSZ);
 
