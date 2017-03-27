@@ -365,6 +365,13 @@ DETAIL:  Failing row contains (1, 2).
 insert into mlparted1 (a, b) values (2, 3);
 ERROR:  new row for relation "mlparted11" violates partition constraint
 DETAIL:  Failing row contains (3, 2).
+-- check routing error through a list partitioned table when the key is null
+create table lparted_nonullpart (a int, b char) partition by list (b);
+create table lparted_nonullpart_a partition of lparted_nonullpart for values in ('a');
+insert into lparted_nonullpart values (1);
+ERROR:  no partition of relation "lparted_nonullpart" found for row
+DETAIL:  Partition key of the failing row contains (b) = (null).
+drop table lparted_nonullpart;
 -- check that RETURNING works correctly with tuple-routing
 alter table mlparted drop constraint check_b;
 create table mlparted12 partition of mlparted1 for values from (5) to (10);

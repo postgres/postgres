@@ -226,6 +226,12 @@ insert into mlparted values (1, 2);
 -- selected by tuple-routing
 insert into mlparted1 (a, b) values (2, 3);
 
+-- check routing error through a list partitioned table when the key is null
+create table lparted_nonullpart (a int, b char) partition by list (b);
+create table lparted_nonullpart_a partition of lparted_nonullpart for values in ('a');
+insert into lparted_nonullpart values (1);
+drop table lparted_nonullpart;
+
 -- check that RETURNING works correctly with tuple-routing
 alter table mlparted drop constraint check_b;
 create table mlparted12 partition of mlparted1 for values from (5) to (10);

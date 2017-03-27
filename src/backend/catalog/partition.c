@@ -1729,10 +1729,14 @@ get_partition_for_tuple(PartitionDispatch *pd,
 						errmsg("range partition key of row contains null")));
 		}
 
-		if (partdesc->boundinfo->has_null && isnull[0])
-			/* Tuple maps to the null-accepting list partition */
+		/*
+		 * A null partition key is only acceptable if null-accepting list
+		 * partition exists.
+		 */
+		cur_index = -1;
+		if (isnull[0] && partdesc->boundinfo->has_null)
 			cur_index = partdesc->boundinfo->null_index;
-		else
+		else if (!isnull[0])
 		{
 			/* Else bsearch in partdesc->boundinfo */
 			bool		equal = false;
