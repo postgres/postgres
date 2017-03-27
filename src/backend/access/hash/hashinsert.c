@@ -344,7 +344,6 @@ _hash_vacuum_one_page(Relation rel, Buffer metabuf, Buffer buf,
 	Page	page = BufferGetPage(buf);
 	HashPageOpaque	pageopaque;
 	HashMetaPage	metap;
-	double tuples_removed = 0;
 
 	/* Scan each tuple in page to see if it is marked as LP_DEAD */
 	maxoff = PageGetMaxOffsetNumber(page);
@@ -355,10 +354,7 @@ _hash_vacuum_one_page(Relation rel, Buffer metabuf, Buffer buf,
 		ItemId	itemId = PageGetItemId(page, offnum);
 
 		if (ItemIdIsDead(itemId))
-		{
 			deletable[ndeletable++] = offnum;
-			tuples_removed += 1;
-		}
 	}
 
 	if (ndeletable > 0)
@@ -386,7 +382,7 @@ _hash_vacuum_one_page(Relation rel, Buffer metabuf, Buffer buf,
 		pageopaque->hasho_flag &= ~LH_PAGE_HAS_DEAD_TUPLES;
 
 		metap = HashPageGetMeta(BufferGetPage(metabuf));
-		metap->hashm_ntuples -= tuples_removed;
+		metap->hashm_ntuples -= ndeletable;
 
 		MarkBufferDirty(buf);
 		MarkBufferDirty(metabuf);
@@ -398,13 +394,18 @@ _hash_vacuum_one_page(Relation rel, Buffer metabuf, Buffer buf,
 			XLogRecPtr	recptr;
 
 			xlrec.hnode = hnode;
-			xlrec.ntuples = tuples_removed;
+			xlrec.ntuples = ndeletable;
 
 			XLogBeginInsert();
+			XLogRegisterBuffer(0, buf, REGBUF_STANDARD);
 			XLogRegisterData((char *) &xlrec, SizeOfHashVacuumOnePage);
 
-			XLogRegisterBuffer(0, buf, REGBUF_STANDARD);
-			XLogRegisterBufData(0, (char *) deletable,
+			/*
+			 * We need the target-offsets array whether or not we store the whole
+			 * buffer, to allow us to find the latestRemovedXid on a standby
+			 * server.
+			 */
+			XLogRegisterData((char *) deletable,
 						ndeletable * sizeof(OffsetNumber));
 
 			XLogRegisterBuffer(1, metabuf, REGBUF_STANDARD);

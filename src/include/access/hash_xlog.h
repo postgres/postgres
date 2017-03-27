@@ -265,11 +265,13 @@ typedef struct xl_hash_init_bitmap_page
 typedef struct xl_hash_vacuum_one_page
 {
 	RelFileNode	hnode;
-	double		ntuples;
+	int		ntuples;
+
+	/* TARGET OFFSET NUMBERS FOLLOW AT THE END */
 }	xl_hash_vacuum_one_page;
 
 #define SizeOfHashVacuumOnePage	\
-	(offsetof(xl_hash_vacuum_one_page, ntuples) + sizeof(double))
+	(offsetof(xl_hash_vacuum_one_page, ntuples) + sizeof(int))
 
 extern void hash_redo(XLogReaderState *record);
 extern void hash_desc(StringInfo buf, XLogReaderState *record);
