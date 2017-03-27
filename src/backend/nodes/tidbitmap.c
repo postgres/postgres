@@ -1533,9 +1533,11 @@ pagetable_allocate(pagetable_hash *pagetable, Size size)
 	 * new memory so that pagetable_free can free the old entry.
 	 */
 	tbm->dsapagetableold = tbm->dsapagetable;
-	tbm->dsapagetable = dsa_allocate0(tbm->dsa, sizeof(PTEntryArray) + size);
-
+	tbm->dsapagetable = dsa_allocate_extended(tbm->dsa,
+											  sizeof(PTEntryArray) + size,
+											DSA_ALLOC_HUGE | DSA_ALLOC_ZERO);
 	ptbase = dsa_get_address(tbm->dsa, tbm->dsapagetable);
+
 	return ptbase->ptentry;
 }
 
