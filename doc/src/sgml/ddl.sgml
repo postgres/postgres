@@ -3854,8 +3854,12 @@ ANALYZE measurement;
 
     <listitem>
      <para>
-      <command>INSERT</command> statements with <literal>ON CONFLICT</>
-      clause are currently not allowed on partitioned tables.
+      Using the <literal>ON CONFLICT</literal> clause with partitioned tables
+      will cause an error if <literal>DO UPDATE</literal> is specified as the
+      alternative action, because unique or exclusion constraints can only be
+      created on individual partitions.  There is no support for enforcing
+      uniqueness (or an exclusion constraint) across an entire partitioning
+      hierarchy.
      </para>
     </listitem>
 
