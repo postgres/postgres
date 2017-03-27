@@ -665,7 +665,12 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 
 	/* The autovacuum launcher is done here */
 	if (IsAutoVacuumLauncherProcess())
+	{
+		/* report this backend in the PgBackendStatus array */
+		pgstat_bestart();
+
 		return;
+	}
 
 	/*
 	 * Start a new transaction here before first access to db, and get a
@@ -874,7 +879,10 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 		 * transaction we started before returning.
 		 */
 		if (!bootstrap)
+		{
+			pgstat_bestart();
 			CommitTransactionCommand();
+		}
 		return;
 	}
 

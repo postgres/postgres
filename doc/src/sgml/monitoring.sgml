@@ -620,8 +620,8 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
     <row>
      <entry><structfield>backend_start</></entry>
      <entry><type>timestamp with time zone</></entry>
-     <entry>Time when this process was started, i.e., when the
-      client connected to the server
+     <entry>Time when this process was started.  For client backends,
+      this is the time the client connected to the server.
      </entry>
     </row>
     <row>
@@ -795,6 +795,17 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       that was executed. By default the query text is truncated at 1024
       characters; this value can be changed via the parameter
       <xref linkend="guc-track-activity-query-size">.
+     </entry>
+    </row>
+    <row>
+     <entry><structfield>backend_type</structfield></entry>
+     <entry><type>text</type></entry>
+     <entry>Type of current backend. Possible types are 
+      <literal>autovacuum launcher</>, <literal>autovacuum worker</>,
+      <literal>background worker</>, <literal>background writer</>,
+      <literal>client backend</>, <literal>checkpointer</>,
+      <literal>startup</>, <literal>walreceiver</>,
+      <literal>walsender</> and <literal>walwriter</>.
      </entry>
     </row>
    </tbody>

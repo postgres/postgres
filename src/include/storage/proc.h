@@ -272,7 +272,6 @@ extern PGPROC *PreparedXactProcs;
  */
 #define NUM_AUXILIARY_PROCS		4
 
-
 /* configurable options */
 extern int	DeadlockTimeout;
 extern int	StatementTimeout;
@@ -308,6 +307,8 @@ extern void LockErrorCleanup(void);
 
 extern void ProcWaitForSignal(uint32 wait_event_info);
 extern void ProcSendSignal(int pid);
+
+extern PGPROC *AuxiliaryPidGetProc(int pid);
 
 extern void BecomeLockGroupLeader(void);
 extern bool BecomeLockGroupMember(PGPROC *leader, int pid);

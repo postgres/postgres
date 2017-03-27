@@ -387,6 +387,10 @@ AuxiliaryProcessMain(int argc, char *argv[])
 		/* finish setting up bufmgr.c */
 		InitBufferPoolBackend();
 
+		/* Initialize backend status information */
+		pgstat_initialize();
+		pgstat_bestart();
+
 		/* register a before-shutdown callback for LWLock cleanup */
 		before_shmem_exit(ShutdownAuxiliaryProcess, 0);
 	}
