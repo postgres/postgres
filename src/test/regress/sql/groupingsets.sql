@@ -355,6 +355,7 @@ select array(select row(v.a,s1.*) from (select two,four, count(*) from onek grou
 
 -- test the knapsack
 
+set enable_indexscan = false;
 set work_mem = '64kB';
 explain (costs off)
   select unique1,
