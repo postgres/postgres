@@ -261,43 +261,43 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
       any existing partition of that parent.
      </para>
 
-     <note>
-      <para>
-       Each of the values specified in the partition bound specification is
-       a literal, <literal>NULL</literal>, or <literal>UNBOUNDED</literal>.
-       A literal is either a numeric constant or a string constant that is
-       coercable to the corresponding partition key column's type.
-      </para>
+     <para>
+      Each of the values specified in the partition bound specification is
+      a literal, <literal>NULL</literal>, or <literal>UNBOUNDED</literal>.
+      A literal is either a numeric constant or a string constant that is
+      coercible to the corresponding partition key column's type.
+     </para>
 
-      <para>
-       When creating a range partition, the lower bound specified with
-       <literal>FROM</literal> is an inclusive bound, whereas the upper bound
-       specified with <literal>TO</literal> is an exclusive bound.  That is,
-       the values specified in the <literal>FROM</literal> list are accepted
-       values of the corresponding partition key columns in a given partition,
-       whereas those in the <literal>TO</literal> list are not.  To be precise,
-       this applies only to the first of the partition key columns for which
-       the corresponding values in the <literal>FROM</literal> and
-       <literal>TO</literal> lists are not equal.  All rows in a given
-       partition contain the same values for all preceding columns, equal to
-       those specified in <literal>FROM</literal> and <literal>TO</literal>
-       lists.  On the other hand, any subsequent columns are insignificant
-       as far as implicit partition constraint is concerned.
+     <para>
+      When creating a range partition, the lower bound specified with
+      <literal>FROM</literal> is an inclusive bound, whereas the upper
+      bound specified with <literal>TO</literal> is an exclusive bound.
+      That is, the values specified in the <literal>FROM</literal> list
+      are accepted values of the corresponding partition key columns in a
+      given partition, whereas those in the <literal>TO</literal> list are
+      not.  To be precise, this applies only to the first of the partition
+      key columns for which the corresponding values in the <literal>FROM</literal>
+      and <literal>TO</literal> lists are not equal.  All rows in a given
+      partition contain the same values for all preceding columns, equal to
+      those specified in <literal>FROM</literal> and <literal>TO</literal>
+      lists.  On the other hand, any subsequent columns are insignificant
+      as far as implicit partition constraint is concerned.
+     </para>
 
-       Specifying <literal>UNBOUNDED</literal> in <literal>FROM</literal>
-       signifies <literal>-infinity</literal> as the lower bound of the
-       corresponding column, whereas it signifies <literal>+infinity</literal>
-       as the upper bound when specified in <literal>TO</literal>.
-      </para>
+     <para>
+      Specifying <literal>UNBOUNDED</literal> in <literal>FROM</literal>
+      signifies <literal>-infinity</literal> as the lower bound of the
+      corresponding column, whereas it signifies <literal>+infinity</literal>
+      as the upper bound when specified in <literal>TO</literal>.
+     </para>
 
-      <para>
-       When creating a list partition, <literal>NULL</literal> can be specified
-       to signify that the partition allows the partition key column to be null.
-       However, there cannot be more than one such list partitions for a given
-       parent table.  <literal>NULL</literal> cannot specified for range
-       partitions.
-      </para>
-     </note>
+     <para>
+      When creating a list partition, <literal>NULL</literal> can be
+      specified to signify that the partition allows the partition key
+      column to be null.  However, there cannot be more than one such
+      list partition for a given parent table.  <literal>NULL</literal>
+      cannot be specified for range partitions.
+     </para>
 
      <para>
       A partition must have the same column names and types as the partitioned
