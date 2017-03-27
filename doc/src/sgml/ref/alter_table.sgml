@@ -175,9 +175,14 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
      </para>
 
      <para>
-      If this table is a partition, one cannot perform <literal>DROP NOT NULL</>
+      If this table is a partition, one cannot perform <literal>DROP NOT NULL</literal>
       on a column if it is marked <literal>NOT NULL</literal> in the parent
-      table.
+      table.  To drop the <literal>NOT NULL</literal> constraint from all the
+      partitions, perform <literal>DROP NOT NULL</literal> on the parent
+      table.  Even if there is no <literal>NOT NULL</> constraint on the
+      parent, such a constraint can still be added to individual partitions,
+      if desired; that is, the children can disallow nulls even if the parent
+      allows them, but not the other way around. 
      </para>
     </listitem>
    </varlistentry>
