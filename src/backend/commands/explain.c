@@ -1015,6 +1015,10 @@ ExplainNode(PlanState *planstate, List *ancestors,
 						pname = "HashAggregate";
 						strategy = "Hashed";
 						break;
+					case AGG_MIXED:
+						pname = "MixedAggregate";
+						strategy = "Mixed";
+						break;
 					default:
 						pname = "Aggregate ???";
 						strategy = "???";
@@ -1978,6 +1982,19 @@ show_grouping_set_keys(PlanState *planstate,
 	ListCell   *lc;
 	List	   *gsets = aggnode->groupingSets;
 	AttrNumber *keycols = aggnode->grpColIdx;
+	const char *keyname;
+	const char *keysetname;
+
+	if (aggnode->aggstrategy == AGG_HASHED || aggnode->aggstrategy == AGG_MIXED)
+	{
+		keyname = "Hash Key";
+		keysetname = "Hash Keys";
+	}
+	else
+	{
+		keyname = "Group Key";
+		keysetname = "Group Keys";
+	}
 
 	ExplainOpenGroup("Grouping Set", NULL, true, es);
 
@@ -1992,7 +2009,7 @@ show_grouping_set_keys(PlanState *planstate,
 			es->indent++;
 	}
 
-	ExplainOpenGroup("Group Keys", "Group Keys", false, es);
+	ExplainOpenGroup(keysetname, keysetname, false, es);
 
 	foreach(lc, gsets)
 	{
@@ -2016,12 +2033,12 @@ show_grouping_set_keys(PlanState *planstate,
 		}
 
 		if (!result && es->format == EXPLAIN_FORMAT_TEXT)
-			ExplainPropertyText("Group Key", "()", es);
+			ExplainPropertyText(keyname, "()", es);
 		else
-			ExplainPropertyListNested("Group Key", result, es);
+			ExplainPropertyListNested(keyname, result, es);
 	}
 
-	ExplainCloseGroup("Group Keys", "Group Keys", false, es);
+	ExplainCloseGroup(keysetname, keysetname, false, es);
 
 	if (sortnode && es->format == EXPLAIN_FORMAT_TEXT)
 		es->indent--;

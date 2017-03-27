@@ -2697,10 +2697,9 @@ create_agg_path(PlannerInfo *root,
  * 'subpath' is the path representing the source of data
  * 'target' is the PathTarget to be computed
  * 'having_qual' is the HAVING quals if any
- * 'rollup_lists' is a list of grouping sets
- * 'rollup_groupclauses' is a list of grouping clauses for grouping sets
+ * 'rollups' is a list of RollupData nodes
  * 'agg_costs' contains cost info about the aggregate functions to be computed
- * 'numGroups' is the estimated number of groups
+ * 'numGroups' is the estimated total number of groups
  */
 GroupingSetsPath *
 create_groupingsets_path(PlannerInfo *root,
@@ -2708,13 +2707,15 @@ create_groupingsets_path(PlannerInfo *root,
 						 Path *subpath,
 						 PathTarget *target,
 						 List *having_qual,
-						 List *rollup_lists,
-						 List *rollup_groupclauses,
+						 AggStrategy aggstrategy,
+						 List *rollups,
 						 const AggClauseCosts *agg_costs,
 						 double numGroups)
 {
 	GroupingSetsPath *pathnode = makeNode(GroupingSetsPath);
-	int			numGroupCols;
+	ListCell   *lc;
+	bool		is_first = true;
+	bool		is_first_sort = true;
 
 	/* The topmost generated Plan node will be an Agg */
 	pathnode->path.pathtype = T_Agg;
@@ -2728,74 +2729,109 @@ create_groupingsets_path(PlannerInfo *root,
 	pathnode->subpath = subpath;
 
 	/*
+	 * Simplify callers by downgrading AGG_SORTED to AGG_PLAIN, and AGG_MIXED
+	 * to AGG_HASHED, here if possible.
+	 */
+	if (aggstrategy == AGG_SORTED &&
+		list_length(rollups) == 1 &&
+		((RollupData *) linitial(rollups))->groupClause == NIL)
+		aggstrategy = AGG_PLAIN;
+
+	if (aggstrategy == AGG_MIXED &&
+		list_length(rollups) == 1)
+		aggstrategy = AGG_HASHED;
+
+	/*
 	 * Output will be in sorted order by group_pathkeys if, and only if, there
 	 * is a single rollup operation on a non-empty list of grouping
 	 * expressions.
 	 */
-	if (list_length(rollup_groupclauses) == 1 &&
-		((List *) linitial(rollup_groupclauses)) != NIL)
+	if (aggstrategy == AGG_SORTED && list_length(rollups) == 1)
 		pathnode->path.pathkeys = root->group_pathkeys;
 	else
 		pathnode->path.pathkeys = NIL;
 
-	pathnode->rollup_groupclauses = rollup_groupclauses;
-	pathnode->rollup_lists = rollup_lists;
+	pathnode->aggstrategy = aggstrategy;
+	pathnode->rollups = rollups;
 	pathnode->qual = having_qual;
 
-	Assert(rollup_lists != NIL);
-	Assert(list_length(rollup_lists) == list_length(rollup_groupclauses));
+	Assert(rollups != NIL);
+	Assert(aggstrategy != AGG_PLAIN || list_length(rollups) == 1);
+	Assert(aggstrategy != AGG_MIXED || list_length(rollups) > 1);
 
-	/* Account for cost of the topmost Agg node */
-	numGroupCols = list_length((List *) linitial((List *) llast(rollup_lists)));
-
-	cost_agg(&pathnode->path, root,
-			 (numGroupCols > 0) ? AGG_SORTED : AGG_PLAIN,
-			 agg_costs,
-			 numGroupCols,
-			 numGroups,
-			 subpath->startup_cost,
-			 subpath->total_cost,
-			 subpath->rows);
-
-	/*
-	 * Add in the costs and output rows of the additional sorting/aggregation
-	 * steps, if any.  Only total costs count, since the extra sorts aren't
-	 * run on startup.
-	 */
-	if (list_length(rollup_lists) > 1)
+	foreach(lc, rollups)
 	{
-		ListCell   *lc;
+		RollupData *rollup = lfirst(lc);
+		List	   *gsets = rollup->gsets;
+		int			numGroupCols = list_length(linitial(gsets));
 
-		foreach(lc, rollup_lists)
+		/*
+		 * In AGG_SORTED or AGG_PLAIN mode, the first rollup takes the
+		 * (already-sorted) input, and following ones do their own sort.
+		 *
+		 * In AGG_HASHED mode, there is one rollup for each grouping set.
+		 *
+		 * In AGG_MIXED mode, the first rollups are hashed, the first
+		 * non-hashed one takes the (already-sorted) input, and following ones
+		 * do their own sort.
+		 */
+		if (is_first)
 		{
-			List	   *gsets = (List *) lfirst(lc);
+			cost_agg(&pathnode->path, root,
+					 aggstrategy,
+					 agg_costs,
+					 numGroupCols,
+					 rollup->numGroups,
+					 subpath->startup_cost,
+					 subpath->total_cost,
+					 subpath->rows);
+			is_first = false;
+			if (!rollup->is_hashed)
+				is_first_sort = false;
+		}
+		else
+		{
 			Path		sort_path;		/* dummy for result of cost_sort */
 			Path		agg_path;		/* dummy for result of cost_agg */
 
-			/* We must iterate over all but the last rollup_lists element */
-			if (lnext(lc) == NULL)
-				break;
+			if (rollup->is_hashed || is_first_sort)
+			{
+				/*
+				 * Account for cost of aggregation, but don't charge input
+				 * cost again
+				 */
+				cost_agg(&agg_path, root,
+						 rollup->is_hashed ? AGG_HASHED : AGG_SORTED,
+						 agg_costs,
+						 numGroupCols,
+						 rollup->numGroups,
+						 0.0, 0.0,
+						 subpath->rows);
+				if (!rollup->is_hashed)
+					is_first_sort = false;
+			}
+			else
+			{
+				/* Account for cost of sort, but don't charge input cost again */
+				cost_sort(&sort_path, root, NIL,
+						  0.0,
+						  subpath->rows,
+						  subpath->pathtarget->width,
+						  0.0,
+						  work_mem,
+						  -1.0);
 
-			/* Account for cost of sort, but don't charge input cost again */
-			cost_sort(&sort_path, root, NIL,
-					  0.0,
-					  subpath->rows,
-					  subpath->pathtarget->width,
-					  0.0,
-					  work_mem,
-					  -1.0);
+				/* Account for cost of aggregation */
 
-			/* Account for cost of aggregation */
-			numGroupCols = list_length((List *) linitial(gsets));
-
-			cost_agg(&agg_path, root,
-					 AGG_SORTED,
-					 agg_costs,
-					 numGroupCols,
-					 numGroups, /* XXX surely not right for all steps? */
-					 sort_path.startup_cost,
-					 sort_path.total_cost,
-					 sort_path.rows);
+				cost_agg(&agg_path, root,
+						 AGG_SORTED,
+						 agg_costs,
+						 numGroupCols,
+						 rollup->numGroups,
+						 sort_path.startup_cost,
+						 sort_path.total_cost,
+						 sort_path.rows);
+			}
 
 			pathnode->path.total_cost += agg_path.total_cost;
 			pathnode->path.rows += agg_path.rows;

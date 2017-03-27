@@ -261,6 +261,8 @@ typedef enum NodeTag
 	T_PlaceHolderInfo,
 	T_MinMaxAggInfo,
 	T_PlannerParamItem,
+	T_RollupData,
+	T_GroupingSetData,
 	T_StatisticExtInfo,
 
 	/*
@@ -724,7 +726,8 @@ typedef enum AggStrategy
 {
 	AGG_PLAIN,					/* simple agg across all input rows */
 	AGG_SORTED,					/* grouped agg, input must be sorted */
-	AGG_HASHED					/* grouped agg, use internal hashtable */
+	AGG_HASHED,					/* grouped agg, use internal hashtable */
+	AGG_MIXED					/* grouped agg, hash and sort both used */
 } AggStrategy;
 
 /*

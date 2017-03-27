@@ -1418,17 +1418,37 @@ typedef struct AggPath
 } AggPath;
 
 /*
- * GroupingSetsPath represents a GROUPING SETS aggregation
- *
- * Currently we only support this in sorted not hashed form, so the input
- * must always be appropriately presorted.
+ * Various annotations used for grouping sets in the planner.
  */
+
+typedef struct GroupingSetData
+{
+	NodeTag		type;
+	List	   *set;			/* grouping set as list of sortgrouprefs */
+	double		numGroups;		/* est. number of result groups */
+} GroupingSetData;
+
+typedef struct RollupData
+{
+	NodeTag		type;
+	List	   *groupClause;	/* applicable subset of parse->groupClause */
+	List	   *gsets;			/* lists of integer indexes into groupClause */
+	List	   *gsets_data;		/* list of GroupingSetData */
+	double		numGroups;		/* est. number of result groups */
+	bool		hashable;		/* can be hashed */
+	bool		is_hashed;		/* to be implemented as a hashagg */
+} RollupData;
+
+/*
+ * GroupingSetsPath represents a GROUPING SETS aggregation
+ */
+
 typedef struct GroupingSetsPath
 {
 	Path		path;
 	Path	   *subpath;		/* path representing input source */
-	List	   *rollup_groupclauses;	/* list of lists of SortGroupClause's */
-	List	   *rollup_lists;	/* parallel list of lists of grouping sets */
+	AggStrategy aggstrategy;	/* basic strategy */
+	List	   *rollups;		/* list of RollupData */
 	List	   *qual;			/* quals (HAVING quals), if any */
 } GroupingSetsPath;
 

@@ -3276,16 +3276,19 @@ select sum(q.a), count(q.b) from ft4 left join (select 13, avg(ft1.c1), sum(ft2.
 -- Grouping sets
 explain (verbose, costs off)
 select c2, sum(c1) from ft1 where c2 < 3 group by rollup(c2) order by 1 nulls last;
-                                            QUERY PLAN                                             
----------------------------------------------------------------------------------------------------
- GroupAggregate
-   Output: c2, sum(c1)
-   Group Key: ft1.c2
-   Group Key: ()
-   ->  Foreign Scan on public.ft1
-         Output: c2, c1
-         Remote SQL: SELECT "C 1", c2 FROM "S 1"."T 1" WHERE ((c2 < 3)) ORDER BY c2 ASC NULLS LAST
-(7 rows)
+                                  QUERY PLAN                                  
+------------------------------------------------------------------------------
+ Sort
+   Output: c2, (sum(c1))
+   Sort Key: ft1.c2
+   ->  MixedAggregate
+         Output: c2, sum(c1)
+         Hash Key: ft1.c2
+         Group Key: ()
+         ->  Foreign Scan on public.ft1
+               Output: c2, c1
+               Remote SQL: SELECT "C 1", c2 FROM "S 1"."T 1" WHERE ((c2 < 3))
+(10 rows)
 
 select c2, sum(c1) from ft1 where c2 < 3 group by rollup(c2) order by 1 nulls last;
  c2 |  sum   
@@ -3298,16 +3301,19 @@ select c2, sum(c1) from ft1 where c2 < 3 group by rollup(c2) order by 1 nulls la
 
 explain (verbose, costs off)
 select c2, sum(c1) from ft1 where c2 < 3 group by cube(c2) order by 1 nulls last;
-                                            QUERY PLAN                                             
----------------------------------------------------------------------------------------------------
- GroupAggregate
-   Output: c2, sum(c1)
-   Group Key: ft1.c2
-   Group Key: ()
-   ->  Foreign Scan on public.ft1
-         Output: c2, c1
-         Remote SQL: SELECT "C 1", c2 FROM "S 1"."T 1" WHERE ((c2 < 3)) ORDER BY c2 ASC NULLS LAST
-(7 rows)
+                                  QUERY PLAN                                  
+------------------------------------------------------------------------------
+ Sort
+   Output: c2, (sum(c1))
+   Sort Key: ft1.c2
+   ->  MixedAggregate
+         Output: c2, sum(c1)
+         Hash Key: ft1.c2
+         Group Key: ()
+         ->  Foreign Scan on public.ft1
+               Output: c2, c1
+               Remote SQL: SELECT "C 1", c2 FROM "S 1"."T 1" WHERE ((c2 < 3))
+(10 rows)
 
 select c2, sum(c1) from ft1 where c2 < 3 group by cube(c2) order by 1 nulls last;
  c2 |  sum   
@@ -3320,20 +3326,19 @@ select c2, sum(c1) from ft1 where c2 < 3 group by cube(c2) order by 1 nulls last
 
 explain (verbose, costs off)
 select c2, c6, sum(c1) from ft1 where c2 < 3 group by grouping sets(c2, c6) order by 1 nulls last, 2 nulls last;
-                                                 QUERY PLAN                                                  
--------------------------------------------------------------------------------------------------------------
+                                    QUERY PLAN                                    
+----------------------------------------------------------------------------------
  Sort
    Output: c2, c6, (sum(c1))
    Sort Key: ft1.c2, ft1.c6
-   ->  GroupAggregate
+   ->  HashAggregate
          Output: c2, c6, sum(c1)
-         Group Key: ft1.c2
-         Sort Key: ft1.c6
-           Group Key: ft1.c6
+         Hash Key: ft1.c2
+         Hash Key: ft1.c6
          ->  Foreign Scan on public.ft1
                Output: c2, c6, c1
-               Remote SQL: SELECT "C 1", c2, c6 FROM "S 1"."T 1" WHERE ((c2 < 3)) ORDER BY c2 ASC NULLS LAST
-(11 rows)
+               Remote SQL: SELECT "C 1", c2, c6 FROM "S 1"."T 1" WHERE ((c2 < 3))
+(10 rows)
 
 select c2, c6, sum(c1) from ft1 where c2 < 3 group by grouping sets(c2, c6) order by 1 nulls last, 2 nulls last;
  c2 | c6 |  sum  

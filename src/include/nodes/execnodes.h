@@ -1699,6 +1699,7 @@ typedef struct AggStatePerAggData *AggStatePerAgg;
 typedef struct AggStatePerTransData *AggStatePerTrans;
 typedef struct AggStatePerGroupData *AggStatePerGroup;
 typedef struct AggStatePerPhaseData *AggStatePerPhase;
+typedef struct AggStatePerHashData *AggStatePerHash;
 
 typedef struct AggState
 {
@@ -1706,15 +1707,17 @@ typedef struct AggState
 	List	   *aggs;			/* all Aggref nodes in targetlist & quals */
 	int			numaggs;		/* length of list (could be zero!) */
 	int			numtrans;		/* number of pertrans items */
+	AggStrategy aggstrategy;	/* strategy mode */
 	AggSplit	aggsplit;		/* agg-splitting mode, see nodes.h */
 	AggStatePerPhase phase;		/* pointer to current phase data */
-	int			numphases;		/* number of phases */
+	int			numphases;		/* number of phases (including phase 0) */
 	int			current_phase;	/* current phase number */
-	FmgrInfo   *hashfunctions;	/* per-grouping-field hash fns */
 	AggStatePerAgg peragg;		/* per-Aggref information */
 	AggStatePerTrans pertrans;	/* per-Trans state information */
+	ExprContext *hashcontext;	/* econtexts for long-lived data (hashtable) */
 	ExprContext **aggcontexts;	/* econtexts for long-lived data (per GS) */
 	ExprContext *tmpcontext;	/* econtext for input expressions */
+	ExprContext *curaggcontext; /* currently active aggcontext */
 	AggStatePerTrans curpertrans;		/* currently active trans state */
 	bool		input_done;		/* indicates end of input */
 	bool		agg_done;		/* indicates completion of Agg scan */
@@ -1726,21 +1729,17 @@ typedef struct AggState
 	/* These fields are for grouping set phase data */
 	int			maxsets;		/* The max number of sets in any phase */
 	AggStatePerPhase phases;	/* array of all phases */
-	Tuplesortstate *sort_in;	/* sorted input to phases > 0 */
+	Tuplesortstate *sort_in;	/* sorted input to phases > 1 */
 	Tuplesortstate *sort_out;	/* input is copied here for next phase */
 	TupleTableSlot *sort_slot;	/* slot for sort results */
 	/* these fields are used in AGG_PLAIN and AGG_SORTED modes: */
 	AggStatePerGroup pergroup;	/* per-Aggref-per-group working state */
 	HeapTuple	grp_firstTuple; /* copy of first tuple of current group */
-	/* these fields are used in AGG_HASHED mode: */
-	TupleHashTable hashtable;	/* hash table with one entry per group */
-	TupleTableSlot *hashslot;	/* slot for loading hash table */
-	int			numhashGrpCols;	/* number of columns in hash table */
-	int			largestGrpColIdx; /* largest column required for hashing */
-	AttrNumber *hashGrpColIdxInput;	/* and their indices in input slot */
-	AttrNumber *hashGrpColIdxHash;	/* indices for execGrouping in hashtbl */
+	/* these fields are used in AGG_HASHED and AGG_MIXED modes: */
 	bool		table_filled;	/* hash table filled yet? */
-	TupleHashIterator hashiter; /* for iterating through hash table */
+	int			num_hashes;
+	AggStatePerHash perhash;
+	AggStatePerGroup *hash_pergroup;	/* array of per-group pointers */
 	/* support for evaluation of agg inputs */
 	TupleTableSlot *evalslot;	/* slot for agg inputs */
 	ProjectionInfo *evalproj;	/* projection machinery */

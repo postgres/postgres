@@ -1783,18 +1783,15 @@ create_groupingsets_plan(PlannerInfo *root, GroupingSetsPath *best_path)
 {
 	Agg		   *plan;
 	Plan	   *subplan;
-	List	   *rollup_groupclauses = best_path->rollup_groupclauses;
-	List	   *rollup_lists = best_path->rollup_lists;
+	List	   *rollups = best_path->rollups;
 	AttrNumber *grouping_map;
 	int			maxref;
 	List	   *chain;
-	ListCell   *lc,
-			   *lc2;
+	ListCell   *lc;
 
 	/* Shouldn't get here without grouping sets */
 	Assert(root->parse->groupingSets);
-	Assert(rollup_lists != NIL);
-	Assert(list_length(rollup_lists) == list_length(rollup_groupclauses));
+	Assert(rollups != NIL);
 
 	/*
 	 * Agg can project, so no need to be terribly picky about child tlist, but
@@ -1846,72 +1843,86 @@ create_groupingsets_plan(PlannerInfo *root, GroupingSetsPath *best_path)
 	 * costs will be shown by EXPLAIN.
 	 */
 	chain = NIL;
-	if (list_length(rollup_groupclauses) > 1)
+	if (list_length(rollups) > 1)
 	{
-		forboth(lc, rollup_groupclauses, lc2, rollup_lists)
+		ListCell   *lc2 = lnext(list_head(rollups));
+		bool		is_first_sort = ((RollupData *) linitial(rollups))->is_hashed;
+
+		for_each_cell(lc, lc2)
 		{
-			List	   *groupClause = (List *) lfirst(lc);
-			List	   *gsets = (List *) lfirst(lc2);
+			RollupData *rollup = lfirst(lc);
 			AttrNumber *new_grpColIdx;
-			Plan	   *sort_plan;
+			Plan	   *sort_plan = NULL;
 			Plan	   *agg_plan;
+			AggStrategy strat;
 
-			/* We want to iterate over all but the last rollup list elements */
-			if (lnext(lc) == NULL)
-				break;
+			new_grpColIdx = remap_groupColIdx(root, rollup->groupClause);
 
-			new_grpColIdx = remap_groupColIdx(root, groupClause);
+			if (!rollup->is_hashed && !is_first_sort)
+			{
+				sort_plan = (Plan *)
+					make_sort_from_groupcols(rollup->groupClause,
+											 new_grpColIdx,
+											 subplan);
+			}
 
-			sort_plan = (Plan *)
-				make_sort_from_groupcols(groupClause,
-										 new_grpColIdx,
-										 subplan);
+			if (!rollup->is_hashed)
+				is_first_sort = false;
+
+			if (rollup->is_hashed)
+				strat = AGG_HASHED;
+			else if (list_length(linitial(rollup->gsets)) == 0)
+				strat = AGG_PLAIN;
+			else
+				strat = AGG_SORTED;
 
 			agg_plan = (Plan *) make_agg(NIL,
 										 NIL,
-										 AGG_SORTED,
+										 strat,
 										 AGGSPLIT_SIMPLE,
-									   list_length((List *) linitial(gsets)),
+							   list_length((List *) linitial(rollup->gsets)),
 										 new_grpColIdx,
-										 extract_grouping_ops(groupClause),
-										 gsets,
+								   extract_grouping_ops(rollup->groupClause),
+										 rollup->gsets,
 										 NIL,
-										 0,		/* numGroups not needed */
+										 rollup->numGroups,
 										 sort_plan);
 
 			/*
-			 * Nuke stuff we don't need to avoid bloating debug output.
+			 * Remove stuff we don't need to avoid bloating debug output.
 			 */
-			sort_plan->targetlist = NIL;
-			sort_plan->lefttree = NULL;
+			if (sort_plan)
+			{
+				sort_plan->targetlist = NIL;
+				sort_plan->lefttree = NULL;
+			}
 
 			chain = lappend(chain, agg_plan);
 		}
 	}
 
 	/*
-	 * Now make the final Agg node
+	 * Now make the real Agg node
 	 */
 	{
-		List	   *groupClause = (List *) llast(rollup_groupclauses);
-		List	   *gsets = (List *) llast(rollup_lists);
+		RollupData *rollup = linitial(rollups);
 		AttrNumber *top_grpColIdx;
 		int			numGroupCols;
 
-		top_grpColIdx = remap_groupColIdx(root, groupClause);
+		top_grpColIdx = remap_groupColIdx(root, rollup->groupClause);
 
-		numGroupCols = list_length((List *) linitial(gsets));
+		numGroupCols = list_length((List *) linitial(rollup->gsets));
 
 		plan = make_agg(build_path_tlist(root, &best_path->path),
 						best_path->qual,
-						(numGroupCols > 0) ? AGG_SORTED : AGG_PLAIN,
+						best_path->aggstrategy,
 						AGGSPLIT_SIMPLE,
 						numGroupCols,
 						top_grpColIdx,
-						extract_grouping_ops(groupClause),
-						gsets,
+						extract_grouping_ops(rollup->groupClause),
+						rollup->gsets,
 						chain,
-						0,		/* numGroups not needed */
+						rollup->numGroups,
 						subplan);
 
 		/* Copy cost data from Path to Plan */

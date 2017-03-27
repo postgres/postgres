@@ -21,6 +21,11 @@
 #define BITMAPSET_H
 
 /*
+ * Forward decl to save including pg_list.h
+ */
+struct List;
+
+/*
  * Data representation
  */
 
@@ -70,6 +75,7 @@ extern bool bms_is_subset(const Bitmapset *a, const Bitmapset *b);
 extern BMS_Comparison bms_subset_compare(const Bitmapset *a, const Bitmapset *b);
 extern bool bms_is_member(int x, const Bitmapset *a);
 extern bool bms_overlap(const Bitmapset *a, const Bitmapset *b);
+extern bool bms_overlap_list(const Bitmapset *a, const struct List *b);
 extern bool bms_nonempty_difference(const Bitmapset *a, const Bitmapset *b);
 extern int	bms_singleton_member(const Bitmapset *a);
 extern bool bms_get_singleton_member(const Bitmapset *a, int *member);
