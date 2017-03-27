@@ -174,6 +174,20 @@ typedef struct TabStatusArray
 static TabStatusArray *pgStatTabList = NULL;
 
 /*
+ * pgStatTabHash entry
+ */
+typedef struct TabStatHashEntry
+{
+	Oid t_id;
+	PgStat_TableStatus* tsa_entry;
+} TabStatHashEntry;
+
+/*
+ * Hash table for O(1) t_id -> tsa_entry lookup
+ */
+static HTAB *pgStatTabHash = NULL;
+
+/*
  * Backends store per-function info that's waiting to be sent to the collector
  * in this hash table (indexed by function OID).
  */
@@ -839,6 +853,14 @@ pgstat_report_stat(bool force)
 			   tsa->tsa_used * sizeof(PgStat_TableStatus));
 		tsa->tsa_used = 0;
 	}
+
+	/*
+	 * pgStatTabHash is outdated on this point so we have to clean it,
+	 * hash_destroy() will remove hash memory context, allocated in
+	 * make_sure_stat_tab_initialized()
+	 */
+	hash_destroy(pgStatTabHash);
+	pgStatTabHash = NULL;
 
 	/*
 	 * Send partial messages.  Make sure that any pending xact commit/abort
@@ -1685,59 +1707,87 @@ pgstat_initstats(Relation rel)
 }
 
 /*
+ * Make sure pgStatTabList and pgStatTabHash are initialized.
+ */
+static void
+make_sure_stat_tab_initialized()
+{
+	HASHCTL			ctl;
+	MemoryContext	new_ctx;
+
+	if(!pgStatTabList)
+	{
+		/* This is first time procedure is called */
+		pgStatTabList = (TabStatusArray *) MemoryContextAllocZero(TopMemoryContext,
+												sizeof(TabStatusArray));
+	}
+
+	if(pgStatTabHash)
+		return;
+
+	/* Hash table was freed or never existed.  */
+
+	new_ctx = AllocSetContextCreate(
+		TopMemoryContext,
+		"PGStatLookupHashTableContext",
+		ALLOCSET_DEFAULT_SIZES);
+
+	memset(&ctl, 0, sizeof(ctl));
+	ctl.keysize = sizeof(Oid);
+	ctl.entrysize = sizeof(TabStatHashEntry);
+	ctl.hcxt = new_ctx;
+
+	pgStatTabHash = hash_create("pgstat t_id to tsa_entry lookup hash table",
+		TABSTAT_QUANTUM, &ctl, HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
+}
+
+/*
  * get_tabstat_entry - find or create a PgStat_TableStatus entry for rel
  */
 static PgStat_TableStatus *
 get_tabstat_entry(Oid rel_id, bool isshared)
 {
+	TabStatHashEntry* hash_entry;
 	PgStat_TableStatus *entry;
 	TabStatusArray *tsa;
-	TabStatusArray *prev_tsa;
-	int			i;
+	bool found;
+
+	make_sure_stat_tab_initialized();
 
 	/*
-	 * Search the already-used tabstat slots for this relation.
+	 * Find an entry or create a new one.
 	 */
-	prev_tsa = NULL;
-	for (tsa = pgStatTabList; tsa != NULL; prev_tsa = tsa, tsa = tsa->tsa_next)
+	hash_entry = hash_search(pgStatTabHash, &rel_id, HASH_ENTER, &found);
+	if(found)
+		return hash_entry->tsa_entry;
+
+	/*
+	 * `hash_entry` was just created and now we have to fill it.
+	 * First make sure there is a free space in a last element of pgStatTabList.
+	 */
+	tsa = pgStatTabList;
+	while(tsa->tsa_used == TABSTAT_QUANTUM)
 	{
-		for (i = 0; i < tsa->tsa_used; i++)
+		if(tsa->tsa_next == NULL)
 		{
-			entry = &tsa->tsa_entries[i];
-			if (entry->t_id == rel_id)
-				return entry;
+			tsa->tsa_next = (TabStatusArray *) MemoryContextAllocZero(TopMemoryContext,
+														sizeof(TabStatusArray));
 		}
 
-		if (tsa->tsa_used < TABSTAT_QUANTUM)
-		{
-			/*
-			 * It must not be present, but we found a free slot instead. Fine,
-			 * let's use this one.  We assume the entry was already zeroed,
-			 * either at creation or after last use.
-			 */
-			entry = &tsa->tsa_entries[tsa->tsa_used++];
-			entry->t_id = rel_id;
-			entry->t_shared = isshared;
-			return entry;
-		}
+		tsa = tsa->tsa_next;
 	}
 
 	/*
-	 * We ran out of tabstat slots, so allocate more.  Be sure they're zeroed.
-	 */
-	tsa = (TabStatusArray *) MemoryContextAllocZero(TopMemoryContext,
-													sizeof(TabStatusArray));
-	if (prev_tsa)
-		prev_tsa->tsa_next = tsa;
-	else
-		pgStatTabList = tsa;
-
-	/*
-	 * Use the first entry of the new TabStatusArray.
+	 * Add an entry.
 	 */
 	entry = &tsa->tsa_entries[tsa->tsa_used++];
 	entry->t_id = rel_id;
 	entry->t_shared = isshared;
+
+	/*
+	 * Add a corresponding entry to pgStatTabHash.
+	 */
+	hash_entry->tsa_entry = entry;
 	return entry;
 }
 
@@ -1749,22 +1799,19 @@ get_tabstat_entry(Oid rel_id, bool isshared)
 PgStat_TableStatus *
 find_tabstat_entry(Oid rel_id)
 {
-	PgStat_TableStatus *entry;
-	TabStatusArray *tsa;
-	int			i;
+	TabStatHashEntry* hash_entry;
 
-	for (tsa = pgStatTabList; tsa != NULL; tsa = tsa->tsa_next)
-	{
-		for (i = 0; i < tsa->tsa_used; i++)
-		{
-			entry = &tsa->tsa_entries[i];
-			if (entry->t_id == rel_id)
-				return entry;
-		}
-	}
+	/*
+	 * There are no entries at all.
+	 */
+	if(!pgStatTabHash)
+		return NULL;
 
-	/* Not present */
-	return NULL;
+	hash_entry = hash_search(pgStatTabHash, &rel_id, HASH_FIND, NULL);
+	if(!hash_entry)
+		return NULL;
+
+	return hash_entry->tsa_entry;
 }
 
 /*
