@@ -27,6 +27,9 @@ typedef struct MVNDistinctItem
 	double		ndistinct;		/* ndistinct value for this combination */
 	Bitmapset  *attrs;			/* attr numbers of items */
 } MVNDistinctItem;
+/* size of the struct, excluding attribute list */
+#define SizeOfMVNDistinctItem \
+	(offsetof(MVNDistinctItem, ndistinct) + sizeof(double))
 
 /* A MVNDistinct object, comprising all possible combinations of columns */
 typedef struct MVNDistinct
@@ -36,6 +39,10 @@ typedef struct MVNDistinct
 	uint32		nitems;			/* number of items in the statistic */
 	MVNDistinctItem items[FLEXIBLE_ARRAY_MEMBER];
 } MVNDistinct;
+
+/* size of the struct excluding the items array */
+#define SizeOfMVNDistinct	(offsetof(MVNDistinct, nitems) + sizeof(uint32))
+
 
 extern MVNDistinct *statext_ndistinct_load(Oid mvoid);
 

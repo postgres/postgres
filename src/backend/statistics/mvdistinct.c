@@ -161,10 +161,10 @@ statext_ndistinct_serialize(MVNDistinct *ndistinct)
 	Assert(ndistinct->type == STATS_NDISTINCT_TYPE_BASIC);
 
 	/*
-	 * Base size is base struct size, plus one base struct for each items,
-	 * including number of items for each.
+	 * Base size is size of scalar fields in the struct, plus one base struct
+	 * for each item, including number of items for each.
 	 */
-	len = VARHDRSZ + offsetof(MVNDistinct, items) +
+	len = VARHDRSZ + SizeOfMVNDistinct +
 		ndistinct->nitems * (offsetof(MVNDistinctItem, attrs) + sizeof(int));
 
 	/* and also include space for the actual attribute numbers */
@@ -182,9 +182,13 @@ statext_ndistinct_serialize(MVNDistinct *ndistinct)
 
 	tmp = VARDATA(output);
 
-	/* Store the base struct values */
-	memcpy(tmp, ndistinct, offsetof(MVNDistinct, items));
-	tmp += offsetof(MVNDistinct, items);
+	/* Store the base struct values (magic, type, nitems) */
+	memcpy(tmp, &ndistinct->magic, sizeof(uint32));
+	tmp += sizeof(uint32);
+	memcpy(tmp, &ndistinct->type, sizeof(uint32));
+	tmp += sizeof(uint32);
+	memcpy(tmp, &ndistinct->nitems, sizeof(uint32));
+	tmp += sizeof(uint32);
 
 	/*
 	 * store number of attributes and attribute numbers for each ndistinct
@@ -224,49 +228,64 @@ MVNDistinct *
 statext_ndistinct_deserialize(bytea *data)
 {
 	int			i;
-	Size		expected_size;
+	Size		minimum_size;
+	MVNDistinct	ndist;
 	MVNDistinct *ndistinct;
 	char	   *tmp;
 
 	if (data == NULL)
 		return NULL;
 
-	if (VARSIZE_ANY_EXHDR(data) < offsetof(MVNDistinct, items))
+	/* we expect at least the basic fields of MVNDistinct struct */
+	if (VARSIZE_ANY_EXHDR(data) < SizeOfMVNDistinct)
 		elog(ERROR, "invalid MVNDistinct size %ld (expected at least %ld)",
-			 VARSIZE_ANY_EXHDR(data), offsetof(MVNDistinct, items));
-
-	/* read the MVNDistinct header */
-	ndistinct = (MVNDistinct *) palloc(sizeof(MVNDistinct));
+			 VARSIZE_ANY_EXHDR(data), SizeOfMVNDistinct);
 
 	/* initialize pointer to the data part (skip the varlena header) */
 	tmp = VARDATA_ANY(data);
 
-	/* get the header and perform basic sanity checks */
-	memcpy(ndistinct, tmp, offsetof(MVNDistinct, items));
-	tmp += offsetof(MVNDistinct, items);
+	/* read the header fields and perform basic sanity checks */
+	memcpy(&ndist.magic, tmp, sizeof(uint32));
+	tmp += sizeof(uint32);
+	memcpy(&ndist.type, tmp, sizeof(uint32));
+	tmp += sizeof(uint32);
+	memcpy(&ndist.nitems, tmp, sizeof(uint32));
+	tmp += sizeof(uint32);
 
-	if (ndistinct->magic != STATS_NDISTINCT_MAGIC)
-		elog(ERROR, "invalid ndistinct magic %d (expected %d)",
-			 ndistinct->magic, STATS_NDISTINCT_MAGIC);
-
-	if (ndistinct->type != STATS_NDISTINCT_TYPE_BASIC)
-		elog(ERROR, "invalid ndistinct type %d (expected %d)",
-			 ndistinct->type, STATS_NDISTINCT_TYPE_BASIC);
-
-	Assert(ndistinct->nitems > 0);
+	if (ndist.magic != STATS_NDISTINCT_MAGIC)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_CORRUPTED),
+				 errmsg("invalid ndistinct magic %08x (expected %08x)",
+						ndist.magic, STATS_NDISTINCT_MAGIC)));
+	if (ndist.type != STATS_NDISTINCT_TYPE_BASIC)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_CORRUPTED),
+				 errmsg("invalid ndistinct type %d (expected %d)",
+						ndist.type, STATS_NDISTINCT_TYPE_BASIC)));
+	if (ndist.nitems == 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_CORRUPTED),
+				 errmsg("invalid zero-length item array in MVNDistinct")));
 
 	/* what minimum bytea size do we expect for those parameters */
-	expected_size = offsetof(MVNDistinct, items) +
-		ndistinct->nitems * (offsetof(MVNDistinctItem, attrs) +
-							 sizeof(AttrNumber) * 2);
+	minimum_size = (SizeOfMVNDistinct +
+					ndist.nitems * (SizeOfMVNDistinctItem +
+									sizeof(AttrNumber) * 2));
+	if (VARSIZE_ANY_EXHDR(data) < minimum_size)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_CORRUPTED),
+				 errmsg("invalid MVNDistinct size %ld (expected at least %ld)",
+						VARSIZE_ANY_EXHDR(data), minimum_size)));
 
-	if (VARSIZE_ANY_EXHDR(data) < expected_size)
-		elog(ERROR, "invalid dependencies size %ld (expected at least %ld)",
-			 VARSIZE_ANY_EXHDR(data), expected_size);
-
-	/* allocate space for the ndistinct items */
-	ndistinct = repalloc(ndistinct, offsetof(MVNDistinct, items) +
-						 (ndistinct->nitems * sizeof(MVNDistinctItem)));
+	/*
+	 * Allocate space for the ndistinct items (no space for each item's attnos:
+	 * those live in bitmapsets allocated separately)
+	 */
+	ndistinct = palloc0(MAXALIGN(SizeOfMVNDistinct) +
+						(ndist.nitems * sizeof(MVNDistinctItem)));
+	ndistinct->magic = ndist.magic;
+	ndistinct->type = ndist.type;
+	ndistinct->nitems = ndist.nitems;
 
 	for (i = 0; i < ndistinct->nitems; i++)
 	{
