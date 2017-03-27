@@ -4363,8 +4363,8 @@ SELECT * FROM parent WHERE key = 2400;
         find the logs currently in use by the instance. Here is an example of
         this file's content:
 <programlisting>
-stderr pg_log/postgresql.log
-csvlog pg_log/postgresql.csv
+stderr log/postgresql.log
+csvlog log/postgresql.csv
 </programlisting>
 
         <filename>current_logfiles</filename> is recreated when a new log file
@@ -4466,7 +4466,7 @@ local0.*    /var/log/postgresql
         cluster data directory.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
-        The default is <literal>pg_log</literal>.
+        The default is <literal>log</literal>.
        </para>
       </listitem>
      </varlistentry>

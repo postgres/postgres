@@ -551,7 +551,7 @@ sub _backup_fs
 		$backup_path,
 		filterfn => sub {
 			my $src = shift;
-			return ($src ne 'pg_log' and $src ne 'postmaster.pid');
+			return ($src ne 'log' and $src ne 'postmaster.pid');
 		});
 
 	if ($hot)

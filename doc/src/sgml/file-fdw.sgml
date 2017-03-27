@@ -262,7 +262,7 @@ CREATE FOREIGN TABLE pglog (
   location text,
   application_name text
 ) SERVER pglog
-OPTIONS ( filename '/home/josh/9.1/data/pg_log/pglog.csv', format 'csv' );
+OPTIONS ( filename '/home/josh/data/log/pglog.csv', format 'csv' );
 </programlisting>
   </para>
 
