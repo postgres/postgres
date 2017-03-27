@@ -94,7 +94,7 @@ ALTER COLLATION <replaceable>name</replaceable> SET SCHEMA <replaceable>new_sche
      <para>
       Updated the collation version.
       See <xref linkend="sql-altercollation-notes"
-      endterm="sql-altercollation-notes"> below.
+      endterm="sql-altercollation-notes-title"> below.
      </para>
     </listitem>
    </varlistentry>
@@ -102,7 +102,7 @@ ALTER COLLATION <replaceable>name</replaceable> SET SCHEMA <replaceable>new_sche
  </refsect1>
 
  <refsect1 id="sql-altercollation-notes">
-  <title>Notes</title>
+  <title id="sql-altercollation-notes-title">Notes</title>
 
   <para>
    When using collations provided by the ICU library, the ICU-specific version
