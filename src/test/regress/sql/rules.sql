@@ -1150,6 +1150,7 @@ SELECT pg_get_constraintdef(0);
 SELECT pg_get_functiondef(0);
 SELECT pg_get_indexdef(0);
 SELECT pg_get_ruledef(0);
+SELECT pg_get_statisticsextdef(0);
 SELECT pg_get_triggerdef(0);
 SELECT pg_get_viewdef(0);
 SELECT pg_get_function_arguments(0);

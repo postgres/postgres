@@ -1448,11 +1448,10 @@ static char *
 pg_get_statisticsext_worker(Oid statextid, bool missing_ok)
 {
 	Form_pg_statistic_ext	statextrec;
-	Form_pg_class			pgclassrec;
 	HeapTuple	statexttup;
-	HeapTuple	pgclasstup;
 	StringInfoData buf;
 	int			colno;
+	char	   *nsp;
 
 	statexttup = SearchSysCache1(STATEXTOID, ObjectIdGetDatum(statextid));
 
@@ -1465,20 +1464,12 @@ pg_get_statisticsext_worker(Oid statextid, bool missing_ok)
 
 	statextrec = (Form_pg_statistic_ext) GETSTRUCT(statexttup);
 
-	pgclasstup = SearchSysCache1(RELOID, ObjectIdGetDatum(statextrec->starelid));
-
-	if (!HeapTupleIsValid(statexttup))
-	{
-		ReleaseSysCache(statexttup);
-		elog(ERROR, "cache lookup failed for relation %u", statextrec->starelid);
-	}
-
-	pgclassrec = (Form_pg_class) GETSTRUCT(pgclasstup);
-
 	initStringInfo(&buf);
 
+	nsp = get_namespace_name(statextrec->stanamespace);
 	appendStringInfo(&buf, "CREATE STATISTICS %s ON (",
-							quote_identifier(NameStr(statextrec->staname)));
+					 quote_qualified_identifier(nsp,
+												NameStr(statextrec->staname)));
 
 	for (colno = 0; colno < statextrec->stakeys.dim1; colno++)
 	{
@@ -1494,10 +1485,9 @@ pg_get_statisticsext_worker(Oid statextid, bool missing_ok)
 	}
 
 	appendStringInfo(&buf, ") FROM %s",
-							quote_identifier(NameStr(pgclassrec->relname)));
+					 generate_relation_name(statextrec->starelid, NIL));
 
 	ReleaseSysCache(statexttup);
-	ReleaseSysCache(pgclasstup);
 
 	return buf.data;
 }
