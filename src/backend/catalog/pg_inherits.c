@@ -31,7 +31,16 @@
 #include "utils/fmgroids.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"
+#include "utils/memutils.h"
 
+/*
+ * Entry of a hash table used in find_all_inheritors. See below.
+ */
+typedef struct SeenRelsEntry
+{
+	Oid			 rel_id;			/* relation oid */
+	ListCell	*numparents_cell;	/* corresponding list cell */
+} SeenRelsEntry;
 
 /*
  * find_inheritance_children
@@ -157,9 +166,32 @@ find_inheritance_children(Oid parentrelId, LOCKMODE lockmode)
 List *
 find_all_inheritors(Oid parentrelId, LOCKMODE lockmode, List **numparents)
 {
+	/* hash table for O(1) rel_oid -> rel_numparents cell lookup */
+	HTAB		   *seen_rels;
+	HASHCTL			ctl;
+	MemoryContext	new_ctx;
 	List	   *rels_list,
 			   *rel_numparents;
 	ListCell   *l;
+
+	/*
+	 * We need a separate memory context for a hash table. This is because
+	 * hash table is used only in this procedure. To free a memory we need to
+	 * call hash_destroy which is just a wrapper around MemoryContextDelete.
+	 */
+	new_ctx = AllocSetContextCreate(CurrentMemoryContext,
+									"FindAllInheritorsSeenRelsContext",
+									ALLOCSET_DEFAULT_SIZES);
+
+	memset(&ctl, 0, sizeof(ctl));
+	ctl.keysize = sizeof(Oid);
+	ctl.entrysize = sizeof(SeenRelsEntry);
+	ctl.hcxt = new_ctx;
+
+	seen_rels = hash_create(
+		"find_all_inheritors temporary table",
+		32, /* start small and extend */
+		&ctl, HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 
 	/*
 	 * We build a list starting with the given rel and adding all direct and
@@ -190,26 +222,21 @@ find_all_inheritors(Oid parentrelId, LOCKMODE lockmode, List **numparents)
 		foreach(lc, currentchildren)
 		{
 			Oid			child_oid = lfirst_oid(lc);
-			bool		found = false;
-			ListCell   *lo;
-			ListCell   *li;
+			bool			found;
+			SeenRelsEntry	*hash_entry;
 
-			/* if the rel is already there, bump number-of-parents counter */
-			forboth(lo, rels_list, li, rel_numparents)
+			hash_entry = hash_search(seen_rels, &child_oid, HASH_ENTER, &found);
+			if (found)
 			{
-				if (lfirst_oid(lo) == child_oid)
-				{
-					lfirst_int(li)++;
-					found = true;
-					break;
-				}
+				/* if the rel is already there, bump number-of-parents counter */
+				lfirst_int(hash_entry->numparents_cell)++;
 			}
-
-			/* if it's not there, add it. expect 1 parent, initially. */
-			if (!found)
+			else
 			{
+				/* if it's not there, add it. expect 1 parent, initially. */
 				rels_list = lappend_oid(rels_list, child_oid);
 				rel_numparents = lappend_int(rel_numparents, 1);
+				hash_entry->numparents_cell = rel_numparents->tail;
 			}
 		}
 	}
@@ -218,6 +245,9 @@ find_all_inheritors(Oid parentrelId, LOCKMODE lockmode, List **numparents)
 		*numparents = rel_numparents;
 	else
 		list_free(rel_numparents);
+
+	hash_destroy(seen_rels);
+
 	return rels_list;
 }
 
