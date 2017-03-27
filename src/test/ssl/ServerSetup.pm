@@ -58,21 +58,21 @@ sub configure_test_server_for_ssl
 	$node->psql('postgres', "CREATE DATABASE certdb");
 
 	# enable logging etc.
-	open CONF, ">>$pgdata/postgresql.conf";
-	print CONF "fsync=off\n";
-	print CONF "log_connections=on\n";
-	print CONF "log_hostname=on\n";
-	print CONF "listen_addresses='$serverhost'\n";
-	print CONF "log_statement=all\n";
+	open my $conf, '>>', "$pgdata/postgresql.conf";
+	print $conf "fsync=off\n";
+	print $conf "log_connections=on\n";
+	print $conf "log_hostname=on\n";
+	print $conf "listen_addresses='$serverhost'\n";
+	print $conf "log_statement=all\n";
 
 	# enable SSL and set up server key
-	print CONF "include 'sslconfig.conf'";
+	print $conf "include 'sslconfig.conf'";
 
-	close CONF;
+	close $conf;
 
 	# ssl configuration will be placed here
-	open SSLCONF, ">$pgdata/sslconfig.conf";
-	close SSLCONF;
+	open my $sslconf, '>', "$pgdata/sslconfig.conf";
+	close $sslconf;
 
 	# Copy all server certificates and keys, and client root cert, to the data dir
 	copy_files("ssl/server-*.crt", $pgdata);
@@ -100,13 +100,13 @@ sub switch_server_cert
 
 	diag "Reloading server with certfile \"$certfile\" and cafile \"$cafile\"...";
 
-	open SSLCONF, ">$pgdata/sslconfig.conf";
-	print SSLCONF "ssl=on\n";
-	print SSLCONF "ssl_ca_file='$cafile.crt'\n";
-	print SSLCONF "ssl_cert_file='$certfile.crt'\n";
-	print SSLCONF "ssl_key_file='$certfile.key'\n";
-	print SSLCONF "ssl_crl_file='root+client.crl'\n";
-	close SSLCONF;
+	open my $sslconf, '>', "$pgdata/sslconfig.conf";
+	print $sslconf "ssl=on\n";
+	print $sslconf "ssl_ca_file='root+client_ca.crt'\n";
+	print $sslconf "ssl_cert_file='$certfile.crt'\n";
+	print $sslconf "ssl_key_file='$certfile.key'\n";
+	print $sslconf "ssl_crl_file='root+client.crl'\n";
+	close $sslconf;
 
 	$node->reload;
 }
@@ -121,16 +121,16 @@ sub configure_hba_for_ssl
 	# but seems best to keep it as narrow as possible for security reasons.
 	#
 	# When connecting to certdb, also check the client certificate.
-	open HBA, ">$pgdata/pg_hba.conf";
-	print HBA
+	open my $hba, '>', "$pgdata/pg_hba.conf";
+	print $hba
 "# TYPE  DATABASE        USER            ADDRESS                 METHOD\n";
-	print HBA
+	print $hba
 "hostssl trustdb         ssltestuser     $serverhost/32            trust\n";
-	print HBA
+	print $hba
 "hostssl trustdb         ssltestuser     ::1/128                 trust\n";
-	print HBA
+	print $hba
 "hostssl certdb          ssltestuser     $serverhost/32            cert\n";
-	print HBA
+	print $hba
 "hostssl certdb          ssltestuser     ::1/128                 cert\n";
-	close HBA;
+	close $hba;
 }

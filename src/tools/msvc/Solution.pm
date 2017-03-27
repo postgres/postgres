@@ -102,14 +102,14 @@ sub IsNewer
 sub copyFile
 {
 	my ($src, $dest) = @_;
-	open(I, $src)     || croak "Could not open $src";
-	open(O, ">$dest") || croak "Could not open $dest";
-	while (<I>)
+	open(my $i, '<', $src)  || croak "Could not open $src";
+	open(my $o, '>', $dest) || croak "Could not open $dest";
+	while (<$i>)
 	{
-		print O;
+		print $o $_;
 	}
-	close(I);
-	close(O);
+	close($i);
+	close($o);
 }
 
 sub GenerateFiles
@@ -118,9 +118,9 @@ sub GenerateFiles
 	my $bits = $self->{platform} eq 'Win32' ? 32 : 64;
 
 	# Parse configure.in to get version numbers
-	open(C, "configure.in")
+	open(my $c, '<', "configure.in")
 	  || confess("Could not open configure.in for reading\n");
-	while (<C>)
+	while (<$c>)
 	{
 		if (/^AC_INIT\(\[PostgreSQL\], \[([^\]]+)\]/)
 		{
@@ -133,7 +133,7 @@ sub GenerateFiles
 			$self->{majorver} = sprintf("%d", $1);
 		}
 	}
-	close(C);
+	close($c);
 	confess "Unable to parse configure.in for all variables!"
 	  if ($self->{strver} eq '' || $self->{numver} eq '');
 
@@ -146,91 +146,91 @@ sub GenerateFiles
 	if (IsNewer("src/include/pg_config.h", "src/include/pg_config.h.win32"))
 	{
 		print "Generating pg_config.h...\n";
-		open(I, "src/include/pg_config.h.win32")
+		open(my $i, '<', "src/include/pg_config.h.win32")
 		  || confess "Could not open pg_config.h.win32\n";
-		open(O, ">src/include/pg_config.h")
+		open(my $o, '>', "src/include/pg_config.h")
 		  || confess "Could not write to pg_config.h\n";
 		my $extraver = $self->{options}->{extraver};
 		$extraver = '' unless defined $extraver;
-		while (<I>)
+		while (<$i>)
 		{
 			s{PG_VERSION "[^"]+"}{PG_VERSION "$self->{strver}$extraver"};
 			s{PG_VERSION_NUM \d+}{PG_VERSION_NUM $self->{numver}};
 s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY(z)\n#define PG_VERSION_STR "PostgreSQL $self->{strver}$extraver, compiled by Visual C++ build " __STRINGIFY2(_MSC_VER) ", $bits-bit"};
-			print O;
+			print $o $_;
 		}
-		print O "#define PG_MAJORVERSION \"$self->{majorver}\"\n";
-		print O "#define LOCALEDIR \"/share/locale\"\n"
+		print $o "#define PG_MAJORVERSION \"$self->{majorver}\"\n";
+		print $o "#define LOCALEDIR \"/share/locale\"\n"
 		  if ($self->{options}->{nls});
-		print O "/* defines added by config steps */\n";
-		print O "#ifndef IGNORE_CONFIGURED_SETTINGS\n";
-		print O "#define USE_ASSERT_CHECKING 1\n"
+		print $o "/* defines added by config steps */\n";
+		print $o "#ifndef IGNORE_CONFIGURED_SETTINGS\n";
+		print $o "#define USE_ASSERT_CHECKING 1\n"
 		  if ($self->{options}->{asserts});
-		print O "#define USE_LDAP 1\n"    if ($self->{options}->{ldap});
-		print O "#define HAVE_LIBZ 1\n"   if ($self->{options}->{zlib});
-		print O "#define USE_OPENSSL 1\n" if ($self->{options}->{openssl});
-		print O "#define ENABLE_NLS 1\n"  if ($self->{options}->{nls});
+		print $o "#define USE_LDAP 1\n"    if ($self->{options}->{ldap});
+		print $o "#define HAVE_LIBZ 1\n"   if ($self->{options}->{zlib});
+		print $o "#define USE_OPENSSL 1\n" if ($self->{options}->{openssl});
+		print $o "#define ENABLE_NLS 1\n"  if ($self->{options}->{nls});
 
-		print O "#define BLCKSZ ", 1024 * $self->{options}->{blocksize}, "\n";
-		print O "#define RELSEG_SIZE ",
+		print $o "#define BLCKSZ ", 1024 * $self->{options}->{blocksize}, "\n";
+		print $o "#define RELSEG_SIZE ",
 		  (1024 / $self->{options}->{blocksize}) *
 		  $self->{options}->{segsize} *
 		  1024, "\n";
-		print O "#define XLOG_BLCKSZ ",
+		print $o "#define XLOG_BLCKSZ ",
 		  1024 * $self->{options}->{wal_blocksize}, "\n";
-		print O "#define XLOG_SEG_SIZE (", $self->{options}->{wal_segsize},
+		print $o "#define XLOG_SEG_SIZE (", $self->{options}->{wal_segsize},
 		  " * 1024 * 1024)\n";
 
 		if ($self->{options}->{float4byval})
 		{
-			print O "#define USE_FLOAT4_BYVAL 1\n";
-			print O "#define FLOAT4PASSBYVAL true\n";
+			print $o "#define USE_FLOAT4_BYVAL 1\n";
+			print $o "#define FLOAT4PASSBYVAL true\n";
 		}
 		else
 		{
-			print O "#define FLOAT4PASSBYVAL false\n";
+			print $o "#define FLOAT4PASSBYVAL false\n";
 		}
 		if ($self->{options}->{float8byval})
 		{
-			print O "#define USE_FLOAT8_BYVAL 1\n";
-			print O "#define FLOAT8PASSBYVAL true\n";
+			print $o "#define USE_FLOAT8_BYVAL 1\n";
+			print $o "#define FLOAT8PASSBYVAL true\n";
 		}
 		else
 		{
-			print O "#define FLOAT8PASSBYVAL false\n";
+			print $o "#define FLOAT8PASSBYVAL false\n";
 		}
 
 		if ($self->{options}->{uuid})
 		{
-			print O "#define HAVE_UUID_OSSP\n";
-			print O "#define HAVE_UUID_H\n";
+			print $o "#define HAVE_UUID_OSSP\n";
+			print $o "#define HAVE_UUID_H\n";
 		}
 		if ($self->{options}->{xml})
 		{
-			print O "#define HAVE_LIBXML2\n";
-			print O "#define USE_LIBXML\n";
+			print $o "#define HAVE_LIBXML2\n";
+			print $o "#define USE_LIBXML\n";
 		}
 		if ($self->{options}->{xslt})
 		{
-			print O "#define HAVE_LIBXSLT\n";
-			print O "#define USE_LIBXSLT\n";
+			print $o "#define HAVE_LIBXSLT\n";
+			print $o "#define USE_LIBXSLT\n";
 		}
 		if ($self->{options}->{gss})
 		{
-			print O "#define ENABLE_GSS 1\n";
+			print $o "#define ENABLE_GSS 1\n";
 		}
 		if (my $port = $self->{options}->{"--with-pgport"})
 		{
-			print O "#undef DEF_PGPORT\n";
-			print O "#undef DEF_PGPORT_STR\n";
-			print O "#define DEF_PGPORT $port\n";
-			print O "#define DEF_PGPORT_STR \"$port\"\n";
+			print $o "#undef DEF_PGPORT\n";
+			print $o "#undef DEF_PGPORT_STR\n";
+			print $o "#define DEF_PGPORT $port\n";
+			print $o "#define DEF_PGPORT_STR \"$port\"\n";
 		}
-		print O "#define VAL_CONFIGURE \""
+		print $o "#define VAL_CONFIGURE \""
 		  . $self->GetFakeConfigure() . "\"\n";
-		print O "#endif /* IGNORE_CONFIGURED_SETTINGS */\n";
-		close(O);
-		close(I);
+		print $o "#endif /* IGNORE_CONFIGURED_SETTINGS */\n";
+		close($o);
+		close($i);
 	}
 
 	if (IsNewer(
@@ -379,17 +379,17 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
 		my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) =
 		  localtime(time);
 		my $d = ($year - 100) . "$yday";
-		open(I, '<', 'src/interfaces/libpq/libpq.rc.in')
+		open(my $i, '<', 'src/interfaces/libpq/libpq.rc.in')
 		  || confess "Could not open libpq.rc.in";
-		open(O, '>', 'src/interfaces/libpq/libpq.rc')
+		open(my $o, '>', 'src/interfaces/libpq/libpq.rc')
 		  || confess "Could not open libpq.rc";
-		while (<I>)
+		while (<$i>)
 		{
 			s/(VERSION.*),0/$1,$d/;
-			print O;
+			print $o;
 		}
-		close(I);
-		close(O);
+		close($i);
+		close($o);
 	}
 
 	if (IsNewer('src/bin/psql/sql_help.h', 'src/bin/psql/create_help.pl'))
@@ -415,23 +415,23 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
 			'src/interfaces/ecpg/include/ecpg_config.h.in'))
 	{
 		print "Generating ecpg_config.h...\n";
-		open(O, '>', 'src/interfaces/ecpg/include/ecpg_config.h')
+		open(my $o, '>', 'src/interfaces/ecpg/include/ecpg_config.h')
 		  || confess "Could not open ecpg_config.h";
-		print O <<EOF;
+		print $o <<EOF;
 #if (_MSC_VER > 1200)
 #define HAVE_LONG_LONG_INT_64
 #define ENABLE_THREAD_SAFETY 1
 EOF
-		print O "#endif\n";
-		close(O);
+		print $o "#endif\n";
+		close($o);
 	}
 
 	unless (-f "src/port/pg_config_paths.h")
 	{
 		print "Generating pg_config_paths.h...\n";
-		open(O, '>', 'src/port/pg_config_paths.h')
+		open(my $o, '>', 'src/port/pg_config_paths.h')
 		  || confess "Could not open pg_config_paths.h";
-		print O <<EOF;
+		print $o <<EOF;
 #define PGBINDIR "/bin"
 #define PGSHAREDIR "/share"
 #define SYSCONFDIR "/etc"
@@ -445,7 +445,7 @@ EOF
 #define HTMLDIR "/doc"
 #define MANDIR "/man"
 EOF
-		close(O);
+		close($o);
 	}
 
 	my $mf = Project::read_file('src/backend/catalog/Makefile');
@@ -474,13 +474,13 @@ EOF
 		}
 	}
 
-	open(O, ">doc/src/sgml/version.sgml")
+	open(my $o, '>', "doc/src/sgml/version.sgml")
 	  || croak "Could not write to version.sgml\n";
-	print O <<EOF;
+	print $o <<EOF;
 <!ENTITY version "$self->{strver}">
 <!ENTITY majorversion "$self->{majorver}">
 EOF
-	close(O);
+	close($o);
 }
 
 sub GenerateDefFile
@@ -490,18 +490,18 @@ sub GenerateDefFile
 	if (IsNewer($deffile, $txtfile))
 	{
 		print "Generating $deffile...\n";
-		open(I, $txtfile)    || confess("Could not open $txtfile\n");
-		open(O, ">$deffile") || confess("Could not open $deffile\n");
-		print O "LIBRARY $libname\nEXPORTS\n";
-		while (<I>)
+		open(my $if, '<', $txtfile) || confess("Could not open $txtfile\n");
+		open(my $of, '>', $deffile) || confess("Could not open $deffile\n");
+		print $of "LIBRARY $libname\nEXPORTS\n";
+		while (<$if>)
 		{
 			next if (/^#/);
 			next if (/^\s*$/);
 			my ($f, $o) = split;
-			print O " $f @ $o\n";
+			print $of " $f @ $o\n";
 		}
-		close(O);
-		close(I);
+		close($of);
+		close($if);
 	}
 }
 
@@ -575,19 +575,19 @@ sub Save
 		}
 	}
 
-	open(SLN, ">pgsql.sln") || croak "Could not write to pgsql.sln\n";
-	print SLN <<EOF;
+	open(my $sln, '>', "pgsql.sln") || croak "Could not write to pgsql.sln\n";
+	print $sln <<EOF;
 Microsoft Visual Studio Solution File, Format Version $self->{solutionFileVersion}
 # $self->{visualStudioName}
 EOF
 
-	print SLN $self->GetAdditionalHeaders();
+	print $sln $self->GetAdditionalHeaders();
 
 	foreach my $fld (keys %{ $self->{projects} })
 	{
 		foreach my $proj (@{ $self->{projects}->{$fld} })
 		{
-			print SLN <<EOF;
+			print $sln <<EOF;
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "$proj->{name}", "$proj->{name}$proj->{filenameExtension}", "$proj->{guid}"
 EndProject
 EOF
@@ -595,14 +595,14 @@ EOF
 		if ($fld ne "")
 		{
 			$flduid{$fld} = Win32::GuidGen();
-			print SLN <<EOF;
+			print $sln <<EOF;
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "$fld", "$fld", "$flduid{$fld}"
 EndProject
 EOF
 		}
 	}
 
-	print SLN <<EOF;
+	print $sln <<EOF;
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|$self->{platform}= Debug|$self->{platform}
@@ -615,7 +615,7 @@ EOF
 	{
 		foreach my $proj (@{ $self->{projects}->{$fld} })
 		{
-			print SLN <<EOF;
+			print $sln <<EOF;
 		$proj->{guid}.Debug|$self->{platform}.ActiveCfg = Debug|$self->{platform}
 		$proj->{guid}.Debug|$self->{platform}.Build.0  = Debug|$self->{platform}
 		$proj->{guid}.Release|$self->{platform}.ActiveCfg = Release|$self->{platform}
@@ -624,7 +624,7 @@ EOF
 		}
 	}
 
-	print SLN <<EOF;
+	print $sln <<EOF;
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -637,15 +637,15 @@ EOF
 		next if ($fld eq "");
 		foreach my $proj (@{ $self->{projects}->{$fld} })
 		{
-			print SLN "\t\t$proj->{guid} = $flduid{$fld}\n";
+			print $sln "\t\t$proj->{guid} = $flduid{$fld}\n";
 		}
 	}
 
-	print SLN <<EOF;
+	print $sln <<EOF;
 	EndGlobalSection
 EndGlobal
 EOF
-	close(SLN);
+	close($sln);
 }
 
 sub GetFakeConfigure

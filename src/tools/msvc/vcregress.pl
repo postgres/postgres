@@ -20,8 +20,8 @@ chdir "../../.." if (-d "../../../src/tools/msvc");
 my $topdir         = getcwd();
 my $tmp_installdir = "$topdir/tmp_install";
 
-require 'src/tools/msvc/config_default.pl';
-require 'src/tools/msvc/config.pl' if (-f 'src/tools/msvc/config.pl');
+do 'src/tools/msvc/config_default.pl';
+do 'src/tools/msvc/config.pl' if (-f 'src/tools/msvc/config.pl');
 
 # buildenv.pl is for specifying the build environment settings
 # it should contain lines like:
@@ -29,7 +29,7 @@ require 'src/tools/msvc/config.pl' if (-f 'src/tools/msvc/config.pl');
 
 if (-e "src/tools/msvc/buildenv.pl")
 {
-	require "src/tools/msvc/buildenv.pl";
+	do "src/tools/msvc/buildenv.pl";
 }
 
 my $what = shift || "";
@@ -505,8 +505,8 @@ sub upgradecheck
 sub fetchRegressOpts
 {
 	my $handle;
-	open($handle, "<GNUmakefile")
-	  || open($handle, "<Makefile")
+	open($handle, '<', "GNUmakefile")
+	  || open($handle, '<', "Makefile")
 	  || die "Could not open Makefile";
 	local ($/) = undef;
 	my $m = <$handle>;
@@ -521,8 +521,9 @@ sub fetchRegressOpts
 		# an unhandled variable reference.  Ignore anything that isn't an
 		# option starting with "--".
 		@opts = grep {
-			s/\Q$(top_builddir)\E/\"$topdir\"/;
-			$_ !~ /\$\(/ && $_ =~ /^--/
+			my $x = $_;
+			$x =~ s/\Q$(top_builddir)\E/\"$topdir\"/;
+			$x !~ /\$\(/ && $x =~ /^--/
 		} split(/\s+/, $1);
 	}
 	if ($m =~ /^\s*ENCODING\s*=\s*(\S+)/m)
@@ -540,8 +541,8 @@ sub fetchTests
 {
 
 	my $handle;
-	open($handle, "<GNUmakefile")
-	  || open($handle, "<Makefile")
+	open($handle, '<', "GNUmakefile")
+	  || open($handle, '<', "Makefile")
 	  || die "Could not open Makefile";
 	local ($/) = undef;
 	my $m = <$handle>;

@@ -23,17 +23,17 @@ use Mkvcbuild;
 
 if (-e "src/tools/msvc/buildenv.pl")
 {
-	require "src/tools/msvc/buildenv.pl";
+	do "src/tools/msvc/buildenv.pl";
 }
 elsif (-e "./buildenv.pl")
 {
-	require "./buildenv.pl";
+	do "./buildenv.pl";
 }
 
 # set up the project
 our $config;
-require "config_default.pl";
-require "config.pl" if (-f "src/tools/msvc/config.pl");
+do "config_default.pl";
+do "config.pl" if (-f "src/tools/msvc/config.pl");
 
 my $vcver = Mkvcbuild::mkvcbuild($config);
 

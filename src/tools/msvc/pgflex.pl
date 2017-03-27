@@ -10,7 +10,7 @@ $ENV{CYGWIN} = 'nodosfilewarning';
 
 # assume we are in the postgres source root
 
-require 'src/tools/msvc/buildenv.pl' if -e 'src/tools/msvc/buildenv.pl';
+do 'src/tools/msvc/buildenv.pl' if -e 'src/tools/msvc/buildenv.pl';
 
 my ($flexver) = `flex -V`;    # grab first line
 $flexver = (split(/\s+/, $flexver))[1];
@@ -41,7 +41,7 @@ elsif (!-e $input)
 # get flex flags from make file
 my $makefile = dirname($input) . "/Makefile";
 my ($mf, $make);
-open($mf, $makefile);
+open($mf, '<', $makefile);
 local $/ = undef;
 $make = <$mf>;
 close($mf);
@@ -53,7 +53,7 @@ if ($? == 0)
 {
 	# Check for "%option reentrant" in .l file.
 	my $lfile;
-	open($lfile, $input) || die "opening $input for reading: $!";
+	open($lfile, '<', $input) || die "opening $input for reading: $!";
 	my $lcode = <$lfile>;
 	close($lfile);
 	if ($lcode =~ /\%option\sreentrant/)
@@ -69,18 +69,18 @@ if ($? == 0)
 		# For reentrant scanners (like the core scanner) we do not
 		# need to (and must not) change the yywrap definition.
 		my $cfile;
-		open($cfile, $output) || die "opening $output for reading: $!";
+		open($cfile, '<', $output) || die "opening $output for reading: $!";
 		my $ccode = <$cfile>;
 		close($cfile);
 		$ccode =~ s/yywrap\(n\)/yywrap()/;
-		open($cfile, ">$output") || die "opening $output for writing: $!";
+		open($cfile, '>', $output) || die "opening $output for writing: $!";
 		print $cfile $ccode;
 		close($cfile);
 	}
 	if ($flexflags =~ /\s-b\s/)
 	{
 		my $lexback = "lex.backup";
-		open($lfile, $lexback) || die "opening $lexback for reading: $!";
+		open($lfile, '<', $lexback) || die "opening $lexback for reading: $!";
 		my $lexbacklines = <$lfile>;
 		close($lfile);
 		my $linecount = $lexbacklines =~ tr /\n/\n/;

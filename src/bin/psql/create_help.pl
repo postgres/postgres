@@ -42,12 +42,12 @@ $define =~ s/\W/_/g;
 
 opendir(DIR, $docdir)
   or die "$0: could not open documentation source dir '$docdir': $!\n";
-open(HFILE, ">$hfile")
+open(my $hfile_handle, '>', $hfile)
   or die "$0: could not open output file '$hfile': $!\n";
-open(CFILE, ">$cfile")
+open(my $cfile_handle, '>', $cfile)
   or die "$0: could not open output file '$cfile': $!\n";
 
-print HFILE "/*
+print $hfile_handle "/*
  * *** Do not change this file by hand. It is automatically
  * *** generated from the DocBook documentation.
  *
@@ -72,7 +72,7 @@ struct _helpStruct
 extern const struct _helpStruct QL_HELP[];
 ";
 
-print CFILE "/*
+print $cfile_handle "/*
  * *** Do not change this file by hand. It is automatically
  * *** generated from the DocBook documentation.
  *
@@ -97,9 +97,9 @@ foreach my $file (sort readdir DIR)
 	my (@cmdnames, $cmddesc, $cmdsynopsis);
 	$file =~ /\.sgml$/ or next;
 
-	open(FILE, "$docdir/$file") or next;
-	my $filecontent = join('', <FILE>);
-	close FILE;
+	open(my $fh, '<', "$docdir/$file") or next;
+	my $filecontent = join('', <$fh>);
+	close $fh;
 
 	# Ignore files that are not for SQL language statements
 	$filecontent =~
@@ -171,7 +171,7 @@ foreach (sort keys %entries)
 	$synopsis =~ s/\\n/\\n"\n$prefix"/g;
 	my @args =
 	  ("buf", $synopsis, map("_(\"$_\")", @{ $entries{$_}{params} }));
-	print CFILE "static void
+	print $cfile_handle "static void
 sql_help_$id(PQExpBuffer buf)
 {
 \tappendPQExpBuffer(" . join(",\n$prefix", @args) . ");
@@ -180,14 +180,14 @@ sql_help_$id(PQExpBuffer buf)
 ";
 }
 
-print CFILE "
+print $cfile_handle "
 const struct _helpStruct QL_HELP[] = {
 ";
 foreach (sort keys %entries)
 {
 	my $id = $_;
 	$id =~ s/ /_/g;
-	print CFILE "    { \"$_\",
+	print $cfile_handle "    { \"$_\",
       N_(\"$entries{$_}{cmddesc}\"),
       sql_help_$id,
       $entries{$_}{nl_count} },
@@ -195,12 +195,12 @@ foreach (sort keys %entries)
 ";
 }
 
-print CFILE "
+print $cfile_handle "
     { NULL, NULL, NULL }    /* End of list marker */
 };
 ";
 
-print HFILE "
+print $hfile_handle "
 #define QL_HELP_COUNT	"
   . scalar(keys %entries) . "		/* number of help items */
 #define QL_MAX_CMD_LEN	$maxlen		/* largest strlen(cmd) */
@@ -209,6 +209,6 @@ print HFILE "
 #endif /* $define */
 ";
 
-close CFILE;
-close HFILE;
+close $cfile_handle;
+close $hfile_handle;
 closedir DIR;

@@ -14,11 +14,11 @@ use Install qw(Install);
 
 if (-e "src/tools/msvc/buildenv.pl")
 {
-	require "src/tools/msvc/buildenv.pl";
+	do "src/tools/msvc/buildenv.pl";
 }
 elsif (-e "./buildenv.pl")
 {
-	require "./buildenv.pl";
+	do "./buildenv.pl";
 }
 
 my $target = shift || Usage();

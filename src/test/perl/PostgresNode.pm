@@ -347,7 +347,7 @@ sub set_replication_conf
 	$self->host eq $test_pghost
 	  or die "set_replication_conf only works with the default host";
 
-	open my $hba, ">>$pgdata/pg_hba.conf";
+	open my $hba, '>>', "$pgdata/pg_hba.conf";
 	print $hba "\n# Allow replication (set up by PostgresNode.pm)\n";
 	if ($TestLib::windows_os)
 	{
@@ -399,7 +399,7 @@ sub init
 		@{ $params{extra} });
 	TestLib::system_or_bail($ENV{PG_REGRESS}, '--config-auth', $pgdata);
 
-	open my $conf, ">>$pgdata/postgresql.conf";
+	open my $conf, '>>', "$pgdata/postgresql.conf";
 	print $conf "\n# Added by PostgresNode.pm\n";
 	print $conf "fsync = off\n";
 	print $conf "log_line_prefix = '%m [%p] %q%a '\n";
@@ -820,7 +820,7 @@ sub _update_pid
 	# If we can open the PID file, read its first line and that's the PID we
 	# want.  If the file cannot be opened, presumably the server is not
 	# running; don't be noisy in that case.
-	if (open my $pidfile, $self->data_dir . "/postmaster.pid")
+	if (open my $pidfile, '<', $self->data_dir . "/postmaster.pid")
 	{
 		chomp($self->{_pid} = <$pidfile>);
 		print "# Postmaster PID for node \"$name\" is $self->{_pid}\n";
@@ -1357,7 +1357,7 @@ sub lsn
 	chomp($result);
 	if ($result eq '')
 	{
-		return undef;
+		return;
 	}
 	else
 	{

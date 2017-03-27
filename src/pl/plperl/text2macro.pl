@@ -49,7 +49,7 @@ for my $src_file (@ARGV)
 
 	(my $macro = $src_file) =~ s/ .*? (\w+) (?:\.\w+) $/$1/x;
 
-	open my $src_fh, $src_file    # not 3-arg form
+	open my $src_fh, '<', $src_file
 	  or die "Can't open $src_file: $!";
 
 	printf qq{#define %s%s \\\n},
@@ -80,19 +80,19 @@ sub selftest
 	my $tmp    = "text2macro_tmp";
 	my $string = q{a '' '\\'' "" "\\"" "\\\\" "\\\\n" b};
 
-	open my $fh, ">$tmp.pl" or die;
+	open my $fh, '>', "$tmp.pl" or die;
 	print $fh $string;
 	close $fh;
 
 	system("perl $0 --name=X $tmp.pl > $tmp.c") == 0 or die;
-	open $fh, ">>$tmp.c";
+	open $fh, '>>', "$tmp.c";
 	print $fh "#include <stdio.h>\n";
 	print $fh "int main() { puts(X); return 0; }\n";
 	close $fh;
 	system("cat -n $tmp.c");
 
 	system("make $tmp") == 0 or die;
-	open $fh, "./$tmp |" or die;
+	open $fh, '<', "./$tmp |" or die;
 	my $result = <$fh>;
 	unlink <$tmp.*>;
 

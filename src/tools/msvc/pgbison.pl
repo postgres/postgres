@@ -7,7 +7,7 @@ use File::Basename;
 
 # assume we are in the postgres source root
 
-require 'src/tools/msvc/buildenv.pl' if -e 'src/tools/msvc/buildenv.pl';
+do 'src/tools/msvc/buildenv.pl' if -e 'src/tools/msvc/buildenv.pl';
 
 my ($bisonver) = `bison -V`;    # grab first line
 $bisonver = (split(/\s+/, $bisonver))[3];    # grab version number
@@ -38,7 +38,7 @@ $output =~ s/gram\.c$/pl_gram.c/ if $input =~ /src.pl.plpgsql.src.gram\.y$/;
 
 my $makefile = dirname($input) . "/Makefile";
 my ($mf, $make);
-open($mf, $makefile);
+open($mf, '<', $makefile);
 local $/ = undef;
 $make = <$mf>;
 close($mf);

@@ -90,11 +90,11 @@ my $oidsfile = $output_path . 'fmgroids.h';
 my $protosfile = $output_path . 'fmgrprotos.h';
 my $tabfile  = $output_path . 'fmgrtab.c';
 
-open H, '>', $oidsfile . $tmpext or die "Could not open $oidsfile$tmpext: $!";
-open P, '>', $protosfile . $tmpext or die "Could not open $protosfile$tmpext: $!";
-open T, '>', $tabfile . $tmpext  or die "Could not open $tabfile$tmpext: $!";
+open my $ofh, '>', $oidsfile . $tmpext or die "Could not open $oidsfile$tmpext: $!";
+open my $pfh, '>', $protosfile . $tmpext or die "Could not open $protosfile$tmpext: $!";
+open my $tfh, '>', $tabfile . $tmpext  or die "Could not open $tabfile$tmpext: $!";
 
-print H
+print $ofh
 qq|/*-------------------------------------------------------------------------
  *
  * fmgroids.h
@@ -132,7 +132,7 @@ qq|/*-------------------------------------------------------------------------
  */
 |;
 
-print P
+print $pfh
 qq|/*-------------------------------------------------------------------------
  *
  * fmgrprotos.h
@@ -159,7 +159,7 @@ qq|/*-------------------------------------------------------------------------
 
 |;
 
-print T
+print $tfh
 qq|/*-------------------------------------------------------------------------
  *
  * fmgrtab.c
@@ -193,26 +193,26 @@ foreach my $s (sort { $a->{oid} <=> $b->{oid} } @fmgr)
 {
 	next if $seenit{ $s->{prosrc} };
 	$seenit{ $s->{prosrc} } = 1;
-	print H "#define F_" . uc $s->{prosrc} . " $s->{oid}\n";
-	print P "extern Datum $s->{prosrc}(PG_FUNCTION_ARGS);\n";
+	print $ofh "#define F_" . uc $s->{prosrc} . " $s->{oid}\n";
+	print $pfh "extern Datum $s->{prosrc}(PG_FUNCTION_ARGS);\n";
 }
 
 # Create the fmgr_builtins table
-print T "\nconst FmgrBuiltin fmgr_builtins[] = {\n";
+print $tfh "\nconst FmgrBuiltin fmgr_builtins[] = {\n";
 my %bmap;
 $bmap{'t'} = 'true';
 $bmap{'f'} = 'false';
 foreach my $s (sort { $a->{oid} <=> $b->{oid} } @fmgr)
 {
-	print T
+	print $tfh
 "  { $s->{oid}, \"$s->{prosrc}\", $s->{nargs}, $bmap{$s->{strict}}, $bmap{$s->{retset}}, $s->{prosrc} },\n";
 }
 
 # And add the file footers.
-print H "\n#endif /* FMGROIDS_H */\n";
-print P "\n#endif /* FMGRPROTOS_H */\n";
+print $ofh "\n#endif /* FMGROIDS_H */\n";
+print $pfh "\n#endif /* FMGRPROTOS_H */\n";
 
-print T
+print $tfh
 qq|  /* dummy entry is easier than getting rid of comma after last real one */
   /* (not that there has ever been anything wrong with *having* a
      comma after the last field in an array initializer) */
@@ -223,9 +223,9 @@ qq|  /* dummy entry is easier than getting rid of comma after last real one */
 const int fmgr_nbuiltins = (sizeof(fmgr_builtins) / sizeof(FmgrBuiltin)) - 1;
 |;
 
-close(H);
-close(P);
-close(T);
+close($ofh);
+close($pfh);
+close($tfh);
 
 # Finally, rename the completed files into place.
 Catalog::RenameTempFile($oidsfile, $tmpext);

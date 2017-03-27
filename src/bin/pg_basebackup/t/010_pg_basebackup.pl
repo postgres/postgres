@@ -24,10 +24,10 @@ $node->command_fails(['pg_basebackup'],
 
 # Some Windows ANSI code pages may reject this filename, in which case we
 # quietly proceed without this bit of test coverage.
-if (open BADCHARS, ">>$tempdir/pgdata/FOO\xe0\xe0\xe0BAR")
+if (open my $badchars, '>>', "$tempdir/pgdata/FOO\xe0\xe0\xe0BAR")
 {
-	print BADCHARS "test backup of file with non-UTF8 name\n";
-	close BADCHARS;
+	print $badchars "test backup of file with non-UTF8 name\n";
+	close $badchars;
 }
 
 $node->set_replication_conf();
@@ -45,19 +45,19 @@ $node->command_fails(
 
 ok(-d "$tempdir/backup", 'backup directory was created and left behind');
 
-open CONF, ">>$pgdata/postgresql.conf";
-print CONF "max_replication_slots = 10\n";
-print CONF "max_wal_senders = 10\n";
-print CONF "wal_level = replica\n";
-close CONF;
+open my $conf, '>>', "$pgdata/postgresql.conf";
+print $conf "max_replication_slots = 10\n";
+print $conf "max_wal_senders = 10\n";
+print $conf "wal_level = replica\n";
+close $conf;
 $node->restart;
 
 # Write some files to test that they are not copied.
 foreach my $filename (qw(backup_label tablespace_map postgresql.auto.conf.tmp current_logfiles.tmp))
 {
-	open FILE, ">>$pgdata/$filename";
-	print FILE "DONOTCOPY";
-	close FILE;
+	open my $file, '>>', "$pgdata/$filename";
+	print $file "DONOTCOPY";
+	close $file;
 }
 
 $node->command_ok([ 'pg_basebackup', '-D', "$tempdir/backup", '-X', 'none' ],
@@ -124,8 +124,8 @@ $node->command_fails(
 my $superlongname = "superlongname_" . ("x" x 100);
 my $superlongpath = "$pgdata/$superlongname";
 
-open FILE, ">$superlongpath" or die "unable to create file $superlongpath";
-close FILE;
+open my $file, '>', "$superlongpath" or die "unable to create file $superlongpath";
+close $file;
 $node->command_fails(
 	[ 'pg_basebackup', '-D', "$tempdir/tarbackup_l1", '-Ft' ],
 	'pg_basebackup tar with long name fails');

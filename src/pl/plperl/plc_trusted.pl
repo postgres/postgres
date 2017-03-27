@@ -1,6 +1,6 @@
 #  src/pl/plperl/plc_trusted.pl
 
-package PostgreSQL::InServer::safe;
+package PostgreSQL::InServer::safe;  ## no critic (RequireFilenameMatchesPackage);
 
 # Load widely useful pragmas into plperl to make them available.
 #

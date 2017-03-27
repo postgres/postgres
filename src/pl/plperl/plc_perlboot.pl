@@ -52,7 +52,7 @@ sub ::encode_array_constructor
 
 {
 
-	package PostgreSQL::InServer;
+	package PostgreSQL::InServer;  ## no critic (RequireFilenameMatchesPackage);
 	use strict;
 	use warnings;
 
@@ -86,11 +86,13 @@ sub ::encode_array_constructor
 
 	sub mkfunc
 	{
+		## no critic (ProhibitNoStrict, ProhibitStringyEval);
 		no strict;      # default to no strict for the eval
 		no warnings;    # default to no warnings for the eval
 		my $ret = eval(mkfuncsrc(@_));
 		$@ =~ s/\(eval \d+\) //g if $@;
 		return $ret;
+		## use critic
 	}
 
 	1;

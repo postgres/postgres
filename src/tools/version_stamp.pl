@@ -80,8 +80,8 @@ my $padnumericversion = sprintf("%d%04d", $majorversion, $numericminor);
 # (this also ensures we're in the right directory)
 
 my $aconfver = "";
-open(FILE, "configure.in") || die "could not read configure.in: $!\n";
-while (<FILE>)
+open(my $fh, '<', "configure.in") || die "could not read configure.in: $!\n";
+while (<$fh>)
 {
 	if (
 m/^m4_if\(m4_defn\(\[m4_PACKAGE_VERSION\]\), \[(.*)\], \[\], \[m4_fatal/)
@@ -90,7 +90,7 @@ m/^m4_if\(m4_defn\(\[m4_PACKAGE_VERSION\]\), \[(.*)\], \[\], \[m4_fatal/)
 		last;
 	}
 }
-close(FILE);
+close($fh);
 $aconfver ne ""
   || die "could not find autoconf version number in configure.in\n";
 

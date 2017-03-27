@@ -310,12 +310,12 @@ sub AddResourceFile
 	if (Solution::IsNewer("$dir/win32ver.rc", 'src/port/win32ver.rc'))
 	{
 		print "Generating win32ver.rc for $dir\n";
-		open(I, 'src/port/win32ver.rc')
+		open(my $i, '<', 'src/port/win32ver.rc')
 		  || confess "Could not open win32ver.rc";
-		open(O, ">$dir/win32ver.rc")
+		open(my $o, '>', "$dir/win32ver.rc")
 		  || confess "Could not write win32ver.rc";
 		my $icostr = $ico ? "IDI_ICON ICON \"src/port/$ico.ico\"" : "";
-		while (<I>)
+		while (<$i>)
 		{
 			s/FILEDESC/"$desc"/gm;
 			s/_ICO_/$icostr/gm;
@@ -324,11 +324,11 @@ sub AddResourceFile
 			{
 				s/VFT_APP/VFT_DLL/gm;
 			}
-			print O;
+			print $o $_;
 		}
+		close($o);
+		close($i);
 	}
-	close(O);
-	close(I);
 	$self->AddFile("$dir/win32ver.rc");
 }
 
@@ -357,13 +357,13 @@ sub Save
 	$self->DisableLinkerWarnings('4197') if ($self->{platform} eq 'x64');
 
 	# Dump the project
-	open(F, ">$self->{name}$self->{filenameExtension}")
+	open(my $f, '>', "$self->{name}$self->{filenameExtension}")
 	  || croak(
 		"Could not write to $self->{name}$self->{filenameExtension}\n");
-	$self->WriteHeader(*F);
-	$self->WriteFiles(*F);
-	$self->Footer(*F);
-	close(F);
+	$self->WriteHeader($f);
+	$self->WriteFiles($f);
+	$self->Footer($f);
+	close($f);
 }
 
 sub GetAdditionalLinkerDependencies
@@ -397,7 +397,7 @@ sub read_file
 	my $t = $/;
 
 	undef $/;
-	open($F, $filename) || croak "Could not open file $filename\n";
+	open($F, '<', $filename) || croak "Could not open file $filename\n";
 	my $txt = <$F>;
 	close($F);
 	$/ = $t;
@@ -412,8 +412,8 @@ sub read_makefile
 	my $t = $/;
 
 	undef $/;
-	open($F, "$reldir/GNUmakefile")
-	  || open($F, "$reldir/Makefile")
+	open($F, '<', "$reldir/GNUmakefile")
+	  || open($F, '<', "$reldir/Makefile")
 	  || confess "Could not open $reldir/Makefile\n";
 	my $txt = <$F>;
 	close($F);

@@ -32,8 +32,8 @@ sub dumpsyms
 sub extract_syms
 {
 	my ($symfile, $def) = @_;
-	open(F, "<$symfile") || die "Could not open $symfile for $_\n";
-	while (<F>)
+	open(my $f, '<', $symfile) || die "Could not open $symfile for $_\n";
+	while (<$f>)
 	{
 
 	# Expected symbol lines look like:
@@ -115,14 +115,14 @@ sub extract_syms
 		# whatever came last.
 		$def->{ $pieces[6] } = $pieces[3];
 	}
-	close(F);
+	close($f);
 }
 
 sub writedef
 {
 	my ($deffile, $platform, $def) = @_;
-	open(DEF, ">$deffile") || die "Could not write to $deffile\n";
-	print DEF "EXPORTS\n";
+	open(my $fh, '>', $deffile) || die "Could not write to $deffile\n";
+	print $fh "EXPORTS\n";
 	foreach my $f (sort keys %{$def})
 	{
 		my $isdata = $def->{$f} eq 'data';
@@ -135,14 +135,14 @@ sub writedef
 		# decorated with the DATA option for variables.
 		if ($isdata)
 		{
-			print DEF "  $f DATA\n";
+			print $fh "  $f DATA\n";
 		}
 		else
 		{
-			print DEF "  $f\n";
+			print $fh "  $f\n";
 		}
 	}
-	close(DEF);
+	close($fh);
 }
 
 
@@ -174,7 +174,7 @@ print "Generating $defname.DEF from directory $ARGV[0], platform $platform\n";
 
 my %def = ();
 
-while (<$ARGV[0]/*.obj>)
+while (<$ARGV[0]/*.obj>)  ## no critic (RequireGlobFunction);
 {
 	my $objfile = $_;
 	my $symfile = $objfile;

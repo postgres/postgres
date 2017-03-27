@@ -159,8 +159,7 @@ sub process_exclude
 		while (my $line = <$eh>)
 		{
 			chomp $line;
-			my $rgx;
-			eval " \$rgx = qr!$line!;";
+			my $rgx = qr!$line!;
 			@files = grep { $_ !~ /$rgx/ } @files if $rgx;
 		}
 		close($eh);
@@ -435,7 +434,7 @@ sub diff
 
 sub run_build
 {
-	eval "use LWP::Simple;";
+	eval "use LWP::Simple;";  ## no critic (ProhibitStringyEval);
 
 	my $code_base = shift || '.';
 	my $save_dir = getcwd();

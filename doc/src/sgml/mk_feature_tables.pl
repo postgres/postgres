@@ -6,11 +6,11 @@ use strict;
 
 my $yesno = $ARGV[0];
 
-open PACK, $ARGV[1] or die;
+open my $pack, '<', $ARGV[1] or die;
 
 my %feature_packages;
 
-while (<PACK>)
+while (<$pack>)
 {
 	chomp;
 	my ($fid, $pname) = split /\t/;
@@ -24,13 +24,13 @@ while (<PACK>)
 	}
 }
 
-close PACK;
+close $pack;
 
-open FEAT, $ARGV[2] or die;
+open my $feat, '<', $ARGV[2] or die;
 
 print "<tbody>\n";
 
-while (<FEAT>)
+while (<$feat>)
 {
 	chomp;
 	my ($feature_id,      $feature_name, $subfeature_id,
@@ -69,4 +69,4 @@ while (<FEAT>)
 
 print "</tbody>\n";
 
-close FEAT;
+close $feat;

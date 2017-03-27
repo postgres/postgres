@@ -25,7 +25,7 @@ my $filename = shift;
 # Suck in the whole file.
 local $/ = undef;
 my $cfile;
-open($cfile, $filename) || die "opening $filename for reading: $!";
+open($cfile, '<', $filename) || die "opening $filename for reading: $!";
 my $ccode = <$cfile>;
 close($cfile);
 
@@ -45,7 +45,7 @@ $ccode =~ s|(struct yyguts_t \* yyg = \(struct yyguts_t\*\)yyscanner; /\* This v
 |s;
 
 # Write the modified file back out.
-open($cfile, ">$filename") || die "opening $filename for writing: $!";
+open($cfile, '>', $filename) || die "opening $filename for writing: $!";
 print $cfile $ccode;
 close($cfile);
 

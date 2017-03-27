@@ -825,7 +825,7 @@ sub GenerateContribSqlFiles
 				$dn   =~ s/\.sql$//;
 				$cont =~ s/MODULE_PATHNAME/\$libdir\/$dn/g;
 				my $o;
-				open($o, ">contrib/$n/$out")
+				open($o, '>', "contrib/$n/$out")
 				  || croak "Could not write to contrib/$n/$d";
 				print $o $cont;
 				close($o);

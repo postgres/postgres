@@ -44,13 +44,13 @@ sub Catalogs
 		$catalog{columns} = [];
 		$catalog{data}    = [];
 
-		open(INPUT_FILE, '<', $input_file) || die "$input_file: $!";
+		open(my $ifh, '<', $input_file) || die "$input_file: $!";
 
 		my ($filename) = ($input_file =~ m/(\w+)\.h$/);
 		my $natts_pat = "Natts_$filename";
 
 		# Scan the input file.
-		while (<INPUT_FILE>)
+		while (<$ifh>)
 		{
 
 			# Strip C-style comments.
@@ -59,7 +59,7 @@ sub Catalogs
 			{
 
 				# handle multi-line comments properly.
-				my $next_line = <INPUT_FILE>;
+				my $next_line = <$ifh>;
 				die "$input_file: ends within C-style comment\n"
 				  if !defined $next_line;
 				$_ .= $next_line;
@@ -211,7 +211,7 @@ sub Catalogs
 			}
 		}
 		$catalogs{$catname} = \%catalog;
-		close INPUT_FILE;
+		close $ifh;
 	}
 	return \%catalogs;
 }

@@ -20,18 +20,18 @@ command_ok([ 'pg_ctl', 'initdb', '-D', "$tempdir/data", '-o', '-N' ],
 	'pg_ctl initdb');
 command_ok([ $ENV{PG_REGRESS}, '--config-auth', "$tempdir/data" ],
 	'configure authentication');
-open CONF, ">>$tempdir/data/postgresql.conf";
-print CONF "fsync = off\n";
-if (!$windows_os)
+open my $conf, '>>', "$tempdir/data/postgresql.conf";
+print $conf "fsync = off\n";
+if (! $windows_os)
 {
-	print CONF "listen_addresses = ''\n";
-	print CONF "unix_socket_directories = '$tempdir_short'\n";
+	print $conf "listen_addresses = ''\n";
+	print $conf "unix_socket_directories = '$tempdir_short'\n";
 }
 else
 {
-	print CONF "listen_addresses = '127.0.0.1'\n";
+	print $conf "listen_addresses = '127.0.0.1'\n";
 }
-close CONF;
+close $conf;
 command_ok([ 'pg_ctl', 'start', '-D', "$tempdir/data" ],
 	'pg_ctl start');
 

@@ -18,7 +18,7 @@ chdir '../../..' if (-d '../msvc' && -d '../../../src');
 
 noversion() unless -e 'doc/src/sgml/version.sgml';
 
-require 'src/tools/msvc/buildenv.pl' if -e 'src/tools/msvc/buildenv.pl';
+do 'src/tools/msvc/buildenv.pl' if -e 'src/tools/msvc/buildenv.pl';
 
 my $docroot = $ENV{DOCROOT};
 die "bad DOCROOT '$docroot'" unless ($docroot && -d $docroot);

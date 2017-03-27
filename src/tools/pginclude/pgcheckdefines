@@ -42,25 +42,25 @@ my $MAKE = "make";
 #
 my (@cfiles, @hfiles);
 
-open PIPE, "$FIND * -type f -name '*.c' |"
+open my $pipe, '-|', "$FIND * -type f -name '*.c'"
   or die "can't fork: $!";
-while (<PIPE>)
+while (<$pipe>)
 {
 	chomp;
 	push @cfiles, $_;
 }
-close PIPE or die "$FIND failed: $!";
+close $pipe or die "$FIND failed: $!";
 
-open PIPE, "$FIND * -type f -name '*.h' |"
+open $pipe, '-|', "$FIND * -type f -name '*.h'"
   or die "can't fork: $!";
-while (<PIPE>)
+while (<$pipe>)
 {
 	chomp;
 	push @hfiles, $_
 	  unless m|^src/include/port/|
 		  || m|^src/backend/port/\w+/|;
 }
-close PIPE or die "$FIND failed: $!";
+close $pipe or die "$FIND failed: $!";
 
 #
 # For each .h file, extract all the symbols it #define's, and add them to
@@ -71,16 +71,16 @@ my %defines;
 
 foreach my $hfile (@hfiles)
 {
-	open HFILE, $hfile
+	open my $fh, '<', $hfile
 	  or die "can't open $hfile: $!";
-	while (<HFILE>)
+	while (<$fh>)
 	{
 		if (m/^\s*#\s*define\s+(\w+)/)
 		{
 			$defines{$1}{$hfile} = 1;
 		}
 	}
-	close HFILE;
+	close $fh;
 }
 
 #
@@ -124,9 +124,9 @@ foreach my $file (@hfiles, @cfiles)
 
 	my ($CPPFLAGS, $CFLAGS, $CFLAGS_SL, $PTHREAD_CFLAGS, $CC);
 
-	open PIPE, "$MAKECMD |"
+	open $pipe, '-|', "$MAKECMD"
 	  or die "can't fork: $!";
-	while (<PIPE>)
+	while (<$pipe>)
 	{
 		if (m/^CPPFLAGS :?= (.*)/)
 		{
@@ -166,9 +166,9 @@ foreach my $file (@hfiles, @cfiles)
 	#
 	my @includes = ();
 	my $COMPILE  = "$CC $CPPFLAGS $CFLAGS -H -E $fname";
-	open PIPE, "$COMPILE 2>&1 >/dev/null |"
+	open $pipe, '-|', "$COMPILE 2>&1 >/dev/null"
 	  or die "can't fork: $!";
-	while (<PIPE>)
+	while (<$pipe>)
 	{
 		if (m/^\.+ (.*)/)
 		{
@@ -211,10 +211,10 @@ foreach my $file (@hfiles, @cfiles)
 	# We assume #ifdef isn't continued across lines, and that defined(foo)
 	# isn't split across lines either
 	#
-	open FILE, $fname
+	open my $fh, '<', $fname
 	  or die "can't open $file: $!";
 	my $inif = 0;
-	while (<FILE>)
+	while (<$fh>)
 	{
 		my $line = $_;
 		if ($line =~ m/^\s*#\s*ifdef\s+(\w+)/)
@@ -241,7 +241,7 @@ foreach my $file (@hfiles, @cfiles)
 			}
 		}
 	}
-	close FILE;
+	close $fh;
 
 	chdir $topdir or die "can't chdir to $topdir: $!";
 }
