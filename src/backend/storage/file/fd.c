@@ -658,6 +658,43 @@ durable_rename(const char *oldfile, const char *newfile, int elevel)
 }
 
 /*
+ * durable_unlink -- remove a file in a durable manner
+ *
+ * This routine ensures that, after returning, the effect of removing file
+ * persists in case of a crash. A crash while this routine is running will
+ * leave the system in no mixed state.
+ *
+ * It does so by using fsync on the parent directory of the file after the
+ * actual removal is done.
+ *
+ * Log errors with the severity specified by caller.
+ *
+ * Returns 0 if the operation succeeded, -1 otherwise. Note that errno is not
+ * valid upon return.
+ */
+int
+durable_unlink(const char *fname, int elevel)
+{
+	if (unlink(fname) < 0)
+	{
+		ereport(elevel,
+				(errcode_for_file_access(),
+				 errmsg("could not remove file \"%s\": %m",
+						fname)));
+		return -1;
+	}
+
+	/*
+	 * To guarantee that the removal of the file is persistent, fsync
+	 * its parent directory.
+	 */
+	if (fsync_parent_path(fname, elevel) != 0)
+		return -1;
+
+	return 0;
+}
+
+/*
  * durable_link_or_rename -- rename a file in a durable manner.
  *
  * Similar to durable_rename(), except that this routine tries (but does not

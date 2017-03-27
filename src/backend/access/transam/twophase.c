@@ -1650,6 +1650,14 @@ CheckPointTwoPhase(XLogRecPtr redo_horizon)
 	}
 	LWLockRelease(TwoPhaseStateLock);
 
+	/*
+	 * Flush unconditionally the parent directory to make any information
+	 * durable on disk.  Two-phase files could have been removed and those
+	 * removals need to be made persistent as well as any files newly created
+	 * previously since the last checkpoint.
+	 */
+	fsync_fname(TWOPHASE_DIR, true);
+
 	TRACE_POSTGRESQL_TWOPHASE_CHECKPOINT_DONE();
 
 	if (log_checkpoints && serialized_xacts > 0)
