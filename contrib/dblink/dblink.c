@@ -687,23 +687,25 @@ dblink_record_internal(FunctionCallInfo fcinfo, bool is_async)
 			if (PG_NARGS() == 3)
 			{
 				/* text,text,bool */
-				dblink_get_conn(text_to_cstring(PG_GETARG_TEXT_PP(0)), &conn, &conname, &freeconn);
+				conname = text_to_cstring(PG_GETARG_TEXT_PP(0));
 				sql = text_to_cstring(PG_GETARG_TEXT_PP(1));
 				fail = PG_GETARG_BOOL(2);
+				dblink_get_conn(conname, &conn, &conname, &freeconn);
 			}
 			else if (PG_NARGS() == 2)
 			{
 				/* text,text or text,bool */
 				if (get_fn_expr_argtype(fcinfo->flinfo, 1) == BOOLOID)
 				{
-					conn = pconn->conn;
 					sql = text_to_cstring(PG_GETARG_TEXT_PP(0));
 					fail = PG_GETARG_BOOL(1);
+					conn = pconn->conn;
 				}
 				else
 				{
-					dblink_get_conn(text_to_cstring(PG_GETARG_TEXT_PP(0)), &conn, &conname, &freeconn);
+					conname = text_to_cstring(PG_GETARG_TEXT_PP(0));
 					sql = text_to_cstring(PG_GETARG_TEXT_PP(1));
+					dblink_get_conn(conname, &conn, &conname, &freeconn);
 				}
 			}
 			else if (PG_NARGS() == 1)
@@ -719,16 +721,18 @@ dblink_record_internal(FunctionCallInfo fcinfo, bool is_async)
 		else	/* is_async */
 		{
 			/* get async result */
+			conname = text_to_cstring(PG_GETARG_TEXT_PP(0));
+
 			if (PG_NARGS() == 2)
 			{
 				/* text,bool */
-				conn = dblink_get_named_conn(text_to_cstring(PG_GETARG_TEXT_PP(0)));
 				fail = PG_GETARG_BOOL(1);
+				conn = dblink_get_named_conn(conname);
 			}
 			else if (PG_NARGS() == 1)
 			{
 				/* text */
-				conn = dblink_get_named_conn(text_to_cstring(PG_GETARG_TEXT_PP(0)));
+				conn = dblink_get_named_conn(conname);
 			}
 			else
 				/* shouldn't happen */
@@ -1390,23 +1394,25 @@ dblink_exec(PG_FUNCTION_ARGS)
 		if (PG_NARGS() == 3)
 		{
 			/* must be text,text,bool */
-			dblink_get_conn(text_to_cstring(PG_GETARG_TEXT_PP(0)), &conn, &conname, &freeconn);
+			conname = text_to_cstring(PG_GETARG_TEXT_PP(0));
 			sql = text_to_cstring(PG_GETARG_TEXT_PP(1));
 			fail = PG_GETARG_BOOL(2);
+			dblink_get_conn(conname, &conn, &conname, &freeconn);
 		}
 		else if (PG_NARGS() == 2)
 		{
 			/* might be text,text or text,bool */
 			if (get_fn_expr_argtype(fcinfo->flinfo, 1) == BOOLOID)
 			{
-				conn = pconn->conn;
 				sql = text_to_cstring(PG_GETARG_TEXT_PP(0));
 				fail = PG_GETARG_BOOL(1);
+				conn = pconn->conn;
 			}
 			else
 			{
-				dblink_get_conn(text_to_cstring(PG_GETARG_TEXT_PP(0)), &conn, &conname, &freeconn);
+				conname = text_to_cstring(PG_GETARG_TEXT_PP(0));
 				sql = text_to_cstring(PG_GETARG_TEXT_PP(1));
+				dblink_get_conn(conname, &conn, &conname, &freeconn);
 			}
 		}
 		else if (PG_NARGS() == 1)
