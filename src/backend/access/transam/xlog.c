@@ -5044,7 +5044,7 @@ BootStrapXLOG(void)
 	record->xl_rmid = RM_XLOG_ID;
 	recptr += SizeOfXLogRecord;
 	/* fill the XLogRecordDataHeaderShort struct */
-	*(recptr++) = XLR_BLOCK_ID_DATA_SHORT;
+	*(recptr++) = (char) XLR_BLOCK_ID_DATA_SHORT;
 	*(recptr++) = sizeof(checkPoint);
 	memcpy(recptr, &checkPoint, sizeof(checkPoint));
 	recptr += sizeof(checkPoint);
