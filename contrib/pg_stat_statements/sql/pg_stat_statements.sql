@@ -37,11 +37,19 @@ SELECT :add + 1 + 1 AS "add" \gset
 -- set operator
 SELECT 1 AS i UNION SELECT 2 ORDER BY i;
 
+-- ? operator
+select '{"a":1, "b":2}'::jsonb ? 'b';
+
 -- cte
 WITH t(f) AS (
   VALUES (1.0), (2.0)
 )
   SELECT f FROM t ORDER BY f;
+
+-- prepared statement with parameter
+PREPARE pgss_test (int) AS SELECT $1, 'test' LIMIT 1;
+EXECUTE pgss_test(1);
+DEALLOCATE pgss_test;
 
 SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
 
@@ -51,7 +59,7 @@ SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
 SELECT pg_stat_statements_reset();
 
 -- utility "create table" should not be shown
-CREATE TABLE test (a int, b char(20));
+CREATE TEMP TABLE test (a int, b char(20));
 
 INSERT INTO test VALUES(generate_series(1, 10), 'aaa');
 UPDATE test SET b = 'bbb' WHERE a > 7;
@@ -74,6 +82,9 @@ UPDATE test SET b = '555' WHERE a = 5 \;
 UPDATE test SET b = '666' WHERE a = 6 \;
 COMMIT ;
 
+-- many INSERT values
+INSERT INTO test (a, b) VALUES (1, 'a'), (2, 'b'), (3, 'c');
+
 -- SELECT with constants
 SELECT * FROM test WHERE a > 5 ORDER BY a ;
 
@@ -84,6 +95,9 @@ SELECT *
 
 -- SELECT without constants
 SELECT * FROM test ORDER BY a;
+
+-- SELECT with IN clause
+SELECT * FROM test WHERE a IN (1, 2, 3, 4, 5);
 
 SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
 

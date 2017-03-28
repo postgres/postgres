@@ -244,11 +244,12 @@
   </para>
 
   <para>
-   When a constant's value has been ignored for purposes of matching the
-   query to other queries, the constant is replaced by <literal>?</literal>
-   in the <structname>pg_stat_statements</> display.  The rest of the query
-   text is that of the first query that had the particular
-   <structfield>queryid</> hash value associated with the
+   When a constant's value has been ignored for purposes of matching the query
+   to other queries, the constant is replaced by a parameter symbol, such
+   as <literal>$1</literal>, in the <structname>pg_stat_statements</>
+   display.
+   The rest of the query text is that of the first query that had the
+   particular <structfield>queryid</> hash value associated with the
    <structname>pg_stat_statements</> entry.
   </para>
 
@@ -299,6 +300,18 @@
    identical in all relevant details, so <structfield>queryid</> will
    not be a useful identifier for accumulating costs across a set of logical
    replicas.  If in doubt, direct testing is recommended.
+  </para>
+
+  <para>
+   The parameter symbols used to replace constants in
+   representative query texts start from the next number after the
+   highest <literal>$</><replaceable>n</> parameter in the original query
+   text, or <literal>$1</> if there was none.  It's worth noting that in
+   some cases there may be hidden parameter symbols that affect this
+   numbering.  For example, <application>PL/pgSQL</> uses hidden parameter
+   symbols to insert values of function local variables into queries, so that
+   a <application>PL/pgSQL</> statement like <literal>SELECT i + 1 INTO j</>
+   would have representative text like <literal>SELECT i + $2</>.
   </para>
 
   <para>
@@ -481,13 +494,13 @@ bench=# SELECT query, calls, total_time, rows, 100.0 * shared_blks_hit /
                nullif(shared_blks_hit + shared_blks_read, 0) AS hit_percent
           FROM pg_stat_statements ORDER BY total_time DESC LIMIT 5;
 -[ RECORD 1 ]---------------------------------------------------------------------
-query       | UPDATE pgbench_branches SET bbalance = bbalance + ? WHERE bid = ?;
+query       | UPDATE pgbench_branches SET bbalance = bbalance + $1 WHERE bid = $2;
 calls       | 3000
 total_time  | 9609.00100000002
 rows        | 2836
 hit_percent | 99.9778970000200936
 -[ RECORD 2 ]---------------------------------------------------------------------
-query       | UPDATE pgbench_tellers SET tbalance = tbalance + ? WHERE tid = ?;
+query       | UPDATE pgbench_tellers SET tbalance = tbalance + $1 WHERE tid = $2;
 calls       | 3000
 total_time  | 8015.156
 rows        | 2990
@@ -499,7 +512,7 @@ total_time  | 310.624
 rows        | 100000
 hit_percent | 0.30395136778115501520
 -[ RECORD 4 ]---------------------------------------------------------------------
-query       | UPDATE pgbench_accounts SET abalance = abalance + ? WHERE aid = ?;
+query       | UPDATE pgbench_accounts SET abalance = abalance + $1 WHERE aid = $2;
 calls       | 3000
 total_time  | 271.741999999997
 rows        | 3000
