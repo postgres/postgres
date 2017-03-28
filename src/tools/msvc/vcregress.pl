@@ -520,11 +520,9 @@ sub fetchRegressOpts
 		# Substitute known Makefile variables, then ignore options that retain
 		# an unhandled variable reference.  Ignore anything that isn't an
 		# option starting with "--".
-		@opts = grep {
-			my $x = $_;
-			$x =~ s/\Q$(top_builddir)\E/\"$topdir\"/;
-			$x !~ /\$\(/ && $x =~ /^--/
-		} split(/\s+/, $1);
+		@opts = grep { !/\$\(/ && /^--/ }
+		  map { (my $x = $_) =~ s/\Q$(top_builddir)\E/\"$topdir\"/; $x; }
+		  split(/\s+/, $1);
 	}
 	if ($m =~ /^\s*ENCODING\s*=\s*(\S+)/m)
 	{
