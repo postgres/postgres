@@ -52,20 +52,21 @@ int32
 ItemPointerCompare(ItemPointer arg1, ItemPointer arg2)
 {
 	/*
-	 * Don't use ItemPointerGetBlockNumber or ItemPointerGetOffsetNumber here,
-	 * because they assert ip_posid != 0 which might not be true for a
-	 * user-supplied TID.
+	 * Use ItemPointerGet{Offset,Block}NumberNoCheck to avoid asserting
+	 * ip_posid != 0, which may not be true for a user-supplied TID.
 	 */
-	BlockNumber b1 = BlockIdGetBlockNumber(&(arg1->ip_blkid));
-	BlockNumber b2 = BlockIdGetBlockNumber(&(arg2->ip_blkid));
+	BlockNumber b1 = ItemPointerGetBlockNumberNoCheck(arg1);
+	BlockNumber b2 = ItemPointerGetBlockNumberNoCheck(arg2);
 
 	if (b1 < b2)
 		return -1;
 	else if (b1 > b2)
 		return 1;
-	else if (arg1->ip_posid < arg2->ip_posid)
+	else if (ItemPointerGetOffsetNumberNoCheck(arg1) <
+			 ItemPointerGetOffsetNumberNoCheck(arg2))
 		return -1;
-	else if (arg1->ip_posid > arg2->ip_posid)
+	else if (ItemPointerGetOffsetNumberNoCheck(arg1) >
+			 ItemPointerGetOffsetNumberNoCheck(arg2))
 		return 1;
 	else
 		return 0;

@@ -151,9 +151,8 @@ typedef struct BTMetaPageData
  *	within a level). - vadim 04/09/97
  */
 #define BTTidSame(i1, i2)	\
-	( (i1).ip_blkid.bi_hi == (i2).ip_blkid.bi_hi && \
-	  (i1).ip_blkid.bi_lo == (i2).ip_blkid.bi_lo && \
-	  (i1).ip_posid == (i2).ip_posid )
+	((ItemPointerGetBlockNumber(&(i1)) == ItemPointerGetBlockNumber(&(i2))) && \
+	 (ItemPointerGetOffsetNumber(&(i1)) == ItemPointerGetOffsetNumber(&(i2))))
 #define BTEntrySame(i1, i2) \
 	BTTidSame((i1)->t_tid, (i2)->t_tid)
 

@@ -422,7 +422,7 @@ do { \
 
 #define HeapTupleHeaderIsSpeculative(tup) \
 ( \
-	(tup)->t_ctid.ip_posid == SpecTokenOffsetNumber \
+	(ItemPointerGetOffsetNumberNoCheck(&(tup)->t_ctid) == SpecTokenOffsetNumber) \
 )
 
 #define HeapTupleHeaderGetSpeculativeToken(tup) \

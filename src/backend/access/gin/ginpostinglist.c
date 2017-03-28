@@ -79,13 +79,11 @@ itemptr_to_uint64(const ItemPointer iptr)
 	uint64		val;
 
 	Assert(ItemPointerIsValid(iptr));
-	Assert(iptr->ip_posid < (1 << MaxHeapTuplesPerPageBits));
+	Assert(GinItemPointerGetOffsetNumber(iptr) < (1 << MaxHeapTuplesPerPageBits));
 
-	val = iptr->ip_blkid.bi_hi;
-	val <<= 16;
-	val |= iptr->ip_blkid.bi_lo;
+	val = GinItemPointerGetBlockNumber(iptr);
 	val <<= MaxHeapTuplesPerPageBits;
-	val |= iptr->ip_posid;
+	val |= GinItemPointerGetOffsetNumber(iptr);
 
 	return val;
 }
@@ -93,11 +91,9 @@ itemptr_to_uint64(const ItemPointer iptr)
 static inline void
 uint64_to_itemptr(uint64 val, ItemPointer iptr)
 {
-	iptr->ip_posid = val & ((1 << MaxHeapTuplesPerPageBits) - 1);
+	GinItemPointerSetOffsetNumber(iptr, val & ((1 << MaxHeapTuplesPerPageBits) - 1));
 	val = val >> MaxHeapTuplesPerPageBits;
-	iptr->ip_blkid.bi_lo = val & 0xFFFF;
-	val = val >> 16;
-	iptr->ip_blkid.bi_hi = val & 0xFFFF;
+	GinItemPointerSetBlockNumber(iptr, val);
 
 	Assert(ItemPointerIsValid(iptr));
 }

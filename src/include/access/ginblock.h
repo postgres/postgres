@@ -132,10 +132,17 @@ typedef struct GinMetaPageData
  * to avoid Asserts, since sometimes the ip_posid isn't "valid"
  */
 #define GinItemPointerGetBlockNumber(pointer) \
-	BlockIdGetBlockNumber(&(pointer)->ip_blkid)
+	(ItemPointerGetBlockNumberNoCheck(pointer))
 
 #define GinItemPointerGetOffsetNumber(pointer) \
-	((pointer)->ip_posid)
+	(ItemPointerGetOffsetNumberNoCheck(pointer))
+
+#define GinItemPointerSetBlockNumber(pointer, blkno) \
+	(ItemPointerSetBlockNumber((pointer), (blkno)))
+
+#define GinItemPointerSetOffsetNumber(pointer, offnum) \
+	(ItemPointerSetOffsetNumber((pointer), (offnum)))
+
 
 /*
  * Special-case item pointer values needed by the GIN search logic.

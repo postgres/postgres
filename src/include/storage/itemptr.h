@@ -60,23 +60,41 @@ typedef ItemPointerData *ItemPointer;
 	((bool) (PointerIsValid(pointer) && ((pointer)->ip_posid != 0)))
 
 /*
- * ItemPointerGetBlockNumber
+ * ItemPointerGetBlockNumberNoCheck
  *		Returns the block number of a disk item pointer.
  */
-#define ItemPointerGetBlockNumber(pointer) \
+#define ItemPointerGetBlockNumberNoCheck(pointer) \
 ( \
-	AssertMacro(ItemPointerIsValid(pointer)), \
 	BlockIdGetBlockNumber(&(pointer)->ip_blkid) \
 )
 
 /*
- * ItemPointerGetOffsetNumber
+ * ItemPointerGetBlockNumber
+ *		As above, but verifies that the item pointer looks valid.
+ */
+#define ItemPointerGetBlockNumber(pointer) \
+( \
+	AssertMacro(ItemPointerIsValid(pointer)), \
+	ItemPointerGetBlockNumberNoCheck(pointer) \
+)
+
+/*
+ * ItemPointerGetOffsetNumberNoCheck
  *		Returns the offset number of a disk item pointer.
+ */
+#define ItemPointerGetOffsetNumberNoCheck(pointer) \
+( \
+	(pointer)->ip_posid \
+)
+
+/*
+ * ItemPointerGetOffsetNumber
+ *		As above, but verifies that the item pointer looks valid.
  */
 #define ItemPointerGetOffsetNumber(pointer) \
 ( \
 	AssertMacro(ItemPointerIsValid(pointer)), \
-	(pointer)->ip_posid \
+	ItemPointerGetOffsetNumberNoCheck(pointer) \
 )
 
 /*

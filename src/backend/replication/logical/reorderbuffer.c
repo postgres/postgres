@@ -3013,8 +3013,8 @@ DisplayMapping(HTAB *tuplecid_data)
 			 ent->key.relnode.dbNode,
 			 ent->key.relnode.spcNode,
 			 ent->key.relnode.relNode,
-			 BlockIdGetBlockNumber(&ent->key.tid.ip_blkid),
-			 ent->key.tid.ip_posid,
+			 ItemPointerGetBlockNumber(&ent->key.tid),
+			 ItemPointerGetOffsetNumber(&ent->key.tid),
 			 ent->cmin,
 			 ent->cmax
 			);

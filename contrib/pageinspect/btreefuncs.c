@@ -363,8 +363,8 @@ bt_page_items(PG_FUNCTION_ARGS)
 		j = 0;
 		values[j++] = psprintf("%d", uargs->offset);
 		values[j++] = psprintf("(%u,%u)",
-							   BlockIdGetBlockNumber(&(itup->t_tid.ip_blkid)),
-							   itup->t_tid.ip_posid);
+							   ItemPointerGetBlockNumberNoCheck(&itup->t_tid),
+							ItemPointerGetOffsetNumberNoCheck(&itup->t_tid));
 		values[j++] = psprintf("%d", (int) IndexTupleSize(itup));
 		values[j++] = psprintf("%c", IndexTupleHasNulls(itup) ? 't' : 'f');
 		values[j++] = psprintf("%c", IndexTupleHasVarwidths(itup) ? 't' : 'f');

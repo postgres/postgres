@@ -356,7 +356,7 @@ pgstat_heap(Relation rel, FunctionCallInfo fcinfo)
 		 * heap_getnext may find no tuples on a given page, so we cannot
 		 * simply examine the pages returned by the heap scan.
 		 */
-		tupblock = BlockIdGetBlockNumber(&tuple->t_self.ip_blkid);
+		tupblock = ItemPointerGetBlockNumber(&tuple->t_self);
 
 		while (block <= tupblock)
 		{

@@ -460,8 +460,8 @@ extern ItemPointer ginMergeItemPointers(ItemPointerData *a, uint32 na,
 static inline int
 ginCompareItemPointers(ItemPointer a, ItemPointer b)
 {
-	uint64		ia = (uint64) a->ip_blkid.bi_hi << 32 | (uint64) a->ip_blkid.bi_lo << 16 | a->ip_posid;
-	uint64		ib = (uint64) b->ip_blkid.bi_hi << 32 | (uint64) b->ip_blkid.bi_lo << 16 | b->ip_posid;
+	uint64		ia = (uint64) GinItemPointerGetBlockNumber(a) << 32 | GinItemPointerGetOffsetNumber(a);
+	uint64		ib = (uint64) GinItemPointerGetBlockNumber(b) << 32 | GinItemPointerGetOffsetNumber(b);
 
 	if (ia == ib)
 		return 0;
@@ -471,6 +471,6 @@ ginCompareItemPointers(ItemPointer a, ItemPointer b)
 		return -1;
 }
 
-extern int ginTraverseLock(Buffer buffer, bool searchMode);
+extern int	ginTraverseLock(Buffer buffer, bool searchMode);
 
 #endif   /* GIN_PRIVATE_H */
