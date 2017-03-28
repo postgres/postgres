@@ -2796,7 +2796,7 @@ psql_completion(const char *text, int start, int end)
 		 * to the kinds of objects supported.
 		 */
 		if (HeadMatches3("ALTER","DEFAULT","PRIVILEGES"))
-			COMPLETE_WITH_LIST4("TABLES", "SEQUENCES", "FUNCTIONS", "TYPES");
+			COMPLETE_WITH_LIST5("TABLES", "SEQUENCES", "FUNCTIONS", "TYPES", "SCHEMAS");
 		else
 			COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tsvmf,
 								   " UNION SELECT 'ALL FUNCTIONS IN SCHEMA'"

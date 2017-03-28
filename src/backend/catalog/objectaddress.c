@@ -1843,11 +1843,14 @@ get_object_address_defacl(List *object, bool missing_ok)
 		case DEFACLOBJ_TYPE:
 			objtype_str = "types";
 			break;
+		case DEFACLOBJ_NAMESPACE:
+			objtype_str = "schemas";
+			break;
 		default:
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				  errmsg("unrecognized default ACL object type %c", objtype),
-					 errhint("Valid object types are \"r\", \"S\", \"f\", and \"T\".")));
+					 errhint("Valid object types are \"r\", \"S\", \"f\", \"T\" and \"s\".")));
 	}
 
 	/*
@@ -3253,6 +3256,11 @@ getObjectDescription(const ObjectAddress *object)
 					case DEFACLOBJ_TYPE:
 						appendStringInfo(&buffer,
 										 _("default privileges on new types belonging to role %s"),
+							   GetUserNameFromId(defacl->defaclrole, false));
+						break;
+					case DEFACLOBJ_NAMESPACE:
+						appendStringInfo(&buffer,
+										 _("default privileges on new schemas belonging to role %s"),
 							   GetUserNameFromId(defacl->defaclrole, false));
 						break;
 					default:
@@ -4761,6 +4769,10 @@ getObjectIdentityParts(const ObjectAddress *object,
 					case DEFACLOBJ_TYPE:
 						appendStringInfoString(&buffer,
 											   " on types");
+						break;
+					case DEFACLOBJ_NAMESPACE:
+						appendStringInfoString(&buffer,
+											   " on schemas");
 						break;
 				}
 

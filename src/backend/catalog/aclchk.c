@@ -959,6 +959,10 @@ ExecAlterDefaultPrivilegesStmt(ParseState *pstate, AlterDefaultPrivilegesStmt *s
 			all_privileges = ACL_ALL_RIGHTS_TYPE;
 			errormsg = gettext_noop("invalid privilege type %s for type");
 			break;
+		case ACL_OBJECT_NAMESPACE:
+			all_privileges = ACL_ALL_RIGHTS_NAMESPACE;
+			errormsg = gettext_noop("invalid privilege type %s for schema");
+			break;
 		default:
 			elog(ERROR, "unrecognized GrantStmt.objtype: %d",
 				 (int) action->objtype);
@@ -1144,6 +1148,16 @@ SetDefaultACL(InternalDefaultACL *iacls)
 			objtype = DEFACLOBJ_TYPE;
 			if (iacls->all_privs && this_privileges == ACL_NO_RIGHTS)
 				this_privileges = ACL_ALL_RIGHTS_TYPE;
+			break;
+
+		case ACL_OBJECT_NAMESPACE:
+			if (OidIsValid(iacls->nspid))
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_GRANT_OPERATION),
+						 errmsg("cannot use IN SCHEMA clause when using GRANT/REVOKE ON SCHEMAS")));
+			objtype = DEFACLOBJ_NAMESPACE;
+			if (iacls->all_privs && this_privileges == ACL_NO_RIGHTS)
+				this_privileges = ACL_ALL_RIGHTS_NAMESPACE;
 			break;
 
 		default:
@@ -1368,6 +1382,9 @@ RemoveRoleFromObjectACL(Oid roleid, Oid classid, Oid objid)
 				break;
 			case DEFACLOBJ_TYPE:
 				iacls.objtype = ACL_OBJECT_TYPE;
+				break;
+			case DEFACLOBJ_NAMESPACE:
+				iacls.objtype = ACL_OBJECT_NAMESPACE;
 				break;
 			default:
 				/* Shouldn't get here */
@@ -5257,6 +5274,10 @@ get_user_default_acl(GrantObjectType objtype, Oid ownerId, Oid nsp_oid)
 
 		case ACL_OBJECT_TYPE:
 			defaclobjtype = DEFACLOBJ_TYPE;
+			break;
+
+		case ACL_OBJECT_NAMESPACE:
+			defaclobjtype = DEFACLOBJ_NAMESPACE;
 			break;
 
 		default:

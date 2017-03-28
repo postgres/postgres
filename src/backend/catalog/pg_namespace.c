@@ -31,10 +31,11 @@
  * Create a namespace (schema) with the given name and owner OID.
  *
  * If isTemp is true, this schema is a per-backend schema for holding
- * temporary tables.  Currently, the only effect of that is to prevent it
- * from being linked as a member of any active extension.  (If someone
- * does CREATE TEMP TABLE in an extension script, we don't want the temp
- * schema to become part of the extension.)
+ * temporary tables.  Currently, it is used to prevent it from being
+ * linked as a member of any active extension.  (If someone does CREATE
+ * TEMP TABLE in an extension script, we don't want the temp schema to
+ * become part of the extension). And to avoid checking for default ACL
+ * for temp namespace (as it is not necessary).
  * ---------------
  */
 Oid
@@ -49,6 +50,7 @@ NamespaceCreate(const char *nspName, Oid ownerId, bool isTemp)
 	TupleDesc	tupDesc;
 	ObjectAddress myself;
 	int			i;
+	Acl			*nspacl;
 
 	/* sanity checks */
 	if (!nspName)
@@ -60,6 +62,12 @@ NamespaceCreate(const char *nspName, Oid ownerId, bool isTemp)
 				(errcode(ERRCODE_DUPLICATE_SCHEMA),
 				 errmsg("schema \"%s\" already exists", nspName)));
 
+	if (!isTemp)
+		nspacl = get_user_default_acl(ACL_OBJECT_NAMESPACE, ownerId,
+									  InvalidOid);
+	else
+		nspacl = NULL;
+
 	/* initialize nulls and values */
 	for (i = 0; i < Natts_pg_namespace; i++)
 	{
@@ -69,7 +77,10 @@ NamespaceCreate(const char *nspName, Oid ownerId, bool isTemp)
 	namestrcpy(&nname, nspName);
 	values[Anum_pg_namespace_nspname - 1] = NameGetDatum(&nname);
 	values[Anum_pg_namespace_nspowner - 1] = ObjectIdGetDatum(ownerId);
-	nulls[Anum_pg_namespace_nspacl - 1] = true;
+	if (nspacl != NULL)
+		values[Anum_pg_namespace_nspacl - 1] = PointerGetDatum(nspacl);
+	else
+		nulls[Anum_pg_namespace_nspacl - 1] = true;
 
 	nspdesc = heap_open(NamespaceRelationId, RowExclusiveLock);
 	tupDesc = nspdesc->rd_att;

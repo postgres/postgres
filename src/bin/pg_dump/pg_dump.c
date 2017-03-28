@@ -14295,6 +14295,9 @@ dumpDefaultACL(Archive *fout, DefaultACLInfo *daclinfo)
 		case DEFACLOBJ_TYPE:
 			type = "TYPES";
 			break;
+		case DEFACLOBJ_NAMESPACE:
+			type = "SCHEMAS";
+			break;
 		default:
 			/* shouldn't get here */
 			exit_horribly(NULL,
