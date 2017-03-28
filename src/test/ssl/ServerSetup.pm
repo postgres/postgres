@@ -102,7 +102,7 @@ sub switch_server_cert
 
 	open my $sslconf, '>', "$pgdata/sslconfig.conf";
 	print $sslconf "ssl=on\n";
-	print $sslconf "ssl_ca_file='root+client_ca.crt'\n";
+	print $sslconf "ssl_ca_file='$cafile.crt'\n";
 	print $sslconf "ssl_cert_file='$certfile.crt'\n";
 	print $sslconf "ssl_key_file='$certfile.key'\n";
 	print $sslconf "ssl_crl_file='root+client.crl'\n";
