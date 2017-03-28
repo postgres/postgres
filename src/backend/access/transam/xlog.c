@@ -4980,7 +4980,7 @@ BootStrapXLOG(void)
 	if (!pg_backend_random(mock_auth_nonce, MOCK_AUTH_NONCE_LEN))
 		ereport(PANIC,
 			(errcode(ERRCODE_INTERNAL_ERROR),
-			 errmsg("could not generation secret authorization token")));
+			 errmsg("could not generate secret authorization token")));
 
 	/* First timeline ID is always 1 */
 	ThisTimeLineID = 1;
