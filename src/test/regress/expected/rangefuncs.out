@@ -1909,25 +1909,22 @@ select * from usersview;
  id2    |   2 | email2 |       12 | t       |              11 |          2
 (2 rows)
 
-alter table users drop column moredrop;
-select * from usersview;
- userid | seq | email  | moredrop | enabled | generate_series | ordinality 
---------+-----+--------+----------+---------+-----------------+------------
- id     |   1 | email  |          | t       |              10 |          1
- id2    |   2 | email2 |          | t       |              11 |          2
-(2 rows)
-
 alter table users add column junk text;
 select * from usersview;
  userid | seq | email  | moredrop | enabled | generate_series | ordinality 
 --------+-----+--------+----------+---------+-----------------+------------
- id     |   1 | email  |          | t       |              10 |          1
- id2    |   2 | email2 |          | t       |              11 |          2
+ id     |   1 | email  |       11 | t       |              10 |          1
+ id2    |   2 | email2 |       12 | t       |              11 |          2
 (2 rows)
 
+begin;
+alter table users drop column moredrop;
+select * from usersview;  -- expect clean failure
+ERROR:  attribute 5 of type record has been dropped
+rollback;
 alter table users alter column seq type numeric;
 select * from usersview;  -- expect clean failure
-ERROR:  attribute 2 has wrong type
+ERROR:  attribute 2 of type record has wrong type
 DETAIL:  Table has type numeric, but query expects integer.
 drop view usersview;
 drop function get_first_user();

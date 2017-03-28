@@ -556,10 +556,12 @@ create temp view usersview as
 SELECT * FROM ROWS FROM(get_users(), generate_series(10,11)) WITH ORDINALITY;
 
 select * from usersview;
-alter table users drop column moredrop;
-select * from usersview;
 alter table users add column junk text;
 select * from usersview;
+begin;
+alter table users drop column moredrop;
+select * from usersview;  -- expect clean failure
+rollback;
 alter table users alter column seq type numeric;
 select * from usersview;  -- expect clean failure
 

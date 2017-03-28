@@ -1396,10 +1396,10 @@ select pg_get_viewdef('vv6', true);
 (1 row)
 
 --
--- Check some cases involving dropped columns in a function's rowtype result
+-- Check cases involving dropped/altered columns in a function's rowtype result
 --
 create table tt14t (f1 text, f2 text, f3 text, f4 text);
-insert into tt14t values('foo', 'bar', 'baz', 'quux');
+insert into tt14t values('foo', 'bar', 'baz', '42');
 alter table tt14t drop column f2;
 create function tt14f() returns setof tt14t as
 $$
@@ -1424,14 +1424,15 @@ select pg_get_viewdef('tt14v', true);
 (1 row)
 
 select * from tt14v;
- f1  | f3  |  f4  
------+-----+------
- foo | baz | quux
+ f1  | f3  | f4 
+-----+-----+----
+ foo | baz | 42
 (1 row)
 
+begin;
 -- this perhaps should be rejected, but it isn't:
 alter table tt14t drop column f3;
--- f3 is still in the view but will read as nulls
+-- f3 is still in the view ...
 select pg_get_viewdef('tt14v', true);
          pg_get_viewdef         
 --------------------------------
@@ -1441,12 +1442,40 @@ select pg_get_viewdef('tt14v', true);
     FROM tt14f() t(f1, f3, f4);
 (1 row)
 
-select * from tt14v;
- f1  | f3 |  f4  
------+----+------
- foo |    | quux
+-- but will fail at execution
+select f1, f4 from tt14v;
+ f1  | f4 
+-----+----
+ foo | 42
 (1 row)
 
+select * from tt14v;
+ERROR:  attribute 3 of type record has been dropped
+rollback;
+begin;
+-- this perhaps should be rejected, but it isn't:
+alter table tt14t alter column f4 type integer using f4::integer;
+-- f4 is still in the view ...
+select pg_get_viewdef('tt14v', true);
+         pg_get_viewdef         
+--------------------------------
+  SELECT t.f1,                 +
+     t.f3,                     +
+     t.f4                      +
+    FROM tt14f() t(f1, f3, f4);
+(1 row)
+
+-- but will fail at execution
+select f1, f3 from tt14v;
+ f1  | f3  
+-----+-----
+ foo | baz
+(1 row)
+
+select * from tt14v;
+ERROR:  attribute 4 of type record has wrong type
+DETAIL:  Table has type integer, but query expects text.
+rollback;
 -- check display of whole-row variables in some corner cases
 create type nestedcomposite as (x int8_tbl);
 create view tt15v as select row(i)::nestedcomposite from int8_tbl i;
