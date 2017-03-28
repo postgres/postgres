@@ -2034,6 +2034,8 @@ The commands accepted in walsender mode are:
      <para>
       Drops a replication slot, freeing any reserved server-side resources. If
       the slot is currently in use by an active connection, this command fails.
+      If the slot is a logical slot that was created in a database other than
+      the database the walsender is connected to, this command fails.
      </para>
      <variablelist>
       <varlistentry>

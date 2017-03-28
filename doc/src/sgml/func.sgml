@@ -18876,7 +18876,8 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
        <entry>
         Drops the physical or logical replication slot
         named <parameter>slot_name</parameter>. Same as replication protocol
-        command <literal>DROP_REPLICATION_SLOT</>.
+        command <literal>DROP_REPLICATION_SLOT</>. For logical slots, this must
+        be called when connected to the same database the slot was created on.
        </entry>
       </row>
 

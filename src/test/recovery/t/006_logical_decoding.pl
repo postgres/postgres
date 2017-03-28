@@ -7,7 +7,7 @@ use strict;
 use warnings;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 5;
+use Test::More tests => 16;
 
 # Initialize master node
 my $node_master = get_new_node('master');
@@ -54,7 +54,7 @@ my $stdout_sql = $node_master->safe_psql('postgres', qq[SELECT data FROM pg_logi
 is($stdout_sql, $expected, 'got expected output from SQL decoding session');
 
 my $endpos = $node_master->safe_psql('postgres', "SELECT location FROM pg_logical_slot_peek_changes('test_slot', NULL, NULL) ORDER BY location DESC LIMIT 1;");
-diag "waiting to replay $endpos";
+print "waiting to replay $endpos\n";
 
 my $stdout_recv = $node_master->pg_recvlogical_upto('postgres', 'test_slot', $endpos, 10, 'include-xids' => '0', 'skip-empty-xacts' => '1');
 chomp($stdout_recv);
@@ -63,6 +63,42 @@ is($stdout_recv, $expected, 'got same expected output from pg_recvlogical decodi
 $stdout_recv = $node_master->pg_recvlogical_upto('postgres', 'test_slot', $endpos, 10, 'include-xids' => '0', 'skip-empty-xacts' => '1');
 chomp($stdout_recv);
 is($stdout_recv, '', 'pg_recvlogical acknowledged changes, nothing pending on slot');
+
+$node_master->safe_psql('postgres', 'CREATE DATABASE otherdb');
+
+is($node_master->psql('otherdb', "SELECT location FROM pg_logical_slot_peek_changes('test_slot', NULL, NULL) ORDER BY location DESC LIMIT 1;"), 3,
+	'replaying logical slot from another database fails');
+
+$node_master->safe_psql('otherdb', qq[SELECT pg_create_logical_replication_slot('otherdb_slot', 'test_decoding');]);
+
+# make sure you can't drop a slot while active
+my $pg_recvlogical = IPC::Run::start(['pg_recvlogical', '-d', $node_master->connstr('otherdb'), '-S', 'otherdb_slot', '-f', '-', '--start']);
+$node_master->poll_query_until('otherdb', "SELECT EXISTS (SELECT 1 FROM pg_replication_slots WHERE slot_name = 'otherdb_slot' AND active_pid IS NOT NULL)");
+is($node_master->psql('postgres', 'DROP DATABASE otherdb'), 3,
+	'dropping a DB with inactive logical slots fails');
+$pg_recvlogical->kill_kill;
+is($node_master->slot('otherdb_slot')->{'slot_name'}, undef,
+	'logical slot still exists');
+
+$node_master->poll_query_until('otherdb', "SELECT EXISTS (SELECT 1 FROM pg_replication_slots WHERE slot_name = 'otherdb_slot' AND active_pid IS NULL)");
+is($node_master->psql('postgres', 'DROP DATABASE otherdb'), 0,
+	'dropping a DB with inactive logical slots succeeds');
+is($node_master->slot('otherdb_slot')->{'slot_name'}, undef,
+	'logical slot was actually dropped with DB');
+
+# Restarting a node with wal_level = logical that has existing
+# slots must succeed, but decoding from those slots must fail.
+$node_master->safe_psql('postgres', 'ALTER SYSTEM SET wal_level = replica');
+is($node_master->safe_psql('postgres', 'SHOW wal_level'), 'logical', 'wal_level is still logical before restart');
+$node_master->restart;
+is($node_master->safe_psql('postgres', 'SHOW wal_level'), 'replica', 'wal_level is replica');
+isnt($node_master->slot('test_slot')->{'catalog_xmin'}, '0',
+	'restored slot catalog_xmin is nonzero');
+is($node_master->psql('postgres', qq[SELECT pg_logical_slot_get_changes('test_slot', NULL, NULL);]), 3,
+	'reading from slot with wal_level < logical fails');
+is($node_master->psql('postgres', q[SELECT pg_drop_replication_slot('test_slot')]), 0,
+	'can drop logical slot while wal_level = replica');
+is($node_master->slot('test_slot')->{'catalog_xmin'}, '', 'slot was dropped');
 
 # done with the node
 $node_master->stop;

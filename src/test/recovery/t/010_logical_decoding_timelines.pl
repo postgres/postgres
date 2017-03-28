@@ -15,12 +15,15 @@
 # This module uses the first approach to show that timeline following
 # on a logical slot works.
 #
+# (For convenience, it also tests some recovery-related operations
+# on logical slots).
+#
 use strict;
 use warnings;
 
 use PostgresNode;
 use TestLib;
-use Test::More tests => 10;
+use Test::More tests => 13;
 use RecursiveCopy;
 use File::Copy;
 use IPC::Run ();
@@ -50,6 +53,16 @@ $node_master->safe_psql('postgres',
 $node_master->safe_psql('postgres', "CREATE TABLE decoding(blah text);");
 $node_master->safe_psql('postgres',
 	"INSERT INTO decoding(blah) VALUES ('beforebb');");
+
+# We also want to verify that DROP DATABASE on a standby with a logical
+# slot works. This isn't strictly related to timeline following, but
+# the only way to get a logical slot on a standby right now is to use
+# the same physical copy trick, so:
+$node_master->safe_psql('postgres', 'CREATE DATABASE dropme;');
+$node_master->safe_psql('dropme',
+"SELECT pg_create_logical_replication_slot('dropme_slot', 'test_decoding');"
+);
+
 $node_master->safe_psql('postgres', 'CHECKPOINT;');
 
 my $backup_name = 'b1';
@@ -68,6 +81,17 @@ $node_replica->append_conf(
 
 $node_replica->start;
 
+# If we drop 'dropme' on the master, the standby should drop the
+# db and associated slot.
+is($node_master->psql('postgres', 'DROP DATABASE dropme'), 0,
+	'dropped DB with logical slot OK on master');
+$node_master->wait_for_catchup($node_replica, 'replay', $node_master->lsn('insert'));
+is($node_replica->safe_psql('postgres', q[SELECT 1 FROM pg_database WHERE datname = 'dropme']), '',
+	'dropped DB dropme on standby');
+is($node_master->slot('dropme_slot')->{'slot_name'}, undef,
+	'logical slot was actually dropped on standby');
+
+# Back to testing failover...
 $node_master->safe_psql('postgres',
 "SELECT pg_create_logical_replication_slot('after_basebackup', 'test_decoding');"
 );
@@ -99,10 +123,13 @@ isnt($phys_slot->{'catalog_xmin'}, '',
 cmp_ok($phys_slot->{'xmin'}, '>=', $phys_slot->{'catalog_xmin'},
 	   'xmin on physical slot must not be lower than catalog_xmin');
 
+$node_master->safe_psql('postgres', 'CHECKPOINT');
+
 # Boom, crash
 $node_master->stop('immediate');
 
 $node_replica->promote;
+print "waiting for replica to come up\n";
 $node_replica->poll_query_until('postgres',
 	"SELECT NOT pg_is_in_recovery();");
 
@@ -154,5 +181,4 @@ $stdout = $node_replica->pg_recvlogical_upto('postgres', 'before_basebackup',
 chomp($stdout);
 is($stdout, $final_expected_output_bb, 'got same output from walsender via pg_recvlogical on before_basebackup');
 
-# We don't need the standby anymore
 $node_replica->teardown_node();
