@@ -1100,7 +1100,7 @@ WriteEmptyXLOG(void)
 	record->xl_rmid = RM_XLOG_ID;
 
 	recptr += SizeOfXLogRecord;
-	*(recptr++) = XLR_BLOCK_ID_DATA_SHORT;
+	*(recptr++) = (char) XLR_BLOCK_ID_DATA_SHORT;
 	*(recptr++) = sizeof(CheckPoint);
 	memcpy(recptr, &ControlFile.checkPointCopy,
 		   sizeof(CheckPoint));
