@@ -67,10 +67,6 @@ CREATE FUNCTION reverse_name(name)
    RETURNS name
    AS '@libdir@/regress@DLSUFFIX@'
    LANGUAGE C STRICT;
-CREATE FUNCTION oldstyle_length(int4, text)
-   RETURNS int4
-   AS '@libdir@/regress@DLSUFFIX@'
-   LANGUAGE C;  -- intentionally not strict
 --
 -- Function dynamic loading
 --

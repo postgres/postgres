@@ -3,62 +3,19 @@ src/backend/utils/fmgr/README
 Function Manager
 ================
 
-Proposal For Function-Manager Redesign			19-Nov-2000
---------------------------------------
+[This file originally explained the transition from the V0 to the V1
+interface.  Now it just explains some internals and rationale for the V1
+interface, while the V0 interface has been removed.]
 
-We know that the existing mechanism for calling Postgres functions needs
-to be redesigned.  It has portability problems because it makes
-assumptions about parameter passing that violate ANSI C; it fails to
-handle NULL arguments and results cleanly; and "function handlers" that
-support a class of functions (such as fmgr_pl) can only be done via a
-really ugly, non-reentrant kluge.  (Global variable set during every
-function call, forsooth.)  Here is a proposal for fixing these problems.
+The V1 Function-Manager Interface
+---------------------------------
 
-In the past, the major objections to redoing the function-manager
-interface have been (a) it'll be quite tedious to implement, since every
-built-in function and everyplace that calls such functions will need to
-be touched; (b) such wide-ranging changes will be difficult to make in
-parallel with other development work; (c) it will break existing
-user-written loadable modules that define "C language" functions.  While
-I have no solution to the "tedium" aspect, I believe I see an answer to
-the other problems: by use of function handlers, we can support both old
-and new interfaces in parallel for both callers and callees, at some
-small efficiency cost for the old styles.  That way, most of the changes
-can be done on an incremental file-by-file basis --- we won't need a
-"big bang" where everything changes at once.  Support for callees
-written in the old style can be left in place indefinitely, to provide
-backward compatibility for user-written C functions.
-
-
-Changes In pg_proc (System Data About a Function)
--------------------------------------------------
-
-A new column "proisstrict" will be added to the system pg_proc table.
-This is a boolean value which will be TRUE if the function is "strict",
-that is it always returns NULL when any of its inputs are NULL.  The
-function manager will check this field and skip calling the function when
-it's TRUE and there are NULL inputs.  This allows us to remove explicit
-NULL-value tests from many functions that currently need them (not to
-mention fixing many more that need them but don't have them).  A function
-that is not marked "strict" is responsible for checking whether its inputs
-are NULL or not.  Most builtin functions will be marked "strict".
-
-An optional WITH parameter will be added to CREATE FUNCTION to allow
-specification of whether user-defined functions are strict or not.  I am
-inclined to make the default be "not strict", since that seems to be the
-more useful case for functions expressed in SQL or a PL language, but
-am open to arguments for the other choice.
-
-
-The New Function-Manager Interface
-----------------------------------
-
-The core of the new design is revised data structures for representing
-the result of a function lookup and for representing the parameters
-passed to a specific function invocation.  (We want to keep function
-lookup separate from function call, since many parts of the system apply
-the same function over and over; the lookup overhead should be paid once
-per query, not once per tuple.)
+The core of the design is data structures for representing the result of a
+function lookup and for representing the parameters passed to a specific
+function invocation.  (We want to keep function lookup separate from
+function call, since many parts of the system apply the same function over
+and over; the lookup overhead should be paid once per query, not once per
+tuple.)
 
 
 When a function is looked up in pg_proc, the result is represented as
@@ -183,50 +140,6 @@ should have no portability or optimization problems.
 Function Coding Conventions
 ---------------------------
 
-As an example, int4 addition goes from old-style
-
-int32
-int4pl(int32 arg1, int32 arg2)
-{
-    return arg1 + arg2;
-}
-
-to new-style
-
-Datum
-int4pl(FunctionCallInfo fcinfo)
-{
-    /* we assume the function is marked "strict", so we can ignore
-     * NULL-value handling */
-
-    return Int32GetDatum(DatumGetInt32(fcinfo->arg[0]) +
-                         DatumGetInt32(fcinfo->arg[1]));
-}
-
-This is, of course, much uglier than the old-style code, but we can
-improve matters with some well-chosen macros for the boilerplate parts.
-I propose below macros that would make the code look like
-
-Datum
-int4pl(PG_FUNCTION_ARGS)
-{
-    int32   arg1 = PG_GETARG_INT32(0);
-    int32   arg2 = PG_GETARG_INT32(1);
-
-    PG_RETURN_INT32( arg1 + arg2 );
-}
-
-This is still more code than before, but it's fairly readable, and it's
-also amenable to machine processing --- for example, we could probably
-write a script that scans code like this and extracts argument and result
-type info for comparison to the pg_proc table.
-
-For the standard data types float4, float8, and int8, these macros should hide
-whether the types are pass-by-value or pass-by reference, by incorporating
-indirection and space allocation if needed.  This will offer a considerable
-gain in readability, and it also opens up the opportunity to make these types
-be pass-by-value on machines where it's feasible to do so.
-
 Here are the proposed macros and coding conventions:
 
 The definition of an fmgr-callable function will always look like
@@ -289,67 +202,6 @@ produce or take a pointer.  For example, PG_GETARG_TEXT_P yields "text *".
 When a function needs to access fcinfo->flinfo or one of the other auxiliary
 fields of FunctionCallInfo, it should just do it.  I doubt that providing
 syntactic-sugar macros for these cases is useful.
-
-
-Call-Site Coding Conventions
-----------------------------
-
-There are many places in the system that call either a specific function
-(for example, the parser invokes "textin" by name in places) or a
-particular group of functions that have a common argument list (for
-example, the optimizer invokes selectivity estimation functions with
-a fixed argument list).  These places will need to change, but we should
-try to avoid making them significantly uglier than before.
-
-Places that invoke an arbitrary function with an arbitrary argument list
-can simply be changed to fill a FunctionCallInfoData structure directly;
-that'll be no worse and possibly cleaner than what they do now.
-
-When invoking a specific built-in function by name, we have generally
-just written something like
-	result = textin ( ... args ... )
-which will not work after textin() is converted to the new call style.
-I suggest that code like this be converted to use "helper" functions
-that will create and fill in a FunctionCallInfoData struct.  For
-example, if textin is being called with one argument, it'd look
-something like
-	result = DirectFunctionCall1(textin, PointerGetDatum(argument));
-These helper routines will have declarations like
-	Datum DirectFunctionCall2(PGFunction func, Datum arg1, Datum arg2);
-Note it will be the caller's responsibility to convert to and from
-Datum; appropriate conversion macros should be used.
-
-The DirectFunctionCallN routines will not bother to fill in
-fcinfo->flinfo (indeed cannot, since they have no idea about an OID for
-the target function); they will just set it NULL.  This is unlikely to
-bother any built-in function that could be called this way.  Note also
-that this style of coding cannot pass a NULL input value nor cope with
-a NULL result (it couldn't before, either!).  We can make the helper
-routines ereport an error if they see that the function returns a NULL.
-
-When invoking a function that has a known argument signature, we have
-usually written either
-	result = fmgr(targetfuncOid, ... args ... );
-or
-	result = fmgr_ptr(FmgrInfo *finfo, ... args ... );
-depending on whether an FmgrInfo lookup has been done yet or not.
-This kind of code can be recast using helper routines, in the same
-style as above:
-	result = OidFunctionCall1(funcOid, PointerGetDatum(argument));
-	result = FunctionCall2(funcCallInfo,
-	                       PointerGetDatum(argument),
-	                       Int32GetDatum(argument));
-Again, this style of coding does not allow for expressing NULL inputs
-or receiving a NULL result.
-
-As with the callee-side situation, I propose adding argument conversion
-macros that hide whether int8, float4, and float8 are pass-by-value or
-pass-by-reference.
-
-The existing helper functions fmgr(), fmgr_c(), etc will be left in
-place until all uses of them are gone.  Of course their internals will
-have to change in the first step of implementation, but they can
-continue to support the same external appearance.
 
 
 Support for TOAST-Able Data Types
@@ -474,83 +326,3 @@ context.  fn_mcxt normally points at the context that was
 CurrentMemoryContext at the time the FmgrInfo structure was created;
 in any case it is required to be a context at least as long-lived as the
 FmgrInfo itself.
-
-
-Telling the Difference Between Old- and New-Style Functions
------------------------------------------------------------
-
-During the conversion process, we carried two different pg_language
-entries, "internal" and "newinternal", for internal functions.  The
-function manager used the language code to distinguish which calling
-convention to use.  (Old-style internal functions were supported via
-a function handler.)  As of Nov. 2000, no old-style internal functions
-remain, so we can drop support for them.  We will remove the old "internal"
-pg_language entry and rename "newinternal" to "internal".
-
-The interim solution for dynamically-loaded compiled functions has been
-similar: two pg_language entries "C" and "newC".  This naming convention
-is not desirable for the long run, and yet we cannot stop supporting
-old-style user functions.  Instead, it seems better to use just one
-pg_language entry "C", and require the dynamically-loaded library to
-provide additional information that identifies new-style functions.
-This avoids compatibility problems --- for example, existing dump
-scripts will identify PL language handlers as being in language "C",
-which would be wrong under the "newC" convention.  Also, this approach
-should generalize more conveniently for future extensions to the function
-interface specification.
-
-Given a dynamically loaded function named "foo" (note that the name being
-considered here is the link-symbol name, not the SQL-level function name),
-the function manager will look for another function in the same dynamically
-loaded library named "pg_finfo_foo".  If this second function does not
-exist, then foo is assumed to be called old-style, thus ensuring backwards
-compatibility with existing libraries.  If the info function does exist,
-it is expected to have the signature
-
-	Pg_finfo_record * pg_finfo_foo (void);
-
-The info function will be called by the fmgr, and must return a pointer
-to a Pg_finfo_record struct.  (The returned struct will typically be a
-statically allocated constant in the dynamic-link library.)  The current
-definition of the struct is just
-
-	typedef struct {
-		int	api_version;
-	} Pg_finfo_record;
-
-where api_version is 0 to indicate old-style or 1 to indicate new-style
-calling convention.  In future releases, additional fields may be defined
-after api_version, but these additional fields will only be used if
-api_version is greater than 1.
-
-These details will be hidden from the author of a dynamically loaded
-function by using a macro.  To define a new-style dynamically loaded
-function named foo, write
-
-	PG_FUNCTION_INFO_V1(foo);
-
-	Datum
-	foo(PG_FUNCTION_ARGS)
-	{
-		...
-	}
-
-The function itself is written using the same conventions as for new-style
-internal functions; you just need to add the PG_FUNCTION_INFO_V1() macro.
-Note that old-style and new-style functions can be intermixed in the same
-library, depending on whether or not you write a PG_FUNCTION_INFO_V1() for
-each one.
-
-The SQL declaration for a dynamically-loaded function is CREATE FUNCTION
-foo ... LANGUAGE C regardless of whether it is old- or new-style.
-
-New-style dynamic functions will be invoked directly by fmgr, and will
-therefore have the same performance as internal functions after the initial
-pg_proc lookup overhead.  Old-style dynamic functions will be invoked via
-a handler, and will therefore have a small performance penalty.
-
-To allow old-style dynamic functions to work safely on toastable datatypes,
-the handler for old-style functions will automatically detoast toastable
-arguments before passing them to the old-style function.  A new-style
-function is expected to take care of toasted arguments by using the
-standard argument access macros defined above.

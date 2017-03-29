@@ -45,8 +45,6 @@
 
 extern PATH *poly2path(POLYGON *poly);
 extern void regress_lseg_construct(LSEG *lseg, Point *pt1, Point *pt2);
-extern char *reverse_name(char *string);
-extern int	oldstyle_length(int n, text *t);
 
 #ifdef PG_MODULE_MAGIC
 PG_MODULE_MAGIC;
@@ -240,14 +238,15 @@ typedef struct
 	double		radius;
 } WIDGET;
 
-WIDGET	   *widget_in(char *str);
-char	   *widget_out(WIDGET *widget);
+PG_FUNCTION_INFO_V1(widget_in);
+PG_FUNCTION_INFO_V1(widget_out);
 
 #define NARGS	3
 
-WIDGET *
-widget_in(char *str)
+Datum
+widget_in(PG_FUNCTION_ARGS)
 {
+	char	   *str = PG_GETARG_CSTRING(0);
 	char	   *p,
 			   *coord[NARGS];
 	int			i;
@@ -270,14 +269,16 @@ widget_in(char *str)
 	result->center.y = atof(coord[1]);
 	result->radius = atof(coord[2]);
 
-	return result;
+	PG_RETURN_POINTER(result);
 }
 
-char *
-widget_out(WIDGET *widget)
+Datum
+widget_out(PG_FUNCTION_ARGS)
 {
-	return psprintf("(%g,%g,%g)",
-					widget->center.x, widget->center.y, widget->radius);
+	WIDGET *widget = (WIDGET *) PG_GETARG_POINTER(0);
+	char *str =  psprintf("(%g,%g,%g)",
+						  widget->center.x, widget->center.y, widget->radius);
+	PG_RETURN_CSTRING(str);
 }
 
 PG_FUNCTION_INFO_V1(pt_in_widget);
@@ -305,9 +306,12 @@ boxarea(PG_FUNCTION_ARGS)
 	PG_RETURN_FLOAT8(width * height);
 }
 
-char *
-reverse_name(char *string)
+PG_FUNCTION_INFO_V1(reverse_name);
+
+Datum
+reverse_name(PG_FUNCTION_ARGS)
 {
+	char	   *string = PG_GETARG_CSTRING(0);
 	int			i;
 	int			len;
 	char	   *new_string;
@@ -320,22 +324,7 @@ reverse_name(char *string)
 	len = i;
 	for (; i >= 0; --i)
 		new_string[len - i] = string[i];
-	return new_string;
-}
-
-/*
- * This rather silly function is just to test that oldstyle functions
- * work correctly on toast-able inputs.
- */
-int
-oldstyle_length(int n, text *t)
-{
-	int			len = 0;
-
-	if (t)
-		len = VARSIZE(t) - VARHDRSZ;
-
-	return n + len;
+	PG_RETURN_CSTRING(new_string);
 }
 
 

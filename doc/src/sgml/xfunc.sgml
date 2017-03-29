@@ -1610,14 +1610,10 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
    </para>
 
    <para>
-    Two different calling conventions are currently used for C functions.
-    The newer <quote>version 1</quote> calling convention is indicated by writing
-    a <literal>PG_FUNCTION_INFO_V1()</literal> macro call for the function,
-    as illustrated below.  Lack of such a macro indicates an old-style
-    (<quote>version 0</quote>) function.  The language name specified in <command>CREATE FUNCTION</command>
-    is <literal>C</literal> in either case.  Old-style functions are now deprecated
-    because of portability problems and lack of functionality, but they
-    are still supported for compatibility reasons.
+    Currently only one calling convention is used for C functions
+    (<quote>version 1</quote>). Support for that calling convention is
+    indicated by writing a <literal>PG_FUNCTION_INFO_V1()</literal> macro
+    call for the function, as illustrated below.
    </para>
 
   <sect2 id="xfunc-c-dynload">
@@ -2138,160 +2134,6 @@ memcpy(destination->data, buffer, 40);
    </sect2>
 
    <sect2>
-    <title>Version 0 Calling Conventions</title>
-
-    <para>
-     We present the <quote>old style</quote> calling convention first &mdash; although
-     this approach is now deprecated, it's easier to get a handle on
-     initially.  In the version-0 method, the arguments and result
-     of the C function are just declared in normal C style, but being
-     careful to use the C representation of each SQL data type as shown
-     above.
-    </para>
-
-    <para>
-     Here are some examples:
-
-<programlisting><![CDATA[
-#include "postgres.h"
-#include <string.h>
-#include "utils/geo_decls.h"
-
-#ifdef PG_MODULE_MAGIC
-PG_MODULE_MAGIC;
-#endif
-
-/* by value */
-
-int
-add_one(int arg)
-{
-    return arg + 1;
-}
-
-/* by reference, fixed length */
-
-float8 *
-add_one_float8(float8 *arg)
-{
-    float8    *result = (float8 *) palloc(sizeof(float8));
-
-    *result = *arg + 1.0;
-
-    return result;
-}
-
-Point *
-makepoint(Point *pointx, Point *pointy)
-{
-    Point     *new_point = (Point *) palloc(sizeof(Point));
-
-    new_point->x = pointx->x;
-    new_point->y = pointy->y;
-
-    return new_point;
-}
-
-/* by reference, variable length */
-
-text *
-copytext(text *t)
-{
-    /*
-     * VARSIZE is the total size of the struct in bytes.
-     */
-    text *new_t = (text *) palloc(VARSIZE(t));
-    SET_VARSIZE(new_t, VARSIZE(t));
-    /*
-     * VARDATA is a pointer to the data region of the struct.
-     */
-    memcpy((void *) VARDATA(new_t), /* destination */
-           (void *) VARDATA(t),     /* source */
-           VARSIZE(t) - VARHDRSZ);  /* how many bytes */
-    return new_t;
-}
-
-text *
-concat_text(text *arg1, text *arg2)
-{
-    int32 new_text_size = VARSIZE(arg1) + VARSIZE(arg2) - VARHDRSZ;
-    text *new_text = (text *) palloc(new_text_size);
-
-    SET_VARSIZE(new_text, new_text_size);
-    memcpy(VARDATA(new_text), VARDATA(arg1), VARSIZE(arg1) - VARHDRSZ);
-    memcpy(VARDATA(new_text) + (VARSIZE(arg1) - VARHDRSZ),
-           VARDATA(arg2), VARSIZE(arg2) - VARHDRSZ);
-    return new_text;
-}
-]]>
-</programlisting>
-    </para>
-
-    <para>
-     Supposing that the above code has been prepared in file
-     <filename>funcs.c</filename> and compiled into a shared object,
-     we could define the functions to <productname>PostgreSQL</productname>
-     with commands like this:
-
-<programlisting>
-CREATE FUNCTION add_one(integer) RETURNS integer
-     AS '<replaceable>DIRECTORY</replaceable>/funcs', 'add_one'
-     LANGUAGE C STRICT;
-
--- note overloading of SQL function name "add_one"
-CREATE FUNCTION add_one(double precision) RETURNS double precision
-     AS '<replaceable>DIRECTORY</replaceable>/funcs', 'add_one_float8'
-     LANGUAGE C STRICT;
-
-CREATE FUNCTION makepoint(point, point) RETURNS point
-     AS '<replaceable>DIRECTORY</replaceable>/funcs', 'makepoint'
-     LANGUAGE C STRICT;
-
-CREATE FUNCTION copytext(text) RETURNS text
-     AS '<replaceable>DIRECTORY</replaceable>/funcs', 'copytext'
-     LANGUAGE C STRICT;
-
-CREATE FUNCTION concat_text(text, text) RETURNS text
-     AS '<replaceable>DIRECTORY</replaceable>/funcs', 'concat_text'
-     LANGUAGE C STRICT;
-</programlisting>
-    </para>
-
-    <para>
-     Here, <replaceable>DIRECTORY</replaceable> stands for the
-     directory of the shared library file (for instance the
-     <productname>PostgreSQL</productname> tutorial directory, which
-     contains the code for the examples used in this section).
-     (Better style would be to use just <literal>'funcs'</> in the
-     <literal>AS</> clause, after having added
-     <replaceable>DIRECTORY</replaceable> to the search path.  In any
-     case, we can omit the system-specific extension for a shared
-     library, commonly <literal>.so</literal> or
-     <literal>.sl</literal>.)
-    </para>
-
-    <para>
-     Notice that we have specified the functions as <quote>strict</quote>,
-     meaning that
-     the system should automatically assume a null result if any input
-     value is null.  By doing this, we avoid having to check for null inputs
-     in the function code.  Without this, we'd have to check for null values
-     explicitly, by checking for a null pointer for each
-     pass-by-reference argument.  (For pass-by-value arguments, we don't
-     even have a way to check!)
-    </para>
-
-    <para>
-     Although this calling convention is simple to use,
-     it is not very portable; on some architectures there are problems
-     with passing data types that are smaller than <type>int</type> this way.  Also, there is
-     no simple way to return a null result, nor to cope with null arguments
-     in any way other than making the function strict.  The version-1
-     convention, presented next, overcomes these objections.
-    </para>
-   </sect2>
-
-   <sect2>
     <title>Version 1 Calling Conventions</title>
 
     <para>
@@ -2316,8 +2158,10 @@ PG_FUNCTION_INFO_V1(funcname);
     <para>
      In a version-1 function, each actual argument is fetched using a
      <function>PG_GETARG_<replaceable>xxx</replaceable>()</function>
-     macro that corresponds to the argument's data type, and the
-     result is returned using a
+     macro that corresponds to the argument's data type.  In non-strict
+     functions there needs to be a previous check about argument null-ness
+     using <function>PG_ARGNULL_<replaceable>xxx</replaceable>()</function>.
+     The result is returned using a
      <function>PG_RETURN_<replaceable>xxx</replaceable>()</function>
      macro for the return type.
      <function>PG_GETARG_<replaceable>xxx</replaceable>()</function>
@@ -2328,7 +2172,7 @@ PG_FUNCTION_INFO_V1(funcname);
     </para>
 
     <para>
-     Here we show the same functions as above, coded in version-1 style:
+     Here are some examples using the version-1 calling convention:
 
 <programlisting><![CDATA[
 #include "postgres.h"
@@ -2427,27 +2271,67 @@ concat_text(PG_FUNCTION_ARGS)
 }
 ]]>
 </programlisting>
+
+    <para>
+     Supposing that the above code has been prepared in file
+     <filename>funcs.c</filename> and compiled into a shared object,
+     we could define the functions to <productname>PostgreSQL</productname>
+     with commands like this:
+
+<programlisting>
+CREATE FUNCTION add_one(integer) RETURNS integer
+     AS '<replaceable>DIRECTORY</replaceable>/funcs', 'add_one'
+     LANGUAGE C STRICT;
+
+-- note overloading of SQL function name "add_one"
+CREATE FUNCTION add_one(double precision) RETURNS double precision
+     AS '<replaceable>DIRECTORY</replaceable>/funcs', 'add_one_float8'
+     LANGUAGE C STRICT;
+
+CREATE FUNCTION makepoint(point, point) RETURNS point
+     AS '<replaceable>DIRECTORY</replaceable>/funcs', 'makepoint'
+     LANGUAGE C STRICT;
+
+CREATE FUNCTION copytext(text) RETURNS text
+     AS '<replaceable>DIRECTORY</replaceable>/funcs', 'copytext'
+     LANGUAGE C STRICT;
+
+CREATE FUNCTION concat_text(text, text) RETURNS text
+     AS '<replaceable>DIRECTORY</replaceable>/funcs', 'concat_text'
+     LANGUAGE C STRICT;
+</programlisting>
+
+    <para>
+     Here, <replaceable>DIRECTORY</replaceable> stands for the
+     directory of the shared library file (for instance the
+     <productname>PostgreSQL</productname> tutorial directory, which
+     contains the code for the examples used in this section).
+     (Better style would be to use just <literal>'funcs'</> in the
+     <literal>AS</> clause, after having added
+     <replaceable>DIRECTORY</replaceable> to the search path.  In any
+     case, we can omit the system-specific extension for a shared
+     library, commonly <literal>.so</literal>.)
     </para>
 
     <para>
-     The <command>CREATE FUNCTION</command> commands are the same as
-     for the version-0 equivalents.
+     Notice that we have specified the functions as <quote>strict</quote>,
+     meaning that
+     the system should automatically assume a null result if any input
+     value is null.  By doing this, we avoid having to check for null inputs
+     in the function code.  Without this, we'd have to check for null values
+     explicitly, using PG_ARGISNULL().
     </para>
 
     <para>
-     At first glance, the version-1 coding conventions might appear to
-     be just pointless obscurantism.  They do, however, offer a number
-     of improvements, because the macros can hide unnecessary detail.
-     An example is that in coding <function>add_one_float8</>, we no longer need to
-     be aware that <type>float8</type> is a pass-by-reference type.  Another
-     example is that the <literal>GETARG</> macros for variable-length types allow
-     for more efficient fetching of <quote>toasted</quote> (compressed or
+     At first glance, the version-1 coding conventions might appear to be just
+     pointless obscurantism, over using plain <literal>C</> calling
+     conventions.  They do however allow to deal with <literal>NULL</>able
+     arguments/return values, and <quote>toasted</quote> (compressed or
      out-of-line) values.
     </para>
 
     <para>
-     One big improvement in version-1 functions is better handling of null
-     inputs and results.  The macro <function>PG_ARGISNULL(<replaceable>n</>)</function>
+     The macro <function>PG_ARGISNULL(<replaceable>n</>)</function>
      allows a function to test whether each input is null.  (Of course, doing
      this is only necessary in functions not declared <quote>strict</>.)
      As with the
@@ -2461,7 +2345,7 @@ concat_text(PG_FUNCTION_ARGS)
     </para>
 
     <para>
-     Other options provided in the new-style interface are two
+     Other options provided by the version-1 interface are two
      variants of the
      <function>PG_GETARG_<replaceable>xxx</replaceable>()</function>
      macros. The first of these,
@@ -2493,9 +2377,7 @@ concat_text(PG_FUNCTION_ARGS)
      to return set results (<xref linkend="xfunc-c-return-set">) and
      implement trigger functions (<xref linkend="triggers">) and
      procedural-language call handlers (<xref
-     linkend="plhandler">).  Version-1 code is also more
-     portable than version-0, because it does not break restrictions
-     on function call protocol in the C standard.  For more details
+     linkend="plhandler">).  For more details
      see <filename>src/backend/utils/fmgr/README</filename> in the
      source distribution.
     </para>
@@ -2630,33 +2512,8 @@ SELECT name, c_overpaid(emp, 1500) AS overpaid
     WHERE name = 'Bill' OR name = 'Sam';
 </programlisting>
 
-     Using call conventions version 0, we can define
+     Using the version-1 calling conventions, we can define
      <function>c_overpaid</> as:
-
-<programlisting><![CDATA[
-#include "postgres.h"
-#include "executor/executor.h"  /* for GetAttributeByName() */
-
-#ifdef PG_MODULE_MAGIC
-PG_MODULE_MAGIC;
-#endif
-
-bool
-c_overpaid(HeapTupleHeader t, /* the current row of emp */
-           int32 limit)
-{
-    bool isnull;
-    int32 salary;
-
-    salary = DatumGetInt32(GetAttributeByName(t, "salary", &isnull));
-    if (isnull)
-        return false;
-    return salary > limit;
-}
-]]>
-</programlisting>
-
-     In version-1 coding, the above would look like this:
 
 <programlisting><![CDATA[
 #include "postgres.h"
