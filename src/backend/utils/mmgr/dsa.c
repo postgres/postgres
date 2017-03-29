@@ -1314,6 +1314,13 @@ attach_internal(void *place, dsm_segment *segment, dsa_handle handle)
 
 	/* Bump the reference count. */
 	LWLockAcquire(DSA_AREA_LOCK(area), LW_EXCLUSIVE);
+	if (control->refcnt == 0)
+	{
+		/* We can't attach to a DSA area that has already been destroyed. */
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("could not attach to dsa_area")));
+	}
 	++control->refcnt;
 	LWLockRelease(DSA_AREA_LOCK(area));
 
