@@ -199,7 +199,7 @@ if test "$pgac_cv_c_typeof" != no; then
   AC_DEFINE(HAVE_TYPEOF, 1,
             [Define to 1 if your compiler understands `typeof' or something similar.])
   if test "$pgac_cv_c_typeof" != typeof; then
-    AC_DEFINE(typeof, $pgac_cv_c_typeof, [Define to how the compiler spells `typeof'.])
+    AC_DEFINE_UNQUOTED(typeof, $pgac_cv_c_typeof, [Define to how the compiler spells `typeof'.])
   fi
 fi])# PGAC_C_TYPEOF
 

@@ -11704,7 +11704,9 @@ $as_echo "#define HAVE_TYPEOF 1" >>confdefs.h
 
   if test "$pgac_cv_c_typeof" != typeof; then
 
-$as_echo "#define typeof \$pgac_cv_c_typeof" >>confdefs.h
+cat >>confdefs.h <<_ACEOF
+#define typeof $pgac_cv_c_typeof
+_ACEOF
 
   fi
 fi
