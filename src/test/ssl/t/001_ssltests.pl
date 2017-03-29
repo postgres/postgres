@@ -73,7 +73,7 @@ chmod 0600, "ssl/client.key";
 
 #### Part 0. Set up the server.
 
-diag "setting up data directory...";
+note "setting up data directory";
 my $node = get_new_node('master');
 $node->init;
 
@@ -91,36 +91,36 @@ switch_server_cert($node, 'server-cn-only');
 ### on sslmode and whether the server's certificate looks correct. No
 ### client certificate is used in these tests.
 
-diag "running client tests...";
+note "running client tests";
 
 $common_connstr =
 "user=ssltestuser dbname=trustdb sslcert=invalid hostaddr=$SERVERHOSTADDR host=common-name.pg-ssltest.test";
 
 # The server should not accept non-SSL connections
-diag "test that the server doesn't accept non-SSL connections";
+note "test that the server doesn't accept non-SSL connections";
 test_connect_fails("sslmode=disable");
 
 # Try without a root cert. In sslmode=require, this should work. In verify-ca
 # or verify-full mode it should fail
-diag "connect without server root cert";
+note "connect without server root cert";
 test_connect_ok("sslrootcert=invalid sslmode=require");
 test_connect_fails("sslrootcert=invalid sslmode=verify-ca");
 test_connect_fails("sslrootcert=invalid sslmode=verify-full");
 
 # Try with wrong root cert, should fail. (we're using the client CA as the
 # root, but the server's key is signed by the server CA)
-diag "connect without wrong server root cert";
+note "connect without wrong server root cert";
 test_connect_fails("sslrootcert=ssl/client_ca.crt sslmode=require");
 test_connect_fails("sslrootcert=ssl/client_ca.crt sslmode=verify-ca");
 test_connect_fails("sslrootcert=ssl/client_ca.crt sslmode=verify-full");
 
 # Try with just the server CA's cert. This fails because the root file
 # must contain the whole chain up to the root CA.
-diag "connect with server CA cert, without root CA";
+note "connect with server CA cert, without root CA";
 test_connect_fails("sslrootcert=ssl/server_ca.crt sslmode=verify-ca");
 
 # And finally, with the correct root cert.
-diag "connect with correct server CA cert file";
+note "connect with correct server CA cert file";
 test_connect_ok("sslrootcert=ssl/root+server_ca.crt sslmode=require");
 test_connect_ok("sslrootcert=ssl/root+server_ca.crt sslmode=verify-ca");
 test_connect_ok("sslrootcert=ssl/root+server_ca.crt sslmode=verify-full");
@@ -130,7 +130,7 @@ test_connect_ok("sslrootcert=ssl/root+server_ca.crt sslmode=verify-full");
 test_connect_ok("sslrootcert=ssl/both-cas-1.crt sslmode=verify-ca");
 test_connect_ok("sslrootcert=ssl/both-cas-2.crt sslmode=verify-ca");
 
-diag "testing sslcrl option with a non-revoked cert";
+note "testing sslcrl option with a non-revoked cert";
 
 # Invalid CRL filename is the same as no CRL, succeeds
 test_connect_ok(
@@ -147,7 +147,7 @@ test_connect_ok(
 
 # Check that connecting with verify-full fails, when the hostname doesn't
 # match the hostname in the server's certificate.
-diag "test mismatch between hostname and server certificate";
+note "test mismatch between hostname and server certificate";
 $common_connstr =
 "user=ssltestuser dbname=trustdb sslcert=invalid sslrootcert=ssl/root+server_ca.crt hostaddr=$SERVERHOSTADDR sslmode=verify-full";
 
@@ -158,7 +158,7 @@ test_connect_fails("sslmode=verify-full host=wronghost.test");
 # Test Subject Alternative Names.
 switch_server_cert($node, 'server-multiple-alt-names');
 
-diag "test hostname matching with X509 Subject Alternative Names";
+note "test hostname matching with X.509 Subject Alternative Names";
 $common_connstr =
 "user=ssltestuser dbname=trustdb sslcert=invalid sslrootcert=ssl/root+server_ca.crt hostaddr=$SERVERHOSTADDR sslmode=verify-full";
 
@@ -173,7 +173,7 @@ test_connect_fails("host=deep.subdomain.wildcard.pg-ssltest.test");
 # slightly different error message, that's all)
 switch_server_cert($node, 'server-single-alt-name');
 
-diag "test hostname matching with a single X509 Subject Alternative Name";
+note "test hostname matching with a single X.509 Subject Alternative Name";
 $common_connstr =
 "user=ssltestuser dbname=trustdb sslcert=invalid sslrootcert=ssl/root+server_ca.crt hostaddr=$SERVERHOSTADDR sslmode=verify-full";
 
@@ -186,7 +186,7 @@ test_connect_fails("host=deep.subdomain.wildcard.pg-ssltest.test");
 # should be ignored when the certificate has both.
 switch_server_cert($node, 'server-cn-and-alt-names');
 
-diag "test certificate with both a CN and SANs";
+note "test certificate with both a CN and SANs";
 $common_connstr =
 "user=ssltestuser dbname=trustdb sslcert=invalid sslrootcert=ssl/root+server_ca.crt hostaddr=$SERVERHOSTADDR sslmode=verify-full";
 
@@ -204,7 +204,7 @@ test_connect_ok("sslmode=verify-ca host=common-name.pg-ssltest.test");
 test_connect_fails("sslmode=verify-full host=common-name.pg-ssltest.test");
 
 # Test that the CRL works
-diag "Testing client-side CRL";
+note "testing client-side CRL";
 switch_server_cert($node, 'server-revoked');
 
 $common_connstr =
@@ -220,7 +220,7 @@ test_connect_fails(
 ###
 ### Test certificate authorization.
 
-diag "Testing certificate authorization...";
+note "testing certificate authorization";
 $common_connstr =
 "sslrootcert=ssl/root+server_ca.crt sslmode=require dbname=certdb hostaddr=$SERVERHOSTADDR";
 

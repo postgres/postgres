@@ -60,7 +60,7 @@ is($node_standby_2->psql('postgres', 'INSERT INTO tab_int VALUES (1)'),
 	3, 'read-only queries on standby 2');
 
 # Tests for connection parameter target_session_attrs
-diag "testing connection parameter \"target_session_attrs\"";
+note "testing connection parameter \"target_session_attrs\"";
 
 # Routine designed to run tests on the connection parameter
 # target_session_attrs with multiple nodes.
@@ -107,7 +107,7 @@ test_target_session_attrs($node_master, $node_standby_1, $node_master,
 test_target_session_attrs($node_standby_1, $node_master, $node_standby_1,
 						  "any", 0);
 
-diag "switching to physical replication slot";
+note "switching to physical replication slot";
 # Switch to using a physical replication slot. We can do this without a new
 # backup since physical slots can go backwards if needed. Do so on both
 # standbys. Since we're going to be testing things that affect the slot state,
@@ -158,7 +158,7 @@ sub replay_check
 
 replay_check();
 
-diag "enabling hot_standby_feedback";
+note "enabling hot_standby_feedback";
 # Enable hs_feedback. The slot should gain an xmin. We set the status interval
 # so we'll see the results promptly.
 $node_standby_1->safe_psql('postgres', 'ALTER SYSTEM SET hot_standby_feedback = on;');
@@ -176,7 +176,7 @@ is($catalog_xmin, '', 'non-cascaded slot xmin still null with hs_feedback');
 isnt($xmin, '', 'cascaded slot xmin non-null with hs feedback');
 is($catalog_xmin, '', 'cascaded slot xmin still null with hs_feedback');
 
-diag "doing some work to advance xmin";
+note "doing some work to advance xmin";
 for my $i (10000..11000) {
 	$node_master->safe_psql('postgres', qq[INSERT INTO tab_int VALUES ($i);]);
 }
@@ -184,16 +184,16 @@ $node_master->safe_psql('postgres', 'VACUUM;');
 $node_master->safe_psql('postgres', 'CHECKPOINT;');
 
 my ($xmin2, $catalog_xmin2) = get_slot_xmins($node_master, $slotname_1);
-diag "new xmin $xmin2, old xmin $xmin";
+note "new xmin $xmin2, old xmin $xmin";
 isnt($xmin2, $xmin, 'non-cascaded slot xmin with hs feedback has changed');
 is($catalog_xmin2, '', 'non-cascaded slot xmin still null with hs_feedback unchanged');
 
 ($xmin2, $catalog_xmin2) = get_slot_xmins($node_standby_1, $slotname_2);
-diag "new xmin $xmin2, old xmin $xmin";
+note "new xmin $xmin2, old xmin $xmin";
 isnt($xmin2, $xmin, 'cascaded slot xmin with hs feedback has changed');
 is($catalog_xmin2, '', 'cascaded slot xmin still null with hs_feedback unchanged');
 
-diag "disabling hot_standby_feedback";
+note "disabling hot_standby_feedback";
 # Disable hs_feedback. Xmin should be cleared.
 $node_standby_1->safe_psql('postgres', 'ALTER SYSTEM SET hot_standby_feedback = off;');
 $node_standby_1->reload;
@@ -210,7 +210,7 @@ is($catalog_xmin, '', 'non-cascaded slot xmin still null with hs_feedback reset'
 is($xmin, '', 'cascaded slot xmin null with hs feedback reset');
 is($catalog_xmin, '', 'cascaded slot xmin still null with hs_feedback reset');
 
-diag "re-enabling hot_standby_feedback and disabling while stopped";
+note "re-enabling hot_standby_feedback and disabling while stopped";
 $node_standby_2->safe_psql('postgres', 'ALTER SYSTEM SET hot_standby_feedback = on;');
 $node_standby_2->reload;
 

@@ -45,7 +45,7 @@ wal_receiver_status_interval = 1
 $node_master->dump_info;
 $node_master->start;
 
-diag "Testing logical timeline following with a filesystem-level copy";
+note "testing logical timeline following with a filesystem-level copy";
 
 $node_master->safe_psql('postgres',
 "SELECT pg_create_logical_replication_slot('before_basebackup', 'test_decoding');"
