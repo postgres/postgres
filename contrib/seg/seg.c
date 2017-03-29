@@ -17,6 +17,11 @@
 
 #include "segdata.h"
 
+
+#define DatumGetSegP(X) ((SEG *) DatumGetPointer(X))
+#define PG_GETARG_SEG_P(n) DatumGetSegP(PG_GETARG_POINTER(n))
+
+
 /*
 #define GIST_DEBUG
 #define GIST_QUERY_DEBUG
@@ -47,52 +52,45 @@ PG_FUNCTION_INFO_V1(seg_center);
 /*
 ** GiST support methods
 */
-bool gseg_consistent(GISTENTRY *entry,
-				SEG *query,
-				StrategyNumber strategy,
-				Oid subtype,
-				bool *recheck);
-GISTENTRY  *gseg_compress(GISTENTRY *entry);
-GISTENTRY  *gseg_decompress(GISTENTRY *entry);
-float	   *gseg_penalty(GISTENTRY *origentry, GISTENTRY *newentry, float *result);
-GIST_SPLITVEC *gseg_picksplit(GistEntryVector *entryvec, GIST_SPLITVEC *v);
-bool		gseg_leaf_consistent(SEG *key, SEG *query, StrategyNumber strategy);
-bool		gseg_internal_consistent(SEG *key, SEG *query, StrategyNumber strategy);
-SEG		   *gseg_union(GistEntryVector *entryvec, int *sizep);
-SEG		   *gseg_binary_union(SEG *r1, SEG *r2, int *sizep);
-bool	   *gseg_same(SEG *b1, SEG *b2, bool *result);
+PG_FUNCTION_INFO_V1(gseg_consistent);
+PG_FUNCTION_INFO_V1(gseg_compress);
+PG_FUNCTION_INFO_V1(gseg_decompress);
+PG_FUNCTION_INFO_V1(gseg_picksplit);
+PG_FUNCTION_INFO_V1(gseg_penalty);
+PG_FUNCTION_INFO_V1(gseg_union);
+PG_FUNCTION_INFO_V1(gseg_same);
+static Datum gseg_leaf_consistent(Datum key, Datum query, StrategyNumber strategy);
+static Datum gseg_internal_consistent(Datum key, Datum query, StrategyNumber strategy);
+static Datum gseg_binary_union(Datum r1, Datum r2, int *sizep);
 
 
 /*
 ** R-tree support functions
 */
-bool		seg_same(SEG *a, SEG *b);
-bool		seg_contains_int(SEG *a, int *b);
-bool		seg_contains_float4(SEG *a, float4 *b);
-bool		seg_contains_float8(SEG *a, float8 *b);
-bool		seg_contains(SEG *a, SEG *b);
-bool		seg_contained(SEG *a, SEG *b);
-bool		seg_overlap(SEG *a, SEG *b);
-bool		seg_left(SEG *a, SEG *b);
-bool		seg_over_left(SEG *a, SEG *b);
-bool		seg_right(SEG *a, SEG *b);
-bool		seg_over_right(SEG *a, SEG *b);
-SEG		   *seg_union(SEG *a, SEG *b);
-SEG		   *seg_inter(SEG *a, SEG *b);
-void		rt_seg_size(SEG *a, float *sz);
+PG_FUNCTION_INFO_V1(seg_same);
+PG_FUNCTION_INFO_V1(seg_contains);
+PG_FUNCTION_INFO_V1(seg_contained);
+PG_FUNCTION_INFO_V1(seg_overlap);
+PG_FUNCTION_INFO_V1(seg_left);
+PG_FUNCTION_INFO_V1(seg_over_left);
+PG_FUNCTION_INFO_V1(seg_right);
+PG_FUNCTION_INFO_V1(seg_over_right);
+PG_FUNCTION_INFO_V1(seg_union);
+PG_FUNCTION_INFO_V1(seg_inter);
+static void rt_seg_size(SEG *a, float *size);
 
 /*
 ** Various operators
 */
-int32		seg_cmp(SEG *a, SEG *b);
-bool		seg_lt(SEG *a, SEG *b);
-bool		seg_le(SEG *a, SEG *b);
-bool		seg_gt(SEG *a, SEG *b);
-bool		seg_ge(SEG *a, SEG *b);
-bool		seg_different(SEG *a, SEG *b);
+PG_FUNCTION_INFO_V1(seg_cmp);
+PG_FUNCTION_INFO_V1(seg_lt);
+PG_FUNCTION_INFO_V1(seg_le);
+PG_FUNCTION_INFO_V1(seg_gt);
+PG_FUNCTION_INFO_V1(seg_ge);
+PG_FUNCTION_INFO_V1(seg_different);
 
 /*
-** Auxiliary funxtions
+** Auxiliary functions
 */
 static int	restore(char *s, float val, int n);
 
@@ -120,7 +118,7 @@ seg_in(PG_FUNCTION_ARGS)
 Datum
 seg_out(PG_FUNCTION_ARGS)
 {
-	SEG		   *seg = (SEG *) PG_GETARG_POINTER(0);
+	SEG		   *seg = PG_GETARG_SEG_P(0);
 	char	   *result;
 	char	   *p;
 
@@ -161,7 +159,7 @@ seg_out(PG_FUNCTION_ARGS)
 Datum
 seg_center(PG_FUNCTION_ARGS)
 {
-	SEG		   *seg = (SEG *) PG_GETARG_POINTER(0);
+	SEG		   *seg = PG_GETARG_SEG_P(0);
 
 	PG_RETURN_FLOAT4(((float) seg->lower + (float) seg->upper) / 2.0);
 }
@@ -169,7 +167,7 @@ seg_center(PG_FUNCTION_ARGS)
 Datum
 seg_lower(PG_FUNCTION_ARGS)
 {
-	SEG		   *seg = (SEG *) PG_GETARG_POINTER(0);
+	SEG		   *seg = PG_GETARG_SEG_P(0);
 
 	PG_RETURN_FLOAT4(seg->lower);
 }
@@ -177,7 +175,7 @@ seg_lower(PG_FUNCTION_ARGS)
 Datum
 seg_upper(PG_FUNCTION_ARGS)
 {
-	SEG		   *seg = (SEG *) PG_GETARG_POINTER(0);
+	SEG		   *seg = PG_GETARG_SEG_P(0);
 
 	PG_RETURN_FLOAT4(seg->upper);
 }
@@ -193,13 +191,16 @@ seg_upper(PG_FUNCTION_ARGS)
 ** the predicate x op query == FALSE, where op is the oper
 ** corresponding to strategy in the pg_amop table.
 */
-bool
-gseg_consistent(GISTENTRY *entry,
-				SEG *query,
-				StrategyNumber strategy,
-				Oid subtype,
-				bool *recheck)
+Datum
+gseg_consistent(PG_FUNCTION_ARGS)
 {
+	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
+	Datum		query = PG_GETARG_DATUM(1);
+	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
+
+	/* Oid		subtype = PG_GETARG_OID(3); */
+	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
+
 	/* All cases served by this function are exact */
 	*recheck = false;
 
@@ -208,73 +209,77 @@ gseg_consistent(GISTENTRY *entry,
 	 * gseg_leaf_consistent
 	 */
 	if (GIST_LEAF(entry))
-		return (gseg_leaf_consistent((SEG *) DatumGetPointer(entry->key), query, strategy));
+		return gseg_leaf_consistent(entry->key, query, strategy);
 	else
-		return (gseg_internal_consistent((SEG *) DatumGetPointer(entry->key), query, strategy));
+		return gseg_internal_consistent(entry->key, query, strategy);
 }
 
 /*
 ** The GiST Union method for segments
 ** returns the minimal bounding seg that encloses all the entries in entryvec
 */
-SEG *
-gseg_union(GistEntryVector *entryvec, int *sizep)
+Datum
+gseg_union(PG_FUNCTION_ARGS)
 {
+	GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
+	int		   *sizep = (int *) PG_GETARG_POINTER(1);
 	int			numranges,
 				i;
-	SEG		   *out = (SEG *) NULL;
-	SEG		   *tmp;
+	Datum		out = 0;
+	Datum		tmp;
 
 #ifdef GIST_DEBUG
 	fprintf(stderr, "union\n");
 #endif
 
 	numranges = entryvec->n;
-	tmp = (SEG *) DatumGetPointer(entryvec->vector[0].key);
+	tmp = entryvec->vector[0].key;
 	*sizep = sizeof(SEG);
 
 	for (i = 1; i < numranges; i++)
 	{
-		out = gseg_binary_union(tmp, (SEG *)
-								DatumGetPointer(entryvec->vector[i].key),
-								sizep);
+		out = gseg_binary_union(tmp, entryvec->vector[i].key, sizep);
 		tmp = out;
 	}
 
-	return (out);
+	PG_RETURN_DATUM(out);
 }
 
 /*
 ** GiST Compress and Decompress methods for segments
 ** do not do anything.
 */
-GISTENTRY *
-gseg_compress(GISTENTRY *entry)
+Datum
+gseg_compress(PG_FUNCTION_ARGS)
 {
-	return (entry);
+	PG_RETURN_POINTER(PG_GETARG_POINTER(0));
 }
 
-GISTENTRY *
-gseg_decompress(GISTENTRY *entry)
+Datum
+gseg_decompress(PG_FUNCTION_ARGS)
 {
-	return (entry);
+	PG_RETURN_POINTER(PG_GETARG_POINTER(0));
 }
 
 /*
 ** The GiST Penalty method for segments
 ** As in the R-tree paper, we use change in area as our penalty metric
 */
-float *
-gseg_penalty(GISTENTRY *origentry, GISTENTRY *newentry, float *result)
+Datum
+gseg_penalty(PG_FUNCTION_ARGS)
 {
+	GISTENTRY  *origentry = (GISTENTRY *) PG_GETARG_POINTER(0);
+	GISTENTRY  *newentry = (GISTENTRY *) PG_GETARG_POINTER(1);
+	float	   *result = (float *) PG_GETARG_POINTER(2);
 	SEG		   *ud;
 	float		tmp1,
 				tmp2;
 
-	ud = seg_union((SEG *) DatumGetPointer(origentry->key),
-				   (SEG *) DatumGetPointer(newentry->key));
+	ud = DatumGetSegP(DirectFunctionCall2(seg_union,
+										  origentry->key,
+										  newentry->key));
 	rt_seg_size(ud, &tmp1);
-	rt_seg_size((SEG *) DatumGetPointer(origentry->key), &tmp2);
+	rt_seg_size(DatumGetSegP(origentry->key), &tmp2);
 	*result = tmp1 - tmp2;
 
 #ifdef GIST_DEBUG
@@ -282,7 +287,7 @@ gseg_penalty(GISTENTRY *origentry, GISTENTRY *newentry, float *result)
 	fprintf(stderr, "\t%g\n", *result);
 #endif
 
-	return (result);
+	PG_RETURN_POINTER(result);
 }
 
 /*
@@ -309,14 +314,15 @@ gseg_picksplit_item_cmp(const void *a, const void *b)
  * it's easier and more robust to just sort the segments by center-point and
  * split at the middle.
  */
-GIST_SPLITVEC *
-gseg_picksplit(GistEntryVector *entryvec,
-			   GIST_SPLITVEC *v)
+Datum
+gseg_picksplit(PG_FUNCTION_ARGS)
 {
+	GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
+	GIST_SPLITVEC *v = (GIST_SPLITVEC *) PG_GETARG_POINTER(1);
 	int			i;
-	SEG		   *datum_l,
-			   *datum_r,
-			   *seg;
+	SEG		   *seg,
+			   *seg_l,
+			   *seg_r;
 	gseg_picksplit_item *sort_items;
 	OffsetNumber *left,
 			   *right;
@@ -337,7 +343,7 @@ gseg_picksplit(GistEntryVector *entryvec,
 		palloc(maxoff * sizeof(gseg_picksplit_item));
 	for (i = 1; i <= maxoff; i++)
 	{
-		seg = (SEG *) DatumGetPointer(entryvec->vector[i].key);
+		seg = DatumGetSegP(entryvec->vector[i].key);
 		/* center calculation is done this way to avoid possible overflow */
 		sort_items[i - 1].center = seg->lower * 0.5f + seg->upper * 0.5f;
 		sort_items[i - 1].index = i;
@@ -359,13 +365,17 @@ gseg_picksplit(GistEntryVector *entryvec,
 	/*
 	 * Emit segments to the left output page, and compute its bounding box.
 	 */
-	datum_l = (SEG *) palloc(sizeof(SEG));
-	memcpy(datum_l, sort_items[0].data, sizeof(SEG));
+	seg_l = (SEG *) palloc(sizeof(SEG));
+	memcpy(seg_l, sort_items[0].data, sizeof(SEG));
 	*left++ = sort_items[0].index;
 	v->spl_nleft++;
 	for (i = 1; i < firstright; i++)
 	{
-		datum_l = seg_union(datum_l, sort_items[i].data);
+		Datum		sortitem = PointerGetDatum(sort_items[i].data);
+
+		seg_l = DatumGetSegP(DirectFunctionCall2(seg_union,
+												 PointerGetDatum(seg_l),
+												 sortitem));
 		*left++ = sort_items[i].index;
 		v->spl_nleft++;
 	}
@@ -373,30 +383,36 @@ gseg_picksplit(GistEntryVector *entryvec,
 	/*
 	 * Likewise for the right page.
 	 */
-	datum_r = (SEG *) palloc(sizeof(SEG));
-	memcpy(datum_r, sort_items[firstright].data, sizeof(SEG));
+	seg_r = (SEG *) palloc(sizeof(SEG));
+	memcpy(seg_r, sort_items[firstright].data, sizeof(SEG));
 	*right++ = sort_items[firstright].index;
 	v->spl_nright++;
 	for (i = firstright + 1; i < maxoff; i++)
 	{
-		datum_r = seg_union(datum_r, sort_items[i].data);
+		Datum		sortitem = PointerGetDatum(sort_items[i].data);
+
+		seg_r = DatumGetSegP(DirectFunctionCall2(seg_union,
+												 PointerGetDatum(seg_r),
+												 sortitem));
 		*right++ = sort_items[i].index;
 		v->spl_nright++;
 	}
 
-	v->spl_ldatum = PointerGetDatum(datum_l);
-	v->spl_rdatum = PointerGetDatum(datum_r);
+	v->spl_ldatum = PointerGetDatum(seg_l);
+	v->spl_rdatum = PointerGetDatum(seg_r);
 
-	return v;
+	PG_RETURN_POINTER(v);
 }
 
 /*
 ** Equality methods
 */
-bool *
-gseg_same(SEG *b1, SEG *b2, bool *result)
+Datum
+gseg_same(PG_FUNCTION_ARGS)
 {
-	if (seg_same(b1, b2))
+	bool	   *result = (bool *) PG_GETARG_POINTER(2);
+
+	if (DirectFunctionCall2(seg_same, PG_GETARG_DATUM(0), PG_GETARG_DATUM(1)))
 		*result = TRUE;
 	else
 		*result = FALSE;
@@ -405,18 +421,16 @@ gseg_same(SEG *b1, SEG *b2, bool *result)
 	fprintf(stderr, "same: %s\n", (*result ? "TRUE" : "FALSE"));
 #endif
 
-	return (result);
+	PG_RETURN_POINTER(result);
 }
 
 /*
 ** SUPPORT ROUTINES
 */
-bool
-gseg_leaf_consistent(SEG *key,
-					 SEG *query,
-					 StrategyNumber strategy)
+static Datum
+gseg_leaf_consistent(Datum key, Datum query, StrategyNumber strategy)
 {
-	bool		retval;
+	Datum		retval;
 
 #ifdef GIST_QUERY_DEBUG
 	fprintf(stderr, "leaf_consistent, %d\n", strategy);
@@ -425,41 +439,40 @@ gseg_leaf_consistent(SEG *key,
 	switch (strategy)
 	{
 		case RTLeftStrategyNumber:
-			retval = (bool) seg_left(key, query);
+			retval = DirectFunctionCall2(seg_left, key, query);
 			break;
 		case RTOverLeftStrategyNumber:
-			retval = (bool) seg_over_left(key, query);
+			retval = DirectFunctionCall2(seg_over_left, key, query);
 			break;
 		case RTOverlapStrategyNumber:
-			retval = (bool) seg_overlap(key, query);
+			retval = DirectFunctionCall2(seg_overlap, key, query);
 			break;
 		case RTOverRightStrategyNumber:
-			retval = (bool) seg_over_right(key, query);
+			retval = DirectFunctionCall2(seg_over_right, key, query);
 			break;
 		case RTRightStrategyNumber:
-			retval = (bool) seg_right(key, query);
+			retval = DirectFunctionCall2(seg_right, key, query);
 			break;
 		case RTSameStrategyNumber:
-			retval = (bool) seg_same(key, query);
+			retval = DirectFunctionCall2(seg_same, key, query);
 			break;
 		case RTContainsStrategyNumber:
 		case RTOldContainsStrategyNumber:
-			retval = (bool) seg_contains(key, query);
+			retval = DirectFunctionCall2(seg_contains, key, query);
 			break;
 		case RTContainedByStrategyNumber:
 		case RTOldContainedByStrategyNumber:
-			retval = (bool) seg_contained(key, query);
+			retval = DirectFunctionCall2(seg_contained, key, query);
 			break;
 		default:
 			retval = FALSE;
 	}
-	return (retval);
+
+	PG_RETURN_DATUM(retval);
 }
 
-bool
-gseg_internal_consistent(SEG *key,
-						 SEG *query,
-						 StrategyNumber strategy)
+static Datum
+gseg_internal_consistent(Datum key, Datum query, StrategyNumber strategy)
 {
 	bool		retval;
 
@@ -470,117 +483,147 @@ gseg_internal_consistent(SEG *key,
 	switch (strategy)
 	{
 		case RTLeftStrategyNumber:
-			retval = (bool) !seg_over_right(key, query);
+			retval =
+				!DatumGetBool(DirectFunctionCall2(seg_over_right, key, query));
 			break;
 		case RTOverLeftStrategyNumber:
-			retval = (bool) !seg_right(key, query);
+			retval =
+				!DatumGetBool(DirectFunctionCall2(seg_right, key, query));
 			break;
 		case RTOverlapStrategyNumber:
-			retval = (bool) seg_overlap(key, query);
+			retval =
+				DatumGetBool(DirectFunctionCall2(seg_overlap, key, query));
 			break;
 		case RTOverRightStrategyNumber:
-			retval = (bool) !seg_left(key, query);
+			retval =
+				!DatumGetBool(DirectFunctionCall2(seg_left, key, query));
 			break;
 		case RTRightStrategyNumber:
-			retval = (bool) !seg_over_left(key, query);
+			retval =
+				!DatumGetBool(DirectFunctionCall2(seg_over_left, key, query));
 			break;
 		case RTSameStrategyNumber:
 		case RTContainsStrategyNumber:
 		case RTOldContainsStrategyNumber:
-			retval = (bool) seg_contains(key, query);
+			retval =
+				DatumGetBool(DirectFunctionCall2(seg_contains, key, query));
 			break;
 		case RTContainedByStrategyNumber:
 		case RTOldContainedByStrategyNumber:
-			retval = (bool) seg_overlap(key, query);
+			retval =
+				DatumGetBool(DirectFunctionCall2(seg_overlap, key, query));
 			break;
 		default:
 			retval = FALSE;
 	}
-	return (retval);
+
+	PG_RETURN_BOOL(retval);
 }
 
-SEG *
-gseg_binary_union(SEG *r1, SEG *r2, int *sizep)
+static Datum
+gseg_binary_union(Datum r1, Datum r2, int *sizep)
 {
-	SEG		   *retval;
+	Datum		retval;
 
-	retval = seg_union(r1, r2);
+	retval = DirectFunctionCall2(seg_union, r1, r2);
 	*sizep = sizeof(SEG);
 
 	return (retval);
 }
 
 
-bool
-seg_contains(SEG *a, SEG *b)
+Datum
+seg_contains(PG_FUNCTION_ARGS)
 {
-	return ((a->lower <= b->lower) && (a->upper >= b->upper));
+	SEG		   *a = PG_GETARG_SEG_P(0);
+	SEG		   *b = PG_GETARG_SEG_P(1);
+
+	PG_RETURN_BOOL((a->lower <= b->lower) && (a->upper >= b->upper));
 }
 
-bool
-seg_contained(SEG *a, SEG *b)
+Datum
+seg_contained(PG_FUNCTION_ARGS)
 {
-	return (seg_contains(b, a));
+	Datum		a = PG_GETARG_DATUM(0);
+	Datum		b = PG_GETARG_DATUM(1);
+
+	PG_RETURN_DATUM(DirectFunctionCall2(seg_contains, b, a));
 }
 
 /*****************************************************************************
  * Operator class for R-tree indexing
  *****************************************************************************/
 
-bool
-seg_same(SEG *a, SEG *b)
+Datum
+seg_same(PG_FUNCTION_ARGS)
 {
-	return seg_cmp(a, b) == 0;
+	int			cmp = DatumGetInt32(
+	   DirectFunctionCall2(seg_cmp, PG_GETARG_DATUM(0), PG_GETARG_DATUM(1)));
+
+	PG_RETURN_BOOL(cmp == 0);
 }
 
 /*	seg_overlap -- does a overlap b?
  */
-bool
-seg_overlap(SEG *a, SEG *b)
+Datum
+seg_overlap(PG_FUNCTION_ARGS)
 {
-	return (
-			((a->upper >= b->upper) && (a->lower <= b->upper))
-			||
-			((b->upper >= a->upper) && (b->lower <= a->upper))
-		);
+	SEG		   *a = PG_GETARG_SEG_P(0);
+	SEG		   *b = PG_GETARG_SEG_P(1);
+
+	PG_RETURN_BOOL(((a->upper >= b->upper) && (a->lower <= b->upper)) ||
+				   ((b->upper >= a->upper) && (b->lower <= a->upper)));
 }
 
-/*	seg_overleft -- is the right edge of (a) located at or left of the right edge of (b)?
+/*	seg_over_left -- is the right edge of (a) located at or left of the right edge of (b)?
  */
-bool
-seg_over_left(SEG *a, SEG *b)
+Datum
+seg_over_left(PG_FUNCTION_ARGS)
 {
-	return (a->upper <= b->upper);
+	SEG		   *a = PG_GETARG_SEG_P(0);
+	SEG		   *b = PG_GETARG_SEG_P(1);
+
+	PG_RETURN_BOOL(a->upper <= b->upper);
 }
 
 /*	seg_left -- is (a) entirely on the left of (b)?
  */
-bool
-seg_left(SEG *a, SEG *b)
+Datum
+seg_left(PG_FUNCTION_ARGS)
 {
-	return (a->upper < b->lower);
+	SEG		   *a = PG_GETARG_SEG_P(0);
+	SEG		   *b = PG_GETARG_SEG_P(1);
+
+	PG_RETURN_BOOL(a->upper < b->lower);
 }
 
 /*	seg_right -- is (a) entirely on the right of (b)?
  */
-bool
-seg_right(SEG *a, SEG *b)
+Datum
+seg_right(PG_FUNCTION_ARGS)
 {
-	return (a->lower > b->upper);
+	SEG		   *a = PG_GETARG_SEG_P(0);
+	SEG		   *b = PG_GETARG_SEG_P(1);
+
+	PG_RETURN_BOOL(a->lower > b->upper);
 }
 
-/*	seg_overright -- is the left edge of (a) located at or right of the left edge of (b)?
+/*	seg_over_right -- is the left edge of (a) located at or right of the left edge of (b)?
  */
-bool
-seg_over_right(SEG *a, SEG *b)
+Datum
+seg_over_right(PG_FUNCTION_ARGS)
 {
-	return (a->lower >= b->lower);
+	SEG		   *a = PG_GETARG_SEG_P(0);
+	SEG		   *b = PG_GETARG_SEG_P(1);
+
+	PG_RETURN_BOOL(a->lower >= b->lower);
 }
 
-
-SEG *
-seg_union(SEG *a, SEG *b)
+Datum
+seg_union(PG_FUNCTION_ARGS)
 {
+	SEG		   *a = PG_GETARG_SEG_P(0);
+	SEG		   *b = PG_GETARG_SEG_P(1);
 	SEG		   *n;
 
 	n = (SEG *) palloc(sizeof(*n));
@@ -613,13 +656,14 @@ seg_union(SEG *a, SEG *b)
 		n->l_ext = b->l_ext;
 	}
 
-	return (n);
+	PG_RETURN_POINTER(n);
 }
 
-
-SEG *
-seg_inter(SEG *a, SEG *b)
+Datum
+seg_inter(PG_FUNCTION_ARGS)
 {
+	SEG		   *a = PG_GETARG_SEG_P(0);
+	SEG		   *b = PG_GETARG_SEG_P(1);
 	SEG		   *n;
 
 	n = (SEG *) palloc(sizeof(*n));
@@ -652,10 +696,10 @@ seg_inter(SEG *a, SEG *b)
 		n->l_ext = b->l_ext;
 	}
 
-	return (n);
+	PG_RETURN_POINTER(n);
 }
 
-void
+static void
 rt_seg_size(SEG *a, float *size)
 {
 	if (a == (SEG *) NULL || a->upper <= a->lower)
@@ -669,7 +713,7 @@ rt_seg_size(SEG *a, float *size)
 Datum
 seg_size(PG_FUNCTION_ARGS)
 {
-	SEG		   *seg = (SEG *) PG_GETARG_POINTER(0);
+	SEG		   *seg = PG_GETARG_SEG_P(0);
 
 	PG_RETURN_FLOAT4((float) Abs(seg->upper - seg->lower));
 }
@@ -678,16 +722,19 @@ seg_size(PG_FUNCTION_ARGS)
 /*****************************************************************************
  *				   Miscellaneous operators
  *****************************************************************************/
-int32
-seg_cmp(SEG *a, SEG *b)
+Datum
+seg_cmp(PG_FUNCTION_ARGS)
 {
+	SEG		   *a = PG_GETARG_SEG_P(0);
+	SEG		   *b = PG_GETARG_SEG_P(1);
+
 	/*
 	 * First compare on lower boundary position
 	 */
 	if (a->lower < b->lower)
-		return -1;
+		PG_RETURN_INT32(-1);
 	if (a->lower > b->lower)
-		return 1;
+		PG_RETURN_INT32(1);
 
 	/*
 	 * a->lower == b->lower, so consider type of boundary.
@@ -699,27 +746,27 @@ seg_cmp(SEG *a, SEG *b)
 	if (a->l_ext != b->l_ext)
 	{
 		if (a->l_ext == '-')
-			return -1;
+			PG_RETURN_INT32(-1);
 		if (b->l_ext == '-')
-			return 1;
+			PG_RETURN_INT32(1);
 		if (a->l_ext == '<')
-			return -1;
+			PG_RETURN_INT32(-1);
 		if (b->l_ext == '<')
-			return 1;
+			PG_RETURN_INT32(1);
 		if (a->l_ext == '>')
-			return 1;
+			PG_RETURN_INT32(1);
 		if (b->l_ext == '>')
-			return -1;
+			PG_RETURN_INT32(-1);
 	}
 
 	/*
 	 * For other boundary types, consider # of significant digits first.
 	 */
 	if (a->l_sigd < b->l_sigd)	/* (a) is blurred and is likely to include (b) */
-		return -1;
+		PG_RETURN_INT32(-1);
 	if (a->l_sigd > b->l_sigd)	/* (a) is less blurred and is likely to be
 								 * included in (b) */
-		return 1;
+		PG_RETURN_INT32(1);
 
 	/*
 	 * For same # of digits, an approximate boundary is more blurred than
@@ -728,9 +775,9 @@ seg_cmp(SEG *a, SEG *b)
 	if (a->l_ext != b->l_ext)
 	{
 		if (a->l_ext == '~')	/* (a) is approximate, while (b) is exact */
-			return -1;
+			PG_RETURN_INT32(-1);
 		if (b->l_ext == '~')
-			return 1;
+			PG_RETURN_INT32(1);
 		/* can't get here unless data is corrupt */
 		elog(ERROR, "bogus lower boundary types %d %d",
 			 (int) a->l_ext, (int) b->l_ext);
@@ -742,9 +789,9 @@ seg_cmp(SEG *a, SEG *b)
 	 * First compare on upper boundary position
 	 */
 	if (a->upper < b->upper)
-		return -1;
+		PG_RETURN_INT32(-1);
 	if (a->upper > b->upper)
-		return 1;
+		PG_RETURN_INT32(1);
 
 	/*
 	 * a->upper == b->upper, so consider type of boundary.
@@ -756,17 +803,17 @@ seg_cmp(SEG *a, SEG *b)
 	if (a->u_ext != b->u_ext)
 	{
 		if (a->u_ext == '-')
-			return 1;
+			PG_RETURN_INT32(1);
 		if (b->u_ext == '-')
-			return -1;
+			PG_RETURN_INT32(-1);
 		if (a->u_ext == '<')
-			return -1;
+			PG_RETURN_INT32(-1);
 		if (b->u_ext == '<')
-			return 1;
+			PG_RETURN_INT32(1);
 		if (a->u_ext == '>')
-			return 1;
+			PG_RETURN_INT32(1);
 		if (b->u_ext == '>')
-			return -1;
+			PG_RETURN_INT32(-1);
 	}
 
 	/*
@@ -774,10 +821,10 @@ seg_cmp(SEG *a, SEG *b)
 	 * result here is converse of the lower-boundary case.
 	 */
 	if (a->u_sigd < b->u_sigd)	/* (a) is blurred and is likely to include (b) */
-		return 1;
+		PG_RETURN_INT32(1);
 	if (a->u_sigd > b->u_sigd)	/* (a) is less blurred and is likely to be
 								 * included in (b) */
-		return -1;
+		PG_RETURN_INT32(-1);
 
 	/*
 	 * For same # of digits, an approximate boundary is more blurred than
@@ -786,45 +833,61 @@ seg_cmp(SEG *a, SEG *b)
 	if (a->u_ext != b->u_ext)
 	{
 		if (a->u_ext == '~')	/* (a) is approximate, while (b) is exact */
-			return 1;
+			PG_RETURN_INT32(1);
 		if (b->u_ext == '~')
-			return -1;
+			PG_RETURN_INT32(-1);
 		/* can't get here unless data is corrupt */
 		elog(ERROR, "bogus upper boundary types %d %d",
 			 (int) a->u_ext, (int) b->u_ext);
 	}
 
-	return 0;
+	PG_RETURN_INT32(0);
 }
 
-bool
-seg_lt(SEG *a, SEG *b)
+Datum
+seg_lt(PG_FUNCTION_ARGS)
 {
-	return seg_cmp(a, b) < 0;
+	int			cmp = DatumGetInt32(
+	   DirectFunctionCall2(seg_cmp, PG_GETARG_DATUM(0), PG_GETARG_DATUM(1)));
+
+	PG_RETURN_BOOL(cmp < 0);
 }
 
-bool
-seg_le(SEG *a, SEG *b)
+Datum
+seg_le(PG_FUNCTION_ARGS)
 {
-	return seg_cmp(a, b) <= 0;
+	int			cmp = DatumGetInt32(
+	   DirectFunctionCall2(seg_cmp, PG_GETARG_DATUM(0), PG_GETARG_DATUM(1)));
+
+	PG_RETURN_BOOL(cmp <= 0);
 }
 
-bool
-seg_gt(SEG *a, SEG *b)
+Datum
+seg_gt(PG_FUNCTION_ARGS)
 {
-	return seg_cmp(a, b) > 0;
+	int			cmp = DatumGetInt32(
+	   DirectFunctionCall2(seg_cmp, PG_GETARG_DATUM(0), PG_GETARG_DATUM(1)));
+
+	PG_RETURN_BOOL(cmp > 0);
 }
 
-bool
-seg_ge(SEG *a, SEG *b)
+Datum
+seg_ge(PG_FUNCTION_ARGS)
 {
-	return seg_cmp(a, b) >= 0;
+	int			cmp = DatumGetInt32(
+	   DirectFunctionCall2(seg_cmp, PG_GETARG_DATUM(0), PG_GETARG_DATUM(1)));
+
+	PG_RETURN_BOOL(cmp >= 0);
 }
 
-bool
-seg_different(SEG *a, SEG *b)
+
+Datum
+seg_different(PG_FUNCTION_ARGS)
 {
-	return seg_cmp(a, b) != 0;
+	int			cmp = DatumGetInt32(
+	   DirectFunctionCall2(seg_cmp, PG_GETARG_DATUM(0), PG_GETARG_DATUM(1)));
+
+	PG_RETURN_BOOL(cmp != 0);
 }
 
 
@@ -984,24 +1047,6 @@ restore(char *result, float val, int n)
 /*
 ** Miscellany
 */
-
-bool
-seg_contains_int(SEG *a, int *b)
-{
-	return ((a->lower <= *b) && (a->upper >= *b));
-}
-
-bool
-seg_contains_float4(SEG *a, float4 *b)
-{
-	return ((a->lower <= *b) && (a->upper >= *b));
-}
-
-bool
-seg_contains_float8(SEG *a, float8 *b)
-{
-	return ((a->lower <= *b) && (a->upper >= *b));
-}
 
 /* find out the number of significant digits in a string representing
  * a floating point number
