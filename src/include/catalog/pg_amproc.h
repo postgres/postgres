@@ -117,6 +117,7 @@ DATA(insert (	1976   20 23 1 2189 ));
 DATA(insert (	1976   20 21 1 2193 ));
 DATA(insert (	1982   1186 1186 1 1315 ));
 DATA(insert (	1984   829 829 1 836 ));
+DATA(insert (	1984   829 829 2 3359 ));
 DATA(insert (	1986   19 19 1 359 ));
 DATA(insert (	1986   19 19 2 3135 ));
 DATA(insert (	1988   1700 1700 1 1769 ));
