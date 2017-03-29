@@ -25,8 +25,6 @@
 #endif
 
 
-#define DB_MAX_ERR_STMT 128
-
 /* translator: this is a module name */
 static const char *modulename = gettext_noop("archiver (db)");
 
@@ -449,7 +447,6 @@ ExecuteSqlCommand(ArchiveHandle *AH, const char *qry, const char *desc)
 {
 	PGconn	   *conn = AH->connection;
 	PGresult   *res;
-	char		errStmt[DB_MAX_ERR_STMT];
 
 #ifdef NOT_USED
 	fprintf(stderr, "Executing: '%s'\n\n", qry);
@@ -469,16 +466,8 @@ ExecuteSqlCommand(ArchiveHandle *AH, const char *qry, const char *desc)
 			break;
 		default:
 			/* trouble */
-			strncpy(errStmt, qry, DB_MAX_ERR_STMT);		/* strncpy required here */
-			if (errStmt[DB_MAX_ERR_STMT - 1] != '\0')
-			{
-				errStmt[DB_MAX_ERR_STMT - 4] = '.';
-				errStmt[DB_MAX_ERR_STMT - 3] = '.';
-				errStmt[DB_MAX_ERR_STMT - 2] = '.';
-				errStmt[DB_MAX_ERR_STMT - 1] = '\0';
-			}
 			warn_or_exit_horribly(AH, modulename, "%s: %s    Command was: %s\n",
-								  desc, PQerrorMessage(conn), errStmt);
+								  desc, PQerrorMessage(conn), qry);
 			break;
 	}
 
