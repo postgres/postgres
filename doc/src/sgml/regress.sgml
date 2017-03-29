@@ -205,6 +205,12 @@ make installcheck-world
    <literal>ecpg1_regression</>, or <literal>ecpg2_regression</>, as well as
    <literal>regression</>.
   </para>
+
+  <para>
+   The TAP tests are only run when PostgreSQL was configured with the
+   option <option>--enable-tap-tests</option>.  This is recommended for
+   development, but can be omitted if there is no suitable Perl installation.
+  </para>
   </sect2>
 
   <sect2>
