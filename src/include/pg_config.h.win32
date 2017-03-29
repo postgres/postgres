@@ -455,7 +455,7 @@
 #define HAVE_TOWLOWER 1
 
 /* Define to 1 if your compiler understands `typeof' or something similar. */
-#define HAVE_TYPEOF 1
+/* #undef HAVE_TYPEOF */
 
 /* Define to 1 if you have the external array `tzname'. */
 /* #undef HAVE_TZNAME */
@@ -687,4 +687,4 @@
 /* #undef signed */
 
 /* Define to how the compiler spells `typeof'. */
-#define typeof decltype
+/* #undef typeof */
