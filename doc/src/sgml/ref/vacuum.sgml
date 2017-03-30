@@ -246,39 +246,11 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">
   <title>Examples</title>
 
   <para>
-   The following is an example from running <command>VACUUM</command> on a
-   table in the regression database:
+   To clean a single table <literal>onek</literal>, analyze it for
+   the optimizer and print a detailed vacuum activity report:
 
 <programlisting>
-regression=# VACUUM (VERBOSE, ANALYZE) onek;
-INFO:  vacuuming "public.onek"
-INFO:  index "onek_unique1" now contains 1000 tuples in 14 pages
-DETAIL:  3000 index tuples were removed.
-0 index pages have been deleted, 0 are currently reusable.
-CPU: user: 0.08 s, system: 0.01 s, elapsed: 0.18 s.
-INFO:  index "onek_unique2" now contains 1000 tuples in 16 pages
-DETAIL:  3000 index tuples were removed.
-0 index pages have been deleted, 0 are currently reusable.
-CPU: user: 0.07 s, system: 0.00 s, elapsed: 0.23 s.
-INFO:  index "onek_hundred" now contains 1000 tuples in 13 pages
-DETAIL:  3000 index tuples were removed.
-0 index pages have been deleted, 0 are currently reusable.
-CPU: user: 0.08 s, system: 0.01 s, elapsed: 0.17 s.
-INFO:  index "onek_stringu1" now contains 1000 tuples in 48 pages
-DETAIL:  3000 index tuples were removed.
-0 index pages have been deleted, 0 are currently reusable.
-CPU: user: 0.09 s, system: 0.01 s, elapsed: 0.59 s.
-INFO:  "onek": removed 3000 tuples in 108 pages
-DETAIL:  CPU: user: 0.06 s, system: 0.01 s, elapsed: 0.07 s.
-INFO:  "onek": found 3000 removable, 1000 nonremovable tuples in 143 pages
-DETAIL:  0 dead tuples cannot be removed yet.
-There were 0 unused item pointers.
-Skipped 0 pages due to buffer pins, 0 frozen pages.
-0 pages are entirely empty.
-CPU: user: 0.39 s, system: 0.07 s, elapsed: 1.56 s.
-INFO:  analyzing "public.onek"
-INFO:  "onek": 36 pages, 1000 rows sampled, 1000 estimated total rows
-VACUUM
+VACUUM (VERBOSE, ANALYZE) onek;
 </programlisting></para>
  </refsect1>
 
