@@ -17,6 +17,7 @@
 #include "access/htup_details.h"
 #include "catalog/catalog.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_authid.h"
 #include "catalog/pg_tablespace.h"
 #include "commands/dbcommands.h"
 #include "commands/tablespace.h"
@@ -88,11 +89,17 @@ calculate_database_size(Oid dbOid)
 	char		pathname[MAXPGPATH];
 	AclResult	aclresult;
 
-	/* User must have connect privilege for target database */
+	/*
+	 * User must have connect privilege for target database
+	 * or be a member of pg_read_all_stats
+	 */
 	aclresult = pg_database_aclcheck(dbOid, GetUserId(), ACL_CONNECT);
-	if (aclresult != ACLCHECK_OK)
+	if (aclresult != ACLCHECK_OK &&
+		!is_member_of_role(GetUserId(), DEFAULT_ROLE_READ_ALL_STATS))
+	{
 		aclcheck_error(aclresult, ACL_KIND_DATABASE,
 					   get_database_name(dbOid));
+	}
 
 	/* Shared storage in pg_global is not counted */
 
@@ -172,11 +179,12 @@ calculate_tablespace_size(Oid tblspcOid)
 	AclResult	aclresult;
 
 	/*
-	 * User must have CREATE privilege for target tablespace, either
-	 * explicitly granted or implicitly because it is default for current
-	 * database.
+	 * User must be a member of pg_read_all_stats or have CREATE privilege for
+	 * target tablespace, either explicitly granted or implicitly because
+	 * it is default for current database.
 	 */
-	if (tblspcOid != MyDatabaseTableSpace)
+	if (tblspcOid != MyDatabaseTableSpace &&
+		!is_member_of_role(GetUserId(), DEFAULT_ROLE_READ_ALL_STATS))
 	{
 		aclresult = pg_tablespace_aclcheck(tblspcOid, GetUserId(), ACL_CREATE);
 		if (aclresult != ACLCHECK_OK)

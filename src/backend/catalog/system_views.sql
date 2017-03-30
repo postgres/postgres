@@ -1148,3 +1148,9 @@ REVOKE EXECUTE ON FUNCTION pg_stat_reset_single_function_counters(oid) FROM publ
 
 REVOKE EXECUTE ON FUNCTION pg_ls_logdir() FROM public;
 REVOKE EXECUTE ON FUNCTION pg_ls_waldir() FROM public;
+GRANT EXECUTE ON FUNCTION pg_ls_logdir() TO pg_monitor;
+GRANT EXECUTE ON FUNCTION pg_ls_waldir() TO pg_monitor;
+
+GRANT pg_read_all_settings TO pg_monitor;
+GRANT pg_read_all_stats TO pg_monitor;
+GRANT pg_stat_scan_tables TO pg_monitor;

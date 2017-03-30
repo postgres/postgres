@@ -19408,9 +19408,11 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
     accept the OID or name of a database or tablespace, and return the total
     disk space used therein.  To use <function>pg_database_size</function>,
     you must have <literal>CONNECT</> permission on the specified database
-    (which is granted by default).  To use <function>pg_tablespace_size</>,
-    you must have <literal>CREATE</> permission on the specified tablespace,
-    unless it is the default tablespace for the current database.
+    (which is granted by default), or be a member of the <literal>pg_read_all_stats</>
+    role. To use <function>pg_tablespace_size</>, you must have
+    <literal>CREATE</> permission on the specified tablespace, or be a member
+    of the <literal>pg_read_all_stats</> role unless it is the default tablespace for
+    the current database.
    </para>
 
    <para>
@@ -19736,7 +19738,8 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
        <entry><type>setof record</type></entry>
        <entry>
         List the name, size, and last modification time of files in the log
-        directory.  Access may be granted to non-superuser roles.
+        directory. Access is granted to members of the <literal>pg_monitor</>
+        role and may be granted to other non-superuser roles.
        </entry>
       </row>
       <row>
@@ -19746,7 +19749,8 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
        <entry><type>setof record</type></entry>
        <entry>
         List the name, size, and last modification time of files in the WAL
-        directory.  Access may be granted to non-superuser roles.
+        directory. Access is granted to members of the <literal>pg_monitor</>
+        role and may be granted to other non-superuser roles.
        </entry>
       </row>
       <row>
@@ -19807,8 +19811,8 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
    <para>
     <function>pg_ls_logdir</> returns the name, size, and last modified time
     (mtime) of each file in the log directory. By default, only superusers
-    can use this function, but access may be granted to others using
-    <command>GRANT</command>.
+    and members of the <literal>pg_monitor</> role can use this function.
+    Access may be granted to others using <command>GRANT</command>.
    </para>
 
    <indexterm>
@@ -19817,8 +19821,9 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
    <para>
     <function>pg_ls_waldir</> returns the name, size, and last modified time
     (mtime) of each file in the write ahead log (WAL) directory. By
-    default only superusers can use this function, but access may be granted
-    to others using <command>GRANT</command>.
+    default only superusers and members of the <literal>pg_monitor</> role
+    can use this function. Access may be granted to others using
+    <command>GRANT</command>.
    </para>
 
    <indexterm>

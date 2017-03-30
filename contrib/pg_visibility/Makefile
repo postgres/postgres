@@ -4,7 +4,8 @@ MODULE_big = pg_visibility
 OBJS = pg_visibility.o $(WIN32RES)
 
 EXTENSION = pg_visibility
-DATA = pg_visibility--1.1.sql pg_visibility--1.0--1.1.sql
+DATA = pg_visibility--1.1.sql pg_visibility--1.1--1.2.sql \
+	pg_visibility--1.0--1.1.sql
 PGFILEDESC = "pg_visibility - page visibility information"
 
 REGRESS = pg_visibility

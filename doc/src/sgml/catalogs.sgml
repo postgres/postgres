@@ -10221,15 +10221,17 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       <entry><type>text</type></entry>
       <entry>Configuration file the current value was set in (null for
       values set from sources other than configuration files, or when
-      examined by a non-superuser);
-      helpful when using <literal>include</> directives in configuration files</entry>
+      examined by a user who is neither a superuser or a member of
+      <literal>pg_read_all_settings</literal>); helpful when using
+      <literal>include</> directives in configuration files</entry>
      </row>
      <row>
       <entry><structfield>sourceline</structfield></entry>
       <entry><type>integer</type></entry>
       <entry>Line number within the configuration file the current value was
       set at (null for values set from sources other than configuration files,
-      or when examined by a non-superuser)
+      or when examined by a user who is neither a superuser or a member of
+      <literal>pg_read_all_settings</literal>).
       </entry>
      </row>
      <row>

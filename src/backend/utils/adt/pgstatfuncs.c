@@ -15,6 +15,7 @@
 #include "postgres.h"
 
 #include "access/htup_details.h"
+#include "catalog/pg_authid.h"
 #include "catalog/pg_type.h"
 #include "common/ip.h"
 #include "funcapi.h"
@@ -658,8 +659,9 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 			nulls[19] = nulls[20] = nulls[21] = nulls[22] = nulls[23] = true;
 		}
 
-		/* Values only available to role member */
-		if (has_privs_of_role(GetUserId(), beentry->st_userid))
+		/* Values only available to role member or pg_read_all_stats */
+		if (has_privs_of_role(GetUserId(), beentry->st_userid) ||
+			is_member_of_role(GetUserId(), DEFAULT_ROLE_READ_ALL_STATS))
 		{
 			SockAddr	zero_clientaddr;
 

@@ -516,12 +516,48 @@ DROP ROLE doomed_role;
      </thead>
      <tbody>
       <row>
+       <entry>pg_read_all_settings</entry>
+       <entry>Read all configuration variables, even those normally visible only to
+       superusers.</entry>
+      </row>
+      <row>
+       <entry>pg_read_all_stats</entry>
+       <entry>Read all pg_stat_* views and use various statistics related extensions,
+       even those normally visible only to superusers.</entry>
+      </row>
+      <row>
+       <entry>pg_stat_scan_tables</entry>
+       <entry>Execute monitoring functions that may take AccessShareLocks on tables,
+       potentially for a long time.</entry>
+      </row>
+      <row>
        <entry>pg_signal_backend</entry>
        <entry>Send signals to other backends (eg: cancel query, terminate).</entry>
+      </row>
+      <row>
+       <entry>pg_monitor</entry>
+       <entry>Read/execute various monitoring views and functions.
+       This role is a member of <literal>pg_read_all_settings</literal>,
+       <literal>pg_read_all_stats</literal> and
+       <literal>pg_stat_scan_tables</literal>.</entry>
       </row>
      </tbody>
     </tgroup>
    </table>
+
+  <para>
+  The <literal>pg_monitor</literal>, <literal>pg_read_all_settings</literal>,
+  <literal>pg_read_all_stats</literal> and <literal>pg_stat_scan_tables</literal>
+  roles are intended to allow administrators to easily configure a role for the
+  purpose of monitoring the database server. They grant a set of common privileges
+  allowing the role to read various useful configuration settings, statistics and
+  other system information normally restricted to superusers.
+  </para>
+
+  <para>
+  Care should be taken when granting these roles to ensure they are only used where
+  needed to perform the desired monitoring.
+  </para>
 
   <para>
    Administrators can grant access to these roles to users using the GRANT

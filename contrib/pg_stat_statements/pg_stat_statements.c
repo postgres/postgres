@@ -62,6 +62,7 @@
 #include <unistd.h>
 
 #include "access/hash.h"
+#include "catalog/pg_authid.h"
 #include "executor/instrument.h"
 #include "funcapi.h"
 #include "mb/pg_wchar.h"
@@ -1391,13 +1392,16 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 	MemoryContext per_query_ctx;
 	MemoryContext oldcontext;
 	Oid			userid = GetUserId();
-	bool		is_superuser = superuser();
+	bool		is_allowed_role = false;
 	char	   *qbuffer = NULL;
 	Size		qbuffer_size = 0;
 	Size		extent = 0;
 	int			gc_count = 0;
 	HASH_SEQ_STATUS hash_seq;
 	pgssEntry  *entry;
+
+	/* Superusers or members of pg_read_all_stats members are allowed */
+	is_allowed_role = is_member_of_role(GetUserId(), DEFAULT_ROLE_READ_ALL_STATS);
 
 	/* hash table must exist already */
 	if (!pgss || !pgss_hash)
@@ -1541,7 +1545,7 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 		values[i++] = ObjectIdGetDatum(entry->key.userid);
 		values[i++] = ObjectIdGetDatum(entry->key.dbid);
 
-		if (is_superuser || entry->key.userid == userid)
+		if (is_allowed_role || entry->key.userid == userid)
 		{
 			if (api_version >= PGSS_V1_2)
 				values[i++] = Int64GetDatumFast(queryid);

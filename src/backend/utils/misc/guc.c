@@ -34,6 +34,7 @@
 #include "access/xact.h"
 #include "access/xlog_internal.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_authid.h"
 #include "commands/async.h"
 #include "commands/prepare.h"
 #include "commands/user.h"
@@ -6689,10 +6690,11 @@ GetConfigOption(const char *name, bool missing_ok, bool restrict_superuser)
 	}
 	if (restrict_superuser &&
 		(record->flags & GUC_SUPERUSER_ONLY) &&
-		!superuser())
+		!is_member_of_role(GetUserId(), DEFAULT_ROLE_READ_ALL_SETTINGS))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be superuser to examine \"%s\"", name)));
+				 errmsg("must be superuser or a member of pg_read_all_settings to examine \"%s\"",
+				 name)));
 
 	switch (record->vartype)
 	{
@@ -6737,10 +6739,12 @@ GetConfigOptionResetString(const char *name)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 			   errmsg("unrecognized configuration parameter \"%s\"", name)));
-	if ((record->flags & GUC_SUPERUSER_ONLY) && !superuser())
+	if ((record->flags & GUC_SUPERUSER_ONLY) &&
+		!is_member_of_role(GetUserId(), DEFAULT_ROLE_READ_ALL_SETTINGS))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be superuser to examine \"%s\"", name)));
+				 errmsg("must be superuser or a member of pg_read_all_settings to examine \"%s\"",
+				 name)));
 
 	switch (record->vartype)
 	{
@@ -8027,10 +8031,12 @@ GetConfigOptionByName(const char *name, const char **varname, bool missing_ok)
 			   errmsg("unrecognized configuration parameter \"%s\"", name)));
 	}
 
-	if ((record->flags & GUC_SUPERUSER_ONLY) && !superuser())
+	if ((record->flags & GUC_SUPERUSER_ONLY) &&
+		!is_member_of_role(GetUserId(), DEFAULT_ROLE_READ_ALL_SETTINGS))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be superuser to examine \"%s\"", name)));
+				 errmsg("must be superuser or a member of pg_read_all_settings to examine \"%s\"",
+				 name)));
 
 	if (varname)
 		*varname = record->name;
@@ -8056,7 +8062,8 @@ GetConfigOptionByNum(int varnum, const char **values, bool *noshow)
 	if (noshow)
 	{
 		if ((conf->flags & GUC_NO_SHOW_ALL) ||
-			((conf->flags & GUC_SUPERUSER_ONLY) && !superuser()))
+			((conf->flags & GUC_SUPERUSER_ONLY) &&
+			!is_member_of_role(GetUserId(), DEFAULT_ROLE_READ_ALL_SETTINGS)))
 			*noshow = true;
 		else
 			*noshow = false;

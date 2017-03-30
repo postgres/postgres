@@ -99,10 +99,18 @@ typedef FormData_pg_authid *Form_pg_authid;
  * ----------------
  */
 DATA(insert OID = 10 ( "POSTGRES" t t t t t t t -1 _null_ _null_));
+DATA(insert OID = 3373 ( "pg_monitor" f t f f f f f -1 _null_ _null_));
+DATA(insert OID = 3374 ( "pg_read_all_settings" f t f f f f f -1 _null_ _null_));
+DATA(insert OID = 3375 ( "pg_read_all_stats" f t f f f f f -1 _null_ _null_));
+DATA(insert OID = 3377 ( "pg_stat_scan_tables" f t f f f f f -1 _null_ _null_));
 DATA(insert OID = 4200 ( "pg_signal_backend" f t f f f f f -1 _null_ _null_));
 
 #define BOOTSTRAP_SUPERUSERID			10
 
+#define DEFAULT_ROLE_MONITOR		3373
+#define DEFAULT_ROLE_READ_ALL_SETTINGS	3374
+#define DEFAULT_ROLE_READ_ALL_STATS	3375
+#define DEFAULT_ROLE_STAT_SCAN_TABLES	3377
 #define DEFAULT_ROLE_SIGNAL_BACKENDID	4200
 
 #endif   /* PG_AUTHID_H */

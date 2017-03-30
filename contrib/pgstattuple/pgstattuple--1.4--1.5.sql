@@ -17,6 +17,7 @@ AS 'MODULE_PATHNAME', 'pgstattuple_v1_5'
 LANGUAGE C STRICT PARALLEL SAFE;
 
 REVOKE EXECUTE ON FUNCTION pgstattuple(text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION pgstattuple(text) TO pg_stat_scan_tables;
 
 CREATE OR REPLACE FUNCTION pgstatindex(IN relname text,
     OUT version INT,
@@ -33,6 +34,7 @@ AS 'MODULE_PATHNAME', 'pgstatindex_v1_5'
 LANGUAGE C STRICT PARALLEL SAFE;
 
 REVOKE EXECUTE ON FUNCTION pgstatindex(text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION pgstatindex(text) TO pg_stat_scan_tables;
 
 CREATE OR REPLACE FUNCTION pg_relpages(IN relname text)
 RETURNS BIGINT
@@ -40,6 +42,7 @@ AS 'MODULE_PATHNAME', 'pg_relpages_v1_5'
 LANGUAGE C STRICT PARALLEL SAFE;
 
 REVOKE EXECUTE ON FUNCTION pg_relpages(text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION pg_relpages(text) TO pg_stat_scan_tables;
 
 /* New stuff in 1.1 begins here */
 
@@ -51,6 +54,7 @@ AS 'MODULE_PATHNAME', 'pgstatginindex_v1_5'
 LANGUAGE C STRICT PARALLEL SAFE;
 
 REVOKE EXECUTE ON FUNCTION pgstatginindex(regclass) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION pgstatginindex(regclass) TO pg_stat_scan_tables;
 
 /* New stuff in 1.2 begins here */
 
@@ -68,6 +72,7 @@ AS 'MODULE_PATHNAME', 'pgstattuplebyid_v1_5'
 LANGUAGE C STRICT PARALLEL SAFE;
 
 REVOKE EXECUTE ON FUNCTION pgstattuple(regclass) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION pgstattuple(regclass) TO pg_stat_scan_tables;
 
 CREATE OR REPLACE FUNCTION pgstatindex(IN relname regclass,
     OUT version INT,
@@ -84,6 +89,7 @@ AS 'MODULE_PATHNAME', 'pgstatindexbyid_v1_5'
 LANGUAGE C STRICT PARALLEL SAFE;
 
 REVOKE EXECUTE ON FUNCTION pgstatindex(regclass) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION pgstatindex(regclass) TO pg_stat_scan_tables;
 
 CREATE OR REPLACE FUNCTION pg_relpages(IN relname regclass)
 RETURNS BIGINT
@@ -91,6 +97,7 @@ AS 'MODULE_PATHNAME', 'pg_relpagesbyid_v1_5'
 LANGUAGE C STRICT PARALLEL SAFE;
 
 REVOKE EXECUTE ON FUNCTION pg_relpages(regclass) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION pg_relpages(regclass) TO pg_stat_scan_tables;
 
 /* New stuff in 1.3 begins here */
 
@@ -109,6 +116,7 @@ AS 'MODULE_PATHNAME', 'pgstattuple_approx_v1_5'
 LANGUAGE C STRICT PARALLEL SAFE;
 
 REVOKE EXECUTE ON FUNCTION pgstattuple_approx(regclass) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION pgstattuple_approx(regclass) TO pg_stat_scan_tables;
 
 /* New stuff in 1.5 begins here */
 
@@ -125,3 +133,4 @@ AS 'MODULE_PATHNAME', 'pgstathashindex'
 LANGUAGE C STRICT PARALLEL SAFE;
 
 REVOKE EXECUTE ON FUNCTION pgstathashindex(regclass) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION pgstathashindex(regclass) TO pg_stat_scan_tables;
