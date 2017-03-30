@@ -227,7 +227,7 @@
 
   <para>
    For security reasons, only superusers and members of the
-   <literal>pg_read_all_stats<literal> role are allowed to see the SQL text and
+   <literal>pg_read_all_stats</literal> role are allowed to see the SQL text and
    <structfield>queryid</structfield> of queries executed by other users.
    Other users can see the statistics, however, if the view has been installed
    in their database.
