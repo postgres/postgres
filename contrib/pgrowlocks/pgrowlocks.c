@@ -100,7 +100,7 @@ pgrowlocks(PG_FUNCTION_ARGS)
 		rel = heap_openrv(relrv, AccessShareLock);
 
 		/* check permissions: must have SELECT on table or be in pg_stat_scan_tables */
-		aclresult = (pg_class_aclcheck(RelationGetRelid(rel), GetUserId(),
+		aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(),
 									  ACL_SELECT) ||
 			is_member_of_role(GetUserId(), DEFAULT_ROLE_STAT_SCAN_TABLES);
 
