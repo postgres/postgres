@@ -66,7 +66,7 @@
  */
 
 char *
-get_prompt(promptStatus_t status)
+get_prompt(promptStatus_t status, ConditionalStack cstack)
 {
 #define MAX_PROMPT_SIZE 256
 	static char destination[MAX_PROMPT_SIZE + 1];
@@ -188,7 +188,9 @@ get_prompt(promptStatus_t status)
 					switch (status)
 					{
 						case PROMPT_READY:
-							if (!pset.db)
+							if (cstack != NULL && !conditional_active(cstack))
+								buf[0] = '@';
+							else if (!pset.db)
 								buf[0] = '!';
 							else if (!pset.singleline)
 								buf[0] = '=';

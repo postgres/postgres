@@ -552,7 +552,7 @@ handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary, PGresult **res)
 		/* interactive input probably silly, but give one prompt anyway */
 		if (showprompt)
 		{
-			const char *prompt = get_prompt(PROMPT_COPY);
+			const char *prompt = get_prompt(PROMPT_COPY, NULL);
 
 			fputs(prompt, stdout);
 			fflush(stdout);
@@ -590,7 +590,7 @@ handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary, PGresult **res)
 
 			if (showprompt)
 			{
-				const char *prompt = get_prompt(PROMPT_COPY);
+				const char *prompt = get_prompt(PROMPT_COPY, NULL);
 
 				fputs(prompt, stdout);
 				fflush(stdout);

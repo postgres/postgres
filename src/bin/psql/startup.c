@@ -331,6 +331,7 @@ main(int argc, char *argv[])
 			else if (cell->action == ACT_SINGLE_SLASH)
 			{
 				PsqlScanState scan_state;
+				ConditionalStack cond_stack;
 
 				if (pset.echo == PSQL_ECHO_ALL)
 					puts(cell->val);
@@ -339,11 +340,17 @@ main(int argc, char *argv[])
 				psql_scan_setup(scan_state,
 								cell->val, strlen(cell->val),
 								pset.encoding, standard_strings());
+				cond_stack = conditional_stack_create();
+				psql_scan_set_passthrough(scan_state, (void *) cond_stack);
 
-				successResult = HandleSlashCmds(scan_state, NULL) != PSQL_CMD_ERROR
+				successResult = HandleSlashCmds(scan_state,
+												cond_stack,
+												NULL,
+												NULL) != PSQL_CMD_ERROR
 					? EXIT_SUCCESS : EXIT_FAILURE;
 
 				psql_scan_destroy(scan_state);
+				conditional_stack_destroy(cond_stack);
 			}
 			else if (cell->action == ACT_FILE)
 			{

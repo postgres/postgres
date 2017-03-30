@@ -2064,6 +2064,95 @@ hello 10
 
 
       <varlistentry>
+        <term><literal>\if</literal> <replaceable class="parameter">expression</replaceable></term>
+        <term><literal>\elif</literal> <replaceable class="parameter">expression</replaceable></term>
+        <term><literal>\else</literal></term>
+        <term><literal>\endif</literal></term>
+        <listitem>
+        <para>
+        This group of commands implements nestable conditional blocks.
+        A conditional block must begin with an <command>\if</command> and end
+        with an <command>\endif</command>.  In between there may be any number
+        of <command>\elif</command> clauses, which may optionally be followed
+        by a single <command>\else</command> clause.  Ordinary queries and
+        other types of backslash commands may (and usually do) appear between
+        the commands forming a conditional block.
+        </para>
+        <para>
+        The <command>\if</command> and <command>\elif</command> commands read
+        their argument(s) and evaluate them as a boolean expression.  If the
+        expression yields <literal>true</literal> then processing continues
+        normally; otherwise, lines are skipped until a
+        matching <command>\elif</command>, <command>\else</command>,
+        or <command>\endif</command> is reached.  Once
+        an <command>\if</command> or <command>\elif</command> test has
+        succeeded, the arguments of later <command>\elif</command> commands in
+        the same block are not evaluated but are treated as false.  Lines
+        following an <command>\else</command> are processed only if no earlier
+        matching <command>\if</command> or <command>\elif</command> succeeded.
+        </para>
+        <para>
+        The <replaceable class="parameter">expression</replaceable> argument
+        of an <command>\if</command> or <command>\elif</command> command
+        is subject to variable interpolation and backquote expansion, just
+        like any other backslash command argument.  After that it is evaluated
+        like the value of an on/off option variable.  So a valid value
+        is any unambiguous case-insensitive match for one of:
+        <literal>true</literal>, <literal>false</literal>, <literal>1</literal>,
+        <literal>0</literal>, <literal>on</literal>, <literal>off</literal>,
+        <literal>yes</literal>, <literal>no</literal>.  For example,
+        <literal>t</literal>, <literal>T</literal>, and <literal>tR</literal>
+        will all be considered to be <literal>true</literal>.
+        </para>
+        <para>
+        Expressions that do not properly evaluate to true or false will
+        generate a warning and be treated as false.
+        </para>
+        <para>
+        Lines being skipped are parsed normally to identify queries and
+        backslash commands, but queries are not sent to the server, and
+        backslash commands other than conditionals
+        (<command>\if</command>, <command>\elif</command>,
+        <command>\else</command>, <command>\endif</command>) are
+        ignored.  Conditional commands are checked only for valid nesting.
+        Variable references in skipped lines are not expanded, and backquote
+        expansion is not performed either.
+        </para>
+        <para>
+        All the backslash commands of a given conditional block must appear in
+        the same source file. If EOF is reached on the main input file or an
+        <command>\include</command>-ed file before all local
+        <command>\if</command>-blocks have been closed,
+        then <application>psql</> will raise an error.
+        </para>
+        <para>
+         Here is an example:
+        </para>
+<programlisting>
+-- check for the existence of two separate records in the database and store
+-- the results in separate psql variables
+SELECT
+    EXISTS(SELECT 1 FROM customer WHERE customer_id = 123) as is_customer,
+    EXISTS(SELECT 1 FROM employee WHERE employee_id = 456) as is_employee
+\gset
+\if :is_customer
+    SELECT * FROM customer WHERE customer_id = 123;
+\elif :is_employee
+    \echo 'is not a customer but is an employee'
+    SELECT * FROM employee WHERE employee_id = 456;
+\else
+    \if yes
+        \echo 'not a customer or employee'
+    \else
+        \echo 'this will never print'
+    \endif
+\endif
+</programlisting>
+        </listitem>
+      </varlistentry>
+
+
+      <varlistentry>
         <term><literal>\l[+]</literal> or <literal>\list[+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
@@ -3715,7 +3804,8 @@ testdb=&gt; <userinput>INSERT INTO my_table VALUES (:'content');</userinput>
         <listitem>
         <para>
         In prompt 1 normally <literal>=</literal>,
-        but <literal>^</literal> if in single-line mode,
+        but <literal>@</literal> if the session is in an inactive branch of a
+        conditional block, or <literal>^</literal> if in single-line mode,
         or <literal>!</literal> if the session is disconnected from the
         database (which can happen if <command>\connect</command> fails).
         In prompt 2 <literal>%R</literal> is replaced by a character that

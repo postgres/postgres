@@ -121,7 +121,8 @@ setQFout(const char *fname)
  * (Failure in escaping should lead to returning NULL.)
  *
  * "passthrough" is the pointer previously given to psql_scan_set_passthrough.
- * psql currently doesn't use this.
+ * In psql, passthrough points to a ConditionalStack, which we check to
+ * determine whether variable expansion is allowed.
  */
 char *
 psql_get_variable(const char *varname, bool escape, bool as_ident,
@@ -129,6 +130,10 @@ psql_get_variable(const char *varname, bool escape, bool as_ident,
 {
 	char	   *result;
 	const char *value;
+
+	/* In an inactive \if branch, suppress all variable substitutions */
+	if (passthrough && !conditional_active((ConditionalStack) passthrough))
+		return NULL;
 
 	value = GetVariable(pset.vars, varname);
 	if (!value)

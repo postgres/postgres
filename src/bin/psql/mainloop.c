@@ -35,6 +35,7 @@ int
 MainLoop(FILE *source)
 {
 	PsqlScanState scan_state;	/* lexer working state */
+	ConditionalStack cond_stack;	/* \if status stack */
 	volatile PQExpBuffer query_buf;		/* buffer for query being accumulated */
 	volatile PQExpBuffer previous_buf;	/* if there isn't anything in the new
 										 * buffer yet, use this one for \e,
@@ -50,16 +51,15 @@ MainLoop(FILE *source)
 	volatile promptStatus_t prompt_status = PROMPT_READY;
 	volatile int count_eof = 0;
 	volatile bool die_on_error = false;
-
-	/* Save the prior command source */
 	FILE	   *prev_cmd_source;
 	bool		prev_cmd_interactive;
 	uint64		prev_lineno;
 
-	/* Save old settings */
+	/* Save the prior command source */
 	prev_cmd_source = pset.cur_cmd_source;
 	prev_cmd_interactive = pset.cur_cmd_interactive;
 	prev_lineno = pset.lineno;
+	/* pset.stmt_lineno does not need to be saved and restored */
 
 	/* Establish new source */
 	pset.cur_cmd_source = source;
@@ -69,6 +69,8 @@ MainLoop(FILE *source)
 
 	/* Create working state */
 	scan_state = psql_scan_create(&psqlscan_callbacks);
+	cond_stack = conditional_stack_create();
+	psql_scan_set_passthrough(scan_state, (void *) cond_stack);
 
 	query_buf = createPQExpBuffer();
 	previous_buf = createPQExpBuffer();
@@ -122,7 +124,19 @@ MainLoop(FILE *source)
 			cancel_pressed = false;
 
 			if (pset.cur_cmd_interactive)
+			{
 				putc('\n', stdout);
+
+				/*
+				 * if interactive user is in an \if block, then Ctrl-C will
+				 * exit from the innermost \if.
+				 */
+				if (!conditional_stack_empty(cond_stack))
+				{
+					psql_error("\\if: escaped\n");
+					conditional_stack_pop(cond_stack);
+				}
+			}
 			else
 			{
 				successResult = EXIT_USER;
@@ -140,7 +154,8 @@ MainLoop(FILE *source)
 			/* May need to reset prompt, eg after \r command */
 			if (query_buf->len == 0)
 				prompt_status = PROMPT_READY;
-			line = gets_interactive(get_prompt(prompt_status), query_buf);
+			line = gets_interactive(get_prompt(prompt_status, cond_stack),
+									query_buf);
 		}
 		else
 		{
@@ -286,8 +301,10 @@ MainLoop(FILE *source)
 				(scan_result == PSCAN_EOL && pset.singleline))
 			{
 				/*
-				 * Save query in history.  We use history_buf to accumulate
-				 * multi-line queries into a single history entry.
+				 * Save line in history.  We use history_buf to accumulate
+				 * multi-line queries into a single history entry.  Note that
+				 * history accumulation works on input lines, so it doesn't
+				 * matter whether the query will be ignored due to \if.
 				 */
 				if (pset.cur_cmd_interactive && !line_saved_in_history)
 				{
@@ -296,22 +313,36 @@ MainLoop(FILE *source)
 					line_saved_in_history = true;
 				}
 
-				/* execute query */
-				success = SendQuery(query_buf->data);
-				slashCmdStatus = success ? PSQL_CMD_SEND : PSQL_CMD_ERROR;
-				pset.stmt_lineno = 1;
-
-				/* transfer query to previous_buf by pointer-swapping */
+				/* execute query unless we're in an inactive \if branch */
+				if (conditional_active(cond_stack))
 				{
-					PQExpBuffer swap_buf = previous_buf;
+					success = SendQuery(query_buf->data);
+					slashCmdStatus = success ? PSQL_CMD_SEND : PSQL_CMD_ERROR;
+					pset.stmt_lineno = 1;
 
-					previous_buf = query_buf;
-					query_buf = swap_buf;
+					/* transfer query to previous_buf by pointer-swapping */
+					{
+						PQExpBuffer swap_buf = previous_buf;
+
+						previous_buf = query_buf;
+						query_buf = swap_buf;
+					}
+					resetPQExpBuffer(query_buf);
+
+					added_nl_pos = -1;
+					/* we need not do psql_scan_reset() here */
 				}
-				resetPQExpBuffer(query_buf);
-
-				added_nl_pos = -1;
-				/* we need not do psql_scan_reset() here */
+				else
+				{
+					/* if interactive, warn about non-executed query */
+					if (pset.cur_cmd_interactive)
+						psql_error("query ignored; use \\endif or Ctrl-C to exit current \\if block\n");
+					/* fake an OK result for purposes of loop checks */
+					success = true;
+					slashCmdStatus = PSQL_CMD_SEND;
+					pset.stmt_lineno = 1;
+					/* note that query_buf doesn't change state */
+				}
 			}
 			else if (scan_result == PSCAN_BACKSLASH)
 			{
@@ -343,21 +374,24 @@ MainLoop(FILE *source)
 
 				/* execute backslash command */
 				slashCmdStatus = HandleSlashCmds(scan_state,
-												 query_buf->len > 0 ?
-												 query_buf : previous_buf);
+												 cond_stack,
+												 query_buf,
+												 previous_buf);
 
 				success = slashCmdStatus != PSQL_CMD_ERROR;
-				pset.stmt_lineno = 1;
 
-				if ((slashCmdStatus == PSQL_CMD_SEND || slashCmdStatus == PSQL_CMD_NEWEDIT) &&
-					query_buf->len == 0)
-				{
-					/* copy previous buffer to current for handling */
-					appendPQExpBufferStr(query_buf, previous_buf->data);
-				}
+				/*
+				 * Resetting stmt_lineno after a backslash command isn't
+				 * always appropriate, but it's what we've done historically
+				 * and there have been few complaints.
+				 */
+				pset.stmt_lineno = 1;
 
 				if (slashCmdStatus == PSQL_CMD_SEND)
 				{
+					/* should not see this in inactive branch */
+					Assert(conditional_active(cond_stack));
+
 					success = SendQuery(query_buf->data);
 
 					/* transfer query to previous_buf by pointer-swapping */
@@ -374,6 +408,8 @@ MainLoop(FILE *source)
 				}
 				else if (slashCmdStatus == PSQL_CMD_NEWEDIT)
 				{
+					/* should not see this in inactive branch */
+					Assert(conditional_active(cond_stack));
 					/* rescan query_buf as new input */
 					psql_scan_finish(scan_state);
 					free(line);
@@ -429,13 +465,35 @@ MainLoop(FILE *source)
 		if (pset.cur_cmd_interactive)
 			pg_send_history(history_buf);
 
-		/* execute query */
-		success = SendQuery(query_buf->data);
+		/* execute query unless we're in an inactive \if branch */
+		if (conditional_active(cond_stack))
+		{
+			success = SendQuery(query_buf->data);
+		}
+		else
+		{
+			if (pset.cur_cmd_interactive)
+				psql_error("query ignored; use \\endif or Ctrl-C to exit current \\if block\n");
+			success = true;
+		}
 
 		if (!success && die_on_error)
 			successResult = EXIT_USER;
 		else if (pset.db == NULL)
 			successResult = EXIT_BADCONN;
+	}
+
+	/*
+	 * Check for unbalanced \if-\endifs unless user explicitly quit, or the
+	 * script is erroring out
+	 */
+	if (slashCmdStatus != PSQL_CMD_TERMINATE &&
+		successResult != EXIT_USER &&
+		!conditional_stack_empty(cond_stack))
+	{
+		psql_error("reached EOF without finding closing \\endif(s)\n");
+		if (die_on_error && !pset.cur_cmd_interactive)
+			successResult = EXIT_USER;
 	}
 
 	/*
@@ -452,6 +510,7 @@ MainLoop(FILE *source)
 	destroyPQExpBuffer(history_buf);
 
 	psql_scan_destroy(scan_state);
+	conditional_stack_destroy(cond_stack);
 
 	pset.cur_cmd_source = prev_cmd_source;
 	pset.cur_cmd_interactive = prev_cmd_interactive;

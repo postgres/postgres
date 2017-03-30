@@ -167,7 +167,7 @@ slashUsage(unsigned short int pager)
 	 * Use "psql --help=commands | wc" to count correctly.  It's okay to count
 	 * the USE_READLINE line even in builds without that.
 	 */
-	output = PageOutput(113, pager ? &(pset.popt.topt) : NULL);
+	output = PageOutput(122, pager ? &(pset.popt.topt) : NULL);
 
 	fprintf(output, _("General\n"));
 	fprintf(output, _("  \\copyright             show PostgreSQL usage and distribution terms\n"));
@@ -208,6 +208,13 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  \\ir FILE               as \\i, but relative to location of current script\n"));
 	fprintf(output, _("  \\o [FILE]              send all query results to file or |pipe\n"));
 	fprintf(output, _("  \\qecho [STRING]        write string to query output stream (see \\o)\n"));
+	fprintf(output, "\n");
+
+	fprintf(output, _("Conditional\n"));
+	fprintf(output, _("  \\if EXPR               begin conditional block\n"));
+	fprintf(output, _("  \\elif EXPR             alternative within current conditional block\n"));
+	fprintf(output, _("  \\else                  final alternative within current conditional block\n"));
+	fprintf(output, _("  \\endif                 end conditional block\n"));
 	fprintf(output, "\n");
 
 	fprintf(output, _("Informational\n"));

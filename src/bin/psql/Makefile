@@ -21,10 +21,10 @@ REFDOCDIR= $(top_srcdir)/doc/src/sgml/ref
 override CPPFLAGS := -I. -I$(srcdir) -I$(libpq_srcdir) $(CPPFLAGS)
 LDFLAGS += -L$(top_builddir)/src/fe_utils -lpgfeutils -lpq
 
-OBJS=	command.o common.o help.o input.o stringutils.o mainloop.o copy.o \
-	startup.o prompt.o variables.o large_obj.o describe.o \
-	crosstabview.o tab-complete.o \
-	sql_help.o psqlscanslash.o \
+OBJS=	command.o common.o conditional.o copy.o crosstabview.o \
+	describe.o help.o input.o large_obj.o mainloop.o \
+	prompt.o psqlscanslash.o sql_help.o startup.o stringutils.o \
+	tab-complete.o variables.o \
 	$(WIN32RES)
 
 

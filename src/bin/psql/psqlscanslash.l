@@ -19,6 +19,7 @@
 #include "postgres_fe.h"
 
 #include "psqlscanslash.h"
+#include "conditional.h"
 
 #include "libpq-fe.h"
 }
@@ -230,8 +231,7 @@ other			.
 
 :{variable_char}+	{
 					/* Possible psql variable substitution */
-					if (option_type == OT_NO_EVAL ||
-						cur_state->callbacks->get_variable == NULL)
+					if (cur_state->callbacks->get_variable == NULL)
 						ECHO;
 					else
 					{
@@ -268,25 +268,15 @@ other			.
 				}
 
 :'{variable_char}+'	{
-					if (option_type == OT_NO_EVAL)
-						ECHO;
-					else
-					{
-						psqlscan_escape_variable(cur_state, yytext, yyleng, false);
-						*option_quote = ':';
-					}
+					psqlscan_escape_variable(cur_state, yytext, yyleng, false);
+					*option_quote = ':';
 					unquoted_option_chars = 0;
 				}
 
 
 :\"{variable_char}+\"	{
-					if (option_type == OT_NO_EVAL)
-						ECHO;
-					else
-					{
-						psqlscan_escape_variable(cur_state, yytext, yyleng, true);
-						*option_quote = ':';
-					}
+					psqlscan_escape_variable(cur_state, yytext, yyleng, true);
+					*option_quote = ':';
 					unquoted_option_chars = 0;
 				}
 
@@ -353,8 +343,9 @@ other			.
 	 */
 
 "`"				{
-					/* In NO_EVAL mode, don't evaluate the command */
-					if (option_type != OT_NO_EVAL)
+					/* In an inactive \if branch, don't evaluate the command */
+					if (cur_state->cb_passthrough == NULL ||
+						conditional_active((ConditionalStack) cur_state->cb_passthrough))
 						evaluate_backtick(cur_state);
 					BEGIN(xslasharg);
 				}
@@ -639,6 +630,25 @@ psql_scan_slash_command_end(PsqlScanState state)
 	 * reselect the appropriate initial state.
 	 */
 	psql_scan_reselect_sql_lexer(state);
+}
+
+/*
+ * Fetch current paren nesting depth
+ */
+int
+psql_scan_get_paren_depth(PsqlScanState state)
+{
+	return state->paren_depth;
+}
+
+/*
+ * Set paren nesting depth
+ */
+void
+psql_scan_set_paren_depth(PsqlScanState state, int depth)
+{
+	Assert(depth >= 0);
+	state->paren_depth = depth;
 }
 
 /*
