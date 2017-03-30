@@ -2173,6 +2173,7 @@ PG_FUNCTION_INFO_V1(funcname);
 
     <para>
      Here are some examples using the version-1 calling convention:
+    </para>
 
 <programlisting><![CDATA[
 #include "postgres.h"
@@ -2277,6 +2278,7 @@ concat_text(PG_FUNCTION_ARGS)
      <filename>funcs.c</filename> and compiled into a shared object,
      we could define the functions to <productname>PostgreSQL</productname>
      with commands like this:
+    </para>
 
 <programlisting>
 CREATE FUNCTION add_one(integer) RETURNS integer
