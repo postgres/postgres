@@ -750,9 +750,11 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
       class="parameter">refcolumn</replaceable> list is omitted, the
       primary key of the <replaceable class="parameter">reftable</replaceable>
       is used.  The referenced columns must be the columns of a non-deferrable
-      unique or primary key constraint in the referenced table.  Note that
-      foreign key constraints cannot be defined between temporary tables and
-      permanent tables.
+      unique or primary key constraint in the referenced table.  The user
+      must have <literal>REFERENCES</> permission on the referenced table
+      (either the whole table, or the specific referenced columns).
+      Note that foreign key constraints cannot be defined between temporary
+      tables and permanent tables.
      </para>
 
      <para>

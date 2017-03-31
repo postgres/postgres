@@ -6817,7 +6817,6 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 	 * Now we can check permissions.
 	 */
 	checkFkeyPermissions(pkrel, pkattnum, numpks);
-	checkFkeyPermissions(rel, fkattnum, numfks);
 
 	/*
 	 * Look up the equality operators to use in the constraint.
@@ -7745,7 +7744,12 @@ findFkeyCast(Oid targetTypeId, Oid sourceTypeId, Oid *funcid)
 	return ret;
 }
 
-/* Permissions checks for ADD FOREIGN KEY */
+/*
+ * Permissions checks on the referenced table for ADD FOREIGN KEY
+ *
+ * Note: we have already checked that the user owns the referencing table,
+ * else we'd have failed much earlier; no additional checks are needed for it.
+ */
 static void
 checkFkeyPermissions(Relation rel, int16 *attnums, int natts)
 {

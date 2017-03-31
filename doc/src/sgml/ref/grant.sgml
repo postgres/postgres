@@ -257,10 +257,9 @@ GRANT <replaceable class="PARAMETER">role_name</replaceable> [, ...] TO <replace
      <term>REFERENCES</term>
      <listitem>
       <para>
-       To create a foreign key constraint, it is
-       necessary to have this privilege on both the referencing and
-       referenced columns.  The privilege may be granted for all columns
-       of a table, or just specific columns.
+       Allows creation of a foreign key constraint referencing the specified
+       table, or specified column(s) of the table.  (See the
+       <xref linkend="sql-createtable"> statement.)
       </para>
      </listitem>
     </varlistentry>
@@ -351,7 +350,7 @@ GRANT <replaceable class="PARAMETER">role_name</replaceable> [, ...] TO <replace
        <function>currval</function> and <function>nextval</function> functions.
       </para>
       <para>
-       For types and domains, this privilege allow the use of the type or
+       For types and domains, this privilege allows the use of the type or
        domain in the creation of tables, functions, and other schema objects.
        (Note that it does not control general <quote>usage</quote> of the type,
        such as values of the type appearing in queries.  It only prevents
@@ -360,13 +359,13 @@ GRANT <replaceable class="PARAMETER">role_name</replaceable> [, ...] TO <replace
        which could prevent the owner from changing the type later.)
       </para>
       <para>
-       For foreign-data wrappers, this privilege enables the grantee
-       to create new servers using that foreign-data wrapper.
+       For foreign-data wrappers, this privilege allows creation of
+       new servers using the foreign-data wrapper.
       </para>
       <para>
-       For servers, this privilege enables the grantee to create foreign
-       tables using the server, and also to create, alter, or drop their own
-       user's user mappings associated with that server.
+       For servers, this privilege allows creation of foreign tables using
+       the server.  Grantees may also create, alter, or drop their own
+       user mappings associated with that server.
       </para>
      </listitem>
     </varlistentry>
