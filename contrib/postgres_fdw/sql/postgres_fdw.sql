@@ -1618,6 +1618,9 @@ CREATE TABLE import_source.t3 (c1 timestamptz default now(), c2 typ1);
 CREATE TABLE import_source."x 4" (c1 float8, "C 2" text, c3 varchar(42));
 CREATE TABLE import_source."x 5" (c1 float8);
 ALTER TABLE import_source."x 5" DROP COLUMN c1;
+CREATE TABLE import_source.t4 (c1 int) PARTITION BY RANGE (c1);
+CREATE TABLE import_source.t4_part PARTITION OF import_source.t4
+  FOR VALUES FROM (1) TO (100);
 
 CREATE SCHEMA import_dest1;
 IMPORT FOREIGN SCHEMA import_source FROM SERVER loopback INTO import_dest1;

@@ -425,6 +425,16 @@
     For more detail about the treatment of <literal>CHECK</> constraints on
     foreign tables, see <xref linkend="sql-createforeigntable">.
    </para>
+
+   <para>
+    Tables or foreign tables which are partitions of some other table are
+    automatically excluded.  Partitioned tables are imported, unless they
+    are a partition of some other table.  Since all data can be accessed
+    through the partitioned table which is the root of the partitioning
+    hierarchy, this approach should allow access to all the data without
+    creating extra objects.
+   </para>
+
   </sect3>
  </sect2>
 
