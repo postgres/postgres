@@ -471,13 +471,3 @@ commit;
 select * from selfconflict;
 
 drop table selfconflict;
-
--- check that the following works:
--- insert into partitioned_table on conflict do nothing
-create table parted_conflict_test (a int, b char) partition by list (a);
-create table parted_conflict_test_1 partition of parted_conflict_test for values in (1);
-insert into parted_conflict_test values (1, 'a') on conflict do nothing;
-insert into parted_conflict_test values (1, 'a') on conflict do nothing;
--- however, on conflict do update not supported yet
-insert into parted_conflict_test values (1) on conflict (a) do update set b = excluded.b where excluded.a = 1;
-drop table parted_conflict_test, parted_conflict_test_1;
