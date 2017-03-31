@@ -293,6 +293,7 @@ heap_create(const char *relname,
 		case RELKIND_VIEW:
 		case RELKIND_COMPOSITE_TYPE:
 		case RELKIND_FOREIGN_TABLE:
+		case RELKIND_PARTITIONED_TABLE:
 			create_storage = false;
 
 			/*
@@ -1347,14 +1348,13 @@ heap_create_with_catalog(const char *relname,
 	if (oncommit != ONCOMMIT_NOOP)
 		register_on_commit_action(relid, oncommit);
 
-	if (relpersistence == RELPERSISTENCE_UNLOGGED)
-	{
-		Assert(relkind == RELKIND_RELATION || relkind == RELKIND_MATVIEW ||
-			   relkind == RELKIND_TOASTVALUE ||
-			   relkind == RELKIND_PARTITIONED_TABLE);
-
+	/*
+	 * Unlogged objects need an init fork, except for partitioned tables which
+	 * have no storage at all.
+	 */
+	if (relpersistence == RELPERSISTENCE_UNLOGGED &&
+		relkind != RELKIND_PARTITIONED_TABLE)
 		heap_create_init_fork(new_rel_desc);
-	}
 
 	/*
 	 * ok, the relation has been cataloged, so close our relations and return
@@ -1378,6 +1378,9 @@ heap_create_with_catalog(const char *relname,
 void
 heap_create_init_fork(Relation rel)
 {
+	Assert(rel->rd_rel->relkind == RELKIND_RELATION ||
+		   rel->rd_rel->relkind == RELKIND_MATVIEW ||
+		   rel->rd_rel->relkind == RELKIND_TOASTVALUE);
 	RelationOpenSmgr(rel);
 	smgrcreate(rel->rd_smgr, INIT_FORKNUM, false);
 	log_smgrcreate(&rel->rd_smgr->smgr_rnode.node, INIT_FORKNUM);
@@ -1824,7 +1827,8 @@ heap_drop_with_catalog(Oid relid)
 	 */
 	if (rel->rd_rel->relkind != RELKIND_VIEW &&
 		rel->rd_rel->relkind != RELKIND_COMPOSITE_TYPE &&
-		rel->rd_rel->relkind != RELKIND_FOREIGN_TABLE)
+		rel->rd_rel->relkind != RELKIND_FOREIGN_TABLE &&
+		rel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
 	{
 		RelationDropStorage(rel);
 	}

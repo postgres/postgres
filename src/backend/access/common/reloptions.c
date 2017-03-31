@@ -1000,7 +1000,8 @@ extractRelOptions(HeapTuple tuple, TupleDesc tupdesc,
  * array; this is so that the caller can easily locate the default values.
  *
  * If there are no options of the given kind, numrelopts is set to 0 and NULL
- * is returned.
+ * is returned (unless options are illegally supplied despite none being
+ * defined, in which case an error occurs).
  *
  * Note: values of type int, bool and real are allocated as part of the
  * returned array.  Values of type string are allocated separately and must
@@ -1010,7 +1011,7 @@ relopt_value *
 parseRelOptions(Datum options, bool validate, relopt_kind kind,
 				int *numrelopts)
 {
-	relopt_value *reloptions;
+	relopt_value *reloptions = NULL;
 	int			numoptions = 0;
 	int			i;
 	int			j;
@@ -1024,21 +1025,18 @@ parseRelOptions(Datum options, bool validate, relopt_kind kind,
 		if (relOpts[i]->kinds & kind)
 			numoptions++;
 
-	if (numoptions == 0)
+	if (numoptions > 0)
 	{
-		*numrelopts = 0;
-		return NULL;
-	}
+		reloptions = palloc(numoptions * sizeof(relopt_value));
 
-	reloptions = palloc(numoptions * sizeof(relopt_value));
-
-	for (i = 0, j = 0; relOpts[i]; i++)
-	{
-		if (relOpts[i]->kinds & kind)
+		for (i = 0, j = 0; relOpts[i]; i++)
 		{
-			reloptions[j].gen = relOpts[i];
-			reloptions[j].isset = false;
-			j++;
+			if (relOpts[i]->kinds & kind)
+			{
+				reloptions[j].gen = relOpts[i];
+				reloptions[j].isset = false;
+				j++;
+			}
 		}
 	}
 
@@ -1418,8 +1416,10 @@ heap_reloptions(char relkind, Datum reloptions, bool validate)
 			return (bytea *) rdopts;
 		case RELKIND_RELATION:
 		case RELKIND_MATVIEW:
-		case RELKIND_PARTITIONED_TABLE:
 			return default_reloptions(reloptions, validate, RELOPT_KIND_HEAP);
+		case RELKIND_PARTITIONED_TABLE:
+			return default_reloptions(reloptions, validate,
+									  RELOPT_KIND_PARTITIONED);
 		default:
 			/* other relkinds are not supported */
 			return NULL;
