@@ -9566,6 +9566,15 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
        </row>
        <row>
         <entry>
+         <literal><function>to_tsvector(<optional> <replaceable class="PARAMETER">config</> <type>regconfig</> , </optional> <replaceable class="PARAMETER">document</> <type>json(b)</type>)</function></literal>
+        </entry>
+        <entry><type>tsvector</type></entry>
+        <entry>reduce document text to <type>tsvector</></entry>
+        <entry><literal>to_tsvector('english', '{"a": "The Fat Rats"}'::json)</literal></entry>
+        <entry><literal>'fat':2 'rat':3</literal></entry>
+       </row>
+       <row>
+        <entry>
          <indexterm>
           <primary>ts_delete</primary>
          </indexterm>
@@ -9609,6 +9618,15 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         <entry>display a query match</entry>
         <entry><literal>ts_headline('x y z', 'z'::tsquery)</literal></entry>
         <entry><literal>x y &lt;b&gt;z&lt;/b&gt;</literal></entry>
+       </row>
+       <row>
+        <entry>
+         <literal><function>ts_headline(<optional> <replaceable class="PARAMETER">config</replaceable> <type>regconfig</>, </optional> <replaceable class="PARAMETER">document</replaceable> <type>json(b)</>, <replaceable class="PARAMETER">query</replaceable> <type>tsquery</> <optional>, <replaceable class="PARAMETER">options</replaceable> <type>text</> </optional>)</function></literal>
+        </entry>
+        <entry><type>text</type></entry>
+        <entry>display a query match</entry>
+        <entry><literal>ts_headline('{"a":"x y z"}'::json, 'z'::tsquery)</literal></entry>
+        <entry><literal>{"a":"x y &lt;b&gt;z&lt;/b&gt;"}</literal></entry>
        </row>
        <row>
         <entry>

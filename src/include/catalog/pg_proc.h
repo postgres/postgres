@@ -4812,6 +4812,24 @@ DESCR("generate headline");
 DATA(insert OID = 3755 (  ts_headline	PGNSP PGUID 12 100 0 0 0 f f f f t f s s 2 0 25 "25 3615" _null_ _null_ _null_ _null_ _null_ ts_headline _null_ _null_ _null_ ));
 DESCR("generate headline");
 
+DATA(insert OID = 4201 (  ts_headline	PGNSP PGUID 12 100 0 0 0 f f f f t f i s 4 0 3802 "3734 3802 3615 25" _null_ _null_ _null_ _null_ _null_ ts_headline_jsonb_byid_opt _null_ _null_ _null_ ));
+DESCR("generate headline from jsonb");
+DATA(insert OID = 4202 (  ts_headline	PGNSP PGUID 12 100 0 0 0 f f f f t f i s 3 0 3802 "3734 3802 3615" _null_ _null_ _null_ _null_ _null_ ts_headline_jsonb_byid _null_ _null_ _null_ ));
+DESCR("generate headline from jsonb");
+DATA(insert OID = 4203 (  ts_headline	PGNSP PGUID 12 100 0 0 0 f f f f t f s s 3 0 3802 "3802 3615 25" _null_ _null_ _null_ _null_ _null_ ts_headline_jsonb_opt _null_ _null_ _null_ ));
+DESCR("generate headline from jsonb");
+DATA(insert OID = 4204 (  ts_headline	PGNSP PGUID 12 100 0 0 0 f f f f t f s s 2 0 3802 "3802 3615" _null_ _null_ _null_ _null_ _null_ ts_headline_jsonb _null_ _null_ _null_ ));
+DESCR("generate headline from jsonb");
+
+DATA(insert OID = 4205 (  ts_headline	PGNSP PGUID 12 100 0 0 0 f f f f t f i s 4 0 114 "3734 114 3615 25" _null_ _null_ _null_ _null_ _null_ ts_headline_json_byid_opt _null_ _null_ _null_ ));
+DESCR("generate headline from json");
+DATA(insert OID = 4206 (  ts_headline	PGNSP PGUID 12 100 0 0 0 f f f f t f i s 3 0 114 "3734 114 3615" _null_ _null_ _null_ _null_ _null_ ts_headline_json_byid _null_ _null_ _null_ ));
+DESCR("generate headline from json");
+DATA(insert OID = 4207 (  ts_headline	PGNSP PGUID 12 100 0 0 0 f f f f t f s s 3 0 114 "114 3615 25" _null_ _null_ _null_ _null_ _null_ ts_headline_json_opt _null_ _null_ _null_ ));
+DESCR("generate headline from json");
+DATA(insert OID = 4208 (  ts_headline	PGNSP PGUID 12 100 0 0 0 f f f f t f s s 2 0 114 "114 3615" _null_ _null_ _null_ _null_ _null_ ts_headline_json _null_ _null_ _null_ ));
+DESCR("generate headline from json");
+
 DATA(insert OID = 3745 (  to_tsvector		PGNSP PGUID 12 100 0 0 0 f f f f t f i s 2 0 3614 "3734 25" _null_ _null_ _null_ _null_ _null_ to_tsvector_byid _null_ _null_ _null_ ));
 DESCR("transform to tsvector");
 DATA(insert OID = 3746 (  to_tsquery		PGNSP PGUID 12 100 0 0 0 f f f f t f i s 2 0 3615 "3734 25" _null_ _null_ _null_ _null_ _null_ to_tsquery_byid _null_ _null_ _null_ ));
@@ -4828,6 +4846,14 @@ DATA(insert OID = 3751 (  plainto_tsquery	PGNSP PGUID 12 100 0 0 0 f f f f t f s
 DESCR("transform to tsquery");
 DATA(insert OID = 5001 (  phraseto_tsquery	PGNSP PGUID 12 100 0 0 0 f f f f t f s s 1 0 3615 "25" _null_ _null_ _null_ _null_ _null_ phraseto_tsquery _null_ _null_ _null_ ));
 DESCR("transform to tsquery");
+DATA(insert OID = 4209 (  to_tsvector		PGNSP PGUID 12 100 0 0 0 f f f f t f s s 1 0 3614 "3802" _null_ _null_ _null_ _null_ _null_ jsonb_to_tsvector _null_ _null_ _null_ ));
+DESCR("transform jsonb to tsvector");
+DATA(insert OID = 4210 (  to_tsvector		PGNSP PGUID 12 100 0 0 0 f f f f t f s s 1 0 3614 "114" _null_ _null_ _null_ _null_ _null_ json_to_tsvector _null_ _null_ _null_ ));
+DESCR("transform json to tsvector");
+DATA(insert OID = 4211 (  to_tsvector		PGNSP PGUID 12 100 0 0 0 f f f f t f s s 2 0 3614 "3734 3802" _null_ _null_ _null_ _null_ _null_ jsonb_to_tsvector_byid _null_ _null_ _null_ ));
+DESCR("transform jsonb to tsvector");
+DATA(insert OID = 4212 (  to_tsvector		PGNSP PGUID 12 100 0 0 0 f f f f t f s s 2 0 3614 "3734 114" _null_ _null_ _null_ _null_ _null_ json_to_tsvector_byid _null_ _null_ _null_ ));
+DESCR("transform json to tsvector");
 
 DATA(insert OID = 3752 (  tsvector_update_trigger			PGNSP PGUID 12 1 0 0 0 f f f f f f v s 0 0 2279 "" _null_ _null_ _null_ _null_ _null_ tsvector_update_trigger_byid _null_ _null_ _null_ ));
 DESCR("trigger for automatic update of tsvector column");

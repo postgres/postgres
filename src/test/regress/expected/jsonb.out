@@ -3474,3 +3474,93 @@ HINT:  Try using the function jsonb_set to replace key value.
 select jsonb_insert('{"a": {"b": "value"}}', '{a, b}', '"new_value"', true);
 ERROR:  cannot replace existing key
 HINT:  Try using the function jsonb_set to replace key value.
+-- jsonb to tsvector
+select to_tsvector('{"a": "aaa bbb ddd ccc", "b": ["eee fff ggg"], "c": {"d": "hhh iii"}}'::jsonb);
+                                to_tsvector                                
+---------------------------------------------------------------------------
+ 'aaa':1 'bbb':2 'ccc':4 'ddd':3 'eee':6 'fff':7 'ggg':8 'hhh':10 'iii':11
+(1 row)
+
+-- jsonb to tsvector with config
+select to_tsvector('simple', '{"a": "aaa bbb ddd ccc", "b": ["eee fff ggg"], "c": {"d": "hhh iii"}}'::jsonb);
+                                to_tsvector                                
+---------------------------------------------------------------------------
+ 'aaa':1 'bbb':2 'ccc':4 'ddd':3 'eee':6 'fff':7 'ggg':8 'hhh':10 'iii':11
+(1 row)
+
+-- jsonb to tsvector with stop words
+select to_tsvector('{"a": "aaa in bbb ddd ccc", "b": ["the eee fff ggg"], "c": {"d": "hhh. iii"}}'::jsonb);
+                                to_tsvector                                 
+----------------------------------------------------------------------------
+ 'aaa':1 'bbb':3 'ccc':5 'ddd':4 'eee':8 'fff':9 'ggg':10 'hhh':12 'iii':13
+(1 row)
+
+-- ts_vector corner cases
+select to_tsvector('""'::jsonb);
+ to_tsvector 
+-------------
+ 
+(1 row)
+
+select to_tsvector('{}'::jsonb);
+ to_tsvector 
+-------------
+ 
+(1 row)
+
+select to_tsvector('[]'::jsonb);
+ to_tsvector 
+-------------
+ 
+(1 row)
+
+select to_tsvector('null'::jsonb);
+ to_tsvector 
+-------------
+ 
+(1 row)
+
+-- ts_headline for jsonb
+select ts_headline('{"a": "aaa bbb", "b": {"c": "ccc ddd fff", "c1": "ccc1 ddd1"}, "d": ["ggg hhh", "iii jjj"]}'::jsonb, tsquery('bbb & ddd & hhh'));
+                                                   ts_headline                                                    
+------------------------------------------------------------------------------------------------------------------
+ {"a": "aaa <b>bbb</b>", "b": {"c": "ccc <b>ddd</b> fff", "c1": "ccc1 ddd1"}, "d": ["ggg <b>hhh</b>", "iii jjj"]}
+(1 row)
+
+select ts_headline('english', '{"a": "aaa bbb", "b": {"c": "ccc ddd fff"}, "d": ["ggg hhh", "iii jjj"]}'::jsonb, tsquery('bbb & ddd & hhh'));
+                                          ts_headline                                          
+-----------------------------------------------------------------------------------------------
+ {"a": "aaa <b>bbb</b>", "b": {"c": "ccc <b>ddd</b> fff"}, "d": ["ggg <b>hhh</b>", "iii jjj"]}
+(1 row)
+
+select ts_headline('{"a": "aaa bbb", "b": {"c": "ccc ddd fff", "c1": "ccc1 ddd1"}, "d": ["ggg hhh", "iii jjj"]}'::jsonb, tsquery('bbb & ddd & hhh'), 'StartSel = <, StopSel = >');
+                                            ts_headline                                            
+---------------------------------------------------------------------------------------------------
+ {"a": "aaa <bbb>", "b": {"c": "ccc <ddd> fff", "c1": "ccc1 ddd1"}, "d": ["ggg <hhh>", "iii jjj"]}
+(1 row)
+
+select ts_headline('english', '{"a": "aaa bbb", "b": {"c": "ccc ddd fff", "c1": "ccc1 ddd1"}, "d": ["ggg hhh", "iii jjj"]}'::jsonb, tsquery('bbb & ddd & hhh'), 'StartSel = <, StopSel = >');
+                                            ts_headline                                            
+---------------------------------------------------------------------------------------------------
+ {"a": "aaa <bbb>", "b": {"c": "ccc <ddd> fff", "c1": "ccc1 ddd1"}, "d": ["ggg <hhh>", "iii jjj"]}
+(1 row)
+
+-- corner cases for ts_headline with jsonb
+select ts_headline('null'::jsonb, tsquery('aaa & bbb'));
+ ts_headline 
+-------------
+ null
+(1 row)
+
+select ts_headline('{}'::jsonb, tsquery('aaa & bbb'));
+ ts_headline 
+-------------
+ {}
+(1 row)
+
+select ts_headline('[]'::jsonb, tsquery('aaa & bbb'));
+ ts_headline 
+-------------
+ []
+(1 row)
+
