@@ -14,6 +14,7 @@
 #ifndef JSONAPI_H
 #define JSONAPI_H
 
+#include "jsonb.h"
 #include "lib/stringinfo.h"
 
 typedef enum
@@ -130,5 +131,20 @@ extern JsonLexContext *makeJsonLexContextCstringLen(char *json,
  * str argument does not need to be nul-terminated.
  */
 extern bool IsValidJsonNumber(const char *str, int len);
+
+/* an action that will be applied to each value in iterate_json(b)_string_vaues functions */
+typedef void (*JsonIterateStringValuesAction) (void *state, char *elem_value, int elem_len);
+
+/* an action that will be applied to each value in transform_json(b)_string_values functions */
+typedef text * (*JsonTransformStringValuesAction) (void *state, char *elem_value, int elem_len);
+
+extern void iterate_jsonb_string_values(Jsonb *jb, void *state,
+										JsonIterateStringValuesAction action);
+extern void iterate_json_string_values(text *json, void *action_state,
+									   JsonIterateStringValuesAction action);
+extern Jsonb *transform_jsonb_string_values(Jsonb *jsonb, void *action_state,
+											JsonTransformStringValuesAction transform_action);
+extern text *transform_json_string_values(text *json, void *action_state,
+										  JsonTransformStringValuesAction transform_action);
 
 #endif   /* JSONAPI_H */

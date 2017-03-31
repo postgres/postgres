@@ -52,6 +52,25 @@ typedef struct OkeysState
 	int			sent_count;
 } OkeysState;
 
+/* state for iterate_json_string_values function */
+typedef struct IterateJsonStringValuesState
+{
+	JsonLexContext					*lex;
+	JsonIterateStringValuesAction	action;			/* an action that will be applied
+													   to each json value */
+	void							*action_state;	/* any necessary context for iteration */
+} IterateJsonStringValuesState;
+
+/* state for transform_json_string_values function */
+typedef struct TransformJsonStringValuesState
+{
+	JsonLexContext					*lex;
+	StringInfo						strval;			/* resulting json */
+	JsonTransformStringValuesAction	action;			/* an action that will be applied
+													   to each json value */
+	void							*action_state;	/* any necessary context for transformation */
+} TransformJsonStringValuesState;
+
 /* state for json_get* functions */
 typedef struct GetState
 {
@@ -270,6 +289,18 @@ static void setPathArray(JsonbIterator **it, Datum *path_elems,
 			 bool *path_nulls, int path_len, JsonbParseState **st,
 			 int level, Jsonb *newval, uint32 nelems, int op_type);
 static void addJsonbToParseState(JsonbParseState **jbps, Jsonb *jb);
+
+/* function supporting iterate_json_string_values */
+static void iterate_string_values_scalar(void *state, char *token, JsonTokenType tokentype);
+
+/* functions supporting transform_json_string_values */
+static void transform_string_values_object_start(void *state);
+static void transform_string_values_object_end(void *state);
+static void transform_string_values_array_start(void *state);
+static void transform_string_values_array_end(void *state);
+static void transform_string_values_object_field_start(void *state, char *fname, bool isnull);
+static void transform_string_values_array_element_start(void *state, bool isnull);
+static void transform_string_values_scalar(void *state, char *token, JsonTokenType tokentype);
 
 
 /*
@@ -4129,4 +4160,209 @@ setPathArray(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
 			}
 		}
 	}
+}
+
+/*
+ * Iterate over jsonb string values or elements, and pass them together with an
+ * iteration state to a specified JsonIterateStringValuesAction.
+ */
+void
+iterate_jsonb_string_values(Jsonb *jb, void *state, JsonIterateStringValuesAction action)
+{
+	JsonbIterator		*it;
+	JsonbValue			v;
+	JsonbIteratorToken	type;
+
+	it = JsonbIteratorInit(&jb->root);
+
+	while ((type = JsonbIteratorNext(&it, &v, false)) != WJB_DONE)
+	{
+		if ((type == WJB_VALUE || type == WJB_ELEM) && v.type == jbvString)
+		{
+			action(state, v.val.string.val, v.val.string.len);
+		}
+	}
+}
+
+/*
+ * Iterate over json string values or elements, and pass them together with an
+ * iteration state to a specified JsonIterateStringValuesAction.
+ */
+void
+iterate_json_string_values(text *json, void *action_state, JsonIterateStringValuesAction action)
+{
+	JsonLexContext *lex = makeJsonLexContext(json, true);
+	JsonSemAction *sem = palloc0(sizeof(JsonSemAction));
+	IterateJsonStringValuesState   *state = palloc0(sizeof(IterateJsonStringValuesState));
+
+	state->lex = lex;
+	state->action = action;
+	state->action_state = action_state;
+
+	sem->semstate = (void *) state;
+	sem->scalar = iterate_string_values_scalar;
+
+	pg_parse_json(lex, sem);
+}
+
+/*
+ * An auxiliary function for iterate_json_string_values to invoke a specified
+ * JsonIterateStringValuesAction.
+ */
+static void
+iterate_string_values_scalar(void *state, char *token, JsonTokenType tokentype)
+{
+	IterateJsonStringValuesState   *_state = (IterateJsonStringValuesState *) state;
+	if (tokentype == JSON_TOKEN_STRING)
+		(*_state->action) (_state->action_state, token, strlen(token));
+}
+
+/*
+ * Iterate over a jsonb, and apply a specified JsonTransformStringValuesAction
+ * to every string value or element. Any necessary context for a
+ * JsonTransformStringValuesAction can be passed in the action_state variable.
+ * Function returns a copy of an original jsonb object with transformed values.
+ */
+Jsonb *
+transform_jsonb_string_values(Jsonb *jsonb, void *action_state,
+							  JsonTransformStringValuesAction transform_action)
+{
+	JsonbIterator		*it;
+	JsonbValue			v, *res = NULL;
+	JsonbIteratorToken	type;
+	JsonbParseState		*st = NULL;
+	text				*out;
+	bool				is_scalar = false;
+
+	it = JsonbIteratorInit(&jsonb->root);
+	is_scalar = it->isScalar;
+
+	while ((type = JsonbIteratorNext(&it, &v, false)) != WJB_DONE)
+	{
+		if ((type == WJB_VALUE || type == WJB_ELEM) && v.type == jbvString)
+		{
+			out = transform_action(action_state, v.val.string.val, v.val.string.len);
+			v.val.string.val = VARDATA_ANY(out);
+			v.val.string.len = VARSIZE_ANY_EXHDR(out);
+			res = pushJsonbValue(&st, type, type < WJB_BEGIN_ARRAY ? &v : NULL);
+		}
+		else
+		{
+			res = pushJsonbValue(&st, type, (type == WJB_KEY ||
+											 type == WJB_VALUE ||
+											 type == WJB_ELEM) ? &v : NULL);
+		}
+	}
+
+	if (res->type == jbvArray)
+		res->val.array.rawScalar = is_scalar;
+
+	return JsonbValueToJsonb(res);
+}
+
+/*
+ * Iterate over a json, and apply a specified JsonTransformStringValuesAction
+ * to every string value or element. Any necessary context for a
+ * JsonTransformStringValuesAction can be passed in the action_state variable.
+ * Function returns a StringInfo, which is a copy of an original json with
+ * transformed values.
+ */
+text *
+transform_json_string_values(text *json, void *action_state,
+							 JsonTransformStringValuesAction transform_action)
+{
+	JsonLexContext *lex = makeJsonLexContext(json, true);
+	JsonSemAction *sem = palloc0(sizeof(JsonSemAction));
+	TransformJsonStringValuesState *state = palloc0(sizeof(TransformJsonStringValuesState));
+
+	state->lex = lex;
+	state->strval = makeStringInfo();
+	state->action = transform_action;
+	state->action_state = action_state;
+
+	sem->semstate = (void *) state;
+	sem->scalar = transform_string_values_scalar;
+	sem->object_start = transform_string_values_object_start;
+	sem->object_end = transform_string_values_object_end;
+	sem->array_start = transform_string_values_array_start;
+	sem->array_end = transform_string_values_array_end;
+	sem->scalar = transform_string_values_scalar;
+	sem->array_element_start = transform_string_values_array_element_start;
+	sem->object_field_start = transform_string_values_object_field_start;
+
+	pg_parse_json(lex, sem);
+
+	return cstring_to_text_with_len(state->strval->data, state->strval->len);
+}
+
+/*
+ * Set of auxiliary functions for transform_json_string_values to invoke a
+ * specified JsonTransformStringValuesAction for all values and left everything
+ * else untouched.
+ */
+static void
+transform_string_values_object_start(void *state)
+{
+	TransformJsonStringValuesState *_state = (TransformJsonStringValuesState *) state;
+	appendStringInfoCharMacro(_state->strval, '{');
+}
+
+static void
+transform_string_values_object_end(void *state)
+{
+	TransformJsonStringValuesState *_state = (TransformJsonStringValuesState *) state;
+	appendStringInfoCharMacro(_state->strval, '}');
+}
+
+static void
+transform_string_values_array_start(void *state)
+{
+	TransformJsonStringValuesState *_state = (TransformJsonStringValuesState *) state;
+	appendStringInfoCharMacro(_state->strval, '[');
+}
+
+static void
+transform_string_values_array_end(void *state)
+{
+	TransformJsonStringValuesState *_state = (TransformJsonStringValuesState *) state;
+	appendStringInfoCharMacro(_state->strval, ']');
+}
+
+static void
+transform_string_values_object_field_start(void *state, char *fname, bool isnull)
+{
+	TransformJsonStringValuesState *_state = (TransformJsonStringValuesState *) state;
+
+	if (_state->strval->data[_state->strval->len - 1] != '{')
+		appendStringInfoCharMacro(_state->strval, ',');
+
+	/*
+	 * Unfortunately we don't have the quoted and escaped string any more, so
+	 * we have to re-escape it.
+	 */
+	escape_json(_state->strval, fname);
+	appendStringInfoCharMacro(_state->strval, ':');
+}
+
+static void
+transform_string_values_array_element_start(void *state, bool isnull)
+{
+	TransformJsonStringValuesState *_state = (TransformJsonStringValuesState *) state;
+
+	if (_state->strval->data[_state->strval->len - 1] != '[')
+		appendStringInfoCharMacro(_state->strval, ',');
+}
+
+static void
+transform_string_values_scalar(void *state, char *token, JsonTokenType tokentype)
+{
+	TransformJsonStringValuesState *_state = (TransformJsonStringValuesState *) state;
+
+	if (tokentype == JSON_TOKEN_STRING)
+	{
+		text *out = (*_state->action) (_state->action_state, token, strlen(token));
+		escape_json(_state->strval, text_to_cstring(out));
+	}
+	else
+		appendStringInfoString(_state->strval, token);
 }
