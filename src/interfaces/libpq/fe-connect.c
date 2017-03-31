@@ -2896,7 +2896,7 @@ keep_going:						/* We will come back to here until there is
 					 * We are yet to make a connection. Save all existing error
 					 * messages until we make a successful connection state.
 					 * This is important because PQsendQuery is going to reset
-					 * conn->errorMessage and we will loose error messages
+					 * conn->errorMessage and we will lose error messages
 					 * related to previous hosts we have tried to connect and
 					 * failed.
 					 */
