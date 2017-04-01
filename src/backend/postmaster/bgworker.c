@@ -15,12 +15,14 @@
 #include <unistd.h>
 
 #include "libpq/pqsignal.h"
+#include "access/parallel.h"
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "port/atomics.h"
 #include "postmaster/bgworker_internals.h"
 #include "postmaster/postmaster.h"
 #include "replication/logicallauncher.h"
+#include "replication/logicalworker.h"
 #include "storage/dsm.h"
 #include "storage/ipc.h"
 #include "storage/latch.h"
@@ -109,13 +111,25 @@ struct BackgroundWorkerHandle
 static BackgroundWorkerArray *BackgroundWorkerData;
 
 /*
- * List of workers that are allowed to be started outside of
- * shared_preload_libraries.
+ * List of internal background workers. These are used for mapping the
+ * function name to actual function when building with EXEC_BACKEND and also
+ * to allow these to be loaded outside of shared_preload_libraries.
  */
-static const bgworker_main_type InternalBGWorkers[] = {
-	ApplyLauncherMain,
-	NULL
+typedef struct InternalBGWorkerMain
+{
+	char			   *bgw_function_name;
+	bgworker_main_type	bgw_main;
+} InternalBGWorkerMain;
+
+static const InternalBGWorkerMain InternalBGWorkers[] = {
+	{"ParallelWorkerMain", ParallelWorkerMain},
+	{"ApplyLauncherMain", ApplyLauncherMain},
+	{"ApplyWorkerMain", ApplyWorkerMain},
+	/* Dummy entry marking end of the array. */
+	{NULL, NULL}
 };
+
+static bgworker_main_type GetInternalBgWorkerMain(BackgroundWorker *worker);
 
 /*
  * Calculate shared memory needed.
@@ -341,7 +355,6 @@ BackgroundWorkerStateChange(void)
 		rw->rw_worker.bgw_flags = slot->worker.bgw_flags;
 		rw->rw_worker.bgw_start_time = slot->worker.bgw_start_time;
 		rw->rw_worker.bgw_restart_time = slot->worker.bgw_restart_time;
-		rw->rw_worker.bgw_main = slot->worker.bgw_main;
 		rw->rw_worker.bgw_main_arg = slot->worker.bgw_main_arg;
 		memcpy(rw->rw_worker.bgw_extra, slot->worker.bgw_extra, BGW_EXTRALEN);
 
@@ -763,17 +776,14 @@ StartBackgroundWorker(void)
 	}
 
 	/*
-	 * If bgw_main is set, we use that value as the initial entrypoint.
-	 * However, if the library containing the entrypoint wasn't loaded at
-	 * postmaster startup time, passing it as a direct function pointer is not
-	 * possible.  To work around that, we allow callers for whom a function
-	 * pointer is not available to pass a library name (which will be loaded,
-	 * if necessary) and a function name (which will be looked up in the named
-	 * library).
+	 * For internal workers set the entry point to known function address.
+	 * Otherwise use the entry point specified by library name (which will
+	 * be loaded, if necessary) and a function name (which will be looked up
+	 * in the named library).
 	 */
-	if (worker->bgw_main != NULL)
-		entrypt = worker->bgw_main;
-	else
+	entrypt = GetInternalBgWorkerMain(worker);
+
+	if (entrypt == NULL)
 		entrypt = (bgworker_main_type)
 			load_external_function(worker->bgw_library_name,
 								   worker->bgw_function_name,
@@ -806,23 +816,13 @@ RegisterBackgroundWorker(BackgroundWorker *worker)
 {
 	RegisteredBgWorker *rw;
 	static int	numworkers = 0;
-	bool		internal = false;
-	int			i;
 
 	if (!IsUnderPostmaster)
 		ereport(DEBUG1,
 		 (errmsg("registering background worker \"%s\"", worker->bgw_name)));
 
-	for (i = 0; InternalBGWorkers[i]; i++)
-	{
-		if (worker->bgw_main == InternalBGWorkers[i])
-		{
-			internal = true;
-			break;
-		}
-	}
-
-	if (!process_shared_preload_libraries_in_progress && !internal)
+	if (!process_shared_preload_libraries_in_progress &&
+		GetInternalBgWorkerMain(worker) == NULL)
 	{
 		if (!IsUnderPostmaster)
 			ereport(LOG,
@@ -1151,4 +1151,29 @@ TerminateBackgroundWorker(BackgroundWorkerHandle *handle)
 	/* Make sure the postmaster notices the change to shared memory. */
 	if (signal_postmaster)
 		SendPostmasterSignal(PMSIGNAL_BACKGROUND_WORKER_CHANGE);
+}
+
+/*
+ * Search the known internal worker array and return its main function
+ * pointer if found.
+ *
+ * Returns NULL if not known internal worker.
+ */
+static bgworker_main_type
+GetInternalBgWorkerMain(BackgroundWorker *worker)
+{
+	int i;
+
+	/* Internal workers always have to use postgres as library name. */
+	if (strncmp(worker->bgw_library_name, "postgres", BGW_MAXLEN) != 0)
+		return NULL;
+
+	for (i = 0; InternalBGWorkers[i].bgw_function_name; i++)
+	{
+		if (strncmp(InternalBGWorkers[i].bgw_function_name,
+					worker->bgw_function_name, BGW_MAXLEN) == 0)
+			return InternalBGWorkers[i].bgw_main;
+	}
+
+	return NULL;
 }

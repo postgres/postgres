@@ -110,7 +110,6 @@ static dlist_head pcxt_list = DLIST_STATIC_INIT(pcxt_list);
 /* Private functions. */
 static void HandleParallelMessage(ParallelContext *pcxt, int i, StringInfo msg);
 static void ParallelExtensionTrampoline(dsm_segment *seg, shm_toc *toc);
-static void ParallelWorkerMain(Datum main_arg);
 static void WaitForParallelWorkersToExit(ParallelContext *pcxt);
 
 
@@ -458,7 +457,8 @@ LaunchParallelWorkers(ParallelContext *pcxt)
 		| BGWORKER_CLASS_PARALLEL;
 	worker.bgw_start_time = BgWorkerStart_ConsistentState;
 	worker.bgw_restart_time = BGW_NEVER_RESTART;
-	worker.bgw_main = ParallelWorkerMain;
+	sprintf(worker.bgw_library_name, "postgres");
+	sprintf(worker.bgw_function_name, "ParallelWorkerMain");
 	worker.bgw_main_arg = UInt32GetDatum(dsm_segment_handle(pcxt->seg));
 	worker.bgw_notify_pid = MyProcPid;
 	memset(&worker.bgw_extra, 0, BGW_EXTRALEN);
@@ -931,7 +931,7 @@ AtEOXact_Parallel(bool isCommit)
 /*
  * Main entrypoint for parallel workers.
  */
-static void
+void
 ParallelWorkerMain(Datum main_arg)
 {
 	dsm_segment *seg;

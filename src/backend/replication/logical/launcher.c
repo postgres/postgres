@@ -295,7 +295,8 @@ logicalrep_worker_launch(Oid dbid, Oid subid, const char *subname, Oid userid,
 	bgw.bgw_flags =	BGWORKER_SHMEM_ACCESS |
 		BGWORKER_BACKEND_DATABASE_CONNECTION;
 	bgw.bgw_start_time = BgWorkerStart_RecoveryFinished;
-	bgw.bgw_main = ApplyWorkerMain;
+	snprintf(bgw.bgw_library_name, BGW_MAXLEN, "postgres");
+	snprintf(bgw.bgw_function_name, BGW_MAXLEN, "ApplyWorkerMain");
 	if (OidIsValid(relid))
 		snprintf(bgw.bgw_name, BGW_MAXLEN,
 				 "logical replication worker for subscription %u sync %u", subid, relid);
@@ -553,7 +554,8 @@ ApplyLauncherRegister(void)
 	bgw.bgw_flags =	BGWORKER_SHMEM_ACCESS |
 		BGWORKER_BACKEND_DATABASE_CONNECTION;
 	bgw.bgw_start_time = BgWorkerStart_RecoveryFinished;
-	bgw.bgw_main = ApplyLauncherMain;
+	snprintf(bgw.bgw_library_name, BGW_MAXLEN, "postgres");
+	snprintf(bgw.bgw_function_name, BGW_MAXLEN, "ApplyLauncherMain");
 	snprintf(bgw.bgw_name, BGW_MAXLEN,
 			 "logical replication launcher");
 	bgw.bgw_restart_time = 5;

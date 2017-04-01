@@ -54,9 +54,8 @@ typedef struct BackgroundWorker
     int         bgw_flags;
     BgWorkerStartTime bgw_start_time;
     int         bgw_restart_time;       /* in seconds, or BGW_NEVER_RESTART */
-    bgworker_main_type bgw_main;
-    char        bgw_library_name[BGW_MAXLEN];   /* only if bgw_main is NULL */
-    char        bgw_function_name[BGW_MAXLEN];  /* only if bgw_main is NULL */
+    char        bgw_library_name[BGW_MAXLEN];
+    char        bgw_function_name[BGW_MAXLEN];
     Datum       bgw_main_arg;
     char        bgw_extra[BGW_EXTRALEN];
     int         bgw_notify_pid;
@@ -131,26 +130,12 @@ typedef struct BackgroundWorker
   </para>
 
   <para>
-   <structfield>bgw_main</structfield> is a pointer to the function to run when
-   the process is started.  This field can only safely be used to launch
-   functions within the core server, because shared libraries may be loaded
-   at different starting addresses in different backend processes.  This will
-   happen on all platforms when the library is loaded using any mechanism
-   other than <xref linkend="guc-shared-preload-libraries">.  Even when that
-   mechanism is used, address space layout variations will still occur on
-   Windows, and when <literal>EXEC_BACKEND</> is used.  Therefore, most users
-   of this API should set this field to NULL.  If it is non-NULL, it takes
-   precedence over <structfield>bgw_library_name</> and
-   <structfield>bgw_function_name</>.
-  </para>
-
-  <para>
    <structfield>bgw_library_name</structfield> is the name of a library in
    which the initial entry point for the background worker should be sought.
    The named library will be dynamically loaded by the worker process and
    <structfield>bgw_function_name</structfield> will be used to identify the
-   function to be called.  If loading a function from the core code,
-   <structfield>bgw_main</> should be set instead.
+   function to be called.  If loading a function from the core code, this must
+   be set to "postgres".
   </para>
 
   <para>
@@ -161,13 +146,10 @@ typedef struct BackgroundWorker
 
   <para>
    <structfield>bgw_main_arg</structfield> is the <type>Datum</> argument
-   to the background worker main function.  Regardless of whether that
-   function is specified via <structfield>bgw_main</> or via the combination
-   of <function>bgw_library_name</> and <function>bgw_function_name</>,
-   this main function should take a single argument of type <type>Datum</>
-   and return <type>void</>.  <structfield>bgw_main_arg</structfield> will be
-   passed as the argument.  In addition, the global variable
-   <literal>MyBgworkerEntry</literal>
+   to the background worker main function.  This main function should take a
+   single argument of type <type>Datum</> and return <type>void</>.
+   <structfield>bgw_main_arg</structfield> will be passed as the argument.
+   In addition, the global variable <literal>MyBgworkerEntry</literal>
    points to a copy of the <structname>BackgroundWorker</structname> structure
    passed at registration time; the worker may find it helpful to examine
    this structure.
@@ -215,7 +197,7 @@ typedef struct BackgroundWorker
 
   <para>
    Signals are initially blocked when control reaches the
-   <structfield>bgw_main</> function, and must be unblocked by it; this is to
+   background worker's main function, and must be unblocked by it; this is to
    allow the process to customize its signal handlers, if necessary.
    Signals can be unblocked in the new process by calling
    <function>BackgroundWorkerUnblockSignals</> and blocked by calling

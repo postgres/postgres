@@ -216,7 +216,6 @@ setup_background_workers(int nworkers, dsm_segment *seg)
 	worker.bgw_flags = BGWORKER_SHMEM_ACCESS;
 	worker.bgw_start_time = BgWorkerStart_ConsistentState;
 	worker.bgw_restart_time = BGW_NEVER_RESTART;
-	worker.bgw_main = NULL;		/* new worker might not have library loaded */
 	sprintf(worker.bgw_library_name, "test_shm_mq");
 	sprintf(worker.bgw_function_name, "test_shm_mq_main");
 	snprintf(worker.bgw_name, BGW_MAXLEN, "test_shm_mq");

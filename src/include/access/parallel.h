@@ -67,4 +67,6 @@ extern void AtEOXact_Parallel(bool isCommit);
 extern void AtEOSubXact_Parallel(bool isCommit, SubTransactionId mySubId);
 extern void ParallelWorkerReportLastRecEnd(XLogRecPtr last_xlog_end);
 
+extern void ParallelWorkerMain(Datum main_arg);
+
 #endif   /* PARALLEL_H */
