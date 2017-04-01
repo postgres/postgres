@@ -862,7 +862,8 @@ SELECT pg_start_backup('label', false, false);
      <xref linkend="guc-checkpoint-completion-target">).  This is
      usually what you want, because it minimizes the impact on query
      processing.  If you want to start the backup as soon as
-     possible, change the second parameter to <literal>true</>.
+     possible, change the second parameter to <literal>true</>, which will
+     issue an immediate checkpoint using as much I/O as available.
     </para>
 
     <para>
