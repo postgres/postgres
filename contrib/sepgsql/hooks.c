@@ -22,6 +22,7 @@
 #include "miscadmin.h"
 #include "tcop/utility.h"
 #include "utils/guc.h"
+#include "utils/queryenvironment.h"
 
 #include "sepgsql.h"
 
@@ -301,6 +302,7 @@ sepgsql_utility_command(PlannedStmt *pstmt,
 						const char *queryString,
 						ProcessUtilityContext context,
 						ParamListInfo params,
+						QueryEnvironment *queryEnv,
 						DestReceiver *dest,
 						char *completionTag)
 {
@@ -364,11 +366,11 @@ sepgsql_utility_command(PlannedStmt *pstmt,
 
 		if (next_ProcessUtility_hook)
 			(*next_ProcessUtility_hook) (pstmt, queryString,
-										 context, params,
+										 context, params, queryEnv,
 										 dest, completionTag);
 		else
 			standard_ProcessUtility(pstmt, queryString,
-									context, params,
+									context, params, queryEnv,
 									dest, completionTag);
 	}
 	PG_CATCH();
