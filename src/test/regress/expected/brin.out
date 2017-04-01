@@ -425,7 +425,7 @@ $$;
 SELECT brin_summarize_range('brin_summarize_idx', 0);
  brin_summarize_range 
 ----------------------
-                    1
+                    0
 (1 row)
 
 -- nothing: already summarized
