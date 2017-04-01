@@ -1870,6 +1870,7 @@ _outGatherPath(StringInfo str, const GatherPath *node)
 
 	WRITE_NODE_FIELD(subpath);
 	WRITE_BOOL_FIELD(single_copy);
+	WRITE_INT_FIELD(num_workers);
 }
 
 static void

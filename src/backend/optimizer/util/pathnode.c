@@ -1742,16 +1742,17 @@ create_gather_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 														  required_outer);
 	pathnode->path.parallel_aware = false;
 	pathnode->path.parallel_safe = false;
-	pathnode->path.parallel_workers = subpath->parallel_workers;
+	pathnode->path.parallel_workers = 0;
 	pathnode->path.pathkeys = NIL;		/* Gather has unordered result */
 
 	pathnode->subpath = subpath;
+	pathnode->num_workers = subpath->parallel_workers;
 	pathnode->single_copy = false;
 
-	if (pathnode->path.parallel_workers == 0)
+	if (pathnode->num_workers == 0)
 	{
-		pathnode->path.parallel_workers = 1;
 		pathnode->path.pathkeys = subpath->pathkeys;
+		pathnode->num_workers = 1;
 		pathnode->single_copy = true;
 	}
 
