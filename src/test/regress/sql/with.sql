@@ -1028,3 +1028,6 @@ DROP RULE y_rule ON y;
 create table foo (with baz);  -- fail, WITH is a reserved word
 create table foo (with ordinality);  -- fail, WITH is a reserved word
 with ordinality as (select 1 as x) select * from ordinality;
+
+-- check sane response to attempt to modify CTE relation
+WITH d AS (SELECT 42) INSERT INTO d VALUES (1);

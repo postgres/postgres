@@ -122,6 +122,7 @@ SPI_connect(void)
 	_SPI_current->procCxt = NULL;		/* in case we fail to create 'em */
 	_SPI_current->execCxt = NULL;
 	_SPI_current->connectSubid = GetCurrentSubTransactionId();
+	_SPI_current->queryEnv = NULL;
 
 	/*
 	 * Create memory contexts for this procedure
@@ -1193,7 +1194,7 @@ SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
 	 */
 
 	/* Replan if needed, and increment plan refcount for portal */
-	cplan = GetCachedPlan(plansource, paramLI, false);
+	cplan = GetCachedPlan(plansource, paramLI, false, _SPI_current->queryEnv);
 	stmt_list = cplan->stmt_list;
 
 	/* Pop the error context stack */
@@ -1532,6 +1533,10 @@ SPI_result_code_string(int code)
 			return "SPI_ERROR_NOOUTFUNC";
 		case SPI_ERROR_TYPUNKNOWN:
 			return "SPI_ERROR_TYPUNKNOWN";
+		case SPI_ERROR_REL_DUPLICATE:
+			return "SPI_ERROR_REL_DUPLICATE";
+		case SPI_ERROR_REL_NOT_FOUND:
+			return "SPI_ERROR_REL_NOT_FOUND";
 		case SPI_OK_CONNECT:
 			return "SPI_OK_CONNECT";
 		case SPI_OK_FINISH:
@@ -1560,6 +1565,10 @@ SPI_result_code_string(int code)
 			return "SPI_OK_UPDATE_RETURNING";
 		case SPI_OK_REWRITTEN:
 			return "SPI_OK_REWRITTEN";
+		case SPI_OK_REL_REGISTER:
+			return "SPI_OK_REL_REGISTER";
+		case SPI_OK_REL_UNREGISTER:
+			return "SPI_OK_REL_UNREGISTER";
 	}
 	/* Unrecognized code ... return something useful ... */
 	sprintf(buf, "Unrecognized SPI code %d", code);
@@ -1615,7 +1624,8 @@ SPI_plan_get_cached_plan(SPIPlanPtr plan)
 	error_context_stack = &spierrcontext;
 
 	/* Get the generic plan for the query */
-	cplan = GetCachedPlan(plansource, NULL, plan->saved);
+	cplan = GetCachedPlan(plansource, NULL, plan->saved,
+						  _SPI_current->queryEnv);
 	Assert(cplan == plansource->gplan);
 
 	/* Pop the error context stack */
@@ -1767,7 +1777,8 @@ _SPI_prepare_plan(const char *src, SPIPlanPtr plan)
 		 */
 		plansource = CreateCachedPlan(parsetree,
 									  src,
-									  CreateCommandTag(parsetree->stmt));
+									  CreateCommandTag(parsetree->stmt),
+									  _SPI_current->queryEnv);
 
 		/*
 		 * Parameter datatypes are driven by parserSetup hook if provided,
@@ -1779,14 +1790,16 @@ _SPI_prepare_plan(const char *src, SPIPlanPtr plan)
 			stmt_list = pg_analyze_and_rewrite_params(parsetree,
 													  src,
 													  plan->parserSetup,
-													  plan->parserSetupArg);
+													  plan->parserSetupArg,
+													  _SPI_current->queryEnv);
 		}
 		else
 		{
 			stmt_list = pg_analyze_and_rewrite(parsetree,
 											   src,
 											   plan->argtypes,
-											   plan->nargs);
+											   plan->nargs,
+											   _SPI_current->queryEnv);
 		}
 
 		/* Finish filling in the CachedPlanSource */
@@ -1975,14 +1988,16 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 				stmt_list = pg_analyze_and_rewrite_params(parsetree,
 														  src,
 														  plan->parserSetup,
-													   plan->parserSetupArg);
+													   plan->parserSetupArg,
+													  _SPI_current->queryEnv);
 			}
 			else
 			{
 				stmt_list = pg_analyze_and_rewrite(parsetree,
 												   src,
 												   plan->argtypes,
-												   plan->nargs);
+												   plan->nargs,
+												   _SPI_current->queryEnv);
 			}
 
 			/* Finish filling in the CachedPlanSource */
@@ -2001,7 +2016,7 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 		 * Replan if needed, and increment plan refcount.  If it's a saved
 		 * plan, the refcount must be backed by the CurrentResourceOwner.
 		 */
-		cplan = GetCachedPlan(plansource, paramLI, plan->saved);
+		cplan = GetCachedPlan(plansource, paramLI, plan->saved, _SPI_current->queryEnv);
 		stmt_list = cplan->stmt_list;
 
 		/*
@@ -2081,7 +2096,8 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 										plansource->query_string,
 										snap, crosscheck_snapshot,
 										dest,
-										paramLI, 0);
+										paramLI, _SPI_current->queryEnv,
+										0);
 				res = _SPI_pquery(qdesc, fire_triggers,
 								  canSetTag ? tcount : 0);
 				FreeQueryDesc(qdesc);
@@ -2094,6 +2110,7 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 							   plansource->query_string,
 							   PROCESS_UTILITY_QUERY,
 							   paramLI,
+							   _SPI_current->queryEnv,
 							   dest,
 							   completionTag);
 
@@ -2618,4 +2635,85 @@ _SPI_save_plan(SPIPlanPtr plan)
 	}
 
 	return newplan;
+}
+
+/*
+ * Internal lookup of ephemeral named relation by name.
+ */
+static EphemeralNamedRelation
+_SPI_find_ENR_by_name(const char *name)
+{
+	/* internal static function; any error is bug in SPI itself */
+	Assert(name != NULL);
+
+	/* fast exit if no tuplestores have been added */
+	if (_SPI_current->queryEnv == NULL)
+		return NULL;
+
+	return get_ENR(_SPI_current->queryEnv, name);
+}
+
+/*
+ * Register an ephemeral named relation for use by the planner and executor on
+ * subsequent calls using this SPI connection.
+ */
+int
+SPI_register_relation(EphemeralNamedRelation enr)
+{
+	EphemeralNamedRelation match;
+	int			res;
+
+	if (enr == NULL || enr->md.name == NULL)
+		return SPI_ERROR_ARGUMENT;
+
+	res = _SPI_begin_call(false);	/* keep current memory context */
+	if (res < 0)
+		return res;
+
+	match = _SPI_find_ENR_by_name(enr->md.name);
+	if (match)
+		res = SPI_ERROR_REL_DUPLICATE;
+	else
+	{
+		if (_SPI_current->queryEnv == NULL)
+			_SPI_current->queryEnv = create_queryEnv();
+
+		register_ENR(_SPI_current->queryEnv, enr);
+		res = SPI_OK_REL_REGISTER;
+	}
+
+	_SPI_end_call(false);
+
+	return res;
+}
+
+/*
+ * Unregister an ephemeral named relation by name.  This will probably be a
+ * rarely used function, since SPI_finish will clear it automatically.
+ */
+int
+SPI_unregister_relation(const char *name)
+{
+	EphemeralNamedRelation match;
+	int			res;
+
+	if (name == NULL)
+		return SPI_ERROR_ARGUMENT;
+
+	res = _SPI_begin_call(false);	/* keep current memory context */
+	if (res < 0)
+		return res;
+
+	match = _SPI_find_ENR_by_name(name);
+	if (match)
+	{
+		unregister_ENR(_SPI_current->queryEnv, match->md.name);
+		res = SPI_OK_REL_UNREGISTER;
+	}
+	else
+		res = SPI_ERROR_REL_NOT_FOUND;
+
+	_SPI_end_call(false);
+
+	return res;
 }

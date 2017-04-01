@@ -100,6 +100,8 @@ extern Path *create_tablefuncscan_path(PlannerInfo *root, RelOptInfo *rel,
 						  Relids required_outer);
 extern Path *create_ctescan_path(PlannerInfo *root, RelOptInfo *rel,
 					Relids required_outer);
+extern Path *create_namedtuplestorescan_path(PlannerInfo *root, RelOptInfo *rel,
+					Relids required_outer);
 extern Path *create_worktablescan_path(PlannerInfo *root, RelOptInfo *rel,
 						  Relids required_outer);
 extern ForeignPath *create_foreignscan_path(PlannerInfo *root, RelOptInfo *rel,

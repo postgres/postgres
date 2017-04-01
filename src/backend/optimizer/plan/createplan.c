@@ -139,6 +139,8 @@ static TableFuncScan *create_tablefuncscan_plan(PlannerInfo *root, Path *best_pa
 						  List *tlist, List *scan_clauses);
 static CteScan *create_ctescan_plan(PlannerInfo *root, Path *best_path,
 					List *tlist, List *scan_clauses);
+static NamedTuplestoreScan *create_namedtuplestorescan_plan(PlannerInfo *root,
+					Path *best_path, List *tlist, List *scan_clauses);
 static WorkTableScan *create_worktablescan_plan(PlannerInfo *root, Path *best_path,
 						  List *tlist, List *scan_clauses);
 static ForeignScan *create_foreignscan_plan(PlannerInfo *root, ForeignPath *best_path,
@@ -197,6 +199,8 @@ static TableFuncScan *make_tablefuncscan(List *qptlist, List *qpqual,
 				   Index scanrelid, TableFunc *tablefunc);
 static CteScan *make_ctescan(List *qptlist, List *qpqual,
 			 Index scanrelid, int ctePlanId, int cteParam);
+static NamedTuplestoreScan *make_namedtuplestorescan(List *qptlist, List *qpqual,
+			 Index scanrelid, char *enrname);
 static WorkTableScan *make_worktablescan(List *qptlist, List *qpqual,
 				   Index scanrelid, int wtParam);
 static Append *make_append(List *appendplans, List *tlist, List *partitioned_rels);
@@ -366,6 +370,7 @@ create_plan_recurse(PlannerInfo *root, Path *best_path, int flags)
 		case T_ValuesScan:
 		case T_CteScan:
 		case T_WorkTableScan:
+		case T_NamedTuplestoreScan:
 		case T_ForeignScan:
 		case T_CustomScan:
 			plan = create_scan_plan(root, best_path, flags);
@@ -666,6 +671,13 @@ create_scan_plan(PlannerInfo *root, Path *best_path, int flags)
 												best_path,
 												tlist,
 												scan_clauses);
+			break;
+
+		case T_NamedTuplestoreScan:
+			plan = (Plan *) create_namedtuplestorescan_plan(root,
+															best_path,
+															tlist,
+															scan_clauses);
 			break;
 
 		case T_WorkTableScan:
@@ -3286,6 +3298,45 @@ create_ctescan_plan(PlannerInfo *root, Path *best_path,
 }
 
 /*
+ * create_namedtuplestorescan_plan
+ *	 Returns a tuplestorescan plan for the base relation scanned by
+ *	'best_path' with restriction clauses 'scan_clauses' and targetlist
+ *	'tlist'.
+ */
+static NamedTuplestoreScan *
+create_namedtuplestorescan_plan(PlannerInfo *root, Path *best_path,
+								List *tlist, List *scan_clauses)
+{
+	NamedTuplestoreScan *scan_plan;
+	Index		scan_relid = best_path->parent->relid;
+	RangeTblEntry *rte;
+
+	Assert(scan_relid > 0);
+	rte = planner_rt_fetch(scan_relid, root);
+	Assert(rte->rtekind == RTE_NAMEDTUPLESTORE);
+
+	/* Sort clauses into best execution order */
+	scan_clauses = order_qual_clauses(root, scan_clauses);
+
+	/* Reduce RestrictInfo list to bare expressions; ignore pseudoconstants */
+	scan_clauses = extract_actual_clauses(scan_clauses, false);
+
+	/* Replace any outer-relation variables with nestloop params */
+	if (best_path->param_info)
+	{
+		scan_clauses = (List *)
+			replace_nestloop_params(root, (Node *) scan_clauses);
+	}
+
+	scan_plan = make_namedtuplestorescan(tlist, scan_clauses, scan_relid,
+										 rte->enrname);
+
+	copy_generic_path_info(&scan_plan->scan.plan, best_path);
+
+	return scan_plan;
+}
+
+/*
  * create_worktablescan_plan
  *	 Returns a worktablescan plan for the base relation scanned by 'best_path'
  *	 with restriction clauses 'scan_clauses' and targetlist 'tlist'.
@@ -5116,6 +5167,26 @@ make_ctescan(List *qptlist,
 	node->scan.scanrelid = scanrelid;
 	node->ctePlanId = ctePlanId;
 	node->cteParam = cteParam;
+
+	return node;
+}
+
+static NamedTuplestoreScan *
+make_namedtuplestorescan(List *qptlist,
+						 List *qpqual,
+						 Index scanrelid,
+						 char *enrname)
+{
+	NamedTuplestoreScan *node = makeNode(NamedTuplestoreScan);
+	Plan	   *plan = &node->scan.plan;
+
+	/* cost should be inserted by caller */
+	plan->targetlist = qptlist;
+	plan->qual = qpqual;
+	plan->lefttree = NULL;
+	plan->righttree = NULL;
+	node->scan.scanrelid = scanrelid;
+	node->enrname = enrname;
 
 	return node;
 }

@@ -299,6 +299,7 @@ static void pgss_ExecutorFinish(QueryDesc *queryDesc);
 static void pgss_ExecutorEnd(QueryDesc *queryDesc);
 static void pgss_ProcessUtility(PlannedStmt *pstmt, const char *queryString,
 					ProcessUtilityContext context, ParamListInfo params,
+					QueryEnvironment *queryEnv,
 					DestReceiver *dest, char *completionTag);
 static uint32 pgss_hash_fn(const void *key, Size keysize);
 static int	pgss_match_fn(const void *key1, const void *key2, Size keysize);
@@ -956,7 +957,8 @@ pgss_ExecutorEnd(QueryDesc *queryDesc)
  */
 static void
 pgss_ProcessUtility(PlannedStmt *pstmt, const char *queryString,
-					ProcessUtilityContext context, ParamListInfo params,
+					ProcessUtilityContext context,
+					ParamListInfo params, QueryEnvironment *queryEnv,
 					DestReceiver *dest, char *completionTag)
 {
 	Node	   *parsetree = pstmt->utilityStmt;
@@ -994,11 +996,11 @@ pgss_ProcessUtility(PlannedStmt *pstmt, const char *queryString,
 		{
 			if (prev_ProcessUtility)
 				prev_ProcessUtility(pstmt, queryString,
-									context, params,
+									context, params, queryEnv,
 									dest, completionTag);
 			else
 				standard_ProcessUtility(pstmt, queryString,
-										context, params,
+										context, params, queryEnv,
 										dest, completionTag);
 			nested_level--;
 		}
@@ -1058,11 +1060,11 @@ pgss_ProcessUtility(PlannedStmt *pstmt, const char *queryString,
 	{
 		if (prev_ProcessUtility)
 			prev_ProcessUtility(pstmt, queryString,
-								context, params,
+								context, params, queryEnv,
 								dest, completionTag);
 		else
 			standard_ProcessUtility(pstmt, queryString,
-									context, params,
+									context, params, queryEnv,
 									dest, completionTag);
 	}
 }
@@ -2423,6 +2425,9 @@ JumbleRangeTable(pgssJumbleState *jstate, List *rtable)
 				 */
 				APP_JUMB_STRING(rte->ctename);
 				APP_JUMB(rte->ctelevelsup);
+				break;
+			case RTE_NAMEDTUPLESTORE:
+				APP_JUMB_STRING(rte->enrname);
 				break;
 			default:
 				elog(ERROR, "unrecognized RTE kind: %d", (int) rte->rtekind);

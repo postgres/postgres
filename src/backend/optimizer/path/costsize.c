@@ -1517,6 +1517,43 @@ cost_ctescan(Path *path, PlannerInfo *root,
 }
 
 /*
+ * cost_namedtuplestorescan
+ *	  Determines and returns the cost of scanning a named tuplestore.
+ */
+void
+cost_namedtuplestorescan(Path *path, PlannerInfo *root,
+						 RelOptInfo *baserel, ParamPathInfo *param_info)
+{
+	Cost		startup_cost = 0;
+	Cost		run_cost = 0;
+	QualCost	qpqual_cost;
+	Cost		cpu_per_tuple;
+
+	/* Should only be applied to base relations that are Tuplestores */
+	Assert(baserel->relid > 0);
+	Assert(baserel->rtekind == RTE_NAMEDTUPLESTORE);
+
+	/* Mark the path with the correct row estimate */
+	if (param_info)
+		path->rows = param_info->ppi_rows;
+	else
+		path->rows = baserel->rows;
+
+	/* Charge one CPU tuple cost per row for tuplestore manipulation */
+	cpu_per_tuple = cpu_tuple_cost;
+
+	/* Add scanning CPU costs */
+	get_restriction_qual_cost(root, baserel, param_info, &qpqual_cost);
+
+	startup_cost += qpqual_cost.startup;
+	cpu_per_tuple += cpu_tuple_cost + qpqual_cost.per_tuple;
+	run_cost += cpu_per_tuple * baserel->tuples;
+
+	path->startup_cost = startup_cost;
+	path->total_cost = startup_cost + run_cost;
+}
+
+/*
  * cost_recursive_union
  *	  Determines and returns the cost of performing a recursive union,
  *	  and also the estimated output size.
@@ -4679,6 +4716,39 @@ set_cte_size_estimates(PlannerInfo *root, RelOptInfo *rel, double cte_rows)
 		/* Otherwise just believe the CTE's rowcount estimate */
 		rel->tuples = cte_rows;
 	}
+
+	/* Now estimate number of output rows, etc */
+	set_baserel_size_estimates(root, rel);
+}
+
+/*
+ * set_namedtuplestore_size_estimates
+ *		Set the size estimates for a base relation that is a tuplestore reference.
+ *
+ * The rel's targetlist and restrictinfo list must have been constructed
+ * already.
+ *
+ * We set the same fields as set_baserel_size_estimates.
+ */
+void
+set_namedtuplestore_size_estimates(PlannerInfo *root, RelOptInfo *rel)
+{
+	RangeTblEntry *rte;
+
+	/* Should only be applied to base relations that are tuplestore references */
+	Assert(rel->relid > 0);
+	rte = planner_rt_fetch(rel->relid, root);
+	Assert(rte->rtekind == RTE_NAMEDTUPLESTORE);
+
+	/*
+	 * Use the estimate provided by the code which is generating the named
+	 * tuplestore.  In some cases, the actual number might be available; in
+	 * others the same plan will be re-used, so a "typical" value might be
+	 * estimated and used.
+	 */
+	rel->tuples = rte->enrtuples;
+	if (rel->tuples < 0)
+		rel->tuples = 1000;
 
 	/* Now estimate number of output rows, etc */
 	set_baserel_size_estimates(root, rel);

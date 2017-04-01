@@ -906,7 +906,8 @@ typedef enum RTEKind
 	RTE_FUNCTION,				/* function in FROM */
 	RTE_TABLEFUNC,				/* TableFunc(.., column list) */
 	RTE_VALUES,					/* VALUES (<exprlist>), (<exprlist>), ... */
-	RTE_CTE						/* common table expr (WITH list element) */
+	RTE_CTE,					/* common table expr (WITH list element) */
+	RTE_NAMEDTUPLESTORE			/* tuplestore, e.g. for AFTER triggers */
 } RTEKind;
 
 typedef struct RangeTblEntry
@@ -992,6 +993,9 @@ typedef struct RangeTblEntry
 	List	   *coltypes;		/* OID list of column type OIDs */
 	List	   *coltypmods;		/* integer list of column typmods */
 	List	   *colcollations;	/* OID list of column collation OIDs */
+
+	char	   *enrname;		/* name of ephemeral named relation */
+	double		enrtuples;		/* estimated or actual from caller */
 
 	/*
 	 * Fields valid in all RTEs:

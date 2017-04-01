@@ -4910,7 +4910,7 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 	querytree_list = pg_analyze_and_rewrite_params(linitial(raw_parsetree_list),
 												   src,
 									   (ParserSetupHook) sql_fn_parser_setup,
-												   pinfo);
+												   pinfo, NULL);
 	if (list_length(querytree_list) != 1)
 		goto fail;
 	querytree = linitial(querytree_list);

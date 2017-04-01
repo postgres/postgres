@@ -55,7 +55,8 @@ explain_get_index_name_hook_type explain_get_index_name_hook = NULL;
 
 static void ExplainOneQuery(Query *query, int cursorOptions,
 				IntoClause *into, ExplainState *es,
-				const char *queryString, ParamListInfo params);
+				const char *queryString, ParamListInfo params,
+				QueryEnvironment *queryEnv);
 static void report_triggers(ResultRelInfo *rInfo, bool show_relname,
 				ExplainState *es);
 static double elapsed_time(instr_time *starttime);
@@ -142,7 +143,8 @@ static void escape_yaml(StringInfo buf, const char *str);
  */
 void
 ExplainQuery(ParseState *pstate, ExplainStmt *stmt, const char *queryString,
-			 ParamListInfo params, DestReceiver *dest)
+			 ParamListInfo params, QueryEnvironment *queryEnv,
+			 DestReceiver *dest)
 {
 	ExplainState *es = NewExplainState();
 	TupOutputState *tstate;
@@ -253,7 +255,7 @@ ExplainQuery(ParseState *pstate, ExplainStmt *stmt, const char *queryString,
 		{
 			ExplainOneQuery(castNode(Query, lfirst(l)),
 							CURSOR_OPT_PARALLEL_OK, NULL, es,
-							queryString, params);
+							queryString, params, queryEnv);
 
 			/* Separate plans with an appropriate separator */
 			if (lnext(l) != NULL)
@@ -338,12 +340,14 @@ ExplainResultDesc(ExplainStmt *stmt)
 static void
 ExplainOneQuery(Query *query, int cursorOptions,
 				IntoClause *into, ExplainState *es,
-				const char *queryString, ParamListInfo params)
+				const char *queryString, ParamListInfo params,
+				QueryEnvironment *queryEnv)
 {
 	/* planner will not cope with utility statements */
 	if (query->commandType == CMD_UTILITY)
 	{
-		ExplainOneUtility(query->utilityStmt, into, es, queryString, params);
+		ExplainOneUtility(query->utilityStmt, into, es, queryString, params,
+						  queryEnv);
 		return;
 	}
 
@@ -366,7 +370,8 @@ ExplainOneQuery(Query *query, int cursorOptions,
 		INSTR_TIME_SUBTRACT(planduration, planstart);
 
 		/* run it (if needed) and produce output */
-		ExplainOnePlan(plan, into, es, queryString, params, &planduration);
+		ExplainOnePlan(plan, into, es, queryString, params, queryEnv,
+					   &planduration);
 	}
 }
 
@@ -383,7 +388,8 @@ ExplainOneQuery(Query *query, int cursorOptions,
  */
 void
 ExplainOneUtility(Node *utilityStmt, IntoClause *into, ExplainState *es,
-				  const char *queryString, ParamListInfo params)
+				  const char *queryString, ParamListInfo params,
+				  QueryEnvironment *queryEnv)
 {
 	if (utilityStmt == NULL)
 		return;
@@ -404,7 +410,7 @@ ExplainOneUtility(Node *utilityStmt, IntoClause *into, ExplainState *es,
 		Assert(list_length(rewritten) == 1);
 		ExplainOneQuery(castNode(Query, linitial(rewritten)),
 						0, ctas->into, es,
-						queryString, params);
+						queryString, params, queryEnv);
 	}
 	else if (IsA(utilityStmt, DeclareCursorStmt))
 	{
@@ -423,11 +429,11 @@ ExplainOneUtility(Node *utilityStmt, IntoClause *into, ExplainState *es,
 		Assert(list_length(rewritten) == 1);
 		ExplainOneQuery(castNode(Query, linitial(rewritten)),
 						dcs->options, NULL, es,
-						queryString, params);
+						queryString, params, queryEnv);
 	}
 	else if (IsA(utilityStmt, ExecuteStmt))
 		ExplainExecuteQuery((ExecuteStmt *) utilityStmt, into, es,
-							queryString, params);
+							queryString, params, queryEnv);
 	else if (IsA(utilityStmt, NotifyStmt))
 	{
 		if (es->format == EXPLAIN_FORMAT_TEXT)
@@ -460,7 +466,7 @@ ExplainOneUtility(Node *utilityStmt, IntoClause *into, ExplainState *es,
 void
 ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
 			   const char *queryString, ParamListInfo params,
-			   const instr_time *planduration)
+			   QueryEnvironment *queryEnv, const instr_time *planduration)
 {
 	DestReceiver *dest;
 	QueryDesc  *queryDesc;
@@ -505,7 +511,7 @@ ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
 	/* Create a QueryDesc for the query */
 	queryDesc = CreateQueryDesc(plannedstmt, queryString,
 								GetActiveSnapshot(), InvalidSnapshot,
-								dest, params, instrument_option);
+								dest, params, queryEnv, instrument_option);
 
 	/* Select execution options */
 	if (es->analyze)
@@ -796,6 +802,7 @@ ExplainPreScanNode(PlanState *planstate, Bitmapset **rels_used)
 		case T_TableFuncScan:
 		case T_ValuesScan:
 		case T_CteScan:
+		case T_NamedTuplestoreScan:
 		case T_WorkTableScan:
 			*rels_used = bms_add_member(*rels_used,
 										((Scan *) plan)->scanrelid);
@@ -950,6 +957,9 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			break;
 		case T_CteScan:
 			pname = sname = "CTE Scan";
+			break;
+		case T_NamedTuplestoreScan:
+			pname = sname = "Named Tuplestore Scan";
 			break;
 		case T_WorkTableScan:
 			pname = sname = "WorkTable Scan";
@@ -1389,6 +1399,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 		case T_SeqScan:
 		case T_ValuesScan:
 		case T_CteScan:
+		case T_NamedTuplestoreScan:
 		case T_WorkTableScan:
 		case T_SubqueryScan:
 			show_scan_qual(plan->qual, "Filter", planstate, ancestors, es);
@@ -2678,6 +2689,11 @@ ExplainTargetRel(Plan *plan, Index rti, ExplainState *es)
 			Assert(!rte->self_reference);
 			objectname = rte->ctename;
 			objecttag = "CTE Name";
+			break;
+		case T_NamedTuplestoreScan:
+			Assert(rte->rtekind == RTE_NAMEDTUPLESTORE);
+			objectname = rte->enrname;
+			objecttag = "Tuplestore Name";
 			break;
 		case T_WorkTableScan:
 			/* Assert it's on a self-reference CTE */

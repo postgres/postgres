@@ -156,6 +156,7 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
 		case RTE_TABLEFUNC:
 		case RTE_VALUES:
 		case RTE_CTE:
+		case RTE_NAMEDTUPLESTORE:
 
 			/*
 			 * Subquery, function, tablefunc, or values list --- set up attr

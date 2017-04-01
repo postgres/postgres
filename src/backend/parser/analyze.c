@@ -94,7 +94,8 @@ static bool test_raw_expression_coverage(Node *node, void *context);
  */
 Query *
 parse_analyze(RawStmt *parseTree, const char *sourceText,
-			  Oid *paramTypes, int numParams)
+			  Oid *paramTypes, int numParams,
+			  QueryEnvironment *queryEnv)
 {
 	ParseState *pstate = make_parsestate(NULL);
 	Query	   *query;
@@ -105,6 +106,8 @@ parse_analyze(RawStmt *parseTree, const char *sourceText,
 
 	if (numParams > 0)
 		parse_fixed_parameters(pstate, paramTypes, numParams);
+
+	pstate->p_queryEnv = queryEnv;
 
 	query = transformTopLevelStmt(pstate, parseTree);
 
@@ -2796,6 +2799,15 @@ transformLockingClause(ParseState *pstate, Query *qry, LockingClause *lc,
 							/*------
 							  translator: %s is a SQL row locking clause such as FOR UPDATE */
 							   errmsg("%s cannot be applied to a WITH query",
+									  LCS_asString(lc->strength)),
+							 parser_errposition(pstate, thisrel->location)));
+							break;
+						case RTE_NAMEDTUPLESTORE:
+							ereport(ERROR,
+									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							/*------
+							  translator: %s is a SQL row locking clause such as FOR UPDATE */
+							   errmsg("%s cannot be applied to a named tuplestore",
 									  LCS_asString(lc->strength)),
 							 parser_errposition(pstate, thisrel->location)));
 							break;

@@ -137,6 +137,7 @@ typedef struct PortalData
 	CachedPlan *cplan;			/* CachedPlan, if stmts are from one */
 
 	ParamListInfo portalParams; /* params to pass to query */
+	QueryEnvironment *queryEnv; /* environment for query */
 
 	/* Features/options */
 	PortalStrategy strategy;	/* see above */

@@ -15,6 +15,7 @@
 #define PARSE_NODE_H
 
 #include "nodes/parsenodes.h"
+#include "utils/queryenvironment.h"
 #include "utils/relcache.h"
 
 
@@ -187,6 +188,8 @@ struct ParseState
 										 * with FOR UPDATE/FOR SHARE */
 	bool		p_resolve_unknowns;		/* resolve unknown-type SELECT outputs
 										 * as type text */
+
+	QueryEnvironment *p_queryEnv; /* curr env, incl refs to enclosing env */
 
 	/* Flags telling about things found in the query: */
 	bool		p_hasAggs;

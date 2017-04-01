@@ -40,6 +40,7 @@ typedef struct QueryDesc
 	Snapshot	crosscheck_snapshot;	/* crosscheck for RI update/delete */
 	DestReceiver *dest;			/* the destination for tuple output */
 	ParamListInfo params;		/* param values being passed in */
+	QueryEnvironment *queryEnv; /* query environment passed in */
 	int			instrument_options;		/* OR of InstrumentOption flags */
 
 	/* These fields are set by ExecutorStart */
@@ -61,6 +62,7 @@ extern QueryDesc *CreateQueryDesc(PlannedStmt *plannedstmt,
 				Snapshot crosscheck_snapshot,
 				DestReceiver *dest,
 				ParamListInfo params,
+				QueryEnvironment *queryEnv,
 				int instrument_options);
 
 extern void FreeQueryDesc(QueryDesc *qdesc);

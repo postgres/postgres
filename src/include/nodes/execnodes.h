@@ -22,6 +22,7 @@
 #include "nodes/params.h"
 #include "nodes/plannodes.h"
 #include "utils/hsearch.h"
+#include "utils/queryenvironment.h"
 #include "utils/reltrigger.h"
 #include "utils/sortsupport.h"
 #include "utils/tuplestore.h"
@@ -430,6 +431,8 @@ typedef struct EState
 	/* Parameter info: */
 	ParamListInfo es_param_list_info;	/* values of external params */
 	ParamExecData *es_param_exec_vals;	/* values of internal params */
+
+	QueryEnvironment *es_queryEnv;	/* query environment */
 
 	/* Other working state: */
 	MemoryContext es_query_cxt; /* per-query context in which EState lives */
@@ -1444,6 +1447,24 @@ typedef struct CteScanState
 	Tuplestorestate *cte_table; /* rows already read from the CTE query */
 	bool		eof_cte;		/* reached end of CTE query? */
 } CteScanState;
+
+/* ----------------
+ *	 NamedTuplestoreScanState information
+ *
+ *		NamedTuplestoreScan nodes are used to scan a Tuplestore created and
+ *		named prior to execution of the query.  An example is a transition
+ *		table for an AFTER trigger.
+ *
+ * Multiple NamedTuplestoreScan nodes can read out from the same Tuplestore.
+ * ----------------
+ */
+typedef struct NamedTuplestoreScanState
+{
+	ScanState	ss;				/* its first field is NodeTag */
+	int			readptr;		/* index of my tuplestore read pointer */
+	TupleDesc	tupdesc;		/* format of the tuples in the tuplestore */
+	Tuplestorestate *relation;	/* the rows */
+} NamedTuplestoreScanState;
 
 /* ----------------
  *	 WorkTableScanState information

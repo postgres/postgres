@@ -120,6 +120,8 @@ CreateExecutorState(void)
 	estate->es_param_list_info = NULL;
 	estate->es_param_exec_vals = NULL;
 
+	estate->es_queryEnv = NULL;
+
 	estate->es_query_cxt = qcontext;
 
 	estate->es_tupleTable = NIL;

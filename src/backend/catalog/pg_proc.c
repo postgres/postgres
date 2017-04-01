@@ -934,7 +934,8 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 				querytree_sublist = pg_analyze_and_rewrite_params(parsetree,
 																  prosrc,
 									   (ParserSetupHook) sql_fn_parser_setup,
-																  pinfo);
+																  pinfo,
+																  NULL);
 				querytree_list = list_concat(querytree_list,
 											 querytree_sublist);
 			}
