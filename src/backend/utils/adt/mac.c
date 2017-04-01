@@ -398,7 +398,8 @@ macaddr_fast_cmp(Datum x, Datum y, SortSupport ssup)
 
 /*
  * SortSupport abbreviated key comparison function. Compares two MAC addresses
- * quickly by treating them like integers, and without having to go the heap.
+ * quickly by treating them like integers, and without having to go to the
+ * heap.
  */
 static int
 macaddr_cmp_abbrev(Datum x, Datum y, SortSupport ssup)
@@ -477,7 +478,7 @@ macaddr_abbrev_abort(int memtupcount, SortSupport ssup)
 }
 
 /*
- * SortSupport converstion routine. Converts original macaddr representation
+ * SortSupport conversion routine. Converts original macaddr representation
  * to abbreviated key representation.
  *
  * Packs the bytes of a 6-byte MAC address into a Datum and treats it as an
