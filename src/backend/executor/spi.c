@@ -1777,8 +1777,7 @@ _SPI_prepare_plan(const char *src, SPIPlanPtr plan)
 		 */
 		plansource = CreateCachedPlan(parsetree,
 									  src,
-									  CreateCommandTag(parsetree->stmt),
-									  _SPI_current->queryEnv);
+									  CreateCommandTag(parsetree->stmt));
 
 		/*
 		 * Parameter datatypes are driven by parserSetup hook if provided,

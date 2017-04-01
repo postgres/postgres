@@ -151,8 +151,7 @@ InitPlanCache(void)
 CachedPlanSource *
 CreateCachedPlan(RawStmt *raw_parse_tree,
 				 const char *query_string,
-				 const char *commandTag,
-				 QueryEnvironment *queryEnv)
+				 const char *commandTag)
 {
 	CachedPlanSource *plansource;
 	MemoryContext source_context;

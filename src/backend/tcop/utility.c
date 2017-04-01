@@ -308,6 +308,8 @@ CheckRestrictedOperation(const char *cmdname)
  *	context: identifies source of statement (toplevel client command,
  *		non-toplevel client command, subcommand of a larger utility command)
  *	params: parameters to use during execution
+ *	queryEnv: environment for parse through execution (e.g., ephemeral named
+ *		tables like trigger transition tables).  May be NULL.
  *	dest: where to send results
  *	completionTag: points to a buffer of size COMPLETION_TAG_BUFSIZE
  *		in which to store a command completion status string.

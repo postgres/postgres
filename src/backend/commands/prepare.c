@@ -91,7 +91,7 @@ PrepareQuery(PrepareStmt *stmt, const char *queryString,
 	 * to see the unmodified raw parse tree.
 	 */
 	plansource = CreateCachedPlan(rawstmt, queryString,
-								  CreateCommandTag(stmt->query), NULL);
+								  CreateCommandTag(stmt->query));
 
 	/* Transform list of TypeNames to array of type OIDs */
 	nargs = list_length(stmt->argtypes);

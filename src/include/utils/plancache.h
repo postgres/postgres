@@ -149,8 +149,7 @@ extern void ResetPlanCache(void);
 
 extern CachedPlanSource *CreateCachedPlan(struct RawStmt *raw_parse_tree,
 				 const char *query_string,
-				 const char *commandTag,
-				 QueryEnvironment *queryEnv);
+				 const char *commandTag);
 extern CachedPlanSource *CreateOneShotCachedPlan(struct RawStmt *raw_parse_tree,
 						const char *query_string,
 						const char *commandTag);

@@ -1318,8 +1318,7 @@ exec_parse_message(const char *query_string,	/* string to execute */
 		 * Create the CachedPlanSource before we do parse analysis, since it
 		 * needs to see the unmodified raw parse tree.
 		 */
-		psrc = CreateCachedPlan(raw_parse_tree, query_string, commandTag,
-								NULL);
+		psrc = CreateCachedPlan(raw_parse_tree, query_string, commandTag);
 
 		/*
 		 * Set up a snapshot if parse analysis will need one.
@@ -1371,8 +1370,7 @@ exec_parse_message(const char *query_string,	/* string to execute */
 		/* Empty input string.  This is legal. */
 		raw_parse_tree = NULL;
 		commandTag = NULL;
-		psrc = CreateCachedPlan(raw_parse_tree, query_string, commandTag,
-								NULL);
+		psrc = CreateCachedPlan(raw_parse_tree, query_string, commandTag);
 		querytree_list = NIL;
 	}
 
