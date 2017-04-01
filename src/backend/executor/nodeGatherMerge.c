@@ -419,10 +419,9 @@ reread:
 }
 
 /*
- * Clear out the tuple table slots for each gather merge input,
- * and return a cleared slot.
+ * Clear out the tuple table slots for each gather merge input.
  */
-static TupleTableSlot *
+static void
 gather_merge_clear_slots(GatherMergeState *gm_state)
 {
 	int			i;
@@ -437,9 +436,6 @@ gather_merge_clear_slots(GatherMergeState *gm_state)
 	pfree(gm_state->gm_tuple_buffers);
 	/* Free the binaryheap, which was created for sort */
 	binaryheap_free(gm_state->gm_heap);
-
-	/* return any clear slot */
-	return gm_state->gm_slots[0];
 }
 
 /*
@@ -479,7 +475,8 @@ gather_merge_getnext(GatherMergeState *gm_state)
 	if (binaryheap_empty(gm_state->gm_heap))
 	{
 		/* All the queues are exhausted, and so is the heap */
-		return gather_merge_clear_slots(gm_state);
+		gather_merge_clear_slots(gm_state);
+		return NULL;
 	}
 	else
 	{
