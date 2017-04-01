@@ -20,6 +20,7 @@
 #include "commands/event_trigger.h"
 #include "commands/trigger.h"
 #include "executor/spi.h"
+#include "utils/queryenvironment.h"
 
 /**********************************************************************
  * Definitions
@@ -780,12 +781,12 @@ typedef struct PLpgSQL_func_hashkey
 	/* be careful that pad bytes in this struct get zeroed! */
 
 	/*
-	 * For a trigger function, the OID of the relation triggered on is part of
-	 * the hash key --- we want to compile the trigger separately for each
-	 * relation it is used with, in case the rowtype is different.  Zero if
-	 * not called as a trigger.
+	 * For a trigger function, the OID of the trigger is part of the hash key
+	 * --- we want to compile the trigger function separately for each trigger
+	 * it is used with, in case the rowtype or transition table names are
+	 * different.  Zero if not called as a trigger.
 	 */
-	Oid			trigrelOid;
+	Oid			trigOid;
 
 	/*
 	 * We must include the input collation as part of the hash key too,
@@ -909,6 +910,9 @@ typedef struct PLpgSQL_execstate
 	/* we pass datums[i] to the executor, when needed, in paramLI->params[i] */
 	ParamListInfo paramLI;
 	bool		params_dirty;	/* T if any resettable datum has been passed */
+
+	/* custom environment for parsing/execution of query for this context */
+	QueryEnvironment *queryEnv;
 
 	/* EState to use for "simple" expression evaluation */
 	EState	   *simple_eval_estate;

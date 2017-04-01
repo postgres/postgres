@@ -589,11 +589,11 @@ do_compile(FunctionCallInfo fcinfo,
 				  errmsg("trigger functions cannot have declared arguments"),
 						 errhint("The arguments of the trigger can be accessed through TG_NARGS and TG_ARGV instead.")));
 
-			/* Add the record for referencing NEW */
+			/* Add the record for referencing NEW ROW */
 			rec = plpgsql_build_record("new", 0, true);
 			function->new_varno = rec->dno;
 
-			/* Add the record for referencing OLD */
+			/* Add the record for referencing OLD ROW */
 			rec = plpgsql_build_record("old", 0, true);
 			function->old_varno = rec->dno;
 
@@ -2453,15 +2453,16 @@ compute_function_hashkey(FunctionCallInfo fcinfo,
 	hashkey->isTrigger = CALLED_AS_TRIGGER(fcinfo);
 
 	/*
-	 * if trigger, get relation OID.  In validation mode we do not know what
-	 * relation is intended to be used, so we leave trigrelOid zero; the hash
-	 * entry built in this case will never really be used.
+	 * if trigger, get its OID.  In validation mode we do not know what
+	 * relation or transition table names are intended to be used, so we leave
+	 * trigOid zero; the hash entry built in this case will never really be
+	 * used.
 	 */
 	if (hashkey->isTrigger && !forValidator)
 	{
 		TriggerData *trigdata = (TriggerData *) fcinfo->context;
 
-		hashkey->trigrelOid = RelationGetRelid(trigdata->tg_relation);
+		hashkey->trigOid = trigdata->tg_trigger->tgoid;
 	}
 
 	/* get input collation, if known */

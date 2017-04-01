@@ -1240,3 +1240,26 @@ select * from upsert;
 drop table upsert;
 drop function upsert_before_func();
 drop function upsert_after_func();
+
+--
+-- Verify that triggers are prevented on partitioned tables if they would
+-- access row data (ROW and STATEMENT-with-transition-table)
+--
+
+create table my_table (i int) partition by list (i);
+create table my_table_42 partition of my_table for values in (42);
+create function my_trigger_function() returns trigger as $$ begin end; $$ language plpgsql;
+create trigger my_trigger before update on my_table for each row execute procedure my_trigger_function();
+create trigger my_trigger after update on my_table referencing old table as old_table
+   for each statement execute procedure my_trigger_function();
+
+--
+-- Verify that triggers are allowed on partitions
+--
+create trigger my_trigger before update on my_table_42 for each row execute procedure my_trigger_function();
+drop trigger my_trigger on my_table_42;
+create trigger my_trigger after update on my_table_42 referencing old table as old_table
+   for each statement execute procedure my_trigger_function();
+drop trigger my_trigger on my_table_42;
+drop table my_table_42;
+drop table my_table;
