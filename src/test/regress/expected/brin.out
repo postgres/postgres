@@ -392,6 +392,12 @@ INSERT INTO brintest SELECT
 	format('%s/%s%s', odd, even, tenthous)::pg_lsn,
 	box(point(odd, even), point(thousand, twothousand))
 FROM tenk1 ORDER BY unique2 LIMIT 5 OFFSET 5;
+SELECT brin_desummarize_range('brinidx', 0);
+ brin_desummarize_range 
+------------------------
+ 
+(1 row)
+
 VACUUM brintest;  -- force a summarization cycle in brinidx
 UPDATE brintest SET int8col = int8col * int4col;
 UPDATE brintest SET textcol = '' WHERE textcol IS NOT NULL;
@@ -404,6 +410,27 @@ SELECT brin_summarize_new_values('brinidx'); -- ok, no change expected
  brin_summarize_new_values 
 ---------------------------
                          0
+(1 row)
+
+-- Tests for brin_desummarize_range
+SELECT brin_desummarize_range('brinidx', -1); -- error, invalid range
+ERROR:  block number out of range: -1
+SELECT brin_desummarize_range('brinidx', 0);
+ brin_desummarize_range 
+------------------------
+ 
+(1 row)
+
+SELECT brin_desummarize_range('brinidx', 0);
+ brin_desummarize_range 
+------------------------
+ 
+(1 row)
+
+SELECT brin_desummarize_range('brinidx', 100000000);
+ brin_desummarize_range 
+------------------------
+ 
 (1 row)
 
 -- Test brin_summarize_range

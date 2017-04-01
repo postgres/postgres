@@ -61,6 +61,13 @@ brin_desc(StringInfo buf, XLogReaderState *record)
 
 		appendStringInfo(buf, "targetBlk %u", xlrec->targetBlk);
 	}
+	else if (info == XLOG_BRIN_DESUMMARIZE)
+	{
+		xl_brin_desummarize *xlrec = (xl_brin_desummarize *) rec;
+
+		appendStringInfo(buf, "pagesPerRange %u, heapBlk %u, page offset %u",
+						 xlrec->pagesPerRange, xlrec->heapBlk, xlrec->regOffset);
+	}
 }
 
 const char *
@@ -90,6 +97,9 @@ brin_identify(uint8 info)
 			break;
 		case XLOG_BRIN_REVMAP_EXTEND:
 			id = "REVMAP_EXTEND";
+			break;
+		case XLOG_BRIN_DESUMMARIZE:
+			id = "DESUMMARIZE";
 			break;
 	}
 

@@ -33,7 +33,7 @@
 #define XLOG_BRIN_UPDATE			0x20
 #define XLOG_BRIN_SAMEPAGE_UPDATE	0x30
 #define XLOG_BRIN_REVMAP_EXTEND		0x40
-#define XLOG_BRIN_REVMAP_VACUUM		0x50
+#define XLOG_BRIN_DESUMMARIZE		0x50
 
 #define XLOG_BRIN_OPMASK			0x70
 /*
@@ -123,6 +123,24 @@ typedef struct xl_brin_revmap_extend
 
 #define SizeOfBrinRevmapExtend	(offsetof(xl_brin_revmap_extend, targetBlk) + \
 								 sizeof(BlockNumber))
+
+/*
+ * This is what we need to know about a range de-summarization
+ *
+ * Backup block 0: revmap page
+ * Backup block 1: regular page
+ */
+typedef struct xl_brin_desummarize
+{
+	BlockNumber	pagesPerRange;
+	/* page number location to set to invalid */
+	OffsetNumber heapBlk;
+	/* offset of item to delete in regular index page */
+	OffsetNumber regOffset;
+} xl_brin_desummarize;
+
+#define SizeOfBrinDesummarize	(offsetof(xl_brin_desummarize, regOffset) + \
+								 sizeof(OffsetNumber))
 
 
 extern void brin_redo(XLogReaderState *record);

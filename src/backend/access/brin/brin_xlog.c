@@ -254,6 +254,46 @@ brin_xlog_revmap_extend(XLogReaderState *record)
 		UnlockReleaseBuffer(metabuf);
 }
 
+static void
+brin_xlog_desummarize_page(XLogReaderState *record)
+{
+	XLogRecPtr	lsn = record->EndRecPtr;
+	xl_brin_desummarize *xlrec;
+	Buffer		buffer;
+	XLogRedoAction action;
+
+	xlrec = (xl_brin_desummarize *) XLogRecGetData(record);
+
+	/* Update the revmap */
+	action = XLogReadBufferForRedo(record, 0, &buffer);
+	if (action == BLK_NEEDS_REDO)
+	{
+		ItemPointerData	iptr;
+
+		ItemPointerSetInvalid(&iptr);
+		brinSetHeapBlockItemptr(buffer, xlrec->pagesPerRange, xlrec->heapBlk, iptr);
+
+		PageSetLSN(BufferGetPage(buffer), lsn);
+		MarkBufferDirty(buffer);
+	}
+	if (BufferIsValid(buffer))
+		UnlockReleaseBuffer(buffer);
+
+	/* remove the leftover entry from the regular page */
+	action = XLogReadBufferForRedo(record, 1, &buffer);
+	if (action == BLK_NEEDS_REDO)
+	{
+		Page	regPg = BufferGetPage(buffer);
+
+		PageIndexTupleDeleteNoCompact(regPg, xlrec->regOffset);
+
+		PageSetLSN(regPg, lsn);
+		MarkBufferDirty(buffer);
+	}
+	if (BufferIsValid(buffer))
+		UnlockReleaseBuffer(buffer);
+}
+
 void
 brin_redo(XLogReaderState *record)
 {
@@ -275,6 +315,9 @@ brin_redo(XLogReaderState *record)
 			break;
 		case XLOG_BRIN_REVMAP_EXTEND:
 			brin_xlog_revmap_extend(record);
+			break;
+		case XLOG_BRIN_DESUMMARIZE:
+			brin_xlog_desummarize_page(record);
 			break;
 		default:
 			elog(PANIC, "brin_redo: unknown op code %u", info);

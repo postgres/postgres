@@ -36,5 +36,6 @@ extern void brinSetHeapBlockItemptr(Buffer rmbuf, BlockNumber pagesPerRange,
 extern BrinTuple *brinGetTupleForHeapBlock(BrinRevmap *revmap,
 						 BlockNumber heapBlk, Buffer *buf, OffsetNumber *off,
 						 Size *size, int mode, Snapshot snapshot);
+extern bool brinRevmapDesummarizeRange(Relation idxrel, BlockNumber heapBlk);
 
 #endif   /* BRIN_REVMAP_H */

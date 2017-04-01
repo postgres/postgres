@@ -19660,6 +19660,14 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
     <primary>gin_clean_pending_list</primary>
    </indexterm>
 
+   <indexterm>
+    <primary>brin_summarize_range</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>brin_desummarize_range</primary>
+   </indexterm>
+
    <para>
     <xref linkend="functions-admin-index-table"> shows the functions
     available for index maintenance tasks.
@@ -19689,6 +19697,13 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
        </entry>
        <entry><type>integer</type></entry>
        <entry>summarize the page range covering the given block, if not already summarized</entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>brin_desummarize_range(<parameter>index</> <type>regclass</>, <parameter>blockNumber</> <type>bigint</type>)</function></literal>
+       </entry>
+       <entry><type>integer</type></entry>
+       <entry>de-summarize the page range covering the given block, if summarized</entry>
       </row>
       <row>
        <entry>

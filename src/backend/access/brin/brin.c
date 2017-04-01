@@ -909,6 +909,80 @@ brin_summarize_range(PG_FUNCTION_ARGS)
 }
 
 /*
+ * SQL-callable interface to mark a range as no longer summarized
+ */
+Datum
+brin_desummarize_range(PG_FUNCTION_ARGS)
+{
+	Oid		indexoid = PG_GETARG_OID(0);
+	int64	heapBlk64 = PG_GETARG_INT64(1);
+	BlockNumber heapBlk;
+	Oid		heapoid;
+	Relation heapRel;
+	Relation indexRel;
+	bool	done;
+
+	if (heapBlk64 > MaxBlockNumber || heapBlk64 < 0)
+	{
+		char	   *blk = psprintf(INT64_FORMAT, heapBlk64);
+
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("block number out of range: %s", blk)));
+	}
+	heapBlk = (BlockNumber) heapBlk64;
+
+	/*
+	 * We must lock table before index to avoid deadlocks.  However, if the
+	 * passed indexoid isn't an index then IndexGetRelation() will fail.
+	 * Rather than emitting a not-very-helpful error message, postpone
+	 * complaining, expecting that the is-it-an-index test below will fail.
+	 */
+	heapoid = IndexGetRelation(indexoid, true);
+	if (OidIsValid(heapoid))
+		heapRel = heap_open(heapoid, ShareUpdateExclusiveLock);
+	else
+		heapRel = NULL;
+
+	indexRel = index_open(indexoid, ShareUpdateExclusiveLock);
+
+	/* Must be a BRIN index */
+	if (indexRel->rd_rel->relkind != RELKIND_INDEX ||
+		indexRel->rd_rel->relam != BRIN_AM_OID)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not a BRIN index",
+						RelationGetRelationName(indexRel))));
+
+	/* User must own the index (comparable to privileges needed for VACUUM) */
+	if (!pg_class_ownercheck(indexoid, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+					   RelationGetRelationName(indexRel));
+
+	/*
+	 * Since we did the IndexGetRelation call above without any lock, it's
+	 * barely possible that a race against an index drop/recreation could have
+	 * netted us the wrong table.  Recheck.
+	 */
+	if (heapRel == NULL || heapoid != IndexGetRelation(indexoid, false))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_TABLE),
+				 errmsg("could not open parent table of index %s",
+						RelationGetRelationName(indexRel))));
+
+	/* the revmap does the hard work */
+	do {
+		done = brinRevmapDesummarizeRange(indexRel, heapBlk);
+	}
+	while (!done);
+
+	relation_close(indexRel, ShareUpdateExclusiveLock);
+	relation_close(heapRel, ShareUpdateExclusiveLock);
+
+	PG_RETURN_VOID();
+}
+
+/*
  * Build a BrinDesc used to create or scan a BRIN index
  */
 BrinDesc *
