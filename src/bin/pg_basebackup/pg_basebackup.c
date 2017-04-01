@@ -1757,7 +1757,7 @@ BaseBackup(void)
 				progname);
 
 	if (showprogress && !verbose)
-		fprintf(stderr, "waiting for checkpoint\n");
+		fprintf(stderr, "waiting for checkpoint\r");
 
 	basebkp =
 		psprintf("BASE_BACKUP LABEL '%s' %s %s %s %s %s %s",
