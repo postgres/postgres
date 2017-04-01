@@ -19685,6 +19685,13 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
       </row>
       <row>
        <entry>
+        <literal><function>brin_summarize_range(<parameter>index</> <type>regclass</>, <parameter>blockNumber</> <type>bigint</type>)</function></literal>
+       </entry>
+       <entry><type>integer</type></entry>
+       <entry>summarize the page range covering the given block, if not already summarized</entry>
+      </row>
+      <row>
+       <entry>
         <literal><function>gin_clean_pending_list(<parameter>index</> <type>regclass</>)</function></literal>
        </entry>
        <entry><type>bigint</type></entry>
@@ -19700,7 +19707,8 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
     that are not currently summarized by the index; for any such range
     it creates a new summary index tuple by scanning the table pages.
     It returns the number of new page range summaries that were inserted
-    into the index.
+    into the index.  <function>brin_summarize_range</> does the same, except
+    it only summarizes the range that covers the given block number.
    </para>
 
    <para>

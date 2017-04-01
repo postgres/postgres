@@ -74,9 +74,14 @@
    tuple; those tuples remain unsummarized until a summarization run is
    invoked later, creating initial summaries.
    This process can be invoked manually using the
-   <function>brin_summarize_new_values(regclass)</function> function,
-   or automatically when <command>VACUUM</command> processes the table.
+   <function>brin_summarize_range(regclass, bigint)</function> or
+   <function>brin_summarize_new_values(regclass)</function> functions;
+   automatically when <command>VACUUM</command> processes the table;
+   or by automatic summarization executed by autovacuum, as insertions
+   occur.  (This last trigger is disabled by default and can be enabled
+   with the <literal>autosummarize</literal> parameter.)
   </para>
+
  </sect2>
 </sect1>
 

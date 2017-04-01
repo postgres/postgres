@@ -22,6 +22,7 @@ typedef struct BrinOptions
 {
 	int32		vl_len_;		/* varlena header (do not touch directly!) */
 	BlockNumber pagesPerRange;
+	bool		autosummarize;
 } BrinOptions;
 
 #define BRIN_DEFAULT_PAGES_PER_RANGE	128
@@ -29,5 +30,9 @@ typedef struct BrinOptions
 	((relation)->rd_options ? \
 	 ((BrinOptions *) (relation)->rd_options)->pagesPerRange : \
 	  BRIN_DEFAULT_PAGES_PER_RANGE)
+#define BrinGetAutoSummarize(relation) \
+	((relation)->rd_options ? \
+	 ((BrinOptions *) (relation)->rd_options)->autosummarize : \
+	  false)
 
 #endif   /* BRIN_H */

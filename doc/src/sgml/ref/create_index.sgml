@@ -382,7 +382,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
    </variablelist>
 
    <para>
-    <acronym>BRIN</> indexes accept a different parameter:
+    <acronym>BRIN</> indexes accept different parameters:
    </para>
 
    <variablelist>
@@ -393,6 +393,16 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
      Defines the number of table blocks that make up one block range for
      each entry of a <acronym>BRIN</> index (see <xref linkend="brin-intro">
      for more details).  The default is <literal>128</>.
+    </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>autosummarize</></term>
+    <listitem>
+    <para>
+     Defines whether a summarization run is invoked for the previous page
+     range whenever an insertion is detected on the next one.
     </para>
     </listitem>
    </varlistentry>

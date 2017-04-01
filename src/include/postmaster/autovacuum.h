@@ -14,6 +14,15 @@
 #ifndef AUTOVACUUM_H
 #define AUTOVACUUM_H
 
+/*
+ * Other processes can request specific work from autovacuum, identified by
+ * AutoVacuumWorkItem elements.
+ */
+typedef enum
+{
+	AVW_BRINSummarizeRange
+} AutoVacuumWorkItemType;
+
 
 /* GUC variables */
 extern bool autovacuum_start_daemon;
@@ -59,6 +68,9 @@ extern void AutoVacWorkerMain(int argc, char *argv[]) pg_attribute_noreturn();
 extern void AutovacuumWorkerIAm(void);
 extern void AutovacuumLauncherIAm(void);
 #endif
+
+extern void AutoVacuumRequestWork(AutoVacuumWorkItemType type,
+					  Oid relationId, BlockNumber blkno);
 
 /* shared memory stuff */
 extern Size AutoVacuumShmemSize(void);

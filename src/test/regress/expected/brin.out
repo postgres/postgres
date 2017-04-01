@@ -406,3 +406,51 @@ SELECT brin_summarize_new_values('brinidx'); -- ok, no change expected
                          0
 (1 row)
 
+-- Test brin_summarize_range
+CREATE TABLE brin_summarize (
+    value int
+) WITH (fillfactor=10, autovacuum_enabled=false);
+CREATE INDEX brin_summarize_idx ON brin_summarize USING brin (value) WITH (pages_per_range=2);
+-- Fill a few pages
+DO $$
+DECLARE curtid tid;
+BEGIN
+  LOOP
+    INSERT INTO brin_summarize VALUES (1) RETURNING ctid INTO curtid;
+    EXIT WHEN curtid > tid '(2, 0)';
+  END LOOP;
+END;
+$$;
+-- summarize one range
+SELECT brin_summarize_range('brin_summarize_idx', 0);
+ brin_summarize_range 
+----------------------
+                    1
+(1 row)
+
+-- nothing: already summarized
+SELECT brin_summarize_range('brin_summarize_idx', 1);
+ brin_summarize_range 
+----------------------
+                    0
+(1 row)
+
+-- summarize one range
+SELECT brin_summarize_range('brin_summarize_idx', 2);
+ brin_summarize_range 
+----------------------
+                    1
+(1 row)
+
+-- nothing: page doesn't exist in table
+SELECT brin_summarize_range('brin_summarize_idx', 4294967295);
+ brin_summarize_range 
+----------------------
+                    0
+(1 row)
+
+-- invalid block number values
+SELECT brin_summarize_range('brin_summarize_idx', -1);
+ERROR:  block number out of range: -1
+SELECT brin_summarize_range('brin_summarize_idx', 4294967296);
+ERROR:  block number out of range: 4294967296

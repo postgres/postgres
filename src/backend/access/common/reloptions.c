@@ -94,6 +94,15 @@ static relopt_bool boolRelOpts[] =
 {
 	{
 		{
+			"autosummarize",
+			"Enables automatic summarization on this BRIN index",
+			RELOPT_KIND_BRIN,
+			AccessExclusiveLock
+		},
+		false
+	},
+	{
+		{
 			"autovacuum_enabled",
 			"Enables autovacuum in this relation",
 			RELOPT_KIND_HEAP | RELOPT_KIND_TOAST,
