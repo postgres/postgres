@@ -425,13 +425,30 @@ appendByteaLiteral(PQExpBuffer buf, const unsigned char *str, size_t length,
  * arguments containing LF or CR characters.  A future major release should
  * reject those characters in CREATE ROLE and CREATE DATABASE, because use
  * there eventually leads to errors here.
+ *
+ * appendShellString() simply prints an error and dies if LF or CR appears.
+ * appendShellStringNoError() omits those characters from the result, and
+ * returns false if there were any.
  */
 void
 appendShellString(PQExpBuffer buf, const char *str)
 {
+	if (!appendShellStringNoError(buf, str))
+	{
+		fprintf(stderr,
+				_("shell command argument contains a newline or carriage return: \"%s\"\n"),
+				str);
+		exit(EXIT_FAILURE);
+	}
+}
+
+bool
+appendShellStringNoError(PQExpBuffer buf, const char *str)
+{
 #ifdef WIN32
 	int			backslash_run_length = 0;
 #endif
+	bool		ok = true;
 	const char *p;
 
 	/*
@@ -442,7 +459,7 @@ appendShellString(PQExpBuffer buf, const char *str)
 		strspn(str, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_./:") == strlen(str))
 	{
 		appendPQExpBufferStr(buf, str);
-		return;
+		return ok;
 	}
 
 #ifndef WIN32
@@ -451,10 +468,8 @@ appendShellString(PQExpBuffer buf, const char *str)
 	{
 		if (*p == '\n' || *p == '\r')
 		{
-			fprintf(stderr,
-					_("shell command argument contains a newline or carriage return: \"%s\"\n"),
-					str);
-			exit(EXIT_FAILURE);
+			ok = false;
+			continue;
 		}
 
 		if (*p == '\'')
@@ -481,10 +496,8 @@ appendShellString(PQExpBuffer buf, const char *str)
 	{
 		if (*p == '\n' || *p == '\r')
 		{
-			fprintf(stderr,
-					_("shell command argument contains a newline or carriage return: \"%s\"\n"),
-					str);
-			exit(EXIT_FAILURE);
+			ok = false;
+			continue;
 		}
 
 		/* Change N backslashes before a double quote to 2N+1 backslashes. */
@@ -524,6 +537,8 @@ appendShellString(PQExpBuffer buf, const char *str)
 	}
 	appendPQExpBufferStr(buf, "^\"");
 #endif   /* WIN32 */
+
+	return ok;
 }
 
 

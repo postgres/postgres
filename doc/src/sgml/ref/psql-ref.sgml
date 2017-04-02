@@ -770,17 +770,32 @@ testdb=&gt;
     </para>
 
     <para>
-    Within an argument, text that is enclosed in backquotes
-    (<literal>`</literal>) is taken as a command line that is passed to the
-    shell. The output of the command (with any trailing newline removed)
-    replaces the backquoted text.
-    </para>
-
-    <para>
     If an unquoted colon (<literal>:</literal>) followed by a
     <application>psql</> variable name appears within an argument, it is
     replaced by the variable's value, as described in <xref
     linkend="APP-PSQL-interpolation" endterm="APP-PSQL-interpolation-title">.
+    The forms <literal>:'<replaceable>variable_name</>'</literal> and
+    <literal>:"<replaceable>variable_name</>"</literal> described there
+    work as well.
+    </para>
+
+    <para>
+    Within an argument, text that is enclosed in backquotes
+    (<literal>`</literal>) is taken as a command line that is passed to the
+    shell.  The output of the command (with any trailing newline removed)
+    replaces the backquoted text.  Within the text enclosed in backquotes,
+    no special quoting or other processing occurs, except that appearances
+    of <literal>:<replaceable>variable_name</></literal> where
+    <replaceable>variable_name</> is a <application>psql</> variable name
+    are replaced by the variable's value.  Also, appearances of
+    <literal>:'<replaceable>variable_name</>'</literal> are replaced by the
+    variable's value suitably quoted to become a single shell command
+    argument.  (The latter form is almost always preferable, unless you are
+    very sure of what is in the variable.)  Because carriage return and line
+    feed characters cannot be safely quoted on all platforms, the
+    <literal>:'<replaceable>variable_name</>'</literal> form prints an
+    error message and does not substitute the variable value when such
+    characters appear in the value.
     </para>
 
     <para>

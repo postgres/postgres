@@ -242,8 +242,7 @@ other			.
 															 yytext + 1,
 															 yyleng - 1);
 						value = cur_state->callbacks->get_variable(varname,
-																   false,
-																   false,
+																   PQUOTE_PLAIN,
 																   cur_state->cb_passthrough);
 						free(varname);
 
@@ -268,14 +267,16 @@ other			.
 				}
 
 :'{variable_char}+'	{
-					psqlscan_escape_variable(cur_state, yytext, yyleng, false);
+					psqlscan_escape_variable(cur_state, yytext, yyleng,
+											 PQUOTE_SQL_LITERAL);
 					*option_quote = ':';
 					unquoted_option_chars = 0;
 				}
 
 
 :\"{variable_char}+\"	{
-					psqlscan_escape_variable(cur_state, yytext, yyleng, true);
+					psqlscan_escape_variable(cur_state, yytext, yyleng,
+											 PQUOTE_SQL_IDENT);
 					*option_quote = ':';
 					unquoted_option_chars = 0;
 				}
@@ -337,9 +338,8 @@ other			.
 
 <xslashbackquote>{
 	/*
-	 * backticked text: copy everything until next backquote, then evaluate.
-	 *
-	 * XXX Possible future behavioral change: substitute for :VARIABLE?
+	 * backticked text: copy everything until next backquote (expanding
+	 * variable references, but doing nought else), then evaluate.
 	 */
 
 "`"				{
@@ -348,6 +348,44 @@ other			.
 						conditional_active((ConditionalStack) cur_state->cb_passthrough))
 						evaluate_backtick(cur_state);
 					BEGIN(xslasharg);
+				}
+
+:{variable_char}+	{
+					/* Possible psql variable substitution */
+					if (cur_state->callbacks->get_variable == NULL)
+						ECHO;
+					else
+					{
+						char	   *varname;
+						char	   *value;
+
+						varname = psqlscan_extract_substring(cur_state,
+															 yytext + 1,
+															 yyleng - 1);
+						value = cur_state->callbacks->get_variable(varname,
+																   PQUOTE_PLAIN,
+																   cur_state->cb_passthrough);
+						free(varname);
+
+						if (value)
+						{
+							appendPQExpBufferStr(output_buf, value);
+							free(value);
+						}
+						else
+							ECHO;
+					}
+				}
+
+:'{variable_char}+'	{
+					psqlscan_escape_variable(cur_state, yytext, yyleng,
+											 PQUOTE_SHELL_ARG);
+				}
+
+:'{variable_char}*	{
+					/* Throw back everything but the colon */
+					yyless(1);
+					ECHO;
 				}
 
 {other}|\n		{ ECHO; }

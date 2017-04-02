@@ -12,11 +12,12 @@
 
 #include "libpq-fe.h"
 #include "fe_utils/print.h"
+#include "fe_utils/psqlscan.h"
 
 extern bool openQueryOutputFile(const char *fname, FILE **fout, bool *is_pipe);
 extern bool setQFout(const char *fname);
 
-extern char *psql_get_variable(const char *varname, bool escape, bool as_ident,
+extern char *psql_get_variable(const char *varname, PsqlScanQuoteType quote,
 				  void *passthrough);
 
 extern void psql_error(const char *fmt,...) pg_attribute_printf(1, 2);

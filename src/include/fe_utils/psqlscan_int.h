@@ -141,6 +141,6 @@ extern char *psqlscan_extract_substring(PsqlScanState state,
 						   const char *txt, int len);
 extern void psqlscan_escape_variable(PsqlScanState state,
 						 const char *txt, int len,
-						 bool as_ident);
+						 PsqlScanQuoteType quote);
 
 #endif   /* PSQLSCAN_INT_H */

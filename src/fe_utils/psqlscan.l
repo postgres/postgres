@@ -699,8 +699,7 @@ other			.
 														 yyleng - 1);
 					if (cur_state->callbacks->get_variable)
 						value = cur_state->callbacks->get_variable(varname,
-																   false,
-																   false,
+																   PQUOTE_PLAIN,
 																   cur_state->cb_passthrough);
 					else
 						value = NULL;
@@ -737,11 +736,13 @@ other			.
 				}
 
 :'{variable_char}+'	{
-					psqlscan_escape_variable(cur_state, yytext, yyleng, false);
+					psqlscan_escape_variable(cur_state, yytext, yyleng,
+											 PQUOTE_SQL_LITERAL);
 				}
 
 :\"{variable_char}+\"	{
-					psqlscan_escape_variable(cur_state, yytext, yyleng, true);
+					psqlscan_escape_variable(cur_state, yytext, yyleng,
+											 PQUOTE_SQL_IDENT);
 				}
 
 	/*
@@ -1415,7 +1416,7 @@ psqlscan_extract_substring(PsqlScanState state, const char *txt, int len)
  */
 void
 psqlscan_escape_variable(PsqlScanState state, const char *txt, int len,
-						 bool as_ident)
+						 PsqlScanQuoteType quote)
 {
 	char	   *varname;
 	char	   *value;
@@ -1423,7 +1424,7 @@ psqlscan_escape_variable(PsqlScanState state, const char *txt, int len,
 	/* Variable lookup. */
 	varname = psqlscan_extract_substring(state, txt + 2, len - 3);
 	if (state->callbacks->get_variable)
-		value = state->callbacks->get_variable(varname, true, as_ident,
+		value = state->callbacks->get_variable(varname, quote,
 											   state->cb_passthrough);
 	else
 		value = NULL;
