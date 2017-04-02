@@ -14,11 +14,11 @@
  * replication-mode commands. The START_REPLICATION command begins streaming
  * WAL to the client. While streaming, the walsender keeps reading XLOG
  * records from the disk and sends them to the standby server over the
- * COPY protocol, until the either side ends the replication by exiting COPY
+ * COPY protocol, until either side ends the replication by exiting COPY
  * mode (or until the connection is closed).
  *
  * Normal termination is by SIGTERM, which instructs the walsender to
- * close the connection and exit(0) at next convenient moment. Emergency
+ * close the connection and exit(0) at the next convenient moment. Emergency
  * termination is by SIGQUIT; like any backend, the walsender will simply
  * abort and exit on SIGQUIT. A close of the connection and a FATAL error
  * are treated as not a crash but approximately normal termination;
@@ -277,7 +277,7 @@ InitWalSender(void)
  * Clean up after an error.
  *
  * WAL sender processes don't use transactions like regular backends do.
- * This function does any cleanup requited after an error in a WAL sender
+ * This function does any cleanup required after an error in a WAL sender
  * process, similar to what transaction abort does in a regular backend.
  */
 void
@@ -570,7 +570,7 @@ StartReplication(StartReplicationCmd *cmd)
 			sendTimeLineIsHistoric = true;
 
 			/*
-			 * Check that the timeline the client requested for exists, and
+			 * Check that the timeline the client requested exists, and
 			 * the requested start location is on that timeline.
 			 */
 			timeLineHistory = readTimeLineHistory(ThisTimeLineID);
@@ -588,8 +588,8 @@ StartReplication(StartReplicationCmd *cmd)
 			 * starting point. This is because the client can legitimately
 			 * request to start replication from the beginning of the WAL
 			 * segment that contains switchpoint, but on the new timeline, so
-			 * that it doesn't end up with a partial segment. If you ask for a
-			 * too old starting point, you'll get an error later when we fail
+			 * that it doesn't end up with a partial segment. If you ask for
+			 * too old a starting point, you'll get an error later when we fail
 			 * to find the requested WAL segment in pg_wal.
 			 *
 			 * XXX: we could be more strict here and only allow a startpoint
@@ -626,7 +626,7 @@ StartReplication(StartReplicationCmd *cmd)
 	{
 		/*
 		 * When we first start replication the standby will be behind the
-		 * primary. For some applications, for example, synchronous
+		 * primary. For some applications, for example synchronous
 		 * replication, it is important to have a clear state for this initial
 		 * catchup mode, so we can trigger actions when we change streaming
 		 * state later. We may stay in this state for a long time, which is
@@ -954,7 +954,7 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 
 		ReplicationSlotMarkDirty();
 
-		/* Write this slot to disk if it's permanent one. */
+		/* Write this slot to disk if it's a permanent one. */
 		if (!cmd->temporary)
 			ReplicationSlotSave();
 	}
@@ -1111,7 +1111,7 @@ StartLogicalReplication(StartReplicationCmd *cmd)
  *
  * Prepare a write into a StringInfo.
  *
- * Don't do anything lasting in here, it's quite possible that nothing will done
+ * Don't do anything lasting in here, it's quite possible that nothing will be done
  * with the data.
  */
 static void
@@ -1150,7 +1150,7 @@ WalSndWriteData(LogicalDecodingContext *ctx, XLogRecPtr lsn, TransactionId xid,
 
 	/*
 	 * Fill the send timestamp last, so that it is taken as late as possible.
-	 * This is somewhat ugly, but the protocol's set as it's already used for
+	 * This is somewhat ugly, but the protocol is set as it's already used for
 	 * several releases by streaming physical replication.
 	 */
 	resetStringInfo(&tmpbuf);
@@ -1237,7 +1237,7 @@ WalSndWaitForWal(XLogRecPtr loc)
 
 
 	/*
-	 * Fast path to avoid acquiring the spinlock in the we already know we
+	 * Fast path to avoid acquiring the spinlock in case we already know we
 	 * have enough WAL available. This is particularly interesting if we're
 	 * far behind.
 	 */
@@ -2498,7 +2498,7 @@ XLogSendPhysical(void)
 		 * given the current implementation of XLogRead().  And in any case
 		 * it's unsafe to send WAL that is not securely down to disk on the
 		 * master: if the master subsequently crashes and restarts, slaves
-		 * must not have applied any WAL that gets lost on the master.
+		 * must not have applied any WAL that got lost on the master.
 		 */
 		SendRqstPtr = GetFlushRecPtr();
 	}
@@ -2522,7 +2522,7 @@ XLogSendPhysical(void)
 	 * LSN.
 	 *
 	 * Note that the LSN is not necessarily the LSN for the data contained in
-	 * the present message; it's the end of the the WAL, which might be
+	 * the present message; it's the end of the WAL, which might be
 	 * further ahead.  All the lag tracking machinery cares about is finding
 	 * out when that arbitrary LSN is eventually reported as written, flushed
 	 * and applied, so that it can measure the elapsed time.
@@ -2922,7 +2922,7 @@ WalSndShmemInit(void)
  * Wake up all walsenders
  *
  * This will be called inside critical sections, so throwing an error is not
- * adviseable.
+ * advisable.
  */
 void
 WalSndWakeup(void)
@@ -3159,7 +3159,7 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 }
 
 /*
-  * This function is used to send keepalive message to standby.
+  * This function is used to send a keepalive message to standby.
   * If requestReply is set, sets a flag in the message requesting the standby
   * to send a message back to us, for heartbeat purposes.
   */
