@@ -824,6 +824,14 @@ testdb=&gt;
     </para>
 
     <para>
+    Many of the meta-commands act on the <firstterm>current query buffer</>.
+    This is simply a buffer holding whatever SQL command text has been typed
+    but not yet sent to the server for execution.  This will include previous
+    input lines as well as any text appearing before the meta-command on the
+    same line.
+    </para>
+
+    <para>
     The following meta-commands are defined:
 
     <variablelist>
@@ -1713,22 +1721,28 @@ testdb=&gt;
         <listitem>
         <para>
         If <replaceable class="parameter">filename</replaceable> is
-        specified, the file is edited; after the editor exits, its
-        content is copied back to the query buffer. If no <replaceable
+        specified, the file is edited; after the editor exits, the file's
+        content is copied into the current query buffer. If no <replaceable
         class="parameter">filename</replaceable> is given, the current query
         buffer is copied to a temporary file which is then edited in the same
+        fashion.  Or, if the current query buffer is empty, the most recently
+        executed query is copied to a temporary file and edited in the same
         fashion.
         </para>
 
         <para>
-        The new query buffer is then re-parsed according to the normal
-        rules of <application>psql</application>, where the whole buffer
-        is treated as a single line. (Thus you cannot make scripts this
-        way. Use <command>\i</command> for that.) This means that
-        if the query ends with (or contains) a semicolon, it is
-        immediately executed. Otherwise it will merely wait in the
-        query buffer; type semicolon or <literal>\g</> to send it, or
-        <literal>\r</> to cancel.
+        The new contents of the query buffer are then re-parsed according to
+        the normal rules of <application>psql</application>, treating the
+        whole buffer as a single line.  Any complete queries are immediately
+        executed; that is, if the query buffer contains or ends with a
+        semicolon, everything up to that point is executed.  Whatever remains
+        will wait in the query buffer; type semicolon or <literal>\g</> to
+        send it, or <literal>\r</> to cancel it by clearing the query buffer.
+        Treating the buffer as a single line primarily affects meta-commands:
+        whatever is in the buffer after a meta-command will be taken as
+        argument(s) to the meta-command, even if it spans multiple lines.
+        (Thus you cannot make meta-command-using scripts this way.
+        Use <command>\i</command> for that.)
         </para>
 
         <para>
@@ -1888,16 +1902,17 @@ Tue Oct 26 21:40:57 CEST 1999
         <term><literal>\g [ |<replaceable class="parameter">command</replaceable> ]</literal></term>
         <listitem>
         <para>
-        Sends the current query input buffer to the server, and
-        optionally stores the query's output in <replaceable
-        class="parameter">filename</replaceable> or pipes the output
-        to the shell command <replaceable
-        class="parameter">command</replaceable>.  The file or command is
-        written to only if the query successfully returns zero or more tuples,
-        not if the query fails or is a non-data-returning SQL command.
+        Sends the current query buffer to the server for execution.
+        If an argument is given, the query's output is written to the named
+        file or piped to the given shell command, instead of displaying it as
+        usual.  The file or command is written to only if the query
+        successfully returns zero or more tuples, not if the query fails or
+        is a non-data-returning SQL command.
         </para>
         <para>
-        A bare <literal>\g</literal> is essentially equivalent to a semicolon.
+        If the current query buffer is empty, the most recently sent query is
+        re-executed instead.  Except for that behavior, <literal>\g</literal>
+        without an argument is essentially equivalent to a semicolon.
         A <literal>\g</literal> with argument is a <quote>one-shot</quote>
         alternative to the <command>\o</command> command.
         </para>
@@ -1922,7 +1937,7 @@ Tue Oct 26 21:40:57 CEST 1999
 
         <listitem>
         <para>
-         Sends the current query input buffer to the server, then treats
+         Sends the current query buffer to the server, then treats
          each column of each row of the query's output (if any) as a SQL
          statement to be executed.  For example, to create an index on each
          column of <structname>my_table</>:
@@ -1955,6 +1970,10 @@ CREATE INDEX
          timing, and other query execution features apply to each generated
          query as well.
         </para>
+        <para>
+         If the current query buffer is empty, the most recently sent query
+         is re-executed instead.
+        </para>
         </listitem>
       </varlistentry>
 
@@ -1964,7 +1983,7 @@ CREATE INDEX
 
         <listitem>
         <para>
-         Sends the current query input buffer to the server and stores the
+         Sends the current query buffer to the server and stores the
          query's output into <application>psql</> variables (see <xref
          linkend="APP-PSQL-variables" endterm="APP-PSQL-variables-title">).
          The query to be executed must return exactly one row.  Each column of
@@ -1995,6 +2014,10 @@ hello 10
         <para>
          If the query fails or does not return one row,
          no variables are changed.
+        </para>
+        <para>
+         If the current query buffer is empty, the most recently sent query
+         is re-executed instead.
         </para>
         </listitem>
       </varlistentry>
@@ -2302,6 +2325,8 @@ lo_import 152801
         <listitem>
         <para>
         Print the current query buffer to the standard output.
+        If the current query buffer is empty, the most recently executed query
+        is printed instead.
         </para>
         </listitem>
       </varlistentry>
@@ -2970,9 +2995,11 @@ testdb=&gt; <userinput>\setenv LESS -imx4F</userinput>
         <term><literal>\w</literal> or <literal>\write</literal> <literal>|</><replaceable class="parameter">command</replaceable></term>
         <listitem>
         <para>
-        Outputs the current query buffer to the file <replaceable
+        Writes the current query buffer to the file <replaceable
         class="parameter">filename</replaceable> or pipes it to the shell
         command <replaceable class="parameter">command</replaceable>.
+        If the current query buffer is empty, the most recently executed query
+        is written instead.
         </para>
         </listitem>
       </varlistentry>
@@ -2987,6 +3014,10 @@ testdb=&gt; <userinput>\setenv LESS -imx4F</userinput>
         seconds (default 2) between executions.  Each query result is
         displayed with a header that includes the <literal>\pset title</>
         string (if any), the time as of query start, and the delay interval.
+        </para>
+        <para>
+        If the current query buffer is empty, the most recently sent query
+        is re-executed instead.
         </para>
         </listitem>
       </varlistentry>
