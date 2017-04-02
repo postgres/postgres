@@ -106,7 +106,7 @@ static backslashResult exec_command_lo(PsqlScanState scan_state, bool active_bra
 				const char *cmd);
 static backslashResult exec_command_out(PsqlScanState scan_state, bool active_branch);
 static backslashResult exec_command_print(PsqlScanState scan_state, bool active_branch,
-				   PQExpBuffer query_buf);
+				   PQExpBuffer query_buf, PQExpBuffer previous_buf);
 static backslashResult exec_command_password(PsqlScanState scan_state, bool active_branch);
 static backslashResult exec_command_prompt(PsqlScanState scan_state, bool active_branch,
 					const char *cmd);
@@ -362,7 +362,8 @@ exec_command(const char *cmd,
 	else if (strcmp(cmd, "o") == 0 || strcmp(cmd, "out") == 0)
 		status = exec_command_out(scan_state, active_branch);
 	else if (strcmp(cmd, "p") == 0 || strcmp(cmd, "print") == 0)
-		status = exec_command_print(scan_state, active_branch, query_buf);
+		status = exec_command_print(scan_state, active_branch,
+									query_buf, previous_buf);
 	else if (strcmp(cmd, "password") == 0)
 		status = exec_command_password(scan_state, active_branch);
 	else if (strcmp(cmd, "prompt") == 0)
@@ -955,7 +956,7 @@ exec_command_edit(PsqlScanState scan_state, bool active_branch,
 				if (fname)
 					canonicalize_path(fname);
 
-				/* Applies to previous query if current buffer is empty */
+				/* If query_buf is empty, recall previous query for editing */
 				copy_previous_query(query_buf, previous_buf);
 
 				if (do_edit(fname, query_buf, lineno, NULL))
@@ -1827,12 +1828,19 @@ exec_command_out(PsqlScanState scan_state, bool active_branch)
  */
 static backslashResult
 exec_command_print(PsqlScanState scan_state, bool active_branch,
-				   PQExpBuffer query_buf)
+				   PQExpBuffer query_buf, PQExpBuffer previous_buf)
 {
 	if (active_branch)
 	{
+		/*
+		 * We want to print the same thing \g would execute, but not to change
+		 * the query buffer state; so we can't use copy_previous_query().
+		 * Also, beware of possibility that buffer pointers are NULL.
+		 */
 		if (query_buf && query_buf->len > 0)
 			puts(query_buf->data);
+		else if (previous_buf && previous_buf->len > 0)
+			puts(previous_buf->data);
 		else if (!pset.quiet)
 			puts(_("Query buffer is empty."));
 		fflush(stdout);
@@ -2549,9 +2557,14 @@ exec_command_write(PsqlScanState scan_state, bool active_branch,
 		{
 			int			result;
 
+			/*
+			 * We want to print the same thing \g would execute, but not to
+			 * change the query buffer state; so we can't use
+			 * copy_previous_query().  Also, beware of possibility that buffer
+			 * pointers are NULL.
+			 */
 			if (query_buf && query_buf->len > 0)
 				fprintf(fd, "%s\n", query_buf->data);
-			/* Applies to previous query if current buffer is empty */
 			else if (previous_buf && previous_buf->len > 0)
 				fprintf(fd, "%s\n", previous_buf->data);
 
@@ -2602,7 +2615,7 @@ exec_command_watch(PsqlScanState scan_state, bool active_branch,
 			free(opt);
 		}
 
-		/* Applies to previous query if current buffer is empty */
+		/* If query_buf is empty, recall and execute previous query */
 		copy_previous_query(query_buf, previous_buf);
 
 		success = do_watch(query_buf, sleep);

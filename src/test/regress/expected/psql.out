@@ -2932,3 +2932,35 @@ NOTICE:  foo
 CONTEXT:  PL/pgSQL function inline_code_block line 3 at RAISE
 ERROR:  bar
 CONTEXT:  PL/pgSQL function inline_code_block line 4 at RAISE
+-- test printing and clearing the query buffer
+SELECT 1;
+ ?column? 
+----------
+        1
+(1 row)
+
+\p
+SELECT 1;
+SELECT 2 \r
+\p
+SELECT 1;
+SELECT 3 \p
+SELECT 3 
+UNION SELECT 4 \p
+SELECT 3 
+UNION SELECT 4 
+UNION SELECT 5
+ORDER BY 1;
+ ?column? 
+----------
+        3
+        4
+        5
+(3 rows)
+
+\r
+\p
+SELECT 3 
+UNION SELECT 4 
+UNION SELECT 5
+ORDER BY 1;
