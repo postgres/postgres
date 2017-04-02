@@ -989,8 +989,10 @@ testdb=&gt;
         command.  All options other than the data source/destination are
         as specified for <xref linkend="sql-copy">.
         Because of this, special parsing rules apply to the <command>\copy</>
-        command. In particular, <application>psql</>'s variable substitution
-        rules and backslash escapes do not apply.
+        meta-command.  Unlike most other meta-commands, the entire remainder
+        of the line is always taken to be the arguments of <command>\copy</>,
+        and neither variable interpolation nor backquote expansion are
+        performed in the arguments.
         </para>
 
         <tip>
@@ -1820,6 +1822,13 @@ Tue Oct 26 21:40:57 CEST 1999
         line of the file.)
         </para>
 
+        <para>
+        Unlike most other meta-commands, the entire remainder of the line is
+        always taken to be the argument(s) of <command>\ef</>, and neither
+        variable interpolation nor backquote expansion are performed in the
+        arguments.
+        </para>
+
         <tip>
         <para>
         See under <xref linkend="app-psql-environment"
@@ -1879,6 +1888,13 @@ Tue Oct 26 21:40:57 CEST 1999
          If a line number is specified, <application>psql</application> will
          position the cursor on the specified line of the view definition.
         </para>
+
+        <para>
+        Unlike most other meta-commands, the entire remainder of the line is
+        always taken to be the argument(s) of <command>\ev</>, and neither
+        variable interpolation nor backquote expansion are performed in the
+        arguments.
+        </para>
         </listitem>
       </varlistentry>
 
@@ -1915,6 +1931,14 @@ Tue Oct 26 21:40:57 CEST 1999
         without an argument is essentially equivalent to a semicolon.
         A <literal>\g</literal> with argument is a <quote>one-shot</quote>
         alternative to the <command>\o</command> command.
+        </para>
+        <para>
+        If the argument begins with <literal>|</>, then the entire remainder
+        of the line is taken to be
+        the <replaceable class="parameter">command</replaceable> to execute,
+        and neither variable interpolation nor backquote expansion are
+        performed in it.  The rest of the line is simply passed literally to
+        the shell.
         </para>
         </listitem>
       </varlistentry>
@@ -2033,6 +2057,13 @@ hello 10
         <replaceable class="parameter">command</replaceable> is an
         asterisk (<literal>*</literal>), then syntax help on all
         <acronym>SQL</acronym> commands is shown.
+        </para>
+
+        <para>
+        Unlike most other meta-commands, the entire remainder of the line is
+        always taken to be the argument(s) of <command>\help</>, and neither
+        variable interpolation nor backquote expansion are performed in the
+        arguments.
         </para>
 
         <note>
@@ -2303,10 +2334,20 @@ lo_import 152801
         specified, the query output is reset to the standard output.
         </para>
 
-        <para><quote>Query results</quote> includes all tables, command
+        <para>
+        If the argument begins with <literal>|</>, then the entire remainder
+        of the line is taken to be
+        the <replaceable class="parameter">command</replaceable> to execute,
+        and neither variable interpolation nor backquote expansion are
+        performed in it.  The rest of the line is simply passed literally to
+        the shell.
+        </para>
+
+        <para>
+        <quote>Query results</quote> includes all tables, command
         responses, and notices obtained from the database server, as
         well as output of various backslash commands that query the
-        database (such as <command>\d</command>), but not error
+        database (such as <command>\d</command>); but not error
         messages.
         </para>
 
@@ -2907,6 +2948,13 @@ testdb=&gt; <userinput>\setenv LESS -imx4F</userinput>
          output lines are numbered, with the first line of the function body
          being line 1.
         </para>
+
+        <para>
+        Unlike most other meta-commands, the entire remainder of the line is
+        always taken to be the argument(s) of <command>\sf</>, and neither
+        variable interpolation nor backquote expansion are performed in the
+        arguments.
+        </para>
         </listitem>
       </varlistentry>
 
@@ -2926,6 +2974,13 @@ testdb=&gt; <userinput>\setenv LESS -imx4F</userinput>
           If <literal>+</literal> is appended to the command name, then the
           output lines are numbered from 1.
          </para>
+
+        <para>
+        Unlike most other meta-commands, the entire remainder of the line is
+        always taken to be the argument(s) of <command>\sv</>, and neither
+        variable interpolation nor backquote expansion are performed in the
+        arguments.
+        </para>
         </listitem>
       </varlistentry>
 
@@ -3001,6 +3056,15 @@ testdb=&gt; <userinput>\setenv LESS -imx4F</userinput>
         If the current query buffer is empty, the most recently executed query
         is written instead.
         </para>
+
+        <para>
+        If the argument begins with <literal>|</>, then the entire remainder
+        of the line is taken to be
+        the <replaceable class="parameter">command</replaceable> to execute,
+        and neither variable interpolation nor backquote expansion are
+        performed in it.  The rest of the line is simply passed literally to
+        the shell.
+        </para>
         </listitem>
       </varlistentry>
 
@@ -3057,11 +3121,17 @@ testdb=&gt; <userinput>\setenv LESS -imx4F</userinput>
         <term><literal>\! [ <replaceable class="parameter">command</replaceable> ]</literal></term>
         <listitem>
         <para>
-        Escapes to a separate shell or executes the shell command
-        <replaceable class="parameter">command</replaceable>. The
-        arguments are not further interpreted; the shell will see them
-        as-is.  In particular, the variable substitution rules and
-        backslash escapes do not apply.
+        With no argument, escapes to a sub-shell; <application>psql</>
+        resumes when the sub-shell exits.  With an argument, executes the
+        shell command <replaceable class="parameter">command</replaceable>.
+        </para>
+
+        <para>
+        Unlike most other meta-commands, the entire remainder of the line is
+        always taken to be the argument(s) of <command>\!</>, and neither
+        variable interpolation nor backquote expansion are performed in the
+        arguments.  The rest of the line is simply passed literally to the
+        shell.
         </para>
         </listitem>
       </varlistentry>
