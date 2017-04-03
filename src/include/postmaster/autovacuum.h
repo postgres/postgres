@@ -14,6 +14,8 @@
 #ifndef AUTOVACUUM_H
 #define AUTOVACUUM_H
 
+#include "storage/block.h"
+
 /*
  * Other processes can request specific work from autovacuum, identified by
  * AutoVacuumWorkItem elements.
