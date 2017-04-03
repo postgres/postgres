@@ -3362,6 +3362,8 @@ get_number_of_groups(PlannerInfo *root,
 			ListCell   *lc;
 			ListCell   *lc2;
 
+			Assert(gd);  /* keep Coverity happy */
+
 			dNumGroups = 0;
 
 			foreach(lc, gd->rollups)
