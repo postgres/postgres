@@ -1351,6 +1351,21 @@ reread_subscription(void)
 	}
 
 	/*
+	 * We need to make new connection to new slot if slot name has changed
+	 * so exit here as well if that's the case.
+	 */
+	if (strcmp(newsub->slotname, MySubscription->slotname) != 0)
+	{
+		ereport(LOG,
+				(errmsg("logical replication worker for subscription \"%s\" will "
+						"restart because the replication slot name was changed",
+						MySubscription->name)));
+
+		walrcv_disconnect(wrconn);
+		proc_exit(0);
+	}
+
+	/*
 	 * Exit if publication list was changed. The launcher will start
 	 * new worker.
 	 */
@@ -1382,8 +1397,7 @@ reread_subscription(void)
 	}
 
 	/* Check for other changes that should never happen too. */
-	if (newsub->dbid != MySubscription->dbid ||
-		strcmp(newsub->slotname, MySubscription->slotname) != 0)
+	if (newsub->dbid != MySubscription->dbid)
 	{
 		elog(ERROR, "subscription %u changed unexpectedly",
 			 MyLogicalRepWorker->subid);
