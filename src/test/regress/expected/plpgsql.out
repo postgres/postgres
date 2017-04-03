@@ -5961,7 +5961,7 @@ UPDATE alter_table_under_transition_tables
   SET name = (name::text || name::text)::integer;
 WARNING:  old table = 1=11,2=22,3=33, new table = 1=1111,2=2222,3=3333
 NOTICE:  one = 1
--- now drop column 'name' 
+-- now drop column 'name'
 ALTER TABLE alter_table_under_transition_tables
   DROP column name;
 UPDATE alter_table_under_transition_tables

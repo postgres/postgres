@@ -4753,7 +4753,7 @@ ALTER TABLE alter_table_under_transition_tables
 UPDATE alter_table_under_transition_tables
   SET name = (name::text || name::text)::integer;
 
--- now drop column 'name' 
+-- now drop column 'name'
 ALTER TABLE alter_table_under_transition_tables
   DROP column name;
 UPDATE alter_table_under_transition_tables
