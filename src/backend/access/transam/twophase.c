@@ -2024,8 +2024,8 @@ ProcessTwoPhaseBuffer(TransactionId xid,
 					  TransactionId *maxsubxid)
 {
 	TransactionId origNextXid = ShmemVariableCache->nextXid;
-	TransactionId res;
-	TransactionId maxsub;
+	TransactionId res = InvalidTransactionId;
+	TransactionId maxsub = InvalidTransactionId;
 	TransactionId *subxids;
 	char	   *buf;
 	TwoPhaseFileHeader *hdr;
