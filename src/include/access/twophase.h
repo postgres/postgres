@@ -49,11 +49,12 @@ extern TransactionId PrescanPreparedTransactions(TransactionId **xids_p,
 extern void StandbyRecoverPreparedTransactions(bool overwriteOK);
 extern void RecoverPreparedTransactions(void);
 
-extern void RecreateTwoPhaseFile(TransactionId xid, void *content, int len);
-extern void RemoveTwoPhaseFile(TransactionId xid, bool giveWarning);
-
 extern void CheckPointTwoPhase(XLogRecPtr redo_horizon);
 
 extern void FinishPreparedTransaction(const char *gid, bool isCommit);
 
+extern void PrepareRedoAdd(char *buf, XLogRecPtr start_lsn,
+						   XLogRecPtr end_lsn);
+extern void PrepareRedoRemove(TransactionId xid, bool giveWarning);
+extern void restoreTwoPhaseData(void);
 #endif   /* TWOPHASE_H */
