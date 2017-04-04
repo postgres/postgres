@@ -2932,7 +2932,7 @@ VALUES ('Albany', NULL, NULL, 'NY');
     tables and partitions.  For example, a partition cannot have any parents
     other than the partitioned table it is a partition of, nor can a regular
     table inherit from a partitioned table making the latter its parent.
-    That means partitioned table and partitions do not participate in
+    That means partitioned tables and partitions do not participate in
     inheritance with regular tables.  Since a partition hierarchy consisting
     of the partitioned table and its partitions is still an inheritance
     hierarchy, all the normal rules of inheritance apply as described in
@@ -3036,11 +3036,12 @@ CREATE TABLE measurement (
       <para>
        You may decide to use multiple columns in the partition key for range
        partitioning, if desired.  Of course, this will often result in a larger
-       number of partitions, each of which is individually smaller.
-       criteria.  Using fewer columns may lead to coarser-grained
-       A query accessing the partitioned table will have
-       to scan fewer partitions if the conditions involve some or all of these
-       columns.  For example, consider a table range partitioned using columns
+       number of partitions, each of which is individually smaller.  On the
+       other hand, using fewer columns may lead to a coarser-grained
+       partitioning criteria with smaller number of partitions.  A query
+       accessing the partitioned table will have to scan fewer partitions if
+       the conditions involve some or all of these columns.
+       For example, consider a table range partitioned using columns
        <structfield>lastname</> and <structfield>firstname</> (in that order)
        as the partition key.
       </para>
@@ -3167,8 +3168,8 @@ CREATE INDEX ON measurement_y2008m01 (logdate);
     </para>
 
     <para>
-     The simplest option for removing old data is simply to drop the partition
-     that is no longer necessary:
+     The simplest option for removing old data is to drop the partition that
+     is no longer necessary:
 <programlisting>
 DROP TABLE measurement_y2006m02;
 </programlisting>
@@ -3595,8 +3596,8 @@ DO INSTEAD
     <sect3 id="ddl-partitioning-inheritance-maintenance">
      <title>Partition Maintenance</title>
      <para>
-      To remove old data quickly, simply to drop the partition that is no
-      longer necessary:
+      To remove old data quickly, simply drop the partition that is no longer
+      necessary:
 <programlisting>
 DROP TABLE measurement_y2006m02;
 </programlisting>
@@ -3692,7 +3693,7 @@ ANALYZE measurement;
         Triggers or rules will be needed to route rows to the desired
         partition, unless the application is explicitly aware of the
         partitioning scheme.  Triggers may be complicated to write, and will
-        be much slower than the tuple routing performed interally by
+        be much slower than the tuple routing performed internally by
         declarative partitioning.
        </para>
       </listitem>
