@@ -86,8 +86,8 @@ extern uint32 bootstrap_data_checksum_version;
 
 
 /* User-settable parameters */
-int			max_wal_size = 64;	/* 1 GB */
-int			min_wal_size = 5;	/* 80 MB */
+int			max_wal_size_mb = 1024;		/* 1 GB */
+int			min_wal_size_mb = 80;		/* 80 MB */
 int			wal_keep_segments = 0;
 int			XLOGbuffers = -1;
 int			XLogArchiveTimeout = 0;
@@ -737,6 +737,10 @@ static ControlFileData *ControlFile = NULL;
  */
 #define UsableBytesInPage (XLOG_BLCKSZ - SizeOfXLogShortPHD)
 #define UsableBytesInSegment ((XLOG_SEG_SIZE / XLOG_BLCKSZ) * UsableBytesInPage - (SizeOfXLogLongPHD - SizeOfXLogShortPHD))
+
+/* Convert min_wal_size_mb and max wal_size_mb to equivalent segment count */
+#define ConvertToXSegs(x)	\
+	(x / (XLOG_SEG_SIZE / (1024 * 1024)))
 
 /*
  * Private, possibly out-of-date copy of shared LogwrtResult.
@@ -2200,7 +2204,7 @@ AdvanceXLInsertBuffer(XLogRecPtr upto, bool opportunistic)
 }
 
 /*
- * Calculate CheckPointSegments based on max_wal_size and
+ * Calculate CheckPointSegments based on max_wal_size_mb and
  * checkpoint_completion_target.
  */
 static void
@@ -2210,14 +2214,14 @@ CalculateCheckpointSegments(void)
 
 	/*-------
 	 * Calculate the distance at which to trigger a checkpoint, to avoid
-	 * exceeding max_wal_size. This is based on two assumptions:
+	 * exceeding max_wal_size_mb. This is based on two assumptions:
 	 *
 	 * a) we keep WAL for two checkpoint cycles, back to the "prev" checkpoint.
 	 * b) during checkpoint, we consume checkpoint_completion_target *
 	 *	  number of segments consumed between checkpoints.
 	 *-------
 	 */
-	target = (double) max_wal_size / (2.0 + CheckPointCompletionTarget);
+	target = (double) ConvertToXSegs(max_wal_size_mb) / (2.0 + CheckPointCompletionTarget);
 
 	/* round down */
 	CheckPointSegments = (int) target;
@@ -2229,7 +2233,7 @@ CalculateCheckpointSegments(void)
 void
 assign_max_wal_size(int newval, void *extra)
 {
-	max_wal_size = newval;
+	max_wal_size_mb = newval;
 	CalculateCheckpointSegments();
 }
 
@@ -2253,12 +2257,12 @@ XLOGfileslop(XLogRecPtr PriorRedoPtr)
 	XLogSegNo	recycleSegNo;
 
 	/*
-	 * Calculate the segment numbers that min_wal_size and max_wal_size
+	 * Calculate the segment numbers that min_wal_size_mb and max_wal_size_mb
 	 * correspond to. Always recycle enough segments to meet the minimum, and
 	 * remove enough segments to stay below the maximum.
 	 */
-	minSegNo = PriorRedoPtr / XLOG_SEG_SIZE + min_wal_size - 1;
-	maxSegNo = PriorRedoPtr / XLOG_SEG_SIZE + max_wal_size - 1;
+	minSegNo = PriorRedoPtr / XLOG_SEG_SIZE + ConvertToXSegs(min_wal_size_mb) - 1;
+	maxSegNo = PriorRedoPtr / XLOG_SEG_SIZE + ConvertToXSegs(max_wal_size_mb) - 1;
 
 	/*
 	 * Between those limits, recycle enough segments to get us through to the

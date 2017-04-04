@@ -729,6 +729,11 @@ static const unit_conversion memory_unit_conversion_table[] =
 	{"MB", GUC_UNIT_KB, 1024},
 	{"kB", GUC_UNIT_KB, 1},
 
+	{"TB", GUC_UNIT_MB, 1024 * 1024},
+	{"GB", GUC_UNIT_MB, 1024},
+	{"MB", GUC_UNIT_MB, 1},
+	{"kB", GUC_UNIT_MB, -1024},
+
 	{"TB", GUC_UNIT_BLOCKS, (1024 * 1024 * 1024) / (BLCKSZ / 1024)},
 	{"GB", GUC_UNIT_BLOCKS, (1024 * 1024) / (BLCKSZ / 1024)},
 	{"MB", GUC_UNIT_BLOCKS, 1024 / (BLCKSZ / 1024)},
@@ -738,11 +743,6 @@ static const unit_conversion memory_unit_conversion_table[] =
 	{"GB", GUC_UNIT_XBLOCKS, (1024 * 1024) / (XLOG_BLCKSZ / 1024)},
 	{"MB", GUC_UNIT_XBLOCKS, 1024 / (XLOG_BLCKSZ / 1024)},
 	{"kB", GUC_UNIT_XBLOCKS, -(XLOG_BLCKSZ / 1024)},
-
-	{"TB", GUC_UNIT_XSEGS, (1024 * 1024 * 1024) / (XLOG_SEG_SIZE / 1024)},
-	{"GB", GUC_UNIT_XSEGS, (1024 * 1024) / (XLOG_SEG_SIZE / 1024)},
-	{"MB", GUC_UNIT_XSEGS, -(XLOG_SEG_SIZE / (1024 * 1024))},
-	{"kB", GUC_UNIT_XSEGS, -(XLOG_SEG_SIZE / 1024)},
 
 	{""}						/* end of table marker */
 };
@@ -2236,10 +2236,10 @@ static struct config_int ConfigureNamesInt[] =
 		{"min_wal_size", PGC_SIGHUP, WAL_CHECKPOINTS,
 			gettext_noop("Sets the minimum size to shrink the WAL to."),
 			NULL,
-			GUC_UNIT_XSEGS
+			GUC_UNIT_MB
 		},
-		&min_wal_size,
-		5, 2, INT_MAX,
+		&min_wal_size_mb,
+		5 * (XLOG_SEG_SIZE/ (1024 * 1024)), 2, MAX_KILOBYTES,
 		NULL, NULL, NULL
 	},
 
@@ -2247,10 +2247,10 @@ static struct config_int ConfigureNamesInt[] =
 		{"max_wal_size", PGC_SIGHUP, WAL_CHECKPOINTS,
 			gettext_noop("Sets the WAL size that triggers a checkpoint."),
 			NULL,
-			GUC_UNIT_XSEGS
+			GUC_UNIT_MB
 		},
-		&max_wal_size,
-		64, 2, INT_MAX,
+		&max_wal_size_mb,
+		64 * (XLOG_SEG_SIZE/ (1024 * 1024)), 2, MAX_KILOBYTES,
 		NULL, assign_max_wal_size, NULL
 	},
 
@@ -8085,17 +8085,15 @@ GetConfigOptionByNum(int varnum, const char **values, bool *noshow)
 			case GUC_UNIT_KB:
 				values[2] = "kB";
 				break;
+			case GUC_UNIT_MB:
+				values[2] = "MB";
+				break;
 			case GUC_UNIT_BLOCKS:
 				snprintf(buffer, sizeof(buffer), "%dkB", BLCKSZ / 1024);
 				values[2] = pstrdup(buffer);
 				break;
 			case GUC_UNIT_XBLOCKS:
 				snprintf(buffer, sizeof(buffer), "%dkB", XLOG_BLCKSZ / 1024);
-				values[2] = pstrdup(buffer);
-				break;
-			case GUC_UNIT_XSEGS:
-				snprintf(buffer, sizeof(buffer), "%dMB",
-						 XLOG_SEG_SIZE / (1024 * 1024));
 				values[2] = pstrdup(buffer);
 				break;
 			case GUC_UNIT_MS:
