@@ -494,7 +494,7 @@ BitmapAdjustPrefetchIterator(BitmapHeapScanState *node,
 		SpinLockAcquire(&pstate->mutex);
 		if (pstate->prefetch_pages > 0)
 		{
-			node->prefetch_pages--;
+			pstate->prefetch_pages--;
 			SpinLockRelease(&pstate->mutex);
 		}
 		else
