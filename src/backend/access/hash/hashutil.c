@@ -174,7 +174,8 @@ _hash_spareindex(uint32 num_bucket)
 
 	/* account for phases within current group */
 	splitpoint_phases +=
-		(((num_bucket - 1) >> (HASH_SPLITPOINT_PHASE_BITS + 1)) &
+		(((num_bucket - 1) >>
+		  (splitpoint_group - (HASH_SPLITPOINT_PHASE_BITS + 1))) &
 		 HASH_SPLITPOINT_PHASE_MASK);	/* to 0-based value. */
 
 	return splitpoint_phases;
