@@ -1,3 +1,6 @@
+-- predictability
+SET synchronous_commit = on;
+
 SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot_p', 'test_decoding');
 SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot_t', 'test_decoding', true);
 
@@ -9,6 +12,8 @@ SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot_t2', 'tes
 -- here we want to start a new session and wait till old one is gone
 select pg_backend_pid() as oldpid \gset
 \c -
+SET synchronous_commit = on;
+
 do 'declare c int = 0;
 begin
   while (select count(*) from pg_replication_slots where active_pid = '
