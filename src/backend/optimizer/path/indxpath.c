@@ -2779,6 +2779,9 @@ check_index_predicates(PlannerInfo *root, RelOptInfo *rel)
 	Relids		otherrels;
 	ListCell   *lc;
 
+	/* Indexes are available only on base or "other" member relations. */
+	Assert(IS_SIMPLE_REL(rel));
+
 	/*
 	 * Initialize the indrestrictinfo lists to be identical to
 	 * baserestrictinfo, and check whether there are any partial indexes.  If

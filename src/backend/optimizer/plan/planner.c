@@ -6001,7 +6001,7 @@ plan_cluster_use_sort(Oid tableOid, Oid indexOid)
 	setup_simple_rel_arrays(root);
 
 	/* Build RelOptInfo */
-	rel = build_simple_rel(root, 1, RELOPT_BASEREL);
+	rel = build_simple_rel(root, 1, NULL);
 
 	/* Locate IndexOptInfo for the target index */
 	indexInfo = NULL;

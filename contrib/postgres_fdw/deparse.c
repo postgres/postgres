@@ -243,7 +243,7 @@ is_foreign_expr(PlannerInfo *root,
 	 * because the upperrel's own relids currently aren't set to anything
 	 * meaningful by the core code.  For other relation, use their own relids.
 	 */
-	if (baserel->reloptkind == RELOPT_UPPER_REL)
+	if (IS_UPPER_REL(baserel))
 		glob_cxt.relids = fpinfo->outerrel->relids;
 	else
 		glob_cxt.relids = baserel->relids;
@@ -677,7 +677,7 @@ foreign_expr_walker(Node *node,
 				ListCell   *lc;
 
 				/* Not safe to pushdown when not in grouping context */
-				if (glob_cxt->foreignrel->reloptkind != RELOPT_UPPER_REL)
+				if (!IS_UPPER_REL(glob_cxt->foreignrel))
 					return false;
 
 				/* Only non-split aggregates are pushable. */
@@ -874,7 +874,7 @@ build_tlist_to_deparse(RelOptInfo *foreignrel)
 	 * For an upper relation, we have already built the target list while
 	 * checking shippability, so just return that.
 	 */
-	if (foreignrel->reloptkind == RELOPT_UPPER_REL)
+	if (IS_UPPER_REL(foreignrel))
 		return fpinfo->grouped_tlist;
 
 	/*
@@ -929,17 +929,13 @@ deparseSelectStmtForRel(StringInfo buf, PlannerInfo *root, RelOptInfo *rel,
 	 * We handle relations for foreign tables, joins between those and upper
 	 * relations.
 	 */
-	Assert(rel->reloptkind == RELOPT_JOINREL ||
-		   rel->reloptkind == RELOPT_BASEREL ||
-		   rel->reloptkind == RELOPT_OTHER_MEMBER_REL ||
-		   rel->reloptkind == RELOPT_UPPER_REL);
+	Assert(IS_JOIN_REL(rel) || IS_SIMPLE_REL(rel) || IS_UPPER_REL(rel));
 
 	/* Fill portions of context common to upper, join and base relation */
 	context.buf = buf;
 	context.root = root;
 	context.foreignrel = rel;
-	context.scanrel = (rel->reloptkind == RELOPT_UPPER_REL) ?
-		fpinfo->outerrel : rel;
+	context.scanrel = IS_UPPER_REL(rel) ? fpinfo->outerrel : rel;
 	context.params_list = params_list;
 
 	/* Construct SELECT clause */
@@ -950,7 +946,7 @@ deparseSelectStmtForRel(StringInfo buf, PlannerInfo *root, RelOptInfo *rel,
 	 * conditions of the underlying scan relation; otherwise, we can use the
 	 * supplied list of remote conditions directly.
 	 */
-	if (rel->reloptkind == RELOPT_UPPER_REL)
+	if (IS_UPPER_REL(rel))
 	{
 		PgFdwRelationInfo *ofpinfo;
 
@@ -963,7 +959,7 @@ deparseSelectStmtForRel(StringInfo buf, PlannerInfo *root, RelOptInfo *rel,
 	/* Construct FROM and WHERE clauses */
 	deparseFromExpr(quals, &context);
 
-	if (rel->reloptkind == RELOPT_UPPER_REL)
+	if (IS_UPPER_REL(rel))
 	{
 		/* Append GROUP BY clause */
 		appendGroupByClause(tlist, &context);
@@ -1020,8 +1016,7 @@ deparseSelectSql(List *tlist, bool is_subquery, List **retrieved_attrs,
 		 */
 		deparseSubqueryTargetList(context);
 	}
-	else if (foreignrel->reloptkind == RELOPT_JOINREL ||
-			 foreignrel->reloptkind == RELOPT_UPPER_REL)
+	else if (IS_JOIN_REL(foreignrel) || IS_UPPER_REL(foreignrel))
 	{
 		/*
 		 * For a join or upper relation the input tlist gives the list of
@@ -1062,9 +1057,8 @@ deparseFromExpr(List *quals, deparse_expr_cxt *context)
 	RelOptInfo *scanrel = context->scanrel;
 
 	/* For upper relations, scanrel must be either a joinrel or a baserel */
-	Assert(context->foreignrel->reloptkind != RELOPT_UPPER_REL ||
-		   scanrel->reloptkind == RELOPT_JOINREL ||
-		   scanrel->reloptkind == RELOPT_BASEREL);
+	Assert(!IS_UPPER_REL(context->foreignrel) ||
+		   IS_JOIN_REL(scanrel) || IS_SIMPLE_REL(scanrel));
 
 	/* Construct FROM clause */
 	appendStringInfoString(buf, " FROM ");
@@ -1219,7 +1213,7 @@ deparseLockingClause(deparse_expr_cxt *context)
 			appendStringInfoString(buf, " FOR UPDATE");
 
 			/* Add the relation alias if we are here for a join relation */
-			if (rel->reloptkind == RELOPT_JOINREL)
+			if (IS_JOIN_REL(rel))
 				appendStringInfo(buf, " OF %s%d", REL_ALIAS_PREFIX, relid);
 		}
 		else
@@ -1384,8 +1378,7 @@ deparseSubqueryTargetList(deparse_expr_cxt *context)
 	ListCell   *lc;
 
 	/* Should only be called in these cases. */
-	Assert(foreignrel->reloptkind == RELOPT_BASEREL ||
-		   foreignrel->reloptkind == RELOPT_JOINREL);
+	Assert(IS_SIMPLE_REL(foreignrel) || IS_JOIN_REL(foreignrel));
 
 	first = true;
 	foreach(lc, foreignrel->reltarget->exprs)
@@ -1417,7 +1410,7 @@ deparseFromExprForRel(StringInfo buf, PlannerInfo *root, RelOptInfo *foreignrel,
 {
 	PgFdwRelationInfo *fpinfo = (PgFdwRelationInfo *) foreignrel->fdw_private;
 
-	if (foreignrel->reloptkind == RELOPT_JOINREL)
+	if (IS_JOIN_REL(foreignrel))
 	{
 		StringInfoData join_sql_o;
 		StringInfoData join_sql_i;
@@ -1495,8 +1488,7 @@ deparseRangeTblRef(StringInfo buf, PlannerInfo *root, RelOptInfo *foreignrel,
 	PgFdwRelationInfo *fpinfo = (PgFdwRelationInfo *) foreignrel->fdw_private;
 
 	/* Should only be called in these cases. */
-	Assert(foreignrel->reloptkind == RELOPT_BASEREL ||
-		   foreignrel->reloptkind == RELOPT_JOINREL);
+	Assert(IS_SIMPLE_REL(foreignrel) || IS_JOIN_REL(foreignrel));
 
 	Assert(fpinfo->local_conds == NIL);
 
@@ -3097,15 +3089,13 @@ is_subquery_var(Var *node, RelOptInfo *foreignrel, int *relno, int *colno)
 	RelOptInfo *innerrel = fpinfo->innerrel;
 
 	/* Should only be called in these cases. */
-	Assert(foreignrel->reloptkind == RELOPT_BASEREL ||
-		   foreignrel->reloptkind == RELOPT_JOINREL ||
-		   foreignrel->reloptkind == RELOPT_OTHER_MEMBER_REL);
+	Assert(IS_SIMPLE_REL(foreignrel) || IS_JOIN_REL(foreignrel));
 
 	/*
 	 * If the given relation isn't a join relation, it doesn't have any lower
 	 * subqueries, so the Var isn't a subquery output column.
 	 */
-	if (foreignrel->reloptkind != RELOPT_JOINREL)
+	if (!IS_JOIN_REL(foreignrel))
 		return false;
 
 	/*

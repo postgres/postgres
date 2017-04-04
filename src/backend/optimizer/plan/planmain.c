@@ -242,8 +242,7 @@ query_planner(PlannerInfo *root, List *tlist,
 
 		Assert(brel->relid == rti);		/* sanity check on array */
 
-		if (brel->reloptkind == RELOPT_BASEREL ||
-			brel->reloptkind == RELOPT_OTHER_MEMBER_REL)
+		if (IS_SIMPLE_REL(brel))
 			total_pages += (double) brel->pages;
 	}
 	root->total_table_pages = total_pages;

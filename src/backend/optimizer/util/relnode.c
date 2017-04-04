@@ -88,7 +88,7 @@ setup_simple_rel_arrays(PlannerInfo *root)
  *	  Construct a new RelOptInfo for a base relation or 'other' relation.
  */
 RelOptInfo *
-build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
+build_simple_rel(PlannerInfo *root, int relid, RelOptInfo *parent)
 {
 	RelOptInfo *rel;
 	RangeTblEntry *rte;
@@ -103,7 +103,7 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
 	Assert(rte != NULL);
 
 	rel = makeNode(RelOptInfo);
-	rel->reloptkind = reloptkind;
+	rel->reloptkind = parent ? RELOPT_OTHER_MEMBER_REL : RELOPT_BASEREL;
 	rel->relids = bms_make_singleton(relid);
 	rel->rows = 0;
 	/* cheap startup cost is interesting iff not all tuples to be retrieved */
@@ -143,6 +143,22 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
 	rel->baserestrict_min_security = UINT_MAX;
 	rel->joininfo = NIL;
 	rel->has_eclass_joins = false;
+
+	/*
+	 * Pass top parent's relids down the inheritance hierarchy. If the parent
+	 * has top_parent_relids set, it's a direct or an indirect child of the top
+	 * parent indicated by top_parent_relids. By extention this child is also
+	 * an indirect child of that parent.
+	 */
+	if (parent)
+	{
+		if (parent->top_parent_relids)
+			rel->top_parent_relids = parent->top_parent_relids;
+		else
+			rel->top_parent_relids = bms_copy(parent->relids);
+	}
+	else
+		rel->top_parent_relids = NULL;
 
 	/* Check type of rtable entry */
 	switch (rte->rtekind)
@@ -209,7 +225,7 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
 				continue;
 
 			(void) build_simple_rel(root, appinfo->child_relid,
-									RELOPT_OTHER_MEMBER_REL);
+									rel);
 		}
 	}
 
@@ -504,6 +520,7 @@ build_join_rel(PlannerInfo *root,
 	joinrel->baserestrict_min_security = UINT_MAX;
 	joinrel->joininfo = NIL;
 	joinrel->has_eclass_joins = false;
+	joinrel->top_parent_relids = NULL;
 
 	/* Compute information relevant to the foreign relations. */
 	set_foreign_rel_properties(joinrel, outer_rel, inner_rel);
@@ -966,32 +983,6 @@ find_childrel_appendrelinfo(PlannerInfo *root, RelOptInfo *rel)
 
 
 /*
- * find_childrel_top_parent
- *		Fetch the topmost appendrel parent rel of an appendrel child rel.
- *
- * Since appendrels can be nested, a child could have multiple levels of
- * appendrel ancestors.  This function locates the topmost ancestor,
- * which will be a regular baserel not an otherrel.
- */
-RelOptInfo *
-find_childrel_top_parent(PlannerInfo *root, RelOptInfo *rel)
-{
-	do
-	{
-		AppendRelInfo *appinfo = find_childrel_appendrelinfo(root, rel);
-		Index		prelid = appinfo->parent_relid;
-
-		/* traverse up to the parent rel, loop if it's also a child rel */
-		rel = find_base_rel(root, prelid);
-	} while (rel->reloptkind == RELOPT_OTHER_MEMBER_REL);
-
-	Assert(rel->reloptkind == RELOPT_BASEREL);
-
-	return rel;
-}
-
-
-/*
  * find_childrel_parents
  *		Compute the set of parent relids of an appendrel child rel.
  *
@@ -1003,6 +994,8 @@ Relids
 find_childrel_parents(PlannerInfo *root, RelOptInfo *rel)
 {
 	Relids		result = NULL;
+
+	Assert(rel->reloptkind == RELOPT_OTHER_MEMBER_REL);
 
 	do
 	{

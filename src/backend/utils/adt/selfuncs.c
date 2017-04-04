@@ -3473,7 +3473,7 @@ estimate_num_groups(PlannerInfo *root, List *groupExprs, double input_rows,
 		/*
 		 * Sanity check --- don't divide by zero if empty relation.
 		 */
-		Assert(rel->reloptkind == RELOPT_BASEREL);
+		Assert(IS_SIMPLE_REL(rel));
 		if (rel->tuples > 0)
 		{
 			/*

@@ -729,8 +729,11 @@ get_useful_ecs_for_relation(PlannerInfo *root, RelOptInfo *rel)
 		return useful_eclass_list;
 
 	/* If this is a child rel, we must use the topmost parent rel to search. */
-	if (rel->reloptkind == RELOPT_OTHER_MEMBER_REL)
-		relids = find_childrel_top_parent(root, rel)->relids;
+	if (IS_OTHER_REL(rel))
+	{
+		Assert(!bms_is_empty(rel->top_parent_relids));
+		relids = rel->top_parent_relids;
+	}
 	else
 		relids = rel->relids;
 
@@ -1129,8 +1132,7 @@ postgresGetForeignPlan(PlannerInfo *root,
 	 * For base relations, set scan_relid as the relid of the relation. For
 	 * other kinds of relations set it to 0.
 	 */
-	if (foreignrel->reloptkind == RELOPT_BASEREL ||
-		foreignrel->reloptkind == RELOPT_OTHER_MEMBER_REL)
+	if (IS_SIMPLE_REL(foreignrel))
 		scan_relid = foreignrel->relid;
 	else
 	{
@@ -1189,8 +1191,7 @@ postgresGetForeignPlan(PlannerInfo *root,
 			local_exprs = lappend(local_exprs, rinfo->clause);
 	}
 
-	if (foreignrel->reloptkind == RELOPT_JOINREL ||
-		foreignrel->reloptkind == RELOPT_UPPER_REL)
+	if (IS_JOIN_REL(foreignrel) || IS_UPPER_REL(foreignrel))
 	{
 		/* For a join relation, get the conditions from fdw_private structure */
 		remote_conds = fpinfo->remote_conds;
@@ -1216,7 +1217,7 @@ postgresGetForeignPlan(PlannerInfo *root,
 			 * joins. Queries involving aggregates or grouping do not require
 			 * EPQ mechanism, hence should not have an outer plan here.
 			 */
-			Assert(foreignrel->reloptkind != RELOPT_UPPER_REL);
+			Assert(!IS_UPPER_REL(foreignrel));
 
 			outer_plan->targetlist = fdw_scan_tlist;
 
@@ -1255,8 +1256,7 @@ postgresGetForeignPlan(PlannerInfo *root,
 							 remote_conds,
 							 retrieved_attrs,
 							 makeInteger(fpinfo->fetch_size));
-	if (foreignrel->reloptkind == RELOPT_JOINREL ||
-		foreignrel->reloptkind == RELOPT_UPPER_REL)
+	if (IS_JOIN_REL(foreignrel) || IS_UPPER_REL(foreignrel))
 		fdw_private = lappend(fdw_private,
 							  makeString(fpinfo->relation_name->data));
 
@@ -2535,8 +2535,7 @@ estimate_path_cost_size(PlannerInfo *root,
 						   &remote_param_join_conds, &local_param_join_conds);
 
 		/* Build the list of columns to be fetched from the foreign server. */
-		if (foreignrel->reloptkind == RELOPT_JOINREL ||
-			foreignrel->reloptkind == RELOPT_UPPER_REL)
+		if (IS_JOIN_REL(foreignrel) || IS_UPPER_REL(foreignrel))
 			fdw_scan_tlist = build_tlist_to_deparse(foreignrel);
 		else
 			fdw_scan_tlist = NIL;
@@ -2617,7 +2616,7 @@ estimate_path_cost_size(PlannerInfo *root,
 			startup_cost = fpinfo->rel_startup_cost;
 			run_cost = fpinfo->rel_total_cost - fpinfo->rel_startup_cost;
 		}
-		else if (foreignrel->reloptkind == RELOPT_JOINREL)
+		else if (IS_JOIN_REL(foreignrel))
 		{
 			PgFdwRelationInfo *fpinfo_i;
 			PgFdwRelationInfo *fpinfo_o;
@@ -2683,7 +2682,7 @@ estimate_path_cost_size(PlannerInfo *root,
 			run_cost += nrows * remote_conds_cost.per_tuple;
 			run_cost += fpinfo->local_conds_cost.per_tuple * retrieved_rows;
 		}
-		else if (foreignrel->reloptkind == RELOPT_UPPER_REL)
+		else if (IS_UPPER_REL(foreignrel))
 		{
 			PgFdwRelationInfo *ofpinfo;
 			PathTarget *ptarget = root->upper_targets[UPPERREL_GROUP_AGG];

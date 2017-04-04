@@ -1337,6 +1337,9 @@ relation_excluded_by_constraints(PlannerInfo *root,
 	List	   *safe_constraints;
 	ListCell   *lc;
 
+	/* As of now, constraint exclusion works only with simple relations. */
+	Assert(IS_SIMPLE_REL(rel));
+
 	/*
 	 * Regardless of the setting of constraint_exclusion, detect
 	 * constant-FALSE-or-NULL restriction clauses.  Because const-folding will

@@ -484,6 +484,23 @@ typedef enum RelOptKind
 	RELOPT_DEADREL
 } RelOptKind;
 
+/*
+ * Is the given relation a simple relation i.e a base or "other" member
+ * relation?
+ */
+#define IS_SIMPLE_REL(rel) \
+	((rel)->reloptkind == RELOPT_BASEREL || \
+	 (rel)->reloptkind == RELOPT_OTHER_MEMBER_REL)
+
+/* Is the given relation a join relation? */
+#define IS_JOIN_REL(rel) ((rel)->reloptkind == RELOPT_JOINREL)
+
+/* Is the given relation an upper relation? */
+#define IS_UPPER_REL(rel) ((rel)->reloptkind == RELOPT_UPPER_REL)
+
+/* Is the given relation an "other" relation? */
+#define IS_OTHER_REL(rel) ((rel)->reloptkind == RELOPT_OTHER_MEMBER_REL)
+
 typedef struct RelOptInfo
 {
 	NodeTag		type;
@@ -554,6 +571,9 @@ typedef struct RelOptInfo
 	List	   *joininfo;		/* RestrictInfo structures for join clauses
 								 * involving this rel */
 	bool		has_eclass_joins;		/* T means joininfo is incomplete */
+
+	/* used by "other" relations. */
+	Relids		top_parent_relids;		/* Relids of topmost parents. */
 } RelOptInfo;
 
 /*

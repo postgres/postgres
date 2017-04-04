@@ -539,8 +539,7 @@ set_rel_consider_parallel(PlannerInfo *root, RelOptInfo *rel,
 	Assert(root->glob->parallelModeOK);
 
 	/* This should only be called for baserels and appendrel children. */
-	Assert(rel->reloptkind == RELOPT_BASEREL ||
-		   rel->reloptkind == RELOPT_OTHER_MEMBER_REL);
+	Assert(IS_SIMPLE_REL(rel));
 
 	/* Assorted checks based on rtekind. */
 	switch (rte->rtekind)
@@ -846,7 +845,7 @@ set_foreign_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 
 /*
  * set_append_rel_size
- *	  Set size estimates for an "append relation"
+ *	  Set size estimates for a simple "append relation"
  *
  * The passed-in rel and RTE represent the entire append relation.  The
  * relation's contents are computed by appending together the output of
@@ -866,6 +865,8 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 	double	   *parent_attrsizes;
 	int			nattrs;
 	ListCell   *l;
+
+	Assert(IS_SIMPLE_REL(rel));
 
 	/*
 	 * Initialize to compute size estimates for whole append relation.

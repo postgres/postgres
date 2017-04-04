@@ -271,7 +271,7 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 		 * used for much here, but it carries the subroot data structures
 		 * forward to setrefs.c processing.
 		 */
-		rel = build_simple_rel(root, rtr->rtindex, RELOPT_BASEREL);
+		rel = build_simple_rel(root, rtr->rtindex, NULL);
 
 		/* plan_params should not be in use in current query level */
 		Assert(root->plan_params == NIL);
@@ -2143,7 +2143,7 @@ adjust_appendrel_attrs_multilevel(PlannerInfo *root, Node *node,
 	RelOptInfo *parent_rel = find_base_rel(root, appinfo->parent_relid);
 
 	/* If parent is also a child, first recurse to apply its translations */
-	if (parent_rel->reloptkind == RELOPT_OTHER_MEMBER_REL)
+	if (IS_OTHER_REL(parent_rel))
 		node = adjust_appendrel_attrs_multilevel(root, node, parent_rel);
 	else
 		Assert(parent_rel->reloptkind == RELOPT_BASEREL);

@@ -717,7 +717,7 @@ GetExistingLocalJoinPath(RelOptInfo *joinrel)
 {
 	ListCell   *lc;
 
-	Assert(joinrel->reloptkind == RELOPT_JOINREL);
+	Assert(IS_JOIN_REL(joinrel));
 
 	foreach(lc, joinrel->pathlist)
 	{
@@ -782,7 +782,7 @@ GetExistingLocalJoinPath(RelOptInfo *joinrel)
 			ForeignPath *foreign_path;
 
 			foreign_path = (ForeignPath *) joinpath->outerjoinpath;
-			if (foreign_path->path.parent->reloptkind == RELOPT_JOINREL)
+			if (IS_JOIN_REL(foreign_path->path.parent))
 				joinpath->outerjoinpath = foreign_path->fdw_outerpath;
 		}
 
@@ -791,7 +791,7 @@ GetExistingLocalJoinPath(RelOptInfo *joinrel)
 			ForeignPath *foreign_path;
 
 			foreign_path = (ForeignPath *) joinpath->innerjoinpath;
-			if (foreign_path->path.parent->reloptkind == RELOPT_JOINREL)
+			if (IS_JOIN_REL(foreign_path->path.parent))
 				joinpath->innerjoinpath = foreign_path->fdw_outerpath;
 		}
 

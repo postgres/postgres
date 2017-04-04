@@ -1060,10 +1060,12 @@ generate_join_implied_equalities_for_ecs(PlannerInfo *root,
 	ListCell   *lc;
 
 	/* If inner rel is a child, extra setup work is needed */
-	if (inner_rel->reloptkind == RELOPT_OTHER_MEMBER_REL)
+	if (IS_OTHER_REL(inner_rel))
 	{
+		Assert(!bms_is_empty(inner_rel->top_parent_relids));
+
 		/* Fetch relid set for the topmost parent rel */
-		nominal_inner_relids = find_childrel_top_parent(root, inner_rel)->relids;
+		nominal_inner_relids = inner_rel->top_parent_relids;
 		/* ECs will be marked with the parent's relid, not the child's */
 		nominal_join_relids = bms_union(outer_relids, nominal_inner_relids);
 	}
@@ -1324,8 +1326,7 @@ generate_join_implied_equalities_broken(PlannerInfo *root,
 	 * mentioned in the ec_sources clauses, we have to be prepared to apply
 	 * multiple levels of Var translation.
 	 */
-	if (inner_rel->reloptkind == RELOPT_OTHER_MEMBER_REL &&
-		result != NIL)
+	if (IS_OTHER_REL(inner_rel) && result != NIL)
 		result = (List *) adjust_appendrel_attrs_multilevel(root,
 															(Node *) result,
 															inner_rel);
@@ -2180,6 +2181,9 @@ generate_implied_equalities_for_column(PlannerInfo *root,
 	Relids		parent_relids;
 	ListCell   *lc1;
 
+	/* Indexes are available only on base or "other" member relations. */
+	Assert(IS_SIMPLE_REL(rel));
+
 	/* If it's a child rel, we'll need to know what its parent(s) are */
 	if (is_child_rel)
 		parent_relids = find_childrel_parents(root, rel);
@@ -2413,8 +2417,11 @@ eclass_useful_for_merging(PlannerInfo *root,
 	 */
 
 	/* If specified rel is a child, we must consider the topmost parent rel */
-	if (rel->reloptkind == RELOPT_OTHER_MEMBER_REL)
-		relids = find_childrel_top_parent(root, rel)->relids;
+	if (IS_OTHER_REL(rel))
+	{
+		Assert(!bms_is_empty(rel->top_parent_relids));
+		relids = rel->top_parent_relids;
+	}
 	else
 		relids = rel->relids;
 
