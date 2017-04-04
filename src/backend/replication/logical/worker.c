@@ -126,7 +126,7 @@ static void reread_subscription(void);
  * changes coming to the main apply worker during the sync of a table.
  *
  * Note we need to do smaller or equals comparison for SYNCDONE state because
- * it might hold position of end of intitial slot consistent point WAL
+ * it might hold position of end of initial slot consistent point WAL
  * record + 1 (ie start of next record) and next record can be COMMIT of
  * transaction we are now processing (which is what we set remote_final_lsn
  * to in apply_handle_begin).
