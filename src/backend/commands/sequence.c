@@ -1232,6 +1232,8 @@ init_params(ParseState *pstate, List *options, bool isInit,
 	DefElem    *cache_value = NULL;
 	DefElem    *is_cycled = NULL;
 	ListCell   *option;
+	bool		reset_max_value = false;
+	bool		reset_min_value = false;
 
 	*owned_by = NIL;
 
@@ -1335,13 +1337,34 @@ init_params(ParseState *pstate, List *options, bool isInit,
 	/* AS type */
 	if (as_type != NULL)
 	{
-		seqform->seqtypid = typenameTypeId(pstate, defGetTypeName(as_type));
-		if (seqform->seqtypid != INT2OID &&
-			seqform->seqtypid != INT4OID &&
-			seqform->seqtypid != INT8OID)
+		Oid		newtypid = typenameTypeId(pstate, defGetTypeName(as_type));
+
+		if (newtypid != INT2OID &&
+			newtypid != INT4OID &&
+			newtypid != INT8OID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("sequence type must be smallint, integer, or bigint")));
+
+		if (!isInit)
+		{
+			/*
+			 * When changing type and the old sequence min/max values were the
+			 * min/max of the old type, adjust sequence min/max values to
+			 * min/max of new type.  (Otherwise, the user chose explicit
+			 * min/max values, which we'll leave alone.)
+			 */
+			if ((seqform->seqtypid == INT2OID && seqform->seqmax == PG_INT16_MAX) ||
+				(seqform->seqtypid == INT4OID && seqform->seqmax == PG_INT32_MAX) ||
+				(seqform->seqtypid == INT8OID && seqform->seqmax == PG_INT64_MAX))
+				reset_max_value = true;
+			if ((seqform->seqtypid == INT2OID && seqform->seqmin == PG_INT16_MIN) ||
+				(seqform->seqtypid == INT4OID && seqform->seqmin == PG_INT32_MIN) ||
+				(seqform->seqtypid == INT8OID && seqform->seqmin == PG_INT64_MIN))
+				reset_min_value = true;
+		}
+
+		seqform->seqtypid = newtypid;
 	}
 	else if (isInit)
 		seqform->seqtypid = INT8OID;
@@ -1375,9 +1398,9 @@ init_params(ParseState *pstate, List *options, bool isInit,
 		seqform->seqmax = defGetInt64(max_value);
 		seqdataform->log_cnt = 0;
 	}
-	else if (isInit || max_value != NULL)
+	else if (isInit || max_value != NULL || reset_max_value)
 	{
-		if (seqform->seqincrement > 0)
+		if (seqform->seqincrement > 0 || reset_max_value)
 		{
 			/* ascending seq */
 			if (seqform->seqtypid == INT2OID)
@@ -1412,11 +1435,9 @@ init_params(ParseState *pstate, List *options, bool isInit,
 		seqform->seqmin = defGetInt64(min_value);
 		seqdataform->log_cnt = 0;
 	}
-	else if (isInit || min_value != NULL)
+	else if (isInit || min_value != NULL || reset_min_value)
 	{
-		if (seqform->seqincrement > 0)
-			seqform->seqmin = 1; /* ascending seq */
-		else
+		if (seqform->seqincrement < 0 || reset_min_value)
 		{
 			/* descending seq */
 			if (seqform->seqtypid == INT2OID)
@@ -1426,6 +1447,8 @@ init_params(ParseState *pstate, List *options, bool isInit,
 			else
 				seqform->seqmin = PG_INT64_MIN;
 		}
+		else
+			seqform->seqmin = 1; /* ascending seq */
 		seqdataform->log_cnt = 0;
 	}
 

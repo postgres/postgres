@@ -23,14 +23,30 @@ DROP TABLE sequence_test_table;
 CREATE SEQUENCE sequence_test5 AS integer;
 CREATE SEQUENCE sequence_test6 AS smallint;
 CREATE SEQUENCE sequence_test7 AS bigint;
+CREATE SEQUENCE sequence_test8 AS integer MAXVALUE 100000;
+CREATE SEQUENCE sequence_test9 AS integer INCREMENT BY -1;
+CREATE SEQUENCE sequence_test10 AS integer MINVALUE -100000 START 1;
+CREATE SEQUENCE sequence_test11 AS smallint;
+CREATE SEQUENCE sequence_test12 AS smallint INCREMENT -1;
+CREATE SEQUENCE sequence_test13 AS smallint MINVALUE -32768;
+CREATE SEQUENCE sequence_test14 AS smallint MAXVALUE 32767 INCREMENT -1;
 CREATE SEQUENCE sequence_testx AS text;
 CREATE SEQUENCE sequence_testx AS nosuchtype;
 
-ALTER SEQUENCE sequence_test5 AS smallint;  -- fails
-ALTER SEQUENCE sequence_test5 AS smallint NO MINVALUE NO MAXVALUE;
-
 CREATE SEQUENCE sequence_testx AS smallint MAXVALUE 100000;
 CREATE SEQUENCE sequence_testx AS smallint MINVALUE -100000;
+
+ALTER SEQUENCE sequence_test5 AS smallint;  -- success, max will be adjusted
+ALTER SEQUENCE sequence_test8 AS smallint;  -- fail, max has to be adjusted
+ALTER SEQUENCE sequence_test8 AS smallint MAXVALUE 20000;  -- ok now
+ALTER SEQUENCE sequence_test9 AS smallint;  -- success, min will be adjusted
+ALTER SEQUENCE sequence_test10 AS smallint;  -- fail, min has to be adjusted
+ALTER SEQUENCE sequence_test10 AS smallint MINVALUE -20000;  -- ok now
+
+ALTER SEQUENCE sequence_test11 AS int;  -- max will be adjusted
+ALTER SEQUENCE sequence_test12 AS int;  -- min will be adjusted
+ALTER SEQUENCE sequence_test13 AS int;  -- min and max will be adjusted
+ALTER SEQUENCE sequence_test14 AS int;  -- min and max will be adjusted
 
 ---
 --- test creation of SERIAL column

@@ -94,10 +94,15 @@ ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> S
        </para>
 
        <para>
-        Note that changing the data type does not automatically change the
-        minimum and maximum values.  You can use the clauses <literal>NO
-        MINVALUE</literal> and <literal>NO MAXVALUE</literal> to adjust the
-        minimum and maximum values to the range of the new data type.
+        Changing the data type automatically changes the minimum and maximum
+        values of the sequence if and only if the previous minimum and maximum
+        values were the minimum or maximum value of the old data type (in
+        other words, if the sequence had been created using <literal>NO
+        MINVALUE</literal> or <literal>NO MAXVALUE</literal>, implicitly or
+        explicitly).  Otherwise, the minimum and maximum values are preserved,
+        unless new values are given as part of the same command.  If the
+        minimum and maximum values do not fit into the new data type, an error
+        will be generated.
        </para>
       </listitem>
      </varlistentry>
