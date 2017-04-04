@@ -403,7 +403,7 @@ SlabAlloc(MemoryContext context, Size size)
 	 * Remove the chunk from the freelist head. The index of the next free
 	 * chunk is stored in the chunk itself.
 	 */
-	VALGRIND_MAKE_MEM_DEFINED(chunk, SlabChunkGetPointer(chunk));
+	VALGRIND_MAKE_MEM_DEFINED(SlabChunkGetPointer(chunk), sizeof(int32));
 	block->firstFreeChunk = *(int32 *) SlabChunkGetPointer(chunk);
 
 	Assert(block->firstFreeChunk >= 0);
@@ -725,6 +725,7 @@ SlabCheck(MemoryContext context)
 
 				/* read index of the next free chunk */
 				chunk = SlabBlockGetChunk(slab, block, idx);
+				VALGRIND_MAKE_MEM_DEFINED(SlabChunkGetPointer(chunk), sizeof(int32));
 				idx = *(int32 *) SlabChunkGetPointer(chunk);
 			}
 
