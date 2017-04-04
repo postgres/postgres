@@ -2644,6 +2644,11 @@ SPIPlanPtr SPI_saveplan(SPIPlanPtr <parameter>plan</parameter>)
 <refentry id="spi-spi-register-relation">
  <indexterm><primary>SPI_register_relation</primary></indexterm>
 
+ <indexterm>
+  <primary>ephemeral named relation</primary>
+  <secondary>registering with SPI</secondary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>SPI_register_relation</refentrytitle>
   <manvolnum>3</manvolnum>
@@ -2746,6 +2751,11 @@ int SPI_register_relation(EphemeralNamedRelation <parameter>enr</parameter>)
 <refentry id="spi-spi-unregister-relation">
  <indexterm><primary>SPI_unregister_relation</primary></indexterm>
 
+ <indexterm>
+  <primary>ephemeral named relation</primary>
+  <secondary>unregistering from SPI</secondary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>SPI_unregister_relation</refentrytitle>
   <manvolnum>3</manvolnum>
@@ -2833,6 +2843,121 @@ int SPI_unregister_relation(const char * <parameter>name</parameter>)
       <para>
        if <parameter>name</parameter> is not found in the registry for the
        current connection
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+</refentry>
+
+<!-- *********************************************** -->
+
+<refentry id="spi-spi-register-trigger-data">
+ <indexterm><primary>SPI_register_trigger_data</primary></indexterm>
+
+ <indexterm>
+  <primary>ephemeral named relation</primary>
+  <secondary>registering with SPI</secondary>
+ </indexterm>
+
+ <indexterm>
+  <primary>transition tables</primary>
+  <secondary>implementation in PLs</secondary>
+ </indexterm>
+
+ <refmeta>
+  <refentrytitle>SPI_register_trigger_data</refentrytitle>
+  <manvolnum>3</manvolnum>
+ </refmeta>
+
+ <refnamediv>
+  <refname>SPI_register_trigger_data</refname>
+  <refpurpose>make ephemeral trigger data available in SPI queries</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+<synopsis>
+int SPI_register_trigger_data(TriggerData *<parameter>tdata</parameter>)
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <function>SPI_register_trigger_data</function> makes any ephemeral
+   relations captured by a trigger available to queries planned and executed
+   through the current SPI connection.  Currently, this means the transition
+   tables captured by an <literal>AFTER</literal> trigger defined with a
+   <literal>REFERENCING OLD/NEW TABLE AS</literal> ... clause.  This function
+   should be called by a PL trigger handler function after connecting.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Arguments</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><literal>TriggerData *<parameter>tdata</parameter></literal></term>
+    <listitem>
+     <para>
+       the <structname>TriggerData</structname> object passed to a trigger
+       handler function as <literal>fcinfo->context</literal>
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Return Value</title>
+
+  <para>
+   If the execution of the command was successful then the following
+   (nonnegative) value will be returned:
+
+   <variablelist>
+    <varlistentry>
+     <term><symbol>SPI_OK_TD_REGISTER</symbol></term>
+     <listitem>
+      <para>
+       if the captured trigger data (if any) has been successfully registered
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+
+  <para>
+   On error, one of the following negative values is returned:
+
+   <variablelist>
+    <varlistentry>
+     <term><symbol>SPI_ERROR_ARGUMENT</symbol></term>
+     <listitem>
+      <para>
+       if <parameter>tdata</parameter> is <symbol>NULL</symbol>
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><symbol>SPI_ERROR_UNCONNECTED</symbol></term>
+     <listitem>
+      <para>
+       if called from an unconnected procedure
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><symbol>SPI_ERROR_REL_DUPLICATE</symbol></term>
+     <listitem>
+      <para>
+       if the name of any trigger data transient relation is already
+       registered for this connection
       </para>
      </listitem>
     </varlistentry>

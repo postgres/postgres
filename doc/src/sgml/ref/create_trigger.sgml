@@ -8,6 +8,11 @@ PostgreSQL documentation
   <primary>CREATE TRIGGER</primary>
  </indexterm>
 
+ <indexterm>
+  <primary>transition tables</primary>
+  <seealso>ephemeral named relation</seealso>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>CREATE TRIGGER</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -322,11 +327,6 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
      <para>
       The (unqualified) name to be used within the trigger for this relation.
      </para>
-     <note>
-      <para>
-       So far only triggers written in C or PL/pgSQL support this.
-      </para>
-     </note>
     </listitem>
    </varlistentry>
 

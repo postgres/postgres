@@ -345,6 +345,11 @@ PLy_exec_trigger(FunctionCallInfo fcinfo, PLyProcedure *proc)
 
 	PG_TRY();
 	{
+		int		rc PG_USED_FOR_ASSERTS_ONLY;
+
+		rc = SPI_register_trigger_data(tdata);
+		Assert(rc >= 0);
+
 		plargs = PLy_trigger_build_args(fcinfo, proc, &rv);
 		plrv = PLy_procedure_call(proc, "TD", plargs);
 

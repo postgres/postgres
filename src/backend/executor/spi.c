@@ -1257,6 +1257,9 @@ SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
 					 errdetail("Scrollable cursors must be READ ONLY.")));
 	}
 
+	/* Make current query environment available to portal at execution time. */
+	portal->queryEnv = _SPI_current->queryEnv;
+
 	/*
 	 * If told to be read-only, or in parallel mode, verify that this query is
 	 * in fact read-only.  This can't be done earlier because we need to look
@@ -2715,4 +2718,53 @@ SPI_unregister_relation(const char *name)
 	_SPI_end_call(false);
 
 	return res;
+}
+
+/*
+ * Register the transient relations from 'tdata' using this SPI connection.
+ * This should be called by PL implementations' trigger handlers after
+ * connecting, in order to make transition tables visible to any queries run
+ * in this connection.
+ */
+int
+SPI_register_trigger_data(TriggerData *tdata)
+{
+	if (tdata == NULL)
+		return SPI_ERROR_ARGUMENT;
+
+	if (tdata->tg_newtable)
+	{
+		EphemeralNamedRelation enr =
+			palloc(sizeof(EphemeralNamedRelationData));
+		int		rc;
+
+		enr->md.name = tdata->tg_trigger->tgnewtable;
+		enr->md.reliddesc = tdata->tg_relation->rd_id;
+		enr->md.tupdesc = NULL;
+		enr->md.enrtype = ENR_NAMED_TUPLESTORE;
+		enr->md.enrtuples = tuplestore_tuple_count(tdata->tg_newtable);
+		enr->reldata = tdata->tg_newtable;
+		rc = SPI_register_relation(enr);
+		if (rc != SPI_OK_REL_REGISTER)
+			return rc;
+	}
+
+	if (tdata->tg_oldtable)
+	{
+		EphemeralNamedRelation enr =
+			palloc(sizeof(EphemeralNamedRelationData));
+		int		rc;
+
+		enr->md.name = tdata->tg_trigger->tgoldtable;
+		enr->md.reliddesc = tdata->tg_relation->rd_id;
+		enr->md.tupdesc = NULL;
+		enr->md.enrtype = ENR_NAMED_TUPLESTORE;
+		enr->md.enrtuples = tuplestore_tuple_count(tdata->tg_oldtable);
+		enr->reldata = tdata->tg_oldtable;
+		rc = SPI_register_relation(enr);
+		if (rc != SPI_OK_REL_REGISTER)
+			return rc;
+	}
+
+	return SPI_OK_TD_REGISTER;
 }

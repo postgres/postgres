@@ -216,3 +216,23 @@ select tcl_eval($$
   after 100 {set ::tcl_vwait 1}
   vwait ::tcl_vwait
   unset -nocomplain ::tcl_vwait$$);
+
+-- test transition table visibility
+create table transition_table_test (id int, name text);
+insert into transition_table_test values (1, 'a');
+create function transition_table_test_f() returns trigger language pltcl as
+$$
+  spi_exec -array C "SELECT id, name FROM old_table" {
+    elog INFO "old: $C(id) -> $C(name)"
+  }
+  spi_exec -array C "SELECT id, name FROM new_table" {
+    elog INFO "new: $C(id) -> $C(name)"
+  }
+  return OK
+$$;
+CREATE TRIGGER a_t AFTER UPDATE ON transition_table_test
+  REFERENCING OLD TABLE AS old_table NEW TABLE AS new_table
+  FOR EACH STATEMENT EXECUTE PROCEDURE transition_table_test_f();
+update transition_table_test set name = 'b';
+drop table transition_table_test;
+drop function transition_table_test_f();

@@ -395,6 +395,11 @@
     <secondary>in C</secondary>
    </indexterm>
 
+   <indexterm>
+    <primary>transition tables</primary>
+    <secondary>referencing from C trigger</secondary>
+   </indexterm>
+
    <para>
     This section describes the low-level details of the interface to a
     trigger function.  This information is only needed when writing
@@ -438,14 +443,16 @@ CALLED_AS_TRIGGER(fcinfo)
 <programlisting>
 typedef struct TriggerData
 {
-    NodeTag       type;
-    TriggerEvent  tg_event;
-    Relation      tg_relation;
-    HeapTuple     tg_trigtuple;
-    HeapTuple     tg_newtuple;
-    Trigger      *tg_trigger;
-    Buffer        tg_trigtuplebuf;
-    Buffer        tg_newtuplebuf;
+    NodeTag          type;
+    TriggerEvent     tg_event;
+    Relation         tg_relation;
+    HeapTuple        tg_trigtuple;
+    HeapTuple        tg_newtuple;
+    Trigger         *tg_trigger;
+    Buffer           tg_trigtuplebuf;
+    Buffer           tg_newtuplebuf;
+    Tuplestorestate *tg_oldtable;
+    Tuplestorestate *tg_newtable;
 } TriggerData;
 </programlisting>
 
@@ -629,6 +636,8 @@ typedef struct Trigger
     int16      *tgattr;
     char      **tgargs;
     char       *tgqual;
+    char       *tgoldtable;
+    char       *tgnewtable;
 } Trigger;
 </programlisting>
 
@@ -662,7 +671,36 @@ typedef struct Trigger
       </listitem>
      </varlistentry>
 
+     <varlistentry>
+      <term><structfield>tg_oldtable</></term>
+      <listitem>
+       <para>
+        A pointer to a structure of type <structname>Tuplestorestate</structname>
+        containing zero or more rows in the format specified by
+        <structfield>tg_relation</structfield>, or a <symbol>NULL</> pointer
+        if there is no <literal>OLD TABLE</literal> transition relation.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><structfield>tg_newtable</></term>
+      <listitem>
+       <para>
+        A pointer to a structure of type <structname>Tuplestorestate</structname>
+        containing zero or more rows in the format specified by
+        <structfield>tg_relation</structfield>, or a <symbol>NULL</> pointer
+        if there is no <literal>NEW TABLE</literal> transition relation.
+       </para>
+      </listitem>
+     </varlistentry>
+
     </variablelist>
+   </para>
+
+   <para>
+    To allow queries issued through SPI to reference transition tables, see
+    <xref linkend="spi-spi-register-trigger-data">.
    </para>
 
    <para>

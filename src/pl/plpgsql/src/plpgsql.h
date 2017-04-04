@@ -20,7 +20,6 @@
 #include "commands/event_trigger.h"
 #include "commands/trigger.h"
 #include "executor/spi.h"
-#include "utils/queryenvironment.h"
 
 /**********************************************************************
  * Definitions
@@ -910,9 +909,6 @@ typedef struct PLpgSQL_execstate
 	/* we pass datums[i] to the executor, when needed, in paramLI->params[i] */
 	ParamListInfo paramLI;
 	bool		params_dirty;	/* T if any resettable datum has been passed */
-
-	/* custom environment for parsing/execution of query for this context */
-	QueryEnvironment *queryEnv;
 
 	/* EState to use for "simple" expression evaluation */
 	EState	   *simple_eval_estate;

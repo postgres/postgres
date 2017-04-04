@@ -689,46 +689,9 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 	else
 		elog(ERROR, "unrecognized trigger action: not INSERT, DELETE, or UPDATE");
 
-	/*
-	 * Capture the NEW and OLD transition TABLE tuplestores (if specified for
-	 * this trigger).
-	 */
-	if (trigdata->tg_newtable || trigdata->tg_oldtable)
-	{
-		estate.queryEnv = create_queryEnv();
-		if (trigdata->tg_newtable)
-		{
-			EphemeralNamedRelation enr =
-			  palloc(sizeof(EphemeralNamedRelationData));
-			int rc PG_USED_FOR_ASSERTS_ONLY;
-
-			enr->md.name = trigdata->tg_trigger->tgnewtable;
-			enr->md.reliddesc = RelationGetRelid(trigdata->tg_relation);
-			enr->md.tupdesc = NULL;
-			enr->md.enrtype = ENR_NAMED_TUPLESTORE;
-			enr->md.enrtuples = tuplestore_tuple_count(trigdata->tg_newtable);
-			enr->reldata = trigdata->tg_newtable;
-			register_ENR(estate.queryEnv, enr);
-			rc = SPI_register_relation(enr);
-			Assert(rc >= 0);
-		}
-		if (trigdata->tg_oldtable)
-		{
-			EphemeralNamedRelation enr =
-			  palloc(sizeof(EphemeralNamedRelationData));
-			int rc PG_USED_FOR_ASSERTS_ONLY;
-
-			enr->md.name = trigdata->tg_trigger->tgoldtable;
-			enr->md.reliddesc = RelationGetRelid(trigdata->tg_relation);
-			enr->md.tupdesc = NULL;
-			enr->md.enrtype = ENR_NAMED_TUPLESTORE;
-			enr->md.enrtuples = tuplestore_tuple_count(trigdata->tg_oldtable);
-			enr->reldata = trigdata->tg_oldtable;
-			register_ENR(estate.queryEnv, enr);
-			rc = SPI_register_relation(enr);
-			Assert(rc >= 0);
-		}
-	}
+	/* Make transition tables visible to this SPI connection */
+	rc = SPI_register_trigger_data(trigdata);
+	Assert(rc >= 0);
 
 	/*
 	 * Assign the special tg_ variables
@@ -3482,9 +3445,6 @@ plpgsql_estate_setup(PLpgSQL_execstate *estate,
 	estate->paramLI->numParams = estate->ndatums;
 	estate->paramLI->paramMask = NULL;
 	estate->params_dirty = false;
-
-	/* default tuplestore cache to "none" */
-	estate->queryEnv = NULL;
 
 	/* set up for use of appropriate simple-expression EState and cast hash */
 	if (simple_eval_estate)
@@ -7372,9 +7332,6 @@ exec_dynquery_with_params(PLpgSQL_execstate *estate,
 
 	/* Release transient data */
 	MemoryContextReset(stmt_mcontext);
-
-	/* Make sure the portal knows about any named tuplestores. */
-	portal->queryEnv = estate->queryEnv;
 
 	return portal;
 }

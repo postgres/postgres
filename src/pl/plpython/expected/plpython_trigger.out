@@ -503,3 +503,24 @@ SELECT * FROM b;
  1234
 (1 row)
 
+-- check that SQL run in trigger code can see transition tables
+CREATE TABLE transition_table_test (id int, name text);
+INSERT INTO transition_table_test VALUES (1, 'a');
+CREATE FUNCTION transition_table_test_f() RETURNS trigger LANGUAGE plpythonu AS
+$$
+    rv = plpy.execute("SELECT * FROM old_table")
+    assert(rv.nrows() == 1)
+    plpy.info("old: " + str(rv[0]["id"]) + " -> " + rv[0]["name"])
+    rv = plpy.execute("SELECT * FROM new_table")
+    assert(rv.nrows() == 1)
+    plpy.info("new: " + str(rv[0]["id"]) + " -> " + rv[0]["name"])
+    return None
+$$;
+CREATE TRIGGER a_t AFTER UPDATE ON transition_table_test
+  REFERENCING OLD TABLE AS old_table NEW TABLE AS new_table
+  FOR EACH STATEMENT EXECUTE PROCEDURE transition_table_test_f();
+UPDATE transition_table_test SET name = 'b';
+INFO:  old: 1 -> a
+INFO:  new: 1 -> b
+DROP TABLE transition_table_test;
+DROP FUNCTION transition_table_test_f();

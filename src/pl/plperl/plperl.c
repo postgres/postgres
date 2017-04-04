@@ -2442,10 +2442,17 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 	SV		   *svTD;
 	HV		   *hvTD;
 	ErrorContextCallback pl_error_context;
+	TriggerData *tdata;
+	int 		rc PG_USED_FOR_ASSERTS_ONLY;
 
 	/* Connect to SPI manager */
 	if (SPI_connect() != SPI_OK_CONNECT)
 		elog(ERROR, "could not connect to SPI manager");
+
+	/* Make transition tables visible to this SPI connection */
+	tdata = (TriggerData *) fcinfo->context;
+	rc = SPI_register_trigger_data(tdata);
+	Assert(rc >= 0);
 
 	/* Find or compile the function */
 	prodesc = compile_plperl_function(fcinfo->flinfo->fn_oid, true, false);
