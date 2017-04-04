@@ -476,9 +476,17 @@ hashrescan(IndexScanDesc scan, ScanKey scankey, int nscankeys,
 	HashScanOpaque so = (HashScanOpaque) scan->opaque;
 	Relation	rel = scan->indexRelation;
 
-	/* Before leaving current page, deal with any killed items */
+	/*
+	 * Before leaving current page, deal with any killed items.
+	 * Also, ensure that we acquire lock on current page before
+	 * calling _hash_kill_items.
+	 */
 	if (so->numKilled > 0)
+	{
+		LockBuffer(so->hashso_curbuf, BUFFER_LOCK_SHARE);
 		_hash_kill_items(scan);
+		LockBuffer(so->hashso_curbuf, BUFFER_LOCK_UNLOCK);
+	}
 
 	_hash_dropscanbuf(rel, so);
 
@@ -507,9 +515,17 @@ hashendscan(IndexScanDesc scan)
 	HashScanOpaque so = (HashScanOpaque) scan->opaque;
 	Relation	rel = scan->indexRelation;
 
-	/* Before leaving current page, deal with any killed items */
+	/*
+	 * Before leaving current page, deal with any killed items.
+	 * Also, ensure that we acquire lock on current page before
+	 * calling _hash_kill_items.
+	 */
 	if (so->numKilled > 0)
+	{
+		LockBuffer(so->hashso_curbuf, BUFFER_LOCK_SHARE);
 		_hash_kill_items(scan);
+		LockBuffer(so->hashso_curbuf, BUFFER_LOCK_UNLOCK);
+	}
 
 	_hash_dropscanbuf(rel, so);
 
