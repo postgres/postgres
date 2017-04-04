@@ -58,35 +58,51 @@ rules to support a variable number of overflow pages while not having to
 move primary bucket pages around after they are created.
 
 Primary bucket pages (henceforth just "bucket pages") are allocated in
-power-of-2 groups, called "split points" in the code.  Buckets 0 and 1
-are created when the index is initialized.  At the first split, buckets 2
-and 3 are allocated; when bucket 4 is needed, buckets 4-7 are allocated;
-when bucket 8 is needed, buckets 8-15 are allocated; etc.  All the bucket
-pages of a power-of-2 group appear consecutively in the index.  This
-addressing scheme allows the physical location of a bucket page to be
-computed from the bucket number relatively easily, using only a small
-amount of control information.  We take the log2() of the bucket number
-to determine which split point S the bucket belongs to, and then simply
-add "hashm_spares[S] + 1" (where hashm_spares[] is an array stored in the
-metapage) to compute the physical address.  hashm_spares[S] can be
-interpreted as the total number of overflow pages that have been allocated
-before the bucket pages of splitpoint S.  hashm_spares[0] is always 0,
-so that buckets 0 and 1 (which belong to splitpoint 0) always appear at
-block numbers 1 and 2, just after the meta page.  We always have
-hashm_spares[N] <= hashm_spares[N+1], since the latter count includes the
-former.  The difference between the two represents the number of overflow
-pages appearing between the bucket page groups of splitpoints N and N+1.
-
+power-of-2 groups, called "split points" in the code.  That means at every new
+splitpoint we double the existing number of buckets.  Allocating huge chunks
+of bucket pages all at once isn't optimal and we will take ages to consume
+those.  To avoid this exponential growth of index size, we did use a trick to
+break up allocation of buckets at the splitpoint into 4 equal phases.  If
+(2 ^ x) are the total buckets need to be allocated at a splitpoint (from now on
+we shall call this as a splitpoint group), then we allocate 1/4th (2 ^ (x - 2))
+of total buckets at each phase of splitpoint group.  Next quarter of allocation
+will only happen if buckets of the previous phase have been already consumed.
+For the initial splitpoint groups < 10 we will allocate all of their buckets in
+single phase only, as number of buckets allocated at initial groups are small
+in numbers.  And for the groups >= 10 the allocation process is distributed
+among four equal phases.  At group 10 we allocate (2 ^ 9) buckets in 4
+different phases {2 ^ 7, 2 ^ 7, 2 ^ 7, 2 ^ 7}, the numbers in curly braces
+indicate the number of buckets allocated within each phase of splitpoint group
+10.  And, for splitpoint group 11 and 12 allocation phases will be
+{2 ^ 8, 2 ^ 8, 2 ^ 8, 2 ^ 8} and {2 ^ 9, 2 ^ 9, 2 ^ 9, 2 ^ 9} respectively.  We
+can see that at each splitpoint group we double the total number of buckets
+from the previous group but in an incremental phase.  The bucket pages
+allocated within one phase of a splitpoint group will appear consecutively in
+the index.  This addressing scheme allows the physical location of a bucket
+page to be computed from the bucket number relatively easily, using only a
+small amount of control information.  If we look at the function
+_hash_spareindex for a given bucket number we first compute the
+splitpoint group it belongs to and then the phase to which the bucket belongs
+to.  Adding them we get the global splitpoint phase number S to which the
+bucket belongs and then simply add "hashm_spares[S] + 1" (where hashm_spares[]
+is an array stored in the metapage) with given bucket number to compute its
+physical address.  The hashm_spares[S] can be interpreted as the total number
+of overflow pages that have been allocated before the bucket pages of
+splitpoint phase S.  The hashm_spares[0] is always 0, so that buckets 0 and 1
+always appear at block numbers 1 and 2, just after the meta page.  We always
+have hashm_spares[N] <= hashm_spares[N+1], since the latter count includes the
+former.  The difference between the two represents the number of overflow pages
+appearing between the bucket page groups of splitpoints phase N and N+1.
 (Note: the above describes what happens when filling an initially minimally
-sized hash index.  In practice, we try to estimate the required index size
-and allocate a suitable number of splitpoints immediately, to avoid
+sized hash index.  In practice, we try to estimate the required index size and
+allocate a suitable number of splitpoints phases immediately, to avoid
 expensive re-splitting during initial index build.)
 
 When S splitpoints exist altogether, the array entries hashm_spares[0]
 through hashm_spares[S] are valid; hashm_spares[S] records the current
 total number of overflow pages.  New overflow pages are created as needed
 at the end of the index, and recorded by incrementing hashm_spares[S].
-When it is time to create a new splitpoint's worth of bucket pages, we
+When it is time to create a new splitpoint phase's worth of bucket pages, we
 copy hashm_spares[S] into hashm_spares[S+1] and increment S (which is
 stored in the hashm_ovflpoint field of the meta page).  This has the
 effect of reserving the correct number of bucket pages at the end of the
@@ -101,7 +117,7 @@ We have to allow the case "greater than" because it's possible that during
 an index extension we crash after allocating filesystem space and before
 updating the metapage.  Note that on filesystems that allow "holes" in
 files, it's entirely likely that pages before the logical EOF are not yet
-allocated: when we allocate a new splitpoint's worth of bucket pages, we
+allocated: when we allocate a new splitpoint phase's worth of bucket pages, we
 physically zero the last such page to force the EOF up, and the first such
 page will be used immediately, but the intervening pages are not written
 until needed.

@@ -502,14 +502,15 @@ _hash_init_metabuffer(Buffer buf, double num_tuples, RegProcedure procid,
 	Page		page;
 	double		dnumbuckets;
 	uint32		num_buckets;
-	uint32		log2_num_buckets;
+	uint32		spare_index;
 	uint32		i;
 
 	/*
 	 * Choose the number of initial bucket pages to match the fill factor
 	 * given the estimated number of tuples.  We round up the result to the
-	 * next power of 2, however, and always force at least 2 bucket pages. The
-	 * upper limit is determined by considerations explained in
+	 * total number of buckets which has to be allocated before using its
+	 * _hashm_spare element. However always force at least 2 bucket pages.
+	 * The upper limit is determined by considerations explained in
 	 * _hash_expandtable().
 	 */
 	dnumbuckets = num_tuples / ffactor;
@@ -518,11 +519,10 @@ _hash_init_metabuffer(Buffer buf, double num_tuples, RegProcedure procid,
 	else if (dnumbuckets >= (double) 0x40000000)
 		num_buckets = 0x40000000;
 	else
-		num_buckets = ((uint32) 1) << _hash_log2((uint32) dnumbuckets);
+		num_buckets = _hash_get_totalbuckets(_hash_spareindex(dnumbuckets));
 
-	log2_num_buckets = _hash_log2(num_buckets);
-	Assert(num_buckets == (((uint32) 1) << log2_num_buckets));
-	Assert(log2_num_buckets < HASH_MAX_SPLITPOINTS);
+	spare_index = _hash_spareindex(num_buckets);
+	Assert(spare_index < HASH_MAX_SPLITPOINTS);
 
 	page = BufferGetPage(buf);
 	if (initpage)
@@ -563,18 +563,23 @@ _hash_init_metabuffer(Buffer buf, double num_tuples, RegProcedure procid,
 
 	/*
 	 * We initialize the index with N buckets, 0 .. N-1, occupying physical
-	 * blocks 1 to N.  The first freespace bitmap page is in block N+1. Since
-	 * N is a power of 2, we can set the masks this way:
+	 * blocks 1 to N.  The first freespace bitmap page is in block N+1.
 	 */
-	metap->hashm_maxbucket = metap->hashm_lowmask = num_buckets - 1;
-	metap->hashm_highmask = (num_buckets << 1) - 1;
+	metap->hashm_maxbucket = num_buckets - 1;
+
+	/*
+	 * Set highmask as next immediate ((2 ^ x) - 1), which should be sufficient
+	 * to cover num_buckets.
+	 */
+	metap->hashm_highmask = (1 << (_hash_log2(num_buckets + 1))) - 1;
+	metap->hashm_lowmask = (metap->hashm_highmask >> 1);
 
 	MemSet(metap->hashm_spares, 0, sizeof(metap->hashm_spares));
 	MemSet(metap->hashm_mapp, 0, sizeof(metap->hashm_mapp));
 
 	/* Set up mapping for one spare page after the initial splitpoints */
-	metap->hashm_spares[log2_num_buckets] = 1;
-	metap->hashm_ovflpoint = log2_num_buckets;
+	metap->hashm_spares[spare_index] = 1;
+	metap->hashm_ovflpoint = spare_index;
 	metap->hashm_firstfree = 0;
 
 	/*
@@ -773,25 +778,25 @@ restart_expand:
 	start_nblkno = BUCKET_TO_BLKNO(metap, new_bucket);
 
 	/*
-	 * If the split point is increasing (hashm_maxbucket's log base 2
-	 * increases), we need to allocate a new batch of bucket pages.
+	 * If the split point is increasing we need to allocate a new batch of
+	 * bucket pages.
 	 */
-	spare_ndx = _hash_log2(new_bucket + 1);
+	spare_ndx = _hash_spareindex(new_bucket + 1);
 	if (spare_ndx > metap->hashm_ovflpoint)
 	{
+		uint32		buckets_to_add;
+
 		Assert(spare_ndx == metap->hashm_ovflpoint + 1);
 
 		/*
-		 * The number of buckets in the new splitpoint is equal to the total
-		 * number already in existence, i.e. new_bucket.  Currently this maps
-		 * one-to-one to blocks required, but someday we may need a more
-		 * complicated calculation here.  We treat allocation of buckets as a
-		 * separate WAL-logged action.  Even if we fail after this operation,
-		 * won't leak bucket pages; rather, the next split will consume this
-		 * space. In any case, even without failure we don't use all the space
-		 * in one split operation.
+		 * We treat allocation of buckets as a separate WAL-logged action.
+		 * Even if we fail after this operation, won't leak bucket pages;
+		 * rather, the next split will consume this space. In any case, even
+		 * without failure we don't use all the space in one split
+		 * operation.
 		 */
-		if (!_hash_alloc_buckets(rel, start_nblkno, new_bucket))
+		buckets_to_add = _hash_get_totalbuckets(spare_ndx) - new_bucket;
+		if (!_hash_alloc_buckets(rel, start_nblkno, buckets_to_add))
 		{
 			/* can't split due to BlockNumber overflow */
 			_hash_relbuf(rel, buf_oblkno);
@@ -836,10 +841,9 @@ restart_expand:
 	}
 
 	/*
-	 * If the split point is increasing (hashm_maxbucket's log base 2
-	 * increases), we need to adjust the hashm_spares[] array and
-	 * hashm_ovflpoint so that future overflow pages will be created beyond
-	 * this new batch of bucket pages.
+	 * If the split point is increasing we need to adjust the hashm_spares[]
+	 * array and hashm_ovflpoint so that future overflow pages will be created
+	 * beyond this new batch of bucket pages.
 	 */
 	if (spare_ndx > metap->hashm_ovflpoint)
 	{

@@ -37,7 +37,15 @@ struct HSpool
 {
 	Tuplesortstate *sortstate;	/* state data for tuplesort.c */
 	Relation	index;
-	uint32		hash_mask;		/* bitmask for hash codes */
+
+	/*
+	 * We sort the hash keys based on the buckets they belong to. Below masks
+	 * are used in _hash_hashkey2bucket to determine the bucket of given hash
+	 * key.
+	 */
+	uint32		high_mask;
+	uint32		low_mask;
+	uint32		max_buckets;
 };
 
 
@@ -56,11 +64,12 @@ _h_spoolinit(Relation heap, Relation index, uint32 num_buckets)
 	 * num_buckets buckets in the index, the appropriate mask can be computed
 	 * as follows.
 	 *
-	 * Note: at present, the passed-in num_buckets is always a power of 2, so
-	 * we could just compute num_buckets - 1.  We prefer not to assume that
-	 * here, though.
+	 * NOTE : This hash mask calculation should be in sync with similar
+	 * calculation in _hash_init_metabuffer.
 	 */
-	hspool->hash_mask = (((uint32) 1) << _hash_log2(num_buckets)) - 1;
+	hspool->high_mask = (((uint32) 1) << _hash_log2(num_buckets + 1)) - 1;
+	hspool->low_mask = (hspool->high_mask >> 1);
+	hspool->max_buckets = num_buckets - 1;
 
 	/*
 	 * We size the sort area as maintenance_work_mem rather than work_mem to
@@ -69,7 +78,9 @@ _h_spoolinit(Relation heap, Relation index, uint32 num_buckets)
 	 */
 	hspool->sortstate = tuplesort_begin_index_hash(heap,
 												   index,
-												   hspool->hash_mask,
+												   hspool->high_mask,
+												   hspool->low_mask,
+												   hspool->max_buckets,
 												   maintenance_work_mem,
 												   false);
 
@@ -122,7 +133,9 @@ _h_indexbuild(HSpool *hspool, Relation heapRel)
 #ifdef USE_ASSERT_CHECKING
 		uint32		lasthashkey = hashkey;
 
-		hashkey = _hash_get_indextuple_hashkey(itup) & hspool->hash_mask;
+		hashkey = _hash_hashkey2bucket(_hash_get_indextuple_hashkey(itup),
+									   hspool->max_buckets, hspool->high_mask,
+									   hspool->low_mask);
 		Assert(hashkey >= lasthashkey);
 #endif
 

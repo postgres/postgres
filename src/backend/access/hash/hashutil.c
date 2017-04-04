@@ -150,6 +150,71 @@ _hash_log2(uint32 num)
 }
 
 /*
+ * _hash_spareindex -- returns spare index / global splitpoint phase of the
+ *					   bucket
+ */
+uint32
+_hash_spareindex(uint32 num_bucket)
+{
+	uint32		splitpoint_group;
+	uint32		splitpoint_phases;
+
+	splitpoint_group = _hash_log2(num_bucket);
+
+	if (splitpoint_group < HASH_SPLITPOINT_GROUPS_WITH_ONE_PHASE)
+		return splitpoint_group;
+
+	/* account for single-phase groups */
+	splitpoint_phases = HASH_SPLITPOINT_GROUPS_WITH_ONE_PHASE;
+
+	/* account for multi-phase groups before splitpoint_group */
+	splitpoint_phases +=
+		((splitpoint_group - HASH_SPLITPOINT_GROUPS_WITH_ONE_PHASE) <<
+		 HASH_SPLITPOINT_PHASE_BITS);
+
+	/* account for phases within current group */
+	splitpoint_phases +=
+		(((num_bucket - 1) >> (HASH_SPLITPOINT_PHASE_BITS + 1)) &
+		 HASH_SPLITPOINT_PHASE_MASK);	/* to 0-based value. */
+
+	return splitpoint_phases;
+}
+
+/*
+ *	_hash_get_totalbuckets -- returns total number of buckets allocated till
+ *							the given splitpoint phase.
+ */
+uint32
+_hash_get_totalbuckets(uint32 splitpoint_phase)
+{
+	uint32		splitpoint_group;
+	uint32		total_buckets;
+	uint32		phases_within_splitpoint_group;
+
+	if (splitpoint_phase < HASH_SPLITPOINT_GROUPS_WITH_ONE_PHASE)
+		return (1 << splitpoint_phase);
+
+	/* get splitpoint's group */
+	splitpoint_group = HASH_SPLITPOINT_GROUPS_WITH_ONE_PHASE;
+	splitpoint_group +=
+		((splitpoint_phase - HASH_SPLITPOINT_GROUPS_WITH_ONE_PHASE) >>
+		 HASH_SPLITPOINT_PHASE_BITS);
+
+	/* account for buckets before splitpoint_group */
+	total_buckets = (1 << (splitpoint_group - 1));
+
+	/* account for buckets within splitpoint_group */
+	phases_within_splitpoint_group =
+		(((splitpoint_phase - HASH_SPLITPOINT_GROUPS_WITH_ONE_PHASE) &
+		  HASH_SPLITPOINT_PHASE_MASK) + 1);		/* from 0-based to 1-based */
+	total_buckets +=
+		(((1 << (splitpoint_group - 1)) >> HASH_SPLITPOINT_PHASE_BITS) *
+		 phases_within_splitpoint_group);
+
+	return total_buckets;
+}
+
+/*
  * _hash_checkpage -- sanity checks on the format of all hash pages
  *
  * If flags is not zero, it is a bitwise OR of the acceptable values of

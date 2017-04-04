@@ -36,7 +36,7 @@ typedef uint32 Bucket;
 #define InvalidBucket	((Bucket) 0xFFFFFFFF)
 
 #define BUCKET_TO_BLKNO(metap,B) \
-		((BlockNumber) ((B) + ((B) ? (metap)->hashm_spares[_hash_log2((B)+1)-1] : 0)) + 1)
+		((BlockNumber) ((B) + ((B) ? (metap)->hashm_spares[_hash_spareindex((B)+1)-1] : 0)) + 1)
 
 /*
  * Special space for hash index pages.
@@ -158,7 +158,8 @@ typedef HashScanOpaqueData *HashScanOpaque;
 #define HASH_METAPAGE	0		/* metapage is always block 0 */
 
 #define HASH_MAGIC		0x6440640
-#define HASH_VERSION	2		/* 2 signifies only hash key value is stored */
+#define HASH_VERSION	3		/* 3 signifies multi-phased bucket allocation
+								 * to reduce doubling */
 
 /*
  * spares[] holds the number of overflow pages currently allocated at or
@@ -176,12 +177,27 @@ typedef HashScanOpaqueData *HashScanOpaque;
  *
  * The limitation on the size of spares[] comes from the fact that there's
  * no point in having more than 2^32 buckets with only uint32 hashcodes.
+ * (Note: The value of HASH_MAX_SPLITPOINTS which is the size of spares[] is
+ * adjusted in such a way to accommodate multi phased allocation of buckets
+ * after HASH_SPLITPOINT_GROUPS_WITH_ONE_PHASE).
+ *
  * There is no particular upper limit on the size of mapp[], other than
  * needing to fit into the metapage.  (With 8K block size, 128 bitmaps
  * limit us to 64 GB of overflow space...)
  */
-#define HASH_MAX_SPLITPOINTS		32
 #define HASH_MAX_BITMAPS			128
+
+#define HASH_SPLITPOINT_PHASE_BITS	2
+#define HASH_SPLITPOINT_PHASES_PER_GRP	(1 << HASH_SPLITPOINT_PHASE_BITS)
+#define HASH_SPLITPOINT_PHASE_MASK		(HASH_SPLITPOINT_PHASES_PER_GRP - 1)
+#define HASH_SPLITPOINT_GROUPS_WITH_ONE_PHASE	10
+
+/* defines max number of splitpoit phases a hash index can have */
+#define HASH_MAX_SPLITPOINT_GROUP	32
+#define HASH_MAX_SPLITPOINTS \
+	(((HASH_MAX_SPLITPOINT_GROUP - HASH_SPLITPOINT_GROUPS_WITH_ONE_PHASE) * \
+	  HASH_SPLITPOINT_PHASES_PER_GRP) + \
+	 HASH_SPLITPOINT_GROUPS_WITH_ONE_PHASE)
 
 typedef struct HashMetaPageData
 {
@@ -382,6 +398,8 @@ extern uint32 _hash_datum2hashkey_type(Relation rel, Datum key, Oid keytype);
 extern Bucket _hash_hashkey2bucket(uint32 hashkey, uint32 maxbucket,
 					 uint32 highmask, uint32 lowmask);
 extern uint32 _hash_log2(uint32 num);
+extern uint32 _hash_spareindex(uint32 num_bucket);
+extern uint32 _hash_get_totalbuckets(uint32 splitpoint_phase);
 extern void _hash_checkpage(Relation rel, Buffer buf, int flags);
 extern uint32 _hash_get_indextuple_hashkey(IndexTuple itup);
 extern bool _hash_convert_tuple(Relation index,

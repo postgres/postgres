@@ -49,7 +49,7 @@ bitno_to_blkno(HashMetaPage metap, uint32 ovflbitnum)
 	 * Convert to absolute page number by adding the number of bucket pages
 	 * that exist before this split point.
 	 */
-	return (BlockNumber) ((1 << i) + ovflbitnum);
+	return (BlockNumber) (_hash_get_totalbuckets(i) + ovflbitnum);
 }
 
 /*
@@ -67,14 +67,15 @@ _hash_ovflblkno_to_bitno(HashMetaPage metap, BlockNumber ovflblkno)
 	/* Determine the split number containing this page */
 	for (i = 1; i <= splitnum; i++)
 	{
-		if (ovflblkno <= (BlockNumber) (1 << i))
+		if (ovflblkno <= (BlockNumber) _hash_get_totalbuckets(i))
 			break;				/* oops */
-		bitnum = ovflblkno - (1 << i);
+		bitnum = ovflblkno - _hash_get_totalbuckets(i);
 
 		/*
 		 * bitnum has to be greater than number of overflow page added in
 		 * previous split point. The overflow page at this splitnum (i) if any
-		 * should start from ((2 ^ i) + metap->hashm_spares[i - 1] + 1).
+		 * should start from (_hash_get_totalbuckets(i) +
+		 * metap->hashm_spares[i - 1] + 1).
 		 */
 		if (bitnum > metap->hashm_spares[i - 1] &&
 			bitnum <= metap->hashm_spares[i])
