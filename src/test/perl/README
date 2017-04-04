@@ -20,6 +20,11 @@ src/test/ssl, or should be added to one of the suites for an existing utility.
 Note that all tests and test tools should have perltidy run on them before
 patches are submitted, using perltidy --profile=src/tools/pgindent/perltidyrc
 
+By default, to keep the noise low during runs, we do not set any flags via
+PROVE_FLAGS, but this can be done on the 'make' command line if desired, eg:
+
+make check-world PROVE_FLAGS='--verbose'
+
 Writing tests
 -------------
 
