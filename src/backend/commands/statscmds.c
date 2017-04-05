@@ -96,7 +96,13 @@ CreateStatistics(CreateStatsStmt *stmt)
 				 errmsg("statistics \"%s\" already exist", namestr)));
 	}
 
-	rel = heap_openrv(stmt->relation, AccessExclusiveLock);
+	/*
+	 * CREATE STATISTICS will influence future execution plans but does
+	 * not interfere with currently executing plans so it is safe to
+	 * take only ShareUpdateExclusiveLock on relation, conflicting with
+	 * ANALYZE and other DDL that sets statistical information.
+	 */
+	rel = heap_openrv(stmt->relation, ShareUpdateExclusiveLock);
 	relid = RelationGetRelid(rel);
 
 	if (rel->rd_rel->relkind != RELKIND_RELATION &&
