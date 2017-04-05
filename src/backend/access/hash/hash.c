@@ -707,7 +707,7 @@ loop_top:
 		xlrec.ntuples = metap->hashm_ntuples;
 
 		XLogBeginInsert();
-		XLogRegisterData((char *) &xlrec, sizeof(SizeOfHashUpdateMetaPage));
+		XLogRegisterData((char *) &xlrec, SizeOfHashUpdateMetaPage);
 
 		XLogRegisterBuffer(0, metabuf, REGBUF_STANDARD);
 
