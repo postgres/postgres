@@ -231,6 +231,14 @@ main(int argc, char **argv)
 		appendPQExpBuffer(&wait_query, ",%s", backend_pids[i]);
 	appendPQExpBufferStr(&wait_query, "}'::integer[]");
 
+	/* Also detect certain wait events. */
+	appendPQExpBufferStr(&wait_query,
+						 " OR EXISTS ("
+						 "  SELECT * "
+						 "  FROM pg_catalog.pg_stat_activity "
+						 "  WHERE pid = $1 "
+						 "  AND wait_event IN ('SafeSnapshot'))");
+
 	res = PQprepare(conns[0], PREP_WAITING, wait_query.data, 0, NULL);
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
