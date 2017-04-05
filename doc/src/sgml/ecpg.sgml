@@ -3592,7 +3592,7 @@ void PGTYPESdecimal_free(decimal *var);
 EXEC SQL ALLOCATE DESCRIPTOR <replaceable>identifier</replaceable>;
 </programlisting>
     The identifier serves as the <quote>variable name</quote> of the
-    descriptor area.  <remark>The scope of the allocated descriptor is WHAT?.</remark>
+    descriptor area.  <!-- The scope of the allocated descriptor is WHAT?. -->
     When you don't need the descriptor anymore, you should deallocate
     it:
 <programlisting>

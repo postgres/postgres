@@ -3,10 +3,6 @@
 <chapter id="dml">
  <title>Data Manipulation</title>
 
- <remark>
-  This chapter is still quite incomplete.
- </remark>
-
  <para>
   The previous chapter discussed how to create tables and other
   structures to hold your data.  Now it is time to fill the tables
