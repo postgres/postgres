@@ -96,7 +96,7 @@ parse_output_parameters(List *options, uint32 *protocol_version,
 
 		Assert(defel->arg == NULL || IsA(defel->arg, String));
 
-		/* Check each param, whether or not we recognise it */
+		/* Check each param, whether or not we recognize it */
 		if (strcmp(defel->defname, "proto_version") == 0)
 		{
 			int64		parsed;
@@ -167,7 +167,7 @@ pgoutput_startup(LogicalDecodingContext * ctx, OutputPluginOptions *opt,
 	 */
 	if (!is_init)
 	{
-		/* Parse the params and ERROR if we see any we don't recognise */
+		/* Parse the params and ERROR if we see any we don't recognize */
 		parse_output_parameters(ctx->output_plugin_options,
 								&data->protocol_version,
 								&data->publication_names);

@@ -866,7 +866,7 @@ main(int argc, char **argv)
 						config.stats_per_record = true;
 					else if (strcmp(optarg, "rmgr") != 0)
 					{
-						fprintf(stderr, _("%s: unrecognised argument to --stats: %s\n"),
+						fprintf(stderr, _("%s: unrecognized argument to --stats: %s\n"),
 								progname, optarg);
 						goto bad_argument;
 					}
