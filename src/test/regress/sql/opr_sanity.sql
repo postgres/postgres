@@ -381,6 +381,11 @@ and pronamespace = (select oid from pg_catalog.pg_namespace
                     where nspname = 'pg_catalog')
 order by 1;
 
+-- Check that all immutable functions are marked parallel safe
+SELECT p1.oid, p1.proname
+FROM pg_proc AS p1
+WHERE provolatile = 'i' AND proparallel = 'u';
+
 
 -- **************** pg_cast ****************
 

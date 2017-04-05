@@ -42,14 +42,14 @@ SET search_path TO information_schema;
 /* Expand any 1-D array into a set with integers 1..N */
 CREATE FUNCTION _pg_expandarray(IN anyarray, OUT x anyelement, OUT n int)
     RETURNS SETOF RECORD
-    LANGUAGE sql STRICT IMMUTABLE
+    LANGUAGE sql STRICT IMMUTABLE PARALLEL SAFE
     AS 'select $1[s], s - pg_catalog.array_lower($1,1) + 1
         from pg_catalog.generate_series(pg_catalog.array_lower($1,1),
                                         pg_catalog.array_upper($1,1),
                                         1) as g(s)';
 
 CREATE FUNCTION _pg_keysequal(smallint[], smallint[]) RETURNS boolean
-    LANGUAGE sql IMMUTABLE  -- intentionally not STRICT, to allow inlining
+    LANGUAGE sql IMMUTABLE PARALLEL SAFE  -- intentionally not STRICT, to allow inlining
     AS 'select $1 operator(pg_catalog.<@) $2 and $2 operator(pg_catalog.<@) $1';
 
 /* Given an index's OID and an underlying-table column number, return the
@@ -66,6 +66,7 @@ $$;
 CREATE FUNCTION _pg_truetypid(pg_attribute, pg_type) RETURNS oid
     LANGUAGE sql
     IMMUTABLE
+    PARALLEL SAFE
     RETURNS NULL ON NULL INPUT
     AS
 $$SELECT CASE WHEN $2.typtype = 'd' THEN $2.typbasetype ELSE $1.atttypid END$$;
@@ -73,6 +74,7 @@ $$SELECT CASE WHEN $2.typtype = 'd' THEN $2.typbasetype ELSE $1.atttypid END$$;
 CREATE FUNCTION _pg_truetypmod(pg_attribute, pg_type) RETURNS int4
     LANGUAGE sql
     IMMUTABLE
+    PARALLEL SAFE
     RETURNS NULL ON NULL INPUT
     AS
 $$SELECT CASE WHEN $2.typtype = 'd' THEN $2.typtypmod ELSE $1.atttypmod END$$;
@@ -82,6 +84,7 @@ $$SELECT CASE WHEN $2.typtype = 'd' THEN $2.typtypmod ELSE $1.atttypmod END$$;
 CREATE FUNCTION _pg_char_max_length(typid oid, typmod int4) RETURNS integer
     LANGUAGE sql
     IMMUTABLE
+    PARALLEL SAFE
     RETURNS NULL ON NULL INPUT
     AS
 $$SELECT
@@ -97,6 +100,7 @@ $$SELECT
 CREATE FUNCTION _pg_char_octet_length(typid oid, typmod int4) RETURNS integer
     LANGUAGE sql
     IMMUTABLE
+    PARALLEL SAFE
     RETURNS NULL ON NULL INPUT
     AS
 $$SELECT
@@ -112,6 +116,7 @@ $$SELECT
 CREATE FUNCTION _pg_numeric_precision(typid oid, typmod int4) RETURNS integer
     LANGUAGE sql
     IMMUTABLE
+    PARALLEL SAFE
     RETURNS NULL ON NULL INPUT
     AS
 $$SELECT
@@ -132,6 +137,7 @@ $$SELECT
 CREATE FUNCTION _pg_numeric_precision_radix(typid oid, typmod int4) RETURNS integer
     LANGUAGE sql
     IMMUTABLE
+    PARALLEL SAFE
     RETURNS NULL ON NULL INPUT
     AS
 $$SELECT
@@ -143,6 +149,7 @@ $$SELECT
 CREATE FUNCTION _pg_numeric_scale(typid oid, typmod int4) RETURNS integer
     LANGUAGE sql
     IMMUTABLE
+    PARALLEL SAFE
     RETURNS NULL ON NULL INPUT
     AS
 $$SELECT
@@ -158,6 +165,7 @@ $$SELECT
 CREATE FUNCTION _pg_datetime_precision(typid oid, typmod int4) RETURNS integer
     LANGUAGE sql
     IMMUTABLE
+    PARALLEL SAFE
     RETURNS NULL ON NULL INPUT
     AS
 $$SELECT
@@ -173,6 +181,7 @@ $$SELECT
 CREATE FUNCTION _pg_interval_type(typid oid, mod int4) RETURNS text
     LANGUAGE sql
     IMMUTABLE
+    PARALLEL SAFE
     RETURNS NULL ON NULL INPUT
     AS
 $$SELECT
