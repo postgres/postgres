@@ -4851,7 +4851,7 @@ a_output := a_output || $$ if v_$$ || referrer_keys.kind || $$ like '$$
 
    <para>
     To aid the user in finding instances of simple but common problems before
-    they cause harm, <application>PL/PgSQL</> provides additional
+    they cause harm, <application>PL/pgSQL</> provides additional
     <replaceable>checks</>. When enabled, depending on the configuration, they
     can be used to emit either a <literal>WARNING</> or an <literal>ERROR</>
     during the compilation of a function. A function which has received

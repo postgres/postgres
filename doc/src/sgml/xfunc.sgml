@@ -153,7 +153,7 @@ SELECT clean_emp();
       <literal>CREATE TABLE foo (...); INSERT INTO foo VALUES(...);</literal>
       will not work as desired if packaged up into a single SQL function,
       since <structname>foo</> won't exist yet when the <command>INSERT</>
-      command is parsed.  It's recommended to use <application>PL/PgSQL</>
+      command is parsed.  It's recommended to use <application>PL/pgSQL</>
       instead of a SQL function in this type of situation.
      </para>
    </note>

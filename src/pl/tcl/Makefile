@@ -1,6 +1,6 @@
 #-------------------------------------------------------------------------
 #
-# Makefile for the pl/tcl procedural language
+# Makefile for the PL/Tcl procedural language
 #
 # src/pl/tcl/Makefile
 #

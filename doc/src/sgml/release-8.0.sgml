@@ -312,14 +312,14 @@
 
     <listitem>
      <para>
-      Update pl/perl's <filename>ppport.h</> for modern Perl versions
+      Update PL/Perl's <filename>ppport.h</> for modern Perl versions
       (Andrew)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Fix assorted memory leaks in pl/python (Andreas Freund, Tom)
+      Fix assorted memory leaks in PL/Python (Andreas Freund, Tom)
      </para>
     </listitem>
 
@@ -2439,9 +2439,9 @@ when the  data directory is not specified (Magnus)</para></listitem>
 (Neil)</para></listitem>
 
 <listitem><para>Recover properly if error occurs during argument passing
-in <application>PL/python</> (Neil)</para></listitem>
+in <application>PL/Python</> (Neil)</para></listitem>
 
-<listitem><para>Fix <application>PL/perl</>'s handling of locales on
+<listitem><para>Fix <application>PL/Perl</>'s handling of locales on
 Win32 to match the backend (Andrew)</para></listitem>
 
 <listitem><para>Fix crash when <literal>log_min_messages</> is set to

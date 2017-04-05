@@ -242,14 +242,14 @@
 
     <listitem>
      <para>
-      Update pl/perl's <filename>ppport.h</> for modern Perl versions
+      Update PL/Perl's <filename>ppport.h</> for modern Perl versions
       (Andrew)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Fix assorted memory leaks in pl/python (Andreas Freund, Tom)
+      Fix assorted memory leaks in PL/Python (Andreas Freund, Tom)
      </para>
     </listitem>
 

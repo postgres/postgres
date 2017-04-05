@@ -1898,7 +1898,7 @@ setup_schema(FILE *cmdfd)
 }
 
 /*
- * load PL/pgsql server-side language
+ * load PL/pgSQL server-side language
  */
 static void
 load_plpgsql(FILE *cmdfd)

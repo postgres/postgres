@@ -952,7 +952,7 @@ SELECT oid, * FROM ft_pg_type WHERE typname = 'int4';
 SELECT oid, * FROM ft_pg_type WHERE typname = 'int4';
 
 -- ===================================================================
--- used in pl/pgsql function
+-- used in PL/pgSQL function
 -- ===================================================================
 CREATE OR REPLACE FUNCTION f_test(p_c1 int) RETURNS int AS $$
 DECLARE

@@ -205,7 +205,7 @@ $ENV{MSBFLAGS}="/m";
     <varlistentry>
      <term><productname>ActiveState TCL</productname></term>
      <listitem><para>
-      Required for building <application>PL/TCL</application> (Note: version
+      Required for building <application>PL/Tcl</application> (Note: version
       8.4 is required, the free Standard Distribution is sufficient).
      </para></listitem>
     </varlistentry>

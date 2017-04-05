@@ -3,7 +3,7 @@
  * scanner.h
  *		API for the core scanner (flex machine)
  *
- * The core scanner is also used by PL/pgsql, so we provide a public API
+ * The core scanner is also used by PL/pgSQL, so we provide a public API
  * for it.  However, the rest of the backend is only expected to use the
  * higher-level API provided by parser.h.
  *

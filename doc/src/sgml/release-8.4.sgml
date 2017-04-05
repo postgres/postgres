@@ -5260,21 +5260,21 @@
 
     <listitem>
      <para>
-      Fix pl/pgsql's <literal>CASE</> statement to not fail when the
+      Fix PL/pgSQL's <literal>CASE</> statement to not fail when the
       case expression is a query that returns no rows (Tom)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Update pl/perl's <filename>ppport.h</> for modern Perl versions
+      Update PL/Perl's <filename>ppport.h</> for modern Perl versions
       (Andrew)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Fix assorted memory leaks in pl/python (Andreas Freund, Tom)
+      Fix assorted memory leaks in PL/Python (Andreas Freund, Tom)
      </para>
     </listitem>
 

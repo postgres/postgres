@@ -154,7 +154,7 @@ parallelism was started before all parallel workers have exited; and it's even
 more clearly crazy for a parallel worker to try to subcommit or subabort the
 current subtransaction and execute in some other transaction context than was
 present in the initiating backend.  It might be practical to allow internal
-sub-transactions (e.g. to implement a PL/pgsql EXCEPTION block) to be used in
+sub-transactions (e.g. to implement a PL/pgSQL EXCEPTION block) to be used in
 parallel mode, provided that they are XID-less, because other backends
 wouldn't really need to know about those transactions or do anything
 differently because of them.  Right now, we don't even allow that.

@@ -149,7 +149,7 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
         which the system thinks that partial or incremental execution might
         occur, no parallel plan is generated. For example, a cursor created
         using <link linkend="sql-declare">DECLARE CURSOR</link> will never use
-        a parallel plan. Similarly, a PL/pgsql loop of the form
+        a parallel plan. Similarly, a PL/pgSQL loop of the form
         <literal>FOR x IN query LOOP .. END LOOP</literal> will never use a
         parallel plan, because the parallel query system is unable to verify
         that the code in the loop is safe to execute while parallel query is
@@ -478,7 +478,7 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
   <para>
     Functions and aggregates must be marked <literal>PARALLEL UNSAFE</> if
     they write to the database, access sequences, change the transaction state
-    even temporarily (e.g. a PL/pgsql function which establishes an
+    even temporarily (e.g. a PL/pgSQL function which establishes an
     <literal>EXCEPTION</> block to catch errors), or make persistent changes to
     settings.  Similarly, functions must be marked <literal>PARALLEL
     RESTRICTED</> if they access temporary tables, client connection state,

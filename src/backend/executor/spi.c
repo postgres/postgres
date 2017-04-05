@@ -1582,7 +1582,7 @@ SPI_result_code_string(int code)
  * SPI_plan_get_plan_sources --- get a SPI plan's underlying list of
  * CachedPlanSources.
  *
- * This is exported so that pl/pgsql can use it (this beats letting pl/pgsql
+ * This is exported so that PL/pgSQL can use it (this beats letting PL/pgSQL
  * look directly into the SPIPlan for itself).  It's not documented in
  * spi.sgml because we'd just as soon not have too many places using this.
  */
@@ -1598,7 +1598,7 @@ SPI_plan_get_plan_sources(SPIPlanPtr plan)
  * if the SPI plan contains exactly one CachedPlanSource.  If not,
  * return NULL.  Caller is responsible for doing ReleaseCachedPlan().
  *
- * This is exported so that pl/pgsql can use it (this beats letting pl/pgsql
+ * This is exported so that PL/pgSQL can use it (this beats letting PL/pgSQL
  * look directly into the SPIPlan for itself).  It's not documented in
  * spi.sgml because we'd just as soon not have too many places using this.
  */

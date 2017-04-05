@@ -1,6 +1,6 @@
 #-------------------------------------------------------------------------
 #
-# Makefile for the pl/pgsql procedural language
+# Makefile for the PL/pgSQL procedural language
 #
 # src/pl/plpgsql/src/Makefile
 #
