@@ -3725,7 +3725,11 @@ case ${wal_segsize} in
  16) ;;
  32) ;;
  64) ;;
-  *) as_fn_error $? "Invalid WAL segment size. Allowed values are 1,2,4,8,16,32,64." "$LINENO" 5
+ 128) ;;
+ 256) ;;
+ 512) ;;
+ 1024) ;;
+  *) as_fn_error $? "Invalid WAL segment size. Allowed values are 1,2,4,8,16,32,64,128,256,512,1024." "$LINENO" 5
 esac
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${wal_segsize}MB" >&5
 $as_echo "${wal_segsize}MB" >&6; }

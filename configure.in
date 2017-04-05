@@ -358,7 +358,11 @@ case ${wal_segsize} in
  16) ;;
  32) ;;
  64) ;;
-  *) AC_MSG_ERROR([Invalid WAL segment size. Allowed values are 1,2,4,8,16,32,64.])
+ 128) ;;
+ 256) ;;
+ 512) ;;
+ 1024) ;;
+  *) AC_MSG_ERROR([Invalid WAL segment size. Allowed values are 1,2,4,8,16,32,64,128,256,512,1024.])
 esac
 AC_MSG_RESULT([${wal_segsize}MB])
 
