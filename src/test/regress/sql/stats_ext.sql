@@ -163,3 +163,71 @@ EXPLAIN (COSTS off)
  SELECT COUNT(*) FROM ndistinct GROUP BY a, d;
 
 DROP TABLE ndistinct;
+
+-- functional dependencies tests
+CREATE TABLE functional_dependencies (
+    filler1 TEXT,
+    filler2 NUMERIC,
+    a INT,
+    b TEXT,
+    filler3 DATE,
+    c INT,
+    d TEXT
+);
+
+SET random_page_cost = 1.2;
+
+CREATE INDEX fdeps_ab_idx ON functional_dependencies (a, b);
+CREATE INDEX fdeps_abc_idx ON functional_dependencies (a, b, c);
+
+-- random data (no functional dependencies)
+INSERT INTO functional_dependencies (a, b, c, filler1)
+     SELECT mod(i, 23), mod(i, 29), mod(i, 31), i FROM generate_series(1,5000) s(i);
+
+ANALYZE functional_dependencies;
+
+EXPLAIN (COSTS OFF)
+ SELECT * FROM functional_dependencies WHERE a = 1 AND b = '1';
+
+EXPLAIN (COSTS OFF)
+ SELECT * FROM functional_dependencies WHERE a = 1 AND b = '1' AND c = 1;
+
+-- create statistics
+CREATE STATISTICS func_deps_stat WITH (dependencies) ON (a, b, c) FROM functional_dependencies;
+
+ANALYZE functional_dependencies;
+
+EXPLAIN (COSTS OFF)
+ SELECT * FROM functional_dependencies WHERE a = 1 AND b = '1';
+
+EXPLAIN (COSTS OFF)
+ SELECT * FROM functional_dependencies WHERE a = 1 AND b = '1' AND c = 1;
+
+-- a => b, a => c, b => c
+TRUNCATE functional_dependencies;
+DROP STATISTICS func_deps_stat;
+
+INSERT INTO functional_dependencies (a, b, c, filler1)
+     SELECT mod(i,100), mod(i,50), mod(i,25), i FROM generate_series(1,5000) s(i);
+
+ANALYZE functional_dependencies;
+
+EXPLAIN (COSTS OFF)
+ SELECT * FROM functional_dependencies WHERE a = 1 AND b = '1';
+
+EXPLAIN (COSTS OFF)
+ SELECT * FROM functional_dependencies WHERE a = 1 AND b = '1' AND c = 1;
+
+-- create statistics
+CREATE STATISTICS func_deps_stat WITH (dependencies) ON (a, b, c) FROM functional_dependencies;
+
+ANALYZE functional_dependencies;
+
+EXPLAIN (COSTS OFF)
+ SELECT * FROM functional_dependencies WHERE a = 1 AND b = '1';
+
+EXPLAIN (COSTS OFF)
+ SELECT * FROM functional_dependencies WHERE a = 1 AND b = '1' AND c = 1;
+
+RESET random_page_cost;
+DROP TABLE functional_dependencies;

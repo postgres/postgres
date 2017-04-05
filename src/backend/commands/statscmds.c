@@ -62,10 +62,11 @@ CreateStatistics(CreateStatsStmt *stmt)
 	Oid			relid;
 	ObjectAddress parentobject,
 				childobject;
-	Datum		types[1];		/* only ndistinct defined now */
+	Datum		types[2];		/* one for each possible type of statistics */
 	int			ntypes;
 	ArrayType  *staenabled;
 	bool		build_ndistinct;
+	bool		build_dependencies;
 	bool		requested_type = false;
 
 	Assert(IsA(stmt, CreateStatsStmt));
@@ -159,7 +160,7 @@ CreateStatistics(CreateStatsStmt *stmt)
 				 errmsg("statistics require at least 2 columns")));
 
 	/*
-	 * Sort the attnums, which makes detecting duplicies somewhat easier, and
+	 * Sort the attnums, which makes detecting duplicities somewhat easier, and
 	 * it does not hurt (it does not affect the efficiency, unlike for
 	 * indexes, for example).
 	 */
@@ -182,6 +183,7 @@ CreateStatistics(CreateStatsStmt *stmt)
 	 * recognized.
 	 */
 	build_ndistinct = false;
+	build_dependencies = false;
 	foreach(l, stmt->options)
 	{
 		DefElem    *opt = (DefElem *) lfirst(l);
@@ -189,6 +191,11 @@ CreateStatistics(CreateStatsStmt *stmt)
 		if (strcmp(opt->defname, "ndistinct") == 0)
 		{
 			build_ndistinct = defGetBoolean(opt);
+			requested_type = true;
+		}
+		else if (strcmp(opt->defname, "dependencies") == 0)
+		{
+			build_dependencies = defGetBoolean(opt);
 			requested_type = true;
 		}
 		else
@@ -199,12 +206,17 @@ CreateStatistics(CreateStatsStmt *stmt)
 	}
 	/* If no statistic type was specified, build them all. */
 	if (!requested_type)
+	{
 		build_ndistinct = true;
+		build_dependencies = true;
+	}
 
 	/* construct the char array of enabled statistic types */
 	ntypes = 0;
 	if (build_ndistinct)
 		types[ntypes++] = CharGetDatum(STATS_EXT_NDISTINCT);
+	if (build_dependencies)
+		types[ntypes++] = CharGetDatum(STATS_EXT_DEPENDENCIES);
 	Assert(ntypes > 0);
 	staenabled = construct_array(types, ntypes, CHAROID, 1, true, 'c');
 
@@ -222,6 +234,7 @@ CreateStatistics(CreateStatsStmt *stmt)
 
 	/* no statistics build yet */
 	nulls[Anum_pg_statistic_ext_standistinct - 1] = true;
+	nulls[Anum_pg_statistic_ext_stadependencies - 1] = true;
 
 	/* insert it into pg_statistic_ext */
 	statrel = heap_open(StatisticExtRelationId, RowExclusiveLock);

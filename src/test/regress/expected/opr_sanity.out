@@ -824,11 +824,12 @@ WHERE c.castmethod = 'b' AND
  character varying | character         |        0 | i
  pg_node_tree      | text              |        0 | i
  pg_ndistinct      | bytea             |        0 | i
+ pg_dependencies   | bytea             |        0 | i
  cidr              | inet              |        0 | i
  xml               | text              |        0 | a
  xml               | character varying |        0 | a
  xml               | character         |        0 | a
-(8 rows)
+(9 rows)
 
 -- **************** pg_conversion ****************
 -- Look for illegal values in pg_conversion fields.

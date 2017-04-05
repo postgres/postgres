@@ -47,7 +47,7 @@ static List *fetch_statentries_for_relation(Relation pg_statext, Oid relid);
 static VacAttrStats **lookup_var_attr_stats(Relation rel, Bitmapset *attrs,
 					  int natts, VacAttrStats **vacattrstats);
 static void statext_store(Relation pg_stext, Oid relid,
-			  MVNDistinct *ndistinct,
+			  MVNDistinct *ndistinct, MVDependencies *dependencies,
 			  VacAttrStats **stats);
 
 
@@ -74,6 +74,7 @@ BuildRelationExtStatistics(Relation onerel, double totalrows,
 	{
 		StatExtEntry   *stat = (StatExtEntry *) lfirst(lc);
 		MVNDistinct	   *ndistinct = NULL;
+		MVDependencies *dependencies = NULL;
 		VacAttrStats  **stats;
 		ListCell	   *lc2;
 
@@ -93,10 +94,13 @@ BuildRelationExtStatistics(Relation onerel, double totalrows,
 			if (t == STATS_EXT_NDISTINCT)
 				ndistinct = statext_ndistinct_build(totalrows, numrows, rows,
 													stat->columns, stats);
+			else if (t == STATS_EXT_DEPENDENCIES)
+				dependencies = statext_dependencies_build(numrows, rows,
+													   stat->columns, stats);
 		}
 
 		/* store the statistics in the catalog */
-		statext_store(pg_stext, stat->statOid, ndistinct, stats);
+		statext_store(pg_stext, stat->statOid, ndistinct, dependencies, stats);
 	}
 
 	heap_close(pg_stext, RowExclusiveLock);
@@ -115,6 +119,10 @@ statext_is_kind_built(HeapTuple htup, char type)
 	{
 		case STATS_EXT_NDISTINCT:
 			attnum = Anum_pg_statistic_ext_standistinct;
+			break;
+
+		case STATS_EXT_DEPENDENCIES:
+			attnum = Anum_pg_statistic_ext_stadependencies;
 			break;
 
 		default:
@@ -178,7 +186,8 @@ fetch_statentries_for_relation(Relation pg_statext, Oid relid)
 		enabled = (char *) ARR_DATA_PTR(arr);
 		for (i = 0; i < ARR_DIMS(arr)[0]; i++)
 		{
-			Assert(enabled[i] == STATS_EXT_NDISTINCT);
+			Assert((enabled[i] == STATS_EXT_NDISTINCT) ||
+				   (enabled[i] == STATS_EXT_DEPENDENCIES));
 			entry->types = lappend_int(entry->types, (int) enabled[i]);
 		}
 
@@ -256,7 +265,7 @@ lookup_var_attr_stats(Relation rel, Bitmapset *attrs, int natts,
  */
 static void
 statext_store(Relation pg_stext, Oid statOid,
-			  MVNDistinct *ndistinct,
+			  MVNDistinct *ndistinct, MVDependencies *dependencies,
 			  VacAttrStats **stats)
 {
 	HeapTuple	stup,
@@ -280,8 +289,17 @@ statext_store(Relation pg_stext, Oid statOid,
 		values[Anum_pg_statistic_ext_standistinct - 1] = PointerGetDatum(data);
 	}
 
+	if (dependencies != NULL)
+	{
+		bytea	   *data = statext_dependencies_serialize(dependencies);
+
+		nulls[Anum_pg_statistic_ext_stadependencies - 1] = (data == NULL);
+		values[Anum_pg_statistic_ext_stadependencies - 1] = PointerGetDatum(data);
+	}
+
 	/* always replace the value (either by bytea or NULL) */
 	replaces[Anum_pg_statistic_ext_standistinct - 1] = true;
+	replaces[Anum_pg_statistic_ext_stadependencies - 1] = true;
 
 	/* there should already be a pg_statistic_ext tuple */
 	oldtup = SearchSysCache1(STATEXTOID, ObjectIdGetDatum(statOid));
@@ -386,4 +404,83 @@ multi_sort_compare_dims(int start, int end,
 	}
 
 	return 0;
+}
+
+/*
+ * has_stats_of_kind
+ *	Check that the list contains statistic of a given kind
+ */
+bool
+has_stats_of_kind(List *stats, char requiredkind)
+{
+	ListCell   *l;
+
+	foreach(l, stats)
+	{
+		StatisticExtInfo *stat = (StatisticExtInfo *) lfirst(l);
+
+		if (stat->kind == requiredkind)
+			return true;
+	}
+
+	return false;
+}
+
+/*
+ * choose_best_statistics
+ *		Look for statistics with the specified 'requiredkind' which have keys
+ *		that match at least two attnums.
+ *
+ * The current selection criteria is very simple - we choose the statistics
+ * referencing the most attributes with the least keys.
+ *
+ * XXX if multiple statistics exists of the same size matching the same number
+ * of keys, then the statistics which are chosen depend on the order that they
+ * appear in the stats list. Perhaps this needs to be more definitive.
+ */
+StatisticExtInfo *
+choose_best_statistics(List *stats, Bitmapset *attnums, char requiredkind)
+{
+	ListCell   *lc;
+	StatisticExtInfo *best_match = NULL;
+	int			best_num_matched = 2;	/* goal #1: maximize */
+	int			best_match_keys = (STATS_MAX_DIMENSIONS + 1);	/* goal #2: minimize */
+
+	foreach(lc, stats)
+	{
+		StatisticExtInfo *info = (StatisticExtInfo *) lfirst(lc);
+		int			num_matched;
+		int			numkeys;
+		Bitmapset  *matched;
+
+		/* skip statistics that are not the correct type */
+		if (info->kind != requiredkind)
+			continue;
+
+		/* determine how many attributes of these stats can be matched to */
+		matched = bms_intersect(attnums, info->keys);
+		num_matched = bms_num_members(matched);
+		bms_free(matched);
+
+		/*
+		 * save the actual number of keys in the stats so that we can choose
+		 * the narrowest stats with the most matching keys.
+		 */
+		numkeys = bms_num_members(info->keys);
+
+		/*
+		 * Use these statistics when it increases the number of matched
+		 * clauses or when it matches the same number of attributes but these
+		 * stats have fewer keys than any previous match.
+		 */
+		if (num_matched > best_num_matched ||
+			(num_matched == best_num_matched && numkeys < best_match_keys))
+		{
+			best_match = info;
+			best_num_matched = num_matched;
+			best_match_keys = numkeys;
+		}
+	}
+
+	return best_match;
 }

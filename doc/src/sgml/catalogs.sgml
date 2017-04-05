@@ -4339,6 +4339,15 @@
       </entry>
      </row>
 
+     <row>
+      <entry><structfield>stadependencies</structfield></entry>
+      <entry><type>pg_dependencies</type></entry>
+      <entry></entry>
+      <entry>
+       Functional dependencies, serialized as <structname>pg_dependencies</> type.
+      </entry>
+     </row>
+
     </tbody>
    </tgroup>
   </table>

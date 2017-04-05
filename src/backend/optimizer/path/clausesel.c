@@ -22,6 +22,7 @@
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/selfuncs.h"
+#include "statistics/statistics.h"
 
 
 /*
@@ -60,23 +61,30 @@ static void addRangeClause(RangeQueryClause **rqlist, Node *clause,
  * subclauses.  However, that's only right if the subclauses have independent
  * probabilities, and in reality they are often NOT independent.  So,
  * we want to be smarter where we can.
-
- * Currently, the only extra smarts we have is to recognize "range queries",
- * such as "x > 34 AND x < 42".  Clauses are recognized as possible range
- * query components if they are restriction opclauses whose operators have
- * scalarltsel() or scalargtsel() as their restriction selectivity estimator.
- * We pair up clauses of this form that refer to the same variable.  An
- * unpairable clause of this kind is simply multiplied into the selectivity
- * product in the normal way.  But when we find a pair, we know that the
- * selectivities represent the relative positions of the low and high bounds
- * within the column's range, so instead of figuring the selectivity as
- * hisel * losel, we can figure it as hisel + losel - 1.  (To visualize this,
- * see that hisel is the fraction of the range below the high bound, while
- * losel is the fraction above the low bound; so hisel can be interpreted
- * directly as a 0..1 value but we need to convert losel to 1-losel before
- * interpreting it as a value.  Then the available range is 1-losel to hisel.
- * However, this calculation double-excludes nulls, so really we need
- * hisel + losel + null_frac - 1.)
+ *
+ * When 'rel' is not null and rtekind = RTE_RELATION, we'll try to apply
+ * selectivity estimates using any extended statistcs on 'rel'.
+ *
+ * If we identify such extended statistics exist, we try to apply them.
+ * Currently we only have (soft) functional dependencies, so apply these in as
+ * many cases as possible, and fall back on normal estimates for remaining
+ * clauses.
+ *
+ * We also recognize "range queries", such as "x > 34 AND x < 42".  Clauses
+ * are recognized as possible range query components if they are restriction
+ * opclauses whose operators have scalarltsel() or scalargtsel() as their
+ * restriction selectivity estimator.  We pair up clauses of this form that
+ * refer to the same variable.  An unpairable clause of this kind is simply
+ * multiplied into the selectivity product in the normal way.  But when we
+ * find a pair, we know that the selectivities represent the relative
+ * positions of the low and high bounds within the column's range, so instead
+ * of figuring the selectivity as hisel * losel, we can figure it as hisel +
+ * losel - 1.  (To visualize this, see that hisel is the fraction of the range
+ * below the high bound, while losel is the fraction above the low bound; so
+ * hisel can be interpreted directly as a 0..1 value but we need to convert
+ * losel to 1-losel before interpreting it as a value.  Then the available
+ * range is 1-losel to hisel.  However, this calculation double-excludes
+ * nulls, so really we need hisel + losel + null_frac - 1.)
  *
  * If either selectivity is exactly DEFAULT_INEQ_SEL, we forget this equation
  * and instead use DEFAULT_RANGE_INEQ_SEL.  The same applies if the equation
@@ -93,33 +101,70 @@ clauselist_selectivity(PlannerInfo *root,
 					   List *clauses,
 					   int varRelid,
 					   JoinType jointype,
-					   SpecialJoinInfo *sjinfo)
+					   SpecialJoinInfo *sjinfo,
+					   RelOptInfo *rel)
 {
 	Selectivity s1 = 1.0;
 	RangeQueryClause *rqlist = NULL;
 	ListCell   *l;
+	Bitmapset  *estimatedclauses = NULL;
+	int			listidx;
 
 	/*
-	 * If there's exactly one clause, then no use in trying to match up pairs,
-	 * so just go directly to clause_selectivity().
+	 * If there's exactly one clause, then extended statistics is futile at
+	 * this level (we might be able to apply them later if it's AND/OR
+	 * clause). So just go directly to clause_selectivity().
 	 */
 	if (list_length(clauses) == 1)
 		return clause_selectivity(root, (Node *) linitial(clauses),
-								  varRelid, jointype, sjinfo);
+								  varRelid, jointype, sjinfo, rel);
 
 	/*
-	 * Initial scan over clauses.  Anything that doesn't look like a potential
-	 * rangequery clause gets multiplied into s1 and forgotten. Anything that
-	 * does gets inserted into an rqlist entry.
+	 * When a relation of RTE_RELATION is given as 'rel', we'll try to
+	 * perform selectivity estimation using extended statistics.
 	 */
+	if (rel && rel->rtekind == RTE_RELATION && rel->statlist != NIL)
+	{
+		/*
+		 * Perform selectivity estimations on any clauses found applicable by
+		 * dependencies_clauselist_selectivity. The 0-based list position of
+		 * estimated clauses will be populated in 'estimatedclauses'.
+		 */
+		s1 *= dependencies_clauselist_selectivity(root, clauses, varRelid,
+								   jointype, sjinfo, rel, &estimatedclauses);
+
+		/*
+		 * This would be the place to apply any other types of extended
+		 * statistics selectivity estimations for remaining clauses.
+		 */
+	}
+
+	/*
+	 * Apply normal selectivity estimates for remaining clauses. We'll be
+	 * careful to skip any clauses which were already estimated above.
+	 *
+	 * Anything that doesn't look like a potential rangequery clause gets
+	 * multiplied into s1 and forgotten. Anything that does gets inserted into
+	 * an rqlist entry.
+	 */
+	listidx = -1;
 	foreach(l, clauses)
 	{
 		Node	   *clause = (Node *) lfirst(l);
 		RestrictInfo *rinfo;
 		Selectivity s2;
 
+		listidx++;
+
+		/*
+		 * Skip this clause if it's already been estimated by some other
+		 * statistics above.
+		 */
+		if (bms_is_member(listidx, estimatedclauses))
+			continue;
+
 		/* Always compute the selectivity using clause_selectivity */
-		s2 = clause_selectivity(root, clause, varRelid, jointype, sjinfo);
+		s2 = clause_selectivity(root, clause, varRelid, jointype, sjinfo, rel);
 
 		/*
 		 * Check for being passed a RestrictInfo.
@@ -484,7 +529,8 @@ clause_selectivity(PlannerInfo *root,
 				   Node *clause,
 				   int varRelid,
 				   JoinType jointype,
-				   SpecialJoinInfo *sjinfo)
+				   SpecialJoinInfo *sjinfo,
+				   RelOptInfo *rel)
 {
 	Selectivity s1 = 0.5;		/* default for any unhandled clause type */
 	RestrictInfo *rinfo = NULL;
@@ -604,7 +650,8 @@ clause_selectivity(PlannerInfo *root,
 								  (Node *) get_notclausearg((Expr *) clause),
 									  varRelid,
 									  jointype,
-									  sjinfo);
+									  sjinfo,
+									  rel);
 	}
 	else if (and_clause(clause))
 	{
@@ -613,7 +660,8 @@ clause_selectivity(PlannerInfo *root,
 									((BoolExpr *) clause)->args,
 									varRelid,
 									jointype,
-									sjinfo);
+									sjinfo,
+									rel);
 	}
 	else if (or_clause(clause))
 	{
@@ -632,7 +680,8 @@ clause_selectivity(PlannerInfo *root,
 												(Node *) lfirst(arg),
 												varRelid,
 												jointype,
-												sjinfo);
+												sjinfo,
+												rel);
 
 			s1 = s1 + s2 - s1 * s2;
 		}
@@ -725,7 +774,8 @@ clause_selectivity(PlannerInfo *root,
 								(Node *) ((RelabelType *) clause)->arg,
 								varRelid,
 								jointype,
-								sjinfo);
+								sjinfo,
+								rel);
 	}
 	else if (IsA(clause, CoerceToDomain))
 	{
@@ -734,7 +784,8 @@ clause_selectivity(PlannerInfo *root,
 								(Node *) ((CoerceToDomain *) clause)->arg,
 								varRelid,
 								jointype,
-								sjinfo);
+								sjinfo,
+								rel);
 	}
 	else
 	{

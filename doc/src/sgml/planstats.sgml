@@ -446,6 +446,160 @@ rows = (outer_cardinality * inner_cardinality) * selectivity
    in <filename>src/backend/utils/adt/selfuncs.c</filename>.
   </para>
 
+  <sect2 id="functional-dependencies">
+   <title>Functional Dependencies</title>
+
+   <para>
+    The simplest type of extended statistics are functional dependencies,
+    used in definitions of database normal forms. When simplified, saying that
+    <literal>b</> is functionally dependent on <literal>a</> means that
+    knowledge of value of <literal>a</> is sufficient to determine value of
+    <literal>b</>.
+   </para>
+
+   <para>
+    In normalized databases, only functional dependencies on primary keys
+    and superkeys are allowed. However, in practice, many data sets are not
+    fully normalized, for example, due to intentional denormalization for
+    performance reasons.
+   </para>
+
+   <para>
+    Functional dependencies directly affect accuracy of the estimates, as
+    conditions on the dependent column(s) do not restrict the result set,
+    resulting in underestimates.
+   </para>
+
+   <para>
+    To inform the planner about the functional dependencies, we collect
+    measurements of dependency during <command>ANALYZE</>. Assessing
+    dependency between all sets of columns would be prohibitively
+    expensive, so we limit our search to potential dependencies defined
+    using the <command>CREATE STATISTICS</> command.
+
+<programlisting>
+CREATE TABLE t (a INT, b INT);
+INSERT INTO t SELECT i/100, i/100 FROM generate_series(1,10000) s(i);
+CREATE STATISTICS s1 WITH (dependencies) ON (a, b) FROM t;
+ANALYZE t;
+EXPLAIN ANALYZE SELECT * FROM t WHERE a = 1 AND b = 1;
+                                          QUERY PLAN                                             
+-------------------------------------------------------------------------------------------------
+ Seq Scan on t  (cost=0.00..195.00 rows=100 width=8) (actual time=0.095..3.118 rows=100 loops=1)
+   Filter: ((a = 1) AND (b = 1))
+   Rows Removed by Filter: 9900
+ Planning time: 0.367 ms
+ Execution time: 3.380 ms
+(5 rows)
+</programlisting>
+
+    The planner is now aware of the functional dependencies and considers
+    them when computing the selectivity of the second condition.  Running
+    the query without the statistics would lead to quite different estimates.
+
+<programlisting>
+DROP STATISTICS s1;
+EXPLAIN ANALYZE SELECT * FROM t WHERE a = 1 AND b = 1;
+                                          QUERY PLAN                                           
+-----------------------------------------------------------------------------------------------
+ Seq Scan on t  (cost=0.00..195.00 rows=1 width=8) (actual time=0.000..6.379 rows=100 loops=1)
+   Filter: ((a = 1) AND (b = 1))
+   Rows Removed by Filter: 9900
+ Planning time: 0.000 ms
+ Execution time: 6.379 ms
+(5 rows)
+</programlisting>
+   </para>
+
+   <para>
+    If no dependency exists, the collected statistics do not influence the
+    query plan. The only effect is to slow down <command>ANALYZE</>. Should
+    partial dependencies exist these will also be stored and applied
+    during planning.
+   </para>
+
+   <para>
+    Similarly to per-column statistics, extended statistics are stored in
+    a system catalog called <structname>pg_statistic_ext</structname>, but
+    there is also a more convenient view <structname>pg_stats_ext</structname>.
+    To inspect the statistics <literal>s1</literal> defined above,
+    you may do this:
+
+<programlisting>
+SELECT tablename, staname, attnums, depsbytes
+  FROM pg_stats_ext WHERE staname = 's1';
+ tablename | staname | attnums | depsbytes 
+-----------+---------+---------+-----------
+ t         | s1      | 1 2     |        40
+(1 row)
+</programlisting>
+
+     This shows that the statistics are defined on table <structname>t</>,
+     <structfield>attnums</structfield> lists attribute numbers of columns
+     (references <structname>pg_attribute</structname>). It also shows
+     the length in bytes of the functional dependencies, as found by
+     <command>ANALYZE</> when serialized into a <literal>bytea</> column.
+   </para>
+
+   <para>
+    When computing the selectivity, the planner inspects all conditions and
+    attempts to identify which conditions are already implied by other
+    conditions.  The selectivity estimates from any redundant conditions are
+    ignored from a selectivity point of view. In the example query above,
+    the selectivity estimates for either of the conditions may be eliminated,
+    thus improving the overall estimate.
+   </para>
+
+    <sect3 id="functional-dependencies-limitations">
+     <title>Limitations of functional dependencies</title>
+
+     <para>
+      Functional dependencies are a very simple type of statistics, and
+      as such have several limitations. The first limitation is that they
+      only work with simple equality conditions, comparing columns and constant
+      values. It's not possible to use them to eliminate equality conditions
+      comparing two columns or a column to an expression, range clauses,
+      <literal>LIKE</> or any other type of conditions.
+     </para>
+
+     <para>
+      When eliminating the implied conditions, the planner assumes that the
+      conditions are compatible. Consider the following example, violating
+      this assumption:
+
+<programlisting>
+EXPLAIN ANALYZE SELECT * FROM t WHERE a = 1 AND b = 10;
+                                          QUERY PLAN
+-----------------------------------------------------------------------------------------------
+ Seq Scan on t  (cost=0.00..195.00 rows=100 width=8) (actual time=2.992..2.992 rows=0 loops=1)
+   Filter: ((a = 1) AND (b = 10))
+   Rows Removed by Filter: 10000
+ Planning time: 0.232 ms
+ Execution time: 3.033 ms
+(5 rows)
+</programlisting>
+
+      While there are no rows with such combination of values, the planner
+      is unable to verify whether the values match - it only knows that
+      the columns are functionally dependent.
+     </para>
+
+     <para>
+      This assumption is more about queries executed on the database - in many
+      cases, it's actually satisfied (e.g. when the GUI only allows selecting
+      compatible values). But if that's not the case, functional dependencies
+      may not be a viable option.
+     </para>
+
+     <para>
+      For additional information about functional dependencies, see
+      <filename>src/backend/statistics/README.dependencies</>.
+     </para>
+
+    </sect3>
+
+  </sect2>
+
  </sect1>
 
 </chapter>

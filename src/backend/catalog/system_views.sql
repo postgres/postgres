@@ -192,7 +192,8 @@ CREATE VIEW pg_stats_ext AS
         C.relname AS tablename,
         S.staname AS staname,
         S.stakeys AS attnums,
-        length(s.standistinct) AS ndistbytes
+        length(s.standistinct::bytea) AS ndistbytes,
+        length(S.stadependencies::bytea) AS depsbytes
     FROM (pg_statistic_ext S JOIN pg_class C ON (C.oid = S.starelid))
         LEFT JOIN pg_namespace N ON (N.oid = C.relnamespace);
 

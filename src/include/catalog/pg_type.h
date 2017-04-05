@@ -368,6 +368,10 @@ DATA(insert OID = 3361 ( pg_ndistinct		PGNSP PGUID -1 f b S f t \054 0 0 0 pg_nd
 DESCR("multivariate ndistinct coefficients");
 #define PGNDISTINCTOID	3361
 
+DATA(insert OID = 3402 ( pg_dependencies		PGNSP PGUID -1 f b S f t \054 0 0 0 pg_dependencies_in pg_dependencies_out pg_dependencies_recv pg_dependencies_send - - - i x f 0 -1 0 100 _null_ _null_ _null_ ));
+DESCR("multivariate dependencies");
+#define PGDEPENDENCIESOID	3402
+
 DATA(insert OID = 32 ( pg_ddl_command	PGNSP PGUID SIZEOF_POINTER t p P f t \054 0 0 0 pg_ddl_command_in pg_ddl_command_out pg_ddl_command_recv pg_ddl_command_send - - - ALIGNOF_POINTER p f 0 -1 0 0 _null_ _null_ _null_ ));
 DESCR("internal type for passing CollectedCommand");
 #define PGDDLCOMMANDOID 32

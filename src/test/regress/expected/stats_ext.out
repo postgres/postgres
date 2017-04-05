@@ -31,7 +31,7 @@ ALTER TABLE ab1 DROP COLUMN a;
  b      | integer |           |          | 
  c      | integer |           |          | 
 Statistics:
-    "public.ab1_b_c_stats" WITH (ndistinct) ON (b, c)
+    "public.ab1_b_c_stats" WITH (ndistinct, dependencies) ON (b, c)
 
 DROP TABLE ab1;
 -- Ensure things work sanely with SET STATISTICS 0
@@ -135,7 +135,7 @@ SELECT staenabled, standistinct
   FROM pg_statistic_ext WHERE starelid = 'ndistinct'::regclass;
  staenabled |                                          standistinct                                          
 ------------+------------------------------------------------------------------------------------------------
- {d}        | [{(b 3 4), 301.000000}, {(b 3 6), 301.000000}, {(b 4 6), 301.000000}, {(b 3 4 6), 301.000000}]
+ {d,f}      | [{(b 3 4), 301.000000}, {(b 3 6), 301.000000}, {(b 4 6), 301.000000}, {(b 3 4 6), 301.000000}]
 (1 row)
 
 -- Hash Aggregate, thanks to estimates improved by the statistic
@@ -201,7 +201,7 @@ SELECT staenabled, standistinct
   FROM pg_statistic_ext WHERE starelid = 'ndistinct'::regclass;
  staenabled |                                            standistinct                                            
 ------------+----------------------------------------------------------------------------------------------------
- {d}        | [{(b 3 4), 2550.000000}, {(b 3 6), 800.000000}, {(b 4 6), 1632.000000}, {(b 3 4 6), 10000.000000}]
+ {d,f}      | [{(b 3 4), 2550.000000}, {(b 3 6), 800.000000}, {(b 4 6), 1632.000000}, {(b 3 4 6), 10000.000000}]
 (1 row)
 
 -- plans using Group Aggregate, thanks to using correct esimates
@@ -311,3 +311,107 @@ EXPLAIN (COSTS off)
 (3 rows)
 
 DROP TABLE ndistinct;
+-- functional dependencies tests
+CREATE TABLE functional_dependencies (
+    filler1 TEXT,
+    filler2 NUMERIC,
+    a INT,
+    b TEXT,
+    filler3 DATE,
+    c INT,
+    d TEXT
+);
+SET random_page_cost = 1.2;
+CREATE INDEX fdeps_ab_idx ON functional_dependencies (a, b);
+CREATE INDEX fdeps_abc_idx ON functional_dependencies (a, b, c);
+-- random data (no functional dependencies)
+INSERT INTO functional_dependencies (a, b, c, filler1)
+     SELECT mod(i, 23), mod(i, 29), mod(i, 31), i FROM generate_series(1,5000) s(i);
+ANALYZE functional_dependencies;
+EXPLAIN (COSTS OFF)
+ SELECT * FROM functional_dependencies WHERE a = 1 AND b = '1';
+                    QUERY PLAN                     
+---------------------------------------------------
+ Bitmap Heap Scan on functional_dependencies
+   Recheck Cond: ((a = 1) AND (b = '1'::text))
+   ->  Bitmap Index Scan on fdeps_abc_idx
+         Index Cond: ((a = 1) AND (b = '1'::text))
+(4 rows)
+
+EXPLAIN (COSTS OFF)
+ SELECT * FROM functional_dependencies WHERE a = 1 AND b = '1' AND c = 1;
+                        QUERY PLAN                         
+-----------------------------------------------------------
+ Index Scan using fdeps_abc_idx on functional_dependencies
+   Index Cond: ((a = 1) AND (b = '1'::text) AND (c = 1))
+(2 rows)
+
+-- create statistics
+CREATE STATISTICS func_deps_stat WITH (dependencies) ON (a, b, c) FROM functional_dependencies;
+ANALYZE functional_dependencies;
+EXPLAIN (COSTS OFF)
+ SELECT * FROM functional_dependencies WHERE a = 1 AND b = '1';
+                    QUERY PLAN                     
+---------------------------------------------------
+ Bitmap Heap Scan on functional_dependencies
+   Recheck Cond: ((a = 1) AND (b = '1'::text))
+   ->  Bitmap Index Scan on fdeps_abc_idx
+         Index Cond: ((a = 1) AND (b = '1'::text))
+(4 rows)
+
+EXPLAIN (COSTS OFF)
+ SELECT * FROM functional_dependencies WHERE a = 1 AND b = '1' AND c = 1;
+                        QUERY PLAN                         
+-----------------------------------------------------------
+ Index Scan using fdeps_abc_idx on functional_dependencies
+   Index Cond: ((a = 1) AND (b = '1'::text) AND (c = 1))
+(2 rows)
+
+-- a => b, a => c, b => c
+TRUNCATE functional_dependencies;
+DROP STATISTICS func_deps_stat;
+INSERT INTO functional_dependencies (a, b, c, filler1)
+     SELECT mod(i,100), mod(i,50), mod(i,25), i FROM generate_series(1,5000) s(i);
+ANALYZE functional_dependencies;
+EXPLAIN (COSTS OFF)
+ SELECT * FROM functional_dependencies WHERE a = 1 AND b = '1';
+                        QUERY PLAN                         
+-----------------------------------------------------------
+ Index Scan using fdeps_abc_idx on functional_dependencies
+   Index Cond: ((a = 1) AND (b = '1'::text))
+(2 rows)
+
+EXPLAIN (COSTS OFF)
+ SELECT * FROM functional_dependencies WHERE a = 1 AND b = '1' AND c = 1;
+                        QUERY PLAN                         
+-----------------------------------------------------------
+ Index Scan using fdeps_abc_idx on functional_dependencies
+   Index Cond: ((a = 1) AND (b = '1'::text) AND (c = 1))
+(2 rows)
+
+-- create statistics
+CREATE STATISTICS func_deps_stat WITH (dependencies) ON (a, b, c) FROM functional_dependencies;
+ANALYZE functional_dependencies;
+EXPLAIN (COSTS OFF)
+ SELECT * FROM functional_dependencies WHERE a = 1 AND b = '1';
+                    QUERY PLAN                     
+---------------------------------------------------
+ Bitmap Heap Scan on functional_dependencies
+   Recheck Cond: ((a = 1) AND (b = '1'::text))
+   ->  Bitmap Index Scan on fdeps_abc_idx
+         Index Cond: ((a = 1) AND (b = '1'::text))
+(4 rows)
+
+EXPLAIN (COSTS OFF)
+ SELECT * FROM functional_dependencies WHERE a = 1 AND b = '1' AND c = 1;
+                    QUERY PLAN                     
+---------------------------------------------------
+ Bitmap Heap Scan on functional_dependencies
+   Recheck Cond: ((a = 1) AND (b = '1'::text))
+   Filter: (c = 1)
+   ->  Bitmap Index Scan on fdeps_ab_idx
+         Index Cond: ((a = 1) AND (b = '1'::text))
+(5 rows)
+
+RESET random_page_cost;
+DROP TABLE functional_dependencies;
