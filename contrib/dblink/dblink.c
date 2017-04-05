@@ -360,7 +360,7 @@ Datum
 dblink_open(PG_FUNCTION_ARGS)
 {
 	PGresult   *res = NULL;
-	PGconn	   *conn = NULL;
+	PGconn	   *conn;
 	char	   *curname = NULL;
 	char	   *sql = NULL;
 	char	   *conname = NULL;
@@ -408,8 +408,8 @@ dblink_open(PG_FUNCTION_ARGS)
 
 	if (!rconn || !rconn->conn)
 		dblink_conn_not_avail(conname);
-	else
-		conn = rconn->conn;
+
+	conn = rconn->conn;
 
 	/* If we are not in a transaction, start one */
 	if (PQtransactionStatus(conn) == PQTRANS_IDLE)
@@ -451,7 +451,7 @@ PG_FUNCTION_INFO_V1(dblink_close);
 Datum
 dblink_close(PG_FUNCTION_ARGS)
 {
-	PGconn	   *conn = NULL;
+	PGconn	   *conn;
 	PGresult   *res = NULL;
 	char	   *curname = NULL;
 	char	   *conname = NULL;
@@ -495,8 +495,8 @@ dblink_close(PG_FUNCTION_ARGS)
 
 	if (!rconn || !rconn->conn)
 		dblink_conn_not_avail(conname);
-	else
-		conn = rconn->conn;
+
+	conn = rconn->conn;
 
 	appendStringInfo(&buf, "CLOSE %s", curname);
 
