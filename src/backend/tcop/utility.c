@@ -1452,9 +1452,8 @@ ProcessUtilitySlow(ParseState *pstate,
 				break;
 
 			case T_RefreshMatViewStmt:
-
 				/*
-				 * REFRSH CONCURRENTLY executes some DDL commands internally.
+				 * REFRESH CONCURRENTLY executes some DDL commands internally.
 				 * Inhibit DDL command collection here to avoid those commands
 				 * from showing up in the deparsed command queue.  The refresh
 				 * command itself is queued, which is enough.
