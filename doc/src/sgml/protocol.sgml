@@ -6107,11 +6107,14 @@ TupleData
 </varlistentry>
 <varlistentry>
 <term>
-        String
+        Byte<replaceable>n</replaceable>
 </term>
 <listitem>
 <para>
-                The text value.
+                The value of the column, in text format.  (A future release
+                might support additional formats.)
+                <replaceable>n</replaceable> is the above length.
+
 </para>
 </listitem>
 </varlistentry>

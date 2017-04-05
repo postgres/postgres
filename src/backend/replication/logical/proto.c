@@ -417,7 +417,6 @@ logicalrep_write_tuple(StringInfo out, Relation rel, HeapTuple tuple)
 		Form_pg_type typclass;
 		Form_pg_attribute att = desc->attrs[i];
 		char	   *outputstr;
-		int			len;
 
 		/* skip dropped columns */
 		if (att->attisdropped)
@@ -442,10 +441,7 @@ logicalrep_write_tuple(StringInfo out, Relation rel, HeapTuple tuple)
 		pq_sendbyte(out, 't');	/* 'text' data follows */
 
 		outputstr = OidOutputFunctionCall(typclass->typoutput, values[i]);
-		len = strlen(outputstr) + 1;	/* null terminated */
-		pq_sendint(out, len, 4);		/* length */
-		pq_sendstring(out, outputstr);	/* data */
-
+		pq_sendcountedtext(out, outputstr, strlen(outputstr), false);
 		pfree(outputstr);
 
 		ReleaseSysCache(typtup);
@@ -492,7 +488,9 @@ logicalrep_read_tuple(StringInfo in, LogicalRepTupleData *tuple)
 					len = pq_getmsgint(in, 4); /* read length */
 
 					/* and data */
-					tuple->values[i] = (char *) pq_getmsgbytes(in, len);
+					tuple->values[i] = palloc(len + 1);
+					pq_copymsgbytes(in, tuple->values[i], len);
+					tuple->values[i][len] = '\0';
 				}
 				break;
 			default:
