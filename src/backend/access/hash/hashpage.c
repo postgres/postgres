@@ -993,6 +993,7 @@ _hash_alloc_buckets(Relation rel, BlockNumber firstblock, uint32 nblocks)
 	BlockNumber lastblock;
 	char		zerobuf[BLCKSZ];
 	Page		page;
+	HashPageOpaque ovflopaque;
 
 	lastblock = firstblock + nblocks - 1;
 
@@ -1007,9 +1008,18 @@ _hash_alloc_buckets(Relation rel, BlockNumber firstblock, uint32 nblocks)
 
 	/*
 	 * Initialize the page.  Just zeroing the page won't work; see
-	 * _hash_freeovflpage for similar usage.
+	 * _hash_freeovflpage for similar usage.  We take care to make the
+	 * special space valid for the benefit of tools such as pageinspect.
 	 */
 	_hash_pageinit(page, BLCKSZ);
+
+	ovflopaque = (HashPageOpaque) PageGetSpecialPointer(page);
+
+	ovflopaque->hasho_prevblkno = InvalidBlockNumber;
+	ovflopaque->hasho_nextblkno = InvalidBlockNumber;
+	ovflopaque->hasho_bucket = -1;
+	ovflopaque->hasho_flag = LH_UNUSED_PAGE;
+	ovflopaque->hasho_page_id = HASHO_PAGE_ID;
 
 	if (RelationNeedsWAL(rel))
 		log_newpage(&rel->rd_node,

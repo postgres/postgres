@@ -56,31 +56,33 @@ static Page
 verify_hash_page(bytea *raw_page, int flags)
 {
 	Page		page = get_page_from_raw(raw_page);
-	int			pagetype;
-	HashPageOpaque pageopaque;
+	int			pagetype = LH_UNUSED_PAGE;
 
-	if (PageIsNew(page))
-		ereport(ERROR,
-				(errcode(ERRCODE_INDEX_CORRUPTED),
-				 errmsg("index table contains zero page")));
+	/* Treat new pages as unused. */
+	if (!PageIsNew(page))
+	{
+		HashPageOpaque pageopaque;
 
-	if (PageGetSpecialSize(page) != MAXALIGN(sizeof(HashPageOpaqueData)))
-		ereport(ERROR,
-				(errcode(ERRCODE_INDEX_CORRUPTED),
-				 errmsg("index table contains corrupted page")));
+		if (PageGetSpecialSize(page) != MAXALIGN(sizeof(HashPageOpaqueData)))
+			ereport(ERROR,
+					(errcode(ERRCODE_INDEX_CORRUPTED),
+					 errmsg("index table contains corrupted page")));
 
-	pageopaque = (HashPageOpaque) PageGetSpecialPointer(page);
-	if (pageopaque->hasho_page_id != HASHO_PAGE_ID)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("page is not a hash page"),
-				 errdetail("Expected %08x, got %08x.",
-						   HASHO_PAGE_ID, pageopaque->hasho_page_id)));
+		pageopaque = (HashPageOpaque) PageGetSpecialPointer(page);
+		if (pageopaque->hasho_page_id != HASHO_PAGE_ID)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("page is not a hash page"),
+					 errdetail("Expected %08x, got %08x.",
+							   HASHO_PAGE_ID, pageopaque->hasho_page_id)));
+
+		pagetype = pageopaque->hasho_flag & LH_PAGE_TYPE;
+	}
 
 	/* Check that page type is sane. */
-	pagetype = pageopaque->hasho_flag & LH_PAGE_TYPE;
 	if (pagetype != LH_OVERFLOW_PAGE && pagetype != LH_BUCKET_PAGE &&
-		pagetype != LH_BITMAP_PAGE && pagetype != LH_META_PAGE)
+		pagetype != LH_BITMAP_PAGE && pagetype != LH_META_PAGE &&
+		pagetype != LH_UNUSED_PAGE)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("invalid hash page type %08x", pagetype)));
@@ -190,19 +192,25 @@ hash_page_type(PG_FUNCTION_ARGS)
 				 (errmsg("must be superuser to use raw page functions"))));
 
 	page = verify_hash_page(raw_page, 0);
-	opaque = (HashPageOpaque) PageGetSpecialPointer(page);
 
-	/* page type (flags) */
-	if (opaque->hasho_flag & LH_META_PAGE)
-		type = "metapage";
-	else if (opaque->hasho_flag & LH_OVERFLOW_PAGE)
-		type = "overflow";
-	else if (opaque->hasho_flag & LH_BUCKET_PAGE)
-		type = "bucket";
-	else if (opaque->hasho_flag & LH_BITMAP_PAGE)
-		type = "bitmap";
-	else
+	if (PageIsNew(page))
 		type = "unused";
+	else
+	{
+		opaque = (HashPageOpaque) PageGetSpecialPointer(page);
+
+		/* page type (flags) */
+		if (opaque->hasho_flag & LH_META_PAGE)
+			type = "metapage";
+		else if (opaque->hasho_flag & LH_OVERFLOW_PAGE)
+			type = "overflow";
+		else if (opaque->hasho_flag & LH_BUCKET_PAGE)
+			type = "bucket";
+		else if (opaque->hasho_flag & LH_BITMAP_PAGE)
+			type = "bitmap";
+		else
+			type = "unused";
+	}
 
 	PG_RETURN_TEXT_P(cstring_to_text(type));
 }

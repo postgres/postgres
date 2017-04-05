@@ -697,10 +697,19 @@ hash_xlog_squeeze_page(XLogReaderState *record)
 	if (XLogReadBufferForRedo(record, 2, &ovflbuf) == BLK_NEEDS_REDO)
 	{
 		Page		ovflpage;
+		HashPageOpaque ovflopaque;
 
 		ovflpage = BufferGetPage(ovflbuf);
 
 		_hash_pageinit(ovflpage, BufferGetPageSize(ovflbuf));
+
+		ovflopaque = (HashPageOpaque) PageGetSpecialPointer(ovflpage);
+
+		ovflopaque->hasho_prevblkno = InvalidBlockNumber;
+		ovflopaque->hasho_nextblkno = InvalidBlockNumber;
+		ovflopaque->hasho_bucket = -1;
+		ovflopaque->hasho_flag = LH_UNUSED_PAGE;
+		ovflopaque->hasho_page_id = HASHO_PAGE_ID;
 
 		PageSetLSN(ovflpage, lsn);
 		MarkBufferDirty(ovflbuf);

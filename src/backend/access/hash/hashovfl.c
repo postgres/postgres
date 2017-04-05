@@ -590,11 +590,22 @@ _hash_freeovflpage(Relation rel, Buffer bucketbuf, Buffer ovflbuf,
 	}
 
 	/*
-	 * Initialize the freed overflow page.  Just zeroing the page won't work,
-	 * because WAL replay routines expect pages to be initialized. See
-	 * explanation of RBM_NORMAL mode atop XLogReadBufferExtended.
+	 * Reinitialize the freed overflow page.  Just zeroing the page won't
+	 * work, because WAL replay routines expect pages to be initialized. See
+	 * explanation of RBM_NORMAL mode atop XLogReadBufferExtended.  We are
+	 * careful to make the special space valid here so that tools like
+	 * pageinspect won't get confused.
 	 */
 	_hash_pageinit(ovflpage, BufferGetPageSize(ovflbuf));
+
+	ovflopaque = (HashPageOpaque) PageGetSpecialPointer(ovflpage);
+
+	ovflopaque->hasho_prevblkno = InvalidBlockNumber;
+	ovflopaque->hasho_nextblkno = InvalidBlockNumber;
+	ovflopaque->hasho_bucket = -1;
+	ovflopaque->hasho_flag = LH_UNUSED_PAGE;
+	ovflopaque->hasho_page_id = HASHO_PAGE_ID;
+
 	MarkBufferDirty(ovflbuf);
 
 	if (BufferIsValid(prevbuf))
