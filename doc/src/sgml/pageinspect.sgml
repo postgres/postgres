@@ -333,6 +333,38 @@ test=# SELECT * FROM bt_page_items('pg_cast_oid_index', 1);
      </para>
     </listitem>
    </varlistentry>
+
+   <varlistentry>
+    <term>
+     <function>bt_page_items(page bytea) returns setof record</function>
+     <indexterm>
+      <primary>bt_page_items</primary>
+     </indexterm>
+    </term>
+
+    <listitem>
+     <para>
+      It is also possible to pass a page to <function>bt_page_items</function>
+      as a <type>bytea</> value.  A page image obtained
+      with <function>get_raw_page</function> should be passed as argument.  So
+      the last example could also be rewritten like this:
+<screen>
+test=# SELECT * FROM bt_page_items(get_raw_page('pg_cast_oid_index', 1));
+ itemoffset |  ctid   | itemlen | nulls | vars |    data
+------------+---------+---------+-------+------+-------------
+          1 | (0,1)   |      12 | f     | f    | 23 27 00 00
+          2 | (0,2)   |      12 | f     | f    | 24 27 00 00
+          3 | (0,3)   |      12 | f     | f    | 25 27 00 00
+          4 | (0,4)   |      12 | f     | f    | 26 27 00 00
+          5 | (0,5)   |      12 | f     | f    | 27 27 00 00
+          6 | (0,6)   |      12 | f     | f    | 28 27 00 00
+          7 | (0,7)   |      12 | f     | f    | 29 27 00 00
+          8 | (0,8)   |      12 | f     | f    | 2a 27 00 00
+</screen>
+      All the other details are the same as explained in the previous item.
+     </para>
+    </listitem>
+   </varlistentry>
   </variablelist>
  </sect2>
 

@@ -42,4 +42,17 @@ data       | 01 00 00 00 00 00 00 01
 
 SELECT * FROM bt_page_items('test1_a_idx', 2);
 ERROR:  block number out of range
+SELECT * FROM bt_page_items(get_raw_page('test1_a_idx', 0));
+ERROR:  block is a meta page
+SELECT * FROM bt_page_items(get_raw_page('test1_a_idx', 1));
+-[ RECORD 1 ]-----------------------
+itemoffset | 1
+ctid       | (0,1)
+itemlen    | 16
+nulls      | f
+vars       | f
+data       | 01 00 00 00 00 00 00 01
+
+SELECT * FROM bt_page_items(get_raw_page('test1_a_idx', 2));
+ERROR:  block number 2 is out of range for relation "test1_a_idx"
 DROP TABLE test1;

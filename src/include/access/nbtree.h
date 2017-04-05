@@ -176,6 +176,7 @@ typedef struct BTMetaPageData
 #define P_ISLEAF(opaque)		((opaque)->btpo_flags & BTP_LEAF)
 #define P_ISROOT(opaque)		((opaque)->btpo_flags & BTP_ROOT)
 #define P_ISDELETED(opaque)		((opaque)->btpo_flags & BTP_DELETED)
+#define P_ISMETA(opaque)		((opaque)->btpo_flags & BTP_META)
 #define P_ISHALFDEAD(opaque)	((opaque)->btpo_flags & BTP_HALF_DEAD)
 #define P_IGNORE(opaque)		((opaque)->btpo_flags & (BTP_DELETED|BTP_HALF_DEAD))
 #define P_HAS_GARBAGE(opaque)	((opaque)->btpo_flags & BTP_HAS_GARBAGE)

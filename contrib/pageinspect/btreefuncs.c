@@ -41,6 +41,7 @@
 
 PG_FUNCTION_INFO_V1(bt_metap);
 PG_FUNCTION_INFO_V1(bt_page_items);
+PG_FUNCTION_INFO_V1(bt_page_items_bytea);
 PG_FUNCTION_INFO_V1(bt_page_stats);
 
 #define IS_INDEX(r) ((r)->rd_rel->relkind == RELKIND_INDEX)
@@ -235,14 +236,6 @@ bt_page_stats(PG_FUNCTION_ARGS)
 	PG_RETURN_DATUM(result);
 }
 
-/*-------------------------------------------------------
- * bt_page_items()
- *
- * Get IndexTupleData set in a btree page
- *
- * Usage: SELECT * FROM bt_page_items('t1_pkey', 1);
- *-------------------------------------------------------
- */
 
 /*
  * cross-call data structure for SRF
@@ -253,14 +246,72 @@ struct user_args
 	OffsetNumber offset;
 };
 
+/*-------------------------------------------------------
+ * bt_page_print_tuples()
+ *
+ * Form a tuple describing index tuple at a given offset
+ * ------------------------------------------------------
+ */
+static Datum
+bt_page_print_tuples(FuncCallContext *fctx, Page page, OffsetNumber offset)
+{
+	char	   *values[6];
+	HeapTuple	tuple;
+	ItemId		id;
+	IndexTuple	itup;
+	int			j;
+	int			off;
+	int			dlen;
+	char	   *dump;
+	char	   *ptr;
+
+	id = PageGetItemId(page, offset);
+
+	if (!ItemIdIsValid(id))
+		elog(ERROR, "invalid ItemId");
+
+	itup = (IndexTuple) PageGetItem(page, id);
+
+	j = 0;
+	values[j++] = psprintf("%d", offset);
+	values[j++] = psprintf("(%u,%u)",
+						   ItemPointerGetBlockNumberNoCheck(&itup->t_tid),
+						   ItemPointerGetOffsetNumberNoCheck(&itup->t_tid));
+	values[j++] = psprintf("%d", (int) IndexTupleSize(itup));
+	values[j++] = psprintf("%c", IndexTupleHasNulls(itup) ? 't' : 'f');
+	values[j++] = psprintf("%c", IndexTupleHasVarwidths(itup) ? 't' : 'f');
+
+	ptr = (char *) itup + IndexInfoFindDataOffset(itup->t_info);
+	dlen = IndexTupleSize(itup) - IndexInfoFindDataOffset(itup->t_info);
+	dump = palloc0(dlen * 3 + 1);
+	values[j] = dump;
+	for (off = 0; off < dlen; off++)
+	{
+		if (off > 0)
+			*dump++ = ' ';
+		sprintf(dump, "%02x", *(ptr + off) & 0xff);
+		dump += 2;
+	}
+
+	tuple = BuildTupleFromCStrings(fctx->attinmeta, values);
+
+	return HeapTupleGetDatum(tuple);
+}
+
+/*-------------------------------------------------------
+ * bt_page_items()
+ *
+ * Get IndexTupleData set in a btree page
+ *
+ * Usage: SELECT * FROM bt_page_items('t1_pkey', 1);
+ *-------------------------------------------------------
+ */
 Datum
 bt_page_items(PG_FUNCTION_ARGS)
 {
 	text	   *relname = PG_GETARG_TEXT_PP(0);
 	uint32		blkno = PG_GETARG_UINT32(1);
 	Datum		result;
-	char	   *values[6];
-	HeapTuple	tuple;
 	FuncCallContext *fctx;
 	MemoryContext mctx;
 	struct user_args *uargs;
@@ -345,52 +396,97 @@ bt_page_items(PG_FUNCTION_ARGS)
 
 	if (fctx->call_cntr < fctx->max_calls)
 	{
-		ItemId		id;
-		IndexTuple	itup;
-		int			j;
-		int			off;
-		int			dlen;
-		char	   *dump;
-		char	   *ptr;
-
-		id = PageGetItemId(uargs->page, uargs->offset);
-
-		if (!ItemIdIsValid(id))
-			elog(ERROR, "invalid ItemId");
-
-		itup = (IndexTuple) PageGetItem(uargs->page, id);
-
-		j = 0;
-		values[j++] = psprintf("%d", uargs->offset);
-		values[j++] = psprintf("(%u,%u)",
-							   ItemPointerGetBlockNumberNoCheck(&itup->t_tid),
-							ItemPointerGetOffsetNumberNoCheck(&itup->t_tid));
-		values[j++] = psprintf("%d", (int) IndexTupleSize(itup));
-		values[j++] = psprintf("%c", IndexTupleHasNulls(itup) ? 't' : 'f');
-		values[j++] = psprintf("%c", IndexTupleHasVarwidths(itup) ? 't' : 'f');
-
-		ptr = (char *) itup + IndexInfoFindDataOffset(itup->t_info);
-		dlen = IndexTupleSize(itup) - IndexInfoFindDataOffset(itup->t_info);
-		dump = palloc0(dlen * 3 + 1);
-		values[j] = dump;
-		for (off = 0; off < dlen; off++)
-		{
-			if (off > 0)
-				*dump++ = ' ';
-			sprintf(dump, "%02x", *(ptr + off) & 0xff);
-			dump += 2;
-		}
-
-		tuple = BuildTupleFromCStrings(fctx->attinmeta, values);
-		result = HeapTupleGetDatum(tuple);
-
-		uargs->offset = uargs->offset + 1;
-
+		result = bt_page_print_tuples(fctx, uargs->page, uargs->offset);
+		uargs->offset++;
 		SRF_RETURN_NEXT(fctx, result);
 	}
 	else
 	{
 		pfree(uargs->page);
+		pfree(uargs);
+		SRF_RETURN_DONE(fctx);
+	}
+}
+
+/*-------------------------------------------------------
+ * bt_page_items_bytea()
+ *
+ * Get IndexTupleData set in a btree page
+ *
+ * Usage: SELECT * FROM bt_page_items(get_raw_page('t1_pkey', 1));
+ *-------------------------------------------------------
+ */
+
+Datum
+bt_page_items_bytea(PG_FUNCTION_ARGS)
+{
+	bytea	   *raw_page = PG_GETARG_BYTEA_P(0);
+	Datum		result;
+	FuncCallContext *fctx;
+	struct user_args *uargs;
+	int			raw_page_size;
+
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 (errmsg("must be superuser to use pageinspect functions"))));
+
+	if (SRF_IS_FIRSTCALL())
+	{
+		BTPageOpaque opaque;
+		MemoryContext mctx;
+		TupleDesc	tupleDesc;
+
+		raw_page_size = VARSIZE(raw_page) - VARHDRSZ;
+
+		if (raw_page_size < SizeOfPageHeaderData)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				  errmsg("input page too small (%d bytes)", raw_page_size)));
+
+		fctx = SRF_FIRSTCALL_INIT();
+		mctx = MemoryContextSwitchTo(fctx->multi_call_memory_ctx);
+
+		uargs = palloc(sizeof(struct user_args));
+
+		uargs->page = VARDATA(raw_page);
+
+		uargs->offset = FirstOffsetNumber;
+
+		opaque = (BTPageOpaque) PageGetSpecialPointer(uargs->page);
+
+		if (P_ISMETA(opaque))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("block is a meta page")));
+
+		if (P_ISDELETED(opaque))
+			elog(NOTICE, "page is deleted");
+
+		fctx->max_calls = PageGetMaxOffsetNumber(uargs->page);
+
+		/* Build a tuple descriptor for our result type */
+		if (get_call_result_type(fcinfo, NULL, &tupleDesc) != TYPEFUNC_COMPOSITE)
+			elog(ERROR, "return type must be a row type");
+
+		fctx->attinmeta = TupleDescGetAttInMetadata(tupleDesc);
+
+		fctx->user_fctx = uargs;
+
+		MemoryContextSwitchTo(mctx);
+	}
+
+	fctx = SRF_PERCALL_SETUP();
+	uargs = fctx->user_fctx;
+
+	if (fctx->call_cntr < fctx->max_calls)
+	{
+		result = bt_page_print_tuples(fctx, uargs->page, uargs->offset);
+		uargs->offset++;
+		SRF_RETURN_NEXT(fctx, result);
+	}
+	else
+	{
 		pfree(uargs);
 		SRF_RETURN_DONE(fctx);
 	}
