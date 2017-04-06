@@ -409,6 +409,7 @@ sub emit_pgattr_row
 		attcacheoff   => '-1',
 		atttypmod     => '-1',
 		atthasdef     => 'f',
+		attidentity   => '',
 		attisdropped  => 'f',
 		attislocal    => 't',
 		attinhcount   => '0',
@@ -424,7 +425,7 @@ sub bki_insert
 	my $row        = shift;
 	my @attnames   = @_;
 	my $oid        = $row->{oid} ? "OID = $row->{oid} " : '';
-	my $bki_values = join ' ', map $row->{$_}, @attnames;
+	my $bki_values = join ' ', map { $_ eq '' ? '""' : $_ } map $row->{$_}, @attnames;
 	printf $bki "insert %s( %s)\n", $oid, $bki_values;
 }
 
@@ -435,10 +436,14 @@ sub emit_schemapg_row
 	my $row        = shift;
 	my @bool_attrs = @_;
 
+	# Replace empty string by zero char constant
+	$row->{attidentity} ||= '\0';
+
 	# Supply appropriate quoting for these fields.
 	$row->{attname}    = q|{"| . $row->{attname} . q|"}|;
 	$row->{attstorage} = q|'| . $row->{attstorage} . q|'|;
 	$row->{attalign}   = q|'| . $row->{attalign} . q|'|;
+	$row->{attidentity} = q|'| . $row->{attidentity} . q|'|;
 
 	# We don't emit initializers for the variable length fields at all.
 	# Only the fixed-size portions of the descriptors are ever used.

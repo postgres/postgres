@@ -246,6 +246,9 @@ exprType(const Node *expr)
 		case T_CurrentOfExpr:
 			type = BOOLOID;
 			break;
+		case T_NextValueExpr:
+			type = ((const NextValueExpr *) expr)->typeId;
+			break;
 		case T_InferenceElem:
 			{
 				const InferenceElem *n = (const InferenceElem *) expr;
@@ -919,6 +922,9 @@ exprCollation(const Node *expr)
 		case T_CurrentOfExpr:
 			coll = InvalidOid;	/* result is always boolean */
 			break;
+		case T_NextValueExpr:
+			coll = InvalidOid;	/* result is always an integer type */
+			break;
 		case T_InferenceElem:
 			coll = exprCollation((Node *) ((const InferenceElem *) expr)->expr);
 			break;
@@ -1121,6 +1127,9 @@ exprSetCollation(Node *expr, Oid collation)
 			break;
 		case T_CurrentOfExpr:
 			Assert(!OidIsValid(collation));		/* result is always boolean */
+			break;
+		case T_NextValueExpr:
+			Assert(!OidIsValid(collation));		/* result is always an integer type */
 			break;
 		default:
 			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(expr));
@@ -1881,6 +1890,7 @@ expression_tree_walker(Node *node,
 		case T_CaseTestExpr:
 		case T_SetToDefault:
 		case T_CurrentOfExpr:
+		case T_NextValueExpr:
 		case T_SQLValueFunction:
 		case T_RangeTblRef:
 		case T_SortGroupClause:
@@ -2476,6 +2486,7 @@ expression_tree_mutator(Node *node,
 		case T_CaseTestExpr:
 		case T_SetToDefault:
 		case T_CurrentOfExpr:
+		case T_NextValueExpr:
 		case T_SQLValueFunction:
 		case T_RangeTblRef:
 		case T_SortGroupClause:

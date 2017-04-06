@@ -1895,7 +1895,7 @@ psql_completion(const char *text, int start, int end)
 	/* ALTER TABLE ALTER [COLUMN] <foo> */
 	else if (Matches6("ALTER", "TABLE", MatchAny, "ALTER", "COLUMN", MatchAny) ||
 			 Matches5("ALTER", "TABLE", MatchAny, "ALTER", MatchAny))
-		COMPLETE_WITH_LIST4("TYPE", "SET", "RESET", "DROP");
+		COMPLETE_WITH_LIST6("TYPE", "SET", "RESET", "RESTART", "ADD", "DROP");
 	/* ALTER TABLE ALTER [COLUMN] <foo> SET */
 	else if (Matches7("ALTER", "TABLE", MatchAny, "ALTER", "COLUMN", MatchAny, "SET") ||
 			 Matches6("ALTER", "TABLE", MatchAny, "ALTER", MatchAny, "SET"))
@@ -1911,7 +1911,7 @@ psql_completion(const char *text, int start, int end)
 	/* ALTER TABLE ALTER [COLUMN] <foo> DROP */
 	else if (Matches7("ALTER", "TABLE", MatchAny, "ALTER", "COLUMN", MatchAny, "DROP") ||
 			 Matches6("ALTER", "TABLE", MatchAny, "ALTER", MatchAny, "DROP"))
-		COMPLETE_WITH_LIST2("DEFAULT", "NOT NULL");
+		COMPLETE_WITH_LIST3("DEFAULT", "IDENTITY", "NOT NULL");
 	else if (Matches4("ALTER", "TABLE", MatchAny, "CLUSTER"))
 		COMPLETE_WITH_CONST("ON");
 	else if (Matches5("ALTER", "TABLE", MatchAny, "CLUSTER", "ON"))
@@ -2920,17 +2920,25 @@ psql_completion(const char *text, int start, int end)
 
 	/*
 	 * Complete INSERT INTO <table> with "(" or "VALUES" or "SELECT" or
-	 * "TABLE" or "DEFAULT VALUES"
+	 * "TABLE" or "DEFAULT VALUES" or "OVERRIDING"
 	 */
 	else if (TailMatches3("INSERT", "INTO", MatchAny))
-		COMPLETE_WITH_LIST5("(", "DEFAULT VALUES", "SELECT", "TABLE", "VALUES");
+		COMPLETE_WITH_LIST6("(", "DEFAULT VALUES", "SELECT", "TABLE", "VALUES", "OVERRIDING");
 
 	/*
 	 * Complete INSERT INTO <table> (attribs) with "VALUES" or "SELECT" or
-	 * "TABLE"
+	 * "TABLE" or "OVERRIDING"
 	 */
 	else if (TailMatches4("INSERT", "INTO", MatchAny, MatchAny) &&
 			 ends_with(prev_wd, ')'))
+		COMPLETE_WITH_LIST4("SELECT", "TABLE", "VALUES", "OVERRIDING");
+
+	/* Complete OVERRIDING */
+	else if (TailMatches1("OVERRIDING"))
+		COMPLETE_WITH_LIST2("SYSTEM VALUE", "USER VALUE");
+
+	/* Complete after OVERRIDING clause */
+	else if (TailMatches3("OVERRIDING", MatchAny, "VALUE"))
 		COMPLETE_WITH_LIST3("SELECT", "TABLE", "VALUES");
 
 	/* Insert an open parenthesis after "VALUES" */

@@ -144,6 +144,7 @@ typedef enum ExprEvalOp
 	EEOP_NULLIF,
 	EEOP_SQLVALUEFUNCTION,
 	EEOP_CURRENTOFEXPR,
+	EEOP_NEXTVALUEEXPR,
 	EEOP_ARRAYEXPR,
 	EEOP_ARRAYCOERCE,
 	EEOP_ROW,
@@ -360,6 +361,13 @@ typedef struct ExprEvalStep
 		{
 			SQLValueFunction *svf;
 		}			sqlvaluefunction;
+
+		/* for EEOP_NEXTVALUEXPR */
+		struct
+		{
+			Oid			seqid;
+			Oid			seqtypid;
+		}			nextvalueexpr;
 
 		/* for EEOP_ARRAYEXPR */
 		struct

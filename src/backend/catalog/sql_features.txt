@@ -200,7 +200,7 @@ F181	Multiple module support			NO
 F191	Referential delete actions			YES	
 F200	TRUNCATE TABLE statement			YES	
 F201	CAST function			YES	
-F202	TRUNCATE TABLE: identity column restart option			NO	
+F202	TRUNCATE TABLE: identity column restart option			YES	
 F221	Explicit defaults			YES	
 F222	INSERT statement: DEFAULT VALUES clause			YES	
 F231	Privilege tables			YES	
@@ -241,9 +241,9 @@ F381	Extended schema manipulation	02	ALTER TABLE statement: ADD CONSTRAINT claus
 F381	Extended schema manipulation	03	ALTER TABLE statement: DROP CONSTRAINT clause	YES	
 F382	Alter column data type			YES	
 F383	Set column not null clause			YES	
-F384	Drop identity property clause			NO	
+F384	Drop identity property clause			YES	
 F385	Drop column generation expression clause			NO	
-F386	Set identity column generation clause			NO	
+F386	Set identity column generation clause			YES	
 F391	Long identifiers			YES	
 F392	Unicode escapes in identifiers			YES	
 F393	Unicode escapes in literals			YES	
@@ -420,11 +420,11 @@ T152	DISTINCT predicate with negation			YES
 T171	LIKE clause in table definition			YES	
 T172	AS subquery clause in table definition			YES	
 T173	Extended LIKE clause in table definition			YES	
-T174	Identity columns			NO	
+T174	Identity columns			YES	
 T175	Generated columns			NO	
 T176	Sequence generator support			NO	
-T177	Sequence generator support: simple restart option			NO	
-T178	Identity columns:  simple restart option			NO	
+T177	Sequence generator support: simple restart option			YES	
+T178	Identity columns:  simple restart option			YES	
 T180	System-versioned tables			NO	
 T181	Application-time period tables			NO	
 T191	Referential action RESTRICT			YES	

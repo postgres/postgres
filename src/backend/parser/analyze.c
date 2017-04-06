@@ -487,6 +487,8 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 		qry->hasModifyingCTE = pstate->p_hasModifyingCTE;
 	}
 
+	qry->override = stmt->override;
+
 	isOnConflictUpdate = (stmt->onConflictClause &&
 						stmt->onConflictClause->action == ONCONFLICT_UPDATE);
 

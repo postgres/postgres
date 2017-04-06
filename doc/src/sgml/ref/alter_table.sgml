@@ -46,6 +46,9 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> SET DEFAULT <replaceable class="PARAMETER">expression</replaceable>
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> DROP DEFAULT
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> { SET | DROP } NOT NULL
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> ADD GENERATED { ALWAYS | BY DEFAULT } AS IDENTITY [ ( <replaceable>sequence_options</replaceable> ) ]
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> { SET GENERATED { ALWAYS | BY DEFAULT } | SET <replaceable>sequence_option</replaceable> | RESTART [ [ WITH ] <replaceable class="parameter">restart</replaceable> ] } [...]
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> DROP IDENTITY [ IF EXISTS ]
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> SET STATISTICS <replaceable class="PARAMETER">integer</replaceable>
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> SET ( <replaceable class="PARAMETER">attribute_option</replaceable> = <replaceable class="PARAMETER">value</replaceable> [, ... ] )
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> RESET ( <replaceable class="PARAMETER">attribute_option</replaceable> [, ... ] )
@@ -183,6 +186,38 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
       parent, such a constraint can still be added to individual partitions,
       if desired; that is, the children can disallow nulls even if the parent
       allows them, but not the other way around. 
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>ADD GENERATED { ALWAYS | BY DEFAULT } AS IDENTITY</literal></term>
+    <term><literal>SET GENERATED { ALWAYS | BY DEFAULT }</literal></term>
+    <term><literal>DROP IDENTITY [ IF EXISTS ]</literal></term>
+    <listitem>
+     <para>
+      These forms change whether a column is an identity column or change the
+      generation attribute of an existing identity column.
+      See <xref linkend="sql-createtable"> for details.
+     </para>
+
+     <para>
+      If <literal>DROP IDENTITY IF EXISTS</literal> is specified and the
+      column is not an identity column, no error is thrown.  In this case a
+      notice is issued instead.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>SET <replaceable>sequence_option</replaceable></literal></term>
+    <term><literal>RESTART</literal></term>
+    <listitem>
+     <para>
+      These forms alter the sequence that underlies an existing identity
+      column.  <replaceable>sequence_option</replaceable> is an option
+      supported by <xref linkend="sql-altersequence"> such
+      as <literal>INCREMENT BY</literal>.
      </para>
     </listitem>
    </varlistentry>
@@ -1160,8 +1195,11 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
    </para>
 
    <para>
-    The <literal>TRIGGER</>, <literal>CLUSTER</>, <literal>OWNER</>,
-    and <literal>TABLESPACE</> actions never recurse to descendant tables;
+    The actions for identity columns (<literal>ADD
+    GENERATED</literal>, <literal>SET</literal> etc., <literal>DROP
+    IDENTITY</literal>), as well as the actions
+    <literal>TRIGGER</>, <literal>CLUSTER</>, <literal>OWNER</>,
+    and <literal>TABLESPACE</> never recurse to descendant tables;
     that is, they always act as though <literal>ONLY</> were specified.
     Adding a constraint recurses only for <literal>CHECK</> constraints
     that are not marked <literal>NO INHERIT</>.
@@ -1371,8 +1409,9 @@ ALTER TABLE cities
 
   <para>
    The forms <literal>ADD</literal> (without <literal>USING INDEX</literal>),
-   <literal>DROP</>, <literal>SET DEFAULT</>,
-   and <literal>SET DATA TYPE</literal> (without <literal>USING</literal>)
+   <literal>DROP [COLUMN]</>, <literal>DROP IDENTITY</literal>, <literal>RESTART</literal>,
+   <literal>SET DEFAULT</>, <literal>SET DATA TYPE</literal> (without <literal>USING</literal>),
+   <literal>SET GENERATED</literal>, and <literal>SET <replaceable>sequence_option</replaceable></literal>
    conform with the SQL standard.  The other forms are
    <productname>PostgreSQL</productname> extensions of the SQL standard.
    Also, the ability to specify more than one manipulation in a single

@@ -62,6 +62,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
   NULL |
   CHECK ( <replaceable class="PARAMETER">expression</replaceable> ) [ NO INHERIT ] |
   DEFAULT <replaceable>default_expr</replaceable> |
+  GENERATED { ALWAYS | BY DEFAULT } AS IDENTITY [ ( <replaceable>sequence_options</replaceable> ) ] |
   UNIQUE <replaceable class="PARAMETER">index_parameters</replaceable> |
   PRIMARY KEY <replaceable class="PARAMETER">index_parameters</replaceable> |
   REFERENCES <replaceable class="PARAMETER">reftable</replaceable> [ ( <replaceable class="PARAMETER">refcolumn</replaceable> ) ] [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ]
@@ -81,7 +82,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
 
 <phrase>and <replaceable class="PARAMETER">like_option</replaceable> is:</phrase>
 
-{ INCLUDING | EXCLUDING } { DEFAULTS | CONSTRAINTS | INDEXES | STORAGE | COMMENTS | ALL }
+{ INCLUDING | EXCLUDING } { DEFAULTS | CONSTRAINTS | IDENTITY | INDEXES | STORAGE | COMMENTS | ALL }
 
 <phrase>and <replaceable class="PARAMETER">partition_bound_spec</replaceable> is:</phrase>
 
@@ -412,6 +413,11 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
       Column <literal>STORAGE</> settings are also copied from parent tables.
      </para>
 
+     <para>
+      If a column in the parent table is an identity column, that property is
+      not inherited.  A column in the child table can be declared identity
+      column if desired.
+     </para>
     </listitem>
    </varlistentry>
 
@@ -481,6 +487,12 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
       the original and new tables.
      </para>
      <para>
+      Any identity specifications of copied column definitions will only be
+      copied if <literal>INCLUDING IDENTITY</literal> is specified.  A new
+      sequence is created for each identity column of the new table, separate
+      from the sequences associated with the old table.
+     </para>
+     <para>
       Not-null constraints are always copied to the new table.
       <literal>CHECK</literal> constraints will be copied only if
       <literal>INCLUDING CONSTRAINTS</literal> is specified.
@@ -512,7 +524,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
      </para>
      <para>
       <literal>INCLUDING ALL</literal> is an abbreviated form of
-      <literal>INCLUDING DEFAULTS INCLUDING CONSTRAINTS INCLUDING INDEXES INCLUDING STORAGE INCLUDING COMMENTS</literal>.
+      <literal>INCLUDING DEFAULTS INCLUDING IDENTITY INCLUDING CONSTRAINTS INCLUDING INDEXES INCLUDING STORAGE INCLUDING COMMENTS</literal>.
      </para>
      <para>
       Note that unlike <literal>INHERITS</literal>, columns and
@@ -622,6 +634,37 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
       The default expression will be used in any insert operation that
       does not specify a value for the column.  If there is no default
       for a column, then the default is null.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>GENERATED { ALWAYS | BY DEFAULT } AS IDENTITY [ ( <replaceable>sequence_options</replaceable> ) ]</literal></term>
+    <listitem>
+     <para>
+      This clause creates the column as an <firstterm>identity
+      column</firstterm>.  It will have an implicit sequence attached to it
+      and the column in new rows will automatically have values from the
+      sequence assigned to it.
+     </para>
+
+     <para>
+      The clauses <literal>ALWAYS</literal> and <literal>BY DEFAULT</literal>
+      determine how the sequence value is given precedence over a
+      user-specified value in an <command>INSERT</command> statement.
+      If <literal>ALWAYS</literal> is specified, a user-specified value is
+      only accepted if the <command>INSERT</command> statement
+      specifies <literal>OVERRIDING SYSTEM VALUE</literal>.  If <literal>BY
+      DEFAULT</literal> is specified, then the user-specified value takes
+      precedence.  See <xref linkend="sql-insert"> for details.  (In
+      the <command>COPY</command> command, user-specified values are always
+      used regardless of this setting.)
+     </para>
+
+     <para>
+      The optional <replaceable>sequence_options</replaceable> clause can be
+      used to override the options of the sequence.
+      See <xref linkend="sql-createsequence"> for details.
      </para>
     </listitem>
    </varlistentry>
@@ -1263,7 +1306,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
 
     <para>
      Using OIDs in new applications is not recommended: where
-     possible, using a <literal>SERIAL</literal> or other sequence
+     possible, using an identity column or other sequence
      generator as the table's primary key is preferred. However, if
      your application does make use of OIDs to identify specific
      rows of a table, it is recommended to create a unique constraint
@@ -1323,7 +1366,7 @@ CREATE TABLE films (
 );
 
 CREATE TABLE distributors (
-     did    integer PRIMARY KEY DEFAULT nextval('serial'),
+     did    integer PRIMARY KEY GENERATED BY DEFAULT AS IDENTITY,
      name   varchar(40) NOT NULL CHECK (name &lt;&gt; '')
 );
 </programlisting>
@@ -1734,6 +1777,20 @@ CREATE TABLE cities_ab_10000_to_100000
     tables.  Zero-column tables are not in themselves very useful, but
     disallowing them creates odd special cases for <command>ALTER TABLE
     DROP COLUMN</>, so it seems cleaner to ignore this spec restriction.
+   </para>
+  </refsect2>
+
+  <refsect2>
+   <title>Multiple Identity Columns</title>
+
+   <para>
+    <productname>PostgreSQL</productname> allows a table to have more than one
+    identity column.  The standard specifies that a table can have at most one
+    identity column.  This is relaxed mainly to give more flexibility for
+    doing schema changes or migrations.  Note that
+    the <command>INSERT</command> command supports only one override clause
+    that applies to the entire statement, so having multiple identity columns
+    with different behaviors is not well supported.
    </para>
   </refsect2>
 

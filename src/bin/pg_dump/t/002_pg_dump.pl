@@ -2263,6 +2263,37 @@ my %tests = (
 			only_dump_test_table     => 1,
 			role                     => 1, }, },
 
+	'COPY test_table_identity' => {
+		all_runs     => 1,
+		catch_all    => 'COPY ... commands',
+		create_order => 54,
+		create_sql =>
+'INSERT INTO dump_test.test_table_identity (col2) VALUES (\'test\');',
+		regexp => qr/^
+			\QCOPY test_table_identity (col1, col2) FROM stdin;\E
+			\n1\ttest\n\\\.\n
+			/xm,
+		like => {
+			clean                   => 1,
+			clean_if_exists         => 1,
+			createdb                => 1,
+			data_only               => 1,
+			defaults                => 1,
+			exclude_test_table      => 1,
+			exclude_test_table_data => 1,
+			no_blobs                => 1,
+			no_privs                => 1,
+			no_owner                => 1,
+			only_dump_test_schema   => 1,
+			pg_dumpall_dbprivs      => 1,
+			section_data            => 1,
+			test_schema_plus_blobs  => 1,
+			with_oids               => 1, },
+		unlike => {
+			exclude_dump_test_schema => 1,
+			only_dump_test_table     => 1,
+			role                     => 1, }, },
+
 	'COPY ... commands' => {    # catch-all for COPY
 		all_runs => 0,             # catch-all
 		regexp   => qr/^COPY /m,
@@ -2315,6 +2346,14 @@ my %tests = (
 		catch_all => 'INSERT INTO ...',
 		regexp =>
 qr/^\QINSERT INTO test_fifth_table (col1, col2, col3, col4, col5) VALUES (NULL, true, false, B'11001', 'NaN');\E/m,
+		like   => { column_inserts => 1, },
+		unlike => {}, },
+
+	'INSERT INTO test_table_identity' => {
+		all_runs  => 1,
+		catch_all => 'INSERT INTO ...',
+		regexp =>
+qr/^\QINSERT INTO test_table_identity (col1, col2) OVERRIDING SYSTEM VALUE VALUES (1, 'test');\E/m,
 		like   => { column_inserts => 1, },
 		unlike => {}, },
 
@@ -4684,6 +4723,54 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 			\n\s+\Qcol5 double precision\E
 			\n\);
 			/xm,
+		like => {
+			binary_upgrade          => 1,
+			clean                   => 1,
+			clean_if_exists         => 1,
+			createdb                => 1,
+			defaults                => 1,
+			exclude_test_table      => 1,
+			exclude_test_table_data => 1,
+			no_blobs                => 1,
+			no_privs                => 1,
+			no_owner                => 1,
+			only_dump_test_schema   => 1,
+			pg_dumpall_dbprivs      => 1,
+			schema_only             => 1,
+			section_pre_data        => 1,
+			test_schema_plus_blobs  => 1,
+			with_oids               => 1, },
+		unlike => {
+			exclude_dump_test_schema => 1,
+			only_dump_test_table     => 1,
+			pg_dumpall_globals       => 1,
+			pg_dumpall_globals_clean => 1,
+			role                     => 1,
+			section_post_data        => 1, }, },
+
+	'CREATE TABLE test_table_identity' => {
+		all_runs     => 1,
+		catch_all    => 'CREATE ... commands',
+		create_order => 3,
+		create_sql   => 'CREATE TABLE dump_test.test_table_identity (
+						   col1 int generated always as identity primary key,
+						   col2 text
+					   );',
+		regexp => qr/^
+			\QCREATE TABLE test_table_identity (\E\n
+			\s+\Qcol1 integer NOT NULL,\E\n
+			\s+\Qcol2 text\E\n
+			\);
+			.*
+			\QALTER TABLE test_table_identity ALTER COLUMN col1 ADD GENERATED ALWAYS AS IDENTITY (\E\n
+			\s+\QSEQUENCE NAME test_table_identity_col1_seq\E\n
+			\s+\QSTART WITH 1\E\n
+			\s+\QINCREMENT BY 1\E\n
+			\s+\QNO MINVALUE\E\n
+			\s+\QNO MAXVALUE\E\n
+			\s+\QCACHE 1\E\n
+			\);
+			/xms,
 		like => {
 			binary_upgrade          => 1,
 			clean                   => 1,

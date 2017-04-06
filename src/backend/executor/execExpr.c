@@ -1993,6 +1993,18 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 				break;
 			}
 
+		case T_NextValueExpr:
+			{
+				NextValueExpr *nve = (NextValueExpr *) node;
+
+				scratch.opcode = EEOP_NEXTVALUEEXPR;
+				scratch.d.nextvalueexpr.seqid = nve->seqid;
+				scratch.d.nextvalueexpr.seqtypid = nve->typeId;
+
+				ExprEvalPushStep(state, &scratch);
+				break;
+			}
+
 		default:
 			elog(ERROR, "unrecognized node type: %d",
 				 (int) nodeTag(node));

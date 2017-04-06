@@ -327,6 +327,7 @@ Section: Class 42 - Syntax Error or Access Rule Violation
 42P21    E    ERRCODE_COLLATION_MISMATCH                                     collation_mismatch
 42P22    E    ERRCODE_INDETERMINATE_COLLATION                                indeterminate_collation
 42809    E    ERRCODE_WRONG_OBJECT_TYPE                                      wrong_object_type
+428C9    E    ERRCODE_GENERATED_ALWAYS                                       generated_always
 
 # Note: for ERRCODE purposes, we divide namable objects into these categories:
 # databases, schemas, prepared statements, cursors, tables, columns,

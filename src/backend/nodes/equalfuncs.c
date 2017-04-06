@@ -734,6 +734,15 @@ _equalCurrentOfExpr(const CurrentOfExpr *a, const CurrentOfExpr *b)
 }
 
 static bool
+_equalNextValueExpr(const NextValueExpr *a, const NextValueExpr *b)
+{
+	COMPARE_SCALAR_FIELD(seqid);
+	COMPARE_SCALAR_FIELD(typeId);
+
+	return true;
+}
+
+static bool
 _equalInferenceElem(const InferenceElem *a, const InferenceElem *b)
 {
 	COMPARE_NODE_FIELD(expr);
@@ -963,6 +972,7 @@ _equalQuery(const Query *a, const Query *b)
 	COMPARE_NODE_FIELD(rtable);
 	COMPARE_NODE_FIELD(jointree);
 	COMPARE_NODE_FIELD(targetList);
+	COMPARE_SCALAR_FIELD(override);
 	COMPARE_NODE_FIELD(onConflict);
 	COMPARE_NODE_FIELD(returningList);
 	COMPARE_NODE_FIELD(groupClause);
@@ -1002,6 +1012,7 @@ _equalInsertStmt(const InsertStmt *a, const InsertStmt *b)
 	COMPARE_NODE_FIELD(onConflictClause);
 	COMPARE_NODE_FIELD(returningList);
 	COMPARE_NODE_FIELD(withClause);
+	COMPARE_SCALAR_FIELD(override);
 
 	return true;
 }
@@ -1713,6 +1724,7 @@ _equalCreateSeqStmt(const CreateSeqStmt *a, const CreateSeqStmt *b)
 	COMPARE_NODE_FIELD(sequence);
 	COMPARE_NODE_FIELD(options);
 	COMPARE_SCALAR_FIELD(ownerId);
+	COMPARE_SCALAR_FIELD(for_identity);
 	COMPARE_SCALAR_FIELD(if_not_exists);
 
 	return true;
@@ -1723,6 +1735,7 @@ _equalAlterSeqStmt(const AlterSeqStmt *a, const AlterSeqStmt *b)
 {
 	COMPARE_NODE_FIELD(sequence);
 	COMPARE_NODE_FIELD(options);
+	COMPARE_SCALAR_FIELD(for_identity);
 	COMPARE_SCALAR_FIELD(missing_ok);
 
 	return true;
@@ -2530,6 +2543,7 @@ _equalColumnDef(const ColumnDef *a, const ColumnDef *b)
 	COMPARE_SCALAR_FIELD(storage);
 	COMPARE_NODE_FIELD(raw_default);
 	COMPARE_NODE_FIELD(cooked_default);
+	COMPARE_SCALAR_FIELD(identity);
 	COMPARE_NODE_FIELD(collClause);
 	COMPARE_SCALAR_FIELD(collOid);
 	COMPARE_NODE_FIELD(constraints);
@@ -2550,6 +2564,7 @@ _equalConstraint(const Constraint *a, const Constraint *b)
 	COMPARE_SCALAR_FIELD(is_no_inherit);
 	COMPARE_NODE_FIELD(raw_expr);
 	COMPARE_STRING_FIELD(cooked_expr);
+	COMPARE_SCALAR_FIELD(generated_when);
 	COMPARE_NODE_FIELD(keys);
 	COMPARE_NODE_FIELD(exclusions);
 	COMPARE_NODE_FIELD(options);
@@ -3098,6 +3113,9 @@ equal(const void *a, const void *b)
 			break;
 		case T_CurrentOfExpr:
 			retval = _equalCurrentOfExpr(a, b);
+			break;
+		case T_NextValueExpr:
+			retval = _equalNextValueExpr(a, b);
 			break;
 		case T_InferenceElem:
 			retval = _equalInferenceElem(a, b);

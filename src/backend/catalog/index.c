@@ -353,6 +353,7 @@ ConstructTupleDescriptor(Relation heapRelation,
 			to->attcacheoff = -1;
 			to->attnotnull = false;
 			to->atthasdef = false;
+			to->attidentity = '\0';
 			to->attislocal = true;
 			to->attinhcount = 0;
 			to->attcollation = collationObjectId[i];

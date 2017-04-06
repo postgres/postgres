@@ -43,6 +43,7 @@
 #include "access/sysattr.h"
 #include "access/transam.h"
 #include "catalog/pg_am.h"
+#include "catalog/pg_attribute.h"
 #include "catalog/pg_cast.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_default_acl.h"
@@ -1924,6 +1925,9 @@ dumpTableData_insert(Archive *fout, void *dcontext)
 						}
 						appendPQExpBufferStr(insertStmt, ") ");
 					}
+
+					if (tbinfo->needs_override)
+						appendPQExpBufferStr(insertStmt, "OVERRIDING SYSTEM VALUE ");
 
 					appendPQExpBufferStr(insertStmt, "VALUES (");
 				}
@@ -5451,6 +5455,7 @@ getTables(Archive *fout, int *numTables)
 	int			i_toastreloptions;
 	int			i_reloftype;
 	int			i_relpages;
+	int			i_is_identity_sequence;
 	int			i_changed_acl;
 
 	/* Make sure we are in proper schema */
@@ -5528,6 +5533,7 @@ getTables(Archive *fout, int *numTables)
 						  "CASE WHEN 'check_option=local' = ANY (c.reloptions) THEN 'LOCAL'::text "
 						  "WHEN 'check_option=cascaded' = ANY (c.reloptions) THEN 'CASCADED'::text ELSE NULL END AS checkoption, "
 						  "tc.reloptions AS toast_reloptions, "
+						  "c.relkind = '%c' AND EXISTS (SELECT 1 FROM pg_depend WHERE classid = 'pg_class'::regclass AND objid = c.oid AND objsubid = 0 AND refclassid = 'pg_class'::regclass AND deptype = 'i') AS is_identity_sequence, "
 						  "EXISTS (SELECT 1 FROM pg_attribute at LEFT JOIN pg_init_privs pip ON "
 						  "(c.oid = pip.objoid "
 						  "AND pip.classoid = 'pg_class'::regclass "
@@ -5544,7 +5550,7 @@ getTables(Archive *fout, int *numTables)
 						  "(c.relkind = '%c' AND "
 						  "d.classid = c.tableoid AND d.objid = c.oid AND "
 						  "d.objsubid = 0 AND "
-						  "d.refclassid = c.tableoid AND d.deptype = 'a') "
+						  "d.refclassid = c.tableoid AND d.deptype IN ('a', 'i')) "
 					   "LEFT JOIN pg_class tc ON (c.reltoastrelid = tc.oid) "
 						  "LEFT JOIN pg_init_privs pip ON "
 						  "(c.oid = pip.objoid "
@@ -5557,6 +5563,7 @@ getTables(Archive *fout, int *numTables)
 						  initacl_subquery->data,
 						  initracl_subquery->data,
 						  username_subquery,
+						  RELKIND_SEQUENCE,
 						  attacl_subquery->data,
 						  attracl_subquery->data,
 						  attinitacl_subquery->data,
@@ -5979,6 +5986,7 @@ getTables(Archive *fout, int *numTables)
 	i_checkoption = PQfnumber(res, "checkoption");
 	i_toastreloptions = PQfnumber(res, "toast_reloptions");
 	i_reloftype = PQfnumber(res, "reloftype");
+	i_is_identity_sequence = PQfnumber(res, "is_identity_sequence");
 	i_changed_acl = PQfnumber(res, "changed_acl");
 
 	if (dopt->lockWaitTimeout)
@@ -6078,6 +6086,9 @@ getTables(Archive *fout, int *numTables)
 		tblinfo[i].interesting = tblinfo[i].dobj.dump ? true : false;
 		tblinfo[i].dummy_view = false;	/* might get set during sort */
 		tblinfo[i].postponed_def = false;		/* might get set during sort */
+
+		tblinfo[i].is_identity_sequence = (i_is_identity_sequence >= 0 &&
+										   strcmp(PQgetvalue(res, i, i_is_identity_sequence), "t") == 0);
 
 		/*
 		 * Read-lock target tables to make sure they aren't DROPPED or altered
@@ -7735,6 +7746,7 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 	int			i_typstorage;
 	int			i_attnotnull;
 	int			i_atthasdef;
+	int			i_attidentity;
 	int			i_attisdropped;
 	int			i_attlen;
 	int			i_attalign;
@@ -7777,7 +7789,34 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 
 		resetPQExpBuffer(q);
 
-		if (fout->remoteVersion >= 90200)
+		if (fout->remoteVersion >= 100000)
+		{
+			/*
+			 * attidentity is new in version 10.
+			 */
+			appendPQExpBuffer(q, "SELECT a.attnum, a.attname, a.atttypmod, "
+							  "a.attstattarget, a.attstorage, t.typstorage, "
+							  "a.attnotnull, a.atthasdef, a.attisdropped, "
+							  "a.attlen, a.attalign, a.attislocal, "
+				  "pg_catalog.format_type(t.oid,a.atttypmod) AS atttypname, "
+						"array_to_string(a.attoptions, ', ') AS attoptions, "
+							  "CASE WHEN a.attcollation <> t.typcollation "
+						   "THEN a.attcollation ELSE 0 END AS attcollation, "
+							  "a.attidentity, "
+							  "pg_catalog.array_to_string(ARRAY("
+							  "SELECT pg_catalog.quote_ident(option_name) || "
+							  "' ' || pg_catalog.quote_literal(option_value) "
+						"FROM pg_catalog.pg_options_to_table(attfdwoptions) "
+							  "ORDER BY option_name"
+							  "), E',\n    ') AS attfdwoptions "
+			 "FROM pg_catalog.pg_attribute a LEFT JOIN pg_catalog.pg_type t "
+							  "ON a.atttypid = t.oid "
+							  "WHERE a.attrelid = '%u'::pg_catalog.oid "
+							  "AND a.attnum > 0::pg_catalog.int2 "
+							  "ORDER BY a.attnum",
+							  tbinfo->dobj.catId.oid);
+		}
+		else if (fout->remoteVersion >= 90200)
 		{
 			/*
 			 * attfdwoptions is new in 9.2.
@@ -7876,6 +7915,7 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 		i_typstorage = PQfnumber(res, "typstorage");
 		i_attnotnull = PQfnumber(res, "attnotnull");
 		i_atthasdef = PQfnumber(res, "atthasdef");
+		i_attidentity = PQfnumber(res, "attidentity");
 		i_attisdropped = PQfnumber(res, "attisdropped");
 		i_attlen = PQfnumber(res, "attlen");
 		i_attalign = PQfnumber(res, "attalign");
@@ -7891,6 +7931,7 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 		tbinfo->attstattarget = (int *) pg_malloc(ntups * sizeof(int));
 		tbinfo->attstorage = (char *) pg_malloc(ntups * sizeof(char));
 		tbinfo->typstorage = (char *) pg_malloc(ntups * sizeof(char));
+		tbinfo->attidentity = (char *) pg_malloc(ntups * sizeof(bool));
 		tbinfo->attisdropped = (bool *) pg_malloc(ntups * sizeof(bool));
 		tbinfo->attlen = (int *) pg_malloc(ntups * sizeof(int));
 		tbinfo->attalign = (char *) pg_malloc(ntups * sizeof(char));
@@ -7915,6 +7956,8 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 			tbinfo->attstattarget[j] = atoi(PQgetvalue(res, j, i_attstattarget));
 			tbinfo->attstorage[j] = *(PQgetvalue(res, j, i_attstorage));
 			tbinfo->typstorage[j] = *(PQgetvalue(res, j, i_typstorage));
+			tbinfo->attidentity[j] = (i_attidentity >= 0 ? *(PQgetvalue(res, j, i_attidentity)) : '\0');
+			tbinfo->needs_override = tbinfo->needs_override || (tbinfo->attidentity[j] == ATTRIBUTE_IDENTITY_ALWAYS);
 			tbinfo->attisdropped[j] = (PQgetvalue(res, j, i_attisdropped)[0] == 't');
 			tbinfo->attlen[j] = atoi(PQgetvalue(res, j, i_attlen));
 			tbinfo->attalign[j] = *(PQgetvalue(res, j, i_attalign));
@@ -16307,10 +16350,13 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 	/*
 	 * DROP must be fully qualified in case same name appears in pg_catalog
 	 */
-	appendPQExpBuffer(delqry, "DROP SEQUENCE %s.",
-					  fmtId(tbinfo->dobj.namespace->dobj.name));
-	appendPQExpBuffer(delqry, "%s;\n",
-					  fmtId(tbinfo->dobj.name));
+	if (!tbinfo->is_identity_sequence)
+	{
+		appendPQExpBuffer(delqry, "DROP SEQUENCE %s.",
+						  fmtId(tbinfo->dobj.namespace->dobj.name));
+		appendPQExpBuffer(delqry, "%s;\n",
+						  fmtId(tbinfo->dobj.name));
+	}
 
 	resetPQExpBuffer(query);
 
@@ -16322,12 +16368,32 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 												tbinfo->dobj.catId.oid);
 	}
 
-	appendPQExpBuffer(query,
-					  "CREATE SEQUENCE %s\n",
-					  fmtId(tbinfo->dobj.name));
+	if (tbinfo->is_identity_sequence)
+	{
+		TableInfo  *owning_tab = findTableByOid(tbinfo->owning_tab);
 
-	if (strcmp(seqtype, "bigint") != 0)
-		appendPQExpBuffer(query, "    AS %s\n", seqtype);
+		appendPQExpBuffer(query,
+						  "ALTER TABLE %s ",
+						  fmtId(owning_tab->dobj.name));
+		appendPQExpBuffer(query,
+						  "ALTER COLUMN %s ADD GENERATED ",
+						  fmtId(owning_tab->attnames[tbinfo->owning_col - 1]));
+		if (owning_tab->attidentity[tbinfo->owning_col - 1] == ATTRIBUTE_IDENTITY_ALWAYS)
+			appendPQExpBuffer(query, "ALWAYS");
+		else if (owning_tab->attidentity[tbinfo->owning_col - 1] == ATTRIBUTE_IDENTITY_BY_DEFAULT)
+			appendPQExpBuffer(query, "BY DEFAULT");
+		appendPQExpBuffer(query, " AS IDENTITY (\n    SEQUENCE NAME %s\n",
+						  fmtId(tbinfo->dobj.name));
+	}
+	else
+	{
+		appendPQExpBuffer(query,
+						  "CREATE SEQUENCE %s\n",
+						  fmtId(tbinfo->dobj.name));
+
+		if (strcmp(seqtype, "bigint") != 0)
+			appendPQExpBuffer(query, "    AS %s\n", seqtype);
+	}
 
 	if (fout->remoteVersion >= 80400)
 		appendPQExpBuffer(query, "    START WITH %s\n", startv);
@@ -16348,7 +16414,10 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 					  "    CACHE %s%s",
 					  cache, (cycled ? "\n    CYCLE" : ""));
 
-	appendPQExpBufferStr(query, ";\n");
+	if (tbinfo->is_identity_sequence)
+		appendPQExpBufferStr(query, "\n);\n");
+	else
+		appendPQExpBufferStr(query, ";\n");
 
 	appendPQExpBuffer(labelq, "SEQUENCE %s", fmtId(tbinfo->dobj.name));
 
@@ -16381,7 +16450,7 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 	 * We need not schema-qualify the table reference because both sequence
 	 * and table must be in the same schema.
 	 */
-	if (OidIsValid(tbinfo->owning_tab))
+	if (OidIsValid(tbinfo->owning_tab) && !tbinfo->is_identity_sequence)
 	{
 		TableInfo  *owning_tab = findTableByOid(tbinfo->owning_tab);
 

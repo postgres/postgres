@@ -13,7 +13,7 @@ CREATE SEQUENCE sequence_testx CACHE 0;
 
 -- OWNED BY errors
 CREATE SEQUENCE sequence_testx OWNED BY nobody;  -- nonsense word
-CREATE SEQUENCE sequence_testx OWNED BY pg_tables.tablename;  -- not a table
+CREATE SEQUENCE sequence_testx OWNED BY pg_class_oid_index.oid;  -- not a table
 CREATE SEQUENCE sequence_testx OWNED BY pg_class.relname;  -- not same schema
 CREATE TABLE sequence_test_table (a int);
 CREATE SEQUENCE sequence_testx OWNED BY sequence_test_table.b;  -- wrong column

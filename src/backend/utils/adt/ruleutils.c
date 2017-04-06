@@ -5936,6 +5936,14 @@ get_insert_query_def(Query *query, deparse_context *context)
 	if (query->targetList)
 		appendStringInfoString(buf, ") ");
 
+	if (query->override)
+	{
+		if (query->override == OVERRIDING_SYSTEM_VALUE)
+			appendStringInfoString(buf, "OVERRIDING SYSTEM VALUE ");
+		else if (query->override == OVERRIDING_USER_VALUE)
+			appendStringInfoString(buf, "OVERRIDING USER VALUE ");
+	}
+
 	if (select_rte)
 	{
 		/* Add the SELECT */

@@ -93,17 +93,17 @@ static HTAB *seqhashtab = NULL; /* hash table for SeqTable items */
 static SeqTableData *last_used_seq = NULL;
 
 static void fill_seq_with_data(Relation rel, HeapTuple tuple);
-static int64 nextval_internal(Oid relid);
 static Relation open_share_lock(SeqTable seq);
 static void create_seq_hashtable(void);
 static void init_sequence(Oid relid, SeqTable *p_elm, Relation *p_rel);
 static Form_pg_sequence_data read_seq_tuple(Relation rel,
 			   Buffer *buf, HeapTuple seqdatatuple);
-static void init_params(ParseState *pstate, List *options, bool isInit,
+static void init_params(ParseState *pstate, List *options, bool for_identity,
+						bool isInit,
 						Form_pg_sequence seqform,
 						Form_pg_sequence_data seqdataform, List **owned_by);
 static void do_setval(Oid relid, int64 next, bool iscalled);
-static void process_owned_by(Relation seqrel, List *owned_by);
+static void process_owned_by(Relation seqrel, List *owned_by, bool for_identity);
 
 
 /*
@@ -153,7 +153,7 @@ DefineSequence(ParseState *pstate, CreateSeqStmt *seq)
 	}
 
 	/* Check and set all option values */
-	init_params(pstate, seq->options, true, &seqform, &seqdataform, &owned_by);
+	init_params(pstate, seq->options, seq->for_identity, true, &seqform, &seqdataform, &owned_by);
 
 	/*
 	 * Create relation (and fill value[] and null[] for the tuple)
@@ -219,7 +219,7 @@ DefineSequence(ParseState *pstate, CreateSeqStmt *seq)
 
 	/* process OWNED BY if given */
 	if (owned_by)
-		process_owned_by(rel, owned_by);
+		process_owned_by(rel, owned_by, seq->for_identity);
 
 	heap_close(rel, NoLock);
 
@@ -455,7 +455,7 @@ AlterSequence(ParseState *pstate, AlterSeqStmt *stmt)
 	seqform = (Form_pg_sequence) GETSTRUCT(tuple);
 
 	/* Check and set new values */
-	init_params(pstate, stmt->options, false, seqform, &newseqdata, &owned_by);
+	init_params(pstate, stmt->options, stmt->for_identity, false, seqform, &newseqdata, &owned_by);
 
 	/* Clear local cache so that we don't think we have cached numbers */
 	/* Note that we do not change the currval() state */
@@ -498,7 +498,7 @@ AlterSequence(ParseState *pstate, AlterSeqStmt *stmt)
 
 	/* process OWNED BY if given */
 	if (owned_by)
-		process_owned_by(seqrel, owned_by);
+		process_owned_by(seqrel, owned_by, stmt->for_identity);
 
 	InvokeObjectPostAlterHook(RelationRelationId, relid, 0);
 
@@ -554,7 +554,7 @@ nextval(PG_FUNCTION_ARGS)
 	 */
 	relid = RangeVarGetRelid(sequence, NoLock, false);
 
-	PG_RETURN_INT64(nextval_internal(relid));
+	PG_RETURN_INT64(nextval_internal(relid, true));
 }
 
 Datum
@@ -562,11 +562,11 @@ nextval_oid(PG_FUNCTION_ARGS)
 {
 	Oid			relid = PG_GETARG_OID(0);
 
-	PG_RETURN_INT64(nextval_internal(relid));
+	PG_RETURN_INT64(nextval_internal(relid, true));
 }
 
-static int64
-nextval_internal(Oid relid)
+int64
+nextval_internal(Oid relid, bool check_permissions)
 {
 	SeqTable	elm;
 	Relation	seqrel;
@@ -592,7 +592,8 @@ nextval_internal(Oid relid)
 	/* open and AccessShareLock sequence */
 	init_sequence(relid, &elm, &seqrel);
 
-	if (pg_class_aclcheck(elm->relid, GetUserId(),
+	if (check_permissions &&
+		pg_class_aclcheck(elm->relid, GetUserId(),
 						  ACL_USAGE | ACL_UPDATE) != ACLCHECK_OK)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
@@ -1219,7 +1220,8 @@ read_seq_tuple(Relation rel, Buffer *buf, HeapTuple seqdatatuple)
  * otherwise, do not change existing options that aren't explicitly overridden.
  */
 static void
-init_params(ParseState *pstate, List *options, bool isInit,
+init_params(ParseState *pstate, List *options, bool for_identity,
+			bool isInit,
 			Form_pg_sequence seqform,
 			Form_pg_sequence_data seqdataform, List **owned_by)
 {
@@ -1322,6 +1324,18 @@ init_params(ParseState *pstate, List *options, bool isInit,
 						 parser_errposition(pstate, defel->location)));
 			*owned_by = defGetQualifiedName(defel);
 		}
+		else if (strcmp(defel->defname, "sequence_name") == 0)
+		{
+			/*
+			 * The parser allows this, but it is only for identity columns, in
+			 * which case it is filtered out in parse_utilcmd.c.  We only get
+			 * here if someone puts it into a CREATE SEQUENCE.
+			 */
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("invalid sequence option SEQUENCE NAME"),
+					 parser_errposition(pstate, defel->location)));
+		}
 		else
 			elog(ERROR, "option \"%s\" not recognized",
 				 defel->defname);
@@ -1344,7 +1358,9 @@ init_params(ParseState *pstate, List *options, bool isInit,
 			newtypid != INT8OID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("sequence type must be smallint, integer, or bigint")));
+					 for_identity
+					 ? errmsg("identity column type must be smallint, integer, or bigint")
+					 : errmsg("sequence type must be smallint, integer, or bigint")));
 
 		if (!isInit)
 		{
@@ -1588,11 +1604,14 @@ init_params(ParseState *pstate, List *options, bool isInit,
  * as the sequence.
  */
 static void
-process_owned_by(Relation seqrel, List *owned_by)
+process_owned_by(Relation seqrel, List *owned_by, bool for_identity)
 {
+	DependencyType deptype;
 	int			nnames;
 	Relation	tablerel;
 	AttrNumber	attnum;
+
+	deptype = for_identity ? DEPENDENCY_INTERNAL : DEPENDENCY_AUTO;
 
 	nnames = list_length(owned_by);
 	Assert(nnames > 0);
@@ -1624,6 +1643,7 @@ process_owned_by(Relation seqrel, List *owned_by)
 		/* Must be a regular or foreign table */
 		if (!(tablerel->rd_rel->relkind == RELKIND_RELATION ||
 			  tablerel->rd_rel->relkind == RELKIND_FOREIGN_TABLE ||
+			  tablerel->rd_rel->relkind == RELKIND_VIEW ||
 			  tablerel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE))
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -1650,10 +1670,28 @@ process_owned_by(Relation seqrel, List *owned_by)
 	}
 
 	/*
-	 * OK, we are ready to update pg_depend.  First remove any existing AUTO
+	 * Catch user explicitly running OWNED BY on identity sequence.
+	 */
+	if (deptype == DEPENDENCY_AUTO)
+	{
+		Oid			tableId;
+		int32		colId;
+
+		if (sequenceIsOwned(RelationGetRelid(seqrel), DEPENDENCY_INTERNAL, &tableId, &colId))
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot change ownership of identity sequence"),
+					 errdetail("Sequence \"%s\" is linked to table \"%s\".",
+							   RelationGetRelationName(seqrel),
+							   get_rel_name(tableId))));
+	}
+
+	/*
+	 * OK, we are ready to update pg_depend.  First remove any existing
 	 * dependencies for the sequence, then optionally add a new one.
 	 */
-	markSequenceUnowned(RelationGetRelid(seqrel));
+	deleteDependencyRecordsForClass(RelationRelationId, RelationGetRelid(seqrel),
+									RelationRelationId, deptype);
 
 	if (tablerel)
 	{
@@ -1666,7 +1704,7 @@ process_owned_by(Relation seqrel, List *owned_by)
 		depobject.classId = RelationRelationId;
 		depobject.objectId = RelationGetRelid(seqrel);
 		depobject.objectSubId = 0;
-		recordDependencyOn(&depobject, &refobject, DEPENDENCY_AUTO);
+		recordDependencyOn(&depobject, &refobject, deptype);
 	}
 
 	/* Done, but hold lock until commit */
@@ -1674,6 +1712,33 @@ process_owned_by(Relation seqrel, List *owned_by)
 		relation_close(tablerel, NoLock);
 }
 
+
+/*
+ * Return sequence parameters in a list of the form created by the parser.
+ */
+List *
+sequence_options(Oid relid)
+{
+	HeapTuple	pgstuple;
+	Form_pg_sequence pgsform;
+	List	   *options = NIL;
+
+	pgstuple = SearchSysCache1(SEQRELID, relid);
+	if (!HeapTupleIsValid(pgstuple))
+		elog(ERROR, "cache lookup failed for sequence %u", relid);
+	pgsform = (Form_pg_sequence) GETSTRUCT(pgstuple);
+
+	options = lappend(options, makeDefElem("cache", (Node *) makeInteger(pgsform->seqcache), -1));
+	options = lappend(options, makeDefElem("cycle", (Node *) makeInteger(pgsform->seqcycle), -1));
+	options = lappend(options, makeDefElem("increment", (Node *) makeInteger(pgsform->seqincrement), -1));
+	options = lappend(options, makeDefElem("maxvalue", (Node *) makeInteger(pgsform->seqmax), -1));
+	options = lappend(options, makeDefElem("minvalue", (Node *) makeInteger(pgsform->seqmin), -1));
+	options = lappend(options, makeDefElem("start", (Node *) makeInteger(pgsform->seqstart), -1));
+
+	ReleaseSysCache(pgstuple);
+
+	return options;
+}
 
 /*
  * Return sequence parameters (formerly for use by information schema)

@@ -393,6 +393,36 @@ SELECT * FROM truncate_a;
   2 |  34
 (2 rows)
 
+CREATE TABLE truncate_b (id int GENERATED ALWAYS AS IDENTITY (START WITH 44));
+INSERT INTO truncate_b DEFAULT VALUES;
+INSERT INTO truncate_b DEFAULT VALUES;
+SELECT * FROM truncate_b;
+ id 
+----
+ 44
+ 45
+(2 rows)
+
+TRUNCATE truncate_b;
+INSERT INTO truncate_b DEFAULT VALUES;
+INSERT INTO truncate_b DEFAULT VALUES;
+SELECT * FROM truncate_b;
+ id 
+----
+ 46
+ 47
+(2 rows)
+
+TRUNCATE truncate_b RESTART IDENTITY;
+INSERT INTO truncate_b DEFAULT VALUES;
+INSERT INTO truncate_b DEFAULT VALUES;
+SELECT * FROM truncate_b;
+ id 
+----
+ 44
+ 45
+(2 rows)
+
 -- check rollback of a RESTART IDENTITY operation
 BEGIN;
 TRUNCATE truncate_a RESTART IDENTITY;

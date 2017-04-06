@@ -3268,6 +3268,7 @@ RelationBuildLocalRelation(const char *relname,
 	has_not_null = false;
 	for (i = 0; i < natts; i++)
 	{
+		rel->rd_att->attrs[i]->attidentity = tupDesc->attrs[i]->attidentity;
 		rel->rd_att->attrs[i]->attnotnull = tupDesc->attrs[i]->attnotnull;
 		has_not_null |= tupDesc->attrs[i]->attnotnull;
 	}

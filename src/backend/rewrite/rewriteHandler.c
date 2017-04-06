@@ -21,6 +21,7 @@
 #include "postgres.h"
 
 #include "access/sysattr.h"
+#include "catalog/dependency.h"
 #include "catalog/pg_type.h"
 #include "commands/trigger.h"
 #include "foreign/fdwapi.h"
@@ -61,6 +62,7 @@ static Query *rewriteRuleAction(Query *parsetree,
 static List *adjustJoinTreeList(Query *parsetree, bool removert, int rt_index);
 static List *rewriteTargetListIU(List *targetList,
 					CmdType commandType,
+					OverridingKind override,
 					Relation target_relation,
 					int result_rti,
 					List **attrno_list);
@@ -709,6 +711,7 @@ adjustJoinTreeList(Query *parsetree, bool removert, int rt_index)
 static List *
 rewriteTargetListIU(List *targetList,
 					CmdType commandType,
+					OverridingKind override,
 					Relation target_relation,
 					int result_rti,
 					List **attrno_list)
@@ -789,6 +792,7 @@ rewriteTargetListIU(List *targetList,
 	for (attrno = 1; attrno <= numattrs; attrno++)
 	{
 		TargetEntry *new_tle = new_tles[attrno - 1];
+		bool	apply_default;
 
 		att_tup = target_relation->rd_att->attrs[attrno - 1];
 
@@ -801,12 +805,51 @@ rewriteTargetListIU(List *targetList,
 		 * it's an INSERT and there's no tlist entry for the column, or the
 		 * tlist entry is a DEFAULT placeholder node.
 		 */
-		if ((new_tle == NULL && commandType == CMD_INSERT) ||
-			(new_tle && new_tle->expr && IsA(new_tle->expr, SetToDefault)))
+		apply_default = ((new_tle == NULL && commandType == CMD_INSERT) ||
+						 (new_tle && new_tle->expr && IsA(new_tle->expr, SetToDefault)));
+
+		if (commandType == CMD_INSERT)
+		{
+			if (att_tup->attidentity == ATTRIBUTE_IDENTITY_ALWAYS && !apply_default)
+			{
+				if (override != OVERRIDING_SYSTEM_VALUE)
+					ereport(ERROR,
+							(errcode(ERRCODE_GENERATED_ALWAYS),
+							 errmsg("cannot insert into column \"%s\"", NameStr(att_tup->attname)),
+							 errdetail("Column \"%s\" is an identity column defined as GENERATED ALWAYS.",
+									   NameStr(att_tup->attname)),
+							 errhint("Use OVERRIDING SYSTEM VALUE to override.")));
+			}
+
+			if (att_tup->attidentity == ATTRIBUTE_IDENTITY_BY_DEFAULT && override == OVERRIDING_USER_VALUE)
+				apply_default = true;
+		}
+
+		if (commandType == CMD_UPDATE)
+		{
+			if (att_tup->attidentity == ATTRIBUTE_IDENTITY_ALWAYS && !apply_default)
+				ereport(ERROR,
+						(errcode(ERRCODE_GENERATED_ALWAYS),
+						 errmsg("column \"%s\" can only be updated to DEFAULT", NameStr(att_tup->attname)),
+						 errdetail("Column \"%s\" is an identity column defined as GENERATED ALWAYS.",
+								   NameStr(att_tup->attname))));
+		}
+
+		if (apply_default)
 		{
 			Node	   *new_expr;
 
-			new_expr = build_column_default(target_relation, attrno);
+			if (att_tup->attidentity)
+			{
+				NextValueExpr *nve = makeNode(NextValueExpr);
+
+				nve->seqid = getOwnedSequence(RelationGetRelid(target_relation), attrno);
+				nve->typeId = att_tup->atttypid;
+
+				new_expr = (Node *) nve;
+			}
+			else
+				new_expr = build_column_default(target_relation, attrno);
 
 			/*
 			 * If there is no default (ie, default is effectively NULL), we
@@ -3232,6 +3275,7 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 				/* Process the main targetlist ... */
 				parsetree->targetList = rewriteTargetListIU(parsetree->targetList,
 													  parsetree->commandType,
+															parsetree->override,
 															rt_entry_relation,
 												   parsetree->resultRelation,
 															&attrnos);
@@ -3244,6 +3288,7 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 				parsetree->targetList =
 					rewriteTargetListIU(parsetree->targetList,
 										parsetree->commandType,
+										parsetree->override,
 										rt_entry_relation,
 										parsetree->resultRelation, NULL);
 			}
@@ -3254,6 +3299,7 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 				parsetree->onConflict->onConflictSet =
 					rewriteTargetListIU(parsetree->onConflict->onConflictSet,
 										CMD_UPDATE,
+										parsetree->override,
 										rt_entry_relation,
 										parsetree->resultRelation,
 										NULL);
@@ -3263,7 +3309,9 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 		{
 			parsetree->targetList =
 				rewriteTargetListIU(parsetree->targetList,
-									parsetree->commandType, rt_entry_relation,
+									parsetree->commandType,
+									parsetree->override,
+									rt_entry_relation,
 									parsetree->resultRelation, NULL);
 			rewriteTargetListUD(parsetree, rt_entry, rt_entry_relation);
 		}

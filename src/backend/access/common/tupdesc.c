@@ -150,6 +150,7 @@ CreateTupleDescCopy(TupleDesc tupdesc)
 		memcpy(desc->attrs[i], tupdesc->attrs[i], ATTRIBUTE_FIXED_PART_SIZE);
 		desc->attrs[i]->attnotnull = false;
 		desc->attrs[i]->atthasdef = false;
+		desc->attrs[i]->attidentity = '\0';
 	}
 
 	desc->tdtypeid = tupdesc->tdtypeid;
@@ -257,6 +258,7 @@ TupleDescCopyEntry(TupleDesc dst, AttrNumber dstAttno,
 	/* since we're not copying constraints or defaults, clear these */
 	dst->attrs[dstAttno - 1]->attnotnull = false;
 	dst->attrs[dstAttno - 1]->atthasdef = false;
+	dst->attrs[dstAttno - 1]->attidentity = '\0';
 }
 
 /*
@@ -401,6 +403,8 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 			return false;
 		if (attr1->atthasdef != attr2->atthasdef)
 			return false;
+		if (attr1->attidentity != attr2->attidentity)
+			return false;
 		if (attr1->attisdropped != attr2->attisdropped)
 			return false;
 		if (attr1->attislocal != attr2->attislocal)
@@ -534,6 +538,7 @@ TupleDescInitEntry(TupleDesc desc,
 
 	att->attnotnull = false;
 	att->atthasdef = false;
+	att->attidentity = '\0';
 	att->attisdropped = false;
 	att->attislocal = true;
 	att->attinhcount = 0;
@@ -591,6 +596,7 @@ TupleDescInitBuiltinEntry(TupleDesc desc,
 
 	att->attnotnull = false;
 	att->atthasdef = false;
+	att->attidentity = '\0';
 	att->attisdropped = false;
 	att->attislocal = true;
 	att->attinhcount = 0;

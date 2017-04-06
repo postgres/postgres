@@ -480,6 +480,13 @@ COPY <replaceable class="parameter">count</replaceable>
    </para>
 
    <para>
+    For identity columns, the <command>COPY FROM</command> command will always
+    write the column values provided in the input data, like
+    the <command>INPUT</command> option <literal>OVERRIDING SYSTEM
+    VALUE</literal>.
+   </para>
+
+   <para>
     <command>COPY</command> input and output is affected by
     <varname>DateStyle</varname>. To ensure portability to other
     <productname>PostgreSQL</productname> installations that might use

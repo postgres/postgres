@@ -60,6 +60,7 @@
 
 #include "access/tuptoaster.h"
 #include "catalog/pg_type.h"
+#include "commands/sequence.h"
 #include "executor/execExpr.h"
 #include "executor/nodeSubplan.h"
 #include "funcapi.h"
@@ -337,6 +338,7 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 		&&CASE_EEOP_NULLIF,
 		&&CASE_EEOP_SQLVALUEFUNCTION,
 		&&CASE_EEOP_CURRENTOFEXPR,
+		&&CASE_EEOP_NEXTVALUEEXPR,
 		&&CASE_EEOP_ARRAYEXPR,
 		&&CASE_EEOP_ARRAYCOERCE,
 		&&CASE_EEOP_ROW,
@@ -1224,6 +1226,27 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 		{
 			/* error invocation uses space, and shouldn't ever occur */
 			ExecEvalCurrentOfExpr(state, op);
+
+			EEO_NEXT();
+		}
+
+		EEO_CASE(EEOP_NEXTVALUEEXPR)
+		{
+			switch (op->d.nextvalueexpr.seqtypid)
+			{
+				case INT2OID:
+					*op->resvalue = Int16GetDatum((int16) nextval_internal(op->d.nextvalueexpr.seqid, false));
+					break;
+				case INT4OID:
+					*op->resvalue = Int32GetDatum((int32) nextval_internal(op->d.nextvalueexpr.seqid, false));
+					break;
+				case INT8OID:
+					*op->resvalue = Int64GetDatum((int64) nextval_internal(op->d.nextvalueexpr.seqid, false));
+					break;
+				default:
+					elog(ERROR, "unsupported sequence type %u", op->d.nextvalueexpr.seqtypid);
+			}
+			*op->resnull = false;
 
 			EEO_NEXT();
 		}

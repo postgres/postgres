@@ -1292,6 +1292,20 @@ typedef struct InferenceElem
 	Oid			inferopclass;	/* OID of att opclass, or InvalidOid */
 } InferenceElem;
 
+/*
+ * NextValueExpr - get next value from sequence
+ *
+ * This has the same effect as calling the nextval() function, but it does not
+ * check permissions on the sequence.  This is used for identity columns,
+ * where the sequence is an implicit dependency without its own permissions.
+ */
+typedef struct NextValueExpr
+{
+	Expr		xpr;
+	Oid			seqid;
+	Oid			typeId;
+} NextValueExpr;
+
 /*--------------------
  * TargetEntry -
  *	   a target entry (used in query target lists)

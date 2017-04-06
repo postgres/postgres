@@ -170,6 +170,7 @@ test: conversion
 test: truncate
 test: alter_table
 test: sequence
+test: identity
 test: polymorphism
 test: rowtypes
 test: returning

@@ -1929,6 +1929,13 @@ find_expr_references_walker(Node *node,
 						   context->addrs);
 		/* fall through to examine arguments */
 	}
+	else if (IsA(node, NextValueExpr))
+	{
+		NextValueExpr  *nve = (NextValueExpr *) node;
+
+		add_object_address(OCLASS_CLASS, nve->seqid, 0,
+						   context->addrs);
+	}
 
 	return expression_tree_walker(node, find_expr_references_walker,
 								  (void *) context);
