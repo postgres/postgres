@@ -2891,12 +2891,12 @@ get_rte_attribute_is_dropped(RangeTblEntry *rte, AttrNumber attnum)
 				Assert(rte->enrname);
 
 				/*
-				 * We checked when we loaded ctecoltypes for the tuplestore
-				 * that InvalidOid was only used for dropped columns, so it is
-				 * safe to count on that here.
+				 * We checked when we loaded coltypes for the tuplestore that
+				 * InvalidOid was only used for dropped columns, so it is safe
+				 * to count on that here.
 				 */
 				result =
-					(list_nth(rte->coltypes, attnum - 1) != InvalidOid);
+					((list_nth_oid(rte->coltypes, attnum - 1) == InvalidOid));
 			}
 			break;
 		case RTE_JOIN:
