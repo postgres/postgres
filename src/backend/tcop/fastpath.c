@@ -249,24 +249,15 @@ fetch_fp_info(Oid func_id, struct fp_info * fip)
  * This corresponds to the libpq protocol symbol "F".
  *
  * INPUT:
- *		In protocol version 3, postgres.c has already read the message body
- *		and will pass it in msgBuf.
- *		In old protocol, the passed msgBuf is empty and we must read the
- *		message here.
- *
- * RETURNS:
- *		0 if successful completion, EOF if frontend connection lost.
- *
- * Note: All ordinary errors result in ereport(ERROR,...).  However,
- * if we lose the frontend connection there is no one to ereport to,
- * and no use in proceeding...
+ *		postgres.c has already read the message body and will pass it in
+ *		msgBuf.
  *
  * Note: palloc()s done here and in the called function do not need to be
  * cleaned up explicitly.  We are called from PostgresMain() in the
  * MessageContext memory context, which will be automatically reset when
  * control returns to PostgresMain.
  */
-int
+void
 HandleFunctionRequest(StringInfo msgBuf)
 {
 	Oid			fid;
@@ -281,9 +272,8 @@ HandleFunctionRequest(StringInfo msgBuf)
 	char		msec_str[32];
 
 	/*
-	 * Now that we've eaten the input message, check to see if we actually
-	 * want to do the function call or not.  It's now safe to ereport(); we
-	 * won't lose sync with the frontend.
+	 * We only accept COMMIT/ABORT if we are in an aborted transaction, and
+	 * COMMIT/ABORT cannot be executed through the fastpath interface.
 	 */
 	if (IsAbortedTransactionBlockState())
 		ereport(ERROR,
@@ -406,8 +396,6 @@ HandleFunctionRequest(StringInfo msgBuf)
 							msec_str, fip->fname, fid)));
 			break;
 	}
-
-	return 0;
 }
 
 /*
