@@ -476,7 +476,7 @@ parse_scram_verifier(const char *verifier, char **salt, int *iterations,
 	if ((p = strtok(NULL, ":")) == NULL)
 		goto invalid_verifier;
 	errno = 0;
-	*iterations = strtol(p, &p, SCRAM_ITERATION_LEN);
+	*iterations = strtol(p, &p, 10);
 	if (*p || errno != 0)
 		goto invalid_verifier;
 

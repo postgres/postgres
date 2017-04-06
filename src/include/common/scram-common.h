@@ -31,9 +31,6 @@
 /* length of salt when generating new verifiers */
 #define SCRAM_SALT_LEN				10
 
-/* number of bytes used when sending iteration number during exchange */
-#define SCRAM_ITERATION_LEN			10
-
 /* default number of iterations when generating verifier */
 #define SCRAM_ITERATIONS_DEFAULT	4096
 

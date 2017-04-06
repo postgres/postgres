@@ -444,7 +444,7 @@ read_server_first_message(fe_scram_state *state, char *input,
 		/* read_attr_value() has generated an error string */
 		return false;
 	}
-	state->iterations = strtol(iterations_str, &endptr, SCRAM_ITERATION_LEN);
+	state->iterations = strtol(iterations_str, &endptr, 10);
 	if (*endptr != '\0' || state->iterations < 1)
 	{
 		printfPQExpBuffer(errormessage,
