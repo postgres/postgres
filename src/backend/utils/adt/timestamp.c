@@ -24,6 +24,7 @@
 #include "access/hash.h"
 #include "access/xact.h"
 #include "catalog/pg_type.h"
+#include "common/int128.h"
 #include "funcapi.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
@@ -2288,15 +2289,35 @@ timestamptz_cmp_timestamp(PG_FUNCTION_ARGS)
 
 /*
  *		interval_relop	- is interval1 relop interval2
+ *
+ * Interval comparison is based on converting interval values to a linear
+ * representation expressed in the units of the time field (microseconds,
+ * in the case of integer timestamps) with days assumed to be always 24 hours
+ * and months assumed to be always 30 days.  To avoid overflow, we need a
+ * wider-than-int64 datatype for the linear representation, so use INT128.
  */
-static inline TimeOffset
+
+static inline INT128
 interval_cmp_value(const Interval *interval)
 {
-	TimeOffset	span;
+	INT128		span;
+	int64		dayfraction;
+	int64		days;
 
-	span = interval->time;
-	span += interval->month * INT64CONST(30) * USECS_PER_DAY;
-	span += interval->day * INT64CONST(24) * USECS_PER_HOUR;
+	/*
+	 * Separate time field into days and dayfraction, then add the month and
+	 * day fields to the days part.  We cannot overflow int64 days here.
+	 */
+	dayfraction = interval->time % USECS_PER_DAY;
+	days = interval->time / USECS_PER_DAY;
+	days += interval->month * INT64CONST(30);
+	days += interval->day;
+
+	/* Widen dayfraction to 128 bits */
+	span = int64_to_int128(dayfraction);
+
+	/* Scale up days to microseconds, forming a 128-bit product */
+	int128_add_int64_mul_int64(&span, days, USECS_PER_DAY);
 
 	return span;
 }
@@ -2304,10 +2325,10 @@ interval_cmp_value(const Interval *interval)
 static int
 interval_cmp_internal(Interval *interval1, Interval *interval2)
 {
-	TimeOffset	span1 = interval_cmp_value(interval1);
-	TimeOffset	span2 = interval_cmp_value(interval2);
+	INT128		span1 = interval_cmp_value(interval1);
+	INT128		span2 = interval_cmp_value(interval2);
 
-	return ((span1 < span2) ? -1 : (span1 > span2) ? 1 : 0);
+	return int128_compare(span1, span2);
 }
 
 Datum
@@ -2384,9 +2405,18 @@ Datum
 interval_hash(PG_FUNCTION_ARGS)
 {
 	Interval   *interval = PG_GETARG_INTERVAL_P(0);
-	TimeOffset	span = interval_cmp_value(interval);
+	INT128		span = interval_cmp_value(interval);
+	int64		span64;
 
-	return DirectFunctionCall1(hashint8, Int64GetDatumFast(span));
+	/*
+	 * Use only the least significant 64 bits for hashing.  The upper 64 bits
+	 * seldom add any useful information, and besides we must do it like this
+	 * for compatibility with hashes calculated before use of INT128 was
+	 * introduced.
+	 */
+	span64 = int128_to_int64(span);
+
+	return DirectFunctionCall1(hashint8, Int64GetDatumFast(span64));
 }
 
 /* overlaps_timestamp() --- implements the SQL OVERLAPS operator.
