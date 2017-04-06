@@ -2343,15 +2343,18 @@ describeOneTableDetails(const char *schemaname,
 		if (pset.sversion >= 100000)
 		{
 			printfPQExpBuffer(&buf,
-							  "SELECT oid, stanamespace::regnamespace AS nsp, staname, stakeys,\n"
-							  "  (SELECT pg_catalog.string_agg(pg_catalog.quote_ident(attname::text),', ') \n"
-						   "    FROM ((SELECT pg_catalog.unnest(stakeys) AS attnum) s\n"
-			   "         JOIN pg_catalog.pg_attribute a ON (starelid = a.attrelid AND\n"
-							  "a.attnum = s.attnum AND not attisdropped))) AS columns,\n"
-							  "  (staenabled::char[] @> '{d}'::char[]) AS ndist_enabled,\n"
-							  "  (staenabled::char[] @> '{f}'::char[]) AS deps_enabled\n"
-			  "FROM pg_catalog.pg_statistic_ext stat WHERE starelid  = '%s'\n"
-			  "ORDER BY 1;",
+							  "SELECT oid, "
+							  "stanamespace::pg_catalog.regnamespace AS nsp, "
+							  "staname, stakeys,\n"
+							  "  (SELECT pg_catalog.string_agg(pg_catalog.quote_ident(attname),', ')\n"
+							  "   FROM pg_catalog.unnest(stakeys) s(attnum)\n"
+							  "   JOIN pg_catalog.pg_attribute a ON (starelid = a.attrelid AND\n"
+							  "        a.attnum = s.attnum AND NOT attisdropped)) AS columns,\n"
+							  "  (staenabled @> '{d}') AS ndist_enabled,\n"
+							  "  (staenabled @> '{f}') AS deps_enabled\n"
+							  "FROM pg_catalog.pg_statistic_ext stat "
+							  "WHERE starelid = '%s'\n"
+							  "ORDER BY 1;",
 							  oid);
 
 			result = PSQLexec(buf.data);
