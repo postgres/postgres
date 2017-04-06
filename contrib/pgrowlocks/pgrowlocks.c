@@ -101,8 +101,9 @@ pgrowlocks(PG_FUNCTION_ARGS)
 
 		/* check permissions: must have SELECT on table or be in pg_stat_scan_tables */
 		aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(),
-									  ACL_SELECT) ||
-			is_member_of_role(GetUserId(), DEFAULT_ROLE_STAT_SCAN_TABLES);
+									  ACL_SELECT);
+		if (aclresult != ACLCHECK_OK)
+			aclresult = is_member_of_role(GetUserId(), DEFAULT_ROLE_STAT_SCAN_TABLES) ? ACLCHECK_OK : ACLCHECK_NO_PRIV;
 
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, ACL_KIND_CLASS,
