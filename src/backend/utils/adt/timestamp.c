@@ -24,6 +24,7 @@
 #include "access/hash.h"
 #include "access/xact.h"
 #include "catalog/pg_type.h"
+#include "common/int128.h"
 #include "funcapi.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
@@ -2562,19 +2563,47 @@ timestamptz_cmp_timestamp(PG_FUNCTION_ARGS)
 /*
  *		interval_relop	- is interval1 relop interval2
  *
- *		collate invalid interval at the end
+ * Interval comparison is based on converting interval values to a linear
+ * representation expressed in the units of the time field (microseconds,
+ * in the case of integer timestamps) with days assumed to be always 24 hours
+ * and months assumed to be always 30 days.  To avoid overflow, we need a
+ * wider-than-int64 datatype for the linear representation, so use INT128
+ * with integer timestamps.
+ *
+ * In the float8 case, our problems are not with overflow but with precision;
+ * but it's been like that since day one, so live with it.
  */
-static inline TimeOffset
+#ifdef HAVE_INT64_TIMESTAMP
+typedef INT128 IntervalOffset;
+#else
+typedef TimeOffset IntervalOffset;
+#endif
+
+static inline IntervalOffset
 interval_cmp_value(const Interval *interval)
 {
-	TimeOffset	span;
-
-	span = interval->time;
+	IntervalOffset span;
 
 #ifdef HAVE_INT64_TIMESTAMP
-	span += interval->month * INT64CONST(30) * USECS_PER_DAY;
-	span += interval->day * INT64CONST(24) * USECS_PER_HOUR;
+	int64		dayfraction;
+	int64		days;
+
+	/*
+	 * Separate time field into days and dayfraction, then add the month and
+	 * day fields to the days part.  We cannot overflow int64 days here.
+	 */
+	dayfraction = interval->time % USECS_PER_DAY;
+	days = interval->time / USECS_PER_DAY;
+	days += interval->month * INT64CONST(30);
+	days += interval->day;
+
+	/* Widen dayfraction to 128 bits */
+	span = int64_to_int128(dayfraction);
+
+	/* Scale up days to microseconds, forming a 128-bit product */
+	int128_add_int64_mul_int64(&span, days, USECS_PER_DAY);
 #else
+	span = interval->time;
 	span += interval->month * ((double) DAYS_PER_MONTH * SECS_PER_DAY);
 	span += interval->day * ((double) HOURS_PER_DAY * SECS_PER_HOUR);
 #endif
@@ -2585,10 +2614,14 @@ interval_cmp_value(const Interval *interval)
 static int
 interval_cmp_internal(Interval *interval1, Interval *interval2)
 {
-	TimeOffset	span1 = interval_cmp_value(interval1);
-	TimeOffset	span2 = interval_cmp_value(interval2);
+	IntervalOffset span1 = interval_cmp_value(interval1);
+	IntervalOffset span2 = interval_cmp_value(interval2);
 
+#ifdef HAVE_INT64_TIMESTAMP
+	return int128_compare(span1, span2);
+#else
 	return ((span1 < span2) ? -1 : (span1 > span2) ? 1 : 0);
+#endif
 }
 
 Datum
@@ -2665,10 +2698,20 @@ Datum
 interval_hash(PG_FUNCTION_ARGS)
 {
 	Interval   *interval = PG_GETARG_INTERVAL_P(0);
-	TimeOffset	span = interval_cmp_value(interval);
+	IntervalOffset span = interval_cmp_value(interval);
 
 #ifdef HAVE_INT64_TIMESTAMP
-	return DirectFunctionCall1(hashint8, Int64GetDatumFast(span));
+	int64		span64;
+
+	/*
+	 * Use only the least significant 64 bits for hashing.  The upper 64 bits
+	 * seldom add any useful information, and besides we must do it like this
+	 * for compatibility with hashes calculated before use of INT128 was
+	 * introduced.
+	 */
+	span64 = int128_to_int64(span);
+
+	return DirectFunctionCall1(hashint8, Int64GetDatumFast(span64));
 #else
 	return DirectFunctionCall1(hashfloat8, Float8GetDatumFast(span));
 #endif
