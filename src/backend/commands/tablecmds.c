@@ -5924,6 +5924,11 @@ ATExecAddIdentity(Relation rel, const char *colName,
 	return address;
 }
 
+/*
+ * ALTER TABLE ALTER COLUMN SET { GENERATED or sequence options }
+ *
+ * Return the address of the affected column.
+ */
 static ObjectAddress
 ATExecSetIdentity(Relation rel, const char *colName, Node *def, LOCKMODE lockmode)
 {
@@ -5992,6 +5997,8 @@ ATExecSetIdentity(Relation rel, const char *colName, Node *def, LOCKMODE lockmod
 		ObjectAddressSubSet(address, RelationRelationId,
 							RelationGetRelid(rel), attnum);
 	}
+	else
+		address = InvalidObjectAddress;
 
 	heap_freetuple(tuple);
 	heap_close(attrelation, RowExclusiveLock);
@@ -5999,6 +6006,11 @@ ATExecSetIdentity(Relation rel, const char *colName, Node *def, LOCKMODE lockmod
 	return address;
 }
 
+/*
+ * ALTER TABLE ALTER COLUMN DROP IDENTITY
+ *
+ * Return the address of the affected column.
+ */
 static ObjectAddress
 ATExecDropIdentity(Relation rel, const char *colName, bool missing_ok, LOCKMODE lockmode)
 {
