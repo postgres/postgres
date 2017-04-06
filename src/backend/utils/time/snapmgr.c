@@ -1051,7 +1051,7 @@ AtSubAbort_Snapshot(int level)
  *		Snapshot manager's cleanup function for end of transaction
  */
 void
-AtEOXact_Snapshot(bool isCommit)
+AtEOXact_Snapshot(bool isCommit, bool isPrepare)
 {
 	/*
 	 * In transaction-snapshot mode we must release our privately-managed
@@ -1136,7 +1136,17 @@ AtEOXact_Snapshot(bool isCommit)
 
 	FirstSnapshotSet = false;
 
-	SnapshotResetXmin();
+	/*
+	 * During normal commit and abort processing, we call
+	 * ProcArrayEndTransaction() or ProcArrayClearTransaction() to
+	 * reset the PgXact->xmin. That call happens prior to the call to
+	 * AtEOXact_Snapshot(), so we need not touch xmin here at all,
+	 * accept when we are preparing a transaction.
+	 */
+	if (isPrepare)
+		SnapshotResetXmin();
+
+	Assert(isPrepare || MyPgXact->xmin == 0);
 }
 
 
