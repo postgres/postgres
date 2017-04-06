@@ -666,6 +666,9 @@ initialize_phase(AggState *aggstate, int newphase)
  * Fetch a tuple from either the outer plan (for phase 1) or from the sorter
  * populated by the previous phase.  Copy it to the sorter for the next phase
  * if any.
+ *
+ * Callers cannot rely on memory for tuple in returned slot remaining valid
+ * past any subsequently fetched tuple.
  */
 static TupleTableSlot *
 fetch_input_tuple(AggState *aggstate)
@@ -674,8 +677,8 @@ fetch_input_tuple(AggState *aggstate)
 
 	if (aggstate->sort_in)
 	{
-		if (!tuplesort_gettupleslot(aggstate->sort_in, true, aggstate->sort_slot,
-									NULL))
+		if (!tuplesort_gettupleslot(aggstate->sort_in, true, false,
+									aggstate->sort_slot, NULL))
 			return NULL;
 		slot = aggstate->sort_slot;
 	}
@@ -1409,7 +1412,7 @@ process_ordered_aggregate_multi(AggState *aggstate,
 		ExecClearTuple(slot2);
 
 	while (tuplesort_gettupleslot(pertrans->sortstates[aggstate->current_set],
-								  true, slot1, &newAbbrevVal))
+								  true, true, slot1, &newAbbrevVal))
 	{
 		/*
 		 * Extract the first numTransInputs columns as datums to pass to the

@@ -132,12 +132,13 @@ ExecSort(SortState *node)
 
 	/*
 	 * Get the first or next tuple from tuplesort. Returns NULL if no more
-	 * tuples.
+	 * tuples.  Note that we only rely on slot tuple remaining valid until the
+	 * next fetch from the tuplesort.
 	 */
 	slot = node->ss.ps.ps_ResultTupleSlot;
 	(void) tuplesort_gettupleslot(tuplesortstate,
 								  ScanDirectionIsForward(dir),
-								  slot, NULL);
+								  false, slot, NULL);
 	return slot;
 }
 

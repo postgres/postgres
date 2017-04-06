@@ -1852,7 +1852,8 @@ tuplesort_performsort(Tuplesortstate *state)
  * Internal routine to fetch the next tuple in either forward or back
  * direction into *stup.  Returns FALSE if no more tuples.
  * Returned tuple belongs to tuplesort memory context, and must not be freed
- * by caller.  Caller should not use tuple following next call here.
+ * by caller.  Note that fetched tuple is stored in memory that may be
+ * recycled by any future fetch.
  */
 static bool
 tuplesort_gettuple_common(Tuplesortstate *state, bool forward,
@@ -2101,12 +2102,15 @@ tuplesort_gettuple_common(Tuplesortstate *state, bool forward,
  * NULL value in leading attribute will set abbreviated value to zeroed
  * representation, which caller may rely on in abbreviated inequality check.
  *
- * The slot receives a copied tuple (sometimes allocated in caller memory
- * context) that will stay valid regardless of future manipulations of the
- * tuplesort's state.
+ * If copy is true, the slot receives a copied tuple that'll that will stay
+ * valid regardless of future manipulations of the tuplesort's state.  Memory
+ * is owned by the caller.  If copy is false, the slot will just receive a
+ * pointer to a tuple held within the tuplesort, which is more efficient, but
+ * only safe for callers that are prepared to have any subsequent manipulation
+ * of the tuplesort's state invalidate slot contents.
  */
 bool
-tuplesort_gettupleslot(Tuplesortstate *state, bool forward,
+tuplesort_gettupleslot(Tuplesortstate *state, bool forward, bool copy,
 					   TupleTableSlot *slot, Datum *abbrev)
 {
 	MemoryContext oldcontext = MemoryContextSwitchTo(state->sortcontext);
@@ -2123,8 +2127,10 @@ tuplesort_gettupleslot(Tuplesortstate *state, bool forward,
 		if (state->sortKeys->abbrev_converter && abbrev)
 			*abbrev = stup.datum1;
 
-		stup.tuple = heap_copy_minimal_tuple((MinimalTuple) stup.tuple);
-		ExecStoreMinimalTuple((MinimalTuple) stup.tuple, slot, true);
+		if (copy)
+			stup.tuple = heap_copy_minimal_tuple((MinimalTuple) stup.tuple);
+
+		ExecStoreMinimalTuple((MinimalTuple) stup.tuple, slot, copy);
 		return true;
 	}
 	else
@@ -2137,8 +2143,8 @@ tuplesort_gettupleslot(Tuplesortstate *state, bool forward,
 /*
  * Fetch the next tuple in either forward or back direction.
  * Returns NULL if no more tuples.  Returned tuple belongs to tuplesort memory
- * context, and must not be freed by caller.  Caller should not use tuple
- * following next call here.
+ * context, and must not be freed by caller.  Caller may not rely on tuple
+ * remaining valid after any further manipulation of tuplesort.
  */
 HeapTuple
 tuplesort_getheaptuple(Tuplesortstate *state, bool forward)
@@ -2157,8 +2163,8 @@ tuplesort_getheaptuple(Tuplesortstate *state, bool forward)
 /*
  * Fetch the next index tuple in either forward or back direction.
  * Returns NULL if no more tuples.  Returned tuple belongs to tuplesort memory
- * context, and must not be freed by caller.  Caller should not use tuple
- * following next call here.
+ * context, and must not be freed by caller.  Caller may not rely on tuple
+ * remaining valid after any further manipulation of tuplesort.
  */
 IndexTuple
 tuplesort_getindextuple(Tuplesortstate *state, bool forward)
