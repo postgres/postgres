@@ -116,6 +116,9 @@ set force_parallel_mode=1;
 explain (costs off)
   select stringu1::int2 from tenk1 where unique1 = 1;
 
+-- to increase the parallel query test coverage
+EXPLAIN (analyze, timing off, summary off, costs off) SELECT * FROM tenk1;
+
 -- provoke error in worker
 select stringu1::int2 from tenk1 where unique1 = 1;
 

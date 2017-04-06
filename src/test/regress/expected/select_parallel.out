@@ -280,6 +280,16 @@ explain (costs off)
          Index Cond: (unique1 = 1)
 (5 rows)
 
+-- to increase the parallel query test coverage
+EXPLAIN (analyze, timing off, summary off, costs off) SELECT * FROM tenk1;
+                         QUERY PLAN                          
+-------------------------------------------------------------
+ Gather (actual rows=10000 loops=1)
+   Workers Planned: 4
+   Workers Launched: 4
+   ->  Parallel Seq Scan on tenk1 (actual rows=2000 loops=5)
+(4 rows)
+
 -- provoke error in worker
 select stringu1::int2 from tenk1 where unique1 = 1;
 ERROR:  invalid input syntax for integer: "BAAAAA"
