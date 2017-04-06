@@ -243,7 +243,7 @@ sepgsql_relation_post_create(Oid relOid)
 	HeapTuple	tuple;
 	Form_pg_class classForm;
 	ObjectAddress object;
-	uint16		tclass;
+	uint16_t	tclass;
 	char	   *scontext;		/* subject */
 	char	   *tcontext;		/* schema */
 	char	   *rcontext;		/* relation */
@@ -413,7 +413,7 @@ sepgsql_relation_drop(Oid relOid)
 {
 	ObjectAddress object;
 	char	   *audit_name;
-	uint16_t	tclass;
+	uint16_t	tclass = 0;
 	char		relkind;
 
 	relkind = get_rel_relkind(relOid);
