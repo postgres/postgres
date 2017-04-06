@@ -79,6 +79,7 @@ static List *get_relation_statistics(RelOptInfo *rel, Relation relation);
  *	min_attr	lowest valid AttrNumber
  *	max_attr	highest valid AttrNumber
  *	indexlist	list of IndexOptInfos for relation's indexes
+ *	statlist	list of StatisticExtInfo for relation's statistic objects
  *	serverid	if it's a foreign table, the server OID
  *	fdwroutine	if it's a foreign table, the FDW function pointers
  *	pages		number of pages

@@ -900,7 +900,13 @@ find_strongest_dependency(StatisticExtInfo * stats, MVDependencies * dependencie
 
 /*
  * dependencies_clauselist_selectivity
- *		Attempt to estimate selectivity using functional dependency statistics
+ *		Return the estimated selectivity of the given clauses using
+ *		functional dependency statistics, or 1.0 if no useful functional
+ *		dependency statistic exists.
+ *
+ * 'estimatedclauses' is an output argument that gets a bit set corresponding
+ * to the (zero-based) list index of clauses that are included in the
+ * estimated selectivity.
  *
  * Given equality clauses on attributes (a,b) we find the strongest dependency
  * between them, i.e. either (a=>b) or (b=>a). Assuming (a=>b) is the selected
@@ -934,7 +940,6 @@ dependencies_clauselist_selectivity(PlannerInfo *root,
 	MVDependencies *dependencies;
 	AttrNumber *list_attnums;
 	int			listidx;
-
 
 	/* check if there's any stats that might be useful for us. */
 	if (!has_stats_of_kind(rel->statlist, STATS_EXT_DEPENDENCIES))

@@ -4508,7 +4508,6 @@ RelationGetStatExtList(Relation relation)
 								 NULL, 1, &skey);
 
 	while (HeapTupleIsValid(htup = systable_getnext(indscan)))
-		/* TODO maybe include only already built statistics? */
 		result = insert_ordered_oid(result, HeapTupleGetOid(htup));
 
 	systable_endscan(indscan);

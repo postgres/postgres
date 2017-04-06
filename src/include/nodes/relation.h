@@ -693,17 +693,15 @@ typedef struct ForeignKeyOptInfo
  * StatisticExtInfo
  *		Information about extended statistics for planning/optimization
  *
- * This contains information about which columns are covered by the
- * statistics (stakeys), which options were requested while adding the
- * statistics (*_enabled), and which kinds of statistics were actually
- * built and are available for the optimizer (*_built).
+ * Each pg_statistic_ext row is represented by one or more nodes of this
+ * type, or even zero if ANALYZE has not computed them.
  */
 typedef struct StatisticExtInfo
 {
 	NodeTag		type;
 
 	Oid			statOid;		/* OID of the statistics row */
-	RelOptInfo *rel;			/* back-link to index's table */
+	RelOptInfo *rel;			/* back-link to statistic's table */
 	char		kind;			/* statistic kind of this entry */
 	Bitmapset  *keys;			/* attnums of the columns covered */
 } StatisticExtInfo;

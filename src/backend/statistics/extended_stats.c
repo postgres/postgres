@@ -408,7 +408,7 @@ multi_sort_compare_dims(int start, int end,
 
 /*
  * has_stats_of_kind
- *	Check that the list contains statistic of a given kind
+ *		Check that the list contains statistic of a given kind
  */
 bool
 has_stats_of_kind(List *stats, char requiredkind)
@@ -428,8 +428,9 @@ has_stats_of_kind(List *stats, char requiredkind)
 
 /*
  * choose_best_statistics
- *		Look for statistics with the specified 'requiredkind' which have keys
- *		that match at least two attnums.
+ *		Look for and return statistics with the specified 'requiredkind' which
+ *		have keys that match at least two of the given attnums.  Return NULL if
+ *		there's no match.
  *
  * The current selection criteria is very simple - we choose the statistics
  * referencing the most attributes with the least keys.
