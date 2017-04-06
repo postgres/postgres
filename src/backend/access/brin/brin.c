@@ -1050,6 +1050,27 @@ brin_free_desc(BrinDesc *bdesc)
 }
 
 /*
+ * Fetch index's statistical data into *stats
+ */
+void
+brinGetStats(Relation index, BrinStatsData *stats)
+{
+	Buffer		metabuffer;
+	Page		metapage;
+	BrinMetaPageData *metadata;
+
+	metabuffer = ReadBuffer(index, BRIN_METAPAGE_BLKNO);
+	LockBuffer(metabuffer, BUFFER_LOCK_SHARE);
+	metapage = BufferGetPage(metabuffer);
+	metadata = (BrinMetaPageData *) PageGetContents(metapage);
+
+	stats->pagesPerRange = metadata->pagesPerRange;
+	stats->revmapNumPages = metadata->lastRevmapPage - 1;
+
+	UnlockReleaseBuffer(metabuffer);
+}
+
+/*
  * Initialize a BrinBuildState appropriate to create tuples on the given index.
  */
 static BrinBuildState *

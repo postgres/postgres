@@ -101,6 +101,7 @@
 #include <float.h>
 #include <math.h>
 
+#include "access/brin.h"
 #include "access/gin.h"
 #include "access/htup_details.h"
 #include "access/sysattr.h"
@@ -7721,56 +7722,200 @@ brincostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 {
 	IndexOptInfo *index = path->indexinfo;
 	List	   *indexQuals = path->indexquals;
-	List	   *indexOrderBys = path->indexorderbys;
 	double		numPages = index->pages;
-	double		numTuples = index->tuples;
+	RelOptInfo *baserel = index->rel;
+	RangeTblEntry *rte = planner_rt_fetch(baserel->relid, root);
 	List	   *qinfos;
 	Cost		spc_seq_page_cost;
 	Cost		spc_random_page_cost;
-	double		qual_op_cost;
 	double		qual_arg_cost;
+	double		qualSelectivity;
+	BrinStatsData statsData;
+	double		indexRanges;
+	double		minimalRanges;
+	double		estimatedRanges;
+	double		selec;
+	Relation	indexRel;
+	ListCell   *l;
+	VariableStatData vardata;
 
-	/* Do preliminary analysis of indexquals */
-	qinfos = deconstruct_indexquals(path);
+	Assert(rte->rtekind == RTE_RELATION);
 
-	/* fetch estimated page cost for tablespace containing index */
+	/* fetch estimated page cost for the tablespace containing the index */
 	get_tablespace_page_costs(index->reltablespace,
 							  &spc_random_page_cost,
 							  &spc_seq_page_cost);
 
 	/*
-	 * BRIN indexes are always read in full; use that as startup cost.
-	 *
-	 * XXX maybe only include revmap pages here?
+	 * Obtain some data from the index itself.
 	 */
-	*indexStartupCost = spc_seq_page_cost * numPages * loop_count;
+	indexRel = index_open(index->indexoid, AccessShareLock);
+	brinGetStats(indexRel, &statsData);
+	index_close(indexRel, AccessShareLock);
+
+	/*
+	 * Compute index correlation
+	 *
+	 * Because we can use all index quals equally when scanning, we can use
+	 * the largest correlation (in absolute value) among columns used by the
+	 * query.  Start at zero, the worst possible case.  If we cannot find
+	 * any correlation statistics, we will keep it as 0.
+	 */
+	*indexCorrelation = 0;
+
+	qinfos = deconstruct_indexquals(path);
+	foreach(l, qinfos)
+	{
+		IndexQualInfo *qinfo = (IndexQualInfo *) lfirst(l);
+		AttrNumber	attnum = index->indexkeys[qinfo->indexcol];
+
+		/* attempt to lookup stats in relation for this index column */
+		if (attnum != 0)
+		{
+			/* Simple variable -- look to stats for the underlying table */
+			if (get_relation_stats_hook &&
+				(*get_relation_stats_hook) (root, rte, attnum, &vardata))
+			{
+				/*
+				 * The hook took control of acquiring a stats tuple.  If it
+				 * did supply a tuple, it'd better have supplied a freefunc.
+				 */
+				if (HeapTupleIsValid(vardata.statsTuple) && !vardata.freefunc)
+					elog(ERROR,
+						 "no function provided to release variable stats with");
+			}
+			else
+			{
+				vardata.statsTuple =
+					SearchSysCache3(STATRELATTINH,
+									ObjectIdGetDatum(rte->relid),
+									Int16GetDatum(attnum),
+									BoolGetDatum(false));
+				vardata.freefunc = ReleaseSysCache;
+			}
+		}
+		else
+		{
+			/*
+			 * Looks like we've found an expression column in the index. Let's
+			 * see if there's any stats for it.
+			 */
+
+			/* get the attnum from the 0-based index. */
+			attnum = qinfo->indexcol + 1;
+
+			if (get_index_stats_hook &&
+				(*get_index_stats_hook) (root, index->indexoid, attnum, &vardata))
+			{
+				/*
+				 * The hook took control of acquiring a stats tuple.  If it did
+				 * supply a tuple, it'd better have supplied a freefunc.
+				 */
+				if (HeapTupleIsValid(vardata.statsTuple) &&
+					!vardata.freefunc)
+					elog(ERROR, "no function provided to release variable stats with");
+			}
+			else
+			{
+				vardata.statsTuple = SearchSysCache3(STATRELATTINH,
+													 ObjectIdGetDatum(index->indexoid),
+													 Int16GetDatum(attnum),
+													 BoolGetDatum(false));
+				vardata.freefunc = ReleaseSysCache;
+			}
+		}
+
+		if (HeapTupleIsValid(vardata.statsTuple))
+		{
+			float4	   *numbers;
+			int			nnumbers;
+
+			if (get_attstatsslot(vardata.statsTuple, InvalidOid, 0,
+								 STATISTIC_KIND_CORRELATION,
+								 InvalidOid,
+								 NULL,
+								 NULL, NULL,
+								 &numbers, &nnumbers))
+			{
+				double		varCorrelation = 0.0;
+
+				if (nnumbers > 0)
+					varCorrelation = Abs(numbers[0]);
+
+				if (varCorrelation > *indexCorrelation)
+					*indexCorrelation = varCorrelation;
+
+				free_attstatsslot(InvalidOid, NULL, 0, numbers, nnumbers);
+			}
+		}
+
+		ReleaseVariableStats(vardata);
+	}
+
+	qualSelectivity = clauselist_selectivity(root, indexQuals,
+											 baserel->relid,
+											 JOIN_INNER, NULL,
+											 baserel);
+
+	/* work out the actual number of ranges in the index */
+	indexRanges = Max(ceil((double) baserel->pages / statsData.pagesPerRange),
+					  1.0);
+
+	/*
+	 * Now calculate the minimum possible ranges we could match with if all of
+	 * the rows were in the perfect order in the table's heap.
+	 */
+	minimalRanges = ceil(indexRanges * qualSelectivity);
+
+	/*
+	 * Now estimate the number of ranges that we'll touch by using the
+	 * indexCorrelation from the stats. Careful not to divide by zero
+	 * (note we're using the absolute value of the correlation).
+	 */
+	if (*indexCorrelation < 1.0e-10)
+		estimatedRanges = indexRanges;
+	else
+		estimatedRanges = Min(minimalRanges / *indexCorrelation, indexRanges);
+
+	/* we expect to visit this portion of the table */
+	selec = estimatedRanges / indexRanges;
+
+	CLAMP_PROBABILITY(selec);
+
+	*indexSelectivity = selec;
+
+	/*
+	 * Compute the index qual costs, much as in genericcostestimate, to add
+	 * to the index costs.
+	 */
+	qual_arg_cost = other_operands_eval_cost(root, qinfos) +
+		orderby_operands_eval_cost(root, path);
+
+	/*
+	 * Compute the startup cost as the cost to read the whole revmap
+	 * sequentially, including the cost to execute the index quals.
+	 */
+	*indexStartupCost =
+		spc_seq_page_cost * statsData.revmapNumPages * loop_count;
+	*indexStartupCost += qual_arg_cost;
 
 	/*
 	 * To read a BRIN index there might be a bit of back and forth over
 	 * regular pages, as revmap might point to them out of sequential order;
-	 * calculate this as reading the whole index in random order.
+	 * calculate the total cost as reading the whole index in random order.
 	 */
-	*indexTotalCost = spc_random_page_cost * numPages * loop_count;
-
-	*indexSelectivity =
-		clauselist_selectivity(root, indexQuals,
-							   path->indexinfo->rel->relid,
-							   JOIN_INNER, NULL,
-							   path->indexinfo->rel);
-	*indexCorrelation = 1;
+	*indexTotalCost = *indexStartupCost +
+		spc_random_page_cost * (numPages - statsData.revmapNumPages) * loop_count;
 
 	/*
-	 * Add on index qual eval costs, much as in genericcostestimate.
+	 * Charge a small amount per range tuple which we expect to match to. This
+	 * is meant to reflect the costs of manipulating the bitmap. The BRIN scan
+	 * will set a bit for each page in the range when we find a matching
+	 * range, so we must multiply the charge by the number of pages in the
+	 * range.
 	 */
-	qual_arg_cost = other_operands_eval_cost(root, qinfos) +
-		orderby_operands_eval_cost(root, path);
-	qual_op_cost = cpu_operator_cost *
-		(list_length(indexQuals) + list_length(indexOrderBys));
+	*indexTotalCost += 0.1 * cpu_operator_cost * estimatedRanges *
+		statsData.pagesPerRange;
 
-	*indexStartupCost += qual_arg_cost;
-	*indexTotalCost += qual_arg_cost;
-	*indexTotalCost += (numTuples * *indexSelectivity) * (cpu_index_tuple_cost + qual_op_cost);
 	*indexPages = index->pages;
-
-	/* XXX what about pages_per_range? */
 }

@@ -370,6 +370,9 @@ BEGIN
 END;
 $x$;
 
+RESET enable_seqscan;
+RESET enable_bitmapscan;
+
 INSERT INTO brintest SELECT
 	repeat(stringu1, 42)::bytea,
 	substr(stringu1, 1, 1)::"char",
@@ -444,3 +447,16 @@ SELECT brin_summarize_range('brin_summarize_idx', 4294967295);
 -- invalid block number values
 SELECT brin_summarize_range('brin_summarize_idx', -1);
 SELECT brin_summarize_range('brin_summarize_idx', 4294967296);
+
+
+-- test brin cost estimates behave sanely based on correlation of values
+CREATE TABLE brin_test (a INT, b INT);
+INSERT INTO brin_test SELECT x/100,x%100 FROM generate_series(1,10000) x(x);
+CREATE INDEX brin_test_a_idx ON brin_test USING brin (a) WITH (pages_per_range = 2);
+CREATE INDEX brin_test_b_idx ON brin_test USING brin (b) WITH (pages_per_range = 2);
+VACUUM ANALYZE brin_test;
+
+-- Ensure brin index is used when columns are perfectly correlated
+EXPLAIN (COSTS OFF) SELECT * FROM brin_test WHERE a = 1;
+-- Ensure brin index is not used when values are not correlated
+EXPLAIN (COSTS OFF) SELECT * FROM brin_test WHERE b = 1;

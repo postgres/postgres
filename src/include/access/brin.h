@@ -25,6 +25,17 @@ typedef struct BrinOptions
 	bool		autosummarize;
 } BrinOptions;
 
+
+/*
+ * BrinStatsData represents stats data for planner use
+ */
+typedef struct BrinStatsData
+{
+	BlockNumber	pagesPerRange;
+	BlockNumber	revmapNumPages;
+} BrinStatsData;
+
+
 #define BRIN_DEFAULT_PAGES_PER_RANGE	128
 #define BrinGetPagesPerRange(relation) \
 	((relation)->rd_options ? \
@@ -34,5 +45,8 @@ typedef struct BrinOptions
 	((relation)->rd_options ? \
 	 ((BrinOptions *) (relation)->rd_options)->autosummarize : \
 	  false)
+
+
+extern void brinGetStats(Relation index, BrinStatsData *stats);
 
 #endif   /* BRIN_H */
