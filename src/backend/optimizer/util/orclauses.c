@@ -280,7 +280,7 @@ consider_new_or_clause(PlannerInfo *root, RelOptInfo *rel,
 	 * saving work later.)
 	 */
 	or_selec = clause_selectivity(root, (Node *) or_rinfo,
-								  0, JOIN_INNER, NULL, rel);
+								  0, JOIN_INNER, NULL);
 
 	/*
 	 * The clause is only worth adding to the query if it rejects a useful
@@ -344,7 +344,7 @@ consider_new_or_clause(PlannerInfo *root, RelOptInfo *rel,
 
 		/* Compute inner-join size */
 		orig_selec = clause_selectivity(root, (Node *) join_or_rinfo,
-										0, JOIN_INNER, &sjinfo, NULL);
+										0, JOIN_INNER, &sjinfo);
 
 		/* And hack cached selectivity so join size remains the same */
 		join_or_rinfo->norm_selec = orig_selec / or_selec;

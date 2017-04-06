@@ -3750,8 +3750,7 @@ compute_semi_anti_join_factors(PlannerInfo *root,
 									joinquals,
 									0,
 									jointype,
-									sjinfo,
-									NULL);
+									sjinfo);
 
 	/*
 	 * Also get the normal inner-join selectivity of the join clauses.
@@ -3774,8 +3773,7 @@ compute_semi_anti_join_factors(PlannerInfo *root,
 									joinquals,
 									0,
 									JOIN_INNER,
-									&norm_sjinfo,
-									NULL);
+									&norm_sjinfo);
 
 	/* Avoid leaking a lot of ListCells */
 	if (jointype == JOIN_ANTI)
@@ -3942,7 +3940,7 @@ approx_tuple_count(PlannerInfo *root, JoinPath *path, List *quals)
 		Node	   *qual = (Node *) lfirst(l);
 
 		/* Note that clause_selectivity will be able to cache its result */
-		selec *= clause_selectivity(root, qual, 0, JOIN_INNER, &sjinfo, NULL);
+		selec *= clause_selectivity(root, qual, 0, JOIN_INNER, &sjinfo);
 	}
 
 	/* Apply it to the input relation sizes */
@@ -3978,8 +3976,7 @@ set_baserel_size_estimates(PlannerInfo *root, RelOptInfo *rel)
 							   rel->baserestrictinfo,
 							   0,
 							   JOIN_INNER,
-							   NULL,
-							   rel);
+							   NULL);
 
 	rel->rows = clamp_row_est(nrows);
 
@@ -4016,8 +4013,7 @@ get_parameterized_baserel_size(PlannerInfo *root, RelOptInfo *rel,
 							   allclauses,
 							   rel->relid,		/* do not use 0! */
 							   JOIN_INNER,
-							   NULL,
-							   rel);
+							   NULL);
 	nrows = clamp_row_est(nrows);
 	/* For safety, make sure result is not more than the base estimate */
 	if (nrows > rel->rows)
@@ -4183,14 +4179,12 @@ calc_joinrel_size_estimate(PlannerInfo *root,
 										joinquals,
 										0,
 										jointype,
-										sjinfo,
-										NULL);
+										sjinfo);
 		pselec = clauselist_selectivity(root,
 										pushedquals,
 										0,
 										jointype,
-										sjinfo,
-										NULL);
+										sjinfo);
 
 		/* Avoid leaking a lot of ListCells */
 		list_free(joinquals);
@@ -4202,8 +4196,7 @@ calc_joinrel_size_estimate(PlannerInfo *root,
 										restrictlist,
 										0,
 										jointype,
-										sjinfo,
-										NULL);
+										sjinfo);
 		pselec = 0.0;			/* not used, keep compiler quiet */
 	}
 
@@ -4498,7 +4491,7 @@ get_foreign_key_join_selectivity(PlannerInfo *root,
 				Selectivity csel;
 
 				csel = clause_selectivity(root, (Node *) rinfo,
-										  0, jointype, sjinfo, NULL);
+										  0, jointype, sjinfo);
 				thisfksel = Min(thisfksel, csel);
 			}
 			fkselec *= thisfksel;

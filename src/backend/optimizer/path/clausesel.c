@@ -41,7 +41,8 @@ typedef struct RangeQueryClause
 
 static void addRangeClause(RangeQueryClause **rqlist, Node *clause,
 			   bool varonleft, bool isLTsel, Selectivity s2);
-
+static RelOptInfo *find_relation_from_clauses(PlannerInfo *root,
+											  List *clauses);
 
 /****************************************************************************
  *		ROUTINES TO COMPUTE SELECTIVITIES
@@ -101,14 +102,14 @@ clauselist_selectivity(PlannerInfo *root,
 					   List *clauses,
 					   int varRelid,
 					   JoinType jointype,
-					   SpecialJoinInfo *sjinfo,
-					   RelOptInfo *rel)
+					   SpecialJoinInfo *sjinfo)
 {
 	Selectivity s1 = 1.0;
 	RangeQueryClause *rqlist = NULL;
 	ListCell   *l;
 	Bitmapset  *estimatedclauses = NULL;
 	int			listidx;
+	RelOptInfo *rel;
 
 	/*
 	 * If there's exactly one clause, then extended statistics is futile at
@@ -117,7 +118,14 @@ clauselist_selectivity(PlannerInfo *root,
 	 */
 	if (list_length(clauses) == 1)
 		return clause_selectivity(root, (Node *) linitial(clauses),
-								  varRelid, jointype, sjinfo, rel);
+								  varRelid, jointype, sjinfo);
+
+	/*
+	 * Determine if these clauses reference a single relation. If so we might
+	 * like to try applying any extended statistics which exist on it.
+	 * Called many time during joins, so must return NULL quickly if not.
+	 */
+	rel = find_relation_from_clauses(root, clauses);
 
 	/*
 	 * When a relation of RTE_RELATION is given as 'rel', we'll try to
@@ -164,7 +172,7 @@ clauselist_selectivity(PlannerInfo *root,
 			continue;
 
 		/* Always compute the selectivity using clause_selectivity */
-		s2 = clause_selectivity(root, clause, varRelid, jointype, sjinfo, rel);
+		s2 = clause_selectivity(root, clause, varRelid, jointype, sjinfo);
 
 		/*
 		 * Check for being passed a RestrictInfo.
@@ -418,6 +426,39 @@ addRangeClause(RangeQueryClause **rqlist, Node *clause,
 }
 
 /*
+ * find_relation_from_clauses
+ *		Process each clause in 'clauses' and determine if all clauses
+ *		reference only a single relation. If so return that relation,
+ *		otherwise return NULL.
+ */
+static RelOptInfo *
+find_relation_from_clauses(PlannerInfo *root, List *clauses)
+{
+	ListCell *l;
+	int relid;
+	int lastrelid = 0;
+
+	foreach(l, clauses)
+	{
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
+
+		if (bms_get_singleton_member(rinfo->clause_relids, &relid))
+		{
+			if (lastrelid != 0 && relid != lastrelid)
+				return NULL;		/* relation not the same as last one */
+			lastrelid = relid;
+		}
+		else
+			return NULL;			/* multiple relations in clause */
+	}
+
+	if (lastrelid != 0)
+		return find_base_rel(root, lastrelid);
+
+	return NULL;			/* no clauses */
+}
+
+/*
  * bms_is_subset_singleton
  *
  * Same result as bms_is_subset(s, bms_make_singleton(x)),
@@ -529,8 +570,7 @@ clause_selectivity(PlannerInfo *root,
 				   Node *clause,
 				   int varRelid,
 				   JoinType jointype,
-				   SpecialJoinInfo *sjinfo,
-				   RelOptInfo *rel)
+				   SpecialJoinInfo *sjinfo)
 {
 	Selectivity s1 = 0.5;		/* default for any unhandled clause type */
 	RestrictInfo *rinfo = NULL;
@@ -650,8 +690,7 @@ clause_selectivity(PlannerInfo *root,
 								  (Node *) get_notclausearg((Expr *) clause),
 									  varRelid,
 									  jointype,
-									  sjinfo,
-									  rel);
+									  sjinfo);
 	}
 	else if (and_clause(clause))
 	{
@@ -660,8 +699,7 @@ clause_selectivity(PlannerInfo *root,
 									((BoolExpr *) clause)->args,
 									varRelid,
 									jointype,
-									sjinfo,
-									rel);
+									sjinfo);
 	}
 	else if (or_clause(clause))
 	{
@@ -680,8 +718,7 @@ clause_selectivity(PlannerInfo *root,
 												(Node *) lfirst(arg),
 												varRelid,
 												jointype,
-												sjinfo,
-												rel);
+												sjinfo);
 
 			s1 = s1 + s2 - s1 * s2;
 		}
@@ -774,8 +811,7 @@ clause_selectivity(PlannerInfo *root,
 								(Node *) ((RelabelType *) clause)->arg,
 								varRelid,
 								jointype,
-								sjinfo,
-								rel);
+								sjinfo);
 	}
 	else if (IsA(clause, CoerceToDomain))
 	{
@@ -784,8 +820,7 @@ clause_selectivity(PlannerInfo *root,
 								(Node *) ((CoerceToDomain *) clause)->arg,
 								varRelid,
 								jointype,
-								sjinfo,
-								rel);
+								sjinfo);
 	}
 	else
 	{

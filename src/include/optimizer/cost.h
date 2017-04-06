@@ -203,14 +203,12 @@ extern Selectivity clauselist_selectivity(PlannerInfo *root,
 					   List *clauses,
 					   int varRelid,
 					   JoinType jointype,
-					   SpecialJoinInfo *sjinfo,
-					   RelOptInfo *rel);
+					   SpecialJoinInfo *sjinfo);
 extern Selectivity clause_selectivity(PlannerInfo *root,
 				   Node *clause,
 				   int varRelid,
 				   JoinType jointype,
-				   SpecialJoinInfo *sjinfo,
-				   RelOptInfo *rel);
+				   SpecialJoinInfo *sjinfo);
 extern void cost_gather_merge(GatherMergePath *path, PlannerInfo *root,
 							  RelOptInfo *rel, ParamPathInfo *param_info,
 							  Cost input_startup_cost, Cost input_total_cost,

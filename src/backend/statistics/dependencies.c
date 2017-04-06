@@ -1050,8 +1050,8 @@ dependencies_clauselist_selectivity(PlannerInfo *root,
 			{
 				clause = (Node *) lfirst(l);
 
-				s2 = clause_selectivity(root, clause, varRelid, jointype, sjinfo,
-										NULL);	/* don't try to use ext stats */
+				s2 = clause_selectivity(root, clause, varRelid, jointype,
+										sjinfo);
 
 				/* mark this one as done, so we don't touch it again. */
 				*estimatedclauses = bms_add_member(*estimatedclauses, listidx);
