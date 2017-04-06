@@ -175,7 +175,12 @@ set enable_indexscan to off;
 set enable_hashjoin to off;
 set enable_mergejoin to off;
 set enable_material to off;
-set effective_io_concurrency=50;
+-- test prefetching, if the platform allows it
+DO $$
+BEGIN
+ SET effective_io_concurrency = 50;
+EXCEPTION WHEN invalid_parameter_value THEN
+END $$;
 set work_mem='64kB';  --set small work mem to force lossy pages
 explain (costs off)
 	select count(*) from tenk1, tenk2 where tenk1.hundred > 1 and tenk2.thousand=0;
