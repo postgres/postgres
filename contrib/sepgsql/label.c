@@ -10,6 +10,16 @@
  */
 #include "postgres.h"
 
+#include <selinux/label.h>
+
+/*
+ * <selinux/label.h> includes <stdbool.h>, which creates an incompatible
+ * #define for bool.  Get rid of that so we can use our own typedef.
+ * (We don't care if <stdbool.h> redefines "true"/"false"; those are close
+ * enough.)
+ */
+#undef bool
+
 #include "access/heapam.h"
 #include "access/htup_details.h"
 #include "access/genam.h"
@@ -36,8 +46,6 @@
 #include "utils/tqual.h"
 
 #include "sepgsql.h"
-
-#include <selinux/label.h>
 
 /*
  * Saved hook entries (if stacked)
