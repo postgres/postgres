@@ -32,6 +32,14 @@
   <xsl:attribute name="text-align">center</xsl:attribute>
 </xsl:attribute-set>
 
+<!-- fix missing space after vertical simplelist
+     https://github.com/docbook/xslt10-stylesheets/issues/31 -->
+<xsl:attribute-set name="normal.para.spacing">
+  <xsl:attribute name="space-after.optimum">1em</xsl:attribute>
+  <xsl:attribute name="space-after.minimum">0.8em</xsl:attribute>
+  <xsl:attribute name="space-after.maximum">1.2em</xsl:attribute>
+</xsl:attribute-set>
+
 <!-- Change display of some elements -->
 
 <xsl:template match="command">
