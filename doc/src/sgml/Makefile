@@ -33,9 +33,10 @@ ifndef DBTOEPUB
 DBTOEPUB = $(missing) dbtoepub
 endif
 
-ifndef JADE
-JADE = $(missing) jade
+ifndef FOP
+FOP = $(missing) fop
 endif
+
 SGMLINCLUDE = -D . -D $(srcdir)
 
 ifndef NSGMLS
@@ -57,17 +58,10 @@ endif
 override XSLTPROCFLAGS += --stringparam pg.version '$(VERSION)'
 
 
-GENERATED_SGML = bookindex.sgml version.sgml \
+GENERATED_SGML = version.sgml \
 	features-supported.sgml features-unsupported.sgml errcodes-table.sgml
 
 ALLSGML := $(wildcard $(srcdir)/*.sgml $(srcdir)/ref/*.sgml) $(GENERATED_SGML)
-
-# Sometimes we don't want this one.
-ALMOSTALLSGML := $(filter-out %bookindex.sgml,$(ALLSGML))
-
-ifdef DOCBOOKSTYLE
-CATALOG = -c $(DOCBOOKSTYLE)/catalog
-endif
 
 # Enable some extra warnings
 # -wfully-tagged needed to throw a warning on missing tags
@@ -76,6 +70,7 @@ endif
 # in particular < and & that haven't been made into entities.  It's far too
 # noisy to turn on by default, unfortunately.
 override SPFLAGS += -wall -wno-unused-param -wno-empty -wfully-tagged
+
 
 ##
 ## Man pages
@@ -90,49 +85,8 @@ man-stamp: stylesheet-man.xsl postgres.xml
 
 
 ##
-## HTML
+## common files
 ##
-
-.PHONY: draft
-
-JADE.html.call = $(JADE) $(JADEFLAGS) $(SPFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -t sgml -i output-html
-ifeq ($(STYLE),website)
-JADE.html.call += -V website-stylesheet
-endif
-
-# The draft target creates HTML output in draft mode, without index (for faster build).
-draft: postgres.sgml $(ALMOSTALLSGML) stylesheet.dsl
-	$(MKDIR_P) html
-	$(JADE.html.call) -V draft-mode $<
-	cp $(srcdir)/stylesheet.css html/
-
-oldhtml: oldhtml-stamp
-
-oldhtml-stamp: postgres.sgml $(ALLSGML) stylesheet.dsl
-	$(MAKE) check-tabs
-	$(MKDIR_P) html
-	$(JADE.html.call) -i include-index $<
-	cp $(srcdir)/stylesheet.css html/
-	touch $@
-
-# single-page HTML
-postgres.html: postgres.sgml $(ALLSGML) stylesheet.dsl
-	$(JADE.html.call) -V nochunks -V rootchunk -V '(define %root-filename% #f)' -V '(define use-output-dir #f)' -i include-index $<
-
-# single-page text
-postgres.txt: postgres.html
-	$(LYNX) -force_html -dump -nolist $< > $@
-
-HTML.index: postgres.sgml $(ALMOSTALLSGML) stylesheet.dsl
-	@$(MKDIR_P) html
-	$(JADE.html.call) -V html-index $<
-
-bookindex.sgml: HTML.index
-ifdef COLLATEINDEX
-	LC_ALL=C $(PERL) $(COLLATEINDEX) -f -g -i 'bookindex' -o $@ $<
-else
-	@$(missing) collateindex.pl $< $@
-endif
 
 # Technically, this should depend on Makefile.global, but then
 # version.sgml would need to be rebuilt after every configure run,
@@ -153,67 +107,6 @@ features-unsupported.sgml: $(top_srcdir)/src/backend/catalog/sql_feature_package
 
 errcodes-table.sgml: $(top_srcdir)/src/backend/utils/errcodes.txt generate-errcodes-table.pl
 	$(PERL) $(srcdir)/generate-errcodes-table.pl $< > $@
-
-##
-## Print
-##
-
-
-# RTF to allow minor editing for hardcopy
-%.rtf: %.sgml $(ALLSGML)
-	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -t rtf -V rtf-backend -i output-print  -i include-index postgres.sgml
-
-# TeX
-# Regular TeX and pdfTeX have slightly differing requirements, so we
-# need to distinguish the path we're taking.
-
-JADE.tex.call = $(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d $(srcdir)/stylesheet.dsl -t tex -V tex-backend -i output-print -i include-index
-
-%-A4.tex-ps: %.sgml $(ALLSGML)
-	$(JADE.tex.call) -V texdvi-output -V '%paper-type%'=A4 -o $@ $<
-
-%-US.tex-ps: %.sgml $(ALLSGML)
-	$(JADE.tex.call) -V texdvi-output -V '%paper-type%'=USletter -o $@ $<
-
-%-A4.tex-pdf: %.sgml $(ALLSGML)
-	$(JADE.tex.call) -V texpdf-output -V '%paper-type%'=A4 -o $@ $<
-
-%-US.tex-pdf: %.sgml $(ALLSGML)
-	$(JADE.tex.call) -V texpdf-output -V '%paper-type%'=USletter -o $@ $<
-
-%.dvi: %.tex-ps
-	@rm -f $*.aux $*.log
-# multiple runs are necessary to create proper intra-document links
-	jadetex $<
-	jadetex $<
-	jadetex $<
-
-# PostScript from TeX
-postgres.ps:
-	$(error Invalid target;  use postgres-A4.ps or postgres-US.ps as targets)
-
-%.ps: %.dvi
-	dvips -o $@ $<
-
-postgres.pdf:
-	$(error Invalid target;  use postgres-A4.pdf or postgres-US.pdf as targets)
-
-%.pdf: %.tex-pdf
-	@rm -f $*.aux $*.log $*.out
-# multiple runs are necessary to create proper intra-document links
-	pdfjadetex $<
-	pdfjadetex $<
-	pdfjadetex $<
-
-# Cancel built-in suffix rules, interfering with PS building
-.SUFFIXES:
-
-
-# This generates an XML version of the flow-object tree.  It's useful
-# for debugging DSSSL code, and possibly to interface to some other
-# tools that can make use of this.
-%.fot: %.sgml $(ALLSGML)
-	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -t fot -i output-print -i include-index -o $@ $<
 
 
 ##
@@ -239,19 +132,19 @@ INSTALL.html: %.html : stylesheet-text.xsl %.xml
 	$(XSLTPROC) $(XSLTPROCFLAGS) $(XSLTPROC_HTML_FLAGS) $^ >$@
 
 INSTALL.xml: standalone-install.sgml installation.sgml version.sgml
-	$(OSX) -D. -x lower $(filter-out version.sgml,$^) >$@.tmp
+	$(OSX) $(SGMLINCLUDE) -x lower $(filter-out version.sgml,$^) >$@.tmp
 	$(call mangle-xml,chapter)
 
 
 ##
-## XSLT processing
+## SGML->XML conversion
 ##
 
 # For obscure reasons, GNU make 3.81 complains about circular dependencies
 # if we try to do "make all" in a VPATH build without the explicit
 # $(srcdir) on the postgres.sgml dependency in this rule.  GNU make bug?
-postgres.xml: $(srcdir)/postgres.sgml $(ALMOSTALLSGML)
-	$(OSX) -D. -x lower -i include-xslt-index $< >$@.tmp
+postgres.xml: $(srcdir)/postgres.sgml $(ALLSGML)
+	$(OSX) $(SGMLINCLUDE) -x lower $< >$@.tmp
 	$(call mangle-xml,book)
 
 define mangle-xml
@@ -260,6 +153,11 @@ $(PERL) -p -e 's/\[(aacute|acirc|aelig|agrave|amp|aring|atilde|auml|bull|copy|ea
   <$@.tmp > $@
 rm $@.tmp
 endef
+
+
+##
+## HTML
+##
 
 ifeq ($(STYLE),website)
 XSLTPROC_HTML_FLAGS += --param website.stylesheet 1
@@ -277,6 +175,23 @@ htmlhelp: stylesheet-hh.xsl postgres.xml
 	$(XMLLINT) --noout --valid postgres.xml
 	$(XSLTPROC) $(XSLTPROCFLAGS) $^
 
+# single-page HTML
+postgres.html: stylesheet-html-nochunk.xsl postgres.xml
+	$(XMLLINT) --noout --valid postgres.xml
+	$(XSLTPROC) $(XSLTPROCFLAGS) $(XSLTPROC_HTML_FLAGS) -o $@ $^
+
+# single-page text
+postgres.txt: postgres.html
+	$(LYNX) -force_html -dump -nolist $< > $@
+
+
+##
+## Print
+##
+
+postgres.pdf:
+	$(error Invalid target;  use postgres-A4.pdf or postgres-US.pdf as targets)
+
 %-A4.fo: stylesheet-fo.xsl %.xml
 	$(XMLLINT) --noout --valid $*.xml
 	$(XSLTPROC) $(XSLTPROCFLAGS) --stringparam paper.type A4 -o $@ $^
@@ -285,12 +200,13 @@ htmlhelp: stylesheet-hh.xsl postgres.xml
 	$(XMLLINT) --noout --valid $*.xml
 	$(XSLTPROC) $(XSLTPROCFLAGS) --stringparam paper.type USletter -o $@ $^
 
-FOP = fop
-
-.SECONDARY: postgres-A4.fo postgres-US.fo
-
-%-fop.pdf: %.fo
+%.pdf: %.fo
 	$(FOP) -fo $< -pdf $@
+
+
+##
+## EPUB
+##
 
 epub: postgres.epub
 postgres.epub: postgres.xml
@@ -321,7 +237,7 @@ MAKEINFO = makeinfo
 ##
 
 # Quick syntax check without style processing
-check: postgres.sgml $(ALMOSTALLSGML) check-tabs
+check: postgres.sgml $(ALLSGML) check-tabs
 	$(NSGMLS) $(SPFLAGS) $(SGMLINCLUDE) -s $<
 
 
@@ -394,7 +310,7 @@ check-tabs:
 # keeping the dependencies satisfied.
 .SECONDARY: postgres.xml $(GENERATED_SGML) HTML.index
 .SECONDARY: INSTALL.html INSTALL.xml
-.SECONDARY: %-A4.tex-ps %-US.tex-ps %-A4.tex-pdf %-US.tex-pdf
+.SECONDARY: postgres-A4.fo postgres-US.fo
 
 clean:
 # text --- these are shipped, but not in this directory
@@ -403,11 +319,13 @@ clean:
 # single-page output
 	rm -f postgres.html postgres.txt
 # print
-	rm -f *.rtf *.tex-ps *.tex-pdf *.dvi *.aux *.log *.ps *.pdf *.out *.fot
-# index
-	rm -f HTML.index $(GENERATED_SGML)
-# XSLT
-	rm -f postgres.xml *.tmp htmlhelp.hhp toc.hhc index.hhk *.fo
+	rm -f *.fo *.pdf
+# generated SGML files
+	rm -f $(GENERATED_SGML)
+# SGML->XML conversion
+	rm -f postgres.xml *.tmp
+# HTML Help
+	rm -f htmlhelp.hhp toc.hhc index.hhk
 # EPUB
 	rm -f postgres.epub
 # Texinfo

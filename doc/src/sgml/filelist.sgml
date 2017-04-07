@@ -193,7 +193,6 @@
 
 <!-- back matter -->
 <!ENTITY biblio     SYSTEM "biblio.sgml">
-<!ENTITY bookindex  SYSTEM "bookindex.sgml">
 
 <!--
  Some parts of the documentation are also source for some plain-text
@@ -203,14 +202,3 @@
  -->
 <!ENTITY % standalone-ignore  "INCLUDE">
 <!ENTITY % standalone-include "IGNORE">
-
-<!--
- By default, no index is included.  Use -i include-index on the command line
- to include it.
- -->
-<!ENTITY % include-index "IGNORE">
-
-<!--
- Create empty index element for processing by XSLT stylesheet.
- -->
-<!ENTITY % include-xslt-index "IGNORE">

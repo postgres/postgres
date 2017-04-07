@@ -518,16 +518,6 @@ $ENV{PERL5LIB}=$ENV{PERL5LIB} . ';c:\IPC-Run-0.94\lib';
     </varlistentry>
 
     <varlistentry>
-     <term>DocBook DSSSL 1.79</term>
-     <listitem><para>
-      Download from
-      <ulink url="http://sourceforge.net/projects/docbook/files/docbook-dsssl/1.79/docbook-dsssl-1.79.zip/download"></>
-      and uncompress in the subdirectory
-      <filename>docbook-dsssl-1.79</filename>.
-     </para></listitem>
-    </varlistentry>
-
-    <varlistentry>
      <term>ISO character entities</term>
      <listitem><para>
       Download from

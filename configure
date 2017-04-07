@@ -629,14 +629,12 @@ ac_subst_vars='LTLIBOBJS
 vpath_build
 PG_VERSION_NUM
 PROVE
+FOP
 OSX
 XSLTPROC
 XMLLINT
 DBTOEPUB
-COLLATEINDEX
-DOCBOOKSTYLE
 have_docbook
-JADE
 NSGMLS
 TCL_SHLIB_LD_LIBS
 TCL_SHARED_BUILD
@@ -869,8 +867,7 @@ PKG_CONFIG_LIBDIR
 ICU_CFLAGS
 ICU_LIBS
 LDFLAGS_EX
-LDFLAGS_SL
-DOCBOOKSTYLE'
+LDFLAGS_SL'
 
 
 # Initialize some variables set by options.
@@ -1568,8 +1565,6 @@ Some influential environment variables:
   ICU_LIBS    linker flags for ICU, overriding pkg-config
   LDFLAGS_EX  extra linker flags for linking executables only
   LDFLAGS_SL  extra linker flags for linking shared libraries only
-  DOCBOOKSTYLE
-              location of DocBook stylesheets
 
 Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
@@ -15951,48 +15946,6 @@ fi
   test -n "$NSGMLS" && break
 done
 
-for ac_prog in openjade jade
-do
-  # Extract the first word of "$ac_prog", so it can be a program name with args.
-set dummy $ac_prog; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_JADE+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$JADE"; then
-  ac_cv_prog_JADE="$JADE" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_JADE="$ac_prog"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-fi
-fi
-JADE=$ac_cv_prog_JADE
-if test -n "$JADE"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $JADE" >&5
-$as_echo "$JADE" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-  test -n "$JADE" && break
-done
-
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for DocBook V4.2" >&5
 $as_echo_n "checking for DocBook V4.2... " >&6; }
@@ -16029,93 +15982,6 @@ $as_echo "$pgac_cv_check_docbook" >&6; }
 have_docbook=$pgac_cv_check_docbook
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for DocBook stylesheets" >&5
-$as_echo_n "checking for DocBook stylesheets... " >&6; }
-if ${pgac_cv_path_stylesheets+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$DOCBOOKSTYLE"; then
-  pgac_cv_path_stylesheets=$DOCBOOKSTYLE
-else
-  for pgac_prefix in /usr /usr/local /opt /sw; do
-    for pgac_infix in share lib; do
-      for pgac_postfix in \
-        sgml/stylesheets/nwalsh-modular \
-        sgml/stylesheets/docbook \
-        sgml/stylesheets/dsssl/docbook \
-        sgml/docbook-dsssl \
-        sgml/docbook/dsssl/modular \
-        sgml/docbook/stylesheet/dsssl/modular \
-        sgml/docbook/dsssl-stylesheets \
-        sgml/dsssl/docbook-dsssl-nwalsh
-      do
-        pgac_candidate=$pgac_prefix/$pgac_infix/$pgac_postfix
-        if test -r "$pgac_candidate/html/docbook.dsl" \
-           && test -r "$pgac_candidate/print/docbook.dsl"
-        then
-          pgac_cv_path_stylesheets=$pgac_candidate
-          break 3
-        fi
-      done
-    done
-  done
-fi
-fi
-
-DOCBOOKSTYLE=$pgac_cv_path_stylesheets
-
-if test -n "$DOCBOOKSTYLE"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $DOCBOOKSTYLE" >&5
-$as_echo "$DOCBOOKSTYLE" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-if test -n "$DOCBOOKSTYLE" -a -r "$DOCBOOKSTYLE/bin/collateindex.pl"; then
-  COLLATEINDEX="$DOCBOOKSTYLE/bin/collateindex.pl"
-
-else
-  # Extract the first word of "collateindex.pl", so it can be a program name with args.
-set dummy collateindex.pl; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_path_COLLATEINDEX+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  case $COLLATEINDEX in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_COLLATEINDEX="$COLLATEINDEX" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_COLLATEINDEX="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  ;;
-esac
-fi
-COLLATEINDEX=$ac_cv_path_COLLATEINDEX
-if test -n "$COLLATEINDEX"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $COLLATEINDEX" >&5
-$as_echo "$COLLATEINDEX" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-fi
 for ac_prog in dbtoepub
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
@@ -16282,6 +16148,48 @@ fi
 
 
   test -n "$OSX" && break
+done
+
+for ac_prog in fop
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_FOP+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$FOP"; then
+  ac_cv_prog_FOP="$FOP" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_FOP="$ac_prog"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+FOP=$ac_cv_prog_FOP
+if test -n "$FOP"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $FOP" >&5
+$as_echo "$FOP" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  test -n "$FOP" && break
 done
 
 
