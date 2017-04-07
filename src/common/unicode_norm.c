@@ -369,10 +369,10 @@ unicode_normalize_kc(const pg_wchar *input)
 		 * combining class for the second, and the second is not a starter.  A
 		 * character is a starter if its combining class is 0.
 		 */
-		if (nextEntry->class == 0x0 || prevEntry->class == 0x0)
+		if (nextEntry->comb_class == 0x0 || prevEntry->comb_class == 0x0)
 			continue;
 
-		if (prevEntry->class <= nextEntry->class)
+		if (prevEntry->comb_class <= nextEntry->comb_class)
 			continue;
 
 		/* exchange can happen */
@@ -407,7 +407,7 @@ unicode_normalize_kc(const pg_wchar *input)
 	{
 		pg_wchar	ch = decomp_chars[count];
 		pg_unicode_decomposition *ch_entry = get_code_entry(ch);
-		int			ch_class = (ch_entry == NULL) ? 0 : ch_entry->class;
+		int			ch_class = (ch_entry == NULL) ? 0 : ch_entry->comb_class;
 		pg_wchar	composite;
 
 		if (last_class < ch_class &&

@@ -19,7 +19,7 @@
 typedef struct
 {
 	uint32		codepoint;		/* Unicode codepoint */
-	uint8		class;			/* combining class of character */
+	uint8		comb_class;		/* combining class of character */
 	uint8		dec_size_flags; /* size and flags of decomposition code list */
 	uint16		dec_index;		/* index into UnicodeDecomp_codepoints, or the
 								 * decomposition itself if DECOMP_INLINE */
