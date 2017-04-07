@@ -515,7 +515,7 @@ dsa_attach(dsa_handle handle)
 	if (segment == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("could not attach to dsa_handle")));
+				 errmsg("could not attach to dynamic shared area")));
 
 	area = attach_internal(dsm_segment_address(segment), segment, handle);
 
@@ -1319,7 +1319,7 @@ attach_internal(void *place, dsm_segment *segment, dsa_handle handle)
 		/* We can't attach to a DSA area that has already been destroyed. */
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("could not attach to dsa_area")));
+				 errmsg("could not attach to dynamic shared area")));
 	}
 	++control->refcnt;
 	LWLockRelease(DSA_AREA_LOCK(area));
