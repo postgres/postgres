@@ -484,6 +484,34 @@ SELECT * FROM jsonb_array_elements_text('[1,true,[1,[2,3]],null,{"f1":1,"f2":[7,
 -- populate_record
 CREATE TYPE jbpop AS (a text, b int, c timestamp);
 
+CREATE DOMAIN jsb_int_not_null  AS int     NOT NULL;
+CREATE DOMAIN jsb_int_array_1d  AS int[]   CHECK(array_length(VALUE, 1) = 3);
+CREATE DOMAIN jsb_int_array_2d  AS int[][] CHECK(array_length(VALUE, 2) = 3);
+
+CREATE TYPE jsbrec AS (
+	i	int,
+	ia	_int4,
+	ia1	int[],
+	ia2	int[][],
+	ia3	int[][][],
+	ia1d	jsb_int_array_1d,
+	ia2d	jsb_int_array_2d,
+	t	text,
+	ta	text[],
+	c	char(10),
+	ca	char(10)[],
+	ts	timestamp,
+	js	json,
+	jsb	jsonb,
+	jsa	json[],
+	rec	jbpop,
+	reca	jbpop[]
+);
+
+CREATE TYPE jsbrec_i_not_null AS (
+	i	jsb_int_not_null
+);
+
 SELECT * FROM jsonb_populate_record(NULL::jbpop,'{"a":"blurfl","x":43.2}') q;
 SELECT * FROM jsonb_populate_record(row('x',3,'2012-12-31 15:30:56')::jbpop,'{"a":"blurfl","x":43.2}') q;
 
@@ -493,6 +521,100 @@ SELECT * FROM jsonb_populate_record(row('x',3,'2012-12-31 15:30:56')::jbpop,'{"a
 SELECT * FROM jsonb_populate_record(NULL::jbpop,'{"a":[100,200,false],"x":43.2}') q;
 SELECT * FROM jsonb_populate_record(row('x',3,'2012-12-31 15:30:56')::jbpop,'{"a":[100,200,false],"x":43.2}') q;
 SELECT * FROM jsonb_populate_record(row('x',3,'2012-12-31 15:30:56')::jbpop,'{"c":[100,200,false],"x":43.2}') q;
+
+SELECT * FROM jsonb_populate_record(row('x',3,'2012-12-31 15:30:56')::jbpop, '{}') q;
+
+SELECT i FROM jsonb_populate_record(NULL::jsbrec_i_not_null, '{"x": 43.2}') q;
+SELECT i FROM jsonb_populate_record(NULL::jsbrec_i_not_null, '{"i": null}') q;
+SELECT i FROM jsonb_populate_record(NULL::jsbrec_i_not_null, '{"i": 12345}') q;
+
+SELECT ia FROM jsonb_populate_record(NULL::jsbrec, '{"ia": null}') q;
+SELECT ia FROM jsonb_populate_record(NULL::jsbrec, '{"ia": 123}') q;
+SELECT ia FROM jsonb_populate_record(NULL::jsbrec, '{"ia": [1, "2", null, 4]}') q;
+SELECT ia FROM jsonb_populate_record(NULL::jsbrec, '{"ia": [[1, 2], [3, 4]]}') q;
+SELECT ia FROM jsonb_populate_record(NULL::jsbrec, '{"ia": [[1], 2]}') q;
+SELECT ia FROM jsonb_populate_record(NULL::jsbrec, '{"ia": [[1], [2, 3]]}') q;
+SELECT ia FROM jsonb_populate_record(NULL::jsbrec, '{"ia": "{1,2,3}"}') q;
+
+SELECT ia1 FROM jsonb_populate_record(NULL::jsbrec, '{"ia1": null}') q;
+SELECT ia1 FROM jsonb_populate_record(NULL::jsbrec, '{"ia1": 123}') q;
+SELECT ia1 FROM jsonb_populate_record(NULL::jsbrec, '{"ia1": [1, "2", null, 4]}') q;
+SELECT ia1 FROM jsonb_populate_record(NULL::jsbrec, '{"ia1": [[1, 2, 3]]}') q;
+
+SELECT ia1d FROM jsonb_populate_record(NULL::jsbrec, '{"ia1d": null}') q;
+SELECT ia1d FROM jsonb_populate_record(NULL::jsbrec, '{"ia1d": 123}') q;
+SELECT ia1d FROM jsonb_populate_record(NULL::jsbrec, '{"ia1d": [1, "2", null, 4]}') q;
+SELECT ia1d FROM jsonb_populate_record(NULL::jsbrec, '{"ia1d": [1, "2", null]}') q;
+
+SELECT ia2 FROM jsonb_populate_record(NULL::jsbrec, '{"ia2": [1, "2", null, 4]}') q;
+SELECT ia2 FROM jsonb_populate_record(NULL::jsbrec, '{"ia2": [[1, 2], [null, 4]]}') q;
+SELECT ia2 FROM jsonb_populate_record(NULL::jsbrec, '{"ia2": [[], []]}') q;
+SELECT ia2 FROM jsonb_populate_record(NULL::jsbrec, '{"ia2": [[1, 2], [3]]}') q;
+SELECT ia2 FROM jsonb_populate_record(NULL::jsbrec, '{"ia2": [[1, 2], 3, 4]}') q;
+
+SELECT ia2d FROM jsonb_populate_record(NULL::jsbrec, '{"ia2d": [[1, "2"], [null, 4]]}') q;
+SELECT ia2d FROM jsonb_populate_record(NULL::jsbrec, '{"ia2d": [[1, "2", 3], [null, 5, 6]]}') q;
+
+SELECT ia3 FROM jsonb_populate_record(NULL::jsbrec, '{"ia3": [1, "2", null, 4]}') q;
+SELECT ia3 FROM jsonb_populate_record(NULL::jsbrec, '{"ia3": [[1, 2], [null, 4]]}') q;
+SELECT ia3 FROM jsonb_populate_record(NULL::jsbrec, '{"ia3": [ [[], []], [[], []], [[], []] ]}') q;
+SELECT ia3 FROM jsonb_populate_record(NULL::jsbrec, '{"ia3": [ [[1, 2]], [[3, 4]] ]}') q;
+SELECT ia3 FROM jsonb_populate_record(NULL::jsbrec, '{"ia3": [ [[1, 2], [3, 4]], [[5, 6], [7, 8]] ]}') q;
+SELECT ia3 FROM jsonb_populate_record(NULL::jsbrec, '{"ia3": [ [[1, 2], [3, 4]], [[5, 6], [7, 8], [9, 10]] ]}') q;
+
+SELECT ta FROM jsonb_populate_record(NULL::jsbrec, '{"ta": null}') q;
+SELECT ta FROM jsonb_populate_record(NULL::jsbrec, '{"ta": 123}') q;
+SELECT ta FROM jsonb_populate_record(NULL::jsbrec, '{"ta": [1, "2", null, 4]}') q;
+SELECT ta FROM jsonb_populate_record(NULL::jsbrec, '{"ta": [[1, 2, 3], {"k": "v"}]}') q;
+
+SELECT c FROM jsonb_populate_record(NULL::jsbrec, '{"c": null}') q;
+SELECT c FROM jsonb_populate_record(NULL::jsbrec, '{"c": "aaa"}') q;
+SELECT c FROM jsonb_populate_record(NULL::jsbrec, '{"c": "aaaaaaaaaa"}') q;
+SELECT c FROM jsonb_populate_record(NULL::jsbrec, '{"c": "aaaaaaaaaaaaa"}') q;
+
+SELECT ca FROM jsonb_populate_record(NULL::jsbrec, '{"ca": null}') q;
+SELECT ca FROM jsonb_populate_record(NULL::jsbrec, '{"ca": 123}') q;
+SELECT ca FROM jsonb_populate_record(NULL::jsbrec, '{"ca": [1, "2", null, 4]}') q;
+SELECT ca FROM jsonb_populate_record(NULL::jsbrec, '{"ca": ["aaaaaaaaaaaaaaaa"]}') q;
+SELECT ca FROM jsonb_populate_record(NULL::jsbrec, '{"ca": [[1, 2, 3], {"k": "v"}]}') q;
+
+SELECT js FROM jsonb_populate_record(NULL::jsbrec, '{"js": null}') q;
+SELECT js FROM jsonb_populate_record(NULL::jsbrec, '{"js": true}') q;
+SELECT js FROM jsonb_populate_record(NULL::jsbrec, '{"js": 123.45}') q;
+SELECT js FROM jsonb_populate_record(NULL::jsbrec, '{"js": "123.45"}') q;
+SELECT js FROM jsonb_populate_record(NULL::jsbrec, '{"js": "abc"}') q;
+SELECT js FROM jsonb_populate_record(NULL::jsbrec, '{"js": [123, "123", null, {"key": "value"}]}') q;
+SELECT js FROM jsonb_populate_record(NULL::jsbrec, '{"js": {"a": "bbb", "b": null, "c": 123.45}}') q;
+
+SELECT jsb FROM jsonb_populate_record(NULL::jsbrec, '{"jsb": null}') q;
+SELECT jsb FROM jsonb_populate_record(NULL::jsbrec, '{"jsb": true}') q;
+SELECT jsb FROM jsonb_populate_record(NULL::jsbrec, '{"jsb": 123.45}') q;
+SELECT jsb FROM jsonb_populate_record(NULL::jsbrec, '{"jsb": "123.45"}') q;
+SELECT jsb FROM jsonb_populate_record(NULL::jsbrec, '{"jsb": "abc"}') q;
+SELECT jsb FROM jsonb_populate_record(NULL::jsbrec, '{"jsb": [123, "123", null, {"key": "value"}]}') q;
+SELECT jsb FROM jsonb_populate_record(NULL::jsbrec, '{"jsb": {"a": "bbb", "b": null, "c": 123.45}}') q;
+
+SELECT jsa FROM jsonb_populate_record(NULL::jsbrec, '{"jsa": null}') q;
+SELECT jsa FROM jsonb_populate_record(NULL::jsbrec, '{"jsa": 123}') q;
+SELECT jsa FROM jsonb_populate_record(NULL::jsbrec, '{"jsa": [1, "2", null, 4]}') q;
+SELECT jsa FROM jsonb_populate_record(NULL::jsbrec, '{"jsa": ["aaa", null, [1, 2, "3", {}], { "k" : "v" }]}') q;
+
+SELECT rec FROM jsonb_populate_record(NULL::jsbrec, '{"rec": 123}') q;
+SELECT rec FROM jsonb_populate_record(NULL::jsbrec, '{"rec": [1, 2]}') q;
+SELECT rec FROM jsonb_populate_record(NULL::jsbrec, '{"rec": {"a": "abc", "c": "01.02.2003", "x": 43.2}}') q;
+SELECT rec FROM jsonb_populate_record(NULL::jsbrec, '{"rec": "(abc,42,01.02.2003)"}') q;
+
+SELECT reca FROM jsonb_populate_record(NULL::jsbrec, '{"reca": 123}') q;
+SELECT reca FROM jsonb_populate_record(NULL::jsbrec, '{"reca": [1, 2]}') q;
+SELECT reca FROM jsonb_populate_record(NULL::jsbrec, '{"reca": [{"a": "abc", "b": 456}, null, {"c": "01.02.2003", "x": 43.2}]}') q;
+SELECT reca FROM jsonb_populate_record(NULL::jsbrec, '{"reca": ["(abc,42,01.02.2003)"]}') q;
+SELECT reca FROM jsonb_populate_record(NULL::jsbrec, '{"reca": "{\"(abc,42,01.02.2003)\"}"}') q;
+
+SELECT rec FROM jsonb_populate_record(
+	row(NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+		row('x',3,'2012-12-31 15:30:56')::jbpop,NULL)::jsbrec,
+	'{"rec": {"a": "abc", "c": "01.02.2003", "x": 43.2}}'
+) q;
 
 -- populate_recordset
 SELECT * FROM jsonb_populate_recordset(NULL::jbpop,'[{"a":"blurfl","x":43.2},{"b":3,"c":"2012-01-20 10:42:53"}]') q;
@@ -515,12 +637,42 @@ select * from jsonb_to_recordset('[{"a":1,"b":"foo","d":false},{"a":2,"b":"bar",
     as x(a int, b text, c boolean);
 
 select *, c is null as c_is_null
-from jsonb_to_record('{"a":1, "b":{"c":16, "d":2}, "x":8}'::jsonb)
-    as t(a int, b jsonb, c text, x int);
+from jsonb_to_record('{"a":1, "b":{"c":16, "d":2}, "x":8, "ca": ["1 2", 3], "ia": [[1,2],[3,4]], "r": {"a": "aaa", "b": 123}}'::jsonb)
+    as t(a int, b jsonb, c text, x int, ca char(5)[], ia int[][], r jbpop);
 
 select *, c is null as c_is_null
 from jsonb_to_recordset('[{"a":1, "b":{"c":16, "d":2}, "x":8}]'::jsonb)
     as t(a int, b jsonb, c text, x int);
+
+select * from jsonb_to_record('{"ia": null}') as x(ia _int4);
+select * from jsonb_to_record('{"ia": 123}') as x(ia _int4);
+select * from jsonb_to_record('{"ia": [1, "2", null, 4]}') as x(ia _int4);
+select * from jsonb_to_record('{"ia": [[1, 2], [3, 4]]}') as x(ia _int4);
+select * from jsonb_to_record('{"ia": [[1], 2]}') as x(ia _int4);
+select * from jsonb_to_record('{"ia": [[1], [2, 3]]}') as x(ia _int4);
+
+select * from jsonb_to_record('{"ia2": [1, 2, 3]}') as x(ia2 int[][]);
+select * from jsonb_to_record('{"ia2": [[1, 2], [3, 4]]}') as x(ia2 int4[][]);
+select * from jsonb_to_record('{"ia2": [[[1], [2], [3]]]}') as x(ia2 int4[][]);
+
+-- test type info caching in jsonb_populate_record()
+CREATE TEMP TABLE jsbpoptest (js jsonb);
+
+INSERT INTO jsbpoptest
+SELECT '{
+	"jsa": [1, "2", null, 4],
+	"rec": {"a": "abc", "c": "01.02.2003", "x": 43.2},
+	"reca": [{"a": "abc", "b": 456}, null, {"c": "01.02.2003", "x": 43.2}]
+}'::jsonb
+FROM generate_series(1, 3);
+
+SELECT (jsonb_populate_record(NULL::jsbrec, js)).* FROM jsbpoptest;
+
+DROP TYPE jsbrec;
+DROP TYPE jsbrec_i_not_null;
+DROP DOMAIN jsb_int_not_null;
+DROP DOMAIN jsb_int_array_1d;
+DROP DOMAIN jsb_int_array_2d;
 
 -- indexing
 SELECT count(*) FROM testjsonb WHERE j @> '{"wait":null}';

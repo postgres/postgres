@@ -11546,12 +11546,12 @@ table2-mapping
          whose columns match the record type defined by <replaceable>base</>
          (see note below).
        </entry>
-       <entry><literal>select * from json_populate_record(null::myrowtype, '{"a":1,"b":2}')</literal></entry>
+       <entry><literal>select * from json_populate_record(null::myrowtype, '{"a": 1, "b": ["2", "a b"], "c": {"d": 4, "e": "a  b c"}}')</literal></entry>
        <entry>
 <programlisting>
- a | b
----+---
- 1 | 2
+ a |   b       |      c
+---+-----------+-------------
+ 1 | {2,"a b"} | (4,"a b c")
 </programlisting>
        </entry>
       </row>
@@ -11640,12 +11640,12 @@ table2-mapping
          explicitly define the structure of the record with an <literal>AS</>
          clause.
        </entry>
-       <entry><literal>select * from json_to_record('{"a":1,"b":[1,2,3],"c":"bar"}') as x(a int, b text, d text) </literal></entry>
+       <entry><literal>select * from json_to_record('{"a":1,"b":[1,2,3],"c":[1,2,3],"e":"bar","r": {"a": 123, "b": "a b c"}}') as x(a int, b text, c int[], d text, r myrowtype) </literal></entry>
        <entry>
 <programlisting>
- a |    b    | d
----+---------+---
- 1 | [1,2,3] |
+ a |    b    |    c    | d |       r
+---+---------+---------+---+---------------
+ 1 | [1,2,3] | {1,2,3} |   | (123,"a b c")
 </programlisting>
        </entry>
       </row>
