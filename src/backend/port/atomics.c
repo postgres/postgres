@@ -89,7 +89,7 @@ void
 pg_atomic_init_u32_impl(volatile pg_atomic_uint32 *ptr, uint32 val_)
 {
 	StaticAssertStmt(sizeof(ptr->sema) >= sizeof(slock_t),
-					 "size mismatch of atomic_flag vs slock_t");
+					 "size mismatch of atomic_uint32 vs slock_t");
 
 	/*
 	 * If we're using semaphore based atomic flags, be careful about nested
@@ -157,3 +157,66 @@ pg_atomic_fetch_add_u32_impl(volatile pg_atomic_uint32 *ptr, int32 add_)
 }
 
 #endif   /* PG_HAVE_ATOMIC_U32_SIMULATION */
+
+
+#ifdef PG_HAVE_ATOMIC_U64_SIMULATION
+
+void
+pg_atomic_init_u64_impl(volatile pg_atomic_uint64 *ptr, uint64 val_)
+{
+	StaticAssertStmt(sizeof(ptr->sema) >= sizeof(slock_t),
+					 "size mismatch of atomic_uint64 vs slock_t");
+
+	/*
+	 * If we're using semaphore based atomic flags, be careful about nested
+	 * usage of atomics while a spinlock is held.
+	 */
+#ifndef HAVE_SPINLOCKS
+	s_init_lock_sema((slock_t *) &ptr->sema, true);
+#else
+	SpinLockInit((slock_t *) &ptr->sema);
+#endif
+	ptr->value = val_;
+}
+
+bool
+pg_atomic_compare_exchange_u64_impl(volatile pg_atomic_uint64 *ptr,
+									uint64 *expected, uint64 newval)
+{
+	bool		ret;
+
+	/*
+	 * Do atomic op under a spinlock. It might look like we could just skip
+	 * the cmpxchg if the lock isn't available, but that'd just emulate a
+	 * 'weak' compare and swap. I.e. one that allows spurious failures. Since
+	 * several algorithms rely on a strong variant and that is efficiently
+	 * implementable on most major architectures let's emulate it here as
+	 * well.
+	 */
+	SpinLockAcquire((slock_t *) &ptr->sema);
+
+	/* perform compare/exchange logic */
+	ret = ptr->value == *expected;
+	*expected = ptr->value;
+	if (ret)
+		ptr->value = newval;
+
+	/* and release lock */
+	SpinLockRelease((slock_t *) &ptr->sema);
+
+	return ret;
+}
+
+uint64
+pg_atomic_fetch_add_u64_impl(volatile pg_atomic_uint64 *ptr, int64 add_)
+{
+	uint64		oldval;
+
+	SpinLockAcquire((slock_t *) &ptr->sema);
+	oldval = ptr->value;
+	ptr->value += add_;
+	SpinLockRelease((slock_t *) &ptr->sema);
+	return oldval;
+}
+
+#endif   /* PG_HAVE_ATOMIC_U64_SIMULATION */

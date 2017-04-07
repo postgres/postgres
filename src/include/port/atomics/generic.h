@@ -255,8 +255,6 @@ pg_atomic_sub_fetch_u32_impl(volatile pg_atomic_uint32 *ptr, int32 sub_)
 }
 #endif
 
-#ifdef PG_HAVE_ATOMIC_U64_SUPPORT
-
 #if !defined(PG_HAVE_ATOMIC_EXCHANGE_U64) && defined(PG_HAVE_ATOMIC_COMPARE_EXCHANGE_U64)
 #define PG_HAVE_ATOMIC_EXCHANGE_U64
 static inline uint64
@@ -270,6 +268,24 @@ pg_atomic_exchange_u64_impl(volatile pg_atomic_uint64 *ptr, uint64 xchg_)
 			break;
 	}
 	return old;
+}
+#endif
+
+#ifndef PG_HAVE_ATOMIC_READ_U64
+#define PG_HAVE_ATOMIC_READ_U64
+static inline uint64
+pg_atomic_read_u64_impl(volatile pg_atomic_uint64 *ptr)
+{
+	return *(&ptr->value);
+}
+#endif
+
+#ifndef PG_HAVE_ATOMIC_WRITE_U64
+#define PG_HAVE_ATOMIC_WRITE_U64
+static inline void
+pg_atomic_write_u64_impl(volatile pg_atomic_uint64 *ptr, uint64 val)
+{
+	ptr->value = val;
 }
 #endif
 
@@ -388,5 +404,3 @@ pg_atomic_sub_fetch_u64_impl(volatile pg_atomic_uint64 *ptr, int64 sub_)
 	return pg_atomic_fetch_sub_u64_impl(ptr, sub_) - sub_;
 }
 #endif
-
-#endif /* PG_HAVE_ATOMIC_COMPARE_EXCHANGE_U64 */

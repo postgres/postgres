@@ -12,13 +12,14 @@
  * * pg_compiler_barrier(), pg_write_barrier(), pg_read_barrier()
  * * pg_atomic_compare_exchange_u32(), pg_atomic_fetch_add_u32()
  * * pg_atomic_test_set_flag(), pg_atomic_init_flag(), pg_atomic_clear_flag()
+ * * PG_HAVE_8BYTE_SINGLE_COPY_ATOMICITY should be defined if appropriate.
  *
  * There exist generic, hardware independent, implementations for several
  * compilers which might be sufficient, although possibly not optimal, for a
  * new platform. If no such generic implementation is available spinlocks (or
  * even OS provided semaphores) will be used to implement the API.
  *
- * Implement the _u64 variants if and only if your platform can use them
+ * Implement _u64 atomics if and only if your platform can use them
  * efficiently (and obviously correctly).
  *
  * Use higher level functionality (lwlocks, spinlocks, heavyweight locks)
@@ -110,9 +111,9 @@
 
 /*
  * Provide a full fallback of the pg_*_barrier(), pg_atomic**_flag and
- * pg_atomic_*_u32 APIs for platforms without sufficient spinlock and/or
- * atomics support. In the case of spinlock backed atomics the emulation is
- * expected to be efficient, although less so than native atomics support.
+ * pg_atomic_* APIs for platforms without sufficient spinlock and/or atomics
+ * support. In the case of spinlock backed atomics the emulation is expected
+ * to be efficient, although less so than native atomics support.
  */
 #include "port/atomics/fallback.h"
 
@@ -421,8 +422,6 @@ pg_atomic_sub_fetch_u32(volatile pg_atomic_uint32 *ptr, int32 sub_)
  * documentation.
  * ----
  */
-#ifdef PG_HAVE_ATOMIC_U64_SUPPORT
-
 static inline void
 pg_atomic_init_u64(volatile pg_atomic_uint64 *ptr, uint64 val)
 {
@@ -505,8 +504,6 @@ pg_atomic_sub_fetch_u64(volatile pg_atomic_uint64 *ptr, int64 sub_)
 	Assert(sub_ != PG_INT64_MIN);
 	return pg_atomic_sub_fetch_u64_impl(ptr, sub_);
 }
-
-#endif   /* PG_HAVE_64_BIT_ATOMICS */
 
 #undef INSIDE_ATOMICS_H
 

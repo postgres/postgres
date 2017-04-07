@@ -239,4 +239,14 @@ pg_atomic_fetch_add_u64_impl(volatile pg_atomic_uint64 *ptr, int64 add_)
 
 #endif /* defined(__GNUC__) || defined(__INTEL_COMPILER) */
 
+/*
+ * 8 byte reads / writes have single-copy atomicity on 32 bit x86 platforms
+ * since at least the 586. As well as on all x86-64 cpus.
+ */
+#if defined(__i568__) || defined(__i668__) || /* gcc i586+ */  \
+	(defined(_M_IX86) && _M_IX86 >= 500) || /* msvc i586+ */ \
+	defined(__x86_64__) || defined(__x86_64) || defined(_M_X64) /* gcc, sunpro, msvc */
+#define PG_HAVE_8BYTE_SINGLE_COPY_ATOMICITY
+#endif /* 8 byte single-copy atomicity */
+
 #endif /* HAVE_ATOMICS */

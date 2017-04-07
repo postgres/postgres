@@ -997,7 +997,6 @@ test_atomic_uint32(void)
 		elog(ERROR, "pg_atomic_fetch_and_u32() #3 wrong");
 }
 
-#ifdef PG_HAVE_ATOMIC_U64_SUPPORT
 static void
 test_atomic_uint64(void)
 {
@@ -1073,7 +1072,6 @@ test_atomic_uint64(void)
 	if (pg_atomic_fetch_and_u64(&var, ~0) != 0)
 		elog(ERROR, "pg_atomic_fetch_and_u64() #3 wrong");
 }
-#endif   /* PG_HAVE_ATOMIC_U64_SUPPORT */
 
 
 PG_FUNCTION_INFO_V1(test_atomic_ops);
@@ -1096,9 +1094,7 @@ test_atomic_ops(PG_FUNCTION_ARGS)
 
 	test_atomic_uint32();
 
-#ifdef PG_HAVE_ATOMIC_U64_SUPPORT
 	test_atomic_uint64();
-#endif
 
 	PG_RETURN_BOOL(true);
 }

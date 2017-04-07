@@ -24,3 +24,6 @@
 #define pg_read_barrier_impl()		__asm__ __volatile__ ("lwsync" : : : "memory")
 #define pg_write_barrier_impl()		__asm__ __volatile__ ("lwsync" : : : "memory")
 #endif
+
+/* per architecture manual doubleword accesses have single copy atomicity */
+#define PG_HAVE_8BYTE_SINGLE_COPY_ATOMICITY

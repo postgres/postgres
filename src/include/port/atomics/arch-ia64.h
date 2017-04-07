@@ -24,3 +24,6 @@
 #elif defined(__hpux)
 #	define pg_memory_barrier_impl()		_Asm_mf()
 #endif
+
+/* per architecture manual doubleword accesses have single copy atomicity */
+#define PG_HAVE_8BYTE_SINGLE_COPY_ATOMICITY
