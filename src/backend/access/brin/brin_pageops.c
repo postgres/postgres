@@ -548,6 +548,8 @@ brin_evacuate_page(Relation idxRel, BlockNumber pagesPerRange,
 	OffsetNumber off;
 	OffsetNumber maxoff;
 	Page		page;
+	BrinTuple  *btup = NULL;
+	Size		btupsz = 0;
 
 	page = BufferGetPage(buf);
 
@@ -567,7 +569,7 @@ brin_evacuate_page(Relation idxRel, BlockNumber pagesPerRange,
 		{
 			sz = ItemIdGetLength(lp);
 			tup = (BrinTuple *) PageGetItem(page, lp);
-			tup = brin_copy_tuple(tup, sz);
+			tup = brin_copy_tuple(tup, sz, btup, &btupsz);
 
 			LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 

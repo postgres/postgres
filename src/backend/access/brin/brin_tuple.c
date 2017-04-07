@@ -311,17 +311,26 @@ brin_free_tuple(BrinTuple *tuple)
 }
 
 /*
- * Create a palloc'd copy of a BrinTuple.
+ * Given a brin tuple of size len, create a copy of it.  If 'dest' is not
+ * NULL, its size is destsz, and can be used as output buffer; if the tuple
+ * to be copied does not fit, it is enlarged by repalloc, and the size is
+ * updated to match.  This avoids palloc/free cycles when many brin tuples
+ * are being processed in loops.
  */
 BrinTuple *
-brin_copy_tuple(BrinTuple *tuple, Size len)
+brin_copy_tuple(BrinTuple *tuple, Size len, BrinTuple *dest, Size *destsz)
 {
-	BrinTuple  *newtup;
+	if (!destsz || *destsz == 0)
+		dest = palloc(len);
+	else if (len > *destsz)
+	{
+		dest = repalloc(dest, len);
+		*destsz = len;
+	}
 
-	newtup = palloc(len);
-	memcpy(newtup, tuple, len);
+	memcpy(dest, tuple, len);
 
-	return newtup;
+	return dest;
 }
 
 /*
@@ -348,54 +357,69 @@ BrinMemTuple *
 brin_new_memtuple(BrinDesc *brdesc)
 {
 	BrinMemTuple *dtup;
-	char	   *currdatum;
 	long		basesize;
-	int			i;
 
 	basesize = MAXALIGN(sizeof(BrinMemTuple) +
 						sizeof(BrinValues) * brdesc->bd_tupdesc->natts);
 	dtup = palloc0(basesize + sizeof(Datum) * brdesc->bd_totalstored);
-	currdatum = (char *) dtup + basesize;
-	for (i = 0; i < brdesc->bd_tupdesc->natts; i++)
-	{
-		dtup->bt_columns[i].bv_attno = i + 1;
-		dtup->bt_columns[i].bv_allnulls = true;
-		dtup->bt_columns[i].bv_hasnulls = false;
-		dtup->bt_columns[i].bv_values = (Datum *) currdatum;
-		currdatum += sizeof(Datum) * brdesc->bd_info[i]->oi_nstored;
-	}
+
+	dtup->bt_values = palloc(sizeof(Datum) * brdesc->bd_totalstored);
+	dtup->bt_allnulls = palloc(sizeof(bool) * brdesc->bd_tupdesc->natts);
+	dtup->bt_hasnulls = palloc(sizeof(bool) * brdesc->bd_tupdesc->natts);
 
 	dtup->bt_context = AllocSetContextCreate(CurrentMemoryContext,
 											 "brin dtuple",
 											 ALLOCSET_DEFAULT_SIZES);
+
+	brin_memtuple_initialize(dtup, brdesc);
+
 	return dtup;
 }
 
 /*
- * Reset a BrinMemTuple to initial state
+ * Reset a BrinMemTuple to initial state.  We return the same tuple, for
+ * notational convenience.
  */
-void
+BrinMemTuple *
 brin_memtuple_initialize(BrinMemTuple *dtuple, BrinDesc *brdesc)
 {
 	int			i;
+	char	   *currdatum;
 
 	MemoryContextReset(dtuple->bt_context);
+
+	currdatum = (char *) dtuple +
+		MAXALIGN(sizeof(BrinMemTuple) +
+				 sizeof(BrinValues) * brdesc->bd_tupdesc->natts);
 	for (i = 0; i < brdesc->bd_tupdesc->natts; i++)
 	{
 		dtuple->bt_columns[i].bv_allnulls = true;
 		dtuple->bt_columns[i].bv_hasnulls = false;
+
+		dtuple->bt_columns[i].bv_attno = i + 1;
+		dtuple->bt_columns[i].bv_allnulls = true;
+		dtuple->bt_columns[i].bv_hasnulls = false;
+		dtuple->bt_columns[i].bv_values = (Datum *) currdatum;
+		currdatum += sizeof(Datum) * brdesc->bd_info[i]->oi_nstored;
 	}
+
+	return dtuple;
 }
 
 /*
  * Convert a BrinTuple back to a BrinMemTuple.  This is the reverse of
  * brin_form_tuple.
  *
+ * As an optimization, the caller can pass a previously allocated 'dMemtuple'.
+ * This avoids having to allocate it here, which can be useful when this
+ * function is called many times in a loop.  It is caller's responsibility
+ * that the given BrinMemTuple matches what we need here.
+ *
  * Note we don't need the "on disk tupdesc" here; we rely on our own routine to
  * deconstruct the tuple from the on-disk format.
  */
 BrinMemTuple *
-brin_deform_tuple(BrinDesc *brdesc, BrinTuple *tuple)
+brin_deform_tuple(BrinDesc *brdesc, BrinTuple *tuple, BrinMemTuple *dMemtuple)
 {
 	BrinMemTuple *dtup;
 	Datum	   *values;
@@ -407,15 +431,16 @@ brin_deform_tuple(BrinDesc *brdesc, BrinTuple *tuple)
 	int			valueno;
 	MemoryContext oldcxt;
 
-	dtup = brin_new_memtuple(brdesc);
+	dtup = dMemtuple ? brin_memtuple_initialize(dMemtuple, brdesc) :
+		brin_new_memtuple(brdesc);
 
 	if (BrinTupleIsPlaceholder(tuple))
 		dtup->bt_placeholder = true;
 	dtup->bt_blkno = tuple->bt_blkno;
 
-	values = palloc(sizeof(Datum) * brdesc->bd_totalstored);
-	allnulls = palloc(sizeof(bool) * brdesc->bd_tupdesc->natts);
-	hasnulls = palloc(sizeof(bool) * brdesc->bd_tupdesc->natts);
+	values = dtup->bt_values;
+	allnulls = dtup->bt_allnulls;
+	hasnulls = dtup->bt_hasnulls;
 
 	tp = (char *) tuple + BrinTupleDataOffset(tuple);
 
@@ -457,10 +482,6 @@ brin_deform_tuple(BrinDesc *brdesc, BrinTuple *tuple)
 	}
 
 	MemoryContextSwitchTo(oldcxt);
-
-	pfree(values);
-	pfree(allnulls);
-	pfree(hasnulls);
 
 	return dtup;
 }

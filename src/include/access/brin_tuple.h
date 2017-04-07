@@ -38,6 +38,11 @@ typedef struct BrinMemTuple
 	bool		bt_placeholder; /* this is a placeholder tuple */
 	BlockNumber bt_blkno;		/* heap blkno that the tuple is for */
 	MemoryContext bt_context;	/* memcxt holding the bt_columns values */
+	/* output arrays for brin_deform_tuple: */
+	Datum		*bt_values;		/* values array */
+	bool		*bt_allnulls;	/* allnulls array */
+	bool		*bt_hasnulls; 	/* hasnulls array */
+	/* not an output array, but must be last */
 	BrinValues	bt_columns[FLEXIBLE_ARRAY_MEMBER];
 } BrinMemTuple;
 
@@ -83,14 +88,15 @@ extern BrinTuple *brin_form_tuple(BrinDesc *brdesc, BlockNumber blkno,
 extern BrinTuple *brin_form_placeholder_tuple(BrinDesc *brdesc,
 							BlockNumber blkno, Size *size);
 extern void brin_free_tuple(BrinTuple *tuple);
-extern BrinTuple *brin_copy_tuple(BrinTuple *tuple, Size len);
+extern BrinTuple *brin_copy_tuple(BrinTuple *tuple, Size len,
+				BrinTuple *dest, Size *destsz);
 extern bool brin_tuples_equal(const BrinTuple *a, Size alen,
 				  const BrinTuple *b, Size blen);
 
 extern BrinMemTuple *brin_new_memtuple(BrinDesc *brdesc);
-extern void brin_memtuple_initialize(BrinMemTuple *dtuple,
+extern BrinMemTuple *brin_memtuple_initialize(BrinMemTuple *dtuple,
 						 BrinDesc *brdesc);
 extern BrinMemTuple *brin_deform_tuple(BrinDesc *brdesc,
-				  BrinTuple *tuple);
+				  BrinTuple *tuple, BrinMemTuple *dMemtuple);
 
 #endif   /* BRIN_TUPLE_H */

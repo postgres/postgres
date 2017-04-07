@@ -217,7 +217,7 @@ brininsert(Relation idxRel, Datum *values, bool *nulls,
 			MemoryContextSwitchTo(tupcxt);
 		}
 
-		dtup = brin_deform_tuple(bdesc, brtup);
+		dtup = brin_deform_tuple(bdesc, brtup, NULL);
 
 		/*
 		 * Compare the key values of the new tuple to the stored index values;
@@ -268,7 +268,7 @@ brininsert(Relation idxRel, Datum *values, bool *nulls,
 			 * re-acquiring the lock.
 			 */
 			origsz = ItemIdGetLength(lp);
-			origtup = brin_copy_tuple(brtup, origsz);
+			origtup = brin_copy_tuple(brtup, origsz, NULL, NULL);
 
 			/*
 			 * Before releasing the lock, check if we can attempt a same-page
@@ -363,6 +363,9 @@ bringetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 	FmgrInfo   *consistentFn;
 	MemoryContext oldcxt;
 	MemoryContext perRangeCxt;
+	BrinMemTuple *dtup;
+	BrinTuple    *btup = NULL;
+	Size		btupsz = 0;
 
 	opaque = (BrinOpaque *) scan->opaque;
 	bdesc = opaque->bo_bdesc;
@@ -384,6 +387,9 @@ bringetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 	 */
 	consistentFn = palloc0(sizeof(FmgrInfo) * bdesc->bd_tupdesc->natts);
 
+	/* allocate an initial in-memory tuple, out of the per-range memcxt */
+	dtup = brin_new_memtuple(bdesc);
+
 	/*
 	 * Setup and use a per-range memory context, which is reset every time we
 	 * loop below.  This avoids having to free the tuples within the loop.
@@ -401,6 +407,7 @@ bringetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 	for (heapBlk = 0; heapBlk < nblocks; heapBlk += opaque->bo_pagesPerRange)
 	{
 		bool		addrange;
+		bool		gottuple = false;
 		BrinTuple  *tup;
 		OffsetNumber off;
 		Size		size;
@@ -414,7 +421,8 @@ bringetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 									   scan->xs_snapshot);
 		if (tup)
 		{
-			tup = brin_copy_tuple(tup, size);
+			gottuple = true;
+			btup = brin_copy_tuple(tup, size, btup, &btupsz);
 			LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 		}
 
@@ -422,15 +430,13 @@ bringetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 		 * For page ranges with no indexed tuple, we must return the whole
 		 * range; otherwise, compare it to the scan keys.
 		 */
-		if (tup == NULL)
+		if (!gottuple)
 		{
 			addrange = true;
 		}
 		else
 		{
-			BrinMemTuple *dtup;
-
-			dtup = brin_deform_tuple(bdesc, tup);
+			dtup = brin_deform_tuple(bdesc, btup, dtup);
 			if (dtup->bt_placeholder)
 			{
 				/*
@@ -1210,7 +1216,7 @@ summarize_range(IndexInfo *indexInfo, BrinBuildState *state, Relation heapRel,
 		/* the placeholder tuple must exist */
 		if (phtup == NULL)
 			elog(ERROR, "missing placeholder tuple");
-		phtup = brin_copy_tuple(phtup, phsz);
+		phtup = brin_copy_tuple(phtup, phsz, NULL, NULL);
 		LockBuffer(phbuf, BUFFER_LOCK_UNLOCK);
 
 		/* merge it into the tuple from the heap scan */
@@ -1358,7 +1364,7 @@ union_tuples(BrinDesc *bdesc, BrinMemTuple *a, BrinTuple *b)
 								"brin union",
 								ALLOCSET_DEFAULT_SIZES);
 	oldcxt = MemoryContextSwitchTo(cxt);
-	db = brin_deform_tuple(bdesc, b);
+	db = brin_deform_tuple(bdesc, b, NULL);
 	MemoryContextSwitchTo(oldcxt);
 
 	for (keyno = 0; keyno < bdesc->bd_tupdesc->natts; keyno++)

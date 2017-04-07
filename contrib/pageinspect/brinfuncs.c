@@ -226,7 +226,8 @@ brin_page_items(PG_FUNCTION_ARGS)
 			if (ItemIdIsUsed(itemId))
 			{
 				dtup = brin_deform_tuple(bdesc,
-									(BrinTuple *) PageGetItem(page, itemId));
+									(BrinTuple *) PageGetItem(page, itemId),
+									NULL);
 				attno = 1;
 				unusedItem = false;
 			}
