@@ -11,13 +11,43 @@
  *
  * - Username from the authentication exchange is not used. The client
  *	 should send an empty string as the username.
- * - Password is not processed with the SASLprep algorithm.
+ *
+ * - If the password isn't valid UTF-8, or contains characters prohibited
+ *	 by the SASLprep profile, we skip the SASLprep pre-processing and use
+ *	 the raw bytes in calculating the hash.
+ *
  * - Channel binding is not supported yet.
+ *
  *
  * The password stored in pg_authid consists of the salt, iteration count,
  * StoredKey and ServerKey.
  *
- * On error handling:
+ * SASLprep usage
+ * --------------
+ *
+ * One notable difference to the SCRAM specification is that while the
+ * specification dictates that the password is in UTF-8, and prohibits
+ * certain characters, we are more lenient.  If the password isn't a valid
+ * UTF-8 string, or contains prohibited characters, the raw bytes are used
+ * to calculate the hash instead, without SASLprep processing.  This is
+ * because PostgreSQL supports other encodings too, and the encoding being
+ * used during authentication is undefined (client_encoding isn't set until
+ * after authentication).  In effect, we try to interpret the password as
+ * UTF-8 and apply SASLprep processing, but if it looks invalid, we assume
+ * that it's in some other encoding.
+ *
+ * In the worst case, we misinterpret a password that's in a different
+ * encoding as being Unicode, because it happens to consists entirely of
+ * valid UTF-8 bytes, and we apply Unicode normalization to it.  As long
+ * as we do that consistently, that will not lead to failed logins.
+ * Fortunately, the UTF-8 byte sequences that are ignored by SASLprep
+ * don't correspond to any commonly used characters in any of the other
+ * supported encodings, so it should not lead to any significant loss in
+ * entropy, even if the normalization is incorrectly applied to a
+ * non-UTF-8 password.
+ *
+ * Error handling
+ * --------------
  *
  * Don't reveal user information to an unauthenticated client.  We don't
  * want an attacker to be able to probe whether a particular username is
@@ -37,6 +67,7 @@
  * to the encoding being used, whatever that is.  We cannot avoid that in
  * general, after logging in, but let's do what we can here.
  *
+ *
  * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -52,6 +83,7 @@
 #include "catalog/pg_authid.h"
 #include "catalog/pg_control.h"
 #include "common/base64.h"
+#include "common/saslprep.h"
 #include "common/scram-common.h"
 #include "common/sha2.h"
 #include "libpq/auth.h"
@@ -344,6 +376,17 @@ scram_build_verifier(const char *username, const char *password,
 	char		salt[SCRAM_SALT_LEN];
 	char	   *encoded_salt;
 	int			encoded_len;
+	char	   *prep_password = NULL;
+	pg_saslprep_rc rc;
+
+	/*
+	 * Normalize the password with SASLprep.  If that doesn't work, because
+	 * the password isn't valid UTF-8 or contains prohibited characters, just
+	 * proceed with the original password.  (See comments at top of file.)
+	 */
+	rc = pg_saslprep(password, &prep_password);
+	if (rc == SASLPREP_SUCCESS)
+		password = (const char *) prep_password;
 
 	if (iterations <= 0)
 		iterations = SCRAM_ITERATIONS_DEFAULT;
@@ -373,6 +416,9 @@ scram_build_verifier(const char *username, const char *password,
 	(void) hex_encode((const char *) keybuf, SCRAM_KEY_LEN, serverkey_hex);
 	serverkey_hex[SCRAM_KEY_LEN * 2] = '\0';
 
+	if (prep_password)
+		pfree(prep_password);
+
 	return psprintf("scram-sha-256:%s:%d:%s:%s", encoded_salt, iterations, storedkey_hex, serverkey_hex);
 }
 
@@ -392,13 +438,14 @@ scram_verify_plain_password(const char *username, const char *password,
 	uint8		stored_key[SCRAM_KEY_LEN];
 	uint8		server_key[SCRAM_KEY_LEN];
 	uint8		computed_key[SCRAM_KEY_LEN];
+	char	   *prep_password = NULL;
+	pg_saslprep_rc rc;
 
 	if (!parse_scram_verifier(verifier, &encoded_salt, &iterations,
 							  stored_key, server_key))
 	{
 		/*
-		 * The password looked like a SCRAM verifier, but could not be
-		 * parsed.
+		 * The password looked like a SCRAM verifier, but could not be parsed.
 		 */
 		elog(LOG, "invalid SCRAM verifier for user \"%s\"", username);
 		return false;
@@ -412,9 +459,17 @@ scram_verify_plain_password(const char *username, const char *password,
 		return false;
 	}
 
+	/* Normalize the password */
+	rc = pg_saslprep(password, &prep_password);
+	if (rc == SASLPREP_SUCCESS)
+		password = prep_password;
+
 	/* Compute Server key based on the user-supplied plaintext password */
 	scram_ClientOrServerKey(password, salt, saltlen, iterations,
 							SCRAM_SERVER_KEY_NAME, computed_key);
+
+	if (prep_password)
+		pfree(prep_password);
 
 	/*
 	 * Compare the verifier's Server Key with the one computed from the

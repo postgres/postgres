@@ -11,6 +11,7 @@
 /pg_strong_random.c
 /pgstrcasecmp.c
 /pqsignal.c
+/saslprep.c
 /scram-common.c
 /sha2.c
 /sha2_openssl.c
@@ -19,6 +20,7 @@
 /strlcpy.c
 /system.c
 /thread.c
+/unicode_norm.c
 /win32error.c
 /win32setlocale.c
 /pgsleep.c

@@ -148,28 +148,9 @@ scram_H(const uint8 *input, int len, uint8 *result)
 }
 
 /*
- * Encrypt password for SCRAM authentication. This basically applies the
- * normalization of the password and a hash calculation using the salt
- * value given by caller.
- */
-static void
-scram_SaltedPassword(const char *password, const char *salt, int saltlen, int iterations,
-					 uint8 *result)
-{
-	/*
-	 * XXX: Here SASLprep should be applied on password. However, per RFC5802,
-	 * it is required that the password is encoded in UTF-8, something that is
-	 * not guaranteed in this protocol. We may want to revisit this
-	 * normalization function once encoding functions are available as well in
-	 * the frontend in order to be able to encode properly this string, and
-	 * then apply SASLprep on it.
-	 */
-
-	scram_Hi(password, salt, saltlen, iterations, result);
-}
-
-/*
  * Calculate ClientKey or ServerKey.
+ *
+ * The password should already be normalized by SASLprep.
  */
 void
 scram_ClientOrServerKey(const char *password,
@@ -179,7 +160,7 @@ scram_ClientOrServerKey(const char *password,
 	uint8		keybuf[SCRAM_KEY_LEN];
 	scram_HMAC_ctx ctx;
 
-	scram_SaltedPassword(password, salt, saltlen, iterations, keybuf);
+	scram_Hi(password, salt, saltlen, iterations, keybuf);
 	scram_HMAC_init(&ctx, keybuf, SCRAM_KEY_LEN);
 	scram_HMAC_update(&ctx, keystr, strlen(keystr));
 	scram_HMAC_final(result, &ctx);

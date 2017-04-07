@@ -15,6 +15,7 @@
 #include "postgres_fe.h"
 
 #include "common/base64.h"
+#include "common/saslprep.h"
 #include "common/scram-common.h"
 #include "fe-auth.h"
 
@@ -42,7 +43,7 @@ typedef struct
 
 	/* These are supplied by the user */
 	const char *username;
-	const char *password;
+	char	   *password;
 
 	/* We construct these */
 	char	   *client_nonce;
@@ -82,6 +83,8 @@ void *
 pg_fe_scram_init(const char *username, const char *password)
 {
 	fe_scram_state *state;
+	char	   *prep_password;
+	pg_saslprep_rc rc;
 
 	state = (fe_scram_state *) malloc(sizeof(fe_scram_state));
 	if (!state)
@@ -89,7 +92,24 @@ pg_fe_scram_init(const char *username, const char *password)
 	memset(state, 0, sizeof(fe_scram_state));
 	state->state = FE_SCRAM_INIT;
 	state->username = username;
-	state->password = password;
+
+	/* Normalize the password with SASLprep, if possible */
+	rc = pg_saslprep(password, &prep_password);
+	if (rc == SASLPREP_OOM)
+	{
+		free(state);
+		return NULL;
+	}
+	if (rc != SASLPREP_SUCCESS)
+	{
+		prep_password = strdup(password);
+		if (!prep_password)
+		{
+			free(state);
+			return NULL;
+		}
+	}
+	state->password = prep_password;
 
 	return state;
 }
@@ -101,6 +121,9 @@ void
 pg_fe_scram_free(void *opaq)
 {
 	fe_scram_state *state = (fe_scram_state *) opaq;
+
+	if (state->password)
+		free(state->password);
 
 	/* client messages */
 	if (state->client_nonce)
