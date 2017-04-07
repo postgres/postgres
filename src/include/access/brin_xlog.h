@@ -134,7 +134,7 @@ typedef struct xl_brin_desummarize
 {
 	BlockNumber	pagesPerRange;
 	/* page number location to set to invalid */
-	OffsetNumber heapBlk;
+	BlockNumber heapBlk;
 	/* offset of item to delete in regular index page */
 	OffsetNumber regOffset;
 } xl_brin_desummarize;

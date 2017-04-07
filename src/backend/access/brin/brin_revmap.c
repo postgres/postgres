@@ -417,6 +417,7 @@ brinRevmapDesummarizeRange(Relation idxrel, BlockNumber heapBlk)
 		xl_brin_desummarize xlrec;
 		XLogRecPtr		recptr;
 
+		xlrec.pagesPerRange = revmap->rm_pagesPerRange;
 		xlrec.heapBlk = heapBlk;
 		xlrec.regOffset = regOffset;
 
