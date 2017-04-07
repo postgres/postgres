@@ -657,6 +657,15 @@ select row_to_json(r) from (select q2,q1 from tt1 offset 0) r;
  {"q2":0,"q1":0}
 (3 rows)
 
+-- check no-op rowtype conversions
+create temp table tt3 () inherits(tt2);
+insert into tt3 values(33,44);
+select row_to_json(tt3::tt2::tt1) from tt3;
+    row_to_json    
+-------------------
+ {"q1":33,"q2":44}
+(1 row)
+
 --
 -- IS [NOT] NULL should not recurse into nested composites (bug #14235)
 --

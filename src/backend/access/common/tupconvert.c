@@ -138,13 +138,14 @@ convert_tuples_by_position(TupleDesc indesc,
 						   nincols, noutcols)));
 
 	/*
-	 * Check to see if the map is one-to-one, in which case we need not do
-	 * the tuple conversion.  That's not enough though if either source or
-	 * destination (tuples) contains OIDs; we'd need conversion in that case
-	 * to inject the right OID into the tuple datum.
+	 * Check to see if the map is one-to-one, in which case we need not do a
+	 * tuple conversion.  We must also insist that both tupdescs either
+	 * specify or don't specify an OID column, else we need a conversion to
+	 * add/remove space for that.  (For some callers, presence or absence of
+	 * an OID column perhaps would not really matter, but let's be safe.)
 	 */
 	if (indesc->natts == outdesc->natts &&
-		!indesc->tdhasoid && !outdesc->tdhasoid)
+		indesc->tdhasoid == outdesc->tdhasoid)
 	{
 		for (i = 0; i < n; i++)
 		{
@@ -215,13 +216,14 @@ convert_tuples_by_name(TupleDesc indesc,
 	attrMap = convert_tuples_by_name_map(indesc, outdesc, msg);
 
 	/*
-	 * Check to see if the map is one-to-one, in which case we need not do
-	 * the tuple conversion.  That's not enough though if either source or
-	 * destination (tuples) contains OIDs; we'd need conversion in that case
-	 * to inject the right OID into the tuple datum.
+	 * Check to see if the map is one-to-one, in which case we need not do a
+	 * tuple conversion.  We must also insist that both tupdescs either
+	 * specify or don't specify an OID column, else we need a conversion to
+	 * add/remove space for that.  (For some callers, presence or absence of
+	 * an OID column perhaps would not really matter, but let's be safe.)
 	 */
 	if (indesc->natts == outdesc->natts &&
-		!indesc->tdhasoid && !outdesc->tdhasoid)
+		indesc->tdhasoid == outdesc->tdhasoid)
 	{
 		same = true;
 		for (i = 0; i < n; i++)

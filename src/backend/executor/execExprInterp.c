@@ -2840,21 +2840,31 @@ ExecEvalConvertRowtype(ExprState *state, ExprEvalStep *op, ExprContext *econtext
 		MemoryContextSwitchTo(old_cxt);
 	}
 
-	/*
-	 * No-op if no conversion needed (not clear this can happen here).
-	 */
-	if (op->d.convert_rowtype.map == NULL)
-		return;
-
-	/*
-	 * do_convert_tuple needs a HeapTuple not a bare HeapTupleHeader.
-	 */
+	/* Following steps need a HeapTuple not a bare HeapTupleHeader */
 	tmptup.t_len = HeapTupleHeaderGetDatumLength(tuple);
 	tmptup.t_data = tuple;
 
-	result = do_convert_tuple(&tmptup, op->d.convert_rowtype.map);
-
-	*op->resvalue = HeapTupleGetDatum(result);
+	if (op->d.convert_rowtype.map != NULL)
+	{
+		/* Full conversion with attribute rearrangement needed */
+		result = do_convert_tuple(&tmptup, op->d.convert_rowtype.map);
+		/* Result already has appropriate composite-datum header fields */
+		*op->resvalue = HeapTupleGetDatum(result);
+	}
+	else
+	{
+		/*
+		 * The tuple is physically compatible as-is, but we need to insert the
+		 * destination rowtype OID in its composite-datum header field, so we
+		 * have to copy it anyway.  heap_copy_tuple_as_datum() is convenient
+		 * for this since it will both make the physical copy and insert the
+		 * correct composite header fields.  Note that we aren't expecting to
+		 * have to flatten any toasted fields: the input was a composite
+		 * datum, so it shouldn't contain any.  So heap_copy_tuple_as_datum()
+		 * is overkill here, but its check for external fields is cheap.
+		 */
+		*op->resvalue = heap_copy_tuple_as_datum(&tmptup, outdesc);
+	}
 }
 
 /*
