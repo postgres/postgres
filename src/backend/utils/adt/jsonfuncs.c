@@ -185,7 +185,7 @@ typedef enum TypeCat
 	TYPECAT_SCALAR = 's',
 	TYPECAT_ARRAY = 'a',
 	TYPECAT_COMPOSITE = 'c',
-	TYPECAT_DOMAIN = 'd',
+	TYPECAT_DOMAIN = 'd'
 } TypeCat;
 
 /* these two are stolen from hstore / record_out, used in populate_record* */
