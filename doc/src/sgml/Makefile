@@ -132,7 +132,7 @@ INSTALL.html: %.html : stylesheet-text.xsl %.xml
 	$(XSLTPROC) $(XSLTPROCFLAGS) $(XSLTPROC_HTML_FLAGS) $^ >$@
 
 INSTALL.xml: standalone-install.sgml installation.sgml version.sgml
-	$(OSX) $(SGMLINCLUDE) -x lower $(filter-out version.sgml,$^) >$@.tmp
+	$(OSX) $(SPFLAGS) $(SGMLINCLUDE) -x lower $(filter-out version.sgml,$^) >$@.tmp
 	$(call mangle-xml,chapter)
 
 
@@ -144,7 +144,7 @@ INSTALL.xml: standalone-install.sgml installation.sgml version.sgml
 # if we try to do "make all" in a VPATH build without the explicit
 # $(srcdir) on the postgres.sgml dependency in this rule.  GNU make bug?
 postgres.xml: $(srcdir)/postgres.sgml $(ALLSGML)
-	$(OSX) $(SGMLINCLUDE) -x lower $< >$@.tmp
+	$(OSX) $(SPFLAGS) $(SGMLINCLUDE) -x lower $< >$@.tmp
 	$(call mangle-xml,book)
 
 define mangle-xml
