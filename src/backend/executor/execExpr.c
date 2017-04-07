@@ -511,7 +511,11 @@ List *
 ExecPrepareExprList(List *nodes, EState *estate)
 {
 	List	   *result = NIL;
+	MemoryContext oldcontext;
 	ListCell   *lc;
+
+	/* Ensure that the list cell nodes are in the right context too */
+	oldcontext = MemoryContextSwitchTo(estate->es_query_cxt);
 
 	foreach(lc, nodes)
 	{
@@ -519,6 +523,8 @@ ExecPrepareExprList(List *nodes, EState *estate)
 
 		result = lappend(result, ExecPrepareExpr(e, estate));
 	}
+
+	MemoryContextSwitchTo(oldcontext);
 
 	return result;
 }
