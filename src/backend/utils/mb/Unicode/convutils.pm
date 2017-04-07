@@ -49,8 +49,7 @@ sub read_source
 			print STDERR "READ ERROR at line $. in $fname: $_\n";
 			exit;
 		}
-		my $out = {f => $fname, l => $.,
-				   code => hex($1),
+		my $out = {code => hex($1),
 				   ucs => hex($2),
 				   comment => $4,
 				   direction => BOTH,
