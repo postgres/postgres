@@ -1275,6 +1275,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
         <row>
          <entry><literal>ProcArrayGroupUpdate</></entry>
          <entry>Waiting for group leader to clear transaction id at transaction end.</entry>
+        </row>
         <row>
          <entry><literal>SafeSnapshot</></entry>
          <entry>Waiting for a snapshot for a <literal>READ ONLY DEFERRABLE</> transaction.</entry>
