@@ -610,8 +610,8 @@ getOwnedSequence(Oid relid, AttrNumber attnum)
 		elog(ERROR, "more than one owned sequence found");
 	else if (list_length(seqlist) < 1)
 		elog(ERROR, "no owned sequence found");
-	else
-		return linitial_oid(seqlist);
+
+	return linitial_oid(seqlist);
 }
 
 /*
