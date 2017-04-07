@@ -511,7 +511,7 @@ statext_dependencies_deserialize(bytea *data)
 		return NULL;
 
 	if (VARSIZE_ANY_EXHDR(data) < SizeOfDependencies)
-		elog(ERROR, "invalid MVDependencies size %ld (expected at least %ld)",
+		elog(ERROR, "invalid MVDependencies size %zd (expected at least %zd)",
 			 VARSIZE_ANY_EXHDR(data), SizeOfDependencies);
 
 	/* read the MVDependencies header */
@@ -547,7 +547,7 @@ statext_dependencies_deserialize(bytea *data)
 							   sizeof(AttrNumber) * 2);
 
 	if (VARSIZE_ANY_EXHDR(data) < min_expected_size)
-		elog(ERROR, "invalid dependencies size %ld (expected at least %ld)",
+		elog(ERROR, "invalid dependencies size %zd (expected at least %zd)",
 			 VARSIZE_ANY_EXHDR(data), min_expected_size);
 
 	/* allocate space for the MCV items */
