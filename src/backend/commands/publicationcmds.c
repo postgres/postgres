@@ -499,7 +499,7 @@ RemovePublicationRelById(Oid proid)
 }
 
 /*
- * Open relations based om provided by RangeVar list.
+ * Open relations based on provided by RangeVar list.
  * The returned tables are locked in ShareUpdateExclusiveLock mode.
  */
 static List *
