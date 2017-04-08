@@ -396,13 +396,14 @@ EXPLAIN (VERBOSE, COSTS OFF)
    Output: t1.c1, t2."C 1"
    ->  Merge Join
          Output: t1.c1, t2."C 1"
+         Inner Unique: true
          Merge Cond: (t1.c1 = t2."C 1")
          ->  Foreign Scan on public.ft2 t1
                Output: t1.c1
                Remote SQL: SELECT "C 1" FROM "S 1"."T 1" ORDER BY "C 1" ASC NULLS LAST
          ->  Index Only Scan using t1_pkey on "S 1"."T 1" t2
                Output: t2."C 1"
-(10 rows)
+(11 rows)
 
 SELECT t1.c1, t2."C 1" FROM ft2 t1 JOIN "S 1"."T 1" t2 ON (t1.c1 = t2."C 1") OFFSET 100 LIMIT 10;
  c1  | C 1 
@@ -429,13 +430,14 @@ EXPLAIN (VERBOSE, COSTS OFF)
    Output: t1.c1, t2."C 1"
    ->  Merge Left Join
          Output: t1.c1, t2."C 1"
+         Inner Unique: true
          Merge Cond: (t1.c1 = t2."C 1")
          ->  Foreign Scan on public.ft2 t1
                Output: t1.c1
                Remote SQL: SELECT "C 1" FROM "S 1"."T 1" ORDER BY "C 1" ASC NULLS LAST
          ->  Index Only Scan using t1_pkey on "S 1"."T 1" t2
                Output: t2."C 1"
-(10 rows)
+(11 rows)
 
 SELECT t1.c1, t2."C 1" FROM ft2 t1 LEFT JOIN "S 1"."T 1" t2 ON (t1.c1 = t2."C 1") OFFSET 100 LIMIT 10;
  c1  | C 1 
@@ -462,6 +464,7 @@ EXPLAIN (VERBOSE, COSTS OFF)
    Output: t1."C 1"
    ->  Merge Right Join
          Output: t1."C 1"
+         Inner Unique: true
          Merge Cond: (t3.c1 = t1."C 1")
          ->  Foreign Scan
                Output: t3.c1
@@ -469,7 +472,7 @@ EXPLAIN (VERBOSE, COSTS OFF)
                Remote SQL: SELECT r3."C 1" FROM ("S 1"."T 1" r2 INNER JOIN "S 1"."T 1" r3 ON (((r2."C 1" = r3."C 1")))) ORDER BY r2."C 1" ASC NULLS LAST
          ->  Index Only Scan using t1_pkey on "S 1"."T 1" t1
                Output: t1."C 1"
-(11 rows)
+(12 rows)
 
 SELECT t1."C 1" FROM "S 1"."T 1" t1 left join ft1 t2 join ft2 t3 on (t2.c1 = t3.c1) on (t3.c1 = t1."C 1") OFFSET 100 LIMIT 10;
  C 1 
@@ -497,6 +500,7 @@ EXPLAIN (VERBOSE, COSTS OFF)
    Output: t1."C 1", t2.c1, t3.c1
    ->  Merge Right Join
          Output: t1."C 1", t2.c1, t3.c1
+         Inner Unique: true
          Merge Cond: (t3.c1 = t1."C 1")
          ->  Foreign Scan
                Output: t3.c1, t2.c1
@@ -504,7 +508,7 @@ EXPLAIN (VERBOSE, COSTS OFF)
                Remote SQL: SELECT r3."C 1", r2."C 1" FROM ("S 1"."T 1" r3 LEFT JOIN "S 1"."T 1" r2 ON (((r2."C 1" = r3."C 1")))) ORDER BY r3."C 1" ASC NULLS LAST
          ->  Index Only Scan using t1_pkey on "S 1"."T 1" t1
                Output: t1."C 1"
-(11 rows)
+(12 rows)
 
 SELECT t1."C 1", t2.c1, t3.c1 FROM "S 1"."T 1" t1 left join ft1 t2 full join ft2 t3 on (t2.c1 = t3.c1) on (t3.c1 = t1."C 1") OFFSET 100 LIMIT 10;
  C 1 | c1  | c1  
@@ -530,6 +534,7 @@ EXPLAIN (VERBOSE, COSTS OFF)
    Output: t1."C 1", t2.c1, t3.c1
    ->  Merge Full Join
          Output: t1."C 1", t2.c1, t3.c1
+         Inner Unique: true
          Merge Cond: (t3.c1 = t1."C 1")
          ->  Foreign Scan
                Output: t2.c1, t3.c1
@@ -537,7 +542,7 @@ EXPLAIN (VERBOSE, COSTS OFF)
                Remote SQL: SELECT r2."C 1", r3."C 1" FROM ("S 1"."T 1" r2 FULL JOIN "S 1"."T 1" r3 ON (((r2."C 1" = r3."C 1")))) ORDER BY r3."C 1" ASC NULLS LAST
          ->  Index Only Scan using t1_pkey on "S 1"."T 1" t1
                Output: t1."C 1"
-(11 rows)
+(12 rows)
 
 SELECT t1."C 1", t2.c1, t3.c1 FROM "S 1"."T 1" t1 full join ft1 t2 full join ft2 t3 on (t2.c1 = t3.c1) on (t3.c1 = t1."C 1") OFFSET 100 LIMIT 10;
  C 1 | c1  | c1  
@@ -1844,8 +1849,8 @@ SELECT t1.ctid, t1, t2, t1.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) ORDER B
 -- SEMI JOIN, not pushed down
 EXPLAIN (VERBOSE, COSTS OFF)
 SELECT t1.c1 FROM ft1 t1 WHERE EXISTS (SELECT 1 FROM ft2 t2 WHERE t1.c1 = t2.c1) ORDER BY t1.c1 OFFSET 100 LIMIT 10;
-                                         QUERY PLAN                                          
----------------------------------------------------------------------------------------------
+                                      QUERY PLAN                                       
+---------------------------------------------------------------------------------------
  Limit
    Output: t1.c1
    ->  Merge Semi Join
@@ -1854,12 +1859,10 @@ SELECT t1.c1 FROM ft1 t1 WHERE EXISTS (SELECT 1 FROM ft2 t2 WHERE t1.c1 = t2.c1)
          ->  Foreign Scan on public.ft1 t1
                Output: t1.c1
                Remote SQL: SELECT "C 1" FROM "S 1"."T 1" ORDER BY "C 1" ASC NULLS LAST
-         ->  Materialize
+         ->  Foreign Scan on public.ft2 t2
                Output: t2.c1
-               ->  Foreign Scan on public.ft2 t2
-                     Output: t2.c1
-                     Remote SQL: SELECT "C 1" FROM "S 1"."T 1" ORDER BY "C 1" ASC NULLS LAST
-(13 rows)
+               Remote SQL: SELECT "C 1" FROM "S 1"."T 1" ORDER BY "C 1" ASC NULLS LAST
+(11 rows)
 
 SELECT t1.c1 FROM ft1 t1 WHERE EXISTS (SELECT 1 FROM ft2 t2 WHERE t1.c1 = t2.c1) ORDER BY t1.c1 OFFSET 100 LIMIT 10;
  c1  
@@ -1889,12 +1892,10 @@ SELECT t1.c1 FROM ft1 t1 WHERE NOT EXISTS (SELECT 1 FROM ft2 t2 WHERE t1.c1 = t2
          ->  Foreign Scan on public.ft1 t1
                Output: t1.c1
                Remote SQL: SELECT "C 1" FROM "S 1"."T 1" ORDER BY "C 1" ASC NULLS LAST
-         ->  Materialize
+         ->  Foreign Scan on public.ft2 t2
                Output: t2.c2
-               ->  Foreign Scan on public.ft2 t2
-                     Output: t2.c2
-                     Remote SQL: SELECT c2 FROM "S 1"."T 1" ORDER BY c2 ASC NULLS LAST
-(13 rows)
+               Remote SQL: SELECT c2 FROM "S 1"."T 1" ORDER BY c2 ASC NULLS LAST
+(11 rows)
 
 SELECT t1.c1 FROM ft1 t1 WHERE NOT EXISTS (SELECT 1 FROM ft2 t2 WHERE t1.c1 = t2.c2) ORDER BY t1.c1 OFFSET 100 LIMIT 10;
  c1  
@@ -3121,6 +3122,7 @@ select count(*), x.b from ft1, (select c2 a, sum(c1) b from ft1 group by c2) x w
          Group Key: x.b
          ->  Hash Join
                Output: x.b
+               Inner Unique: true
                Hash Cond: (ft1.c2 = x.a)
                ->  Foreign Scan on public.ft1
                      Output: ft1.c2
@@ -3133,7 +3135,7 @@ select count(*), x.b from ft1, (select c2 a, sum(c1) b from ft1 group by c2) x w
                                  Output: ft1_1.c2, (sum(ft1_1.c1))
                                  Relations: Aggregate on (public.ft1)
                                  Remote SQL: SELECT c2, sum("C 1") FROM "S 1"."T 1" GROUP BY c2
-(20 rows)
+(21 rows)
 
 select count(*), x.b from ft1, (select c2 a, sum(c1) b from ft1 group by c2) x where ft1.c2 = x.a group by x.b order by 1, 2;
  count |   b   
@@ -3252,6 +3254,7 @@ select sum(q.a), count(q.b) from ft4 left join (select 13, avg(ft1.c1), sum(ft2.
    Output: sum(q.a), count(q.b)
    ->  Nested Loop Left Join
          Output: q.a, q.b
+         Inner Unique: true
          Join Filter: ((ft4.c1)::numeric <= q.b)
          ->  Foreign Scan on public.ft4
                Output: ft4.c1, ft4.c2, ft4.c3
@@ -3264,7 +3267,7 @@ select sum(q.a), count(q.b) from ft4 left join (select 13, avg(ft1.c1), sum(ft2.
                            Output: 13, (avg(ft1.c1)), NULL::bigint
                            Relations: Aggregate on ((public.ft2) LEFT JOIN (public.ft1))
                            Remote SQL: SELECT 13, avg(r1."C 1"), NULL::bigint FROM ("S 1"."T 1" r2 LEFT JOIN "S 1"."T 1" r1 ON (((r1."C 1" = r2."C 1"))))
-(16 rows)
+(17 rows)
 
 select sum(q.a), count(q.b) from ft4 left join (select 13, avg(ft1.c1), sum(ft2.c1) from ft1 right join ft2 on (ft1.c1 = ft2.c1)) q(a, b, c) on (ft4.c1 <= q.b);
  sum | count 
@@ -4048,20 +4051,18 @@ explain (verbose, costs off) select * from ft3 where f2 = 'foo' COLLATE "C";
 
 explain (verbose, costs off) select * from ft3 f, loct3 l
   where f.f3 = l.f3 COLLATE "POSIX" and l.f1 = 'foo';
-                         QUERY PLAN                          
--------------------------------------------------------------
- Hash Join
+                       QUERY PLAN                        
+---------------------------------------------------------
+ Nested Loop
    Output: f.f1, f.f2, f.f3, l.f1, l.f2, l.f3
-   Hash Cond: ((f.f3)::text = (l.f3)::text)
+   Join Filter: ((f.f3)::text = (l.f3)::text)
+   ->  Index Scan using loct3_f1_key on public.loct3 l
+         Output: l.f1, l.f2, l.f3
+         Index Cond: (l.f1 = 'foo'::text)
    ->  Foreign Scan on public.ft3 f
          Output: f.f1, f.f2, f.f3
          Remote SQL: SELECT f1, f2, f3 FROM public.loct3
-   ->  Hash
-         Output: l.f1, l.f2, l.f3
-         ->  Index Scan using loct3_f1_key on public.loct3 l
-               Output: l.f1, l.f2, l.f3
-               Index Cond: (l.f1 = 'foo'::text)
-(11 rows)
+(9 rows)
 
 -- ===================================================================
 -- test writable foreign table stuff
@@ -6541,6 +6542,7 @@ select * from bar where f1 in (select f1 from foo) for update;
    Output: bar.f1, bar.f2, bar.ctid, bar.*, bar.tableoid, foo.ctid, foo.*, foo.tableoid
    ->  Hash Join
          Output: bar.f1, bar.f2, bar.ctid, bar.*, bar.tableoid, foo.ctid, foo.*, foo.tableoid
+         Inner Unique: true
          Hash Cond: (bar.f1 = foo.f1)
          ->  Append
                ->  Seq Scan on public.bar
@@ -6559,7 +6561,7 @@ select * from bar where f1 in (select f1 from foo) for update;
                            ->  Foreign Scan on public.foo2
                                  Output: foo2.ctid, foo2.*, foo2.tableoid, foo2.f1
                                  Remote SQL: SELECT f1, f2, f3, ctid FROM public.loct1
-(22 rows)
+(23 rows)
 
 select * from bar where f1 in (select f1 from foo) for update;
  f1 | f2 
@@ -6578,6 +6580,7 @@ select * from bar where f1 in (select f1 from foo) for share;
    Output: bar.f1, bar.f2, bar.ctid, bar.*, bar.tableoid, foo.ctid, foo.*, foo.tableoid
    ->  Hash Join
          Output: bar.f1, bar.f2, bar.ctid, bar.*, bar.tableoid, foo.ctid, foo.*, foo.tableoid
+         Inner Unique: true
          Hash Cond: (bar.f1 = foo.f1)
          ->  Append
                ->  Seq Scan on public.bar
@@ -6596,7 +6599,7 @@ select * from bar where f1 in (select f1 from foo) for share;
                            ->  Foreign Scan on public.foo2
                                  Output: foo2.ctid, foo2.*, foo2.tableoid, foo2.f1
                                  Remote SQL: SELECT f1, f2, f3, ctid FROM public.loct1
-(22 rows)
+(23 rows)
 
 select * from bar where f1 in (select f1 from foo) for share;
  f1 | f2 
@@ -6618,6 +6621,7 @@ update bar set f2 = f2 + 100 where f1 in (select f1 from foo);
      Remote SQL: UPDATE public.loct2 SET f2 = $2 WHERE ctid = $1
    ->  Hash Join
          Output: bar.f1, (bar.f2 + 100), bar.ctid, foo.ctid, foo.*, foo.tableoid
+         Inner Unique: true
          Hash Cond: (bar.f1 = foo.f1)
          ->  Seq Scan on public.bar
                Output: bar.f1, bar.f2, bar.ctid
@@ -6634,6 +6638,7 @@ update bar set f2 = f2 + 100 where f1 in (select f1 from foo);
                                  Remote SQL: SELECT f1, f2, f3, ctid FROM public.loct1
    ->  Hash Join
          Output: bar2.f1, (bar2.f2 + 100), bar2.f3, bar2.ctid, foo.ctid, foo.*, foo.tableoid
+         Inner Unique: true
          Hash Cond: (bar2.f1 = foo.f1)
          ->  Foreign Scan on public.bar2
                Output: bar2.f1, bar2.f2, bar2.f3, bar2.ctid
@@ -6649,7 +6654,7 @@ update bar set f2 = f2 + 100 where f1 in (select f1 from foo);
                            ->  Foreign Scan on public.foo2
                                  Output: foo2.ctid, foo2.*, foo2.tableoid, foo2.f1
                                  Remote SQL: SELECT f1, f2, f3, ctid FROM public.loct1
-(37 rows)
+(39 rows)
 
 update bar set f2 = f2 + 100 where f1 in (select f1 from foo);
 select tableoid::regclass, * from bar order by 1,2;

@@ -3979,7 +3979,7 @@ select id from a where id in (
 );
          QUERY PLAN         
 ----------------------------
- Hash Semi Join
+ Hash Join
    Hash Cond: (a.id = b.id)
    ->  Seq Scan on a
    ->  Hash
@@ -5327,3 +5327,310 @@ ERROR:  invalid reference to FROM-clause entry for table "xx1"
 LINE 1: ...xx1 using lateral (select * from int4_tbl where f1 = x1) ss;
                                                                 ^
 HINT:  There is an entry for table "xx1", but it cannot be referenced from this part of the query.
+--
+-- test planner's ability to mark joins as unique
+--
+create table j1 (id int primary key);
+create table j2 (id int primary key);
+create table j3 (id int);
+insert into j1 values(1),(2),(3);
+insert into j2 values(1),(2),(3);
+insert into j3 values(1),(1);
+analyze j1;
+analyze j2;
+analyze j3;
+-- ensure join is properly marked as unique
+explain (verbose, costs off)
+select * from j1 inner join j2 on j1.id = j2.id;
+            QUERY PLAN             
+-----------------------------------
+ Hash Join
+   Output: j1.id, j2.id
+   Inner Unique: true
+   Hash Cond: (j1.id = j2.id)
+   ->  Seq Scan on public.j1
+         Output: j1.id
+   ->  Hash
+         Output: j2.id
+         ->  Seq Scan on public.j2
+               Output: j2.id
+(10 rows)
+
+-- ensure join is not unique when not an equi-join
+explain (verbose, costs off)
+select * from j1 inner join j2 on j1.id > j2.id;
+            QUERY PLAN             
+-----------------------------------
+ Nested Loop
+   Output: j1.id, j2.id
+   Join Filter: (j1.id > j2.id)
+   ->  Seq Scan on public.j1
+         Output: j1.id
+   ->  Materialize
+         Output: j2.id
+         ->  Seq Scan on public.j2
+               Output: j2.id
+(9 rows)
+
+-- ensure non-unique rel is not chosen as inner
+explain (verbose, costs off)
+select * from j1 inner join j3 on j1.id = j3.id;
+            QUERY PLAN             
+-----------------------------------
+ Hash Join
+   Output: j1.id, j3.id
+   Inner Unique: true
+   Hash Cond: (j3.id = j1.id)
+   ->  Seq Scan on public.j3
+         Output: j3.id
+   ->  Hash
+         Output: j1.id
+         ->  Seq Scan on public.j1
+               Output: j1.id
+(10 rows)
+
+-- ensure left join is marked as unique
+explain (verbose, costs off)
+select * from j1 left join j2 on j1.id = j2.id;
+            QUERY PLAN             
+-----------------------------------
+ Hash Left Join
+   Output: j1.id, j2.id
+   Inner Unique: true
+   Hash Cond: (j1.id = j2.id)
+   ->  Seq Scan on public.j1
+         Output: j1.id
+   ->  Hash
+         Output: j2.id
+         ->  Seq Scan on public.j2
+               Output: j2.id
+(10 rows)
+
+-- ensure right join is marked as unique
+explain (verbose, costs off)
+select * from j1 right join j2 on j1.id = j2.id;
+            QUERY PLAN             
+-----------------------------------
+ Hash Left Join
+   Output: j1.id, j2.id
+   Inner Unique: true
+   Hash Cond: (j2.id = j1.id)
+   ->  Seq Scan on public.j2
+         Output: j2.id
+   ->  Hash
+         Output: j1.id
+         ->  Seq Scan on public.j1
+               Output: j1.id
+(10 rows)
+
+-- ensure full join is marked as unique
+explain (verbose, costs off)
+select * from j1 full join j2 on j1.id = j2.id;
+            QUERY PLAN             
+-----------------------------------
+ Hash Full Join
+   Output: j1.id, j2.id
+   Inner Unique: true
+   Hash Cond: (j1.id = j2.id)
+   ->  Seq Scan on public.j1
+         Output: j1.id
+   ->  Hash
+         Output: j2.id
+         ->  Seq Scan on public.j2
+               Output: j2.id
+(10 rows)
+
+-- a clauseless (cross) join can't be unique
+explain (verbose, costs off)
+select * from j1 cross join j2;
+            QUERY PLAN             
+-----------------------------------
+ Nested Loop
+   Output: j1.id, j2.id
+   ->  Seq Scan on public.j1
+         Output: j1.id
+   ->  Materialize
+         Output: j2.id
+         ->  Seq Scan on public.j2
+               Output: j2.id
+(8 rows)
+
+-- ensure a natural join is marked as unique
+explain (verbose, costs off)
+select * from j1 natural join j2;
+            QUERY PLAN             
+-----------------------------------
+ Hash Join
+   Output: j1.id
+   Inner Unique: true
+   Hash Cond: (j1.id = j2.id)
+   ->  Seq Scan on public.j1
+         Output: j1.id
+   ->  Hash
+         Output: j2.id
+         ->  Seq Scan on public.j2
+               Output: j2.id
+(10 rows)
+
+-- ensure a distinct clause allows the inner to become unique
+explain (verbose, costs off)
+select * from j1
+inner join (select distinct id from j3) j3 on j1.id = j3.id;
+                  QUERY PLAN                   
+-----------------------------------------------
+ Nested Loop
+   Output: j1.id, j3.id
+   Inner Unique: true
+   Join Filter: (j1.id = j3.id)
+   ->  Seq Scan on public.j1
+         Output: j1.id
+   ->  Materialize
+         Output: j3.id
+         ->  Unique
+               Output: j3.id
+               ->  Sort
+                     Output: j3.id
+                     Sort Key: j3.id
+                     ->  Seq Scan on public.j3
+                           Output: j3.id
+(15 rows)
+
+-- ensure group by clause allows the inner to become unique
+explain (verbose, costs off)
+select * from j1
+inner join (select id from j3 group by id) j3 on j1.id = j3.id;
+                  QUERY PLAN                   
+-----------------------------------------------
+ Nested Loop
+   Output: j1.id, j3.id
+   Inner Unique: true
+   Join Filter: (j1.id = j3.id)
+   ->  Seq Scan on public.j1
+         Output: j1.id
+   ->  Materialize
+         Output: j3.id
+         ->  Group
+               Output: j3.id
+               Group Key: j3.id
+               ->  Sort
+                     Output: j3.id
+                     Sort Key: j3.id
+                     ->  Seq Scan on public.j3
+                           Output: j3.id
+(16 rows)
+
+drop table j1;
+drop table j2;
+drop table j3;
+-- test more complex permutations of unique joins
+create table j1 (id1 int, id2 int, primary key(id1,id2));
+create table j2 (id1 int, id2 int, primary key(id1,id2));
+create table j3 (id1 int, id2 int, primary key(id1,id2));
+insert into j1 values(1,1),(1,2);
+insert into j2 values(1,1);
+insert into j3 values(1,1);
+analyze j1;
+analyze j2;
+analyze j3;
+-- ensure there's no unique join when not all columns which are part of the
+-- unique index are seen in the join clause
+explain (verbose, costs off)
+select * from j1
+inner join j2 on j1.id1 = j2.id1;
+                QUERY PLAN                
+------------------------------------------
+ Nested Loop
+   Output: j1.id1, j1.id2, j2.id1, j2.id2
+   Join Filter: (j1.id1 = j2.id1)
+   ->  Seq Scan on public.j2
+         Output: j2.id1, j2.id2
+   ->  Seq Scan on public.j1
+         Output: j1.id1, j1.id2
+(7 rows)
+
+-- ensure proper unique detection with multiple join quals
+explain (verbose, costs off)
+select * from j1
+inner join j2 on j1.id1 = j2.id1 and j1.id2 = j2.id2;
+                        QUERY PLAN                        
+----------------------------------------------------------
+ Nested Loop
+   Output: j1.id1, j1.id2, j2.id1, j2.id2
+   Inner Unique: true
+   Join Filter: ((j1.id1 = j2.id1) AND (j1.id2 = j2.id2))
+   ->  Seq Scan on public.j1
+         Output: j1.id1, j1.id2
+   ->  Materialize
+         Output: j2.id1, j2.id2
+         ->  Seq Scan on public.j2
+               Output: j2.id1, j2.id2
+(10 rows)
+
+-- ensure we don't detect the join to be unique when quals are not part of the
+-- join condition
+explain (verbose, costs off)
+select * from j1
+inner join j2 on j1.id1 = j2.id1 where j1.id2 = 1;
+                QUERY PLAN                
+------------------------------------------
+ Nested Loop
+   Output: j1.id1, j1.id2, j2.id1, j2.id2
+   Join Filter: (j1.id1 = j2.id1)
+   ->  Seq Scan on public.j1
+         Output: j1.id1, j1.id2
+         Filter: (j1.id2 = 1)
+   ->  Seq Scan on public.j2
+         Output: j2.id1, j2.id2
+(8 rows)
+
+-- as above, but for left joins.
+explain (verbose, costs off)
+select * from j1
+left join j2 on j1.id1 = j2.id1 where j1.id2 = 1;
+                QUERY PLAN                
+------------------------------------------
+ Nested Loop Left Join
+   Output: j1.id1, j1.id2, j2.id1, j2.id2
+   Join Filter: (j1.id1 = j2.id1)
+   ->  Seq Scan on public.j1
+         Output: j1.id1, j1.id2
+         Filter: (j1.id2 = 1)
+   ->  Seq Scan on public.j2
+         Output: j2.id1, j2.id2
+(8 rows)
+
+-- validate logic in merge joins which skips mark and restore.
+-- it should only do this if all quals which were used to detect the unique
+-- are present as join quals, and not plain quals.
+set enable_nestloop to 0;
+set enable_hashjoin to 0;
+set enable_sort to 0;
+-- create an index that will be preferred over the PK to perform the join
+create index j1_id1_idx on j1 (id1) where id1 % 1000 = 1;
+explain (costs off) select * from j1 j1
+inner join j1 j2 on j1.id1 = j2.id1 and j1.id2 = j2.id2
+where j1.id1 % 1000 = 1 and j2.id1 % 1000 = 1;
+                 QUERY PLAN                 
+--------------------------------------------
+ Merge Join
+   Merge Cond: (j1.id1 = j2.id1)
+   Join Filter: (j1.id2 = j2.id2)
+   ->  Index Scan using j1_id1_idx on j1
+   ->  Index Scan using j1_id1_idx on j1 j2
+(5 rows)
+
+select * from j1 j1
+inner join j1 j2 on j1.id1 = j2.id1 and j1.id2 = j2.id2
+where j1.id1 % 1000 = 1 and j2.id1 % 1000 = 1;
+ id1 | id2 | id1 | id2 
+-----+-----+-----+-----
+   1 |   1 |   1 |   1
+   1 |   2 |   1 |   2
+(2 rows)
+
+reset enable_nestloop;
+reset enable_hashjoin;
+reset enable_sort;
+drop table j1;
+drop table j2;
+drop table j3;

@@ -317,12 +317,11 @@ explain (costs off)
                      ->  Index Scan using ec1_expr2 on ec1 ec1_1
                      ->  Index Scan using ec1_expr3 on ec1 ec1_2
                      ->  Index Scan using ec1_expr4 on ec1 ec1_3
-               ->  Materialize
-                     ->  Sort
-                           Sort Key: ec1.f1 USING <
-                           ->  Index Scan using ec1_pkey on ec1
-                                 Index Cond: (ff = '42'::bigint)
-(20 rows)
+               ->  Sort
+                     Sort Key: ec1.f1 USING <
+                     ->  Index Scan using ec1_pkey on ec1
+                           Index Cond: (ff = '42'::bigint)
+(19 rows)
 
 -- check partially indexed scan
 set enable_nestloop = on;
@@ -374,12 +373,11 @@ explain (costs off)
                Sort Key: (((ec1_2.ff + 3) + 1))
                ->  Seq Scan on ec1 ec1_2
          ->  Index Scan using ec1_expr4 on ec1 ec1_3
-   ->  Materialize
-         ->  Sort
-               Sort Key: ec1.f1 USING <
-               ->  Index Scan using ec1_pkey on ec1
-                     Index Cond: (ff = '42'::bigint)
-(14 rows)
+   ->  Sort
+         Sort Key: ec1.f1 USING <
+         ->  Index Scan using ec1_pkey on ec1
+               Index Cond: (ff = '42'::bigint)
+(13 rows)
 
 -- check effects of row-level security
 set enable_nestloop = on;

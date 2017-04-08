@@ -1536,6 +1536,8 @@ typedef struct JoinState
 {
 	PlanState	ps;
 	JoinType	jointype;
+	bool		single_match;	/* True if we should skip to next outer tuple
+								 * after finding one inner match */
 	ExprState  *joinqual;		/* JOIN quals (in addition to ps.qual) */
 } JoinState;
 
@@ -1561,6 +1563,7 @@ typedef struct NestLoopState
  *		NumClauses		   number of mergejoinable join clauses
  *		Clauses			   info for each mergejoinable clause
  *		JoinState		   current state of ExecMergeJoin state machine
+ *		SkipMarkRestore    true if we may skip Mark and Restore operations
  *		ExtraMarks		   true to issue extra Mark operations on inner scan
  *		ConstFalseJoin	   true if we have a constant-false joinqual
  *		FillOuter		   true if should emit unjoined outer tuples anyway
@@ -1585,6 +1588,7 @@ typedef struct MergeJoinState
 	int			mj_NumClauses;
 	MergeJoinClause mj_Clauses; /* array of length mj_NumClauses */
 	int			mj_JoinState;
+	bool		mj_SkipMarkRestore;
 	bool		mj_ExtraMarks;
 	bool		mj_ConstFalseJoin;
 	bool		mj_FillOuter;

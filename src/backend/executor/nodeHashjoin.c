@@ -288,10 +288,11 @@ ExecHashJoin(HashJoinState *node)
 					}
 
 					/*
-					 * In a semijoin, we'll consider returning the first
-					 * match, but after that we're done with this outer tuple.
+					 * If we only need to join to the first matching inner
+					 * tuple, then consider returning this one, but after that
+					 * continue with next outer tuple.
 					 */
-					if (node->js.jointype == JOIN_SEMI)
+					if (node->js.single_match)
 						node->hj_JoinState = HJ_NEED_NEW_OUTER;
 
 					if (otherqual == NULL || ExecQual(otherqual, econtext))
@@ -434,6 +435,12 @@ ExecInitHashJoin(HashJoin *node, EState *estate, int eflags)
 	 */
 	ExecInitResultTupleSlot(estate, &hjstate->js.ps);
 	hjstate->hj_OuterTupleSlot = ExecInitExtraTupleSlot(estate);
+
+	/*
+	 * detect whether we need only consider the first matching inner tuple
+	 */
+	hjstate->js.single_match = (node->join.inner_unique ||
+								node->join.jointype == JOIN_SEMI);
 
 	/* set up null tuples for outer joins, if needed */
 	switch (node->join.jointype)

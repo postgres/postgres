@@ -442,6 +442,19 @@ typedef struct PlannerInfo
  *		fdwroutine - function hooks for FDW, if foreign table (else NULL)
  *		fdw_private - private state for FDW, if foreign table (else NULL)
  *
+ * Two fields are used to cache knowledge acquired during the join search
+ * about whether this rel is provably unique when being joined to given other
+ * relation(s), ie, it can have at most one row matching any given row from
+ * that join relation.  Currently we only attempt such proofs, and thus only
+ * populate these fields, for base rels; but someday they might be used for
+ * join rels too:
+ *
+ *		unique_for_rels - list of Relid sets, each one being a set of other
+ *					rels for which this one has been proven unique
+ *		non_unique_for_rels - list of Relid sets, each one being a set of
+ *					other rels for which we have tried and failed to prove
+ *					this one unique
+ *
  * The presence of the remaining fields depends on the restrictions
  * and joins that the relation participates in:
  *
@@ -562,6 +575,10 @@ typedef struct RelOptInfo
 	struct FdwRoutine *fdwroutine;
 	void	   *fdw_private;
 
+	/* cache space for remembering if we have proven this relation unique */
+	List	   *unique_for_rels;	/* known unique for these other relid set(s) */
+	List	   *non_unique_for_rels;	/* known not unique for these set(s) */
+
 	/* used by various scans and joins: */
 	List	   *baserestrictinfo;		/* RestrictInfo structures (if base
 										 * rel) */
@@ -572,8 +589,8 @@ typedef struct RelOptInfo
 								 * involving this rel */
 	bool		has_eclass_joins;		/* T means joininfo is incomplete */
 
-	/* used by "other" relations. */
-	Relids		top_parent_relids;		/* Relids of topmost parents. */
+	/* used by "other" relations */
+	Relids		top_parent_relids;		/* Relids of topmost parents */
 } RelOptInfo;
 
 /*
@@ -1272,6 +1289,9 @@ typedef struct JoinPath
 
 	JoinType	jointype;
 
+	bool		inner_unique;	/* each outer tuple provably matches no more
+								 * than one inner tuple */
+
 	Path	   *outerjoinpath;	/* path for the outer side of the join */
 	Path	   *innerjoinpath;	/* path for the inner side of the join */
 
@@ -1314,6 +1334,13 @@ typedef JoinPath NestPath;
  * mergejoin.  If it is not NIL then it is a PathKeys list describing
  * the ordering that must be created by an explicit Sort node.
  *
+ * skip_mark_restore is TRUE if the executor need not do mark/restore calls.
+ * Mark/restore overhead is usually required, but can be skipped if we know
+ * that the executor need find only one match per outer tuple, and that the
+ * mergeclauses are sufficient to identify a match.  In such cases the
+ * executor can immediately advance the outer relation after processing a
+ * match, and therefoere it need never back up the inner relation.
+ *
  * materialize_inner is TRUE if a Material node should be placed atop the
  * inner input.  This may appear with or without an inner Sort step.
  */
@@ -1324,6 +1351,7 @@ typedef struct MergePath
 	List	   *path_mergeclauses;		/* join clauses to be used for merge */
 	List	   *outersortkeys;	/* keys for explicit sort, if any */
 	List	   *innersortkeys;	/* keys for explicit sort, if any */
+	bool		skip_mark_restore;		/* can executor skip mark/restore? */
 	bool		materialize_inner;		/* add Materialize to inner? */
 } MergePath;
 
@@ -2112,8 +2140,8 @@ typedef struct PlannerParamItem
 } PlannerParamItem;
 
 /*
- * When making cost estimates for a SEMI or ANTI join, there are some
- * correction factors that are needed in both nestloop and hash joins
+ * When making cost estimates for a SEMI/ANTI/inner_unique join, there are
+ * some correction factors that are needed in both nestloop and hash joins
  * to account for the fact that the executor can stop scanning inner rows
  * as soon as it finds a match to the current outer row.  These numbers
  * depend only on the selected outer and inner join relations, not on the
@@ -2140,14 +2168,17 @@ typedef struct SemiAntiJoinFactors
  *		clauses that apply to this join
  * mergeclause_list is a list of RestrictInfo nodes for available
  *		mergejoin clauses in this join
+ * inner_unique is true if each outer tuple provably matches no more
+ *		than one inner tuple
  * sjinfo is extra info about special joins for selectivity estimation
- * semifactors is as shown above (only valid for SEMI or ANTI joins)
+ * semifactors is as shown above (only valid for SEMI/ANTI/inner_unique joins)
  * param_source_rels are OK targets for parameterization of result paths
  */
 typedef struct JoinPathExtraData
 {
 	List	   *restrictlist;
 	List	   *mergeclause_list;
+	bool		inner_unique;
 	SpecialJoinInfo *sjinfo;
 	SemiAntiJoinFactors semifactors;
 	Relids		param_source_rels;

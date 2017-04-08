@@ -41,6 +41,11 @@ static bool rel_supports_distinctness(PlannerInfo *root, RelOptInfo *rel);
 static bool rel_is_distinct_for(PlannerInfo *root, RelOptInfo *rel,
 					List *clause_list);
 static Oid	distinct_col_search(int colno, List *colnos, List *opids);
+static bool is_innerrel_unique_for(PlannerInfo *root,
+					   RelOptInfo *outerrel,
+					   RelOptInfo *innerrel,
+					   JoinType jointype,
+					   List *restrictlist);
 
 
 /*
@@ -844,4 +849,172 @@ distinct_col_search(int colno, List *colnos, List *opids)
 			return lfirst_oid(lc2);
 	}
 	return InvalidOid;
+}
+
+
+/*
+ * innerrel_is_unique
+ *	  Check if the innerrel provably contains at most one tuple matching any
+ *	  tuple from the outerrel, based on join clauses in the 'restrictlist'.
+ *
+ * The proof must be made based only on clauses that will be "joinquals"
+ * rather than "otherquals" at execution.  For an inner join there's no
+ * difference; but if the join is outer, we must ignore pushed-down quals,
+ * as those will become "otherquals".  Note that this means the answer might
+ * vary depending on whether IS_OUTER_JOIN(jointype); since we cache the
+ * answer without regard to that, callers must take care not to call this
+ * with jointypes that would be classified differently by IS_OUTER_JOIN().
+ *
+ * The actual proof is undertaken by is_innerrel_unique_for(); this function
+ * is a frontend that is mainly concerned with caching the answers.
+ */
+bool
+innerrel_is_unique(PlannerInfo *root,
+				   RelOptInfo *outerrel,
+				   RelOptInfo *innerrel,
+				   JoinType jointype,
+				   List *restrictlist)
+{
+	MemoryContext old_context;
+	ListCell   *lc;
+
+	/* Certainly can't prove uniqueness when there are no joinclauses */
+	if (restrictlist == NIL)
+		return false;
+
+	/*
+	 * Make a quick check to eliminate cases in which we will surely be unable
+	 * to prove uniqueness of the innerrel.
+	 */
+	if (!rel_supports_distinctness(root, innerrel))
+		return false;
+
+	/*
+	 * Query the cache to see if we've managed to prove that innerrel is
+	 * unique for any subset of this outerrel.  We don't need an exact match,
+	 * as extra outerrels can't make the innerrel any less unique (or more
+	 * formally, the restrictlist for a join to a superset outerrel must be a
+	 * superset of the conditions we successfully used before).
+	 */
+	foreach(lc, innerrel->unique_for_rels)
+	{
+		Relids		unique_for_rels = (Relids) lfirst(lc);
+
+		if (bms_is_subset(unique_for_rels, outerrel->relids))
+			return true;		/* Success! */
+	}
+
+	/*
+	 * Conversely, we may have already determined that this outerrel, or some
+	 * superset thereof, cannot prove this innerrel to be unique.
+	 */
+	foreach(lc, innerrel->non_unique_for_rels)
+	{
+		Relids		unique_for_rels = (Relids) lfirst(lc);
+
+		if (bms_is_subset(outerrel->relids, unique_for_rels))
+			return false;
+	}
+
+	/* No cached information, so try to make the proof. */
+	if (is_innerrel_unique_for(root, outerrel, innerrel,
+							   jointype, restrictlist))
+	{
+		/*
+		 * Cache the positive result for future probes, being sure to keep it
+		 * in the planner_cxt even if we are working in GEQO.
+		 *
+		 * Note: one might consider trying to isolate the minimal subset of
+		 * the outerrels that proved the innerrel unique.  But it's not worth
+		 * the trouble, because the planner builds up joinrels incrementally
+		 * and so we'll see the minimally sufficient outerrels before any
+		 * supersets of them anyway.
+		 */
+		old_context = MemoryContextSwitchTo(root->planner_cxt);
+		innerrel->unique_for_rels = lappend(innerrel->unique_for_rels,
+											bms_copy(outerrel->relids));
+		MemoryContextSwitchTo(old_context);
+
+		return true;			/* Success! */
+	}
+	else
+	{
+		/*
+		 * None of the join conditions for outerrel proved innerrel unique, so
+		 * we can safely reject this outerrel or any subset of it in future
+		 * checks.
+		 *
+		 * However, in normal planning mode, caching this knowledge is totally
+		 * pointless; it won't be queried again, because we build up joinrels
+		 * from smaller to larger.  It is useful in GEQO mode, where the
+		 * knowledge can be carried across successive planning attempts; and
+		 * it's likely to be useful when using join-search plugins, too. Hence
+		 * cache only when join_search_private is non-NULL.  (Yeah, that's a
+		 * hack, but it seems reasonable.)
+		 */
+		if (root->join_search_private)
+		{
+			old_context = MemoryContextSwitchTo(root->planner_cxt);
+			innerrel->non_unique_for_rels =
+				lappend(innerrel->non_unique_for_rels,
+						bms_copy(outerrel->relids));
+			MemoryContextSwitchTo(old_context);
+		}
+
+		return false;
+	}
+}
+
+/*
+ * is_innerrel_unique_for
+ *	  Check if the innerrel provably contains at most one tuple matching any
+ *	  tuple from the outerrel, based on join clauses in the 'restrictlist'.
+ */
+static bool
+is_innerrel_unique_for(PlannerInfo *root,
+					   RelOptInfo *outerrel,
+					   RelOptInfo *innerrel,
+					   JoinType jointype,
+					   List *restrictlist)
+{
+	List	   *clause_list = NIL;
+	ListCell   *lc;
+
+	/*
+	 * Search for mergejoinable clauses that constrain the inner rel against
+	 * the outer rel.  If an operator is mergejoinable then it behaves like
+	 * equality for some btree opclass, so it's what we want.  The
+	 * mergejoinability test also eliminates clauses containing volatile
+	 * functions, which we couldn't depend on.
+	 */
+	foreach(lc, restrictlist)
+	{
+		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(lc);
+
+		/*
+		 * As noted above, if it's a pushed-down clause and we're at an outer
+		 * join, we can't use it.
+		 */
+		if (restrictinfo->is_pushed_down && IS_OUTER_JOIN(jointype))
+			continue;
+
+		/* Ignore if it's not a mergejoinable clause */
+		if (!restrictinfo->can_join ||
+			restrictinfo->mergeopfamilies == NIL)
+			continue;			/* not mergejoinable */
+
+		/*
+		 * Check if clause has the form "outer op inner" or "inner op outer",
+		 * and if so mark which side is inner.
+		 */
+		if (!clause_sides_match_join(restrictinfo, outerrel->relids,
+									 innerrel->relids))
+			continue;			/* no good for these input relations */
+
+		/* OK, add to list */
+		clause_list = lappend(clause_list, restrictinfo);
+	}
+
+	/* Let rel_is_distinct_for() do the hard work */
+	return rel_is_distinct_for(root, innerrel, clause_list);
 }
