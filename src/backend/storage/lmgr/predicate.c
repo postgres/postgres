@@ -352,8 +352,15 @@ static OldSerXidControl oldSerXidControl;
 static SERIALIZABLEXACT *OldCommittedSxact;
 
 
-/* This configuration variable is used to set the predicate lock table size */
+/*
+ * These configuration variables are used to set the predicate lock table size
+ * and to control promotion of predicate locks to coarser granularity in an
+ * attempt to degrade performance (mostly as false positive serialization
+ * failure) gracefully in the face of memory pressurel
+ */
 int			max_predicate_locks_per_xact;		/* set by guc.c */
+int			max_predicate_locks_per_relation;	/* set by guc.c */
+int			max_predicate_locks_per_page;		/* set by guc.c */
 
 /*
  * This provides a list of objects in order to track transactions
@@ -437,7 +444,7 @@ static void RestoreScratchTarget(bool lockheld);
 static void RemoveTargetIfNoLongerUsed(PREDICATELOCKTARGET *target,
 						   uint32 targettaghash);
 static void DeleteChildTargetLocks(const PREDICATELOCKTARGETTAG *newtargettag);
-static int	PredicateLockPromotionThreshold(const PREDICATELOCKTARGETTAG *tag);
+static int	MaxPredicateChildLocks(const PREDICATELOCKTARGETTAG *tag);
 static bool CheckAndPromotePredicateLockRequest(const PREDICATELOCKTARGETTAG *reqtag);
 static void DecrementParentLocks(const PREDICATELOCKTARGETTAG *targettag);
 static void CreatePredicateLock(const PREDICATELOCKTARGETTAG *targettag,
@@ -2118,28 +2125,35 @@ DeleteChildTargetLocks(const PREDICATELOCKTARGETTAG *newtargettag)
 }
 
 /*
- * Returns the promotion threshold for a given predicate lock
- * target. This is the number of descendant locks required to promote
- * to the specified tag. Note that the threshold includes non-direct
- * descendants, e.g. both tuples and pages for a relation lock.
+ * Returns the promotion limit for a given predicate lock target.  This is the
+ * max number of descendant locks allowed before promoting to the specified
+ * tag. Note that the limit includes non-direct descendants (e.g., both tuples
+ * and pages for a relation lock).
  *
- * TODO SSI: We should do something more intelligent about what the
- * thresholds are, either making it proportional to the number of
- * tuples in a page & pages in a relation, or at least making it a
- * GUC. Currently the threshold is 3 for a page lock, and
- * max_pred_locks_per_transaction/2 for a relation lock, chosen
- * entirely arbitrarily (and without benchmarking).
+ * Currently the default limit is 2 for a page lock, and half of the value of
+ * max_pred_locks_per_transaction - 1 for a relation lock, to match behavior
+ * of earlier releases when upgrading.
+ *
+ * TODO SSI: We should probably add additional GUCs to allow a maximum ratio
+ * of page and tuple locks based on the pages in a relation, and the maximum
+ * ratio of tuple locks to tuples in a page.  This would provide more
+ * generally "balanced" allocation of locks to where they are most useful,
+ * while still allowing the absolute numbers to prevent one relation from
+ * tying up all predicate lock resources.
  */
 static int
-PredicateLockPromotionThreshold(const PREDICATELOCKTARGETTAG *tag)
+MaxPredicateChildLocks(const PREDICATELOCKTARGETTAG *tag)
 {
 	switch (GET_PREDICATELOCKTARGETTAG_TYPE(*tag))
 	{
 		case PREDLOCKTAG_RELATION:
-			return max_predicate_locks_per_xact / 2;
+			return max_predicate_locks_per_relation < 0
+				? (max_predicate_locks_per_xact
+				   / (-max_predicate_locks_per_relation)) - 1
+				: max_predicate_locks_per_relation;
 
 		case PREDLOCKTAG_PAGE:
-			return 3;
+			return max_predicate_locks_per_page;
 
 		case PREDLOCKTAG_TUPLE:
 
@@ -2194,8 +2208,8 @@ CheckAndPromotePredicateLockRequest(const PREDICATELOCKTARGETTAG *reqtag)
 		else
 			parentlock->childLocks++;
 
-		if (parentlock->childLocks >=
-			PredicateLockPromotionThreshold(&targettag))
+		if (parentlock->childLocks >
+			MaxPredicateChildLocks(&targettag))
 		{
 			/*
 			 * We should promote to this parent lock. Continue to check its

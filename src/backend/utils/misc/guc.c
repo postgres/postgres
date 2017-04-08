@@ -2200,6 +2200,28 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
+		{"max_pred_locks_per_relation", PGC_SIGHUP, LOCK_MANAGEMENT,
+			gettext_noop("Sets the maximum number of predicate-locked pages and tuples per relation."),
+			gettext_noop("If more than this total of pages and tuples in the same relation are locked "
+						 "by a connection, those locks are replaced by a relation level lock.")
+		},
+		&max_predicate_locks_per_relation,
+		-2, INT_MIN, INT_MAX,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"max_pred_locks_per_page", PGC_SIGHUP, LOCK_MANAGEMENT,
+			gettext_noop("Sets the maximum number of predicate-locked tuples per page."),
+			gettext_noop("If more than this number of tuples on the same page are locked "
+						 "by a connection, those locks are replaced by a page level lock.")
+		},
+		&max_predicate_locks_per_page,
+		2, 0, INT_MAX,
+		NULL, NULL, NULL
+	},
+
+	{
 		{"authentication_timeout", PGC_SIGHUP, CONN_AUTH_SECURITY,
 			gettext_noop("Sets the maximum allowed time to complete client authentication."),
 			NULL,

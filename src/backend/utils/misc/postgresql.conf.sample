@@ -593,6 +593,10 @@
 					# (change requires restart)
 #max_pred_locks_per_transaction = 64	# min 10
 					# (change requires restart)
+#max_pred_locks_per_relation = -2	# negative values mean
+					# (max_pred_locks_per_transaction
+					#  / -max_pred_locks_per_relation) - 1
+#max_pred_locks_per_page = 2            # min 0
 
 
 #------------------------------------------------------------------------------

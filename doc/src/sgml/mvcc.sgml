@@ -765,7 +765,9 @@ ERROR:  could not serialize access due to read/write dependencies among transact
        locks into a single relation-level predicate lock because the predicate
        lock table is short of memory, an increase in the rate of serialization
        failures may occur.  You can avoid this by increasing
-       <xref linkend="guc-max-pred-locks-per-transaction">.
+       <xref linkend="guc-max-pred-locks-per-transaction">,
+       <xref linkend="guc-max-pred-locks-per-relation">, and/or
+       <xref linkend="guc-max-pred-locks-per-page">.
       </para>
      </listitem>
      <listitem>

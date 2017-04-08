@@ -7337,7 +7337,43 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         tables in a single serializable transaction. This parameter can
         only be set at server start.
        </para>
+      </listitem>
+     </varlistentry>
 
+     <varlistentry id="guc-max-pred-locks-per-relation" xreflabel="max_pred_locks_per_relation">
+      <term><varname>max_pred_locks_per_relation</varname> (<type>integer</type>)
+      <indexterm>
+       <primary><varname>max_pred_locks_per_relation</> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        This controls how many pages or tuples of a single relation can be
+        predicate-locked before the lock is promoted to covering the whole
+        relation.  Values greater than or equal to zero mean an absolute
+        limit, while negative values
+        mean <xref linkend="guc-max-pred-locks-per-transaction"> divided by
+        the absolute value of this setting.  The default is -2, which keeps
+        the behaviour from previous versions of <productname>PostgreSQL</>.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-max-pred-locks-per-page" xreflabel="max_pred_locks_per_page">
+      <term><varname>max_pred_locks_per_page</varname> (<type>integer</type>)
+      <indexterm>
+       <primary><varname>max_pred_locks_per_page</> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        This controls how many rows on a single page can be predicate-locked
+        before the lock is promoted to covering the whole page.  The default
+        is 2.  This parameter can only be set in
+        the <filename>postgresql.conf</> file or on the server command line.
+       </para>
       </listitem>
      </varlistentry>
 
