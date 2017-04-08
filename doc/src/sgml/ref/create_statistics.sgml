@@ -22,9 +22,9 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 CREATE STATISTICS [ IF NOT EXISTS ] <replaceable class="PARAMETER">statistics_name</replaceable>
-  WITH ( <replaceable class="PARAMETER">option</replaceable> [= <replaceable class="PARAMETER">value</replaceable>] [, ... ] )
-  ON ( <replaceable class="PARAMETER">column_name</replaceable>, <replaceable class="PARAMETER">column_name</replaceable> [, ...])
-  FROM <replaceable class="PARAMETER">table_name</replaceable>
+    WITH ( <replaceable class="PARAMETER">option</replaceable> [= <replaceable class="PARAMETER">value</replaceable>] [, ... ] )
+    ON ( <replaceable class="PARAMETER">column_name</replaceable>, <replaceable class="PARAMETER">column_name</replaceable> [, ...])
+    FROM <replaceable class="PARAMETER">table_name</replaceable>
 </synopsis>
 
  </refsynopsisdiv>

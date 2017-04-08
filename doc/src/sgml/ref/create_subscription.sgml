@@ -136,8 +136,8 @@ CREATE SUBSCRIPTION <replaceable class="PARAMETER">subscription_name</replaceabl
    </varlistentry>
 
    <varlistentry>
-    <term>COPY DATA</term>
-    <term>NOCOPY DATA</term>
+    <term><literal>COPY DATA</literal></term>
+    <term><literal>NOCOPY DATA</literal></term>
     <listitem>
      <para>
       Specifies if the existing data in the publications that are being
@@ -148,7 +148,7 @@ CREATE SUBSCRIPTION <replaceable class="PARAMETER">subscription_name</replaceabl
    </varlistentry>
 
    <varlistentry>
-    <term>NOCONNECT</term>
+    <term><literal>NOCONNECT</literal></term>
     <listitem>
      <para>
       Instructs <command>CREATE SUBSCRIPTION</command> to skip the initial

@@ -98,7 +98,7 @@ ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> DISABLE
    </varlistentry>
 
    <varlistentry>
-    <term>REFRESH PUBLICATION</term>
+    <term><literal>REFRESH PUBLICATION</literal></term>
     <listitem>
      <para>
       Fetch missing table information from publisher. This will start

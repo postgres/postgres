@@ -177,7 +177,7 @@ GRANT <replaceable class="PARAMETER">role_name</replaceable> [, ...] TO <replace
 
    <variablelist>
     <varlistentry>
-     <term>SELECT</term>
+     <term><literal>SELECT</literal></term>
      <listitem>
       <para>
        Allows <xref linkend="sql-select"> from
@@ -196,7 +196,7 @@ GRANT <replaceable class="PARAMETER">role_name</replaceable> [, ...] TO <replace
     </varlistentry>
 
     <varlistentry>
-     <term>INSERT</term>
+     <term><literal>INSERT</literal></term>
      <listitem>
       <para>
        Allows <xref linkend="sql-insert"> of a new
@@ -209,7 +209,7 @@ GRANT <replaceable class="PARAMETER">role_name</replaceable> [, ...] TO <replace
     </varlistentry>
 
     <varlistentry>
-     <term>UPDATE</term>
+     <term><literal>UPDATE</literal></term>
      <listitem>
       <para>
        Allows <xref linkend="sql-update"> of any
@@ -231,7 +231,7 @@ GRANT <replaceable class="PARAMETER">role_name</replaceable> [, ...] TO <replace
     </varlistentry>
 
     <varlistentry>
-     <term>DELETE</term>
+     <term><literal>DELETE</literal></term>
      <listitem>
       <para>
        Allows <xref linkend="sql-delete"> of a row
@@ -244,7 +244,7 @@ GRANT <replaceable class="PARAMETER">role_name</replaceable> [, ...] TO <replace
     </varlistentry>
 
     <varlistentry>
-     <term>TRUNCATE</term>
+     <term><literal>TRUNCATE</literal></term>
      <listitem>
       <para>
        Allows <xref linkend="sql-truncate"> on
@@ -254,7 +254,7 @@ GRANT <replaceable class="PARAMETER">role_name</replaceable> [, ...] TO <replace
     </varlistentry>
 
     <varlistentry>
-     <term>REFERENCES</term>
+     <term><literal>REFERENCES</literal></term>
      <listitem>
       <para>
        Allows creation of a foreign key constraint referencing the specified
@@ -265,7 +265,7 @@ GRANT <replaceable class="PARAMETER">role_name</replaceable> [, ...] TO <replace
     </varlistentry>
 
     <varlistentry>
-     <term>TRIGGER</term>
+     <term><literal>TRIGGER</literal></term>
      <listitem>
       <para>
        Allows the creation of a trigger on the specified table.  (See the
@@ -275,7 +275,7 @@ GRANT <replaceable class="PARAMETER">role_name</replaceable> [, ...] TO <replace
     </varlistentry>
 
     <varlistentry>
-     <term>CREATE</term>
+     <term><literal>CREATE</literal></term>
      <listitem>
       <para>
        For databases, allows new schemas and publications to be created within the database.
@@ -295,7 +295,7 @@ GRANT <replaceable class="PARAMETER">role_name</replaceable> [, ...] TO <replace
     </varlistentry>
 
     <varlistentry>
-     <term>CONNECT</term>
+     <term><literal>CONNECT</literal></term>
      <listitem>
       <para>
        Allows the user to connect to the specified database.  This
@@ -306,8 +306,8 @@ GRANT <replaceable class="PARAMETER">role_name</replaceable> [, ...] TO <replace
     </varlistentry>
 
     <varlistentry>
-     <term>TEMPORARY</term>
-     <term>TEMP</term>
+     <term><literal>TEMPORARY</literal></term>
+     <term><literal>TEMP</literal></term>
      <listitem>
       <para>
        Allows temporary tables to be created while using the specified database.
@@ -316,7 +316,7 @@ GRANT <replaceable class="PARAMETER">role_name</replaceable> [, ...] TO <replace
     </varlistentry>
 
     <varlistentry>
-     <term>EXECUTE</term>
+     <term><literal>EXECUTE</literal></term>
      <listitem>
       <para>
        Allows the use of the specified function and the use of any
@@ -328,7 +328,7 @@ GRANT <replaceable class="PARAMETER">role_name</replaceable> [, ...] TO <replace
     </varlistentry>
 
     <varlistentry>
-     <term>USAGE</term>
+     <term><literal>USAGE</literal></term>
      <listitem>
       <para>
        For procedural languages, allows the use of the specified language for
@@ -371,7 +371,7 @@ GRANT <replaceable class="PARAMETER">role_name</replaceable> [, ...] TO <replace
     </varlistentry>
 
     <varlistentry>
-     <term>ALL PRIVILEGES</term>
+     <term><literal>ALL PRIVILEGES</literal></term>
      <listitem>
       <para>
        Grant all of the available privileges at once.

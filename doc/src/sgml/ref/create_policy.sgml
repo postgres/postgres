@@ -121,20 +121,20 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">PERMISSIVE</replaceable></term>
+    <term><literal>PERMISSIVE</literal></term>
     <listitem>
      <para>
       Specify that the policy is to be created as a permissive policy.
       All permissive policies which are applicable to a given query will
       be combined together using the boolean "OR" operator.  By creating
       permissive policies, administrators can add to the set of records
-      which can be accessed.  Policies are PERMISSIVE by default.
+      which can be accessed.  Policies are permissive by default.
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">RESTRICTIVE</replaceable></term>
+    <term><literal>RESTRICTIVE</literal></term>
     <listitem>
      <para>
       Specify that the policy is to be created as a restrictive policy.

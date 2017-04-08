@@ -54,7 +54,7 @@ ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
 
   <variablelist>
    <varlistentry>
-    <term>SET/DROP DEFAULT</term>
+    <term><literal>SET</literal>/<literal>DROP DEFAULT</literal></term>
     <listitem>
      <para>
       These forms set or remove the default value for a domain. Note
@@ -65,7 +65,7 @@ ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term>SET/DROP NOT NULL</term>
+    <term><literal>SET</literal>/<literal>DROP NOT NULL</literal></term>
     <listitem>
      <para>
       These forms change whether a domain is marked to allow NULL
@@ -76,7 +76,7 @@ ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term>ADD <replaceable class="PARAMETER">domain_constraint</replaceable> [ NOT VALID ]</term>
+    <term><literal>ADD <replaceable class="PARAMETER">domain_constraint</replaceable> [ NOT VALID ]</literal></term>
     <listitem>
      <para>
       This form adds a new constraint to a domain using the same syntax as
@@ -94,7 +94,7 @@ ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term>DROP CONSTRAINT [ IF EXISTS ]</term>
+    <term><literal>DROP CONSTRAINT [ IF EXISTS ]</literal></term>
     <listitem>
      <para>
       This form drops constraints on a domain.
@@ -105,7 +105,7 @@ ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term>RENAME CONSTRAINT</term>
+    <term><literal>RENAME CONSTRAINT</literal></term>
     <listitem>
      <para>
       This form changes the name of a constraint on a domain.
@@ -114,7 +114,7 @@ ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term>VALIDATE CONSTRAINT</term>
+    <term><literal>VALIDATE CONSTRAINT</literal></term>
     <listitem>
      <para>
       This form validates a constraint previously added as
@@ -125,7 +125,7 @@ ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term>OWNER</term>
+    <term><literal>OWNER</literal></term>
     <listitem>
      <para>
       This form changes the owner of the domain to the specified user.
@@ -143,7 +143,7 @@ ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term>SET SCHEMA</term>
+    <term><literal>SET SCHEMA</literal></term>
     <listitem>
      <para>
       This form changes the schema of the domain.  Any constraints
