@@ -425,30 +425,41 @@ pg_atomic_sub_fetch_u32(volatile pg_atomic_uint32 *ptr, int32 sub_)
 static inline void
 pg_atomic_init_u64(volatile pg_atomic_uint64 *ptr, uint64 val)
 {
+	/*
+	 * Can't necessarily enforce alignment - and don't need it - when using
+	 * the spinlock based fallback implementation. Therefore only assert when
+	 * not using it.
+	 */
+#ifndef PG_HAVE_ATOMIC_U64_SIMULATION
 	AssertPointerAlignment(ptr, 8);
-
+#endif
 	pg_atomic_init_u64_impl(ptr, val);
 }
 
 static inline uint64
 pg_atomic_read_u64(volatile pg_atomic_uint64 *ptr)
 {
+#ifndef PG_HAVE_ATOMIC_U64_SIMULATION
 	AssertPointerAlignment(ptr, 8);
+#endif
 	return pg_atomic_read_u64_impl(ptr);
 }
 
 static inline void
 pg_atomic_write_u64(volatile pg_atomic_uint64 *ptr, uint64 val)
 {
+#ifndef PG_HAVE_ATOMIC_U64_SIMULATION
 	AssertPointerAlignment(ptr, 8);
+#endif
 	pg_atomic_write_u64_impl(ptr, val);
 }
 
 static inline uint64
 pg_atomic_exchange_u64(volatile pg_atomic_uint64 *ptr, uint64 newval)
 {
+#ifndef PG_HAVE_ATOMIC_U64_SIMULATION
 	AssertPointerAlignment(ptr, 8);
-
+#endif
 	return pg_atomic_exchange_u64_impl(ptr, newval);
 }
 
@@ -456,22 +467,28 @@ static inline bool
 pg_atomic_compare_exchange_u64(volatile pg_atomic_uint64 *ptr,
 							   uint64 *expected, uint64 newval)
 {
+#ifndef PG_HAVE_ATOMIC_U64_SIMULATION
 	AssertPointerAlignment(ptr, 8);
 	AssertPointerAlignment(expected, 8);
+#endif
 	return pg_atomic_compare_exchange_u64_impl(ptr, expected, newval);
 }
 
 static inline uint64
 pg_atomic_fetch_add_u64(volatile pg_atomic_uint64 *ptr, int64 add_)
 {
+#ifndef PG_HAVE_ATOMIC_U64_SIMULATION
 	AssertPointerAlignment(ptr, 8);
+#endif
 	return pg_atomic_fetch_add_u64_impl(ptr, add_);
 }
 
 static inline uint64
 pg_atomic_fetch_sub_u64(volatile pg_atomic_uint64 *ptr, int64 sub_)
 {
+#ifndef PG_HAVE_ATOMIC_U64_SIMULATION
 	AssertPointerAlignment(ptr, 8);
+#endif
 	Assert(sub_ != PG_INT64_MIN);
 	return pg_atomic_fetch_sub_u64_impl(ptr, sub_);
 }
@@ -479,28 +496,36 @@ pg_atomic_fetch_sub_u64(volatile pg_atomic_uint64 *ptr, int64 sub_)
 static inline uint64
 pg_atomic_fetch_and_u64(volatile pg_atomic_uint64 *ptr, uint64 and_)
 {
+#ifndef PG_HAVE_ATOMIC_U64_SIMULATION
 	AssertPointerAlignment(ptr, 8);
+#endif
 	return pg_atomic_fetch_and_u64_impl(ptr, and_);
 }
 
 static inline uint64
 pg_atomic_fetch_or_u64(volatile pg_atomic_uint64 *ptr, uint64 or_)
 {
+#ifndef PG_HAVE_ATOMIC_U64_SIMULATION
 	AssertPointerAlignment(ptr, 8);
+#endif
 	return pg_atomic_fetch_or_u64_impl(ptr, or_);
 }
 
 static inline uint64
 pg_atomic_add_fetch_u64(volatile pg_atomic_uint64 *ptr, int64 add_)
 {
+#ifndef PG_HAVE_ATOMIC_U64_SIMULATION
 	AssertPointerAlignment(ptr, 8);
+#endif
 	return pg_atomic_add_fetch_u64_impl(ptr, add_);
 }
 
 static inline uint64
 pg_atomic_sub_fetch_u64(volatile pg_atomic_uint64 *ptr, int64 sub_)
 {
+#ifndef PG_HAVE_ATOMIC_U64_SIMULATION
 	AssertPointerAlignment(ptr, 8);
+#endif
 	Assert(sub_ != PG_INT64_MIN);
 	return pg_atomic_sub_fetch_u64_impl(ptr, sub_);
 }

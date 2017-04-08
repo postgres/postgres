@@ -271,26 +271,26 @@ pg_atomic_exchange_u64_impl(volatile pg_atomic_uint64 *ptr, uint64 xchg_)
 }
 #endif
 
-#ifndef PG_HAVE_ATOMIC_READ_U64
-#define PG_HAVE_ATOMIC_READ_U64
-static inline uint64
-pg_atomic_read_u64_impl(volatile pg_atomic_uint64 *ptr)
-{
-	return *(&ptr->value);
-}
-#endif
-
 #ifndef PG_HAVE_ATOMIC_WRITE_U64
 #define PG_HAVE_ATOMIC_WRITE_U64
+
+#if defined(PG_HAVE_8BYTE_SINGLE_COPY_ATOMICITY) && \
+	!defined(PG_HAVE_ATOMIC_U64_SIMULATION)
+
 static inline void
 pg_atomic_write_u64_impl(volatile pg_atomic_uint64 *ptr, uint64 val)
 {
+	/*
+	 * On this platform aligned 64bit writes are guaranteed to be atomic,
+	 * except if using the fallback implementation, where can't guarantee the
+	 * required alignment.
+	 */
+	AssertPointerAlignment(ptr, 8);
 	ptr->value = val;
 }
-#endif
 
-#ifndef PG_HAVE_ATOMIC_WRITE_U64
-#define PG_HAVE_ATOMIC_WRITE_U64
+#else
+
 static inline void
 pg_atomic_write_u64_impl(volatile pg_atomic_uint64 *ptr, uint64 val)
 {
@@ -300,10 +300,30 @@ pg_atomic_write_u64_impl(volatile pg_atomic_uint64 *ptr, uint64 val)
 	 */
 	pg_atomic_exchange_u64_impl(ptr, val);
 }
-#endif
+
+#endif /* PG_HAVE_8BYTE_SINGLE_COPY_ATOMICITY && !PG_HAVE_ATOMIC_U64_SIMULATION */
+#endif /* PG_HAVE_ATOMIC_WRITE_U64 */
 
 #ifndef PG_HAVE_ATOMIC_READ_U64
 #define PG_HAVE_ATOMIC_READ_U64
+
+#if defined(PG_HAVE_8BYTE_SINGLE_COPY_ATOMICITY) && \
+	!defined(PG_HAVE_ATOMIC_U64_SIMULATION)
+
+static inline uint64
+pg_atomic_read_u64_impl(volatile pg_atomic_uint64 *ptr)
+{
+	/*
+	 * On this platform aligned 64bit reads are guaranteed to be atomic,
+	 * except if using the fallback implementation, where can't guarantee the
+	 * required alignment.
+	 */
+	AssertPointerAlignment(ptr, 8);
+	return *(&ptr->value);
+}
+
+#else
+
 static inline uint64
 pg_atomic_read_u64_impl(volatile pg_atomic_uint64 *ptr)
 {
@@ -319,7 +339,8 @@ pg_atomic_read_u64_impl(volatile pg_atomic_uint64 *ptr)
 
 	return old;
 }
-#endif
+#endif /* PG_HAVE_8BYTE_SINGLE_COPY_ATOMICITY && !PG_HAVE_ATOMIC_U64_SIMULATION */
+#endif /* PG_HAVE_ATOMIC_READ_U64 */
 
 #ifndef PG_HAVE_ATOMIC_INIT_U64
 #define PG_HAVE_ATOMIC_INIT_U64
