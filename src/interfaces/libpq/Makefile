@@ -156,7 +156,7 @@ clean distclean: clean-lib
 	rm -f pg_config_paths.h
 # Remove files we (may have) symlinked in from src/port and other places
 	rm -f chklocale.c crypt.c erand48.c getaddrinfo.c getpeereid.c inet_aton.c inet_net_ntop.c noblock.c open.c system.c pgsleep.c pg_strong_random.c pgstrcasecmp.c pqsignal.c snprintf.c strerror.c strlcpy.c thread.c win32error.c win32setlocale.c
-	rm -f md5.c ip.c base64.c scram-common.c sha2.c sha2_openssl.c
+	rm -f ip.c md5.c base64.c scram-common.c sha2.c sha2_openssl.c saslprep.c unicode_norm.c
 	rm -f encnames.c wchar.c
 
 maintainer-clean: distclean maintainer-clean-lib
