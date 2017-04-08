@@ -41,8 +41,8 @@ typedef struct RangeQueryClause
 
 static void addRangeClause(RangeQueryClause **rqlist, Node *clause,
 			   bool varonleft, bool isLTsel, Selectivity s2);
-static RelOptInfo *find_relation_from_clauses(PlannerInfo *root,
-											  List *clauses);
+static RelOptInfo *find_single_rel_for_clauses(PlannerInfo *root,
+							List *clauses);
 
 /****************************************************************************
  *		ROUTINES TO COMPUTE SELECTIVITIES
@@ -63,10 +63,8 @@ static RelOptInfo *find_relation_from_clauses(PlannerInfo *root,
  * probabilities, and in reality they are often NOT independent.  So,
  * we want to be smarter where we can.
  *
- * When 'rel' is not null and rtekind = RTE_RELATION, we'll try to apply
- * selectivity estimates using any extended statistcs on 'rel'.
- *
- * If we identify such extended statistics exist, we try to apply them.
+ * If the clauses taken together refer to just one relation, we'll try to
+ * apply selectivity estimates using any extended statistics for that rel.
  * Currently we only have (soft) functional dependencies, so apply these in as
  * many cases as possible, and fall back on normal estimates for remaining
  * clauses.
@@ -105,41 +103,36 @@ clauselist_selectivity(PlannerInfo *root,
 					   SpecialJoinInfo *sjinfo)
 {
 	Selectivity s1 = 1.0;
+	RelOptInfo *rel;
+	Bitmapset  *estimatedclauses = NULL;
 	RangeQueryClause *rqlist = NULL;
 	ListCell   *l;
-	Bitmapset  *estimatedclauses = NULL;
 	int			listidx;
-	RelOptInfo *rel;
 
 	/*
-	 * If there's exactly one clause, then extended statistics is futile at
-	 * this level (we might be able to apply them later if it's AND/OR
-	 * clause). So just go directly to clause_selectivity().
+	 * If there's exactly one clause, just go directly to
+	 * clause_selectivity(). None of what we might do below is relevant.
 	 */
 	if (list_length(clauses) == 1)
 		return clause_selectivity(root, (Node *) linitial(clauses),
 								  varRelid, jointype, sjinfo);
 
 	/*
-	 * Determine if these clauses reference a single relation. If so we might
-	 * like to try applying any extended statistics which exist on it.
-	 * Called many time during joins, so must return NULL quickly if not.
+	 * Determine if these clauses reference a single relation.  If so, and if
+	 * it has extended statistics, try to apply those.
 	 */
-	rel = find_relation_from_clauses(root, clauses);
-
-	/*
-	 * When a relation of RTE_RELATION is given as 'rel', we'll try to
-	 * perform selectivity estimation using extended statistics.
-	 */
+	rel = find_single_rel_for_clauses(root, clauses);
 	if (rel && rel->rtekind == RTE_RELATION && rel->statlist != NIL)
 	{
 		/*
 		 * Perform selectivity estimations on any clauses found applicable by
-		 * dependencies_clauselist_selectivity. The 0-based list position of
-		 * estimated clauses will be populated in 'estimatedclauses'.
+		 * dependencies_clauselist_selectivity.  'estimatedclauses' will be
+		 * filled with the 0-based list positions of clauses used that way, so
+		 * that we can ignore them below.
 		 */
 		s1 *= dependencies_clauselist_selectivity(root, clauses, varRelid,
-								   jointype, sjinfo, rel, &estimatedclauses);
+												  jointype, sjinfo, rel,
+												  &estimatedclauses);
 
 		/*
 		 * This would be the place to apply any other types of extended
@@ -426,36 +419,46 @@ addRangeClause(RangeQueryClause **rqlist, Node *clause,
 }
 
 /*
- * find_relation_from_clauses
- *		Process each clause in 'clauses' and determine if all clauses
- *		reference only a single relation. If so return that relation,
+ * find_single_rel_for_clauses
+ *		Examine each clause in 'clauses' and determine if all clauses
+ *		reference only a single relation.  If so return that relation,
  *		otherwise return NULL.
  */
 static RelOptInfo *
-find_relation_from_clauses(PlannerInfo *root, List *clauses)
+find_single_rel_for_clauses(PlannerInfo *root, List *clauses)
 {
-	ListCell *l;
-	int relid;
-	int lastrelid = 0;
+	int			lastrelid = 0;
+	ListCell   *l;
 
 	foreach(l, clauses)
 	{
 		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
+		int			relid;
 
-		if (bms_get_singleton_member(rinfo->clause_relids, &relid))
-		{
-			if (lastrelid != 0 && relid != lastrelid)
-				return NULL;		/* relation not the same as last one */
-			lastrelid = relid;
-		}
-		else
-			return NULL;			/* multiple relations in clause */
+		/*
+		 * If we have a list of bare clauses rather than RestrictInfos, we
+		 * could pull out their relids the hard way with pull_varnos().
+		 * However, currently the extended-stats machinery won't do anything
+		 * with non-RestrictInfo clauses anyway, so there's no point in
+		 * spending extra cycles; just fail if that's what we have.
+		 */
+		if (!IsA(rinfo, RestrictInfo))
+			return NULL;
+
+		if (bms_is_empty(rinfo->clause_relids))
+			continue;			/* we can ignore variable-free clauses */
+		if (!bms_get_singleton_member(rinfo->clause_relids, &relid))
+			return NULL;		/* multiple relations in this clause */
+		if (lastrelid == 0)
+			lastrelid = relid;	/* first clause referencing a relation */
+		else if (relid != lastrelid)
+			return NULL;		/* relation not same as last one */
 	}
 
 	if (lastrelid != 0)
 		return find_base_rel(root, lastrelid);
 
-	return NULL;			/* no clauses */
+	return NULL;				/* no clauses */
 }
 
 /*
