@@ -54,12 +54,13 @@ sepgsql_attribute_post_create(Oid relOid, AttrNumber attnum)
 	ObjectAddress object;
 	Form_pg_attribute attForm;
 	StringInfoData audit_name;
+	char		relkind = get_rel_relkind(relOid);
 
 	/*
-	 * Only attributes within regular relation have individual security
-	 * labels.
+	 * Only attributes within regular relations or partition relations have
+	 * individual security labels.
 	 */
-	if (get_rel_relkind(relOid) != RELKIND_RELATION)
+	if (relkind != RELKIND_RELATION && relkind != RELKIND_PARTITIONED_TABLE)
 		return;
 
 	/*
@@ -135,8 +136,9 @@ sepgsql_attribute_drop(Oid relOid, AttrNumber attnum)
 {
 	ObjectAddress object;
 	char	   *audit_name;
+	char		relkind = get_rel_relkind(relOid);
 
-	if (get_rel_relkind(relOid) != RELKIND_RELATION)
+	if (relkind != RELKIND_RELATION && relkind != RELKIND_PARTITIONED_TABLE)
 		return;
 
 	/*
@@ -167,8 +169,9 @@ sepgsql_attribute_relabel(Oid relOid, AttrNumber attnum,
 {
 	ObjectAddress object;
 	char	   *audit_name;
+	char		relkind = get_rel_relkind(relOid);
 
-	if (get_rel_relkind(relOid) != RELKIND_RELATION)
+	if (relkind != RELKIND_RELATION && relkind != RELKIND_PARTITIONED_TABLE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("cannot set security label on non-regular columns")));
@@ -209,8 +212,9 @@ sepgsql_attribute_setattr(Oid relOid, AttrNumber attnum)
 {
 	ObjectAddress object;
 	char	   *audit_name;
+	char		relkind = get_rel_relkind(relOid);
 
-	if (get_rel_relkind(relOid) != RELKIND_RELATION)
+	if (relkind != RELKIND_RELATION && relkind != RELKIND_PARTITIONED_TABLE)
 		return;
 
 	/*
@@ -291,6 +295,7 @@ sepgsql_relation_post_create(Oid relOid)
 	switch (classForm->relkind)
 	{
 		case RELKIND_RELATION:
+		case RELKIND_PARTITIONED_TABLE:
 			tclass = SEPG_CLASS_DB_TABLE;
 			break;
 		case RELKIND_SEQUENCE:
@@ -333,7 +338,8 @@ sepgsql_relation_post_create(Oid relOid)
 								  true);
 
 	/*
-	 * Assign the default security label on the new relation
+	 * Assign the default security label on the new regular or partitioned
+	 * relation.
 	 */
 	object.classId = RelationRelationId;
 	object.objectId = relOid;
@@ -341,10 +347,10 @@ sepgsql_relation_post_create(Oid relOid)
 	SetSecurityLabel(&object, SEPGSQL_LABEL_TAG, rcontext);
 
 	/*
-	 * We also assigns a default security label on columns of the new regular
-	 * tables.
+	 * We also assign a default security label on columns of a new table.
 	 */
-	if (classForm->relkind == RELKIND_RELATION)
+	if (classForm->relkind == RELKIND_RELATION ||
+		classForm->relkind == RELKIND_PARTITIONED_TABLE)
 	{
 		Relation	arel;
 		ScanKeyData akey;
@@ -414,12 +420,12 @@ sepgsql_relation_drop(Oid relOid)
 	ObjectAddress object;
 	char	   *audit_name;
 	uint16_t	tclass = 0;
-	char		relkind;
+	char		relkind = get_rel_relkind(relOid);
 
-	relkind = get_rel_relkind(relOid);
 	switch (relkind)
 	{
 		case RELKIND_RELATION:
+		case RELKIND_PARTITIONED_TABLE:
 			tclass = SEPG_CLASS_DB_TABLE;
 			break;
 		case RELKIND_SEQUENCE:
@@ -479,7 +485,7 @@ sepgsql_relation_drop(Oid relOid)
 	/*
 	 * check db_column:{drop} permission
 	 */
-	if (relkind == RELKIND_RELATION)
+	if (relkind == RELKIND_RELATION || relkind == RELKIND_PARTITIONED_TABLE)
 	{
 		Form_pg_attribute attForm;
 		CatCList   *attrList;
@@ -521,11 +527,10 @@ sepgsql_relation_relabel(Oid relOid, const char *seclabel)
 {
 	ObjectAddress object;
 	char	   *audit_name;
-	char		relkind;
+	char		relkind = get_rel_relkind(relOid);
 	uint16_t	tclass = 0;
 
-	relkind = get_rel_relkind(relOid);
-	if (relkind == RELKIND_RELATION)
+	if (relkind == RELKIND_RELATION || relkind == RELKIND_PARTITIONED_TABLE)
 		tclass = SEPG_CLASS_DB_TABLE;
 	else if (relkind == RELKIND_SEQUENCE)
 		tclass = SEPG_CLASS_DB_SEQUENCE;
@@ -585,6 +590,7 @@ sepgsql_relation_setattr(Oid relOid)
 	switch (get_rel_relkind(relOid))
 	{
 		case RELKIND_RELATION:
+		case RELKIND_PARTITIONED_TABLE:
 			tclass = SEPG_CLASS_DB_TABLE;
 			break;
 		case RELKIND_SEQUENCE:

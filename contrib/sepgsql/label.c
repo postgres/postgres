@@ -787,7 +787,8 @@ exec_object_restorecon(struct selabel_handle * sehnd, Oid catalogId)
 			case RelationRelationId:
 				relForm = (Form_pg_class) GETSTRUCT(tuple);
 
-				if (relForm->relkind == RELKIND_RELATION)
+				if (relForm->relkind == RELKIND_RELATION ||
+					relForm->relkind == RELKIND_PARTITIONED_TABLE)
 					objtype = SELABEL_DB_TABLE;
 				else if (relForm->relkind == RELKIND_SEQUENCE)
 					objtype = SELABEL_DB_SEQUENCE;
@@ -811,7 +812,8 @@ exec_object_restorecon(struct selabel_handle * sehnd, Oid catalogId)
 			case AttributeRelationId:
 				attForm = (Form_pg_attribute) GETSTRUCT(tuple);
 
-				if (get_rel_relkind(attForm->attrelid) != RELKIND_RELATION)
+				if (get_rel_relkind(attForm->attrelid) != RELKIND_RELATION &&
+					get_rel_relkind(attForm->attrelid) != RELKIND_PARTITIONED_TABLE)
 					continue;	/* no need to assign security label */
 
 				objtype = SELABEL_DB_COLUMN;

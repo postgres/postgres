@@ -26,6 +26,13 @@ SET search_path = regtest_schema_1, regtest_schema_2, public;
 CREATE TABLE regtest_table_1 (a int, b text);
 CREATE TABLE regtest_table_2 (c text) inherits (regtest_table_1);
 CREATE TABLE regtest_table_3 (x int primary key, y text);
+---
+-- partitioned table parent
+CREATE TABLE regtest_ptable_1 (o int, p text) PARTITION BY RANGE (o);
+-- partitioned table children
+CREATE TABLE regtest_ptable_1_ones PARTITION OF regtest_ptable_1 FOR VALUES FROM ('0') TO ('10');
+CREATE TABLE regtest_ptable_1_tens PARTITION OF regtest_ptable_1 FOR VALUES FROM ('10') TO ('100');
+---
 CREATE SEQUENCE regtest_seq_1;
 CREATE VIEW regtest_view_1 AS SELECT * FROM regtest_table_1 WHERE a > 0;
 CREATE FUNCTION regtest_func_1 (text) RETURNS bool
@@ -54,6 +61,10 @@ LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:sepgsql_reg
 LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="regtest_schema_1.regtest_table_1"
 ALTER TABLE regtest_table_1 OWNER TO regress_sepgsql_test_user;
 LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="regtest_schema_1.regtest_table_1"
+ALTER TABLE regtest_ptable_1 OWNER TO regress_sepgsql_test_user;
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="regtest_schema_1.regtest_ptable_1"
+ALTER TABLE regtest_ptable_1_ones OWNER TO regress_sepgsql_test_user;
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="regtest_schema_1.regtest_ptable_1_ones"
 ALTER SEQUENCE regtest_seq_1 OWNER TO regress_sepgsql_test_user;
 LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_seq_t:s0 tclass=db_sequence name="regtest_schema_1.regtest_seq_1"
 ALTER SEQUENCE regtest_seq_1 OWNER TO regress_sepgsql_test_user;
@@ -73,6 +84,14 @@ ALTER TABLE regtest_table_1 SET SCHEMA regtest_schema_2;
 LOG:  SELinux: allowed { remove_name } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_1"
 LOG:  SELinux: allowed { add_name } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_2"
 LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="regtest_schema_1.regtest_table_1"
+ALTER TABLE regtest_ptable_1 SET SCHEMA regtest_schema_2;
+LOG:  SELinux: allowed { remove_name } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_1"
+LOG:  SELinux: allowed { add_name } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_2"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="regtest_schema_1.regtest_ptable_1"
+ALTER TABLE regtest_ptable_1_ones SET SCHEMA regtest_schema_2;
+LOG:  SELinux: allowed { remove_name } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_1"
+LOG:  SELinux: allowed { add_name } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_2"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="regtest_schema_1.regtest_ptable_1_ones"
 ALTER SEQUENCE regtest_seq_1 SET SCHEMA regtest_schema_2;
 LOG:  SELinux: allowed { remove_name } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_1"
 LOG:  SELinux: allowed { add_name } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_2"
@@ -97,6 +116,16 @@ LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:sepgsql_reg
 LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=system_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="public"
 LOG:  SELinux: allowed { add_name remove_name } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_2"
 LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="regtest_schema_2.regtest_table_1"
+---
+-- partitioned table parent
+ALTER TABLE regtest_ptable_1 RENAME TO regtest_ptable;
+LOG:  SELinux: allowed { add_name remove_name } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_2"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="regtest_schema_2.regtest_ptable_1"
+-- partitioned table child
+ALTER TABLE regtest_ptable_1_ones RENAME TO regtest_table_part;
+LOG:  SELinux: allowed { add_name remove_name } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_2"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="regtest_schema_2.regtest_ptable_1_ones"
+---
 ALTER SEQUENCE regtest_seq_1 RENAME TO regtest_seq;
 LOG:  SELinux: allowed { add_name remove_name } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_2"
 LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_seq_t:s0 tclass=db_sequence name="regtest_schema_2.regtest_seq_1"
@@ -197,6 +226,83 @@ ALTER TABLE regtest_table_2 NO INHERIT regtest_table;   -- not supported
 ALTER TABLE regtest_table_2 INHERIT regtest_table;      -- not supported
 ALTER TABLE regtest_table SET TABLESPACE pg_default;
 LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="regtest_schema_2.regtest_table"
+---
+-- partitioned table parent
+ALTER TABLE regtest_ptable ADD COLUMN d float;
+LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=system_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="pg_catalog"
+LINE 1: ALTER TABLE regtest_ptable ADD COLUMN d float;
+                                                ^
+LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=system_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="pg_catalog"
+LOG:  SELinux: allowed { create } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_ptable.d"
+LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=system_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="pg_catalog"
+LOG:  SELinux: allowed { create } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_table_part.d"
+LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=system_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="pg_catalog"
+LOG:  SELinux: allowed { create } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema.regtest_ptable_1_tens.d"
+ALTER TABLE regtest_ptable DROP COLUMN d;
+LOG:  SELinux: allowed { drop } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_table_part.d"
+LOG:  SELinux: allowed { drop } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema.regtest_ptable_1_tens.d"
+LOG:  SELinux: allowed { drop } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_ptable.d"
+ALTER TABLE regtest_ptable ALTER p SET DEFAULT 'abcd';   -- not supported by sepgsql
+ALTER TABLE regtest_ptable ALTER p SET DEFAULT 'XYZ';    -- not supported by sepgsql
+ALTER TABLE regtest_ptable ALTER p DROP DEFAULT;         -- not supported by sepgsql
+ALTER TABLE regtest_ptable ALTER p SET NOT NULL;
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_ptable.p"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_table_part.p"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema.regtest_ptable_1_tens.p"
+ALTER TABLE regtest_ptable ALTER p DROP NOT NULL;
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_ptable.p"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_table_part.p"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema.regtest_ptable_1_tens.p"
+ALTER TABLE regtest_ptable ALTER p SET STATISTICS -1;
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_ptable.p"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_table_part.p"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema.regtest_ptable_1_tens.p"
+ALTER TABLE regtest_ptable ALTER p SET (n_distinct = 999);
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_ptable.p"
+ALTER TABLE regtest_ptable ALTER p SET STORAGE PLAIN;
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_ptable.p"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_table_part.p"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema.regtest_ptable_1_tens.p"
+ALTER TABLE regtest_ptable ADD CONSTRAINT test_ck CHECK (p like '%abc%') NOT VALID;      -- not supported by sepgsql
+ALTER TABLE regtest_ptable DROP CONSTRAINT test_ck;      -- not supported by sepgsql
+ALTER TABLE regtest_ptable SET WITH OIDS;
+LOG:  SELinux: allowed { create } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_ptable.oid"
+LOG:  SELinux: allowed { create } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_table_part.oid"
+LOG:  SELinux: allowed { create } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema.regtest_ptable_1_tens.oid"
+ALTER TABLE regtest_ptable SET WITHOUT OIDS;
+LOG:  SELinux: allowed { drop } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_table_part.oid"
+LOG:  SELinux: allowed { drop } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema.regtest_ptable_1_tens.oid"
+LOG:  SELinux: allowed { drop } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_ptable.oid"
+ALTER TABLE regtest_ptable SET TABLESPACE pg_default;
+-- partitioned table child
+ALTER TABLE regtest_table_part ALTER p SET DEFAULT 'abcd';   -- not supported by sepgsql
+ALTER TABLE regtest_table_part ALTER p SET DEFAULT 'XYZ';    -- not supported by sepgsql
+ALTER TABLE regtest_table_part ALTER p DROP DEFAULT;         -- not supported by sepgsql
+ALTER TABLE regtest_table_part ALTER p SET NOT NULL;
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_table_part.p"
+ALTER TABLE regtest_table_part ALTER p DROP NOT NULL;
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_table_part.p"
+ALTER TABLE regtest_table_part ALTER p SET STATISTICS -1;
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_table_part.p"
+ALTER TABLE regtest_table_part ALTER p SET (n_distinct = 999);
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_table_part.p"
+ALTER TABLE regtest_table_part ALTER p SET STORAGE PLAIN;
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_table_part.p"
+ALTER TABLE regtest_table_part ADD CONSTRAINT test_ck CHECK (p like '%abc%') NOT VALID;      -- not supported by sepgsql
+ALTER TABLE regtest_table_part VALIDATE CONSTRAINT test_ck;  -- not supported by sepgsql
+LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.textlike(pg_catalog.text,pg_catalog.text)"
+ALTER TABLE regtest_table_part DROP CONSTRAINT test_ck;      -- not supported by sepgsql
+CREATE TRIGGER regtest_part_test_trig BEFORE UPDATE ON regtest_table_part
+    FOR EACH ROW EXECUTE PROCEDURE suppress_redundant_updates_trigger();
+ALTER TABLE regtest_table_part DISABLE TRIGGER regtest_part_test_trig;    -- not supported by sepgsql
+ALTER TABLE regtest_table_part ENABLE  TRIGGER regtest_part_test_trig;    -- not supported by sepgsql
+ALTER TABLE regtest_table_part SET (fillfactor = 75);
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="regtest_schema_2.regtest_table_part"
+ALTER TABLE regtest_table_part RESET (fillfactor);
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="regtest_schema_2.regtest_table_part"
+ALTER TABLE regtest_table_part SET TABLESPACE pg_default;
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="regtest_schema_2.regtest_table_part"
+---
 ALTER VIEW regtest_view SET (security_barrier);
 LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_view_t:s0 tclass=db_view name="regtest_schema_2.regtest_view"
 ALTER SEQUENCE regtest_seq INCREMENT BY 10 START WITH 1000;
@@ -208,13 +314,15 @@ RESET sepgsql.debug_audit;
 RESET client_min_messages;
 DROP DATABASE sepgsql_test_regression;
 DROP SCHEMA regtest_schema CASCADE;
-NOTICE:  drop cascades to 3 other objects
+NOTICE:  drop cascades to 4 other objects
 DETAIL:  drop cascades to table regtest_table_2
 drop cascades to table regtest_table_3
 drop cascades to constraint test_fk on table regtest_table
+drop cascades to table regtest_ptable_1_tens
 DROP SCHEMA regtest_schema_2 CASCADE;
-NOTICE:  drop cascades to 4 other objects
+NOTICE:  drop cascades to 5 other objects
 DETAIL:  drop cascades to table regtest_table
+drop cascades to table regtest_ptable
 drop cascades to sequence regtest_seq
 drop cascades to view regtest_view
 drop cascades to function regtest_func(text)

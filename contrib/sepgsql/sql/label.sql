@@ -64,6 +64,22 @@ INSERT INTO var_tbl VALUES (2,'xxx'), (3,'yyy'), (4,'zzz'), (5,'xyz');
 SECURITY LABEL ON TABLE var_tbl
 	IS 'system_u:object_r:sepgsql_regtest_var_table_t:s0';
 
+CREATE TABLE foo_ptbl(o int, p text) PARTITION BY RANGE (o);
+CREATE TABLE foo_ptbl_ones PARTITION OF foo_ptbl FOR VALUES FROM ('0') TO ('10');
+CREATE TABLE foo_ptbl_tens PARTITION OF foo_ptbl FOR VALUES FROM ('10') TO ('100');
+
+INSERT INTO foo_ptbl VALUES (0, 'aaa'), (9,'bbb'), (10,'ccc'), (99,'ddd');
+SECURITY LABEL ON TABLE foo_ptbl
+	IS 'system_u:object_r:sepgsql_regtest_foo_table_t:s0';
+
+CREATE TABLE var_ptbl(q int, r text) PARTITION BY RANGE (q);
+CREATE TABLE var_ptbl_ones PARTITION OF var_ptbl FOR VALUES FROM ('0') TO ('10');
+CREATE TABLE var_ptbl_tens PARTITION OF var_ptbl FOR VALUES FROM ('10') TO ('100');
+
+INSERT INTO var_ptbl VALUES (0,'xxx'), (9,'yyy'), (10,'zzz'), (99,'xyz');
+SECURITY LABEL ON TABLE var_ptbl
+	IS 'system_u:object_r:sepgsql_regtest_var_table_t:s0';
+
 --
 -- Tests for default labeling behavior
 --
@@ -75,10 +91,30 @@ INSERT INTO t3 VALUES (1, 'sss'), (2, 'ttt'), (3, 'uuu');
 CREATE TABLE t4 (m int, n text);
 INSERT INTO t4 VALUES (1,'mmm'), (2,'nnn'), (3,'ooo');
 
+-- @SECURITY-CONTEXT=unconfined_u:unconfined_r:sepgsql_regtest_user_t:s0
+CREATE TABLE tpart (o int, p text) PARTITION BY RANGE (o);
+
+CREATE TABLE tpart_ones PARTITION OF tpart FOR VALUES FROM ('0') TO ('10');
+-- @SECURITY-CONTEXT=unconfined_u:unconfined_r:sepgsql_regtest_dba_t:s0
+CREATE TABLE tpart_tens PARTITION OF tpart FOR VALUES FROM ('10') TO ('100');
+
+INSERT INTO tpart VALUES (0, 'aaa');
+INSERT INTO tpart VALUES (9, 'bbb');
+INSERT INTO tpart VALUES (99, 'ccc');
+
 SELECT objtype, objname, label FROM pg_seclabels
-    WHERE provider = 'selinux' AND objtype = 'table' AND objname in ('t1', 't2', 't3');
+    WHERE provider = 'selinux' AND objtype = 'table' AND objname in ('t1', 't2', 't3',
+                                                                     'tpart',
+																	 'tpart_ones',
+																	 'tpart_tens')
+    ORDER BY objname ASC;
 SELECT objtype, objname, label FROM pg_seclabels
-    WHERE provider = 'selinux' AND objtype = 'column' AND (objname like 't3.%' OR objname like 't4.%');
+    WHERE provider = 'selinux' AND objtype = 'column' AND (objname like 't3.%'
+	                                                      OR objname like 't4.%'
+														  OR objname like 'tpart.%'
+														  OR objname like 'tpart_ones.%'
+														  OR objname like 'tpart_tens.%')
+    ORDER BY objname ASC;
 
 --
 -- Tests for SECURITY LABEL
@@ -92,6 +128,14 @@ SECURITY LABEL ON COLUMN t2
     IS 'system_u:object_r:sepgsql_ro_table_t:s0';	-- be failed
 SECURITY LABEL ON COLUMN t2.b
     IS 'system_u:object_r:sepgsql_ro_table_t:s0';	-- ok
+SECURITY LABEL ON TABLE tpart
+    IS 'system_u:object_r:sepgsql_ro_table_t:s0';   -- ok
+SECURITY LABEL ON TABLE tpart
+    IS 'invalid security context';          -- failed
+SECURITY LABEL ON COLUMN tpart
+    IS 'system_u:object_r:sepgsql_ro_table_t:s0';   -- failed
+SECURITY LABEL ON COLUMN tpart.o
+    IS 'system_u:object_r:sepgsql_ro_table_t:s0';   -- ok
 
 --
 -- Tests for Trusted Procedures
@@ -198,8 +242,10 @@ SELECT auth_func('foo', 'acbd18db4cc2f85cedef654fccc4a4d8');
 SELECT sepgsql_getcon();
 
 SELECT * FROM foo_tbl;	-- OK
+SELECT * FROM foo_ptbl;	-- OK
 
 SELECT * FROM var_tbl;	-- failed
+SELECT * FROM var_ptbl;	-- failed
 
 SELECT * FROM auth_tbl;	-- failed
 
@@ -208,8 +254,10 @@ SELECT sepgsql_getcon();
 
 -- the pooler cannot touch these tables directly
 SELECT * FROM foo_tbl;	-- failed
+SELECT * FROM foo_ptbl;	-- failed
 
 SELECT * FROM var_tbl;	-- failed
+SELECT * FROM var_ptbl;	-- failed
 
 -- switch to "var"
 SELECT auth_func('var', 'b2145aac704ce76dbe1ac7adac535b23');
@@ -217,8 +265,10 @@ SELECT auth_func('var', 'b2145aac704ce76dbe1ac7adac535b23');
 SELECT sepgsql_getcon();
 
 SELECT * FROM foo_tbl;  -- failed
+SELECT * FROM foo_ptbl;  -- failed
 
 SELECT * FROM var_tbl;  -- OK
+SELECT * FROM var_ptbl;  -- OK
 
 SELECT * FROM auth_tbl;	-- failed
 
@@ -236,6 +286,7 @@ DROP TABLE IF EXISTS t1 CASCADE;
 DROP TABLE IF EXISTS t2 CASCADE;
 DROP TABLE IF EXISTS t3 CASCADE;
 DROP TABLE IF EXISTS t4 CASCADE;
+DROP TABLE IF EXISTS tpart CASCADE;
 DROP FUNCTION IF EXISTS f1() CASCADE;
 DROP FUNCTION IF EXISTS f2() CASCADE;
 DROP FUNCTION IF EXISTS f3() CASCADE;
