@@ -107,14 +107,14 @@ SELECT objtype, objname, label FROM pg_seclabels
                                                                      'tpart',
 																	 'tpart_ones',
 																	 'tpart_tens')
-    ORDER BY objname ASC;
+    ORDER BY objname COLLATE "C" ASC;
 SELECT objtype, objname, label FROM pg_seclabels
     WHERE provider = 'selinux' AND objtype = 'column' AND (objname like 't3.%'
 	                                                      OR objname like 't4.%'
 														  OR objname like 'tpart.%'
 														  OR objname like 'tpart_ones.%'
 														  OR objname like 'tpart_tens.%')
-    ORDER BY objname ASC;
+    ORDER BY objname COLLATE "C" ASC;
 
 --
 -- Tests for SECURITY LABEL

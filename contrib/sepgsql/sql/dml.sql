@@ -65,7 +65,7 @@ SELECT objtype, objname, label FROM pg_seclabels
                       't1p', 't1p.o', 't1p.p', 't1p.q',
                       't1p_ones', 't1p_ones.o', 't1p_ones.p', 't1p_ones.q',
                       't1p_tens', 't1p_tens.o', 't1p_tens.p', 't1p_tens.q')
-ORDER BY objname;
+ORDER BY objname COLLATE "C";
 
 CREATE SCHEMA my_schema_1;
 CREATE TABLE my_schema_1.ts1 (a int, b text);

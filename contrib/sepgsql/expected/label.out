@@ -107,7 +107,7 @@ SELECT objtype, objname, label FROM pg_seclabels
                                                                      'tpart',
 																	 'tpart_ones',
 																	 'tpart_tens')
-    ORDER BY objname ASC;
+    ORDER BY objname COLLATE "C" ASC;
  objtype |  objname   |                     label                     
 ---------+------------+-----------------------------------------------
  table   | t1         | unconfined_u:object_r:sepgsql_table_t:s0
@@ -124,7 +124,7 @@ SELECT objtype, objname, label FROM pg_seclabels
 														  OR objname like 'tpart.%'
 														  OR objname like 'tpart_ones.%'
 														  OR objname like 'tpart_tens.%')
-    ORDER BY objname ASC;
+    ORDER BY objname COLLATE "C" ASC;
  objtype |       objname       |                     label                     
 ---------+---------------------+-----------------------------------------------
  column  | t3.cmax             | unconfined_u:object_r:user_sepgsql_table_t:s0
@@ -147,6 +147,10 @@ SELECT objtype, objname, label FROM pg_seclabels
  column  | tpart.cmin          | unconfined_u:object_r:user_sepgsql_table_t:s0
  column  | tpart.ctid          | unconfined_u:object_r:user_sepgsql_table_t:s0
  column  | tpart.o             | unconfined_u:object_r:user_sepgsql_table_t:s0
+ column  | tpart.p             | unconfined_u:object_r:user_sepgsql_table_t:s0
+ column  | tpart.tableoid      | unconfined_u:object_r:user_sepgsql_table_t:s0
+ column  | tpart.xmax          | unconfined_u:object_r:user_sepgsql_table_t:s0
+ column  | tpart.xmin          | unconfined_u:object_r:user_sepgsql_table_t:s0
  column  | tpart_ones.cmax     | unconfined_u:object_r:user_sepgsql_table_t:s0
  column  | tpart_ones.cmin     | unconfined_u:object_r:user_sepgsql_table_t:s0
  column  | tpart_ones.ctid     | unconfined_u:object_r:user_sepgsql_table_t:s0
@@ -155,8 +159,6 @@ SELECT objtype, objname, label FROM pg_seclabels
  column  | tpart_ones.tableoid | unconfined_u:object_r:user_sepgsql_table_t:s0
  column  | tpart_ones.xmax     | unconfined_u:object_r:user_sepgsql_table_t:s0
  column  | tpart_ones.xmin     | unconfined_u:object_r:user_sepgsql_table_t:s0
- column  | tpart.p             | unconfined_u:object_r:user_sepgsql_table_t:s0
- column  | tpart.tableoid      | unconfined_u:object_r:user_sepgsql_table_t:s0
  column  | tpart_tens.cmax     | unconfined_u:object_r:sepgsql_sysobj_t:s0
  column  | tpart_tens.cmin     | unconfined_u:object_r:sepgsql_sysobj_t:s0
  column  | tpart_tens.ctid     | unconfined_u:object_r:sepgsql_sysobj_t:s0
@@ -165,8 +167,6 @@ SELECT objtype, objname, label FROM pg_seclabels
  column  | tpart_tens.tableoid | unconfined_u:object_r:sepgsql_sysobj_t:s0
  column  | tpart_tens.xmax     | unconfined_u:object_r:sepgsql_sysobj_t:s0
  column  | tpart_tens.xmin     | unconfined_u:object_r:sepgsql_sysobj_t:s0
- column  | tpart.xmax          | unconfined_u:object_r:user_sepgsql_table_t:s0
- column  | tpart.xmin          | unconfined_u:object_r:user_sepgsql_table_t:s0
 (40 rows)
 
 --
