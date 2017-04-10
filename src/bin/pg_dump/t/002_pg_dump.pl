@@ -39,6 +39,7 @@ my %pgdump_runs = (
 	binary_upgrade => {
 		dump_cmd => [
 			'pg_dump',
+			'--no-sync',
 			'--format=custom',
 			"--file=$tempdir/binary_upgrade.dump",
 			'-w',
@@ -55,6 +56,7 @@ my %pgdump_runs = (
 	clean => {
 		dump_cmd => [
 			'pg_dump',
+			'--no-sync',
 			"--file=$tempdir/clean.sql",
 			'--include-subscriptions',
 			'-c',
@@ -63,6 +65,7 @@ my %pgdump_runs = (
 	clean_if_exists => {
 		dump_cmd => [
 			'pg_dump',
+			'--no-sync',
 			"--file=$tempdir/clean_if_exists.sql",
 			'--include-subscriptions',
 			'-c',
@@ -71,12 +74,16 @@ my %pgdump_runs = (
 			'postgres', ], },
 	column_inserts => {
 		dump_cmd => [
-			'pg_dump', "--file=$tempdir/column_inserts.sql",
-			'-a',      '--column-inserts',
+			'pg_dump',
+			'--no-sync',
+			"--file=$tempdir/column_inserts.sql",
+			'-a',
+		    '--column-inserts',
 			'postgres', ], },
 	createdb => {
 		dump_cmd => [
 			'pg_dump',
+			'--no-sync',
 			"--file=$tempdir/createdb.sql",
 			'--include-subscriptions',
 			'-C',
@@ -86,6 +93,7 @@ my %pgdump_runs = (
 	data_only => {
 		dump_cmd => [
 			'pg_dump',
+			'--no-sync',
 			"--file=$tempdir/data_only.sql",
 			'--include-subscriptions',
 			'-a',
@@ -94,8 +102,13 @@ my %pgdump_runs = (
 			'-v',                 # no-op, just make sure it works
 			'postgres', ], },
 	defaults => {
-		dump_cmd => [ 'pg_dump', '-f', "$tempdir/defaults.sql", 'postgres', ],
-	},
+		dump_cmd => [
+			'pg_dump',
+			'--no-sync',
+			'-f',
+			"$tempdir/defaults.sql",
+			'postgres', ], },
+	# Do not use --no-sync to give test coverage for data sync.
 	defaults_custom_format => {
 		test_key => 'defaults',
 		dump_cmd => [
@@ -105,6 +118,7 @@ my %pgdump_runs = (
 			'pg_restore', '-Fc',
 			"--file=$tempdir/defaults_custom_format.sql",
 			"$tempdir/defaults_custom_format.dump", ], },
+	# Do not use --no-sync to give test coverage for data sync.
 	defaults_dir_format => {
 		test_key => 'defaults',
 		dump_cmd => [
@@ -114,6 +128,7 @@ my %pgdump_runs = (
 			'pg_restore', '-Fd',
 			"--file=$tempdir/defaults_dir_format.sql",
 			"$tempdir/defaults_dir_format", ], },
+	# Do not use --no-sync to give test coverage for data sync.
 	defaults_parallel => {
 		test_key => 'defaults',
 		dump_cmd => [
@@ -123,6 +138,7 @@ my %pgdump_runs = (
 			'pg_restore',
 			"--file=$tempdir/defaults_parallel.sql",
 			"$tempdir/defaults_parallel", ], },
+	# Do not use --no-sync to give test coverage for data sync.
 	defaults_tar_format => {
 		test_key => 'defaults',
 		dump_cmd => [
@@ -135,17 +151,22 @@ my %pgdump_runs = (
 			"$tempdir/defaults_tar_format.tar", ], },
 	exclude_dump_test_schema => {
 		dump_cmd => [
-			'pg_dump', "--file=$tempdir/exclude_dump_test_schema.sql",
-			'--exclude-schema=dump_test', 'postgres', ], },
+			'pg_dump',
+			'--no-sync',
+			"--file=$tempdir/exclude_dump_test_schema.sql",
+			'--exclude-schema=dump_test',
+			'postgres', ], },
 	exclude_test_table => {
 		dump_cmd => [
 			'pg_dump',
+			'--no-sync',
 			"--file=$tempdir/exclude_test_table.sql",
 			'--exclude-table=dump_test.test_table',
 			'postgres', ], },
 	exclude_test_table_data => {
 		dump_cmd => [
 			'pg_dump',
+			'--no-sync',
 			"--file=$tempdir/exclude_test_table_data.sql",
 			'--exclude-table-data=dump_test.test_table',
 			'--no-unlogged-table-data',
@@ -153,30 +174,52 @@ my %pgdump_runs = (
 	pg_dumpall_globals => {
 		dump_cmd => [
 			'pg_dumpall',                             '-v',
-			"--file=$tempdir/pg_dumpall_globals.sql", '-g', ], },
+			"--file=$tempdir/pg_dumpall_globals.sql", '-g',
+			'--no-sync', ], },
 	pg_dumpall_globals_clean => {
 		dump_cmd => [
-			'pg_dumpall', "--file=$tempdir/pg_dumpall_globals_clean.sql",
-			'-g',         '-c', ], },
+			'pg_dumpall',
+			"--file=$tempdir/pg_dumpall_globals_clean.sql",
+			'-g',
+			'-c',
+			'--no-sync', ], },
 	pg_dumpall_dbprivs => {
-		dump_cmd =>
-		  [ 'pg_dumpall', "--file=$tempdir/pg_dumpall_dbprivs.sql", ], },
+		dump_cmd => [
+			'pg_dumpall',
+			'--no-sync',
+			"--file=$tempdir/pg_dumpall_dbprivs.sql", ], },
 	no_blobs => {
-		dump_cmd =>
-		  [ 'pg_dump', "--file=$tempdir/no_blobs.sql", '-B', 'postgres', ], },
+		dump_cmd => [
+			'pg_dump',
+			'--no-sync',
+			"--file=$tempdir/no_blobs.sql",
+			'-B',
+			'postgres', ], },
 	no_privs => {
-		dump_cmd =>
-		  [ 'pg_dump', "--file=$tempdir/no_privs.sql", '-x', 'postgres', ], },
+		dump_cmd => [
+			'pg_dump',
+			'--no-sync',
+			"--file=$tempdir/no_privs.sql",
+			'-x',
+			'postgres', ], },
 	no_owner => {
-		dump_cmd =>
-		  [ 'pg_dump', "--file=$tempdir/no_owner.sql", '-O', 'postgres', ], },
+		dump_cmd => [
+			'pg_dump',
+			'--no-sync',
+			"--file=$tempdir/no_owner.sql",
+			'-O',
+			'postgres', ], },
 	only_dump_test_schema => {
 		dump_cmd => [
-			'pg_dump', "--file=$tempdir/only_dump_test_schema.sql",
-			'--schema=dump_test', 'postgres', ], },
+			'pg_dump',
+			'--no-sync',
+			"--file=$tempdir/only_dump_test_schema.sql",
+			'--schema=dump_test',
+			'postgres', ], },
 	only_dump_test_table => {
 		dump_cmd => [
 			'pg_dump',
+			'--no-sync',
 			"--file=$tempdir/only_dump_test_table.sql",
 			'--table=dump_test.test_table',
 			'--lock-wait-timeout=1000000',
@@ -184,6 +227,7 @@ my %pgdump_runs = (
 	role => {
 		dump_cmd => [
 			'pg_dump',
+			'--no-sync',
 			"--file=$tempdir/role.sql",
 			'--role=regress_dump_test_role',
 			'--schema=dump_test_second_schema',
@@ -192,6 +236,7 @@ my %pgdump_runs = (
 		test_key => 'role',
 		dump_cmd => [
 			'pg_dump',
+			'--no-sync',
 			'--format=directory',
 			'--jobs=2',
 			"--file=$tempdir/role_parallel",
@@ -204,28 +249,29 @@ my %pgdump_runs = (
 	schema_only => {
 		dump_cmd => [
 			'pg_dump', '--format=plain', "--file=$tempdir/schema_only.sql",
-			'-s', 'postgres', ], },
+			'--no-sync', '-s', 'postgres', ], },
 	section_pre_data => {
 		dump_cmd => [
 			'pg_dump',            "--file=$tempdir/section_pre_data.sql",
 			'--include-subscriptions',
-			'--section=pre-data', 'postgres', ], },
+			'--section=pre-data', '--no-sync', 'postgres', ], },
 	section_data => {
 		dump_cmd => [
 			'pg_dump',        "--file=$tempdir/section_data.sql",
-			'--section=data', 'postgres', ], },
+			'--section=data', '--no-sync', 'postgres', ], },
 	section_post_data => {
 		dump_cmd => [
 			'pg_dump',             "--file=$tempdir/section_post_data.sql",
-			'--section=post-data', 'postgres', ], },
+			'--section=post-data', '--no-sync', 'postgres', ], },
 	test_schema_plus_blobs => {
 		dump_cmd => [
 			'pg_dump', "--file=$tempdir/test_schema_plus_blobs.sql",
-			'--schema=dump_test', '-b', '-B', 'postgres', ], },
+
+			'--schema=dump_test', '-b', '-B', '--no-sync', 'postgres', ], },
 	with_oids => {
 		dump_cmd => [
 			'pg_dump',                       '--oids',
-			'--include-subscriptions',
+			'--include-subscriptions',       '--no-sync',
 			"--file=$tempdir/with_oids.sql", 'postgres', ], },);
 
 ###############################################################

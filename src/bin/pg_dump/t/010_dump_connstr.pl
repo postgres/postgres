@@ -59,29 +59,29 @@ $node->command_ok(
 		'-U', $dbname4 ],
 	'pg_dumpall with long ASCII name 1');
 $node->command_ok(
-	[   'pg_dumpall', '-r', '-f', $discard, '--dbname',
+	[   'pg_dumpall', '--no-sync', '-r', '-f', $discard, '--dbname',
 		$node->connstr($dbname2),
 		'-U', $dbname3 ],
 	'pg_dumpall with long ASCII name 2');
 $node->command_ok(
-	[   'pg_dumpall', '-r', '-f', $discard, '--dbname',
+	[   'pg_dumpall', '--no-sync', '-r', '-f', $discard, '--dbname',
 		$node->connstr($dbname3),
 		'-U', $dbname2 ],
 	'pg_dumpall with long ASCII name 3');
 $node->command_ok(
-	[   'pg_dumpall', '-r', '-f', $discard, '--dbname',
+	[   'pg_dumpall', '--no-sync', '-r', '-f', $discard, '--dbname',
 		$node->connstr($dbname4),
 		'-U', $dbname1 ],
 	'pg_dumpall with long ASCII name 4');
 $node->command_ok(
-	[ 'pg_dumpall', '-r', '-l', 'dbname=template1' ],
+	[ 'pg_dumpall', '--no-sync', '-r', '-l', 'dbname=template1' ],
 	'pg_dumpall -l accepts connection string');
 
 $node->run_log([ 'createdb', "foo\n\rbar" ]);
 
 # not sufficient to use -r here
 $node->command_fails(
-	[ 'pg_dumpall', '-f', $discard ],
+	[ 'pg_dumpall', '--no-sync', '-f', $discard ],
 	'pg_dumpall with \n\r in database name');
 $node->run_log([ 'dropdb', "foo\n\rbar" ]);
 
@@ -91,7 +91,7 @@ $node->safe_psql($dbname1, 'CREATE TABLE t0()');
 
 # XXX no printed message when this fails, just SIGPIPE termination
 $node->command_ok(
-	[   'pg_dump', '-Fd', '-j2', '-f', $dirfmt,
+	[   'pg_dump', '-Fd', '--no-sync', '-j2', '-f', $dirfmt,
 		'-U', $dbname1, $node->connstr($dbname1) ],
 	'parallel dump');
 
@@ -112,7 +112,7 @@ $node->command_ok(
 	'parallel restore with create');
 
 
-$node->command_ok([ 'pg_dumpall', '-f', $plain, '-U', $dbname1 ],
+$node->command_ok([ 'pg_dumpall', '--no-sync', '-f', $plain, '-U', $dbname1 ],
 	'take full dump');
 system_log('cat', $plain);
 my ($stderr, $result);
