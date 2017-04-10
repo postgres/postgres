@@ -158,14 +158,14 @@ UPDATE t5 SET e = g || '_upd';			-- failed
 ---
 -- partitioned table parent
 UPDATE t1p SET o = 9 WHERE o < 10;			-- ok
-UPDATE t1p SET o = 99 WHERE o >= 10;			-- ok 
+UPDATE t1p SET o = 99 WHERE o >= 10;			-- ok
 UPDATE t1p SET o = ascii(COALESCE(p,'upd'))%10 WHERE o < 10;		-- ok
 UPDATE t1p SET o = ascii(COALESCE(q,'upd'))%100 WHERE o >= 10;	-- failed
 -- partitioned table children
 UPDATE t1p_ones SET o = 9;								-- ok
 UPDATE t1p_ones SET o = ascii(COALESCE(p,'upd'))%10;	-- ok
 UPDATE t1p_ones SET o = ascii(COALESCE(q,'upd'))%10;	-- failed
-UPDATE t1p_tens SET o = 99;								-- ok 
+UPDATE t1p_tens SET o = 99;								-- ok
 UPDATE t1p_tens SET o = ascii(COALESCE(p,'upd'))%100;	-- ok
 UPDATE t1p_tens SET o = ascii(COALESCE(q,'upd'))%100;	-- failed
 ---
