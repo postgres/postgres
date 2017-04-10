@@ -1824,14 +1824,12 @@ ExecPartitionCheck(ResultRelInfo *resultRelInfo, TupleTableSlot *slot,
  * the partition constraint, if any.
  *
  * Note: 'slot' contains the tuple to check the constraints of, which may
- * have been converted from the original input tuple after tuple routing,
- * while 'orig_slot' contains the original tuple to be shown in the message,
- * if an error occurs.
+ * have been converted from the original input tuple after tuple routing.
+ * 'resultRelInfo' is the original result relation, before tuple routing.
  */
 void
 ExecConstraints(ResultRelInfo *resultRelInfo,
-				TupleTableSlot *slot, TupleTableSlot *orig_slot,
-				EState *estate)
+				TupleTableSlot *slot, EState *estate)
 {
 	Relation	rel = resultRelInfo->ri_RelationDesc;
 	TupleDesc	tupdesc = RelationGetDescr(rel);
@@ -1854,23 +1852,37 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 			{
 				char	   *val_desc;
 				Relation	orig_rel = rel;
-				TupleDesc	orig_tupdesc = tupdesc;
+				TupleDesc	orig_tupdesc = RelationGetDescr(rel);
 
 				/*
-				 * choose the correct relation to build val_desc from the
-				 * tuple contained in orig_slot
+				 * If the tuple has been routed, it's been converted to the
+				 * partition's rowtype, which might differ from the root
+				 * table's.  We must convert it back to the root table's
+				 * rowtype so that val_desc shown error message matches the
+				 * input tuple.
 				 */
 				if (resultRelInfo->ri_PartitionRoot)
 				{
+					HeapTuple	tuple = ExecFetchSlotTuple(slot);
+					TupleConversionMap	*map;
+
 					rel = resultRelInfo->ri_PartitionRoot;
 					tupdesc = RelationGetDescr(rel);
+					/* a reverse map */
+					map = convert_tuples_by_name(orig_tupdesc, tupdesc,
+								gettext_noop("could not convert row type"));
+					if (map != NULL)
+					{
+						tuple = do_convert_tuple(tuple, map);
+						ExecStoreTuple(tuple, slot, InvalidBuffer, false);
+					}
 				}
 
 				insertedCols = GetInsertedColumns(resultRelInfo, estate);
 				updatedCols = GetUpdatedColumns(resultRelInfo, estate);
 				modifiedCols = bms_union(insertedCols, updatedCols);
 				val_desc = ExecBuildSlotValueDescription(RelationGetRelid(rel),
-														 orig_slot,
+														 slot,
 														 tupdesc,
 														 modifiedCols,
 														 64);
@@ -1897,15 +1909,27 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 			/* See the comment above. */
 			if (resultRelInfo->ri_PartitionRoot)
 			{
+				HeapTuple	tuple = ExecFetchSlotTuple(slot);
+				TupleDesc	old_tupdesc = RelationGetDescr(rel);
+				TupleConversionMap	*map;
+
 				rel = resultRelInfo->ri_PartitionRoot;
 				tupdesc = RelationGetDescr(rel);
+				/* a reverse map */
+				map = convert_tuples_by_name(old_tupdesc, tupdesc,
+							gettext_noop("could not convert row type"));
+				if (map != NULL)
+				{
+					tuple = do_convert_tuple(tuple, map);
+					ExecStoreTuple(tuple, slot, InvalidBuffer, false);
+				}
 			}
 
 			insertedCols = GetInsertedColumns(resultRelInfo, estate);
 			updatedCols = GetUpdatedColumns(resultRelInfo, estate);
 			modifiedCols = bms_union(insertedCols, updatedCols);
 			val_desc = ExecBuildSlotValueDescription(RelationGetRelid(rel),
-													 orig_slot,
+													 slot,
 													 tupdesc,
 													 modifiedCols,
 													 64);
@@ -1927,15 +1951,27 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 		/* See the comment above. */
 		if (resultRelInfo->ri_PartitionRoot)
 		{
+			HeapTuple	tuple = ExecFetchSlotTuple(slot);
+			TupleDesc	old_tupdesc = RelationGetDescr(rel);
+			TupleConversionMap	*map;
+
 			rel = resultRelInfo->ri_PartitionRoot;
 			tupdesc = RelationGetDescr(rel);
+			/* a reverse map */
+			map = convert_tuples_by_name(old_tupdesc, tupdesc,
+						gettext_noop("could not convert row type"));
+			if (map != NULL)
+			{
+				tuple = do_convert_tuple(tuple, map);
+				ExecStoreTuple(tuple, slot, InvalidBuffer, false);
+			}
 		}
 
 		insertedCols = GetInsertedColumns(resultRelInfo, estate);
 		updatedCols = GetUpdatedColumns(resultRelInfo, estate);
 		modifiedCols = bms_union(insertedCols, updatedCols);
 		val_desc = ExecBuildSlotValueDescription(RelationGetRelid(rel),
-												 orig_slot,
+												 slot,
 												 tupdesc,
 												 modifiedCols,
 												 64);

@@ -217,9 +217,26 @@ insert into mlparted (a, b) values (1, 5);
 
 truncate mlparted;
 alter table mlparted add constraint check_b check (b = 3);
--- check that correct input row is shown when constraint check_b fails on mlparted11
--- after "(1, 2)" is routed to it
+
+-- have a BR trigger modify the row such that the check_b is violated
+create function mlparted11_trig_fn()
+returns trigger AS
+$$
+begin
+  NEW.b := 4;
+  return NEW;
+end;
+$$
+language plpgsql;
+create trigger mlparted11_trig before insert ON mlparted11
+  for each row execute procedure mlparted11_trig_fn();
+
+-- check that the correct row is shown when constraint check_b fails after
+-- "(1, 2)" is routed to mlparted11 (actually "(1, 4)" would be shown due
+-- to the BR trigger mlparted11_trig_fn)
 insert into mlparted values (1, 2);
+drop trigger mlparted11_trig on mlparted11;
+drop function mlparted11_trig_fn();
 
 -- check that inserting into an internal partition successfully results in
 -- checking its partition constraint before inserting into the leaf partition
