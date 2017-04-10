@@ -332,7 +332,7 @@ process_syncing_tables_for_apply(XLogRecPtr current_lsn)
 			}
 			else
 				/*
-				 * If no sync worker for this table yet, could running sync
+				 * If no sync worker for this table yet, count running sync
 				 * workers for this subscription, while we have the lock, for
 				 * later.
 				 */
