@@ -1244,6 +1244,7 @@ create_internal(void *place, size_t size,
 	area->mapping_pinned = false;
 	memset(area->segment_maps, 0, sizeof(dsa_segment_map) * DSA_MAX_SEGMENTS);
 	area->high_segment_index = 0;
+	area->freed_segment_counter = 0;
 	LWLockInitialize(&control->lock, control->lwlock_tranche_id);
 	for (i = 0; i < DSA_NUM_SIZE_CLASSES; ++i)
 		LWLockInitialize(DSA_SCLASS_LOCK(area, i),
@@ -1322,6 +1323,7 @@ attach_internal(void *place, dsm_segment *segment, dsa_handle handle)
 				 errmsg("could not attach to dynamic shared area")));
 	}
 	++control->refcnt;
+	area->freed_segment_counter = area->control->freed_segment_counter;
 	LWLockRelease(DSA_AREA_LOCK(area));
 
 	return area;
