@@ -817,7 +817,7 @@ ExecInitSubPlan(SubPlan *subplan, PlanState *parent)
 		i = 1;
 		foreach(l, oplist)
 		{
-			OpExpr	   *opexpr = castNode(OpExpr, lfirst(l));
+			OpExpr	   *opexpr = lfirst_node(OpExpr, l);
 			Expr	   *expr;
 			TargetEntry *tle;
 			Oid			rhs_eq_oper;
@@ -1148,7 +1148,7 @@ ExecInitAlternativeSubPlan(AlternativeSubPlan *asplan, PlanState *parent)
 	 */
 	foreach(lc, asplan->subplans)
 	{
-		SubPlan    *sp = castNode(SubPlan, lfirst(lc));
+		SubPlan    *sp = lfirst_node(SubPlan, lc);
 		SubPlanState *sps = ExecInitSubPlan(sp, parent);
 
 		asstate->subplans = lappend(asstate->subplans, sps);
@@ -1197,8 +1197,8 @@ ExecAlternativeSubPlan(AlternativeSubPlanState *node,
 					   bool *isNull)
 {
 	/* Just pass control to the active subplan */
-	SubPlanState *activesp = castNode(SubPlanState,
-									  list_nth(node->subplans, node->active));
+	SubPlanState *activesp = list_nth_node(SubPlanState,
+										   node->subplans, node->active);
 
 	return ExecSubPlan(activesp, econtext, isNull);
 }

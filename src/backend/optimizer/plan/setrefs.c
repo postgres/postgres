@@ -224,7 +224,7 @@ set_plan_references(PlannerInfo *root, Plan *plan)
 	 */
 	foreach(lc, root->rowMarks)
 	{
-		PlanRowMark *rc = castNode(PlanRowMark, lfirst(lc));
+		PlanRowMark *rc = lfirst_node(PlanRowMark, lc);
 		PlanRowMark *newrc;
 
 		/* flat copy is enough since all fields are scalars */

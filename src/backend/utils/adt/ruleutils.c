@@ -7809,7 +7809,7 @@ get_rule_expr(Node *node, deparse_context *context,
 				appendStringInfoString(buf, "(alternatives: ");
 				foreach(lc, asplan->subplans)
 				{
-					SubPlan    *splan = castNode(SubPlan, lfirst(lc));
+					SubPlan    *splan = lfirst_node(SubPlan, lc);
 
 					if (splan->useHashTable)
 						appendStringInfo(buf, "hashed %s", splan->plan_name);
@@ -8364,7 +8364,7 @@ get_rule_expr(Node *node, deparse_context *context,
 							get_rule_expr((Node *) linitial(xexpr->args),
 										  context, true);
 
-							con = castNode(Const, lsecond(xexpr->args));
+							con = lsecond_node(Const, xexpr->args);
 							Assert(!con->constisnull);
 							if (DatumGetBool(con->constvalue))
 								appendStringInfoString(buf,
@@ -8387,7 +8387,7 @@ get_rule_expr(Node *node, deparse_context *context,
 							else
 								get_rule_expr((Node *) con, context, false);
 
-							con = castNode(Const, lthird(xexpr->args));
+							con = lthird_node(Const, xexpr->args);
 							if (con->constisnull)
 								 /* suppress STANDALONE NO VALUE */ ;
 							else
@@ -8899,7 +8899,7 @@ get_agg_expr(Aggref *aggref, deparse_context *context,
 	 */
 	if (DO_AGGSPLIT_COMBINE(aggref->aggsplit))
 	{
-		TargetEntry *tle = castNode(TargetEntry, linitial(aggref->args));
+		TargetEntry *tle = linitial_node(TargetEntry, aggref->args);
 
 		Assert(list_length(aggref->args) == 1);
 		resolve_special_varno((Node *) tle->expr, context, original_aggref,
@@ -9360,7 +9360,7 @@ get_sublink_expr(SubLink *sublink, deparse_context *context)
 			sep = "";
 			foreach(l, ((BoolExpr *) sublink->testexpr)->args)
 			{
-				OpExpr	   *opexpr = castNode(OpExpr, lfirst(l));
+				OpExpr	   *opexpr = lfirst_node(OpExpr, l);
 
 				appendStringInfoString(buf, sep);
 				get_rule_expr(linitial(opexpr->args), context, true);

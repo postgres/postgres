@@ -3090,7 +3090,7 @@ eval_const_expressions_mutator(Node *node,
 				const_true_cond = false;
 				foreach(arg, caseexpr->args)
 				{
-					CaseWhen   *oldcasewhen = castNode(CaseWhen, lfirst(arg));
+					CaseWhen   *oldcasewhen = lfirst_node(CaseWhen, arg);
 					Node	   *casecond;
 					Node	   *caseresult;
 

@@ -5942,7 +5942,7 @@ ATExecSetIdentity(Relation rel, const char *colName, Node *def, LOCKMODE lockmod
 
 	foreach(option, castNode(List, def))
 	{
-		DefElem	   *defel = castNode(DefElem, lfirst(option));
+		DefElem	   *defel = lfirst_node(DefElem, option);
 
 		if (strcmp(defel->defname, "generated") == 0)
 		{
@@ -9547,7 +9547,7 @@ ATPostAlterTypeParse(Oid oldId, Oid oldRelId, Oid refRelId, char *cmd,
 	querytree_list = NIL;
 	foreach(list_item, raw_parsetree_list)
 	{
-		RawStmt    *rs = castNode(RawStmt, lfirst(list_item));
+		RawStmt    *rs = lfirst_node(RawStmt, list_item);
 		Node	   *stmt = rs->stmt;
 
 		if (IsA(stmt, IndexStmt))

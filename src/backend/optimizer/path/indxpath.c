@@ -1277,7 +1277,7 @@ generate_bitmap_or_paths(PlannerInfo *root, RelOptInfo *rel,
 
 	foreach(lc, clauses)
 	{
-		RestrictInfo *rinfo = castNode(RestrictInfo, lfirst(lc));
+		RestrictInfo *rinfo = lfirst_node(RestrictInfo, lc);
 		List	   *pathlist;
 		Path	   *bitmapqual;
 		ListCell   *j;
@@ -2188,7 +2188,7 @@ match_clauses_to_index(IndexOptInfo *index,
 
 	foreach(lc, clauses)
 	{
-		RestrictInfo *rinfo = castNode(RestrictInfo, lfirst(lc));
+		RestrictInfo *rinfo = lfirst_node(RestrictInfo, lc);
 
 		match_clause_to_index(index, rinfo, clauseset);
 	}

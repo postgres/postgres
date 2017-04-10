@@ -322,7 +322,7 @@ ExecBuildProjectionInfo(List *targetList,
 	/* Now compile each tlist column */
 	foreach(lc, targetList)
 	{
-		TargetEntry *tle = castNode(TargetEntry, lfirst(lc));
+		TargetEntry *tle = lfirst_node(TargetEntry, lc);
 		Var		   *variable = NULL;
 		AttrNumber	attnum = 0;
 		bool		isSafeVar = false;

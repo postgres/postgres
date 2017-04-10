@@ -2550,7 +2550,7 @@ create_indexscan_plan(PlannerInfo *root,
 	qpqual = NIL;
 	foreach(l, scan_clauses)
 	{
-		RestrictInfo *rinfo = castNode(RestrictInfo, lfirst(l));
+		RestrictInfo *rinfo = lfirst_node(RestrictInfo, l);
 
 		if (rinfo->pseudoconstant)
 			continue;			/* we may drop pseudoconstants here */
@@ -2710,7 +2710,7 @@ create_bitmap_scan_plan(PlannerInfo *root,
 	qpqual = NIL;
 	foreach(l, scan_clauses)
 	{
-		RestrictInfo *rinfo = castNode(RestrictInfo, lfirst(l));
+		RestrictInfo *rinfo = lfirst_node(RestrictInfo, l);
 		Node	   *clause = (Node *) rinfo->clause;
 
 		if (rinfo->pseudoconstant)
@@ -3867,7 +3867,7 @@ create_mergejoin_plan(PlannerInfo *root,
 	i = 0;
 	foreach(lc, best_path->path_mergeclauses)
 	{
-		RestrictInfo *rinfo = castNode(RestrictInfo, lfirst(lc));
+		RestrictInfo *rinfo = lfirst_node(RestrictInfo, lc);
 		EquivalenceClass *oeclass;
 		EquivalenceClass *ieclass;
 		PathKey    *opathkey;
@@ -4414,7 +4414,7 @@ fix_indexqual_references(PlannerInfo *root, IndexPath *index_path)
 
 	forboth(lcc, index_path->indexquals, lci, index_path->indexqualcols)
 	{
-		RestrictInfo *rinfo = castNode(RestrictInfo, lfirst(lcc));
+		RestrictInfo *rinfo = lfirst_node(RestrictInfo, lcc);
 		int			indexcol = lfirst_int(lci);
 		Node	   *clause;
 

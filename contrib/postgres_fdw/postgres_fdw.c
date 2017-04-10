@@ -1169,7 +1169,7 @@ postgresGetForeignPlan(PlannerInfo *root,
 	 */
 	foreach(lc, scan_clauses)
 	{
-		RestrictInfo *rinfo = castNode(RestrictInfo, lfirst(lc));
+		RestrictInfo *rinfo = lfirst_node(RestrictInfo, lc);
 
 		/* Ignore any pseudoconstants, they're dealt with elsewhere */
 		if (rinfo->pseudoconstant)
@@ -5022,8 +5022,8 @@ conversion_error_callback(void *arg)
 		EState	   *estate = fsstate->ss.ps.state;
 		TargetEntry *tle;
 
-		tle = castNode(TargetEntry, list_nth(fsplan->fdw_scan_tlist,
-											 errpos->cur_attno - 1));
+		tle = list_nth_node(TargetEntry, fsplan->fdw_scan_tlist,
+							errpos->cur_attno - 1);
 
 		/*
 		 * Target list can have Vars and expressions.  For Vars, we can get

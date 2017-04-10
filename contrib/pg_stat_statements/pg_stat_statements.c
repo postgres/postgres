@@ -2393,7 +2393,7 @@ JumbleRangeTable(pgssJumbleState *jstate, List *rtable)
 
 	foreach(lc, rtable)
 	{
-		RangeTblEntry *rte = castNode(RangeTblEntry, lfirst(lc));
+		RangeTblEntry *rte = lfirst_node(RangeTblEntry, lc);
 
 		APP_JUMB(rte->rtekind);
 		switch (rte->rtekind)
@@ -2656,7 +2656,7 @@ JumbleExpr(pgssJumbleState *jstate, Node *node)
 				JumbleExpr(jstate, (Node *) caseexpr->arg);
 				foreach(temp, caseexpr->args)
 				{
-					CaseWhen   *when = castNode(CaseWhen, lfirst(temp));
+					CaseWhen   *when = lfirst_node(CaseWhen, temp);
 
 					JumbleExpr(jstate, (Node *) when->expr);
 					JumbleExpr(jstate, (Node *) when->result);

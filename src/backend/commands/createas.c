@@ -323,7 +323,7 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 			elog(ERROR, "unexpected rewrite result for %s",
 				 is_matview ? "CREATE MATERIALIZED VIEW" :
 				 "CREATE TABLE AS SELECT");
-		query = castNode(Query, linitial(rewritten));
+		query = linitial_node(Query, rewritten);
 		Assert(query->commandType == CMD_SELECT);
 
 		/* plan the query --- note we disallow parallelism */

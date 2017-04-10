@@ -1233,9 +1233,9 @@ SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
 	if (!(portal->cursorOptions & (CURSOR_OPT_SCROLL | CURSOR_OPT_NO_SCROLL)))
 	{
 		if (list_length(stmt_list) == 1 &&
-			castNode(PlannedStmt, linitial(stmt_list))->commandType != CMD_UTILITY &&
-			castNode(PlannedStmt, linitial(stmt_list))->rowMarks == NIL &&
-			ExecSupportsBackwardScan(castNode(PlannedStmt, linitial(stmt_list))->planTree))
+			linitial_node(PlannedStmt, stmt_list)->commandType != CMD_UTILITY &&
+			linitial_node(PlannedStmt, stmt_list)->rowMarks == NIL &&
+			ExecSupportsBackwardScan(linitial_node(PlannedStmt, stmt_list)->planTree))
 			portal->cursorOptions |= CURSOR_OPT_SCROLL;
 		else
 			portal->cursorOptions |= CURSOR_OPT_NO_SCROLL;
@@ -1249,8 +1249,8 @@ SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
 	if (portal->cursorOptions & CURSOR_OPT_SCROLL)
 	{
 		if (list_length(stmt_list) == 1 &&
-			castNode(PlannedStmt, linitial(stmt_list))->commandType != CMD_UTILITY &&
-			castNode(PlannedStmt, linitial(stmt_list))->rowMarks != NIL)
+			linitial_node(PlannedStmt, stmt_list)->commandType != CMD_UTILITY &&
+			linitial_node(PlannedStmt, stmt_list)->rowMarks != NIL)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("DECLARE SCROLL CURSOR ... FOR UPDATE/SHARE is not supported"),
@@ -1274,7 +1274,7 @@ SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
 
 		foreach(lc, stmt_list)
 		{
-			PlannedStmt *pstmt = castNode(PlannedStmt, lfirst(lc));
+			PlannedStmt *pstmt = lfirst_node(PlannedStmt, lc);
 
 			if (!CommandIsReadOnly(pstmt))
 			{
@@ -1770,7 +1770,7 @@ _SPI_prepare_plan(const char *src, SPIPlanPtr plan)
 
 	foreach(list_item, raw_parsetree_list)
 	{
-		RawStmt    *parsetree = castNode(RawStmt, lfirst(list_item));
+		RawStmt    *parsetree = lfirst_node(RawStmt, list_item);
 		List	   *stmt_list;
 		CachedPlanSource *plansource;
 
@@ -1874,7 +1874,7 @@ _SPI_prepare_oneshot_plan(const char *src, SPIPlanPtr plan)
 
 	foreach(list_item, raw_parsetree_list)
 	{
-		RawStmt    *parsetree = castNode(RawStmt, lfirst(list_item));
+		RawStmt    *parsetree = lfirst_node(RawStmt, list_item);
 		CachedPlanSource *plansource;
 
 		plansource = CreateOneShotCachedPlan(parsetree,
@@ -2035,7 +2035,7 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 
 		foreach(lc2, stmt_list)
 		{
-			PlannedStmt *stmt = castNode(PlannedStmt, lfirst(lc2));
+			PlannedStmt *stmt = lfirst_node(PlannedStmt, lc2);
 			bool		canSetTag = stmt->canSetTag;
 			DestReceiver *dest;
 

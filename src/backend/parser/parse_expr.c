@@ -1669,7 +1669,7 @@ transformCaseExpr(ParseState *pstate, CaseExpr *c)
 	resultexprs = NIL;
 	foreach(l, c->args)
 	{
-		CaseWhen   *w = castNode(CaseWhen, lfirst(l));
+		CaseWhen   *w = lfirst_node(CaseWhen, l);
 		CaseWhen   *neww = makeNode(CaseWhen);
 		Node	   *warg;
 
@@ -2334,7 +2334,7 @@ transformXmlExpr(ParseState *pstate, XmlExpr *x)
 
 	foreach(lc, x->named_args)
 	{
-		ResTarget  *r = castNode(ResTarget, lfirst(lc));
+		ResTarget  *r = lfirst_node(ResTarget, lc);
 		Node	   *expr;
 		char	   *argname;
 

@@ -478,7 +478,7 @@ TypeNameListToString(List *typenames)
 	initStringInfo(&string);
 	foreach(l, typenames)
 	{
-		TypeName   *typeName = castNode(TypeName, lfirst(l));
+		TypeName   *typeName = lfirst_node(TypeName, l);
 
 		if (l != list_head(typenames))
 			appendStringInfoChar(&string, ',');
@@ -719,7 +719,7 @@ typeStringToTypeName(const char *str)
 	 */
 	if (list_length(raw_parsetree_list) != 1)
 		goto fail;
-	stmt = (SelectStmt *) castNode(RawStmt, linitial(raw_parsetree_list))->stmt;
+	stmt = (SelectStmt *) linitial_node(RawStmt, raw_parsetree_list)->stmt;
 	if (stmt == NULL ||
 		!IsA(stmt, SelectStmt) ||
 		stmt->distinctClause != NIL ||

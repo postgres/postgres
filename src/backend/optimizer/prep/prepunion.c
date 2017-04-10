@@ -1750,7 +1750,7 @@ translate_col_privs(const Bitmapset *parent_privs,
 	attno = InvalidAttrNumber;
 	foreach(lc, translated_vars)
 	{
-		Var		   *var = castNode(Var, lfirst(lc));
+		Var		   *var = lfirst_node(Var, lc);
 
 		attno++;
 		if (var == NULL)		/* ignore dropped columns */

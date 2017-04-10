@@ -3639,7 +3639,7 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 
 			foreach(l2, plansource->query_list)
 			{
-				Query	   *q = castNode(Query, lfirst(l2));
+				Query	   *q = lfirst_node(Query, l2);
 
 				if (q->canSetTag)
 				{
@@ -6835,7 +6835,7 @@ exec_simple_recheck_plan(PLpgSQL_expr *expr, CachedPlan *cplan)
 	 */
 	if (list_length(cplan->stmt_list) != 1)
 		return;
-	stmt = castNode(PlannedStmt, linitial(cplan->stmt_list));
+	stmt = linitial_node(PlannedStmt, cplan->stmt_list);
 
 	/*
 	 * 2. It must be a RESULT plan --> no scan's required

@@ -1636,7 +1636,7 @@ AtSubCommit_Notify(void)
 	List	   *parentPendingActions;
 	List	   *parentPendingNotifies;
 
-	parentPendingActions = castNode(List, linitial(upperPendingActions));
+	parentPendingActions = linitial_node(List, upperPendingActions);
 	upperPendingActions = list_delete_first(upperPendingActions);
 
 	Assert(list_length(upperPendingActions) ==
@@ -1647,7 +1647,7 @@ AtSubCommit_Notify(void)
 	 */
 	pendingActions = list_concat(parentPendingActions, pendingActions);
 
-	parentPendingNotifies = castNode(List, linitial(upperPendingNotifies));
+	parentPendingNotifies = linitial_node(List, upperPendingNotifies);
 	upperPendingNotifies = list_delete_first(upperPendingNotifies);
 
 	Assert(list_length(upperPendingNotifies) ==
@@ -1679,13 +1679,13 @@ AtSubAbort_Notify(void)
 	 */
 	while (list_length(upperPendingActions) > my_level - 2)
 	{
-		pendingActions = castNode(List, linitial(upperPendingActions));
+		pendingActions = linitial_node(List, upperPendingActions);
 		upperPendingActions = list_delete_first(upperPendingActions);
 	}
 
 	while (list_length(upperPendingNotifies) > my_level - 2)
 	{
-		pendingNotifies = castNode(List, linitial(upperPendingNotifies));
+		pendingNotifies = linitial_node(List, upperPendingNotifies);
 		upperPendingNotifies = list_delete_first(upperPendingNotifies);
 	}
 }

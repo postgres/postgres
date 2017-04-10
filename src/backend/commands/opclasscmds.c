@@ -460,7 +460,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 	 */
 	foreach(l, stmt->items)
 	{
-		CreateOpClassItem *item = castNode(CreateOpClassItem, lfirst(l));
+		CreateOpClassItem *item = lfirst_node(CreateOpClassItem, l);
 		Oid			operOid;
 		Oid			funcOid;
 		Oid			sortfamilyOid;
@@ -834,7 +834,7 @@ AlterOpFamilyAdd(AlterOpFamilyStmt *stmt, Oid amoid, Oid opfamilyoid,
 	 */
 	foreach(l, items)
 	{
-		CreateOpClassItem *item = castNode(CreateOpClassItem, lfirst(l));
+		CreateOpClassItem *item = lfirst_node(CreateOpClassItem, l);
 		Oid			operOid;
 		Oid			funcOid;
 		Oid			sortfamilyOid;
@@ -959,7 +959,7 @@ AlterOpFamilyDrop(AlterOpFamilyStmt *stmt, Oid amoid, Oid opfamilyoid,
 	 */
 	foreach(l, items)
 	{
-		CreateOpClassItem *item = castNode(CreateOpClassItem, lfirst(l));
+		CreateOpClassItem *item = lfirst_node(CreateOpClassItem, l);
 		Oid			lefttype,
 					righttype;
 		OpFamilyMember *member;

@@ -111,7 +111,7 @@ exprType(const Node *expr)
 
 					if (!qtree || !IsA(qtree, Query))
 						elog(ERROR, "cannot get type for untransformed sublink");
-					tent = castNode(TargetEntry, linitial(qtree->targetList));
+					tent = linitial_node(TargetEntry, qtree->targetList);
 					Assert(!tent->resjunk);
 					type = exprType((Node *) tent->expr);
 					if (sublink->subLinkType == ARRAY_SUBLINK)
@@ -324,7 +324,7 @@ exprTypmod(const Node *expr)
 
 					if (!qtree || !IsA(qtree, Query))
 						elog(ERROR, "cannot get type for untransformed sublink");
-					tent = castNode(TargetEntry, linitial(qtree->targetList));
+					tent = linitial_node(TargetEntry, qtree->targetList);
 					Assert(!tent->resjunk);
 					return exprTypmod((Node *) tent->expr);
 					/* note we don't need to care if it's an array */
@@ -382,7 +382,7 @@ exprTypmod(const Node *expr)
 					return -1;	/* no point in trying harder */
 				foreach(arg, cexpr->args)
 				{
-					CaseWhen   *w = castNode(CaseWhen, lfirst(arg));
+					CaseWhen   *w = lfirst_node(CaseWhen, arg);
 
 					if (exprType((Node *) w->result) != casetype)
 						return -1;
@@ -809,7 +809,7 @@ exprCollation(const Node *expr)
 
 					if (!qtree || !IsA(qtree, Query))
 						elog(ERROR, "cannot get collation for untransformed sublink");
-					tent = castNode(TargetEntry, linitial(qtree->targetList));
+					tent = linitial_node(TargetEntry, qtree->targetList);
 					Assert(!tent->resjunk);
 					coll = exprCollation((Node *) tent->expr);
 					/* collation doesn't change if it's converted to array */
@@ -1054,7 +1054,7 @@ exprSetCollation(Node *expr, Oid collation)
 
 					if (!qtree || !IsA(qtree, Query))
 						elog(ERROR, "cannot set collation for untransformed sublink");
-					tent = castNode(TargetEntry, linitial(qtree->targetList));
+					tent = linitial_node(TargetEntry, qtree->targetList);
 					Assert(!tent->resjunk);
 					Assert(collation == exprCollation((Node *) tent->expr));
 				}
@@ -2058,7 +2058,7 @@ expression_tree_walker(Node *node,
 				/* we assume walker doesn't care about CaseWhens, either */
 				foreach(temp, caseexpr->args)
 				{
-					CaseWhen   *when = castNode(CaseWhen, lfirst(temp));
+					CaseWhen   *when = lfirst_node(CaseWhen, temp);
 
 					if (walker(when->expr, context))
 						return true;
@@ -3308,7 +3308,7 @@ raw_expression_tree_walker(Node *node,
 				/* we assume walker doesn't care about CaseWhens, either */
 				foreach(temp, caseexpr->args)
 				{
-					CaseWhen   *when = castNode(CaseWhen, lfirst(temp));
+					CaseWhen   *when = lfirst_node(CaseWhen, temp);
 
 					if (walker(when->expr, context))
 						return true;
@@ -3807,7 +3807,7 @@ planstate_walk_subplans(List *plans,
 
 	foreach(lc, plans)
 	{
-		SubPlanState *sps = castNode(SubPlanState, lfirst(lc));
+		SubPlanState *sps = lfirst_node(SubPlanState, lc);
 
 		if (walker(sps->planstate, context))
 			return true;

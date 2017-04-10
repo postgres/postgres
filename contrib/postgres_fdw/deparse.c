@@ -1350,7 +1350,7 @@ deparseExplicitTargetList(List *tlist, List **retrieved_attrs,
 
 	foreach(lc, tlist)
 	{
-		TargetEntry *tle = castNode(TargetEntry, lfirst(lc));
+		TargetEntry *tle = lfirst_node(TargetEntry, lc);
 
 		if (i > 0)
 			appendStringInfoString(buf, ", ");

@@ -517,7 +517,7 @@ ExecInitHashJoin(HashJoin *node, EState *estate, int eflags)
 	hoperators = NIL;
 	foreach(l, node->hashclauses)
 	{
-		OpExpr	   *hclause = castNode(OpExpr, lfirst(l));
+		OpExpr	   *hclause = lfirst_node(OpExpr, l);
 
 		lclauses = lappend(lclauses, ExecInitExpr(linitial(hclause->args),
 												  (PlanState *) hjstate));

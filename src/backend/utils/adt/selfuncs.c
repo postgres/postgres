@@ -6243,7 +6243,7 @@ deconstruct_indexquals(IndexPath *path)
 
 	forboth(lcc, path->indexquals, lci, path->indexqualcols)
 	{
-		RestrictInfo *rinfo = castNode(RestrictInfo, lfirst(lcc));
+		RestrictInfo *rinfo = lfirst_node(RestrictInfo, lcc);
 		int			indexcol = lfirst_int(lci);
 		Expr	   *clause;
 		Node	   *leftop,

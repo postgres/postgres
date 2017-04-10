@@ -757,7 +757,7 @@ extract_nonindex_conditions(List *qual_clauses, List *indexquals)
 
 	foreach(lc, qual_clauses)
 	{
-		RestrictInfo *rinfo = castNode(RestrictInfo, lfirst(lc));
+		RestrictInfo *rinfo = lfirst_node(RestrictInfo, lc);
 
 		if (rinfo->pseudoconstant)
 			continue;			/* we may drop pseudoconstants here */
@@ -1990,7 +1990,7 @@ cost_windowagg(Path *path, PlannerInfo *root,
 	 */
 	foreach(lc, windowFuncs)
 	{
-		WindowFunc *wfunc = castNode(WindowFunc, lfirst(lc));
+		WindowFunc *wfunc = lfirst_node(WindowFunc, lc);
 		Cost		wfunccost;
 		QualCost	argcosts;
 
@@ -3066,7 +3066,7 @@ final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 		innerbucketsize = 1.0;
 		foreach(hcl, hashclauses)
 		{
-			RestrictInfo *restrictinfo = castNode(RestrictInfo, lfirst(hcl));
+			RestrictInfo *restrictinfo = lfirst_node(RestrictInfo, hcl);
 			Selectivity thisbucketsize;
 
 			/*
@@ -3760,7 +3760,7 @@ compute_semi_anti_join_factors(PlannerInfo *root,
 		joinquals = NIL;
 		foreach(l, restrictlist)
 		{
-			RestrictInfo *rinfo = castNode(RestrictInfo, lfirst(l));
+			RestrictInfo *rinfo = lfirst_node(RestrictInfo, l);
 
 			if (!rinfo->is_pushed_down)
 				joinquals = lappend(joinquals, rinfo);
@@ -4192,7 +4192,7 @@ calc_joinrel_size_estimate(PlannerInfo *root,
 		/* Grovel through the clauses to separate into two lists */
 		foreach(l, restrictlist)
 		{
-			RestrictInfo *rinfo = castNode(RestrictInfo, lfirst(l));
+			RestrictInfo *rinfo = lfirst_node(RestrictInfo, l);
 
 			if (rinfo->is_pushed_down)
 				pushedquals = lappend(pushedquals, rinfo);
@@ -4568,7 +4568,7 @@ set_subquery_size_estimates(PlannerInfo *root, RelOptInfo *rel)
 	 */
 	foreach(lc, subroot->parse->targetList)
 	{
-		TargetEntry *te = castNode(TargetEntry, lfirst(lc));
+		TargetEntry *te = lfirst_node(TargetEntry, lc);
 		Node	   *texpr = (Node *) te->expr;
 		int32		item_width = 0;
 

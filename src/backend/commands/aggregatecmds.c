@@ -109,13 +109,13 @@ DefineAggregate(ParseState *pstate, List *name, List *args, bool oldstyle, List 
 			aggKind = AGGKIND_ORDERED_SET;
 		else
 			numDirectArgs = 0;
-		args = castNode(List, linitial(args));
+		args = linitial_node(List, args);
 	}
 
 	/* Examine aggregate's definition clauses */
 	foreach(pl, parameters)
 	{
-		DefElem    *defel = castNode(DefElem, lfirst(pl));
+		DefElem    *defel = lfirst_node(DefElem, pl);
 
 		/*
 		 * sfunc1, stype1, and initcond1 are accepted as obsolete spellings

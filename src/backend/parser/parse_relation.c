@@ -931,7 +931,7 @@ markRTEForSelectPriv(ParseState *pstate, RangeTblEntry *rte,
 			JoinExpr   *j;
 
 			if (rtindex > 0 && rtindex <= list_length(pstate->p_joinexprs))
-				j = castNode(JoinExpr, list_nth(pstate->p_joinexprs, rtindex - 1));
+				j = list_nth_node(JoinExpr, pstate->p_joinexprs, rtindex - 1);
 			else
 				j = NULL;
 			if (j == NULL)

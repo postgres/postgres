@@ -601,7 +601,7 @@ rel_is_distinct_for(PlannerInfo *root, RelOptInfo *rel, List *clause_list)
 		 */
 		foreach(l, clause_list)
 		{
-			RestrictInfo *rinfo = castNode(RestrictInfo, lfirst(l));
+			RestrictInfo *rinfo = lfirst_node(RestrictInfo, l);
 			Oid			op;
 			Var		   *var;
 

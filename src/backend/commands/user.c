@@ -1388,7 +1388,7 @@ roleSpecsToIds(List *memberNames)
 
 	foreach(l, memberNames)
 	{
-		RoleSpec   *rolespec = castNode(RoleSpec, lfirst(l));
+		RoleSpec   *rolespec = lfirst_node(RoleSpec, l);
 		Oid			roleid;
 
 		roleid = get_rolespec_oid(rolespec, false);

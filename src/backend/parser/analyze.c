@@ -829,7 +829,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 		AttrNumber	attr_num;
 		TargetEntry *tle;
 
-		col = castNode(ResTarget, lfirst(icols));
+		col = lfirst_node(ResTarget, icols);
 		attr_num = (AttrNumber) lfirst_int(attnos);
 
 		tle = makeTargetEntry(expr,
@@ -954,7 +954,7 @@ transformInsertRow(ParseState *pstate, List *exprlist,
 		Expr	   *expr = (Expr *) lfirst(lc);
 		ResTarget  *col;
 
-		col = castNode(ResTarget, lfirst(icols));
+		col = lfirst_node(ResTarget, icols);
 
 		expr = transformAssignedExpr(pstate, expr,
 									 EXPR_KIND_INSERT_TARGET,
@@ -2300,7 +2300,7 @@ transformUpdateTargetList(ParseState *pstate, List *origTlist)
 		}
 		if (orig_tl == NULL)
 			elog(ERROR, "UPDATE target count mismatch --- internal error");
-		origTarget = castNode(ResTarget, lfirst(orig_tl));
+		origTarget = lfirst_node(ResTarget, orig_tl);
 
 		attrno = attnameAttNum(pstate->p_target_relation,
 							   origTarget->name, true);

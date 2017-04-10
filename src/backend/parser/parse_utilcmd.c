@@ -388,7 +388,7 @@ generateSerialExtraStmts(CreateStmtContext *cxt, ColumnDef *column,
 
 	foreach(option, seqoptions)
 	{
-		DefElem    *defel = castNode(DefElem, lfirst(option));
+		DefElem    *defel = lfirst_node(DefElem, option);
 
 		if (strcmp(defel->defname, "sequence_name") == 0)
 		{
@@ -605,7 +605,7 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 
 	foreach(clist, column->constraints)
 	{
-		Constraint *constraint = castNode(Constraint, lfirst(clist));
+		Constraint *constraint = lfirst_node(Constraint, clist);
 
 		switch (constraint->contype)
 		{
@@ -1635,7 +1635,7 @@ transformIndexConstraints(CreateStmtContext *cxt)
 	 */
 	foreach(lc, cxt->ixconstraints)
 	{
-		Constraint *constraint = castNode(Constraint, lfirst(lc));
+		Constraint *constraint = lfirst_node(Constraint, lc);
 
 		Assert(constraint->contype == CONSTR_PRIMARY ||
 			   constraint->contype == CONSTR_UNIQUE ||
@@ -1956,8 +1956,8 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 			List	   *opname;
 
 			Assert(list_length(pair) == 2);
-			elem = castNode(IndexElem, linitial(pair));
-			opname = castNode(List, lsecond(pair));
+			elem = linitial_node(IndexElem, pair);
+			opname = lsecond_node(List, pair);
 
 			index->indexParams = lappend(index->indexParams, elem);
 			index->excludeOpNames = lappend(index->excludeOpNames, opname);
@@ -1984,7 +1984,7 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 
 		foreach(columns, cxt->columns)
 		{
-			column = castNode(ColumnDef, lfirst(columns));
+			column = lfirst_node(ColumnDef, columns);
 			if (strcmp(column->colname, key) == 0)
 			{
 				found = true;
@@ -2013,7 +2013,7 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 
 			foreach(inher, cxt->inhRelations)
 			{
-				RangeVar   *inh = castNode(RangeVar, lfirst(inher));
+				RangeVar   *inh = lfirst_node(RangeVar, inher);
 				Relation	rel;
 				int			count;
 
@@ -2823,7 +2823,7 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 					 */
 					foreach(lc, castNode(List, cmd->def))
 					{
-						DefElem	   *def = castNode(DefElem, lfirst(lc));
+						DefElem	   *def = lfirst_node(DefElem, lc);
 
 						if (strcmp(def->defname, "generated") == 0)
 							newdef = lappend(newdef, def);
@@ -2900,7 +2900,7 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 	 */
 	foreach(l, cxt.alist)
 	{
-		IndexStmt  *idxstmt = castNode(IndexStmt, lfirst(l));
+		IndexStmt  *idxstmt = lfirst_node(IndexStmt, l);
 
 		idxstmt = transformIndexStmt(relid, idxstmt, queryString);
 		newcmd = makeNode(AlterTableCmd);

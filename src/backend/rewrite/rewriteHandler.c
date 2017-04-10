@@ -2367,7 +2367,7 @@ view_cols_are_auto_updatable(Query *viewquery,
 	 * there should be a single base relation.
 	 */
 	Assert(list_length(viewquery->jointree->fromlist) == 1);
-	rtr = castNode(RangeTblRef, linitial(viewquery->jointree->fromlist));
+	rtr = linitial_node(RangeTblRef, viewquery->jointree->fromlist);
 
 	/* Initialize the optional return values */
 	if (updatable_cols != NULL)
@@ -2619,7 +2619,7 @@ adjust_view_column_set(Bitmapset *cols, List *targetlist)
 
 			foreach(lc, targetlist)
 			{
-				TargetEntry *tle = (TargetEntry *) lfirst(lc);
+				TargetEntry *tle = lfirst_node(TargetEntry, lc);
 				Var		   *var;
 
 				if (tle->resjunk)
@@ -2806,7 +2806,7 @@ rewriteTargetView(Query *parsetree, Relation view)
 	 * view contains a single base relation.
 	 */
 	Assert(list_length(viewquery->jointree->fromlist) == 1);
-	rtr = castNode(RangeTblRef, linitial(viewquery->jointree->fromlist));
+	rtr = linitial_node(RangeTblRef, viewquery->jointree->fromlist);
 
 	base_rt_index = rtr->rtindex;
 	base_rte = rt_fetch(base_rt_index, viewquery->rtable);
@@ -3162,7 +3162,7 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 	 */
 	foreach(lc1, parsetree->cteList)
 	{
-		CommonTableExpr *cte = (CommonTableExpr *) lfirst(lc1);
+		CommonTableExpr *cte = lfirst_node(CommonTableExpr, lc1);
 		Query	   *ctequery = castNode(Query, cte->ctequery);
 		List	   *newstuff;
 
@@ -3179,7 +3179,7 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 		if (list_length(newstuff) == 1)
 		{
 			/* Push the single Query back into the CTE node */
-			ctequery = castNode(Query, linitial(newstuff));
+			ctequery = linitial_node(Query, newstuff);
 			/* WITH queries should never be canSetTag */
 			Assert(!ctequery->canSetTag);
 			cte->ctequery = (Node *) ctequery;

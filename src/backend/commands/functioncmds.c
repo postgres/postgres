@@ -578,7 +578,7 @@ update_proconfig_value(ArrayType *a, List *set_items)
 
 	foreach(l, set_items)
 	{
-		VariableSetStmt *sstmt = castNode(VariableSetStmt, lfirst(l));
+		VariableSetStmt *sstmt = lfirst_node(VariableSetStmt, l);
 
 		if (sstmt->kind == VAR_RESET_ALL)
 			a = NULL;
@@ -972,7 +972,8 @@ CreateFunction(ParseState *pstate, CreateFunctionStmt *stmt)
 
 		foreach(lc, castNode(List, transformDefElem))
 		{
-			Oid			typeid = typenameTypeId(NULL, lfirst(lc));
+			Oid			typeid = typenameTypeId(NULL,
+												lfirst_node(TypeName, lc));
 			Oid			elt = get_base_element_type(typeid);
 
 			typeid = elt ? elt : typeid;

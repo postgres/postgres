@@ -188,7 +188,7 @@ extract_or_clause(RestrictInfo *or_rinfo, RelOptInfo *rel)
 
 			foreach(lc2, andargs)
 			{
-				RestrictInfo *rinfo = castNode(RestrictInfo, lfirst(lc2));
+				RestrictInfo *rinfo = lfirst_node(RestrictInfo, lc2);
 
 				if (restriction_is_or_clause(rinfo))
 				{

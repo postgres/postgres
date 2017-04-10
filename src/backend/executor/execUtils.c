@@ -978,7 +978,7 @@ ExecCleanTargetListLength(List *targetlist)
 
 	foreach(tl, targetlist)
 	{
-		TargetEntry *curTle = castNode(TargetEntry, lfirst(tl));
+		TargetEntry *curTle = lfirst_node(TargetEntry, tl);
 
 		if (!curTle->resjunk)
 			len++;

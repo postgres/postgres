@@ -7366,7 +7366,7 @@ ExecSetVariableStmt(VariableSetStmt *stmt, bool isTopLevel)
 			}
 			else if (strcmp(stmt->name, "TRANSACTION SNAPSHOT") == 0)
 			{
-				A_Const    *con = castNode(A_Const, linitial(stmt->args));
+				A_Const    *con = linitial_node(A_Const, stmt->args);
 
 				if (stmt->is_local)
 					ereport(ERROR,

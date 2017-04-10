@@ -516,7 +516,7 @@ DefineView(ViewStmt *stmt, const char *queryString,
 
 		foreach(targetList, viewParse->targetList)
 		{
-			TargetEntry *te = castNode(TargetEntry, lfirst(targetList));
+			TargetEntry *te = lfirst_node(TargetEntry, targetList);
 
 			/* junk columns don't get aliases */
 			if (te->resjunk)

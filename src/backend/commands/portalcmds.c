@@ -83,7 +83,7 @@ PerformCursorOpen(DeclareCursorStmt *cstmt, ParamListInfo params,
 	if (list_length(rewritten) != 1)
 		elog(ERROR, "non-SELECT statement in DECLARE CURSOR");
 
-	query = castNode(Query, linitial(rewritten));
+	query = linitial_node(Query, rewritten);
 
 	if (query->commandType != CMD_SELECT)
 		elog(ERROR, "non-SELECT statement in DECLARE CURSOR");

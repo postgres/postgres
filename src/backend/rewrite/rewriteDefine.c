@@ -171,7 +171,7 @@ InsertRule(char *rulname,
 	if (event_qual != NULL)
 	{
 		/* Find query containing OLD/NEW rtable entries */
-		Query	   *qry = castNode(Query, linitial(action));
+		Query	   *qry = linitial_node(Query, action);
 
 		qry = getInsertSelectQuery(qry, NULL);
 		recordDependencyOnExpr(&myself, event_qual, qry->rtable,
@@ -284,7 +284,7 @@ DefineQueryRewrite(char *rulename,
 	 */
 	foreach(l, action)
 	{
-		query = castNode(Query, lfirst(l));
+		query = lfirst_node(Query, l);
 		if (query->resultRelation == 0)
 			continue;
 		/* Don't be fooled by INSERT/SELECT */
@@ -326,7 +326,7 @@ DefineQueryRewrite(char *rulename,
 		/*
 		 * ... the one action must be a SELECT, ...
 		 */
-		query = castNode(Query, linitial(action));
+		query = linitial_node(Query, action);
 		if (!is_instead ||
 			query->commandType != CMD_SELECT)
 			ereport(ERROR,
@@ -480,7 +480,7 @@ DefineQueryRewrite(char *rulename,
 
 		foreach(l, action)
 		{
-			query = castNode(Query, lfirst(l));
+			query = lfirst_node(Query, l);
 
 			if (!query->returningList)
 				continue;

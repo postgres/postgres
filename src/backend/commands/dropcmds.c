@@ -214,7 +214,7 @@ type_in_list_does_not_exist_skipping(List *typenames, const char **msg,
 
 	foreach(l, typenames)
 	{
-		TypeName   *typeName = castNode(TypeName, lfirst(l));
+		TypeName   *typeName = lfirst_node(TypeName, l);
 
 		if (typeName != NULL)
 		{
@@ -371,8 +371,8 @@ does_not_exist_skipping(ObjectType objtype, Node *object)
 				{
 					/* XXX quote or no quote? */
 					msg = gettext_noop("cast from type %s to type %s does not exist, skipping");
-					name = TypeNameToString(castNode(TypeName, linitial(castNode(List, object))));
-					args = TypeNameToString(castNode(TypeName, lsecond(castNode(List, object))));
+					name = TypeNameToString(linitial_node(TypeName, castNode(List, object)));
+					args = TypeNameToString(lsecond_node(TypeName, castNode(List, object)));
 				}
 			}
 			break;
@@ -380,7 +380,7 @@ does_not_exist_skipping(ObjectType objtype, Node *object)
 			if (!type_in_list_does_not_exist_skipping(list_make1(linitial(castNode(List, object))), &msg, &name))
 			{
 				msg = gettext_noop("transform for type %s language \"%s\" does not exist, skipping");
-				name = TypeNameToString(castNode(TypeName, linitial(castNode(List, object))));
+				name = TypeNameToString(linitial_node(TypeName, castNode(List, object)));
 				args = strVal(lsecond(castNode(List, object)));
 			}
 			break;

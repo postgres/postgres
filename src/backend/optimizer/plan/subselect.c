@@ -433,7 +433,7 @@ get_first_col_type(Plan *plan, Oid *coltype, int32 *coltypmod,
 	/* In cases such as EXISTS, tlist might be empty; arbitrarily use VOID */
 	if (plan->targetlist)
 	{
-		TargetEntry *tent = castNode(TargetEntry, linitial(plan->targetlist));
+		TargetEntry *tent = linitial_node(TargetEntry, plan->targetlist);
 
 		if (!tent->resjunk)
 		{

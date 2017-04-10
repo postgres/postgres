@@ -71,7 +71,7 @@ DefineCollation(ParseState *pstate, List *names, List *parameters, bool if_not_e
 
 	foreach(pl, parameters)
 	{
-		DefElem    *defel = castNode(DefElem, lfirst(pl));
+		DefElem    *defel = lfirst_node(DefElem, pl);
 		DefElem   **defelp;
 
 		if (pg_strcasecmp(defel->defname, "from") == 0)

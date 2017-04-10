@@ -153,7 +153,7 @@ PortalGetPrimaryStmt(Portal portal)
 
 	foreach(lc, portal->stmts)
 	{
-		PlannedStmt *stmt = castNode(PlannedStmt, lfirst(lc));
+		PlannedStmt *stmt = lfirst_node(PlannedStmt, lc);
 
 		if (stmt->canSetTag)
 			return stmt;

@@ -854,7 +854,7 @@ get_object_address(ObjectType objtype, Node *object,
 
 					objlist = castNode(List, object);
 					domaddr = get_object_address_type(OBJECT_DOMAIN,
-													  castNode(TypeName, linitial(objlist)),
+													  linitial_node(TypeName, objlist),
 													  missing_ok);
 					constrname = strVal(lsecond(objlist));
 
@@ -932,8 +932,8 @@ get_object_address(ObjectType objtype, Node *object,
 				break;
 			case OBJECT_CAST:
 				{
-					TypeName   *sourcetype = castNode(TypeName, linitial(castNode(List, object)));
-					TypeName   *targettype = castNode(TypeName, lsecond(castNode(List, object)));
+					TypeName   *sourcetype = linitial_node(TypeName, castNode(List, object));
+					TypeName   *targettype = lsecond_node(TypeName, castNode(List, object));
 					Oid			sourcetypeid;
 					Oid			targettypeid;
 
@@ -947,7 +947,7 @@ get_object_address(ObjectType objtype, Node *object,
 				break;
 			case OBJECT_TRANSFORM:
 				{
-					TypeName   *typename = castNode(TypeName, linitial(castNode(List, object)));
+					TypeName   *typename = linitial_node(TypeName, castNode(List, object));
 					char	   *langname = strVal(lsecond(castNode(List, object)));
 					Oid			type_id = LookupTypeNameOid(NULL, typename, missing_ok);
 					Oid			lang_id = get_language_oid(langname, missing_ok);
@@ -1597,7 +1597,7 @@ get_object_address_opf_member(ObjectType objtype,
 	{
 		ObjectAddress typaddr;
 
-		typenames[i] = castNode(TypeName, lfirst(cell));
+		typenames[i] = lfirst_node(TypeName, cell);
 		typaddr = get_object_address_type(OBJECT_TYPE, typenames[i], missing_ok);
 		typeoids[i] = typaddr.objectId;
 		if (++i >= 2)
@@ -2319,8 +2319,8 @@ check_object_ownership(Oid roleid, ObjectType objtype, ObjectAddress address,
 		case OBJECT_CAST:
 			{
 				/* We can only check permissions on the source/target types */
-				TypeName   *sourcetype = castNode(TypeName, linitial(castNode(List, object)));
-				TypeName   *targettype = castNode(TypeName, lsecond(castNode(List, object)));
+				TypeName   *sourcetype = linitial_node(TypeName, castNode(List, object));
+				TypeName   *targettype = lsecond_node(TypeName, castNode(List, object));
 				Oid			sourcetypeid = typenameTypeId(NULL, sourcetype);
 				Oid			targettypeid = typenameTypeId(NULL, targettype);
 
@@ -2345,7 +2345,7 @@ check_object_ownership(Oid roleid, ObjectType objtype, ObjectAddress address,
 			break;
 		case OBJECT_TRANSFORM:
 			{
-				TypeName   *typename = castNode(TypeName, linitial(castNode(List, object)));
+				TypeName   *typename = linitial_node(TypeName, castNode(List, object));
 				Oid			typeid = typenameTypeId(NULL, typename);
 
 				if (!pg_type_ownercheck(typeid, roleid))

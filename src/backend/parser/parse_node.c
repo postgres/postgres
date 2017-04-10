@@ -337,7 +337,7 @@ transformArraySubscripts(ParseState *pstate,
 	 */
 	foreach(idx, indirection)
 	{
-		A_Indices  *ai = castNode(A_Indices, lfirst(idx));
+		A_Indices  *ai = lfirst_node(A_Indices, idx);
 		Node	   *subexpr;
 
 		if (isSlice)
