@@ -474,5 +474,7 @@ typedef struct TwoPhasePredicateRecord
  * locking internals.
  */
 extern PredicateLockData *GetPredicateLockStatusData(void);
+extern int GetSafeSnapshotBlockingPids(int blocked_pid,
+							int *output, int output_size);
 
 #endif   /* PREDICATE_INTERNALS_H */

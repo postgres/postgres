@@ -1556,6 +1556,56 @@ GetSafeSnapshot(Snapshot origSnapshot)
 }
 
 /*
+ * GetSafeSnapshotBlockingPids
+ *		If the specified process is currently blocked in GetSafeSnapshot,
+ *		write the process IDs of all processes that it is blocked by
+ *		into the caller-supplied buffer output[].  The list is truncated at
+ *		output_size, and the number of PIDs written into the buffer is
+ *		returned.  Returns zero if the given PID is not currently blocked
+ *		in GetSafeSnapshot.
+ */
+int
+GetSafeSnapshotBlockingPids(int blocked_pid, int *output, int output_size)
+{
+	int			num_written = 0;
+	SERIALIZABLEXACT *sxact;
+
+	LWLockAcquire(SerializableXactHashLock, LW_SHARED);
+
+	/* Find blocked_pid's SERIALIZABLEXACT by linear search. */
+	for (sxact = FirstPredXact(); sxact != NULL; sxact = NextPredXact(sxact))
+	{
+		if (sxact->pid == blocked_pid)
+			break;
+	}
+
+	/* Did we find it, and is it currently waiting in GetSafeSnapshot? */
+	if (sxact != NULL && SxactIsDeferrableWaiting(sxact))
+	{
+		RWConflict	possibleUnsafeConflict;
+
+		/* Traverse the list of possible unsafe conflicts collecting PIDs. */
+		possibleUnsafeConflict = (RWConflict)
+			SHMQueueNext(&sxact->possibleUnsafeConflicts,
+						 &sxact->possibleUnsafeConflicts,
+						 offsetof(RWConflictData, inLink));
+
+		while (possibleUnsafeConflict != NULL && num_written < output_size)
+		{
+			output[num_written++] = possibleUnsafeConflict->sxactOut->pid;
+			possibleUnsafeConflict = (RWConflict)
+				SHMQueueNext(&sxact->possibleUnsafeConflicts,
+							 &possibleUnsafeConflict->inLink,
+							 offsetof(RWConflictData, inLink));
+		}
+	}
+
+	LWLockRelease(SerializableXactHashLock);
+
+	return num_written;
+}
+
+/*
  * Acquire a snapshot that can be used for the current transaction.
  *
  * Make sure we have a SERIALIZABLEXACT reference in MySerializableXact.

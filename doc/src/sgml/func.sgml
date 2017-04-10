@@ -15747,7 +15747,7 @@ SELECT * FROM pg_ls_dir('.') WITH ORDINALITY AS t(ls,n);
       <row>
        <entry><literal><function>pg_blocking_pids(<type>int</type>)</function></literal></entry>
        <entry><type>int[]</type></entry>
-       <entry>Process ID(s) that are blocking specified server process ID</entry>
+       <entry>Process ID(s) that are blocking specified server process ID from acquiring a lock</entry>
       </row>
 
       <row>
@@ -15791,6 +15791,12 @@ SELECT * FROM pg_ls_dir('.') WITH ORDINALITY AS t(ls,n);
        <entry><literal><function>pg_postmaster_start_time()</function></literal></entry>
        <entry><type>timestamp with time zone</type></entry>
        <entry>server start time</entry>
+      </row>
+
+      <row>
+       <entry><literal><function>pg_safe_snapshot_blocking_pids(<type>int</type>)</function></literal></entry>
+       <entry><type>int[]</type></entry>
+       <entry>Process ID(s) that are blocking specified server process ID from acquiring a safe snapshot</entry>
       </row>
 
       <row>
@@ -16067,6 +16073,25 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
     server started.
    </para>
 
+   <indexterm>
+    <primary>pg_safe_snapshot_blocking_pids</primary>
+   </indexterm>
+
+   <para>
+    <function>pg_safe_snapshot_blocking_pids</function> returns an array of
+    the process IDs of the sessions that are blocking the server process with
+    the specified process ID from acquiring a safe snapshot, or an empty array
+    if there is no such server process or it is not blocked.  A session
+    running a <literal>SERIALIZABLE</literal> transaction blocks
+    a <literal>SERIALIZABLE READ ONLY DEFERRABLE</literal> transaction from
+    acquiring a snapshot until the latter determines that it is safe to avoid
+    taking any predicate locks.  See <xref linkend="xact-serializable"> for
+    more information about serializable and deferrable transactions.  Frequent
+    calls to this function could have some impact on database performance,
+    because it needs access to the predicate lock manager's shared
+    state for a short time.
+   </para>
+   
    <indexterm>
     <primary>version</primary>
    </indexterm>

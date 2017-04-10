@@ -224,20 +224,12 @@ main(int argc, char **argv)
 	 */
 	initPQExpBuffer(&wait_query);
 	appendPQExpBufferStr(&wait_query,
-						 "SELECT pg_catalog.pg_blocking_pids($1) && '{");
+			"SELECT pg_catalog.pg_isolation_test_session_is_blocked($1, '{");
 	/* The spec syntax requires at least one session; assume that here. */
 	appendPQExpBufferStr(&wait_query, backend_pids[1]);
 	for (i = 2; i < nconns; i++)
 		appendPQExpBuffer(&wait_query, ",%s", backend_pids[i]);
-	appendPQExpBufferStr(&wait_query, "}'::integer[]");
-
-	/* Also detect certain wait events. */
-	appendPQExpBufferStr(&wait_query,
-						 " OR EXISTS ("
-						 "  SELECT * "
-						 "  FROM pg_catalog.pg_stat_activity "
-						 "  WHERE pid = $1 "
-						 "  AND wait_event IN ('SafeSnapshot'))");
+	appendPQExpBufferStr(&wait_query, "}')");
 
 	res = PQprepare(conns[0], PREP_WAITING, wait_query.data, 0, NULL);
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
