@@ -1138,6 +1138,12 @@ LogicalRepApplyLoop(XLogRecPtr last_received)
 		if (rc & WL_POSTMASTER_DEATH)
 			proc_exit(1);
 
+		if (got_SIGHUP)
+		{
+			got_SIGHUP = false;
+			ProcessConfigFile(PGC_SIGHUP);
+		}
+
 		if (rc & WL_TIMEOUT)
 		{
 			/*
@@ -1441,6 +1447,7 @@ ApplyWorkerMain(Datum main_arg)
 	logicalrep_worker_attach(worker_slot);
 
 	/* Setup signal handling */
+	pqsignal(SIGHUP, logicalrep_worker_sighup);
 	pqsignal(SIGTERM, logicalrep_worker_sigterm);
 	BackgroundWorkerUnblockSignals();
 
