@@ -5144,12 +5144,13 @@ StartupMessage (F)
 </term>
 <listitem>
 <para>
-                Used to connect in streaming replication mode, where a small
-                set of replication commands can be issued instead of SQL
-                statements. Value can be <literal>true</>,
-                <literal>false</>, or  <literal>database</>, and the default
-                is <literal>false</>. See
-                <xref linkend="protocol-replication"> for details.
+                        Used to connect in streaming replication mode, where
+                        a small set of replication commands can be issued
+                        instead of SQL statements. Value can be
+                        <literal>true</>, <literal>false</>, or
+                        <literal>database</>, and the default is
+                        <literal>false</>. See
+                        <xref linkend="protocol-replication"> for details.
 </para>
 </listitem>
 </varlistentry>
