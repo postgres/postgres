@@ -214,6 +214,10 @@ textarray_to_stringlist(ArrayType *textarray)
 
 /*
  * Set the state of a subscription table.
+ *
+ * The insert-or-update logic in this function is not concurrency safe so it
+ * might raise an error in rare circumstances.  But if we took a stronger lock
+ * such as ShareRowExclusiveLock, we would risk more deadlocks.
  */
 Oid
 SetSubscriptionRelState(Oid subid, Oid relid, char state,
@@ -225,8 +229,7 @@ SetSubscriptionRelState(Oid subid, Oid relid, char state,
 	bool		nulls[Natts_pg_subscription_rel];
 	Datum		values[Natts_pg_subscription_rel];
 
-	/* Prevent concurrent changes. */
-	rel = heap_open(SubscriptionRelRelationId, ShareRowExclusiveLock);
+	rel = heap_open(SubscriptionRelRelationId, RowExclusiveLock);
 
 	/* Try finding existing mapping. */
 	tup = SearchSysCacheCopy2(SUBSCRIPTIONRELMAP,
@@ -357,8 +360,7 @@ RemoveSubscriptionRel(Oid subid, Oid relid)
 	HeapTuple	tup;
 	int			nkeys = 0;
 
-	/* Prevent concurrent changes (see SetSubscriptionRelState()). */
-	rel = heap_open(SubscriptionRelRelationId, ShareRowExclusiveLock);
+	rel = heap_open(SubscriptionRelRelationId, RowExclusiveLock);
 
 	if (OidIsValid(subid))
 	{
@@ -386,7 +388,7 @@ RemoveSubscriptionRel(Oid subid, Oid relid)
 	}
 	heap_endscan(scan);
 
-	heap_close(rel, ShareRowExclusiveLock);
+	heap_close(rel, RowExclusiveLock);
 }
 
 
