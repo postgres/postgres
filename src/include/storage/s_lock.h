@@ -833,7 +833,7 @@ extern slock_t pg_atomic_cas(volatile slock_t *lock, slock_t with,
 #endif
 
 
-#ifdef WIN32_ONLY_COMPILER
+#ifdef _MSC_VER
 typedef LONG slock_t;
 
 #define HAS_TEST_AND_SET

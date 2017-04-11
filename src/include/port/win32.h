@@ -1,9 +1,5 @@
 /* src/include/port/win32.h */
 
-#if defined(_MSC_VER)
-#define WIN32_ONLY_COMPILER
-#endif
-
 /*
  * Make sure _WIN32_WINNT has the minimum required value.
  * Leave a higher value in place. When building with at least Visual
@@ -43,7 +39,7 @@
  * The Mingw64 headers choke if this is already defined - they
  * define it themselves.
  */
-#if !defined(__MINGW64_VERSION_MAJOR) || defined(WIN32_ONLY_COMPILER)
+#if !defined(__MINGW64_VERSION_MAJOR) || defined(_MSC_VER)
 #define _WINSOCKAPI_
 #endif
 #include <winsock2.h>
@@ -233,7 +229,7 @@ int			setitimer(int which, const struct itimerval * value, struct itimerval * ov
  * with 64-bit offsets.
  */
 #define pgoff_t __int64
-#ifdef WIN32_ONLY_COMPILER
+#ifdef _MSC_VER
 #define fseeko(stream, offset, origin) _fseeki64(stream, offset, origin)
 #define ftello(stream) _ftelli64(stream)
 #else
@@ -256,7 +252,7 @@ typedef int gid_t;
 #endif
 typedef long key_t;
 
-#ifdef WIN32_ONLY_COMPILER
+#ifdef _MSC_VER
 typedef int pid_t;
 #endif
 
@@ -416,7 +412,7 @@ extern int	pgwin32_is_admin(void);
 #define unsetenv(x) pgwin32_unsetenv(x)
 
 /* Things that exist in MingW headers, but need to be added to MSVC */
-#ifdef WIN32_ONLY_COMPILER
+#ifdef _MSC_VER
 
 #ifndef _WIN64
 typedef long ssize_t;
@@ -446,7 +442,7 @@ typedef unsigned short mode_t;
 /* Pulled from Makefile.port in mingw */
 #define DLSUFFIX ".dll"
 
-#endif   /* WIN32_ONLY_COMPILER */
+#endif   /* _MSC_VER */
 
 /* These aren't provided by either MingW or MSVC */
 #define S_IRGRP 0

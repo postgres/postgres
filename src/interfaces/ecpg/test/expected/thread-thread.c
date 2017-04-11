@@ -152,7 +152,7 @@ void *test_thread(void *arg)
 
 
   /* build up connection name, and connect to database */
-#ifndef WIN32_ONLY_COMPILER
+#ifndef _MSC_VER
   snprintf(l_connection, sizeof(l_connection), "thread_%03ld", threadnum);
 #else
   _snprintf(l_connection, sizeof(l_connection), "thread_%03ld", threadnum);

@@ -35,7 +35,7 @@
 #define log_error4(str, param, arg1)	(fprintf(stderr, str, param, arg1), fputc('\n', stderr))
 #endif
 
-#ifdef WIN32_ONLY_COMPILER
+#ifdef _MSC_VER
 #define getcwd(cwd,len)  GetCurrentDirectory(len, cwd)
 #endif
 

@@ -231,7 +231,7 @@ extern int	pgrename(const char *from, const char *to);
 extern int	pgunlink(const char *path);
 
 /* Include this first so later includes don't see these defines */
-#ifdef WIN32_ONLY_COMPILER
+#ifdef _MSC_VER
 #include <io.h>
 #endif
 

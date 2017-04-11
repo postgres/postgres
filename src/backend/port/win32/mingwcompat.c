@@ -13,7 +13,7 @@
 
 #include "postgres.h"
 
-#ifndef WIN32_ONLY_COMPILER
+#ifndef _MSC_VER
 /*
  * MingW defines an extern to this struct, but the actual struct isn't present
  * in any library. It's trivial enough that we can safely define it

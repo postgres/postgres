@@ -53,7 +53,7 @@
 
 #ifdef ENABLE_SSPI
 #define SECURITY_WIN32
-#if defined(WIN32) && !defined(WIN32_ONLY_COMPILER)
+#if defined(WIN32) && !defined(_MSC_VER)
 #include <ntsecapi.h>
 #endif
 #include <security.h>

@@ -38,14 +38,14 @@
  * that doesn't match the msvc build. It gives a bunch of compiler warnings that we ignore,
  * but also defines a symbol that simply does not exist. Undefine it again.
  */
-#ifdef WIN32_ONLY_COMPILER
+#ifdef _MSC_VER
 #undef HAVE_GETADDRINFO
 #endif
 #endif   /* ENABLE_GSS */
 
 #ifdef ENABLE_SSPI
 #define SECURITY_WIN32
-#if defined(WIN32) && !defined(WIN32_ONLY_COMPILER)
+#if defined(WIN32) && !defined(_MSC_VER)
 #include <ntsecapi.h>
 #endif
 #include <security.h>

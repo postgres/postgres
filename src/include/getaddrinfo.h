@@ -40,7 +40,7 @@
 #define EAI_MEMORY		(-10)
 #define EAI_SYSTEM		(-11)
 #else							/* WIN32 */
-#ifdef WIN32_ONLY_COMPILER
+#ifdef _MSC_VER
 #ifndef WSA_NOT_ENOUGH_MEMORY
 #define WSA_NOT_ENOUGH_MEMORY	(WSAENOBUFS)
 #endif

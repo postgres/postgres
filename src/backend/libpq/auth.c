@@ -958,7 +958,7 @@ CheckSCRAMAuth(Port *port, char *shadow_pass, char **logdetail)
  */
 #ifdef ENABLE_GSS
 
-#if defined(WIN32) && !defined(WIN32_ONLY_COMPILER)
+#if defined(WIN32) && !defined(_MSC_VER)
 /*
  * MIT Kerberos GSSAPI DLL doesn't properly export the symbols for MingW
  * that contain the OIDs required. Redefine here, values copied

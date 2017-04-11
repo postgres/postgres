@@ -96,7 +96,7 @@
 /* gcc or compatible, including clang and icc */
 #elif defined(__GNUC__) || defined(__INTEL_COMPILER)
 #include "port/atomics/generic-gcc.h"
-#elif defined(WIN32_ONLY_COMPILER)
+#elif defined(_MSC_VER)
 #include "port/atomics/generic-msvc.h"
 #elif defined(__hpux) && defined(__ia64) && !defined(__GNUC__)
 #include "port/atomics/generic-acc.h"

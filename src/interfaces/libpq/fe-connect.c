@@ -37,7 +37,7 @@
 #endif
 #define near
 #include <shlobj.h>
-#ifdef WIN32_ONLY_COMPILER		/* mstcpip.h is missing on mingw */
+#ifdef _MSC_VER		/* mstcpip.h is missing on mingw */
 #include <mstcpip.h>
 #endif
 #else

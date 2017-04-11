@@ -113,14 +113,14 @@ pg_spin_delay_impl(void)
 {
 	__asm__ __volatile__(" rep; nop			\n");
 }
-#elif defined(WIN32_ONLY_COMPILER) && defined(__x86_64__)
+#elif defined(_MSC_VER) && defined(__x86_64__)
 #define PG_HAVE_SPIN_DELAY
 static __forceinline void
 pg_spin_delay_impl(void)
 {
 	_mm_pause();
 }
-#elif defined(WIN32_ONLY_COMPILER)
+#elif defined(_MSC_VER)
 #define PG_HAVE_SPIN_DELAY
 static __forceinline void
 pg_spin_delay_impl(void)
