@@ -1814,7 +1814,7 @@ CheckPointSnapBuild(void)
 	XLogRecPtr	redo;
 	DIR		   *snap_dir;
 	struct dirent *snap_de;
-	char		path[MAXPGPATH];
+	char		path[MAXPGPATH + 21];
 
 	/*
 	 * We start of with a minimum of the last redo pointer. No new replication
@@ -1841,7 +1841,7 @@ CheckPointSnapBuild(void)
 			strcmp(snap_de->d_name, "..") == 0)
 			continue;
 
-		snprintf(path, MAXPGPATH, "pg_logical/snapshots/%s", snap_de->d_name);
+		snprintf(path, sizeof(path), "pg_logical/snapshots/%s", snap_de->d_name);
 
 		if (lstat(path, &statbuf) == 0 && !S_ISREG(statbuf.st_mode))
 		{
