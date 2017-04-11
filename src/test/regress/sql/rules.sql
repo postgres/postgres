@@ -1158,3 +1158,11 @@ SELECT pg_get_function_identity_arguments(0);
 SELECT pg_get_function_result(0);
 SELECT pg_get_function_arg_default(0, 0);
 SELECT pg_get_function_arg_default('pg_class'::regclass, 0);
+
+-- test rename for a rule defined on a partitioned table
+CREATE TABLE parted_table (a int) PARTITION BY LIST (a);
+CREATE TABLE parted_table_1 PARTITION OF parted_table FOR VALUES IN (1);
+CREATE RULE parted_table_insert AS ON INSERT to parted_table
+    DO INSTEAD INSERT INTO parted_table_1 VALUES (NEW.*);
+ALTER RULE parted_table_insert ON parted_table RENAME TO parted_table_insert_redirect;
+DROP TABLE parted_table;
