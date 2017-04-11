@@ -866,12 +866,14 @@ tbm_prepare_shared_iterate(TIDBitmap *tbm)
 		else if (tbm->status == TBM_ONE_PAGE)
 		{
 			/*
-			 * In one page mode allocate the space for one pagetable entry and
-			 * directly store its index i.e. 0 in page array
+			 * In one page mode allocate the space for one pagetable entry,
+			 * initialize it, and directly store its index (i.e. 0) in the
+			 * page array.
 			 */
 			tbm->dsapagetable = dsa_allocate(tbm->dsa, sizeof(PTEntryArray) +
 											 sizeof(PagetableEntry));
 			ptbase = dsa_get_address(tbm->dsa, tbm->dsapagetable);
+			memcpy(ptbase->ptentry, &tbm->entry1, sizeof(PagetableEntry));
 			ptpages->index[0] = 0;
 		}
 
