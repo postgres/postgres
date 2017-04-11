@@ -13166,13 +13166,14 @@ NULL baz</literallayout>(3 rows)</entry>
 
   <para>
    <firstterm>Aggregate functions</firstterm> compute a single result
-   from a set of input values.  The built-in normal aggregate functions
-   are listed in
-   <xref linkend="functions-aggregate-table"> and
-   <xref linkend="functions-aggregate-statistics-table">.
-   The built-in ordered-set aggregate functions
-   are listed in <xref linkend="functions-orderedset-table"> and
-   <xref linkend="functions-hypothetical-table">.  Grouping operations,
+   from a set of input values.  The built-in general-purpose aggregate
+   functions are listed in <xref linkend="functions-aggregate-table">
+   and statistical aggregates in <xref
+   linkend="functions-aggregate-statistics-table">.
+   The built-in within-group ordered-set aggregate functions
+   are listed in <xref linkend="functions-orderedset-table">
+   while the built-in within-group hypothetical-set ones are in <xref
+   linkend="functions-hypothetical-table">.  Grouping operations,
    which are closely related to aggregate functions, are listed in
    <xref linkend="functions-grouping-table">.
    The special syntax considerations for aggregate
@@ -14413,17 +14414,19 @@ SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
   <para>
    The built-in window functions are listed in
    <xref linkend="functions-window-table">.  Note that these functions
-   <emphasis>must</> be invoked using window function syntax; that is an
+   <emphasis>must</> be invoked using window function syntax, i.e., an
    <literal>OVER</> clause is required.
   </para>
 
   <para>
-   In addition to these functions, any built-in or user-defined normal
-   aggregate function (but not ordered-set or hypothetical-set aggregates)
+   In addition to these functions, any built-in or user-defined
+   general-purpose or statistical
+   aggregate (i.e., not ordered-set or hypothetical-set aggregates)
    can be used as a window function; see
    <xref linkend="functions-aggregate"> for a list of the built-in aggregates.
    Aggregate functions act as window functions only when an <literal>OVER</>
-   clause follows the call; otherwise they act as regular aggregates.
+   clause follows the call; otherwise they act as non-window aggregates
+   and return a single row for the entire set.
   </para>
 
   <table id="functions-window-table">
@@ -14488,7 +14491,7 @@ SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
       <entry>
        <type>double precision</type>
       </entry>
-      <entry>relative rank of the current row: (<function>rank</> - 1) / (total rows - 1)</entry>
+      <entry>relative rank of the current row: (<function>rank</> - 1) / (total partition rows - 1)</entry>
      </row>
 
      <row>
@@ -14501,7 +14504,7 @@ SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
       <entry>
        <type>double precision</type>
       </entry>
-      <entry>relative rank of the current row: (number of rows preceding or peer with current row) / (total rows)</entry>
+      <entry>cumulative distribution: (number of partition rows preceding or peer with current row) / total partition rows</entry>
      </row>
 
      <row>
@@ -14634,9 +14637,10 @@ SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
    All of the functions listed in
    <xref linkend="functions-window-table"> depend on the sort ordering
    specified by the <literal>ORDER BY</> clause of the associated window
-   definition.  Rows that are not distinct in the <literal>ORDER BY</>
-   ordering are said to be <firstterm>peers</>; the four ranking functions
-   are defined so that they give the same answer for any two peer rows.
+   definition.  Rows that are not distinct when considering only the
+   <literal>ORDER BY</> columns are said to be <firstterm>peers</>.
+   The four ranking functions (including <function>cume_dist</>) are
+   defined so that they give the same answer for all peer rows.
   </para>
 
   <para>
@@ -14678,6 +14682,14 @@ SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
     ordering.)
    </para>
   </note>
+
+  <para>
+   <function>cume_dist</> computes the fraction of partition rows that
+   are less than or equal to the current row and its peers, while
+   <function>percent_rank</> computes the fraction of partition rows that
+   are less than the current row, assuming the current row does not exist
+   in the partition.
+  </para>
 
  </sect1>
 

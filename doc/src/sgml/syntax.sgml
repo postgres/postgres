@@ -1664,7 +1664,8 @@ SELECT string_agg(a ORDER BY a, ',') FROM table;  -- incorrect
    <para>
     Placing <literal>ORDER BY</> within the aggregate's regular argument
     list, as described so far, is used when ordering the input rows for
-    a <quote>normal</> aggregate for which ordering is optional.  There is a
+    general-purpose and statistical aggregates, for which ordering is
+    optional.  There is a
     subclass of aggregate functions called <firstterm>ordered-set
     aggregates</> for which an <replaceable>order_by_clause</replaceable>
     is <emphasis>required</>, usually because the aggregate's computation is
@@ -1675,7 +1676,7 @@ SELECT string_agg(a ORDER BY a, ',') FROM table;  -- incorrect
     inside <literal>WITHIN GROUP (...)</>, as shown in the final syntax
     alternative above.  The expressions in
     the <replaceable>order_by_clause</replaceable> are evaluated once per
-    input row just like normal aggregate arguments, sorted as per
+    input row just like regular aggregate arguments, sorted as per
     the <replaceable>order_by_clause</replaceable>'s requirements, and fed
     to the aggregate function as input arguments.  (This is unlike the case
     for a non-<literal>WITHIN GROUP</> <replaceable>order_by_clause</>,
@@ -1683,7 +1684,7 @@ SELECT string_agg(a ORDER BY a, ',') FROM table;  -- incorrect
     argument expressions preceding <literal>WITHIN GROUP</>, if any, are
     called <firstterm>direct arguments</> to distinguish them from
     the <firstterm>aggregated arguments</> listed in
-    the <replaceable>order_by_clause</replaceable>.  Unlike normal aggregate
+    the <replaceable>order_by_clause</replaceable>.  Unlike regular aggregate
     arguments, direct arguments are evaluated only once per aggregate call,
     not once per input row.  This means that they can contain variables only
     if those variables are grouped by <literal>GROUP BY</>; this restriction
@@ -1779,10 +1780,10 @@ FROM generate_series(1,10) AS s(i);
    <para>
     A <firstterm>window function call</firstterm> represents the application
     of an aggregate-like function over some portion of the rows selected
-    by a query.  Unlike regular aggregate function calls, this is not tied
+    by a query.  Unlike non-window aggregate calls, this is not tied
     to grouping of the selected rows into a single output row &mdash; each
     row remains separate in the query output.  However the window function
-    is able to scan all the rows that would be part of the current row's
+    has access to all the rows that would be part of the current row's
     group according to the grouping specification (<literal>PARTITION BY</>
     list) of the window function call.
     The syntax of a window function call is one of the following:
@@ -1831,20 +1832,20 @@ UNBOUNDED FOLLOWING
     named window in the <literal>WINDOW</literal> clause; see the
     <xref linkend="sql-select"> reference page for details.  It's worth
     pointing out that <literal>OVER wname</> is not exactly equivalent to
-    <literal>OVER (wname)</>; the latter implies copying and modifying the
+    <literal>OVER (wname ...)</>; the latter implies copying and modifying the
     window definition, and will be rejected if the referenced window
     specification includes a frame clause.
    </para>
 
    <para>
-    The <literal>PARTITION BY</> option groups the rows of the query into
+    The <literal>PARTITION BY</> clause groups the rows of the query into
     <firstterm>partitions</>, which are processed separately by the window
     function.  <literal>PARTITION BY</> works similarly to a query-level
     <literal>GROUP BY</> clause, except that its expressions are always just
     expressions and cannot be output-column names or numbers.
     Without <literal>PARTITION BY</>, all rows produced by the query are
     treated as a single partition.
-    The <literal>ORDER BY</> option determines the order in which the rows
+    The <literal>ORDER BY</> clause determines the order in which the rows
     of a partition are processed by the window function.  It works similarly
     to a query-level <literal>ORDER BY</> clause, but likewise cannot use
     output-column names or numbers.  Without <literal>ORDER BY</>, rows are
@@ -1921,17 +1922,17 @@ UNBOUNDED FOLLOWING
    <para>
     The built-in window functions are described in <xref
     linkend="functions-window-table">.  Other window functions can be added by
-    the user.  Also, any built-in or user-defined normal aggregate function
-    can be used as a window function.  Ordered-set aggregates presently
-    cannot be used as window functions, however.
+    the user.  Also, any built-in or user-defined general-purpose or
+    statistical aggregate can be used as a window function.  (Ordered-set
+    and hypothetical-set aggregates cannot presently be used as window functions.)
    </para>
 
    <para>
     The syntaxes using <literal>*</> are used for calling parameter-less
     aggregate functions as window functions, for example
     <literal>count(*) OVER (PARTITION BY x ORDER BY y)</>.
-    The asterisk (<literal>*</>) is customarily not used for non-aggregate window functions.
-    Aggregate window functions, unlike normal aggregate functions, do not
+    The asterisk (<literal>*</>) is customarily not used for
+    window-specific functions.  Window-specific functions do not
     allow <literal>DISTINCT</> or <literal>ORDER BY</> to be used within the
     function argument list.
    </para>

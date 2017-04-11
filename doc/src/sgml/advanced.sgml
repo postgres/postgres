@@ -328,8 +328,8 @@ COMMIT;
     A <firstterm>window function</> performs a calculation across a set of
     table rows that are somehow related to the current row.  This is comparable
     to the type of calculation that can be done with an aggregate function.
-    But unlike regular aggregate functions, use of a window function does not
-    cause rows to become grouped into a single output row &mdash; the
+    However, window functions do not cause rows to become grouped into a single
+    output row like non-window aggregate calls would.  Instead, the
     rows retain their separate identities.  Behind the scenes, the window
     function is able to access more than just the current row of the query
     result.
@@ -363,20 +363,19 @@ SELECT depname, empno, salary, avg(salary) OVER (PARTITION BY depname) FROM emps
     <structname>empsalary</>, and there is one output row for each row in the
     table.  The fourth column represents an average taken across all the table
     rows that have the same <structfield>depname</> value as the current row.
-    (This actually is the same function as the regular <function>avg</>
-    aggregate function, but the <literal>OVER</> clause causes it to be
-    treated as a window function and computed across an appropriate set of
-    rows.)
+    (This actually is the same function as the non-window <function>avg</>
+    aggregate, but the <literal>OVER</> clause causes it to be
+    treated as a window function and computed across the window frame.)
    </para>
 
    <para>
     A window function call always contains an <literal>OVER</> clause
     directly following the window function's name and argument(s).  This is what
-    syntactically distinguishes it from a regular function or aggregate
-    function.  The <literal>OVER</> clause determines exactly how the
+    syntactically distinguishes it from a normal function or non-window
+    aggregate.  The <literal>OVER</> clause determines exactly how the
     rows of the query are split up for processing by the window function.
-    The <literal>PARTITION BY</> list within <literal>OVER</> specifies
-    dividing the rows into groups, or partitions, that share the same
+    The <literal>PARTITION BY</> clause within <literal>OVER</>
+    divides the rows into groups, or partitions, that share the same
     values of the <literal>PARTITION BY</> expression(s).  For each row,
     the window function is computed across the rows that fall into the
     same partition as the current row.
@@ -411,8 +410,8 @@ FROM empsalary;
 </screen>
 
     As shown here, the <function>rank</> function produces a numerical rank
-    within the current row's partition for each distinct <literal>ORDER BY</>
-    value, in the order defined by the <literal>ORDER BY</> clause.
+    for each distinct <literal>ORDER BY</> value in the current row's
+    partition, using the order defined by the <literal>ORDER BY</> clause.
     <function>rank</> needs no explicit parameter, because its behavior
     is entirely determined by the <literal>OVER</> clause.
    </para>
@@ -424,20 +423,20 @@ FROM empsalary;
     if any.  For example, a row removed because it does not meet the
     <literal>WHERE</> condition is not seen by any window function.
     A query can contain multiple window functions that slice up the data
-    in different ways by means of different <literal>OVER</> clauses, but
+    in different ways using different <literal>OVER</> clauses, but
     they all act on the same collection of rows defined by this virtual table.
    </para>
 
    <para>
     We already saw that <literal>ORDER BY</> can be omitted if the ordering
     of rows is not important.  It is also possible to omit <literal>PARTITION
-    BY</>, in which case there is just one partition containing all the rows.
+    BY</>, in which case there is a single partition containing all rows.
    </para>
 
    <para>
     There is another important concept associated with window functions:
     for each row, there is a set of rows within its partition called its
-    <firstterm>window frame</>.  Many (but not all) window functions act only
+    <firstterm>window frame</>.  Some window functions act only
     on the rows of the window frame, rather than of the whole partition.
     By default, if <literal>ORDER BY</> is supplied then the frame consists of
     all rows from the start of the partition up through the current row, plus
@@ -515,7 +514,7 @@ SELECT salary, sum(salary) OVER (ORDER BY salary) FROM empsalary;
     elsewhere, such as in <literal>GROUP BY</>, <literal>HAVING</>
     and <literal>WHERE</literal> clauses.  This is because they logically
     execute after the processing of those clauses.  Also, window functions
-    execute after regular aggregate functions.  This means it is valid to
+    execute after non-window aggregate functions.  This means it is valid to
     include an aggregate function call in the arguments of a window function,
     but not vice versa.
    </para>
