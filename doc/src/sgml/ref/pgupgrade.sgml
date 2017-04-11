@@ -336,8 +336,8 @@ NET STOP postgresql-9.0
      Always run the <application>pg_upgrade</> binary of the new server, not the old one.
      <application>pg_upgrade</> requires the specification of the old and new cluster's
      data and executable (<filename>bin</>) directories. You can also specify
-     user and port values, and whether you want the data linked instead of
-     copied (the default).
+     user and port values, and whether you want the data files linked
+     instead of the default copy behavior.
     </para>
 
     <para>
