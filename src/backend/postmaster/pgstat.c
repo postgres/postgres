@@ -606,7 +606,7 @@ pgstat_reset_remove_files(const char *directory)
 {
 	DIR		   *dir;
 	struct dirent *entry;
-	char		fname[MAXPGPATH];
+	char		fname[MAXPGPATH * 2];
 
 	dir = AllocateDir(directory);
 	while ((entry = ReadDir(dir, directory)) != NULL)
@@ -636,7 +636,7 @@ pgstat_reset_remove_files(const char *directory)
 			strcmp(entry->d_name + nchars, "stat") != 0)
 			continue;
 
-		snprintf(fname, MAXPGPATH, "%s/%s", directory,
+		snprintf(fname, sizeof(fname), "%s/%s", directory,
 				 entry->d_name);
 		unlink(fname);
 	}

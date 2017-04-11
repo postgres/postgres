@@ -307,9 +307,9 @@ dsm_cleanup_for_mmap(void)
 		if (strncmp(dent->d_name, PG_DYNSHMEM_MMAP_FILE_PREFIX,
 					strlen(PG_DYNSHMEM_MMAP_FILE_PREFIX)) == 0)
 		{
-			char		buf[MAXPGPATH];
+			char		buf[MAXPGPATH + sizeof(PG_DYNSHMEM_DIR)];
 
-			snprintf(buf, MAXPGPATH, PG_DYNSHMEM_DIR "/%s", dent->d_name);
+			snprintf(buf, sizeof(buf), PG_DYNSHMEM_DIR "/%s", dent->d_name);
 
 			elog(DEBUG2, "removing file \"%s\"", buf);
 

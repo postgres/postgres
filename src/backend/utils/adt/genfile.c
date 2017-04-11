@@ -522,7 +522,7 @@ pg_ls_dir_files(FunctionCallInfo fcinfo, char *dir)
 	{
 		Datum		values[3];
 		bool		nulls[3];
-		char		path[MAXPGPATH];
+		char		path[MAXPGPATH * 2];
 		struct		stat attrib;
 		HeapTuple	tuple;
 
@@ -531,7 +531,7 @@ pg_ls_dir_files(FunctionCallInfo fcinfo, char *dir)
 			continue;
 
 		/* Get the file info */
-		snprintf(path, MAXPGPATH, "%s/%s", fctx->location, de->d_name);
+		snprintf(path, sizeof(path), "%s/%s", fctx->location, de->d_name);
 		if (stat(path, &attrib) < 0)
 			ereport(ERROR,
 					(errcode_for_file_access(),

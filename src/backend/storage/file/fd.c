@@ -2705,7 +2705,7 @@ CleanupTempFiles(bool isProcExit)
 void
 RemovePgTempFiles(void)
 {
-	char		temp_path[MAXPGPATH];
+	char		temp_path[MAXPGPATH + 10 + sizeof(TABLESPACE_VERSION_DIRECTORY) + sizeof(PG_TEMP_FILES_DIR)];
 	DIR		   *spc_dir;
 	struct dirent *spc_de;
 
@@ -2753,7 +2753,7 @@ RemovePgTempFilesInDir(const char *tmpdirname)
 {
 	DIR		   *temp_dir;
 	struct dirent *temp_de;
-	char		rm_path[MAXPGPATH];
+	char		rm_path[MAXPGPATH * 2];
 
 	temp_dir = AllocateDir(tmpdirname);
 	if (temp_dir == NULL)
@@ -2794,7 +2794,7 @@ RemovePgTempRelationFiles(const char *tsdirname)
 {
 	DIR		   *ts_dir;
 	struct dirent *de;
-	char		dbspace_path[MAXPGPATH];
+	char		dbspace_path[MAXPGPATH * 2];
 
 	ts_dir = AllocateDir(tsdirname);
 	if (ts_dir == NULL)
@@ -2835,7 +2835,7 @@ RemovePgTempRelationFilesInDbspace(const char *dbspacedirname)
 {
 	DIR		   *dbspace_dir;
 	struct dirent *de;
-	char		rm_path[MAXPGPATH];
+	char		rm_path[MAXPGPATH * 2];
 
 	dbspace_dir = AllocateDir(dbspacedirname);
 	if (dbspace_dir == NULL)
@@ -3022,7 +3022,7 @@ walkdir(const char *path,
 
 	while ((de = ReadDirExtended(dir, path, elevel)) != NULL)
 	{
-		char		subpath[MAXPGPATH];
+		char		subpath[MAXPGPATH * 2];
 		struct stat fst;
 		int			sret;
 
@@ -3032,7 +3032,7 @@ walkdir(const char *path,
 			strcmp(de->d_name, "..") == 0)
 			continue;
 
-		snprintf(subpath, MAXPGPATH, "%s/%s", path, de->d_name);
+		snprintf(subpath, sizeof(subpath), "%s/%s", path, de->d_name);
 
 		if (process_symlinks)
 			sret = stat(subpath, &fst);

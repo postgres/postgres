@@ -959,7 +959,7 @@ sendDir(char *path, int basepathlen, bool sizeonly, List *tablespaces,
 {
 	DIR		   *dir;
 	struct dirent *de;
-	char		pathbuf[MAXPGPATH];
+	char		pathbuf[MAXPGPATH * 2];
 	struct stat statbuf;
 	int64		size = 0;
 
@@ -1011,7 +1011,7 @@ sendDir(char *path, int basepathlen, bool sizeonly, List *tablespaces,
 		if (excludeFound)
 			continue;
 
-		snprintf(pathbuf, MAXPGPATH, "%s/%s", path, de->d_name);
+		snprintf(pathbuf, sizeof(pathbuf), "%s/%s", path, de->d_name);
 
 		/* Skip pg_control here to back up it last */
 		if (strcmp(pathbuf, "./global/pg_control") == 0)

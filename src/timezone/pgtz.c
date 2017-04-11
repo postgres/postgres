@@ -412,7 +412,7 @@ pg_tzenumerate_next(pg_tzenum *dir)
 	while (dir->depth >= 0)
 	{
 		struct dirent *direntry;
-		char		fullname[MAXPGPATH];
+		char		fullname[MAXPGPATH * 2];
 		struct stat statbuf;
 
 		direntry = ReadDir(dir->dirdesc[dir->depth], dir->dirname[dir->depth]);
@@ -429,7 +429,7 @@ pg_tzenumerate_next(pg_tzenum *dir)
 		if (direntry->d_name[0] == '.')
 			continue;
 
-		snprintf(fullname, MAXPGPATH, "%s/%s",
+		snprintf(fullname, sizeof(fullname), "%s/%s",
 				 dir->dirname[dir->depth], direntry->d_name);
 		if (stat(fullname, &statbuf) != 0)
 			ereport(ERROR,

@@ -244,7 +244,7 @@ FindStreamingStart(uint32 *tli)
 		if (!ispartial && !iscompress)
 		{
 			struct stat statbuf;
-			char		fullpath[MAXPGPATH];
+			char		fullpath[MAXPGPATH * 2];
 
 			snprintf(fullpath, sizeof(fullpath), "%s/%s", basedir, dirent->d_name);
 			if (stat(fullpath, &statbuf) != 0)
@@ -267,7 +267,7 @@ FindStreamingStart(uint32 *tli)
 			int		fd;
 			char	buf[4];
 			int		bytes_out;
-			char	fullpath[MAXPGPATH];
+			char	fullpath[MAXPGPATH * 2];
 
 			snprintf(fullpath, sizeof(fullpath), "%s/%s", basedir, dirent->d_name);
 

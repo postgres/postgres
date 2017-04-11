@@ -2228,7 +2228,7 @@ static void
 setup_formatted_log_time(void)
 {
 	pg_time_t	stamp_time;
-	char		msbuf[8];
+	char		msbuf[13];
 
 	if (!saved_timeval_set)
 	{

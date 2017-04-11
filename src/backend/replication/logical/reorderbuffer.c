@@ -2613,7 +2613,7 @@ StartupReorderBuffer(void)
 	while ((logical_de = ReadDir(logical_dir, "pg_replslot")) != NULL)
 	{
 		struct stat statbuf;
-		char		path[MAXPGPATH];
+		char		path[MAXPGPATH * 2 + 12];
 
 		if (strcmp(logical_de->d_name, ".") == 0 ||
 			strcmp(logical_de->d_name, "..") == 0)

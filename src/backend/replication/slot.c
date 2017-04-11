@@ -1023,13 +1023,13 @@ StartupReplicationSlots(void)
 	while ((replication_de = ReadDir(replication_dir, "pg_replslot")) != NULL)
 	{
 		struct stat statbuf;
-		char		path[MAXPGPATH];
+		char		path[MAXPGPATH + 12];
 
 		if (strcmp(replication_de->d_name, ".") == 0 ||
 			strcmp(replication_de->d_name, "..") == 0)
 			continue;
 
-		snprintf(path, MAXPGPATH, "pg_replslot/%s", replication_de->d_name);
+		snprintf(path, sizeof(path), "pg_replslot/%s", replication_de->d_name);
 
 		/* we're only creating directories here, skip if it's not our's */
 		if (lstat(path, &statbuf) == 0 && !S_ISDIR(statbuf.st_mode))
@@ -1259,7 +1259,7 @@ RestoreSlotFromDisk(const char *name)
 {
 	ReplicationSlotOnDisk cp;
 	int			i;
-	char		path[MAXPGPATH];
+	char		path[MAXPGPATH + 22];
 	int			fd;
 	bool		restored = false;
 	int			readBytes;
