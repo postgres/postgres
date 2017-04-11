@@ -919,6 +919,11 @@ do
        <entry><type>boolean</type></entry>
        <entry><type>bool</type><footnote><para>declared in <filename>ecpglib.h</filename> if not native</para></footnote></entry>
       </row>
+
+      <row>
+       <entry><type>bytea</type></entry>
+       <entry><type>char *</type></entry>
+      </row>
      </tbody>
     </tgroup>
    </table>
