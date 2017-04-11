@@ -210,7 +210,7 @@ classifyConditions(PlannerInfo *root,
 
 	foreach(lc, input_conds)
 	{
-		RestrictInfo *ri = (RestrictInfo *) lfirst(lc);
+		RestrictInfo *ri = lfirst_node(RestrictInfo, lc);
 
 		if (is_foreign_expr(root, baserel, ri->clause))
 			*remote_conds = lappend(*remote_conds, ri);
@@ -869,6 +869,7 @@ build_tlist_to_deparse(RelOptInfo *foreignrel)
 {
 	List	   *tlist = NIL;
 	PgFdwRelationInfo *fpinfo = (PgFdwRelationInfo *) foreignrel->fdw_private;
+	ListCell   *lc;
 
 	/*
 	 * For an upper relation, we have already built the target list while
@@ -884,9 +885,14 @@ build_tlist_to_deparse(RelOptInfo *foreignrel)
 	tlist = add_to_flat_tlist(tlist,
 					   pull_var_clause((Node *) foreignrel->reltarget->exprs,
 									   PVC_RECURSE_PLACEHOLDERS));
-	tlist = add_to_flat_tlist(tlist,
-							  pull_var_clause((Node *) fpinfo->local_conds,
-											  PVC_RECURSE_PLACEHOLDERS));
+	foreach(lc, fpinfo->local_conds)
+	{
+		RestrictInfo *rinfo = lfirst_node(RestrictInfo, lc);
+
+		tlist = add_to_flat_tlist(tlist,
+								  pull_var_clause((Node *) rinfo->clause,
+												  PVC_RECURSE_PLACEHOLDERS));
+	}
 
 	return tlist;
 }
@@ -1049,6 +1055,7 @@ deparseSelectSql(List *tlist, bool is_subquery, List **retrieved_attrs,
  * "buf".
  *
  * quals is the list of clauses to be included in the WHERE clause.
+ * (These may or may not include RestrictInfo decoration.)
  */
 static void
 deparseFromExpr(List *quals, deparse_expr_cxt *context)
@@ -1262,6 +1269,9 @@ deparseLockingClause(deparse_expr_cxt *context)
  *
  * The conditions in the list are assumed to be ANDed. This function is used to
  * deparse WHERE clauses, JOIN .. ON clauses and HAVING clauses.
+ *
+ * Depending on the caller, the list elements might be either RestrictInfos
+ * or bare clauses.
  */
 static void
 appendConditions(List *exprs, deparse_expr_cxt *context)
@@ -1278,16 +1288,9 @@ appendConditions(List *exprs, deparse_expr_cxt *context)
 	{
 		Expr	   *expr = (Expr *) lfirst(lc);
 
-		/*
-		 * Extract clause from RestrictInfo, if required. See comments in
-		 * declaration of PgFdwRelationInfo for details.
-		 */
+		/* Extract clause from RestrictInfo, if required */
 		if (IsA(expr, RestrictInfo))
-		{
-			RestrictInfo *ri = (RestrictInfo *) expr;
-
-			expr = ri->clause;
-		}
+			expr = ((RestrictInfo *) expr)->clause;
 
 		/* Connect expressions with "AND" and parenthesize each condition. */
 		if (!is_first)

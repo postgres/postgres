@@ -34,16 +34,8 @@ typedef struct PgFdwRelationInfo
 
 	/*
 	 * Restriction clauses, divided into safe and unsafe to pushdown subsets.
-	 *
-	 * For a base foreign relation this is a list of clauses along-with
-	 * RestrictInfo wrapper. Keeping RestrictInfo wrapper helps while dividing
-	 * scan_clauses in postgresGetForeignPlan into safe and unsafe subsets.
-	 * Also it helps in estimating costs since RestrictInfo caches the
-	 * selectivity and qual cost for the clause in it.
-	 *
-	 * For a join relation, however, they are part of otherclause list
-	 * obtained from extract_actual_join_clauses, which strips RestrictInfo
-	 * construct. So, for a join relation they are list of bare clauses.
+	 * All entries in these lists should have RestrictInfo wrappers; that
+	 * improves efficiency of selectivity and cost estimation.
 	 */
 	List	   *remote_conds;
 	List	   *local_conds;
@@ -91,7 +83,7 @@ typedef struct PgFdwRelationInfo
 	RelOptInfo *outerrel;
 	RelOptInfo *innerrel;
 	JoinType	jointype;
-	List	   *joinclauses;
+	List	   *joinclauses;	/* List of RestrictInfo */
 
 	/* Grouping information */
 	List	   *grouped_tlist;
