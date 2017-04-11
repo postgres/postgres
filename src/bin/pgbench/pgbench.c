@@ -4652,10 +4652,21 @@ threadRun(void *arg)
 					(cur.cnt - last.cnt);
 
 				if (progress_timestamp)
-					sprintf(tbuf, "%.03f s",
-							INSTR_TIME_GET_MILLISEC(now_time) / 1000.0);
+				{
+					/*
+					 * On some platforms the current system timestamp is
+					 * available in now_time, but rather than get entangled
+					 * with that, we just eat the cost of an extra syscall in
+					 * all cases.
+					 */
+					struct timeval tv;
+
+					gettimeofday(&tv, NULL);
+					snprintf(tbuf, sizeof(tbuf), "%ld.%03ld s",
+							 (long) tv.tv_sec, (long) (tv.tv_usec / 1000));
+				}
 				else
-					sprintf(tbuf, "%.1f s", total_run);
+					snprintf(tbuf, sizeof(tbuf), "%.1f s", total_run);
 
 				fprintf(stderr,
 						"progress: %s, %.1f tps, lat %.3f ms stddev %.3f",
