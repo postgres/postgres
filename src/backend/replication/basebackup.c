@@ -115,7 +115,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 		/* Collect information about all tablespaces */
 		while ((de = ReadDir(tblspcdir, "pg_tblspc")) != NULL)
 		{
-			char		fullpath[MAXPGPATH];
+			char		fullpath[MAXPGPATH + 10];
 			char		linkpath[MAXPGPATH];
 			char	   *relpath = NULL;
 			int			rllen;
@@ -821,7 +821,7 @@ sendDir(char *path, int basepathlen, bool sizeonly, List *tablespaces)
 {
 	DIR		   *dir;
 	struct dirent *de;
-	char		pathbuf[MAXPGPATH];
+	char		pathbuf[MAXPGPATH * 2];
 	struct stat statbuf;
 	int64		size = 0;
 
@@ -855,7 +855,7 @@ sendDir(char *path, int basepathlen, bool sizeonly, List *tablespaces)
 			ereport(ERROR,
 				(errmsg("shutdown requested, aborting active base backup")));
 
-		snprintf(pathbuf, MAXPGPATH, "%s/%s", path, de->d_name);
+		snprintf(pathbuf, sizeof(pathbuf), "%s/%s", path, de->d_name);
 
 		/* Skip postmaster.pid and postmaster.opts in the data directory */
 		if (strcmp(pathbuf, "./postmaster.pid") == 0 ||

@@ -135,8 +135,8 @@ typedef struct
  */
 typedef struct
 {
-	char		old_dir[MAXPGPATH];
-	char		new_dir[MAXPGPATH];
+	char		old_dir[MAXPGPATH * 2];
+	char		new_dir[MAXPGPATH * 2];
 
 	/*
 	 * old/new relfilenodes might differ for pg_largeobject(_metadata) indexes

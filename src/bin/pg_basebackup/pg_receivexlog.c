@@ -125,7 +125,7 @@ FindStreamingStart(XLogRecPtr currentpos, uint32 currenttimeline)
 
 	while (errno = 0, (dirent = readdir(dir)) != NULL)
 	{
-		char		fullpath[MAXPGPATH];
+		char		fullpath[MAXPGPATH * 2];
 		struct stat statbuf;
 		uint32		tli,
 					log,
