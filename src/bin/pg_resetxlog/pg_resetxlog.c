@@ -892,7 +892,7 @@ KillExistingXLOG(void)
 {
 	DIR		   *xldir;
 	struct dirent *xlde;
-	char		path[MAXPGPATH];
+	char		path[MAXPGPATH + sizeof(XLOGDIR)];
 
 	xldir = opendir(XLOGDIR);
 	if (xldir == NULL)
@@ -907,7 +907,7 @@ KillExistingXLOG(void)
 		if (strlen(xlde->d_name) == 24 &&
 			strspn(xlde->d_name, "0123456789ABCDEF") == 24)
 		{
-			snprintf(path, MAXPGPATH, "%s/%s", XLOGDIR, xlde->d_name);
+			snprintf(path, sizeof(path), "%s/%s", XLOGDIR, xlde->d_name);
 			if (unlink(path) < 0)
 			{
 				fprintf(stderr, _("%s: could not delete file \"%s\": %s\n"),
@@ -939,11 +939,11 @@ KillExistingXLOG(void)
 static void
 KillExistingArchiveStatus(void)
 {
+#define ARCHSTATDIR XLOGDIR "/archive_status"
+
 	DIR		   *xldir;
 	struct dirent *xlde;
-	char		path[MAXPGPATH];
-
-#define ARCHSTATDIR XLOGDIR "/archive_status"
+	char		path[MAXPGPATH + sizeof(ARCHSTATDIR)];
 
 	xldir = opendir(ARCHSTATDIR);
 	if (xldir == NULL)
@@ -959,7 +959,7 @@ KillExistingArchiveStatus(void)
 			(strcmp(xlde->d_name + 24, ".ready") == 0 ||
 			 strcmp(xlde->d_name + 24, ".done") == 0))
 		{
-			snprintf(path, MAXPGPATH, "%s/%s", ARCHSTATDIR, xlde->d_name);
+			snprintf(path, sizeof(path), "%s/%s", ARCHSTATDIR, xlde->d_name);
 			if (unlink(path) < 0)
 			{
 				fprintf(stderr, _("%s: could not delete file \"%s\": %s\n"),

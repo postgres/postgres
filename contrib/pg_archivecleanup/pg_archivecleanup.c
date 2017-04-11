@@ -30,7 +30,7 @@ char	   *additional_ext = NULL;		/* Extension to remove from filenames */
 
 char	   *archiveLocation;	/* where to find the archive? */
 char	   *restartWALFileName; /* the file from which we can restart restore */
-char		WALFilePath[MAXPGPATH];		/* the file path including archive */
+char		WALFilePath[MAXPGPATH * 2];		/* the file path including archive */
 char		exclusiveCleanupFileName[MAXPGPATH];		/* the oldest file we
 														 * want to remain in
 														 * archive */
@@ -133,7 +133,7 @@ CleanupPriorWALFiles(void)
 				 * extension that might have been chopped off before testing
 				 * the sequence.
 				 */
-				snprintf(WALFilePath, MAXPGPATH, "%s/%s",
+				snprintf(WALFilePath, sizeof(WALFilePath), "%s/%s",
 						 archiveLocation, xlde->d_name);
 
 				if (dryrun)
