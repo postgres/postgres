@@ -515,13 +515,34 @@ ResetBackgroundWorkerCrashTimes(void)
 
 		rw = slist_container(RegisteredBgWorker, rw_lnode, iter.cur);
 
-		/*
-		 * For workers that should not be restarted, we don't want to lose the
-		 * information that they have crashed; otherwise, they would be
-		 * restarted, which is wrong.
-		 */
-		if (rw->rw_worker.bgw_restart_time != BGW_NEVER_RESTART)
+		if (rw->rw_worker.bgw_restart_time == BGW_NEVER_RESTART)
+		{
+			/*
+			 * Workers marked BGW_NVER_RESTART shouldn't get relaunched after
+			 * the crash, so forget about them.  (If we wait until after the
+			 * crash to forget about them, and they are parallel workers,
+			 * parallel_terminate_count will get incremented after we've
+			 * already zeroed parallel_register_count, which would be bad.)
+			 */
+			ForgetBackgroundWorker(&iter);
+		}
+		else
+		{
+			/*
+			 * The accounting which we do via parallel_register_count and
+			 * parallel_terminate_count would get messed up if a worker marked
+			 * parallel could survive a crash and restart cycle. All such
+			 * workers should be marked BGW_NEVER_RESTART, and thus control
+			 * should never reach this branch.
+			 */
+			Assert((rw->rw_worker.bgw_flags & BGWORKER_CLASS_PARALLEL) == 0);
+
+			/*
+			 * Allow this worker to be restarted immediately after we finish
+			 * resetting.
+			 */
 			rw->rw_crashed_at = 0;
+		}
 	}
 }
 
@@ -585,6 +606,21 @@ SanityCheckBackgroundWorker(BackgroundWorker *worker, int elevel)
 		ereport(elevel,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("background worker \"%s\": invalid restart interval",
+						worker->bgw_name)));
+		return false;
+	}
+
+	/*
+	 * Parallel workers may not be configured for restart, because the
+	 * parallel_register_count/parallel_terminate_count accounting can't
+	 * handle parallel workers lasting through a crash-and-restart cycle.
+	 */
+	if (worker->bgw_restart_time != BGW_NEVER_RESTART &&
+		(worker->bgw_flags & BGWORKER_CLASS_PARALLEL) != 0)
+	{
+		ereport(elevel,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("background worker \"%s\": parallel workers may not be configured for restart",
 						worker->bgw_name)));
 		return false;
 	}
