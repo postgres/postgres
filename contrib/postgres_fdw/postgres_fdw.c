@@ -64,9 +64,6 @@ enum FdwScanPrivateIndex
 {
 	/* SQL statement to execute remotely (as a String node) */
 	FdwScanPrivateSelectSql,
-	/* List of qual clauses that can be executed remotely */
-	/* (DO NOT try to use these at runtime; see postgresGetForeignPlan) */
-	FdwScanPrivateRemoteConds,
 	/* Integer list of attribute numbers retrieved by the SELECT */
 	FdwScanPrivateRetrievedAttrs,
 	/* Integer representing the desired fetch_size */
@@ -1262,12 +1259,14 @@ postgresGetForeignPlan(PlannerInfo *root,
 							remote_exprs, best_path->path.pathkeys,
 							false, &retrieved_attrs, &params_list);
 
+	/* Remember remote_exprs for possible use by postgresPlanDirectModify */
+	fpinfo->final_remote_exprs = remote_exprs;
+
 	/*
 	 * Build the fdw_private list that will be available to the executor.
 	 * Items in the list must match order in enum FdwScanPrivateIndex.
 	 */
-	fdw_private = list_make4(makeString(sql.data),
-							 remote_exprs,
+	fdw_private = list_make3(makeString(sql.data),
 							 retrieved_attrs,
 							 makeInteger(fpinfo->fetch_size));
 	if (IS_JOIN_REL(foreignrel) || IS_UPPER_REL(foreignrel))
@@ -1280,13 +1279,6 @@ postgresGetForeignPlan(PlannerInfo *root,
 	 * Note that the remote parameter expressions are stored in the fdw_exprs
 	 * field of the finished plan node; we can't keep them in private state
 	 * because then they wouldn't be subject to later planner processing.
-	 *
-	 * We have some foreign qual conditions hidden away within fdw_private's
-	 * FdwScanPrivateRemoteConds item, which would be unsafe per the above
-	 * consideration. But those will only be used by postgresPlanDirectModify,
-	 * which may extract them to use in a rewritten plan.  We assume that
-	 * nothing will be done between here and there that would need to modify
-	 * those expressions.
 	 */
 	return make_foreignscan(tlist,
 							local_exprs,
@@ -2130,13 +2122,15 @@ postgresPlanDirectModify(PlannerInfo *root,
 						 int subplan_index)
 {
 	CmdType		operation = plan->operation;
-	Plan	   *subplan = (Plan *) list_nth(plan->plans, subplan_index);
-	RangeTblEntry *rte = planner_rt_fetch(resultRelation, root);
+	Plan	   *subplan;
+	RelOptInfo *foreignrel;
+	RangeTblEntry *rte;
+	PgFdwRelationInfo *fpinfo;
 	Relation	rel;
 	StringInfoData sql;
 	ForeignScan *fscan;
 	List	   *targetAttrs = NIL;
-	List	   *remote_conds;
+	List	   *remote_exprs;
 	List	   *params_list = NIL;
 	List	   *returningList = NIL;
 	List	   *retrieved_attrs = NIL;
@@ -2155,8 +2149,10 @@ postgresPlanDirectModify(PlannerInfo *root,
 	 * It's unsafe to modify a foreign table directly if there are any local
 	 * joins needed.
 	 */
+	subplan = (Plan *) list_nth(plan->plans, subplan_index);
 	if (!IsA(subplan, ForeignScan))
 		return false;
+	fscan = (ForeignScan *) subplan;
 
 	/*
 	 * It's unsafe to modify a foreign table directly if there are any quals
@@ -2168,9 +2164,13 @@ postgresPlanDirectModify(PlannerInfo *root,
 	/*
 	 * We can't handle an UPDATE or DELETE on a foreign join for now.
 	 */
-	fscan = (ForeignScan *) subplan;
 	if (fscan->scan.scanrelid == 0)
 		return false;
+
+	/* Safe to fetch data about the target foreign rel */
+	foreignrel = root->simple_rel_array[resultRelation];
+	rte = root->simple_rte_array[resultRelation];
+	fpinfo = (PgFdwRelationInfo *) foreignrel->fdw_private;
 
 	/*
 	 * It's unsafe to update a foreign table directly, if any expressions to
@@ -2178,7 +2178,6 @@ postgresPlanDirectModify(PlannerInfo *root,
 	 */
 	if (operation == CMD_UPDATE)
 	{
-		RelOptInfo *baserel = root->simple_rel_array[resultRelation];
 		int			col;
 
 		/*
@@ -2201,7 +2200,7 @@ postgresPlanDirectModify(PlannerInfo *root,
 				elog(ERROR, "attribute number %d not found in subplan targetlist",
 					 attno);
 
-			if (!is_foreign_expr(root, baserel, (Expr *) tle->expr))
+			if (!is_foreign_expr(root, foreignrel, (Expr *) tle->expr))
 				return false;
 
 			targetAttrs = lappend_int(targetAttrs, attno);
@@ -2220,12 +2219,11 @@ postgresPlanDirectModify(PlannerInfo *root,
 	rel = heap_open(rte->relid, NoLock);
 
 	/*
-	 * Extract the qual clauses that can be evaluated remotely.  (These are
+	 * Recall the qual clauses that must be evaluated remotely.  (These are
 	 * bare clauses not RestrictInfos, but deparse.c's appendConditions()
 	 * doesn't care.)
 	 */
-	remote_conds = (List *) list_nth(fscan->fdw_private,
-									 FdwScanPrivateRemoteConds);
+	remote_exprs = fpinfo->final_remote_exprs;
 
 	/*
 	 * Extract the relevant RETURNING list if any.
@@ -2242,12 +2240,12 @@ postgresPlanDirectModify(PlannerInfo *root,
 			deparseDirectUpdateSql(&sql, root, resultRelation, rel,
 								   ((Plan *) fscan)->targetlist,
 								   targetAttrs,
-								   remote_conds, &params_list,
+								   remote_exprs, &params_list,
 								   returningList, &retrieved_attrs);
 			break;
 		case CMD_DELETE:
 			deparseDirectDeleteSql(&sql, root, resultRelation, rel,
-								   remote_conds, &params_list,
+								   remote_exprs, &params_list,
 								   returningList, &retrieved_attrs);
 			break;
 		default:

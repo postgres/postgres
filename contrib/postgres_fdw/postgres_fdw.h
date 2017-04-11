@@ -22,7 +22,10 @@
 
 /*
  * FDW-specific planner information kept in RelOptInfo.fdw_private for a
- * foreign table.  This information is collected by postgresGetForeignRelSize.
+ * postgres_fdw foreign table.  For a baserel, this struct is created by
+ * postgresGetForeignRelSize, although some fields are not filled till later.
+ * postgresGetForeignJoinPaths creates it for a joinrel, and
+ * postgresGetForeignUpperPaths creates it for an upperrel.
  */
 typedef struct PgFdwRelationInfo
 {
@@ -39,6 +42,9 @@ typedef struct PgFdwRelationInfo
 	 */
 	List	   *remote_conds;
 	List	   *local_conds;
+
+	/* Actual remote restriction clauses for scan (sans RestrictInfos) */
+	List	   *final_remote_exprs;
 
 	/* Bitmap of attr numbers we need to fetch from the remote server. */
 	Bitmapset  *attrs_used;
@@ -83,6 +89,7 @@ typedef struct PgFdwRelationInfo
 	RelOptInfo *outerrel;
 	RelOptInfo *innerrel;
 	JoinType	jointype;
+	/* joinclauses contains only JOIN/ON conditions for an outer join */
 	List	   *joinclauses;	/* List of RestrictInfo */
 
 	/* Grouping information */
