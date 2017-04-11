@@ -57,7 +57,7 @@ char	   *xlogFilePath;		/* where we are going to restore to */
 char	   *nextWALFileName;	/* the file we need to get from archive */
 char	   *restartWALFileName; /* the file from which we can restart restore */
 char	   *priorWALFileName;	/* the file we need to get from archive */
-char		WALFilePath[MAXPGPATH];		/* the file path including archive */
+char		WALFilePath[MAXPGPATH * 2];		/* the file path including archive */
 char		restoreCommand[MAXPGPATH];	/* run this to restore */
 char		exclusiveCleanupFileName[MAXFNAMELEN];		/* the file we need to
 														 * get from archive */
@@ -259,9 +259,9 @@ CustomizableCleanupPriorWALFiles(void)
 				  strcmp(xlde->d_name + 8, exclusiveCleanupFileName + 8) < 0)
 				{
 #ifdef WIN32
-					snprintf(WALFilePath, MAXPGPATH, "%s\\%s", archiveLocation, xlde->d_name);
+					snprintf(WALFilePath, sizeof(WALFilePath), "%s\\%s", archiveLocation, xlde->d_name);
 #else
-					snprintf(WALFilePath, MAXPGPATH, "%s/%s", archiveLocation, xlde->d_name);
+					snprintf(WALFilePath, sizeof(WALFilePath), "%s/%s", archiveLocation, xlde->d_name);
 #endif
 
 					if (debug)

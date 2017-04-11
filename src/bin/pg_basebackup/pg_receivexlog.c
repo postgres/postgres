@@ -210,7 +210,7 @@ FindStreamingStart(uint32 *tli)
 		if (!ispartial)
 		{
 			struct stat statbuf;
-			char		fullpath[MAXPGPATH];
+			char		fullpath[MAXPGPATH * 2];
 
 			snprintf(fullpath, sizeof(fullpath), "%s/%s", basedir, dirent->d_name);
 			if (stat(fullpath, &statbuf) != 0)

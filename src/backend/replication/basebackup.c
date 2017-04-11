@@ -888,7 +888,7 @@ sendDir(char *path, int basepathlen, bool sizeonly, List *tablespaces,
 {
 	DIR		   *dir;
 	struct dirent *de;
-	char		pathbuf[MAXPGPATH];
+	char		pathbuf[MAXPGPATH * 2];
 	struct stat statbuf;
 	int64		size = 0;
 
@@ -940,7 +940,7 @@ sendDir(char *path, int basepathlen, bool sizeonly, List *tablespaces,
 						 "and should not be used. "
 						 "Try taking another online backup.")));
 
-		snprintf(pathbuf, MAXPGPATH, "%s/%s", path, de->d_name);
+		snprintf(pathbuf, sizeof(pathbuf), "%s/%s", path, de->d_name);
 
 		/* Skip postmaster.pid and postmaster.opts in the data directory */
 		if (strcmp(pathbuf, "./postmaster.pid") == 0 ||
