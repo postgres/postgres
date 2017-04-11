@@ -971,6 +971,9 @@ RegisterDynamicBackgroundWorker(BackgroundWorker *worker,
 					 BackgroundWorkerData->parallel_terminate_count) >=
 		max_parallel_workers)
 	{
+		Assert(BackgroundWorkerData->parallel_register_count -
+			   BackgroundWorkerData->parallel_terminate_count <=
+			   MAX_PARALLEL_WORKER_LIMIT);
 		LWLockRelease(BackgroundWorkerLock);
 		return false;
 	}

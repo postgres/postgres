@@ -16,6 +16,13 @@
 #include "lib/ilist.h"
 #include "postmaster/bgworker.h"
 
+/* GUC options */
+
+/*
+ * Maximum possible value of parallel workers.
+ */
+#define MAX_PARALLEL_WORKER_LIMIT 1024
+
 /*
  * List of background workers, private to postmaster.
  *
