@@ -1759,28 +1759,32 @@ void
 heap_drop_with_catalog(Oid relid)
 {
 	Relation	rel;
+	HeapTuple	tuple;
 	Oid			parentOid;
 	Relation	parent = NULL;
+
+	/*
+	 * To drop a partition safely, we must grab exclusive lock on its parent,
+	 * because another backend might be about to execute a query on the parent
+	 * table.  If it relies on previously cached partition descriptor, then
+	 * it could attempt to access the just-dropped relation as its partition.
+	 * We must therefore take a table lock strong enough to prevent all
+	 * queries on the table from proceeding until we commit and send out a
+	 * shared-cache-inval notice that will make them update their index lists.
+	 */
+	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
+	if (((Form_pg_class) GETSTRUCT(tuple))->relispartition)
+	{
+		parentOid = get_partition_parent(relid);
+		parent = heap_open(parentOid, AccessExclusiveLock);
+	}
+
+	ReleaseSysCache(tuple);
 
 	/*
 	 * Open and lock the relation.
 	 */
 	rel = relation_open(relid, AccessExclusiveLock);
-
-	/*
-	 * If the relation is a partition, we must grab exclusive lock on its
-	 * parent because we need to update its partition descriptor. We must take
-	 * a table lock strong enough to prevent all queries on the parent from
-	 * proceeding until we commit and send out a shared-cache-inval notice
-	 * that will make them update their partition descriptor. Sometimes, doing
-	 * this is cycles spent uselessly, especially if the parent will be
-	 * dropped as part of the same command anyway.
-	 */
-	if (rel->rd_rel->relispartition)
-	{
-		parentOid = get_partition_parent(relid);
-		parent = heap_open(parentOid, AccessExclusiveLock);
-	}
 
 	/*
 	 * There can no longer be anyone *else* touching the relation, but we

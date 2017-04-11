@@ -271,6 +271,7 @@ struct DropRelationCallbackState
 {
 	char		relkind;
 	Oid			heapOid;
+	Oid			partParentOid;
 	bool		concurrent;
 };
 
@@ -1049,6 +1050,7 @@ RemoveRelations(DropStmt *drop)
 		/* Look up the appropriate relation using namespace search. */
 		state.relkind = relkind;
 		state.heapOid = InvalidOid;
+		state.partParentOid = InvalidOid;
 		state.concurrent = drop->concurrent;
 		relOid = RangeVarGetRelidExtended(rel, lockmode, true,
 										  false,
@@ -1078,6 +1080,8 @@ RemoveRelations(DropStmt *drop)
 /*
  * Before acquiring a table lock, check whether we have sufficient rights.
  * In the case of DROP INDEX, also try to lock the table before the index.
+ * Also, if the table to be dropped is a partition, we try to lock the parent
+ * first.
  */
 static void
 RangeVarCallbackForDropRelation(const RangeVar *rel, Oid relOid, Oid oldRelOid,
@@ -1087,6 +1091,7 @@ RangeVarCallbackForDropRelation(const RangeVar *rel, Oid relOid, Oid oldRelOid,
 	struct DropRelationCallbackState *state;
 	char		relkind;
 	char		expected_relkind;
+	bool		is_partition;
 	Form_pg_class classform;
 	LOCKMODE	heap_lockmode;
 
@@ -1106,6 +1111,17 @@ RangeVarCallbackForDropRelation(const RangeVar *rel, Oid relOid, Oid oldRelOid,
 		state->heapOid = InvalidOid;
 	}
 
+	/*
+	 * Similarly, if we previously locked some other partition's heap, and
+	 * the name we're looking up no longer refers to that relation, release
+	 * the now-useless lock.
+	 */
+	if (relOid != oldRelOid && OidIsValid(state->partParentOid))
+	{
+		UnlockRelationOid(state->partParentOid, AccessExclusiveLock);
+		state->partParentOid = InvalidOid;
+	}
+
 	/* Didn't find a relation, so no need for locking or permission checks. */
 	if (!OidIsValid(relOid))
 		return;
@@ -1114,6 +1130,7 @@ RangeVarCallbackForDropRelation(const RangeVar *rel, Oid relOid, Oid oldRelOid,
 	if (!HeapTupleIsValid(tuple))
 		return;					/* concurrently dropped, so nothing to do */
 	classform = (Form_pg_class) GETSTRUCT(tuple);
+	is_partition = classform->relispartition;
 
 	/*
 	 * Both RELKIND_RELATION and RELKIND_PARTITIONED_TABLE are OBJECT_TABLE,
@@ -1156,6 +1173,19 @@ RangeVarCallbackForDropRelation(const RangeVar *rel, Oid relOid, Oid oldRelOid,
 		state->heapOid = IndexGetRelation(relOid, true);
 		if (OidIsValid(state->heapOid))
 			LockRelationOid(state->heapOid, heap_lockmode);
+	}
+
+	/*
+	 * Similarly, if the relation is a partition, we must acquire lock on its
+	 * parent before locking the partition.  That's because queries lock the
+	 * parent before its partitions, so we risk deadlock it we do it the other
+	 * way around.
+	 */
+	if (is_partition && relOid != oldRelOid)
+	{
+		state->partParentOid = get_partition_parent(relOid);
+		if (OidIsValid(state->partParentOid))
+			LockRelationOid(state->partParentOid, AccessExclusiveLock);
 	}
 }
 
