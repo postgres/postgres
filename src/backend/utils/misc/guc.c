@@ -610,6 +610,8 @@ const char *const config_group_names[] =
 	gettext_noop("Replication / Master Server"),
 	/* REPLICATION_STANDBY */
 	gettext_noop("Replication / Standby Servers"),
+	/* REPLICATION_SUBSCRIBERS */
+	gettext_noop("Replication / Subscribers"),
 	/* QUERY_TUNING */
 	gettext_noop("Query Tuning"),
 	/* QUERY_TUNING_METHOD */
@@ -2511,7 +2513,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"max_logical_replication_workers",
 			PGC_POSTMASTER,
-			RESOURCES_ASYNCHRONOUS,
+			REPLICATION_SUBSCRIBERS,
 			gettext_noop("Maximum number of logical replication worker processes."),
 			NULL,
 		},
@@ -2523,7 +2525,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"max_sync_workers_per_subscription",
 			PGC_SIGHUP,
-			RESOURCES_ASYNCHRONOUS,
+			REPLICATION_SUBSCRIBERS,
 			gettext_noop("Maximum number of table synchronization workers per subscription."),
 			NULL,
 		},

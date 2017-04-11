@@ -164,7 +164,6 @@
 #max_parallel_workers_per_gather = 2	# taken from max_parallel_workers
 #max_parallel_workers = 8	    # maximum number of max_worker_processes that
 					# can be used in parallel queries
-#max_logical_replication_workers = 4	# taken from max_worker_processes
 #old_snapshot_threshold = -1		# 1min-60d; -1 disables; 0 is immediate
 					# (change requires restart)
 #backend_flush_after = 0		# measured in pages, 0 disables
@@ -272,6 +271,13 @@
 					# in milliseconds; 0 disables
 #wal_retrieve_retry_interval = 5s	# time to wait before retrying to
 					# retrieve WAL after a failed attempt
+
+# - Subscribers -
+
+# These settings are ignored on a publisher.
+
+#max_logical_replication_workers = 4	# taken from max_worker_processes
+#max_sync_workers_per_subscription = 2	# taken from max_logical_replication_workers
 
 
 #------------------------------------------------------------------------------
