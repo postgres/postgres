@@ -1,6 +1,6 @@
 /* src/include/port/win32.h */
 
-#if defined(_MSC_VER) || defined(__BORLANDC__)
+#if defined(_MSC_VER)
 #define WIN32_ONLY_COMPILER
 #endif
 
@@ -32,9 +32,7 @@
  * Always build with SSPI support. Keep it as a #define in case
  * we want a switch to disable it sometime in the future.
  */
-#ifndef __BORLANDC__
 #define ENABLE_SSPI 1
-#endif
 
 /* undefine and redefine after #include */
 #undef mkdir
@@ -56,9 +54,7 @@
 #include <signal.h>
 #include <errno.h>
 #include <direct.h>
-#ifndef __BORLANDC__
 #include <sys/utime.h>			/* for non-unicode version */
-#endif
 #undef near
 
 /* Must be here to avoid conflicting with prototype in windows.h */
@@ -207,10 +203,8 @@
 #define SIGTTIN				21
 #define SIGTTOU				22	/* Same as SIGABRT -- no problem, I hope */
 #define SIGWINCH			28
-#ifndef __BORLANDC__
 #define SIGUSR1				30
 #define SIGUSR2				31
-#endif
 
 /*
  * New versions of mingw have gettimeofday() and also declare
@@ -421,7 +415,7 @@ extern int	pgwin32_is_admin(void);
 #define putenv(x) pgwin32_putenv(x)
 #define unsetenv(x) pgwin32_unsetenv(x)
 
-/* Things that exist in MingW headers, but need to be added to MSVC & BCC */
+/* Things that exist in MingW headers, but need to be added to MSVC */
 #ifdef WIN32_ONLY_COMPILER
 
 #ifndef _WIN64
@@ -430,7 +424,6 @@ typedef long ssize_t;
 typedef __int64 ssize_t;
 #endif
 
-#ifndef __BORLANDC__
 typedef unsigned short mode_t;
 
 #define S_IRUSR _S_IREAD
@@ -440,7 +433,6 @@ typedef unsigned short mode_t;
 /* see also S_IRGRP etc below */
 #define S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
 #define S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
-#endif   /* __BORLANDC__ */
 
 #define F_OK 0
 #define W_OK 2
@@ -454,26 +446,9 @@ typedef unsigned short mode_t;
 /* Pulled from Makefile.port in mingw */
 #define DLSUFFIX ".dll"
 
-#ifdef __BORLANDC__
-
-/* for port/dirent.c */
-#ifndef INVALID_FILE_ATTRIBUTES
-#define INVALID_FILE_ATTRIBUTES ((DWORD) -1)
-#endif
-
-/* for port/open.c */
-#ifndef O_RANDOM
-#define O_RANDOM		0x0010	/* File access is primarily random */
-#define O_SEQUENTIAL	0x0020	/* File access is primarily sequential */
-#define O_TEMPORARY		0x0040	/* Temporary file bit */
-#define O_SHORT_LIVED	0x1000	/* Temporary storage file, try not to flush */
-#define _O_SHORT_LIVED	O_SHORT_LIVED
-#endif   /* ifndef O_RANDOM */
-#endif   /* __BORLANDC__ */
 #endif   /* WIN32_ONLY_COMPILER */
 
 /* These aren't provided by either MingW or MSVC */
-#ifndef __BORLANDC__
 #define S_IRGRP 0
 #define S_IWGRP 0
 #define S_IXGRP 0
@@ -482,5 +457,3 @@ typedef unsigned short mode_t;
 #define S_IWOTH 0
 #define S_IXOTH 0
 #define S_IRWXO 0
-
-#endif   /* __BORLANDC__ */

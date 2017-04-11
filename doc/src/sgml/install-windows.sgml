@@ -35,14 +35,6 @@
  </para>
 
  <para>
-  Finally, the client access library
-  (<application>libpq</application>) can be built using
-  <productname>Visual C++ 7.1</productname> or
-  <productname>Borland C++</productname> for compatibility with statically
-  linked applications built using these tools.
- </para>
-
- <para>
   Building using <productname>MinGW</productname> or
   <productname>Cygwin</productname> uses the normal build system, see
   <xref linkend="installation"> and the specific notes in
@@ -538,114 +530,5 @@ $ENV{DOCROOT}='c:\docbook';
   </para>
  </sect2>
 
- </sect1>
-
- <sect1 id="install-windows-libpq">
-  <title>Building <application>libpq</application> with
-  <productname>Visual C++</productname> or
-  <productname>Borland C++</productname></title>
-
- <para>
-  Using <productname>Visual C++ 7.1-9.0</productname> or
-  <productname>Borland C++</productname> to build libpq is only recommended
-  if you need a version with different debug/release flags, or if you need a
-  static library to link into an application. For normal use the
-  <productname>MinGW</productname> or
-  <productname>Visual Studio</productname> or
-  <productname>Windows SDK</productname> method is recommended.
- </para>
-
- <para>
-  To build the <application>libpq</application> client library using
-  <productname>Visual Studio 7.1 or later</productname>, change into the
-  <filename>src</filename> directory and type the command:
-<screen>
-<userinput>nmake /f win32.mak</userinput>
-</screen>
- </para>
- <para>
- To build a 64-bit version of the <application>libpq</application>
- client library using <productname>Visual Studio 8.0 or
- later</productname>, change into the <filename>src</filename>
- directory and type in the command:
-<screen>
-<userinput>nmake /f win32.mak CPU=AMD64</userinput>
-</screen>
- See the <filename>win32.mak</filename> file for further details
- about supported variables.
- </para>
-
- <para>
-  To build the <application>libpq</application> client library using
-  <productname>Borland C++</productname>, change into the
-  <filename>src</filename> directory and type the command:
-<screen>
-<userinput>make -N -DCFG=Release /f bcc32.mak</userinput>
-</screen>
- </para>
-
- <sect2>
- <title>Generated Files</title>
- <para>
-  The following files will be built:
-
-  <variablelist>
-   <varlistentry>
-    <term><filename>interfaces\libpq\Release\libpq.dll</filename></term>
-    <listitem>
-     <para>
-      The dynamically linkable frontend library
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><filename>interfaces\libpq\Release\libpqdll.lib</filename></term>
-    <listitem>
-     <para>
-      Import library to link your programs to <filename>libpq.dll</filename>
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><filename>interfaces\libpq\Release\libpq.lib</filename></term>
-    <listitem>
-     <para>
-      Static version of the frontend library
-     </para>
-    </listitem>
-   </varlistentry>
-
-  </variablelist>
- </para>
-
- <para>
-  Normally you do not need to install any of the client files. You should
-  place the <filename>libpq.dll</filename> file in the same directory
-  as your applications executable file. Do not install
-  <filename>libpq.dll</filename> into your <filename>Windows</>,
-  <filename>System</> or <filename>System32</> directory unless
-  absolutely necessary.
-  If this file is installed using a setup program, then it should
-  be installed with version checking using the
-  <symbol>VERSIONINFO</symbol> resource included in the file, to
-  ensure that a newer version of the library is not overwritten.
- </para>
-
- <para>
-  If you are planning to do development using <application>libpq</application>
-  on this machine, you will have to add the
-  <filename>src\include</filename> and
-  <filename>src\interfaces\libpq</filename> subdirectories of the source
-  tree to the include path in your compiler's settings.
- </para>
-
- <para>
-  To use the library, you must add the
-  <filename>libpqdll.lib</filename> file to your project.  (In Visual
-  C++, just right-click on the project and choose to add it.)
- </para>
- </sect2>
  </sect1>
 </chapter>

@@ -23,7 +23,6 @@
 #error "should be included via atomics.h"
 #endif
 
-/* Should work on both MSVC and Borland. */
 #pragma intrinsic(_ReadWriteBarrier)
 #define pg_compiler_barrier_impl()	_ReadWriteBarrier()
 

@@ -405,30 +405,22 @@ endif # PORTNAME == cygwin || PORTNAME == win32
 # tarballs.
 
 ifneq (,$(SHLIB_EXPORTS))
-distprep: lib$(NAME)dll.def lib$(NAME)ddll.def blib$(NAME)dll.def
+distprep: lib$(NAME)dll.def lib$(NAME)ddll.def
 
 UC_NAME = $(shell echo $(NAME) | tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ')
 
 lib$(NAME)dll.def: $(SHLIB_EXPORTS)
-	echo '; DEF file for win32.mak release build and for Makefile.shlib (MinGW)' >$@
+	echo '; DEF file for Makefile.shlib (MinGW)' >$@
 	echo 'LIBRARY LIB$(UC_NAME).dll' >>$@
 	echo 'EXPORTS' >>$@
 	sed -e '/^#/d' -e 's/^\(.*[ 	]\)\([0-9][0-9]*\)/    \1@ \2/' $< >>$@
 
 lib$(NAME)ddll.def: $(SHLIB_EXPORTS)
-	echo '; DEF file for win32.mak debug build' >$@
+	echo '; DEF file for Makefile.shlib (MinGW)' >$@
 	echo 'LIBRARY LIB$(UC_NAME)D.dll' >>$@
 	echo 'EXPORTS' >>$@
 	sed -e '/^#/d' -e 's/^\(.*[ 	]\)\([0-9][0-9]*\)/    \1@ \2/' $< >>$@
 
-blib$(NAME)dll.def: $(SHLIB_EXPORTS)
-	echo '; DEF file for bcc32.mak (Borland C++ Builder)' >$@
-	echo 'LIBRARY BLIB$(UC_NAME)' >>$@
-	echo 'EXPORTS' >>$@
-	sed -e '/^#/d' -e 's/^\(.*[ 	]\)\([0-9][0-9]*\)/    _\1@ \2/' $< >>$@
-	echo >>$@
-	echo '; Aliases for MS compatible names' >> $@
-	sed -e '/^#/d' -e 's/^\(.*[ 	]\)\([0-9][0-9]*\)/    \1= _\1/' $< | sed 's/ *$$//' >>$@
 endif # SHLIB_EXPORTS
 
 
@@ -517,5 +509,5 @@ clean-lib:
 
 ifneq (,$(SHLIB_EXPORTS))
 maintainer-clean-lib:
-	rm -f lib$(NAME)dll.def lib$(NAME)ddll.def blib$(NAME)dll.def
+	rm -f lib$(NAME)dll.def lib$(NAME)ddll.def
 endif

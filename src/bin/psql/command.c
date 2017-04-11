@@ -8,10 +8,6 @@
 #include "postgres_fe.h"
 #include "command.h"
 
-#ifdef __BORLANDC__				/* needed for BCC */
-#undef mkdir
-#endif
-
 #include <ctype.h>
 #include <time.h>
 #include <pwd.h>
