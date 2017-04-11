@@ -215,8 +215,8 @@ transfer_relfile(pageCnvCtx *pageConverter, FileNameMap *map,
 				 const char *type_suffix)
 {
 	const char *msg;
-	char		old_file[MAXPGPATH];
-	char		new_file[MAXPGPATH];
+	char		old_file[MAXPGPATH * 3];
+	char		new_file[MAXPGPATH * 3];
 	int			fd;
 	int			segno;
 	char		extent_suffix[65];
