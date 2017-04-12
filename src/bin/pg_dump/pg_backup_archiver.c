@@ -171,7 +171,6 @@ dumpOptionsFromRestoreOptions(RestoreOptions *ropt)
 	dopt->include_everything = ropt->include_everything;
 	dopt->enable_row_security = ropt->enable_row_security;
 	dopt->sequence_data = ropt->sequence_data;
-	dopt->include_subscriptions = ropt->include_subscriptions;
 
 	return dopt;
 }

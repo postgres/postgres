@@ -342,7 +342,6 @@ main(int argc, char **argv)
 		{"enable-row-security", no_argument, &dopt.enable_row_security, 1},
 		{"exclude-table-data", required_argument, NULL, 4},
 		{"if-exists", no_argument, &dopt.if_exists, 1},
-		{"include-subscriptions", no_argument, &dopt.include_subscriptions, 1},
 		{"inserts", no_argument, &dopt.dump_inserts, 1},
 		{"lock-wait-timeout", required_argument, NULL, 2},
 		{"no-tablespaces", no_argument, &dopt.outputNoTablespaces, 1},
@@ -868,7 +867,6 @@ main(int argc, char **argv)
 	ropt->include_everything = dopt.include_everything;
 	ropt->enable_row_security = dopt.enable_row_security;
 	ropt->sequence_data = dopt.sequence_data;
-	ropt->include_subscriptions = dopt.include_subscriptions;
 	ropt->binary_upgrade = dopt.binary_upgrade;
 
 	if (compressLevel == -1)
@@ -951,7 +949,6 @@ help(const char *progname)
 			 "                               access to)\n"));
 	printf(_("  --exclude-table-data=TABLE   do NOT dump data for the named table(s)\n"));
 	printf(_("  --if-exists                  use IF EXISTS when dropping objects\n"));
-	printf(_("  --include-subscriptions      dump logical replication subscriptions\n"));
 	printf(_("  --inserts                    dump data as INSERT commands, rather than COPY\n"));
 	printf(_("  --no-security-labels         do not dump security label assignments\n"));
 	printf(_("  --no-subscription-connect    dump subscriptions so they don't connect on restore\n"));
@@ -3641,6 +3638,22 @@ dumpPublicationTable(Archive *fout, PublicationRelInfo *pubrinfo)
 	destroyPQExpBuffer(query);
 }
 
+/*
+ * Is the currently connected user a superuser?
+ */
+static bool
+is_superuser(Archive *fout)
+{
+	ArchiveHandle *AH = (ArchiveHandle *) fout;
+	const char *val;
+
+	val = PQparameterStatus(AH->connection, "is_superuser");
+
+	if (val && strcmp(val, "on") == 0)
+		return true;
+
+	return false;
+}
 
 /*
  * getSubscriptions
@@ -3649,7 +3662,6 @@ dumpPublicationTable(Archive *fout, PublicationRelInfo *pubrinfo)
 void
 getSubscriptions(Archive *fout)
 {
-	DumpOptions *dopt = fout->dopt;
 	PQExpBuffer query;
 	PGresult   *res;
 	SubscriptionInfo *subinfo;
@@ -3664,8 +3676,24 @@ getSubscriptions(Archive *fout)
 	int			i,
 				ntups;
 
-	if (!dopt->include_subscriptions || fout->remoteVersion < 100000)
+	if (fout->remoteVersion < 100000)
 		return;
+
+	if (!is_superuser(fout))
+	{
+		int n;
+
+		res = ExecuteSqlQuery(fout,
+							  "SELECT count(*) FROM pg_subscription "
+							  "WHERE subdbid = (SELECT oid FROM pg_catalog.pg_database"
+							  "                 WHERE datname = current_database())",
+							  PGRES_TUPLES_OK);
+		n = atoi(PQgetvalue(res, 0, 0));
+		if (n > 0)
+			write_msg(NULL, "WARNING: subscriptions not dumped because current user is not a superuser\n");
+		PQclear(res);
+		return;
+	}
 
 	query = createPQExpBuffer();
 
@@ -3714,6 +3742,9 @@ getSubscriptions(Archive *fout)
 		if (strlen(subinfo[i].rolname) == 0)
 			write_msg(NULL, "WARNING: owner of subscription \"%s\" appears to be invalid\n",
 					  subinfo[i].dobj.name);
+
+		/* Decide whether we want to dump it */
+		selectDumpableObject(&(subinfo[i].dobj), fout);
 	}
 	PQclear(res);
 
@@ -3735,7 +3766,7 @@ dumpSubscription(Archive *fout, SubscriptionInfo *subinfo)
 	int			npubnames = 0;
 	int			i;
 
-	if (dopt->dataOnly)
+	if (!(subinfo->dobj.dump & DUMP_COMPONENT_DEFINITION))
 		return;
 
 	delq = createPQExpBuffer();

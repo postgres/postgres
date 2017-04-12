@@ -67,7 +67,6 @@ main(int argc, char **argv)
 	char	   *inputFileSpec;
 	static int	disable_triggers = 0;
 	static int	enable_row_security = 0;
-	static int	include_subscriptions = 0;
 	static int	if_exists = 0;
 	static int	no_data_for_failed_tables = 0;
 	static int	outputNoTablespaces = 0;
@@ -112,7 +111,6 @@ main(int argc, char **argv)
 		{"disable-triggers", no_argument, &disable_triggers, 1},
 		{"enable-row-security", no_argument, &enable_row_security, 1},
 		{"if-exists", no_argument, &if_exists, 1},
-		{"include-subscriptions", no_argument, &include_subscriptions, 1},
 		{"no-data-for-failed-tables", no_argument, &no_data_for_failed_tables, 1},
 		{"no-tablespaces", no_argument, &outputNoTablespaces, 1},
 		{"role", required_argument, NULL, 2},
@@ -353,7 +351,6 @@ main(int argc, char **argv)
 
 	opts->disable_triggers = disable_triggers;
 	opts->enable_row_security = enable_row_security;
-	opts->include_subscriptions = include_subscriptions;
 	opts->noDataForFailedTables = no_data_for_failed_tables;
 	opts->noTablespace = outputNoTablespaces;
 	opts->use_setsessauth = use_setsessauth;

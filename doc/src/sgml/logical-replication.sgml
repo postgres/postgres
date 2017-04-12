@@ -167,9 +167,10 @@
   </para>
 
   <para>
-   Subscriptions are not dumped by <command>pg_dump</command> by default, but
-   this can be requested using the command-line
-   option <option>--include-subscriptions</option>.
+   Subscriptions are dumped by <command>pg_dump</command> if the current user
+   is a superuser.  Otherwise a warning is written and subscriptions are
+   skipped, because non-superusers cannot read all subscription information
+   from the <structname>pg_subscription</structname> catalog.
   </para>
 
   <para>

@@ -43,7 +43,6 @@ my %pgdump_runs = (
 			'--format=custom',
 			"--file=$tempdir/binary_upgrade.dump",
 			'-w',
-			'--include-subscriptions', # XXX Should not be necessary?
 			'--schema-only',
 			'--binary-upgrade',
 			'-d', 'postgres',    # alternative way to specify database
@@ -58,7 +57,6 @@ my %pgdump_runs = (
 			'pg_dump',
 			'--no-sync',
 			"--file=$tempdir/clean.sql",
-			'--include-subscriptions',
 			'-c',
 			'-d', 'postgres',    # alternative way to specify database
 		], },
@@ -67,7 +65,6 @@ my %pgdump_runs = (
 			'pg_dump',
 			'--no-sync',
 			"--file=$tempdir/clean_if_exists.sql",
-			'--include-subscriptions',
 			'-c',
 			'--if-exists',
 			'--encoding=UTF8',    # no-op, just tests that option is accepted
@@ -85,7 +82,6 @@ my %pgdump_runs = (
 			'pg_dump',
 			'--no-sync',
 			"--file=$tempdir/createdb.sql",
-			'--include-subscriptions',
 			'-C',
 			'-R',                 # no-op, just for testing
 			'-v',
@@ -95,7 +91,6 @@ my %pgdump_runs = (
 			'pg_dump',
 			'--no-sync',
 			"--file=$tempdir/data_only.sql",
-			'--include-subscriptions',
 			'-a',
 			'--superuser=test_superuser',
 			'--disable-triggers',
@@ -253,7 +248,6 @@ my %pgdump_runs = (
 	section_pre_data => {
 		dump_cmd => [
 			'pg_dump',            "--file=$tempdir/section_pre_data.sql",
-			'--include-subscriptions',
 			'--section=pre-data', '--no-sync', 'postgres', ], },
 	section_data => {
 		dump_cmd => [
@@ -271,7 +265,7 @@ my %pgdump_runs = (
 	with_oids => {
 		dump_cmd => [
 			'pg_dump',                       '--oids',
-			'--include-subscriptions',       '--no-sync',
+			'--no-sync',
 			"--file=$tempdir/with_oids.sql", 'postgres', ], },);
 
 ###############################################################
@@ -1405,7 +1399,7 @@ my %tests = (
 	# catch-all for ALTER ... OWNER (except LARGE OBJECTs and PUBLICATIONs)
 	'ALTER ... OWNER commands (except LARGE OBJECTs and PUBLICATIONs)' => {
 		all_runs => 0,    # catch-all
-		regexp => qr/^ALTER (?!LARGE OBJECT|PUBLICATION)(.*) OWNER TO .*;/m,
+		regexp => qr/^ALTER (?!LARGE OBJECT|PUBLICATION|SUBSCRIPTION)(.*) OWNER TO .*;/m,
 		like   => {},     # use more-specific options above
 		unlike => {
 			column_inserts           => 1,
@@ -4318,25 +4312,25 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 			clean                    => 1,
 			clean_if_exists          => 1,
 			createdb                 => 1,
-			with_oids                => 1, },
-		unlike => {
 			defaults                 => 1,
 			exclude_test_table_data  => 1,
 			exclude_dump_test_schema => 1,
 			exclude_test_table       => 1,
-			section_pre_data         => 1,
 			no_blobs                 => 1,
 			no_privs                 => 1,
 			no_owner                 => 1,
+			pg_dumpall_dbprivs       => 1,
+			schema_only              => 1,
+			section_post_data        => 1,
+			with_oids                => 1, },
+		unlike => {
+			section_pre_data         => 1,
 			only_dump_test_schema    => 1,
 			only_dump_test_table     => 1,
-			pg_dumpall_dbprivs       => 1,
 			pg_dumpall_globals       => 1,
 			pg_dumpall_globals_clean => 1,
-			schema_only              => 1, # XXX Should be like?
 			role                     => 1,
-			section_pre_data         => 1, # XXX Should be like?
-			section_post_data        => 1,
+			section_pre_data         => 1,
 			test_schema_plus_blobs   => 1, }, },
 
 	'ALTER PUBLICATION pub1 ADD TABLE test_table' => {
