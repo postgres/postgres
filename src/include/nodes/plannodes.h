@@ -68,7 +68,8 @@ typedef struct PlannedStmt
 	/* rtable indexes of non-leaf target relations for INSERT/UPDATE/DELETE */
 	List	   *nonleafResultRelations;
 
-	List	   *subplans;		/* Plan trees for SubPlan expressions */
+	List	   *subplans;		/* Plan trees for SubPlan expressions; note
+								 * that some could be NULL */
 
 	Bitmapset  *rewindPlanIDs;	/* indices of subplans that require REWIND */
 

@@ -123,7 +123,7 @@ static char *
 ExecSerializePlan(Plan *plan, EState *estate)
 {
 	PlannedStmt *pstmt;
-	ListCell   *tlist;
+	ListCell   *lc;
 
 	/* We can't scribble on the original plan, so make a copy. */
 	plan = copyObject(plan);
@@ -137,9 +137,9 @@ ExecSerializePlan(Plan *plan, EState *estate)
 	 * accordingly.  This is sort of a hack; there might be better ways to do
 	 * this...
 	 */
-	foreach(tlist, plan->targetlist)
+	foreach(lc, plan->targetlist)
 	{
-		TargetEntry *tle = (TargetEntry *) lfirst(tlist);
+		TargetEntry *tle = lfirst_node(TargetEntry, lc);
 
 		tle->resjunk = false;
 	}
@@ -162,7 +162,24 @@ ExecSerializePlan(Plan *plan, EState *estate)
 	pstmt->rtable = estate->es_range_table;
 	pstmt->resultRelations = NIL;
 	pstmt->nonleafResultRelations = NIL;
-	pstmt->subplans = estate->es_plannedstmt->subplans;
+
+	/*
+	 * Transfer only parallel-safe subplans, leaving a NULL "hole" in the list
+	 * for unsafe ones (so that the list indexes of the safe ones are
+	 * preserved).  This positively ensures that the worker won't try to run,
+	 * or even do ExecInitNode on, an unsafe subplan.  That's important to
+	 * protect, eg, non-parallel-aware FDWs from getting into trouble.
+	 */
+	pstmt->subplans = NIL;
+	foreach(lc, estate->es_plannedstmt->subplans)
+	{
+		Plan	   *subplan = (Plan *) lfirst(lc);
+
+		if (subplan && !subplan->parallel_safe)
+			subplan = NULL;
+		pstmt->subplans = lappend(pstmt->subplans, subplan);
+	}
+
 	pstmt->rewindPlanIDs = NULL;
 	pstmt->rowMarks = NIL;
 	pstmt->relationOids = NIL;
