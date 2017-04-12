@@ -132,8 +132,11 @@ open_walfile(StreamCtl *stream, XLogRecPtr startpoint)
 			}
 
 			/* fsync file in case of a previous crash */
-			if (!stream->walmethod->sync(f))
+			if (stream->walmethod->sync(f) != 0)
 			{
+				fprintf(stderr,
+						_("%s: could not sync existing transaction log file \"%s\": %s\n"),
+						progname, fn, stream->walmethod->getlasterror());
 				stream->walmethod->close(f, CLOSE_UNLINK);
 				return false;
 			}

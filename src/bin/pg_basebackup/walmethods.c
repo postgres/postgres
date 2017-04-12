@@ -61,7 +61,7 @@ typedef struct DirectoryMethodFile
 #endif
 }	DirectoryMethodFile;
 
-static char *
+static const char *
 dir_getlasterror(void)
 {
 	/* Directory method always sets errno, so just use strerror */
@@ -406,7 +406,7 @@ static TarMethodData *tar_data = NULL;
 #define tar_clear_error() tar_data->lasterror[0] = '\0'
 #define tar_set_error(msg) strlcpy(tar_data->lasterror, msg, sizeof(tar_data->lasterror))
 
-static char *
+static const char *
 tar_getlasterror(void)
 {
 	/*
