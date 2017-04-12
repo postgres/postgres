@@ -132,9 +132,9 @@ select * from pgstatginindex('test_ginidx');
 
 create index test_hashidx on test using hash (b);
 select * from pgstathashindex('test_hashidx');
- version | bucket_pages | overflow_pages | bitmap_pages | zero_pages | live_items | dead_items | free_percent 
----------+--------------+----------------+--------------+------------+------------+------------+--------------
-       3 |            4 |              0 |            1 |          0 |          0 |          0 |          100
+ version | bucket_pages | overflow_pages | bitmap_pages | unused_pages | live_items | dead_items | free_percent 
+---------+--------------+----------------+--------------+--------------+------------+------------+--------------
+       3 |            4 |              0 |            1 |            0 |          0 |          0 |          100
 (1 row)
 
 -- these should error with the wrong type

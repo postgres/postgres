@@ -125,7 +125,7 @@ CREATE OR REPLACE FUNCTION pgstathashindex(IN relname regclass,
 	OUT bucket_pages BIGINT,
 	OUT overflow_pages BIGINT,
 	OUT bitmap_pages BIGINT,
-	OUT zero_pages BIGINT,
+	OUT unused_pages BIGINT,
 	OUT live_items BIGINT,
 	OUT dead_items BIGINT,
 	OUT free_percent FLOAT8)

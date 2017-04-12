@@ -372,7 +372,7 @@ version        | 2
 bucket_pages   | 33081
 overflow_pages | 0
 bitmap_pages   | 1
-zero_pages     | 32455
+unused_pages   | 32455
 live_items     | 10204006
 dead_items     | 0
 free_percent   | 61.8005949100872
@@ -418,9 +418,9 @@ free_percent   | 61.8005949100872
        </row>
 
        <row>
-        <entry><structfield>zero_pages</structfield></entry>
+        <entry><structfield>unused_pages</structfield></entry>
         <entry><type>bigint</type></entry>
-        <entry>Number of new or zero pages</entry>
+        <entry>Number of unused pages</entry>
        </row>
 
        <row>
