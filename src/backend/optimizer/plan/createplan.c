@@ -88,7 +88,7 @@ static Plan *create_unique_plan(PlannerInfo *root, UniquePath *best_path,
 				   int flags);
 static Gather *create_gather_plan(PlannerInfo *root, GatherPath *best_path);
 static Plan *create_projection_plan(PlannerInfo *root, ProjectionPath *best_path);
-static Plan *inject_projection_plan(Plan *subplan, List *tlist);
+static Plan *inject_projection_plan(Plan *subplan, List *tlist, bool parallel_safe);
 static Sort *create_sort_plan(PlannerInfo *root, SortPath *best_path, int flags);
 static Group *create_group_plan(PlannerInfo *root, GroupPath *best_path);
 static Unique *create_upper_unique_plan(PlannerInfo *root, UpperUniquePath *best_path,
@@ -920,6 +920,9 @@ create_gating_plan(PlannerInfo *root, Path *path, Plan *plan,
 	 */
 	copy_plan_costsize(gplan, plan);
 
+	/* Gating quals could be unsafe, so better use the Path's safety flag */
+	gplan->parallel_safe = path->parallel_safe;
+
 	return gplan;
 }
 
@@ -1313,7 +1316,8 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path, int flags)
 		 */
 		if (!is_projection_capable_plan(subplan) &&
 			!tlist_same_exprs(newtlist, subplan->targetlist))
-			subplan = inject_projection_plan(subplan, newtlist);
+			subplan = inject_projection_plan(subplan, newtlist,
+											 best_path->path.parallel_safe);
 		else
 			subplan->targetlist = newtlist;
 	}
@@ -1572,7 +1576,8 @@ create_projection_plan(PlannerInfo *root, ProjectionPath *best_path)
 		plan->total_cost = best_path->path.total_cost;
 		plan->plan_rows = best_path->path.rows;
 		plan->plan_width = best_path->path.pathtarget->width;
-		/* ... but be careful not to munge subplan's parallel-aware flag */
+		plan->parallel_safe = best_path->path.parallel_safe;
+		/* ... but don't change subplan's parallel_aware flag */
 	}
 	else
 	{
@@ -1592,9 +1597,12 @@ create_projection_plan(PlannerInfo *root, ProjectionPath *best_path)
  * This is used in a few places where we decide on-the-fly that we need a
  * projection step as part of the tree generated for some Path node.
  * We should try to get rid of this in favor of doing it more honestly.
+ *
+ * One reason it's ugly is we have to be told the right parallel_safe marking
+ * to apply (since the tlist might be unsafe even if the child plan is safe).
  */
 static Plan *
-inject_projection_plan(Plan *subplan, List *tlist)
+inject_projection_plan(Plan *subplan, List *tlist, bool parallel_safe)
 {
 	Plan	   *plan;
 
@@ -1608,6 +1616,7 @@ inject_projection_plan(Plan *subplan, List *tlist)
 	 * consistent not more so.  Hence, just copy the subplan's cost.
 	 */
 	copy_plan_costsize(plan, subplan);
+	plan->parallel_safe = parallel_safe;
 
 	return plan;
 }
@@ -1984,6 +1993,7 @@ create_minmaxagg_plan(PlannerInfo *root, MinMaxAggPath *best_path)
 		plan->plan_rows = 1;
 		plan->plan_width = mminfo->path->pathtarget->width;
 		plan->parallel_aware = false;
+		plan->parallel_safe = mminfo->path->parallel_safe;
 
 		/* Convert the plan into an InitPlan in the outer query. */
 		SS_make_initplan_from_plan(root, subroot, plan, mminfo->param);
@@ -2829,6 +2839,7 @@ create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 			clamp_row_est(apath->bitmapselectivity * apath->path.parent->tuples);
 		plan->plan_width = 0;	/* meaningless */
 		plan->parallel_aware = false;
+		plan->parallel_safe = apath->path.parallel_safe;
 		*qual = subquals;
 		*indexqual = subindexquals;
 		*indexECs = subindexECs;
@@ -2892,6 +2903,7 @@ create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 				clamp_row_est(opath->bitmapselectivity * opath->path.parent->tuples);
 			plan->plan_width = 0;		/* meaningless */
 			plan->parallel_aware = false;
+			plan->parallel_safe = opath->path.parallel_safe;
 		}
 
 		/*
@@ -2936,6 +2948,7 @@ create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 			clamp_row_est(ipath->indexselectivity * ipath->path.parent->tuples);
 		plan->plan_width = 0;	/* meaningless */
 		plan->parallel_aware = false;
+		plan->parallel_safe = ipath->path.parallel_safe;
 		*qual = get_actual_clauses(ipath->indexclauses);
 		*indexqual = get_actual_clauses(ipath->indexquals);
 		foreach(l, ipath->indexinfo->indpred)
@@ -4834,7 +4847,7 @@ order_qual_clauses(PlannerInfo *root, List *clauses)
 /*
  * Copy cost and size info from a Path node to the Plan node created from it.
  * The executor usually won't use this info, but it's needed by EXPLAIN.
- * Also copy the parallel-aware flag, which the executor *will* use.
+ * Also copy the parallel-related flags, which the executor *will* use.
  */
 static void
 copy_generic_path_info(Plan *dest, Path *src)
@@ -4844,6 +4857,7 @@ copy_generic_path_info(Plan *dest, Path *src)
 	dest->plan_rows = src->rows;
 	dest->plan_width = src->pathtarget->width;
 	dest->parallel_aware = src->parallel_aware;
+	dest->parallel_safe = src->parallel_safe;
 }
 
 /*
@@ -4859,6 +4873,8 @@ copy_plan_costsize(Plan *dest, Plan *src)
 	dest->plan_width = src->plan_width;
 	/* Assume the inserted node is not parallel-aware. */
 	dest->parallel_aware = false;
+	/* Assume the inserted node is parallel-safe, if child plan is. */
+	dest->parallel_safe = src->parallel_safe;
 }
 
 /*
@@ -4888,6 +4904,7 @@ label_sort_with_costsize(PlannerInfo *root, Sort *plan, double limit_tuples)
 	plan->plan.plan_rows = lefttree->plan_rows;
 	plan->plan.plan_width = lefttree->plan_width;
 	plan->plan.parallel_aware = false;
+	plan->plan.parallel_safe = lefttree->parallel_safe;
 }
 
 /*
@@ -5696,7 +5713,8 @@ prepare_sort_from_pathkeys(Plan *lefttree, List *pathkeys,
 			{
 				/* copy needed so we don't modify input's tlist below */
 				tlist = copyObject(tlist);
-				lefttree = inject_projection_plan(lefttree, tlist);
+				lefttree = inject_projection_plan(lefttree, tlist,
+												  lefttree->parallel_safe);
 			}
 
 			/* Don't bother testing is_projection_capable_plan again */
@@ -5975,6 +5993,7 @@ materialize_finished_plan(Plan *subplan)
 	matplan->plan_rows = subplan->plan_rows;
 	matplan->plan_width = subplan->plan_width;
 	matplan->parallel_aware = false;
+	matplan->parallel_safe = subplan->parallel_safe;
 
 	return matplan;
 }

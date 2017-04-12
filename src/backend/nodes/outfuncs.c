@@ -275,6 +275,7 @@ _outPlanInfo(StringInfo str, const Plan *node)
 	WRITE_FLOAT_FIELD(plan_rows, "%.0f");
 	WRITE_INT_FIELD(plan_width);
 	WRITE_BOOL_FIELD(parallel_aware);
+	WRITE_BOOL_FIELD(parallel_safe);
 	WRITE_INT_FIELD(plan_node_id);
 	WRITE_NODE_FIELD(targetlist);
 	WRITE_NODE_FIELD(qual);

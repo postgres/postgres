@@ -58,7 +58,7 @@ static Node *build_subplan(PlannerInfo *root, Plan *plan, PlannerInfo *subroot,
 			  List *plan_params,
 			  SubLinkType subLinkType, int subLinkId,
 			  Node *testexpr, bool adjust_testexpr,
-			  bool unknownEqFalse, bool parallel_safe);
+			  bool unknownEqFalse);
 static List *generate_subquery_params(PlannerInfo *root, List *tlist,
 						 List **paramIds);
 static List *generate_subquery_vars(PlannerInfo *root, List *tlist,
@@ -550,8 +550,7 @@ make_subplan(PlannerInfo *root, Query *orig_subquery,
 	/* And convert to SubPlan or InitPlan format. */
 	result = build_subplan(root, plan, subroot, plan_params,
 						   subLinkType, subLinkId,
-						   testexpr, true, isTopQual,
-						   best_path->parallel_safe);
+						   testexpr, true, isTopQual);
 
 	/*
 	 * If it's a correlated EXISTS with an unimportant targetlist, we might be
@@ -605,8 +604,7 @@ make_subplan(PlannerInfo *root, Query *orig_subquery,
 												  plan_params,
 												  ANY_SUBLINK, 0,
 												  newtestexpr,
-												  false, true,
-												  best_path->parallel_safe));
+												  false, true));
 				/* Check we got what we expected */
 				Assert(hashplan->parParam == NIL);
 				Assert(hashplan->useHashTable);
@@ -635,7 +633,7 @@ build_subplan(PlannerInfo *root, Plan *plan, PlannerInfo *subroot,
 			  List *plan_params,
 			  SubLinkType subLinkType, int subLinkId,
 			  Node *testexpr, bool adjust_testexpr,
-			  bool unknownEqFalse, bool parallel_safe)
+			  bool unknownEqFalse)
 {
 	Node	   *result;
 	SubPlan    *splan;
@@ -654,7 +652,7 @@ build_subplan(PlannerInfo *root, Plan *plan, PlannerInfo *subroot,
 					   &splan->firstColCollation);
 	splan->useHashTable = false;
 	splan->unknownEqFalse = unknownEqFalse;
-	splan->parallel_safe = parallel_safe;
+	splan->parallel_safe = plan->parallel_safe;
 	splan->setParam = NIL;
 	splan->parParam = NIL;
 	splan->args = NIL;
@@ -1218,7 +1216,8 @@ SS_process_ctes(PlannerInfo *root)
 
 		/*
 		 * CTE scans are not considered for parallelism (cf
-		 * set_rel_consider_parallel).
+		 * set_rel_consider_parallel), and even if they were, initPlans aren't
+		 * parallel-safe.
 		 */
 		splan->parallel_safe = false;
 		splan->setParam = NIL;

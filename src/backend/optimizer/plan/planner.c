@@ -351,11 +351,9 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 
 	/*
 	 * Optionally add a Gather node for testing purposes, provided this is
-	 * actually a safe thing to do.  (Note: we assume adding a Material node
-	 * above did not change the parallel safety of the plan, so we can still
-	 * rely on best_path->parallel_safe.)
+	 * actually a safe thing to do.
 	 */
-	if (force_parallel_mode != FORCE_PARALLEL_OFF && best_path->parallel_safe)
+	if (force_parallel_mode != FORCE_PARALLEL_OFF && top_plan->parallel_safe)
 	{
 		Gather	   *gather = makeNode(Gather);
 
@@ -378,6 +376,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 		gather->plan.plan_rows = top_plan->plan_rows;
 		gather->plan.plan_width = top_plan->plan_width;
 		gather->plan.parallel_aware = false;
+		gather->plan.parallel_safe = false;
 
 		/* use parallel mode for parallel plans. */
 		root->glob->parallelModeNeeded = true;
