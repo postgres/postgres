@@ -34,7 +34,7 @@
 # To generate major release notes, intended usage is
 #   git_changelog --master-only --brief --oldest-first --since='start-date'
 # To find the appropriate start date, use:
-#   git show $(git merge-base REL9_5_STABLE master)
+#   git show --summary $(git merge-base REL9_5_STABLE master)
 # where the branch to mention is the previously forked-off branch.  This
 # shows the last commit before that branch was made.
 #
