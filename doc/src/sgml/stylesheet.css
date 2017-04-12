@@ -25,6 +25,11 @@ h2 {
 	font-size: 1.2em;
 	margin: 1.2em 0em 1.2em 0em;
 	font-weight: bold;
+	color: #666;
+}
+
+.titlepage h2.title,
+.refnamediv h2 {
 	color: #EC5800;
 }
 
@@ -69,6 +74,19 @@ div.example {
 	border-left-width: 2px;
 	border-color: black;
 	margin: 0.5ex;
+}
+
+/* Put these here instead of inside the HTML (see unsetting of
+   admon.style in XSL) so that the web site stylesheet can set its own
+   style. */
+
+.tip,
+.note,
+.important,
+.caution,
+.warning {
+	margin-left: 0.5in;
+	margin-right: 0.5in;
 }
 
 /* miscellaneous */
