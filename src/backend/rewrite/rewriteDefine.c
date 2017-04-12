@@ -422,6 +422,12 @@ DefineQueryRewrite(char *rulename,
 			HeapScanDesc scanDesc;
 			Snapshot	snapshot;
 
+			if (event_relation->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("could not convert partitioned table \"%s\" to a view",
+								RelationGetRelationName(event_relation))));
+
 			snapshot = RegisterSnapshot(GetLatestSnapshot());
 			scanDesc = heap_beginscan(event_relation, snapshot, 0, NULL);
 			if (heap_getnext(scanDesc, ForwardScanDirection) != NULL)

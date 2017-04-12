@@ -898,6 +898,11 @@ select reltoastrelid, relkind, relfrozenxid
 
 drop view fooview;
 
+-- trying to convert a partitioned table to view is not allowed
+create table fooview (x int, y text) partition by list (x);
+create rule "_RETURN" as on select to fooview do instead
+  select 1 as x, 'aaa'::text as y;
+
 --
 -- check for planner problems with complex inherited UPDATES
 --

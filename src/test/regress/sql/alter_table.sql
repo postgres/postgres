@@ -2228,3 +2228,10 @@ alter table p attach partition p1 for values from (1, 2) to (1, 10);
 -- cleanup
 drop table p;
 drop table p1;
+
+-- validate constraint on partitioned tables should only scan leaf partitions
+create table parted_validate_test (a int) partition by list (a);
+create table parted_validate_test_1 partition of parted_validate_test for values in (0, 1);
+alter table parted_validate_test add constraint parted_validate_test_chka check (a > 0) not valid;
+alter table parted_validate_test validate constraint parted_validate_test_chka;
+drop table parted_validate_test;
