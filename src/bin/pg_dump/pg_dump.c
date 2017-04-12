@@ -2589,7 +2589,7 @@ dumpDatabase(Archive *fout)
 		appendPQExpBufferStr(creaQry, "\n-- For binary upgrade, set datfrozenxid and datminmxid.\n");
 		appendPQExpBuffer(creaQry, "UPDATE pg_catalog.pg_database\n"
 						  "SET datfrozenxid = '%u', datminmxid = '%u'\n"
-						  "WHERE	datname = ",
+						  "WHERE datname = ",
 						  frozenxid, minmxid);
 		appendStringLiteralAH(creaQry, datname, fout);
 		appendPQExpBufferStr(creaQry, ";\n");
@@ -6281,7 +6281,7 @@ getPartitions(Archive *fout, int *numPartitions)
 
 	appendPQExpBufferStr(query,
 						 "SELECT inhrelid as partrelid, inhparent AS partparent,"
-						 "		 pg_get_expr(relpartbound, inhrelid) AS partbound"
+						 "       pg_get_expr(relpartbound, inhrelid) AS partbound"
 						 " FROM pg_class c, pg_inherits"
 						 " WHERE c.oid = inhrelid AND c.relispartition");
 

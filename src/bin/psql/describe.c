@@ -614,7 +614,7 @@ describeTypes(const char *pattern, bool verbose, bool showSystem)
 		appendPQExpBufferStr(&buf,
 							 "  pg_catalog.array_to_string(\n"
 							 "      ARRAY(\n"
-							 "		     SELECT e.enumlabel\n"
+							 "          SELECT e.enumlabel\n"
 							 "          FROM pg_catalog.pg_enum e\n"
 							 "          WHERE e.enumtypid = t.oid\n");
 
@@ -4221,8 +4221,8 @@ listTSDictionaries(const char *pattern, bool verbose)
 		appendPQExpBuffer(&buf,
 						  "  ( SELECT COALESCE(nt.nspname, '(null)')::pg_catalog.text || '.' || t.tmplname FROM \n"
 						  "    pg_catalog.pg_ts_template t \n"
-						  "			 LEFT JOIN pg_catalog.pg_namespace nt ON nt.oid = t.tmplnamespace \n"
-						  "			 WHERE d.dicttemplate = t.oid ) AS  \"%s\", \n"
+						  "    LEFT JOIN pg_catalog.pg_namespace nt ON nt.oid = t.tmplnamespace \n"
+						  "    WHERE d.dicttemplate = t.oid ) AS  \"%s\", \n"
 						  "  d.dictinitoption as \"%s\", \n",
 						  gettext_noop("Template"),
 						  gettext_noop("Init options"));
