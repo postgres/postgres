@@ -30,6 +30,7 @@ ALTER PUBLICATION <replaceable class="PARAMETER">name</replaceable> WITH ( <repl
     | PUBLISH DELETE | NOPUBLISH DELETE
 
 ALTER PUBLICATION <replaceable class="PARAMETER">name</replaceable> OWNER TO { <replaceable>new_owner</replaceable> | CURRENT_USER | SESSION_USER }
+ALTER PUBLICATION <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable>new_name</replaceable>
 ALTER PUBLICATION <replaceable class="PARAMETER">name</replaceable> ADD TABLE <replaceable class="PARAMETER">table_name</replaceable> [, ...]
 ALTER PUBLICATION <replaceable class="PARAMETER">name</replaceable> SET TABLE <replaceable class="PARAMETER">table_name</replaceable> [, ...]
 ALTER PUBLICATION <replaceable class="PARAMETER">name</replaceable> DROP TABLE <replaceable class="PARAMETER">table_name</replaceable> [, ...]
@@ -74,6 +75,24 @@ ALTER PUBLICATION <replaceable class="PARAMETER">name</replaceable> DROP TABLE <
     <listitem>
      <para>
       The name of an existing publication whose definition is to be altered.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">new_owner</replaceable></term>
+    <listitem>
+     <para>
+      The user name of the new owner of the publication.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">new_name</replaceable></term>
+    <listitem>
+     <para>
+      The new name for the publication.
      </para>
     </listitem>
    </varlistentry>
