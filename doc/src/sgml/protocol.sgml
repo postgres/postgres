@@ -1470,7 +1470,7 @@ the password is in.
 </step>
 </procedure>
 </sect2>
-
+</sect1>
 
 <sect1 id="protocol-replication">
 <title>Streaming Replication Protocol</title>
