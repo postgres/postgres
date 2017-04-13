@@ -324,6 +324,14 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       </entry>
      </row>
 
+     <row>
+      <entry><structname>pg_stat_progress_vacuum</><indexterm><primary>pg_stat_progress_vacuum</primary></indexterm></entry>
+      <entry>One row for each backend (including autovacuum worker processes) running
+       <command>VACUUM</>, showing current progress.
+       See <xref linkend='vacuum-progress-reporting'>.
+      </entry>
+     </row>
+
     </tbody>
    </tgroup>
   </table>
@@ -515,12 +523,6 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       yet included in <structname>pg_stat_user_functions</>).</entry>
      </row>
 
-     <row>
-      <entry><structname>pg_stat_progress_vacuum</><indexterm><primary>pg_stat_progress_vacuum</primary></indexterm></entry>
-      <entry>One row for each backend (including autovacuum worker processes) running
-      <command>VACUUM</>, showing current progress.
-      See <xref linkend='vacuum-progress-reporting'>.</entry>
-     </row>
     </tbody>
    </tgroup>
   </table>
