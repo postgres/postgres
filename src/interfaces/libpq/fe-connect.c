@@ -2483,6 +2483,7 @@ keep_going:						/* We will come back to here until there is
 				int			msgLength;
 				int			avail;
 				AuthRequest areq;
+				int			res;
 
 				/*
 				 * Scan the message from current point (note that if we find
@@ -2672,116 +2673,50 @@ keep_going:						/* We will come back to here until there is
 					/* We'll come back when there are more data */
 					return PGRES_POLLING_READING;
 				}
-
-				/* Get the password salt if there is one. */
-				if (areq == AUTH_REQ_MD5)
-				{
-					if (pqGetnchar(conn->md5Salt,
-								   sizeof(conn->md5Salt), conn))
-					{
-						/* We'll come back when there are more data */
-						return PGRES_POLLING_READING;
-					}
-				}
-#if defined(ENABLE_GSS) || defined(ENABLE_SSPI)
+				msgLength -= 4;
 
 				/*
-				 * Continue GSSAPI/SSPI authentication
+				 * Ensure the password salt is in the input buffer, if it's an
+				 * MD5 request.  All the other authentication methods that
+				 * contain extra data in the authentication request are only
+				 * supported in protocol version 3, in which case we already
+				 * read the whole message above.
 				 */
-				if (areq == AUTH_REQ_GSS_CONT)
+				if (areq == AUTH_REQ_MD5 && PG_PROTOCOL_MAJOR(conn->pversion) < 3)
 				{
-					int			llen = msgLength - 4;
+					msgLength += 4;
 
-					/*
-					 * We can be called repeatedly for the same buffer. Avoid
-					 * re-allocating the buffer in this case - just re-use the
-					 * old buffer.
-					 */
-					if (llen != conn->ginbuf.length)
+					avail = conn->inEnd - conn->inCursor;
+					if (avail < 4)
 					{
-						if (conn->ginbuf.value)
-							free(conn->ginbuf.value);
-
-						conn->ginbuf.length = llen;
-						conn->ginbuf.value = malloc(llen);
-						if (!conn->ginbuf.value)
-						{
-							printfPQExpBuffer(&conn->errorMessage,
-											  libpq_gettext("out of memory allocating GSSAPI buffer (%d)"),
-											  llen);
+						/*
+						 * Before returning, try to enlarge the input buffer
+						 * if needed to hold the whole message; see notes in
+						 * pqParseInput3.
+						 */
+						if (pqCheckInBufferSpace(conn->inCursor + (size_t) 4,
+												 conn))
 							goto error_return;
-						}
-					}
-
-					if (pqGetnchar(conn->ginbuf.value, llen, conn))
-					{
-						/* We'll come back when there is more data. */
+						/* We'll come back when there is more data */
 						return PGRES_POLLING_READING;
 					}
 				}
-#endif
-				/* Get additional payload for SASL, if any */
-				if ((areq == AUTH_REQ_SASL ||
-					 areq == AUTH_REQ_SASL_CONT) &&
-					msgLength > 4)
-				{
-					int			llen = msgLength - 4;
-
-					/*
-					 * We can be called repeatedly for the same buffer. Avoid
-					 * re-allocating the buffer in this case - just re-use the
-					 * old buffer.
-					 */
-					if (llen != conn->auth_req_inlen)
-					{
-						if (conn->auth_req_inbuf)
-						{
-							free(conn->auth_req_inbuf);
-							conn->auth_req_inbuf = NULL;
-						}
-
-						conn->auth_req_inlen = llen;
-						conn->auth_req_inbuf = malloc(llen + 1);
-						if (!conn->auth_req_inbuf)
-						{
-							printfPQExpBuffer(&conn->errorMessage,
-											  libpq_gettext("out of memory allocating SASL buffer (%d)"),
-											  llen);
-							goto error_return;
-						}
-					}
-
-					if (pqGetnchar(conn->auth_req_inbuf, llen, conn))
-					{
-						/* We'll come back when there is more data. */
-						return PGRES_POLLING_READING;
-					}
-
-					/*
-					 * For safety and convenience, always ensure the in-buffer
-					 * is NULL-terminated.
-					 */
-					conn->auth_req_inbuf[llen] = '\0';
-				}
 
 				/*
-				 * OK, we successfully read the message; mark data consumed
-				 */
-				conn->inStart = conn->inCursor;
-
-				/* Respond to the request if necessary. */
-
-				/*
+				 * Process the rest of the authentication request message, and
+				 * respond to it if necessary.
+				 *
 				 * Note that conn->pghost must be non-NULL if we are going to
 				 * avoid the Kerberos code doing a hostname look-up.
 				 */
-
-				if (pg_fe_sendauth(areq, conn) != STATUS_OK)
-				{
-					conn->errorMessage.len = strlen(conn->errorMessage.data);
-					goto error_return;
-				}
+				res = pg_fe_sendauth(areq, msgLength, conn);
 				conn->errorMessage.len = strlen(conn->errorMessage.data);
+
+				/* OK, we have processed the message; mark data consumed */
+				conn->inStart = conn->inCursor;
+
+				if (res != STATUS_OK)
+					goto error_return;
 
 				/*
 				 * Just make sure that any data sent by pg_fe_sendauth is
@@ -3522,17 +3457,9 @@ closePGconn(PGconn *conn)
 			gss_delete_sec_context(&min_s, &conn->gctx, GSS_C_NO_BUFFER);
 		if (conn->gtarg_nam)
 			gss_release_name(&min_s, &conn->gtarg_nam);
-		if (conn->ginbuf.length)
-			gss_release_buffer(&min_s, &conn->ginbuf);
-		if (conn->goutbuf.length)
-			gss_release_buffer(&min_s, &conn->goutbuf);
 	}
 #endif
 #ifdef ENABLE_SSPI
-	if (conn->ginbuf.length)
-		free(conn->ginbuf.value);
-	conn->ginbuf.length = 0;
-	conn->ginbuf.value = NULL;
 	if (conn->sspitarget)
 		free(conn->sspitarget);
 	conn->sspitarget = NULL;

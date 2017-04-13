@@ -419,7 +419,6 @@ struct pg_conn
 	/* Miscellaneous stuff */
 	int			be_pid;			/* PID of backend --- needed for cancels */
 	int			be_key;			/* key of backend --- needed for cancels */
-	char		md5Salt[4];		/* password salt received from backend */
 	pgParameterStatus *pstatus; /* ParameterStatus data */
 	int			client_encoding;	/* encoding id */
 	bool		std_strings;	/* standard_conforming_strings */
@@ -452,10 +451,6 @@ struct pg_conn
 	PGresult   *result;			/* result being constructed */
 	PGresult   *next_result;	/* next result (used in single-row mode) */
 
-	/* Buffer to hold incoming authentication request data */
-	char	   *auth_req_inbuf;
-	int			auth_req_inlen;
-
 	/* Assorted state for SASL, SSL, GSS, etc */
 	void	   *sasl_state;
 
@@ -479,14 +474,10 @@ struct pg_conn
 #ifdef ENABLE_GSS
 	gss_ctx_id_t gctx;			/* GSS context */
 	gss_name_t	gtarg_nam;		/* GSS target name */
-	gss_buffer_desc ginbuf;		/* GSS input token */
-	gss_buffer_desc goutbuf;	/* GSS output token */
 #endif
 
 #ifdef ENABLE_SSPI
-#ifndef ENABLE_GSS
-	gss_buffer_desc ginbuf;		/* GSS input token */
-#else
+#ifdef ENABLE_GSS
 	char	   *gsslib;			/* What GSS library to use ("gssapi" or
 								 * "sspi") */
 #endif

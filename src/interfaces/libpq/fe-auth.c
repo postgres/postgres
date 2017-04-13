@@ -100,11 +100,39 @@ pg_GSS_error(const char *mprefix, PGconn *conn,
  * Continue GSS authentication with next token as needed.
  */
 static int
-pg_GSS_continue(PGconn *conn)
+pg_GSS_continue(PGconn *conn, int payloadlen)
 {
 	OM_uint32	maj_stat,
 				min_stat,
 				lmin_s;
+	gss_buffer_desc ginbuf;
+	gss_buffer_desc goutbuf;
+
+	/*
+	 * On first call, there's no input token. On subsequent calls, read the
+	 * input token into a GSS buffer.
+	 */
+	if (conn->gctx != GSS_C_NO_CONTEXT)
+	{
+		ginbuf.length = payloadlen;
+		ginbuf.value = malloc(payloadlen);
+		if (!ginbuf.value)
+		{
+			printfPQExpBuffer(&conn->errorMessage,
+			  libpq_gettext("out of memory allocating GSSAPI buffer (%d)\n"),
+							  payloadlen);
+			return STATUS_ERROR;
+		}
+		if (pqGetnchar(ginbuf.value, payloadlen, conn))
+		{
+			/*
+			 * Shouldn't happen, because the caller should've ensured that the
+			 * whole message is already in the input buffer.
+			 */
+			free(ginbuf.value);
+			return STATUS_ERROR;
+		}
+	}
 
 	maj_stat = gss_init_sec_context(&min_stat,
 									GSS_C_NO_CREDENTIAL,
@@ -114,20 +142,16 @@ pg_GSS_continue(PGconn *conn)
 									GSS_C_MUTUAL_FLAG,
 									0,
 									GSS_C_NO_CHANNEL_BINDINGS,
-		  (conn->gctx == GSS_C_NO_CONTEXT) ? GSS_C_NO_BUFFER : &conn->ginbuf,
+				(conn->gctx == GSS_C_NO_CONTEXT) ? GSS_C_NO_BUFFER : &ginbuf,
 									NULL,
-									&conn->goutbuf,
+									&goutbuf,
 									NULL,
 									NULL);
 
 	if (conn->gctx != GSS_C_NO_CONTEXT)
-	{
-		free(conn->ginbuf.value);
-		conn->ginbuf.value = NULL;
-		conn->ginbuf.length = 0;
-	}
+		free(ginbuf.value);
 
-	if (conn->goutbuf.length != 0)
+	if (goutbuf.length != 0)
 	{
 		/*
 		 * GSS generated data to send to the server. We don't care if it's the
@@ -135,14 +159,13 @@ pg_GSS_continue(PGconn *conn)
 		 * packet.
 		 */
 		if (pqPacketSend(conn, 'p',
-						 conn->goutbuf.value, conn->goutbuf.length)
-			!= STATUS_OK)
+						 goutbuf.value, goutbuf.length) != STATUS_OK)
 		{
-			gss_release_buffer(&lmin_s, &conn->goutbuf);
+			gss_release_buffer(&lmin_s, &goutbuf);
 			return STATUS_ERROR;
 		}
 	}
-	gss_release_buffer(&lmin_s, &conn->goutbuf);
+	gss_release_buffer(&lmin_s, &goutbuf);
 
 	if (maj_stat != GSS_S_COMPLETE && maj_stat != GSS_S_CONTINUE_NEEDED)
 	{
@@ -165,7 +188,7 @@ pg_GSS_continue(PGconn *conn)
  * Send initial GSS authentication token
  */
 static int
-pg_GSS_startup(PGconn *conn)
+pg_GSS_startup(PGconn *conn, int payloadlen)
 {
 	OM_uint32	maj_stat,
 				min_stat;
@@ -221,7 +244,7 @@ pg_GSS_startup(PGconn *conn)
 	 */
 	conn->gctx = GSS_C_NO_CONTEXT;
 
-	return pg_GSS_continue(conn);
+	return pg_GSS_continue(conn, payloadlen);
 }
 #endif   /* ENABLE_GSS */
 
@@ -251,7 +274,7 @@ pg_SSPI_error(PGconn *conn, const char *mprefix, SECURITY_STATUS r)
  * Continue SSPI authentication with next token as needed.
  */
 static int
-pg_SSPI_continue(PGconn *conn)
+pg_SSPI_continue(PGconn *conn, int payloadlen)
 {
 	SECURITY_STATUS r;
 	CtxtHandle	newContext;
@@ -260,6 +283,7 @@ pg_SSPI_continue(PGconn *conn)
 	SecBufferDesc outbuf;
 	SecBuffer	OutBuffers[1];
 	SecBuffer	InBuffers[1];
+	char	   *inputbuf = NULL;
 
 	if (conn->sspictx != NULL)
 	{
@@ -267,11 +291,29 @@ pg_SSPI_continue(PGconn *conn)
 		 * On runs other than the first we have some data to send. Put this
 		 * data in a SecBuffer type structure.
 		 */
+		inputbuf = malloc(payloadlen);
+		if (!inputbuf)
+		{
+			printfPQExpBuffer(&conn->errorMessage,
+				libpq_gettext("out of memory allocating SSPI buffer (%d)\n"),
+							  payloadlen);
+			return STATUS_ERROR;
+		}
+		if (pqGetnchar(inputbuf, payloadlen, conn))
+		{
+			/*
+			 * Shouldn't happen, because the caller should've ensured that the
+			 * whole message is already in the input buffer.
+			 */
+			free(inputbuf);
+			return STATUS_ERROR;
+		}
+
 		inbuf.ulVersion = SECBUFFER_VERSION;
 		inbuf.cBuffers = 1;
 		inbuf.pBuffers = InBuffers;
-		InBuffers[0].pvBuffer = conn->ginbuf.value;
-		InBuffers[0].cbBuffer = conn->ginbuf.length;
+		InBuffers[0].pvBuffer = inputbuf;
+		InBuffers[0].cbBuffer = payloadlen;
 		InBuffers[0].BufferType = SECBUFFER_TOKEN;
 	}
 
@@ -295,6 +337,10 @@ pg_SSPI_continue(PGconn *conn)
 								  &contextAttr,
 								  NULL);
 
+	/* we don't need the input anymore */
+	if (inputbuf)
+		free(inputbuf);
+
 	if (r != SEC_E_OK && r != SEC_I_CONTINUE_NEEDED)
 	{
 		pg_SSPI_error(conn, libpq_gettext("SSPI continuation error"), r);
@@ -312,16 +358,6 @@ pg_SSPI_continue(PGconn *conn)
 			return STATUS_ERROR;
 		}
 		memcpy(conn->sspictx, &newContext, sizeof(CtxtHandle));
-	}
-	else
-	{
-		/*
-		 * On subsequent runs when we had data to send, free buffers that
-		 * contained this data.
-		 */
-		free(conn->ginbuf.value);
-		conn->ginbuf.value = NULL;
-		conn->ginbuf.length = 0;
 	}
 
 	/*
@@ -369,7 +405,7 @@ pg_SSPI_continue(PGconn *conn)
  * which supports both kerberos and NTLM, but is not compatible with Unix.
  */
 static int
-pg_SSPI_startup(PGconn *conn, int use_negotiate)
+pg_SSPI_startup(PGconn *conn, int use_negotiate, int payloadlen)
 {
 	SECURITY_STATUS r;
 	TimeStamp	expire;
@@ -429,16 +465,38 @@ pg_SSPI_startup(PGconn *conn, int use_negotiate)
 	 */
 	conn->usesspi = 1;
 
-	return pg_SSPI_continue(conn);
+	return pg_SSPI_continue(conn, payloadlen);
 }
 #endif   /* ENABLE_SSPI */
 
 /*
  * Initialize SASL authentication exchange.
  */
-static bool
-pg_SASL_init(PGconn *conn, const char *auth_mechanism)
+static int
+pg_SASL_init(PGconn *conn, int payloadlen)
 {
+	char		auth_mechanism[21];
+	char	   *initialresponse;
+	int			initialresponselen;
+	bool		done;
+	bool		success;
+	int			res;
+
+	/*
+	 * Read the authentication mechanism the server told us to use.
+	 */
+	if (payloadlen > sizeof(auth_mechanism) - 1)
+		printfPQExpBuffer(&conn->errorMessage,
+			 libpq_gettext("SASL authentication mechanism not supported\n"));
+	if (pqGetnchar(auth_mechanism, payloadlen, conn))
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+						  "fe_sendauth: invalid authentication request from server: invalid authentication mechanism\n");
+
+		return STATUS_ERROR;
+	}
+	auth_mechanism[payloadlen] = '\0';
+
 	/*
 	 * Check the authentication mechanism (only SCRAM-SHA-256 is supported at
 	 * the moment.)
@@ -465,16 +523,40 @@ pg_SASL_init(PGconn *conn, const char *auth_mechanism)
 							  libpq_gettext("out of memory\n"));
 			return STATUS_ERROR;
 		}
-
-		return STATUS_OK;
 	}
 	else
 	{
 		printfPQExpBuffer(&conn->errorMessage,
 		   libpq_gettext("SASL authentication mechanism %s not supported\n"),
-						  (char *) conn->auth_req_inbuf);
+						  auth_mechanism);
 		return STATUS_ERROR;
 	}
+
+	/* Send the initial client response */
+	pg_fe_scram_exchange(conn->sasl_state,
+						 NULL, -1,
+						 &initialresponse, &initialresponselen,
+						 &done, &success, &conn->errorMessage);
+
+	if (initialresponse)
+	{
+		res = pqPacketSend(conn, 'p', initialresponse, initialresponselen);
+		free(initialresponse);
+
+		if (res != STATUS_OK)
+			return STATUS_ERROR;
+	}
+
+	if (done && !success)
+	{
+		/* Use error message, if set already */
+		if (conn->errorMessage.len == 0)
+			printfPQExpBuffer(&conn->errorMessage,
+							  "fe_sendauth: error in SASL authentication\n");
+		return STATUS_ERROR;
+	}
+
+	return STATUS_OK;
 }
 
 /*
@@ -483,25 +565,42 @@ pg_SASL_init(PGconn *conn, const char *auth_mechanism)
  * the protocol.
  */
 static int
-pg_SASL_exchange(PGconn *conn)
+pg_SASL_continue(PGconn *conn, int payloadlen)
 {
 	char	   *output;
 	int			outputlen;
 	bool		done;
 	bool		success;
 	int			res;
+	char	   *challenge;
+
+	/* Read the SASL challenge from the AuthenticationSASLContinue message. */
+	challenge = malloc(payloadlen + 1);
+	if (!challenge)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+				libpq_gettext("out of memory allocating SASL buffer (%d)\n"),
+						  payloadlen);
+		return STATUS_ERROR;
+	}
+
+	if (pqGetnchar(challenge, payloadlen, conn))
+	{
+		free(challenge);
+		return STATUS_ERROR;
+	}
+	/* For safety and convenience, ensure the buffer is NULL-terminated. */
+	challenge[payloadlen] = '\0';
 
 	pg_fe_scram_exchange(conn->sasl_state,
-						 conn->auth_req_inbuf, conn->auth_req_inlen,
+						 challenge, payloadlen,
 						 &output, &outputlen,
 						 &done, &success, &conn->errorMessage);
+	free(challenge);			/* don't need the input anymore */
+
+	/* Send the SASL response to the server, if any. */
 	if (outputlen != 0)
 	{
-		/*
-		 * Send the SASL response to the server. We don't care if it's the
-		 * first or subsequent packet, just send the same kind of password
-		 * packet.
-		 */
 		res = pqPacketSend(conn, 'p', output, outputlen);
 		free(output);
 
@@ -582,6 +681,14 @@ pg_password_sendauth(PGconn *conn, const char *password, AuthRequest areq)
 	int			ret;
 	char	   *crypt_pwd = NULL;
 	const char *pwd_to_send;
+	char		md5Salt[4];
+
+	/* Read the salt from the AuthenticationMD5 message. */
+	if (areq == AUTH_REQ_MD5)
+	{
+		if (pqGetnchar(md5Salt, 4, conn))
+			return STATUS_ERROR;	/* shouldn't happen */
+	}
 
 	/* Encrypt the password if needed. */
 
@@ -607,8 +714,8 @@ pg_password_sendauth(PGconn *conn, const char *password, AuthRequest areq)
 					free(crypt_pwd);
 					return STATUS_ERROR;
 				}
-				if (!pg_md5_encrypt(crypt_pwd2 + strlen("md5"), conn->md5Salt,
-									sizeof(conn->md5Salt), crypt_pwd))
+				if (!pg_md5_encrypt(crypt_pwd2 + strlen("md5"), md5Salt,
+									4, crypt_pwd))
 				{
 					free(crypt_pwd);
 					return STATUS_ERROR;
@@ -635,10 +742,17 @@ pg_password_sendauth(PGconn *conn, const char *password, AuthRequest areq)
 
 /*
  * pg_fe_sendauth
- *		client demux routine for outgoing authentication information
+ *		client demux routine for processing an authentication request
+ *
+ * The server has sent us an authentication challenge (or OK). Send an
+ * appropriate response. The caller has ensured that the whole message is
+ * now in the input buffer, and has already read the type and length of
+ * it. We are responsible for reading any remaining extra data, specific
+ * to the authentication method. 'payloadlen' is the remaining length in
+ * the message.
  */
 int
-pg_fe_sendauth(AuthRequest areq, PGconn *conn)
+pg_fe_sendauth(AuthRequest areq, int payloadlen, PGconn *conn)
 {
 	switch (areq)
 	{
@@ -676,13 +790,13 @@ pg_fe_sendauth(AuthRequest areq, PGconn *conn)
 				 */
 #if defined(ENABLE_GSS) && defined(ENABLE_SSPI)
 				if (conn->gsslib && (pg_strcasecmp(conn->gsslib, "gssapi") == 0))
-					r = pg_GSS_startup(conn);
+					r = pg_GSS_startup(conn, payloadlen);
 				else
-					r = pg_SSPI_startup(conn, 0);
+					r = pg_SSPI_startup(conn, 0, payloadlen);
 #elif defined(ENABLE_GSS) && !defined(ENABLE_SSPI)
-				r = pg_GSS_startup(conn);
+				r = pg_GSS_startup(conn, payloadlen);
 #elif !defined(ENABLE_GSS) && defined(ENABLE_SSPI)
-				r = pg_SSPI_startup(conn, 0);
+				r = pg_SSPI_startup(conn, 0, payloadlen);
 #endif
 				if (r != STATUS_OK)
 				{
@@ -701,13 +815,13 @@ pg_fe_sendauth(AuthRequest areq, PGconn *conn)
 				pglock_thread();
 #if defined(ENABLE_GSS) && defined(ENABLE_SSPI)
 				if (conn->usesspi)
-					r = pg_SSPI_continue(conn);
+					r = pg_SSPI_continue(conn, payloadlen);
 				else
-					r = pg_GSS_continue(conn);
+					r = pg_GSS_continue(conn, payloadlen);
 #elif defined(ENABLE_GSS) && !defined(ENABLE_SSPI)
-				r = pg_GSS_continue(conn);
+				r = pg_GSS_continue(conn, payloadlen);
 #elif !defined(ENABLE_GSS) && defined(ENABLE_SSPI)
-				r = pg_SSPI_continue(conn);
+				r = pg_SSPI_continue(conn, payloadlen);
 #endif
 				if (r != STATUS_OK)
 				{
@@ -736,7 +850,7 @@ pg_fe_sendauth(AuthRequest areq, PGconn *conn)
 			 * negotiation instead of Kerberos.
 			 */
 			pglock_thread();
-			if (pg_SSPI_startup(conn, 1) != STATUS_OK)
+			if (pg_SSPI_startup(conn, 1, payloadlen) != STATUS_OK)
 			{
 				/* Error message already filled in. */
 				pgunlock_thread();
@@ -796,12 +910,12 @@ pg_fe_sendauth(AuthRequest areq, PGconn *conn)
 			 * The request contains the name (as assigned by IANA) of the
 			 * authentication mechanism.
 			 */
-			if (pg_SASL_init(conn, conn->auth_req_inbuf) != STATUS_OK)
+			if (pg_SASL_init(conn, payloadlen) != STATUS_OK)
 			{
 				/* pg_SASL_init already set the error message */
 				return STATUS_ERROR;
 			}
-			/* fall through */
+			break;
 
 		case AUTH_REQ_SASL_CONT:
 			if (conn->sasl_state == NULL)
@@ -810,7 +924,7 @@ pg_fe_sendauth(AuthRequest areq, PGconn *conn)
 								  "fe_sendauth: invalid authentication request from server: AUTH_REQ_SASL_CONT without AUTH_REQ_SASL\n");
 				return STATUS_ERROR;
 			}
-			if (pg_SASL_exchange(conn) != STATUS_OK)
+			if (pg_SASL_continue(conn, payloadlen) != STATUS_OK)
 			{
 				/* Use error message, if set already */
 				if (conn->errorMessage.len == 0)

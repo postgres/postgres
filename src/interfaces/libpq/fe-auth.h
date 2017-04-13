@@ -19,7 +19,7 @@
 
 
 /* Prototypes for functions in fe-auth.c */
-extern int	pg_fe_sendauth(AuthRequest areq, PGconn *conn);
+extern int	pg_fe_sendauth(AuthRequest areq, int payloadlen, PGconn *conn);
 extern char *pg_fe_getauthname(PQExpBuffer errorMessage);
 
 /* Prototypes for functions in fe-auth-scram.c */
