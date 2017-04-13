@@ -2188,15 +2188,6 @@ pg_stats| SELECT n.nspname AS schemaname,
      JOIN pg_attribute a ON (((c.oid = a.attrelid) AND (a.attnum = s.staattnum))))
      LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
   WHERE ((NOT a.attisdropped) AND has_column_privilege(c.oid, a.attnum, 'select'::text) AND ((c.relrowsecurity = false) OR (NOT row_security_active(c.oid))));
-pg_stats_ext| SELECT n.nspname AS schemaname,
-    c.relname AS tablename,
-    s.staname,
-    s.stakeys AS attnums,
-    length((s.standistinct)::bytea) AS ndistbytes,
-    length((s.stadependencies)::bytea) AS depsbytes
-   FROM ((pg_statistic_ext s
-     JOIN pg_class c ON ((c.oid = s.starelid)))
-     LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)));
 pg_tables| SELECT n.nspname AS schemaname,
     c.relname AS tablename,
     pg_get_userbyid(c.relowner) AS tableowner,

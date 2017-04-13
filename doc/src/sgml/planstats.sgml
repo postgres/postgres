@@ -520,17 +520,15 @@ EXPLAIN ANALYZE SELECT * FROM t WHERE a = 1 AND b = 1;
 
    <para>
     Similarly to per-column statistics, extended statistics are stored in
-    a system catalog called <structname>pg_statistic_ext</structname>, but
-    there is also a more convenient view <structname>pg_stats_ext</structname>.
+    a system catalog called <structname>pg_statistic_ext</structname>.
     To inspect the statistics <literal>s1</literal> defined above,
     you may do this:
 
 <programlisting>
-SELECT tablename, staname, attnums, depsbytes
-  FROM pg_stats_ext WHERE staname = 's1';
- tablename | staname | attnums | depsbytes 
------------+---------+---------+-----------
- t         | s1      | 1 2     |        40
+SELECT staname,stadependencies FROM pg_statistic_ext WHERE staname = 's1';
+ staname |              stadependencies
+---------+--------------------------------------------
+ s1      | [{1 => 2 : 1.000000}, {2 => 1 : 1.000000}]
 (1 row)
 </programlisting>
 
