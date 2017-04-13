@@ -21,10 +21,7 @@
 
 #include <ctype.h>
 
-#include "access/genam.h"
-#include "access/heapam.h"
 #include "access/htup_details.h"
-#include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_operator.h"
@@ -36,10 +33,8 @@
 #include "miscadmin.h"
 #include "parser/parse_type.h"
 #include "utils/builtins.h"
-#include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
-#include "utils/tqual.h"
 #include "utils/acl.h"
 #include "utils/regproc.h"
 #include "utils/varlena.h"
@@ -87,51 +82,11 @@ regprocin(PG_FUNCTION_ARGS)
 	/* Else it's a name, possibly schema-qualified */
 
 	/*
-	 * In bootstrap mode we assume the given name is not schema-qualified, and
-	 * just search pg_proc for a unique match.  This is needed for
-	 * initializing other system catalogs (pg_namespace may not exist yet, and
-	 * certainly there are no schemas other than pg_catalog).
+	 * We should never get here in bootstrap mode, as all references should
+	 * have been resolved by genbki.pl.
 	 */
 	if (IsBootstrapProcessingMode())
-	{
-		int			matches = 0;
-		Relation	hdesc;
-		ScanKeyData skey[1];
-		SysScanDesc sysscan;
-		HeapTuple	tuple;
-
-		ScanKeyInit(&skey[0],
-					Anum_pg_proc_proname,
-					BTEqualStrategyNumber, F_NAMEEQ,
-					CStringGetDatum(pro_name_or_oid));
-
-		hdesc = heap_open(ProcedureRelationId, AccessShareLock);
-		sysscan = systable_beginscan(hdesc, ProcedureNameArgsNspIndexId, true,
-									 NULL, 1, skey);
-
-		while (HeapTupleIsValid(tuple = systable_getnext(sysscan)))
-		{
-			result = (RegProcedure) HeapTupleGetOid(tuple);
-			if (++matches > 1)
-				break;
-		}
-
-		systable_endscan(sysscan);
-		heap_close(hdesc, AccessShareLock);
-
-		if (matches == 0)
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				 errmsg("function \"%s\" does not exist", pro_name_or_oid)));
-
-		else if (matches > 1)
-			ereport(ERROR,
-					(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
-					 errmsg("more than one function named \"%s\"",
-							pro_name_or_oid)));
-
-		PG_RETURN_OID(result);
-	}
+		elog(ERROR, "regproc values must be OIDs in bootstrap mode");
 
 	/*
 	 * Normal case: parse the name into components and see if it matches any
@@ -295,15 +250,15 @@ regprocedurein(PG_FUNCTION_ARGS)
 		PG_RETURN_OID(result);
 	}
 
+	/* The rest of this wouldn't work in bootstrap mode */
+	if (IsBootstrapProcessingMode())
+		elog(ERROR, "regprocedure values must be OIDs in bootstrap mode");
+
 	/*
 	 * Else it's a name and arguments.  Parse the name and arguments, look up
 	 * potential matches in the current namespace search list, and scan to see
 	 * which one exactly matches the given argument types.  (There will not be
 	 * more than one match.)
-	 *
-	 * XXX at present, this code will not work in bootstrap mode, hence this
-	 * datatype cannot be used for any system column that needs to receive
-	 * data during bootstrap.
 	 */
 	parseNameAndArgTypes(pro_name_or_oid, false, &names, &nargs, argtypes);
 
@@ -400,6 +355,7 @@ format_procedure_internal(Oid procedure_oid, bool force_qualify)
 		StringInfoData buf;
 
 		/* XXX no support here for bootstrap mode */
+		Assert(!IsBootstrapProcessingMode());
 
 		initStringInfo(&buf);
 
@@ -546,51 +502,9 @@ regoperin(PG_FUNCTION_ARGS)
 
 	/* Else it's a name, possibly schema-qualified */
 
-	/*
-	 * In bootstrap mode we assume the given name is not schema-qualified, and
-	 * just search pg_operator for a unique match.  This is needed for
-	 * initializing other system catalogs (pg_namespace may not exist yet, and
-	 * certainly there are no schemas other than pg_catalog).
-	 */
+	/* The rest of this wouldn't work in bootstrap mode */
 	if (IsBootstrapProcessingMode())
-	{
-		int			matches = 0;
-		Relation	hdesc;
-		ScanKeyData skey[1];
-		SysScanDesc sysscan;
-		HeapTuple	tuple;
-
-		ScanKeyInit(&skey[0],
-					Anum_pg_operator_oprname,
-					BTEqualStrategyNumber, F_NAMEEQ,
-					CStringGetDatum(opr_name_or_oid));
-
-		hdesc = heap_open(OperatorRelationId, AccessShareLock);
-		sysscan = systable_beginscan(hdesc, OperatorNameNspIndexId, true,
-									 NULL, 1, skey);
-
-		while (HeapTupleIsValid(tuple = systable_getnext(sysscan)))
-		{
-			result = HeapTupleGetOid(tuple);
-			if (++matches > 1)
-				break;
-		}
-
-		systable_endscan(sysscan);
-		heap_close(hdesc, AccessShareLock);
-
-		if (matches == 0)
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_FUNCTION),
-					 errmsg("operator does not exist: %s", opr_name_or_oid)));
-		else if (matches > 1)
-			ereport(ERROR,
-					(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
-					 errmsg("more than one operator named %s",
-							opr_name_or_oid)));
-
-		PG_RETURN_OID(result);
-	}
+		elog(ERROR, "regoper values must be OIDs in bootstrap mode");
 
 	/*
 	 * Normal case: parse the name into components and see if it matches any
@@ -759,15 +673,15 @@ regoperatorin(PG_FUNCTION_ARGS)
 		PG_RETURN_OID(result);
 	}
 
+	/* The rest of this wouldn't work in bootstrap mode */
+	if (IsBootstrapProcessingMode())
+		elog(ERROR, "regoperator values must be OIDs in bootstrap mode");
+
 	/*
 	 * Else it's a name and arguments.  Parse the name and arguments, look up
 	 * potential matches in the current namespace search list, and scan to see
 	 * which one exactly matches the given argument types.  (There will not be
 	 * more than one match.)
-	 *
-	 * XXX at present, this code will not work in bootstrap mode, hence this
-	 * datatype cannot be used for any system column that needs to receive
-	 * data during bootstrap.
 	 */
 	parseNameAndArgTypes(opr_name_or_oid, true, &names, &nargs, argtypes);
 	if (nargs == 1)
@@ -852,6 +766,7 @@ format_operator_internal(Oid operator_oid, bool force_qualify)
 		StringInfoData buf;
 
 		/* XXX no support here for bootstrap mode */
+		Assert(!IsBootstrapProcessingMode());
 
 		initStringInfo(&buf);
 
@@ -1006,42 +921,9 @@ regclassin(PG_FUNCTION_ARGS)
 
 	/* Else it's a name, possibly schema-qualified */
 
-	/*
-	 * In bootstrap mode we assume the given name is not schema-qualified, and
-	 * just search pg_class for a match.  This is needed for initializing
-	 * other system catalogs (pg_namespace may not exist yet, and certainly
-	 * there are no schemas other than pg_catalog).
-	 */
+	/* The rest of this wouldn't work in bootstrap mode */
 	if (IsBootstrapProcessingMode())
-	{
-		Relation	hdesc;
-		ScanKeyData skey[1];
-		SysScanDesc sysscan;
-		HeapTuple	tuple;
-
-		ScanKeyInit(&skey[0],
-					Anum_pg_class_relname,
-					BTEqualStrategyNumber, F_NAMEEQ,
-					CStringGetDatum(class_name_or_oid));
-
-		hdesc = heap_open(RelationRelationId, AccessShareLock);
-		sysscan = systable_beginscan(hdesc, ClassNameNspIndexId, true,
-									 NULL, 1, skey);
-
-		if (HeapTupleIsValid(tuple = systable_getnext(sysscan)))
-			result = HeapTupleGetOid(tuple);
-		else
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_TABLE),
-			   errmsg("relation \"%s\" does not exist", class_name_or_oid)));
-
-		/* We assume there can be only one match */
-
-		systable_endscan(sysscan);
-		heap_close(hdesc, AccessShareLock);
-
-		PG_RETURN_OID(result);
-	}
+		elog(ERROR, "regclass values must be OIDs in bootstrap mode");
 
 	/*
 	 * Normal case: parse the name into components and see if it matches any
@@ -1163,16 +1045,16 @@ regclasssend(PG_FUNCTION_ARGS)
 /*
  * regtypein		- converts "typename" to type OID
  *
- * We also accept a numeric OID, for symmetry with the output routine.
+ * The type name can be specified using the full type syntax recognized by
+ * the parser; for example, DOUBLE PRECISION and INTEGER[] will work and be
+ * translated to the correct type names.  (We ignore any typmod info
+ * generated by the parser, however.)
+ *
+ * We also accept a numeric OID, for symmetry with the output routine,
+ * and for possible use in bootstrap mode.
  *
  * '-' signifies unknown (OID 0).  In all other cases, the input must
  * match an existing pg_type entry.
- *
- * In bootstrap mode the name must just equal some existing name in pg_type.
- * In normal mode the type name can be specified using the full type syntax
- * recognized by the parser; for example, DOUBLE PRECISION and INTEGER[] will
- * work and be translated to the correct type names.  (We ignore any typmod
- * info generated by the parser, however.)
  */
 Datum
 regtypein(PG_FUNCTION_ARGS)
@@ -1197,42 +1079,9 @@ regtypein(PG_FUNCTION_ARGS)
 
 	/* Else it's a type name, possibly schema-qualified or decorated */
 
-	/*
-	 * In bootstrap mode we assume the given name is not schema-qualified, and
-	 * just search pg_type for a match.  This is needed for initializing other
-	 * system catalogs (pg_namespace may not exist yet, and certainly there
-	 * are no schemas other than pg_catalog).
-	 */
+	/* The rest of this wouldn't work in bootstrap mode */
 	if (IsBootstrapProcessingMode())
-	{
-		Relation	hdesc;
-		ScanKeyData skey[1];
-		SysScanDesc sysscan;
-		HeapTuple	tuple;
-
-		ScanKeyInit(&skey[0],
-					Anum_pg_type_typname,
-					BTEqualStrategyNumber, F_NAMEEQ,
-					CStringGetDatum(typ_name_or_oid));
-
-		hdesc = heap_open(TypeRelationId, AccessShareLock);
-		sysscan = systable_beginscan(hdesc, TypeNameNspIndexId, true,
-									 NULL, 1, skey);
-
-		if (HeapTupleIsValid(tuple = systable_getnext(sysscan)))
-			result = HeapTupleGetOid(tuple);
-		else
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("type \"%s\" does not exist", typ_name_or_oid)));
-
-		/* We assume there can be only one match */
-
-		systable_endscan(sysscan);
-		heap_close(hdesc, AccessShareLock);
-
-		PG_RETURN_OID(result);
-	}
+		elog(ERROR, "regtype values must be OIDs in bootstrap mode");
 
 	/*
 	 * Normal case: invoke the full parser to deal with special cases such as
@@ -1342,9 +1191,6 @@ regtypesend(PG_FUNCTION_ARGS)
  *
  * '-' signifies unknown (OID 0).  In all other cases, the input must
  * match an existing pg_ts_config entry.
- *
- * This function is not needed in bootstrap mode, so we don't worry about
- * making it work then.
  */
 Datum
 regconfigin(PG_FUNCTION_ARGS)
@@ -1366,6 +1212,10 @@ regconfigin(PG_FUNCTION_ARGS)
 										  CStringGetDatum(cfg_name_or_oid)));
 		PG_RETURN_OID(result);
 	}
+
+	/* The rest of this wouldn't work in bootstrap mode */
+	if (IsBootstrapProcessingMode())
+		elog(ERROR, "regconfig values must be OIDs in bootstrap mode");
 
 	/*
 	 * Normal case: parse the name into components and see if it matches any
@@ -1452,9 +1302,6 @@ regconfigsend(PG_FUNCTION_ARGS)
  *
  * '-' signifies unknown (OID 0).  In all other cases, the input must
  * match an existing pg_ts_dict entry.
- *
- * This function is not needed in bootstrap mode, so we don't worry about
- * making it work then.
  */
 Datum
 regdictionaryin(PG_FUNCTION_ARGS)
@@ -1476,6 +1323,10 @@ regdictionaryin(PG_FUNCTION_ARGS)
 										 CStringGetDatum(dict_name_or_oid)));
 		PG_RETURN_OID(result);
 	}
+
+	/* The rest of this wouldn't work in bootstrap mode */
+	if (IsBootstrapProcessingMode())
+		elog(ERROR, "regdictionary values must be OIDs in bootstrap mode");
 
 	/*
 	 * Normal case: parse the name into components and see if it matches any
@@ -1562,9 +1413,6 @@ regdictionarysend(PG_FUNCTION_ARGS)
  *
  * '-' signifies unknown (OID 0).  In all other cases, the input must
  * match an existing pg_authid entry.
- *
- * This function is not needed in bootstrap mode, so we don't worry about
- * making it work then.
  */
 Datum
 regrolein(PG_FUNCTION_ARGS)
@@ -1586,6 +1434,10 @@ regrolein(PG_FUNCTION_ARGS)
 										 CStringGetDatum(role_name_or_oid)));
 		PG_RETURN_OID(result);
 	}
+
+	/* The rest of this wouldn't work in bootstrap mode */
+	if (IsBootstrapProcessingMode())
+		elog(ERROR, "regrole values must be OIDs in bootstrap mode");
 
 	/* Normal case: see if the name matches any pg_authid entry. */
 	names = stringToQualifiedNameList(role_name_or_oid);
@@ -1707,6 +1559,10 @@ regnamespacein(PG_FUNCTION_ARGS)
 										  CStringGetDatum(nsp_name_or_oid)));
 		PG_RETURN_OID(result);
 	}
+
+	/* The rest of this wouldn't work in bootstrap mode */
+	if (IsBootstrapProcessingMode())
+		elog(ERROR, "regnamespace values must be OIDs in bootstrap mode");
 
 	/* Normal case: see if the name matches any pg_namespace entry. */
 	names = stringToQualifiedNameList(nsp_name_or_oid);

@@ -19,7 +19,7 @@ use warnings;
 require Exporter;
 our @ISA       = qw(Exporter);
 our @EXPORT    = ();
-our @EXPORT_OK = qw(Catalogs RenameTempFile);
+our @EXPORT_OK = qw(Catalogs SplitDataLine RenameTempFile);
 
 # Call this function with an array of names of header files to parse.
 # Returns a nested data structure describing the data in the headers.
@@ -216,6 +216,28 @@ sub Catalogs
 	return \%catalogs;
 }
 
+# Split a DATA line into fields.
+# Call this on the bki_values element of a DATA item returned by Catalogs();
+# it returns a list of field values.  We don't strip quoting from the fields.
+# Note: it should be safe to assign the result to a list of length equal to
+# the nominal number of catalog fields, because check_natts already checked
+# the number of fields.
+sub SplitDataLine
+{
+	my $bki_values = shift;
+
+	# This handling of quoted strings might look too simplistic, but it
+	# matches what bootscanner.l does: that has no provision for quote marks
+	# inside quoted strings, either.  If we don't have a quoted string, just
+	# snarf everything till next whitespace.  That will accept some things
+	# that bootscanner.l will see as erroneous tokens; but it seems wiser
+	# to do that and let bootscanner.l complain than to silently drop
+	# non-whitespace characters.
+	my @result = $bki_values =~ /"[^"]*"|\S+/g;
+
+	return @result;
+}
+
 # Rename temporary files to final names.
 # Call this function with the final file name and the .tmp extension
 # Note: recommended extension is ".tmp$$", so that parallel make steps
@@ -229,21 +251,20 @@ sub RenameTempFile
 	rename($temp_name, $final_name) || die "rename: $temp_name: $!";
 }
 
-# verify the number of fields in the passed-in bki structure
+# verify the number of fields in the passed-in DATA line
 sub check_natts
 {
 	my ($catname, $natts, $bki_val, $file, $line) = @_;
+
 	die "Could not find definition for Natts_${catname} before start of DATA() in $file\n"
 		unless defined $natts;
 
-	# we're working with a copy and need to count the fields only, so collapse
-	$bki_val =~ s/"[^"]*?"/xxx/g;
-	my @atts = split /\s+/, $bki_val;
+	my $nfields = scalar(SplitDataLine($bki_val));
 
 	die sprintf
 		"Wrong number of attributes in DATA() entry at %s:%d (expected %d but got %d)\n",
-		$file, $line, $natts, scalar @atts
-	  unless $natts == @atts;
+		$file, $line, $natts, $nfields
+	  unless $natts == $nfields;
 }
 
 1;

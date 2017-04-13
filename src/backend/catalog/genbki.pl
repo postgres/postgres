@@ -102,6 +102,7 @@ print $bki "# PostgreSQL $major_version\n";
 # vars to hold data needed for schemapg.h
 my %schemapg_entries;
 my @tables_needing_macros;
+my %regprocoids;
 our @types;
 
 # produce output, one catalog at a time
@@ -160,24 +161,57 @@ foreach my $catname (@{ $catalogs->{names} })
 		foreach my $row (@{ $catalog->{data} })
 		{
 
-			# substitute constant values we acquired above
-			$row->{bki_values} =~ s/\bPGUID\b/$BOOTSTRAP_SUPERUSERID/g;
-			$row->{bki_values} =~ s/\bPGNSP\b/$PG_CATALOG_NAMESPACE/g;
+			# Split line into tokens without interpreting their meaning.
+			my %bki_values;
+			@bki_values{@attnames} = Catalog::SplitDataLine($row->{bki_values});
+
+			# Perform required substitutions on fields
+			foreach my $att (keys %bki_values)
+			{
+				# Substitute constant values we acquired above.
+				# (It's intentional that this can apply to parts of a field).
+				$bki_values{$att} =~ s/\bPGUID\b/$BOOTSTRAP_SUPERUSERID/g;
+				$bki_values{$att} =~ s/\bPGNSP\b/$PG_CATALOG_NAMESPACE/g;
+
+				# Replace regproc columns' values with OIDs.
+				# If we don't have a unique value to substitute,
+				# just do nothing (regprocin will complain).
+				if ($bki_attr{$att}->{type} eq 'regproc')
+				{
+					my $procoid = $regprocoids{$bki_values{$att}};
+					$bki_values{$att} = $procoid
+						if defined($procoid) && $procoid ne 'MULTIPLE';
+				}
+			}
+
+			# Save pg_proc oids for use in later regproc substitutions.
+			# This relies on the order we process the files in!
+			if ($catname eq 'pg_proc')
+			{
+				if (defined($regprocoids{$bki_values{proname}}))
+				{
+					$regprocoids{$bki_values{proname}} = 'MULTIPLE';
+				}
+				else
+				{
+					$regprocoids{$bki_values{proname}} = $row->{oid};
+				}
+			}
 
 			# Save pg_type info for pg_attribute processing below
 			if ($catname eq 'pg_type')
 			{
-				my %type;
+				my %type = %bki_values;
 				$type{oid} = $row->{oid};
-				@type{@attnames} = split /\s+/, $row->{bki_values};
 				push @types, \%type;
 			}
 
 			# Write to postgres.bki
 			my $oid = $row->{oid} ? "OID = $row->{oid} " : '';
-			printf $bki "insert %s( %s)\n", $oid, $row->{bki_values};
+			printf $bki "insert %s( %s )\n", $oid,
+			  join(' ', @bki_values{@attnames});
 
-		   # Write comments to postgres.description and postgres.shdescription
+			# Write comments to postgres.description and postgres.shdescription
 			if (defined $row->{descr})
 			{
 				printf $descr "%s\t%s\t0\t%s\n", $row->{oid}, $catname,
@@ -426,7 +460,7 @@ sub bki_insert
 	my @attnames   = @_;
 	my $oid        = $row->{oid} ? "OID = $row->{oid} " : '';
 	my $bki_values = join ' ', map { $_ eq '' ? '""' : $_ } map $row->{$_}, @attnames;
-	printf $bki "insert %s( %s)\n", $oid, $bki_values;
+	printf $bki "insert %s( %s )\n", $oid, $bki_values;
 }
 
 # The field values of a Schema_pg_xxx declaration are similar, but not
