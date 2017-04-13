@@ -475,88 +475,129 @@ pg_SSPI_startup(PGconn *conn, int use_negotiate, int payloadlen)
 static int
 pg_SASL_init(PGconn *conn, int payloadlen)
 {
-	char		auth_mechanism[21];
-	char	   *initialresponse;
+	char	   *initialresponse = NULL;
 	int			initialresponselen;
 	bool		done;
 	bool		success;
-	int			res;
+	const char *selected_mechanism;
+	PQExpBufferData mechanism_buf;
+
+	initPQExpBuffer(&mechanism_buf);
+
+	if (conn->sasl_state)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+				   libpq_gettext("duplicate SASL authentication request\n"));
+		goto error;
+	}
 
 	/*
-	 * Read the authentication mechanism the server told us to use.
+	 * Parse the list of SASL authentication mechanisms in the
+	 * AuthenticationSASL message, and select the best mechanism that we
+	 * support.  (Only SCRAM-SHA-256 is supported at the moment.)
 	 */
-	if (payloadlen > sizeof(auth_mechanism) - 1)
-		printfPQExpBuffer(&conn->errorMessage,
-			 libpq_gettext("SASL authentication mechanism not supported\n"));
-	if (pqGetnchar(auth_mechanism, payloadlen, conn))
+	selected_mechanism = NULL;
+	for (;;)
 	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  "fe_sendauth: invalid authentication request from server: invalid authentication mechanism\n");
-
-		return STATUS_ERROR;
-	}
-	auth_mechanism[payloadlen] = '\0';
-
-	/*
-	 * Check the authentication mechanism (only SCRAM-SHA-256 is supported at
-	 * the moment.)
-	 */
-	if (strcmp(auth_mechanism, SCRAM_SHA256_NAME) == 0)
-	{
-		char	   *password;
-
-		conn->password_needed = true;
-		password = conn->connhost[conn->whichhost].password;
-		if (password == NULL)
-			password = conn->pgpass;
-		if (password == NULL || password[0] == '\0')
+		if (pqGets(&mechanism_buf, conn))
 		{
 			printfPQExpBuffer(&conn->errorMessage,
-							  PQnoPasswordSupplied);
-			return STATUS_ERROR;
+							  "fe_sendauth: invalid authentication request from server: invalid list of authentication mechanisms\n");
+			goto error;
 		}
+		if (PQExpBufferDataBroken(mechanism_buf))
+			goto oom_error;
 
-		conn->sasl_state = pg_fe_scram_init(conn->pguser, password);
-		if (!conn->sasl_state)
+		/* An empty string indicates end of list */
+		if (mechanism_buf.data[0] == '\0')
+			break;
+
+		/*
+		 * If we have already selected a mechanism, just skip through the rest
+		 * of the list.
+		 */
+		if (selected_mechanism)
+			continue;
+
+		/*
+		 * Do we support this mechanism?
+		 */
+		if (strcmp(mechanism_buf.data, SCRAM_SHA256_NAME) == 0)
 		{
-			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("out of memory\n"));
-			return STATUS_ERROR;
+			char	   *password;
+
+			conn->password_needed = true;
+			password = conn->connhost[conn->whichhost].password;
+			if (password == NULL)
+				password = conn->pgpass;
+			if (password == NULL || password[0] == '\0')
+			{
+				printfPQExpBuffer(&conn->errorMessage,
+								  PQnoPasswordSupplied);
+				goto error;
+			}
+
+			conn->sasl_state = pg_fe_scram_init(conn->pguser, password);
+			if (!conn->sasl_state)
+				goto oom_error;
+			selected_mechanism = SCRAM_SHA256_NAME;
 		}
 	}
-	else
+
+	if (!selected_mechanism)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-		   libpq_gettext("SASL authentication mechanism %s not supported\n"),
-						  auth_mechanism);
-		return STATUS_ERROR;
+						  libpq_gettext("none of the server's SASL authentication mechanisms are supported\n"));
+		goto error;
 	}
 
-	/* Send the initial client response */
+	/* Get the mechanism-specific Initial Client Response, if any */
 	pg_fe_scram_exchange(conn->sasl_state,
 						 NULL, -1,
 						 &initialresponse, &initialresponselen,
 						 &done, &success, &conn->errorMessage);
 
+	if (done && !success)
+		goto error;
+
+	/*
+	 * Build a SASLInitialResponse message, and send it.
+	 */
+	if (pqPutMsgStart('p', true, conn))
+		goto error;
+	if (pqPuts(selected_mechanism, conn))
+		goto error;
 	if (initialresponse)
 	{
-		res = pqPacketSend(conn, 'p', initialresponse, initialresponselen);
+		if (pqPutInt(initialresponselen, 4, conn))
+			goto error;
+		if (pqPutnchar(initialresponse, initialresponselen, conn))
+			goto error;
+	}
+	if (pqPutMsgEnd(conn))
+		goto error;
+	if (pqFlush(conn))
+		goto error;
+
+	termPQExpBuffer(&mechanism_buf);
+	if (initialresponse)
 		free(initialresponse);
 
-		if (res != STATUS_OK)
-			return STATUS_ERROR;
-	}
-
-	if (done && !success)
-	{
-		/* Use error message, if set already */
-		if (conn->errorMessage.len == 0)
-			printfPQExpBuffer(&conn->errorMessage,
-							  "fe_sendauth: error in SASL authentication\n");
-		return STATUS_ERROR;
-	}
-
 	return STATUS_OK;
+
+error:
+	termPQExpBuffer(&mechanism_buf);
+	if (initialresponse)
+		free(initialresponse);
+	return STATUS_ERROR;
+
+oom_error:
+	termPQExpBuffer(&mechanism_buf);
+	if (initialresponse)
+		free(initialresponse);
+	printfPQExpBuffer(&conn->errorMessage,
+					  libpq_gettext("out of memory\n"));
+	return STATUS_ERROR;
 }
 
 /*
@@ -565,7 +606,7 @@ pg_SASL_init(PGconn *conn, int payloadlen)
  * the protocol.
  */
 static int
-pg_SASL_continue(PGconn *conn, int payloadlen)
+pg_SASL_continue(PGconn *conn, int payloadlen, bool final)
 {
 	char	   *output;
 	int			outputlen;
@@ -598,9 +639,20 @@ pg_SASL_continue(PGconn *conn, int payloadlen)
 						 &done, &success, &conn->errorMessage);
 	free(challenge);			/* don't need the input anymore */
 
-	/* Send the SASL response to the server, if any. */
+	if (final && !done)
+	{
+		if (outputlen != 0)
+			free(output);
+
+		printfPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("AuthenticationSASLFinal received from server, but SASL authentication was not completed\n"));
+		return STATUS_ERROR;
+	}
 	if (outputlen != 0)
 	{
+		/*
+		 * Send the SASL response to the server.
+		 */
 		res = pqPacketSend(conn, 'p', output, outputlen);
 		free(output);
 
@@ -918,13 +970,15 @@ pg_fe_sendauth(AuthRequest areq, int payloadlen, PGconn *conn)
 			break;
 
 		case AUTH_REQ_SASL_CONT:
+		case AUTH_REQ_SASL_FIN:
 			if (conn->sasl_state == NULL)
 			{
 				printfPQExpBuffer(&conn->errorMessage,
 								  "fe_sendauth: invalid authentication request from server: AUTH_REQ_SASL_CONT without AUTH_REQ_SASL\n");
 				return STATUS_ERROR;
 			}
-			if (pg_SASL_continue(conn, payloadlen) != STATUS_OK)
+			if (pg_SASL_continue(conn, payloadlen,
+								 (areq == AUTH_REQ_SASL_FIN)) != STATUS_OK)
 			{
 				/* Use error message, if set already */
 				if (conn->errorMessage.len == 0)

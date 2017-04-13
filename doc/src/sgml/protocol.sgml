@@ -330,7 +330,7 @@
       <listitem>
        <para>
         The frontend must now initiate a GSSAPI negotiation. The frontend
-        will send a PasswordMessage with the first part of the GSSAPI
+        will send a GSSResponse message with the first part of the GSSAPI
         data stream in response to this. If further messages are needed,
         the server will respond with AuthenticationGSSContinue.
        </para>
@@ -342,7 +342,7 @@
       <listitem>
        <para>
         The frontend must now initiate a SSPI negotiation. The frontend
-        will send a PasswordMessage with the first part of the SSPI
+        will send a GSSResponse with the first part of the SSPI
         data stream in response to this. If further messages are needed,
         the server will respond with AuthenticationGSSContinue.
        </para>
@@ -358,7 +358,7 @@
         or a previous AuthenticationGSSContinue). If the GSSAPI
         or SSPI data in this message
         indicates more data is needed to complete the authentication,
-        the frontend must send that data as another PasswordMessage. If
+        the frontend must send that data as another GSSResponse message. If
         GSSAPI or SSPI authentication is completed by this message, the server
         will next send AuthenticationOk to indicate successful authentication
         or ErrorResponse to indicate failure.
@@ -370,27 +370,38 @@
       <term>AuthenticationSASL</term>
       <listitem>
        <para>
-        The frontend must now initiate a SASL negotiation, using the SASL
-        mechanism specified in the message. The frontend will send a
-        PasswordMessage with the first part of the SASL data stream in
-        response to this. If further messages are needed, the server will
-        respond with AuthenticationSASLContinue.
+        The frontend must now initiate a SASL negotiation, using one of the
+        SASL mechanisms listed in the message. The frontend will send a
+        SASLInitialResponse with the name of the selected mechanism, and the
+        first part of the SASL data stream in response to this. If further
+        messages are needed, the server will respond with
+        AuthenticationSASLContinue. See <xref linkend="sasl-authentication">
+        for details.
        </para>
       </listitem>
-
      </varlistentry>
+
      <varlistentry>
       <term>AuthenticationSASLContinue</term>
       <listitem>
        <para>
-        This message contains the response data from the previous step
-        of SASL negotiation (AuthenticationSASL, or a previous
-        AuthenticationSASLContinue). If the SASL data in this message
-        indicates more data is needed to complete the authentication,
-        the frontend must send that data as another PasswordMessage. If
-        SASL authentication is completed by this message, the server
-        will next send AuthenticationOk to indicate successful authentication
-        or ErrorResponse to indicate failure.
+        This message contains challenge data from the previous step of SASL
+        negotiation (AuthenticationSASL, or a previous
+        AuthenticationSASLContinue). The frontend must respond with a
+        SASLResponse message.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>AuthenticationSASLFinal</term>
+      <listitem>
+       <para>
+        SASL authentication has completed with additional mechanism-specific
+        data for the client. The server will next send AuthenticationOk to
+        indicate successful authentication, or an ErrorResponse to indicate
+        failure. This message is sent only if the SASL mechanism specifies
+        additional data to be sent from server to client at completion.
        </para>
       </listitem>
      </varlistentry>
@@ -1325,6 +1336,141 @@
    </para>
   </sect2>
  </sect1>
+
+<sect1 id="sasl-authentication">
+<title>SASL Authentication</title>
+
+<para>
+<firstterm>SASL</> is a framework for authentication in connection-oriented
+protocols. At the moment, <productname>PostgreSQL</> implements only one SASL
+authentication mechanism, SCRAM-SHA-256, but more might be added in the
+future. The below steps illustrate how SASL authentication is performed in
+general, while the next subsection gives more details on SCRAM-SHA-256.
+</para>
+
+<procedure>
+<title>SASL Authentication Message Flow</title>
+
+<step id="sasl-auth-begin">
+<para>  
+  To begin a SASL authentication exchange, the server an AuthenticationSASL
+  message. It includes a list of SASL authentication mechanisms that the
+  server can accept, in the server's preferred order.
+</para>
+</step>
+
+<step id="sasl-auth-initial-response">
+<para>
+  The client selects one of the supported mechanisms from the list, and sends
+  a SASLInitialResponse message to the server. The message includes the name
+  of the selected mechanism, and an optional Initial Client Response, if the
+  selected mechanism uses that.
+</para>
+</step>
+
+<step id="sasl-auth-continue">
+<para>
+  One or more server-challenge and client-response message will follow. Each
+  server-challenge is sent in an AuthenticationSASLContinue message, followed
+  by a response from client in an SASLResponse message. The particulars of
+  the messages are mechanism specific.
+</para>
+</step>
+
+<step id="sasl-auth-end">
+<para>
+  Finally, when the authentication exchange is completed successfully, the
+  server sends an AuthenticationSASLFinal message, followed
+  immediately by an AuthenticationOk message. The AuthenticationSASLFinal
+  contains additional server-to-client data, whose content is particular to the
+  selected authentication mechanism. If the authentication mechanism doesn't
+  use additional data that's sent at completion, the AuthenticationSASLFinal
+  message is not sent.
+</para>
+</step>
+</procedure>
+
+<para>
+On error, the server can abort the authentication at any stage, and send an
+ErrorMessage.
+</para>
+
+ <sect2 id="sasl-scram-sha256">
+  <title>SCRAM-SHA-256 authentication</title>
+
+  <para>
+    <firstterm>SCRAM-SHA-256</> (called just <firstterm>SCRAM</> from now on) is
+    the only implemented SASL mechanism, at the moment. It is described in detail
+    in RFC 7677 and RFC 5741. 
+  </para>
+
+  <para>
+When SCRAM-SHA-256 is used in PostgreSQL, the server will ignore the username
+that the client sends in the <structname>client-first-message</>. The username
+that was already sent in the startup message is used instead.
+<productname>PostgreSQL</> supports multiple character encodings, while SCRAM
+dictates UTF-8 to be used for the username, so it might be impossible to
+represent the PostgreSQL username in UTF-8. To avoid confusion, the client
+should use <literal>pg_same_as_startup_message</literal> as the username in the
+<structname>client-first-message</>.
+  </para>
+
+  <para>
+The SCRAM specification dictates that the password is also in UTF-8, and is
+processed with the <firstterm>SASLprep</> algorithm.
+<productname>PostgreSQL</>, however, does not require UTF-8 to be used for
+the password. When a user's password is set, it is processed with SASLprep
+as if it was in UTF-8, regardless of the actual encoding used. However, if
+it is not a legal UTF-8 byte sequence, or it contains UTF-8 byte sequences
+that are prohibited by the SASLprep algorithm, the raw password will be used
+without SASLprep processing, instead of throwing an error. This allows the
+password to be normalized when it is in UTF-8, but still allows a non-UTF-8
+password to be used, and doesn't require the system to know which encoding
+the password is in.
+  </para>
+
+  <para>
+<firstterm>Channel binding</> has not been implemented yet.
+  </para>
+
+<procedure>
+<title>Example</title>
+  <step id="scram-begin">
+<para>
+  The server sends an AuthenticationSASL message. It includes a list of
+  SASL authentication mechanisms that the server can accept.
+</para>
+</step>
+<step id="scram-client-first">
+<para>
+  The client responds by sending a SASLInitialResponse message, which
+  indicates the chosen mechanism, <literal>SCRAM-SHA-256</>. In the Initial
+  Client response field, the message contains the SCRAM
+  <structname>client-first-message</>.
+</para>
+</step>
+<step id="scram-server-first">
+<para>
+  Server sends an AuthenticationSASLContinue message, with a SCRAM
+  <structname>server-first message</> as the content.
+</para>
+</step>
+<step id="scram-client-final">
+<para>
+  Client sends a SASLResponse message, with SCRAM
+  <structname>client-final-message</> as the content.
+</para>
+</step>
+<step id="scram-server-final">
+<para>
+  Server sends an AuthenticationSASLFinal message, with the SCRAM
+  <structname>server-final-message</>, followed immediately by
+  an AuthenticationOk message.
+</para>
+</step>
+</procedure>
+</sect2>
+
 
 <sect1 id="protocol-replication">
 <title>Streaming Replication Protocol</title>
@@ -2802,6 +2948,8 @@ AuthenticationSSPI (B)
 </para>
 </listitem>
 </varlistentry>
+
+
 <varlistentry>
 <term>
 AuthenticationGSSContinue (B)
@@ -2856,6 +3004,7 @@ AuthenticationGSSContinue (B)
 </listitem>
 </varlistentry>
 
+
 <varlistentry>
 <term>
 AuthenticationSASL (B)
@@ -2890,10 +3039,16 @@ AuthenticationSASL (B)
 </term>
 <listitem>
 <para>
-                Specifies that SASL authentication is started.
+                Specifies that SASL authentication is required.
 </para>
 </listitem>
 </varlistentry>
+</variablelist>
+The message body is a list of SASL authentication mechanisms, in the
+server's order of preference. A zero byte is required as terminator after
+the last authentication mechanism name. For each mechanism, there is the
+following:
+<variablelist>
 <varlistentry>
 <term>
         String
@@ -2909,6 +3064,7 @@ AuthenticationSASL (B)
 </para>
 </listitem>
 </varlistentry>
+
 
 <varlistentry>
 <term>
@@ -2944,8 +3100,7 @@ AuthenticationSASLContinue (B)
 </term>
 <listitem>
 <para>
-                Specifies that this message contains SASL-mechanism specific
-                data.
+                Specifies that this message contains a SASL challenge.
 </para>
 </listitem>
 </varlistentry>
@@ -2964,6 +3119,63 @@ AuthenticationSASLContinue (B)
 </para>
 </listitem>
 </varlistentry>
+
+
+<varlistentry>
+<term>
+AuthenticationSASLFinal (B)
+</term>
+<listitem>
+<para>
+
+<variablelist>
+<varlistentry>
+<term>
+        Byte1('R')
+</term>
+<listitem>
+<para>
+                Identifies the message as an authentication request.
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+        Int32
+</term>
+<listitem>
+<para>
+                Length of message contents in bytes, including self.
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+        Int32(12)
+</term>
+<listitem>
+<para>
+                Specifies that SASL authentication has completed.
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+        Byte<replaceable>n</replaceable>
+</term>
+<listitem>
+<para>
+                SASL outcome "additional data", specific to the SASL mechanism
+                being used.
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
+
+</para>
+</listitem>
+</varlistentry>
+
 
 <varlistentry>
 <term>
@@ -4316,6 +4528,52 @@ FunctionCallResponse (B)
 
 <varlistentry>
 <term>
+GSSResponse (F)
+</term>
+<listitem>
+<para>
+
+<variablelist>
+<varlistentry>
+<term>
+        Byte1('p')
+</term>
+<listitem>
+<para>
+                Identifies the message as a GSSAPI or SSPI response. Note that
+                this is also used for SASL and password response messages.
+                The exact message type can be deduced from the context.
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+        Int32
+</term>
+<listitem>
+<para>
+                Length of message contents in bytes, including self.
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+        Byte<replaceable>n</replaceable>
+</term>
+<listitem>
+<para>
+                GSSAPI/SSPI specific message data.
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
+</para>
+</listitem>
+</varlistentry>
+
+
+<varlistentry>
+<term>
 NoData (B)
 </term>
 <listitem>
@@ -4726,10 +4984,8 @@ PasswordMessage (F)
 <listitem>
 <para>
                 Identifies the message as a password response. Note that
-                this is also used for GSSAPI, SSPI and SASL response messages
-                (which is really a design error, since the contained data
-                is not a null-terminated string in that case, but can be
-                arbitrary binary data).
+                this is also used for GSSAPI, SSPI and SASL response messages.
+                The exact message type can be deduced from the context.
 </para>
 </listitem>
 </varlistentry>
@@ -5011,6 +5267,120 @@ RowDescription (B)
 </varlistentry>
 </variablelist>
 
+</para>
+</listitem>
+</varlistentry>
+
+
+<varlistentry>
+<term>
+SASLInitialresponse (F)
+</term>
+<listitem>
+<para>
+
+<variablelist>
+<varlistentry>
+<term>
+        Byte1('p')
+</term>
+<listitem>
+<para>
+                Identifies the message as an initial SASL response. Note that
+                this is also used for GSSAPI, SSPI and password response messages.
+                The exact message type is deduced from the context.
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+        Int32
+</term>
+<listitem>
+<para>
+                Length of message contents in bytes, including self.
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+        String
+</term>
+<listitem>
+<para>
+                Name of the SASL authentication mechanism that the client
+                selected.
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+        Int32
+</term>
+<listitem>
+<para>
+                Length of SASL mechanism specific "Initial Client Response" that
+                follows, or -1 if there is no Initial Response.
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+        Byte<replaceable>n</replaceable>
+</term>
+<listitem>
+<para>
+                SASL mechanism specific "Initial Response".
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
+</para>
+</listitem>
+</varlistentry>
+
+
+<varlistentry>
+<term>
+SASLResponse (F)
+</term>
+<listitem>
+<para>
+
+<variablelist>
+<varlistentry>
+<term>
+        Byte1('p')
+</term>
+<listitem>
+<para>
+                Identifies the message as a SASL response. Note that
+                this is also used for GSSAPI, SSPI and password response messages.
+                The exact message type can be deduced from the context.
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+        Int32
+</term>
+<listitem>
+<para>
+                Length of message contents in bytes, including self.
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+        Byte<replaceable>n</replaceable>
+</term>
+<listitem>
+<para>
+                SASL mechanism specific message data.
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
 </para>
 </listitem>
 </varlistentry>

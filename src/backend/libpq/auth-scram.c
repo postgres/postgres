@@ -254,8 +254,16 @@ pg_be_scram_init(const char *username, const char *shadow_pass)
 /*
  * Continue a SCRAM authentication exchange.
  *
- * The next message to send to client is saved in "output", for a length
- * of "outputlen".  In the case of an error, optionally store a palloc'd
+ * 'input' is the SCRAM payload sent by the client.  On the first call,
+ * 'input' contains the "Initial Client Response" that the client sent as
+ * part of the SASLInitialResponse message, or NULL if no Initial Client
+ * Response was given.  (The SASL specification distinguishes between an
+ * empty response and non-existing one.)  On subsequent calls, 'input'
+ * cannot be NULL.  For convenience in this function, the caller must
+ * ensure that there is a null terminator at input[inputlen].
+ *
+ * The next message to send to client is saved in 'output', for a length
+ * of 'outputlen'.  In the case of an error, optionally store a palloc'd
  * string at *logdetail that will be sent to the postmaster log (but not
  * the client).
  */
@@ -267,6 +275,21 @@ pg_be_scram_exchange(void *opaq, char *input, int inputlen,
 	int			result;
 
 	*output = NULL;
+
+	/*
+	 * If the client didn't include an "Initial Client Response" in the
+	 * SASLInitialResponse message, send an empty challenge, to which the
+	 * client will respond with the same data that usually comes in the
+	 * Initial Client Response.
+	 */
+	if (input == NULL)
+	{
+		Assert(state->state == SCRAM_AUTH_INIT);
+
+		*output = pstrdup("");
+		*outputlen = 0;
+		return SASL_EXCHANGE_CONTINUE;
+	}
 
 	/*
 	 * Check that the input length agrees with the string length of the input.

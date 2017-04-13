@@ -620,10 +620,11 @@ sendAuthRequest(Port *port, AuthRequest areq, char *extradata, int extralen)
 	pq_endmessage(&buf);
 
 	/*
-	 * Flush message so client will see it, except for AUTH_REQ_OK, which need
-	 * not be sent until we are ready for queries.
+	 * Flush message so client will see it, except for AUTH_REQ_OK and
+	 * AUTH_REQ_SASL_FIN, which need not be sent until we are ready for
+	 * queries.
 	 */
-	if (areq != AUTH_REQ_OK)
+	if (areq != AUTH_REQ_OK && areq != AUTH_REQ_SASL_FIN)
 		pq_flush();
 
 	CHECK_FOR_INTERRUPTS();
@@ -850,7 +851,10 @@ CheckSCRAMAuth(Port *port, char *shadow_pass, char **logdetail)
 	void	   *scram_opaq;
 	char	   *output = NULL;
 	int			outputlen = 0;
+	char	   *input;
+	int			inputlen;
 	int			result;
+	bool		initial;
 
 	/*
 	 * SASL auth is not supported for protocol versions before 3, because it
@@ -866,10 +870,13 @@ CheckSCRAMAuth(Port *port, char *shadow_pass, char **logdetail)
 				 errmsg("SASL authentication is not supported in protocol version 2")));
 
 	/*
-	 * Send first the authentication request to user.
+	 * Send the SASL authentication request to user.  It includes the list of
+	 * authentication mechanisms (which is trivial, because we only support
+	 * SCRAM-SHA-256 at the moment).  The extra "\0" is for an empty string to
+	 * terminate the list.
 	 */
-	sendAuthRequest(port, AUTH_REQ_SASL, SCRAM_SHA256_NAME,
-					strlen(SCRAM_SHA256_NAME) + 1);
+	sendAuthRequest(port, AUTH_REQ_SASL, SCRAM_SHA256_NAME "\0",
+					strlen(SCRAM_SHA256_NAME) + 2);
 
 	/*
 	 * Initialize the status tracker for message exchanges.
@@ -890,6 +897,7 @@ CheckSCRAMAuth(Port *port, char *shadow_pass, char **logdetail)
 	 * from the client.  All messages from client to server are password
 	 * packets (type 'p').
 	 */
+	initial = true;
 	do
 	{
 		pq_startmsgread();
@@ -921,10 +929,51 @@ CheckSCRAMAuth(Port *port, char *shadow_pass, char **logdetail)
 		elog(DEBUG4, "Processing received SASL response of length %d", buf.len);
 
 		/*
+		 * The first SASLInitialResponse message is different from the others.
+		 * It indicates which SASL mechanism the client selected, and contains
+		 * an optional Initial Client Response payload.  The subsequent
+		 * SASLResponse messages contain just the SASL payload.
+		 */
+		if (initial)
+		{
+			const char *selected_mech;
+
+			/*
+			 * We only support SCRAM-SHA-256 at the moment, so anything else
+			 * is an error.
+			 */
+			selected_mech = pq_getmsgrawstring(&buf);
+			if (strcmp(selected_mech, SCRAM_SHA256_NAME) != 0)
+				ereport(COMMERROR,
+						(errcode(ERRCODE_PROTOCOL_VIOLATION),
+						 errmsg("client selected an invalid SASL authentication mechanism")));
+
+			inputlen = pq_getmsgint(&buf, 4);
+			if (inputlen == -1)
+				input = NULL;
+			else
+				input = (char *) pq_getmsgbytes(&buf, inputlen);
+
+			initial = false;
+		}
+		else
+		{
+			inputlen = buf.len;
+			input = (char *) pq_getmsgbytes(&buf, buf.len);
+		}
+		pq_getmsgend(&buf);
+
+		/*
+		 * The StringInfo guarantees that there's a \0 byte after the
+		 * response.
+		 */
+		Assert(input == NULL || input[inputlen] == '\0');
+
+		/*
 		 * we pass 'logdetail' as NULL when doing a mock authentication,
 		 * because we should already have a better error message in that case
 		 */
-		result = pg_be_scram_exchange(scram_opaq, buf.data, buf.len,
+		result = pg_be_scram_exchange(scram_opaq, input, inputlen,
 									  &output, &outputlen,
 									  logdetail);
 
@@ -938,7 +987,10 @@ CheckSCRAMAuth(Port *port, char *shadow_pass, char **logdetail)
 			 */
 			elog(DEBUG4, "sending SASL challenge of length %u", outputlen);
 
-			sendAuthRequest(port, AUTH_REQ_SASL_CONT, output, outputlen);
+			if (result == SASL_EXCHANGE_SUCCESS)
+				sendAuthRequest(port, AUTH_REQ_SASL_FIN, output, outputlen);
+			else
+				sendAuthRequest(port, AUTH_REQ_SASL_CONT, output, outputlen);
 
 			pfree(output);
 		}
