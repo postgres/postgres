@@ -799,19 +799,6 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>--no-subscription-connect</option></term>
-      <listitem>
-       <para>
-        When dumping logical replication subscriptions,
-        generate <command>CREATE SUBSCRIPTION</command> commands that do not
-        make remote connections for creating replication slot or initial table
-        copy.  That way, the dump can be restored without requiring network
-        access to the remote servers.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><option>--no-synchronized-snapshots</></term>
       <listitem>
        <para>
@@ -1234,6 +1221,19 @@ CREATE DATABASE foo WITH TEMPLATE template0;
    Use of the <option>--quote-all-identifiers</option> option is recommended
    in cross-version cases, as it can prevent problems arising from varying
    reserved-word lists in different <productname>PostgreSQL</> versions.
+  </para>
+
+  <para>
+   When dumping logical replication subscriptions,
+   <application>pg_dump</application> will generate <command>CREATE
+   SUBSCRIPTION</command> commands that use the <literal>NOCONNECT</literal>
+   option, so that restoring the subscription does not make remote connections
+   for creating a replication slot or for initial table copy.  That way, the
+   dump can be restored without requiring network access to the remote
+   servers.  It is then up to the user to reactivate the subscriptions in a
+   suitable way.  If the involved hosts have changed, the connection
+   information might have to be changed.  It might also be appropriate to
+   truncate the target tables before initiating a new full table copy.
   </para>
  </refsect1>
 

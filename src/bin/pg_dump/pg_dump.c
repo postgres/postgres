@@ -353,7 +353,6 @@ main(int argc, char **argv)
 		{"strict-names", no_argument, &strict_names, 1},
 		{"use-set-session-authorization", no_argument, &dopt.use_setsessauth, 1},
 		{"no-security-labels", no_argument, &dopt.no_security_labels, 1},
-		{"no-subscription-connect", no_argument, &dopt.no_subscription_connect, 1},
 		{"no-synchronized-snapshots", no_argument, &dopt.no_synchronized_snapshots, 1},
 		{"no-unlogged-table-data", no_argument, &dopt.no_unlogged_table_data, 1},
 		{"no-sync", no_argument, NULL, 7},
@@ -951,7 +950,6 @@ help(const char *progname)
 	printf(_("  --if-exists                  use IF EXISTS when dropping objects\n"));
 	printf(_("  --inserts                    dump data as INSERT commands, rather than COPY\n"));
 	printf(_("  --no-security-labels         do not dump security label assignments\n"));
-	printf(_("  --no-subscription-connect    dump subscriptions so they don't connect on restore\n"));
 	printf(_("  --no-synchronized-snapshots  do not use synchronized snapshots in parallel jobs\n"));
 	printf(_("  --no-tablespaces             do not dump tablespace assignments\n"));
 	printf(_("  --no-unlogged-table-data     do not dump unlogged table data\n"));
@@ -3669,7 +3667,6 @@ getSubscriptions(Archive *fout)
 	int			i_oid;
 	int			i_subname;
 	int			i_rolname;
-	int			i_subenabled;
 	int			i_subconninfo;
 	int			i_subslotname;
 	int			i_subpublications;
@@ -3702,7 +3699,7 @@ getSubscriptions(Archive *fout)
 	/* Get the subscriptions in current database. */
 	appendPQExpBuffer(query,
 					  "SELECT s.tableoid, s.oid, s.subname,"
-					  "(%s s.subowner) AS rolname, s.subenabled, "
+					  "(%s s.subowner) AS rolname, "
 					  " s.subconninfo, s.subslotname, s.subpublications "
 					  "FROM pg_catalog.pg_subscription s "
 					  "WHERE s.subdbid = (SELECT oid FROM pg_catalog.pg_database"
@@ -3716,7 +3713,6 @@ getSubscriptions(Archive *fout)
 	i_oid = PQfnumber(res, "oid");
 	i_subname = PQfnumber(res, "subname");
 	i_rolname = PQfnumber(res, "rolname");
-	i_subenabled = PQfnumber(res, "subenabled");
 	i_subconninfo = PQfnumber(res, "subconninfo");
 	i_subslotname = PQfnumber(res, "subslotname");
 	i_subpublications = PQfnumber(res, "subpublications");
@@ -3732,8 +3728,6 @@ getSubscriptions(Archive *fout)
 		AssignDumpId(&subinfo[i].dobj);
 		subinfo[i].dobj.name = pg_strdup(PQgetvalue(res, i, i_subname));
 		subinfo[i].rolname = pg_strdup(PQgetvalue(res, i, i_rolname));
-		subinfo[i].subenabled =
-			(strcmp(PQgetvalue(res, i, i_subenabled), "t") == 0);
 		subinfo[i].subconninfo = pg_strdup(PQgetvalue(res, i, i_subconninfo));
 		subinfo[i].subslotname = pg_strdup(PQgetvalue(res, i, i_subslotname));
 		subinfo[i].subpublications =
@@ -3758,7 +3752,6 @@ getSubscriptions(Archive *fout)
 static void
 dumpSubscription(Archive *fout, SubscriptionInfo *subinfo)
 {
-	DumpOptions *dopt = fout->dopt;
 	PQExpBuffer delq;
 	PQExpBuffer query;
 	PQExpBuffer publications;
@@ -3799,19 +3792,8 @@ dumpSubscription(Archive *fout, SubscriptionInfo *subinfo)
 		appendPQExpBufferStr(publications, fmtId(pubnames[i]));
 	}
 
-	appendPQExpBuffer(query, " PUBLICATION %s WITH (", publications->data);
-
-	if (subinfo->subenabled)
-		appendPQExpBufferStr(query, "ENABLED");
-	else
-		appendPQExpBufferStr(query, "DISABLED");
-
-	appendPQExpBufferStr(query, ", SLOT NAME = ");
+	appendPQExpBuffer(query, " PUBLICATION %s WITH (NOCONNECT, SLOT NAME = ", publications->data);
 	appendStringLiteralAH(query, subinfo->subslotname, fout);
-
-	if (dopt->no_subscription_connect)
-		appendPQExpBufferStr(query, ", NOCONNECT");
-
 	appendPQExpBufferStr(query, ");\n");
 
 	ArchiveEntry(fout, subinfo->dobj.catId, subinfo->dobj.dumpId,

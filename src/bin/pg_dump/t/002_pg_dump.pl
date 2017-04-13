@@ -4303,9 +4303,9 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 		create_order => 50,
 		create_sql   => 'CREATE SUBSCRIPTION sub1
 						 CONNECTION \'dbname=doesnotexist\' PUBLICATION pub1
-						 WITH (DISABLED, NOCONNECT);',
+						 WITH (NOCONNECT);',
 		regexp       => qr/^
-			\QCREATE SUBSCRIPTION sub1 CONNECTION 'dbname=doesnotexist' PUBLICATION pub1 WITH (DISABLED, SLOT NAME = 'sub1');\E
+			\QCREATE SUBSCRIPTION sub1 CONNECTION 'dbname=doesnotexist' PUBLICATION pub1 WITH (NOCONNECT, SLOT NAME = 'sub1');\E
 			/xm,
 		like => {
 			binary_upgrade           => 1,

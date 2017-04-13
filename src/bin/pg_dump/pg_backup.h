@@ -153,7 +153,6 @@ typedef struct _dumpOptions
 	int			outputNoTablespaces;
 	int			use_setsessauth;
 	int			enable_row_security;
-	int			no_subscription_connect;
 
 	/* default, if no "inclusion" switches appear, is to dump everything */
 	bool		include_everything;
