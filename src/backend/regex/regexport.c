@@ -6,8 +6,8 @@
  * In this implementation, the NFA defines a necessary but not sufficient
  * condition for a string to match the regex: that is, there can be strings
  * that match the NFA but don't match the full regex, but not vice versa.
- * Thus, for example, it is okay for the functions below to ignore lookaround
- * constraints, which merely constrain the string some more.
+ * Thus, for example, it is okay for the functions below to treat lookaround
+ * constraints as no-ops, since they merely constrain the string some more.
  *
  * Notice that these functions return info into caller-provided arrays
  * rather than doing their own malloc's.  This simplifies the APIs by
@@ -72,29 +72,78 @@ pg_reg_getfinalstate(const regex_t *regex)
 }
 
 /*
- * Get number of outgoing NFA arcs of state number "st".
+ * pg_reg_getnumoutarcs() and pg_reg_getoutarcs() mask the existence of LACON
+ * arcs from the caller, treating any LACON as being automatically satisfied.
+ * Since the output representation does not support arcs that consume no
+ * character when traversed, we have to recursively traverse LACON arcs here,
+ * and report whatever normal arcs are reachable by traversing LACON arcs.
+ * Note that this wouldn't work if it were possible to reach the final state
+ * via LACON traversal, but the regex library never builds NFAs that have
+ * LACON arcs leading directly to the final state.  (This is because the
+ * regex executor is designed to consume one character beyond the nominal
+ * match end --- possibly an EOS indicator --- so there is always a set of
+ * ordinary arcs leading to the final state.)
  *
- * Note: LACON arcs are ignored, both here and in pg_reg_getoutarcs().
+ * traverse_lacons is a recursive subroutine used by both exported functions
+ * to count and then emit the reachable regular arcs.  *arcs_count is
+ * incremented by the number of reachable arcs, and as many as will fit in
+ * arcs_len (possibly 0) are emitted into arcs[].
+ */
+static void
+traverse_lacons(struct cnfa * cnfa, int st,
+				int *arcs_count,
+				regex_arc_t *arcs, int arcs_len)
+{
+	struct carc *ca;
+
+	/*
+	 * Since this function recurses, it could theoretically be driven to stack
+	 * overflow.  In practice, this is mostly useful to backstop against a
+	 * failure of the regex compiler to remove a loop of LACON arcs.
+	 */
+	check_stack_depth();
+
+	for (ca = cnfa->states[st]; ca->co != COLORLESS; ca++)
+	{
+		if (ca->co < cnfa->ncolors)
+		{
+			/* Ordinary arc, so count and possibly emit it */
+			int			ndx = (*arcs_count)++;
+
+			if (ndx < arcs_len)
+			{
+				arcs[ndx].co = ca->co;
+				arcs[ndx].to = ca->to;
+			}
+		}
+		else
+		{
+			/* LACON arc --- assume it's satisfied and recurse... */
+			/* ... but first, assert it doesn't lead directly to post state */
+			Assert(ca->to != cnfa->post);
+
+			traverse_lacons(cnfa, ca->to, arcs_count, arcs, arcs_len);
+		}
+	}
+}
+
+/*
+ * Get number of outgoing NFA arcs of state number "st".
  */
 int
 pg_reg_getnumoutarcs(const regex_t *regex, int st)
 {
 	struct cnfa *cnfa;
-	struct carc *ca;
-	int			count;
+	int			arcs_count;
 
 	assert(regex != NULL && regex->re_magic == REMAGIC);
 	cnfa = &((struct guts *) regex->re_guts)->search;
 
 	if (st < 0 || st >= cnfa->nstates)
 		return 0;
-	count = 0;
-	for (ca = cnfa->states[st]; ca->co != COLORLESS; ca++)
-	{
-		if (ca->co < cnfa->ncolors)
-			count++;
-	}
-	return count;
+	arcs_count = 0;
+	traverse_lacons(cnfa, st, &arcs_count, NULL, 0);
+	return arcs_count;
 }
 
 /*
@@ -107,24 +156,15 @@ pg_reg_getoutarcs(const regex_t *regex, int st,
 				  regex_arc_t *arcs, int arcs_len)
 {
 	struct cnfa *cnfa;
-	struct carc *ca;
+	int			arcs_count;
 
 	assert(regex != NULL && regex->re_magic == REMAGIC);
 	cnfa = &((struct guts *) regex->re_guts)->search;
 
 	if (st < 0 || st >= cnfa->nstates || arcs_len <= 0)
 		return;
-	for (ca = cnfa->states[st]; ca->co != COLORLESS; ca++)
-	{
-		if (ca->co < cnfa->ncolors)
-		{
-			arcs->co = ca->co;
-			arcs->to = ca->to;
-			arcs++;
-			if (--arcs_len == 0)
-				break;
-		}
-	}
+	arcs_count = 0;
+	traverse_lacons(cnfa, st, &arcs_count, arcs, arcs_len);
 }
 
 /*
