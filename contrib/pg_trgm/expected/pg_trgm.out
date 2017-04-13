@@ -3676,6 +3676,12 @@ select * from test2 where t ~ '  z foo';
    z foo bar
 (1 row)
 
+select * from test2 where t ~ 'qua(?!foo)';
+   t   
+-------
+ quark
+(1 row)
+
 drop index test2_idx_gin;
 create index test2_idx_gist on test2 using gist (t gist_trgm_ops);
 set enable_seqscan=off;
@@ -3854,5 +3860,11 @@ select * from test2 where t ~ '  z foo';
       t      
 -------------
    z foo bar
+(1 row)
+
+select * from test2 where t ~ 'qua(?!foo)';
+   t   
+-------
+ quark
 (1 row)
 
