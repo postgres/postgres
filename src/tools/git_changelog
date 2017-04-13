@@ -31,7 +31,7 @@
 # The default output of this script is meant for generating minor release
 # notes, where we need to know which branches a merged commit affects.
 #
-# To generate major release notes, intended usage is
+# To generate major release notes, use:
 #   git_changelog --master-only --brief --oldest-first --since='start-date'
 # To find the appropriate start date, use:
 #   git show --summary $(git merge-base REL9_5_STABLE master)
