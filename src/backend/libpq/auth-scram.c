@@ -161,10 +161,10 @@ static char *scram_MockSalt(const char *username);
  * needs to be called before doing any exchange.  It will be filled later
  * after the beginning of the exchange with verifier data.
  *
- * 'username' is the provided by the client.  'shadow_pass' is the role's
- * password verifier, from pg_authid.rolpassword.  If 'shadow_pass' is NULL, we
- * still perform an authentication exchange, but it will fail, as if an
- * incorrect password was given.
+ * 'username' is the username provided by the client in the startup message.
+ * 'shadow_pass' is the role's password verifier, from pg_authid.rolpassword.
+ * If 'shadow_pass' is NULL, we still perform an authentication exchange, but
+ * it will fail, as if an incorrect password was given.
  */
 void *
 pg_be_scram_init(const char *username, const char *shadow_pass)
@@ -984,7 +984,7 @@ build_server_first_message(scram_state *state)
 				 state->client_nonce, state->server_nonce,
 				 state->salt, state->iterations);
 
-	return state->server_first_message;
+	return pstrdup(state->server_first_message);
 }
 
 

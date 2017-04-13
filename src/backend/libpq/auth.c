@@ -872,6 +872,8 @@ CheckSCRAMAuth(Port *port, char *shadow_pass, char **logdetail)
 					strlen(SCRAM_SHA256_NAME) + 1);
 
 	/*
+	 * Initialize the status tracker for message exchanges.
+	 *
 	 * If the user doesn't exist, or doesn't have a valid password, or it's
 	 * expired, we still go through the motions of SASL authentication, but
 	 * tell the authentication method that the authentication is "doomed".
@@ -880,8 +882,6 @@ CheckSCRAMAuth(Port *port, char *shadow_pass, char **logdetail)
 	 * This is because we don't want to reveal to an attacker what usernames
 	 * are valid, nor which users have a valid password.
 	 */
-
-	/* Initialize the status tracker for message exchanges */
 	scram_opaq = pg_be_scram_init(port->user_name, shadow_pass);
 
 	/*
@@ -918,7 +918,7 @@ CheckSCRAMAuth(Port *port, char *shadow_pass, char **logdetail)
 			return STATUS_ERROR;
 		}
 
-		elog(DEBUG4, "Processing received SASL token of length %d", buf.len);
+		elog(DEBUG4, "Processing received SASL response of length %d", buf.len);
 
 		/*
 		 * we pass 'logdetail' as NULL when doing a mock authentication,
@@ -931,14 +931,16 @@ CheckSCRAMAuth(Port *port, char *shadow_pass, char **logdetail)
 		/* input buffer no longer used */
 		pfree(buf.data);
 
-		if (outputlen > 0)
+		if (output)
 		{
 			/*
 			 * Negotiation generated data to be sent to the client.
 			 */
-			elog(DEBUG4, "sending SASL response token of length %u", outputlen);
+			elog(DEBUG4, "sending SASL challenge of length %u", outputlen);
 
 			sendAuthRequest(port, AUTH_REQ_SASL_CONT, output, outputlen);
+
+			pfree(output);
 		}
 	} while (result == SASL_EXCHANGE_CONTINUE);
 
