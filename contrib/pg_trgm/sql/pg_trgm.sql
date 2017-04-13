@@ -81,7 +81,9 @@ select * from test2 where t ~ 'z foo bar';
 select * from test2 where t ~ ' z foo bar';
 select * from test2 where t ~ '  z foo bar';
 select * from test2 where t ~ '  z foo';
+select * from test2 where t ~ 'qua(?!foo)';
 drop index test2_idx_gin;
+
 create index test2_idx_gist on test2 using gist (t gist_trgm_ops);
 set enable_seqscan=off;
 explain (costs off)
@@ -116,6 +118,7 @@ select * from test2 where t ~ 'z foo bar';
 select * from test2 where t ~ ' z foo bar';
 select * from test2 where t ~ '  z foo bar';
 select * from test2 where t ~ '  z foo';
+select * from test2 where t ~ 'qua(?!foo)';
 
 -- Check similarity threshold (bug #14202)
 
