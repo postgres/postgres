@@ -1501,7 +1501,7 @@ psql_completion(const char *text, int start, int end)
 	/* ALTER PUBLICATION <name> ...*/
 	else if (Matches3("ALTER","PUBLICATION",MatchAny))
 	{
-		COMPLETE_WITH_LIST6("WITH", "ADD TABLE", "SET TABLE", "DROP TABLE",
+		COMPLETE_WITH_LIST6("WITH (", "ADD TABLE", "SET TABLE", "DROP TABLE",
 							"OWNER TO", "RENAME TO");
 	}
 	/* ALTER PUBLICATION <name> .. WITH ( ... */
@@ -1513,9 +1513,16 @@ psql_completion(const char *text, int start, int end)
 	/* ALTER SUBSCRIPTION <name> ... */
 	else if (Matches3("ALTER","SUBSCRIPTION",MatchAny))
 	{
-		COMPLETE_WITH_LIST7("WITH", "CONNECTION", "SET PUBLICATION", "ENABLE",
-							"DISABLE", "OWNER TO", "RENAME TO");
+		COMPLETE_WITH_LIST8("WITH (", "CONNECTION", "SET PUBLICATION", "ENABLE",
+							"DISABLE", "OWNER TO", "RENAME TO", "REFRESH PUBLICATION WITH (");
 	}
+	/* ALTER SUBSCRIPTION <name> REFRESH PUBLICATION WITH ( ... */
+	else if (HeadMatches3("ALTER", "SUBSCRIPTION", MatchAny) &&
+			 TailMatches4("REFRESH", "PUBLICATION", "WITH", "("))
+	{
+		COMPLETE_WITH_LIST2("COPY DATA", "NOCOPY DATA");
+	}
+	/* ALTER SUBSCRIPTION <name> .. WITH ( ... */
 	else if (HeadMatches3("ALTER", "SUBSCRIPTION", MatchAny) && TailMatches2("WITH", "("))
 	{
 		COMPLETE_WITH_CONST("SLOT NAME");
@@ -2419,10 +2426,13 @@ psql_completion(const char *text, int start, int end)
 	{
 		/* complete with nothing here as this refers to remote publications */
 	}
+	else if (HeadMatches2("CREATE", "SUBSCRIPTION") && TailMatches2("PUBLICATION", MatchAny))
+		COMPLETE_WITH_CONST("WITH (");
 	/* Complete "CREATE SUBSCRIPTION <name> ...  WITH ( <opt>" */
 	else if (HeadMatches2("CREATE", "SUBSCRIPTION") && TailMatches2("WITH", "("))
-		COMPLETE_WITH_LIST5("ENABLED", "DISABLED", "CREATE SLOT",
-							"NOCREATE SLOT", "SLOT NAME");
+		COMPLETE_WITH_LIST8("ENABLED", "DISABLED", "CREATE SLOT",
+							"NOCREATE SLOT", "SLOT NAME", "COPY DATA", "NOCOPY DATA",
+							"NOCONNECT");
 
 /* CREATE TRIGGER --- is allowed inside CREATE SCHEMA, so use TailMatches */
 	/* complete CREATE TRIGGER <name> with BEFORE,AFTER,INSTEAD OF */
@@ -2680,6 +2690,10 @@ psql_completion(const char *text, int start, int end)
 	}
 	else if (Matches5("DROP", "RULE", MatchAny, "ON", MatchAny))
 		COMPLETE_WITH_LIST2("CASCADE", "RESTRICT");
+
+	/* DROP SUBSCRIPTION */
+	else if (Matches3("DROP", "SUBSCRIPTION", MatchAny))
+		COMPLETE_WITH_LIST2("DROP SLOT", "NODROP SLOT");
 
 /* EXECUTE */
 	else if (Matches1("EXECUTE"))
