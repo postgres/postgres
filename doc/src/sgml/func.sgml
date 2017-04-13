@@ -10525,7 +10525,7 @@ SELECT xpath_exists('/my:a/text()', '<my:a xmlns:my="http://example.com">test</m
     </indexterm>
 
 <synopsis>
-<function>xmltable</function>( <optional>XMLNAMESPACES(<replaceable>namespace uri</replaceable> AS <replaceable>namespace name</replaceable><optional>, ...</optional>)</optional>
+<function>xmltable</function>( <optional>XMLNAMESPACES(<replaceable>namespace uri</replaceable> AS <replaceable>namespace name</replaceable><optional>, ...</optional>), </optional>
           <replaceable>row_expression</replaceable> PASSING <optional>BY REF</optional> <replaceable>document_expression</replaceable> <optional>BY REF</optional>
           COLUMNS <replaceable>name</replaceable> { <replaceable>type</replaceable> <optional>PATH <replaceable>column_expression</replaceable></optional> <optional>DEFAULT <replaceable>default_expression</replaceable></optional> <optional>NOT NULL | NULL</optional>
                         | FOR ORDINALITY }
@@ -10708,6 +10708,36 @@ SELECT xmltable.*
        element        
 ----------------------
    Hello2a2   bbbCC  
+]]></screen>
+    </para>
+
+    <para>
+     The following example illustrates how
+     the <literal>XMLNAMESPACES</literal> clause can be used to specify
+     the default namespace, and a list of additional namespaces
+     used in the XML document as well as in the XPath expressions:
+
+  <screen><![CDATA[
+WITH xmldata(data) AS (VALUES ('
+<example xmlns="http://example.com/myns" xmlns:B="http://example.com/b">
+ <item foo="1" B:bar="2"/>
+ <item foo="3" B:bar="4"/>
+ <item foo="4" B:bar="5"/>
+</example>'::xml)
+)
+SELECT xmltable.*
+  FROM XMLTABLE(XMLNAMESPACES('http://example.com/myns' AS x,
+                              'http://example.com/b' AS "B"),
+             '/x:example/x:item'
+                PASSING (SELECT data FROM xmldata)
+                COLUMNS foo int PATH '@foo',
+                  bar int PATH '@B:bar');
+ foo | bar
+-----+-----
+   1 |   2
+   3 |   4
+   4 |   5
+(3 rows)
 ]]></screen>
     </para>
    </sect3>
