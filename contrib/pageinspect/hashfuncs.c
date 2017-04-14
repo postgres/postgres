@@ -184,7 +184,8 @@ hash_page_type(PG_FUNCTION_ARGS)
 	bytea	   *raw_page = PG_GETARG_BYTEA_P(0);
 	Page		page;
 	HashPageOpaque opaque;
-	char	   *type;
+	int			pagetype;
+	const char *type;
 
 	if (!superuser())
 		ereport(ERROR,
@@ -200,13 +201,14 @@ hash_page_type(PG_FUNCTION_ARGS)
 		opaque = (HashPageOpaque) PageGetSpecialPointer(page);
 
 		/* page type (flags) */
-		if (opaque->hasho_flag & LH_META_PAGE)
+		pagetype = opaque->hasho_flag & LH_PAGE_TYPE;
+		if (pagetype == LH_META_PAGE)
 			type = "metapage";
-		else if (opaque->hasho_flag & LH_OVERFLOW_PAGE)
+		else if (pagetype == LH_OVERFLOW_PAGE)
 			type = "overflow";
-		else if (opaque->hasho_flag & LH_BUCKET_PAGE)
+		else if (pagetype == LH_BUCKET_PAGE)
 			type = "bucket";
-		else if (opaque->hasho_flag & LH_BITMAP_PAGE)
+		else if (pagetype == LH_BITMAP_PAGE)
 			type = "bitmap";
 		else
 			type = "unused";

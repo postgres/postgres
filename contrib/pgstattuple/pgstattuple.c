@@ -453,7 +453,7 @@ pgstat_hash_page(pgstattuple_type *stat, Relation rel, BlockNumber blkno,
 		HashPageOpaque opaque;
 
 		opaque = (HashPageOpaque) PageGetSpecialPointer(page);
-		switch (opaque->hasho_flag)
+		switch (opaque->hasho_flag & LH_PAGE_TYPE)
 		{
 			case LH_UNUSED_PAGE:
 				stat->free_space += BLCKSZ;

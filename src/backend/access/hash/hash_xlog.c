@@ -1234,6 +1234,7 @@ hash_mask(char *pagedata, BlockNumber blkno)
 {
 	Page		page = (Page) pagedata;
 	HashPageOpaque opaque;
+	int			pagetype;
 
 	mask_page_lsn(page);
 
@@ -1242,15 +1243,16 @@ hash_mask(char *pagedata, BlockNumber blkno)
 
 	opaque = (HashPageOpaque) PageGetSpecialPointer(page);
 
-	if (opaque->hasho_flag & LH_UNUSED_PAGE)
+	pagetype = opaque->hasho_flag & LH_PAGE_TYPE;
+	if (pagetype == LH_UNUSED_PAGE)
 	{
 		/*
 		 * Mask everything on a UNUSED page.
 		 */
 		mask_page_content(page);
 	}
-	else if ((opaque->hasho_flag & LH_BUCKET_PAGE) ||
-			 (opaque->hasho_flag & LH_OVERFLOW_PAGE))
+	else if (pagetype == LH_BUCKET_PAGE ||
+			 pagetype == LH_OVERFLOW_PAGE)
 	{
 		/*
 		 * In hash bucket and overflow pages, it is possible to modify the

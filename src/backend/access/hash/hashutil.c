@@ -218,8 +218,8 @@ _hash_get_totalbuckets(uint32 splitpoint_phase)
 /*
  * _hash_checkpage -- sanity checks on the format of all hash pages
  *
- * If flags is not zero, it is a bitwise OR of the acceptable values of
- * hasho_flag.
+ * If flags is not zero, it is a bitwise OR of the acceptable page types
+ * (values of hasho_flag & LH_PAGE_TYPE).
  */
 void
 _hash_checkpage(Relation rel, Buffer buf, int flags)

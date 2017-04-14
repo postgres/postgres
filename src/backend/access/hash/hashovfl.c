@@ -168,7 +168,7 @@ _hash_addovflpage(Relation rel, Buffer metabuf, Buffer buf, bool retain_pin)
 		if (retain_pin)
 		{
 			/* pin will be retained only for the primary bucket page */
-			Assert(pageopaque->hasho_flag & LH_BUCKET_PAGE);
+			Assert((pageopaque->hasho_flag & LH_PAGE_TYPE) == LH_BUCKET_PAGE);
 			LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 		}
 		else

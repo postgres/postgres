@@ -41,13 +41,13 @@ typedef uint32 Bucket;
 /*
  * Special space for hash index pages.
  *
- * hasho_flag tells us which type of page we're looking at.  For
- * example, knowing overflow pages from bucket pages is necessary
- * information when you're deleting tuples from a page. If all the
- * tuples are deleted from an overflow page, the overflow is made
- * available to other buckets by calling _hash_freeovflpage(). If all
- * the tuples are deleted from a bucket page, no additional action is
- * necessary.
+ * hasho_flag's LH_PAGE_TYPE bits tell us which type of page we're looking at.
+ * Additional bits in the flag word are used for more transient purposes.
+ *
+ * To test a page's type, do (hasho_flag & LH_PAGE_TYPE) == LH_xxx_PAGE.
+ * However, we ensure that each used page type has a distinct bit so that
+ * we can OR together page types for uses such as the allowable-page-types
+ * argument of _hash_checkpage().
  */
 #define LH_UNUSED_PAGE			(0)
 #define LH_OVERFLOW_PAGE		(1 << 0)
@@ -60,7 +60,7 @@ typedef uint32 Bucket;
 #define LH_PAGE_HAS_DEAD_TUPLES	(1 << 7)
 
 #define LH_PAGE_TYPE \
-	(LH_OVERFLOW_PAGE|LH_BUCKET_PAGE|LH_BITMAP_PAGE|LH_META_PAGE)
+	(LH_OVERFLOW_PAGE | LH_BUCKET_PAGE | LH_BITMAP_PAGE | LH_META_PAGE)
 
 /*
  * In an overflow page, hasho_prevblkno stores the block number of the previous
@@ -78,16 +78,16 @@ typedef struct HashPageOpaqueData
 	BlockNumber hasho_prevblkno;	/* see above */
 	BlockNumber hasho_nextblkno;	/* see above */
 	Bucket		hasho_bucket;	/* bucket number this pg belongs to */
-	uint16		hasho_flag;		/* page type code, see above */
+	uint16		hasho_flag;		/* page type code + flag bits, see above */
 	uint16		hasho_page_id;	/* for identification of hash indexes */
 } HashPageOpaqueData;
 
 typedef HashPageOpaqueData *HashPageOpaque;
 
-#define H_NEEDS_SPLIT_CLEANUP(opaque)	((opaque)->hasho_flag & LH_BUCKET_NEEDS_SPLIT_CLEANUP)
-#define H_BUCKET_BEING_SPLIT(opaque)	((opaque)->hasho_flag & LH_BUCKET_BEING_SPLIT)
-#define H_BUCKET_BEING_POPULATED(opaque)	((opaque)->hasho_flag & LH_BUCKET_BEING_POPULATED)
-#define H_HAS_DEAD_TUPLES(opaque)		((opaque)->hasho_flag & LH_PAGE_HAS_DEAD_TUPLES)
+#define H_NEEDS_SPLIT_CLEANUP(opaque)	(((opaque)->hasho_flag & LH_BUCKET_NEEDS_SPLIT_CLEANUP) != 0)
+#define H_BUCKET_BEING_SPLIT(opaque)	(((opaque)->hasho_flag & LH_BUCKET_BEING_SPLIT) != 0)
+#define H_BUCKET_BEING_POPULATED(opaque)	(((opaque)->hasho_flag & LH_BUCKET_BEING_POPULATED) != 0)
+#define H_HAS_DEAD_TUPLES(opaque)		(((opaque)->hasho_flag & LH_PAGE_HAS_DEAD_TUPLES) != 0)
 
 /*
  * The page ID is for the convenience of pg_filedump and similar utilities,
