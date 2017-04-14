@@ -612,7 +612,7 @@ fetch_remote_table_info(char *nspname, char *relname,
 	while (tuplestore_gettupleslot(res->tuplestore, true, false, slot))
 	{
 		lrel->attnames[natt] =
-			pstrdup(TextDatumGetCString(slot_getattr(slot, 1, &isnull)));
+			TextDatumGetCString(slot_getattr(slot, 1, &isnull));
 		Assert(!isnull);
 		lrel->atttyps[natt] = DatumGetObjectId(slot_getattr(slot, 2, &isnull));
 		Assert(!isnull);

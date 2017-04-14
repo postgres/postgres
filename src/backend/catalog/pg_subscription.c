@@ -75,7 +75,7 @@ GetSubscription(Oid subid, bool missing_ok)
 							Anum_pg_subscription_subconninfo,
 							&isnull);
 	Assert(!isnull);
-	sub->conninfo = pstrdup(TextDatumGetCString(datum));
+	sub->conninfo = TextDatumGetCString(datum);
 
 	/* Get slotname */
 	datum = SysCacheGetAttr(SUBSCRIPTIONOID,
@@ -207,7 +207,7 @@ textarray_to_stringlist(ArrayType *textarray)
 		return NIL;
 
 	for (i = 0; i < nelems; i++)
-		res = lappend(res, makeString(pstrdup(TextDatumGetCString(elems[i]))));
+		res = lappend(res, makeString(TextDatumGetCString(elems[i])));
 
 	return res;
 }

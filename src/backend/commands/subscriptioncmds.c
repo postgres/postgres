@@ -767,7 +767,7 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 	datum = SysCacheGetAttr(SUBSCRIPTIONOID, tup,
 							Anum_pg_subscription_subconninfo, &isnull);
 	Assert(!isnull);
-	conninfo = pstrdup(TextDatumGetCString(datum));
+	conninfo = TextDatumGetCString(datum);
 
 	/* Get slotname */
 	datum = SysCacheGetAttr(SUBSCRIPTIONOID, tup,
