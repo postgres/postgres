@@ -18,6 +18,7 @@
 #include <signal.h>
 
 #include "access/htup_details.h"
+#include "access/xact.h"
 #include "bootstrap/bootstrap.h"
 #include "catalog/index.h"
 #include "catalog/pg_collation.h"
@@ -496,7 +497,9 @@ BootstrapModeMain(void)
 	/*
 	 * Process bootstrap input.
 	 */
+	StartTransactionCommand();
 	boot_yyparse();
+	CommitTransactionCommand();
 
 	/*
 	 * We should now know about all mapped relations, so it's okay to write
