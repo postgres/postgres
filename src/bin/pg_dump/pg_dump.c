@@ -3456,18 +3456,22 @@ dumpPublication(Archive *fout, PublicationInfo *pubinfo)
 {
 	PQExpBuffer delq;
 	PQExpBuffer query;
+	PQExpBuffer labelq;
 
 	if (!(pubinfo->dobj.dump & DUMP_COMPONENT_DEFINITION))
 		return;
 
 	delq = createPQExpBuffer();
 	query = createPQExpBuffer();
+	labelq = createPQExpBuffer();
 
 	appendPQExpBuffer(delq, "DROP PUBLICATION %s;\n",
 					  fmtId(pubinfo->dobj.name));
 
 	appendPQExpBuffer(query, "CREATE PUBLICATION %s",
 					  fmtId(pubinfo->dobj.name));
+
+	appendPQExpBuffer(labelq, "PUBLICATION %s", fmtId(pubinfo->dobj.name));
 
 	if (pubinfo->puballtables)
 		appendPQExpBufferStr(query, " FOR ALL TABLES");
@@ -3499,6 +3503,16 @@ dumpPublication(Archive *fout, PublicationInfo *pubinfo)
 				 query->data, delq->data, NULL,
 				 NULL, 0,
 				 NULL, NULL);
+
+	if (pubinfo->dobj.dump & DUMP_COMPONENT_COMMENT)
+		dumpComment(fout, labelq->data,
+					NULL, pubinfo->rolname,
+					pubinfo->dobj.catId, 0, pubinfo->dobj.dumpId);
+
+	if (pubinfo->dobj.dump & DUMP_COMPONENT_SECLABEL)
+		dumpSecLabel(fout, labelq->data,
+					 NULL, pubinfo->rolname,
+					 pubinfo->dobj.catId, 0, pubinfo->dobj.dumpId);
 
 	destroyPQExpBuffer(delq);
 	destroyPQExpBuffer(query);
@@ -3754,6 +3768,7 @@ dumpSubscription(Archive *fout, SubscriptionInfo *subinfo)
 {
 	PQExpBuffer delq;
 	PQExpBuffer query;
+	PQExpBuffer labelq;
 	PQExpBuffer publications;
 	char	  **pubnames = NULL;
 	int			npubnames = 0;
@@ -3764,6 +3779,7 @@ dumpSubscription(Archive *fout, SubscriptionInfo *subinfo)
 
 	delq = createPQExpBuffer();
 	query = createPQExpBuffer();
+	labelq = createPQExpBuffer();
 
 	appendPQExpBuffer(delq, "DROP SUBSCRIPTION %s;\n",
 					  fmtId(subinfo->dobj.name));
@@ -3796,6 +3812,8 @@ dumpSubscription(Archive *fout, SubscriptionInfo *subinfo)
 	appendStringLiteralAH(query, subinfo->subslotname, fout);
 	appendPQExpBufferStr(query, ");\n");
 
+	appendPQExpBuffer(labelq, "SUBSCRIPTION %s", fmtId(subinfo->dobj.name));
+
 	ArchiveEntry(fout, subinfo->dobj.catId, subinfo->dobj.dumpId,
 				 subinfo->dobj.name,
 				 NULL,
@@ -3805,6 +3823,16 @@ dumpSubscription(Archive *fout, SubscriptionInfo *subinfo)
 				 query->data, delq->data, NULL,
 				 NULL, 0,
 				 NULL, NULL);
+
+	if (subinfo->dobj.dump & DUMP_COMPONENT_COMMENT)
+		dumpComment(fout, labelq->data,
+					NULL, subinfo->rolname,
+					subinfo->dobj.catId, 0, subinfo->dobj.dumpId);
+
+	if (subinfo->dobj.dump & DUMP_COMPONENT_SECLABEL)
+		dumpSecLabel(fout, labelq->data,
+					 NULL, subinfo->rolname,
+					 subinfo->dobj.catId, 0, subinfo->dobj.dumpId);
 
 	destroyPQExpBuffer(publications);
 	if (pubnames)
