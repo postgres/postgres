@@ -462,6 +462,7 @@ apply_handle_commit(StringInfo s)
 	/* Process any tables that are being synchronized in parallel. */
 	process_syncing_tables(commit_data.end_lsn);
 
+	pgstat_report_stat(false);
 	pgstat_report_activity(STATE_IDLE, NULL);
 }
 

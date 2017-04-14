@@ -114,9 +114,15 @@ StringInfo	copybuf = NULL;
 static void pg_attribute_noreturn()
 finish_sync_worker(void)
 {
-	/* Commit any outstanding transaction. */
+	/*
+	 * Commit any outstanding transaction. This is the usual case, unless
+	 * there was nothing to do for the table.
+	 */
 	if (IsTransactionState())
+	{
 		CommitTransactionCommand();
+		pgstat_report_stat(false);
+	}
 
 	/* And flush all writes. */
 	XLogFlush(GetXLogWriteRecPtr());
