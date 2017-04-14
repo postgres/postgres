@@ -1,4 +1,4 @@
-<!-- doc/src/sggml/ref/drop_foreign_table.sgml -->
+<!-- doc/src/sgml/ref/drop_foreign_table.sgml -->
 
 <refentry id="SQL-DROPFOREIGNTABLE">
  <indexterm zone="sql-dropforeigntable">
