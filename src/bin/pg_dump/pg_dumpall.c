@@ -356,15 +356,6 @@ main(int argc, char *argv[])
 		exit_nicely(1);
 	}
 
-	if (no_role_passwords && binary_upgrade)
-	{
-		fprintf(stderr, _("%s: options --no-role-passwords and --binary-upgrade cannot be used together\n"),
-				progname);
-		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-				progname);
-		exit_nicely(1);
-	}
-
 	/*
 	 * If password values are not required in the dump, switch to
 	 * using pg_roles which is equally useful, just more likely
