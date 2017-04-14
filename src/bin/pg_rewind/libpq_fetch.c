@@ -489,7 +489,7 @@ libpq_executeFileMap(filemap_t *map)
 	 * temporary table. Now, actually fetch all of those ranges.
 	 */
 	sql =
-		"SELECT path, begin, \n"
+		"SELECT path, begin,\n"
 		"  pg_read_binary_file(path, begin, len, true) AS chunk\n"
 		"FROM fetchchunks\n";
 

@@ -506,20 +506,20 @@ sql_exec_searchtables(PGconn *conn, struct options * opts)
 	/* now build the query */
 	todo = psprintf(
 					"SELECT pg_catalog.pg_relation_filenode(c.oid) as \"Filenode\", relname as \"Table Name\" %s\n"
-					"FROM pg_catalog.pg_class c \n"
-		"	LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace \n"
+					"FROM pg_catalog.pg_class c\n"
+		"	LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n"
 					"	LEFT JOIN pg_catalog.pg_database d ON d.datname = pg_catalog.current_database(),\n"
-					"	pg_catalog.pg_tablespace t \n"
+					"	pg_catalog.pg_tablespace t\n"
 					"WHERE relkind IN (" CppAsString2(RELKIND_RELATION) ","
 					CppAsString2(RELKIND_MATVIEW) ","
 					CppAsString2(RELKIND_INDEX) ","
 					CppAsString2(RELKIND_SEQUENCE) ","
-					CppAsString2(RELKIND_TOASTVALUE) ") AND \n"
+					CppAsString2(RELKIND_TOASTVALUE) ") AND\n"
 					"		t.oid = CASE\n"
 			"			WHEN reltablespace <> 0 THEN reltablespace\n"
 					"			ELSE dattablespace\n"
-					"		END AND \n"
-					"  (%s) \n"
+					"		END AND\n"
+					"  (%s)\n"
 					"ORDER BY relname\n",
 					opts->extended ? addfields : "",
 					qualifiers);
