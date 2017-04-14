@@ -52,6 +52,7 @@ create table test2(t text COLLATE "C");
 insert into test2 values ('abcdef');
 insert into test2 values ('quark');
 insert into test2 values ('  z foo bar');
+insert into test2 values ('/123/-45/');
 create index test2_idx_gin on test2 using gin (t gin_trgm_ops);
 set enable_seqscan=off;
 explain (costs off)
@@ -87,6 +88,7 @@ select * from test2 where t ~ ' z foo bar';
 select * from test2 where t ~ '  z foo bar';
 select * from test2 where t ~ '  z foo';
 select * from test2 where t ~ 'qua(?!foo)';
+select * from test2 where t ~ '/\d+/-\d';
 drop index test2_idx_gin;
 
 create index test2_idx_gist on test2 using gist (t gist_trgm_ops);
@@ -124,6 +126,7 @@ select * from test2 where t ~ ' z foo bar';
 select * from test2 where t ~ '  z foo bar';
 select * from test2 where t ~ '  z foo';
 select * from test2 where t ~ 'qua(?!foo)';
+select * from test2 where t ~ '/\d+/-\d';
 
 -- Check similarity threshold (bug #14202)
 
