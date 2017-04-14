@@ -129,17 +129,13 @@ get_subscription_list(void)
 		 */
 		oldcxt = MemoryContextSwitchTo(resultcxt);
 
-		sub = (Subscription *) palloc(sizeof(Subscription));
+		sub = (Subscription *) palloc0(sizeof(Subscription));
 		sub->oid = HeapTupleGetOid(tup);
 		sub->dbid = subform->subdbid;
 		sub->owner = subform->subowner;
 		sub->enabled = subform->subenabled;
 		sub->name = pstrdup(NameStr(subform->subname));
-
 		/* We don't fill fields we are not interested in. */
-		sub->conninfo = NULL;
-		sub->slotname = NULL;
-		sub->publications = NIL;
 
 		res = lappend(res, sub);
 		MemoryContextSwitchTo(oldcxt);

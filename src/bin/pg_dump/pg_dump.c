@@ -3683,6 +3683,7 @@ getSubscriptions(Archive *fout)
 	int			i_rolname;
 	int			i_subconninfo;
 	int			i_subslotname;
+	int			i_subsynccommit;
 	int			i_subpublications;
 	int			i,
 				ntups;
@@ -3714,7 +3715,8 @@ getSubscriptions(Archive *fout)
 	appendPQExpBuffer(query,
 					  "SELECT s.tableoid, s.oid, s.subname,"
 					  "(%s s.subowner) AS rolname, "
-					  " s.subconninfo, s.subslotname, s.subpublications "
+					  " s.subconninfo, s.subslotname, s.subsynccommit, "
+					  " s.subpublications "
 					  "FROM pg_catalog.pg_subscription s "
 					  "WHERE s.subdbid = (SELECT oid FROM pg_catalog.pg_database"
 					  "                   WHERE datname = current_database())",
@@ -3729,6 +3731,7 @@ getSubscriptions(Archive *fout)
 	i_rolname = PQfnumber(res, "rolname");
 	i_subconninfo = PQfnumber(res, "subconninfo");
 	i_subslotname = PQfnumber(res, "subslotname");
+	i_subsynccommit = PQfnumber(res, "subsynccommit");
 	i_subpublications = PQfnumber(res, "subpublications");
 
 	subinfo = pg_malloc(ntups * sizeof(SubscriptionInfo));
@@ -3744,6 +3747,8 @@ getSubscriptions(Archive *fout)
 		subinfo[i].rolname = pg_strdup(PQgetvalue(res, i, i_rolname));
 		subinfo[i].subconninfo = pg_strdup(PQgetvalue(res, i, i_subconninfo));
 		subinfo[i].subslotname = pg_strdup(PQgetvalue(res, i, i_subslotname));
+		subinfo[i].subsynccommit =
+			pg_strdup(PQgetvalue(res, i, i_subsynccommit));
 		subinfo[i].subpublications =
 			pg_strdup(PQgetvalue(res, i, i_subpublications));
 
@@ -3810,6 +3815,10 @@ dumpSubscription(Archive *fout, SubscriptionInfo *subinfo)
 
 	appendPQExpBuffer(query, " PUBLICATION %s WITH (NOCONNECT, SLOT NAME = ", publications->data);
 	appendStringLiteralAH(query, subinfo->subslotname, fout);
+
+	if (strcmp(subinfo->subsynccommit, "off") != 0)
+		appendPQExpBuffer(query, ", SYNCHRONOUS_COMMIT = %s", fmtId(subinfo->subsynccommit));
+
 	appendPQExpBufferStr(query, ");\n");
 
 	appendPQExpBuffer(labelq, "SUBSCRIPTION %s", fmtId(subinfo->dobj.name));

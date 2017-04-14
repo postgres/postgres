@@ -46,10 +46,10 @@ CREATE SUBSCRIPTION testsub2 CONNECTION 'dbname=doesnotexist' PUBLICATION foo WI
 ERROR:  must be superuser to create subscriptions
 SET SESSION AUTHORIZATION 'regress_subscription_user';
 \dRs+
-                               List of subscriptions
-  Name   |           Owner           | Enabled | Publication |      Conninfo       
----------+---------------------------+---------+-------------+---------------------
- testsub | regress_subscription_user | f       | {testpub}   | dbname=doesnotexist
+                                         List of subscriptions
+  Name   |           Owner           | Enabled | Publication | Synchronous commit |      Conninfo       
+---------+---------------------------+---------+-------------+--------------------+---------------------
+ testsub | regress_subscription_user | f       | {testpub}   | off                | dbname=doesnotexist
 (1 row)
 
 ALTER SUBSCRIPTION testsub SET PUBLICATION testpub2, testpub3 NOREFRESH;
@@ -59,10 +59,10 @@ ALTER SUBSCRIPTION testsub WITH (SLOT NAME = 'newname');
 ALTER SUBSCRIPTION doesnotexist CONNECTION 'dbname=doesnotexist2';
 ERROR:  subscription "doesnotexist" does not exist
 \dRs+
-                                   List of subscriptions
-  Name   |           Owner           | Enabled |     Publication     |       Conninfo       
----------+---------------------------+---------+---------------------+----------------------
- testsub | regress_subscription_user | f       | {testpub2,testpub3} | dbname=doesnotexist2
+                                              List of subscriptions
+  Name   |           Owner           | Enabled |     Publication     | Synchronous commit |       Conninfo       
+---------+---------------------------+---------+---------------------+--------------------+----------------------
+ testsub | regress_subscription_user | f       | {testpub2,testpub3} | off                | dbname=doesnotexist2
 (1 row)
 
 BEGIN;
@@ -89,11 +89,15 @@ ALTER SUBSCRIPTION testsub RENAME TO testsub_dummy;
 ERROR:  must be owner of subscription testsub
 RESET ROLE;
 ALTER SUBSCRIPTION testsub RENAME TO testsub_foo;
-\dRs
-                          List of subscriptions
-    Name     |           Owner           | Enabled |     Publication     
--------------+---------------------------+---------+---------------------
- testsub_foo | regress_subscription_user | f       | {testpub2,testpub3}
+ALTER SUBSCRIPTION testsub_foo WITH (SYNCHRONOUS_COMMIT = local);
+ALTER SUBSCRIPTION testsub_foo WITH (SYNCHRONOUS_COMMIT = foobar);
+ERROR:  invalid value for parameter "synchronous_commit": "foobar"
+HINT:  Available values: local, remote_write, remote_apply, on, off.
+\dRs+
+                                                List of subscriptions
+    Name     |           Owner           | Enabled |     Publication     | Synchronous commit |       Conninfo       
+-------------+---------------------------+---------+---------------------+--------------------+----------------------
+ testsub_foo | regress_subscription_user | f       | {testpub2,testpub3} | local              | dbname=doesnotexist2
 (1 row)
 
 -- rename back to keep the rest simple

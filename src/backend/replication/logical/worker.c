@@ -1416,6 +1416,10 @@ reread_subscription(void)
 
 	MemoryContextSwitchTo(oldctx);
 
+	/* Change synchronous commit according to the user's wishes */
+	SetConfigOption("synchronous_commit", MySubscription->synccommit,
+					PGC_BACKEND, PGC_S_OVERRIDE);
+
 	if (started_tx)
 		CommitTransactionCommand();
 
@@ -1484,6 +1488,10 @@ ApplyWorkerMain(Datum main_arg)
 	MySubscription = GetSubscription(MyLogicalRepWorker->subid, false);
 	MySubscriptionValid = true;
 	MemoryContextSwitchTo(oldctx);
+
+	/* Setup synchronous commit according to the user's wishes */
+	SetConfigOption("synchronous_commit", MySubscription->synccommit,
+					PGC_BACKEND, PGC_S_OVERRIDE);
 
 	if (!MySubscription->enabled)
 	{

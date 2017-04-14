@@ -32,6 +32,7 @@ CREATE SUBSCRIPTION <replaceable class="PARAMETER">subscription_name</replaceabl
     | CREATE SLOT | NOCREATE SLOT
     | SLOT NAME = <replaceable class="PARAMETER">slot_name</replaceable>
     | COPY DATA | NOCOPY DATA
+    | SYNCHRONOUS_COMMIT = <replaceable class="PARAMETER">synchronous_commit</replaceable>
     | NOCONNECT
 </synopsis>
  </refsynopsisdiv>
@@ -143,6 +144,36 @@ CREATE SUBSCRIPTION <replaceable class="PARAMETER">subscription_name</replaceabl
       Specifies if the existing data in the publications that are being
       subscribed to should be copied once the replication starts.
       <literal>COPY DATA</literal> is the default.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>SYNCHRONOUS_COMMIT = <replaceable class="PARAMETER">synchronous_commit</replaceable></literal></term>
+    <listitem>
+     <para>
+      The value of this parameter overrides the
+      <xref linkend="guc-synchronous-commit"> setting.  The default value is
+      <literal>off</literal>.
+     </para>
+
+     <para>
+      It is safe to use <literal>off</literal> for logical replication: If the
+      subscriber loses transactions because of missing synchronization, the
+      data will be resent from the publisher.
+     </para>
+
+     <para>
+      A different setting might be appropriate when doing synchronous logical
+      replication.  The logical replication workers report the positions of
+      writes and flushes to the publisher, and when using synchronous
+      replication, the publisher will wait for the actual flush.  This means
+      that setting <literal>SYNCHRONOUS_COMMIT</literal> for the subscriber
+      to <literal>off</literal> when the subscription is used for synchronous
+      replication might increase the latency for <command>COMMIT</command> on
+      the publisher.  In this scenario, it can be advantageous to set
+      <literal>SYNCHRONOUS_COMMIT</literal> to <literal>local</literal> or
+      higher.
      </para>
     </listitem>
    </varlistentry>

@@ -43,7 +43,7 @@ CATALOG(pg_subscription,6100) BKI_SHARED_RELATION BKI_ROWTYPE_OID(6101) BKI_SCHE
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
 	text		subconninfo;	/* Connection string to the publisher */
 	NameData	subslotname;	/* Slot name on publisher */
-
+	text		subsynccommit;	/* Synchronous commit setting for worker */
 	text		subpublications[1];	/* List of publications subscribed to */
 #endif
 } FormData_pg_subscription;
@@ -54,14 +54,15 @@ typedef FormData_pg_subscription *Form_pg_subscription;
  *		compiler constants for pg_subscription
  * ----------------
  */
-#define Natts_pg_subscription					7
+#define Natts_pg_subscription					8
 #define Anum_pg_subscription_subdbid			1
 #define Anum_pg_subscription_subname			2
 #define Anum_pg_subscription_subowner			3
 #define Anum_pg_subscription_subenabled			4
 #define Anum_pg_subscription_subconninfo		5
 #define Anum_pg_subscription_subslotname		6
-#define Anum_pg_subscription_subpublications	7
+#define Anum_pg_subscription_subsynccommit		7
+#define Anum_pg_subscription_subpublications	8
 
 
 typedef struct Subscription
@@ -73,6 +74,7 @@ typedef struct Subscription
 	bool	enabled;		/* Indicates if the subscription is enabled */
 	char   *conninfo;		/* Connection string to the publisher */
 	char   *slotname;		/* Name of the replication slot */
+	char   *synccommit;		/* Synchronous commit setting for worker */
 	List   *publications;	/* List of publication names to subscribe to */
 } Subscription;
 

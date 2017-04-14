@@ -616,6 +616,7 @@ typedef struct _SubscriptionInfo
 	char	   *rolname;
 	char	   *subconninfo;
 	char	   *subslotname;
+	char	   *subsynccommit;
 	char	   *subpublications;
 } SubscriptionInfo;
 

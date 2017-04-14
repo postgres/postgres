@@ -85,6 +85,14 @@ GetSubscription(Oid subid, bool missing_ok)
 	Assert(!isnull);
 	sub->slotname = pstrdup(NameStr(*DatumGetName(datum)));
 
+	/* Get synccommit */
+	datum = SysCacheGetAttr(SUBSCRIPTIONOID,
+							tup,
+							Anum_pg_subscription_subsynccommit,
+							&isnull);
+	Assert(!isnull);
+	sub->synccommit = TextDatumGetCString(datum);
+
 	/* Get publications */
 	datum = SysCacheGetAttr(SUBSCRIPTIONOID,
 							tup,

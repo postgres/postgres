@@ -6531,6 +6531,16 @@
      </row>
 
      <row>
+      <entry><structfield>subsynccommit</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>
+       Contains the value of the <varname>synchronous_commit</varname>
+       setting for the subscription workers.
+      </entry>
+     </row>
+
+     <row>
       <entry><structfield>subconninfo</structfield></entry>
       <entry><type>text</type></entry>
       <entry></entry>
