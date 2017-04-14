@@ -587,7 +587,7 @@ ExecMergeTupleDump(MergeJoinState *mergestate)
 	ExecMergeTupleDumpInner(mergestate);
 	ExecMergeTupleDumpMarked(mergestate);
 
-	printf("******** \n");
+	printf("********\n");
 }
 #endif
 

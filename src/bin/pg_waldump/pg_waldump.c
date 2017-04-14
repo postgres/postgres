@@ -683,7 +683,7 @@ usage(void)
 	printf(_("%s decodes and displays PostgreSQL transaction logs for debugging.\n\n"),
 		   progname);
 	printf(_("Usage:\n"));
-	printf(_("  %s [OPTION]... [STARTSEG [ENDSEG]] \n"), progname);
+	printf(_("  %s [OPTION]... [STARTSEG [ENDSEG]]\n"), progname);
 	printf(_("\nOptions:\n"));
 	printf(_("  -b, --bkp-details      output detailed information about backup blocks\n"));
 	printf(_("  -e, --end=RECPTR       stop reading at log position RECPTR\n"));
