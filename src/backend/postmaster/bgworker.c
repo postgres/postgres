@@ -95,23 +95,24 @@ struct BackgroundWorkerHandle
 static BackgroundWorkerArray *BackgroundWorkerData;
 
 /*
- * List of internal background workers. These are used for mapping the
- * function name to actual function when building with EXEC_BACKEND and also
- * to allow these to be loaded outside of shared_preload_libraries.
+ * List of internal background worker entry points.  We need this for
+ * reasons explained in LookupBackgroundWorkerFunction(), below.
  */
-typedef struct InternalBGWorkerMain
+static const struct
 {
-	char			   *bgw_function_name;
-	bgworker_main_type	bgw_main;
-} InternalBGWorkerMain;
+	const char *fn_name;
+	bgworker_main_type fn_addr;
+}	InternalBGWorkers[] =
 
-static const InternalBGWorkerMain InternalBGWorkers[] = {
-	{"ParallelWorkerMain", ParallelWorkerMain},
-	/* Dummy entry marking end of the array. */
-	{NULL, NULL}
+{
+	{
+		"ParallelWorkerMain", ParallelWorkerMain
+	}
 };
 
-static bgworker_main_type GetInternalBgWorkerMain(BackgroundWorker *worker);
+/* Private functions. */
+static bgworker_main_type LookupBackgroundWorkerFunction(char *libraryname, char *funcname);
+
 
 /*
  * Calculate shared memory needed.
@@ -715,27 +716,18 @@ StartBackgroundWorker(void)
 #endif
 	}
 
-	/* For internal workers set the entry point to known function address. */
-	entrypt = GetInternalBgWorkerMain(worker);
-
 	/*
-	 * Otherwise, if bgw_main is set, we use that value as the initial
-	 * entrypoint. This does not work well EXEC_BACKEND outside Windows but
-	 * we keep the logic for backwards compatibility. In other cases use
-	 * the entry point specified by library name (which will be loaded, if
-	 * necessary) and a function name (which will be looked up in the named
-	 * library).
+	 * If bgw_main is set, we use that value as the entry point function.
+	 * Passing function addresses across processes is unreliable on many
+	 * platforms, but we'll leave the option in place in 9.x for backwards
+	 * compatibility.  Otherwise, look up the entry point function, loading
+	 * its library if necessary.
 	 */
-	if (entrypt == NULL)
-	{
-		if (worker->bgw_main != NULL)
-			entrypt = worker->bgw_main;
-		else
-			entrypt = (bgworker_main_type)
-				load_external_function(worker->bgw_library_name,
-									   worker->bgw_function_name,
-									   true, NULL);
-	}
+	if (worker->bgw_main != NULL)
+		entrypt = worker->bgw_main;
+	else
+		entrypt = LookupBackgroundWorkerFunction(worker->bgw_library_name,
+												 worker->bgw_function_name);
 
 	/*
 	 * Note that in normal processes, we would call InitPostgres here.  For a
@@ -1077,26 +1069,45 @@ TerminateBackgroundWorker(BackgroundWorkerHandle *handle)
 }
 
 /*
- * Search the known internal worker array and return its main function
- * pointer if found.
+ * Look up (and possibly load) a bgworker entry point function.
  *
- * Returns NULL if not known internal worker.
+ * For functions contained in the core code, we use library name "postgres"
+ * and consult the InternalBGWorkers array.  External functions are
+ * looked up, and loaded if necessary, using load_external_function().
+ *
+ * The point of this is to pass function names as strings across process
+ * boundaries.  We can't pass actual function addresses because of the
+ * possibility that the function has been loaded at a different address
+ * in a different process.  This is obviously a hazard for functions in
+ * loadable libraries, but it can happen even for functions in the core code
+ * on platforms using EXEC_BACKEND (e.g., Windows).
+ *
+ * At some point it might be worthwhile to get rid of InternalBGWorkers[]
+ * in favor of applying load_external_function() for core functions too;
+ * but that raises portability issues that are not worth addressing now.
  */
 static bgworker_main_type
-GetInternalBgWorkerMain(BackgroundWorker *worker)
+LookupBackgroundWorkerFunction(char *libraryname, char *funcname)
 {
-	int i;
-
-	/* Internal workers always have to use postgres as library name. */
-	if (strncmp(worker->bgw_library_name, "postgres", BGW_MAXLEN) != 0)
-		return NULL;
-
-	for (i = 0; InternalBGWorkers[i].bgw_function_name; i++)
+	/*
+	 * If the function is to be loaded from postgres itself, search the
+	 * InternalBGWorkers array.
+	 */
+	if (strcmp(libraryname, "postgres") == 0)
 	{
-		if (strncmp(InternalBGWorkers[i].bgw_function_name,
-					worker->bgw_function_name, BGW_MAXLEN) == 0)
-			return InternalBGWorkers[i].bgw_main;
+		int			i;
+
+		for (i = 0; i < lengthof(InternalBGWorkers); i++)
+		{
+			if (strcmp(InternalBGWorkers[i].fn_name, funcname) == 0)
+				return InternalBGWorkers[i].fn_addr;
+		}
+
+		/* We can only reach this by programming error. */
+		elog(ERROR, "internal function \"%s\" not found", funcname);
 	}
 
-	return NULL;
+	/* Otherwise load from external library. */
+	return (bgworker_main_type)
+		load_external_function(libraryname, funcname, true, NULL);
 }
