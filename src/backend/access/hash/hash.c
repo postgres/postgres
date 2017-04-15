@@ -897,7 +897,7 @@ hashbucketcleanup(Relation rel, Bucket cur_bucket, Buffer bucket_buf,
 			 * flag.
 			 */
 			if (tuples_removed && *tuples_removed > 0 &&
-				opaque->hasho_flag & LH_PAGE_HAS_DEAD_TUPLES)
+				H_HAS_DEAD_TUPLES(opaque))
 			{
 				opaque->hasho_flag &= ~LH_PAGE_HAS_DEAD_TUPLES;
 				clear_dead_marking = true;
