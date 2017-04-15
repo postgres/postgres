@@ -34,8 +34,16 @@ command_fails(
 	'role names cannot begin with "pg_"');
 
 mkdir $datadir;
-command_ok([ 'initdb', '-N', '-T', 'german', '-X', $xlogdir, $datadir ],
-	'successful creation');
 
+# make sure we run one successful test without a TZ setting so we test
+# initdb's time zone setting code
+{
+	# delete local only works from perl 5.12, so use the older way to do this
+	local (%ENV) = %ENV;
+	delete $ENV{TZ};
+
+	command_ok([ 'initdb', '-N', '-T', 'german', '-X', $xlogdir, $datadir ],
+		'successful creation');
+}
 command_ok([ 'initdb', '-S', $datadir ], 'sync only');
 command_fails([ 'initdb', $datadir ], 'existing data directory');
