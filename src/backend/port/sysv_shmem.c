@@ -102,7 +102,27 @@ static void *
 InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size)
 {
 	IpcMemoryId shmid;
+	void	   *requestedAddress = NULL;
 	void	   *memAddress;
+
+	/*
+	 * Normally we just pass requestedAddress = NULL to shmat(), allowing the
+	 * system to choose where the segment gets mapped.  But in an EXEC_BACKEND
+	 * build, it's possible for whatever is chosen in the postmaster to not
+	 * work for backends, due to variations in address space layout.  As a
+	 * rather klugy workaround, allow the user to specify the address to use
+	 * via setting the environment variable PG_SHMEM_ADDR.  (If this were of
+	 * interest for anything except debugging, we'd probably create a cleaner
+	 * and better-documented way to set it, such as a GUC.)
+	 */
+#ifdef EXEC_BACKEND
+	{
+		char	   *pg_shmem_addr = getenv("PG_SHMEM_ADDR");
+
+		if (pg_shmem_addr)
+			requestedAddress = (void *) strtoul(pg_shmem_addr, NULL, 0);
+	}
+#endif
 
 	shmid = shmget(memKey, size, IPC_CREAT | IPC_EXCL | IPCProtection);
 
@@ -203,10 +223,11 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size)
 	on_shmem_exit(IpcMemoryDelete, Int32GetDatum(shmid));
 
 	/* OK, should be able to attach to the segment */
-	memAddress = shmat(shmid, NULL, PG_SHMAT_FLAGS);
+	memAddress = shmat(shmid, requestedAddress, PG_SHMAT_FLAGS);
 
 	if (memAddress == (void *) -1)
-		elog(FATAL, "shmat(id=%d) failed: %m", shmid);
+		elog(FATAL, "shmat(id=%d, addr=%p, flags=0x%x) failed: %m",
+			 shmid, requestedAddress, PG_SHMAT_FLAGS);
 
 	/* Register on-exit routine to detach new segment before deleting */
 	on_shmem_exit(IpcMemoryDetach, PointerGetDatum(memAddress));
