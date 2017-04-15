@@ -28,7 +28,7 @@
 #include <openssl/rand.h>
 #endif
 #ifdef WIN32
-#include <Wincrypt.h>
+#include <wincrypt.h>
 #endif
 
 #ifdef WIN32
