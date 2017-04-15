@@ -198,7 +198,7 @@ pattern looks like this:
 
 	EnterParallelMode();		/* prohibit unsafe state changes */
 
-	pcxt = CreateParallelContext(entrypoint, nworkers);
+	pcxt = CreateParallelContext("library_name", "function_name", nworkers);
 
 	/* Allow space for application-specific data here. */
 	shm_toc_estimate_chunk(&pcxt->estimator, size);

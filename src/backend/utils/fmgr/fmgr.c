@@ -381,7 +381,7 @@ fmgr_info_other_lang(Oid functionId, FmgrInfo *finfo, HeapTuple procedureTuple)
  * pg_proc.
  */
 const Pg_finfo_record *
-fetch_finfo_record(void *filehandle, char *funcname)
+fetch_finfo_record(void *filehandle, const char *funcname)
 {
 	char	   *infofuncname;
 	PGFInfoFunction infofunc;
