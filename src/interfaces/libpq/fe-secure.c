@@ -58,7 +58,7 @@
 #ifdef USE_SSL
 
 #include <openssl/ssl.h>
-#if (SSLEAY_VERSION_NUMBER >= 0x00907000L)
+#if (OPENSSL_VERSION_NUMBER >= 0x00907000L)
 #include <openssl/conf.h>
 #endif
 #ifdef USE_SSL_ENGINE
@@ -835,9 +835,13 @@ verify_peer_name_matches_certificate(PGconn *conn)
 	return result;
 }
 
-#ifdef ENABLE_THREAD_SAFETY
+#if defined(ENABLE_THREAD_SAFETY) && defined(HAVE_CRYPTO_LOCK)
 /*
- *	Callback functions for OpenSSL internal locking
+ *	Callback functions for OpenSSL internal locking.  (OpenSSL 1.1.0
+ *	does its own locking, and doesn't need these anymore.  The
+ *	CRYPTO_lock() function was removed in 1.1.0, when the callbacks
+ *	were made obsolete, so we assume that if CRYPTO_lock() exists,
+ *	the callbacks are still required.)
  */
 
 static unsigned long
@@ -867,7 +871,7 @@ pq_lockingcallback(int mode, int n, const char *file, int line)
 			PGTHREAD_ERROR("failed to unlock mutex");
 	}
 }
-#endif   /* ENABLE_THREAD_SAFETY */
+#endif   /* ENABLE_THREAD_SAFETY && HAVE_CRYPTO_LOCK */
 
 /*
  * Initialize SSL library.
@@ -905,6 +909,7 @@ init_ssl_system(PGconn *conn)
 	if (pthread_mutex_lock(&ssl_config_mutex))
 		return -1;
 
+#ifdef HAVE_CRYPTO_LOCK
 	if (pq_init_crypto_lib)
 	{
 		/*
@@ -940,17 +945,22 @@ init_ssl_system(PGconn *conn)
 			CRYPTO_set_locking_callback(pq_lockingcallback);
 		}
 	}
+#endif   /* HAVE_CRYPTO_LOCK */
 #endif   /* ENABLE_THREAD_SAFETY */
 
 	if (!ssl_lib_initialized)
 	{
 		if (pq_init_ssl_lib)
 		{
-#if SSLEAY_VERSION_NUMBER >= 0x00907000L
+#ifdef HAVE_OPENSSL_INIT_SSL
+			OPENSSL_init_ssl(OPENSSL_INIT_LOAD_CONFIG, NULL);
+#else
+#if OPENSSL_VERSION_NUMBER >= 0x00907000L
 			OPENSSL_config(NULL);
 #endif
 			SSL_library_init();
 			SSL_load_error_strings();
+#endif
 		}
 		ssl_lib_initialized = true;
 	}
@@ -970,12 +980,13 @@ init_ssl_system(PGconn *conn)
  *	if we had any.)
  *
  *	Callbacks are only set when we're compiled in threadsafe mode, so
- *	we only need to remove them in this case.
+ *	we only need to remove them in this case. They are also not needed
+ *	with OpenSSL 1.1.0 anymore.
  */
 static void
 destroy_ssl_system(void)
 {
-#ifdef ENABLE_THREAD_SAFETY
+#if defined(ENABLE_THREAD_SAFETY) && defined(HAVE_CRYPTO_LOCK)
 	/* Mutex is created in initialize_ssl_system() */
 	if (pthread_mutex_lock(&ssl_config_mutex))
 		return;

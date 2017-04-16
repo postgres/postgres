@@ -620,15 +620,6 @@ px_find_cipher(const char *name, PX_Cipher **res)
  * Randomness provider
  */
 
-/*
- * Use always strong randomness.
- */
-int
-px_get_pseudo_random_bytes(uint8 *dst, unsigned count)
-{
-	return px_get_random_bytes(dst, count);
-}
-
 static time_t seed_time = 0;
 static time_t check_time = 0;
 
