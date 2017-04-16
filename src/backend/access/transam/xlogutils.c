@@ -780,7 +780,7 @@ XLogRead(char *buf, TimeLineID tli, XLogRecPtr startptr, Size count)
  *
  * We can't just check the timeline when we read a page on a different segment
  * to the last page. We could've received a timeline switch from a cascading
- * upstream, so the current segment ends apruptly (possibly getting renamed to
+ * upstream, so the current segment ends abruptly (possibly getting renamed to
  * .partial) and we have to switch to a new one.  Even in the middle of reading
  * a page we could have to dump the cached page and switch to a new TLI.
  *
