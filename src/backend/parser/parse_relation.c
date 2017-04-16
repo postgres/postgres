@@ -1986,11 +1986,12 @@ addRangeTableEntryForENR(ParseState *pstate,
 	RangeTblEntry *rte = makeNode(RangeTblEntry);
 	Alias	   *alias = rv->alias;
 	char	   *refname = alias ? alias->aliasname : rv->relname;
-	EphemeralNamedRelationMetadata enrmd =
-	  get_visible_ENR(pstate, rv->relname);
+	EphemeralNamedRelationMetadata enrmd;
 	TupleDesc	tupdesc;
 	int			attno;
 
+	Assert(pstate != NULL);
+	enrmd = get_visible_ENR(pstate, rv->relname);
 	Assert(enrmd != NULL);
 
 	switch (enrmd->enrtype)
@@ -2000,7 +2001,7 @@ addRangeTableEntryForENR(ParseState *pstate,
 			break;
 
 		default:
-			elog(ERROR, "unexpected enrtype of %i", enrmd->enrtype);
+			elog(ERROR, "unexpected enrtype: %d", enrmd->enrtype);
 			return NULL;  /* for fussy compilers */
 	}
 
@@ -2056,8 +2057,7 @@ addRangeTableEntryForENR(ParseState *pstate,
 	 * Add completed RTE to pstate's range table list, but not to join list
 	 * nor namespace --- caller must do that if appropriate.
 	 */
-	if (pstate != NULL)
-		pstate->p_rtable = lappend(pstate->p_rtable, rte);
+	pstate->p_rtable = lappend(pstate->p_rtable, rte);
 
 	return rte;
 }
