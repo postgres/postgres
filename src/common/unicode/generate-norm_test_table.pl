@@ -18,9 +18,9 @@ my $output_file = $ARGV[1];
 my $output_base = basename($output_file);
 
 # Open the input and output files
-open my $INPUT, $input_file
+open my $INPUT, '<', $input_file
   or die "Could not open input file $input_file: $!";
-open my $OUTPUT, "> $output_file"
+open my $OUTPUT, '>', $output_file
   or die "Could not open output file $output_file: $!\n";
 
 # Print header of output file.

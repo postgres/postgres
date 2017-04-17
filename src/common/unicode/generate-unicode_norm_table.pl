@@ -16,7 +16,7 @@ my $FH;
 
 # Read list of codes that should be excluded from re-composition.
 my @composition_exclusion_codes = ();
-open($FH, "CompositionExclusions.txt")
+open($FH, '<', "CompositionExclusions.txt")
   or die "Could not open CompositionExclusions.txt: $!.";
 while (my $line = <$FH>)
 {
@@ -32,7 +32,7 @@ close $FH;
 # and character decomposition mapping
 my @characters     = ();
 my %character_hash = ();
-open($FH, "UnicodeData.txt") or die "Could not open UnicodeData.txt: $!.";
+open($FH, '<', "UnicodeData.txt") or die "Could not open UnicodeData.txt: $!.";
 while (my $line = <$FH>)
 {
 	# Split the line wanted and get the fields needed:
@@ -63,7 +63,7 @@ close $FH;
 my $num_characters = scalar @characters;
 
 # Start writing out the output file
-open my $OUTPUT, "> $output_file"
+open my $OUTPUT, '>', $output_file
   or die "Could not open output file $output_file: $!\n";
 
 print $OUTPUT <<HEADER;
