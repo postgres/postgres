@@ -47,7 +47,7 @@
 static Plan *create_plan_recurse(PlannerInfo *root, Path *best_path);
 static Plan *create_scan_plan(PlannerInfo *root, Path *best_path);
 static List *build_path_tlist(PlannerInfo *root, Path *path);
-static bool use_physical_tlist(PlannerInfo *root, RelOptInfo *rel);
+static bool use_physical_tlist(PlannerInfo *root, Path *path);
 static void disuse_physical_tlist(PlannerInfo *root, Plan *plan, Path *path);
 static Plan *create_gating_plan(PlannerInfo *root, Plan *plan, List *quals);
 static Plan *create_join_plan(PlannerInfo *root, JoinPath *best_path);
@@ -303,7 +303,7 @@ create_scan_plan(PlannerInfo *root, Path *best_path)
 	 * planner.c may replace the tlist we generate here, forcing projection to
 	 * occur.)
 	 */
-	if (use_physical_tlist(root, rel))
+	if (use_physical_tlist(root, best_path))
 	{
 		if (best_path->pathtype == T_IndexOnlyScan)
 		{
@@ -493,8 +493,9 @@ build_path_tlist(PlannerInfo *root, Path *path)
  *		rather than only those Vars actually referenced.
  */
 static bool
-use_physical_tlist(PlannerInfo *root, RelOptInfo *rel)
+use_physical_tlist(PlannerInfo *root, Path *path)
 {
+	RelOptInfo *rel = path->parent;
 	int			i;
 	ListCell   *lc;
 
@@ -514,6 +515,13 @@ use_physical_tlist(PlannerInfo *root, RelOptInfo *rel)
 	 * doesn't project).
 	 */
 	if (rel->reloptkind != RELOPT_BASEREL)
+		return false;
+
+	/*
+	 * Also, don't do it to a CustomPath; the premise that we're extracting
+	 * columns from a simple physical tuple is unlikely to hold for those.
+	 */
+	if (IsA(path, CustomPath))
 		return false;
 
 	/*
