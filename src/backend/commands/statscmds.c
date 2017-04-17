@@ -50,13 +50,13 @@ CreateStatistics(CreateStatsStmt *stmt)
 	int			numcols = 0;
 	ObjectAddress address = InvalidObjectAddress;
 	char	   *namestr;
-	NameData	staname;
+	NameData	stxname;
 	Oid			statoid;
 	Oid			namespaceId;
 	HeapTuple	htup;
 	Datum		values[Natts_pg_statistic_ext];
 	bool		nulls[Natts_pg_statistic_ext];
-	int2vector *stakeys;
+	int2vector *stxkeys;
 	Relation	statrel;
 	Relation	rel;
 	Oid			relid;
@@ -64,7 +64,7 @@ CreateStatistics(CreateStatsStmt *stmt)
 				childobject;
 	Datum		types[2];		/* one for each possible type of statistics */
 	int			ntypes;
-	ArrayType  *staenabled;
+	ArrayType  *stxkind;
 	bool		build_ndistinct;
 	bool		build_dependencies;
 	bool		requested_type = false;
@@ -73,13 +73,13 @@ CreateStatistics(CreateStatsStmt *stmt)
 
 	/* resolve the pieces of the name (namespace etc.) */
 	namespaceId = QualifiedNameGetCreationNamespace(stmt->defnames, &namestr);
-	namestrcpy(&staname, namestr);
+	namestrcpy(&stxname, namestr);
 
 	/*
 	 * If if_not_exists was given and the statistics already exists, bail out.
 	 */
 	if (SearchSysCacheExists2(STATEXTNAMENSP,
-							  PointerGetDatum(&staname),
+							  PointerGetDatum(&stxname),
 							  ObjectIdGetDatum(namespaceId)))
 	{
 		if (stmt->if_not_exists)
@@ -184,7 +184,7 @@ CreateStatistics(CreateStatsStmt *stmt)
 					(errcode(ERRCODE_UNDEFINED_COLUMN),
 				  errmsg("duplicate column name in statistics definition")));
 
-	stakeys = buildint2vector(attnums, numcols);
+	stxkeys = buildint2vector(attnums, numcols);
 
 	/*
 	 * Parse the statistics options.  Currently only statistics types are
@@ -226,23 +226,23 @@ CreateStatistics(CreateStatsStmt *stmt)
 	if (build_dependencies)
 		types[ntypes++] = CharGetDatum(STATS_EXT_DEPENDENCIES);
 	Assert(ntypes > 0);
-	staenabled = construct_array(types, ntypes, CHAROID, 1, true, 'c');
+	stxkind = construct_array(types, ntypes, CHAROID, 1, true, 'c');
 
 	/*
 	 * Everything seems fine, so let's build the pg_statistic_ext tuple.
 	 */
 	memset(values, 0, sizeof(values));
 	memset(nulls, false, sizeof(nulls));
-	values[Anum_pg_statistic_ext_starelid - 1] = ObjectIdGetDatum(relid);
-	values[Anum_pg_statistic_ext_staname - 1] = NameGetDatum(&staname);
-	values[Anum_pg_statistic_ext_stanamespace - 1] = ObjectIdGetDatum(namespaceId);
-	values[Anum_pg_statistic_ext_staowner - 1] = ObjectIdGetDatum(GetUserId());
-	values[Anum_pg_statistic_ext_stakeys - 1] = PointerGetDatum(stakeys);
-	values[Anum_pg_statistic_ext_staenabled - 1] = PointerGetDatum(staenabled);
+	values[Anum_pg_statistic_ext_stxrelid - 1] = ObjectIdGetDatum(relid);
+	values[Anum_pg_statistic_ext_stxname - 1] = NameGetDatum(&stxname);
+	values[Anum_pg_statistic_ext_stxnamespace - 1] = ObjectIdGetDatum(namespaceId);
+	values[Anum_pg_statistic_ext_stxowner - 1] = ObjectIdGetDatum(GetUserId());
+	values[Anum_pg_statistic_ext_stxkeys - 1] = PointerGetDatum(stxkeys);
+	values[Anum_pg_statistic_ext_stxkind - 1] = PointerGetDatum(stxkind);
 
 	/* no statistics build yet */
-	nulls[Anum_pg_statistic_ext_standistinct - 1] = true;
-	nulls[Anum_pg_statistic_ext_stadependencies - 1] = true;
+	nulls[Anum_pg_statistic_ext_stxndistinct - 1] = true;
+	nulls[Anum_pg_statistic_ext_stxdependencies - 1] = true;
 
 	/* insert it into pg_statistic_ext */
 	statrel = heap_open(StatisticExtRelationId, RowExclusiveLock);
@@ -303,7 +303,7 @@ RemoveStatisticsById(Oid statsOid)
 		elog(ERROR, "cache lookup failed for statistics %u", statsOid);
 
 	statext = (Form_pg_statistic_ext) GETSTRUCT(tup);
-	relid = statext->starelid;
+	relid = statext->stxrelid;
 
 	rel = heap_open(relid, AccessExclusiveLock);
 

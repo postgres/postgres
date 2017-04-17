@@ -5148,7 +5148,7 @@ pg_statistics_ownercheck(Oid stat_oid, Oid roleid)
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("statistics with OID %u do not exist", stat_oid)));
 
-	ownerId = ((Form_pg_statistic_ext) GETSTRUCT(tuple))->staowner;
+	ownerId = ((Form_pg_statistic_ext) GETSTRUCT(tuple))->stxowner;
 
 	ReleaseSysCache(tuple);
 

@@ -1473,23 +1473,23 @@ pg_get_statisticsext_worker(Oid statextid, bool missing_ok)
 
 	initStringInfo(&buf);
 
-	nsp = get_namespace_name(statextrec->stanamespace);
+	nsp = get_namespace_name(statextrec->stxnamespace);
 	appendStringInfo(&buf, "CREATE STATISTICS %s",
 					 quote_qualified_identifier(nsp,
-												NameStr(statextrec->staname)));
+												NameStr(statextrec->stxname)));
 
 	/*
-	 * Lookup the staenabled column so that we know how to handle the WITH
+	 * Lookup the stxkind column so that we know how to handle the WITH
 	 * clause.
 	 */
 	datum = SysCacheGetAttr(STATEXTOID, statexttup,
-							Anum_pg_statistic_ext_staenabled, &isnull);
+							Anum_pg_statistic_ext_stxkind, &isnull);
 	Assert(!isnull);
 	arr = DatumGetArrayTypeP(datum);
 	if (ARR_NDIM(arr) != 1 ||
 		ARR_HASNULL(arr) ||
 		ARR_ELEMTYPE(arr) != CHAROID)
-		elog(ERROR, "staenabled is not a 1-D char array");
+		elog(ERROR, "stxkind is not a 1-D char array");
 	enabled = (char *) ARR_DATA_PTR(arr);
 
 	ndistinct_enabled = false;
@@ -1523,21 +1523,21 @@ pg_get_statisticsext_worker(Oid statextid, bool missing_ok)
 
 	appendStringInfoString(&buf, " ON (");
 
-	for (colno = 0; colno < statextrec->stakeys.dim1; colno++)
+	for (colno = 0; colno < statextrec->stxkeys.dim1; colno++)
 	{
-		AttrNumber	attnum = statextrec->stakeys.values[colno];
+		AttrNumber	attnum = statextrec->stxkeys.values[colno];
 		char	   *attname;
 
 		if (colno > 0)
 			appendStringInfoString(&buf, ", ");
 
-		attname = get_relid_attribute_name(statextrec->starelid, attnum);
+		attname = get_relid_attribute_name(statextrec->stxrelid, attnum);
 
 		appendStringInfoString(&buf, quote_identifier(attname));
 	}
 
 	appendStringInfo(&buf, ") FROM %s",
-					 generate_relation_name(statextrec->starelid, NIL));
+					 generate_relation_name(statextrec->stxrelid, NIL));
 
 	ReleaseSysCache(statexttup);
 

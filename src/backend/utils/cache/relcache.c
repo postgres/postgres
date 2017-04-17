@@ -4497,9 +4497,9 @@ RelationGetStatExtList(Relation relation)
 	 */
 	result = NIL;
 
-	/* Prepare to scan pg_statistic_ext for entries having starelid = this rel. */
+	/* Prepare to scan pg_statistic_ext for entries having stxrelid = this rel. */
 	ScanKeyInit(&skey,
-				Anum_pg_statistic_ext_starelid,
+				Anum_pg_statistic_ext_stxrelid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(RelationGetRelid(relation)));
 

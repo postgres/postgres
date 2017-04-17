@@ -16,7 +16,7 @@ CREATE SCHEMA regress_schema_2;
 CREATE STATISTICS regress_schema_2.ab1_a_b_stats ON (a, b) FROM ab1;
 
 -- Let's also verify the pg_get_statisticsextdef output looks sane.
-SELECT pg_get_statisticsextdef(oid) FROM pg_statistic_ext WHERE staname = 'ab1_a_b_stats';
+SELECT pg_get_statisticsextdef(oid) FROM pg_statistic_ext WHERE stxname = 'ab1_a_b_stats';
 
 DROP STATISTICS regress_schema_2.ab1_a_b_stats;
 
@@ -130,8 +130,8 @@ CREATE STATISTICS s10 ON (a, b, c) FROM ndistinct;
 
 ANALYZE ndistinct;
 
-SELECT staenabled, standistinct
-  FROM pg_statistic_ext WHERE starelid = 'ndistinct'::regclass;
+SELECT stxkind, stxndistinct
+  FROM pg_statistic_ext WHERE stxrelid = 'ndistinct'::regclass;
 
 -- Hash Aggregate, thanks to estimates improved by the statistic
 EXPLAIN (COSTS off)
@@ -161,8 +161,8 @@ INSERT INTO ndistinct (a, b, c, filler1)
 
 ANALYZE ndistinct;
 
-SELECT staenabled, standistinct
-  FROM pg_statistic_ext WHERE starelid = 'ndistinct'::regclass;
+SELECT stxkind, stxndistinct
+  FROM pg_statistic_ext WHERE stxrelid = 'ndistinct'::regclass;
 
 -- plans using Group Aggregate, thanks to using correct esimates
 EXPLAIN (COSTS off)
@@ -182,8 +182,8 @@ EXPLAIN (COSTS off)
 
 DROP STATISTICS s10;
 
-SELECT staenabled, standistinct
-  FROM pg_statistic_ext WHERE starelid = 'ndistinct'::regclass;
+SELECT stxkind, stxndistinct
+  FROM pg_statistic_ext WHERE stxrelid = 'ndistinct'::regclass;
 
 -- dropping the statistics switches the plans to Hash Aggregate,
 -- due to under-estimates

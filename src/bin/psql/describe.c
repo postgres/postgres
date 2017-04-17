@@ -2344,16 +2344,16 @@ describeOneTableDetails(const char *schemaname,
 		{
 			printfPQExpBuffer(&buf,
 							  "SELECT oid, "
-							  "stanamespace::pg_catalog.regnamespace AS nsp, "
-							  "staname, stakeys,\n"
+							  "stxnamespace::pg_catalog.regnamespace AS nsp, "
+							  "stxname, stxkeys,\n"
 							  "  (SELECT pg_catalog.string_agg(pg_catalog.quote_ident(attname),', ')\n"
-							  "   FROM pg_catalog.unnest(stakeys) s(attnum)\n"
-							  "   JOIN pg_catalog.pg_attribute a ON (starelid = a.attrelid AND\n"
+							  "   FROM pg_catalog.unnest(stxkeys) s(attnum)\n"
+							  "   JOIN pg_catalog.pg_attribute a ON (stxrelid = a.attrelid AND\n"
 							  "        a.attnum = s.attnum AND NOT attisdropped)) AS columns,\n"
-							  "  (staenabled @> '{d}') AS ndist_enabled,\n"
-							  "  (staenabled @> '{f}') AS deps_enabled\n"
+							  "  (stxkind @> '{d}') AS ndist_enabled,\n"
+							  "  (stxkind @> '{f}') AS deps_enabled\n"
 							  "FROM pg_catalog.pg_statistic_ext stat "
-							  "WHERE starelid = '%s'\n"
+							  "WHERE stxrelid = '%s'\n"
 							  "ORDER BY 1;",
 							  oid);
 

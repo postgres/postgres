@@ -2805,7 +2805,7 @@ RemoveStatisticsExt(Oid relid, AttrNumber attnum)
 	pgstatisticext = heap_open(StatisticExtRelationId, RowExclusiveLock);
 
 	ScanKeyInit(&key,
-				Anum_pg_statistic_ext_starelid,
+				Anum_pg_statistic_ext_stxrelid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(relid));
 
@@ -2825,13 +2825,13 @@ RemoveStatisticsExt(Oid relid, AttrNumber attnum)
 			int			i;
 
 			/*
-			 * Decode the stakeys array and delete any stats that involve the
+			 * Decode the stxkeys array and delete any stats that involve the
 			 * specified column.
 			 */
 			staForm = (Form_pg_statistic_ext) GETSTRUCT(tuple);
-			for (i = 0; i < staForm->stakeys.dim1; i++)
+			for (i = 0; i < staForm->stxkeys.dim1; i++)
 			{
-				if (staForm->stakeys.values[i] == attnum)
+				if (staForm->stxkeys.values[i] == attnum)
 				{
 					delete = true;
 					break;

@@ -1293,8 +1293,8 @@ get_relation_statistics(RelOptInfo *rel, Relation relation)
 		 * wasted if no stats are actually built, but it doesn't seem worth
 		 * troubling over that case.
 		 */
-		for (i = 0; i < staForm->stakeys.dim1; i++)
-			keys = bms_add_member(keys, staForm->stakeys.values[i]);
+		for (i = 0; i < staForm->stxkeys.dim1; i++)
+			keys = bms_add_member(keys, staForm->stxkeys.values[i]);
 
 		/* add one StatisticExtInfo for each kind built */
 		if (statext_is_kind_built(htup, STATS_EXT_NDISTINCT))

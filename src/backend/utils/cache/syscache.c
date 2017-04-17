@@ -731,8 +731,8 @@ static const struct cachedesc cacheinfo[] = {
 		StatisticExtNameIndexId,
 		2,
 		{
-			Anum_pg_statistic_ext_staname,
-			Anum_pg_statistic_ext_stanamespace,
+			Anum_pg_statistic_ext_stxname,
+			Anum_pg_statistic_ext_stxnamespace,
 			0,
 			0
 		},

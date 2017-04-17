@@ -134,7 +134,7 @@ statext_ndistinct_load(Oid mvoid)
 		elog(ERROR, "cache lookup failed for statistics %u", mvoid);
 
 	ndist = SysCacheGetAttr(STATEXTOID, htup,
-							Anum_pg_statistic_ext_standistinct, &isnull);
+							Anum_pg_statistic_ext_stxndistinct, &isnull);
 	if (isnull)
 		elog(ERROR,
 			 "requested statistic kind %c not yet built for statistics %u",

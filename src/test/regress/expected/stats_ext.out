@@ -12,7 +12,7 @@ DROP STATISTICS ab1_a_b_stats;
 CREATE SCHEMA regress_schema_2;
 CREATE STATISTICS regress_schema_2.ab1_a_b_stats ON (a, b) FROM ab1;
 -- Let's also verify the pg_get_statisticsextdef output looks sane.
-SELECT pg_get_statisticsextdef(oid) FROM pg_statistic_ext WHERE staname = 'ab1_a_b_stats';
+SELECT pg_get_statisticsextdef(oid) FROM pg_statistic_ext WHERE stxname = 'ab1_a_b_stats';
                        pg_get_statisticsextdef                       
 ---------------------------------------------------------------------
  CREATE STATISTICS regress_schema_2.ab1_a_b_stats ON (a, b) FROM ab1
@@ -173,11 +173,11 @@ ERROR:  duplicate column name in statistics definition
 -- correct command
 CREATE STATISTICS s10 ON (a, b, c) FROM ndistinct;
 ANALYZE ndistinct;
-SELECT staenabled, standistinct
-  FROM pg_statistic_ext WHERE starelid = 'ndistinct'::regclass;
- staenabled |                                          standistinct                                          
-------------+------------------------------------------------------------------------------------------------
- {d,f}      | [{(b 3 4), 301.000000}, {(b 3 6), 301.000000}, {(b 4 6), 301.000000}, {(b 3 4 6), 301.000000}]
+SELECT stxkind, stxndistinct
+  FROM pg_statistic_ext WHERE stxrelid = 'ndistinct'::regclass;
+ stxkind |                                          stxndistinct                                          
+---------+------------------------------------------------------------------------------------------------
+ {d,f}   | [{(b 3 4), 301.000000}, {(b 3 6), 301.000000}, {(b 4 6), 301.000000}, {(b 3 4 6), 301.000000}]
 (1 row)
 
 -- Hash Aggregate, thanks to estimates improved by the statistic
@@ -239,11 +239,11 @@ INSERT INTO ndistinct (a, b, c, filler1)
             cash_words(mod(i,33)::int::money)
        FROM generate_series(1,10000) s(i);
 ANALYZE ndistinct;
-SELECT staenabled, standistinct
-  FROM pg_statistic_ext WHERE starelid = 'ndistinct'::regclass;
- staenabled |                                            standistinct                                            
-------------+----------------------------------------------------------------------------------------------------
- {d,f}      | [{(b 3 4), 2550.000000}, {(b 3 6), 800.000000}, {(b 4 6), 1632.000000}, {(b 3 4 6), 10000.000000}]
+SELECT stxkind, stxndistinct
+  FROM pg_statistic_ext WHERE stxrelid = 'ndistinct'::regclass;
+ stxkind |                                            stxndistinct                                            
+---------+----------------------------------------------------------------------------------------------------
+ {d,f}   | [{(b 3 4), 2550.000000}, {(b 3 6), 800.000000}, {(b 4 6), 1632.000000}, {(b 3 4 6), 10000.000000}]
 (1 row)
 
 -- plans using Group Aggregate, thanks to using correct esimates
@@ -299,10 +299,10 @@ EXPLAIN (COSTS off)
 (3 rows)
 
 DROP STATISTICS s10;
-SELECT staenabled, standistinct
-  FROM pg_statistic_ext WHERE starelid = 'ndistinct'::regclass;
- staenabled | standistinct 
-------------+--------------
+SELECT stxkind, stxndistinct
+  FROM pg_statistic_ext WHERE stxrelid = 'ndistinct'::regclass;
+ stxkind | stxndistinct 
+---------+--------------
 (0 rows)
 
 -- dropping the statistics switches the plans to Hash Aggregate,

@@ -184,9 +184,9 @@ DECLARE_UNIQUE_INDEX(pg_largeobject_metadata_oid_index, 2996, on pg_largeobject_
 
 DECLARE_UNIQUE_INDEX(pg_statistic_ext_oid_index, 3380, on pg_statistic_ext using btree(oid oid_ops));
 #define StatisticExtOidIndexId	3380
-DECLARE_UNIQUE_INDEX(pg_statistic_ext_name_index, 3997, on pg_statistic_ext using btree(staname name_ops, stanamespace oid_ops));
+DECLARE_UNIQUE_INDEX(pg_statistic_ext_name_index, 3997, on pg_statistic_ext using btree(stxname name_ops, stxnamespace oid_ops));
 #define StatisticExtNameIndexId 3997
-DECLARE_INDEX(pg_statistic_ext_relid_index, 3379, on pg_statistic_ext using btree(starelid oid_ops));
+DECLARE_INDEX(pg_statistic_ext_relid_index, 3379, on pg_statistic_ext using btree(stxrelid oid_ops));
 #define StatisticExtRelidIndexId 3379
 
 DECLARE_UNIQUE_INDEX(pg_namespace_nspname_index, 2684, on pg_namespace using btree(nspname name_ops));

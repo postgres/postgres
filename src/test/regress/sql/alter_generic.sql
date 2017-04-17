@@ -459,11 +459,11 @@ ALTER STATISTICS alt_stat3 SET SCHEMA alt_nsp2;		-- failed (not owner)
 ALTER STATISTICS alt_stat2 SET SCHEMA alt_nsp2;		-- failed (name conflict)
 
 RESET SESSION AUTHORIZATION;
-SELECT nspname, staname, rolname
+SELECT nspname, stxname, rolname
   FROM pg_statistic_ext s, pg_namespace n, pg_authid a
- WHERE s.stanamespace = n.oid AND s.staowner = a.oid
+ WHERE s.stxnamespace = n.oid AND s.stxowner = a.oid
    AND n.nspname in ('alt_nsp1', 'alt_nsp2')
- ORDER BY nspname, staname;
+ ORDER BY nspname, stxname;
 
 --
 -- Text Search Dictionary

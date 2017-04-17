@@ -411,7 +411,7 @@ statext_dependencies_build(int numrows, HeapTuple *rows, Bitmapset *attrs,
 			d = (MVDependency *) palloc0(offsetof(MVDependency, attributes)
 										 + k * sizeof(AttrNumber));
 
-			/* copy the dependency (and keep the indexes into stakeys) */
+			/* copy the dependency (and keep the indexes into stxkeys) */
 			d->degree = degree;
 			d->nattributes = k;
 			for (i = 0; i < k; i++)
@@ -652,7 +652,7 @@ staext_dependencies_load(Oid mvoid)
 		elog(ERROR, "cache lookup failed for extended statistics %u", mvoid);
 
 	deps = SysCacheGetAttr(STATEXTOID, htup,
-						   Anum_pg_statistic_ext_stadependencies, &isnull);
+						   Anum_pg_statistic_ext_stxdependencies, &isnull);
 
 	Assert(!isnull);
 

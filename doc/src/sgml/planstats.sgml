@@ -525,8 +525,8 @@ EXPLAIN ANALYZE SELECT * FROM t WHERE a = 1 AND b = 1;
     you may do this:
 
 <programlisting>
-SELECT staname,stadependencies FROM pg_statistic_ext WHERE staname = 's1';
- staname |              stadependencies
+SELECT stxname,stxdependencies FROM pg_statistic_ext WHERE stxname = 's1';
+ stxname |              stxdependencies
 ---------+--------------------------------------------
  s1      | [{1 => 2 : 1.000000}, {2 => 1 : 1.000000}]
 (1 row)

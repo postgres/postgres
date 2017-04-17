@@ -485,9 +485,9 @@ static const ObjectPropertyType ObjectProperty[] =
 		StatisticExtOidIndexId,
 		STATEXTOID,
 		STATEXTNAMENSP,
-		Anum_pg_statistic_ext_staname,
-		Anum_pg_statistic_ext_stanamespace,
-		Anum_pg_statistic_ext_staowner,
+		Anum_pg_statistic_ext_stxname,
+		Anum_pg_statistic_ext_stxnamespace,
+		Anum_pg_statistic_ext_stxowner,
 		InvalidAttrNumber,		/* no ACL (same as relation) */
 		ACL_KIND_STATISTICS,
 		true
@@ -4936,13 +4936,13 @@ getObjectIdentityParts(const ObjectAddress *object,
 					elog(ERROR, "cache lookup failed for statistics %u",
 						 object->objectId);
 				formStatistic = (Form_pg_statistic_ext) GETSTRUCT(tup);
-				schema = get_namespace_name_or_temp(formStatistic->stanamespace);
+				schema = get_namespace_name_or_temp(formStatistic->stxnamespace);
 				appendStringInfoString(&buffer,
 									   quote_qualified_identifier(schema,
-										   NameStr(formStatistic->staname)));
+										   NameStr(formStatistic->stxname)));
 				if (objname)
 					*objname = list_make2(schema,
-								   pstrdup(NameStr(formStatistic->staname)));
+								   pstrdup(NameStr(formStatistic->stxname)));
 				ReleaseSysCache(tup);
 			}
 			break;

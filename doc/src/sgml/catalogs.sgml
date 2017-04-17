@@ -4291,21 +4291,21 @@
     <tbody>
 
      <row>
-      <entry><structfield>starelid</structfield></entry>
+      <entry><structfield>stxrelid</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
       <entry>The table that the described columns belongs to</entry>
      </row>
 
      <row>
-      <entry><structfield>staname</structfield></entry>
+      <entry><structfield>stxname</structfield></entry>
       <entry><type>name</type></entry>
       <entry></entry>
       <entry>Name of the statistic.</entry>
      </row>
 
      <row>
-      <entry><structfield>stanamespace</structfield></entry>
+      <entry><structfield>stxnamespace</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link>.oid</literal></entry>
       <entry>
@@ -4314,24 +4314,26 @@
      </row>
 
      <row>
-      <entry><structfield>staowner</structfield></entry>
+      <entry><structfield>stxowner</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
       <entry>Owner of the statistic</entry>
      </row>
 
      <row>
-      <entry><structfield>staenabled</structfield></entry>
+      <entry><structfield>stxkind</structfield></entry>
       <entry><type>char[]</type></entry>
       <entry></entry>
       <entry>
-        An array with the modes of the enabled statistic types, encoded as
-        <literal>d</literal> for ndistinct coefficients.
+        An array with the modes of the enabled statistic types.  Valid values
+        are:
+        <literal>d</literal> for ndistinct coefficients,
+        <literal>f</literal> for functional dependencies.
       </entry>
      </row>
 
      <row>
-      <entry><structfield>stakeys</structfield></entry>
+      <entry><structfield>stxkeys</structfield></entry>
       <entry><type>int2vector</type></entry>
       <entry><literal><link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.attnum</literal></entry>
       <entry>
@@ -4342,7 +4344,7 @@
      </row>
 
      <row>
-      <entry><structfield>standistinct</structfield></entry>
+      <entry><structfield>stxndistinct</structfield></entry>
       <entry><type>pg_ndistinct</type></entry>
       <entry></entry>
       <entry>
@@ -4351,7 +4353,7 @@
      </row>
 
      <row>
-      <entry><structfield>stadependencies</structfield></entry>
+      <entry><structfield>stxdependencies</structfield></entry>
       <entry><type>pg_dependencies</type></entry>
       <entry></entry>
       <entry>
