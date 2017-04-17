@@ -44,6 +44,16 @@ SELECT pubname, puballtables FROM pg_publication WHERE pubname = 'testpub_forall
 DROP TABLE testpub_tbl2;
 DROP PUBLICATION testpub_foralltables;
 
+CREATE TABLE testpub_tbl3 (a int);
+CREATE TABLE testpub_tbl3a (b text) INHERITS (testpub_tbl3);
+CREATE PUBLICATION testpub3 FOR TABLE testpub_tbl3;
+CREATE PUBLICATION testpub4 FOR TABLE ONLY testpub_tbl3;
+\dRp+ testpub3
+\dRp+ testpub4
+
+DROP TABLE testpub_tbl3, testpub_tbl3a;
+DROP PUBLICATION testpub3, testpub4;
+
 -- fail - view
 CREATE PUBLICATION testpub_fortbl FOR TABLE testpub_view;
 CREATE PUBLICATION testpub_fortbl FOR TABLE testpub_tbl1, pub_test.testpub_nopk;

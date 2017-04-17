@@ -31,9 +31,9 @@ ALTER PUBLICATION <replaceable class="PARAMETER">name</replaceable> WITH ( <repl
 
 ALTER PUBLICATION <replaceable class="PARAMETER">name</replaceable> OWNER TO { <replaceable>new_owner</replaceable> | CURRENT_USER | SESSION_USER }
 ALTER PUBLICATION <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable>new_name</replaceable>
-ALTER PUBLICATION <replaceable class="PARAMETER">name</replaceable> ADD TABLE <replaceable class="PARAMETER">table_name</replaceable> [, ...]
-ALTER PUBLICATION <replaceable class="PARAMETER">name</replaceable> SET TABLE <replaceable class="PARAMETER">table_name</replaceable> [, ...]
-ALTER PUBLICATION <replaceable class="PARAMETER">name</replaceable> DROP TABLE <replaceable class="PARAMETER">table_name</replaceable> [, ...]
+ALTER PUBLICATION <replaceable class="PARAMETER">name</replaceable> ADD TABLE [ ONLY ] <replaceable class="PARAMETER">table_name</replaceable> [ * ] [, ...]
+ALTER PUBLICATION <replaceable class="PARAMETER">name</replaceable> SET TABLE [ ONLY ] <replaceable class="PARAMETER">table_name</replaceable> [ * ] [, ...]
+ALTER PUBLICATION <replaceable class="PARAMETER">name</replaceable> DROP TABLE [ ONLY ] <replaceable class="PARAMETER">table_name</replaceable> [ * ] [, ...]
 </synopsis>
  </refsynopsisdiv>
 
@@ -116,7 +116,11 @@ ALTER PUBLICATION <replaceable class="PARAMETER">name</replaceable> DROP TABLE <
     <term><replaceable class="parameter">table_name</replaceable></term>
     <listitem>
      <para>
-      Name of an existing table.
+      Name of an existing table.  If <literal>ONLY</> is specified before the
+      table name, only that table is affected.  If <literal>ONLY</> is not
+      specified, the table and all its descendant tables (if any) are
+      affected.  Optionally, <literal>*</> can be specified after the table
+      name to explicitly indicate that descendant tables are included.
      </para>
     </listitem>
    </varlistentry>

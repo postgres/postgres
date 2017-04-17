@@ -22,7 +22,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
-    [ FOR TABLE <replaceable class="parameter">table_name</replaceable> [, ...]
+    [ FOR TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [, ...]
       | FOR ALL TABLES ]
     [ WITH ( <replaceable class="parameter">option</replaceable> [, ... ] ) ]
 
@@ -68,7 +68,12 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
     <term><literal>FOR TABLE</literal></term>
     <listitem>
      <para>
-      Specifies a list of tables to add to the publication.
+      Specifies a list of tables to add to the publication.  If
+      <literal>ONLY</> is specified before the table name, only
+      that table is added to the publication.  If <literal>ONLY</> is not
+      specified, the table and all its descendant tables (if any) are added.
+      Optionally, <literal>*</> can be specified after the table name to
+      explicitly indicate that descendant tables are included.
      </para>
     </listitem>
    </varlistentry>
