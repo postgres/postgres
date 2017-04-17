@@ -343,6 +343,7 @@ _PG_init(void)
 							NULL);
 
 	/* set up common data for all our workers */
+	memset(&worker, 0, sizeof(worker));
 	worker.bgw_flags = BGWORKER_SHMEM_ACCESS |
 		BGWORKER_BACKEND_DATABASE_CONNECTION;
 	worker.bgw_start_time = BgWorkerStart_RecoveryFinished;
@@ -375,6 +376,7 @@ worker_spi_launch(PG_FUNCTION_ARGS)
 	BgwHandleStatus status;
 	pid_t		pid;
 
+	memset(&worker, 0, sizeof(worker));
 	worker.bgw_flags = BGWORKER_SHMEM_ACCESS |
 		BGWORKER_BACKEND_DATABASE_CONNECTION;
 	worker.bgw_start_time = BgWorkerStart_RecoveryFinished;

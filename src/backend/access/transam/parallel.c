@@ -435,6 +435,7 @@ LaunchParallelWorkers(ParallelContext *pcxt)
 	oldcontext = MemoryContextSwitchTo(TopTransactionContext);
 
 	/* Configure a worker. */
+	memset(&worker, 0, sizeof(worker));
 	snprintf(worker.bgw_name, BGW_MAXLEN, "parallel worker for PID %d",
 			 MyProcPid);
 	worker.bgw_flags =
@@ -446,7 +447,6 @@ LaunchParallelWorkers(ParallelContext *pcxt)
 	sprintf(worker.bgw_function_name, "ParallelWorkerMain");
 	worker.bgw_main_arg = UInt32GetDatum(dsm_segment_handle(pcxt->seg));
 	worker.bgw_notify_pid = MyProcPid;
-	memset(&worker.bgw_extra, 0, BGW_EXTRALEN);
 
 	/*
 	 * Start workers.

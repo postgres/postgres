@@ -291,6 +291,7 @@ logicalrep_worker_launch(Oid dbid, Oid subid, const char *subname, Oid userid,
 	LWLockRelease(LogicalRepWorkerLock);
 
 	/* Register the new dynamic worker. */
+	memset(&bgw, 0, sizeof(bgw));
 	bgw.bgw_flags =	BGWORKER_SHMEM_ACCESS |
 		BGWORKER_BACKEND_DATABASE_CONNECTION;
 	bgw.bgw_start_time = BgWorkerStart_RecoveryFinished;
@@ -560,6 +561,10 @@ ApplyLauncherShmemSize(void)
 	return size;
 }
 
+/*
+ * ApplyLauncherRegister
+ *		Register a background worker running the logical replication launcher.
+ */
 void
 ApplyLauncherRegister(void)
 {
@@ -568,6 +573,7 @@ ApplyLauncherRegister(void)
 	if (max_logical_replication_workers == 0)
 		return;
 
+	memset(&bgw, 0, sizeof(bgw));
 	bgw.bgw_flags =	BGWORKER_SHMEM_ACCESS |
 		BGWORKER_BACKEND_DATABASE_CONNECTION;
 	bgw.bgw_start_time = BgWorkerStart_RecoveryFinished;

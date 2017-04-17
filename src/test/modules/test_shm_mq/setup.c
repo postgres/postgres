@@ -213,6 +213,7 @@ setup_background_workers(int nworkers, dsm_segment *seg)
 				  PointerGetDatum(wstate));
 
 	/* Configure a worker. */
+	memset(&worker, 0, sizeof(worker));
 	worker.bgw_flags = BGWORKER_SHMEM_ACCESS;
 	worker.bgw_start_time = BgWorkerStart_ConsistentState;
 	worker.bgw_restart_time = BGW_NEVER_RESTART;
