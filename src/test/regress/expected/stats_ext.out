@@ -40,9 +40,11 @@ ALTER TABLE ab1 ALTER a SET STATISTICS 0;
 INSERT INTO ab1 SELECT a, a%23 FROM generate_series(1, 1000) a;
 CREATE STATISTICS ab1_a_b_stats ON (a, b) FROM ab1;
 ANALYZE ab1;
-ERROR:  extended statistics could not be collected for column "a" of relation public.ab1
-HINT:  Consider ALTER TABLE "public"."ab1" ALTER "a" SET STATISTICS -1
+WARNING:  extended statistics "public.ab1_a_b_stats" could not be collected for relation public.ab1
 ALTER TABLE ab1 ALTER a SET STATISTICS -1;
+-- partial analyze doesn't build stats either
+ANALYZE ab1 (a);
+WARNING:  extended statistics "public.ab1_a_b_stats" could not be collected for relation public.ab1
 ANALYZE ab1;
 DROP TABLE ab1;
 -- n-distinct tests

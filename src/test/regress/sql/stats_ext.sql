@@ -35,6 +35,8 @@ INSERT INTO ab1 SELECT a, a%23 FROM generate_series(1, 1000) a;
 CREATE STATISTICS ab1_a_b_stats ON (a, b) FROM ab1;
 ANALYZE ab1;
 ALTER TABLE ab1 ALTER a SET STATISTICS -1;
+-- partial analyze doesn't build stats either
+ANALYZE ab1 (a);
 ANALYZE ab1;
 DROP TABLE ab1;
 
