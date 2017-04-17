@@ -912,7 +912,7 @@ AlterSubscriptionOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 		  errmsg("permission denied to change owner of subscription \"%s\"",
 				 NameStr(form->subname)),
-			 errhint("The owner of an subscription must be a superuser.")));
+			 errhint("The owner of a subscription must be a superuser.")));
 
 	form->subowner = newOwnerId;
 	CatalogTupleUpdate(rel, &tup->t_self, tup);

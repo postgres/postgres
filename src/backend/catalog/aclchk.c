@@ -5104,7 +5104,7 @@ pg_publication_ownercheck(Oid pub_oid, Oid roleid)
 }
 
 /*
- * Ownership check for an subscription (specified by OID).
+ * Ownership check for a subscription (specified by OID).
  */
 bool
 pg_subscription_ownercheck(Oid sub_oid, Oid roleid)

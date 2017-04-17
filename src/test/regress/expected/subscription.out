@@ -105,7 +105,7 @@ ALTER SUBSCRIPTION testsub_foo RENAME TO testsub;
 -- fail - new owner must be superuser
 ALTER SUBSCRIPTION testsub OWNER TO regress_subscription_user2;
 ERROR:  permission denied to change owner of subscription "testsub"
-HINT:  The owner of an subscription must be a superuser.
+HINT:  The owner of a subscription must be a superuser.
 ALTER ROLE regress_subscription_user2 SUPERUSER;
 -- now it works
 ALTER SUBSCRIPTION testsub OWNER TO regress_subscription_user2;
