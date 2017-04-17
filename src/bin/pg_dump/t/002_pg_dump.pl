@@ -4423,7 +4423,7 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 		create_sql =>
 		  'ALTER PUBLICATION pub1 ADD TABLE dump_test.test_table;',
 		regexp => qr/^
-			\QALTER PUBLICATION pub1 ADD TABLE test_table;\E
+			\QALTER PUBLICATION pub1 ADD TABLE ONLY test_table;\E
 			/xm,
 		like => {
 			binary_upgrade          => 1,
@@ -4457,7 +4457,7 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 		create_sql =>
 		  'ALTER PUBLICATION pub1 ADD TABLE dump_test.test_second_table;',
 		regexp => qr/^
-			\QALTER PUBLICATION pub1 ADD TABLE test_second_table;\E
+			\QALTER PUBLICATION pub1 ADD TABLE ONLY test_second_table;\E
 			/xm,
 		like => {
 			binary_upgrade          => 1,

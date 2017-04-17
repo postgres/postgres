@@ -3627,7 +3627,7 @@ dumpPublicationTable(Archive *fout, PublicationRelInfo *pubrinfo)
 
 	query = createPQExpBuffer();
 
-	appendPQExpBuffer(query, "ALTER PUBLICATION %s ADD TABLE",
+	appendPQExpBuffer(query, "ALTER PUBLICATION %s ADD TABLE ONLY",
 					  fmtId(pubrinfo->pubname));
 	appendPQExpBuffer(query, " %s;",
 					  fmtId(tbinfo->dobj.name));
