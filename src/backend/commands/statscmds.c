@@ -102,14 +102,16 @@ CreateStatistics(CreateStatsStmt *stmt)
 	 * take only ShareUpdateExclusiveLock on relation, conflicting with
 	 * ANALYZE and other DDL that sets statistical information.
 	 */
-	rel = heap_openrv(stmt->relation, ShareUpdateExclusiveLock);
+	rel = relation_openrv(stmt->relation, ShareUpdateExclusiveLock);
 	relid = RelationGetRelid(rel);
 
 	if (rel->rd_rel->relkind != RELKIND_RELATION &&
-		rel->rd_rel->relkind != RELKIND_MATVIEW)
+		rel->rd_rel->relkind != RELKIND_MATVIEW &&
+		rel->rd_rel->relkind != RELKIND_FOREIGN_TABLE &&
+		rel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("relation \"%s\" is not a table or materialized view",
+				 errmsg("relation \"%s\" is not a table, foreign table, or materialized view",
 						RelationGetRelationName(rel))));
 
 	/*
@@ -248,7 +250,7 @@ CreateStatistics(CreateStatsStmt *stmt)
 	CatalogTupleInsert(statrel, htup);
 	statoid = HeapTupleGetOid(htup);
 	heap_freetuple(htup);
-	heap_close(statrel, RowExclusiveLock);
+	relation_close(statrel, RowExclusiveLock);
 
 	/*
 	 * Invalidate relcache so that others see the new statistics.

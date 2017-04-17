@@ -40,6 +40,44 @@ ANALYZE ab1 (a);
 ANALYZE ab1;
 DROP TABLE ab1;
 
+-- Verify supported object types for extended statistics
+CREATE schema tststats;
+
+CREATE TABLE tststats.t (a int, b int, c text);
+CREATE INDEX ti ON tststats.t (a, b);
+CREATE SEQUENCE tststats.s;
+CREATE VIEW tststats.v AS SELECT * FROM tststats.t;
+CREATE MATERIALIZED VIEW tststats.mv AS SELECT * FROM tststats.t;
+CREATE TYPE tststats.ty AS (a int, b int, c text);
+CREATE FOREIGN DATA WRAPPER extstats_dummy_fdw;
+CREATE SERVER extstats_dummy_srv FOREIGN DATA WRAPPER extstats_dummy_fdw;
+CREATE FOREIGN TABLE tststats.f (a int, b int, c text) SERVER extstats_dummy_srv;
+CREATE TABLE tststats.pt (a int, b int, c text) PARTITION BY RANGE (a, b);
+CREATE TABLE tststats.pt1 PARTITION OF tststats.pt FOR VALUES FROM (-10, -10) TO (10, 10);
+
+CREATE STATISTICS tststats.s1 ON (a, b) FROM tststats.t;
+CREATE STATISTICS tststats.s2 ON (a, b) FROM tststats.ti;
+CREATE STATISTICS tststats.s3 ON (a, b) FROM tststats.s;
+CREATE STATISTICS tststats.s4 ON (a, b) FROM tststats.v;
+CREATE STATISTICS tststats.s5 ON (a, b) FROM tststats.mv;
+CREATE STATISTICS tststats.s6 ON (a, b) FROM tststats.ty;
+CREATE STATISTICS tststats.s7 ON (a, b) FROM tststats.f;
+CREATE STATISTICS tststats.s8 ON (a, b) FROM tststats.pt;
+CREATE STATISTICS tststats.s9 ON (a, b) FROM tststats.pt1;
+DO $$
+DECLARE
+	relname text := reltoastrelid::regclass FROM pg_class WHERE oid = 'tststats.t'::regclass;
+BEGIN
+	EXECUTE 'CREATE STATISTICS tststats.s10 ON (a, b) FROM ' || relname;
+EXCEPTION WHEN wrong_object_type THEN
+	RAISE NOTICE 'stats on toast table not created';
+END;
+$$;
+
+SET client_min_messages TO warning;
+DROP SCHEMA tststats CASCADE;
+DROP FOREIGN DATA WRAPPER extstats_dummy_fdw CASCADE;
+RESET client_min_messages;
 
 -- n-distinct tests
 CREATE TABLE ndistinct (

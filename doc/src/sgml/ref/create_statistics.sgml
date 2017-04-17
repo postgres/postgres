@@ -34,7 +34,7 @@ CREATE STATISTICS [ IF NOT EXISTS ] <replaceable class="PARAMETER">statistics_na
 
   <para>
    <command>CREATE STATISTICS</command> will create a new extended statistics
-   object on the specified table.
+   object on the specified table, foreign table or materialized view.
    The statistics will be created in the current database and
    will be owned by the user issuing the command.
   </para>
