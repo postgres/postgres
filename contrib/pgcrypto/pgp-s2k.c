@@ -223,13 +223,13 @@ pgp_s2k_fill(PGP_S2K *s2k, int mode, int digest_algo)
 		case 0:
 			break;
 		case 1:
-			res = px_get_pseudo_random_bytes(s2k->salt, PGP_S2K_SALT);
+			res = px_get_random_bytes(s2k->salt, PGP_S2K_SALT);
 			break;
 		case 3:
-			res = px_get_pseudo_random_bytes(s2k->salt, PGP_S2K_SALT);
+			res = px_get_random_bytes(s2k->salt, PGP_S2K_SALT);
 			if (res < 0)
 				break;
-			res = px_get_pseudo_random_bytes(&tmp, 1);
+			res = px_get_random_bytes(&tmp, 1);
 			if (res < 0)
 				break;
 			s2k->iter = decide_count(tmp);

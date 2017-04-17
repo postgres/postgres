@@ -190,7 +190,6 @@ int			px_find_cipher(const char *name, PX_Cipher **res);
 int			px_find_combo(const char *name, PX_Combo **res);
 
 int			px_get_random_bytes(uint8 *dst, unsigned count);
-int			px_get_pseudo_random_bytes(uint8 *dst, unsigned count);
 int			px_add_entropy(const uint8 *data, unsigned count);
 
 unsigned	px_acquire_system_randomness(uint8 *dst);
