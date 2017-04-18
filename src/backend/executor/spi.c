@@ -1197,9 +1197,6 @@ SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
 	cplan = GetCachedPlan(plansource, paramLI, false, _SPI_current->queryEnv);
 	stmt_list = cplan->stmt_list;
 
-	/* Pop the error context stack */
-	error_context_stack = spierrcontext.previous;
-
 	if (!plan->saved)
 	{
 		/*
@@ -1317,6 +1314,9 @@ SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
 	PortalStart(portal, paramLI, 0, snapshot);
 
 	Assert(portal->strategy != PORTAL_MULTI_QUERY);
+
+	/* Pop the error context stack */
+	error_context_stack = spierrcontext.previous;
 
 	/* Pop the SPI stack */
 	_SPI_end_call(true);

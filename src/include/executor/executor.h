@@ -482,6 +482,8 @@ extern bool ExecRelationIsTargetRelation(EState *estate, Index scanrelid);
 extern Relation ExecOpenScanRelation(EState *estate, Index scanrelid, int eflags);
 extern void ExecCloseScanRelation(Relation scanrel);
 
+extern int	executor_errposition(EState *estate, int location);
+
 extern void RegisterExprContextCallback(ExprContext *econtext,
 							ExprContextCallbackFunction function,
 							Datum arg);

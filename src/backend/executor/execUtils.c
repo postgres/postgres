@@ -28,6 +28,8 @@
  *		ExecOpenScanRelation	Common code for scan node init routines.
  *		ExecCloseScanRelation
  *
+ *		executor_errposition	Report syntactic position of an error.
+ *
  *		RegisterExprContextCallback    Register function shutdown callback
  *		UnregisterExprContextCallback  Deregister function shutdown callback
  *
@@ -44,6 +46,7 @@
 #include "access/relscan.h"
 #include "access/transam.h"
 #include "executor/executor.h"
+#include "mb/pg_wchar.h"
 #include "nodes/nodeFuncs.h"
 #include "parser/parsetree.h"
 #include "storage/lmgr.h"
@@ -683,6 +686,36 @@ UpdateChangedParamSet(PlanState *node, Bitmapset *newchg)
 		node->chgParam = bms_join(node->chgParam, parmset);
 	else
 		bms_free(parmset);
+}
+
+/*
+ * executor_errposition
+ *		Report an execution-time cursor position, if possible.
+ *
+ * This is expected to be used within an ereport() call.  The return value
+ * is a dummy (always 0, in fact).
+ *
+ * The locations stored in parsetrees are byte offsets into the source string.
+ * We have to convert them to 1-based character indexes for reporting to
+ * clients.  (We do things this way to avoid unnecessary overhead in the
+ * normal non-error case: computing character indexes would be much more
+ * expensive than storing token offsets.)
+ */
+int
+executor_errposition(EState *estate, int location)
+{
+	int			pos;
+
+	/* No-op if location was not provided */
+	if (location < 0)
+		return 0;
+	/* Can't do anything if source text is not available */
+	if (estate == NULL || estate->es_sourceText == NULL)
+		return 0;
+	/* Convert offset to character number */
+	pos = pg_mbstrlen_with_len(estate->es_sourceText, location) + 1;
+	/* And pass it to the ereport mechanism */
+	return errposition(pos);
 }
 
 /*

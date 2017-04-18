@@ -193,9 +193,13 @@ SELECT few.dataa, count(*) FROM few WHERE dataa = 'a' GROUP BY few.dataa, unnest
 -- SRFs are not allowed in aggregate arguments
 SELECT min(generate_series(1, 3)) FROM few;
 ERROR:  set-valued function called in context that cannot accept a set
+LINE 1: SELECT min(generate_series(1, 3)) FROM few;
+                   ^
 -- SRFs are not allowed in window function arguments, either
 SELECT min(generate_series(1, 3)) OVER() FROM few;
 ERROR:  set-valued function called in context that cannot accept a set
+LINE 1: SELECT min(generate_series(1, 3)) OVER() FROM few;
+                   ^
 -- SRFs are normally computed after window functions
 SELECT id,lag(id) OVER(), count(*) OVER(), generate_series(1,3) FROM few;
  id | lag | count | generate_series 
@@ -424,6 +428,8 @@ SELECT int4mul(generate_series(1,2), 10);
 -- but SRFs in function RTEs must be at top level (annoying restriction)
 SELECT * FROM int4mul(generate_series(1,2), 10);
 ERROR:  set-valued function called in context that cannot accept a set
+LINE 1: SELECT * FROM int4mul(generate_series(1,2), 10);
+                              ^
 -- DISTINCT ON is evaluated before tSRF evaluation if SRF is not
 -- referenced either in ORDER BY or in the DISTINCT ON list. The ORDER
 -- BY reference can be implicitly generated, if there's no other ORDER BY.

@@ -34,7 +34,8 @@
 
 
 /* static function decls */
-static void init_sexpr(Oid foid, Oid input_collation, SetExprState *sexpr,
+static void init_sexpr(Oid foid, Oid input_collation, Expr *node,
+		   SetExprState *sexpr, PlanState *parent,
 		   MemoryContext sexprCxt, bool allowSRF, bool needDescForSRF);
 static void ShutdownSetExpr(Datum arg);
 static void ExecEvalFuncArgs(FunctionCallInfo fcinfo,
@@ -77,7 +78,7 @@ ExecInitTableFunctionResult(Expr *expr,
 		state->funcReturnsSet = func->funcretset;
 		state->args = ExecInitExprList(func->args, parent);
 
-		init_sexpr(func->funcid, func->inputcollid, state,
+		init_sexpr(func->funcid, func->inputcollid, expr, state, parent,
 				   econtext->ecxt_per_query_memory, func->funcretset, false);
 	}
 	else
@@ -438,7 +439,7 @@ ExecInitFunctionResultSet(Expr *expr,
 		FuncExpr   *func = (FuncExpr *) expr;
 
 		state->args = ExecInitExprList(func->args, parent);
-		init_sexpr(func->funcid, func->inputcollid, state,
+		init_sexpr(func->funcid, func->inputcollid, expr, state, parent,
 				   econtext->ecxt_per_query_memory, true, true);
 	}
 	else if (IsA(expr, OpExpr))
@@ -446,7 +447,7 @@ ExecInitFunctionResultSet(Expr *expr,
 		OpExpr	   *op = (OpExpr *) expr;
 
 		state->args = ExecInitExprList(op->args, parent);
-		init_sexpr(op->opfuncid, op->inputcollid, state,
+		init_sexpr(op->opfuncid, op->inputcollid, expr, state, parent,
 				   econtext->ecxt_per_query_memory, true, true);
 	}
 	else
@@ -645,7 +646,8 @@ restart:
  * init_sexpr - initialize a SetExprState node during first use
  */
 static void
-init_sexpr(Oid foid, Oid input_collation, SetExprState *sexpr,
+init_sexpr(Oid foid, Oid input_collation, Expr *node,
+		   SetExprState *sexpr, PlanState *parent,
 		   MemoryContext sexprCxt, bool allowSRF, bool needDescForSRF)
 {
 	AclResult	aclresult;
@@ -683,7 +685,9 @@ init_sexpr(Oid foid, Oid input_collation, SetExprState *sexpr,
 	if (sexpr->func.fn_retset && !allowSRF)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("set-valued function called in context that cannot accept a set")));
+				 errmsg("set-valued function called in context that cannot accept a set"),
+				 parent ? executor_errposition(parent->state,
+										  exprLocation((Node *) node)) : 0));
 
 	/* Otherwise, caller should have marked the sexpr correctly */
 	Assert(sexpr->func.fn_retset == sexpr->funcReturnsSet);
