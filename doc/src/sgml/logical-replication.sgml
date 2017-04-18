@@ -200,7 +200,9 @@
 
   <para>
    Columns of a table are also matched by name.  A different order of columns
-   in the target table is allowed, but the column types have to match.
+   in the target table is allowed, but the column types have to match.  The
+   target table can have additional columns not provided by the published
+   table.  Those will be filled with their default values.
   </para>
  </sect1>
 
