@@ -1084,8 +1084,8 @@ primary_slot_name = 'node_a_slot'
     In the case that <varname>synchronous_commit</> is set to
     <literal>remote_apply</>, the standby sends reply messages when the commit
     record is replayed, making the transaction visible.
-    If the standby is chosen as a synchronous standby, from a priority
-    list of <varname>synchronous_standby_names</> on the primary, the reply
+    If the standby is chosen as a synchronous standby, according to the setting
+    of <varname>synchronous_standby_names</> on the primary, the reply
     messages from that standby will be considered along with those from other
     synchronous standbys to decide when to release transactions waiting for
     confirmation that the commit record has been received. These parameters
@@ -1246,9 +1246,20 @@ synchronous_standby_names = 'FIRST 2 (s1, s2, s3)'
     The best solution for high availability is to ensure you keep as many
     synchronous standbys as requested. This can be achieved by naming multiple
     potential synchronous standbys using <varname>synchronous_standby_names</>.
-    The standbys whose names appear earlier in the list will be used as
-    synchronous standbys. Standbys listed after these will take over
-    the role of synchronous standby if one of current ones should fail.
+   </para>
+
+   <para>
+    In a priority-based synchronous replication, the standbys whose names
+    appear earlier in the list will be used as synchronous standbys.
+    Standbys listed after these will take over the role of synchronous standby
+    if one of current ones should fail.
+   </para>
+
+   <para>
+    In a quorum-based synchronous replication, all the standbys appearing
+    in the list will be used as candidates for synchronous standbys.
+    Even if one of them should fail, the other standbys will keep performing
+    the role of candidates of synchronous standby.
    </para>
 
    <para>
