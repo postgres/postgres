@@ -183,7 +183,7 @@ pg_be_scram_init(const char *username, const char *shadow_pass)
 	{
 		int			password_type = get_password_type(shadow_pass);
 
-		if (password_type == PASSWORD_TYPE_SCRAM)
+		if (password_type == PASSWORD_TYPE_SCRAM_SHA_256)
 		{
 			if (parse_scram_verifier(shadow_pass, &state->salt, &state->iterations,
 									 state->StoredKey, state->ServerKey))

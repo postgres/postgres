@@ -51,7 +51,7 @@ SKIP:
 
 	# Create 3 roles with different password methods for each one. The same
 	# password is used for all of them.
-	$node->safe_psql('postgres', "SET password_encryption='scram'; CREATE ROLE scram_role LOGIN PASSWORD 'pass';");
+	$node->safe_psql('postgres', "SET password_encryption='scram-sha-256'; CREATE ROLE scram_role LOGIN PASSWORD 'pass';");
 	$node->safe_psql('postgres', "SET password_encryption='md5'; CREATE ROLE md5_role LOGIN PASSWORD 'pass';");
 	$node->safe_psql('postgres', "SET password_encryption='plain'; CREATE ROLE plain_role LOGIN PASSWORD 'pass';");
 	$ENV{"PGPASSWORD"} = 'pass';
@@ -68,12 +68,12 @@ SKIP:
 	test_role($node, 'md5_role', 'password', 0);
 	test_role($node, 'plain_role', 'password', 0);
 
-	# For "scram" method, user "plain_role" and "scram_role" should be able to
-	# connect.
-	reset_pg_hba($node, 'scram');
-	test_role($node, 'scram_role', 'scram', 0);
-	test_role($node, 'md5_role', 'scram', 2);
-	test_role($node, 'plain_role', 'scram', 0);
+	# For "scram-sha-256" method, user "plain_role" and "scram_role" should
+	# be able to connect.
+	reset_pg_hba($node, 'scram-sha-256');
+	test_role($node, 'scram_role', 'scram-sha-256', 0);
+	test_role($node, 'md5_role', 'scram-sha-256', 2);
+	test_role($node, 'plain_role', 'scram-sha-256', 0);
 
 	# For "md5" method, all users should be able to connect (SCRAM
 	# authentication will be performed for the user with a scram verifier.)

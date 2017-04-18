@@ -7,7 +7,7 @@ SET password_encryption = 'novalue'; -- error
 SET password_encryption = true; -- ok
 SET password_encryption = 'md5'; -- ok
 SET password_encryption = 'plain'; -- ok
-SET password_encryption = 'scram'; -- ok
+SET password_encryption = 'scram-sha-256'; -- ok
 
 -- consistency of password entries
 SET password_encryption = 'plain';
@@ -16,7 +16,7 @@ SET password_encryption = 'md5';
 CREATE ROLE regress_passwd2 PASSWORD 'role_pwd2';
 SET password_encryption = 'on';
 CREATE ROLE regress_passwd3 PASSWORD 'role_pwd3';
-SET password_encryption = 'scram';
+SET password_encryption = 'scram-sha-256';
 CREATE ROLE regress_passwd4 PASSWORD 'role_pwd4';
 SET password_encryption = 'plain';
 CREATE ROLE regress_passwd5 PASSWORD NULL;
@@ -50,7 +50,7 @@ ALTER ROLE regress_passwd3 ENCRYPTED PASSWORD 'foo'; -- encrypted with MD5
 
 ALTER ROLE regress_passwd4 ENCRYPTED PASSWORD 'scram-sha-256:VLK4RMaQLCvNtQ==:4096:3ded2376f7aafa93b1bdbd71bcc18b7d6ee50ed018029cc583d152ef3fc7d430:a6dd36dfc94c181956a6ae95f05e01b1864f0a22a2657d1de4ba84d2a24dc438'; -- client-supplied SCRAM verifier, use as it is
 
-SET password_encryption = 'scram';
+SET password_encryption = 'scram-sha-256';
 ALTER ROLE  regress_passwd5 ENCRYPTED PASSWORD 'foo'; -- create SCRAM verifier
 CREATE ROLE regress_passwd6 ENCRYPTED PASSWORD 'md53725413363ab045e20521bf36b8d8d7f'; -- encrypted with MD5, use as it is
 

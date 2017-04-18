@@ -140,8 +140,8 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 			dpassword = defel;
 			if (strcmp(defel->defname, "encryptedPassword") == 0)
 			{
-				if (Password_encryption == PASSWORD_TYPE_SCRAM)
-					password_type = PASSWORD_TYPE_SCRAM;
+				if (Password_encryption == PASSWORD_TYPE_SCRAM_SHA_256)
+					password_type = PASSWORD_TYPE_SCRAM_SHA_256;
 				else
 					password_type = PASSWORD_TYPE_MD5;
 			}
@@ -548,8 +548,8 @@ AlterRole(AlterRoleStmt *stmt)
 			dpassword = defel;
 			if (strcmp(defel->defname, "encryptedPassword") == 0)
 			{
-				if (Password_encryption == PASSWORD_TYPE_SCRAM)
-					password_type = PASSWORD_TYPE_SCRAM;
+				if (Password_encryption == PASSWORD_TYPE_SCRAM_SHA_256)
+					password_type = PASSWORD_TYPE_SCRAM_SHA_256;
 				else
 					password_type = PASSWORD_TYPE_MD5;
 			}

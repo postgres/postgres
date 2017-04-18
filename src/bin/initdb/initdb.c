@@ -77,7 +77,7 @@
 extern const char *select_default_timezone(const char *share_path);
 
 static const char *const auth_methods_host[] = {
-	"trust", "reject", "md5", "password", "scram", "ident", "radius",
+	"trust", "reject", "scram-sha-256", "md5", "password", "ident", "radius",
 #ifdef ENABLE_GSS
 	"gss",
 #endif
@@ -99,7 +99,7 @@ static const char *const auth_methods_host[] = {
 	NULL
 };
 static const char *const auth_methods_local[] = {
-	"trust", "reject", "md5", "scram", "password", "peer", "radius",
+	"trust", "reject", "scram-sha-256", "md5", "password", "peer", "radius",
 #ifdef USE_PAM
 	"pam", "pam ",
 #endif
@@ -1130,12 +1130,12 @@ setup_config(void)
 							  "#update_process_title = off");
 #endif
 
-	if (strcmp(authmethodlocal, "scram") == 0 ||
-		strcmp(authmethodhost, "scram") == 0)
+	if (strcmp(authmethodlocal, "scram-sha-256") == 0 ||
+		strcmp(authmethodhost, "scram-sha-256") == 0)
 	{
 		conflines = replace_token(conflines,
 								  "#password_encryption = md5",
-								  "password_encryption = scram");
+								  "password_encryption = scram-sha-256");
 	}
 
 	snprintf(path, sizeof(path), "%s/postgresql.conf", pg_data);
@@ -2329,16 +2329,16 @@ check_need_password(const char *authmethodlocal, const char *authmethodhost)
 {
 	if ((strcmp(authmethodlocal, "md5") == 0 ||
 		 strcmp(authmethodlocal, "password") == 0 ||
-		 strcmp(authmethodlocal, "scram") == 0) &&
+		 strcmp(authmethodlocal, "scram-sha-256") == 0) &&
 		(strcmp(authmethodhost, "md5") == 0 ||
 		 strcmp(authmethodhost, "password") == 0 ||
-		 strcmp(authmethodhost, "scram") == 0) &&
+		 strcmp(authmethodhost, "scram-sha-256") == 0) &&
 		!(pwprompt || pwfilename))
 	{
 		fprintf(stderr, _("%s: must specify a password for the superuser to enable %s authentication\n"), progname,
 				(strcmp(authmethodlocal, "md5") == 0 ||
 				 strcmp(authmethodlocal, "password") == 0 ||
-				 strcmp(authmethodlocal, "scram") == 0)
+				 strcmp(authmethodlocal, "scram-sha-256") == 0)
 				? authmethodlocal
 				: authmethodhost);
 		exit(1);

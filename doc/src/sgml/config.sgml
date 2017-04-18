@@ -1194,8 +1194,8 @@ include_dir 'conf.d'
         stores the password as an MD5 hash. Setting this to <literal>plain</> stores
         it in plaintext. <literal>on</> and <literal>off</> are also accepted, as
         aliases for <literal>md5</> and <literal>plain</>, respectively.  Setting
-        this parameter to <literal>scram</> will encrypt the password with
-        SCRAM-SHA-256.
+        this parameter to <literal>scram-sha-256</> will encrypt the password
+        with SCRAM-SHA-256.
        </para>
       </listitem>
      </varlistentry>

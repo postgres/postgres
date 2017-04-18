@@ -101,7 +101,7 @@ get_password_type(const char *shadow_pass)
 	if (strncmp(shadow_pass, "md5", 3) == 0 && strlen(shadow_pass) == MD5_PASSWD_LEN)
 		return PASSWORD_TYPE_MD5;
 	if (strncmp(shadow_pass, "scram-sha-256:", strlen("scram-sha-256:")) == 0)
-		return PASSWORD_TYPE_SCRAM;
+		return PASSWORD_TYPE_SCRAM_SHA_256;
 	return PASSWORD_TYPE_PLAINTEXT;
 }
 
@@ -141,7 +141,7 @@ encrypt_password(PasswordType target_type, const char *role,
 						elog(ERROR, "password encryption failed");
 					return encrypted_password;
 
-				case PASSWORD_TYPE_SCRAM:
+				case PASSWORD_TYPE_SCRAM_SHA_256:
 
 					/*
 					 * cannot convert a SCRAM verifier to an MD5 hash, so fall
@@ -152,7 +152,7 @@ encrypt_password(PasswordType target_type, const char *role,
 			}
 			break;
 
-		case PASSWORD_TYPE_SCRAM:
+		case PASSWORD_TYPE_SCRAM_SHA_256:
 			switch (guessed_type)
 			{
 				case PASSWORD_TYPE_PLAINTEXT:
@@ -164,7 +164,7 @@ encrypt_password(PasswordType target_type, const char *role,
 					 * cannot convert an MD5 hash to a SCRAM verifier, so fall
 					 * through to save the MD5 hash instead.
 					 */
-				case PASSWORD_TYPE_SCRAM:
+				case PASSWORD_TYPE_SCRAM_SHA_256:
 					return pstrdup(password);
 			}
 			break;
@@ -280,7 +280,7 @@ plain_crypt_verify(const char *role, const char *shadow_pass,
 	 */
 	switch (get_password_type(shadow_pass))
 	{
-		case PASSWORD_TYPE_SCRAM:
+		case PASSWORD_TYPE_SCRAM_SHA_256:
 			if (scram_verify_plain_password(role,
 											client_pass,
 											shadow_pass))

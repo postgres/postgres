@@ -63,7 +63,7 @@ SKIP:
 
 	# Create test roles.
 	$node->safe_psql('postgres',
-"SET password_encryption='scram';
+"SET password_encryption='scram-sha-256';
  SET client_encoding='utf8';
  CREATE ROLE saslpreptest1_role LOGIN PASSWORD 'IX';
  CREATE ROLE saslpreptest4a_role LOGIN PASSWORD 'a';
@@ -73,7 +73,7 @@ SKIP:
 ");
 
 	# Require password from now on.
-	reset_pg_hba($node, 'scram');
+	reset_pg_hba($node, 'scram-sha-256');
 
 	# Check that #1 and #5 are treated the same as just 'IX'
 	test_login($node, 'saslpreptest1_role', "I\xc2\xadX", 0);

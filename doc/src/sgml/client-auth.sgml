@@ -412,7 +412,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        </varlistentry>
 
        <varlistentry>
-        <term><literal>scram</></term>
+        <term><literal>scram-sha-256</></term>
         <listitem>
          <para>
           Perform SCRAM-SHA-256 authentication to verify the user's
@@ -683,7 +683,7 @@ host    postgres        all             192.168.93.0/24         ident
 # "postgres" if the user's password is correctly supplied.
 #
 # TYPE  DATABASE        USER            ADDRESS                 METHOD
-host    postgres        all             192.168.12.10/32        scram
+host    postgres        all             192.168.12.10/32        scram-sha-256
 
 # Allow any user from hosts in the example.com domain to connect to
 # any database if the user's password is correctly supplied.
@@ -694,7 +694,7 @@ host    postgres        all             192.168.12.10/32        scram
 #
 # TYPE  DATABASE        USER            ADDRESS                 METHOD
 host    all             mike            .example.com            md5
-host    all             all             .example.com            scram
+host    all             all             .example.com            scram-sha-256
 
 # In the absence of preceding "host" lines, these two lines will
 # reject all connections from 192.168.54.1 (since that entry will be
@@ -922,7 +922,7 @@ omicron         bryanh                  guest1
    </indexterm>
 
    <para>
-    The password-based authentication methods are <literal>scram</>,
+    The password-based authentication methods are <literal>scram-sha-256</>,
     <literal>md5</>, and <literal>password</>. These methods operate
     similarly except for the way that the password is sent across the
     connection.
@@ -939,8 +939,9 @@ omicron         bryanh                  guest1
 
 
    <para>
-    <literal>scram</> performs SCRAM-SHA-256 authentication, as described
-    in <ulink url="https://tools.ietf.org/html/rfc5802">RFC5802</ulink>. It
+    <literal>scram-sha-256</> performs SCRAM-SHA-256 authentication, as
+    described in
+    <ulink url="https://tools.ietf.org/html/rfc5802">RFC5802</ulink>. It
     is a challenge-response scheme, that prevents password sniffing on
     untrusted connections. It is more secure than the <literal>md5</>
     method, but might not be supported by older clients.
@@ -953,7 +954,7 @@ omicron         bryanh                  guest1
     protection if an attacker manages to steal the password hash from the
     server, and it cannot be used with the <xref
     linkend="guc-db-user-namespace"> feature. For all other users,
-    <literal>md5</> works the same as <literal>scram</>.
+    <literal>md5</> works the same as <literal>scram-sha-256</>.
    </para>
 
    <para>

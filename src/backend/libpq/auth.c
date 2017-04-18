@@ -50,7 +50,7 @@ static char *recv_password_packet(Port *port);
 
 
 /*----------------------------------------------------------------
- * Password-based authentication methods (password, md5, and scram)
+ * Password-based authentication methods (password, md5, and scram-sha-256)
  *----------------------------------------------------------------
  */
 static int	CheckPasswordAuth(Port *port, char **logdetail);
@@ -757,10 +757,10 @@ CheckPWChallengeAuth(Port *port, char **logdetail)
 	 * If the user does not exist, or has no password, we still go through the
 	 * motions of authentication, to avoid revealing to the client that the
 	 * user didn't exist.  If 'md5' is allowed, we choose whether to use 'md5'
-	 * or 'scram' authentication based on current password_encryption setting.
-	 * The idea is that most genuine users probably have a password of that
-	 * type, if we pretend that this user had a password of that type, too, it
-	 * "blends in" best.
+	 * or 'scram-sha-256' authentication based on current password_encryption
+	 * setting.  The idea is that most genuine users probably have a password
+	 * of that type, if we pretend that this user had a password of that type,
+	 * too, it "blends in" best.
 	 *
 	 * If the user had a password, but it was expired, we'll use the details
 	 * of the expired password for the authentication, but report it as
@@ -773,9 +773,9 @@ CheckPWChallengeAuth(Port *port, char **logdetail)
 
 	/*
 	 * If 'md5' authentication is allowed, decide whether to perform 'md5' or
-	 * 'scram' authentication based on the type of password the user has.  If
-	 * it's an MD5 hash, we must do MD5 authentication, and if it's a SCRAM
-	 * verifier, we must do SCRAM authentication.  If it's stored in
+	 * 'scram-sha-256' authentication based on the type of password the user
+	 * has.  If it's an MD5 hash, we must do MD5 authentication, and if it's
+	 * a SCRAM verifier, we must do SCRAM authentication.  If it's stored in
 	 * plaintext, we could do either one, so we opt for the more secure
 	 * mechanism, SCRAM.
 	 *
