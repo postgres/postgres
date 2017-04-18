@@ -2389,28 +2389,14 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
    <title>Creating a Self-signed Certificate</title>
 
    <para>
-    To create a quick self-signed certificate for the server, use the
-    following <productname>OpenSSL</productname> command:
+     To create a quick self-signed certificate for the server, valid for 365
+     days, use the following <productname>OpenSSL</productname> command, using
+     the local host name in the subject argument:
 <programlisting>
-openssl req -new -text -out server.req
+openssl req -new -x509 -days 365 -nodes -text -out server.crt \
+  -keyout server.key -subj "/CN=yourdomain.com"
 </programlisting>
-    Fill out the information that <application>openssl</> asks for. Make sure
-    you enter the local host name as <quote>Common Name</>; the challenge
-    password can be left blank. The program will generate a key that is
-    passphrase protected; it will not accept a passphrase that is less
-    than four characters long.  To remove the passphrase again (as you must
-    if you want automatic start-up of the server), next run the commands:
-<programlisting>
-openssl rsa -in privkey.pem -out server.key
-rm privkey.pem
-</programlisting>
-    Enter the old passphrase to unlock the existing key. Now do:
-<programlisting>
-openssl req -x509 -in server.req -text -key server.key -out server.crt
-</programlisting>
-    to turn the certificate into a self-signed certificate and to copy
-    the key and certificate to where the server will look for them.
-    Finally do:
+    Then do:
 <programlisting>
 chmod og-rwx server.key
 </programlisting>
