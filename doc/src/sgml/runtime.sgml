@@ -2390,11 +2390,11 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
 
    <para>
      To create a quick self-signed certificate for the server, valid for 365
-     days, use the following <productname>OpenSSL</productname> command, using
-     the local host name in the subject argument:
+     days, use the following <productname>OpenSSL</productname> command,
+     replacing <replaceable>yourdomain.com</> with the server's host name:
 <programlisting>
 openssl req -new -x509 -days 365 -nodes -text -out server.crt \
-  -keyout server.key -subj "/CN=yourdomain.com"
+  -keyout server.key -subj "/CN=<replaceable>yourdomain.com</>"
 </programlisting>
     Then do:
 <programlisting>
