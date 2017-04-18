@@ -549,7 +549,7 @@ RelationBuildPartitionDesc(Relation rel)
 						{
 							int			orig_index = rbounds[i]->index;
 
-							/* If the old index is has no mapping, assign one */
+							/* If the old index has no mapping, assign one */
 							if (mapping[orig_index] == -1)
 								mapping[orig_index] = next_index++;
 
