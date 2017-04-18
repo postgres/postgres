@@ -126,6 +126,18 @@ select count(*) from tenk1 where (two, four) not in
  10000
 (1 row)
 
+-- this is not parallel-safe due to use of random() within SubLink's testexpr:
+explain (costs off)
+	select * from tenk1 where (unique1 + random())::integer not in
+	(select ten from tenk2);
+             QUERY PLAN             
+------------------------------------
+ Seq Scan on tenk1
+   Filter: (NOT (hashed SubPlan 1))
+   SubPlan 1
+     ->  Seq Scan on tenk2
+(4 rows)
+
 alter table tenk2 reset (parallel_workers);
 -- test parallel index scans.
 set enable_seqscan to off;

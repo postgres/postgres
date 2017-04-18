@@ -46,6 +46,10 @@ explain (costs off)
 	(select hundred, thousand from tenk2 where thousand > 100);
 select count(*) from tenk1 where (two, four) not in
 	(select hundred, thousand from tenk2 where thousand > 100);
+-- this is not parallel-safe due to use of random() within SubLink's testexpr:
+explain (costs off)
+	select * from tenk1 where (unique1 + random())::integer not in
+	(select ten from tenk2);
 alter table tenk2 reset (parallel_workers);
 
 -- test parallel index scans.
