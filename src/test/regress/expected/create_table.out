@@ -669,3 +669,22 @@ Number of partitions: 3 (Use \d+ to list them.)
 
 -- cleanup
 DROP TABLE parted, list_parted, range_parted, list_parted2, range_parted2, range_parted3;
+-- comments on partitioned tables columns
+CREATE TABLE parted_col_comment (a int, b text) PARTITION BY LIST (a);
+COMMENT ON TABLE parted_col_comment IS 'Am partitioned table';
+COMMENT ON COLUMN parted_col_comment.a IS 'Partition key';
+SELECT obj_description('parted_col_comment'::regclass);
+   obj_description    
+----------------------
+ Am partitioned table
+(1 row)
+
+\d+ parted_col_comment
+                              Table "public.parted_col_comment"
+ Column |  Type   | Collation | Nullable | Default | Storage  | Stats target |  Description  
+--------+---------+-----------+----------+---------+----------+--------------+---------------
+ a      | integer |           |          |         | plain    |              | Partition key
+ b      | text    |           |          |         | extended |              | 
+Partition key: LIST (a)
+
+DROP TABLE parted_col_comment;

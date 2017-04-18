@@ -597,3 +597,11 @@ CREATE TABLE part_c_1_10 PARTITION OF part_c FOR VALUES FROM (1) TO (10);
 
 -- cleanup
 DROP TABLE parted, list_parted, range_parted, list_parted2, range_parted2, range_parted3;
+
+-- comments on partitioned tables columns
+CREATE TABLE parted_col_comment (a int, b text) PARTITION BY LIST (a);
+COMMENT ON TABLE parted_col_comment IS 'Am partitioned table';
+COMMENT ON COLUMN parted_col_comment.a IS 'Partition key';
+SELECT obj_description('parted_col_comment'::regclass);
+\d+ parted_col_comment
+DROP TABLE parted_col_comment;
