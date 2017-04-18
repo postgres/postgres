@@ -37,6 +37,7 @@
 #include "optimizer/clauses.h"
 #include "optimizer/planner.h"
 #include "nodes/makefuncs.h"
+#include "parser/parse_relation.h"
 #include "rewrite/rewriteHandler.h"
 #include "storage/fd.h"
 #include "tcop/tcopprot.h"
@@ -787,7 +788,6 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 	Relation	rel;
 	Oid			relid;
 	RawStmt    *query = NULL;
-	List	   *range_table = NIL;
 
 	/* Disallow COPY to/from file or program except to superusers. */
 	if (!pipe && !superuser())
@@ -809,7 +809,6 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 	if (stmt->relation)
 	{
 		TupleDesc	tupDesc;
-		AclMode		required_access = (is_from ? ACL_INSERT : ACL_SELECT);
 		List	   *attnums;
 		ListCell   *cur;
 		RangeTblEntry *rte;
@@ -822,12 +821,8 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 
 		relid = RelationGetRelid(rel);
 
-		rte = makeNode(RangeTblEntry);
-		rte->rtekind = RTE_RELATION;
-		rte->relid = RelationGetRelid(rel);
-		rte->relkind = rel->rd_rel->relkind;
-		rte->requiredPerms = required_access;
-		range_table = list_make1(rte);
+		rte = addRangeTableEntryForRelation(pstate, rel, NULL, false, false);
+		rte->requiredPerms = (is_from ? ACL_INSERT : ACL_SELECT);
 
 		tupDesc = RelationGetDescr(rel);
 		attnums = CopyGetAttnums(tupDesc, rel, stmt->attlist);
@@ -841,7 +836,7 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 			else
 				rte->selectedCols = bms_add_member(rte->selectedCols, attno);
 		}
-		ExecCheckRTPerms(range_table, true);
+		ExecCheckRTPerms(pstate->p_rtable, true);
 
 		/*
 		 * Permission check for row security policies.
@@ -977,7 +972,6 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 
 		cstate = BeginCopyFrom(pstate, rel, stmt->filename, stmt->is_program,
 							   NULL, stmt->attlist, stmt->options);
-		cstate->range_table = range_table;
 		*processed = CopyFrom(cstate);	/* copy from file to database */
 		EndCopyFrom(cstate);
 	}
@@ -2920,6 +2914,10 @@ BeginCopyFrom(ParseState *pstate,
 	cstate->line_buf_converted = false;
 	cstate->raw_buf = (char *) palloc(RAW_BUF_SIZE + 1);
 	cstate->raw_buf_index = cstate->raw_buf_len = 0;
+
+	/* Assign range table, we'll need it in CopyFrom. */
+	if (pstate)
+		cstate->range_table = pstate->p_rtable;
 
 	tupDesc = RelationGetDescr(cstate->rel);
 	attr = tupDesc->attrs;
