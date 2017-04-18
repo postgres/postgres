@@ -21,7 +21,6 @@ extern void ApplyLauncherMain(Datum main_arg);
 extern Size ApplyLauncherShmemSize(void);
 extern void ApplyLauncherShmemInit(void);
 
-extern void ApplyLauncherWakeup(void);
 extern void ApplyLauncherWakeupAtCommit(void);
 extern void AtCommit_ApplyLauncher(void);
 
