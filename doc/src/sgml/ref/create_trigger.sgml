@@ -531,8 +531,8 @@ CREATE TRIGGER view_insert
 <programlisting>
 CREATE TRIGGER transfer_insert
     AFTER INSERT ON transfer
-    FOR EACH STATEMENT
     REFERENCING NEW TABLE AS inserted
+    FOR EACH STATEMENT
     EXECUTE PROCEDURE check_transfer_balances_to_zero();
 </programlisting>
 
@@ -543,8 +543,8 @@ CREATE TRIGGER transfer_insert
 <programlisting>
 CREATE TRIGGER paired_items_update
     AFTER UPDATE ON paired_items
-    FOR EACH ROW
     REFERENCING NEW TABLE AS newtab OLD TABLE AS oldtab
+    FOR EACH ROW
     EXECUTE PROCEDURE check_matching_pairs();
 </programlisting>
   </para>
