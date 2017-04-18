@@ -1441,7 +1441,7 @@ subscription_change_cb(Datum arg, int cacheid, uint32 hashvalue)
 void
 ApplyWorkerMain(Datum main_arg)
 {
-	int				worker_slot = DatumGetObjectId(main_arg);
+	int				worker_slot = DatumGetInt32(main_arg);
 	MemoryContext	oldctx;
 	char			originname[NAMEDATALEN];
 	XLogRecPtr		origin_startpos;
