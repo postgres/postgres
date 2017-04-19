@@ -1353,9 +1353,9 @@ general, while the next subsection gives more details on SCRAM-SHA-256.
 
 <step id="sasl-auth-begin">
 <para>  
-  To begin a SASL authentication exchange, the server an AuthenticationSASL
-  message. It includes a list of SASL authentication mechanisms that the
-  server can accept, in the server's preferred order.
+  To begin a SASL authentication exchange, the server sends an
+  AuthenticationSASL message. It includes a list of SASL authentication
+  mechanisms that the server can accept, in the server's preferred order.
 </para>
 </step>
 
