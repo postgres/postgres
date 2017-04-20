@@ -1932,18 +1932,19 @@ do_help(void)
 {
 	printf(_("%s is a utility to initialize, start, stop, or control a PostgreSQL server.\n\n"), progname);
 	printf(_("Usage:\n"));
-	printf(_("  %s init[db]               [-D DATADIR] [-s] [-o \"OPTIONS\"]\n"), progname);
-	printf(_("  %s start   [-w] [-t SECS] [-D DATADIR] [-s] [-l FILENAME] [-o \"OPTIONS\"]\n"), progname);
-	printf(_("  %s stop    [-W] [-t SECS] [-D DATADIR] [-s] [-m SHUTDOWN-MODE]\n"), progname);
-	printf(_("  %s restart [-w] [-t SECS] [-D DATADIR] [-s] [-m SHUTDOWN-MODE]\n"
-			 "                 [-o \"OPTIONS\"]\n"), progname);
-	printf(_("  %s reload                 [-D DATADIR] [-s]\n"), progname);
-	printf(_("  %s status                 [-D DATADIR]\n"), progname);
-	printf(_("  %s promote [-w] [-t SECS] [-D DATADIR] [-s]\n"), progname);
-	printf(_("  %s kill    SIGNALNAME PID\n"), progname);
+	printf(_("  %s init[db] [-D DATADIR] [-s] [-o OPTIONS]\n"), progname);
+	printf(_("  %s start    [-D DATADIR] [-l FILENAME] [-W] [-t SECS] [-s]\n"
+			 "                  [-o OPTIONS] [-p PATH] [-c]\n"), progname);
+	printf(_("  %s stop     [-D DATADIR] [-m SHUTDOWN-MODE] [-W] [-t SECS] [-s]\n"), progname);
+	printf(_("  %s restart  [-D DATADIR] [-m SHUTDOWN-MODE] [-W] [-t SECS] [-s]\n"
+			 "                  [-o OPTIONS] [-c]\n"), progname);
+	printf(_("  %s reload   [-D DATADIR] [-s]\n"), progname);
+	printf(_("  %s status   [-D DATADIR]\n"), progname);
+	printf(_("  %s promote  [-D DATADIR] [-W] [-t SECS] [-s]\n"), progname);
+	printf(_("  %s kill     SIGNALNAME PID\n"), progname);
 #ifdef WIN32
-	printf(_("  %s register   [-N SERVICENAME] [-U USERNAME] [-P PASSWORD] [-D DATADIR]\n"
-			 "                    [-S START-TYPE] [-w] [-t SECS] [-o \"OPTIONS\"]\n"), progname);
+	printf(_("  %s register [-D DATADIR] [-N SERVICENAME] [-U USERNAME] [-P PASSWORD]\n"
+			 "                  [-S START-TYPE] [-e SOURCE] [-W] [-t SECS] [-s] [-o OPTIONS]\n"), progname);
 	printf(_("  %s unregister [-N SERVICENAME]\n"), progname);
 #endif
 
@@ -1958,7 +1959,6 @@ do_help(void)
 	printf(_("  -w, --wait             wait until operation completes (default)\n"));
 	printf(_("  -W, --no-wait          do not wait until operation completes\n"));
 	printf(_("  -?, --help             show this help, then exit\n"));
-	printf(_("(The default is to wait for shutdown, but not for start or restart.)\n\n"));
 	printf(_("If the -D option is omitted, the environment variable PGDATA is used.\n"));
 
 	printf(_("\nOptions for start or restart:\n"));
@@ -1976,7 +1976,7 @@ do_help(void)
 
 	printf(_("\nShutdown modes are:\n"));
 	printf(_("  smart       quit after all clients have disconnected\n"));
-	printf(_("  fast        quit directly, with proper shutdown\n"));
+	printf(_("  fast        quit directly, with proper shutdown (default)\n"));
 	printf(_("  immediate   quit without complete shutdown; will lead to recovery on restart\n"));
 
 	printf(_("\nAllowed signal names for kill:\n"));
@@ -2242,7 +2242,8 @@ main(int argc, char **argv)
 	/* process command-line options */
 	while (optind < argc)
 	{
-		while ((c = getopt_long(argc, argv, "cD:e:l:m:N:o:p:P:sS:t:U:wW", long_options, &option_index)) != -1)
+		while ((c = getopt_long(argc, argv, "cD:e:l:m:N:o:p:P:sS:t:U:wW",
+								long_options, &option_index)) != -1)
 		{
 			switch (c)
 			{

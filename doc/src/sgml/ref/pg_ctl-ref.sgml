@@ -23,19 +23,19 @@ PostgreSQL documentation
   <cmdsynopsis>
    <command>pg_ctl</command>
    <arg choice="plain"><option>init[db]</option></arg>
-   <arg choice="opt"><option>-s</option></arg>
    <arg choice="opt"><option>-D</option> <replaceable>datadir</replaceable></arg>
+   <arg choice="opt"><option>-s</option></arg>
    <arg choice="opt"><option>-o</option> <replaceable>initdb-options</replaceable></arg>
   </cmdsynopsis>
 
   <cmdsynopsis>
    <command>pg_ctl</command>
    <arg choice="plain"><option>start</option></arg>
+   <arg choice="opt"><option>-D</option> <replaceable>datadir</replaceable></arg>
+   <arg choice="opt"><option>-l</option> <replaceable>filename</replaceable></arg>
    <arg choice="opt"><option>-W</option></arg>
    <arg choice="opt"><option>-t</option> <replaceable>seconds</replaceable></arg>
    <arg choice="opt"><option>-s</option></arg>
-   <arg choice="opt"><option>-D</option> <replaceable>datadir</replaceable></arg>
-   <arg choice="opt"><option>-l</option> <replaceable>filename</replaceable></arg>
    <arg choice="opt"><option>-o</option> <replaceable>options</replaceable></arg>
    <arg choice="opt"><option>-p</option> <replaceable>path</replaceable></arg>
    <arg choice="opt"><option>-c</option></arg>
@@ -44,9 +44,6 @@ PostgreSQL documentation
   <cmdsynopsis>
    <command>pg_ctl</command>
    <arg choice="plain"><option>stop</option></arg>
-   <arg choice="opt"><option>-W</option></arg>
-   <arg choice="opt"><option>-t</option> <replaceable>seconds</replaceable></arg>
-   <arg choice="opt"><option>-s</option></arg>
    <arg choice="opt"><option>-D</option> <replaceable>datadir</replaceable></arg>
    <arg choice="opt"><option>-m</option>
      <group choice="plain">
@@ -55,16 +52,15 @@ PostgreSQL documentation
        <arg choice="plain"><option>i[mmediate]</option></arg>
      </group>
    </arg>
+   <arg choice="opt"><option>-W</option></arg>
+   <arg choice="opt"><option>-t</option> <replaceable>seconds</replaceable></arg>
+   <arg choice="opt"><option>-s</option></arg>
   </cmdsynopsis>
 
   <cmdsynopsis>
    <command>pg_ctl</command>
    <arg choice="plain"><option>restart</option></arg>
-   <arg choice="opt"><option>-W</option></arg>
-   <arg choice="opt"><option>-t</option> <replaceable>seconds</replaceable></arg>
-   <arg choice="opt"><option>-s</option></arg>
    <arg choice="opt"><option>-D</option> <replaceable>datadir</replaceable></arg>
-   <arg choice="opt"><option>-c</option></arg>
    <arg choice="opt"><option>-m</option>
      <group choice="plain">
        <arg choice="plain"><option>s[mart]</option></arg>
@@ -72,14 +68,18 @@ PostgreSQL documentation
        <arg choice="plain"><option>i[mmediate]</option></arg>
      </group>
    </arg>
+   <arg choice="opt"><option>-W</option></arg>
+   <arg choice="opt"><option>-t</option> <replaceable>seconds</replaceable></arg>
+   <arg choice="opt"><option>-s</option></arg>
    <arg choice="opt"><option>-o</option> <replaceable>options</replaceable></arg>
+   <arg choice="opt"><option>-c</option></arg>
   </cmdsynopsis>
 
   <cmdsynopsis>
    <command>pg_ctl</command>
    <arg choice="plain"><option>reload</option></arg>
-   <arg choice="opt"><option>-s</option></arg>
    <arg choice="opt"><option>-D</option> <replaceable>datadir</replaceable></arg>
+   <arg choice="opt"><option>-s</option></arg>
   </cmdsynopsis>
 
   <cmdsynopsis>
@@ -91,10 +91,10 @@ PostgreSQL documentation
   <cmdsynopsis>
    <command>pg_ctl</command>
    <arg choice="plain"><option>promote</option></arg>
+   <arg choice="opt"><option>-D</option> <replaceable>datadir</replaceable></arg>
    <arg choice="opt"><option>-W</option></arg>
    <arg choice="opt"><option>-t</option> <replaceable>seconds</replaceable></arg>
    <arg choice="opt"><option>-s</option></arg>
-   <arg choice="opt"><option>-D</option> <replaceable>datadir</replaceable></arg>
   </cmdsynopsis>
 
   <cmdsynopsis>
@@ -104,19 +104,22 @@ PostgreSQL documentation
    <arg choice="plain"><replaceable>process_id</replaceable></arg>
   </cmdsynopsis>
 
+  <para>On Microsoft Windows, also:</para>
+
   <cmdsynopsis>
    <command>pg_ctl</command>
    <arg choice="plain"><option>register</option></arg>
+   <arg choice="opt"><option>-D</option> <replaceable>datadir</replaceable></arg>
    <arg choice="opt"><option>-N</option> <replaceable>servicename</replaceable></arg>
    <arg choice="opt"><option>-U</option> <replaceable>username</replaceable></arg>
    <arg choice="opt"><option>-P</option> <replaceable>password</replaceable></arg>
-   <arg choice="opt"><option>-D</option> <replaceable>datadir</replaceable></arg>
    <arg choice="opt"><option>-S</option>
      <group choice="plain">
        <arg choice="plain"><option>a[uto]</option></arg>
        <arg choice="plain"><option>d[emand]</option></arg>
      </group>
    </arg>
+   <arg choice="opt"><option>-e</option> <replaceable>source</replaceable></arg>
    <arg choice="opt"><option>-W</option></arg>
    <arg choice="opt"><option>-t</option> <replaceable>seconds</replaceable></arg>
    <arg choice="opt"><option>-s</option></arg>
@@ -147,14 +150,14 @@ PostgreSQL documentation
 
   <para>
    The <option>init</option> or <option>initdb</option> mode creates a new
-   <productname>PostgreSQL</productname> database cluster.  A database
-   cluster is a collection of databases that are managed by a single
+   <productname>PostgreSQL</productname> database cluster, that is,
+   a collection of databases that will be managed by a single
    server instance.  This mode invokes the <command>initdb</command>
    command.  See <xref linkend="app-initdb"> for details.
   </para>
 
   <para>
-   In <option>start</option> mode, a new server is launched.  The
+   <option>start</option> mode launches a new server.  The
    server is started in the background, and its standard input is attached
    to <filename>/dev/null</filename> (or <literal>nul</> on Windows).
    On Unix-like systems, by default, the server's standard output and
@@ -172,8 +175,8 @@ PostgreSQL documentation
   </para>
 
   <para>
-   In <option>stop</option> mode, the server that is running in
-   the specified data directory is shut down.  Three different
+   <option>stop</option> mode shuts down the server that is running in
+   the specified data directory.  Three different
    shutdown methods can be selected with the <option>-m</option>
    option.  <quote>Smart</quote> mode waits for all active
    clients to disconnect and any online backup to finish.
@@ -183,60 +186,63 @@ PostgreSQL documentation
    will terminate an online backup in progress.  All active transactions are
    rolled back and clients are forcibly disconnected, then the
    server is shut down.  <quote>Immediate</quote> mode will abort
-   all server processes immediately, without a clean shutdown.
-   This will lead to a crash-recovery run on the next restart.
+   all server processes immediately, without a clean shutdown.  This choice
+   will lead to a crash-recovery cycle during the next server start.
   </para>
 
   <para>
    <option>restart</option> mode effectively executes a stop followed
    by a start.  This allows changing the <command>postgres</command>
-   command-line options.  <option>restart</option> might fail if
-   relative paths specified were specified on the command-line during
-   server start.
+   command-line options, or changing configuration-file options that
+   cannot be changed without restarting the server.
+   If relative paths were used on the command line during server
+   start, <option>restart</option> might fail unless
+   <application>pg_ctl</application> is executed in the same current
+   directory as it was during server start.
   </para>
 
   <para>
    <option>reload</option> mode simply sends the
-   <command>postgres</command> process a <systemitem>SIGHUP</>
+   <command>postgres</command> server process a <systemitem>SIGHUP</>
    signal, causing it to reread its configuration files
    (<filename>postgresql.conf</filename>,
-   <filename>pg_hba.conf</filename>, etc.).  This allows changing of
-   configuration-file options that do not require a complete restart
+   <filename>pg_hba.conf</filename>, etc.).  This allows changing
+   configuration-file options that do not require a full server restart
    to take effect.
   </para>
 
   <para>
    <option>status</option> mode checks whether a server is running in
-   the specified data directory. If it is, the <acronym>PID</acronym>
-   and the command line options that were used to invoke it are
-   displayed.  If the server is not running, the process returns an
-   exit status of 3.  If an accessible data directory is not specified,
-   the process returns an exit status of 4.
+   the specified data directory. If it is, the server's <acronym>PID</acronym>
+   and the command line options that were used to invoke it are displayed.
+   If the server is not running, <application>pg_ctl</application> returns
+   an exit status of 3.  If an accessible data directory is not
+   specified, <application>pg_ctl</application> returns an exit status of 4.
   </para>
 
   <para>
-   In <option>promote</option> mode, the standby server that is
-   running in the specified data directory is commanded to exit
-   recovery and begin read-write operations.
+   <option>promote</option> mode commands the standby server that is
+   running in the specified data directory to end standby mode
+   and begin read-write operations.
   </para>
 
   <para>
-   <option>kill</option> mode allows you to send a signal to a specified
-    process.  This is particularly valuable for <productname>Microsoft Windows</>
-    which does not have a <application>kill</> command.  Use
-    <literal>--help</> to see a list of supported signal names.
+   <option>kill</option> mode sends a signal to a specified process.
+   This is primarily valuable on <productname>Microsoft Windows</>
+   which does not have a built-in <application>kill</> command.  Use
+   <literal>--help</> to see a list of supported signal names.
   </para>
 
   <para>
-   <option>register</option> mode allows you to register a system service
-   on <productname>Microsoft Windows</>.  The <option>-S</option> option
-   allows selection of service start type, either <quote>auto</quote> (start
-   service automatically on system startup) or <quote>demand</quote> (start
-   service on demand).
+   <option>register</option> mode registers the <productname>PostgreSQL</>
+   server as a system service on <productname>Microsoft Windows</>.
+   The <option>-S</option> option allows selection of service start type,
+   either <quote>auto</quote> (start service automatically on system startup)
+   or <quote>demand</quote> (start service on demand).
   </para>
 
   <para>
-   <option>unregister</option> mode allows you to unregister a system service
+   <option>unregister</option> mode unregisters a system service
    on <productname>Microsoft Windows</>.  This undoes the effects of the
    <option>register</option> command.
   </para>
@@ -249,7 +255,7 @@ PostgreSQL documentation
 
      <varlistentry>
       <term><option>-c</option></term>
-      <term><option>--core-file</option></term>
+      <term><option>--core-files</option></term>
       <listitem>
        <para>
         Attempt to allow server crashes to produce core files, on platforms
@@ -267,7 +273,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         Specifies the file system location of the database configuration files.  If
-        this is omitted, the environment variable
+        this option is omitted, the environment variable
         <envar>PGDATA</envar> is used.
        </para>
       </listitem>
@@ -294,7 +300,8 @@ PostgreSQL documentation
         Specifies the shutdown mode.  <replaceable>mode</replaceable>
         can be <literal>smart</literal>, <literal>fast</literal>, or
         <literal>immediate</literal>, or the first letter of one of
-        these three.  If this is omitted, <literal>fast</literal> is used.
+        these three.  If this option is omitted, <literal>fast</literal> is
+        the default.
        </para>
       </listitem>
      </varlistentry>
@@ -305,12 +312,13 @@ PostgreSQL documentation
       <listitem>
        <para>
         Specifies options to be passed directly to the
-        <command>postgres</command> command;  multiple
-        option invocations are appended.
+        <command>postgres</command> command.
+        <option>-o</> can be specified multiple times, with all the given
+        options being passed through.
        </para>
        <para>
-        The options should usually be surrounded by single or double
-        quotes to ensure that they are passed through as a group.
+        The <replaceable>options</> should usually be surrounded by single or
+        double quotes to ensure that they are passed through as a group.
        </para>
       </listitem>
      </varlistentry>
@@ -322,10 +330,12 @@ PostgreSQL documentation
        <para>
         Specifies options to be passed directly to the
         <command>initdb</command> command.
+        <option>-o</> can be specified multiple times, with all the given
+        options being passed through.
        </para>
        <para>
-        The options should usually be surrounded by single or double
-        quotes to ensure that they are passed through as a group.
+        The <replaceable>options</> should usually be surrounded by single or
+        double quotes to ensure that they are passed through as a group.
        </para>
       </listitem>
      </varlistentry>
@@ -361,14 +371,14 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-t</option></term>
-      <term><option>--timeout</option></term>
+      <term><option>-t <replaceable class="parameter">seconds</replaceable></option></term>
+      <term><option>--timeout=<replaceable class="parameter">seconds</replaceable></option></term>
       <listitem>
        <para>
-        The maximum number of seconds to wait when waiting for an operation
-        to complete (see option <option>-w</option>). Defaults to the value of the
-        <envar>PGCTLTIMEOUT</> environment variable or, if not set, to 60
-        seconds.
+        Specifies the maximum number of seconds to wait when waiting for an
+        operation to complete (see option <option>-w</option>).  Defaults to
+        the value of the <envar>PGCTLTIMEOUT</> environment variable or, if
+        not set, to 60 seconds.
        </para>
       </listitem>
      </varlistentry>
@@ -388,7 +398,7 @@ PostgreSQL documentation
       <term><option>--wait</option></term>
       <listitem>
        <para>
-        Wait for an operation to complete.  This is supported for the
+        Wait for the operation to complete.  This is supported for the
         modes <literal>start</literal>, <literal>stop</literal>,
         <literal>restart</literal>, <literal>promote</literal>,
         and <literal>register</literal>, and is the default for those modes.
@@ -399,7 +409,6 @@ PostgreSQL documentation
         attempts to connect to the server.
         When waiting for shutdown, <command>pg_ctl</command> waits for
         the server to remove its <acronym>PID</acronym> file.
-        This option allows the entry of an <acronym>SSL</> passphrase on startup.
         <command>pg_ctl</command> returns an exit code based on the
         success of the startup or shutdown.
        </para>
@@ -411,8 +420,8 @@ PostgreSQL documentation
       <term><option>--no-wait</option></term>
       <listitem>
        <para>
-        Do not wait for an operation to complete.  This is the opposite of the
-        option <option>-w</option>.
+        Do not wait for the operation to complete.  This is the opposite of
+        the option <option>-w</option>.
        </para>
 
        <para>
@@ -441,6 +450,11 @@ PostgreSQL documentation
      </varlistentry>
    </variablelist>
 
+  <para>
+   If an option is specified that is valid, but not relevant to the selected
+   operating mode, <application>pg_ctl</application> ignores it.
+  </para>
+
   <refsect2 id="app-pg-ctl-windows-options">
    <title>Options for Windows</title>
 
@@ -452,11 +466,12 @@ PostgreSQL documentation
        Name of the event source for <application>pg_ctl</application> to use
        for logging to the event log when running as a Windows service.  The
        default is <literal>PostgreSQL</literal>.  Note that this only controls
-       the logging from <application>pg_ctl</application> itself; once
+       messages sent from <application>pg_ctl</application> itself; once
        started, the server will use the event source specified
-       by <xref linkend="guc-event-source">.  Should the server fail during
-       early startup, it might also log using the default event
-       source <literal>PostgreSQL</literal>.
+       by its <xref linkend="guc-event-source"> parameter.  Should the server
+       fail very early in startup, before that parameter has been set,
+       it might also log using the default event
+       source name <literal>PostgreSQL</literal>.
       </para>
      </listitem>
     </varlistentry>
@@ -465,8 +480,9 @@ PostgreSQL documentation
      <term><option>-N <replaceable class="parameter">servicename</replaceable></option></term>
      <listitem>
       <para>
-       Name of the system service to register. The name will be used
+       Name of the system service to register. This name will be used
        as both the service name and the display name.
+       The default is <literal>PostgreSQL</literal>.
       </para>
      </listitem>
     </varlistentry>
@@ -475,7 +491,7 @@ PostgreSQL documentation
      <term><option>-P <replaceable class="parameter">password</replaceable></option></term>
      <listitem>
       <para>
-       Password for the user to start the service.
+       Password for the user to run the service as.
       </para>
      </listitem>
     </varlistentry>
@@ -484,10 +500,10 @@ PostgreSQL documentation
      <term><option>-S <replaceable class="parameter">start-type</replaceable></option></term>
      <listitem>
       <para>
-       Start type of the system service to register.  start-type can
+       Start type of the system service.  <replaceable>start-type</> can
        be <literal>auto</literal>, or <literal>demand</literal>, or
-       the first letter of one of these two. If this is omitted,
-       <literal>auto</literal> is used.
+       the first letter of one of these two. If this option is omitted,
+       <literal>auto</literal> is the default.
       </para>
      </listitem>
     </varlistentry>
@@ -496,7 +512,7 @@ PostgreSQL documentation
      <term><option>-U <replaceable class="parameter">username</replaceable></option></term>
      <listitem>
       <para>
-       User name for the user to start the service. For domain users, use the
+       User name for the user to run the service as. For domain users, use the
        format <literal>DOMAIN\username</literal>.
       </para>
      </listitem>
@@ -535,11 +551,21 @@ PostgreSQL documentation
   </variablelist>
 
   <para>
+   Most <command>pg_ctl</command> modes require knowing the data directory
+   location; therefore, the <option>-D</> option is required
+   unless <envar>PGDATA</envar> is set.
+  </para>
+
+  <para>
    <command>pg_ctl</command>, like most other <productname>PostgreSQL</>
    utilities,
    also uses the environment variables supported by <application>libpq</>
    (see <xref linkend="libpq-envars">).
-   For additional server variables, see <xref linkend="app-postgres">.
+  </para>
+
+  <para>
+   For additional variables that affect the server,
+   see <xref linkend="app-postgres">.
   </para>
  </refsect1>
 
@@ -553,9 +579,8 @@ PostgreSQL documentation
 
     <listitem>
      <para>
-      The existence of this file in the data directory is used to help
-      <application>pg_ctl</application> determine if the server is
-      currently running.
+      <application>pg_ctl</application> examines this file in the data
+      directory to determine whether the server is currently running.
      </para>
     </listitem>
    </varlistentry>
@@ -583,13 +608,6 @@ PostgreSQL documentation
 
   <refsect2 id="R2-APP-PGCTL-3">
    <title>Starting the Server</title>
-
-   <para>
-    To start the server:
-<screen>
-<prompt>$</prompt> <userinput>pg_ctl start</userinput>
-</screen>
-   </para>
 
    <para>
     To start the server, waiting until the server is
@@ -626,24 +644,17 @@ PostgreSQL documentation
 
    <para>
     Restarting the server is almost equivalent to stopping the
-    server and starting it again,
-    except that <command>pg_ctl</command> saves and reuses the command line options that
-    were passed to the previously running instance.  To restart
-    the server in the simplest form, use:
+    server and starting it again, except that by default,
+    <command>pg_ctl</command> saves and reuses the command line options that
+    were passed to the previously-running instance.  To restart
+    the server using the same options as before, use:
 <screen>
 <prompt>$</prompt> <userinput>pg_ctl restart</userinput>
 </screen>
    </para>
 
    <para>
-    To restart the server,
-    waiting for it to shut down and restart:
-<screen>
-<prompt>$</prompt> <userinput>pg_ctl restart</userinput>
-</screen>
-   </para>
-
-   <para>
+    But if <option>-o</> is specified, that replaces any previous options.
     To restart using port 5433, disabling <function>fsync</> upon restart:
 <screen>
 <prompt>$</prompt> <userinput>pg_ctl -o "-F -p 5433" restart</userinput>
@@ -663,7 +674,7 @@ pg_ctl: server is running (PID: 13718)
 /usr/local/pgsql/bin/postgres "-D" "/usr/local/pgsql/data" "-p" "5433" "-B" "128"
 </computeroutput>
 </screen>
-    This is the command line that would be invoked in restart mode.
+    The second line is the command that would be invoked in restart mode.
    </para>
   </refsect2>
  </refsect1>
