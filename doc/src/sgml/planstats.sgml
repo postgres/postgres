@@ -445,159 +445,141 @@ rows = (outer_cardinality * inner_cardinality) * selectivity
    operator-specific selectivity functions are mostly found
    in <filename>src/backend/utils/adt/selfuncs.c</filename>.
   </para>
+ </sect1>
 
-  <sect2 id="functional-dependencies">
-   <title>Functional Dependencies</title>
+ <sect1 id="multivariate-statistics-examples">
+  <title>Multivariate Statistics Examples</title>
 
+  <indexterm>
+   <primary>row estimation</primary>
+   <secondary>multivariate</secondary>
+  </indexterm>
+
+  <sect2>
+   <title>Functional dependencies</title>
    <para>
-    The simplest type of extended statistics are functional dependencies,
-    used in definitions of database normal forms. When simplified, saying that
-    <literal>b</> is functionally dependent on <literal>a</> means that
-    knowledge of value of <literal>a</> is sufficient to determine value of
-    <literal>b</>.
-   </para>
-
-   <para>
-    In normalized databases, only functional dependencies on primary keys
-    and superkeys are allowed. However, in practice, many data sets are not
-    fully normalized, for example, due to intentional denormalization for
-    performance reasons.
-   </para>
-
-   <para>
-    Functional dependencies directly affect accuracy of the estimates, as
-    conditions on the dependent column(s) do not restrict the result set,
-    resulting in underestimates.
-   </para>
-
-   <para>
-    To inform the planner about the functional dependencies, we collect
-    measurements of dependency during <command>ANALYZE</>. Assessing
-    dependency between all sets of columns would be prohibitively
-    expensive, so we limit our search to potential dependencies defined
-    using the <command>CREATE STATISTICS</> command.
+    Multivariate correlation can be seen with a very simple data set &mdash; a
+    table with two columns, both containing the same values:
 
 <programlisting>
 CREATE TABLE t (a INT, b INT);
-INSERT INTO t SELECT i/100, i/100 FROM generate_series(1,10000) s(i);
-CREATE STATISTICS s1 WITH (dependencies) ON (a, b) FROM t;
+INSERT INTO t SELECT i % 100, i % 100 FROM generate_series(1, 10000) s(i);
 ANALYZE t;
-EXPLAIN ANALYZE SELECT * FROM t WHERE a = 1 AND b = 1;
-                                          QUERY PLAN                                             
--------------------------------------------------------------------------------------------------
- Seq Scan on t  (cost=0.00..195.00 rows=100 width=8) (actual time=0.095..3.118 rows=100 loops=1)
+</programlisting>
+
+    As explained in <xref linkend="planner-stats">, the planner can determine
+    cardinality of <structname>t</structname> using the number of pages and
+    rows obtained from <structname>pg_class</structname>:
+
+<programlisting>
+SELECT relpages, reltuples FROM pg_class WHERE relname = 't';
+
+ relpages | reltuples
+----------+-----------
+       45 |     10000
+</programlisting>
+
+    The data distribution is very simple; there are only 100 distinct values
+    in each column, uniformly distributed.
+   </para>
+
+   <para>
+    The following example shows the result of estimating a <literal>WHERE</>
+    condition on the <structfield>a</> column:
+
+<programlisting>
+EXPLAIN (ANALYZE, TIMING OFF) SELECT * FROM t WHERE a = 1;
+                                 QUERY PLAN                                  
+-------------------------------------------------------------------------------
+ Seq Scan on t  (cost=0.00..170.00 rows=100 width=8) (actual rows=100 loops=1)
+   Filter: (a = 1)
+   Rows Removed by Filter: 9900
+</programlisting>
+
+    The planner examines the condition and determines the selectivity
+    of this clause to be 1%.  By comparing this estimate and the actual
+    number of rows, we see that the estimate is very accurate
+    (in fact exact, as the table is very small).  Changing the
+    <literal>WHERE</> to use the <structfield>b</> column, an identical
+    plan is generated.  Observe what happens if we apply the same
+    condition on both columns combining them with <literal>AND</>:
+
+<programlisting>
+EXPLAIN (ANALYZE, TIMING OFF) SELECT * FROM t WHERE a = 1 AND b = 1;
+                                 QUERY PLAN                                  
+-----------------------------------------------------------------------------
+ Seq Scan on t  (cost=0.00..195.00 rows=1 width=8) (actual rows=100 loops=1)
    Filter: ((a = 1) AND (b = 1))
    Rows Removed by Filter: 9900
- Planning time: 0.367 ms
- Execution time: 3.380 ms
-(5 rows)
 </programlisting>
 
-    The planner is now aware of the functional dependencies and considers
-    them when computing the selectivity of the second condition.  Running
-    the query without the statistics would lead to quite different estimates.
+    The planner estimates the selectivity for each condition individually,
+    arriving to the 1% estimates as above, and then multiplies them, getting
+    the final 0.01% estimate. The <quote>actual</quote> figures, however,
+    show that this results in a significant underestimate, as the actual
+    number of rows matching the conditions (100) is two orders of magnitude
+    higher than the estimated value.
+   </para>
+
+   <para>
+    This problem can be fixed by applying functional-dependency
+    multivariate statistics on the two columns:
 
 <programlisting>
-DROP STATISTICS s1;
-EXPLAIN ANALYZE SELECT * FROM t WHERE a = 1 AND b = 1;
-                                          QUERY PLAN                                           
------------------------------------------------------------------------------------------------
- Seq Scan on t  (cost=0.00..195.00 rows=1 width=8) (actual time=0.000..6.379 rows=100 loops=1)
+CREATE STATISTICS stts WITH (dependencies) ON (a, b) FROM t;
+ANALYZE t;
+EXPLAIN (ANALYZE, TIMING OFF) SELECT * FROM t WHERE a = 1 AND b = 1;
+                                  QUERY PLAN                                   
+-------------------------------------------------------------------------------
+ Seq Scan on t  (cost=0.00..195.00 rows=100 width=8) (actual rows=100 loops=1)
    Filter: ((a = 1) AND (b = 1))
    Rows Removed by Filter: 9900
- Planning time: 0.000 ms
- Execution time: 6.379 ms
-(5 rows)
 </programlisting>
    </para>
-
-   <para>
-    If no dependency exists, the collected statistics do not influence the
-    query plan. The only effect is to slow down <command>ANALYZE</>. Should
-    partial dependencies exist these will also be stored and applied
-    during planning.
-   </para>
-
-   <para>
-    Similarly to per-column statistics, extended statistics are stored in
-    a system catalog called <structname>pg_statistic_ext</structname>.
-    To inspect the statistics <literal>s1</literal> defined above,
-    you may do this:
-
-<programlisting>
-SELECT stxname,stxdependencies FROM pg_statistic_ext WHERE stxname = 's1';
- stxname |              stxdependencies
----------+--------------------------------------------
- s1      | [{1 => 2 : 1.000000}, {2 => 1 : 1.000000}]
-(1 row)
-</programlisting>
-
-     This shows that the statistics are defined on table <structname>t</>,
-     <structfield>attnums</structfield> lists attribute numbers of columns
-     (references <structname>pg_attribute</structname>). It also shows
-     the length in bytes of the functional dependencies, as found by
-     <command>ANALYZE</> when serialized into a <literal>bytea</> column.
-   </para>
-
-   <para>
-    When computing the selectivity, the planner inspects all conditions and
-    attempts to identify which conditions are already implied by other
-    conditions.  The selectivity estimates from any redundant conditions are
-    ignored from a selectivity point of view. In the example query above,
-    the selectivity estimates for either of the conditions may be eliminated,
-    thus improving the overall estimate.
-   </para>
-
-    <sect3 id="functional-dependencies-limitations">
-     <title>Limitations of functional dependencies</title>
-
-     <para>
-      Functional dependencies are a very simple type of statistics, and
-      as such have several limitations. The first limitation is that they
-      only work with simple equality conditions, comparing columns and constant
-      values. It's not possible to use them to eliminate equality conditions
-      comparing two columns or a column to an expression, range clauses,
-      <literal>LIKE</> or any other type of conditions.
-     </para>
-
-     <para>
-      When eliminating the implied conditions, the planner assumes that the
-      conditions are compatible. Consider the following example, violating
-      this assumption:
-
-<programlisting>
-EXPLAIN ANALYZE SELECT * FROM t WHERE a = 1 AND b = 10;
-                                          QUERY PLAN
------------------------------------------------------------------------------------------------
- Seq Scan on t  (cost=0.00..195.00 rows=100 width=8) (actual time=2.992..2.992 rows=0 loops=1)
-   Filter: ((a = 1) AND (b = 10))
-   Rows Removed by Filter: 10000
- Planning time: 0.232 ms
- Execution time: 3.033 ms
-(5 rows)
-</programlisting>
-
-      While there are no rows with such combination of values, the planner
-      is unable to verify whether the values match - it only knows that
-      the columns are functionally dependent.
-     </para>
-
-     <para>
-      This assumption is more about queries executed on the database - in many
-      cases, it's actually satisfied (e.g. when the GUI only allows selecting
-      compatible values). But if that's not the case, functional dependencies
-      may not be a viable option.
-     </para>
-
-     <para>
-      For additional information about functional dependencies, see
-      <filename>src/backend/statistics/README.dependencies</>.
-     </para>
-
-    </sect3>
-
   </sect2>
 
- </sect1>
+  <sect2>
+   <title>Multivariate N-Distinct coefficients</title>
+   <para>
+    A similar problem occurs with estimation of the cardinality of distinct
+    elements, used to determine the number of groups that would be generated
+    by a <command>GROUP BY</command> clause.  When <command>GROUP BY</command>
+    lists a single column, the n-distinct estimate (which can be seen as the
+    number of rows returned by the aggregate execution node) is very accurate:
+<programlisting>
+EXPLAIN (ANALYZE, TIMING OFF) SELECT COUNT(*) FROM t GROUP BY a;
+                                       QUERY PLAN                                        
+-----------------------------------------------------------------------------------------
+ HashAggregate  (cost=195.00..196.00 rows=100 width=12) (actual rows=100 loops=1)
+   Group Key: a
+   -&gt;  Seq Scan on t  (cost=0.00..145.00 rows=10000 width=4) (actual rows=10000 loops=1)
+</programlisting>
+    But without multivariate statistics, the estimate for the number of
+    groups in a query with two columns in <command>GROUP BY</command>, as
+    in the following example, is off by an order of magnitude:
+<programlisting>
+EXPLAIN (ANALYZE, TIMING OFF) SELECT COUNT(*) FROM t GROUP BY a, b;
+                                       QUERY PLAN                                        
+--------------------------------------------------------------------------------------------
+ HashAggregate  (cost=220.00..230.00 rows=1000 width=16) (actual rows=100 loops=1)
+   Group Key: a, b
+   -&gt;  Seq Scan on t  (cost=0.00..145.00 rows=10000 width=8) (actual rows=10000 loops=1)
+</programlisting>
+    By dropping the existing statistics and re-creating it to include n-distinct
+    calculation, the estimate is much improved:
+<programlisting>
+DROP STATISTICS stts;
+CREATE STATISTICS stts WITH (dependencies, ndistinct) ON (a, b) FROM t;
+ANALYZE t;
+EXPLAIN (ANALYZE, TIMING OFF) SELECT COUNT(*) FROM t GROUP BY a, b;
+                                       QUERY PLAN                                        
+--------------------------------------------------------------------------------------------
+ HashAggregate  (cost=220.00..221.00 rows=100 width=16) (actual rows=100 loops=1)
+   Group Key: a, b
+   -&gt;  Seq Scan on t  (cost=0.00..145.00 rows=10000 width=8) (actual rows=10000 loops=1)
+</programlisting>
+   </para>
 
+  </sect2>
+ </sect1>
 </chapter>

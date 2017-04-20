@@ -4321,6 +4321,17 @@
      </row>
 
      <row>
+      <entry><structfield>stxkeys</structfield></entry>
+      <entry><type>int2vector</type></entry>
+      <entry><literal><link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.attnum</literal></entry>
+      <entry>
+       This is an array of values that indicate which table columns this
+       statistic covers. For example a value of <literal>1 3</literal> would
+       mean that the first and the third table columns make up the statistic key.
+      </entry>
+     </row>
+
+     <row>
       <entry><structfield>stxkind</structfield></entry>
       <entry><type>char[]</type></entry>
       <entry></entry>
@@ -4329,17 +4340,6 @@
         are:
         <literal>d</literal> for ndistinct coefficients,
         <literal>f</literal> for functional dependencies.
-      </entry>
-     </row>
-
-     <row>
-      <entry><structfield>stxkeys</structfield></entry>
-      <entry><type>int2vector</type></entry>
-      <entry><literal><link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.attnum</literal></entry>
-      <entry>
-       This is an array of values that indicate which table columns this
-       statistic covers. For example a value of <literal>1 3</literal> would
-       mean that the first and the third table columns make up the statistic key.
       </entry>
      </row>
 

@@ -906,6 +906,8 @@ EXPLAIN ANALYZE SELECT * FROM tenk1 WHERE unique1 &lt; 100 AND unique2 &gt; 9000
    <secondary>of the planner</secondary>
   </indexterm>
 
+  <sect2>
+   <title>Single-Column Statistics</title>
   <para>
    As we saw in the previous section, the query planner needs to estimate
    the number of rows retrieved by a query in order to make good choices
@@ -1043,7 +1045,200 @@ WHERE tablename = 'road';
    Further details about the planner's use of statistics can be found in
    <xref linkend="planner-stats-details">.
   </para>
+  </sect2>
 
+  <sect2 id="planner-stats-extended">
+   <title>Extended Statistics</title>
+
+   <indexterm zone="planner-stats-extended">
+    <primary>statistics</primary>
+    <secondary>of the planner</secondary>
+   </indexterm>
+
+   <indexterm>
+    <primary>correlation</primary>
+    <secondary>in the query planner</secondary>
+   </indexterm>
+
+   <indexterm>
+    <primary>pg_statistic_ext</primary>
+   </indexterm>
+
+   <para>
+    It is common to see slow queries running bad execution plans because
+    multiple columns used in the query clauses are correlated.
+    The planner normally assumes that multiple conditions
+    are independent of each other,
+    an assumption that does not hold when column values are correlated.
+    Regular statistics, because of their per-individual-column nature,
+    do not capture the knowledge of cross-column correlation;
+    <firstterm>multivariate statistics</firstterm> can be used to instruct
+    the server to obtain statistics across such a set of columns,
+    which are later used by the query optimizer
+    to determine cardinality and selectivity
+    of clauses involving those columns.
+    Multivariate statistics are currently the only use of
+    <firstterm>extended statistics</firstterm>.
+   </para>
+
+   <para>
+    Extended statistics are created using
+    <xref linkend="sql-createstatistics">, which see for more details.
+    Data collection is deferred until the next <command>ANALYZE</command>
+    on the table, after which the stored values can be examined in the
+    <link linkend="catalog-pg-statistic-ext"><structname>pg_statistic_ext</structname></link>
+    catalog.
+   </para>
+
+   <para>
+    The following subsections describe the types of extended statistics
+    that are currently supported.
+   </para>
+
+   <sect3>
+    <title>Functional Dependencies</title>
+
+    <para>
+     The simplest type of extended statistics are functional dependencies,
+     a concept used in definitions of database normal forms.
+     Put simply, it is said that column <literal>b</> is functionally
+     dependent on column <literal>a</> if knowledge of the value of
+     <literal>a</> is sufficient to determine the value of <literal>b</>.
+     In normalized databases, functional dependencies are allowed only on
+     primary keys and superkeys. However, many data sets are in practice not
+     fully normalized for various reasons; intentional denormalization for
+     performance reasons is a common example.
+    </para>
+
+    <para>
+     The existance of functional dependencies directly affects the accuracy
+     of estimates in certain queries.
+     The reason is that conditions on the dependent columns do not
+     restrict the result set, but the query planner (lacking functional
+     dependency knowledge) considers them independent, resulting in
+     underestimates.
+     To inform the planner about the functional dependencies, we collect
+     measurements of dependency during <command>ANALYZE</>. Assessing
+     the degree of dependency between all sets of columns would be
+     prohibitively expensive, so the search is limited to potential
+     dependencies defined using the <literal>dependencies</> option of
+     extended statistics.  It is advisable to create
+     <literal>dependencies</> statistics if and only if functional
+     dependencies actually exist, to avoid unnecessary overhead on both
+     <command>ANALYZE</> and query planning.
+    </para>
+
+    <para>
+     To inspect functional dependencies on a statistics
+     <literal>stts</literal>, you may do this:
+<programlisting>
+CREATE STATISTICS stts WITH (dependencies)
+               ON (zip, city) FROM zipcodes;
+ANALYZE zipcodes;
+SELECT stxname, stxkeys, stxdependencies
+  FROM pg_statistic_ext
+ WHERE stxname = 'stts';
+ stxname | stxkeys |              stxdependencies               
+---------+---------+--------------------------------------------
+ stts    | 1 5     | [{1 => 5 : 1.000000}, {5 => 1 : 0.423130}]
+(1 row)
+</programlisting>
+     where it can be seen that column 1 (a zip code) fully determines column
+     5 (city) so the coefficient is 1.0, while city only determines zip code
+     about 42% of the time, meaning that there are many cities (58%) that are
+     represented by more than a single ZIP code.
+    </para>
+
+    <para>
+     When computing the selectivity, the planner inspects all conditions and
+     attempts to identify which conditions are already implied by other
+     conditions.  The selectivity estimates from any redundant conditions are
+     ignored from a selectivity point of view. In the example query above,
+     the selectivity estimates for either of the conditions may be eliminated,
+     thus improving the overall estimate.
+    </para>
+
+    <sect4>
+     <title>Limitations of Functional Dependencies</title>
+
+     <para>
+      Functional dependencies are a very simple type of statistics, and
+      as such have several limitations. The first limitation is that they
+      only work with simple equality conditions, comparing columns and constant
+      values. It's not possible to use them to eliminate equality conditions
+      comparing two columns or a column to an expression, range clauses,
+      <literal>LIKE</> or any other type of conditions.
+     </para>
+
+     <para>
+      When eliminating the implied conditions, the planner assumes that the
+      conditions are compatible. Consider the following example, where
+      this assumption does not hold:
+
+<programlisting>
+EXPLAIN (ANALYZE, TIMING OFF) SELECT * FROM t WHERE a = 1 AND b = 10;
+                                 QUERY PLAN                                  
+-----------------------------------------------------------------------------
+ Seq Scan on t  (cost=0.00..195.00 rows=100 width=8) (actual rows=0 loops=1)
+   Filter: ((a = 1) AND (b = 10))
+   Rows Removed by Filter: 10000
+</programlisting>
+
+      While there are no rows with such combination of values, the planner
+      is unable to verify whether the values match &mdash; it only knows that
+      the columns are functionally dependent.
+     </para>
+
+     <para>
+      This assumption is related to queries executed on the database; in many
+      cases, it's actually satisfied (e.g. when the GUI only allows selecting
+      compatible values). But if that's not the case, functional dependencies
+      may not be a viable option.
+     </para>
+    </sect4>
+   </sect3>
+
+   <sect3>
+    <title>Multivariate N-Distinct Coefficients</title>
+
+    <para>
+     Single-column statistics store the number of distinct values in each
+     column.  Estimates of the number of distinct values on more than one
+     column (for example, for <literal>GROUP BY a, b</literal>) are
+     frequently wrong when the planner only has single-column statistical
+     data, however, causing it to select bad plans.
+     In order to improve n-distinct estimation when multiple columns are
+     grouped together, the <literal>ndistinct</> option of extended statistics
+     can be used, which instructs <command>ANALYZE</> to collect n-distinct
+     estimates for all possible combinations of two or more columns of the set
+     of columns in the statistics object (the per-column estimates are already
+     available in <structname>pg_statistic</>).
+    </para>
+
+    <para>
+     Continuing the above example, the n-distinct coefficients in a ZIP
+     code table may look like the following:
+<programlisting>
+CREATE STATISTICS stts2 WITH (ndistinct)
+               ON (zip, state, city) FROM zipcodes;
+ANALYZE zipcodes;
+SELECT stxkeys AS k, stxndistinct AS nd
+  FROM pg_statistic_ext
+ WHERE stxname = 'stts2';
+-[ RECORD 1 ]---------------------------------------------
+k  | 1 2 5
+nd | [{(b 1 2), 33178.000000}, {(b 1 5), 33178.000000},
+      {(b 2 5), 27435.000000}, {(b 1 2 5), 33178.000000}]
+(1 row)
+</programlisting>
+     which indicates that there are three combinations of columns that
+     have 33178 distinct values: ZIP code and state; ZIP code and city;
+     and ZIP code, city and state (the fact that they are all equal is
+     expected given the nature of ZIP-code data).  On the other hand,
+     the combination of city and state only has 27435 distinct values.
+    </para>
+   </sect3>
+  </sect2>
  </sect1>
 
  <sect1 id="explicit-joins">
