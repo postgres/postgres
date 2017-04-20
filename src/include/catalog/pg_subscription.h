@@ -41,10 +41,17 @@ CATALOG(pg_subscription,6100) BKI_SHARED_RELATION BKI_ROWTYPE_OID(6101) BKI_SCHE
 								 * (the worker should be running) */
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
-	text		subconninfo;	/* Connection string to the publisher */
-	NameData	subslotname;	/* Slot name on publisher */
-	text		subsynccommit;	/* Synchronous commit setting for worker */
-	text		subpublications[1];	/* List of publications subscribed to */
+	/* Connection string to the publisher */
+	text		subconninfo BKI_FORCE_NOT_NULL;
+
+	/* Slot name on publisher */
+	NameData	subslotname BKI_FORCE_NOT_NULL;
+
+	/* Synchronous commit setting for worker */
+	text		subsynccommit BKI_FORCE_NOT_NULL;
+
+	/* List of publications subscribed to */
+	text		subpublications[1] BKI_FORCE_NOT_NULL;
 #endif
 } FormData_pg_subscription;
 
