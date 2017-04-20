@@ -37,6 +37,7 @@ CREATE SCHEMA pub_test;
 CREATE TABLE testpub_tbl1 (id serial primary key, data text);
 CREATE TABLE pub_test.testpub_nopk (foo int, bar int);
 CREATE VIEW testpub_view AS SELECT 1;
+CREATE TABLE testpub_parted (a int) PARTITION BY LIST (a);
 CREATE PUBLICATION testpub_foralltables FOR ALL TABLES WITH (nopublish delete, nopublish update);
 ALTER PUBLICATION testpub_foralltables WITH (publish update);
 CREATE TABLE testpub_tbl2 (id serial primary key, data text);
@@ -118,6 +119,11 @@ Tables:
 ALTER PUBLICATION testpub_default ADD TABLE testpub_view;
 ERROR:  "testpub_view" is not a table
 DETAIL:  Only tables can be added to publications.
+-- fail - partitioned table
+ALTER PUBLICATION testpub_fortbl ADD TABLE testpub_parted;
+ERROR:  "testpub_parted" is a partitioned table
+DETAIL:  Adding partitioned tables to publications is not supported.
+HINT:  You can add the table partitions individually.
 ALTER PUBLICATION testpub_default ADD TABLE testpub_tbl1;
 ALTER PUBLICATION testpub_default SET TABLE testpub_tbl1;
 ALTER PUBLICATION testpub_default ADD TABLE pub_test.testpub_nopk;
@@ -188,6 +194,7 @@ ALTER PUBLICATION testpub2 ADD TABLE testpub_tbl1;  -- ok
 DROP PUBLICATION testpub2;
 SET ROLE regress_publication_user;
 REVOKE CREATE ON DATABASE regression FROM regress_publication_user2;
+DROP TABLE testpub_parted;
 DROP VIEW testpub_view;
 DROP TABLE testpub_tbl1;
 \dRp+ testpub_default

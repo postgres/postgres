@@ -75,6 +75,14 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
       Optionally, <literal>*</> can be specified after the table name to
       explicitly indicate that descendant tables are included.
      </para>
+
+     <para>
+      Only persistent base tables can be part of a publication.  Temporary
+      tables, unlogged tables, foreign tables, materialized views, regular
+      views, and partitioned tables cannot be part of a publication.  To
+      replicate a partitioned table, add the individual partitions to the
+      publication.
+     </para>
     </listitem>
    </varlistentry>
 

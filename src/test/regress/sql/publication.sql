@@ -26,6 +26,7 @@ CREATE SCHEMA pub_test;
 CREATE TABLE testpub_tbl1 (id serial primary key, data text);
 CREATE TABLE pub_test.testpub_nopk (foo int, bar int);
 CREATE VIEW testpub_view AS SELECT 1;
+CREATE TABLE testpub_parted (a int) PARTITION BY LIST (a);
 
 CREATE PUBLICATION testpub_foralltables FOR ALL TABLES WITH (nopublish delete, nopublish update);
 ALTER PUBLICATION testpub_foralltables WITH (publish update);
@@ -66,6 +67,8 @@ CREATE PUBLICATION testpub_fortbl FOR TABLE testpub_tbl1;
 
 -- fail - view
 ALTER PUBLICATION testpub_default ADD TABLE testpub_view;
+-- fail - partitioned table
+ALTER PUBLICATION testpub_fortbl ADD TABLE testpub_parted;
 
 ALTER PUBLICATION testpub_default ADD TABLE testpub_tbl1;
 ALTER PUBLICATION testpub_default SET TABLE testpub_tbl1;
@@ -104,6 +107,7 @@ DROP PUBLICATION testpub2;
 SET ROLE regress_publication_user;
 REVOKE CREATE ON DATABASE regression FROM regress_publication_user2;
 
+DROP TABLE testpub_parted;
 DROP VIEW testpub_view;
 DROP TABLE testpub_tbl1;
 
