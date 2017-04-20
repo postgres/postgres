@@ -1369,14 +1369,6 @@ exec_replication_command(const char *cmd_string)
 	MemoryContext old_context;
 
 	/*
-	 * Log replication command if log_replication_commands is enabled. Even
-	 * when it's disabled, log the command with DEBUG1 level for backward
-	 * compatibility.
-	 */
-	ereport(log_replication_commands ? LOG : DEBUG1,
-			(errmsg("received replication command: %s", cmd_string)));
-
-	/*
 	 * CREATE_REPLICATION_SLOT ... LOGICAL exports a snapshot until the next
 	 * command arrives. Clean up the old stuff if there's anything.
 	 */
@@ -1398,6 +1390,16 @@ exec_replication_command(const char *cmd_string)
 								  parse_rc))));
 
 	cmd_node = replication_parse_result;
+
+	/*
+	 * Log replication command if log_replication_commands is enabled. Even
+	 * when it's disabled, log the command with DEBUG1 level for backward
+	 * compatibility. Note that SQL commands are not logged here, and will be
+	 * logged later if log_statement is enabled.
+	 */
+	if (cmd_node->type != T_SQLCmd)
+		ereport(log_replication_commands ? LOG : DEBUG1,
+				(errmsg("received replication command: %s", cmd_string)));
 
 	/*
 	 * CREATE_REPLICATION_SLOT ... LOGICAL exports a snapshot. If it was
