@@ -705,17 +705,20 @@ LogicalRepSyncTableStart(XLogRecPtr *origin_startpos)
 {
 	char		   *slotname;
 	char		   *err;
+	char		relstate;
+	XLogRecPtr	relstate_lsn;
 
 	/* Check the state of the table synchronization. */
 	StartTransactionCommand();
-	SpinLockAcquire(&MyLogicalRepWorker->relmutex);
-	MyLogicalRepWorker->relstate =
-		GetSubscriptionRelState(MyLogicalRepWorker->subid,
-								MyLogicalRepWorker->relid,
-								&MyLogicalRepWorker->relstate_lsn,
-								false);
-	SpinLockRelease(&MyLogicalRepWorker->relmutex);
+	relstate = GetSubscriptionRelState(MyLogicalRepWorker->subid,
+									   MyLogicalRepWorker->relid,
+									   &relstate_lsn, false);
 	CommitTransactionCommand();
+
+	SpinLockAcquire(&MyLogicalRepWorker->relmutex);
+	MyLogicalRepWorker->relstate = relstate;
+	MyLogicalRepWorker->relstate_lsn = relstate_lsn;
+	SpinLockRelease(&MyLogicalRepWorker->relmutex);
 
 	/*
 	 * To build a slot name for the sync work, we are limited to NAMEDATALEN -
