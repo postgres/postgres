@@ -5,6 +5,7 @@
  *
  * See the following RFCs for more details:
  * - RFC 5802: https://tools.ietf.org/html/rfc5802
+ * - RFC 5803: https://tools.ietf.org/html/rfc5803
  * - RFC 7677: https://tools.ietf.org/html/rfc7677
  *
  * Here are some differences:
@@ -19,7 +20,7 @@
  * - Channel binding is not supported yet.
  *
  *
- * The password stored in pg_authid consists of the salt, iteration count,
+ * The password stored in pg_authid consists of the iteration count, salt,
  * StoredKey and ServerKey.
  *
  * SASLprep usage
@@ -111,8 +112,8 @@ typedef struct
 
 	const char *username;		/* username from startup packet */
 
-	char	   *salt;			/* base64-encoded */
 	int			iterations;
+	char	   *salt;			/* base64-encoded */
 	uint8		StoredKey[SCRAM_KEY_LEN];
 	uint8		ServerKey[SCRAM_KEY_LEN];
 
@@ -146,10 +147,10 @@ static char *build_server_first_message(scram_state *state);
 static char *build_server_final_message(scram_state *state);
 static bool verify_client_proof(scram_state *state);
 static bool verify_final_nonce(scram_state *state);
-static bool parse_scram_verifier(const char *verifier, char **salt,
-					 int *iterations, uint8 *stored_key, uint8 *server_key);
-static void mock_scram_verifier(const char *username, char **salt, int *iterations,
-					uint8 *stored_key, uint8 *server_key);
+static bool parse_scram_verifier(const char *verifier, int *iterations,
+					 char **salt, uint8 *stored_key, uint8 *server_key);
+static void mock_scram_verifier(const char *username, int *iterations,
+					char **salt, uint8 *stored_key, uint8 *server_key);
 static bool is_scram_printable(char *p);
 static char *sanitize_char(char c);
 static char *scram_MockSalt(const char *username);
@@ -185,7 +186,7 @@ pg_be_scram_init(const char *username, const char *shadow_pass)
 
 		if (password_type == PASSWORD_TYPE_SCRAM_SHA_256)
 		{
-			if (parse_scram_verifier(shadow_pass, &state->salt, &state->iterations,
+			if (parse_scram_verifier(shadow_pass, &state->iterations, &state->salt,
 									 state->StoredKey, state->ServerKey))
 				got_verifier = true;
 			else
@@ -208,7 +209,7 @@ pg_be_scram_init(const char *username, const char *shadow_pass)
 
 			verifier = scram_build_verifier(username, shadow_pass, 0);
 
-			(void) parse_scram_verifier(verifier, &state->salt, &state->iterations,
+			(void) parse_scram_verifier(verifier, &state->iterations, &state->salt,
 										state->StoredKey, state->ServerKey);
 			pfree(verifier);
 
@@ -243,7 +244,7 @@ pg_be_scram_init(const char *username, const char *shadow_pass)
 	 */
 	if (!got_verifier)
 	{
-		mock_scram_verifier(username, &state->salt, &state->iterations,
+		mock_scram_verifier(username, &state->iterations, &state->salt,
 							state->StoredKey, state->ServerKey);
 		state->doomed = true;
 	}
@@ -393,14 +394,15 @@ char *
 scram_build_verifier(const char *username, const char *password,
 					 int iterations)
 {
-	uint8		keybuf[SCRAM_KEY_LEN + 1];
-	char		storedkey_hex[SCRAM_KEY_LEN * 2 + 1];
-	char		serverkey_hex[SCRAM_KEY_LEN * 2 + 1];
-	char		salt[SCRAM_SALT_LEN];
-	char	   *encoded_salt;
-	int			encoded_len;
 	char	   *prep_password = NULL;
 	pg_saslprep_rc rc;
+	char		saltbuf[SCRAM_SALT_LEN];
+	uint8		keybuf[SCRAM_KEY_LEN];
+	char	   *encoded_salt;
+	char	   *encoded_storedkey;
+	char	   *encoded_serverkey;
+	int			encoded_len;
+	char	   *result;
 
 	/*
 	 * Normalize the password with SASLprep.  If that doesn't work, because
@@ -414,7 +416,8 @@ scram_build_verifier(const char *username, const char *password,
 	if (iterations <= 0)
 		iterations = SCRAM_ITERATIONS_DEFAULT;
 
-	if (!pg_backend_random(salt, SCRAM_SALT_LEN))
+	/* Generate salt, and encode it in base64 */
+	if (!pg_backend_random(saltbuf, SCRAM_SALT_LEN))
 	{
 		ereport(LOG,
 				(errcode(ERRCODE_INTERNAL_ERROR),
@@ -423,26 +426,38 @@ scram_build_verifier(const char *username, const char *password,
 	}
 
 	encoded_salt = palloc(pg_b64_enc_len(SCRAM_SALT_LEN) + 1);
-	encoded_len = pg_b64_encode(salt, SCRAM_SALT_LEN, encoded_salt);
+	encoded_len = pg_b64_encode(saltbuf, SCRAM_SALT_LEN, encoded_salt);
 	encoded_salt[encoded_len] = '\0';
 
-	/* Calculate StoredKey, and encode it in hex */
-	scram_ClientOrServerKey(password, salt, SCRAM_SALT_LEN,
+	/* Calculate StoredKey, and encode it in base64 */
+	scram_ClientOrServerKey(password, saltbuf, SCRAM_SALT_LEN,
 							iterations, SCRAM_CLIENT_KEY_NAME, keybuf);
 	scram_H(keybuf, SCRAM_KEY_LEN, keybuf);		/* StoredKey */
-	(void) hex_encode((const char *) keybuf, SCRAM_KEY_LEN, storedkey_hex);
-	storedkey_hex[SCRAM_KEY_LEN * 2] = '\0';
+
+	encoded_storedkey = palloc(pg_b64_enc_len(SCRAM_KEY_LEN) + 1);
+	encoded_len = pg_b64_encode((const char *) keybuf, SCRAM_KEY_LEN,
+								encoded_storedkey);
+	encoded_storedkey[encoded_len] = '\0';
 
 	/* And same for ServerKey */
-	scram_ClientOrServerKey(password, salt, SCRAM_SALT_LEN, iterations,
+	scram_ClientOrServerKey(password, saltbuf, SCRAM_SALT_LEN, iterations,
 							SCRAM_SERVER_KEY_NAME, keybuf);
-	(void) hex_encode((const char *) keybuf, SCRAM_KEY_LEN, serverkey_hex);
-	serverkey_hex[SCRAM_KEY_LEN * 2] = '\0';
+
+	encoded_serverkey = palloc(pg_b64_enc_len(SCRAM_KEY_LEN) + 1);
+	encoded_len = pg_b64_encode((const char *) keybuf, SCRAM_KEY_LEN,
+								encoded_serverkey);
+	encoded_serverkey[encoded_len] = '\0';
+
+	result = psprintf("SCRAM-SHA-256$%d:%s$%s:%s", iterations, encoded_salt,
+					  encoded_storedkey, encoded_serverkey);
 
 	if (prep_password)
 		pfree(prep_password);
+	pfree(encoded_salt);
+	pfree(encoded_storedkey);
+	pfree(encoded_serverkey);
 
-	return psprintf("scram-sha-256:%s:%d:%s:%s", encoded_salt, iterations, storedkey_hex, serverkey_hex);
+	return result;
 }
 
 /*
@@ -464,7 +479,7 @@ scram_verify_plain_password(const char *username, const char *password,
 	char	   *prep_password = NULL;
 	pg_saslprep_rc rc;
 
-	if (!parse_scram_verifier(verifier, &encoded_salt, &iterations,
+	if (!parse_scram_verifier(verifier, &iterations, &encoded_salt,
 							  stored_key, server_key))
 	{
 		/*
@@ -509,13 +524,14 @@ scram_verify_plain_password(const char *username, const char *password,
 bool
 is_scram_verifier(const char *verifier)
 {
-	char	   *salt = NULL;
 	int			iterations;
+	char	   *salt = NULL;
 	uint8		stored_key[SCRAM_KEY_LEN];
 	uint8		server_key[SCRAM_KEY_LEN];
 	bool		result;
 
-	result = parse_scram_verifier(verifier, &salt, &iterations, stored_key, server_key);
+	result = parse_scram_verifier(verifier, &iterations, &salt,
+								  stored_key, server_key);
 	if (salt)
 		pfree(salt);
 
@@ -529,60 +545,82 @@ is_scram_verifier(const char *verifier)
  * Returns true if the SCRAM verifier has been parsed, and false otherwise.
  */
 static bool
-parse_scram_verifier(const char *verifier, char **salt, int *iterations,
+parse_scram_verifier(const char *verifier, int *iterations, char **salt,
 					 uint8 *stored_key, uint8 *server_key)
 {
 	char	   *v;
 	char	   *p;
+	char	   *scheme_str;
+	char	   *salt_str;
+	char	   *iterations_str;
+	char	   *storedkey_str;
+	char	   *serverkey_str;
+	int			decoded_len;
+	char	   *decoded_salt_buf;
 
 	/*
 	 * The verifier is of form:
 	 *
-	 * scram-sha-256:<salt>:<iterations>:<storedkey>:<serverkey>
+	 * SCRAM-SHA-256$<iterations>:<salt>$<storedkey>:<serverkey>
 	 */
-	if (strncmp(verifier, "scram-sha-256:", strlen("scram-sha-256:")) != 0)
-		return false;
-
-	v = pstrdup(verifier + strlen("scram-sha-256:"));
-
-	/* salt */
-	if ((p = strtok(v, ":")) == NULL)
+	v = pstrdup(verifier);
+	if ((scheme_str = strtok(v, "$")) == NULL)
 		goto invalid_verifier;
-	*salt = pstrdup(p);
-
-	/* iterations */
-	if ((p = strtok(NULL, ":")) == NULL)
+	if ((iterations_str = strtok(NULL, ":")) == NULL)
 		goto invalid_verifier;
+	if ((salt_str = strtok(NULL, "$")) == NULL)
+		goto invalid_verifier;
+	if ((storedkey_str = strtok(NULL, ":")) == NULL)
+		goto invalid_verifier;
+	if ((serverkey_str = strtok(NULL, "")) == NULL)
+		goto invalid_verifier;
+
+	/* Parse the fields */
+	if (strcmp(scheme_str, "SCRAM-SHA-256") != 0)
+		goto invalid_verifier;
+
 	errno = 0;
-	*iterations = strtol(p, &p, 10);
+	*iterations = strtol(iterations_str, &p, 10);
 	if (*p || errno != 0)
 		goto invalid_verifier;
 
-	/* storedkey */
-	if ((p = strtok(NULL, ":")) == NULL)
+	/*
+	 * Verify that the salt is in Base64-encoded format, by decoding it,
+	 * although we return the encoded version to the caller.
+	 */
+	decoded_salt_buf = palloc(pg_b64_dec_len(strlen(salt_str)));
+	decoded_len = pg_b64_decode(salt_str, strlen(salt_str), decoded_salt_buf);
+	if (decoded_len < 0)
 		goto invalid_verifier;
-	if (strlen(p) != SCRAM_KEY_LEN * 2)
+	*salt = pstrdup(salt_str);
+
+	/*
+	 * Decode StoredKey and ServerKey.
+	 */
+	if (pg_b64_dec_len(strlen(storedkey_str) != SCRAM_KEY_LEN))
+		goto invalid_verifier;
+	decoded_len = pg_b64_decode(storedkey_str, strlen(storedkey_str),
+								(char *) stored_key);
+	if (decoded_len != SCRAM_KEY_LEN)
 		goto invalid_verifier;
 
-	hex_decode(p, SCRAM_KEY_LEN * 2, (char *) stored_key);
-
-	/* serverkey */
-	if ((p = strtok(NULL, ":")) == NULL)
+	if (pg_b64_dec_len(strlen(serverkey_str) != SCRAM_KEY_LEN))
 		goto invalid_verifier;
-	if (strlen(p) != SCRAM_KEY_LEN * 2)
+	decoded_len = pg_b64_decode(serverkey_str, strlen(serverkey_str),
+								(char *) server_key);
+	if (decoded_len != SCRAM_KEY_LEN)
 		goto invalid_verifier;
-	hex_decode(p, SCRAM_KEY_LEN * 2, (char *) server_key);
 
-	pfree(v);
 	return true;
 
 invalid_verifier:
 	pfree(v);
+	*salt = NULL;
 	return false;
 }
 
 static void
-mock_scram_verifier(const char *username, char **salt, int *iterations,
+mock_scram_verifier(const char *username, int *iterations, char **salt,
 					uint8 *stored_key, uint8 *server_key)
 {
 	char	   *raw_salt;

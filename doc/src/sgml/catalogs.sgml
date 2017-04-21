@@ -1376,14 +1376,22 @@
    32-character hexadecimal MD5 hash. The MD5 hash will be of the user's
    password concatenated to their user name. For example, if user
    <literal>joe</> has password <literal>xyzzy</>, <productname>PostgreSQL</>
-   will store the md5 hash of <literal>xyzzyjoe</>.  If the password is
-   encrypted with SCRAM-SHA-256, it consists of 5 fields separated by colons.
-   The first field is the constant <literal>scram-sha-256</literal>, to
-   identify the password as a SCRAM-SHA-256 verifier. The second field is a
-   salt, Base64-encoded, and the third field is the number of iterations used
-   to generate the password.  The fourth field and fifth field are the stored
-   key and server key, respectively, in hexadecimal format. A password that
-   does not follow either of those formats is assumed to be unencrypted.
+   will store the md5 hash of <literal>xyzzyjoe</>.
+  </para>
+
+  <para>
+   If the password is encrypted with SCRAM-SHA-256, it has the format:
+<synopsis>
+SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;</>$<replaceable>&lt;StoredKey&gt;</>:<replaceable>&lt;ServerKey&gt;</>
+</synopsis>
+   where <replaceable>salt</>, <replaceable>StoredKey</> and
+   <replaceable>ServerKey</> are in Base64 encoded format. This format is
+   the same as that specified by RFC 5803.
+  </para>
+
+  <para>
+    A password that does not follow either of those formats is assumed to be
+    unencrypted.
   </para>
  </sect1>
 

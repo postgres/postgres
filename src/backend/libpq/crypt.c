@@ -100,7 +100,7 @@ get_password_type(const char *shadow_pass)
 {
 	if (strncmp(shadow_pass, "md5", 3) == 0 && strlen(shadow_pass) == MD5_PASSWD_LEN)
 		return PASSWORD_TYPE_MD5;
-	if (strncmp(shadow_pass, "scram-sha-256:", strlen("scram-sha-256:")) == 0)
+	if (strncmp(shadow_pass, "SCRAM-SHA-256$", strlen("SCRAM-SHA-256$")) == 0)
 		return PASSWORD_TYPE_SCRAM_SHA_256;
 	return PASSWORD_TYPE_PLAINTEXT;
 }
