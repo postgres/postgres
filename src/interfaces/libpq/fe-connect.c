@@ -74,10 +74,6 @@ static int ldapServiceLookup(const char *purl, PQconninfoOption *options,
 #include "common/ip.h"
 #include "mb/pg_wchar.h"
 
-#ifndef FD_CLOEXEC
-#define FD_CLOEXEC 1
-#endif
-
 
 #ifndef WIN32
 #define PGPASSFILE ".pgpass"
@@ -1987,7 +1983,6 @@ keep_going:						/* We will come back to here until there is
 						continue;
 					}
 
-#ifdef F_SETFD
 					if (fcntl(conn->sock, F_SETFD, FD_CLOEXEC) == -1)
 					{
 						appendPQExpBuffer(&conn->errorMessage,
@@ -1997,7 +1992,6 @@ keep_going:						/* We will come back to here until there is
 						conn->addr_cur = addr_cur->ai_next;
 						continue;
 					}
-#endif   /* F_SETFD */
 
 					if (!IS_AF_UNIX(addr_cur->ai_family))
 					{
