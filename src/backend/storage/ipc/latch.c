@@ -169,9 +169,9 @@ InitializeLatchSupport(void)
 	 */
 	if (pipe(pipefd) < 0)
 		elog(FATAL, "pipe() failed: %m");
-	if (fcntl(pipefd[0], F_SETFL, O_NONBLOCK) < 0)
+	if (fcntl(pipefd[0], F_SETFL, O_NONBLOCK) == -1)
 		elog(FATAL, "fcntl() failed on read-end of self-pipe: %m");
-	if (fcntl(pipefd[1], F_SETFL, O_NONBLOCK) < 0)
+	if (fcntl(pipefd[1], F_SETFL, O_NONBLOCK) == -1)
 		elog(FATAL, "fcntl() failed on write-end of self-pipe: %m");
 
 	selfpipe_readfd = pipefd[0];
