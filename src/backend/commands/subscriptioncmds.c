@@ -395,20 +395,6 @@ CreateSubscription(CreateSubscriptionStmt *stmt, bool isTopLevel)
 		PG_TRY();
 		{
 			/*
-			 * If requested, create permanent slot for the subscription.
-			 * We won't use the initial snapshot for anything, so no need
-			 * to export it.
-			 */
-			if (create_slot)
-			{
-				walrcv_create_slot(wrconn, slotname, false,
-								   CRS_NOEXPORT_SNAPSHOT, &lsn);
-				ereport(NOTICE,
-						(errmsg("created replication slot \"%s\" on publisher",
-								slotname)));
-			}
-
-			/*
 			 * Set sync state based on if we were asked to do data copy or
 			 * not.
 			 */
@@ -432,6 +418,20 @@ CreateSubscription(CreateSubscriptionStmt *stmt, bool isTopLevel)
 
 			ereport(NOTICE,
 					(errmsg("synchronized table states")));
+
+			/*
+			 * If requested, create permanent slot for the subscription.
+			 * We won't use the initial snapshot for anything, so no need
+			 * to export it.
+			 */
+			if (create_slot)
+			{
+				walrcv_create_slot(wrconn, slotname, false,
+								   CRS_NOEXPORT_SNAPSHOT, &lsn);
+				ereport(NOTICE,
+						(errmsg("created replication slot \"%s\" on publisher",
+								slotname)));
+			}
 		}
 		PG_CATCH();
 		{
