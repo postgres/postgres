@@ -862,7 +862,7 @@ SELECT t1.a, t2.b, t1.ctid FROM t1, t2 WHERE t1.a = t2.a;
     <command>UPDATE</command>, and <command>DELETE</command> commands on
     a view. These rules will rewrite the command, typically into a command
     that updates one or more tables, rather than views. That is the topic
-    of the next section.
+    of <xref linkend="rules-update">.
 </para>
 
 <para>
