@@ -402,6 +402,7 @@ sub init
 	open my $conf, ">>$pgdata/postgresql.conf";
 	print $conf "\n# Added by PostgresNode.pm\n";
 	print $conf "fsync = off\n";
+	print $conf "restart_after_crash = off\n";
 	print $conf "log_statement = all\n";
 	print $conf "port = $port\n";
 
@@ -636,18 +637,19 @@ sub start
 	my $port   = $self->port;
 	my $pgdata = $self->data_dir;
 	my $name   = $self->name;
+	BAIL_OUT("node \"$name\" is already running") if defined $self->{_pid};
 	print("### Starting node \"$name\"\n");
 	my $ret = TestLib::system_log('pg_ctl', '-w', '-D', $self->data_dir, '-l',
 		$self->logfile, 'start');
 
 	if ($ret != 0)
 	{
-		print "# pg_ctl failed; logfile:\n";
+		print "# pg_ctl start failed; logfile:\n";
 		print TestLib::slurp_file($self->logfile);
-		BAIL_OUT("pg_ctl failed");
+		BAIL_OUT("pg_ctl start failed");
 	}
 
-	$self->_update_pid;
+	$self->_update_pid(1);
 }
 
 =pod
@@ -655,6 +657,10 @@ sub start
 =item $node->stop(mode)
 
 Stop the node using pg_ctl -m $mode and wait for it to stop.
+
+Note: if the node is already known stopped, this does nothing.
+However, if we think it's running and it's not, it's important for
+this to fail.  Otherwise, tests might fail to detect server crashes.
 
 =cut
 
@@ -667,9 +673,8 @@ sub stop
 	$mode = 'fast' unless defined $mode;
 	return unless defined $self->{_pid};
 	print "### Stopping node \"$name\" using mode $mode\n";
-	TestLib::system_log('pg_ctl', '-D', $pgdata, '-m', $mode, 'stop');
-	$self->{_pid} = undef;
-	$self->_update_pid;
+	TestLib::system_or_bail('pg_ctl', '-D', $pgdata, '-m', $mode, 'stop');
+	$self->_update_pid(0);
 }
 
 =pod
@@ -687,7 +692,7 @@ sub reload
 	my $pgdata = $self->data_dir;
 	my $name   = $self->name;
 	print "### Reloading node \"$name\"\n";
-	TestLib::system_log('pg_ctl', '-D', $pgdata, 'reload');
+	TestLib::system_or_bail('pg_ctl', '-D', $pgdata, 'reload');
 }
 
 =pod
@@ -706,9 +711,9 @@ sub restart
 	my $logfile = $self->logfile;
 	my $name    = $self->name;
 	print "### Restarting node \"$name\"\n";
-	TestLib::system_log('pg_ctl', '-D', $pgdata, '-w', '-l', $logfile,
-		'restart');
-	$self->_update_pid;
+	TestLib::system_or_bail('pg_ctl', '-D', $pgdata, '-w', '-l', $logfile,
+							'restart');
+	$self->_update_pid(1);
 }
 
 =pod
@@ -727,7 +732,8 @@ sub promote
 	my $logfile = $self->logfile;
 	my $name    = $self->name;
 	print "### Promoting node \"$name\"\n";
-	TestLib::system_log('pg_ctl', '-D', $pgdata, '-l', $logfile, 'promote');
+	TestLib::system_or_bail('pg_ctl', '-D', $pgdata, '-l', $logfile,
+							'promote');
 }
 
 # Internal routine to enable streaming replication on a standby node.
@@ -805,22 +811,26 @@ archive_command = '$copy_command'
 # Internal method
 sub _update_pid
 {
-	my $self = shift;
+	my ($self, $is_running) = @_;
 	my $name = $self->name;
 
 	# If we can open the PID file, read its first line and that's the PID we
-	# want.  If the file cannot be opened, presumably the server is not
-	# running; don't be noisy in that case.
-	if (open my $pidfile, $self->data_dir . "/postmaster.pid")
+	# want.
+	if (open my $pidfile, '<', $self->data_dir . "/postmaster.pid")
 	{
 		chomp($self->{_pid} = <$pidfile>);
 		print "# Postmaster PID for node \"$name\" is $self->{_pid}\n";
 		close $pidfile;
+
+		# If we found a pidfile when there shouldn't be one, complain.
+		BAIL_OUT("postmaster.pid unexpectedly present") unless $is_running;
 		return;
 	}
 
 	$self->{_pid} = undef;
-	print "# No postmaster PID\n";
+	print "# No postmaster PID for node \"$name\"\n";
+	# Complain if we expected to find a pidfile.
+	BAIL_OUT("postmaster.pid unexpectedly not present") if $is_running;
 }
 
 =pod
