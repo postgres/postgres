@@ -17,7 +17,8 @@ use File::Spec;
 use File::Temp ();
 use IPC::Run;
 use SimpleTee;
-use Test::More;
+# specify a recent enough version of Test::More  to support the note() function
+use Test::More 0.82;
 
 our @EXPORT = qw(
   generate_ascii_string
