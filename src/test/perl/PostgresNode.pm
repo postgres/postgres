@@ -455,7 +455,7 @@ A shortcut method to append to files like pg_hba.conf and postgresql.conf.
 Does no validation or sanity checking. Does not reload the configuration
 after writing.
 
-A newline is NOT automatically appended to the string.
+A newline is automatically appended to the string.
 
 =cut
 
@@ -465,7 +465,7 @@ sub append_conf
 
 	my $conffile = $self->data_dir . '/' . $filename;
 
-	TestLib::append_to_file($conffile, $str);
+	TestLib::append_to_file($conffile, $str . "\n");
 }
 
 =pod

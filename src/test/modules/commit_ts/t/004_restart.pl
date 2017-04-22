@@ -7,10 +7,7 @@ use Test::More tests => 16;
 
 my $node_master = get_new_node('master');
 $node_master->init(allows_streaming => 1);
-$node_master->append_conf(
-	'postgresql.conf', qq(
-track_commit_timestamp = on
-));
+$node_master->append_conf('postgresql.conf', 'track_commit_timestamp = on');
 $node_master->start;
 
 my ($ret, $stdout, $stderr);
@@ -75,10 +72,7 @@ is($after_restart_ts, $before_restart_ts,
 
 # Now disable commit timestamps
 
-$node_master->append_conf(
-	'postgresql.conf', qq(
-track_commit_timestamp = off
-));
+$node_master->append_conf('postgresql.conf', 'track_commit_timestamp = off');
 
 $node_master->stop('fast');
 $node_master->start;
@@ -110,10 +104,7 @@ like(
 	'expected error from disabled tx when committs disabled');
 
 # Re-enable, restart and ensure we can still get the old timestamps
-$node_master->append_conf(
-	'postgresql.conf', qq(
-track_commit_timestamp = on
-));
+$node_master->append_conf('postgresql.conf', 'track_commit_timestamp = on');
 
 $node_master->stop('fast');
 $node_master->start;
