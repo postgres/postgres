@@ -1956,7 +1956,7 @@ RecoverPreparedTransactions(void)
 		 * hierarchy, but there's no need to restore that exactly.
 		 */
 		for (i = 0; i < hdr->nsubxacts; i++)
-			SubTransSetParent(subxids[i], xid, overwriteOK);
+			SubTransSetParent(subxids[i], xid, true);
 
 		/*
 		 * Recreate its GXACT and dummy PGPROC. But, check whether
