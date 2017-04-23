@@ -3328,7 +3328,16 @@ LagTrackerRead(int head, XLogRecPtr lsn, TimestampTz now)
 			WalTimeSample prev = LagTracker.last_read[head];
 			WalTimeSample next = LagTracker.buffer[LagTracker.read_heads[head]];
 
-			Assert(lsn >= prev.lsn);
+			if (lsn < prev.lsn)
+			{
+				/*
+				 * Reported LSNs shouldn't normally go backwards, but it's
+				 * possible when there is a timeline change.  Treat as not
+				 * found.
+				 */
+				return -1;
+			}
+
 			Assert(prev.lsn < next.lsn);
 
 			if (prev.time > next.time)
