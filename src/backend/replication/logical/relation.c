@@ -82,7 +82,7 @@ logicalrep_relmap_invalidate_cb(Datum arg, Oid reloid)
  * Initialize the relation map cache.
  */
 static void
-logicalrep_relmap_init()
+logicalrep_relmap_init(void)
 {
 	HASHCTL		ctl;
 
@@ -141,19 +141,10 @@ logicalrep_relmap_free_entry(LogicalRepRelMapEntry *entry)
 		pfree(remoterel->attnames);
 		pfree(remoterel->atttyps);
 	}
-	remoterel->attnames = NULL;
-	remoterel->atttyps = NULL;
-
 	bms_free(remoterel->attkeys);
-	remoterel->attkeys = NULL;
 
 	if (entry->attrmap)
 		pfree(entry->attrmap);
-
-	entry->attrmap = NULL;
-	remoterel->natts = 0;
-	entry->localreloid = InvalidOid;
-	entry->localrel = NULL;
 }
 
 /*
@@ -182,6 +173,8 @@ logicalrep_relmap_update(LogicalRepRelation *remoterel)
 	if (found)
 		logicalrep_relmap_free_entry(entry);
 
+	memset(entry, 0, sizeof(LogicalRepRelMapEntry));
+
 	/* Make cached copy of the data */
 	oldctx = MemoryContextSwitchTo(LogicalRepRelMapContext);
 	entry->remoterel.remoteid = remoterel->remoteid;
@@ -197,8 +190,6 @@ logicalrep_relmap_update(LogicalRepRelation *remoterel)
 	}
 	entry->remoterel.replident = remoterel->replident;
 	entry->remoterel.attkeys = bms_copy(remoterel->attkeys);
-	entry->attrmap = NULL;
-	entry->localreloid = InvalidOid;
 	MemoryContextSwitchTo(oldctx);
 }
 
