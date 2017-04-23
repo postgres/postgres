@@ -2142,7 +2142,7 @@ ProcessTwoPhaseBuffer(TransactionId xid,
 		}
 
 		if (setParent)
-			SubTransSetParent(xid, subxid, overwriteOK);
+			SubTransSetParent(subxid, xid, overwriteOK);
 	}
 
 	return buf;
