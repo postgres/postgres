@@ -559,6 +559,9 @@ CheckPointReplicationOrigin(void)
 		if (curstate->roident == InvalidRepOriginId)
 			continue;
 
+		/* zero, to avoid uninitialized padding bytes */
+		memset(&disk_state, 0, sizeof(disk_state));
+
 		LWLockAcquire(&curstate->lock, LW_SHARED);
 
 		disk_state.roident = curstate->roident;
