@@ -611,6 +611,15 @@ PostmasterMain(int argc, char *argv[])
 	/*
 	 * Set up signal handlers for the postmaster process.
 	 *
+	 * In the postmaster, we want to install non-ignored handlers *without*
+	 * SA_RESTART.  This is because they'll be blocked at all times except
+	 * when ServerLoop is waiting for something to happen, and during that
+	 * window, we want signals to exit the select(2) wait so that ServerLoop
+	 * can respond if anything interesting happened.  On some platforms,
+	 * signals marked SA_RESTART would not cause the select() wait to end.
+	 * Child processes will generally want SA_RESTART, but we expect them to
+	 * set up their own handlers before unblocking signals.
+	 *
 	 * CAUTION: when changing this list, check for side-effects on the signal
 	 * handling setup of child processes.  See tcop/postgres.c,
 	 * bootstrap/bootstrap.c, postmaster/bgwriter.c, postmaster/walwriter.c,
@@ -621,16 +630,20 @@ PostmasterMain(int argc, char *argv[])
 	pqinitmask();
 	PG_SETMASK(&BlockSig);
 
-	pqsignal(SIGHUP, SIGHUP_handler);	/* reread config file and have
-										 * children do same */
-	pqsignal(SIGINT, pmdie);	/* send SIGTERM and shut down */
-	pqsignal(SIGQUIT, pmdie);	/* send SIGQUIT and die */
-	pqsignal(SIGTERM, pmdie);	/* wait for children and shut down */
+	pqsignal_no_restart(SIGHUP, SIGHUP_handler);		/* reread config file
+														 * and have children do
+														 * same */
+	pqsignal_no_restart(SIGINT, pmdie); /* send SIGTERM and shut down */
+	pqsignal_no_restart(SIGQUIT, pmdie);		/* send SIGQUIT and die */
+	pqsignal_no_restart(SIGTERM, pmdie);		/* wait for children and shut
+												 * down */
 	pqsignal(SIGALRM, SIG_IGN); /* ignored */
 	pqsignal(SIGPIPE, SIG_IGN); /* ignored */
-	pqsignal(SIGUSR1, sigusr1_handler); /* message from child process */
-	pqsignal(SIGUSR2, dummy_handler);	/* unused, reserve for children */
-	pqsignal(SIGCHLD, reaper);	/* handle child termination */
+	pqsignal_no_restart(SIGUSR1, sigusr1_handler);		/* message from child
+														 * process */
+	pqsignal_no_restart(SIGUSR2, dummy_handler);		/* unused, reserve for
+														 * children */
+	pqsignal_no_restart(SIGCHLD, reaper);		/* handle child termination */
 	pqsignal(SIGTTIN, SIG_IGN); /* ignored */
 	pqsignal(SIGTTOU, SIG_IGN); /* ignored */
 	/* ignore SIGXFSZ, so that ulimit violations work like disk full */
