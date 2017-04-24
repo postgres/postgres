@@ -88,7 +88,7 @@ extern bool TransactionIdIsInProgress(TransactionId xid);
 extern bool TransactionIdIsActive(TransactionId xid);
 extern TransactionId GetOldestXmin(Relation rel, int flags);
 extern TransactionId GetOldestActiveTransactionId(void);
-extern TransactionId GetOldestSafeDecodingTransactionId(void);
+extern TransactionId GetOldestSafeDecodingTransactionId(bool catalogOnly);
 
 extern VirtualTransactionId *GetVirtualXIDsDelayingChkpt(int *nvxids);
 extern bool HaveVirtualXIDsDelayingChkpt(VirtualTransactionId *vxids, int nvxids);

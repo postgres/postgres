@@ -533,6 +533,18 @@ SnapBuildInitialSnapshot(SnapBuild *builder)
 	 * mechanism. Due to that we can do this without locks, we're only
 	 * changing our own value.
 	 */
+#ifdef USE_ASSERT_CHECKING
+	{
+		TransactionId safeXid;
+
+		LWLockAcquire(ProcArrayLock, LW_SHARED);
+		safeXid = GetOldestSafeDecodingTransactionId(true);
+		LWLockRelease(ProcArrayLock);
+
+		Assert(TransactionIdPrecedesOrEquals(safeXid, snap->xmin));
+	}
+#endif
+
 	MyPgXact->xmin = snap->xmin;
 
 	/* allocate in transaction context */
