@@ -31,11 +31,15 @@
 #include "utils/typcache.h"
 
 
-/* used for sorting the attnums in CreateStatistics */
+/* qsort comparator for the attnums in CreateStatistics */
 static int
 compare_int16(const void *a, const void *b)
 {
-	return memcmp(a, b, sizeof(int16));
+	int			av = *(const int16 *) a;
+	int			bv = *(const int16 *) b;
+
+	/* this can't overflow if int is wider than int16 */
+	return (av - bv);
 }
 
 /*
@@ -44,8 +48,6 @@ compare_int16(const void *a, const void *b)
 ObjectAddress
 CreateStatistics(CreateStatsStmt *stmt)
 {
-	int			i;
-	ListCell   *l;
 	int16		attnums[STATS_MAX_DIMENSIONS];
 	int			numcols = 0;
 	ObjectAddress address = InvalidObjectAddress;
@@ -68,6 +70,8 @@ CreateStatistics(CreateStatsStmt *stmt)
 	bool		build_ndistinct;
 	bool		build_dependencies;
 	bool		requested_type = false;
+	int			i;
+	ListCell   *l;
 
 	Assert(IsA(stmt, CreateStatsStmt));
 
@@ -76,10 +80,10 @@ CreateStatistics(CreateStatsStmt *stmt)
 	namestrcpy(&stxname, namestr);
 
 	/*
-	 * If if_not_exists was given and the statistics already exists, bail out.
+	 * Deal with the possibility that the named statistics already exist.
 	 */
 	if (SearchSysCacheExists2(STATEXTNAMENSP,
-							  PointerGetDatum(&stxname),
+							  NameGetDatum(&stxname),
 							  ObjectIdGetDatum(namespaceId)))
 	{
 		if (stmt->if_not_exists)
@@ -97,10 +101,11 @@ CreateStatistics(CreateStatsStmt *stmt)
 	}
 
 	/*
-	 * CREATE STATISTICS will influence future execution plans but does
-	 * not interfere with currently executing plans so it is safe to
+	 * CREATE STATISTICS will influence future execution plans but does not
+	 * interfere with currently executing plans.  So it should be enough to
 	 * take only ShareUpdateExclusiveLock on relation, conflicting with
-	 * ANALYZE and other DDL that sets statistical information.
+	 * ANALYZE and other DDL that sets statistical information, but not with
+	 * normal queries.
 	 */
 	rel = relation_openrv(stmt->relation, ShareUpdateExclusiveLock);
 	relid = RelationGetRelid(rel);
@@ -137,25 +142,26 @@ CreateStatistics(CreateStatsStmt *stmt)
 		if (attForm->attnum < 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("statistic creation on system columns is not supported")));
+					 errmsg("statistics creation on system columns is not supported")));
 
 		/* Disallow data types without a less-than operator */
 		type = lookup_type_cache(attForm->atttypid, TYPECACHE_LT_OPR);
 		if (type->lt_opr == InvalidOid)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("only scalar types can be used in extended statistics")));
+					 errmsg("column \"%s\" cannot be used in statistics because its type has no default btree operator class",
+							attname)));
 
 		/* Make sure no more than STATS_MAX_DIMENSIONS columns are used */
 		if (numcols >= STATS_MAX_DIMENSIONS)
 			ereport(ERROR,
 					(errcode(ERRCODE_TOO_MANY_COLUMNS),
-					 errmsg("cannot have more than %d keys in statistics",
+					 errmsg("cannot have more than %d columns in statistics",
 							STATS_MAX_DIMENSIONS)));
 
 		attnums[numcols] = ((Form_pg_attribute) GETSTRUCT(atttuple))->attnum;
-		ReleaseSysCache(atttuple);
 		numcols++;
+		ReleaseSysCache(atttuple);
 	}
 
 	/*
@@ -164,26 +170,27 @@ CreateStatistics(CreateStatsStmt *stmt)
 	 */
 	if (numcols < 2)
 		ereport(ERROR,
-				(errcode(ERRCODE_TOO_MANY_COLUMNS),
-				 errmsg("statistics require at least 2 columns")));
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("extended statistics require at least 2 columns")));
 
 	/*
-	 * Sort the attnums, which makes detecting duplicities somewhat easier, and
+	 * Sort the attnums, which makes detecting duplicates somewhat easier, and
 	 * it does not hurt (it does not affect the efficiency, unlike for
 	 * indexes, for example).
 	 */
 	qsort(attnums, numcols, sizeof(int16), compare_int16);
 
 	/*
-	 * Look for duplicities in the list of columns. The attnums are sorted so
+	 * Check for duplicates in the list of columns. The attnums are sorted so
 	 * just check consecutive elements.
 	 */
 	for (i = 1; i < numcols; i++)
 		if (attnums[i] == attnums[i - 1])
 			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_COLUMN),
+					(errcode(ERRCODE_DUPLICATE_COLUMN),
 				  errmsg("duplicate column name in statistics definition")));
 
+	/* Form an int2vector representation of the sorted column list */
 	stxkeys = buildint2vector(attnums, numcols);
 
 	/*
@@ -225,7 +232,7 @@ CreateStatistics(CreateStatsStmt *stmt)
 		types[ntypes++] = CharGetDatum(STATS_EXT_NDISTINCT);
 	if (build_dependencies)
 		types[ntypes++] = CharGetDatum(STATS_EXT_DEPENDENCIES);
-	Assert(ntypes > 0);
+	Assert(ntypes > 0 && ntypes <= lengthof(types));
 	stxkind = construct_array(types, ntypes, CHAROID, 1, true, 'c');
 
 	/*
@@ -240,7 +247,7 @@ CreateStatistics(CreateStatsStmt *stmt)
 	values[Anum_pg_statistic_ext_stxkeys - 1] = PointerGetDatum(stxkeys);
 	values[Anum_pg_statistic_ext_stxkind - 1] = PointerGetDatum(stxkind);
 
-	/* no statistics build yet */
+	/* no statistics built yet */
 	nulls[Anum_pg_statistic_ext_stxndistinct - 1] = true;
 	nulls[Anum_pg_statistic_ext_stxdependencies - 1] = true;
 
@@ -260,7 +267,7 @@ CreateStatistics(CreateStatsStmt *stmt)
 	relation_close(rel, NoLock);
 
 	/*
-	 * Add a dependency on a table, so that stats get dropped on DROP TABLE.
+	 * Add a dependency on the table, so that stats get dropped on DROP TABLE.
 	 */
 	ObjectAddressSet(parentobject, RelationRelationId, relid);
 	ObjectAddressSet(childobject, StatisticExtRelationId, statoid);
@@ -269,12 +276,15 @@ CreateStatistics(CreateStatsStmt *stmt)
 	/*
 	 * Also add dependency on the schema.  This is required to ensure that we
 	 * drop the statistics on DROP SCHEMA.  This is not handled automatically
-	 * by DROP TABLE because the statistics are not an object in the table's
-	 * schema.
+	 * by DROP TABLE because the statistics might be in a different schema
+	 * from the table itself.  (This definition is a bit bizarre for the
+	 * single-table case, but it will make more sense if/when we support
+	 * extended stats across multiple tables.)
 	 */
 	ObjectAddressSet(parentobject, NamespaceRelationId, namespaceId);
 	recordDependencyOn(&childobject, &parentobject, DEPENDENCY_AUTO);
 
+	/* Return stats object's address */
 	ObjectAddressSet(address, StatisticExtRelationId, statoid);
 
 	return address;
@@ -287,13 +297,13 @@ void
 RemoveStatisticsById(Oid statsOid)
 {
 	Relation	relation;
-	Oid			relid;
-	Relation	rel;
 	HeapTuple	tup;
 	Form_pg_statistic_ext statext;
+	Oid			relid;
 
 	/*
-	 * Delete the pg_statistic_ext tuple.
+	 * Delete the pg_statistic_ext tuple.  Also send out a cache inval on the
+	 * associated table, so that dependent plans will be rebuilt.
 	 */
 	relation = heap_open(StatisticExtRelationId, RowExclusiveLock);
 
@@ -305,14 +315,11 @@ RemoveStatisticsById(Oid statsOid)
 	statext = (Form_pg_statistic_ext) GETSTRUCT(tup);
 	relid = statext->stxrelid;
 
-	rel = heap_open(relid, AccessExclusiveLock);
+	CacheInvalidateRelcacheByRelid(relid);
 
 	simple_heap_delete(relation, &tup->t_self);
-
-	CacheInvalidateRelcache(rel);
 
 	ReleaseSysCache(tup);
 
 	heap_close(relation, RowExclusiveLock);
-	heap_close(rel, NoLock);
 }

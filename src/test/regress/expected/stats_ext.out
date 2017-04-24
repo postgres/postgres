@@ -163,7 +163,7 @@ CREATE STATISTICS s10 ON (unknown_column) FROM ndistinct;
 ERROR:  column "unknown_column" referenced in statistics does not exist
 -- single column
 CREATE STATISTICS s10 ON (a) FROM ndistinct;
-ERROR:  statistics require at least 2 columns
+ERROR:  extended statistics require at least 2 columns
 -- single column, duplicated
 CREATE STATISTICS s10 ON (a,a) FROM ndistinct;
 ERROR:  duplicate column name in statistics definition
