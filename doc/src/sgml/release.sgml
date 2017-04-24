@@ -9,12 +9,13 @@ postgresql.conf, pg_hba.conf,
         recovery.conf           <filename>
 [A-Z][A-Z_ ]+[A-Z_]             <command>, <literal>, <envar>, <acronym>
 [A-Za-z_][A-Za-z0-9_]+()        <function>
--[-A-Za-z_]+                    <option>
+\-\-?[A-Za-z_]+[-A-Za-z_]*      <option> (use backslashes to avoid SGML markup)
 [A-Za-z_]+/[A-Za-z_]+           <filename>
 psql                            <application>
 pg_[A-Za-z0-9_]+                <application>, <structname>
 [A-Z][A-Z][A-Z_ ]*              <type>
-[a-z]+_[a-z_]+                  <varname>
+[a-z]+_[a-z_]+                  <varname>, <structfield>
+                                <systemitem class="osname">
 
 non-ASCII characters            find using grep -P '[\x80-\xFF]'
                                 convert to HTML4 named entity (&) escapes
