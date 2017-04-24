@@ -411,6 +411,7 @@ static void TerminateChildren(int signal);
 
 static int	CountChildren(int target);
 static int	CountUnconnectedWorkers(void);
+static bool assign_backendlist_entry(RegisteredBgWorker *rw);
 static void maybe_start_bgworker(void);
 static bool CreateOptsFile(int argc, char *argv[], char *fullprogname);
 static pid_t StartChildProcess(AuxProcType type);
@@ -5522,12 +5523,40 @@ bgworker_forkexec(int shmem_slot)
  * Start a new bgworker.
  * Starting time conditions must have been checked already.
  *
+ * Returns true on success, false on failure.
+ * In either case, update the RegisteredBgWorker's state appropriately.
+ *
  * This code is heavily based on autovacuum.c, q.v.
  */
-static void
+static bool
 do_start_bgworker(RegisteredBgWorker *rw)
 {
 	pid_t		worker_pid;
+
+	Assert(rw->rw_pid == 0);
+
+	/*
+	 * If necessary, allocate and assign the Backend element.  Note we must do
+	 * this before forking, so that we can handle out of memory properly.
+	 *
+	 * Treat failure as though the worker had crashed.  That way, the
+	 * postmaster will wait a bit before attempting to start it again; if it
+	 * tried again right away, most likely it'd find itself repeating the
+	 * out-of-memory or fork failure condition.
+	 *
+	 * If not connected, we don't need a Backend element, but we still need a
+	 * PMChildSlot.
+	 */
+	if (rw->rw_worker.bgw_flags & BGWORKER_BACKEND_DATABASE_CONNECTION)
+	{
+		if (!assign_backendlist_entry(rw))
+		{
+			rw->rw_crashed_at = GetCurrentTimestamp();
+			return false;
+		}
+	}
+	else
+		rw->rw_child_slot = MyPMChildSlot = AssignPostmasterChildSlot();
 
 	ereport(LOG,
 			(errmsg("starting background worker process \"%s\"",
@@ -5540,9 +5569,18 @@ do_start_bgworker(RegisteredBgWorker *rw)
 #endif
 	{
 		case -1:
+			/* in postmaster, fork failed ... */
 			ereport(LOG,
 					(errmsg("could not fork worker process: %m")));
-			return;
+			/* undo what assign_backendlist_entry did */
+			ReleasePostmasterChildSlot(rw->rw_child_slot);
+			rw->rw_child_slot = 0;
+			if (rw->rw_backend)
+				free(rw->rw_backend);
+			rw->rw_backend = NULL;
+			/* mark entry as crashed, so we'll try again later */
+			rw->rw_crashed_at = GetCurrentTimestamp();
+			break;
 
 #ifndef EXEC_BACKEND
 		case 0:
@@ -5557,14 +5595,28 @@ do_start_bgworker(RegisteredBgWorker *rw)
 
 			MyBgworkerEntry = &rw->rw_worker;
 			StartBackgroundWorker();
+
+			exit(1);			/* should not get here */
 			break;
 #endif
 		default:
+			/* in postmaster, fork successful ... */
 			rw->rw_pid = worker_pid;
 			if (rw->rw_backend)
 				rw->rw_backend->pid = rw->rw_pid;
 			ReportBackgroundWorkerPID(rw);
+			if (rw->rw_backend)
+			{
+				/* add new worker to lists of backends */
+				dlist_push_head(&BackendList, &rw->rw_backend->elem);
+#ifdef EXEC_BACKEND
+				ShmemBackendArrayAdd(rw->rw_backend);
+#endif
+			}
+			return true;
 	}
+
+	return false;
 }
 
 /*
@@ -5611,6 +5663,8 @@ bgworker_should_start_now(BgWorkerStartTime start_time)
  * Allocate the Backend struct for a connected background worker, but don't
  * add it to the list of backends just yet.
  *
+ * On failure, return false without changing any worker state.
+ *
  * Some info from the Backend is copied into the passed rw.
  */
 static bool
@@ -5623,14 +5677,6 @@ assign_backendlist_entry(RegisteredBgWorker *rw)
 		ereport(LOG,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of memory")));
-
-		/*
-		 * The worker didn't really crash, but setting this nonzero makes
-		 * postmaster wait a bit before attempting to start it again; if it
-		 * tried again right away, most likely it'd find itself under the same
-		 * memory pressure.
-		 */
-		rw->rw_crashed_at = GetCurrentTimestamp();
 		return false;
 	}
 
@@ -5660,6 +5706,11 @@ assign_backendlist_entry(RegisteredBgWorker *rw)
  * As a side effect, the bgworker control variables are set or reset whenever
  * there are more workers to start after this one, and whenever the overall
  * system state requires it.
+ *
+ * The reason we start at most one worker per call is to avoid consuming the
+ * postmaster's attention for too long when many such requests are pending.
+ * As long as StartWorkerNeeded is true, ServerLoop will not block and will
+ * call this function again after dealing with any other issues.
  */
 static void
 maybe_start_bgworker(void)
@@ -5667,13 +5718,19 @@ maybe_start_bgworker(void)
 	slist_mutable_iter iter;
 	TimestampTz now = 0;
 
+	/*
+	 * During crash recovery, we have no need to be called until the state
+	 * transition out of recovery.
+	 */
 	if (FatalError)
 	{
 		StartWorkerNeeded = false;
 		HaveCrashedWorker = false;
-		return;					/* not yet */
+		return;
 	}
 
+	/* Don't need to be called again unless we find a reason for it below */
+	StartWorkerNeeded = false;
 	HaveCrashedWorker = false;
 
 	slist_foreach_modify(iter, &BackgroundWorkerList)
@@ -5682,11 +5739,11 @@ maybe_start_bgworker(void)
 
 		rw = slist_container(RegisteredBgWorker, rw_lnode, iter.cur);
 
-		/* already running? */
+		/* ignore if already running */
 		if (rw->rw_pid != 0)
 			continue;
 
-		/* marked for death? */
+		/* if marked for death, clean up and remove from list */
 		if (rw->rw_terminate)
 		{
 			ForgetBackgroundWorker(&iter);
@@ -5708,12 +5765,14 @@ maybe_start_bgworker(void)
 				continue;
 			}
 
+			/* read system time only when needed */
 			if (now == 0)
 				now = GetCurrentTimestamp();
 
 			if (!TimestampDifferenceExceeds(rw->rw_crashed_at, now,
 									  rw->rw_worker.bgw_restart_time * 1000))
 			{
+				/* Set flag to remember that we have workers to start later */
 				HaveCrashedWorker = true;
 				continue;
 			}
@@ -5721,47 +5780,35 @@ maybe_start_bgworker(void)
 
 		if (bgworker_should_start_now(rw->rw_worker.bgw_start_time))
 		{
-			/* reset crash time before calling assign_backendlist_entry */
+			/* reset crash time before trying to start worker */
 			rw->rw_crashed_at = 0;
 
 			/*
-			 * If necessary, allocate and assign the Backend element.  Note we
-			 * must do this before forking, so that we can handle out of
-			 * memory properly.
+			 * Try to start the worker.
 			 *
-			 * If not connected, we don't need a Backend element, but we still
-			 * need a PMChildSlot.
+			 * On failure, give up processing workers for now, but set
+			 * StartWorkerNeeded so we'll come back here on the next iteration
+			 * of ServerLoop to try again.  (We don't want to wait, because
+			 * there might be additional ready-to-run workers.)  We could set
+			 * HaveCrashedWorker as well, since this worker is now marked
+			 * crashed, but there's no need because the next run of this
+			 * function will do that.
 			 */
-			if (rw->rw_worker.bgw_flags & BGWORKER_BACKEND_DATABASE_CONNECTION)
+			if (!do_start_bgworker(rw))
 			{
-				if (!assign_backendlist_entry(rw))
-					return;
-			}
-			else
-				rw->rw_child_slot = MyPMChildSlot = AssignPostmasterChildSlot();
-
-			do_start_bgworker(rw);		/* sets rw->rw_pid */
-
-			if (rw->rw_backend)
-			{
-				dlist_push_head(&BackendList, &rw->rw_backend->elem);
-#ifdef EXEC_BACKEND
-				ShmemBackendArrayAdd(rw->rw_backend);
-#endif
+				StartWorkerNeeded = true;
+				return;
 			}
 
 			/*
-			 * Have ServerLoop call us again.  Note that there might not
-			 * actually *be* another runnable worker, but we don't care all
-			 * that much; we will find out the next time we run.
+			 * Quit, but have ServerLoop call us again to look for additional
+			 * ready-to-run workers.  There might not be any, but we'll find
+			 * out the next time we run.
 			 */
 			StartWorkerNeeded = true;
 			return;
 		}
 	}
-
-	/* no runnable worker found */
-	StartWorkerNeeded = false;
 }
 
 /*
