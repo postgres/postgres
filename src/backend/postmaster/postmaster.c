@@ -614,9 +614,9 @@ PostmasterMain(int argc, char *argv[])
 	 * In the postmaster, we want to install non-ignored handlers *without*
 	 * SA_RESTART.  This is because they'll be blocked at all times except
 	 * when ServerLoop is waiting for something to happen, and during that
-	 * window, we want signals to exit the pselect(2) wait so that ServerLoop
+	 * window, we want signals to exit the select(2) wait so that ServerLoop
 	 * can respond if anything interesting happened.  On some platforms,
-	 * signals marked SA_RESTART would not cause the pselect() wait to end.
+	 * signals marked SA_RESTART would not cause the select() wait to end.
 	 * Child processes will generally want SA_RESTART, but we expect them to
 	 * set up their own handlers before unblocking signals.
 	 *
@@ -1670,8 +1670,6 @@ ServerLoop(void)
 	for (;;)
 	{
 		fd_set		rmask;
-		fd_set	   *rmask_p;
-		struct timeval timeout;
 		int			selres;
 		time_t		now;
 
@@ -1681,64 +1679,37 @@ ServerLoop(void)
 		 * We block all signals except while sleeping. That makes it safe for
 		 * signal handlers, which again block all signals while executing, to
 		 * do nontrivial work.
+		 *
+		 * If we are in PM_WAIT_DEAD_END state, then we don't want to accept
+		 * any new connections, so we don't call select(), and just sleep.
 		 */
+		memcpy((char *) &rmask, (char *) &readmask, sizeof(fd_set));
+
 		if (pmState == PM_WAIT_DEAD_END)
 		{
-			/*
-			 * If we are in PM_WAIT_DEAD_END state, then we don't want to
-			 * accept any new connections, so pass a null rmask.
-			 */
-			rmask_p = NULL;
-			timeout.tv_sec = 0;
-			timeout.tv_usec = 100000;	/* 100 msec seems reasonable */
+			PG_SETMASK(&UnBlockSig);
+
+			pg_usleep(100000L); /* 100 msec seems reasonable */
+			selres = 0;
+
+			PG_SETMASK(&BlockSig);
 		}
 		else
 		{
-			/* Normal case: check sockets, and compute a suitable timeout */
-			memcpy(&rmask, &readmask, sizeof(fd_set));
-			rmask_p = &rmask;
+			/* must set timeout each time; some OSes change it! */
+			struct timeval timeout;
 
 			/* Needs to run with blocked signals! */
 			DetermineSleepTime(&timeout);
-		}
 
-		/*
-		 * We prefer to wait with pselect(2) if available, as using that,
-		 * together with *not* using SA_RESTART for signals, guarantees that
-		 * we will get kicked off the wait if a signal occurs.
-		 *
-		 * If we lack pselect(2), fake it with select(2).  This has a race
-		 * condition: a signal that was already pending will be delivered
-		 * before we reach the select(), and therefore the select() will wait,
-		 * even though we might wish to do something in response.  Therefore,
-		 * beware of putting any time-critical signal response logic into
-		 * ServerLoop rather than into the signal handler itself.  It will run
-		 * eventually, but maybe not till after a timeout delay.
-		 *
-		 * Some implementations of pselect() are reportedly not atomic, making
-		 * the first alternative here functionally equivalent to the second.
-		 * Not much we can do about that though.
-		 */
-		{
-#ifdef HAVE_PSELECT
-			/* pselect uses a randomly different timeout API, sigh */
-			struct timespec ptimeout;
-
-			ptimeout.tv_sec = timeout.tv_sec;
-			ptimeout.tv_nsec = timeout.tv_usec * 1000;
-
-			selres = pselect(nSockets, rmask_p, NULL, NULL,
-							 &ptimeout, &UnBlockSig);
-#else
 			PG_SETMASK(&UnBlockSig);
 
-			selres = select(nSockets, rmask_p, NULL, NULL, &timeout);
+			selres = select(nSockets, &rmask, NULL, NULL, &timeout);
 
 			PG_SETMASK(&BlockSig);
-#endif
 		}
 
-		/* Now check the select()/pselect() result */
+		/* Now check the select() result */
 		if (selres < 0)
 		{
 			if (errno != EINTR && errno != EWOULDBLOCK)
