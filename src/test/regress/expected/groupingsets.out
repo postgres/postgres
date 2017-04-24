@@ -847,4 +847,11 @@ select sum(ten) from onek group by rollup(four::text), two order by 1;
  2500
 (6 rows)
 
+-- Check for sensible failure on unsortable data
+select usort, grouping(usort), count(*) from (values ('1'::xid),('2'::xid),('1'::xid)) v(usort) group by rollup(usort);
+ERROR:  could not implement GROUP BY
+DETAIL:  Some of the datatypes do not support sorting, which is required for grouping sets.
+select id, usort, grouping(id,usort), count(*) from (values (1,'1'::xid),(1,'2'::xid),(2,'1'::xid)) v(id,usort) group by grouping sets ((id), (usort));
+ERROR:  could not implement GROUP BY
+DETAIL:  Some of the datatypes do not support sorting, which is required for grouping sets.
 -- end

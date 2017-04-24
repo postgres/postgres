@@ -224,4 +224,8 @@ select array(select row(v.a,s1.*) from (select two,four, count(*) from onek grou
 select sum(ten) from onek group by two, rollup(four::text) order by 1;
 select sum(ten) from onek group by rollup(four::text), two order by 1;
 
+-- Check for sensible failure on unsortable data
+select usort, grouping(usort), count(*) from (values ('1'::xid),('2'::xid),('1'::xid)) v(usort) group by rollup(usort);
+select id, usort, grouping(id,usort), count(*) from (values (1,'1'::xid),(1,'2'::xid),(2,'1'::xid)) v(id,usort) group by grouping sets ((id), (usort));
+
 -- end

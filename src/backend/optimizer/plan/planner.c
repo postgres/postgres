@@ -1756,6 +1756,11 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 
 			if (parse->groupingSets)
 			{
+				if (!grouping_is_sortable(parse->groupClause))
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("could not implement GROUP BY"),
+							 errdetail("Some of the datatypes do not support sorting, which is required for grouping sets.")));
 				use_hashed_grouping = false;
 			}
 			else
