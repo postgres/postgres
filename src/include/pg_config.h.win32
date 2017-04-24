@@ -267,6 +267,9 @@
 /* Define to 1 if you have the <poll.h> header file. */
 /* #undef HAVE_POLL_H */
 
+/* Define to 1 if you have the `pselect' function. */
+/* #undef HAVE_PSELECT */
+
 /* Define to 1 if you have the `pstat' function. */
 /* #undef HAVE_PSTAT */
 
