@@ -810,6 +810,7 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 		LogicalDecodingContext *ctx;
 
 		ctx = CreateInitDecodingContext(cmd->plugin, NIL,
+										true, /* build snapshot */
 										logical_read_xlog_page,
 										WalSndPrepareWrite, WalSndWriteData);
 
