@@ -429,7 +429,7 @@ Author: Robert Haas <rhaas@postgresql.org>
 -->
 <para>
 Increase parallel query usage in procedural language functions (Robert
-Haas)
+Haas, Rafia Sabih)
 </para>
 </listitem>
 
@@ -2530,7 +2530,7 @@ class="osname">Linux</> and <systemitem class="osname">FreeBSD</>
 </para>
 
 <para>
-This avoids some limits on SysV semaphores usage.
+This avoids some limits on SysV semaphore usage.
 </para>
 </listitem>
 
