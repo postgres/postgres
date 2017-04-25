@@ -411,12 +411,6 @@ Allow merge joins to be performed in parallel (Dilip Kumar)
 </para>
 </listitem>
 
-<para>
-This allows a single index scan to dispatch parallel workers to process
-different areas of the heap.
-</para>
-</listitem>
-
 <listitem>
 <!--
 Author: Robert Haas <rhaas@postgresql.org>
