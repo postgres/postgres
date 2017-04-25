@@ -186,7 +186,7 @@ standby4|0|async),
 # for sync standbys in a quorum-based sync replication.
 test_sync_state(
 $node_master, qq(standby1|1|quorum
-standby2|2|quorum
+standby2|1|quorum
 standby4|0|async),
 '2 quorum and 1 async',
 'ANY 2(standby1, standby2)');
