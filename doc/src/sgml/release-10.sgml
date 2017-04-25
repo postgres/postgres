@@ -49,14 +49,16 @@
 
 <listitem>
 <!--
-Created from "Improve hash bucket split performance" item
+Copied here from this commit:
+Author: Robert Haas <rhaas@postgresql.org>
+2017-04-03 [ea69a0dea] Expand hash indexes more gradually.
 -->
 <para>
 <application>pg_upgrade</>-ed hash indexes from previous major Postgres versions must be rebuilt.
 </para>
 
 <para>
-Major hash index performance improvements necessitated this requirement.
+Major hash storage improvements necessitated this requirement.
 </para>
 </listitem>
 
@@ -450,55 +452,6 @@ processes for non-parallel purposes.
 
 <listitem>
 <!--
-Author: Robert Haas <rhaas@postgresql.org>
-2017-03-14 [c11453ce0] hash: Add write-ahead logging support.
--->
-<para>
-Add write-ahead logging support to hash indexes (Amit Kapila)
-</para>
-
-<para>
-This makes hash indexes crash-safe and replicated, and removes the
-warning message about their use.
-</para>
-</listitem>
-
-<listitem>
-<!--
-Author: Robert Haas <rhaas@postgresql.org>
-2016-11-30 [6d46f4783] Improve hash index bucket split behavior.
-Author: Robert Haas <rhaas@postgresql.org>
-2017-02-07 [293e24e50] Cache hash index's metapage in rel->rd_amcache.
-Author: Robert Haas <rhaas@postgresql.org>
-2017-02-27 [b0f18cb77] hash: Refactor bucket squeeze code.
-Author: Robert Haas <rhaas@postgresql.org>
-2017-02-27 [30df93f69] hash: Refactor overflow page allocation.
-Author: Robert Haas <rhaas@postgresql.org>
-2017-04-03 [ea69a0dea] Expand hash indexes more gradually.
--->
-<para>
-Improve hash bucket split performance by reducing locking requirements
-(Amit Kapila, Mithun Cy)
-</para>
-
-<para>
-Also cache hash index meta-information for faster lookups.  Additional
-hash performance improvements have also been made.
-</para>
-</listitem>
-
-<listitem>
-<!--
-Author: Robert Haas <rhaas@postgresql.org>
-2017-03-15 [6977b8b7f] Port single-page btree vacuum logic to hash indexes.
--->
-<para>
-Allow single-page hash pruning (Ashutosh Sharma)
-</para>
-</listitem>
-
-<listitem>
-<!--
 Author: Andrew Dunstan <andrew@dunslane.net>
 2017-03-31 [e306df7f9] Full Text Search support for <type>JSON</> and <type>JSONB</>
 -->
@@ -568,12 +521,79 @@ This allows future <acronym>BRIN</> index summarization to be more compact.  CLA
 
      </itemizedlist>
      
-    </sect4>
+      <sect5>
+       <title><link linkend="indexes-types">Hash Indexes</link></title>
 
-    <sect4>
-     <title>Locking</title>
+       <itemizedlist>
 
-     <itemizedlist>
+<listitem>
+<!--
+Author: Robert Haas <rhaas@postgresql.org>
+2017-03-14 [c11453ce0] hash: Add write-ahead logging support.
+-->
+<para>
+Add write-ahead logging support to hash indexes (Amit Kapila)
+</para>
+
+<para>
+This makes hash indexes crash-safe and replicated, and removes the
+warning message about their use.
+</para>
+</listitem>
+
+<listitem>
+<!--
+Author: Robert Haas <rhaas@postgresql.org>
+2016-11-30 [6d46f4783] Improve hash index bucket split behavior.
+Author: Robert Haas <rhaas@postgresql.org>
+2017-02-07 [293e24e50] Cache hash index's metapage in rel->rd_amcache.
+Author: Robert Haas <rhaas@postgresql.org>
+-->
+<para>
+Improve hash bucket split performance by reducing locking requirements
+(Amit Kapila, Mithun Cy)
+</para>
+
+<para>
+Also cache hash index meta-information for faster lookups.
+</para>
+</listitem>
+
+<listitem>
+<!--
+Author: Robert Haas <rhaas@postgresql.org>
+2017-02-27 [b0f18cb77] hash: Refactor bucket squeeze code.
+Author: Robert Haas <rhaas@postgresql.org>
+2017-02-27 [30df93f69] hash: Refactor overflow page allocation.
+Author: Robert Haas <rhaas@postgresql.org>
+2017-04-03 [ea69a0dea] Expand hash indexes more gradually.
+-->
+<para>
+Improve efficiency of hash index growth (Amit Kapila, Mithun Cy)
+</para>
+</listitem>
+
+<listitem>
+<!--
+Author: Robert Haas <rhaas@postgresql.org>
+2017-03-15 [6977b8b7f] Port single-page btree vacuum logic to hash indexes.
+-->
+<para>
+Allow single-page hash pruning (Ashutosh Sharma)
+</para>
+</listitem>
+
+       </itemizedlist>
+
+      </sect5>
+
+     </sect4>
+
+     <sect4>
+
+      <title>Locking</title>
+
+      <itemizedlist>
 
 <listitem>
 <!--
