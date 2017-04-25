@@ -807,6 +807,17 @@
        </para>
       </listitem>
 
+      <listitem>
+       <!--
+       Author: Teodor Sigaev <teodor@sigaev.ru>
+       2017-03-27 [090010f2e] Improve performance of find_tabstat_entry()/get_tabstat_
+       -->
+       <para>
+        Improve table creation speed in sessions that reference many
+        relations (Aleksander Alekseev)
+       </para>
+      </listitem>
+
      </itemizedlist>
 
     </sect4>
@@ -858,10 +869,10 @@
        </para>
 
        <para>
-        By default planning and execution is display by <command>EXPLAIN
-        ANALYZE</> and not display in other cases.  The new
-        <command>EXPLAIN</> option <literal>SUMMARY</> allows explicit
-        control of this.
+        By default planning and execution time is display by
+        <command>EXPLAIN ANALYZE</> and not display in other cases.
+        The new <command>EXPLAIN</> option <literal>SUMMARY</> allows
+        explicit control of this.
        </para>
       </listitem>
 
