@@ -1330,9 +1330,7 @@ hash_get_num_entries(HTAB *hashp)
  *
  * NOTE: it is possible to use hash_seq_init/hash_seq_search without any
  * worry about hash_seq_term cleanup, if the hashtable is first locked against
- * further insertions by calling hash_freeze.  This is used by nodeAgg.c,
- * wherein it is inconvenient to track whether a scan is still open, and
- * there's no possibility of further insertions after readout has begun.
+ * further insertions by calling hash_freeze.
  *
  * NOTE: to use this with a partitioned hashtable, caller had better hold
  * at least shared lock on all partitions of the table throughout the scan!
