@@ -84,6 +84,44 @@ Karlsson)
 </listitem>
 
 <listitem>
+<!--<listitem>
+Author: Robert Haas <rhaas@postgresql.org>
+2016-10-20 [f82ec32ac] Rename "pg_xlog" directory to "pg_wal"
+-->
+<para>
+Rename <filename>pg_xlog</> to <link linkend="wal"><filename>pg_wal</></> (Michael Paquier)
+</para>
+
+<para>
+This prevents the write-ahead log directory from being confused as
+containing server activity logs, and erroneously truncated.
+</para>
+</listitem>
+
+<listitem>
+<!--
+Author: Robert Haas <rhaas@postgresql.org>
+2017-02-09 [806091c96] Remove all references to "xlog" from SQL-callable functi
+Author: Robert Haas <rhaas@postgresql.org>
+2017-02-09 [85c11324c] Rename user-facing tools with "xlog" in the name to say 
+Author: Robert Haas <rhaas@postgresql.org>
+2017-02-09 [62e8b3875] Rename command line options for ongoing xlog -> wal conv
+Author: Fujii Masao <fujii@postgresql.org>
+2017-02-15 [0dfa89ba2] Replace reference to "xlog-method" with "wal-method" in 
+-->
+<para>
+Rename <acronym>SQL</> functions, tools, and options that reference <quote>xlog</> to <quote>wal</>
+(Robert Haas)
+</para>
+
+<para>
+For example, <function>pg_switch_xlog()</> becomes <function>pg_switch_wal()</>, <application>pg_receivexlog</>
+becomes <application>pg_receivewal</>, and <option>--xlogdir</> becomes <option>--waldir</>.  This might
+require adjustments for prior-version scripts.
+</para>
+</listitem>
+
+<listitem>
 <!--
 Author: Robert Haas <rhaas@postgresql.org>
 2017-03-17 [88e66d193] Rename "pg_clog" directory to "pg_xact".
@@ -91,6 +129,25 @@ Author: Robert Haas <rhaas@postgresql.org>
 <para>
 Rename transaction status directory <filename>pg_clog</> directory to <filename>pg_xact</>
 (Michael Paquier)
+</para>
+</listitem>
+
+<listitem>
+<!--
+Author: Andres Freund <andres@anarazel.de>
+2017-01-18 [69f4b9c85] Move targetlist SRF handling from expression evaluation 
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2017-01-18 [f13a1277a] Doc: improve documentation of new SRF-in-tlist behavior.
+-->
+<para>
+Allow <literal>COALESCE</> and <literal>CASE</> to return multiple rows when evaluating
+set-returning functions (Andres Freund).  
+</para>
+
+<para>
+This also prevents conditionals like <literal>CASE</> from controlling the
+execution of set-returning functions because set-returning functions
+are now executed earlier.
 </para>
 </listitem>
 
@@ -192,6 +249,22 @@ to control parallel operation (Amit Kapila, Robert Haas)
 
 <para>
 This replaces <varname>min_parallel_relation_size</>, which was too generic.
+</para>
+</listitem>
+
+<listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2016-10-12 [64f3524e2] Remove pg_dump/pg_dumpall support for dumping from pre-8
+-->
+<para>
+Remove <application>pg_dump</>/<application>pg_dumpall</> support for dumping from pre-8.0 servers (Tom
+Lane)
+</para>
+
+<para>
+Users needing dump support for pre-8.0 servers need to use dump binaries
+from Postgres 9.6.
 </para>
 </listitem>
 
@@ -361,79 +434,6 @@ that can be used for parallelism (Julien Rouhaud)
 <para>
 This can be set lower than <xref linkend="guc-max-worker-processes"> to reserve worker
 processes for non-parallel purposes.
-</para>
-</listitem>
-
-<listitem>
-<!--<listitem>
-Author: Robert Haas <rhaas@postgresql.org>
-2016-10-20 [f82ec32ac] Rename "pg_xlog" directory to "pg_wal"
--->
-<para>
-Rename <filename>pg_xlog</> to <link linkend="wal"><filename>pg_wal</></> (Michael Paquier)
-</para>
-
-<para>
-This prevents the write-ahead log directory from being confused as
-containing server activity logs, and erroneously truncated.
-</para>
-</listitem>
-
-<listitem>
-<!--
-Author: Robert Haas <rhaas@postgresql.org>
-2017-02-09 [806091c96] Remove all references to "xlog" from SQL-callable functi
-Author: Robert Haas <rhaas@postgresql.org>
-2017-02-09 [85c11324c] Rename user-facing tools with "xlog" in the name to say 
-Author: Robert Haas <rhaas@postgresql.org>
-2017-02-09 [62e8b3875] Rename command line options for ongoing xlog -> wal conv
-Author: Fujii Masao <fujii@postgresql.org>
-2017-02-15 [0dfa89ba2] Replace reference to "xlog-method" with "wal-method" in 
--->
-<para>
-Rename <acronym>SQL</> functions, tools, and options that reference <quote>xlog</> to <quote>wal</>
-(Robert Haas)
-</para>
-
-<para>
-For example, <function>pg_switch_xlog()</> becomes <function>pg_switch_wal()</>, <application>pg_receivexlog</>
-becomes <application>pg_receivewal</>, and <option>--xlogdir</> becomes <option>--waldir</>.  This might
-require adjustments for prior-version scripts.
-</para>
-</listitem>
-
-<listitem>
-<!--
-Author: Andres Freund <andres@anarazel.de>
-2017-01-18 [69f4b9c85] Move targetlist SRF handling from expression evaluation 
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-2017-01-18 [f13a1277a] Doc: improve documentation of new SRF-in-tlist behavior.
--->
-<para>
-Allow <literal>COALESCE</> and <literal>CASE</> to return multiple rows when evaluating
-set-returning functions (Andres Freund).  
-</para>
-
-<para>
-This also prevents conditionals like <literal>CASE</> from controlling the
-execution of set-returning functions because set-returning functions
-are now executed earlier.
-</para>
-</listitem>
-
-<listitem>
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-2016-10-12 [64f3524e2] Remove pg_dump/pg_dumpall support for dumping from pre-8
--->
-<para>
-Remove <application>pg_dump</>/<application>pg_dumpall</> support for dumping from pre-8.0 servers (Tom
-Lane)
-</para>
-
-<para>
-Users needing dump support for pre-8.0 servers need to use dump binaries
-from Postgres 9.6.
 </para>
 </listitem>
 
@@ -797,8 +797,8 @@ Author: Peter Eisentraut <peter_e@gmx.net>
 2016-12-20 [1753b1b02] Add pg_sequence system catalog
 -->
 <para>
-Create a <link linkend="catalog-pg-sequence"><structname>pg_sequence</></> system catalog to store sequence metadata (Andreas
-Karlsson)
+Create a <link linkend="catalog-pg-sequence"><structname>pg_sequence</></> system catalog to store sequence metadata
+(Peter Eisentraut)
 </para>
 
 <para>
