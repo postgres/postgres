@@ -460,7 +460,7 @@ Add full text search support for <type>JSON</> and <type>JSONB</> (Dmitry Dolgov
 </para>
 
 <para>
-This is accessed via <function>ts_headline()</> and to_tsvector. RIGHT SECTION?
+This is accessed via <function>ts_headline()</> and <function>to_tsvector</>. RIGHT SECTION?
 </para>
 </listitem>
 
@@ -1070,7 +1070,7 @@ Paquier, Heikki Linnakangas)
 </para>
 
 <para>
-This proves better security than the existing 'md5' negotiation and
+This proves better security than the existing <literal>md5</> negotiation and
 storage method.
 </para>
 </listitem>
@@ -1257,7 +1257,7 @@ Author: Robert Haas <rhaas@postgresql.org>
 -->
 <para>
 Add <acronym>GUC</> <xref linkend="guc-wal-consistency-checking"> to add details to <acronym>WAL</> that can be
-sanity-checked on the standby (Kuntal Ghosh, Michael Paquier, Robert
+sanity-checked on the standby (Kuntal Ghosh, Robert
 Haas)
 </para>
 
@@ -1389,8 +1389,8 @@ Add specification of a Log Sequence Number (<acronym>LSN</>) stopping point in
 </para>
 
 <para>
-Previously only specification of the stop name, time, and xid were
-supported.
+Previously only specification of the stop name, time, timeline, xid,
+and immediate were supported.
 </para>
 </listitem>
 
@@ -1440,7 +1440,8 @@ Author: Simon Riggs <simon@2ndQuadrant.com>
 2017-04-04 [728bd991c] Speedup 2PC recovery by skipping two phase state files i
 -->
 <para>
-Speed up two-phase commit recovery performance (Simon Riggs)
+Speed up two-phase commit recovery performance (Stas Kelvich, Nikhil
+Sontakke, Michael Paquier)
 </para>
 </listitem>
 
@@ -2467,6 +2468,22 @@ It is called <option>--options</>.
 
 <listitem>
 <!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2016-08-15 [ca9112a42] Stamp HEAD as 10devel.
+-->
+<para>
+New major version numbering (Peter Eisentraut, Tom Lane)
+</para>
+
+<para>
+Major versions will now increase just the first number, and minor
+releases will increase just the second number.  A third number will no
+longer be used in Postgres version numbers.
+</para>
+</listitem>
+
+<listitem>
+<!--
 Author: Peter Eisentraut <peter_e@gmx.net>
 2017-03-23 [eccfef81e] ICU support
 -->
@@ -2480,22 +2497,6 @@ The <acronym>ICU</> library has versioning that allows detection of collation
 changes between versions.  It is enabled via configure option
 <option>--with-icu</>.  The default still uses the operating system's native
 collation library.
-</para>
-</listitem>
-
-<listitem>
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-2016-08-15 [ca9112a42] Stamp HEAD as 10devel.
--->
-<para>
-New major version numbering (Peter Eisentraut, Tom Lane)
-</para>
-
-<para>
-Major versions will now increase just the first number, and minor
-releases will increase just the second number.  A third number will no
-longer be used in Postgres version numbers.
 </para>
 </listitem>
 
@@ -2777,7 +2778,7 @@ Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
 2016-09-29 [6e654546f] Don't bother to lock bufmgr partitions in pg_buffercache
 -->
 <para>
-Allow <link linkend="pgbuffercache"><application>pg_buffercache</></> to run without fewer locks (Ivan Kartyshov)
+Allow <link linkend="pgbuffercache"><application>pg_buffercache</></> to run with fewer locks (Ivan Kartyshov)
 </para>
 
 <para>
