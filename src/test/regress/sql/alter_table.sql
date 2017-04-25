@@ -2173,19 +2173,31 @@ ALTER TABLE part_2 DROP COLUMN b;
 ALTER TABLE part_2 RENAME COLUMN b to c;
 ALTER TABLE part_2 ALTER COLUMN b TYPE text;
 
--- cannot add NOT NULL or check constraints to *only* the parent (ie, non-inherited)
+-- cannot add/drop NOT NULL or check constraints to *only* the parent, when
+-- partitions exist
 ALTER TABLE ONLY list_parted2 ALTER b SET NOT NULL;
-ALTER TABLE ONLY list_parted2 add constraint check_b check (b <> 'zz');
-ALTER TABLE list_parted2 add constraint check_b check (b <> 'zz') NO INHERIT;
+ALTER TABLE ONLY list_parted2 ADD CONSTRAINT check_b CHECK (b <> 'zz');
+
+ALTER TABLE list_parted2 ALTER b SET NOT NULL;
+ALTER TABLE ONLY list_parted2 ALTER b DROP NOT NULL;
+ALTER TABLE list_parted2 ADD CONSTRAINT check_b CHECK (b <> 'zz');
+ALTER TABLE ONLY list_parted2 DROP CONSTRAINT check_b;
+
+-- It's alright though, if no partitions are yet created
+CREATE TABLE parted_no_parts (a int) PARTITION BY LIST (a);
+ALTER TABLE ONLY parted_no_parts ALTER a SET NOT NULL;
+ALTER TABLE ONLY parted_no_parts ADD CONSTRAINT check_a CHECK (a > 0);
+ALTER TABLE ONLY parted_no_parts ALTER a DROP NOT NULL;
+ALTER TABLE ONLY parted_no_parts DROP CONSTRAINT check_a;
+DROP TABLE parted_no_parts;
 
 -- cannot drop inherited NOT NULL or check constraints from partition
 ALTER TABLE list_parted2 ALTER b SET NOT NULL, ADD CONSTRAINT check_a2 CHECK (a > 0);
 ALTER TABLE part_2 ALTER b DROP NOT NULL;
 ALTER TABLE part_2 DROP CONSTRAINT check_a2;
 
--- cannot drop NOT NULL or check constraints from *only* the parent
-ALTER TABLE ONLY list_parted2 ALTER a DROP NOT NULL;
-ALTER TABLE ONLY list_parted2 DROP CONSTRAINT check_a2;
+-- Doesn't make sense to add NO INHERIT constraints on partitioned tables
+ALTER TABLE list_parted2 add constraint check_b2 check (b <> 'zz') NO INHERIT;
 
 -- check that a partition cannot participate in regular inheritance
 CREATE TABLE inh_test () INHERITS (part_2);

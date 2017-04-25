@@ -2944,17 +2944,23 @@ VALUES ('Albany', NULL, NULL, 'NY');
        Both <literal>CHECK</literal> and <literal>NOT NULL</literal>
        constraints of a partitioned table are always inherited by all its
        partitions.  <literal>CHECK</literal> constraints that are marked
-       <literal>NO INHERIT</literal> are not allowed.
+       <literal>NO INHERIT</literal> are not allowed to be created on
+       partitioned tables.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       The <literal>ONLY</literal> notation used to exclude child tables
-       will cause an error for partitioned tables in the case of
-       schema-modifying commands such as most <literal>ALTER TABLE</literal>
-       commands.  For example, dropping a column from only the parent does
-       not make sense for partitioned tables.
+       Using <literal>ONLY</literal> to add or drop a constraint on only the
+       partitioned table is supported when there are no partitions.  Once
+       partitions exist, using <literal>ONLY</literal> will result in an error
+       as adding or dropping constraints on only the partitioned table, when
+       partitions exist, is not supported.  Instead, constraints can be added
+       or dropped, when they are not present in the parent table, directly on
+       the partitions.  As a partitioned table does not have any data
+       directly, attempts to use <command>TRUNCATE</command>
+       <literal>ONLY</literal> on a partitioned table will always return an
+       error.
       </para>
      </listitem>
 
