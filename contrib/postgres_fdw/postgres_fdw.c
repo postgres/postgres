@@ -414,6 +414,11 @@ static void add_paths_with_pathkeys_for_rel(PlannerInfo *root, RelOptInfo *rel,
 static void add_foreign_grouping_paths(PlannerInfo *root,
 						   RelOptInfo *input_rel,
 						   RelOptInfo *grouped_rel);
+static void apply_server_options(PgFdwRelationInfo *fpinfo);
+static void apply_table_options(PgFdwRelationInfo *fpinfo);
+static void merge_fdw_options(PgFdwRelationInfo *fpinfo,
+							  const PgFdwRelationInfo *fpinfo_o,
+							  const PgFdwRelationInfo *fpinfo_i);
 
 
 /*
@@ -513,31 +518,8 @@ postgresGetForeignRelSize(PlannerInfo *root,
 	fpinfo->shippable_extensions = NIL;
 	fpinfo->fetch_size = 100;
 
-	foreach(lc, fpinfo->server->options)
-	{
-		DefElem    *def = (DefElem *) lfirst(lc);
-
-		if (strcmp(def->defname, "use_remote_estimate") == 0)
-			fpinfo->use_remote_estimate = defGetBoolean(def);
-		else if (strcmp(def->defname, "fdw_startup_cost") == 0)
-			fpinfo->fdw_startup_cost = strtod(defGetString(def), NULL);
-		else if (strcmp(def->defname, "fdw_tuple_cost") == 0)
-			fpinfo->fdw_tuple_cost = strtod(defGetString(def), NULL);
-		else if (strcmp(def->defname, "extensions") == 0)
-			fpinfo->shippable_extensions =
-				ExtractExtensionList(defGetString(def), false);
-		else if (strcmp(def->defname, "fetch_size") == 0)
-			fpinfo->fetch_size = strtol(defGetString(def), NULL, 10);
-	}
-	foreach(lc, fpinfo->table->options)
-	{
-		DefElem    *def = (DefElem *) lfirst(lc);
-
-		if (strcmp(def->defname, "use_remote_estimate") == 0)
-			fpinfo->use_remote_estimate = defGetBoolean(def);
-		else if (strcmp(def->defname, "fetch_size") == 0)
-			fpinfo->fetch_size = strtol(defGetString(def), NULL, 10);
-	}
+	apply_server_options(fpinfo);
+	apply_table_options(fpinfo);
 
 	/*
 	 * If the table or the server is configured to use remote estimates,
@@ -4115,6 +4097,15 @@ foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
 		return false;
 
 	/*
+	 * Merge FDW options.  We might be tempted to do this after we have deemed
+	 * the foreign join to be OK.  But we must do this beforehand so that we
+	 * know which quals can be evaluated on the foreign server, which might
+	 * depend on shippable_extensions.
+	 */
+	fpinfo->server = fpinfo_o->server;
+	merge_fdw_options(fpinfo, fpinfo_o, fpinfo_i);
+
+	/*
 	 * Separate restrict list into join quals and pushed-down (other) quals.
 	 *
 	 * Join quals belonging to an outer join must all be shippable, else we
@@ -4279,15 +4270,6 @@ foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
 	/* Mark that this join can be pushed down safely */
 	fpinfo->pushdown_safe = true;
 
-	/*
-	 * If user is willing to estimate cost for a scan of either of the joining
-	 * relations using EXPLAIN, he intends to estimate scans on that relation
-	 * more accurately. Then, it makes sense to estimate the cost of the join
-	 * with that relation more accurately using EXPLAIN.
-	 */
-	fpinfo->use_remote_estimate = fpinfo_o->use_remote_estimate ||
-		fpinfo_i->use_remote_estimate;
-
 	/* Get user mapping */
 	if (fpinfo->use_remote_estimate)
 	{
@@ -4299,17 +4281,6 @@ foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
 	else
 		fpinfo->user = NULL;
 
-	/* Get foreign server */
-	fpinfo->server = fpinfo_o->server;
-
-	/*
-	 * Since both the joining relations come from the same server, the server
-	 * level options should have same value for both the relations. Pick from
-	 * any side.
-	 */
-	fpinfo->fdw_startup_cost = fpinfo_o->fdw_startup_cost;
-	fpinfo->fdw_tuple_cost = fpinfo_o->fdw_tuple_cost;
-
 	/*
 	 * Set cached relation costs to some negative value, so that we can detect
 	 * when they are set to some sensible costs, during one (usually the
@@ -4317,15 +4288,6 @@ foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
 	 */
 	fpinfo->rel_startup_cost = -1;
 	fpinfo->rel_total_cost = -1;
-
-	/*
-	 * Set fetch size to maximum of the joining sides, since we are expecting
-	 * the rows returned by the join to be proportional to the relation sizes.
-	 */
-	if (fpinfo_o->fetch_size > fpinfo_i->fetch_size)
-		fpinfo->fetch_size = fpinfo_o->fetch_size;
-	else
-		fpinfo->fetch_size = fpinfo_i->fetch_size;
 
 	/*
 	 * Set the string describing this join relation to be used in EXPLAIN
@@ -4381,6 +4343,110 @@ add_paths_with_pathkeys_for_rel(PlannerInfo *root, RelOptInfo *rel,
 										 NULL,
 										 epq_path,
 										 NIL));
+	}
+}
+
+/*
+ * Parse options from foreign server and apply them to fpinfo.
+ *
+ * New options might also require tweaking merge_fdw_options().
+ */
+static void
+apply_server_options(PgFdwRelationInfo *fpinfo)
+{
+	ListCell *lc;
+
+	foreach(lc, fpinfo->server->options)
+	{
+		DefElem    *def = (DefElem *) lfirst(lc);
+
+		if (strcmp(def->defname, "use_remote_estimate") == 0)
+			fpinfo->use_remote_estimate = defGetBoolean(def);
+		else if (strcmp(def->defname, "fdw_startup_cost") == 0)
+			fpinfo->fdw_startup_cost = strtod(defGetString(def), NULL);
+		else if (strcmp(def->defname, "fdw_tuple_cost") == 0)
+			fpinfo->fdw_tuple_cost = strtod(defGetString(def), NULL);
+		else if (strcmp(def->defname, "extensions") == 0)
+			fpinfo->shippable_extensions =
+				ExtractExtensionList(defGetString(def), false);
+		else if (strcmp(def->defname, "fetch_size") == 0)
+			fpinfo->fetch_size = strtol(defGetString(def), NULL, 10);
+	}
+}
+
+/*
+ * Parse options from foreign table and apply them to fpinfo.
+ *
+ * New options might also require tweaking merge_fdw_options().
+ */
+static void
+apply_table_options(PgFdwRelationInfo *fpinfo)
+{
+	ListCell *lc;
+
+	foreach(lc, fpinfo->table->options)
+	{
+		DefElem    *def = (DefElem *) lfirst(lc);
+
+		if (strcmp(def->defname, "use_remote_estimate") == 0)
+			fpinfo->use_remote_estimate = defGetBoolean(def);
+		else if (strcmp(def->defname, "fetch_size") == 0)
+			fpinfo->fetch_size = strtol(defGetString(def), NULL, 10);
+	}
+}
+
+/*
+ * Merge FDW options from input relations into a new set of options for a join
+ * or an upper rel.
+ *
+ * For a join relation, FDW-specific information about the inner and outer
+ * relations is provided using fpinfo_i and fpinfo_o.  For an upper relation,
+ * fpinfo_o provides the information for the input relation; fpinfo_i is
+ * expected to NULL.
+ */
+static void
+merge_fdw_options(PgFdwRelationInfo *fpinfo,
+				  const PgFdwRelationInfo *fpinfo_o,
+				  const PgFdwRelationInfo *fpinfo_i)
+{
+	/* We must always have fpinfo_o. */
+	Assert(fpinfo_o);
+
+	/* fpinfo_i may be NULL, but if present the servers must both match. */
+	Assert(!fpinfo_i ||
+		   fpinfo_i->server->serverid == fpinfo_o->server->serverid);
+
+	/*
+	 * Copy the server specific FDW options.  (For a join, both relations come
+	 * from the same server, so the server options should have the same value
+	 * for both relations.)
+	 */
+	fpinfo->fdw_startup_cost = fpinfo_o->fdw_startup_cost;
+	fpinfo->fdw_tuple_cost = fpinfo_o->fdw_tuple_cost;
+	fpinfo->shippable_extensions = fpinfo_o->shippable_extensions;
+	fpinfo->use_remote_estimate = fpinfo_o->use_remote_estimate;
+	fpinfo->fetch_size = fpinfo_o->fetch_size;
+
+	/* Merge the table level options from either side of the join. */
+	if (fpinfo_i)
+	{
+		/*
+		 * We'll prefer to use remote estimates for this join if any table
+		 * from either side of the join is using remote estimates.  This is
+		 * most likely going to be preferred since they're already willing to
+		 * pay the price of a round trip to get the remote EXPLAIN.  In any
+		 * case it's not entirely clear how we might otherwise handle this
+		 * best.
+		 */
+		fpinfo->use_remote_estimate = fpinfo_o->use_remote_estimate ||
+									  fpinfo_i->use_remote_estimate;
+
+		/*
+		 * Set fetch size to maximum of the joining sides, since we are
+		 * expecting the rows returned by the join to be proportional to the
+		 * relation sizes.
+		 */
+		fpinfo->fetch_size = Max(fpinfo_o->fetch_size, fpinfo_i->fetch_size);
 	}
 }
 
@@ -4715,27 +4781,12 @@ foreign_grouping_ok(PlannerInfo *root, RelOptInfo *grouped_rel)
 	fpinfo->pushdown_safe = true;
 
 	/*
-	 * If user is willing to estimate cost for a scan using EXPLAIN, he
-	 * intends to estimate scans on that relation more accurately. Then, it
-	 * makes sense to estimate the cost of the grouping on that relation more
-	 * accurately using EXPLAIN.
-	 */
-	fpinfo->use_remote_estimate = ofpinfo->use_remote_estimate;
-
-	/* Copy startup and tuple cost as is from underneath input rel's fpinfo */
-	fpinfo->fdw_startup_cost = ofpinfo->fdw_startup_cost;
-	fpinfo->fdw_tuple_cost = ofpinfo->fdw_tuple_cost;
-
-	/*
 	 * Set cached relation costs to some negative value, so that we can detect
 	 * when they are set to some sensible costs, during one (usually the
 	 * first) of the calls to estimate_path_cost_size().
 	 */
 	fpinfo->rel_startup_cost = -1;
 	fpinfo->rel_total_cost = -1;
-
-	/* Set fetch size same as that of underneath input rel's fpinfo */
-	fpinfo->fetch_size = ofpinfo->fetch_size;
 
 	/*
 	 * Set the string describing this grouped relation to be used in EXPLAIN
@@ -4812,13 +4863,13 @@ add_foreign_grouping_paths(PlannerInfo *root, RelOptInfo *input_rel,
 	fpinfo->outerrel = input_rel;
 
 	/*
-	 * Copy foreign table, foreign server, user mapping, shippable extensions
-	 * etc. details from the input relation's fpinfo.
+	 * Copy foreign table, foreign server, user mapping, FDW options etc.
+	 * details from the input relation's fpinfo.
 	 */
 	fpinfo->table = ifpinfo->table;
 	fpinfo->server = ifpinfo->server;
 	fpinfo->user = ifpinfo->user;
-	fpinfo->shippable_extensions = ifpinfo->shippable_extensions;
+	merge_fdw_options(fpinfo, ifpinfo , NULL);
 
 	/* Assess if it is safe to push down aggregation and grouping. */
 	if (!foreign_grouping_ok(root, grouped_rel))

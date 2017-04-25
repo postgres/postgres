@@ -1620,6 +1620,35 @@ SELECT t1.c1, t2.c1 FROM ft4 t1 FULL JOIN ft5 t2 ON (t1.c1 = t2.c1) WHERE (t1.c1
     | 21
 (10 rows)
 
+-- full outer join + WHERE clause with shippable extensions set
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT t1.c1, t2.c2, t1.c3 FROM ft1 t1 FULL JOIN ft2 t2 ON (t1.c1 = t2.c1) WHERE postgres_fdw_abs(t1.c1) > 0 OFFSET 10 LIMIT 10;
+                                                                                  QUERY PLAN                                                                                   
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   Output: t1.c1, t2.c2, t1.c3
+   ->  Foreign Scan
+         Output: t1.c1, t2.c2, t1.c3
+         Relations: (public.ft1 t1) FULL JOIN (public.ft2 t2)
+         Remote SQL: SELECT r1."C 1", r1.c3, r2.c2 FROM ("S 1"."T 1" r1 FULL JOIN "S 1"."T 1" r2 ON (((r1."C 1" = r2."C 1")))) WHERE ((public.postgres_fdw_abs(r1."C 1") > 0))
+(6 rows)
+
+ALTER SERVER loopback OPTIONS (DROP extensions);
+-- full outer join + WHERE clause with shippable extensions not set
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT t1.c1, t2.c2, t1.c3 FROM ft1 t1 FULL JOIN ft2 t2 ON (t1.c1 = t2.c1) WHERE postgres_fdw_abs(t1.c1) > 0 OFFSET 10 LIMIT 10;
+                                                          QUERY PLAN                                                           
+-------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   Output: t1.c1, t2.c2, t1.c3
+   ->  Foreign Scan
+         Output: t1.c1, t2.c2, t1.c3
+         Filter: (postgres_fdw_abs(t1.c1) > 0)
+         Relations: (public.ft1 t1) FULL JOIN (public.ft2 t2)
+         Remote SQL: SELECT r1."C 1", r1.c3, r2.c2 FROM ("S 1"."T 1" r1 FULL JOIN "S 1"."T 1" r2 ON (((r1."C 1" = r2."C 1"))))
+(7 rows)
+
+ALTER SERVER loopback OPTIONS (ADD extensions 'postgres_fdw');
 -- join two tables with FOR UPDATE clause
 -- tests whole-row reference for row marks
 EXPLAIN (VERBOSE, COSTS OFF)
