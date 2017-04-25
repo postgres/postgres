@@ -3990,6 +3990,15 @@ foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
 		joinclauses = NIL;
 	}
 
+	/* Get foreign server */
+	fpinfo->server = fpinfo_o->server;
+
+	/*
+	 * Copy shippable_extensions before checking whether the foreign join is
+	 * OK, so that we know which quals can be evaluated on the foreign server.
+	 */
+	fpinfo->shippable_extensions = fpinfo_o->shippable_extensions;
+
 	/* Join quals must be safe to push down. */
 	foreach(lc, joinclauses)
 	{
@@ -4132,9 +4141,6 @@ foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
 	}
 	else
 		fpinfo->user = NULL;
-
-	/* Get foreign server */
-	fpinfo->server = fpinfo_o->server;
 
 	/*
 	 * Since both the joining relations come from the same server, the server
