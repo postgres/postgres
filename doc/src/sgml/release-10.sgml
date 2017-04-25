@@ -1746,6 +1746,22 @@
 
      <listitem>
       <!--
+      Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+      2017-01-23 [7e26e02ee] Prefetch blocks during lazy vacuum's truncation scan
+      -->
+      <para>
+       Improve speed of <command>VACUUM</>'s removal of trailing empty
+       heap pages (Alvaro Herrera)
+      </para>
+
+      <para>
+       This information is also included in <xref
+       linkend="guc-log-autovacuum-min-duration"> output.
+      </para>
+     </listitem>
+
+     <listitem>
+      <!--
       Author: Tom Lane <tgl@sss.pgh.pa.us>
       2017-01-16 [d43a619c6] Fix check_srf_call_placement() to handle VALUES cases co
       -->
