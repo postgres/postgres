@@ -669,7 +669,8 @@ distinct values on several columns (Tomas Vondra, David Rowley)
 New commands are <command><link linkend="SQL-CREATESTATISTICS">CREATE</></>,
 <command><link linkend="SQL-ALTERSTATISTICS">ALTER</></>, and
 <command><link linkend="SQL-DROPSTATISTICS">DROP STATISTICS</></>.  This is helpful in
-estimating query memory usage and ... HOW IS RATIO USED?
+estimating query memory usage and when combining the statistics from
+individual columns.
 </para>
 </listitem>
 
@@ -680,17 +681,6 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 <para>
 Improve planner matching of boolean indexes (Tom Lane)
-</para>
-</listitem>
-
-<listitem>
-<!--
-Author: Robert Haas <rhaas@postgresql.org>
-2017-03-16 [b30fb56b0] postgres_fdw: Push down <literal>FULL JOIN</>s with restriction clau
--->
-<para>
-Improve optimization of <literal>FULL JOIN</> queries containing subqueries in the
-<literal>FROM</> clause (Etsuro Fujita)
 </para>
 </listitem>
 
@@ -830,7 +820,7 @@ Author: Stephen Frost <sfrost@snowman.net>
 -->
 <para>
 Allow explicit control over <command><link linkend="SQL-EXPLAIN">EXPLAIN</></>'s display of planning and execution
-time (Stephen Frost)
+time (Ashutosh Bapat)
 </para>
 
 <para>
@@ -2691,6 +2681,17 @@ This reduces the amount of data that must be passed from the foreign
 data wrapper server, and offloads aggregate computation from the
 requesting server.  The <link linkend="postgres-fdw"><application>postgres_fdw</></> is able to perform this
 optimization.
+</para>
+</listitem>
+
+<listitem>
+<!--
+Author: Robert Haas <rhaas@postgresql.org>
+2017-03-16 [b30fb56b0] postgres_fdw: Push down <literal>FULL JOIN</>s with restriction clau
+-->
+<para>
+Allow push down of <literal>FULL JOIN</> queries containing subqueries in the
+<literal>FROM</> clause to foreign servers (Etsuro Fujita)
 </para>
 </listitem>
 
