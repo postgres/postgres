@@ -411,17 +411,6 @@ Allow merge joins to be performed in parallel (Dilip Kumar)
 </para>
 </listitem>
 
-<listitem>
-<!--
-Author: Robert Haas <rhaas@postgresql.org>
-2017-03-08 [98e6e8904] tidbitmap: Support shared iteration.
-Author: Robert Haas <rhaas@postgresql.org>
-2017-03-08 [f35742ccb] Support parallel bitmap heap scans.
--->
-<para>
-Support parallel bitmap heap scans (Dilip Kumar)
-</para>
-
 <para>
 This allows a single index scan to dispatch parallel workers to process
 different areas of the heap.
@@ -1152,7 +1141,7 @@ Author: Peter Eisentraut <peter_e@gmx.net>
 -->
 <para>
 Remove documented restriction about using large shared buffers on
-<systemitem class="osname">Windows</> (Tsunakawa, Takayuki)
+<systemitem class="osname">Windows</> (Takayuki Tsunakawa)
 </para>
 </listitem>
 
@@ -1868,7 +1857,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 2016-09-28 [d3cd36a13] Make to_timestamp() and to_date() range-check fields of 
 -->
 <para>
-Have <function>to_timestamp()</> and <function>to_date()</> check check input values for validity
+Have <function>to_timestamp()</> and <function>to_date()</> check input values for validity
 (Artur Zakirov)
 </para>
 
