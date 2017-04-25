@@ -644,6 +644,9 @@ AlterSubscription(AlterSubscriptionStmt *stmt)
 					BoolGetDatum(enabled);
 				replaces[Anum_pg_subscription_subenabled - 1] = true;
 
+				if (enabled)
+					ApplyLauncherWakeupAtCommit();
+
 				update_tuple = true;
 				break;
 			}
