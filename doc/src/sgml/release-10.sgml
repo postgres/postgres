@@ -813,8 +813,8 @@
        2017-03-27 [090010f2e] Improve performance of find_tabstat_entry()/get_tabstat_
        -->
        <para>
-        Improve table creation speed in sessions that reference many
-        relations (Aleksander Alekseev)
+        Reduce statistics tracking overhead in sessions that reference
+        many thousands of relations (Aleksander Alekseev)
        </para>
       </listitem>
 
