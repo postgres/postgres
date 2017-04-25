@@ -869,8 +869,8 @@
        </para>
 
        <para>
-        By default planning and execution time is display by
-        <command>EXPLAIN ANALYZE</> and not display in other cases.
+        By default planning and execution time are display by
+        <command>EXPLAIN ANALYZE</> and are not display in other cases.
         The new <command>EXPLAIN</> option <literal>SUMMARY</> allows
         explicit control of this.
        </para>
