@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> WITH ( <replaceable class="PARAMETER">suboption</replaceable> [, ... ] ) ]
+ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> WITH ( <replaceable class="PARAMETER">suboption</replaceable> [, ... ] )
 
 <phrase>where <replaceable class="PARAMETER">suboption</replaceable> can be:</phrase>
 
@@ -29,7 +29,7 @@ ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> WITH ( <rep
     | SYNCHRONOUS_COMMIT = <replaceable class="PARAMETER">synchronous_commit</replaceable>
 
 ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> SET PUBLICATION <replaceable class="PARAMETER">publication_name</replaceable> [, ...] { REFRESH WITH ( <replaceable class="PARAMETER">puboption</replaceable> [, ... ] ) | NOREFRESH }
-ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> REFRESH PUBLICATION WITH ( <replaceable class="PARAMETER">puboption</replaceable> [, ... ] )
+ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> REFRESH PUBLICATION [ WITH ( <replaceable class="PARAMETER">puboption</replaceable> [, ... ] ) ]
 
 <phrase>where <replaceable class="PARAMETER">puboption</replaceable> can be:</phrase>
 
@@ -54,7 +54,7 @@ ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> DISABLE
 
   <para>
    To alter the owner, you must also be a direct or indirect member of the
-   new owning role. The new owner has to be a superuser
+   new owning role. The new owner has to be a superuser.
   </para>
  </refsect1>
 
