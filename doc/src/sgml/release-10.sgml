@@ -1597,6 +1597,8 @@
       2016-11-04 [8c48375e5] Implement syntax for transition tables in AFTER triggers
       Author: Kevin Grittner <kgrittn@postgresql.org>
       2017-04-04 [5ebeb579b] Follow-on cleanup for the transition table patch.
+      Author: Kevin Grittner <kgrittn@postgresql.org>
+      2017-03-31 [597027163] Add transition table support to plpgsql.
       -->
       <para>
        Add <link linkend="SQL-CREATETRIGGER"><literal>AFTER</> trigger</>
