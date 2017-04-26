@@ -421,7 +421,7 @@ static void TerminateChildren(int signal);
 
 static int	CountChildren(int target);
 static bool assign_backendlist_entry(RegisteredBgWorker *rw);
-static void maybe_start_bgworker(void);
+static void maybe_start_bgworkers(void);
 static bool CreateOptsFile(int argc, char *argv[], char *fullprogname);
 static pid_t StartChildProcess(AuxProcType type);
 static void StartAutovacuumWorker(void);
@@ -1346,7 +1346,7 @@ PostmasterMain(int argc, char *argv[])
 	pmState = PM_STARTUP;
 
 	/* Some workers may be scheduled to start now */
-	maybe_start_bgworker();
+	maybe_start_bgworkers();
 
 	status = ServerLoop();
 
@@ -1813,7 +1813,7 @@ ServerLoop(void)
 
 		/* Get other worker processes running, if needed */
 		if (StartWorkerNeeded || HaveCrashedWorker)
-			maybe_start_bgworker();
+			maybe_start_bgworkers();
 
 #ifdef HAVE_PTHREAD_IS_THREADED_NP
 
@@ -2859,7 +2859,7 @@ reaper(SIGNAL_ARGS)
 				PgStatPID = pgstat_start();
 
 			/* workers may be scheduled to start now */
-			maybe_start_bgworker();
+			maybe_start_bgworkers();
 
 			/* at this point we are really open for business */
 			ereport(LOG,
@@ -5026,7 +5026,7 @@ sigusr1_handler(SIGNAL_ARGS)
 	}
 
 	if (StartWorkerNeeded || HaveCrashedWorker)
-		maybe_start_bgworker();
+		maybe_start_bgworkers();
 
 	if (CheckPostmasterSignal(PMSIGNAL_WAKEN_ARCHIVER) &&
 		PgArchPID != 0)
@@ -5726,22 +5726,23 @@ assign_backendlist_entry(RegisteredBgWorker *rw)
 }
 
 /*
- * If the time is right, start one background worker.
+ * If the time is right, start background worker(s).
  *
- * As a side effect, the bgworker control variables are set or reset whenever
- * there are more workers to start after this one, and whenever the overall
- * system state requires it.
+ * As a side effect, the bgworker control variables are set or reset
+ * depending on whether more workers may need to be started.
  *
- * The reason we start at most one worker per call is to avoid consuming the
+ * We limit the number of workers started per call, to avoid consuming the
  * postmaster's attention for too long when many such requests are pending.
  * As long as StartWorkerNeeded is true, ServerLoop will not block and will
  * call this function again after dealing with any other issues.
  */
 static void
-maybe_start_bgworker(void)
+maybe_start_bgworkers(void)
 {
-	slist_mutable_iter iter;
+#define MAX_BGWORKERS_TO_LAUNCH 100
+	int			num_launched = 0;
 	TimestampTz now = 0;
+	slist_mutable_iter iter;
 
 	/*
 	 * During crash recovery, we have no need to be called until the state
@@ -5826,12 +5827,16 @@ maybe_start_bgworker(void)
 			}
 
 			/*
-			 * Quit, but have ServerLoop call us again to look for additional
-			 * ready-to-run workers.  There might not be any, but we'll find
-			 * out the next time we run.
+			 * If we've launched as many workers as allowed, quit, but have
+			 * ServerLoop call us again to look for additional ready-to-run
+			 * workers.  There might not be any, but we'll find out the next
+			 * time we run.
 			 */
-			StartWorkerNeeded = true;
-			return;
+			if (++num_launched >= MAX_BGWORKERS_TO_LAUNCH)
+			{
+				StartWorkerNeeded = true;
+				return;
+			}
 		}
 	}
 }
