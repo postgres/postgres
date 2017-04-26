@@ -21,6 +21,15 @@
 
 typedef struct LogicalRepWorker
 {
+	/* Time at which this worker was launched. */
+	TimestampTz	launch_time;
+
+	/* Indicates if this slot is used or free. */
+	bool	in_use;
+
+	/* Increased everytime the slot is taken by new worker. */
+	uint16	generation;
+
 	/* Pointer to proc array. NULL if not running. */
 	PGPROC *proc;
 
