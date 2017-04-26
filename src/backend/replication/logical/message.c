@@ -20,7 +20,7 @@
  * Non-transactional messages are sent to the plugin at the time when the
  * logical decoding reads them from XLOG. This also means that transactional
  * messages won't be delivered if the transaction was rolled back but the
- * non-transactional one will be delivered always.
+ * non-transactional one will always be delivered.
  *
  * Every message carries prefix to avoid conflicts between different decoding
  * plugins. The plugin authors must take extra care to use unique prefix,

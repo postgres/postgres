@@ -33,12 +33,12 @@
  *		 When the desired state appears it will compare its position in the
  *		 stream with the SYNCWAIT position and based on that changes the
  *		 state to based on following rules:
- *		  - if the apply is in front of the sync in the wal stream the new
+ *		  - if the apply is in front of the sync in the WAL stream the new
  *			state is set to CATCHUP and apply loops until the sync process
  *			catches up to the same LSN as apply
- *		  - if the sync is in front of the apply in the wal stream the new
+ *		  - if the sync is in front of the apply in the WAL stream the new
  *			state is set to SYNCDONE
- *		  - if both apply and sync are at the same position in the wal stream
+ *		  - if both apply and sync are at the same position in the WAL stream
  *			the state of the table is set to READY
  *	   - If the state was set to CATCHUP sync will read the stream and
  *		 apply changes until it catches up to the specified stream
@@ -698,7 +698,7 @@ copy_table(Relation rel)
 /*
  * Start syncing the table in the sync worker.
  *
- * The returned slot name is palloced in current memory context.
+ * The returned slot name is palloc'ed in current memory context.
  */
 char *
 LogicalRepSyncTableStart(XLogRecPtr *origin_startpos)

@@ -377,7 +377,7 @@ logicalrep_read_typ(StringInfo in, LogicalRepTyp *ltyp)
 {
 	ltyp->remoteid = pq_getmsgint(in, 4);
 
-	/* Read tupe name from stream */
+	/* Read type name from stream */
 	ltyp->nspname = pstrdup(logicalrep_read_namespace(in));
 	ltyp->typname = pstrdup(pq_getmsgstring(in));
 }
@@ -459,7 +459,7 @@ logicalrep_read_tuple(StringInfo in, LogicalRepTupleData *tuple)
 	int			i;
 	int			natts;
 
-	/* Get of attributes. */
+	/* Get number of attributes */
 	natts = pq_getmsgint(in, 2);
 
 	memset(tuple->changed, 0, sizeof(tuple->changed));

@@ -321,7 +321,7 @@ GetAllTablesPublicationRelations(void)
 /*
  * Get publication using oid
  *
- * The Publication struct and it's data are palloced here.
+ * The Publication struct and its data are palloc'ed here.
  */
 Publication *
 GetPublication(Oid pubid)

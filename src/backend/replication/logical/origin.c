@@ -24,7 +24,7 @@
  * two bytes allow us to be more space efficient.
  *
  * Replication progress is tracked in a shared memory table
- * (ReplicationStates) that's dumped to disk every checkpoint. Entries
+ * (ReplicationState) that's dumped to disk every checkpoint. Entries
  * ('slots') in this table are identified by the internal id. That's the case
  * because it allows to increase replication progress during crash
  * recovery. To allow doing so we store the original LSN (from the originating
@@ -48,7 +48,7 @@
  *	 pg_replication_slot is required for the duration. That allows us to
  *	 safely and conflict free assign new origins using a dirty snapshot.
  *
- * * When creating an in-memory replication progress slot the ReplicationOirgin
+ * * When creating an in-memory replication progress slot the ReplicationOrigin
  *	 LWLock has to be held exclusively; when iterating over the replication
  *	 progress a shared lock has to be held, the same when advancing the
  *	 replication progress of an individual backend that has not setup as the
@@ -162,8 +162,8 @@ static ReplicationState *replication_states;
 static ReplicationStateCtl *replication_states_ctl;
 
 /*
- * Backend-local, cached element from ReplicationStates for use in a backend
- * replaying remote commits, so we don't have to search ReplicationStates for
+ * Backend-local, cached element from ReplicationState for use in a backend
+ * replaying remote commits, so we don't have to search ReplicationState for
  * the backends current RepOriginId.
  */
 static ReplicationState *session_replication_state = NULL;
@@ -441,7 +441,7 @@ ReplicationOriginShmemSize(void)
 	/*
 	 * XXX: max_replication_slots is arguably the wrong thing to use, as here
 	 * we keep the replay state of *remote* transactions. But for now it seems
-	 * sufficient to reuse it, lest we introduce a separate guc.
+	 * sufficient to reuse it, lest we introduce a separate GUC.
 	 */
 	if (max_replication_slots == 0)
 		return size;
@@ -497,7 +497,7 @@ ReplicationOriginShmemInit(void)
  *
  * So its just the magic, followed by the statically sized
  * ReplicationStateOnDisk structs. Note that the maximum number of
- * ReplicationStates is determined by max_replication_slots.
+ * ReplicationState is determined by max_replication_slots.
  * ---------------------------------------------------------------------------
  */
 void
@@ -1253,7 +1253,7 @@ pg_replication_origin_session_is_setup(PG_FUNCTION_ARGS)
  * Return the replication progress for origin setup in the current session.
  *
  * If 'flush' is set to true it is ensured that the returned value corresponds
- * to a local transaction that has been flushed. this is useful if asynchronous
+ * to a local transaction that has been flushed. This is useful if asynchronous
  * commits are used when replaying replicated transactions.
  */
 Datum
@@ -1327,7 +1327,7 @@ pg_replication_origin_advance(PG_FUNCTION_ARGS)
 	 * set up the initial replication state, but not for replay.
 	 */
 	replorigin_advance(node, remote_commit, InvalidXLogRecPtr,
-					   true /* go backward */ , true /* wal log */ );
+					   true /* go backward */ , true /* WAL log */ );
 
 	UnlockRelationOid(ReplicationOriginRelationId, RowExclusiveLock);
 
@@ -1339,7 +1339,7 @@ pg_replication_origin_advance(PG_FUNCTION_ARGS)
  * Return the replication progress for an individual replication origin.
  *
  * If 'flush' is set to true it is ensured that the returned value corresponds
- * to a local transaction that has been flushed. this is useful if asynchronous
+ * to a local transaction that has been flushed. This is useful if asynchronous
  * commits are used when replaying replicated transactions.
  */
 Datum
