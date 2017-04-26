@@ -254,7 +254,7 @@ logicalrep_worker_launch(Oid dbid, Oid subid, const char *subname, Oid userid,
 	BackgroundWorker	bgw;
 	BackgroundWorkerHandle *bgw_handle;
 	int					i;
-	int					slot;
+	int					slot = 0;
 	LogicalRepWorker   *worker = NULL;
 	int					nsyncworkers;
 	TimestampTz			now;
