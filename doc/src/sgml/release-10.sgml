@@ -380,7 +380,7 @@
        -->
        <para>
         Support parallel btree index scans (Rahila Syed, Amit Kapila,
-        Robert Haas)
+        Robert Haas, Rafia Sabih)
        </para>
 
        <para>
