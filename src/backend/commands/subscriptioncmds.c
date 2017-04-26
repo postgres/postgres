@@ -56,7 +56,7 @@ static List *fetch_table_list(WalReceiverConn *wrconn, List *publications);
  *
  * Since not all options can be specified in both commands, this function
  * will report an error on options if the target output pointer is NULL to
- * accomodate that.
+ * accommodate that.
  */
 static void
 parse_subscription_options(List *options, bool *connect, bool *enabled_given,
