@@ -3212,6 +3212,12 @@ SELECT pg_get_function_arg_default('pg_class'::regclass, 0);
  
 (1 row)
 
+SELECT pg_get_partkeydef(0);
+ pg_get_partkeydef 
+-------------------
+ 
+(1 row)
+
 -- test rename for a rule defined on a partitioned table
 CREATE TABLE parted_table (a int) PARTITION BY LIST (a);
 CREATE TABLE parted_table_1 PARTITION OF parted_table FOR VALUES IN (1);

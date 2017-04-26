@@ -1163,6 +1163,7 @@ SELECT pg_get_function_identity_arguments(0);
 SELECT pg_get_function_result(0);
 SELECT pg_get_function_arg_default(0, 0);
 SELECT pg_get_function_arg_default('pg_class'::regclass, 0);
+SELECT pg_get_partkeydef(0);
 
 -- test rename for a rule defined on a partitioned table
 CREATE TABLE parted_table (a int) PARTITION BY LIST (a);

@@ -320,7 +320,7 @@ static char *pg_get_indexdef_worker(Oid indexrelid, int colno,
 					   int prettyFlags, bool missing_ok);
 static char *pg_get_statisticsext_worker(Oid statextid, bool missing_ok);
 static char *pg_get_partkeydef_worker(Oid relid, int prettyFlags,
-						 bool attrsOnly);
+						 bool attrsOnly, bool missing_ok);
 static char *pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 							int prettyFlags, bool missing_ok);
 static text *pg_get_expr_worker(text *expr, Oid relid, const char *relname,
@@ -1555,10 +1555,14 @@ Datum
 pg_get_partkeydef(PG_FUNCTION_ARGS)
 {
 	Oid			relid = PG_GETARG_OID(0);
+	char	   *res;
 
-	PG_RETURN_TEXT_P(string_to_text(pg_get_partkeydef_worker(relid,
-														PRETTYFLAG_INDENT,
-															 false)));
+	res = pg_get_partkeydef_worker(relid, PRETTYFLAG_INDENT, false, true);
+
+	if (res == NULL)
+		PG_RETURN_NULL();
+
+	PG_RETURN_TEXT_P(string_to_text(res));
 }
 
 /* Internal version that just reports the column definitions */
@@ -1568,7 +1572,7 @@ pg_get_partkeydef_columns(Oid relid, bool pretty)
 	int			prettyFlags;
 
 	prettyFlags = pretty ? PRETTYFLAG_PAREN | PRETTYFLAG_INDENT : PRETTYFLAG_INDENT;
-	return pg_get_partkeydef_worker(relid, prettyFlags, true);
+	return pg_get_partkeydef_worker(relid, prettyFlags, true, false);
 }
 
 /*
@@ -1576,7 +1580,7 @@ pg_get_partkeydef_columns(Oid relid, bool pretty)
  */
 static char *
 pg_get_partkeydef_worker(Oid relid, int prettyFlags,
-						 bool attrsOnly)
+						 bool attrsOnly, bool missing_ok)
 {
 	Form_pg_partitioned_table form;
 	HeapTuple	tuple;
@@ -1594,7 +1598,11 @@ pg_get_partkeydef_worker(Oid relid, int prettyFlags,
 
 	tuple = SearchSysCache1(PARTRELID, ObjectIdGetDatum(relid));
 	if (!HeapTupleIsValid(tuple))
+	{
+		if (missing_ok)
+			return NULL;
 		elog(ERROR, "cache lookup failed for partition key of %u", relid);
+	}
 
 	form = (Form_pg_partitioned_table) GETSTRUCT(tuple);
 
