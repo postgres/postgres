@@ -560,8 +560,9 @@ fetch_remote_table_info(char *nspname, char *relname,
 	/* First fetch Oid and replica identity. */
 	initStringInfo(&cmd);
 	appendStringInfo(&cmd, "SELECT c.oid, c.relreplident"
-						   "  FROM pg_catalog.pg_class c,"
-						   "       pg_catalog.pg_namespace n"
+						   "  FROM pg_catalog.pg_class c"
+						   "  INNER JOIN pg_catalog.pg_namespace n"
+						   "        ON (c.relnamespace = n.oid)"
 						   " WHERE n.nspname = %s"
 						   "   AND c.relname = %s"
 						   "   AND c.relkind = 'r'",
