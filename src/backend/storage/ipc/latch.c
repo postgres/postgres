@@ -565,9 +565,18 @@ CreateWaitEventSet(MemoryContext context, int nevents)
 	set->nevents_space = nevents;
 
 #if defined(WAIT_USE_EPOLL)
+#ifdef EPOLL_CLOEXEC
 	set->epoll_fd = epoll_create1(EPOLL_CLOEXEC);
 	if (set->epoll_fd < 0)
 		elog(ERROR, "epoll_create1 failed: %m");
+#else
+	/* cope with ancient glibc lacking epoll_create1 (e.g., RHEL5) */
+	set->epoll_fd = epoll_create(nevents);
+	if (set->epoll_fd < 0)
+		elog(ERROR, "epoll_create failed: %m");
+	if (fcntl(set->epoll_fd, F_SETFD, FD_CLOEXEC) == -1)
+		elog(ERROR, "fcntl(F_SETFD) failed on epoll descriptor: %m");
+#endif   /* EPOLL_CLOEXEC */
 #elif defined(WAIT_USE_WIN32)
 
 	/*
