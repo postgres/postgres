@@ -245,7 +245,10 @@ process_syncing_tables_for_sync(XLogRecPtr current_lsn)
  *
  * If there are tables that need synchronizing and are not being synchronized
  * yet, start sync workers for them (if there are free slots for sync
- * workers).
+ * workers).  To prevent starting the sync worker for the same relation at a
+ * high frequency after a failure, we store its last start time with each sync
+ * state info.  We start the sync worker for the same relation after waiting
+ * at least wal_retrieve_retry_interval.
  *
  * For tables that are being synchronized already, check if sync workers
  * either need action from the apply worker or have finished.
@@ -263,7 +266,13 @@ process_syncing_tables_for_sync(XLogRecPtr current_lsn)
 static void
 process_syncing_tables_for_apply(XLogRecPtr current_lsn)
 {
+	struct tablesync_start_time_mapping
+	{
+		Oid			relid;
+		TimestampTz	last_start_time;
+	};
 	static List *table_states = NIL;
+	static HTAB *last_start_times = NULL;
 	ListCell   *lc;
 
 	Assert(!IsTransactionState());
@@ -298,6 +307,31 @@ process_syncing_tables_for_apply(XLogRecPtr current_lsn)
 		CommitTransactionCommand();
 
 		table_states_valid = true;
+	}
+
+	/*
+	 * Prepare hash table for tracking last start times of workers, to avoid
+	 * immediate restarts.  We don't need it if there are no tables that need
+	 * syncing.
+	 */
+	if (table_states && !last_start_times)
+	{
+		HASHCTL		ctl;
+
+		memset(&ctl, 0, sizeof(ctl));
+		ctl.keysize = sizeof(Oid);
+		ctl.entrysize = sizeof(struct tablesync_start_time_mapping);
+		last_start_times = hash_create("Logical replication table sync worker start times",
+									   256, &ctl, HASH_ELEM | HASH_BLOBS);
+	}
+	/*
+	 * Clean up the hash table when we're done with all tables (just to
+	 * release the bit of memory).
+	 */
+	else if (!table_states && last_start_times)
+	{
+		hash_destroy(last_start_times);
+		last_start_times = NULL;
 	}
 
 	/* Process all tables that are being synchronized. */
@@ -403,11 +437,23 @@ process_syncing_tables_for_apply(XLogRecPtr current_lsn)
 			 */
 			else if (!syncworker && nsyncworkers < max_sync_workers_per_subscription)
 			{
-				logicalrep_worker_launch(MyLogicalRepWorker->dbid,
-										 MySubscription->oid,
-										 MySubscription->name,
-										 MyLogicalRepWorker->userid,
-										 rstate->relid);
+				TimestampTz	now = GetCurrentTimestamp();
+				struct tablesync_start_time_mapping *hentry;
+				bool		found;
+
+				hentry = hash_search(last_start_times, &rstate->relid, HASH_ENTER, &found);
+
+				if (!found ||
+					TimestampDifferenceExceeds(hentry->last_start_time, now,
+											   wal_retrieve_retry_interval))
+				{
+					logicalrep_worker_launch(MyLogicalRepWorker->dbid,
+											 MySubscription->oid,
+											 MySubscription->name,
+											 MyLogicalRepWorker->userid,
+											 rstate->relid);
+					hentry->last_start_time = now;
+				}
 			}
 		}
 	}
