@@ -873,6 +873,7 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 	if (cmd->kind == REPLICATION_KIND_LOGICAL)
 	{
 		LogicalDecodingContext *ctx;
+		bool	need_full_snapshot = false;
 
 		/*
 		 * Do options check early so that we can bail before calling the
@@ -884,6 +885,8 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 				ereport(ERROR,
 						(errmsg("CREATE_REPLICATION_SLOT ... EXPORT_SNAPSHOT "
 								"must not be called inside a transaction")));
+
+			need_full_snapshot = true;
 		}
 		else if (snapshot_action == CRS_USE_SNAPSHOT)
 		{
@@ -906,10 +909,11 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 				ereport(ERROR,
 						(errmsg("CREATE_REPLICATION_SLOT ... USE_SNAPSHOT "
 								"must not be called in a subtransaction")));
+
+			need_full_snapshot = true;
 		}
 
-		ctx = CreateInitDecodingContext(cmd->plugin, NIL,
-										true, /* build snapshot */
+		ctx = CreateInitDecodingContext(cmd->plugin, NIL, need_full_snapshot,
 										logical_read_xlog_page,
 										WalSndPrepareWrite, WalSndWriteData);
 
