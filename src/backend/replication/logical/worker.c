@@ -351,7 +351,7 @@ slot_store_cstrings(TupleTableSlot *slot, LogicalRepRelMapEntry *rel,
 }
 
 /*
- * Modify slot with user data provided as C strigs.
+ * Modify slot with user data provided as C strings.
  * This is somewhat similar to heap_modify_tuple but also calls the type
  * input function on the user data as the input is the text representation
  * of the types.
