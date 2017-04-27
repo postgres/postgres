@@ -118,6 +118,9 @@ static volatile sig_atomic_t waiting = false;
 static int	selfpipe_readfd = -1;
 static int	selfpipe_writefd = -1;
 
+/* Process owning the self-pipe --- needed for checking purposes */
+static int	selfpipe_owner_pid = 0;
+
 /* Private function prototypes */
 static void sendSelfPipeByte(void);
 static void drainSelfPipe(void);
@@ -146,7 +149,41 @@ InitializeLatchSupport(void)
 #ifndef WIN32
 	int			pipefd[2];
 
-	Assert(selfpipe_readfd == -1);
+	if (IsUnderPostmaster)
+	{
+		/*
+		 * We might have inherited connections to a self-pipe created by the
+		 * postmaster.  It's critical that child processes create their own
+		 * self-pipes, of course, and we really want them to close the
+		 * inherited FDs for safety's sake.
+		 */
+		if (selfpipe_owner_pid != 0)
+		{
+			/* Assert we go through here but once in a child process */
+			Assert(selfpipe_owner_pid != MyProcPid);
+			/* Release postmaster's pipe FDs; ignore any error */
+			(void) close(selfpipe_readfd);
+			(void) close(selfpipe_writefd);
+			/* Clean up, just for safety's sake; we'll set these below */
+			selfpipe_readfd = selfpipe_writefd = -1;
+			selfpipe_owner_pid = 0;
+		}
+		else
+		{
+			/*
+			 * Postmaster didn't create a self-pipe ... or else we're in an
+			 * EXEC_BACKEND build, in which case it doesn't matter since the
+			 * postmaster's pipe FDs were closed by the action of FD_CLOEXEC.
+			 */
+			Assert(selfpipe_readfd == -1);
+		}
+	}
+	else
+	{
+		/* In postmaster or standalone backend, assert we do this but once */
+		Assert(selfpipe_readfd == -1);
+		Assert(selfpipe_owner_pid == 0);
+	}
 
 	/*
 	 * Set up the self-pipe that allows a signal handler to wake up the
@@ -154,23 +191,30 @@ InitializeLatchSupport(void)
 	 * that SetLatch won't block if the event has already been set many times
 	 * filling the kernel buffer. Make the read-end non-blocking too, so that
 	 * we can easily clear the pipe by reading until EAGAIN or EWOULDBLOCK.
+	 * Also, make both FDs close-on-exec, since we surely do not want any
+	 * child processes messing with them.
 	 */
 	if (pipe(pipefd) < 0)
 		elog(FATAL, "pipe() failed: %m");
 	if (fcntl(pipefd[0], F_SETFL, O_NONBLOCK) == -1)
-		elog(FATAL, "fcntl() failed on read-end of self-pipe: %m");
+		elog(FATAL, "fcntl(F_SETFL) failed on read-end of self-pipe: %m");
 	if (fcntl(pipefd[1], F_SETFL, O_NONBLOCK) == -1)
-		elog(FATAL, "fcntl() failed on write-end of self-pipe: %m");
+		elog(FATAL, "fcntl(F_SETFL) failed on write-end of self-pipe: %m");
+	if (fcntl(pipefd[0], F_SETFD, FD_CLOEXEC) == -1)
+		elog(FATAL, "fcntl(F_SETFD) failed on read-end of self-pipe: %m");
+	if (fcntl(pipefd[1], F_SETFD, FD_CLOEXEC) == -1)
+		elog(FATAL, "fcntl(F_SETFD) failed on write-end of self-pipe: %m");
 
 	selfpipe_readfd = pipefd[0];
 	selfpipe_writefd = pipefd[1];
+	selfpipe_owner_pid = MyProcPid;
 #else
 	/* currently, nothing to do here for Windows */
 #endif
 }
 
 /*
- * Initialize a backend-local latch.
+ * Initialize a process-local latch.
  */
 void
 InitLatch(volatile Latch *latch)
@@ -181,7 +225,7 @@ InitLatch(volatile Latch *latch)
 
 #ifndef WIN32
 	/* Assert InitializeLatchSupport has been called in this process */
-	Assert(selfpipe_readfd >= 0);
+	Assert(selfpipe_readfd >= 0 && selfpipe_owner_pid == MyProcPid);
 #else
 	latch->event = CreateEvent(NULL, TRUE, FALSE, NULL);
 	if (latch->event == NULL)
@@ -199,6 +243,10 @@ InitLatch(volatile Latch *latch)
  * containing the latch with ShmemInitStruct. (The Unix implementation
  * doesn't actually require that, but the Windows one does.) Because of
  * this restriction, we have no concurrency issues to worry about here.
+ *
+ * Note that other handles created in this module are never marked as
+ * inheritable.  Thus we do not need to worry about cleaning up child
+ * process references to postmaster-private latches or WaitEventSets.
  */
 void
 InitSharedLatch(volatile Latch *latch)
@@ -244,7 +292,7 @@ OwnLatch(volatile Latch *latch)
 
 #ifndef WIN32
 	/* Assert InitializeLatchSupport has been called in this process */
-	Assert(selfpipe_readfd >= 0);
+	Assert(selfpipe_readfd >= 0 && selfpipe_owner_pid == MyProcPid);
 #endif
 
 	if (latch->owner_pid != 0)
@@ -277,7 +325,7 @@ DisownLatch(volatile Latch *latch)
  * is incurred when WL_TIMEOUT is given, so avoid using a timeout if possible.
  *
  * The latch must be owned by the current process, ie. it must be a
- * backend-local latch initialized with InitLatch, or a shared latch
+ * process-local latch initialized with InitLatch, or a shared latch
  * associated with the current process by calling OwnLatch.
  *
  * Returns bit mask indicating which condition(s) caused the wake-up. Note
@@ -517,9 +565,9 @@ CreateWaitEventSet(MemoryContext context, int nevents)
 	set->nevents_space = nevents;
 
 #if defined(WAIT_USE_EPOLL)
-	set->epoll_fd = epoll_create(nevents);
+	set->epoll_fd = epoll_create1(EPOLL_CLOEXEC);
 	if (set->epoll_fd < 0)
-		elog(ERROR, "epoll_create failed: %m");
+		elog(ERROR, "epoll_create1 failed: %m");
 #elif defined(WAIT_USE_WIN32)
 
 	/*
@@ -540,6 +588,12 @@ CreateWaitEventSet(MemoryContext context, int nevents)
 
 /*
  * Free a previously created WaitEventSet.
+ *
+ * Note: preferably, this shouldn't have to free any resources that could be
+ * inherited across an exec().  If it did, we'd likely leak those resources in
+ * many scenarios.  For the epoll case, we ensure that by setting FD_CLOEXEC
+ * when the FD is created.  For the Windows case, we assume that the handles
+ * involved are non-inheritable.
  */
 void
 FreeWaitEventSet(WaitEventSet *set)
@@ -586,7 +640,7 @@ FreeWaitEventSet(WaitEventSet *set)
  * used to modify previously added wait events using ModifyWaitEvent().
  *
  * In the WL_LATCH_SET case the latch must be owned by the current process,
- * i.e. it must be a backend-local latch initialized with InitLatch, or a
+ * i.e. it must be a process-local latch initialized with InitLatch, or a
  * shared latch associated with the current process by calling OwnLatch.
  *
  * In the WL_SOCKET_READABLE/WRITEABLE case, EOF and error conditions are
