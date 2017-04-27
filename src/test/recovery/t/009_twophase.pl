@@ -4,7 +4,7 @@ use warnings;
 
 use PostgresNode;
 use TestLib;
-use Test::More tests => 13;
+use Test::More tests => 12;
 
 # Setup master node
 my $node_master = get_new_node("master");
@@ -283,40 +283,3 @@ $node_master->psql('postgres', "
 $node_slave->psql('postgres', "SELECT count(*) FROM pg_prepared_xacts",
 	  stdout => \$psql_out);
 is($psql_out, '0', "Replay prepared transaction with DDL");
-
-
-###############################################################################
-# Check that replay will correctly set SUBTRANS and properly advance nextXid
-# so that it won't conflict with savepoint xids.
-###############################################################################
-
-$node_master->psql('postgres', "
-	BEGIN;
-	DELETE FROM t_009_tbl;
-	INSERT INTO t_009_tbl VALUES (43);
-	SAVEPOINT s1;
-	INSERT INTO t_009_tbl VALUES (43);
-	SAVEPOINT s2;
-	INSERT INTO t_009_tbl VALUES (43);
-	SAVEPOINT s3;
-	INSERT INTO t_009_tbl VALUES (43);
-	SAVEPOINT s4;
-	INSERT INTO t_009_tbl VALUES (43);
-	SAVEPOINT s5;
-	INSERT INTO t_009_tbl VALUES (43);
-	PREPARE TRANSACTION 'xact_009_1';
-	CHECKPOINT;");
-
-$node_master->stop;
-$node_master->start;
-$node_master->psql('postgres', "
-	-- here we can get xid of previous savepoint if nextXid
-	-- wasn't properly advanced
-	BEGIN;
-	INSERT INTO t_009_tbl VALUES (142);
-	ROLLBACK;
-	COMMIT PREPARED 'xact_009_1';");
-
-$node_master->psql('postgres', "SELECT count(*) FROM t_009_tbl",
-	  stdout => \$psql_out);
-is($psql_out, '6', "Check nextXid handling for prepared subtransactions");
