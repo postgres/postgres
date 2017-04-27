@@ -221,8 +221,7 @@ static void RemoveGXact(GlobalTransaction gxact);
 static void XlogReadTwoPhaseData(XLogRecPtr lsn, char **buf, int *len);
 static char *ProcessTwoPhaseBuffer(TransactionId xid,
 							XLogRecPtr	prepare_start_lsn,
-							bool fromdisk, bool overwriteOK, bool setParent,
-							bool setNextXid);
+							bool fromdisk, bool setParent, bool setNextXid);
 static void MarkAsPreparingGuts(GlobalTransaction gxact, TransactionId xid,
 				const char *gid, TimestampTz prepared_at, Oid owner,
 				Oid databaseid);
@@ -1743,8 +1742,7 @@ restoreTwoPhaseData(void)
 			xid = (TransactionId) strtoul(clde->d_name, NULL, 16);
 
 			buf = ProcessTwoPhaseBuffer(xid, InvalidXLogRecPtr,
-										true, false, false,
-										false);
+										true, false, false);
 			if (buf == NULL)
 				continue;
 
@@ -1804,8 +1802,7 @@ PrescanPreparedTransactions(TransactionId **xids_p, int *nxids_p)
 
 		buf = ProcessTwoPhaseBuffer(xid,
 				gxact->prepare_start_lsn,
-				gxact->ondisk, false, false,
-				true);
+				gxact->ondisk, false, true);
 
 		if (buf == NULL)
 			continue;
@@ -1858,12 +1855,12 @@ PrescanPreparedTransactions(TransactionId **xids_p, int *nxids_p)
  * This is never called at the end of recovery - we use
  * RecoverPreparedTransactions() at that point.
  *
- * Currently we simply call SubTransSetParent() for any subxids of prepared
- * transactions. If overwriteOK is true, it's OK if some XIDs have already
- * been marked in pg_subtrans.
+ * The lack of calls to SubTransSetParent() calls here is by design;
+ * those calls are made by RecoverPreparedTransactions() at the end of recovery
+ * for those xacts that need this.
  */
 void
-StandbyRecoverPreparedTransactions(bool overwriteOK)
+StandbyRecoverPreparedTransactions(void)
 {
 	int			i;
 
@@ -1880,8 +1877,7 @@ StandbyRecoverPreparedTransactions(bool overwriteOK)
 
 		buf = ProcessTwoPhaseBuffer(xid,
 				gxact->prepare_start_lsn,
-				gxact->ondisk, overwriteOK, true,
-				false);
+				gxact->ondisk, false, false);
 		if (buf != NULL)
 			pfree(buf);
 	}
@@ -1895,6 +1891,13 @@ StandbyRecoverPreparedTransactions(bool overwriteOK)
  * each prepared transaction (reacquire locks, etc).
  *
  * This is run during database startup.
+ *
+ * At the end of recovery the way we take snapshots will change. We now need
+ * to mark all running transactions with their full SubTransSetParent() info
+ * to allow normal snapshots to work correctly if snapshots overflow.
+ * We do this here because by definition prepared transactions are the only
+ * type of write transaction still running, so this is necessary and
+ * complete.
  */
 void
 RecoverPreparedTransactions(void)
@@ -1913,15 +1916,21 @@ RecoverPreparedTransactions(void)
 		TwoPhaseFileHeader *hdr;
 		TransactionId *subxids;
 		const char *gid;
-		bool		overwriteOK = false;
-		int			i;
 
 		xid = gxact->xid;
 
+		/*
+		 * Reconstruct subtrans state for the transaction --- needed
+		 * because pg_subtrans is not preserved over a restart.  Note that
+		 * we are linking all the subtransactions directly to the
+		 * top-level XID; there may originally have been a more complex
+		 * hierarchy, but there's no need to restore that exactly.
+		 * It's possible that SubTransSetParent has been set before, if
+		 * the prepared transaction generated xid assignment records.
+		 */
 		buf = ProcessTwoPhaseBuffer(xid,
 				gxact->prepare_start_lsn,
-				gxact->ondisk, false, false,
-				false);
+				gxact->ondisk, true, false);
 		if (buf == NULL)
 			continue;
 
@@ -1938,25 +1947,6 @@ RecoverPreparedTransactions(void)
 		bufptr += MAXALIGN(hdr->ncommitrels * sizeof(RelFileNode));
 		bufptr += MAXALIGN(hdr->nabortrels * sizeof(RelFileNode));
 		bufptr += MAXALIGN(hdr->ninvalmsgs * sizeof(SharedInvalidationMessage));
-
-		/*
-		 * It's possible that SubTransSetParent has been set before, if
-		 * the prepared transaction generated xid assignment records. Test
-		 * here must match one used in AssignTransactionId().
-		 */
-		if (InHotStandby && (hdr->nsubxacts >= PGPROC_MAX_CACHED_SUBXIDS ||
-							 XLogLogicalInfoActive()))
-			overwriteOK = true;
-
-		/*
-		 * Reconstruct subtrans state for the transaction --- needed
-		 * because pg_subtrans is not preserved over a restart.  Note that
-		 * we are linking all the subtransactions directly to the
-		 * top-level XID; there may originally have been a more complex
-		 * hierarchy, but there's no need to restore that exactly.
-		 */
-		for (i = 0; i < hdr->nsubxacts; i++)
-			SubTransSetParent(subxids[i], xid, true);
 
 		/*
 		 * Recreate its GXACT and dummy PGPROC. But, check whether
@@ -2006,8 +1996,7 @@ RecoverPreparedTransactions(void)
  * Given a transaction id, read it either from disk or read it directly
  * via shmem xlog record pointer using the provided "prepare_start_lsn".
  *
- * If setParent is true, then use the overwriteOK parameter to set up
- * subtransaction parent linkages.
+ * If setParent is true, set up subtransaction parent linkages.
  *
  * If setNextXid is true, set ShmemVariableCache->nextXid to the newest
  * value scanned.
@@ -2015,7 +2004,7 @@ RecoverPreparedTransactions(void)
 static char *
 ProcessTwoPhaseBuffer(TransactionId xid,
 					  XLogRecPtr prepare_start_lsn,
-					  bool fromdisk, bool overwriteOK,
+					  bool fromdisk,
 					  bool setParent, bool setNextXid)
 {
 	TransactionId origNextXid = ShmemVariableCache->nextXid;
@@ -2142,7 +2131,7 @@ ProcessTwoPhaseBuffer(TransactionId xid,
 		}
 
 		if (setParent)
-			SubTransSetParent(subxid, xid, overwriteOK);
+			SubTransSetParent(subxid, xid);
 	}
 
 	return buf;

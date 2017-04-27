@@ -68,11 +68,9 @@ static bool SubTransPagePrecedes(int page1, int page2);
 
 /*
  * Record the parent of a subtransaction in the subtrans log.
- *
- * In some cases we may need to overwrite an existing value.
  */
 void
-SubTransSetParent(TransactionId xid, TransactionId parent, bool overwriteOK)
+SubTransSetParent(TransactionId xid, TransactionId parent)
 {
 	int			pageno = TransactionIdToPage(xid);
 	int			entryno = TransactionIdToEntry(xid);
@@ -80,6 +78,7 @@ SubTransSetParent(TransactionId xid, TransactionId parent, bool overwriteOK)
 	TransactionId *ptr;
 
 	Assert(TransactionIdIsValid(parent));
+	Assert(TransactionIdFollows(xid, parent));
 
 	LWLockAcquire(SubtransControlLock, LW_EXCLUSIVE);
 
@@ -87,13 +86,17 @@ SubTransSetParent(TransactionId xid, TransactionId parent, bool overwriteOK)
 	ptr = (TransactionId *) SubTransCtl->shared->page_buffer[slotno];
 	ptr += entryno;
 
-	/* Current state should be 0 */
-	Assert(*ptr == InvalidTransactionId ||
-		   (*ptr == parent && overwriteOK));
-
-	*ptr = parent;
-
-	SubTransCtl->shared->page_dirty[slotno] = true;
+	/*
+	 * It's possible we'll try to set the parent xid multiple times
+	 * but we shouldn't ever be changing the xid from one valid xid
+	 * to another valid xid, which would corrupt the data structure.
+	 */
+	if (*ptr != parent)
+	{
+		Assert(*ptr == InvalidTransactionId);
+		*ptr = parent;
+		SubTransCtl->shared->page_dirty[slotno] = true;
+	}
 
 	LWLockRelease(SubtransControlLock);
 }
@@ -157,6 +160,15 @@ SubTransGetTopmostTransaction(TransactionId xid)
 		if (TransactionIdPrecedes(parentXid, TransactionXmin))
 			break;
 		parentXid = SubTransGetParent(parentXid);
+
+		/*
+		 * By convention the parent xid gets allocated first, so should
+		 * always precede the child xid. Anything else points to a corrupted
+		 * data structure that could lead to an infinite loop, so exit.
+		 */
+		if (!TransactionIdPrecedes(parentXid, previousXid))
+			elog(ERROR, "pg_subtrans contains invalid entry: xid %u points to parent xid %u",
+							previousXid, parentXid);
 	}
 
 	Assert(TransactionIdIsValid(previousXid));

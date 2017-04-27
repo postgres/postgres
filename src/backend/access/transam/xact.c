@@ -559,7 +559,7 @@ AssignTransactionId(TransactionState s)
 		XactTopTransactionId = s->transactionId;
 
 	if (isSubXact)
-		SubTransSetParent(s->transactionId, s->parent->transactionId, false);
+		SubTransSetParent(s->transactionId, s->parent->transactionId);
 
 	/*
 	 * If it's a top-level transaction, the predicate locking system needs to
