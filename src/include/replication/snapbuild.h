@@ -54,7 +54,8 @@ struct xl_running_xacts;
 extern void CheckPointSnapBuild(void);
 
 extern SnapBuild *AllocateSnapshotBuilder(struct ReorderBuffer *cache,
-						TransactionId xmin_horizon, XLogRecPtr start_lsn);
+						TransactionId xmin_horizon, XLogRecPtr start_lsn,
+						bool need_full_snapshot);
 extern void FreeSnapshotBuilder(SnapBuild *cache);
 
 extern void SnapBuildSnapDecRefcount(Snapshot snap);

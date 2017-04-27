@@ -165,6 +165,9 @@ struct SnapBuild
 	 */
 	TransactionId initial_xmin_horizon;
 
+	/* Indicates if we are building full snapshot or just catalog one .*/
+	bool		building_full_snapshot;
+
 	/*
 	 * Snapshot that's valid to see the catalog state seen at this moment.
 	 */
@@ -281,7 +284,8 @@ static bool SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn);
 SnapBuild *
 AllocateSnapshotBuilder(ReorderBuffer *reorder,
 						TransactionId xmin_horizon,
-						XLogRecPtr start_lsn)
+						XLogRecPtr start_lsn,
+						bool need_full_snapshot)
 {
 	MemoryContext context;
 	MemoryContext oldcontext;
@@ -308,6 +312,7 @@ AllocateSnapshotBuilder(ReorderBuffer *reorder,
 
 	builder->initial_xmin_horizon = xmin_horizon;
 	builder->start_decoding_at = start_lsn;
+	builder->building_full_snapshot = need_full_snapshot;
 
 	MemoryContextSwitchTo(oldcontext);
 
@@ -1245,7 +1250,7 @@ SnapBuildFindSnapshot(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *runn
 	 *
 	 * a) There were no running transactions when the xl_running_xacts record
 	 *	  was inserted, jump to CONSISTENT immediately. We might find such a
-	 *	  state we were waiting for b) and c).
+	 *	  state we were waiting for b) or c).
 	 *
 	 * b) Wait for all toplevel transactions that were running to end. We
 	 *	  simply track the number of in-progress toplevel transactions and
@@ -1260,7 +1265,10 @@ SnapBuildFindSnapshot(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *runn
 	 *	  at all.
 	 *
 	 * c) This (in a previous run) or another decoding slot serialized a
-	 *	  snapshot to disk that we can use.
+	 *	  snapshot to disk that we can use.  Can't use this method for the
+	 *	  initial snapshot when slot is being created and needs full snapshot
+	 *	  for export or direct use, as that snapshot will only contain catalog
+	 *	  modifying transactions.
 	 * ---
 	 */
 
@@ -1315,8 +1323,9 @@ SnapBuildFindSnapshot(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *runn
 
 		return false;
 	}
-	/* c) valid on disk state */
-	else if (SnapBuildRestore(builder, lsn))
+	/* c) valid on disk state and not building full snapshot */
+	else if (!builder->building_full_snapshot &&
+			 SnapBuildRestore(builder, lsn))
 	{
 		/* there won't be any state to cleanup */
 		return false;
