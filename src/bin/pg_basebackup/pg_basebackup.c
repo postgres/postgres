@@ -480,6 +480,11 @@ LogStreamerMain(logstreamer_param *param)
 	stream.timeline = param->timeline;
 	stream.sysidentifier = param->sysidentifier;
 	stream.stream_stop = reached_end_position;
+#ifndef WIN32
+	stream.stop_socket = bgpipe[0];
+#else
+	stream.stop_socket = PGINVALID_SOCKET;
+#endif
 	stream.standby_message_timeout = standby_message_timeout;
 	stream.synchronous = false;
 	stream.do_sync = do_sync;

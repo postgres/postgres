@@ -409,6 +409,7 @@ StreamLog(void)
 				stream.timeline);
 
 	stream.stream_stop = stop_streaming;
+	stream.stop_socket = PGINVALID_SOCKET;
 	stream.standby_message_timeout = standby_message_timeout;
 	stream.synchronous = synchronous;
 	stream.do_sync = true;
