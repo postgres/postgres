@@ -419,6 +419,16 @@
       <listitem>
        <!--
        Author: Robert Haas <rhaas@postgresql.org>
+       2017-02-14 [5e6d8d2bb] Allow parallel workers to execute subplans.
+       -->
+       <para>
+        Allow non-correlated subqueries to be run in parallel (Amit Kapila)
+       </para>
+      </listitem>
+
+      <listitem>
+       <!--
+       Author: Robert Haas <rhaas@postgresql.org>
        2017-03-09 [355d3993c] Add a Gather Merge executor node.
        -->
        <para>
@@ -552,7 +562,11 @@
        <listitem>
         <!--
         Author: Robert Haas <rhaas@postgresql.org>
+        2017-02-27 [30df93f69] hash: Refactor overflow page allocation.
+        Author: Robert Haas <rhaas@postgresql.org>
         2017-03-14 [c11453ce0] hash: Add write-ahead logging support.
+        Author: Robert Haas <rhaas@postgresql.org>
+        2017-02-27 [b0f18cb77] hash: Refactor bucket squeeze code.
         -->
         <para>
          Add write-ahead logging support to hash indexes (Amit Kapila)
@@ -584,10 +598,6 @@
 
        <listitem>
         <!--
-        Author: Robert Haas <rhaas@postgresql.org>
-        2017-02-27 [b0f18cb77] hash: Refactor bucket squeeze code.
-        Author: Robert Haas <rhaas@postgresql.org>
-        2017-02-27 [30df93f69] hash: Refactor overflow page allocation.
         Author: Robert Haas <rhaas@postgresql.org>
         2017-04-03 [ea69a0dea] Expand hash indexes more gradually.
         -->
