@@ -781,6 +781,8 @@ ApplyLauncherWakeup(void)
 void
 ApplyLauncherMain(Datum main_arg)
 {
+	TimestampTz		last_start_time = 0;
+
 	ereport(DEBUG1,
 			(errmsg("logical replication launcher started")));
 
@@ -812,7 +814,6 @@ ApplyLauncherMain(Datum main_arg)
 		MemoryContext	subctx;
 		MemoryContext	oldctx;
 		TimestampTz		now;
-		TimestampTz		last_start_time = 0;
 		long			wait_time = DEFAULT_NAPTIME_PER_CYCLE;
 
 		now = GetCurrentTimestamp();
