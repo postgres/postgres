@@ -396,7 +396,8 @@ scram_build_verifier(const char *username, const char *password,
 {
 	char	   *prep_password = NULL;
 	pg_saslprep_rc rc;
-	char		saltbuf[SCRAM_SALT_LEN];
+	char		saltbuf[SCRAM_DEFAULT_SALT_LEN];
+	uint8		salted_password[SCRAM_KEY_LEN];
 	uint8		keybuf[SCRAM_KEY_LEN];
 	char	   *encoded_salt;
 	char	   *encoded_storedkey;
@@ -414,10 +415,10 @@ scram_build_verifier(const char *username, const char *password,
 		password = (const char *) prep_password;
 
 	if (iterations <= 0)
-		iterations = SCRAM_ITERATIONS_DEFAULT;
+		iterations = SCRAM_DEFAULT_ITERATIONS;
 
 	/* Generate salt, and encode it in base64 */
-	if (!pg_backend_random(saltbuf, SCRAM_SALT_LEN))
+	if (!pg_backend_random(saltbuf, SCRAM_DEFAULT_SALT_LEN))
 	{
 		ereport(LOG,
 				(errcode(ERRCODE_INTERNAL_ERROR),
@@ -425,13 +426,14 @@ scram_build_verifier(const char *username, const char *password,
 		return NULL;
 	}
 
-	encoded_salt = palloc(pg_b64_enc_len(SCRAM_SALT_LEN) + 1);
-	encoded_len = pg_b64_encode(saltbuf, SCRAM_SALT_LEN, encoded_salt);
+	encoded_salt = palloc(pg_b64_enc_len(SCRAM_DEFAULT_SALT_LEN) + 1);
+	encoded_len = pg_b64_encode(saltbuf, SCRAM_DEFAULT_SALT_LEN, encoded_salt);
 	encoded_salt[encoded_len] = '\0';
 
 	/* Calculate StoredKey, and encode it in base64 */
-	scram_ClientOrServerKey(password, saltbuf, SCRAM_SALT_LEN,
-							iterations, SCRAM_CLIENT_KEY_NAME, keybuf);
+	scram_SaltedPassword(password, saltbuf, SCRAM_DEFAULT_SALT_LEN,
+						 iterations, salted_password);
+	scram_ClientKey(salted_password, keybuf);
 	scram_H(keybuf, SCRAM_KEY_LEN, keybuf);		/* StoredKey */
 
 	encoded_storedkey = palloc(pg_b64_enc_len(SCRAM_KEY_LEN) + 1);
@@ -440,8 +442,7 @@ scram_build_verifier(const char *username, const char *password,
 	encoded_storedkey[encoded_len] = '\0';
 
 	/* And same for ServerKey */
-	scram_ClientOrServerKey(password, saltbuf, SCRAM_SALT_LEN, iterations,
-							SCRAM_SERVER_KEY_NAME, keybuf);
+	scram_ServerKey(salted_password, keybuf);
 
 	encoded_serverkey = palloc(pg_b64_enc_len(SCRAM_KEY_LEN) + 1);
 	encoded_len = pg_b64_encode((const char *) keybuf, SCRAM_KEY_LEN,
@@ -473,6 +474,7 @@ scram_verify_plain_password(const char *username, const char *password,
 	char	   *salt;
 	int			saltlen;
 	int			iterations;
+	uint8		salted_password[SCRAM_KEY_LEN];
 	uint8		stored_key[SCRAM_KEY_LEN];
 	uint8		server_key[SCRAM_KEY_LEN];
 	uint8		computed_key[SCRAM_KEY_LEN];
@@ -502,9 +504,9 @@ scram_verify_plain_password(const char *username, const char *password,
 	if (rc == SASLPREP_SUCCESS)
 		password = prep_password;
 
-	/* Compute Server key based on the user-supplied plaintext password */
-	scram_ClientOrServerKey(password, salt, saltlen, iterations,
-							SCRAM_SERVER_KEY_NAME, computed_key);
+	/* Compute Server Key based on the user-supplied plaintext password */
+	scram_SaltedPassword(password, salt, saltlen, iterations, salted_password);
+	scram_ServerKey(salted_password, computed_key);
 
 	if (prep_password)
 		pfree(prep_password);
@@ -630,12 +632,12 @@ mock_scram_verifier(const char *username, int *iterations, char **salt,
 	/* Generate deterministic salt */
 	raw_salt = scram_MockSalt(username);
 
-	encoded_salt = (char *) palloc(pg_b64_enc_len(SCRAM_SALT_LEN) + 1);
-	encoded_len = pg_b64_encode(raw_salt, SCRAM_SALT_LEN, encoded_salt);
+	encoded_salt = (char *) palloc(pg_b64_enc_len(SCRAM_DEFAULT_SALT_LEN) + 1);
+	encoded_len = pg_b64_encode(raw_salt, SCRAM_DEFAULT_SALT_LEN, encoded_salt);
 	encoded_salt[encoded_len] = '\0';
 
 	*salt = encoded_salt;
-	*iterations = SCRAM_ITERATIONS_DEFAULT;
+	*iterations = SCRAM_DEFAULT_ITERATIONS;
 
 	/* StoredKey and ServerKey are not used in a doomed authentication */
 	memset(stored_key, 0, SCRAM_KEY_LEN);
@@ -1179,7 +1181,7 @@ build_server_final_message(scram_state *state)
 /*
  * Determinisitcally generate salt for mock authentication, using a SHA256
  * hash based on the username and a cluster-level secret key.  Returns a
- * pointer to a static buffer of size SCRAM_SALT_LEN.
+ * pointer to a static buffer of size SCRAM_DEFAULT_SALT_LEN.
  */
 static char *
 scram_MockSalt(const char *username)
@@ -1194,7 +1196,7 @@ scram_MockSalt(const char *username)
 	 * not larger the SHA256 digest length. If the salt is smaller, the caller
 	 * will just ignore the extra data))
 	 */
-	StaticAssertStmt(PG_SHA256_DIGEST_LENGTH >= SCRAM_SALT_LEN,
+	StaticAssertStmt(PG_SHA256_DIGEST_LENGTH >= SCRAM_DEFAULT_SALT_LEN,
 					 "salt length greater than SHA256 digest length");
 
 	pg_sha256_init(&ctx);

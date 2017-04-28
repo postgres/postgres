@@ -98,14 +98,16 @@ scram_HMAC_final(uint8 *result, scram_HMAC_ctx *ctx)
 }
 
 /*
- * Iterate hash calculation of HMAC entry using given salt.
- * scram_Hi() is essentially PBKDF2 (see RFC2898) with HMAC() as the
- * pseudorandom function.
+ * Calculate SaltedPassword.
+ *
+ * The password should already be normalized by SASLprep.
  */
-static void
-scram_Hi(const char *str, const char *salt, int saltlen, int iterations, uint8 *result)
+void
+scram_SaltedPassword(const char *password,
+					 const char *salt, int saltlen, int iterations,
+					 uint8 *result)
 {
-	int			str_len = strlen(str);
+	int			password_len = strlen(password);
 	uint32		one = htonl(1);
 	int			i,
 				j;
@@ -113,8 +115,14 @@ scram_Hi(const char *str, const char *salt, int saltlen, int iterations, uint8 *
 	uint8		Ui_prev[SCRAM_KEY_LEN];
 	scram_HMAC_ctx hmac_ctx;
 
+	/*
+	 * Iterate hash calculation of HMAC entry using given salt.  This is
+	 * essentially PBKDF2 (see RFC2898) with HMAC() as the pseudorandom
+	 * function.
+	 */
+
 	/* First iteration */
-	scram_HMAC_init(&hmac_ctx, (uint8 *) str, str_len);
+	scram_HMAC_init(&hmac_ctx, (uint8 *) password, password_len);
 	scram_HMAC_update(&hmac_ctx, salt, saltlen);
 	scram_HMAC_update(&hmac_ctx, (char *) &one, sizeof(uint32));
 	scram_HMAC_final(Ui_prev, &hmac_ctx);
@@ -123,7 +131,7 @@ scram_Hi(const char *str, const char *salt, int saltlen, int iterations, uint8 *
 	/* Subsequent iterations */
 	for (i = 2; i <= iterations; i++)
 	{
-		scram_HMAC_init(&hmac_ctx, (uint8 *) str, str_len);
+		scram_HMAC_init(&hmac_ctx, (uint8 *) password, password_len);
 		scram_HMAC_update(&hmac_ctx, (const char *) Ui_prev, SCRAM_KEY_LEN);
 		scram_HMAC_final(Ui, &hmac_ctx);
 		for (j = 0; j < SCRAM_KEY_LEN; j++)
@@ -148,20 +156,27 @@ scram_H(const uint8 *input, int len, uint8 *result)
 }
 
 /*
- * Calculate ClientKey or ServerKey.
- *
- * The password should already be normalized by SASLprep.
+ * Calculate ClientKey.
  */
 void
-scram_ClientOrServerKey(const char *password,
-						const char *salt, int saltlen, int iterations,
-						const char *keystr, uint8 *result)
+scram_ClientKey(const uint8 *salted_password, uint8 *result)
 {
-	uint8		keybuf[SCRAM_KEY_LEN];
 	scram_HMAC_ctx ctx;
 
-	scram_Hi(password, salt, saltlen, iterations, keybuf);
-	scram_HMAC_init(&ctx, keybuf, SCRAM_KEY_LEN);
-	scram_HMAC_update(&ctx, keystr, strlen(keystr));
+	scram_HMAC_init(&ctx, salted_password, SCRAM_KEY_LEN);
+	scram_HMAC_update(&ctx, "Client Key", strlen("Client Key"));
+	scram_HMAC_final(result, &ctx);
+}
+
+/*
+ * Calculate ServerKey.
+ */
+void
+scram_ServerKey(const uint8 *salted_password, uint8 *result)
+{
+	scram_HMAC_ctx ctx;
+
+	scram_HMAC_init(&ctx, salted_password, SCRAM_KEY_LEN);
+	scram_HMAC_update(&ctx, "Server Key", strlen("Server Key"));
 	scram_HMAC_final(result, &ctx);
 }

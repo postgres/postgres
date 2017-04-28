@@ -46,6 +46,7 @@ typedef struct
 	char	   *password;
 
 	/* We construct these */
+	uint8		SaltedPassword[SCRAM_KEY_LEN];
 	char	   *client_nonce;
 	char	   *client_first_message_bare;
 	char	   *client_final_message_without_proof;
@@ -59,7 +60,7 @@ typedef struct
 
 	/* These come from the server-final message */
 	char	   *server_final_message;
-	char		ServerProof[SCRAM_KEY_LEN];
+	char		ServerSignature[SCRAM_KEY_LEN];
 } fe_scram_state;
 
 static bool read_server_first_message(fe_scram_state *state, char *input,
@@ -70,7 +71,7 @@ static char *build_client_first_message(fe_scram_state *state,
 						   PQExpBuffer errormessage);
 static char *build_client_final_message(fe_scram_state *state,
 						   PQExpBuffer errormessage);
-static bool verify_server_proof(fe_scram_state *state);
+static bool verify_server_signature(fe_scram_state *state);
 static void calculate_client_proof(fe_scram_state *state,
 					   const char *client_final_message_without_proof,
 					   uint8 *result);
@@ -216,12 +217,12 @@ pg_fe_scram_exchange(void *opaq, char *input, int inputlen,
 				goto error;
 
 			/*
-			 * Verify server proof, to make sure we're talking to the genuine
-			 * server.  XXX: A fake server could simply not require
+			 * Verify server signature, to make sure we're talking to the
+			 * genuine server.  XXX: A fake server could simply not require
 			 * authentication, though.  There is currently no option in libpq
 			 * to reject a connection, if SCRAM authentication did not happen.
 			 */
-			if (verify_server_proof(state))
+			if (verify_server_signature(state))
 				*success = true;
 			else
 			{
@@ -486,12 +487,11 @@ read_server_first_message(fe_scram_state *state, char *input,
  * Read the final exchange message coming from the server.
  */
 static bool
-read_server_final_message(fe_scram_state *state,
-						  char *input,
+read_server_final_message(fe_scram_state *state, char *input,
 						  PQExpBuffer errormessage)
 {
-	char	   *encoded_server_proof;
-	int			server_proof_len;
+	char	   *encoded_server_signature;
+	int			server_signature_len;
 
 	state->server_final_message = strdup(input);
 	if (!state->server_final_message)
@@ -513,8 +513,8 @@ read_server_final_message(fe_scram_state *state,
 	}
 
 	/* Parse the message. */
-	encoded_server_proof = read_attr_value(&input, 'v', errormessage);
-	if (encoded_server_proof == NULL)
+	encoded_server_signature = read_attr_value(&input, 'v', errormessage);
+	if (encoded_server_signature == NULL)
 	{
 		/* read_attr_value() has generated an error message */
 		return false;
@@ -524,13 +524,13 @@ read_server_final_message(fe_scram_state *state,
 		printfPQExpBuffer(errormessage,
 						  libpq_gettext("malformed SCRAM message (garbage at end of server-final-message)\n"));
 
-	server_proof_len = pg_b64_decode(encoded_server_proof,
-									 strlen(encoded_server_proof),
-									 state->ServerProof);
-	if (server_proof_len != SCRAM_KEY_LEN)
+	server_signature_len = pg_b64_decode(encoded_server_signature,
+										 strlen(encoded_server_signature),
+										 state->ServerSignature);
+	if (server_signature_len != SCRAM_KEY_LEN)
 	{
 		printfPQExpBuffer(errormessage,
-		  libpq_gettext("malformed SCRAM message (invalid server proof)\n"));
+						  libpq_gettext("malformed SCRAM message (invalid server signature)\n"));
 		return false;
 	}
 
@@ -552,8 +552,14 @@ calculate_client_proof(fe_scram_state *state,
 	int			i;
 	scram_HMAC_ctx ctx;
 
-	scram_ClientOrServerKey(state->password, state->salt, state->saltlen,
-						state->iterations, SCRAM_CLIENT_KEY_NAME, ClientKey);
+	/*
+	 * Calculate SaltedPassword, and store it in 'state' so that we can reuse
+	 * it later in verify_server_signature.
+	 */
+	scram_SaltedPassword(state->password, state->salt, state->saltlen,
+						 state->iterations, state->SaltedPassword);
+
+	scram_ClientKey(state->SaltedPassword, ClientKey);
 	scram_H(ClientKey, SCRAM_KEY_LEN, StoredKey);
 
 	scram_HMAC_init(&ctx, StoredKey, SCRAM_KEY_LEN);
@@ -575,19 +581,17 @@ calculate_client_proof(fe_scram_state *state,
 }
 
 /*
- * Validate the server proof, received as part of the final exchange message
- * received from the server.
+ * Validate the server signature, received as part of the final exchange
+ * message received from the server.
  */
 static bool
-verify_server_proof(fe_scram_state *state)
+verify_server_signature(fe_scram_state *state)
 {
-	uint8		ServerSignature[SCRAM_KEY_LEN];
+	uint8		expected_ServerSignature[SCRAM_KEY_LEN];
 	uint8		ServerKey[SCRAM_KEY_LEN];
 	scram_HMAC_ctx ctx;
 
-	scram_ClientOrServerKey(state->password, state->salt, state->saltlen,
-							state->iterations, SCRAM_SERVER_KEY_NAME,
-							ServerKey);
+	scram_ServerKey(state->SaltedPassword, ServerKey);
 
 	/* calculate ServerSignature */
 	scram_HMAC_init(&ctx, ServerKey, SCRAM_KEY_LEN);
@@ -602,9 +606,9 @@ verify_server_proof(fe_scram_state *state)
 	scram_HMAC_update(&ctx,
 					  state->client_final_message_without_proof,
 					  strlen(state->client_final_message_without_proof));
-	scram_HMAC_final(ServerSignature, &ctx);
+	scram_HMAC_final(expected_ServerSignature, &ctx);
 
-	if (memcmp(ServerSignature, state->ServerProof, SCRAM_KEY_LEN) != 0)
+	if (memcmp(expected_ServerSignature, state->ServerSignature, SCRAM_KEY_LEN) != 0)
 		return false;
 
 	return true;
