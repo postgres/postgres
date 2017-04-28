@@ -7704,9 +7704,10 @@ ATExecValidateConstraint(Relation rel, char *constrName, bool recurse,
 
 			/*
 			 * If we're recursing, the parent has already done this, so skip
-			 * it.
+			 * it.  Also, if the constraint is a NO INHERIT constraint, we
+			 * shouldn't try to look for it in the children.
 			 */
-			if (!recursing)
+			if (!recursing && !con->connoinherit)
 				children = find_all_inheritors(RelationGetRelid(rel),
 											   lockmode, NULL);
 
