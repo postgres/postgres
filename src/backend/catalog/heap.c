@@ -68,6 +68,7 @@
 #include "parser/parse_collate.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
+#include "storage/lmgr.h"
 #include "storage/predicate.h"
 #include "storage/smgr.h"
 #include "utils/acl.h"
@@ -1760,8 +1761,7 @@ heap_drop_with_catalog(Oid relid)
 {
 	Relation	rel;
 	HeapTuple	tuple;
-	Oid			parentOid;
-	Relation	parent = NULL;
+	Oid			parentOid = InvalidOid;
 
 	/*
 	 * To drop a partition safely, we must grab exclusive lock on its parent,
@@ -1776,7 +1776,7 @@ heap_drop_with_catalog(Oid relid)
 	if (((Form_pg_class) GETSTRUCT(tuple))->relispartition)
 	{
 		parentOid = get_partition_parent(relid);
-		parent = heap_open(parentOid, AccessExclusiveLock);
+		LockRelationOid(parentOid, AccessExclusiveLock);
 	}
 
 	ReleaseSysCache(tuple);
@@ -1885,14 +1885,14 @@ heap_drop_with_catalog(Oid relid)
 	 */
 	DeleteRelationTuple(relid);
 
-	if (parent)
+	if (OidIsValid(parentOid))
 	{
 		/*
 		 * Invalidate the parent's relcache so that the partition is no longer
 		 * included in its partition descriptor.
 		 */
-		CacheInvalidateRelcache(parent);
-		heap_close(parent, NoLock);		/* keep the lock */
+		CacheInvalidateRelcacheByRelid(parentOid);
+		/* keep the lock */
 	}
 }
 
