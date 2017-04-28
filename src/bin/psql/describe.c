@@ -2006,7 +2006,8 @@ describeOneTableDetails(const char *schemaname,
 		/* Get the column that owns this sequence */
 		printfPQExpBuffer(&buf, "SELECT pg_catalog.quote_ident(nspname) || '.' ||"
 						  "\n   pg_catalog.quote_ident(relname) || '.' ||"
-						  "\n   pg_catalog.quote_ident(attname)"
+						  "\n   pg_catalog.quote_ident(attname),"
+						  "\n   d.deptype"
 						  "\nFROM pg_catalog.pg_class c"
 					"\nINNER JOIN pg_catalog.pg_depend d ON c.oid=d.refobjid"
 			 "\nINNER JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace"
@@ -2016,7 +2017,7 @@ describeOneTableDetails(const char *schemaname,
 			   "\nWHERE d.classid='pg_catalog.pg_class'::pg_catalog.regclass"
 			 "\n AND d.refclassid='pg_catalog.pg_class'::pg_catalog.regclass"
 						  "\n AND d.objid=%s"
-						  "\n AND d.deptype='a'",
+						  "\n AND d.deptype IN ('a', 'i')",
 						  oid);
 
 		result = PSQLexec(buf.data);
@@ -2024,9 +2025,19 @@ describeOneTableDetails(const char *schemaname,
 			goto error_return;
 		else if (PQntuples(result) == 1)
 		{
-			printfPQExpBuffer(&buf, _("Owned by: %s"),
-							  PQgetvalue(result, 0, 0));
-			printTableAddFooter(&cont, buf.data);
+			switch (PQgetvalue(result, 0, 1)[0])
+			{
+				case 'a':
+					printfPQExpBuffer(&buf, _("Owned by: %s"),
+									  PQgetvalue(result, 0, 0));
+					printTableAddFooter(&cont, buf.data);
+					break;
+				case 'i':
+					printfPQExpBuffer(&buf, _("Sequence for identity column: %s"),
+									  PQgetvalue(result, 0, 0));
+					printTableAddFooter(&cont, buf.data);
+					break;
+			}
 		}
 
 		/*
