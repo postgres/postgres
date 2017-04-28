@@ -5004,7 +5004,7 @@ This commit is also listed under libpq and PL/pgSQL
 -->
        <para>
         Allow the number of client connections (<option>-c</>) to not
-        be an exact multiple of the number of threads (<option>-t</>)
+        be an exact multiple of the number of threads (<option>-j</>)
         (Fabien Coelho)
        </para>
       </listitem>
