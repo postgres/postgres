@@ -93,6 +93,9 @@ onek|t
 onek2|t
 path_tbl|f
 person|f
+persons|f
+persons2|t
+persons3|t
 pg_aggregate|t
 pg_am|t
 pg_amop|t

@@ -576,8 +576,6 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <str>			part_strategy
 %type <partelem>	part_elem
 %type <list>		part_params
-%type <list>		OptPartitionElementList PartitionElementList
-%type <node>		PartitionElement
 %type <node>		ForValues
 %type <node>		partbound_datum
 %type <list>		partbound_datum_list
@@ -3131,7 +3129,7 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					$$ = (Node *)n;
 				}
 		| CREATE OptTemp TABLE qualified_name PARTITION OF qualified_name
-			OptPartitionElementList ForValues OptPartitionSpec OptWith
+			OptTypedTableElementList ForValues OptPartitionSpec OptWith
 			OnCommitOption OptTableSpace
 				{
 					CreateStmt *n = makeNode(CreateStmt);
@@ -3150,7 +3148,7 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					$$ = (Node *)n;
 				}
 		| CREATE OptTemp TABLE IF_P NOT EXISTS qualified_name PARTITION OF
-			qualified_name OptPartitionElementList ForValues OptPartitionSpec
+			qualified_name OptTypedTableElementList ForValues OptPartitionSpec
 			OptWith OnCommitOption OptTableSpace
 				{
 					CreateStmt *n = makeNode(CreateStmt);
@@ -3213,11 +3211,6 @@ OptTypedTableElementList:
 			| /*EMPTY*/							{ $$ = NIL; }
 		;
 
-OptPartitionElementList:
-			'(' PartitionElementList ')'		{ $$ = $2; }
-			| /*EMPTY*/							{ $$ = NIL; }
-		;
-
 TableElementList:
 			TableElement
 				{
@@ -3240,17 +3233,6 @@ TypedTableElementList:
 				}
 		;
 
-PartitionElementList:
-			PartitionElement
-				{
-					$$ = list_make1($1);
-				}
-			| PartitionElementList ',' PartitionElement
-				{
-					$$ = lappend($1, $3);
-				}
-		;
-
 TableElement:
 			columnDef							{ $$ = $1; }
 			| TableLikeClause					{ $$ = $1; }
@@ -3260,28 +3242,6 @@ TableElement:
 TypedTableElement:
 			columnOptions						{ $$ = $1; }
 			| TableConstraint					{ $$ = $1; }
-		;
-
-PartitionElement:
-		TableConstraint					{ $$ = $1; }
-		|	ColId ColQualList
-			{
-				ColumnDef *n = makeNode(ColumnDef);
-				n->colname = $1;
-				n->typeName = NULL;
-				n->inhcount = 0;
-				n->is_local = true;
-				n->is_not_null = false;
-				n->is_from_type = false;
-				n->storage = 0;
-				n->raw_default = NULL;
-				n->cooked_default = NULL;
-				n->collOid = InvalidOid;
-				SplitColQualList($2, &n->constraints, &n->collClause,
-								 yyscanner);
-				n->location = @1;
-				$$ = (Node *) n;
-			}
 		;
 
 columnDef:	ColId Typename create_generic_options ColQualList
@@ -3305,7 +3265,25 @@ columnDef:	ColId Typename create_generic_options ColQualList
 				}
 		;
 
-columnOptions:	ColId WITH OPTIONS ColQualList
+columnOptions:	ColId ColQualList
+				{
+					ColumnDef *n = makeNode(ColumnDef);
+					n->colname = $1;
+					n->typeName = NULL;
+					n->inhcount = 0;
+					n->is_local = true;
+					n->is_not_null = false;
+					n->is_from_type = false;
+					n->storage = 0;
+					n->raw_default = NULL;
+					n->cooked_default = NULL;
+					n->collOid = InvalidOid;
+					SplitColQualList($2, &n->constraints, &n->collClause,
+									 yyscanner);
+					n->location = @1;
+					$$ = (Node *)n;
+				}
+				| ColId WITH OPTIONS ColQualList
 				{
 					ColumnDef *n = makeNode(ColumnDef);
 					n->colname = $1;
@@ -4872,7 +4850,7 @@ CreateForeignTableStmt:
 					$$ = (Node *) n;
 				}
 		| CREATE FOREIGN TABLE qualified_name
-			PARTITION OF qualified_name OptPartitionElementList ForValues
+			PARTITION OF qualified_name OptTypedTableElementList ForValues
 			SERVER name create_generic_options
 				{
 					CreateForeignTableStmt *n = makeNode(CreateForeignTableStmt);
@@ -4893,7 +4871,7 @@ CreateForeignTableStmt:
 					$$ = (Node *) n;
 				}
 		| CREATE FOREIGN TABLE IF_P NOT EXISTS qualified_name
-			PARTITION OF qualified_name OptPartitionElementList ForValues
+			PARTITION OF qualified_name OptTypedTableElementList ForValues
 			SERVER name create_generic_options
 				{
 					CreateForeignTableStmt *n = makeNode(CreateForeignTableStmt);

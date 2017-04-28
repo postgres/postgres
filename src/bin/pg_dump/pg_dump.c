@@ -15267,13 +15267,16 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 						continue;
 					}
 
-					/* Attribute type */
-					if ((tbinfo->reloftype || tbinfo->partitionOf) &&
-						!dopt->binary_upgrade)
-					{
-						appendPQExpBufferStr(q, " WITH OPTIONS");
-					}
-					else
+					/*
+					 * Attribute type
+					 *
+					 * In binary-upgrade mode, we always include the type.
+					 * If we aren't in binary-upgrade mode, then we skip the
+					 * type when creating a typed table ('OF type_name') or a
+					 * partition ('PARTITION OF'), since the type comes from
+					 * the parent/partitioned table.
+					 */
+					if (dopt->binary_upgrade || (!tbinfo->reloftype && !tbinfo->partitionOf))
 					{
 						appendPQExpBuffer(q, " %s",
 										  tbinfo->atttypnames[j]);

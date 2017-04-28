@@ -578,7 +578,7 @@ SELECT conislocal, coninhcount FROM pg_constraint WHERE conrelid = 'part_b'::reg
 
 -- specify PARTITION BY for a partition
 CREATE TABLE fail_part_col_not_found PARTITION OF parted FOR VALUES IN ('c') PARTITION BY RANGE (c);
-CREATE TABLE part_c PARTITION OF parted FOR VALUES IN ('c') PARTITION BY RANGE ((b));
+CREATE TABLE part_c PARTITION OF parted (b WITH OPTIONS NOT NULL DEFAULT 0) FOR VALUES IN ('c') PARTITION BY RANGE ((b));
 
 -- create a level-2 partition
 CREATE TABLE part_c_1_10 PARTITION OF part_c FOR VALUES FROM (1) TO (10);
