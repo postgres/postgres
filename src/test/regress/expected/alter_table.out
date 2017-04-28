@@ -367,6 +367,26 @@ NOTICE:  merging constraint "identity" with inherited definition
 ALTER TABLE tmp3 VALIDATE CONSTRAINT identity;
 NOTICE:  boo: 16
 NOTICE:  boo: 20
+-- A NO INHERIT constraint should not be looked for in children during VALIDATE CONSTRAINT
+create table parent_noinh_convalid (a int);
+create table child_noinh_convalid () inherits (parent_noinh_convalid);
+insert into parent_noinh_convalid values (1);
+insert into child_noinh_convalid values (1);
+alter table parent_noinh_convalid add constraint check_a_is_2 check (a = 2) no inherit not valid;
+-- fail, because of the row in parent
+alter table parent_noinh_convalid validate constraint check_a_is_2;
+ERROR:  check constraint "check_a_is_2" is violated by some row
+delete from only parent_noinh_convalid;
+-- ok (parent itself contains no violating rows)
+alter table parent_noinh_convalid validate constraint check_a_is_2;
+select convalidated from pg_constraint where conrelid = 'parent_noinh_convalid'::regclass and conname = 'check_a_is_2';
+ convalidated 
+--------------
+ t
+(1 row)
+
+-- cleanup
+drop table parent_noinh_convalid, child_noinh_convalid;
 -- Try (and fail) to create constraint from tmp5(a) to tmp4(a) - unique constraint on
 -- tmp4 is a,b
 ALTER TABLE tmp5 add constraint tmpconstr foreign key(a) references tmp4(a) match full;
