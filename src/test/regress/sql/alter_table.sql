@@ -307,6 +307,21 @@ ALTER TABLE tmp7 ADD CONSTRAINT identity CHECK (b = boo(b));
 ALTER TABLE tmp3 ADD CONSTRAINT IDENTITY check (b = boo(b)) NOT VALID;
 ALTER TABLE tmp3 VALIDATE CONSTRAINT identity;
 
+-- A NO INHERIT constraint should not be looked for in children during VALIDATE CONSTRAINT
+create table parent_noinh_convalid (a int);
+create table child_noinh_convalid () inherits (parent_noinh_convalid);
+insert into parent_noinh_convalid values (1);
+insert into child_noinh_convalid values (1);
+alter table parent_noinh_convalid add constraint check_a_is_2 check (a = 2) no inherit not valid;
+-- fail, because of the row in parent
+alter table parent_noinh_convalid validate constraint check_a_is_2;
+delete from only parent_noinh_convalid;
+-- ok (parent itself contains no violating rows)
+alter table parent_noinh_convalid validate constraint check_a_is_2;
+select convalidated from pg_constraint where conrelid = 'parent_noinh_convalid'::regclass and conname = 'check_a_is_2';
+-- cleanup
+drop table parent_noinh_convalid, child_noinh_convalid;
+
 -- Try (and fail) to create constraint from tmp5(a) to tmp4(a) - unique constraint on
 -- tmp4 is a,b
 
