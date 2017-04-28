@@ -569,6 +569,15 @@ SELECT attname, attislocal, attinhcount FROM pg_attribute
   ORDER BY attnum;
 
 -- able to specify column default, column constraint, and table constraint
+
+-- first check the "column specified more than once" error
+CREATE TABLE part_b PARTITION OF parted (
+	b NOT NULL,
+	b DEFAULT 1,
+	b CHECK (b >= 0),
+	CONSTRAINT check_a CHECK (length(a) > 0)
+) FOR VALUES IN ('b');
+
 CREATE TABLE part_b PARTITION OF parted (
 	b NOT NULL DEFAULT 1 CHECK (b >= 0),
 	CONSTRAINT check_a CHECK (length(a) > 0)

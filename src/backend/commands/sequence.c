@@ -167,6 +167,7 @@ DefineSequence(ParseState *pstate, CreateSeqStmt *seq)
 		coldef->is_local = true;
 		coldef->is_not_null = true;
 		coldef->is_from_type = false;
+		coldef->is_from_parent = false;
 		coldef->storage = 0;
 		coldef->raw_default = NULL;
 		coldef->cooked_default = NULL;

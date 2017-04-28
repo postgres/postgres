@@ -1919,6 +1919,7 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 				def->is_local = false;
 				def->is_not_null = attribute->attnotnull;
 				def->is_from_type = false;
+				def->is_from_parent = true;
 				def->storage = attribute->attstorage;
 				def->raw_default = NULL;
 				def->cooked_default = NULL;
@@ -2206,11 +2207,20 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 					 * merge the column options into the column from the
 					 * parent
 					 */
-					coldef->is_not_null = restdef->is_not_null;
-					coldef->raw_default = restdef->raw_default;
-					coldef->cooked_default = restdef->cooked_default;
-					coldef->constraints = restdef->constraints;
-					list_delete_cell(schema, rest, prev);
+					if (coldef->is_from_parent)
+					{
+						coldef->is_not_null = restdef->is_not_null;
+						coldef->raw_default = restdef->raw_default;
+						coldef->cooked_default = restdef->cooked_default;
+						coldef->constraints = restdef->constraints;
+						coldef->is_from_parent = false;
+						list_delete_cell(schema, rest, prev);
+					}
+					else
+						ereport(ERROR,
+								(errcode(ERRCODE_DUPLICATE_COLUMN),
+								 errmsg("column \"%s\" specified more than once",
+										coldef->colname)));
 				}
 				prev = rest;
 				rest = next;
