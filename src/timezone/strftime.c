@@ -1,4 +1,4 @@
-/* Convert a broken-down time stamp to a string. */
+/* Convert a broken-down timestamp to a string. */
 
 /*
  * Copyright 1989 The Regents of the University of California.
@@ -43,7 +43,6 @@
 #include <fcntl.h>
 
 #include "private.h"
-#include "tzfile.h"
 
 
 struct lc_time_T
@@ -451,11 +450,17 @@ _fmt(const char *format, const struct pg_tm * t, char *pt, const char *ptlim,
 					{
 						long		diff;
 						char const *sign;
+						bool		negative;
 
 						if (t->tm_isdst < 0)
 							continue;
 						diff = t->tm_gmtoff;
-						if (diff < 0)
+						negative = diff < 0;
+						if (diff == 0)
+						{
+							negative = t->tm_zone[0] == '-';
+						}
+						if (negative)
 						{
 							sign = "-";
 							diff = -diff;
