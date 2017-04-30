@@ -315,8 +315,8 @@ retry:
 										   wal_receiver_timeout))
 			{
 				elog(WARNING,
-					 "logical replication worker for subscription \"%d\" took too long to start; canceled",
-					 worker->subid);
+					 "logical replication worker for subscription %u took too long to start; canceled",
+					 w->subid);
 
 				logicalrep_worker_cleanup(w);
 				did_cleanup = true;
@@ -347,7 +347,7 @@ retry:
 		LWLockRelease(LogicalRepWorkerLock);
 		ereport(WARNING,
 				(errcode(ERRCODE_CONFIGURATION_LIMIT_EXCEEDED),
-				 errmsg("out of logical replication workers slots"),
+				 errmsg("out of logical replication worker slots"),
 				 errhint("You might need to increase max_logical_replication_workers.")));
 		return;
 	}
@@ -393,7 +393,7 @@ retry:
 	{
 		ereport(WARNING,
 				(errcode(ERRCODE_CONFIGURATION_LIMIT_EXCEEDED),
-				 errmsg("out of background workers slots"),
+				 errmsg("out of background worker slots"),
 				 errhint("You might need to increase max_worker_processes.")));
 		return;
 	}
