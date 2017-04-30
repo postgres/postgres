@@ -17,6 +17,7 @@
 #include <sys/stat.h>
 #include <time.h>
 
+#include "datatype/timestamp.h"
 #include "miscadmin.h"
 #include "pgtz.h"
 #include "storage/fd.h"
@@ -308,14 +309,14 @@ pg_tzset_offset(long gmtoffset)
 	char		tzname[128];
 
 	snprintf(offsetstr, sizeof(offsetstr),
-			 "%02ld", absoffset / SECSPERHOUR);
-	absoffset %= SECSPERHOUR;
+			 "%02ld", absoffset / SECS_PER_HOUR);
+	absoffset %= SECS_PER_HOUR;
 	if (absoffset != 0)
 	{
 		snprintf(offsetstr + strlen(offsetstr),
 				 sizeof(offsetstr) - strlen(offsetstr),
-				 ":%02ld", absoffset / SECSPERMIN);
-		absoffset %= SECSPERMIN;
+				 ":%02ld", absoffset / SECS_PER_MINUTE);
+		absoffset %= SECS_PER_MINUTE;
 		if (absoffset != 0)
 			snprintf(offsetstr + strlen(offsetstr),
 					 sizeof(offsetstr) - strlen(offsetstr),
