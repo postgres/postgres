@@ -29,6 +29,12 @@ see the `Australia' and `India' files.
 The files named Africa.txt, etc, are not intended to be used directly as
 time zone abbreviation files. They contain reference definitions of time zone
 abbreviations that can be copied into a custom abbreviation file as needed.
-Note that these files (*.txt) are already a subset of the IANA timezone
-database files: we tried to list only those time zone abbreviations that
-(according to the IANA timezone database) appear to be still in use.
+These files contain most of the time zone abbreviations that were shown
+in the IANA timezone database circa 2010.
+
+However, it turns out that many of these abbreviations had simply been
+invented by the IANA timezone group, and do not have currency in real-world
+use.  The IANA group have changed their policy about that, and now prefer to
+use numeric UTC offsets whenever there's not an abbreviation with known
+real-world popularity.  A lot of these abbreviations therefore no longer
+appear in the IANA data, and so are marked "obsolete" in these data files.
