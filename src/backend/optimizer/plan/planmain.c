@@ -193,6 +193,12 @@ query_planner(PlannerInfo *root, List *tlist,
 	joinlist = remove_useless_joins(root, joinlist);
 
 	/*
+	 * Also, reduce any semijoins with unique inner rels to plain inner joins.
+	 * Likewise, this can't be done until now for lack of needed info.
+	 */
+	reduce_unique_semijoins(root);
+
+	/*
 	 * Now distribute "placeholders" to base rels as needed.  This has to be
 	 * done after join removal because removal could change whether a
 	 * placeholder is evaluable at a base rel.

@@ -1864,3 +1864,17 @@ from onek t1, tenk1 t2
 where exists (select 1 from tenk1 t3
               where t3.thousand = t1.unique1 and t3.tenthous = t2.hundred)
       and t1.unique1 < 1;
+
+-- ... unless it actually is unique
+create table j3 as select unique1, tenthous from onek;
+vacuum analyze j3;
+create unique index on j3(unique1, tenthous);
+
+explain (verbose, costs off)
+select t1.unique1, t2.hundred
+from onek t1, tenk1 t2
+where exists (select 1 from j3
+              where j3.unique1 = t1.unique1 and j3.tenthous = t2.hundred)
+      and t1.unique1 < 1;
+
+drop table j3;

@@ -42,7 +42,7 @@ static bool rel_is_distinct_for(PlannerInfo *root, RelOptInfo *rel,
 					List *clause_list);
 static Oid	distinct_col_search(int colno, List *colnos, List *opids);
 static bool is_innerrel_unique_for(PlannerInfo *root,
-					   RelOptInfo *outerrel,
+					   Relids outerrelids,
 					   RelOptInfo *innerrel,
 					   JoinType jointype,
 					   List *restrictlist);
@@ -496,6 +496,88 @@ remove_rel_from_joinlist(List *joinlist, int relid, int *nremoved)
 
 
 /*
+ * reduce_unique_semijoins
+ *		Check for semijoins that can be simplified to plain inner joins
+ *		because the inner relation is provably unique for the join clauses.
+ *
+ * Ideally this would happen during reduce_outer_joins, but we don't have
+ * enough information at that point.
+ *
+ * To perform the strength reduction when applicable, we need only delete
+ * the semijoin's SpecialJoinInfo from root->join_info_list.  (We don't
+ * bother fixing the join type attributed to it in the query jointree,
+ * since that won't be consulted again.)
+ */
+void
+reduce_unique_semijoins(PlannerInfo *root)
+{
+	ListCell   *lc;
+	ListCell   *next;
+
+	/*
+	 * Scan the join_info_list to find semijoins.  We can't use foreach
+	 * because we may delete the current cell.
+	 */
+	for (lc = list_head(root->join_info_list); lc != NULL; lc = next)
+	{
+		SpecialJoinInfo *sjinfo = (SpecialJoinInfo *) lfirst(lc);
+		int			innerrelid;
+		RelOptInfo *innerrel;
+		Relids		joinrelids;
+		List	   *restrictlist;
+
+		next = lnext(lc);
+
+		/*
+		 * Must be a non-delaying semijoin to a single baserel, else we aren't
+		 * going to be able to do anything with it.  (It's probably not
+		 * possible for delay_upper_joins to be set on a semijoin, but we
+		 * might as well check.)
+		 */
+		if (sjinfo->jointype != JOIN_SEMI ||
+			sjinfo->delay_upper_joins)
+			continue;
+
+		if (!bms_get_singleton_member(sjinfo->min_righthand, &innerrelid))
+			continue;
+
+		innerrel = find_base_rel(root, innerrelid);
+
+		/*
+		 * Before we trouble to run generate_join_implied_equalities, make a
+		 * quick check to eliminate cases in which we will surely be unable to
+		 * prove uniqueness of the innerrel.
+		 */
+		if (!rel_supports_distinctness(root, innerrel))
+			continue;
+
+		/* Compute the relid set for the join we are considering */
+		joinrelids = bms_union(sjinfo->min_lefthand, sjinfo->min_righthand);
+
+		/*
+		 * Since we're only considering a single-rel RHS, any join clauses it
+		 * has must be clauses linking it to the semijoin's min_lefthand.  We
+		 * can also consider EC-derived join clauses.
+		 */
+		restrictlist =
+			list_concat(generate_join_implied_equalities(root,
+														 joinrelids,
+														 sjinfo->min_lefthand,
+														 innerrel),
+						innerrel->joininfo);
+
+		/* Test whether the innerrel is unique for those clauses. */
+		if (!innerrel_is_unique(root, sjinfo->min_lefthand, innerrel,
+								JOIN_SEMI, restrictlist, true))
+			continue;
+
+		/* OK, remove the SpecialJoinInfo from the list. */
+		root->join_info_list = list_delete_ptr(root->join_info_list, sjinfo);
+	}
+}
+
+
+/*
  * rel_supports_distinctness
  *		Could the relation possibly be proven distinct on some set of columns?
  *
@@ -857,6 +939,10 @@ distinct_col_search(int colno, List *colnos, List *opids)
  *	  Check if the innerrel provably contains at most one tuple matching any
  *	  tuple from the outerrel, based on join clauses in the 'restrictlist'.
  *
+ * We need an actual RelOptInfo for the innerrel, but it's sufficient to
+ * identify the outerrel by its Relids.  This asymmetry supports use of this
+ * function before joinrels have been built.
+ *
  * The proof must be made based only on clauses that will be "joinquals"
  * rather than "otherquals" at execution.  For an inner join there's no
  * difference; but if the join is outer, we must ignore pushed-down quals,
@@ -867,13 +953,18 @@ distinct_col_search(int colno, List *colnos, List *opids)
  *
  * The actual proof is undertaken by is_innerrel_unique_for(); this function
  * is a frontend that is mainly concerned with caching the answers.
+ * In particular, the force_cache argument allows overriding the internal
+ * heuristic about whether to cache negative answers; it should be "true"
+ * if making an inquiry that is not part of the normal bottom-up join search
+ * sequence.
  */
 bool
 innerrel_is_unique(PlannerInfo *root,
-				   RelOptInfo *outerrel,
+				   Relids outerrelids,
 				   RelOptInfo *innerrel,
 				   JoinType jointype,
-				   List *restrictlist)
+				   List *restrictlist,
+				   bool force_cache)
 {
 	MemoryContext old_context;
 	ListCell   *lc;
@@ -900,7 +991,7 @@ innerrel_is_unique(PlannerInfo *root,
 	{
 		Relids		unique_for_rels = (Relids) lfirst(lc);
 
-		if (bms_is_subset(unique_for_rels, outerrel->relids))
+		if (bms_is_subset(unique_for_rels, outerrelids))
 			return true;		/* Success! */
 	}
 
@@ -912,12 +1003,12 @@ innerrel_is_unique(PlannerInfo *root,
 	{
 		Relids		unique_for_rels = (Relids) lfirst(lc);
 
-		if (bms_is_subset(outerrel->relids, unique_for_rels))
+		if (bms_is_subset(outerrelids, unique_for_rels))
 			return false;
 	}
 
 	/* No cached information, so try to make the proof. */
-	if (is_innerrel_unique_for(root, outerrel, innerrel,
+	if (is_innerrel_unique_for(root, outerrelids, innerrel,
 							   jointype, restrictlist))
 	{
 		/*
@@ -932,7 +1023,7 @@ innerrel_is_unique(PlannerInfo *root,
 		 */
 		old_context = MemoryContextSwitchTo(root->planner_cxt);
 		innerrel->unique_for_rels = lappend(innerrel->unique_for_rels,
-											bms_copy(outerrel->relids));
+											bms_copy(outerrelids));
 		MemoryContextSwitchTo(old_context);
 
 		return true;			/* Success! */
@@ -949,15 +1040,19 @@ innerrel_is_unique(PlannerInfo *root,
 		 * from smaller to larger.  It is useful in GEQO mode, where the
 		 * knowledge can be carried across successive planning attempts; and
 		 * it's likely to be useful when using join-search plugins, too. Hence
-		 * cache only when join_search_private is non-NULL.  (Yeah, that's a
-		 * hack, but it seems reasonable.)
+		 * cache when join_search_private is non-NULL.  (Yeah, that's a hack,
+		 * but it seems reasonable.)
+		 *
+		 * Also, allow callers to override that heuristic and force caching;
+		 * that's useful for reduce_unique_semijoins, which calls here before
+		 * the normal join search starts.
 		 */
-		if (root->join_search_private)
+		if (force_cache || root->join_search_private)
 		{
 			old_context = MemoryContextSwitchTo(root->planner_cxt);
 			innerrel->non_unique_for_rels =
 				lappend(innerrel->non_unique_for_rels,
-						bms_copy(outerrel->relids));
+						bms_copy(outerrelids));
 			MemoryContextSwitchTo(old_context);
 		}
 
@@ -972,7 +1067,7 @@ innerrel_is_unique(PlannerInfo *root,
  */
 static bool
 is_innerrel_unique_for(PlannerInfo *root,
-					   RelOptInfo *outerrel,
+					   Relids outerrelids,
 					   RelOptInfo *innerrel,
 					   JoinType jointype,
 					   List *restrictlist)
@@ -1007,7 +1102,7 @@ is_innerrel_unique_for(PlannerInfo *root,
 		 * Check if clause has the form "outer op inner" or "inner op outer",
 		 * and if so mark which side is inner.
 		 */
-		if (!clause_sides_match_join(restrictinfo, outerrel->relids,
+		if (!clause_sides_match_join(restrictinfo, outerrelids,
 									 innerrel->relids))
 			continue;			/* no good for these input relations */
 

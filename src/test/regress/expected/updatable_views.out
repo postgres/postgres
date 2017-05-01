@@ -1673,7 +1673,7 @@ EXPLAIN (costs off) UPDATE rw_view1 SET a = a + 5;
                            QUERY PLAN                            
 -----------------------------------------------------------------
  Update on base_tbl b
-   ->  Hash Semi Join
+   ->  Hash Join
          Hash Cond: (b.a = r.a)
          ->  Seq Scan on base_tbl b
          ->  Hash

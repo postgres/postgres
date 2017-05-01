@@ -5663,3 +5663,31 @@ where exists (select 1 from tenk1 t3
          Index Cond: (t2.hundred = t3.tenthous)
 (18 rows)
 
+-- ... unless it actually is unique
+create table j3 as select unique1, tenthous from onek;
+vacuum analyze j3;
+create unique index on j3(unique1, tenthous);
+explain (verbose, costs off)
+select t1.unique1, t2.hundred
+from onek t1, tenk1 t2
+where exists (select 1 from j3
+              where j3.unique1 = t1.unique1 and j3.tenthous = t2.hundred)
+      and t1.unique1 < 1;
+                               QUERY PLAN                               
+------------------------------------------------------------------------
+ Nested Loop
+   Output: t1.unique1, t2.hundred
+   ->  Nested Loop
+         Output: t1.unique1, j3.tenthous
+         ->  Index Only Scan using onek_unique1 on public.onek t1
+               Output: t1.unique1
+               Index Cond: (t1.unique1 < 1)
+         ->  Index Only Scan using j3_unique1_tenthous_idx on public.j3
+               Output: j3.unique1, j3.tenthous
+               Index Cond: (j3.unique1 = t1.unique1)
+   ->  Index Only Scan using tenk1_hundred on public.tenk1 t2
+         Output: t2.hundred
+         Index Cond: (t2.hundred = j3.tenthous)
+(13 rows)
+
+drop table j3;
