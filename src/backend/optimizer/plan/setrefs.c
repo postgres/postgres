@@ -882,11 +882,22 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 				/*
 				 * If the main target relation is a partitioned table, the
 				 * following list contains the RT indexes of partitioned child
-				 * relations, which are not included in the above list.
+				 * relations including the root, which are not included in the
+				 * above list.  We also keep RT indexes of the roots separately
+				 * to be identitied as such during the executor initialization.
 				 */
-				root->glob->nonleafResultRelations =
-					list_concat(root->glob->nonleafResultRelations,
-								list_copy(splan->partitioned_rels));
+				if (splan->partitioned_rels != NIL)
+				{
+					root->glob->nonleafResultRelations =
+						list_concat(root->glob->nonleafResultRelations,
+									list_copy(splan->partitioned_rels));
+					/* Remember where this root will be in the global list. */
+					splan->rootResultRelIndex =
+								list_length(root->glob->rootResultRelations);
+					root->glob->rootResultRelations =
+								lappend_int(root->glob->rootResultRelations,
+									linitial_int(splan->partitioned_rels));
+				}
 			}
 			break;
 		case T_Append:

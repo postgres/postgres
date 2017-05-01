@@ -108,6 +108,7 @@ typedef struct PlannerGlobal
 	List	   *resultRelations;	/* "flat" list of integer RT indexes */
 
 	List   *nonleafResultRelations; /* "flat" list of integer RT indexes */
+	List	   *rootResultRelations; /* "flat" list of integer RT indexes */
 
 	List	   *relationOids;	/* OIDs of relations the plan depends on */
 

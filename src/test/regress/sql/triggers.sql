@@ -1263,3 +1263,73 @@ create trigger my_trigger after update on my_table_42 referencing old table as o
 drop trigger my_trigger on my_table_42;
 drop table my_table_42;
 drop table my_table;
+
+--
+-- Verify that per-statement triggers are fired for partitioned tables
+--
+create table parted_stmt_trig (a int) partition by list (a);
+create table parted_stmt_trig1 partition of parted_stmt_trig for values in (1);
+create table parted_stmt_trig2 partition of parted_stmt_trig for values in (2);
+
+create table parted2_stmt_trig (a int) partition by list (a);
+create table parted2_stmt_trig1 partition of parted2_stmt_trig for values in (1);
+create table parted2_stmt_trig2 partition of parted2_stmt_trig for values in (2);
+
+create or replace function trigger_notice() returns trigger as $$
+  begin
+    raise notice 'trigger on % % % for %', TG_TABLE_NAME, TG_WHEN, TG_OP, TG_LEVEL;
+    if TG_LEVEL = 'ROW' then
+       return NEW;
+    end if;
+    return null;
+  end;
+  $$ language plpgsql;
+
+-- insert/update/delete statment-level triggers on the parent
+create trigger trig_ins_before before insert on parted_stmt_trig
+  for each statement execute procedure trigger_notice();
+create trigger trig_ins_after after insert on parted_stmt_trig
+  for each statement execute procedure trigger_notice();
+create trigger trig_upd_before before update on parted_stmt_trig
+  for each statement execute procedure trigger_notice();
+create trigger trig_upd_after after update on parted_stmt_trig
+  for each statement execute procedure trigger_notice();
+create trigger trig_del_before before delete on parted_stmt_trig
+  for each statement execute procedure trigger_notice();
+create trigger trig_del_after after delete on parted_stmt_trig
+  for each statement execute procedure trigger_notice();
+
+-- insert/update/delete row-level triggers on the first partition
+create trigger trig_ins_before before insert on parted_stmt_trig1
+  for each row execute procedure trigger_notice();
+create trigger trig_ins_after after insert on parted_stmt_trig1
+  for each row execute procedure trigger_notice();
+create trigger trig_upd_before before update on parted_stmt_trig1
+  for each row execute procedure trigger_notice();
+create trigger trig_upd_after after update on parted_stmt_trig1
+  for each row execute procedure trigger_notice();
+
+-- insert/update/delete statement-level triggers on the parent
+create trigger trig_ins_before before insert on parted2_stmt_trig
+  for each statement execute procedure trigger_notice();
+create trigger trig_ins_after after insert on parted2_stmt_trig
+  for each statement execute procedure trigger_notice();
+create trigger trig_upd_before before update on parted2_stmt_trig
+  for each statement execute procedure trigger_notice();
+create trigger trig_upd_after after update on parted2_stmt_trig
+  for each statement execute procedure trigger_notice();
+create trigger trig_del_before before delete on parted2_stmt_trig
+  for each statement execute procedure trigger_notice();
+create trigger trig_del_after after delete on parted2_stmt_trig
+  for each statement execute procedure trigger_notice();
+
+with ins (a) as (
+  insert into parted2_stmt_trig values (1), (2) returning a
+) insert into parted_stmt_trig select a from ins returning tableoid::regclass, a;
+
+with upd as (
+  update parted2_stmt_trig set a = a
+) update parted_stmt_trig  set a = a;
+
+delete from parted_stmt_trig;
+drop table parted_stmt_trig, parted2_stmt_trig;

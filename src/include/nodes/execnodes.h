@@ -422,6 +422,16 @@ typedef struct EState
 	int			es_num_result_relations;		/* length of array */
 	ResultRelInfo *es_result_relation_info;		/* currently active array elt */
 
+	/*
+	 * Info about the target partitioned target table root(s) for
+	 * update/delete queries.  They required only to fire any per-statement
+	 * triggers defined on the table.  It exists separately from
+	 * es_result_relations, because partitioned tables don't appear in the
+	 * plan tree for the update/delete cases.
+	 */
+	ResultRelInfo *es_root_result_relations;	/* array of ResultRelInfos */
+	int			es_num_root_result_relations;	/* length of the array */
+
 	/* Stuff used for firing triggers: */
 	List	   *es_trig_target_relations;		/* trigger-only ResultRelInfos */
 	TupleTableSlot *es_trig_tuple_slot; /* for trigger output tuples */
@@ -914,6 +924,8 @@ typedef struct ModifyTableState
 	int			mt_nplans;		/* number of plans in the array */
 	int			mt_whichplan;	/* which one is being executed (0..n-1) */
 	ResultRelInfo *resultRelInfo;		/* per-subplan target relations */
+	ResultRelInfo *rootResultRelInfo;	/* root target relation (partitioned
+										 * table root) */
 	List	  **mt_arowmarks;	/* per-subplan ExecAuxRowMark lists */
 	EPQState	mt_epqstate;	/* for evaluating EvalPlanQual rechecks */
 	bool		fireBSTriggers; /* do we need to fire stmt triggers? */

@@ -33,7 +33,8 @@
    <para>
     A trigger is a specification that the database should automatically
     execute a particular function whenever a certain type of operation is
-    performed.  Triggers can be attached to tables, views, and foreign tables.
+    performed.  Triggers can be attached to tables (partitioned or not),
+    views, and foreign tables.
   </para>
 
   <para>
@@ -111,14 +112,14 @@
     Statement-level <literal>BEFORE</> triggers naturally fire before the
     statement starts to do anything, while statement-level <literal>AFTER</>
     triggers fire at the very end of the statement.  These types of
-    triggers may be defined on tables or views.  Row-level <literal>BEFORE</>
-    triggers fire immediately before a particular row is operated on,
-    while row-level <literal>AFTER</> triggers fire at the end of the
-    statement (but before any statement-level <literal>AFTER</> triggers).
-    These types of triggers may only be defined on tables and foreign tables.
-    Row-level <literal>INSTEAD OF</> triggers may only be defined on views,
-    and fire immediately as each row in the view is identified as needing to
-    be operated on.
+    triggers may be defined on tables, views, or foreign tables.  Row-level
+    <literal>BEFORE</> triggers fire immediately before a particular row is
+    operated on, while row-level <literal>AFTER</> triggers fire at the end of
+    the statement (but before any statement-level <literal>AFTER</> triggers).
+    These types of triggers may only be defined on non-partitioned tables and
+    foreign tables.  Row-level <literal>INSTEAD OF</> triggers may only be
+    defined on views, and fire immediately as each row in the view is
+    identified as needing to be operated on.
    </para>
 
    <para>

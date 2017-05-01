@@ -861,17 +861,52 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 
 		/*
 		 * In the partitioned result relation case, lock the non-leaf result
-		 * relations too.  We don't however need ResultRelInfos for them.
+		 * relations too.  A subset of these are the roots of respective
+		 * partitioned tables, for which we also allocate ResulRelInfos.
 		 */
+		estate->es_root_result_relations = NULL;
+		estate->es_num_root_result_relations = 0;
 		if (plannedstmt->nonleafResultRelations)
 		{
+			int		num_roots = list_length(plannedstmt->rootResultRelations);
+
+			/*
+			 * Firstly, build ResultRelInfos for all the partitioned table
+			 * roots, because we will need them to fire the statement-level
+			 * triggers, if any.
+			 */
+			resultRelInfos = (ResultRelInfo *)
+									palloc(num_roots * sizeof(ResultRelInfo));
+			resultRelInfo = resultRelInfos;
+			foreach(l, plannedstmt->rootResultRelations)
+			{
+				Index		resultRelIndex = lfirst_int(l);
+				Oid			resultRelOid;
+				Relation	resultRelDesc;
+
+				resultRelOid = getrelid(resultRelIndex, rangeTable);
+				resultRelDesc = heap_open(resultRelOid, RowExclusiveLock);
+				InitResultRelInfo(resultRelInfo,
+								  resultRelDesc,
+								  lfirst_int(l),
+								  NULL,
+								  estate->es_instrument);
+				resultRelInfo++;
+			}
+
+			estate->es_root_result_relations = resultRelInfos;
+			estate->es_num_root_result_relations = num_roots;
+
+			/* Simply lock the rest of them. */
 			foreach(l, plannedstmt->nonleafResultRelations)
 			{
-				Index		resultRelationIndex = lfirst_int(l);
-				Oid			resultRelationOid;
+				Index	resultRelIndex = lfirst_int(l);
 
-				resultRelationOid = getrelid(resultRelationIndex, rangeTable);
-				LockRelationOid(resultRelationOid, RowExclusiveLock);
+				/* We locked the roots above. */
+				if (!list_member_int(plannedstmt->rootResultRelations,
+									 resultRelIndex))
+					LockRelationOid(getrelid(resultRelIndex, rangeTable),
+									RowExclusiveLock);
 			}
 		}
 	}
@@ -883,6 +918,8 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 		estate->es_result_relations = NULL;
 		estate->es_num_result_relations = 0;
 		estate->es_result_relation_info = NULL;
+		estate->es_root_result_relations = NULL;
+		estate->es_num_root_result_relations = 0;
 	}
 
 	/*
@@ -1561,6 +1598,14 @@ ExecEndPlan(PlanState *planstate, EState *estate)
 	{
 		/* Close indices and then the relation itself */
 		ExecCloseIndices(resultRelInfo);
+		heap_close(resultRelInfo->ri_RelationDesc, NoLock);
+		resultRelInfo++;
+	}
+
+	/* Close the root target relation(s). */
+	resultRelInfo = estate->es_root_result_relations;
+	for (i = estate->es_num_root_result_relations; i > 0; i--)
+	{
 		heap_close(resultRelInfo->ri_RelationDesc, NoLock);
 		resultRelInfo++;
 	}
