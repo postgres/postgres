@@ -16,8 +16,7 @@ ACST    34200    # Australian Central Standard Time
                  #     (Australia/Adelaide)
                  #     (Australia/Broken_Hill)
                  #     (Australia/Darwin)
-ACWST   31500    # Australian Central Western Standard Time
-                 #     (Australia/Eucla)
+ACWST   31500    # Australian Central Western Standard Time (obsolete)
 AESST   39600 D  # Australia Eastern Summer Standard Time (not in IANA database)
 AEDT    39600 D  # Australian Eastern Daylight Time
                  #     (Australia/Brisbane)
@@ -53,10 +52,8 @@ EAST    36000    # East Australian Standard Time (not in IANA database)
 # Other timezones:
 #  - EST: Eastern Standard Time (America)
 EST     36000    # Eastern Standard Time (not in IANA database)
-LHDT    Australia/Lord_Howe  # Lord Howe Daylight Time
-                 #     (Australia/Lord_Howe)
-LHST    37800    # Lord Howe Standard Time
-                 #     (Australia/Lord_Howe)
+LHDT    Australia/Lord_Howe  # Lord Howe Daylight Time (obsolete)
+LHST    37800    # Lord Howe Standard Time (obsolete)
 LIGT    36000    # Melbourne, Australia (not in IANA database)
 NZT     43200    # New Zealand Time (not in IANA database)
 SADT    37800 D  # South Australian Daylight-Saving Time (not in IANA database)
