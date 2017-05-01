@@ -455,7 +455,10 @@ array_cat(PG_FUNCTION_ARGS)
 
 
 /*
- * used by text_to_array() in varlena.c
+ * create_singleton_array - make a one-element array
+ *
+ * If desired, the caller can ask for it to be higher than one-dimensional.
+ * Caller's fcinfo must be passed in, as we use fn_extra for caching.
  */
 ArrayType *
 create_singleton_array(FunctionCallInfo fcinfo,
