@@ -137,10 +137,6 @@ $node_master->safe_psql('postgres', 'CHECKPOINT');
 $node_master->stop('immediate');
 
 $node_replica->promote;
-print "waiting for replica to come up\n";
-$node_replica->poll_query_until('postgres',
-	"SELECT NOT pg_is_in_recovery();")
-  or die "replica never exited recovery";
 
 $node_replica->safe_psql('postgres',
 	"INSERT INTO decoding(blah) VALUES ('after failover');");

@@ -109,8 +109,6 @@ $node_slave->psql(
 is($psql_out, '8128', "Visible");
 $node_master->stop;
 $node_slave->promote;
-$node_slave->poll_query_until('postgres', "SELECT NOT pg_is_in_recovery()")
-  or die "Timed out while waiting for promotion of standby";
 
 $node_slave->psql(
 	'postgres',
@@ -162,8 +160,6 @@ $node_slave->psql(
 is($psql_out, '-1', "Not visible");
 $node_master->stop;
 $node_slave->promote;
-$node_slave->poll_query_until('postgres', "SELECT NOT pg_is_in_recovery()")
-  or die "Timed out while waiting for promotion of standby";
 
 $node_slave->psql(
 	'postgres',
@@ -205,8 +201,6 @@ $node_slave->psql(
 is($psql_out, '-1', "Not visible");
 $node_master->stop;
 $node_slave->promote;
-$node_slave->poll_query_until('postgres', "SELECT NOT pg_is_in_recovery()")
-  or die "Timed out while waiting for promotion of standby";
 
 $node_slave->psql(
 	'postgres',

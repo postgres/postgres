@@ -215,8 +215,6 @@ $cur_master->psql(
 	PREPARE TRANSACTION 'xact_009_10';");
 $cur_master->teardown_node;
 $cur_slave->promote;
-$cur_slave->poll_query_until('postgres', "SELECT NOT pg_is_in_recovery()")
-  or die "Timed out while waiting for promotion of standby " . $cur_slave->name;
 
 # change roles
 note "Now paris is master and london is slave";
@@ -254,8 +252,6 @@ $cur_master->psql(
 $cur_master->stop;
 $cur_slave->restart;
 $cur_slave->promote;
-$cur_slave->poll_query_until('postgres', "SELECT NOT pg_is_in_recovery()")
-  or die "Timed out while waiting for promotion of standby " . $cur_slave->name;
 
 # change roles
 note "Now london is master and paris is slave";
@@ -296,8 +292,6 @@ $cur_master->stop;
 $cur_slave->teardown_node;
 $cur_slave->start;
 $cur_slave->promote;
-$cur_slave->poll_query_until('postgres', "SELECT NOT pg_is_in_recovery()")
-  or die "Timed out while waiting for promotion of standby " . $cur_slave->name;
 
 # change roles
 note "Now paris is master and london is slave";
