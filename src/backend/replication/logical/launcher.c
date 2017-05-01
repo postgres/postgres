@@ -748,10 +748,12 @@ ApplyLauncherShmemInit(void)
  * Wakeup the launcher on commit if requested.
  */
 void
-AtCommit_ApplyLauncher(void)
+AtEOXact_ApplyLauncher(bool isCommit)
 {
-	if (on_commit_launcher_wakeup)
+	if (isCommit && on_commit_launcher_wakeup)
 		ApplyLauncherWakeup();
+
+	on_commit_launcher_wakeup = false;
 }
 
 /*

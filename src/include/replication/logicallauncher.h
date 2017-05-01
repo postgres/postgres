@@ -22,6 +22,6 @@ extern Size ApplyLauncherShmemSize(void);
 extern void ApplyLauncherShmemInit(void);
 
 extern void ApplyLauncherWakeupAtCommit(void);
-extern void AtCommit_ApplyLauncher(void);
+extern void AtEOXact_ApplyLauncher(bool isCommit);
 
 #endif   /* LOGICALLAUNCHER_H */
