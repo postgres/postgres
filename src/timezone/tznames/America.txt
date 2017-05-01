@@ -9,9 +9,7 @@
 
 # Acre time is sometimes called Acre Standard Time (AST) which leads to a
 # conflict with AST (see below at AST)
-ACT    -18000    # Acre Time
-                 #     (America/Eirunepe)
-                 #     (America/Rio_Branco)
+ACT    -18000    # Acre Time (obsolete)
 # CONFLICT! ACST is not unique
 # Other timezones:
 #  - ACST: Australian Central Standard Time
@@ -35,30 +33,13 @@ AKST   -32400    # Alaska Standard Time
 # CONFLICT! AMST is not unique
 # Other timezones:
 #  - AMST: Armenia Summer Time (Asia)
-AMST   -10800 D  # Amazon Summer Time
-                 #     (America/Campo_Grande)
-                 #     (America/Cuiaba)
+AMST   -10800 D  # Amazon Summer Time (obsolete)
 # CONFLICT! AMT is not unique
 # Other timezones:
 #  - AMT: Armenia Time (Asia)
-AMT    -14400    # Amazon Time
-                 #     (America/Boa_Vista)
-                 #     (America/Campo_Grande)
-                 #     (America/Cuiaba)
-                 #     (America/Manaus)
-                 #     (America/Porto_Velho)
-ART    America/Argentina/Buenos_Aires  # Argentina Time
-                 #     (America/Argentina/Buenos_Aires)
-                 #     (America/Argentina/Cordoba)
-                 #     (America/Argentina/Tucuman)
-                 #     (America/Argentina/La_Rioja)
-                 #     (America/Argentina/San_Juan)
-                 #     (America/Argentina/Jujuy)
-                 #     (America/Argentina/Catamarca)
-                 #     (America/Argentina/Mendoza)
-                 #     (America/Argentina/Rio_Gallegos)
-                 #     (America/Argentina/Ushuaia)
-ARST    America/Argentina/Buenos_Aires  # Argentina Summer Time
+AMT    -14400    # Amazon Time (obsolete)
+ART    America/Argentina/Buenos_Aires  # Argentina Time (obsolete)
+ARST    America/Argentina/Buenos_Aires  # Argentina Summer Time (obsolete)
 # CONFLICT! AST is not unique
 # Other timezones:
 #  - AST: Arabic Standard Time (Asia)
@@ -90,19 +71,10 @@ AST    -14400    # Atlantic Standard Time
                  #     (America/Thule)
                  #     (America/Tortola)
                  #     (Atlantic/Bermuda)
-BOT    -14400    # Bolivia Time
-                 #     (America/La_Paz)
+BOT    -14400    # Bolivia Time (obsolete)
 BRA    -10800    # Brazil Time (not in IANA database)
-BRST    -7200 D  # Brasil Summer Time
-                 #     (America/Sao_Paulo)
-BRT    -10800    # Brasil Time
-                 #     (America/Araguaina)
-                 #     (America/Bahia)
-                 #     (America/Belem)
-                 #     (America/Fortaleza)
-                 #     (America/Maceio)
-                 #     (America/Recife)
-                 #     (America/Sao_Paulo)
+BRST    -7200 D  # Brasil Summer Time (obsolete)
+BRT    -10800    # Brasil Time (obsolete)
 # CONFLICT! CDT is not unique
 # Other timezones:
 #  - CDT: Central Daylight Time (America)
@@ -125,13 +97,9 @@ CDT    -18000 D  # Central Daylight Time
                  #     (America/Rainy_River)
                  #     (America/Rankin_Inlet)
                  #     (America/Winnipeg)
-CLST   -10800 D  # Chile Summer Time
-                 #     (America/Santiago)
-                 #     (Antarctica/Palmer)
-CLT    America/Santiago  # Chile Time
-                 #     (America/Santiago)
-                 #     (Antarctica/Palmer)
-COT    -18000    # Columbia Time (not in IANA database)
+CLST   -10800 D  # Chile Summer Time (obsolete)
+CLT    America/Santiago  # Chile Time (obsolete)
+COT    -18000    # Columbia Time (obsolete)
 # CONFLICT! CST is not unique
 # Other timezones:
 #  - CST: Central Standard Time (Australia)
@@ -156,9 +124,7 @@ CST    -21600    # Central Standard Time (America)
                  #     (America/Regina)
                  #     (America/Swift_Current)
                  #     (America/Winnipeg)
-ECT    -18000    # Ecuador Time
-                 # Eastern Caribbean Time
-                 #     (America/Guayaquil)
+ECT    -18000    # Ecuador Time (obsolete)
 EDT    -14400 D  # Eastern Daylight Saving Time
                  #     (America/Detroit)
                  #     (America/Grand_Turk)
@@ -176,10 +142,8 @@ EDT    -14400 D  # Eastern Daylight Saving Time
                  #     (America/Pangnirtung)
                  #     (America/Thunder_Bay)
                  #     (America/Toronto)
-EGST        0 D  # East Greenland Summer Time
-                 #     (America/Scoresbysund)
-EGT     -3600    # East Greenland Time (Svalbard & Jan Mayen)
-                 #     (America/Scoresbysund)
+EGST        0 D  # East Greenland Summer Time (obsolete)
+EGT     -3600    # East Greenland Time (Svalbard & Jan Mayen) (obsolete)
 # CONFLICT! EST is not unique
 # Other timezones:
 #  - EST: Eastern Standard Time (Australia)
@@ -205,12 +169,9 @@ EST    -18000    # Eastern Standard Time (America)
                  #     (America/Pangnirtung)
                  #     (America/Thunder_Bay)
                  #     (America/Toronto)
-FNT     -7200    # Fernando de Noronha Time
-                 #     (America/Noronha)
-FNST    -3600 D  # Fernando de Noronha Summer Time (not in IANA database)
-                 #     (America/Noronha)
-GFT    -10800    # French Guiana Time
-                 #     (America/Cayenne)
+FNT     -7200    # Fernando de Noronha Time (obsolete)
+FNST    -3600 D  # Fernando de Noronha Summer Time (obsolete)
+GFT    -10800    # French Guiana Time (obsolete)
 GMT         0    # Greenwich Mean Time
                  #     (Africa/Abidjan)
                  #     (Africa/Bamako)
@@ -229,8 +190,7 @@ GMT         0    # Greenwich Mean Time
                  #     (Etc/GMT)
                  #     (Europe/Dublin)
                  #     (Europe/London)
-GYT    America/Guyana  # Guyana Time
-                 #     (America/Guyana)
+GYT    America/Guyana  # Guyana Time (obsolete)
 HADT   -32400 D  # Hawaii-Aleutian Daylight Time (obsolete abbreviation)
                  #     (America/Adak)
 HAST   -36000    # Hawaii-Aleutian Standard Time (obsolete abbreviation)
@@ -274,11 +234,9 @@ PDT    -25200 D  # Pacific Daylight Time
                  #     (America/Tijuana)
                  #     (America/Vancouver)
                  #     (America/Whitehorse)
-PET    -18000    # Peru Time (not in IANA database)
-PMDT    -7200 D  # Pierre & Miquelon Daylight Time
-                 #     (America/Miquelon)
-PMST   -10800    # Pierre & Miquelon Standard Time
-                 #     (America/Miquelon)
+PET    -18000    # Peru Time (obsolete)
+PMDT    -7200 D  # Pierre & Miquelon Daylight Time (obsolete)
+PMST   -10800    # Pierre & Miquelon Standard Time (obsolete)
 PST    -28800    # Pacific Standard Time
                  #     (America/Dawson)
                  #     (America/Los_Angeles)
@@ -286,19 +244,11 @@ PST    -28800    # Pacific Standard Time
                  #     (America/Vancouver)
                  #     (America/Whitehorse)
                  #     (Pacific/Pitcairn)
-PYST   -10800 D  # Paraguay Summer Time
-                 #     (America/Asuncion)
-PYT    America/Asuncion  # Paraguay Time
-                 #     (America/Asuncion)
-SRT    America/Paramaribo  # Suriname Time
-                 #     (America/Paramaribo)
+PYST   -10800 D  # Paraguay Summer Time (obsolete)
+PYT    America/Asuncion  # Paraguay Time (obsolete)
+SRT    America/Paramaribo  # Suriname Time (obsolete)
 UYST    -7200 D  # Uruguay Summer Time (obsolete)
-                 #     (America/Montevideo)
-UYT    -10800    # Uruguay Time
-                 #     (America/Montevideo)
-VET    America/Caracas  # Venezuela Time
-                 #     (America/Caracas)
-WGST    -7200 D  # Western Greenland Summer Time
-                 #     (America/Godthab)
-WGT    -10800    # West Greenland Time
-                 #     (America/Godthab)
+UYT    -10800    # Uruguay Time (obsolete)
+VET    America/Caracas  # Venezuela Time (obsolete)
+WGST    -7200 D  # Western Greenland Summer Time (obsolete)
+WGT    -10800    # West Greenland Time (obsolete)
