@@ -978,9 +978,18 @@ connectOptions2(PGconn *conn)
 
 		for (i = 0; i < conn->nconnhost; i++)
 		{
-			/* Try to get a password for this host from pgpassfile */
+			/*
+			 * Try to get a password for this host from pgpassfile. We use host
+			 * name rather than host address in the same manner to PQhost().
+			 */
+			char *pwhost = conn->connhost[i].host;
+
+			if (conn->connhost[i].type == CHT_HOST_ADDRESS &&
+				conn->pghost != NULL && conn->pghost[0] != '\0')
+				pwhost = conn->pghost;
+
 			conn->connhost[i].password =
-				passwordFromFile(conn->connhost[i].host,
+				passwordFromFile(pwhost,
 								 conn->connhost[i].port,
 								 conn->dbName,
 								 conn->pguser,
