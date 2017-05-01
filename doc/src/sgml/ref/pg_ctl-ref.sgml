@@ -412,6 +412,13 @@ PostgreSQL documentation
         <command>pg_ctl</command> returns an exit code based on the
         success of the startup or shutdown.
        </para>
+
+       <para>
+        If the operation does not complete within the timeout (see
+        option <option>-t</option>), then <command>pg_ctl</command> exits with
+        a nonzero exit status.  But note that the operation might continue in
+        the background and eventually succeed.
+       </para>
       </listitem>
      </varlistentry>
 

@@ -840,7 +840,9 @@ do_start(void)
 				break;
 			case POSTMASTER_STILL_STARTING:
 				print_msg(_(" stopped waiting\n"));
-				print_msg(_("server is still starting up\n"));
+				write_stderr(_("%s: server did not start in time\n"),
+							 progname);
+				exit(1);
 				break;
 			case POSTMASTER_FAILED:
 				print_msg(_(" stopped waiting\n"));
@@ -1166,7 +1168,9 @@ do_promote(void)
 		else
 		{
 			print_msg(_(" stopped waiting\n"));
-			print_msg(_("server is still promoting\n"));
+			write_stderr(_("%s: server did not promote in time\n"),
+						 progname);
+			exit(1);
 		}
 	}
 	else
