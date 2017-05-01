@@ -7,10 +7,8 @@
 # src/timezone/tznames/Indian.txt
 #
 
-CCT     23400    # Cocos Islands Time (Indian Ocean)
-                 #     (Indian/Cocos)
-CXT     25200    # Christmas Island Time (Indian Ocean)
-                 #     (Indian/Christmas)
+CCT     23400    # Cocos Islands Time (Indian Ocean) (obsolete)
+CXT     25200    # Christmas Island Time (Indian Ocean) (obsolete)
 EAT     10800    # East Africa Time
                  #     (Africa/Addis_Ababa)
                  #     (Africa/Asmera)
@@ -23,16 +21,10 @@ EAT     10800    # East Africa Time
                  #     (Indian/Antananarivo)
                  #     (Indian/Comoro)
                  #     (Indian/Mayotte)
-IOT     Indian/Chagos  # British Indian Ocean Territory (Chagos)
-                 #     (Indian/Chagos)
-MUT     14400    # Mauritius Island Time
-                 #     (Indian/Mauritius)
-MUST    18000 D  # Mauritius Island Summer Time
-                 #     (Indian/Mauritius)
-MVT     18000    # Maldives Island Time
-                 #     (Indian/Maldives)
-RET     14400    # Reunion Time
-                 #     (Indian/Reunion)
-SCT     14400    # Seychelles Time
-                 #     (Indian/Mahe)
+IOT     Indian/Chagos  # British Indian Ocean Territory (Chagos) (obsolete)
+MUT     14400    # Mauritius Island Time (obsolete)
+MUST    18000 D  # Mauritius Island Summer Time (obsolete)
+MVT     18000    # Maldives Island Time (obsolete)
+RET     14400    # Reunion Time (obsolete)
+SCT     14400    # Seychelles Time (obsolete)
 TFT     18000    # Kerguelen Time (obsolete)

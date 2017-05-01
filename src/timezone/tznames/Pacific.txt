@@ -10,72 +10,48 @@
 # CONFLICT! BST is not unique
 # Other timezones:
 #  - BST: British Summer Time
-BST     39600    # Bougainville Standard Time (Papua New Guinea)
-                 #     (Pacific/Bougainville)
-CHADT   49500 D  # Chatham Daylight Time (New Zealand)
-                 #     (Pacific/Chatham)
-CHAST   45900    # Chatham Standard Time (New Zealand)
-                 #     (Pacific/Chatham)
+BST     39600    # Bougainville Standard Time (Papua New Guinea) (obsolete)
+CHADT   49500 D  # Chatham Daylight Time (New Zealand) (obsolete)
+CHAST   45900    # Chatham Standard Time (New Zealand) (obsolete)
 ChST    36000    # Chamorro Standard Time (lower case "h" is as in IANA database)
                  #     (Pacific/Guam)
                  #     (Pacific/Saipan)
-CHUT    36000    # Chuuk Time
-                 #     (Pacific/Chuuk)
-CKT     Pacific/Rarotonga  # Cook Islands Time
-                 #     (Pacific/Rarotonga)
-EASST   Pacific/Easter  # Easter Island Summer Time
-                 #     (Pacific/Easter)
+CHUT    36000    # Chuuk Time (obsolete)
+CKT     Pacific/Rarotonga  # Cook Islands Time (obsolete)
+EASST   Pacific/Easter  # Easter Island Summer Time (obsolete)
 # CONFLICT! EAST is not unique
 # Other timezones:
 #  - EAST: East Australian Standard Time (Australia)
-EAST    Pacific/Easter  # Easter Island Time (Chile)
-                 #     (Pacific/Easter)
-FJST    46800 D  # Fiji Summer Time (caution: this used to mean -46800)
-                 #     (Pacific/Fiji)
-FJT     43200    # Fiji Time (caution: this used to mean -43200)
-                 #     (Pacific/Fiji)
-GALT   -21600    # Galapagos Time
-                 #     (Pacific/Galapagos)
-GAMT   -32400    # Gambier Time
-                 #     (Pacific/Gambier)
-GILT    43200    # Gilbert Islands Time
-                 #     (Pacific/Tarawa)
+EAST    Pacific/Easter  # Easter Island Time (Chile) (obsolete)
+FJST    46800 D  # Fiji Summer Time (caution: this used to mean -46800) (obsolete)
+FJT     43200    # Fiji Time (caution: this used to mean -43200) (obsolete)
+GALT   -21600    # Galapagos Time (obsolete)
+GAMT   -32400    # Gambier Time (obsolete)
+GILT    43200    # Gilbert Islands Time (obsolete)
 HST    -36000    # Hawaiian Standard Time
                  #     (Pacific/Honolulu)
                  #     (Pacific/Johnston)
-KOST    Pacific/Kosrae  # Kosrae Time
-                 #     (Pacific/Kosrae)
-LINT    Pacific/Kiritimati  # Line Islands Time (Kiribati)
-                 #     (Pacific/Kiritimati)
-MART   -34200    # Marquesas Time
-                 #     (Pacific/Marquesas)
-MHT     43200    # Kwajalein Time
-                 #     (Pacific/Kwajalein)
-                 #     (Pacific/Majuro)
+KOST    Pacific/Kosrae  # Kosrae Time (obsolete)
+LINT    Pacific/Kiritimati  # Line Islands Time (Kiribati) (obsolete)
+MART   -34200    # Marquesas Time (obsolete)
+MHT     43200    # Kwajalein Time (obsolete)
 MPT     36000    # North Mariana Islands Time (not in IANA database)
-NCT     39600    # New Caledonia Time
-                 #     (Pacific/Noumea)
+NCT     39600    # New Caledonia Time (obsolete)
 # CONFLICT! NFT is not unique
 # Other timezones:
 #  - NFT: Newfoundland Time (America)
-NFT     Pacific/Norfolk  # Norfolk Time
-                 #     (Pacific/Norfolk)
-NRT     Pacific/Nauru  # Nauru Time
-                 #     (Pacific/Nauru)
-NUT     Pacific/Niue  # Niue Time
-                 #     (Pacific/Niue)
+NFT     Pacific/Norfolk  # Norfolk Time (obsolete)
+NRT     Pacific/Nauru  # Nauru Time (obsolete)
+NUT     Pacific/Niue  # Niue Time (obsolete)
 NZDT    46800 D  # New Zealand Daylight Time
                  #     (Antarctica/McMurdo)
                  #     (Pacific/Auckland)
 NZST    43200    # New Zealand Standard Time
                  #     (Antarctica/McMurdo)
                  #     (Pacific/Auckland)
-PGT     36000    # Papua New Guinea Time
-                 #     (Pacific/Port_Moresby)
-PHOT    Pacific/Enderbury  # Phoenix Islands Time (Kiribati)
-                 #     (Pacific/Enderbury)
-PONT    39600    # Ponape Time (Micronesia)
-                 #     (Pacific/Ponape)
+PGT     36000    # Papua New Guinea Time (obsolete)
+PHOT    Pacific/Enderbury  # Phoenix Islands Time (Kiribati) (obsolete)
+PONT    39600    # Ponape Time (Micronesia) (obsolete)
 PST    -28800    # Pacific Standard Time
                  #     (America/Dawson)
                  #     (America/Los_Angeles)
@@ -83,32 +59,21 @@ PST    -28800    # Pacific Standard Time
                  #     (America/Vancouver)
                  #     (America/Whitehorse)
                  #     (Pacific/Pitcairn)
-PWT     32400    # Palau Time
-                 #     (Pacific/Palau)
-SBT     39600    # Solomon Islands Time
-                 #     (Pacific/Guadalcanal)
+PWT     32400    # Palau Time (obsolete)
+SBT     39600    # Solomon Islands Time (obsolete)
 SST    -39600    # South Sumatran Time
                  #     (Pacific/Midway)
                  #     (Pacific/Pago_Pago)
-TAHT   -36000    # Tahiti Time (IANA database says "TAHT", other sources "THAT")
-                 #     (Pacific/Tahiti)
-TKT     Pacific/Fakaofo  # Tokelau Time
-                 #     (Pacific/Fakaofo)
+TAHT   -36000    # Tahiti Time (obsolete)
+TKT     Pacific/Fakaofo  # Tokelau Time (obsolete)
 TOT     46800    # Tonga Time (obsolete)
-TRUT    36000    # Truk Time (IANA database used to say "TRUT", other sources say "TRUK")
-                 #     (Pacific/Truk)
-TVT     43200    # Tuvalu Time
-                 #     (Pacific/Funafuti)
-VUT     39600    # Vanuata Time
-                 #     (Pacific/Efate)
-WAKT    43200    # Wake Time
-                 #     (Pacific/Wake)
-WFT     43200    # Wallis and Futuna Time
-                 #     (Pacific/Wallis)
-WSDT    50400 D  # West Samoa Daylight Time
-                 #     (Pacific/Apia)
-WSST    46800    # West Samoa Standard Time
-                 #     (Pacific/Apia)
+TRUT    36000    # Truk Time (obsolete)
+TVT     43200    # Tuvalu Time (obsolete)
+VUT     39600    # Vanuata Time (obsolete)
+WAKT    43200    # Wake Time (obsolete)
+WFT     43200    # Wallis and Futuna Time (obsolete)
+WSDT    50400 D  # West Samoa Daylight Time (obsolete)
+WSST    46800    # West Samoa Standard Time (obsolete)
 # CONFLICT! WST is not unique
 # Other timezones:
 #  - WST: Western Standard Time (Australia)

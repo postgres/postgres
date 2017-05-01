@@ -65,7 +65,7 @@ Link Africa/Asmara Africa/Asmera
 # Mali (southern)
 Zone	Africa/Bamako	-0:32:00 -	LMT	1912
 			 0:00	-	GMT	1934 Feb 26
-			-1:00	-	WAT	1960 Jun 20
+			-1:00	-	-01	1960 Jun 20
 			 0:00	-	GMT
 
 # Central African Republic
@@ -75,7 +75,7 @@ Zone	Africa/Bangui	1:14:20	-	LMT	1912
 # Gambia
 Zone	Africa/Banjul	-1:06:36 -	LMT	1912
 			-1:06:36 -	BMT	1935 # Banjul Mean Time
-			-1:00	-	WAT	1964
+			-1:00	-	-01	1964
 			 0:00	-	GMT
 
 # Malawi
@@ -93,18 +93,18 @@ Zone Africa/Bujumbura	1:57:28	-	LMT	1890
 # Guinea
 Zone	Africa/Conakry	-0:54:52 -	LMT	1912
 			 0:00	-	GMT	1934 Feb 26
-			-1:00	-	WAT	1960
+			-1:00	-	-01	1960
 			 0:00	-	GMT
 
 # Senegal
 Zone	Africa/Dakar	-1:09:44 -	LMT	1912
-			-1:00	-	WAT	1941 Jun
+			-1:00	-	-01	1941 Jun
 			 0:00	-	GMT
 
 # Tanzania
 Zone Africa/Dar_es_Salaam 2:37:08 -	LMT	1931
 			3:00	-	EAT	1948
-			2:45	-	BEAUT	1961
+			2:45	-	+0245	1961
 			3:00	-	EAT
 
 # Djibouti
@@ -122,14 +122,14 @@ Zone	Africa/Douala	0:38:48	-	LMT	1912
 # The International Hydrographic Bulletin, 1932-33, p 63 says that
 # Sierra Leone would advance its clocks by 20 minutes on 1933-10-01.
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
-Rule	SL	1935	1942	-	Jun	 1	0:00	0:40	SLST
-Rule	SL	1935	1942	-	Oct	 1	0:00	0	WAT
-Rule	SL	1957	1962	-	Jun	 1	0:00	1:00	SLST
+Rule	SL	1935	1942	-	Jun	 1	0:00	0:40	-0020
+Rule	SL	1935	1942	-	Oct	 1	0:00	0	-01
+Rule	SL	1957	1962	-	Jun	 1	0:00	1:00	+01
 Rule	SL	1957	1962	-	Sep	 1	0:00	0	GMT
 Zone	Africa/Freetown	-0:53:00 -	LMT	1882
 			-0:53:00 -	FMT	1913 Jun # Freetown Mean Time
 			-1:00	SL	%s	1957
-			 0:00	SL	%s
+			 0:00	SL	GMT/+01
 
 # Botswana
 # From Paul Eggert (2013-02-21):
@@ -153,8 +153,8 @@ Zone	Africa/Juba	2:06:24 -	LMT	1931
 # Uganda
 Zone	Africa/Kampala	2:09:40 -	LMT	1928 Jul
 			3:00	-	EAT	1930
-			2:30	-	BEAT	1948
-			2:45	-	BEAUT	1957
+			2:30	-	+0230	1948
+			2:45	-	+0245	1957
 			3:00	-	EAT
 
 # Rwanda
@@ -177,11 +177,11 @@ Zone	Africa/Lome	0:04:52 -	LMT	1893
 #
 # Shanks gives 1911-05-26 for the transition to WAT,
 # evidently confusing the date of the Portuguese decree
-# http://dre.pt/pdf1sdip/1911/05/12500/23132313.pdf
+# https://dre.pt/pdf1sdip/1911/05/12500/23132313.pdf
 # with the date that it took effect, namely 1912-01-01.
 #
 Zone	Africa/Luanda	0:52:56	-	LMT	1892
-			0:52:04	-	AOT	1912 Jan  1 # Angola Time
+			0:52:04	-	+005204	1912 Jan  1
 			1:00	-	WAT
 
 # Democratic Republic of the Congo (east)
@@ -216,19 +216,19 @@ Zone	Africa/Mbabane	2:04:24 -	LMT	1903 Mar
 # Somalia
 Zone Africa/Mogadishu	3:01:28 -	LMT	1893 Nov
 			3:00	-	EAT	1931
-			2:30	-	BEAT	1957
+			2:30	-	+0230	1957
 			3:00	-	EAT
 
 # Niger
 Zone	Africa/Niamey	 0:08:28 -	LMT	1912
-			-1:00	-	WAT	1934 Feb 26
+			-1:00	-	-01	1934 Feb 26
 			 0:00	-	GMT	1960
 			 1:00	-	WAT
 
 # Mauritania
 Zone Africa/Nouakchott	-1:03:48 -	LMT	1912
 			 0:00	-	GMT	1934 Feb 26
-			-1:00	-	WAT	1960 Nov 28
+			-1:00	-	-01	1960 Nov 28
 			 0:00	-	GMT
 
 # Burkina Faso
@@ -264,19 +264,19 @@ Zone	America/Antigua	-4:07:12 -	LMT	1912 Mar 2
 # The name "Comodoro Rivadavia" exceeds the 14-byte POSIX limit.
 Zone America/Argentina/ComodRivadavia -4:30:00 - LMT	1894 Oct 31
 			-4:16:48 -	CMT	1920 May
-			-4:00	-	ART	1930 Dec
-			-4:00	Arg	AR%sT	1969 Oct  5
-			-3:00	Arg	AR%sT	1991 Mar  3
-			-4:00	-	WART	1991 Oct 20
-			-3:00	Arg	AR%sT	1999 Oct  3
-			-4:00	Arg	AR%sT	2000 Mar  3
-			-3:00	-	ART	2004 Jun  1
-			-4:00	-	WART	2004 Jun 20
-			-3:00	-	ART
+			-4:00	-	-04	1930 Dec
+			-4:00	Arg	-04/-03	1969 Oct  5
+			-3:00	Arg	-03/-02	1991 Mar  3
+			-4:00	-	-04	1991 Oct 20
+			-3:00	Arg	-03/-02	1999 Oct  3
+			-4:00	Arg	-04/-03	2000 Mar  3
+			-3:00	-	-03	2004 Jun  1
+			-4:00	-	-04	2004 Jun 20
+			-3:00	-	-03
 
 # Aruba
 Zone	America/Aruba	-4:40:24 -	LMT	1912 Feb 12 # Oranjestad
-			-4:30	-	ANT	1965 # Netherlands Antilles Time
+			-4:30	-	-0430	1965
 			-4:00	-	AST
 
 # Cayman Is
@@ -365,12 +365,12 @@ Zone America/Montserrat	-4:08:52 -	LMT	1911 Jul  1  0:01 # Cork Hill
 # Formosa (FM), La Pampa (LP), Chubut (CH)
 Zone America/Rosario	-4:02:40 -	LMT	1894 Nov
 			-4:16:44 -	CMT	1920 May
-			-4:00	-	ART	1930 Dec
-			-4:00	Arg	AR%sT	1969 Oct  5
-			-3:00	Arg	AR%sT	1991 Jul
-			-3:00	-	ART	1999 Oct  3  0:00
-			-4:00	Arg	AR%sT	2000 Mar  3  0:00
-			-3:00	-	ART
+			-4:00	-	-04	1930 Dec
+			-4:00	Arg	-04/-03	1969 Oct  5
+			-3:00	Arg	-03/-02	1991 Jul
+			-3:00	-	-03	1999 Oct  3  0:00
+			-4:00	Arg	-04/-03	2000 Mar  3  0:00
+			-3:00	-	-03
 
 # St Kitts-Nevis
 Zone America/St_Kitts	-4:10:52 -	LMT	1912 Mar  2 # Basseterre
@@ -403,12 +403,12 @@ Link Antarctica/McMurdo Antarctica/South_Pole
 # Milne says 2:59:54 was the meridian of the saluting battery at Aden,
 # and that Yemen was at 1:55:56, the meridian of the Hagia Sophia.
 Zone	Asia/Aden	2:59:54	-	LMT	1950
-			3:00	-	AST
+			3:00	-	+03
 
 # Bahrain
 Zone	Asia/Bahrain	3:22:20 -	LMT	1920     # Manamah
-			4:00	-	GST	1972 Jun
-			3:00	-	AST
+			4:00	-	+04	1972 Jun
+			3:00	-	+03
 
 # India
 #
@@ -431,7 +431,7 @@ Zone	Asia/Bahrain	3:22:20 -	LMT	1920     # Manamah
 # counties Deqing, Enping, Kaiping, Luoding, Taishan, Xinxing,
 # Yangchun, Yangjiang, Yu'nan, and Yunfu.
 Zone	Asia/Chongqing	7:06:20	-	LMT	1928     # or Chungking
-			7:00	-	LONT	1980 May # Long-shu Time
+			7:00	-	+07	1980 May
 			8:00	PRC	C%sT
 Link Asia/Chongqing Asia/Chungking
 
@@ -442,43 +442,43 @@ Link Asia/Chongqing Asia/Chungking
 # October 1954, with exact date and time unspecified.
 Zone	Asia/Hanoi	7:03:24 -	LMT	1906 Jul  1
 			7:06:30	-	PLMT	1911 May  1
-			7:00	-	ICT	1942 Dec 31 23:00
-			8:00	-	IDT	1945 Mar 14 23:00
-			9:00	-	JST	1945 Sep  2
-			7:00	-	ICT	1947 Apr  1
-			8:00	-	IDT	1954 Oct
-			7:00	-	ICT
+			7:00	-	+07	1942 Dec 31 23:00
+			8:00	-	+08	1945 Mar 14 23:00
+			9:00	-	+09	1945 Sep  2
+			7:00	-	+07	1947 Apr  1
+			8:00	-	+08	1954 Oct
+			7:00	-	+07
 
 # China
 # Changbai Time ("Long-white Time", Long-white = Heilongjiang area)
 # Heilongjiang (except Mohe county), Jilin
 Zone	Asia/Harbin	8:26:44	-	LMT	1928     # or Haerbin
-			8:30	-	CHAT	1932 Mar # Changbai Time
+			8:30	-	+0830	1932 Mar
 			8:00	-	CST	1940
-			9:00	-	CHAT	1966 May
-			8:30	-	CHAT	1980 May
+			9:00	-	+09	1966 May
+			8:30	-	+0830	1980 May
 			8:00	PRC	C%sT
 
 # far west China
 Zone	Asia/Kashgar	5:03:56	-	LMT	1928     # or Kashi or Kaxgar
-			5:30	-	KAST	1940     # Kashgar Time
-			5:00	-	KAST	1980 May
+			5:30	-	+0530	1940
+			5:00	-	+05	1980 May
 			8:00	PRC	C%sT
 
 # Kuwait
 Zone	Asia/Kuwait	3:11:56 -	LMT	1950
-			3:00	-	AST
+			3:00	-	+03
 
 
 # Oman
 # Milne says 3:54:24 was the meridian of the Muscat Tidal Observatory.
 Zone	Asia/Muscat	3:54:24 -	LMT	1920
-			4:00	-	GST
+			4:00	-	+04
 
 # India
 # From Paul Eggert (2014-08-11), after a heads-up from Stephen Colebourne:
 # According to a Portuguese decree (1911-05-26)
-# http://dre.pt/pdf1sdip/1911/05/12500/23132313.pdf
+# https://dre.pt/pdf1sdip/1911/05/12500/23132313.pdf
 # Portuguese India switched to UT +05 on 1912-01-01.
 #Zone	Asia/Panaji	[not enough info to complete]
 
@@ -491,12 +491,12 @@ Zone	Asia/Muscat	3:54:24 -	LMT	1920
 # transitions there.
 Zone	Asia/Phnom_Penh	6:59:40 -	LMT	1906 Jul  1
 			7:06:30	-	PLMT	1911 May  1
-			7:00	-	ICT	1942 Dec 31 23:00
-			8:00	-	IDT	1945 Mar 14 23:00
-			9:00	-	JST	1945 Sep  2
-			7:00	-	ICT	1947 Apr  1
-			8:00	-	IDT	1953 Nov  9
-			7:00	-	ICT
+			7:00	-	+07	1942 Dec 31 23:00
+			8:00	-	+08	1945 Mar 14 23:00
+			9:00	-	+09	1945 Sep  2
+			7:00	-	+07	1947 Apr  1
+			8:00	-	+08	1953 Nov  9
+			7:00	-	+07
 
 # Israel
 Zone	Asia/Tel_Aviv	2:19:04 -	LMT	1880
@@ -511,16 +511,16 @@ Zone	Asia/Tel_Aviv	2:19:04 -	LMT	1880
 # this is probably wrong but it's better than guessing no transition.
 Zone	Asia/Vientiane	6:50:24 -	LMT	1906 Jul  1
 			7:06:30	-	PLMT	1911 May  1
-			7:00	-	ICT	1942 Dec 31 23:00
-			8:00	-	IDT	1945 Mar 14 23:00
-			9:00	-	JST	1945 Sep  2
-			7:00	-	ICT	1947 Apr  1
-			8:00	-	IDT	1955 Apr 15
-			7:00	-	ICT
+			7:00	-	+07	1942 Dec 31 23:00
+			8:00	-	+08	1945 Mar 14 23:00
+			9:00	-	+09	1945 Sep  2
+			7:00	-	+07	1947 Apr  1
+			8:00	-	+08	1955 Apr 15
+			7:00	-	+07
 
 # Jan Mayen
 # From Whitman:
-Zone Atlantic/Jan_Mayen	-1:00	-	EGT
+Zone Atlantic/Jan_Mayen	-1:00	-	-01
 
 # St Helena
 Zone Atlantic/St_Helena	-0:22:48 -	LMT	1890 # Jamestown
@@ -663,15 +663,13 @@ Zone Pacific/Johnston	-10:00	-	HST
 #  "   3:00P Ar. MIDWAY ISLAND . . . . . . . . . M.L.T. Lv. 6:00A  "
 #
 Zone Pacific/Midway	-11:49:28 -	LMT	1901
-			-11:00	-	NST	1956 Jun  3
-			-11:00	1:00	NDT	1956 Sep  2
-			-11:00	-	NST	1967 Apr    # N=Nome
-			-11:00	-	BST	1983 Nov 30 # B=Bering
-			-11:00	-	SST	            # S=Samoa
+			-11:00	-	-11	1956 Jun  3
+			-11:00	1:00	-10	1956 Sep  2
+			-11:00	-	-11
 
 # N Mariana Is
 Zone Pacific/Saipan	-14:17:00 -	LMT	1844 Dec 31
 			 9:43:00 -	LMT	1901
-			 9:00	-	MPT	1969 Oct    # N Mariana Is Time
-			10:00	-	MPT	2000 Dec 23
+			 9:00	-	+09	1969 Oct
+			10:00	-	+10	2000 Dec 23
 			10:00	-	ChST	# Chamorro Standard Time
