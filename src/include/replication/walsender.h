@@ -44,6 +44,7 @@ extern void WalSndSignals(void);
 extern Size WalSndShmemSize(void);
 extern void WalSndShmemInit(void);
 extern void WalSndWakeup(void);
+extern void WalSndWaitStopping(void);
 extern void WalSndRqstFileReload(void);
 
 /*
