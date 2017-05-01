@@ -126,8 +126,11 @@ add_paths_to_joinrel(PlannerInfo *root,
 	 *
 	 * We have some special cases: for JOIN_SEMI and JOIN_ANTI, it doesn't
 	 * matter since the executor can make the equivalent optimization anyway;
-	 * we need not expend planner cycles on proofs.  For JOIN_UNIQUE_INNER, we
-	 * know we're going to force uniqueness of the innerrel below.  For
+	 * we need not expend planner cycles on proofs.  For JOIN_UNIQUE_INNER, if
+	 * the LHS covers all of the associated semijoin's min_lefthand, then it's
+	 * appropriate to set inner_unique because the path produced by
+	 * create_unique_path will be unique relative to the LHS.  (If we have an
+	 * LHS that's only part of the min_lefthand, that is *not* true.)  For
 	 * JOIN_UNIQUE_OUTER, pass JOIN_INNER to avoid letting that value escape
 	 * this module.
 	 */
@@ -138,7 +141,8 @@ add_paths_to_joinrel(PlannerInfo *root,
 			extra.inner_unique = false; /* well, unproven */
 			break;
 		case JOIN_UNIQUE_INNER:
-			extra.inner_unique = true;
+			extra.inner_unique = bms_is_subset(sjinfo->min_lefthand,
+											   outerrel->relids);
 			break;
 		case JOIN_UNIQUE_OUTER:
 			extra.inner_unique = innerrel_is_unique(root, outerrel, innerrel,

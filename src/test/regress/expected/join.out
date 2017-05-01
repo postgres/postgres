@@ -5634,3 +5634,32 @@ reset enable_sort;
 drop table j1;
 drop table j2;
 drop table j3;
+-- check that semijoin inner is not seen as unique for a portion of the outerrel
+explain (verbose, costs off)
+select t1.unique1, t2.hundred
+from onek t1, tenk1 t2
+where exists (select 1 from tenk1 t3
+              where t3.thousand = t1.unique1 and t3.tenthous = t2.hundred)
+      and t1.unique1 < 1;
+                                   QUERY PLAN                                    
+---------------------------------------------------------------------------------
+ Nested Loop
+   Output: t1.unique1, t2.hundred
+   ->  Hash Join
+         Output: t1.unique1, t3.tenthous
+         Hash Cond: (t3.thousand = t1.unique1)
+         ->  HashAggregate
+               Output: t3.thousand, t3.tenthous
+               Group Key: t3.thousand, t3.tenthous
+               ->  Index Only Scan using tenk1_thous_tenthous on public.tenk1 t3
+                     Output: t3.thousand, t3.tenthous
+         ->  Hash
+               Output: t1.unique1
+               ->  Index Only Scan using onek_unique1 on public.onek t1
+                     Output: t1.unique1
+                     Index Cond: (t1.unique1 < 1)
+   ->  Index Only Scan using tenk1_hundred on public.tenk1 t2
+         Output: t2.hundred
+         Index Cond: (t2.hundred = t3.tenthous)
+(18 rows)
+
