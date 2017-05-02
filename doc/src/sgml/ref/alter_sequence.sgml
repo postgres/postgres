@@ -180,6 +180,14 @@ ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> S
         the start value that was recorded by <command>CREATE SEQUENCE</>
         or last set by <command>ALTER SEQUENCE START WITH</>.
        </para>
+
+       <para>
+        Like a <function>setval</function> call, a <literal>RESTART</literal>
+        operation on a sequence is never rolled back, to avoid blocking of
+        concurrent transactions that obtain numbers from the same sequence.
+        (The other clauses cause ordinary catalog updates that can be rolled
+        back.)
+       </para>
       </listitem>
      </varlistentry>
 
@@ -280,15 +288,6 @@ ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> S
 
  <refsect1>
   <title>Notes</title>
-
-  <para>
-   To avoid blocking of concurrent transactions that obtain numbers from the
-   same sequence, <command>ALTER SEQUENCE</command>'s effects on the sequence
-   generation parameters are never rolled back; those changes take effect
-   immediately and are not reversible.  However, the <literal>OWNED BY</>,
-   <literal>OWNER TO</>, <literal>RENAME TO</>, and <literal>SET SCHEMA</>
-   clauses cause ordinary catalog updates that can be rolled back.
-  </para>
 
   <para>
    <command>ALTER SEQUENCE</command> will not immediately affect
