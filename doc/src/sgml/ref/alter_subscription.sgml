@@ -35,11 +35,11 @@ ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> REFRESH PUB
 
     COPY DATA | NOCOPY DATA
 
-ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> OWNER TO { <replaceable>new_owner</replaceable> | CURRENT_USER | SESSION_USER }
-ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable>new_name</replaceable>
 ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> CONNECTION '<replaceable>conninfo</replaceable>'
 ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> ENABLE
 ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> DISABLE
+ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> OWNER TO { <replaceable>new_owner</replaceable> | CURRENT_USER | SESSION_USER }
+ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable>new_name</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -67,24 +67,6 @@ ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> DISABLE
     <listitem>
      <para>
       The name of a subscription whose properties are to be altered.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><replaceable class="parameter">new_owner</replaceable></term>
-    <listitem>
-     <para>
-      The user name of the new owner of the subscription.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><replaceable class="parameter">new_name</replaceable></term>
-    <listitem>
-     <para>
-      The new name for the subscription.
      </para>
     </listitem>
    </varlistentry>
@@ -156,6 +138,23 @@ ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> DISABLE
     </listitem>
    </varlistentry>
 
+   <varlistentry>
+    <term><replaceable class="parameter">new_owner</replaceable></term>
+    <listitem>
+     <para>
+      The user name of the new owner of the subscription.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">new_name</replaceable></term>
+    <listitem>
+     <para>
+      The new name for the subscription.
+     </para>
+    </listitem>
+   </varlistentry>
   </variablelist>
  </refsect1>
 
