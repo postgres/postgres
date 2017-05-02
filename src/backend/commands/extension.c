@@ -718,6 +718,9 @@ execute_sql_string(const char *sql, const char *filename)
 		List	   *stmt_list;
 		ListCell   *lc2;
 
+		/* Be sure parser can see any DDL done so far */
+		CommandCounterIncrement();
+
 		stmt_list = pg_analyze_and_rewrite(parsetree,
 										   sql,
 										   NULL,
