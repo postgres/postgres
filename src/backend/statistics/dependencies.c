@@ -624,7 +624,7 @@ dependency_is_fully_matched(MVDependency * dependency, Bitmapset *attnums)
  *		check that the attnum matches is implied by the functional dependency
  */
 static bool
-dependency_implies_attribute(MVDependency * dependency, AttrNumber attnum)
+dependency_implies_attribute(MVDependency *dependency, AttrNumber attnum)
 {
 	if (attnum == dependency->attributes[dependency->nattributes - 1])
 		return true;
@@ -641,11 +641,6 @@ staext_dependencies_load(Oid mvoid)
 {
 	bool		isnull;
 	Datum		deps;
-
-	/*
-	 * Prepare to scan pg_statistic_ext for entries having indrelid = this
-	 * rel.
-	 */
 	HeapTuple	htup = SearchSysCache1(STATEXTOID, ObjectIdGetDatum(mvoid));
 
 	if (!HeapTupleIsValid(htup))
@@ -653,7 +648,6 @@ staext_dependencies_load(Oid mvoid)
 
 	deps = SysCacheGetAttr(STATEXTOID, htup,
 						   Anum_pg_statistic_ext_stxdependencies, &isnull);
-
 	Assert(!isnull);
 
 	ReleaseSysCache(htup);
@@ -687,16 +681,14 @@ pg_dependencies_in(PG_FUNCTION_ARGS)
 Datum
 pg_dependencies_out(PG_FUNCTION_ARGS)
 {
+	bytea	   *data = PG_GETARG_BYTEA_PP(0);
+	MVDependencies *dependencies = statext_dependencies_deserialize(data);
 	int			i,
 				j;
 	StringInfoData str;
 
-	bytea	   *data = PG_GETARG_BYTEA_PP(0);
-
-	MVDependencies *dependencies = statext_dependencies_deserialize(data);
-
 	initStringInfo(&str);
-	appendStringInfoChar(&str, '[');
+	appendStringInfoChar(&str, '{');
 
 	for (i = 0; i < dependencies->ndeps; i++)
 	{
@@ -705,7 +697,7 @@ pg_dependencies_out(PG_FUNCTION_ARGS)
 		if (i > 0)
 			appendStringInfoString(&str, ", ");
 
-		appendStringInfoChar(&str, '{');
+		appendStringInfoChar(&str, '"');
 		for (j = 0; j < dependency->nattributes; j++)
 		{
 			if (j == dependency->nattributes - 1)
@@ -715,11 +707,10 @@ pg_dependencies_out(PG_FUNCTION_ARGS)
 
 			appendStringInfo(&str, "%d", dependency->attributes[j]);
 		}
-		appendStringInfo(&str, " : %f", dependency->degree);
-		appendStringInfoChar(&str, '}');
+		appendStringInfo(&str, "\": %f", dependency->degree);
 	}
 
-	appendStringInfoChar(&str, ']');
+	appendStringInfoChar(&str, '}');
 
 	PG_RETURN_CSTRING(str.data);
 }

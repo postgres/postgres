@@ -1138,9 +1138,9 @@ ANALYZE zipcodes;
 SELECT stxname, stxkeys, stxdependencies
   FROM pg_statistic_ext
  WHERE stxname = 'stts';
- stxname | stxkeys |              stxdependencies               
----------+---------+--------------------------------------------
- stts    | 1 5     | [{1 => 5 : 1.000000}, {5 => 1 : 0.423130}]
+ stxname | stxkeys |             stxdependencies               
+---------+---------+------------------------------------------
+ stts    | 1 5     | {"1 => 5": 1.000000, "5 => 1": 0.423130}
 (1 row)
 </programlisting>
      where it can be seen that column 1 (a zip code) fully determines column
@@ -1225,10 +1225,9 @@ ANALYZE zipcodes;
 SELECT stxkeys AS k, stxndistinct AS nd
   FROM pg_statistic_ext
  WHERE stxname = 'stts2';
--[ RECORD 1 ]---------------------------------------------
+-[ RECORD 1 ]--------------------------------------------------------
 k  | 1 2 5
-nd | [{(b 1 2), 33178.000000}, {(b 1 5), 33178.000000},
-      {(b 2 5), 27435.000000}, {(b 1 2 5), 33178.000000}]
+nd | {"1, 2": 33178, "1, 5": 33178, "2, 5": 27435, "1, 2, 5": 33178}
 (1 row)
 </programlisting>
      which indicates that there are three combinations of columns that

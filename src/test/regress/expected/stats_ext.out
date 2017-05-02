@@ -175,9 +175,9 @@ CREATE STATISTICS s10 ON (a, b, c) FROM ndistinct;
 ANALYZE ndistinct;
 SELECT stxkind, stxndistinct
   FROM pg_statistic_ext WHERE stxrelid = 'ndistinct'::regclass;
- stxkind |                                          stxndistinct                                          
----------+------------------------------------------------------------------------------------------------
- {d,f}   | [{(b 3 4), 301.000000}, {(b 3 6), 301.000000}, {(b 4 6), 301.000000}, {(b 3 4 6), 301.000000}]
+ stxkind |                      stxndistinct                       
+---------+---------------------------------------------------------
+ {d,f}   | {"3, 4": 301, "3, 6": 301, "4, 6": 301, "3, 4, 6": 301}
 (1 row)
 
 -- Hash Aggregate, thanks to estimates improved by the statistic
@@ -241,9 +241,9 @@ INSERT INTO ndistinct (a, b, c, filler1)
 ANALYZE ndistinct;
 SELECT stxkind, stxndistinct
   FROM pg_statistic_ext WHERE stxrelid = 'ndistinct'::regclass;
- stxkind |                                            stxndistinct                                            
----------+----------------------------------------------------------------------------------------------------
- {d,f}   | [{(b 3 4), 2550.000000}, {(b 3 6), 800.000000}, {(b 4 6), 1632.000000}, {(b 3 4 6), 10000.000000}]
+ stxkind |                        stxndistinct                         
+---------+-------------------------------------------------------------
+ {d,f}   | {"3, 4": 2550, "3, 6": 800, "4, 6": 1632, "3, 4, 6": 10000}
 (1 row)
 
 -- plans using Group Aggregate, thanks to using correct esimates

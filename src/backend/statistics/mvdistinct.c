@@ -354,21 +354,26 @@ pg_ndistinct_out(PG_FUNCTION_ARGS)
 	StringInfoData str;
 
 	initStringInfo(&str);
-	appendStringInfoChar(&str, '[');
+	appendStringInfoChar(&str, '{');
 
 	for (i = 0; i < ndist->nitems; i++)
 	{
 		MVNDistinctItem item = ndist->items[i];
+		int		x = -1;
+		bool	first = true;
 
 		if (i > 0)
 			appendStringInfoString(&str, ", ");
 
-		appendStringInfoChar(&str, '{');
-		outBitmapset(&str, item.attrs);
-		appendStringInfo(&str, ", %f}", item.ndistinct);
+		while ((x = bms_next_member(item.attrs, x)) >= 0)
+		{
+			appendStringInfo(&str, "%s%d", first ? "\"" : ", ", x);
+			first = false;
+		}
+		appendStringInfo(&str, "\": %d", (int) item.ndistinct);
 	}
 
-	appendStringInfoChar(&str, ']');
+	appendStringInfoChar(&str, '}');
 
 	PG_RETURN_CSTRING(str.data);
 }
