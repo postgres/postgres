@@ -452,7 +452,8 @@ CreateSubscription(CreateSubscriptionStmt *stmt, bool isTopLevel)
 
 	heap_close(rel, RowExclusiveLock);
 
-	ApplyLauncherWakeupAtCommit();
+	if (enabled)
+		ApplyLauncherWakeupAtCommit();
 
 	ObjectAddressSet(myself, SubscriptionRelationId, subid);
 
