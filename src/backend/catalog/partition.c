@@ -988,7 +988,7 @@ RelationGetPartitionQual(Relation rel)
  *		Returns information necessary to route tuples down a partition tree
  *
  * All the partitions will be locked with lockmode, unless it is NoLock.
- * A list of the OIDs of all the leaf partition of rel is returned in
+ * A list of the OIDs of all the leaf partitions of rel is returned in
  * *leaf_part_oids.
  */
 PartitionDispatch *
@@ -1012,9 +1012,9 @@ RelationGetPartitionDispatchInfo(Relation rel, int lockmode,
 	 *
 	 * Cannot use find_all_inheritors() here, because then the order of OIDs
 	 * in parted_rels list would be unknown, which does not help, because we
-	 * we assign indexes within individual PartitionDispatch in an order that
-	 * is predetermined (determined by the order of OIDs in individual
-	 * partition descriptors).
+	 * assign indexes within individual PartitionDispatch in an order that is
+	 * predetermined (determined by the order of OIDs in individual partition
+	 * descriptors).
 	 */
 	*num_parted = 1;
 	parted_rels = list_make1(rel);
