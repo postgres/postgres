@@ -88,7 +88,7 @@ my $proc = $command{$what};
 
 exit 3 unless $proc;
 
-&$proc(@_);
+&$proc(@ARGV);
 
 exit 0;
 
