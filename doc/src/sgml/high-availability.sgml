@@ -2057,8 +2057,8 @@ if (!triggered)
    <title>Administrator's Overview</title>
 
    <para>
-    If <varname>hot_standby</> is turned <literal>on</> in
-    <filename>postgresql.conf</> and there is a <filename>recovery.conf</>
+    If <varname>hot_standby</> is <literal>on</> in <filename>postgresql.conf</>
+    (the default value) and there is a <filename>recovery.conf</>
     file present, the server will run in Hot Standby mode.
     However, it may take some time for Hot Standby connections to be allowed,
     because the server will not accept connections until it has completed

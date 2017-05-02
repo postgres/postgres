@@ -3227,7 +3227,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
        <para>
         Specifies whether or not you can connect and run queries during
         recovery, as described in <xref linkend="hot-standby">.
-        The default value is <literal>off</literal>.
+        The default value is <literal>on</literal>.
         This parameter can only be set at server start. It only has effect
         during archive recovery or in standby mode.
        </para>
