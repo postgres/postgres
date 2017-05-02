@@ -943,7 +943,7 @@ ALTER SEQUENCE <replaceable class="parameter">tablename</replaceable>_<replaceab
       </thead>
       <tbody>
        <row>
-        <entry>money</entry>
+        <entry><type>money</type></entry>
         <entry>8 bytes</entry>
         <entry>currency amount</entry>
         <entry>-92233720368547758.08 to +92233720368547758.07</entry>
