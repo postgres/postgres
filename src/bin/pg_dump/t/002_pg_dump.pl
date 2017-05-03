@@ -6414,7 +6414,8 @@ foreach my $test (
 			next;
 		}
 
-		$create_sql .= $tests{$test}->{create_sql};
+		# Add terminating semicolon
+		$create_sql .= $tests{$test}->{create_sql} . ";";
 	}
 }
 
