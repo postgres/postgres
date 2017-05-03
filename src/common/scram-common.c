@@ -23,6 +23,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include "common/base64.h"
 #include "common/scram-common.h"
 
 #define HMAC_IPAD 0x36
@@ -179,4 +180,67 @@ scram_ServerKey(const uint8 *salted_password, uint8 *result)
 	scram_HMAC_init(&ctx, salted_password, SCRAM_KEY_LEN);
 	scram_HMAC_update(&ctx, "Server Key", strlen("Server Key"));
 	scram_HMAC_final(result, &ctx);
+}
+
+
+/*
+ * Construct a verifier string for SCRAM, stored in pg_authid.rolpassword.
+ *
+ * The password should already have been processed with SASLprep, if necessary!
+ *
+ * If iterations is 0, default number of iterations is used.  The result is
+ * palloc'd or malloc'd, so caller is responsible for freeing it.
+ */
+char *
+scram_build_verifier(const char *salt, int saltlen, int iterations,
+					 const char *password)
+{
+	uint8		salted_password[SCRAM_KEY_LEN];
+	uint8		stored_key[SCRAM_KEY_LEN];
+	uint8		server_key[SCRAM_KEY_LEN];
+	char	   *result;
+	char	   *p;
+	int			maxlen;
+
+	if (iterations <= 0)
+		iterations = SCRAM_DEFAULT_ITERATIONS;
+
+	/* Calculate StoredKey and ServerKey */
+	scram_SaltedPassword(password, salt, saltlen, iterations,
+						 salted_password);
+	scram_ClientKey(salted_password, stored_key);
+	scram_H(stored_key, SCRAM_KEY_LEN, stored_key);
+
+	scram_ServerKey(salted_password, server_key);
+
+	/*
+	 * The format is:
+	 * SCRAM-SHA-256$<iteration count>:<salt>$<StoredKey>:<ServerKey>
+	 */
+	maxlen = strlen("SCRAM-SHA-256") + 1
+		+ 10 + 1								/* iteration count */
+		+ pg_b64_enc_len(saltlen) + 1			/* Base64-encoded salt */
+		+ pg_b64_enc_len(SCRAM_KEY_LEN) + 1		/* Base64-encoded StoredKey */
+		+ pg_b64_enc_len(SCRAM_KEY_LEN) + 1;	/* Base64-encoded ServerKey */
+
+#ifdef FRONTEND
+	result = malloc(maxlen);
+	if (!result)
+		return NULL;
+#else
+	result = palloc(maxlen);
+#endif
+
+	p = result + sprintf(result, "SCRAM-SHA-256$%d:", iterations);
+
+	p += pg_b64_encode(salt, saltlen, p);
+	*(p++) = '$';
+	p += pg_b64_encode((char *) stored_key, SCRAM_KEY_LEN, p);
+	*(p++) = ':';
+	p += pg_b64_encode((char *) server_key, SCRAM_KEY_LEN, p);
+	*(p++) = '\0';
+
+	Assert(p - result <= maxlen);
+
+	return result;
 }

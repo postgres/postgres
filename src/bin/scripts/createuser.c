@@ -274,11 +274,14 @@ main(int argc, char *argv[])
 		{
 			char	   *encrypted_password;
 
-			encrypted_password = PQencryptPassword(newpassword,
-												   newuser);
+			encrypted_password = PQencryptPasswordConn(conn,
+													   newpassword,
+													   newuser,
+													   NULL);
 			if (!encrypted_password)
 			{
-				fprintf(stderr, _("Password encryption failed.\n"));
+				fprintf(stderr, _("%s: password encryption failed: %s"),
+						progname, PQerrorMessage(conn));
 				exit(1);
 			}
 			appendStringLiteralConn(&sql, encrypted_password, conn);

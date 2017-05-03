@@ -1077,22 +1077,12 @@ pg_fe_getauthname(PQExpBuffer errorMessage)
 
 
 /*
- * PQencryptPassword -- exported routine to encrypt a password
+ * PQencryptPassword -- exported routine to encrypt a password with MD5
  *
- * This is intended to be used by client applications that wish to send
- * commands like ALTER USER joe PASSWORD 'pwd'.  The password need not
- * be sent in cleartext if it is encrypted on the client side.  This is
- * good because it ensures the cleartext password won't end up in logs,
- * pg_stat displays, etc.  We export the function so that clients won't
- * be dependent on low-level details like whether the encryption is MD5
- * or something else.
- *
- * Arguments are the cleartext password, and the SQL name of the user it
- * is for.
- *
- * Return value is a malloc'd string, or NULL if out-of-memory.  The client
- * may assume the string doesn't contain any special characters that would
- * require escaping.
+ * This function is equivalent to calling PQencryptPasswordConn with
+ * "md5" as the encryption method, except that this doesn't require
+ * a connection object.  This function is deprecated, use
+ * PQencryptPasswordConn instead.
  */
 char *
 PQencryptPassword(const char *passwd, const char *user)
@@ -1108,6 +1098,117 @@ PQencryptPassword(const char *passwd, const char *user)
 		free(crypt_pwd);
 		return NULL;
 	}
+
+	return crypt_pwd;
+}
+
+/*
+ * PQencryptPasswordConn -- exported routine to encrypt a password
+ *
+ * This is intended to be used by client applications that wish to send
+ * commands like ALTER USER joe PASSWORD 'pwd'.  The password need not
+ * be sent in cleartext if it is encrypted on the client side.  This is
+ * good because it ensures the cleartext password won't end up in logs,
+ * pg_stat displays, etc.  We export the function so that clients won't
+ * be dependent on low-level details like whether the encryption is MD5
+ * or something else.
+ *
+ * Arguments are a connection object, the cleartext password, the SQL
+ * name of the user it is for, and a string indicating the algorithm to
+ * use for encrypting the password.  If algorithm is NULL, this queries
+ * the server for the current 'password_encryption' value.  If you wish
+ * to avoid that, e.g. to avoid blocking, you can execute
+ * 'show password_encryption' yourself before calling this function, and
+ * pass it as the algorithm.
+ *
+ * Return value is a malloc'd string.  The client may assume the string
+ * doesn't contain any special characters that would require escaping.
+ * On error, an error message is stored in the connection object, and
+ * returns NULL.
+ */
+char *
+PQencryptPasswordConn(PGconn *conn, const char *passwd, const char *user,
+					  const char *algorithm)
+{
+#define MAX_ALGORITHM_NAME_LEN 50
+	char		algobuf[MAX_ALGORITHM_NAME_LEN + 1];
+	char	   *crypt_pwd = NULL;
+
+	if (!conn)
+		return NULL;
+
+	/* If no algorithm was given, ask the server. */
+	if (algorithm == NULL)
+	{
+		PGresult   *res;
+		char	   *val;
+
+		res = PQexec(conn, "show password_encryption");
+		if (res == NULL)
+		{
+			/* PQexec() should've set conn->errorMessage already */
+			return NULL;
+		}
+		if (PQresultStatus(res) != PGRES_TUPLES_OK)
+		{
+			/* PQexec() should've set conn->errorMessage already */
+			PQclear(res);
+			return NULL;
+		}
+		if (PQntuples(res) != 1 || PQnfields(res) != 1)
+		{
+			PQclear(res);
+			printfPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("unexpected shape of result set returned for SHOW\n"));
+			return NULL;
+		}
+		val = PQgetvalue(res, 0, 0);
+
+		if (strlen(val) > MAX_ALGORITHM_NAME_LEN)
+		{
+			PQclear(res);
+			printfPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("password_encryption value too long\n"));
+			return NULL;
+		}
+		strcpy(algobuf, val);
+		PQclear(res);
+
+		algorithm = algobuf;
+	}
+
+	/* Ok, now we know what algorithm to use */
+
+	if (strcmp(algorithm, "scram-sha-256") == 0)
+	{
+		crypt_pwd = pg_fe_scram_build_verifier(passwd);
+	}
+	else if (strcmp(algorithm, "md5") == 0)
+	{
+		crypt_pwd = malloc(MD5_PASSWD_LEN + 1);
+		if (crypt_pwd)
+		{
+			if (!pg_md5_encrypt(passwd, user, strlen(user), crypt_pwd))
+			{
+				free(crypt_pwd);
+				crypt_pwd = NULL;
+			}
+		}
+	}
+	else if (strcmp(algorithm, "plain") == 0)
+	{
+		crypt_pwd = strdup(passwd);
+	}
+	else
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("unknown password encryption algorithm\n"));
+		return NULL;
+	}
+
+	if (!crypt_pwd)
+		printfPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("out of memory\n"));
 
 	return crypt_pwd;
 }

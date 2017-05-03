@@ -5875,6 +5875,58 @@ void PQconninfoFree(PQconninfoOption *connOptions);
     </listitem>
    </varlistentry>
 
+   <varlistentry id="libpq-pqencryptpasswordconn">
+    <term>
+     <function>PQencryptPasswordConn</function>
+     <indexterm>
+      <primary>PQencryptPasswordConn</primary>
+     </indexterm>
+    </term>
+
+    <listitem>
+     <para>
+      Prepares the encrypted form of a <productname>PostgreSQL</> password.
+<synopsis>
+char *PQencryptPasswordConn(PGconn *conn, const char *passwd, const char *user, const char *algorithm);
+</synopsis>
+      This function is intended to be used by client applications that
+      wish to send commands like <literal>ALTER USER joe PASSWORD
+      'pwd'</>.  It is good practice not to send the original cleartext
+      password in such a command, because it might be exposed in command
+      logs, activity displays, and so on.  Instead, use this function to
+      convert the password to encrypted form before it is sent.
+     </para>
+
+     <para>
+      The <parameter>passwd</> and <parameter>user</> arguments
+      are the cleartext password, and the SQL name of the user it is for.
+      <parameter>algorithm</> specifies the encryption algorithm
+      to use to encrypt the password. Currently supported algorithms are
+      <literal>md5</>, <literal>scram-sha-256</> and <literal>plain</>.
+      <literal>scram-sha-256</> was introduced in <productname>PostgreSQL</>
+      version 10, and will not work correctly with older server versions. If
+      <parameter>algorithm</> is <symbol>NULL</>, this function will query
+      the server for the current value of the
+      <xref linkend="guc-password-encryption"> setting. That can block, and
+      will fail if the current transaction is aborted, or if the connection
+      is busy executing another query. If you wish to use the default
+      algorithm for the server but want to avoid blocking, query
+      <varname>password_encryption</> yourself before calling
+      <function>PQencryptPasswordConn</>, and pass that value as the
+      <parameter>algorithm</>.
+     </para>
+
+     <para>
+      The return value is a string allocated by <function>malloc</>.
+      The caller can assume the string doesn't contain any special characters
+      that would require escaping.  Use <function>PQfreemem</> to free the
+      result when done with it. On error, returns <symbol>NULL</>, and
+      a suitable message is stored in the connection object.
+     </para>
+
+    </listitem>
+   </varlistentry>
+
    <varlistentry id="libpq-pqencryptpassword">
     <term>
      <function>PQencryptPassword</function>
@@ -5885,22 +5937,15 @@ void PQconninfoFree(PQconninfoOption *connOptions);
 
     <listitem>
      <para>
-      Prepares the encrypted form of a <productname>PostgreSQL</> password.
-<synopsis>
-char * PQencryptPassword(const char *passwd, const char *user);
-</synopsis>
-      This function is intended to be used by client applications that
-      wish to send commands like <literal>ALTER USER joe PASSWORD
-      'pwd'</>.  It is good practice not to send the original cleartext
-      password in such a command, because it might be exposed in command
-      logs, activity displays, and so on.  Instead, use this function to
-      convert the password to encrypted form before it is sent.  The
-      arguments are the cleartext password, and the SQL name of the user
-      it is for.  The return value is a string allocated by
-      <function>malloc</function>, or <symbol>NULL</symbol> if out of
-      memory.  The caller can assume the string doesn't contain any
-      special characters that would require escaping.  Use
-      <function>PQfreemem</> to free the result when done with it.
+      Prepares the md5-encrypted form of a <productname>PostgreSQL</> password.
+ <synopsis>
+char *PQencryptPassword(const char *passwd, const char *user);
+ </synopsis>
+      <function>PQencryptPassword</> is an older, deprecated version of 
+      <function>PQencryptPasswodConn</>. The difference is that
+      <function>PQencryptPassword</> does not 
+      require a connection object, and <literal>md5</> is always used as the
+      encryption algorithm.
      </para>
     </listitem>
    </varlistentry>

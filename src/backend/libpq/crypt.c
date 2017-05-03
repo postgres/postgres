@@ -156,7 +156,7 @@ encrypt_password(PasswordType target_type, const char *role,
 			switch (guessed_type)
 			{
 				case PASSWORD_TYPE_PLAINTEXT:
-					return scram_build_verifier(role, password, 0);
+					return pg_be_scram_build_verifier(password);
 
 				case PASSWORD_TYPE_MD5:
 

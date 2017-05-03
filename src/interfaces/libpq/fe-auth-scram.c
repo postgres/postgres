@@ -615,6 +615,41 @@ verify_server_signature(fe_scram_state *state)
 }
 
 /*
+ * Build a new SCRAM verifier.
+ */
+char *
+pg_fe_scram_build_verifier(const char *password)
+{
+	char	   *prep_password = NULL;
+	pg_saslprep_rc rc;
+	char		saltbuf[SCRAM_DEFAULT_SALT_LEN];
+	char	   *result;
+
+	/*
+	 * Normalize the password with SASLprep.  If that doesn't work, because
+	 * the password isn't valid UTF-8 or contains prohibited characters, just
+	 * proceed with the original password.  (See comments at top of file.)
+	 */
+	rc = pg_saslprep(password, &prep_password);
+	if (rc == SASLPREP_OOM)
+		return NULL;
+	if (rc == SASLPREP_SUCCESS)
+		password = (const char *) prep_password;
+
+	/* Generate a random salt */
+	if (!pg_frontend_random(saltbuf, SCRAM_DEFAULT_SALT_LEN))
+		return NULL;
+
+	result = scram_build_verifier(saltbuf, SCRAM_DEFAULT_SALT_LEN,
+								  SCRAM_DEFAULT_ITERATIONS, password);
+
+	if (prep_password)
+		free(prep_password);
+
+	return result;
+}
+
+/*
  * Random number generator.
  */
 static bool

@@ -1878,11 +1878,11 @@ exec_command_password(PsqlScanState scan_state, bool active_branch)
 			else
 				user = PQuser(pset.db);
 
-			encrypted_password = PQencryptPassword(pw1, user);
+			encrypted_password = PQencryptPasswordConn(pset.db, pw1, user, NULL);
 
 			if (!encrypted_password)
 			{
-				psql_error("Password encryption failed.\n");
+				psql_error("%s", PQerrorMessage(pset.db));
 				success = false;
 			}
 			else
