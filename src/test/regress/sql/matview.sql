@@ -122,18 +122,6 @@ SELECT relispopulated FROM pg_class WHERE oid = 'mv_test3'::regclass;
 
 DROP VIEW v_test1 CASCADE;
 
--- test that vacuum does not make empty matview look unpopulated
-CREATE TABLE hoge (i int);
-INSERT INTO hoge VALUES (generate_series(1,100000));
-CREATE MATERIALIZED VIEW hogeview AS SELECT * FROM hoge WHERE i % 2 = 0;
-CREATE INDEX hogeviewidx ON hogeview (i);
-DELETE FROM hoge;
-REFRESH MATERIALIZED VIEW hogeview;
-SELECT * FROM hogeview WHERE i < 10;
-VACUUM ANALYZE hogeview;
-SELECT * FROM hogeview WHERE i < 10;
-DROP TABLE hoge CASCADE;
-
 -- test that duplicate values on unique index prevent refresh
 CREATE TABLE foo(a, b) AS VALUES(1, 10);
 CREATE MATERIALIZED VIEW mv AS SELECT * FROM foo;
