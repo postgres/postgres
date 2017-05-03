@@ -443,13 +443,4 @@ extern ExpandedArrayHeader *DatumGetExpandedArrayX(Datum d,
 extern AnyArrayType *DatumGetAnyArray(Datum d);
 extern void deconstruct_expanded_array(ExpandedArrayHeader *eah);
 
-/*
- * prototypes for functions defined in array_userfuncs.c
- */
-extern ArrayType *create_singleton_array(FunctionCallInfo fcinfo,
-					   Oid element_type,
-					   Datum element,
-					   bool isNull,
-					   int ndims);
-
 #endif   /* ARRAY_H */
