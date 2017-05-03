@@ -80,12 +80,37 @@ pg_open_tzfile(const char *name, char *canonname)
 	int			fullnamelen;
 	int			orignamelen;
 
+	/* Initialize fullname with base name of tzdata directory */
+	strlcpy(fullname, pg_TZDIR(), sizeof(fullname));
+	orignamelen = fullnamelen = strlen(fullname);
+
+	if (fullnamelen + 1 + strlen(name) >= MAXPGPATH)
+		return -1;				/* not gonna fit */
+
+	/*
+	 * If the caller doesn't need the canonical spelling, first just try to
+	 * open the name as-is.  This can be expected to succeed if the given name
+	 * is already case-correct, or if the filesystem is case-insensitive; and
+	 * we don't need to distinguish those situations if we aren't tasked with
+	 * reporting the canonical spelling.
+	 */
+	if (canonname == NULL)
+	{
+		int			result;
+
+		fullname[fullnamelen] = '/';
+		/* test above ensured this will fit: */
+		strcpy(fullname + fullnamelen + 1, name);
+		result = open(fullname, O_RDONLY | PG_BINARY, 0);
+		if (result >= 0)
+			return result;
+		/* If that didn't work, fall through to do it the hard way */
+	}
+
 	/*
 	 * Loop to split the given name into directory levels; for each level,
 	 * search using scan_directory_ci().
 	 */
-	strlcpy(fullname, pg_TZDIR(), sizeof(fullname));
-	orignamelen = fullnamelen = strlen(fullname);
 	fname = name;
 	for (;;)
 	{
@@ -97,8 +122,6 @@ pg_open_tzfile(const char *name, char *canonname)
 			fnamelen = slashptr - fname;
 		else
 			fnamelen = strlen(fname);
-		if (fullnamelen + 1 + fnamelen >= MAXPGPATH)
-			return -1;			/* not gonna fit */
 		if (!scan_directory_ci(fullname, fname, fnamelen,
 							   fullname + fullnamelen + 1,
 							   MAXPGPATH - fullnamelen - 1))
@@ -458,10 +481,11 @@ pg_tzenumerate_next(pg_tzenum *dir)
 
 		/*
 		 * Load this timezone using tzload() not pg_tzset(), so we don't fill
-		 * the cache
+		 * the cache.  Also, don't ask for the canonical spelling: we already
+		 * know it, and pg_open_tzfile's way of finding it out is pretty
+		 * inefficient.
 		 */
-		if (tzload(fullname + dir->baselen, dir->tz.TZname, &dir->tz.state,
-				   true) != 0)
+		if (tzload(fullname + dir->baselen, NULL, &dir->tz.state, true) != 0)
 		{
 			/* Zone could not be loaded, ignore it */
 			continue;
@@ -472,6 +496,10 @@ pg_tzenumerate_next(pg_tzenum *dir)
 			/* Ignore leap-second zones */
 			continue;
 		}
+
+		/* OK, return the canonical zone name spelling. */
+		strlcpy(dir->tz.TZname, fullname + dir->baselen,
+				sizeof(dir->tz.TZname));
 
 		/* Timezone loaded OK. */
 		return &dir->tz;
