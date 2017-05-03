@@ -55,6 +55,13 @@ static const pg_time_t time_t_min = MINVAL(pg_time_t, TYPE_BIT(pg_time_t));
 static const pg_time_t time_t_max = MAXVAL(pg_time_t, TYPE_BIT(pg_time_t));
 
 /*
+ * We cache the result of trying to load the TZDEFRULES zone here.
+ * tzdefrules_loaded is 0 if not tried yet, +1 if good, -1 if failed.
+ */
+static struct state tzdefrules_s;
+static int	tzdefrules_loaded = 0;
+
+/*
  * The DST rules to use if TZ has no rules and we can't load TZDEFRULES.
  * We default to US rules as of 1999-08-17.
  * POSIX 1003.1 section 8.1.1 says that the default DST rules are
@@ -942,7 +949,21 @@ tzparse(const char *name, struct state * sp, bool lastditch)
 		charcnt = stdlen + 1;
 		if (sizeof sp->chars < charcnt)
 			return false;
-		load_ok = tzload(TZDEFRULES, NULL, sp, false) == 0;
+
+		/*
+		 * This bit also differs from the IANA code, which doesn't make any
+		 * attempt to avoid repetitive loadings of the TZDEFRULES zone.
+		 */
+		if (tzdefrules_loaded == 0)
+		{
+			if (tzload(TZDEFRULES, NULL, &tzdefrules_s, false) == 0)
+				tzdefrules_loaded = 1;
+			else
+				tzdefrules_loaded = -1;
+		}
+		load_ok = (tzdefrules_loaded > 0);
+		if (load_ok)
+			memcpy(sp, &tzdefrules_s, sizeof(struct state));
 	}
 	if (!load_ok)
 		sp->leapcnt = 0;		/* so, we're off a little */
