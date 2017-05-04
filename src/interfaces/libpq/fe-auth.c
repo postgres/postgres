@@ -1168,7 +1168,7 @@ PQencryptPasswordConn(PGconn *conn, const char *passwd, const char *user,
 		{
 			PQclear(res);
 			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("password_encryption value too long\n"));
+					  libpq_gettext("password_encryption value too long\n"));
 			return NULL;
 		}
 		strcpy(algobuf, val);
@@ -1177,8 +1177,19 @@ PQencryptPasswordConn(PGconn *conn, const char *passwd, const char *user,
 		algorithm = algobuf;
 	}
 
-	/* Ok, now we know what algorithm to use */
+	/*
+	 * Also accept "on" and "off" as aliases for "md5", because
+	 * password_encryption was a boolean before PostgreSQL 10.  We refuse to
+	 * send the password in plaintext even if it was "off".
+	 */
+	if (strcmp(algorithm, "on") == 0 ||
+		strcmp(algorithm, "off") == 0 ||
+		strcmp(algorithm, "plain") == 0)
+		algorithm = "md5";
 
+	/*
+	 * Ok, now we know what algorithm to use
+	 */
 	if (strcmp(algorithm, "scram-sha-256") == 0)
 	{
 		crypt_pwd = pg_fe_scram_build_verifier(passwd);
@@ -1195,14 +1206,10 @@ PQencryptPasswordConn(PGconn *conn, const char *passwd, const char *user,
 			}
 		}
 	}
-	else if (strcmp(algorithm, "plain") == 0)
-	{
-		crypt_pwd = strdup(passwd);
-	}
 	else
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("unknown password encryption algorithm\n"));
+				   libpq_gettext("unknown password encryption algorithm\n"));
 		return NULL;
 	}
 

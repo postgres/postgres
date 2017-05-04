@@ -5902,7 +5902,9 @@ char *PQencryptPasswordConn(PGconn *conn, const char *passwd, const char *user, 
       are the cleartext password, and the SQL name of the user it is for.
       <parameter>algorithm</> specifies the encryption algorithm
       to use to encrypt the password. Currently supported algorithms are
-      <literal>md5</>, <literal>scram-sha-256</> and <literal>plain</>.
+      <literal>md5</> and <literal>scram-sha-256</> (<literal>on</> and
+      <literal>off</> are also accepted as aliases for <literal>md5</>, for
+      compatibility with older server versions). Note that support for
       <literal>scram-sha-256</> was introduced in <productname>PostgreSQL</>
       version 10, and will not work correctly with older server versions. If
       <parameter>algorithm</> is <symbol>NULL</>, this function will query
