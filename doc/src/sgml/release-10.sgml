@@ -1763,7 +1763,7 @@
       -->
       <para>
        Improve speed of <command>VACUUM</>'s removal of trailing empty
-       heap pages (Alvaro Herrera)
+       heap pages (Claudio Freire, &Aacute;lvaro Herrera)
       </para>
 
       <para>
