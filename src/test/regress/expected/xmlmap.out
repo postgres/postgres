@@ -696,20 +696,58 @@ SELECT cursor_to_xml('xc'::refcursor, 5, false, true, '');
  
 (1 row)
 
-MOVE FIRST IN xc;
+SELECT cursor_to_xmlschema('xc'::refcursor, false, true, '');
+                                     cursor_to_xmlschema                                      
+----------------------------------------------------------------------------------------------
+ <xsd:schema                                                                                 +
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema">                                           +
+                                                                                             +
+ <xsd:simpleType name="INTEGER">                                                             +
+   <xsd:restriction base="xsd:int">                                                          +
+     <xsd:maxInclusive value="2147483647"/>                                                  +
+     <xsd:minInclusive value="-2147483648"/>                                                 +
+   </xsd:restriction>                                                                        +
+ </xsd:simpleType>                                                                           +
+                                                                                             +
+ <xsd:simpleType name="UDT.regression.pg_catalog.text">                                      +
+   <xsd:restriction base="xsd:string">                                                       +
+   </xsd:restriction>                                                                        +
+ </xsd:simpleType>                                                                           +
+                                                                                             +
+ <xsd:complexType name="RowType">                                                            +
+   <xsd:sequence>                                                                            +
+     <xsd:element name="a" type="INTEGER" minOccurs="0"></xsd:element>                       +
+     <xsd:element name="b" type="UDT.regression.pg_catalog.text" minOccurs="0"></xsd:element>+
+   </xsd:sequence>                                                                           +
+ </xsd:complexType>                                                                          +
+                                                                                             +
+ <xsd:element name="row" type="RowType"/>                                                    +
+                                                                                             +
+ </xsd:schema>
+(1 row)
+
+MOVE BACKWARD ALL IN xc;
 SELECT cursor_to_xml('xc'::refcursor, 5, true, false, '');
- cursor_to_xml 
----------------
- <row>        +
-   <a>1</a>   +
-   <b>one</b> +
- </row>       +
-              +
- <row>        +
-   <a>2</a>   +
-   <b>two</b> +
- </row>       +
-              +
+                         cursor_to_xml                         
+---------------------------------------------------------------
+ <table xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">+
+                                                              +
+ <row>                                                        +
+   <a>-1</a>                                                  +
+   <b xsi:nil="true"/>                                        +
+ </row>                                                       +
+                                                              +
+ <row>                                                        +
+   <a>1</a>                                                   +
+   <b>one</b>                                                 +
+ </row>                                                       +
+                                                              +
+ <row>                                                        +
+   <a>2</a>                                                   +
+   <b>two</b>                                                 +
+ </row>                                                       +
+                                                              +
+ </table>                                                     +
  
 (1 row)
 

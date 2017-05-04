@@ -78,7 +78,11 @@ SELECT cursor_to_xml('xc'::refcursor, 5, false, true, '');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
 HINT:  You need to rebuild PostgreSQL using --with-libxml.
-MOVE FIRST IN xc;
+SELECT cursor_to_xmlschema('xc'::refcursor, false, true, '');
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+MOVE BACKWARD ALL IN xc;
 SELECT cursor_to_xml('xc'::refcursor, 5, true, false, '');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
