@@ -30,7 +30,8 @@ SELECT query_to_xml_and_xmlschema('SELECT * FROM testxmlschema.test1', true, tru
 
 DECLARE xc CURSOR WITH HOLD FOR SELECT * FROM testxmlschema.test1 ORDER BY 1, 2;
 SELECT cursor_to_xml('xc'::refcursor, 5, false, true, '');
-MOVE FIRST IN xc;
+SELECT cursor_to_xmlschema('xc'::refcursor, false, true, '');
+MOVE BACKWARD ALL IN xc;
 SELECT cursor_to_xml('xc'::refcursor, 5, true, false, '');
 SELECT cursor_to_xmlschema('xc'::refcursor, true, false, '');
 

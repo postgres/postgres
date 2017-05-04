@@ -146,6 +146,10 @@ static int xml_xpathobjtoxmlarray(xmlXPathObjectPtr xpathobj,
 					   PgXmlErrorContext *xmlerrcxt);
 #endif   /* USE_LIBXML */
 
+static void xmldata_root_element_start(StringInfo result, const char *eltname,
+						   const char *xmlschema, const char *targetns,
+						   bool top_level);
+static void xmldata_root_element_end(StringInfo result, const char *eltname);
 static StringInfo query_to_xml_internal(const char *query, char *tablename,
 					  const char *xmlschema, bool nulls, bool tableforest,
 					  const char *targetns, bool top_level);
@@ -2380,6 +2384,9 @@ cursor_to_xml(PG_FUNCTION_ARGS)
 
 	initStringInfo(&result);
 
+	if (!tableforest)
+		xmldata_root_element_start(&result, "table", NULL, targetns, true);
+
 	SPI_connect();
 	portal = SPI_cursor_find(name);
 	if (portal == NULL)
@@ -2393,6 +2400,9 @@ cursor_to_xml(PG_FUNCTION_ARGS)
 								  tableforest, targetns, true);
 
 	SPI_finish();
+
+	if (!tableforest)
+		xmldata_root_element_end(&result, "table");
 
 	PG_RETURN_XML_P(stringinfo_to_xmltype(&result));
 }
