@@ -318,6 +318,9 @@ gistrescan(PG_FUNCTION_ARGS)
 			pfree(fn_extras);
 	}
 
+	/* any previous xs_itup will have been pfree'd in context resets above */
+	scan->xs_itup = NULL;
+
 	PG_RETURN_VOID();
 }
 
