@@ -375,6 +375,7 @@ gistScanPage(IndexScanDesc scan, GISTSearchItem *pageItem, double *myDistances,
 	}
 
 	so->nPageData = so->curPageData = 0;
+	scan->xs_hitup = NULL;		/* might point into pageDataCxt */
 	if (so->pageDataCxt)
 		MemoryContextReset(so->pageDataCxt);
 
@@ -642,6 +643,7 @@ gistgettuple(IndexScanDesc scan, ScanDirection dir)
 
 		so->firstCall = false;
 		so->curPageData = so->nPageData = 0;
+		scan->xs_hitup = NULL;
 		if (so->pageDataCxt)
 			MemoryContextReset(so->pageDataCxt);
 
@@ -766,6 +768,7 @@ gistgetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 
 	/* Begin the scan by processing the root page */
 	so->curPageData = so->nPageData = 0;
+	scan->xs_hitup = NULL;
 	if (so->pageDataCxt)
 		MemoryContextReset(so->pageDataCxt);
 
