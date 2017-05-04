@@ -312,6 +312,9 @@ gistrescan(IndexScanDesc scan, ScanKey key, int nkeys,
 		if (!first_time)
 			pfree(fn_extras);
 	}
+
+	/* any previous xs_itup will have been pfree'd in context resets above */
+	scan->xs_itup = NULL;
 }
 
 void

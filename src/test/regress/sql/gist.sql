@@ -69,6 +69,22 @@ order by point(0.101, 0.101) <-> p;
 select p from gist_tbl where p <@ box(point(0,0), point(0.5, 0.5))
 order by point(0.101, 0.101) <-> p;
 
+-- Check case with multiple rescans (bug #14641)
+explain (costs off)
+select p from
+  (values (box(point(0,0), point(0.5,0.5))),
+          (box(point(0.5,0.5), point(0.75,0.75))),
+          (box(point(0.8,0.8), point(1.0,1.0)))) as v(bb)
+cross join lateral
+  (select p from gist_tbl where p <@ bb order by p <-> bb[0] limit 2) ss;
+
+select p from
+  (values (box(point(0,0), point(0.5,0.5))),
+          (box(point(0.5,0.5), point(0.75,0.75))),
+          (box(point(0.8,0.8), point(1.0,1.0)))) as v(bb)
+cross join lateral
+  (select p from gist_tbl where p <@ bb order by p <-> bb[0] limit 2) ss;
+
 drop index gist_tbl_point_index;
 
 -- Test index-only scan with box opclass
