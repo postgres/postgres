@@ -552,6 +552,17 @@
        </para>
       </listitem>
 
+      <listitem>
+       <!--
+       Author: Tom Lane <tgl@sss.pgh.pa.us>
+       2016-09-09 [b1328d78f] Invent PageIndexTupleOverwrite, and teach BRIN and GiST
+       -->
+       <para>
+        Allow faster <acronym>GiST</> inserts and updates by reusing
+        index space more efficiently (Andrey Borodin)
+       </para>
+      </listitem>
+
      </itemizedlist>
         
      <sect5>
@@ -675,7 +686,7 @@
        <para>
         The new settings are <xref
         linkend="guc-max-pred-locks-per-relation"> and
-       <varname>max_pred_locks_per_page</>.
+        <xref linkend="guc-max-pred-locks-per-page">.
        </para>
       </listitem>
 
@@ -1840,7 +1851,7 @@
       </para>
 
       <para>
-       This uses the syntax <link linkend="SQL-ALTERTABLE"><command>ALTER
+       This uses the syntax <link linkend="SQL-ALTERTYPE"><command>ALTER
        TYPE ... RENAME VALUE</></>.
       </para>
      </listitem>
@@ -2220,6 +2231,10 @@
        <!--
        Author: Tom Lane <tgl@sss.pgh.pa.us>
        2017-03-30 [e984ef586] Support \if ... \elif ... \else ... \endif in psql scrip
+       Author: Tom Lane <tgl@sss.pgh.pa.us>
+       2017-04-02 [5dbc5da11] Fix behavior of psql's \p to agree with \g, \w, etc.
+       Author: Tom Lane <tgl@sss.pgh.pa.us>
+       2017-04-02 [68dba97a4] Document psql's behavior of recalling the previously exe
        -->
        <para>
         Add conditional branch support to <application>psql</> (Corey
@@ -2296,24 +2311,6 @@
         default value, rather than a zero-length string and undefined.
         Also have \set always display values for <literal>FETCH_COUNT</>,
         <literal>HISTSIZE</>, and <literal>IGNOREEOF</>.
-       </para>
-      </listitem>
-
-      <listitem>
-       <!--
-       Author: Tom Lane <tgl@sss.pgh.pa.us>
-       2017-04-02 [5dbc5da11] Fix behavior of psql's \p to agree with \g, \w, etc.
-       Author: Tom Lane <tgl@sss.pgh.pa.us>
-       2017-04-02 [68dba97a4] Document psql's behavior of recalling the previously exe
-       -->
-       <para>
-        Fix <application>psql</> \p to always print what would be executed
-        by \g or \w (Daniel V&eacute;rit&eacute;)
-       </para>
-
-       <para>
-        Previously \p didn't properly print the reverted-to command after
-        a buffer contents reset.  CLARIFY?
        </para>
       </listitem>
 
