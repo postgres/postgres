@@ -115,6 +115,7 @@
 #include "catalog/pg_type.h"
 #include "executor/executor.h"
 #include "mb/pg_wchar.h"
+#include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
@@ -129,6 +130,7 @@
 #include "parser/parse_coerce.h"
 #include "parser/parsetree.h"
 #include "statistics/statistics.h"
+#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/bytea.h"
 #include "utils/date.h"
@@ -273,6 +275,7 @@ var_eq_const(VariableStatData *vardata, Oid operator,
 {
 	double		selec;
 	bool		isdefault;
+	Oid			opfuncoid;
 
 	/*
 	 * If the constant is NULL, assume operator is strict and return zero, ie,
@@ -291,7 +294,9 @@ var_eq_const(VariableStatData *vardata, Oid operator,
 	if (vardata->isunique && vardata->rel && vardata->rel->tuples >= 1.0)
 		return 1.0 / vardata->rel->tuples;
 
-	if (HeapTupleIsValid(vardata->statsTuple))
+	if (HeapTupleIsValid(vardata->statsTuple) &&
+		statistic_proc_security_check(vardata,
+									  (opfuncoid = get_opcode(operator))))
 	{
 		Form_pg_statistic stats;
 		Datum	   *values;
@@ -319,7 +324,7 @@ var_eq_const(VariableStatData *vardata, Oid operator,
 		{
 			FmgrInfo	eqproc;
 
-			fmgr_info(get_opcode(operator), &eqproc);
+			fmgr_info(opfuncoid, &eqproc);
 
 			for (i = 0; i < nvalues; i++)
 			{
@@ -625,6 +630,7 @@ mcv_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
 	sumcommon = 0.0;
 
 	if (HeapTupleIsValid(vardata->statsTuple) &&
+		statistic_proc_security_check(vardata, opproc->fn_oid) &&
 		get_attstatsslot(vardata->statsTuple,
 						 vardata->atttype, vardata->atttypmod,
 						 STATISTIC_KIND_MCV, InvalidOid,
@@ -701,6 +707,7 @@ histogram_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
 	Assert(min_hist_size > 2 * n_skip);
 
 	if (HeapTupleIsValid(vardata->statsTuple) &&
+		statistic_proc_security_check(vardata, opproc->fn_oid) &&
 		get_attstatsslot(vardata->statsTuple,
 						 vardata->atttype, vardata->atttypmod,
 						 STATISTIC_KIND_HISTOGRAM, InvalidOid,
@@ -778,6 +785,7 @@ ineq_histogram_selectivity(PlannerInfo *root,
 	 * the reverse way if isgt is TRUE.
 	 */
 	if (HeapTupleIsValid(vardata->statsTuple) &&
+		statistic_proc_security_check(vardata, opproc->fn_oid) &&
 		get_attstatsslot(vardata->statsTuple,
 						 vardata->atttype, vardata->atttypmod,
 						 STATISTIC_KIND_HISTOGRAM, InvalidOid,
@@ -2262,6 +2270,7 @@ eqjoinsel_inner(Oid operator,
 	double		nd2;
 	bool		isdefault1;
 	bool		isdefault2;
+	Oid			opfuncoid;
 	Form_pg_statistic stats1 = NULL;
 	Form_pg_statistic stats2 = NULL;
 	bool		have_mcvs1 = false;
@@ -2278,30 +2287,36 @@ eqjoinsel_inner(Oid operator,
 	nd1 = get_variable_numdistinct(vardata1, &isdefault1);
 	nd2 = get_variable_numdistinct(vardata2, &isdefault2);
 
+	opfuncoid = get_opcode(operator);
+
 	if (HeapTupleIsValid(vardata1->statsTuple))
 	{
+		/* note we allow use of nullfrac regardless of security check */
 		stats1 = (Form_pg_statistic) GETSTRUCT(vardata1->statsTuple);
-		have_mcvs1 = get_attstatsslot(vardata1->statsTuple,
-									  vardata1->atttype,
-									  vardata1->atttypmod,
-									  STATISTIC_KIND_MCV,
-									  InvalidOid,
-									  NULL,
-									  &values1, &nvalues1,
-									  &numbers1, &nnumbers1);
+		if (statistic_proc_security_check(vardata1, opfuncoid))
+			have_mcvs1 = get_attstatsslot(vardata1->statsTuple,
+										  vardata1->atttype,
+										  vardata1->atttypmod,
+										  STATISTIC_KIND_MCV,
+										  InvalidOid,
+										  NULL,
+										  &values1, &nvalues1,
+										  &numbers1, &nnumbers1);
 	}
 
 	if (HeapTupleIsValid(vardata2->statsTuple))
 	{
+		/* note we allow use of nullfrac regardless of security check */
 		stats2 = (Form_pg_statistic) GETSTRUCT(vardata2->statsTuple);
-		have_mcvs2 = get_attstatsslot(vardata2->statsTuple,
-									  vardata2->atttype,
-									  vardata2->atttypmod,
-									  STATISTIC_KIND_MCV,
-									  InvalidOid,
-									  NULL,
-									  &values2, &nvalues2,
-									  &numbers2, &nnumbers2);
+		if (statistic_proc_security_check(vardata2, opfuncoid))
+			have_mcvs2 = get_attstatsslot(vardata2->statsTuple,
+										  vardata2->atttype,
+										  vardata2->atttypmod,
+										  STATISTIC_KIND_MCV,
+										  InvalidOid,
+										  NULL,
+										  &values2, &nvalues2,
+										  &numbers2, &nnumbers2);
 	}
 
 	if (have_mcvs1 && have_mcvs2)
@@ -2335,7 +2350,7 @@ eqjoinsel_inner(Oid operator,
 		int			i,
 					nmatches;
 
-		fmgr_info(get_opcode(operator), &eqproc);
+		fmgr_info(opfuncoid, &eqproc);
 		hasmatch1 = (bool *) palloc0(nvalues1 * sizeof(bool));
 		hasmatch2 = (bool *) palloc0(nvalues2 * sizeof(bool));
 
@@ -2478,6 +2493,7 @@ eqjoinsel_inner(Oid operator,
  *
  * (Also used for anti join, which we are supposed to estimate the same way.)
  * Caller has ensured that vardata1 is the LHS variable.
+ * Unlike eqjoinsel_inner, we have to cope with operator being InvalidOid.
  */
 static double
 eqjoinsel_semi(Oid operator,
@@ -2489,6 +2505,7 @@ eqjoinsel_semi(Oid operator,
 	double		nd2;
 	bool		isdefault1;
 	bool		isdefault2;
+	Oid			opfuncoid;
 	Form_pg_statistic stats1 = NULL;
 	bool		have_mcvs1 = false;
 	Datum	   *values1 = NULL;
@@ -2503,6 +2520,8 @@ eqjoinsel_semi(Oid operator,
 
 	nd1 = get_variable_numdistinct(vardata1, &isdefault1);
 	nd2 = get_variable_numdistinct(vardata2, &isdefault2);
+
+	opfuncoid = OidIsValid(operator) ? get_opcode(operator) : InvalidOid;
 
 	/*
 	 * We clamp nd2 to be not more than what we estimate the inner relation's
@@ -2539,18 +2558,21 @@ eqjoinsel_semi(Oid operator,
 
 	if (HeapTupleIsValid(vardata1->statsTuple))
 	{
+		/* note we allow use of nullfrac regardless of security check */
 		stats1 = (Form_pg_statistic) GETSTRUCT(vardata1->statsTuple);
-		have_mcvs1 = get_attstatsslot(vardata1->statsTuple,
-									  vardata1->atttype,
-									  vardata1->atttypmod,
-									  STATISTIC_KIND_MCV,
-									  InvalidOid,
-									  NULL,
-									  &values1, &nvalues1,
-									  &numbers1, &nnumbers1);
+		if (statistic_proc_security_check(vardata1, opfuncoid))
+			have_mcvs1 = get_attstatsslot(vardata1->statsTuple,
+										  vardata1->atttype,
+										  vardata1->atttypmod,
+										  STATISTIC_KIND_MCV,
+										  InvalidOid,
+										  NULL,
+										  &values1, &nvalues1,
+										  &numbers1, &nnumbers1);
 	}
 
-	if (HeapTupleIsValid(vardata2->statsTuple))
+	if (HeapTupleIsValid(vardata2->statsTuple) &&
+		statistic_proc_security_check(vardata2, opfuncoid))
 	{
 		have_mcvs2 = get_attstatsslot(vardata2->statsTuple,
 									  vardata2->atttype,
@@ -2592,7 +2614,7 @@ eqjoinsel_semi(Oid operator,
 		 */
 		clamped_nvalues2 = Min(nvalues2, nd2);
 
-		fmgr_info(get_opcode(operator), &eqproc);
+		fmgr_info(opfuncoid, &eqproc);
 		hasmatch1 = (bool *) palloc0(nvalues1 * sizeof(bool));
 		hasmatch2 = (bool *) palloc0(clamped_nvalues2 * sizeof(bool));
 
@@ -4558,6 +4580,9 @@ get_join_variables(PlannerInfo *root, List *args, SpecialJoinInfo *sjinfo,
  *		this query.  (Caution: this should be trusted for statistical
  *		purposes only, since we do not check indimmediate nor verify that
  *		the exact same definition of equality applies.)
+ *	acl_ok: TRUE if current user has permission to read the column(s)
+ *		underlying the pg_statistic entry.  This is consulted by
+ *		statistic_proc_security_check().
  *
  * Caller is responsible for doing ReleaseVariableStats() before exiting.
  */
@@ -4726,6 +4751,30 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 												Int16GetDatum(pos + 1),
 												BoolGetDatum(false));
 							vardata->freefunc = ReleaseSysCache;
+
+							if (HeapTupleIsValid(vardata->statsTuple))
+							{
+								/* Get index's table for permission check */
+								RangeTblEntry *rte;
+
+								rte = planner_rt_fetch(index->rel->relid, root);
+								Assert(rte->rtekind == RTE_RELATION);
+
+								/*
+								 * For simplicity, we insist on the whole
+								 * table being selectable, rather than trying
+								 * to identify which column(s) the index
+								 * depends on.
+								 */
+								vardata->acl_ok =
+									(pg_class_aclcheck(rte->relid, GetUserId(),
+												 ACL_SELECT) == ACLCHECK_OK);
+							}
+							else
+							{
+								/* suppress leakproofness checks later */
+								vardata->acl_ok = true;
+							}
 						}
 						if (vardata->statsTuple)
 							break;
@@ -4778,6 +4827,21 @@ examine_simple_variable(PlannerInfo *root, Var *var,
 											  Int16GetDatum(var->varattno),
 											  BoolGetDatum(rte->inh));
 		vardata->freefunc = ReleaseSysCache;
+
+		if (HeapTupleIsValid(vardata->statsTuple))
+		{
+			/* check if user has permission to read this column */
+			vardata->acl_ok =
+				(pg_class_aclcheck(rte->relid, GetUserId(),
+								   ACL_SELECT) == ACLCHECK_OK) ||
+				(pg_attribute_aclcheck(rte->relid, var->varattno, GetUserId(),
+									   ACL_SELECT) == ACLCHECK_OK);
+		}
+		else
+		{
+			/* suppress any possible leakproofness checks later */
+			vardata->acl_ok = true;
+		}
 	}
 	else if (rte->rtekind == RTE_SUBQUERY && !rte->inh)
 	{
@@ -4892,6 +4956,30 @@ examine_simple_variable(PlannerInfo *root, Var *var,
 		 * maybe someday try to be smarter about VALUES and/or CTEs.
 		 */
 	}
+}
+
+/*
+ * Check whether it is permitted to call func_oid passing some of the
+ * pg_statistic data in vardata.  We allow this either if the user has SELECT
+ * privileges on the table or column underlying the pg_statistic data or if
+ * the function is marked leak-proof.
+ */
+bool
+statistic_proc_security_check(VariableStatData *vardata, Oid func_oid)
+{
+	if (vardata->acl_ok)
+		return true;
+
+	if (!OidIsValid(func_oid))
+		return false;
+
+	if (get_func_leakproof(func_oid))
+		return true;
+
+	ereport(DEBUG2,
+			(errmsg_internal("not using statistics because function \"%s\" is not leak-proof",
+							 get_func_name(func_oid))));
+	return false;
 }
 
 /*
@@ -5036,6 +5124,7 @@ get_variable_range(PlannerInfo *root, VariableStatData *vardata, Oid sortop,
 	bool		have_data = false;
 	int16		typLen;
 	bool		typByVal;
+	Oid			opfuncoid;
 	Datum	   *values;
 	int			nvalues;
 	int			i;
@@ -5057,6 +5146,17 @@ get_variable_range(PlannerInfo *root, VariableStatData *vardata, Oid sortop,
 		/* no stats available, so default result */
 		return false;
 	}
+
+	/*
+	 * If we can't apply the sortop to the stats data, just fail.  In
+	 * principle, if there's a histogram and no MCVs, we could return the
+	 * histogram endpoints without ever applying the sortop ... but it's
+	 * probably not worth trying, because whatever the caller wants to do with
+	 * the endpoints would likely fail the security check too.
+	 */
+	if (!statistic_proc_security_check(vardata,
+									   (opfuncoid = get_opcode(sortop))))
+		return false;
 
 	get_typlenbyval(vardata->atttype, &typLen, &typByVal);
 
@@ -5110,7 +5210,7 @@ get_variable_range(PlannerInfo *root, VariableStatData *vardata, Oid sortop,
 		bool		tmax_is_mcv = false;
 		FmgrInfo	opproc;
 
-		fmgr_info(get_opcode(sortop), &opproc);
+		fmgr_info(opfuncoid, &opproc);
 
 		for (i = 0; i < nvalues; i++)
 		{
