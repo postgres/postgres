@@ -212,7 +212,7 @@ pg_fe_scram_exchange(void *opaq, char *input, int inputlen,
 			break;
 
 		case FE_SCRAM_PROOF_SENT:
-			/* Receive server proof */
+			/* Receive server signature */
 			if (!read_server_final_message(state, input, errorMessage))
 				goto error;
 
@@ -228,7 +228,7 @@ pg_fe_scram_exchange(void *opaq, char *input, int inputlen,
 			{
 				*success = false;
 				printfPQExpBuffer(errorMessage,
-								  libpq_gettext("invalid server proof\n"));
+								  libpq_gettext("invalid server signature\n"));
 			}
 			*done = true;
 			state->state = FE_SCRAM_FINISHED;

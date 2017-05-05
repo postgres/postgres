@@ -153,7 +153,7 @@ static void mock_scram_verifier(const char *username, int *iterations,
 					char **salt, uint8 *stored_key, uint8 *server_key);
 static bool is_scram_printable(char *p);
 static char *sanitize_char(char c);
-static char *scram_MockSalt(const char *username);
+static char *scram_mock_salt(const char *username);
 
 /*
  * pg_be_scram_init
@@ -480,28 +480,6 @@ scram_verify_plain_password(const char *username, const char *password,
 	return memcmp(computed_key, server_key, SCRAM_KEY_LEN) == 0;
 }
 
-/*
- * Check if given verifier can be used for SCRAM authentication.
- *
- * Returns true if it is a SCRAM verifier, and false otherwise.
- */
-bool
-is_scram_verifier(const char *verifier)
-{
-	int			iterations;
-	char	   *salt = NULL;
-	uint8		stored_key[SCRAM_KEY_LEN];
-	uint8		server_key[SCRAM_KEY_LEN];
-	bool		result;
-
-	result = parse_scram_verifier(verifier, &iterations, &salt,
-								  stored_key, server_key);
-	if (salt)
-		pfree(salt);
-
-	return result;
-}
-
 
 /*
  * Parse and validate format of given SCRAM verifier.
@@ -592,7 +570,7 @@ mock_scram_verifier(const char *username, int *iterations, char **salt,
 	int			encoded_len;
 
 	/* Generate deterministic salt */
-	raw_salt = scram_MockSalt(username);
+	raw_salt = scram_mock_salt(username);
 
 	encoded_salt = (char *) palloc(pg_b64_enc_len(SCRAM_DEFAULT_SALT_LEN) + 1);
 	encoded_len = pg_b64_encode(raw_salt, SCRAM_DEFAULT_SALT_LEN, encoded_salt);
@@ -679,7 +657,7 @@ sanitize_char(char c)
 	if (c >= 0x21 && c <= 0x7E)
 		snprintf(buf, sizeof(buf), "'%c'", c);
 	else
-		snprintf(buf, sizeof(buf), "0x%02x", c);
+		snprintf(buf, sizeof(buf), "0x%02x", (unsigned char) c);
 	return buf;
 }
 
@@ -1146,7 +1124,7 @@ build_server_final_message(scram_state *state)
  * pointer to a static buffer of size SCRAM_DEFAULT_SALT_LEN.
  */
 static char *
-scram_MockSalt(const char *username)
+scram_mock_salt(const char *username)
 {
 	pg_sha256_ctx ctx;
 	static uint8 sha_digest[PG_SHA256_DIGEST_LENGTH];
