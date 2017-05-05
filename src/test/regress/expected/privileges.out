@@ -184,6 +184,103 @@ SELECT * FROM atest1; -- ok
  1 | two
 (2 rows)
 
+-- test leaky-function protections in selfuncs
+-- regress_user1 will own a table and provide a view for it.
+SET SESSION AUTHORIZATION regress_user1;
+CREATE TABLE atest12 as
+  SELECT x AS a, 10001 - x AS b FROM generate_series(1,10000) x;
+CREATE INDEX ON atest12 (a);
+CREATE INDEX ON atest12 (abs(a));
+VACUUM ANALYZE atest12;
+CREATE FUNCTION leak(integer,integer) RETURNS boolean
+  AS $$begin return $1 < $2; end$$
+  LANGUAGE plpgsql immutable;
+CREATE OPERATOR <<< (procedure = leak, leftarg = integer, rightarg = integer,
+                     restrict = scalarltsel);
+-- view with leaky operator
+CREATE VIEW atest12v AS
+  SELECT * FROM atest12 WHERE b <<< 5;
+GRANT SELECT ON atest12v TO PUBLIC;
+-- This plan should use nestloop, knowing that few rows will be selected.
+EXPLAIN (COSTS OFF) SELECT * FROM atest12v x, atest12v y WHERE x.a = y.b;
+                   QUERY PLAN                    
+-------------------------------------------------
+ Nested Loop
+   ->  Seq Scan on atest12 atest12_1
+         Filter: (b <<< 5)
+   ->  Index Scan using atest12_a_idx on atest12
+         Index Cond: (a = atest12_1.b)
+         Filter: (b <<< 5)
+(6 rows)
+
+-- And this one.
+EXPLAIN (COSTS OFF) SELECT * FROM atest12 x, atest12 y
+  WHERE x.a = y.b and abs(y.a) <<< 5;
+                    QUERY PLAN                     
+---------------------------------------------------
+ Nested Loop
+   ->  Seq Scan on atest12 y
+         Filter: (abs(a) <<< 5)
+   ->  Index Scan using atest12_a_idx on atest12 x
+         Index Cond: (a = y.b)
+(5 rows)
+
+-- Check if regress_user2 can break security.
+SET SESSION AUTHORIZATION regress_user2;
+CREATE FUNCTION leak2(integer,integer) RETURNS boolean
+  AS $$begin raise notice 'leak % %', $1, $2; return $1 > $2; end$$
+  LANGUAGE plpgsql immutable;
+CREATE OPERATOR >>> (procedure = leak2, leftarg = integer, rightarg = integer,
+                     restrict = scalargtsel);
+-- This should not show any "leak" notices before failing.
+EXPLAIN (COSTS OFF) SELECT * FROM atest12 WHERE a >>> 0;
+ERROR:  permission denied for relation atest12
+-- This plan should use hashjoin, as it will expect many rows to be selected.
+EXPLAIN (COSTS OFF) SELECT * FROM atest12v x, atest12v y WHERE x.a = y.b;
+                QUERY PLAN                 
+-------------------------------------------
+ Hash Join
+   Hash Cond: (atest12.a = atest12_1.b)
+   ->  Seq Scan on atest12
+         Filter: (b <<< 5)
+   ->  Hash
+         ->  Seq Scan on atest12 atest12_1
+               Filter: (b <<< 5)
+(7 rows)
+
+-- Now regress_user1 grants sufficient access to regress_user2.
+SET SESSION AUTHORIZATION regress_user1;
+GRANT SELECT (a, b) ON atest12 TO PUBLIC;
+SET SESSION AUTHORIZATION regress_user2;
+-- Now regress_user2 will also get a good row estimate.
+EXPLAIN (COSTS OFF) SELECT * FROM atest12v x, atest12v y WHERE x.a = y.b;
+                   QUERY PLAN                    
+-------------------------------------------------
+ Nested Loop
+   ->  Seq Scan on atest12 atest12_1
+         Filter: (b <<< 5)
+   ->  Index Scan using atest12_a_idx on atest12
+         Index Cond: (a = atest12_1.b)
+         Filter: (b <<< 5)
+(6 rows)
+
+-- But not for this, due to lack of table-wide permissions needed
+-- to make use of the expression index's statistics.
+EXPLAIN (COSTS OFF) SELECT * FROM atest12 x, atest12 y
+  WHERE x.a = y.b and abs(y.a) <<< 5;
+              QUERY PLAN              
+--------------------------------------
+ Hash Join
+   Hash Cond: (x.a = y.b)
+   ->  Seq Scan on atest12 x
+   ->  Hash
+         ->  Seq Scan on atest12 y
+               Filter: (abs(a) <<< 5)
+(6 rows)
+
+-- clean up (regress_user1's objects are all dropped later)
+DROP FUNCTION leak2(integer, integer) CASCADE;
+NOTICE:  drop cascades to operator >>>(integer,integer)
 -- groups
 SET SESSION AUTHORIZATION regress_user3;
 CREATE TABLE atest3 (one int, two int, three int);
