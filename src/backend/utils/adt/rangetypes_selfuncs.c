@@ -255,6 +255,7 @@ calc_rangesel(TypeCacheEntry *typcache, VariableStatData *vardata,
 			if (nnumbers != 1)
 				elog(ERROR, "invalid empty fraction statistic");		/* shouldn't happen */
 			empty_frac = numbers[0];
+			free_attstatsslot(vardata->atttype, NULL, 0, numbers, nnumbers);
 		}
 		else
 		{
@@ -383,6 +384,15 @@ calc_hist_selectivity(TypeCacheEntry *typcache, VariableStatData *vardata,
 	bool		empty;
 	double		hist_selec;
 
+	/* Can't use the histogram with insecure range support functions */
+	if (!statistic_proc_security_check(vardata,
+									   typcache->rng_cmp_proc_finfo.fn_oid))
+		return -1;
+	if (OidIsValid(typcache->rng_subdiff_finfo.fn_oid) &&
+		!statistic_proc_security_check(vardata,
+									   typcache->rng_subdiff_finfo.fn_oid))
+		return -1;
+
 	/* Try to get histogram of ranges */
 	if (!(HeapTupleIsValid(vardata->statsTuple) &&
 		  get_attstatsslot(vardata->statsTuple,
@@ -420,11 +430,19 @@ calc_hist_selectivity(TypeCacheEntry *typcache, VariableStatData *vardata,
 							   NULL,
 							   &length_hist_values, &length_nhist,
 							   NULL, NULL)))
+		{
+			free_attstatsslot(vardata->atttype, hist_values, nhist, NULL, 0);
 			return -1.0;
+		}
 
 		/* check that it's a histogram, not just a dummy entry */
 		if (length_nhist < 2)
+		{
+			free_attstatsslot(vardata->atttype,
+							  length_hist_values, length_nhist, NULL, 0);
+			free_attstatsslot(vardata->atttype, hist_values, nhist, NULL, 0);
 			return -1.0;
+		}
 	}
 
 	/* Extract the bounds of the constant value. */
@@ -559,6 +577,10 @@ calc_hist_selectivity(TypeCacheEntry *typcache, VariableStatData *vardata,
 			hist_selec = -1.0;	/* keep compiler quiet */
 			break;
 	}
+
+	free_attstatsslot(vardata->atttype,
+					  length_hist_values, length_nhist, NULL, 0);
+	free_attstatsslot(vardata->atttype, hist_values, nhist, NULL, 0);
 
 	return hist_selec;
 }
