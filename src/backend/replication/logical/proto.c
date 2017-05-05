@@ -95,7 +95,7 @@ logicalrep_read_commit(StringInfo in, LogicalRepCommitData *commit_data)
 	uint8   flags = pq_getmsgbyte(in);
 
 	if (flags != 0)
-		elog(ERROR, "unknown flags %u in commit message", flags);
+		elog(ERROR, "unrecognized flags %u in commit message", flags);
 
 	/* read fields */
 	commit_data->commit_lsn = pq_getmsgint64(in);
@@ -468,7 +468,6 @@ logicalrep_read_tuple(StringInfo in, LogicalRepTupleData *tuple)
 	for (i = 0; i < natts; i++)
 	{
 		char		kind;
-		int			len;
 
 		kind = pq_getmsgbyte(in);
 
@@ -479,10 +478,13 @@ logicalrep_read_tuple(StringInfo in, LogicalRepTupleData *tuple)
 				tuple->changed[i] = true;
 				break;
 			case 'u': /* unchanged column */
-				tuple->values[i] = (char *) 0xdeadbeef; /* make bad usage more obvious */
+				/* we don't receive the value of an unchanged column */
+				tuple->values[i] = NULL;
 				break;
 			case 't': /* text formatted value */
 				{
+					int			len;
+
 					tuple->changed[i] = true;
 
 					len = pq_getmsgint(in, 4); /* read length */
@@ -494,7 +496,7 @@ logicalrep_read_tuple(StringInfo in, LogicalRepTupleData *tuple)
 				}
 				break;
 			default:
-				elog(ERROR, "unknown data representation type '%c'", kind);
+				elog(ERROR, "unrecognized data representation type '%c'", kind);
 		}
 	}
 }
