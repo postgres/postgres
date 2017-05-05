@@ -204,20 +204,24 @@ sub mkvcbuild
 
 	if ($solution->{options}->{tcl})
 	{
+		my $found = 0;
 		my $pltcl =
 		  $solution->AddProject('pltcl', 'dll', 'PLs', 'src/pl/tcl');
 		$pltcl->AddIncludeDir($solution->{options}->{tcl} . '/include');
 		$pltcl->AddReference($postgres);
-		if (-e $solution->{options}->{tcl} . '/lib/tcl85.lib')
+
+		for my $tclver (qw(86t 85 84))
 		{
-			$pltcl->AddLibrary(
-				$solution->{options}->{tcl} . '/lib/tcl85.lib');
+			my $tcllib = $solution->{options}->{tcl} . "/lib/tcl$tclver.lib";
+			if (-e $tcllib)
+			{
+				$pltcl->AddLibrary($tcllib);
+				$found = 1;
+				last;
+			}
 		}
-		else
-		{
-			$pltcl->AddLibrary(
-				$solution->{options}->{tcl} . '/lib/tcl84.lib');
-		}
+		die "Unable to find $solution->{options}->{tcl}/lib/tcl<version>.lib"
+			unless $found;
 	}
 
 	$libpq = $solution->AddProject('libpq', 'dll', 'interfaces',
