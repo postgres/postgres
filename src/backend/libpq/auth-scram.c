@@ -343,6 +343,13 @@ pg_be_scram_exchange(void *opaq, char *input, int inputlen,
 			 * If we performed a "mock" authentication that we knew would fail
 			 * from the get go, this is where we fail.
 			 *
+			 * The SCRAM specification includes an error code,
+			 * "invalid-proof", for authentication failure, but it also allows
+			 * erroring out in an application-specific way.  We choose to do
+			 * the latter, so that the error message for invalid password is
+			 * the same for all authentication methods.  The caller will call
+			 * ereport(), when we return SASL_EXCHANGE_FAILURE with no output.
+			 *
 			 * NB: the order of these checks is intentional.  We calculate the
 			 * client proof even in a mock authentication, even though it's
 			 * bound to fail, to thwart timing attacks to determine if a role
@@ -350,14 +357,6 @@ pg_be_scram_exchange(void *opaq, char *input, int inputlen,
 			 */
 			if (!verify_client_proof(state) || state->doomed)
 			{
-				/*
-				 * Signal invalid-proof, although the real reason might also
-				 * be e.g. that the password has expired, or the user doesn't
-				 * exist.  "e=other-error" might be more correct, but
-				 * "e=invalid-proof" is more likely to give a nice error
-				 * message to the user.
-				 */
-				*output = psprintf("e=invalid-proof");
 				result = SASL_EXCHANGE_FAILURE;
 				break;
 			}
