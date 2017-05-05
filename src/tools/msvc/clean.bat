@@ -20,6 +20,7 @@ del /s /q src\bin\win32ver.rc 2> NUL
 del /s /q src\interfaces\win32ver.rc 2> NUL
 if exist src\backend\win32ver.rc del /q src\backend\win32ver.rc
 if exist src\backend\replication\libpqwalreceiver\win32ver.rc del /q src\backend\replication\libpqwalreceiver\win32ver.rc
+if exist src\backend\replication\pgoutput\win32ver.rc del /q src\backend\replication\pgoutput\win32ver.rc
 if exist src\backend\snowball\win32ver.rc del /q src\backend\snowball\win32ver.rc
 if exist src\interfaces\ecpg\test\win32ver.rc del /q src\interfaces\ecpg\test\win32ver.rc
 if exist src\pl\plperl\win32ver.rc del /q src\pl\plperl\win32ver.rc

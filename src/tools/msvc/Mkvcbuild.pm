@@ -252,6 +252,11 @@ sub mkvcbuild
 	$libpqwalreceiver->AddIncludeDir('src/interfaces/libpq');
 	$libpqwalreceiver->AddReference($postgres, $libpq);
 
+	my $pgoutput = $solution->AddProject(
+		'pgoutput', 'dll', '',
+		'src/backend/replication/pgoutput');
+	$pgoutput->AddReference($postgres);
+
 	my $pgtypes = $solution->AddProject(
 		'libpgtypes', 'dll',
 		'interfaces', 'src/interfaces/ecpg/pgtypeslib');
