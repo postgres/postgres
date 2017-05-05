@@ -1049,6 +1049,40 @@ my %tests = (
 			section_post_data        => 1,
 			section_data             => 1, }, },
 
+	'ALTER TABLE ONLY dump_test.measurement ATTACH PARTITION measurement_y2006m2' => {
+		all_runs     => 1,
+		regexp => qr/^
+			\QALTER TABLE ONLY dump_test.measurement ATTACH PARTITION measurement_y2006m2 \E
+			\QFOR VALUES FROM ('2006-02-01') TO ('2006-03-01');\E\n
+			/xm,
+		like => {
+			binary_upgrade           => 1, },
+		unlike => {
+			clean                    => 1,
+			clean_if_exists          => 1,
+			createdb                 => 1,
+			defaults                 => 1,
+			exclude_dump_test_schema => 1,
+			exclude_test_table       => 1,
+			exclude_test_table_data  => 1,
+			no_blobs                 => 1,
+			no_privs                 => 1,
+			no_owner                 => 1,
+			pg_dumpall_dbprivs       => 1,
+			role                     => 1,
+			schema_only              => 1,
+			section_pre_data         => 1,
+			with_oids                => 1,
+			only_dump_test_schema    => 1,
+			only_dump_test_table     => 1,
+			pg_dumpall_globals       => 1,
+			pg_dumpall_globals_clean => 1,
+			section_post_data        => 1,
+			test_schema_plus_blobs   => 1,
+			column_inserts           => 1,
+			data_only                => 1,
+			section_data             => 1, }, },
+
 	'ALTER TABLE test_table CLUSTER ON test_table_pkey' => {
 		all_runs  => 1,
 		catch_all => 'ALTER TABLE ... commands',
@@ -4764,8 +4798,6 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 			\Q--\E\n\n
 			\QCREATE TABLE measurement_y2006m2 PARTITION OF dump_test.measurement\E\n
 			\QFOR VALUES FROM ('2006-02-01') TO ('2006-03-01');\E\n
-			\QALTER TABLE ONLY measurement_y2006m2 ALTER COLUMN city_id SET NOT NULL;\E\n
-			\QALTER TABLE ONLY measurement_y2006m2 ALTER COLUMN logdate SET NOT NULL;\E\n
 			/xm,
 		like => {
 			clean                    => 1,

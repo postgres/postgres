@@ -68,8 +68,6 @@ static int	numextmembers;
 
 static void flagInhTables(TableInfo *tbinfo, int numTables,
 			  InhInfo *inhinfo, int numInherits);
-static void flagPartitions(TableInfo *tblinfo, int numTables,
-			  PartInfo *partinfo, int numPartitions);
 static void flagInhAttrs(DumpOptions *dopt, TableInfo *tblinfo, int numTables);
 static DumpableObject **buildIndexArray(void *objArray, int numObjs,
 				Size objSize);
@@ -77,8 +75,6 @@ static int	DOCatalogIdCompare(const void *p1, const void *p2);
 static int	ExtensionMemberIdCompare(const void *p1, const void *p2);
 static void findParentsByOid(TableInfo *self,
 				 InhInfo *inhinfo, int numInherits);
-static void findPartitionParentByOid(TableInfo *self, PartInfo *partinfo,
-				 int numPartitions);
 static int	strInArray(const char *pattern, char **arr, int arr_size);
 
 
@@ -97,10 +93,8 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	NamespaceInfo *nspinfo;
 	ExtensionInfo *extinfo;
 	InhInfo    *inhinfo;
-	PartInfo    *partinfo;
 	int			numAggregates;
 	int			numInherits;
-	int			numPartitions;
 	int			numRules;
 	int			numProcLangs;
 	int			numCasts;
@@ -238,10 +232,6 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	inhinfo = getInherits(fout, &numInherits);
 
 	if (g_verbose)
-		write_msg(NULL, "reading partition information\n");
-	partinfo = getPartitions(fout, &numPartitions);
-
-	if (g_verbose)
 		write_msg(NULL, "reading event triggers\n");
 	getEventTriggers(fout, &numEventTriggers);
 
@@ -254,11 +244,6 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	if (g_verbose)
 		write_msg(NULL, "finding inheritance relationships\n");
 	flagInhTables(tblinfo, numTables, inhinfo, numInherits);
-
-	/* Link tables to partition parents, mark parents as interesting */
-	if (g_verbose)
-		write_msg(NULL, "finding partition relationships\n");
-	flagPartitions(tblinfo, numTables, partinfo, numPartitions);
 
 	if (g_verbose)
 		write_msg(NULL, "reading column info for interesting tables\n");
@@ -291,10 +276,6 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	if (g_verbose)
 		write_msg(NULL, "reading policies\n");
 	getPolicies(fout, tblinfo, numTables);
-
-	if (g_verbose)
-		write_msg(NULL, "reading partition key information for interesting tables\n");
-	getTablePartitionKeyInfo(fout, tblinfo, numTables);
 
 	if (g_verbose)
 		write_msg(NULL, "reading publications\n");
@@ -351,43 +332,6 @@ flagInhTables(TableInfo *tblinfo, int numTables,
 		parents = tblinfo[i].parents;
 		for (j = 0; j < numParents; j++)
 			parents[j]->interesting = true;
-	}
-}
-
-/* flagPartitions -
- *	 Fill in parent link fields of every target table that is partition,
- *	 and mark parents of partitions as interesting
- *
- * modifies tblinfo
- */
-static void
-flagPartitions(TableInfo *tblinfo, int numTables,
-			  PartInfo *partinfo, int numPartitions)
-{
-	int		i;
-
-	for (i = 0; i < numTables; i++)
-	{
-		/* Some kinds are never partitions */
-		if (tblinfo[i].relkind == RELKIND_SEQUENCE ||
-			tblinfo[i].relkind == RELKIND_VIEW ||
-			tblinfo[i].relkind == RELKIND_MATVIEW)
-			continue;
-
-		/* Don't bother computing anything for non-target tables, either */
-		if (!tblinfo[i].dobj.dump)
-			continue;
-
-		/* Find the parent TableInfo and save */
-		findPartitionParentByOid(&tblinfo[i], partinfo, numPartitions);
-
-		/* Mark the parent as interesting for getTableAttrs */
-		if (tblinfo[i].partitionOf)
-		{
-			tblinfo[i].partitionOf->interesting = true;
-			addObjectDependency(&tblinfo[i].dobj,
-								tblinfo[i].partitionOf->dobj.dumpId);
-		}
 	}
 }
 
@@ -989,40 +933,6 @@ findParentsByOid(TableInfo *self,
 	}
 	else
 		self->parents = NULL;
-}
-
-/*
- * findPartitionParentByOid
- *	  find a partition's parent in tblinfo[]
- */
-static void
-findPartitionParentByOid(TableInfo *self, PartInfo *partinfo,
-						 int numPartitions)
-{
-	Oid			oid = self->dobj.catId.oid;
-	int			i;
-
-	for (i = 0; i < numPartitions; i++)
-	{
-		if (partinfo[i].partrelid == oid)
-		{
-			TableInfo  *parent;
-
-			parent = findTableByOid(partinfo[i].partparent);
-			if (parent == NULL)
-			{
-				write_msg(NULL, "failed sanity check, parent OID %u of table \"%s\" (OID %u) not found\n",
-						  partinfo[i].partparent,
-						  self->dobj.name,
-						  oid);
-				exit_nicely(1);
-			}
-			self->partitionOf = parent;
-
-			/* While we're at it, also save the partdef */
-			self->partitiondef = partinfo[i].partdef;
-		}
-	}
 }
 
 /*
