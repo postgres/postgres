@@ -26,10 +26,10 @@
  * is in "raw" number of bytes, the actual nonces sent over the wire are
  * encoded using only ASCII-printable characters.
  */
-#define SCRAM_RAW_NONCE_LEN			10
+#define SCRAM_RAW_NONCE_LEN			18
 
 /* length of salt when generating new verifiers */
-#define SCRAM_DEFAULT_SALT_LEN		10
+#define SCRAM_DEFAULT_SALT_LEN		12
 
 /* default number of iterations when generating verifier */
 #define SCRAM_DEFAULT_ITERATIONS	4096

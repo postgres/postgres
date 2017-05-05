@@ -28,7 +28,7 @@ CREATE ROLE regress_passwd5 PASSWORD NULL;
 --
 -- Since the salt is random, the exact value stored will be different on every test
 -- run. Use a regular expression to mask the changing parts.
-SELECT rolname, regexp_replace(rolpassword, '(SCRAM-SHA-256)\$(\d+):([a-zA-Z0-9+/]+==)\$([a-zA-Z0-9+/]+=):([a-zA-Z0-9+/]+=)', '\1$\2:<salt>$<storedkey>:<serverkey>') as rolpassword_masked
+SELECT rolname, regexp_replace(rolpassword, '(SCRAM-SHA-256)\$(\d+):([a-zA-Z0-9+/=]+)\$([a-zA-Z0-9+=/]+):([a-zA-Z0-9+/=]+)', '\1$\2:<salt>$<storedkey>:<serverkey>') as rolpassword_masked
     FROM pg_authid
     WHERE rolname LIKE 'regress_passwd%'
     ORDER BY rolname, rolpassword;
@@ -54,7 +54,7 @@ SET password_encryption = 'scram-sha-256';
 ALTER ROLE  regress_passwd5 ENCRYPTED PASSWORD 'foo'; -- create SCRAM verifier
 CREATE ROLE regress_passwd6 ENCRYPTED PASSWORD 'md53725413363ab045e20521bf36b8d8d7f'; -- encrypted with MD5, use as it is
 
-SELECT rolname, regexp_replace(rolpassword, '(SCRAM-SHA-256)\$(\d+):([a-zA-Z0-9+/]+==)\$([a-zA-Z0-9+/]+=):([a-zA-Z0-9+/]+=)', '\1$\2:<salt>$<storedkey>:<serverkey>') as rolpassword_masked
+SELECT rolname, regexp_replace(rolpassword, '(SCRAM-SHA-256)\$(\d+):([a-zA-Z0-9+/=]+)\$([a-zA-Z0-9+=/]+):([a-zA-Z0-9+/=]+)', '\1$\2:<salt>$<storedkey>:<serverkey>') as rolpassword_masked
     FROM pg_authid
     WHERE rolname LIKE 'regress_passwd%'
     ORDER BY rolname, rolpassword;
