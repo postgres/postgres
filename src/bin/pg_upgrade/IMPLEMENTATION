@@ -71,8 +71,8 @@ performs a number of bookkeeping tasks required to 'sync up' the new
 cluster with the existing data.
 
 First, pg_upgrade copies the commit status information and 'next
-transaction ID' from the old cluster to the new cluster. This is the
-steps ensures that the proper tuples are visible from the new cluster.
+transaction ID' from the old cluster to the new cluster. This step
+ensures that the proper tuples are visible from the new cluster.
 Remember, pg_upgrade does not export/import the content of user-defined
 tables so the transaction IDs in the new cluster must match the
 transaction IDs in the old data. pg_upgrade also copies the starting
