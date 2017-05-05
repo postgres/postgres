@@ -554,6 +554,17 @@
 
       <listitem>
        <!--
+       Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+       2017-04-06 [7e534adcd] Fix BRIN cost estimation
+       -->
+       <para>
+        Improve accuracy in determining if a <acronym>BRIN</> index scan
+        is beneficial (David Rowley, Emre Hasegeli)
+       </para>
+      </listitem>
+
+      <listitem>
+       <!--
        Author: Tom Lane <tgl@sss.pgh.pa.us>
        2016-09-09 [b1328d78f] Invent PageIndexTupleOverwrite, and teach BRIN and GiST
        -->
@@ -707,8 +718,9 @@
        2017-04-05 [2686ee1b7] Collect and use multi-column dependency stats
        -->
       <para>
-       Add the ability to compute a correlation ratio and the number of
-       distinct values on several columns (Tomas Vondra, David Rowley)
+       Add multi-column optimizer statistics to compute the correlation
+       ratio and number of distinct values (Tomas Vondra, David Rowley,
+       &Aacute;lvaro Herrera)
       </para>
 
       <para>
@@ -1755,10 +1767,12 @@
       <!--
       Author: Fujii Masao <fujii@postgresql.org>
       2017-03-25 [70adf2fbe] Make VACUUM VERBOSE report the number of skipped frozen 
+      Author: Simon Riggs <simon@2ndQuadrant.com>
+      2017-03-03 [9eb344faf] Allow vacuums to report oldestxmin
       -->
       <para>
-       Have <link linkend="SQL-VACUUM"><command>VACUUM VERBOSE</></>
-       report the number of skipped frozen pages (Masahiko Sawada)
+       Have <link linkend="SQL-VACUUM"><command>VACUUM VERBOSE</></> report
+       the number of skipped frozen pages and oldest xmin (Masahiko Sawada)
       </para>
 
       <para>
