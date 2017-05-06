@@ -23,7 +23,12 @@
    </para>
 
    <para>
-    However, if you are upgrading from a version earlier than 9.6.2,
+    However, if you are using third-party replication tools that depend
+    on <quote>logical decoding</>, see the first changelog entry below.
+   </para>
+
+   <para>
+    Also, if you are upgrading from a version earlier than 9.6.2,
     see <xref linkend="release-9-6-2">.
    </para>
   </sect2>
@@ -32,6 +37,40 @@
    <title>Changes</title>
 
    <itemizedlist>
+
+    <listitem>
+<!--
+Author: Andres Freund <andres@anarazel.de>
+Branch: master [2bef06d51] 2017-04-27 13:13:36 -0700
+Branch: REL9_6_STABLE [28afff347] 2017-04-27 13:13:36 -0700
+Branch: REL9_5_STABLE [47f896b5c] 2017-04-27 13:13:37 -0700
+Branch: REL9_4_STABLE [5da646138] 2017-04-27 13:13:37 -0700
+Branch: master [56e19d938] 2017-04-27 15:29:15 -0700
+Branch: REL9_6_STABLE [29e8c881d] 2017-04-27 15:29:33 -0700
+Branch: REL9_5_STABLE [54270d7eb] 2017-04-27 15:29:43 -0700
+Branch: REL9_4_STABLE [b6ecf26cc] 2017-04-27 15:29:52 -0700
+-->
+     <para>
+      Fix possibly-invalid initial snapshot during logical decoding
+      (Petr Jelinek, Andres Freund)
+     </para>
+
+     <para>
+      The initial snapshot created for a logical decoding replication slot
+      was potentially incorrect.  This could cause third-party tools that
+      use logical decoding to copy incomplete/inconsistent initial data.
+      This was more likely to happen if the source server was busy at the
+      time of slot creation, or if another logical slot already existed.
+     </para>
+
+     <para>
+      If you are using a replication tool that depends on logical decoding,
+      and it should have copied a nonempty data set at the start of
+      replication, it is advisable to recreate the replica after
+      installing this update, or to verify its contents against the source
+      server.
+     </para>
+    </listitem>
 
     <listitem>
 <!--
@@ -81,33 +120,6 @@ Branch: REL9_2_STABLE [952e33b05] 2017-04-23 13:10:58 -0400
 
     <listitem>
 <!--
-Author: Andres Freund <andres@anarazel.de>
-Branch: master [2bef06d51] 2017-04-27 13:13:36 -0700
-Branch: REL9_6_STABLE [28afff347] 2017-04-27 13:13:36 -0700
-Branch: REL9_5_STABLE [47f896b5c] 2017-04-27 13:13:37 -0700
-Branch: REL9_4_STABLE [5da646138] 2017-04-27 13:13:37 -0700
-Branch: master [56e19d938] 2017-04-27 15:29:15 -0700
-Branch: REL9_6_STABLE [29e8c881d] 2017-04-27 15:29:33 -0700
-Branch: REL9_5_STABLE [54270d7eb] 2017-04-27 15:29:43 -0700
-Branch: REL9_4_STABLE [b6ecf26cc] 2017-04-27 15:29:52 -0700
--->
-     <para>
-      Fix possibly-corrupt initial snapshot during logical decoding
-      (Petr Jelinek, Andres Freund)
-     </para>
-
-     <para>
-      If a logical decoding replication slot was created while another slot
-      already exists, it was initialized with a potentially-corrupted
-      snapshot, allowing wrong data to be returned during decoding.
-      The time window during which this snapshot continued to be used
-      depended on how busy the server was; under low load it would be hard
-      to see any problem.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
 Author: Fujii Masao <fujii@postgresql.org>
 Branch: master [1d04a59be] 2017-02-22 03:11:58 +0900
 Branch: REL9_6_STABLE [9fab155c6] 2017-02-22 08:29:32 +0900
@@ -142,15 +154,15 @@ Branch: master [aa1351f1e] 2017-04-26 16:17:34 -0400
 Branch: REL9_6_STABLE [e880df25e] 2017-04-26 16:17:29 -0400
 -->
      <para>
-      Prevent delays in postmaster's launching of parallel worker processes
-      (Tom Lane)
+      Prevent delays in postmaster's launching of multiple parallel worker
+      processes (Tom Lane)
      </para>
 
      <para>
       There could be a significant delay (up to tens of seconds) before
-      satisfying a query's request for more than one worker process.  On most
-      platforms this required unlucky timing, but on some it was the typical
-      case.
+      satisfying a query's request for more than one worker process, or when
+      multiple queries requested workers simultaneously.  On most platforms
+      this required unlucky timing, but on some it was the typical case.
      </para>
     </listitem>
 
@@ -168,8 +180,8 @@ Branch: REL9_4_STABLE [436b560b8] 2017-04-24 12:16:58 -0400
      </para>
 
      <para>
-      Previously, the postmaster partially updated its state as though
-      the process had been successfully launched, resulting in subsequent
+      Previously, the postmaster updated portions of its state as though
+      the process had been launched successfully, resulting in subsequent
       confusion.
      </para>
     </listitem>
@@ -227,7 +239,7 @@ Branch: REL9_5_STABLE [6f0f98bb0] 2017-04-17 15:29:00 -0400
      <para>
       This optimization supposed that retrieving all columns of a tuple
       is inexpensive, which is true for ordinary Postgres tuples; but it
-      might not be the case at all for a custom scan provider.
+      might not be the case for a custom scan provider.
      </para>
     </listitem>
 
@@ -271,7 +283,7 @@ Branch: REL9_2_STABLE [27a8c8033] 2017-02-12 16:05:23 -0500
 
      <para>
       The command failed if the calling user did not currently have
-      privileges to use the tablespace an index had been created in.
+      <literal>CREATE</> privilege for the tablespace containing the index.
       That behavior seems unhelpful, so skip the check, allowing the
       index to be rebuilt where it is.
      </para>
@@ -289,7 +301,7 @@ Branch: REL9_2_STABLE [f60f0c8fe] 2017-04-28 14:55:42 -0400
 -->
      <para>
       Fix <command>ALTER TABLE ... VALIDATE CONSTRAINT</> to not recurse
-      to child tables if the constraint is marked <literal>NO INHERIT</>
+      to child tables when the constraint is marked <literal>NO INHERIT</>
       (Amit Langote)
      </para>
 
@@ -404,7 +416,7 @@ Branch: REL9_4_STABLE [8851bcf88] 2017-04-05 23:51:28 -0400
 -->
      <para>
       Fix integer-overflow problems in <type>interval</> comparison (Kyotaro
-      Horiguchi and Tom Lane)
+      Horiguchi, Tom Lane)
      </para>
 
      <para>
@@ -682,9 +694,9 @@ Branch: REL9_6_STABLE [4e8b2fd33] 2017-02-17 15:06:34 -0500
      </para>
 
      <para>
-      This resulted in <application>pg_dump</> always thinking that the
-      language had no initial privileges; since that's true for most
-      procedural languages, bad effects from this bug are probably rare.
+      This resulted in <application>pg_dump</> always believing that the
+      language had no initial privileges.  Since that's true for most
+      procedural languages, ill effects from this bug are probably rare.
      </para>
     </listitem>
 
@@ -763,8 +775,8 @@ Branch: REL9_3_STABLE [f6cfc14e5] 2017-03-11 13:33:22 -0800
 Branch: REL9_2_STABLE [c4613c3f4] 2017-03-11 13:33:30 -0800
 -->
      <para>
-      In <filename>contrib/dblink</>, avoid connection leak when establishing
-      a new unnamed connection (Joe Conway)
+      In <filename>contrib/dblink</>, avoid leaking the previous unnamed
+      connection when establishing a new unnamed connection (Joe Conway)
      </para>
     </listitem>
 
