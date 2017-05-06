@@ -611,7 +611,8 @@ CheckArchiveTimeout(void)
 	{
 		/*
 		 * Switch segment only when "important" WAL has been logged since the
-		 * last segment switch.
+		 * last segment switch (last_switch_lsn points to end of segment
+		 * switch occurred in).
 		 */
 		if (GetLastImportantRecPtr() > last_switch_lsn)
 		{

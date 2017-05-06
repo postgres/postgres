@@ -325,10 +325,13 @@ BackgroundWriterMain(void)
 
 			/*
 			 * Only log if enough time has passed and interesting records have
-			 * been inserted since the last snapshot.
+			 * been inserted since the last snapshot.  Have to compare with <=
+			 * instead of < because GetLastImportantRecPtr() points at the
+			 * start of a record, whereas last_snapshot_lsn points just past
+			 * the end of the record.
 			 */
 			if (now >= timeout &&
-				last_snapshot_lsn < GetLastImportantRecPtr())
+				last_snapshot_lsn <= GetLastImportantRecPtr())
 			{
 				last_snapshot_lsn = LogStandbySnapshot();
 				last_snapshot_ts = now;
