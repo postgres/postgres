@@ -15736,6 +15736,12 @@ SELECT * FROM pg_ls_dir('.') WITH ORDINALITY AS t(ls,n);
       </row>
 
       <row>
+       <entry><literal><function>current_role</function></literal></entry>
+       <entry><type>name</type></entry>
+       <entry>equivalent to <function>current_user</function></entry>
+      </row>
+
+      <row>
        <entry><literal><function>current_schema</function>[()]</literal></entry>
        <entry><type>name</type></entry>
        <entry>name of current schema</entry>
@@ -15871,8 +15877,11 @@ SELECT * FROM pg_ls_dir('.') WITH ORDINALITY AS t(ls,n);
 
    <note>
     <para>
-     <function>current_catalog</function>, <function>current_schema</function>,
-     <function>current_user</function>, <function>session_user</function>,
+     <function>current_catalog</function>,
+     <function>current_role</function>,
+     <function>current_schema</function>,
+     <function>current_user</function>,
+     <function>session_user</function>,
      and <function>user</function> have special syntactic status
      in <acronym>SQL</acronym>: they must be called without trailing
      parentheses.  (In PostgreSQL, parentheses can optionally be used with
@@ -15890,6 +15899,10 @@ SELECT * FROM pg_ls_dir('.') WITH ORDINALITY AS t(ls,n);
 
    <indexterm>
     <primary>current_query</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>current_role</primary>
    </indexterm>
 
    <indexterm>
@@ -15943,6 +15956,11 @@ SELECT * FROM pg_ls_dir('.') WITH ORDINALITY AS t(ls,n);
     functions with the attribute <literal>SECURITY DEFINER</literal>.
     In Unix parlance, the session user is the <quote>real user</quote> and
     the current user is the <quote>effective user</quote>.
+    <function>current_role</function> and <function>user</function> are
+    synonyms for <function>current_user</function>.  (The SQL standard draws
+    a distinction between <function>current_role</function>
+    and <function>current_user</function>, but <productname>PostgreSQL</>
+    does not, since it unifies users and roles into a single kind of entity.)
    </para>
 
    <para>
