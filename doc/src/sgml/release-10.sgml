@@ -458,13 +458,13 @@
        <para>
         Add <acronym>GUC</> <xref linkend="guc-max-parallel-workers">
         to limit the number of worker processes that can be used for
-        parallelism (Julien Rouhaud)
+        query parallelism (Julien Rouhaud)
        </para>
 
        <para>
         This can be set lower than <xref
         linkend="guc-max-worker-processes"> to reserve worker processes
-        for non-parallel purposes.
+        for purposes other than parallel queries.
        </para>
       </listitem>
 
@@ -476,22 +476,6 @@
      <title>Indexes</title>
 
      <itemizedlist>
-
-      <listitem>
-       <!--
-       Author: Andrew Dunstan <andrew@dunslane.net>
-       2017-03-31 [e306df7f9] Full Text Search support for <type>JSON</> and <type>JSONB</>
-       -->
-       <para>
-        Add full text search support for <type>JSON</> and <type>JSONB</>
-        (Dmitry Dolgov)
-       </para>
-
-       <para>
-        This is accessed via <function>ts_headline()</> and
-        <function>to_tsvector</>. RIGHT SECTION?
-       </para>
-      </listitem>
 
       <listitem>
        <!--
@@ -525,12 +509,14 @@
        2017-04-01 [7526e1022] BRIN auto-summarization
        -->
        <para>
-        Cause <acronym>BRIN</> index summarization to happen more
-        aggressively (&Aacute;lvaro Herrera)
+        Add option to allow <acronym>BRIN</> index summarization to happen
+        more aggressively (&Aacute;lvaro Herrera)
        </para>
 
        <para>
-        Specifically, summarize the previous page range when a new page
+        Specifically, a new <link linkend="SQL-ALTERINDEX"><command>CREATE
+        INDEX</></> option allows auto-summarizion of the
+        previous <acronym>BRIN</> page range when a new page
         range is created.
        </para>
       </listitem>
@@ -541,14 +527,18 @@
        2017-04-01 [c655899ba] BRIN de-summarization
        -->
        <para>
-        Add function <function>brin_desummarize_range()</> to remove
-        <acronym>BRIN</> summarization of a specified range (&Aacute;lvaro
+        Add functions to remove and re-add <acronym>BRIN</>
+        summarization for <acronym>BRIN</> index ranges (&Aacute;lvaro
         Herrera)
        </para>
 
        <para>
-        This allows future <acronym>BRIN</> index summarization to be
-        more compact.  CLARIFY
+        New <acronym>SQL</> function <link
+        linkend="functions-admin-index-table"><function>brin_summarize_range()</></>
+        updates <acronym>BRIN</> index summarization for a specified
+        range and <function>brin_desummarize_range()</> removes it.
+        This is helpful to update summarization of a range that is now
+        smaller due to <command>UPDATE</>s and <command>DELETE</>s.
        </para>
       </listitem>
 
@@ -863,19 +853,9 @@
       <listitem>
        <!--
        Author: Peter Eisentraut <peter_e@gmx.net>
-       2016-11-18 [67dc4ccbb] Add pg_sequences view
-       -->
-       <para>
-        Add <link
-        linkend="view-pg-sequences"><structname>pg_sequences</></> view
-        to show all sequences (Peter Eisentraut)
-       </para>
-      </listitem>
-
-      <listitem>
-       <!--
-       Author: Peter Eisentraut <peter_e@gmx.net>
        2016-12-20 [1753b1b02] Add pg_sequence system catalog
+       Author: Peter Eisentraut <peter_e@gmx.net>
+       2016-11-18 [67dc4ccbb] Add pg_sequences view
        -->
        <para>
         Create a <link
@@ -884,9 +864,11 @@
        </para>
 
        <para>
-        Sequence metadata includes start, increment, etc, which is now
-        transactional.  Sequence counters are still stored in separate
-        heap relations.
+        Sequence metadata includes start, increment, etc,
+        which is now transactional.  Sequence counters are
+        still stored in separate heap relations.  Also add <link
+        linkend="view-pg-sequences"><structname>pg_sequences</></> view
+        to show all sequences.
        </para>
       </listitem>
 
@@ -1167,7 +1149,7 @@
       </para>
 
        <para>
-        This proves better security than the existing <literal>md5</>
+        This provides better security than the existing <literal>md5</>
         negotiation and storage method.
        </para>
       </listitem>
@@ -1238,8 +1220,8 @@
        2017-01-04 [6667d9a6d] Re-allow SSL passphrase prompt at server start, but not 
        -->
        <para>
-        Allow <acronym>SSL</> configuration to be updated at
-        <literal>SIGHUP</> (Andreas Karlsson, Tom Lane)
+        Allow <acronym>SSL</> configuration to be updated during
+        configuration reload (Andreas Karlsson, Tom Lane)
        </para>
 
        <para>
@@ -1317,23 +1299,6 @@
        </para>
       </listitem>
 
-      <listitem>
-       <!--
-       Author: Robert Haas <rhaas@postgresql.org>
-       2016-11-21 [a734fd5d1] autovacuum: Drop orphan temp tables more quickly but wit
-       Author: Tom Lane <tgl@sss.pgh.pa.us>
-       2016-11-27 [dafa0848d] Code review for early drop of orphaned temp relations in
-       -->
-       <para>
-        Remove orphaned temporary tables more aggressively (Robert Haas,
-        Tom Lane)
-       </para>
-
-       <para>
-        Previously such tables were removed only when necessary. SECTION?
-       </para>
-      </listitem>
-
      </itemizedlist>
 
      <sect5>
@@ -1376,8 +1341,14 @@
         2017-04-05 [00b6b6feb] Allow \-\-with-wal-segsize=n up to n=1024MB
         -->
         <para>
-         Increase the maximum configurable <acronym>WAL</> size to 1
-         gigabyte (Beena Emerson)
+         Increase the maximum configurable <acronym>WAL</> segment size
+         to one gigabyte (Beena Emerson)
+        </para>
+
+        <para>
+         Larger <acronym>WAL</> segment sizes allows for fewer
+         <xref linkend="guc-archive-command"> invocations and fewer
+         <acronym>WAL</> files to manage.
         </para>
        </listitem>
 
@@ -1568,6 +1539,19 @@
     <title>Queries</title>
 
     <itemizedlist>
+
+     <listitem>
+      <!--
+      Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+      2017-03-08 [fcec6caaf] Support XMLTABLE query expression
+      -->
+      <para>
+       Add <link
+       linkend="functions-xml-processing-xmltable"><function>XMLTABLE</></>
+       function that converts <type>XML</>-formatted data into a row set
+       (Pavel Stehule, &Aacute;lvaro Herrera)
+      </para>
+     </listitem>
 
      <listitem>
       <!--
@@ -1821,6 +1805,22 @@
 
     <itemizedlist>
 
+      <listitem>
+       <!--
+       Author: Andrew Dunstan <andrew@dunslane.net>
+       2017-03-31 [e306df7f9] Full Text Search support for <type>JSON</> and <type>JSONB</>
+       -->
+       <para>
+        Add full text search support for <type>JSON</> and <type>JSONB</>
+        (Dmitry Dolgov)
+       </para>
+
+       <para>
+        This is accessed via <function>ts_headline()</> and
+        <function>to_tsvector</>.
+       </para>
+      </listitem>
+
      <listitem>
       <!--
       Author: Stephen Frost <sfrost@snowman.net>
@@ -1934,23 +1934,6 @@
       <para>
        Similar to <function>regexp_matches()</>, but only returns results
        from the first match so it is easier use for simple cases.
-      </para>
-     </listitem>
-
-     <listitem>
-      <!--
-      Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
-      2017-03-08 [fcec6caaf] Support XMLTABLE query expression
-      -->
-      <para>
-       Add support for converting <type>XML</>-formatted data into a row
-       set (Pavel Stehule, &Aacute;lvaro Herrera)
-      </para>
-
-      <para>
-       This is done by referencing the new <link
-       linkend="functions-xml-processing-xmltable"><function>XMLTABLE</></>
-       function.
       </para>
      </listitem>
 
@@ -2572,7 +2555,7 @@
        </para>
 
        <para>
-        Also add <option>-nosync</> option to disable fsync.
+        Also add <option>--nosync</> option to disable fsync.
        </para>
       </listitem>   
 
@@ -2617,7 +2600,7 @@
        2016-10-19 [0be22457d] pg_ctl: Add long options for -w and -W
        -->
        <para>
-        Add log options for <application>pg_ctl</> wait (<option>--wait</>)
+        Add long options for <application>pg_ctl</> wait (<option>--wait</>)
         and no-wait (<option>--no-wait</>) (Vik Fearing)
        </para>
       </listitem>
