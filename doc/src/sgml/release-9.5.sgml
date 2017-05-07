@@ -1,6 +1,502 @@
 <!-- doc/src/sgml/release-9.5.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-9-5-7">
+  <title>Release 9.5.7</title>
+
+  <note>
+  <title>Release Date</title>
+  <simpara>2017-05-11</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 9.5.6.
+   For information about new features in the 9.5 major release, see
+   <xref linkend="release-9-5">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 9.5.7</title>
+
+   <para>
+    A dump/restore is not required for those running 9.5.X.
+   </para>
+
+   <para>
+    However, if you are using third-party replication tools that depend
+    on <quote>logical decoding</>, see the first changelog entry below.
+   </para>
+
+   <para>
+    Also, if you are upgrading from a version earlier than 9.5.6,
+    see <xref linkend="release-9-5-6">.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Fix possibly-invalid initial snapshot during logical decoding
+      (Petr Jelinek, Andres Freund)
+     </para>
+
+     <para>
+      The initial snapshot created for a logical decoding replication slot
+      was potentially incorrect.  This could cause third-party tools that
+      use logical decoding to copy incomplete/inconsistent initial data.
+      This was more likely to happen if the source server was busy at the
+      time of slot creation, or if another logical slot already existed.
+     </para>
+
+     <para>
+      If you are using a replication tool that depends on logical decoding,
+      and it should have copied a nonempty data set at the start of
+      replication, it is advisable to recreate the replica after
+      installing this update, or to verify its contents against the source
+      server.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible corruption of <quote>init forks</> of unlogged indexes
+      (Robert Haas, Michael Paquier)
+     </para>
+
+     <para>
+      This could result in an unlogged index being set to an invalid state
+      after a crash and restart.  Such a problem would persist until the
+      index was dropped and rebuilt.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix incorrect reconstruction of <structname>pg_subtrans</> entries
+      when a standby server replays a prepared but uncommitted two-phase
+      transaction (Tom Lane)
+     </para>
+
+     <para>
+      In most cases this turned out to have no visible ill effects, but in
+      corner cases it could result in circular references
+      in <structname>pg_subtrans</>, potentially causing infinite loops
+      in queries that examine rows modified by the two-phase transaction.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid possible crash in <application>walsender</> due to failure
+      to initialize a string buffer (Stas Kelvich, Fujii Masao)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible crash when rescanning a nearest-neighbor index-only scan
+      on a GiST index (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix postmaster's handling of <function>fork()</> failure for a
+      background worker process (Tom Lane)
+     </para>
+
+     <para>
+      Previously, the postmaster updated portions of its state as though
+      the process had been launched successfully, resulting in subsequent
+      confusion.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Andrew Gierth <rhodiumtoad@postgresql.org>
+Branch: REL9_5_STABLE [7be3678a8] 2017-04-24 07:53:05 +0100
+-->
+     <para>
+      Fix crash or wrong answers when a <literal>GROUPING SETS</> column's
+      data type is hashable but not sortable (Pavan Deolasee)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid applying <quote>physical targetlist</> optimization to custom
+      scans (Dmitry Ivanov, Tom Lane)
+     </para>
+
+     <para>
+      This optimization supposed that retrieving all columns of a tuple
+      is inexpensive, which is true for ordinary Postgres tuples; but it
+      might not be the case for a custom scan provider.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Use the correct sub-expression when applying a <literal>FOR ALL</>
+      row-level-security policy (Stephen Frost)
+     </para>
+
+     <para>
+      In some cases the <literal>WITH CHECK</> restriction would be applied
+      when the <literal>USING</> restriction is more appropriate.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure parsing of queries in extension scripts sees the results of
+      immediately-preceding DDL (Julien Rouhaud, Tom Lane)
+     </para>
+
+     <para>
+      Due to lack of a cache flush step between commands in an extension
+      script file, non-utility queries might not see the effects of an
+      immediately preceding catalog change, such as <command>ALTER TABLE
+      ... RENAME</>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Skip tablespace privilege checks when <command>ALTER TABLE ... ALTER
+      COLUMN TYPE</> rebuilds an existing index (Noah Misch)
+     </para>
+
+     <para>
+      The command failed if the calling user did not currently have
+      <literal>CREATE</> privilege for the tablespace containing the index.
+      That behavior seems unhelpful, so skip the check, allowing the
+      index to be rebuilt where it is.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <command>ALTER TABLE ... VALIDATE CONSTRAINT</> to not recurse
+      to child tables when the constraint is marked <literal>NO INHERIT</>
+      (Amit Langote)
+     </para>
+
+     <para>
+      This fix prevents unwanted <quote>constraint does not exist</> failures
+      when no matching constraint is present in the child tables.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid dangling pointer in <command>COPY ... TO</> when row-level
+      security is active for the source table (Tom Lane)
+     </para>
+
+     <para>
+      Usually this had no ill effects, but sometimes it would cause
+      unexpected errors or crashes.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid accessing an already-closed relcache entry in <command>CLUSTER</>
+      and <command>VACUUM FULL</> (Tom Lane)
+     </para>
+
+     <para>
+      With some bad luck, this could lead to indexes on the target
+      relation getting rebuilt with the wrong persistence setting.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <command>VACUUM</> to account properly for pages that could not
+      be scanned due to conflicting page pins (Andrew Gierth)
+     </para>
+
+     <para>
+      This tended to lead to underestimation of the number of tuples in
+      the table.  In the worst case of a small heavily-contended
+      table, <command>VACUUM</> could incorrectly report that the table
+      contained no tuples, leading to very bad planning choices.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure that bulk-tuple-transfer loops within a hash join are
+      interruptible by query cancel requests (Tom Lane, Thomas Munro)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix integer-overflow problems in <type>interval</> comparison (Kyotaro
+      Horiguchi, Tom Lane)
+     </para>
+
+     <para>
+      The comparison operators for type <type>interval</> could yield wrong
+      answers for intervals larger than about 296000 years.  Indexes on
+      columns containing such large values should be reindexed, since they
+      may be corrupt.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <function>cursor_to_xml()</> to produce valid output
+      with <replaceable>tableforest</> = false
+      (Thomas Munro, Peter Eisentraut)
+     </para>
+
+     <para>
+      Previously it failed to produce a wrapping <literal>&lt;table&gt;</>
+      element.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix roundoff problems in <function>float8_timestamptz()</>
+      and <function>make_interval()</> (Tom Lane)
+     </para>
+
+     <para>
+      These functions truncated, rather than rounded, when converting a
+      floating-point value to integer microseconds; that could cause
+      unexpectedly off-by-one results.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <function>pg_get_object_address()</> to handle members of operator
+      families correctly (&Aacute;lvaro Herrera)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve performance of <structname>pg_timezone_names</> view
+      (Tom Lane, David Rowley)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Reduce memory management overhead for contexts containing many large
+      blocks (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix sloppy handling of corner-case errors from <function>lseek()</>
+      and <function>close()</> (Tom Lane)
+     </para>
+
+     <para>
+      Neither of these system calls are likely to fail in typical situations,
+      but if they did, <filename>fd.c</> could get quite confused.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix incorrect check for whether postmaster is running as a Windows
+      service (Michael Paquier)
+     </para>
+
+     <para>
+      This could result in attempting to write to the event log when that
+      isn't accessible, so that no logging happens at all.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>ecpg</> to support <command>COMMIT PREPARED</>
+      and <command>ROLLBACK PREPARED</> (Masahiko Sawada)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix a double-free error when processing dollar-quoted string literals
+      in <application>ecpg</> (Michael Meskes)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      In <application>pg_dump</>, fix incorrect schema and owner marking for
+      comments and security labels of some types of database objects
+      (Giuseppe Broccolo, Tom Lane)
+     </para>
+
+     <para>
+      In simple cases this caused no ill effects; but for example, a
+      schema-selective restore might omit comments it should include, because
+      they were not marked as belonging to the schema of their associated
+      object.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid emitting an invalid list file in <literal>pg_restore -l</>
+      when SQL object names contain newlines (Tom Lane)
+     </para>
+
+     <para>
+      Replace newlines by spaces, which is sufficient to make the output
+      valid for <literal>pg_restore -L</>'s purposes.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>pg_upgrade</> to transfer comments and security labels
+      attached to <quote>large objects</> (blobs) (Stephen Frost)
+     </para>
+
+     <para>
+      Previously, blobs were correctly transferred to the new database, but
+      any comments or security labels attached to them were lost.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve error handling
+      in <filename>contrib/adminpack</>'s <function>pg_file_write()</>
+      function (Noah Misch)
+     </para>
+
+     <para>
+      Notably, it failed to detect errors reported
+      by <function>fclose()</>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      In <filename>contrib/dblink</>, avoid leaking the previous unnamed
+      connection when establishing a new unnamed connection (Joe Conway)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <filename>contrib/pg_trgm</>'s extraction of trigrams from regular
+      expressions (Tom Lane)
+     </para>
+
+     <para>
+      In some cases it would produce a broken data structure that could never
+      match anything, leading to GIN or GiST indexscans that use a trigram
+      index not finding any matches to the regular expression.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Robert Haas <rhaas@postgresql.org>
+Branch: REL9_5_STABLE [cdf5a004b] 2017-05-06 22:21:38 -0400
+Branch: REL9_4_STABLE [f14bf0a8f] 2017-05-06 22:19:56 -0400
+Branch: REL9_3_STABLE [3aa16b117] 2017-05-06 22:17:35 -0400
+-->
+     <para>
+      In <filename>contrib/postgres_fdw</>,
+      transmit query cancellation requests to the remote server
+      (Michael Paquier, Etsuro Fujita)
+     </para>
+
+     <para>
+      Previously, a local query cancellation request did not cause an
+      already-sent remote query to terminate early.  This is a back-patch
+      of work originally done for 9.6.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Support Tcl 8.6 in MSVC builds (&Aacute;lvaro Herrera)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Sync our copy of the timezone library with IANA release tzcode2017b
+      (Tom Lane)
+     </para>
+
+     <para>
+      This fixes a bug affecting some DST transitions in January 2038.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</> release 2017b
+      for DST law changes in Chile, Haiti, and Mongolia, plus historical
+      corrections for Ecuador, Kazakhstan, Liberia, and Spain.
+      Switch to numeric abbreviations for numerous time zones in South
+      America, the Pacific and Indian oceans, and some Asian and Middle
+      Eastern countries.
+     </para>
+
+     <para>
+      The IANA time zone database previously provided textual abbreviations
+      for all time zones, sometimes making up abbreviations that have little
+      or no currency among the local population.  They are in process of
+      reversing that policy in favor of using numeric UTC offsets in zones
+      where there is no evidence of real-world use of an English
+      abbreviation.  At least for the time being, <productname>PostgreSQL</>
+      will continue to accept such removed abbreviations for timestamp input.
+      But they will not be shown in the <structname>pg_timezone_names</>
+      view nor used for output.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Use correct daylight-savings rules for POSIX-style time zone names
+      in MSVC builds (David Rowley)
+     </para>
+
+     <para>
+      The Microsoft MSVC build scripts neglected to install
+      the <filename>posixrules</> file in the timezone directory tree.
+      This resulted in the timezone code falling back to its built-in
+      rule about what DST behavior to assume for a POSIX-style time zone
+      name.  For historical reasons that still corresponds to the DST rules
+      the USA was using before 2007 (i.e., change on first Sunday in April
+      and last Sunday in October).  With this fix, a POSIX-style zone name
+      will use the current and historical DST transition dates of
+      the <literal>US/Eastern</> zone.  If you don't want that, remove
+      the <filename>posixrules</> file, or replace it with a copy of some
+      other zone file (see <xref linkend="datatype-timezones">).  Note that
+      due to caching, you may need to restart the server to get such changes
+      to take effect.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-9-5-6">
   <title>Release 9.5.6</title>
 
