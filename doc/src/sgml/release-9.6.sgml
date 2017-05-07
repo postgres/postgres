@@ -245,6 +245,24 @@ Branch: REL9_5_STABLE [6f0f98bb0] 2017-04-17 15:29:00 -0400
 
     <listitem>
 <!--
+Author: Stephen Frost <sfrost@snowman.net>
+Branch: master [aa5d3c0b3] 2017-05-06 21:46:35 -0400
+Branch: REL9_6_STABLE [92b15224b] 2017-05-06 21:46:41 -0400
+Branch: REL9_5_STABLE [d617c7629] 2017-05-06 21:46:56 -0400
+-->
+     <para>
+      Use the correct sub-expression when applying a <literal>FOR ALL</>
+      row-level-security policy (Stephen Frost)
+     </para>
+
+     <para>
+      In some cases the <literal>WITH CHECK</> restriction would be applied
+      when the <literal>USING</> restriction is more appropriate.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 Branch: master [9209e0760] 2017-05-02 18:06:09 -0400
 Branch: REL9_6_STABLE [d56b8b41b] 2017-05-02 18:05:54 -0400
@@ -516,9 +534,16 @@ Branch: REL9_5_STABLE [724cd4f06] 2017-05-02 21:50:47 -0400
 Branch: REL9_4_STABLE [5557b6af5] 2017-05-02 21:50:52 -0400
 Branch: REL9_3_STABLE [35ac926bf] 2017-05-02 21:50:56 -0400
 Branch: REL9_2_STABLE [1b6db75ef] 2017-05-02 21:51:01 -0400
+Branch: master [5788a5670] 2017-05-07 11:34:31 -0400
+Branch: REL9_6_STABLE [5042e9492] 2017-05-07 11:34:41 -0400
+Branch: REL9_5_STABLE [38ed45c91] 2017-05-07 11:34:48 -0400
+Branch: REL9_4_STABLE [6eedc6c18] 2017-05-07 11:34:58 -0400
+Branch: REL9_3_STABLE [07987304d] 2017-05-07 11:35:05 -0400
+Branch: REL9_2_STABLE [9061680f0] 2017-05-07 11:35:11 -0400
 -->
      <para>
-      Improve performance of <structname>pg_timezone_names</> view (Tom Lane)
+      Improve performance of <structname>pg_timezone_names</> view
+      (Tom Lane, David Rowley)
      </para>
     </listitem>
 
@@ -826,6 +851,26 @@ Branch: REL9_6_STABLE [86e640a69] 2017-04-26 09:14:21 -0400
 
     <listitem>
 <!--
+Author: Robert Haas <rhaas@postgresql.org>
+Branch: REL9_5_STABLE [cdf5a004b] 2017-05-06 22:21:38 -0400
+Branch: REL9_4_STABLE [f14bf0a8f] 2017-05-06 22:19:56 -0400
+Branch: REL9_3_STABLE [3aa16b117] 2017-05-06 22:17:35 -0400
+-->
+     <para>
+      In <filename>contrib/postgres_fdw</>,
+      transmit query cancellation requests to the remote server
+      (Michael Paquier, Etsuro Fujita)
+     </para>
+
+     <para>
+      Previously, a local query cancellation request did not cause an
+      already-sent remote query to terminate early.  This is a back-patch
+      of work originally done for 9.6.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 Branch: REL9_4_STABLE [bb132cddf] 2017-04-15 20:16:03 -0400
 Branch: REL9_3_STABLE [fbfeceb25] 2017-04-17 12:51:40 -0400
@@ -867,6 +912,12 @@ Branch: REL9_5_STABLE [4d4d8fa77] 2017-04-30 15:14:11 -0400
 Branch: REL9_4_STABLE [96cad6f24] 2017-04-30 15:14:15 -0400
 Branch: REL9_3_STABLE [f8cf9719d] 2017-04-30 15:14:20 -0400
 Branch: REL9_2_STABLE [54aeb8d3e] 2017-04-30 15:14:24 -0400
+Branch: master [a54d5875f] 2017-05-07 12:33:12 -0400
+Branch: REL9_6_STABLE [fab2d0d7f] 2017-05-07 12:33:18 -0400
+Branch: REL9_5_STABLE [74e747fbd] 2017-05-07 12:33:22 -0400
+Branch: REL9_4_STABLE [e829385f5] 2017-05-07 12:33:27 -0400
+Branch: REL9_3_STABLE [9e5f3d013] 2017-05-07 12:33:31 -0400
+Branch: REL9_2_STABLE [da55df018] 2017-05-07 12:33:35 -0400
 -->
      <para>
       Sync our copy of the timezone library with IANA release tzcode2017b
@@ -907,6 +958,38 @@ Branch: REL9_2_STABLE [c96ccc40e] 2017-05-01 11:54:08 -0400
       will continue to accept such removed abbreviations for timestamp input.
       But they will not be shown in the <structname>pg_timezone_names</>
       view nor used for output.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [d4e59c552] 2017-05-07 11:57:41 -0400
+Branch: REL9_6_STABLE [f75472817] 2017-05-07 11:57:41 -0400
+Branch: REL9_5_STABLE [2f66002df] 2017-05-07 11:57:41 -0400
+Branch: REL9_4_STABLE [62a288312] 2017-05-07 11:57:41 -0400
+Branch: REL9_3_STABLE [5971accd8] 2017-05-07 11:57:41 -0400
+Branch: REL9_2_STABLE [82e7d3dfd] 2017-05-07 11:57:41 -0400
+-->
+     <para>
+      Use correct daylight-savings rules for POSIX-style time zone names
+      in MSVC builds (David Rowley)
+     </para>
+
+     <para>
+      The Microsoft MSVC build scripts neglected to install
+      the <filename>posixrules</> file in the timezone directory tree.
+      This resulted in the timezone code falling back to its built-in
+      rule about what DST behavior to assume for a POSIX-style time zone
+      name.  For historical reasons that still corresponds to the DST rules
+      the USA was using before 2007 (i.e., change on first Sunday in April
+      and last Sunday in October).  With this fix, a POSIX-style zone name
+      will use the current and historical DST transition dates of
+      the <literal>US/Eastern</> zone.  If you don't want that, remove
+      the <filename>posixrules</> file, or replace it with a copy of some
+      other zone file (see <xref linkend="datatype-timezones">).  Note that
+      due to caching, you may need to restart the server to get such changes
+      to take effect.
      </para>
     </listitem>
 
@@ -6679,7 +6762,7 @@ This commit is also listed under libpq and PL/pgSQL
 -->
        <para>
         Transmit query cancellation requests to the remote server
-        (Michael Paquier)
+        (Michael Paquier, Etsuro Fujita)
        </para>
 
        <para>
