@@ -308,15 +308,20 @@ sub GenerateTimezoneFiles
 	my $conf   = shift;
 	my $mf     = read_file("src/timezone/Makefile");
 	$mf =~ s{\\\s*[\r\n]+}{}mg;
+
 	$mf =~ /^TZDATA\s*:?=\s*(.*)$/m
 	  || die "Could not find TZDATA line in timezone makefile\n";
 	my @tzfiles = split /\s+/, $1;
 
+	$mf =~ /^POSIXRULES\s*:?=\s*(.*)$/m
+	  || die "Could not find POSIXRULES line in timezone makefile\n";
+	my $posixrules = $1;
+	$posixrules =~ s/\s+//g;
+
 	print "Generating timezone files...";
 
-	my @args = ("$conf/zic/zic",
-				'-d',
-				"$target/share/timezone");
+	my @args = ("$conf/zic/zic", '-d', "$target/share/timezone",
+				'-p', "$posixrules");
 	foreach (@tzfiles)
 	{
 		my $tzfile = $_;
