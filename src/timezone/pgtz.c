@@ -105,6 +105,7 @@ pg_open_tzfile(const char *name, char *canonname)
 		if (result >= 0)
 			return result;
 		/* If that didn't work, fall through to do it the hard way */
+		fullname[fullnamelen] = '\0';
 	}
 
 	/*
