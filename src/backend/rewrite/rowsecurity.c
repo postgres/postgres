@@ -78,7 +78,8 @@ static void add_with_check_options(Relation rel,
 					   List *permissive_policies,
 					   List *restrictive_policies,
 					   List **withCheckOptions,
-					   bool *hasSubLinks);
+					   bool *hasSubLinks,
+					   bool force_using);
 
 static bool check_role_for_policy(ArrayType *policy_roles, Oid user_id);
 
@@ -272,7 +273,8 @@ get_row_security_policies(Query *root, RangeTblEntry *rte, int rt_index,
 							   permissive_policies,
 							   restrictive_policies,
 							   withCheckOptions,
-							   hasSubLinks);
+							   hasSubLinks,
+							   false);
 
 		/*
 		 * Get and add ALL/SELECT policies, if SELECT rights are required for
@@ -295,7 +297,8 @@ get_row_security_policies(Query *root, RangeTblEntry *rte, int rt_index,
 								   select_permissive_policies,
 								   select_restrictive_policies,
 								   withCheckOptions,
-								   hasSubLinks);
+								   hasSubLinks,
+								   true);
 		}
 
 		/*
@@ -324,7 +327,8 @@ get_row_security_policies(Query *root, RangeTblEntry *rte, int rt_index,
 								   conflict_permissive_policies,
 								   conflict_restrictive_policies,
 								   withCheckOptions,
-								   hasSubLinks);
+								   hasSubLinks,
+								   true);
 
 			/*
 			 * Get and add ALL/SELECT policies, as WCO_RLS_CONFLICT_CHECK WCOs
@@ -346,7 +350,8 @@ get_row_security_policies(Query *root, RangeTblEntry *rte, int rt_index,
 									   conflict_select_permissive_policies,
 									   conflict_select_restrictive_policies,
 									   withCheckOptions,
-									   hasSubLinks);
+									   hasSubLinks,
+									   true);
 			}
 
 			/* Enforce the WITH CHECK clauses of the UPDATE policies */
@@ -355,7 +360,8 @@ get_row_security_policies(Query *root, RangeTblEntry *rte, int rt_index,
 								   conflict_permissive_policies,
 								   conflict_restrictive_policies,
 								   withCheckOptions,
-								   hasSubLinks);
+								   hasSubLinks,
+								   false);
 		}
 	}
 
@@ -659,13 +665,14 @@ add_with_check_options(Relation rel,
 					   List *permissive_policies,
 					   List *restrictive_policies,
 					   List **withCheckOptions,
-					   bool *hasSubLinks)
+					   bool *hasSubLinks,
+					   bool force_using)
 {
 	ListCell   *item;
 	List	   *permissive_quals = NIL;
 
 #define QUAL_FOR_WCO(policy) \
-	( kind != WCO_RLS_CONFLICT_CHECK && \
+	( !force_using && \
 	  (policy)->with_check_qual != NULL ? \
 	  (policy)->with_check_qual : (policy)->qual )
 
