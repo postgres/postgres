@@ -188,17 +188,6 @@ Branch: REL9_4_STABLE [436b560b8] 2017-04-24 12:16:58 -0400
 
     <listitem>
 <!--
-Author: Andrew Gierth <rhodiumtoad@postgresql.org>
-Branch: REL9_5_STABLE [7be3678a8] 2017-04-24 07:53:05 +0100
--->
-     <para>
-      Fix crash or wrong answers when a <literal>GROUPING SETS</> column's
-      data type is hashable but not sortable (Pavan Deolasee)
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 Branch: master [89deca582] 2017-04-07 12:18:38 -0400
 Branch: REL9_6_STABLE [c0a493e17] 2017-04-07 12:18:38 -0400
@@ -846,45 +835,6 @@ Branch: REL9_6_STABLE [86e640a69] 2017-04-26 09:14:21 -0400
       In <filename>contrib/postgres_fdw</>, allow join conditions that
       contain shippable extension-provided functions to be pushed to the
       remote server (David Rowley, Ashutosh Bapat)
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Robert Haas <rhaas@postgresql.org>
-Branch: REL9_5_STABLE [cdf5a004b] 2017-05-06 22:21:38 -0400
-Branch: REL9_4_STABLE [f14bf0a8f] 2017-05-06 22:19:56 -0400
-Branch: REL9_3_STABLE [3aa16b117] 2017-05-06 22:17:35 -0400
--->
-     <para>
-      In <filename>contrib/postgres_fdw</>,
-      transmit query cancellation requests to the remote server
-      (Michael Paquier, Etsuro Fujita)
-     </para>
-
-     <para>
-      Previously, a local query cancellation request did not cause an
-      already-sent remote query to terminate early.  This is a back-patch
-      of work originally done for 9.6.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: REL9_4_STABLE [bb132cddf] 2017-04-15 20:16:03 -0400
-Branch: REL9_3_STABLE [fbfeceb25] 2017-04-17 12:51:40 -0400
-Branch: REL9_2_STABLE [58384149b] 2017-04-17 12:51:40 -0400
-Branch: REL9_3_STABLE [4e91330da] 2017-04-17 13:52:42 -0400
-Branch: REL9_2_STABLE [fb50c38e9] 2017-04-17 13:52:42 -0400
--->
-     <para>
-      Support OpenSSL 1.1.0 (Heikki Linnakangas, Andreas Karlsson, Tom Lane)
-     </para>
-
-     <para>
-      This is a back-patch of work previously done in newer branches;
-      it's needed since many platforms are adopting newer OpenSSL versions.
      </para>
     </listitem>
 
