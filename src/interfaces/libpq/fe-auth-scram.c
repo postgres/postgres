@@ -638,7 +638,11 @@ pg_fe_scram_build_verifier(const char *password)
 
 	/* Generate a random salt */
 	if (!pg_frontend_random(saltbuf, SCRAM_DEFAULT_SALT_LEN))
+	{
+		if (prep_password)
+			free(prep_password);
 		return NULL;
+	}
 
 	result = scram_build_verifier(saltbuf, SCRAM_DEFAULT_SALT_LEN,
 								  SCRAM_DEFAULT_ITERATIONS, password);

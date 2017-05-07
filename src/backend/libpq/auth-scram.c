@@ -411,6 +411,8 @@ pg_be_scram_build_verifier(const char *password)
 		ereport(LOG,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("could not generate random salt")));
+		if (prep_password)
+			pfree(prep_password);
 		return NULL;
 	}
 
