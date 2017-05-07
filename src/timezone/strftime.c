@@ -458,7 +458,8 @@ _fmt(const char *format, const struct pg_tm * t, char *pt, const char *ptlim,
 						negative = diff < 0;
 						if (diff == 0)
 						{
-							negative = t->tm_zone[0] == '-';
+							if (t->tm_zone != NULL)
+								negative = t->tm_zone[0] == '-';
 						}
 						if (negative)
 						{
