@@ -374,8 +374,8 @@ calc_hist_selectivity(TypeCacheEntry *typcache, VariableStatData *vardata,
 {
 	Datum	   *hist_values;
 	int			nhist;
-	Datum	   *length_hist_values;
-	int			length_nhist;
+	Datum	   *length_hist_values = NULL;
+	int			length_nhist = 0;
 	RangeBound *hist_lower;
 	RangeBound *hist_upper;
 	int			i;
