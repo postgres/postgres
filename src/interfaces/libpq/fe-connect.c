@@ -5084,6 +5084,30 @@ conninfo_add_defaults(PQconninfoOption *options, PQExpBuffer errorMessage)
 		}
 
 		/*
+		 * Interpret the deprecated PGREQUIRESSL environment variable.  Per
+		 * tradition, translate values starting with "1" to sslmode=require,
+		 * and ignore other values.  Given both PGREQUIRESSL=1 and PGSSLMODE,
+		 * PGSSLMODE takes precedence; the opposite was true before v9.3.
+		 */
+		if (strcmp(option->keyword, "sslmode") == 0)
+		{
+			const char *requiresslenv = getenv("PGREQUIRESSL");
+
+			if (requiresslenv != NULL && requiresslenv[0] == '1')
+			{
+				option->val = strdup("require");
+				if (!option->val)
+				{
+					if (errorMessage)
+						printfPQExpBuffer(errorMessage,
+										  libpq_gettext("out of memory\n"));
+					return false;
+				}
+				continue;
+			}
+		}
+
+		/*
 		 * No environment variable specified or the variable isn't set - try
 		 * compiled-in default
 		 */

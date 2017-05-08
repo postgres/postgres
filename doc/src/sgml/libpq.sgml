@@ -7061,6 +7061,9 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       </indexterm>
       <envar>PGREQUIRESSL</envar> behaves the same as the <xref
       linkend="libpq-connect-requiressl"> connection parameter.
+      This environment variable is deprecated in favor of the
+      <envar>PGSSLMODE</envar> variable; setting both variables suppresses the
+      effect of this one.
      </para>
     </listitem>
 
