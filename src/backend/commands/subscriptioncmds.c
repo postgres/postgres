@@ -653,6 +653,11 @@ AlterSubscription(AlterSubscriptionStmt *stmt)
 			}
 
 		case ALTER_SUBSCRIPTION_CONNECTION:
+			/* Load the library providing us libpq calls. */
+			load_file("libpqwalreceiver", false);
+			/* Check the connection info string. */
+			walrcv_check_conninfo(stmt->conninfo);
+
 			values[Anum_pg_subscription_subconninfo - 1] =
 				CStringGetTextDatum(stmt->conninfo);
 			replaces[Anum_pg_subscription_subconninfo - 1] = true;

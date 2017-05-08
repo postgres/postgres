@@ -38,6 +38,9 @@ SET SESSION AUTHORIZATION 'regress_subscription_user2';
 CREATE SUBSCRIPTION testsub2 CONNECTION 'dbname=doesnotexist' PUBLICATION foo WITH (NOCONNECT);
 SET SESSION AUTHORIZATION 'regress_subscription_user';
 
+-- fail - invalid connection string
+ALTER SUBSCRIPTION testsub CONNECTION 'foobar';
+
 \dRs+
 
 ALTER SUBSCRIPTION testsub SET PUBLICATION testpub2, testpub3 NOREFRESH;

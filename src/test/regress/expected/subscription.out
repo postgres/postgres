@@ -45,6 +45,10 @@ SET SESSION AUTHORIZATION 'regress_subscription_user2';
 CREATE SUBSCRIPTION testsub2 CONNECTION 'dbname=doesnotexist' PUBLICATION foo WITH (NOCONNECT);
 ERROR:  must be superuser to create subscriptions
 SET SESSION AUTHORIZATION 'regress_subscription_user';
+-- fail - invalid connection string
+ALTER SUBSCRIPTION testsub CONNECTION 'foobar';
+ERROR:  invalid connection string syntax: missing "=" after "foobar" in connection info string
+
 \dRs+
                                          List of subscriptions
   Name   |           Owner           | Enabled | Publication | Synchronous commit |      Conninfo       
