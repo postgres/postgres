@@ -4,14 +4,14 @@
 # Serguei A. Mokhov <mokhov@cs.concordia.ca>, 2001-2005.
 # Oleg Bartunov <oleg@sai.msu.su>, 2004-2005.
 # Dmitriy Olshevskiy <olshevskiy87@bk.ru>, 2014.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2016, 2017.
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2017.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: postgres (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-01-30 17:16+0000\n"
-"PO-Revision-Date: 2017-02-02 15:23+0300\n"
+"POT-Creation-Date: 2017-02-09 21:16+0000\n"
+"PO-Revision-Date: 2017-04-18 17:11+0300\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -3675,7 +3675,7 @@ msgstr ""
 #: utils/adt/selfuncs.c:5280 utils/adt/varlena.c:1411 utils/adt/varlena.c:1800
 #, c-format
 msgid "Use the COLLATE clause to set the collation explicitly."
-msgstr "Задайте правило сравнения явно в предложении COLLATE."
+msgstr "Задайте правило сортировки явно в предложении COLLATE."
 
 #: catalog/heap.c:1066 catalog/index.c:793 commands/tablecmds.c:2615
 #, c-format
@@ -6768,12 +6768,12 @@ msgstr ""
 #: commands/foreigncmds.c:1165
 #, c-format
 msgid "user mapping \"%s\" already exists for server %s"
-msgstr "сопоставление пользователей \"%s\" для сервера \"%s\" уже существует"
+msgstr "сопоставление пользователя \"%s\" для сервера \"%s\" уже существует"
 
 #: commands/foreigncmds.c:1259 commands/foreigncmds.c:1375
 #, c-format
 msgid "user mapping \"%s\" does not exist for the server"
-msgstr "сопоставление пользователей \"%s\" для данного сервера не существует"
+msgstr "сопоставление пользователя \"%s\" для данного сервера не существует"
 
 #: commands/foreigncmds.c:1362
 #, c-format
@@ -6784,7 +6784,8 @@ msgstr "сервер не существует, пропускается"
 #, c-format
 msgid "user mapping \"%s\" does not exist for the server, skipping"
 msgstr ""
-"сопоставление пользователей \"%s\" не существует для сервера, пропускается"
+"сопоставление пользователя \"%s\" для данного сервера не существует, "
+"пропускается"
 
 #: commands/foreigncmds.c:1532 foreign/foreign.c:360
 #, c-format
@@ -7226,7 +7227,7 @@ msgstr "функции в индексном выражении должны б�
 #: commands/indexcmds.c:1086
 #, c-format
 msgid "could not determine which collation to use for index expression"
-msgstr "не удалось определить правило сравнения для индексного выражения"
+msgstr "не удалось определить правило сортировки для индексного выражения"
 
 #: commands/indexcmds.c:1094 commands/typecmds.c:825 parser/parse_expr.c:2583
 #: parser/parse_type.c:550 parser/parse_utilcmd.c:2738 utils/adt/misc.c:546
@@ -7972,12 +7973,12 @@ msgstr "DROP INDEX CONCURRENTLY не поддерживает режим CASCADE
 #: commands/tablecmds.c:1081
 #, c-format
 msgid "truncate cascades to table \"%s\""
-msgstr "удаление распространяется на таблицу %s"
+msgstr "опустошение распространяется на таблицу %s"
 
 #: commands/tablecmds.c:1319
 #, c-format
 msgid "cannot truncate temporary tables of other sessions"
-msgstr "временные таблицы других сеансов нельзя очистить"
+msgstr "временные таблицы других сеансов нельзя опустошить"
 
 #: commands/tablecmds.c:1525 parser/parse_utilcmd.c:1809
 #, c-format
@@ -10229,7 +10230,7 @@ msgid ""
 "an unconditional ON INSERT DO INSTEAD rule."
 msgstr ""
 "Чтобы представление допускало добавление данных, установите триггер INSTEAD "
-"OF INSERT trigger или безусловное правило ON INSERT DO INSTEAD."
+"OF INSERT или безусловное правило ON INSERT DO INSTEAD."
 
 #: executor/execMain.c:1057 rewrite/rewriteHandler.c:2649
 #, c-format
@@ -11022,8 +11023,8 @@ msgstr ""
 #, c-format
 msgid "no pg_hba.conf entry for host \"%s\", user \"%s\", database \"%s\", %s"
 msgstr ""
-"в pg_hba.conf нет записи, разрешающей подключение для репликации с "
-"компьютера \"%s\" для пользователя \"%s\", базы данных \"%s\", %s"
+"в pg_hba.conf нет записи для компьютера \"%s\", пользователя \"%s\", базы "
+"\"%s\", %s"
 
 #: libpq/auth.c:474
 #, c-format
@@ -13360,8 +13361,7 @@ msgstr ""
 #: parser/parse_coerce.c:1735 parser/parse_coerce.c:1956
 #, c-format
 msgid "argument declared \"anyrange\" is not a range type but type %s"
-msgstr ""
-"аргумент, объявленный как \"anyrange\", оказался не диапазоном, а типом %s"
+msgstr "аргумент, объявленный как \"anyrange\", имеет не диапазонный тип, а %s"
 
 #: parser/parse_coerce.c:1751
 #, c-format
@@ -16520,7 +16520,8 @@ msgstr "правило представления для \"%s\" должно н�
 #, c-format
 msgid "could not convert table \"%s\" to a view because it is not empty"
 msgstr ""
-"не удалось преобразовать таблицу \"%s\" в представление, так как она не пуста"
+"не удалось преобразовать таблицу \"%s\" в представление, так как она не "
+"пуста1"
 
 #: rewrite/rewriteDefine.c:440
 #, c-format
@@ -17506,7 +17507,7 @@ msgstr ""
 #, c-format
 msgid "page verification failed, calculated checksum %u but expected %u"
 msgstr ""
-"ошибка проверки страницы: получена контрольная сумма %u, а ожидалась — %u"
+"ошибка проверки страницы: получена контрольная сумма %u, а ожидалась - %u"
 
 #: storage/page/bufpage.c:203 storage/page/bufpage.c:522
 #: storage/page/bufpage.c:737 storage/page/bufpage.c:868
@@ -18698,7 +18699,7 @@ msgstr "неверный синтаксис для типа money: \"%s\""
 #: utils/adt/int.c:1097 utils/adt/int.c:1125 utils/adt/int8.c:597
 #: utils/adt/int8.c:657 utils/adt/int8.c:897 utils/adt/int8.c:1005
 #: utils/adt/int8.c:1094 utils/adt/int8.c:1202 utils/adt/numeric.c:5920
-#: utils/adt/numeric.c:6203 utils/adt/timestamp.c:3402
+#: utils/adt/numeric.c:6203 utils/adt/timestamp.c:3405
 #, c-format
 msgid "division by zero"
 msgstr "деление на ноль"
@@ -18767,20 +18768,20 @@ msgstr "дата вне диапазона для типа timestamp"
 #: utils/adt/nabstime.c:498 utils/adt/nabstime.c:528 utils/adt/nabstime.c:571
 #: utils/adt/timestamp.c:224 utils/adt/timestamp.c:267
 #: utils/adt/timestamp.c:716 utils/adt/timestamp.c:745
-#: utils/adt/timestamp.c:784 utils/adt/timestamp.c:2991
-#: utils/adt/timestamp.c:3012 utils/adt/timestamp.c:3025
-#: utils/adt/timestamp.c:3034 utils/adt/timestamp.c:3091
-#: utils/adt/timestamp.c:3114 utils/adt/timestamp.c:3127
-#: utils/adt/timestamp.c:3138 utils/adt/timestamp.c:3663
-#: utils/adt/timestamp.c:3792 utils/adt/timestamp.c:3833
-#: utils/adt/timestamp.c:3921 utils/adt/timestamp.c:3967
-#: utils/adt/timestamp.c:4078 utils/adt/timestamp.c:4402
-#: utils/adt/timestamp.c:4518 utils/adt/timestamp.c:4528
-#: utils/adt/timestamp.c:4613 utils/adt/timestamp.c:4732
-#: utils/adt/timestamp.c:4742 utils/adt/timestamp.c:4989
-#: utils/adt/timestamp.c:5003 utils/adt/timestamp.c:5094
-#: utils/adt/timestamp.c:5101 utils/adt/timestamp.c:5127
-#: utils/adt/timestamp.c:5131 utils/adt/timestamp.c:5200 utils/adt/xml.c:2051
+#: utils/adt/timestamp.c:784 utils/adt/timestamp.c:2994
+#: utils/adt/timestamp.c:3015 utils/adt/timestamp.c:3028
+#: utils/adt/timestamp.c:3037 utils/adt/timestamp.c:3094
+#: utils/adt/timestamp.c:3117 utils/adt/timestamp.c:3130
+#: utils/adt/timestamp.c:3141 utils/adt/timestamp.c:3666
+#: utils/adt/timestamp.c:3795 utils/adt/timestamp.c:3836
+#: utils/adt/timestamp.c:3924 utils/adt/timestamp.c:3970
+#: utils/adt/timestamp.c:4081 utils/adt/timestamp.c:4405
+#: utils/adt/timestamp.c:4521 utils/adt/timestamp.c:4531
+#: utils/adt/timestamp.c:4616 utils/adt/timestamp.c:4735
+#: utils/adt/timestamp.c:4745 utils/adt/timestamp.c:4992
+#: utils/adt/timestamp.c:5006 utils/adt/timestamp.c:5097
+#: utils/adt/timestamp.c:5104 utils/adt/timestamp.c:5130
+#: utils/adt/timestamp.c:5134 utils/adt/timestamp.c:5203 utils/adt/xml.c:2051
 #: utils/adt/xml.c:2058 utils/adt/xml.c:2078 utils/adt/xml.c:2085
 #, c-format
 msgid "timestamp out of range"
@@ -18819,13 +18820,13 @@ msgstr "\"время с часовым поясом\" содержит нера�
 
 #: utils/adt/date.c:2744 utils/adt/datetime.c:926 utils/adt/datetime.c:1848
 #: utils/adt/datetime.c:4609 utils/adt/timestamp.c:531
-#: utils/adt/timestamp.c:558 utils/adt/timestamp.c:5015
-#: utils/adt/timestamp.c:5211
+#: utils/adt/timestamp.c:558 utils/adt/timestamp.c:5018
+#: utils/adt/timestamp.c:5214
 #, c-format
 msgid "time zone \"%s\" not recognized"
 msgstr "часовой пояс \"%s\" не распознан"
 
-#: utils/adt/date.c:2784 utils/adt/timestamp.c:5052 utils/adt/timestamp.c:5237
+#: utils/adt/date.c:2784 utils/adt/timestamp.c:5055 utils/adt/timestamp.c:5240
 #, c-format
 msgid "interval time zone \"%s\" must not include months or days"
 msgstr ""
@@ -19448,7 +19449,7 @@ msgid "oidvector has too many elements"
 msgstr "oidvector содержит слишком много элементов"
 
 #: utils/adt/int.c:1362 utils/adt/int8.c:1460 utils/adt/numeric.c:1358
-#: utils/adt/timestamp.c:5298 utils/adt/timestamp.c:5379
+#: utils/adt/timestamp.c:5301 utils/adt/timestamp.c:5382
 #, c-format
 msgid "step size cannot equal zero"
 msgstr "размер шага не может быть нулевым"
@@ -20751,14 +20752,14 @@ msgid "timestamp out of range: %d-%02d-%02d %d:%02d:%02g"
 msgstr "timestamp вне диапазона: %d-%02d-%02d %d:%02d:%02g"
 
 #: utils/adt/timestamp.c:911 utils/adt/timestamp.c:1535
-#: utils/adt/timestamp.c:2038 utils/adt/timestamp.c:3178
-#: utils/adt/timestamp.c:3183 utils/adt/timestamp.c:3188
-#: utils/adt/timestamp.c:3238 utils/adt/timestamp.c:3245
-#: utils/adt/timestamp.c:3252 utils/adt/timestamp.c:3272
-#: utils/adt/timestamp.c:3279 utils/adt/timestamp.c:3286
-#: utils/adt/timestamp.c:3315 utils/adt/timestamp.c:3322
-#: utils/adt/timestamp.c:3367 utils/adt/timestamp.c:3658
-#: utils/adt/timestamp.c:3787 utils/adt/timestamp.c:4178
+#: utils/adt/timestamp.c:2041 utils/adt/timestamp.c:3181
+#: utils/adt/timestamp.c:3186 utils/adt/timestamp.c:3191
+#: utils/adt/timestamp.c:3241 utils/adt/timestamp.c:3248
+#: utils/adt/timestamp.c:3255 utils/adt/timestamp.c:3275
+#: utils/adt/timestamp.c:3282 utils/adt/timestamp.c:3289
+#: utils/adt/timestamp.c:3318 utils/adt/timestamp.c:3325
+#: utils/adt/timestamp.c:3370 utils/adt/timestamp.c:3661
+#: utils/adt/timestamp.c:3790 utils/adt/timestamp.c:4181
 #, c-format
 msgid "interval out of range"
 msgstr "interval вне диапазона"
@@ -20783,34 +20784,34 @@ msgstr "INTERVAL(%d): точность уменьшена до максимал�
 msgid "interval(%d) precision must be between %d and %d"
 msgstr "точность interval(%d) должна быть между %d и %d"
 
-#: utils/adt/timestamp.c:2767
+#: utils/adt/timestamp.c:2770
 #, c-format
 msgid "cannot subtract infinite timestamps"
 msgstr "вычитать бесконечные значения timestamp нельзя"
 
-#: utils/adt/timestamp.c:3913 utils/adt/timestamp.c:4539
-#: utils/adt/timestamp.c:4559
+#: utils/adt/timestamp.c:3916 utils/adt/timestamp.c:4542
+#: utils/adt/timestamp.c:4562
 #, c-format
 msgid "timestamp units \"%s\" not supported"
 msgstr "единицы timestamp \"%s\" не поддерживаются"
 
-#: utils/adt/timestamp.c:3927 utils/adt/timestamp.c:4569
+#: utils/adt/timestamp.c:3930 utils/adt/timestamp.c:4572
 #, c-format
 msgid "timestamp units \"%s\" not recognized"
 msgstr "единицы timestamp \"%s\" не распознаны"
 
-#: utils/adt/timestamp.c:4067 utils/adt/timestamp.c:4750
-#: utils/adt/timestamp.c:4771
+#: utils/adt/timestamp.c:4070 utils/adt/timestamp.c:4753
+#: utils/adt/timestamp.c:4774
 #, c-format
 msgid "timestamp with time zone units \"%s\" not supported"
 msgstr "единицы timestamp с часовым поясом \"%s\" не поддерживаются"
 
-#: utils/adt/timestamp.c:4084 utils/adt/timestamp.c:4780
+#: utils/adt/timestamp.c:4087 utils/adt/timestamp.c:4783
 #, c-format
 msgid "timestamp with time zone units \"%s\" not recognized"
 msgstr "единицы timestamp с часовым поясом \"%s\" не распознаны"
 
-#: utils/adt/timestamp.c:4165
+#: utils/adt/timestamp.c:4168
 #, c-format
 msgid ""
 "interval units \"%s\" not supported because months usually have fractional "
@@ -20819,17 +20820,17 @@ msgstr ""
 "единицы интервала \"%s\" не поддерживаются, так как в месяцах дробное число "
 "недель"
 
-#: utils/adt/timestamp.c:4171 utils/adt/timestamp.c:4886
+#: utils/adt/timestamp.c:4174 utils/adt/timestamp.c:4889
 #, c-format
 msgid "interval units \"%s\" not supported"
 msgstr "единицы interval \"%s\" не поддерживаются"
 
-#: utils/adt/timestamp.c:4187 utils/adt/timestamp.c:4913
+#: utils/adt/timestamp.c:4190 utils/adt/timestamp.c:4916
 #, c-format
 msgid "interval units \"%s\" not recognized"
 msgstr "единицы interval \"%s\" не распознаны"
 
-#: utils/adt/timestamp.c:5008 utils/adt/timestamp.c:5204
+#: utils/adt/timestamp.c:5011 utils/adt/timestamp.c:5207
 #, c-format
 msgid "could not convert to time zone \"%s\""
 msgstr "не удалось пересчитать время в часовой пояс \"%s\""
@@ -21340,17 +21341,17 @@ msgstr "для типа %s нет функции вывода"
 msgid "cached plan must not change result type"
 msgstr "в кешированном плане не должен изменяться тип результата"
 
-#: utils/cache/relcache.c:5021
+#: utils/cache/relcache.c:5048
 #, c-format
 msgid "could not create relation-cache initialization file \"%s\": %m"
 msgstr "создать файл инициализации для кеша отношений \"%s\" не удалось: %m"
 
-#: utils/cache/relcache.c:5023
+#: utils/cache/relcache.c:5050
 #, c-format
 msgid "Continuing anyway, but there's something wrong."
 msgstr "Продолжаем всё равно, хотя что-то не так."
 
-#: utils/cache/relcache.c:5256
+#: utils/cache/relcache.c:5283
 #, c-format
 msgid "could not remove cache file \"%s\": %m"
 msgstr "не удалось стереть файл кеша \"%s\": %m"
@@ -24221,19 +24222,19 @@ msgstr "Данные содержат дублирующиеся ключи."
 #: utils/sort/tuplestore.c:1313
 #, c-format
 msgid "could not seek in tuplestore temporary file: %m"
-msgstr "не удалось переместиться в файле временного хранилища кортежей: %m"
+msgstr "не удалось переместиться во временном файле источника кортежей: %m"
 
 #: utils/sort/tuplestore.c:1460 utils/sort/tuplestore.c:1533
 #: utils/sort/tuplestore.c:1539
 #, c-format
 msgid "could not read from tuplestore temporary file: %m"
-msgstr "не удалось прочитать файл временного хранилища кортежей: %m"
+msgstr "не удалось прочитать временный файл источника кортежей: %m"
 
 #: utils/sort/tuplestore.c:1501 utils/sort/tuplestore.c:1506
 #: utils/sort/tuplestore.c:1512
 #, c-format
 msgid "could not write to tuplestore temporary file: %m"
-msgstr "не удалось записать в файл временного хранилища кортежей: %m"
+msgstr "не удалось записать во временный файл источника кортежей: %m"
 
 #: utils/time/snapmgr.c:473
 #, c-format

@@ -1,7 +1,7 @@
 # translation of pltcl.po to fr_fr
 # french message translation file for pltcl
 #
-# Use these quotes: « %s »
+# Use these quotes: Â« %s Â»
 # Guillaume Lelarge <guillaume@lelarge.info>, 2009.
 #
 msgid ""
@@ -14,39 +14,39 @@ msgstr ""
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=ISO-8859-15\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 1.8.6\n"
 
 #: pltcl.c:555
 #, c-format
 msgid "module \"unknown\" not found in pltcl_modules"
-msgstr "module « unkown » introuvable dans pltcl_modules"
+msgstr "module Â« unkown Â» introuvable dans pltcl_modules"
 
 #: pltcl.c:591
 #, c-format
 msgid "could not load module \"unknown\": %s"
-msgstr "n'a pas pu charger le module « unknown » : %s"
+msgstr "n'a pas pu charger le module Â« unknown Â» : %s"
 
 #: pltcl.c:1047
 #, c-format
 msgid "could not split return value from trigger: %s"
-msgstr "n'a pas pu séparer la valeur de retour du trigger : %s"
+msgstr "n'a pas pu sÃ©parer la valeur de retour du trigger : %s"
 
 #: pltcl.c:1058
 #, c-format
 msgid "trigger's return list must have even number of elements"
-msgstr "la liste de retour du trigger doit avoir un nombre pair d'éléments"
+msgstr "la liste de retour du trigger doit avoir un nombre pair d'Ã©lÃ©ments"
 
 #: pltcl.c:1094
 #, c-format
 msgid "unrecognized attribute \"%s\""
-msgstr "attribut « %s » non reconnu"
+msgstr "attribut Â« %s Â» non reconnu"
 
 #: pltcl.c:1099
 #, c-format
 msgid "cannot set system attribute \"%s\""
-msgstr "ne peut pas initialiser l'attribut système « %s »"
+msgstr "ne peut pas initialiser l'attribut systÃ¨me Â« %s Â»"
 
 #: pltcl.c:1222 pltcl.c:1648
 #, c-format
@@ -60,17 +60,17 @@ msgid ""
 "in PL/Tcl function \"%s\""
 msgstr ""
 "%s\n"
-"dans la fonction PL/Tcl « %s »"
+"dans la fonction PL/Tcl Â« %s Â»"
 
 #: pltcl.c:1331 pltcl.c:1338
 #, c-format
 msgid "out of memory"
-msgstr "mémoire épuisée"
+msgstr "mÃ©moire Ã©puisÃ©e"
 
 #: pltcl.c:1386
 #, c-format
 msgid "trigger functions can only be called as triggers"
-msgstr "les fonctions trigger peuvent seulement être appelées par des triggers"
+msgstr "les fonctions trigger peuvent seulement Ãªtre appelÃ©es par des triggers"
 
 #: pltcl.c:1395
 #, c-format
@@ -90,4 +90,4 @@ msgstr "les fonctions PL/Tcl ne peuvent pas accepter le type %s"
 #: pltcl.c:1564
 #, c-format
 msgid "could not create internal procedure \"%s\": %s"
-msgstr "n'a pas pu créer la procédure interne « %s » : %s"
+msgstr "n'a pas pu crÃ©er la procÃ©dure interne Â« %s Â» : %s"
