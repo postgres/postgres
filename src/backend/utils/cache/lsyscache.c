@@ -2865,8 +2865,8 @@ get_attavgwidth(Oid relid, AttrNumber attnum)
  * pg_statistic.
  *
  * statstuple: pg_statistic tuple to be examined.
- * atttype: type OID of attribute (can be InvalidOid if values == NULL).
- * atttypmod: typmod of attribute (can be 0 if values == NULL).
+ * atttype: type OID of slot's stavalues (can be InvalidOid if values == NULL).
+ * atttypmod: typmod of slot's stavalues (can be 0 if values == NULL).
  * reqkind: STAKIND code for desired statistics slot kind.
  * reqop: STAOP value wanted, or InvalidOid if don't care.
  * actualop: if not NULL, *actualop receives the actual STAOP value.
@@ -2874,7 +2874,7 @@ get_attavgwidth(Oid relid, AttrNumber attnum)
  * numbers, nnumbers: if not NULL, the slot's stanumbers are extracted.
  *
  * If assigned, values and numbers are set to point to palloc'd arrays.
- * If the attribute type is pass-by-reference, the values referenced by
+ * If the stavalues datatype is pass-by-reference, the values referenced by
  * the values array are themselves palloc'd.  The palloc'd stuff can be
  * freed by calling free_attstatsslot.
  *
@@ -3004,7 +3004,8 @@ get_attstatsslot(HeapTuple statstuple,
  * free_attstatsslot
  *		Free data allocated by get_attstatsslot
  *
- * atttype need be valid only if values != NULL.
+ * atttype is the type of the individual values in values[].
+ * It need be valid only if values != NULL.
  */
 void
 free_attstatsslot(Oid atttype,
