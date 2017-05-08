@@ -274,6 +274,7 @@ process_syncing_tables_for_apply(XLogRecPtr current_lsn)
 	static List *table_states = NIL;
 	static HTAB *last_start_times = NULL;
 	ListCell   *lc;
+	bool		started_tx = false;
 
 	Assert(!IsTransactionState());
 
@@ -290,6 +291,7 @@ process_syncing_tables_for_apply(XLogRecPtr current_lsn)
 		table_states = NIL;
 
 		StartTransactionCommand();
+		started_tx = true;
 
 		/* Fetch all non-ready tables. */
 		rstates	= GetSubscriptionNotReadyRelations(MySubscription->oid);
@@ -303,8 +305,6 @@ process_syncing_tables_for_apply(XLogRecPtr current_lsn)
 			table_states = lappend(table_states, rstate);
 		}
 		MemoryContextSwitchTo(oldctx);
-
-		CommitTransactionCommand();
 
 		table_states_valid = true;
 	}
@@ -350,11 +350,14 @@ process_syncing_tables_for_apply(XLogRecPtr current_lsn)
 			{
 				rstate->state = SUBREL_STATE_READY;
 				rstate->lsn = current_lsn;
-				StartTransactionCommand();
+				if (!started_tx)
+				{
+					StartTransactionCommand();
+					started_tx = true;
+				}
 				SetSubscriptionRelState(MyLogicalRepWorker->subid,
 										rstate->relid, rstate->state,
 										rstate->lsn);
-				CommitTransactionCommand();
 			}
 		}
 		else
@@ -456,6 +459,12 @@ process_syncing_tables_for_apply(XLogRecPtr current_lsn)
 				}
 			}
 		}
+	}
+
+	if (started_tx)
+	{
+		CommitTransactionCommand();
+		pgstat_report_stat(false);
 	}
 }
 
@@ -806,6 +815,7 @@ LogicalRepSyncTableStart(XLogRecPtr *origin_startpos)
 										MyLogicalRepWorker->relstate,
 										MyLogicalRepWorker->relstate_lsn);
 				CommitTransactionCommand();
+				pgstat_report_stat(false);
 
 				/*
 				 * We want to do the table data sync in single
