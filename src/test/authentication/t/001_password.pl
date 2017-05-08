@@ -10,7 +10,7 @@ use strict;
 use warnings;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 12;
+use Test::More tests => 8;
 
 # Delete pg_hba.conf from the given node, add a new entry to it
 # and then execute a reload to refresh it.
@@ -53,32 +53,26 @@ SKIP:
 	# password is used for all of them.
 	$node->safe_psql('postgres', "SET password_encryption='scram-sha-256'; CREATE ROLE scram_role LOGIN PASSWORD 'pass';");
 	$node->safe_psql('postgres', "SET password_encryption='md5'; CREATE ROLE md5_role LOGIN PASSWORD 'pass';");
-	$node->safe_psql('postgres', "SET password_encryption='plain'; CREATE ROLE plain_role LOGIN PASSWORD 'pass';");
 	$ENV{"PGPASSWORD"} = 'pass';
 
 	# For "trust" method, all users should be able to connect.
 	reset_pg_hba($node, 'trust');
 	test_role($node, 'scram_role', 'trust', 0);
 	test_role($node, 'md5_role', 'trust', 0);
-	test_role($node, 'plain_role', 'trust', 0);
 
 	# For plain "password" method, all users should also be able to connect.
 	reset_pg_hba($node, 'password');
 	test_role($node, 'scram_role', 'password', 0);
 	test_role($node, 'md5_role', 'password', 0);
-	test_role($node, 'plain_role', 'password', 0);
 
-	# For "scram-sha-256" method, user "plain_role" and "scram_role" should
-	# be able to connect.
+	# For "scram-sha-256" method, user "scram_role" should be able to connect.
 	reset_pg_hba($node, 'scram-sha-256');
 	test_role($node, 'scram_role', 'scram-sha-256', 0);
 	test_role($node, 'md5_role', 'scram-sha-256', 2);
-	test_role($node, 'plain_role', 'scram-sha-256', 0);
 
 	# For "md5" method, all users should be able to connect (SCRAM
 	# authentication will be performed for the user with a scram verifier.)
 	reset_pg_hba($node, 'md5');
 	test_role($node, 'scram_role', 'md5', 0);
 	test_role($node, 'md5_role', 'md5', 0);
-	test_role($node, 'plain_role', 'md5', 0);
 }

@@ -33,7 +33,7 @@ CREATE ROLE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replac
     | REPLICATION | NOREPLICATION
     | BYPASSRLS | NOBYPASSRLS
     | CONNECTION LIMIT <replaceable class="PARAMETER">connlimit</replaceable>
-    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD '<replaceable class="PARAMETER">password</replaceable>'
+    | [ ENCRYPTED ] PASSWORD '<replaceable class="PARAMETER">password</replaceable>'
     | VALID UNTIL '<replaceable class="PARAMETER">timestamp</replaceable>'
     | IN ROLE <replaceable class="PARAMETER">role_name</replaceable> [, ...]
     | IN GROUP <replaceable class="PARAMETER">role_name</replaceable> [, ...]
@@ -207,7 +207,7 @@ CREATE ROLE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replac
      </varlistentry>
 
      <varlistentry>
-      <term><literal>PASSWORD</> <replaceable class="parameter">password</replaceable></term>
+      <term>[ <literal>ENCRYPTED</> ] <literal>PASSWORD</> <replaceable class="parameter">password</replaceable></term>
       <listitem>
        <para>
         Sets the role's password.  (A password is only of use for
@@ -219,29 +219,17 @@ CREATE ROLE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replac
         user.  A null password can optionally be written explicitly as
         <literal>PASSWORD NULL</literal>.
        </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><literal>ENCRYPTED</></term>
-      <term><literal>UNENCRYPTED</></term>
-      <listitem>
        <para>
-        These key words control whether the password is stored
-        encrypted in the system catalogs.  (If neither is specified,
-        the default behavior is determined by the configuration
-        parameter <xref linkend="guc-password-encryption">.)  If the
-        presented password string is already in MD5-encrypted or
-        SCRAM-encrypted format, then it is stored encrypted as-is,
-        regardless of whether <literal>ENCRYPTED</> or <literal>UNENCRYPTED</>
-        is specified (since the system cannot decrypt the specified encrypted
-        password string).  This allows reloading of encrypted passwords
+        The password is always stored encrypted in the system catalogs. The
+        <literal>ENCRYPTED</> keyword has no effect, but is accepted for
+        backwards compatibility. The method of encryption is determined
+        by the configuration parameter <xref linkend="guc-password-encryption">.
+        If the presented password string is already in MD5-encrypted or
+        SCRAM-encrypted format, then it is stored as-is regardless of
+        <varname>password_encryption</> (since the system cannot decrypt
+        the specified encrypted password string, to encrypt it in a
+        different format).  This allows reloading of encrypted passwords
         during dump/restore.
-       </para>
-
-       <para>
-        Note that older clients might lack support for the SCRAM
-        authentication mechanism.
        </para>
       </listitem>
      </varlistentry>

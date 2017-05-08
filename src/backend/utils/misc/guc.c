@@ -405,20 +405,16 @@ static const struct config_enum_entry force_parallel_mode_options[] = {
 
 /*
  * password_encryption used to be a boolean, so accept all the likely
- * variants of "on" and "off", too.
+ * variants of "on", too. "off" used to store passwords in plaintext,
+ * but we don't support that anymore.
  */
 static const struct config_enum_entry password_encryption_options[] = {
-	{"plain", PASSWORD_TYPE_PLAINTEXT, false},
 	{"md5", PASSWORD_TYPE_MD5, false},
 	{"scram-sha-256", PASSWORD_TYPE_SCRAM_SHA_256, false},
-	{"off", PASSWORD_TYPE_PLAINTEXT, false},
-	{"on", PASSWORD_TYPE_MD5, false},
+	{"on", PASSWORD_TYPE_MD5, true},
 	{"true", PASSWORD_TYPE_MD5, true},
-	{"false", PASSWORD_TYPE_PLAINTEXT, true},
 	{"yes", PASSWORD_TYPE_MD5, true},
-	{"no", PASSWORD_TYPE_PLAINTEXT, true},
 	{"1", PASSWORD_TYPE_MD5, true},
-	{"0", PASSWORD_TYPE_PLAINTEXT, true},
 	{NULL, 0, false}
 };
 

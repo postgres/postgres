@@ -754,17 +754,13 @@ CheckPWChallengeAuth(Port *port, char **logdetail)
 	shadow_pass = get_role_password(port->user_name, logdetail);
 
 	/*
-	 * If the user does not exist, or has no password, we still go through the
-	 * motions of authentication, to avoid revealing to the client that the
-	 * user didn't exist.  If 'md5' is allowed, we choose whether to use 'md5'
-	 * or 'scram-sha-256' authentication based on current password_encryption
-	 * setting.  The idea is that most genuine users probably have a password
-	 * of that type, if we pretend that this user had a password of that type,
-	 * too, it "blends in" best.
-	 *
-	 * If the user had a password, but it was expired, we'll use the details
-	 * of the expired password for the authentication, but report it as
-	 * failure to the client even if correct password was given.
+	 * If the user does not exist, or has no password or it's expired, we
+	 * still go through the motions of authentication, to avoid revealing to
+	 * the client that the user didn't exist.  If 'md5' is allowed, we choose
+	 * whether to use 'md5' or 'scram-sha-256' authentication based on
+	 * current password_encryption setting.  The idea is that most genuine
+	 * users probably have a password of that type, and if we pretend that
+	 * this user had a password of that type, too, it "blends in" best.
 	 */
 	if (!shadow_pass)
 		pwtype = Password_encryption;
@@ -775,21 +771,15 @@ CheckPWChallengeAuth(Port *port, char **logdetail)
 	 * If 'md5' authentication is allowed, decide whether to perform 'md5' or
 	 * 'scram-sha-256' authentication based on the type of password the user
 	 * has.  If it's an MD5 hash, we must do MD5 authentication, and if it's
-	 * a SCRAM verifier, we must do SCRAM authentication.  If it's stored in
-	 * plaintext, we could do either one, so we opt for the more secure
-	 * mechanism, SCRAM.
+	 * a SCRAM verifier, we must do SCRAM authentication.
 	 *
 	 * If MD5 authentication is not allowed, always use SCRAM.  If the user
 	 * had an MD5 password, CheckSCRAMAuth() will fail.
 	 */
 	if (port->hba->auth_method == uaMD5 && pwtype == PASSWORD_TYPE_MD5)
-	{
 		auth_result = CheckMD5Auth(port, shadow_pass, logdetail);
-	}
 	else
-	{
 		auth_result = CheckSCRAMAuth(port, shadow_pass, logdetail);
-	}
 
 	if (shadow_pass)
 		pfree(shadow_pass);

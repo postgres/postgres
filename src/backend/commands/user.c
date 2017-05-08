@@ -80,7 +80,6 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 	ListCell   *item;
 	ListCell   *option;
 	char	   *password = NULL;	/* user password */
-	int			password_type = Password_encryption;
 	bool		issuper = false;	/* Make the user a superuser? */
 	bool		inherit = true; /* Auto inherit privileges? */
 	bool		createrole = false;		/* Can this user create roles? */
@@ -128,9 +127,7 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 	{
 		DefElem    *defel = (DefElem *) lfirst(option);
 
-		if (strcmp(defel->defname, "password") == 0 ||
-			strcmp(defel->defname, "encryptedPassword") == 0 ||
-			strcmp(defel->defname, "unencryptedPassword") == 0)
+		if (strcmp(defel->defname, "password") == 0)
 		{
 			if (dpassword)
 				ereport(ERROR,
@@ -138,15 +135,6 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 						 errmsg("conflicting or redundant options"),
 						 parser_errposition(pstate, defel->location)));
 			dpassword = defel;
-			if (strcmp(defel->defname, "encryptedPassword") == 0)
-			{
-				if (Password_encryption == PASSWORD_TYPE_SCRAM_SHA_256)
-					password_type = PASSWORD_TYPE_SCRAM_SHA_256;
-				else
-					password_type = PASSWORD_TYPE_MD5;
-			}
-			else if (strcmp(defel->defname, "unencryptedPassword") == 0)
-				password_type = PASSWORD_TYPE_PLAINTEXT;
 		}
 		else if (strcmp(defel->defname, "sysid") == 0)
 		{
@@ -400,7 +388,8 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 		/* Encrypt the password to the requested format. */
 		char	   *shadow_pass;
 
-		shadow_pass = encrypt_password(password_type, stmt->role, password);
+		shadow_pass = encrypt_password(Password_encryption, stmt->role,
+									   password);
 		new_record[Anum_pg_authid_rolpassword - 1] =
 			CStringGetTextDatum(shadow_pass);
 	}
@@ -503,7 +492,6 @@ AlterRole(AlterRoleStmt *stmt)
 	ListCell   *option;
 	char	   *rolename = NULL;
 	char	   *password = NULL;	/* user password */
-	int			password_type = Password_encryption;
 	int			issuper = -1;	/* Make the user a superuser? */
 	int			inherit = -1;	/* Auto inherit privileges? */
 	int			createrole = -1;	/* Can this user create roles? */
@@ -537,24 +525,13 @@ AlterRole(AlterRoleStmt *stmt)
 	{
 		DefElem    *defel = (DefElem *) lfirst(option);
 
-		if (strcmp(defel->defname, "password") == 0 ||
-			strcmp(defel->defname, "encryptedPassword") == 0 ||
-			strcmp(defel->defname, "unencryptedPassword") == 0)
+		if (strcmp(defel->defname, "password") == 0)
 		{
 			if (dpassword)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options")));
 			dpassword = defel;
-			if (strcmp(defel->defname, "encryptedPassword") == 0)
-			{
-				if (Password_encryption == PASSWORD_TYPE_SCRAM_SHA_256)
-					password_type = PASSWORD_TYPE_SCRAM_SHA_256;
-				else
-					password_type = PASSWORD_TYPE_MD5;
-			}
-			else if (strcmp(defel->defname, "unencryptedPassword") == 0)
-				password_type = PASSWORD_TYPE_PLAINTEXT;
 		}
 		else if (strcmp(defel->defname, "superuser") == 0)
 		{
@@ -809,7 +786,8 @@ AlterRole(AlterRoleStmt *stmt)
 		/* Encrypt the password to the requested format. */
 		char	   *shadow_pass;
 
-		shadow_pass = encrypt_password(password_type, rolename, password);
+		shadow_pass = encrypt_password(Password_encryption, rolename,
+									   password);
 		new_record[Anum_pg_authid_rolpassword - 1] =
 			CStringGetTextDatum(shadow_pass);
 		new_record_repl[Anum_pg_authid_rolpassword - 1] = true;

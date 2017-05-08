@@ -48,7 +48,6 @@ main(int argc, char *argv[])
 		{"connection-limit", required_argument, NULL, 'c'},
 		{"pwprompt", no_argument, NULL, 'P'},
 		{"encrypted", no_argument, NULL, 'E'},
-		{"unencrypted", no_argument, NULL, 'N'},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -75,8 +74,7 @@ main(int argc, char *argv[])
 				createrole = TRI_DEFAULT,
 				inherit = TRI_DEFAULT,
 				login = TRI_DEFAULT,
-				replication = TRI_DEFAULT,
-				encrypted = TRI_DEFAULT;
+				replication = TRI_DEFAULT;
 
 	PQExpBufferData sql;
 
@@ -88,7 +86,7 @@ main(int argc, char *argv[])
 
 	handle_help_version_opts(argc, argv, "createuser", help);
 
-	while ((c = getopt_long(argc, argv, "h:p:U:g:wWedDsSaArRiIlLc:PEN",
+	while ((c = getopt_long(argc, argv, "h:p:U:g:wWedDsSaArRiIlLc:PE",
 							long_options, &optindex)) != -1)
 	{
 		switch (c)
@@ -153,10 +151,7 @@ main(int argc, char *argv[])
 				pwprompt = true;
 				break;
 			case 'E':
-				encrypted = TRI_YES;
-				break;
-			case 'N':
-				encrypted = TRI_NO;
+				/* no-op, accepted for backward compatibility */
 				break;
 			case 1:
 				replication = TRI_YES;
@@ -264,31 +259,22 @@ main(int argc, char *argv[])
 	printfPQExpBuffer(&sql, "CREATE ROLE %s", fmtId(newuser));
 	if (newpassword)
 	{
-		if (encrypted == TRI_YES)
-			appendPQExpBufferStr(&sql, " ENCRYPTED");
-		if (encrypted == TRI_NO)
-			appendPQExpBufferStr(&sql, " UNENCRYPTED");
+		char	   *encrypted_password;
+
 		appendPQExpBufferStr(&sql, " PASSWORD ");
 
-		if (encrypted != TRI_NO)
+		encrypted_password = PQencryptPasswordConn(conn,
+												   newpassword,
+												   newuser,
+												   NULL);
+		if (!encrypted_password)
 		{
-			char	   *encrypted_password;
-
-			encrypted_password = PQencryptPasswordConn(conn,
-													   newpassword,
-													   newuser,
-													   NULL);
-			if (!encrypted_password)
-			{
-				fprintf(stderr, _("%s: password encryption failed: %s"),
-						progname, PQerrorMessage(conn));
-				exit(1);
-			}
-			appendStringLiteralConn(&sql, encrypted_password, conn);
-			PQfreemem(encrypted_password);
+			fprintf(stderr, _("%s: password encryption failed: %s"),
+					progname, PQerrorMessage(conn));
+			exit(1);
 		}
-		else
-			appendStringLiteralConn(&sql, newpassword, conn);
+		appendStringLiteralConn(&sql, encrypted_password, conn);
+		PQfreemem(encrypted_password);
 	}
 	if (superuser == TRI_YES)
 		appendPQExpBufferStr(&sql, " SUPERUSER");
@@ -361,14 +347,12 @@ help(const char *progname)
 	printf(_("  -d, --createdb            role can create new databases\n"));
 	printf(_("  -D, --no-createdb         role cannot create databases (default)\n"));
 	printf(_("  -e, --echo                show the commands being sent to the server\n"));
-	printf(_("  -E, --encrypted           encrypt stored password\n"));
 	printf(_("  -g, --role=ROLE           new role will be a member of this role\n"));
 	printf(_("  -i, --inherit             role inherits privileges of roles it is a\n"
 			 "                            member of (default)\n"));
 	printf(_("  -I, --no-inherit          role does not inherit privileges\n"));
 	printf(_("  -l, --login               role can login (default)\n"));
 	printf(_("  -L, --no-login            role cannot login\n"));
-	printf(_("  -N, --unencrypted         do not encrypt stored password\n"));
 	printf(_("  -P, --pwprompt            assign a password to new role\n"));
 	printf(_("  -r, --createrole          role can create new roles\n"));
 	printf(_("  -R, --no-createrole       role cannot create roles (default)\n"));

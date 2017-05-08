@@ -1183,8 +1183,7 @@ PQencryptPasswordConn(PGconn *conn, const char *passwd, const char *user,
 	 * send the password in plaintext even if it was "off".
 	 */
 	if (strcmp(algorithm, "on") == 0 ||
-		strcmp(algorithm, "off") == 0 ||
-		strcmp(algorithm, "plain") == 0)
+		strcmp(algorithm, "off") == 0)
 		algorithm = "md5";
 
 	/*

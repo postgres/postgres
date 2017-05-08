@@ -994,13 +994,21 @@ AlterOptRoleElem:
 				}
 			| ENCRYPTED PASSWORD Sconst
 				{
-					$$ = makeDefElem("encryptedPassword",
+					/*
+					 * These days, passwords are always stored in encrypted
+					 * form, so there is no difference between PASSWORD and
+					 * ENCRYPTED PASSWORD.
+					 */
+					$$ = makeDefElem("password",
 									 (Node *)makeString($3), @1);
 				}
 			| UNENCRYPTED PASSWORD Sconst
 				{
-					$$ = makeDefElem("unencryptedPassword",
-									 (Node *)makeString($3), @1);
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("UNENCRYPTED PASSWORD is no longer supported"),
+							 errhint("Remove UNENCRYPTED to store the password in encrypted form instead."),
+							 parser_errposition(@1)));
 				}
 			| INHERIT
 				{

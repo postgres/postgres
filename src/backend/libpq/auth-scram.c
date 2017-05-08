@@ -199,27 +199,11 @@ pg_be_scram_init(const char *username, const char *shadow_pass)
 				got_verifier = false;
 			}
 		}
-		else if (password_type == PASSWORD_TYPE_PLAINTEXT)
-		{
-			/*
-			 * The stored password is in plain format.  Generate a fresh SCRAM
-			 * verifier from it, and proceed with that.
-			 */
-			char	   *verifier;
-
-			verifier = pg_be_scram_build_verifier(shadow_pass);
-
-			(void) parse_scram_verifier(verifier, &state->iterations, &state->salt,
-										state->StoredKey, state->ServerKey);
-			pfree(verifier);
-
-			got_verifier = true;
-		}
 		else
 		{
 			/*
-			 * The user doesn't have SCRAM verifier, nor could we generate
-			 * one. (You cannot do SCRAM authentication with an MD5 hash.)
+			 * The user doesn't have SCRAM verifier. (You cannot do SCRAM
+			 * authentication with an MD5 hash.)
 			 */
 			state->logdetail = psprintf(_("User \"%s\" does not have a valid SCRAM verifier."),
 										state->username);
