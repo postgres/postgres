@@ -1756,7 +1756,8 @@
       -->
       <para>
        Have <link linkend="SQL-VACUUM"><command>VACUUM VERBOSE</></> report
-       the number of skipped frozen pages and oldest xmin (Masahiko Sawada)
+       the number of skipped frozen pages and oldest xmin (Masahiko
+       Sawada, Simon Riggs)
       </para>
 
       <para>
