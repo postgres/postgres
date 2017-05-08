@@ -19,8 +19,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: plpython (PostgreSQL) 9.2\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2016-04-11 22:56+0000\n"
-"PO-Revision-Date: 2016-04-17 03:39+0100\n"
+"POT-Creation-Date: 2017-02-07 20:13+0000\n"
+"PO-Revision-Date: 2017-04-23 02:56+0100\n"
 "Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
 "Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
 "Language: it\n"
@@ -28,7 +28,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Poedit 1.5.4\n"
+"X-Generator: Poedit 1.8.7.1\n"
 
 #: plpy_cursorobject.c:98
 #, c-format
@@ -72,7 +72,7 @@ msgstr "lettura da un cursore chiuso"
 msgid "closing a cursor in an aborted subtransaction"
 msgstr "chiusura di un cursore in una sotto-transazione interrotta"
 
-#: plpy_elog.c:108 plpy_elog.c:109 plpy_plpymodule.c:420
+#: plpy_elog.c:108 plpy_elog.c:109 plpy_plpymodule.c:441
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -242,32 +242,37 @@ msgstr "blocco di codice anonimo in PL/Python"
 msgid "plan.status takes no arguments"
 msgstr "plan.status non accetta argomenti"
 
-#: plpy_plpymodule.c:178 plpy_plpymodule.c:181
+#: plpy_plpymodule.c:181 plpy_plpymodule.c:184
 #, c-format
 msgid "could not import \"plpy\" module"
 msgstr "importazione del modulo \"plpy\" fallita"
 
-#: plpy_plpymodule.c:196
+#: plpy_plpymodule.c:199
+#, c-format
+msgid "could not create the spiexceptions module"
+msgstr "creazione del modulo spiexceptions fallita"
+
+#: plpy_plpymodule.c:207
 #, c-format
 msgid "could not add the spiexceptions module"
 msgstr "aggiunta del modulo spiexceptions fallita"
 
-#: plpy_plpymodule.c:217
+#: plpy_plpymodule.c:237
 #, c-format
-msgid "could not create the base SPI exceptions"
-msgstr "creazione delle eccezioni SPI di base fallita"
+msgid "could not create exception \"%s\""
+msgstr "creazione dell'eccezione \"%s\" fallita"
 
-#: plpy_plpymodule.c:253 plpy_plpymodule.c:257
+#: plpy_plpymodule.c:272 plpy_plpymodule.c:276
 #, c-format
 msgid "could not generate SPI exceptions"
 msgstr "generazione delle eccezioni SPI fallita"
 
-#: plpy_plpymodule.c:388
+#: plpy_plpymodule.c:409
 #, c-format
 msgid "could not unpack arguments in plpy.elog"
 msgstr "non è stato possibile espandere gli argomenti in plpy.elog"
 
-#: plpy_plpymodule.c:396
+#: plpy_plpymodule.c:417
 msgid "could not parse error message in plpy.elog"
 msgstr "non è stato possibile interpretare il messaggio di errore in plpy.elog"
 

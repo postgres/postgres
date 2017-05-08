@@ -24,7 +24,7 @@ msgstr ""
 "Project-Id-Version: pg_controldata (PostgreSQL) 9.2\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2013-03-13 12:17+0000\n"
-"PO-Revision-Date: 2016-04-17 20:45+0100\n"
+"PO-Revision-Date: 2017-04-23 03:02+0100\n"
 "Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
 "Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
 "Language: it\n"
@@ -33,7 +33,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Poedit-SourceCharset: utf-8\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Poedit 1.5.4\n"
+"X-Generator: Poedit 1.8.7.1\n"
 
 #: pg_controldata.c:33
 #, c-format
@@ -140,7 +140,7 @@ msgstr "Prova \"%s --help\" per maggiori informazioni.\n"
 #: pg_controldata.c:132
 #, c-format
 msgid "%s: could not open file \"%s\" for reading: %s\n"
-msgstr "%s: errore nell'apertura del file \"%s\" per la lettura: %s\n"
+msgstr "%s: apertura del file \"%s\" per la lettura fallita: %s\n"
 
 #: pg_controldata.c:139
 #, c-format
@@ -155,9 +155,9 @@ msgid ""
 "is expecting.  The results below are untrustworthy.\n"
 "\n"
 msgstr ""
-"ATTENZIONE: La somma di controllo CRC non corrisponde al valore memorizzato nel file.\n"
-"O il file è corrotto oppure ha un formato differente da quello previsto.\n"
-"I risultati seguenti non sono affidabili.\n"
+"ATTENZIONE: Il codice di controllo CRC calcolato non combacia con quello\n"
+"memorizzato nel file. O il file è corrotto o ha un formato diverso da quanto\n"
+"questo programma si aspetta. I risultati seguenti non sono affidabili.\n"
 "\n"
 
 #: pg_controldata.c:180
@@ -173,11 +173,11 @@ msgid ""
 "used by this program.  In that case the results below would be incorrect, and\n"
 "the PostgreSQL installation would be incompatible with this data directory.\n"
 msgstr ""
-"ATTENZIONE: possibile errore nel byte ordering\n"
-"il byte ordering usato per archiviare il file pg_control potrebbe non\n"
-"corrispondere a quello usato da questo programma. In questo caso il risultato\n"
-"qui sotto potrebbe essere non corretto, e l'installazione di PostgreSQL\n"
-"potrebbe essere incompatibile con questa directory dei dati.\n"
+"ATTENZIONE: possibile differenza nell'ordine dei byte\n"
+"L'ordine dei byte usato per memorizzare il file pg_control potrebbe non\n"
+"combaciare con quello usato da questo programma. In questo caso i risultati\n"
+"seguenti non sarebbero corretti e l'installazione di PostgreSQL sarebbe\n"
+"incompatibile con questa directory di dati.\n"
 
 #: pg_controldata.c:187
 #, c-format
