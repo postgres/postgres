@@ -11,8 +11,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_dump (PostgreSQL 9)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-01-30 17:28+0000\n"
-"PO-Revision-Date: 2017-02-02 15:13+0300\n"
+"POT-Creation-Date: 2017-02-06 22:27+0000\n"
+"PO-Revision-Date: 2017-02-07 19:04+0300\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -2045,8 +2045,8 @@ msgstr "недопустимое значение provolatile для функц�
 
 #: pg_dump.c:10305
 #, c-format
-msgid "unable to find function definition for OID %u"
-msgstr "не удалось найти определение функции для OID %u"
+msgid "could not find function definition for function with OID %u\n"
+msgstr "не удалось найти определение функции для функции с OID %u\n"
 
 #: pg_dump.c:10350
 #, c-format

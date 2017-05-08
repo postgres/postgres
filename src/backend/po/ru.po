@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgres (PostgreSQL 9)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-01-30 17:24+0000\n"
-"PO-Revision-Date: 2017-02-02 15:14+0300\n"
+"POT-Creation-Date: 2017-02-06 22:22+0000\n"
+"PO-Revision-Date: 2017-04-19 06:50+0300\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -3394,7 +3394,7 @@ msgstr ""
 #: utils/adt/selfuncs.c:5225 utils/adt/varlena.c:1381
 #, c-format
 msgid "Use the COLLATE clause to set the collation explicitly."
-msgstr "Задайте правило сравнения явно в предложении COLLATE."
+msgstr "Задайте правило сортировки явно в предложении COLLATE."
 
 #: catalog/heap.c:1057 catalog/index.c:778 commands/tablecmds.c:2550
 #, c-format
@@ -6650,7 +6650,7 @@ msgstr "функции в индексном выражении должны б�
 #: commands/indexcmds.c:1071
 #, c-format
 msgid "could not determine which collation to use for index expression"
-msgstr "не удалось определить правило сравнения для индексного выражения"
+msgstr "не удалось определить правило сортировки для индексного выражения"
 
 #: commands/indexcmds.c:1079 commands/typecmds.c:782 parser/parse_expr.c:2278
 #: parser/parse_type.c:546 parser/parse_utilcmd.c:2650 utils/adt/misc.c:520
@@ -10235,8 +10235,8 @@ msgstr ""
 #, c-format
 msgid "no pg_hba.conf entry for host \"%s\", user \"%s\", database \"%s\", %s"
 msgstr ""
-"в pg_hba.conf нет записи, разрешающей подключение для репликации с "
-"компьютера \"%s\" для пользователя \"%s\", базы данных \"%s\", %s"
+"в pg_hba.conf нет записи для компьютера \"%s\", пользователя \"%s\", базы "
+"\"%s\", %s"
 
 #: libpq/auth.c:481
 #, c-format
@@ -20010,17 +20010,17 @@ msgstr "для типа %s нет функции вывода"
 msgid "cached plan must not change result type"
 msgstr "в кешированном плане не должен изменяться тип результата"
 
-#: utils/cache/relcache.c:4875
+#: utils/cache/relcache.c:4902
 #, c-format
 msgid "could not create relation-cache initialization file \"%s\": %m"
 msgstr "создать файл инициализации для кеша отношений \"%s\" не удалось: %m"
 
-#: utils/cache/relcache.c:4877
+#: utils/cache/relcache.c:4904
 #, c-format
 msgid "Continuing anyway, but there's something wrong."
 msgstr "Продолжаем всё равно, хотя что-то не так."
 
-#: utils/cache/relcache.c:5110
+#: utils/cache/relcache.c:5137
 #, c-format
 msgid "could not remove cache file \"%s\": %m"
 msgstr "не удалось стереть файл кеша \"%s\": %m"
