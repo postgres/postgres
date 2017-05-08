@@ -2039,14 +2039,6 @@ SerializeSnapshot(Snapshot snapshot, char *start_address)
 	serialized_snapshot.whenTaken = snapshot->whenTaken;
 	serialized_snapshot.lsn = snapshot->lsn;
 
-	/*
-	 * Ignore the SubXID array if it has overflowed, unless the snapshot was
-	 * taken during recovey - in that case, top-level XIDs are in subxip as
-	 * well, and we mustn't lose them.
-	 */
-	if (serialized_snapshot.suboverflowed && !snapshot->takenDuringRecovery)
-		serialized_snapshot.subxcnt = 0;
-
 	/* Copy struct to possibly-unaligned buffer */
 	memcpy(start_address,
 		   &serialized_snapshot, sizeof(SerializedSnapshotData));
@@ -2063,6 +2055,9 @@ SerializeSnapshot(Snapshot snapshot, char *start_address)
 	 * snapshot taken during recovery; all the top-level XIDs are in subxip as
 	 * well in that case, so we mustn't lose them.
 	 */
+	if (serialized_snapshot.suboverflowed && !snapshot->takenDuringRecovery)
+		serialized_snapshot.subxcnt = 0;
+
 	if (serialized_snapshot.subxcnt > 0)
 	{
 		Size		subxipoff = sizeof(SerializedSnapshotData) +
