@@ -493,7 +493,22 @@ ALTER SERVER s9 VERSION '1.2';                                  -- ERROR
 GRANT USAGE ON FOREIGN SERVER s9 TO regress_test_role;          -- WARNING
 CREATE USER MAPPING FOR current_user SERVER s9;
 DROP SERVER s9 CASCADE;                                         -- ERROR
+
+-- Check visibility of user mapping data
+SET ROLE regress_test_role;
+CREATE SERVER s10 FOREIGN DATA WRAPPER foo;
+CREATE USER MAPPING FOR public SERVER s10 OPTIONS (user 'secret');
+GRANT USAGE ON FOREIGN SERVER s10 TO regress_unprivileged_role;
+-- owner of server can see option fields
+\deu+
 RESET ROLE;
+-- superuser can see option fields
+\deu+
+-- unprivileged user cannot see option fields
+SET ROLE regress_unprivileged_role;
+\deu+
+RESET ROLE;
+DROP SERVER s10 CASCADE;
 
 -- Triggers
 CREATE FUNCTION dummy_trigger() RETURNS TRIGGER AS $$

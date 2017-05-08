@@ -1200,7 +1200,61 @@ WARNING:  no privileges were granted for "s9"
 CREATE USER MAPPING FOR current_user SERVER s9;
 DROP SERVER s9 CASCADE;                                         -- ERROR
 ERROR:  must be owner of foreign server s9
+-- Check visibility of user mapping data
+SET ROLE regress_test_role;
+CREATE SERVER s10 FOREIGN DATA WRAPPER foo;
+CREATE USER MAPPING FOR public SERVER s10 OPTIONS (user 'secret');
+GRANT USAGE ON FOREIGN SERVER s10 TO regress_unprivileged_role;
+-- owner of server can see option fields
+\deu+
+                 List of user mappings
+ Server |         User name         |    FDW Options    
+--------+---------------------------+-------------------
+ s10    | public                    | ("user" 'secret')
+ s4     | regress_foreign_data_user | 
+ s5     | regress_test_role         | (modified '1')
+ s6     | regress_test_role         | 
+ s8     | public                    | 
+ s8     | regress_foreign_data_user | 
+ s9     | regress_unprivileged_role | 
+ t1     | public                    | (modified '1')
+(8 rows)
+
 RESET ROLE;
+-- superuser can see option fields
+\deu+
+                  List of user mappings
+ Server |         User name         |     FDW Options     
+--------+---------------------------+---------------------
+ s10    | public                    | ("user" 'secret')
+ s4     | regress_foreign_data_user | 
+ s5     | regress_test_role         | (modified '1')
+ s6     | regress_test_role         | 
+ s8     | public                    | 
+ s8     | regress_foreign_data_user | (password 'public')
+ s9     | regress_unprivileged_role | 
+ t1     | public                    | (modified '1')
+(8 rows)
+
+-- unprivileged user cannot see option fields
+SET ROLE regress_unprivileged_role;
+\deu+
+              List of user mappings
+ Server |         User name         | FDW Options 
+--------+---------------------------+-------------
+ s10    | public                    | 
+ s4     | regress_foreign_data_user | 
+ s5     | regress_test_role         | 
+ s6     | regress_test_role         | 
+ s8     | public                    | 
+ s8     | regress_foreign_data_user | 
+ s9     | regress_unprivileged_role | 
+ t1     | public                    | 
+(8 rows)
+
+RESET ROLE;
+DROP SERVER s10 CASCADE;
+NOTICE:  drop cascades to user mapping for public on server s10
 -- Triggers
 CREATE FUNCTION dummy_trigger() RETURNS TRIGGER AS $$
   BEGIN

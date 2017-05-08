@@ -11084,8 +11084,11 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       <entry></entry>
       <entry>
        User mapping specific options, as <quote>keyword=value</>
-       strings, if the current user is the owner of the foreign
-       server, else null
+       strings.  This column will show as null unless the current user
+       is the user being mapped, or the mapping is for
+       <literal>PUBLIC</literal> and the current user is the server
+       owner, or the current user is a superuser.  The intent is
+       to protect password information stored as user mapping option.
       </entry>
      </row>
     </tbody>
