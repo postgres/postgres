@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.6\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2016-09-20 16:55+0900\n"
+"POT-Creation-Date: 2017-01-30 16:42+0900\n"
 "PO-Revision-Date: 2013-08-18 12:10+0900\n"
 "Last-Translator: Okano Naoki <okano.naoki@jp.fujitsu.com>\n"
 "Language-Team: jpug-doc <jpug-doc@ml.postgresql.jp>\n"
@@ -529,7 +529,7 @@ msgstr "オプション:\n"
 #: pg_resetxlog.c:1170
 #, c-format
 msgid "  -c XID,XID       set oldest and newest transactions bearing commit timestamp\n"
-msgstr "  -c XID,XID       コミットタイムスタンプを作成する最も古いトランザクションと最も新しいトランザクションを設定します\n"
+msgstr "  -c XID,XID       コミットタイムスタンプを保持する最も古いトランザクションと最も新しいトランザクションを設定します\n"
 
 #: pg_resetxlog.c:1171
 #, c-format
@@ -601,30 +601,3 @@ msgid ""
 msgstr ""
 "\n"
 "不具合は<pgsql-bugs@postgresql.org>まで報告してください。\n"
-
-#~ msgid "First log file ID after reset:        %u\n"
-#~ msgstr "リセット後、現在のログファイルID:     %u\n"
-
-#~ msgid "  --help          show this help, then exit\n"
-#~ msgstr "  --help          ヘルプを表示し、終了します\n"
-
-#~ msgid "  --version       output version information, then exit\n"
-#~ msgstr "  --version       バージョン情報を表示し、終了します\n"
-
-#~ msgid "%s: could not read from directory \"%s\": %s\n"
-#~ msgstr "%s: ディレクトリ\"%s\"から読み込めませんでした: %s\n"
-
-#~ msgid "%s: invalid argument for option -l\n"
-#~ msgstr "%s: オプション-lの引数が無効です\n"
-
-#~ msgid "%s: invalid argument for option -O\n"
-#~ msgstr "%s: オプション-Oの引数が無効です\n"
-
-#~ msgid "%s: invalid argument for option -m\n"
-#~ msgstr "%s: オプション-mの引数が無効です\n"
-
-#~ msgid "%s: invalid argument for option -o\n"
-#~ msgstr "%s: オプション-oの引数が無効です\n"
-
-#~ msgid "%s: invalid argument for option -x\n"
-#~ msgstr "%s: オプション-xの引数が無効です\n"

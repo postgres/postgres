@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.6\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2016-09-23 20:07+0000\n"
-"PO-Revision-Date: 2016-09-24 18:10+0200\n"
+"POT-Creation-Date: 2017-02-06 16:07+0000\n"
+"PO-Revision-Date: 2017-02-06 19:02+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 1.8.7\n"
+"X-Generator: Poedit 1.8.11\n"
 
 #: plpy_cursorobject.c:101
 #, c-format
@@ -66,7 +66,7 @@ msgstr "le résultat de la requête contient trop de lignes pour être intégré
 msgid "closing a cursor in an aborted subtransaction"
 msgstr "fermeture d'un curseur dans une sous-transaction annulée"
 
-#: plpy_elog.c:127 plpy_elog.c:128 plpy_plpymodule.c:527
+#: plpy_elog.c:127 plpy_elog.c:128 plpy_plpymodule.c:548
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -233,46 +233,51 @@ msgstr "bloc de code PL/Python anonyme"
 msgid "plan.status takes no arguments"
 msgstr "plan.status ne prends pas d'arguments"
 
-#: plpy_plpymodule.c:178 plpy_plpymodule.c:181
+#: plpy_plpymodule.c:181 plpy_plpymodule.c:184
 #, c-format
 msgid "could not import \"plpy\" module"
 msgstr "n'a pas pu importer le module « plpy »"
 
-#: plpy_plpymodule.c:196
+#: plpy_plpymodule.c:199
+#, c-format
+msgid "could not create the spiexceptions module"
+msgstr "n'a pas pu créer le module « spiexceptions »"
+
+#: plpy_plpymodule.c:207
 #, c-format
 msgid "could not add the spiexceptions module"
 msgstr "n'a pas pu ajouter le module « spiexceptions »"
 
-#: plpy_plpymodule.c:217
+#: plpy_plpymodule.c:236
 #, c-format
-msgid "could not create the base SPI exceptions"
-msgstr "n'a pas pu créer les exceptions SPI de base"
+msgid "could not create exception \"%s\""
+msgstr "n'a pas pu créer l'exception « %s »"
 
-#: plpy_plpymodule.c:252 plpy_plpymodule.c:256
+#: plpy_plpymodule.c:271 plpy_plpymodule.c:275
 #, c-format
 msgid "could not generate SPI exceptions"
 msgstr "n'a pas pu générer les exceptions SPI"
 
-#: plpy_plpymodule.c:422
+#: plpy_plpymodule.c:443
 #, c-format
 msgid "could not unpack arguments in plpy.elog"
 msgstr "n'a pas pu déballer les arguments dans plpy.elog"
 
-#: plpy_plpymodule.c:431
+#: plpy_plpymodule.c:452
 msgid "could not parse error message in plpy.elog"
 msgstr "n'a pas pu analyser le message d'erreur dans plpy.elog"
 
-#: plpy_plpymodule.c:448
+#: plpy_plpymodule.c:469
 #, c-format
 msgid "Argument 'message' given by name and position"
 msgstr "Argument 'message' donn\" par nom et position"
 
-#: plpy_plpymodule.c:475
+#: plpy_plpymodule.c:496
 #, c-format
 msgid "'%s' is an invalid keyword argument for this function"
 msgstr "'%s' est une argument mot-clé invalide pour cette fonction"
 
-#: plpy_plpymodule.c:486 plpy_plpymodule.c:492
+#: plpy_plpymodule.c:507 plpy_plpymodule.c:513
 #, c-format
 msgid "invalid SQLSTATE code"
 msgstr "code SQLSTATE invalide"
@@ -453,21 +458,55 @@ msgstr "n'a pas pu convertir l'objet Unicode Python en octets"
 msgid "could not extract bytes from encoded string"
 msgstr "n'a pas pu extraire les octets de la chaîne encodée"
 
-#~ msgid "Python major version mismatch in session"
-#~ msgstr "Différence de version majeure de Python dans la session"
+#~ msgid "the message is already specified"
+#~ msgstr "le message est déjà spécifié"
 
-#~ msgid "This session has previously used Python major version %d, and it is now attempting to use Python major version %d."
+#~ msgid "plpy.prepare does not support composite types"
+#~ msgstr "plpy.prepare ne supporte pas les types composites"
+
+#~ msgid "PL/Python does not support conversion to arrays of row types."
+#~ msgstr "PL/Python ne supporte pas les conversions vers des tableaux de types row."
+
+#~ msgid "unrecognized error in PLy_spi_execute_fetch_result"
+#~ msgstr "erreur inconnue dans PLy_spi_execute_fetch_result"
+
+#~ msgid "PyCObject_AsVoidPtr() failed"
+#~ msgstr "échec de PyCObject_AsVoidPtr()"
+
+#~ msgid "PyCObject_FromVoidPtr() failed"
+#~ msgstr "échec de PyCObject_FromVoidPtr()"
+
+#~ msgid "transaction aborted"
+#~ msgstr "transaction annulée"
+
+#~ msgid "invalid arguments for plpy.prepare"
+#~ msgstr "arguments invalides pour plpy.prepare"
+
+#~ msgid "unrecognized error in PLy_spi_prepare"
+#~ msgstr "erreur inconnue dans PLy_spi_prepare"
+
+#~ msgid "unrecognized error in PLy_spi_execute_plan"
+#~ msgstr "erreur inconnue dans PLy_spi_execute_plan"
+
+#~ msgid "unrecognized error in PLy_spi_execute_query"
+#~ msgstr "erreur inconnue dans PLy_spi_execute_query"
+
+#~ msgid "could not create procedure cache"
+#~ msgstr "n'a pas pu créer le cache de procédure"
+
+#~ msgid "PL/Python: %s"
+#~ msgstr "PL/python : %s"
+
+#~ msgid "out of memory"
+#~ msgstr "mémoire épuisée"
+
+#~ msgid "PL/Python function \"%s\" failed"
+#~ msgstr "échec de la fonction PL/python « %s »"
+
+#~ msgid "could not compute string representation of Python object in PL/Python function \"%s\" while modifying trigger row"
 #~ msgstr ""
-#~ "Cette session a auparavant utilisé la version majeure %d de Python et elle\n"
-#~ "essaie maintenant d'utiliser la version majeure %d."
-
-#~ msgid "Start a new session to use a different Python major version."
-#~ msgstr ""
-#~ "Lancez une nouvelle session pour utiliser une version majeure différente de\n"
-#~ "Python."
-
-#~ msgid "PL/Python function \"%s\" could not execute plan"
-#~ msgstr "la fonction PL/python « %s » n'a pas pu exécuter un plan"
+#~ "n'a pas pu traiter la représentation de la chaîne d'un objet Python dans\n"
+#~ "la fonction PL/Python « %s » lors de la modification de la ligne du trigger"
 
 #~ msgid "could not create string representation of Python object in PL/Python function \"%s\" while creating return value"
 #~ msgstr ""
@@ -475,52 +514,21 @@ msgstr "n'a pas pu extraire les octets de la chaîne encodée"
 #~ "Python dans la fonction PL/python « %s » lors de la création de la valeur\n"
 #~ "de retour"
 
-#~ msgid "could not compute string representation of Python object in PL/Python function \"%s\" while modifying trigger row"
+#~ msgid "PL/Python function \"%s\" could not execute plan"
+#~ msgstr "la fonction PL/python « %s » n'a pas pu exécuter un plan"
+
+#~ msgid "Start a new session to use a different Python major version."
 #~ msgstr ""
-#~ "n'a pas pu traiter la représentation de la chaîne d'un objet Python dans\n"
-#~ "la fonction PL/Python « %s » lors de la modification de la ligne du trigger"
+#~ "Lancez une nouvelle session pour utiliser une version majeure différente de\n"
+#~ "Python."
 
-#~ msgid "PL/Python function \"%s\" failed"
-#~ msgstr "échec de la fonction PL/python « %s »"
+#~ msgid "This session has previously used Python major version %d, and it is now attempting to use Python major version %d."
+#~ msgstr ""
+#~ "Cette session a auparavant utilisé la version majeure %d de Python et elle\n"
+#~ "essaie maintenant d'utiliser la version majeure %d."
 
-#~ msgid "out of memory"
-#~ msgstr "mémoire épuisée"
+#~ msgid "Python major version mismatch in session"
+#~ msgstr "Différence de version majeure de Python dans la session"
 
-#~ msgid "PL/Python: %s"
-#~ msgstr "PL/python : %s"
-
-#~ msgid "could not create procedure cache"
-#~ msgstr "n'a pas pu créer le cache de procédure"
-
-#~ msgid "unrecognized error in PLy_spi_execute_query"
-#~ msgstr "erreur inconnue dans PLy_spi_execute_query"
-
-#~ msgid "unrecognized error in PLy_spi_execute_plan"
-#~ msgstr "erreur inconnue dans PLy_spi_execute_plan"
-
-#~ msgid "unrecognized error in PLy_spi_prepare"
-#~ msgstr "erreur inconnue dans PLy_spi_prepare"
-
-#~ msgid "invalid arguments for plpy.prepare"
-#~ msgstr "arguments invalides pour plpy.prepare"
-
-#~ msgid "transaction aborted"
-#~ msgstr "transaction annulée"
-
-#~ msgid "PyCObject_FromVoidPtr() failed"
-#~ msgstr "échec de PyCObject_FromVoidPtr()"
-
-#~ msgid "PyCObject_AsVoidPtr() failed"
-#~ msgstr "échec de PyCObject_AsVoidPtr()"
-
-#~ msgid "unrecognized error in PLy_spi_execute_fetch_result"
-#~ msgstr "erreur inconnue dans PLy_spi_execute_fetch_result"
-
-#~ msgid "PL/Python does not support conversion to arrays of row types."
-#~ msgstr "PL/Python ne supporte pas les conversions vers des tableaux de types row."
-
-#~ msgid "plpy.prepare does not support composite types"
-#~ msgstr "plpy.prepare ne supporte pas les types composites"
-
-#~ msgid "the message is already specified"
-#~ msgstr "le message est déjà spécifié"
+#~ msgid "could not create the base SPI exceptions"
+#~ msgstr "n'a pas pu créer les exceptions SPI de base"

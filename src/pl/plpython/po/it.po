@@ -19,8 +19,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: plpython (PostgreSQL) 9.6\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2016-04-17 00:07+0000\n"
-"PO-Revision-Date: 2016-04-17 20:40+0100\n"
+"POT-Creation-Date: 2017-02-09 21:07+0000\n"
+"PO-Revision-Date: 2017-04-23 02:56+0100\n"
 "Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
 "Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
 "Language: it\n"
@@ -28,56 +28,56 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Poedit 1.5.4\n"
+"X-Generator: Poedit 1.8.7.1\n"
 
 #: plpy_cursorobject.c:101
 #, c-format
 msgid "plpy.cursor expected a query or a plan"
 msgstr "plpy.cursor richiede una query o un piano"
 
-#: plpy_cursorobject.c:179
+#: plpy_cursorobject.c:177
 #, c-format
 msgid "plpy.cursor takes a sequence as its second argument"
 msgstr "plpy.cursor richiede una sequenza come secondo argomento"
 
-#: plpy_cursorobject.c:195 plpy_spi.c:229
+#: plpy_cursorobject.c:193 plpy_spi.c:227
 #, c-format
 msgid "could not execute plan"
 msgstr "esecuzione del piano fallita"
 
-#: plpy_cursorobject.c:198 plpy_spi.c:232
+#: plpy_cursorobject.c:196 plpy_spi.c:230
 #, c-format
 msgid "Expected sequence of %d argument, got %d: %s"
 msgid_plural "Expected sequence of %d arguments, got %d: %s"
 msgstr[0] "Attesa sequenza di %d argomento, ricevuti %d: %s"
 msgstr[1] "Attesa sequenza di %d argomenti, ricevuti %d: %s"
 
-#: plpy_cursorobject.c:354
+#: plpy_cursorobject.c:350
 #, c-format
 msgid "iterating a closed cursor"
 msgstr "iterazione di un cursore chiuso"
 
-#: plpy_cursorobject.c:362 plpy_cursorobject.c:427
+#: plpy_cursorobject.c:358 plpy_cursorobject.c:423
 #, c-format
 msgid "iterating a cursor in an aborted subtransaction"
 msgstr "iterazione di un cursore in una sotto-transazione interrotta"
 
-#: plpy_cursorobject.c:419
+#: plpy_cursorobject.c:415
 #, c-format
 msgid "fetch from a closed cursor"
 msgstr "lettura da un cursore chiuso"
 
-#: plpy_cursorobject.c:467 plpy_spi.c:438
+#: plpy_cursorobject.c:463 plpy_spi.c:434
 #, c-format
 msgid "query result has too many rows to fit in a Python list"
 msgstr "il risultato della query ha troppe righe per una lista Python"
 
-#: plpy_cursorobject.c:508
+#: plpy_cursorobject.c:504
 #, c-format
 msgid "closing a cursor in an aborted subtransaction"
 msgstr "chiusura di un cursore in una sotto-transazione interrotta"
 
-#: plpy_elog.c:127 plpy_elog.c:128 plpy_plpymodule.c:513
+#: plpy_elog.c:127 plpy_elog.c:128 plpy_plpymodule.c:548
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -217,12 +217,12 @@ msgstr "creazione delle variabili globali fallita"
 msgid "could not initialize globals"
 msgstr "inizializzazione delle variabili globali fallita"
 
-#: plpy_main.c:389
+#: plpy_main.c:387
 #, c-format
 msgid "PL/Python function \"%s\""
 msgstr "funzione PL/Python \"%s\""
 
-#: plpy_main.c:396
+#: plpy_main.c:394
 #, c-format
 msgid "PL/Python anonymous code block"
 msgstr "blocco di codice anonimo in PL/Python"
@@ -232,71 +232,76 @@ msgstr "blocco di codice anonimo in PL/Python"
 msgid "plan.status takes no arguments"
 msgstr "plan.status non accetta argomenti"
 
-#: plpy_plpymodule.c:178 plpy_plpymodule.c:181
+#: plpy_plpymodule.c:181 plpy_plpymodule.c:184
 #, c-format
 msgid "could not import \"plpy\" module"
 msgstr "importazione del modulo \"plpy\" fallita"
 
-#: plpy_plpymodule.c:196
+#: plpy_plpymodule.c:199
+#, c-format
+msgid "could not create the spiexceptions module"
+msgstr "creazione del modulo spiexceptions fallita"
+
+#: plpy_plpymodule.c:207
 #, c-format
 msgid "could not add the spiexceptions module"
 msgstr "aggiunta del modulo spiexceptions fallita"
 
-#: plpy_plpymodule.c:217
+#: plpy_plpymodule.c:236
 #, c-format
-msgid "could not create the base SPI exceptions"
-msgstr "creazione delle eccezioni SPI di base fallita"
+msgid "could not create exception \"%s\""
+msgstr "creazione dell'eccezione \"%s\" fallita"
 
-#: plpy_plpymodule.c:252 plpy_plpymodule.c:256
+#: plpy_plpymodule.c:271 plpy_plpymodule.c:275
 #, c-format
 msgid "could not generate SPI exceptions"
 msgstr "generazione delle eccezioni SPI fallita"
 
-#: plpy_plpymodule.c:421
+#: plpy_plpymodule.c:443
 #, c-format
 msgid "could not unpack arguments in plpy.elog"
 msgstr "non è stato possibile espandere gli argomenti in plpy.elog"
 
-#: plpy_plpymodule.c:430
+#: plpy_plpymodule.c:452
 msgid "could not parse error message in plpy.elog"
 msgstr "non è stato possibile interpretare il messaggio di errore in plpy.elog"
 
-#: plpy_plpymodule.c:446
-#, c-format
-msgid "the message is already specified"
-msgstr "il messaggio è già specificato"
-
 #: plpy_plpymodule.c:469
+#, c-format
+msgid "Argument 'message' given by name and position"
+msgstr "Parametro 'message' dato con nome e posizione"
+
+#: plpy_plpymodule.c:496
 #, c-format
 msgid "'%s' is an invalid keyword argument for this function"
 msgstr "'%s' è un nome di argomento non valido per questa funzione"
 
-#: plpy_plpymodule.c:477 plpy_plpymodule.c:480
+#: plpy_plpymodule.c:507 plpy_plpymodule.c:513
 #, c-format
 msgid "invalid SQLSTATE code"
 msgstr "codice SQLSTATE non valido"
 
-#: plpy_procedure.c:232
+#: plpy_procedure.c:230
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "le funzioni trigger possono essere chiamate esclusivamente da trigger"
 
-#: plpy_procedure.c:237
+#: plpy_procedure.c:235
 #, c-format
 msgid "PL/Python functions cannot return type %s"
 msgstr "le funzioni PL/Python non possono restituire il tipo %s"
 
-#: plpy_procedure.c:318
+#: plpy_procedure.c:316
 #, c-format
 msgid "PL/Python functions cannot accept type %s"
 msgstr "le funzioni PL/Python non possono accettare il tipo %s"
 
-#: plpy_procedure.c:414
+#: plpy_procedure.c:412
 #, c-format
 msgid "could not compile PL/Python function \"%s\""
 msgstr "compilazione della funzione PL/Python \"%s\" fallita"
 
-#: plpy_procedure.c:417
+#: plpy_procedure.c:415
 #, c-format
 msgid "could not compile anonymous PL/Python code block"
 msgstr "compilazione del blocco di codice anonimo PL/Python fallita"
@@ -311,27 +316,27 @@ msgstr "il comando non ha prodotto risultati"
 msgid "second argument of plpy.prepare must be a sequence"
 msgstr "il secondo argomento di plpy.prepare deve essere una sequenza"
 
-#: plpy_spi.c:118
+#: plpy_spi.c:116
 #, c-format
 msgid "plpy.prepare: type name at ordinal position %d is not a string"
 msgstr "plpy.prepare: il nome del tipo nella posizione %d non è una stringa"
 
-#: plpy_spi.c:194
+#: plpy_spi.c:192
 #, c-format
 msgid "plpy.execute expected a query or a plan"
 msgstr "plpy.execute si aspetta una query o un plan"
 
-#: plpy_spi.c:213
+#: plpy_spi.c:211
 #, c-format
 msgid "plpy.execute takes a sequence as its second argument"
 msgstr "plpy.execute richiede una sequenza come secondo argomento"
 
-#: plpy_spi.c:337
+#: plpy_spi.c:335
 #, c-format
 msgid "SPI_execute_plan failed: %s"
 msgstr "SPI_execute_plan ha fallito: %s"
 
-#: plpy_spi.c:379
+#: plpy_spi.c:377
 #, c-format
 msgid "SPI_execute failed: %s"
 msgstr "SPI_execute ha fallito: %s"
@@ -396,42 +401,42 @@ msgstr "creazione della nuova lista Python fallita"
 msgid "could not create bytes representation of Python object"
 msgstr "creazione della rappresentazione in byte dell'oggetto Python fallita"
 
-#: plpy_typeio.c:822
+#: plpy_typeio.c:820
 #, c-format
 msgid "could not create string representation of Python object"
 msgstr "creazione della rappresentazione stringa dell'oggetto Python fallita"
 
-#: plpy_typeio.c:833
+#: plpy_typeio.c:831
 #, c-format
 msgid "could not convert Python object into cstring: Python string representation appears to contain null bytes"
 msgstr "conversione dell'oggetto Python in cstring fallita: la rappresentazione stringa Python sembra contenere byte null"
 
-#: plpy_typeio.c:879
+#: plpy_typeio.c:877
 #, c-format
 msgid "return value of function with array return type is not a Python sequence"
 msgstr "il valore restituito dalla funzione con tipo restituito array non è una sequenza Python"
 
-#: plpy_typeio.c:1000
+#: plpy_typeio.c:996
 #, c-format
 msgid "key \"%s\" not found in mapping"
 msgstr "la chiave \"%s\" non è stata trovata nel dizionario"
 
-#: plpy_typeio.c:1001
+#: plpy_typeio.c:997
 #, c-format
 msgid "To return null in a column, add the value None to the mapping with the key named after the column."
 msgstr "Per restituire null in una colonna, inserire nella mappa il valore None con una chiave chiamata come la colonna."
 
-#: plpy_typeio.c:1052
+#: plpy_typeio.c:1048
 #, c-format
 msgid "length of returned sequence did not match number of columns in row"
 msgstr "la lunghezza della sequenza ritornata non rispetta il numero di colonne presenti nella riga"
 
-#: plpy_typeio.c:1163
+#: plpy_typeio.c:1159
 #, c-format
 msgid "attribute \"%s\" does not exist in Python object"
 msgstr "l'attributo \"%s\" non esiste nell'oggetto Python"
 
-#: plpy_typeio.c:1164
+#: plpy_typeio.c:1160
 #, c-format
 msgid "To return null in a column, let the returned object have an attribute named after column with value None."
 msgstr "Per restituire null in una colonna, l'oggetto restituito deve avere un attributo chiamato come la colonna con valore None."

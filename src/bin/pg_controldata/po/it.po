@@ -23,8 +23,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_controldata (PostgreSQL) 9.6\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2016-04-17 00:15+0000\n"
-"PO-Revision-Date: 2016-04-17 20:45+0100\n"
+"POT-Creation-Date: 2017-02-09 21:14+0000\n"
+"PO-Revision-Date: 2017-04-23 03:02+0100\n"
 "Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
 "Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
 "Language: it\n"
@@ -33,7 +33,52 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Poedit-SourceCharset: utf-8\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Poedit 1.5.4\n"
+"X-Generator: Poedit 1.8.7.1\n"
+
+#: ../../common/controldata_utils.c:56
+#, c-format
+msgid "%s: could not open file \"%s\" for reading: %s\n"
+msgstr "%s: apertura del file \"%s\" per la lettura fallita: %s\n"
+
+#: ../../common/controldata_utils.c:69
+#, c-format
+msgid "%s: could not read file \"%s\": %s\n"
+msgstr "%s: lettura del file \"%s\" fallita: %s\n"
+
+#: ../../common/controldata_utils.c:86
+msgid "calculated CRC checksum does not match value stored in file"
+msgstr "il codice di controllo CRC calcolato non combacia con quello memorizzato nel file"
+
+#: ../../common/controldata_utils.c:88
+#, c-format
+msgid ""
+"WARNING: Calculated CRC checksum does not match value stored in file.\n"
+"Either the file is corrupt, or it has a different layout than this program\n"
+"is expecting.  The results below are untrustworthy.\n"
+"\n"
+msgstr ""
+"ATTENZIONE: Il codice di controllo CRC calcolato non combacia con quello\n"
+"memorizzato nel file. O il file è corrotto o ha un formato diverso da quanto\n"
+"questo programma si aspetta. I risultati seguenti non sono affidabili.\n"
+"\n"
+
+#: ../../common/controldata_utils.c:97
+msgid "byte ordering mismatch"
+msgstr "ordinamento dei byte non combaciante"
+
+#: ../../common/controldata_utils.c:99
+#, c-format
+msgid ""
+"WARNING: possible byte ordering mismatch\n"
+"The byte ordering used to store the pg_control file might not match the one\n"
+"used by this program.  In that case the results below would be incorrect, and\n"
+"the PostgreSQL installation would be incompatible with this data directory.\n"
+msgstr ""
+"ATTENZIONE: possibile differenza nell'ordine dei byte\n"
+"L'ordine dei byte usato per memorizzare il file pg_control potrebbe non\n"
+"combaciare con quello usato da questo programma. In questo caso i risultati\n"
+"seguenti non sarebbero corretti e l'installazione di PostgreSQL sarebbe\n"
+"incompatibile con questa directory di dati.\n"
 
 #: pg_controldata.c:33
 #, c-format

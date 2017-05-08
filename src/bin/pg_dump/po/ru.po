@@ -5,14 +5,15 @@
 # Oleg Bartunov <oleg@sai.msu.su>, 2004.
 # Sergey Burladyan <eshkinkot@gmail.com>, 2012.
 # Dmitriy Olshevskiy <olshevskiy87@bk.ru>, 2014.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2016, 2017.
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2017.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_dump (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-02-01 23:14+0000\n"
-"PO-Revision-Date: 2017-02-02 15:21+0300\n"
+"POT-Creation-Date: 2017-02-09 21:14+0000\n"
+"PO-Revision-Date: 2017-04-03 08:42+0300\n"
+"Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -20,7 +21,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
-"Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 
 #: ../../common/exec.c:127 ../../common/exec.c:241 ../../common/exec.c:284
 #, c-format
@@ -277,7 +277,9 @@ msgstr "чтение политик\n"
 #: common.c:908
 #, c-format
 msgid "failed sanity check, parent OID %u of table \"%s\" (OID %u) not found\n"
-msgstr "родительская таблица с OID %u для таблицы \"%s\" (OID %u) не найдена\n"
+msgstr ""
+"нарушение целостности: родительская таблица с OID %u для таблицы \"%s\" (OID "
+"%u) не найдена\n"
 
 #: common.c:950
 #, c-format
@@ -2047,7 +2049,7 @@ msgstr "ПРЕДУПРЕЖДЕНИЕ: у таблицы \"%s\" по-видимо
 #, c-format
 msgid "failed sanity check, parent table OID %u of sequence OID %u not found\n"
 msgstr ""
-"по OID %u не удалось найти родительскую таблицу для записи "
+"нарушение целостности: по OID %u не удалось найти родительскую таблицу "
 "последовательности с OID %u\n"
 
 #: pg_dump.c:6220
@@ -2066,8 +2068,8 @@ msgid ""
 "failed sanity check, parent table OID %u of pg_rewrite entry OID %u not "
 "found\n"
 msgstr ""
-"по OID %u не удалось найти родительскую таблицу для записи pg_rewrite с OID "
-"%u\n"
+"нарушение целостности: по OID %u не удалось найти родительскую таблицу для "
+"записи pg_rewrite с OID %u\n"
 
 #: pg_dump.c:6928
 #, c-format
@@ -2169,8 +2171,8 @@ msgstr "недопустимое значение proparallel для функц�
 
 #: pg_dump.c:11948 pg_dump.c:12058 pg_dump.c:12065
 #, c-format
-msgid "unable to find function definition for OID %u"
-msgstr "не удалось найти определение функции для OID %u"
+msgid "could not find function definition for function with OID %u\n"
+msgstr "не удалось найти определение функции для функции с OID %u\n"
 
 #: pg_dump.c:11993
 #, c-format
