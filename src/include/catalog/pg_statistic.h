@@ -275,7 +275,7 @@ typedef FormData_pg_statistic *Form_pg_statistic;
  * fraction of empty ranges. stavalues is a histogram of non-empty lengths, in
  * a format similar to STATISTIC_KIND_HISTOGRAM: it contains M (>=2) range
  * values that divide the column data values into M-1 bins of approximately
- * equal population. The lengths are stores as float8s, as measured by the
+ * equal population. The lengths are stored as float8s, as measured by the
  * range type's subdiff function. Only non-null rows are considered.
  */
 #define STATISTIC_KIND_RANGE_LENGTH_HISTOGRAM  6
