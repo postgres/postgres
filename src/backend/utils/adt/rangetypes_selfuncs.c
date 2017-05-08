@@ -20,6 +20,7 @@
 #include "access/htup_details.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_statistic.h"
+#include "catalog/pg_type.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/rangetypes.h"
@@ -246,8 +247,9 @@ calc_rangesel(TypeCacheEntry *typcache, VariableStatData *vardata,
 
 		/* Try to get fraction of empty ranges */
 		if (get_attstatsslot(vardata->statsTuple,
-							 vardata->atttype, vardata->atttypmod,
-						   STATISTIC_KIND_RANGE_LENGTH_HISTOGRAM, InvalidOid,
+							 FLOAT8OID, -1,
+							 STATISTIC_KIND_RANGE_LENGTH_HISTOGRAM,
+							 InvalidOid,
 							 NULL,
 							 NULL, NULL,
 							 &numbers, &nnumbers))
@@ -255,7 +257,7 @@ calc_rangesel(TypeCacheEntry *typcache, VariableStatData *vardata,
 			if (nnumbers != 1)
 				elog(ERROR, "invalid empty fraction statistic");		/* shouldn't happen */
 			empty_frac = numbers[0];
-			free_attstatsslot(vardata->atttype, NULL, 0, numbers, nnumbers);
+			free_attstatsslot(FLOAT8OID, NULL, 0, numbers, nnumbers);
 		}
 		else
 		{
@@ -424,7 +426,7 @@ calc_hist_selectivity(TypeCacheEntry *typcache, VariableStatData *vardata,
 	{
 		if (!(HeapTupleIsValid(vardata->statsTuple) &&
 			  get_attstatsslot(vardata->statsTuple,
-							   vardata->atttype, vardata->atttypmod,
+							   FLOAT8OID, -1,
 							   STATISTIC_KIND_RANGE_LENGTH_HISTOGRAM,
 							   InvalidOid,
 							   NULL,
@@ -438,7 +440,7 @@ calc_hist_selectivity(TypeCacheEntry *typcache, VariableStatData *vardata,
 		/* check that it's a histogram, not just a dummy entry */
 		if (length_nhist < 2)
 		{
-			free_attstatsslot(vardata->atttype,
+			free_attstatsslot(FLOAT8OID,
 							  length_hist_values, length_nhist, NULL, 0);
 			free_attstatsslot(vardata->atttype, hist_values, nhist, NULL, 0);
 			return -1.0;
@@ -578,7 +580,7 @@ calc_hist_selectivity(TypeCacheEntry *typcache, VariableStatData *vardata,
 			break;
 	}
 
-	free_attstatsslot(vardata->atttype,
+	free_attstatsslot(FLOAT8OID,
 					  length_hist_values, length_nhist, NULL, 0);
 	free_attstatsslot(vardata->atttype, hist_values, nhist, NULL, 0);
 
