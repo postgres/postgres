@@ -462,7 +462,7 @@ sub run_build
 	$ENV{PGTYPEDEFS} = abs_path('tmp_typedefs.list');
 
 	my $pg_bsd_indent_url =
-	    "ftp://ftp.postgresql.org/pub/dev/pg_bsd_indent-"
+	    "http://ftp.postgresql.org/pub/dev/pg_bsd_indent-"
 	  . $INDENT_VERSION
 	  . ".tar.gz";
 
