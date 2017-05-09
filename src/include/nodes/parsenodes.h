@@ -3393,8 +3393,8 @@ typedef struct DropSubscriptionStmt
 {
 	NodeTag		type;
 	char	   *subname;		/* Name of of the subscription */
-	bool		drop_slot;		/* Should we drop the slot on remote side? */
 	bool		missing_ok;		/* Skip error if missing? */
+	DropBehavior behavior;		/* RESTRICT or CASCADE behavior */
 } DropSubscriptionStmt;
 
 #endif   /* PARSENODES_H */

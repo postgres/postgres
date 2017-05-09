@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP SUBSCRIPTION [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [ DROP SLOT | NODROP SLOT ]
+DROP SUBSCRIPTION [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -39,7 +39,9 @@ DROP SUBSCRIPTION [ IF EXISTS ] <replaceable class="parameter">name</replaceable
 
   <para>
    <command>DROP SUBSCRIPTION</command> cannot be executed inside a
-   transaction block when <literal>DROP SLOT</literal> is specified.
+   transaction block if the subscription is associated with a replication
+   slot.  (You can use <command>ALTER SUBSCRIPTION</command> to unset the
+   slot.)
   </para>
  </refsect1>
 
@@ -57,20 +59,13 @@ DROP SUBSCRIPTION [ IF EXISTS ] <replaceable class="parameter">name</replaceable
    </varlistentry>
 
    <varlistentry>
-    <term><literal>DROP SLOT</literal></term>
-    <term><literal>NODROP SLOT</literal></term>
+    <term><literal>CASCADE</literal></term>
+    <term><literal>RESTRICT</literal></term>
+
     <listitem>
      <para>
-      Specifies whether to drop the replication slot on the publisher.  The
-      default is
-      <literal>DROP SLOT</literal>.
-     </para>
-
-     <para>
-      If the publisher is not reachable when the subscription is to be
-      dropped, then it is useful to specify <literal>NODROP SLOT</literal>.
-      But the replication slot on the publisher will then have to be removed
-      manually.
+      These key words do not have any effect, since there are no dependencies
+      on subscriptions.
      </para>
     </listitem>
    </varlistentry>

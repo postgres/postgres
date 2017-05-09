@@ -1329,6 +1329,22 @@ reread_subscription(void)
 	}
 
 	/*
+	 * Exit if the subscription was disabled.
+	 * This normally should not happen as the worker gets killed
+	 * during ALTER SUBSCRIPTION ... DISABLE.
+	 */
+	if (!newsub->enabled)
+	{
+		ereport(LOG,
+				(errmsg("logical replication worker for subscription \"%s\" will "
+						"stop because the subscription was disabled",
+						MySubscription->name)));
+
+		walrcv_disconnect(wrconn);
+		proc_exit(0);
+	}
+
+	/*
 	 * Exit if connection string was changed. The launcher will start
 	 * new worker.
 	 */
@@ -1358,6 +1374,9 @@ reread_subscription(void)
 		proc_exit(0);
 	}
 
+	/* !slotname should never happen when enabled is true. */
+	Assert(newsub->slotname);
+
 	/*
 	 * We need to make new connection to new slot if slot name has changed
 	 * so exit here as well if that's the case.
@@ -1382,22 +1401,6 @@ reread_subscription(void)
 		ereport(LOG,
 				(errmsg("logical replication worker for subscription \"%s\" will "
 						"restart because subscription's publications were changed",
-						MySubscription->name)));
-
-		walrcv_disconnect(wrconn);
-		proc_exit(0);
-	}
-
-	/*
-	 * Exit if the subscription was disabled.
-	 * This normally should not happen as the worker gets killed
-	 * during ALTER SUBSCRIPTION ... DISABLE.
-	 */
-	if (!newsub->enabled)
-	{
-		ereport(LOG,
-				(errmsg("logical replication worker for subscription \"%s\" will "
-						"stop because the subscription was disabled",
 						MySubscription->name)));
 
 		walrcv_disconnect(wrconn);

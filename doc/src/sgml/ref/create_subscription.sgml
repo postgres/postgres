@@ -133,6 +133,15 @@ CREATE SUBSCRIPTION <replaceable class="PARAMETER">subscription_name</replaceabl
       Name of the replication slot to use. The default behavior is to use
       <literal>subscription_name</> for slot name.
      </para>
+
+     <para>
+      When <literal>SLOT NAME</literal> is set to
+      <literal>NONE</literal>, there will be no replication slot associated
+      with the subscription.  This can be used if the replication slot will be
+      created later manually.  Such subscriptions must also have both
+      <literal>ENABLED</literal> and <literal>CREATE SLOT</literal> set
+      to <literal>false</literal>.
+     </para>
     </listitem>
    </varlistentry>
 

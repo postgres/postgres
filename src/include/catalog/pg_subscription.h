@@ -45,7 +45,7 @@ CATALOG(pg_subscription,6100) BKI_SHARED_RELATION BKI_ROWTYPE_OID(6101) BKI_SCHE
 	text		subconninfo BKI_FORCE_NOT_NULL;
 
 	/* Slot name on publisher */
-	NameData	subslotname BKI_FORCE_NOT_NULL;
+	NameData	subslotname;
 
 	/* Synchronous commit setting for worker */
 	text		subsynccommit BKI_FORCE_NOT_NULL;

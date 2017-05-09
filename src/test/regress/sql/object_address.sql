@@ -40,7 +40,7 @@ CREATE TRANSFORM FOR int LANGUAGE SQL (
 	FROM SQL WITH FUNCTION varchar_transform(internal),
 	TO SQL WITH FUNCTION int4recv(internal));
 CREATE PUBLICATION addr_pub FOR TABLE addr_nsp.gentable;
-CREATE SUBSCRIPTION addr_sub CONNECTION '' PUBLICATION bar WITH (DISABLED, NOCONNECT);
+CREATE SUBSCRIPTION addr_sub CONNECTION '' PUBLICATION bar WITH (NOCONNECT, SLOT NAME = NONE);
 CREATE STATISTICS addr_nsp.gentable_stat ON (a,b) FROM addr_nsp.gentable;
 
 -- test some error cases
@@ -205,7 +205,7 @@ SET client_min_messages TO 'warning';
 
 DROP FOREIGN DATA WRAPPER addr_fdw CASCADE;
 DROP PUBLICATION addr_pub;
-DROP SUBSCRIPTION addr_sub NODROP SLOT;
+DROP SUBSCRIPTION addr_sub;
 
 DROP SCHEMA addr_nsp CASCADE;
 

@@ -191,7 +191,7 @@ $node_publisher->poll_query_until('postgres',
   or die "Timed out while waiting for apply to restart";
 
 # check all the cleanup
-$node_subscriber->safe_psql('postgres', "DROP SUBSCRIPTION tap_sub_renamed DROP SLOT");
+$node_subscriber->safe_psql('postgres', "DROP SUBSCRIPTION tap_sub_renamed");
 
 $result =
   $node_subscriber->safe_psql('postgres', "SELECT count(*) FROM pg_subscription");

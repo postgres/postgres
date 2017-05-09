@@ -415,7 +415,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <fun_param_mode> arg_class
 %type <typnam>	func_return func_type
 
-%type <boolean>  opt_trusted opt_restart_seqs opt_drop_slot
+%type <boolean>  opt_trusted opt_restart_seqs
 %type <ival>	 OptTemp
 %type <ival>	 OptNoLog
 %type <oncommit> OnCommitOption
@@ -467,7 +467,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <node>	def_arg columnElem where_clause where_or_current_clause
 				a_expr b_expr c_expr AexprConst indirection_el opt_slice_bound
 				columnref in_expr having_clause func_table xmltable array_expr
-				ExclusionWhereClause
+				ExclusionWhereClause operator_def_arg
 %type <list>	rowsfrom_item rowsfrom_list opt_col_def_list
 %type <boolean> opt_ordinality
 %type <list>	ExclusionConstraintList ExclusionConstraintElem
@@ -671,7 +671,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 
 	SAVEPOINT SCHEMA SCHEMAS SCROLL SEARCH SECOND_P SECURITY SELECT SEQUENCE SEQUENCES
 	SERIALIZABLE SERVER SESSION SESSION_USER SET SETS SETOF SHARE SHOW
-	SIMILAR SIMPLE SKIP SLOT SMALLINT SNAPSHOT SOME SQL_P STABLE STANDALONE_P
+	SIMILAR SIMPLE SKIP SMALLINT SNAPSHOT SOME SQL_P STABLE STANDALONE_P
 	START STATEMENT STATISTICS STDIN STDOUT STORAGE STRICT_P STRIP_P
 	SUBSCRIPTION SUBSTRING SYMMETRIC SYSID SYSTEM_P
 
@@ -5694,6 +5694,7 @@ def_arg:	func_type						{ $$ = (Node *)$1; }
 			| qual_all_Op					{ $$ = (Node *)$1; }
 			| NumericOnly					{ $$ = (Node *)$1; }
 			| Sconst						{ $$ = (Node *)makeString($1); }
+			| NONE							{ $$ = (Node *)makeString(pstrdup($1)); }
 		;
 
 old_aggr_definition: '(' old_aggr_list ')'			{ $$ = $2; }
@@ -8933,8 +8934,17 @@ operator_def_list:	operator_def_elem								{ $$ = list_make1($1); }
 
 operator_def_elem: ColLabel '=' NONE
 						{ $$ = makeDefElem($1, NULL, @1); }
-				   | ColLabel '=' def_arg
-					   { $$ = makeDefElem($1, (Node *) $3, @1); }
+				   | ColLabel '=' operator_def_arg
+						{ $$ = makeDefElem($1, (Node *) $3, @1); }
+		;
+
+/* must be similar enough to def_arg to avoid reduce/reduce conflicts */
+operator_def_arg:
+			func_type						{ $$ = (Node *)$1; }
+			| reserved_keyword				{ $$ = (Node *)makeString(pstrdup($1)); }
+			| qual_all_Op					{ $$ = (Node *)$1; }
+			| NumericOnly					{ $$ = (Node *)$1; }
+			| Sconst						{ $$ = (Node *)makeString($1); }
 		;
 
 /*****************************************************************************
@@ -9324,40 +9334,22 @@ AlterSubscriptionStmt:
  *
  *****************************************************************************/
 
-DropSubscriptionStmt: DROP SUBSCRIPTION name opt_drop_slot
+DropSubscriptionStmt: DROP SUBSCRIPTION name opt_drop_behavior
 				{
 					DropSubscriptionStmt *n = makeNode(DropSubscriptionStmt);
 					n->subname = $3;
-					n->drop_slot = $4;
 					n->missing_ok = false;
+					n->behavior = $4;
 					$$ = (Node *) n;
 				}
-				|  DROP SUBSCRIPTION IF_P EXISTS name opt_drop_slot
+				|  DROP SUBSCRIPTION IF_P EXISTS name opt_drop_behavior
 				{
 					DropSubscriptionStmt *n = makeNode(DropSubscriptionStmt);
 					n->subname = $5;
-					n->drop_slot = $6;
 					n->missing_ok = true;
+					n->behavior = $6;
 					$$ = (Node *) n;
 				}
-		;
-
-opt_drop_slot:
-			DROP SLOT
-				{
-					$$ = TRUE;
-				}
-			| IDENT SLOT
-				{
-					if (strcmp($1, "nodrop") == 0)
-						$$ = FALSE;
-					else
-						ereport(ERROR,
-								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("unrecognized option \"%s\"", $1),
-										parser_errposition(@1)));
-				}
-			| /*EMPTY*/								{ $$ = TRUE; }
 		;
 
 /*****************************************************************************
@@ -14846,7 +14838,6 @@ unreserved_keyword:
 			| SHOW
 			| SIMPLE
 			| SKIP
-			| SLOT
 			| SNAPSHOT
 			| SQL_P
 			| STABLE
