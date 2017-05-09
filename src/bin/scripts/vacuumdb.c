@@ -854,7 +854,7 @@ DisconnectDatabase(ParallelSlot *slot)
 
 		if ((cancel = PQgetCancel(slot->connection)))
 		{
-			PQcancel(cancel, errbuf, sizeof(errbuf));
+			(void) PQcancel(cancel, errbuf, sizeof(errbuf));
 			PQfreeCancel(cancel);
 		}
 	}
