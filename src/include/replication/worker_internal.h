@@ -56,8 +56,8 @@ typedef struct LogicalRepWorker
 	TimestampTz	reply_time;
 } LogicalRepWorker;
 
-/* Memory context for cached variables in apply worker. */
-extern MemoryContext				ApplyCacheContext;
+/* Main memory context for apply worker. Permanent during worker lifetime. */
+extern MemoryContext				ApplyContext;
 
 /* libpqreceiver connection */
 extern struct WalReceiverConn	   *wrconn;
