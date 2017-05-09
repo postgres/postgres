@@ -75,6 +75,7 @@ typedef struct _restoreOptions
 	int			column_inserts;
 	int			if_exists;
 	int			no_security_labels;		/* Skip security label entries */
+	int			no_subscriptions;		/* Skip subscription entries */
 	int			strict_names;
 
 	const char *filename;
@@ -145,6 +146,7 @@ typedef struct _dumpOptions
 	int			column_inserts;
 	int			if_exists;
 	int			no_security_labels;
+	int			no_subscriptions;
 	int			no_synchronized_snapshots;
 	int			no_unlogged_table_data;
 	int			serializable_deferrable;

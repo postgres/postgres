@@ -72,6 +72,7 @@ main(int argc, char **argv)
 	static int	outputNoTablespaces = 0;
 	static int	use_setsessauth = 0;
 	static int	no_security_labels = 0;
+	static int	no_subscriptions = 0;
 	static int	strict_names = 0;
 
 	struct option cmdopts[] = {
@@ -118,6 +119,7 @@ main(int argc, char **argv)
 		{"strict-names", no_argument, &strict_names, 1},
 		{"use-set-session-authorization", no_argument, &use_setsessauth, 1},
 		{"no-security-labels", no_argument, &no_security_labels, 1},
+		{"no-subscriptions", no_argument, &no_subscriptions, 1},
 
 		{NULL, 0, NULL, 0}
 	};
@@ -355,6 +357,7 @@ main(int argc, char **argv)
 	opts->noTablespace = outputNoTablespaces;
 	opts->use_setsessauth = use_setsessauth;
 	opts->no_security_labels = no_security_labels;
+	opts->no_subscriptions = no_subscriptions;
 
 	if (if_exists && !opts->dropSchema)
 	{
@@ -477,6 +480,7 @@ usage(const char *progname)
 	printf(_("  --no-data-for-failed-tables  do not restore data of tables that could not be\n"
 			 "                               created\n"));
 	printf(_("  --no-security-labels         do not restore security labels\n"));
+	printf(_("  --no-subscriptions           do not restore subscriptions\n"));
 	printf(_("  --no-tablespaces             do not restore tablespace assignments\n"));
 	printf(_("  --section=SECTION            restore named section (pre-data, data, or post-data)\n"));
 	printf(_("  --strict-names               require table and/or schema include patterns to\n"

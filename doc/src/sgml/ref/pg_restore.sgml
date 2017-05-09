@@ -592,6 +592,16 @@
      </varlistentry>
 
      <varlistentry>
+      <term><option>--no-subscriptions</option></term>
+      <listitem>
+       <para>
+        Do not output commands to restore subscriptions, even if the archive
+        contains them.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--no-tablespaces</option></term>
       <listitem>
        <para>
