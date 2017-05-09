@@ -204,6 +204,66 @@
    target table can have additional columns not provided by the published
    table.  Those will be filled with their default values.
   </para>
+
+  <sect2 id="logical-replication-subscription-slot">
+   <title>Replication Slot Management</title>
+
+   <para>
+    As mentioned earlier, each (active) subscription receives changes from a
+    replication slot on the remote (publishing) side.  Normally, the remote
+    replication slot is created automatically when the subscription is created
+    using <command>CREATE SUBSCRIPTION</command> and it is dropped
+    automatically when the subscription is dropped using <command>DROP
+    SUBSCRIPTION</command>.  In some situations, however, it can be useful or
+    necessary to manipulate the subscription and the underlying replication
+    slot separately.  Here are some scenarios:
+
+    <itemizedlist>
+     <listitem>
+      <para>
+       When creating a subscription, the replication slot already exists.  In
+       that case, the subscription can be created using the <literal>NOCREATE
+       SLOT</literal> option to associate with the existing slot.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       When creating a subscription, the remote host is not reachable or in an
+       unclear state.  In that case, the subscription can be created using
+       the <literal>NOCONNECT</literal> option.  The remote host will then not
+       be contacted at all.  This is what <application>pg_dump</application>
+       uses.  The remote replication slot will then have to be created
+       manually before the subscription can be activated.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       When dropping a subscription, the replication slot should be kept.
+       This could be useful when the subscriber database is being moved to a
+       different host and will be activated from there.  In that case,
+       disassociate the slot from the subscription using <command>ALTER
+       SUBSCRIPTION</command> before attempting to drop the subscription.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       When dropping a subscription, the remote host is not reachable.  In
+       that case, disassociate the slot from the subscription
+       using <command>ALTER SUBSCRIPTION</command> before attempting to drop
+       the subscription.  If the remote database instance no longer exists, no
+       further action is then necessary.  If, however, the remote database
+       instance is just unreachable, the replication slot should then be
+       dropped manually; otherwise it would continue to reserve WAL and might
+       eventually cause the disk to fill up.  Such cases should be carefully
+       investigated.
+      </para>
+     </listitem>
+    </itemizedlist>
+   </para>
+  </sect2>
  </sect1>
 
  <sect1 id="logical-replication-conflicts">
