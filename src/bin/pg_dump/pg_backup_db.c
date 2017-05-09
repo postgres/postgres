@@ -351,12 +351,12 @@ DisconnectDatabase(Archive *AHX)
 	if (AH->connCancel)
 	{
 		/*
-		 * If we have an active query, send a cancel before closing.  This is
-		 * of no use for a normal exit, but might be helpful during
-		 * exit_horribly().
+		 * If we have an active query, send a cancel before closing, ignoring
+		 * any errors.  This is of no use for a normal exit, but might be
+		 * helpful during exit_horribly().
 		 */
 		if (PQtransactionStatus(AH->connection) == PQTRANS_ACTIVE)
-			PQcancel(AH->connCancel, errbuf, sizeof(errbuf));
+			(void) PQcancel(AH->connCancel, errbuf, sizeof(errbuf));
 
 		/*
 		 * Prevent signal handler from sending a cancel after this.
