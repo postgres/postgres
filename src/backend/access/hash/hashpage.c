@@ -1564,16 +1564,12 @@ _hash_getbucketbuf_from_hashkey(Relation rel, uint32 hashkey, int access,
 		page = BufferGetPage(buf);
 		opaque = (HashPageOpaque) PageGetSpecialPointer(page);
 		Assert(opaque->hasho_bucket == bucket);
+		Assert(opaque->hasho_prevblkno != InvalidBlockNumber);
 
 		/*
 		 * If this bucket hasn't been split, we're done.
-		 *
-		 * NB: The check for InvalidBlockNumber is only needed for on-disk
-		 * compatibility with indexes created before we started storing
-		 * hashm_maxbucket in the primary page's hasho_prevblkno.
 		 */
-		if (opaque->hasho_prevblkno == InvalidBlockNumber ||
-			opaque->hasho_prevblkno <= metap->hashm_maxbucket)
+		if (opaque->hasho_prevblkno <= metap->hashm_maxbucket)
 			break;
 
 		/* Drop lock on this buffer, update cached metapage, and retry. */

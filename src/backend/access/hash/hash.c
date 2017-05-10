@@ -624,13 +624,9 @@ loop_top:
 			 * now that the primary page of the target bucket has been locked
 			 * (and thus can't be further split), check whether we need to
 			 * update our cached metapage data.
-			 *
-			 * NB: The check for InvalidBlockNumber is only needed for
-			 * on-disk compatibility with indexes created before we started
-			 * storing hashm_maxbucket in the primary page's hasho_prevblkno.
 			 */
-			if (bucket_opaque->hasho_prevblkno != InvalidBlockNumber &&
-				bucket_opaque->hasho_prevblkno > cachedmetap->hashm_maxbucket)
+			Assert(bucket_opaque->hasho_prevblkno != InvalidBlockNumber);
+			if (bucket_opaque->hasho_prevblkno > cachedmetap->hashm_maxbucket)
 			{
 				cachedmetap = _hash_getcachedmetap(rel, &metabuf, true);
 				Assert(cachedmetap != NULL);
