@@ -2421,7 +2421,7 @@ describeOneTableDetails(const char *schemaname,
 			}
 
 			/* Print server name */
-			printfPQExpBuffer(&buf, "Server: %s",
+			printfPQExpBuffer(&buf, _("Server: %s"),
 							  PQgetvalue(result, 0, 0));
 			printTableAddFooter(&cont, buf.data);
 
@@ -2429,7 +2429,7 @@ describeOneTableDetails(const char *schemaname,
 			ftoptions = PQgetvalue(result, 0, 1);
 			if (ftoptions && ftoptions[0] != '\0')
 			{
-				printfPQExpBuffer(&buf, "FDW Options: (%s)", ftoptions);
+				printfPQExpBuffer(&buf, _("FDW Options: (%s)"), ftoptions);
 				printTableAddFooter(&cont, buf.data);
 			}
 			PQclear(result);
