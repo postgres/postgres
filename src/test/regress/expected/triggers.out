@@ -1785,7 +1785,22 @@ drop trigger my_trigger on my_table_42;
 create trigger my_trigger after update on my_table_42 referencing old table as old_table
    for each statement execute procedure my_trigger_function();
 drop trigger my_trigger on my_table_42;
+drop function my_trigger_function();
 drop table my_table_42;
+drop table my_table;
+--
+-- Verify that triggers with transition tables are not allowed on
+-- views
+--
+create table my_table (i int);
+create view my_view as select * from my_table;
+create function my_trigger_function() returns trigger as $$ begin end; $$ language plpgsql;
+create trigger my_trigger after update on my_view referencing old table as old_table
+   for each statement execute procedure my_trigger_function();
+ERROR:  "my_view" is a view
+DETAIL:  Triggers on views cannot have transition tables.
+drop function my_trigger_function();
+drop view my_view;
 drop table my_table;
 --
 -- Verify that per-statement triggers are fired for partitioned tables

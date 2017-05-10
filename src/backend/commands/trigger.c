@@ -361,6 +361,20 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 								RelationGetRelationName(rel)),
 					 errdetail("Triggers on partitioned tables cannot have transition tables.")));
 
+			if (rel->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("\"%s\" is a foreign table",
+								RelationGetRelationName(rel)),
+					 errdetail("Triggers on foreign tables cannot have transition tables.")));
+
+			if (rel->rd_rel->relkind == RELKIND_VIEW)
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("\"%s\" is a view",
+								RelationGetRelationName(rel)),
+					 errdetail("Triggers on views cannot have transition tables.")));
+
 			if (stmt->timing != TRIGGER_TYPE_AFTER)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
