@@ -1340,9 +1340,9 @@ InitResultRelInfo(ResultRelInfo *resultRelInfo,
 
 	/*
 	 * If partition_root has been specified, that means we are building the
-	 * ResultRelationInfo for one of its leaf partitions.  In that case, we
-	 * need *not* initialize the leaf partition's constraint, but rather the
-	 * the partition_root's (if any).  We must do that explicitly like this,
+	 * ResultRelInfo for one of its leaf partitions.  In that case, we need
+	 * *not* initialize the leaf partition's constraint, but rather the
+	 * partition_root's (if any).  We must do that explicitly like this,
 	 * because implicit partition constraints are not inherited like user-
 	 * defined constraints and would fail to be enforced by ExecConstraints()
 	 * after a tuple is routed to a leaf partition.
