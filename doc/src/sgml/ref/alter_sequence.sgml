@@ -305,6 +305,13 @@ ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> S
   </para>
 
   <para>
+   <command>ALTER SEQUENCE</command> blocks
+   concurrent <function>nextval</function>, <function>currval</function>,
+   <function>lastval</function>, and <command>setval</command> calls, except
+   if only the <literal>RESTART</literal> clause is used.
+  </para>
+
+  <para>
    For historical reasons, <command>ALTER TABLE</command> can be used with
    sequences too; but the only variants of <command>ALTER TABLE</command>
    that are allowed with sequences are equivalent to the forms shown above.

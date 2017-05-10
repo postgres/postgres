@@ -93,11 +93,12 @@ static HTAB *seqhashtab = NULL; /* hash table for SeqTable items */
 static SeqTableData *last_used_seq = NULL;
 
 static void fill_seq_with_data(Relation rel, HeapTuple tuple);
-static Relation open_share_lock(SeqTable seq);
+static Relation lock_and_open_sequence(SeqTable seq);
 static void create_seq_hashtable(void);
 static void init_sequence(Oid relid, SeqTable *p_elm, Relation *p_rel);
 static Form_pg_sequence_data read_seq_tuple(Relation rel,
 			   Buffer *buf, HeapTuple seqdatatuple);
+static LOCKMODE alter_sequence_get_lock_level(List *options);
 static void init_params(ParseState *pstate, List *options, bool for_identity,
 						bool isInit,
 						Form_pg_sequence seqform,
@@ -427,7 +428,9 @@ AlterSequence(ParseState *pstate, AlterSeqStmt *stmt)
 	HeapTuple	tuple;
 
 	/* Open and lock sequence. */
-	relid = RangeVarGetRelid(stmt->sequence, AccessShareLock, stmt->missing_ok);
+	relid = RangeVarGetRelid(stmt->sequence,
+							 alter_sequence_get_lock_level(stmt->options),
+							 stmt->missing_ok);
 	if (relid == InvalidOid)
 	{
 		ereport(NOTICE,
@@ -443,12 +446,6 @@ AlterSequence(ParseState *pstate, AlterSeqStmt *stmt)
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
 					   stmt->sequence->relname);
 
-	/* lock page' buffer and read tuple into new sequence structure */
-	seqdata = read_seq_tuple(seqrel, &buf, &seqdatatuple);
-
-	/* Copy old sequence data into workspace */
-	memcpy(&newseqdata, seqdata, sizeof(FormData_pg_sequence_data));
-
 	rel = heap_open(SequenceRelationId, RowExclusiveLock);
 	tuple = SearchSysCacheCopy1(SEQRELID,
 								ObjectIdGetDatum(relid));
@@ -457,6 +454,12 @@ AlterSequence(ParseState *pstate, AlterSeqStmt *stmt)
 			 relid);
 
 	seqform = (Form_pg_sequence) GETSTRUCT(tuple);
+
+	/* lock page's buffer and read tuple into new sequence structure */
+	seqdata = read_seq_tuple(seqrel, &buf, &seqdatatuple);
+
+	/* Copy old sequence data into workspace */
+	memcpy(&newseqdata, seqdata, sizeof(FormData_pg_sequence_data));
 
 	/* Check and set new values */
 	init_params(pstate, stmt->options, stmt->for_identity, false, seqform, &changed_seqform, &newseqdata, &owned_by);
@@ -508,11 +511,11 @@ AlterSequence(ParseState *pstate, AlterSeqStmt *stmt)
 
 	ObjectAddressSet(address, RelationRelationId, relid);
 
-	relation_close(seqrel, NoLock);
-
 	if (changed_seqform)
 		CatalogTupleUpdate(rel, &tuple->t_self, tuple);
 	heap_close(rel, RowExclusiveLock);
+
+	relation_close(seqrel, NoLock);
 
 	return address;
 }
@@ -594,7 +597,7 @@ nextval_internal(Oid relid, bool check_permissions)
 	bool		cycle;
 	bool		logit = false;
 
-	/* open and AccessShareLock sequence */
+	/* open and lock sequence */
 	init_sequence(relid, &elm, &seqrel);
 
 	if (check_permissions &&
@@ -829,7 +832,7 @@ currval_oid(PG_FUNCTION_ARGS)
 	SeqTable	elm;
 	Relation	seqrel;
 
-	/* open and AccessShareLock sequence */
+	/* open and lock sequence */
 	init_sequence(relid, &elm, &seqrel);
 
 	if (pg_class_aclcheck(elm->relid, GetUserId(),
@@ -869,7 +872,7 @@ lastval(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("lastval is not yet defined in this session")));
 
-	seqrel = open_share_lock(last_used_seq);
+	seqrel = lock_and_open_sequence(last_used_seq);
 
 	/* nextval() must have already been called for this sequence */
 	Assert(last_used_seq->last_valid);
@@ -913,7 +916,7 @@ do_setval(Oid relid, int64 next, bool iscalled)
 	int64		maxv,
 				minv;
 
-	/* open and AccessShareLock sequence */
+	/* open and lock sequence */
 	init_sequence(relid, &elm, &seqrel);
 
 	if (pg_class_aclcheck(elm->relid, GetUserId(), ACL_UPDATE) != ACLCHECK_OK)
@@ -1042,15 +1045,15 @@ setval3_oid(PG_FUNCTION_ARGS)
 
 
 /*
- * Open the sequence and acquire AccessShareLock if needed
+ * Open the sequence and acquire lock if needed
  *
  * If we haven't touched the sequence already in this transaction,
- * we need to acquire AccessShareLock.  We arrange for the lock to
+ * we need to acquire a lock.  We arrange for the lock to
  * be owned by the top transaction, so that we don't need to do it
  * more than once per xact.
  */
 static Relation
-open_share_lock(SeqTable seq)
+lock_and_open_sequence(SeqTable seq)
 {
 	LocalTransactionId thislxid = MyProc->lxid;
 
@@ -1063,7 +1066,7 @@ open_share_lock(SeqTable seq)
 		PG_TRY();
 		{
 			CurrentResourceOwner = TopTransactionResourceOwner;
-			LockRelationOid(seq->relid, AccessShareLock);
+			LockRelationOid(seq->relid, RowExclusiveLock);
 		}
 		PG_CATCH();
 		{
@@ -1078,7 +1081,7 @@ open_share_lock(SeqTable seq)
 		seq->lxid = thislxid;
 	}
 
-	/* We now know we have AccessShareLock, and can safely open the rel */
+	/* We now know we have the lock, and can safely open the rel */
 	return relation_open(seq->relid, NoLock);
 }
 
@@ -1135,7 +1138,7 @@ init_sequence(Oid relid, SeqTable *p_elm, Relation *p_rel)
 	/*
 	 * Open the sequence relation.
 	 */
-	seqrel = open_share_lock(elm);
+	seqrel = lock_and_open_sequence(elm);
 
 	if (seqrel->rd_rel->relkind != RELKIND_SEQUENCE)
 		ereport(ERROR,
@@ -1214,6 +1217,30 @@ read_seq_tuple(Relation rel, Buffer *buf, HeapTuple seqdatatuple)
 	seq = (Form_pg_sequence_data) GETSTRUCT(seqdatatuple);
 
 	return seq;
+}
+
+/*
+ * Check the sequence options list and return the appropriate lock level for
+ * ALTER SEQUENCE.
+ *
+ * Most sequence option changes require a self-exclusive lock and should block
+ * concurrent nextval() et al.  But RESTART does not, because it's not
+ * transactional.  Also take a lower lock if no option at all is present.
+ */
+static LOCKMODE
+alter_sequence_get_lock_level(List *options)
+{
+	ListCell   *option;
+
+	foreach(option, options)
+	{
+		DefElem    *defel = (DefElem *) lfirst(option);
+
+		if (strcmp(defel->defname, "restart") != 0)
+			return ShareRowExclusiveLock;
+	}
+
+	return RowExclusiveLock;
 }
 
 /*
@@ -1850,7 +1877,7 @@ pg_sequence_last_value(PG_FUNCTION_ARGS)
 	bool		is_called;
 	int64		result;
 
-	/* open and AccessShareLock sequence */
+	/* open and lock sequence */
 	init_sequence(relid, &elm, &seqrel);
 
 	if (pg_class_aclcheck(relid, GetUserId(), ACL_SELECT | ACL_USAGE) != ACLCHECK_OK)

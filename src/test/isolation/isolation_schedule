@@ -58,6 +58,7 @@ test: alter-table-1
 test: alter-table-2
 test: alter-table-3
 test: create-trigger
+test: sequence-ddl
 test: async-notify
 test: vacuum-reltuples
 test: timeouts
