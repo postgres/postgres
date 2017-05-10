@@ -473,6 +473,11 @@ CREATE TABLE fail_part PARTITION OF range_parted FOR VALUES FROM ('a') TO ('z', 
 -- cannot specify null values in range bounds
 CREATE TABLE fail_part PARTITION OF range_parted FOR VALUES FROM (null) TO (unbounded);
 
+-- cannot specify finite values after UNBOUNDED has been specified
+CREATE TABLE range_parted_multicol (a int, b int, c int) PARTITION BY RANGE (a, b, c);
+CREATE TABLE fail_part PARTITION OF range_parted_multicol FOR VALUES FROM (1, UNBOUNDED, 1) TO (UNBOUNDED, 1, 1);
+DROP TABLE range_parted_multicol;
+
 -- check if compatible with the specified parent
 
 -- cannot create as partition of a non-partitioned table

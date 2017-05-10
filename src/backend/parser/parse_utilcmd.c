@@ -3358,6 +3358,7 @@ transformPartitionBound(ParseState *pstate, Relation parent, Node *bound)
 		int			i,
 					j;
 		char	   *colname;
+		bool		seen_unbounded;
 
 		if (spec->strategy != PARTITION_STRATEGY_RANGE)
 			ereport(ERROR,
@@ -3375,6 +3376,39 @@ transformPartitionBound(ParseState *pstate, Relation parent, Node *bound)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 					 errmsg("TO must specify exactly one value per partitioning column")));
+
+		/*
+		 * Check that no finite value follows a UNBOUNDED literal in either of
+		 * lower and upper bound lists.
+		 */
+		seen_unbounded = false;
+		foreach(cell1, spec->lowerdatums)
+		{
+			PartitionRangeDatum *ldatum;
+
+			ldatum = (PartitionRangeDatum *) lfirst(cell1);
+			if (ldatum->infinite)
+				seen_unbounded = true;
+			else if (seen_unbounded)
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("cannot specify finite value after UNBOUNDED"),
+						 parser_errposition(pstate, exprLocation((Node *) ldatum))));
+		}
+		seen_unbounded = false;
+		foreach(cell1, spec->upperdatums)
+		{
+			PartitionRangeDatum *rdatum;
+
+			rdatum = (PartitionRangeDatum *) lfirst(cell1);
+			if (rdatum->infinite)
+				seen_unbounded = true;
+			else if (seen_unbounded)
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("cannot specify finite value after UNBOUNDED"),
+						 parser_errposition(pstate, exprLocation((Node *) rdatum))));
+		}
 
 		i = j = 0;
 		result_spec->lowerdatums = result_spec->upperdatums = NIL;
