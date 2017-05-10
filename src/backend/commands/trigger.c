@@ -366,6 +366,11 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 						 errmsg("transition table name can only be specified for an AFTER trigger")));
 
+			if (TRIGGER_FOR_TRUNCATE(tgtype))
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("TRUNCATE triggers with transition tables are not supported")));
+
 			if (tt->isNew)
 			{
 				if (!(TRIGGER_FOR_INSERT(tgtype) ||
