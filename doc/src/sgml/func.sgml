@@ -996,7 +996,7 @@
         </indexterm>
         <literal><function>scale(<type>numeric</type>)</function></literal>
        </entry>
-       <entry><type>numeric</type></entry>
+       <entry><type>integer</type></entry>
        <entry>scale of the argument (the number of decimal digits in the fractional part)</entry>
        <entry><literal>scale(8.41)</literal></entry>
        <entry><literal>2</literal></entry>
