@@ -17908,17 +17908,17 @@ SELECT collation for ('foo' COLLATE "de_DE");
      <tbody>
 
       <row>
-       <entry><literal>checkpoint_location</literal></entry>
+       <entry><literal>checkpoint_lsn</literal></entry>
        <entry><type>pg_lsn</type></entry>
       </row>
 
       <row>
-       <entry><literal>prior_location</literal></entry>
+       <entry><literal>prior_lsn</literal></entry>
        <entry><type>pg_lsn</type></entry>
       </row>
 
       <row>
-       <entry><literal>redo_location</literal></entry>
+       <entry><literal>redo_lsn</literal></entry>
        <entry><type>pg_lsn</type></entry>
       </row>
 
@@ -18146,7 +18146,7 @@ SELECT collation for ('foo' COLLATE "de_DE");
      <tbody>
 
       <row>
-       <entry><literal>min_recovery_end_location</literal></entry>
+       <entry><literal>min_recovery_end_lsn</literal></entry>
        <entry><type>pg_lsn</type></entry>
       </row>
 
@@ -18156,12 +18156,12 @@ SELECT collation for ('foo' COLLATE "de_DE");
       </row>
 
       <row>
-       <entry><literal>backup_start_location</literal></entry>
+       <entry><literal>backup_start_lsn</literal></entry>
        <entry><type>pg_lsn</type></entry>
       </row>
 
       <row>
-       <entry><literal>backup_end_location</literal></entry>
+       <entry><literal>backup_end_lsn</literal></entry>
        <entry><type>pg_lsn</type></entry>
       </row>
 
@@ -18404,13 +18404,13 @@ SELECT set_config('log_statement_stats', 'off', false);
     <primary>pg_create_restore_point</primary>
    </indexterm>
    <indexterm>
-    <primary>pg_current_wal_flush_location</primary>
+    <primary>pg_current_wal_flush_lsn</primary>
    </indexterm>
    <indexterm>
-    <primary>pg_current_wal_insert_location</primary>
+    <primary>pg_current_wal_insert_lsn</primary>
    </indexterm>
    <indexterm>
-    <primary>pg_current_wal_location</primary>
+    <primary>pg_current_wal_lsn</primary>
    </indexterm>
    <indexterm>
     <primary>pg_start_backup</primary>
@@ -18434,7 +18434,7 @@ SELECT set_config('log_statement_stats', 'off', false);
     <primary>pg_walfile_name_offset</primary>
    </indexterm>
    <indexterm>
-    <primary>pg_wal_location_diff</primary>
+    <primary>pg_wal_lsn_diff</primary>
    </indexterm>
 
    <para>
@@ -18442,7 +18442,7 @@ SELECT set_config('log_statement_stats', 'off', false);
     linkend="functions-admin-backup-table"> assist in making on-line backups.
     These functions cannot be executed during recovery (except
     <function>pg_is_in_backup</function>, <function>pg_backup_start_time</function>
-    and <function>pg_wal_location_diff</function>).
+    and <function>pg_wal_lsn_diff</function>).
    </para>
 
    <table id="functions-admin-backup-table">
@@ -18463,21 +18463,21 @@ SELECT set_config('log_statement_stats', 'off', false);
       </row>
       <row>
        <entry>
-        <literal><function>pg_current_wal_flush_location()</function></literal>
+        <literal><function>pg_current_wal_flush_lsn()</function></literal>
         </entry>
        <entry><type>pg_lsn</type></entry>
        <entry>Get current transaction log flush location</entry>
       </row>
       <row>
        <entry>
-        <literal><function>pg_current_wal_insert_location()</function></literal>
+        <literal><function>pg_current_wal_insert_lsn()</function></literal>
         </entry>
        <entry><type>pg_lsn</type></entry>
        <entry>Get current transaction log insert location</entry>
       </row>
       <row>
        <entry>
-        <literal><function>pg_current_wal_location()</function></literal>
+        <literal><function>pg_current_wal_lsn()</function></literal>
         </entry>
        <entry><type>pg_lsn</type></entry>
        <entry>Get current transaction log write location</entry>
@@ -18526,21 +18526,21 @@ SELECT set_config('log_statement_stats', 'off', false);
       </row>
       <row>
        <entry>
-        <literal><function>pg_walfile_name(<parameter>location</> <type>pg_lsn</>)</function></literal>
+        <literal><function>pg_walfile_name(<parameter>lsn</> <type>pg_lsn</>)</function></literal>
         </entry>
        <entry><type>text</type></entry>
-       <entry>Convert transaction log location string to file name</entry>
+       <entry>Convert transaction log location to file name</entry>
       </row>
       <row>
        <entry>
-        <literal><function>pg_walfile_name_offset(<parameter>location</> <type>pg_lsn</>)</function></literal>
+        <literal><function>pg_walfile_name_offset(<parameter>lsn</> <type>pg_lsn</>)</function></literal>
         </entry>
        <entry><type>text</>, <type>integer</></entry>
-       <entry>Convert transaction log location string to file name and decimal byte offset within file</entry>
+       <entry>Convert transaction log location to file name and decimal byte offset within file</entry>
       </row>
       <row>
        <entry>
-        <literal><function>pg_wal_location_diff(<parameter>location</> <type>pg_lsn</>, <parameter>location</> <type>pg_lsn</>)</function></literal>
+        <literal><function>pg_wal_lsn_diff(<parameter>lsn</> <type>pg_lsn</>, <parameter>lsn</> <type>pg_lsn</>)</function></literal>
        </entry>
        <entry><type>numeric</></entry>
        <entry>Calculate the difference between two transaction log locations</entry>
@@ -18623,17 +18623,17 @@ postgres=# select pg_start_backup('label_goes_here');
    </para>
 
    <para>
-    <function>pg_current_wal_location</> displays the current transaction log write
+    <function>pg_current_wal_lsn</> displays the current transaction log write
     location in the same format used by the above functions.  Similarly,
-    <function>pg_current_wal_insert_location</> displays the current transaction log
-    insertion point and <function>pg_current_wal_flush_location</> displays the
-    current transaction log flush point. The insertion point is the <quote>logical</>
+    <function>pg_current_wal_insert_lsn</> displays the current transaction log
+    insertion location and <function>pg_current_wal_flush_lsn</> displays the
+    current transaction log flush location. The insertion location is the <quote>logical</>
     end of the transaction log at any instant, while the write location is the end of
     what has actually been written out from the server's internal buffers and flush
     location is the location guaranteed to be written to durable storage. The write
     location is the end of what can be examined from outside the server, and is usually
     what you want if you are interested in archiving partially-complete transaction log
-    files.  The insertion and flush points are made available primarily for server
+    files.  The insertion and flush locations are made available primarily for server
     debugging purposes.  These are both read-only operations and do not
     require superuser permissions.
    </para>
@@ -18658,7 +18658,7 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
    </para>
 
    <para>
-    <function>pg_wal_location_diff</> calculates the difference in bytes
+    <function>pg_wal_lsn_diff</> calculates the difference in bytes
     between two transaction log locations. It can be used with
     <structname>pg_stat_replication</structname> or some functions shown in
     <xref linkend="functions-admin-backup-table"> to get the replication lag.
@@ -18678,10 +18678,10 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
     <primary>pg_is_in_recovery</primary>
    </indexterm>
    <indexterm>
-    <primary>pg_last_wal_receive_location</primary>
+    <primary>pg_last_wal_receive_lsn</primary>
    </indexterm>
    <indexterm>
-    <primary>pg_last_wal_replay_location</primary>
+    <primary>pg_last_wal_replay_lsn</primary>
    </indexterm>
    <indexterm>
     <primary>pg_last_xact_replay_timestamp</primary>
@@ -18713,7 +18713,7 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
       </row>
       <row>
        <entry>
-        <literal><function>pg_last_wal_receive_location()</function></literal>
+        <literal><function>pg_last_wal_receive_lsn()</function></literal>
         </entry>
        <entry><type>pg_lsn</type></entry>
        <entry>Get last transaction log location received and synced to disk by
@@ -18727,7 +18727,7 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
       </row>
       <row>
        <entry>
-        <literal><function>pg_last_wal_replay_location()</function></literal>
+        <literal><function>pg_last_wal_replay_lsn()</function></literal>
         </entry>
        <entry><type>pg_lsn</type></entry>
        <entry>Get last transaction log location replayed during recovery.
@@ -18950,7 +18950,7 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
         <literal><function>pg_create_physical_replication_slot(<parameter>slot_name</parameter> <type>name</type> <optional>, <parameter>immediately_reserve</> <type>boolean</>, <parameter>temporary</> <type>boolean</></optional>)</function></literal>
        </entry>
        <entry>
-        (<parameter>slot_name</parameter> <type>name</type>, <parameter>wal_position</parameter> <type>pg_lsn</type>)
+        (<parameter>slot_name</parameter> <type>name</type>, <parameter>lsn</parameter> <type>pg_lsn</type>)
        </entry>
        <entry>
         Creates a new physical replication slot named
@@ -18995,7 +18995,7 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
         <literal><function>pg_create_logical_replication_slot(<parameter>slot_name</parameter> <type>name</type>, <parameter>plugin</parameter> <type>name</type> <optional>, <parameter>temporary</> <type>boolean</></optional>)</function></literal>
        </entry>
        <entry>
-        (<parameter>slot_name</parameter> <type>name</type>, <parameter>wal_position</parameter> <type>pg_lsn</type>)
+        (<parameter>slot_name</parameter> <type>name</type>, <parameter>lsn</parameter> <type>pg_lsn</type>)
        </entry>
        <entry>
         Creates a new logical (decoding) replication slot named
@@ -19018,7 +19018,7 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
         <literal><function>pg_logical_slot_get_changes(<parameter>slot_name</parameter> <type>name</type>, <parameter>upto_lsn</parameter> <type>pg_lsn</type>, <parameter>upto_nchanges</parameter> <type>int</type>, VARIADIC <parameter>options</parameter> <type>text[]</type>)</function></literal>
        </entry>
        <entry>
-        (<parameter>location</parameter> <type>pg_lsn</type>, <parameter>xid</parameter> <type>xid</type>, <parameter>data</parameter> <type>text</type>)
+        (<parameter>lsn</parameter> <type>pg_lsn</type>, <parameter>xid</parameter> <type>xid</type>, <parameter>data</parameter> <type>text</type>)
        </entry>
        <entry>
         Returns changes in the slot <parameter>slot_name</parameter>, starting
@@ -19043,7 +19043,7 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
         <literal><function>pg_logical_slot_peek_changes(<parameter>slot_name</parameter> <type>name</type>, <parameter>upto_lsn</parameter> <type>pg_lsn</type>, <parameter>upto_nchanges</parameter> <type>int</type>, VARIADIC <parameter>options</parameter> <type>text[]</type>)</function></literal>
        </entry>
        <entry>
-        (<parameter>location</parameter> <type>text</type>, <parameter>xid</parameter> <type>xid</type>, <parameter>data</parameter> <type>text</type>)
+        (<parameter>lsn</parameter> <type>pg_lsn</type>, <parameter>xid</parameter> <type>xid</type>, <parameter>data</parameter> <type>text</type>)
        </entry>
        <entry>
         Behaves just like
@@ -19061,7 +19061,7 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
         <literal><function>pg_logical_slot_get_binary_changes(<parameter>slot_name</parameter> <type>name</type>, <parameter>upto_lsn</parameter> <type>pg_lsn</type>, <parameter>upto_nchanges</parameter> <type>int</type>, VARIADIC <parameter>options</parameter> <type>text[]</type>)</function></literal>
        </entry>
        <entry>
-        (<parameter>location</parameter> <type>pg_lsn</type>, <parameter>xid</parameter> <type>xid</type>, <parameter>data</parameter> <type>bytea</type>)
+        (<parameter>lsn</parameter> <type>pg_lsn</type>, <parameter>xid</parameter> <type>xid</type>, <parameter>data</parameter> <type>bytea</type>)
        </entry>
        <entry>
         Behaves just like
@@ -19078,7 +19078,7 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
         <literal><function>pg_logical_slot_peek_binary_changes(<parameter>slot_name</parameter> <type>name</type>, <parameter>upto_lsn</parameter> <type>pg_lsn</type>, <parameter>upto_nchanges</parameter> <type>int</type>, VARIADIC <parameter>options</parameter> <type>text[]</type>)</function></literal>
        </entry>
        <entry>
-        (<parameter>location</parameter> <type>pg_lsn</type>, <parameter>xid</parameter> <type>xid</type>, <parameter>data</parameter> <type>bytea</type>)
+        (<parameter>lsn</parameter> <type>pg_lsn</type>, <parameter>xid</parameter> <type>xid</type>, <parameter>data</parameter> <type>bytea</type>)
        </entry>
        <entry>
         Behaves just like
@@ -19197,7 +19197,7 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
         <type>pg_lsn</type>
        </entry>
        <entry>
-        Return the replay position for the replication origin configured in
+        Return the replay location for the replication origin configured in
         the current session. The parameter <parameter>flush</parameter>
         determines whether the corresponding local transaction will be
         guaranteed to have been flushed to disk or not.
@@ -19244,15 +19244,15 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
         <indexterm>
          <primary>pg_replication_origin_advance</primary>
         </indexterm>
-        <literal>pg_replication_origin_advance<function>(<parameter>node_name</parameter> <type>text</type>, <parameter>pos</parameter> <type>pg_lsn</type>)</function></literal>
+        <literal>pg_replication_origin_advance<function>(<parameter>node_name</parameter> <type>text</type>, <parameter>lsn</parameter> <type>pg_lsn</type>)</function></literal>
        </entry>
        <entry>
         <type>void</>
        </entry>
        <entry>
         Set replication progress for the given node to the given
-        position. This primarily is useful for setting up the initial position
-        or a new position after configuration changes and similar. Be aware
+        location. This primarily is useful for setting up the initial location
+        or a new location after configuration changes and similar. Be aware
         that careless use of this function can lead to inconsistently
         replicated data.
        </entry>
@@ -19269,7 +19269,7 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
         <type>pg_lsn</type>
        </entry>
        <entry>
-        Return the replay position for the given replication origin. The
+        Return the replay location for the given replication origin. The
         parameter <parameter>flush</parameter> determines whether the
         corresponding local transaction will be guaranteed to have been
         flushed to disk or not.

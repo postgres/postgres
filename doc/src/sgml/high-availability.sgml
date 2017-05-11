@@ -850,9 +850,9 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
      of WAL records generated in the primary, but not yet applied in the
      standby. You can calculate this lag by comparing the current WAL write
      location on the primary with the last WAL location received by the
-     standby. They can be retrieved using
-     <function>pg_current_wal_location</> on the primary and the
-     <function>pg_last_wal_receive_location</> on the standby,
+     standby. These locations can be retrieved using
+     <function>pg_current_wal_lsn</> on the primary and
+     <function>pg_last_wal_receive_lsn</> on the standby,
      respectively (see <xref linkend="functions-admin-backup-table"> and
      <xref linkend="functions-recovery-info-table"> for details).
      The last WAL receive location in the standby is also displayed in the
@@ -863,10 +863,10 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
      You can retrieve a list of WAL sender processes via the
      <link linkend="monitoring-stats-views-table">
      <literal>pg_stat_replication</></link> view. Large differences between
-     <function>pg_current_wal_location</> and <literal>sent_location</> field
+     <function>pg_current_wal_lsn</> and the view's <literal>sent_lsn</> field
      might indicate that the master server is under heavy load, while
-     differences between <literal>sent_location</> and
-     <function>pg_last_wal_receive_location</> on the standby might indicate
+     differences between <literal>sent_lsn</> and
+     <function>pg_last_wal_receive_lsn</> on the standby might indicate
      network delay, or that the standby is under heavy load.
     </para>
    </sect3>
@@ -927,8 +927,8 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
      You can create a replication slot like this:
 <programlisting>
 postgres=# SELECT * FROM pg_create_physical_replication_slot('node_a_slot');
-  slot_name  | wal_position
--------------+---------------
+  slot_name  | lsn
+-------------+-----
  node_a_slot |
 
 postgres=# SELECT * FROM pg_replication_slots;

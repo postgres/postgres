@@ -10,7 +10,7 @@ sub wait_for_caught_up
 	my ($node, $appname) = @_;
 
 	$node->poll_query_until('postgres',
-							"SELECT pg_current_wal_location() <= replay_location FROM pg_stat_replication WHERE application_name = '$appname';")
+							"SELECT pg_current_wal_lsn() <= replay_lsn FROM pg_stat_replication WHERE application_name = '$appname';")
 		or die "Timed out while waiting for subscriber to catch up";
 }
 

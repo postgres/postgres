@@ -169,7 +169,7 @@ is($stderr, '', 'replay from slot before_basebackup produces no stderr');
 # pg_recvlogical we should get complete results. First, find out the commit lsn
 # of the last transaction. There's no max(pg_lsn), so:
 
-my $endpos = $node_replica->safe_psql('postgres', "SELECT location FROM pg_logical_slot_peek_changes('before_basebackup', NULL, NULL) ORDER BY location DESC LIMIT 1;");
+my $endpos = $node_replica->safe_psql('postgres', "SELECT lsn FROM pg_logical_slot_peek_changes('before_basebackup', NULL, NULL) ORDER BY lsn DESC LIMIT 1;");
 
 # now use the walsender protocol to peek the slot changes and make sure we see
 # the same results.

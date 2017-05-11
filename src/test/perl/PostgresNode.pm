@@ -1347,13 +1347,13 @@ sub run_log
 
 =item $node->lsn(mode)
 
-Look up WAL positions on the server:
+Look up WAL locations on the server:
 
- * insert position (master only, error on replica)
- * write position (master only, error on replica)
- * flush position (master only, error on replica)
- * receive position (always undef on master)
- * replay position (always undef on master)
+ * insert location (master only, error on replica)
+ * write location (master only, error on replica)
+ * flush location (master only, error on replica)
+ * receive location (always undef on master)
+ * replay location (always undef on master)
 
 mode must be specified.
 
@@ -1362,11 +1362,11 @@ mode must be specified.
 sub lsn
 {
 	my ($self, $mode) = @_;
-	my %modes = ('insert' => 'pg_current_wal_insert_location()',
-				 'flush' => 'pg_current_wal_flush_location()',
-				 'write' => 'pg_current_wal_location()',
-				 'receive' => 'pg_last_wal_receive_location()',
-				 'replay' => 'pg_last_wal_replay_location()');
+	my %modes = ('insert' => 'pg_current_wal_insert_lsn()',
+				 'flush' => 'pg_current_wal_flush_lsn()',
+				 'write' => 'pg_current_wal_lsn()',
+				 'receive' => 'pg_last_wal_receive_lsn()',
+				 'replay' => 'pg_last_wal_replay_lsn()');
 
 	$mode = '<undef>' if !defined($mode);
 	die "unknown mode for 'lsn': '$mode', valid modes are " . join(', ', keys %modes)
@@ -1389,10 +1389,10 @@ sub lsn
 =item $node->wait_for_catchup(standby_name, mode, target_lsn)
 
 Wait for the node with application_name standby_name (usually from node->name)
-until its replication position in pg_stat_replication equals or passes the
+until its replication location in pg_stat_replication equals or passes the
 upstream's WAL insert point at the time this function is called. By default
-the replay_location is waited for, but 'mode' may be specified to wait for any
-of sent|write|flush|replay.
+the replay_lsn is waited for, but 'mode' may be specified to wait for any of
+sent|write|flush|replay.
 
 If there is no active replication connection from this peer, waits until
 poll_query_until timeout.
@@ -1417,10 +1417,10 @@ sub wait_for_catchup
 		$standby_name = $standby_name->name;
 	}
 	die 'target_lsn must be specified' unless defined($target_lsn);
-	print "Waiting for replication conn " . $standby_name . "'s " . $mode . "_location to pass " . $target_lsn . " on " . $self->name . "\n";
-	my $query = qq[SELECT '$target_lsn' <= ${mode}_location FROM pg_catalog.pg_stat_replication WHERE application_name = '$standby_name';];
+	print "Waiting for replication conn " . $standby_name . "'s " . $mode . "_lsn to pass " . $target_lsn . " on " . $self->name . "\n";
+	my $query = qq[SELECT '$target_lsn' <= ${mode}_lsn FROM pg_catalog.pg_stat_replication WHERE application_name = '$standby_name';];
 	$self->poll_query_until('postgres', $query)
-		or die "timed out waiting for catchup, current position is " . ($self->safe_psql('postgres', $query) || '(unknown)');
+		or die "timed out waiting for catchup, current location is " . ($self->safe_psql('postgres', $query) || '(unknown)');
 	print "done\n";
 }
 
@@ -1429,7 +1429,7 @@ sub wait_for_catchup
 =item $node->wait_for_slot_catchup(slot_name, mode, target_lsn)
 
 Wait for the named replication slot to equal or pass the supplied target_lsn.
-The position used is the restart_lsn unless mode is given, in which case it may
+The location used is the restart_lsn unless mode is given, in which case it may
 be 'restart' or 'confirmed_flush'.
 
 Requires that the 'postgres' db exists and is accessible.
@@ -1456,7 +1456,7 @@ sub wait_for_slot_catchup
 	print "Waiting for replication slot " . $slot_name . "'s " . $mode . "_lsn to pass " . $target_lsn . " on " . $self->name . "\n";
 	my $query = qq[SELECT '$target_lsn' <= ${mode}_lsn FROM pg_catalog.pg_replication_slots WHERE slot_name = '$slot_name';];
 	$self->poll_query_until('postgres', $query)
-		or die "timed out waiting for catchup, current position is " . ($self->safe_psql('postgres', $query) || '(unknown)');
+		or die "timed out waiting for catchup, current location is " . ($self->safe_psql('postgres', $query) || '(unknown)');
 	print "done\n";
 }
 

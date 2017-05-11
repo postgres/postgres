@@ -351,7 +351,7 @@ pg_create_restore_point(PG_FUNCTION_ARGS)
  * to the kernel, but is not necessarily synced to disk.
  */
 Datum
-pg_current_wal_location(PG_FUNCTION_ARGS)
+pg_current_wal_lsn(PG_FUNCTION_ARGS)
 {
 	XLogRecPtr	current_recptr;
 
@@ -372,7 +372,7 @@ pg_current_wal_location(PG_FUNCTION_ARGS)
  * This function is mostly for debugging purposes.
  */
 Datum
-pg_current_wal_insert_location(PG_FUNCTION_ARGS)
+pg_current_wal_insert_lsn(PG_FUNCTION_ARGS)
 {
 	XLogRecPtr	current_recptr;
 
@@ -393,7 +393,7 @@ pg_current_wal_insert_location(PG_FUNCTION_ARGS)
  * This function is mostly for debugging purposes.
  */
 Datum
-pg_current_wal_flush_location(PG_FUNCTION_ARGS)
+pg_current_wal_flush_lsn(PG_FUNCTION_ARGS)
 {
 	XLogRecPtr	current_recptr;
 
@@ -415,7 +415,7 @@ pg_current_wal_flush_location(PG_FUNCTION_ARGS)
  * and synced to disk by walreceiver.
  */
 Datum
-pg_last_wal_receive_location(PG_FUNCTION_ARGS)
+pg_last_wal_receive_lsn(PG_FUNCTION_ARGS)
 {
 	XLogRecPtr	recptr;
 
@@ -434,7 +434,7 @@ pg_last_wal_receive_location(PG_FUNCTION_ARGS)
  * connections during recovery.
  */
 Datum
-pg_last_wal_replay_location(PG_FUNCTION_ARGS)
+pg_last_wal_replay_lsn(PG_FUNCTION_ARGS)
 {
 	XLogRecPtr	recptr;
 
@@ -621,7 +621,7 @@ pg_is_in_recovery(PG_FUNCTION_ARGS)
  * Compute the difference in bytes between two WAL locations.
  */
 Datum
-pg_wal_location_diff(PG_FUNCTION_ARGS)
+pg_wal_lsn_diff(PG_FUNCTION_ARGS)
 {
 	Datum		result;
 

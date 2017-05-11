@@ -25,7 +25,7 @@
 
 <programlisting>
 postgres=# SELECT * FROM pg_logical_slot_get_changes('test_slot', NULL, NULL, 'include-xids', '0');
- location  | xid |                       data
+   lsn     | xid |                       data
 -----------+-----+--------------------------------------------------
  0/16D30F8 | 691 | BEGIN
  0/16D32A0 | 691 | table public.data: INSERT: id[int4]:2 data[text]:'arg'
