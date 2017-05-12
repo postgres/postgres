@@ -166,6 +166,7 @@ dumpOptionsFromRestoreOptions(RestoreOptions *ropt)
 
 	dopt->disable_dollar_quoting = ropt->disable_dollar_quoting;
 	dopt->dump_inserts = ropt->dump_inserts;
+	dopt->no_publications = ropt->no_publications;
 	dopt->no_security_labels = ropt->no_security_labels;
 	dopt->no_subscriptions = ropt->no_subscriptions;
 	dopt->lockWaitTimeout = ropt->lockWaitTimeout;
@@ -2790,6 +2791,10 @@ _tocEntryRequired(TocEntry *te, teSection curSection, RestoreOptions *ropt)
 
 	/* If it's an ACL, maybe ignore it */
 	if (ropt->aclsSkip && _tocEntryIsACL(te))
+		return 0;
+
+	/* If it's a publication, maybe ignore it */
+	if (ropt->no_publications && strcmp(te->desc, "PUBLICATION") == 0)
 		return 0;
 
 	/* If it's security labels, maybe ignore it */

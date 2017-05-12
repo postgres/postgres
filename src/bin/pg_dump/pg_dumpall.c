@@ -74,6 +74,7 @@ static int	if_exists = 0;
 static int	inserts = 0;
 static int	no_tablespaces = 0;
 static int	use_setsessauth = 0;
+static int	no_publications = 0;
 static int	no_security_labels = 0;
 static int	no_subscriptions = 0;
 static int	no_unlogged_table_data = 0;
@@ -129,6 +130,7 @@ main(int argc, char *argv[])
 		{"quote-all-identifiers", no_argument, &quote_all_identifiers, 1},
 		{"role", required_argument, NULL, 3},
 		{"use-set-session-authorization", no_argument, &use_setsessauth, 1},
+		{"no-publications", no_argument, &no_publications, 1},
 		{"no-security-labels", no_argument, &no_security_labels, 1},
 		{"no-subscriptions", no_argument, &no_subscriptions, 1},
 		{"no-sync", no_argument, NULL, 4},
@@ -385,6 +387,8 @@ main(int argc, char *argv[])
 		appendPQExpBufferStr(pgdumpopts, " --quote-all-identifiers");
 	if (use_setsessauth)
 		appendPQExpBufferStr(pgdumpopts, " --use-set-session-authorization");
+	if (no_publications)
+		appendPQExpBufferStr(pgdumpopts, " --no-publications");
 	if (no_security_labels)
 		appendPQExpBufferStr(pgdumpopts, " --no-security-labels");
 	if (no_subscriptions)
@@ -594,6 +598,7 @@ help(void)
 	printf(_("  --disable-triggers           disable triggers during data-only restore\n"));
 	printf(_("  --if-exists                  use IF EXISTS when dropping objects\n"));
 	printf(_("  --inserts                    dump data as INSERT commands, rather than COPY\n"));
+	printf(_("  --no-publications            do not dump publications\n"));
 	printf(_("  --no-security-labels         do not dump security label assignments\n"));
 	printf(_("  --no-subscriptions           do not dump subscriptions\n"));
 	printf(_("  --no-sync                    do not wait for changes to be written safely to disk\n"));

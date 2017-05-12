@@ -352,6 +352,7 @@ main(int argc, char **argv)
 		{"snapshot", required_argument, NULL, 6},
 		{"strict-names", no_argument, &strict_names, 1},
 		{"use-set-session-authorization", no_argument, &dopt.use_setsessauth, 1},
+		{"no-publications", no_argument, &dopt.no_publications, 1},
 		{"no-security-labels", no_argument, &dopt.no_security_labels, 1},
 		{"no-synchronized-snapshots", no_argument, &dopt.no_synchronized_snapshots, 1},
 		{"no-unlogged-table-data", no_argument, &dopt.no_unlogged_table_data, 1},
@@ -862,6 +863,7 @@ main(int argc, char **argv)
 	ropt->use_setsessauth = dopt.use_setsessauth;
 	ropt->disable_dollar_quoting = dopt.disable_dollar_quoting;
 	ropt->dump_inserts = dopt.dump_inserts;
+	ropt->no_publications = dopt.no_publications;
 	ropt->no_security_labels = dopt.no_security_labels;
 	ropt->no_subscriptions = dopt.no_subscriptions;
 	ropt->lockWaitTimeout = dopt.lockWaitTimeout;
@@ -951,6 +953,7 @@ help(const char *progname)
 	printf(_("  --exclude-table-data=TABLE   do NOT dump data for the named table(s)\n"));
 	printf(_("  --if-exists                  use IF EXISTS when dropping objects\n"));
 	printf(_("  --inserts                    dump data as INSERT commands, rather than COPY\n"));
+	printf(_("  --no-publications            do not dump publications\n"));
 	printf(_("  --no-security-labels         do not dump security label assignments\n"));
 	printf(_("  --no-subscriptions           do not dump subscriptions\n"));
 	printf(_("  --no-synchronized-snapshots  do not use synchronized snapshots in parallel jobs\n"));
@@ -3376,6 +3379,7 @@ dumpPolicy(Archive *fout, PolicyInfo *polinfo)
 void
 getPublications(Archive *fout)
 {
+	DumpOptions *dopt = fout->dopt;
 	PQExpBuffer query;
 	PGresult   *res;
 	PublicationInfo *pubinfo;
@@ -3390,7 +3394,7 @@ getPublications(Archive *fout)
 	int			i,
 				ntups;
 
-	if (fout->remoteVersion < 100000)
+	if (dopt->no_publications || fout->remoteVersion < 100000)
 		return;
 
 	query = createPQExpBuffer();
