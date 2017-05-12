@@ -845,8 +845,6 @@ static const struct cachedesc cacheinfo[] = {
 	}
 };
 
-#define SysCacheSize	((int) lengthof(cacheinfo))
-
 static CatCache *SysCache[SysCacheSize];
 
 static bool CacheInitialized = false;
@@ -876,6 +874,9 @@ InitCatalogCache(void)
 	int			cacheId;
 	int			i,
 				j;
+
+	StaticAssertStmt(SysCacheSize == (int) lengthof(cacheinfo),
+					 "SysCacheSize does not match syscache.c's array");
 
 	Assert(!CacheInitialized);
 
