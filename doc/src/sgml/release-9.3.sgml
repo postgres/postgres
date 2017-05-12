@@ -4,10 +4,10 @@
  <sect1 id="release-9-3-17">
   <title>Release 9.3.17</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2017-05-11</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2017-05-11</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.3.16.
@@ -491,10 +491,10 @@ UPDATE pg_database SET datallowconn = false WHERE datname = 'template0';
  <sect1 id="release-9-3-16">
   <title>Release 9.3.16</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2017-02-09</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2017-02-09</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.3.15.
@@ -939,10 +939,10 @@ UPDATE pg_database SET datallowconn = false WHERE datname = 'template0';
  <sect1 id="release-9-3-15">
   <title>Release 9.3.15</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2016-10-27</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2016-10-27</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.3.14.
@@ -1268,10 +1268,10 @@ UPDATE pg_database SET datallowconn = false WHERE datname = 'template0';
  <sect1 id="release-9-3-14">
   <title>Release 9.3.14</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2016-08-11</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2016-08-11</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.3.13.
@@ -1758,10 +1758,10 @@ UPDATE pg_database SET datallowconn = false WHERE datname = 'template0';
  <sect1 id="release-9-3-13">
   <title>Release 9.3.13</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2016-05-12</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2016-05-12</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.3.12.
@@ -1988,10 +1988,10 @@ Branch: REL9_2_STABLE [37f30b251] 2016-04-18 13:19:52 -0400
  <sect1 id="release-9-3-12">
   <title>Release 9.3.12</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2016-03-31</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2016-03-31</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.3.11.
@@ -2207,10 +2207,10 @@ Branch: REL9_2_STABLE [37f30b251] 2016-04-18 13:19:52 -0400
  <sect1 id="release-9-3-11">
   <title>Release 9.3.11</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2016-02-11</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2016-02-11</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.3.10.
@@ -2830,10 +2830,10 @@ Branch: REL9_2_STABLE [37f30b251] 2016-04-18 13:19:52 -0400
  <sect1 id="release-9-3-10">
   <title>Release 9.3.10</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2015-10-08</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2015-10-08</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.3.9.
@@ -3459,10 +3459,10 @@ Branch: REL9_2_STABLE [37f30b251] 2016-04-18 13:19:52 -0400
  <sect1 id="release-9-3-9">
   <title>Release 9.3.9</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2015-06-12</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2015-06-12</para>
+  </formalpara>
 
   <para>
    This release contains a small number of fixes from 9.3.8.
@@ -3608,10 +3608,10 @@ Branch: REL9_2_STABLE [37f30b251] 2016-04-18 13:19:52 -0400
  <sect1 id="release-9-3-8">
   <title>Release 9.3.8</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2015-06-04</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2015-06-04</para>
+  </formalpara>
 
   <para>
    This release contains a small number of fixes from 9.3.7.
@@ -3716,10 +3716,10 @@ Branch: REL9_0_STABLE [4dddf8552] 2015-05-21 20:41:55 -0400
  <sect1 id="release-9-3-7">
   <title>Release 9.3.7</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2015-05-22</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2015-05-22</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.3.6.
@@ -4306,10 +4306,10 @@ Branch: REL9_0_STABLE [4dddf8552] 2015-05-21 20:41:55 -0400
  <sect1 id="release-9-3-6">
   <title>Release 9.3.6</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2015-02-05</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2015-02-05</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.3.5.
@@ -6191,10 +6191,10 @@ Branch: REL9_0_STABLE [b6391f587] 2014-10-04 14:18:43 -0400
  <sect1 id="release-9-3-5">
   <title>Release 9.3.5</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2014-07-24</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2014-07-24</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.3.4.
@@ -7311,10 +7311,10 @@ Branch: REL8_4_STABLE [c51da696b] 2014-07-19 15:01:45 -0400
  <sect1 id="release-9-3-4">
   <title>Release 9.3.4</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2014-03-20</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2014-03-20</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.3.3.
@@ -7773,10 +7773,10 @@ Branch: REL8_4_STABLE [6e6c2c2e1] 2014-03-15 13:36:57 -0400
  <sect1 id="release-9-3-3">
   <title>Release 9.3.3</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2014-02-20</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2014-02-20</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.3.2.
@@ -9235,10 +9235,10 @@ Branch: REL8_4_STABLE [c0c2d62ac] 2014-02-14 21:59:56 -0500
  <sect1 id="release-9-3-2">
   <title>Release 9.3.2</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2013-12-05</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2013-12-05</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.3.1.
@@ -9714,10 +9714,10 @@ SELECT ... FROM tab1 x CROSS JOIN (tab2 x CROSS JOIN tab3 y) z
  <sect1 id="release-9-3-1">
   <title>Release 9.3.1</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2013-10-10</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2013-10-10</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.3.0.
@@ -9817,10 +9817,10 @@ ALTER EXTENSION hstore UPDATE;
  <sect1 id="release-9-3">
   <title>Release 9.3</title>
 
-  <note>
-   <title>Release Date</title>
-   <simpara>2013-09-09</simpara>
-  </note>
+  <formalpara>
+   <title>Release date:</title>
+   <para>2013-09-09</para>
+  </formalpara>
 
   <sect2>
    <title>Overview</title>

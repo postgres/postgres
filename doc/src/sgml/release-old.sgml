@@ -4,10 +4,10 @@
  <sect1 id="release-7-3-21">
   <title>Release 7.3.21</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2008-01-07</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2008-01-07</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 7.3.20,
@@ -116,10 +116,10 @@
  <sect1 id="release-7-3-20">
   <title>Release 7.3.20</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2007-09-17</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2007-09-17</para>
+  </formalpara>
 
   <para>
    This release contains fixes from 7.3.19.
@@ -177,10 +177,10 @@
  <sect1 id="release-7-3-19">
   <title>Release 7.3.19</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2007-04-23</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2007-04-23</para>
+  </formalpara>
 
   <para>
    This release contains fixes from 7.3.18,
@@ -233,10 +233,10 @@
  <sect1 id="release-7-3-18">
   <title>Release 7.3.18</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2007-02-05</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2007-02-05</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 7.3.17, including
@@ -295,10 +295,10 @@
  <sect1 id="release-7-3-17">
   <title>Release 7.3.17</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2007-01-08</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2007-01-08</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 7.3.16.
@@ -351,10 +351,10 @@
  <sect1 id="release-7-3-16">
   <title>Release 7.3.16</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2006-10-16</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2006-10-16</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 7.3.15.
@@ -393,10 +393,10 @@
  <sect1 id="release-7-3-15">
   <title>Release 7.3.15</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2006-05-23</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2006-05-23</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 7.3.14,
@@ -485,10 +485,10 @@ Fuhr)</para></listitem>
  <sect1 id="release-7-3-14">
   <title>Release 7.3.14</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2006-02-14</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2006-02-14</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 7.3.13.
@@ -542,10 +542,10 @@ and <function>isinf</> during configure (Tom)</para></listitem>
  <sect1 id="release-7-3-13">
   <title>Release 7.3.13</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2006-01-09</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2006-01-09</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 7.3.12.
@@ -604,10 +604,10 @@ what's actually returned by the query (Joe)</para></listitem>
  <sect1 id="release-7-3-12">
   <title>Release 7.3.12</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2005-12-12</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2005-12-12</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 7.3.11.
@@ -651,10 +651,10 @@ table has been dropped</para></listitem>
  <sect1 id="release-7-3-11">
   <title>Release 7.3.11</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2005-10-04</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2005-10-04</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 7.3.10.
@@ -702,10 +702,10 @@ the variable is of pass-by-reference type</para></listitem>
  <sect1 id="release-7-3-10">
   <title>Release 7.3.10</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2005-05-09</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2005-05-09</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 7.3.9, including several
@@ -828,10 +828,10 @@ month-related formats</para></listitem>
  <sect1 id="release-7-3-9">
   <title>Release 7.3.9</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2005-01-31</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2005-01-31</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 7.3.8, including several
@@ -884,10 +884,10 @@ datestyles</para></listitem>
  <sect1 id="release-7-3-8">
   <title>Release 7.3.8</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2004-10-22</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2004-10-22</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 7.3.7.
@@ -934,10 +934,10 @@ concern since there is no reason for non-developers to use this script anyway.
  <sect1 id="release-7-3-7">
   <title>Release 7.3.7</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2004-08-16</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2004-08-16</para>
+  </formalpara>
 
   <para>
    This release contains one critical fix over 7.3.6, and some minor items.
@@ -974,10 +974,10 @@ since <productname>PostgreSQL</productname> 7.1.
  <sect1 id="release-7-3-6">
   <title>Release 7.3.6</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2004-03-02</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2004-03-02</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 7.3.5.
@@ -1039,10 +1039,10 @@ operations on bytea columns (Joe)</para></listitem>
  <sect1 id="release-7-3-5">
   <title>Release 7.3.5</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2003-12-03</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2003-12-03</para>
+  </formalpara>
 
   <para>
    This has a variety of fixes from 7.3.4.
@@ -1090,10 +1090,10 @@ operations on bytea columns (Joe)</para></listitem>
  <sect1 id="release-7-3-4">
   <title>Release 7.3.4</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2003-07-24</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2003-07-24</para>
+  </formalpara>
 
   <para>
    This has a variety of fixes from 7.3.3.
@@ -1130,10 +1130,10 @@ operations on bytea columns (Joe)</para></listitem>
 <sect1 id="release-7-3-3">
  <title>Release 7.3.3</title>
 
- <note>
-  <title>Release Date</title>
-  <simpara>2003-05-22</simpara>
- </note>
+ <formalpara>
+  <title>Release date:</title>
+  <para>2003-05-22</para>
+ </formalpara>
 
  <para>
   This release contains a variety of fixes for version 7.3.2.
@@ -1240,10 +1240,10 @@ operations on bytea columns (Joe)</para></listitem>
 <sect1 id="release-7-3-2">
  <title>Release 7.3.2</title>
 
- <note>
-  <title>Release Date</title>
-  <simpara>2003-02-04</simpara>
- </note>
+ <formalpara>
+  <title>Release date:</title>
+  <para>2003-02-04</para>
+ </formalpara>
 
  <para>
   This release contains a variety of fixes for version 7.3.1.
@@ -1301,10 +1301,10 @@ operations on bytea columns (Joe)</para></listitem>
 <sect1 id="release-7-3-1">
  <title>Release 7.3.1</title>
 
- <note>
-  <title>Release Date</title>
-  <simpara>2002-12-18</simpara>
- </note>
+ <formalpara>
+  <title>Release date:</title>
+  <para>2002-12-18</para>
+ </formalpara>
 
  <para>
   This release contains a variety of fixes for version 7.3.
@@ -1351,10 +1351,10 @@ operations on bytea columns (Joe)</para></listitem>
 <sect1 id="release-7-3">
  <title>Release 7.3</title>
 
- <note>
-  <title>Release Date</title>
-  <simpara>2002-11-27</simpara>
- </note>
+ <formalpara>
+  <title>Release date:</title>
+  <para>2002-11-27</para>
+ </formalpara>
 
  <sect2>
   <title>Overview</title>
@@ -1987,10 +1987,10 @@ operations on bytea columns (Joe)</para></listitem>
  <sect1 id="release-7-2-8">
   <title>Release 7.2.8</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2005-05-09</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2005-05-09</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 7.2.7, including one
@@ -2038,10 +2038,10 @@ month-related formats</para></listitem>
  <sect1 id="release-7-2-7">
   <title>Release 7.2.7</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2005-01-31</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2005-01-31</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 7.2.6, including several
@@ -2086,10 +2086,10 @@ datestyles</para></listitem>
  <sect1 id="release-7-2-6">
   <title>Release 7.2.6</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2004-10-22</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2004-10-22</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 7.2.5.
@@ -2137,10 +2137,10 @@ concern since there is no reason for non-developers to use this script anyway.
  <sect1 id="release-7-2-5">
   <title>Release 7.2.5</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2004-08-16</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2004-08-16</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 7.2.4.
@@ -2180,10 +2180,10 @@ since <productname>PostgreSQL</productname> 7.1.
 <sect1 id="release-7-2-4">
  <title>Release 7.2.4</title>
 
- <note>
-  <title>Release Date</title>
-  <simpara>2003-01-30</simpara>
- </note>
+ <formalpara>
+  <title>Release date:</title>
+  <para>2003-01-30</para>
+ </formalpara>
 
  <para>
   This release contains a variety of fixes for version 7.2.3,
@@ -2219,10 +2219,10 @@ since <productname>PostgreSQL</productname> 7.1.
 <sect1 id="release-7-2-3">
  <title>Release 7.2.3</title>
 
- <note>
-  <title>Release Date</title>
-  <simpara>2002-10-01</simpara>
- </note>
+ <formalpara>
+  <title>Release date:</title>
+  <para>2002-10-01</para>
+ </formalpara>
 
  <para>
   This release contains a variety of fixes for version 7.2.2,
@@ -2256,10 +2256,10 @@ since <productname>PostgreSQL</productname> 7.1.
 <sect1 id="release-7-2-2">
  <title>Release 7.2.2</title>
 
- <note>
-  <title>Release Date</title>
-  <simpara>2002-08-23</simpara>
- </note>
+ <formalpara>
+  <title>Release date:</title>
+  <para>2002-08-23</para>
+ </formalpara>
 
  <para>
   This release contains a variety of fixes for version 7.2.1.
@@ -2299,10 +2299,10 @@ since <productname>PostgreSQL</productname> 7.1.
 <sect1 id="release-7-2-1">
  <title>Release 7.2.1</title>
 
- <note>
-  <title>Release Date</title>
-  <simpara>2002-03-21</simpara>
- </note>
+ <formalpara>
+  <title>Release date:</title>
+  <para>2002-03-21</para>
+ </formalpara>
 
  <para>
   This release contains a variety of fixes for version 7.2.
@@ -2345,10 +2345,10 @@ since <productname>PostgreSQL</productname> 7.1.
 <sect1 id="release-7-2">
  <title>Release 7.2</title>
 
- <note>
-  <title>Release Date</title>
-  <simpara>2002-02-04</simpara>
- </note>
+ <formalpara>
+  <title>Release date:</title>
+  <para>2002-02-04</para>
+ </formalpara>
 
  <sect2>
   <title>Overview</title>
@@ -2901,10 +2901,10 @@ since <productname>PostgreSQL</productname> 7.1.
  <sect1 id="release-7-1-3">
   <title>Release 7.1.3</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2001-08-15</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2001-08-15</para>
+  </formalpara>
 
   <sect2>
    <title>Migration to Version 7.1.3</title>
@@ -2939,10 +2939,10 @@ Cygwin build (Jason Tishler)
  <sect1 id="release-7-1-2">
   <title>Release 7.1.2</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2001-05-11</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2001-05-11</para>
+  </formalpara>
 
   <para>
    This has one fix from 7.1.1.
@@ -2977,10 +2977,10 @@ pg_dump cleanups
  <sect1 id="release-7-1-1">
   <title>Release 7.1.1</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2001-05-05</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2001-05-05</para>
+  </formalpara>
 
   <para>
    This has a variety of fixes from 7.1.
@@ -3024,10 +3024,10 @@ Python fixes (Darcy)
  <sect1 id="release-7-1">
   <title>Release 7.1</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2001-04-13</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2001-04-13</para>
+  </formalpara>
 
   <para>
        This release focuses on removing limitations that have existed in the
@@ -3322,10 +3322,10 @@ New FreeBSD tools ipc_check, start-scripts/freebsd
  <sect1 id="release-7-0-3">
   <title>Release 7.0.3</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2000-11-11</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2000-11-11</para>
+  </formalpara>
 
   <para>
    This has a variety of fixes from 7.0.2.
@@ -3394,10 +3394,10 @@ Fix for crash of backend, on abort (Tom)
  <sect1 id="release-7-0-2">
   <title>Release 7.0.2</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2000-06-05</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2000-06-05</para>
+  </formalpara>
 
   <para>
    This is a repackaging of 7.0.1 with added documentation.
@@ -3428,10 +3428,10 @@ Added documentation to tarball.
  <sect1 id="release-7-0-1">
   <title>Release 7.0.1</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2000-06-01</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2000-06-01</para>
+  </formalpara>
 
   <para>
    This is a cleanup release for 7.0.
@@ -3483,10 +3483,10 @@ ecpg changes (Michael)
  <sect1 id="release-7-0">
   <title>Release 7.0</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2000-05-08</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2000-05-08</para>
+  </formalpara>
 
   <para>
    This release contains improvements in many areas, demonstrating
@@ -3952,10 +3952,10 @@ New multibyte encodings
  <sect1 id="release-6-5-3">
   <title>Release 6.5.3</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>1999-10-13</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>1999-10-13</para>
+  </formalpara>
 
   <para>
    This is basically a cleanup release for 6.5.2.  We have added a new
@@ -3988,10 +3988,10 @@ Fix dumping rules on inherited tables
  <sect1 id="release-6-5-2">
   <title>Release 6.5.2</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>1999-09-15</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>1999-09-15</para>
+  </formalpara>
 
   <para>
    This is basically a cleanup release for 6.5.1.  We have fixed a variety of
@@ -4045,10 +4045,10 @@ Updated version of pgaccess 0.98
  <sect1 id="release-6-5-1">
   <title>Release 6.5.1</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>1999-07-15</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>1999-07-15</para>
+  </formalpara>
 
   <para>
    This is basically a cleanup release for 6.5.  We have fixed a variety of
@@ -4100,10 +4100,10 @@ Add Win1250 (Czech) support (Pavel Behal)
  <sect1 id="release-6-5">
   <title>Release 6.5</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>1999-06-09</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>1999-06-09</para>
+  </formalpara>
 
   <para>
    This release marks a major step in the development team's mastery of the source
@@ -4500,10 +4500,10 @@ New install commands for plpgsql(Jan)
 <sect1 id="release-6-4-2">
 <title>Release 6.4.2</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>1998-12-20</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>1998-12-20</para>
+  </formalpara>
 
 <para>
 The 6.4.1 release was improperly packaged.  This also has one additional
@@ -4535,10 +4535,10 @@ Fix for datetime constant problem on some platforms(Thomas)
 <sect1 id="release-6-4-1">
 <title>Release 6.4.1</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>1998-12-18</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>1998-12-18</para>
+  </formalpara>
 
 <para>
 This is basically a cleanup release for 6.4.  We have fixed a variety of
@@ -4599,10 +4599,10 @@ Upgrade to PyGreSQL 2.2(D'Arcy)
 <sect1 id="release-6-4">
 <title>Release 6.4</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>1998-10-30</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>1998-10-30</para>
+  </formalpara>
 
 <para>
 There are <emphasis>many</emphasis> new features and improvements in this release.
@@ -4896,10 +4896,10 @@ new Makefile.shlib for shared library configuration(Tom)
 <sect1 id="release-6-3-2">
 <title>Release 6.3.2</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>1998-04-07</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>1998-04-07</para>
+  </formalpara>
 
 <para>
 This is a bug-fix release for 6.3.x.
@@ -4966,10 +4966,10 @@ ASSERT fixes(Bruce)
  <sect1 id="release-6-3-1">
   <title>Release 6.3.1</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>1998-03-23</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>1998-03-23</para>
+  </formalpara>
 
   <para>
    Summary:
@@ -5052,10 +5052,10 @@ Better identify tcl and tk libs and includes(Bruce)
  <sect1 id="release-6-3">
   <title>Release 6.3</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>1998-03-01</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>1998-03-01</para>
+  </formalpara>
 
   <para>
    There are <emphasis>many</emphasis> new features and improvements in this release.
@@ -5364,10 +5364,10 @@ Remove un-needed malloc() calls and replace with palloc()(Bruce)
 <sect1 id="release-6-2-1">
 <title>Release 6.2.1</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>1997-10-17</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>1997-10-17</para>
+  </formalpara>
 
 <para>
 6.2.1 is a bug-fix and usability release on 6.2.
@@ -5446,10 +5446,10 @@ Trigger function for inserting user names for INSERT/UPDATE(Brook Milligan)
 <sect1 id="release-6-2">
 <title>Release 6.2</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>1997-10-02</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>1997-10-02</para>
+  </formalpara>
 
 <para>
 A dump/restore is required for those wishing to migrate data from
@@ -5599,10 +5599,10 @@ SPI and Trigger programming guides (Vadim &amp; D'Arcy)
 <sect1 id="release-6-1-1">
 <title>Release 6.1.1</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>1997-07-22</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>1997-07-22</para>
+  </formalpara>
 
 <sect2>
 <title>Migration from version 6.1 to version 6.1.1</title>
@@ -5644,10 +5644,10 @@ pg_dumpall now returns proper status, portability fix(Bruce)
 <sect1 id="release-6-1">
 <title>Release 6.1</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>1997-06-08</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>1997-06-08</para>
+  </formalpara>
 
 <para>
  The regression tests have been adapted and extensively modified for the
@@ -5816,10 +5816,10 @@ DG/UX, Ultrix, IRIX, AIX portability fixes
 <sect1 id="release-6-0">
 <title>Release 6.0</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>1997-01-29</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>1997-01-29</para>
+  </formalpara>
 
 <para>
 A dump/restore is required for those wishing to migrate data from
@@ -5960,10 +5960,10 @@ Unused/uninitialized variables corrected
 <sect1 id="release-1-09">
 <title>Release 1.09</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>1996-11-04</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>1996-11-04</para>
+  </formalpara>
 
 <para>
 Sorry, we didn't keep track of changes from 1.02 to 1.09.  Some of
@@ -5975,10 +5975,10 @@ releases.
 <sect1 id="release-1-02">
 <title>Release 1.02</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>1996-08-01</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>1996-08-01</para>
+  </formalpara>
 
 <sect2>
 <title>Migration from version 1.02 to version 1.02.1</title>
@@ -6124,10 +6124,10 @@ Contributors (apologies to any missed)
 <sect1 id="release-1-01">
 <title>Release 1.01</title>
 
-   <note>
-   <title>Release Date</title>
-   <simpara>1996-02-23</simpara>
-   </note>
+   <formalpara>
+   <title>Release date:</title>
+   <para>1996-02-23</para>
+   </formalpara>
 
 
 <sect2>
@@ -6316,10 +6316,10 @@ Bug fixes:
 <sect1 id="release-1-0">
 <title>Release 1.0</title>
 
-   <note>
-   <title>Release Date</title>
-   <simpara>1995-09-05</simpara>
-   </note>
+   <formalpara>
+   <title>Release date:</title>
+   <para>1995-09-05</para>
+   </formalpara>
 
 <sect2>
 <title>Changes</title>
@@ -6373,10 +6373,10 @@ Bug fixes:
 <sect1 id="release-0-03">
 <title><productname>Postgres95</productname> Release 0.03</title>
 
-   <note>
-   <title>Release Date</title>
-   <simpara>1995-07-21</simpara>
-   </note>
+   <formalpara>
+   <title>Release date:</title>
+   <para>1995-07-21</para>
+   </formalpara>
 
 <sect2>
 <title>Changes</title>
@@ -6495,10 +6495,10 @@ New documentation:
 <sect1 id="release-0-02">
 <title><productname>Postgres95</productname> Release 0.02</title>
 
-   <note>
-   <title>Release Date</title>
-   <simpara>1995-05-25</simpara>
-   </note>
+   <formalpara>
+   <title>Release date:</title>
+   <para>1995-05-25</para>
+   </formalpara>
 
 <sect2>
 <title>Changes</title>
@@ -6546,10 +6546,10 @@ The following bugs have been fixed in postgres95-beta-0.02:
 <sect1 id="release-0-01">
 <title><productname>Postgres95</productname> Release 0.01</title>
 
-   <note>
-   <title>Release Date</title>
-   <simpara>1995-05-01</simpara>
-   </note>
+   <formalpara>
+   <title>Release date:</title>
+   <para>1995-05-01</para>
+   </formalpara>
 
 <para>
 Initial release.
