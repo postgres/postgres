@@ -4,11 +4,10 @@
  <sect1 id="release-10">
   <title>Release 10</title>
 
-  <note>
-   <title>Release Date</title>
-   <simpara>2017-09-XX</simpara>
-   <simpara>CURRENT AS OF 2017-04-22</simpara>
-  </note>
+  <formalpara>
+   <title>Release date:</title>
+   <para>2017-09-XX (CURRENT AS OF 2017-04-22)</para>
+  </formalpara>
 
   <sect2>
    <title>Overview</title>

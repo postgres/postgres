@@ -4,10 +4,10 @@
  <sect1 id="release-8-4-22">
   <title>Release 8.4.22</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2014-07-24</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2014-07-24</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 8.4.21.
@@ -323,10 +323,10 @@
  <sect1 id="release-8-4-21">
   <title>Release 8.4.21</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2014-03-20</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2014-03-20</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 8.4.20.
@@ -442,10 +442,10 @@
  <sect1 id="release-8-4-20">
   <title>Release 8.4.20</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2014-02-20</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2014-02-20</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 8.4.19.
@@ -901,10 +901,10 @@
  <sect1 id="release-8-4-19">
   <title>Release 8.4.19</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2013-12-05</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2013-12-05</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 8.4.18.
@@ -1102,10 +1102,10 @@
  <sect1 id="release-8-4-18">
   <title>Release 8.4.18</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2013-10-10</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2013-10-10</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 8.4.17.
@@ -1302,10 +1302,10 @@
  <sect1 id="release-8-4-17">
   <title>Release 8.4.17</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2013-04-04</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2013-04-04</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 8.4.16.
@@ -1531,10 +1531,10 @@
  <sect1 id="release-8-4-16">
   <title>Release 8.4.16</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2013-02-07</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2013-02-07</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 8.4.15.
@@ -1741,10 +1741,10 @@
  <sect1 id="release-8-4-15">
   <title>Release 8.4.15</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2012-12-06</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2012-12-06</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 8.4.14.
@@ -2043,10 +2043,10 @@
  <sect1 id="release-8-4-14">
   <title>Release 8.4.14</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2012-09-24</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2012-09-24</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 8.4.13.
@@ -2159,10 +2159,10 @@
  <sect1 id="release-8-4-13">
   <title>Release 8.4.13</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2012-08-17</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2012-08-17</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 8.4.12.
@@ -2393,10 +2393,10 @@
  <sect1 id="release-8-4-12">
   <title>Release 8.4.12</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2012-06-04</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2012-06-04</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 8.4.11.
@@ -2678,10 +2678,10 @@
  <sect1 id="release-8-4-11">
   <title>Release 8.4.11</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2012-02-27</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2012-02-27</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 8.4.10.
@@ -3040,10 +3040,10 @@
  <sect1 id="release-8-4-10">
   <title>Release 8.4.10</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2011-12-05</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2011-12-05</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 8.4.9.
@@ -3355,10 +3355,10 @@
  <sect1 id="release-8-4-9">
   <title>Release 8.4.9</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2011-09-26</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2011-09-26</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 8.4.8.
@@ -3880,10 +3880,10 @@
  <sect1 id="release-8-4-8">
   <title>Release 8.4.8</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2011-04-18</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2011-04-18</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 8.4.7.
@@ -4125,10 +4125,10 @@
  <sect1 id="release-8-4-7">
   <title>Release 8.4.7</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2011-01-31</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2011-01-31</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 8.4.6.
@@ -4257,10 +4257,10 @@
  <sect1 id="release-8-4-6">
   <title>Release 8.4.6</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2010-12-16</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2010-12-16</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 8.4.5.
@@ -4568,10 +4568,10 @@
  <sect1 id="release-8-4-5">
   <title>Release 8.4.5</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2010-10-04</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2010-10-04</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 8.4.4.
@@ -5090,10 +5090,10 @@
  <sect1 id="release-8-4-4">
   <title>Release 8.4.4</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2010-05-17</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2010-05-17</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 8.4.3.
@@ -5381,10 +5381,10 @@
  <sect1 id="release-8-4-3">
   <title>Release 8.4.3</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2010-03-15</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2010-03-15</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 8.4.2.
@@ -5848,10 +5848,10 @@
  <sect1 id="release-8-4-2">
   <title>Release 8.4.2</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2009-12-14</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2009-12-14</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 8.4.1.
@@ -6379,10 +6379,10 @@ WITH w AS (SELECT * FROM foo) SELECT * FROM w, bar ... FOR UPDATE
  <sect1 id="release-8-4-1">
   <title>Release 8.4.1</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2009-09-09</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2009-09-09</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 8.4.
@@ -6678,10 +6678,10 @@ WITH w AS (SELECT * FROM foo) SELECT * FROM w, bar ... FOR UPDATE
  <sect1 id="release-8-4">
   <title>Release 8.4</title>
 
-  <note>
-   <title>Release Date</title>
-   <simpara>2009-07-01</simpara>
-  </note>
+  <formalpara>
+   <title>Release date:</title>
+   <para>2009-07-01</para>
+  </formalpara>
 
   <sect2>
    <title>Overview</title>

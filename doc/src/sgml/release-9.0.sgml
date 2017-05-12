@@ -4,10 +4,10 @@
  <sect1 id="release-9-0-23">
   <title>Release 9.0.23</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2015-10-08</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2015-10-08</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.0.22.
@@ -501,10 +501,10 @@
  <sect1 id="release-9-0-22">
   <title>Release 9.0.22</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2015-06-12</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2015-06-12</para>
+  </formalpara>
 
   <para>
    This release contains a small number of fixes from 9.0.21.
@@ -575,10 +575,10 @@
  <sect1 id="release-9-0-21">
   <title>Release 9.0.21</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2015-06-04</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2015-06-04</para>
+  </formalpara>
 
   <para>
    This release contains a small number of fixes from 9.0.20.
@@ -669,10 +669,10 @@
  <sect1 id="release-9-0-20">
   <title>Release 9.0.20</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2015-05-22</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2015-05-22</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.0.19.
@@ -1113,10 +1113,10 @@
  <sect1 id="release-9-0-19">
   <title>Release 9.0.19</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2015-02-05</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2015-02-05</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.0.18.
@@ -1839,10 +1839,10 @@
  <sect1 id="release-9-0-18">
   <title>Release 9.0.18</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2014-07-24</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2014-07-24</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.0.17.
@@ -2185,10 +2185,10 @@
  <sect1 id="release-9-0-17">
   <title>Release 9.0.17</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2014-03-20</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2014-03-20</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.0.16.
@@ -2338,10 +2338,10 @@
  <sect1 id="release-9-0-16">
   <title>Release 9.0.16</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2014-02-20</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2014-02-20</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.0.15.
@@ -2839,10 +2839,10 @@
  <sect1 id="release-9-0-15">
   <title>Release 9.0.15</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2013-12-05</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2013-12-05</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.0.14.
@@ -3077,10 +3077,10 @@
  <sect1 id="release-9-0-14">
   <title>Release 9.0.14</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2013-10-10</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2013-10-10</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.0.13.
@@ -3343,10 +3343,10 @@
  <sect1 id="release-9-0-13">
   <title>Release 9.0.13</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2013-04-04</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2013-04-04</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.0.12.
@@ -3640,10 +3640,10 @@
  <sect1 id="release-9-0-12">
   <title>Release 9.0.12</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2013-02-07</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2013-02-07</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.0.11.
@@ -3902,10 +3902,10 @@
  <sect1 id="release-9-0-11">
   <title>Release 9.0.11</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2012-12-06</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2012-12-06</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.0.10.
@@ -4280,10 +4280,10 @@
  <sect1 id="release-9-0-10">
   <title>Release 9.0.10</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2012-09-24</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2012-09-24</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.0.9.
@@ -4422,10 +4422,10 @@
  <sect1 id="release-9-0-9">
   <title>Release 9.0.9</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2012-08-17</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2012-08-17</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.0.8.
@@ -4728,10 +4728,10 @@
  <sect1 id="release-9-0-8">
   <title>Release 9.0.8</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2012-06-04</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2012-06-04</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.0.7.
@@ -5048,10 +5048,10 @@
  <sect1 id="release-9-0-7">
   <title>Release 9.0.7</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2012-02-27</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2012-02-27</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.0.6.
@@ -5564,10 +5564,10 @@
  <sect1 id="release-9-0-6">
   <title>Release 9.0.6</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2011-12-05</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2011-12-05</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.0.5.
@@ -5948,10 +5948,10 @@
  <sect1 id="release-9-0-5">
   <title>Release 9.0.5</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2011-09-26</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2011-09-26</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.0.4.
@@ -6598,10 +6598,10 @@
  <sect1 id="release-9-0-4">
   <title>Release 9.0.4</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2011-04-18</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2011-04-18</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.0.3.
@@ -6939,10 +6939,10 @@
  <sect1 id="release-9-0-3">
   <title>Release 9.0.3</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2011-01-31</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2011-01-31</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.0.2.
@@ -7115,10 +7115,10 @@
  <sect1 id="release-9-0-2">
   <title>Release 9.0.2</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2010-12-16</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2010-12-16</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.0.1.
@@ -7562,10 +7562,10 @@
  <sect1 id="release-9-0-1">
   <title>Release 9.0.1</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2010-10-04</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2010-10-04</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.0.0.
@@ -7704,10 +7704,10 @@
  <sect1 id="release-9-0">
   <title>Release 9.0</title>
 
-  <note>
-   <title>Release Date</title>
-   <simpara>2010-09-20</simpara>
-  </note>
+  <formalpara>
+   <title>Release date:</title>
+   <para>2010-09-20</para>
+  </formalpara>
 
   <sect2>
    <title>Overview</title>
