@@ -543,7 +543,7 @@ LocalExecuteInvalidationMessage(SharedInvalidationMessage *msg)
 		{
 			InvalidateCatalogSnapshot();
 
-			CatalogCacheIdInvalidate(msg->cc.id, msg->cc.hashValue);
+			SysCacheInvalidate(msg->cc.id, msg->cc.hashValue);
 
 			CallSyscacheCallbacks(msg->cc.id, msg->cc.hashValue);
 		}
