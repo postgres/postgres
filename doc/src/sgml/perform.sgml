@@ -1132,8 +1132,8 @@ WHERE tablename = 'road';
      To inspect functional dependencies on a statistics
      <literal>stts</literal>, you may do this:
 <programlisting>
-CREATE STATISTICS stts WITH (dependencies)
-               ON (zip, city) FROM zipcodes;
+CREATE STATISTICS stts (dependencies)
+               ON zip, city FROM zipcodes;
 ANALYZE zipcodes;
 SELECT stxname, stxkeys, stxdependencies
   FROM pg_statistic_ext
@@ -1219,8 +1219,8 @@ EXPLAIN (ANALYZE, TIMING OFF) SELECT * FROM t WHERE a = 1 AND b = 10;
      Continuing the above example, the n-distinct coefficients in a ZIP
      code table may look like the following:
 <programlisting>
-CREATE STATISTICS stts2 WITH (ndistinct)
-               ON (zip, state, city) FROM zipcodes;
+CREATE STATISTICS stts2 (ndistinct)
+               ON zip, state, city FROM zipcodes;
 ANALYZE zipcodes;
 SELECT stxkeys AS k, stxndistinct AS nd
   FROM pg_statistic_ext

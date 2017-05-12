@@ -39,7 +39,7 @@ CREATE TRANSFORM FOR int LANGUAGE SQL (
 CREATE PUBLICATION addr_pub FOR TABLE addr_nsp.gentable;
 CREATE SUBSCRIPTION addr_sub CONNECTION '' PUBLICATION bar WITH (connect = false, slot_name = NONE);
 WARNING:  tables were not subscribed, you will have to run ALTER SUBSCRIPTION ... REFRESH PUBLICATION to subscribe the tables
-CREATE STATISTICS addr_nsp.gentable_stat ON (a,b) FROM addr_nsp.gentable;
+CREATE STATISTICS addr_nsp.gentable_stat ON a, b FROM addr_nsp.gentable;
 -- test some error cases
 SELECT pg_get_object_address('stone', '{}', '{}');
 ERROR:  unrecognized object type "stone"

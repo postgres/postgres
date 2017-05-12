@@ -1504,15 +1504,15 @@ pg_get_statisticsext_worker(Oid statextid, bool missing_ok)
 	}
 
 	/*
-	 * If any option is disabled, then we'll need to append a WITH clause to
-	 * show which options are enabled.  We omit the WITH clause on purpose
+	 * If any option is disabled, then we'll need to append the types clause
+	 * to show which options are enabled.  We omit the types clause on purpose
 	 * when all options are enabled, so a pg_dump/pg_restore will create all
 	 * statistics types on a newer postgres version, if the statistics had all
 	 * options enabled on the original version.
 	 */
 	if (!ndistinct_enabled || !dependencies_enabled)
 	{
-		appendStringInfoString(&buf, " WITH (");
+		appendStringInfoString(&buf, " (");
 		if (ndistinct_enabled)
 			appendStringInfoString(&buf, "ndistinct");
 		else if (dependencies_enabled)
@@ -1521,7 +1521,7 @@ pg_get_statisticsext_worker(Oid statextid, bool missing_ok)
 		appendStringInfoChar(&buf, ')');
 	}
 
-	appendStringInfoString(&buf, " ON (");
+	appendStringInfoString(&buf, " ON ");
 
 	for (colno = 0; colno < statextrec->stxkeys.dim1; colno++)
 	{
@@ -1536,7 +1536,7 @@ pg_get_statisticsext_worker(Oid statextid, bool missing_ok)
 		appendStringInfoString(&buf, quote_identifier(attname));
 	}
 
-	appendStringInfo(&buf, ") FROM %s",
+	appendStringInfo(&buf, " FROM %s",
 					 generate_relation_name(statextrec->stxrelid, NIL));
 
 	ReleaseSysCache(statexttup);

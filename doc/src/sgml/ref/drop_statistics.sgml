@@ -29,9 +29,9 @@ DROP STATISTICS [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> 
   <title>Description</title>
 
   <para>
-   <command>DROP STATISTICS</command> removes statistics from the database.
-   Only the statistics owner, the schema owner, and superuser can drop a
-   statistics.
+   <command>DROP STATISTICS</command> removes statistics object(s) from the
+   database.  Only the statistics object's owner, the schema owner, or a
+   superuser can drop a statistics object.
   </para>
 
  </refsect1>
@@ -44,8 +44,8 @@ DROP STATISTICS [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> 
     <term><literal>IF EXISTS</literal></term>
     <listitem>
      <para>
-      Do not throw an error if the statistics do not exist. A notice is
-      issued in this case.
+      Do not throw an error if the statistics object does not exist. A notice
+      is issued in this case.
      </para>
     </listitem>
    </varlistentry>
@@ -54,7 +54,7 @@ DROP STATISTICS [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> 
     <term><replaceable class="PARAMETER">name</replaceable></term>
     <listitem>
      <para>
-      The name (optionally schema-qualified) of the statistics to drop.
+      The name (optionally schema-qualified) of the statistics object to drop.
      </para>
     </listitem>
    </varlistentry>
@@ -66,7 +66,7 @@ DROP STATISTICS [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> 
   <title>Examples</title>
 
   <para>
-   To destroy two statistics objects on different schemas, without failing
+   To destroy two statistics objects in different schemas, without failing
    if they don't exist:
 
 <programlisting>
@@ -82,7 +82,7 @@ DROP STATISTICS IF EXISTS
   <title>Compatibility</title>
 
   <para>
-   There's no <command>DROP STATISTICS</command> command in the SQL standard.
+   There is no <command>DROP STATISTICS</command> command in the SQL standard.
   </para>
  </refsect1>
 

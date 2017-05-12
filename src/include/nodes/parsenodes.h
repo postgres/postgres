@@ -2689,10 +2689,10 @@ typedef struct CreateStatsStmt
 {
 	NodeTag		type;
 	List	   *defnames;		/* qualified name (list of Value strings) */
-	RangeVar   *relation;		/* relation to build statistics on */
-	List	   *keys;			/* String nodes naming referenced columns */
-	List	   *options;		/* list of DefElem */
-	bool		if_not_exists;	/* do nothing if statistics already exists */
+	List	   *stat_types;		/* stat types (list of Value strings) */
+	List	   *exprs;			/* expressions to build statistics on */
+	List	   *relations;		/* rels to build stats on (list of RangeVar) */
+	bool		if_not_exists;	/* do nothing if stats name already exists */
 } CreateStatsStmt;
 
 /* ----------------------

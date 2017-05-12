@@ -7,13 +7,24 @@ SET max_parallel_workers = 0;
 SET max_parallel_workers_per_gather = 0;
 SET work_mem = '128kB';
 
+-- Verify failures
+CREATE STATISTICS tst;
+CREATE STATISTICS tst ON a, b;
+CREATE STATISTICS tst FROM sometab;
+CREATE STATISTICS tst ON a, b FROM nonexistant;
+CREATE STATISTICS tst ON a, b FROM pg_class;
+CREATE STATISTICS tst ON relname, relname, relnatts FROM pg_class;
+CREATE STATISTICS tst ON relnatts + relpages FROM pg_class;
+CREATE STATISTICS tst ON (relpages, reltuples) FROM pg_class;
+CREATE STATISTICS tst (unrecognized) ON relname, relnatts FROM pg_class;
+
 -- Ensure stats are dropped sanely
 CREATE TABLE ab1 (a INTEGER, b INTEGER, c INTEGER);
-CREATE STATISTICS ab1_a_b_stats ON (a, b) FROM ab1;
+CREATE STATISTICS ab1_a_b_stats ON a, b FROM ab1;
 DROP STATISTICS ab1_a_b_stats;
 
 CREATE SCHEMA regress_schema_2;
-CREATE STATISTICS regress_schema_2.ab1_a_b_stats ON (a, b) FROM ab1;
+CREATE STATISTICS regress_schema_2.ab1_a_b_stats ON a, b FROM ab1;
 
 -- Let's also verify the pg_get_statisticsextdef output looks sane.
 SELECT pg_get_statisticsextdef(oid) FROM pg_statistic_ext WHERE stxname = 'ab1_a_b_stats';
@@ -21,9 +32,9 @@ SELECT pg_get_statisticsextdef(oid) FROM pg_statistic_ext WHERE stxname = 'ab1_a
 DROP STATISTICS regress_schema_2.ab1_a_b_stats;
 
 -- Ensure statistics are dropped when columns are
-CREATE STATISTICS ab1_b_c_stats ON (b, c) FROM ab1;
-CREATE STATISTICS ab1_a_b_c_stats ON (a, b, c) FROM ab1;
-CREATE STATISTICS ab1_a_b_stats ON (a, b) FROM ab1;
+CREATE STATISTICS ab1_b_c_stats ON b, c FROM ab1;
+CREATE STATISTICS ab1_a_b_c_stats ON a, b, c FROM ab1;
+CREATE STATISTICS ab1_a_b_stats ON a, b FROM ab1;
 ALTER TABLE ab1 DROP COLUMN a;
 \d ab1
 DROP TABLE ab1;
@@ -32,7 +43,7 @@ DROP TABLE ab1;
 CREATE TABLE ab1 (a INTEGER, b INTEGER);
 ALTER TABLE ab1 ALTER a SET STATISTICS 0;
 INSERT INTO ab1 SELECT a, a%23 FROM generate_series(1, 1000) a;
-CREATE STATISTICS ab1_a_b_stats ON (a, b) FROM ab1;
+CREATE STATISTICS ab1_a_b_stats ON a, b FROM ab1;
 ANALYZE ab1;
 ALTER TABLE ab1 ALTER a SET STATISTICS -1;
 -- partial analyze doesn't build stats either
@@ -55,20 +66,20 @@ CREATE FOREIGN TABLE tststats.f (a int, b int, c text) SERVER extstats_dummy_srv
 CREATE TABLE tststats.pt (a int, b int, c text) PARTITION BY RANGE (a, b);
 CREATE TABLE tststats.pt1 PARTITION OF tststats.pt FOR VALUES FROM (-10, -10) TO (10, 10);
 
-CREATE STATISTICS tststats.s1 ON (a, b) FROM tststats.t;
-CREATE STATISTICS tststats.s2 ON (a, b) FROM tststats.ti;
-CREATE STATISTICS tststats.s3 ON (a, b) FROM tststats.s;
-CREATE STATISTICS tststats.s4 ON (a, b) FROM tststats.v;
-CREATE STATISTICS tststats.s5 ON (a, b) FROM tststats.mv;
-CREATE STATISTICS tststats.s6 ON (a, b) FROM tststats.ty;
-CREATE STATISTICS tststats.s7 ON (a, b) FROM tststats.f;
-CREATE STATISTICS tststats.s8 ON (a, b) FROM tststats.pt;
-CREATE STATISTICS tststats.s9 ON (a, b) FROM tststats.pt1;
+CREATE STATISTICS tststats.s1 ON a, b FROM tststats.t;
+CREATE STATISTICS tststats.s2 ON a, b FROM tststats.ti;
+CREATE STATISTICS tststats.s3 ON a, b FROM tststats.s;
+CREATE STATISTICS tststats.s4 ON a, b FROM tststats.v;
+CREATE STATISTICS tststats.s5 ON a, b FROM tststats.mv;
+CREATE STATISTICS tststats.s6 ON a, b FROM tststats.ty;
+CREATE STATISTICS tststats.s7 ON a, b FROM tststats.f;
+CREATE STATISTICS tststats.s8 ON a, b FROM tststats.pt;
+CREATE STATISTICS tststats.s9 ON a, b FROM tststats.pt1;
 DO $$
 DECLARE
 	relname text := reltoastrelid::regclass FROM pg_class WHERE oid = 'tststats.t'::regclass;
 BEGIN
-	EXECUTE 'CREATE STATISTICS tststats.s10 ON (a, b) FROM ' || relname;
+	EXECUTE 'CREATE STATISTICS tststats.s10 ON a, b FROM ' || relname;
 EXCEPTION WHEN wrong_object_type THEN
 	RAISE NOTICE 'stats on toast table not created';
 END;
@@ -113,20 +124,8 @@ EXPLAIN (COSTS off)
 EXPLAIN (COSTS off)
  SELECT COUNT(*) FROM ndistinct GROUP BY b, c, d;
 
--- unknown column
-CREATE STATISTICS s10 ON (unknown_column) FROM ndistinct;
-
--- single column
-CREATE STATISTICS s10 ON (a) FROM ndistinct;
-
--- single column, duplicated
-CREATE STATISTICS s10 ON (a,a) FROM ndistinct;
-
--- two columns, one duplicated
-CREATE STATISTICS s10 ON (a, a, b) FROM ndistinct;
-
 -- correct command
-CREATE STATISTICS s10 ON (a, b, c) FROM ndistinct;
+CREATE STATISTICS s10 ON a, b, c FROM ndistinct;
 
 ANALYZE ndistinct;
 
@@ -202,8 +201,6 @@ EXPLAIN (COSTS off)
 EXPLAIN (COSTS off)
  SELECT COUNT(*) FROM ndistinct GROUP BY a, d;
 
-DROP TABLE ndistinct;
-
 -- functional dependencies tests
 CREATE TABLE functional_dependencies (
     filler1 TEXT,
@@ -233,7 +230,7 @@ EXPLAIN (COSTS OFF)
  SELECT * FROM functional_dependencies WHERE a = 1 AND b = '1' AND c = 1;
 
 -- create statistics
-CREATE STATISTICS func_deps_stat WITH (dependencies) ON (a, b, c) FROM functional_dependencies;
+CREATE STATISTICS func_deps_stat (dependencies) ON a, b, c FROM functional_dependencies;
 
 ANALYZE functional_dependencies;
 
@@ -259,7 +256,7 @@ EXPLAIN (COSTS OFF)
  SELECT * FROM functional_dependencies WHERE a = 1 AND b = '1' AND c = 1;
 
 -- create statistics
-CREATE STATISTICS func_deps_stat WITH (dependencies) ON (a, b, c) FROM functional_dependencies;
+CREATE STATISTICS func_deps_stat (dependencies) ON a, b, c FROM functional_dependencies;
 
 ANALYZE functional_dependencies;
 
@@ -270,4 +267,3 @@ EXPLAIN (COSTS OFF)
  SELECT * FROM functional_dependencies WHERE a = 1 AND b = '1' AND c = 1;
 
 RESET random_page_cost;
-DROP TABLE functional_dependencies;

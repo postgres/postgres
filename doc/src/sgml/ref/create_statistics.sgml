@@ -22,8 +22,8 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 CREATE STATISTICS [ IF NOT EXISTS ] <replaceable class="PARAMETER">statistics_name</replaceable>
-    WITH ( <replaceable class="PARAMETER">option</replaceable> [= <replaceable class="PARAMETER">value</replaceable>] [, ... ] )
-    ON ( <replaceable class="PARAMETER">column_name</replaceable>, <replaceable class="PARAMETER">column_name</replaceable> [, ...])
+    [ ( <replaceable class="PARAMETER">statistic_type</replaceable> [, ... ] ) ]
+    ON <replaceable class="PARAMETER">column_name</replaceable>, <replaceable class="PARAMETER">column_name</replaceable> [, ...]
     FROM <replaceable class="PARAMETER">table_name</replaceable>
 </synopsis>
 
@@ -34,17 +34,17 @@ CREATE STATISTICS [ IF NOT EXISTS ] <replaceable class="PARAMETER">statistics_na
 
   <para>
    <command>CREATE STATISTICS</command> will create a new extended statistics
-   object on the specified table, foreign table or materialized view.
-   The statistics will be created in the current database and
-   will be owned by the user issuing the command.
+   object tracking data about the specified table, foreign table or
+   materialized view.  The statistics object will be created in the current
+   database and will be owned by the user issuing the command.
   </para>
 
   <para>
    If a schema name is given (for example, <literal>CREATE STATISTICS
-   myschema.mystat ...</>) then the statistics is created in the specified
-   schema.  Otherwise it is created in the current schema.  The name of
-   the statistics must be distinct from the name of any other statistics in the
-   same schema.
+   myschema.mystat ...</>) then the statistics object is created in the
+   specified schema.  Otherwise it is created in the current schema.
+   The name of the statistics object must be distinct from the name of any
+   other statistics object in the same schema.
   </para>
  </refsect1>
 
@@ -57,10 +57,10 @@ CREATE STATISTICS [ IF NOT EXISTS ] <replaceable class="PARAMETER">statistics_na
     <term><literal>IF NOT EXISTS</></term>
     <listitem>
      <para>
-      Do not throw an error if a statistics with the same name already exists.
-      A notice is issued in this case.  Note that only the name of the
-      statistics object is considered here. The definition of the statistics is
-      not considered.
+      Do not throw an error if a statistics object with the same name already
+      exists.  A notice is issued in this case.  Note that only the name of
+      the statistics object is considered here, not the details of its
+      definition.
      </para>
     </listitem>
    </varlistentry>
@@ -69,7 +69,21 @@ CREATE STATISTICS [ IF NOT EXISTS ] <replaceable class="PARAMETER">statistics_na
     <term><replaceable class="PARAMETER">statistics_name</replaceable></term>
     <listitem>
      <para>
-      The name (optionally schema-qualified) of the statistics to be created.
+      The name (optionally schema-qualified) of the statistics object to be
+      created.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">statistic_type</replaceable></term>
+    <listitem>
+     <para>
+      A statistic type to be computed in this statistics object.  Currently
+      supported types are <literal>ndistinct</literal>, which enables
+      n-distinct coefficient tracking,
+      and <literal>dependencies</literal>, which enables functional
+      dependencies.
      </para>
     </listitem>
    </varlistentry>
@@ -78,7 +92,7 @@ CREATE STATISTICS [ IF NOT EXISTS ] <replaceable class="PARAMETER">statistics_na
     <term><replaceable class="PARAMETER">column_name</replaceable></term>
     <listitem>
      <para>
-      The name of a column to be included in the statistics.
+      The name of a table column to be included in the statistics object.
      </para>
     </listitem>
    </varlistentry>
@@ -87,49 +101,13 @@ CREATE STATISTICS [ IF NOT EXISTS ] <replaceable class="PARAMETER">statistics_na
     <term><replaceable class="PARAMETER">table_name</replaceable></term>
     <listitem>
      <para>
-      The name (optionally schema-qualified) of the table the statistics should
-      be created on.
+      The name (optionally schema-qualified) of the table containing the
+      column(s) the statistics are computed on.
      </para>
     </listitem>
    </varlistentry>
 
   </variablelist>
-
-  <refsect2 id="SQL-CREATESTATISTICS-parameters">
-   <title id="SQL-CREATESTATISTICS-parameters-title">Parameters</title>
-
- <indexterm zone="sql-createstatistics-parameters">
-  <primary>statistics parameters</primary>
- </indexterm>
-
-   <para>
-    The <literal>WITH</> clause can specify <firstterm>options</>
-    for the statistics. Available options are listed below.
-   </para>
-
-   <variablelist>
-
-   <varlistentry>
-    <term><literal>dependencies</> (<type>boolean</>)</term>
-    <listitem>
-     <para>
-      Enables functional dependencies for the statistics.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><literal>ndistinct</> (<type>boolean</>)</term>
-    <listitem>
-     <para>
-      Enables ndistinct coefficients for the statistics.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   </variablelist>
-
-  </refsect2>
  </refsect1>
 
  <refsect1>
@@ -158,7 +136,7 @@ CREATE TABLE t1 (
 INSERT INTO t1 SELECT i/100, i/500
                  FROM generate_series(1,1000000) s(i);
 
-CREATE STATISTICS s1 WITH (dependencies) ON (a, b) FROM t1;
+CREATE STATISTICS s1 (dependencies) ON a, b FROM t1;
 
 ANALYZE t1;
 
@@ -168,6 +146,11 @@ EXPLAIN ANALYZE SELECT * FROM t1 WHERE (a = 1) AND (b = 0);
 -- invalid combination of values
 EXPLAIN ANALYZE SELECT * FROM t1 WHERE (a = 1) AND (b = 1);
 </programlisting>
+
+   Without functional-dependency statistics, the planner would make the
+   same estimate of the number of matching rows for these two queries.
+   With such statistics, it is able to tell that one case has matches
+   and the other does not.
   </para>
 
  </refsect1>
@@ -176,7 +159,7 @@ EXPLAIN ANALYZE SELECT * FROM t1 WHERE (a = 1) AND (b = 1);
   <title>Compatibility</title>
 
   <para>
-   There's no <command>CREATE STATISTICS</command> command in the SQL standard.
+   There is no <command>CREATE STATISTICS</command> command in the SQL standard.
   </para>
  </refsect1>
 

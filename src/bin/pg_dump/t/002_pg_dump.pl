@@ -4955,9 +4955,9 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 		catch_all    => 'CREATE ... commands',
 		create_order => 97,
 		create_sql   => 'CREATE STATISTICS dump_test.test_ext_stats_no_options
-							ON (col1, col2) FROM dump_test.test_fifth_table',
+							ON col1, col2 FROM dump_test.test_fifth_table',
 		regexp => qr/^
-			\QCREATE STATISTICS dump_test.test_ext_stats_no_options ON (col1, col2) FROM test_fifth_table;\E
+			\QCREATE STATISTICS dump_test.test_ext_stats_no_options ON col1, col2 FROM test_fifth_table;\E
 		    /xms,
 		like => {
 			binary_upgrade          => 1,
@@ -4988,10 +4988,10 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 		all_runs     => 1,
 		catch_all    => 'CREATE ... commands',
 		create_order => 97,
-		create_sql   => 'CREATE STATISTICS dump_test.test_ext_stats_using
-							WITH (ndistinct) ON (col1, col2) FROM dump_test.test_fifth_table',
+		create_sql   => 'CREATE STATISTICS dump_test.test_ext_stats_opts
+							(ndistinct) ON col1, col2 FROM dump_test.test_fifth_table',
 		regexp => qr/^
-			\QCREATE STATISTICS dump_test.test_ext_stats_using WITH (ndistinct) ON (col1, col2) FROM test_fifth_table;\E
+			\QCREATE STATISTICS dump_test.test_ext_stats_opts (ndistinct) ON col1, col2 FROM test_fifth_table;\E
 		    /xms,
 		like => {
 			binary_upgrade          => 1,

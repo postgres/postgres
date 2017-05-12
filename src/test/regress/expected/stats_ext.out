@@ -5,24 +5,49 @@
 SET max_parallel_workers = 0;
 SET max_parallel_workers_per_gather = 0;
 SET work_mem = '128kB';
+-- Verify failures
+CREATE STATISTICS tst;
+ERROR:  syntax error at or near ";"
+LINE 1: CREATE STATISTICS tst;
+                             ^
+CREATE STATISTICS tst ON a, b;
+ERROR:  syntax error at or near ";"
+LINE 1: CREATE STATISTICS tst ON a, b;
+                                     ^
+CREATE STATISTICS tst FROM sometab;
+ERROR:  syntax error at or near "FROM"
+LINE 1: CREATE STATISTICS tst FROM sometab;
+                              ^
+CREATE STATISTICS tst ON a, b FROM nonexistant;
+ERROR:  relation "nonexistant" does not exist
+CREATE STATISTICS tst ON a, b FROM pg_class;
+ERROR:  column "a" referenced in statistics does not exist
+CREATE STATISTICS tst ON relname, relname, relnatts FROM pg_class;
+ERROR:  duplicate column name in statistics definition
+CREATE STATISTICS tst ON relnatts + relpages FROM pg_class;
+ERROR:  only simple column references are allowed in CREATE STATISTICS
+CREATE STATISTICS tst ON (relpages, reltuples) FROM pg_class;
+ERROR:  only simple column references are allowed in CREATE STATISTICS
+CREATE STATISTICS tst (unrecognized) ON relname, relnatts FROM pg_class;
+ERROR:  unrecognized statistics type "unrecognized"
 -- Ensure stats are dropped sanely
 CREATE TABLE ab1 (a INTEGER, b INTEGER, c INTEGER);
-CREATE STATISTICS ab1_a_b_stats ON (a, b) FROM ab1;
+CREATE STATISTICS ab1_a_b_stats ON a, b FROM ab1;
 DROP STATISTICS ab1_a_b_stats;
 CREATE SCHEMA regress_schema_2;
-CREATE STATISTICS regress_schema_2.ab1_a_b_stats ON (a, b) FROM ab1;
+CREATE STATISTICS regress_schema_2.ab1_a_b_stats ON a, b FROM ab1;
 -- Let's also verify the pg_get_statisticsextdef output looks sane.
 SELECT pg_get_statisticsextdef(oid) FROM pg_statistic_ext WHERE stxname = 'ab1_a_b_stats';
-                       pg_get_statisticsextdef                       
----------------------------------------------------------------------
- CREATE STATISTICS regress_schema_2.ab1_a_b_stats ON (a, b) FROM ab1
+                      pg_get_statisticsextdef                      
+-------------------------------------------------------------------
+ CREATE STATISTICS regress_schema_2.ab1_a_b_stats ON a, b FROM ab1
 (1 row)
 
 DROP STATISTICS regress_schema_2.ab1_a_b_stats;
 -- Ensure statistics are dropped when columns are
-CREATE STATISTICS ab1_b_c_stats ON (b, c) FROM ab1;
-CREATE STATISTICS ab1_a_b_c_stats ON (a, b, c) FROM ab1;
-CREATE STATISTICS ab1_a_b_stats ON (a, b) FROM ab1;
+CREATE STATISTICS ab1_b_c_stats ON b, c FROM ab1;
+CREATE STATISTICS ab1_a_b_c_stats ON a, b, c FROM ab1;
+CREATE STATISTICS ab1_a_b_stats ON a, b FROM ab1;
 ALTER TABLE ab1 DROP COLUMN a;
 \d ab1
                 Table "public.ab1"
@@ -31,14 +56,14 @@ ALTER TABLE ab1 DROP COLUMN a;
  b      | integer |           |          | 
  c      | integer |           |          | 
 Statistics:
-    "public.ab1_b_c_stats" WITH (ndistinct, dependencies) ON (b, c)
+    "public"."ab1_b_c_stats" (ndistinct, dependencies) ON b, c FROM ab1
 
 DROP TABLE ab1;
 -- Ensure things work sanely with SET STATISTICS 0
 CREATE TABLE ab1 (a INTEGER, b INTEGER);
 ALTER TABLE ab1 ALTER a SET STATISTICS 0;
 INSERT INTO ab1 SELECT a, a%23 FROM generate_series(1, 1000) a;
-CREATE STATISTICS ab1_a_b_stats ON (a, b) FROM ab1;
+CREATE STATISTICS ab1_a_b_stats ON a, b FROM ab1;
 ANALYZE ab1;
 WARNING:  extended statistics "public.ab1_a_b_stats" could not be collected for relation public.ab1
 ALTER TABLE ab1 ALTER a SET STATISTICS -1;
@@ -60,24 +85,24 @@ CREATE SERVER extstats_dummy_srv FOREIGN DATA WRAPPER extstats_dummy_fdw;
 CREATE FOREIGN TABLE tststats.f (a int, b int, c text) SERVER extstats_dummy_srv;
 CREATE TABLE tststats.pt (a int, b int, c text) PARTITION BY RANGE (a, b);
 CREATE TABLE tststats.pt1 PARTITION OF tststats.pt FOR VALUES FROM (-10, -10) TO (10, 10);
-CREATE STATISTICS tststats.s1 ON (a, b) FROM tststats.t;
-CREATE STATISTICS tststats.s2 ON (a, b) FROM tststats.ti;
+CREATE STATISTICS tststats.s1 ON a, b FROM tststats.t;
+CREATE STATISTICS tststats.s2 ON a, b FROM tststats.ti;
 ERROR:  relation "ti" is not a table, foreign table, or materialized view
-CREATE STATISTICS tststats.s3 ON (a, b) FROM tststats.s;
+CREATE STATISTICS tststats.s3 ON a, b FROM tststats.s;
 ERROR:  relation "s" is not a table, foreign table, or materialized view
-CREATE STATISTICS tststats.s4 ON (a, b) FROM tststats.v;
+CREATE STATISTICS tststats.s4 ON a, b FROM tststats.v;
 ERROR:  relation "v" is not a table, foreign table, or materialized view
-CREATE STATISTICS tststats.s5 ON (a, b) FROM tststats.mv;
-CREATE STATISTICS tststats.s6 ON (a, b) FROM tststats.ty;
+CREATE STATISTICS tststats.s5 ON a, b FROM tststats.mv;
+CREATE STATISTICS tststats.s6 ON a, b FROM tststats.ty;
 ERROR:  relation "ty" is not a table, foreign table, or materialized view
-CREATE STATISTICS tststats.s7 ON (a, b) FROM tststats.f;
-CREATE STATISTICS tststats.s8 ON (a, b) FROM tststats.pt;
-CREATE STATISTICS tststats.s9 ON (a, b) FROM tststats.pt1;
+CREATE STATISTICS tststats.s7 ON a, b FROM tststats.f;
+CREATE STATISTICS tststats.s8 ON a, b FROM tststats.pt;
+CREATE STATISTICS tststats.s9 ON a, b FROM tststats.pt1;
 DO $$
 DECLARE
 	relname text := reltoastrelid::regclass FROM pg_class WHERE oid = 'tststats.t'::regclass;
 BEGIN
-	EXECUTE 'CREATE STATISTICS tststats.s10 ON (a, b) FROM ' || relname;
+	EXECUTE 'CREATE STATISTICS tststats.s10 ON a, b FROM ' || relname;
 EXCEPTION WHEN wrong_object_type THEN
 	RAISE NOTICE 'stats on toast table not created';
 END;
@@ -158,20 +183,8 @@ EXPLAIN (COSTS off)
          ->  Seq Scan on ndistinct
 (5 rows)
 
--- unknown column
-CREATE STATISTICS s10 ON (unknown_column) FROM ndistinct;
-ERROR:  column "unknown_column" referenced in statistics does not exist
--- single column
-CREATE STATISTICS s10 ON (a) FROM ndistinct;
-ERROR:  extended statistics require at least 2 columns
--- single column, duplicated
-CREATE STATISTICS s10 ON (a,a) FROM ndistinct;
-ERROR:  duplicate column name in statistics definition
--- two columns, one duplicated
-CREATE STATISTICS s10 ON (a, a, b) FROM ndistinct;
-ERROR:  duplicate column name in statistics definition
 -- correct command
-CREATE STATISTICS s10 ON (a, b, c) FROM ndistinct;
+CREATE STATISTICS s10 ON a, b, c FROM ndistinct;
 ANALYZE ndistinct;
 SELECT stxkind, stxndistinct
   FROM pg_statistic_ext WHERE stxrelid = 'ndistinct'::regclass;
@@ -352,7 +365,6 @@ EXPLAIN (COSTS off)
    ->  Seq Scan on ndistinct
 (3 rows)
 
-DROP TABLE ndistinct;
 -- functional dependencies tests
 CREATE TABLE functional_dependencies (
     filler1 TEXT,
@@ -389,7 +401,7 @@ EXPLAIN (COSTS OFF)
 (2 rows)
 
 -- create statistics
-CREATE STATISTICS func_deps_stat WITH (dependencies) ON (a, b, c) FROM functional_dependencies;
+CREATE STATISTICS func_deps_stat (dependencies) ON a, b, c FROM functional_dependencies;
 ANALYZE functional_dependencies;
 EXPLAIN (COSTS OFF)
  SELECT * FROM functional_dependencies WHERE a = 1 AND b = '1';
@@ -432,7 +444,7 @@ EXPLAIN (COSTS OFF)
 (2 rows)
 
 -- create statistics
-CREATE STATISTICS func_deps_stat WITH (dependencies) ON (a, b, c) FROM functional_dependencies;
+CREATE STATISTICS func_deps_stat (dependencies) ON a, b, c FROM functional_dependencies;
 ANALYZE functional_dependencies;
 EXPLAIN (COSTS OFF)
  SELECT * FROM functional_dependencies WHERE a = 1 AND b = '1';
@@ -456,4 +468,3 @@ EXPLAIN (COSTS OFF)
 (5 rows)
 
 RESET random_page_cost;
-DROP TABLE functional_dependencies;

@@ -60,7 +60,7 @@ CreateStatistics(CreateStatsStmt *stmt)
 	bool		nulls[Natts_pg_statistic_ext];
 	int2vector *stxkeys;
 	Relation	statrel;
-	Relation	rel;
+	Relation	rel = NULL;
 	Oid			relid;
 	ObjectAddress parentobject,
 				childobject;
@@ -71,7 +71,7 @@ CreateStatistics(CreateStatsStmt *stmt)
 	bool		build_dependencies;
 	bool		requested_type = false;
 	int			i;
-	ListCell   *l;
+	ListCell   *cell;
 
 	Assert(IsA(stmt, CreateStatsStmt));
 
@@ -101,34 +101,80 @@ CreateStatistics(CreateStatsStmt *stmt)
 	}
 
 	/*
-	 * CREATE STATISTICS will influence future execution plans but does not
-	 * interfere with currently executing plans.  So it should be enough to
-	 * take only ShareUpdateExclusiveLock on relation, conflicting with
-	 * ANALYZE and other DDL that sets statistical information, but not with
-	 * normal queries.
+	 * Examine the FROM clause.  Currently, we only allow it to be a single
+	 * simple table, but later we'll probably allow multiple tables and JOIN
+	 * syntax.  The grammar is already prepared for that, so we have to check
+	 * here that what we got is what we can support.
 	 */
-	rel = relation_openrv(stmt->relation, ShareUpdateExclusiveLock);
+	if (list_length(stmt->relations) != 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+		  errmsg("only a single relation is allowed in CREATE STATISTICS")));
+
+	foreach(cell, stmt->relations)
+	{
+		Node	   *rln = (Node *) lfirst(cell);
+
+		if (!IsA(rln, RangeVar))
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("only a single relation is allowed in CREATE STATISTICS")));
+
+		/*
+		 * CREATE STATISTICS will influence future execution plans but does
+		 * not interfere with currently executing plans.  So it should be
+		 * enough to take only ShareUpdateExclusiveLock on relation,
+		 * conflicting with ANALYZE and other DDL that sets statistical
+		 * information, but not with normal queries.
+		 */
+		rel = relation_openrv((RangeVar *) rln, ShareUpdateExclusiveLock);
+
+		/* Restrict to allowed relation types */
+		if (rel->rd_rel->relkind != RELKIND_RELATION &&
+			rel->rd_rel->relkind != RELKIND_MATVIEW &&
+			rel->rd_rel->relkind != RELKIND_FOREIGN_TABLE &&
+			rel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("relation \"%s\" is not a table, foreign table, or materialized view",
+							RelationGetRelationName(rel))));
+
+		/* You must own the relation to create stats on it */
+		if (!pg_class_ownercheck(RelationGetRelid(rel), GetUserId()))
+			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+						   RelationGetRelationName(rel));
+	}
+
+	Assert(rel);
 	relid = RelationGetRelid(rel);
 
-	if (rel->rd_rel->relkind != RELKIND_RELATION &&
-		rel->rd_rel->relkind != RELKIND_MATVIEW &&
-		rel->rd_rel->relkind != RELKIND_FOREIGN_TABLE &&
-		rel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("relation \"%s\" is not a table, foreign table, or materialized view",
-						RelationGetRelationName(rel))));
-
 	/*
-	 * Transform column names to array of attnums. While at it, enforce some
-	 * constraints.
+	 * Currently, we only allow simple column references in the expression
+	 * list.  That will change someday, and again the grammar already supports
+	 * it so we have to enforce restrictions here.  For now, we can convert
+	 * the expression list to a simple array of attnums.  While at it, enforce
+	 * some constraints.
 	 */
-	foreach(l, stmt->keys)
+	foreach(cell, stmt->exprs)
 	{
-		char	   *attname = strVal(lfirst(l));
+		Node	   *expr = (Node *) lfirst(cell);
+		ColumnRef  *cref;
+		char	   *attname;
 		HeapTuple	atttuple;
 		Form_pg_attribute attForm;
 		TypeCacheEntry *type;
+
+		if (!IsA(expr, ColumnRef))
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("only simple column references are allowed in CREATE STATISTICS")));
+		cref = (ColumnRef *) expr;
+
+		if (list_length(cref->fields) != 1)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("only simple column references are allowed in CREATE STATISTICS")));
+		attname = strVal((Value *) linitial(cref->fields));
 
 		atttuple = SearchSysCacheAttName(relid, attname);
 		if (!HeapTupleIsValid(atttuple))
@@ -194,30 +240,29 @@ CreateStatistics(CreateStatsStmt *stmt)
 	stxkeys = buildint2vector(attnums, numcols);
 
 	/*
-	 * Parse the statistics options.  Currently only statistics types are
-	 * recognized.
+	 * Parse the statistics types.
 	 */
 	build_ndistinct = false;
 	build_dependencies = false;
-	foreach(l, stmt->options)
+	foreach(cell, stmt->stat_types)
 	{
-		DefElem    *opt = (DefElem *) lfirst(l);
+		char	   *type = strVal((Value *) lfirst(cell));
 
-		if (strcmp(opt->defname, "ndistinct") == 0)
+		if (strcmp(type, "ndistinct") == 0)
 		{
-			build_ndistinct = defGetBoolean(opt);
+			build_ndistinct = true;
 			requested_type = true;
 		}
-		else if (strcmp(opt->defname, "dependencies") == 0)
+		else if (strcmp(type, "dependencies") == 0)
 		{
-			build_dependencies = defGetBoolean(opt);
+			build_dependencies = true;
 			requested_type = true;
 		}
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("unrecognized STATISTICS option \"%s\"",
-							opt->defname)));
+					 errmsg("unrecognized statistics type \"%s\"",
+							type)));
 	}
 	/* If no statistic type was specified, build them all. */
 	if (!requested_type)
@@ -268,6 +313,8 @@ CreateStatistics(CreateStatsStmt *stmt)
 
 	/*
 	 * Add a dependency on the table, so that stats get dropped on DROP TABLE.
+	 *
+	 * XXX don't we need dependencies on the specific columns, instead?
 	 */
 	ObjectAddressSet(parentobject, RelationRelationId, relid);
 	ObjectAddressSet(childobject, StatisticExtRelationId, statoid);

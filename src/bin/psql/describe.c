@@ -2355,8 +2355,9 @@ describeOneTableDetails(const char *schemaname,
 		{
 			printfPQExpBuffer(&buf,
 							  "SELECT oid, "
+							  "stxrelid::pg_catalog.regclass, "
 							  "stxnamespace::pg_catalog.regnamespace AS nsp, "
-							  "stxname, stxkeys,\n"
+							  "stxname,\n"
 							  "  (SELECT pg_catalog.string_agg(pg_catalog.quote_ident(attname),', ')\n"
 							  "   FROM pg_catalog.unnest(stxkeys) s(attnum)\n"
 							  "   JOIN pg_catalog.pg_attribute a ON (stxrelid = a.attrelid AND\n"
@@ -2385,9 +2386,9 @@ describeOneTableDetails(const char *schemaname,
 					printfPQExpBuffer(&buf, "    ");
 
 					/* statistics name (qualified with namespace) */
-					appendPQExpBuffer(&buf, "\"%s.%s\" WITH (",
-									  PQgetvalue(result, i, 1),
-									  PQgetvalue(result, i, 2));
+					appendPQExpBuffer(&buf, "\"%s\".\"%s\" (",
+									  PQgetvalue(result, i, 2),
+									  PQgetvalue(result, i, 3));
 
 					/* options */
 					if (strcmp(PQgetvalue(result, i, 5), "t") == 0)
@@ -2401,8 +2402,9 @@ describeOneTableDetails(const char *schemaname,
 						appendPQExpBuffer(&buf, "%sdependencies", gotone ? ", " : "");
 					}
 
-					appendPQExpBuffer(&buf, ") ON (%s)",
-									  PQgetvalue(result, i, 4));
+					appendPQExpBuffer(&buf, ") ON %s FROM %s",
+									  PQgetvalue(result, i, 4),
+									  PQgetvalue(result, i, 1));
 
 					printTableAddFooter(&cont, buf.data);
 				}

@@ -438,8 +438,8 @@ DROP OPERATOR FAMILY alt_opf18 USING btree;
 --
 SET SESSION AUTHORIZATION regress_alter_user1;
 CREATE TABLE alt_regress_1 (a INTEGER, b INTEGER);
-CREATE STATISTICS alt_stat1 ON (a, b) FROM alt_regress_1;
-CREATE STATISTICS alt_stat2 ON (a, b) FROM alt_regress_1;
+CREATE STATISTICS alt_stat1 ON a, b FROM alt_regress_1;
+CREATE STATISTICS alt_stat2 ON a, b FROM alt_regress_1;
 
 ALTER STATISTICS alt_stat1 RENAME TO alt_stat2;   -- failed (name conflict)
 ALTER STATISTICS alt_stat1 RENAME TO alt_stat3;   -- failed (name conflict)
@@ -448,8 +448,9 @@ ALTER STATISTICS alt_stat2 OWNER TO regress_alter_user3;  -- OK
 ALTER STATISTICS alt_stat2 SET SCHEMA alt_nsp2;    -- OK
 
 SET SESSION AUTHORIZATION regress_alter_user2;
-CREATE STATISTICS alt_stat1 ON (a, b) FROM alt_regress_1;
-CREATE STATISTICS alt_stat2 ON (a, b) FROM alt_regress_1;
+CREATE TABLE alt_regress_2 (a INTEGER, b INTEGER);
+CREATE STATISTICS alt_stat1 ON a, b FROM alt_regress_2;
+CREATE STATISTICS alt_stat2 ON a, b FROM alt_regress_2;
 
 ALTER STATISTICS alt_stat3 RENAME TO alt_stat4;    -- failed (not owner)
 ALTER STATISTICS alt_stat1 RENAME TO alt_stat4;    -- OK
@@ -572,12 +573,13 @@ SELECT nspname, prsname
 ---
 --- Cleanup resources
 ---
+set client_min_messages to warning; -- suppress cascade notices
+
 DROP FOREIGN DATA WRAPPER alt_fdw2 CASCADE;
 DROP FOREIGN DATA WRAPPER alt_fdw3 CASCADE;
 
 DROP LANGUAGE alt_lang2 CASCADE;
 DROP LANGUAGE alt_lang3 CASCADE;
-DROP LANGUAGE alt_lang4 CASCADE;
 
 DROP SCHEMA alt_nsp1 CASCADE;
 DROP SCHEMA alt_nsp2 CASCADE;

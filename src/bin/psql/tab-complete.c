@@ -616,6 +616,21 @@ static const SchemaQuery Query_for_list_of_matviews = {
 	NULL
 };
 
+static const SchemaQuery Query_for_list_of_statistics = {
+	/* catname */
+	"pg_catalog.pg_statistic_ext s",
+	/* selcondition */
+	NULL,
+	/* viscondition */
+	NULL,
+	/* namespace */
+	"s.stxnamespace",
+	/* result */
+	"pg_catalog.quote_ident(s.stxname)",
+	/* qualresult */
+	NULL
+};
+
 
 /*
  * Queries to get lists of names of various kinds of things, possibly
@@ -1023,6 +1038,7 @@ static const pgsql_thing_t words_after_create[] = {
 	{"SCHEMA", Query_for_list_of_schemas},
 	{"SEQUENCE", NULL, &Query_for_list_of_sequences},
 	{"SERVER", Query_for_list_of_servers},
+	{"STATISTICS", NULL, &Query_for_list_of_statistics},
 	{"SUBSCRIPTION", Query_for_list_of_subscriptions},
 	{"SYSTEM", NULL, NULL, THING_NO_CREATE | THING_NO_DROP},
 	{"TABLE", NULL, &Query_for_list_of_tables},
@@ -1782,6 +1798,10 @@ psql_completion(const char *text, int start, int end)
 	else if (Matches5("ALTER", "RULE", MatchAny, "ON", MatchAny))
 		COMPLETE_WITH_CONST("RENAME TO");
 
+	/* ALTER STATISTICS <name> */
+	else if (Matches3("ALTER", "STATISTICS", MatchAny))
+		COMPLETE_WITH_LIST3("OWNER TO", "RENAME TO", "SET SCHEMA");
+
 	/* ALTER TRIGGER <name>, add ON */
 	else if (Matches3("ALTER", "TRIGGER", MatchAny))
 		COMPLETE_WITH_CONST("ON");
@@ -2118,7 +2138,8 @@ psql_completion(const char *text, int start, int end)
 		{"ACCESS METHOD", "CAST", "COLLATION", "CONVERSION", "DATABASE",
 			"EVENT TRIGGER", "EXTENSION",
 			"FOREIGN DATA WRAPPER", "FOREIGN TABLE",
-			"SERVER", "INDEX", "LANGUAGE", "POLICY", "PUBLICATION", "RULE", "SCHEMA", "SEQUENCE", "SUBSCRIPTION",
+			"SERVER", "INDEX", "LANGUAGE", "POLICY", "PUBLICATION", "RULE",
+			"SCHEMA", "SEQUENCE", "STATISTICS", "SUBSCRIPTION",
 			"TABLE", "TYPE", "VIEW", "MATERIALIZED VIEW", "COLUMN", "AGGREGATE", "FUNCTION",
 			"OPERATOR", "TRIGGER", "CONSTRAINT", "DOMAIN", "LARGE OBJECT",
 		"TABLESPACE", "TEXT SEARCH", "ROLE", NULL};
@@ -2380,6 +2401,19 @@ psql_completion(const char *text, int start, int end)
 	else if (Matches3("CREATE", "SERVER", MatchAny))
 		COMPLETE_WITH_LIST3("TYPE", "VERSION", "FOREIGN DATA WRAPPER");
 
+/* CREATE STATISTICS <name> */
+	else if (Matches3("CREATE", "STATISTICS", MatchAny))
+		COMPLETE_WITH_LIST2("(", "ON");
+	else if (Matches4("CREATE", "STATISTICS", MatchAny, "("))
+		COMPLETE_WITH_LIST2("ndistinct", "dependencies");
+	else if (HeadMatches3("CREATE", "STATISTICS", MatchAny) &&
+			 previous_words[0][0] == '(' &&
+			 previous_words[0][strlen(previous_words[0]) - 1] == ')')
+		COMPLETE_WITH_CONST("ON");
+	else if (HeadMatches3("CREATE", "STATISTICS", MatchAny) &&
+			 TailMatches1("FROM"))
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables, NULL);
+
 /* CREATE TABLE --- is allowed inside CREATE SCHEMA, so use TailMatches */
 	/* Complete "CREATE TEMP/TEMPORARY" with the possible temp objects */
 	else if (TailMatches2("CREATE", "TEMP|TEMPORARY"))
@@ -2585,7 +2619,7 @@ psql_completion(const char *text, int start, int end)
 /* DROP */
 	/* Complete DROP object with CASCADE / RESTRICT */
 	else if (Matches3("DROP",
-					  "COLLATION|CONVERSION|DOMAIN|EXTENSION|LANGUAGE|PUBLICATION|SCHEMA|SEQUENCE|SERVER|SUBSCRIPTION|TABLE|TYPE|VIEW",
+					  "COLLATION|CONVERSION|DOMAIN|EXTENSION|LANGUAGE|PUBLICATION|SCHEMA|SEQUENCE|SERVER|SUBSCRIPTION|STATISTICS|TABLE|TYPE|VIEW",
 					  MatchAny) ||
 			 Matches4("DROP", "ACCESS", "METHOD", MatchAny) ||
 			 (Matches4("DROP", "AGGREGATE|FUNCTION", MatchAny, MatchAny) &&

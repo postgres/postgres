@@ -3389,9 +3389,9 @@ _copyCreateStatsStmt(const CreateStatsStmt *from)
 	CreateStatsStmt *newnode = makeNode(CreateStatsStmt);
 
 	COPY_NODE_FIELD(defnames);
-	COPY_NODE_FIELD(relation);
-	COPY_NODE_FIELD(keys);
-	COPY_NODE_FIELD(options);
+	COPY_NODE_FIELD(stat_types);
+	COPY_NODE_FIELD(exprs);
+	COPY_NODE_FIELD(relations);
 	COPY_SCALAR_FIELD(if_not_exists);
 
 	return newnode;

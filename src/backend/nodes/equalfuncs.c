@@ -1349,9 +1349,9 @@ static bool
 _equalCreateStatsStmt(const CreateStatsStmt *a, const CreateStatsStmt *b)
 {
 	COMPARE_NODE_FIELD(defnames);
-	COMPARE_NODE_FIELD(relation);
-	COMPARE_NODE_FIELD(keys);
-	COMPARE_NODE_FIELD(options);
+	COMPARE_NODE_FIELD(stat_types);
+	COMPARE_NODE_FIELD(exprs);
+	COMPARE_NODE_FIELD(relations);
 	COMPARE_SCALAR_FIELD(if_not_exists);
 
 	return true;

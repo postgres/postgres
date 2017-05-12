@@ -3835,31 +3835,29 @@ ExistingIndex:   USING INDEX index_name				{ $$ = $3; }
 /*****************************************************************************
  *
  *		QUERY :
- *				CREATE STATISTICS stats_name WITH (options) ON (columns) FROM relname
+ *				CREATE STATISTICS stats_name [(stat types)]
+ *					ON expression-list FROM from_list
+ *
+ * Note: the expectation here is that the clauses after ON are a subset of
+ * SELECT syntax, allowing for expressions and joined tables, and probably
+ * someday a WHERE clause.  Much less than that is currently implemented,
+ * but the grammar accepts it and then we'll throw FEATURE_NOT_SUPPORTED
+ * errors as necessary at execution.
  *
  *****************************************************************************/
 
-
-CreateStatsStmt:	CREATE STATISTICS any_name opt_reloptions ON '(' columnList ')' FROM qualified_name
-						{
-							CreateStatsStmt *n = makeNode(CreateStatsStmt);
-							n->defnames = $3;
-							n->relation = $10;
-							n->keys = $7;
-							n->options = $4;
-							n->if_not_exists = false;
-							$$ = (Node *)n;
-						}
-					| CREATE STATISTICS IF_P NOT EXISTS any_name opt_reloptions ON '(' columnList ')' FROM qualified_name
-						{
-							CreateStatsStmt *n = makeNode(CreateStatsStmt);
-							n->defnames = $6;
-							n->relation = $13;
-							n->keys = $10;
-							n->options = $7;
-							n->if_not_exists = true;
-							$$ = (Node *)n;
-						}
+CreateStatsStmt:
+			CREATE opt_if_not_exists STATISTICS any_name
+			opt_name_list ON expr_list FROM from_list
+				{
+					CreateStatsStmt *n = makeNode(CreateStatsStmt);
+					n->defnames = $4;
+					n->stat_types = $5;
+					n->exprs = $7;
+					n->relations = $9;
+					n->if_not_exists = $2;
+					$$ = (Node *)n;
+				}
 			;
 
 /*****************************************************************************

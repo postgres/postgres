@@ -17,7 +17,7 @@ PostgreSQL documentation
  <refnamediv>
   <refname>ALTER STATISTICS</refname>
   <refpurpose>
-   change the definition of a extended statistics
+   change the definition of an extended statistics object
   </refpurpose>
  </refnamediv>
 
@@ -34,19 +34,20 @@ ALTER STATISTICS <replaceable class="parameter">name</replaceable> SET SCHEMA <r
 
   <para>
    <command>ALTER STATISTICS</command> changes the parameters of an existing
-   extended statistics.  Any parameters not specifically set in the
+   extended statistics object.  Any parameters not specifically set in the
    <command>ALTER STATISTICS</command> command retain their prior settings.
   </para>
 
   <para>
-   You must own the statistics to use <command>ALTER STATISTICS</>.
-   To change a statistics' schema, you must also have <literal>CREATE</>
-   privilege on the new schema.
+   You must own the statistics object to use <command>ALTER STATISTICS</>.
+   To change a statistics object's schema, you must also
+   have <literal>CREATE</> privilege on the new schema.
    To alter the owner, you must also be a direct or indirect member of the new
    owning role, and that role must have <literal>CREATE</literal> privilege on
-   the statistics' schema.  (These restrictions enforce that altering the owner
-   doesn't do anything you couldn't do by dropping and recreating the statistics.
-   However, a superuser can alter ownership of any statistics anyway.)
+   the statistics object's schema.  (These restrictions enforce that altering
+   the owner doesn't do anything you couldn't do by dropping and recreating
+   the statistics object.  However, a superuser can alter ownership of any
+   statistics object anyway.)
   </para>
  </refsect1>
 
@@ -59,7 +60,8 @@ ALTER STATISTICS <replaceable class="parameter">name</replaceable> SET SCHEMA <r
       <term><replaceable class="parameter">name</replaceable></term>
       <listitem>
        <para>
-        The name (optionally schema-qualified) of the statistics to be altered.
+        The name (optionally schema-qualified) of the statistics object to be
+        altered.
        </para>
       </listitem>
      </varlistentry>
@@ -68,7 +70,7 @@ ALTER STATISTICS <replaceable class="parameter">name</replaceable> SET SCHEMA <r
       <term><replaceable class="PARAMETER">new_owner</replaceable></term>
       <listitem>
        <para>
-        The user name of the new owner of the statistics.
+        The user name of the new owner of the statistics object.
        </para>
       </listitem>
      </varlistentry>
@@ -77,7 +79,7 @@ ALTER STATISTICS <replaceable class="parameter">name</replaceable> SET SCHEMA <r
       <term><replaceable class="parameter">new_name</replaceable></term>
       <listitem>
        <para>
-        The new name for the statistics.
+        The new name for the statistics object.
        </para>
       </listitem>
      </varlistentry>
@@ -86,7 +88,7 @@ ALTER STATISTICS <replaceable class="parameter">name</replaceable> SET SCHEMA <r
       <term><replaceable class="parameter">new_schema</replaceable></term>
       <listitem>
        <para>
-        The new schema for the statistics.
+        The new schema for the statistics object.
        </para>
       </listitem>
      </varlistentry>
@@ -99,7 +101,7 @@ ALTER STATISTICS <replaceable class="parameter">name</replaceable> SET SCHEMA <r
   <title>Compatibility</title>
 
   <para>
-   There's no <command>ALTER STATISTICS</command> command in the SQL standard.
+   There is no <command>ALTER STATISTICS</command> command in the SQL standard.
   </para>
  </refsect1>
 

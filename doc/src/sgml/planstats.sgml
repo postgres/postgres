@@ -526,7 +526,7 @@ EXPLAIN (ANALYZE, TIMING OFF) SELECT * FROM t WHERE a = 1 AND b = 1;
     multivariate statistics on the two columns:
 
 <programlisting>
-CREATE STATISTICS stts WITH (dependencies) ON (a, b) FROM t;
+CREATE STATISTICS stts (dependencies) ON a, b FROM t;
 ANALYZE t;
 EXPLAIN (ANALYZE, TIMING OFF) SELECT * FROM t WHERE a = 1 AND b = 1;
                                   QUERY PLAN                                   
@@ -569,7 +569,7 @@ EXPLAIN (ANALYZE, TIMING OFF) SELECT COUNT(*) FROM t GROUP BY a, b;
     calculation, the estimate is much improved:
 <programlisting>
 DROP STATISTICS stts;
-CREATE STATISTICS stts WITH (dependencies, ndistinct) ON (a, b) FROM t;
+CREATE STATISTICS stts (dependencies, ndistinct) ON a, b FROM t;
 ANALYZE t;
 EXPLAIN (ANALYZE, TIMING OFF) SELECT COUNT(*) FROM t GROUP BY a, b;
                                        QUERY PLAN                                        

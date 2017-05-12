@@ -501,8 +501,8 @@ DROP OPERATOR FAMILY alt_opf18 USING btree;
 --
 SET SESSION AUTHORIZATION regress_alter_user1;
 CREATE TABLE alt_regress_1 (a INTEGER, b INTEGER);
-CREATE STATISTICS alt_stat1 ON (a, b) FROM alt_regress_1;
-CREATE STATISTICS alt_stat2 ON (a, b) FROM alt_regress_1;
+CREATE STATISTICS alt_stat1 ON a, b FROM alt_regress_1;
+CREATE STATISTICS alt_stat2 ON a, b FROM alt_regress_1;
 ALTER STATISTICS alt_stat1 RENAME TO alt_stat2;   -- failed (name conflict)
 ERROR:  statistics "alt_stat2" already exists in schema "alt_nsp1"
 ALTER STATISTICS alt_stat1 RENAME TO alt_stat3;   -- failed (name conflict)
@@ -511,8 +511,9 @@ ERROR:  must be member of role "regress_alter_user2"
 ALTER STATISTICS alt_stat2 OWNER TO regress_alter_user3;  -- OK
 ALTER STATISTICS alt_stat2 SET SCHEMA alt_nsp2;    -- OK
 SET SESSION AUTHORIZATION regress_alter_user2;
-CREATE STATISTICS alt_stat1 ON (a, b) FROM alt_regress_1;
-CREATE STATISTICS alt_stat2 ON (a, b) FROM alt_regress_1;
+CREATE TABLE alt_regress_2 (a INTEGER, b INTEGER);
+CREATE STATISTICS alt_stat1 ON a, b FROM alt_regress_2;
+CREATE STATISTICS alt_stat2 ON a, b FROM alt_regress_2;
 ALTER STATISTICS alt_stat3 RENAME TO alt_stat4;    -- failed (not owner)
 ERROR:  must be owner of statistics alt_stat3
 ALTER STATISTICS alt_stat1 RENAME TO alt_stat4;    -- OK
@@ -672,54 +673,13 @@ SELECT nspname, prsname
 ---
 --- Cleanup resources
 ---
+set client_min_messages to warning; -- suppress cascade notices
 DROP FOREIGN DATA WRAPPER alt_fdw2 CASCADE;
-NOTICE:  drop cascades to server alt_fserv2
 DROP FOREIGN DATA WRAPPER alt_fdw3 CASCADE;
-NOTICE:  drop cascades to server alt_fserv3
 DROP LANGUAGE alt_lang2 CASCADE;
 DROP LANGUAGE alt_lang3 CASCADE;
-DROP LANGUAGE alt_lang4 CASCADE;
-ERROR:  language "alt_lang4" does not exist
 DROP SCHEMA alt_nsp1 CASCADE;
-NOTICE:  drop cascades to 27 other objects
-DETAIL:  drop cascades to function alt_func3(integer)
-drop cascades to function alt_agg3(integer)
-drop cascades to function alt_func4(integer)
-drop cascades to function alt_func2(integer)
-drop cascades to function alt_agg4(integer)
-drop cascades to function alt_agg2(integer)
-drop cascades to conversion alt_conv3
-drop cascades to conversion alt_conv4
-drop cascades to conversion alt_conv2
-drop cascades to operator @+@(integer,integer)
-drop cascades to operator @-@(integer,integer)
-drop cascades to operator family alt_opf3 for access method hash
-drop cascades to operator family alt_opc1 for access method hash
-drop cascades to operator family alt_opc2 for access method hash
-drop cascades to operator family alt_opf4 for access method hash
-drop cascades to operator family alt_opf2 for access method hash
-drop cascades to table alt_regress_1
-drop cascades to text search dictionary alt_ts_dict3
-drop cascades to text search dictionary alt_ts_dict4
-drop cascades to text search dictionary alt_ts_dict2
-drop cascades to text search configuration alt_ts_conf3
-drop cascades to text search configuration alt_ts_conf4
-drop cascades to text search configuration alt_ts_conf2
-drop cascades to text search template alt_ts_temp3
-drop cascades to text search template alt_ts_temp2
-drop cascades to text search parser alt_ts_prs3
-drop cascades to text search parser alt_ts_prs2
 DROP SCHEMA alt_nsp2 CASCADE;
-NOTICE:  drop cascades to 9 other objects
-DETAIL:  drop cascades to function alt_nsp2.alt_func2(integer)
-drop cascades to function alt_nsp2.alt_agg2(integer)
-drop cascades to conversion alt_conv2
-drop cascades to operator alt_nsp2.@-@(integer,integer)
-drop cascades to operator family alt_nsp2.alt_opf2 for access method hash
-drop cascades to text search dictionary alt_ts_dict2
-drop cascades to text search configuration alt_ts_conf2
-drop cascades to text search template alt_ts_temp2
-drop cascades to text search parser alt_ts_prs2
 DROP USER regress_alter_user1;
 DROP USER regress_alter_user2;
 DROP USER regress_alter_user3;
