@@ -2,7 +2,7 @@
  *
  * xlogfuncs.c
  *
- * PostgreSQL transaction log manager user interface functions
+ * PostgreSQL write-ahead log manager user interface functions
  *
  * This file contains WAL control and information functions.
  *

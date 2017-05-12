@@ -242,7 +242,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
       </term>
       <listitem>
        <para>
-        This parameter specifies the LSN of the transaction log location up
+        This parameter specifies the LSN of the write-ahead log location up
         to which recovery will proceed. The precise stopping point is also
         influenced by <xref linkend="recovery-target-inclusive">. This
         parameter is parsed using the system data type

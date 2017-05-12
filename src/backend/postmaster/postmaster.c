@@ -5036,7 +5036,7 @@ sigusr1_handler(SIGNAL_ARGS)
 	{
 		/*
 		 * Send SIGUSR1 to archiver process, to wake it up and begin archiving
-		 * next transaction log file.
+		 * next WAL file.
 		 */
 		signal_child(PgArchPID, SIGUSR1);
 	}

@@ -1547,7 +1547,7 @@ The commands accepted in walsender mode are:
       <listitem>
       <para>
        Current WAL flush location. Useful to get a known location in the
-       transaction log where streaming can start.
+       write-ahead log where streaming can start.
       </para>
       </listitem>
       </varlistentry>

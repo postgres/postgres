@@ -1,7 +1,7 @@
 /*
  * xlog.h
  *
- * PostgreSQL transaction log manager
+ * PostgreSQL write-ahead log manager
  *
  * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California

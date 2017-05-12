@@ -482,7 +482,7 @@ pgarch_ArchiverCopyLoop(void)
 				if (++failures >= NUM_ARCHIVE_RETRIES)
 				{
 					ereport(WARNING,
-							(errmsg("archiving transaction log file \"%s\" failed too many times, will try again later",
+							(errmsg("archiving write-ahead log file \"%s\" failed too many times, will try again later",
 									xlog)));
 					return;		/* give up archiving for now */
 				}
@@ -628,8 +628,7 @@ pgarch_archiveXlog(char *xlog)
 
 		return false;
 	}
-	ereport(DEBUG1,
-			(errmsg("archived transaction log file \"%s\"", xlog)));
+	elog(DEBUG1, "archived write-ahead log file \"%s\"", xlog);
 
 	snprintf(activitymsg, sizeof(activitymsg), "last was %s", xlog);
 	set_ps_display(activitymsg, false);

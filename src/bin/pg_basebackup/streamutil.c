@@ -282,7 +282,7 @@ RunIdentifySystem(PGconn *conn, char **sysid, TimeLineID *starttli,
 		if (sscanf(PQgetvalue(res, 0, 2), "%X/%X", &hi, &lo) != 2)
 		{
 			fprintf(stderr,
-				  _("%s: could not parse transaction log location \"%s\"\n"),
+				  _("%s: could not parse write-ahead log location \"%s\"\n"),
 					progname, PQgetvalue(res, 0, 2));
 
 			PQclear(res);

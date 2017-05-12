@@ -1424,7 +1424,7 @@ restore_command = 'cp /mnt/server/archivedir/%f %p'
       As with base backups, the easiest way to produce a standalone
       hot backup is to use the <xref linkend="app-pgbasebackup">
       tool. If you include the <literal>-X</> parameter when calling
-      it, all the transaction log required to use the backup will be
+      it, all the write-ahead log required to use the backup will be
       included in the backup automatically, and no special action is
       required to restore the backup.
      </para>

@@ -138,7 +138,7 @@ protocol to make nodes agree on a serializable transactional order.
   </varlistentry>
 
   <varlistentry>
-   <term>Transaction Log Shipping</term>
+   <term>Write-Ahead Log Shipping</term>
    <listitem>
 
     <para>
@@ -289,7 +289,7 @@ protocol to make nodes agree on a serializable transactional order.
      <entry>Feature</entry>
      <entry>Shared Disk Failover</entry>
      <entry>File System Replication</entry>
-     <entry>Transaction Log Shipping</entry>
+     <entry>Write-Ahead Log Shipping</entry>
      <entry>Trigger-Based Master-Standby Replication</entry>
      <entry>Statement-Based Replication Middleware</entry>
      <entry>Asynchronous Multimaster Replication</entry>
@@ -1036,7 +1036,7 @@ primary_slot_name = 'node_a_slot'
    <para>
     When requesting synchronous replication, each commit of a
     write transaction will wait until confirmation is
-    received that the commit has been written to the transaction log on disk
+    received that the commit has been written to the write-ahead log on disk
     of both the primary and standby server. The only possibility that data
     can be lost is if both the primary and the standby suffer crashes at the
     same time. This can provide a much higher level of durability, though only

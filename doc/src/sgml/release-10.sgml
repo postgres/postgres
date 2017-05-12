@@ -2517,7 +2517,7 @@
        2016-12-21 [ecbdc4c55] Forbid invalid combination of options in pg_basebackup.
        -->
        <para>
-        Allow <application>pg_basebackup</> to stream transaction log in
+        Allow <application>pg_basebackup</> to stream write-ahead log in
         tar mode (Magnus Hagander)
        </para>
 

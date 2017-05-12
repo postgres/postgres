@@ -1,7 +1,7 @@
 /*
  * xlog_internal.h
  *
- * PostgreSQL transaction log internal declarations
+ * PostgreSQL write-ahead log internal declarations
  *
  * NOTE: this file is intended to contain declarations useful for
  * manipulating the XLOG files directly, but it is not supposed to be

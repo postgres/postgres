@@ -34,7 +34,7 @@
   problem.  However, differences shown by
   <application>pg_test_fsync</application> might not make any significant
   difference in real database throughput, especially since many database servers
-  are not speed-limited by their transaction logs.
+  are not speed-limited by their write-ahead logs.
   <application>pg_test_fsync</application> reports average file sync operation
   time in microseconds for each <literal>wal_sync_method</literal>, which can also be used to
   inform efforts to optimize the value of <xref linkend="guc-commit-delay">.

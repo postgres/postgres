@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * pg_receivewal.c - receive streaming transaction log data and write it
+ * pg_receivewal.c - receive streaming WAL data and write it
  *					  to a local file.
  *
  * Author: Magnus Hagander <magnus@hagander.net>
@@ -71,18 +71,18 @@ static bool stop_streaming(XLogRecPtr segendpos, uint32 timeline,
 static void
 usage(void)
 {
-	printf(_("%s receives PostgreSQL streaming transaction logs.\n\n"),
+	printf(_("%s receives PostgreSQL streaming write-ahead logs.\n\n"),
 		   progname);
 	printf(_("Usage:\n"));
 	printf(_("  %s [OPTION]...\n"), progname);
 	printf(_("\nOptions:\n"));
-	printf(_("  -D, --directory=DIR    receive transaction log files into this directory\n"));
+	printf(_("  -D, --directory=DIR    receive write-ahead log files into this directory\n"));
 	printf(_("      --if-not-exists    do not error if slot already exists when creating a slot\n"));
 	printf(_("  -n, --no-loop          do not loop on connection lost\n"));
 	printf(_("  -s, --status-interval=SECS\n"
 			 "                         time between status packets sent to server (default: %d)\n"), (standby_message_timeout / 1000));
 	printf(_("  -S, --slot=SLOTNAME    replication slot to use\n"));
-	printf(_("      --synchronous      flush transaction log immediately after writing\n"));
+	printf(_("      --synchronous      flush write-ahead log immediately after writing\n"));
 	printf(_("  -v, --verbose          output verbose messages\n"));
 	printf(_("  -V, --version          output version information, then exit\n"));
 	printf(_("  -Z, --compress=0-9     compress logs with given compression level\n"));

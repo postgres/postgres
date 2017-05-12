@@ -680,7 +680,7 @@ XLogDumpDisplayStats(XLogDumpConfig *config, XLogDumpStats *stats)
 static void
 usage(void)
 {
-	printf(_("%s decodes and displays PostgreSQL transaction logs for debugging.\n\n"),
+	printf(_("%s decodes and displays PostgreSQL write-ahead logs for debugging.\n\n"),
 		   progname);
 	printf(_("Usage:\n"));
 	printf(_("  %s [OPTION]... [STARTSEG [ENDSEG]]\n"), progname);

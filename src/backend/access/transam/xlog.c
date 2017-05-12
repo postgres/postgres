@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * xlog.c
- *		PostgreSQL transaction log manager
+ *		PostgreSQL write-ahead log manager
  *
  *
  * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
@@ -3532,7 +3532,7 @@ XLogFileOpen(XLogSegNo segno)
 	if (fd < 0)
 		ereport(PANIC,
 				(errcode_for_file_access(),
-			errmsg("could not open transaction log file \"%s\": %m", path)));
+			errmsg("could not open write-ahead log file \"%s\": %m", path)));
 
 	return fd;
 }
@@ -3838,7 +3838,7 @@ RemoveOldXlogFiles(XLogSegNo segno, XLogRecPtr PriorRedoPtr, XLogRecPtr endptr)
 	if (xldir == NULL)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not open transaction log directory \"%s\": %m",
+				 errmsg("could not open write-ahead log directory \"%s\": %m",
 						XLOGDIR)));
 
 	/*
@@ -3913,7 +3913,7 @@ RemoveNonParentXlogFiles(XLogRecPtr switchpoint, TimeLineID newTLI)
 	if (xldir == NULL)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not open transaction log directory \"%s\": %m",
+				 errmsg("could not open write-ahead log directory \"%s\": %m",
 						XLOGDIR)));
 
 	/*
@@ -3994,7 +3994,7 @@ RemoveXlogFile(const char *segname, XLogRecPtr PriorRedoPtr, XLogRecPtr endptr)
 							   true, recycleSegNo, true))
 	{
 		ereport(DEBUG2,
-				(errmsg("recycled transaction log file \"%s\"",
+				(errmsg("recycled write-ahead log file \"%s\"",
 						segname)));
 		CheckpointStats.ckpt_segs_recycled++;
 		/* Needn't recheck that slot on future iterations */
@@ -4006,7 +4006,7 @@ RemoveXlogFile(const char *segname, XLogRecPtr PriorRedoPtr, XLogRecPtr endptr)
 		int			rc;
 
 		ereport(DEBUG2,
-				(errmsg("removing transaction log file \"%s\"",
+				(errmsg("removing write-ahead log file \"%s\"",
 						segname)));
 
 #ifdef WIN32
@@ -4026,7 +4026,7 @@ RemoveXlogFile(const char *segname, XLogRecPtr PriorRedoPtr, XLogRecPtr endptr)
 		{
 			ereport(LOG,
 					(errcode_for_file_access(),
-			   errmsg("could not rename old transaction log file \"%s\": %m",
+			   errmsg("could not rename old write-ahead log file \"%s\": %m",
 					  path)));
 			return;
 		}
@@ -4108,7 +4108,7 @@ CleanupBackupHistory(void)
 	if (xldir == NULL)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not open transaction log directory \"%s\": %m",
+				 errmsg("could not open write-ahead log directory \"%s\": %m",
 						XLOGDIR)));
 
 	while ((xlde = ReadDir(xldir, XLOGDIR)) != NULL)
@@ -4117,9 +4117,8 @@ CleanupBackupHistory(void)
 		{
 			if (XLogArchiveCheckDone(xlde->d_name))
 			{
-				ereport(DEBUG2,
-				(errmsg("removing transaction log backup history file \"%s\"",
-						xlde->d_name)));
+				elog(DEBUG2, "removing WAL backup history file \"%s\"",
+					 xlde->d_name);
 				snprintf(path, sizeof(path), XLOGDIR "/%s", xlde->d_name);
 				unlink(path);
 				XLogArchiveCleanup(xlde->d_name);
@@ -5074,7 +5073,7 @@ BootStrapXLOG(void)
 			errno = ENOSPC;
 		ereport(PANIC,
 				(errcode_for_file_access(),
-			  errmsg("could not write bootstrap transaction log file: %m")));
+			  errmsg("could not write bootstrap write-ahead log file: %m")));
 	}
 	pgstat_report_wait_end();
 
@@ -5082,13 +5081,13 @@ BootStrapXLOG(void)
 	if (pg_fsync(openLogFile) != 0)
 		ereport(PANIC,
 				(errcode_for_file_access(),
-			  errmsg("could not fsync bootstrap transaction log file: %m")));
+			  errmsg("could not fsync bootstrap write-ahead log file: %m")));
 	pgstat_report_wait_end();
 
 	if (close(openLogFile))
 		ereport(PANIC,
 				(errcode_for_file_access(),
-			  errmsg("could not close bootstrap transaction log file: %m")));
+			  errmsg("could not close bootstrap write-ahead log file: %m")));
 
 	openLogFile = -1;
 
@@ -8432,7 +8431,7 @@ LogCheckpointEnd(bool restartpoint)
 	average_usecs = average_sync_time - (uint64) average_secs *1000000;
 
 	elog(LOG, "%s complete: wrote %d buffers (%.1f%%); "
-		 "%d transaction log file(s) added, %d removed, %d recycled; "
+		 "%d WAL file(s) added, %d removed, %d recycled; "
 		 "write=%ld.%03d s, sync=%ld.%03d s, total=%ld.%03d s; "
 		 "sync files=%d, longest=%ld.%03d s, average=%ld.%03d s; "
 		 "distance=%d kB, estimate=%d kB",
@@ -8842,7 +8841,7 @@ CreateCheckPoint(int flags)
 	 */
 	if (shutdown && checkPoint.redo != ProcLastRecPtr)
 		ereport(PANIC,
-				(errmsg("concurrent transaction log activity while database system is shutting down")));
+				(errmsg("concurrent write-ahead log activity while database system is shutting down")));
 
 	/*
 	 * Remember the prior checkpoint's redo pointer, used later to determine

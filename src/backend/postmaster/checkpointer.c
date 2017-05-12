@@ -626,9 +626,8 @@ CheckArchiveTimeout(void)
 			 * assume nothing happened.
 			 */
 			if ((switchpoint % XLogSegSize) != 0)
-				ereport(DEBUG1,
-						(errmsg("transaction log switch forced (archive_timeout=%d)",
-								XLogArchiveTimeout)));
+				elog(DEBUG1, "write-ahead log switch forced (archive_timeout=%d)",
+					 XLogArchiveTimeout);
 		}
 
 		/*

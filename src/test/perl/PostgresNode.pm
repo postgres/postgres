@@ -483,7 +483,7 @@ sub append_conf
 =item $node->backup(backup_name)
 
 Create a hot backup with B<pg_basebackup> in subdirectory B<backup_name> of
-B<< $node->backup_dir >>, including the transaction logs. Transaction logs are
+B<< $node->backup_dir >>, including the WAL. WAL files
 fetched at the end of the backup, not streamed.
 
 You'll have to configure a suitable B<max_wal_senders> on the
@@ -507,7 +507,7 @@ sub backup
 =item $node->backup_fs_hot(backup_name)
 
 Create a backup with a filesystem level copy in subdirectory B<backup_name> of
-B<< $node->backup_dir >>, including transaction logs.
+B<< $node->backup_dir >>, including WAL.
 
 Archiving must be enabled, as B<pg_start_backup()> and B<pg_stop_backup()> are
 used. This is not checked or enforced.
@@ -525,7 +525,7 @@ sub backup_fs_hot
 =item $node->backup_fs_cold(backup_name)
 
 Create a backup with a filesystem level copy in subdirectory B<backup_name> of
-B<< $node->backup_dir >>, including transaction logs. The server must be
+B<< $node->backup_dir >>, including WAL. The server must be
 stopped as no attempt to handle concurrent writes is made.
 
 Use B<backup> or B<backup_fs_hot> if you want to back up a running server.

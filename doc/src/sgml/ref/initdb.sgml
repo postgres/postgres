@@ -320,7 +320,7 @@ PostgreSQL documentation
       <term><option>--waldir=<replaceable class="parameter">directory</replaceable></option></term>
       <listitem>
        <para>
-        This option specifies the directory where the transaction log
+        This option specifies the directory where the write-ahead log
         should be stored.
        </para>
       </listitem>

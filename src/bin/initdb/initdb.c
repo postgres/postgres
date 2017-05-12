@@ -563,19 +563,19 @@ exit_nicely(void)
 
 		if (made_new_xlogdir)
 		{
-			fprintf(stderr, _("%s: removing transaction log directory \"%s\"\n"),
+			fprintf(stderr, _("%s: removing WAL directory \"%s\"\n"),
 					progname, xlog_dir);
 			if (!rmtree(xlog_dir, true))
-				fprintf(stderr, _("%s: failed to remove transaction log directory\n"),
+				fprintf(stderr, _("%s: failed to remove WAL directory\n"),
 						progname);
 		}
 		else if (found_existing_xlogdir)
 		{
 			fprintf(stderr,
-			_("%s: removing contents of transaction log directory \"%s\"\n"),
+			_("%s: removing contents of WAL directory \"%s\"\n"),
 					progname, xlog_dir);
 			if (!rmtree(xlog_dir, false))
-				fprintf(stderr, _("%s: failed to remove contents of transaction log directory\n"),
+				fprintf(stderr, _("%s: failed to remove contents of WAL directory\n"),
 						progname);
 		}
 		/* otherwise died during startup, do nothing! */
@@ -589,7 +589,7 @@ exit_nicely(void)
 
 		if (made_new_xlogdir || found_existing_xlogdir)
 			fprintf(stderr,
-					_("%s: transaction log directory \"%s\" not removed at user's request\n"),
+					_("%s: WAL directory \"%s\" not removed at user's request\n"),
 					progname, xlog_dir);
 	}
 
@@ -2704,7 +2704,7 @@ create_data_directory(void)
 }
 
 
-/* Create transaction log directory, and symlink if required */
+/* Create WAL directory, and symlink if required */
 void
 create_xlog_or_symlink(void)
 {
@@ -2721,7 +2721,7 @@ create_xlog_or_symlink(void)
 		canonicalize_path(xlog_dir);
 		if (!is_absolute_path(xlog_dir))
 		{
-			fprintf(stderr, _("%s: transaction log directory location must be an absolute path\n"), progname);
+			fprintf(stderr, _("%s: WAL directory location must be an absolute path\n"), progname);
 			exit_nicely();
 		}
 
@@ -2775,8 +2775,8 @@ create_xlog_or_symlink(void)
 					warn_on_mount_point(ret);
 				else
 					fprintf(stderr,
-							_("If you want to store the transaction log there, either\n"
-							  "remove or empty the directory \"%s\".\n"),
+							_("If you want to store the WAL there, either remove or empty the directory\n"
+							  "\"%s\".\n"),
 							xlog_dir);
 				exit_nicely();
 

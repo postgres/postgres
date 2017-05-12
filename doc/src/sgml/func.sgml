@@ -18466,21 +18466,21 @@ SELECT set_config('log_statement_stats', 'off', false);
         <literal><function>pg_current_wal_flush_lsn()</function></literal>
         </entry>
        <entry><type>pg_lsn</type></entry>
-       <entry>Get current transaction log flush location</entry>
+       <entry>Get current write-ahead log flush location</entry>
       </row>
       <row>
        <entry>
         <literal><function>pg_current_wal_insert_lsn()</function></literal>
         </entry>
        <entry><type>pg_lsn</type></entry>
-       <entry>Get current transaction log insert location</entry>
+       <entry>Get current write-ahead log insert location</entry>
       </row>
       <row>
        <entry>
         <literal><function>pg_current_wal_lsn()</function></literal>
         </entry>
        <entry><type>pg_lsn</type></entry>
-       <entry>Get current transaction log write location</entry>
+       <entry>Get current write-ahead log write location</entry>
       </row>
       <row>
        <entry>
@@ -18522,28 +18522,28 @@ SELECT set_config('log_statement_stats', 'off', false);
         <literal><function>pg_switch_wal()</function></literal>
         </entry>
        <entry><type>pg_lsn</type></entry>
-       <entry>Force switch to a new transaction log file (restricted to superusers by default, but other users can be granted EXECUTE to run the function)</entry>
+       <entry>Force switch to a new write-ahead log file (restricted to superusers by default, but other users can be granted EXECUTE to run the function)</entry>
       </row>
       <row>
        <entry>
         <literal><function>pg_walfile_name(<parameter>lsn</> <type>pg_lsn</>)</function></literal>
         </entry>
        <entry><type>text</type></entry>
-       <entry>Convert transaction log location to file name</entry>
+       <entry>Convert write-ahead log location to file name</entry>
       </row>
       <row>
        <entry>
         <literal><function>pg_walfile_name_offset(<parameter>lsn</> <type>pg_lsn</>)</function></literal>
         </entry>
        <entry><type>text</>, <type>integer</></entry>
-       <entry>Convert transaction log location to file name and decimal byte offset within file</entry>
+       <entry>Convert write-ahead log location to file name and decimal byte offset within file</entry>
       </row>
       <row>
        <entry>
         <literal><function>pg_wal_lsn_diff(<parameter>lsn</> <type>pg_lsn</>, <parameter>lsn</> <type>pg_lsn</>)</function></literal>
        </entry>
        <entry><type>numeric</></entry>
-       <entry>Calculate the difference between two transaction log locations</entry>
+       <entry>Calculate the difference between two write-ahead log locations</entry>
       </row>
      </tbody>
     </tgroup>
@@ -18556,7 +18556,7 @@ SELECT set_config('log_statement_stats', 'off', false);
     backup label file (<filename>backup_label</>) and, if there are any links
     in the <filename>pg_tblspc/</> directory, a tablespace map file
     (<filename>tablespace_map</>) into the database cluster's data directory,
-    performs a checkpoint, and then returns the backup's starting transaction
+    performs a checkpoint, and then returns the backup's starting write-ahead
     log location as text.  The user can ignore this result value, but it is
     provided in case it is useful. When used in non-exclusive mode, the
     contents of these files are instead returned by the
@@ -18592,30 +18592,30 @@ postgres=# select pg_start_backup('label_goes_here');
    </para>
 
    <para>
-    The function also creates a backup history file in the transaction log
+    The function also creates a backup history file in the write-ahead log
     archive area. The history file includes the label given to
-    <function>pg_start_backup</>, the starting and ending transaction log locations for
+    <function>pg_start_backup</>, the starting and ending write-ahead log locations for
     the backup, and the starting and ending times of the backup.  The return
-    value is the backup's ending transaction log location (which again
+    value is the backup's ending write-ahead log location (which again
     can be ignored).  After recording the ending location, the current
-    transaction log insertion
-    point is automatically advanced to the next transaction log file, so that the
-    ending transaction log file can be archived immediately to complete the backup.
+    write-ahead log insertion
+    point is automatically advanced to the next write-ahead log file, so that the
+    ending write-ahead log file can be archived immediately to complete the backup.
    </para>
 
    <para>
-    <function>pg_switch_wal</> moves to the next transaction log file, allowing the
+    <function>pg_switch_wal</> moves to the next write-ahead log file, allowing the
     current file to be archived (assuming you are using continuous archiving).
-    The return value is the ending transaction log location + 1 within the just-completed transaction log file.
-    If there has been no transaction log activity since the last transaction log switch,
+    The return value is the ending write-ahead log location + 1 within the just-completed write-ahead log file.
+    If there has been no write-ahead log activity since the last write-ahead log switch,
     <function>pg_switch_wal</> does nothing and returns the start location
-    of the transaction log file currently in use.
+    of the write-ahead log file currently in use.
    </para>
 
    <para>
-    <function>pg_create_restore_point</> creates a named transaction log
+    <function>pg_create_restore_point</> creates a named write-ahead log
     record that can be used as recovery target, and returns the corresponding
-    transaction log location.  The given name can then be used with
+    write-ahead log location.  The given name can then be used with
     <xref linkend="recovery-target-name"> to specify the point up to which
     recovery will proceed.  Avoid creating multiple restore points with the
     same name, since recovery will stop at the first one whose name matches
@@ -18623,16 +18623,16 @@ postgres=# select pg_start_backup('label_goes_here');
    </para>
 
    <para>
-    <function>pg_current_wal_lsn</> displays the current transaction log write
+    <function>pg_current_wal_lsn</> displays the current write-ahead log write
     location in the same format used by the above functions.  Similarly,
-    <function>pg_current_wal_insert_lsn</> displays the current transaction log
+    <function>pg_current_wal_insert_lsn</> displays the current write-ahead log
     insertion location and <function>pg_current_wal_flush_lsn</> displays the
-    current transaction log flush location. The insertion location is the <quote>logical</>
+    current write-ahead log flush location. The insertion location is the <quote>logical</>
     end of the transaction log at any instant, while the write location is the end of
     what has actually been written out from the server's internal buffers and flush
     location is the location guaranteed to be written to durable storage. The write
     location is the end of what can be examined from outside the server, and is usually
-    what you want if you are interested in archiving partially-complete transaction log
+    what you want if you are interested in archiving partially-complete write-ahead log
     files.  The insertion and flush locations are made available primarily for server
     debugging purposes.  These are both read-only operations and do not
     require superuser permissions.
@@ -18640,7 +18640,7 @@ postgres=# select pg_start_backup('label_goes_here');
 
    <para>
     You can use <function>pg_walfile_name_offset</> to extract the
-    corresponding transaction log file name and byte offset from the results of any of the
+    corresponding write-ahead log file name and byte offset from the results of any of the
     above functions.  For example:
 <programlisting>
 postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
@@ -18649,17 +18649,17 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
  00000001000000000000000D |     4039624
 (1 row)
 </programlisting>
-    Similarly, <function>pg_walfile_name</> extracts just the transaction log file name.
-    When the given transaction log location is exactly at a transaction log file boundary, both
-    these functions return the name of the preceding transaction log file.
-    This is usually the desired behavior for managing transaction log archiving
+    Similarly, <function>pg_walfile_name</> extracts just the write-ahead log file name.
+    When the given write-ahead log location is exactly at a write-ahead log file boundary, both
+    these functions return the name of the preceding write-ahead log file.
+    This is usually the desired behavior for managing write-ahead log archiving
     behavior, since the preceding file is the last one that currently
     needs to be archived.
    </para>
 
    <para>
     <function>pg_wal_lsn_diff</> calculates the difference in bytes
-    between two transaction log locations. It can be used with
+    between two write-ahead log locations. It can be used with
     <structname>pg_stat_replication</structname> or some functions shown in
     <xref linkend="functions-admin-backup-table"> to get the replication lag.
    </para>
@@ -18716,7 +18716,7 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
         <literal><function>pg_last_wal_receive_lsn()</function></literal>
         </entry>
        <entry><type>pg_lsn</type></entry>
-       <entry>Get last transaction log location received and synced to disk by
+       <entry>Get last write-ahead log location received and synced to disk by
         streaming replication. While streaming replication is in progress
         this will increase monotonically. If recovery has completed this will
         remain static at
@@ -18730,7 +18730,7 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
         <literal><function>pg_last_wal_replay_lsn()</function></literal>
         </entry>
        <entry><type>pg_lsn</type></entry>
-       <entry>Get last transaction log location replayed during recovery.
+       <entry>Get last write-ahead log location replayed during recovery.
         If recovery is still in progress this will increase monotonically.
         If recovery has completed then this value will remain static at
         the value of the last WAL record applied during that recovery.

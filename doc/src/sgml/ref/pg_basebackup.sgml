@@ -178,8 +178,8 @@ PostgreSQL documentation
             target directory, the tar contents will be written to
             standard output, suitable for piping to for example
             <productname>gzip</productname>. This is only possible if
-            the cluster has no additional tablespaces and transaction
-            log streaming is not used.
+            the cluster has no additional tablespaces and WAL
+            streaming is not used.
            </para>
            </listitem>
          </varlistentry>
@@ -299,9 +299,9 @@ PostgreSQL documentation
       <term><option>--waldir=<replaceable class="parameter">waldir</replaceable></option></term>
       <listitem>
        <para>
-        Specifies the location for the transaction log directory.
+        Specifies the location for the write-ahead log directory.
         <replaceable>waldir</replaceable> must be an absolute path.
-        The transaction log directory can only be specified when
+        The write-ahead log directory can only be specified when
         the backup is in plain mode.
        </para>
       </listitem>
@@ -312,15 +312,15 @@ PostgreSQL documentation
       <term><option>--wal-method=<replaceable class="parameter">method</replaceable></option></term>
       <listitem>
        <para>
-        Includes the required transaction log files (WAL files) in the
-        backup. This will include all transaction logs generated during
+        Includes the required write-ahead log files (WAL files) in the
+        backup. This will include all write-ahead logs generated during
         the backup. Unless the method <literal>none</literal> is specified,
         it is possible to start a postmaster directly in the extracted
         directory without the need to consult the log archive, thus
         making this a completely standalone backup.
        </para>
        <para>
-        The following methods for collecting the transaction logs are
+        The following methods for collecting the write-ahead logs are
         supported:
 
         <variablelist>
@@ -329,7 +329,7 @@ PostgreSQL documentation
           <term><literal>none</literal></term>
           <listitem>
            <para>
-            Don't include transaction log in the backup.
+            Don't include write-ahead log in the backup.
            </para>
           </listitem>
          </varlistentry>
@@ -339,7 +339,7 @@ PostgreSQL documentation
           <term><literal>fetch</literal></term>
           <listitem>
            <para>
-            The transaction log files are collected at the end of the backup.
+            The write-ahead log files are collected at the end of the backup.
             Therefore, it is necessary for the
             <xref linkend="guc-wal-keep-segments"> parameter to be set high
              enough that the log is not removed before the end of the backup.
@@ -347,7 +347,7 @@ PostgreSQL documentation
              backup will fail and be unusable.
            </para>
            <para>
-            The transaction log files will be written to
+            The write-ahead log files will be written to
             the <filename>base.tar</filename> file.
            </para>
           </listitem>
@@ -358,16 +358,16 @@ PostgreSQL documentation
           <term><literal>stream</literal></term>
           <listitem>
            <para>
-            Stream the transaction log while the backup is created. This will
+            Stream the write-ahead log while the backup is created. This will
             open a second connection to the server and start streaming the
-            transaction log in parallel while running the backup. Therefore,
+            write-ahead log in parallel while running the backup. Therefore,
             it will use up two connections configured by the
             <xref linkend="guc-max-wal-senders"> parameter. As long as the
-             client can keep up with transaction log received, using this mode
-             requires no extra transaction logs to be saved on the master.
+             client can keep up with write-ahead log received, using this mode
+             requires no extra write-ahead logs to be saved on the master.
            </para>
            <para>
-            The transaction log files are written to a separate file
+            The write-ahead log files are written to a separate file
             named <filename>pg_wal.tar</filename> (if the server is a version
             earlier than 10, the file will be named <filename>pg_xlog.tar</filename>).
            </para>
@@ -443,7 +443,7 @@ PostgreSQL documentation
         By default, when <command>pg_basebackup</command> aborts with an
         error, it removes any directories it might have created before
         discovering that it cannot finish the job (for example, data directory
-        and transaction log directory). This option inhibits tidying-up and is
+        and write-ahead log directory). This option inhibits tidying-up and is
         thus useful for debugging.
        </para>
 

@@ -2,7 +2,7 @@
  *
  * xlogutils.c
  *
- * PostgreSQL transaction log manager utility routines
+ * PostgreSQL write-ahead log manager utility routines
  *
  * This file contains support routines that are used by XLOG replay functions.
  * None of this code is used during normal system operation.

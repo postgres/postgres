@@ -434,7 +434,7 @@ main(int argc, char *argv[])
 	if (ControlFile.state != DB_SHUTDOWNED && !force)
 	{
 		printf(_("The database server was not shut down cleanly.\n"
-			   "Resetting the transaction log might cause data to be lost.\n"
+			   "Resetting the write-ahead log might cause data to be lost.\n"
 				 "If you want to proceed anyway, use -f to force reset.\n"));
 		exit(1);
 	}
@@ -447,7 +447,7 @@ main(int argc, char *argv[])
 	KillExistingArchiveStatus();
 	WriteEmptyXLOG();
 
-	printf(_("Transaction log reset\n"));
+	printf(_("Write-ahead log reset\n"));
 	return 0;
 }
 
@@ -1159,7 +1159,7 @@ WriteEmptyXLOG(void)
 static void
 usage(void)
 {
-	printf(_("%s resets the PostgreSQL transaction log.\n\n"), progname);
+	printf(_("%s resets the PostgreSQL write-ahead log.\n\n"), progname);
 	printf(_("Usage:\n  %s [OPTION]... DATADIR\n\n"), progname);
 	printf(_("Options:\n"));
 	printf(_("  -c XID,XID       set oldest and newest transactions bearing commit timestamp\n"));
@@ -1167,7 +1167,7 @@ usage(void)
 	printf(_(" [-D] DATADIR      data directory\n"));
 	printf(_("  -e XIDEPOCH      set next transaction ID epoch\n"));
 	printf(_("  -f               force update to be done\n"));
-	printf(_("  -l XLOGFILE      force minimum WAL starting location for new transaction log\n"));
+	printf(_("  -l WALFILE       force minimum WAL starting location for new write-ahead log\n"));
 	printf(_("  -m MXID,MXID     set next and oldest multitransaction ID\n"));
 	printf(_("  -n               no update, just show what would be done (for testing)\n"));
 	printf(_("  -o OID           set next OID\n"));

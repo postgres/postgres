@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * receivelog.c - receive transaction log files using the streaming
+ * receivelog.c - receive WAL files using the streaming
  *				  replication protocol.
  *
  * Author: Magnus Hagander <magnus@hagander.net>
@@ -116,7 +116,7 @@ open_walfile(StreamCtl *stream, XLogRecPtr startpoint)
 		if (size < 0)
 		{
 			fprintf(stderr,
-			_("%s: could not get size of transaction log file \"%s\": %s\n"),
+			_("%s: could not get size of write-ahead log file \"%s\": %s\n"),
 					progname, fn, stream->walmethod->getlasterror());
 			return false;
 		}
@@ -127,7 +127,7 @@ open_walfile(StreamCtl *stream, XLogRecPtr startpoint)
 			if (f == NULL)
 			{
 				fprintf(stderr,
-						_("%s: could not open existing transaction log file \"%s\": %s\n"),
+						_("%s: could not open existing write-ahead log file \"%s\": %s\n"),
 						progname, fn, stream->walmethod->getlasterror());
 				return false;
 			}
@@ -136,7 +136,7 @@ open_walfile(StreamCtl *stream, XLogRecPtr startpoint)
 			if (stream->walmethod->sync(f) != 0)
 			{
 				fprintf(stderr,
-						_("%s: could not sync existing transaction log file \"%s\": %s\n"),
+						_("%s: could not sync existing write-ahead log file \"%s\": %s\n"),
 						progname, fn, stream->walmethod->getlasterror());
 				stream->walmethod->close(f, CLOSE_UNLINK);
 				return false;
@@ -151,7 +151,7 @@ open_walfile(StreamCtl *stream, XLogRecPtr startpoint)
 			if (errno == 0)
 				errno = ENOSPC;
 			fprintf(stderr,
-					_("%s: transaction log file \"%s\" has %d bytes, should be 0 or %d\n"),
+					_("%s: write-ahead log file \"%s\" has %d bytes, should be 0 or %d\n"),
 					progname, fn, (int) size, XLogSegSize);
 			return false;
 		}
@@ -164,7 +164,7 @@ open_walfile(StreamCtl *stream, XLogRecPtr startpoint)
 	if (f == NULL)
 	{
 		fprintf(stderr,
-				_("%s: could not open transaction log file \"%s\": %s\n"),
+				_("%s: could not open write-ahead log file \"%s\": %s\n"),
 				progname, fn, stream->walmethod->getlasterror());
 		return false;
 	}
@@ -1121,7 +1121,7 @@ ProcessXLogDataMsg(PGconn *conn, StreamCtl *stream, char *copybuf, int len,
 		if (xlogoff != 0)
 		{
 			fprintf(stderr,
-					_("%s: received transaction log record for offset %u with no file open\n"),
+					_("%s: received write-ahead log record for offset %u with no file open\n"),
 					progname, xlogoff);
 			return false;
 		}

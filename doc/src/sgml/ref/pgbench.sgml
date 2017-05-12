@@ -614,7 +614,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
       <term><option>--log-prefix=<replaceable>prefix</></option></term>
       <listitem>
        <para>
-        Set the filename prefix for the transaction log files created by
+        Set the filename prefix for the log files created by
         <option>--log</>.  The default is <literal>pgbench_log</>.
        </para>
       </listitem>

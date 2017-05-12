@@ -16,7 +16,7 @@ PostgreSQL documentation
 
  <refnamediv>
   <refname>pg_receivewal</refname>
-  <refpurpose>stream transaction logs from a <productname>PostgreSQL</productname> server</refpurpose>
+  <refpurpose>stream write-ahead logs from a <productname>PostgreSQL</productname> server</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
@@ -31,8 +31,8 @@ PostgreSQL documentation
    Description
   </title>
   <para>
-   <application>pg_receivewal</application> is used to stream the transaction log
-   from a running <productname>PostgreSQL</productname> cluster. The transaction
+   <application>pg_receivewal</application> is used to stream the write-ahead log
+   from a running <productname>PostgreSQL</productname> cluster. The write-ahead
    log is streamed using the streaming replication protocol, and is written
    to a local directory of files. This directory can be used as the archive
    location for doing a restore using point-in-time recovery (see
@@ -40,7 +40,7 @@ PostgreSQL documentation
   </para>
 
   <para>
-   <application>pg_receivewal</application> streams the transaction
+   <application>pg_receivewal</application> streams the write-ahead
    log in real time as it's being generated on the server, and does not wait
    for segments to complete like <xref linkend="guc-archive-command"> does.
    For this reason, it is not necessary to set
@@ -56,7 +56,7 @@ PostgreSQL documentation
   </para>
 
   <para>
-   The transaction log is streamed over a regular
+   The write-ahead log is streamed over a regular
    <productname>PostgreSQL</productname> connection and uses the replication
    protocol. The connection must be made with a superuser or a user
    having <literal>REPLICATION</literal> permissions (see
@@ -186,7 +186,7 @@ PostgreSQL documentation
       <term><option>--compress=<replaceable class="parameter">level</replaceable></option></term>
       <listitem>
        <para>
-        Enables gzip compression of transaction logs, and specifies the
+        Enables gzip compression of write-ahead logs, and specifies the
         compression level (0 through 9, 0 being no compression and 9 being best
         compression).  The suffix <filename>.gz</filename> will
         automatically be added to all filenames.
@@ -366,7 +366,7 @@ PostgreSQL documentation
    When using <application>pg_receivewal</application> instead of
    <xref linkend="guc-archive-command"> as the main WAL backup method, it is
    strongly recommended to use replication slots.  Otherwise, the server is
-   free to recycle or remove transaction log files before they are backed up,
+   free to recycle or remove write-ahead log files before they are backed up,
    because it does not have any information, either
    from <xref linkend="guc-archive-command"> or the replication slots, about
    how far the WAL stream has been archived.  Note, however, that a
@@ -380,7 +380,7 @@ PostgreSQL documentation
   <title>Examples</title>
 
   <para>
-   To stream the transaction log from the server at
+   To stream the write-ahead log from the server at
    <literal>mydbserver</literal> and store it in the local directory
    <filename>/usr/local/pgsql/archive</filename>:
 <screen>
