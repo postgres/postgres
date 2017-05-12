@@ -3004,6 +3004,26 @@ getObjectDescription(const ObjectAddress *object)
 				break;
 			}
 
+		case OCLASS_STATISTIC_EXT:
+			{
+				HeapTuple	stxTup;
+				Form_pg_statistic_ext stxForm;
+
+				stxTup = SearchSysCache1(STATEXTOID,
+										 ObjectIdGetDatum(object->objectId));
+				if (!HeapTupleIsValid(stxTup))
+					elog(ERROR, "could not find tuple for statistics object %u",
+						 object->objectId);
+
+				stxForm = (Form_pg_statistic_ext) GETSTRUCT(stxTup);
+
+				appendStringInfo(&buffer, _("statistics object %s"),
+								 NameStr(stxForm->stxname));
+
+				ReleaseSysCache(stxTup);
+				break;
+			}
+
 		case OCLASS_TRANSFORM:
 			{
 				HeapTuple	trfTup;
@@ -3394,13 +3414,6 @@ getObjectDescription(const ObjectAddress *object)
 								 get_subscription_name(object->objectId));
 				break;
 			}
-
-		default:
-			appendStringInfo(&buffer, "unrecognized object %u %u %d",
-							 object->classId,
-							 object->objectId,
-							 object->objectSubId);
-			break;
 	}
 
 	return buffer.data;
