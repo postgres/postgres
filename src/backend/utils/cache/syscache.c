@@ -1339,6 +1339,27 @@ SearchSysCacheList(int cacheId, int nkeys,
 }
 
 /*
+ * SysCacheInvalidate
+ *
+ *	Invalidate entries in the specified cache, given a hash value.
+ *	See CatCacheInvalidate() for more info.
+ *
+ *	This routine is only quasi-public: it should only be used by inval.c.
+ */
+void
+SysCacheInvalidate(int cacheId, uint32 hashValue)
+{
+	if (cacheId < 0 || cacheId >= SysCacheSize)
+		elog(ERROR, "invalid cache ID: %d", cacheId);
+
+	/* if this cache isn't initialized yet, no need to do anything */
+	if (!PointerIsValid(SysCache[cacheId]))
+		return;
+
+	CatCacheInvalidate(SysCache[cacheId], hashValue);
+}
+
+/*
  * Certain relations that do not have system caches send snapshot invalidation
  * messages in lieu of catcache messages.  This is for the benefit of
  * GetCatalogSnapshot(), which can then reuse its existing MVCC snapshot
