@@ -18628,7 +18628,7 @@ postgres=# select pg_start_backup('label_goes_here');
     <function>pg_current_wal_insert_lsn</> displays the current write-ahead log
     insertion location and <function>pg_current_wal_flush_lsn</> displays the
     current write-ahead log flush location. The insertion location is the <quote>logical</>
-    end of the transaction log at any instant, while the write location is the end of
+    end of the write-ahead log at any instant, while the write location is the end of
     what has actually been written out from the server's internal buffers and flush
     location is the location guaranteed to be written to durable storage. The write
     location is the end of what can be examined from outside the server, and is usually
