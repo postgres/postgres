@@ -23,17 +23,8 @@ PostgreSQL documentation
 <synopsis>
 CREATE SUBSCRIPTION <replaceable class="PARAMETER">subscription_name</replaceable>
     CONNECTION '<replaceable class="PARAMETER">conninfo</replaceable>'
-    PUBLICATION { <replaceable class="PARAMETER">publication_name</replaceable> [, ...] }
-    [ WITH ( <replaceable class="PARAMETER">option</replaceable> [, ... ] ) ]
-
-<phrase>where <replaceable class="PARAMETER">option</replaceable> can be:</phrase>
-
-    | ENABLED | DISABLED
-    | CREATE SLOT | NOCREATE SLOT
-    | SLOT NAME = <replaceable class="PARAMETER">slot_name</replaceable>
-    | COPY DATA | NOCOPY DATA
-    | SYNCHRONOUS_COMMIT = <replaceable class="PARAMETER">synchronous_commit</replaceable>
-    | NOCONNECT
+    PUBLICATION <replaceable class="PARAMETER">publication_name</replaceable> [, ...]
+    [ WITH ( <replaceable class="parameter">subscription_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] ) ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -59,7 +50,7 @@ CREATE SUBSCRIPTION <replaceable class="PARAMETER">subscription_name</replaceabl
 
   <para>
    <command>CREATE SUBSCRIPTION</command> cannot be executed inside a
-   transaction block when <literal>CREATE SLOT</literal> is specified.
+   transaction block when the parameter <literal>create_slot</literal> is specified.
   </para>
 
   <para>
@@ -97,116 +88,129 @@ CREATE SUBSCRIPTION <replaceable class="PARAMETER">subscription_name</replaceabl
     <term><literal>PUBLICATION <replaceable class="parameter">publication_name</replaceable></literal></term>
     <listitem>
      <para>
-      Name(s) of the publications on the publisher to subscribe to.
+      Names of the publications on the publisher to subscribe to.
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term><literal>ENABLED</literal></term>
-    <term><literal>DISABLED</literal></term>
+    <term><literal>WITH ( <replaceable class="parameter">subscription_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] )</literal></term>
     <listitem>
      <para>
-      Specifies whether the subscription should be actively replicating or
-      if it should be just setup but not started yet.  Note that the
-      replication slot as described above is created in either case.
-      <literal>ENABLED</literal> is the default.
-     </para>
-    </listitem>
-   </varlistentry>
+      This clause specifies optional parameters for a subscription.  The
+      following parameters are supported:
 
-   <varlistentry>
-    <term><literal>CREATE SLOT</literal></term>
-    <term><literal>NOCREATE SLOT</literal></term>
-    <listitem>
-     <para>
-      Specifies whether the command should create the replication slot on the
-      publisher. <literal>CREATE SLOT</literal> is the default.
-     </para>
-    </listitem>
-   </varlistentry>
+      <variablelist>
+       <varlistentry>
+        <term><literal>copy_data</literal> (<type>boolean</type>)</term>
+        <listitem>
+         <para>
+          Specifies whether the existing data in the publications that are
+          being subscribed to should be copied once the replication starts.
+          The default is <literal>true</literal>.
+         </para>
+        </listitem>
+       </varlistentry>
 
-   <varlistentry>
-    <term><literal>SLOT NAME = <replaceable class="parameter">slot_name</replaceable></literal></term>
-    <listitem>
-     <para>
-      Name of the replication slot to use. The default behavior is to use
-      <literal>subscription_name</> for slot name.
-     </para>
+       <varlistentry>
+        <term><literal>create_slot</literal> (<type>boolean</type>)</term>
+        <listitem>
+         <para>
+          Specifies whether the command should create the replication slot on
+          the publisher.  The default is <literal>true</literal>.
+         </para>
+        </listitem>
+       </varlistentry>
 
-     <para>
-      When <literal>SLOT NAME</literal> is set to
-      <literal>NONE</literal>, there will be no replication slot associated
-      with the subscription.  This can be used if the replication slot will be
-      created later manually.  Such subscriptions must also have both
-      <literal>ENABLED</literal> and <literal>CREATE SLOT</literal> set
-      to <literal>false</literal>.
-     </para>
-    </listitem>
-   </varlistentry>
+       <varlistentry>
+        <term><literal>enabled</literal> (<type>boolean</type>)</term>
+        <listitem>
+         <para>
+          Specifies whether the subscription should be actively replicating,
+          or whether it should be just setup but not started yet.  The default
+          is <literal>true</literal>.
+         </para>
+        </listitem>
+       </varlistentry>
 
-   <varlistentry>
-    <term><literal>COPY DATA</literal></term>
-    <term><literal>NOCOPY DATA</literal></term>
-    <listitem>
-     <para>
-      Specifies if the existing data in the publications that are being
-      subscribed to should be copied once the replication starts.
-      <literal>COPY DATA</literal> is the default.
-     </para>
-    </listitem>
-   </varlistentry>
+       <varlistentry>
+        <term><literal>slot_name</literal> (<type>string</type>)</term>
+        <listitem>
+         <para>
+          Name of the replication slot to use.  The default behavior is to
+          use the name of the subscription for the slot name.
+         </para>
 
-   <varlistentry>
-    <term><literal>SYNCHRONOUS_COMMIT = <replaceable class="PARAMETER">synchronous_commit</replaceable></literal></term>
-    <listitem>
-     <para>
-      The value of this parameter overrides the
-      <xref linkend="guc-synchronous-commit"> setting.  The default value is
-      <literal>off</literal>.
-     </para>
+         <para>
+          When <literal>slot_name</literal> is set to
+          <literal>NONE</literal>, there will be no replication slot
+          associated with the subscription.  This can be used if the
+          replication slot will be created later manually.  Such
+          subscriptions must also have both <literal>enabled</literal> and
+          <literal>create_slot</literal> set to <literal>false</literal>.
+         </para>
+        </listitem>
+       </varlistentry>
 
-     <para>
-      It is safe to use <literal>off</literal> for logical replication: If the
-      subscriber loses transactions because of missing synchronization, the
-      data will be resent from the publisher.
-     </para>
+       <varlistentry>
+        <term><literal>synchronous_commit</literal> (<type>enum</type>)</term>
+        <listitem>
+         <para>
+          The value of this parameter overrides the
+          <xref linkend="guc-synchronous-commit"> setting.  The default
+          value is <literal>off</literal>.
+         </para>
 
-     <para>
-      A different setting might be appropriate when doing synchronous logical
-      replication.  The logical replication workers report the positions of
-      writes and flushes to the publisher, and when using synchronous
-      replication, the publisher will wait for the actual flush.  This means
-      that setting <literal>SYNCHRONOUS_COMMIT</literal> for the subscriber
-      to <literal>off</literal> when the subscription is used for synchronous
-      replication might increase the latency for <command>COMMIT</command> on
-      the publisher.  In this scenario, it can be advantageous to set
-      <literal>SYNCHRONOUS_COMMIT</literal> to <literal>local</literal> or
-      higher.
-     </para>
-    </listitem>
-   </varlistentry>
+         <para>
+          It is safe to use <literal>off</literal> for logical replication:
+          If the subscriber loses transactions because of missing
+          synchronization, the data will be resent from the publisher.
+         </para>
 
-   <varlistentry>
-    <term><literal>NOCONNECT</literal></term>
-    <listitem>
-     <para>
-      Instructs <command>CREATE SUBSCRIPTION</command> to skip the initial
-      connection to the provider. This will change default values of other
-      options to <literal>DISABLED</literal>,
-      <literal>NOCREATE SLOT</literal>, and <literal>NOCOPY DATA</literal>.
-     </para>
-     <para>
-      It's not allowed to combine <literal>NOCONNECT</literal> and
-      <literal>ENABLED</literal>, <literal>CREATE SLOT</literal>, or
-      <literal>COPY DATA</literal>.
-     </para>
-     <para>
-      Since no connection is made when this option is specified, the tables
-      are not subscribed, so after you enable the subscription nothing will
-      be replicated. It is required to run
-      <literal>ALTER SUBSCRIPTION ... REFRESH PUBLICATION</> in order for
-      tables to be subscribed.
+         <para>
+          A different setting might be appropriate when doing synchronous
+          logical replication.  The logical replication workers report the
+          positions of writes and flushes to the publisher, and when using
+          synchronous replication, the publisher will wait for the actual
+          flush.  This means that setting
+          <literal>synchronous_commit</literal> for the subscriber to
+          <literal>off</literal> when the subscription is used for
+          synchronous replication might increase the latency for
+          <command>COMMIT</command> on the publisher.  In this scenario, it
+          can be advantageous to set <literal>synchronous_commit</literal>
+          to <literal>local</literal> or higher.
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry>
+        <term><literal>connect</literal> (<type>boolean</type>)</term>
+        <listitem>
+         <para>
+          Specifies whether the <command>CREATE SUBSCRIPTION</command>
+          should connect to the publisher at all.  Setting this to
+          <literal>false</literal> will change default values of
+          <literal>enabled</literal>, <literal>create_slot</literal> and
+          <literal>copy_data</literal> to <literal>false</literal>.
+         </para>
+
+         <para>
+          It is not allowed to combine <literal>connect</literal> set to
+          <literal>false</literal> and <literal>enabled</literal>,
+          <literal>create_slot</literal>, or <literal>copy_data</literal>
+          set to <literal>true</literal>.
+         </para>
+
+         <para>
+          Since no connection is made when this option is specified, the
+          tables are not subscribed, and so after you enable the subscription
+          nothing will be replicated.  It is required to run
+          <literal>ALTER SUBSCRIPTION ... REFRESH PUBLICATION</> in order
+          for tables to be subscribed.
+         </para>
+        </listitem>
+       </varlistentry>
+      </variablelist>
      </para>
     </listitem>
    </varlistentry>
@@ -246,7 +250,7 @@ CREATE SUBSCRIPTION mysub
 CREATE SUBSCRIPTION mysub
          CONNECTION 'host=192.168.1.50 port=5432 user=foo dbname=foodb'
         PUBLICATION insert_only
-               WITH (DISABLED);
+               WITH (enabled = false);
 </programlisting>
   </para>
  </refsect1>

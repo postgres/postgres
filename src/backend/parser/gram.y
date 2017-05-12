@@ -338,7 +338,6 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 				database_name access_method_clause access_method attr_name
 				name cursor_name file_name
 				index_name opt_index_name cluster_index_specification
-				def_key
 
 %type <list>	func_name handler_name qual_Op qual_all_Op subquery_Op
 				opt_class opt_inline_handler opt_validator validator_clause
@@ -652,7 +651,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 	MAPPING MATCH MATERIALIZED MAXVALUE METHOD MINUTE_P MINVALUE MODE MONTH_P MOVE
 
 	NAME_P NAMES NATIONAL NATURAL NCHAR NEW NEXT NO NONE
-	NOREFRESH NOT NOTHING NOTIFY NOTNULL NOWAIT NULL_P NULLIF
+	NOT NOTHING NOTIFY NOTNULL NOWAIT NULL_P NULLIF
 	NULLS_P NUMERIC
 
 	OBJECT_P OF OFF OFFSET OIDS OLD ON ONLY OPERATOR OPTION OPTIONS OR
@@ -5673,19 +5672,14 @@ def_list:	def_elem								{ $$ = list_make1($1); }
 			| def_list ',' def_elem					{ $$ = lappend($1, $3); }
 		;
 
-def_elem:	def_key '=' def_arg
+def_elem:	ColLabel '=' def_arg
 				{
 					$$ = makeDefElem($1, (Node *) $3, @1);
 				}
-			| def_key
+			| ColLabel
 				{
 					$$ = makeDefElem($1, NULL, @1);
 				}
-		;
-
-def_key:
-			ColLabel						{ $$ = $1; }
-			| ColLabel ColLabel				{ $$ = psprintf("%s %s", $1, $2); }
 		;
 
 /* Note: any simple identifier will be returned as a type name! */
@@ -9173,9 +9167,10 @@ publication_for_tables:
 				}
 		;
 
+
 /*****************************************************************************
  *
- * ALTER PUBLICATION name [ WITH ] options
+ * ALTER PUBLICATION name SET ( options )
  *
  * ALTER PUBLICATION name ADD TABLE table [, table2]
  *
@@ -9186,7 +9181,7 @@ publication_for_tables:
  *****************************************************************************/
 
 AlterPublicationStmt:
-			ALTER PUBLICATION name WITH definition
+			ALTER PUBLICATION name SET definition
 				{
 					AlterPublicationStmt *n = makeNode(AlterPublicationStmt);
 					n->pubname = $3;
@@ -9254,12 +9249,12 @@ publication_name_item:
 
 /*****************************************************************************
  *
- * ALTER SUBSCRIPTION name [ WITH ] options
+ * ALTER SUBSCRIPTION name ...
  *
  *****************************************************************************/
 
 AlterSubscriptionStmt:
-			ALTER SUBSCRIPTION name WITH definition
+			ALTER SUBSCRIPTION name SET definition
 				{
 					AlterSubscriptionStmt *n =
 						makeNode(AlterSubscriptionStmt);
@@ -9296,7 +9291,7 @@ AlterSubscriptionStmt:
 					n->options = $8;
 					$$ = (Node *)n;
 				}
-			| ALTER SUBSCRIPTION name SET PUBLICATION publication_name_list NOREFRESH
+			| ALTER SUBSCRIPTION name SET PUBLICATION publication_name_list SKIP REFRESH
 				{
 					AlterSubscriptionStmt *n =
 						makeNode(AlterSubscriptionStmt);
@@ -14758,7 +14753,6 @@ unreserved_keyword:
 			| NEW
 			| NEXT
 			| NO
-			| NOREFRESH
 			| NOTHING
 			| NOTIFY
 			| NOWAIT

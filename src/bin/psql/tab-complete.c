@@ -1504,28 +1504,27 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH_LIST6("WITH (", "ADD TABLE", "SET TABLE", "DROP TABLE",
 							"OWNER TO", "RENAME TO");
 	}
-	/* ALTER PUBLICATION <name> .. WITH ( ... */
-	else if (HeadMatches3("ALTER", "PUBLICATION",MatchAny) && TailMatches2("WITH", "("))
+	/* ALTER PUBLICATION <name> .. SET ( ... */
+	else if (HeadMatches3("ALTER", "PUBLICATION",MatchAny) && TailMatches2("SET", "("))
 	{
-		COMPLETE_WITH_LIST6("PUBLISH INSERT", "NOPUBLISH INSERT", "PUBLISH UPDATE",
-							"NOPUBLISH UPDATE", "PUBLISH DELETE", "NOPUBLISH DELETE");
+		COMPLETE_WITH_CONST("publish");
 	}
 	/* ALTER SUBSCRIPTION <name> ... */
 	else if (Matches3("ALTER","SUBSCRIPTION",MatchAny))
 	{
-		COMPLETE_WITH_LIST8("WITH (", "CONNECTION", "SET PUBLICATION", "ENABLE",
+		COMPLETE_WITH_LIST8("SET (", "CONNECTION", "SET PUBLICATION", "ENABLE",
 							"DISABLE", "OWNER TO", "RENAME TO", "REFRESH PUBLICATION WITH (");
 	}
 	/* ALTER SUBSCRIPTION <name> REFRESH PUBLICATION WITH ( ... */
 	else if (HeadMatches3("ALTER", "SUBSCRIPTION", MatchAny) &&
 			 TailMatches4("REFRESH", "PUBLICATION", "WITH", "("))
 	{
-		COMPLETE_WITH_LIST2("COPY DATA", "NOCOPY DATA");
+		COMPLETE_WITH_CONST("copy_data");
 	}
-	/* ALTER SUBSCRIPTION <name> .. WITH ( ... */
-	else if (HeadMatches3("ALTER", "SUBSCRIPTION", MatchAny) && TailMatches2("WITH", "("))
+	/* ALTER SUBSCRIPTION <name> .. SET ( ... */
+	else if (HeadMatches3("ALTER", "SUBSCRIPTION", MatchAny) && TailMatches2("SET", "("))
 	{
-		COMPLETE_WITH_CONST("SLOT NAME");
+		COMPLETE_WITH_CONST("slot_name");
 	}
 	/* ALTER SCHEMA <name> */
 	else if (Matches3("ALTER", "SCHEMA", MatchAny))
@@ -2349,9 +2348,7 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables, NULL);
 	/* Complete "CREATE PUBLICATION <name> [...] WITH" */
 	else if (HeadMatches2("CREATE", "PUBLICATION") && TailMatches2("WITH", "("))
-		COMPLETE_WITH_LIST2("PUBLISH", "NOPUBLISH");
-	else if (HeadMatches2("CREATE", "PUBLICATION") && TailMatches3("WITH", "(", MatchAny))
-		COMPLETE_WITH_LIST3("INSERT", "UPDATE", "DELETE");
+		COMPLETE_WITH_CONST("publish");
 
 /* CREATE RULE */
 	/* Complete "CREATE RULE <sth>" with "AS ON" */
@@ -2427,9 +2424,8 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH_CONST("WITH (");
 	/* Complete "CREATE SUBSCRIPTION <name> ...  WITH ( <opt>" */
 	else if (HeadMatches2("CREATE", "SUBSCRIPTION") && TailMatches2("WITH", "("))
-		COMPLETE_WITH_LIST8("ENABLED", "DISABLED", "CREATE SLOT",
-							"NOCREATE SLOT", "SLOT NAME", "COPY DATA", "NOCOPY DATA",
-							"NOCONNECT");
+		COMPLETE_WITH_LIST5("enabled", "create_slot", "slot_name",
+							"copy_data", "connect");
 
 /* CREATE TRIGGER --- is allowed inside CREATE SCHEMA, so use TailMatches */
 	/* complete CREATE TRIGGER <name> with BEFORE,AFTER,INSTEAD OF */

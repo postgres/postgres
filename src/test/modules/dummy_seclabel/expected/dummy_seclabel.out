@@ -69,7 +69,7 @@ CREATE SCHEMA dummy_seclabel_test;
 SECURITY LABEL ON SCHEMA dummy_seclabel_test IS 'unclassified';		-- OK
 SET client_min_messages = error;
 CREATE PUBLICATION dummy_pub;
-CREATE SUBSCRIPTION dummy_sub CONNECTION '' PUBLICATION foo WITH (NOCONNECT, SLOT NAME = NONE);
+CREATE SUBSCRIPTION dummy_sub CONNECTION '' PUBLICATION foo WITH (connect = false, slot_name = NONE);
 RESET client_min_messages;
 SECURITY LABEL ON PUBLICATION dummy_pub IS 'classified';
 SECURITY LABEL ON SUBSCRIPTION dummy_sub IS 'classified';

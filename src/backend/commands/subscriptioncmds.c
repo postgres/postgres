@@ -93,7 +93,7 @@ parse_subscription_options(List *options, bool *connect, bool *enabled_given,
 	{
 		DefElem    *defel = (DefElem *) lfirst(lc);
 
-		if (strcmp(defel->defname, "noconnect") == 0 && connect)
+		if (strcmp(defel->defname, "connect") == 0 && connect)
 		{
 			if (connect_given)
 				ereport(ERROR,
@@ -101,7 +101,7 @@ parse_subscription_options(List *options, bool *connect, bool *enabled_given,
 						 errmsg("conflicting or redundant options")));
 
 			connect_given = true;
-			*connect = !defGetBoolean(defel);
+			*connect = defGetBoolean(defel);
 		}
 		else if (strcmp(defel->defname, "enabled") == 0 && enabled)
 		{
@@ -113,17 +113,7 @@ parse_subscription_options(List *options, bool *connect, bool *enabled_given,
 			*enabled_given = true;
 			*enabled = defGetBoolean(defel);
 		}
-		else if (strcmp(defel->defname, "disabled") == 0 && enabled)
-		{
-			if (*enabled_given)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options")));
-
-			*enabled_given = true;
-			*enabled = !defGetBoolean(defel);
-		}
-		else if (strcmp(defel->defname, "create slot") == 0 && create_slot)
+		else if (strcmp(defel->defname, "create_slot") == 0 && create_slot)
 		{
 			if (create_slot_given)
 				ereport(ERROR,
@@ -133,17 +123,7 @@ parse_subscription_options(List *options, bool *connect, bool *enabled_given,
 			create_slot_given = true;
 			*create_slot = defGetBoolean(defel);
 		}
-		else if (strcmp(defel->defname, "nocreate slot") == 0 && create_slot)
-		{
-			if (create_slot_given)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options")));
-
-			create_slot_given = true;
-			*create_slot = !defGetBoolean(defel);
-		}
-		else if (strcmp(defel->defname, "slot name") == 0 && slot_name)
+		else if (strcmp(defel->defname, "slot_name") == 0 && slot_name)
 		{
 			if (*slot_name_given)
 				ereport(ERROR,
@@ -157,7 +137,7 @@ parse_subscription_options(List *options, bool *connect, bool *enabled_given,
 			if (strcmp(*slot_name, "none") == 0)
 				*slot_name = NULL;
 		}
-		else if (strcmp(defel->defname, "copy data") == 0 && copy_data)
+		else if (strcmp(defel->defname, "copy_data") == 0 && copy_data)
 		{
 			if (copy_data_given)
 				ereport(ERROR,
@@ -166,16 +146,6 @@ parse_subscription_options(List *options, bool *connect, bool *enabled_given,
 
 			copy_data_given = true;
 			*copy_data = defGetBoolean(defel);
-		}
-		else if (strcmp(defel->defname, "nocopy data") == 0 && copy_data)
-		{
-			if (copy_data_given)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options")));
-
-			copy_data_given = true;
-			*copy_data = !defGetBoolean(defel);
 		}
 		else if (strcmp(defel->defname, "synchronous_commit") == 0 &&
 				 synchronous_commit)
@@ -336,7 +306,7 @@ CreateSubscription(CreateSubscriptionStmt *stmt, bool isTopLevel)
 	 * replication slot.
 	 */
 	if (create_slot)
-		PreventTransactionChain(isTopLevel, "CREATE SUBSCRIPTION ... CREATE SLOT");
+		PreventTransactionChain(isTopLevel, "CREATE SUBSCRIPTION ... WITH (create_slot = true)");
 
 	if (!superuser())
 		ereport(ERROR,

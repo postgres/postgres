@@ -11,13 +11,17 @@ CREATE PUBLICATION testpub_default;
 COMMENT ON PUBLICATION testpub_default IS 'test publication';
 SELECT obj_description(p.oid, 'pg_publication') FROM pg_publication p;
 
-CREATE PUBLICATION testpib_ins_trunct WITH (nopublish delete, nopublish update);
+CREATE PUBLICATION testpib_ins_trunct WITH (publish = insert);
 
-ALTER PUBLICATION testpub_default WITH (nopublish insert, nopublish delete);
+ALTER PUBLICATION testpub_default SET (publish = update);
+
+-- error cases
+CREATE PUBLICATION testpub_xxx WITH (foo);
+CREATE PUBLICATION testpub_xxx WITH (publish = 'cluster, vacuum');
 
 \dRp
 
-ALTER PUBLICATION testpub_default WITH (publish insert, publish delete);
+ALTER PUBLICATION testpub_default SET (publish = 'insert, update, delete');
 
 \dRp
 
@@ -28,8 +32,8 @@ CREATE TABLE pub_test.testpub_nopk (foo int, bar int);
 CREATE VIEW testpub_view AS SELECT 1;
 CREATE TABLE testpub_parted (a int) PARTITION BY LIST (a);
 
-CREATE PUBLICATION testpub_foralltables FOR ALL TABLES WITH (nopublish delete, nopublish update);
-ALTER PUBLICATION testpub_foralltables WITH (publish update);
+CREATE PUBLICATION testpub_foralltables FOR ALL TABLES WITH (publish = 'insert');
+ALTER PUBLICATION testpub_foralltables SET (publish = 'insert, update');
 
 CREATE TABLE testpub_tbl2 (id serial primary key, data text);
 -- fail - can't add to for all tables publication

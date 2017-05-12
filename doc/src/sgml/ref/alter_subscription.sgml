@@ -21,23 +21,12 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> WITH ( <replaceable class="PARAMETER">suboption</replaceable> [, ... ] )
-
-<phrase>where <replaceable class="PARAMETER">suboption</replaceable> can be:</phrase>
-
-    SLOT NAME = <replaceable class="PARAMETER">slot_name</replaceable>
-    | SYNCHRONOUS_COMMIT = <replaceable class="PARAMETER">synchronous_commit</replaceable>
-
-ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> SET PUBLICATION <replaceable class="PARAMETER">publication_name</replaceable> [, ...] { REFRESH WITH ( <replaceable class="PARAMETER">puboption</replaceable> [, ... ] ) | NOREFRESH }
-ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> REFRESH PUBLICATION [ WITH ( <replaceable class="PARAMETER">puboption</replaceable> [, ... ] ) ]
-
-<phrase>where <replaceable class="PARAMETER">puboption</replaceable> can be:</phrase>
-
-    COPY DATA | NOCOPY DATA
-
 ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> CONNECTION '<replaceable>conninfo</replaceable>'
+ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> SET PUBLICATION <replaceable class="PARAMETER">publication_name</replaceable> [, ...] { REFRESH [ WITH ( <replaceable class="PARAMETER">refresh_option</replaceable> <replaceable class="PARAMETER">value</replaceable> [, ... ] ) ] | SKIP REFRESH }
+ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> REFRESH PUBLICATION [ WITH ( <replaceable class="PARAMETER">refresh_option</replaceable> <replaceable class="PARAMETER">value</replaceable> [, ... ] ) ]
 ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> ENABLE
 ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> DISABLE
+ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> SET ( <replaceable class="parameter">subscription_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] )
 ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> OWNER TO { <replaceable>new_owner</replaceable> | CURRENT_USER | SESSION_USER }
 ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable>new_name</replaceable>
 </synopsis>
@@ -73,11 +62,9 @@ ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> RENAME TO <
 
    <varlistentry>
     <term><literal>CONNECTION '<replaceable class="parameter">conninfo</replaceable>'</literal></term>
-    <term><literal>SLOT NAME = <replaceable class="parameter">slot_name</replaceable></literal></term>
-    <term><literal>SYNCHRONOUS_COMMIT = <replaceable class="PARAMETER">synchronous_commit</replaceable></literal></term>
     <listitem>
      <para>
-      These clauses alter properties originally set by
+      This clause alters the connection property originally set by
       <xref linkend="SQL-CREATESUBSCRIPTION">.  See there for more
       information.
      </para>
@@ -91,11 +78,17 @@ ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> RENAME TO <
       Changes list of subscribed publications. See
       <xref linkend="SQL-CREATESUBSCRIPTION"> for more information.
      </para>
+
      <para>
-      When <literal>REFRESH</literal> is specified, this command will also
-      act like <literal>REFRESH PUBLICATION</literal>. When
-      <literal>NOREFRESH</literal> is specified, the comamnd will not try to
-      refresh table information.
+      When <literal>REFRESH</literal> is specified, this command will also act
+      like <literal>REFRESH
+      PUBLICATION</literal>.  <literal>refresh_option</literal> specifies
+      additional options for the refresh operation, as described
+      under <literal>REFRESH PUBLICATION</literal>.  When
+      <literal>SKIP REFRESH</literal> is specified, the command will not try
+      to refresh table information.  Note that
+      either <literal>REFRESH</literal> or <literal>SKIP REFRESH</literal>
+      must be specified.
      </para>
     </listitem>
    </varlistentry>
@@ -104,16 +97,28 @@ ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> RENAME TO <
     <term><literal>REFRESH PUBLICATION</literal></term>
     <listitem>
      <para>
-      Fetch missing table information from publisher. This will start
+      Fetch missing table information from publisher.  This will start
       replication of tables that were added to the subscribed-to publications
       since the last invocation of <command>REFRESH PUBLICATION</command> or
       since <command>CREATE SUBSCRIPTION</command>.
      </para>
+
      <para>
-      The <literal>COPY DATA</literal> and <literal>NOCOPY DATA</literal>
-      options specify if the existing data in the publications that are being
-      subscribed to should be copied. <literal>COPY DATA</literal> is the
-      default.
+      <literal>refresh_option</literal> specifies additional options for the
+      refresh operation.  The supported options are:
+
+      <variablelist>
+       <varlistentry>
+        <term><literal>copy_data</literal> (<type>boolean</type>)</term>
+        <listitem>
+         <para>
+          Specifies whether the existing data in the publications that are
+          being subscribed to should be copied once the replication starts.
+          The default is <literal>true</literal>.
+         </para>
+        </listitem>
+       </varlistentry>
+      </variablelist>
      </para>
     </listitem>
    </varlistentry>
@@ -134,6 +139,18 @@ ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> RENAME TO <
      <para>
       Disables the running subscription, stopping the logical replication
       worker at the end of transaction.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>SET ( <replaceable class="parameter">subscription_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] )</literal></term>
+    <listitem>
+     <para>
+      This clause alters parameters originally set by
+      <xref linkend="SQL-CREATESUBSCRIPTION">.  See there for more
+      information.  The allowed options are <literal>slot_name</literal> and
+      <literal>synchronous_commit</literal>
      </para>
     </listitem>
    </varlistentry>
@@ -165,7 +182,7 @@ ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> RENAME TO <
    Change the publication subscribed by a subscription to
    <literal>insert_only</literal>:
 <programlisting>
-ALTER SUBSCRIPTION mysub SET PUBLICATION insert_only;
+ALTER SUBSCRIPTION mysub SET PUBLICATION insert_only REFRESH;
 </programlisting>
   </para>
 

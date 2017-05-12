@@ -24,13 +24,8 @@ PostgreSQL documentation
 CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
     [ FOR TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [, ...]
       | FOR ALL TABLES ]
-    [ WITH ( <replaceable class="parameter">option</replaceable> [, ... ] ) ]
+    [ WITH ( <replaceable class="parameter">publication_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] ) ]
 
-<phrase>where <replaceable class="parameter">option</replaceable> can be:</phrase>
-
-      PUBLISH INSERT | NOPUBLISH INSERT
-    | PUBLISH UPDATE | NOPUBLISH UPDATE
-    | PUBLISH DELETE | NOPUBLISH DELETE
 </synopsis>
  </refsynopsisdiv>
 
@@ -97,37 +92,29 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term><literal>PUBLISH INSERT</literal></term>
-    <term><literal>NOPUBLISH INSERT</literal></term>
+    <term><literal>WITH ( <replaceable class="parameter">publication_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] )</literal></term>
     <listitem>
      <para>
-      These clauses determine whether the new publication will send
-      the <command>INSERT</command> operations to the subscribers.
-      <literal>PUBLISH INSERT</literal> is the default.
-     </para>
-    </listitem>
-   </varlistentry>
+      This clause specifies optional parameters for a publication.  The
+      following parameters are supported:
 
-   <varlistentry>
-    <term><literal>PUBLISH UPDATE</literal></term>
-    <term><literal>NOPUBLISH UPDATE</literal></term>
-    <listitem>
-     <para>
-      These clauses determine whether the new publication will send
-      the <command>UPDATE</command> operations to the subscribers.
-      <literal>PUBLISH UPDATE</literal> is the default.
-     </para>
-    </listitem>
-   </varlistentry>
+      <variablelist>
+       <varlistentry>
+        <term><literal>publish</literal> (<type>string</type>)</term>
+        <listitem>
+         <para>
+          This parameter determines which DML operations will be published by
+          the new publication to the subscribers.  The value is
+          comma-separated list of operations.  The allowed operations are
+          <literal>insert</literal>, <literal>update</literal>, and
+          <literal>delete</literal>.  The default is to publish all actions,
+          and so the default value for this option is
+          <literal>'insert, update, delete'</literal>.
+         </para>
+        </listitem>
+       </varlistentry>
+      </variablelist>
 
-   <varlistentry>
-    <term><literal>PUBLISH DELETE</literal></term>
-    <term><literal>NOPUBLISH DELETE</literal></term>
-    <listitem>
-     <para>
-      These clauses determine whether the new publication will send
-      the <command>DELETE</command> operations to the subscribers.
-      <literal>PUBLISH DELETE</literal> is the default.
      </para>
     </listitem>
    </varlistentry>
@@ -203,7 +190,7 @@ CREATE PUBLICATION alltables FOR ALL TABLES;
    operations in one table:
 <programlisting>
 CREATE PUBLICATION insert_only FOR TABLE mydata
-    WITH (NOPUBLISH UPDATE, NOPUBLISH DELETE);
+    WITH (publish = 'insert');
 </programlisting>
   </para>
  </refsect1>

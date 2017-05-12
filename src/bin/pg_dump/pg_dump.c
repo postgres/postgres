@@ -3460,6 +3460,7 @@ dumpPublication(Archive *fout, PublicationInfo *pubinfo)
 	PQExpBuffer delq;
 	PQExpBuffer query;
 	PQExpBuffer labelq;
+	bool		first = true;
 
 	if (!(pubinfo->dobj.dump & DUMP_COMPONENT_DEFINITION))
 		return;
@@ -3479,23 +3480,32 @@ dumpPublication(Archive *fout, PublicationInfo *pubinfo)
 	if (pubinfo->puballtables)
 		appendPQExpBufferStr(query, " FOR ALL TABLES");
 
-	appendPQExpBufferStr(query, " WITH (");
+	appendPQExpBufferStr(query, " WITH (publish = '");
 	if (pubinfo->pubinsert)
-		appendPQExpBufferStr(query, "PUBLISH INSERT");
-	else
-		appendPQExpBufferStr(query, "NOPUBLISH INSERT");
+	{
+		appendPQExpBufferStr(query, "insert");
+		first = false;
+	}
+
+	if (!first)
+		appendPQExpBufferStr(query, ", ");
 
 	if (pubinfo->pubupdate)
-		appendPQExpBufferStr(query, ", PUBLISH UPDATE");
-	else
-		appendPQExpBufferStr(query, ", NOPUBLISH UPDATE");
+	{
+		appendPQExpBufferStr(query, "update");
+		first = false;
+	}
+
+	if (!first)
+		appendPQExpBufferStr(query, ", ");
 
 	if (pubinfo->pubdelete)
-		appendPQExpBufferStr(query, ", PUBLISH DELETE");
-	else
-		appendPQExpBufferStr(query, ", NOPUBLISH DELETE");
+	{
+		appendPQExpBufferStr(query, "delete");
+		first = false;
+	}
 
-	appendPQExpBufferStr(query, ");\n");
+	appendPQExpBufferStr(query, "');\n");
 
 	ArchiveEntry(fout, pubinfo->dobj.catId, pubinfo->dobj.dumpId,
 				 pubinfo->dobj.name,
@@ -3817,11 +3827,11 @@ dumpSubscription(Archive *fout, SubscriptionInfo *subinfo)
 		appendPQExpBufferStr(publications, fmtId(pubnames[i]));
 	}
 
-	appendPQExpBuffer(query, " PUBLICATION %s WITH (NOCONNECT, SLOT NAME = ", publications->data);
+	appendPQExpBuffer(query, " PUBLICATION %s WITH (connect = false, slot_name = ", publications->data);
 	appendStringLiteralAH(query, subinfo->subslotname, fout);
 
 	if (strcmp(subinfo->subsynccommit, "off") != 0)
-		appendPQExpBuffer(query, ", SYNCHRONOUS_COMMIT = %s", fmtId(subinfo->subsynccommit));
+		appendPQExpBuffer(query, ", synchronous_commit = %s", fmtId(subinfo->subsynccommit));
 
 	appendPQExpBufferStr(query, ");\n");
 

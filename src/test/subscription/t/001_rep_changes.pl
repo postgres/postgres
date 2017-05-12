@@ -40,7 +40,7 @@ my $publisher_connstr = $node_publisher->connstr . ' dbname=postgres';
 $node_publisher->safe_psql('postgres',
 	"CREATE PUBLICATION tap_pub");
 $node_publisher->safe_psql('postgres',
-	"CREATE PUBLICATION tap_pub_ins_only WITH (nopublish delete, nopublish update)");
+	"CREATE PUBLICATION tap_pub_ins_only WITH (publish = insert)");
 $node_publisher->safe_psql('postgres',
 	"ALTER PUBLICATION tap_pub ADD TABLE tab_rep, tab_full");
 $node_publisher->safe_psql('postgres',
@@ -136,7 +136,7 @@ $node_publisher->poll_query_until('postgres',
 $oldpid = $node_publisher->safe_psql('postgres',
 	"SELECT pid FROM pg_stat_replication WHERE application_name = '$appname';");
 $node_subscriber->safe_psql('postgres',
-	"ALTER SUBSCRIPTION tap_sub SET PUBLICATION tap_pub_ins_only REFRESH WITH (NOCOPY DATA)");
+	"ALTER SUBSCRIPTION tap_sub SET PUBLICATION tap_pub_ins_only REFRESH WITH (copy_data = false)");
 $node_publisher->poll_query_until('postgres',
 	"SELECT pid != $oldpid FROM pg_stat_replication WHERE application_name = '$appname';")
   or die "Timed out while waiting for apply to restart";
@@ -159,13 +159,13 @@ is($result, qq(20|-20|-1), 'check changes skipped after subscription publication
 
 # check alter publication (relcache invalidation etc)
 $node_publisher->safe_psql('postgres',
-	"ALTER PUBLICATION tap_pub_ins_only WITH (publish delete)");
+	"ALTER PUBLICATION tap_pub_ins_only SET (publish = 'insert, delete')");
 $node_publisher->safe_psql('postgres',
 	"ALTER PUBLICATION tap_pub_ins_only ADD TABLE tab_full");
 $node_publisher->safe_psql('postgres',
 	"DELETE FROM tab_ins WHERE a > 0");
 $node_subscriber->safe_psql('postgres',
-	"ALTER SUBSCRIPTION tap_sub REFRESH PUBLICATION WITH (NOCOPY DATA)");
+	"ALTER SUBSCRIPTION tap_sub REFRESH PUBLICATION WITH (copy_data = false)");
 $node_publisher->safe_psql('postgres',
 	"INSERT INTO tab_full VALUES(0)");
 

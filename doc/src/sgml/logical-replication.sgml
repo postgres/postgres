@@ -222,8 +222,9 @@
      <listitem>
       <para>
        When creating a subscription, the replication slot already exists.  In
-       that case, the subscription can be created using the <literal>NOCREATE
-       SLOT</literal> option to associate with the existing slot.
+       that case, the subscription can be created using
+       the <literal>create_slot = false</literal> option to associate with the
+       existing slot.
       </para>
      </listitem>
 
@@ -231,7 +232,7 @@
       <para>
        When creating a subscription, the remote host is not reachable or in an
        unclear state.  In that case, the subscription can be created using
-       the <literal>NOCONNECT</literal> option.  The remote host will then not
+       the <literal>connect = false</literal> option.  The remote host will then not
        be contacted at all.  This is what <application>pg_dump</application>
        uses.  The remote replication slot will then have to be created
        manually before the subscription can be activated.

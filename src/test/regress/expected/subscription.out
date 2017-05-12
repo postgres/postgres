@@ -17,18 +17,18 @@ LINE 1: CREATE SUBSCRIPTION testsub PUBLICATION foo;
                                     ^
 -- fail - cannot do CREATE SUBSCRIPTION CREATE SLOT inside transaction block
 BEGIN;
-CREATE SUBSCRIPTION testsub CONNECTION 'testconn' PUBLICATION testpub WITH (CREATE SLOT);
-ERROR:  CREATE SUBSCRIPTION ... CREATE SLOT cannot run inside a transaction block
+CREATE SUBSCRIPTION testsub CONNECTION 'testconn' PUBLICATION testpub WITH (create_slot);
+ERROR:  CREATE SUBSCRIPTION ... WITH (create_slot = true) cannot run inside a transaction block
 COMMIT;
 -- fail - invalid connection string
 CREATE SUBSCRIPTION testsub CONNECTION 'testconn' PUBLICATION testpub;
 ERROR:  invalid connection string syntax: missing "=" after "testconn" in connection info string
 
 -- fail - duplicate publications
-CREATE SUBSCRIPTION testsub CONNECTION 'dbname=doesnotexist' PUBLICATION foo, testpub, foo WITH (NOCONNECT);
+CREATE SUBSCRIPTION testsub CONNECTION 'dbname=doesnotexist' PUBLICATION foo, testpub, foo WITH (connect = false);
 ERROR:  publication name "foo" used more than once
 -- ok
-CREATE SUBSCRIPTION testsub CONNECTION 'dbname=doesnotexist' PUBLICATION testpub WITH (NOCONNECT);
+CREATE SUBSCRIPTION testsub CONNECTION 'dbname=doesnotexist' PUBLICATION testpub WITH (connect = false);
 WARNING:  tables were not subscribed, you will have to run ALTER SUBSCRIPTION ... REFRESH PUBLICATION to subscribe the tables
 COMMENT ON SUBSCRIPTION testsub IS 'test subscription';
 SELECT obj_description(s.oid, 'pg_subscription') FROM pg_subscription s;
@@ -38,11 +38,11 @@ SELECT obj_description(s.oid, 'pg_subscription') FROM pg_subscription s;
 (1 row)
 
 -- fail - name already exists
-CREATE SUBSCRIPTION testsub CONNECTION 'dbname=doesnotexist' PUBLICATION testpub WITH (NOCONNECT);
+CREATE SUBSCRIPTION testsub CONNECTION 'dbname=doesnotexist' PUBLICATION testpub WITH (connect = false);
 ERROR:  subscription "testsub" already exists
 -- fail - must be superuser
 SET SESSION AUTHORIZATION 'regress_subscription_user2';
-CREATE SUBSCRIPTION testsub2 CONNECTION 'dbname=doesnotexist' PUBLICATION foo WITH (NOCONNECT);
+CREATE SUBSCRIPTION testsub2 CONNECTION 'dbname=doesnotexist' PUBLICATION foo WITH (connect = false);
 ERROR:  must be superuser to create subscriptions
 SET SESSION AUTHORIZATION 'regress_subscription_user';
 -- fail - invalid connection string
@@ -56,9 +56,9 @@ ERROR:  invalid connection string syntax: missing "=" after "foobar" in connecti
  testsub | regress_subscription_user | f       | {testpub}   | off                | dbname=doesnotexist
 (1 row)
 
-ALTER SUBSCRIPTION testsub SET PUBLICATION testpub2, testpub3 NOREFRESH;
+ALTER SUBSCRIPTION testsub SET PUBLICATION testpub2, testpub3 SKIP REFRESH;
 ALTER SUBSCRIPTION testsub CONNECTION 'dbname=doesnotexist2';
-ALTER SUBSCRIPTION testsub WITH (SLOT NAME = 'newname');
+ALTER SUBSCRIPTION testsub SET (slot_name = 'newname');
 -- fail
 ALTER SUBSCRIPTION doesnotexist CONNECTION 'dbname=doesnotexist2';
 ERROR:  subscription "doesnotexist" does not exist
@@ -93,8 +93,8 @@ ALTER SUBSCRIPTION testsub RENAME TO testsub_dummy;
 ERROR:  must be owner of subscription testsub
 RESET ROLE;
 ALTER SUBSCRIPTION testsub RENAME TO testsub_foo;
-ALTER SUBSCRIPTION testsub_foo WITH (SYNCHRONOUS_COMMIT = local);
-ALTER SUBSCRIPTION testsub_foo WITH (SYNCHRONOUS_COMMIT = foobar);
+ALTER SUBSCRIPTION testsub_foo SET (synchronous_commit = local);
+ALTER SUBSCRIPTION testsub_foo SET (synchronous_commit = foobar);
 ERROR:  invalid value for parameter "synchronous_commit": "foobar"
 HINT:  Available values: local, remote_write, remote_apply, on, off.
 \dRs+
@@ -118,7 +118,7 @@ BEGIN;
 DROP SUBSCRIPTION testsub;
 ERROR:  DROP SUBSCRIPTION cannot run inside a transaction block
 COMMIT;
-ALTER SUBSCRIPTION testsub WITH (SLOT NAME = NONE);
+ALTER SUBSCRIPTION testsub SET (slot_name = NONE);
 -- now it works
 BEGIN;
 DROP SUBSCRIPTION testsub;

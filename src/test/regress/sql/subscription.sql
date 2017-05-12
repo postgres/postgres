@@ -15,27 +15,27 @@ CREATE SUBSCRIPTION testsub PUBLICATION foo;
 
 -- fail - cannot do CREATE SUBSCRIPTION CREATE SLOT inside transaction block
 BEGIN;
-CREATE SUBSCRIPTION testsub CONNECTION 'testconn' PUBLICATION testpub WITH (CREATE SLOT);
+CREATE SUBSCRIPTION testsub CONNECTION 'testconn' PUBLICATION testpub WITH (create_slot);
 COMMIT;
 
 -- fail - invalid connection string
 CREATE SUBSCRIPTION testsub CONNECTION 'testconn' PUBLICATION testpub;
 
 -- fail - duplicate publications
-CREATE SUBSCRIPTION testsub CONNECTION 'dbname=doesnotexist' PUBLICATION foo, testpub, foo WITH (NOCONNECT);
+CREATE SUBSCRIPTION testsub CONNECTION 'dbname=doesnotexist' PUBLICATION foo, testpub, foo WITH (connect = false);
 
 -- ok
-CREATE SUBSCRIPTION testsub CONNECTION 'dbname=doesnotexist' PUBLICATION testpub WITH (NOCONNECT);
+CREATE SUBSCRIPTION testsub CONNECTION 'dbname=doesnotexist' PUBLICATION testpub WITH (connect = false);
 
 COMMENT ON SUBSCRIPTION testsub IS 'test subscription';
 SELECT obj_description(s.oid, 'pg_subscription') FROM pg_subscription s;
 
 -- fail - name already exists
-CREATE SUBSCRIPTION testsub CONNECTION 'dbname=doesnotexist' PUBLICATION testpub WITH (NOCONNECT);
+CREATE SUBSCRIPTION testsub CONNECTION 'dbname=doesnotexist' PUBLICATION testpub WITH (connect = false);
 
 -- fail - must be superuser
 SET SESSION AUTHORIZATION 'regress_subscription_user2';
-CREATE SUBSCRIPTION testsub2 CONNECTION 'dbname=doesnotexist' PUBLICATION foo WITH (NOCONNECT);
+CREATE SUBSCRIPTION testsub2 CONNECTION 'dbname=doesnotexist' PUBLICATION foo WITH (connect = false);
 SET SESSION AUTHORIZATION 'regress_subscription_user';
 
 -- fail - invalid connection string
@@ -43,9 +43,9 @@ ALTER SUBSCRIPTION testsub CONNECTION 'foobar';
 
 \dRs+
 
-ALTER SUBSCRIPTION testsub SET PUBLICATION testpub2, testpub3 NOREFRESH;
+ALTER SUBSCRIPTION testsub SET PUBLICATION testpub2, testpub3 SKIP REFRESH;
 ALTER SUBSCRIPTION testsub CONNECTION 'dbname=doesnotexist2';
-ALTER SUBSCRIPTION testsub WITH (SLOT NAME = 'newname');
+ALTER SUBSCRIPTION testsub SET (slot_name = 'newname');
 
 -- fail
 ALTER SUBSCRIPTION doesnotexist CONNECTION 'dbname=doesnotexist2';
@@ -69,8 +69,8 @@ ALTER SUBSCRIPTION testsub RENAME TO testsub_dummy;
 RESET ROLE;
 
 ALTER SUBSCRIPTION testsub RENAME TO testsub_foo;
-ALTER SUBSCRIPTION testsub_foo WITH (SYNCHRONOUS_COMMIT = local);
-ALTER SUBSCRIPTION testsub_foo WITH (SYNCHRONOUS_COMMIT = foobar);
+ALTER SUBSCRIPTION testsub_foo SET (synchronous_commit = local);
+ALTER SUBSCRIPTION testsub_foo SET (synchronous_commit = foobar);
 
 \dRs+
 
@@ -88,7 +88,7 @@ BEGIN;
 DROP SUBSCRIPTION testsub;
 COMMIT;
 
-ALTER SUBSCRIPTION testsub WITH (SLOT NAME = NONE);
+ALTER SUBSCRIPTION testsub SET (slot_name = NONE);
 
 -- now it works
 BEGIN;

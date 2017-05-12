@@ -4351,7 +4351,7 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 		create_order => 50,
 		create_sql   => 'CREATE PUBLICATION pub1;',
 		regexp       => qr/^
-			\QCREATE PUBLICATION pub1 WITH (PUBLISH INSERT, PUBLISH UPDATE, PUBLISH DELETE);\E
+			\QCREATE PUBLICATION pub1 WITH (publish = 'insert, update, delete');\E
 			/xm,
 		like => {
 			binary_upgrade           => 1,
@@ -4384,11 +4384,9 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 		create_order => 50,
 		create_sql   => 'CREATE PUBLICATION pub2
 						 FOR ALL TABLES
-						 WITH (NOPUBLISH INSERT,
-							   NOPUBLISH UPDATE,
-							   NOPUBLISH DELETE);',
+						 WITH (publish = \'\');',
 		regexp       => qr/^
-			\QCREATE PUBLICATION pub2 FOR ALL TABLES WITH (NOPUBLISH INSERT, NOPUBLISH UPDATE, NOPUBLISH DELETE);\E
+			\QCREATE PUBLICATION pub2 FOR ALL TABLES WITH (publish = '');\E
 			/xm,
 		like => {
 			binary_upgrade           => 1,
@@ -4421,9 +4419,9 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 		create_order => 50,
 		create_sql   => 'CREATE SUBSCRIPTION sub1
 						 CONNECTION \'dbname=doesnotexist\' PUBLICATION pub1
-						 WITH (NOCONNECT);',
+						 WITH (connect = false);',
 		regexp       => qr/^
-			\QCREATE SUBSCRIPTION sub1 CONNECTION 'dbname=doesnotexist' PUBLICATION pub1 WITH (NOCONNECT, SLOT NAME = 'sub1');\E
+			\QCREATE SUBSCRIPTION sub1 CONNECTION 'dbname=doesnotexist' PUBLICATION pub1 WITH (connect = false, slot_name = 'sub1');\E
 			/xm,
 		like => {
 			binary_upgrade           => 1,
