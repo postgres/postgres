@@ -181,7 +181,10 @@ sub tap_check
 	my $dir = shift;
 	chdir $dir;
 
-	my @args = ("prove", "--verbose", "t/*.pl");
+	my @flags;
+	@flags = split(/\s+/,$ENV{PROVE_FLAGS}) if exists $ENV{PROVE_FLAGS};
+
+	my @args = ("prove", @flags, "t/*.pl");
 
 	# adjust the environment for just this test
 	local %ENV = %ENV;
