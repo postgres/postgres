@@ -52,7 +52,6 @@
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_partitioned_table.h"
 #include "catalog/pg_statistic.h"
-#include "catalog/pg_statistic_ext.h"
 #include "catalog/pg_subscription_rel.h"
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_type.h"
@@ -1615,10 +1614,7 @@ RemoveAttributeById(Oid relid, AttrNumber attnum)
 	heap_close(attr_rel, RowExclusiveLock);
 
 	if (attnum > 0)
-	{
 		RemoveStatistics(relid, attnum);
-		RemoveStatisticsExt(relid, attnum);
-	}
 
 	relation_close(rel, NoLock);
 }
@@ -1873,7 +1869,6 @@ heap_drop_with_catalog(Oid relid)
 	 * delete statistics
 	 */
 	RemoveStatistics(relid, 0);
-	RemoveStatisticsExt(relid, 0);
 
 	/*
 	 * delete attribute tuples
@@ -2782,75 +2777,6 @@ RemoveStatistics(Oid relid, AttrNumber attnum)
 	systable_endscan(scan);
 
 	heap_close(pgstatistic, RowExclusiveLock);
-}
-
-
-/*
- * RemoveStatisticsExt --- remove entries in pg_statistic_ext for a relation
- *
- * If attnum is zero, remove all entries for rel; else remove only the
- * one(s) involving that column.
- */
-void
-RemoveStatisticsExt(Oid relid, AttrNumber attnum)
-{
-	Relation	pgstatisticext;
-	SysScanDesc scan;
-	ScanKeyData key;
-	HeapTuple	tuple;
-
-	/*
-	 * Scan pg_statistic_ext to delete relevant tuples
-	 */
-	pgstatisticext = heap_open(StatisticExtRelationId, RowExclusiveLock);
-
-	ScanKeyInit(&key,
-				Anum_pg_statistic_ext_stxrelid,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(relid));
-
-	scan = systable_beginscan(pgstatisticext,
-							  StatisticExtRelidIndexId,
-							  true, NULL, 1, &key);
-
-	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
-	{
-		bool		delete = false;
-
-		if (attnum == 0)
-			delete = true;
-		else if (attnum != 0)
-		{
-			Form_pg_statistic_ext	staForm;
-			int			i;
-
-			/*
-			 * Decode the stxkeys array and delete any stats that involve the
-			 * specified column.
-			 */
-			staForm = (Form_pg_statistic_ext) GETSTRUCT(tuple);
-			for (i = 0; i < staForm->stxkeys.dim1; i++)
-			{
-				if (staForm->stxkeys.values[i] == attnum)
-				{
-					delete = true;
-					break;
-				}
-			}
-		}
-
-		if (delete)
-		{
-			CatalogTupleDelete(pgstatisticext, &tuple->t_self);
-			deleteDependencyRecordsFor(StatisticExtRelationId,
-									   HeapTupleGetOid(tuple),
-									   false);
-		}
-	}
-
-	systable_endscan(scan);
-
-	heap_close(pgstatisticext, RowExclusiveLock);
 }
 
 

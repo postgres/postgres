@@ -34,10 +34,13 @@ DROP STATISTICS regress_schema_2.ab1_a_b_stats;
 -- Ensure statistics are dropped when columns are
 CREATE STATISTICS ab1_b_c_stats ON b, c FROM ab1;
 CREATE STATISTICS ab1_a_b_c_stats ON a, b, c FROM ab1;
-CREATE STATISTICS ab1_a_b_stats ON a, b FROM ab1;
+CREATE STATISTICS ab1_b_a_stats ON b, a FROM ab1;
 ALTER TABLE ab1 DROP COLUMN a;
 \d ab1
+-- Ensure statistics are dropped when table is
+SELECT stxname FROM pg_statistic_ext WHERE stxname LIKE 'ab1%';
 DROP TABLE ab1;
+SELECT stxname FROM pg_statistic_ext WHERE stxname LIKE 'ab1%';
 
 -- Ensure things work sanely with SET STATISTICS 0
 CREATE TABLE ab1 (a INTEGER, b INTEGER);

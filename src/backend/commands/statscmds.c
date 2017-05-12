@@ -50,11 +50,11 @@ CreateStatistics(CreateStatsStmt *stmt)
 {
 	int16		attnums[STATS_MAX_DIMENSIONS];
 	int			numcols = 0;
-	ObjectAddress address = InvalidObjectAddress;
 	char	   *namestr;
 	NameData	stxname;
 	Oid			statoid;
 	Oid			namespaceId;
+	Oid			stxowner = GetUserId();
 	HeapTuple	htup;
 	Datum		values[Natts_pg_statistic_ext];
 	bool		nulls[Natts_pg_statistic_ext];
@@ -63,7 +63,7 @@ CreateStatistics(CreateStatsStmt *stmt)
 	Relation	rel = NULL;
 	Oid			relid;
 	ObjectAddress parentobject,
-				childobject;
+				myself;
 	Datum		types[2];		/* one for each possible type of statistics */
 	int			ntypes;
 	ArrayType  *stxkind;
@@ -140,7 +140,7 @@ CreateStatistics(CreateStatsStmt *stmt)
 							RelationGetRelationName(rel))));
 
 		/* You must own the relation to create stats on it */
-		if (!pg_class_ownercheck(RelationGetRelid(rel), GetUserId()))
+		if (!pg_class_ownercheck(RelationGetRelid(rel), stxowner))
 			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
 						   RelationGetRelationName(rel));
 	}
@@ -185,7 +185,7 @@ CreateStatistics(CreateStatsStmt *stmt)
 		attForm = (Form_pg_attribute) GETSTRUCT(atttuple);
 
 		/* Disallow use of system attributes in extended stats */
-		if (attForm->attnum < 0)
+		if (attForm->attnum <= 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("statistics creation on system columns is not supported")));
@@ -205,7 +205,7 @@ CreateStatistics(CreateStatsStmt *stmt)
 					 errmsg("cannot have more than %d columns in statistics",
 							STATS_MAX_DIMENSIONS)));
 
-		attnums[numcols] = ((Form_pg_attribute) GETSTRUCT(atttuple))->attnum;
+		attnums[numcols] = attForm->attnum;
 		numcols++;
 		ReleaseSysCache(atttuple);
 	}
@@ -231,10 +231,12 @@ CreateStatistics(CreateStatsStmt *stmt)
 	 * just check consecutive elements.
 	 */
 	for (i = 1; i < numcols; i++)
+	{
 		if (attnums[i] == attnums[i - 1])
 			ereport(ERROR,
 					(errcode(ERRCODE_DUPLICATE_COLUMN),
 				  errmsg("duplicate column name in statistics definition")));
+	}
 
 	/* Form an int2vector representation of the sorted column list */
 	stxkeys = buildint2vector(attnums, numcols);
@@ -288,7 +290,7 @@ CreateStatistics(CreateStatsStmt *stmt)
 	values[Anum_pg_statistic_ext_stxrelid - 1] = ObjectIdGetDatum(relid);
 	values[Anum_pg_statistic_ext_stxname - 1] = NameGetDatum(&stxname);
 	values[Anum_pg_statistic_ext_stxnamespace - 1] = ObjectIdGetDatum(namespaceId);
-	values[Anum_pg_statistic_ext_stxowner - 1] = ObjectIdGetDatum(GetUserId());
+	values[Anum_pg_statistic_ext_stxowner - 1] = ObjectIdGetDatum(stxowner);
 	values[Anum_pg_statistic_ext_stxkeys - 1] = PointerGetDatum(stxkeys);
 	values[Anum_pg_statistic_ext_stxkind - 1] = PointerGetDatum(stxkind);
 
@@ -312,29 +314,35 @@ CreateStatistics(CreateStatsStmt *stmt)
 	relation_close(rel, NoLock);
 
 	/*
-	 * Add a dependency on the table, so that stats get dropped on DROP TABLE.
-	 *
-	 * XXX don't we need dependencies on the specific columns, instead?
+	 * Add an AUTO dependency on each column used in the stats, so that the
+	 * stats object goes away if any or all of them get dropped.
 	 */
-	ObjectAddressSet(parentobject, RelationRelationId, relid);
-	ObjectAddressSet(childobject, StatisticExtRelationId, statoid);
-	recordDependencyOn(&childobject, &parentobject, DEPENDENCY_AUTO);
+	ObjectAddressSet(myself, StatisticExtRelationId, statoid);
+
+	for (i = 0; i < numcols; i++)
+	{
+		ObjectAddressSubSet(parentobject, RelationRelationId, relid, attnums[i]);
+		recordDependencyOn(&myself, &parentobject, DEPENDENCY_AUTO);
+	}
 
 	/*
-	 * Also add dependency on the schema.  This is required to ensure that we
-	 * drop the statistics on DROP SCHEMA.  This is not handled automatically
-	 * by DROP TABLE because the statistics might be in a different schema
-	 * from the table itself.  (This definition is a bit bizarre for the
-	 * single-table case, but it will make more sense if/when we support
-	 * extended stats across multiple tables.)
+	 * Also add dependencies on namespace and owner.  These are required
+	 * because the stats object might have a different namespace and/or owner
+	 * than the underlying table(s).
 	 */
 	ObjectAddressSet(parentobject, NamespaceRelationId, namespaceId);
-	recordDependencyOn(&childobject, &parentobject, DEPENDENCY_AUTO);
+	recordDependencyOn(&myself, &parentobject, DEPENDENCY_NORMAL);
+
+	recordDependencyOnOwner(StatisticExtRelationId, statoid, stxowner);
+
+	/*
+	 * XXX probably there should be a recordDependencyOnCurrentExtension call
+	 * here too, but we'd have to add support for ALTER EXTENSION ADD/DROP
+	 * STATISTICS, which is more work than it seems worth.
+	 */
 
 	/* Return stats object's address */
-	ObjectAddressSet(address, StatisticExtRelationId, statoid);
-
-	return address;
+	return myself;
 }
 
 /*
