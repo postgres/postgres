@@ -67,7 +67,7 @@
 # must set a recovery target.
 #
 # You may set a recovery target either by transactionId, by name,
-# by timestamp or by WAL position (LSN). Recovery may either include or
+# by timestamp or by WAL location (LSN). Recovery may either include or
 # exclude the transaction(s) with the recovery target value (ie, stop either
 # just after or just before the given target, respectively).
 #

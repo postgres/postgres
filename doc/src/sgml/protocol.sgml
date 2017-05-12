@@ -1724,7 +1724,7 @@ The commands accepted in walsender mode are:
         <term><literal>consistent_point</literal> (<type>text</type>)</term>
         <listitem>
          <para>
-          The WAL position at which the slot became consistent.  This is the
+          The WAL location at which the slot became consistent.  This is the
           earliest location from which streaming can start on this replication
           slot.
          </para>
@@ -1764,7 +1764,7 @@ The commands accepted in walsender mode are:
     <listitem>
      <para>
       Instructs server to start streaming WAL, starting at
-      WAL position <replaceable class="parameter">XXX/XXX</>.
+      WAL location <replaceable class="parameter">XXX/XXX</>.
       If <literal>TIMELINE</literal> option is specified,
       streaming starts on timeline <replaceable class="parameter">tli</>;
       otherwise, the server's current timeline is selected. The server can
@@ -1796,7 +1796,7 @@ The commands accepted in walsender mode are:
       acknowledges this by also exiting COPY mode, the server sends a result
       set with one row and two columns, indicating the next timeline in this
       server's history. The first column is the next timeline's ID (type <type>int8</type>), and the
-      second column is the WAL position where the switch happened (type <type>text</type>). Usually,
+      second column is the WAL location where the switch happened (type <type>text</type>). Usually,
       the switch position is the end of the WAL that was streamed, but there
       are corner cases where the server can send some WAL from the old
       timeline that it has not itself replayed before promoting. Finally, the
@@ -2115,7 +2115,7 @@ The commands accepted in walsender mode are:
     <listitem>
      <para>
       Instructs server to start streaming WAL for logical replication, starting
-      at WAL position <replaceable class="parameter">XXX/XXX</>. The server can
+      at WAL location <replaceable class="parameter">XXX/XXX</>. The server can
       reply with an error, for example if the requested section of WAL has already
       been recycled. On success, server responds with a CopyBothResponse
       message, and then starts to stream WAL to the frontend.
@@ -2147,7 +2147,7 @@ The commands accepted in walsender mode are:
        <term><replaceable class="parameter">XXX/XXX</></term>
        <listitem>
         <para>
-         The WAL position to begin streaming at.
+         The WAL location to begin streaming at.
         </para>
        </listitem>
       </varlistentry>

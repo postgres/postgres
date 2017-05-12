@@ -194,7 +194,7 @@ static volatile sig_atomic_t replication_active = false;
 static LogicalDecodingContext *logical_decoding_ctx = NULL;
 static XLogRecPtr logical_startptr = InvalidXLogRecPtr;
 
-/* A sample associating a log position with the time it was written. */
+/* A sample associating a WAL location with the time it was written. */
 typedef struct
 {
 	XLogRecPtr lsn;
@@ -340,7 +340,7 @@ static void
 IdentifySystem(void)
 {
 	char		sysid[32];
-	char		xpos[MAXFNAMELEN];
+	char		xloc[MAXFNAMELEN];
 	XLogRecPtr	logptr;
 	char	   *dbname = NULL;
 	DestReceiver *dest;
@@ -367,7 +367,7 @@ IdentifySystem(void)
 	else
 		logptr = GetFlushRecPtr();
 
-	snprintf(xpos, sizeof(xpos), "%X/%X", (uint32) (logptr >> 32), (uint32) logptr);
+	snprintf(xloc, sizeof(xloc), "%X/%X", (uint32) (logptr >> 32), (uint32) logptr);
 
 	if (MyDatabaseId != InvalidOid)
 	{
@@ -406,8 +406,8 @@ IdentifySystem(void)
 	/* column 2: timeline */
 	values[1] = Int32GetDatum(ThisTimeLineID);
 
-	/* column 3: xlog position */
-	values[2] = CStringGetTextDatum(xpos);
+	/* column 3: wal location */
+	values[2] = CStringGetTextDatum(xloc);
 
 	/* column 4: database name, or NULL if none */
 	if (dbname)
@@ -842,7 +842,7 @@ static void
 CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 {
 	const char *snapshot_name = NULL;
-	char		xpos[MAXFNAMELEN];
+	char		xloc[MAXFNAMELEN];
 	char	   *slot_name;
 	bool		reserve_wal = false;
 	CRSSnapshotAction snapshot_action = CRS_EXPORT_SNAPSHOT;
@@ -975,7 +975,7 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 			ReplicationSlotSave();
 	}
 
-	snprintf(xpos, sizeof(xpos), "%X/%X",
+	snprintf(xloc, sizeof(xloc), "%X/%X",
 			 (uint32) (MyReplicationSlot->data.confirmed_flush >> 32),
 			 (uint32) MyReplicationSlot->data.confirmed_flush);
 
@@ -1008,7 +1008,7 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 	values[0] = CStringGetTextDatum(slot_name);
 
 	/* consistent wal location */
-	values[1] = CStringGetTextDatum(xpos);
+	values[1] = CStringGetTextDatum(xloc);
 
 	/* snapshot name, or NULL if none */
 	if (snapshot_name != NULL)
@@ -1729,7 +1729,7 @@ PhysicalConfirmReceivedLocation(XLogRecPtr lsn)
 }
 
 /*
- * Regular reply from standby advising of WAL positions on standby server.
+ * Regular reply from standby advising of WAL locations on standby server.
  */
 static void
 ProcessStandbyReplyMessage(void)
@@ -2579,7 +2579,7 @@ XLogSendPhysical(void)
 
 	/*
 	 * Record the current system time as an approximation of the time at which
-	 * this WAL position was written for the purposes of lag tracking.
+	 * this WAL location was written for the purposes of lag tracking.
 	 *
 	 * In theory we could make XLogFlush() record a time in shmem whenever WAL
 	 * is flushed and we could get that time as well as the LSN when we call
@@ -3353,7 +3353,7 @@ WalSndKeepaliveIfNecessary(TimestampTz now)
 
 /*
  * Record the end of the WAL and the time it was flushed locally, so that
- * LagTrackerRead can compute the elapsed time (lag) when this WAL position is
+ * LagTrackerRead can compute the elapsed time (lag) when this WAL location is
  * eventually reported to have been written, flushed and applied by the
  * standby in a reply message.
  */
@@ -3410,7 +3410,7 @@ LagTrackerWrite(XLogRecPtr lsn, TimestampTz local_flush_time)
 }
 
 /*
- * Find out how much time has elapsed between the moment WAL position 'lsn'
+ * Find out how much time has elapsed between the moment WAL location 'lsn'
  * (or the highest known earlier LSN) was flushed locally and the time 'now'.
  * We have a separate read head for each of the reported LSN locations we
  * receive in replies from standby; 'head' controls which read head is

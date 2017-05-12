@@ -791,7 +791,7 @@
    <filename>pg_control</filename>. Therefore, at the start of recovery,
    the server first reads <filename>pg_control</filename> and
    then the checkpoint record; then it performs the REDO operation by
-   scanning forward from the log position indicated in the checkpoint
+   scanning forward from the log location indicated in the checkpoint
    record.  Because the entire content of data pages is saved in the
    log on the first page modification after a checkpoint (assuming
    <xref linkend="guc-full-page-writes"> is not disabled), all pages

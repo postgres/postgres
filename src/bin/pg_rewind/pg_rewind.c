@@ -231,7 +231,7 @@ main(int argc, char **argv)
 	else
 	{
 		findCommonAncestorTimeline(&divergerec, &lastcommontliIndex);
-		printf(_("servers diverged at WAL position %X/%X on timeline %u\n"),
+		printf(_("servers diverged at WAL location %X/%X on timeline %u\n"),
 			   (uint32) (divergerec >> 32), (uint32) divergerec,
 			   targetHistory[lastcommontliIndex].tli);
 
@@ -415,9 +415,9 @@ sanityChecks(void)
 }
 
 /*
- * Find minimum from two XLOG positions assuming InvalidXLogRecPtr means
+ * Find minimum from two WAL locations assuming InvalidXLogRecPtr means
  * infinity as src/include/access/timeline.h states. This routine should
- * be used only when comparing XLOG positions related to history files.
+ * be used only when comparing WAL locations related to history files.
  */
 static XLogRecPtr
 MinXLogRecPtr(XLogRecPtr a, XLogRecPtr b)

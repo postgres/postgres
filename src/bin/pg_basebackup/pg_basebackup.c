@@ -1782,7 +1782,7 @@ BaseBackup(void)
 	}
 
 	/*
-	 * Get the starting xlog position
+	 * Get the starting WAL location
 	 */
 	res = PQgetResult(conn);
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)

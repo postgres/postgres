@@ -149,7 +149,7 @@ readOneRecord(const char *datadir, XLogRecPtr ptr, int tliIndex)
 }
 
 /*
- * Find the previous checkpoint preceding given WAL position.
+ * Find the previous checkpoint preceding given WAL location.
  */
 void
 findLastCheckpoint(const char *datadir, XLogRecPtr forkptr, int tliIndex,

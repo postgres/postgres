@@ -2294,7 +2294,7 @@ RecordTransactionAbortPrepared(TransactionId xid,
  *
  * Store pointers to the start/end of the WAL record along with the xid in
  * a gxact entry in shared memory TwoPhaseState structure.  If caller
- * specifies InvalidXLogRecPtr as WAL position to fetch the two-phase
+ * specifies InvalidXLogRecPtr as WAL location to fetch the two-phase
  * data, the entry is marked as located on disk.
  */
 void

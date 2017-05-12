@@ -85,7 +85,7 @@ PostgreSQL documentation
       <term><option>--end=<replaceable>end</replaceable></option></term>
       <listitem>
        <para>
-        Stop reading at the specified log position, instead of reading to the
+        Stop reading at the specified WAL location, instead of reading to the
         end of the log stream.
        </para>
       </listitem>
@@ -144,7 +144,7 @@ PostgreSQL documentation
       <term><option>--start=<replaceable>start</replaceable></option></term>
       <listitem>
        <para>
-        Log position at which to start reading. The default is to start reading
+        WAL location at which to start reading. The default is to start reading
         the first valid log record found in the earliest file found.
        </para>
       </listitem>

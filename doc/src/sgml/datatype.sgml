@@ -4635,7 +4635,7 @@ SELECT * FROM pg_attribute
     standard comparison operators, like <literal>=</literal> and
     <literal>&gt;</literal>.  Two LSNs can be subtracted using the
     <literal>-</literal> operator; the result is the number of bytes separating
-    those write-ahead log positions.
+    those write-ahead log locations.
    </para>
   </sect1>
 

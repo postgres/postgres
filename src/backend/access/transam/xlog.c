@@ -5643,7 +5643,7 @@ recoveryStopsBefore(XLogReaderState *record)
 		recoveryStopTime = 0;
 		recoveryStopName[0] = '\0';
 		ereport(LOG,
-				(errmsg("recovery stopping before WAL position (LSN) \"%X/%X\"",
+				(errmsg("recovery stopping before WAL location (LSN) \"%X/%X\"",
 						(uint32) (recoveryStopLSN >> 32),
 						(uint32) recoveryStopLSN)));
 		return true;
@@ -5800,7 +5800,7 @@ recoveryStopsAfter(XLogReaderState *record)
 		recoveryStopTime = 0;
 		recoveryStopName[0] = '\0';
 		ereport(LOG,
-				(errmsg("recovery stopping after WAL position (LSN) \"%X/%X\"",
+				(errmsg("recovery stopping after WAL location (LSN) \"%X/%X\"",
 						(uint32) (recoveryStopLSN >> 32),
 						(uint32) recoveryStopLSN)));
 		return true;
@@ -6323,7 +6323,7 @@ StartupXLOG(void)
 							recoveryTargetName)));
 		else if (recoveryTarget == RECOVERY_TARGET_LSN)
 			ereport(LOG,
-					(errmsg("starting point-in-time recovery to WAL position (LSN) \"%X/%X\"",
+					(errmsg("starting point-in-time recovery to WAL location (LSN) \"%X/%X\"",
 							(uint32) (recoveryTargetLSN >> 32),
 							(uint32) recoveryTargetLSN)));
 		else if (recoveryTarget == RECOVERY_TARGET_IMMEDIATE)
@@ -7455,7 +7455,7 @@ StartupXLOG(void)
 		exitArchiveRecovery(EndOfLogTLI, EndOfLog);
 
 	/*
-	 * Prepare to write WAL starting at EndOfLog position, and init xlog
+	 * Prepare to write WAL starting at EndOfLog location, and init xlog
 	 * buffer cache using the block containing the last record from the
 	 * previous incarnation.
 	 */
@@ -10159,7 +10159,7 @@ XLogFileNameP(TimeLineID tli, XLogSegNo segno)
  * when backup needs to generate tablespace_map file, it is used to
  * embed escape character before newline character in tablespace path.
  *
- * Returns the minimum WAL position that must be present to restore from this
+ * Returns the minimum WAL location that must be present to restore from this
  * backup, and the corresponding timeline ID in *starttli_p.
  *
  * Every successfully started non-exclusive backup must be stopped by calling
@@ -10669,7 +10669,7 @@ get_backup_status(void)
  * If labelfile is NULL, this stops an exclusive backup. Otherwise this stops
  * the non-exclusive backup specified by 'labelfile'.
  *
- * Returns the last WAL position that must be present to restore from this
+ * Returns the last WAL location that must be present to restore from this
  * backup, and the corresponding timeline ID in *stoptli_p.
  *
  * It is the responsibility of the caller of this function to verify the
@@ -11569,7 +11569,7 @@ next_record_is_invalid:
 }
 
 /*
- * Open the WAL segment containing WAL position 'RecPtr'.
+ * Open the WAL segment containing WAL location 'RecPtr'.
  *
  * The segment can be fetched via restore_command, or via walreceiver having
  * streamed the record, or it can already be present in pg_wal. Checking

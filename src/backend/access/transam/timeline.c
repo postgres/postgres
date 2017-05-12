@@ -15,7 +15,7 @@
  * <parentTLI> <switchpoint> <reason>
  *
  *	parentTLI	ID of the parent timeline
- *	switchpoint XLogRecPtr of the WAL position where the switch happened
+ *	switchpoint XLogRecPtr of the WAL location where the switch happened
  *	reason		human-readable explanation of why the timeline was changed
  *
  * The fields are separated by tabs. Lines beginning with # are comments, and
@@ -278,7 +278,7 @@ findNewestTimeLine(TimeLineID startTLI)
  *
  *	newTLI: ID of the new timeline
  *	parentTLI: ID of its immediate parent
- *	switchpoint: XLOG position where the system switched to the new timeline
+ *	switchpoint: WAL location where the system switched to the new timeline
  *	reason: human-readable explanation of why the timeline was switched
  *
  * Currently this is only used at the end recovery, and so there are no locking

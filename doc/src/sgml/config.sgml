@@ -3312,7 +3312,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
        to the primary or upstream standby, where it can be seen using the
        <link linkend="monitoring-stats-views-table">
        <literal>pg_stat_replication</></link> view.  The standby will report
-       the last write-ahead log position it has written, the last position it
+       the last write-ahead log location it has written, the last position it
        has flushed to disk, and the last position it has applied.
        This parameter's
        value is the maximum interval, in seconds, between reports.  Updates are

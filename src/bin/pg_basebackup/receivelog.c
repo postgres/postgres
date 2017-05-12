@@ -438,7 +438,7 @@ CheckServerVersionForStreaming(PGconn *conn)
  * If 'synchronous' is true, the received WAL is flushed as soon as written,
  * otherwise only when the WAL file is closed.
  *
- * Note: The log position *must* be at a log segment start!
+ * Note: The WAL location *must* be at a log segment start!
  */
 bool
 ReceiveXlogStream(PGconn *conn, StreamCtl *stream)
@@ -733,7 +733,7 @@ ReadEndOfStreamingResult(PGresult *res, XLogRecPtr *startpos, uint32 *timeline)
 	 *		   4 | 0/9949AE0
 	 *
 	 * next_tli is the timeline ID of the next timeline after the one that
-	 * just finished streaming. next_tli_startpos is the XLOG position where
+	 * just finished streaming. next_tli_startpos is the WAL location where
 	 * the server switched to it.
 	 *----------
 	 */

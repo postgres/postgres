@@ -632,7 +632,7 @@ typedef void (*LogicalDecodeMessageCB) (struct LogicalDecodingContext *ctx,
       its XID. Note however that it can be NULL when the message is
       non-transactional and the XID was not assigned yet in the transaction
       which logged the message. The <parameter>lsn</parameter> has WAL
-      position of the message. The <parameter>transactional</parameter> says
+      location of the message. The <parameter>transactional</parameter> says
       if the message was sent as transactional or not.
       The <parameter>prefix</parameter> is arbitrary null-terminated prefix
       which can be used for identifying interesting messages for the current

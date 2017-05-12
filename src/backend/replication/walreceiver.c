@@ -1090,7 +1090,7 @@ XLogWalRcvFlush(bool dying)
 }
 
 /*
- * Send reply message to primary, indicating our current XLOG positions, oldest
+ * Send reply message to primary, indicating our current WAL locations, oldest
  * xmin and the current time.
  *
  * If 'force' is not set, the message is only sent if enough time has
@@ -1125,7 +1125,7 @@ XLogWalRcvSendReply(bool force, bool requestReply)
 	 * We can compare the write and flush positions to the last message we
 	 * sent without taking any lock, but the apply position requires a spin
 	 * lock, so we don't check that unless something else has changed or 10
-	 * seconds have passed.  This means that the apply log position will
+	 * seconds have passed.  This means that the apply WAL location will
 	 * appear, from the master's point of view, to lag slightly, but since
 	 * this is only for reporting purposes and only on idle systems, that's
 	 * probably OK.
