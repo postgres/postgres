@@ -530,6 +530,7 @@ sub AddProject
 	if ($self->{options}->{xml})
 	{
 		$proj->AddIncludeDir($self->{options}->{xml} . '\include');
+		$proj->AddIncludeDir($self->{options}->{xml} . '\include\libxml2');
 		$proj->AddLibrary($self->{options}->{xml} . '\lib\libxml2.lib');
 	}
 	if ($self->{options}->{xslt})
