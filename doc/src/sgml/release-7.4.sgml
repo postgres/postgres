@@ -4,10 +4,10 @@
  <sect1 id="release-7-4-30">
   <title>Release 7.4.30</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2010-10-04</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2010-10-04</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 7.4.29.
@@ -138,10 +138,10 @@
  <sect1 id="release-7-4-29">
   <title>Release 7.4.29</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2010-05-17</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2010-05-17</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 7.4.28.
@@ -282,10 +282,10 @@
  <sect1 id="release-7-4-28">
   <title>Release 7.4.28</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2010-03-15</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2010-03-15</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 7.4.27.
@@ -401,10 +401,10 @@
  <sect1 id="release-7-4-27">
   <title>Release 7.4.27</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2009-12-14</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2009-12-14</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 7.4.26.
@@ -521,10 +521,10 @@
  <sect1 id="release-7-4-26">
   <title>Release 7.4.26</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2009-09-09</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2009-09-09</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 7.4.25.
@@ -651,10 +651,10 @@
  <sect1 id="release-7-4-25">
   <title>Release 7.4.25</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2009-03-16</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2009-03-16</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 7.4.24.
@@ -731,10 +731,10 @@
  <sect1 id="release-7-4-24">
   <title>Release 7.4.24</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2009-02-02</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2009-02-02</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 7.4.23.
@@ -817,10 +817,10 @@
  <sect1 id="release-7-4-23">
   <title>Release 7.4.23</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2008-11-03</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2008-11-03</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 7.4.22.
@@ -901,10 +901,10 @@
  <sect1 id="release-7-4-22">
   <title>Release 7.4.22</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2008-09-22</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2008-09-22</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 7.4.21.
@@ -977,10 +977,10 @@
  <sect1 id="release-7-4-21">
   <title>Release 7.4.21</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2008-06-12</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2008-06-12</para>
+  </formalpara>
 
   <para>
    This release contains one serious bug fix over 7.4.20.
@@ -1031,10 +1031,10 @@
  <sect1 id="release-7-4-20">
   <title>Release 7.4.20</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>never released</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>never released</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 7.4.19.
@@ -1176,10 +1176,10 @@
  <sect1 id="release-7-4-19">
   <title>Release 7.4.19</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2008-01-07</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2008-01-07</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 7.4.18,
@@ -1330,10 +1330,10 @@
  <sect1 id="release-7-4-18">
   <title>Release 7.4.18</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2007-09-17</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2007-09-17</para>
+  </formalpara>
 
   <para>
    This release contains fixes from 7.4.17.
@@ -1406,10 +1406,10 @@
  <sect1 id="release-7-4-17">
   <title>Release 7.4.17</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2007-04-23</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2007-04-23</para>
+  </formalpara>
 
   <para>
    This release contains fixes from 7.4.16,
@@ -1477,10 +1477,10 @@
  <sect1 id="release-7-4-16">
   <title>Release 7.4.16</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2007-02-05</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2007-02-05</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 7.4.15, including
@@ -1548,10 +1548,10 @@
  <sect1 id="release-7-4-15">
   <title>Release 7.4.15</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2007-01-08</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2007-01-08</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 7.4.14.
@@ -1637,10 +1637,10 @@
  <sect1 id="release-7-4-14">
   <title>Release 7.4.14</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2006-10-16</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2006-10-16</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 7.4.13.
@@ -1684,10 +1684,10 @@ ANYARRAY</para></listitem>
  <sect1 id="release-7-4-13">
   <title>Release 7.4.13</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2006-05-23</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2006-05-23</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 7.4.12,
@@ -1791,10 +1791,10 @@ Fuhr)</para></listitem>
  <sect1 id="release-7-4-12">
   <title>Release 7.4.12</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2006-02-14</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2006-02-14</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 7.4.11.
@@ -1854,10 +1854,10 @@ and <function>isinf</> during configure (Tom)</para></listitem>
  <sect1 id="release-7-4-11">
   <title>Release 7.4.11</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2006-01-09</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2006-01-09</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 7.4.10.
@@ -1921,10 +1921,10 @@ what's actually returned by the query (Joe)</para></listitem>
  <sect1 id="release-7-4-10">
   <title>Release 7.4.10</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2005-12-12</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2005-12-12</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 7.4.9.
@@ -1974,10 +1974,10 @@ table has been dropped</para></listitem>
  <sect1 id="release-7-4-9">
   <title>Release 7.4.9</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2005-10-04</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2005-10-04</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 7.4.8.
@@ -2043,10 +2043,10 @@ code</para></listitem>
  <sect1 id="release-7-4-8">
   <title>Release 7.4.8</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2005-05-09</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2005-05-09</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 7.4.7, including several
@@ -2227,10 +2227,10 @@ holder of the lock released it within a very narrow window.
  <sect1 id="release-7-4-7">
   <title>Release 7.4.7</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2005-01-31</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2005-01-31</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 7.4.6, including several
@@ -2287,10 +2287,10 @@ GMT</para></listitem>
  <sect1 id="release-7-4-6">
   <title>Release 7.4.6</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2004-10-22</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2004-10-22</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 7.4.5.
@@ -2359,10 +2359,10 @@ ECPG prepare statement</para></listitem>
  <sect1 id="release-7-4-5">
   <title>Release 7.4.5</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2004-08-18</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2004-08-18</para>
+  </formalpara>
 
   <para>
    This release contains one serious bug fix over 7.4.4.
@@ -2397,10 +2397,10 @@ still worth a re-release.  The bug does not exist in pre-7.4 releases.
  <sect1 id="release-7-4-4">
   <title>Release 7.4.4</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2004-08-16</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2004-08-16</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 7.4.3.
@@ -2449,10 +2449,10 @@ aggregate plan</para></listitem>
  <sect1 id="release-7-4-3">
   <title>Release 7.4.3</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2004-06-14</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2004-06-14</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 7.4.2.
@@ -2507,10 +2507,10 @@ names from outer query levels.
  <sect1 id="release-7-4-2">
   <title>Release 7.4.2</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2004-03-08</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2004-03-08</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 7.4.1.
@@ -2650,10 +2650,10 @@ inconveniences associated with the <literal>i/I</> problem.</para></listitem>
  <sect1 id="release-7-4-1">
   <title>Release 7.4.1</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2003-12-22</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2003-12-22</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 7.4.
@@ -2764,10 +2764,10 @@ DROP SCHEMA information_schema CASCADE;
 <sect1 id="release-7-4">
  <title>Release 7.4</title>
 
- <note>
-  <title>Release Date</title>
-  <simpara>2003-11-17</simpara>
- </note>
+ <formalpara>
+  <title>Release date:</title>
+  <para>2003-11-17</para>
+ </formalpara>
 
  <sect2>
   <title>Overview</title>

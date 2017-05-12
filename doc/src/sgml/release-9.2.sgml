@@ -4,10 +4,10 @@
  <sect1 id="release-9-2-21">
   <title>Release 9.2.21</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2017-05-11</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2017-05-11</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.2.20.
@@ -452,10 +452,10 @@ UPDATE pg_database SET datallowconn = false WHERE datname = 'template0';
  <sect1 id="release-9-2-20">
   <title>Release 9.2.20</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2017-02-09</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2017-02-09</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.2.19.
@@ -864,10 +864,10 @@ Branch: REL9_2_STABLE [38bec1805] 2017-01-25 07:02:25 +0900
  <sect1 id="release-9-2-19">
   <title>Release 9.2.19</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2016-10-27</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2016-10-27</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.2.18.
@@ -1130,10 +1130,10 @@ Branch: REL9_2_STABLE [38bec1805] 2017-01-25 07:02:25 +0900
  <sect1 id="release-9-2-18">
   <title>Release 9.2.18</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2016-08-11</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2016-08-11</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.2.17.
@@ -1471,10 +1471,10 @@ Branch: REL9_2_STABLE [38bec1805] 2017-01-25 07:02:25 +0900
  <sect1 id="release-9-2-17">
   <title>Release 9.2.17</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2016-05-12</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2016-05-12</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.2.16.
@@ -1667,10 +1667,10 @@ Branch: REL9_2_STABLE [38bec1805] 2017-01-25 07:02:25 +0900
  <sect1 id="release-9-2-16">
   <title>Release 9.2.16</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2016-03-31</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2016-03-31</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.2.15.
@@ -1873,10 +1873,10 @@ Branch: REL9_2_STABLE [38bec1805] 2017-01-25 07:02:25 +0900
  <sect1 id="release-9-2-15">
   <title>Release 9.2.15</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2016-02-11</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2016-02-11</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.2.14.
@@ -2417,10 +2417,10 @@ Branch: REL9_2_STABLE [38bec1805] 2017-01-25 07:02:25 +0900
  <sect1 id="release-9-2-14">
   <title>Release 9.2.14</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2015-10-08</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2015-10-08</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.2.13.
@@ -3014,10 +3014,10 @@ Branch: REL9_2_STABLE [e90a629e1] 2015-09-22 14:58:38 -0700
  <sect1 id="release-9-2-13">
   <title>Release 9.2.13</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2015-06-12</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2015-06-12</para>
+  </formalpara>
 
   <para>
    This release contains a small number of fixes from 9.2.12.
@@ -3082,10 +3082,10 @@ Branch: REL9_2_STABLE [e90a629e1] 2015-09-22 14:58:38 -0700
  <sect1 id="release-9-2-12">
   <title>Release 9.2.12</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2015-06-04</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2015-06-04</para>
+  </formalpara>
 
   <para>
    This release contains a small number of fixes from 9.2.11.
@@ -3177,10 +3177,10 @@ Branch: REL9_2_STABLE [e90a629e1] 2015-09-22 14:58:38 -0700
  <sect1 id="release-9-2-11">
   <title>Release 9.2.11</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2015-05-22</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2015-05-22</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.2.10.
@@ -3759,10 +3759,10 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
  <sect1 id="release-9-2-10">
   <title>Release 9.2.10</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2015-02-05</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2015-02-05</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.2.9.
@@ -4676,10 +4676,10 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
  <sect1 id="release-9-2-9">
   <title>Release 9.2.9</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2014-07-24</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2014-07-24</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.2.8.
@@ -5157,10 +5157,10 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
  <sect1 id="release-9-2-8">
   <title>Release 9.2.8</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2014-03-20</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2014-03-20</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.2.7.
@@ -5346,10 +5346,10 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
  <sect1 id="release-9-2-7">
   <title>Release 9.2.7</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2014-02-20</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2014-02-20</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.2.6.
@@ -5953,10 +5953,10 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
  <sect1 id="release-9-2-6">
   <title>Release 9.2.6</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2013-12-05</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2013-12-05</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.2.5.
@@ -6290,10 +6290,10 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
  <sect1 id="release-9-2-5">
   <title>Release 9.2.5</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2013-10-10</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2013-10-10</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.2.4.
@@ -6709,10 +6709,10 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
  <sect1 id="release-9-2-4">
   <title>Release 9.2.4</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2013-04-04</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2013-04-04</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.2.3.
@@ -7116,10 +7116,10 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
  <sect1 id="release-9-2-3">
   <title>Release 9.2.3</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2013-02-07</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2013-02-07</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.2.2.
@@ -7567,10 +7567,10 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
  <sect1 id="release-9-2-2">
   <title>Release 9.2.2</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2012-12-06</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2012-12-06</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.2.1.
@@ -8291,10 +8291,10 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
  <sect1 id="release-9-2-1">
   <title>Release 9.2.1</title>
 
-  <note>
-  <title>Release Date</title>
-  <simpara>2012-09-24</simpara>
-  </note>
+  <formalpara>
+  <title>Release date:</title>
+  <para>2012-09-24</para>
+  </formalpara>
 
   <para>
    This release contains a variety of fixes from 9.2.0.
@@ -8459,10 +8459,10 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
  <sect1 id="release-9-2">
   <title>Release 9.2</title>
 
-  <note>
-   <title>Release Date</title>
-   <simpara>2012-09-10</simpara>
-  </note>
+  <formalpara>
+   <title>Release date:</title>
+   <para>2012-09-10</para>
+  </formalpara>
 
   <sect2>
    <title>Overview</title>
