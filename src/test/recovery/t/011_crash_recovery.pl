@@ -5,7 +5,17 @@ use strict;
 use warnings;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 3;
+use Test::More;
+use Config;
+if  ($Config{osname} eq 'MSWin32')
+{
+	# some Windows Perls at least don't like IPC::Run's start/kill_kill regime.
+	plan skip_all => "Test fails on Windows perl";
+}
+else
+{
+	plan tests => 3;
+}
 
 my $node = get_new_node('master');
 $node->init(allows_streaming => 1);

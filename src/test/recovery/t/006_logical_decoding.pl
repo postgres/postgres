@@ -8,6 +8,7 @@ use warnings;
 use PostgresNode;
 use TestLib;
 use Test::More tests => 16;
+use Config;
 
 # Initialize master node
 my $node_master = get_new_node('master');
@@ -72,13 +73,19 @@ is($node_master->psql('otherdb', "SELECT lsn FROM pg_logical_slot_peek_changes('
 $node_master->safe_psql('otherdb', qq[SELECT pg_create_logical_replication_slot('otherdb_slot', 'test_decoding');]);
 
 # make sure you can't drop a slot while active
-my $pg_recvlogical = IPC::Run::start(['pg_recvlogical', '-d', $node_master->connstr('otherdb'), '-S', 'otherdb_slot', '-f', '-', '--start']);
-$node_master->poll_query_until('otherdb', "SELECT EXISTS (SELECT 1 FROM pg_replication_slots WHERE slot_name = 'otherdb_slot' AND active_pid IS NOT NULL)");
-is($node_master->psql('postgres', 'DROP DATABASE otherdb'), 3,
-	'dropping a DB with inactive logical slots fails');
-$pg_recvlogical->kill_kill;
-is($node_master->slot('otherdb_slot')->{'slot_name'}, undef,
-	'logical slot still exists');
+SKIP:
+{
+	# some Windows Perls at least don't like IPC::Run's start/kill_kill regime.
+	skip "Test fails on Windows perl", 2 if $Config{osname} eq 'MSWin32';
+
+	my $pg_recvlogical = IPC::Run::start(['pg_recvlogical', '-d', $node_master->connstr('otherdb'), '-S', 'otherdb_slot', '-f', '-', '--start']);
+	$node_master->poll_query_until('otherdb', "SELECT EXISTS (SELECT 1 FROM pg_replication_slots WHERE slot_name = 'otherdb_slot' AND active_pid IS NOT NULL)");
+	is($node_master->psql('postgres', 'DROP DATABASE otherdb'), 3,
+	   'dropping a DB with inactive logical slots fails');
+	$pg_recvlogical->kill_kill;
+	is($node_master->slot('otherdb_slot')->{'slot_name'}, undef,
+	   'logical slot still exists');
+}
 
 $node_master->poll_query_until('otherdb', "SELECT EXISTS (SELECT 1 FROM pg_replication_slots WHERE slot_name = 'otherdb_slot' AND active_pid IS NULL)");
 is($node_master->psql('postgres', 'DROP DATABASE otherdb'), 0,
