@@ -124,7 +124,7 @@ InitializeRelfilenodeMap(void)
 	 * error.
 	 */
 	RelfilenodeMapHash =
-		hash_create("RelfilenodeMap cache", 1024, &ctl,
+		hash_create("RelfilenodeMap cache", 64, &ctl,
 					HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
 
 	/* Watch for invalidation events. */
