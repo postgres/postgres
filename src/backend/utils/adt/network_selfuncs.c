@@ -88,10 +88,9 @@ networksel(PG_FUNCTION_ARGS)
 	Selectivity selec,
 				mcv_selec,
 				non_mcv_selec;
-	Datum		constvalue,
-			   *hist_values;
-	int			hist_nvalues;
+	Datum		constvalue;
 	Form_pg_statistic stats;
+	AttStatsSlot hslot;
 	double		sumcommon,
 				nullfrac;
 	FmgrInfo	proc;
@@ -146,22 +145,19 @@ networksel(PG_FUNCTION_ARGS)
 	 * non-MCV population that satisfies the clause.  If we don't, apply the
 	 * default selectivity to that population.
 	 */
-	if (get_attstatsslot(vardata.statsTuple,
-						 vardata.atttype, vardata.atttypmod,
+	if (get_attstatsslot(&hslot, vardata.statsTuple,
 						 STATISTIC_KIND_HISTOGRAM, InvalidOid,
-						 NULL,
-						 &hist_values, &hist_nvalues,
-						 NULL, NULL))
+						 ATTSTATSSLOT_VALUES))
 	{
 		int			opr_codenum = inet_opr_codenum(operator);
 
 		/* Commute if needed, so we can consider histogram to be on the left */
 		if (!varonleft)
 			opr_codenum = -opr_codenum;
-		non_mcv_selec = inet_hist_value_sel(hist_values, hist_nvalues,
+		non_mcv_selec = inet_hist_value_sel(hslot.values, hslot.nvalues,
 											constvalue, opr_codenum);
 
-		free_attstatsslot(vardata.atttype, hist_values, hist_nvalues, NULL, 0);
+		free_attstatsslot(&hslot);
 	}
 	else
 		non_mcv_selec = DEFAULT_SEL(operator);
@@ -277,42 +273,33 @@ networkjoinsel_inner(Oid operator,
 				hist1_exists = false,
 				hist2_exists = false;
 	int			opr_codenum;
-	int			mcv1_nvalues,
-				mcv2_nvalues,
-				mcv1_nnumbers,
-				mcv2_nnumbers,
-				hist1_nvalues,
-				hist2_nvalues,
-				mcv1_length = 0,
+	int			mcv1_length = 0,
 				mcv2_length = 0;
-	Datum	   *mcv1_values,
-			   *mcv2_values,
-			   *hist1_values,
-			   *hist2_values;
-	float4	   *mcv1_numbers,
-			   *mcv2_numbers;
+	AttStatsSlot mcv1_slot;
+	AttStatsSlot mcv2_slot;
+	AttStatsSlot hist1_slot;
+	AttStatsSlot hist2_slot;
 
 	if (HeapTupleIsValid(vardata1->statsTuple))
 	{
 		stats = (Form_pg_statistic) GETSTRUCT(vardata1->statsTuple);
 		nullfrac1 = stats->stanullfrac;
 
-		mcv1_exists = get_attstatsslot(vardata1->statsTuple,
-									   vardata1->atttype, vardata1->atttypmod,
+		mcv1_exists = get_attstatsslot(&mcv1_slot, vardata1->statsTuple,
 									   STATISTIC_KIND_MCV, InvalidOid,
-									   NULL,
-									   &mcv1_values, &mcv1_nvalues,
-									   &mcv1_numbers, &mcv1_nnumbers);
-		hist1_exists = get_attstatsslot(vardata1->statsTuple,
-									  vardata1->atttype, vardata1->atttypmod,
+								 ATTSTATSSLOT_VALUES | ATTSTATSSLOT_NUMBERS);
+		hist1_exists = get_attstatsslot(&hist1_slot, vardata1->statsTuple,
 										STATISTIC_KIND_HISTOGRAM, InvalidOid,
-										NULL,
-										&hist1_values, &hist1_nvalues,
-										NULL, NULL);
+										ATTSTATSSLOT_VALUES);
 		/* Arbitrarily limit number of MCVs considered */
-		mcv1_length = Min(mcv1_nvalues, MAX_CONSIDERED_ELEMS);
+		mcv1_length = Min(mcv1_slot.nvalues, MAX_CONSIDERED_ELEMS);
 		if (mcv1_exists)
-			sumcommon1 = mcv_population(mcv1_numbers, mcv1_length);
+			sumcommon1 = mcv_population(mcv1_slot.numbers, mcv1_length);
+	}
+	else
+	{
+		memset(&mcv1_slot, 0, sizeof(mcv1_slot));
+		memset(&hist1_slot, 0, sizeof(hist1_slot));
 	}
 
 	if (HeapTupleIsValid(vardata2->statsTuple))
@@ -320,22 +307,21 @@ networkjoinsel_inner(Oid operator,
 		stats = (Form_pg_statistic) GETSTRUCT(vardata2->statsTuple);
 		nullfrac2 = stats->stanullfrac;
 
-		mcv2_exists = get_attstatsslot(vardata2->statsTuple,
-									   vardata2->atttype, vardata2->atttypmod,
+		mcv2_exists = get_attstatsslot(&mcv2_slot, vardata2->statsTuple,
 									   STATISTIC_KIND_MCV, InvalidOid,
-									   NULL,
-									   &mcv2_values, &mcv2_nvalues,
-									   &mcv2_numbers, &mcv2_nnumbers);
-		hist2_exists = get_attstatsslot(vardata2->statsTuple,
-									  vardata2->atttype, vardata2->atttypmod,
+								 ATTSTATSSLOT_VALUES | ATTSTATSSLOT_NUMBERS);
+		hist2_exists = get_attstatsslot(&hist2_slot, vardata2->statsTuple,
 										STATISTIC_KIND_HISTOGRAM, InvalidOid,
-										NULL,
-										&hist2_values, &hist2_nvalues,
-										NULL, NULL);
+										ATTSTATSSLOT_VALUES);
 		/* Arbitrarily limit number of MCVs considered */
-		mcv2_length = Min(mcv2_nvalues, MAX_CONSIDERED_ELEMS);
+		mcv2_length = Min(mcv2_slot.nvalues, MAX_CONSIDERED_ELEMS);
 		if (mcv2_exists)
-			sumcommon2 = mcv_population(mcv2_numbers, mcv2_length);
+			sumcommon2 = mcv_population(mcv2_slot.numbers, mcv2_length);
+	}
+	else
+	{
+		memset(&mcv2_slot, 0, sizeof(mcv2_slot));
+		memset(&hist2_slot, 0, sizeof(hist2_slot));
 	}
 
 	opr_codenum = inet_opr_codenum(operator);
@@ -344,8 +330,10 @@ networkjoinsel_inner(Oid operator,
 	 * Calculate selectivity for MCV vs MCV matches.
 	 */
 	if (mcv1_exists && mcv2_exists)
-		selec += inet_mcv_join_sel(mcv1_values, mcv1_numbers, mcv1_length,
-								   mcv2_values, mcv2_numbers, mcv2_length,
+		selec += inet_mcv_join_sel(mcv1_slot.values, mcv1_slot.numbers,
+								   mcv1_length,
+								   mcv2_slot.values, mcv2_slot.numbers,
+								   mcv2_length,
 								   operator);
 
 	/*
@@ -355,13 +343,13 @@ networkjoinsel_inner(Oid operator,
 	 */
 	if (mcv1_exists && hist2_exists)
 		selec += (1.0 - nullfrac2 - sumcommon2) *
-			inet_mcv_hist_sel(mcv1_values, mcv1_numbers, mcv1_length,
-							  hist2_values, hist2_nvalues,
+			inet_mcv_hist_sel(mcv1_slot.values, mcv1_slot.numbers, mcv1_length,
+							  hist2_slot.values, hist2_slot.nvalues,
 							  opr_codenum);
 	if (mcv2_exists && hist1_exists)
 		selec += (1.0 - nullfrac1 - sumcommon1) *
-			inet_mcv_hist_sel(mcv2_values, mcv2_numbers, mcv2_length,
-							  hist1_values, hist1_nvalues,
+			inet_mcv_hist_sel(mcv2_slot.values, mcv2_slot.numbers, mcv2_length,
+							  hist1_slot.values, hist1_slot.nvalues,
 							  -opr_codenum);
 
 	/*
@@ -371,8 +359,8 @@ networkjoinsel_inner(Oid operator,
 	if (hist1_exists && hist2_exists)
 		selec += (1.0 - nullfrac1 - sumcommon1) *
 			(1.0 - nullfrac2 - sumcommon2) *
-			inet_hist_inclusion_join_sel(hist1_values, hist1_nvalues,
-										 hist2_values, hist2_nvalues,
+			inet_hist_inclusion_join_sel(hist1_slot.values, hist1_slot.nvalues,
+									   hist2_slot.values, hist2_slot.nvalues,
 										 opr_codenum);
 
 	/*
@@ -383,18 +371,10 @@ networkjoinsel_inner(Oid operator,
 		selec = (1.0 - nullfrac1) * (1.0 - nullfrac2) * DEFAULT_SEL(operator);
 
 	/* Release stats. */
-	if (mcv1_exists)
-		free_attstatsslot(vardata1->atttype, mcv1_values, mcv1_nvalues,
-						  mcv1_numbers, mcv1_nnumbers);
-	if (mcv2_exists)
-		free_attstatsslot(vardata2->atttype, mcv2_values, mcv2_nvalues,
-						  mcv2_numbers, mcv2_nnumbers);
-	if (hist1_exists)
-		free_attstatsslot(vardata1->atttype, hist1_values, hist1_nvalues,
-						  NULL, 0);
-	if (hist2_exists)
-		free_attstatsslot(vardata2->atttype, hist2_values, hist2_nvalues,
-						  NULL, 0);
+	free_attstatsslot(&mcv1_slot);
+	free_attstatsslot(&mcv2_slot);
+	free_attstatsslot(&hist1_slot);
+	free_attstatsslot(&hist2_slot);
 
 	return selec;
 }
@@ -423,42 +403,33 @@ networkjoinsel_semi(Oid operator,
 	int			opr_codenum;
 	FmgrInfo	proc;
 	int			i,
-				mcv1_nvalues,
-				mcv2_nvalues,
-				mcv1_nnumbers,
-				mcv2_nnumbers,
-				hist1_nvalues,
-				hist2_nvalues,
 				mcv1_length = 0,
 				mcv2_length = 0;
-	Datum	   *mcv1_values,
-			   *mcv2_values,
-			   *hist1_values,
-			   *hist2_values;
-	float4	   *mcv1_numbers,
-			   *mcv2_numbers;
+	AttStatsSlot mcv1_slot;
+	AttStatsSlot mcv2_slot;
+	AttStatsSlot hist1_slot;
+	AttStatsSlot hist2_slot;
 
 	if (HeapTupleIsValid(vardata1->statsTuple))
 	{
 		stats = (Form_pg_statistic) GETSTRUCT(vardata1->statsTuple);
 		nullfrac1 = stats->stanullfrac;
 
-		mcv1_exists = get_attstatsslot(vardata1->statsTuple,
-									   vardata1->atttype, vardata1->atttypmod,
+		mcv1_exists = get_attstatsslot(&mcv1_slot, vardata1->statsTuple,
 									   STATISTIC_KIND_MCV, InvalidOid,
-									   NULL,
-									   &mcv1_values, &mcv1_nvalues,
-									   &mcv1_numbers, &mcv1_nnumbers);
-		hist1_exists = get_attstatsslot(vardata1->statsTuple,
-									  vardata1->atttype, vardata1->atttypmod,
+								 ATTSTATSSLOT_VALUES | ATTSTATSSLOT_NUMBERS);
+		hist1_exists = get_attstatsslot(&hist1_slot, vardata1->statsTuple,
 										STATISTIC_KIND_HISTOGRAM, InvalidOid,
-										NULL,
-										&hist1_values, &hist1_nvalues,
-										NULL, NULL);
+										ATTSTATSSLOT_VALUES);
 		/* Arbitrarily limit number of MCVs considered */
-		mcv1_length = Min(mcv1_nvalues, MAX_CONSIDERED_ELEMS);
+		mcv1_length = Min(mcv1_slot.nvalues, MAX_CONSIDERED_ELEMS);
 		if (mcv1_exists)
-			sumcommon1 = mcv_population(mcv1_numbers, mcv1_length);
+			sumcommon1 = mcv_population(mcv1_slot.numbers, mcv1_length);
+	}
+	else
+	{
+		memset(&mcv1_slot, 0, sizeof(mcv1_slot));
+		memset(&hist1_slot, 0, sizeof(hist1_slot));
 	}
 
 	if (HeapTupleIsValid(vardata2->statsTuple))
@@ -466,22 +437,21 @@ networkjoinsel_semi(Oid operator,
 		stats = (Form_pg_statistic) GETSTRUCT(vardata2->statsTuple);
 		nullfrac2 = stats->stanullfrac;
 
-		mcv2_exists = get_attstatsslot(vardata2->statsTuple,
-									   vardata2->atttype, vardata2->atttypmod,
+		mcv2_exists = get_attstatsslot(&mcv2_slot, vardata2->statsTuple,
 									   STATISTIC_KIND_MCV, InvalidOid,
-									   NULL,
-									   &mcv2_values, &mcv2_nvalues,
-									   &mcv2_numbers, &mcv2_nnumbers);
-		hist2_exists = get_attstatsslot(vardata2->statsTuple,
-									  vardata2->atttype, vardata2->atttypmod,
+								 ATTSTATSSLOT_VALUES | ATTSTATSSLOT_NUMBERS);
+		hist2_exists = get_attstatsslot(&hist2_slot, vardata2->statsTuple,
 										STATISTIC_KIND_HISTOGRAM, InvalidOid,
-										NULL,
-										&hist2_values, &hist2_nvalues,
-										NULL, NULL);
+										ATTSTATSSLOT_VALUES);
 		/* Arbitrarily limit number of MCVs considered */
-		mcv2_length = Min(mcv2_nvalues, MAX_CONSIDERED_ELEMS);
+		mcv2_length = Min(mcv2_slot.nvalues, MAX_CONSIDERED_ELEMS);
 		if (mcv2_exists)
-			sumcommon2 = mcv_population(mcv2_numbers, mcv2_length);
+			sumcommon2 = mcv_population(mcv2_slot.numbers, mcv2_length);
+	}
+	else
+	{
+		memset(&mcv2_slot, 0, sizeof(mcv2_slot));
+		memset(&hist2_slot, 0, sizeof(hist2_slot));
 	}
 
 	opr_codenum = inet_opr_codenum(operator);
@@ -499,10 +469,11 @@ networkjoinsel_semi(Oid operator,
 	{
 		for (i = 0; i < mcv1_length; i++)
 		{
-			selec += mcv1_numbers[i] *
-				inet_semi_join_sel(mcv1_values[i],
-								   mcv2_exists, mcv2_values, mcv2_length,
-								   hist2_exists, hist2_values, hist2_nvalues,
+			selec += mcv1_slot.numbers[i] *
+				inet_semi_join_sel(mcv1_slot.values[i],
+								   mcv2_exists, mcv2_slot.values, mcv2_length,
+								   hist2_exists,
+								   hist2_slot.values, hist2_slot.nvalues,
 								   hist2_weight,
 								   &proc, opr_codenum);
 		}
@@ -519,21 +490,22 @@ networkjoinsel_semi(Oid operator,
 	 *
 	 * If there are too many histogram elements, decimate to limit runtime.
 	 */
-	if (hist1_exists && hist1_nvalues > 2 && (mcv2_exists || hist2_exists))
+	if (hist1_exists && hist1_slot.nvalues > 2 && (mcv2_exists || hist2_exists))
 	{
 		double		hist_selec_sum = 0.0;
 		int			k,
 					n;
 
-		k = (hist1_nvalues - 3) / MAX_CONSIDERED_ELEMS + 1;
+		k = (hist1_slot.nvalues - 3) / MAX_CONSIDERED_ELEMS + 1;
 
 		n = 0;
-		for (i = 1; i < hist1_nvalues - 1; i += k)
+		for (i = 1; i < hist1_slot.nvalues - 1; i += k)
 		{
 			hist_selec_sum +=
-				inet_semi_join_sel(hist1_values[i],
-								   mcv2_exists, mcv2_values, mcv2_length,
-								   hist2_exists, hist2_values, hist2_nvalues,
+				inet_semi_join_sel(hist1_slot.values[i],
+								   mcv2_exists, mcv2_slot.values, mcv2_length,
+								   hist2_exists,
+								   hist2_slot.values, hist2_slot.nvalues,
 								   hist2_weight,
 								   &proc, opr_codenum);
 			n++;
@@ -550,18 +522,10 @@ networkjoinsel_semi(Oid operator,
 		selec = (1.0 - nullfrac1) * (1.0 - nullfrac2) * DEFAULT_SEL(operator);
 
 	/* Release stats. */
-	if (mcv1_exists)
-		free_attstatsslot(vardata1->atttype, mcv1_values, mcv1_nvalues,
-						  mcv1_numbers, mcv1_nnumbers);
-	if (mcv2_exists)
-		free_attstatsslot(vardata2->atttype, mcv2_values, mcv2_nvalues,
-						  mcv2_numbers, mcv2_nnumbers);
-	if (hist1_exists)
-		free_attstatsslot(vardata1->atttype, hist1_values, hist1_nvalues,
-						  NULL, 0);
-	if (hist2_exists)
-		free_attstatsslot(vardata2->atttype, hist2_values, hist2_nvalues,
-						  NULL, 0);
+	free_attstatsslot(&mcv1_slot);
+	free_attstatsslot(&mcv2_slot);
+	free_attstatsslot(&hist1_slot);
+	free_attstatsslot(&hist2_slot);
 
 	return selec;
 }

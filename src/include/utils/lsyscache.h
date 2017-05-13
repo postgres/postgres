@@ -35,6 +35,28 @@ typedef enum IOFuncSelector
 	IOFunc_send
 } IOFuncSelector;
 
+/* Flag bits for get_attstatsslot */
+#define ATTSTATSSLOT_VALUES		0x01
+#define ATTSTATSSLOT_NUMBERS	0x02
+
+/* Result struct for get_attstatsslot */
+typedef struct AttStatsSlot
+{
+	/* Always filled: */
+	Oid			staop;			/* Actual staop for the found slot */
+	/* Filled if ATTSTATSSLOT_VALUES is specified: */
+	Oid			valuetype;		/* Actual datatype of the values */
+	Datum	   *values;			/* slot's "values" array, or NULL if none */
+	int			nvalues;		/* length of values[], or 0 */
+	/* Filled if ATTSTATSSLOT_NUMBERS is specified: */
+	float4	   *numbers;		/* slot's "numbers" array, or NULL if none */
+	int			nnumbers;		/* length of numbers[], or 0 */
+
+	/* Remaining fields are private to get_attstatsslot/free_attstatsslot */
+	void	   *values_arr;		/* palloc'd values array, if any */
+	void	   *numbers_arr;	/* palloc'd numbers array, if any */
+} AttStatsSlot;
+
 /* Hook for plugins to get control in get_attavgwidth() */
 typedef int32 (*get_attavgwidth_hook_type) (Oid relid, AttrNumber attnum);
 extern PGDLLIMPORT get_attavgwidth_hook_type get_attavgwidth_hook;
@@ -148,15 +170,9 @@ extern Oid	getBaseType(Oid typid);
 extern Oid	getBaseTypeAndTypmod(Oid typid, int32 *typmod);
 extern int32 get_typavgwidth(Oid typid, int32 typmod);
 extern int32 get_attavgwidth(Oid relid, AttrNumber attnum);
-extern bool get_attstatsslot(HeapTuple statstuple,
-				 Oid atttype, int32 atttypmod,
-				 int reqkind, Oid reqop,
-				 Oid *actualop,
-				 Datum **values, int *nvalues,
-				 float4 **numbers, int *nnumbers);
-extern void free_attstatsslot(Oid atttype,
-				  Datum *values, int nvalues,
-				  float4 *numbers, int nnumbers);
+extern bool get_attstatsslot(AttStatsSlot *sslot, HeapTuple statstuple,
+				 int reqkind, Oid reqop, int flags);
+extern void free_attstatsslot(AttStatsSlot *sslot);
 extern char *get_namespace_name(Oid nspid);
 extern char *get_namespace_name_or_temp(Oid nspid);
 extern Oid	get_range_subtype(Oid rangeOid);

@@ -163,28 +163,22 @@ tsquerysel(VariableStatData *vardata, Datum constval)
 	if (HeapTupleIsValid(vardata->statsTuple))
 	{
 		Form_pg_statistic stats;
-		Datum	   *values;
-		int			nvalues;
-		float4	   *numbers;
-		int			nnumbers;
+		AttStatsSlot sslot;
 
 		stats = (Form_pg_statistic) GETSTRUCT(vardata->statsTuple);
 
 		/* MCELEM will be an array of TEXT elements for a tsvector column */
-		if (get_attstatsslot(vardata->statsTuple,
-							 TEXTOID, -1,
+		if (get_attstatsslot(&sslot, vardata->statsTuple,
 							 STATISTIC_KIND_MCELEM, InvalidOid,
-							 NULL,
-							 &values, &nvalues,
-							 &numbers, &nnumbers))
+							 ATTSTATSSLOT_VALUES | ATTSTATSSLOT_NUMBERS))
 		{
 			/*
 			 * There is a most-common-elements slot for the tsvector Var, so
 			 * use that.
 			 */
-			selec = mcelem_tsquery_selec(query, values, nvalues,
-										 numbers, nnumbers);
-			free_attstatsslot(TEXTOID, values, nvalues, numbers, nnumbers);
+			selec = mcelem_tsquery_selec(query, sslot.values, sslot.nvalues,
+										 sslot.numbers, sslot.nnumbers);
+			free_attstatsslot(&sslot);
 		}
 		else
 		{

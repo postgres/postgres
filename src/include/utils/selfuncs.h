@@ -72,8 +72,8 @@ typedef struct VariableStatData
 	/* NB: if statsTuple!=NULL, it must be freed when caller is done */
 	void		(*freefunc) (HeapTuple tuple);	/* how to free statsTuple */
 	Oid			vartype;		/* exposed type of expression */
-	Oid			atttype;		/* type to pass to get_attstatsslot */
-	int32		atttypmod;		/* typmod to pass to get_attstatsslot */
+	Oid			atttype;		/* actual type (after stripping relabel) */
+	int32		atttypmod;		/* actual typmod (after stripping relabel) */
 	bool		isunique;		/* matches unique index or DISTINCT clause */
 	bool		acl_ok;			/* result of ACL check on table or column */
 } VariableStatData;
