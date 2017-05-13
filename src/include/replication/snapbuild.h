@@ -20,24 +20,30 @@ typedef enum
 	/*
 	 * Initial state, we can't do much yet.
 	 */
-	SNAPBUILD_START,
+	SNAPBUILD_START = -1,
+
+	/*
+	 * Collecting committed transactions, to build the initial catalog
+	 * snapshot.
+	 */
+	SNAPBUILD_BUILDING_SNAPSHOT = 0,
 
 	/*
 	 * We have collected enough information to decode tuples in transactions
 	 * that started after this.
 	 *
 	 * Once we reached this we start to collect changes. We cannot apply them
-	 * yet because the might be based on transactions that were still running
-	 * when we reached them yet.
+	 * yet, because they might be based on transactions that were still running
+	 * when FULL_SNAPSHOT was reached.
 	 */
-	SNAPBUILD_FULL_SNAPSHOT,
+	SNAPBUILD_FULL_SNAPSHOT = 1,
 
 	/*
-	 * Found a point after hitting built_full_snapshot where all transactions
-	 * that were running at that point finished. Till we reach that we hold
-	 * off calling any commit callbacks.
+	 * Found a point after SNAPBUILD_FULL_SNAPSHOT where all transactions that
+	 * were running at that point finished. Till we reach that we hold off
+	 * calling any commit callbacks.
 	 */
-	SNAPBUILD_CONSISTENT
+	SNAPBUILD_CONSISTENT = 2
 } SnapBuildState;
 
 /* forward declare so we don't have to expose the struct to the public */
@@ -73,9 +79,6 @@ extern bool SnapBuildXactNeedsSkip(SnapBuild *snapstate, XLogRecPtr ptr);
 extern void SnapBuildCommitTxn(SnapBuild *builder, XLogRecPtr lsn,
 				   TransactionId xid, int nsubxacts,
 				   TransactionId *subxacts);
-extern void SnapBuildAbortTxn(SnapBuild *builder, XLogRecPtr lsn,
-				  TransactionId xid, int nsubxacts,
-				  TransactionId *subxacts);
 extern bool SnapBuildProcessChange(SnapBuild *builder, TransactionId xid,
 					   XLogRecPtr lsn);
 extern void SnapBuildProcessNewCid(SnapBuild *builder, TransactionId xid,

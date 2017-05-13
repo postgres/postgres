@@ -1725,7 +1725,7 @@ ReorderBufferAbortOld(ReorderBuffer *rb, TransactionId oldestRunningXid)
 
 		if (TransactionIdPrecedes(txn->xid, oldestRunningXid))
 		{
-			elog(DEBUG1, "aborting old transaction %u", txn->xid);
+			elog(DEBUG2, "aborting old transaction %u", txn->xid);
 
 			/* remove potential on-disk data, and deallocate this tx */
 			ReorderBufferCleanupTXN(rb, txn);
