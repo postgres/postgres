@@ -80,6 +80,7 @@ extern List *get_qual_from_partbound(Relation rel, Relation parent, Node *bound)
 extern List *map_partition_varattnos(List *expr, int target_varno,
 						Relation partrel, Relation parent);
 extern List *RelationGetPartitionQual(Relation rel);
+extern Expr *get_partition_qual_relid(Oid relid);
 
 /* For tuple routing */
 extern PartitionDispatch *RelationGetPartitionDispatchInfo(Relation rel,

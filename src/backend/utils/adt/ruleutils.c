@@ -24,6 +24,7 @@
 #include "access/sysattr.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
+#include "catalog/partition.h"
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_am.h"
 #include "catalog/pg_authid.h"
@@ -1726,6 +1727,37 @@ pg_get_partkeydef_worker(Oid relid, int prettyFlags,
 	ReleaseSysCache(tuple);
 
 	return buf.data;
+}
+
+/*
+ * pg_get_partition_constraintdef
+ *
+ * Returns partition constraint expression as a string for the input relation
+ */
+Datum
+pg_get_partition_constraintdef(PG_FUNCTION_ARGS)
+{
+	Oid		relationId = PG_GETARG_OID(0);
+	Expr   *constr_expr;
+	int		prettyFlags;
+	List   *context;
+	char   *consrc;
+
+	constr_expr = get_partition_qual_relid(relationId);
+
+	/* Quick exit if not a partition */
+	if (constr_expr == NULL)
+		PG_RETURN_NULL();
+
+	/*
+	 * Deparse and return the constraint expression.
+	 */
+	prettyFlags = PRETTYFLAG_INDENT;
+	context = deparse_context_for(get_relation_name(relationId), relationId);
+	consrc = deparse_expression_pretty((Node *) constr_expr, context, false,
+									   false, prettyFlags, 0);
+
+	PG_RETURN_TEXT_P(string_to_text(consrc));
 }
 
 /*

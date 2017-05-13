@@ -977,6 +977,35 @@ RelationGetPartitionQual(Relation rel)
 }
 
 /*
+ * get_partition_qual_relid
+ *
+ * Returns an expression tree describing the passed-in relation's partition
+ * constraint.
+ */
+Expr *
+get_partition_qual_relid(Oid relid)
+{
+	Relation	rel = heap_open(relid, AccessShareLock);
+	Expr	   *result = NULL;
+	List	   *and_args;
+
+	/* Do the work only if this relation is a partition. */
+	if (rel->rd_rel->relispartition)
+	{
+		and_args = generate_partition_qual(rel);
+		if (list_length(and_args) > 1)
+			result = makeBoolExpr(AND_EXPR, and_args, -1);
+		else
+			result = linitial(and_args);
+	}
+
+	/* Keep the lock. */
+	heap_close(rel, NoLock);
+
+	return result;
+}
+
+/*
  * Append OIDs of rel's partitions to the list 'partoids' and for each OID,
  * append pointer rel to the list 'parents'.
  */

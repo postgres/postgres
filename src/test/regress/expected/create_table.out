@@ -546,6 +546,7 @@ CREATE TABLE part_forced_oids PARTITION OF oids_parted FOR VALUES FROM (1) TO (1
 --------+---------+-----------+----------+---------+---------+--------------+-------------
  a      | integer |           | not null |         | plain   |              | 
 Partition of: oids_parted FOR VALUES FROM (1) TO (10)
+Partition constraint: ((a >= 1) AND (a < 10))
 Has OIDs: yes
 
 DROP TABLE oids_parted, part_forced_oids;
@@ -643,29 +644,43 @@ CREATE TABLE part_c PARTITION OF parted (b WITH OPTIONS NOT NULL DEFAULT 0) FOR 
 -- create a level-2 partition
 CREATE TABLE part_c_1_10 PARTITION OF part_c FOR VALUES FROM (1) TO (10);
 -- Partition bound in describe output
-\d part_b
-               Table "public.part_b"
- Column |  Type   | Collation | Nullable | Default 
---------+---------+-----------+----------+---------
- a      | text    |           |          | 
- b      | integer |           | not null | 1
+\d+ part_b
+                                   Table "public.part_b"
+ Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
+--------+---------+-----------+----------+---------+----------+--------------+-------------
+ a      | text    |           |          |         | extended |              | 
+ b      | integer |           | not null | 1       | plain    |              | 
 Partition of: parted FOR VALUES IN ('b')
+Partition constraint: ((a IS NOT NULL) AND (a = ANY (ARRAY['b'::text])))
 Check constraints:
     "check_a" CHECK (length(a) > 0)
     "part_b_b_check" CHECK (b >= 0)
 
 -- Both partition bound and partition key in describe output
-\d part_c
-               Table "public.part_c"
- Column |  Type   | Collation | Nullable | Default 
---------+---------+-----------+----------+---------
- a      | text    |           |          | 
- b      | integer |           | not null | 0
+\d+ part_c
+                                   Table "public.part_c"
+ Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
+--------+---------+-----------+----------+---------+----------+--------------+-------------
+ a      | text    |           |          |         | extended |              | 
+ b      | integer |           | not null | 0       | plain    |              | 
 Partition of: parted FOR VALUES IN ('c')
+Partition constraint: ((a IS NOT NULL) AND (a = ANY (ARRAY['c'::text])))
 Partition key: RANGE (b)
 Check constraints:
     "check_a" CHECK (length(a) > 0)
-Number of partitions: 1 (Use \d+ to list them.)
+Partitions: part_c_1_10 FOR VALUES FROM (1) TO (10)
+
+-- a level-2 partition's constraint will include the parent's expressions
+\d+ part_c_1_10
+                                Table "public.part_c_1_10"
+ Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
+--------+---------+-----------+----------+---------+----------+--------------+-------------
+ a      | text    |           |          |         | extended |              | 
+ b      | integer |           | not null | 0       | plain    |              | 
+Partition of: part_c FOR VALUES FROM (1) TO (10)
+Partition constraint: ((a IS NOT NULL) AND (a = ANY (ARRAY['c'::text])) AND (b >= 1) AND (b < 10))
+Check constraints:
+    "check_a" CHECK (length(a) > 0)
 
 -- Show partition count in the parent's describe output
 -- Tempted to include \d+ output listing partitions with bound info but
@@ -682,6 +697,54 @@ Check constraints:
     "check_a" CHECK (length(a) > 0)
 Number of partitions: 3 (Use \d+ to list them.)
 
+-- check that we get the expected partition constraints
+CREATE TABLE range_parted4 (a int, b int, c int) PARTITION BY RANGE (abs(a), abs(b), c);
+CREATE TABLE unbounded_range_part PARTITION OF range_parted4 FOR VALUES FROM (UNBOUNDED, UNBOUNDED, UNBOUNDED) TO (UNBOUNDED, UNBOUNDED, UNBOUNDED);
+\d+ unbounded_range_part
+                           Table "public.unbounded_range_part"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ a      | integer |           |          |         | plain   |              | 
+ b      | integer |           |          |         | plain   |              | 
+ c      | integer |           | not null |         | plain   |              | 
+Partition of: range_parted4 FOR VALUES FROM (UNBOUNDED, UNBOUNDED, UNBOUNDED) TO (UNBOUNDED, UNBOUNDED, UNBOUNDED)
+Partition constraint: ((abs(a) IS NOT NULL) AND (abs(b) IS NOT NULL))
+
+DROP TABLE unbounded_range_part;
+CREATE TABLE range_parted4_1 PARTITION OF range_parted4 FOR VALUES FROM (UNBOUNDED, UNBOUNDED, UNBOUNDED) TO (1, UNBOUNDED, UNBOUNDED);
+\d+ range_parted4_1
+                              Table "public.range_parted4_1"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ a      | integer |           |          |         | plain   |              | 
+ b      | integer |           |          |         | plain   |              | 
+ c      | integer |           | not null |         | plain   |              | 
+Partition of: range_parted4 FOR VALUES FROM (UNBOUNDED, UNBOUNDED, UNBOUNDED) TO (1, UNBOUNDED, UNBOUNDED)
+Partition constraint: ((abs(a) IS NOT NULL) AND (abs(b) IS NOT NULL) AND (abs(a) <= 1))
+
+CREATE TABLE range_parted4_2 PARTITION OF range_parted4 FOR VALUES FROM (3, 4, 5) TO (6, 7, UNBOUNDED);
+\d+ range_parted4_2
+                              Table "public.range_parted4_2"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ a      | integer |           |          |         | plain   |              | 
+ b      | integer |           |          |         | plain   |              | 
+ c      | integer |           | not null |         | plain   |              | 
+Partition of: range_parted4 FOR VALUES FROM (3, 4, 5) TO (6, 7, UNBOUNDED)
+Partition constraint: ((abs(a) IS NOT NULL) AND (abs(b) IS NOT NULL) AND ((abs(a) > 3) OR ((abs(a) = 3) AND (abs(b) > 4)) OR ((abs(a) = 3) AND (abs(b) = 4) AND (c >= 5))) AND ((abs(a) < 6) OR ((abs(a) = 6) AND (abs(b) <= 7))))
+
+CREATE TABLE range_parted4_3 PARTITION OF range_parted4 FOR VALUES FROM (6, 8, UNBOUNDED) TO (9, UNBOUNDED, UNBOUNDED);
+\d+ range_parted4_3
+                              Table "public.range_parted4_3"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ a      | integer |           |          |         | plain   |              | 
+ b      | integer |           |          |         | plain   |              | 
+ c      | integer |           | not null |         | plain   |              | 
+Partition of: range_parted4 FOR VALUES FROM (6, 8, UNBOUNDED) TO (9, UNBOUNDED, UNBOUNDED)
+Partition constraint: ((abs(a) IS NOT NULL) AND (abs(b) IS NOT NULL) AND ((abs(a) > 6) OR ((abs(a) = 6) AND (abs(b) >= 8))) AND (abs(a) <= 9))
+
+DROP TABLE range_parted4;
 -- cleanup
 DROP TABLE parted, list_parted, range_parted, list_parted2, range_parted2, range_parted3;
 -- comments on partitioned tables columns

@@ -1992,6 +1992,8 @@ DATA(insert OID = 3415 (  pg_get_statisticsextdef	   PGNSP PGUID 12 1 0 0 0 f f 
 DESCR("index description");
 DATA(insert OID = 3352 (  pg_get_partkeydef    PGNSP PGUID 12 1 0 0 0 f f f f t f s s 1 0 25 "26" _null_ _null_ _null_ _null_ _null_ pg_get_partkeydef _null_ _null_ _null_ ));
 DESCR("partition key description");
+DATA(insert OID = 3408 (  pg_get_partition_constraintdef    PGNSP PGUID 12 1 0 0 0 f f f f t f s s 1 0 25 "26" _null_ _null_ _null_ _null_ _null_ pg_get_partition_constraintdef _null_ _null_ _null_ ));
+DESCR("partition constraint description");
 DATA(insert OID = 1662 (  pg_get_triggerdef    PGNSP PGUID 12 1 0 0 0 f f f f t f s s 1 0 25 "26" _null_ _null_ _null_ _null_ _null_ pg_get_triggerdef _null_ _null_ _null_ ));
 DESCR("trigger description");
 DATA(insert OID = 1387 (  pg_get_constraintdef PGNSP PGUID 12 1 0 0 0 f f f f t f s s 1 0 25 "26" _null_ _null_ _null_ _null_ _null_ pg_get_constraintdef _null_ _null_ _null_ ));

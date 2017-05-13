@@ -1858,13 +1858,26 @@ describeOneTableDetails(const char *schemaname,
 		PGresult   *result;
 		char	   *parent_name;
 		char	   *partdef;
+		char	   *partconstraintdef = NULL;
 
-		printfPQExpBuffer(&buf,
-			 "SELECT inhparent::pg_catalog.regclass, pg_get_expr(c.relpartbound, inhrelid)"
-			 " FROM pg_catalog.pg_class c"
-			 " JOIN pg_catalog.pg_inherits"
-			 " ON c.oid = inhrelid"
-			 " WHERE c.oid = '%s' AND c.relispartition;", oid);
+		/* If verbose, also request the partition constraint definition */
+		if (verbose)
+			printfPQExpBuffer(&buf,
+				"SELECT inhparent::pg_catalog.regclass,"
+				"		pg_get_expr(c.relpartbound, inhrelid),"
+				"		pg_get_partition_constraintdef(inhrelid)"
+				" FROM pg_catalog.pg_class c"
+				" JOIN pg_catalog.pg_inherits"
+				" ON c.oid = inhrelid"
+				" WHERE c.oid = '%s' AND c.relispartition;", oid);
+		else
+			printfPQExpBuffer(&buf,
+				"SELECT inhparent::pg_catalog.regclass,"
+				"		pg_get_expr(c.relpartbound, inhrelid)"
+				" FROM pg_catalog.pg_class c"
+				" JOIN pg_catalog.pg_inherits"
+				" ON c.oid = inhrelid"
+				" WHERE c.oid = '%s' AND c.relispartition;", oid);
 		result = PSQLexec(buf.data);
 		if (!result)
 			goto error_return;
@@ -1873,9 +1886,21 @@ describeOneTableDetails(const char *schemaname,
 		{
 			parent_name = PQgetvalue(result, 0, 0);
 			partdef = PQgetvalue(result, 0, 1);
+
+			if (PQnfields(result) == 3)
+				partconstraintdef = PQgetvalue(result, 0, 2);
+
 			printfPQExpBuffer(&tmpbuf, _("Partition of: %s %s"), parent_name,
 						  partdef);
 			printTableAddFooter(&cont, tmpbuf.data);
+
+			if (partconstraintdef)
+			{
+				printfPQExpBuffer(&tmpbuf, _("Partition constraint: %s"),
+								  partconstraintdef);
+				printTableAddFooter(&cont, tmpbuf.data);
+			}
+
 			PQclear(result);
 		}
 	}
