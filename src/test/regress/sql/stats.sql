@@ -14,12 +14,8 @@ SET enable_indexscan TO on;
 -- for the moment, we don't want index-only scans here
 SET enable_indexonlyscan TO off;
 
--- wait to let any prior tests finish dumping out stats;
--- else our messages might get lost due to contention
-SELECT pg_sleep_for('2 seconds');
-
 -- save counters
-CREATE TEMP TABLE prevstats AS
+CREATE TABLE prevstats AS
 SELECT t.seq_scan, t.seq_tup_read, t.idx_scan, t.idx_tup_fetch,
        (b.heap_blks_read + b.heap_blks_hit) AS heap_blks,
        (b.idx_blks_read + b.idx_blks_hit) AS idx_blks,
@@ -61,7 +57,7 @@ begin
     exit when updated1 and updated2 and updated3;
 
     -- wait a little
-    perform pg_sleep(0.1);
+    perform pg_sleep_for('100 milliseconds');
 
     -- reset stats snapshot so we can test again
     perform pg_stat_clear_snapshot();
@@ -137,9 +133,13 @@ SELECT count(*) FROM tenk2;
 -- do an indexscan
 SELECT count(*) FROM tenk2 WHERE unique1 = 1;
 
--- force the rate-limiting logic in pgstat_report_stat() to time out
--- and send a message
-SELECT pg_sleep(1.0);
+-- We can't just call wait_for_stats() at this point, because we only
+-- transmit stats when the session goes idle, and we probably didn't
+-- transmit the last couple of counts yet thanks to the rate-limiting logic
+-- in pgstat_report_stat().  But instead of waiting for the rate limiter's
+-- timeout to elapse, let's just start a new session.  The old one will
+-- then send its stats before dying.
+\c -
 
 -- wait for stats collector to update
 SELECT wait_for_stats();
@@ -165,4 +165,5 @@ SELECT pr.snap_ts < pg_stat_get_snapshot_timestamp() as snapshot_newer
 FROM prevstats AS pr;
 
 DROP TABLE trunc_stats_test, trunc_stats_test1, trunc_stats_test2, trunc_stats_test3, trunc_stats_test4;
+DROP TABLE prevstats;
 -- End of Stats Test
