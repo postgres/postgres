@@ -622,7 +622,7 @@ static const SchemaQuery Query_for_list_of_statistics = {
 	/* selcondition */
 	NULL,
 	/* viscondition */
-	NULL,
+	"pg_catalog.pg_statistic_ext_is_visible(s.oid)",
 	/* namespace */
 	"s.stxnamespace",
 	/* result */

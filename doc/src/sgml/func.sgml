@@ -16681,6 +16681,12 @@ SELECT relname FROM pg_class WHERE pg_table_is_visible(oid);
        <entry>is operator family visible in search path</entry>
       </row>
       <row>
+       <entry><literal><function>pg_statistic_ext_is_visible(<parameter>stat_oid</parameter>)</function></literal>
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>is statistics object visible in search path</entry>
+      </row>
+      <row>
        <entry><literal><function>pg_table_is_visible(<parameter>table_oid</parameter>)</function></literal>
        </entry>
        <entry><type>boolean</type></entry>
@@ -16737,6 +16743,9 @@ SELECT relname FROM pg_class WHERE pg_table_is_visible(oid);
    </indexterm>
    <indexterm>
     <primary>pg_opfamily_is_visible</primary>
+   </indexterm>
+   <indexterm>
+    <primary>pg_statistic_ext_is_visible</primary>
    </indexterm>
    <indexterm>
     <primary>pg_table_is_visible</primary>

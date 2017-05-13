@@ -3181,6 +3181,8 @@ DATA(insert OID = 3829 (  pg_opfamily_is_visible	PGNSP PGUID 12 10 0 0 0 f f f f
 DESCR("is opfamily visible in search path?");
 DATA(insert OID = 2093 (  pg_conversion_is_visible	PGNSP PGUID 12 10 0 0 0 f f f f t f s s 1 0 16 "26" _null_ _null_ _null_ _null_ _null_ pg_conversion_is_visible _null_ _null_ _null_ ));
 DESCR("is conversion visible in search path?");
+DATA(insert OID = 3403 (  pg_statistic_ext_is_visible	PGNSP PGUID 12 10 0 0 0 f f f f t f s s 1 0 16 "26" _null_ _null_ _null_ _null_ _null_ pg_statistic_ext_is_visible _null_ _null_ _null_ ));
+DESCR("is statistics object visible in search path?");
 DATA(insert OID = 3756 (  pg_ts_parser_is_visible	PGNSP PGUID 12 10 0 0 0 f f f f t f s s 1 0 16 "26" _null_ _null_ _null_ _null_ _null_ pg_ts_parser_is_visible _null_ _null_ _null_ ));
 DESCR("is text search parser visible in search path?");
 DATA(insert OID = 3757 (  pg_ts_dict_is_visible		PGNSP PGUID 12 10 0 0 0 f f f f t f s s 1 0 16 "26" _null_ _null_ _null_ _null_ _null_ pg_ts_dict_is_visible _null_ _null_ _null_ ));

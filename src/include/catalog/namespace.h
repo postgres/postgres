@@ -92,6 +92,9 @@ extern bool CollationIsVisible(Oid collid);
 extern Oid	ConversionGetConid(const char *conname);
 extern bool ConversionIsVisible(Oid conid);
 
+extern Oid	get_statistics_oid(List *names, bool missing_ok);
+extern bool StatisticsObjIsVisible(Oid stxid);
+
 extern Oid	get_ts_parser_oid(List *names, bool missing_ok);
 extern bool TSParserIsVisible(Oid prsId);
 
@@ -141,7 +144,6 @@ extern Oid	get_collation_oid(List *collname, bool missing_ok);
 extern Oid	get_conversion_oid(List *conname, bool missing_ok);
 extern Oid	FindDefaultConversionProc(int32 for_encoding, int32 to_encoding);
 
-extern Oid	get_statistics_oid(List *names, bool missing_ok);
 
 /* initialization & transaction cleanup code */
 extern void InitializeSearchPath(void);
