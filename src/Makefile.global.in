@@ -573,7 +573,7 @@ pg_isolation_regress_check = \
     $(pg_regress_locale_flags) $(EXTRA_REGRESS_OPTS)
 pg_isolation_regress_installcheck = \
     $(top_builddir)/src/test/isolation/pg_isolation_regress \
-    --inputdir=$(srcdir) \
+    --inputdir=$(srcdir) --outputdir=output_iso \
     --bindir='$(bindir)' \
     $(pg_regress_locale_flags) $(EXTRA_REGRESS_OPTS)
 
