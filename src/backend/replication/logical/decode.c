@@ -590,8 +590,6 @@ DecodeAbort(LogicalDecodingContext *ctx, XLogRecPtr lsn, TransactionId xid,
 {
 	int			i;
 
-	SnapBuildAbortTxn(ctx->snapshot_builder, lsn, xid, nsubxacts, sub_xids);
-
 	for (i = 0; i < nsubxacts; i++)
 	{
 		ReorderBufferAbort(ctx->reorder, *sub_xids, lsn);
