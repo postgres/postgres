@@ -929,21 +929,26 @@ SnapBuildCommitTxn(SnapBuild *builder, XLogRecPtr lsn, TransactionId xid,
 {
 	int			nxact;
 
-	bool		forced_timetravel = false;
+	bool		needs_snapshot = false;
+	bool		needs_timetravel = false;
 	bool		sub_needs_timetravel = false;
-	bool		top_needs_timetravel = false;
 
 	TransactionId xmax = xid;
 
 	/*
-	 * If we couldn't observe every change of a transaction because it was
-	 * already running at the point we started to observe we have to assume it
-	 * made catalog changes.
-	 *
-	 * This has the positive benefit that we afterwards have enough
-	 * information to build an exportable snapshot that's usable by pg_dump et
-	 * al.
+	 * Transactions preceding BUILDING_SNAPSHOT will neither be decoded, nor
+	 * will they be part of a snapshot.  So we don't need to record anything.
 	 */
+	if (builder->state == SNAPBUILD_START ||
+		(builder->state == SNAPBUILD_BUILDING_SNAPSHOT &&
+		 TransactionIdPrecedes(xid, SnapBuildNextPhaseAt(builder))))
+	{
+		/* ensure that only commits after this are getting replayed */
+		if (builder->start_decoding_at <= lsn)
+			builder->start_decoding_at = lsn + 1;
+		return;
+	}
+
 	if (builder->state < SNAPBUILD_CONSISTENT)
 	{
 		/* ensure that only commits after this are getting replayed */
@@ -951,12 +956,13 @@ SnapBuildCommitTxn(SnapBuild *builder, XLogRecPtr lsn, TransactionId xid,
 			builder->start_decoding_at = lsn + 1;
 
 		/*
-		 * We could avoid treating !SnapBuildTxnIsRunning transactions as
-		 * timetravel ones, but we want to be able to export a snapshot when
-		 * we reached consistency.
+		 * If building an exportable snapshot, force xid to be tracked, even
+		 * if the transaction didn't modify the catalog.
 		 */
-		forced_timetravel = true;
-		elog(DEBUG1, "forced to assume catalog changes for xid %u because it was running too early", xid);
+		if (builder->building_full_snapshot)
+		{
+			needs_timetravel = true;
+		}
 	}
 
 	for (nxact = 0; nxact < nsubxacts; nxact++)
@@ -964,25 +970,15 @@ SnapBuildCommitTxn(SnapBuild *builder, XLogRecPtr lsn, TransactionId xid,
 		TransactionId subxid = subxacts[nxact];
 
 		/*
-		 * If we're forcing timetravel we also need visibility information
-		 * about subtransaction, so keep track of subtransaction's state.
+		 * Add subtransaction to base snapshot if catalog modifying, we don't
+		 * distinguish to toplevel transactions there.
 		 */
-		if (forced_timetravel)
-		{
-			SnapBuildAddCommittedTxn(builder, subxid);
-			if (NormalTransactionIdFollows(subxid, xmax))
-				xmax = subxid;
-		}
-
-		/*
-		 * Add subtransaction to base snapshot if it DDL, we don't distinguish
-		 * to toplevel transactions there.
-		 */
-		else if (ReorderBufferXidHasCatalogChanges(builder->reorder, subxid))
+		if (ReorderBufferXidHasCatalogChanges(builder->reorder, subxid))
 		{
 			sub_needs_timetravel = true;
+			needs_snapshot = true;
 
-			elog(DEBUG1, "found subtransaction %u:%u with catalog changes.",
+			elog(DEBUG1, "found subtransaction %u:%u with catalog changes",
 				 xid, subxid);
 
 			SnapBuildAddCommittedTxn(builder, subxid);
@@ -990,44 +986,65 @@ SnapBuildCommitTxn(SnapBuild *builder, XLogRecPtr lsn, TransactionId xid,
 			if (NormalTransactionIdFollows(subxid, xmax))
 				xmax = subxid;
 		}
+		/*
+		 * If we're forcing timetravel we also need visibility information
+		 * about subtransaction, so keep track of subtransaction's state, even
+		 * if not catalog modifying.  Don't need to distribute a snapshot in
+		 * that case.
+		 */
+		else if (needs_timetravel)
+		{
+			SnapBuildAddCommittedTxn(builder, subxid);
+			if (NormalTransactionIdFollows(subxid, xmax))
+				xmax = subxid;
+		}
 	}
 
-	if (forced_timetravel)
+	/* if top-level modified catalog, it'll need a snapshot */
+	if (ReorderBufferXidHasCatalogChanges(builder->reorder, xid))
 	{
-		elog(DEBUG2, "forced transaction %u to do timetravel.", xid);
-
-		SnapBuildAddCommittedTxn(builder, xid);
-	}
-	/* add toplevel transaction to base snapshot */
-	else if (ReorderBufferXidHasCatalogChanges(builder->reorder, xid))
-	{
-		elog(DEBUG2, "found top level transaction %u, with catalog changes!",
+		elog(DEBUG2, "found top level transaction %u, with catalog changes",
 			 xid);
-
-		top_needs_timetravel = true;
+		needs_snapshot = true;
+		needs_timetravel = true;
 		SnapBuildAddCommittedTxn(builder, xid);
 	}
 	else if (sub_needs_timetravel)
 	{
-		/* mark toplevel txn as timetravel as well */
+		/* track toplevel txn as well, subxact alone isn't meaningful */
+		SnapBuildAddCommittedTxn(builder, xid);
+	}
+	else if (needs_timetravel)
+	{
+		elog(DEBUG2, "forced transaction %u to do timetravel", xid);
+
 		SnapBuildAddCommittedTxn(builder, xid);
 	}
 
-	/* if there's any reason to build a historic snapshot, do so now */
-	if (forced_timetravel || top_needs_timetravel || sub_needs_timetravel)
+	if (!needs_timetravel)
 	{
-		/*
-		 * Adjust xmax of the snapshot builder, we only do that for committed,
-		 * catalog modifying, transactions, everything else isn't interesting
-		 * for us since we'll never look at the respective rows.
-		 */
-		if (!TransactionIdIsValid(builder->xmax) ||
-			TransactionIdFollowsOrEquals(xmax, builder->xmax))
-		{
-			builder->xmax = xmax;
-			TransactionIdAdvance(builder->xmax);
-		}
+		/* record that we cannot export a general snapshot anymore */
+		builder->committed.includes_all_transactions = false;
+	}
 
+	Assert(!needs_snapshot || needs_timetravel);
+
+	/*
+	 * Adjust xmax of the snapshot builder, we only do that for committed,
+	 * catalog modifying, transactions, everything else isn't interesting
+	 * for us since we'll never look at the respective rows.
+	 */
+	if (needs_timetravel &&
+		(!TransactionIdIsValid(builder->xmax) ||
+		 TransactionIdFollowsOrEquals(xmax, builder->xmax)))
+	{
+		builder->xmax = xmax;
+		TransactionIdAdvance(builder->xmax);
+	}
+
+	/* if there's any reason to build a historic snapshot, do so now */
+	if (needs_snapshot)
+	{
 		/*
 		 * If we haven't built a complete snapshot yet there's no need to hand
 		 * it out, it wouldn't (and couldn't) be used anyway.
@@ -1058,11 +1075,6 @@ SnapBuildCommitTxn(SnapBuild *builder, XLogRecPtr lsn, TransactionId xid,
 
 		/* add a new Snapshot to all currently running transactions */
 		SnapBuildDistributeNewCatalogSnapshot(builder, lsn);
-	}
-	else
-	{
-		/* record that we cannot export a general snapshot anymore */
-		builder->committed.includes_all_transactions = false;
 	}
 }
 
