@@ -289,3 +289,46 @@ revoke all on key_desc from someone_else;
 revoke all on key_desc_1 from someone_else;
 drop role someone_else;
 drop table key_desc, key_desc_1;
+
+-- check multi-column range partitioning expression enforces the same
+-- constraint as what tuple-routing would determine it to be
+create table mcrparted (a int, b int, c int) partition by range (a, abs(b), c);
+create table mcrparted0 partition of mcrparted for values from (unbounded, unbounded, unbounded) to (1, unbounded, unbounded);
+create table mcrparted1 partition of mcrparted for values from (2, 1, unbounded) to (10, 5, 10);
+create table mcrparted2 partition of mcrparted for values from (10, 6, unbounded) to (10, unbounded, unbounded);
+create table mcrparted3 partition of mcrparted for values from (11, 1, 1) to (20, 10, 10);
+create table mcrparted4 partition of mcrparted for values from (21, unbounded, unbounded) to (30, 20, unbounded);
+create table mcrparted5 partition of mcrparted for values from (30, 21, 20) to (unbounded, unbounded, unbounded);
+
+-- routed to mcrparted0
+insert into mcrparted values (0, 1, 1);
+insert into mcrparted0 values (0, 1, 1);
+
+-- routed to mcparted1
+insert into mcrparted values (9, 1000, 1);
+insert into mcrparted1 values (9, 1000, 1);
+insert into mcrparted values (10, 5, -1);
+insert into mcrparted1 values (10, 5, -1);
+insert into mcrparted values (2, 1, 0);
+insert into mcrparted1 values (2, 1, 0);
+
+-- routed to mcparted2
+insert into mcrparted values (10, 6, 1000);
+insert into mcrparted2 values (10, 6, 1000);
+insert into mcrparted values (10, 1000, 1000);
+insert into mcrparted2 values (10, 1000, 1000);
+
+-- no partition exists, nor does mcrparted3 accept it
+insert into mcrparted values (11, 1, -1);
+insert into mcrparted3 values (11, 1, -1);
+
+-- routed to mcrparted5
+insert into mcrparted values (30, 21, 20);
+insert into mcrparted5 values (30, 21, 20);
+insert into mcrparted4 values (30, 21, 20);	-- error
+
+-- check rows
+select tableoid::regclass::text, * from mcrparted order by 1;
+
+-- cleanup
+drop table mcrparted;

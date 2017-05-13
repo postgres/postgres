@@ -183,6 +183,20 @@ list_length(const List *l)
 		 (cell1) = lnext(cell1), (cell2) = lnext(cell2))
 
 /*
+ * for_both_cell -
+ *	  a convenience macro which loops through two lists starting from the
+ *	  specified cells of each. This macro loops through both lists at the same
+ *	  time, stopping when either list runs out of elements.  Depending on the
+ *	  requirements of the call site, it may also be wise to assert that the
+ *	  lengths of the two lists are equal, and initcell1 and initcell2 are at
+ *	  the same position in the respective lists.
+ */
+#define for_both_cell(cell1, initcell1, cell2, initcell2)	\
+	for ((cell1) = (initcell1), (cell2) = (initcell2);		\
+		 (cell1) != NULL && (cell2) != NULL;				\
+		 (cell1) = lnext(cell1), (cell2) = lnext(cell2))
+
+/*
  * forthree -
  *	  the same for three lists
  */
