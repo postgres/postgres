@@ -9236,6 +9236,17 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 				Assert(defaultexpr);
 				break;
 
+			case OCLASS_STATISTIC_EXT:
+
+				/*
+				 * Give the extended-stats machinery a chance to fix anything
+				 * that this column type change would break.
+				 */
+				UpdateStatisticsForTypeChange(foundObject.objectId,
+											  RelationGetRelid(rel), attnum,
+											  attTup->atttypid, targettype);
+				break;
+
 			case OCLASS_PROC:
 			case OCLASS_TYPE:
 			case OCLASS_CAST:
@@ -9246,6 +9257,7 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 			case OCLASS_OPERATOR:
 			case OCLASS_OPCLASS:
 			case OCLASS_OPFAMILY:
+			case OCLASS_AM:
 			case OCLASS_AMOP:
 			case OCLASS_AMPROC:
 			case OCLASS_SCHEMA:
@@ -9261,6 +9273,11 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 			case OCLASS_USER_MAPPING:
 			case OCLASS_DEFACL:
 			case OCLASS_EXTENSION:
+			case OCLASS_EVENT_TRIGGER:
+			case OCLASS_PUBLICATION:
+			case OCLASS_PUBLICATION_REL:
+			case OCLASS_SUBSCRIPTION:
+			case OCLASS_TRANSFORM:
 
 				/*
 				 * We don't expect any of these sorts of objects to depend on
@@ -9270,9 +9287,10 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 					 getObjectDescription(&foundObject));
 				break;
 
-			default:
-				elog(ERROR, "unrecognized object class: %u",
-					 foundObject.classId);
+				/*
+				 * There's intentionally no default: case here; we want the
+				 * compiler to warn if a new OCLASS hasn't been handled above.
+				 */
 		}
 	}
 

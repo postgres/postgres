@@ -80,6 +80,9 @@ extern ObjectAddress AlterOperator(AlterOperatorStmt *stmt);
 /* commands/statscmds.c */
 extern ObjectAddress CreateStatistics(CreateStatsStmt *stmt);
 extern void RemoveStatisticsById(Oid statsOid);
+extern void UpdateStatisticsForTypeChange(Oid statsOid,
+							  Oid relationOid, int attnum,
+							  Oid oldColumnType, Oid newColumnType);
 
 /* commands/aggregatecmds.c */
 extern ObjectAddress DefineAggregate(ParseState *pstate, List *name, List *args, bool oldstyle,

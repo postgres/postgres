@@ -378,3 +378,31 @@ RemoveStatisticsById(Oid statsOid)
 
 	heap_close(relation, RowExclusiveLock);
 }
+
+/*
+ * Update a statistics object for ALTER COLUMN TYPE on a source column.
+ *
+ * This could throw an error if the type change can't be supported.
+ * If it can be supported, but the stats must be recomputed, a likely choice
+ * would be to set the relevant column(s) of the pg_statistic_ext tuple to
+ * null until the next ANALYZE.  (Note that the type change hasn't actually
+ * happened yet, so one option that's *not* on the table is to recompute
+ * immediately.)
+ */
+void
+UpdateStatisticsForTypeChange(Oid statsOid, Oid relationOid, int attnum,
+							  Oid oldColumnType, Oid newColumnType)
+{
+	/*
+	 * Currently, we don't actually need to do anything here.  For both
+	 * ndistinct and functional-dependencies stats, the on-disk representation
+	 * is independent of the source column data types, and it is plausible to
+	 * assume that the old statistic values will still be good for the new
+	 * column contents.  (Obviously, if the ALTER COLUMN TYPE has a USING
+	 * expression that substantially alters the semantic meaning of the column
+	 * values, this assumption could fail.  But that seems like a corner case
+	 * that doesn't justify zapping the stats in common cases.)
+	 *
+	 * Future types of extended stats will likely require us to work harder.
+	 */
+}

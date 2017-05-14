@@ -269,4 +269,15 @@ EXPLAIN (COSTS OFF)
 EXPLAIN (COSTS OFF)
  SELECT * FROM functional_dependencies WHERE a = 1 AND b = '1' AND c = 1;
 
+-- check change of column type doesn't break it
+ALTER TABLE functional_dependencies ALTER COLUMN c TYPE numeric;
+
+EXPLAIN (COSTS OFF)
+ SELECT * FROM functional_dependencies WHERE a = 1 AND b = '1' AND c = 1;
+
+ANALYZE functional_dependencies;
+
+EXPLAIN (COSTS OFF)
+ SELECT * FROM functional_dependencies WHERE a = 1 AND b = '1' AND c = 1;
+
 RESET random_page_cost;
