@@ -2087,12 +2087,12 @@ ConversionIsVisible(Oid conid)
 }
 
 /*
- * get_statistics_oid - find a statistics by possibly qualified name
+ * get_statistics_object_oid - find a statistics object by possibly qualified name
  *
  * If not found, returns InvalidOid if missing_ok, else throws error
  */
 Oid
-get_statistics_oid(List *names, bool missing_ok)
+get_statistics_object_oid(List *names, bool missing_ok)
 {
 	char	   *schemaname;
 	char	   *stats_name;
@@ -2136,7 +2136,7 @@ get_statistics_oid(List *names, bool missing_ok)
 	if (!OidIsValid(stats_oid) && !missing_ok)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("statistics \"%s\" do not exist",
+				 errmsg("statistics object \"%s\" does not exist",
 						NameListToString(names))));
 
 	return stats_oid;
@@ -4303,7 +4303,7 @@ pg_conversion_is_visible(PG_FUNCTION_ARGS)
 }
 
 Datum
-pg_statistic_ext_is_visible(PG_FUNCTION_ARGS)
+pg_statistics_obj_is_visible(PG_FUNCTION_ARGS)
 {
 	Oid			oid = PG_GETARG_OID(0);
 

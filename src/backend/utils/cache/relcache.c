@@ -4462,7 +4462,7 @@ RelationGetIndexList(Relation relation)
 
 /*
  * RelationGetStatExtList
- *		get a list of OIDs of extended statistics on this relation
+ *		get a list of OIDs of statistics objects on this relation
  *
  * The statistics list is created only if someone requests it, in a way
  * similar to RelationGetIndexList().  We scan pg_statistic_ext to find
@@ -4470,7 +4470,7 @@ RelationGetIndexList(Relation relation)
  * won't have to compute it again.  Note that shared cache inval of a
  * relcache entry will delete the old list and set rd_statvalid to 0,
  * so that we must recompute the statistics list on next request.  This
- * handles creation or deletion of a statistic.
+ * handles creation or deletion of a statistics object.
  *
  * The returned list is guaranteed to be sorted in order by OID, although
  * this is not currently needed.

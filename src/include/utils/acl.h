@@ -327,7 +327,7 @@ extern bool pg_event_trigger_ownercheck(Oid et_oid, Oid roleid);
 extern bool pg_extension_ownercheck(Oid ext_oid, Oid roleid);
 extern bool pg_publication_ownercheck(Oid pub_oid, Oid roleid);
 extern bool pg_subscription_ownercheck(Oid sub_oid, Oid roleid);
-extern bool pg_statistics_ownercheck(Oid stat_oid, Oid roleid);
+extern bool pg_statistics_object_ownercheck(Oid stat_oid, Oid roleid);
 extern bool has_createrole_privilege(Oid roleid);
 extern bool has_bypassrls_privilege(Oid roleid);
 

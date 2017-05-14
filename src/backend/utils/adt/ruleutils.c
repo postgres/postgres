@@ -319,7 +319,7 @@ static char *pg_get_indexdef_worker(Oid indexrelid, int colno,
 					   const Oid *excludeOps,
 					   bool attrsOnly, bool showTblSpc,
 					   int prettyFlags, bool missing_ok);
-static char *pg_get_statisticsext_worker(Oid statextid, bool missing_ok);
+static char *pg_get_statisticsobj_worker(Oid statextid, bool missing_ok);
 static char *pg_get_partkeydef_worker(Oid relid, int prettyFlags,
 						 bool attrsOnly, bool missing_ok);
 static char *pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
@@ -1425,16 +1425,16 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 }
 
 /*
- * pg_get_statisticsextdef
+ * pg_get_statisticsobjdef
  *		Get the definition of an extended statistics object
  */
 Datum
-pg_get_statisticsextdef(PG_FUNCTION_ARGS)
+pg_get_statisticsobjdef(PG_FUNCTION_ARGS)
 {
 	Oid			statextid = PG_GETARG_OID(0);
 	char	   *res;
 
-	res = pg_get_statisticsext_worker(statextid, true);
+	res = pg_get_statisticsobj_worker(statextid, true);
 
 	if (res == NULL)
 		PG_RETURN_NULL();
@@ -1446,7 +1446,7 @@ pg_get_statisticsextdef(PG_FUNCTION_ARGS)
  * Internal workhorse to decompile an extended statistics object.
  */
 static char *
-pg_get_statisticsext_worker(Oid statextid, bool missing_ok)
+pg_get_statisticsobj_worker(Oid statextid, bool missing_ok)
 {
 	Form_pg_statistic_ext	statextrec;
 	HeapTuple	statexttup;
@@ -1467,7 +1467,7 @@ pg_get_statisticsext_worker(Oid statextid, bool missing_ok)
 	{
 		if (missing_ok)
 			return NULL;
-		elog(ERROR, "cache lookup failed for extended statistics %u", statextid);
+		elog(ERROR, "cache lookup failed for statistics object %u", statextid);
 	}
 
 	statextrec = (Form_pg_statistic_ext) GETSTRUCT(statexttup);
@@ -1480,8 +1480,7 @@ pg_get_statisticsext_worker(Oid statextid, bool missing_ok)
 												NameStr(statextrec->stxname)));
 
 	/*
-	 * Lookup the stxkind column so that we know how to handle the WITH
-	 * clause.
+	 * Decode the stxkind column so that we know which stats types to print.
 	 */
 	datum = SysCacheGetAttr(STATEXTOID, statexttup,
 							Anum_pg_statistic_ext_stxkind, &isnull);
@@ -1518,7 +1517,6 @@ pg_get_statisticsext_worker(Oid statextid, bool missing_ok)
 			appendStringInfoString(&buf, "ndistinct");
 		else if (dependencies_enabled)
 			appendStringInfoString(&buf, "dependencies");
-
 		appendStringInfoChar(&buf, ')');
 	}
 

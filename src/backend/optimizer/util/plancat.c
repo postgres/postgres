@@ -1285,13 +1285,13 @@ get_relation_statistics(RelOptInfo *rel, Relation relation)
 
 		htup = SearchSysCache1(STATEXTOID, ObjectIdGetDatum(statOid));
 		if (!htup)
-			elog(ERROR, "cache lookup failed for statistics %u", statOid);
+			elog(ERROR, "cache lookup failed for statistics object %u", statOid);
 		staForm = (Form_pg_statistic_ext) GETSTRUCT(htup);
 
 		/*
 		 * First, build the array of columns covered.  This is ultimately
-		 * wasted if no stats are actually built, but it doesn't seem worth
-		 * troubling over that case.
+		 * wasted if no stats within the object have actually been built, but
+		 * it doesn't seem worth troubling over that case.
 		 */
 		for (i = 0; i < staForm->stxkeys.dim1; i++)
 			keys = bms_add_member(keys, staForm->stxkeys.values[i]);

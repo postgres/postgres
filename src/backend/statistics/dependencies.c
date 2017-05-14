@@ -342,8 +342,8 @@ dependency_degree(int numrows, HeapTuple *rows, int k, AttrNumber *dependency,
  * detects functional dependencies between groups of columns
  *
  * Generates all possible subsets of columns (variations) and computes
- * the degree of validity for each one. For example with a statistic on
- * three columns (a,b,c) there are 9 possible dependencies
+ * the degree of validity for each one. For example when creating statistics
+ * on three columns (a,b,c) there are 9 possible dependencies
  *
  *	   two columns			  three columns
  *	   -----------			  -------------
@@ -383,8 +383,8 @@ statext_dependencies_build(int numrows, HeapTuple *rows, Bitmapset *attrs,
 	/*
 	 * We'll try build functional dependencies starting from the smallest ones
 	 * covering just 2 columns, to the largest ones, covering all columns
-	 * included in the statistics. We start from the smallest ones because we
-	 * want to be able to skip already implied ones.
+	 * included in the statistics object.  We start from the smallest ones
+	 * because we want to be able to skip already implied ones.
 	 */
 	for (k = 2; k <= numattrs; k++)
 	{
@@ -644,7 +644,7 @@ staext_dependencies_load(Oid mvoid)
 	HeapTuple	htup = SearchSysCache1(STATEXTOID, ObjectIdGetDatum(mvoid));
 
 	if (!HeapTupleIsValid(htup))
-		elog(ERROR, "cache lookup failed for extended statistics %u", mvoid);
+		elog(ERROR, "cache lookup failed for statistics object %u", mvoid);
 
 	deps = SysCacheGetAttr(STATEXTOID, htup,
 						   Anum_pg_statistic_ext_stxdependencies, &isnull);
@@ -975,7 +975,7 @@ dependencies_clauselist_selectivity(PlannerInfo *root,
 		return 1.0;
 	}
 
-	/* find the best suited statistics for these attnums */
+	/* find the best suited statistics object for these attnums */
 	stat = choose_best_statistics(rel->statlist, clauses_attnums,
 								  STATS_EXT_DEPENDENCIES);
 
@@ -986,7 +986,7 @@ dependencies_clauselist_selectivity(PlannerInfo *root,
 		return 1.0;
 	}
 
-	/* load the dependency items stored in the statistics */
+	/* load the dependency items stored in the statistics object */
 	dependencies = staext_dependencies_load(stat->statOid);
 
 	/*

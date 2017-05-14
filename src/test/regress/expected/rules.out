@@ -3166,8 +3166,8 @@ SELECT pg_get_ruledef(0);
  
 (1 row)
 
-SELECT pg_get_statisticsextdef(0);
- pg_get_statisticsextdef 
+SELECT pg_get_statisticsobjdef(0);
+ pg_get_statisticsobjdef 
 -------------------------
  
 (1 row)

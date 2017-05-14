@@ -9,7 +9,7 @@
  * The multivariate ndistinct coefficients address this by storing ndistinct
  * estimates for combinations of the user-specified columns.  So for example
  * given a statistics object on three columns (a,b,c), this module estimates
- * and store n-distinct for (a,b), (a,c), (b,c) and (a,b,c).  The per-column
+ * and stores n-distinct for (a,b), (a,c), (b,c) and (a,b,c).  The per-column
  * estimates are already available in pg_statistic.
  *
  *
@@ -18,6 +18,7 @@
  *
  * IDENTIFICATION
  *	  src/backend/statistics/mvdistinct.c
+ *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -131,13 +132,13 @@ statext_ndistinct_load(Oid mvoid)
 
 	htup = SearchSysCache1(STATEXTOID, ObjectIdGetDatum(mvoid));
 	if (!htup)
-		elog(ERROR, "cache lookup failed for statistics %u", mvoid);
+		elog(ERROR, "cache lookup failed for statistics object %u", mvoid);
 
 	ndist = SysCacheGetAttr(STATEXTOID, htup,
 							Anum_pg_statistic_ext_stxndistinct, &isnull);
 	if (isnull)
 		elog(ERROR,
-			 "requested statistic kind %c not yet built for statistics %u",
+			 "requested statistic kind %c is not yet built for statistics object %u",
 			 STATS_EXT_NDISTINCT, mvoid);
 
 	ReleaseSysCache(htup);

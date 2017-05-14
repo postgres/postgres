@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * statscmds.c
- *	  Commands for creating and altering extended statistics
+ *	  Commands for creating and altering extended statistics objects
  *
  * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -64,7 +64,7 @@ CreateStatistics(CreateStatsStmt *stmt)
 	Oid			relid;
 	ObjectAddress parentobject,
 				myself;
-	Datum		types[2];		/* one for each possible type of statistics */
+	Datum		types[2];		/* one for each possible type of statistic */
 	int			ntypes;
 	ArrayType  *stxkind;
 	bool		build_ndistinct;
@@ -80,7 +80,7 @@ CreateStatistics(CreateStatsStmt *stmt)
 	namestrcpy(&stxname, namestr);
 
 	/*
-	 * Deal with the possibility that the named statistics already exist.
+	 * Deal with the possibility that the statistics object already exists.
 	 */
 	if (SearchSysCacheExists2(STATEXTNAMENSP,
 							  NameGetDatum(&stxname),
@@ -90,14 +90,14 @@ CreateStatistics(CreateStatsStmt *stmt)
 		{
 			ereport(NOTICE,
 					(errcode(ERRCODE_DUPLICATE_OBJECT),
-					 errmsg("statistics \"%s\" already exist, skipping",
+					 errmsg("statistics object \"%s\" already exists, skipping",
 							namestr)));
 			return InvalidObjectAddress;
 		}
 
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
-				 errmsg("statistics \"%s\" already exist", namestr)));
+				 errmsg("statistics object \"%s\" already exists", namestr)));
 	}
 
 	/*
@@ -263,7 +263,7 @@ CreateStatistics(CreateStatsStmt *stmt)
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("unrecognized statistics type \"%s\"",
+					 errmsg("unrecognized statistic type \"%s\"",
 							type)));
 	}
 	/* If no statistic type was specified, build them all. */
@@ -307,7 +307,7 @@ CreateStatistics(CreateStatsStmt *stmt)
 	relation_close(statrel, RowExclusiveLock);
 
 	/*
-	 * Invalidate relcache so that others see the new statistics.
+	 * Invalidate relcache so that others see the new statistics object.
 	 */
 	CacheInvalidateRelcache(rel);
 
@@ -346,7 +346,7 @@ CreateStatistics(CreateStatsStmt *stmt)
 }
 
 /*
- * Guts of statistics deletion.
+ * Guts of statistics object deletion.
  */
 void
 RemoveStatisticsById(Oid statsOid)
@@ -365,7 +365,7 @@ RemoveStatisticsById(Oid statsOid)
 	tup = SearchSysCache1(STATEXTOID, ObjectIdGetDatum(statsOid));
 
 	if (!HeapTupleIsValid(tup)) /* should not happen */
-		elog(ERROR, "cache lookup failed for statistics %u", statsOid);
+		elog(ERROR, "cache lookup failed for statistics object %u", statsOid);
 
 	statext = (Form_pg_statistic_ext) GETSTRUCT(tup);
 	relid = statext->stxrelid;

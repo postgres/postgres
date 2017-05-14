@@ -29,16 +29,16 @@ ERROR:  only simple column references are allowed in CREATE STATISTICS
 CREATE STATISTICS tst ON (relpages, reltuples) FROM pg_class;
 ERROR:  only simple column references are allowed in CREATE STATISTICS
 CREATE STATISTICS tst (unrecognized) ON relname, relnatts FROM pg_class;
-ERROR:  unrecognized statistics type "unrecognized"
+ERROR:  unrecognized statistic type "unrecognized"
 -- Ensure stats are dropped sanely
 CREATE TABLE ab1 (a INTEGER, b INTEGER, c INTEGER);
 CREATE STATISTICS ab1_a_b_stats ON a, b FROM ab1;
 DROP STATISTICS ab1_a_b_stats;
 CREATE SCHEMA regress_schema_2;
 CREATE STATISTICS regress_schema_2.ab1_a_b_stats ON a, b FROM ab1;
--- Let's also verify the pg_get_statisticsextdef output looks sane.
-SELECT pg_get_statisticsextdef(oid) FROM pg_statistic_ext WHERE stxname = 'ab1_a_b_stats';
-                      pg_get_statisticsextdef                      
+-- Let's also verify the pg_get_statisticsobjdef output looks sane.
+SELECT pg_get_statisticsobjdef(oid) FROM pg_statistic_ext WHERE stxname = 'ab1_a_b_stats';
+                      pg_get_statisticsobjdef                      
 -------------------------------------------------------------------
  CREATE STATISTICS regress_schema_2.ab1_a_b_stats ON a, b FROM ab1
 (1 row)
@@ -55,7 +55,7 @@ ALTER TABLE ab1 DROP COLUMN a;
 --------+---------+-----------+----------+---------
  b      | integer |           |          | 
  c      | integer |           |          | 
-Statistics:
+Statistics objects:
     "public"."ab1_b_c_stats" (ndistinct, dependencies) ON b, c FROM ab1
 
 -- Ensure statistics are dropped when table is
@@ -77,11 +77,11 @@ ALTER TABLE ab1 ALTER a SET STATISTICS 0;
 INSERT INTO ab1 SELECT a, a%23 FROM generate_series(1, 1000) a;
 CREATE STATISTICS ab1_a_b_stats ON a, b FROM ab1;
 ANALYZE ab1;
-WARNING:  extended statistics "public.ab1_a_b_stats" could not be collected for relation public.ab1
+WARNING:  statistics object "public.ab1_a_b_stats" could not be computed for relation "public.ab1"
 ALTER TABLE ab1 ALTER a SET STATISTICS -1;
 -- partial analyze doesn't build stats either
 ANALYZE ab1 (a);
-WARNING:  extended statistics "public.ab1_a_b_stats" could not be collected for relation public.ab1
+WARNING:  statistics object "public.ab1_a_b_stats" could not be computed for relation "public.ab1"
 ANALYZE ab1;
 DROP TABLE ab1;
 -- Verify supported object types for extended statistics

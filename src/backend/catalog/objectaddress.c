@@ -712,7 +712,7 @@ static const struct object_type_map
 	},
 	/* OBJECT_STATISTIC_EXT */
 	{
-		"statistics", OBJECT_STATISTIC_EXT
+		"statistics object", OBJECT_STATISTIC_EXT
 	}
 };
 
@@ -993,8 +993,8 @@ get_object_address(ObjectType objtype, Node *object,
 				break;
 			case OBJECT_STATISTIC_EXT:
 				address.classId = StatisticExtRelationId;
-				address.objectId = get_statistics_oid(castNode(List, object),
-													  missing_ok);
+				address.objectId = get_statistics_object_oid(castNode(List, object),
+															 missing_ok);
 				address.objectSubId = 0;
 				break;
 			default:
@@ -2398,7 +2398,7 @@ check_object_ownership(Oid roleid, ObjectType objtype, ObjectAddress address,
 						 errmsg("must be superuser")));
 			break;
 		case OBJECT_STATISTIC_EXT:
-			if (!pg_statistics_ownercheck(address.objectId, roleid))
+			if (!pg_statistics_object_ownercheck(address.objectId, roleid))
 				aclcheck_error_type(ACLCHECK_NOT_OWNER, address.objectId);
 			break;
 		default:
@@ -3907,11 +3907,12 @@ getObjectTypeDescription(const ObjectAddress *object)
 			break;
 
 		case OCLASS_STATISTIC_EXT:
-			appendStringInfoString(&buffer, "statistics");
+			appendStringInfoString(&buffer, "statistics object");
 			break;
 
 		default:
-			appendStringInfo(&buffer, "unrecognized %u", object->classId);
+			appendStringInfo(&buffer, "unrecognized object class %u",
+							 object->classId);
 			break;
 	}
 
@@ -4946,7 +4947,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 				tup = SearchSysCache1(STATEXTOID,
 									  ObjectIdGetDatum(object->objectId));
 				if (!HeapTupleIsValid(tup))
-					elog(ERROR, "cache lookup failed for statistics %u",
+					elog(ERROR, "cache lookup failed for statistics object %u",
 						 object->objectId);
 				formStatistic = (Form_pg_statistic_ext) GETSTRUCT(tup);
 				schema = get_namespace_name_or_temp(formStatistic->stxnamespace);

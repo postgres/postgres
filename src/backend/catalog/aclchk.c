@@ -3321,7 +3321,7 @@ static const char *const no_priv_msg[MAX_ACL_KIND] =
 	/* ACL_KIND_CONVERSION */
 	gettext_noop("permission denied for conversion %s"),
 	/* ACL_KIND_STATISTICS */
-	gettext_noop("permission denied for statistics %s"),
+	gettext_noop("permission denied for statistics object %s"),
 	/* ACL_KIND_TABLESPACE */
 	gettext_noop("permission denied for tablespace %s"),
 	/* ACL_KIND_TSDICTIONARY */
@@ -3373,7 +3373,7 @@ static const char *const not_owner_msg[MAX_ACL_KIND] =
 	/* ACL_KIND_CONVERSION */
 	gettext_noop("must be owner of conversion %s"),
 	/* ACL_KIND_STATISTICS */
-	gettext_noop("must be owner of statistics %s"),
+	gettext_noop("must be owner of statistics object %s"),
 	/* ACL_KIND_TABLESPACE */
 	gettext_noop("must be owner of tablespace %s"),
 	/* ACL_KIND_TSDICTIONARY */
@@ -3490,7 +3490,7 @@ pg_aclmask(AclObjectKind objkind, Oid table_oid, AttrNumber attnum, Oid roleid,
 		case ACL_KIND_NAMESPACE:
 			return pg_namespace_aclmask(table_oid, roleid, mask, how);
 		case ACL_KIND_STATISTICS:
-			elog(ERROR, "grantable rights not supported for statistics");
+			elog(ERROR, "grantable rights not supported for statistics objects");
 			/* not reached, but keep compiler quiet */
 			return ACL_NO_RIGHTS;
 		case ACL_KIND_TABLESPACE:
@@ -5130,10 +5130,10 @@ pg_subscription_ownercheck(Oid sub_oid, Oid roleid)
 }
 
 /*
- * Ownership check for a extended statistics (specified by OID).
+ * Ownership check for a statistics object (specified by OID).
  */
 bool
-pg_statistics_ownercheck(Oid stat_oid, Oid roleid)
+pg_statistics_object_ownercheck(Oid stat_oid, Oid roleid)
 {
 	HeapTuple	tuple;
 	Oid			ownerId;
@@ -5146,7 +5146,8 @@ pg_statistics_ownercheck(Oid stat_oid, Oid roleid)
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("statistics with OID %u do not exist", stat_oid)));
+				 errmsg("statistics object with OID %u does not exist",
+						stat_oid)));
 
 	ownerId = ((Form_pg_statistic_ext) GETSTRUCT(tuple))->stxowner;
 

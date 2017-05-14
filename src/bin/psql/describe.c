@@ -2402,7 +2402,7 @@ describeOneTableDetails(const char *schemaname,
 
 			if (tuples > 0)
 			{
-				printTableAddFooter(&cont, _("Statistics:"));
+				printTableAddFooter(&cont, _("Statistics objects:"));
 
 				for (i = 0; i < tuples; i++)
 				{
@@ -2410,7 +2410,7 @@ describeOneTableDetails(const char *schemaname,
 
 					printfPQExpBuffer(&buf, "    ");
 
-					/* statistics name (qualified with namespace) */
+					/* statistics object name (qualified with namespace) */
 					appendPQExpBuffer(&buf, "\"%s\".\"%s\" (",
 									  PQgetvalue(result, i, 2),
 									  PQgetvalue(result, i, 3));

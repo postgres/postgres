@@ -289,7 +289,7 @@ does_not_exist_skipping(ObjectType objtype, Node *object)
 		case OBJECT_STATISTIC_EXT:
 			if (!schema_does_not_exist_skipping(castNode(List, object), &msg, &name))
 			{
-				msg = gettext_noop("extended statistics \"%s\" do not exist, skipping");
+				msg = gettext_noop("statistics object \"%s\" does not exist, skipping");
 				name = NameListToString(castNode(List, object));
 			}
 			break;

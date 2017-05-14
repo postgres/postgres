@@ -6713,7 +6713,7 @@ getExtendedStatistics(Archive *fout, TableInfo tblinfo[], int numTables)
 							"tableoid, "
 							"oid, "
 							"stxname, "
-						  "pg_catalog.pg_get_statisticsextdef(oid) AS stxdef "
+						  "pg_catalog.pg_get_statisticsobjdef(oid) AS stxdef "
 						  "FROM pg_statistic_ext "
 						  "WHERE stxrelid = '%u' "
 						  "ORDER BY stxname", tbinfo->dobj.catId.oid);

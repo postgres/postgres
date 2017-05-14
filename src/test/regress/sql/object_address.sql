@@ -187,7 +187,7 @@ WITH objects (type, name, args) AS (VALUES
 				('publication', '{addr_pub}', '{}'),
 				('publication relation', '{addr_nsp, gentable}', '{addr_pub}'),
 				('subscription', '{addr_sub}', '{}'),
-				('statistics', '{addr_nsp, gentable_stat}', '{}')
+				('statistics object', '{addr_nsp, gentable_stat}', '{}')
         )
 SELECT (pg_identify_object(addr1.classid, addr1.objid, addr1.objsubid)).*,
 	-- test roundtrip through pg_identify_object_as_address

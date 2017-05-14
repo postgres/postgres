@@ -92,7 +92,7 @@ extern bool CollationIsVisible(Oid collid);
 extern Oid	ConversionGetConid(const char *conname);
 extern bool ConversionIsVisible(Oid conid);
 
-extern Oid	get_statistics_oid(List *names, bool missing_ok);
+extern Oid	get_statistics_object_oid(List *names, bool missing_ok);
 extern bool StatisticsObjIsVisible(Oid stxid);
 
 extern Oid	get_ts_parser_oid(List *names, bool missing_ok);

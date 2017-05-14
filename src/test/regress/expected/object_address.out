@@ -411,7 +411,7 @@ WITH objects (type, name, args) AS (VALUES
 				('publication', '{addr_pub}', '{}'),
 				('publication relation', '{addr_nsp, gentable}', '{addr_pub}'),
 				('subscription', '{addr_sub}', '{}'),
-				('statistics', '{addr_nsp, gentable_stat}', '{}')
+				('statistics object', '{addr_nsp, gentable_stat}', '{}')
         )
 SELECT (pg_identify_object(addr1.classid, addr1.objid, addr1.objsubid)).*,
 	-- test roundtrip through pg_identify_object_as_address
@@ -459,7 +459,7 @@ SELECT (pg_identify_object(addr1.classid, addr1.objid, addr1.objsubid)).*,
  trigger                   |            |                   | t on addr_nsp.gentable                                               | t
  operator family           | pg_catalog | integer_ops       | pg_catalog.integer_ops USING btree                                   | t
  policy                    |            |                   | genpol on addr_nsp.gentable                                          | t
- statistics                | addr_nsp   | gentable_stat     | addr_nsp.gentable_stat                                               | t
+ statistics object         | addr_nsp   | gentable_stat     | addr_nsp.gentable_stat                                               | t
  collation                 | pg_catalog | "default"         | pg_catalog."default"                                                 | t
  transform                 |            |                   | for integer on language sql                                          | t
  text search dictionary    | addr_nsp   | addr_ts_dict      | addr_nsp.addr_ts_dict                                                | t

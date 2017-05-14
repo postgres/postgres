@@ -48,7 +48,7 @@ rendering the approach mostly useless even for slightly noisy data sets, or
 result in sudden changes in behavior depending on minor differences between
 samples provided to ANALYZE.
 
-For this reason, the statistics implements "soft" functional dependencies,
+For this reason, extended statistics implement "soft" functional dependencies,
 associating each functional dependency with a degree of validity (a number
 between 0 and 1). This degree is then used to combine selectivities in a
 smooth manner.

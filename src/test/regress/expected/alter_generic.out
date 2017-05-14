@@ -504,7 +504,7 @@ CREATE TABLE alt_regress_1 (a INTEGER, b INTEGER);
 CREATE STATISTICS alt_stat1 ON a, b FROM alt_regress_1;
 CREATE STATISTICS alt_stat2 ON a, b FROM alt_regress_1;
 ALTER STATISTICS alt_stat1 RENAME TO alt_stat2;   -- failed (name conflict)
-ERROR:  statistics "alt_stat2" already exists in schema "alt_nsp1"
+ERROR:  statistics object "alt_stat2" already exists in schema "alt_nsp1"
 ALTER STATISTICS alt_stat1 RENAME TO alt_stat3;   -- failed (name conflict)
 ALTER STATISTICS alt_stat2 OWNER TO regress_alter_user2;  -- failed (no role membership)
 ERROR:  must be member of role "regress_alter_user2"
@@ -515,16 +515,16 @@ CREATE TABLE alt_regress_2 (a INTEGER, b INTEGER);
 CREATE STATISTICS alt_stat1 ON a, b FROM alt_regress_2;
 CREATE STATISTICS alt_stat2 ON a, b FROM alt_regress_2;
 ALTER STATISTICS alt_stat3 RENAME TO alt_stat4;    -- failed (not owner)
-ERROR:  must be owner of statistics alt_stat3
+ERROR:  must be owner of statistics object alt_stat3
 ALTER STATISTICS alt_stat1 RENAME TO alt_stat4;    -- OK
 ALTER STATISTICS alt_stat3 OWNER TO regress_alter_user2; -- failed (not owner)
-ERROR:  must be owner of statistics alt_stat3
+ERROR:  must be owner of statistics object alt_stat3
 ALTER STATISTICS alt_stat2 OWNER TO regress_alter_user3; -- failed (no role membership)
 ERROR:  must be member of role "regress_alter_user3"
 ALTER STATISTICS alt_stat3 SET SCHEMA alt_nsp2;		-- failed (not owner)
-ERROR:  must be owner of statistics alt_stat3
+ERROR:  must be owner of statistics object alt_stat3
 ALTER STATISTICS alt_stat2 SET SCHEMA alt_nsp2;		-- failed (name conflict)
-ERROR:  statistics "alt_stat2" already exists in schema "alt_nsp2"
+ERROR:  statistics object "alt_stat2" already exists in schema "alt_nsp2"
 RESET SESSION AUTHORIZATION;
 SELECT nspname, stxname, rolname
   FROM pg_statistic_ext s, pg_namespace n, pg_authid a

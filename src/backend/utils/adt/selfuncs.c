@@ -3707,25 +3707,27 @@ estimate_multivariate_ndistinct(PlannerInfo *root, RelOptInfo *rel,
 	{
 		StatisticExtInfo *info = (StatisticExtInfo *) lfirst(lc);
 		Bitmapset  *shared;
+		int nshared;
 
 		/* skip statistics of other kinds */
 		if (info->kind != STATS_EXT_NDISTINCT)
 			continue;
 
-		/* compute attnums shared by the vars and the statistic */
+		/* compute attnums shared by the vars and the statistics object */
 		shared = bms_intersect(info->keys, attnums);
+		nshared = bms_num_members(shared);
 
 		/*
-		 * Does this statistics matches more columns than the currently
-		 * best statistic?  If so, use this one instead.
+		 * Does this statistics object match more columns than the currently
+		 * best object?  If so, use this one instead.
 		 *
-		 * XXX This should break ties using name of the statistic, or
-		 * something like that, to make the outcome stable.
+		 * XXX This should break ties using name of the object, or something
+		 * like that, to make the outcome stable.
 		 */
-		if (bms_num_members(shared) > nmatches)
+		if (nshared > nmatches)
 		{
 			statOid = info->statOid;
-			nmatches = bms_num_members(shared);
+			nmatches = nshared;
 			matched = shared;
 		}
 	}

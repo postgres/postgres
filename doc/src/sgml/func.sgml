@@ -16681,7 +16681,7 @@ SELECT relname FROM pg_class WHERE pg_table_is_visible(oid);
        <entry>is operator family visible in search path</entry>
       </row>
       <row>
-       <entry><literal><function>pg_statistic_ext_is_visible(<parameter>stat_oid</parameter>)</function></literal>
+       <entry><literal><function>pg_statistics_obj_is_visible(<parameter>stat_oid</parameter>)</function></literal>
        </entry>
        <entry><type>boolean</type></entry>
        <entry>is statistics object visible in search path</entry>
@@ -16745,7 +16745,7 @@ SELECT relname FROM pg_class WHERE pg_table_is_visible(oid);
     <primary>pg_opfamily_is_visible</primary>
    </indexterm>
    <indexterm>
-    <primary>pg_statistic_ext_is_visible</primary>
+    <primary>pg_statistics_obj_is_visible</primary>
    </indexterm>
    <indexterm>
     <primary>pg_table_is_visible</primary>
@@ -16836,7 +16836,7 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
    </indexterm>
 
    <indexterm>
-    <primary>pg_get_statisticsextdef</primary>
+    <primary>pg_get_statisticsobjdef</primary>
    </indexterm>
 
    <indexterm>
@@ -17009,9 +17009,9 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
        uses</entry>
       </row>
       <row>
-       <entry><literal><function>pg_get_statisticsextdef(<parameter>statext_oid</parameter>)</function></literal></entry>
+       <entry><literal><function>pg_get_statisticsobjdef(<parameter>statobj_oid</parameter>)</function></literal></entry>
        <entry><type>text</type></entry>
-       <entry>get <command>CREATE STATISTICS</> command for extended statistics objects</entry>
+       <entry>get <command>CREATE STATISTICS</> command for extended statistics object</entry>
       </row>
       <row>
        <entry><function>pg_get_triggerdef</function>(<parameter>trigger_oid</parameter>)</entry>
@@ -17158,7 +17158,7 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
   <para>
    <function>pg_get_constraintdef</function>,
    <function>pg_get_indexdef</function>, <function>pg_get_ruledef</function>,
-   <function>pg_get_statisticsextdef</function>, and
+   <function>pg_get_statisticsobjdef</function>, and
    <function>pg_get_triggerdef</function>, respectively reconstruct the
    creating command for a constraint, index, rule, extended statistics object,
    or trigger. (Note that this is a decompiled reconstruction, not the

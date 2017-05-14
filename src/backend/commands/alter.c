@@ -123,7 +123,7 @@ report_namespace_conflict(Oid classId, const char *name, Oid nspOid)
 			break;
 		case StatisticExtRelationId:
 			Assert(OidIsValid(nspOid));
-			msgfmt = gettext_noop("statistics \"%s\" already exists in schema \"%s\"");
+			msgfmt = gettext_noop("statistics object \"%s\" already exists in schema \"%s\"");
 			break;
 		case TSParserRelationId:
 			Assert(OidIsValid(nspOid));
