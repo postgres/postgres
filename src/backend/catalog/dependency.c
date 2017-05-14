@@ -1204,6 +1204,10 @@ doDeletion(const ObjectAddress *object, int flags)
 			RemoveSchemaById(object->objectId);
 			break;
 
+		case OCLASS_STATISTIC_EXT:
+			RemoveStatisticsById(object->objectId);
+			break;
+
 		case OCLASS_TSPARSER:
 			RemoveTSParserById(object->objectId);
 			break;
@@ -1265,13 +1269,20 @@ doDeletion(const ObjectAddress *object, int flags)
 			DropTransformById(object->objectId);
 			break;
 
-		case OCLASS_STATISTIC_EXT:
-			RemoveStatisticsById(object->objectId);
+			/*
+			 * These global object types are not supported here.
+			 */
+		case OCLASS_ROLE:
+		case OCLASS_DATABASE:
+		case OCLASS_TBLSPACE:
+		case OCLASS_SUBSCRIPTION:
+			elog(ERROR, "global objects cannot be deleted by doDeletion");
 			break;
 
-		default:
-			elog(ERROR, "unrecognized object class: %u",
-				 object->classId);
+			/*
+			 * There's intentionally no default: case here; we want the
+			 * compiler to warn if a new OCLASS hasn't been handled above.
+			 */
 	}
 }
 

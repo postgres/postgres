@@ -1122,8 +1122,15 @@ EventTriggerSupportsObjectType(ObjectType obtype)
 		case OBJECT_USER_MAPPING:
 		case OBJECT_VIEW:
 			return true;
+
+			/*
+			 * There's intentionally no default: case here; we want the
+			 * compiler to warn if a new ObjectType hasn't been handled above.
+			 */
 	}
-	return true;
+
+	/* Shouldn't get here, but if we do, say "no support" */
+	return false;
 }
 
 /*
@@ -1155,12 +1162,13 @@ EventTriggerSupportsObjectClass(ObjectClass objclass)
 		case OCLASS_OPERATOR:
 		case OCLASS_OPCLASS:
 		case OCLASS_OPFAMILY:
+		case OCLASS_AM:
 		case OCLASS_AMOP:
 		case OCLASS_AMPROC:
 		case OCLASS_REWRITE:
 		case OCLASS_TRIGGER:
 		case OCLASS_SCHEMA:
-		case OCLASS_TRANSFORM:
+		case OCLASS_STATISTIC_EXT:
 		case OCLASS_TSPARSER:
 		case OCLASS_TSDICT:
 		case OCLASS_TSTEMPLATE:
@@ -1171,15 +1179,20 @@ EventTriggerSupportsObjectClass(ObjectClass objclass)
 		case OCLASS_DEFACL:
 		case OCLASS_EXTENSION:
 		case OCLASS_POLICY:
-		case OCLASS_AM:
 		case OCLASS_PUBLICATION:
 		case OCLASS_PUBLICATION_REL:
 		case OCLASS_SUBSCRIPTION:
-		case OCLASS_STATISTIC_EXT:
+		case OCLASS_TRANSFORM:
 			return true;
+
+			/*
+			 * There's intentionally no default: case here; we want the
+			 * compiler to warn if a new OCLASS hasn't been handled above.
+			 */
 	}
 
-	return true;
+	/* Shouldn't get here, but if we do, say "no support" */
+	return false;
 }
 
 bool
@@ -1204,10 +1217,15 @@ EventTriggerSupportsGrantObjectType(GrantObjectType objtype)
 		case ACL_OBJECT_NAMESPACE:
 		case ACL_OBJECT_TYPE:
 			return true;
-		default:
-			Assert(false);
-			return true;
+
+			/*
+			 * There's intentionally no default: case here; we want the
+			 * compiler to warn if a new ACL class hasn't been handled above.
+			 */
 	}
+
+	/* Shouldn't get here, but if we do, say "no support" */
+	return false;
 }
 
 /*
@@ -2229,35 +2247,50 @@ stringify_grantobjtype(GrantObjectType objtype)
 			return "TABLESPACE";
 		case ACL_OBJECT_TYPE:
 			return "TYPE";
-		default:
-			elog(ERROR, "unrecognized type %d", objtype);
-			return "???";		/* keep compiler quiet */
 	}
+
+	elog(ERROR, "unrecognized grant object type: %d", (int) objtype);
+	return "???";		/* keep compiler quiet */
 }
 
 /*
  * Return the GrantObjectType as a string; as above, but use the spelling
- * in ALTER DEFAULT PRIVILEGES commands instead.
+ * in ALTER DEFAULT PRIVILEGES commands instead.  Generally this is just
+ * the plural.
  */
 static const char *
 stringify_adefprivs_objtype(GrantObjectType objtype)
 {
 	switch (objtype)
 	{
+		case ACL_OBJECT_COLUMN:
+			return "COLUMNS";
 		case ACL_OBJECT_RELATION:
 			return "TABLES";
-			break;
-		case ACL_OBJECT_FUNCTION:
-			return "FUNCTIONS";
-			break;
 		case ACL_OBJECT_SEQUENCE:
 			return "SEQUENCES";
-			break;
+		case ACL_OBJECT_DATABASE:
+			return "DATABASES";
+		case ACL_OBJECT_DOMAIN:
+			return "DOMAINS";
+		case ACL_OBJECT_FDW:
+			return "FOREIGN DATA WRAPPERS";
+		case ACL_OBJECT_FOREIGN_SERVER:
+			return "FOREIGN SERVERS";
+		case ACL_OBJECT_FUNCTION:
+			return "FUNCTIONS";
+		case ACL_OBJECT_LANGUAGE:
+			return "LANGUAGES";
+		case ACL_OBJECT_LARGEOBJECT:
+			return "LARGE OBJECTS";
+		case ACL_OBJECT_NAMESPACE:
+			return "SCHEMAS";
+		case ACL_OBJECT_TABLESPACE:
+			return "TABLESPACES";
 		case ACL_OBJECT_TYPE:
 			return "TYPES";
-			break;
-		default:
-			elog(ERROR, "unrecognized type %d", objtype);
-			return "???";		/* keep compiler quiet */
 	}
+
+	elog(ERROR, "unrecognized grant object type: %d", (int) objtype);
+	return "???";		/* keep compiler quiet */
 }
