@@ -1071,23 +1071,39 @@ WHERE tablename = 'road';
     are independent of each other,
     an assumption that does not hold when column values are correlated.
     Regular statistics, because of their per-individual-column nature,
-    do not capture the knowledge of cross-column correlation;
-    <firstterm>multivariate statistics</firstterm> can be used to instruct
-    the server to obtain statistics across such a set of columns,
-    which are later used by the query optimizer
-    to determine cardinality and selectivity
-    of clauses involving those columns.
-    Multivariate statistics are currently the only use of
-    <firstterm>extended statistics</firstterm>.
+    cannot capture any knowledge about cross-column correlation.
+    However, <productname>PostgreSQL</> has the ability to compute
+    <firstterm>multivariate statistics</firstterm>, which can capture
+    such information.
    </para>
 
    <para>
-    Extended statistics are created using
+    Because the number of possible column combinations is very large,
+    it's impractical to compute multivariate statistics automatically.
+    Instead, <firstterm>extended statistics objects</firstterm>, more often
+    called just <firstterm>statistics objects</>, can be created to instruct
+    the server to obtain statistics across interesting sets of columns.
+   </para>
+
+   <para>
+    Statistics objects are created using
     <xref linkend="sql-createstatistics">, which see for more details.
-    Data collection is deferred until the next <command>ANALYZE</command>
-    on the table, after which the stored values can be examined in the
+    Creation of such an object merely creates a catalog entry expressing
+    interest in the statistics.  Actual data collection is performed
+    by <command>ANALYZE</command> (either a manual command, or background
+    auto-analyze).  The collected values can be examined in the
     <link linkend="catalog-pg-statistic-ext"><structname>pg_statistic_ext</structname></link>
     catalog.
+   </para>
+
+   <para>
+    <command>ANALYZE</command> computes extended statistics based on the same
+    sample of table rows that it takes for computing regular single-column
+    statistics.  Since the sample size is increased by increasing the
+    statistics target for the table or any of its columns (as described in
+    the previous section), a larger statistics target will normally result in
+    more accurate extended statistics, as well as more time spent calculating
+    them.
    </para>
 
    <para>
@@ -1099,142 +1115,162 @@ WHERE tablename = 'road';
     <title>Functional Dependencies</title>
 
     <para>
-     The simplest type of extended statistics are functional dependencies,
-     a concept used in definitions of database normal forms.
-     Put simply, it is said that column <literal>b</> is functionally
-     dependent on column <literal>a</> if knowledge of the value of
-     <literal>a</> is sufficient to determine the value of <literal>b</>.
-     In normalized databases, functional dependencies are allowed only on
-     primary keys and superkeys. However, many data sets are in practice not
-     fully normalized for various reasons; intentional denormalization for
-     performance reasons is a common example.
+     The simplest type of extended statistics tracks <firstterm>functional
+     dependencies</>, a concept used in definitions of database normal forms.
+     We say that column <structfield>b</> is functionally dependent on
+     column <structfield>a</> if knowledge of the value of
+     <structfield>a</> is sufficient to determine the value
+     of <structfield>b</>, that is there are no two rows having the same value
+     of <structfield>a</> but different values of <structfield>b</>.
+     In a fully normalized database, functional dependencies should exist
+     only on primary keys and superkeys. However, in practice many data sets
+     are not fully normalized for various reasons; intentional
+     denormalization for performance reasons is a common example.
+     Even in a fully normalized database, there may be partial correlation
+     between some columns, which can be expressed as partial functional
+     dependency.
     </para>
 
     <para>
-     The existance of functional dependencies directly affects the accuracy
-     of estimates in certain queries.
-     The reason is that conditions on the dependent columns do not
-     restrict the result set, but the query planner (lacking functional
-     dependency knowledge) considers them independent, resulting in
-     underestimates.
-     To inform the planner about the functional dependencies, we collect
-     measurements of dependency during <command>ANALYZE</>. Assessing
-     the degree of dependency between all sets of columns would be
-     prohibitively expensive, so the search is limited to potential
-     dependencies defined using the <literal>dependencies</> option of
-     extended statistics.  It is advisable to create
-     <literal>dependencies</> statistics if and only if functional
-     dependencies actually exist, to avoid unnecessary overhead on both
-     <command>ANALYZE</> and query planning.
+     The existence of functional dependencies directly affects the accuracy
+     of estimates in certain queries.  If a query contains conditions on
+     both the independent and the dependent column(s), the
+     conditions on the dependent columns do not further reduce the result
+     size; but without knowledge of the functional dependency, the query
+     planner will assume that the conditions are independent, resulting
+     in underestimating the result size.
     </para>
 
     <para>
-     To inspect functional dependencies on a statistics
-     <literal>stts</literal>, you may do this:
+     To inform the planner about functional dependencies, <command>ANALYZE</>
+     can collect measurements of cross-column dependency. Assessing the
+     degree of dependency between all sets of columns would be prohibitively
+     expensive, so data collection is limited to those groups of columns
+     appearing together in a statistics object defined with
+     the <literal>dependencies</> option.  It is advisable to create
+     <literal>dependencies</> statistics only for column groups that are
+     strongly correlated, to avoid unnecessary overhead in both
+     <command>ANALYZE</> and later query planning.
+    </para>
+
+    <para>
+     Here is an example of collecting functional-dependency statistics:
 <programlisting>
-CREATE STATISTICS stts (dependencies)
-               ON zip, city FROM zipcodes;
+CREATE STATISTICS stts (dependencies) ON zip, city FROM zipcodes;
+
 ANALYZE zipcodes;
+
 SELECT stxname, stxkeys, stxdependencies
   FROM pg_statistic_ext
- WHERE stxname = 'stts';
+  WHERE stxname = 'stts';
  stxname | stxkeys |             stxdependencies               
 ---------+---------+------------------------------------------
  stts    | 1 5     | {"1 => 5": 1.000000, "5 => 1": 0.423130}
 (1 row)
 </programlisting>
-     where it can be seen that column 1 (a zip code) fully determines column
+     Here it can be seen that column 1 (zip code) fully determines column
      5 (city) so the coefficient is 1.0, while city only determines zip code
      about 42% of the time, meaning that there are many cities (58%) that are
      represented by more than a single ZIP code.
     </para>
 
     <para>
-     When computing the selectivity, the planner inspects all conditions and
-     attempts to identify which conditions are already implied by other
-     conditions.  The selectivity estimates from any redundant conditions are
-     ignored from a selectivity point of view. In the example query above,
-     the selectivity estimates for either of the conditions may be eliminated,
-     thus improving the overall estimate.
+     When computing the selectivity for a query involving functionally
+     dependent columns, the planner adjusts the per-condition selectivity
+     estimates using the dependency coefficients so as not to produce
+     an underestimate.
     </para>
 
     <sect4>
      <title>Limitations of Functional Dependencies</title>
 
      <para>
-      Functional dependencies are a very simple type of statistics, and
-      as such have several limitations. The first limitation is that they
-      only work with simple equality conditions, comparing columns and constant
-      values. It's not possible to use them to eliminate equality conditions
-      comparing two columns or a column to an expression, range clauses,
-      <literal>LIKE</> or any other type of conditions.
+      Functional dependencies are currently only applied when considering
+      simple equality conditions that compare columns to constant values.
+      They are not used to improve estimates for equality conditions
+      comparing two columns or comparing a column to an expression, nor for
+      range clauses, <literal>LIKE</> or any other type of condition.
      </para>
 
      <para>
-      When eliminating the implied conditions, the planner assumes that the
-      conditions are compatible. Consider the following example, where
-      this assumption does not hold:
-
+      When estimating with functional dependencies, the planner assumes that
+      conditions on the involved columns are compatible and hence redundant.
+      If they are incompatible, the correct estimate would be zero rows, but
+      that possibility is not considered.  For example, given a query like
 <programlisting>
-EXPLAIN (ANALYZE, TIMING OFF) SELECT * FROM t WHERE a = 1 AND b = 10;
-                                 QUERY PLAN                                  
------------------------------------------------------------------------------
- Seq Scan on t  (cost=0.00..195.00 rows=100 width=8) (actual rows=0 loops=1)
-   Filter: ((a = 1) AND (b = 10))
-   Rows Removed by Filter: 10000
+SELECT * FROM zipcodes WHERE city = 'San Francisco' AND zip = '94105';
 </programlisting>
-
-      While there are no rows with such combination of values, the planner
-      is unable to verify whether the values match &mdash; it only knows that
-      the columns are functionally dependent.
+      the planner will disregard the <structfield>city</> clause as not
+      changing the selectivity, which is correct.  However, it will make
+      the same assumption about
+<programlisting>
+SELECT * FROM zipcodes WHERE city = 'San Francisco' AND zip = '90210';
+</programlisting>
+      even though there will really be zero rows satisfying this query.
+      Functional dependency statistics do not provide enough information
+      to conclude that, however.
      </para>
 
      <para>
-      This assumption is related to queries executed on the database; in many
-      cases, it's actually satisfied (e.g. when the GUI only allows selecting
-      compatible values). But if that's not the case, functional dependencies
-      may not be a viable option.
+      In many practical situations, this assumption is usually satisfied;
+      for example, there might be a GUI in the application that only allows
+      selecting compatible city and zipcode values to use in a query.
+      But if that's not the case, functional dependencies may not be a viable
+      option.
      </para>
     </sect4>
    </sect3>
 
    <sect3>
-    <title>Multivariate N-Distinct Coefficients</title>
+    <title>Multivariate N-Distinct Counts</title>
 
     <para>
      Single-column statistics store the number of distinct values in each
-     column.  Estimates of the number of distinct values on more than one
-     column (for example, for <literal>GROUP BY a, b</literal>) are
+     column.  Estimates of the number of distinct values when combining more
+     than one column (for example, for <literal>GROUP BY a, b</literal>) are
      frequently wrong when the planner only has single-column statistical
-     data, however, causing it to select bad plans.
-     In order to improve n-distinct estimation when multiple columns are
-     grouped together, the <literal>ndistinct</> option of extended statistics
-     can be used, which instructs <command>ANALYZE</> to collect n-distinct
-     estimates for all possible combinations of two or more columns of the set
-     of columns in the statistics object (the per-column estimates are already
-     available in <structname>pg_statistic</>).
+     data, causing it to select bad plans.
     </para>
 
     <para>
-     Continuing the above example, the n-distinct coefficients in a ZIP
-     code table may look like the following:
+     To improve such estimates, <command>ANALYZE</> can collect n-distinct
+     statistics for groups of columns.  As before, it's impractical to do
+     this for every possible column grouping, so data is collected only for
+     those groups of columns appearing together in a statistics object
+     defined with the <literal>ndistinct</> option.  Data will be collected
+     for each possible combination of two or more columns from the set of
+     listed columns.
+    </para>
+
+    <para>
+     Continuing the previous example, the n-distinct counts in a
+     table of ZIP codes might look like the following:
 <programlisting>
-CREATE STATISTICS stts2 (ndistinct)
-               ON zip, state, city FROM zipcodes;
+CREATE STATISTICS stts2 (ndistinct) ON zip, state, city FROM zipcodes;
+
 ANALYZE zipcodes;
+
 SELECT stxkeys AS k, stxndistinct AS nd
   FROM pg_statistic_ext
- WHERE stxname = 'stts2';
+  WHERE stxname = 'stts2';
 -[ RECORD 1 ]--------------------------------------------------------
 k  | 1 2 5
 nd | {"1, 2": 33178, "1, 5": 33178, "2, 5": 27435, "1, 2, 5": 33178}
 (1 row)
 </programlisting>
-     which indicates that there are three combinations of columns that
+     This indicates that there are three combinations of columns that
      have 33178 distinct values: ZIP code and state; ZIP code and city;
      and ZIP code, city and state (the fact that they are all equal is
-     expected given the nature of ZIP-code data).  On the other hand,
-     the combination of city and state only has 27435 distinct values.
+     expected given that ZIP code alone is unique in this table).  On the
+     other hand, the combination of city and state has only 27435 distinct
+     values.
+    </para>
+
+    <para>
+     It's advisable to create <literal>ndistinct</> statistics objects only
+     on combinations of columns that are actually used for grouping, and
+     for which misestimation of the number of groups is resulting in bad
+     plans.  Otherwise, the <command>ANALYZE</> cycles are just wasted.
     </para>
    </sect3>
   </sect2>

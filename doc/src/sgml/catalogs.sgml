@@ -221,13 +221,13 @@
      </row>
 
      <row>
-      <entry><link linkend="catalog-pg-pltemplate"><structname>pg_pltemplate</structname></link></entry>
-      <entry>template data for procedural languages</entry>
+      <entry><link linkend="catalog-pg-partitioned-table"><structname>pg_partitioned_table</structname></link></entry>
+      <entry>information about partition key of tables</entry>
      </row>
 
      <row>
-      <entry><link linkend="catalog-pg-partitioned-table"><structname>pg_partitioned_table</structname></link></entry>
-      <entry>information about partition key of tables</entry>
+      <entry><link linkend="catalog-pg-pltemplate"><structname>pg_pltemplate</structname></link></entry>
+      <entry>template data for procedural languages</entry>
      </row>
 
      <row>
@@ -4271,108 +4271,6 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </table>
  </sect1>
 
- <sect1 id="catalog-pg-statistic-ext">
-  <title><structname>pg_statistic_ext</structname></title>
-
-  <indexterm zone="catalog-pg-statistic-ext">
-   <primary>pg_statistic_ext</primary>
-  </indexterm>
-
-  <para>
-   The catalog <structname>pg_statistic_ext</structname>
-   holds extended planner statistics.
-  </para>
-
-  <table>
-   <title><structname>pg_statistic_ext</> Columns</title>
-
-   <tgroup cols="4">
-    <thead>
-     <row>
-      <entry>Name</entry>
-      <entry>Type</entry>
-      <entry>References</entry>
-      <entry>Description</entry>
-     </row>
-    </thead>
-
-    <tbody>
-
-     <row>
-      <entry><structfield>stxrelid</structfield></entry>
-      <entry><type>oid</type></entry>
-      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
-      <entry>The table that the described columns belongs to</entry>
-     </row>
-
-     <row>
-      <entry><structfield>stxname</structfield></entry>
-      <entry><type>name</type></entry>
-      <entry></entry>
-      <entry>Name of the statistic.</entry>
-     </row>
-
-     <row>
-      <entry><structfield>stxnamespace</structfield></entry>
-      <entry><type>oid</type></entry>
-      <entry><literal><link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link>.oid</literal></entry>
-      <entry>
-       The OID of the namespace that contains this statistic
-      </entry>
-     </row>
-
-     <row>
-      <entry><structfield>stxowner</structfield></entry>
-      <entry><type>oid</type></entry>
-      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
-      <entry>Owner of the statistic</entry>
-     </row>
-
-     <row>
-      <entry><structfield>stxkeys</structfield></entry>
-      <entry><type>int2vector</type></entry>
-      <entry><literal><link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.attnum</literal></entry>
-      <entry>
-       This is an array of values that indicate which table columns this
-       statistic covers. For example a value of <literal>1 3</literal> would
-       mean that the first and the third table columns make up the statistic key.
-      </entry>
-     </row>
-
-     <row>
-      <entry><structfield>stxkind</structfield></entry>
-      <entry><type>char[]</type></entry>
-      <entry></entry>
-      <entry>
-        An array with the modes of the enabled statistic types.  Valid values
-        are:
-        <literal>d</literal> for ndistinct coefficients,
-        <literal>f</literal> for functional dependencies.
-      </entry>
-     </row>
-
-     <row>
-      <entry><structfield>stxndistinct</structfield></entry>
-      <entry><type>pg_ndistinct</type></entry>
-      <entry></entry>
-      <entry>
-       N-distinct coefficients, serialized as <structname>pg_ndistinct</> type.
-      </entry>
-     </row>
-
-     <row>
-      <entry><structfield>stxdependencies</structfield></entry>
-      <entry><type>pg_dependencies</type></entry>
-      <entry></entry>
-      <entry>
-       Functional dependencies, serialized as <structname>pg_dependencies</> type.
-      </entry>
-     </row>
-
-    </tbody>
-   </tgroup>
-  </table>
- </sect1>
 
  <sect1 id="catalog-pg-namespace">
   <title><structname>pg_namespace</structname></title>
@@ -4790,6 +4688,111 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
  </sect1>
 
 
+ <sect1 id="catalog-pg-partitioned-table">
+  <title><structname>pg_partitioned_table</structname></title>
+
+  <indexterm zone="catalog-pg-partitioned-table">
+   <primary>pg_partitioned_table</primary>
+  </indexterm>
+
+  <para>
+   The catalog <structname>pg_partitioned_table</structname> stores
+   information about how tables are partitioned.
+  </para>
+
+  <table>
+   <title><structname>pg_partitioned_table</> Columns</title>
+
+   <tgroup cols="4">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+
+     <row>
+      <entry><structfield>partrelid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
+      <entry>The OID of the <structname>pg_class</> entry for this partitioned table</entry>
+     </row>
+
+     <row>
+      <entry><structfield>partstrat</structfield></entry>
+      <entry><type>char</type></entry>
+      <entry></entry>
+      <entry>
+       Partitioning strategy; <literal>l</> = list partitioned table,
+       <literal>r</> = range partitioned table
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>partnatts</structfield></entry>
+      <entry><type>int2</type></entry>
+      <entry></entry>
+      <entry>The number of columns in partition key</entry>
+     </row>
+
+     <row>
+      <entry><structfield>partattrs</structfield></entry>
+      <entry><type>int2vector</type></entry>
+      <entry><literal><link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.attnum</literal></entry>
+      <entry>
+       This is an array of <structfield>partnatts</structfield> values that
+       indicate which table columns are part of the partition key.  For
+       example, a value of <literal>1 3</literal> would mean that the first
+       and the third table columns make up the partition key.  A zero in this
+       array indicates that the corresponding partition key column is an
+       expression, rather than a simple column reference.
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>partclass</structfield></entry>
+      <entry><type>oidvector</type></entry>
+      <entry><literal><link linkend="catalog-pg-opclass"><structname>pg_opclass</structname></link>.oid</literal></entry>
+      <entry>
+       For each column in the partition key, this contains the OID of the
+       operator class to use.  See
+       <link linkend="catalog-pg-opclass"><structname>pg_opclass</structname></link> for details.
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>partcollation</structfield></entry>
+      <entry><type>oidvector</type></entry>
+      <entry><literal><link linkend="catalog-pg-opclass"><structname>pg_opclass</structname></link>.oid</literal></entry>
+      <entry>
+       For each column in the partition key, this contains the OID of the
+       the collation to use for partitioning.
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>partexprs</structfield></entry>
+      <entry><type>pg_node_tree</type></entry>
+      <entry></entry>
+      <entry>
+       Expression trees (in <function>nodeToString()</function>
+       representation) for partition key columns that are not simple column
+       references.  This is a list with one element for each zero
+       entry in <structfield>partattrs</>.  Null if all partition key columns
+       are simple references.
+      </entry>
+     </row>
+
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+
  <sect1 id="catalog-pg-pltemplate">
   <title><structname>pg_pltemplate</structname></title>
 
@@ -4896,109 +4899,6 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
 
  </sect1>
 
- <sect1 id="catalog-pg-partitioned-table">
-  <title><structname>pg_partitioned_table</structname></title>
-
-  <indexterm zone="catalog-pg-partitioned-table">
-   <primary>pg_partitioned_table</primary>
-  </indexterm>
-
-  <para>
-   The catalog <structname>pg_partitioned_table</structname> stores
-   information about how tables are partitioned.
-  </para>
-
-  <table>
-   <title><structname>pg_partitioned_table</> Columns</title>
-
-   <tgroup cols="4">
-    <thead>
-     <row>
-      <entry>Name</entry>
-      <entry>Type</entry>
-      <entry>References</entry>
-      <entry>Description</entry>
-     </row>
-    </thead>
-
-    <tbody>
-
-     <row>
-      <entry><structfield>partrelid</structfield></entry>
-      <entry><type>oid</type></entry>
-      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
-      <entry>The OID of the <structname>pg_class</> entry for this partitioned table</entry>
-     </row>
-
-     <row>
-      <entry><structfield>partstrat</structfield></entry>
-      <entry><type>char</type></entry>
-      <entry></entry>
-      <entry>
-       Partitioning strategy; <literal>l</> = list partitioned table,
-       <literal>r</> = range partitioned table
-      </entry>
-     </row>
-
-     <row>
-      <entry><structfield>partnatts</structfield></entry>
-      <entry><type>int2</type></entry>
-      <entry></entry>
-      <entry>The number of columns in partition key</entry>
-     </row>
-
-     <row>
-      <entry><structfield>partattrs</structfield></entry>
-      <entry><type>int2vector</type></entry>
-      <entry><literal><link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.attnum</literal></entry>
-      <entry>
-       This is an array of <structfield>partnatts</structfield> values that
-       indicate which table columns are part of the partition key.  For
-       example, a value of <literal>1 3</literal> would mean that the first
-       and the third table columns make up the partition key.  A zero in this
-       array indicates that the corresponding partition key column is an
-       expression, rather than a simple column reference.
-      </entry>
-     </row>
-
-     <row>
-      <entry><structfield>partclass</structfield></entry>
-      <entry><type>oidvector</type></entry>
-      <entry><literal><link linkend="catalog-pg-opclass"><structname>pg_opclass</structname></link>.oid</literal></entry>
-      <entry>
-       For each column in the partition key, this contains the OID of the
-       operator class to use.  See
-       <link linkend="catalog-pg-opclass"><structname>pg_opclass</structname></link> for details.
-      </entry>
-     </row>
-
-     <row>
-      <entry><structfield>partcollation</structfield></entry>
-      <entry><type>oidvector</type></entry>
-      <entry><literal><link linkend="catalog-pg-opclass"><structname>pg_opclass</structname></link>.oid</literal></entry>
-      <entry>
-       For each column in the partition key, this contains the OID of the
-       the collation to use for partitioning.
-      </entry>
-     </row>
-
-     <row>
-      <entry><structfield>partexprs</structfield></entry>
-      <entry><type>pg_node_tree</type></entry>
-      <entry></entry>
-      <entry>
-       Expression trees (in <function>nodeToString()</function>
-       representation) for partition key columns that are not simple column
-       references.  This is a list with one element for each zero
-       entry in <structfield>partattrs</>.  Null if all partition key columns
-       are simple references.
-      </entry>
-     </row>
-
-    </tbody>
-   </tgroup>
-  </table>
- </sect1>
 
  <sect1 id="catalog-pg-policy">
   <title><structname>pg_policy</structname></title>
@@ -6464,6 +6364,120 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
    </tgroup>
   </table>
 
+ </sect1>
+
+ <sect1 id="catalog-pg-statistic-ext">
+  <title><structname>pg_statistic_ext</structname></title>
+
+  <indexterm zone="catalog-pg-statistic-ext">
+   <primary>pg_statistic_ext</primary>
+  </indexterm>
+
+  <para>
+   The catalog <structname>pg_statistic_ext</structname>
+   holds extended planner statistics.
+   Each row in this catalog corresponds to a <firstterm>statistics object</>
+   created with <xref linkend="sql-createstatistics">.
+  </para>
+
+  <table>
+   <title><structname>pg_statistic_ext</> Columns</title>
+
+   <tgroup cols="4">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+
+     <row>
+      <entry><structfield>stxrelid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
+      <entry>Table containing the columns described by this object</entry>
+     </row>
+
+     <row>
+      <entry><structfield>stxname</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry>Name of the statistics object</entry>
+     </row>
+
+     <row>
+      <entry><structfield>stxnamespace</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link>.oid</literal></entry>
+      <entry>
+       The OID of the namespace that contains this statistics object
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>stxowner</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
+      <entry>Owner of the statistics object</entry>
+     </row>
+
+     <row>
+      <entry><structfield>stxkeys</structfield></entry>
+      <entry><type>int2vector</type></entry>
+      <entry><literal><link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.attnum</literal></entry>
+      <entry>
+       An array of attribute numbers, indicating which table columns are
+       covered by this statistics object;
+       for example a value of <literal>1 3</literal> would
+       mean that the first and the third table columns are covered
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>stxkind</structfield></entry>
+      <entry><type>char[]</type></entry>
+      <entry></entry>
+      <entry>
+        An array containing codes for the enabled statistic types;
+        valid values are:
+        <literal>d</literal> for n-distinct statistics,
+        <literal>f</literal> for functional dependency statistics
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>stxndistinct</structfield></entry>
+      <entry><type>pg_ndistinct</type></entry>
+      <entry></entry>
+      <entry>
+       N-distinct counts, serialized as <structname>pg_ndistinct</> type
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>stxdependencies</structfield></entry>
+      <entry><type>pg_dependencies</type></entry>
+      <entry></entry>
+      <entry>
+       Functional dependency statistics, serialized
+       as <structname>pg_dependencies</> type
+      </entry>
+     </row>
+
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   The <structfield>stxkind</structfield> field is filled at creation of the
+   statistics object, indicating which statistic type(s) are desired.
+   The fields after it are initially NULL and are filled only when the
+   corresponding statistic has been computed by <command>ANALYZE</>.
+  </para>
  </sect1>
 
  <sect1 id="catalog-pg-subscription">
