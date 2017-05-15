@@ -3491,20 +3491,20 @@ dumpPublication(Archive *fout, PublicationInfo *pubinfo)
 		first = false;
 	}
 
-	if (!first)
-		appendPQExpBufferStr(query, ", ");
-
 	if (pubinfo->pubupdate)
 	{
+		if (!first)
+			appendPQExpBufferStr(query, ", ");
+
 		appendPQExpBufferStr(query, "update");
 		first = false;
 	}
 
-	if (!first)
-		appendPQExpBufferStr(query, ", ");
-
 	if (pubinfo->pubdelete)
 	{
+		if (!first)
+			appendPQExpBufferStr(query, ", ");
+
 		appendPQExpBufferStr(query, "delete");
 		first = false;
 	}
