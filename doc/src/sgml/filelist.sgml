@@ -12,9 +12,6 @@
 <!ENTITY query      SYSTEM "query.sgml">
 <!ENTITY start      SYSTEM "start.sgml">
 
-<!-- currently unused, but contains some interesting information -->
-<!ENTITY sql        SYSTEM "sql.sgml">
-
 <!-- user's guide -->
 <!ENTITY array      SYSTEM "array.sgml">
 <!ENTITY datatype   SYSTEM "datatype.sgml">
