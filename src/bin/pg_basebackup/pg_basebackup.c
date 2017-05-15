@@ -643,7 +643,7 @@ StartLogStreamer(char *startpos, uint32 timeline, char *sysidentifier)
 /*
  * Verify that the given directory exists and is empty. If it does not
  * exist, it is created. If it exists but is not empty, an error will
- * be give and the process ended.
+ * be given and the process ended.
  */
 static void
 verify_dir_is_empty_or_create(char *dirname, bool *created, bool *found)
