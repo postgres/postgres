@@ -1252,7 +1252,7 @@ ReorderBufferCopySnap(ReorderBuffer *rb, Snapshot orig_snap,
 
 	/*
 	 * snap->subxip contains all txids that belong to our transaction which we
-	 * need to check via cmin/cmax. Thats why we store the toplevel
+	 * need to check via cmin/cmax. That's why we store the toplevel
 	 * transaction in there as well.
 	 */
 	snap->subxip = snap->xip + snap->xcnt;
