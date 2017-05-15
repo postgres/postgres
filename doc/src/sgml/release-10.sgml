@@ -128,6 +128,28 @@
 
     <listitem>
      <!--
+     Author: Tom Lane <tgl@sss.pgh.pa.us> 2017-05-11 [d10c626de] Rename
+     WAL-related functions and views to use "lsn" not
+     -->
+     <para>
+      Rename <acronym>WAL</>-related functions and views to use <literal>lsn</>
+      instead of <literal>location</> (David Rowley)
+     </para>
+    </listitem>
+
+    <listitem>
+     <!--
+     Author: Peter Eisentraut <peter_e@gmx.net> 2017-05-12 [c1a7f64b4]
+     Replace "transaction log" with "write-ahead log"
+     -->
+     <para>
+      Rename<acronym>WAL</>-related functions and views to use <literal>lsn</>
+      instead of <literal>location</> (David Rowley)
+     </para>
+    </listitem>
+
+    <listitem>
+     <!--
      Author: Andres Freund <andres@anarazel.de>
      2017-01-18 [69f4b9c85] Move targetlist SRF handling from expression evaluation 
      Author: Tom Lane <tgl@sss.pgh.pa.us>
@@ -178,6 +200,28 @@
     <para>
      Previously some <application>pg_ctl</> actions didn't wait for
      completion, and required the use of <option>-w</> to do so.
+    </para>
+    </listitem>
+
+    <listitem>
+     <!--
+     Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
+     2017-05-08 [eb61136dc] Remove support for password_encryption='off' / 'plain'.
+     -->
+    <para>
+     Remove the ability to store unencrypted passwords on the server
+     (Heikki Linnakangas)
+    </para>
+
+    <para>
+     The server-side variable <xref linkend="guc-password-encryption">
+     no longer supports <literal>off</> or <literal>plain</>.
+     The <literal>UNENCRYPTED</> option is no longer supported for
+     <command>CREATE/ALTER USER ... PASSSWORD</>.  Similarly, the
+     <option>--unencrypted</> has been removed from <command>createuser</>.
+     The default for <option>password_encryption</> is still
+     <literal>md5</>, and users migrating passwords from older systems
+     will have them stored encrypted by default in this release.
     </para>
     </listitem>
 
@@ -1418,7 +1462,8 @@
       <para>
        Specifically, defaults were changed for <xref
        linkend="guc-wal-level">, <xref linkend="guc-max-wal-senders">,
-       and <xref linkend="guc-max-replication-slots">.
+       <xref linkend="guc-max-replication-slots">, and <xref
+       linkend="guc-hot-standby">.
       </para>
      </listitem>
 
@@ -2199,6 +2244,26 @@
 
      <listitem>
       <!--
+      Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
+      2017-05-03 [8f8b9be51] Add PQencryptPasswordConn function to libpq, use it in p
+      -->
+      <para>
+       Add function <link
+       linkend="libpq-pqencryptpasswordconn"><function>PQencryptPasswordConn()</></>
+       to allow creation of more types of encrypted passwords on the
+       client-side (Michael Paquier, Heikki Linnakangas)
+      </para>
+
+      <para>
+       Previously only <literal>MD5</> passwords could be created using <link
+       linkend="libpq-pqencryptpassword"><function>PQencryptPassword()</></>.
+       This new function can also create <link
+       linkend="auth-pg-hba-conf"><literal>SCRAM-SHA-256</></> passwords.
+      </para>
+     </listitem>
+
+     <listitem>
+      <!--
       Author: Tom Lane <tgl@sss.pgh.pa.us>
       2016-08-16 [a7b5573d6] Remove separate version numbering for ecpg preprocessor.
       -->
@@ -2847,6 +2912,8 @@
       <!--
       Author: Robert Haas <rhaas@postgresql.org>
       2016-10-21 [7012b132d] postgres_fdw: Push down aggregates to remote servers.
+      Author: Peter Eisentraut <peter_e@gmx.net>
+      2017-04-24 [332bec1e6] postgres_fdw: Fix join push down with extensions
       -->
       <para>
        Push aggregates to foreign data wrapper servers, where possible
@@ -2858,7 +2925,8 @@
        from the foreign data wrapper server, and offloads
        aggregate computation from the requesting server.  The <link
        linkend="postgres-fdw"><application>postgres_fdw</></> is able to
-       perform this optimization.
+       perform this optimization.  There are also improvements in
+       pushing down joins involving extensions.
       </para>
      </listitem>
 
