@@ -31,6 +31,7 @@ declare
   updated1 bool;
   updated2 bool;
   updated3 bool;
+  updated4 bool;
 begin
   -- we don't want to wait forever; loop will exit after 30 seconds
   for i in 1 .. 300 loop
@@ -54,7 +55,13 @@ begin
     SELECT (n_tup_ins > 0) INTO updated3
       FROM pg_stat_user_tables WHERE relname='trunc_stats_test4';
 
-    exit when updated1 and updated2 and updated3;
+    -- We must also check explicitly that pg_stat_get_snapshot_timestamp has
+    -- advanced, because that comes from the global stats file which might
+    -- be older than the per-DB stats file we got the other values from.
+    SELECT (pr.snap_ts < pg_stat_get_snapshot_timestamp()) INTO updated4
+      FROM prevstats AS pr;
+
+    exit when updated1 and updated2 and updated3 and updated4;
 
     -- wait a little
     perform pg_sleep_for('100 milliseconds');
