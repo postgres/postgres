@@ -69,6 +69,9 @@ parse_subscription_options(List *options, bool *connect, bool *enabled_given,
 	bool		create_slot_given = false;
 	bool		copy_data_given = false;
 
+	/* If connect is specified, the others also need to be. */
+	Assert(!connect || (enabled && create_slot && copy_data));
+
 	if (connect)
 		*connect = true;
 	if (enabled)
