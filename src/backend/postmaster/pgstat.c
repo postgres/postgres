@@ -174,7 +174,7 @@ typedef struct TabStatusArray
 static TabStatusArray *pgStatTabList = NULL;
 
 /*
- * pgStatTabHash entry
+ * pgStatTabHash entry: map from relation OID to PgStat_TableStatus pointer
  */
 typedef struct TabStatHashEntry
 {
@@ -806,6 +806,17 @@ pgstat_report_stat(bool force)
 	last_report = now;
 
 	/*
+	 * Destroy pgStatTabHash before we start invalidating PgStat_TableEntry
+	 * entries it points to.  (Should we fail partway through the loop below,
+	 * it's okay to have removed the hashtable already --- the only
+	 * consequence is we'd get multiple entries for the same table in the
+	 * pgStatTabList, and that's safe.)
+	 */
+	if (pgStatTabHash)
+		hash_destroy(pgStatTabHash);
+	pgStatTabHash = NULL;
+
+	/*
 	 * Scan through the TabStatusArray struct(s) to find tables that actually
 	 * have counts, and build messages to send.  We have to separate shared
 	 * relations from regular ones because the databaseid field in the message
@@ -854,14 +865,6 @@ pgstat_report_stat(bool force)
 			   tsa->tsa_used * sizeof(PgStat_TableStatus));
 		tsa->tsa_used = 0;
 	}
-
-	/*
-	 * pgStatTabHash is outdated on this point so we have to clean it,
-	 * hash_destroy() will remove hash memory context, allocated in
-	 * make_sure_stat_tab_initialized()
-	 */
-	hash_destroy(pgStatTabHash);
-	pgStatTabHash = NULL;
 
 	/*
 	 * Send partial messages.  Make sure that any pending xact commit/abort
@@ -1708,41 +1711,6 @@ pgstat_initstats(Relation rel)
 }
 
 /*
- * Make sure pgStatTabList and pgStatTabHash are initialized.
- */
-static void
-make_sure_stat_tab_initialized()
-{
-	HASHCTL			ctl;
-	MemoryContext	new_ctx;
-
-	if(!pgStatTabList)
-	{
-		/* This is first time procedure is called */
-		pgStatTabList = (TabStatusArray *) MemoryContextAllocZero(TopMemoryContext,
-												sizeof(TabStatusArray));
-	}
-
-	if(pgStatTabHash)
-		return;
-
-	/* Hash table was freed or never existed.  */
-
-	new_ctx = AllocSetContextCreate(
-		TopMemoryContext,
-		"PGStatLookupHashTableContext",
-		ALLOCSET_DEFAULT_SIZES);
-
-	memset(&ctl, 0, sizeof(ctl));
-	ctl.keysize = sizeof(Oid);
-	ctl.entrysize = sizeof(TabStatHashEntry);
-	ctl.hcxt = new_ctx;
-
-	pgStatTabHash = hash_create("pgstat t_id to tsa_entry lookup hash table",
-		TABSTAT_QUANTUM, &ctl, HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
-}
-
-/*
  * get_tabstat_entry - find or create a PgStat_TableStatus entry for rel
  */
 static PgStat_TableStatus *
@@ -1753,42 +1721,75 @@ get_tabstat_entry(Oid rel_id, bool isshared)
 	TabStatusArray *tsa;
 	bool found;
 
-	make_sure_stat_tab_initialized();
+	/*
+	 * Create hash table if we don't have it already.
+	 */
+	if (pgStatTabHash == NULL)
+	{
+		HASHCTL			ctl;
+
+		memset(&ctl, 0, sizeof(ctl));
+		ctl.keysize = sizeof(Oid);
+		ctl.entrysize = sizeof(TabStatHashEntry);
+
+		pgStatTabHash = hash_create("pgstat TabStatusArray lookup hash table",
+									TABSTAT_QUANTUM,
+									&ctl,
+									HASH_ELEM | HASH_BLOBS);
+	}
 
 	/*
 	 * Find an entry or create a new one.
 	 */
 	hash_entry = hash_search(pgStatTabHash, &rel_id, HASH_ENTER, &found);
-	if(found)
+	if (!found)
+	{
+		/* initialize new entry with null pointer */
+		hash_entry->tsa_entry = NULL;
+	}
+
+	/*
+	 * If entry is already valid, we're done.
+	 */
+	if (hash_entry->tsa_entry)
 		return hash_entry->tsa_entry;
 
 	/*
-	 * `hash_entry` was just created and now we have to fill it.
-	 * First make sure there is a free space in a last element of pgStatTabList.
+	 * Locate the first pgStatTabList entry with free space, making a new list
+	 * entry if needed.  Note that we could get an OOM failure here, but if so
+	 * we have left the hashtable and the list in a consistent state.
 	 */
-	tsa = pgStatTabList;
-	while(tsa->tsa_used == TABSTAT_QUANTUM)
+	if (pgStatTabList == NULL)
 	{
-		if(tsa->tsa_next == NULL)
-		{
-			tsa->tsa_next = (TabStatusArray *) MemoryContextAllocZero(TopMemoryContext,
-														sizeof(TabStatusArray));
-		}
+		/* Set up first pgStatTabList entry */
+		pgStatTabList = (TabStatusArray *)
+			MemoryContextAllocZero(TopMemoryContext,
+								   sizeof(TabStatusArray));
+	}
 
+	tsa = pgStatTabList;
+	while (tsa->tsa_used >= TABSTAT_QUANTUM)
+	{
+		if (tsa->tsa_next == NULL)
+			tsa->tsa_next = (TabStatusArray *)
+				MemoryContextAllocZero(TopMemoryContext,
+									   sizeof(TabStatusArray));
 		tsa = tsa->tsa_next;
 	}
 
 	/*
-	 * Add an entry.
+	 * Allocate a PgStat_TableStatus entry within this list entry.  We assume
+	 * the entry was already zeroed, either at creation or after last use.
 	 */
 	entry = &tsa->tsa_entries[tsa->tsa_used++];
 	entry->t_id = rel_id;
 	entry->t_shared = isshared;
 
 	/*
-	 * Add a corresponding entry to pgStatTabHash.
+	 * Now we can fill the entry in pgStatTabHash.
 	 */
 	hash_entry->tsa_entry = entry;
+
 	return entry;
 }
 
@@ -1796,15 +1797,17 @@ get_tabstat_entry(Oid rel_id, bool isshared)
  * find_tabstat_entry - find any existing PgStat_TableStatus entry for rel
  *
  * If no entry, return NULL, don't create a new one
+ *
+ * Note: if we got an error in the most recent execution of pgstat_report_stat,
+ * it's possible that an entry exists but there's no hashtable entry for it.
+ * That's okay, we'll treat this case as "doesn't exist".
  */
 PgStat_TableStatus *
 find_tabstat_entry(Oid rel_id)
 {
 	TabStatHashEntry* hash_entry;
 
-	/*
-	 * There are no entries at all.
-	 */
+	/* If hashtable doesn't exist, there are no entries at all */
 	if(!pgStatTabHash)
 		return NULL;
 
@@ -1812,6 +1815,7 @@ find_tabstat_entry(Oid rel_id)
 	if(!hash_entry)
 		return NULL;
 
+	/* Note that this step could also return NULL, but that's correct */
 	return hash_entry->tsa_entry;
 }
 
