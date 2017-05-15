@@ -50,9 +50,9 @@ begin
       FROM pg_stat_user_tables AS st, pg_class AS cl, prevstats AS pr
      WHERE st.relname='tenk2' AND cl.relname='tenk2';
 
-    -- check to see if updates have been sensed
+    -- check to see if all updates have been sensed
     SELECT (n_tup_ins > 0) INTO updated3
-      FROM pg_stat_user_tables WHERE relname='trunc_stats_test';
+      FROM pg_stat_user_tables WHERE relname='trunc_stats_test4';
 
     exit when updated1 and updated2 and updated3;
 
