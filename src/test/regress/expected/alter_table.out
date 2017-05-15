@@ -2788,6 +2788,39 @@ SELECT conname as constraint, obj_description(oid, 'pg_constraint') as comment F
  comment_test_positive_col_check | CHECK constraint on comment_test.positive_col
 (2 rows)
 
+-- Check compatibility for foreign keys and comments. This is done
+-- separately as rebuilding the column type of the parent leads
+-- to an error and would reduce the test scope.
+CREATE TABLE comment_test_child (
+  id text CONSTRAINT comment_test_child_fk REFERENCES comment_test);
+CREATE INDEX comment_test_child_fk ON comment_test_child(id);
+COMMENT ON COLUMN comment_test_child.id IS 'Column ''id'' on comment_test_child';
+COMMENT ON INDEX comment_test_child_fk IS 'Index backing the FOREIGN KEY of comment_test_child';
+COMMENT ON CONSTRAINT comment_test_child_fk ON comment_test_child IS 'FOREIGN KEY constraint of comment_test_child';
+-- Change column type of parent
+ALTER TABLE comment_test ALTER COLUMN id SET DATA TYPE text;
+ALTER TABLE comment_test ALTER COLUMN id SET DATA TYPE int USING id::integer;
+ERROR:  foreign key constraint "comment_test_child_fk" cannot be implemented
+DETAIL:  Key columns "id" and "id" are of incompatible types: text and integer.
+-- Comments should be intact
+SELECT col_description('comment_test_child'::regclass, 1) as comment;
+              comment              
+-----------------------------------
+ Column 'id' on comment_test_child
+(1 row)
+
+SELECT indexrelid::regclass::text as index, obj_description(indexrelid, 'pg_class') as comment FROM pg_index where indrelid = 'comment_test_child'::regclass ORDER BY 1, 2;
+         index         |                       comment                       
+-----------------------+-----------------------------------------------------
+ comment_test_child_fk | Index backing the FOREIGN KEY of comment_test_child
+(1 row)
+
+SELECT conname as constraint, obj_description(oid, 'pg_constraint') as comment FROM pg_constraint where conrelid = 'comment_test_child'::regclass ORDER BY 1, 2;
+      constraint       |                   comment                    
+-----------------------+----------------------------------------------
+ comment_test_child_fk | FOREIGN KEY constraint of comment_test_child
+(1 row)
+
 -- Check that we map relation oids to filenodes and back correctly.  Only
 -- display bad mappings so the test output doesn't change all the time.  A
 -- filenode function call can return NULL for a relation dropped concurrently

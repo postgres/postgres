@@ -8917,8 +8917,8 @@ RebuildConstraintComment(AlteredTableInfo *tab, int pass, Oid objid,
 	cmd->objtype = OBJECT_TABCONSTRAINT;
 	cmd->objname = list_make3(
 				   makeString(get_namespace_name(RelationGetNamespace(rel))),
-							  makeString(RelationGetRelationName(rel)),
-							  makeString(conname));
+						   makeString(pstrdup(RelationGetRelationName(rel))),
+							  makeString(pstrdup(conname)));
 	cmd->objargs = NIL;
 	cmd->comment = comment_str;
 
