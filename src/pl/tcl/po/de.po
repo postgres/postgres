@@ -1,14 +1,14 @@
 # German message translation file for PL/Tcl
-# Peter Eisentraut <peter_e@gmx.net>, 2009 - 2015.
+# Peter Eisentraut <peter_e@gmx.net>, 2009 - 2017.
 #
 # Use these quotes: »%s«
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 9.5\n"
+"Project-Id-Version: PostgreSQL 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2015-09-22 15:07+0000\n"
-"PO-Revision-Date: 2015-09-22 20:29-0400\n"
+"POT-Creation-Date: 2017-03-14 17:37+0000\n"
+"PO-Revision-Date: 2017-03-14 14:45-0400\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -16,42 +16,51 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: pltcl.c:555
-#, c-format
-msgid "module \"unknown\" not found in pltcl_modules"
-msgstr "Modul »unknown« nicht in pltcl_modules gefunden"
+#: pltcl.c:459
+msgid "PL/Tcl function to call once when pltcl is first used."
+msgstr "PL/Tcl-Funktion, die einmal aufgerufen wird, wenn pltcl zum ersten Mal benutzt wird."
 
-#: pltcl.c:591
-#, c-format
-msgid "could not load module \"unknown\": %s"
-msgstr "konnte Modul »unknown« nicht laden: %s"
+#: pltcl.c:466
+msgid "PL/TclU function to call once when pltclu is first used."
+msgstr "PL/Tcl-Funktion, die einmal aufgerufen wird, wenn pltclu zum ersten Mal benutzt wird."
 
-#: pltcl.c:1047
+#: pltcl.c:629
+#, c-format
+msgid "function \"%s\" is in the wrong language"
+msgstr "Funktion »%s« ist in der falschen Sprache"
+
+#: pltcl.c:640
+#, c-format
+msgid "function \"%s\" must not be SECURITY DEFINER"
+msgstr "Funktion »%s« darf nicht SECURITY DEFINER sein"
+
+#. translator: %s is "pltcl.start_proc" or "pltclu.start_proc"
+#: pltcl.c:674
+#, c-format
+msgid "processing %s parameter"
+msgstr "Verarbeiten von Parameter von %s"
+
+#: pltcl.c:830
+#, c-format
+msgid "set-valued function called in context that cannot accept a set"
+msgstr "Funktion mit Mengenergebnis in einem Zusammenhang aufgerufen, der keine Mengenergebnisse verarbeiten kann"
+
+#: pltcl.c:994
+#, c-format
+msgid "function returning record called in context that cannot accept type record"
+msgstr "Funktion, die einen Record zurückgibt, in einem Zusammenhang aufgerufen, der Typ record nicht verarbeiten kann"
+
+#: pltcl.c:1258
 #, c-format
 msgid "could not split return value from trigger: %s"
 msgstr "konnte Rückgabewert des Triggers nicht splitten: %s"
 
-#: pltcl.c:1058
-#, c-format
-msgid "trigger's return list must have even number of elements"
-msgstr "Rückgabeliste des Triggers muss gerade Anzahl Elemente haben"
-
-#: pltcl.c:1094
-#, c-format
-msgid "unrecognized attribute \"%s\""
-msgstr "unbekanntes Attribute »%s«"
-
-#: pltcl.c:1099
-#, c-format
-msgid "cannot set system attribute \"%s\""
-msgstr "Systemattribut »%s« kann nicht gesetzt werden"
-
-#: pltcl.c:1222 pltcl.c:1648
+#: pltcl.c:1338 pltcl.c:1766
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pltcl.c:1223
+#: pltcl.c:1339
 #, c-format
 msgid ""
 "%s\n"
@@ -60,32 +69,37 @@ msgstr ""
 "%s\n"
 "in PL/Tcl-Funktion »%s«"
 
-#: pltcl.c:1331 pltcl.c:1338
-#, c-format
-msgid "out of memory"
-msgstr "Speicher aufgebraucht"
-
-#: pltcl.c:1386
+#: pltcl.c:1504
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "Triggerfunktionen können nur als Trigger aufgerufen werden"
 
-#: pltcl.c:1395
+#: pltcl.c:1508
 #, c-format
 msgid "PL/Tcl functions cannot return type %s"
 msgstr "PL/Tcl-Funktionen können keinen Rückgabetyp %s haben"
 
-#: pltcl.c:1407
-#, c-format
-msgid "PL/Tcl functions cannot return composite types"
-msgstr "PL/Tcl-Funktion können keine zusammengesetzten Typen zurückgeben"
-
-#: pltcl.c:1446
+#: pltcl.c:1544
 #, c-format
 msgid "PL/Tcl functions cannot accept type %s"
 msgstr "PL/Tcl-Funktionen können Typ %s nicht annehmen"
 
-#: pltcl.c:1564
+#: pltcl.c:1658
 #, c-format
 msgid "could not create internal procedure \"%s\": %s"
 msgstr "konnte interne Prozedur »%s« nicht erzeugen: %s"
+
+#: pltcl.c:3095
+#, c-format
+msgid "column name/value list must have even number of elements"
+msgstr "Liste der Spaltennamen/-werte muss gerade Anzahl Elemente haben"
+
+#: pltcl.c:3113
+#, c-format
+msgid "column name/value list contains nonexistent column name \"%s\""
+msgstr "Liste der Spaltennamen/-werte enthält nicht existierenden Spaltennamen »%s«"
+
+#: pltcl.c:3120
+#, c-format
+msgid "cannot set system attribute \"%s\""
+msgstr "Systemattribut »%s« kann nicht gesetzt werden"

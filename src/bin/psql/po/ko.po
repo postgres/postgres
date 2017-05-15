@@ -1,0 +1,5447 @@
+# Korean message translation file for psql
+# Ioseph Kim. <ioseph@uri.sarang.net>, 2004.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 9.6\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2016-09-26 14:02+0900\n"
+"PO-Revision-Date: 2016-09-27 01:42+0900\n"
+"Last-Translator: Ioseph Kim <ioseph@uri.sarang.net>\n"
+"Language-Team: Korean <pgsql-translators@postgresql.org>\n"
+"Language: ko\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: ../../common/exec.c:127 ../../common/exec.c:241 ../../common/exec.c:284
+#, c-format
+msgid "could not identify current directory: %s"
+msgstr "현재 디렉터리를 찾을 수 없음: %s"
+
+#: ../../common/exec.c:146
+#, c-format
+msgid "invalid binary \"%s\""
+msgstr "잘못된 바이너리 파일: \"%s\""
+
+#: ../../common/exec.c:195
+#, c-format
+msgid "could not read binary \"%s\""
+msgstr "\"%s\" 바이너리 파일을 읽을 수 없음"
+
+#: ../../common/exec.c:202
+#, c-format
+msgid "could not find a \"%s\" to execute"
+msgstr "실행할 \"%s\" 파일 찾을 수 없음"
+
+#: ../../common/exec.c:257 ../../common/exec.c:293
+#, c-format
+msgid "could not change directory to \"%s\": %s"
+msgstr "\"%s\" 이름의 디렉터리로 이동할 수 없습니다: %s"
+
+#: ../../common/exec.c:272
+#, c-format
+msgid "could not read symbolic link \"%s\""
+msgstr "\"%s\" 실벌릭 링크를 읽을 수 없음"
+
+#: ../../common/exec.c:523
+#, c-format
+msgid "pclose failed: %s"
+msgstr "pclose 실패: %s"
+
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98 command.c:342 input.c:227 mainloop.c:80
+#: mainloop.c:261
+#, c-format
+msgid "out of memory\n"
+msgstr "메모리 부족\n"
+
+#: ../../common/fe_memutils.c:92
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "null 포인터를 복제할 수 없음(내부 오류)\n"
+
+#: ../../common/username.c:45
+#, c-format
+msgid "could not look up effective user ID %ld: %s"
+msgstr "UID %ld 해당하는 사용자를 찾을 수 없음: %s"
+
+#: ../../common/username.c:47 command.c:299
+msgid "user does not exist"
+msgstr "사용자 없음"
+
+#: ../../common/username.c:62
+#, c-format
+msgid "user name lookup failure: error code %lu"
+msgstr "사용자 이름 찾기 실패: 오류번호 %lu"
+
+#: ../../common/wait_error.c:47
+#, c-format
+msgid "command not executable"
+msgstr "명령을 실행할 수 없음"
+
+#: ../../common/wait_error.c:51
+#, c-format
+msgid "command not found"
+msgstr "명령어를 찾을 수 없음"
+
+#: ../../common/wait_error.c:56
+#, c-format
+msgid "child process exited with exit code %d"
+msgstr "하위 프로세스가 %d 코드로 종료했음"
+
+#: ../../common/wait_error.c:63
+#, c-format
+msgid "child process was terminated by exception 0x%X"
+msgstr "0x%X 예외처리에 의해 하위 프로세스가 종료되었음"
+
+#: ../../common/wait_error.c:73
+#, c-format
+msgid "child process was terminated by signal %s"
+msgstr "%s 시그널 감지로 하위 프로세스가 종료되었음"
+
+#: ../../common/wait_error.c:77
+#, c-format
+msgid "child process was terminated by signal %d"
+msgstr "하위 프로세스가 %d 신호를 받고 종료되었음"
+
+#: ../../common/wait_error.c:82
+#, c-format
+msgid "child process exited with unrecognized status %d"
+msgstr "하위 프로세스가 알 수 없는 상태(%d)로 종료되었음"
+
+#: ../../fe_utils/print.c:354
+#, c-format
+msgid "(%lu row)"
+msgid_plural "(%lu rows)"
+msgstr[0] "(%lu개 행)"
+
+#: ../../fe_utils/print.c:2906
+#, c-format
+msgid "Interrupted\n"
+msgstr "인트럽트발생\n"
+
+#: ../../fe_utils/print.c:2970
+#, c-format
+msgid "Cannot add header to table content: column count of %d exceeded.\n"
+msgstr "테이블 내용에 헤더를 추가할 수 없음: 열 수가 %d개를 초과했습니다.\n"
+
+#: ../../fe_utils/print.c:3010
+#, c-format
+msgid "Cannot add cell to table content: total cell count of %d exceeded.\n"
+msgstr "테이블 내용에 셀을 추가할 수 없음: 총 셀 수가 %d개를 초과했습니다.\n"
+
+#: ../../fe_utils/print.c:3259
+#, c-format
+msgid "invalid output format (internal error): %d"
+msgstr "잘못된 출력 형식 (내부 오류): %d"
+
+#: command.c:129
+#, c-format
+msgid "Invalid command \\%s. Try \\? for help.\n"
+msgstr "잘못된 명령: \\%s. 도움말은 \\?.\n"
+
+#: command.c:131
+#, c-format
+msgid "invalid command \\%s\n"
+msgstr "잘못된 명령: \\%s\n"
+
+#: command.c:142
+#, c-format
+msgid "\\%s: extra argument \"%s\" ignored\n"
+msgstr "\\%s: \"%s\" 추가 인수가 무시되었음\n"
+
+#: command.c:297
+#, c-format
+msgid "could not get home directory for user ID %ld: %s\n"
+msgstr "UID %ld 사용자의 홈 디렉터리를 찾을 수 없음: %s\n"
+
+#: command.c:315
+#, c-format
+msgid "\\%s: could not change directory to \"%s\": %s\n"
+msgstr "\\%s: \"%s\" 디렉터리로 이동할 수 없음: %s\n"
+
+#: command.c:330 common.c:553 common.c:611 common.c:1144
+#, c-format
+msgid "You are currently not connected to a database.\n"
+msgstr "현재 데이터베이스에 연결되어있지 않습니다.\n"
+
+#: command.c:355
+#, c-format
+msgid ""
+"You are connected to database \"%s\" as user \"%s\" via socket in \"%s\" at "
+"port \"%s\".\n"
+msgstr ""
+"접속정보: 데이터베이스=\"%s\", 사용자=\"%s\", 소켓=\"%s\", 포트=\"%s\".\n"
+
+#: command.c:358
+#, c-format
+msgid ""
+"You are connected to database \"%s\" as user \"%s\" on host \"%s\" at port "
+"\"%s\".\n"
+msgstr ""
+"접속정보: 데이터베이스=\"%s\", 사용자=\"%s\", 호스트=\"%s\", 포트=\"%s\".\n"
+
+#: command.c:574 command.c:647 command.c:746 command.c:1584
+#, c-format
+msgid "no query buffer\n"
+msgstr "쿼리 버퍼가 없음\n"
+
+#: command.c:607 command.c:3547
+#, c-format
+msgid "invalid line number: %s\n"
+msgstr "잘못된 줄 번호: %s\n"
+
+#: command.c:640
+#, c-format
+msgid "The server (version %s) does not support editing function source.\n"
+msgstr "이 서버(%s 버전)는 함수 소스 편집 기능을 제공하지 않습니다.\n"
+
+#: command.c:721 command.c:792
+msgid "No changes"
+msgstr "변경 내용 없음"
+
+#: command.c:739
+#, c-format
+msgid "The server (version %s) does not support editing view definitions.\n"
+msgstr "이 서버(%s 버전)는 뷰 정의 편집 기능을 제공하지 않습니다.\n"
+
+#: command.c:846
+#, c-format
+msgid "%s: invalid encoding name or conversion procedure not found\n"
+msgstr "%s: 타당치 못한 인코딩 이름 또는 문자셋 변환 프로시저 없음\n"
+
+#: command.c:871 command.c:1962 command.c:3649 common.c:153 common.c:200
+#: common.c:497 common.c:1190 common.c:1218 common.c:1319 copy.c:489
+#: copy.c:699 large_obj.c:156 large_obj.c:191 large_obj.c:253
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: command.c:875
+msgid "out of memory"
+msgstr "메모리 부족"
+
+#: command.c:878
+msgid "There is no previous error."
+msgstr "이전 오류가 없습니다."
+
+#: command.c:972 command.c:1022 command.c:1036 command.c:1053 command.c:1160
+#: command.c:1324 command.c:1564 command.c:1595
+#, c-format
+msgid "\\%s: missing required argument\n"
+msgstr "\\%s: 필요한 인수가 빠졌음\n"
+
+#: command.c:1085
+msgid "Query buffer is empty."
+msgstr "쿼리 버퍼가 비었음."
+
+#: command.c:1095
+msgid "Enter new password: "
+msgstr "새 암호를 입력하세요:"
+
+#: command.c:1096
+msgid "Enter it again: "
+msgstr "다시 입력해 주세요:"
+
+#: command.c:1100
+#, c-format
+msgid "Passwords didn't match.\n"
+msgstr "암호가 서로 틀립니다.\n"
+
+#: command.c:1118
+#, c-format
+msgid "Password encryption failed.\n"
+msgstr "암호 암호화 실패\n"
+
+#: command.c:1189 command.c:1305 command.c:1569
+#, c-format
+msgid "\\%s: error while setting variable\n"
+msgstr "\\%s: 변수 지정 실패\n"
+
+#: command.c:1252
+msgid "Query buffer reset (cleared)."
+msgstr "쿼리 버퍼 초기화 (비웠음)."
+
+#: command.c:1264
+#, c-format
+msgid "Wrote history to file \"%s\".\n"
+msgstr "명령내역(history)을 \"%s\" 파일에 기록했습니다.\n"
+
+#: command.c:1329
+#, c-format
+msgid "\\%s: environment variable name must not contain \"=\"\n"
+msgstr "\\%s: OS 환경 변수 이름에는 \"=\" 문자가 없어야 함\n"
+
+#: command.c:1373
+#, c-format
+msgid "The server (version %s) does not support showing function source.\n"
+msgstr "이 서버(%s 버전)는 함수 소스 보기 기능을 제공하지 않습니다.\n"
+
+#: command.c:1380
+#, c-format
+msgid "function name is required\n"
+msgstr "함수 이름이 필요합니다\n"
+
+#: command.c:1455
+#, c-format
+msgid "The server (version %s) does not support showing view definitions.\n"
+msgstr "이 서버(%s 버전)는 뷰 정의 보기 기능을 제공하지 않습니다.\n"
+
+#: command.c:1462
+#, c-format
+msgid "view name is required\n"
+msgstr "뷰 이름이 필요합니다\n"
+
+#: command.c:1549
+msgid "Timing is on."
+msgstr "작업수행시간 보임"
+
+#: command.c:1551
+msgid "Timing is off."
+msgstr "작업수행시간 숨김"
+
+#: command.c:1613 command.c:1633 command.c:2311 command.c:2314 command.c:2317
+#: command.c:2323 command.c:2325 command.c:2333 command.c:2343 command.c:2352
+#: command.c:2366 command.c:2383 command.c:2441 common.c:68 copy.c:332
+#: copy.c:392 copy.c:405 psqlscanslash.l:711 psqlscanslash.l:722
+#: psqlscanslash.l:732
+#, c-format
+msgid "%s: %s\n"
+msgstr "%s: %s\n"
+
+#: command.c:1727
+#, c-format
+msgid "+ opt(%d) = |%s|\n"
+msgstr "+ opt(%d) = |%s|\n"
+
+#: command.c:1753 startup.c:207
+msgid "Password: "
+msgstr "암호: "
+
+#: command.c:1758 startup.c:209
+#, c-format
+msgid "Password for user %s: "
+msgstr "%s 사용자의 암호: "
+
+#: command.c:1809
+#, c-format
+msgid ""
+"All connection parameters must be supplied because no database connection "
+"exists\n"
+msgstr ""
+"현재 접속 정보가 없습니다. 접속을 위한 연결 관련 매개변수를 지정하세요\n"
+
+#: command.c:1966
+#, c-format
+msgid "Previous connection kept\n"
+msgstr "이전 연결이 유지되었음\n"
+
+#: command.c:1970
+#, c-format
+msgid "\\connect: %s"
+msgstr "\\연결: %s"
+
+#: command.c:2006
+#, c-format
+msgid ""
+"You are now connected to database \"%s\" as user \"%s\" via socket in \"%s\" "
+"at port \"%s\".\n"
+msgstr ""
+"접속정보: 데이터베이스=\"%s\", 사용자=\"%s\", 소켓=\"%s\", 포트=\"%s\".\n"
+
+#: command.c:2009
+#, c-format
+msgid ""
+"You are now connected to database \"%s\" as user \"%s\" on host \"%s\" at "
+"port \"%s\".\n"
+msgstr ""
+"접속정보: 데이터베이스=\"%s\", 사용자=\"%s\", 호스트=\"%s\", 포트=\"%s\".\n"
+
+#: command.c:2013
+#, c-format
+msgid "You are now connected to database \"%s\" as user \"%s\".\n"
+msgstr "접속정보: 데이터베이스=\"%s\", 사용자=\"%s\".\n"
+
+#: command.c:2046
+#, c-format
+msgid "%s (%s, server %s)\n"
+msgstr "%s(%s, %s 서버)\n"
+
+#: command.c:2054
+#, c-format
+msgid ""
+"WARNING: %s major version %s, server major version %s.\n"
+"         Some psql features might not work.\n"
+msgstr ""
+"경고: %s 메이저 버전 %s, 서버 메이저 버전 %s.\n"
+"         일부 psql 기능이 작동하지 않을 수도 있습니다.\n"
+
+#: command.c:2091
+#, c-format
+msgid "SSL connection (protocol: %s, cipher: %s, bits: %s, compression: %s)\n"
+msgstr "SSL 연결정보 (프로토콜: %s, 암호화기법: %s, 비트: %s, 압축: %s)\n"
+
+#: command.c:2092 command.c:2093 command.c:2094
+msgid "unknown"
+msgstr "알수없음"
+
+#: command.c:2095 help.c:46
+msgid "off"
+msgstr "off"
+
+#: command.c:2095 help.c:46
+msgid "on"
+msgstr "on"
+
+#: command.c:2115
+#, c-format
+msgid ""
+"WARNING: Console code page (%u) differs from Windows code page (%u)\n"
+"         8-bit characters might not work correctly. See psql reference\n"
+"         page \"Notes for Windows users\" for details.\n"
+msgstr ""
+"경고: 콘솔 코드 페이지(%u)가 Windows 코드 페이지(%u)와 달라서\n"
+"         8비트 문자가 올바르게 표시되지 않을 수 있습니다. 자세한 내용은 psql "
+"참조\n"
+"         페이지 \"Notes for Windows users\"를 참조하십시오.\n"
+
+#: command.c:2200
+#, c-format
+msgid ""
+"environment variable PSQL_EDITOR_LINENUMBER_ARG must be set to specify a "
+"line number\n"
+msgstr ""
+"지정한 줄번호를 사용하기 위해서는 PSQL_EDITOR_LINENUMBER_ARG 이름의 OS 환경"
+"변수가 설정되어 있어야 합니다.\n"
+
+#: command.c:2229
+#, c-format
+msgid "could not start editor \"%s\"\n"
+msgstr "\"%s\" 문서 편집기를 실행시킬 수 없음\n"
+
+#: command.c:2231
+#, c-format
+msgid "could not start /bin/sh\n"
+msgstr "/bin/sh 명령을 실행할 수 없음\n"
+
+#: command.c:2269
+#, c-format
+msgid "could not locate temporary directory: %s\n"
+msgstr "임시 디렉터리 경로를 알 수 없음: %s\n"
+
+#: command.c:2296
+#, c-format
+msgid "could not open temporary file \"%s\": %s\n"
+msgstr "\"%s\" 임시 파일을 열 수 없음: %s\n"
+
+#: command.c:2570
+#, c-format
+msgid ""
+"\\pset: allowed formats are unaligned, aligned, wrapped, html, asciidoc, "
+"latex, latex-longtable, troff-ms\n"
+msgstr ""
+"\\pset: 허용되는 출력 형식: unaligned, aligned, wrapped, html, asciidoc, "
+"latex, latex-longtable, troff-ms\n"
+
+#: command.c:2589
+#, c-format
+msgid "\\pset: allowed line styles are ascii, old-ascii, unicode\n"
+msgstr "\\pset: 사용할 수 있는 선 모양은 ascii, old-ascii, unicode\n"
+
+#: command.c:2605
+#, c-format
+msgid "\\pset: allowed Unicode border line styles are single, double\n"
+msgstr "\\pset: 사용할 수 있는 유니코드 테두리 모양은 single, double\n"
+
+#: command.c:2620
+#, c-format
+msgid "\\pset: allowed Unicode column line styles are single, double\n"
+msgstr "\\pset: 사용할 수 있는 유니코드 칼럼 선 모양은 single, double\n"
+
+#: command.c:2635
+#, c-format
+msgid "\\pset: allowed Unicode header line styles are single, double\n"
+msgstr "\\pset: 사용할 수 있는 유니코드 헤더 선 모양은 single, double\n"
+
+#: command.c:2787 command.c:2966
+#, c-format
+msgid "\\pset: unknown option: %s\n"
+msgstr "\\pset: 알 수 없는 옵션: %s\n"
+
+#: command.c:2805
+#, c-format
+msgid "Border style is %d.\n"
+msgstr "html 테이블의 테두리를 %d로 지정했습니다.\n"
+
+#: command.c:2811
+#, c-format
+msgid "Target width is unset.\n"
+msgstr "대상 너비 미지정.\n"
+
+#: command.c:2813
+#, c-format
+msgid "Target width is %d.\n"
+msgstr "대상 너비는 %d입니다.\n"
+
+#: command.c:2820
+#, c-format
+msgid "Expanded display is on.\n"
+msgstr "칼럼 단위 보기 기능 켬.\n"
+
+#: command.c:2822
+#, c-format
+msgid "Expanded display is used automatically.\n"
+msgstr "칼럼 단위 보기 기능을 자동으로 지정 함.\n"
+
+#: command.c:2824
+#, c-format
+msgid "Expanded display is off.\n"
+msgstr "칼럼 단위 보기 기능 끔.\n"
+
+#: command.c:2831 command.c:2839
+#, c-format
+msgid "Field separator is zero byte.\n"
+msgstr "필드 구분자가 0 바이트입니다.\n"
+
+#: command.c:2833
+#, c-format
+msgid "Field separator is \"%s\".\n"
+msgstr "필드 구분자 \"%s\".\n"
+
+#: command.c:2846
+#, c-format
+msgid "Default footer is on.\n"
+msgstr "기본 꼬릿말 보기 기능 켬.\n"
+
+#: command.c:2848
+#, c-format
+msgid "Default footer is off.\n"
+msgstr "기본 꼬릿말 보기 기능 끔.\n"
+
+#: command.c:2854
+#, c-format
+msgid "Output format is %s.\n"
+msgstr "현재 출력 형식: %s.\n"
+
+#: command.c:2860
+#, c-format
+msgid "Line style is %s.\n"
+msgstr "선 모양: %s.\n"
+
+#: command.c:2867
+#, c-format
+msgid "Null display is \"%s\".\n"
+msgstr "Null 값은 \"%s\" 문자로 보여짐.\n"
+
+#: command.c:2875
+#, c-format
+msgid "Locale-adjusted numeric output is on.\n"
+msgstr "로케일 맞춤 숫자 표기 기능 켬.\n"
+
+#: command.c:2877
+#, c-format
+msgid "Locale-adjusted numeric output is off.\n"
+msgstr "로케일 맞춤 숫자 표기 기능 끔.\n"
+
+#: command.c:2884
+#, c-format
+msgid "Pager is used for long output.\n"
+msgstr "긴 출력을 위해 페이저가 사용됨.\n"
+
+#: command.c:2886
+#, c-format
+msgid "Pager is always used.\n"
+msgstr "항상 페이저가 사용됨.\n"
+
+#: command.c:2888
+#, c-format
+msgid "Pager usage is off.\n"
+msgstr "화면단위 보기 기능 끔(전체 자료 모두 보여줌).\n"
+
+#: command.c:2894
+#, c-format
+msgid "Pager won't be used for less than %d line.\n"
+msgid_plural "Pager won't be used for less than %d lines.\n"
+msgstr[0] "%d 줄보다 적은 경우는 페이지 단위 보기가 사용되지 않음\n"
+
+#: command.c:2904 command.c:2914
+#, c-format
+msgid "Record separator is zero byte.\n"
+msgstr "레코드 구분자가 0 바이트임.\n"
+
+#: command.c:2906
+#, c-format
+msgid "Record separator is <newline>.\n"
+msgstr "레코드 구분자는 줄바꿈 문자입니다.\n"
+
+#: command.c:2908
+#, c-format
+msgid "Record separator is \"%s\".\n"
+msgstr "레코드 구분자 \"%s\".\n"
+
+#: command.c:2921
+#, c-format
+msgid "Table attributes are \"%s\".\n"
+msgstr "테이블 속성: \"%s\".\n"
+
+#: command.c:2924
+#, c-format
+msgid "Table attributes unset.\n"
+msgstr "테이블 속성 모두 지움.\n"
+
+#: command.c:2931
+#, c-format
+msgid "Title is \"%s\".\n"
+msgstr "출력 테이블의 제목: \"%s\"\n"
+
+#: command.c:2933
+#, c-format
+msgid "Title is unset.\n"
+msgstr "출력 테이블의 제목을 지정하지 않았습니다.\n"
+
+#: command.c:2940
+#, c-format
+msgid "Tuples only is on.\n"
+msgstr "자료만 보기 기능 켬.\n"
+
+#: command.c:2942
+#, c-format
+msgid "Tuples only is off.\n"
+msgstr "자료만 보기 기능 끔.\n"
+
+#: command.c:2948
+#, c-format
+msgid "Unicode border line style is \"%s\".\n"
+msgstr "유니코드 테두리 선문자: \"%s\".\n"
+
+#: command.c:2954
+#, c-format
+msgid "Unicode column line style is \"%s\".\n"
+msgstr "유니코드 칼럼 선문자: \"%s\".\n"
+
+#: command.c:2960
+#, c-format
+msgid "Unicode header line style is \"%s\".\n"
+msgstr "유니코드 헤더 선문자: \"%s\".\n"
+
+#: command.c:3120
+#, c-format
+msgid "\\!: failed\n"
+msgstr "\\!: 실패\n"
+
+#: command.c:3145 common.c:659
+#, c-format
+msgid "\\watch cannot be used with an empty query\n"
+msgstr "\\watch 명령으로 수행할 쿼리가 없습니다.\n"
+
+#: command.c:3186
+#, c-format
+msgid "%s\t%s (every %gs)\n"
+msgstr "%s\t%s (%g초 간격)\n"
+
+#: command.c:3189
+#, c-format
+msgid "%s (every %gs)\n"
+msgstr "%s (%g초 간격)\n"
+
+#: command.c:3243 command.c:3250 common.c:559 common.c:566 common.c:1173
+#, c-format
+msgid ""
+"********* QUERY **********\n"
+"%s\n"
+"**************************\n"
+"\n"
+msgstr ""
+"********** 쿼리 **********\n"
+"%s\n"
+"**************************\n"
+"\n"
+
+#: command.c:3442
+#, c-format
+msgid "\"%s.%s\" is not a view\n"
+msgstr "\"%s.%s\" 뷰(view)가 아님\n"
+
+#: command.c:3458
+#, c-format
+msgid "could not parse reloptions array\n"
+msgstr "reloptions 배열을 분석할 수 없음\n"
+
+#: common.c:138
+#, c-format
+msgid "cannot escape without active connection\n"
+msgstr "현재 접속한 연결 없이는 특수문자처리를 할 수 없음\n"
+
+#: common.c:371
+#, c-format
+msgid "connection to server was lost\n"
+msgstr "서버로부터 연결이 끊어졌습니다.\n"
+
+#: common.c:375
+#, c-format
+msgid "The connection to the server was lost. Attempting reset: "
+msgstr "서버로부터 연결이 끊어졌습니다. 다시 연결을 시도합니다: "
+
+#: common.c:380
+#, c-format
+msgid "Failed.\n"
+msgstr "실패.\n"
+
+#: common.c:387
+#, c-format
+msgid "Succeeded.\n"
+msgstr "성공.\n"
+
+#: common.c:487 common.c:936 common.c:1108
+#, c-format
+msgid "unexpected PQresultStatus: %d\n"
+msgstr "PQresultStatus 반환값이 잘못됨: %d\n"
+
+#: common.c:666
+#, c-format
+msgid "\\watch cannot be used with COPY\n"
+msgstr "\\watch 작업으로 COPY 명령은 사용할 수 없음\n"
+
+#: common.c:671
+#, c-format
+msgid "unexpected result status for \\watch\n"
+msgstr "\\watch 쿼리 결과가 비정상적입니다.\n"
+
+#: common.c:682 common.c:1335
+#, c-format
+msgid "Time: %.3f ms\n"
+msgstr "작업시간: %.3f ms\n"
+
+#: common.c:700
+#, c-format
+msgid ""
+"Asynchronous notification \"%s\" with payload \"%s\" received from server "
+"process with PID %d.\n"
+msgstr ""
+"\"%s\" 비동기 통지를 받음, 부가정보: \"%s\", 보낸 프로세스: %d.\n"
+
+#: common.c:703
+#, c-format
+msgid ""
+"Asynchronous notification \"%s\" received from server process with PID %d.\n"
+msgstr "동기화 신호 \"%s\" 받음, 해당 서버 프로세스 PID %d.\n"
+
+#: common.c:761
+#, c-format
+msgid "no rows returned for \\gset\n"
+msgstr "\\gset 해당 자료 없음\n"
+
+#: common.c:766
+#, c-format
+msgid "more than one row returned for \\gset\n"
+msgstr "\\gset 실행 결과가 단일 자료가 아님\n"
+
+#: common.c:792
+#, c-format
+msgid "could not set variable \"%s\"\n"
+msgstr "\"%s\" 변수를 지정할 수 없음\n"
+
+#: common.c:1153
+#, c-format
+msgid ""
+"***(Single step mode: verify "
+"command)*******************************************\n"
+"%s\n"
+"***(press return to proceed or enter x and return to "
+"cancel)********************\n"
+msgstr ""
+"***(단독 순차 모드: 쿼리 확인)*********************************************\n"
+"%s\n"
+"***(Enter: 계속 진행, x Enter: 중지)********************\n"
+
+#: common.c:1208
+#, c-format
+msgid ""
+"The server (version %s) does not support savepoints for ON_ERROR_ROLLBACK.\n"
+msgstr ""
+"서버(%s 버전)에서 ON_ERROR_ROLLBACK에 사용할 savepoint를 지원하지 않습니"
+"다.\n"
+
+#: common.c:1264
+#, c-format
+msgid "STATEMENT:  %s\n"
+msgstr "명령 구문:  %s\n"
+
+#: common.c:1307
+#, c-format
+msgid "unexpected transaction status (%d)\n"
+msgstr "알 수 없는 트랜잭션 상태 (%d)\n"
+
+#: copy.c:99
+#, c-format
+msgid "\\copy: arguments required\n"
+msgstr "\\copy: 인수가 필요합니다\n"
+
+#: copy.c:254
+#, c-format
+msgid "\\copy: parse error at \"%s\"\n"
+msgstr "\\copy: 구문 오류: \"%s\"\n"
+
+#: copy.c:256
+#, c-format
+msgid "\\copy: parse error at end of line\n"
+msgstr "\\copy: 줄 끝에 구문 오류\n"
+
+#: copy.c:329
+#, c-format
+msgid "could not execute command \"%s\": %s\n"
+msgstr "\"%s\" 명령을 실행할 수 없음: %s\n"
+
+#: copy.c:345
+#, c-format
+msgid "could not stat file \"%s\": %s\n"
+msgstr "\"%s\" 파일의 상태값을 알 수 없음: %s\n"
+
+#: copy.c:349
+#, c-format
+msgid "%s: cannot copy from/to a directory\n"
+msgstr "%s: 디렉터리부터 또는 디렉터리로 복사할 수 없음\n"
+
+#: copy.c:386
+#, c-format
+msgid "could not close pipe to external command: %s\n"
+msgstr "외부 명령으로 파이프를 닫을 수 없음: %s\n"
+
+#: copy.c:452 copy.c:463
+#, c-format
+msgid "could not write COPY data: %s\n"
+msgstr "COPY 자료를 기록할 수 없음: %s\n"
+
+#: copy.c:470
+#, c-format
+msgid "COPY data transfer failed: %s"
+msgstr "COPY 자료 변환 실패: %s"
+
+#: copy.c:531
+msgid "canceled by user"
+msgstr "사용자에 의해서 취소됨"
+
+#: copy.c:542
+msgid ""
+"Enter data to be copied followed by a newline.\n"
+"End with a backslash and a period on a line by itself."
+msgstr ""
+"한 줄에 한 레코드씩 데이터를 입력하고\n"
+"자료입력이 끝나면 backslash 점 (\\.) 마지막 줄 처음에 입력합니다."
+
+#: copy.c:671
+msgid "aborted because of read failure"
+msgstr "읽기 실패로 중지됨"
+
+#: copy.c:695
+msgid "trying to exit copy mode"
+msgstr "복사 모드를 종료하는 중"
+
+#: crosstabview.c:125
+#, c-format
+msgid "\\crosstabview: statement did not return a result set\n"
+msgstr "\\crosstabview: 구문 결과가 집합을 반환하지 않았음\n"
+
+#: crosstabview.c:131
+#, c-format
+msgid "\\crosstabview: query must return at least three columns\n"
+msgstr "\\crosstabview: 쿼리 결과는 적어도 세 개의 칼럼은 반환 해야 함\n"
+
+#: crosstabview.c:158
+#, c-format
+msgid ""
+"\\crosstabview: vertical and horizontal headers must be different columns\n"
+msgstr ""
+"\\crosstabview: 행과 열의 칼럼이 각각 다른 칼럼이어야 함\n"
+
+#: crosstabview.c:174
+#, c-format
+msgid ""
+"\\crosstabview: data column must be specified when query returns more than "
+"three columns\n"
+msgstr ""
+"\\crosstabview: 처리할 칼럼이 세개보다 많을 때는 자료로 사용할 칼럼을 지정해야 함\n"
+
+#: crosstabview.c:230
+#, c-format
+msgid "\\crosstabview: maximum number of columns (%d) exceeded\n"
+msgstr "\\crosstabview: 최대 칼럼 수 (%d) 초과\n"
+
+#: crosstabview.c:398
+#, c-format
+msgid ""
+"\\crosstabview: query result contains multiple data values for row \"%s\", "
+"column \"%s\"\n"
+msgstr ""
+"\\crosstabview: \"%s\" 로우, \"%s\" 칼럼에 대해 쿼리 결과는 다중값이어야 함\n"
+
+#: crosstabview.c:646
+#, c-format
+msgid "\\crosstabview: column number %d is out of range 1..%d\n"
+msgstr "\\crosstabview: %d 번째 열은 0..%d 범위를 벗어났음\n"
+
+#: crosstabview.c:671
+#, c-format
+msgid "\\crosstabview: ambiguous column name: \"%s\"\n"
+msgstr "\\crosstabview: 칼럼 이름이 중복되었음: \"%s\"\n"
+
+#: crosstabview.c:679
+#, c-format
+msgid "\\crosstabview: column name not found: \"%s\"\n"
+msgstr "\\crosstabview: 칼럼 이름 없음: \"%s\"\n"
+
+#: describe.c:71 describe.c:340 describe.c:597 describe.c:727 describe.c:870
+#: describe.c:990 describe.c:1060 describe.c:3035 describe.c:3240
+#: describe.c:3330 describe.c:3578 describe.c:3718 describe.c:3950
+#: describe.c:4025 describe.c:4036 describe.c:4098 describe.c:4518
+#: describe.c:4601
+msgid "Schema"
+msgstr "스키마"
+
+#: describe.c:72 describe.c:160 describe.c:226 describe.c:234 describe.c:341
+#: describe.c:598 describe.c:728 describe.c:789 describe.c:871 describe.c:1061
+#: describe.c:3036 describe.c:3162 describe.c:3241 describe.c:3331
+#: describe.c:3410 describe.c:3579 describe.c:3643 describe.c:3719
+#: describe.c:3951 describe.c:4026 describe.c:4037 describe.c:4099
+#: describe.c:4291 describe.c:4375 describe.c:4599
+msgid "Name"
+msgstr "이름"
+
+#: describe.c:73 describe.c:353 describe.c:399 describe.c:416
+msgid "Result data type"
+msgstr "반환 자료형"
+
+#: describe.c:81 describe.c:94 describe.c:98 describe.c:354 describe.c:400
+#: describe.c:417
+msgid "Argument data types"
+msgstr "인자 자료형"
+
+#: describe.c:105 describe.c:170 describe.c:257 describe.c:462 describe.c:646
+#: describe.c:743 describe.c:814 describe.c:1063 describe.c:1676
+#: describe.c:2836 describe.c:3069 describe.c:3193 describe.c:3267
+#: describe.c:3340 describe.c:3423 describe.c:3491 describe.c:3586
+#: describe.c:3652 describe.c:3720 describe.c:3856 describe.c:3896
+#: describe.c:3967 describe.c:4029 describe.c:4038 describe.c:4100
+#: describe.c:4317 describe.c:4397 describe.c:4532 describe.c:4602
+#: large_obj.c:289 large_obj.c:299
+msgid "Description"
+msgstr "설명"
+
+#: describe.c:123
+msgid "List of aggregate functions"
+msgstr "통계 함수 목록"
+
+#: describe.c:147
+#, c-format
+msgid "The server (version %s) does not support access methods.\n"
+msgstr "서버(%s 버전)에서 접근 방법을 지원하지 않습니다.\n"
+
+#: describe.c:161
+msgid "Index"
+msgstr "인덱스"
+
+#: describe.c:162 describe.c:360 describe.c:405 describe.c:422 describe.c:877
+#: describe.c:999 describe.c:1645 describe.c:3044 describe.c:3242
+#: describe.c:4394
+msgid "Type"
+msgstr "종류"
+
+#: describe.c:169 describe.c:4296
+msgid "Handler"
+msgstr "핸들러"
+
+#: describe.c:188
+msgid "List of access methods"
+msgstr "접근 방법 목록"
+
+#: describe.c:213
+#, c-format
+msgid "The server (version %s) does not support tablespaces.\n"
+msgstr "서버(%s 버전)에서 테이블스페이스를 지원하지 않습니다.\n"
+
+#: describe.c:227 describe.c:235 describe.c:450 describe.c:636 describe.c:790
+#: describe.c:989 describe.c:3045 describe.c:3166 describe.c:3412
+#: describe.c:3644 describe.c:4292 describe.c:4376 large_obj.c:288
+msgid "Owner"
+msgstr "소유주"
+
+#: describe.c:228 describe.c:236
+msgid "Location"
+msgstr "위치"
+
+#: describe.c:247 describe.c:2647
+msgid "Options"
+msgstr "옵션"
+
+#: describe.c:252 describe.c:609 describe.c:806 describe.c:3061
+#: describe.c:3065
+msgid "Size"
+msgstr "크기"
+
+#: describe.c:274
+msgid "List of tablespaces"
+msgstr "테이블스페이스 목록"
+
+#: describe.c:314
+#, c-format
+msgid "\\df only takes [antwS+] as options\n"
+msgstr "\\df는 [antwS+]만 옵션으로 사용함\n"
+
+#: describe.c:322
+#, c-format
+msgid "\\df does not take a \"w\" option with server version %s\n"
+msgstr "\\df 명령은 %s 버전 서버에서는 \"w\" 옵션을 사용하지 않음\n"
+
+#. translator: "agg" is short for "aggregate"
+#: describe.c:356 describe.c:402 describe.c:419
+msgid "agg"
+msgstr "집계"
+
+#: describe.c:357
+msgid "window"
+msgstr "창"
+
+#: describe.c:358 describe.c:403 describe.c:420 describe.c:1197
+msgid "trigger"
+msgstr "트리거"
+
+#: describe.c:359 describe.c:404 describe.c:421
+msgid "normal"
+msgstr "일반"
+
+#: describe.c:432
+msgid "immutable"
+msgstr "immutable"
+
+#: describe.c:433
+msgid "stable"
+msgstr "stable"
+
+#: describe.c:434
+msgid "volatile"
+msgstr "volatile"
+
+#: describe.c:435
+msgid "Volatility"
+msgstr "휘발성"
+
+#: describe.c:443
+msgid "restricted"
+msgstr "엄격함"
+
+#: describe.c:444
+msgid "safe"
+msgstr "safe"
+
+#: describe.c:445
+msgid "unsafe"
+msgstr "unsafe"
+
+#: describe.c:446
+msgid "Parallel"
+msgstr "병렬처리"
+
+#: describe.c:451
+msgid "definer"
+msgstr "definer"
+
+#: describe.c:452
+msgid "invoker"
+msgstr "invoker"
+
+#: describe.c:453
+msgid "Security"
+msgstr "보안"
+
+#: describe.c:460
+msgid "Language"
+msgstr "언어"
+
+#: describe.c:461
+msgid "Source code"
+msgstr "소스 코드"
+
+#: describe.c:560
+msgid "List of functions"
+msgstr "함수 목록"
+
+#: describe.c:608
+msgid "Internal name"
+msgstr "내부 이름"
+
+#: describe.c:630
+msgid "Elements"
+msgstr "요소"
+
+#: describe.c:686
+msgid "List of data types"
+msgstr "자료형 목록"
+
+#: describe.c:729
+msgid "Left arg type"
+msgstr "왼쪽 인수 자료형"
+
+#: describe.c:730
+msgid "Right arg type"
+msgstr "오른쪽 인수 자료형"
+
+#: describe.c:731
+msgid "Result type"
+msgstr "반환 자료형"
+
+#: describe.c:736 describe.c:3482 describe.c:3855
+msgid "Function"
+msgstr "함수"
+
+#: describe.c:761
+msgid "List of operators"
+msgstr "연산자 목록"
+
+#: describe.c:791
+msgid "Encoding"
+msgstr "인코딩"
+
+#: describe.c:796 describe.c:3580
+msgid "Collate"
+msgstr "Collate"
+
+#: describe.c:797 describe.c:3581
+msgid "Ctype"
+msgstr "Ctype"
+
+#: describe.c:810
+msgid "Tablespace"
+msgstr "테이블스페이스"
+
+#: describe.c:832
+msgid "List of databases"
+msgstr "데이터베이스 목록"
+
+#: describe.c:872 describe.c:992 describe.c:3037
+msgid "table"
+msgstr "테이블"
+
+#: describe.c:873 describe.c:3038
+msgid "view"
+msgstr "뷰(view)"
+
+#: describe.c:874 describe.c:3039
+msgid "materialized view"
+msgstr "구체화된 뷰"
+
+#: describe.c:875 describe.c:994 describe.c:3041
+msgid "sequence"
+msgstr "시퀀스"
+
+#: describe.c:876 describe.c:3043
+msgid "foreign table"
+msgstr "외부 테이블"
+
+#: describe.c:888
+msgid "Column privileges"
+msgstr "칼럼 접근권한"
+
+#: describe.c:919
+msgid "Policies"
+msgstr "정책"
+
+#: describe.c:945 describe.c:4749 describe.c:4753
+msgid "Access privileges"
+msgstr "액세스 권한"
+
+#: describe.c:976
+#, c-format
+msgid "The server (version %s) does not support altering default privileges.\n"
+msgstr "이 서버(%s 버전)는 기본 접근권한 변경 기능을 제공하지 않습니다.\n"
+
+#: describe.c:996
+msgid "function"
+msgstr "함수"
+
+#: describe.c:998
+msgid "type"
+msgstr "type"
+
+#: describe.c:1022
+msgid "Default access privileges"
+msgstr "기본 접근권한"
+
+#: describe.c:1062
+msgid "Object"
+msgstr "개체"
+
+#: describe.c:1076
+msgid "table constraint"
+msgstr "테이블 제약 조건"
+
+#: describe.c:1098
+msgid "domain constraint"
+msgstr "도메인 제약조건"
+
+#: describe.c:1126
+msgid "operator class"
+msgstr "연산자 클래스"
+
+#: describe.c:1155
+msgid "operator family"
+msgstr "연산자 부류"
+
+#: describe.c:1177
+msgid "rule"
+msgstr "룰(rule)"
+
+#: describe.c:1219
+msgid "Object descriptions"
+msgstr "개체 설명"
+
+#: describe.c:1273
+#, c-format
+msgid "Did not find any relation named \"%s\".\n"
+msgstr "\"%s\" 이름을 릴레이션(relation) 없음.\n"
+
+#: describe.c:1483
+#, c-format
+msgid "Did not find any relation with OID %s.\n"
+msgstr "%s oid의 어떤 릴레이션(relation)도 찾을 수 없음.\n"
+
+#: describe.c:1589
+#, c-format
+msgid "Unlogged table \"%s.%s\""
+msgstr "로그 미사용 테이블 \"%s.%s\""
+
+#: describe.c:1592
+#, c-format
+msgid "Table \"%s.%s\""
+msgstr "\"%s.%s\" 테이블"
+
+#: describe.c:1596
+#, c-format
+msgid "View \"%s.%s\""
+msgstr "\"%s.%s\" 뷰(view)"
+
+#: describe.c:1601
+#, c-format
+msgid "Unlogged materialized view \"%s.%s\""
+msgstr "트랜잭션 로그를 남기지 않은 구체화된 뷰 \"%s.%s\""
+
+#: describe.c:1604
+#, c-format
+msgid "Materialized view \"%s.%s\""
+msgstr "Materialized 뷰 \"%s.%s\""
+
+#: describe.c:1608
+#, c-format
+msgid "Sequence \"%s.%s\""
+msgstr "\"%s.%s\" 시퀀스"
+
+#: describe.c:1613
+#, c-format
+msgid "Unlogged index \"%s.%s\""
+msgstr "\"%s.%s\" 로그 미사용 인덱스"
+
+#: describe.c:1616
+#, c-format
+msgid "Index \"%s.%s\""
+msgstr "\"%s.%s\" 인덱스"
+
+#: describe.c:1621
+#, c-format
+msgid "Special relation \"%s.%s\""
+msgstr "\"%s.%s\" 특수 릴레이션(relation)"
+
+#: describe.c:1625
+#, c-format
+msgid "TOAST table \"%s.%s\""
+msgstr "\"%s.%s\" TOAST 테이블"
+
+#: describe.c:1629
+#, c-format
+msgid "Composite type \"%s.%s\""
+msgstr "\"%s.%s\" 복합자료형"
+
+#: describe.c:1633
+#, c-format
+msgid "Foreign table \"%s.%s\""
+msgstr "\"%s.%s\" 외부 테이블"
+
+#: describe.c:1644
+msgid "Column"
+msgstr "필드명"
+
+#: describe.c:1653
+msgid "Modifiers"
+msgstr "기타 조건"
+
+#: describe.c:1658
+msgid "Value"
+msgstr "값"
+
+#: describe.c:1661
+msgid "Definition"
+msgstr "정의"
+
+#: describe.c:1664 describe.c:4312 describe.c:4396 describe.c:4467
+#: describe.c:4531
+msgid "FDW Options"
+msgstr "FDW 옵션"
+
+#: describe.c:1668
+msgid "Storage"
+msgstr "스토리지"
+
+#: describe.c:1671
+msgid "Stats target"
+msgstr "통계수집량"
+
+#: describe.c:1721
+#, c-format
+msgid "collate %s"
+msgstr "collate %s"
+
+#: describe.c:1729
+msgid "not null"
+msgstr "Null 아님"
+
+#. translator: default values of column definitions
+#: describe.c:1739
+#, c-format
+msgid "default %s"
+msgstr "초기값 %s"
+
+#: describe.c:1854
+msgid "primary key, "
+msgstr "기본키, "
+
+#: describe.c:1856
+msgid "unique, "
+msgstr "고유, "
+
+#: describe.c:1862
+#, c-format
+msgid "for table \"%s.%s\""
+msgstr "적용테이블: \"%s.%s\""
+
+#: describe.c:1866
+#, c-format
+msgid ", predicate (%s)"
+msgstr ", predicate (%s)"
+
+#: describe.c:1869
+msgid ", clustered"
+msgstr ", 클러스됨"
+
+#: describe.c:1872
+msgid ", invalid"
+msgstr ", 잘못됨"
+
+#: describe.c:1875
+msgid ", deferrable"
+msgstr ""
+
+#: describe.c:1878
+msgid ", initially deferred"
+msgstr ""
+
+#: describe.c:1881
+msgid ", replica identity"
+msgstr ""
+
+#: describe.c:1916
+#, c-format
+msgid "Owned by: %s"
+msgstr "소유주: %s"
+
+#: describe.c:1976
+msgid "Indexes:"
+msgstr "인덱스들:"
+
+#: describe.c:2060
+msgid "Check constraints:"
+msgstr "체크 제약 조건:"
+
+#: describe.c:2091
+msgid "Foreign-key constraints:"
+msgstr "참조키 제약 조건:"
+
+#: describe.c:2122
+msgid "Referenced by:"
+msgstr "다음에서 참조됨:"
+
+#: describe.c:2167
+msgid "Policies:"
+msgstr ""
+
+#: describe.c:2170
+msgid "Policies (forced row security enabled):"
+msgstr ""
+
+#: describe.c:2173
+msgid "Policies (row security enabled): (none)"
+msgstr ""
+
+#: describe.c:2176
+msgid "Policies (forced row security enabled): (none)"
+msgstr ""
+
+#: describe.c:2179
+msgid "Policies (row security disabled):"
+msgstr ""
+
+#: describe.c:2279 describe.c:2329
+msgid "Rules:"
+msgstr "룰(rule)들:"
+
+#: describe.c:2282
+msgid "Disabled rules:"
+msgstr "사용중지된 규칙:"
+
+#: describe.c:2285
+msgid "Rules firing always:"
+msgstr "항상 발생하는 규칙:"
+
+#: describe.c:2288
+msgid "Rules firing on replica only:"
+msgstr "복제본에서만 발생하는 규칙:"
+
+#: describe.c:2312
+msgid "View definition:"
+msgstr "뷰 정의:"
+
+#: describe.c:2447
+msgid "Triggers:"
+msgstr "트리거들:"
+
+#: describe.c:2451
+msgid "Disabled user triggers:"
+msgstr "사용중지된 사용자 트리거:"
+
+#: describe.c:2453
+msgid "Disabled triggers:"
+msgstr "사용중지된 트리거:"
+
+#: describe.c:2456
+msgid "Disabled internal triggers:"
+msgstr "사용중지된 내부 트리거:"
+
+#: describe.c:2459
+msgid "Triggers firing always:"
+msgstr "항상 발생하는 트리거:"
+
+#: describe.c:2462
+msgid "Triggers firing on replica only:"
+msgstr "복제본에서만 발생하는 트리거:"
+
+#: describe.c:2541
+msgid "Inherits"
+msgstr "상속"
+
+#: describe.c:2580
+#, c-format
+msgid "Number of child tables: %d (Use \\d+ to list them.)"
+msgstr "하위 테이블 수: %d (\\d+ 명령으로 볼 수 있음)"
+
+#: describe.c:2587
+msgid "Child tables"
+msgstr "하위 테이블"
+
+#: describe.c:2609
+#, c-format
+msgid "Typed table of type: %s"
+msgstr ""
+
+#: describe.c:2623
+msgid "Replica Identity"
+msgstr ""
+
+#: describe.c:2636
+msgid "Has OIDs: yes"
+msgstr "OID 사용: yes"
+
+#: describe.c:2724
+#, c-format
+msgid "Tablespace: \"%s\""
+msgstr "테이블스페이스: \"%s\""
+
+#. translator: before this string there's an index description like
+#. '"foo_pkey" PRIMARY KEY, btree (a)'
+#: describe.c:2736
+#, c-format
+msgid ", tablespace \"%s\""
+msgstr ", \"%s\" 테이블스페이스"
+
+#: describe.c:2829
+msgid "List of roles"
+msgstr "롤 목록"
+
+#: describe.c:2831
+msgid "Role name"
+msgstr "롤 이름"
+
+#: describe.c:2832
+msgid "Attributes"
+msgstr "속성"
+
+#: describe.c:2833
+msgid "Member of"
+msgstr "소속 그룹:"
+
+#: describe.c:2844
+msgid "Superuser"
+msgstr "슈퍼유저"
+
+#: describe.c:2847
+msgid "No inheritance"
+msgstr "상속 없음"
+
+#: describe.c:2850
+msgid "Create role"
+msgstr "롤 만들기"
+
+#: describe.c:2853
+msgid "Create DB"
+msgstr "DB 만들기"
+
+#: describe.c:2856
+msgid "Cannot login"
+msgstr "로그인할 수 없음"
+
+#: describe.c:2860
+msgid "Replication"
+msgstr "복제"
+
+#: describe.c:2864
+msgid "Bypass RLS"
+msgstr ""
+
+#: describe.c:2873
+msgid "No connections"
+msgstr "연결 없음"
+
+#: describe.c:2875
+#, c-format
+msgid "%d connection"
+msgid_plural "%d connections"
+msgstr[0] "%d개 연결"
+
+#: describe.c:2885
+msgid "Password valid until "
+msgstr ""
+
+#: describe.c:2941
+msgid "Role"
+msgstr "롤"
+
+#: describe.c:2942
+msgid "Database"
+msgstr "데이터베이스"
+
+#: describe.c:2943
+msgid "Settings"
+msgstr "설정"
+
+#: describe.c:2953
+#, c-format
+msgid "No per-database role settings support in this server version.\n"
+msgstr "이 버전의 서버는 데이터베이스 단위 롤 설정이 안됩니다.\n"
+
+#: describe.c:2964
+#, c-format
+msgid "No matching settings found.\n"
+msgstr "찾는 설정이 없습니다.\n"
+
+#: describe.c:2966
+#, c-format
+msgid "No settings found.\n"
+msgstr "설정 없음.\n"
+
+#: describe.c:2971
+msgid "List of settings"
+msgstr "설정 목록"
+
+#: describe.c:3040
+msgid "index"
+msgstr "인덱스"
+
+#: describe.c:3042
+msgid "special"
+msgstr "특수"
+
+#: describe.c:3050 describe.c:4519
+msgid "Table"
+msgstr "테이블"
+
+#: describe.c:3126
+#, c-format
+msgid "No matching relations found.\n"
+msgstr "검색조건에 일치하는 릴레이션(relation) 없음.\n"
+
+#: describe.c:3128
+#, c-format
+msgid "No relations found.\n"
+msgstr "릴레이션(relation) 없음.\n"
+
+#: describe.c:3133
+msgid "List of relations"
+msgstr "릴레이션(relation) 목록"
+
+#: describe.c:3170
+msgid "Trusted"
+msgstr "신뢰됨"
+
+#: describe.c:3178
+msgid "Internal Language"
+msgstr "내부 언어"
+
+#: describe.c:3179
+msgid "Call Handler"
+msgstr "호출 핸들러"
+
+#: describe.c:3180 describe.c:4299
+msgid "Validator"
+msgstr "유효성 검사기"
+
+#: describe.c:3183
+msgid "Inline Handler"
+msgstr "인라인 핸들러"
+
+#: describe.c:3211
+msgid "List of languages"
+msgstr "언어 목록"
+
+#: describe.c:3255
+msgid "Modifier"
+msgstr "기타 조건"
+
+#: describe.c:3256
+msgid "Check"
+msgstr "체크"
+
+#: describe.c:3298
+msgid "List of domains"
+msgstr "도메인(domain) 목록"
+
+#: describe.c:3332
+msgid "Source"
+msgstr "소스"
+
+#: describe.c:3333
+msgid "Destination"
+msgstr "설명"
+
+#: describe.c:3334 describe.c:3483
+msgid "no"
+msgstr "아니오"
+
+#: describe.c:3334 describe.c:3485
+msgid "yes"
+msgstr "예"
+
+#: describe.c:3335
+msgid "Default?"
+msgstr "초기값?"
+
+#: describe.c:3372
+msgid "List of conversions"
+msgstr "문자코드변환규칙(conversion) 목록"
+
+#: describe.c:3411
+msgid "Event"
+msgstr "이벤트"
+
+#: describe.c:3413
+msgid "enabled"
+msgstr "활성화"
+
+#: describe.c:3414
+msgid "replica"
+msgstr ""
+
+#: describe.c:3415
+msgid "always"
+msgstr ""
+
+#: describe.c:3416
+msgid "disabled"
+msgstr "비활성화"
+
+#: describe.c:3417
+msgid "Enabled"
+msgstr "활성화"
+
+#: describe.c:3418
+msgid "Procedure"
+msgstr "프로시져"
+
+#: describe.c:3419
+msgid "Tags"
+msgstr ""
+
+#: describe.c:3438
+msgid "List of event triggers"
+msgstr "이벤트 트리거 목록"
+
+#: describe.c:3480
+msgid "Source type"
+msgstr "Source 자료형"
+
+#: describe.c:3481
+msgid "Target type"
+msgstr "Target 자료형"
+
+#: describe.c:3484
+msgid "in assignment"
+msgstr "in assignment"
+
+#: describe.c:3486
+msgid "Implicit?"
+msgstr "Implicit?"
+
+#: describe.c:3537
+msgid "List of casts"
+msgstr "형변환자 목록"
+
+#: describe.c:3565
+#, c-format
+msgid "The server (version %s) does not support collations.\n"
+msgstr "이 서버(%s 버전)는 문자 정렬(collation) 기능을 지원하지 않습니다.\n"
+
+#: describe.c:3616
+msgid "List of collations"
+msgstr "문자 정렬 목록"
+
+#: describe.c:3675
+msgid "List of schemas"
+msgstr "스키마(schema) 목록"
+
+#: describe.c:3700 describe.c:3938 describe.c:4009 describe.c:4080
+#, c-format
+msgid "The server (version %s) does not support full text search.\n"
+msgstr "이 서버(%s 버전)에서 전문 검색을 지원하지 않습니다.\n"
+
+#: describe.c:3735
+msgid "List of text search parsers"
+msgstr "텍스트 검색 파서 목록"
+
+#: describe.c:3778
+#, c-format
+msgid "Did not find any text search parser named \"%s\".\n"
+msgstr "\"%s\"(이)라는 텍스트 검색 파서를 찾지 못했습니다.\n"
+
+#: describe.c:3853
+msgid "Start parse"
+msgstr "구문 분석 시작"
+
+#: describe.c:3854
+msgid "Method"
+msgstr "방법"
+
+#: describe.c:3858
+msgid "Get next token"
+msgstr "다음 토큰 가져오기"
+
+#: describe.c:3860
+msgid "End parse"
+msgstr "구문 분석 종료"
+
+#: describe.c:3862
+msgid "Get headline"
+msgstr "헤드라인 가져오기"
+
+#: describe.c:3864
+msgid "Get token types"
+msgstr "토큰 형식 가져오기"
+
+#: describe.c:3874
+#, c-format
+msgid "Text search parser \"%s.%s\""
+msgstr "\"%s.%s\" 텍스트 검색 파서"
+
+#: describe.c:3876
+#, c-format
+msgid "Text search parser \"%s\""
+msgstr "\"%s\" 텍스트 검색 파서"
+
+#: describe.c:3895
+msgid "Token name"
+msgstr "토큰 이름"
+
+#: describe.c:3906
+#, c-format
+msgid "Token types for parser \"%s.%s\""
+msgstr "\"%s.%s\" 파서의 토큰 형식"
+
+#: describe.c:3908
+#, c-format
+msgid "Token types for parser \"%s\""
+msgstr "\"%s\" 파서의 토큰 형식"
+
+#: describe.c:3961
+msgid "Template"
+msgstr "템플릿"
+
+#: describe.c:3962
+msgid "Init options"
+msgstr "초기화 옵션"
+
+#: describe.c:3984
+msgid "List of text search dictionaries"
+msgstr "텍스트 검색 사전 목록"
+
+#: describe.c:4027
+msgid "Init"
+msgstr "초기화"
+
+#: describe.c:4028
+msgid "Lexize"
+msgstr "Lexize"
+
+#: describe.c:4055
+msgid "List of text search templates"
+msgstr "텍스트 검색 템플릿 목록"
+
+#: describe.c:4115
+msgid "List of text search configurations"
+msgstr "텍스트 검색 구성 목록"
+
+#: describe.c:4159
+#, c-format
+msgid "Did not find any text search configuration named \"%s\".\n"
+msgstr "\"%s\"(이)라는 텍스트 검색 구성을 찾지 못했습니다.\n"
+
+#: describe.c:4225
+msgid "Token"
+msgstr "토큰"
+
+#: describe.c:4226
+msgid "Dictionaries"
+msgstr "사전"
+
+#: describe.c:4237
+#, c-format
+msgid "Text search configuration \"%s.%s\""
+msgstr "텍스트 검색 구성 \"%s.%s\""
+
+#: describe.c:4240
+#, c-format
+msgid "Text search configuration \"%s\""
+msgstr "텍스트 검색 구성 \"%s\""
+
+#: describe.c:4244
+#, c-format
+msgid ""
+"\n"
+"Parser: \"%s.%s\""
+msgstr ""
+"\n"
+"파서: \"%s.%s\""
+
+#: describe.c:4247
+#, c-format
+msgid ""
+"\n"
+"Parser: \"%s\""
+msgstr ""
+"\n"
+"파서: \"%s\""
+
+#: describe.c:4281
+#, c-format
+msgid "The server (version %s) does not support foreign-data wrappers.\n"
+msgstr "이 서버(%s 버전)에서 외부 데이터 래퍼를 지원하지 않습니다.\n"
+
+#: describe.c:4339
+msgid "List of foreign-data wrappers"
+msgstr "외부 데이터 래퍼 목록"
+
+#: describe.c:4364
+#, c-format
+msgid "The server (version %s) does not support foreign servers.\n"
+msgstr "이 서버(%s 버전)에서 외부 서버를 지원하지 않습니다.\n"
+
+#: describe.c:4377
+msgid "Foreign-data wrapper"
+msgstr "외부 데이터 래퍼"
+
+#: describe.c:4395 describe.c:4600
+msgid "Version"
+msgstr "버전"
+
+#: describe.c:4421
+msgid "List of foreign servers"
+msgstr "외부 서버 목록"
+
+#: describe.c:4446
+#, c-format
+msgid "The server (version %s) does not support user mappings.\n"
+msgstr "이 서버(%s 버전)에서 사용자 매핑을 지원하지 않습니다.\n"
+
+#: describe.c:4456 describe.c:4520
+msgid "Server"
+msgstr "서버"
+
+#: describe.c:4457
+msgid "User name"
+msgstr "사용자 이름"
+
+#: describe.c:4482
+msgid "List of user mappings"
+msgstr "사용자 매핑 목록"
+
+#: describe.c:4507
+#, c-format
+msgid "The server (version %s) does not support foreign tables.\n"
+msgstr "이 서버(%s 버전)에서 외부 테이블을 지원하지 않습니다.\n"
+
+#: describe.c:4560
+msgid "List of foreign tables"
+msgstr "외부 테이블 목록"
+
+#: describe.c:4585 describe.c:4642
+#, c-format
+msgid "The server (version %s) does not support extensions.\n"
+msgstr "이 서버(%s 버전)에서 확장기능을 지원하지 않습니다.\n"
+
+#: describe.c:4617
+msgid "List of installed extensions"
+msgstr "설치된 확장기능 목록"
+
+#: describe.c:4670
+#, c-format
+msgid "Did not find any extension named \"%s\".\n"
+msgstr "\"%s\" 이름의 확장 기능 모듈을 찾을 수 없습니다.\n"
+
+#: describe.c:4673
+#, c-format
+msgid "Did not find any extensions.\n"
+msgstr "추가할 확장 기능 모듈이 없음.\n"
+
+#: describe.c:4717
+msgid "Object Description"
+msgstr "객체 설명"
+
+#: describe.c:4726
+#, c-format
+msgid "Objects in extension \"%s\""
+msgstr "\"%s\" 확장 기능 안에 포함된 객체들"
+
+#: help.c:63
+#, c-format
+msgid "%s\n"
+msgstr "%s\n"
+
+#: help.c:74
+#, c-format
+msgid ""
+"psql is the PostgreSQL interactive terminal.\n"
+"\n"
+msgstr ""
+"psql은 PostgreSQL 대화식 터미널입니다.\n"
+"\n"
+
+#: help.c:75 help.c:333 help.c:367 help.c:394
+#, c-format
+msgid "Usage:\n"
+msgstr "사용법:\n"
+
+#: help.c:76
+#, c-format
+msgid ""
+"  psql [OPTION]... [DBNAME [USERNAME]]\n"
+"\n"
+msgstr ""
+"  psql [OPTION]... [DBNAME [USERNAME]]\n"
+"\n"
+
+#: help.c:78
+#, c-format
+msgid "General options:\n"
+msgstr "일반 옵션:\n"
+
+#: help.c:83
+#, c-format
+msgid ""
+"  -c, --command=COMMAND    run only single command (SQL or internal) and "
+"exit\n"
+msgstr ""
+"  -c, --command=COMMAND    하나의 명령(SQL 또는 내부 명령)만 실행하고 끝냄\n"
+
+#: help.c:84
+#, c-format
+msgid ""
+"  -d, --dbname=DBNAME      database name to connect to (default: \"%s\")\n"
+msgstr "  -d, --dbname=DBNAME      연결할 데이터베이스 이름(기본 값: \"%s\")\n"
+
+#: help.c:85
+#, c-format
+msgid "  -f, --file=FILENAME      execute commands from file, then exit\n"
+msgstr "  -f, --file=FILENAME      파일 안에 지정한 명령을 실행하고 끝냄\n"
+
+#: help.c:86
+#, c-format
+msgid "  -l, --list               list available databases, then exit\n"
+msgstr ""
+"  -l, --list               사용 가능한 데이터베이스 목록을 표시하고 끝냄\n"
+
+#: help.c:87
+#, c-format
+msgid ""
+"  -v, --set=, --variable=NAME=VALUE\n"
+"                           set psql variable NAME to VALUE\n"
+"                           (e.g., -v ON_ERROR_STOP=1)\n"
+msgstr ""
+"  -v, --set=, --variable=NAME=VALUE\n"
+"                           psql 변수 NAME을 VALUE로 설정\n"
+"                           (예, -v ON_ERROR_STOP=1)\n"
+
+#: help.c:90
+#, c-format
+msgid "  -V, --version            output version information, then exit\n"
+msgstr "  -V, --version            버전 정보를 보여주고 마침\n"
+
+#: help.c:91
+#, c-format
+msgid "  -X, --no-psqlrc          do not read startup file (~/.psqlrc)\n"
+msgstr "  -X, --no-psqlrc          시작 파일(~/.psqlrc)을 읽지 않음\n"
+
+#: help.c:92
+#, c-format
+msgid ""
+"  -1 (\"one\"), --single-transaction\n"
+"                           execute as a single transaction (if non-"
+"interactive)\n"
+msgstr ""
+"  -1 (\"one\"), --single-transaction\n"
+"                           명령 파일을 하나의 트랜잭션으로 실행\n"
+
+#: help.c:94
+#, c-format
+msgid "  -?, --help[=options]     show this help, then exit\n"
+msgstr "  -?, --help[=options]     이 도움말을 표시하고 종료\n"
+
+#: help.c:95
+#, c-format
+msgid "      --help=commands      list backslash commands, then exit\n"
+msgstr ""
+"      --help=commands      psql 내장명령어(\\문자로 시작하는)를 표시하고 종"
+"료\n"
+
+#: help.c:96
+#, c-format
+msgid "      --help=variables     list special variables, then exit\n"
+msgstr ""
+"      --help=variables     특별 변수들 보여주고, 종료\n"
+
+#: help.c:98
+#, c-format
+msgid ""
+"\n"
+"Input and output options:\n"
+msgstr ""
+"\n"
+"입출력 옵션:\n"
+
+#: help.c:99
+#, c-format
+msgid "  -a, --echo-all           echo all input from script\n"
+msgstr "  -a, --echo-all           스크립트의 모든 입력 표시\n"
+
+#: help.c:100
+#, c-format
+msgid "  -b, --echo-errors        echo failed commands\n"
+msgstr "  -b, --echo-errors        실패한 명령들 출력\n"
+
+#: help.c:101
+#, c-format
+msgid "  -e, --echo-queries       echo commands sent to server\n"
+msgstr "  -e, --echo-queries       서버로 보낸 명령 표시\n"
+
+#: help.c:102
+#, c-format
+msgid ""
+"  -E, --echo-hidden        display queries that internal commands generate\n"
+msgstr "  -E, --echo-hidden        내부 명령이 생성하는 쿼리 표시\n"
+
+#: help.c:103
+#, c-format
+msgid "  -L, --log-file=FILENAME  send session log to file\n"
+msgstr "  -L, --log-file=FILENAME  세션 로그를 파일로 보냄\n"
+
+#: help.c:104
+#, c-format
+msgid ""
+"  -n, --no-readline        disable enhanced command line editing (readline)\n"
+msgstr ""
+"  -n, --no-readline        확장된 명령행 편집 기능을 사용중지함(readline)\n"
+
+#: help.c:105
+#, c-format
+msgid "  -o, --output=FILENAME    send query results to file (or |pipe)\n"
+msgstr "  -o, --output=FILENAME    쿼리 결과를 파일(또는 |파이프)로 보냄\n"
+
+#: help.c:106
+#, c-format
+msgid ""
+"  -q, --quiet              run quietly (no messages, only query output)\n"
+msgstr "  -q, --quiet              자동 실행(메시지 없이 쿼리 결과만 표시)\n"
+
+#: help.c:107
+#, c-format
+msgid "  -s, --single-step        single-step mode (confirm each query)\n"
+msgstr "  -s, --single-step        단독 순차 모드(각 쿼리 확인)\n"
+
+#: help.c:108
+#, c-format
+msgid ""
+"  -S, --single-line        single-line mode (end of line terminates SQL "
+"command)\n"
+msgstr "  -S, --single-line        한 줄 모드(줄 끝에서 SQL 명령이 종료됨)\n"
+
+#: help.c:110
+#, c-format
+msgid ""
+"\n"
+"Output format options:\n"
+msgstr ""
+"\n"
+"출력 형식 옵션:\n"
+
+#: help.c:111
+#, c-format
+msgid "  -A, --no-align           unaligned table output mode\n"
+msgstr "  -A, --no-align           정렬되지 않은 표 형태의 출력 모드\n"
+
+#: help.c:112
+#, c-format
+msgid ""
+"  -F, --field-separator=STRING\n"
+"                           field separator for unaligned output (default: "
+"\"%s\")\n"
+msgstr ""
+"  -F, --field-separator=STRING\n"
+"                           unaligned 출력용 필드 구분자 설정(기본 값: \"%s"
+"\")\n"
+
+#: help.c:115
+#, c-format
+msgid "  -H, --html               HTML table output mode\n"
+msgstr "  -H, --html               HTML 표 형태 출력 모드\n"
+
+#: help.c:116
+#, c-format
+msgid ""
+"  -P, --pset=VAR[=ARG]     set printing option VAR to ARG (see \\pset "
+"command)\n"
+msgstr ""
+"  -P, --pset=VAR[=ARG]     인쇄 옵션 VAR을 ARG로 설정(\\pset 명령 참조)\n"
+
+#: help.c:117
+#, c-format
+msgid ""
+"  -R, --record-separator=STRING\n"
+"                           record separator for unaligned output (default: "
+"newline)\n"
+msgstr ""
+"  -R, --record-separator=STRING\n"
+"                           unaligned 출력용 레코드 구분자 설정\n"
+"                           (기본 값: 줄바꿈 문자)\n"
+
+#: help.c:119
+#, c-format
+msgid "  -t, --tuples-only        print rows only\n"
+msgstr "  -t, --tuples-only        행만 인쇄\n"
+
+#: help.c:120
+#, c-format
+msgid ""
+"  -T, --table-attr=TEXT    set HTML table tag attributes (e.g., width, "
+"border)\n"
+msgstr ""
+"  -T, --table-attr=TEXT    HTML table 태그 속성 설정(예: width, border)\n"
+
+#: help.c:121
+#, c-format
+msgid "  -x, --expanded           turn on expanded table output\n"
+msgstr "  -x, --expanded           확장된 표 형태로 출력\n"
+
+#: help.c:122
+#, c-format
+msgid ""
+"  -z, --field-separator-zero\n"
+"                           set field separator for unaligned output to zero "
+"byte\n"
+msgstr ""
+"  -z, --field-separator-zero\n"
+"                           unaligned 출력용 필드 구분자를 0 바이트로 지정\n"
+
+#: help.c:124
+#, c-format
+msgid ""
+"  -0, --record-separator-zero\n"
+"                           set record separator for unaligned output to zero "
+"byte\n"
+msgstr ""
+"  -0, --record-separator-zero\n"
+"                           unaligned 출력용 레코드 구분자를 0 바이트로 지정\n"
+
+#: help.c:127
+#, c-format
+msgid ""
+"\n"
+"Connection options:\n"
+msgstr ""
+"\n"
+"연결 옵션들:\n"
+
+#: help.c:130
+#, c-format
+msgid ""
+"  -h, --host=HOSTNAME      database server host or socket directory "
+"(default: \"%s\")\n"
+msgstr ""
+"  -h, --host=HOSTNAME      데이터베이스 서버 호스트 또는 소켓 디렉터리\n"
+"                           (기본값: \"%s\")\n"
+
+#: help.c:131
+msgid "local socket"
+msgstr "로컬 소켓"
+
+#: help.c:134
+#, c-format
+msgid "  -p, --port=PORT          database server port (default: \"%s\")\n"
+msgstr "  -p, --port=PORT          데이터베이스 서버 포트(기본 값: \"%s\")\n"
+
+#: help.c:140
+#, c-format
+msgid "  -U, --username=USERNAME  database user name (default: \"%s\")\n"
+msgstr "  -U, --username=USERNAME  데이터베이스 사용자 이름(기본 값: \"%s\")\n"
+
+#: help.c:141
+#, c-format
+msgid "  -w, --no-password        never prompt for password\n"
+msgstr "  -w, --no-password        암호 프롬프트 표시 안 함\n"
+
+#: help.c:142
+#, c-format
+msgid ""
+"  -W, --password           force password prompt (should happen "
+"automatically)\n"
+msgstr "  -W, --password           암호 입력 프롬프트 보임(자동으로 처리함)\n"
+
+#: help.c:144
+#, c-format
+msgid ""
+"\n"
+"For more information, type \"\\?\" (for internal commands) or \"\\help"
+"\" (for SQL\n"
+"commands) from within psql, or consult the psql section in the PostgreSQL\n"
+"documentation.\n"
+"\n"
+msgstr ""
+"\n"
+"자세한 내용을 보려면 psql 내에서 \"\\?\"(내부 명령) 또는 \"\\help\"(SQL\n"
+"명령)를 입력하거나 PostgreSQL\n"
+"설명서에서 psql 섹션을 참조하십시오.\n"
+"\n"
+
+#: help.c:147
+#, c-format
+msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr "오류보고: <pgsql-bugs@postgresql.org>.\n"
+
+#: help.c:173
+#, c-format
+msgid "General\n"
+msgstr "일반\n"
+
+#: help.c:174
+#, c-format
+msgid ""
+"  \\copyright             show PostgreSQL usage and distribution terms\n"
+msgstr "  \\copyright             PostgreSQL 사용법 및 저작권 정보 표시\n"
+
+#: help.c:175
+#, c-format
+msgid ""
+"  \\errverbose            show most recent error message at maximum "
+"verbosity\n"
+msgstr ""
+"  \\errverbose            최대 자세히 보기 상태에서 최근 오류를 다 보여줌\n"
+
+#: help.c:176
+#, c-format
+msgid ""
+"  \\g [FILE] or ;         execute query (and send results to file or |pipe)\n"
+msgstr ""
+"  \\g [FILE] 또는 ;       쿼리 실행(및 결과를 파일 또는 |파이프로 보냄)\n"
+
+#: help.c:177
+#, c-format
+msgid ""
+"  \\gexec                 execute query, then execute each value in its "
+"result\n"
+msgstr ""
+"  \\gexec                 쿼리를 실행하고, 그 결과를 각각 실행 함\n"
+
+#: help.c:178
+#, c-format
+msgid ""
+"  \\gset [PREFIX]         execute query and store results in psql variables\n"
+msgstr "  \\gset [PREFIX]         쿼리 실행 뒤 그 결과를 psql 변수로 저장\n"
+
+#: help.c:179
+#, c-format
+msgid "  \\q                     quit psql\n"
+msgstr "  \\q                     psql 종료\n"
+
+#: help.c:180
+#, c-format
+msgid ""
+"  \\crosstabview [COLUMNS] execute query and display results in crosstab\n"
+msgstr ""
+"  \\crosstabview [칼럼들] 쿼리를 실행하고, 피봇 테이블 형태로 자료를 보여줌\n"
+
+#: help.c:181
+#, c-format
+msgid "  \\watch [SEC]           execute query every SEC seconds\n"
+msgstr "  \\watch [SEC]           매 초마다 쿼리 실행\n"
+
+#: help.c:184
+#, c-format
+msgid "Help\n"
+msgstr "도움말\n"
+
+#: help.c:186
+#, c-format
+msgid "  \\? [commands]          show help on backslash commands\n"
+msgstr "  \\? [commands]          psql 역슬래시 명령어 설명\n"
+
+#: help.c:187
+#, c-format
+msgid "  \\? options             show help on psql command-line options\n"
+msgstr "  \\? options             psql 명령행 옵션 도움말 보기\n"
+
+#: help.c:188
+#, c-format
+msgid "  \\? variables           show help on special variables\n"
+msgstr "  \\? variables           psql 환경 설정 변수들에 설명 보기\n"
+
+#: help.c:189
+#, c-format
+msgid ""
+"  \\h [NAME]              help on syntax of SQL commands, * for all "
+"commands\n"
+msgstr ""
+"  \\h [NAME]              SQL 명령 구문 도움말, 모든 명령을 표시하려면 * 입"
+"력\n"
+
+#: help.c:192
+#, c-format
+msgid "Query Buffer\n"
+msgstr "쿼리 버퍼\n"
+
+#: help.c:193
+#, c-format
+msgid ""
+"  \\e [FILE] [LINE]       edit the query buffer (or file) with external "
+"editor\n"
+msgstr "  \\e [FILE] [LINE]       외부 편집기로 쿼리 버퍼(또는 파일) 편집\n"
+
+#: help.c:194
+#, c-format
+msgid ""
+"  \\ef [FUNCNAME [LINE]]  edit function definition with external editor\n"
+msgstr "  \\ef [FUNCNAME [LINE]]  외부 편집기로 해당 함수 내용 편집\n"
+
+#: help.c:195
+#, c-format
+msgid "  \\ev [VIEWNAME [LINE]]  edit view definition with external editor\n"
+msgstr "  \\ev [VIEWNAME [LINE]]  외부 편집기로 해당 뷰 정의 편집\n"
+
+#: help.c:196
+#, c-format
+msgid "  \\p                     show the contents of the query buffer\n"
+msgstr "  \\p                     쿼리 버퍼의 내용 표시\n"
+
+#: help.c:197
+#, c-format
+msgid "  \\r                     reset (clear) the query buffer\n"
+msgstr "  \\r                     쿼리 버퍼 초기화(모두 지움)\n"
+
+#: help.c:199
+#, c-format
+msgid "  \\s [FILE]              display history or save it to file\n"
+msgstr "  \\s [FILE]              기록 표시 또는 파일에 저장\n"
+
+#: help.c:201
+#, c-format
+msgid "  \\w FILE                write query buffer to file\n"
+msgstr "  \\w FILE                쿼리 버퍼를 파일에 기록\n"
+
+#: help.c:204
+#, c-format
+msgid "Input/Output\n"
+msgstr "입력/출력\n"
+
+#: help.c:205
+#, c-format
+msgid ""
+"  \\copy ...              perform SQL COPY with data stream to the client "
+"host\n"
+msgstr ""
+"  \\copy ...              클라이언트 호스트에 있는 자료를 SQL COPY 명령 실"
+"행\n"
+
+#: help.c:206
+#, c-format
+msgid "  \\echo [STRING]         write string to standard output\n"
+msgstr "  \\echo [STRING]         문자열을 표준 출력에 기록\n"
+
+#: help.c:207
+#, c-format
+msgid "  \\i FILE                execute commands from file\n"
+msgstr "  \\i FILE                파일에서 명령 실행\n"
+
+#: help.c:208
+#, c-format
+msgid ""
+"  \\ir FILE               as \\i, but relative to location of current "
+"script\n"
+msgstr ""
+"  \\ir FILE               \\i 명령과 같으나, 경로가 현재 위치 기준 상대적\n"
+
+#: help.c:209
+#, c-format
+msgid "  \\o [FILE]              send all query results to file or |pipe\n"
+msgstr "  \\o [FILE]              모든 쿼리 결과를 파일 또는 |파이프로 보냄\n"
+
+#: help.c:210
+#, c-format
+msgid ""
+"  \\qecho [STRING]        write string to query output stream (see \\o)\n"
+msgstr "  \\qecho [STRING]        문자열을 쿼리 출력 스트림에 기록(\\o 참조)\n"
+
+#: help.c:213
+#, c-format
+msgid "Informational\n"
+msgstr "정보보기\n"
+
+#: help.c:214
+#, c-format
+msgid "  (options: S = show system objects, + = additional detail)\n"
+msgstr "  (옵션: S = 시스템 개체 표시, + = 추가 상세 정보)\n"
+
+#: help.c:215
+#, c-format
+msgid "  \\d[S+]                 list tables, views, and sequences\n"
+msgstr "  \\d[S+]                 테이블, 뷰 및 시퀀스 목록\n"
+
+#: help.c:216
+#, c-format
+msgid "  \\d[S+]  NAME           describe table, view, sequence, or index\n"
+msgstr "  \\d[S+]  NAME           테이블, 뷰, 시퀀스 또는 인덱스 설명\n"
+
+#: help.c:217
+#, c-format
+msgid "  \\da[S]  [PATTERN]      list aggregates\n"
+msgstr "  \\da[S]  [PATTERN]      집계 함수 목록\n"
+
+#: help.c:218
+#, c-format
+msgid "  \\dA[+]  [PATTERN]      list access methods\n"
+msgstr "  \\dA[+]  [PATTERN]      접근 방법 목록\n"
+
+#: help.c:219
+#, c-format
+msgid "  \\db[+]  [PATTERN]      list tablespaces\n"
+msgstr "  \\db[+]  [PATTERN]      테이블스페이스 목록\n"
+
+#: help.c:220
+#, c-format
+msgid "  \\dc[S+] [PATTERN]      list conversions\n"
+msgstr "  \\dc[S+] [PATTERN]      문자셋 변환자 목록\n"
+
+#: help.c:221
+#, c-format
+msgid "  \\dC[+]  [PATTERN]      list casts\n"
+msgstr "  \\dC[+]  [PATTERN]      자료형 변환자 목록\n"
+
+#: help.c:222
+#, c-format
+msgid ""
+"  \\dd[S]  [PATTERN]      show object descriptions not displayed elsewhere\n"
+msgstr ""
+"  \\dd[S]  [PATTERN]      다른 곳에서는 볼 수 없는 객체 설명을 보여줌\n"
+
+#: help.c:223
+#, c-format
+msgid "  \\ddp    [PATTERN]      list default privileges\n"
+msgstr "  \\ddp    [PATTERN]      기본 접근권한 목록\n"
+
+#: help.c:224
+#, c-format
+msgid "  \\dD[S+] [PATTERN]      list domains\n"
+msgstr "  \\dD[S+] [PATTERN]      도메인 목록\n"
+
+#: help.c:225
+#, c-format
+msgid "  \\det[+] [PATTERN]      list foreign tables\n"
+msgstr "  \\det[+] [PATTERN]      외부 테이블 목록\n"
+
+#: help.c:226
+#, c-format
+msgid "  \\des[+] [PATTERN]      list foreign servers\n"
+msgstr "  \\des[+] [PATTERN]      외부 서버 목록\n"
+
+#: help.c:227
+#, c-format
+msgid "  \\deu[+] [PATTERN]      list user mappings\n"
+msgstr "  \\deu[+] [PATTERN]      사용자 매핑 목록\n"
+
+#: help.c:228
+#, c-format
+msgid "  \\dew[+] [PATTERN]      list foreign-data wrappers\n"
+msgstr "  \\dew[+] [PATTERN]      외부 데이터 래퍼 목록\n"
+
+#: help.c:229
+#, c-format
+msgid ""
+"  \\df[antw][S+] [PATRN]  list [only agg/normal/trigger/window] functions\n"
+msgstr "  \\df[antw][S+] [PATRN]  [only agg/normal/trigger/window] 함수 목록\n"
+
+#: help.c:230
+#, c-format
+msgid "  \\dF[+]  [PATTERN]      list text search configurations\n"
+msgstr "  \\dF[+]  [PATTERN]      텍스트 검색 구성 목록\n"
+
+#: help.c:231
+#, c-format
+msgid "  \\dFd[+] [PATTERN]      list text search dictionaries\n"
+msgstr "  \\dFd[+] [PATTERN]      텍스트 검색 사전 목록\n"
+
+#: help.c:232
+#, c-format
+msgid "  \\dFp[+] [PATTERN]      list text search parsers\n"
+msgstr "  \\dFp[+] [PATTERN]      텍스트 검색 파서 목록\n"
+
+#: help.c:233
+#, c-format
+msgid "  \\dFt[+] [PATTERN]      list text search templates\n"
+msgstr "  \\dFt[+] [PATTERN]      텍스트 검색 템플릿 목록\n"
+
+#: help.c:234
+#, c-format
+msgid "  \\dg[S+] [PATTERN]      list roles\n"
+msgstr "  \\dg[S+] [PATTERN]      롤 목록\n"
+
+#: help.c:235
+#, c-format
+msgid "  \\di[S+] [PATTERN]      list indexes\n"
+msgstr "  \\di[S+] [PATTERN]      인덱스 목록\n"
+
+#: help.c:236
+#, c-format
+msgid "  \\dl                    list large objects, same as \\lo_list\n"
+msgstr "  \\dl                    큰 개체 목록, \\lo_list 명령과 같음\n"
+
+#: help.c:237
+#, c-format
+msgid "  \\dL[S+] [PATTERN]      list procedural languages\n"
+msgstr "  \\dL[S+] [PATTERN]      프로시져 언어 목록\n"
+
+#: help.c:238
+#, c-format
+msgid "  \\dm[S+] [PATTERN]      list materialized views\n"
+msgstr "  \\dm[S+] [PATTERN]      materialized 뷰 목록\n"
+
+#: help.c:239
+#, c-format
+msgid "  \\dn[S+] [PATTERN]      list schemas\n"
+msgstr "  \\dn[S+] [PATTERN]      스키마 목록\n"
+
+#: help.c:240
+#, c-format
+msgid "  \\do[S]  [PATTERN]      list operators\n"
+msgstr "  \\do[S]  [PATTERN]      연산자 목록\n"
+
+#: help.c:241
+#, c-format
+msgid "  \\dO[S+] [PATTERN]      list collations\n"
+msgstr "  \\dO[S+] [PATTERN]      collation 목록\n"
+
+#: help.c:242
+#, c-format
+msgid ""
+"  \\dp     [PATTERN]      list table, view, and sequence access privileges\n"
+msgstr "  \\dp     [PATTERN]      테이블, 뷰 및 시퀀스 액세스 권한 목록\n"
+
+#: help.c:243
+#, c-format
+msgid "  \\drds [PATRN1 [PATRN2]] list per-database role settings\n"
+msgstr "  \\drds [PATRN1 [PATRN2]] 데이터베이스별 롤 설정 목록\n"
+
+#: help.c:244
+#, c-format
+msgid "  \\ds[S+] [PATTERN]      list sequences\n"
+msgstr "  \\ds[S+] [PATTERN]      시퀀스 목록\n"
+
+#: help.c:245
+#, c-format
+msgid "  \\dt[S+] [PATTERN]      list tables\n"
+msgstr "  \\dt[S+] [PATTERN]      테이블 목록\n"
+
+#: help.c:246
+#, c-format
+msgid "  \\dT[S+] [PATTERN]      list data types\n"
+msgstr "  \\dT[S+] [PATTERN]      데이터 형식 목록\n"
+
+#: help.c:247
+#, c-format
+msgid "  \\du[S+] [PATTERN]      list roles\n"
+msgstr "  \\du[S+] [PATTERN]      롤 목록\n"
+
+#: help.c:248
+#, c-format
+msgid "  \\dv[S+] [PATTERN]      list views\n"
+msgstr "  \\dv[S+] [PATTERN]      뷰 목록\n"
+
+#: help.c:249
+#, c-format
+msgid "  \\dE[S+] [PATTERN]      list foreign tables\n"
+msgstr "  \\dE[S+] [PATTERN]      외부 테이블 목록\n"
+
+#: help.c:250
+#, c-format
+msgid "  \\dx[+]  [PATTERN]      list extensions\n"
+msgstr "  \\dx[+]  [PATTERN]      확장 모듈 목록\n"
+
+#: help.c:251
+#, c-format
+msgid "  \\dy     [PATTERN]      list event triggers\n"
+msgstr "  \\dy     [PATTERN]      이벤트 트리거 목록\n"
+
+#: help.c:252
+#, c-format
+msgid "  \\l[+]   [PATTERN]      list databases\n"
+msgstr "  \\l[+]   [PATTERN]      데이터베이스 목록\n"
+
+#: help.c:253
+#, c-format
+msgid "  \\sf[+]  FUNCNAME       show a function's definition\n"
+msgstr "  \\sf[+]  함수이름       함수 정의 보기\n"
+
+#: help.c:254
+#, c-format
+msgid "  \\sv[+]  VIEWNAME       show a view's definition\n"
+msgstr "  \\sv[+] 뷰이름          뷰 정의 보기\n"
+
+#: help.c:255
+#, c-format
+msgid "  \\z      [PATTERN]      same as \\dp\n"
+msgstr "  \\z      [PATTERN]      \\dp와 같음\n"
+
+#: help.c:258
+#, c-format
+msgid "Formatting\n"
+msgstr "출력 형식\n"
+
+#: help.c:259
+#, c-format
+msgid ""
+"  \\a                     toggle between unaligned and aligned output mode\n"
+msgstr ""
+"  \\a                     정렬되지 않은 출력 모드와 정렬된 출력 모드 전환\n"
+
+#: help.c:260
+#, c-format
+msgid "  \\C [STRING]            set table title, or unset if none\n"
+msgstr ""
+"  \\C [STRING]            테이블 제목 설정 또는 값이 없는 경우 설정 안 함\n"
+
+#: help.c:261
+#, c-format
+msgid ""
+"  \\f [STRING]            show or set field separator for unaligned query "
+"output\n"
+msgstr ""
+"  \\f [STRING]            unaligned 출력에 대해 필드 구분자 표시 또는 설정\n"
+
+#: help.c:262
+#, c-format
+msgid "  \\H                     toggle HTML output mode (currently %s)\n"
+msgstr "  \\H                     HTML 출력 모드 전환(현재 %s)\n"
+
+#: help.c:264
+#, c-format
+msgid ""
+"  \\pset [NAME [VALUE]]   set table output option\n"
+"                         (NAME := {format|border|expanded|fieldsep|"
+"fieldsep_zero|footer|null|\n"
+"                         numericlocale|recordsep|recordsep_zero|tuples_only|"
+"title|tableattr|pager|\n"
+"                         unicode_border_linestyle|unicode_column_linestyle|"
+"unicode_header_linestyle})\n"
+msgstr ""
+"  \\pset [NAME [VALUE]]   표 출력 옵션\n"
+"                         (NAME := {format|border|expanded|fieldsep|\n"
+"                         fieldsep_zero|footer|null|numericlocale|recordsep|\n"
+"                         recordsep_zero|tuples_only|title|tableattr|pager|\n"
+"                         unicode_border_linestyle|unicode_column_linestyle|\n"
+"                         unicode_header_linestyle})\n"
+
+#: help.c:268
+#, c-format
+msgid "  \\t [on|off]            show only rows (currently %s)\n"
+msgstr "  \\t [on|off]            행만 표시(현재 %s)\n"
+
+#: help.c:270
+#, c-format
+msgid ""
+"  \\T [STRING]            set HTML <table> tag attributes, or unset if none\n"
+msgstr ""
+"  \\T [STRING]            HTML <table> 태그 속성 설정 또는 비었는 경우 설정 "
+"안 함\n"
+
+#: help.c:271
+#, c-format
+msgid "  \\x [on|off|auto]       toggle expanded output (currently %s)\n"
+msgstr "  \\x [on|off|auto]       확장된 출력 전환 (현재 %s)\n"
+
+#: help.c:275
+#, c-format
+msgid "Connection\n"
+msgstr "연결\n"
+
+#: help.c:277
+#, c-format
+msgid ""
+"  \\c[onnect] {[DBNAME|- USER|- HOST|- PORT|-] | conninfo}\n"
+"                         connect to new database (currently \"%s\")\n"
+msgstr ""
+"  \\c[onnect] {[DBNAME|- USER|- HOST|- PORT|-] | conninfo}\n"
+"                         새 데이터베이스에 접속 (현재 \"%s\")\n"
+
+#: help.c:281
+#, c-format
+msgid ""
+"  \\c[onnect] {[DBNAME|- USER|- HOST|- PORT|-] | conninfo}\n"
+"                         connect to new database (currently no connection)\n"
+msgstr ""
+"  \\c[onnect] {[DBNAME|- USER|- HOST|- PORT|-] | conninfo}\n"
+"                         새 데이터베이스에 접속 (현재 접속해 있지 않음)\n"
+
+#: help.c:283
+#, c-format
+msgid "  \\encoding [ENCODING]   show or set client encoding\n"
+msgstr "  \\encoding [ENCODING]   클라이언트 인코딩 표시 또는 설정\n"
+
+#: help.c:284
+#, c-format
+msgid "  \\password [USERNAME]   securely change the password for a user\n"
+msgstr "  \\password [USERNAME]   사용자 암호를 안전하게 변경\n"
+
+#: help.c:285
+#, c-format
+msgid ""
+"  \\conninfo              display information about current connection\n"
+msgstr "  \\conninfo              현재 데이터베이스 접속 정보 보기\n"
+
+#: help.c:288
+#, c-format
+msgid "Operating System\n"
+msgstr "운영 체제\n"
+
+#: help.c:289
+#, c-format
+msgid "  \\cd [DIR]              change the current working directory\n"
+msgstr "  \\cd [DIR]              현재 작업 디렉터리 변경\n"
+
+#: help.c:290
+#, c-format
+msgid "  \\setenv NAME [VALUE]   set or unset environment variable\n"
+msgstr "  \\setenv NAME [VALUE]   환경 변수 지정 및 해제\n"
+
+#: help.c:291
+#, c-format
+msgid "  \\timing [on|off]       toggle timing of commands (currently %s)\n"
+msgstr "  \\timing [on|off]       명령 실행 시간 전환(현재 %s)\n"
+
+#: help.c:293
+#, c-format
+msgid ""
+"  \\! [COMMAND]           execute command in shell or start interactive "
+"shell\n"
+msgstr "  \\! [COMMAND]           셸 명령 실행 또는 대화식 셸 시작\n"
+
+#: help.c:296
+#, c-format
+msgid "Variables\n"
+msgstr "변수\n"
+
+#: help.c:297
+#, c-format
+msgid "  \\prompt [TEXT] NAME    prompt user to set internal variable\n"
+msgstr ""
+"  \\prompt [TEXT] NAME    사용자에게 내부 변수를 설정하라는 메시지 표시\n"
+
+#: help.c:298
+#, c-format
+msgid ""
+"  \\set [NAME [VALUE]]    set internal variable, or list all if no "
+"parameters\n"
+msgstr ""
+"  \\set [NAME [VALUE]]    내부 변수 설정 또는 미지정 경우 모든 변수 목록 표"
+"시\n"
+
+#: help.c:299
+#, c-format
+msgid "  \\unset NAME            unset (delete) internal variable\n"
+msgstr "  \\unset NAME            내부 변수 설정 해제(삭제)\n"
+
+#: help.c:302
+#, c-format
+msgid "Large Objects\n"
+msgstr "큰 개체\n"
+
+#: help.c:303
+#, c-format
+msgid ""
+"  \\lo_export LOBOID FILE\n"
+"  \\lo_import FILE [COMMENT]\n"
+"  \\lo_list\n"
+"  \\lo_unlink LOBOID      large object operations\n"
+msgstr ""
+"  \\lo_export LOBOID FILE\n"
+"  \\lo_import FILE [COMMENT]\n"
+"  \\lo_list\n"
+"  \\lo_unlink LOBOID      큰 개체 작업\n"
+
+#: help.c:330
+#, c-format
+msgid ""
+"List of specially treated variables\n"
+"\n"
+msgstr "특별한 기능 설정 변수 목록\n"
+
+#: help.c:332
+#, c-format
+msgid "psql variables:\n"
+msgstr "psql 변수들:\n"
+
+#: help.c:334
+#, c-format
+msgid ""
+"  psql --set=NAME=VALUE\n"
+"  or \\set NAME VALUE inside psql\n"
+"\n"
+msgstr ""
+"  psql --set=NAME=VALUE\n"
+"  또는 psql 명령 모드에서는 \\set NAME VALUE\n"
+"\n"
+
+#: help.c:336
+#, c-format
+msgid ""
+"  AUTOCOMMIT         if set, successful SQL commands are automatically "
+"committed\n"
+msgstr "  AUTOCOMMIT         지정 하면 SQL 명령이 성공하면 자동으로 커밋\n"
+
+#: help.c:337
+#, c-format
+msgid ""
+"  COMP_KEYWORD_CASE  determines the case used to complete SQL key words\n"
+"                     [lower, upper, preserve-lower, preserve-upper]\n"
+msgstr ""
+
+#: help.c:339
+#, c-format
+msgid "  DBNAME             the currently connected database name\n"
+msgstr "  DBNAME             현재 접속한 데이터베이스 이름\n"
+
+#: help.c:340
+#, c-format
+msgid ""
+"  ECHO               controls what input is written to standard output\n"
+"                     [all, errors, none, queries]\n"
+msgstr ""
+
+#: help.c:342
+#, c-format
+msgid ""
+"  ECHO_HIDDEN        if set, display internal queries executed by backslash "
+"commands;\n"
+"                     if set to \"noexec\", just show without execution\n"
+msgstr ""
+
+#: help.c:344
+#, c-format
+msgid "  ENCODING           current client character set encoding\n"
+msgstr "  ENCODING           현재 클라이언트 인코딩\n"
+
+#: help.c:345
+#, c-format
+msgid ""
+"  FETCH_COUNT        the number of result rows to fetch and display at a "
+"time\n"
+"                     (default: 0=unlimited)\n"
+msgstr ""
+
+#: help.c:347
+#, c-format
+msgid ""
+"  HISTCONTROL        controls command history [ignorespace, ignoredups, "
+"ignoreboth]\n"
+msgstr ""
+
+#: help.c:348
+#, c-format
+msgid "  HISTFILE           file name used to store the command history\n"
+msgstr ""
+
+#: help.c:349
+#, c-format
+msgid ""
+"  HISTSIZE           the number of commands to store in the command history\n"
+msgstr ""
+
+#: help.c:350
+#, c-format
+msgid "  HOST               the currently connected database server host\n"
+msgstr "  HOST               현재 접속한 데이터베이스 서버\n"
+
+#: help.c:351
+#, c-format
+msgid ""
+"  IGNOREEOF          if unset, sending an EOF to interactive session "
+"terminates application\n"
+msgstr ""
+
+#: help.c:352
+#, c-format
+msgid "  LASTOID            value of the last affected OID\n"
+msgstr "  LASTOID            마지막 영향 받은 OID\n"
+
+#: help.c:353
+#, c-format
+msgid ""
+"  ON_ERROR_ROLLBACK  if set, an error doesn't stop a transaction (uses "
+"implicit savepoints)\n"
+msgstr ""
+
+#: help.c:354
+#, c-format
+msgid "  ON_ERROR_STOP      stop batch execution after error\n"
+msgstr ""
+
+#: help.c:355
+#, c-format
+msgid "  PORT               server port of the current connection\n"
+msgstr "  PORT               현재 접속한 서버 포트\n"
+
+#: help.c:356
+#, c-format
+msgid "  PROMPT1            specifies the standard psql prompt\n"
+msgstr ""
+
+#: help.c:357
+#, c-format
+msgid ""
+"  PROMPT2            specifies the prompt used when a statement continues "
+"from a previous line\n"
+msgstr ""
+
+#: help.c:358
+#, c-format
+msgid ""
+"  PROMPT3            specifies the prompt used during COPY ... FROM STDIN\n"
+msgstr ""
+
+#: help.c:359
+#, c-format
+msgid "  QUIET              run quietly (same as -q option)\n"
+msgstr "  QUIET              조용히 실행 (-q 옵션과 같음)\n"
+
+#: help.c:360
+#, c-format
+msgid ""
+"  SHOW_CONTEXT       controls display of message context fields [never, "
+"errors, always]\n"
+msgstr ""
+
+#: help.c:361
+#, c-format
+msgid ""
+"  SINGLELINE         end of line terminates SQL command mode (same as -S "
+"option)\n"
+msgstr ""
+
+#: help.c:362
+#, c-format
+msgid "  SINGLESTEP         single-step mode (same as -s option)\n"
+msgstr ""
+
+#: help.c:363
+#, c-format
+msgid "  USER               the currently connected database user\n"
+msgstr "  USER               현재 접속한 데이터베이스 사용자\n"
+
+#: help.c:364
+#, c-format
+msgid ""
+"  VERBOSITY          controls verbosity of error reports [default, verbose, "
+"terse]\n"
+msgstr ""
+
+#: help.c:366
+#, c-format
+msgid ""
+"\n"
+"Display settings:\n"
+msgstr "\n출력 설정들:\n"
+
+#: help.c:368
+#, c-format
+msgid ""
+"  psql --pset=NAME[=VALUE]\n"
+"  or \\pset NAME [VALUE] inside psql\n"
+"\n"
+msgstr ""
+"  psql --pset=NAME[=VALUE]\n"
+"  또는 psql 명령 모드에서는 \\pset NAME [VALUE]\n"
+"\n"
+
+#: help.c:370
+#, c-format
+msgid "  border             border style (number)\n"
+msgstr "  border             테두리 모양 (숫자)\n"
+
+#: help.c:371
+#, c-format
+msgid "  columns            target width for the wrapped format\n"
+msgstr "  columns            줄바꿈을 위한 너비 지정\n"
+
+#: help.c:372
+#, c-format
+msgid "  expanded (or x)    expanded output [on, off, auto]\n"
+msgstr "  expanded (또는 x)  확장된 출력 전환 [on, off, auto]\n"
+
+#: help.c:373
+#, c-format
+msgid ""
+"  fieldsep           field separator for unaligned output (default \"%s\")\n"
+msgstr ""
+"  fieldsep           unaligned 출력용 필드 구분자 (초기값 \"%s\"')\n"
+
+#: help.c:374
+#, c-format
+msgid ""
+"  fieldsep_zero      set field separator for unaligned output to zero byte\n"
+msgstr ""
+"  fieldsep_zero      unaligned 출력용 필드 구분자를 0 바이트로 지정\n"
+
+#: help.c:375
+#, c-format
+msgid ""
+"  footer             enable or disable display of the table footer [on, "
+"off]\n"
+msgstr "  footer             테이블 꼬리말 보이기 전환 [on, off]\n"
+
+#: help.c:376
+#, c-format
+msgid ""
+"  format             set output format [unaligned, aligned, wrapped, html, "
+"asciidoc, ...]\n"
+msgstr ""
+"  format             출력 양식 지정 [unaligned, aligned, wrapped, html, "
+"asciidoc, ...]\n"
+
+#: help.c:377
+#, c-format
+msgid ""
+"  linestyle          set the border line drawing style [ascii, old-ascii, "
+"unicode]\n"
+msgstr ""
+
+#: help.c:378
+#, c-format
+msgid ""
+"  null               set the string to be printed in place of a null value\n"
+msgstr ""
+
+#: help.c:379
+#, c-format
+msgid ""
+"  numericlocale      enable or disable display of a locale-specific "
+"character to separate\n"
+"                     groups of digits [on, off]\n"
+msgstr ""
+
+#: help.c:381
+#, c-format
+msgid ""
+"  pager              control when an external pager is used [yes, no, "
+"always]\n"
+msgstr ""
+
+#: help.c:382
+#, c-format
+msgid "  recordsep          record (line) separator for unaligned output\n"
+msgstr "  recordsep          unaligned 출력용 레코드(줄) 구분자\n"
+
+#: help.c:383
+#, c-format
+msgid ""
+"  recordsep_zero     set record separator for unaligned output to zero byte\n"
+msgstr ""
+"  recordsep_zero     unaligned 출력용 레코드 구분자를 0 바이트로 지정\n"
+
+#: help.c:384
+#, c-format
+msgid ""
+"  tableattr (or T)   specify attributes for table tag in html format or "
+"proportional\n"
+"                     column widths for left-aligned data types in latex-"
+"longtable format\n"
+msgstr ""
+
+#: help.c:386
+#, c-format
+msgid ""
+"  title              set the table title for any subsequently printed "
+"tables\n"
+msgstr "  title              테이블 제목 지정\n"
+
+#: help.c:387
+#, c-format
+msgid "  tuples_only        if set, only actual table data is shown\n"
+msgstr "  tuples_only        지정되면, 자료만 보임\n"
+
+#: help.c:388
+#, c-format
+msgid ""
+"  unicode_border_linestyle\n"
+"  unicode_column_linestyle\n"
+"  unicode_header_linestyle\n"
+"                     set the style of Unicode line drawing [single, double]\n"
+msgstr ""
+"  unicode_border_linestyle\n"
+"  unicode_column_linestyle\n"
+"  unicode_header_linestyle\n"
+"                     유니코드 선 종류 [single, double]\n"
+
+#: help.c:393
+#, c-format
+msgid ""
+"\n"
+"Environment variables:\n"
+msgstr ""
+"\n"
+"OS 환경 변수들:\n"
+
+#: help.c:397
+#, c-format
+msgid ""
+"  NAME=VALUE [NAME=VALUE] psql ...\n"
+"  or \\setenv NAME [VALUE] inside psql\n"
+"\n"
+msgstr ""
+"  NAME=VALUE [NAME=VALUE] psql ...\n"
+"  또는 psql 명령 모드에서는 \\setenv NAME [VALUE]\n"
+"\n"
+
+#: help.c:399
+#, c-format
+msgid ""
+"  set NAME=VALUE\n"
+"  psql ...\n"
+"  or \\setenv NAME [VALUE] inside psql\n"
+"\n"
+msgstr ""
+"  set NAME=VALUE\n"
+"  psql ...\n"
+"  또는 psql 명령 모드에서는 \\setenv NAME [VALUE]\n"
+"\n"
+
+#: help.c:402
+#, c-format
+msgid "  COLUMNS            number of columns for wrapped format\n"
+msgstr "  COLUMNS            다음 줄로 넘어갈 칼럼 수\n"
+
+#: help.c:403
+#, c-format
+msgid "  PAGER              name of external pager program\n"
+msgstr "  PAGER              페이지 단위 보기에서 사용할 프로그램\n"
+
+#: help.c:404
+#, c-format
+msgid ""
+"  PGAPPNAME          same as the application_name connection parameter\n"
+msgstr "  PGAPPNAME          application_name 변수값으로 사용됨\n"
+
+#: help.c:405
+#, c-format
+msgid "  PGDATABASE         same as the dbname connection parameter\n"
+msgstr "  PGDATABASE         접속할 데이터베이스 이름\n"
+
+#: help.c:406
+#, c-format
+msgid "  PGHOST             same as the host connection parameter\n"
+msgstr "  PGHOST             서버 접속용 호스트 이름\n"
+
+#: help.c:407
+#, c-format
+msgid "  PGPORT             same as the port connection parameter\n"
+msgstr "  PGPORT             서버 접속용 포트\n"
+
+#: help.c:408
+#, c-format
+msgid "  PGUSER             same as the user connection parameter\n"
+msgstr "  PGUSER             서버 접속용 데이터베이스 사용자 이름\n"
+
+#: help.c:409
+#, c-format
+msgid "  PGPASSWORD         connection password (not recommended)\n"
+msgstr "  PGPASSWORD         서버 접속 비밀번호 (보안에 취약함)\n"
+
+#: help.c:410
+#, c-format
+msgid "  PGPASSFILE         password file name\n"
+msgstr "  PGPASSFILE         서버 접속용 비밀번호가 저장된 파일 이름\n"
+
+#: help.c:411
+#, c-format
+msgid ""
+"  PSQL_EDITOR, EDITOR, VISUAL\n"
+"                     editor used by the \\e, \\ef, and \\ev commands\n"
+msgstr ""
+"  PSQL_EDITOR, EDITOR, VISUAL\n"
+"                     \\e, \\ef, \\ev 명령에서 사용할 외부 편집기 경로\n"
+
+#: help.c:413
+#, c-format
+msgid ""
+"  PSQL_EDITOR_LINENUMBER_ARG\n"
+"                     how to specify a line number when invoking the editor\n"
+msgstr ""
+"  PSQL_EDITOR_LINENUMBER_ARG\n"
+"                     외부 편집기 호출 시 사용할 줄번호 선택 옵션\n"
+
+#: help.c:415
+#, c-format
+msgid ""
+"  PSQL_HISTORY       alternative location for the command history file\n"
+msgstr "  PSQL_HISTORY       사용자 .psql_history 파일 임의 지정\n"
+
+#: help.c:416
+#, c-format
+msgid "  PSQLRC             alternative location for the user's .psqlrc file\n"
+msgstr "  PSQLRC             사용자 .psqlrc 파일의 임의 지정\n"
+
+#: help.c:417
+#, c-format
+msgid "  SHELL              shell used by the \\! command\n"
+msgstr "  SHELL              \\! 명령에서 사용할 쉘\n"
+
+#: help.c:418
+#, c-format
+msgid "  TMPDIR             directory for temporary files\n"
+msgstr "  TMPDIR             임시 파일을 사용할 디렉터리\n"
+
+#: help.c:461
+msgid "Available help:\n"
+msgstr "사용 가능한 도움말:\n"
+
+#: help.c:545
+#, c-format
+msgid ""
+"Command:     %s\n"
+"Description: %s\n"
+"Syntax:\n"
+"%s\n"
+"\n"
+msgstr ""
+"명령:     %s\n"
+"설명: %s\n"
+"문법:\n"
+"%s\n"
+"\n"
+
+#: help.c:561
+#, c-format
+msgid ""
+"No help available for \"%s\".\n"
+"Try \\h with no arguments to see available help.\n"
+msgstr ""
+"\"%s\" 명령에 대한 도움말 없음.\n"
+"\\h 명령을 인자 없이 호출 하면 사용 가능한 모든 명령 보여줌.\n"
+
+#: input.c:216
+#, c-format
+msgid "could not read from input file: %s\n"
+msgstr "입력 파일을 읽을 수 없음: %s\n"
+
+#: input.c:471 input.c:510
+#, c-format
+msgid "could not save history to file \"%s\": %s\n"
+msgstr "history를 \"%s\" 파일로 저장할 수 없음: %s\n"
+
+#: input.c:530
+#, c-format
+msgid "history is not supported by this installation\n"
+msgstr "히스토리 기능은 이 설치본에서는 지원하지 않음\n"
+
+#: large_obj.c:64
+#, c-format
+msgid "%s: not connected to a database\n"
+msgstr "%s: 데이터베이스에 연되어있지 않음\n"
+
+#: large_obj.c:83
+#, c-format
+msgid "%s: current transaction is aborted\n"
+msgstr "%s: 현재 트랜잭션 중지됨\n"
+
+#: large_obj.c:86
+#, c-format
+msgid "%s: unknown transaction status\n"
+msgstr "%s: 알 수 없는 트랜잭션 상태\n"
+
+#: large_obj.c:287 large_obj.c:298
+msgid "ID"
+msgstr "ID"
+
+#: large_obj.c:308
+msgid "Large objects"
+msgstr "Large objects"
+
+#: mainloop.c:168
+#, c-format
+msgid "Use \"\\q\" to leave %s.\n"
+msgstr "마치려면 \"\\q\"를 입력하세요: %s\n"
+
+#: mainloop.c:190
+msgid ""
+"The input is a PostgreSQL custom-format dump.\n"
+"Use the pg_restore command-line client to restore this dump to a database.\n"
+msgstr ""
+
+#: mainloop.c:210
+msgid "You are using psql, the command-line interface to PostgreSQL."
+msgstr "PostgreSQL에 대한 명령행 인터페이스인 psql을 사용하고 있습니다."
+
+#: mainloop.c:211
+#, c-format
+msgid ""
+"Type:  \\copyright for distribution terms\n"
+"       \\h for help with SQL commands\n"
+"       \\? for help with psql commands\n"
+"       \\g or terminate with semicolon to execute query\n"
+"       \\q to quit\n"
+msgstr ""
+"사용법:  \\copyright 저작권 정보\n"
+"         \\h SQL 명령 도움말\n"
+"         \\? psql 명령 도움말\n"
+"         \\g 또는 명령 끝에 세미콜론(;) 쿼리 실행\n"
+"         \\q 종료\n"
+
+#: psqlscan.l:713
+#, c-format
+msgid "skipping recursive expansion of variable \"%s\"\n"
+msgstr "\"%s\" 변수의 재귀적 확장을 건너뛰는 중\n"
+
+#: psqlscanslash.l:584
+#, c-format
+msgid "unterminated quoted string\n"
+msgstr "인용 부호 짝 맞지 않음\n"
+
+#: psqlscanslash.l:738
+#, c-format
+msgid "%s: out of memory\n"
+msgstr "%s: 메모리 부족\n"
+
+#: sql_help.c:36 sql_help.c:39 sql_help.c:42 sql_help.c:64 sql_help.c:66
+#: sql_help.c:68 sql_help.c:79 sql_help.c:81 sql_help.c:83 sql_help.c:109
+#: sql_help.c:115 sql_help.c:117 sql_help.c:119 sql_help.c:121 sql_help.c:124
+#: sql_help.c:126 sql_help.c:128 sql_help.c:221 sql_help.c:223 sql_help.c:224
+#: sql_help.c:226 sql_help.c:228 sql_help.c:231 sql_help.c:233 sql_help.c:235
+#: sql_help.c:237 sql_help.c:249 sql_help.c:250 sql_help.c:251 sql_help.c:253
+#: sql_help.c:299 sql_help.c:301 sql_help.c:303 sql_help.c:305 sql_help.c:365
+#: sql_help.c:370 sql_help.c:372 sql_help.c:415 sql_help.c:417 sql_help.c:420
+#: sql_help.c:422 sql_help.c:489 sql_help.c:494 sql_help.c:499 sql_help.c:504
+#: sql_help.c:509 sql_help.c:558 sql_help.c:560 sql_help.c:562 sql_help.c:564
+#: sql_help.c:567 sql_help.c:569 sql_help.c:580 sql_help.c:582 sql_help.c:624
+#: sql_help.c:626 sql_help.c:628 sql_help.c:631 sql_help.c:633 sql_help.c:635
+#: sql_help.c:669 sql_help.c:673 sql_help.c:677 sql_help.c:696 sql_help.c:699
+#: sql_help.c:702 sql_help.c:731 sql_help.c:743 sql_help.c:751 sql_help.c:754
+#: sql_help.c:757 sql_help.c:772 sql_help.c:775 sql_help.c:819 sql_help.c:842
+#: sql_help.c:853 sql_help.c:855 sql_help.c:872 sql_help.c:881 sql_help.c:883
+#: sql_help.c:885 sql_help.c:897 sql_help.c:901 sql_help.c:903 sql_help.c:987
+#: sql_help.c:989 sql_help.c:992 sql_help.c:995 sql_help.c:997 sql_help.c:999
+#: sql_help.c:1060 sql_help.c:1062 sql_help.c:1064 sql_help.c:1067
+#: sql_help.c:1088 sql_help.c:1091 sql_help.c:1094 sql_help.c:1097
+#: sql_help.c:1101 sql_help.c:1103 sql_help.c:1105 sql_help.c:1107
+#: sql_help.c:1121 sql_help.c:1124 sql_help.c:1126 sql_help.c:1128
+#: sql_help.c:1138 sql_help.c:1140 sql_help.c:1150 sql_help.c:1152
+#: sql_help.c:1162 sql_help.c:1165 sql_help.c:1186 sql_help.c:1188
+#: sql_help.c:1190 sql_help.c:1193 sql_help.c:1195 sql_help.c:1197
+#: sql_help.c:1247 sql_help.c:1285 sql_help.c:1288 sql_help.c:1290
+#: sql_help.c:1292 sql_help.c:1294 sql_help.c:1296 sql_help.c:1299
+#: sql_help.c:1339 sql_help.c:1544 sql_help.c:1608 sql_help.c:1627
+#: sql_help.c:1640 sql_help.c:1694 sql_help.c:1698 sql_help.c:1708
+#: sql_help.c:1728 sql_help.c:1753 sql_help.c:1771 sql_help.c:1800
+#: sql_help.c:1875 sql_help.c:1917 sql_help.c:1939 sql_help.c:1959
+#: sql_help.c:1960 sql_help.c:1995 sql_help.c:2015 sql_help.c:2037
+#: sql_help.c:2050 sql_help.c:2081 sql_help.c:2106 sql_help.c:2150
+#: sql_help.c:2336 sql_help.c:2349 sql_help.c:2366 sql_help.c:2382
+#: sql_help.c:2421 sql_help.c:2472 sql_help.c:2476 sql_help.c:2478
+#: sql_help.c:2484 sql_help.c:2502 sql_help.c:2529 sql_help.c:2564
+#: sql_help.c:2576 sql_help.c:2585 sql_help.c:2629 sql_help.c:2643
+#: sql_help.c:2671 sql_help.c:2679 sql_help.c:2687 sql_help.c:2695
+#: sql_help.c:2703 sql_help.c:2711 sql_help.c:2719 sql_help.c:2727
+#: sql_help.c:2736 sql_help.c:2747 sql_help.c:2755 sql_help.c:2763
+#: sql_help.c:2771 sql_help.c:2779 sql_help.c:2789 sql_help.c:2798
+#: sql_help.c:2807 sql_help.c:2815 sql_help.c:2824 sql_help.c:2832
+#: sql_help.c:2841 sql_help.c:2849 sql_help.c:2857 sql_help.c:2865
+#: sql_help.c:2873 sql_help.c:2881 sql_help.c:2889 sql_help.c:2897
+#: sql_help.c:2905 sql_help.c:2922 sql_help.c:2931 sql_help.c:2939
+#: sql_help.c:2956 sql_help.c:2971 sql_help.c:3236 sql_help.c:3287
+#: sql_help.c:3316 sql_help.c:3324 sql_help.c:3743 sql_help.c:3791
+#: sql_help.c:3932
+msgid "name"
+msgstr "이름"
+
+#: sql_help.c:37 sql_help.c:40 sql_help.c:43 sql_help.c:309 sql_help.c:1405
+#: sql_help.c:2644 sql_help.c:3539
+msgid "aggregate_signature"
+msgstr "집계함수_식별구문"
+
+#: sql_help.c:38 sql_help.c:65 sql_help.c:80 sql_help.c:116 sql_help.c:236
+#: sql_help.c:254 sql_help.c:373 sql_help.c:421 sql_help.c:498 sql_help.c:544
+#: sql_help.c:559 sql_help.c:581 sql_help.c:632 sql_help.c:698 sql_help.c:753
+#: sql_help.c:774 sql_help.c:820 sql_help.c:844 sql_help.c:854 sql_help.c:884
+#: sql_help.c:904 sql_help.c:996 sql_help.c:1061 sql_help.c:1104
+#: sql_help.c:1125 sql_help.c:1139 sql_help.c:1151 sql_help.c:1164
+#: sql_help.c:1194 sql_help.c:1248 sql_help.c:1293
+msgid "new_name"
+msgstr "새이름"
+
+#: sql_help.c:41 sql_help.c:67 sql_help.c:82 sql_help.c:118 sql_help.c:234
+#: sql_help.c:252 sql_help.c:371 sql_help.c:457 sql_help.c:503 sql_help.c:583
+#: sql_help.c:592 sql_help.c:651 sql_help.c:672 sql_help.c:701 sql_help.c:756
+#: sql_help.c:856 sql_help.c:882 sql_help.c:902 sql_help.c:1045
+#: sql_help.c:1063 sql_help.c:1106 sql_help.c:1127 sql_help.c:1189
+#: sql_help.c:1291 sql_help.c:2322
+msgid "new_owner"
+msgstr "새사용자"
+
+#: sql_help.c:44 sql_help.c:69 sql_help.c:84 sql_help.c:238 sql_help.c:302
+#: sql_help.c:423 sql_help.c:508 sql_help.c:634 sql_help.c:676 sql_help.c:704
+#: sql_help.c:759 sql_help.c:886 sql_help.c:998 sql_help.c:1108
+#: sql_help.c:1129 sql_help.c:1141 sql_help.c:1153 sql_help.c:1196
+#: sql_help.c:1295
+msgid "new_schema"
+msgstr "새스키마"
+
+#: sql_help.c:45 sql_help.c:1458 sql_help.c:2645 sql_help.c:3558
+msgid "where aggregate_signature is:"
+msgstr "집계함수_식별구문 사용법:"
+
+#: sql_help.c:46 sql_help.c:49 sql_help.c:52 sql_help.c:319 sql_help.c:344
+#: sql_help.c:347 sql_help.c:350 sql_help.c:490 sql_help.c:495 sql_help.c:500
+#: sql_help.c:505 sql_help.c:510 sql_help.c:1423 sql_help.c:1459
+#: sql_help.c:1462 sql_help.c:1465 sql_help.c:1609 sql_help.c:1628
+#: sql_help.c:1631 sql_help.c:1876 sql_help.c:2646 sql_help.c:2649
+#: sql_help.c:2652 sql_help.c:2737 sql_help.c:3122 sql_help.c:3454
+#: sql_help.c:3545 sql_help.c:3559 sql_help.c:3562 sql_help.c:3565
+msgid "argmode"
+msgstr "인자모드"
+
+#: sql_help.c:47 sql_help.c:50 sql_help.c:53 sql_help.c:320 sql_help.c:345
+#: sql_help.c:348 sql_help.c:351 sql_help.c:491 sql_help.c:496 sql_help.c:501
+#: sql_help.c:506 sql_help.c:511 sql_help.c:1424 sql_help.c:1460
+#: sql_help.c:1463 sql_help.c:1466 sql_help.c:1610 sql_help.c:1629
+#: sql_help.c:1632 sql_help.c:1877 sql_help.c:2647 sql_help.c:2650
+#: sql_help.c:2653 sql_help.c:2738 sql_help.c:3546 sql_help.c:3560
+#: sql_help.c:3563 sql_help.c:3566
+msgid "argname"
+msgstr "인자이름"
+
+#: sql_help.c:48 sql_help.c:51 sql_help.c:54 sql_help.c:321 sql_help.c:346
+#: sql_help.c:349 sql_help.c:352 sql_help.c:492 sql_help.c:497 sql_help.c:502
+#: sql_help.c:507 sql_help.c:512 sql_help.c:1425 sql_help.c:1461
+#: sql_help.c:1464 sql_help.c:1467 sql_help.c:1878 sql_help.c:2648
+#: sql_help.c:2651 sql_help.c:2654 sql_help.c:2739 sql_help.c:3547
+#: sql_help.c:3561 sql_help.c:3564 sql_help.c:3567
+msgid "argtype"
+msgstr "인자자료형"
+
+#: sql_help.c:110 sql_help.c:368 sql_help.c:446 sql_help.c:458 sql_help.c:814
+#: sql_help.c:899 sql_help.c:1122 sql_help.c:1242 sql_help.c:1270
+#: sql_help.c:1515 sql_help.c:1521 sql_help.c:1803 sql_help.c:1835
+#: sql_help.c:1842 sql_help.c:1918 sql_help.c:2082 sql_help.c:2171
+#: sql_help.c:2351 sql_help.c:2530 sql_help.c:2552 sql_help.c:2990
+#: sql_help.c:3156
+msgid "option"
+msgstr "옵션"
+
+#: sql_help.c:111 sql_help.c:815 sql_help.c:1243 sql_help.c:1919
+#: sql_help.c:2083 sql_help.c:2531
+msgid "where option can be:"
+msgstr "옵션 사용법:"
+
+#: sql_help.c:112 sql_help.c:1735
+msgid "allowconn"
+msgstr ""
+
+#: sql_help.c:113 sql_help.c:816 sql_help.c:1244 sql_help.c:1736
+#: sql_help.c:2084 sql_help.c:2532
+msgid "connlimit"
+msgstr ""
+
+#: sql_help.c:114 sql_help.c:1737
+msgid "istemplate"
+msgstr "true|false"
+
+#: sql_help.c:120 sql_help.c:571 sql_help.c:637 sql_help.c:652 sql_help.c:1001
+#: sql_help.c:1038
+msgid "new_tablespace"
+msgstr "새테이블스페이스"
+
+#: sql_help.c:122 sql_help.c:125 sql_help.c:127 sql_help.c:517 sql_help.c:519
+#: sql_help.c:520 sql_help.c:823 sql_help.c:827 sql_help.c:830 sql_help.c:915
+#: sql_help.c:918 sql_help.c:1250 sql_help.c:1253 sql_help.c:1255
+#: sql_help.c:1887 sql_help.c:3341 sql_help.c:3732
+msgid "configuration_parameter"
+msgstr "환경설정_매개변수"
+
+#: sql_help.c:123 sql_help.c:369 sql_help.c:441 sql_help.c:447 sql_help.c:459
+#: sql_help.c:518 sql_help.c:566 sql_help.c:643 sql_help.c:649 sql_help.c:824
+#: sql_help.c:900 sql_help.c:916 sql_help.c:917 sql_help.c:1020
+#: sql_help.c:1040 sql_help.c:1066 sql_help.c:1123 sql_help.c:1251
+#: sql_help.c:1271 sql_help.c:1804 sql_help.c:1836 sql_help.c:1843
+#: sql_help.c:1888 sql_help.c:1889 sql_help.c:1947 sql_help.c:1979
+#: sql_help.c:2172 sql_help.c:2246 sql_help.c:2254 sql_help.c:2286
+#: sql_help.c:2308 sql_help.c:2325 sql_help.c:2352 sql_help.c:2553
+#: sql_help.c:3157 sql_help.c:3733 sql_help.c:3734
+msgid "value"
+msgstr "값"
+
+#: sql_help.c:185
+msgid "target_role"
+msgstr "대상롤"
+
+#: sql_help.c:186 sql_help.c:1787 sql_help.c:2130 sql_help.c:2135
+#: sql_help.c:3104 sql_help.c:3111 sql_help.c:3125 sql_help.c:3131
+#: sql_help.c:3436 sql_help.c:3443 sql_help.c:3457 sql_help.c:3463
+msgid "schema_name"
+msgstr "스키마이름"
+
+#: sql_help.c:187
+msgid "abbreviated_grant_or_revoke"
+msgstr ""
+
+#: sql_help.c:188
+msgid "where abbreviated_grant_or_revoke is one of:"
+msgstr ""
+
+#: sql_help.c:189 sql_help.c:190 sql_help.c:191 sql_help.c:192 sql_help.c:193
+#: sql_help.c:194 sql_help.c:195 sql_help.c:196 sql_help.c:542 sql_help.c:570
+#: sql_help.c:636 sql_help.c:777 sql_help.c:834 sql_help.c:1000
+#: sql_help.c:1258 sql_help.c:1922 sql_help.c:1923 sql_help.c:1924
+#: sql_help.c:1925 sql_help.c:1926 sql_help.c:2052 sql_help.c:2087
+#: sql_help.c:2088 sql_help.c:2089 sql_help.c:2090 sql_help.c:2091
+#: sql_help.c:2535 sql_help.c:2536 sql_help.c:2537 sql_help.c:2538
+#: sql_help.c:2539 sql_help.c:3138 sql_help.c:3139 sql_help.c:3140
+#: sql_help.c:3437 sql_help.c:3441 sql_help.c:3444 sql_help.c:3446
+#: sql_help.c:3448 sql_help.c:3450 sql_help.c:3452 sql_help.c:3458
+#: sql_help.c:3460 sql_help.c:3462 sql_help.c:3464 sql_help.c:3466
+#: sql_help.c:3468 sql_help.c:3469 sql_help.c:3470 sql_help.c:3753
+msgid "role_name"
+msgstr "롤이름"
+
+#: sql_help.c:222 sql_help.c:434 sql_help.c:1011 sql_help.c:1013
+#: sql_help.c:1287 sql_help.c:1756 sql_help.c:1760 sql_help.c:1846
+#: sql_help.c:1850 sql_help.c:1943 sql_help.c:2258 sql_help.c:2268
+#: sql_help.c:2290 sql_help.c:3187 sql_help.c:3202 sql_help.c:3204
+#: sql_help.c:3618 sql_help.c:3619 sql_help.c:3628 sql_help.c:3669
+#: sql_help.c:3670 sql_help.c:3671 sql_help.c:3672 sql_help.c:3673
+#: sql_help.c:3674 sql_help.c:3707 sql_help.c:3708 sql_help.c:3713
+#: sql_help.c:3718 sql_help.c:3857 sql_help.c:3858 sql_help.c:3867
+#: sql_help.c:3908 sql_help.c:3909 sql_help.c:3910 sql_help.c:3911
+#: sql_help.c:3912 sql_help.c:3913 sql_help.c:3960 sql_help.c:3962
+#: sql_help.c:3995 sql_help.c:4051 sql_help.c:4052 sql_help.c:4061
+#: sql_help.c:4102 sql_help.c:4103 sql_help.c:4104 sql_help.c:4105
+#: sql_help.c:4106 sql_help.c:4107
+msgid "expression"
+msgstr "표현식"
+
+#: sql_help.c:225
+msgid "domain_constraint"
+msgstr "도메인_제약조건"
+
+#: sql_help.c:227 sql_help.c:229 sql_help.c:232 sql_help.c:449 sql_help.c:450
+#: sql_help.c:993 sql_help.c:1026 sql_help.c:1027 sql_help.c:1028
+#: sql_help.c:1048 sql_help.c:1411 sql_help.c:1413 sql_help.c:1759
+#: sql_help.c:1845 sql_help.c:1849 sql_help.c:2257 sql_help.c:2267
+#: sql_help.c:3199
+msgid "constraint_name"
+msgstr "제약조건_이름"
+
+#: sql_help.c:230 sql_help.c:994
+msgid "new_constraint_name"
+msgstr "새제약조건_이름"
+
+#: sql_help.c:300 sql_help.c:898
+msgid "new_version"
+msgstr "새버전"
+
+#: sql_help.c:304 sql_help.c:306
+msgid "member_object"
+msgstr ""
+
+#: sql_help.c:307
+msgid "where member_object is:"
+msgstr ""
+
+#: sql_help.c:308 sql_help.c:1404 sql_help.c:3538
+msgid "aggregate_name"
+msgstr "집계함수이름"
+
+#: sql_help.c:310 sql_help.c:1406 sql_help.c:1674 sql_help.c:1678
+#: sql_help.c:1680 sql_help.c:2662
+msgid "source_type"
+msgstr "기존자료형"
+
+#: sql_help.c:311 sql_help.c:1407 sql_help.c:1675 sql_help.c:1679
+#: sql_help.c:1681 sql_help.c:2663
+msgid "target_type"
+msgstr "대상자료형"
+
+#: sql_help.c:312 sql_help.c:313 sql_help.c:314 sql_help.c:315 sql_help.c:316
+#: sql_help.c:317 sql_help.c:322 sql_help.c:326 sql_help.c:328 sql_help.c:330
+#: sql_help.c:331 sql_help.c:332 sql_help.c:333 sql_help.c:334 sql_help.c:335
+#: sql_help.c:336 sql_help.c:337 sql_help.c:338 sql_help.c:341 sql_help.c:342
+#: sql_help.c:1403 sql_help.c:1408 sql_help.c:1415 sql_help.c:1416
+#: sql_help.c:1417 sql_help.c:1418 sql_help.c:1419 sql_help.c:1420
+#: sql_help.c:1421 sql_help.c:1426 sql_help.c:1428 sql_help.c:1432
+#: sql_help.c:1434 sql_help.c:1438 sql_help.c:1439 sql_help.c:1442
+#: sql_help.c:1443 sql_help.c:1444 sql_help.c:1445 sql_help.c:1446
+#: sql_help.c:1447 sql_help.c:1448 sql_help.c:1449 sql_help.c:1450
+#: sql_help.c:1455 sql_help.c:1456 sql_help.c:3535 sql_help.c:3540
+#: sql_help.c:3541 sql_help.c:3542 sql_help.c:3543 sql_help.c:3549
+#: sql_help.c:3550 sql_help.c:3551 sql_help.c:3552 sql_help.c:3553
+#: sql_help.c:3554 sql_help.c:3555 sql_help.c:3556
+msgid "object_name"
+msgstr "객체이름"
+
+#: sql_help.c:318 sql_help.c:741 sql_help.c:1422 sql_help.c:1676
+#: sql_help.c:1711 sql_help.c:1774 sql_help.c:1996 sql_help.c:2027
+#: sql_help.c:2426 sql_help.c:3121 sql_help.c:3453 sql_help.c:3544
+#: sql_help.c:3647 sql_help.c:3651 sql_help.c:3655 sql_help.c:3658
+#: sql_help.c:3886 sql_help.c:3890 sql_help.c:3894 sql_help.c:3897
+#: sql_help.c:4080 sql_help.c:4084 sql_help.c:4088 sql_help.c:4091
+msgid "function_name"
+msgstr "함수이름"
+
+#: sql_help.c:323 sql_help.c:734 sql_help.c:1429 sql_help.c:2020
+msgid "operator_name"
+msgstr "연산자이름"
+
+#: sql_help.c:324 sql_help.c:670 sql_help.c:674 sql_help.c:678 sql_help.c:1430
+#: sql_help.c:1997 sql_help.c:2780
+msgid "left_type"
+msgstr "왼쪽인자_자료형"
+
+#: sql_help.c:325 sql_help.c:671 sql_help.c:675 sql_help.c:679 sql_help.c:1431
+#: sql_help.c:1998 sql_help.c:2781
+msgid "right_type"
+msgstr "오른쪽인자_자료형"
+
+#: sql_help.c:327 sql_help.c:329 sql_help.c:697 sql_help.c:700 sql_help.c:703
+#: sql_help.c:732 sql_help.c:744 sql_help.c:752 sql_help.c:755 sql_help.c:758
+#: sql_help.c:1433 sql_help.c:1435 sql_help.c:2017 sql_help.c:2038
+#: sql_help.c:2273 sql_help.c:2790 sql_help.c:2799
+msgid "index_method"
+msgstr "색인방법"
+
+#: sql_help.c:339 sql_help.c:1044 sql_help.c:1451 sql_help.c:1884
+#: sql_help.c:2249 sql_help.c:2395 sql_help.c:2913 sql_help.c:3135
+#: sql_help.c:3467
+msgid "type_name"
+msgstr "자료형이름"
+
+#: sql_help.c:340 sql_help.c:1452 sql_help.c:1883 sql_help.c:2396
+#: sql_help.c:2620 sql_help.c:2914 sql_help.c:3127 sql_help.c:3459
+msgid "lang_name"
+msgstr ""
+
+#: sql_help.c:343
+msgid "and aggregate_signature is:"
+msgstr ""
+
+#: sql_help.c:366 sql_help.c:1546 sql_help.c:1801
+msgid "handler_function"
+msgstr "핸들러_함수"
+
+#: sql_help.c:367 sql_help.c:1802
+msgid "validator_function"
+msgstr "유효성검사_함수"
+
+#: sql_help.c:416 sql_help.c:493 sql_help.c:625 sql_help.c:988 sql_help.c:1187
+#: sql_help.c:2264 sql_help.c:2265 sql_help.c:2281 sql_help.c:2282
+msgid "action"
+msgstr "동작"
+
+#: sql_help.c:418 sql_help.c:425 sql_help.c:429 sql_help.c:430 sql_help.c:433
+#: sql_help.c:435 sql_help.c:436 sql_help.c:437 sql_help.c:439 sql_help.c:442
+#: sql_help.c:444 sql_help.c:445 sql_help.c:629 sql_help.c:639 sql_help.c:641
+#: sql_help.c:644 sql_help.c:646 sql_help.c:880 sql_help.c:990 sql_help.c:1003
+#: sql_help.c:1007 sql_help.c:1008 sql_help.c:1012 sql_help.c:1014
+#: sql_help.c:1015 sql_help.c:1016 sql_help.c:1018 sql_help.c:1021
+#: sql_help.c:1023 sql_help.c:1286 sql_help.c:1289 sql_help.c:1309
+#: sql_help.c:1410 sql_help.c:1512 sql_help.c:1517 sql_help.c:1531
+#: sql_help.c:1532 sql_help.c:1533 sql_help.c:1833 sql_help.c:1881
+#: sql_help.c:1942 sql_help.c:1977 sql_help.c:2157 sql_help.c:2237
+#: sql_help.c:2250 sql_help.c:2269 sql_help.c:2271 sql_help.c:2278
+#: sql_help.c:2289 sql_help.c:2306 sql_help.c:2429 sql_help.c:2565
+#: sql_help.c:3106 sql_help.c:3107 sql_help.c:3186 sql_help.c:3201
+#: sql_help.c:3203 sql_help.c:3205 sql_help.c:3438 sql_help.c:3439
+#: sql_help.c:3537 sql_help.c:3678 sql_help.c:3917 sql_help.c:3959
+#: sql_help.c:3961 sql_help.c:3963 sql_help.c:3980 sql_help.c:3983
+#: sql_help.c:4111
+msgid "column_name"
+msgstr "칼럼이름"
+
+#: sql_help.c:419 sql_help.c:630 sql_help.c:991
+msgid "new_column_name"
+msgstr "새칼럼이름"
+
+#: sql_help.c:424 sql_help.c:514 sql_help.c:638 sql_help.c:1002
+#: sql_help.c:1200
+msgid "where action is one of:"
+msgstr "동작 사용법:"
+
+#: sql_help.c:426 sql_help.c:431 sql_help.c:1004 sql_help.c:1009
+#: sql_help.c:1202 sql_help.c:1206 sql_help.c:1754 sql_help.c:1834
+#: sql_help.c:2016 sql_help.c:2238 sql_help.c:2474 sql_help.c:3288
+msgid "data_type"
+msgstr "자료형"
+
+#: sql_help.c:427 sql_help.c:432 sql_help.c:1005 sql_help.c:1010
+#: sql_help.c:1203 sql_help.c:1207 sql_help.c:1755 sql_help.c:1837
+#: sql_help.c:1944 sql_help.c:2239 sql_help.c:2475 sql_help.c:2481
+#: sql_help.c:3196
+msgid "collation"
+msgstr "collation"
+
+#: sql_help.c:428 sql_help.c:1006 sql_help.c:1838 sql_help.c:2240
+#: sql_help.c:2251
+msgid "column_constraint"
+msgstr "칼럼_제약조건"
+
+#: sql_help.c:438 sql_help.c:640 sql_help.c:1017
+msgid "integer"
+msgstr "정수"
+
+#: sql_help.c:440 sql_help.c:443 sql_help.c:642 sql_help.c:645 sql_help.c:1019
+#: sql_help.c:1022
+msgid "attribute_option"
+msgstr "속성_옵션"
+
+#: sql_help.c:448 sql_help.c:1024 sql_help.c:1839 sql_help.c:2241
+#: sql_help.c:2252
+msgid "table_constraint"
+msgstr "테이블_제약조건"
+
+#: sql_help.c:451 sql_help.c:452 sql_help.c:453 sql_help.c:454 sql_help.c:1029
+#: sql_help.c:1030 sql_help.c:1031 sql_help.c:1032 sql_help.c:1453
+msgid "trigger_name"
+msgstr "트리거이름"
+
+#: sql_help.c:455 sql_help.c:456 sql_help.c:1042 sql_help.c:1043
+#: sql_help.c:1840 sql_help.c:2244
+msgid "parent_table"
+msgstr "상위_테이블"
+
+#: sql_help.c:513 sql_help.c:563 sql_help.c:627 sql_help.c:1167
+#: sql_help.c:1786
+msgid "extension_name"
+msgstr "확장모듈이름"
+
+#: sql_help.c:515 sql_help.c:1885
+msgid "execution_cost"
+msgstr "실행비용"
+
+#: sql_help.c:516 sql_help.c:1886
+msgid "result_rows"
+msgstr ""
+
+#: sql_help.c:537 sql_help.c:539 sql_help.c:813 sql_help.c:821 sql_help.c:825
+#: sql_help.c:828 sql_help.c:831 sql_help.c:1241 sql_help.c:1249
+#: sql_help.c:1252 sql_help.c:1254 sql_help.c:1256 sql_help.c:2131
+#: sql_help.c:2133 sql_help.c:2136 sql_help.c:2137 sql_help.c:3105
+#: sql_help.c:3109 sql_help.c:3112 sql_help.c:3114 sql_help.c:3116
+#: sql_help.c:3118 sql_help.c:3120 sql_help.c:3126 sql_help.c:3128
+#: sql_help.c:3130 sql_help.c:3132 sql_help.c:3134 sql_help.c:3136
+msgid "role_specification"
+msgstr "롤_명세"
+
+#: sql_help.c:538 sql_help.c:540 sql_help.c:1268 sql_help.c:1729
+#: sql_help.c:2139 sql_help.c:2550 sql_help.c:2947 sql_help.c:3763
+msgid "user_name"
+msgstr "사용자이름"
+
+#: sql_help.c:541 sql_help.c:833 sql_help.c:1257 sql_help.c:2138
+#: sql_help.c:3137
+msgid "where role_specification can be:"
+msgstr "롤_명세 사용법:"
+
+#: sql_help.c:543
+msgid "group_name"
+msgstr "그룹이름"
+
+#: sql_help.c:561 sql_help.c:1734 sql_help.c:1948 sql_help.c:1980
+#: sql_help.c:2247 sql_help.c:2255 sql_help.c:2287 sql_help.c:2309
+#: sql_help.c:2321 sql_help.c:3133 sql_help.c:3465
+msgid "tablespace_name"
+msgstr "테이블스페이스이름"
+
+#: sql_help.c:565 sql_help.c:568 sql_help.c:648 sql_help.c:650 sql_help.c:1039
+#: sql_help.c:1041 sql_help.c:1946 sql_help.c:1978 sql_help.c:2245
+#: sql_help.c:2253 sql_help.c:2285 sql_help.c:2307
+msgid "storage_parameter"
+msgstr ""
+
+#: sql_help.c:591 sql_help.c:1427 sql_help.c:3548
+msgid "large_object_oid"
+msgstr "대형_객체_oid"
+
+#: sql_help.c:647 sql_help.c:1037 sql_help.c:1046 sql_help.c:1049
+#: sql_help.c:1349
+msgid "index_name"
+msgstr "인덱스이름"
+
+#: sql_help.c:680 sql_help.c:2001
+msgid "res_proc"
+msgstr ""
+
+#: sql_help.c:681 sql_help.c:2002
+msgid "join_proc"
+msgstr ""
+
+#: sql_help.c:733 sql_help.c:745 sql_help.c:2019
+msgid "strategy_number"
+msgstr ""
+
+#: sql_help.c:735 sql_help.c:736 sql_help.c:739 sql_help.c:740 sql_help.c:746
+#: sql_help.c:747 sql_help.c:749 sql_help.c:750 sql_help.c:2021
+#: sql_help.c:2022 sql_help.c:2025 sql_help.c:2026
+msgid "op_type"
+msgstr "연산자자료형"
+
+#: sql_help.c:737 sql_help.c:2023
+msgid "sort_family_name"
+msgstr ""
+
+#: sql_help.c:738 sql_help.c:748 sql_help.c:2024
+msgid "support_number"
+msgstr ""
+
+#: sql_help.c:742 sql_help.c:1677 sql_help.c:2028 sql_help.c:2398
+#: sql_help.c:2400
+msgid "argument_type"
+msgstr "인자자료형"
+
+#: sql_help.c:773 sql_help.c:776 sql_help.c:843 sql_help.c:879 sql_help.c:1163
+#: sql_help.c:1166 sql_help.c:1308 sql_help.c:1348 sql_help.c:1412
+#: sql_help.c:1437 sql_help.c:1441 sql_help.c:1454 sql_help.c:1511
+#: sql_help.c:1516 sql_help.c:1832 sql_help.c:1940 sql_help.c:1976
+#: sql_help.c:2051 sql_help.c:2108 sql_help.c:2156 sql_help.c:2236
+#: sql_help.c:2248 sql_help.c:2305 sql_help.c:2423 sql_help.c:2599
+#: sql_help.c:2816 sql_help.c:2833 sql_help.c:2923 sql_help.c:3103
+#: sql_help.c:3108 sql_help.c:3153 sql_help.c:3184 sql_help.c:3435
+#: sql_help.c:3440 sql_help.c:3536 sql_help.c:3633 sql_help.c:3635
+#: sql_help.c:3684 sql_help.c:3723 sql_help.c:3872 sql_help.c:3874
+#: sql_help.c:3923 sql_help.c:3957 sql_help.c:3979 sql_help.c:3981
+#: sql_help.c:3982 sql_help.c:4066 sql_help.c:4068 sql_help.c:4117
+msgid "table_name"
+msgstr "테이블이름"
+
+#: sql_help.c:778 sql_help.c:2053
+msgid "using_expression"
+msgstr ""
+
+#: sql_help.c:779 sql_help.c:2054
+msgid "check_expression"
+msgstr ""
+
+#: sql_help.c:817 sql_help.c:1245 sql_help.c:1920 sql_help.c:2085
+#: sql_help.c:2533
+msgid "password"
+msgstr "암호"
+
+#: sql_help.c:818 sql_help.c:1246 sql_help.c:1921 sql_help.c:2086
+#: sql_help.c:2534
+msgid "timestamp"
+msgstr ""
+
+#: sql_help.c:822 sql_help.c:826 sql_help.c:829 sql_help.c:832 sql_help.c:3113
+#: sql_help.c:3445
+msgid "database_name"
+msgstr "데이터베이스이름"
+
+#: sql_help.c:873 sql_help.c:2151
+msgid "increment"
+msgstr ""
+
+#: sql_help.c:874 sql_help.c:2152
+msgid "minvalue"
+msgstr "최소값"
+
+#: sql_help.c:875 sql_help.c:2153
+msgid "maxvalue"
+msgstr "최대값"
+
+#: sql_help.c:876 sql_help.c:2154 sql_help.c:3631 sql_help.c:3721
+#: sql_help.c:3870 sql_help.c:3999 sql_help.c:4064
+msgid "start"
+msgstr "시작"
+
+#: sql_help.c:877
+msgid "restart"
+msgstr "재시작"
+
+#: sql_help.c:878 sql_help.c:2155
+msgid "cache"
+msgstr "캐쉬"
+
+#: sql_help.c:1025
+msgid "table_constraint_using_index"
+msgstr ""
+
+#: sql_help.c:1033 sql_help.c:1034 sql_help.c:1035 sql_help.c:1036
+msgid "rewrite_rule_name"
+msgstr ""
+
+#: sql_help.c:1047
+msgid "and table_constraint_using_index is:"
+msgstr ""
+
+#: sql_help.c:1065 sql_help.c:1068 sql_help.c:2324
+msgid "tablespace_option"
+msgstr "테이블스페이스_옵션"
+
+#: sql_help.c:1089 sql_help.c:1092 sql_help.c:1098 sql_help.c:1102
+msgid "token_type"
+msgstr "토큰_종류"
+
+#: sql_help.c:1090 sql_help.c:1093
+msgid "dictionary_name"
+msgstr "사전이름"
+
+#: sql_help.c:1095 sql_help.c:1099
+msgid "old_dictionary"
+msgstr "옛사전"
+
+#: sql_help.c:1096 sql_help.c:1100
+msgid "new_dictionary"
+msgstr "새사전"
+
+#: sql_help.c:1191 sql_help.c:1201 sql_help.c:1204 sql_help.c:1205
+#: sql_help.c:2473
+msgid "attribute_name"
+msgstr "속성이름"
+
+#: sql_help.c:1192
+msgid "new_attribute_name"
+msgstr "새속성이름"
+
+#: sql_help.c:1198
+msgid "new_enum_value"
+msgstr ""
+
+#: sql_help.c:1199
+msgid "existing_enum_value"
+msgstr ""
+
+#: sql_help.c:1269 sql_help.c:1841 sql_help.c:2167 sql_help.c:2551
+#: sql_help.c:2948 sql_help.c:3119 sql_help.c:3154 sql_help.c:3451
+msgid "server_name"
+msgstr "서버이름"
+
+#: sql_help.c:1297 sql_help.c:1300 sql_help.c:2566
+msgid "view_option_name"
+msgstr "뷰_옵션이름"
+
+#: sql_help.c:1298 sql_help.c:2567
+msgid "view_option_value"
+msgstr ""
+
+#: sql_help.c:1323 sql_help.c:3779 sql_help.c:3781 sql_help.c:3805
+msgid "transaction_mode"
+msgstr "트랜잭션모드"
+
+#: sql_help.c:1324 sql_help.c:3782 sql_help.c:3806
+msgid "where transaction_mode is one of:"
+msgstr "트랜잭션모드 사용법:"
+
+#: sql_help.c:1409
+msgid "relation_name"
+msgstr "릴레이션이름"
+
+#: sql_help.c:1414 sql_help.c:3115 sql_help.c:3447
+msgid "domain_name"
+msgstr "도메인이름"
+
+#: sql_help.c:1436
+msgid "policy_name"
+msgstr "정책이름"
+
+#: sql_help.c:1440
+msgid "rule_name"
+msgstr "룰이름"
+
+#: sql_help.c:1457
+msgid "text"
+msgstr ""
+
+#: sql_help.c:1482 sql_help.c:3297 sql_help.c:3485
+msgid "transaction_id"
+msgstr ""
+
+#: sql_help.c:1513 sql_help.c:1519 sql_help.c:3223
+msgid "filename"
+msgstr "파일이름"
+
+#: sql_help.c:1514 sql_help.c:1520 sql_help.c:2110 sql_help.c:2111
+#: sql_help.c:2112
+msgid "command"
+msgstr "명령어"
+
+#: sql_help.c:1518 sql_help.c:1981 sql_help.c:2310 sql_help.c:2568
+#: sql_help.c:2586 sql_help.c:3188
+msgid "query"
+msgstr "쿼리문"
+
+#: sql_help.c:1522 sql_help.c:2993
+msgid "where option can be one of:"
+msgstr "옵션 사용법:"
+
+#: sql_help.c:1523
+msgid "format_name"
+msgstr "입출력양식이름"
+
+#: sql_help.c:1524 sql_help.c:1525 sql_help.c:1528 sql_help.c:2994
+#: sql_help.c:2995 sql_help.c:2996 sql_help.c:2997 sql_help.c:2998
+msgid "boolean"
+msgstr ""
+
+#: sql_help.c:1526
+msgid "delimiter_character"
+msgstr "구분문자"
+
+#: sql_help.c:1527
+msgid "null_string"
+msgstr "널문자열"
+
+#: sql_help.c:1529
+msgid "quote_character"
+msgstr "인용부호"
+
+#: sql_help.c:1530
+msgid "escape_character"
+msgstr "이스케이프 문자"
+
+#: sql_help.c:1534
+msgid "encoding_name"
+msgstr "인코딩이름"
+
+#: sql_help.c:1545
+msgid "access_method_type"
+msgstr ""
+
+#: sql_help.c:1611 sql_help.c:1630 sql_help.c:1633
+msgid "arg_data_type"
+msgstr "인자자료형"
+
+#: sql_help.c:1612 sql_help.c:1634 sql_help.c:1642
+msgid "sfunc"
+msgstr ""
+
+#: sql_help.c:1613 sql_help.c:1635 sql_help.c:1643
+msgid "state_data_type"
+msgstr ""
+
+#: sql_help.c:1614 sql_help.c:1636 sql_help.c:1644
+msgid "state_data_size"
+msgstr ""
+
+#: sql_help.c:1615 sql_help.c:1637 sql_help.c:1645
+msgid "ffunc"
+msgstr ""
+
+#: sql_help.c:1616 sql_help.c:1646
+msgid "combinefunc"
+msgstr ""
+
+#: sql_help.c:1617 sql_help.c:1647
+msgid "serialfunc"
+msgstr ""
+
+#: sql_help.c:1618 sql_help.c:1648
+msgid "deserialfunc"
+msgstr ""
+
+#: sql_help.c:1619 sql_help.c:1638 sql_help.c:1649
+msgid "initial_condition"
+msgstr ""
+
+#: sql_help.c:1620 sql_help.c:1650
+msgid "msfunc"
+msgstr ""
+
+#: sql_help.c:1621 sql_help.c:1651
+msgid "minvfunc"
+msgstr ""
+
+#: sql_help.c:1622 sql_help.c:1652
+msgid "mstate_data_type"
+msgstr ""
+
+#: sql_help.c:1623 sql_help.c:1653
+msgid "mstate_data_size"
+msgstr ""
+
+#: sql_help.c:1624 sql_help.c:1654
+msgid "mffunc"
+msgstr ""
+
+#: sql_help.c:1625 sql_help.c:1655
+msgid "minitial_condition"
+msgstr ""
+
+#: sql_help.c:1626 sql_help.c:1656
+msgid "sort_operator"
+msgstr "정렬연산자"
+
+#: sql_help.c:1639
+msgid "or the old syntax"
+msgstr ""
+
+#: sql_help.c:1641
+msgid "base_type"
+msgstr "기본자료형"
+
+#: sql_help.c:1695
+msgid "locale"
+msgstr "로케일"
+
+#: sql_help.c:1696 sql_help.c:1732
+msgid "lc_collate"
+msgstr ""
+
+#: sql_help.c:1697 sql_help.c:1733
+msgid "lc_ctype"
+msgstr "lc_ctype"
+
+#: sql_help.c:1699
+msgid "existing_collation"
+msgstr ""
+
+#: sql_help.c:1709
+msgid "source_encoding"
+msgstr "원래인코딩"
+
+#: sql_help.c:1710
+msgid "dest_encoding"
+msgstr "대상인코딩"
+
+#: sql_help.c:1730 sql_help.c:2350
+msgid "template"
+msgstr "템플릿"
+
+#: sql_help.c:1731
+msgid "encoding"
+msgstr "인코딩"
+
+#: sql_help.c:1757
+msgid "constraint"
+msgstr "제약조건"
+
+#: sql_help.c:1758
+msgid "where constraint is:"
+msgstr "제약조건 사용법:"
+
+#: sql_help.c:1772 sql_help.c:2107 sql_help.c:2422
+msgid "event"
+msgstr "이벤트"
+
+#: sql_help.c:1773
+msgid "filter_variable"
+msgstr ""
+
+#: sql_help.c:1788
+msgid "version"
+msgstr "버전"
+
+#: sql_help.c:1789
+msgid "old_version"
+msgstr "옛버전"
+
+#: sql_help.c:1844 sql_help.c:2256
+msgid "where column_constraint is:"
+msgstr "칼럼_제약조건 사용법:"
+
+#: sql_help.c:1847 sql_help.c:1879 sql_help.c:2259
+msgid "default_expr"
+msgstr "초기값_표현식"
+
+#: sql_help.c:1848 sql_help.c:2266
+msgid "and table_constraint is:"
+msgstr "테이블_제약조건 사용법:"
+
+#: sql_help.c:1880
+msgid "rettype"
+msgstr ""
+
+#: sql_help.c:1882
+msgid "column_type"
+msgstr ""
+
+#: sql_help.c:1890
+msgid "definition"
+msgstr "함수정의"
+
+#: sql_help.c:1891
+msgid "obj_file"
+msgstr "오브젝트파일"
+
+#: sql_help.c:1892
+msgid "link_symbol"
+msgstr "연결할_함수명"
+
+#: sql_help.c:1893
+msgid "attribute"
+msgstr "속성"
+
+#: sql_help.c:1927 sql_help.c:2092 sql_help.c:2540
+msgid "uid"
+msgstr ""
+
+#: sql_help.c:1941
+msgid "method"
+msgstr "색인방법"
+
+#: sql_help.c:1945 sql_help.c:2291 sql_help.c:3197
+msgid "opclass"
+msgstr ""
+
+#: sql_help.c:1949 sql_help.c:2277
+msgid "predicate"
+msgstr "범위한정구문"
+
+#: sql_help.c:1961
+msgid "call_handler"
+msgstr ""
+
+#: sql_help.c:1962
+msgid "inline_handler"
+msgstr ""
+
+#: sql_help.c:1963
+msgid "valfunction"
+msgstr "구문검사함수"
+
+#: sql_help.c:1999
+msgid "com_op"
+msgstr ""
+
+#: sql_help.c:2000
+msgid "neg_op"
+msgstr ""
+
+#: sql_help.c:2018
+msgid "family_name"
+msgstr ""
+
+#: sql_help.c:2029
+msgid "storage_type"
+msgstr "스토리지_유형"
+
+#: sql_help.c:2109 sql_help.c:2425 sql_help.c:2602 sql_help.c:3207
+#: sql_help.c:3622 sql_help.c:3624 sql_help.c:3712 sql_help.c:3714
+#: sql_help.c:3861 sql_help.c:3863 sql_help.c:3966 sql_help.c:4055
+#: sql_help.c:4057
+msgid "condition"
+msgstr "조건"
+
+#: sql_help.c:2113 sql_help.c:2428
+msgid "where event can be one of:"
+msgstr "이벤트 사용법:"
+
+#: sql_help.c:2132 sql_help.c:2134
+msgid "schema_element"
+msgstr ""
+
+#: sql_help.c:2168
+msgid "server_type"
+msgstr "서버_종류"
+
+#: sql_help.c:2169
+msgid "server_version"
+msgstr "서버_버전"
+
+#: sql_help.c:2170 sql_help.c:3117 sql_help.c:3449
+msgid "fdw_name"
+msgstr ""
+
+#: sql_help.c:2242
+msgid "source_table"
+msgstr "원본테이블"
+
+#: sql_help.c:2243
+msgid "like_option"
+msgstr "LIKE구문옵션"
+
+#: sql_help.c:2260 sql_help.c:2261 sql_help.c:2270 sql_help.c:2272
+#: sql_help.c:2276
+msgid "index_parameters"
+msgstr "색인매개변수"
+
+#: sql_help.c:2262 sql_help.c:2279
+msgid "reftable"
+msgstr "참조테이블"
+
+#: sql_help.c:2263 sql_help.c:2280
+msgid "refcolumn"
+msgstr "참조칼럼"
+
+#: sql_help.c:2274
+msgid "exclude_element"
+msgstr ""
+
+#: sql_help.c:2275 sql_help.c:3629 sql_help.c:3719 sql_help.c:3868
+#: sql_help.c:3997 sql_help.c:4062
+msgid "operator"
+msgstr "연산자"
+
+#: sql_help.c:2283
+msgid "and like_option is:"
+msgstr ""
+
+#: sql_help.c:2284
+msgid "index_parameters in UNIQUE, PRIMARY KEY, and EXCLUDE constraints are:"
+msgstr ""
+
+#: sql_help.c:2288
+msgid "exclude_element in an EXCLUDE constraint is:"
+msgstr ""
+
+#: sql_help.c:2323
+msgid "directory"
+msgstr "디렉터리"
+
+#: sql_help.c:2337
+msgid "parser_name"
+msgstr "구문분석기_이름"
+
+#: sql_help.c:2338
+msgid "source_config"
+msgstr "원본_설정"
+
+#: sql_help.c:2367
+msgid "start_function"
+msgstr "시작_함수"
+
+#: sql_help.c:2368
+msgid "gettoken_function"
+msgstr "gettoken함수"
+
+#: sql_help.c:2369
+msgid "end_function"
+msgstr "종료_함수"
+
+#: sql_help.c:2370
+msgid "lextypes_function"
+msgstr "lextypes함수"
+
+#: sql_help.c:2371
+msgid "headline_function"
+msgstr "headline함수"
+
+#: sql_help.c:2383
+msgid "init_function"
+msgstr "init함수"
+
+#: sql_help.c:2384
+msgid "lexize_function"
+msgstr "lexize함수"
+
+#: sql_help.c:2397
+msgid "from_sql_function_name"
+msgstr ""
+
+#: sql_help.c:2399
+msgid "to_sql_function_name"
+msgstr ""
+
+#: sql_help.c:2424
+msgid "referenced_table_name"
+msgstr ""
+
+#: sql_help.c:2427
+msgid "arguments"
+msgstr "인자들"
+
+#: sql_help.c:2477 sql_help.c:3557
+msgid "label"
+msgstr ""
+
+#: sql_help.c:2479
+msgid "subtype"
+msgstr ""
+
+#: sql_help.c:2480
+msgid "subtype_operator_class"
+msgstr ""
+
+#: sql_help.c:2482
+msgid "canonical_function"
+msgstr ""
+
+#: sql_help.c:2483
+msgid "subtype_diff_function"
+msgstr ""
+
+#: sql_help.c:2485
+msgid "input_function"
+msgstr "입력함수"
+
+#: sql_help.c:2486
+msgid "output_function"
+msgstr "출력함수"
+
+#: sql_help.c:2487
+msgid "receive_function"
+msgstr "받는함수"
+
+#: sql_help.c:2488
+msgid "send_function"
+msgstr "주는함수"
+
+#: sql_help.c:2489
+msgid "type_modifier_input_function"
+msgstr ""
+
+#: sql_help.c:2490
+msgid "type_modifier_output_function"
+msgstr ""
+
+#: sql_help.c:2491
+msgid "analyze_function"
+msgstr "분석함수"
+
+#: sql_help.c:2492
+msgid "internallength"
+msgstr ""
+
+#: sql_help.c:2493
+msgid "alignment"
+msgstr "정렬"
+
+#: sql_help.c:2494
+msgid "storage"
+msgstr "스토리지"
+
+#: sql_help.c:2495
+msgid "like_type"
+msgstr ""
+
+#: sql_help.c:2496
+msgid "category"
+msgstr ""
+
+#: sql_help.c:2497
+msgid "preferred"
+msgstr ""
+
+#: sql_help.c:2498
+msgid "default"
+msgstr "기본값"
+
+#: sql_help.c:2499
+msgid "element"
+msgstr "요소"
+
+#: sql_help.c:2500
+msgid "delimiter"
+msgstr "구분자"
+
+#: sql_help.c:2501
+msgid "collatable"
+msgstr ""
+
+#: sql_help.c:2598 sql_help.c:3183 sql_help.c:3617 sql_help.c:3706
+#: sql_help.c:3856 sql_help.c:3956 sql_help.c:4050
+msgid "with_query"
+msgstr ""
+
+#: sql_help.c:2600 sql_help.c:3185 sql_help.c:3636 sql_help.c:3642
+#: sql_help.c:3645 sql_help.c:3649 sql_help.c:3653 sql_help.c:3661
+#: sql_help.c:3875 sql_help.c:3881 sql_help.c:3884 sql_help.c:3888
+#: sql_help.c:3892 sql_help.c:3900 sql_help.c:3958 sql_help.c:4069
+#: sql_help.c:4075 sql_help.c:4078 sql_help.c:4082 sql_help.c:4086
+#: sql_help.c:4094
+msgid "alias"
+msgstr ""
+
+#: sql_help.c:2601
+msgid "using_list"
+msgstr ""
+
+#: sql_help.c:2603 sql_help.c:3024 sql_help.c:3264 sql_help.c:3967
+msgid "cursor_name"
+msgstr "커서이름"
+
+#: sql_help.c:2604 sql_help.c:3191 sql_help.c:3968
+msgid "output_expression"
+msgstr "출력표현식"
+
+#: sql_help.c:2605 sql_help.c:3192 sql_help.c:3620 sql_help.c:3709
+#: sql_help.c:3859 sql_help.c:3969 sql_help.c:4053
+msgid "output_name"
+msgstr ""
+
+#: sql_help.c:2621
+msgid "code"
+msgstr ""
+
+#: sql_help.c:2972
+msgid "parameter"
+msgstr "매개변수"
+
+#: sql_help.c:2991 sql_help.c:2992 sql_help.c:3289
+msgid "statement"
+msgstr "명령구문"
+
+#: sql_help.c:3023 sql_help.c:3263
+msgid "direction"
+msgstr "방향"
+
+#: sql_help.c:3025 sql_help.c:3265
+msgid "where direction can be empty or one of:"
+msgstr "방향 자리는 비워두거나 다음 중 하나:"
+
+#: sql_help.c:3026 sql_help.c:3027 sql_help.c:3028 sql_help.c:3029
+#: sql_help.c:3030 sql_help.c:3266 sql_help.c:3267 sql_help.c:3268
+#: sql_help.c:3269 sql_help.c:3270 sql_help.c:3630 sql_help.c:3632
+#: sql_help.c:3720 sql_help.c:3722 sql_help.c:3869 sql_help.c:3871
+#: sql_help.c:3998 sql_help.c:4000 sql_help.c:4063 sql_help.c:4065
+msgid "count"
+msgstr "출력개수"
+
+#: sql_help.c:3110 sql_help.c:3442
+msgid "sequence_name"
+msgstr "시퀀스이름"
+
+#: sql_help.c:3123 sql_help.c:3455
+msgid "arg_name"
+msgstr "인자이름"
+
+#: sql_help.c:3124 sql_help.c:3456
+msgid "arg_type"
+msgstr "인자자료형"
+
+#: sql_help.c:3129 sql_help.c:3461
+msgid "loid"
+msgstr ""
+
+#: sql_help.c:3152
+msgid "remote_schema"
+msgstr "원격_스키마"
+
+#: sql_help.c:3155
+msgid "local_schema"
+msgstr "로컬_스키마"
+
+#: sql_help.c:3189
+msgid "conflict_target"
+msgstr ""
+
+#: sql_help.c:3190
+msgid "conflict_action"
+msgstr ""
+
+#: sql_help.c:3193
+msgid "where conflict_target can be one of:"
+msgstr "conflict_target 사용법:"
+
+#: sql_help.c:3194
+msgid "index_column_name"
+msgstr "인덱스칼럼이름"
+
+#: sql_help.c:3195
+msgid "index_expression"
+msgstr "인덱스표현식"
+
+#: sql_help.c:3198
+msgid "index_predicate"
+msgstr ""
+
+#: sql_help.c:3200
+msgid "and conflict_action is one of:"
+msgstr "conflict_action 사용법:"
+
+#: sql_help.c:3206 sql_help.c:3964
+msgid "sub-SELECT"
+msgstr ""
+
+#: sql_help.c:3215 sql_help.c:3278 sql_help.c:3940
+msgid "channel"
+msgstr ""
+
+#: sql_help.c:3237
+msgid "lockmode"
+msgstr ""
+
+#: sql_help.c:3238
+msgid "where lockmode is one of:"
+msgstr "lockmode 사용법:"
+
+#: sql_help.c:3279
+msgid "payload"
+msgstr ""
+
+#: sql_help.c:3306
+msgid "old_role"
+msgstr "기존롤"
+
+#: sql_help.c:3307
+msgid "new_role"
+msgstr "새롤"
+
+#: sql_help.c:3332 sql_help.c:3493 sql_help.c:3501
+msgid "savepoint_name"
+msgstr "savepoint_name"
+
+#: sql_help.c:3534
+msgid "provider"
+msgstr ""
+
+#: sql_help.c:3621 sql_help.c:3663 sql_help.c:3665 sql_help.c:3711
+#: sql_help.c:3860 sql_help.c:3902 sql_help.c:3904 sql_help.c:4054
+#: sql_help.c:4096 sql_help.c:4098
+msgid "from_item"
+msgstr ""
+
+#: sql_help.c:3623 sql_help.c:3675 sql_help.c:3862 sql_help.c:3914
+#: sql_help.c:4056 sql_help.c:4108
+msgid "grouping_element"
+msgstr ""
+
+#: sql_help.c:3625 sql_help.c:3715 sql_help.c:3864 sql_help.c:4058
+msgid "window_name"
+msgstr "윈도우이름"
+
+#: sql_help.c:3626 sql_help.c:3716 sql_help.c:3865 sql_help.c:4059
+msgid "window_definition"
+msgstr "원도우정의"
+
+#: sql_help.c:3627 sql_help.c:3641 sql_help.c:3679 sql_help.c:3717
+#: sql_help.c:3866 sql_help.c:3880 sql_help.c:3918 sql_help.c:4060
+#: sql_help.c:4074 sql_help.c:4112
+msgid "select"
+msgstr ""
+
+#: sql_help.c:3634 sql_help.c:3873 sql_help.c:4067
+msgid "where from_item can be one of:"
+msgstr ""
+
+#: sql_help.c:3637 sql_help.c:3643 sql_help.c:3646 sql_help.c:3650
+#: sql_help.c:3662 sql_help.c:3876 sql_help.c:3882 sql_help.c:3885
+#: sql_help.c:3889 sql_help.c:3901 sql_help.c:4070 sql_help.c:4076
+#: sql_help.c:4079 sql_help.c:4083 sql_help.c:4095
+msgid "column_alias"
+msgstr "칼럼별칭"
+
+#: sql_help.c:3638 sql_help.c:3877 sql_help.c:4071
+msgid "sampling_method"
+msgstr "표본추출방법"
+
+#: sql_help.c:3639 sql_help.c:3648 sql_help.c:3652 sql_help.c:3656
+#: sql_help.c:3659 sql_help.c:3878 sql_help.c:3887 sql_help.c:3891
+#: sql_help.c:3895 sql_help.c:3898 sql_help.c:4072 sql_help.c:4081
+#: sql_help.c:4085 sql_help.c:4089 sql_help.c:4092
+msgid "argument"
+msgstr "인자"
+
+#: sql_help.c:3640 sql_help.c:3879 sql_help.c:4073
+msgid "seed"
+msgstr ""
+
+#: sql_help.c:3644 sql_help.c:3677 sql_help.c:3883 sql_help.c:3916
+#: sql_help.c:4077 sql_help.c:4110
+msgid "with_query_name"
+msgstr ""
+
+#: sql_help.c:3654 sql_help.c:3657 sql_help.c:3660 sql_help.c:3893
+#: sql_help.c:3896 sql_help.c:3899 sql_help.c:4087 sql_help.c:4090
+#: sql_help.c:4093
+msgid "column_definition"
+msgstr "칼럼정의"
+
+#: sql_help.c:3664 sql_help.c:3903 sql_help.c:4097
+msgid "join_type"
+msgstr ""
+
+#: sql_help.c:3666 sql_help.c:3905 sql_help.c:4099
+msgid "join_condition"
+msgstr ""
+
+#: sql_help.c:3667 sql_help.c:3906 sql_help.c:4100
+msgid "join_column"
+msgstr ""
+
+#: sql_help.c:3668 sql_help.c:3907 sql_help.c:4101
+msgid "and grouping_element can be one of:"
+msgstr ""
+
+#: sql_help.c:3676 sql_help.c:3915 sql_help.c:4109
+msgid "and with_query is:"
+msgstr ""
+
+#: sql_help.c:3680 sql_help.c:3919 sql_help.c:4113
+msgid "values"
+msgstr "값"
+
+#: sql_help.c:3681 sql_help.c:3920 sql_help.c:4114
+msgid "insert"
+msgstr ""
+
+#: sql_help.c:3682 sql_help.c:3921 sql_help.c:4115
+msgid "update"
+msgstr ""
+
+#: sql_help.c:3683 sql_help.c:3922 sql_help.c:4116
+msgid "delete"
+msgstr ""
+
+#: sql_help.c:3710
+msgid "new_table"
+msgstr "새테이블"
+
+#: sql_help.c:3735
+msgid "timezone"
+msgstr ""
+
+#: sql_help.c:3780
+msgid "snapshot_id"
+msgstr ""
+
+#: sql_help.c:3965
+msgid "from_list"
+msgstr ""
+
+#: sql_help.c:3996
+msgid "sort_expression"
+msgstr ""
+
+#: sql_help.c:4123 sql_help.c:4863
+msgid "abort the current transaction"
+msgstr "현재 트랜잭션 중지함"
+
+#: sql_help.c:4128
+msgid "change the definition of an aggregate function"
+msgstr "집계함수 정보 바꾸기"
+
+#: sql_help.c:4133
+msgid "change the definition of a collation"
+msgstr "collation 정의 바꾸기"
+
+#: sql_help.c:4138
+msgid "change the definition of a conversion"
+msgstr "문자코드 변환규칙(conversion) 정보 바꾸기"
+
+#: sql_help.c:4143
+msgid "change a database"
+msgstr "데이터베이스 변경"
+
+#: sql_help.c:4148
+msgid "define default access privileges"
+msgstr "기본 접근 권한 정의"
+
+#: sql_help.c:4153
+msgid "change the definition of a domain"
+msgstr "도메인 정보 바꾸기"
+
+#: sql_help.c:4158
+msgid "change the definition of an event trigger"
+msgstr "트리거 정보 바꾸기"
+
+#: sql_help.c:4163
+msgid "change the definition of an extension"
+msgstr "확장모듈 정의 바꾸기"
+
+#: sql_help.c:4168
+msgid "change the definition of a foreign-data wrapper"
+msgstr "외부 데이터 래퍼 정의 바꾸기"
+
+#: sql_help.c:4173
+msgid "change the definition of a foreign table"
+msgstr "외부 테이블 정의 바꾸기"
+
+#: sql_help.c:4178
+msgid "change the definition of a function"
+msgstr "함수 정보 바꾸기"
+
+#: sql_help.c:4183
+msgid "change role name or membership"
+msgstr "롤 이름이나 맴버쉽 바꾸기"
+
+#: sql_help.c:4188
+msgid "change the definition of an index"
+msgstr "인덱스 정의 바꾸기"
+
+#: sql_help.c:4193
+msgid "change the definition of a procedural language"
+msgstr "procedural language 정보 바꾸기"
+
+#: sql_help.c:4198
+msgid "change the definition of a large object"
+msgstr "대형 객체 정의 바꾸기"
+
+#: sql_help.c:4203
+msgid "change the definition of a materialized view"
+msgstr "materialized 뷰 정의 바꾸기"
+
+#: sql_help.c:4208
+msgid "change the definition of an operator"
+msgstr "연산자 정의 바꾸기"
+
+#: sql_help.c:4213
+msgid "change the definition of an operator class"
+msgstr "연산자 클래스 정보 바꾸기"
+
+#: sql_help.c:4218
+msgid "change the definition of an operator family"
+msgstr "연산자 부류의 정의 바꾸기"
+
+#: sql_help.c:4223
+msgid "change the definition of a row level security policy"
+msgstr "로우 단위 보안 정책의 정의 바꾸기"
+
+#: sql_help.c:4228 sql_help.c:4298
+msgid "change a database role"
+msgstr "데이터베이스 롤 변경"
+
+#: sql_help.c:4233
+msgid "change the definition of a rule"
+msgstr "룰 정의 바꾸기"
+
+#: sql_help.c:4238
+msgid "change the definition of a schema"
+msgstr "스키마 이름 바꾸기"
+
+#: sql_help.c:4243
+msgid "change the definition of a sequence generator"
+msgstr "시퀀스 정보 바꾸기"
+
+#: sql_help.c:4248
+msgid "change the definition of a foreign server"
+msgstr "외부 서버 정의 바꾸기"
+
+#: sql_help.c:4253
+msgid "change a server configuration parameter"
+msgstr "서버 환경 설정 매개 변수 바꾸기"
+
+#: sql_help.c:4258
+msgid "change the definition of a table"
+msgstr "테이블 정보 바꾸기"
+
+#: sql_help.c:4263
+msgid "change the definition of a tablespace"
+msgstr "테이블스페이스 정의 바꾸기"
+
+#: sql_help.c:4268
+msgid "change the definition of a text search configuration"
+msgstr "텍스트 검색 구성 정의 바꾸기"
+
+#: sql_help.c:4273
+msgid "change the definition of a text search dictionary"
+msgstr "텍스트 검색 사전 정의 바꾸기"
+
+#: sql_help.c:4278
+msgid "change the definition of a text search parser"
+msgstr "텍스트 검색 파서 정의 바꾸기"
+
+#: sql_help.c:4283
+msgid "change the definition of a text search template"
+msgstr "텍스트 검색 템플릿 정의 바꾸기"
+
+#: sql_help.c:4288
+msgid "change the definition of a trigger"
+msgstr "트리거 정보 바꾸기"
+
+#: sql_help.c:4293
+msgid "change the definition of a type"
+msgstr "자료형 정의 바꾸기"
+
+#: sql_help.c:4303
+msgid "change the definition of a user mapping"
+msgstr "사용자 매핑 정의 바꾸기"
+
+#: sql_help.c:4308
+msgid "change the definition of a view"
+msgstr "뷰 정의 바꾸기"
+
+#: sql_help.c:4313
+msgid "collect statistics about a database"
+msgstr "데이터베이스 사용 통계 정보를 갱신함"
+
+#: sql_help.c:4318 sql_help.c:4928
+msgid "start a transaction block"
+msgstr "트랜잭션 블럭을 시작함"
+
+#: sql_help.c:4323
+msgid "force a transaction log checkpoint"
+msgstr "트랜잭션 로그를 강제로 checkpoint함"
+
+#: sql_help.c:4328
+msgid "close a cursor"
+msgstr "커서 닫기"
+
+#: sql_help.c:4333
+msgid "cluster a table according to an index"
+msgstr "지정한 인덱스 기준으로 테이블 자료를 다시 저장함"
+
+#: sql_help.c:4338
+msgid "define or change the comment of an object"
+msgstr "해당 개체의 코멘트를 지정하거나 수정함"
+
+#: sql_help.c:4343 sql_help.c:4763
+msgid "commit the current transaction"
+msgstr "현재 트랜잭션 commit"
+
+#: sql_help.c:4348
+msgid "commit a transaction that was earlier prepared for two-phase commit"
+msgstr "two-phase 커밋을 위해 먼저 준비된 트랜잭션을 커밋하세요."
+
+#: sql_help.c:4353
+msgid "copy data between a file and a table"
+msgstr "테이블과 파일 사이 자료를 복사함"
+
+#: sql_help.c:4358
+msgid "define a new access method"
+msgstr "새 접속 방법 정의"
+
+#: sql_help.c:4363
+msgid "define a new aggregate function"
+msgstr "새 집계합수 만들기"
+
+#: sql_help.c:4368
+msgid "define a new cast"
+msgstr "새 형변환자 만들기"
+
+#: sql_help.c:4373
+msgid "define a new collation"
+msgstr "새 collation 만들기"
+
+#: sql_help.c:4378
+msgid "define a new encoding conversion"
+msgstr "새 문자코드변환규칙(conversion) 만들기"
+
+#: sql_help.c:4383
+msgid "create a new database"
+msgstr "데이터베이스 생성"
+
+#: sql_help.c:4388
+msgid "define a new domain"
+msgstr "새 도메인 만들기"
+
+#: sql_help.c:4393
+msgid "define a new event trigger"
+msgstr "새 이벤트 트리거 만들기"
+
+#: sql_help.c:4398
+msgid "install an extension"
+msgstr ""
+
+#: sql_help.c:4403
+msgid "define a new foreign-data wrapper"
+msgstr "새 외부 데이터 래퍼 정의"
+
+#: sql_help.c:4408
+msgid "define a new foreign table"
+msgstr "새 외부 테이블 정의"
+
+#: sql_help.c:4413
+msgid "define a new function"
+msgstr "새 함수 만들기"
+
+#: sql_help.c:4418 sql_help.c:4458 sql_help.c:4533
+msgid "define a new database role"
+msgstr "새 데이터베이스 롤 만들기"
+
+#: sql_help.c:4423
+msgid "define a new index"
+msgstr "새 인덱스 만들기"
+
+#: sql_help.c:4428
+msgid "define a new procedural language"
+msgstr "새 프로시주얼 언어 만들기"
+
+#: sql_help.c:4433
+msgid "define a new materialized view"
+msgstr "새 materialized 뷰 만들기"
+
+#: sql_help.c:4438
+msgid "define a new operator"
+msgstr "새 연산자 만들기"
+
+#: sql_help.c:4443
+msgid "define a new operator class"
+msgstr "새 연잔자 클래스 만들기"
+
+#: sql_help.c:4448
+msgid "define a new operator family"
+msgstr "새 연산자 부류 만들기"
+
+#: sql_help.c:4453
+msgid "define a new row level security policy for a table"
+msgstr "특정 테이블에 로우 단위 보안 정책 정의"
+
+#: sql_help.c:4463
+msgid "define a new rewrite rule"
+msgstr "새 룰(rule) 만들기"
+
+#: sql_help.c:4468
+msgid "define a new schema"
+msgstr "새 스키마(schema) 만들기"
+
+#: sql_help.c:4473
+msgid "define a new sequence generator"
+msgstr "새 시퀀스 만들기"
+
+#: sql_help.c:4478
+msgid "define a new foreign server"
+msgstr "새 외부 서버 정의"
+
+#: sql_help.c:4483
+msgid "define a new table"
+msgstr "새 테이블 만들기"
+
+#: sql_help.c:4488 sql_help.c:4893
+msgid "define a new table from the results of a query"
+msgstr "쿼리 결과를 새 테이블로 만들기"
+
+#: sql_help.c:4493
+msgid "define a new tablespace"
+msgstr "새 테이블스페이스 만들기"
+
+#: sql_help.c:4498
+msgid "define a new text search configuration"
+msgstr "새 텍스트 검색 구성 정의"
+
+#: sql_help.c:4503
+msgid "define a new text search dictionary"
+msgstr "새 텍스트 검색 사전 정의"
+
+#: sql_help.c:4508
+msgid "define a new text search parser"
+msgstr "새 텍스트 검색 파서 정의"
+
+#: sql_help.c:4513
+msgid "define a new text search template"
+msgstr "새 텍스트 검색 템플릿 정의"
+
+#: sql_help.c:4518
+msgid "define a new transform"
+msgstr "새 transform 만들기"
+
+#: sql_help.c:4523
+msgid "define a new trigger"
+msgstr "새 트리거 만들기"
+
+#: sql_help.c:4528
+msgid "define a new data type"
+msgstr "새 자료형 만들기"
+
+#: sql_help.c:4538
+msgid "define a new mapping of a user to a foreign server"
+msgstr "사용자와 외부 서버 간의 새 매핑 정의"
+
+#: sql_help.c:4543
+msgid "define a new view"
+msgstr "새 view 만들기"
+
+#: sql_help.c:4548
+msgid "deallocate a prepared statement"
+msgstr "준비된 구문(prepared statement) 정의"
+
+#: sql_help.c:4553
+msgid "define a cursor"
+msgstr "커서 지정"
+
+#: sql_help.c:4558
+msgid "delete rows of a table"
+msgstr "테이블의 자료 삭제"
+
+#: sql_help.c:4563
+msgid "discard session state"
+msgstr "세션 상태 삭제"
+
+#: sql_help.c:4568
+msgid "execute an anonymous code block"
+msgstr ""
+
+#: sql_help.c:4573
+msgid "remove an access method"
+msgstr "접근 방법 삭제"
+
+#: sql_help.c:4578
+msgid "remove an aggregate function"
+msgstr "집계 함수 삭제"
+
+#: sql_help.c:4583
+msgid "remove a cast"
+msgstr "형변환자 삭제"
+
+#: sql_help.c:4588
+msgid "remove a collation"
+msgstr "collation 삭제"
+
+#: sql_help.c:4593
+msgid "remove a conversion"
+msgstr "문자코드 변환규칙(conversion) 삭제"
+
+#: sql_help.c:4598
+msgid "remove a database"
+msgstr "데이터베이스 삭제"
+
+#: sql_help.c:4603
+msgid "remove a domain"
+msgstr "도메인 삭제"
+
+#: sql_help.c:4608
+msgid "remove an event trigger"
+msgstr "이벤트 트리거 삭제"
+
+#: sql_help.c:4613
+msgid "remove an extension"
+msgstr "확장 모듈 삭제"
+
+#: sql_help.c:4618
+msgid "remove a foreign-data wrapper"
+msgstr "외부 데이터 래퍼 제거"
+
+#: sql_help.c:4623
+msgid "remove a foreign table"
+msgstr "외부 테이블 삭제"
+
+#: sql_help.c:4628
+msgid "remove a function"
+msgstr "함수 삭제"
+
+#: sql_help.c:4633 sql_help.c:4678 sql_help.c:4748
+msgid "remove a database role"
+msgstr "데이터베이스 롤 삭제"
+
+#: sql_help.c:4638
+msgid "remove an index"
+msgstr "인덱스 삭제"
+
+#: sql_help.c:4643
+msgid "remove a procedural language"
+msgstr "프로시주얼 언어 삭제"
+
+#: sql_help.c:4648
+msgid "remove a materialized view"
+msgstr "materialized 뷰 삭제"
+
+#: sql_help.c:4653
+msgid "remove an operator"
+msgstr "연산자 삭제"
+
+#: sql_help.c:4658
+msgid "remove an operator class"
+msgstr "연산자 클래스 삭제"
+
+#: sql_help.c:4663
+msgid "remove an operator family"
+msgstr "연산자 부류 삭제"
+
+#: sql_help.c:4668
+msgid "remove database objects owned by a database role"
+msgstr "데이터베이스 롤로 권한이 부여된 데이터베이스 개체들을 삭제하세요"
+
+#: sql_help.c:4673
+msgid "remove a row level security policy from a table"
+msgstr "특정 테이블에 정의된 로우 단위 보안 정책 삭제"
+
+#: sql_help.c:4683
+msgid "remove a rewrite rule"
+msgstr "룰(rule) 삭제"
+
+#: sql_help.c:4688
+msgid "remove a schema"
+msgstr "스키마(schema) 삭제"
+
+#: sql_help.c:4693
+msgid "remove a sequence"
+msgstr "시퀀스 삭제"
+
+#: sql_help.c:4698
+msgid "remove a foreign server descriptor"
+msgstr "외부 서버 설명자 제거"
+
+#: sql_help.c:4703
+msgid "remove a table"
+msgstr "테이블 삭제"
+
+#: sql_help.c:4708
+msgid "remove a tablespace"
+msgstr "테이블스페이스 삭제"
+
+#: sql_help.c:4713
+msgid "remove a text search configuration"
+msgstr "텍스트 검색 구성 제거"
+
+#: sql_help.c:4718
+msgid "remove a text search dictionary"
+msgstr "텍스트 검색 사전 제거"
+
+#: sql_help.c:4723
+msgid "remove a text search parser"
+msgstr "텍스트 검색 파서 제거"
+
+#: sql_help.c:4728
+msgid "remove a text search template"
+msgstr "텍스트 검색 템플릿 제거"
+
+#: sql_help.c:4733
+msgid "remove a transform"
+msgstr "transform 삭제"
+
+#: sql_help.c:4738
+msgid "remove a trigger"
+msgstr "트리거 삭제"
+
+#: sql_help.c:4743
+msgid "remove a data type"
+msgstr "자료형 삭제"
+
+#: sql_help.c:4753
+msgid "remove a user mapping for a foreign server"
+msgstr "외부 서버에 대한 사용자 매핑 제거"
+
+#: sql_help.c:4758
+msgid "remove a view"
+msgstr "뷰(view) 삭제"
+
+#: sql_help.c:4768
+msgid "execute a prepared statement"
+msgstr "준비된 구문(prepared statement) 실행"
+
+#: sql_help.c:4773
+msgid "show the execution plan of a statement"
+msgstr "쿼리 실행계획 보기"
+
+#: sql_help.c:4778
+msgid "retrieve rows from a query using a cursor"
+msgstr "해당 커서에서 자료 뽑기"
+
+#: sql_help.c:4783
+msgid "define access privileges"
+msgstr "액세스 권한 지정하기"
+
+#: sql_help.c:4788
+msgid "import table definitions from a foreign server"
+msgstr "외부 서버로부터 테이블 정의 가져오기"
+
+#: sql_help.c:4793
+msgid "create new rows in a table"
+msgstr "테이블 자료 삽입"
+
+#: sql_help.c:4798
+msgid "listen for a notification"
+msgstr "특정 서버 메시지 수신함"
+
+#: sql_help.c:4803
+msgid "load a shared library file"
+msgstr "공유 라이브러리 파일 로드"
+
+#: sql_help.c:4808
+msgid "lock a table"
+msgstr "테이블 잠금"
+
+#: sql_help.c:4813
+msgid "position a cursor"
+msgstr "커서 위치 옮기기"
+
+#: sql_help.c:4818
+msgid "generate a notification"
+msgstr "특정 서버 메시지 발생"
+
+#: sql_help.c:4823
+msgid "prepare a statement for execution"
+msgstr "준비된 구문(prepared statement) 만들기"
+
+#: sql_help.c:4828
+msgid "prepare the current transaction for two-phase commit"
+msgstr "two-phase 커밋을 위해 현재 트랜잭션을 준비함"
+
+#: sql_help.c:4833
+msgid "change the ownership of database objects owned by a database role"
+msgstr "데이터베이스 롤로 권한이 부여된 데이터베이스 개체들의 소유주 바꾸기"
+
+#: sql_help.c:4838
+msgid "replace the contents of a materialized view"
+msgstr ""
+
+#: sql_help.c:4843
+msgid "rebuild indexes"
+msgstr "인덱스 다시 만들기"
+
+#: sql_help.c:4848
+msgid "destroy a previously defined savepoint"
+msgstr "이전 정의된 savepoint를 파기함"
+
+#: sql_help.c:4853
+msgid "restore the value of a run-time parameter to the default value"
+msgstr "실시간 환경 변수값을 초기값으로 다시 지정"
+
+#: sql_help.c:4858
+msgid "remove access privileges"
+msgstr "액세스 권한 해제하기"
+
+#: sql_help.c:4868
+msgid "cancel a transaction that was earlier prepared for two-phase commit"
+msgstr "two-phase 커밋을 위해 먼저 준비되었던 트랜잭션 실행취소하기"
+
+#: sql_help.c:4873
+msgid "roll back to a savepoint"
+msgstr "savepoint 파기하기"
+
+#: sql_help.c:4878
+msgid "define a new savepoint within the current transaction"
+msgstr "현재 트랜잭션에서 새로운 savepoint 만들기"
+
+#: sql_help.c:4883
+msgid "define or change a security label applied to an object"
+msgstr "해당 개체에 보안 라벨을 정의하거나 변경"
+
+#: sql_help.c:4888 sql_help.c:4933 sql_help.c:4963
+msgid "retrieve rows from a table or view"
+msgstr "테이블이나 뷰의 자료를 출력"
+
+#: sql_help.c:4898
+msgid "change a run-time parameter"
+msgstr "실시간 환경 변수값 바꾸기"
+
+#: sql_help.c:4903
+msgid "set constraint check timing for the current transaction"
+msgstr "현재 트랜잭션에서 제약조건 설정"
+
+#: sql_help.c:4908
+msgid "set the current user identifier of the current session"
+msgstr "현재 세션의 현재 사용자 식별자를 지정"
+
+#: sql_help.c:4913
+msgid ""
+"set the session user identifier and the current user identifier of the "
+"current session"
+msgstr "현재 세션의 사용자 인증을 지정함 - 사용자 지정"
+
+#: sql_help.c:4918
+msgid "set the characteristics of the current transaction"
+msgstr "현재 트랜잭션의 성질을 지정함"
+
+#: sql_help.c:4923
+msgid "show the value of a run-time parameter"
+msgstr "실시간 환경 변수값들을 보여줌"
+
+#: sql_help.c:4938
+msgid "empty a table or set of tables"
+msgstr "하나 또는 지정한 여러개의 테이블에서 모든 자료 지움"
+
+#: sql_help.c:4943
+msgid "stop listening for a notification"
+msgstr "특정 서버 메시지 수신 기능 끔"
+
+#: sql_help.c:4948
+msgid "update rows of a table"
+msgstr "테이블 자료 갱신"
+
+#: sql_help.c:4953
+msgid "garbage-collect and optionally analyze a database"
+msgstr "물리적인 자료 정리 작업 - 쓰레기값 청소"
+
+#: sql_help.c:4958
+msgid "compute a set of rows"
+msgstr "compute a set of rows"
+
+#: startup.c:189
+#, c-format
+msgid "%s: -1 can only be used in non-interactive mode\n"
+msgstr "%s: -1 옵션은 비대화형 모드에서만 사용할 수 있음\n"
+
+#: startup.c:289
+#, c-format
+msgid "%s: could not open log file \"%s\": %s\n"
+msgstr "%s: \"%s\" 로그 파일을 열 수 없음: %s\n"
+
+#: startup.c:389
+#, c-format
+msgid ""
+"Type \"help\" for help.\n"
+"\n"
+msgstr ""
+"도움말을 보려면 \"help\"를 입력하십시오.\n"
+"\n"
+
+#: startup.c:538
+#, c-format
+msgid "%s: could not set printing parameter \"%s\"\n"
+msgstr "%s: 출력 매개 변수 \"%s\" 지정할 수 없음\n"
+
+#: startup.c:578
+#, c-format
+msgid "%s: could not delete variable \"%s\"\n"
+msgstr "%s: \"%s\" 변수를 지울 수 없음\n"
+
+#: startup.c:588
+#, c-format
+msgid "%s: could not set variable \"%s\"\n"
+msgstr "%s: \"%s\" 변수를 지정할 수 없음\n"
+
+#: startup.c:648
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "자세한 도움말은 \"%s --help\"\n"
+
+#: startup.c:665
+#, c-format
+msgid "%s: warning: extra command-line argument \"%s\" ignored\n"
+msgstr "%s: 경고: 추가 명령행 인수 \"%s\" 무시됨\n"
+
+#: startup.c:714
+#, c-format
+msgid "%s: could not find own program executable\n"
+msgstr "%s: 실행 가능한 프로그램을 찾을 수 없습니다\n"
+
+#: startup.c:836 startup.c:883 startup.c:904 startup.c:941 startup.c:963
+#: variables.c:121
+#, c-format
+msgid "unrecognized value \"%s\" for \"%s\"; assuming \"%s\"\n"
+msgstr "\"%s\" 값은 \"%s\" 변수값으로 사용할 수 없음; \"%s\" 값을 사용함\n"
+
+#: tab-complete.c:3704
+#, c-format
+msgid ""
+"tab completion query failed: %s\n"
+"Query was:\n"
+"%s\n"
+msgstr ""
+"탭 자동완성용 쿼리 실패: %s\n"
+"사용한 쿼리:\n"
+"%s\n"

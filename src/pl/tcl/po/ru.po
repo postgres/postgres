@@ -1,62 +1,71 @@
 # Russian message translation file for pltcl
-# Copyright (C) 2012 PostgreSQL Global Development Group
+# Copyright (C) 2012-2016 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Alexander Lakhin <exclusion@gmail.com>, 2012.
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2017.
 #
-# ChangeLog:
-#   - February 18, 2012: Complete translation for 9.1. Alexander Lakhin <exclusion@gmail.com>.
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 9.2\n"
+"Project-Id-Version: pltcl (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2015-09-19 03:07+0000\n"
-"PO-Revision-Date: 2015-10-16 21:38+0400\n"
-"Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
-"Language-Team: Russian <pgsql-translators@postgresql.org>\n"
+"POT-Creation-Date: 2017-03-27 12:37+0000\n"
+"PO-Revision-Date: 2017-03-29 14:01+0300\n"
+"Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
-"X-Generator: Lokalize 2.0\n"
+"Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 
-#: pltcl.c:555
+#: pltcl.c:459
+msgid "PL/Tcl function to call once when pltcl is first used."
+msgstr "Функция на PL/Tcl, вызываемая при первом использовании pltcl."
+
+#: pltcl.c:466
+msgid "PL/TclU function to call once when pltclu is first used."
+msgstr "Функция на PL/TclU, вызываемая при первом использовании pltclu."
+
+#: pltcl.c:629
 #, c-format
-msgid "module \"unknown\" not found in pltcl_modules"
-msgstr "модуль \"unknown\" не найден в pltcl_modules"
+msgid "function \"%s\" is in the wrong language"
+msgstr "Функция \"%s\" объявлена на другом языке"
 
-#: pltcl.c:591
+#: pltcl.c:640
 #, c-format
-msgid "could not load module \"unknown\": %s"
-msgstr "загрузить модуль \"unknown\" не удалось: %s"
+msgid "function \"%s\" must not be SECURITY DEFINER"
+msgstr "функция \"%s\" не должна иметь характеристику SECURITY DEFINER"
 
-#: pltcl.c:1047
+#. translator: %s is "pltcl.start_proc" or "pltclu.start_proc"
+#: pltcl.c:674
+#, c-format
+msgid "processing %s parameter"
+msgstr "обработка параметра %s"
+
+#: pltcl.c:830
+#, c-format
+msgid "set-valued function called in context that cannot accept a set"
+msgstr ""
+"функция, возвращающая множество, вызвана в контексте, где ему нет места"
+
+#: pltcl.c:994
+#, c-format
+msgid ""
+"function returning record called in context that cannot accept type record"
+msgstr ""
+"функция, возвращающая запись, вызвана в контексте, не допускающем этот тип"
+
+#: pltcl.c:1258
 #, c-format
 msgid "could not split return value from trigger: %s"
 msgstr "разложить возвращаемое из триггера значение не удалось: %s"
 
-#: pltcl.c:1058
-#, c-format
-msgid "trigger's return list must have even number of elements"
-msgstr "в возвращаемом триггером списке должно быть чётное число элементов"
-
-#: pltcl.c:1094
-#, c-format
-msgid "unrecognized attribute \"%s\""
-msgstr "нераспознанный атрибут \"%s\""
-
-#: pltcl.c:1099
-#, c-format
-msgid "cannot set system attribute \"%s\""
-msgstr "установить системный атрибут \"%s\" нельзя"
-
-#: pltcl.c:1222 pltcl.c:1648
+#: pltcl.c:1338 pltcl.c:1766
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pltcl.c:1223
+#: pltcl.c:1339
 #, c-format
 msgid ""
 "%s\n"
@@ -65,32 +74,53 @@ msgstr ""
 "%s\n"
 "в функции PL/Tcl \"%s\""
 
-#: pltcl.c:1331 pltcl.c:1338
-#, c-format
-msgid "out of memory"
-msgstr "нехватка памяти"
-
-#: pltcl.c:1386
+#: pltcl.c:1504
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "триггерные функции могут вызываться только в триггерах"
 
-#: pltcl.c:1395
+#: pltcl.c:1508
 #, c-format
 msgid "PL/Tcl functions cannot return type %s"
 msgstr "функции PL/Tcl не могут возвращать тип %s"
 
-#: pltcl.c:1407
-#, c-format
-msgid "PL/Tcl functions cannot return composite types"
-msgstr "функции PL/Tcl не могут возвращать составные типы"
-
-#: pltcl.c:1446
+#: pltcl.c:1544
 #, c-format
 msgid "PL/Tcl functions cannot accept type %s"
 msgstr "функции PL/Tcl не могут принимать тип %s"
 
-#: pltcl.c:1564
+#: pltcl.c:1658
 #, c-format
 msgid "could not create internal procedure \"%s\": %s"
 msgstr "не удалось создать внутреннюю процедуру \"%s\": %s"
+
+#: pltcl.c:3095
+#, c-format
+msgid "column name/value list must have even number of elements"
+msgstr "в списке имён/значений столбцов должно быть чётное число элементов"
+
+#: pltcl.c:3113
+#, c-format
+msgid "column name/value list contains nonexistent column name \"%s\""
+msgstr ""
+"список имён/значений столбцов содержит имя несуществующего столбца \"%s\""
+
+#: pltcl.c:3120
+#, c-format
+msgid "cannot set system attribute \"%s\""
+msgstr "установить системный атрибут \"%s\" нельзя"
+
+#~ msgid "module \"unknown\" not found in pltcl_modules"
+#~ msgstr "модуль \"unknown\" не найден в pltcl_modules"
+
+#~ msgid "could not load module \"unknown\": %s"
+#~ msgstr "загрузить модуль \"unknown\" не удалось: %s"
+
+#~ msgid "unrecognized attribute \"%s\""
+#~ msgstr "нераспознанный атрибут \"%s\""
+
+#~ msgid "out of memory"
+#~ msgstr "нехватка памяти"
+
+#~ msgid "PL/Tcl functions cannot return composite types"
+#~ msgstr "функции PL/Tcl не могут возвращать составные типы"

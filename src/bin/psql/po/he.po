@@ -1,0 +1,5800 @@
+# psql message translation file for psql
+# Copyright (C) 2017 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# Michael Goldberg <mic.goldberg@gmail.com>, 2017.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: psql (PostgreSQL) 10\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2017-05-09 16:09+0300\n"
+"PO-Revision-Date: 2017-05-11 20:43+0300\n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 2.0.1\n"
+"Last-Translator: Michael Goldberg <mic.goldberg@gmail.com>, 2017\n"
+"Language: he_IL\n"
+
+#: ../../common/exec.c:127 ../../common/exec.c:241 ../../common/exec.c:284
+#, c-format
+msgid "could not identify current directory: %s"
+msgstr "לא יוכל לזהות את הספריה הנוכחית: %s"
+
+#: ../../common/exec.c:146
+#, c-format
+msgid "invalid binary \"%s\""
+msgstr "בינארי לא חוקי \"%s\""
+
+#: ../../common/exec.c:195
+#, c-format
+msgid "could not read binary \"%s\""
+msgstr "לא ניתן לקרוא בינארי \"%s\""
+
+#: ../../common/exec.c:202
+#, c-format
+msgid "could not find a \"%s\" to execute"
+msgstr "לא ניתן למצוא \"%s\" לביצוע"
+
+#: ../../common/exec.c:257 ../../common/exec.c:293
+#, c-format
+msgid "could not change directory to \"%s\": %s"
+msgstr "לא לשנות לשנות ספריות ל \"%s\": %s"
+
+#: ../../common/exec.c:272
+#, c-format
+msgid "could not read symbolic link \"%s\""
+msgstr "לא ניתן לקרוא את הקישור הסימבולי \"%s\""
+
+#: ../../common/exec.c:523
+#, c-format
+msgid "pclose failed: %s"
+msgstr "pclose נכשל: %s"
+
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98 command.c:608 input.c:227 mainloop.c:82
+#: mainloop.c:276
+#, c-format
+msgid "out of memory\n"
+msgstr "אין זיכרון פנוי\n"
+
+#: ../../common/fe_memutils.c:92
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "לא ניתן לשכפל מצביע ריק (שגיאה פנימית)\n"
+
+#: ../../common/username.c:43
+#, c-format
+msgid "could not look up effective user ID %ld: %s"
+msgstr "לא יכול לחפש יעיל את המשתמש עם מזהה % ld: %s"
+
+#: ../../common/username.c:45 command.c:555
+msgid "user does not exist"
+msgstr "משתמש לא קיים"
+
+#: ../../common/username.c:60
+#, c-format
+msgid "user name lookup failure: error code %lu"
+msgstr "כישלון בדיקה עבור שם המשתמש: קוד שגיאה % lu"
+
+#: ../../common/wait_error.c:45
+#, c-format
+msgid "command not executable"
+msgstr "הפקודה לא הפעלה"
+
+#: ../../common/wait_error.c:49
+#, c-format
+msgid "command not found"
+msgstr "הפקודה לא נמצאה"
+
+#: ../../common/wait_error.c:54
+#, c-format
+msgid "child process exited with exit code %d"
+msgstr "תהליך צאצא יצא עם %d"
+
+#: ../../common/wait_error.c:61
+#, c-format
+msgid "child process was terminated by exception 0x%X"
+msgstr "תהליך צאצא הופסק על ידי חריגה 0 0x %X"
+
+#: ../../common/wait_error.c:71
+#, c-format
+msgid "child process was terminated by signal %s"
+msgstr "תהליך צאצא הופסק על ידי האות %s"
+
+#: ../../common/wait_error.c:75
+#, c-format
+msgid "child process was terminated by signal %d"
+msgstr "תהליך צאצא הופסק על ידי האות %d"
+
+#: ../../common/wait_error.c:80
+#, c-format
+msgid "child process exited with unrecognized status %d"
+msgstr "תהליך צאצא יצא עם מצב לא מזוהה %d"
+
+#: ../../fe_utils/print.c:353
+#, c-format
+msgid "(%lu row)"
+msgid_plural "(%lu rows)"
+msgstr[0] "(% lu שורה)"
+msgstr[1] "(% lu שורות)"
+
+#: ../../fe_utils/print.c:2913
+#, c-format
+msgid "Interrupted\n"
+msgstr "הופסק\n"
+
+#: ../../fe_utils/print.c:2977
+#, c-format
+msgid "Cannot add header to table content: column count of %d exceeded.\n"
+msgstr "אין אפשרות להוסיף כותרת לתוכן בטבלה:  סה\"כ חריגה של %d העמודות.\n"
+
+#: ../../fe_utils/print.c:3017
+#, c-format
+msgid "Cannot add cell to table content: total cell count of %d exceeded.\n"
+msgstr "לא ניתן להוסיף תא לתוכן בטבלה: סה\"כ חריגה של %d התאים.\n"
+
+#: ../../fe_utils/print.c:3266
+#, c-format
+msgid "invalid output format (internal error): %d"
+msgstr "תבנית הפלט לא תיקנית (שגיאה פנימית): %d"
+
+#: ../../fe_utils/psqlscan.l:713
+#, c-format
+msgid "skipping recursive expansion of variable \"%s\"\n"
+msgstr "דילוג על הרחבת רקורסיבית של משתנה \"%s\"\n"
+
+#: command.c:223
+#, c-format
+msgid "Invalid command \\%s. Try \\? for help.\n"
+msgstr "הפקודה לא חוקית \\%s. נסה \\? לקבלת עזרה.\n"
+
+#: command.c:225
+#, c-format
+msgid "invalid command \\%s\n"
+msgstr "פקודה לא חוקית \\%s\n"
+
+#: command.c:243
+#, c-format
+msgid "\\%s: extra argument \"%s\" ignored\n"
+msgstr "\\%s: התעלמות מהארגומנט הנוסף \"%s\"\n"
+
+#: command.c:295
+#, c-format
+msgid ""
+"\\%s command ignored; use \\endif or Ctrl-C to exit current \\if block\n"
+msgstr ""
+"\\%s התעלמות מהפקודה; להשתמש \\endif או Ctrl-C כדי לצאת מבלוק \\if הנוכחי\n"
+
+#: command.c:553
+#, c-format
+msgid "could not get home directory for user ID %ld: %s\n"
+msgstr "לא ניתן לקבל את ספריית הבית עבור משתמש עם מזהה % ld: %s\n"
+
+#: command.c:571
+#, c-format
+msgid "\\%s: could not change directory to \"%s\": %s\n"
+msgstr "\\%s: לא ניתן לשנות את ספריה ל\"%s\": %s\n"
+
+#: command.c:596 common.c:648 common.c:706 common.c:1242
+#, c-format
+msgid "You are currently not connected to a database.\n"
+msgstr "אתה לא מחובר כרגע למסד נתונים.\n"
+
+#: command.c:621
+#, c-format
+msgid ""
+"You are connected to database \"%s\" as user \"%s\" via socket in \"%s\" at "
+"port \"%s\".\n"
+msgstr ""
+"אתה מחובר מסד הנתונים '%s' כמשתמש '%s ' באמצעות שקע ב- \"%s\" בפורט \"%s\".\n"
+
+#: command.c:624
+#, c-format
+msgid ""
+"You are connected to database \"%s\" as user \"%s\" on host \"%s\" at port "
+"\"%s\".\n"
+msgstr "אתה מחובר מסד הנתונים '%s' כמשתמש \"%s\" בשרת \"%s\" בפורט \"%s\".\n"
+
+#: command.c:912 command.c:1002 command.c:1111 command.c:2520
+#, c-format
+msgid "no query buffer\n"
+msgstr "אין מאגר שאילתה\n"
+
+#: command.c:945 command.c:4757
+#, c-format
+msgid "invalid line number: %s\n"
+msgstr "מספר שורה לא חוקי: %s\n"
+
+#: command.c:995
+#, c-format
+msgid "The server (version %s) does not support editing function source.\n"
+msgstr "השרת (גירסה %s) אינו תומך בעריכת קוד מקור של הפונקציה.\n"
+
+#: command.c:1070 command.c:1151
+msgid "No changes"
+msgstr "אין שינויים"
+
+#: command.c:1104
+#, c-format
+msgid "The server (version %s) does not support editing view definitions.\n"
+msgstr "השרת (גירסה %s) אינו תומך בעריכת של הגדרות התצוגה.\n"
+
+#: command.c:1228
+#, c-format
+msgid "%s: invalid encoding name or conversion procedure not found\n"
+msgstr "%s: שם הקידוד לא חוקי או שגרת ההמרה לא נמצאה\n"
+
+#: command.c:1263 command.c:1885 command.c:3161 command.c:4859 common.c:173
+#: common.c:244 common.c:541 common.c:1288 common.c:1316 common.c:1417
+#: copy.c:489 copy.c:699 large_obj.c:156 large_obj.c:191 large_obj.c:253
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: command.c:1267
+msgid "out of memory"
+msgstr "אין זיכרון פנוי"
+
+#: command.c:1270
+msgid "There is no previous error."
+msgstr "אין שגיאה קודמת."
+
+#: command.c:1441 command.c:1746 command.c:1760 command.c:1777 command.c:1937
+#: command.c:2174 command.c:2487 command.c:2527
+#, c-format
+msgid "\\%s: missing required argument\n"
+msgstr "\\%s: חסר ארגומנט נדרש\n"
+
+#: command.c:1572
+#, c-format
+msgid "\\elif: cannot occur after \\else\n"
+msgstr "\\elif: לא יכולה להתרחש לאחר \\else\n"
+
+#: command.c:1577
+#, c-format
+msgid "\\elif: no matching \\if\n"
+msgstr "\\elif: \\if לא תואמות\n"
+
+#: command.c:1641
+#, c-format
+msgid "\\else: cannot occur after \\else\n"
+msgstr "\\else: לא יכולה להתרחש לאחר \\else\n"
+
+#: command.c:1646
+#, c-format
+msgid "\\else: no matching \\if\n"
+msgstr "\\else: \\if לא תואמות\n"
+
+#: command.c:1686
+#, c-format
+msgid "\\endif: no matching \\if\n"
+msgstr "\\endif: \\if לא תואמות\n"
+
+#: command.c:1841
+msgid "Query buffer is empty."
+msgstr "מאגר השאילתה ריק."
+
+#: command.c:1863
+msgid "Enter new password: "
+msgstr "הזן סיסמה חדשה: "
+
+#: command.c:1864
+msgid "Enter it again: "
+msgstr "הזן שוב: "
+
+#: command.c:1868
+#, c-format
+msgid "Passwords didn't match.\n"
+msgstr "סיסמאות אינן תואמות.\n"
+
+#: command.c:1967
+#, c-format
+msgid "\\%s: could not read value for variable\n"
+msgstr "\\%s: לא ניתן לקרוא את ערך המשתנה\n"
+
+#: command.c:2070
+msgid "Query buffer reset (cleared)."
+msgstr "מאגר השאילתה אופם (נוקה)."
+
+#: command.c:2092
+#, c-format
+msgid "Wrote history to file \"%s\".\n"
+msgstr "כתב היסטוריה לקובץ \"%s\".\n"
+
+#: command.c:2179
+#, c-format
+msgid "\\%s: environment variable name must not contain \"=\"\n"
+msgstr "\\%s: שם משתנה סביבה אינו יכול להכיל \"=\"\n"
+
+#: command.c:2235
+#, c-format
+msgid "The server (version %s) does not support showing function source.\n"
+msgstr "השרת (גירסה %s) אינו תומך בתצוגת קוד מקור של הפונקציה.\n"
+
+#: command.c:2242
+#, c-format
+msgid "function name is required\n"
+msgstr "שם הפונקציה נדרש\n"
+
+#: command.c:2329
+#, c-format
+msgid "The server (version %s) does not support showing view definitions.\n"
+msgstr "השרת (גירסה %s) אינו תומך בתצוגה של הגדרות התצוגה.\n"
+
+#: command.c:2336
+#, c-format
+msgid "view name is required\n"
+msgstr "שם תצוגה נדרש\n"
+
+#: command.c:2459
+msgid "Timing is on."
+msgstr "התזמון הופעל."
+
+#: command.c:2461
+msgid "Timing is off."
+msgstr "התזמון הופסק."
+
+#: command.c:2546 command.c:2574 command.c:3510 command.c:3513 command.c:3516
+#: command.c:3522 command.c:3524 command.c:3532 command.c:3542 command.c:3551
+#: command.c:3565 command.c:3582 command.c:3640 common.c:69 copy.c:332
+#: copy.c:392 copy.c:405 psqlscanslash.l:760 psqlscanslash.l:771
+#: psqlscanslash.l:781
+#, c-format
+msgid "%s: %s\n"
+msgstr "%s: %s\n"
+
+#: command.c:2953 startup.c:202
+msgid "Password: "
+msgstr "סיסמה: "
+
+#: command.c:2958 startup.c:204
+#, c-format
+msgid "Password for user %s: "
+msgstr "הסיסמה עבור המשתמש %s: "
+
+#: command.c:3008
+#, c-format
+msgid ""
+"All connection parameters must be supplied because no database connection "
+"exists\n"
+msgstr "יש לספק את כל פרמטרי החיבור כי אין חיבור מסד נתונים קיים\n"
+
+#: command.c:3165
+#, c-format
+msgid "Previous connection kept\n"
+msgstr "החיבור הקודם נשמר\n"
+
+#: command.c:3169
+#, c-format
+msgid "\\connect: %s"
+msgstr "התחבר ל %s"
+
+#: command.c:3205
+#, c-format
+msgid ""
+"You are now connected to database \"%s\" as user \"%s\" via socket in \"%s\" "
+"at port \"%s\".\n"
+msgstr ""
+"אתה מחובר כעת למסד הנתונים '%s' כמשתמש '%s ' באמצעות שקע ב- \"%s\" בפורט \"%s"
+"\".\n"
+
+#: command.c:3208
+#, c-format
+msgid ""
+"You are now connected to database \"%s\" as user \"%s\" on host \"%s\" at "
+"port \"%s\".\n"
+msgstr ""
+"אתה מחובר כעת למסד הנתונים '%s' כמשתמש \"%s\" בשרת \"%s\" בפורט \"%s\".\n"
+
+#: command.c:3212
+#, c-format
+msgid "You are now connected to database \"%s\" as user \"%s\".\n"
+msgstr "אתה מחובר כעת למסד הנתונים '%s' משתמש '%s'.\n"
+
+#: command.c:3245
+#, c-format
+msgid "%s (%s, server %s)\n"
+msgstr "%s (%s, השרת %s)\n"
+
+#: command.c:3253
+#, c-format
+msgid ""
+"WARNING: %s major version %s, server major version %s.\n"
+"         Some psql features might not work.\n"
+msgstr ""
+"אזהרה: %s גירסה ראשית %s, גירסה ראשית בשרת %s.\n"
+"         כמה תכונות psql אלולים לא לעבוד.\n"
+
+#: command.c:3290
+#, c-format
+msgid "SSL connection (protocol: %s, cipher: %s, bits: %s, compression: %s)\n"
+msgstr "חיבור SSL (פרוטוקול: %s, צופן: %s, סיביות: %s, דחיסה: %s)\n"
+
+#: command.c:3291 command.c:3292 command.c:3293
+msgid "unknown"
+msgstr "לא ידוע"
+
+#: command.c:3294 help.c:45
+msgid "off"
+msgstr "כבוי"
+
+#: command.c:3294 help.c:45
+msgid "on"
+msgstr "פעיל"
+
+#: command.c:3314
+#, c-format
+msgid ""
+"WARNING: Console code page (%u) differs from Windows code page (%u)\n"
+"         8-bit characters might not work correctly. See psql reference\n"
+"         page \"Notes for Windows users\" for details.\n"
+msgstr ""
+"אזהרה: קידוד המסוף (%u) שונה מקידוד  ב Windows \n"
+"            (%u) 8-bit תווים לא יפעלו כהלכה. ראה דף הסבר psql\n"
+"           \"הערות עבור משתמשי חלונות\" לקבלת פרטים.\n"
+
+#: command.c:3399
+#, c-format
+msgid ""
+"environment variable PSQL_EDITOR_LINENUMBER_ARG must be set to specify a "
+"line number\n"
+msgstr ""
+"משתנה הסביבה PSQL_EDITOR_LINENUMBER_ARG חייב להיות מוגדר על מנת לציין מספר "
+"שורה\n"
+
+#: command.c:3428
+#, c-format
+msgid "could not start editor \"%s\"\n"
+msgstr "לא ניתן להפעיל את עורך \"%s\"\n"
+
+#: command.c:3430
+#, c-format
+msgid "could not start /bin/sh\n"
+msgstr "לא ניתן להפעיל את /bin/sh\n"
+
+#: command.c:3468
+#, c-format
+msgid "could not locate temporary directory: %s\n"
+msgstr "לא ניתן לאתר את הספריה הזמנית: %s\n"
+
+#: command.c:3495
+#, c-format
+msgid "could not open temporary file \"%s\": %s\n"
+msgstr "לא ניתן לפתוח את הקובץ הזמני \"%s\": %s\n"
+
+#: command.c:3769
+#, c-format
+msgid ""
+"\\pset: allowed formats are unaligned, aligned, wrapped, html, asciidoc, "
+"latex, latex-longtable, troff-ms\n"
+msgstr ""
+"\\pset: תבניות מותרות הן  unaligned, aligned, wrapped, html, asciidoc, "
+"latex, latex-longtable, troff-ms\n"
+
+#: command.c:3787
+#, c-format
+msgid "\\pset: allowed line styles are ascii, old-ascii, unicode\n"
+msgstr "\\pset: סגנונות מותרות הן ascii, old-ascii, unicode\n"
+
+#: command.c:3802
+#, c-format
+msgid "\\pset: allowed Unicode border line styles are single, double\n"
+msgstr "\\pset: סגנונות קו גבול Unicode מותרות הם single, double\n"
+
+#: command.c:3817
+#, c-format
+msgid "\\pset: allowed Unicode column line styles are single, double\n"
+msgstr "\\pset: סגנונות של העמודה Unicode מותרות הם single, double\n"
+
+#: command.c:3832
+#, c-format
+msgid "\\pset: allowed Unicode header line styles are single, double\n"
+msgstr "\\pset: מותר סגנונות שורה עליונה Unicode מותרות הם single, double\n"
+
+#: command.c:3997 command.c:4176
+#, c-format
+msgid "\\pset: unknown option: %s\n"
+msgstr "\\pset: אפשרות לא ידועה: %s\n"
+
+#: command.c:4015
+#, c-format
+msgid "Border style is %d.\n"
+msgstr "סגנון הגבול הינו %d.\n"
+
+#: command.c:4021
+#, c-format
+msgid "Target width is unset.\n"
+msgstr "רוחב היעד לא הוגדר.\n"
+
+#: command.c:4023
+#, c-format
+msgid "Target width is %d.\n"
+msgstr "רוחב היעד הוא %d.\n"
+
+#: command.c:4030
+#, c-format
+msgid "Expanded display is on.\n"
+msgstr "תצוגה מורחבת מופעלת.\n"
+
+#: command.c:4032
+#, c-format
+msgid "Expanded display is used automatically.\n"
+msgstr "תצוגה מורחבת מופעלת באופן אוטומטי.\n"
+
+#: command.c:4034
+#, c-format
+msgid "Expanded display is off.\n"
+msgstr "תצוגה מורחבת כבויה.\n"
+
+#: command.c:4041 command.c:4049
+#, c-format
+msgid "Field separator is zero byte.\n"
+msgstr "מפריד השדות הוא אפס בתים.\n"
+
+#: command.c:4043
+#, c-format
+msgid "Field separator is \"%s\".\n"
+msgstr "מפריד השדות הוא \"%s\".\n"
+
+#: command.c:4056
+#, c-format
+msgid "Default footer is on.\n"
+msgstr "כותרת תחתונה של ברירת המחדל מופעלת.\n"
+
+#: command.c:4058
+#, c-format
+msgid "Default footer is off.\n"
+msgstr "כותרת תחתונה של ברירת המחדל כבויה.\n"
+
+#: command.c:4064
+#, c-format
+msgid "Output format is %s.\n"
+msgstr "תבנית הפלט הוא %s.\n"
+
+#: command.c:4070
+#, c-format
+msgid "Line style is %s.\n"
+msgstr "סגנון הקו הוא %s.\n"
+
+#: command.c:4077
+#, c-format
+msgid "Null display is \"%s\".\n"
+msgstr "תצוגת Null היא \"%s\".\n"
+
+#: command.c:4085
+#, c-format
+msgid "Locale-adjusted numeric output is on.\n"
+msgstr "הפלט המספרי המותאם לפי אזור מופעל.\n"
+
+#: command.c:4087
+#, c-format
+msgid "Locale-adjusted numeric output is off.\n"
+msgstr "הפלט המספרי המותאם לפי אזור כבוי.\n"
+
+#: command.c:4094
+#, c-format
+msgid "Pager is used for long output.\n"
+msgstr "זימונית בשימוש עבור הפלט ארוך.\n"
+
+#: command.c:4096
+#, c-format
+msgid "Pager is always used.\n"
+msgstr "זימונית בשימוש תמיד.\n"
+
+#: command.c:4098
+#, c-format
+msgid "Pager usage is off.\n"
+msgstr "השימוש בזימונית כבוי.\n"
+
+#: command.c:4104
+#, c-format
+msgid "Pager won't be used for less than %d line.\n"
+msgid_plural "Pager won't be used for less than %d lines.\n"
+msgstr[0] "זימונית לא תהיה בשימוש עבור פחות מ- %d שורה.\n"
+msgstr[1] "זימונית לא תהיה בשימוש עבור פחות מ- %d שורות.\n"
+
+#: command.c:4114 command.c:4124
+#, c-format
+msgid "Record separator is zero byte.\n"
+msgstr "מפריד רשומות הוא אפס בתים.\n"
+
+#: command.c:4116
+#, c-format
+msgid "Record separator is <newline>.\n"
+msgstr "מפריד רשומות היא <שורה חדשה>.\n"
+
+#: command.c:4118
+#, c-format
+msgid "Record separator is \"%s\".\n"
+msgstr "מפריד רשומות היא \"%s\".\n"
+
+#: command.c:4131
+#, c-format
+msgid "Table attributes are \"%s\".\n"
+msgstr "תכונות הטבלה הם \"%s\".\n"
+
+#: command.c:4134
+#, c-format
+msgid "Table attributes unset.\n"
+msgstr "תכונות הטבלה לא הוגדרו.\n"
+
+#: command.c:4141
+#, c-format
+msgid "Title is \"%s\".\n"
+msgstr "הכותרת היא \"%s\".\n"
+
+#: command.c:4143
+#, c-format
+msgid "Title is unset.\n"
+msgstr "כותרת לא הוגדרה.\n"
+
+#: command.c:4150
+#, c-format
+msgid "Tuples only is on.\n"
+msgstr "רק tuples הופעל.\n"
+
+#: command.c:4152
+#, c-format
+msgid "Tuples only is off.\n"
+msgstr "רק tuples כבוי.\n"
+
+#: command.c:4158
+#, c-format
+msgid "Unicode border line style is \"%s\".\n"
+msgstr "סגנון קו הגבול Unicode הוא \"%s\".\n"
+
+#: command.c:4164
+#, c-format
+msgid "Unicode column line style is \"%s\".\n"
+msgstr "סגנון קו עמודה Unicode הוא \"%s\".\n"
+
+#: command.c:4170
+#, c-format
+msgid "Unicode header line style is \"%s\".\n"
+msgstr "סגנון קו כותרת Unicode הוא \"%s\".\n"
+
+#: command.c:4330
+#, c-format
+msgid "\\!: failed\n"
+msgstr "\\!: נכשל\n"
+
+#: command.c:4355 common.c:754
+#, c-format
+msgid "\\watch cannot be used with an empty query\n"
+msgstr "לא ניתן להשתמש ב \\watch עם שאילתה ריקה\n"
+
+#: command.c:4396
+#, c-format
+msgid "%s\t%s (every %gs)\n"
+msgstr "%s\t%s )כל %gs(\n"
+
+#: command.c:4399
+#, c-format
+msgid "%s (every %gs)\n"
+msgstr "%s  (כל %gs)\n"
+
+#: command.c:4453 command.c:4460 common.c:654 common.c:661 common.c:1271
+#, c-format
+msgid ""
+"********* QUERY **********\n"
+"%s\n"
+"**************************\n"
+"\n"
+msgstr ""
+"*********שאילתה*********\n"
+"%s\n"
+"**************************\n"
+"\n"
+
+#: command.c:4652
+#, c-format
+msgid "\"%s.%s\" is not a view\n"
+msgstr "\"%s.%s\" אינה תצוגה\n"
+
+#: command.c:4668
+#, c-format
+msgid "could not parse reloptions array\n"
+msgstr "לא היתה אפשרות לנתח את מערך reloptions\n"
+
+#: common.c:158
+#, c-format
+msgid "cannot escape without active connection\n"
+msgstr "לא מסוגל לברוח בלי חיבור פעיל\n"
+
+#: common.c:199
+#, c-format
+msgid "shell command argument contains a newline or carriage return: \"%s\"\n"
+msgstr "ארגומנט הפקודה shell מכיל שורה חדשה או גררה: \"%s\"\n"
+
+#: common.c:415
+#, c-format
+msgid "connection to server was lost\n"
+msgstr "חיבור לשרת אבד\n"
+
+#: common.c:419
+#, c-format
+msgid "The connection to the server was lost. Attempting reset: "
+msgstr "החיבור לשרת אבד. ניסיון לאפס: "
+
+#: common.c:424
+#, c-format
+msgid "Failed.\n"
+msgstr "נכשל.\n"
+
+#: common.c:431
+#, c-format
+msgid "Succeeded.\n"
+msgstr "הצליח.\n"
+
+#: common.c:531 common.c:1034 common.c:1206
+#, c-format
+msgid "unexpected PQresultStatus: %d\n"
+msgstr "לא צפוי PQresultStatus : %d\n"
+
+#: common.c:593
+#, c-format
+msgid "Time: %.3f ms\n"
+msgstr "זמן: %.3f ms\n"
+
+#: common.c:608
+#, c-format
+msgid "Time: %.3f ms (%02d:%06.3f)\n"
+msgstr "זמן: %.3f ms (% 02d:%06.3f)\n"
+
+#: common.c:617
+#, c-format
+msgid "Time: %.3f ms (%02d:%02d:%06.3f)\n"
+msgstr "זמן: %.3f ms (% 02d:%02d:%06.3f)\n"
+
+#: common.c:624
+#, c-format
+msgid "Time: %.3f ms (%.0f d %02d:%02d:%06.3f)\n"
+msgstr "זמן:%.3f ms (%.0f d %02d:%02d:%06.3f)\n"
+
+#: common.c:761
+#, c-format
+msgid "\\watch cannot be used with COPY\n"
+msgstr "לא ניתן להשתמש \\watch עם COPY\n"
+
+#: common.c:766
+#, c-format
+msgid "unexpected result status for \\watch\n"
+msgstr "מצב התוצאה לא צפוי עבור \\watch\n"
+
+#: common.c:795
+#, c-format
+msgid ""
+"Asynchronous notification \"%s\" with payload \"%s\" received from server "
+"process with PID %d.\n"
+msgstr "הודעה אסינכרונית \"%s\" עם המטען \"%s\" התקבלה מתהליך שרת עם PID %d.\n"
+
+#: common.c:798
+#, c-format
+msgid ""
+"Asynchronous notification \"%s\" received from server process with PID %d.\n"
+msgstr "הודעה אסינכרונית \"%s\" התקבלה מתהליך שרת עם PID %d.\n"
+
+#: common.c:860
+#, c-format
+msgid "no rows returned for \\gset\n"
+msgstr "אין השורות המוחזרות עבור \\gset\n"
+
+#: common.c:865
+#, c-format
+msgid "more than one row returned for \\gset\n"
+msgstr "יותר משורה אחת מוחזרת עבור \\gset\n"
+
+#: common.c:1251
+#, c-format
+msgid ""
+"***(Single step mode: verify "
+"command)*******************************************\n"
+"%s\n"
+"***(press return to proceed or enter x and return to "
+"cancel)********************\n"
+msgstr ""
+"***(מצב צעד יחיד: ודא הפקודה)*******************************************\n"
+"%s\n"
+" ***(לחץ על כדי לחזור או הזן X ולחזור לביטול)********************\n"
+
+#: common.c:1306
+#, c-format
+msgid ""
+"The server (version %s) does not support savepoints for ON_ERROR_ROLLBACK.\n"
+msgstr "השרת (גירסה %s) לא תומך ב savepoints עבור ON_ERROR_ROLLBACK.\n"
+
+#: common.c:1362
+#, c-format
+msgid "STATEMENT:  %s\n"
+msgstr "משפט: %s\n"
+
+#: common.c:1405
+#, c-format
+msgid "unexpected transaction status (%d)\n"
+msgstr "מצב טרנזקציה לא צפוי (%d)\n"
+
+#: copy.c:99
+#, c-format
+msgid "\\copy: arguments required\n"
+msgstr "\\copy: הארגומנטים הדרושים\n"
+
+#: copy.c:254
+#, c-format
+msgid "\\copy: parse error at \"%s\"\n"
+msgstr "\\copy: ניתוח שגיאה ב- \"%s\"\n"
+
+#: copy.c:256
+#, c-format
+msgid "\\copy: parse error at end of line\n"
+msgstr "\\copy: ניתוח שגיאה בסוף שורה\n"
+
+#: copy.c:329
+#, c-format
+msgid "could not execute command \"%s\": %s\n"
+msgstr "לא היה ניתן לבצע את הפקודה \"%s\": %s\n"
+
+#: copy.c:345
+#, c-format
+msgid "could not stat file \"%s\": %s\n"
+msgstr "לא היה ניתן stat קובץ \"%s\": %s\n"
+
+#: copy.c:349
+#, c-format
+msgid "%s: cannot copy from/to a directory\n"
+msgstr "%s: לא ניתן להעתיק את מ/אל ספריה\n"
+
+#: copy.c:386
+#, c-format
+msgid "could not close pipe to external command: %s\n"
+msgstr "לא יכול לסגור את צינור לפקודה חיצוניים: %s\n"
+
+#: copy.c:452 copy.c:463
+#, c-format
+msgid "could not write COPY data: %s\n"
+msgstr "לא יוכלו לכתוב את COPY נתונים: %s\n"
+
+#: copy.c:470
+#, c-format
+msgid "COPY data transfer failed: %s"
+msgstr "העברת נתונים COPY  נכשלה: %s"
+
+#: copy.c:531
+msgid "canceled by user"
+msgstr "בוטלה על-ידי המשתמש"
+
+#: copy.c:542
+msgid ""
+"Enter data to be copied followed by a newline.\n"
+"End with a backslash and a period on a line by itself."
+msgstr ""
+"להזין נתונים על מנת להעתיקם ואחר כך שורה חדשה.\n"
+"לסיים עם קו נטוי הפוך, ונקודה בשורה עצמה."
+
+#: copy.c:671
+msgid "aborted because of read failure"
+msgstr "בוטלו עקב כשל קריאה"
+
+#: copy.c:695
+msgid "trying to exit copy mode"
+msgstr "מנסה לצאת ממצב עותק"
+
+#: crosstabview.c:123
+#, c-format
+msgid "\\crosstabview: statement did not return a result set\n"
+msgstr "\\crosstabview: משפט לא החזיר סט התוצאה\n"
+
+#: crosstabview.c:129
+#, c-format
+msgid "\\crosstabview: query must return at least three columns\n"
+msgstr "\\crosstabview: השאילתה חייבת להחזיר לפחות שלוש עמודות\n"
+
+#: crosstabview.c:156
+#, c-format
+msgid ""
+"\\crosstabview: vertical and horizontal headers must be different columns\n"
+msgstr "\\crosstabview: כותרות אופקיות ואנכיות חייבות להיות עמודות שונות\n"
+
+#: crosstabview.c:172
+#, c-format
+msgid ""
+"\\crosstabview: data column must be specified when query returns more than "
+"three columns\n"
+msgstr ""
+"\\crosstabview: יש לציין עמודת הנתונים כאשר השאילתה מחזירה יותר משלוש "
+"עמודות\n"
+
+#: crosstabview.c:228
+#, c-format
+msgid "\\crosstabview: maximum number of columns (%d) exceeded\n"
+msgstr "\\crosstabview: חריגה במספר מרבי של עמודות (%d)\n"
+
+#: crosstabview.c:397
+#, c-format
+msgid ""
+"\\crosstabview: query result contains multiple data values for row \"%s\", "
+"column \"%s\"\n"
+msgstr ""
+"\\crosstabview: התוצאות השאילתה מכילות ערכים נתונים מרובים עבור שורה \"%s\", "
+"עמודה \"%s\"\n"
+
+#: crosstabview.c:645
+#, c-format
+msgid "\\crosstabview: column number %d is out of range 1..%d\n"
+msgstr "\\crosstabview: מספר העמודה %d נמצא מחוץ לטווח 1..%d\n"
+
+#: crosstabview.c:670
+#, c-format
+msgid "\\crosstabview: ambiguous column name: \"%s\"\n"
+msgstr "\\crosstabview: שם העמודה רב-משמעי: \"%s\"\n"
+
+#: crosstabview.c:678
+#, c-format
+msgid "\\crosstabview: column name not found: \"%s\"\n"
+msgstr "\\crosstabview: שם עמודה לא נמצא: \"%s\"\n"
+
+#: describe.c:73 describe.c:342 describe.c:599 describe.c:730 describe.c:874
+#: describe.c:1035 describe.c:1107 describe.c:3305 describe.c:3511
+#: describe.c:3602 describe.c:3850 describe.c:3995 describe.c:4227
+#: describe.c:4302 describe.c:4313 describe.c:4375 describe.c:4795
+#: describe.c:4878
+msgid "Schema"
+msgstr "סכמה"
+
+#: describe.c:74 describe.c:162 describe.c:228 describe.c:236 describe.c:343
+#: describe.c:600 describe.c:731 describe.c:792 describe.c:875 describe.c:1108
+#: describe.c:3306 describe.c:3434 describe.c:3512 describe.c:3603
+#: describe.c:3682 describe.c:3851 describe.c:3920 describe.c:3996
+#: describe.c:4228 describe.c:4303 describe.c:4314 describe.c:4376
+#: describe.c:4568 describe.c:4652 describe.c:4876 describe.c:5043
+#: describe.c:5232
+msgid "Name"
+msgstr "שם"
+
+#: describe.c:75 describe.c:355 describe.c:401 describe.c:418
+msgid "Result data type"
+msgstr "טיפוס נתונים של תוצאה"
+
+#: describe.c:83 describe.c:96 describe.c:100 describe.c:356 describe.c:402
+#: describe.c:419
+msgid "Argument data types"
+msgstr "טיפוס הנתונים של הארגומנט"
+
+#: describe.c:107 describe.c:172 describe.c:259 describe.c:464 describe.c:648
+#: describe.c:746 describe.c:817 describe.c:1110 describe.c:1746
+#: describe.c:3105 describe.c:3340 describe.c:3465 describe.c:3539
+#: describe.c:3612 describe.c:3695 describe.c:3763 describe.c:3863
+#: describe.c:3929 describe.c:3997 describe.c:4133 describe.c:4173
+#: describe.c:4244 describe.c:4306 describe.c:4315 describe.c:4377
+#: describe.c:4594 describe.c:4674 describe.c:4809 describe.c:4879
+#: large_obj.c:289 large_obj.c:299
+msgid "Description"
+msgstr "תיאור‪"
+
+#: describe.c:125
+msgid "List of aggregate functions"
+msgstr "רשימת פונקציות הצבירה"
+
+#: describe.c:149
+#, c-format
+msgid "The server (version %s) does not support access methods.\n"
+msgstr "השרת (גירסה %s) אינו תומך בשיטות גישה.\n"
+
+#: describe.c:163
+msgid "Index"
+msgstr "אינדקס"
+
+#: describe.c:164 describe.c:362 describe.c:407 describe.c:424 describe.c:882
+#: describe.c:1046 describe.c:1706 describe.c:3315 describe.c:3513
+#: describe.c:4671
+msgid "Type"
+msgstr "סוג"
+
+#: describe.c:171 describe.c:4573
+msgid "Handler"
+msgstr "הנדלר"
+
+#: describe.c:190
+msgid "List of access methods"
+msgstr "רשימת שיטות גישה"
+
+#: describe.c:215
+#, c-format
+msgid "The server (version %s) does not support tablespaces.\n"
+msgstr "השרת (גירסה %s) אינו תומך במרחבי טבלאות.\n"
+
+#: describe.c:229 describe.c:237 describe.c:452 describe.c:638 describe.c:793
+#: describe.c:1034 describe.c:3316 describe.c:3438 describe.c:3684
+#: describe.c:3921 describe.c:4569 describe.c:4653 describe.c:5044
+#: describe.c:5233 large_obj.c:288
+msgid "Owner"
+msgstr "בעלים"
+
+#: describe.c:230 describe.c:238
+msgid "Location"
+msgstr "מיקום"
+
+#: describe.c:249 describe.c:2920
+msgid "Options"
+msgstr "אפשריות"
+
+#: describe.c:254 describe.c:611 describe.c:809 describe.c:3332 describe.c:3336
+msgid "Size"
+msgstr "גודל"
+
+#: describe.c:276
+msgid "List of tablespaces"
+msgstr "רשימת מרחבי טבלאות"
+
+#: describe.c:316
+#, c-format
+msgid "\\df only takes [antwS+] as options\n"
+msgstr "\\df לוקח רק [antwS +] כאפשרויות\n"
+
+#: describe.c:324
+#, c-format
+msgid "\\df does not take a \"w\" option with server version %s\n"
+msgstr "\\df לא לוקח אופציה \"w\" עם גירסת השרת %s\n"
+
+#. translator: "agg" is short for "aggregate"
+#: describe.c:358 describe.c:404 describe.c:421
+msgid "agg"
+msgstr "agg"
+
+#: describe.c:359
+msgid "window"
+msgstr "חלון"
+
+#: describe.c:360 describe.c:405 describe.c:422 describe.c:1244
+msgid "trigger"
+msgstr "הדק"
+
+#: describe.c:361 describe.c:406 describe.c:423
+msgid "normal"
+msgstr "תקין"
+
+#: describe.c:434
+msgid "immutable"
+msgstr "בלתי ניתן לשינוי"
+
+#: describe.c:435
+msgid "stable"
+msgstr "יציב"
+
+#: describe.c:436
+msgid "volatile"
+msgstr "נדיף"
+
+#: describe.c:437
+msgid "Volatility"
+msgstr "תנודתיות"
+
+#: describe.c:445
+msgid "restricted"
+msgstr "מוגבל"
+
+#: describe.c:446
+msgid "safe"
+msgstr "בטוח"
+
+#: describe.c:447
+msgid "unsafe"
+msgstr "לא בטוח"
+
+#: describe.c:448
+msgid "Parallel"
+msgstr "מקבילי"
+
+#: describe.c:453
+msgid "definer"
+msgstr "מגדיר"
+
+#: describe.c:454
+msgid "invoker"
+msgstr "מפעיל"
+
+#: describe.c:455
+msgid "Security"
+msgstr "אבטחה"
+
+#: describe.c:462
+msgid "Language"
+msgstr "ספה"
+
+#: describe.c:463
+msgid "Source code"
+msgstr "קוד מקור"
+
+#: describe.c:562
+msgid "List of functions"
+msgstr "רשימת פונקציות"
+
+#: describe.c:610
+msgid "Internal name"
+msgstr "שם פנימי"
+
+#: describe.c:632
+msgid "Elements"
+msgstr "אלמנטים"
+
+#: describe.c:689
+msgid "List of data types"
+msgstr "רשימת סוגי הנתונים"
+
+#: describe.c:732
+msgid "Left arg type"
+msgstr "סוג ארגומנט השמאלי"
+
+#: describe.c:733
+msgid "Right arg type"
+msgstr "סוג ארגומנט ימני"
+
+#: describe.c:734
+msgid "Result type"
+msgstr "טיפוס נתונים של תוצאה"
+
+#: describe.c:739 describe.c:3754 describe.c:4132
+msgid "Function"
+msgstr "פונקציה"
+
+#: describe.c:764
+msgid "List of operators"
+msgstr "רשימת מפעילים"
+
+#: describe.c:794
+msgid "Encoding"
+msgstr "קידוד"
+
+#: describe.c:799 describe.c:3852
+msgid "Collate"
+msgstr "סדר אלפביתי"
+
+#: describe.c:800 describe.c:3853
+msgid "Ctype"
+msgstr "Ctype"
+
+#: describe.c:813
+msgid "Tablespace"
+msgstr "מרחב טבלאות"
+
+#: describe.c:835
+msgid "List of databases"
+msgstr "רשימת מאגרי מידע"
+
+#: describe.c:876 describe.c:881 describe.c:1037 describe.c:3307
+#: describe.c:3314
+msgid "table"
+msgstr "טבלה"
+
+#: describe.c:877 describe.c:3308
+msgid "view"
+msgstr "תצוגה"
+
+#: describe.c:878 describe.c:3309
+msgid "materialized view"
+msgstr "תצוגה ממומשת"
+
+#: describe.c:879 describe.c:1039 describe.c:3311
+msgid "sequence"
+msgstr "סדרה"
+
+#: describe.c:880 describe.c:3313
+msgid "foreign table"
+msgstr "טבלה זרה"
+
+#: describe.c:893
+msgid "Column privileges"
+msgstr "הרשאות על עמודות"
+
+#: describe.c:924 describe.c:958
+msgid "Policies"
+msgstr "מדיניות"
+
+#: describe.c:990 describe.c:5289 describe.c:5293
+msgid "Access privileges"
+msgstr "הרשאות גישה"
+
+#: describe.c:1021
+#, c-format
+msgid "The server (version %s) does not support altering default privileges.\n"
+msgstr "השרת (גירסה %s) אינו תומך בשינוי של הרשאות ברירת מחדל.\n"
+
+#: describe.c:1041
+msgid "function"
+msgstr "פונקציה"
+
+#: describe.c:1043
+msgid "type"
+msgstr "סוג"
+
+#: describe.c:1045
+msgid "schema"
+msgstr "סכמה"
+
+#: describe.c:1069
+msgid "Default access privileges"
+msgstr "הרשאות גישה ברירת מחדל"
+
+#: describe.c:1109
+msgid "Object"
+msgstr "אובייקט"
+
+#: describe.c:1123
+msgid "table constraint"
+msgstr "אילוץ טבלאי"
+
+#: describe.c:1145
+msgid "domain constraint"
+msgstr "אילוץ התחום"
+
+#: describe.c:1173
+msgid "operator class"
+msgstr "מחלקת המפעיל"
+
+#: describe.c:1202
+msgid "operator family"
+msgstr "משפחת המפעיל"
+
+#: describe.c:1224
+msgid "rule"
+msgstr "כלל"
+
+#: describe.c:1266
+msgid "Object descriptions"
+msgstr "תיאורים של אובייקט"
+
+#: describe.c:1320
+#, c-format
+msgid "Did not find any relation named \"%s\".\n"
+msgstr "לא מצא כל קשר בשם \"%s\".\n"
+
+#: describe.c:1529
+#, c-format
+msgid "Did not find any relation with OID %s.\n"
+msgstr "לא מצא כל קשר עם OID %s.\n"
+
+#: describe.c:1642 describe.c:1691
+#, c-format
+msgid "Unlogged table \"%s.%s\""
+msgstr "טבלה לא במעקב \"%s.%s\""
+
+#: describe.c:1645 describe.c:1694
+#, c-format
+msgid "Table \"%s.%s\""
+msgstr "טבלה \"%s.%s\""
+
+#: describe.c:1649
+#, c-format
+msgid "View \"%s.%s\""
+msgstr "תצוגה \"%s.%s\""
+
+#: describe.c:1654
+#, c-format
+msgid "Unlogged materialized view \"%s.%s\""
+msgstr "תצוג ממומשת לא במעקב \"%s.%s\""
+
+#: describe.c:1657
+#, c-format
+msgid "Materialized view \"%s.%s\""
+msgstr "תצוגה ממומשת \"%s.%s\""
+
+#: describe.c:1661
+#, c-format
+msgid "Sequence \"%s.%s\""
+msgstr "רצף \"%s.%s\""
+
+#: describe.c:1666
+#, c-format
+msgid "Unlogged index \"%s.%s\""
+msgstr "אינדקס לא במעקב \"%s.%s\""
+
+#: describe.c:1669
+#, c-format
+msgid "Index \"%s.%s\""
+msgstr "אינדקס \"%s.%s\""
+
+#: describe.c:1674
+#, c-format
+msgid "Special relation \"%s.%s\""
+msgstr "קשר מיוחד \"%s.%s\""
+
+#: describe.c:1678
+#, c-format
+msgid "TOAST table \"%s.%s\""
+msgstr "בטבלת TOAST  \"%s.%s\""
+
+#: describe.c:1682
+#, c-format
+msgid "Composite type \"%s.%s\""
+msgstr "סוג מורכב \"%s.%s\""
+
+#: describe.c:1686
+#, c-format
+msgid "Foreign table \"%s.%s\""
+msgstr "טבלה זרה \"%s.%s\""
+
+#: describe.c:1705
+msgid "Column"
+msgstr "עמודה"
+
+#: describe.c:1716 describe.c:3519
+msgid "Collation"
+msgstr "סדר אלפביתי"
+
+#: describe.c:1717 describe.c:3526
+msgid "Nullable"
+msgstr "ערך null"
+
+#: describe.c:1718 describe.c:3527
+msgid "Default"
+msgstr "ברירת מחדל"
+
+#: describe.c:1723
+msgid "Value"
+msgstr "ערך"
+
+#: describe.c:1726
+msgid "Definition"
+msgstr "הגדרה"
+
+#: describe.c:1729 describe.c:4589 describe.c:4673 describe.c:4744
+#: describe.c:4808
+msgid "FDW Options"
+msgstr "אפשריות FDW"
+
+#: describe.c:1733
+msgid "Storage"
+msgstr "אחסון"
+
+#: describe.c:1738
+msgid "Stats target"
+msgstr "סטטיסטיקה היעד"
+
+#: describe.c:1876
+#, c-format
+msgid "Partition of: %s %s"
+msgstr "חלוקת: %s %s"
+
+#: describe.c:1897
+#, c-format
+msgid "Partition key: %s"
+msgstr "מחיצה מפתח: %s"
+
+#: describe.c:1965
+msgid "primary key, "
+msgstr "מפתח ראשי, "
+
+#: describe.c:1967
+msgid "unique, "
+msgstr "ייחודי, "
+
+#: describe.c:1973
+#, c-format
+msgid "for table \"%s.%s\""
+msgstr "לטבלה \"%s.%s\""
+
+#: describe.c:1977
+#, c-format
+msgid ", predicate (%s)"
+msgstr ", הפרדיקאט (%s)"
+
+#: describe.c:1980
+msgid ", clustered"
+msgstr ", מקובץ"
+
+#: describe.c:1983
+msgid ", invalid"
+msgstr ", לא תקין"
+
+#: describe.c:1986
+msgid ", deferrable"
+msgstr ", נדחה"
+
+#: describe.c:1989
+msgid ", initially deferred"
+msgstr ", נדחה תחילה"
+
+#: describe.c:1992
+msgid ", replica identity"
+msgstr ", זהות משוכפלת"
+
+#: describe.c:2031
+#, c-format
+msgid "Owned by: %s"
+msgstr "בבעלות של: %s"
+
+#: describe.c:2036
+#, c-format
+msgid "Sequence for identity column: %s"
+msgstr "רצף עבור עמודת זהות: %s"
+
+#: describe.c:2100
+msgid "Indexes:"
+msgstr "אינדקסים:"
+
+#: describe.c:2184
+msgid "Check constraints:"
+msgstr "בדיקת אילוצים:"
+
+#: describe.c:2215
+msgid "Foreign-key constraints:"
+msgstr "אילוצי מפתח זר:"
+
+#: describe.c:2246
+msgid "Referenced by:"
+msgstr "הופנה על-ידי:"
+
+#: describe.c:2306
+msgid "Policies:"
+msgstr "מדיניות:"
+
+#: describe.c:2309
+msgid "Policies (forced row security enabled):"
+msgstr "מדיניות (כפיה של אבטחה ברמת השורה מופעלת):"
+
+#: describe.c:2312
+msgid "Policies (row security enabled): (none)"
+msgstr "מדיניות (אבטחה ברמת השורה מופעלת): (ללא)"
+
+#: describe.c:2315
+msgid "Policies (forced row security enabled): (none)"
+msgstr "מדיניות (כפיה של אבטחה ברמת השורה מופעלת): (ללא)"
+
+#: describe.c:2318
+msgid "Policies (row security disabled):"
+msgstr "מדיניות (אבטחה ברמת השורה מבוטלת):"
+
+#: describe.c:2379
+msgid "Statistics:"
+msgstr "סטטיסטיקות:"
+
+#: describe.c:2481 describe.c:2563
+msgid "Rules:"
+msgstr "כללים:"
+
+#: describe.c:2484
+msgid "Disabled rules:"
+msgstr "חוקים מושבתים:"
+
+#: describe.c:2487
+msgid "Rules firing always:"
+msgstr "חוקים אשר יורים תמיד:"
+
+#: describe.c:2490
+msgid "Rules firing on replica only:"
+msgstr "כללי אשר יורים בעותק בלבד:"
+
+#: describe.c:2527
+msgid "Publications:"
+msgstr "פרסומים:"
+
+#: describe.c:2546
+msgid "View definition:"
+msgstr "הגדרת תצוגה:"
+
+#: describe.c:2681
+msgid "Triggers:"
+msgstr "טריגירים:"
+
+#: describe.c:2685
+msgid "Disabled user triggers:"
+msgstr "טריגרים של משתמשים מושבתים:"
+
+#: describe.c:2687
+msgid "Disabled triggers:"
+msgstr "טריגרים מושבתים:"
+
+#: describe.c:2690
+msgid "Disabled internal triggers:"
+msgstr "טריגרים פנימיים מושבתים:"
+
+#: describe.c:2693
+msgid "Triggers firing always:"
+msgstr "טריגרים פועלים תמיד:"
+
+#: describe.c:2696
+msgid "Triggers firing on replica only:"
+msgstr "טריגרים פועלים בעותק בלבד:"
+
+#: describe.c:2782
+msgid "Inherits"
+msgstr "יורש"
+
+#: describe.c:2836
+#, c-format
+msgid "Number of child tables: %d (Use \\d+ to list them.)"
+msgstr "מספר טבלאות הצאצא: %d (שימוש \\d+ כדי לפרט אותם)."
+
+#: describe.c:2838
+#, c-format
+msgid "Number of partitions: %d (Use \\d+ to list them.)"
+msgstr "מספר החלוקות: %d (שימוש \\d+ כדי לפרט אותם)."
+
+#: describe.c:2846
+msgid "Child tables"
+msgstr "טבלאות הצאצא"
+
+#: describe.c:2846
+msgid "Partitions"
+msgstr "מחיצות"
+
+#: describe.c:2880
+#, c-format
+msgid "Typed table of type: %s"
+msgstr "טבלה מסוג: %s"
+
+#: describe.c:2896
+msgid "Replica Identity"
+msgstr "זהות העותק"
+
+#: describe.c:2909
+msgid "Has OIDs: yes"
+msgstr "יש OIDs: כן"
+
+#: describe.c:2993
+#, c-format
+msgid "Tablespace: \"%s\""
+msgstr "מרחב טבלאי: \"%s\""
+
+#. translator: before this string there's an index description like
+#. '"foo_pkey" PRIMARY KEY, btree (a)'
+#: describe.c:3005
+#, c-format
+msgid ", tablespace \"%s\""
+msgstr ", מרחב טבלאי: \"%s\""
+
+#: describe.c:3098
+msgid "List of roles"
+msgstr "רשימת תפקידים"
+
+#: describe.c:3100
+msgid "Role name"
+msgstr "שם תפקיד"
+
+#: describe.c:3101
+msgid "Attributes"
+msgstr "מאפיינים"
+
+#: describe.c:3102
+msgid "Member of"
+msgstr "חבר ב"
+
+#: describe.c:3113
+msgid "Superuser"
+msgstr "משתמש על"
+
+#: describe.c:3116
+msgid "No inheritance"
+msgstr "אין הורשה"
+
+#: describe.c:3119
+msgid "Create role"
+msgstr "צור תפקיד"
+
+#: describe.c:3122
+msgid "Create DB"
+msgstr "צור מסד נתונים"
+
+#: describe.c:3125
+msgid "Cannot login"
+msgstr "לא מצליח להתחבר"
+
+#: describe.c:3129
+msgid "Replication"
+msgstr "שכפול"
+
+#: describe.c:3133
+msgid "Bypass RLS"
+msgstr "מעקף RLS"
+
+#: describe.c:3142
+msgid "No connections"
+msgstr "אין חיבורים"
+
+#: describe.c:3144
+#, c-format
+msgid "%d connection"
+msgid_plural "%d connections"
+msgstr[0] "%d חיבור"
+msgstr[1] "%d חיבורים"
+
+#: describe.c:3154
+msgid "Password valid until "
+msgstr "הסיסמה בתוקף עד "
+
+#: describe.c:3210
+msgid "Role"
+msgstr "תפקיד"
+
+#: describe.c:3211
+msgid "Database"
+msgstr "מסד נתונים"
+
+#: describe.c:3212
+msgid "Settings"
+msgstr "הגדרות"
+
+#: describe.c:3222
+#, c-format
+msgid "No per-database role settings support in this server version.\n"
+msgstr "אין הגדרות תפקיד ספציפי למסד הנתונים תומכים בגירסת השרת.\n"
+
+#: describe.c:3233
+#, c-format
+msgid "No matching settings found.\n"
+msgstr "לא נמצאו הגדרות תואמות.\n"
+
+#: describe.c:3235
+#, c-format
+msgid "No settings found.\n"
+msgstr "הגדרות לא נמצאו.\n"
+
+#: describe.c:3240
+msgid "List of settings"
+msgstr "רשימת הגדרות"
+
+#: describe.c:3310
+msgid "index"
+msgstr "אינדקס"
+
+#: describe.c:3312
+msgid "special"
+msgstr "מיוחד"
+
+#: describe.c:3321 describe.c:4796
+msgid "Table"
+msgstr "טבלה"
+
+#: describe.c:3398
+#, c-format
+msgid "No matching relations found.\n"
+msgstr "לא נמצאו יחסים תואמים.\n"
+
+#: describe.c:3400
+#, c-format
+msgid "No relations found.\n"
+msgstr "יחסים לא נמצאו.\n"
+
+#: describe.c:3405
+msgid "List of relations"
+msgstr "רשימת יחסים"
+
+#: describe.c:3442
+msgid "Trusted"
+msgstr "אמין"
+
+#: describe.c:3450
+msgid "Internal Language"
+msgstr "שפה פנימית"
+
+#: describe.c:3451
+msgid "Call Handler"
+msgstr "קריאה למטפל"
+
+#: describe.c:3452 describe.c:4576
+msgid "Validator"
+msgstr "מאמת"
+
+#: describe.c:3455
+msgid "Inline Handler"
+msgstr "המטפל מוטבע"
+
+#: describe.c:3483
+msgid "List of languages"
+msgstr "רשימת השפות"
+
+#: describe.c:3528
+msgid "Check"
+msgstr "בדיקה"
+
+#: describe.c:3570
+msgid "List of domains"
+msgstr "רשימת תחומים"
+
+#: describe.c:3604
+msgid "Source"
+msgstr "מקור"
+
+#: describe.c:3605
+msgid "Destination"
+msgstr "יעד"
+
+#: describe.c:3606 describe.c:3755
+msgid "no"
+msgstr "לא"
+
+#: describe.c:3606 describe.c:3757
+msgid "yes"
+msgstr "כן"
+
+#: describe.c:3607
+msgid "Default?"
+msgstr "ברירת מחדל?"
+
+#: describe.c:3644
+msgid "List of conversions"
+msgstr "רשימת המרות"
+
+#: describe.c:3683
+msgid "Event"
+msgstr "אירוע"
+
+#: describe.c:3685
+msgid "enabled"
+msgstr "מאופשר"
+
+#: describe.c:3686
+msgid "replica"
+msgstr "עותק משוכפל"
+
+#: describe.c:3687
+msgid "always"
+msgstr "תמיד"
+
+#: describe.c:3688
+msgid "disabled"
+msgstr "מבוטל"
+
+#: describe.c:3689 describe.c:5234
+msgid "Enabled"
+msgstr "מאופשר"
+
+#: describe.c:3690
+msgid "Procedure"
+msgstr "פרוצדורה"
+
+#: describe.c:3691
+msgid "Tags"
+msgstr "תגיות"
+
+#: describe.c:3710
+msgid "List of event triggers"
+msgstr "רשימת טריגרים של אירועים"
+
+#: describe.c:3752
+msgid "Source type"
+msgstr "סוג מקור"
+
+#: describe.c:3753
+msgid "Target type"
+msgstr "סוג מטרה"
+
+#: describe.c:3756
+msgid "in assignment"
+msgstr "בהקצאה"
+
+#: describe.c:3758
+msgid "Implicit?"
+msgstr "בצורה עקיפה?"
+
+#: describe.c:3809
+msgid "List of casts"
+msgstr "רשימת המרות"
+
+#: describe.c:3837
+#, c-format
+msgid "The server (version %s) does not support collations.\n"
+msgstr "השרת (גירסה %s) אינו תומך באוספים.\n"
+
+#: describe.c:3858
+msgid "Provider"
+msgstr "ספק"
+
+#: describe.c:3893
+msgid "List of collations"
+msgstr "רשימת האוספים"
+
+#: describe.c:3952
+msgid "List of schemas"
+msgstr "רשימת הסכימות"
+
+#: describe.c:3977 describe.c:4215 describe.c:4286 describe.c:4357
+#, c-format
+msgid "The server (version %s) does not support full text search.\n"
+msgstr "השרת (גירסה %s) אינו תומך בחיפוש טקסט מלא.\n"
+
+#: describe.c:4012
+msgid "List of text search parsers"
+msgstr "רשימת מנתחי מבנה חיפוש טקסט"
+
+#: describe.c:4055
+#, c-format
+msgid "Did not find any text search parser named \"%s\".\n"
+msgstr "לא מצא כל מנתח החיפוש טקסט בשם \"%s\".\n"
+
+#: describe.c:4130
+msgid "Start parse"
+msgstr "מתחיל ניתוח"
+
+#: describe.c:4131
+msgid "Method"
+msgstr "שיטה"
+
+#: describe.c:4135
+msgid "Get next token"
+msgstr "תקבל אסימון גישה הבא"
+
+#: describe.c:4137
+msgid "End parse"
+msgstr "סוף ניתוח"
+
+#: describe.c:4139
+msgid "Get headline"
+msgstr "תקבל שורת כותרת"
+
+#: describe.c:4141
+msgid "Get token types"
+msgstr "תקבל סוגים של אסימוני גישה"
+
+#: describe.c:4151
+#, c-format
+msgid "Text search parser \"%s.%s\""
+msgstr "מנתח החיפוש טקסט \"%s.%s\""
+
+#: describe.c:4153
+#, c-format
+msgid "Text search parser \"%s\""
+msgstr "מנתח החיפוש טקסט \"%s\""
+
+#: describe.c:4172
+msgid "Token name"
+msgstr "שם של אסימון גישה"
+
+#: describe.c:4183
+#, c-format
+msgid "Token types for parser \"%s.%s\""
+msgstr "סוגי אסימוני גישה עבור מנתח \"%s.%s\""
+
+#: describe.c:4185
+#, c-format
+msgid "Token types for parser \"%s\""
+msgstr "סוגי אסימוני גישה עבור מנתח \"%s\""
+
+#: describe.c:4238
+msgid "Template"
+msgstr "תבנית"
+
+#: describe.c:4239
+msgid "Init options"
+msgstr "אפשריות init"
+
+#: describe.c:4261
+msgid "List of text search dictionaries"
+msgstr "רשימת מילונים של חיפוש טקסט"
+
+#: describe.c:4304
+msgid "Init"
+msgstr "Init"
+
+#: describe.c:4305
+msgid "Lexize"
+msgstr "Lexize"
+
+#: describe.c:4332
+msgid "List of text search templates"
+msgstr "רשימת תבניות של חיפוש טקסט"
+
+#: describe.c:4392
+msgid "List of text search configurations"
+msgstr "רשימת התצורות של חיפוש טקסט"
+
+#: describe.c:4436
+#, c-format
+msgid "Did not find any text search configuration named \"%s\".\n"
+msgstr "לא נמצא כל תצורת חיפוש טקסט בשם \"%s\".\n"
+
+#: describe.c:4502
+msgid "Token"
+msgstr "אסימון גישה"
+
+#: describe.c:4503
+msgid "Dictionaries"
+msgstr "מילונים"
+
+#: describe.c:4514
+#, c-format
+msgid "Text search configuration \"%s.%s\""
+msgstr "תצורה של חיפוש טקסט \"%s.%s\""
+
+#: describe.c:4517
+#, c-format
+msgid "Text search configuration \"%s\""
+msgstr "תצורה של חיפוש טקסט \"%s\""
+
+#: describe.c:4521
+#, c-format
+msgid ""
+"\n"
+"Parser: \"%s.%s\""
+msgstr ""
+"\n"
+"מנתח: \"%s.%s\""
+
+#: describe.c:4524
+#, c-format
+msgid ""
+"\n"
+"Parser: \"%s\""
+msgstr ""
+"\n"
+"מנתח: \"%s\""
+
+#: describe.c:4558
+#, c-format
+msgid "The server (version %s) does not support foreign-data wrappers.\n"
+msgstr "השרת (גירסה %s) אינו תומך בעטיפות נתונים זרים.\n"
+
+#: describe.c:4616
+msgid "List of foreign-data wrappers"
+msgstr "רשימת עטיפות נתונים זרים"
+
+#: describe.c:4641
+#, c-format
+msgid "The server (version %s) does not support foreign servers.\n"
+msgstr "השרת (גירסה %s) אינו תומך בשרתים זרים.\n"
+
+#: describe.c:4654
+msgid "Foreign-data wrapper"
+msgstr "מעטפת החוץ-נתונים"
+
+#: describe.c:4672 describe.c:4877
+msgid "Version"
+msgstr "גירסה"
+
+#: describe.c:4698
+msgid "List of foreign servers"
+msgstr "רשימת שרתים זרים"
+
+#: describe.c:4723
+#, c-format
+msgid "The server (version %s) does not support user mappings.\n"
+msgstr "השרת (גירסה %s) אינו תומך במיפויים של המשתמש.\n"
+
+#: describe.c:4733 describe.c:4797
+msgid "Server"
+msgstr "שרת"
+
+#: describe.c:4734
+msgid "User name"
+msgstr "שם משתמש"
+
+#: describe.c:4759
+msgid "List of user mappings"
+msgstr "רשימת מיפויים שלמשתמשים"
+
+#: describe.c:4784
+#, c-format
+msgid "The server (version %s) does not support foreign tables.\n"
+msgstr "השרת (גירסה %s) אינו תומך בטבלאות זרות.\n"
+
+#: describe.c:4837
+msgid "List of foreign tables"
+msgstr "רשימת הטבלאות הזרות"
+
+#: describe.c:4862 describe.c:4919
+#, c-format
+msgid "The server (version %s) does not support extensions.\n"
+msgstr "השרת (גירסה %s) אינו תומך בהרחבות.\n"
+
+#: describe.c:4894
+msgid "List of installed extensions"
+msgstr "רשימת ההרחבות המותקנות"
+
+#: describe.c:4947
+#, c-format
+msgid "Did not find any extension named \"%s\".\n"
+msgstr "לא מצא כל הרחבה בשם \"%s\".\n"
+
+#: describe.c:4950
+#, c-format
+msgid "Did not find any extensions.\n"
+msgstr "לא נמצאו כל הרחבות.\n"
+
+#: describe.c:4994
+msgid "Object Description"
+msgstr "תיאור האובייקט"
+
+#: describe.c:5003
+#, c-format
+msgid "Objects in extension \"%s\""
+msgstr "אובייקטים בהרחבה \"%s\""
+
+#: describe.c:5029 describe.c:5091
+#, c-format
+msgid "The server (version %s) does not support publications.\n"
+msgstr "השרת (גירסה %s) אינו תומך בפרסומים.\n"
+
+#: describe.c:5045 describe.c:5136
+msgid "Inserts"
+msgstr "מוסיף"
+
+#: describe.c:5046 describe.c:5137
+msgid "Updates"
+msgstr "מעדכן"
+
+#: describe.c:5047 describe.c:5138
+msgid "Deletes"
+msgstr "מוחק"
+
+#: describe.c:5064
+msgid "List of publications"
+msgstr "רשימת פרסומים"
+
+#: describe.c:5133
+#, c-format
+msgid "Publication %s"
+msgstr "פרסום %s"
+
+#: describe.c:5178
+msgid "Tables:"
+msgstr "טבלאות:"
+
+#: describe.c:5219
+#, c-format
+msgid "The server (version %s) does not support subscriptions.\n"
+msgstr "השרת (גירסה %s) אינו תומך במנויים.\n"
+
+#: describe.c:5235
+msgid "Publication"
+msgstr "פרסום"
+
+#: describe.c:5242
+msgid "Synchronous commit"
+msgstr "ביצוע סינכרוני"
+
+#: describe.c:5243
+msgid "Conninfo"
+msgstr "הגדרות חיבור"
+
+#: describe.c:5265
+msgid "List of subscriptions"
+msgstr "רשימת מנויים"
+
+#: help.c:62
+#, c-format
+msgid "%s\n"
+msgstr "%s\n"
+
+#: help.c:73
+#, c-format
+msgid ""
+"psql is the PostgreSQL interactive terminal.\n"
+"\n"
+msgstr ""
+"psql היא מסוף PostgreSQL אינטראקטיבי.\n"
+"\n"
+
+#: help.c:74 help.c:342 help.c:376 help.c:403
+#, c-format
+msgid "Usage:\n"
+msgstr "שימוש:\n"
+
+#: help.c:75
+#, c-format
+msgid ""
+"  psql [OPTION]... [DBNAME [USERNAME]]\n"
+"\n"
+msgstr ""
+" psqlpsql [OPTION]... [DBNAME [USERNAME]]\n"
+"\n"
+
+#: help.c:77
+#, c-format
+msgid "General options:\n"
+msgstr "אפשרויות כלליות:\n"
+
+#: help.c:82
+#, c-format
+msgid ""
+"  -c, --command=COMMAND    run only single command (SQL or internal) and "
+"exit\n"
+msgstr "  -c, --command=COMMAND מריץ בפקודה אחת בלבד (SQL או פנימיים) ויוצא\n"
+
+#: help.c:83
+#, c-format
+msgid ""
+"  -d, --dbname=DBNAME      database name to connect to (default: \"%s\")\n"
+msgstr ""
+"  -d, --dbname=DBNAME      שם מסד הנתונים כדי להתחבר (ברירת מחדל: \"%s\")\n"
+
+#: help.c:84
+#, c-format
+msgid "  -f, --file=FILENAME      execute commands from file, then exit\n"
+msgstr "  -f, --file=FILENAME      לבצע פקודות מקובץ, ולאחר מכן לצאת\n"
+
+#: help.c:85
+#, c-format
+msgid "  -l, --list               list available databases, then exit\n"
+msgstr ""
+"  -l, --list               רשימה של מסדי נתונים זמינים, ולאחר מכן היציאה\n"
+
+#: help.c:86
+#, c-format
+msgid ""
+"  -v, --set=, --variable=NAME=VALUE\n"
+"                           set psql variable NAME to VALUE\n"
+"                           (e.g., -v ON_ERROR_STOP=1)\n"
+msgstr ""
+"  -v, --set=, --variable=NAME=VALUE\n"
+"                            הגדרת משתנה psql cשם לערך\n"
+"                            (למשל - v ON_ERROR_STOP = 1)\n"
+
+#: help.c:89
+#, c-format
+msgid "  -V, --version            output version information, then exit\n"
+msgstr "  -V, --version            להציג מידע על הגירסה, ולאחר מכן לצאת\n"
+
+#: help.c:90
+#, c-format
+msgid "  -X, --no-psqlrc          do not read startup file (~/.psqlrc)\n"
+msgstr "  -X, --no-psqlrc          לא לקרוא את קובץ ההפעלה (~/.psqlrc)\n"
+
+#: help.c:91
+#, c-format
+msgid ""
+"  -1 (\"one\"), --single-transaction\n"
+"                           execute as a single transaction (if non-"
+"interactive)\n"
+msgstr ""
+"  -1 (\"one\"), --single-transaction\n"
+"                       לבצע כטרנזקציה יחידה (אם לא אינטראקטיבי)\n"
+
+#: help.c:93
+#, c-format
+msgid "  -?, --help[=options]     show this help, then exit\n"
+msgstr "  -?, --help[=options]     הצג עזרה זו, ולאחר מכן היציאה\n"
+
+#: help.c:94
+#, c-format
+msgid "      --help=commands      list backslash commands, then exit\n"
+msgstr ""
+"      --help=commands      רשימת פקודות כם קו נטוי הפוך, ולאחר מכן היציאה\n"
+
+#: help.c:95
+#, c-format
+msgid "      --help=variables     list special variables, then exit\n"
+msgstr "      --help=variables     רשימת משתנים מיוחדים, ולאחר מכן היציאה\n"
+
+#: help.c:97
+#, c-format
+msgid ""
+"\n"
+"Input and output options:\n"
+msgstr ""
+"\n"
+"אפשרויות קלט ופלט:\n"
+
+#: help.c:98
+#, c-format
+msgid "  -a, --echo-all           echo all input from script\n"
+msgstr "  -a, --echo-all           אקו כל קלט מקובץ מסקריפט\n"
+
+#: help.c:99
+#, c-format
+msgid "  -b, --echo-errors        echo failed commands\n"
+msgstr "  -b, --echo-errors        אקו כל פקודות שנכשלו \n"
+
+#: help.c:100
+#, c-format
+msgid "  -e, --echo-queries       echo commands sent to server\n"
+msgstr "  -e, --echo-queries       אקו פקודות הנשלחו לשרת\n"
+
+#: help.c:101
+#, c-format
+msgid ""
+"  -E, --echo-hidden        display queries that internal commands generate\n"
+msgstr ""
+"  -E, --echo-hidden        מראה שאילתות אשר נוצרו על ידי פקודות פנימיות\n"
+
+#: help.c:102
+#, c-format
+msgid "  -L, --log-file=FILENAME  send session log to file\n"
+msgstr "  -L, --log-file=FILENAME  שלח יומן של הפעלה לקובץ\n"
+
+#: help.c:103
+#, c-format
+msgid ""
+"  -n, --no-readline        disable enhanced command line editing (readline)\n"
+msgstr ""
+"  -n, --no-readline        להשבית עריכה  של שורת פקודה משופרת (readline)\n"
+
+#: help.c:104
+#, c-format
+msgid "  -o, --output=FILENAME    send query results to file (or |pipe)\n"
+msgstr "  -o, --output=FILENAME    שלח את תוצאות השאילתה לקובץ (או | צינור)\n"
+
+#: help.c:105
+#, c-format
+msgid ""
+"  -q, --quiet              run quietly (no messages, only query output)\n"
+msgstr "  -q, --quiet              לרוץ בשקט (אין הודעות, רק פלט של שאילתה)\n"
+
+#: help.c:106
+#, c-format
+msgid "  -s, --single-step        single-step mode (confirm each query)\n"
+msgstr ""
+"  -s, --single-step        מצב של צעד אחר צעד צעד יחיד (לאשר כל שאילתה)\n"
+
+#: help.c:107
+#, c-format
+msgid ""
+"  -S, --single-line        single-line mode (end of line terminates SQL "
+"command)\n"
+msgstr ""
+"  -S, --single-line        מצב שורה בודדת  (סוף שורה מסיים הפקודה SQL)\n"
+
+#: help.c:109
+#, c-format
+msgid ""
+"\n"
+"Output format options:\n"
+msgstr ""
+"\n"
+"אפשרויות תבנית פלט:\n"
+
+#: help.c:110
+#, c-format
+msgid "  -A, --no-align           unaligned table output mode\n"
+msgstr "  -A, --no-align           מצב הפלט של טבלה לא מיושרת\n"
+
+#: help.c:111
+#, c-format
+msgid ""
+"  -F, --field-separator=STRING\n"
+"                           field separator for unaligned output (default: "
+"\"%s\")\n"
+msgstr ""
+"  -F, --field-separator=STRING\n"
+"                       מפריד השדות לפלט לא מיושר (ברירת מחדל: \"%s\")\n"
+
+#: help.c:114
+#, c-format
+msgid "  -H, --html               HTML table output mode\n"
+msgstr "  -H, --html               מצב הפלט של הטבלה HTML\n"
+
+#: help.c:115
+#, c-format
+msgid ""
+"  -P, --pset=VAR[=ARG]     set printing option VAR to ARG (see \\pset "
+"command)\n"
+msgstr ""
+"  -P, --pset=VAR[=ARG]     הגדרת אפשרות  הדפסה VAR ל ARG (ראה הפקודה "
+"\\pset)\n"
+
+#: help.c:116
+#, c-format
+msgid ""
+"  -R, --record-separator=STRING\n"
+"                           record separator for unaligned output (default: "
+"newline)\n"
+msgstr ""
+"  -R, --record-separator=STRING\n"
+"                       מפריד רשומות עבור פלט לא מיושר (ברירת מחדל: שורה "
+"חדשה)\n"
+
+#: help.c:118
+#, c-format
+msgid "  -t, --tuples-only        print rows only\n"
+msgstr "  -t, --tuples-only        הדפסת שורות בלבד\n"
+
+#: help.c:119
+#, c-format
+msgid ""
+"  -T, --table-attr=TEXT    set HTML table tag attributes (e.g., width, "
+"border)\n"
+msgstr ""
+"  -T, --table-attr=TEXT    לקבוע תכונות של תג HTML טבלה (למשל, ' רוחב ', ' "
+"גבול ')\n"
+
+#: help.c:120
+#, c-format
+msgid "  -x, --expanded           turn on expanded table output\n"
+msgstr "  -x, --expanded           הפעל את הפלט בטבלה המורחבת\n"
+
+#: help.c:121
+#, c-format
+msgid ""
+"  -z, --field-separator-zero\n"
+"                           set field separator for unaligned output to zero "
+"byte\n"
+msgstr ""
+"  -z, --field-separator-zero\n"
+"                     קובע מפריד שדות עבור פלט לא מיושר לאפס בתים\n"
+
+#: help.c:123
+#, c-format
+msgid ""
+"  -0, --record-separator-zero\n"
+"                           set record separator for unaligned output to zero "
+"byte\n"
+msgstr ""
+"  -0, --record-separator-zero\n"
+"                מגדיר מפריד רשומות עבור פלט לא מיושר לאפס בתים\n"
+
+#: help.c:126
+#, c-format
+msgid ""
+"\n"
+"Connection options:\n"
+msgstr ""
+"\n"
+"אפשרויות חיבור:\n"
+
+#: help.c:129
+#, c-format
+msgid ""
+"  -h, --host=HOSTNAME      database server host or socket directory "
+"(default: \"%s\")\n"
+msgstr ""
+"  -h, --host=HOSTNAME      שרת מארח של מסד הנתונים  או ספריית שקע (ברירת "
+"המחדל: \"%s\"))\n"
+
+#: help.c:130
+msgid "local socket"
+msgstr "שקע מקומי"
+
+#: help.c:133
+#, c-format
+msgid "  -p, --port=PORT          database server port (default: \"%s\")\n"
+msgstr ""
+"  -p, --port=PORT          יציאת שרת מסד נתונים (ברירת המחדל: \"%s\")\n"
+
+#: help.c:139
+#, c-format
+msgid "  -U, --username=USERNAME  database user name (default: \"%s\")\n"
+msgstr ""
+"  -U, --username=USERNAME  שם משתמש של מסד הנתונים (ברירת מחדל: \"%s\")\n"
+
+#: help.c:140
+#, c-format
+msgid "  -w, --no-password        never prompt for password\n"
+msgstr "  -w, --no-password        לעולם לא לבקש סיסמה\n"
+
+#: help.c:141
+#, c-format
+msgid ""
+"  -W, --password           force password prompt (should happen "
+"automatically)\n"
+msgstr ""
+"  -W, --password           נדרשת בקשת סיסמה  (צריך לקרות באופן אוטומטי)\n"
+
+#: help.c:143
+#, c-format
+msgid ""
+"\n"
+"For more information, type \"\\?\" (for internal commands) or \"\\help"
+"\" (for SQL\n"
+"commands) from within psql, or consult the psql section in the PostgreSQL\n"
+"documentation.\n"
+"\n"
+msgstr ""
+"\n"
+"לקבלת מידע נוסף, הקלד \"\\?\" (עבור פקודות פנימיות) או \"\\help\" (עבור "
+"פקודות SQL)\n"
+"מבתוך psql או עיין במקטע psql PostgreSQL בתיעוד.\n"
+"\n"
+
+#: help.c:146
+#, c-format
+msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr "לדווח על באגים ל <pgsql-bugs@postgresql.org>\n"
+
+#: help.c:172
+#, c-format
+msgid "General\n"
+msgstr "כללי\n"
+
+#: help.c:173
+#, c-format
+msgid ""
+"  \\copyright             show PostgreSQL usage and distribution terms\n"
+msgstr ""
+"  \\copyright             להראות PostgreSQL תנאי שימוש והפצה\n"
+"\n"
+
+#: help.c:174
+#, c-format
+msgid ""
+"  \\errverbose            show most recent error message at maximum "
+"verbosity\n"
+msgstr "  \\errverbose            להציג הודעת השגיאה האחרונה עם מלל המרבי\n"
+
+#: help.c:175
+#, c-format
+msgid ""
+"  \\g [FILE] or ;         execute query (and send results to file or |pipe)\n"
+msgstr "  \\g [FILE] or ;         לבצע שאילתה (ושלח תוצאות לקובץ או | צינור)\n"
+
+#: help.c:176
+#, c-format
+msgid "  \\gx [FILE]             as \\g, but forces expanded output mode\n"
+msgstr "  \\gx [FILE]             כמו \\g, אבל כופה מצב הפלט מורחב\n"
+
+#: help.c:177
+#, c-format
+msgid ""
+"  \\gexec                 execute query, then execute each value in its "
+"result\n"
+msgstr ""
+"  \\gexec                 לבצע שאילתה ולאחר מכן לבצע כל ערך על התוצאה שלו\n"
+
+#: help.c:178
+#, c-format
+msgid ""
+"  \\gset [PREFIX]         execute query and store results in psql variables\n"
+msgstr ""
+"\\gse  \\gset [PREFIX]         לבצע שאילתה ולשמור את התוצאות במשתני psql\n"
+
+#: help.c:179
+#, c-format
+msgid "  \\q                     quit psql\n"
+msgstr " \\q                     להפסיק psql\n"
+
+#: help.c:180
+#, c-format
+msgid ""
+"  \\crosstabview [COLUMNS] execute query and display results in crosstab\n"
+msgstr "  \\crosstabview [COLUMNS] לבצע שאילתה ולהציג תוצאות במטריצה\n"
+
+#: help.c:181
+#, c-format
+msgid "  \\watch [SEC]           execute query every SEC seconds\n"
+msgstr "  \\watch [SEC]           לבצע שאילתה כל SEC שניות\n"
+
+#: help.c:184
+#, c-format
+msgid "Help\n"
+msgstr "עזרה\n"
+
+#: help.c:186
+#, c-format
+msgid "  \\? [commands]          show help on backslash commands\n"
+msgstr "  \\? [commands]          הצג עזרה על פקודות שלקו נטוי הפוך\n"
+
+#: help.c:187
+#, c-format
+msgid "  \\? options             show help on psql command-line options\n"
+msgstr ""
+"  \\? options             הצג עזרה על אפשרויות שורת הפקודה של פקודות psql\n"
+
+#: help.c:188
+#, c-format
+msgid "  \\? variables           show help on special variables\n"
+msgstr "  \\? variables           הצג עזרה על משתנים מיוחדים\n"
+
+#: help.c:189
+#, c-format
+msgid ""
+"  \\h [NAME]              help on syntax of SQL commands, * for all "
+"commands\n"
+msgstr ""
+"  \\h [NAME]              עזרה על תחביר של פקודות SQL, * עבור כל פקודות\n"
+
+#: help.c:192
+#, c-format
+msgid "Query Buffer\n"
+msgstr "מאגר שאילתה\n"
+
+#: help.c:193
+#, c-format
+msgid ""
+"  \\e [FILE] [LINE]       edit the query buffer (or file) with external "
+"editor\n"
+msgstr ""
+"  \\e [FILE] [LINE]       לערוך את מאגר השאילתה (או קובץ) בעורך חיצוני\n"
+
+#: help.c:194
+#, c-format
+msgid ""
+"  \\ef [FUNCNAME [LINE]]  edit function definition with external editor\n"
+msgstr "  \\ef [FUNCNAME [LINE]]  לערוך הגדרת הפונקציה בעורך חיצוני\n"
+
+#: help.c:195
+#, c-format
+msgid "  \\ev [VIEWNAME [LINE]]  edit view definition with external editor\n"
+msgstr "  \\ev [VIEWNAME [LINE]]  לערוך הגדרות תצוגה בעורך חיצוני\n"
+
+#: help.c:196
+#, c-format
+msgid "  \\p                     show the contents of the query buffer\n"
+msgstr " \\p                     להציג תוכן של המאגר שאילתה\n"
+
+#: help.c:197
+#, c-format
+msgid "  \\r                     reset (clear) the query buffer\n"
+msgstr "  \\r                     לאפס (לנקות) המאגר שאילתה\n"
+
+#: help.c:199
+#, c-format
+msgid "  \\s [FILE]              display history or save it to file\n"
+msgstr "  \\s [FILE]              להציג היסטוריה או לשמור אותה בקובץ\n"
+
+#: help.c:201
+#, c-format
+msgid "  \\w FILE                write query buffer to file\n"
+msgstr "  \\w FILE                לכתוב מאגר השאילתה לקובץ\n"
+
+#: help.c:204
+#, c-format
+msgid "Input/Output\n"
+msgstr "קלט / פלט\n"
+
+#: help.c:205
+#, c-format
+msgid ""
+"  \\copy ...              perform SQL COPY with data stream to the client "
+"host\n"
+msgstr "  \\copy ...              ביצוע SQL COPY עם זרם הנתונים למחשב הלקוח\n"
+
+#: help.c:206
+#, c-format
+msgid "  \\echo [STRING]         write string to standard output\n"
+msgstr "  \\echo [STRING]         לכתוב מחרוזת לפלט הסטנדרטי\n"
+
+#: help.c:207
+#, c-format
+msgid "  \\i FILE                execute commands from file\n"
+msgstr "  \\i FILE                לבצע פקודות מקובץ\n"
+
+#: help.c:208
+#, c-format
+msgid ""
+"  \\ir FILE               as \\i, but relative to location of current "
+"script\n"
+msgstr "  \\ir FILE               כמו  \\i אלא ביחס למיקום של סקריפט הנוכחי\n"
+
+#: help.c:209
+#, c-format
+msgid "  \\o [FILE]              send all query results to file or |pipe\n"
+msgstr "  \\o [FILE]              לשלוח כל תוצאות שאילתה לקובץ או | צינור\n"
+
+#: help.c:210
+#, c-format
+msgid ""
+"  \\qecho [STRING]        write string to query output stream (see \\o)\n"
+msgstr "  \\qecho [STRING]        לכתוב מחרוזת השאילתה לזרם הפלט (ראה \\o)\n"
+
+#: help.c:213
+#, c-format
+msgid "Conditional\n"
+msgstr "מותנה\n"
+
+#: help.c:214
+#, c-format
+msgid "  \\if EXPR               begin conditional block\n"
+msgstr "  \\if EXPR               התחלה של בלוק מותנה\n"
+
+#: help.c:215
+#, c-format
+msgid ""
+"  \\elif EXPR             alternative within current conditional block\n"
+msgstr "  \\elif EXPR             אלטרנטיבה בתוך בלוק מותנה הנוכחי\n"
+
+#: help.c:216
+#, c-format
+msgid ""
+"  \\else                  final alternative within current conditional "
+"block\n"
+msgstr "  \\else                 אלטרנטיבית הסופית בתוך בלוק מותנה הנוכחי\n"
+
+#: help.c:217
+#, c-format
+msgid "  \\endif                 end conditional block\n"
+msgstr "  \\endif                 קצה בלוק מותנה\n"
+
+#: help.c:220
+#, c-format
+msgid "Informational\n"
+msgstr "מידע\n"
+
+#: help.c:221
+#, c-format
+msgid "  (options: S = show system objects, + = additional detail)\n"
+msgstr "(אפשרויות: S = הצג אובייקטים של מערכת, + = פרטים נוספים)\n"
+
+#: help.c:222
+#, c-format
+msgid "  \\d[S+]                 list tables, views, and sequences\n"
+msgstr "  \\d[S+]                 רשימת טבלאות, תצוגות, רצפים\n"
+
+#: help.c:223
+#, c-format
+msgid "  \\d[S+]  NAME           describe table, view, sequence, or index\n"
+msgstr "  \\d[S+]  NAME           לתאר את הטבלה, התצוגה, רצף או אינדקס\n"
+
+#: help.c:224
+#, c-format
+msgid "  \\da[S]  [PATTERN]      list aggregates\n"
+msgstr "  \\da[S]  [PATTERN]      רשימת האגרגטים\n"
+
+#: help.c:225
+#, c-format
+msgid "  \\dA[+]  [PATTERN]      list access methods\n"
+msgstr "  \\dA[+]  [PATTERN]      רשימת שיטות גישה\n"
+
+#: help.c:226
+#, c-format
+msgid "  \\db[+]  [PATTERN]      list tablespaces\n"
+msgstr "  \\db[+]  [PATTERN]      רשימת מרחבי טבלאות\n"
+
+#: help.c:227
+#, c-format
+msgid "  \\dc[S+] [PATTERN]      list conversions\n"
+msgstr "  \\dc[S+] [PATTERN]      רשימת המרות\n"
+
+#: help.c:228
+#, c-format
+msgid "  \\dC[+]  [PATTERN]      list casts\n"
+msgstr "  \\dC[+]  [PATTERN]      רשימת הטלות\n"
+
+#: help.c:229
+#, c-format
+msgid ""
+"  \\dd[S]  [PATTERN]      show object descriptions not displayed elsewhere\n"
+msgstr ""
+"  \\dd[S]  [PATTERN]      הצג תיאורי האובייקט אשר אינו מוצגים במקום אחר\n"
+
+#: help.c:230
+#, c-format
+msgid "  \\ddp    [PATTERN]      list default privileges\n"
+msgstr "  \\ddp    [PATTERN]      רשימת הרשאות ברירת מחדל\n"
+
+#: help.c:231
+#, c-format
+msgid "  \\dD[S+] [PATTERN]      list domains\n"
+msgstr "  \\dD[S+] [PATTERN]      רשימת דומיינים\n"
+
+#: help.c:232
+#, c-format
+msgid "  \\det[+] [PATTERN]      list foreign tables\n"
+msgstr "  \\det[+] [PATTERN]      רשימת טבלאות זרות\n"
+
+#: help.c:233
+#, c-format
+msgid "  \\des[+] [PATTERN]      list foreign servers\n"
+msgstr "  \\des[+] [PATTERN]      רשימת שרתים זרים\n"
+
+#: help.c:234
+#, c-format
+msgid "  \\deu[+] [PATTERN]      list user mappings\n"
+msgstr "  \\deu[+] [PATTERN]      רשימת מיפויי המשתמש\n"
+
+#: help.c:235
+#, c-format
+msgid "  \\dew[+] [PATTERN]      list foreign-data wrappers\n"
+msgstr "  \\dew[+] [PATTERN]      רשימת עטיפות נתונים זרים\n"
+
+#: help.c:236
+#, c-format
+msgid ""
+"  \\df[antw][S+] [PATRN]  list [only agg/normal/trigger/window] functions\n"
+msgstr ""
+"  \\df[antw][S+] [PATRN]  ברשימת הפונקציות [רק צבירה/רגילות/טריגרים/חלונות]\n"
+
+#: help.c:237
+#, c-format
+msgid "  \\dF[+]  [PATTERN]      list text search configurations\n"
+msgstr "  \\dF[+]  [PATTERN]      רשימת תצורות חיפוש טקסט\n"
+
+#: help.c:238
+#, c-format
+msgid "  \\dFd[+] [PATTERN]      list text search dictionaries\n"
+msgstr "  \\dFd[+] [PATTERN]      רשימת מילונים של חיפוש טקסט\n"
+
+#: help.c:239
+#, c-format
+msgid "  \\dFp[+] [PATTERN]      list text search parsers\n"
+msgstr "  \\dFp[+] [PATTERN]      רשימת מנתחי מבנה חיפוש טקסט\n"
+
+#: help.c:240
+#, c-format
+msgid "  \\dFt[+] [PATTERN]      list text search templates\n"
+msgstr "  \\dFt[+] [PATTERN]      רשימ, תבניות חיפוש טקסט\n"
+
+#: help.c:241
+#, c-format
+msgid "  \\dg[S+] [PATTERN]      list roles\n"
+msgstr "  \\dg[S+] [PATTERN]      רשימת תפקידים\n"
+
+#: help.c:242
+#, c-format
+msgid "  \\di[S+] [PATTERN]      list indexes\n"
+msgstr "  \\di[S+] [PATTERN]      רשימת אינדקסים\n"
+
+#: help.c:243
+#, c-format
+msgid "  \\dl                    list large objects, same as \\lo_list\n"
+msgstr ""
+"  \\dl                    רשימת אובייקטים גדולים, בדיוק כמו \\lo_list\n"
+
+#: help.c:244
+#, c-format
+msgid "  \\dL[S+] [PATTERN]      list procedural languages\n"
+msgstr "  \\dL[S+] [PATTERN]      רשימת שפות פרוצדורליות\n"
+
+#: help.c:245
+#, c-format
+msgid "  \\dm[S+] [PATTERN]      list materialized views\n"
+msgstr "  \\dm[S+] [PATTERN]      רשימת תצוגות ממומשות\n"
+
+#: help.c:246
+#, c-format
+msgid "  \\dn[S+] [PATTERN]      list schemas\n"
+msgstr "  \\dn[S+] [PATTERN]      רשימת הסכימות\n"
+
+#: help.c:247
+#, c-format
+msgid "  \\do[S]  [PATTERN]      list operators\n"
+msgstr "  \\do[S]  [PATTERN]      רשימת אופרטורים\n"
+
+#: help.c:248
+#, c-format
+msgid "  \\dO[S+] [PATTERN]      list collations\n"
+msgstr "  \\dO[S+] [PATTERN]      רשימת האוספים\n"
+
+#: help.c:249
+#, c-format
+msgid ""
+"  \\dp     [PATTERN]      list table, view, and sequence access privileges\n"
+msgstr "  \\dp     [PATTERN]      רשימת זכויות גישה לטבלה, תצוגה ורצף\n"
+
+#: help.c:250
+#, c-format
+msgid "  \\drds [PATRN1 [PATRN2]] list per-database role settings\n"
+msgstr "  \\drds [PATRN1 [PATRN2]] רשימת הגדרות תפקיד ספציפיות למסד נתונים\n"
+
+#: help.c:251
+#, c-format
+msgid "  \\dRp[+] [PATTERN]      list replication publications\n"
+msgstr "  \\dRp[+] [PATTERN]      רשימת פרסומים של שכפול\n"
+
+#: help.c:252
+#, c-format
+msgid "  \\dRs[+] [PATTERN]      list replication subscriptions\n"
+msgstr "  \\dRs[+] [PATTERN]      רשימת מנויים לשכפולים\n"
+
+#: help.c:253
+#, c-format
+msgid "  \\ds[S+] [PATTERN]      list sequences\n"
+msgstr "  \\ds[S+] [PATTERN]      רשימת רצפים\n"
+
+#: help.c:254
+#, c-format
+msgid "  \\dt[S+] [PATTERN]      list tables\n"
+msgstr "  \\dt[S+] [PATTERN]      רשימת טבלאות\n"
+
+#: help.c:255
+#, c-format
+msgid "  \\dT[S+] [PATTERN]      list data types\n"
+msgstr "  \\dT[S+] [PATTERN]      רשימת סוגי נתונים\n"
+
+#: help.c:256
+#, c-format
+msgid "  \\du[S+] [PATTERN]      list roles\n"
+msgstr "  \\du[S+] [PATTERN]      רשימת תפקידים\n"
+
+#: help.c:257
+#, c-format
+msgid "  \\dv[S+] [PATTERN]      list views\n"
+msgstr "  \\dv[S+] [PATTERN]      רשימת תצוגות\n"
+
+#: help.c:258
+#, c-format
+msgid "  \\dE[S+] [PATTERN]      list foreign tables\n"
+msgstr "  \\dE[S+] [PATTERN]      רשימת טבלאות זרות\n"
+
+#: help.c:259
+#, c-format
+msgid "  \\dx[+]  [PATTERN]      list extensions\n"
+msgstr "  \\dx[+]  [PATTERN]      רשימת הרחבות\n"
+
+#: help.c:260
+#, c-format
+msgid "  \\dy     [PATTERN]      list event triggers\n"
+msgstr "  \\dy     [PATTERN]      רשימת טריגרים של אירועים\n"
+
+#: help.c:261
+#, c-format
+msgid "  \\l[+]   [PATTERN]      list databases\n"
+msgstr "  \\l[+]   [PATTERN]      רשימת מסדי נתונים\n"
+
+#: help.c:262
+#, c-format
+msgid "  \\sf[+]  FUNCNAME       show a function's definition\n"
+msgstr "  \\sf[+]  FUNCNAME       להציג ההגדרה של פונקציה\n"
+
+#: help.c:263
+#, c-format
+msgid "  \\sv[+]  VIEWNAME       show a view's definition\n"
+msgstr "  \\sv[+]  VIEWNAME       להציג ההגדרה של תצוגה\n"
+
+#: help.c:264
+#, c-format
+msgid "  \\z      [PATTERN]      same as \\dp\n"
+msgstr "  \\z      [PATTERN]     בדיוק כמו \\dp\n"
+
+#: help.c:267
+#, c-format
+msgid "Formatting\n"
+msgstr "פירמוט\n"
+
+#: help.c:268
+#, c-format
+msgid ""
+"  \\a                     toggle between unaligned and aligned output mode\n"
+msgstr "  \\a                     לעבור בין מצב פלט לא מיושר למיושר\n"
+
+#: help.c:269
+#, c-format
+msgid "  \\C [STRING]            set table title, or unset if none\n"
+msgstr "  \\C [STRING]            להגדיר כותרת טבלה או לא לקבע אם לא\n"
+
+#: help.c:270
+#, c-format
+msgid ""
+"  \\f [STRING]            show or set field separator for unaligned query "
+"output\n"
+msgstr ""
+"  \\f [STRING]           מראה או מגדיר מפריד שדה לפלט השאילתה לא מיושר\n"
+
+#: help.c:271
+#, c-format
+msgid "  \\H                     toggle HTML output mode (currently %s)\n"
+msgstr "  \\H                     לעבור בין מצבי הפלט HTML (כיום %s)\n"
+
+#: help.c:273
+#, c-format
+msgid ""
+"  \\pset [NAME [VALUE]]   set table output option\n"
+"                         (NAME := {format|border|expanded|fieldsep|"
+"fieldsep_zero|footer|null|\n"
+"                         numericlocale|recordsep|recordsep_zero|tuples_only|"
+"title|tableattr|pager|\n"
+"                         unicode_border_linestyle|unicode_column_linestyle|"
+"unicode_header_linestyle})\n"
+msgstr ""
+"  \\pset [NAME [VALUE]]   הגדרת אפשרות של טבלת הפלט\n"
+"                           (NAME := {format|border|expanded|fieldsep|"
+"fieldsep_zero|footer|null|\\n\n"
+"                           numericlocale|recordsep|recordsep_zero|"
+"tuples_only|title|tableattr|pager|\n"
+"                           unicode_border_linestyle|unicode_column_linestyle|"
+"unicode_header_linestyle})\n"
+
+#: help.c:277
+#, c-format
+msgid "  \\t [on|off]            show only rows (currently %s)\n"
+msgstr "  \\t [on|off]            להציג רק שורות (כיום %s)\n"
+
+#: help.c:279
+#, c-format
+msgid ""
+"  \\T [STRING]            set HTML <table> tag attributes, or unset if none\n"
+msgstr ""
+"  \\T [STRING]            להגדיר תגיות HTML עבור טבלה, או לא לקבוע אם לא\n"
+
+#: help.c:280
+#, c-format
+msgid "  \\x [on|off|auto]       toggle expanded output (currently %s)\n"
+msgstr "  \\x [on|off|auto]       החלף מצב הפלט המורחב (כיום %s)\n"
+
+#: help.c:284
+#, c-format
+msgid "Connection\n"
+msgstr "חיבור\n"
+
+#: help.c:286
+#, c-format
+msgid ""
+"  \\c[onnect] {[DBNAME|- USER|- HOST|- PORT|-] | conninfo}\n"
+"                         connect to new database (currently \"%s\")\n"
+msgstr ""
+"  \\c[onnect] {[DBNAME|- USER|- HOST|- PORT|-] | conninfo}\n"
+"                          להתחבר למסד הנתונים החדש (כרגע \"%s\")\n"
+
+#: help.c:290
+#, c-format
+msgid ""
+"  \\c[onnect] {[DBNAME|- USER|- HOST|- PORT|-] | conninfo}\n"
+"                         connect to new database (currently no connection)\n"
+msgstr ""
+"  \\c[onnect] {[DBNAME|- USER|- HOST|- PORT|-] | conninfo}\n"
+"                        להתחבר אל מסד נתונים חדש (כרגע אין חיבור)\n"
+
+#: help.c:292
+#, c-format
+msgid "  \\encoding [ENCODING]   show or set client encoding\n"
+msgstr "  \\encoding [ENCODING]   הצג או קבע קידוד של לקוח\n"
+
+#: help.c:293
+#, c-format
+msgid "  \\password [USERNAME]   securely change the password for a user\n"
+msgstr "  \\password [USERNAME]   לשנות את הסיסמה עבור המשתמש בצורה מאובטחת\n"
+
+#: help.c:294
+#, c-format
+msgid ""
+"  \\conninfo              display information about current connection\n"
+msgstr "  \\conninfo              הצג מידע אודות החיבור הנוכחי\n"
+
+#: help.c:297
+#, c-format
+msgid "Operating System\n"
+msgstr "מערכת הפעלה\n"
+
+#: help.c:298
+#, c-format
+msgid "  \\cd [DIR]              change the current working directory\n"
+msgstr "  \\cd [DIR]              שינוי לספריה הנוכחית\n"
+
+#: help.c:299
+#, c-format
+msgid "  \\setenv NAME [VALUE]   set or unset environment variable\n"
+msgstr "  \\setenv NAME [VALUE]   לקבוע או לאפס משתנה הסביבה\n"
+
+#: help.c:300
+#, c-format
+msgid "  \\timing [on|off]       toggle timing of commands (currently %s)\n"
+msgstr "  \\timing [on|off]       החלפת העיתוי של פקודות (כרגע %s)\n"
+
+#: help.c:302
+#, c-format
+msgid ""
+"  \\! [COMMAND]           execute command in shell or start interactive "
+"shell\n"
+msgstr ""
+"  \\! [COMMAND]           להפעיל פקודה ב shell או להתחיל shell אינטראקטיבי\n"
+
+#: help.c:305
+#, c-format
+msgid "Variables\n"
+msgstr "משתנים\n"
+
+#: help.c:306
+#, c-format
+msgid "  \\prompt [TEXT] NAME    prompt user to set internal variable\n"
+msgstr "  \\prompt [TEXT] NAME    לבקש מהמשתמש להגדיר משתנה פנימי\n"
+
+#: help.c:307
+#, c-format
+msgid ""
+"  \\set [NAME [VALUE]]    set internal variable, or list all if no "
+"parameters\n"
+msgstr ""
+"  \\set [NAME [VALUE]]    להגדיר משתנה פנימי, או להציג את כולם אם אין "
+"פרמטרים\n"
+
+#: help.c:308
+#, c-format
+msgid "  \\unset NAME            unset (delete) internal variable\n"
+msgstr "  \\unset NAME            לאפס (למחוק) משתנה פנימי\n"
+
+#: help.c:311
+#, c-format
+msgid "Large Objects\n"
+msgstr "אובייקטים גדולים\n"
+
+#: help.c:312
+#, c-format
+msgid ""
+"  \\lo_export LOBOID FILE\n"
+"  \\lo_import FILE [COMMENT]\n"
+"  \\lo_list\n"
+"  \\lo_unlink LOBOID      large object operations\n"
+msgstr ""
+"  \\lo_export LOBOID FILE\n"
+"\\lo_import FILE [COMMENT]\n"
+" \\lo_list\n"
+" \\lo_unlink LOBOID פעולות על אובייקטים גדולים\n"
+
+#: help.c:339
+#, c-format
+msgid ""
+"List of specially treated variables\n"
+"\n"
+msgstr ""
+"רשימת משתנים מטופלים במיוחד\n"
+"\n"
+
+#: help.c:341
+#, c-format
+msgid "psql variables:\n"
+msgstr "psql משתנים:\n"
+
+#: help.c:343
+#, c-format
+msgid ""
+"  psql --set=NAME=VALUE\n"
+"  or \\set NAME VALUE inside psql\n"
+"\n"
+msgstr ""
+"  psql --set=NAME=VALUE\n"
+"או  \\set NAME VALUE בתוך psql\n"
+"\n"
+
+#: help.c:345
+#, c-format
+msgid ""
+"  AUTOCOMMIT         if set, successful SQL commands are automatically "
+"committed\n"
+msgstr "  AUTOCOMMIT        אם הופעל, פקודות SQL מחויבות באופן אוטומטי\n"
+
+#: help.c:346
+#, c-format
+msgid ""
+"  COMP_KEYWORD_CASE  determines the case used to complete SQL key words\n"
+"                     [lower, upper, preserve-lower, preserve-upper]\n"
+msgstr ""
+"  COMP_KEYWORD_CASE  קובע את המקרה אשר בשימוש כדי להשלים מילות מפתח SQL\n"
+"                  [התחתון, העליון, שמר-נמוך, שמר-עליון]\n"
+
+#: help.c:348
+#, c-format
+msgid "  DBNAME             the currently connected database name\n"
+msgstr "  DBNAME             שם מסד הנתונים מחובר כעת\n"
+
+#: help.c:349
+#, c-format
+msgid ""
+"  ECHO               controls what input is written to standard output\n"
+"                     [all, errors, none, queries]\n"
+msgstr ""
+"  ECHO               שולט איך קלט נכתב לפלט הסטנדרטי\n"
+"                       [כל, שגיאות, ללא, שאילתות]\n"
+
+#: help.c:351
+#, c-format
+msgid ""
+"  ECHO_HIDDEN        if set, display internal queries executed by backslash "
+"commands;\n"
+"                     if set to \"noexec\", just show without execution\n"
+msgstr ""
+"  ECHO_HIDDEN        אם הוגדר, הצגת שאילתות פנימיות תבוצע על-ידי פקודות של "
+"קו נטוי הפוך ;\n"
+"                     אם מוגדר ל- \"noexec\", פשוט מראה ללא ביצוע\n"
+
+#: help.c:353
+#, c-format
+msgid "  ENCODING           current client character set encoding\n"
+msgstr "  ENCODING           קידוד של ערכת התווים הנוכחית של הלקוח\n"
+
+#: help.c:354
+#, c-format
+msgid ""
+"  FETCH_COUNT        the number of result rows to fetch and display at a "
+"time\n"
+"                     (default: 0=unlimited)\n"
+msgstr ""
+"  FETCH_COUNT        מספר השורות כדי להביא ולהציג כל פעם\n"
+"                     (ברירת המחדל: 0 = ללא הגבלה)\n"
+
+#: help.c:356
+#, c-format
+msgid ""
+"  HISTCONTROL        controls command history [ignorespace, ignoredups, "
+"ignoreboth]\n"
+msgstr ""
+"  HISTCONTROL        ההיסטוריה של הפקודות [ignorespace, ignoredups, "
+"ignoreboth]\n"
+
+#: help.c:357
+#, c-format
+msgid "  HISTFILE           file name used to store the command history\n"
+msgstr "  HISTFILE           שם הקובץ בו לאחסן את היסטוריית הפקודות\n"
+
+#: help.c:358
+#, c-format
+msgid ""
+"  HISTSIZE           max number of commands to store in the command history\n"
+msgstr ""
+"  HISTSIZE           מספר פקודות מקסימלי אשר יאחסנו בהיסטוריית הפקודות\n"
+
+#: help.c:359
+#, c-format
+msgid "  HOST               the currently connected database server host\n"
+msgstr "  HOST               המארח של שרת מסד הנתונים מחובר כעת\n"
+
+#: help.c:360
+#, c-format
+msgid ""
+"  IGNOREEOF          number of EOFs needed to terminate an interactive "
+"session\n"
+msgstr ""
+"  IGNOREEOF          מספר EOFs אשר צריכים בכדי לסיים את מפגש אינטראקטיבי\n"
+
+#: help.c:361
+#, c-format
+msgid "  LASTOID            value of the last affected OID\n"
+msgstr " LASTOID           הערך האחרון של OID אשר מושפע לאחרונה\n"
+
+#: help.c:362
+#, c-format
+msgid ""
+"  ON_ERROR_ROLLBACK  if set, an error doesn't stop a transaction (uses "
+"implicit savepoints)\n"
+msgstr ""
+"  ON_ERROR_ROLLBACK  אם הופעל, שגיאה לא תעצור טרנזקציה (משתמשת בsavepoints "
+"מרומזים)\n"
+
+#: help.c:363
+#, c-format
+msgid "  ON_ERROR_STOP      stop batch execution after error\n"
+msgstr "  ON_ERROR_STOP      עצירת ביצוע של תהליך אצווה לאחר שגיאה\n"
+
+#: help.c:364
+#, c-format
+msgid "  PORT               server port of the current connection\n"
+msgstr "  PORT               יציאת השרת של החיבור הנוכחי\n"
+
+#: help.c:365
+#, c-format
+msgid "  PROMPT1            specifies the standard psql prompt\n"
+msgstr "  PROMPT1            מציין את שורת psql סטנדרטי\n"
+
+#: help.c:366
+#, c-format
+msgid ""
+"  PROMPT2            specifies the prompt used when a statement continues "
+"from a previous line\n"
+msgstr "  PROMPT2            מציין את שורת הפקודה כאשר המשפט ממשיך מקו הקודם\n"
+
+#: help.c:367
+#, c-format
+msgid ""
+"  PROMPT3            specifies the prompt used during COPY ... FROM STDIN\n"
+msgstr ""
+"  PROMPT3            מציין את הפקודה אשר בשימוש במהלך COPY ... FROM STDIN\n"
+
+#: help.c:368
+#, c-format
+msgid "  QUIET              run quietly (same as -q option)\n"
+msgstr "  QUIET              לרוץ בשקט (כמו האפשרות - q)\n"
+
+#: help.c:369
+#, c-format
+msgid ""
+"  SHOW_CONTEXT       controls display of message context fields [never, "
+"errors, always]\n"
+msgstr ""
+"  SHOW_CONTEXT       שולט בתצוגה של שדות בהקשר הודעה [לעולם, שגיאות, תמיד]\n"
+
+#: help.c:370
+#, c-format
+msgid ""
+"  SINGLELINE         end of line terminates SQL command mode (same as -S "
+"option)\n"
+msgstr "  SINGLELINE         סוף שורה מסיימת מצב פקודת SQL (כמו האפשרות -S)\n"
+
+#: help.c:371
+#, c-format
+msgid "  SINGLESTEP         single-step mode (same as -s option)\n"
+msgstr "  SINGLESTEP        מצב צעד יחיד (כמו האפשרות -s)\n"
+
+#: help.c:372
+#, c-format
+msgid "  USER               the currently connected database user\n"
+msgstr "  USER               המשתמש שמחובר כעת למסד נתונים\n"
+
+#: help.c:373
+#, c-format
+msgid ""
+"  VERBOSITY          controls verbosity of error reports [default, verbose, "
+"terse]\n"
+msgstr ""
+"  VERBOSITY          שולט על מלל של דוחות השגיאה [ברירת-מחדל, מילולי, "
+"תמציתי]\n"
+
+#: help.c:375
+#, c-format
+msgid ""
+"\n"
+"Display settings:\n"
+msgstr ""
+"\n"
+"הגדרות תצוגה\n"
+
+#: help.c:377
+#, c-format
+msgid ""
+"  psql --pset=NAME[=VALUE]\n"
+"  or \\pset NAME [VALUE] inside psql\n"
+"\n"
+msgstr ""
+" psql - pset = שם [= ערך]\n"
+"או \\pset [ערך] שם בתוך psql\n"
+"\n"
+
+#: help.c:379
+#, c-format
+msgid "  border             border style (number)\n"
+msgstr " border             סגנון גבול(מספר)\n"
+
+#: help.c:380
+#, c-format
+msgid "  columns            target width for the wrapped format\n"
+msgstr " columns            רוחב היעד רוחב עבור התבנית עטופה\n"
+
+#: help.c:381
+#, c-format
+msgid "  expanded (or x)    expanded output [on, off, auto]\n"
+msgstr "  expanded (or x)    פלט מורחב [פעיל, כבוי, אוטומטי]\n"
+
+#: help.c:382
+#, c-format
+msgid ""
+"  fieldsep           field separator for unaligned output (default \"%s\")\n"
+msgstr ""
+"  fieldsep           מפריד השדות עבור unaligned פלט (ברירת מחדל \"%s\")\n"
+
+#: help.c:383
+#, c-format
+msgid ""
+"  fieldsep_zero      set field separator for unaligned output to zero byte\n"
+msgstr "  fieldsep_zero       להגדיר מפריד השדות לפלט unaligned לאפס בתים\n"
+
+#: help.c:384
+#, c-format
+msgid ""
+"  footer             enable or disable display of the table footer [on, "
+"off]\n"
+msgstr ""
+"  footer             לאפשר או להשבית את תצוגה של כותרת תחתונה של הטבלה "
+"[פועל, מושבת]\n"
+
+#: help.c:385
+#, c-format
+msgid ""
+"  format             set output format [unaligned, aligned, wrapped, html, "
+"asciidoc, ...]\n"
+msgstr ""
+"  format             הגדרת תבנית הפלט [unaligned, aligned, wrapped, html, "
+"asciidoc, ...]\n"
+
+#: help.c:386
+#, c-format
+msgid ""
+"  linestyle          set the border line drawing style [ascii, old-ascii, "
+"unicode]\n"
+msgstr ""
+"  linestyle          להגדיר סגנון הקו של קו הגבול [ascii, old-ascii, "
+"unicode]\n"
+
+#: help.c:387
+#, c-format
+msgid ""
+"  null               set the string to be printed in place of a null value\n"
+msgstr "  null              להגדיר את המחרוזת שיודפס במקום ערך null\n"
+
+#: help.c:388
+#, c-format
+msgid ""
+"  numericlocale      enable or disable display of a locale-specific "
+"character to separate\n"
+"                     groups of digits [on, off]\n"
+msgstr ""
+"  numericlocale      להפעיל או לבטל תצוגה של מותנית הגדרות אזוריות כדי "
+"להפריד\n"
+"                   בין קבוצות של ספרות  [on, off]\n"
+
+#: help.c:390
+#, c-format
+msgid ""
+"  pager              control when an external pager is used [yes, no, "
+"always]\n"
+msgstr ""
+" pager              שליטה כאשר משתמשים בזימונית חיצונית [כן, לא, תמיד]\n"
+
+#: help.c:391
+#, c-format
+msgid "  recordsep          record (line) separator for unaligned output\n"
+msgstr "  recordsep          מפריד רשומות (קווים) לפלט לא מיושר\n"
+
+#: help.c:392
+#, c-format
+msgid ""
+"  recordsep_zero     set record separator for unaligned output to zero byte\n"
+msgstr "  recordsep_zero     לקבוע מפריד לפלט לא מיושר לאפס בתים\n"
+
+#: help.c:393
+#, c-format
+msgid ""
+"  tableattr (or T)   specify attributes for table tag in html format or "
+"proportional\n"
+"                     column widths for left-aligned data types in latex-"
+"longtable format\n"
+msgstr ""
+"  tableattr (or T)   לציין תכונות עבור תג טבלה בתבנית html או רוחבי העמודות "
+"יחסיים עבור סוגי הנתונים מיושר לשמאל בפורמט latex-longtable\n"
+
+#: help.c:395
+#, c-format
+msgid ""
+"  title              set the table title for any subsequently printed "
+"tables\n"
+msgstr ""
+"  title              להגדיר כותרת כותרת טבלה עבור כל טבלאות אשר מודפסות לאחר "
+"מכן\n"
+
+#: help.c:396
+#, c-format
+msgid "  tuples_only        if set, only actual table data is shown\n"
+msgstr "  tuples_only        אם נקבע, בפועל רק נתונים אקטואליים בטבלה מוצגים\n"
+
+#: help.c:397
+#, c-format
+msgid ""
+"  unicode_border_linestyle\n"
+"  unicode_column_linestyle\n"
+"  unicode_header_linestyle\n"
+"                     set the style of Unicode line drawing [single, double]\n"
+msgstr ""
+"  unicode_border_linestyle\n"
+"  unicode_column_linestyle\n"
+"  unicode_header_linestyle\n"
+"            להגדיר את הסגנון של Unicode עבור [יחיד, כפול]\n"
+
+#: help.c:402
+#, c-format
+msgid ""
+"\n"
+"Environment variables:\n"
+msgstr ""
+"\n"
+"משתני סביבה:\n"
+
+#: help.c:406
+#, c-format
+msgid ""
+"  NAME=VALUE [NAME=VALUE] psql ...\n"
+"  or \\setenv NAME [VALUE] inside psql\n"
+"\n"
+msgstr ""
+"  NAME=VALUE [NAME=VALUE] psql ...\n"
+"או \\setenv NAME [VALUE] בתוך psql\n"
+"\n"
+
+#: help.c:408
+#, c-format
+msgid ""
+"  set NAME=VALUE\n"
+"  psql ...\n"
+"  or \\setenv NAME [VALUE] inside psql\n"
+"\n"
+msgstr ""
+"  set NAME=VALUE\n"
+" psql ...\n"
+"או \\setenv NAME [VALUE] בתוך psql\n"
+"\n"
+
+#: help.c:411
+#, c-format
+msgid "  COLUMNS            number of columns for wrapped format\n"
+msgstr "  COLUMNS            מספר עמודות עבור תבנית עוטפת\n"
+
+#: help.c:412
+#, c-format
+msgid "  PAGER              name of external pager program\n"
+msgstr "  PAGER              שם תכנית זימונית חיצונית\n"
+
+#: help.c:413
+#, c-format
+msgid ""
+"  PGAPPNAME          same as the application_name connection parameter\n"
+msgstr "  PGAPPNAME           כמו הפרמטר חיבור application_name\n"
+
+#: help.c:414
+#, c-format
+msgid "  PGDATABASE         same as the dbname connection parameter\n"
+msgstr "  PGDATABASE          בדיוק כמו הפרמטר חיבור dbname\n"
+
+#: help.c:415
+#, c-format
+msgid "  PGHOST             same as the host connection parameter\n"
+msgstr "  PGHOST             כמו הפרמטר חיבור מחשב מארח\n"
+
+#: help.c:416
+#, c-format
+msgid "  PGPORT             same as the port connection parameter\n"
+msgstr "  PGPORT             כמו הפרמטר חיבור פורט\n"
+
+#: help.c:417
+#, c-format
+msgid "  PGUSER             same as the user connection parameter\n"
+msgstr "  PGUSER             כמו הפרמטר חיבור המשתמש\n"
+
+#: help.c:418
+#, c-format
+msgid "  PGPASSWORD         connection password (not recommended)\n"
+msgstr "  PGPASSWORD         סיסמת החיבור (לא מומלץ)\n"
+
+#: help.c:419
+#, c-format
+msgid "  PGPASSFILE         password file name\n"
+msgstr "  PGPASSFILE         שם קובץ הסיסמה\n"
+
+#: help.c:420
+#, c-format
+msgid ""
+"  PSQL_EDITOR, EDITOR, VISUAL\n"
+"                     editor used by the \\e, \\ef, and \\ev commands\n"
+msgstr ""
+"  PSQL_EDITOR, EDITOR, VISUAL\n"
+"עורך אשר בשימוש עם בפקודות \\e, \\ef ו- \\ev\n"
+
+#: help.c:422
+#, c-format
+msgid ""
+"  PSQL_EDITOR_LINENUMBER_ARG\n"
+"                     how to specify a line number when invoking the editor\n"
+msgstr ""
+"  PSQL_EDITOR_LINENUMBER_ARG\n"
+"כיצד לציין את מספר השורה בעת הפעלת העורך\n"
+
+#: help.c:424
+#, c-format
+msgid ""
+"  PSQL_HISTORY       alternative location for the command history file\n"
+msgstr "  PSQL_HISTORY       מיקום חלופי עבור קובץ היסטורית הפקודות\n"
+
+#: help.c:425
+#, c-format
+msgid "  PSQLRC             alternative location for the user's .psqlrc file\n"
+msgstr "  PSQLRC             מיקום חלופי עבור קובץ .psqlrc של המשתמש\n"
+
+#: help.c:426
+#, c-format
+msgid "  SHELL              shell used by the \\! command\n"
+msgstr "SHELL              בshell משתמשים עם פקודת  \\!\n"
+
+#: help.c:427
+#, c-format
+msgid "  TMPDIR             directory for temporary files\n"
+msgstr "  TMPDIR             הספריה לקבצים זמניים\n"
+
+#: help.c:470
+msgid "Available help:\n"
+msgstr "עזרה זמינה:\n"
+
+#: help.c:554
+#, c-format
+msgid ""
+"Command:     %s\n"
+"Description: %s\n"
+"Syntax:\n"
+"%s\n"
+"\n"
+msgstr ""
+"הפקודה: %s\n"
+"תיאור: %s\n"
+"תחביר:\n"
+"%s\n"
+"\n"
+
+#: help.c:570
+#, c-format
+msgid ""
+"No help available for \"%s\".\n"
+"Try \\h with no arguments to see available help.\n"
+msgstr ""
+"אין עזרה זמינים עבור '%s'.\n"
+"נסה \\h ללא ארגומנטים כדי לראות את העזרה הזמינה\n"
+
+#: input.c:216
+#, c-format
+msgid "could not read from input file: %s\n"
+msgstr "לא ניתן לקרוא מתוך קובץ הקלט: %s\n"
+
+#: input.c:471 input.c:510
+#, c-format
+msgid "could not save history to file \"%s\": %s\n"
+msgstr "לא ניתן לשמור את ההיסטוריה לקובץ \"%s\": %s\n"
+
+#: input.c:530
+#, c-format
+msgid "history is not supported by this installation\n"
+msgstr "ההיסטוריה אינה נתמכת על-ידי התקנה זו\n"
+
+#: large_obj.c:64
+#, c-format
+msgid "%s: not connected to a database\n"
+msgstr "%s אינו מחובר למסד נתונים:\n"
+
+#: large_obj.c:83
+#, c-format
+msgid "%s: current transaction is aborted\n"
+msgstr "%s: התנועה הנוכחית בוטלה\n"
+
+#: large_obj.c:86
+#, c-format
+msgid "%s: unknown transaction status\n"
+msgstr "%s: מצב תנועה לא ידוע\n"
+
+#: large_obj.c:287 large_obj.c:298
+msgid "ID"
+msgstr "מזהה ID"
+
+#: large_obj.c:308
+msgid "Large objects"
+msgstr "אובייקטים גדולים"
+
+#: mainloop.c:136
+#, c-format
+msgid "\\if: escaped\n"
+msgstr "\\if: נחלץ\n"
+
+#: mainloop.c:183
+#, c-format
+msgid "Use \"\\q\" to leave %s.\n"
+msgstr "השתמש ב \"\\q\" על מנת לעזוב את %s.\n"
+
+#: mainloop.c:205
+msgid ""
+"The input is a PostgreSQL custom-format dump.\n"
+"Use the pg_restore command-line client to restore this dump to a database.\n"
+msgstr ""
+"הקלט הוא dump מותאמת אישית PostgreSQL .\n"
+"השתמש בשורת הפקודה pg_restore כדי לשחזר את dump הזה למסד נתונים.\n"
+
+#: mainloop.c:225
+msgid "You are using psql, the command-line interface to PostgreSQL."
+msgstr "אתה משתמש ב psql, ממשק שורת פקודה PostgreSQL."
+
+#: mainloop.c:226
+#, c-format
+msgid ""
+"Type:  \\copyright for distribution terms\n"
+"       \\h for help with SQL commands\n"
+"       \\? for help with psql commands\n"
+"       \\g or terminate with semicolon to execute query\n"
+"       \\q to quit\n"
+msgstr ""
+"הקלד:  \\copyright עבור תנאי הפצה\n"
+"       \\h לעזרה עם פקודות SQL\n"
+"       \\? לעזרה עם פקודות psql\n"
+"       \\g או סיים עם נקודה-פסיק כדי לבצע שאילתה\n"
+"       \\q לסיים\n"
+
+#: mainloop.c:339 mainloop.c:476
+#, c-format
+msgid "query ignored; use \\endif or Ctrl-C to exit current \\if block\n"
+msgstr ""
+"התעלמות משאילתה; השתמש ב \\endif או Ctrl-C כדי לצאת מבלוק \\if הנוכחי\n"
+
+#: mainloop.c:494
+#, c-format
+msgid "reached EOF without finding closing \\endif(s)\n"
+msgstr "הגעה לסוף קובץ מבלי למצוא סגירה \\endif(s)\n"
+
+#: psqlscanslash.l:614
+#, c-format
+msgid "unterminated quoted string\n"
+msgstr "מחרוזת מסומנת ללא סגירה\n"
+
+#: psqlscanslash.l:787
+#, c-format
+msgid "%s: out of memory\n"
+msgstr "אין זיכרון פנוי: %s\n"
+
+#: sql_help.c:36 sql_help.c:39 sql_help.c:42 sql_help.c:66 sql_help.c:67
+#: sql_help.c:69 sql_help.c:71 sql_help.c:82 sql_help.c:84 sql_help.c:86
+#: sql_help.c:112 sql_help.c:118 sql_help.c:120 sql_help.c:122 sql_help.c:124
+#: sql_help.c:127 sql_help.c:129 sql_help.c:131 sql_help.c:236 sql_help.c:238
+#: sql_help.c:239 sql_help.c:241 sql_help.c:243 sql_help.c:246 sql_help.c:248
+#: sql_help.c:250 sql_help.c:252 sql_help.c:264 sql_help.c:265 sql_help.c:266
+#: sql_help.c:268 sql_help.c:315 sql_help.c:317 sql_help.c:319 sql_help.c:321
+#: sql_help.c:382 sql_help.c:387 sql_help.c:389 sql_help.c:432 sql_help.c:434
+#: sql_help.c:437 sql_help.c:439 sql_help.c:506 sql_help.c:511 sql_help.c:516
+#: sql_help.c:521 sql_help.c:526 sql_help.c:575 sql_help.c:577 sql_help.c:579
+#: sql_help.c:581 sql_help.c:584 sql_help.c:586 sql_help.c:597 sql_help.c:599
+#: sql_help.c:640 sql_help.c:642 sql_help.c:644 sql_help.c:647 sql_help.c:649
+#: sql_help.c:651 sql_help.c:684 sql_help.c:688 sql_help.c:692 sql_help.c:711
+#: sql_help.c:714 sql_help.c:717 sql_help.c:746 sql_help.c:758 sql_help.c:766
+#: sql_help.c:769 sql_help.c:772 sql_help.c:787 sql_help.c:790 sql_help.c:814
+#: sql_help.c:817 sql_help.c:819 sql_help.c:821 sql_help.c:823 sql_help.c:825
+#: sql_help.c:866 sql_help.c:889 sql_help.c:900 sql_help.c:902 sql_help.c:921
+#: sql_help.c:931 sql_help.c:933 sql_help.c:935 sql_help.c:947 sql_help.c:951
+#: sql_help.c:953 sql_help.c:964 sql_help.c:966 sql_help.c:968 sql_help.c:995
+#: sql_help.c:1000 sql_help.c:1003 sql_help.c:1006 sql_help.c:1008
+#: sql_help.c:1009 sql_help.c:1010 sql_help.c:1012 sql_help.c:1103
+#: sql_help.c:1105 sql_help.c:1108 sql_help.c:1111 sql_help.c:1113
+#: sql_help.c:1115 sql_help.c:1118 sql_help.c:1121 sql_help.c:1187
+#: sql_help.c:1189 sql_help.c:1191 sql_help.c:1194 sql_help.c:1215
+#: sql_help.c:1218 sql_help.c:1221 sql_help.c:1224 sql_help.c:1228
+#: sql_help.c:1230 sql_help.c:1232 sql_help.c:1234 sql_help.c:1248
+#: sql_help.c:1251 sql_help.c:1253 sql_help.c:1255 sql_help.c:1265
+#: sql_help.c:1267 sql_help.c:1277 sql_help.c:1279 sql_help.c:1289
+#: sql_help.c:1292 sql_help.c:1314 sql_help.c:1316 sql_help.c:1318
+#: sql_help.c:1321 sql_help.c:1323 sql_help.c:1325 sql_help.c:1328
+#: sql_help.c:1378 sql_help.c:1416 sql_help.c:1419 sql_help.c:1421
+#: sql_help.c:1423 sql_help.c:1425 sql_help.c:1427 sql_help.c:1430
+#: sql_help.c:1470 sql_help.c:1681 sql_help.c:1745 sql_help.c:1764
+#: sql_help.c:1777 sql_help.c:1833 sql_help.c:1839 sql_help.c:1849
+#: sql_help.c:1869 sql_help.c:1894 sql_help.c:1912 sql_help.c:1941
+#: sql_help.c:2034 sql_help.c:2076 sql_help.c:2098 sql_help.c:2118
+#: sql_help.c:2119 sql_help.c:2154 sql_help.c:2174 sql_help.c:2196
+#: sql_help.c:2210 sql_help.c:2231 sql_help.c:2261 sql_help.c:2286
+#: sql_help.c:2332 sql_help.c:2606 sql_help.c:2619 sql_help.c:2636
+#: sql_help.c:2652 sql_help.c:2692 sql_help.c:2744 sql_help.c:2748
+#: sql_help.c:2750 sql_help.c:2756 sql_help.c:2774 sql_help.c:2801
+#: sql_help.c:2836 sql_help.c:2848 sql_help.c:2857 sql_help.c:2901
+#: sql_help.c:2915 sql_help.c:2943 sql_help.c:2951 sql_help.c:2959
+#: sql_help.c:2967 sql_help.c:2975 sql_help.c:2983 sql_help.c:2991
+#: sql_help.c:2999 sql_help.c:3008 sql_help.c:3019 sql_help.c:3027
+#: sql_help.c:3035 sql_help.c:3043 sql_help.c:3051 sql_help.c:3061
+#: sql_help.c:3070 sql_help.c:3079 sql_help.c:3087 sql_help.c:3096
+#: sql_help.c:3104 sql_help.c:3112 sql_help.c:3121 sql_help.c:3129
+#: sql_help.c:3137 sql_help.c:3145 sql_help.c:3153 sql_help.c:3161
+#: sql_help.c:3169 sql_help.c:3177 sql_help.c:3185 sql_help.c:3193
+#: sql_help.c:3201 sql_help.c:3218 sql_help.c:3227 sql_help.c:3235
+#: sql_help.c:3252 sql_help.c:3267 sql_help.c:3535 sql_help.c:3586
+#: sql_help.c:3615 sql_help.c:3623 sql_help.c:4046 sql_help.c:4094
+#: sql_help.c:4235
+msgid "name"
+msgstr "שם"
+
+#: sql_help.c:37 sql_help.c:40 sql_help.c:43 sql_help.c:326 sql_help.c:1539
+#: sql_help.c:2916 sql_help.c:3840
+msgid "aggregate_signature"
+msgstr "aggregate_signature"
+
+#: sql_help.c:38 sql_help.c:68 sql_help.c:83 sql_help.c:119 sql_help.c:251
+#: sql_help.c:269 sql_help.c:390 sql_help.c:438 sql_help.c:515 sql_help.c:561
+#: sql_help.c:576 sql_help.c:598 sql_help.c:648 sql_help.c:713 sql_help.c:768
+#: sql_help.c:789 sql_help.c:826 sql_help.c:867 sql_help.c:891 sql_help.c:901
+#: sql_help.c:934 sql_help.c:954 sql_help.c:967 sql_help.c:1013 sql_help.c:1112
+#: sql_help.c:1188 sql_help.c:1231 sql_help.c:1252 sql_help.c:1266
+#: sql_help.c:1278 sql_help.c:1291 sql_help.c:1322 sql_help.c:1379
+#: sql_help.c:1424
+msgid "new_name"
+msgstr "new_name"
+
+#: sql_help.c:41 sql_help.c:70 sql_help.c:85 sql_help.c:121 sql_help.c:249
+#: sql_help.c:267 sql_help.c:388 sql_help.c:474 sql_help.c:520 sql_help.c:600
+#: sql_help.c:609 sql_help.c:667 sql_help.c:687 sql_help.c:716 sql_help.c:771
+#: sql_help.c:824 sql_help.c:903 sql_help.c:932 sql_help.c:952 sql_help.c:965
+#: sql_help.c:1011 sql_help.c:1172 sql_help.c:1190 sql_help.c:1233
+#: sql_help.c:1254 sql_help.c:1317 sql_help.c:1422 sql_help.c:2592
+msgid "new_owner"
+msgstr "new_owner"
+
+#: sql_help.c:44 sql_help.c:72 sql_help.c:87 sql_help.c:253 sql_help.c:318
+#: sql_help.c:440 sql_help.c:525 sql_help.c:650 sql_help.c:691 sql_help.c:719
+#: sql_help.c:774 sql_help.c:936 sql_help.c:969 sql_help.c:1114 sql_help.c:1235
+#: sql_help.c:1256 sql_help.c:1268 sql_help.c:1280 sql_help.c:1324
+#: sql_help.c:1426
+msgid "new_schema"
+msgstr "new_schema"
+
+#: sql_help.c:45 sql_help.c:1595 sql_help.c:2917 sql_help.c:3861
+msgid "where aggregate_signature is:"
+msgstr "איפה aggregate_signature הוא:"
+
+#: sql_help.c:46 sql_help.c:49 sql_help.c:52 sql_help.c:336 sql_help.c:361
+#: sql_help.c:364 sql_help.c:367 sql_help.c:507 sql_help.c:512 sql_help.c:517
+#: sql_help.c:522 sql_help.c:527 sql_help.c:1557 sql_help.c:1596
+#: sql_help.c:1599 sql_help.c:1602 sql_help.c:1746 sql_help.c:1765
+#: sql_help.c:1768 sql_help.c:2035 sql_help.c:2918 sql_help.c:2921
+#: sql_help.c:2924 sql_help.c:3009 sql_help.c:3420 sql_help.c:3753
+#: sql_help.c:3846 sql_help.c:3862 sql_help.c:3865 sql_help.c:3868
+msgid "argmode"
+msgstr "argmode"
+
+#: sql_help.c:47 sql_help.c:50 sql_help.c:53 sql_help.c:337 sql_help.c:362
+#: sql_help.c:365 sql_help.c:368 sql_help.c:508 sql_help.c:513 sql_help.c:518
+#: sql_help.c:523 sql_help.c:528 sql_help.c:1558 sql_help.c:1597
+#: sql_help.c:1600 sql_help.c:1603 sql_help.c:1747 sql_help.c:1766
+#: sql_help.c:1769 sql_help.c:2036 sql_help.c:2919 sql_help.c:2922
+#: sql_help.c:2925 sql_help.c:3010 sql_help.c:3847 sql_help.c:3863
+#: sql_help.c:3866 sql_help.c:3869
+msgid "argname"
+msgstr "argname"
+
+#: sql_help.c:48 sql_help.c:51 sql_help.c:54 sql_help.c:338 sql_help.c:363
+#: sql_help.c:366 sql_help.c:369 sql_help.c:509 sql_help.c:514 sql_help.c:519
+#: sql_help.c:524 sql_help.c:529 sql_help.c:1559 sql_help.c:1598
+#: sql_help.c:1601 sql_help.c:1604 sql_help.c:2037 sql_help.c:2920
+#: sql_help.c:2923 sql_help.c:2926 sql_help.c:3011 sql_help.c:3848
+#: sql_help.c:3864 sql_help.c:3867 sql_help.c:3870
+msgid "argtype"
+msgstr "argtype"
+
+#: sql_help.c:113 sql_help.c:385 sql_help.c:463 sql_help.c:475 sql_help.c:815
+#: sql_help.c:861 sql_help.c:949 sql_help.c:1249 sql_help.c:1373
+#: sql_help.c:1401 sql_help.c:1652 sql_help.c:1658 sql_help.c:1944
+#: sql_help.c:1985 sql_help.c:1992 sql_help.c:2001 sql_help.c:2077
+#: sql_help.c:2233 sql_help.c:2262 sql_help.c:2354 sql_help.c:2367
+#: sql_help.c:2394 sql_help.c:2621 sql_help.c:2802 sql_help.c:2824
+#: sql_help.c:3287 sql_help.c:3454
+msgid "option"
+msgstr "אופציה"
+
+#: sql_help.c:114 sql_help.c:816 sql_help.c:862 sql_help.c:1374 sql_help.c:2078
+#: sql_help.c:2234 sql_help.c:2263 sql_help.c:2395 sql_help.c:2803
+msgid "where option can be:"
+msgstr "איפה האפשרות יכולה להיות אחת מ:"
+
+#: sql_help.c:115 sql_help.c:1876
+msgid "allowconn"
+msgstr "allowconn"
+
+#: sql_help.c:116 sql_help.c:863 sql_help.c:1375 sql_help.c:1877
+#: sql_help.c:2264 sql_help.c:2804
+msgid "connlimit"
+msgstr "connlimit"
+
+#: sql_help.c:117 sql_help.c:1878
+msgid "istemplate"
+msgstr "istemplate"
+
+#: sql_help.c:123 sql_help.c:588 sql_help.c:653 sql_help.c:1117 sql_help.c:1165
+msgid "new_tablespace"
+msgstr "new_tablespace"
+
+#: sql_help.c:125 sql_help.c:128 sql_help.c:130 sql_help.c:534 sql_help.c:536
+#: sql_help.c:537 sql_help.c:870 sql_help.c:874 sql_help.c:877 sql_help.c:1024
+#: sql_help.c:1027 sql_help.c:1381 sql_help.c:1384 sql_help.c:1386
+#: sql_help.c:2046 sql_help.c:3640 sql_help.c:4035
+msgid "configuration_parameter"
+msgstr "configuration_parameter"
+
+#: sql_help.c:126 sql_help.c:386 sql_help.c:458 sql_help.c:464 sql_help.c:476
+#: sql_help.c:535 sql_help.c:583 sql_help.c:659 sql_help.c:665 sql_help.c:871
+#: sql_help.c:950 sql_help.c:1025 sql_help.c:1026 sql_help.c:1147
+#: sql_help.c:1167 sql_help.c:1193 sql_help.c:1250 sql_help.c:1382
+#: sql_help.c:1402 sql_help.c:1945 sql_help.c:1986 sql_help.c:1993
+#: sql_help.c:2002 sql_help.c:2047 sql_help.c:2048 sql_help.c:2106
+#: sql_help.c:2138 sql_help.c:2355 sql_help.c:2368 sql_help.c:2494
+#: sql_help.c:2506 sql_help.c:2519 sql_help.c:2556 sql_help.c:2578
+#: sql_help.c:2595 sql_help.c:2622 sql_help.c:2825 sql_help.c:3455
+#: sql_help.c:4036 sql_help.c:4037
+msgid "value"
+msgstr "ערך"
+
+#: sql_help.c:198
+msgid "target_role"
+msgstr "target_role"
+
+#: sql_help.c:199 sql_help.c:1928 sql_help.c:2310 sql_help.c:2315
+#: sql_help.c:3402 sql_help.c:3409 sql_help.c:3423 sql_help.c:3429
+#: sql_help.c:3735 sql_help.c:3742 sql_help.c:3756 sql_help.c:3762
+msgid "schema_name"
+msgstr "schema_name"
+
+#: sql_help.c:200
+msgid "abbreviated_grant_or_revoke"
+msgstr "abbreviated_grant_or_revoke"
+
+#: sql_help.c:201
+msgid "where abbreviated_grant_or_revoke is one of:"
+msgstr "איפה abbreviated_grant_or_revoke הוא אחד מ:"
+
+#: sql_help.c:202 sql_help.c:203 sql_help.c:204 sql_help.c:205 sql_help.c:206
+#: sql_help.c:207 sql_help.c:208 sql_help.c:209 sql_help.c:210 sql_help.c:211
+#: sql_help.c:559 sql_help.c:587 sql_help.c:652 sql_help.c:792 sql_help.c:881
+#: sql_help.c:1116 sql_help.c:1389 sql_help.c:2081 sql_help.c:2082
+#: sql_help.c:2083 sql_help.c:2084 sql_help.c:2085 sql_help.c:2212
+#: sql_help.c:2267 sql_help.c:2268 sql_help.c:2269 sql_help.c:2270
+#: sql_help.c:2271 sql_help.c:2807 sql_help.c:2808 sql_help.c:2809
+#: sql_help.c:2810 sql_help.c:2811 sql_help.c:3436 sql_help.c:3437
+#: sql_help.c:3438 sql_help.c:3736 sql_help.c:3740 sql_help.c:3743
+#: sql_help.c:3745 sql_help.c:3747 sql_help.c:3749 sql_help.c:3751
+#: sql_help.c:3757 sql_help.c:3759 sql_help.c:3761 sql_help.c:3763
+#: sql_help.c:3765 sql_help.c:3767 sql_help.c:3768 sql_help.c:3769
+#: sql_help.c:4056
+msgid "role_name"
+msgstr "role_name"
+
+#: sql_help.c:237 sql_help.c:451 sql_help.c:1132 sql_help.c:1134
+#: sql_help.c:1418 sql_help.c:1897 sql_help.c:1901 sql_help.c:2005
+#: sql_help.c:2009 sql_help.c:2102 sql_help.c:2490 sql_help.c:2502
+#: sql_help.c:2515 sql_help.c:2523 sql_help.c:2534 sql_help.c:2560
+#: sql_help.c:3486 sql_help.c:3501 sql_help.c:3503 sql_help.c:3921
+#: sql_help.c:3922 sql_help.c:3931 sql_help.c:3972 sql_help.c:3973
+#: sql_help.c:3974 sql_help.c:3975 sql_help.c:3976 sql_help.c:3977
+#: sql_help.c:4010 sql_help.c:4011 sql_help.c:4016 sql_help.c:4021
+#: sql_help.c:4160 sql_help.c:4161 sql_help.c:4170 sql_help.c:4211
+#: sql_help.c:4212 sql_help.c:4213 sql_help.c:4214 sql_help.c:4215
+#: sql_help.c:4216 sql_help.c:4263 sql_help.c:4265 sql_help.c:4298
+#: sql_help.c:4354 sql_help.c:4355 sql_help.c:4364 sql_help.c:4405
+#: sql_help.c:4406 sql_help.c:4407 sql_help.c:4408 sql_help.c:4409
+#: sql_help.c:4410
+msgid "expression"
+msgstr "ביטוי"
+
+#: sql_help.c:240
+msgid "domain_constraint"
+msgstr "domain_constraint"
+
+#: sql_help.c:242 sql_help.c:244 sql_help.c:247 sql_help.c:466 sql_help.c:467
+#: sql_help.c:1109 sql_help.c:1153 sql_help.c:1154 sql_help.c:1155
+#: sql_help.c:1175 sql_help.c:1545 sql_help.c:1547 sql_help.c:1900
+#: sql_help.c:2004 sql_help.c:2008 sql_help.c:2522 sql_help.c:2533
+#: sql_help.c:3498
+msgid "constraint_name"
+msgstr "constraint_name"
+
+#: sql_help.c:245 sql_help.c:1110
+msgid "new_constraint_name"
+msgstr "new_constraint_name"
+
+#: sql_help.c:316 sql_help.c:948
+msgid "new_version"
+msgstr "new_version"
+
+#: sql_help.c:320 sql_help.c:322
+msgid "member_object"
+msgstr "אובייקט"
+
+#: sql_help.c:323
+msgid "where member_object is:"
+msgstr "איפה member_object הוא:"
+
+#: sql_help.c:324 sql_help.c:329 sql_help.c:330 sql_help.c:331 sql_help.c:332
+#: sql_help.c:333 sql_help.c:334 sql_help.c:339 sql_help.c:343 sql_help.c:345
+#: sql_help.c:347 sql_help.c:348 sql_help.c:349 sql_help.c:350 sql_help.c:351
+#: sql_help.c:352 sql_help.c:353 sql_help.c:354 sql_help.c:355 sql_help.c:358
+#: sql_help.c:359 sql_help.c:1537 sql_help.c:1542 sql_help.c:1549
+#: sql_help.c:1550 sql_help.c:1551 sql_help.c:1552 sql_help.c:1553
+#: sql_help.c:1554 sql_help.c:1555 sql_help.c:1560 sql_help.c:1562
+#: sql_help.c:1566 sql_help.c:1568 sql_help.c:1572 sql_help.c:1573
+#: sql_help.c:1574 sql_help.c:1577 sql_help.c:1578 sql_help.c:1579
+#: sql_help.c:1580 sql_help.c:1581 sql_help.c:1582 sql_help.c:1583
+#: sql_help.c:1584 sql_help.c:1585 sql_help.c:1586 sql_help.c:1587
+#: sql_help.c:1592 sql_help.c:1593 sql_help.c:3836 sql_help.c:3841
+#: sql_help.c:3842 sql_help.c:3843 sql_help.c:3844 sql_help.c:3850
+#: sql_help.c:3851 sql_help.c:3852 sql_help.c:3853 sql_help.c:3854
+#: sql_help.c:3855 sql_help.c:3856 sql_help.c:3857 sql_help.c:3858
+#: sql_help.c:3859
+msgid "object_name"
+msgstr "object_name"
+
+#: sql_help.c:325 sql_help.c:1538 sql_help.c:3839
+msgid "aggregate_name"
+msgstr "aggregate_name"
+
+#: sql_help.c:327 sql_help.c:1540 sql_help.c:1811 sql_help.c:1815
+#: sql_help.c:1817 sql_help.c:2934
+msgid "source_type"
+msgstr "source_type"
+
+#: sql_help.c:328 sql_help.c:1541 sql_help.c:1812 sql_help.c:1816
+#: sql_help.c:1818 sql_help.c:2935
+msgid "target_type"
+msgstr "target_type"
+
+#: sql_help.c:335 sql_help.c:756 sql_help.c:1556 sql_help.c:1813
+#: sql_help.c:1852 sql_help.c:1915 sql_help.c:2155 sql_help.c:2186
+#: sql_help.c:2698 sql_help.c:3419 sql_help.c:3752 sql_help.c:3845
+#: sql_help.c:3950 sql_help.c:3954 sql_help.c:3958 sql_help.c:3961
+#: sql_help.c:4189 sql_help.c:4193 sql_help.c:4197 sql_help.c:4200
+#: sql_help.c:4383 sql_help.c:4387 sql_help.c:4391 sql_help.c:4394
+msgid "function_name"
+msgstr "function_name"
+
+#: sql_help.c:340 sql_help.c:749 sql_help.c:1563 sql_help.c:2179
+msgid "operator_name"
+msgstr "operator_name"
+
+#: sql_help.c:341 sql_help.c:685 sql_help.c:689 sql_help.c:693 sql_help.c:1564
+#: sql_help.c:2156 sql_help.c:3052
+msgid "left_type"
+msgstr "left_type"
+
+#: sql_help.c:342 sql_help.c:686 sql_help.c:690 sql_help.c:694 sql_help.c:1565
+#: sql_help.c:2157 sql_help.c:3053
+msgid "right_type"
+msgstr "right_type"
+
+#: sql_help.c:344 sql_help.c:346 sql_help.c:712 sql_help.c:715 sql_help.c:718
+#: sql_help.c:747 sql_help.c:759 sql_help.c:767 sql_help.c:770 sql_help.c:773
+#: sql_help.c:1567 sql_help.c:1569 sql_help.c:2176 sql_help.c:2197
+#: sql_help.c:2539 sql_help.c:3062 sql_help.c:3071
+msgid "index_method"
+msgstr "index_method"
+
+#: sql_help.c:356 sql_help.c:1171 sql_help.c:1588 sql_help.c:2043
+#: sql_help.c:2497 sql_help.c:2665 sql_help.c:3209 sql_help.c:3433
+#: sql_help.c:3766
+msgid "type_name"
+msgstr "type_name"
+
+#: sql_help.c:357 sql_help.c:1589 sql_help.c:2042 sql_help.c:2666
+#: sql_help.c:2892 sql_help.c:3210 sql_help.c:3425 sql_help.c:3758
+msgid "lang_name"
+msgstr "lang_name"
+
+#: sql_help.c:360
+msgid "and aggregate_signature is:"
+msgstr "איפה aggregate_signature הוא:"
+
+#: sql_help.c:383 sql_help.c:1683 sql_help.c:1942
+msgid "handler_function"
+msgstr "handler_function"
+
+#: sql_help.c:384 sql_help.c:1943
+msgid "validator_function"
+msgstr "validator_function"
+
+#: sql_help.c:433 sql_help.c:510 sql_help.c:641 sql_help.c:1104 sql_help.c:1315
+#: sql_help.c:2530 sql_help.c:2531 sql_help.c:2547 sql_help.c:2548
+msgid "action"
+msgstr "פעולה"
+
+#: sql_help.c:435 sql_help.c:442 sql_help.c:446 sql_help.c:447 sql_help.c:450
+#: sql_help.c:452 sql_help.c:453 sql_help.c:454 sql_help.c:456 sql_help.c:459
+#: sql_help.c:461 sql_help.c:462 sql_help.c:645 sql_help.c:655 sql_help.c:657
+#: sql_help.c:660 sql_help.c:662 sql_help.c:930 sql_help.c:1106 sql_help.c:1124
+#: sql_help.c:1128 sql_help.c:1129 sql_help.c:1133 sql_help.c:1135
+#: sql_help.c:1136 sql_help.c:1137 sql_help.c:1139 sql_help.c:1142
+#: sql_help.c:1143 sql_help.c:1145 sql_help.c:1148 sql_help.c:1150
+#: sql_help.c:1417 sql_help.c:1420 sql_help.c:1440 sql_help.c:1544
+#: sql_help.c:1649 sql_help.c:1654 sql_help.c:1668 sql_help.c:1669
+#: sql_help.c:1670 sql_help.c:1983 sql_help.c:1996 sql_help.c:2040
+#: sql_help.c:2101 sql_help.c:2136 sql_help.c:2340 sql_help.c:2369
+#: sql_help.c:2370 sql_help.c:2481 sql_help.c:2489 sql_help.c:2498
+#: sql_help.c:2501 sql_help.c:2510 sql_help.c:2514 sql_help.c:2535
+#: sql_help.c:2537 sql_help.c:2544 sql_help.c:2559 sql_help.c:2576
+#: sql_help.c:2701 sql_help.c:2837 sql_help.c:3404 sql_help.c:3405
+#: sql_help.c:3485 sql_help.c:3500 sql_help.c:3502 sql_help.c:3504
+#: sql_help.c:3737 sql_help.c:3738 sql_help.c:3838 sql_help.c:3981
+#: sql_help.c:4220 sql_help.c:4262 sql_help.c:4264 sql_help.c:4266
+#: sql_help.c:4283 sql_help.c:4286 sql_help.c:4414
+msgid "column_name"
+msgstr "column_name"
+
+#: sql_help.c:436 sql_help.c:646 sql_help.c:1107
+msgid "new_column_name"
+msgstr "new_column_name"
+
+#: sql_help.c:441 sql_help.c:531 sql_help.c:654 sql_help.c:1123 sql_help.c:1331
+msgid "where action is one of:"
+msgstr "איפה הפעולה היא אחת מ:"
+
+#: sql_help.c:443 sql_help.c:448 sql_help.c:922 sql_help.c:1125 sql_help.c:1130
+#: sql_help.c:1333 sql_help.c:1337 sql_help.c:1895 sql_help.c:1984
+#: sql_help.c:2175 sql_help.c:2333 sql_help.c:2482 sql_help.c:2746
+#: sql_help.c:3587
+msgid "data_type"
+msgstr "data_type"
+
+#: sql_help.c:444 sql_help.c:449 sql_help.c:1126 sql_help.c:1131
+#: sql_help.c:1334 sql_help.c:1338 sql_help.c:1896 sql_help.c:1987
+#: sql_help.c:2103 sql_help.c:2483 sql_help.c:2491 sql_help.c:2503
+#: sql_help.c:2516 sql_help.c:2747 sql_help.c:2753 sql_help.c:3495
+msgid "collation"
+msgstr "סדר אלפביתי"
+
+#: sql_help.c:445 sql_help.c:1127 sql_help.c:1988 sql_help.c:1997
+#: sql_help.c:2484 sql_help.c:2499 sql_help.c:2511
+msgid "column_constraint"
+msgstr "column_constraint"
+
+#: sql_help.c:455 sql_help.c:656 sql_help.c:1144
+msgid "integer"
+msgstr "מספר שלם"
+
+#: sql_help.c:457 sql_help.c:460 sql_help.c:658 sql_help.c:661 sql_help.c:1146
+#: sql_help.c:1149
+msgid "attribute_option"
+msgstr "attribute_option"
+
+#: sql_help.c:465 sql_help.c:1151 sql_help.c:1989 sql_help.c:1998
+#: sql_help.c:2485 sql_help.c:2500 sql_help.c:2512
+msgid "table_constraint"
+msgstr "table_constraint"
+
+#: sql_help.c:468 sql_help.c:469 sql_help.c:470 sql_help.c:471 sql_help.c:1156
+#: sql_help.c:1157 sql_help.c:1158 sql_help.c:1159 sql_help.c:1590
+msgid "trigger_name"
+msgstr "trigger_name"
+
+#: sql_help.c:472 sql_help.c:473 sql_help.c:1169 sql_help.c:1170
+#: sql_help.c:1990 sql_help.c:1995 sql_help.c:2488 sql_help.c:2509
+msgid "parent_table"
+msgstr "parent_table"
+
+#: sql_help.c:530 sql_help.c:580 sql_help.c:643 sql_help.c:1294 sql_help.c:1927
+msgid "extension_name"
+msgstr "extension_name"
+
+#: sql_help.c:532 sql_help.c:2044
+msgid "execution_cost"
+msgstr "execution_cost"
+
+#: sql_help.c:533 sql_help.c:2045
+msgid "result_rows"
+msgstr "result_rows"
+
+#: sql_help.c:554 sql_help.c:556 sql_help.c:860 sql_help.c:868 sql_help.c:872
+#: sql_help.c:875 sql_help.c:878 sql_help.c:1372 sql_help.c:1380
+#: sql_help.c:1383 sql_help.c:1385 sql_help.c:1387 sql_help.c:2311
+#: sql_help.c:2313 sql_help.c:2316 sql_help.c:2317 sql_help.c:3403
+#: sql_help.c:3407 sql_help.c:3410 sql_help.c:3412 sql_help.c:3414
+#: sql_help.c:3416 sql_help.c:3418 sql_help.c:3424 sql_help.c:3426
+#: sql_help.c:3428 sql_help.c:3430 sql_help.c:3432 sql_help.c:3434
+msgid "role_specification"
+msgstr "role_specification"
+
+#: sql_help.c:555 sql_help.c:557 sql_help.c:1399 sql_help.c:1870
+#: sql_help.c:2319 sql_help.c:2822 sql_help.c:3243 sql_help.c:4066
+msgid "user_name"
+msgstr "user_name"
+
+#: sql_help.c:558 sql_help.c:880 sql_help.c:1388 sql_help.c:2318
+#: sql_help.c:3435
+msgid "where role_specification can be:"
+msgstr "איפה role_specification יכול להיות:"
+
+#: sql_help.c:560
+msgid "group_name"
+msgstr "group_name"
+
+#: sql_help.c:578 sql_help.c:1875 sql_help.c:2107 sql_help.c:2139
+#: sql_help.c:2495 sql_help.c:2507 sql_help.c:2520 sql_help.c:2557
+#: sql_help.c:2579 sql_help.c:2591 sql_help.c:3431 sql_help.c:3764
+msgid "tablespace_name"
+msgstr "tablespace_name"
+
+#: sql_help.c:582 sql_help.c:585 sql_help.c:664 sql_help.c:666 sql_help.c:1166
+#: sql_help.c:1168 sql_help.c:2105 sql_help.c:2137 sql_help.c:2493
+#: sql_help.c:2505 sql_help.c:2518 sql_help.c:2555 sql_help.c:2577
+msgid "storage_parameter"
+msgstr "storage_parameter"
+
+#: sql_help.c:608 sql_help.c:1561 sql_help.c:3849
+msgid "large_object_oid"
+msgstr "large_object_oid"
+
+#: sql_help.c:663 sql_help.c:1164 sql_help.c:1173 sql_help.c:1176
+#: sql_help.c:1480
+msgid "index_name"
+msgstr "index_name"
+
+#: sql_help.c:695 sql_help.c:2160
+msgid "res_proc"
+msgstr "res_proc"
+
+#: sql_help.c:696 sql_help.c:2161
+msgid "join_proc"
+msgstr "join_proc"
+
+#: sql_help.c:748 sql_help.c:760 sql_help.c:2178
+msgid "strategy_number"
+msgstr "strategy_number"
+
+#: sql_help.c:750 sql_help.c:751 sql_help.c:754 sql_help.c:755 sql_help.c:761
+#: sql_help.c:762 sql_help.c:764 sql_help.c:765 sql_help.c:2180 sql_help.c:2181
+#: sql_help.c:2184 sql_help.c:2185
+msgid "op_type"
+msgstr "op_type"
+
+#: sql_help.c:752 sql_help.c:2182
+msgid "sort_family_name"
+msgstr "sort_family_name"
+
+#: sql_help.c:753 sql_help.c:763 sql_help.c:2183
+msgid "support_number"
+msgstr "support_number"
+
+#: sql_help.c:757 sql_help.c:1814 sql_help.c:2187 sql_help.c:2668
+#: sql_help.c:2670
+msgid "argument_type"
+msgstr "argument_type"
+
+#: sql_help.c:788 sql_help.c:791 sql_help.c:818 sql_help.c:820 sql_help.c:822
+#: sql_help.c:890 sql_help.c:929 sql_help.c:1290 sql_help.c:1293
+#: sql_help.c:1439 sql_help.c:1479 sql_help.c:1546 sql_help.c:1571
+#: sql_help.c:1576 sql_help.c:1591 sql_help.c:1648 sql_help.c:1653
+#: sql_help.c:1982 sql_help.c:1994 sql_help.c:2099 sql_help.c:2135
+#: sql_help.c:2211 sql_help.c:2232 sql_help.c:2288 sql_help.c:2339
+#: sql_help.c:2371 sql_help.c:2480 sql_help.c:2496 sql_help.c:2508
+#: sql_help.c:2575 sql_help.c:2694 sql_help.c:2871 sql_help.c:3088
+#: sql_help.c:3113 sql_help.c:3219 sql_help.c:3401 sql_help.c:3406
+#: sql_help.c:3451 sql_help.c:3483 sql_help.c:3734 sql_help.c:3739
+#: sql_help.c:3837 sql_help.c:3936 sql_help.c:3938 sql_help.c:3987
+#: sql_help.c:4026 sql_help.c:4175 sql_help.c:4177 sql_help.c:4226
+#: sql_help.c:4260 sql_help.c:4282 sql_help.c:4284 sql_help.c:4285
+#: sql_help.c:4369 sql_help.c:4371 sql_help.c:4420
+msgid "table_name"
+msgstr "table_name"
+
+#: sql_help.c:793 sql_help.c:2213
+msgid "using_expression"
+msgstr "table_constraint_using_index"
+
+#: sql_help.c:794 sql_help.c:2214
+msgid "check_expression"
+msgstr "check_expression"
+
+#: sql_help.c:864 sql_help.c:1376 sql_help.c:2079 sql_help.c:2265
+#: sql_help.c:2805
+msgid "password"
+msgstr "סיסמא"
+
+#: sql_help.c:865 sql_help.c:1377 sql_help.c:2080 sql_help.c:2266
+#: sql_help.c:2806
+msgid "timestamp"
+msgstr "חותמת זמן"
+
+#: sql_help.c:869 sql_help.c:873 sql_help.c:876 sql_help.c:879 sql_help.c:3411
+#: sql_help.c:3744
+msgid "database_name"
+msgstr "database_name"
+
+#: sql_help.c:923 sql_help.c:2334
+msgid "increment"
+msgstr "הגדלה"
+
+#: sql_help.c:924 sql_help.c:2335
+msgid "minvalue"
+msgstr "ערך מינימלי"
+
+#: sql_help.c:925 sql_help.c:2336
+msgid "maxvalue"
+msgstr "ערך מקסימלי"
+
+#: sql_help.c:926 sql_help.c:2337 sql_help.c:3934 sql_help.c:4024
+#: sql_help.c:4173 sql_help.c:4302 sql_help.c:4367
+msgid "start"
+msgstr "לאתחל"
+
+#: sql_help.c:927 sql_help.c:1141
+msgid "restart"
+msgstr "הפעלה מחדש"
+
+#: sql_help.c:928 sql_help.c:2338
+msgid "cache"
+msgstr "זיכרון מטמון"
+
+#: sql_help.c:996
+msgid "suboption"
+msgstr "suboption"
+
+#: sql_help.c:997
+msgid "where suboption can be:"
+msgstr "איפה suboption יכול להיות:"
+
+#: sql_help.c:998 sql_help.c:2396
+msgid "slot_name"
+msgstr "slot_name"
+
+#: sql_help.c:999 sql_help.c:2397
+msgid "synchronous_commit"
+msgstr "synchronous_commit"
+
+#: sql_help.c:1001 sql_help.c:2393
+msgid "publication_name"
+msgstr "publication_name"
+
+#: sql_help.c:1002 sql_help.c:1004
+msgid "puboption"
+msgstr "puboption"
+
+#: sql_help.c:1005
+msgid "where puboption can be:"
+msgstr "איפה puboption יכולים להיות:"
+
+#: sql_help.c:1007 sql_help.c:2392
+msgid "conninfo"
+msgstr "conninfo"
+
+#: sql_help.c:1119 sql_help.c:1122
+msgid "partition_name"
+msgstr "partition_name"
+
+#: sql_help.c:1120 sql_help.c:1999 sql_help.c:2513
+msgid "partition_bound_spec"
+msgstr "partition_bound_spec"
+
+#: sql_help.c:1138 sql_help.c:2525
+msgid "sequence_options"
+msgstr "sequence_options"
+
+#: sql_help.c:1140
+msgid "sequence_option"
+msgstr "sequence_option"
+
+#: sql_help.c:1152
+msgid "table_constraint_using_index"
+msgstr "table_constraint_using_index"
+
+#: sql_help.c:1160 sql_help.c:1161 sql_help.c:1162 sql_help.c:1163
+msgid "rewrite_rule_name"
+msgstr "rewrite_rule_name"
+
+#: sql_help.c:1174
+msgid "and table_constraint_using_index is:"
+msgstr "ו table_constraint_using_index הוא:"
+
+#: sql_help.c:1192 sql_help.c:1195 sql_help.c:2594
+msgid "tablespace_option"
+msgstr "tablespace_option"
+
+#: sql_help.c:1216 sql_help.c:1219 sql_help.c:1225 sql_help.c:1229
+msgid "token_type"
+msgstr "token_type"
+
+#: sql_help.c:1217 sql_help.c:1220
+msgid "dictionary_name"
+msgstr "dictionary_name"
+
+#: sql_help.c:1222 sql_help.c:1226
+msgid "old_dictionary"
+msgstr "old_dictionary"
+
+#: sql_help.c:1223 sql_help.c:1227
+msgid "new_dictionary"
+msgstr "new_dictionary"
+
+#: sql_help.c:1319 sql_help.c:1332 sql_help.c:1335 sql_help.c:1336
+#: sql_help.c:2745
+msgid "attribute_name"
+msgstr "attribute_name"
+
+#: sql_help.c:1320
+msgid "new_attribute_name"
+msgstr "new_attribute_name"
+
+#: sql_help.c:1326 sql_help.c:1330
+msgid "new_enum_value"
+msgstr "new_enum_value"
+
+#: sql_help.c:1327
+msgid "neighbor_enum_value"
+msgstr "neighbor_enum_value"
+
+#: sql_help.c:1329
+msgid "existing_enum_value"
+msgstr "existing_enum_value"
+
+#: sql_help.c:1400 sql_help.c:1991 sql_help.c:2000 sql_help.c:2350
+#: sql_help.c:2823 sql_help.c:3244 sql_help.c:3417 sql_help.c:3452
+#: sql_help.c:3750
+msgid "server_name"
+msgstr "server_name"
+
+#: sql_help.c:1428 sql_help.c:1431 sql_help.c:2838
+msgid "view_option_name"
+msgstr "view_option_name"
+
+#: sql_help.c:1429 sql_help.c:2839
+msgid "view_option_value"
+msgstr "view_option_value"
+
+#: sql_help.c:1454 sql_help.c:4082 sql_help.c:4084 sql_help.c:4108
+msgid "transaction_mode"
+msgstr "transaction_mode"
+
+#: sql_help.c:1455 sql_help.c:4085 sql_help.c:4109
+msgid "where transaction_mode is one of:"
+msgstr "איפה transaction_mode הוא אחד מ:"
+
+#: sql_help.c:1543
+msgid "relation_name"
+msgstr "relation_name"
+
+#: sql_help.c:1548 sql_help.c:3413 sql_help.c:3746
+msgid "domain_name"
+msgstr "domain_name"
+
+#: sql_help.c:1570
+msgid "policy_name"
+msgstr "policy_name"
+
+#: sql_help.c:1575
+msgid "rule_name"
+msgstr "rule_name"
+
+#: sql_help.c:1594
+msgid "text"
+msgstr "טקסט"
+
+#: sql_help.c:1619 sql_help.c:3596 sql_help.c:3784
+msgid "transaction_id"
+msgstr "transaction_id"
+
+#: sql_help.c:1650 sql_help.c:1656 sql_help.c:3522
+msgid "filename"
+msgstr "שם קובץ"
+
+#: sql_help.c:1651 sql_help.c:1657 sql_help.c:2290 sql_help.c:2291
+#: sql_help.c:2292
+msgid "command"
+msgstr "הפקודה"
+
+#: sql_help.c:1655 sql_help.c:2140 sql_help.c:2580 sql_help.c:2840
+#: sql_help.c:2858 sql_help.c:3487
+msgid "query"
+msgstr "שאילתה"
+
+#: sql_help.c:1659 sql_help.c:3290
+msgid "where option can be one of:"
+msgstr "איפה האפשרות יכולה להיות אחת מ:"
+
+#: sql_help.c:1660
+msgid "format_name"
+msgstr "format_name"
+
+#: sql_help.c:1661 sql_help.c:1662 sql_help.c:1665 sql_help.c:3291
+#: sql_help.c:3292 sql_help.c:3293 sql_help.c:3294 sql_help.c:3295
+#: sql_help.c:3296
+msgid "boolean"
+msgstr "בוליאני"
+
+#: sql_help.c:1663
+msgid "delimiter_character"
+msgstr "delimiter_character"
+
+#: sql_help.c:1664
+msgid "null_string"
+msgstr "null_string"
+
+#: sql_help.c:1666
+msgid "quote_character"
+msgstr "quote_character"
+
+#: sql_help.c:1667
+msgid "escape_character"
+msgstr "escape_character"
+
+#: sql_help.c:1671
+msgid "encoding_name"
+msgstr "encoding_name"
+
+#: sql_help.c:1682
+msgid "access_method_type"
+msgstr "access_method_type"
+
+#: sql_help.c:1748 sql_help.c:1767 sql_help.c:1770
+msgid "arg_data_type"
+msgstr "arg_data_type"
+
+#: sql_help.c:1749 sql_help.c:1771 sql_help.c:1779
+msgid "sfunc"
+msgstr "sfunc"
+
+#: sql_help.c:1750 sql_help.c:1772 sql_help.c:1780
+msgid "state_data_type"
+msgstr "state_data_type"
+
+#: sql_help.c:1751 sql_help.c:1773 sql_help.c:1781
+msgid "state_data_size"
+msgstr "state_data_size"
+
+#: sql_help.c:1752 sql_help.c:1774 sql_help.c:1782
+msgid "ffunc"
+msgstr "ffunc"
+
+#: sql_help.c:1753 sql_help.c:1783
+msgid "combinefunc"
+msgstr "combinefunc"
+
+#: sql_help.c:1754 sql_help.c:1784
+msgid "serialfunc"
+msgstr "serialfunc"
+
+#: sql_help.c:1755 sql_help.c:1785
+msgid "deserialfunc"
+msgstr "deserialfunc"
+
+#: sql_help.c:1756 sql_help.c:1775 sql_help.c:1786
+msgid "initial_condition"
+msgstr "initial_condition"
+
+#: sql_help.c:1757 sql_help.c:1787
+msgid "msfunc"
+msgstr "msfunc"
+
+#: sql_help.c:1758 sql_help.c:1788
+msgid "minvfunc"
+msgstr "minvfunc"
+
+#: sql_help.c:1759 sql_help.c:1789
+msgid "mstate_data_type"
+msgstr "mstate_data_type"
+
+#: sql_help.c:1760 sql_help.c:1790
+msgid "mstate_data_size"
+msgstr "mstate_data_size"
+
+#: sql_help.c:1761 sql_help.c:1791
+msgid "mffunc"
+msgstr "mffunc"
+
+#: sql_help.c:1762 sql_help.c:1792
+msgid "minitial_condition"
+msgstr "minitial_condition"
+
+#: sql_help.c:1763 sql_help.c:1793
+msgid "sort_operator"
+msgstr "sort_operator"
+
+#: sql_help.c:1776
+msgid "or the old syntax"
+msgstr "או את התחביר הישן"
+
+#: sql_help.c:1778
+msgid "base_type"
+msgstr "base_type"
+
+#: sql_help.c:1834
+msgid "locale"
+msgstr "הגדרות אזוריות"
+
+#: sql_help.c:1835 sql_help.c:1873
+msgid "lc_collate"
+msgstr "lc_collate"
+
+#: sql_help.c:1836 sql_help.c:1874
+msgid "lc_ctype"
+msgstr "lc_ctype"
+
+#: sql_help.c:1837 sql_help.c:3835
+msgid "provider"
+msgstr "ספק"
+
+#: sql_help.c:1838 sql_help.c:1929
+msgid "version"
+msgstr "גירסא"
+
+#: sql_help.c:1840
+msgid "existing_collation"
+msgstr "existing_collation"
+
+#: sql_help.c:1850
+msgid "source_encoding"
+msgstr "source_encoding"
+
+#: sql_help.c:1851
+msgid "dest_encoding"
+msgstr "dest_encoding"
+
+#: sql_help.c:1871 sql_help.c:2620
+msgid "template"
+msgstr "תבנית"
+
+#: sql_help.c:1872
+msgid "encoding"
+msgstr "קידוד"
+
+#: sql_help.c:1898
+msgid "constraint"
+msgstr "אילוץ"
+
+#: sql_help.c:1899
+msgid "where constraint is:"
+msgstr "איפה אילוץ הוא:"
+
+#: sql_help.c:1913 sql_help.c:2287 sql_help.c:2693
+msgid "event"
+msgstr "אירוע"
+
+#: sql_help.c:1914
+msgid "filter_variable"
+msgstr "filter_variable"
+
+#: sql_help.c:1930
+msgid "old_version"
+msgstr "old_version"
+
+#: sql_help.c:2003 sql_help.c:2521
+msgid "where column_constraint is:"
+msgstr "איפה column_constraint הוא:"
+
+#: sql_help.c:2006 sql_help.c:2038 sql_help.c:2524
+msgid "default_expr"
+msgstr "default_expr"
+
+#: sql_help.c:2007 sql_help.c:2532
+msgid "and table_constraint is:"
+msgstr "ו table_constraint הוא:"
+
+#: sql_help.c:2039
+msgid "rettype"
+msgstr "rettype"
+
+#: sql_help.c:2041
+msgid "column_type"
+msgstr "column_type"
+
+#: sql_help.c:2049
+msgid "definition"
+msgstr "הגדרה"
+
+#: sql_help.c:2050
+msgid "obj_file"
+msgstr "obj_file"
+
+#: sql_help.c:2051
+msgid "link_symbol"
+msgstr "link_symbol"
+
+#: sql_help.c:2052
+msgid "attribute"
+msgstr "תכונה"
+
+#: sql_help.c:2086 sql_help.c:2272 sql_help.c:2812
+msgid "uid"
+msgstr "מזהה uid"
+
+#: sql_help.c:2100
+msgid "method"
+msgstr "מתודה"
+
+#: sql_help.c:2104 sql_help.c:2492 sql_help.c:2504 sql_help.c:2517
+#: sql_help.c:2561 sql_help.c:3496
+msgid "opclass"
+msgstr "opclass"
+
+#: sql_help.c:2108 sql_help.c:2543
+msgid "predicate"
+msgstr "נשוא"
+
+#: sql_help.c:2120
+msgid "call_handler"
+msgstr "call_handler"
+
+#: sql_help.c:2121
+msgid "inline_handler"
+msgstr "inline_handler"
+
+#: sql_help.c:2122
+msgid "valfunction"
+msgstr "valfunction"
+
+#: sql_help.c:2158
+msgid "com_op"
+msgstr "com_op"
+
+#: sql_help.c:2159
+msgid "neg_op"
+msgstr "neg_op"
+
+#: sql_help.c:2177
+msgid "family_name"
+msgstr "family_name"
+
+#: sql_help.c:2188
+msgid "storage_type"
+msgstr "storage_type"
+
+#: sql_help.c:2289 sql_help.c:2697 sql_help.c:2874 sql_help.c:3506
+#: sql_help.c:3925 sql_help.c:3927 sql_help.c:4015 sql_help.c:4017
+#: sql_help.c:4164 sql_help.c:4166 sql_help.c:4269 sql_help.c:4358
+#: sql_help.c:4360
+msgid "condition"
+msgstr "מצב"
+
+#: sql_help.c:2293 sql_help.c:2700
+msgid "where event can be one of:"
+msgstr "איפה האירוע יכול להיות אחד מ:"
+
+#: sql_help.c:2312 sql_help.c:2314
+msgid "schema_element"
+msgstr "schema_element"
+
+#: sql_help.c:2351
+msgid "server_type"
+msgstr "server_type"
+
+#: sql_help.c:2352
+msgid "server_version"
+msgstr "server_version"
+
+#: sql_help.c:2353 sql_help.c:3415 sql_help.c:3748
+msgid "fdw_name"
+msgstr "fdw_name"
+
+#: sql_help.c:2366
+msgid "statistics_name"
+msgstr "statistics_name"
+
+#: sql_help.c:2391
+msgid "subscription_name"
+msgstr "subscription_name"
+
+#: sql_help.c:2486
+msgid "source_table"
+msgstr "source_table"
+
+#: sql_help.c:2487
+msgid "like_option"
+msgstr "sequence_option"
+
+#: sql_help.c:2526 sql_help.c:2527 sql_help.c:2536 sql_help.c:2538
+#: sql_help.c:2542
+msgid "index_parameters"
+msgstr "index_parameters"
+
+#: sql_help.c:2528 sql_help.c:2545
+msgid "reftable"
+msgstr "reftable"
+
+#: sql_help.c:2529 sql_help.c:2546
+msgid "refcolumn"
+msgstr "refcolumn"
+
+#: sql_help.c:2540
+msgid "exclude_element"
+msgstr "exclude_element"
+
+#: sql_help.c:2541 sql_help.c:3932 sql_help.c:4022 sql_help.c:4171
+#: sql_help.c:4300 sql_help.c:4365
+msgid "operator"
+msgstr "אופרטור"
+
+#: sql_help.c:2549
+msgid "and like_option is:"
+msgstr "ו like_option הוא:"
+
+#: sql_help.c:2550
+msgid "and partition_bound_spec is:"
+msgstr "ו partition_bound_spec הוא:"
+
+#: sql_help.c:2551 sql_help.c:2552 sql_help.c:2553
+msgid "bound_literal"
+msgstr "bound_literal"
+
+#: sql_help.c:2554
+msgid "index_parameters in UNIQUE, PRIMARY KEY, and EXCLUDE constraints are:"
+msgstr "באילוצים UNIQUE, PRIMARY KEY ו EXCLUDE ארגומנטים index_parameters הם:"
+
+#: sql_help.c:2558
+msgid "exclude_element in an EXCLUDE constraint is:"
+msgstr "במשפט EXCLUDE אופציה exclude_element היא:"
+
+#: sql_help.c:2593
+msgid "directory"
+msgstr "ספריה"
+
+#: sql_help.c:2607
+msgid "parser_name"
+msgstr "parser_name"
+
+#: sql_help.c:2608
+msgid "source_config"
+msgstr "source_config"
+
+#: sql_help.c:2637
+msgid "start_function"
+msgstr "start_function"
+
+#: sql_help.c:2638
+msgid "gettoken_function"
+msgstr "gettoken_function"
+
+#: sql_help.c:2639
+msgid "end_function"
+msgstr "end_function"
+
+#: sql_help.c:2640
+msgid "lextypes_function"
+msgstr "lextypes_function"
+
+#: sql_help.c:2641
+msgid "headline_function"
+msgstr "headline_function"
+
+#: sql_help.c:2653
+msgid "init_function"
+msgstr "init_function"
+
+#: sql_help.c:2654
+msgid "lexize_function"
+msgstr "lexize_function"
+
+#: sql_help.c:2667
+msgid "from_sql_function_name"
+msgstr "from_sql_function_name"
+
+#: sql_help.c:2669
+msgid "to_sql_function_name"
+msgstr "to_sql_function_name"
+
+#: sql_help.c:2695
+msgid "referenced_table_name"
+msgstr "referenced_table_name"
+
+#: sql_help.c:2696
+msgid "transition_relation_name"
+msgstr "transition_relation_name"
+
+#: sql_help.c:2699
+msgid "arguments"
+msgstr "ארגומנטים"
+
+#: sql_help.c:2749 sql_help.c:3860
+msgid "label"
+msgstr "תווית"
+
+#: sql_help.c:2751
+msgid "subtype"
+msgstr "סוג משנה"
+
+#: sql_help.c:2752
+msgid "subtype_operator_class"
+msgstr "subtype_operator_class"
+
+#: sql_help.c:2754
+msgid "canonical_function"
+msgstr "canonical_function"
+
+#: sql_help.c:2755
+msgid "subtype_diff_function"
+msgstr "subtype_diff_function"
+
+#: sql_help.c:2757
+msgid "input_function"
+msgstr "input_function"
+
+#: sql_help.c:2758
+msgid "output_function"
+msgstr "output_function"
+
+#: sql_help.c:2759
+msgid "receive_function"
+msgstr "receive_function"
+
+#: sql_help.c:2760
+msgid "send_function"
+msgstr "send_function"
+
+#: sql_help.c:2761
+msgid "type_modifier_input_function"
+msgstr "type_modifier_input_function"
+
+#: sql_help.c:2762
+msgid "type_modifier_output_function"
+msgstr "type_modifier_output_function"
+
+#: sql_help.c:2763
+msgid "analyze_function"
+msgstr "analyze_function"
+
+#: sql_help.c:2764
+msgid "internallength"
+msgstr "internallength"
+
+#: sql_help.c:2765
+msgid "alignment"
+msgstr "יישור"
+
+#: sql_help.c:2766
+msgid "storage"
+msgstr "אחסון"
+
+#: sql_help.c:2767
+msgid "like_type"
+msgstr "like_type"
+
+#: sql_help.c:2768
+msgid "category"
+msgstr "קטגוריה"
+
+#: sql_help.c:2769
+msgid "preferred"
+msgstr "מועדף"
+
+#: sql_help.c:2770
+msgid "default"
+msgstr "ברירת מחדל"
+
+#: sql_help.c:2771
+msgid "element"
+msgstr "אלמנט"
+
+#: sql_help.c:2772
+msgid "delimiter"
+msgstr "מפריד"
+
+#: sql_help.c:2773
+msgid "collatable"
+msgstr "collatable"
+
+#: sql_help.c:2870 sql_help.c:3482 sql_help.c:3920 sql_help.c:4009
+#: sql_help.c:4159 sql_help.c:4259 sql_help.c:4353
+msgid "with_query"
+msgstr "with_query"
+
+#: sql_help.c:2872 sql_help.c:3484 sql_help.c:3939 sql_help.c:3945
+#: sql_help.c:3948 sql_help.c:3952 sql_help.c:3956 sql_help.c:3964
+#: sql_help.c:4178 sql_help.c:4184 sql_help.c:4187 sql_help.c:4191
+#: sql_help.c:4195 sql_help.c:4203 sql_help.c:4261 sql_help.c:4372
+#: sql_help.c:4378 sql_help.c:4381 sql_help.c:4385 sql_help.c:4389
+#: sql_help.c:4397
+msgid "alias"
+msgstr "כינוי"
+
+#: sql_help.c:2873
+msgid "using_list"
+msgstr "using_list"
+
+#: sql_help.c:2875 sql_help.c:3322 sql_help.c:3563 sql_help.c:4270
+msgid "cursor_name"
+msgstr "cursor_name"
+
+#: sql_help.c:2876 sql_help.c:3490 sql_help.c:4271
+msgid "output_expression"
+msgstr "output_expression"
+
+#: sql_help.c:2877 sql_help.c:3491 sql_help.c:3923 sql_help.c:4012
+#: sql_help.c:4162 sql_help.c:4272 sql_help.c:4356
+msgid "output_name"
+msgstr "output_name"
+
+#: sql_help.c:2893
+msgid "code"
+msgstr "קוד"
+
+#: sql_help.c:3268
+msgid "parameter"
+msgstr "פרמטר"
+
+#: sql_help.c:3288 sql_help.c:3289 sql_help.c:3588
+msgid "statement"
+msgstr "משפט"
+
+#: sql_help.c:3321 sql_help.c:3562
+msgid "direction"
+msgstr "כיוון"
+
+#: sql_help.c:3323 sql_help.c:3564
+msgid "where direction can be empty or one of:"
+msgstr "איפה כיוון יכול להיות ריק או אחד מ:"
+
+#: sql_help.c:3324 sql_help.c:3325 sql_help.c:3326 sql_help.c:3327
+#: sql_help.c:3328 sql_help.c:3565 sql_help.c:3566 sql_help.c:3567
+#: sql_help.c:3568 sql_help.c:3569 sql_help.c:3933 sql_help.c:3935
+#: sql_help.c:4023 sql_help.c:4025 sql_help.c:4172 sql_help.c:4174
+#: sql_help.c:4301 sql_help.c:4303 sql_help.c:4366 sql_help.c:4368
+msgid "count"
+msgstr "כמות"
+
+#: sql_help.c:3408 sql_help.c:3741
+msgid "sequence_name"
+msgstr "sequence_name"
+
+#: sql_help.c:3421 sql_help.c:3754
+msgid "arg_name"
+msgstr "arg_name"
+
+#: sql_help.c:3422 sql_help.c:3755
+msgid "arg_type"
+msgstr "arg_type"
+
+#: sql_help.c:3427 sql_help.c:3760
+msgid "loid"
+msgstr "loid"
+
+#: sql_help.c:3450
+msgid "remote_schema"
+msgstr "remote_schema"
+
+#: sql_help.c:3453
+msgid "local_schema"
+msgstr "local_schema"
+
+#: sql_help.c:3488
+msgid "conflict_target"
+msgstr "conflict_target"
+
+#: sql_help.c:3489
+msgid "conflict_action"
+msgstr "conflict_action"
+
+#: sql_help.c:3492
+msgid "where conflict_target can be one of:"
+msgstr "איפה conflict_target יכול להיות אחד מ:"
+
+#: sql_help.c:3493
+msgid "index_column_name"
+msgstr "index_column_name"
+
+#: sql_help.c:3494
+msgid "index_expression"
+msgstr "index_expression"
+
+#: sql_help.c:3497
+msgid "index_predicate"
+msgstr "אינדקס"
+
+#: sql_help.c:3499
+msgid "and conflict_action is one of:"
+msgstr "ו conflict_action הוא אחד מ:"
+
+#: sql_help.c:3505 sql_help.c:4267
+msgid "sub-SELECT"
+msgstr "תת שאילתה"
+
+#: sql_help.c:3514 sql_help.c:3577 sql_help.c:4243
+msgid "channel"
+msgstr "ערוץ"
+
+#: sql_help.c:3536
+msgid "lockmode"
+msgstr "lockmode"
+
+#: sql_help.c:3537
+msgid "where lockmode is one of:"
+msgstr "איפה lockmode הוא אחד מ:"
+
+#: sql_help.c:3578
+msgid "payload"
+msgstr "מטען"
+
+#: sql_help.c:3605
+msgid "old_role"
+msgstr "old_role"
+
+#: sql_help.c:3606
+msgid "new_role"
+msgstr "new_role"
+
+#: sql_help.c:3631 sql_help.c:3792 sql_help.c:3800
+msgid "savepoint_name"
+msgstr "savepoint_name"
+
+#: sql_help.c:3924 sql_help.c:3966 sql_help.c:3968 sql_help.c:4014
+#: sql_help.c:4163 sql_help.c:4205 sql_help.c:4207 sql_help.c:4357
+#: sql_help.c:4399 sql_help.c:4401
+msgid "from_item"
+msgstr "from_item"
+
+#: sql_help.c:3926 sql_help.c:3978 sql_help.c:4165 sql_help.c:4217
+#: sql_help.c:4359 sql_help.c:4411
+msgid "grouping_element"
+msgstr "ו grouping_element יכול להיות אחד מ:"
+
+#: sql_help.c:3928 sql_help.c:4018 sql_help.c:4167 sql_help.c:4361
+msgid "window_name"
+msgstr "חלון"
+
+#: sql_help.c:3929 sql_help.c:4019 sql_help.c:4168 sql_help.c:4362
+msgid "window_definition"
+msgstr "הגדרה"
+
+#: sql_help.c:3930 sql_help.c:3944 sql_help.c:3982 sql_help.c:4020
+#: sql_help.c:4169 sql_help.c:4183 sql_help.c:4221 sql_help.c:4363
+#: sql_help.c:4377 sql_help.c:4415
+msgid "select"
+msgstr "בחר"
+
+#: sql_help.c:3937 sql_help.c:4176 sql_help.c:4370
+msgid "where from_item can be one of:"
+msgstr "איפה from_item יכול להיות אחד מ:"
+
+#: sql_help.c:3940 sql_help.c:3946 sql_help.c:3949 sql_help.c:3953
+#: sql_help.c:3965 sql_help.c:4179 sql_help.c:4185 sql_help.c:4188
+#: sql_help.c:4192 sql_help.c:4204 sql_help.c:4373 sql_help.c:4379
+#: sql_help.c:4382 sql_help.c:4386 sql_help.c:4398
+msgid "column_alias"
+msgstr "column_alias"
+
+#: sql_help.c:3941 sql_help.c:4180 sql_help.c:4374
+msgid "sampling_method"
+msgstr "שיטה"
+
+#: sql_help.c:3942 sql_help.c:3951 sql_help.c:3955 sql_help.c:3959
+#: sql_help.c:3962 sql_help.c:4181 sql_help.c:4190 sql_help.c:4194
+#: sql_help.c:4198 sql_help.c:4201 sql_help.c:4375 sql_help.c:4384
+#: sql_help.c:4388 sql_help.c:4392 sql_help.c:4395
+msgid "argument"
+msgstr "ארגומנט"
+
+#: sql_help.c:3943 sql_help.c:4182 sql_help.c:4376
+msgid "seed"
+msgstr "זרע"
+
+#: sql_help.c:3947 sql_help.c:3980 sql_help.c:4186 sql_help.c:4219
+#: sql_help.c:4380 sql_help.c:4413
+msgid "with_query_name"
+msgstr "with_query_name"
+
+#: sql_help.c:3957 sql_help.c:3960 sql_help.c:3963 sql_help.c:4196
+#: sql_help.c:4199 sql_help.c:4202 sql_help.c:4390 sql_help.c:4393
+#: sql_help.c:4396
+msgid "column_definition"
+msgstr "column_definition"
+
+#: sql_help.c:3967 sql_help.c:4206 sql_help.c:4400
+msgid "join_type"
+msgstr "join_type"
+
+#: sql_help.c:3969 sql_help.c:4208 sql_help.c:4402
+msgid "join_condition"
+msgstr "join_condition"
+
+#: sql_help.c:3970 sql_help.c:4209 sql_help.c:4403
+msgid "join_column"
+msgstr "join_column"
+
+#: sql_help.c:3971 sql_help.c:4210 sql_help.c:4404
+msgid "and grouping_element can be one of:"
+msgstr "ו grouping_element יכול להיות אחד מ:"
+
+#: sql_help.c:3979 sql_help.c:4218 sql_help.c:4412
+msgid "and with_query is:"
+msgstr "ו with_query הוא:"
+
+#: sql_help.c:3983 sql_help.c:4222 sql_help.c:4416
+msgid "values"
+msgstr "ערכים"
+
+#: sql_help.c:3984 sql_help.c:4223 sql_help.c:4417
+msgid "insert"
+msgstr "הכנסה"
+
+#: sql_help.c:3985 sql_help.c:4224 sql_help.c:4418
+msgid "update"
+msgstr "עדכון"
+
+#: sql_help.c:3986 sql_help.c:4225 sql_help.c:4419
+msgid "delete"
+msgstr "מחיקה"
+
+#: sql_help.c:4013
+msgid "new_table"
+msgstr "new_table"
+
+#: sql_help.c:4038
+msgid "timezone"
+msgstr "אזור זמן"
+
+#: sql_help.c:4083
+msgid "snapshot_id"
+msgstr "snapshot_id"
+
+#: sql_help.c:4268
+msgid "from_list"
+msgstr "from_list"
+
+#: sql_help.c:4299
+msgid "sort_expression"
+msgstr "sort_expression"
+
+#: sql_help.c:4426 sql_help.c:5211
+msgid "abort the current transaction"
+msgstr "בטל את התנועה הנוכחית"
+
+#: sql_help.c:4431
+msgid "change the definition of an aggregate function"
+msgstr "שינוי ההגדרה של פונקציית צבירה"
+
+#: sql_help.c:4436
+msgid "change the definition of a collation"
+msgstr "שינוי ההגדרה של collation"
+
+#: sql_help.c:4441
+msgid "change the definition of a conversion"
+msgstr "שינוי ההגדרה של המרה"
+
+#: sql_help.c:4446
+msgid "change a database"
+msgstr "שינוי מסד נתונים"
+
+#: sql_help.c:4451
+msgid "define default access privileges"
+msgstr "להגדיר הרשאות גישה ברירת המחדל"
+
+#: sql_help.c:4456
+msgid "change the definition of a domain"
+msgstr "שינוי ההגדרה של תחום"
+
+#: sql_help.c:4461
+msgid "change the definition of an event trigger"
+msgstr "שינוי ההגדרה של טריגר האירועים"
+
+#: sql_help.c:4466
+msgid "change the definition of an extension"
+msgstr "שינוי ההגדרה של הרחבה"
+
+#: sql_help.c:4471
+msgid "change the definition of a foreign-data wrapper"
+msgstr "שינוי ההגדרה של עטיפת נתונים זרים"
+
+#: sql_help.c:4476
+msgid "change the definition of a foreign table"
+msgstr "תשנה את ההגדרה של טבלה זרה"
+
+#: sql_help.c:4481
+msgid "change the definition of a function"
+msgstr "שינוי ההגדרה של פונקציה"
+
+#: sql_help.c:4486
+msgid "change role name or membership"
+msgstr "שינוי שם תפקיד או חברות"
+
+#: sql_help.c:4491
+msgid "change the definition of an index"
+msgstr "שינוי ההגדרה של אינדקס"
+
+#: sql_help.c:4496
+msgid "change the definition of a procedural language"
+msgstr "שינוי ההגדרה של שפה פרוצדורלי"
+
+#: sql_help.c:4501
+msgid "change the definition of a large object"
+msgstr "שינוי ההגדרה של אובייקט גדול"
+
+#: sql_help.c:4506
+msgid "change the definition of a materialized view"
+msgstr "תשנה את ההגדרה של תצוגה ממומשת"
+
+#: sql_help.c:4511
+msgid "change the definition of an operator"
+msgstr "שינוי ההגדרה של אופרטור"
+
+#: sql_help.c:4516
+msgid "change the definition of an operator class"
+msgstr "לשנות את ההגדרה של מחלקת האופרטור"
+
+#: sql_help.c:4521
+msgid "change the definition of an operator family"
+msgstr "שינוי ההגדרה של משפחה של האופרטור"
+
+#: sql_help.c:4526
+msgid "change the definition of a row level security policy"
+msgstr "שינוי ההגדרה של מדיניות אבטחה ברמת השורה"
+
+#: sql_help.c:4531
+msgid "change the definition of a publication"
+msgstr "שינוי ההגדרה של פרסום"
+
+#: sql_help.c:4536 sql_help.c:4616
+msgid "change a database role"
+msgstr "שינוי תפקיד מסד נתונים"
+
+#: sql_help.c:4541
+msgid "change the definition of a rule"
+msgstr "תשנה את ההגדרה של כלל"
+
+#: sql_help.c:4546
+msgid "change the definition of a schema"
+msgstr "שינוי ההגדרה של סכימה"
+
+#: sql_help.c:4551
+msgid "change the definition of a sequence generator"
+msgstr "שינוי ההגדרה של מחולל רצף"
+
+#: sql_help.c:4556
+msgid "change the definition of a foreign server"
+msgstr "שינוי ההגדרה של שרת החוץ"
+
+#: sql_help.c:4561
+msgid "change the definition of a extended statistics"
+msgstr "שינוי ההגדרה של סטטיסטיקה מורחבת"
+
+#: sql_help.c:4566
+msgid "change the definition of a subscription"
+msgstr "שינוי ההגדרה של מנוי"
+
+#: sql_help.c:4571
+msgid "change a server configuration parameter"
+msgstr "שינוי פרמטר תצורת שרת"
+
+#: sql_help.c:4576
+msgid "change the definition of a table"
+msgstr "תשנה את ההגדרה של טבלה"
+
+#: sql_help.c:4581
+msgid "change the definition of a tablespace"
+msgstr "תשנה את ההגדרה של מרחב טבלאות"
+
+#: sql_help.c:4586
+msgid "change the definition of a text search configuration"
+msgstr "תשנה את ההגדרה של תצורת חיפוש טקסט"
+
+#: sql_help.c:4591
+msgid "change the definition of a text search dictionary"
+msgstr "תשנה את ההגדרה של מילון חיפוש טקסט"
+
+#: sql_help.c:4596
+msgid "change the definition of a text search parser"
+msgstr "תשנה את ההגדרה של מנתח חיפוש טקסט"
+
+#: sql_help.c:4601
+msgid "change the definition of a text search template"
+msgstr "תשנה את ההגדרה של תבנית חיפוש טקסט"
+
+#: sql_help.c:4606
+msgid "change the definition of a trigger"
+msgstr "תשנה את ההגדרה של טריגר"
+
+#: sql_help.c:4611
+msgid "change the definition of a type"
+msgstr "תשנה את ההגדרה של סוג"
+
+#: sql_help.c:4621
+msgid "change the definition of a user mapping"
+msgstr "תשנה את ההגדרה של מיפוי משתמש"
+
+#: sql_help.c:4626
+msgid "change the definition of a view"
+msgstr "תשנה את ההגדרה של תצוגה"
+
+#: sql_help.c:4631
+msgid "collect statistics about a database"
+msgstr "תאסוף נתונים סטטיסטיים אודות מסד נתונים"
+
+#: sql_help.c:4636 sql_help.c:5276
+msgid "start a transaction block"
+msgstr "הפעלת בלוק של טרנזקציה"
+
+#: sql_help.c:4641
+msgid "force a transaction log checkpoint"
+msgstr "תכפה על נקודת הבדיקה של יומן הטרנזקציות"
+
+#: sql_help.c:4646
+msgid "close a cursor"
+msgstr "סגור את הסמן"
+
+#: sql_help.c:4651
+msgid "cluster a table according to an index"
+msgstr "אשכול טבלה לפי אינדקס"
+
+#: sql_help.c:4656
+msgid "define or change the comment of an object"
+msgstr "תגדיר או תשנה את ההערה של אובייקט"
+
+#: sql_help.c:4661 sql_help.c:5111
+msgid "commit the current transaction"
+msgstr "השלם את הטרנזקציה הנוכחית"
+
+#: sql_help.c:4666
+msgid "commit a transaction that was earlier prepared for two-phase commit"
+msgstr "להשלים את הטרנזקציה אשר הוכנה מוקדם לקראת ביצוע דו-שלבי"
+
+#: sql_help.c:4671
+msgid "copy data between a file and a table"
+msgstr "העתק את נתונים בין קובץ ולטבלה"
+
+#: sql_help.c:4676
+msgid "define a new access method"
+msgstr "הגדר שיטת גישה חדשה"
+
+#: sql_help.c:4681
+msgid "define a new aggregate function"
+msgstr "תגדיר את פונקצית צבירה חדשה"
+
+#: sql_help.c:4686
+msgid "define a new cast"
+msgstr "תגדיר המרה חדשה"
+
+#: sql_help.c:4691
+msgid "define a new collation"
+msgstr "תגדיר אוסף חדש"
+
+#: sql_help.c:4696
+msgid "define a new encoding conversion"
+msgstr "תגדיר המרת קידוד חדשה"
+
+#: sql_help.c:4701
+msgid "create a new database"
+msgstr "תיצור מסד נתונים חדש"
+
+#: sql_help.c:4706
+msgid "define a new domain"
+msgstr "תגדיר תחום חדש"
+
+#: sql_help.c:4711
+msgid "define a new event trigger"
+msgstr "תגדיר טריגר אירוע חדש"
+
+#: sql_help.c:4716
+msgid "install an extension"
+msgstr "התקן את ההרחבה"
+
+#: sql_help.c:4721
+msgid "define a new foreign-data wrapper"
+msgstr "להגדיר עטיפת נתונים זרים חדשה"
+
+#: sql_help.c:4726
+msgid "define a new foreign table"
+msgstr "להגדיר טבלה זרה חדשה"
+
+#: sql_help.c:4731
+msgid "define a new function"
+msgstr "להגדיר פונקציה חדשה"
+
+#: sql_help.c:4736 sql_help.c:4781 sql_help.c:4866
+msgid "define a new database role"
+msgstr "להגדיר תפקיד מסד נתונים חדש"
+
+#: sql_help.c:4741
+msgid "define a new index"
+msgstr "להגדיר אינדקס חדש"
+
+#: sql_help.c:4746
+msgid "define a new procedural language"
+msgstr "להגדיר שפה פרוצדורלית חדשה"
+
+#: sql_help.c:4751
+msgid "define a new materialized view"
+msgstr "להגדיר תצוגה ממומשת חדשה"
+
+#: sql_help.c:4756
+msgid "define a new operator"
+msgstr "להגדיר  אופרטור חדש"
+
+#: sql_help.c:4761
+msgid "define a new operator class"
+msgstr "להגדיר מחלקה של אופרטור חדשה"
+
+#: sql_help.c:4766
+msgid "define a new operator family"
+msgstr "להגדיר משפחה של אופרטור חדשה"
+
+#: sql_help.c:4771
+msgid "define a new row level security policy for a table"
+msgstr "להגדיר מדיניות אבטחה חדשה ברמת שורה בטבלה"
+
+#: sql_help.c:4776
+msgid "define a new publication"
+msgstr "להגדיר פרסום חדש"
+
+#: sql_help.c:4786
+msgid "define a new rewrite rule"
+msgstr "להגדיר כלל לשכתב חדש"
+
+#: sql_help.c:4791
+msgid "define a new schema"
+msgstr "להגדיר סכימה חדשה"
+
+#: sql_help.c:4796
+msgid "define a new sequence generator"
+msgstr "להגדיר גנרטור רצף חדש"
+
+#: sql_help.c:4801
+msgid "define a new foreign server"
+msgstr "להגדיר שרת החוץ חדש"
+
+#: sql_help.c:4806
+msgid "define extended statistics"
+msgstr "להגדיר נתונים סטטיסטיים מורחבים"
+
+#: sql_help.c:4811
+msgid "define a new subscription"
+msgstr "להגדיר מנוי חדש"
+
+#: sql_help.c:4816
+msgid "define a new table"
+msgstr "להגדיר טבלה חדשה"
+
+#: sql_help.c:4821 sql_help.c:5241
+msgid "define a new table from the results of a query"
+msgstr "להגדיר טבלה חדשה מתוצאות של שאילתה"
+
+#: sql_help.c:4826
+msgid "define a new tablespace"
+msgstr "להגדיר מרחב טבלאות חדש"
+
+#: sql_help.c:4831
+msgid "define a new text search configuration"
+msgstr "להגדיר תצורה חיפוש טקסט חדשה"
+
+#: sql_help.c:4836
+msgid "define a new text search dictionary"
+msgstr "להגדיר מילון חדש של חיפוש טקסט"
+
+#: sql_help.c:4841
+msgid "define a new text search parser"
+msgstr "להגדיר מנתח החיפוש טקסט חדש"
+
+#: sql_help.c:4846
+msgid "define a new text search template"
+msgstr "להגדיר תבנית חדשה של חיפוש טקסט"
+
+#: sql_help.c:4851
+msgid "define a new transform"
+msgstr "להגדיר המרה חדשה"
+
+#: sql_help.c:4856
+msgid "define a new trigger"
+msgstr "להגדיר טריגר אירוע חדש"
+
+#: sql_help.c:4861
+msgid "define a new data type"
+msgstr "להגדיר סוג נתונים חדש"
+
+#: sql_help.c:4871
+msgid "define a new mapping of a user to a foreign server"
+msgstr "להגדיר מיפוי חדש של המשתמש לשרת החוץ"
+
+#: sql_help.c:4876
+msgid "define a new view"
+msgstr "להגדיר תצוגה חדשה"
+
+#: sql_help.c:4881
+msgid "deallocate a prepared statement"
+msgstr "לבטל הקצאה של הצהרה מוכנה"
+
+#: sql_help.c:4886
+msgid "define a cursor"
+msgstr "להגדיר את הסמן"
+
+#: sql_help.c:4891
+msgid "delete rows of a table"
+msgstr "למחוק שורות בטבלה"
+
+#: sql_help.c:4896
+msgid "discard session state"
+msgstr "לבטל מצב הפעלה"
+
+#: sql_help.c:4901
+msgid "execute an anonymous code block"
+msgstr "לבצע בלוק של קוד אנונימי"
+
+#: sql_help.c:4906
+msgid "remove an access method"
+msgstr "להסיר את שיטת גישה"
+
+#: sql_help.c:4911
+msgid "remove an aggregate function"
+msgstr "להסיר את פונקציית צבירה"
+
+#: sql_help.c:4916
+msgid "remove a cast"
+msgstr "להסיר המרה"
+
+#: sql_help.c:4921
+msgid "remove a collation"
+msgstr "להסיר איסוף"
+
+#: sql_help.c:4926
+msgid "remove a conversion"
+msgstr "להסיר את ההמרה"
+
+#: sql_help.c:4931
+msgid "remove a database"
+msgstr "להסיר מסד נתונים"
+
+#: sql_help.c:4936
+msgid "remove a domain"
+msgstr "להסיר תחום"
+
+#: sql_help.c:4941
+msgid "remove an event trigger"
+msgstr "להסיר טריגר של אירועים"
+
+#: sql_help.c:4946
+msgid "remove an extension"
+msgstr "להסיר הרחבה"
+
+#: sql_help.c:4951
+msgid "remove a foreign-data wrapper"
+msgstr "להסיר את עטיפת נתונים זרים"
+
+#: sql_help.c:4956
+msgid "remove a foreign table"
+msgstr "להסיר טבלה זרה"
+
+#: sql_help.c:4961
+msgid "remove a function"
+msgstr "להסיר פונקציה"
+
+#: sql_help.c:4966 sql_help.c:5016 sql_help.c:5096
+msgid "remove a database role"
+msgstr "להסיר תפקיד של מסד נתונים"
+
+#: sql_help.c:4971
+msgid "remove an index"
+msgstr "להסיר אינדקס"
+
+#: sql_help.c:4976
+msgid "remove a procedural language"
+msgstr "להסיר שפה פרוצדורלי"
+
+#: sql_help.c:4981
+msgid "remove a materialized view"
+msgstr "להסיר תצוגת ממומשת"
+
+#: sql_help.c:4986
+msgid "remove an operator"
+msgstr "להסיר את אופרטור"
+
+#: sql_help.c:4991
+msgid "remove an operator class"
+msgstr "להסיר מחלקה של אופרטור"
+
+#: sql_help.c:4996
+msgid "remove an operator family"
+msgstr "להסיר משפחה של האופרטור"
+
+#: sql_help.c:5001
+msgid "remove database objects owned by a database role"
+msgstr "להסיר אובייקטים של מסד נתונים בבעלות תפקיד מסד נתונים"
+
+#: sql_help.c:5006
+msgid "remove a row level security policy from a table"
+msgstr "להסיר מדיניות אבטחה ברמת שורה מטבלה"
+
+#: sql_help.c:5011
+msgid "remove a publication"
+msgstr "להסיר פרסום"
+
+#: sql_help.c:5021
+msgid "remove a rewrite rule"
+msgstr "להסיר כלל לשכתב"
+
+#: sql_help.c:5026
+msgid "remove a schema"
+msgstr "להסיר סכימה"
+
+#: sql_help.c:5031
+msgid "remove a sequence"
+msgstr "להסיר את רצף"
+
+#: sql_help.c:5036
+msgid "remove a foreign server descriptor"
+msgstr "להסיר מתאר של שרת החוץ"
+
+#: sql_help.c:5041
+msgid "remove extended statistics"
+msgstr "להסיר נתונים סטטיסטיים מורחבים"
+
+#: sql_help.c:5046
+msgid "remove a subscription"
+msgstr "להסיר מנוי"
+
+#: sql_help.c:5051
+msgid "remove a table"
+msgstr "להסיר טבלה"
+
+#: sql_help.c:5056
+msgid "remove a tablespace"
+msgstr "להסיר של מרחב טבלאות"
+
+#: sql_help.c:5061
+msgid "remove a text search configuration"
+msgstr "להסיר את תצורת חיפוש טקסט"
+
+#: sql_help.c:5066
+msgid "remove a text search dictionary"
+msgstr "להסיר מילון חיפוש טקסט"
+
+#: sql_help.c:5071
+msgid "remove a text search parser"
+msgstr "להסיר מנתח חיפוש טקסט"
+
+#: sql_help.c:5076
+msgid "remove a text search template"
+msgstr "להסיר תבנית חיפוש טקסט"
+
+#: sql_help.c:5081
+msgid "remove a transform"
+msgstr "להסיר המרה"
+
+#: sql_help.c:5086
+msgid "remove a trigger"
+msgstr "להסיר את ההדק"
+
+#: sql_help.c:5091
+msgid "remove a data type"
+msgstr "להסיר סוג נתונים"
+
+#: sql_help.c:5101
+msgid "remove a user mapping for a foreign server"
+msgstr "להסיר מיפוי משתמש עבור שרת החוץ"
+
+#: sql_help.c:5106
+msgid "remove a view"
+msgstr "להסיר תצוגה"
+
+#: sql_help.c:5116
+msgid "execute a prepared statement"
+msgstr "לבצע הצהרה מוכנה"
+
+#: sql_help.c:5121
+msgid "show the execution plan of a statement"
+msgstr "להציג תוכנית ביצוע של משפט"
+
+#: sql_help.c:5126
+msgid "retrieve rows from a query using a cursor"
+msgstr "להחזיר שורות משאילתה באמצעות הסמן"
+
+#: sql_help.c:5131
+msgid "define access privileges"
+msgstr "להגדיר הרשאות גישה"
+
+#: sql_help.c:5136
+msgid "import table definitions from a foreign server"
+msgstr "ייבוא הגדרות הטבלה משרת החוץ"
+
+#: sql_help.c:5141
+msgid "create new rows in a table"
+msgstr "ליצור שורות חדשות בטבלה"
+
+#: sql_help.c:5146
+msgid "listen for a notification"
+msgstr "להישמע להודעה"
+
+#: sql_help.c:5151
+msgid "load a shared library file"
+msgstr "לטעון קובץ לספריה המשותפת"
+
+#: sql_help.c:5156
+msgid "lock a table"
+msgstr "לנעול טבלה"
+
+#: sql_help.c:5161
+msgid "position a cursor"
+msgstr "למקם את הסמן"
+
+#: sql_help.c:5166
+msgid "generate a notification"
+msgstr "ליצור הודעה"
+
+#: sql_help.c:5171
+msgid "prepare a statement for execution"
+msgstr "להכין משפט לביצוע"
+
+#: sql_help.c:5176
+msgid "prepare the current transaction for two-phase commit"
+msgstr "להכין את הטרנזקציה הנוכחית עבור ביצוע דו-שלבי"
+
+#: sql_help.c:5181
+msgid "change the ownership of database objects owned by a database role"
+msgstr ""
+"לשנות את הבעלות על אובייקטי מסד הנתונים אשר בבעלות של תפקיד מסד הנתונים"
+
+#: sql_help.c:5186
+msgid "replace the contents of a materialized view"
+msgstr "להחליף את התוכן של תצוגה ממומשת"
+
+#: sql_help.c:5191
+msgid "rebuild indexes"
+msgstr "לבנות מחדש אינדקסים"
+
+#: sql_help.c:5196
+msgid "destroy a previously defined savepoint"
+msgstr "להשמיד את נקודת השמירה שהוגדרו בעבר"
+
+#: sql_help.c:5201
+msgid "restore the value of a run-time parameter to the default value"
+msgstr "לשחזר את הערך של פרמטר זמן ריצה לערך ברירת המחדל"
+
+#: sql_help.c:5206
+msgid "remove access privileges"
+msgstr "להסיר הרשאות גישה"
+
+#: sql_help.c:5216
+msgid "cancel a transaction that was earlier prepared for two-phase commit"
+msgstr "לבטל את הטרנזקציה אשר הוכנה קודם ביצוע דו-שלבי"
+
+#: sql_help.c:5221
+msgid "roll back to a savepoint"
+msgstr "לחזור לנקודת שמירה בטרנזקציה"
+
+#: sql_help.c:5226
+msgid "define a new savepoint within the current transaction"
+msgstr "להגדיר של נקודת שמירה חדשה בתוך התנועה הנוכחית"
+
+#: sql_help.c:5231
+msgid "define or change a security label applied to an object"
+msgstr "להגדיר או לשנות את תווית האבטחה המוצמד לאובייקט"
+
+#: sql_help.c:5236 sql_help.c:5281 sql_help.c:5311
+msgid "retrieve rows from a table or view"
+msgstr "לאחזר שורות מטבלה או תצוגה"
+
+#: sql_help.c:5246
+msgid "change a run-time parameter"
+msgstr "תשנה את פרמטר זמן ריצה"
+
+#: sql_help.c:5251
+msgid "set constraint check timing for the current transaction"
+msgstr "להגדיר עיתוי לבדוק אילוץ עבור הטרנזקציה הנוכחית"
+
+#: sql_help.c:5256
+msgid "set the current user identifier of the current session"
+msgstr "לקבוע את מזהה המשתמש הנוכחי של ההפעלה הנוכחית"
+
+#: sql_help.c:5261
+msgid ""
+"set the session user identifier and the current user identifier of the "
+"current session"
+msgstr "קבע את מזהה המשתמש של ההפעלה ואת מזהה המשתמש הנוכחי של ההפעלה הנוכחית"
+
+#: sql_help.c:5266
+msgid "set the characteristics of the current transaction"
+msgstr "תגדיר את המאפיינים של הטרנזקציה הנוכחית"
+
+#: sql_help.c:5271
+msgid "show the value of a run-time parameter"
+msgstr "תציג את הערך של פרמטר זמן ריצה"
+
+#: sql_help.c:5286
+msgid "empty a table or set of tables"
+msgstr "תרוקן טבלה או קבוצת הטבלאות"
+
+#: sql_help.c:5291
+msgid "stop listening for a notification"
+msgstr "תפסיקים להקשיב עבור הודעה"
+
+#: sql_help.c:5296
+msgid "update rows of a table"
+msgstr "תעדכן שורות בטבלה"
+
+#: sql_help.c:5301
+msgid "garbage-collect and optionally analyze a database"
+msgstr "תוסוף אשפה ואופציונלי תנתח באופן מסד נתונים"
+
+#: sql_help.c:5306
+msgid "compute a set of rows"
+msgstr "לחשב סידרה של שורות"
+
+#: startup.c:184
+#, c-format
+msgid "%s: -1 can only be used in non-interactive mode\n"
+msgstr "%s:-1 יכול לשמש רק במצב שאינו אינטראקטיבי\n"
+
+#: startup.c:287
+#, c-format
+msgid "%s: could not open log file \"%s\": %s\n"
+msgstr "%s: לא ניתן לפתוח קובץ יומן הרישום \"%s\": %s\n"
+
+#: startup.c:394
+#, c-format
+msgid ""
+"Type \"help\" for help.\n"
+"\n"
+msgstr ""
+"לקבלת עזרה, נסה \"help\".\n"
+"\n"
+
+#: startup.c:543
+#, c-format
+msgid "%s: could not set printing parameter \"%s\"\n"
+msgstr "%s: לא ניתן להגדיר פרמטר הדפסה \"%s\"\n"
+
+#: startup.c:645
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "נסה '%s --help' לקבלת מידע נוסף.\n"
+
+#: startup.c:662
+#, c-format
+msgid "%s: warning: extra command-line argument \"%s\" ignored\n"
+msgstr "%s: אזהרה: התעלמות מארגומנט שורת הפקודה נוסף \"%s\"\n"
+
+#: startup.c:711
+#, c-format
+msgid "%s: could not find own program executable\n"
+msgstr "%s: לא ניתן למצוא תוכנית הפעלה משלו\n"
+
+#: tab-complete.c:4097
+#, c-format
+msgid ""
+"tab completion query failed: %s\n"
+"Query was:\n"
+"%s\n"
+msgstr ""
+"השלמת השאילתה עם טאב נכשלה: %s\n"
+"שאילתה היתה:\n"
+"%s\n"
+
+#: variables.c:139
+#, c-format
+msgid "unrecognized value \"%s\" for \"%s\": boolean expected\n"
+msgstr "ערך לא מזוהה \"%s\" עבור \"%s\": צפוי ערך בוליאני\n"
+
+#: variables.c:176
+#, c-format
+msgid "invalid value \"%s\" for \"%s\": integer expected\n"
+msgstr "ערך לא חוקי \"%s\" עבור \"%s\": צפוי מספר שלם\n"
+
+#: variables.c:224
+#, c-format
+msgid "invalid variable name: \"%s\"\n"
+msgstr "שם משתנה לא חוקי: \"%s\"\n"
+
+#: variables.c:393
+#, c-format
+msgid ""
+"unrecognized value \"%s\" for \"%s\"\n"
+"Available values are: %s.\n"
+msgstr ""
+"ערך לא מזוהה \"%s\" עבור \"%s\"\n"
+"הערכים הזמינים הם: %s.\n"
