@@ -1882,4 +1882,14 @@ NOTICE:  trigger on parted2_stmt_trig AFTER UPDATE for STATEMENT
 delete from parted_stmt_trig;
 NOTICE:  trigger on parted_stmt_trig BEFORE DELETE for STATEMENT
 NOTICE:  trigger on parted_stmt_trig AFTER DELETE for STATEMENT
+-- insert via copy on the parent
+copy parted_stmt_trig(a) from stdin;
+NOTICE:  trigger on parted_stmt_trig BEFORE INSERT for STATEMENT
+NOTICE:  trigger on parted_stmt_trig1 BEFORE INSERT for ROW
+NOTICE:  trigger on parted_stmt_trig1 AFTER INSERT for ROW
+NOTICE:  trigger on parted_stmt_trig AFTER INSERT for STATEMENT
+-- insert via copy on the first partition
+copy parted_stmt_trig1(a) from stdin;
+NOTICE:  trigger on parted_stmt_trig1 BEFORE INSERT for ROW
+NOTICE:  trigger on parted_stmt_trig1 AFTER INSERT for ROW
 drop table parted_stmt_trig, parted2_stmt_trig;

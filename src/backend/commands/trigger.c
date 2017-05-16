@@ -4110,16 +4110,7 @@ afterTriggerInvokeEvents(AfterTriggerEventList *events,
 
 	if (local_estate)
 	{
-		ListCell   *l;
-
-		foreach(l, estate->es_trig_target_relations)
-		{
-			ResultRelInfo *resultRelInfo = (ResultRelInfo *) lfirst(l);
-
-			/* Close indices and then the relation itself */
-			ExecCloseIndices(resultRelInfo);
-			heap_close(resultRelInfo->ri_RelationDesc, NoLock);
-		}
+		ExecCleanUpTriggerState(estate);
 		FreeExecutorState(estate);
 	}
 

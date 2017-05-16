@@ -2773,6 +2773,9 @@ CopyFrom(CopyState cstate)
 		ExecDropSingleTupleTableSlot(cstate->partition_tuple_slot);
 	}
 
+	/* Close any trigger target relations */
+	ExecCleanUpTriggerState(estate);
+
 	FreeExecutorState(estate);
 
 	/*

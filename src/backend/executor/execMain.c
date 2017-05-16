@@ -1447,6 +1447,24 @@ ExecGetTriggerResultRel(EState *estate, Oid relid)
 }
 
 /*
+ * Close any relations that have been opened by ExecGetTriggerResultRel().
+ */
+void
+ExecCleanUpTriggerState(EState *estate)
+{
+	ListCell   *l;
+
+	foreach(l, estate->es_trig_target_relations)
+	{
+		ResultRelInfo *resultRelInfo = (ResultRelInfo *) lfirst(l);
+
+		/* Close indices and then the relation itself */
+		ExecCloseIndices(resultRelInfo);
+		heap_close(resultRelInfo->ri_RelationDesc, NoLock);
+	}
+}
+
+/*
  *		ExecContextForcesOids
  *
  * This is pretty grotty: when doing INSERT, UPDATE, or CREATE TABLE AS,
@@ -1610,16 +1628,8 @@ ExecEndPlan(PlanState *planstate, EState *estate)
 		resultRelInfo++;
 	}
 
-	/*
-	 * likewise close any trigger target relations
-	 */
-	foreach(l, estate->es_trig_target_relations)
-	{
-		resultRelInfo = (ResultRelInfo *) lfirst(l);
-		/* Close indices and then the relation itself */
-		ExecCloseIndices(resultRelInfo);
-		heap_close(resultRelInfo->ri_RelationDesc, NoLock);
-	}
+	/* likewise close any trigger target relations */
+	ExecCleanUpTriggerState(estate);
 
 	/*
 	 * close any relations selected FOR [KEY] UPDATE/SHARE, again keeping
@@ -3173,14 +3183,7 @@ EvalPlanQualEnd(EPQState *epqstate)
 	ExecResetTupleTable(estate->es_tupleTable, false);
 
 	/* close any trigger target relations attached to this EState */
-	foreach(l, estate->es_trig_target_relations)
-	{
-		ResultRelInfo *resultRelInfo = (ResultRelInfo *) lfirst(l);
-
-		/* Close indices and then the relation itself */
-		ExecCloseIndices(resultRelInfo);
-		heap_close(resultRelInfo->ri_RelationDesc, NoLock);
-	}
+	ExecCleanUpTriggerState(estate);
 
 	MemoryContextSwitchTo(oldcontext);
 

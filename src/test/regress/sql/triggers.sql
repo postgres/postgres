@@ -1347,4 +1347,16 @@ with upd as (
 ) update parted_stmt_trig  set a = a;
 
 delete from parted_stmt_trig;
+
+-- insert via copy on the parent
+copy parted_stmt_trig(a) from stdin;
+1
+2
+\.
+
+-- insert via copy on the first partition
+copy parted_stmt_trig1(a) from stdin;
+1
+\.
+
 drop table parted_stmt_trig, parted2_stmt_trig;

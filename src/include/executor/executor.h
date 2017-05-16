@@ -184,6 +184,7 @@ extern void InitResultRelInfo(ResultRelInfo *resultRelInfo,
 				  Relation partition_root,
 				  int instrument_options);
 extern ResultRelInfo *ExecGetTriggerResultRel(EState *estate, Oid relid);
+extern void ExecCleanUpTriggerState(EState *estate);
 extern bool ExecContextForcesOids(PlanState *planstate, bool *hasoids);
 extern void ExecConstraints(ResultRelInfo *resultRelInfo,
 				TupleTableSlot *slot, EState *estate);
