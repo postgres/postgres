@@ -191,6 +191,7 @@ timestamp_tbl|f
 timestamptz_tbl|f
 timetz_tbl|f
 tinterval_tbl|f
+transition_table_for_rows|f
 varchar_tbl|f
 -- restore normal output mode
 \a\t
