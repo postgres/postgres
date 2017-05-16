@@ -202,9 +202,10 @@ CREATE SUBSCRIPTION <replaceable class="PARAMETER">subscription_name</replaceabl
          </para>
 
          <para>
-          Since no connection is made when this option is specified, the
-          tables are not subscribed, and so after you enable the subscription
-          nothing will be replicated.  It is required to run
+          Since no connection is made when this option is set
+          to <literal>false</literal>, the tables are not subscribed, and so
+          after you enable the subscription nothing will be replicated.
+          It is required to run
           <literal>ALTER SUBSCRIPTION ... REFRESH PUBLICATION</> in order
           for tables to be subscribed.
          </para>
