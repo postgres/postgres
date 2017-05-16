@@ -1893,30 +1893,3 @@ copy parted_stmt_trig1(a) from stdin;
 NOTICE:  trigger on parted_stmt_trig1 BEFORE INSERT for ROW
 NOTICE:  trigger on parted_stmt_trig1 AFTER INSERT for ROW
 drop table parted_stmt_trig, parted2_stmt_trig;
---
--- Verify that transition table in FOR EACH ROW trigge shows all rows affected
--- by the statement (through the end) for each row (from the beginning).
---
-create table transition_table_for_rows (c int not null);
-create function transition_table_for_rows_func()
-  returns trigger
-  language plpgsql
-as $$
-begin
-  raise notice '% / % = %',
-               new.c,
-               (select sum(c) from newtable),
-               (select new.c::float / sum(newtable.c) from newtable);
-  return null;
-end;
-$$;
-create trigger transition_table_for_rows_trig
-  after insert or update on transition_table_for_rows
-  referencing new table as newtable
-  for each row
-  execute procedure transition_table_for_rows_func();
-insert into transition_table_for_rows select generate_series(1,4);
-NOTICE:  1 / 10 = 0.1
-NOTICE:  2 / 10 = 0.2
-NOTICE:  3 / 10 = 0.3
-NOTICE:  4 / 10 = 0.4
