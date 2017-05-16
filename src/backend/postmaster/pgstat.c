@@ -93,6 +93,9 @@
 #define PGSTAT_POLL_LOOP_COUNT	(PGSTAT_MAX_WAIT_TIME / PGSTAT_RETRY_DELAY)
 #define PGSTAT_INQ_LOOP_COUNT	(PGSTAT_INQ_INTERVAL / PGSTAT_RETRY_DELAY)
 
+/* Minimum receive buffer size for the collector's socket. */
+#define PGSTAT_MIN_RCVBUF		(100 * 1024)
+
 
 /* ----------
  * The initial size hints for the hash tables used in the collector.
@@ -572,6 +575,35 @@ retry2:
 				(errcode_for_socket_access(),
 				 errmsg("could not set statistics collector socket to nonblocking mode: %m")));
 		goto startup_failed;
+	}
+
+	/*
+	 * Try to ensure that the socket's receive buffer is at least
+	 * PGSTAT_MIN_RCVBUF bytes, so that it won't easily overflow and lose
+	 * data.  Use of UDP protocol means that we are willing to lose data under
+	 * heavy load, but we don't want it to happen just because of ridiculously
+	 * small default buffer sizes (such as 8KB on older Windows versions).
+	 */
+	{
+		int			old_rcvbuf;
+		int			new_rcvbuf;
+		ACCEPT_TYPE_ARG3 rcvbufsize = sizeof(old_rcvbuf);
+
+		if (getsockopt(pgStatSock, SOL_SOCKET, SO_RCVBUF,
+					   (char *) &old_rcvbuf, &rcvbufsize) < 0)
+		{
+			elog(LOG, "getsockopt(SO_RCVBUF) failed: %m");
+			/* if we can't get existing size, always try to set it */
+			old_rcvbuf = 0;
+		}
+
+		new_rcvbuf = PGSTAT_MIN_RCVBUF;
+		if (old_rcvbuf < new_rcvbuf)
+		{
+			if (setsockopt(pgStatSock, SOL_SOCKET, SO_RCVBUF,
+						   (char *) &new_rcvbuf, sizeof(new_rcvbuf)) < 0)
+				elog(LOG, "setsockopt(SO_RCVBUF) failed: %m");
+		}
 	}
 
 	pg_freeaddrinfo_all(hints.ai_family, addrs);
