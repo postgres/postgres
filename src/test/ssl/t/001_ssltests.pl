@@ -66,10 +66,10 @@ sub test_connect_fails
 	ok(!$result, "$connstr (should fail)");
 }
 
-# The client's private key must not be world-readable. Git doesn't track
-# permissions (except for the executable bit), so they might be wrong after
-# a checkout.
-chmod 0600, "ssl/client.key";
+# The client's private key must not be world-readable, so take a copy
+# of the key stored in the code tree and update its permissions.
+copy("ssl/client.key", "ssl/client_tmp.key");
+chmod 0600, "ssl/client_tmp.key";
 
 #### Part 0. Set up the server.
 
@@ -229,11 +229,11 @@ test_connect_fails("user=ssltestuser sslcert=invalid");
 
 # correct client cert
 test_connect_ok(
-	"user=ssltestuser sslcert=ssl/client.crt sslkey=ssl/client.key");
+	"user=ssltestuser sslcert=ssl/client.crt sslkey=ssl/client_tmp.key");
 
 # client cert belonging to another user
 test_connect_fails(
-	"user=anotheruser sslcert=ssl/client.crt sslkey=ssl/client.key");
+	"user=anotheruser sslcert=ssl/client.crt sslkey=ssl/client_tmp.key");
 
 # revoked client cert
 test_connect_fails(
@@ -243,7 +243,10 @@ test_connect_fails(
 # intermediate client_ca.crt is provided by client, and isn't in server's ssl_ca_file
 switch_server_cert($node, 'server-cn-only', 'root_ca');
 $common_connstr =
-"user=ssltestuser dbname=certdb sslkey=ssl/client.key sslrootcert=ssl/root+server_ca.crt hostaddr=$SERVERHOSTADDR";
+"user=ssltestuser dbname=certdb sslkey=ssl/client_tmp.key sslrootcert=ssl/root+server_ca.crt hostaddr=$SERVERHOSTADDR";
 
 test_connect_ok("sslmode=require sslcert=ssl/client+client_ca.crt");
 test_connect_fails("sslmode=require sslcert=ssl/client.crt");
+
+# clean up
+unlink "ssl/client_tmp.key";
