@@ -748,8 +748,8 @@ ShutdownCommitTs(void)
 	SimpleLruFlush(CommitTsCtl, false);
 
 	/*
-	 * fsync pg_commit_ts to ensure that any files flushed previously are durably
-	 * on disk.
+	 * fsync pg_commit_ts to ensure that any files flushed previously are
+	 * durably on disk.
 	 */
 	fsync_fname("pg_commit_ts", true);
 }
@@ -764,8 +764,8 @@ CheckPointCommitTs(void)
 	SimpleLruFlush(CommitTsCtl, true);
 
 	/*
-	 * fsync pg_commit_ts to ensure that any files flushed previously are durably
-	 * on disk.
+	 * fsync pg_commit_ts to ensure that any files flushed previously are
+	 * durably on disk.
 	 */
 	fsync_fname("pg_commit_ts", true);
 }

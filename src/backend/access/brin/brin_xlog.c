@@ -268,7 +268,7 @@ brin_xlog_desummarize_page(XLogReaderState *record)
 	action = XLogReadBufferForRedo(record, 0, &buffer);
 	if (action == BLK_NEEDS_REDO)
 	{
-		ItemPointerData	iptr;
+		ItemPointerData iptr;
 
 		ItemPointerSetInvalid(&iptr);
 		brinSetHeapBlockItemptr(buffer, xlrec->pagesPerRange, xlrec->heapBlk, iptr);
@@ -283,7 +283,7 @@ brin_xlog_desummarize_page(XLogReaderState *record)
 	action = XLogReadBufferForRedo(record, 1, &buffer);
 	if (action == BLK_NEEDS_REDO)
 	{
-		Page	regPg = BufferGetPage(buffer);
+		Page		regPg = BufferGetPage(buffer);
 
 		PageIndexTupleDeleteNoCompact(regPg, xlrec->regOffset);
 

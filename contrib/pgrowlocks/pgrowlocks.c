@@ -99,7 +99,10 @@ pgrowlocks(PG_FUNCTION_ARGS)
 		relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
 		rel = heap_openrv(relrv, AccessShareLock);
 
-		/* check permissions: must have SELECT on table or be in pg_stat_scan_tables */
+		/*
+		 * check permissions: must have SELECT on table or be in
+		 * pg_stat_scan_tables
+		 */
 		aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(),
 									  ACL_SELECT);
 		if (aclresult != ACLCHECK_OK)

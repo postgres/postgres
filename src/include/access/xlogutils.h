@@ -53,6 +53,6 @@ extern int read_local_xlog_page(XLogReaderState *state,
 					 TimeLineID *pageTLI);
 
 extern void XLogReadDetermineTimeline(XLogReaderState *state,
-					XLogRecPtr wantPage, uint32 wantLength);
+						  XLogRecPtr wantPage, uint32 wantLength);
 
 #endif

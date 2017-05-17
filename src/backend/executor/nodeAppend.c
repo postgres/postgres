@@ -129,8 +129,8 @@ ExecInitAppend(Append *node, EState *estate, int eflags)
 	Assert(!(eflags & EXEC_FLAG_MARK));
 
 	/*
-	 * Lock the non-leaf tables in the partition tree controlled by this
-	 * node. It's a no-op for non-partitioned parent tables.
+	 * Lock the non-leaf tables in the partition tree controlled by this node.
+	 * It's a no-op for non-partitioned parent tables.
 	 */
 	ExecLockNonLeafAppendTables(node->partitioned_rels, estate);
 

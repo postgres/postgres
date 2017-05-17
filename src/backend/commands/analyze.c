@@ -1275,7 +1275,7 @@ acquire_inherited_sample_rows(Relation onerel, int elevel,
 				nrels,
 				i;
 	ListCell   *lc;
-	bool 		has_child;
+	bool		has_child;
 
 	/*
 	 * Find all members of inheritance set.  We only need AccessShareLock on

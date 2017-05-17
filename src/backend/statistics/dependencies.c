@@ -44,7 +44,7 @@ typedef struct DependencyGeneratorData
 	int			current;		/* next dependency to return (index) */
 	AttrNumber	ndependencies;	/* number of dependencies generated */
 	AttrNumber *dependencies;	/* array of pre-generated dependencies	*/
-}	DependencyGeneratorData;
+} DependencyGeneratorData;
 
 typedef DependencyGeneratorData *DependencyGenerator;
 
@@ -61,7 +61,7 @@ static bool dependency_is_fully_matched(MVDependency *dependency,
 static bool dependency_implies_attribute(MVDependency *dependency,
 							 AttrNumber attnum);
 static bool dependency_is_compatible_clause(Node *clause, Index relid,
-							 AttrNumber *attnum);
+								AttrNumber *attnum);
 static MVDependency *find_strongest_dependency(StatisticExtInfo *stats,
 						  MVDependencies *dependencies,
 						  Bitmapset *attnums);
@@ -409,7 +409,7 @@ statext_dependencies_build(int numrows, HeapTuple *rows, Bitmapset *attrs,
 				continue;
 
 			d = (MVDependency *) palloc0(offsetof(MVDependency, attributes)
-										 + k * sizeof(AttrNumber));
+										 +k * sizeof(AttrNumber));
 
 			/* copy the dependency (and keep the indexes into stxkeys) */
 			d->degree = degree;
@@ -431,7 +431,7 @@ statext_dependencies_build(int numrows, HeapTuple *rows, Bitmapset *attrs,
 			dependencies->ndeps++;
 			dependencies = (MVDependencies *) repalloc(dependencies,
 											   offsetof(MVDependencies, deps)
-							   + dependencies->ndeps * sizeof(MVDependency));
+								+dependencies->ndeps * sizeof(MVDependency));
 
 			dependencies->deps[dependencies->ndeps - 1] = d;
 		}
@@ -451,7 +451,7 @@ statext_dependencies_build(int numrows, HeapTuple *rows, Bitmapset *attrs,
  * Serialize list of dependencies into a bytea value.
  */
 bytea *
-statext_dependencies_serialize(MVDependencies * dependencies)
+statext_dependencies_serialize(MVDependencies *dependencies)
 {
 	int			i;
 	bytea	   *output;
@@ -552,7 +552,7 @@ statext_dependencies_deserialize(bytea *data)
 
 	/* allocate space for the MCV items */
 	dependencies = repalloc(dependencies, offsetof(MVDependencies, deps)
-							+ (dependencies->ndeps * sizeof(MVDependency *)));
+							+(dependencies->ndeps * sizeof(MVDependency *)));
 
 	for (i = 0; i < dependencies->ndeps; i++)
 	{
@@ -573,7 +573,7 @@ statext_dependencies_deserialize(bytea *data)
 
 		/* now that we know the number of attributes, allocate the dependency */
 		d = (MVDependency *) palloc0(offsetof(MVDependency, attributes)
-									 + (k * sizeof(AttrNumber)));
+									 +(k * sizeof(AttrNumber)));
 
 		d->degree = degree;
 		d->nattributes = k;
@@ -600,7 +600,7 @@ statext_dependencies_deserialize(bytea *data)
  *		attributes (assuming the clauses are suitable equality clauses)
  */
 static bool
-dependency_is_fully_matched(MVDependency * dependency, Bitmapset *attnums)
+dependency_is_fully_matched(MVDependency *dependency, Bitmapset *attnums)
 {
 	int			j;
 
@@ -840,7 +840,7 @@ dependency_is_compatible_clause(Node *clause, Index relid, AttrNumber *attnum)
  * (see the comment in dependencies_clauselist_selectivity).
  */
 static MVDependency *
-find_strongest_dependency(StatisticExtInfo * stats, MVDependencies * dependencies,
+find_strongest_dependency(StatisticExtInfo *stats, MVDependencies *dependencies,
 						  Bitmapset *attnums)
 {
 	int			i;

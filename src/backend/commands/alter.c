@@ -428,7 +428,7 @@ ExecAlterObjectDependsStmt(AlterObjectDependsStmt *stmt, ObjectAddress *refAddre
 
 	address =
 		get_object_address_rv(stmt->objectType, stmt->relation, (List *) stmt->object,
-							&rel, AccessExclusiveLock, false);
+							  &rel, AccessExclusiveLock, false);
 
 	/*
 	 * If a relation was involved, it would have been opened and locked. We

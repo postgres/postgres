@@ -3518,10 +3518,10 @@ heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 	 *
 	 * For HOT considerations, this is wasted effort if we fail to update or
 	 * have to put the new tuple on a different page.  But we must compute the
-	 * list before obtaining buffer lock --- in the worst case, if we are doing
-	 * an update on one of the relevant system catalogs, we could deadlock if
-	 * we try to fetch the list later.  In any case, the relcache caches the
-	 * data so this is usually pretty cheap.
+	 * list before obtaining buffer lock --- in the worst case, if we are
+	 * doing an update on one of the relevant system catalogs, we could
+	 * deadlock if we try to fetch the list later.  In any case, the relcache
+	 * caches the data so this is usually pretty cheap.
 	 *
 	 * We also need columns used by the replica identity and columns that are
 	 * considered the "key" of rows in the table.
@@ -3540,15 +3540,16 @@ heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 	page = BufferGetPage(buffer);
 
 	interesting_attrs = NULL;
+
 	/*
 	 * If the page is already full, there is hardly any chance of doing a HOT
 	 * update on this page. It might be wasteful effort to look for index
-	 * column updates only to later reject HOT updates for lack of space in the
-	 * same page. So we be conservative and only fetch hot_attrs if the page is
-	 * not already full. Since we are already holding a pin on the buffer,
-	 * there is no chance that the buffer can get cleaned up concurrently and
-	 * even if that was possible, in the worst case we lose a chance to do a
-	 * HOT update.
+	 * column updates only to later reject HOT updates for lack of space in
+	 * the same page. So we be conservative and only fetch hot_attrs if the
+	 * page is not already full. Since we are already holding a pin on the
+	 * buffer, there is no chance that the buffer can get cleaned up
+	 * concurrently and even if that was possible, in the worst case we lose a
+	 * chance to do a HOT update.
 	 */
 	if (!PageIsFull(page))
 	{
@@ -4176,7 +4177,7 @@ l2:
 	 * logged.
 	 */
 	old_key_tuple = ExtractReplicaIdentity(relation, &oldtup,
-										   bms_overlap(modified_attrs, id_attrs),
+									   bms_overlap(modified_attrs, id_attrs),
 										   &old_key_copied);
 
 	/* NO EREPORT(ERROR) from here till changes are logged */
@@ -4422,17 +4423,17 @@ static Bitmapset *
 HeapDetermineModifiedColumns(Relation relation, Bitmapset *interesting_cols,
 							 HeapTuple oldtup, HeapTuple newtup)
 {
-	int		attnum;
-	Bitmapset *modified = NULL;
+	int			attnum;
+	Bitmapset  *modified = NULL;
 
 	while ((attnum = bms_first_member(interesting_cols)) >= 0)
 	{
 		attnum += FirstLowInvalidHeapAttributeNumber;
 
 		if (!heap_tuple_attr_equals(RelationGetDescr(relation),
-								   attnum, oldtup, newtup))
+									attnum, oldtup, newtup))
 			modified = bms_add_member(modified,
-									  attnum - FirstLowInvalidHeapAttributeNumber);
+								attnum - FirstLowInvalidHeapAttributeNumber);
 	}
 
 	return modified;

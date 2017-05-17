@@ -349,6 +349,7 @@ typedef struct PLpgSQL_arrayelem
 typedef struct PLpgSQL_nsitem
 {
 	PLpgSQL_nsitem_type itemtype;
+
 	/*
 	 * For labels, itemno is a value of enum PLpgSQL_label_type. For other
 	 * itemtypes, itemno is the associated PLpgSQL_datum's dno.
@@ -746,7 +747,7 @@ typedef struct PLpgSQL_stmt_execsql
 	int			lineno;
 	PLpgSQL_expr *sqlstmt;
 	bool		mod_stmt;		/* is the stmt INSERT/UPDATE/DELETE?  Note:
-								   mod_stmt is set when we plan the query */
+								 * mod_stmt is set when we plan the query */
 	bool		into;			/* INTO supplied? */
 	bool		strict;			/* INTO STRICT flag */
 	PLpgSQL_rec *rec;			/* INTO target, if record */

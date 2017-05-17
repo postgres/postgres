@@ -80,12 +80,12 @@ CollationCreate(const char *collname, Oid collnamespace,
 		if (if_not_exists)
 		{
 			ereport(NOTICE,
-				(errcode(ERRCODE_DUPLICATE_OBJECT),
-				 collencoding == -1
-				 ? errmsg("collation \"%s\" already exists, skipping",
-						  collname)
-				 : errmsg("collation \"%s\" for encoding \"%s\" already exists, skipping",
-						  collname, pg_encoding_to_char(collencoding))));
+					(errcode(ERRCODE_DUPLICATE_OBJECT),
+					 collencoding == -1
+					 ? errmsg("collation \"%s\" already exists, skipping",
+							  collname)
+					 : errmsg("collation \"%s\" for encoding \"%s\" already exists, skipping",
+							  collname, pg_encoding_to_char(collencoding))));
 			return InvalidOid;
 		}
 		else
@@ -94,8 +94,8 @@ CollationCreate(const char *collname, Oid collnamespace,
 					 collencoding == -1
 					 ? errmsg("collation \"%s\" already exists",
 							  collname)
-					 : errmsg("collation \"%s\" for encoding \"%s\" already exists",
-							  collname, pg_encoding_to_char(collencoding))));
+			  : errmsg("collation \"%s\" for encoding \"%s\" already exists",
+					   collname, pg_encoding_to_char(collencoding))));
 	}
 
 	/* open pg_collation; see below about the lock level */
@@ -123,16 +123,16 @@ CollationCreate(const char *collname, Oid collnamespace,
 		{
 			heap_close(rel, NoLock);
 			ereport(NOTICE,
-				(errcode(ERRCODE_DUPLICATE_OBJECT),
-				 errmsg("collation \"%s\" already exists, skipping",
-						collname)));
+					(errcode(ERRCODE_DUPLICATE_OBJECT),
+					 errmsg("collation \"%s\" already exists, skipping",
+							collname)));
 			return InvalidOid;
 		}
 		else
 			ereport(ERROR,
-				(errcode(ERRCODE_DUPLICATE_OBJECT),
-				 errmsg("collation \"%s\" already exists",
-						collname)));
+					(errcode(ERRCODE_DUPLICATE_OBJECT),
+					 errmsg("collation \"%s\" already exists",
+							collname)));
 	}
 
 	tupDesc = RelationGetDescr(rel);

@@ -445,7 +445,7 @@ pg_mb_radix_conv(const pg_mb_radix_tree *rt,
 		else
 			return rt->chars16[b4 + rt->b1root - rt->b1_lower];
 	}
-	return 0; /* shouldn't happen */
+	return 0;					/* shouldn't happen */
 }
 
 /*
@@ -607,7 +607,8 @@ UtfToLocal(const unsigned char *utf, int len,
 		/* Now check ordinary map */
 		if (map)
 		{
-			uint32 converted = pg_mb_radix_conv(map, l, b1, b2, b3, b4);
+			uint32		converted = pg_mb_radix_conv(map, l, b1, b2, b3, b4);
+
 			if (converted)
 			{
 				iso = store_coded_char(iso, converted);
@@ -731,7 +732,7 @@ LocalToUtf(const unsigned char *iso, int len,
 
 		if (map)
 		{
-			uint32 converted = pg_mb_radix_conv(map, l, b1, b2, b3, b4);
+			uint32		converted = pg_mb_radix_conv(map, l, b1, b2, b3, b4);
 
 			if (converted)
 			{

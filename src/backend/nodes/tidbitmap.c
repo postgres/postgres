@@ -109,7 +109,7 @@ typedef struct PagetableEntry
  */
 typedef struct PTEntryArray
 {
-	pg_atomic_uint32	refcount;		/* no. of iterator attached */
+	pg_atomic_uint32 refcount;	/* no. of iterator attached */
 	PagetableEntry ptentry[FLEXIBLE_ARRAY_MEMBER];
 } PTEntryArray;
 
@@ -206,7 +206,7 @@ typedef struct TBMSharedIteratorState
  */
 typedef struct PTIterationArray
 {
-	pg_atomic_uint32			refcount;	/* no. of iterator attached */
+	pg_atomic_uint32 refcount;	/* no. of iterator attached */
 	int			index[FLEXIBLE_ARRAY_MEMBER];	/* index array */
 } PTIterationArray;
 
@@ -905,8 +905,8 @@ tbm_prepare_shared_iterate(TIDBitmap *tbm)
 
 	/*
 	 * For every shared iterator, referring to pagetable and iterator array,
-	 * increase the refcount by 1 so that while freeing the shared iterator
-	 * we don't free pagetable and iterator array until its refcount becomes 0.
+	 * increase the refcount by 1 so that while freeing the shared iterator we
+	 * don't free pagetable and iterator array until its refcount becomes 0.
 	 */
 	if (ptbase != NULL)
 		pg_atomic_add_fetch_u32(&ptbase->refcount, 1);

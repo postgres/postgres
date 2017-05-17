@@ -417,8 +417,8 @@ static void add_foreign_grouping_paths(PlannerInfo *root,
 static void apply_server_options(PgFdwRelationInfo *fpinfo);
 static void apply_table_options(PgFdwRelationInfo *fpinfo);
 static void merge_fdw_options(PgFdwRelationInfo *fpinfo,
-							  const PgFdwRelationInfo *fpinfo_o,
-							  const PgFdwRelationInfo *fpinfo_i);
+				  const PgFdwRelationInfo *fpinfo_o,
+				  const PgFdwRelationInfo *fpinfo_i);
 
 
 /*
@@ -4170,8 +4170,8 @@ foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
 	fpinfo->jointype = jointype;
 
 	/*
-	 * By default, both the input relations are not required to be deparsed
-	 * as subqueries, but there might be some relations covered by the input
+	 * By default, both the input relations are not required to be deparsed as
+	 * subqueries, but there might be some relations covered by the input
 	 * relations that are required to be deparsed as subqueries, so save the
 	 * relids of those relations for later use by the deparser.
 	 */
@@ -4227,8 +4227,8 @@ foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
 		case JOIN_FULL:
 
 			/*
-			 * In this case, if any of the input relations has conditions,
-			 * we need to deparse that relation as a subquery so that the
+			 * In this case, if any of the input relations has conditions, we
+			 * need to deparse that relation as a subquery so that the
 			 * conditions can be evaluated before the join.  Remember it in
 			 * the fpinfo of this relation so that the deparser can take
 			 * appropriate action.  Also, save the relids of base relations
@@ -4305,7 +4305,7 @@ foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
 	 * Note that since this joinrel is at the end of the join_rel_list list
 	 * when we are called, we can get the position by list_length.
 	 */
-	Assert(fpinfo->relation_index == 0);	/* shouldn't be set yet */
+	Assert(fpinfo->relation_index == 0);		/* shouldn't be set yet */
 	fpinfo->relation_index =
 		list_length(root->parse->rtable) + list_length(root->join_rel_list);
 
@@ -4354,7 +4354,7 @@ add_paths_with_pathkeys_for_rel(PlannerInfo *root, RelOptInfo *rel,
 static void
 apply_server_options(PgFdwRelationInfo *fpinfo)
 {
-	ListCell *lc;
+	ListCell   *lc;
 
 	foreach(lc, fpinfo->server->options)
 	{
@@ -4382,7 +4382,7 @@ apply_server_options(PgFdwRelationInfo *fpinfo)
 static void
 apply_table_options(PgFdwRelationInfo *fpinfo)
 {
-	ListCell *lc;
+	ListCell   *lc;
 
 	foreach(lc, fpinfo->table->options)
 	{
@@ -4439,7 +4439,7 @@ merge_fdw_options(PgFdwRelationInfo *fpinfo,
 		 * best.
 		 */
 		fpinfo->use_remote_estimate = fpinfo_o->use_remote_estimate ||
-									  fpinfo_i->use_remote_estimate;
+			fpinfo_i->use_remote_estimate;
 
 		/*
 		 * Set fetch size to maximum of the joining sides, since we are
@@ -4869,7 +4869,7 @@ add_foreign_grouping_paths(PlannerInfo *root, RelOptInfo *input_rel,
 	fpinfo->table = ifpinfo->table;
 	fpinfo->server = ifpinfo->server;
 	fpinfo->user = ifpinfo->user;
-	merge_fdw_options(fpinfo, ifpinfo , NULL);
+	merge_fdw_options(fpinfo, ifpinfo, NULL);
 
 	/* Assess if it is safe to push down aggregation and grouping. */
 	if (!foreign_grouping_ok(root, grouped_rel))

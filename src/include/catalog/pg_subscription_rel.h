@@ -31,8 +31,8 @@ CATALOG(pg_subscription_rel,6102) BKI_WITHOUT_OIDS
 	Oid			srsubid;		/* Oid of subscription */
 	Oid			srrelid;		/* Oid of relation */
 	char		srsubstate;		/* state of the relation in subscription */
-	pg_lsn		srsublsn;		/* remote lsn of the state change
-								 * used for synchronization coordination */
+	pg_lsn		srsublsn;		/* remote lsn of the state change used for
+								 * synchronization coordination */
 } FormData_pg_subscription_rel;
 
 typedef FormData_pg_subscription_rel *Form_pg_subscription_rel;
@@ -52,8 +52,10 @@ typedef FormData_pg_subscription_rel *Form_pg_subscription_rel;
  * ----------------
  */
 #define SUBREL_STATE_INIT		'i'		/* initializing (sublsn NULL) */
-#define SUBREL_STATE_DATASYNC	'd'		/* data is being synchronized (sublsn NULL) */
-#define SUBREL_STATE_SYNCDONE	's'		/* synchronization finished in front of apply (sublsn set) */
+#define SUBREL_STATE_DATASYNC	'd'		/* data is being synchronized (sublsn
+										 * NULL) */
+#define SUBREL_STATE_SYNCDONE	's'		/* synchronization finished in front
+										 * of apply (sublsn set) */
 #define SUBREL_STATE_READY		'r'		/* ready (sublsn set) */
 
 /* These are never stored in the catalog, we only use them for IPC. */
@@ -69,9 +71,9 @@ typedef struct SubscriptionRelState
 } SubscriptionRelState;
 
 extern Oid SetSubscriptionRelState(Oid subid, Oid relid, char state,
-								   XLogRecPtr sublsn);
+						XLogRecPtr sublsn);
 extern char GetSubscriptionRelState(Oid subid, Oid relid,
-									XLogRecPtr *sublsn, bool missing_ok);
+						XLogRecPtr *sublsn, bool missing_ok);
 extern void RemoveSubscriptionRel(Oid subid, Oid relid);
 
 extern List *GetSubscriptionRelations(Oid subid);

@@ -2443,7 +2443,7 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 	HV		   *hvTD;
 	ErrorContextCallback pl_error_context;
 	TriggerData *tdata;
-	int 		rc PG_USED_FOR_ASSERTS_ONLY;
+	int rc		PG_USED_FOR_ASSERTS_ONLY;
 
 	/* Connect to SPI manager */
 	if (SPI_connect() != SPI_OK_CONNECT)

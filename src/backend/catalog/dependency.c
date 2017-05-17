@@ -1125,8 +1125,10 @@ doDeletion(const ObjectAddress *object, int flags)
 						heap_drop_with_catalog(object->objectId);
 				}
 
-				/* for a sequence, in addition to dropping the heap, also
-				 * delete pg_sequence tuple */
+				/*
+				 * for a sequence, in addition to dropping the heap, also
+				 * delete pg_sequence tuple
+				 */
 				if (relKind == RELKIND_SEQUENCE)
 					DeleteSequenceTuple(object->objectId);
 				break;
@@ -1942,7 +1944,7 @@ find_expr_references_walker(Node *node,
 	}
 	else if (IsA(node, NextValueExpr))
 	{
-		NextValueExpr  *nve = (NextValueExpr *) node;
+		NextValueExpr *nve = (NextValueExpr *) node;
 
 		add_object_address(OCLASS_CLASS, nve->seqid, 0,
 						   context->addrs);

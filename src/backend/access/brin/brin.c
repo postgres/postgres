@@ -364,7 +364,7 @@ bringetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 	MemoryContext oldcxt;
 	MemoryContext perRangeCxt;
 	BrinMemTuple *dtup;
-	BrinTuple    *btup = NULL;
+	BrinTuple  *btup = NULL;
 	Size		btupsz = 0;
 
 	opaque = (BrinOpaque *) scan->opaque;
@@ -920,13 +920,13 @@ brin_summarize_range(PG_FUNCTION_ARGS)
 Datum
 brin_desummarize_range(PG_FUNCTION_ARGS)
 {
-	Oid		indexoid = PG_GETARG_OID(0);
-	int64	heapBlk64 = PG_GETARG_INT64(1);
+	Oid			indexoid = PG_GETARG_OID(0);
+	int64		heapBlk64 = PG_GETARG_INT64(1);
 	BlockNumber heapBlk;
-	Oid		heapoid;
-	Relation heapRel;
-	Relation indexRel;
-	bool	done;
+	Oid			heapoid;
+	Relation	heapRel;
+	Relation	indexRel;
+	bool		done;
 
 	if (heapBlk64 > MaxBlockNumber || heapBlk64 < 0)
 	{
@@ -977,7 +977,8 @@ brin_desummarize_range(PG_FUNCTION_ARGS)
 						RelationGetRelationName(indexRel))));
 
 	/* the revmap does the hard work */
-	do {
+	do
+	{
 		done = brinRevmapDesummarizeRange(indexRel, heapBlk);
 	}
 	while (!done);

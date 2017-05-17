@@ -27,7 +27,7 @@ typedef struct MorphOpaque
 
 typedef struct TSVectorBuildState
 {
-	ParsedText	*prs;
+	ParsedText *prs;
 	TSVector	result;
 	Oid			cfgId;
 } TSVectorBuildState;
@@ -268,10 +268,10 @@ to_tsvector(PG_FUNCTION_ARGS)
 Datum
 jsonb_to_tsvector_byid(PG_FUNCTION_ARGS)
 {
-	Oid					cfgId = PG_GETARG_OID(0);
-	Jsonb				*jb = PG_GETARG_JSONB(1);
-	TSVectorBuildState	state;
-	ParsedText			*prs = (ParsedText *) palloc(sizeof(ParsedText));
+	Oid			cfgId = PG_GETARG_OID(0);
+	Jsonb	   *jb = PG_GETARG_JSONB(1);
+	TSVectorBuildState state;
+	ParsedText *prs = (ParsedText *) palloc(sizeof(ParsedText));
 
 	prs->words = NULL;
 	state.result = NULL;
@@ -284,8 +284,10 @@ jsonb_to_tsvector_byid(PG_FUNCTION_ARGS)
 
 	if (state.result == NULL)
 	{
-		/* There weren't any string elements in jsonb,
-		 * so wee need to return an empty vector */
+		/*
+		 * There weren't any string elements in jsonb, so wee need to return
+		 * an empty vector
+		 */
 
 		if (prs->words != NULL)
 			pfree(prs->words);
@@ -301,8 +303,8 @@ jsonb_to_tsvector_byid(PG_FUNCTION_ARGS)
 Datum
 jsonb_to_tsvector(PG_FUNCTION_ARGS)
 {
-	Jsonb	*jb = PG_GETARG_JSONB(0);
-	Oid		cfgId;
+	Jsonb	   *jb = PG_GETARG_JSONB(0);
+	Oid			cfgId;
 
 	cfgId = getTSCurrentConfig(true);
 	PG_RETURN_DATUM(DirectFunctionCall2(jsonb_to_tsvector_byid,
@@ -313,10 +315,10 @@ jsonb_to_tsvector(PG_FUNCTION_ARGS)
 Datum
 json_to_tsvector_byid(PG_FUNCTION_ARGS)
 {
-	Oid					cfgId = PG_GETARG_OID(0);
-	text				*json = PG_GETARG_TEXT_P(1);
-	TSVectorBuildState	state;
-	ParsedText			*prs = (ParsedText *) palloc(sizeof(ParsedText));
+	Oid			cfgId = PG_GETARG_OID(0);
+	text	   *json = PG_GETARG_TEXT_P(1);
+	TSVectorBuildState state;
+	ParsedText *prs = (ParsedText *) palloc(sizeof(ParsedText));
 
 	prs->words = NULL;
 	state.result = NULL;
@@ -328,8 +330,10 @@ json_to_tsvector_byid(PG_FUNCTION_ARGS)
 	PG_FREE_IF_COPY(json, 1);
 	if (state.result == NULL)
 	{
-		/* There weren't any string elements in json,
-		 * so wee need to return an empty vector */
+		/*
+		 * There weren't any string elements in json, so wee need to return an
+		 * empty vector
+		 */
 
 		if (prs->words != NULL)
 			pfree(prs->words);
@@ -345,8 +349,8 @@ json_to_tsvector_byid(PG_FUNCTION_ARGS)
 Datum
 json_to_tsvector(PG_FUNCTION_ARGS)
 {
-	text	*json = PG_GETARG_TEXT_P(0);
-	Oid		cfgId;
+	text	   *json = PG_GETARG_TEXT_P(0);
+	Oid			cfgId;
 
 	cfgId = getTSCurrentConfig(true);
 	PG_RETURN_DATUM(DirectFunctionCall2(json_to_tsvector_byid,
@@ -362,7 +366,7 @@ static void
 add_to_tsvector(void *_state, char *elem_value, int elem_len)
 {
 	TSVectorBuildState *state = (TSVectorBuildState *) _state;
-	ParsedText	*prs = state->prs;
+	ParsedText *prs = state->prs;
 	TSVector	item_vector;
 	int			i;
 
@@ -386,8 +390,8 @@ add_to_tsvector(void *_state, char *elem_value, int elem_len)
 			item_vector = make_tsvector(prs);
 
 			state->result = (TSVector) DirectFunctionCall2(tsvector_concat,
-									TSVectorGetDatum(state->result),
-									PointerGetDatum(item_vector));
+											 TSVectorGetDatum(state->result),
+											   PointerGetDatum(item_vector));
 		}
 		else
 			state->result = make_tsvector(prs);

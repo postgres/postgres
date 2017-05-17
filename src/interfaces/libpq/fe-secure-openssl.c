@@ -129,8 +129,8 @@ pgtls_open_client(PGconn *conn)
 	if (conn->ssl == NULL)
 	{
 		/*
-		 * Create a connection-specific SSL object, and load client certificate,
-		 * private key, and trusted CA certs.
+		 * Create a connection-specific SSL object, and load client
+		 * certificate, private key, and trusted CA certs.
 		 */
 		if (initialize_SSL(conn) != 0)
 		{
@@ -868,8 +868,8 @@ destroy_ssl_system(void)
 			CRYPTO_set_id_callback(NULL);
 
 		/*
-		 * We don't free the lock array. If we get another connection in
-		 * this process, we will just re-use them with the existing mutexes.
+		 * We don't free the lock array. If we get another connection in this
+		 * process, we will just re-use them with the existing mutexes.
 		 *
 		 * This means we leak a little memory on repeated load/unload of the
 		 * library.
@@ -889,7 +889,7 @@ destroy_ssl_system(void)
 static int
 initialize_SSL(PGconn *conn)
 {
-	SSL_CTX	   *SSL_context;
+	SSL_CTX    *SSL_context;
 	struct stat buf;
 	char		homedir[MAXPGPATH];
 	char		fnbuf[MAXPGPATH];
@@ -916,8 +916,8 @@ initialize_SSL(PGconn *conn)
 	 * Create a new SSL_CTX object.
 	 *
 	 * We used to share a single SSL_CTX between all connections, but it was
-	 * complicated if connections used different certificates. So now we create
-	 * a separate context for each connection, and accept the overhead.
+	 * complicated if connections used different certificates. So now we
+	 * create a separate context for each connection, and accept the overhead.
 	 */
 	SSL_context = SSL_CTX_new(SSLv23_method());
 	if (!SSL_context)
@@ -925,8 +925,8 @@ initialize_SSL(PGconn *conn)
 		char	   *err = SSLerrmessage(ERR_get_error());
 
 		printfPQExpBuffer(&conn->errorMessage,
-						 libpq_gettext("could not create SSL context: %s\n"),
-							  err);
+						  libpq_gettext("could not create SSL context: %s\n"),
+						  err);
 		SSLerrfree(err);
 		return -1;
 	}
@@ -935,8 +935,8 @@ initialize_SSL(PGconn *conn)
 	SSL_CTX_set_options(SSL_context, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
 
 	/*
-	 * Disable OpenSSL's moving-write-buffer sanity check, because it
-	 * causes unnecessary failures in nonblocking send cases.
+	 * Disable OpenSSL's moving-write-buffer sanity check, because it causes
+	 * unnecessary failures in nonblocking send cases.
 	 */
 	SSL_CTX_set_mode(SSL_context, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
 
@@ -1064,8 +1064,8 @@ initialize_SSL(PGconn *conn)
 	{
 		/*
 		 * Cert file exists, so load it. Since OpenSSL doesn't provide the
-		 * equivalent of "SSL_use_certificate_chain_file", we have to load
-		 * it into the SSL context, rather than the SSL object.
+		 * equivalent of "SSL_use_certificate_chain_file", we have to load it
+		 * into the SSL context, rather than the SSL object.
 		 */
 		if (SSL_CTX_use_certificate_chain_file(SSL_context, fnbuf) != 1)
 		{
@@ -1084,10 +1084,11 @@ initialize_SSL(PGconn *conn)
 	}
 
 	/*
-	 * The SSL context is now loaded with the correct root and client certificates.
-	 * Create a connection-specific SSL object. The private key is loaded directly
-	 * into the SSL object. (We could load the private key into the context, too, but
-	 * we have done it this way historically, and it doesn't really matter.)
+	 * The SSL context is now loaded with the correct root and client
+	 * certificates. Create a connection-specific SSL object. The private key
+	 * is loaded directly into the SSL object. (We could load the private key
+	 * into the context, too, but we have done it this way historically, and
+	 * it doesn't really matter.)
 	 */
 	if (!(conn->ssl = SSL_new(SSL_context)) ||
 		!SSL_set_app_data(conn->ssl, conn) ||
@@ -1105,9 +1106,9 @@ initialize_SSL(PGconn *conn)
 	conn->ssl_in_use = true;
 
 	/*
-	 * SSL contexts are reference counted by OpenSSL. We can free it as soon as we
-	 * have created the SSL object, and it will stick around for as long as it's
-	 * actually needed.
+	 * SSL contexts are reference counted by OpenSSL. We can free it as soon
+	 * as we have created the SSL object, and it will stick around for as long
+	 * as it's actually needed.
 	 */
 	SSL_CTX_free(SSL_context);
 	SSL_context = NULL;
@@ -1269,7 +1270,8 @@ initialize_SSL(PGconn *conn)
 	}
 
 	/*
-	 * If a root cert was loaded, also set our certificate verification callback.
+	 * If a root cert was loaded, also set our certificate verification
+	 * callback.
 	 */
 	if (have_rootcert)
 		SSL_set_verify(conn->ssl, SSL_VERIFY_PEER, verify_cb);
@@ -1647,9 +1649,10 @@ my_BIO_s_socket(void)
 		my_bio_methods = BIO_meth_new(my_bio_index, "libpq socket");
 		if (!my_bio_methods)
 			return NULL;
+
 		/*
-		 * As of this writing, these functions never fail. But check anyway, like
-		 * OpenSSL's own examples do.
+		 * As of this writing, these functions never fail. But check anyway,
+		 * like OpenSSL's own examples do.
 		 */
 		if (!BIO_meth_set_write(my_bio_methods, my_sock_write) ||
 			!BIO_meth_set_read(my_bio_methods, my_sock_read) ||
@@ -1657,7 +1660,7 @@ my_BIO_s_socket(void)
 			!BIO_meth_set_puts(my_bio_methods, BIO_meth_get_puts(biom)) ||
 			!BIO_meth_set_ctrl(my_bio_methods, BIO_meth_get_ctrl(biom)) ||
 			!BIO_meth_set_create(my_bio_methods, BIO_meth_get_create(biom)) ||
-			!BIO_meth_set_destroy(my_bio_methods, BIO_meth_get_destroy(biom)) ||
+		 !BIO_meth_set_destroy(my_bio_methods, BIO_meth_get_destroy(biom)) ||
 			!BIO_meth_set_callback_ctrl(my_bio_methods, BIO_meth_get_callback_ctrl(biom)))
 		{
 			BIO_meth_free(my_bio_methods);

@@ -180,7 +180,7 @@ Generic_Text_IC_like(text *str, text *pat, Oid collation)
 			 */
 			ereport(ERROR,
 					(errcode(ERRCODE_INDETERMINATE_COLLATION),
-					 errmsg("could not determine which collation to use for ILIKE"),
+			  errmsg("could not determine which collation to use for ILIKE"),
 					 errhint("Use the COLLATE clause to set the collation explicitly.")));
 		}
 		locale = pg_newlocale_from_collation(collation);
@@ -189,9 +189,9 @@ Generic_Text_IC_like(text *str, text *pat, Oid collation)
 	/*
 	 * For efficiency reasons, in the single byte case we don't call lower()
 	 * on the pattern and text, but instead call SB_lower_char on each
-	 * character.  In the multi-byte case we don't have much choice :-(.
-	 * Also, ICU does not support single-character case folding, so we go the
-	 * long way.
+	 * character.  In the multi-byte case we don't have much choice :-(. Also,
+	 * ICU does not support single-character case folding, so we go the long
+	 * way.
 	 */
 
 	if (pg_database_encoding_max_length() > 1 || (locale && locale->provider == COLLPROVIDER_ICU))

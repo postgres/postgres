@@ -1555,9 +1555,10 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 			newrc->waitPolicy = oldrc->waitPolicy;
 
 			/*
-			 * We mark RowMarks for partitioned child tables as parent RowMarks
-			 * so that the executor ignores them (except their existence means
-			 * that the child tables be locked using appropriate mode).
+			 * We mark RowMarks for partitioned child tables as parent
+			 * RowMarks so that the executor ignores them (except their
+			 * existence means that the child tables be locked using
+			 * appropriate mode).
 			 */
 			newrc->isParent = (childrte->relkind == RELKIND_PARTITIONED_TABLE);
 
@@ -1593,8 +1594,8 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 	 * parent RT index to the list of RT indexes of its partitioned child
 	 * tables.  When creating an Append or a ModifyTable path for the parent,
 	 * we copy the child RT index list verbatim to the path so that it could
-	 * be carried over to the executor so that the latter could identify
-	 * the partitioned child tables.
+	 * be carried over to the executor so that the latter could identify the
+	 * partitioned child tables.
 	 */
 	if (partitioned_child_rels != NIL)
 	{

@@ -608,9 +608,9 @@ ExecParallelRetrieveInstrumentation(PlanState *planstate,
 	/*
 	 * Also store the per-worker detail.
 	 *
-	 * Worker instrumentation should be allocated in the same context as
-	 * the regular instrumentation information, which is the per-query
-	 * context. Switch into per-query memory context.
+	 * Worker instrumentation should be allocated in the same context as the
+	 * regular instrumentation information, which is the per-query context.
+	 * Switch into per-query memory context.
 	 */
 	oldcontext = MemoryContextSwitchTo(planstate->state->es_query_cxt);
 	ibytes = mul_size(instrumentation->num_workers, sizeof(Instrumentation));

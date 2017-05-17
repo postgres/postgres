@@ -60,7 +60,7 @@ static Node *transformJoinUsingClause(ParseState *pstate,
 static Node *transformJoinOnClause(ParseState *pstate, JoinExpr *j,
 					  List *namespace);
 static RangeTblEntry *getRTEForSpecialRelationTypes(ParseState *pstate,
-						RangeVar *rv);
+							  RangeVar *rv);
 static RangeTblEntry *transformTableEntry(ParseState *pstate, RangeVar *r);
 static RangeTblEntry *transformCTEReference(ParseState *pstate, RangeVar *r,
 					  CommonTableExpr *cte, Index levelsup);
@@ -70,7 +70,7 @@ static RangeTblEntry *transformRangeSubselect(ParseState *pstate,
 static RangeTblEntry *transformRangeFunction(ParseState *pstate,
 					   RangeFunction *r);
 static RangeTblEntry *transformRangeTableFunc(ParseState *pstate,
-					   RangeTableFunc *t);
+						RangeTableFunc *t);
 static TableSampleClause *transformRangeTableSample(ParseState *pstate,
 						  RangeTableSample *rts);
 static Node *transformFromClauseItem(ParseState *pstate, Node *n,
@@ -359,7 +359,7 @@ transformJoinUsingClause(ParseState *pstate,
 
 		/* Now create the lvar = rvar join condition */
 		e = makeSimpleA_Expr(AEXPR_OP, "=",
-							 (Node *) copyObject(lvar), (Node *) copyObject(rvar),
+						(Node *) copyObject(lvar), (Node *) copyObject(rvar),
 							 -1);
 
 		/* Prepare to combine into an AND clause, if multiple join columns */
@@ -759,7 +759,7 @@ transformRangeTableFunc(ParseState *pstate, RangeTableFunc *rtf)
 	/* Transform and apply typecast to the row-generating expression ... */
 	Assert(rtf->rowexpr != NULL);
 	tf->rowexpr = coerce_to_specific_type(pstate,
-										  transformExpr(pstate, rtf->rowexpr, EXPR_KIND_FROM_FUNCTION),
+				transformExpr(pstate, rtf->rowexpr, EXPR_KIND_FROM_FUNCTION),
 										  TEXTOID,
 										  constructName);
 	assign_expr_collations(pstate, tf->rowexpr);
@@ -767,7 +767,7 @@ transformRangeTableFunc(ParseState *pstate, RangeTableFunc *rtf)
 	/* ... and to the document itself */
 	Assert(rtf->docexpr != NULL);
 	tf->docexpr = coerce_to_specific_type(pstate,
-										  transformExpr(pstate, rtf->docexpr, EXPR_KIND_FROM_FUNCTION),
+				transformExpr(pstate, rtf->docexpr, EXPR_KIND_FROM_FUNCTION),
 										  docType,
 										  constructName);
 	assign_expr_collations(pstate, tf->docexpr);
@@ -792,9 +792,8 @@ transformRangeTableFunc(ParseState *pstate, RangeTableFunc *rtf)
 							   makeString(pstrdup(rawc->colname)));
 
 		/*
-		 * Determine the type and typmod for the new column. FOR
-		 * ORDINALITY columns are INTEGER per spec; the others are
-		 * user-specified.
+		 * Determine the type and typmod for the new column. FOR ORDINALITY
+		 * columns are INTEGER per spec; the others are user-specified.
 		 */
 		if (rawc->for_ordinality)
 		{
@@ -824,14 +823,14 @@ transformRangeTableFunc(ParseState *pstate, RangeTableFunc *rtf)
 		tf->coltypes = lappend_oid(tf->coltypes, typid);
 		tf->coltypmods = lappend_int(tf->coltypmods, typmod);
 		tf->colcollations = lappend_oid(tf->colcollations,
-										type_is_collatable(typid) ? DEFAULT_COLLATION_OID : InvalidOid);
+			 type_is_collatable(typid) ? DEFAULT_COLLATION_OID : InvalidOid);
 
 		/* Transform the PATH and DEFAULT expressions */
 		if (rawc->colexpr)
 		{
 			colexpr = coerce_to_specific_type(pstate,
-											  transformExpr(pstate, rawc->colexpr,
-															EXPR_KIND_FROM_FUNCTION),
+										 transformExpr(pstate, rawc->colexpr,
+													EXPR_KIND_FROM_FUNCTION),
 											  TEXTOID,
 											  constructName);
 			assign_expr_collations(pstate, colexpr);
@@ -842,8 +841,8 @@ transformRangeTableFunc(ParseState *pstate, RangeTableFunc *rtf)
 		if (rawc->coldefexpr)
 		{
 			coldefexpr = coerce_to_specific_type_typmod(pstate,
-														transformExpr(pstate, rawc->coldefexpr,
-																	  EXPR_KIND_FROM_FUNCTION),
+									  transformExpr(pstate, rawc->coldefexpr,
+													EXPR_KIND_FROM_FUNCTION),
 														typid, typmod,
 														constructName);
 			assign_expr_collations(pstate, coldefexpr);
@@ -1050,7 +1049,6 @@ transformRangeTableSample(ParseState *pstate, RangeTableSample *rts)
 static RangeTblEntry *
 getRTEForSpecialRelationTypes(ParseState *pstate, RangeVar *rv)
 {
-
 	CommonTableExpr *cte;
 	Index		levelsup;
 	RangeTblEntry *rte = NULL;

@@ -120,7 +120,7 @@ ExecProjectSRF(ProjectSetState *node, bool continuing)
 {
 	TupleTableSlot *resultSlot = node->ps.ps_ResultTupleSlot;
 	ExprContext *econtext = node->ps.ps_ExprContext;
-	bool		hassrf PG_USED_FOR_ASSERTS_ONLY;
+	bool hassrf PG_USED_FOR_ASSERTS_ONLY;
 	bool		hasresult;
 	int			argno;
 

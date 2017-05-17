@@ -1129,7 +1129,8 @@ exprSetCollation(Node *expr, Oid collation)
 			Assert(!OidIsValid(collation));		/* result is always boolean */
 			break;
 		case T_NextValueExpr:
-			Assert(!OidIsValid(collation));		/* result is always an integer type */
+			Assert(!OidIsValid(collation));		/* result is always an integer
+												 * type */
 			break;
 		default:
 			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(expr));

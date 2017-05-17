@@ -37,8 +37,8 @@
 
 
 static double ndistinct_for_combination(double totalrows, int numrows,
-					HeapTuple *rows, VacAttrStats **stats,
-					int k, int *combination);
+						  HeapTuple *rows, VacAttrStats **stats,
+						  int k, int *combination);
 static double estimate_ndistinct(double totalrows, int numrows, int d, int f1);
 static int	n_choose_k(int n, int k);
 static int	num_combinations(int n);
@@ -48,11 +48,11 @@ static int	num_combinations(int n);
 /* internal state for generator of k-combinations of n elements */
 typedef struct CombinationGenerator
 {
-	int		k;				/* size of the combination */
-	int		n;				/* total number of elements */
-	int		current;		/* index of the next combination to return */
-	int		ncombinations;	/* number of combinations (size of array) */
-	int	   *combinations;	/* array of pre-built combinations */
+	int			k;				/* size of the combination */
+	int			n;				/* total number of elements */
+	int			current;		/* index of the next combination to return */
+	int			ncombinations;	/* number of combinations (size of array) */
+	int		   *combinations;	/* array of pre-built combinations */
 } CombinationGenerator;
 
 static CombinationGenerator *generator_init(int n, int k);
@@ -87,7 +87,7 @@ statext_ndistinct_build(double totalrows, int numrows, HeapTuple *rows,
 	itemcnt = 0;
 	for (k = 2; k <= numattrs; k++)
 	{
-		int	   *combination;
+		int		   *combination;
 		CombinationGenerator *generator;
 
 		/* generate combinations of K out of N elements */
@@ -96,12 +96,12 @@ statext_ndistinct_build(double totalrows, int numrows, HeapTuple *rows,
 		while ((combination = generator_next(generator)))
 		{
 			MVNDistinctItem *item = &result->items[itemcnt];
-			int		j;
+			int			j;
 
 			item->attrs = NULL;
 			for (j = 0; j < k; j++)
 				item->attrs = bms_add_member(item->attrs,
-											 stats[combination[j]]->attr->attnum);
+										stats[combination[j]]->attr->attnum);
 			item->ndistinct =
 				ndistinct_for_combination(totalrows, numrows, rows,
 										  stats, k, combination);
@@ -166,12 +166,12 @@ statext_ndistinct_serialize(MVNDistinct *ndistinct)
 	 * for each item, including number of items for each.
 	 */
 	len = VARHDRSZ + SizeOfMVNDistinct +
-		ndistinct->nitems * (offsetof(MVNDistinctItem, attrs) + sizeof(int));
+		ndistinct->nitems * (offsetof(MVNDistinctItem, attrs) +sizeof(int));
 
 	/* and also include space for the actual attribute numbers */
 	for (i = 0; i < ndistinct->nitems; i++)
 	{
-		int		nmembers;
+		int			nmembers;
 
 		nmembers = bms_num_members(ndistinct->items[i].attrs);
 		Assert(nmembers >= 2);
@@ -198,8 +198,8 @@ statext_ndistinct_serialize(MVNDistinct *ndistinct)
 	for (i = 0; i < ndistinct->nitems; i++)
 	{
 		MVNDistinctItem item = ndistinct->items[i];
-		int		nmembers = bms_num_members(item.attrs);
-		int		x;
+		int			nmembers = bms_num_members(item.attrs);
+		int			x;
 
 		memcpy(tmp, &item.ndistinct, sizeof(double));
 		tmp += sizeof(double);
@@ -230,7 +230,7 @@ statext_ndistinct_deserialize(bytea *data)
 {
 	int			i;
 	Size		minimum_size;
-	MVNDistinct	ndist;
+	MVNDistinct ndist;
 	MVNDistinct *ndistinct;
 	char	   *tmp;
 
@@ -275,12 +275,12 @@ statext_ndistinct_deserialize(bytea *data)
 	if (VARSIZE_ANY_EXHDR(data) < minimum_size)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_CORRUPTED),
-				 errmsg("invalid MVNDistinct size %zd (expected at least %zd)",
-						VARSIZE_ANY_EXHDR(data), minimum_size)));
+			   errmsg("invalid MVNDistinct size %zd (expected at least %zd)",
+					  VARSIZE_ANY_EXHDR(data), minimum_size)));
 
 	/*
-	 * Allocate space for the ndistinct items (no space for each item's attnos:
-	 * those live in bitmapsets allocated separately)
+	 * Allocate space for the ndistinct items (no space for each item's
+	 * attnos: those live in bitmapsets allocated separately)
 	 */
 	ndistinct = palloc0(MAXALIGN(SizeOfMVNDistinct) +
 						(ndist.nitems * sizeof(MVNDistinctItem)));
@@ -360,8 +360,8 @@ pg_ndistinct_out(PG_FUNCTION_ARGS)
 	for (i = 0; i < ndist->nitems; i++)
 	{
 		MVNDistinctItem item = ndist->items[i];
-		int		x = -1;
-		bool	first = true;
+		int			x = -1;
+		bool		first = true;
 
 		if (i > 0)
 			appendStringInfoString(&str, ", ");
@@ -449,16 +449,16 @@ ndistinct_for_combination(double totalrows, int numrows, HeapTuple *rows,
 	}
 
 	/*
-	 * For each dimension, set up sort-support and fill in the values from
-	 * the sample data.
+	 * For each dimension, set up sort-support and fill in the values from the
+	 * sample data.
 	 */
 	for (i = 0; i < k; i++)
 	{
-		VacAttrStats   *colstat = stats[combination[i]];
+		VacAttrStats *colstat = stats[combination[i]];
 		TypeCacheEntry *type;
 
 		type = lookup_type_cache(colstat->attrtypid, TYPECACHE_LT_OPR);
-		if (type->lt_opr == InvalidOid)		/* shouldn't happen */
+		if (type->lt_opr == InvalidOid) /* shouldn't happen */
 			elog(ERROR, "cache lookup failed for ordering operator for type %u",
 				 colstat->attrtypid);
 
@@ -513,7 +513,7 @@ estimate_ndistinct(double totalrows, int numrows, int d, int f1)
 				denom,
 				ndistinct;
 
-	numer = (double) numrows * (double) d;
+	numer = (double) numrows *(double) d;
 
 	denom = (double) (numrows - f1) +
 		(double) f1 *(double) numrows / totalrows;
@@ -594,7 +594,7 @@ generator_init(int n, int k)
 
 	state->ncombinations = n_choose_k(n, k);
 
-	/* pre-allocate space for all combinations*/
+	/* pre-allocate space for all combinations */
 	state->combinations = (int *) palloc(sizeof(int) * k * state->ncombinations);
 
 	state->current = 0;
@@ -657,7 +657,7 @@ generate_combinations_recurse(CombinationGenerator *state,
 	/* If we haven't filled all the elements, simply recurse. */
 	if (index < state->k)
 	{
-		int		i;
+		int			i;
 
 		/*
 		 * The values have to be in ascending order, so make sure we start
@@ -688,7 +688,7 @@ generate_combinations_recurse(CombinationGenerator *state,
 static void
 generate_combinations(CombinationGenerator *state)
 {
-	int	   *current = (int *) palloc0(sizeof(int) * state->k);
+	int		   *current = (int *) palloc0(sizeof(int) * state->k);
 
 	generate_combinations_recurse(state, 0, 0, current);
 

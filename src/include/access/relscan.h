@@ -146,7 +146,7 @@ typedef struct ParallelIndexScanDescData
 	Oid			ps_indexid;
 	Size		ps_offset;		/* Offset in bytes of am specific structure */
 	char		ps_snapshot_data[FLEXIBLE_ARRAY_MEMBER];
-} ParallelIndexScanDescData;
+}	ParallelIndexScanDescData;
 
 /* Struct for heap-or-index scans of system tables */
 typedef struct SysScanDescData

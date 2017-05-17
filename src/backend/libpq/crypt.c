@@ -50,7 +50,7 @@ get_role_password(const char *role, char **logdetail)
 	{
 		*logdetail = psprintf(_("Role \"%s\" does not exist."),
 							  role);
-		return NULL;	/* no such user */
+		return NULL;			/* no such user */
 	}
 
 	datum = SysCacheGetAttr(AUTHNAME, roleTup,
@@ -60,7 +60,7 @@ get_role_password(const char *role, char **logdetail)
 		ReleaseSysCache(roleTup);
 		*logdetail = psprintf(_("User \"%s\" has no password assigned."),
 							  role);
-		return NULL;	/* user has no password */
+		return NULL;			/* user has no password */
 	}
 	shadow_pass = TextDatumGetCString(datum);
 
@@ -76,7 +76,7 @@ get_role_password(const char *role, char **logdetail)
 		*logdetail = psprintf(_("User \"%s\" has an empty password."),
 							  role);
 		pfree(shadow_pass);
-		return NULL;	/* empty password */
+		return NULL;			/* empty password */
 	}
 
 	/*
@@ -122,8 +122,8 @@ encrypt_password(PasswordType target_type, const char *role,
 	if (guessed_type != PASSWORD_TYPE_PLAINTEXT)
 	{
 		/*
-		 * Cannot convert an already-encrypted password from one
-		 * format to another, so return it as it is.
+		 * Cannot convert an already-encrypted password from one format to
+		 * another, so return it as it is.
 		 */
 		return pstrdup(password);
 	}
@@ -274,6 +274,7 @@ plain_crypt_verify(const char *role, const char *shadow_pass,
 			break;
 
 		case PASSWORD_TYPE_PLAINTEXT:
+
 			/*
 			 * We never store passwords in plaintext, so this shouldn't
 			 * happen.

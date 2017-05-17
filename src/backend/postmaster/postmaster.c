@@ -1251,7 +1251,7 @@ PostmasterMain(int argc, char *argv[])
 		ereport(LOG,
 				(errcode_for_file_access(),
 				 errmsg("could not remove file \"%s\": %m",
-					LOG_METAINFO_DATAFILE)));
+						LOG_METAINFO_DATAFILE)));
 
 	/*
 	 * If enabled, start up syslogger collection subprocess
@@ -3071,7 +3071,7 @@ CleanupBackgroundWorker(int pid,
 						int exitstatus) /* child's exit status */
 {
 	char		namebuf[MAXPGPATH];
-	slist_mutable_iter	iter;
+	slist_mutable_iter iter;
 
 	slist_foreach_modify(iter, &BackgroundWorkerList)
 	{
@@ -3147,7 +3147,7 @@ CleanupBackgroundWorker(int pid,
 		rw->rw_backend = NULL;
 		rw->rw_pid = 0;
 		rw->rw_child_slot = 0;
-		ReportBackgroundWorkerExit(&iter);	/* report child death */
+		ReportBackgroundWorkerExit(&iter);		/* report child death */
 
 		LogChildExit(EXIT_STATUS_0(exitstatus) ? DEBUG1 : LOG,
 					 namebuf, pid, exitstatus);
@@ -5149,11 +5149,12 @@ RandomCancelKey(int32 *cancel_key)
 #ifdef HAVE_STRONG_RANDOM
 	return pg_strong_random((char *) cancel_key, sizeof(int32));
 #else
+
 	/*
 	 * If built with --disable-strong-random, use plain old erand48.
 	 *
-	 * We cannot use pg_backend_random() in postmaster, because it stores
-	 * its state in shared memory.
+	 * We cannot use pg_backend_random() in postmaster, because it stores its
+	 * state in shared memory.
 	 */
 	static unsigned short seed[3];
 
@@ -5348,10 +5349,10 @@ StartAutovacuumWorker(void)
 	if (canAcceptConnections() == CAC_OK)
 	{
 		/*
-		 * Compute the cancel key that will be assigned to this session.
-		 * We probably don't need cancel keys for autovac workers, but
-		 * we'd better have something random in the field to prevent
-		 * unfriendly people from sending cancels to them.
+		 * Compute the cancel key that will be assigned to this session. We
+		 * probably don't need cancel keys for autovac workers, but we'd
+		 * better have something random in the field to prevent unfriendly
+		 * people from sending cancels to them.
 		 */
 		if (!RandomCancelKey(&MyCancelKey))
 		{

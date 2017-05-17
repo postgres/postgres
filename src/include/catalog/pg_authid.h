@@ -105,7 +105,7 @@ DATA(insert OID = 3373 ( "pg_monitor" f t f f f f f -1 _null_ _null_));
 DATA(insert OID = 3374 ( "pg_read_all_settings" f t f f f f f -1 _null_ _null_));
 #define DEFAULT_ROLE_READ_ALL_SETTINGS	3374
 DATA(insert OID = 3375 ( "pg_read_all_stats" f t f f f f f -1 _null_ _null_));
-#define DEFAULT_ROLE_READ_ALL_STATS	3375
+#define DEFAULT_ROLE_READ_ALL_STATS 3375
 DATA(insert OID = 3377 ( "pg_stat_scan_tables" f t f f f f f -1 _null_ _null_));
 #define DEFAULT_ROLE_STAT_SCAN_TABLES	3377
 DATA(insert OID = 4200 ( "pg_signal_backend" f t f f f f f -1 _null_ _null_));

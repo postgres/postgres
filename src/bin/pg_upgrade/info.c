@@ -269,7 +269,7 @@ report_unmatched_relation(const RelInfo *rel, const DbInfo *db, bool is_new_db)
 		if (i >= db->rel_arr.nrels)
 			snprintf(reldesc + strlen(reldesc),
 					 sizeof(reldesc) - strlen(reldesc),
-					 _(" which is the TOAST table for OID %u"), rel->toastheap);
+				  _(" which is the TOAST table for OID %u"), rel->toastheap);
 	}
 
 	if (is_new_db)

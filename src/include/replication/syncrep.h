@@ -48,7 +48,7 @@ typedef struct SyncRepConfigData
 	int			config_size;	/* total size of this struct, in bytes */
 	int			num_sync;		/* number of sync standbys that we need to
 								 * wait for */
-	uint8		syncrep_method;	/* method to choose sync standbys */
+	uint8		syncrep_method; /* method to choose sync standbys */
 	int			nmembers;		/* number of members in the following list */
 	/* member_names contains nmembers consecutive nul-terminated C strings */
 	char		member_names[FLEXIBLE_ARRAY_MEMBER];

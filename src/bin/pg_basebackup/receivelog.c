@@ -456,15 +456,15 @@ ReceiveXlogStream(PGconn *conn, StreamCtl *stream)
 		return false;
 
 	/*
-	 * Decide whether we want to report the flush position. If we report
-	 * the flush position, the primary will know what WAL we'll
-	 * possibly re-request, and it can then remove older WAL safely.
-	 * We must always do that when we are using slots.
+	 * Decide whether we want to report the flush position. If we report the
+	 * flush position, the primary will know what WAL we'll possibly
+	 * re-request, and it can then remove older WAL safely. We must always do
+	 * that when we are using slots.
 	 *
 	 * Reporting the flush position makes one eligible as a synchronous
 	 * replica. People shouldn't include generic names in
-	 * synchronous_standby_names, but we've protected them against it so
-	 * far, so let's continue to do so unless specifically requested.
+	 * synchronous_standby_names, but we've protected them against it so far,
+	 * so let's continue to do so unless specifically requested.
 	 */
 	if (stream->replication_slot != NULL)
 	{

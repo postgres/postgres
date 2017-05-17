@@ -103,7 +103,7 @@ invalid_input:
 Datum
 macaddr8_in(PG_FUNCTION_ARGS)
 {
-	const unsigned char *str = (unsigned char*) PG_GETARG_CSTRING(0);
+	const unsigned char *str = (unsigned char *) PG_GETARG_CSTRING(0);
 	const unsigned char *ptr = str;
 	macaddr8   *result;
 	unsigned char a = 0,

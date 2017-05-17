@@ -1233,7 +1233,7 @@ mdsync(void)
 					INSTR_TIME_SET_CURRENT(sync_start);
 
 					if (seg != NULL &&
-						FileSync(seg->mdfd_vfd, WAIT_EVENT_DATA_FILE_SYNC) >= 0)
+					 FileSync(seg->mdfd_vfd, WAIT_EVENT_DATA_FILE_SYNC) >= 0)
 					{
 						/* Success; update statistics about sync timing */
 						INSTR_TIME_SET_CURRENT(sync_end);

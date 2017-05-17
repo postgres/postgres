@@ -497,7 +497,7 @@ RegisterLWLockTranches(void)
 		LWLockTranchesAllocated = 64;
 		LWLockTrancheArray = (char **)
 			MemoryContextAllocZero(TopMemoryContext,
-						  LWLockTranchesAllocated * sizeof(char *));
+								   LWLockTranchesAllocated * sizeof(char *));
 		Assert(LWLockTranchesAllocated >= LWTRANCHE_FIRST_USER_DEFINED);
 	}
 

@@ -56,13 +56,13 @@ PG_FUNCTION_INFO_V1(utf8_to_win);
 typedef struct
 {
 	pg_enc		encoding;
-	const pg_mb_radix_tree *map1;	/* to UTF8 map name */
-	const pg_mb_radix_tree *map2;	/* from UTF8 map name */
+	const pg_mb_radix_tree *map1;		/* to UTF8 map name */
+	const pg_mb_radix_tree *map2;		/* from UTF8 map name */
 } pg_conv_map;
 
 static const pg_conv_map maps[] = {
-	{PG_WIN866,  &win866_to_unicode_tree,  &win866_from_unicode_tree},
-	{PG_WIN874,  &win874_to_unicode_tree,  &win874_from_unicode_tree},
+	{PG_WIN866, &win866_to_unicode_tree, &win866_from_unicode_tree},
+	{PG_WIN874, &win874_to_unicode_tree, &win874_from_unicode_tree},
 	{PG_WIN1250, &win1250_to_unicode_tree, &win1250_from_unicode_tree},
 	{PG_WIN1251, &win1251_to_unicode_tree, &win1251_from_unicode_tree},
 	{PG_WIN1252, &win1252_to_unicode_tree, &win1252_from_unicode_tree},

@@ -31,7 +31,7 @@
 PG_FUNCTION_INFO_V1(pgstattuple_approx);
 PG_FUNCTION_INFO_V1(pgstattuple_approx_v1_5);
 
-Datum pgstattuple_approx_internal(Oid relid, FunctionCallInfo fcinfo);
+Datum		pgstattuple_approx_internal(Oid relid, FunctionCallInfo fcinfo);
 
 typedef struct output_type
 {

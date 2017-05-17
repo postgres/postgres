@@ -858,7 +858,7 @@ get_attidentity(Oid relid, AttrNumber attnum)
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_attribute att_tup = (Form_pg_attribute) GETSTRUCT(tp);
-		char			result;
+		char		result;
 
 		result = att_tup->attidentity;
 		ReleaseSysCache(tp);

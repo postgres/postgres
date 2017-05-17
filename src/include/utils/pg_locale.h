@@ -68,20 +68,21 @@ extern void cache_locale_time(void);
  */
 struct pg_locale_struct
 {
-	char	provider;
+	char		provider;
 	union
 	{
 #ifdef HAVE_LOCALE_T
-		locale_t lt;
+		locale_t	lt;
 #endif
 #ifdef USE_ICU
-		struct {
+		struct
+		{
 			const char *locale;
-			UCollator *ucol;
-		} icu;
+			UCollator  *ucol;
+		}			icu;
 #endif
 		int			dummy;		/* in case we have neither LOCALE_T nor ICU */
-	} info;
+	}			info;
 };
 
 typedef struct pg_locale_struct *pg_locale_t;

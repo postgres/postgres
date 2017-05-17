@@ -33,8 +33,8 @@ typedef enum
 	 * that started after this.
 	 *
 	 * Once we reached this we start to collect changes. We cannot apply them
-	 * yet, because they might be based on transactions that were still running
-	 * when FULL_SNAPSHOT was reached.
+	 * yet, because they might be based on transactions that were still
+	 * running when FULL_SNAPSHOT was reached.
 	 */
 	SNAPBUILD_FULL_SNAPSHOT = 1,
 

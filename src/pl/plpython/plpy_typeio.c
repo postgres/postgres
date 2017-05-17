@@ -647,9 +647,10 @@ PLyList_FromArray(PLyDatumToOb *arg, Datum d)
 
 	/*
 	 * We iterate the SQL array in the physical order it's stored in the
-	 * datum. For example, for a 3-dimensional array the order of iteration would
-	 * be the following: [0,0,0] elements through [0,0,k], then [0,1,0] through
-	 * [0,1,k] till [0,m,k], then [1,0,0] through [1,0,k] till [1,m,k], and so on.
+	 * datum. For example, for a 3-dimensional array the order of iteration
+	 * would be the following: [0,0,0] elements through [0,0,k], then [0,1,0]
+	 * through [0,1,k] till [0,m,k], then [1,0,0] through [1,0,k] till
+	 * [1,m,k], and so on.
 	 *
 	 * In Python, there are no multi-dimensional lists as such, but they are
 	 * represented as a list of lists. So a 3-d array of [n,m,k] elements is a
@@ -927,11 +928,11 @@ PLyObject_ToDatum(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarray)
 	 * literal.
 	 *
 	 * To make that less confusing to users who are upgrading from older
-	 * versions, try to give a hint in the typical instances of that. If we are
-	 * parsing an array of composite types, and we see a string literal that
-	 * is not a valid record literal, give a hint. We only want to give the
-	 * hint in the narrow case of a malformed string literal, not any error
-	 * from record_in(), so check for that case here specifically.
+	 * versions, try to give a hint in the typical instances of that. If we
+	 * are parsing an array of composite types, and we see a string literal
+	 * that is not a valid record literal, give a hint. We only want to give
+	 * the hint in the narrow case of a malformed string literal, not any
+	 * error from record_in(), so check for that case here specifically.
 	 *
 	 * This check better match the one in record_in(), so that we don't forbid
 	 * literals that are actually valid!

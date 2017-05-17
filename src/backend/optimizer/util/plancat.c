@@ -1149,7 +1149,7 @@ get_relation_constraints(PlannerInfo *root,
 	Index		varno = rel->relid;
 	Relation	relation;
 	TupleConstr *constr;
-	List		*pcqual;
+	List	   *pcqual;
 
 	/*
 	 * We assume the relation has already been safely locked.

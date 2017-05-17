@@ -59,7 +59,7 @@
  * by the following graph describing the SnapBuild->state transitions:
  *
  *		   +-------------------------+
- *	  +----|         START			 |-------------+
+ *	  +----|		 START			 |-------------+
  *	  |    +-------------------------+			   |
  *	  |					|						   |
  *	  |					|						   |
@@ -68,22 +68,22 @@
  *	  |					|						   |
  *	  |					v						   |
  *	  |    +-------------------------+			   v
- *	  |    |   BUILDING_SNAPSHOT     |------------>|
+ *	  |    |   BUILDING_SNAPSHOT	 |------------>|
  *	  |    +-------------------------+			   |
  *	  |					|						   |
  *	  |					|						   |
- *	  |	running_xacts #2, xacts from #1 finished   |
+ *	  | running_xacts #2, xacts from #1 finished   |
  *	  |					|						   |
  *	  |					|						   |
  *	  |					v						   |
  *	  |    +-------------------------+			   v
- *	  |    |       FULL_SNAPSHOT     |------------>|
+ *	  |    |	   FULL_SNAPSHOT	 |------------>|
  *	  |    +-------------------------+			   |
  *	  |					|						   |
  * running_xacts		|					   saved snapshot
  * with zero xacts		|				  at running_xacts's lsn
  *	  |					|						   |
- *	  |	running_xacts with xacts from #2 finished  |
+ *	  | running_xacts with xacts from #2 finished  |
  *	  |					|						   |
  *	  |					v						   |
  *	  |    +-------------------------+			   |
@@ -209,9 +209,9 @@ struct SnapBuild
 		TransactionId was_xmin;
 		TransactionId was_xmax;
 
-		size_t		was_xcnt;		/* number of used xip entries */
-		size_t		was_xcnt_space; /* allocated size of xip */
-		TransactionId *was_xip;		/* running xacts array, xidComparator-sorted */
+		size_t		was_xcnt;	/* number of used xip entries */
+		size_t		was_xcnt_space;		/* allocated size of xip */
+		TransactionId *was_xip; /* running xacts array, xidComparator-sorted */
 	}			was_running;
 
 	/*
@@ -608,8 +608,8 @@ SnapBuildInitialSnapshot(SnapBuild *builder)
 		{
 			if (newxcnt >= GetMaxSnapshotXidCount())
 				ereport(ERROR,
-					(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
-					 errmsg("initial slot snapshot too large")));
+						(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
+						 errmsg("initial slot snapshot too large")));
 
 			newxip[newxcnt++] = xid;
 		}
@@ -986,6 +986,7 @@ SnapBuildCommitTxn(SnapBuild *builder, XLogRecPtr lsn, TransactionId xid,
 			if (NormalTransactionIdFollows(subxid, xmax))
 				xmax = subxid;
 		}
+
 		/*
 		 * If we're forcing timetravel we also need visibility information
 		 * about subtransaction, so keep track of subtransaction's state, even
@@ -1031,8 +1032,8 @@ SnapBuildCommitTxn(SnapBuild *builder, XLogRecPtr lsn, TransactionId xid,
 
 	/*
 	 * Adjust xmax of the snapshot builder, we only do that for committed,
-	 * catalog modifying, transactions, everything else isn't interesting
-	 * for us since we'll never look at the respective rows.
+	 * catalog modifying, transactions, everything else isn't interesting for
+	 * us since we'll never look at the respective rows.
 	 */
 	if (needs_timetravel &&
 		(!TransactionIdIsValid(builder->xmax) ||
@@ -1130,8 +1131,8 @@ SnapBuildProcessRunningXacts(SnapBuild *builder, XLogRecPtr lsn, xl_running_xact
 		 running->oldestRunningXid);
 
 	/*
-	 * Increase shared memory limits, so vacuum can work on tuples we prevented
-	 * from being pruned till now.
+	 * Increase shared memory limits, so vacuum can work on tuples we
+	 * prevented from being pruned till now.
 	 */
 	LogicalIncreaseXminForSlot(lsn, running->oldestRunningXid);
 
@@ -1202,11 +1203,11 @@ SnapBuildFindSnapshot(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *runn
 	 *	  modifying transactions.
 	 *
 	 * c) First incrementally build a snapshot for catalog tuples
-	 *    (BUILDING_SNAPSHOT), that requires all, already in-progress,
-	 *    transactions to finish.  Every transaction starting after that
-	 *    (FULL_SNAPSHOT state), has enough information to be decoded.  But
-	 *    for older running transactions no viable snapshot exists yet, so
-	 *    CONSISTENT will only be reached once all of those have finished.
+	 *	  (BUILDING_SNAPSHOT), that requires all, already in-progress,
+	 *	  transactions to finish.  Every transaction starting after that
+	 *	  (FULL_SNAPSHOT state), has enough information to be decoded.  But
+	 *	  for older running transactions no viable snapshot exists yet, so
+	 *	  CONSISTENT will only be reached once all of those have finished.
 	 * ---
 	 */
 
@@ -1271,6 +1272,7 @@ SnapBuildFindSnapshot(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *runn
 		/* there won't be any state to cleanup */
 		return false;
 	}
+
 	/*
 	 * c) transition from START to BUILDING_SNAPSHOT.
 	 *
@@ -1308,6 +1310,7 @@ SnapBuildFindSnapshot(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *runn
 
 		SnapBuildWaitSnapshot(running, running->nextXid);
 	}
+
 	/*
 	 * c) transition from BUILDING_SNAPSHOT to FULL_SNAPSHOT.
 	 *
@@ -1324,13 +1327,14 @@ SnapBuildFindSnapshot(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *runn
 		SnapBuildStartNextPhaseAt(builder, running->nextXid);
 
 		ereport(LOG,
-				(errmsg("logical decoding found initial consistent point at %X/%X",
-						(uint32) (lsn >> 32), (uint32) lsn),
-				 errdetail("Waiting for transactions (approximately %d) older than %u to end.",
-						   running->xcnt, running->nextXid)));
+		  (errmsg("logical decoding found initial consistent point at %X/%X",
+				  (uint32) (lsn >> 32), (uint32) lsn),
+		   errdetail("Waiting for transactions (approximately %d) older than %u to end.",
+					 running->xcnt, running->nextXid)));
 
 		SnapBuildWaitSnapshot(running, running->nextXid);
 	}
+
 	/*
 	 * c) transition from FULL_SNAPSHOT to CONSISTENT.
 	 *
@@ -1368,9 +1372,9 @@ SnapBuildFindSnapshot(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *runn
  *
  * This isn't required for the correctness of decoding, but to:
  * a) allow isolationtester to notice that we're currently waiting for
- *    something.
+ *	  something.
  * b) log a new xl_running_xacts record where it'd be helpful, without having
- *    to write for bgwriter or checkpointer.
+ *	  to write for bgwriter or checkpointer.
  * ---
  */
 static void
@@ -1383,9 +1387,9 @@ SnapBuildWaitSnapshot(xl_running_xacts *running, TransactionId cutoff)
 		TransactionId xid = running->xids[off];
 
 		/*
-		 * Upper layers should prevent that we ever need to wait on
-		 * ourselves. Check anyway, since failing to do so would either
-		 * result in an endless wait or an Assert() failure.
+		 * Upper layers should prevent that we ever need to wait on ourselves.
+		 * Check anyway, since failing to do so would either result in an
+		 * endless wait or an Assert() failure.
 		 */
 		if (TransactionIdIsCurrentTransactionId(xid))
 			elog(ERROR, "waiting for ourselves");
@@ -1864,8 +1868,9 @@ CheckPointSnapBuild(void)
 	char		path[MAXPGPATH + 21];
 
 	/*
-	 * We start off with a minimum of the last redo pointer. No new replication
-	 * slot will start before that, so that's a safe upper bound for removal.
+	 * We start off with a minimum of the last redo pointer. No new
+	 * replication slot will start before that, so that's a safe upper bound
+	 * for removal.
 	 */
 	redo = GetRedoRecPtr();
 

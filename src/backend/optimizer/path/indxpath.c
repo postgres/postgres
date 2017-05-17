@@ -1073,8 +1073,8 @@ build_index_paths(PlannerInfo *root, RelOptInfo *rel,
 									  true);
 
 			/*
-			 * if, after costing the path, we find that it's not worth
-			 * using parallel workers, just free it.
+			 * if, after costing the path, we find that it's not worth using
+			 * parallel workers, just free it.
 			 */
 			if (ipath->path.parallel_workers > 0)
 				add_partial_path(rel, (Path *) ipath);

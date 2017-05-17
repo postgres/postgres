@@ -119,11 +119,11 @@ pg_create_logical_replication_slot(PG_FUNCTION_ARGS)
 
 	/*
 	 * Acquire a logical decoding slot, this will check for conflicting names.
-	 * Initially create persistent slot as ephemeral - that allows us to nicely
-	 * handle errors during initialization because it'll get dropped if this
-	 * transaction fails. We'll make it persistent at the end.
-	 * Temporary slots can be created as temporary from beginning as they get
-	 * dropped on error as well.
+	 * Initially create persistent slot as ephemeral - that allows us to
+	 * nicely handle errors during initialization because it'll get dropped if
+	 * this transaction fails. We'll make it persistent at the end. Temporary
+	 * slots can be created as temporary from beginning as they get dropped on
+	 * error as well.
 	 */
 	ReplicationSlotCreate(NameStr(*name), true,
 						  temporary ? RS_TEMPORARY : RS_EPHEMERAL);
@@ -132,7 +132,7 @@ pg_create_logical_replication_slot(PG_FUNCTION_ARGS)
 	 * Create logical decoding context, to build the initial snapshot.
 	 */
 	ctx = CreateInitDecodingContext(NameStr(*plugin), NIL,
-									false, /* do not build snapshot */
+									false,		/* do not build snapshot */
 									logical_read_local_xlog_page, NULL, NULL,
 									NULL);
 
@@ -227,7 +227,7 @@ pg_get_replication_slots(PG_FUNCTION_ARGS)
 		Datum		values[PG_GET_REPLICATION_SLOTS_COLS];
 		bool		nulls[PG_GET_REPLICATION_SLOTS_COLS];
 
-		ReplicationSlotPersistency	persistency;
+		ReplicationSlotPersistency persistency;
 		TransactionId xmin;
 		TransactionId catalog_xmin;
 		XLogRecPtr	restart_lsn;

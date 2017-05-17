@@ -458,7 +458,7 @@ ReportBackgroundWorkerExit(slist_mutable_iter *cur)
 {
 	RegisteredBgWorker *rw;
 	BackgroundWorkerSlot *slot;
-	int		notify_pid;
+	int			notify_pid;
 
 	rw = slist_container(RegisteredBgWorker, rw_lnode, cur->cur);
 

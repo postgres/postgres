@@ -74,7 +74,7 @@ parse_publication_options(List *options,
 	*publish_delete = true;
 
 	/* Parse options */
-	foreach (lc, options)
+	foreach(lc, options)
 	{
 		DefElem    *defel = (DefElem *) lfirst(lc);
 
@@ -106,9 +106,9 @@ parse_publication_options(List *options,
 						 errmsg("invalid publish list")));
 
 			/* Process the option list. */
-			foreach (lc, publish_list)
+			foreach(lc, publish_list)
 			{
-				char *publish_opt = (char *)lfirst(lc);
+				char	   *publish_opt = (char *) lfirst(lc);
 
 				if (strcmp(publish_opt, "insert") == 0)
 					*publish_insert = true;
@@ -157,7 +157,7 @@ CreatePublication(CreatePublicationStmt *stmt)
 	if (stmt->for_all_tables && !superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser to create FOR ALL TABLES publication"))));
+		(errmsg("must be superuser to create FOR ALL TABLES publication"))));
 
 	rel = heap_open(PublicationRelationId, RowExclusiveLock);
 
@@ -228,7 +228,7 @@ CreatePublication(CreatePublicationStmt *stmt)
  */
 static void
 AlterPublicationOptions(AlterPublicationStmt *stmt, Relation rel,
-					   HeapTuple tup)
+						HeapTuple tup)
 {
 	bool		nulls[Natts_pg_publication];
 	bool		replaces[Natts_pg_publication];
@@ -237,7 +237,7 @@ AlterPublicationOptions(AlterPublicationStmt *stmt, Relation rel,
 	bool		publish_insert;
 	bool		publish_update;
 	bool		publish_delete;
-	ObjectAddress		obj;
+	ObjectAddress obj;
 
 	parse_publication_options(stmt->options,
 							  &publish_given, &publish_insert,
@@ -275,7 +275,7 @@ AlterPublicationOptions(AlterPublicationStmt *stmt, Relation rel,
 	}
 	else
 	{
-		List	*relids = GetPublicationRelations(HeapTupleGetOid(tup));
+		List	   *relids = GetPublicationRelations(HeapTupleGetOid(tup));
 
 		/*
 		 * We don't want to send too many individual messages, at some point
@@ -283,11 +283,11 @@ AlterPublicationOptions(AlterPublicationStmt *stmt, Relation rel,
 		 */
 		if (list_length(relids) < MAX_RELCACHE_INVAL_MSGS)
 		{
-			ListCell *lc;
+			ListCell   *lc;
 
-			foreach (lc, relids)
+			foreach(lc, relids)
 			{
-				Oid	relid = lfirst_oid(lc);
+				Oid			relid = lfirst_oid(lc);
 
 				CacheInvalidateRelcacheByRelid(relid);
 			}
@@ -330,7 +330,7 @@ AlterPublicationTables(AlterPublicationStmt *stmt, Relation rel,
 		PublicationAddTables(pubid, rels, false, stmt);
 	else if (stmt->tableAction == DEFELEM_DROP)
 		PublicationDropTables(pubid, rels, false);
-	else /* DEFELEM_SET */
+	else	/* DEFELEM_SET */
 	{
 		List	   *oldrelids = GetPublicationRelations(pubid);
 		List	   *delrels = NIL;
@@ -358,6 +358,7 @@ AlterPublicationTables(AlterPublicationStmt *stmt, Relation rel,
 			{
 				Relation	oldrel = heap_open(oldrelid,
 											   ShareUpdateExclusiveLock);
+
 				delrels = lappend(delrels, oldrel);
 			}
 		}
@@ -366,8 +367,8 @@ AlterPublicationTables(AlterPublicationStmt *stmt, Relation rel,
 		PublicationDropTables(pubid, delrels, true);
 
 		/*
-		 * Don't bother calculating the difference for adding, we'll catch
-		 * and skip existing ones when doing catalog update.
+		 * Don't bother calculating the difference for adding, we'll catch and
+		 * skip existing ones when doing catalog update.
 		 */
 		PublicationAddTables(pubid, rels, true, stmt);
 
@@ -386,8 +387,8 @@ AlterPublicationTables(AlterPublicationStmt *stmt, Relation rel,
 void
 AlterPublication(AlterPublicationStmt *stmt)
 {
-	Relation		rel;
-	HeapTuple		tup;
+	Relation	rel;
+	HeapTuple	tup;
 
 	rel = heap_open(PublicationRelationId, RowExclusiveLock);
 
@@ -444,9 +445,9 @@ RemovePublicationById(Oid pubid)
 void
 RemovePublicationRelById(Oid proid)
 {
-	Relation        rel;
-	HeapTuple       tup;
-	Form_pg_publication_rel		pubrel;
+	Relation	rel;
+	HeapTuple	tup;
+	Form_pg_publication_rel pubrel;
 
 	rel = heap_open(PublicationRelRelationId, RowExclusiveLock);
 
@@ -570,14 +571,14 @@ static void
 PublicationAddTables(Oid pubid, List *rels, bool if_not_exists,
 					 AlterPublicationStmt *stmt)
 {
-	ListCell	   *lc;
+	ListCell   *lc;
 
 	Assert(!stmt || !stmt->for_all_tables);
 
 	foreach(lc, rels)
 	{
 		Relation	rel = (Relation) lfirst(lc);
-		ObjectAddress	obj;
+		ObjectAddress obj;
 
 		/* Must be owner of the table or superuser. */
 		if (!pg_class_ownercheck(RelationGetRelid(rel), GetUserId()))
@@ -602,9 +603,9 @@ PublicationAddTables(Oid pubid, List *rels, bool if_not_exists,
 static void
 PublicationDropTables(Oid pubid, List *rels, bool missing_ok)
 {
-	ObjectAddress	obj;
-	ListCell	   *lc;
-	Oid				prid;
+	ObjectAddress obj;
+	ListCell   *lc;
+	Oid			prid;
 
 	foreach(lc, rels)
 	{
@@ -632,7 +633,7 @@ PublicationDropTables(Oid pubid, List *rels, bool missing_ok)
 /*
  * Internal workhorse for changing a publication owner
  */
-	static void
+static void
 AlterPublicationOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 {
 	Form_pg_publication form;
@@ -663,8 +664,8 @@ AlterPublicationOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 		if (form->puballtables && !superuser_arg(newOwnerId))
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("permission denied to change owner of publication \"%s\"",
-							NameStr(form->pubname)),
+			errmsg("permission denied to change owner of publication \"%s\"",
+				   NameStr(form->pubname)),
 					 errhint("The owner of a FOR ALL TABLES publication must be a superuser.")));
 	}
 
@@ -686,9 +687,9 @@ AlterPublicationOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 ObjectAddress
 AlterPublicationOwner(const char *name, Oid newOwnerId)
 {
-	Oid                     subid;
-	HeapTuple       tup;
-	Relation        rel;
+	Oid			subid;
+	HeapTuple	tup;
+	Relation	rel;
 	ObjectAddress address;
 
 	rel = heap_open(PublicationRelationId, RowExclusiveLock);
@@ -719,8 +720,8 @@ AlterPublicationOwner(const char *name, Oid newOwnerId)
 void
 AlterPublicationOwner_oid(Oid subid, Oid newOwnerId)
 {
-	HeapTuple       tup;
-	Relation        rel;
+	HeapTuple	tup;
+	Relation	rel;
 
 	rel = heap_open(PublicationRelationId, RowExclusiveLock);
 

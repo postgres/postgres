@@ -855,8 +855,8 @@ dropdb(const char *dbname, bool missing_ok)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_IN_USE),
-			  errmsg("database \"%s\" is used by an active logical replication slot",
-					 dbname),
+				 errmsg("database \"%s\" is used by an active logical replication slot",
+						dbname),
 				 errdetail_plural("There is %d active slot",
 								  "There are %d active slots",
 								  nslots_active, nslots_active)));
@@ -2134,7 +2134,8 @@ dbase_redo(XLogReaderState *record)
 			 * which can happen in some cases.
 			 *
 			 * This will lock out walsenders trying to connect to db-specific
-			 * slots for logical decoding too, so it's safe for us to drop slots.
+			 * slots for logical decoding too, so it's safe for us to drop
+			 * slots.
 			 */
 			LockSharedObjectForSession(DatabaseRelationId, xlrec->db_id, 0, AccessExclusiveLock);
 			ResolveRecoveryConflictWithDatabase(xlrec->db_id);

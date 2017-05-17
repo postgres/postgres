@@ -140,7 +140,7 @@ static TableFuncScan *create_tablefuncscan_plan(PlannerInfo *root, Path *best_pa
 static CteScan *create_ctescan_plan(PlannerInfo *root, Path *best_path,
 					List *tlist, List *scan_clauses);
 static NamedTuplestoreScan *create_namedtuplestorescan_plan(PlannerInfo *root,
-					Path *best_path, List *tlist, List *scan_clauses);
+						   Path *best_path, List *tlist, List *scan_clauses);
 static WorkTableScan *create_worktablescan_plan(PlannerInfo *root, Path *best_path,
 						  List *tlist, List *scan_clauses);
 static ForeignScan *create_foreignscan_plan(PlannerInfo *root, ForeignPath *best_path,
@@ -200,7 +200,7 @@ static TableFuncScan *make_tablefuncscan(List *qptlist, List *qpqual,
 static CteScan *make_ctescan(List *qptlist, List *qpqual,
 			 Index scanrelid, int ctePlanId, int cteParam);
 static NamedTuplestoreScan *make_namedtuplestorescan(List *qptlist, List *qpqual,
-			 Index scanrelid, char *enrname);
+						 Index scanrelid, char *enrname);
 static WorkTableScan *make_worktablescan(List *qptlist, List *qpqual,
 				   Index scanrelid, int wtParam);
 static Append *make_append(List *appendplans, List *tlist, List *partitioned_rels);
@@ -4910,7 +4910,7 @@ label_sort_with_costsize(PlannerInfo *root, Sort *plan, double limit_tuples)
 
 /*
  * bitmap_subplan_mark_shared
- *   Set isshared flag in bitmap subplan so that it will be created in
+ *	 Set isshared flag in bitmap subplan so that it will be created in
  *	 shared memory.
  */
 static void
@@ -6425,7 +6425,7 @@ make_modifytable(PlannerInfo *root,
 	node->partitioned_rels = partitioned_rels;
 	node->resultRelations = resultRelations;
 	node->resultRelIndex = -1;	/* will be set correctly in setrefs.c */
-	node->rootResultRelIndex = -1;	/* will be set correctly in setrefs.c */
+	node->rootResultRelIndex = -1;		/* will be set correctly in setrefs.c */
 	node->plans = subplans;
 	if (!onconflict)
 	{

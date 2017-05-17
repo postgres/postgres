@@ -664,8 +664,8 @@ cost_index(IndexPath *path, PlannerInfo *root, double loop_count,
 	{
 		/*
 		 * For index only scans compute workers based on number of index pages
-		 * fetched; the number of heap pages we fetch might be so small as
-		 * to effectively rule out parallelism, which we don't want to do.
+		 * fetched; the number of heap pages we fetch might be so small as to
+		 * effectively rule out parallelism, which we don't want to do.
 		 */
 		if (indexonly)
 			rand_heap_pages = -1;
@@ -2188,7 +2188,7 @@ final_cost_nestloop(PlannerInfo *root, NestPath *path,
 	/* For partial paths, scale row estimate. */
 	if (path->path.parallel_workers > 0)
 	{
-		double	parallel_divisor = get_parallel_divisor(&path->path);
+		double		parallel_divisor = get_parallel_divisor(&path->path);
 
 		path->path.rows =
 			clamp_row_est(path->path.rows / parallel_divisor);
@@ -2624,7 +2624,7 @@ final_cost_mergejoin(PlannerInfo *root, MergePath *path,
 	/* For partial paths, scale row estimate. */
 	if (path->jpath.path.parallel_workers > 0)
 	{
-		double	parallel_divisor = get_parallel_divisor(&path->jpath.path);
+		double		parallel_divisor = get_parallel_divisor(&path->jpath.path);
 
 		path->jpath.path.rows =
 			clamp_row_est(path->jpath.path.rows / parallel_divisor);
@@ -3029,7 +3029,7 @@ final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 	/* For partial paths, scale row estimate. */
 	if (path->jpath.path.parallel_workers > 0)
 	{
-		double	parallel_divisor = get_parallel_divisor(&path->jpath.path);
+		double		parallel_divisor = get_parallel_divisor(&path->jpath.path);
 
 		path->jpath.path.rows =
 			clamp_row_est(path->jpath.path.rows / parallel_divisor);

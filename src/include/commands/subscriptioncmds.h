@@ -19,7 +19,7 @@
 #include "nodes/parsenodes.h"
 
 extern ObjectAddress CreateSubscription(CreateSubscriptionStmt *stmt,
-										bool isTopLevel);
+				   bool isTopLevel);
 extern ObjectAddress AlterSubscription(AlterSubscriptionStmt *stmt);
 extern void DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel);
 

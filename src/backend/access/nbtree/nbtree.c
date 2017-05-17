@@ -100,7 +100,7 @@ typedef struct BTParallelScanDescData
 										 * scan */
 	slock_t		btps_mutex;		/* protects above variables */
 	ConditionVariable btps_cv;	/* used to synchronize parallel scan */
-} BTParallelScanDescData;
+}	BTParallelScanDescData;
 
 typedef struct BTParallelScanDescData *BTParallelScanDesc;
 
@@ -289,11 +289,11 @@ btbuildempty(Relation index)
 	_bt_initmetapage(metapage, P_NONE, 0);
 
 	/*
-	 * Write the page and log it.  It might seem that an immediate sync
-	 * would be sufficient to guarantee that the file exists on disk, but
-	 * recovery itself might remove it while replaying, for example, an
-	 * XLOG_DBASE_CREATE or XLOG_TBLSPC_CREATE record.  Therefore, we
-	 * need this even when wal_level=minimal.
+	 * Write the page and log it.  It might seem that an immediate sync would
+	 * be sufficient to guarantee that the file exists on disk, but recovery
+	 * itself might remove it while replaying, for example, an
+	 * XLOG_DBASE_CREATE or XLOG_TBLSPC_CREATE record.  Therefore, we need
+	 * this even when wal_level=minimal.
 	 */
 	PageSetChecksumInplace(metapage, BTREE_METAPAGE);
 	smgrwrite(index->rd_smgr, INIT_FORKNUM, BTREE_METAPAGE,

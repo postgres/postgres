@@ -643,7 +643,7 @@ typedef struct ColumnDef
 	bool		is_local;		/* column has local (non-inherited) def'n */
 	bool		is_not_null;	/* NOT NULL constraint specified? */
 	bool		is_from_type;	/* column definition came from table type */
-	bool		is_from_parent;	/* column def came from partition parent */
+	bool		is_from_parent; /* column def came from partition parent */
 	char		storage;		/* attstorage setting, or 0 for default */
 	Node	   *raw_default;	/* default value (untransformed parse tree) */
 	Node	   *cooked_default; /* default value (transformed expr tree) */
@@ -1824,8 +1824,8 @@ typedef struct GrantStmt
 	bool		is_grant;		/* true = GRANT, false = REVOKE */
 	GrantTargetType targtype;	/* type of the grant target */
 	GrantObjectType objtype;	/* kind of object being operated on */
-	List	   *objects;		/* list of RangeVar nodes, ObjectWithArgs nodes,
-								 * or plain names (as Value strings) */
+	List	   *objects;		/* list of RangeVar nodes, ObjectWithArgs
+								 * nodes, or plain names (as Value strings) */
 	List	   *privileges;		/* list of AccessPriv nodes */
 	/* privileges == NIL denotes ALL PRIVILEGES */
 	List	   *grantees;		/* list of RoleSpec nodes */
@@ -1843,9 +1843,9 @@ typedef struct ObjectWithArgs
 	NodeTag		type;
 	List	   *objname;		/* qualified name of function/operator */
 	List	   *objargs;		/* list of Typename nodes */
-	bool		args_unspecified; /* argument list was omitted, so name must
-								   * be unique (note that objargs == NIL means
-								   * zero args) */
+	bool		args_unspecified;		/* argument list was omitted, so name
+										 * must be unique (note that objargs
+										 * == NIL means zero args) */
 } ObjectWithArgs;
 
 /*
@@ -3343,7 +3343,7 @@ typedef struct CreatePublicationStmt
 	char	   *pubname;		/* Name of of the publication */
 	List	   *options;		/* List of DefElem nodes */
 	List	   *tables;			/* Optional list of tables to add */
-	bool		for_all_tables;	/* Special publication for all tables in db */
+	bool		for_all_tables; /* Special publication for all tables in db */
 } CreatePublicationStmt;
 
 typedef struct AlterPublicationStmt
@@ -3356,8 +3356,8 @@ typedef struct AlterPublicationStmt
 
 	/* parameters used for ALTER PUBLICATION ... ADD/DROP TABLE */
 	List	   *tables;			/* List of tables to add/drop */
-	bool		for_all_tables;	/* Special publication for all tables in db */
-	DefElemAction	tableAction; /* What action to perform with the tables */
+	bool		for_all_tables; /* Special publication for all tables in db */
+	DefElemAction tableAction;	/* What action to perform with the tables */
 } AlterPublicationStmt;
 
 typedef struct CreateSubscriptionStmt
@@ -3382,7 +3382,7 @@ typedef enum AlterSubscriptionType
 typedef struct AlterSubscriptionStmt
 {
 	NodeTag		type;
-	AlterSubscriptionType kind;	/* ALTER_SUBSCRIPTION_OPTIONS, etc */
+	AlterSubscriptionType kind; /* ALTER_SUBSCRIPTION_OPTIONS, etc */
 	char	   *subname;		/* Name of of the subscription */
 	char	   *conninfo;		/* Connection string to publisher */
 	List	   *publication;	/* One or more publication to subscribe to */

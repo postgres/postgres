@@ -48,7 +48,7 @@ extern void scram_HMAC_update(scram_HMAC_ctx *ctx, const char *str, int slen);
 extern void scram_HMAC_final(uint8 *result, scram_HMAC_ctx *ctx);
 
 extern void scram_SaltedPassword(const char *password, const char *salt,
-						int saltlen, int iterations, uint8 *result);
+					 int saltlen, int iterations, uint8 *result);
 extern void scram_H(const uint8 *str, int len, uint8 *result);
 extern void scram_ClientKey(const uint8 *salted_password, uint8 *result);
 extern void scram_ServerKey(const uint8 *salted_password, uint8 *result);

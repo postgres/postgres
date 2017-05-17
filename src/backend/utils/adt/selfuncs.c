@@ -170,7 +170,7 @@ static double eqjoinsel_semi(Oid operator,
 			   VariableStatData *vardata1, VariableStatData *vardata2,
 			   RelOptInfo *inner_rel);
 static bool estimate_multivariate_ndistinct(PlannerInfo *root,
-			   RelOptInfo *rel, List **varinfos, double *ndistinct);
+						RelOptInfo *rel, List **varinfos, double *ndistinct);
 static bool convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 				  Datum lobound, Datum hibound, Oid boundstypid,
 				  double *scaledlobound, double *scaledhibound);
@@ -3364,8 +3364,8 @@ estimate_num_groups(PlannerInfo *root, List *groupExprs, double input_rows,
 		List	   *relvarinfos = NIL;
 
 		/*
-		 * Split the list of varinfos in two - one for the current rel,
-		 * one for remaining Vars on other rels.
+		 * Split the list of varinfos in two - one for the current rel, one
+		 * for remaining Vars on other rels.
 		 */
 		relvarinfos = lcons(varinfo1, relvarinfos);
 		for_each_cell(l, lnext(list_head(varinfos)))
@@ -3388,9 +3388,9 @@ estimate_num_groups(PlannerInfo *root, List *groupExprs, double input_rows,
 		 * Get the numdistinct estimate for the Vars of this rel.  We
 		 * iteratively search for multivariate n-distinct with maximum number
 		 * of vars; assuming that each var group is independent of the others,
-		 * we multiply them together.  Any remaining relvarinfos after
-		 * no more multivariate matches are found are assumed independent too,
-		 * so their individual ndistinct estimates are multiplied also.
+		 * we multiply them together.  Any remaining relvarinfos after no more
+		 * multivariate matches are found are assumed independent too, so
+		 * their individual ndistinct estimates are multiplied also.
 		 *
 		 * While iterating, count how many separate numdistinct values we
 		 * apply.  We apply a fudge factor below, but only if we multiplied
@@ -3410,7 +3410,7 @@ estimate_num_groups(PlannerInfo *root, List *groupExprs, double input_rows,
 			}
 			else
 			{
-				foreach (l, relvarinfos)
+				foreach(l, relvarinfos)
 				{
 					GroupVarInfo *varinfo2 = (GroupVarInfo *) lfirst(l);
 
@@ -3702,12 +3702,12 @@ estimate_multivariate_ndistinct(PlannerInfo *root, RelOptInfo *rel,
 	}
 
 	/* look for the ndistinct statistics matching the most vars */
-	nmatches = 1; /* we require at least two matches */
+	nmatches = 1;				/* we require at least two matches */
 	foreach(lc, rel->statlist)
 	{
 		StatisticExtInfo *info = (StatisticExtInfo *) lfirst(lc);
 		Bitmapset  *shared;
-		int nshared;
+		int			nshared;
 
 		/* skip statistics of other kinds */
 		if (info->kind != STATS_EXT_NDISTINCT)
@@ -3745,8 +3745,8 @@ estimate_multivariate_ndistinct(PlannerInfo *root, RelOptInfo *rel,
 	 */
 	if (stats)
 	{
-		int		i;
-		List   *newlist = NIL;
+		int			i;
+		List	   *newlist = NIL;
 		MVNDistinctItem *item = NULL;
 
 		/* Find the specific item that exactly matches the combination */
@@ -7766,8 +7766,8 @@ brincostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 	 *
 	 * Because we can use all index quals equally when scanning, we can use
 	 * the largest correlation (in absolute value) among columns used by the
-	 * query.  Start at zero, the worst possible case.  If we cannot find
-	 * any correlation statistics, we will keep it as 0.
+	 * query.  Start at zero, the worst possible case.  If we cannot find any
+	 * correlation statistics, we will keep it as 0.
 	 */
 	*indexCorrelation = 0;
 
@@ -7790,7 +7790,7 @@ brincostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 				 */
 				if (HeapTupleIsValid(vardata.statsTuple) && !vardata.freefunc)
 					elog(ERROR,
-						 "no function provided to release variable stats with");
+					  "no function provided to release variable stats with");
 			}
 			else
 			{
@@ -7813,11 +7813,11 @@ brincostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 			attnum = qinfo->indexcol + 1;
 
 			if (get_index_stats_hook &&
-				(*get_index_stats_hook) (root, index->indexoid, attnum, &vardata))
+			(*get_index_stats_hook) (root, index->indexoid, attnum, &vardata))
 			{
 				/*
-				 * The hook took control of acquiring a stats tuple.  If it did
-				 * supply a tuple, it'd better have supplied a freefunc.
+				 * The hook took control of acquiring a stats tuple.  If it
+				 * did supply a tuple, it'd better have supplied a freefunc.
 				 */
 				if (HeapTupleIsValid(vardata.statsTuple) &&
 					!vardata.freefunc)
@@ -7826,7 +7826,7 @@ brincostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 			else
 			{
 				vardata.statsTuple = SearchSysCache3(STATRELATTINH,
-													 ObjectIdGetDatum(index->indexoid),
+										   ObjectIdGetDatum(index->indexoid),
 													 Int16GetDatum(attnum),
 													 BoolGetDatum(false));
 				vardata.freefunc = ReleaseSysCache;
@@ -7872,8 +7872,8 @@ brincostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 
 	/*
 	 * Now estimate the number of ranges that we'll touch by using the
-	 * indexCorrelation from the stats. Careful not to divide by zero
-	 * (note we're using the absolute value of the correlation).
+	 * indexCorrelation from the stats. Careful not to divide by zero (note
+	 * we're using the absolute value of the correlation).
 	 */
 	if (*indexCorrelation < 1.0e-10)
 		estimatedRanges = indexRanges;
@@ -7888,8 +7888,8 @@ brincostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 	*indexSelectivity = selec;
 
 	/*
-	 * Compute the index qual costs, much as in genericcostestimate, to add
-	 * to the index costs.
+	 * Compute the index qual costs, much as in genericcostestimate, to add to
+	 * the index costs.
 	 */
 	qual_arg_cost = other_operands_eval_cost(root, qinfos) +
 		orderby_operands_eval_cost(root, path);

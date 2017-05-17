@@ -998,8 +998,7 @@ static const struct
 	{
 		"Russia TZ 9 Standard Time", "Russia TZ 9 Daylight Time",
 		"Asia/Vladivostok"
-	},							/* (UTC+10:00) Vladivostok, Magadan
-								 * (RTZ 9) */
+	},							/* (UTC+10:00) Vladivostok, Magadan (RTZ 9) */
 	{
 		"Russia TZ 10 Standard Time", "Russia TZ 10 Daylight Time",
 		"Asia/Magadan"
@@ -1007,8 +1006,8 @@ static const struct
 	{
 		"Russia TZ 11 Standard Time", "Russia TZ 11 Daylight Time",
 		"Asia/Anadyr"
-	},							/* (UTC+12:00) Anadyr, Petropavlovsk-Kamchatsky
-								 * (RTZ 11) */
+	},							/* (UTC+12:00) Anadyr,
+								 * Petropavlovsk-Kamchatsky (RTZ 11) */
 	{
 		"Russian Standard Time", "Russian Daylight Time",
 		"Europe/Moscow"
@@ -1021,13 +1020,12 @@ static const struct
 	{
 		"SA Pacific Standard Time", "SA Pacific Daylight Time",
 		"America/Bogota"
-	},							/* (UTC-05:00) Bogota, Lima, Quito, Rio
-								 * Branco */
+	},							/* (UTC-05:00) Bogota, Lima, Quito, Rio Branco */
 	{
 		"SA Western Standard Time", "SA Western Daylight Time",
 		"America/Caracas"
-	},							/* (UTC-04:00) Georgetown, La Paz, Manaus,
-								 * San Juan */
+	},							/* (UTC-04:00) Georgetown, La Paz, Manaus, San
+								 * Juan */
 	{
 		"Saint Pierre Standard Time", "Saint Pierre Daylight Time",
 		"America/Miquelon"

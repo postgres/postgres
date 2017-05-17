@@ -117,18 +117,18 @@ gin_desc(StringInfo buf, XLogReaderState *record)
 
 					if (!(xlrec->flags & GIN_INSERT_ISDATA))
 						appendStringInfo(buf, " isdelete: %c",
-						 (((ginxlogInsertEntry *) payload)->isDelete) ? 'T' : 'F');
+										 (((ginxlogInsertEntry *) payload)->isDelete) ? 'T' : 'F');
 					else if (xlrec->flags & GIN_INSERT_ISLEAF)
 						desc_recompress_leaf(buf, (ginxlogRecompressDataLeaf *) payload);
 					else
 					{
 						ginxlogInsertDataInternal *insertData =
-							(ginxlogInsertDataInternal *) payload;
+						(ginxlogInsertDataInternal *) payload;
 
 						appendStringInfo(buf, " pitem: %u-%u/%u",
-										 PostingItemGetBlockNumber(&insertData->newitem),
-										 ItemPointerGetBlockNumber(&insertData->newitem.key),
-										 ItemPointerGetOffsetNumber(&insertData->newitem.key));
+							 PostingItemGetBlockNumber(&insertData->newitem),
+						 ItemPointerGetBlockNumber(&insertData->newitem.key),
+						ItemPointerGetOffsetNumber(&insertData->newitem.key));
 					}
 				}
 			}
@@ -159,7 +159,7 @@ gin_desc(StringInfo buf, XLogReaderState *record)
 				else
 				{
 					ginxlogVacuumDataLeafPage *xlrec =
-						(ginxlogVacuumDataLeafPage *) XLogRecGetBlockData(record, 0, NULL);
+					(ginxlogVacuumDataLeafPage *) XLogRecGetBlockData(record, 0, NULL);
 
 					desc_recompress_leaf(buf, &xlrec->data);
 				}

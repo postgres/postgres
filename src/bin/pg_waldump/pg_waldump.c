@@ -260,10 +260,10 @@ XLogDumpXLogRead(const char *directory, TimeLineID timeline_id,
 			XLogFileName(fname, timeline_id, sendSegNo);
 
 			/*
-			 * In follow mode there is a short period of time after the
-			 * server has written the end of the previous file before the
-			 * new file is available. So we loop for 5 seconds looking
-			 * for the file to appear before giving up.
+			 * In follow mode there is a short period of time after the server
+			 * has written the end of the previous file before the new file is
+			 * available. So we loop for 5 seconds looking for the file to
+			 * appear before giving up.
 			 */
 			for (tries = 0; tries < 10; tries++)
 			{
@@ -696,11 +696,11 @@ usage(void)
 			 "                         use --rmgr=list to list valid resource manager names\n"));
 	printf(_("  -s, --start=RECPTR     start reading at WAL location RECPTR\n"));
 	printf(_("  -t, --timeline=TLI     timeline from which to read log records\n"
-			 "                         (default: 1 or the value used in STARTSEG)\n"));
+	"                         (default: 1 or the value used in STARTSEG)\n"));
 	printf(_("  -V, --version          output version information, then exit\n"));
 	printf(_("  -x, --xid=XID          only show records with TransactionId XID\n"));
 	printf(_("  -z, --stats[=record]   show statistics instead of records\n"
-			 "                         (optionally, show per-record statistics)\n"));
+	 "                         (optionally, show per-record statistics)\n"));
 	printf(_("  -?, --help             show this help, then exit\n"));
 }
 
@@ -929,7 +929,7 @@ main(int argc, char **argv)
 		else if (!XLByteInSeg(private.startptr, segno))
 		{
 			fprintf(stderr,
-					_("%s: start WAL location %X/%X is not inside file \"%s\"\n"),
+			   _("%s: start WAL location %X/%X is not inside file \"%s\"\n"),
 					progname,
 					(uint32) (private.startptr >> 32),
 					(uint32) private.startptr,
@@ -973,7 +973,7 @@ main(int argc, char **argv)
 			private.endptr != (segno + 1) * XLogSegSize)
 		{
 			fprintf(stderr,
-					_("%s: end WAL location %X/%X is not inside file \"%s\"\n"),
+				 _("%s: end WAL location %X/%X is not inside file \"%s\"\n"),
 					progname,
 					(uint32) (private.endptr >> 32),
 					(uint32) private.endptr,

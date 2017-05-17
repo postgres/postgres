@@ -1282,7 +1282,7 @@ pg_newlocale_from_collation(Oid collid)
 		Form_pg_collation collform;
 		const char *collcollate;
 		const char *collctype pg_attribute_unused();
-		pg_locale_t	result;
+		pg_locale_t result;
 		Datum		collversion;
 		bool		isnull;
 
@@ -1294,8 +1294,8 @@ pg_newlocale_from_collation(Oid collid)
 		collcollate = NameStr(collform->collcollate);
 		collctype = NameStr(collform->collctype);
 
-		result = malloc(sizeof(* result));
-		memset(result, 0, sizeof(* result));
+		result = malloc(sizeof(*result));
+		memset(result, 0, sizeof(*result));
 		result->provider = collform->collprovider;
 
 		if (collform->collprovider == COLLPROVIDER_LIBC)
@@ -1308,7 +1308,7 @@ pg_newlocale_from_collation(Oid collid)
 				/* Normal case where they're the same */
 #ifndef WIN32
 				loc = newlocale(LC_COLLATE_MASK | LC_CTYPE_MASK, collcollate,
-								   NULL);
+								NULL);
 #else
 				loc = _create_locale(LC_ALL, collcollate);
 #endif
@@ -1330,9 +1330,9 @@ pg_newlocale_from_collation(Oid collid)
 #else
 
 				/*
-				 * XXX The _create_locale() API doesn't appear to support this.
-				 * Could perhaps be worked around by changing pg_locale_t to
-				 * contain two separate fields.
+				 * XXX The _create_locale() API doesn't appear to support
+				 * this. Could perhaps be worked around by changing
+				 * pg_locale_t to contain two separate fields.
 				 */
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -1358,18 +1358,18 @@ pg_newlocale_from_collation(Oid collid)
 			collator = ucol_open(collcollate, &status);
 			if (U_FAILURE(status))
 				ereport(ERROR,
-						(errmsg("could not open collator for locale \"%s\": %s",
-								collcollate, u_errorName(status))));
+					 (errmsg("could not open collator for locale \"%s\": %s",
+							 collcollate, u_errorName(status))));
 
 			result->info.icu.locale = strdup(collcollate);
 			result->info.icu.ucol = collator;
-#else /* not USE_ICU */
+#else							/* not USE_ICU */
 			/* could get here if a collation was created by a build with ICU */
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("ICU is not supported in this build"), \
-					 errhint("You need to rebuild PostgreSQL using --with-icu.")));
-#endif /* not USE_ICU */
+			   errhint("You need to rebuild PostgreSQL using --with-icu.")));
+#endif   /* not USE_ICU */
 		}
 
 		collversion = SysCacheGetAttr(COLLOID, tp, Anum_pg_collation_collversion,
@@ -1382,9 +1382,11 @@ pg_newlocale_from_collation(Oid collid)
 			actual_versionstr = get_collation_actual_version(collform->collprovider, collcollate);
 			if (!actual_versionstr)
 			{
-				/* This could happen when specifying a version in CREATE
-				 * COLLATION for a libc locale, or manually creating a mess
-				 * in the catalogs. */
+				/*
+				 * This could happen when specifying a version in CREATE
+				 * COLLATION for a libc locale, or manually creating a mess in
+				 * the catalogs.
+				 */
 				ereport(ERROR,
 						(errmsg("collation \"%s\" has no actual version, but a version was specified",
 								NameStr(collform->collname))));
@@ -1396,13 +1398,13 @@ pg_newlocale_from_collation(Oid collid)
 						(errmsg("collation \"%s\" has version mismatch",
 								NameStr(collform->collname)),
 						 errdetail("The collation in the database was created using version %s, "
-								   "but the operating system provides version %s.",
+							 "but the operating system provides version %s.",
 								   collversionstr, actual_versionstr),
 						 errhint("Rebuild all objects affected by this collation and run "
 								 "ALTER COLLATION %s REFRESH VERSION, "
-								 "or build PostgreSQL with the right library version.",
+					   "or build PostgreSQL with the right library version.",
 								 quote_qualified_identifier(get_namespace_name(collform->collnamespace),
-															NameStr(collform->collname)))));
+											 NameStr(collform->collname)))));
 		}
 
 		ReleaseSysCache(tp);
@@ -1478,8 +1480,8 @@ init_icu_converter(void)
 	conv = ucnv_open(icu_encoding_name, &status);
 	if (U_FAILURE(status))
 		ereport(ERROR,
-				(errmsg("could not open ICU converter for encoding \"%s\": %s",
-						icu_encoding_name, u_errorName(status))));
+			  (errmsg("could not open ICU converter for encoding \"%s\": %s",
+					  icu_encoding_name, u_errorName(status))));
 
 	icu_converter = conv;
 }
@@ -1492,7 +1494,7 @@ icu_to_uchar(UChar **buff_uchar, const char *buff, size_t nbytes)
 
 	init_icu_converter();
 
-	len_uchar = 2 * nbytes;  /* max length per docs */
+	len_uchar = 2 * nbytes;		/* max length per docs */
 	*buff_uchar = palloc(len_uchar * sizeof(**buff_uchar));
 	status = U_ZERO_ERROR;
 	len_uchar = ucnv_toUChars(icu_converter, *buff_uchar, len_uchar, buff, nbytes, &status);

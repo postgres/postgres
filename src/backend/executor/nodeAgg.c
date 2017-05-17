@@ -471,7 +471,7 @@ typedef struct AggStatePerGroupData
 	 * NULL and not auto-replace it with a later input value. Only the first
 	 * non-NULL input will be auto-substituted.
 	 */
-} AggStatePerGroupData;
+}	AggStatePerGroupData;
 
 /*
  * AggStatePerPhaseData - per-grouping-set-phase state
@@ -515,7 +515,7 @@ typedef struct AggStatePerHashData
 	AttrNumber *hashGrpColIdxInput;		/* hash col indices in input slot */
 	AttrNumber *hashGrpColIdxHash;		/* indices in hashtbl tuples */
 	Agg		   *aggnode;		/* original Agg node, for numGroups etc. */
-} AggStatePerHashData;
+}	AggStatePerHashData;
 
 
 static void select_current_set(AggState *aggstate, int setno, bool is_hash);

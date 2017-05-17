@@ -380,7 +380,7 @@ LookupTupleHashEntry(TupleHashTable hashtable, TupleTableSlot *slot,
 	hashtable->in_hash_funcs = hashtable->tab_hash_funcs;
 	hashtable->cur_eq_funcs = hashtable->tab_eq_funcs;
 
-	key = NULL; /* flag to reference inputslot */
+	key = NULL;					/* flag to reference inputslot */
 
 	if (isnew)
 	{

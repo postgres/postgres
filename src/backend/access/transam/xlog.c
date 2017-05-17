@@ -550,13 +550,12 @@ typedef struct XLogCtlInsert
 	bool		fullPageWrites;
 
 	/*
-	 * exclusiveBackupState indicates the state of an exclusive backup
-	 * (see comments of ExclusiveBackupState for more details).
-	 * nonExclusiveBackups is a counter indicating the number of streaming
-	 * base backups currently in progress. forcePageWrites is set to true
-	 * when either of these is non-zero. lastBackupStart is the latest
-	 * checkpoint redo location used as a starting point for an online
-	 * backup.
+	 * exclusiveBackupState indicates the state of an exclusive backup (see
+	 * comments of ExclusiveBackupState for more details). nonExclusiveBackups
+	 * is a counter indicating the number of streaming base backups currently
+	 * in progress. forcePageWrites is set to true when either of these is
+	 * non-zero. lastBackupStart is the latest checkpoint redo location used
+	 * as a starting point for an online backup.
 	 */
 	ExclusiveBackupState exclusiveBackupState;
 	int			nonExclusiveBackups;
@@ -1082,7 +1081,7 @@ XLogInsertRecord(XLogRecData *rdata,
 		 */
 		if ((flags & XLOG_MARK_UNIMPORTANT) == 0)
 		{
-			int lockno = holdingAllLocks ? 0 : MyLockNo;
+			int			lockno = holdingAllLocks ? 0 : MyLockNo;
 
 			WALInsertLocks[lockno].l.lastImportantAt = StartPos;
 		}
@@ -1405,7 +1404,8 @@ checkXLogConsistency(XLogReaderState *record)
 
 		/*
 		 * If the block LSN is already ahead of this WAL record, we can't
-		 * expect contents to match.  This can happen if recovery is restarted.
+		 * expect contents to match.  This can happen if recovery is
+		 * restarted.
 		 */
 		if (PageGetLSN(replay_image_masked) > record->EndRecPtr)
 			continue;
@@ -4975,15 +4975,15 @@ BootStrapXLOG(void)
 	sysidentifier |= getpid() & 0xFFF;
 
 	/*
-	 * Generate a random nonce. This is used for authentication requests
-	 * that will fail because the user does not exist. The nonce is used to
-	 * create a genuine-looking password challenge for the non-existent user,
-	 * in lieu of an actual stored password.
+	 * Generate a random nonce. This is used for authentication requests that
+	 * will fail because the user does not exist. The nonce is used to create
+	 * a genuine-looking password challenge for the non-existent user, in lieu
+	 * of an actual stored password.
 	 */
 	if (!pg_backend_random(mock_auth_nonce, MOCK_AUTH_NONCE_LEN))
 		ereport(PANIC,
-			(errcode(ERRCODE_INTERNAL_ERROR),
-			 errmsg("could not generate secret authorization token")));
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("could not generate secret authorization token")));
 
 	/* First timeline ID is always 1 */
 	ThisTimeLineID = 1;
@@ -5298,7 +5298,7 @@ readRecoveryCommandFile(void)
 				DatumGetLSN(DirectFunctionCall3(pg_lsn_in,
 												CStringGetDatum(item->value),
 												ObjectIdGetDatum(InvalidOid),
-														Int32GetDatum(-1)));
+												Int32GetDatum(-1)));
 			ereport(DEBUG2,
 					(errmsg_internal("recovery_target_lsn = '%X/%X'",
 									 (uint32) (recoveryTargetLSN >> 32),
@@ -5643,9 +5643,9 @@ recoveryStopsBefore(XLogReaderState *record)
 		recoveryStopTime = 0;
 		recoveryStopName[0] = '\0';
 		ereport(LOG,
-				(errmsg("recovery stopping before WAL location (LSN) \"%X/%X\"",
-						(uint32) (recoveryStopLSN >> 32),
-						(uint32) recoveryStopLSN)));
+			 (errmsg("recovery stopping before WAL location (LSN) \"%X/%X\"",
+					 (uint32) (recoveryStopLSN >> 32),
+					 (uint32) recoveryStopLSN)));
 		return true;
 	}
 
@@ -5800,9 +5800,9 @@ recoveryStopsAfter(XLogReaderState *record)
 		recoveryStopTime = 0;
 		recoveryStopName[0] = '\0';
 		ereport(LOG,
-				(errmsg("recovery stopping after WAL location (LSN) \"%X/%X\"",
-						(uint32) (recoveryStopLSN >> 32),
-						(uint32) recoveryStopLSN)));
+			  (errmsg("recovery stopping after WAL location (LSN) \"%X/%X\"",
+					  (uint32) (recoveryStopLSN >> 32),
+					  (uint32) recoveryStopLSN)));
 		return true;
 	}
 
@@ -6348,12 +6348,12 @@ StartupXLOG(void)
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of memory"),
-		   errdetail("Failed while allocating a WAL reading processor.")));
+			 errdetail("Failed while allocating a WAL reading processor.")));
 	xlogreader->system_identifier = ControlFile->system_identifier;
 
 	/*
-	 * Allocate pages dedicated to WAL consistency checks, those had better
-	 * be aligned.
+	 * Allocate pages dedicated to WAL consistency checks, those had better be
+	 * aligned.
 	 */
 	replay_image_masked = (char *) palloc(BLCKSZ);
 	master_image_masked = (char *) palloc(BLCKSZ);
@@ -6687,21 +6687,21 @@ StartupXLOG(void)
 
 	/*
 	 * Copy any missing timeline history files between 'now' and the recovery
-	 * target timeline from archive to pg_wal. While we don't need those
-	 * files ourselves - the history file of the recovery target timeline
-	 * covers all the previous timelines in the history too - a cascading
-	 * standby server might be interested in them. Or, if you archive the WAL
-	 * from this server to a different archive than the master, it'd be good
-	 * for all the history files to get archived there after failover, so that
-	 * you can use one of the old timelines as a PITR target. Timeline history
-	 * files are small, so it's better to copy them unnecessarily than not
-	 * copy them and regret later.
+	 * target timeline from archive to pg_wal. While we don't need those files
+	 * ourselves - the history file of the recovery target timeline covers all
+	 * the previous timelines in the history too - a cascading standby server
+	 * might be interested in them. Or, if you archive the WAL from this
+	 * server to a different archive than the master, it'd be good for all the
+	 * history files to get archived there after failover, so that you can use
+	 * one of the old timelines as a PITR target. Timeline history files are
+	 * small, so it's better to copy them unnecessarily than not copy them and
+	 * regret later.
 	 */
 	restoreTimeLineHistoryFiles(ThisTimeLineID, recoveryTargetTLI);
 
 	/*
-	 * Before running in recovery, scan pg_twophase and fill in its status
-	 * to be able to work on entries generated by redo.  Doing a scan before
+	 * Before running in recovery, scan pg_twophase and fill in its status to
+	 * be able to work on entries generated by redo.  Doing a scan before
 	 * taking any recovery action has the merit to discard any 2PC files that
 	 * are newer than the first record to replay, saving from any conflicts at
 	 * replay.  This avoids as well any subsequent scans when doing recovery
@@ -7426,7 +7426,7 @@ StartupXLOG(void)
 			snprintf(reason, sizeof(reason),
 					 "%s LSN %X/%X\n",
 					 recoveryStopAfter ? "after" : "before",
-					 (uint32 ) (recoveryStopLSN >> 32),
+					 (uint32) (recoveryStopLSN >> 32),
 					 (uint32) recoveryStopLSN);
 		else if (recoveryTarget == RECOVERY_TARGET_NAME)
 			snprintf(reason, sizeof(reason),
@@ -9645,6 +9645,7 @@ xlog_redo(XLogReaderState *record)
 
 		MultiXactAdvanceOldest(checkPoint.oldestMulti,
 							   checkPoint.oldestMultiDB);
+
 		/*
 		 * No need to set oldestClogXid here as well; it'll be set when we
 		 * redo an xl_clog_truncate if it changed since initialization.
@@ -10238,8 +10239,8 @@ do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 	if (exclusive)
 	{
 		/*
-		 * At first, mark that we're now starting an exclusive backup,
-		 * to ensure that there are no other sessions currently running
+		 * At first, mark that we're now starting an exclusive backup, to
+		 * ensure that there are no other sessions currently running
 		 * pg_start_backup() or pg_stop_backup().
 		 */
 		if (XLogCtl->Insert.exclusiveBackupState != EXCLUSIVE_BACKUP_NONE)
@@ -10505,8 +10506,9 @@ do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 		{
 			/*
 			 * Check for existing backup label --- implies a backup is already
-			 * running.  (XXX given that we checked exclusiveBackupState above,
-			 * maybe it would be OK to just unlink any such label file?)
+			 * running.  (XXX given that we checked exclusiveBackupState
+			 * above, maybe it would be OK to just unlink any such label
+			 * file?)
 			 */
 			if (stat(BACKUP_LABEL_FILE, &stat_buf) != 0)
 			{
@@ -10727,8 +10729,8 @@ do_pg_stop_backup(char *labelfile, bool waitforarchive, TimeLineID *stoptli_p)
 	if (exclusive)
 	{
 		/*
-		 * At first, mark that we're now stopping an exclusive backup,
-		 * to ensure that there are no other sessions currently running
+		 * At first, mark that we're now stopping an exclusive backup, to
+		 * ensure that there are no other sessions currently running
 		 * pg_start_backup() or pg_stop_backup().
 		 */
 		WALInsertLockAcquireExclusive();
@@ -10790,8 +10792,8 @@ do_pg_stop_backup(char *labelfile, bool waitforarchive, TimeLineID *stoptli_p)
 			durable_unlink(BACKUP_LABEL_FILE, ERROR);
 
 			/*
-			 * Remove tablespace_map file if present, it is created only if there
-			 * are tablespaces.
+			 * Remove tablespace_map file if present, it is created only if
+			 * there are tablespaces.
 			 */
 			durable_unlink(TABLESPACE_MAP, DEBUG1);
 		}
@@ -10978,9 +10980,9 @@ do_pg_stop_backup(char *labelfile, bool waitforarchive, TimeLineID *stoptli_p)
 	 * archived before returning. If archiving isn't enabled, the required WAL
 	 * needs to be transported via streaming replication (hopefully with
 	 * wal_keep_segments set high enough), or some more exotic mechanism like
-	 * polling and copying files from pg_wal with script. We have no
-	 * knowledge of those mechanisms, so it's up to the user to ensure that he
-	 * gets all the required WAL.
+	 * polling and copying files from pg_wal with script. We have no knowledge
+	 * of those mechanisms, so it's up to the user to ensure that he gets all
+	 * the required WAL.
 	 *
 	 * We wait until both the last WAL file filled during backup and the
 	 * history file have been archived, and assume that the alphabetic sorting
@@ -10990,8 +10992,8 @@ do_pg_stop_backup(char *labelfile, bool waitforarchive, TimeLineID *stoptli_p)
 	 * We wait forever, since archive_command is supposed to work and we
 	 * assume the admin wanted his backup to work completely. If you don't
 	 * wish to wait, then either waitforarchive should be passed in as false,
-	 * or you can set statement_timeout.  Also, some notices are
-	 * issued to clue in anyone who might be doing this interactively.
+	 * or you can set statement_timeout.  Also, some notices are issued to
+	 * clue in anyone who might be doing this interactively.
 	 */
 	if (waitforarchive && XLogArchivingActive())
 	{
@@ -11717,8 +11719,8 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 					 * little chance that the problem will just go away, but
 					 * PANIC is not good for availability either, especially
 					 * in hot standby mode. So, we treat that the same as
-					 * disconnection, and retry from archive/pg_wal again.
-					 * The WAL in the archive should be identical to what was
+					 * disconnection, and retry from archive/pg_wal again. The
+					 * WAL in the archive should be identical to what was
 					 * streamed, so it's unlikely that it helps, but one can
 					 * hope...
 					 */
@@ -11881,9 +11883,9 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 						 * not open already.  Also read the timeline history
 						 * file if we haven't initialized timeline history
 						 * yet; it should be streamed over and present in
-						 * pg_wal by now.  Use XLOG_FROM_STREAM so that
-						 * source info is set correctly and XLogReceiptTime
-						 * isn't changed.
+						 * pg_wal by now.  Use XLOG_FROM_STREAM so that source
+						 * info is set correctly and XLogReceiptTime isn't
+						 * changed.
 						 */
 						if (readFile < 0)
 						{

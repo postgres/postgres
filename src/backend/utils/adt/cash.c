@@ -203,7 +203,7 @@ cash_in(PG_FUNCTION_ARGS)
 		/* than the required number of decimal places */
 		if (isdigit((unsigned char) *s) && (!seen_dot || dec < fpoint))
 		{
-			Cash newvalue = (value * 10) - (*s - '0');
+			Cash		newvalue = (value * 10) - (*s - '0');
 
 			if (newvalue / 10 != value)
 				ereport(ERROR,
@@ -230,7 +230,7 @@ cash_in(PG_FUNCTION_ARGS)
 
 	/* round off if there's another digit */
 	if (isdigit((unsigned char) *s) && *s >= '5')
-		value--;  /* remember we build the value in the negative */
+		value--;				/* remember we build the value in the negative */
 
 	if (value > 0)
 		ereport(ERROR,
@@ -241,7 +241,7 @@ cash_in(PG_FUNCTION_ARGS)
 	/* adjust for less than required decimal places */
 	for (; dec < fpoint; dec++)
 	{
-		Cash newvalue = value * 10;
+		Cash		newvalue = value * 10;
 
 		if (newvalue / 10 != value)
 			ereport(ERROR,
@@ -279,8 +279,10 @@ cash_in(PG_FUNCTION_ARGS)
 							"money", str)));
 	}
 
-	/* If the value is supposed to be positive, flip the sign, but check for
-	 * the most negative number. */
+	/*
+	 * If the value is supposed to be positive, flip the sign, but check for
+	 * the most negative number.
+	 */
 	if (sgn > 0)
 	{
 		result = -value;

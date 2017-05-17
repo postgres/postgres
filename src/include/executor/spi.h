@@ -44,8 +44,8 @@ typedef struct _SPI_plan *SPIPlanPtr;
 #define SPI_ERROR_NOATTRIBUTE	(-9)
 #define SPI_ERROR_NOOUTFUNC		(-10)
 #define SPI_ERROR_TYPUNKNOWN	(-11)
-#define SPI_ERROR_REL_DUPLICATE	(-12)
-#define SPI_ERROR_REL_NOT_FOUND	(-13)
+#define SPI_ERROR_REL_DUPLICATE (-12)
+#define SPI_ERROR_REL_NOT_FOUND (-13)
 
 #define SPI_OK_CONNECT			1
 #define SPI_OK_FINISH			2
@@ -152,9 +152,9 @@ extern void SPI_scroll_cursor_fetch(Portal, FetchDirection direction, long count
 extern void SPI_scroll_cursor_move(Portal, FetchDirection direction, long count);
 extern void SPI_cursor_close(Portal portal);
 
-extern int SPI_register_relation(EphemeralNamedRelation enr);
-extern int SPI_unregister_relation(const char *name);
-extern int SPI_register_trigger_data(TriggerData *tdata);
+extern int	SPI_register_relation(EphemeralNamedRelation enr);
+extern int	SPI_unregister_relation(const char *name);
+extern int	SPI_register_trigger_data(TriggerData *tdata);
 
 extern void AtEOXact_SPI(bool isCommit);
 extern void AtEOSubXact_SPI(bool isCommit, SubTransactionId mySubid);

@@ -73,7 +73,7 @@ get_code_entry(pg_wchar code)
  * is only valid until next call to this function!
  */
 static const pg_wchar *
-get_code_decomposition(pg_unicode_decomposition * entry, int *dec_size)
+get_code_decomposition(pg_unicode_decomposition *entry, int *dec_size)
 {
 	static pg_wchar x;
 

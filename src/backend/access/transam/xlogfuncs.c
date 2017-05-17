@@ -156,7 +156,8 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 	 * Exclusive backups were typically started in a different connection, so
 	 * don't try to verify that status of backup is set to
 	 * SESSION_BACKUP_EXCLUSIVE in this function. Actual verification that an
-	 * exclusive backup is in fact running is handled inside do_pg_stop_backup.
+	 * exclusive backup is in fact running is handled inside
+	 * do_pg_stop_backup.
 	 */
 	stoppoint = do_pg_stop_backup(NULL, true, NULL);
 
@@ -527,7 +528,7 @@ pg_walfile_name(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("recovery is in progress"),
-		 errhint("pg_walfile_name() cannot be executed during recovery.")));
+		  errhint("pg_walfile_name() cannot be executed during recovery.")));
 
 	XLByteToPrevSeg(locationpoint, xlogsegno);
 	XLogFileName(xlogfilename, ThisTimeLineID, xlogsegno);

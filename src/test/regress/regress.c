@@ -275,9 +275,10 @@ widget_in(PG_FUNCTION_ARGS)
 Datum
 widget_out(PG_FUNCTION_ARGS)
 {
-	WIDGET *widget = (WIDGET *) PG_GETARG_POINTER(0);
-	char *str =  psprintf("(%g,%g,%g)",
-						  widget->center.x, widget->center.y, widget->radius);
+	WIDGET	   *widget = (WIDGET *) PG_GETARG_POINTER(0);
+	char	   *str = psprintf("(%g,%g,%g)",
+						 widget->center.x, widget->center.y, widget->radius);
+
 	PG_RETURN_CSTRING(str);
 }
 

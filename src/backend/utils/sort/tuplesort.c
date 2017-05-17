@@ -2327,8 +2327,8 @@ tuplesort_merge_order(int64 allowedMem)
 	 * which in turn can cause the same sort to need more runs, which makes
 	 * merging slower even if it can still be done in a single pass.  Also,
 	 * high order merges are quite slow due to CPU cache effects; it can be
-	 * faster to pay the I/O cost of a polyphase merge than to perform a single
-	 * merge pass across many hundreds of tapes.
+	 * faster to pay the I/O cost of a polyphase merge than to perform a
+	 * single merge pass across many hundreds of tapes.
 	 */
 	mOrder = Max(mOrder, MINORDER);
 	mOrder = Min(mOrder, MAXORDER);

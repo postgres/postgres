@@ -774,6 +774,6 @@ check_relation_relkind(Relation rel)
 		rel->rd_rel->relkind != RELKIND_TOASTVALUE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not a table, materialized view, or TOAST table",
-						RelationGetRelationName(rel))));
+		   errmsg("\"%s\" is not a table, materialized view, or TOAST table",
+				  RelationGetRelationName(rel))));
 }

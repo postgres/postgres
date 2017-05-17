@@ -1463,7 +1463,7 @@ AddRoleMems(const char *rolename, Oid roleid,
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_GRANT_OPERATION),
 					 (errmsg("role \"%s\" is a member of role \"%s\"",
-						rolename, get_rolespec_name(memberRole)))));
+							 rolename, get_rolespec_name(memberRole)))));
 
 		/*
 		 * Check if entry for this role/member already exists; if so, give
@@ -1478,7 +1478,7 @@ AddRoleMems(const char *rolename, Oid roleid,
 		{
 			ereport(NOTICE,
 					(errmsg("role \"%s\" is already a member of role \"%s\"",
-						 get_rolespec_name(memberRole), rolename)));
+							get_rolespec_name(memberRole), rolename)));
 			ReleaseSysCache(authmem_tuple);
 			continue;
 		}
@@ -1587,7 +1587,7 @@ DelRoleMems(const char *rolename, Oid roleid,
 		{
 			ereport(WARNING,
 					(errmsg("role \"%s\" is not a member of role \"%s\"",
-						 get_rolespec_name(memberRole), rolename)));
+							get_rolespec_name(memberRole), rolename)));
 			continue;
 		}
 

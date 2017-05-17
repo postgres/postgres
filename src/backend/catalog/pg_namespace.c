@@ -50,7 +50,7 @@ NamespaceCreate(const char *nspName, Oid ownerId, bool isTemp)
 	TupleDesc	tupDesc;
 	ObjectAddress myself;
 	int			i;
-	Acl			*nspacl;
+	Acl		   *nspacl;
 
 	/* sanity checks */
 	if (!nspName)

@@ -17,14 +17,14 @@
 
 typedef struct PGOutputData
 {
-	MemoryContext	context;			/* private memory context for transient
-										 * allocations */
+	MemoryContext context;		/* private memory context for transient
+								 * allocations */
 
 	/* client info */
-	uint32			protocol_version;
+	uint32		protocol_version;
 
-	List		   *publication_names;
-	List		   *publications;
+	List	   *publication_names;
+	List	   *publications;
 } PGOutputData;
 
-#endif /* PGOUTPUT_H */
+#endif   /* PGOUTPUT_H */

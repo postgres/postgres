@@ -31,52 +31,52 @@
 typedef struct LogicalRepTupleData
 {
 	/* column values in text format, or NULL for a null value: */
-	char   *values[MaxTupleAttributeNumber];
+	char	   *values[MaxTupleAttributeNumber];
 	/* markers for changed/unchanged column values: */
-	bool	changed[MaxTupleAttributeNumber];
+	bool		changed[MaxTupleAttributeNumber];
 } LogicalRepTupleData;
 
-typedef uint32	LogicalRepRelId;
+typedef uint32 LogicalRepRelId;
 
 /* Relation information */
 typedef struct LogicalRepRelation
 {
 	/* Info coming from the remote side. */
-	LogicalRepRelId		remoteid;	/* unique id of the relation */
-	char	   *nspname;			/* schema name */
-	char	   *relname;			/* relation name */
-	int			natts;				/* number of columns */
-	char	  **attnames;			/* column names */
-	Oid		   *atttyps;			/* column types */
-	char		replident;			/* replica identity */
-	Bitmapset  *attkeys;			/* Bitmap of key columns */
+	LogicalRepRelId remoteid;	/* unique id of the relation */
+	char	   *nspname;		/* schema name */
+	char	   *relname;		/* relation name */
+	int			natts;			/* number of columns */
+	char	  **attnames;		/* column names */
+	Oid		   *atttyps;		/* column types */
+	char		replident;		/* replica identity */
+	Bitmapset  *attkeys;		/* Bitmap of key columns */
 } LogicalRepRelation;
 
 /* Type mapping info */
 typedef struct LogicalRepTyp
 {
-	Oid			remoteid;	/* unique id of the type */
-	char	   *nspname;			/* schema name */
-	char	   *typname;			/* name of the type */
-	Oid			typoid;				/* local type Oid */
+	Oid			remoteid;		/* unique id of the type */
+	char	   *nspname;		/* schema name */
+	char	   *typname;		/* name of the type */
+	Oid			typoid;			/* local type Oid */
 } LogicalRepTyp;
 
 /* Transaction info */
 typedef struct LogicalRepBeginData
 {
-	XLogRecPtr		final_lsn;
-	TimestampTz		committime;
-	TransactionId	xid;
+	XLogRecPtr	final_lsn;
+	TimestampTz committime;
+	TransactionId xid;
 } LogicalRepBeginData;
 
 typedef struct LogicalRepCommitData
 {
-	XLogRecPtr		commit_lsn;
-	XLogRecPtr		end_lsn;
-	TimestampTz		committime;
+	XLogRecPtr	commit_lsn;
+	XLogRecPtr	end_lsn;
+	TimestampTz committime;
 } LogicalRepCommitData;
 
-extern void logicalrep_write_begin(StringInfo out,  ReorderBufferTXN *txn);
+extern void logicalrep_write_begin(StringInfo out, ReorderBufferTXN *txn);
 extern void logicalrep_read_begin(StringInfo in,
 					  LogicalRepBeginData *begin_data);
 extern void logicalrep_write_commit(StringInfo out, ReorderBufferTXN *txn,
@@ -87,20 +87,20 @@ extern void logicalrep_write_origin(StringInfo out, const char *origin,
 						XLogRecPtr origin_lsn);
 extern char *logicalrep_read_origin(StringInfo in, XLogRecPtr *origin_lsn);
 extern void logicalrep_write_insert(StringInfo out, Relation rel,
-							 HeapTuple newtuple);
+						HeapTuple newtuple);
 extern LogicalRepRelId logicalrep_read_insert(StringInfo in, LogicalRepTupleData *newtup);
 extern void logicalrep_write_update(StringInfo out, Relation rel, HeapTuple oldtuple,
-					   HeapTuple newtuple);
+						HeapTuple newtuple);
 extern LogicalRepRelId logicalrep_read_update(StringInfo in,
 					   bool *has_oldtuple, LogicalRepTupleData *oldtup,
 					   LogicalRepTupleData *newtup);
 extern void logicalrep_write_delete(StringInfo out, Relation rel,
-							 HeapTuple oldtuple);
+						HeapTuple oldtuple);
 extern LogicalRepRelId logicalrep_read_delete(StringInfo in,
-											  LogicalRepTupleData *oldtup);
+					   LogicalRepTupleData *oldtup);
 extern void logicalrep_write_rel(StringInfo out, Relation rel);
 extern LogicalRepRelation *logicalrep_read_rel(StringInfo in);
 extern void logicalrep_write_typ(StringInfo out, Oid typoid);
 extern void logicalrep_read_typ(StringInfo out, LogicalRepTyp *ltyp);
 
-#endif /* LOGICALREP_PROTO_H */
+#endif   /* LOGICALREP_PROTO_H */

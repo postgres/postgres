@@ -2250,7 +2250,7 @@ stringify_grantobjtype(GrantObjectType objtype)
 	}
 
 	elog(ERROR, "unrecognized grant object type: %d", (int) objtype);
-	return "???";		/* keep compiler quiet */
+	return "???";				/* keep compiler quiet */
 }
 
 /*
@@ -2292,5 +2292,5 @@ stringify_adefprivs_objtype(GrantObjectType objtype)
 	}
 
 	elog(ERROR, "unrecognized grant object type: %d", (int) objtype);
-	return "???";		/* keep compiler quiet */
+	return "???";				/* keep compiler quiet */
 }

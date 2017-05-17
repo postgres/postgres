@@ -685,8 +685,8 @@ durable_unlink(const char *fname, int elevel)
 	}
 
 	/*
-	 * To guarantee that the removal of the file is persistent, fsync
-	 * its parent directory.
+	 * To guarantee that the removal of the file is persistent, fsync its
+	 * parent directory.
 	 */
 	if (fsync_parent_path(fname, elevel) != 0)
 		return -1;

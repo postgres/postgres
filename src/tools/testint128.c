@@ -45,7 +45,7 @@ typedef union
 		int64		hi;
 #endif
 	}			hl;
-} test128;
+}	test128;
 
 
 /*

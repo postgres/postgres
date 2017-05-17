@@ -1094,8 +1094,8 @@ pg_saslprep(const char *input, char **output)
 	}
 
 	/*
-	 * Quick check if the input is pure ASCII.  An ASCII string requires
-	 * no further processing.
+	 * Quick check if the input is pure ASCII.  An ASCII string requires no
+	 * further processing.
 	 */
 	if (pg_is_ascii_string(input))
 	{

@@ -30,9 +30,9 @@ typedef int XidStatus;
 
 typedef struct xl_clog_truncate
 {
-	int pageno;
+	int			pageno;
 	TransactionId oldestXact;
-	Oid oldestXactDb;
+	Oid			oldestXactDb;
 } xl_clog_truncate;
 
 extern void TransactionIdSetTreeStatus(TransactionId xid, int nsubxids,

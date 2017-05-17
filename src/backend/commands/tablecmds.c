@@ -363,9 +363,9 @@ static ObjectAddress ATExecSetNotNull(AlteredTableInfo *tab, Relation rel,
 static ObjectAddress ATExecColumnDefault(Relation rel, const char *colName,
 					Node *newDefault, LOCKMODE lockmode);
 static ObjectAddress ATExecAddIdentity(Relation rel, const char *colName,
-					Node *def, LOCKMODE lockmode);
+				  Node *def, LOCKMODE lockmode);
 static ObjectAddress ATExecSetIdentity(Relation rel, const char *colName,
-					Node *def, LOCKMODE lockmode);
+				  Node *def, LOCKMODE lockmode);
 static ObjectAddress ATExecDropIdentity(Relation rel, const char *colName, bool missing_ok, LOCKMODE lockmode);
 static void ATPrepSetStatistics(Relation rel, const char *colName,
 					Node *newValue, LOCKMODE lockmode);
@@ -643,8 +643,8 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	descriptor->tdhasoid = (localHasOids || parentOidCount > 0);
 
 	/*
-	 * If a partitioned table doesn't have the system OID column, then none
-	 * of its partitions should have it.
+	 * If a partitioned table doesn't have the system OID column, then none of
+	 * its partitions should have it.
 	 */
 	if (stmt->partbound && parentOidCount == 0 && localHasOids)
 		ereport(ERROR,
@@ -1112,9 +1112,9 @@ RangeVarCallbackForDropRelation(const RangeVar *rel, Oid relOid, Oid oldRelOid,
 	}
 
 	/*
-	 * Similarly, if we previously locked some other partition's heap, and
-	 * the name we're looking up no longer refers to that relation, release
-	 * the now-useless lock.
+	 * Similarly, if we previously locked some other partition's heap, and the
+	 * name we're looking up no longer refers to that relation, release the
+	 * now-useless lock.
 	 */
 	if (relOid != oldRelOid && OidIsValid(state->partParentOid))
 	{
@@ -2219,8 +2219,8 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_DUPLICATE_COLUMN),
-								 errmsg("column \"%s\" specified more than once",
-										coldef->colname)));
+							 errmsg("column \"%s\" specified more than once",
+									coldef->colname)));
 				}
 				prev = rest;
 				rest = next;
@@ -4541,7 +4541,7 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 
 					values[ex->attnum - 1] = ExecEvalExpr(ex->exprstate,
 														  econtext,
-													 &isnull[ex->attnum - 1]);
+													&isnull[ex->attnum - 1]);
 				}
 
 				/*
@@ -5589,12 +5589,12 @@ static void
 ATPrepDropNotNull(Relation rel, bool recurse, bool recursing)
 {
 	/*
-	 * If the parent is a partitioned table, like check constraints, we do
-	 * not support removing the NOT NULL while partitions exist.
+	 * If the parent is a partitioned table, like check constraints, we do not
+	 * support removing the NOT NULL while partitions exist.
 	 */
 	if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 	{
-		PartitionDesc	partdesc = RelationGetPartitionDesc(rel);
+		PartitionDesc partdesc = RelationGetPartitionDesc(rel);
 
 		Assert(partdesc != NULL);
 		if (partdesc->nparts > 0 && !recurse && !recursing)
@@ -5639,8 +5639,8 @@ ATExecDropNotNull(Relation rel, const char *colName, LOCKMODE lockmode)
 	if (get_attidentity(RelationGetRelid(rel), attnum))
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("column \"%s\" of relation \"%s\" is an identity column",
-						colName, RelationGetRelationName(rel))));
+			 errmsg("column \"%s\" of relation \"%s\" is an identity column",
+					colName, RelationGetRelationName(rel))));
 
 	/*
 	 * Check that the attribute is not in a primary key
@@ -5768,7 +5768,7 @@ ATPrepSetNotNull(Relation rel, bool recurse, bool recursing)
 	 */
 	if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 	{
-		PartitionDesc	partdesc = RelationGetPartitionDesc(rel);
+		PartitionDesc partdesc = RelationGetPartitionDesc(rel);
 
 		if (partdesc && partdesc->nparts > 0 && !recurse && !recursing)
 			ereport(ERROR,
@@ -5867,8 +5867,8 @@ ATExecColumnDefault(Relation rel, const char *colName,
 	if (get_attidentity(RelationGetRelid(rel), attnum))
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("column \"%s\" of relation \"%s\" is an identity column",
-						colName, RelationGetRelationName(rel)),
+			 errmsg("column \"%s\" of relation \"%s\" is an identity column",
+					colName, RelationGetRelationName(rel)),
 				 newDefault ? 0 : errhint("Use ALTER TABLE ... ALTER COLUMN ... DROP IDENTITY instead.")));
 
 	/*
@@ -5959,8 +5959,8 @@ ATExecAddIdentity(Relation rel, const char *colName,
 	if (attTup->atthasdef)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("column \"%s\" of relation \"%s\" already has a default value",
-						colName, RelationGetRelationName(rel))));
+		errmsg("column \"%s\" of relation \"%s\" already has a default value",
+			   colName, RelationGetRelationName(rel))));
 
 	attTup->attidentity = cdef->identity;
 	CatalogTupleUpdate(attrelation, &tuple->t_self, tuple);
@@ -5986,7 +5986,7 @@ static ObjectAddress
 ATExecSetIdentity(Relation rel, const char *colName, Node *def, LOCKMODE lockmode)
 {
 	ListCell   *option;
-	DefElem	   *generatedEl = NULL;
+	DefElem    *generatedEl = NULL;
 	HeapTuple	tuple;
 	Form_pg_attribute attTup;
 	AttrNumber	attnum;
@@ -5995,7 +5995,7 @@ ATExecSetIdentity(Relation rel, const char *colName, Node *def, LOCKMODE lockmod
 
 	foreach(option, castNode(List, def))
 	{
-		DefElem	   *defel = lfirst_node(DefElem, option);
+		DefElem    *defel = lfirst_node(DefElem, option);
 
 		if (strcmp(defel->defname, "generated") == 0)
 		{
@@ -6036,8 +6036,8 @@ ATExecSetIdentity(Relation rel, const char *colName, Node *def, LOCKMODE lockmod
 	if (!attTup->attidentity)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("column \"%s\" of relation \"%s\" is not an identity column",
-						colName, RelationGetRelationName(rel))));
+		 errmsg("column \"%s\" of relation \"%s\" is not an identity column",
+				colName, RelationGetRelationName(rel))));
 
 	if (generatedEl)
 	{
@@ -11137,7 +11137,7 @@ CreateInheritance(Relation child_rel, Relation parent_rel)
 							 inhseqno + 1,
 							 catalogRelation,
 							 parent_rel->rd_rel->relkind ==
-											RELKIND_PARTITIONED_TABLE);
+							 RELKIND_PARTITIONED_TABLE);
 
 	/* Now we're done with pg_inherits */
 	heap_close(catalogRelation, RowExclusiveLock);

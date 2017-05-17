@@ -818,7 +818,7 @@ loop:
 			if (current == NULL)
 			{
 				iter->is_over = true;
-				break;		/* end of iteration */
+				break;			/* end of iteration */
 			}
 			else if (came_from == current->right)
 			{

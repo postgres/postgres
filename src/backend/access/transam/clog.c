@@ -84,7 +84,7 @@ static int	ZeroCLOGPage(int pageno, bool writeXlog);
 static bool CLOGPagePrecedes(int page1, int page2);
 static void WriteZeroPageXlogRec(int pageno);
 static void WriteTruncateXlogRec(int pageno, TransactionId oldestXact,
-								 Oid oldestXidDb);
+					 Oid oldestXidDb);
 static void TransactionIdSetPageStatus(TransactionId xid, int nsubxids,
 						   TransactionId *subxids, XidStatus status,
 						   XLogRecPtr lsn, int pageno);
@@ -680,13 +680,13 @@ TruncateCLOG(TransactionId oldestXact, Oid oldestxid_datoid)
 
 	/* vac_truncate_clog already advanced oldestXid */
 	Assert(TransactionIdPrecedesOrEquals(oldestXact,
-		   ShmemVariableCache->oldestXid));
+										 ShmemVariableCache->oldestXid));
 
 	/*
-	 * Write XLOG record and flush XLOG to disk. We record the oldest xid we're
-	 * keeping information about here so we can ensure that it's always ahead
-	 * of clog truncation in case we crash, and so a standby finds out the new
-	 * valid xid before the next checkpoint.
+	 * Write XLOG record and flush XLOG to disk. We record the oldest xid
+	 * we're keeping information about here so we can ensure that it's always
+	 * ahead of clog truncation in case we crash, and so a standby finds out
+	 * the new valid xid before the next checkpoint.
 	 */
 	WriteTruncateXlogRec(cutoffPage, oldestXact, oldestxid_datoid);
 

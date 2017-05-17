@@ -373,7 +373,7 @@ _copyGather(const Gather *from)
 static GatherMerge *
 _copyGatherMerge(const GatherMerge *from)
 {
-	GatherMerge	   *newnode = makeNode(GatherMerge);
+	GatherMerge *newnode = makeNode(GatherMerge);
 
 	/*
 	 * copy node superclass fields
@@ -691,7 +691,7 @@ _copyCteScan(const CteScan *from)
 static NamedTuplestoreScan *
 _copyNamedTuplestoreScan(const NamedTuplestoreScan *from)
 {
-	NamedTuplestoreScan    *newnode = makeNode(NamedTuplestoreScan);
+	NamedTuplestoreScan *newnode = makeNode(NamedTuplestoreScan);
 
 	/*
 	 * copy node superclass fields

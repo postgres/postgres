@@ -29,4 +29,4 @@ typedef FormData_pg_sequence *Form_pg_sequence;
 #define Anum_pg_sequence_seqcache		7
 #define Anum_pg_sequence_seqcycle		8
 
-#endif	/* PG_SEQUENCE_H */
+#endif   /* PG_SEQUENCE_H */

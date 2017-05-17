@@ -28,7 +28,7 @@
 typedef struct
 {
 	slock_t		mutex;
-	proclist_head	wakeup;
+	proclist_head wakeup;
 } ConditionVariable;
 
 /* Initialize a condition variable. */
@@ -54,6 +54,6 @@ extern void ConditionVariablePrepareToSleep(ConditionVariable *);
 
 /* Wake up a single waiter (via signal) or all waiters (via broadcast). */
 extern bool ConditionVariableSignal(ConditionVariable *);
-extern int ConditionVariableBroadcast(ConditionVariable *);
+extern int	ConditionVariableBroadcast(ConditionVariable *);
 
 #endif   /* CONDITION_VARIABLE_H */

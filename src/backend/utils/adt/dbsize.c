@@ -90,8 +90,8 @@ calculate_database_size(Oid dbOid)
 	AclResult	aclresult;
 
 	/*
-	 * User must have connect privilege for target database
-	 * or be a member of pg_read_all_stats
+	 * User must have connect privilege for target database or be a member of
+	 * pg_read_all_stats
 	 */
 	aclresult = pg_database_aclcheck(dbOid, GetUserId(), ACL_CONNECT);
 	if (aclresult != ACLCHECK_OK &&
@@ -180,8 +180,8 @@ calculate_tablespace_size(Oid tblspcOid)
 
 	/*
 	 * User must be a member of pg_read_all_stats or have CREATE privilege for
-	 * target tablespace, either explicitly granted or implicitly because
-	 * it is default for current database.
+	 * target tablespace, either explicitly granted or implicitly because it
+	 * is default for current database.
 	 */
 	if (tblspcOid != MyDatabaseTableSpace &&
 		!is_member_of_role(GetUserId(), DEFAULT_ROLE_READ_ALL_STATS))

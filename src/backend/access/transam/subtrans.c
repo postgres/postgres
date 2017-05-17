@@ -87,9 +87,9 @@ SubTransSetParent(TransactionId xid, TransactionId parent)
 	ptr += entryno;
 
 	/*
-	 * It's possible we'll try to set the parent xid multiple times
-	 * but we shouldn't ever be changing the xid from one valid xid
-	 * to another valid xid, which would corrupt the data structure.
+	 * It's possible we'll try to set the parent xid multiple times but we
+	 * shouldn't ever be changing the xid from one valid xid to another valid
+	 * xid, which would corrupt the data structure.
 	 */
 	if (*ptr != parent)
 	{
@@ -162,13 +162,13 @@ SubTransGetTopmostTransaction(TransactionId xid)
 		parentXid = SubTransGetParent(parentXid);
 
 		/*
-		 * By convention the parent xid gets allocated first, so should
-		 * always precede the child xid. Anything else points to a corrupted
-		 * data structure that could lead to an infinite loop, so exit.
+		 * By convention the parent xid gets allocated first, so should always
+		 * precede the child xid. Anything else points to a corrupted data
+		 * structure that could lead to an infinite loop, so exit.
 		 */
 		if (!TransactionIdPrecedes(parentXid, previousXid))
 			elog(ERROR, "pg_subtrans contains invalid entry: xid %u points to parent xid %u",
-							previousXid, parentXid);
+				 previousXid, parentXid);
 	}
 
 	Assert(TransactionIdIsValid(previousXid));

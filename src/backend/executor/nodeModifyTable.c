@@ -1328,7 +1328,7 @@ ExecOnConflictUpdate(ModifyTableState *mtstate,
 static void
 fireBSTriggers(ModifyTableState *node)
 {
-	ResultRelInfo	*resultRelInfo = node->resultRelInfo;
+	ResultRelInfo *resultRelInfo = node->resultRelInfo;
 
 	/*
 	 * If the node modifies a partitioned table, we must fire its triggers.
@@ -1364,7 +1364,7 @@ fireBSTriggers(ModifyTableState *node)
 static void
 fireASTriggers(ModifyTableState *node)
 {
-	ResultRelInfo	*resultRelInfo = node->resultRelInfo;
+	ResultRelInfo *resultRelInfo = node->resultRelInfo;
 
 	/*
 	 * If the node modifies a partitioned table, we must fire its triggers.
@@ -1676,7 +1676,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	/* If modifying a partitioned table, initialize the root table info */
 	if (node->rootResultRelIndex >= 0)
 		mtstate->rootResultRelInfo = estate->es_root_result_relations +
-												node->rootResultRelIndex;
+			node->rootResultRelIndex;
 
 	mtstate->mt_arowmarks = (List **) palloc0(sizeof(List *) * nplans);
 	mtstate->mt_nplans = nplans;
@@ -1753,12 +1753,12 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	/* The root table RT index is at the head of the partitioned_rels list */
 	if (node->partitioned_rels)
 	{
-		Index	root_rti;
-		Oid		root_oid;
+		Index		root_rti;
+		Oid			root_oid;
 
 		root_rti = linitial_int(node->partitioned_rels);
 		root_oid = getrelid(root_rti, estate->es_range_table);
-		rel = heap_open(root_oid, NoLock);	/* locked by InitPlan */
+		rel = heap_open(root_oid, NoLock);		/* locked by InitPlan */
 	}
 	else
 		rel = mtstate->resultRelInfo->ri_RelationDesc;
@@ -1815,15 +1815,15 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	}
 
 	/*
-	 * Build WITH CHECK OPTION constraints for each leaf partition rel.
-	 * Note that we didn't build the withCheckOptionList for each partition
-	 * within the planner, but simple translation of the varattnos for each
-	 * partition will suffice.  This only occurs for the INSERT case;
-	 * UPDATE/DELETE cases are handled above.
+	 * Build WITH CHECK OPTION constraints for each leaf partition rel. Note
+	 * that we didn't build the withCheckOptionList for each partition within
+	 * the planner, but simple translation of the varattnos for each partition
+	 * will suffice.  This only occurs for the INSERT case; UPDATE/DELETE
+	 * cases are handled above.
 	 */
 	if (node->withCheckOptionLists != NIL && mtstate->mt_num_partitions > 0)
 	{
-		List		*wcoList;
+		List	   *wcoList;
 
 		Assert(operation == CMD_INSERT);
 		resultRelInfo = mtstate->mt_partitions;

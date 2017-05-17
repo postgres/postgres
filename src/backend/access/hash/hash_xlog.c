@@ -950,22 +950,22 @@ hash_xlog_update_meta_page(XLogReaderState *record)
 static TransactionId
 hash_xlog_vacuum_get_latestRemovedXid(XLogReaderState *record)
 {
-	xl_hash_vacuum_one_page	*xlrec;
-	OffsetNumber	*unused;
+	xl_hash_vacuum_one_page *xlrec;
+	OffsetNumber *unused;
 	Buffer		ibuffer,
 				hbuffer;
 	Page		ipage,
 				hpage;
-	RelFileNode	rnode;
-	BlockNumber	blkno;
+	RelFileNode rnode;
+	BlockNumber blkno;
 	ItemId		iitemid,
 				hitemid;
 	IndexTuple	itup;
-	HeapTupleHeader	htuphdr;
-	BlockNumber	hblkno;
-	OffsetNumber	hoffnum;
-	TransactionId	latestRemovedXid = InvalidTransactionId;
-	int		i;
+	HeapTupleHeader htuphdr;
+	BlockNumber hblkno;
+	OffsetNumber hoffnum;
+	TransactionId latestRemovedXid = InvalidTransactionId;
+	int			i;
 
 	xlrec = (xl_hash_vacuum_one_page *) XLogRecGetData(record);
 
@@ -984,9 +984,9 @@ hash_xlog_vacuum_get_latestRemovedXid(XLogReaderState *record)
 		return latestRemovedXid;
 
 	/*
-	 * Check if WAL replay has reached a consistent database state. If not,
-	 * we must PANIC. See the definition of btree_xlog_delete_get_latestRemovedXid
-	 * for more details.
+	 * Check if WAL replay has reached a consistent database state. If not, we
+	 * must PANIC. See the definition of
+	 * btree_xlog_delete_get_latestRemovedXid for more details.
 	 */
 	if (!reachedConsistency)
 		elog(PANIC, "hash_xlog_vacuum_get_latestRemovedXid: cannot operate with inconsistent data");
@@ -1098,11 +1098,11 @@ hash_xlog_vacuum_get_latestRemovedXid(XLogReaderState *record)
 static void
 hash_xlog_vacuum_one_page(XLogReaderState *record)
 {
-	XLogRecPtr lsn = record->EndRecPtr;
+	XLogRecPtr	lsn = record->EndRecPtr;
 	xl_hash_vacuum_one_page *xldata;
-	Buffer buffer;
-	Buffer metabuf;
-	Page page;
+	Buffer		buffer;
+	Buffer		metabuf;
+	Page		page;
 	XLogRedoAction action;
 	HashPageOpaque pageopaque;
 
@@ -1123,7 +1123,7 @@ hash_xlog_vacuum_one_page(XLogReaderState *record)
 	if (InHotStandby)
 	{
 		TransactionId latestRemovedXid =
-					hash_xlog_vacuum_get_latestRemovedXid(record);
+		hash_xlog_vacuum_get_latestRemovedXid(record);
 		RelFileNode rnode;
 
 		XLogRecGetBlockTag(record, 0, &rnode, NULL, NULL);
@@ -1146,8 +1146,8 @@ hash_xlog_vacuum_one_page(XLogReaderState *record)
 		}
 
 		/*
-		 * Mark the page as not containing any LP_DEAD items. See comments
-		 * in _hash_vacuum_one_page() for details.
+		 * Mark the page as not containing any LP_DEAD items. See comments in
+		 * _hash_vacuum_one_page() for details.
 		 */
 		pageopaque = (HashPageOpaque) PageGetSpecialPointer(page);
 		pageopaque->hasho_flag &= ~LH_PAGE_HAS_DEAD_TUPLES;
@@ -1160,7 +1160,7 @@ hash_xlog_vacuum_one_page(XLogReaderState *record)
 
 	if (XLogReadBufferForRedo(record, 1, &metabuf) == BLK_NEEDS_REDO)
 	{
-		Page metapage;
+		Page		metapage;
 		HashMetaPage metap;
 
 		metapage = BufferGetPage(metabuf);

@@ -125,7 +125,7 @@ PosixSemaphoreCreate(void)
  * Attempt to create a new unnamed semaphore.
  */
 static void
-PosixSemaphoreCreate(sem_t * sem)
+PosixSemaphoreCreate(sem_t *sem)
 {
 	if (sem_init(sem, 1, 1) < 0)
 		elog(FATAL, "sem_init failed: %m");
@@ -137,7 +137,7 @@ PosixSemaphoreCreate(sem_t * sem)
  * PosixSemaphoreKill	- removes a semaphore
  */
 static void
-PosixSemaphoreKill(sem_t * sem)
+PosixSemaphoreKill(sem_t *sem)
 {
 #ifdef USE_NAMED_POSIX_SEMAPHORES
 	/* Got to use sem_close for named semaphores */

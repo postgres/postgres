@@ -388,10 +388,10 @@ XLogRegisterBufData(uint8 block_id, char *data, int len)
  *
  * The flags that can be used here are:
  * - XLOG_INCLUDE_ORIGIN, to determine if the replication origin should be
- *   included in the record.
+ *	 included in the record.
  * - XLOG_MARK_UNIMPORTANT, to signal that the record is not important for
- *   durability, which allows to avoid triggering WAL archiving and other
- *   background activity.
+ *	 durability, which allows to avoid triggering WAL archiving and other
+ *	 background activity.
  */
 void
 XLogSetRecordFlags(uint8 flags)
@@ -507,10 +507,10 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 	hdr_rdt.data = hdr_scratch;
 
 	/*
-	 * Enforce consistency checks for this record if user is looking for
-	 * it. Do this before at the beginning of this routine to give the
-	 * possibility for callers of XLogInsert() to pass XLR_CHECK_CONSISTENCY
-	 * directly for a record.
+	 * Enforce consistency checks for this record if user is looking for it.
+	 * Do this before at the beginning of this routine to give the possibility
+	 * for callers of XLogInsert() to pass XLR_CHECK_CONSISTENCY directly for
+	 * a record.
 	 */
 	if (wal_consistency_checking[rmid])
 		info |= XLR_CHECK_CONSISTENCY;
@@ -576,9 +576,8 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 			bkpb.fork_flags |= BKPBLOCK_WILL_INIT;
 
 		/*
-		 * If needs_backup is true or WAL checking is enabled for
-		 * current resource manager, log a full-page write for the current
-		 * block.
+		 * If needs_backup is true or WAL checking is enabled for current
+		 * resource manager, log a full-page write for the current block.
 		 */
 		include_image = needs_backup || (info & XLR_CHECK_CONSISTENCY) != 0;
 
@@ -645,8 +644,8 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 			bimg.bimg_info = (cbimg.hole_length == 0) ? 0 : BKPIMAGE_HAS_HOLE;
 
 			/*
-			 * If WAL consistency checking is enabled for the resource manager of
-			 * this WAL record, a full-page image is included in the record
+			 * If WAL consistency checking is enabled for the resource manager
+			 * of this WAL record, a full-page image is included in the record
 			 * for the block modified. During redo, the full-page is replayed
 			 * only if BKPIMAGE_APPLY is set.
 			 */

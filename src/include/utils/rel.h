@@ -72,7 +72,7 @@ typedef struct PartitionKeyData
 	bool	   *parttypbyval;
 	char	   *parttypalign;
 	Oid		   *parttypcoll;
-} PartitionKeyData;
+}	PartitionKeyData;
 
 typedef struct PartitionKeyData *PartitionKey;
 
@@ -146,7 +146,7 @@ typedef struct RelationData
 	Bitmapset  *rd_pkattr;		/* cols included in primary key */
 	Bitmapset  *rd_idattr;		/* included in replica identity index */
 
-	PublicationActions  *rd_pubactions;	/* publication actions */
+	PublicationActions *rd_pubactions;	/* publication actions */
 
 	/*
 	 * rd_options is set whenever rd_rel is loaded into the relcache entry.

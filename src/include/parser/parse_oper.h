@@ -25,7 +25,7 @@ typedef HeapTuple Operator;
 extern Oid LookupOperName(ParseState *pstate, List *opername,
 			   Oid oprleft, Oid oprright,
 			   bool noError, int location);
-extern Oid LookupOperWithArgs(ObjectWithArgs *oper, bool noError);
+extern Oid	LookupOperWithArgs(ObjectWithArgs *oper, bool noError);
 
 /* Routines to find operators matching a name and given input types */
 /* NB: the selected operator may require coercion of the input types! */

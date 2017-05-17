@@ -96,9 +96,9 @@ typedef struct PgFdwRelationInfo
 	List	   *grouped_tlist;
 
 	/* Subquery information */
-	bool		make_outerrel_subquery;	/* do we deparse outerrel as a
+	bool		make_outerrel_subquery; /* do we deparse outerrel as a
 										 * subquery? */
-	bool		make_innerrel_subquery;	/* do we deparse innerrel as a
+	bool		make_innerrel_subquery; /* do we deparse innerrel as a
 										 * subquery? */
 	Relids		lower_subquery_rels;	/* all relids appearing in lower
 										 * subqueries */

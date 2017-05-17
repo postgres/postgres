@@ -112,13 +112,13 @@ gin_btree_compare_prefix(FunctionCallInfo fcinfo)
 				cmp;
 
 	cmp = DatumGetInt32(CallerFInfoFunctionCall2(
-							data->typecmp,
-							fcinfo->flinfo,
-							PG_GET_COLLATION(),
-							(data->strategy == BTLessStrategyNumber ||
-							 data->strategy == BTLessEqualStrategyNumber)
-							? data->datum : a,
-							b));
+												 data->typecmp,
+												 fcinfo->flinfo,
+												 PG_GET_COLLATION(),
+								   (data->strategy == BTLessStrategyNumber ||
+								 data->strategy == BTLessEqualStrategyNumber)
+												 ? data->datum : a,
+												 b));
 
 	switch (data->strategy)
 	{
@@ -438,16 +438,16 @@ GIN_SUPPORT(numeric, true, leftmostvalue_numeric, gin_numeric_cmp)
  */
 
 
-#define ENUM_IS_LEFTMOST(x)	((x) == InvalidOid)
+#define ENUM_IS_LEFTMOST(x) ((x) == InvalidOid)
 
 PG_FUNCTION_INFO_V1(gin_enum_cmp);
 
 Datum
 gin_enum_cmp(PG_FUNCTION_ARGS)
 {
-	Oid		a = PG_GETARG_OID(0);
-	Oid		b = PG_GETARG_OID(1);
-	int		res = 0;
+	Oid			a = PG_GETARG_OID(0);
+	Oid			b = PG_GETARG_OID(1);
+	int			res = 0;
 
 	if (ENUM_IS_LEFTMOST(a))
 	{
@@ -460,11 +460,11 @@ gin_enum_cmp(PG_FUNCTION_ARGS)
 	else
 	{
 		res = DatumGetInt32(CallerFInfoFunctionCall2(
-								enum_cmp,
-								fcinfo->flinfo,
-								PG_GET_COLLATION(),
-								ObjectIdGetDatum(a),
-								ObjectIdGetDatum(b)));
+													 enum_cmp,
+													 fcinfo->flinfo,
+													 PG_GET_COLLATION(),
+													 ObjectIdGetDatum(a),
+													 ObjectIdGetDatum(b)));
 	}
 
 	PG_RETURN_INT32(res);

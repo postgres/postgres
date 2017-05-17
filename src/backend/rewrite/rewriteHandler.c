@@ -792,7 +792,7 @@ rewriteTargetListIU(List *targetList,
 	for (attrno = 1; attrno <= numattrs; attrno++)
 	{
 		TargetEntry *new_tle = new_tles[attrno - 1];
-		bool	apply_default;
+		bool		apply_default;
 
 		att_tup = target_relation->rd_att->attrs[attrno - 1];
 
@@ -806,7 +806,7 @@ rewriteTargetListIU(List *targetList,
 		 * tlist entry is a DEFAULT placeholder node.
 		 */
 		apply_default = ((new_tle == NULL && commandType == CMD_INSERT) ||
-						 (new_tle && new_tle->expr && IsA(new_tle->expr, SetToDefault)));
+			 (new_tle && new_tle->expr && IsA(new_tle->expr, SetToDefault)));
 
 		if (commandType == CMD_INSERT)
 		{
@@ -818,7 +818,7 @@ rewriteTargetListIU(List *targetList,
 							 errmsg("cannot insert into column \"%s\"", NameStr(att_tup->attname)),
 							 errdetail("Column \"%s\" is an identity column defined as GENERATED ALWAYS.",
 									   NameStr(att_tup->attname)),
-							 errhint("Use OVERRIDING SYSTEM VALUE to override.")));
+					   errhint("Use OVERRIDING SYSTEM VALUE to override.")));
 			}
 
 			if (att_tup->attidentity == ATTRIBUTE_IDENTITY_BY_DEFAULT && override == OVERRIDING_USER_VALUE)
@@ -3275,7 +3275,7 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 				/* Process the main targetlist ... */
 				parsetree->targetList = rewriteTargetListIU(parsetree->targetList,
 													  parsetree->commandType,
-															parsetree->override,
+														 parsetree->override,
 															rt_entry_relation,
 												   parsetree->resultRelation,
 															&attrnos);

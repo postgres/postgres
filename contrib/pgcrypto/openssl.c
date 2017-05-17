@@ -238,7 +238,7 @@ px_find_digest(const char *name, PX_MD **res)
  * prototype for the EVP functions that return an algorithm, e.g.
  * EVP_aes_128_cbc().
  */
-typedef const EVP_CIPHER *(*ossl_EVP_cipher_func)(void);
+typedef const EVP_CIPHER *(*ossl_EVP_cipher_func) (void);
 
 /*
  * ossl_cipher contains the static information about each cipher.
@@ -706,13 +706,15 @@ static const struct ossl_cipher ossl_cast_cbc = {
 
 static const struct ossl_cipher ossl_aes_ecb = {
 	ossl_aes_ecb_init,
-	NULL, /* EVP_aes_XXX_ecb(), determined in init function */
+	NULL,						/* EVP_aes_XXX_ecb(), determined in init
+								 * function */
 	128 / 8, 256 / 8
 };
 
 static const struct ossl_cipher ossl_aes_cbc = {
 	ossl_aes_cbc_init,
-	NULL, /* EVP_aes_XXX_cbc(), determined in init function */
+	NULL,						/* EVP_aes_XXX_cbc(), determined in init
+								 * function */
 	128 / 8, 256 / 8
 };
 

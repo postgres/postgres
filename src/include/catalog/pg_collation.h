@@ -39,7 +39,8 @@ CATALOG(pg_collation,3456)
 	NameData	collcollate;	/* LC_COLLATE setting */
 	NameData	collctype;		/* LC_CTYPE setting */
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
-	text		collversion;	/* provider-dependent version of collation data */
+	text		collversion;	/* provider-dependent version of collation
+								 * data */
 #endif
 } FormData_pg_collation;
 

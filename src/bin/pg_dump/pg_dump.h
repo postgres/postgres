@@ -294,7 +294,7 @@ typedef struct _tableInfo
 	bool		interesting;	/* true if need to collect more data */
 	bool		dummy_view;		/* view's real definition must be postponed */
 	bool		postponed_def;	/* matview must be postponed into post-data */
-	bool        ispartition;    /* is table a partition? */
+	bool		ispartition;	/* is table a partition? */
 
 	/*
 	 * These fields are computed only if we decide the table is interesting
@@ -321,7 +321,7 @@ typedef struct _tableInfo
 	struct _constraintInfo *checkexprs; /* CHECK constraints */
 	char	   *partkeydef;		/* partition key definition */
 	char	   *partbound;		/* partition bound definition */
-	bool		needs_override;	/* has GENERATED ALWAYS AS IDENTITY */
+	bool		needs_override; /* has GENERATED ALWAYS AS IDENTITY */
 
 	/*
 	 * Stuff computed only for dumpable tables.
@@ -709,7 +709,7 @@ extern EventTriggerInfo *getEventTriggers(Archive *fout, int *numEventTriggers);
 extern void getPolicies(Archive *fout, TableInfo tblinfo[], int numTables);
 extern void getPublications(Archive *fout);
 extern void getPublicationTables(Archive *fout, TableInfo tblinfo[],
-								 int numTables);
+					 int numTables);
 extern void getSubscriptions(Archive *fout);
 
 #endif   /* PG_DUMP_H */

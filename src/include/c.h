@@ -420,7 +420,7 @@ typedef uint32 CommandId;
 typedef struct
 {
 	int			indx[MAXDIM];
-} IntArray;
+}	IntArray;
 
 /* ----------------
  *		Variable-length datatypes all share the 'struct varlena' header.

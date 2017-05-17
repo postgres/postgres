@@ -454,8 +454,8 @@ pg_random_uuid(PG_FUNCTION_ARGS)
 	uint8	   *buf = (uint8 *) palloc(UUID_LEN);
 
 	/*
-	 * Generate random bits. pg_backend_random() will do here, we don't
-	 * promis UUIDs to be cryptographically random, when built with
+	 * Generate random bits. pg_backend_random() will do here, we don't promis
+	 * UUIDs to be cryptographically random, when built with
 	 * --disable-strong-random.
 	 */
 	if (!pg_backend_random((char *) buf, UUID_LEN))

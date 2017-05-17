@@ -149,9 +149,9 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptInfo *parent)
 
 	/*
 	 * Pass top parent's relids down the inheritance hierarchy. If the parent
-	 * has top_parent_relids set, it's a direct or an indirect child of the top
-	 * parent indicated by top_parent_relids. By extension this child is also
-	 * an indirect child of that parent.
+	 * has top_parent_relids set, it's a direct or an indirect child of the
+	 * top parent indicated by top_parent_relids. By extension this child is
+	 * also an indirect child of that parent.
 	 */
 	if (parent)
 	{

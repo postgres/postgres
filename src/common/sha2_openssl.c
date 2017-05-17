@@ -9,7 +9,7 @@
  * Portions Copyright (c) 2016, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *        src/common/sha2_openssl.c
+ *		  src/common/sha2_openssl.c
  *
  *-------------------------------------------------------------------------
  */

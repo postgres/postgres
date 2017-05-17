@@ -4504,7 +4504,10 @@ RelationGetStatExtList(Relation relation)
 	 */
 	result = NIL;
 
-	/* Prepare to scan pg_statistic_ext for entries having stxrelid = this rel. */
+	/*
+	 * Prepare to scan pg_statistic_ext for entries having stxrelid = this
+	 * rel.
+	 */
 	ScanKeyInit(&skey,
 				Anum_pg_statistic_ext_stxrelid,
 				BTEqualStrategyNumber, F_OIDEQ,
@@ -4603,9 +4606,10 @@ RelationSetIndexList(Relation relation, List *indexIds, Oid oidIndex)
 	list_free(relation->rd_indexlist);
 	relation->rd_indexlist = indexIds;
 	relation->rd_oidindex = oidIndex;
+
 	/*
-	 * For the moment, assume the target rel hasn't got a pk or replica
-	 * index. We'll load them on demand in the API that wraps access to them.
+	 * For the moment, assume the target rel hasn't got a pk or replica index.
+	 * We'll load them on demand in the API that wraps access to them.
 	 */
 	relation->rd_pkindex = InvalidOid;
 	relation->rd_replidindex = InvalidOid;
@@ -5169,7 +5173,7 @@ GetRelationPublicationActions(Relation relation)
 {
 	List	   *puboids;
 	ListCell   *lc;
-	MemoryContext		oldcxt;
+	MemoryContext oldcxt;
 	PublicationActions *pubactions = palloc0(sizeof(PublicationActions));
 
 	if (relation->rd_pubactions)
@@ -5200,8 +5204,8 @@ GetRelationPublicationActions(Relation relation)
 		ReleaseSysCache(tup);
 
 		/*
-		 * If we know everything is replicated, there is no point to check
-		 * for other publications.
+		 * If we know everything is replicated, there is no point to check for
+		 * other publications.
 		 */
 		if (pubactions->pubinsert && pubactions->pubupdate &&
 			pubactions->pubdelete)

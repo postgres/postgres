@@ -37,7 +37,7 @@
 #endif
 #define near
 #include <shlobj.h>
-#ifdef _MSC_VER		/* mstcpip.h is missing on mingw */
+#ifdef _MSC_VER					/* mstcpip.h is missing on mingw */
 #include <mstcpip.h>
 #endif
 #else
@@ -786,7 +786,7 @@ connectOptions2(PGconn *conn)
 	if ((conn->pghostaddr == NULL || conn->pghostaddr[0] == '\0')
 		&& conn->pghost != NULL)
 	{
-		char   *s;
+		char	   *s;
 
 		for (s = conn->pghost; *s != '\0'; ++s)
 			if (*s == ',')
@@ -798,8 +798,8 @@ connectOptions2(PGconn *conn)
 		goto oom_error;
 
 	/*
-	 * We now have one pg_conn_host structure per possible host.  Fill in
-	 * the host details for each one.
+	 * We now have one pg_conn_host structure per possible host.  Fill in the
+	 * host details for each one.
 	 */
 	if (conn->pghostaddr != NULL && conn->pghostaddr[0] != '\0')
 	{
@@ -810,12 +810,12 @@ connectOptions2(PGconn *conn)
 	}
 	else if (conn->pghost != NULL && conn->pghost[0] != '\0')
 	{
-		int		i = 0;
-		char   *s = conn->pghost;
+		int			i = 0;
+		char	   *s = conn->pghost;
 
 		while (1)
 		{
-			char   *e = s;
+			char	   *e = s;
 
 			/*
 			 * Search for the end of the current hostname; a comma or
@@ -864,13 +864,13 @@ connectOptions2(PGconn *conn)
 	 */
 	if (conn->pgport != NULL && conn->pgport[0] != '\0')
 	{
-		int		i = 0;
-		char   *s = conn->pgport;
-		int		nports = 1;
+		int			i = 0;
+		char	   *s = conn->pgport;
+		int			nports = 1;
 
 		for (i = 0; i < conn->nconnhost; ++i)
 		{
-			char   *e = s;
+			char	   *e = s;
 
 			/* Search for the end of the current port number. */
 			while (*e != '\0' && *e != ',')
@@ -891,9 +891,8 @@ connectOptions2(PGconn *conn)
 			}
 
 			/*
-			 * Move on to the next port number, unless there are no more.
-			 * (If only one part number is specified, we reuse it for every
-			 * host.)
+			 * Move on to the next port number, unless there are no more. (If
+			 * only one part number is specified, we reuse it for every host.)
 			 */
 			if (*e != '\0')
 			{
@@ -911,7 +910,7 @@ connectOptions2(PGconn *conn)
 		{
 			conn->status = CONNECTION_BAD;
 			printfPQExpBuffer(&conn->errorMessage,
-				libpq_gettext("could not match %d port numbers to %d hosts\n"),
+			  libpq_gettext("could not match %d port numbers to %d hosts\n"),
 							  nports, conn->nconnhost);
 			return false;
 		}
@@ -947,12 +946,12 @@ connectOptions2(PGconn *conn)
 	}
 
 	/*
-	 * Supply default password if none given.  Note that the password might
-	 * be different for each host/port pair.
+	 * Supply default password if none given.  Note that the password might be
+	 * different for each host/port pair.
 	 */
 	if (conn->pgpass == NULL || conn->pgpass[0] == '\0')
 	{
-		int		i;
+		int			i;
 
 		if (conn->pgpassfile == NULL || conn->pgpassfile[0] == '\0')
 		{
@@ -979,10 +978,11 @@ connectOptions2(PGconn *conn)
 		for (i = 0; i < conn->nconnhost; i++)
 		{
 			/*
-			 * Try to get a password for this host from pgpassfile. We use host
-			 * name rather than host address in the same manner to PQhost().
+			 * Try to get a password for this host from pgpassfile. We use
+			 * host name rather than host address in the same manner to
+			 * PQhost().
 			 */
-			char *pwhost = conn->connhost[i].host;
+			char	   *pwhost = conn->connhost[i].host;
 
 			if (conn->connhost[i].type == CHT_HOST_ADDRESS &&
 				conn->pghost != NULL && conn->pghost[0] != '\0')
@@ -1070,7 +1070,7 @@ connectOptions2(PGconn *conn)
 		{
 			conn->status = CONNECTION_BAD;
 			printfPQExpBuffer(&conn->errorMessage,
-							libpq_gettext("invalid target_session_attrs value: \"%s\"\n"),
+			   libpq_gettext("invalid target_session_attrs value: \"%s\"\n"),
 							  conn->target_session_attrs);
 			return false;
 		}
@@ -1641,8 +1641,8 @@ connectDBStart(PGconn *conn)
 				{
 					appendPQExpBuffer(&conn->errorMessage,
 									  libpq_gettext("Unix-domain socket path \"%s\" is too long (maximum %d bytes)\n"),
-								  portstr,
-								  (int) (UNIXSOCK_PATH_BUFLEN - 1));
+									  portstr,
+									  (int) (UNIXSOCK_PATH_BUFLEN - 1));
 					conn->options_valid = false;
 					goto connect_errReturn;
 				}
@@ -2833,12 +2833,12 @@ keep_going:						/* We will come back to here until there is
 					strcmp(conn->target_session_attrs, "read-write") == 0)
 				{
 					/*
-					 * We are yet to make a connection. Save all existing error
-					 * messages until we make a successful connection state.
-					 * This is important because PQsendQuery is going to reset
-					 * conn->errorMessage and we will lose error messages
-					 * related to previous hosts we have tried to connect and
-					 * failed.
+					 * We are yet to make a connection. Save all existing
+					 * error messages until we make a successful connection
+					 * state. This is important because PQsendQuery is going
+					 * to reset conn->errorMessage and we will lose error
+					 * messages related to previous hosts we have tried to
+					 * connect and failed.
 					 */
 					if (!saveErrorMessage(conn, &savedMessage))
 						goto error_return;
@@ -3006,8 +3006,8 @@ keep_going:						/* We will come back to here until there is
 					release_all_addrinfo(conn);
 
 					/*
-					 * Finish reading any remaining messages before
-					 * being considered as ready.
+					 * Finish reading any remaining messages before being
+					 * considered as ready.
 					 */
 					conn->status = CONNECTION_CONSUME;
 					goto keep_going;
@@ -5211,8 +5211,8 @@ conninfo_uri_parse_options(PQconninfoOption *options, const char *uri,
 	char	   *user = NULL;
 	char	   *host = NULL;
 	bool		retval = false;
-	PQExpBufferData	hostbuf;
-	PQExpBufferData	portbuf;
+	PQExpBufferData hostbuf;
+	PQExpBufferData portbuf;
 
 	initPQExpBuffer(&hostbuf);
 	initPQExpBuffer(&portbuf);
@@ -5349,8 +5349,8 @@ conninfo_uri_parse_options(PQconninfoOption *options, const char *uri,
 			host = p;
 
 			/*
-			 * Look for port specifier (colon) or end of host specifier (slash)
-			 * or query (question mark) or host separator (comma).
+			 * Look for port specifier (colon) or end of host specifier
+			 * (slash) or query (question mark) or host separator (comma).
 			 */
 			while (*p && *p != ':' && *p != '/' && *p != '?' && *p != ',')
 				++p;
@@ -5364,7 +5364,7 @@ conninfo_uri_parse_options(PQconninfoOption *options, const char *uri,
 
 		if (prevchar == ':')
 		{
-			const char *port = ++p; /* advance past host terminator */
+			const char *port = ++p;		/* advance past host terminator */
 
 			while (*p && *p != '/' && *p != '?' && *p != ',')
 				++p;
@@ -5377,7 +5377,7 @@ conninfo_uri_parse_options(PQconninfoOption *options, const char *uri,
 
 		if (prevchar != ',')
 			break;
-		++p;						/* advance past comma separator */
+		++p;					/* advance past comma separator */
 		appendPQExpBufferStr(&hostbuf, ",");
 		appendPQExpBufferStr(&portbuf, ",");
 	}
@@ -5850,7 +5850,7 @@ PQuser(const PGconn *conn)
 char *
 PQpass(const PGconn *conn)
 {
-	char   *password = NULL;
+	char	   *password = NULL;
 
 	if (!conn)
 		return NULL;
@@ -6000,7 +6000,7 @@ PQbackendPID(const PGconn *conn)
 int
 PQconnectionNeedsPassword(const PGconn *conn)
 {
-	char   *password;
+	char	   *password;
 
 	if (!conn)
 		return false;

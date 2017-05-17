@@ -289,7 +289,7 @@ win32_check_directory_write_permissions(void)
 /*
  * check_single_dir()
  *
- *  Check for the presence of a single directory in PGDATA, and fail if
+ *	Check for the presence of a single directory in PGDATA, and fail if
  * is it missing or not accessible.
  */
 static void
@@ -299,7 +299,7 @@ check_single_dir(const char *pg_data, const char *subdir)
 	char		subDirName[MAXPGPATH];
 
 	snprintf(subDirName, sizeof(subDirName), "%s%s%s", pg_data,
-			 /* Win32 can't stat() a directory with a trailing slash. */
+	/* Win32 can't stat() a directory with a trailing slash. */
 			 *subdir ? "/" : "",
 			 subdir);
 

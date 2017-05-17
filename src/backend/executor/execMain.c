@@ -868,7 +868,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 		estate->es_num_root_result_relations = 0;
 		if (plannedstmt->nonleafResultRelations)
 		{
-			int		num_roots = list_length(plannedstmt->rootResultRelations);
+			int			num_roots = list_length(plannedstmt->rootResultRelations);
 
 			/*
 			 * Firstly, build ResultRelInfos for all the partitioned table
@@ -876,7 +876,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 			 * triggers, if any.
 			 */
 			resultRelInfos = (ResultRelInfo *)
-									palloc(num_roots * sizeof(ResultRelInfo));
+				palloc(num_roots * sizeof(ResultRelInfo));
 			resultRelInfo = resultRelInfos;
 			foreach(l, plannedstmt->rootResultRelations)
 			{
@@ -900,7 +900,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 			/* Simply lock the rest of them. */
 			foreach(l, plannedstmt->nonleafResultRelations)
 			{
-				Index	resultRelIndex = lfirst_int(l);
+				Index		resultRelIndex = lfirst_int(l);
 
 				/* We locked the roots above. */
 				if (!list_member_int(plannedstmt->rootResultRelations,
@@ -1919,13 +1919,13 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 				if (resultRelInfo->ri_PartitionRoot)
 				{
 					HeapTuple	tuple = ExecFetchSlotTuple(slot);
-					TupleConversionMap	*map;
+					TupleConversionMap *map;
 
 					rel = resultRelInfo->ri_PartitionRoot;
 					tupdesc = RelationGetDescr(rel);
 					/* a reverse map */
 					map = convert_tuples_by_name(orig_tupdesc, tupdesc,
-								gettext_noop("could not convert row type"));
+								 gettext_noop("could not convert row type"));
 					if (map != NULL)
 					{
 						tuple = do_convert_tuple(tuple, map);
@@ -1966,13 +1966,13 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 			{
 				HeapTuple	tuple = ExecFetchSlotTuple(slot);
 				TupleDesc	old_tupdesc = RelationGetDescr(rel);
-				TupleConversionMap	*map;
+				TupleConversionMap *map;
 
 				rel = resultRelInfo->ri_PartitionRoot;
 				tupdesc = RelationGetDescr(rel);
 				/* a reverse map */
 				map = convert_tuples_by_name(old_tupdesc, tupdesc,
-							gettext_noop("could not convert row type"));
+								 gettext_noop("could not convert row type"));
 				if (map != NULL)
 				{
 					tuple = do_convert_tuple(tuple, map);
@@ -2008,13 +2008,13 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 		{
 			HeapTuple	tuple = ExecFetchSlotTuple(slot);
 			TupleDesc	old_tupdesc = RelationGetDescr(rel);
-			TupleConversionMap	*map;
+			TupleConversionMap *map;
 
 			rel = resultRelInfo->ri_PartitionRoot;
 			tupdesc = RelationGetDescr(rel);
 			/* a reverse map */
 			map = convert_tuples_by_name(old_tupdesc, tupdesc,
-						gettext_noop("could not convert row type"));
+								 gettext_noop("could not convert row type"));
 			if (map != NULL)
 			{
 				tuple = do_convert_tuple(tuple, map);
@@ -3340,7 +3340,7 @@ ExecFindPartition(ResultRelInfo *resultRelInfo, PartitionDispatch *pd,
 				(errcode(ERRCODE_CHECK_VIOLATION),
 				 errmsg("no partition of relation \"%s\" found for row",
 						RelationGetRelationName(failed_rel)),
-			val_desc ? errdetail("Partition key of the failing row contains %s.", val_desc) : 0));
+				 val_desc ? errdetail("Partition key of the failing row contains %s.", val_desc) : 0));
 	}
 
 	return result;
@@ -3359,8 +3359,8 @@ ExecBuildSlotPartitionKeyDescription(Relation rel,
 									 bool *isnull,
 									 int maxfieldlen)
 {
-	StringInfoData	buf;
-	PartitionKey	key = RelationGetPartitionKey(rel);
+	StringInfoData buf;
+	PartitionKey key = RelationGetPartitionKey(rel);
 	int			partnatts = get_partition_natts(key);
 	int			i;
 	Oid			relid = RelationGetRelid(rel);

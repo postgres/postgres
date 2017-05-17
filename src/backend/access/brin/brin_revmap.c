@@ -318,11 +318,11 @@ bool
 brinRevmapDesummarizeRange(Relation idxrel, BlockNumber heapBlk)
 {
 	BrinRevmap *revmap;
-	BlockNumber	pagesPerRange;
+	BlockNumber pagesPerRange;
 	RevmapContents *contents;
 	ItemPointerData *iptr;
-	ItemPointerData	invalidIptr;
-	BlockNumber	revmapBlk;
+	ItemPointerData invalidIptr;
+	BlockNumber revmapBlk;
 	Buffer		revmapBuf;
 	Buffer		regBuf;
 	Page		revmapPg;
@@ -415,7 +415,7 @@ brinRevmapDesummarizeRange(Relation idxrel, BlockNumber heapBlk)
 	if (RelationNeedsWAL(idxrel))
 	{
 		xl_brin_desummarize xlrec;
-		XLogRecPtr		recptr;
+		XLogRecPtr	recptr;
 
 		xlrec.pagesPerRange = revmap->rm_pagesPerRange;
 		xlrec.heapBlk = heapBlk;

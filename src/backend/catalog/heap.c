@@ -1762,10 +1762,10 @@ heap_drop_with_catalog(Oid relid)
 	/*
 	 * To drop a partition safely, we must grab exclusive lock on its parent,
 	 * because another backend might be about to execute a query on the parent
-	 * table.  If it relies on previously cached partition descriptor, then
-	 * it could attempt to access the just-dropped relation as its partition.
-	 * We must therefore take a table lock strong enough to prevent all
-	 * queries on the table from proceeding until we commit and send out a
+	 * table.  If it relies on previously cached partition descriptor, then it
+	 * could attempt to access the just-dropped relation as its partition. We
+	 * must therefore take a table lock strong enough to prevent all queries
+	 * on the table from proceeding until we commit and send out a
 	 * shared-cache-inval notice that will make them update their index lists.
 	 */
 	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));

@@ -1164,6 +1164,7 @@ parserOpenTable(ParseState *pstate, const RangeVar *relation, int lockmode)
 			 */
 			if (get_visible_ENR_metadata(pstate->p_queryEnv, relation->relname))
 				rel = NULL;
+
 			/*
 			 * An unqualified name might have been meant as a reference to
 			 * some not-yet-in-scope CTE.  The bare "does not exist" message
@@ -2002,7 +2003,7 @@ addRangeTableEntryForENR(ParseState *pstate,
 
 		default:
 			elog(ERROR, "unexpected enrtype: %d", enrmd->enrtype);
-			return NULL;  /* for fussy compilers */
+			return NULL;		/* for fussy compilers */
 	}
 
 	/*

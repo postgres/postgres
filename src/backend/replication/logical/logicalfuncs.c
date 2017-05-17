@@ -328,17 +328,19 @@ pg_logical_slot_get_changes_guts(FunctionCallInfo fcinfo, bool confirm, bool bin
 		if (ctx->reader->EndRecPtr != InvalidXLogRecPtr && confirm)
 		{
 			LogicalConfirmReceivedLocation(ctx->reader->EndRecPtr);
+
 			/*
 			 * If only the confirmed_flush_lsn has changed the slot won't get
-			 * marked as dirty by the above. Callers on the walsender interface
-			 * are expected to keep track of their own progress and don't need
-			 * it written out. But SQL-interface users cannot specify their own
-			 * start positions and it's harder for them to keep track of their
-			 * progress, so we should make more of an effort to save it for them.
+			 * marked as dirty by the above. Callers on the walsender
+			 * interface are expected to keep track of their own progress and
+			 * don't need it written out. But SQL-interface users cannot
+			 * specify their own start positions and it's harder for them to
+			 * keep track of their progress, so we should make more of an
+			 * effort to save it for them.
 			 *
-			 * Dirty the slot so it's written out at the next checkpoint. We'll
-			 * still lose its position on crash, as documented, but it's better
-			 * than always losing the position even on clean restart.
+			 * Dirty the slot so it's written out at the next checkpoint.
+			 * We'll still lose its position on crash, as documented, but it's
+			 * better than always losing the position even on clean restart.
 			 */
 			ReplicationSlotMarkDirty();
 		}

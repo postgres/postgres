@@ -386,10 +386,9 @@ AddRelcacheInvalidationMessage(InvalidationListHeader *hdr,
 	SharedInvalidationMessage msg;
 
 	/*
-	 * Don't add a duplicate item.
-	 * We assume dbId need not be checked because it will never change.
-	 * InvalidOid for relId means all relations so we don't need to add
-	 * individual ones when it is present.
+	 * Don't add a duplicate item. We assume dbId need not be checked because
+	 * it will never change. InvalidOid for relId means all relations so we
+	 * don't need to add individual ones when it is present.
 	 */
 	ProcessMessageList(hdr->rclist,
 					   if (msg->rc.id == SHAREDINVALRELCACHE_ID &&
@@ -523,8 +522,8 @@ RegisterRelcacheInvalidation(Oid dbId, Oid relId)
 
 	/*
 	 * If the relation being invalidated is one of those cached in the local
-	 * relcache init file, mark that we need to zap that file at commit.
-	 * Same is true when we are invalidating whole relcache.
+	 * relcache init file, mark that we need to zap that file at commit. Same
+	 * is true when we are invalidating whole relcache.
 	 */
 	if (OidIsValid(dbId) &&
 		(RelationIdIsInInitFile(relId) || relId == InvalidOid))
@@ -1139,8 +1138,8 @@ CacheInvalidateHeapTuple(Relation relation,
 									  RegisterCatcacheInvalidation);
 
 	/*
-	 * Now, is this tuple one of the primary definers of a relcache entry?
-	 * See comments in file header for deeper explanation.
+	 * Now, is this tuple one of the primary definers of a relcache entry? See
+	 * comments in file header for deeper explanation.
 	 *
 	 * Note we ignore newtuple here; we assume an update cannot move a tuple
 	 * from being part of one relcache entry to being part of another.

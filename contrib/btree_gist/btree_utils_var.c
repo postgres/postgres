@@ -25,7 +25,7 @@ typedef struct
 {
 	const gbtree_vinfo *tinfo;
 	Oid			collation;
-	FmgrInfo *flinfo;
+	FmgrInfo   *flinfo;
 } gbt_vsrt_arg;
 
 
@@ -402,8 +402,8 @@ gbt_var_penalty(float *res, const GISTENTRY *o, const GISTENTRY *n,
 		*res = 0.0;
 	else if (!(((*tinfo->f_cmp) (nk.lower, ok.lower, collation, flinfo) >= 0 ||
 				gbt_bytea_pf_match(ok.lower, nk.lower, tinfo)) &&
-			   ((*tinfo->f_cmp) (nk.upper, ok.upper, collation, flinfo) <= 0 ||
-				gbt_bytea_pf_match(ok.upper, nk.upper, tinfo))))
+			 ((*tinfo->f_cmp) (nk.upper, ok.upper, collation, flinfo) <= 0 ||
+			  gbt_bytea_pf_match(ok.upper, nk.upper, tinfo))))
 	{
 		Datum		d = PointerGetDatum(0);
 		double		dres;

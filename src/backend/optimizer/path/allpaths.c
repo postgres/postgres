@@ -112,7 +112,7 @@ static void set_tablefunc_pathlist(PlannerInfo *root, RelOptInfo *rel,
 static void set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel,
 				 RangeTblEntry *rte);
 static void set_namedtuplestore_pathlist(PlannerInfo *root, RelOptInfo *rel,
-				 RangeTblEntry *rte);
+							 RangeTblEntry *rte);
 static void set_worktable_pathlist(PlannerInfo *root, RelOptInfo *rel,
 					   RangeTblEntry *rte);
 static RelOptInfo *make_rel_from_joinlist(PlannerInfo *root, List *joinlist);
@@ -648,6 +648,7 @@ set_rel_consider_parallel(PlannerInfo *root, RelOptInfo *rel,
 			return;
 
 		case RTE_NAMEDTUPLESTORE:
+
 			/*
 			 * tuplestore cannot be shared, at least without more
 			 * infrastructure to support that.
@@ -1579,7 +1580,7 @@ generate_mergeappend_paths(PlannerInfo *root, RelOptInfo *rel,
 															total_subpaths,
 															pathkeys,
 															NULL,
-															partitioned_rels));
+														  partitioned_rels));
 	}
 }
 
@@ -2220,10 +2221,10 @@ generate_gather_paths(PlannerInfo *root, RelOptInfo *rel)
 	 * For each useful ordering, we can consider an order-preserving Gather
 	 * Merge.
 	 */
-	foreach (lc, rel->partial_pathlist)
+	foreach(lc, rel->partial_pathlist)
 	{
-		Path   *subpath = (Path *) lfirst(lc);
-		GatherMergePath   *path;
+		Path	   *subpath = (Path *) lfirst(lc);
+		GatherMergePath *path;
 
 		if (subpath->pathkeys == NIL)
 			continue;

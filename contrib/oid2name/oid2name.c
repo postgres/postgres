@@ -507,7 +507,7 @@ sql_exec_searchtables(PGconn *conn, struct options * opts)
 	todo = psprintf(
 					"SELECT pg_catalog.pg_relation_filenode(c.oid) as \"Filenode\", relname as \"Table Name\" %s\n"
 					"FROM pg_catalog.pg_class c\n"
-		"	LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n"
+		 "	LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n"
 					"	LEFT JOIN pg_catalog.pg_database d ON d.datname = pg_catalog.current_database(),\n"
 					"	pg_catalog.pg_tablespace t\n"
 					"WHERE relkind IN (" CppAsString2(RELKIND_RELATION) ","

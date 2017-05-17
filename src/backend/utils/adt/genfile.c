@@ -486,7 +486,7 @@ pg_ls_dir_files(FunctionCallInfo fcinfo, char *dir)
 	if (SRF_IS_FIRSTCALL())
 	{
 		MemoryContext oldcontext;
-		TupleDesc       tupdesc;
+		TupleDesc	tupdesc;
 
 		funcctx = SRF_FIRSTCALL_INIT();
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
@@ -523,7 +523,7 @@ pg_ls_dir_files(FunctionCallInfo fcinfo, char *dir)
 		Datum		values[3];
 		bool		nulls[3];
 		char		path[MAXPGPATH * 2];
-		struct		stat attrib;
+		struct stat attrib;
 		HeapTuple	tuple;
 
 		/* Skip hidden files */

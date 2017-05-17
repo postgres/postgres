@@ -259,7 +259,7 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 
 		case T_NamedTuplestoreScan:
 			result = (PlanState *) ExecInitNamedTuplestoreScan((NamedTuplestoreScan *) node,
-												   estate, eflags);
+															 estate, eflags);
 			break;
 
 		case T_WorkTableScan:

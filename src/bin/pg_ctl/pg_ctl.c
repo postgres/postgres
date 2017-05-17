@@ -986,8 +986,8 @@ do_stop(void)
 	{
 		/*
 		 * If backup_label exists, an online backup is running. Warn the user
-		 * that smart shutdown will wait for it to finish. However, if
-		 * the server is in archive recovery, we're recovering from an online
+		 * that smart shutdown will wait for it to finish. However, if the
+		 * server is in archive recovery, we're recovering from an online
 		 * backup instead of performing one.
 		 */
 		if (shutdown_mode == SMART_MODE &&
@@ -1074,8 +1074,8 @@ do_restart(void)
 
 		/*
 		 * If backup_label exists, an online backup is running. Warn the user
-		 * that smart shutdown will wait for it to finish. However, if
-		 * the server is in archive recovery, we're recovering from an online
+		 * that smart shutdown will wait for it to finish. However, if the
+		 * server is in archive recovery, we're recovering from an online
 		 * backup instead of performing one.
 		 */
 		if (shutdown_mode == SMART_MODE &&
@@ -1226,7 +1226,7 @@ do_promote(void)
 
 	if (do_wait)
 	{
-		DBState state = DB_STARTUP;
+		DBState		state = DB_STARTUP;
 
 		print_msg(_("waiting for server to promote..."));
 		while (wait_seconds > 0)
@@ -1236,7 +1236,7 @@ do_promote(void)
 				break;
 
 			print_msg(".");
-			pg_usleep(1000000);     /* 1 sec */
+			pg_usleep(1000000); /* 1 sec */
 			wait_seconds--;
 		}
 		if (state == DB_IN_PRODUCTION)
@@ -2142,8 +2142,8 @@ adjust_data_dir(void)
 static DBState
 get_control_dbstate(void)
 {
-	DBState ret;
-	bool	crc_ok;
+	DBState		ret;
+	bool		crc_ok;
 	ControlFileData *control_file_data = get_controlfile(pg_data, progname, &crc_ok);
 
 	if (!crc_ok)

@@ -572,7 +572,7 @@ exit_nicely(void)
 		else if (found_existing_xlogdir)
 		{
 			fprintf(stderr,
-			_("%s: removing contents of WAL directory \"%s\"\n"),
+					_("%s: removing contents of WAL directory \"%s\"\n"),
 					progname, xlog_dir);
 			if (!rmtree(xlog_dir, false))
 				fprintf(stderr, _("%s: failed to remove contents of WAL directory\n"),
@@ -589,7 +589,7 @@ exit_nicely(void)
 
 		if (made_new_xlogdir || found_existing_xlogdir)
 			fprintf(stderr,
-					_("%s: WAL directory \"%s\" not removed at user's request\n"),
+			   _("%s: WAL directory \"%s\" not removed at user's request\n"),
 					progname, xlog_dir);
 	}
 
@@ -2959,9 +2959,9 @@ main(int argc, char *argv[])
 		{"version", no_argument, NULL, 'V'},
 		{"debug", no_argument, NULL, 'd'},
 		{"show", no_argument, NULL, 's'},
-		{"noclean", no_argument, NULL, 'n'}, /* for backwards compatibility */
+		{"noclean", no_argument, NULL, 'n'},	/* for backwards compatibility */
 		{"no-clean", no_argument, NULL, 'n'},
-		{"nosync", no_argument, NULL, 'N'},  /* for backwards compatibility */
+		{"nosync", no_argument, NULL, 'N'},		/* for backwards compatibility */
 		{"no-sync", no_argument, NULL, 'N'},
 		{"sync-only", no_argument, NULL, 'S'},
 		{"waldir", required_argument, NULL, 'X'},

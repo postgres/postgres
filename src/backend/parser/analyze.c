@@ -1637,7 +1637,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	 * Recursively transform the components of the tree.
 	 */
 	sostmt = castNode(SetOperationStmt,
-					  transformSetOperationTree(pstate, stmt, true,	NULL));
+					  transformSetOperationTree(pstate, stmt, true, NULL));
 	Assert(sostmt);
 	qry->setOperations = (Node *) sostmt;
 
@@ -2809,8 +2809,8 @@ transformLockingClause(ParseState *pstate, Query *qry, LockingClause *lc,
 									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							/*------
 							  translator: %s is a SQL row locking clause such as FOR UPDATE */
-							   errmsg("%s cannot be applied to a named tuplestore",
-									  LCS_asString(lc->strength)),
+									 errmsg("%s cannot be applied to a named tuplestore",
+											LCS_asString(lc->strength)),
 							 parser_errposition(pstate, thisrel->location)));
 							break;
 						default:

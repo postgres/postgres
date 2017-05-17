@@ -57,7 +57,7 @@ typedef uint32 Bucket;
 #define LH_BUCKET_BEING_POPULATED	(1 << 4)
 #define LH_BUCKET_BEING_SPLIT	(1 << 5)
 #define LH_BUCKET_NEEDS_SPLIT_CLEANUP	(1 << 6)
-#define LH_PAGE_HAS_DEAD_TUPLES	(1 << 7)
+#define LH_PAGE_HAS_DEAD_TUPLES (1 << 7)
 
 #define LH_PAGE_TYPE \
 	(LH_OVERFLOW_PAGE | LH_BUCKET_PAGE | LH_BITMAP_PAGE | LH_META_PAGE)
@@ -97,7 +97,7 @@ typedef HashPageOpaqueData *HashPageOpaque;
  */
 #define HASHO_PAGE_ID		0xFF80
 
-typedef struct HashScanPosItem    /* what we remember about each match */
+typedef struct HashScanPosItem	/* what we remember about each match */
 {
 	ItemPointerData heapTid;	/* TID of referenced heap item */
 	OffsetNumber indexOffset;	/* index item's location within page */
@@ -145,8 +145,9 @@ typedef struct HashScanOpaqueData
 	 */
 	bool		hashso_buc_split;
 	/* info about killed items if any (killedItems is NULL if never used) */
-	HashScanPosItem	*killedItems;	/* tids and offset numbers of killed items */
-	int			numKilled;			/* number of currently stored items */
+	HashScanPosItem *killedItems;		/* tids and offset numbers of killed
+										 * items */
+	int			numKilled;		/* number of currently stored items */
 } HashScanOpaqueData;
 
 typedef HashScanOpaqueData *HashScanOpaque;
@@ -358,7 +359,7 @@ extern Buffer _hash_getbucketbuf_from_hashkey(Relation rel, uint32 hashkey,
 								HashMetaPage *cachedmetap);
 extern Buffer _hash_getinitbuf(Relation rel, BlockNumber blkno);
 extern void _hash_initbuf(Buffer buf, uint32 max_bucket, uint32 num_bucket,
-				uint32 flag, bool initpage);
+			  uint32 flag, bool initpage);
 extern Buffer _hash_getnewbuf(Relation rel, BlockNumber blkno,
 				ForkNumber forkNum);
 extern Buffer _hash_getbuf_with_strategy(Relation rel, BlockNumber blkno,

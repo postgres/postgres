@@ -506,8 +506,9 @@ BitmapAdjustPrefetchIterator(BitmapHeapScanState *node,
 			 * In case of shared mode, we can not ensure that the current
 			 * blockno of the main iterator and that of the prefetch iterator
 			 * are same.  It's possible that whatever blockno we are
-			 * prefetching will be processed by another process.  Therefore, we
-			 * don't validate the blockno here as we do in non-parallel case.
+			 * prefetching will be processed by another process.  Therefore,
+			 * we don't validate the blockno here as we do in non-parallel
+			 * case.
 			 */
 			if (prefetch_iterator)
 				tbm_shared_iterate(prefetch_iterator);

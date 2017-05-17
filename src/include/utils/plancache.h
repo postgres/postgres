@@ -174,7 +174,7 @@ extern CachedPlanSource *CopyCachedPlan(CachedPlanSource *plansource);
 extern bool CachedPlanIsValid(CachedPlanSource *plansource);
 
 extern List *CachedPlanGetTargetList(CachedPlanSource *plansource,
-							QueryEnvironment *queryEnv);
+						QueryEnvironment *queryEnv);
 
 extern CachedPlan *GetCachedPlan(CachedPlanSource *plansource,
 			  ParamListInfo boundParams,

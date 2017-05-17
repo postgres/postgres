@@ -40,7 +40,7 @@ typedef struct
 	bool		estimating;		/* true if estimating cardinality */
 
 	hyperLogLogState abbr_card; /* cardinality estimator */
-}	macaddr_sortsupport_state;
+} macaddr_sortsupport_state;
 
 static int	macaddr_cmp_internal(macaddr *a1, macaddr *a2);
 static int	macaddr_fast_cmp(Datum x, Datum y, SortSupport ssup);

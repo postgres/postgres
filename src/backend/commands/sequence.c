@@ -100,10 +100,10 @@ static Form_pg_sequence_data read_seq_tuple(Relation rel,
 			   Buffer *buf, HeapTuple seqdatatuple);
 static LOCKMODE alter_sequence_get_lock_level(List *options);
 static void init_params(ParseState *pstate, List *options, bool for_identity,
-						bool isInit,
-						Form_pg_sequence seqform,
-						bool *changed_seqform,
-						Form_pg_sequence_data seqdataform, List **owned_by);
+			bool isInit,
+			Form_pg_sequence seqform,
+			bool *changed_seqform,
+			Form_pg_sequence_data seqdataform, List **owned_by);
 static void do_setval(Oid relid, int64 next, bool iscalled);
 static void process_owned_by(Relation seqrel, List *owned_by, bool for_identity);
 
@@ -117,7 +117,7 @@ DefineSequence(ParseState *pstate, CreateSeqStmt *seq)
 {
 	FormData_pg_sequence seqform;
 	FormData_pg_sequence_data seqdataform;
-	bool		changed_seqform = false; /* not used here */
+	bool		changed_seqform = false;		/* not used here */
 	List	   *owned_by;
 	CreateStmt *stmt = makeNode(CreateStmt);
 	Oid			seqoid;
@@ -703,9 +703,9 @@ nextval_internal(Oid relid, bool check_permissions)
 
 					snprintf(buf, sizeof(buf), INT64_FORMAT, maxv);
 					ereport(ERROR,
-						  (errcode(ERRCODE_SEQUENCE_GENERATOR_LIMIT_EXCEEDED),
-						   errmsg("nextval: reached maximum value of sequence \"%s\" (%s)",
-								  RelationGetRelationName(seqrel), buf)));
+						 (errcode(ERRCODE_SEQUENCE_GENERATOR_LIMIT_EXCEEDED),
+						  errmsg("nextval: reached maximum value of sequence \"%s\" (%s)",
+								 RelationGetRelationName(seqrel), buf)));
 				}
 				next = minv;
 			}
@@ -726,9 +726,9 @@ nextval_internal(Oid relid, bool check_permissions)
 
 					snprintf(buf, sizeof(buf), INT64_FORMAT, minv);
 					ereport(ERROR,
-						  (errcode(ERRCODE_SEQUENCE_GENERATOR_LIMIT_EXCEEDED),
-						   errmsg("nextval: reached minimum value of sequence \"%s\" (%s)",
-								  RelationGetRelationName(seqrel), buf)));
+						 (errcode(ERRCODE_SEQUENCE_GENERATOR_LIMIT_EXCEEDED),
+						  errmsg("nextval: reached minimum value of sequence \"%s\" (%s)",
+								 RelationGetRelationName(seqrel), buf)));
 				}
 				next = maxv;
 			}
@@ -1390,7 +1390,7 @@ init_params(ParseState *pstate, List *options, bool for_identity,
 	/* AS type */
 	if (as_type != NULL)
 	{
-		Oid		newtypid = typenameTypeId(pstate, defGetTypeName(as_type));
+		Oid			newtypid = typenameTypeId(pstate, defGetTypeName(as_type));
 
 		if (newtypid != INT2OID &&
 			newtypid != INT4OID &&
@@ -1399,7 +1399,7 @@ init_params(ParseState *pstate, List *options, bool for_identity,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 for_identity
 					 ? errmsg("identity column type must be smallint, integer, or bigint")
-					 : errmsg("sequence type must be smallint, integer, or bigint")));
+			: errmsg("sequence type must be smallint, integer, or bigint")));
 
 		if (!isInit)
 		{
@@ -1411,11 +1411,11 @@ init_params(ParseState *pstate, List *options, bool for_identity,
 			 */
 			if ((seqform->seqtypid == INT2OID && seqform->seqmax == PG_INT16_MAX) ||
 				(seqform->seqtypid == INT4OID && seqform->seqmax == PG_INT32_MAX) ||
-				(seqform->seqtypid == INT8OID && seqform->seqmax == PG_INT64_MAX))
+			(seqform->seqtypid == INT8OID && seqform->seqmax == PG_INT64_MAX))
 				reset_max_value = true;
 			if ((seqform->seqtypid == INT2OID && seqform->seqmin == PG_INT16_MIN) ||
 				(seqform->seqtypid == INT4OID && seqform->seqmin == PG_INT32_MIN) ||
-				(seqform->seqtypid == INT8OID && seqform->seqmin == PG_INT64_MIN))
+			(seqform->seqtypid == INT8OID && seqform->seqmin == PG_INT64_MIN))
 				reset_min_value = true;
 		}
 
@@ -1479,7 +1479,7 @@ init_params(ParseState *pstate, List *options, bool for_identity,
 				seqform->seqmax = PG_INT64_MAX;
 		}
 		else
-			seqform->seqmax = -1;	/* descending seq */
+			seqform->seqmax = -1;		/* descending seq */
 		*changed_seqform = true;
 		seqdataform->log_cnt = 0;
 	}
@@ -1494,8 +1494,8 @@ init_params(ParseState *pstate, List *options, bool for_identity,
 
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("MAXVALUE (%s) is out of range for sequence data type %s",
-						bufx, format_type_be(seqform->seqtypid))));
+			errmsg("MAXVALUE (%s) is out of range for sequence data type %s",
+				   bufx, format_type_be(seqform->seqtypid))));
 	}
 
 	/* MINVALUE (null arg means NO MINVALUE) */
@@ -1518,7 +1518,7 @@ init_params(ParseState *pstate, List *options, bool for_identity,
 				seqform->seqmin = PG_INT64_MIN;
 		}
 		else
-			seqform->seqmin = 1; /* ascending seq */
+			seqform->seqmin = 1;	/* ascending seq */
 		*changed_seqform = true;
 		seqdataform->log_cnt = 0;
 	}
@@ -1533,8 +1533,8 @@ init_params(ParseState *pstate, List *options, bool for_identity,
 
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("MINVALUE (%s) is out of range for sequence data type %s",
-						bufm, format_type_be(seqform->seqtypid))));
+			errmsg("MINVALUE (%s) is out of range for sequence data type %s",
+				   bufm, format_type_be(seqform->seqtypid))));
 	}
 
 	/* crosscheck min/max */
@@ -1560,9 +1560,9 @@ init_params(ParseState *pstate, List *options, bool for_identity,
 	else if (isInit)
 	{
 		if (seqform->seqincrement > 0)
-			seqform->seqstart = seqform->seqmin;	/* ascending seq */
+			seqform->seqstart = seqform->seqmin;		/* ascending seq */
 		else
-			seqform->seqstart = seqform->seqmax;	/* descending seq */
+			seqform->seqstart = seqform->seqmax;		/* descending seq */
 		*changed_seqform = true;
 	}
 

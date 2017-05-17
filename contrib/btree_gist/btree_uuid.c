@@ -150,7 +150,7 @@ gbt_uuid_consistent(PG_FUNCTION_ARGS)
 
 	PG_RETURN_BOOL(
 				   gbt_num_consistent(&key, (void *) query, &strategy,
-									  GIST_LEAF(entry), &tinfo, fcinfo->flinfo)
+									GIST_LEAF(entry), &tinfo, fcinfo->flinfo)
 		);
 }
 

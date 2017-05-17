@@ -90,8 +90,8 @@ CreateStatistics(CreateStatsStmt *stmt)
 		{
 			ereport(NOTICE,
 					(errcode(ERRCODE_DUPLICATE_OBJECT),
-					 errmsg("statistics object \"%s\" already exists, skipping",
-							namestr)));
+				  errmsg("statistics object \"%s\" already exists, skipping",
+						 namestr)));
 			return InvalidObjectAddress;
 		}
 

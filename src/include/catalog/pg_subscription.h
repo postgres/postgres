@@ -20,7 +20,7 @@
  * ----------------
  */
 #define SubscriptionRelationId			6100
-#define SubscriptionRelation_Rowtype_Id	6101
+#define SubscriptionRelation_Rowtype_Id 6101
 
 /*
  * Technically, the subscriptions live inside the database, so a shared catalog
@@ -37,18 +37,18 @@ CATALOG(pg_subscription,6100) BKI_SHARED_RELATION BKI_ROWTYPE_OID(6101) BKI_SCHE
 
 	Oid			subowner;		/* Owner of the subscription */
 
-	bool		subenabled;		/* True if the subscription is enabled
-								 * (the worker should be running) */
+	bool		subenabled;		/* True if the subscription is enabled (the
+								 * worker should be running) */
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
 	/* Connection string to the publisher */
-	text		subconninfo BKI_FORCE_NOT_NULL;
+	text subconninfo BKI_FORCE_NOT_NULL;
 
 	/* Slot name on publisher */
 	NameData	subslotname;
 
 	/* Synchronous commit setting for worker */
-	text		subsynccommit BKI_FORCE_NOT_NULL;
+	text subsynccommit BKI_FORCE_NOT_NULL;
 
 	/* List of publications subscribed to */
 	text		subpublications[1] BKI_FORCE_NOT_NULL;
@@ -74,22 +74,23 @@ typedef FormData_pg_subscription *Form_pg_subscription;
 
 typedef struct Subscription
 {
-	Oid		oid;			/* Oid of the subscription */
-	Oid		dbid;			/* Oid of the database which subscription is in */
-	char   *name;			/* Name of the subscription */
-	Oid		owner;			/* Oid of the subscription owner */
-	bool	enabled;		/* Indicates if the subscription is enabled */
-	char   *conninfo;		/* Connection string to the publisher */
-	char   *slotname;		/* Name of the replication slot */
-	char   *synccommit;		/* Synchronous commit setting for worker */
-	List   *publications;	/* List of publication names to subscribe to */
+	Oid			oid;			/* Oid of the subscription */
+	Oid			dbid;			/* Oid of the database which subscription is
+								 * in */
+	char	   *name;			/* Name of the subscription */
+	Oid			owner;			/* Oid of the subscription owner */
+	bool		enabled;		/* Indicates if the subscription is enabled */
+	char	   *conninfo;		/* Connection string to the publisher */
+	char	   *slotname;		/* Name of the replication slot */
+	char	   *synccommit;		/* Synchronous commit setting for worker */
+	List	   *publications;	/* List of publication names to subscribe to */
 } Subscription;
 
 extern Subscription *GetSubscription(Oid subid, bool missing_ok);
 extern void FreeSubscription(Subscription *sub);
-extern Oid get_subscription_oid(const char *subname, bool missing_ok);
+extern Oid	get_subscription_oid(const char *subname, bool missing_ok);
 extern char *get_subscription_name(Oid subid);
 
-extern int CountDBSubscriptions(Oid dbid);
+extern int	CountDBSubscriptions(Oid dbid);
 
 #endif   /* PG_SUBSCRIPTION_H */

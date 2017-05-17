@@ -413,12 +413,13 @@ ExecSupportsMarkRestore(Path *pathnode)
 			return true;
 
 		case T_CustomScan:
-		{
-			CustomPath *customPath = castNode(CustomPath, pathnode);
-			if (customPath->flags & CUSTOMPATH_SUPPORT_MARK_RESTORE)
-				return true;
-			return false;
-		}
+			{
+				CustomPath *customPath = castNode(CustomPath, pathnode);
+
+				if (customPath->flags & CUSTOMPATH_SUPPORT_MARK_RESTORE)
+					return true;
+				return false;
+			}
 		case T_Result:
 
 			/*

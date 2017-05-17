@@ -1452,6 +1452,7 @@ ProcessUtilitySlow(ParseState *pstate,
 				break;
 
 			case T_RefreshMatViewStmt:
+
 				/*
 				 * REFRESH CONCURRENTLY executes some DDL commands internally.
 				 * Inhibit DDL command collection here to avoid those commands
@@ -1610,6 +1611,7 @@ ProcessUtilitySlow(ParseState *pstate,
 
 			case T_AlterPublicationStmt:
 				AlterPublication((AlterPublicationStmt *) parsetree);
+
 				/*
 				 * AlterPublication calls EventTriggerCollectSimpleCommand
 				 * directly

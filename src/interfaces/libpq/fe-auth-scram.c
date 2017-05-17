@@ -228,7 +228,7 @@ pg_fe_scram_exchange(void *opaq, char *input, int inputlen,
 			{
 				*success = false;
 				printfPQExpBuffer(errorMessage,
-								  libpq_gettext("invalid server signature\n"));
+								libpq_gettext("invalid server signature\n"));
 			}
 			*done = true;
 			state->state = FE_SCRAM_FINISHED;

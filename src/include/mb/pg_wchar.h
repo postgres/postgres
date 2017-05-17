@@ -382,8 +382,8 @@ extern const pg_wchar_tbl pg_wchar_table[];
  *
  * 1. Using a radix tree, from source to destination code.
  * 2. Using a sorted array of source -> destination code pairs. This
- *    method is used for "combining" characters. There are so few of
- *    them that building a radix tree would be wasteful.
+ *	  method is used for "combining" characters. There are so few of
+ *	  them that building a radix tree would be wasteful.
  * 3. Using a conversion function.
  */
 
@@ -421,35 +421,35 @@ typedef struct
 	const uint32 *chars32;
 
 	/* Radix tree for 1-byte inputs */
-	uint32		b1root;		/* offset of table in the chars[16|32] array */
-	uint8		b1_lower;	/* min allowed value for a single byte input */
-	uint8		b1_upper;	/* max allowed value for a single byte input */
+	uint32		b1root;			/* offset of table in the chars[16|32] array */
+	uint8		b1_lower;		/* min allowed value for a single byte input */
+	uint8		b1_upper;		/* max allowed value for a single byte input */
 
 	/* Radix tree for 2-byte inputs */
-	uint32		b2root;		/* offset of 1st byte's table */
-	uint8		b2_1_lower; /* min/max allowed value for 1st input byte */
+	uint32		b2root;			/* offset of 1st byte's table */
+	uint8		b2_1_lower;		/* min/max allowed value for 1st input byte */
 	uint8		b2_1_upper;
-	uint8		b2_2_lower; /* min/max allowed value for 2nd input byte */
+	uint8		b2_2_lower;		/* min/max allowed value for 2nd input byte */
 	uint8		b2_2_upper;
 
 	/* Radix tree for 3-byte inputs */
-	uint32		b3root;		/* offset of 1st byte's table */
-	uint8		b3_1_lower; /* min/max allowed value for 1st input byte */
+	uint32		b3root;			/* offset of 1st byte's table */
+	uint8		b3_1_lower;		/* min/max allowed value for 1st input byte */
 	uint8		b3_1_upper;
-	uint8		b3_2_lower; /* min/max allowed value for 2nd input byte */
+	uint8		b3_2_lower;		/* min/max allowed value for 2nd input byte */
 	uint8		b3_2_upper;
-	uint8		b3_3_lower; /* min/max allowed value for 3rd input byte */
+	uint8		b3_3_lower;		/* min/max allowed value for 3rd input byte */
 	uint8		b3_3_upper;
 
 	/* Radix tree for 4-byte inputs */
-	uint32		b4root;		/* offset of 1st byte's table */
-	uint8		b4_1_lower; /* min/max allowed value for 1st input byte */
+	uint32		b4root;			/* offset of 1st byte's table */
+	uint8		b4_1_lower;		/* min/max allowed value for 1st input byte */
 	uint8		b4_1_upper;
-	uint8		b4_2_lower; /* min/max allowed value for 2nd input byte */
+	uint8		b4_2_lower;		/* min/max allowed value for 2nd input byte */
 	uint8		b4_2_upper;
-	uint8		b4_3_lower; /* min/max allowed value for 3rd input byte */
+	uint8		b4_3_lower;		/* min/max allowed value for 3rd input byte */
 	uint8		b4_3_upper;
-	uint8		b4_4_lower; /* min/max allowed value for 4th input byte */
+	uint8		b4_4_lower;		/* min/max allowed value for 4th input byte */
 	uint8		b4_4_upper;
 
 } pg_mb_radix_tree;

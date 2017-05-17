@@ -336,7 +336,7 @@ defGetStringList(DefElem *def)
 	if (nodeTag(def->arg) != T_List)
 		elog(ERROR, "unrecognized node type: %d", (int) nodeTag(def->arg));
 
-	foreach(cell, (List *)def->arg)
+	foreach(cell, (List *) def->arg)
 	{
 		Node	   *str = (Node *) lfirst(cell);
 

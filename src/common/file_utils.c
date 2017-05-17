@@ -32,15 +32,15 @@
 /*
  * pg_xlog has been renamed to pg_wal in version 10.
  */
-#define MINIMUM_VERSION_FOR_PG_WAL  100000
+#define MINIMUM_VERSION_FOR_PG_WAL	100000
 
 #ifdef PG_FLUSH_DATA_WORKS
 static int pre_sync_fname(const char *fname, bool isdir,
-						   const char *progname);
+			   const char *progname);
 #endif
 static void walkdir(const char *path,
-	int (*action) (const char *fname, bool isdir, const char *progname),
-	bool process_symlinks, const char *progname);
+		int (*action) (const char *fname, bool isdir, const char *progname),
+		bool process_symlinks, const char *progname);
 
 /*
  * Issue fsync recursively on PGDATA and all its contents.
@@ -65,7 +65,7 @@ fsync_pgdata(const char *pg_data,
 
 	/* handle renaming of pg_xlog to pg_wal in post-10 clusters */
 	snprintf(pg_wal, MAXPGPATH, "%s/%s", pg_data,
-		serverVersion < MINIMUM_VERSION_FOR_PG_WAL ? "pg_xlog" : "pg_wal");
+		  serverVersion < MINIMUM_VERSION_FOR_PG_WAL ? "pg_xlog" : "pg_wal");
 	snprintf(pg_tblspc, MAXPGPATH, "%s/pg_tblspc", pg_data);
 
 	/*
@@ -347,7 +347,7 @@ fsync_parent_path(const char *fname, const char *progname)
 int
 durable_rename(const char *oldfile, const char *newfile, const char *progname)
 {
-	int		fd;
+	int			fd;
 
 	/*
 	 * First fsync the old and target path (if it exists), to ensure that they

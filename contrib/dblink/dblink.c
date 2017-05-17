@@ -113,7 +113,7 @@ static char *generate_relation_name(Relation rel);
 static void dblink_connstr_check(const char *connstr);
 static void dblink_security_check(PGconn *conn, remoteConn *rconn);
 static void dblink_res_error(PGconn *conn, const char *conname, PGresult *res,
-							 const char *dblink_context_msg, bool fail);
+				 const char *dblink_context_msg, bool fail);
 static char *get_connect_string(const char *servername);
 static char *escape_param_str(const char *from);
 static void validate_pkattnums(Relation rel,
@@ -152,16 +152,19 @@ xpstrdup(const char *in)
 	return pstrdup(in);
 }
 
-static void pg_attribute_noreturn()
+static void
+pg_attribute_noreturn()
 dblink_res_internalerror(PGconn *conn, PGresult *res, const char *p2)
 {
 	char	   *msg = pchomp(PQerrorMessage(conn));
+
 	if (res)
 		PQclear(res);
 	elog(ERROR, "%s: %s", p2, msg);
 }
 
-static void pg_attribute_noreturn()
+static void
+pg_attribute_noreturn()
 dblink_conn_not_avail(const char *conname)
 {
 	if (conname)
@@ -176,7 +179,7 @@ dblink_conn_not_avail(const char *conname)
 
 static void
 dblink_get_conn(char *conname_or_str,
-				PGconn * volatile *conn_p, char **conname_p, volatile bool *freeconn_p)
+	  PGconn *volatile * conn_p, char **conname_p, volatile bool *freeconn_p)
 {
 	remoteConn *rconn = getConnectionByName(conname_or_str);
 	PGconn	   *conn;
@@ -201,11 +204,12 @@ dblink_get_conn(char *conname_or_str,
 		if (PQstatus(conn) == CONNECTION_BAD)
 		{
 			char	   *msg = pchomp(PQerrorMessage(conn));
+
 			PQfinish(conn);
 			ereport(ERROR,
-					(errcode(ERRCODE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION),
-					 errmsg("could not establish connection"),
-					 errdetail_internal("%s", msg)));
+			   (errcode(ERRCODE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION),
+				errmsg("could not establish connection"),
+				errdetail_internal("%s", msg)));
 		}
 		dblink_security_check(conn, rconn);
 		if (PQclientEncoding(conn) != GetDatabaseEncoding())
@@ -223,11 +227,12 @@ static PGconn *
 dblink_get_named_conn(const char *conname)
 {
 	remoteConn *rconn = getConnectionByName(conname);
+
 	if (rconn)
 		return rconn->conn;
 
 	dblink_conn_not_avail(conname);
-	return NULL;		/* keep compiler quiet */
+	return NULL;				/* keep compiler quiet */
 }
 
 static void
@@ -2699,9 +2704,9 @@ dblink_res_error(PGconn *conn, const char *conname, PGresult *res,
 	message_context = xpstrdup(pg_diag_context);
 
 	/*
-	 * If we don't get a message from the PGresult, try the PGconn.  This
-	 * is needed because for connection-level failures, PQexec may just
-	 * return NULL, not a PGresult at all.
+	 * If we don't get a message from the PGresult, try the PGconn.  This is
+	 * needed because for connection-level failures, PQexec may just return
+	 * NULL, not a PGresult at all.
 	 */
 	if (message_primary == NULL)
 		message_primary = pchomp(PQerrorMessage(conn));
@@ -2732,7 +2737,7 @@ get_connect_string(const char *servername)
 	ForeignServer *foreign_server = NULL;
 	UserMapping *user_mapping;
 	ListCell   *cell;
-	StringInfoData	buf;
+	StringInfoData buf;
 	ForeignDataWrapper *fdw;
 	AclResult	aclresult;
 	char	   *srvname;
@@ -2820,7 +2825,7 @@ static char *
 escape_param_str(const char *str)
 {
 	const char *cp;
-	StringInfoData	buf;
+	StringInfoData buf;
 
 	initStringInfo(&buf);
 

@@ -240,7 +240,7 @@ extern Oid	getExtensionOfObject(Oid classId, Oid objectId);
 
 extern bool sequenceIsOwned(Oid seqId, char deptype, Oid *tableId, int32 *colId);
 extern List *getOwnedSequences(Oid relid, AttrNumber attnum);
-extern Oid getOwnedSequence(Oid relid, AttrNumber attnum);
+extern Oid	getOwnedSequence(Oid relid, AttrNumber attnum);
 
 extern Oid	get_constraint_index(Oid constraintId);
 

@@ -1337,7 +1337,7 @@ lazy_scan_heap(Relation onerel, int options, LVRelStats *vacrelstats,
 	 */
 	initStringInfo(&buf);
 	appendStringInfo(&buf,
-					 _("%.0f dead row versions cannot be removed yet, oldest xmin: %u\n"),
+		_("%.0f dead row versions cannot be removed yet, oldest xmin: %u\n"),
 					 nkeep, OldestXmin);
 	appendStringInfo(&buf, _("There were %.0f unused item pointers.\n"),
 					 nunused);
@@ -1912,8 +1912,8 @@ count_nondeletable_pages(Relation onerel, LVRelStats *vacrelstats)
 		/* If we haven't prefetched this lot yet, do so now. */
 		if (prefetchedUntil > blkno)
 		{
-			BlockNumber	prefetchStart;
-			BlockNumber	pblkno;
+			BlockNumber prefetchStart;
+			BlockNumber pblkno;
 
 			prefetchStart = blkno & ~(PREFETCH_SIZE - 1);
 			for (pblkno = prefetchStart; pblkno <= blkno; pblkno++)

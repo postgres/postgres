@@ -333,12 +333,12 @@ hashgettuple(IndexScanDesc scan, ScanDirection dir)
 		if (scan->kill_prior_tuple)
 		{
 			/*
-			 * Yes, so remember it for later. (We'll deal with all such
-			 * tuples at once right after leaving the index page or at
-			 * end of scan.) In case if caller reverses the indexscan
-			 * direction it is quite possible that the same item might
-			 * get entered multiple times. But, we don't detect that;
-			 * instead, we just forget any excess entries.
+			 * Yes, so remember it for later. (We'll deal with all such tuples
+			 * at once right after leaving the index page or at end of scan.)
+			 * In case if caller reverses the indexscan direction it is quite
+			 * possible that the same item might get entered multiple times.
+			 * But, we don't detect that; instead, we just forget any excess
+			 * entries.
 			 */
 			if (so->killedItems == NULL)
 				so->killedItems = palloc(MaxIndexTuplesPerPage *
@@ -348,7 +348,7 @@ hashgettuple(IndexScanDesc scan, ScanDirection dir)
 			{
 				so->killedItems[so->numKilled].heapTid = so->hashso_heappos;
 				so->killedItems[so->numKilled].indexOffset =
-							ItemPointerGetOffsetNumber(&(so->hashso_curpos));
+					ItemPointerGetOffsetNumber(&(so->hashso_curpos));
 				so->numKilled++;
 			}
 		}
@@ -477,9 +477,8 @@ hashrescan(IndexScanDesc scan, ScanKey scankey, int nscankeys,
 	Relation	rel = scan->indexRelation;
 
 	/*
-	 * Before leaving current page, deal with any killed items.
-	 * Also, ensure that we acquire lock on current page before
-	 * calling _hash_kill_items.
+	 * Before leaving current page, deal with any killed items. Also, ensure
+	 * that we acquire lock on current page before calling _hash_kill_items.
 	 */
 	if (so->numKilled > 0)
 	{
@@ -516,9 +515,8 @@ hashendscan(IndexScanDesc scan)
 	Relation	rel = scan->indexRelation;
 
 	/*
-	 * Before leaving current page, deal with any killed items.
-	 * Also, ensure that we acquire lock on current page before
-	 * calling _hash_kill_items.
+	 * Before leaving current page, deal with any killed items. Also, ensure
+	 * that we acquire lock on current page before calling _hash_kill_items.
 	 */
 	if (so->numKilled > 0)
 	{
@@ -889,8 +887,8 @@ hashbucketcleanup(Relation rel, Bucket cur_bucket, Buffer bucket_buf,
 
 			/*
 			 * Let us mark the page as clean if vacuum removes the DEAD tuples
-			 * from an index page. We do this by clearing LH_PAGE_HAS_DEAD_TUPLES
-			 * flag.
+			 * from an index page. We do this by clearing
+			 * LH_PAGE_HAS_DEAD_TUPLES flag.
 			 */
 			if (tuples_removed && *tuples_removed > 0 &&
 				H_HAS_DEAD_TUPLES(opaque))

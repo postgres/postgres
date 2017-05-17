@@ -1448,7 +1448,7 @@ pg_get_statisticsobjdef(PG_FUNCTION_ARGS)
 static char *
 pg_get_statisticsobj_worker(Oid statextid, bool missing_ok)
 {
-	Form_pg_statistic_ext	statextrec;
+	Form_pg_statistic_ext statextrec;
 	HeapTuple	statexttup;
 	StringInfoData buf;
 	int			colno;
@@ -1477,7 +1477,7 @@ pg_get_statisticsobj_worker(Oid statextid, bool missing_ok)
 	nsp = get_namespace_name(statextrec->stxnamespace);
 	appendStringInfo(&buf, "CREATE STATISTICS %s",
 					 quote_qualified_identifier(nsp,
-												NameStr(statextrec->stxname)));
+											  NameStr(statextrec->stxname)));
 
 	/*
 	 * Decode the stxkind column so that we know which stats types to print.
@@ -1735,11 +1735,11 @@ pg_get_partkeydef_worker(Oid relid, int prettyFlags,
 Datum
 pg_get_partition_constraintdef(PG_FUNCTION_ARGS)
 {
-	Oid		relationId = PG_GETARG_OID(0);
-	Expr   *constr_expr;
-	int		prettyFlags;
-	List   *context;
-	char   *consrc;
+	Oid			relationId = PG_GETARG_OID(0);
+	Expr	   *constr_expr;
+	int			prettyFlags;
+	List	   *context;
+	char	   *consrc;
 
 	constr_expr = get_partition_qual_relid(relationId);
 

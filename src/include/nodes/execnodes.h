@@ -442,7 +442,7 @@ typedef struct EState
 	ParamListInfo es_param_list_info;	/* values of external params */
 	ParamExecData *es_param_exec_vals;	/* values of internal params */
 
-	QueryEnvironment *es_queryEnv;	/* query environment */
+	QueryEnvironment *es_queryEnv;		/* query environment */
 
 	/* Other working state: */
 	MemoryContext es_query_cxt; /* per-query context in which EState lives */
@@ -485,7 +485,7 @@ typedef struct EState
 	bool	   *es_epqScanDone; /* true if EPQ tuple has been fetched */
 
 	/* The per-query shared memory area to use for parallel execution. */
-	struct dsa_area   *es_query_dsa;
+	struct dsa_area *es_query_dsa;
 } EState;
 
 
@@ -938,14 +938,13 @@ typedef struct ModifyTableState
 	TupleTableSlot *mt_conflproj;		/* CONFLICT ... SET ... projection
 										 * target */
 	struct PartitionDispatchData **mt_partition_dispatch_info;
-										/* Tuple-routing support info */
-	int				mt_num_dispatch;	/* Number of entries in the above
-										 * array */
-	int				mt_num_partitions;	/* Number of members in the
-										 * following arrays */
-	ResultRelInfo  *mt_partitions;	/* Per partition result relation */
+	/* Tuple-routing support info */
+	int			mt_num_dispatch;	/* Number of entries in the above array */
+	int			mt_num_partitions;		/* Number of members in the following
+										 * arrays */
+	ResultRelInfo *mt_partitions;		/* Per partition result relation */
 	TupleConversionMap **mt_partition_tupconv_maps;
-									/* Per partition tuple conversion map */
+	/* Per partition tuple conversion map */
 	TupleTableSlot *mt_partition_tuple_slot;
 } ModifyTableState;
 

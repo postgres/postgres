@@ -81,12 +81,12 @@ extern GatherPath *create_gather_path(PlannerInfo *root,
 				   RelOptInfo *rel, Path *subpath, PathTarget *target,
 				   Relids required_outer, double *rows);
 extern GatherMergePath *create_gather_merge_path(PlannerInfo *root,
-												 RelOptInfo *rel,
-												 Path *subpath,
-												 PathTarget *target,
-												 List *pathkeys,
-												 Relids required_outer,
-												 double *rows);
+						 RelOptInfo *rel,
+						 Path *subpath,
+						 PathTarget *target,
+						 List *pathkeys,
+						 Relids required_outer,
+						 double *rows);
 extern SubqueryScanPath *create_subqueryscan_path(PlannerInfo *root,
 						 RelOptInfo *rel, Path *subpath,
 						 List *pathkeys, Relids required_outer);
@@ -101,7 +101,7 @@ extern Path *create_tablefuncscan_path(PlannerInfo *root, RelOptInfo *rel,
 extern Path *create_ctescan_path(PlannerInfo *root, RelOptInfo *rel,
 					Relids required_outer);
 extern Path *create_namedtuplestorescan_path(PlannerInfo *root, RelOptInfo *rel,
-					Relids required_outer);
+								Relids required_outer);
 extern Path *create_worktablescan_path(PlannerInfo *root, RelOptInfo *rel,
 						  Relids required_outer);
 extern ForeignPath *create_foreignscan_path(PlannerInfo *root, RelOptInfo *rel,

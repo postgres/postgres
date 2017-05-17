@@ -66,7 +66,7 @@ brin_desc(StringInfo buf, XLogReaderState *record)
 		xl_brin_desummarize *xlrec = (xl_brin_desummarize *) rec;
 
 		appendStringInfo(buf, "pagesPerRange %u, heapBlk %u, page offset %u",
-						 xlrec->pagesPerRange, xlrec->heapBlk, xlrec->regOffset);
+					 xlrec->pagesPerRange, xlrec->heapBlk, xlrec->regOffset);
 	}
 }
 

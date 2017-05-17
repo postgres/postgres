@@ -661,7 +661,7 @@ static const struct cachedesc cacheinfo[] = {
 		},
 		16
 	},
-	{PublicationRelationId,			/* PUBLICATIONOID */
+	{PublicationRelationId,		/* PUBLICATIONOID */
 		PublicationObjectIndexId,
 		1,
 		{
@@ -672,7 +672,7 @@ static const struct cachedesc cacheinfo[] = {
 		},
 		8
 	},
-	{PublicationRelationId,			/* PUBLICATIONNAME */
+	{PublicationRelationId,		/* PUBLICATIONNAME */
 		PublicationNameIndexId,
 		1,
 		{
@@ -683,7 +683,7 @@ static const struct cachedesc cacheinfo[] = {
 		},
 		8
 	},
-	{PublicationRelRelationId,		/* PUBLICATIONREL */
+	{PublicationRelRelationId,	/* PUBLICATIONREL */
 		PublicationRelObjectIndexId,
 		1,
 		{
@@ -694,7 +694,7 @@ static const struct cachedesc cacheinfo[] = {
 		},
 		64
 	},
-	{PublicationRelRelationId,		/* PUBLICATIONRELMAP */
+	{PublicationRelRelationId,	/* PUBLICATIONRELMAP */
 		PublicationRelPrrelidPrpubidIndexId,
 		2,
 		{
@@ -716,7 +716,7 @@ static const struct cachedesc cacheinfo[] = {
 		},
 		8
 	},
-	{SequenceRelationId,			/* SEQRELID */
+	{SequenceRelationId,		/* SEQRELID */
 		SequenceRelidIndexId,
 		1,
 		{
@@ -760,7 +760,7 @@ static const struct cachedesc cacheinfo[] = {
 		},
 		128
 	},
-	{SubscriptionRelationId,		/* SUBSCRIPTIONOID */
+	{SubscriptionRelationId,	/* SUBSCRIPTIONOID */
 		SubscriptionObjectIndexId,
 		1,
 		{
@@ -771,7 +771,7 @@ static const struct cachedesc cacheinfo[] = {
 		},
 		4
 	},
-	{SubscriptionRelationId,		/* SUBSCRIPTIONNAME */
+	{SubscriptionRelationId,	/* SUBSCRIPTIONNAME */
 		SubscriptionNameIndexId,
 		2,
 		{
@@ -782,7 +782,7 @@ static const struct cachedesc cacheinfo[] = {
 		},
 		4
 	},
-	{SubscriptionRelRelationId,		/* SUBSCRIPTIONRELMAP */
+	{SubscriptionRelRelationId, /* SUBSCRIPTIONRELMAP */
 		SubscriptionRelSrrelidSrsubidIndexId,
 		2,
 		{

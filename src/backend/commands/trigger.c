@@ -340,7 +340,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 
 		foreach(lc, varList)
 		{
-			TriggerTransition   *tt = lfirst_node(TriggerTransition, lc);
+			TriggerTransition *tt = lfirst_node(TriggerTransition, lc);
 
 			if (!(tt->isTable))
 				ereport(ERROR,
@@ -359,21 +359,21 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 						 errmsg("\"%s\" is a partitioned table",
 								RelationGetRelationName(rel)),
-					 errdetail("Triggers on partitioned tables cannot have transition tables.")));
+						 errdetail("Triggers on partitioned tables cannot have transition tables.")));
 
 			if (rel->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 						 errmsg("\"%s\" is a foreign table",
 								RelationGetRelationName(rel)),
-					 errdetail("Triggers on foreign tables cannot have transition tables.")));
+						 errdetail("Triggers on foreign tables cannot have transition tables.")));
 
 			if (rel->rd_rel->relkind == RELKIND_VIEW)
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 						 errmsg("\"%s\" is a view",
 								RelationGetRelationName(rel)),
-					 errdetail("Triggers on views cannot have transition tables.")));
+						 errdetail("Triggers on views cannot have transition tables.")));
 
 			if (stmt->timing != TRIGGER_TYPE_AFTER)
 				ereport(ERROR,
@@ -396,7 +396,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 				if (newtablename != NULL)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-							 errmsg("NEW TABLE cannot be specified multiple times")));
+					errmsg("NEW TABLE cannot be specified multiple times")));
 
 				newtablename = tt->name;
 			}
@@ -411,7 +411,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 				if (oldtablename != NULL)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-							 errmsg("OLD TABLE cannot be specified multiple times")));
+					errmsg("OLD TABLE cannot be specified multiple times")));
 
 				oldtablename = tt->name;
 			}
@@ -421,7 +421,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 			strcmp(newtablename, oldtablename) == 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("OLD TABLE name and NEW TABLE name cannot be the same")));
+			errmsg("OLD TABLE name and NEW TABLE name cannot be the same")));
 	}
 
 	/*
@@ -782,12 +782,12 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 
 	if (oldtablename)
 		values[Anum_pg_trigger_tgoldtable - 1] = DirectFunctionCall1(namein,
-												  CStringGetDatum(oldtablename));
+											  CStringGetDatum(oldtablename));
 	else
 		nulls[Anum_pg_trigger_tgoldtable - 1] = true;
 	if (newtablename)
 		values[Anum_pg_trigger_tgnewtable - 1] = DirectFunctionCall1(namein,
-												  CStringGetDatum(newtablename));
+											  CStringGetDatum(newtablename));
 	else
 		nulls[Anum_pg_trigger_tgnewtable - 1] = true;
 
@@ -3412,7 +3412,8 @@ typedef struct AfterTriggersData
 	AfterTriggerEventList events;		/* deferred-event list */
 	int			query_depth;	/* current query list index */
 	AfterTriggerEventList *query_stack; /* events pending from each query */
-	Tuplestorestate **fdw_tuplestores;	/* foreign tuples for one row from each query */
+	Tuplestorestate **fdw_tuplestores;	/* foreign tuples for one row from
+										 * each query */
 	Tuplestorestate **old_tuplestores;	/* all old tuples from each query */
 	Tuplestorestate **new_tuplestores;	/* all new tuples from each query */
 	int			maxquerydepth;	/* allocated len of above array */
@@ -3778,8 +3779,8 @@ AfterTriggerExecute(AfterTriggerEvent event,
 		case AFTER_TRIGGER_FDW_FETCH:
 			{
 				Tuplestorestate *fdw_tuplestore =
-					GetTriggerTransitionTuplestore
-						(afterTriggers.fdw_tuplestores);
+				GetTriggerTransitionTuplestore
+				(afterTriggers.fdw_tuplestores);
 
 				if (!tuplestore_gettupleslot(fdw_tuplestore, true, false,
 											 trig_tuple_slot1))
@@ -5130,7 +5131,7 @@ AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 			Assert(oldtup != NULL);
 			old_tuplestore =
 				GetTriggerTransitionTuplestore
-					(afterTriggers.old_tuplestores);
+				(afterTriggers.old_tuplestores);
 			tuplestore_puttuple(old_tuplestore, oldtup);
 		}
 		if ((event == TRIGGER_EVENT_INSERT &&
@@ -5143,14 +5144,14 @@ AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 			Assert(newtup != NULL);
 			new_tuplestore =
 				GetTriggerTransitionTuplestore
-					(afterTriggers.new_tuplestores);
+				(afterTriggers.new_tuplestores);
 			tuplestore_puttuple(new_tuplestore, newtup);
 		}
 
 		/* If transition tables are the only reason we're here, return. */
 		if ((event == TRIGGER_EVENT_DELETE && !trigdesc->trig_delete_after_row) ||
-			(event == TRIGGER_EVENT_INSERT && !trigdesc->trig_insert_after_row) ||
-			(event == TRIGGER_EVENT_UPDATE && !trigdesc->trig_update_after_row))
+		(event == TRIGGER_EVENT_INSERT && !trigdesc->trig_insert_after_row) ||
+		 (event == TRIGGER_EVENT_UPDATE && !trigdesc->trig_update_after_row))
 			return;
 	}
 
@@ -5253,7 +5254,7 @@ AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 			{
 				fdw_tuplestore =
 					GetTriggerTransitionTuplestore
-						(afterTriggers.fdw_tuplestores);
+					(afterTriggers.fdw_tuplestores);
 				new_event.ate_flags = AFTER_TRIGGER_FDW_FETCH;
 			}
 			else

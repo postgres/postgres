@@ -64,7 +64,7 @@ typedef struct SetOpStatePerGroupData
 {
 	long		numLeft;		/* number of left-input dups in group */
 	long		numRight;		/* number of right-input dups in group */
-} SetOpStatePerGroupData;
+}	SetOpStatePerGroupData;
 
 
 static TupleTableSlot *setop_retrieve_direct(SetOpState *setopstate);

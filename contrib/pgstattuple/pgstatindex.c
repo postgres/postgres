@@ -64,7 +64,7 @@ PG_FUNCTION_INFO_V1(pg_relpages_v1_5);
 PG_FUNCTION_INFO_V1(pg_relpagesbyid_v1_5);
 PG_FUNCTION_INFO_V1(pgstatginindex_v1_5);
 
-Datum pgstatginindex_internal(Oid relid, FunctionCallInfo fcinfo);
+Datum		pgstatginindex_internal(Oid relid, FunctionCallInfo fcinfo);
 
 #define IS_INDEX(r) ((r)->rd_rel->relkind == RELKIND_INDEX)
 #define IS_BTREE(r) ((r)->rd_rel->relam == BTREE_AM_OID)
@@ -113,17 +113,17 @@ typedef struct GinIndexStat
  */
 typedef struct HashIndexStat
 {
-	int32	version;
-	int32	space_per_page;
+	int32		version;
+	int32		space_per_page;
 
-	BlockNumber	bucket_pages;
+	BlockNumber bucket_pages;
 	BlockNumber overflow_pages;
 	BlockNumber bitmap_pages;
 	BlockNumber unused_pages;
 
-	int64	live_items;
-	int64	dead_items;
-	uint64	free_space;
+	int64		live_items;
+	int64		dead_items;
+	uint64		free_space;
 } HashIndexStat;
 
 static Datum pgstatindex_impl(Relation rel, FunctionCallInfo fcinfo);
@@ -581,8 +581,8 @@ Datum
 pgstathashindex(PG_FUNCTION_ARGS)
 {
 	Oid			relid = PG_GETARG_OID(0);
-	BlockNumber	nblocks;
-	BlockNumber	blkno;
+	BlockNumber nblocks;
+	BlockNumber blkno;
 	Relation	rel;
 	HashIndexStat stats;
 	BufferAccessStrategy bstrategy;
@@ -591,7 +591,7 @@ pgstathashindex(PG_FUNCTION_ARGS)
 	Datum		values[8];
 	bool		nulls[8];
 	Buffer		metabuf;
-	HashMetaPage	metap;
+	HashMetaPage metap;
 	float8		free_percent;
 	uint64		total_space;
 
@@ -648,13 +648,13 @@ pgstathashindex(PG_FUNCTION_ARGS)
 				 MAXALIGN(sizeof(HashPageOpaqueData)))
 			ereport(ERROR,
 					(errcode(ERRCODE_INDEX_CORRUPTED),
-					 errmsg("index \"%s\" contains corrupted page at block %u",
-							RelationGetRelationName(rel),
-							BufferGetBlockNumber(buf))));
+				   errmsg("index \"%s\" contains corrupted page at block %u",
+						  RelationGetRelationName(rel),
+						  BufferGetBlockNumber(buf))));
 		else
 		{
-			HashPageOpaque	opaque;
-			int		pagetype;
+			HashPageOpaque opaque;
+			int			pagetype;
 
 			opaque = (HashPageOpaque) PageGetSpecialPointer(page);
 			pagetype = opaque->hasho_flag & LH_PAGE_TYPE;
@@ -676,9 +676,9 @@ pgstathashindex(PG_FUNCTION_ARGS)
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_INDEX_CORRUPTED),
-					errmsg("unexpected page type 0x%04X in HASH index \"%s\" block %u",
+						 errmsg("unexpected page type 0x%04X in HASH index \"%s\" block %u",
 							opaque->hasho_flag, RelationGetRelationName(rel),
-							BufferGetBlockNumber(buf))));
+								BufferGetBlockNumber(buf))));
 		}
 		UnlockReleaseBuffer(buf);
 	}
@@ -735,12 +735,12 @@ static void
 GetHashPageStats(Page page, HashIndexStat *stats)
 {
 	OffsetNumber maxoff = PageGetMaxOffsetNumber(page);
-	int off;
+	int			off;
 
 	/* count live and dead tuples, and free space */
 	for (off = FirstOffsetNumber; off <= maxoff; off++)
 	{
-		ItemId      id = PageGetItemId(page, off);
+		ItemId		id = PageGetItemId(page, off);
 
 		if (!ItemIdIsDead(id))
 			stats->live_items++;

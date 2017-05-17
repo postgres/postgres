@@ -867,8 +867,8 @@ permissionsList(const char *pattern)
 					  " WHEN " CppAsString2(RELKIND_VIEW) " THEN '%s'"
 					  " WHEN " CppAsString2(RELKIND_MATVIEW) " THEN '%s'"
 					  " WHEN " CppAsString2(RELKIND_SEQUENCE) " THEN '%s'"
-					  " WHEN " CppAsString2(RELKIND_FOREIGN_TABLE) " THEN '%s'"
-					  " WHEN " CppAsString2(RELKIND_PARTITIONED_TABLE) " THEN '%s'"
+					" WHEN " CppAsString2(RELKIND_FOREIGN_TABLE) " THEN '%s'"
+				" WHEN " CppAsString2(RELKIND_PARTITIONED_TABLE) " THEN '%s'"
 					  " END as \"%s\",\n"
 					  "  ",
 					  gettext_noop("Schema"),
@@ -1783,8 +1783,8 @@ describeOneTableDetails(const char *schemaname,
 		/* Collation, Nullable, Default */
 		if (show_column_details)
 		{
-			char   *identity;
-			char   *default_str = "";
+			char	   *identity;
+			char	   *default_str = "";
 
 			printTableAddCell(&cont, PQgetvalue(res, i, 5), false, false);
 
@@ -1863,21 +1863,21 @@ describeOneTableDetails(const char *schemaname,
 		/* If verbose, also request the partition constraint definition */
 		if (verbose)
 			printfPQExpBuffer(&buf,
-				"SELECT inhparent::pg_catalog.regclass,"
-				"		pg_get_expr(c.relpartbound, inhrelid),"
-				"		pg_get_partition_constraintdef(inhrelid)"
-				" FROM pg_catalog.pg_class c"
-				" JOIN pg_catalog.pg_inherits"
-				" ON c.oid = inhrelid"
-				" WHERE c.oid = '%s' AND c.relispartition;", oid);
+							  "SELECT inhparent::pg_catalog.regclass,"
+							"		pg_get_expr(c.relpartbound, inhrelid),"
+						  "		pg_get_partition_constraintdef(inhrelid)"
+							  " FROM pg_catalog.pg_class c"
+							  " JOIN pg_catalog.pg_inherits"
+							  " ON c.oid = inhrelid"
+						   " WHERE c.oid = '%s' AND c.relispartition;", oid);
 		else
 			printfPQExpBuffer(&buf,
-				"SELECT inhparent::pg_catalog.regclass,"
-				"		pg_get_expr(c.relpartbound, inhrelid)"
-				" FROM pg_catalog.pg_class c"
-				" JOIN pg_catalog.pg_inherits"
-				" ON c.oid = inhrelid"
-				" WHERE c.oid = '%s' AND c.relispartition;", oid);
+							  "SELECT inhparent::pg_catalog.regclass,"
+							  "		pg_get_expr(c.relpartbound, inhrelid)"
+							  " FROM pg_catalog.pg_class c"
+							  " JOIN pg_catalog.pg_inherits"
+							  " ON c.oid = inhrelid"
+						   " WHERE c.oid = '%s' AND c.relispartition;", oid);
 		result = PSQLexec(buf.data);
 		if (!result)
 			goto error_return;
@@ -1891,7 +1891,7 @@ describeOneTableDetails(const char *schemaname,
 				partconstraintdef = PQgetvalue(result, 0, 2);
 
 			printfPQExpBuffer(&tmpbuf, _("Partition of: %s %s"), parent_name,
-						  partdef);
+							  partdef);
 			printTableAddFooter(&cont, tmpbuf.data);
 
 			if (partconstraintdef)
@@ -1912,7 +1912,7 @@ describeOneTableDetails(const char *schemaname,
 		char	   *partkeydef;
 
 		printfPQExpBuffer(&buf,
-			 "SELECT pg_catalog.pg_get_partkeydef('%s'::pg_catalog.oid);",
+				"SELECT pg_catalog.pg_get_partkeydef('%s'::pg_catalog.oid);",
 						  oid);
 		result = PSQLexec(buf.data);
 		if (!result || PQntuples(result) != 1)
@@ -2289,8 +2289,8 @@ describeOneTableDetails(const char *schemaname,
 				printfPQExpBuffer(&buf,
 								  "SELECT pol.polname, pol.polpermissive,\n"
 								  "CASE WHEN pol.polroles = '{0}' THEN NULL ELSE array_to_string(array(select rolname from pg_roles where oid = any (pol.polroles) order by 1),',') END,\n"
-						   "pg_catalog.pg_get_expr(pol.polqual, pol.polrelid),\n"
-					  "pg_catalog.pg_get_expr(pol.polwithcheck, pol.polrelid),\n"
+					   "pg_catalog.pg_get_expr(pol.polqual, pol.polrelid),\n"
+				  "pg_catalog.pg_get_expr(pol.polwithcheck, pol.polrelid),\n"
 								  "CASE pol.polcmd\n"
 								  "WHEN 'r' THEN 'SELECT'\n"
 								  "WHEN 'a' THEN 'INSERT'\n"
@@ -2302,10 +2302,10 @@ describeOneTableDetails(const char *schemaname,
 								  oid);
 			else
 				printfPQExpBuffer(&buf,
-								  "SELECT pol.polname, 't' as polpermissive,\n"
+								"SELECT pol.polname, 't' as polpermissive,\n"
 								  "CASE WHEN pol.polroles = '{0}' THEN NULL ELSE array_to_string(array(select rolname from pg_roles where oid = any (pol.polroles) order by 1),',') END,\n"
-						   "pg_catalog.pg_get_expr(pol.polqual, pol.polrelid),\n"
-					  "pg_catalog.pg_get_expr(pol.polwithcheck, pol.polrelid),\n"
+					   "pg_catalog.pg_get_expr(pol.polqual, pol.polrelid),\n"
+				  "pg_catalog.pg_get_expr(pol.polwithcheck, pol.polrelid),\n"
 								  "CASE pol.polcmd\n"
 								  "WHEN 'r' THEN 'SELECT'\n"
 								  "WHEN 'a' THEN 'INSERT'\n"
@@ -2386,7 +2386,7 @@ describeOneTableDetails(const char *schemaname,
 							  "  (SELECT pg_catalog.string_agg(pg_catalog.quote_ident(attname),', ')\n"
 							  "   FROM pg_catalog.unnest(stxkeys) s(attnum)\n"
 							  "   JOIN pg_catalog.pg_attribute a ON (stxrelid = a.attrelid AND\n"
-							  "        a.attnum = s.attnum AND NOT attisdropped)) AS columns,\n"
+			"        a.attnum = s.attnum AND NOT attisdropped)) AS columns,\n"
 							  "  (stxkind @> '{d}') AS ndist_enabled,\n"
 							  "  (stxkind @> '{f}') AS deps_enabled\n"
 							  "FROM pg_catalog.pg_statistic_ext stat "
@@ -2795,11 +2795,11 @@ describeOneTableDetails(const char *schemaname,
 
 		/* print inherited tables (exclude, if parent is a partitioned table) */
 		printfPQExpBuffer(&buf,
-				"SELECT c.oid::pg_catalog.regclass"
-				" FROM pg_catalog.pg_class c, pg_catalog.pg_inherits i"
-				" WHERE c.oid=i.inhparent AND i.inhrelid = '%s'"
-				" AND c.relkind != " CppAsString2(RELKIND_PARTITIONED_TABLE)
-				" ORDER BY inhseqno;", oid);
+						  "SELECT c.oid::pg_catalog.regclass"
+					  " FROM pg_catalog.pg_class c, pg_catalog.pg_inherits i"
+						  " WHERE c.oid=i.inhparent AND i.inhrelid = '%s'"
+				 " AND c.relkind != " CppAsString2(RELKIND_PARTITIONED_TABLE)
+						  " ORDER BY inhseqno;", oid);
 
 		result = PSQLexec(buf.data);
 		if (!result)
@@ -2831,20 +2831,20 @@ describeOneTableDetails(const char *schemaname,
 		/* print child tables (with additional info if partitions) */
 		if (pset.sversion >= 100000)
 			printfPQExpBuffer(&buf,
-					"SELECT c.oid::pg_catalog.regclass, pg_get_expr(c.relpartbound, c.oid)"
-					" FROM pg_catalog.pg_class c, pg_catalog.pg_inherits i"
-					" WHERE c.oid=i.inhrelid AND"
-					" i.inhparent = '%s' AND"
-					" EXISTS (SELECT 1 FROM pg_class c WHERE c.oid = '%s')"
-					" ORDER BY c.oid::pg_catalog.regclass::pg_catalog.text;", oid, oid);
+							  "SELECT c.oid::pg_catalog.regclass, pg_get_expr(c.relpartbound, c.oid)"
+					  " FROM pg_catalog.pg_class c, pg_catalog.pg_inherits i"
+							  " WHERE c.oid=i.inhrelid AND"
+							  " i.inhparent = '%s' AND"
+					  " EXISTS (SELECT 1 FROM pg_class c WHERE c.oid = '%s')"
+							  " ORDER BY c.oid::pg_catalog.regclass::pg_catalog.text;", oid, oid);
 		else if (pset.sversion >= 80300)
 			printfPQExpBuffer(&buf,
-					"SELECT c.oid::pg_catalog.regclass"
-					" FROM pg_catalog.pg_class c, pg_catalog.pg_inherits i"
-					" WHERE c.oid=i.inhrelid AND"
-					" i.inhparent = '%s' AND"
-					" EXISTS (SELECT 1 FROM pg_class c WHERE c.oid = '%s')"
-					" ORDER BY c.oid::pg_catalog.regclass::pg_catalog.text;", oid, oid);
+							  "SELECT c.oid::pg_catalog.regclass"
+					  " FROM pg_catalog.pg_class c, pg_catalog.pg_inherits i"
+							  " WHERE c.oid=i.inhrelid AND"
+							  " i.inhparent = '%s' AND"
+					  " EXISTS (SELECT 1 FROM pg_class c WHERE c.oid = '%s')"
+							  " ORDER BY c.oid::pg_catalog.regclass::pg_catalog.text;", oid, oid);
 		else
 			printfPQExpBuffer(&buf, "SELECT c.oid::pg_catalog.regclass FROM pg_catalog.pg_class c, pg_catalog.pg_inherits i WHERE c.oid=i.inhrelid AND i.inhparent = '%s' ORDER BY c.relname;", oid);
 
@@ -2870,7 +2870,7 @@ describeOneTableDetails(const char *schemaname,
 		{
 			/* display the list of child tables */
 			const char *ct = (tableinfo.relkind != RELKIND_PARTITIONED_TABLE) ?
-				_("Child tables") : _("Partitions");
+			_("Child tables") : _("Partitions");
 			int			ctw = pg_wcswidth(ct, strlen(ct), pset.encoding);
 
 			for (i = 0; i < tuples; i++)
@@ -3325,8 +3325,8 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 					  " WHEN " CppAsString2(RELKIND_INDEX) " THEN '%s'"
 					  " WHEN " CppAsString2(RELKIND_SEQUENCE) " THEN '%s'"
 					  " WHEN 's' THEN '%s'"
-					  " WHEN " CppAsString2(RELKIND_FOREIGN_TABLE) " THEN '%s'"
-					  " WHEN " CppAsString2(RELKIND_PARTITIONED_TABLE) " THEN '%s'"
+					" WHEN " CppAsString2(RELKIND_FOREIGN_TABLE) " THEN '%s'"
+				" WHEN " CppAsString2(RELKIND_PARTITIONED_TABLE) " THEN '%s'"
 					  " END as \"%s\",\n"
 					  "  pg_catalog.pg_get_userbyid(c.relowner) as \"%s\"",
 					  gettext_noop("Schema"),
@@ -3534,7 +3534,7 @@ listDomains(const char *pattern, bool verbose, bool showSystem)
 	printfPQExpBuffer(&buf,
 					  "SELECT n.nspname as \"%s\",\n"
 					  "       t.typname as \"%s\",\n"
-					  "       pg_catalog.format_type(t.typbasetype, t.typtypmod) as \"%s\",\n",
+	"       pg_catalog.format_type(t.typbasetype, t.typtypmod) as \"%s\",\n",
 					  gettext_noop("Schema"),
 					  gettext_noop("Name"),
 					  gettext_noop("Type"));
@@ -3545,7 +3545,7 @@ listDomains(const char *pattern, bool verbose, bool showSystem)
 						  "        WHERE c.oid = t.typcollation AND bt.oid = t.typbasetype AND t.typcollation <> bt.typcollation) as \"%s\",\n",
 						  gettext_noop("Collation"));
 	appendPQExpBuffer(&buf,
-					  "       CASE WHEN t.typnotnull THEN 'not null' END as \"%s\",\n"
+			 "       CASE WHEN t.typnotnull THEN 'not null' END as \"%s\",\n"
 					  "       t.typdefault as \"%s\",\n"
 					  "       pg_catalog.array_to_string(ARRAY(\n"
 					  "         SELECT pg_catalog.pg_get_constraintdef(r.oid, true) FROM pg_catalog.pg_constraint r WHERE t.oid = r.contypid\n"
@@ -4127,13 +4127,13 @@ describeOneTSParser(const char *oid, const char *nspname, const char *prsname)
 	printfPQExpBuffer(&buf,
 					  "SELECT '%s' AS \"%s\",\n"
 					  "   p.prsstart::pg_catalog.regproc AS \"%s\",\n"
-		  "   pg_catalog.obj_description(p.prsstart, 'pg_proc') as \"%s\"\n"
+		   "   pg_catalog.obj_description(p.prsstart, 'pg_proc') as \"%s\"\n"
 					  " FROM pg_catalog.pg_ts_parser p\n"
 					  " WHERE p.oid = '%s'\n"
 					  "UNION ALL\n"
 					  "SELECT '%s',\n"
 					  "   p.prstoken::pg_catalog.regproc,\n"
-					"   pg_catalog.obj_description(p.prstoken, 'pg_proc')\n"
+					  "   pg_catalog.obj_description(p.prstoken, 'pg_proc')\n"
 					  " FROM pg_catalog.pg_ts_parser p\n"
 					  " WHERE p.oid = '%s'\n"
 					  "UNION ALL\n"
@@ -4145,13 +4145,13 @@ describeOneTSParser(const char *oid, const char *nspname, const char *prsname)
 					  "UNION ALL\n"
 					  "SELECT '%s',\n"
 					  "   p.prsheadline::pg_catalog.regproc,\n"
-				 "   pg_catalog.obj_description(p.prsheadline, 'pg_proc')\n"
+				  "   pg_catalog.obj_description(p.prsheadline, 'pg_proc')\n"
 					  " FROM pg_catalog.pg_ts_parser p\n"
 					  " WHERE p.oid = '%s'\n"
 					  "UNION ALL\n"
 					  "SELECT '%s',\n"
 					  "   p.prslextype::pg_catalog.regproc,\n"
-				  "   pg_catalog.obj_description(p.prslextype, 'pg_proc')\n"
+				   "   pg_catalog.obj_description(p.prslextype, 'pg_proc')\n"
 					  " FROM pg_catalog.pg_ts_parser p\n"
 					  " WHERE p.oid = '%s';",
 					  gettext_noop("Start parse"),
@@ -4194,7 +4194,7 @@ describeOneTSParser(const char *oid, const char *nspname, const char *prsname)
 	printfPQExpBuffer(&buf,
 					  "SELECT t.alias as \"%s\",\n"
 					  "  t.description as \"%s\"\n"
-			  "FROM pg_catalog.ts_token_type( '%s'::pg_catalog.oid ) as t\n"
+			   "FROM pg_catalog.ts_token_type( '%s'::pg_catalog.oid ) as t\n"
 					  "ORDER BY 1;",
 					  gettext_noop("Token name"),
 					  gettext_noop("Description"),
@@ -4398,7 +4398,7 @@ listTSConfigs(const char *pattern, bool verbose)
 					  "   c.cfgname as \"%s\",\n"
 		   "   pg_catalog.obj_description(c.oid, 'pg_ts_config') as \"%s\"\n"
 					  "FROM pg_catalog.pg_ts_config c\n"
-		  "LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.cfgnamespace\n",
+		   "LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.cfgnamespace\n",
 					  gettext_noop("Schema"),
 					  gettext_noop("Name"),
 					  gettext_noop("Description")
@@ -4440,9 +4440,9 @@ listTSConfigsVerbose(const char *pattern)
 					  "   p.prsname,\n"
 					  "   np.nspname as pnspname\n"
 					  "FROM pg_catalog.pg_ts_config c\n"
-	   "   LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.cfgnamespace,\n"
+		"   LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.cfgnamespace,\n"
 					  " pg_catalog.pg_ts_parser p\n"
-	  "   LEFT JOIN pg_catalog.pg_namespace np ON np.oid = p.prsnamespace\n"
+	   "   LEFT JOIN pg_catalog.pg_namespace np ON np.oid = p.prsnamespace\n"
 					  "WHERE  p.oid = c.cfgparser\n"
 		);
 
@@ -4516,13 +4516,13 @@ describeOneTSConfig(const char *oid, const char *nspname, const char *cfgname,
 					  "    pg_catalog.ts_token_type(c.cfgparser) AS t\n"
 					  "    WHERE t.tokid = m.maptokentype ) AS \"%s\",\n"
 					  "  pg_catalog.btrim(\n"
-				  "    ARRAY( SELECT mm.mapdict::pg_catalog.regdictionary\n"
+				   "    ARRAY( SELECT mm.mapdict::pg_catalog.regdictionary\n"
 					  "           FROM pg_catalog.pg_ts_config_map AS mm\n"
 					  "           WHERE mm.mapcfg = m.mapcfg AND mm.maptokentype = m.maptokentype\n"
 					  "           ORDER BY mapcfg, maptokentype, mapseqno\n"
 					  "    ) :: pg_catalog.text,\n"
 					  "  '{}') AS \"%s\"\n"
-	 "FROM pg_catalog.pg_ts_config AS c, pg_catalog.pg_ts_config_map AS m\n"
+	  "FROM pg_catalog.pg_ts_config AS c, pg_catalog.pg_ts_config_map AS m\n"
 					  "WHERE c.oid = '%s' AND m.mapcfg = c.oid\n"
 					  "GROUP BY m.mapcfg, m.maptokentype, c.cfgparser\n"
 					  "ORDER BY 1;",
@@ -5053,6 +5053,7 @@ listPublications(const char *pattern)
 	if (pset.sversion < 100000)
 	{
 		char		sverbuf[32];
+
 		psql_error("The server (version %s) does not support publications.\n",
 				   formatPGVersionNumber(pset.sversion, false,
 										 sverbuf, sizeof(sverbuf)));
@@ -5109,12 +5110,13 @@ bool
 describePublications(const char *pattern)
 {
 	PQExpBufferData buf;
-	int				i;
-	PGresult	   *res;
+	int			i;
+	PGresult   *res;
 
 	if (pset.sversion < 100000)
 	{
 		char		sverbuf[32];
+
 		psql_error("The server (version %s) does not support publications.\n",
 				   formatPGVersionNumber(pset.sversion, false,
 										 sverbuf, sizeof(sverbuf)));
@@ -5174,7 +5176,7 @@ describePublications(const char *pattern)
 							  "FROM pg_catalog.pg_class c,\n"
 							  "     pg_catalog.pg_namespace n\n"
 							  "WHERE c.relnamespace = n.oid\n"
-							  "  AND c.relkind = " CppAsString2(RELKIND_RELATION) "\n"
+					 "  AND c.relkind = " CppAsString2(RELKIND_RELATION) "\n"
 							  "  AND n.nspname <> 'pg_catalog'\n"
 							  "  AND n.nspname <> 'information_schema'\n"
 							  "ORDER BY 1,2");
@@ -5238,11 +5240,12 @@ describeSubscriptions(const char *pattern, bool verbose)
 	PGresult   *res;
 	printQueryOpt myopt = pset.popt;
 	static const bool translate_columns[] = {false, false, false, false,
-		false, false};
+	false, false};
 
 	if (pset.sversion < 100000)
 	{
 		char		sverbuf[32];
+
 		psql_error("The server (version %s) does not support subscriptions.\n",
 				   formatPGVersionNumber(pset.sversion, false,
 										 sverbuf, sizeof(sverbuf)));
@@ -5275,7 +5278,7 @@ describeSubscriptions(const char *pattern, bool verbose)
 						 "FROM pg_catalog.pg_subscription\n"
 						 "WHERE subdbid = (SELECT oid\n"
 						 "                 FROM pg_catalog.pg_database\n"
-						 "                 WHERE datname = current_database())");
+					 "                 WHERE datname = current_database())");
 
 	processSQLNamePattern(pset.db, &buf, pattern, true, false,
 						  NULL, "subname", NULL,

@@ -78,7 +78,7 @@ extern int	synchronous_commit;
  * globally accessible, so can be set from anywhere in the code which requires
  * recording flags.
  */
-extern int  MyXactFlags;
+extern int	MyXactFlags;
 
 /*
  * XACT_FLAGS_ACCESSEDTEMPREL - set when a temporary relation is accessed. We

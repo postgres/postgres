@@ -147,8 +147,8 @@ TransactionIdInRecentPast(uint64 xid_with_epoch, TransactionId *extracted_xid)
 	/*
 	 * If the transaction ID has wrapped around, it's definitely too old to
 	 * determine the commit status.  Otherwise, we can compare it to
-	 * ShmemVariableCache->oldestClogXid to determine whether the relevant CLOG
-	 * entry is guaranteed to still exist.
+	 * ShmemVariableCache->oldestClogXid to determine whether the relevant
+	 * CLOG entry is guaranteed to still exist.
 	 */
 	if (xid_epoch + 1 < now_epoch
 		|| (xid_epoch + 1 == now_epoch && xid < now_epoch_last_xid)
@@ -454,7 +454,7 @@ txid_current_if_assigned(PG_FUNCTION_ARGS)
 {
 	txid		val;
 	TxidEpoch	state;
-	TransactionId	topxid = GetTopTransactionIdIfAny();
+	TransactionId topxid = GetTopTransactionIdIfAny();
 
 	if (topxid == InvalidTransactionId)
 		PG_RETURN_NULL();
@@ -741,9 +741,9 @@ txid_snapshot_xip(PG_FUNCTION_ARGS)
 Datum
 txid_status(PG_FUNCTION_ARGS)
 {
-	const char	   *status;
-	uint64			xid_with_epoch = PG_GETARG_INT64(0);
-	TransactionId	xid;
+	const char *status;
+	uint64		xid_with_epoch = PG_GETARG_INT64(0);
+	TransactionId xid;
 
 	/*
 	 * We must protect against concurrent truncation of clog entries to avoid
@@ -770,8 +770,8 @@ txid_status(PG_FUNCTION_ARGS)
 			 * it's aborted if it isn't committed and is older than our
 			 * snapshot xmin.
 			 *
-			 * Otherwise it must be in-progress (or have been at the time
-			 * we checked commit/abort status).
+			 * Otherwise it must be in-progress (or have been at the time we
+			 * checked commit/abort status).
 			 */
 			if (TransactionIdPrecedes(xid, GetActiveSnapshot()->xmin))
 				status = gettext_noop("aborted");

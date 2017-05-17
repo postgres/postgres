@@ -885,8 +885,8 @@ FindEndOfXLOG(void)
 	newXlogSegNo = ControlFile.checkPointCopy.redo / ControlFile.xlog_seg_size;
 
 	/*
-	 * Scan the pg_wal directory to find existing WAL segment files. We
-	 * assume any present have been used; in most scenarios this should be
+	 * Scan the pg_wal directory to find existing WAL segment files. We assume
+	 * any present have been used; in most scenarios this should be
 	 * conservative, because of xlog.c's attempts to pre-create files.
 	 */
 	xldir = opendir(XLOGDIR);

@@ -39,9 +39,9 @@ typedef struct BrinMemTuple
 	BlockNumber bt_blkno;		/* heap blkno that the tuple is for */
 	MemoryContext bt_context;	/* memcxt holding the bt_columns values */
 	/* output arrays for brin_deform_tuple: */
-	Datum		*bt_values;		/* values array */
-	bool		*bt_allnulls;	/* allnulls array */
-	bool		*bt_hasnulls; 	/* hasnulls array */
+	Datum	   *bt_values;		/* values array */
+	bool	   *bt_allnulls;	/* allnulls array */
+	bool	   *bt_hasnulls;	/* hasnulls array */
 	/* not an output array, but must be last */
 	BrinValues	bt_columns[FLEXIBLE_ARRAY_MEMBER];
 } BrinMemTuple;

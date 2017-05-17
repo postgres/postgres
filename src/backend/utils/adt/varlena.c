@@ -1557,8 +1557,10 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2, Oid collid)
 				else
 #endif
 				{
-					int32_t ulen1, ulen2;
-					UChar *uchar1, *uchar2;
+					int32_t		ulen1,
+								ulen2;
+					UChar	   *uchar1,
+							   *uchar2;
 
 					ulen1 = icu_to_uchar(&uchar1, arg1, len1);
 					ulen2 = icu_to_uchar(&uchar2, arg2, len2);
@@ -1567,10 +1569,10 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2, Oid collid)
 										  uchar1, ulen1,
 										  uchar2, ulen2);
 				}
-#else	/* not USE_ICU */
+#else							/* not USE_ICU */
 				/* shouldn't happen */
 				elog(ERROR, "unsupported collprovider: %c", mylocale->provider);
-#endif	/* not USE_ICU */
+#endif   /* not USE_ICU */
 			}
 			else
 			{
@@ -2136,13 +2138,15 @@ varstrfastcmp_locale(Datum x, Datum y, SortSupport ssup)
 										  &status);
 				if (U_FAILURE(status))
 					ereport(ERROR,
-							(errmsg("collation failed: %s", u_errorName(status))));
+					  (errmsg("collation failed: %s", u_errorName(status))));
 			}
 			else
 #endif
 			{
-				int32_t ulen1, ulen2;
-				UChar *uchar1, *uchar2;
+				int32_t		ulen1,
+							ulen2;
+				UChar	   *uchar1,
+						   *uchar2;
 
 				ulen1 = icu_to_uchar(&uchar1, a1p, len1);
 				ulen2 = icu_to_uchar(&uchar2, a2p, len2);
@@ -2151,10 +2155,10 @@ varstrfastcmp_locale(Datum x, Datum y, SortSupport ssup)
 									  uchar1, ulen1,
 									  uchar2, ulen2);
 			}
-#else	/* not USE_ICU */
+#else							/* not USE_ICU */
 			/* shouldn't happen */
 			elog(ERROR, "unsupported collprovider: %c", sss->locale->provider);
-#endif	/* not USE_ICU */
+#endif   /* not USE_ICU */
 		}
 		else
 		{
@@ -2300,8 +2304,11 @@ varstr_abbrev_convert(Datum original, SortSupport ssup)
 		}
 
 		memcpy(sss->buf1, authoritative_data, len);
-		/* Just like strcoll(), strxfrm() expects a NUL-terminated string.
-		 * Not necessary for ICU, but doesn't hurt. */
+
+		/*
+		 * Just like strcoll(), strxfrm() expects a NUL-terminated string. Not
+		 * necessary for ICU, but doesn't hurt.
+		 */
 		sss->buf1[len] = '\0';
 		sss->last_len1 = len;
 
@@ -2336,13 +2343,13 @@ varstr_abbrev_convert(Datum original, SortSupport ssup)
 					UErrorCode	status;
 
 					uiter_setUTF8(&iter, sss->buf1, len);
-					state[0] = state[1] = 0;  /* won't need that again */
+					state[0] = state[1] = 0;	/* won't need that again */
 					status = U_ZERO_ERROR;
 					bsize = ucol_nextSortKeyPart(sss->locale->info.icu.ucol,
 												 &iter,
 												 state,
 												 (uint8_t *) sss->buf2,
-												 Min(sizeof(Datum), sss->buflen2),
+											Min(sizeof(Datum), sss->buflen2),
 												 &status);
 					if (U_FAILURE(status))
 						ereport(ERROR,
@@ -2351,7 +2358,7 @@ varstr_abbrev_convert(Datum original, SortSupport ssup)
 				else
 					bsize = ucol_getSortKey(sss->locale->info.icu.ucol,
 											uchar, ulen,
-											(uint8_t *) sss->buf2, sss->buflen2);
+										(uint8_t *) sss->buf2, sss->buflen2);
 			}
 			else
 #endif

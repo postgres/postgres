@@ -38,12 +38,12 @@ typedef struct HeadlineJsonState
 	HeadlineParsedText *prs;
 	TSConfigCacheEntry *cfg;
 	TSParserCacheEntry *prsobj;
-	TSQuery				query;
-	List				*prsoptions;
-	bool				transformed;
+	TSQuery		query;
+	List	   *prsoptions;
+	bool		transformed;
 } HeadlineJsonState;
 
-static text * headline_json_value(void *_state, char *elem_value, int elem_len);
+static text *headline_json_value(void *_state, char *elem_value, int elem_len);
 
 static void
 tt_setup_firstcall(FuncCallContext *funcctx, Oid prsid)
@@ -382,11 +382,11 @@ ts_headline_opt(PG_FUNCTION_ARGS)
 Datum
 ts_headline_jsonb_byid_opt(PG_FUNCTION_ARGS)
 {
-	Oid				tsconfig = PG_GETARG_OID(0);
-	Jsonb			*jb = PG_GETARG_JSONB(1);
-	TSQuery			query = PG_GETARG_TSQUERY(2);
-	text			*opt = (PG_NARGS() > 3 && PG_GETARG_POINTER(3)) ? PG_GETARG_TEXT_P(3) : NULL;
-	Jsonb			*out;
+	Oid			tsconfig = PG_GETARG_OID(0);
+	Jsonb	   *jb = PG_GETARG_JSONB(1);
+	TSQuery		query = PG_GETARG_TSQUERY(2);
+	text	   *opt = (PG_NARGS() > 3 && PG_GETARG_POINTER(3)) ? PG_GETARG_TEXT_P(3) : NULL;
+	Jsonb	   *out;
 	JsonTransformStringValuesAction action = (JsonTransformStringValuesAction) headline_json_value;
 	HeadlineParsedText prs;
 	HeadlineJsonState *state = palloc0(sizeof(HeadlineJsonState));
@@ -458,11 +458,11 @@ ts_headline_jsonb_opt(PG_FUNCTION_ARGS)
 Datum
 ts_headline_json_byid_opt(PG_FUNCTION_ARGS)
 {
-	Oid					tsconfig = PG_GETARG_OID(0);
-	text				*json = PG_GETARG_TEXT_P(1);
-	TSQuery				query = PG_GETARG_TSQUERY(2);
-	text				*opt = (PG_NARGS() > 3 && PG_GETARG_POINTER(3)) ? PG_GETARG_TEXT_P(3) : NULL;
-	text				*out;
+	Oid			tsconfig = PG_GETARG_OID(0);
+	text	   *json = PG_GETARG_TEXT_P(1);
+	TSQuery		query = PG_GETARG_TSQUERY(2);
+	text	   *opt = (PG_NARGS() > 3 && PG_GETARG_POINTER(3)) ? PG_GETARG_TEXT_P(3) : NULL;
+	text	   *out;
 	JsonTransformStringValuesAction action = (JsonTransformStringValuesAction) headline_json_value;
 
 	HeadlineParsedText prs;
@@ -543,8 +543,8 @@ headline_json_value(void *_state, char *elem_value, int elem_len)
 	HeadlineParsedText *prs = state->prs;
 	TSConfigCacheEntry *cfg = state->cfg;
 	TSParserCacheEntry *prsobj = state->prsobj;
-	TSQuery	query = state->query;
-	List *prsoptions = state->prsoptions;
+	TSQuery		query = state->query;
+	List	   *prsoptions = state->prsoptions;
 
 	prs->curwords = 0;
 	hlparsetext(cfg->cfgId, prs, query, elem_value, elem_len);

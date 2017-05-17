@@ -242,24 +242,25 @@ struct _archiveHandle
 	size_t		lookaheadLen;	/* Length of data in lookahead */
 	pgoff_t		lookaheadPos;	/* Current read position in lookahead buffer */
 
-	ArchiveEntryPtrType ArchiveEntryPtr;	/* Called for each metadata object */
-	StartDataPtrType StartDataPtr;	/* Called when table data is about to be
-								 * dumped */
-	WriteDataPtrType WriteDataPtr;	/* Called to send some table data to the
-								 * archive */
-	EndDataPtrType EndDataPtr;		/* Called when table data dump is finished */
-	WriteBytePtrType WriteBytePtr;	/* Write a byte to output */
+	ArchiveEntryPtrType ArchiveEntryPtr;		/* Called for each metadata
+												 * object */
+	StartDataPtrType StartDataPtr;		/* Called when table data is about to
+										 * be dumped */
+	WriteDataPtrType WriteDataPtr;		/* Called to send some table data to
+										 * the archive */
+	EndDataPtrType EndDataPtr;	/* Called when table data dump is finished */
+	WriteBytePtrType WriteBytePtr;		/* Write a byte to output */
 	ReadBytePtrType ReadBytePtr;	/* Read a byte from an archive */
 	WriteBufPtrType WriteBufPtr;	/* Write a buffer of output to the archive */
-	ReadBufPtrType ReadBufPtr;		/* Read a buffer of input from the archive */
-	ClosePtrType ClosePtr;			/* Close the archive */
-	ReopenPtrType ReopenPtr;		/* Reopen the archive */
-	WriteExtraTocPtrType WriteExtraTocPtr;	/* Write extra TOC entry data
-										 * associated with the current archive
-										 * format */
-	ReadExtraTocPtrType ReadExtraTocPtr;	/* Read extra info associated with
-										 * archive format */
-	PrintExtraTocPtrType PrintExtraTocPtr;	/* Extra TOC info for format */
+	ReadBufPtrType ReadBufPtr;	/* Read a buffer of input from the archive */
+	ClosePtrType ClosePtr;		/* Close the archive */
+	ReopenPtrType ReopenPtr;	/* Reopen the archive */
+	WriteExtraTocPtrType WriteExtraTocPtr;		/* Write extra TOC entry data
+												 * associated with the current
+												 * archive format */
+	ReadExtraTocPtrType ReadExtraTocPtr;		/* Read extra info associated
+												 * with archive format */
+	PrintExtraTocPtrType PrintExtraTocPtr;		/* Extra TOC info for format */
 	PrintTocDataPtrType PrintTocDataPtr;
 
 	StartBlobsPtrType StartBlobsPtr;
@@ -271,10 +272,10 @@ struct _archiveHandle
 	WorkerJobDumpPtrType WorkerJobDumpPtr;
 	WorkerJobRestorePtrType WorkerJobRestorePtr;
 
-	ClonePtrType ClonePtr;			/* Clone format-specific fields */
-	DeClonePtrType DeClonePtr;		/* Clean up cloned fields */
+	ClonePtrType ClonePtr;		/* Clone format-specific fields */
+	DeClonePtrType DeClonePtr;	/* Clean up cloned fields */
 
-	CustomOutPtrType CustomOutPtr;	/* Alternative script output routine */
+	CustomOutPtrType CustomOutPtr;		/* Alternative script output routine */
 
 	/* Stuff for direct DB connection */
 	char	   *archdbname;		/* DB name *read* from archive */

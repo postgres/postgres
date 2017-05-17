@@ -40,11 +40,11 @@
  */
 typedef struct StatExtEntry
 {
-	Oid			statOid;	/* OID of pg_statistic_ext entry */
-	char	   *schema;		/* statistics object's schema */
-	char	   *name;		/* statistics object's name */
-	Bitmapset  *columns;	/* attribute numbers covered by the object */
-	List	   *types;		/* 'char' list of enabled statistic kinds */
+	Oid			statOid;		/* OID of pg_statistic_ext entry */
+	char	   *schema;			/* statistics object's schema */
+	char	   *name;			/* statistics object's name */
+	Bitmapset  *columns;		/* attribute numbers covered by the object */
+	List	   *types;			/* 'char' list of enabled statistic kinds */
 } StatExtEntry;
 
 
@@ -83,15 +83,15 @@ BuildRelationExtStatistics(Relation onerel, double totalrows,
 
 	foreach(lc, stats)
 	{
-		StatExtEntry   *stat = (StatExtEntry *) lfirst(lc);
-		MVNDistinct	   *ndistinct = NULL;
+		StatExtEntry *stat = (StatExtEntry *) lfirst(lc);
+		MVNDistinct *ndistinct = NULL;
 		MVDependencies *dependencies = NULL;
-		VacAttrStats  **stats;
-		ListCell	   *lc2;
+		VacAttrStats **stats;
+		ListCell   *lc2;
 
 		/*
-		 * Check if we can build these stats based on the column analyzed.
-		 * If not, report this fact (except in autovacuum) and move on.
+		 * Check if we can build these stats based on the column analyzed. If
+		 * not, report this fact (except in autovacuum) and move on.
 		 */
 		stats = lookup_var_attr_stats(onerel, stat->columns,
 									  natts, vacattrstats);
@@ -114,7 +114,7 @@ BuildRelationExtStatistics(Relation onerel, double totalrows,
 		/* compute statistic of each requested type */
 		foreach(lc2, stat->types)
 		{
-			char	t = (char) lfirst_int(lc2);
+			char		t = (char) lfirst_int(lc2);
 
 			if (t == STATS_EXT_NDISTINCT)
 				ndistinct = statext_ndistinct_build(totalrows, numrows, rows,
@@ -141,7 +141,7 @@ BuildRelationExtStatistics(Relation onerel, double totalrows,
 bool
 statext_is_kind_built(HeapTuple htup, char type)
 {
-	AttrNumber  attnum;
+	AttrNumber	attnum;
 
 	switch (type)
 	{
@@ -168,8 +168,8 @@ fetch_statentries_for_relation(Relation pg_statext, Oid relid)
 {
 	SysScanDesc scan;
 	ScanKeyData skey;
-	HeapTuple   htup;
-	List       *result = NIL;
+	HeapTuple	htup;
+	List	   *result = NIL;
 
 	/*
 	 * Prepare to scan pg_statistic_ext for entries having stxrelid = this
@@ -250,7 +250,7 @@ lookup_var_attr_stats(Relation rel, Bitmapset *attrs,
 	/* lookup VacAttrStats info for the requested columns (same attnum) */
 	while ((x = bms_next_member(attrs, x)) >= 0)
 	{
-		int		j;
+		int			j;
 
 		stats[i] = NULL;
 		for (j = 0; j < nvacatts; j++)
@@ -273,10 +273,10 @@ lookup_var_attr_stats(Relation rel, Bitmapset *attrs,
 			return NULL;
 		}
 
-		 /*
-		  * Sanity check that the column is not dropped - stats should have
-		  * been removed in this case.
-		  */
+		/*
+		 * Sanity check that the column is not dropped - stats should have
+		 * been removed in this case.
+		 */
 		Assert(!stats[i]->attr->attisdropped);
 
 		i++;
@@ -367,7 +367,7 @@ multi_sort_init(int ndims)
 void
 multi_sort_add_dimension(MultiSortSupport mss, int sortdim, Oid oper)
 {
-	SortSupport		ssup = &mss->ssup[sortdim];
+	SortSupport ssup = &mss->ssup[sortdim];
 
 	ssup->ssup_cxt = CurrentMemoryContext;
 	ssup->ssup_collation = DEFAULT_COLLATION_OID;

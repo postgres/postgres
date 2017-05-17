@@ -164,10 +164,10 @@ spgbuildempty(Relation index)
 
 	/*
 	 * Write the page and log it unconditionally.  This is important
-	 * particularly for indexes created on tablespaces and databases
-	 * whose creation happened after the last redo pointer as recovery
-	 * removes any of their existing content when the corresponding
-	 * create records are replayed.
+	 * particularly for indexes created on tablespaces and databases whose
+	 * creation happened after the last redo pointer as recovery removes any
+	 * of their existing content when the corresponding create records are
+	 * replayed.
 	 */
 	PageSetChecksumInplace(page, SPGIST_METAPAGE_BLKNO);
 	smgrwrite(index->rd_smgr, INIT_FORKNUM, SPGIST_METAPAGE_BLKNO,

@@ -468,7 +468,7 @@ _outGather(StringInfo str, const Gather *node)
 static void
 _outGatherMerge(StringInfo str, const GatherMerge *node)
 {
-	int		i;
+	int			i;
 
 	WRITE_NODE_TYPE("GATHERMERGE");
 

@@ -197,7 +197,7 @@ static XLogRecPtr logical_startptr = InvalidXLogRecPtr;
 /* A sample associating a WAL location with the time it was written. */
 typedef struct
 {
-	XLogRecPtr lsn;
+	XLogRecPtr	lsn;
 	TimestampTz time;
 } WalTimeSample;
 
@@ -207,12 +207,12 @@ typedef struct
 /* A mechanism for tracking replication lag. */
 static struct
 {
-	XLogRecPtr last_lsn;
+	XLogRecPtr	last_lsn;
 	WalTimeSample buffer[LAG_TRACKER_BUFFER_SIZE];
-	int write_head;
-	int read_heads[NUM_SYNC_REP_WAIT_MODE];
+	int			write_head;
+	int			read_heads[NUM_SYNC_REP_WAIT_MODE];
 	WalTimeSample last_read[NUM_SYNC_REP_WAIT_MODE];
-} LagTracker;
+}	LagTracker;
 
 /* Signal handlers */
 static void WalSndSigHupHandler(SIGNAL_ARGS);
@@ -530,7 +530,7 @@ StartReplication(StartReplicationCmd *cmd)
 	if (ThisTimeLineID == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("IDENTIFY_SYSTEM has not been run before START_REPLICATION")));
+		errmsg("IDENTIFY_SYSTEM has not been run before START_REPLICATION")));
 
 	/*
 	 * We assume here that we're logging enough information in the WAL for
@@ -580,8 +580,8 @@ StartReplication(StartReplicationCmd *cmd)
 			sendTimeLineIsHistoric = true;
 
 			/*
-			 * Check that the timeline the client requested exists, and
-			 * the requested start location is on that timeline.
+			 * Check that the timeline the client requested exists, and the
+			 * requested start location is on that timeline.
 			 */
 			timeLineHistory = readTimeLineHistory(ThisTimeLineID);
 			switchpoint = tliSwitchPoint(cmd->timeline, timeLineHistory,
@@ -599,8 +599,8 @@ StartReplication(StartReplicationCmd *cmd)
 			 * request to start replication from the beginning of the WAL
 			 * segment that contains switchpoint, but on the new timeline, so
 			 * that it doesn't end up with a partial segment. If you ask for
-			 * too old a starting point, you'll get an error later when we fail
-			 * to find the requested WAL segment in pg_wal.
+			 * too old a starting point, you'll get an error later when we
+			 * fail to find the requested WAL segment in pg_wal.
 			 *
 			 * XXX: we could be more strict here and only allow a startpoint
 			 * that's older than the switchpoint, if it's still in the same
@@ -717,9 +717,9 @@ StartReplication(StartReplicationCmd *cmd)
 		MemSet(nulls, false, sizeof(nulls));
 
 		/*
-		 * Need a tuple descriptor representing two columns.
-		 * int8 may seem like a surprising data type for this, but in theory
-		 * int4 would not be wide enough for this, as TimeLineID is unsigned.
+		 * Need a tuple descriptor representing two columns. int8 may seem
+		 * like a surprising data type for this, but in theory int4 would not
+		 * be wide enough for this, as TimeLineID is unsigned.
 		 */
 		tupdesc = CreateTemplateTupleDesc(2, false);
 		TupleDescInitBuiltinEntry(tupdesc, (AttrNumber) 1, "next_tli",
@@ -795,7 +795,7 @@ parseCreateReplSlotOptions(CreateReplicationSlotCmd *cmd,
 	bool		reserve_wal_given = false;
 
 	/* Parse options */
-	foreach (lc, cmd->options)
+	foreach(lc, cmd->options)
 	{
 		DefElem    *defel = (DefElem *) lfirst(lc);
 
@@ -883,7 +883,7 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 	if (cmd->kind == REPLICATION_KIND_LOGICAL)
 	{
 		LogicalDecodingContext *ctx;
-		bool	need_full_snapshot = false;
+		bool		need_full_snapshot = false;
 
 		/*
 		 * Do options check early so that we can bail before calling the
@@ -1255,10 +1255,10 @@ WalSndUpdateProgress(LogicalDecodingContext *ctx, XLogRecPtr lsn, TransactionId 
 	TimestampTz now = GetCurrentTimestamp();
 
 	/*
-	 * Track lag no more than once per WALSND_LOGICAL_LAG_TRACK_INTERVAL_MS
-	 * to avoid flooding the lag tracker when we commit frequently.
+	 * Track lag no more than once per WALSND_LOGICAL_LAG_TRACK_INTERVAL_MS to
+	 * avoid flooding the lag tracker when we commit frequently.
 	 */
-#define WALSND_LOGICAL_LAG_TRACK_INTERVAL_MS 	1000
+#define WALSND_LOGICAL_LAG_TRACK_INTERVAL_MS	1000
 	if (!TimestampDifferenceExceeds(sendTime, now,
 									WALSND_LOGICAL_LAG_TRACK_INTERVAL_MS))
 		return;
@@ -1474,8 +1474,8 @@ exec_replication_command(const char *cmd_string)
 		SnapBuildClearExportedSnapshot();
 
 	/*
-	 * For aborted transactions, don't allow anything except pure SQL,
-	 * the exec_simple_query() will handle it correctly.
+	 * For aborted transactions, don't allow anything except pure SQL, the
+	 * exec_simple_query() will handle it correctly.
 	 */
 	if (IsAbortedTransactionBlockState() && !IsA(cmd_node, SQLCmd))
 		ereport(ERROR,
@@ -1744,7 +1744,7 @@ ProcessStandbyReplyMessage(void)
 	bool		clearLagTimes;
 	TimestampTz now;
 
-	static bool	fullyAppliedLastTime = false;
+	static bool fullyAppliedLastTime = false;
 
 	/* the caller already consumed the msgtype byte */
 	writePtr = pq_getmsgint64(&reply_message);
@@ -1892,7 +1892,7 @@ TransactionIdInRecentPast(TransactionId xid, uint32 epoch)
 	}
 
 	if (!TransactionIdPrecedesOrEquals(xid, nextXid))
-		return false;				/* epoch OK, but it's wrapped around */
+		return false;			/* epoch OK, but it's wrapped around */
 
 	return true;
 }
@@ -1974,8 +1974,8 @@ ProcessStandbyHSFeedbackMessage(void)
 	 *
 	 * If we're using a replication slot we reserve the xmin via that,
 	 * otherwise via the walsender's PGXACT entry. We can only track the
-	 * catalog xmin separately when using a slot, so we store the least
-	 * of the two provided when not using a slot.
+	 * catalog xmin separately when using a slot, so we store the least of the
+	 * two provided when not using a slot.
 	 *
 	 * XXX: It might make sense to generalize the ephemeral slot concept and
 	 * always use the slot mechanism to handle the feedback xmin.
@@ -2155,8 +2155,8 @@ WalSndLoop(WalSndSendDataCallback send_data)
 			}
 
 			/*
-			 * At the reception of SIGUSR2, switch the WAL sender to the stopping
-			 * state.
+			 * At the reception of SIGUSR2, switch the WAL sender to the
+			 * stopping state.
 			 */
 			if (got_SIGUSR2)
 				WalSndSetState(WALSNDSTATE_STOPPING);
@@ -2588,18 +2588,18 @@ XLogSendPhysical(void)
 	 * it seems good enough to capture the time here.  We should reach this
 	 * after XLogFlush() runs WalSndWakeupProcessRequests(), and although that
 	 * may take some time, we read the WAL flush pointer and take the time
-	 * very close to together here so that we'll get a later position if it
-	 * is still moving.
+	 * very close to together here so that we'll get a later position if it is
+	 * still moving.
 	 *
 	 * Because LagTrackerWriter ignores samples when the LSN hasn't advanced,
 	 * this gives us a cheap approximation for the WAL flush time for this
 	 * LSN.
 	 *
 	 * Note that the LSN is not necessarily the LSN for the data contained in
-	 * the present message; it's the end of the WAL, which might be
-	 * further ahead.  All the lag tracking machinery cares about is finding
-	 * out when that arbitrary LSN is eventually reported as written, flushed
-	 * and applied, so that it can measure the elapsed time.
+	 * the present message; it's the end of the WAL, which might be further
+	 * ahead.  All the lag tracking machinery cares about is finding out when
+	 * that arbitrary LSN is eventually reported as written, flushed and
+	 * applied, so that it can measure the elapsed time.
 	 */
 	LagTrackerWrite(SendRqstPtr, GetCurrentTimestamp());
 
@@ -2758,8 +2758,8 @@ XLogSendLogical(void)
 	if (record != NULL)
 	{
 		/*
-		 * Note the lack of any call to LagTrackerWrite() which is handled
-		 * by WalSndUpdateProgress which is called by output plugin through
+		 * Note the lack of any call to LagTrackerWrite() which is handled by
+		 * WalSndUpdateProgress which is called by output plugin through
 		 * logical decoding write api.
 		 */
 		LogicalDecodingProcessRecord(logical_decoding_ctx, logical_decoding_ctx->reader);
@@ -2805,9 +2805,8 @@ WalSndDone(WalSndSendDataCallback send_data)
 
 	/*
 	 * To figure out whether all WAL has successfully been replicated, check
-	 * flush location if valid, write otherwise. Tools like pg_receivewal
-	 * will usually (unless in synchronous mode) return an invalid flush
-	 * location.
+	 * flush location if valid, write otherwise. Tools like pg_receivewal will
+	 * usually (unless in synchronous mode) return an invalid flush location.
 	 */
 	replicatedPtr = XLogRecPtrIsInvalid(MyWalSnd->flush) ?
 		MyWalSnd->write : MyWalSnd->flush;
@@ -3077,7 +3076,7 @@ WalSndWaitStopping(void)
 		if (all_stopped)
 			return;
 
-		pg_usleep(10000L);	/* wait for 10 msec */
+		pg_usleep(10000L);		/* wait for 10 msec */
 	}
 }
 
@@ -3123,7 +3122,7 @@ WalSndGetStateString(WalSndState state)
 static Interval *
 offset_to_interval(TimeOffset offset)
 {
-	Interval *result = palloc(sizeof(Interval));
+	Interval   *result = palloc(sizeof(Interval));
 
 	result->month = 0;
 	result->day = 0;
@@ -3360,9 +3359,9 @@ WalSndKeepaliveIfNecessary(TimestampTz now)
 static void
 LagTrackerWrite(XLogRecPtr lsn, TimestampTz local_flush_time)
 {
-	bool buffer_full;
-	int new_write_head;
-	int i;
+	bool		buffer_full;
+	int			new_write_head;
+	int			i;
 
 	if (!am_walsender)
 		return;
@@ -3448,16 +3447,16 @@ LagTrackerRead(int head, XLogRecPtr lsn, TimestampTz now)
 		/*
 		 * We didn't cross a time.  If there is a future sample that we
 		 * haven't reached yet, and we've already reached at least one sample,
-		 * let's interpolate the local flushed time.  This is mainly useful for
-		 * reporting a completely stuck apply position as having increasing
-		 * lag, since otherwise we'd have to wait for it to eventually start
-		 * moving again and cross one of our samples before we can show the
-		 * lag increasing.
+		 * let's interpolate the local flushed time.  This is mainly useful
+		 * for reporting a completely stuck apply position as having
+		 * increasing lag, since otherwise we'd have to wait for it to
+		 * eventually start moving again and cross one of our samples before
+		 * we can show the lag increasing.
 		 */
 		if (LagTracker.read_heads[head] != LagTracker.write_head &&
 			LagTracker.last_read[head].time != 0)
 		{
-			double fraction;
+			double		fraction;
 			WalTimeSample prev = LagTracker.last_read[head];
 			WalTimeSample next = LagTracker.buffer[LagTracker.read_heads[head]];
 

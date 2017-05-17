@@ -31,14 +31,14 @@ typedef enum EphemeralNameRelationType
  */
 typedef struct EphemeralNamedRelationMetadataData
 {
-	char			   *name;		/* name used to identify the relation */
+	char	   *name;			/* name used to identify the relation */
 
 	/* only one of the next two fields should be used */
-	Oid					reliddesc;	/* oid of relation to get tupdesc */
-	TupleDesc			tupdesc;	/* description of result rows */
+	Oid			reliddesc;		/* oid of relation to get tupdesc */
+	TupleDesc	tupdesc;		/* description of result rows */
 
 	EphemeralNameRelationType enrtype;	/* to identify type of relation */
-	double				enrtuples;	/* estimated number of tuples */
+	double		enrtuples;		/* estimated number of tuples */
 } EphemeralNamedRelationMetadataData;
 
 typedef EphemeralNamedRelationMetadataData *EphemeralNamedRelationMetadata;
@@ -49,7 +49,7 @@ typedef EphemeralNamedRelationMetadataData *EphemeralNamedRelationMetadata;
  */
 typedef struct EphemeralNamedRelationData
 {
-	EphemeralNamedRelationMetadataData	md;
+	EphemeralNamedRelationMetadataData md;
 	void	   *reldata;		/* structure for execution-time access to data */
 } EphemeralNamedRelationData;
 

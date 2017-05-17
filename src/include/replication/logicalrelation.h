@@ -16,28 +16,27 @@
 
 typedef struct LogicalRepRelMapEntry
 {
-	LogicalRepRelation	remoterel;		/* key is remoterel.remoteid */
+	LogicalRepRelation remoterel;		/* key is remoterel.remoteid */
 
 	/* Mapping to local relation, filled as needed. */
-	Oid					localreloid;	/* local relation id */
-	Relation			localrel;		/* relcache entry */
-	AttrNumber         *attrmap;		/* map of local attributes to
-										 * remote ones */
-	bool				updatable;		/* Can apply updates/deletes? */
+	Oid			localreloid;	/* local relation id */
+	Relation	localrel;		/* relcache entry */
+	AttrNumber *attrmap;		/* map of local attributes to remote ones */
+	bool		updatable;		/* Can apply updates/deletes? */
 
 	/* Sync state. */
-	char				state;
-	XLogRecPtr			statelsn;
+	char		state;
+	XLogRecPtr	statelsn;
 } LogicalRepRelMapEntry;
 
 extern void logicalrep_relmap_update(LogicalRepRelation *remoterel);
 
 extern LogicalRepRelMapEntry *logicalrep_rel_open(LogicalRepRelId remoteid,
-												  LOCKMODE lockmode);
+					LOCKMODE lockmode);
 extern void logicalrep_rel_close(LogicalRepRelMapEntry *rel,
-								 LOCKMODE lockmode);
+					 LOCKMODE lockmode);
 
 extern void logicalrep_typmap_update(LogicalRepTyp *remotetyp);
-extern Oid logicalrep_typmap_getid(Oid remoteid);
+extern Oid	logicalrep_typmap_getid(Oid remoteid);
 
 #endif   /* LOGICALRELATION_H */

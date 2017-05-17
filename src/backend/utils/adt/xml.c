@@ -2385,8 +2385,8 @@ database_get_xml_visible_tables(void)
 							 CppAsString2(RELKIND_RELATION) ","
 							 CppAsString2(RELKIND_MATVIEW) ","
 							 CppAsString2(RELKIND_VIEW) ")"
-							 " AND pg_catalog.has_table_privilege(pg_class.oid, 'SELECT')"
-							 " AND relnamespace IN (" XML_VISIBLE_SCHEMAS ");");
+				" AND pg_catalog.has_table_privilege(pg_class.oid, 'SELECT')"
+						  " AND relnamespace IN (" XML_VISIBLE_SCHEMAS ");");
 }
 
 
@@ -4518,9 +4518,8 @@ XmlTableGetValue(TableFuncScanState *state, int colnum,
 					 * This line ensure mapping of empty tags to PostgreSQL
 					 * value. Usually we would to map a empty tag to empty
 					 * string. But this mapping can create empty string when
-					 * user doesn't expect it - when empty tag is enforced
-					 * by libxml2 - when user uses a text() function for
-					 * example.
+					 * user doesn't expect it - when empty tag is enforced by
+					 * libxml2 - when user uses a text() function for example.
 					 */
 					cstr = "";
 				}

@@ -272,7 +272,7 @@ AdvanceOldestClogXid(TransactionId oldest_datfrozenxid)
 {
 	LWLockAcquire(CLogTruncationLock, LW_EXCLUSIVE);
 	if (TransactionIdPrecedes(ShmemVariableCache->oldestClogXid,
-		oldest_datfrozenxid))
+							  oldest_datfrozenxid))
 	{
 		ShmemVariableCache->oldestClogXid = oldest_datfrozenxid;
 	}

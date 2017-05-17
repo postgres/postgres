@@ -171,8 +171,8 @@ static void deparseFromExprForRel(StringInfo buf, PlannerInfo *root,
 					RelOptInfo *joinrel, bool use_alias, List **params_list);
 static void deparseFromExpr(List *quals, deparse_expr_cxt *context);
 static void deparseRangeTblRef(StringInfo buf, PlannerInfo *root,
-							   RelOptInfo *foreignrel, bool make_subquery,
-							   List **params_list);
+				   RelOptInfo *foreignrel, bool make_subquery,
+				   List **params_list);
 static void deparseAggref(Aggref *node, deparse_expr_cxt *context);
 static void appendGroupByClause(List *tlist, deparse_expr_cxt *context);
 static void appendAggOrderBy(List *orderList, List *targetList,
@@ -185,9 +185,9 @@ static Node *deparseSortGroupClause(Index ref, List *tlist,
  * Helper functions
  */
 static bool is_subquery_var(Var *node, RelOptInfo *foreignrel,
-							int *relno, int *colno);
+				int *relno, int *colno);
 static void get_relation_column_alias_ids(Var *node, RelOptInfo *foreignrel,
-										  int *relno, int *colno);
+							  int *relno, int *colno);
 
 
 /*
@@ -1017,8 +1017,8 @@ deparseSelectSql(List *tlist, bool is_subquery, List **retrieved_attrs,
 	{
 		/*
 		 * For a relation that is deparsed as a subquery, emit expressions
-		 * specified in the relation's reltarget.  Note that since this is
-		 * for the subquery, no need to care about *retrieved_attrs.
+		 * specified in the relation's reltarget.  Note that since this is for
+		 * the subquery, no need to care about *retrieved_attrs.
 		 */
 		deparseSubqueryTargetList(context);
 	}
@@ -2189,8 +2189,8 @@ deparseVar(Var *node, deparse_expr_cxt *context)
 
 	/*
 	 * If the Var belongs to the foreign relation that is deparsed as a
-	 * subquery, use the relation and column alias to the Var provided
-	 * by the subquery, instead of the remote name.
+	 * subquery, use the relation and column alias to the Var provided by the
+	 * subquery, instead of the remote name.
 	 */
 	if (is_subquery_var(node, context->scanrel, &relno, &colno))
 	{

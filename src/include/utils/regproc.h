@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * regproc.h
- *    Functions for the built-in types regproc, regclass, regtype, etc.
+ *	  Functions for the built-in types regproc, regclass, regtype, etc.
  *
  * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California

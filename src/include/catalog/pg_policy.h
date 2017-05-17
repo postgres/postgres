@@ -50,6 +50,6 @@ typedef FormData_pg_policy *Form_pg_policy;
 #define Anum_pg_policy_polpermissive	4
 #define Anum_pg_policy_polroles			5
 #define Anum_pg_policy_polqual			6
-#define Anum_pg_policy_polwithcheck 	7
+#define Anum_pg_policy_polwithcheck		7
 
 #endif   /* PG_POLICY_H */

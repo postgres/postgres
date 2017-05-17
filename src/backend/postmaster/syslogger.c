@@ -1360,7 +1360,7 @@ set_next_rotation_time(void)
 static void
 update_metainfo_datafile(void)
 {
-	FILE    *fh;
+	FILE	   *fh;
 
 	if (!(Log_destination & LOG_DESTINATION_STDERR) &&
 		!(Log_destination & LOG_DESTINATION_CSVLOG))
@@ -1369,7 +1369,7 @@ update_metainfo_datafile(void)
 			ereport(LOG,
 					(errcode_for_file_access(),
 					 errmsg("could not remove file \"%s\": %m",
-						LOG_METAINFO_DATAFILE)));
+							LOG_METAINFO_DATAFILE)));
 		return;
 	}
 
@@ -1378,7 +1378,7 @@ update_metainfo_datafile(void)
 		ereport(LOG,
 				(errcode_for_file_access(),
 				 errmsg("could not open file \"%s\": %m",
-					LOG_METAINFO_DATAFILE_TMP)));
+						LOG_METAINFO_DATAFILE_TMP)));
 		return;
 	}
 
@@ -1388,7 +1388,7 @@ update_metainfo_datafile(void)
 		{
 			ereport(LOG,
 					(errcode_for_file_access(),
-					errmsg("could not write file \"%s\": %m",
+					 errmsg("could not write file \"%s\": %m",
 							LOG_METAINFO_DATAFILE_TMP)));
 			fclose(fh);
 			return;
@@ -1401,7 +1401,7 @@ update_metainfo_datafile(void)
 		{
 			ereport(LOG,
 					(errcode_for_file_access(),
-					errmsg("could not write file \"%s\": %m",
+					 errmsg("could not write file \"%s\": %m",
 							LOG_METAINFO_DATAFILE_TMP)));
 			fclose(fh);
 			return;
@@ -1412,8 +1412,8 @@ update_metainfo_datafile(void)
 	if (rename(LOG_METAINFO_DATAFILE_TMP, LOG_METAINFO_DATAFILE) != 0)
 		ereport(LOG,
 				(errcode_for_file_access(),
-				errmsg("could not rename file \"%s\" to \"%s\": %m",
-					   LOG_METAINFO_DATAFILE_TMP, LOG_METAINFO_DATAFILE)));
+				 errmsg("could not rename file \"%s\" to \"%s\": %m",
+						LOG_METAINFO_DATAFILE_TMP, LOG_METAINFO_DATAFILE)));
 }
 
 /* --------------------------------

@@ -116,15 +116,15 @@ RelationFindReplTupleByIndex(Relation rel, Oid idxoid,
 							 TupleTableSlot *searchslot,
 							 TupleTableSlot *outslot)
 {
-	HeapTuple		scantuple;
-	ScanKeyData		skey[INDEX_MAX_KEYS];
-	IndexScanDesc	scan;
-	SnapshotData	snap;
-	TransactionId	xwait;
-	Relation		idxrel;
-	bool			found;
+	HeapTuple	scantuple;
+	ScanKeyData skey[INDEX_MAX_KEYS];
+	IndexScanDesc scan;
+	SnapshotData snap;
+	TransactionId xwait;
+	Relation	idxrel;
+	bool		found;
 
-	/* Open the index.*/
+	/* Open the index. */
 	idxrel = index_open(idxoid, RowExclusiveLock);
 
 	/* Start an index scan. */
@@ -152,8 +152,8 @@ retry:
 			snap.xmin : snap.xmax;
 
 		/*
-		 * If the tuple is locked, wait for locking transaction to finish
-		 * and retry.
+		 * If the tuple is locked, wait for locking transaction to finish and
+		 * retry.
 		 */
 		if (TransactionIdIsValid(xwait))
 		{
@@ -165,7 +165,7 @@ retry:
 	/* Found tuple, try to lock it in the lockmode. */
 	if (found)
 	{
-		Buffer buf;
+		Buffer		buf;
 		HeapUpdateFailureData hufd;
 		HTSU_Result res;
 		HeapTupleData locktup;
@@ -177,7 +177,7 @@ retry:
 		res = heap_lock_tuple(rel, &locktup, GetCurrentCommandId(false),
 							  lockmode,
 							  LockWaitBlock,
-							  false /* don't follow updates */,
+							  false /* don't follow updates */ ,
 							  &buf, &hufd);
 		/* the tuple slot already has the buffer pinned */
 		ReleaseBuffer(buf);
@@ -219,7 +219,7 @@ retry:
  * to use.
  */
 static bool
-tuple_equals_slot(TupleDesc	desc, HeapTuple tup, TupleTableSlot *slot)
+tuple_equals_slot(TupleDesc desc, HeapTuple tup, TupleTableSlot *slot)
 {
 	Datum		values[MaxTupleAttributeNumber];
 	bool		isnull[MaxTupleAttributeNumber];
@@ -267,12 +267,12 @@ bool
 RelationFindReplTupleSeq(Relation rel, LockTupleMode lockmode,
 						 TupleTableSlot *searchslot, TupleTableSlot *outslot)
 {
-	HeapTuple		scantuple;
-	HeapScanDesc	scan;
-	SnapshotData	snap;
-	TransactionId	xwait;
-	bool			found;
-	TupleDesc		desc = RelationGetDescr(rel);
+	HeapTuple	scantuple;
+	HeapScanDesc scan;
+	SnapshotData snap;
+	TransactionId xwait;
+	bool		found;
+	TupleDesc	desc = RelationGetDescr(rel);
 
 	Assert(equalTupleDescs(desc, outslot->tts_tupleDescriptor));
 
@@ -299,8 +299,8 @@ retry:
 			snap.xmin : snap.xmax;
 
 		/*
-		 * If the tuple is locked, wait for locking transaction to finish
-		 * and retry.
+		 * If the tuple is locked, wait for locking transaction to finish and
+		 * retry.
 		 */
 		if (TransactionIdIsValid(xwait))
 		{
@@ -312,7 +312,7 @@ retry:
 	/* Found tuple, try to lock it in the lockmode. */
 	if (found)
 	{
-		Buffer buf;
+		Buffer		buf;
 		HeapUpdateFailureData hufd;
 		HTSU_Result res;
 		HeapTupleData locktup;
@@ -324,7 +324,7 @@ retry:
 		res = heap_lock_tuple(rel, &locktup, GetCurrentCommandId(false),
 							  lockmode,
 							  LockWaitBlock,
-							  false /* don't follow updates */,
+							  false /* don't follow updates */ ,
 							  &buf, &hufd);
 		/* the tuple slot already has the buffer pinned */
 		ReleaseBuffer(buf);
@@ -363,10 +363,10 @@ retry:
 void
 ExecSimpleRelationInsert(EState *estate, TupleTableSlot *slot)
 {
-	bool			skip_tuple = false;
-	HeapTuple		tuple;
-	ResultRelInfo  *resultRelInfo = estate->es_result_relation_info;
-	Relation		rel = resultRelInfo->ri_RelationDesc;
+	bool		skip_tuple = false;
+	HeapTuple	tuple;
+	ResultRelInfo *resultRelInfo = estate->es_result_relation_info;
+	Relation	rel = resultRelInfo->ri_RelationDesc;
 
 	/* For now we support only tables. */
 	Assert(rel->rd_rel->relkind == RELKIND_RELATION);
@@ -379,7 +379,7 @@ ExecSimpleRelationInsert(EState *estate, TupleTableSlot *slot)
 	{
 		slot = ExecBRInsertTriggers(estate, resultRelInfo, slot);
 
-		if (slot == NULL)	/* "do nothing" */
+		if (slot == NULL)		/* "do nothing" */
 			skip_tuple = true;
 	}
 
@@ -420,10 +420,10 @@ void
 ExecSimpleRelationUpdate(EState *estate, EPQState *epqstate,
 						 TupleTableSlot *searchslot, TupleTableSlot *slot)
 {
-	bool			skip_tuple = false;
-	HeapTuple		tuple;
-	ResultRelInfo  *resultRelInfo = estate->es_result_relation_info;
-	Relation		rel = resultRelInfo->ri_RelationDesc;
+	bool		skip_tuple = false;
+	HeapTuple	tuple;
+	ResultRelInfo *resultRelInfo = estate->es_result_relation_info;
+	Relation	rel = resultRelInfo->ri_RelationDesc;
 
 	/* For now we support only tables. */
 	Assert(rel->rd_rel->relkind == RELKIND_RELATION);
@@ -438,7 +438,7 @@ ExecSimpleRelationUpdate(EState *estate, EPQState *epqstate,
 									&searchslot->tts_tuple->t_self,
 									NULL, slot);
 
-		if (slot == NULL)	/* "do nothing" */
+		if (slot == NULL)		/* "do nothing" */
 			skip_tuple = true;
 	}
 
@@ -482,9 +482,9 @@ void
 ExecSimpleRelationDelete(EState *estate, EPQState *epqstate,
 						 TupleTableSlot *searchslot)
 {
-	bool			skip_tuple = false;
-	ResultRelInfo  *resultRelInfo = estate->es_result_relation_info;
-	Relation		rel = resultRelInfo->ri_RelationDesc;
+	bool		skip_tuple = false;
+	ResultRelInfo *resultRelInfo = estate->es_result_relation_info;
+	Relation	rel = resultRelInfo->ri_RelationDesc;
 
 	/* For now we support only tables. */
 	Assert(rel->rd_rel->relkind == RELKIND_RELATION);
@@ -568,6 +568,6 @@ CheckSubscriptionRelkind(char relkind, const char *nspname,
 	if (relkind != RELKIND_RELATION)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("logical replication target relation \"%s.%s\" is not a table",
-						nspname, relname)));
+		errmsg("logical replication target relation \"%s.%s\" is not a table",
+			   nspname, relname)));
 }

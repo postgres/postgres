@@ -32,14 +32,14 @@ static bool
 gbt_enumgt(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	return DatumGetBool(
-		CallerFInfoFunctionCall2(enum_gt, flinfo, InvalidOid, ObjectIdGetDatum(*((const Oid *) a)), ObjectIdGetDatum(*((const Oid *) b)))
+						CallerFInfoFunctionCall2(enum_gt, flinfo, InvalidOid, ObjectIdGetDatum(*((const Oid *) a)), ObjectIdGetDatum(*((const Oid *) b)))
 		);
 }
 static bool
 gbt_enumge(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	return DatumGetBool(
-		CallerFInfoFunctionCall2(enum_ge, flinfo, InvalidOid, ObjectIdGetDatum(*((const Oid *) a)), ObjectIdGetDatum(*((const Oid *) b)))
+						CallerFInfoFunctionCall2(enum_ge, flinfo, InvalidOid, ObjectIdGetDatum(*((const Oid *) a)), ObjectIdGetDatum(*((const Oid *) b)))
 		);
 }
 static bool
@@ -74,12 +74,12 @@ gbt_enumkey_cmp(const void *a, const void *b, FmgrInfo *flinfo)
 			return 0;
 
 		return DatumGetInt32(
-			CallerFInfoFunctionCall2(enum_cmp, flinfo, InvalidOid, ObjectIdGetDatum(ia->upper), ObjectIdGetDatum(ib->upper))
+							 CallerFInfoFunctionCall2(enum_cmp, flinfo, InvalidOid, ObjectIdGetDatum(ia->upper), ObjectIdGetDatum(ib->upper))
 			);
 	}
 
 	return DatumGetInt32(
-		CallerFInfoFunctionCall2(enum_cmp, flinfo, InvalidOid, ObjectIdGetDatum(ia->lower), ObjectIdGetDatum(ib->lower))
+						 CallerFInfoFunctionCall2(enum_cmp, flinfo, InvalidOid, ObjectIdGetDatum(ia->lower), ObjectIdGetDatum(ib->lower))
 		);
 }
 
@@ -94,7 +94,7 @@ static const gbtree_ninfo tinfo =
 	gbt_enumle,
 	gbt_enumlt,
 	gbt_enumkey_cmp,
-	NULL /* no KNN support at least for now */
+	NULL						/* no KNN support at least for now */
 };
 
 

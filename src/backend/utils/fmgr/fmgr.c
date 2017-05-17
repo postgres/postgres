@@ -396,10 +396,10 @@ fetch_finfo_record(void *filehandle, const char *funcname)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				 errmsg("could not find function information for function \"%s\"",
-						funcname),
+			errmsg("could not find function information for function \"%s\"",
+				   funcname),
 				 errhint("SQL-callable functions need an accompanying PG_FUNCTION_INFO_V1(funcname).")));
-		return NULL; /* silence compiler */
+		return NULL;			/* silence compiler */
 	}
 
 	/* Found, so call it */

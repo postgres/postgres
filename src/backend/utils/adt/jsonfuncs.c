@@ -56,20 +56,20 @@ typedef struct OkeysState
 /* state for iterate_json_string_values function */
 typedef struct IterateJsonStringValuesState
 {
-	JsonLexContext					*lex;
-	JsonIterateStringValuesAction	action;			/* an action that will be applied
-													   to each json value */
-	void							*action_state;	/* any necessary context for iteration */
+	JsonLexContext *lex;
+	JsonIterateStringValuesAction action;		/* an action that will be
+												 * applied to each json value */
+	void	   *action_state;	/* any necessary context for iteration */
 } IterateJsonStringValuesState;
 
 /* state for transform_json_string_values function */
 typedef struct TransformJsonStringValuesState
 {
-	JsonLexContext					*lex;
-	StringInfo						strval;			/* resulting json */
-	JsonTransformStringValuesAction	action;			/* an action that will be applied
-													   to each json value */
-	void							*action_state;	/* any necessary context for transformation */
+	JsonLexContext *lex;
+	StringInfo	strval;			/* resulting json */
+	JsonTransformStringValuesAction action;		/* an action that will be
+												 * applied to each json value */
+	void	   *action_state;	/* any necessary context for transformation */
 } TransformJsonStringValuesState;
 
 /* state for json_get* functions */
@@ -154,29 +154,29 @@ typedef struct RecordIOData RecordIOData;
 /* structure to cache metadata needed for populate_array() */
 typedef struct ArrayIOData
 {
-	ColumnIOData   *element_info;	/* metadata cache */
-	Oid				element_type;	/* array element type id */
-	int32			element_typmod;	/* array element type modifier */
+	ColumnIOData *element_info; /* metadata cache */
+	Oid			element_type;	/* array element type id */
+	int32		element_typmod; /* array element type modifier */
 } ArrayIOData;
 
 /* structure to cache metadata needed for populate_composite() */
 typedef struct CompositeIOData
 {
 	/*
-	 * We use pointer to a RecordIOData here because variable-length
-	 * struct RecordIOData can't be used directly in ColumnIOData.io union
+	 * We use pointer to a RecordIOData here because variable-length struct
+	 * RecordIOData can't be used directly in ColumnIOData.io union
 	 */
-	RecordIOData   *record_io;	/* metadata cache for populate_record() */
-	TupleDesc		tupdesc;	/* cached tuple descriptor */
+	RecordIOData *record_io;	/* metadata cache for populate_record() */
+	TupleDesc	tupdesc;		/* cached tuple descriptor */
 } CompositeIOData;
 
 /* structure to cache metadata needed for populate_domain() */
 typedef struct DomainIOData
 {
-	ColumnIOData   *base_io;		/* metadata cache */
-	Oid				base_typid;		/* base type id */
-	int32			base_typmod;	/* base type modifier */
-	void		   *domain_info;	/* opaque cache for domain checks */
+	ColumnIOData *base_io;		/* metadata cache */
+	Oid			base_typid;		/* base type id */
+	int32		base_typmod;	/* base type modifier */
+	void	   *domain_info;	/* opaque cache for domain checks */
 } DomainIOData;
 
 /* enumeration type categories */
@@ -193,17 +193,18 @@ typedef enum TypeCat
 /* structure to cache record metadata needed for populate_record_field() */
 struct ColumnIOData
 {
-	Oid			typid;		/* column type id */
-	int32		typmod;		/* column type modifier */
-	TypeCat		typcat;		/* column type category */
-	ScalarIOData scalar_io;	/* metadata cache for directi conversion
-							 * through input function */
+	Oid			typid;			/* column type id */
+	int32		typmod;			/* column type modifier */
+	TypeCat		typcat;			/* column type category */
+	ScalarIOData scalar_io;		/* metadata cache for directi conversion
+								 * through input function */
 	union
 	{
-		ArrayIOData		array;
-		CompositeIOData	composite;
-		DomainIOData	domain;
-	} io;			/* metadata cache for various column type categories */
+		ArrayIOData array;
+		CompositeIOData composite;
+		DomainIOData domain;
+	}			io;				/* metadata cache for various column type
+								 * categories */
 };
 
 /* structure to cache record metadata needed for populate_record() */
@@ -234,31 +235,32 @@ typedef struct PopulateRecordsetState
 /* structure to cache metadata needed for populate_record_worker() */
 typedef struct PopulateRecordCache
 {
-	Oid				argtype;	/* verified row type of the first argument */
+	Oid			argtype;		/* verified row type of the first argument */
 	CompositeIOData io;			/* metadata cache for populate_composite() */
 } PopulateRecordCache;
 
 /* common data for populate_array_json() and populate_array_dim_jsonb() */
 typedef struct PopulateArrayContext
 {
-	ArrayBuildState	   *astate;		/* array build state */
-	ArrayIOData		   *aio;		/* metadata cache */
-	MemoryContext		acxt;		/* array build memory context */
-	MemoryContext		mcxt;		/* cache memory context */
-	const char		   *colname;	/* for diagnostics only */
-	int				   *dims;		/* dimensions */
-	int				   *sizes;		/* current dimension counters */
-	int					ndims; 		/* number of dimensions */
+	ArrayBuildState *astate;	/* array build state */
+	ArrayIOData *aio;			/* metadata cache */
+	MemoryContext acxt;			/* array build memory context */
+	MemoryContext mcxt;			/* cache memory context */
+	const char *colname;		/* for diagnostics only */
+	int		   *dims;			/* dimensions */
+	int		   *sizes;			/* current dimension counters */
+	int			ndims;			/* number of dimensions */
 } PopulateArrayContext;
 
 /* state for populate_array_json() */
 typedef struct PopulateArrayState
 {
-	JsonLexContext	   *lex;			/* json lexer */
+	JsonLexContext *lex;		/* json lexer */
 	PopulateArrayContext *ctx;	/* context */
-	char			   *element_start;	/* start of the current array element */
-	char			   *element_scalar;	/* current array element token if it is a scalar */
-	JsonTokenType		element_type;	/* current array element type */
+	char	   *element_start;	/* start of the current array element */
+	char	   *element_scalar; /* current array element token if it is a
+								 * scalar */
+	JsonTokenType element_type; /* current array element type */
 } PopulateArrayState;
 
 /* state for json_strip_nulls */
@@ -272,18 +274,18 @@ typedef struct StripnullState
 /* structure for generalized json/jsonb value passing */
 typedef struct JsValue
 {
-	bool is_json;				/* json/jsonb */
+	bool		is_json;		/* json/jsonb */
 	union
 	{
 		struct
 		{
-			char   *str;		/* json string */
-			int		len;		/* json string length or -1 if null-terminated */
-			JsonTokenType type;	/* json type */
-		} json;					/* json value */
+			char	   *str;	/* json string */
+			int			len;	/* json string length or -1 if null-terminated */
+			JsonTokenType type; /* json type */
+		}			json;		/* json value */
 
 		JsonbValue *jsonb;		/* jsonb value */
-	} val;
+	}			val;
 } JsValue;
 
 typedef struct JsObject
@@ -291,9 +293,9 @@ typedef struct JsObject
 	bool		is_json;		/* json/jsonb */
 	union
 	{
-		HTAB		   *json_hash;
+		HTAB	   *json_hash;
 		JsonbContainer *jsonb_cont;
-	} val;
+	}			val;
 } JsObject;
 
 /* useful macros for testing JsValue properties */
@@ -406,39 +408,39 @@ static void sn_scalar(void *state, char *token, JsonTokenType tokentype);
 static Datum populate_recordset_worker(FunctionCallInfo fcinfo, const char *funcname,
 						  bool have_record_arg);
 static Datum populate_record_worker(FunctionCallInfo fcinfo, const char *funcname,
-									bool have_record_arg);
+					   bool have_record_arg);
 
 /* helper functions for populate_record[set] */
-static HeapTupleHeader populate_record(TupleDesc tupdesc, RecordIOData  **record_info,
-									   HeapTupleHeader template, MemoryContext mcxt,
-									   JsObject *obj);
+static HeapTupleHeader populate_record(TupleDesc tupdesc, RecordIOData **record_info,
+				HeapTupleHeader template, MemoryContext mcxt,
+				JsObject *obj);
 static Datum populate_record_field(ColumnIOData *col, Oid typid, int32 typmod,
-								   const char *colname, MemoryContext mcxt,
-								   Datum defaultval, JsValue *jsv, bool *isnull);
+					  const char *colname, MemoryContext mcxt,
+					  Datum defaultval, JsValue *jsv, bool *isnull);
 static void JsValueToJsObject(JsValue *jsv, JsObject *jso);
 static Datum populate_composite(CompositeIOData *io, Oid typid, int32 typmod,
-								const char *colname, MemoryContext mcxt,
-								HeapTupleHeader defaultval, JsValue *jsv);
+				   const char *colname, MemoryContext mcxt,
+				   HeapTupleHeader defaultval, JsValue *jsv);
 static Datum populate_scalar(ScalarIOData *io, Oid typid, int32 typmod, JsValue *jsv);
 static void prepare_column_cache(ColumnIOData *column, Oid typid, int32 typmod,
-								 MemoryContext mcxt, bool json);
+					 MemoryContext mcxt, bool json);
 static Datum populate_record_field(ColumnIOData *col, Oid typid, int32 typmod,
-								   const char *colname, MemoryContext mcxt, Datum defaultval,
-								   JsValue *jsv, bool *isnull);
-static RecordIOData * allocate_record_info(MemoryContext mcxt, int ncolumns);
+				   const char *colname, MemoryContext mcxt, Datum defaultval,
+					  JsValue *jsv, bool *isnull);
+static RecordIOData *allocate_record_info(MemoryContext mcxt, int ncolumns);
 static bool JsObjectGetField(JsObject *obj, char *field, JsValue *jsv);
 static void populate_recordset_record(PopulateRecordsetState *state, JsObject *obj);
 static void populate_array_json(PopulateArrayContext *ctx, char *json, int len);
-static void populate_array_dim_jsonb(PopulateArrayContext  *ctx, JsonbValue *jbv,
-									 int ndim);
+static void populate_array_dim_jsonb(PopulateArrayContext *ctx, JsonbValue *jbv,
+						 int ndim);
 static void populate_array_report_expected_array(PopulateArrayContext *ctx, int ndim);
 static void populate_array_assign_ndims(PopulateArrayContext *ctx, int ndims);
 static void populate_array_check_dimension(PopulateArrayContext *ctx, int ndim);
 static void populate_array_element(PopulateArrayContext *ctx, int ndim, JsValue *jsv);
-static Datum populate_array(ArrayIOData	   *aio, const char *colname,
-							MemoryContext	mcxt, JsValue *jsv);
-static Datum populate_domain(DomainIOData   *io, Oid typid,	const char *colname,
-							 MemoryContext	mcxt, JsValue *jsv,	bool isnull);
+static Datum populate_array(ArrayIOData *aio, const char *colname,
+			   MemoryContext mcxt, JsValue *jsv);
+static Datum populate_domain(DomainIOData *io, Oid typid, const char *colname,
+				MemoryContext mcxt, JsValue *jsv, bool isnull);
 
 /* Worker that takes care of common setup for us */
 static JsonbValue *findJsonbValueFromContainerLen(JsonbContainer *container,
@@ -2319,8 +2321,8 @@ populate_array_report_expected_array(PopulateArrayContext *ctx, int ndim)
 	}
 	else
 	{
-		StringInfoData	indices;
-		int				i;
+		StringInfoData indices;
+		int			i;
 
 		initStringInfo(&indices);
 
@@ -2348,7 +2350,7 @@ populate_array_report_expected_array(PopulateArrayContext *ctx, int ndim)
 static void
 populate_array_assign_ndims(PopulateArrayContext *ctx, int ndims)
 {
-	int		i;
+	int			i;
 
 	Assert(ctx->ndims <= 0);
 
@@ -2360,17 +2362,17 @@ populate_array_assign_ndims(PopulateArrayContext *ctx, int ndims)
 	ctx->sizes = palloc0(sizeof(int) * ndims);
 
 	for (i = 0; i < ndims; i++)
-		ctx->dims[i] = -1; /* dimensions are unknown yet */
+		ctx->dims[i] = -1;		/* dimensions are unknown yet */
 }
 
 /* check the populated subarray dimension */
 static void
 populate_array_check_dimension(PopulateArrayContext *ctx, int ndim)
 {
-	int dim = ctx->sizes[ndim];	/* current dimension counter */
+	int			dim = ctx->sizes[ndim]; /* current dimension counter */
 
 	if (ctx->dims[ndim] == -1)
-		ctx->dims[ndim] = dim; /* assign dimension if not yet known */
+		ctx->dims[ndim] = dim;	/* assign dimension if not yet known */
 	else if (ctx->dims[ndim] != dim)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
@@ -2389,8 +2391,8 @@ populate_array_check_dimension(PopulateArrayContext *ctx, int ndim)
 static void
 populate_array_element(PopulateArrayContext *ctx, int ndim, JsValue *jsv)
 {
-	Datum	element;
-	bool	element_isnull;
+	Datum		element;
+	bool		element_isnull;
 
 	/* populate the array element */
 	element = populate_record_field(ctx->aio->element_info,
@@ -2400,10 +2402,10 @@ populate_array_element(PopulateArrayContext *ctx, int ndim, JsValue *jsv)
 									jsv, &element_isnull);
 
 	accumArrayResult(ctx->astate, element, element_isnull,
-			ctx->aio->element_type, ctx->acxt);
+					 ctx->aio->element_type, ctx->acxt);
 
 	Assert(ndim > 0);
-	ctx->sizes[ndim - 1]++; /* increment current dimension counter */
+	ctx->sizes[ndim - 1]++;		/* increment current dimension counter */
 }
 
 /* json object start handler for populate_array_json() */
@@ -2411,7 +2413,7 @@ static void
 populate_array_object_start(void *_state)
 {
 	PopulateArrayState *state = (PopulateArrayState *) _state;
-	int					ndim = state->lex->lex_level;
+	int			ndim = state->lex->lex_level;
 
 	if (state->ctx->ndims <= 0)
 		populate_array_assign_ndims(state->ctx, ndim);
@@ -2423,9 +2425,9 @@ populate_array_object_start(void *_state)
 static void
 populate_array_array_end(void *_state)
 {
-	PopulateArrayState	   *state = (PopulateArrayState *) _state;
-	PopulateArrayContext   *ctx = state->ctx;
-	int						ndim = state->lex->lex_level;
+	PopulateArrayState *state = (PopulateArrayState *) _state;
+	PopulateArrayContext *ctx = state->ctx;
+	int			ndim = state->lex->lex_level;
 
 	if (ctx->ndims <= 0)
 		populate_array_assign_ndims(ctx, ndim + 1);
@@ -2439,7 +2441,7 @@ static void
 populate_array_element_start(void *_state, bool isnull)
 {
 	PopulateArrayState *state = (PopulateArrayState *) _state;
-	int					ndim = state->lex->lex_level;
+	int			ndim = state->lex->lex_level;
 
 	if (state->ctx->ndims <= 0 || ndim == state->ctx->ndims)
 	{
@@ -2454,9 +2456,9 @@ populate_array_element_start(void *_state, bool isnull)
 static void
 populate_array_element_end(void *_state, bool isnull)
 {
-	PopulateArrayState	   *state = (PopulateArrayState *) _state;
-	PopulateArrayContext   *ctx = state->ctx;
-	int						ndim = state->lex->lex_level;
+	PopulateArrayState *state = (PopulateArrayState *) _state;
+	PopulateArrayContext *ctx = state->ctx;
+	int			ndim = state->lex->lex_level;
 
 	Assert(ctx->ndims > 0);
 
@@ -2476,7 +2478,7 @@ populate_array_element_end(void *_state, bool isnull)
 		else if (state->element_scalar)
 		{
 			jsv.val.json.str = state->element_scalar;
-			jsv.val.json.len = -1;	/* null-terminated */
+			jsv.val.json.len = -1;		/* null-terminated */
 		}
 		else
 		{
@@ -2493,9 +2495,9 @@ populate_array_element_end(void *_state, bool isnull)
 static void
 populate_array_scalar(void *_state, char *token, JsonTokenType tokentype)
 {
-	PopulateArrayState	   *state = (PopulateArrayState *) _state;
-	PopulateArrayContext   *ctx = state->ctx;
-	int						ndim = state->lex->lex_level;
+	PopulateArrayState *state = (PopulateArrayState *) _state;
+	PopulateArrayContext *ctx = state->ctx;
+	int			ndim = state->lex->lex_level;
 
 	if (ctx->ndims <= 0)
 		populate_array_assign_ndims(ctx, ndim);
@@ -2515,8 +2517,8 @@ populate_array_scalar(void *_state, char *token, JsonTokenType tokentype)
 static void
 populate_array_json(PopulateArrayContext *ctx, char *json, int len)
 {
-	PopulateArrayState	state;
-	JsonSemAction		sem;
+	PopulateArrayState state;
+	JsonSemAction sem;
 
 	state.lex = makeJsonLexContextCstringLen(json, len, true);
 	state.ctx = ctx;
@@ -2539,18 +2541,18 @@ populate_array_json(PopulateArrayContext *ctx, char *json, int len)
 
 /*
  * populate_array_dim_jsonb() -- Iterate recursively through jsonb sub-array
- * 		elements and accumulate result using given ArrayBuildState.
+ *		elements and accumulate result using given ArrayBuildState.
  */
 static void
-populate_array_dim_jsonb(PopulateArrayContext  *ctx,	/* context */
-						 JsonbValue			   *jbv,	/* jsonb sub-array */
-						 int					ndim)	/* current dimension */
+populate_array_dim_jsonb(PopulateArrayContext *ctx,		/* context */
+						 JsonbValue *jbv,		/* jsonb sub-array */
+						 int ndim)		/* current dimension */
 {
-	JsonbContainer	   *jbc = jbv->val.binary.data;
-	JsonbIterator	   *it;
-	JsonbIteratorToken	tok;
-	JsonbValue			val;
-	JsValue				jsv;
+	JsonbContainer *jbc = jbv->val.binary.data;
+	JsonbIterator *it;
+	JsonbIteratorToken tok;
+	JsonbValue	val;
+	JsValue		jsv;
 
 	check_stack_depth();
 
@@ -2567,9 +2569,9 @@ populate_array_dim_jsonb(PopulateArrayContext  *ctx,	/* context */
 	tok = JsonbIteratorNext(&it, &val, true);
 
 	/*
-	 * If the number of dimensions is not yet known and
-	 * we have found end of the array, or the first child element is not
-	 *  an array, then assign the number of dimensions now.
+	 * If the number of dimensions is not yet known and we have found end of
+	 * the array, or the first child element is not an array, then assign the
+	 * number of dimensions now.
 	 */
 	if (ctx->ndims <= 0 &&
 		(tok == WJB_END_ARRAY ||
@@ -2585,8 +2587,8 @@ populate_array_dim_jsonb(PopulateArrayContext  *ctx,	/* context */
 	while (tok == WJB_ELEM)
 	{
 		/*
-		 * Recurse only if the dimensions of dimensions is still unknown or
-		 * if it is not the innermost dimension.
+		 * Recurse only if the dimensions of dimensions is still unknown or if
+		 * it is not the innermost dimension.
 		 */
 		if (ctx->ndims > 0 && ndim >= ctx->ndims)
 			populate_array_element(ctx, ndim, &jsv);
@@ -2613,29 +2615,29 @@ populate_array_dim_jsonb(PopulateArrayContext  *ctx,	/* context */
 
 /* recursively populate an array from json/jsonb */
 static Datum
-populate_array(ArrayIOData	   *aio,
-			   const char	   *colname,
-			   MemoryContext	mcxt,
-			   JsValue		   *jsv)
+populate_array(ArrayIOData *aio,
+			   const char *colname,
+			   MemoryContext mcxt,
+			   JsValue *jsv)
 {
-	PopulateArrayContext	ctx;
-	Datum					result;
-	int					   *lbs;
-	int						i;
+	PopulateArrayContext ctx;
+	Datum		result;
+	int		   *lbs;
+	int			i;
 
 	ctx.aio = aio;
 	ctx.mcxt = mcxt;
 	ctx.acxt = CurrentMemoryContext;
 	ctx.astate = initArrayResult(aio->element_type, ctx.acxt, true);
 	ctx.colname = colname;
-	ctx.ndims = 0; /* unknown yet */
+	ctx.ndims = 0;				/* unknown yet */
 	ctx.dims = NULL;
 	ctx.sizes = NULL;
 
 	if (jsv->is_json)
 		populate_array_json(&ctx, jsv->val.json.str,
 							jsv->val.json.len >= 0 ? jsv->val.json.len
-												   : strlen(jsv->val.json.str));
+							: strlen(jsv->val.json.str));
 	else
 	{
 		populate_array_dim_jsonb(&ctx, jsv->val.jsonb, 1);
@@ -2644,7 +2646,7 @@ populate_array(ArrayIOData	   *aio,
 
 	Assert(ctx.ndims > 0);
 
-	lbs  = palloc(sizeof(int) * ctx.ndims);
+	lbs = palloc(sizeof(int) * ctx.ndims);
 
 	for (i = 0; i < ctx.ndims; i++)
 		lbs[i] = 1;
@@ -2668,11 +2670,11 @@ JsValueToJsObject(JsValue *jsv, JsObject *jso)
 	{
 		/* convert plain-text json into a hash table */
 		jso->val.json_hash =
-				get_json_object_as_hash(jsv->val.json.str,
-										jsv->val.json.len >= 0
-											 ? jsv->val.json.len
-											 : strlen(jsv->val.json.str),
-										"populate_composite");
+			get_json_object_as_hash(jsv->val.json.str,
+									jsv->val.json.len >= 0
+									? jsv->val.json.len
+									: strlen(jsv->val.json.str),
+									"populate_composite");
 	}
 	else
 	{
@@ -2689,23 +2691,23 @@ JsValueToJsObject(JsValue *jsv, JsObject *jso)
 /* recursively populate a composite (row type) value from json/jsonb */
 static Datum
 populate_composite(CompositeIOData *io,
-				   Oid				typid,
-				   int32			typmod,
-				   const char	   *colname,
-				   MemoryContext	mcxt,
-				   HeapTupleHeader	defaultval,
-				   JsValue		   *jsv)
+				   Oid typid,
+				   int32 typmod,
+				   const char *colname,
+				   MemoryContext mcxt,
+				   HeapTupleHeader defaultval,
+				   JsValue *jsv)
 {
-	HeapTupleHeader	tuple;
-	JsObject		jso;
+	HeapTupleHeader tuple;
+	JsObject	jso;
 
 	/* acquire cached tuple descriptor */
 	if (!io->tupdesc ||
 		io->tupdesc->tdtypeid != typid ||
 		io->tupdesc->tdtypmod != typmod)
 	{
-		TupleDesc 		tupdesc = lookup_rowtype_tupdesc(typid, typmod);
-		MemoryContext	oldcxt;
+		TupleDesc	tupdesc = lookup_rowtype_tupdesc(typid, typmod);
+		MemoryContext oldcxt;
 
 		if (io->tupdesc)
 			FreeTupleDesc(io->tupdesc);
@@ -2750,8 +2752,8 @@ populate_scalar(ScalarIOData *io, Oid typid, int32 typmod, JsValue *jsv)
 			jsv->val.json.type == JSON_TOKEN_STRING)
 		{
 			/*
-			 * Add quotes around string value (should be already escaped)
-			 * if converting to json/jsonb.
+			 * Add quotes around string value (should be already escaped) if
+			 * converting to json/jsonb.
 			 */
 
 			if (len < 0)
@@ -2771,7 +2773,7 @@ populate_scalar(ScalarIOData *io, Oid typid, int32 typmod, JsValue *jsv)
 			str[len] = '\0';
 		}
 		else
-			str = json;		/* null-terminated string */
+			str = json;			/* null-terminated string */
 	}
 	else
 	{
@@ -2779,7 +2781,8 @@ populate_scalar(ScalarIOData *io, Oid typid, int32 typmod, JsValue *jsv)
 
 		if (typid == JSONBOID)
 		{
-			Jsonb *jsonb = JsonbValueToJsonb(jbv); /* directly use jsonb */
+			Jsonb	   *jsonb = JsonbValueToJsonb(jbv); /* directly use jsonb */
+
 			return JsonbGetDatum(jsonb);
 		}
 		/* convert jsonb to string for typio call */
@@ -2789,19 +2792,20 @@ populate_scalar(ScalarIOData *io, Oid typid, int32 typmod, JsValue *jsv)
 			 * Convert scalar jsonb (non-scalars are passed here as jbvBinary)
 			 * to json string, preserving quotes around top-level strings.
 			 */
-			Jsonb *jsonb = JsonbValueToJsonb(jbv);
+			Jsonb	   *jsonb = JsonbValueToJsonb(jbv);
+
 			str = JsonbToCString(NULL, &jsonb->root, VARSIZE(jsonb));
 		}
-		else if (jbv->type == jbvString) /* quotes are stripped */
+		else if (jbv->type == jbvString)		/* quotes are stripped */
 			str = pnstrdup(jbv->val.string.val, jbv->val.string.len);
 		else if (jbv->type == jbvBool)
 			str = pstrdup(jbv->val.boolean ? "true" : "false");
 		else if (jbv->type == jbvNumeric)
 			str = DatumGetCString(DirectFunctionCall1(numeric_out,
-										PointerGetDatum(jbv->val.numeric)));
+										 PointerGetDatum(jbv->val.numeric)));
 		else if (jbv->type == jbvBinary)
 			str = JsonbToCString(NULL, jbv->val.binary.data,
-									   jbv->val.binary.len);
+								 jbv->val.binary.len);
 		else
 			elog(ERROR, "unrecognized jsonb type: %d", (int) jbv->type);
 	}
@@ -2816,12 +2820,12 @@ populate_scalar(ScalarIOData *io, Oid typid, int32 typmod, JsValue *jsv)
 }
 
 static Datum
-populate_domain(DomainIOData   *io,
-				Oid				typid,
-				const char	   *colname,
-				MemoryContext	mcxt,
-				JsValue		   *jsv,
-				bool			isnull)
+populate_domain(DomainIOData *io,
+				Oid typid,
+				const char *colname,
+				MemoryContext mcxt,
+				JsValue *jsv,
+				bool isnull)
 {
 	Datum		res;
 
@@ -2843,14 +2847,14 @@ populate_domain(DomainIOData   *io,
 
 /* prepare column metadata cache for the given type */
 static void
-prepare_column_cache(ColumnIOData  *column,
-					 Oid			typid,
-					 int32			typmod,
-					 MemoryContext	mcxt,
-					 bool			json)
+prepare_column_cache(ColumnIOData *column,
+					 Oid typid,
+					 int32 typmod,
+					 MemoryContext mcxt,
+					 bool json)
 {
-	HeapTuple		tup;
-	Form_pg_type	type;
+	HeapTuple	tup;
+	Form_pg_type type;
 
 	column->typid = typid;
 	column->typmod = typmod;
@@ -2867,7 +2871,7 @@ prepare_column_cache(ColumnIOData  *column,
 		column->io.domain.base_typid = type->typbasetype;
 		column->io.domain.base_typmod = type->typtypmod;
 		column->io.domain.base_io = MemoryContextAllocZero(mcxt,
-													  sizeof(ColumnIOData));
+													   sizeof(ColumnIOData));
 		column->io.domain.domain_info = NULL;
 	}
 	else if (type->typtype == TYPTYPE_COMPOSITE || typid == RECORDOID)
@@ -2880,7 +2884,7 @@ prepare_column_cache(ColumnIOData  *column,
 	{
 		column->typcat = TYPECAT_ARRAY;
 		column->io.array.element_info = MemoryContextAllocZero(mcxt,
-														sizeof(ColumnIOData));
+													   sizeof(ColumnIOData));
 		column->io.array.element_type = type->typelem;
 		/* array element typemod stored in attribute's typmod */
 		column->io.array.element_typmod = typmod;
@@ -2891,7 +2895,7 @@ prepare_column_cache(ColumnIOData  *column,
 	/* don't need input function when converting from jsonb to jsonb */
 	if (json || typid != JSONBOID)
 	{
-		Oid		typioproc;
+		Oid			typioproc;
 
 		getTypeInputInfo(typid, &typioproc, &column->scalar_io.typioparam);
 		fmgr_info_cxt(typioproc, &column->scalar_io.typiofunc, mcxt);
@@ -2903,13 +2907,13 @@ prepare_column_cache(ColumnIOData  *column,
 /* recursively populate a record field or an array element from a json/jsonb value */
 static Datum
 populate_record_field(ColumnIOData *col,
-					  Oid			typid,
-					  int32			typmod,
-					  const char   *colname,
-					  MemoryContext	mcxt,
-					  Datum			defaultval,
-					  JsValue	   *jsv,
-					  bool		   *isnull)
+					  Oid typid,
+					  int32 typmod,
+					  const char *colname,
+					  MemoryContext mcxt,
+					  Datum defaultval,
+					  JsValue *jsv,
+					  bool *isnull)
 {
 	TypeCat		typcat;
 
@@ -2962,9 +2966,9 @@ static RecordIOData *
 allocate_record_info(MemoryContext mcxt, int ncolumns)
 {
 	RecordIOData *data = (RecordIOData *)
-			MemoryContextAlloc(mcxt,
-								offsetof(RecordIOData, columns) +
-								ncolumns * sizeof(ColumnIOData));
+	MemoryContextAlloc(mcxt,
+					   offsetof(RecordIOData, columns) +
+					   ncolumns * sizeof(ColumnIOData));
 
 	data->record_type = InvalidOid;
 	data->record_typmod = 0;
@@ -2986,7 +2990,7 @@ JsObjectGetField(JsObject *obj, char *field, JsValue *jsv)
 
 		jsv->val.json.type = hashentry ? hashentry->type : JSON_TOKEN_NULL;
 		jsv->val.json.str = jsv->val.json.type == JSON_TOKEN_NULL ? NULL :
-															hashentry->val;
+			hashentry->val;
 		jsv->val.json.len = jsv->val.json.str ? -1 : 0; /* null-terminated */
 
 		return hashentry != NULL;
@@ -2994,8 +2998,8 @@ JsObjectGetField(JsObject *obj, char *field, JsValue *jsv)
 	else
 	{
 		jsv->val.jsonb = !obj->val.jsonb_cont ? NULL :
-				findJsonbValueFromContainerLen(obj->val.jsonb_cont, JB_FOBJECT,
-											   field, strlen(field));
+			findJsonbValueFromContainerLen(obj->val.jsonb_cont, JB_FOBJECT,
+										   field, strlen(field));
 
 		return jsv->val.jsonb != NULL;
 	}
@@ -3003,23 +3007,23 @@ JsObjectGetField(JsObject *obj, char *field, JsValue *jsv)
 
 /* populate a record tuple from json/jsonb value */
 static HeapTupleHeader
-populate_record(TupleDesc		tupdesc,
-				RecordIOData  **precord,
-				HeapTupleHeader	defaultval,
-				MemoryContext	mcxt,
-				JsObject	   *obj)
+populate_record(TupleDesc tupdesc,
+				RecordIOData **precord,
+				HeapTupleHeader defaultval,
+				MemoryContext mcxt,
+				JsObject *obj)
 {
-	RecordIOData   *record = *precord;
-	Datum		   *values;
-	bool		   *nulls;
-	HeapTuple		res;
-	int				ncolumns = tupdesc->natts;
-	int				i;
+	RecordIOData *record = *precord;
+	Datum	   *values;
+	bool	   *nulls;
+	HeapTuple	res;
+	int			ncolumns = tupdesc->natts;
+	int			i;
 
 	/*
-	 * if the input json is empty, we can only skip the rest if we were
-	 * passed in a non-null record, since otherwise there may be issues
-	 * with domain nulls.
+	 * if the input json is empty, we can only skip the rest if we were passed
+	 * in a non-null record, since otherwise there may be issues with domain
+	 * nulls.
 	 */
 	if (defaultval && JsObjectIsEmpty(obj))
 		return defaultval;
@@ -3034,7 +3038,7 @@ populate_record(TupleDesc		tupdesc,
 		record->record_typmod != tupdesc->tdtypmod)
 	{
 		MemSet(record, 0, offsetof(RecordIOData, columns) +
-							ncolumns * sizeof(ColumnIOData));
+			   ncolumns * sizeof(ColumnIOData));
 		record->record_type = tupdesc->tdtypeid;
 		record->record_typmod = tupdesc->tdtypmod;
 		record->ncolumns = ncolumns;
@@ -3067,10 +3071,10 @@ populate_record(TupleDesc		tupdesc,
 
 	for (i = 0; i < ncolumns; ++i)
 	{
-		Form_pg_attribute	att = tupdesc->attrs[i];
-		char			   *colname = NameStr(att->attname);
-		JsValue				field = { 0 };
-		bool				found;
+		Form_pg_attribute att = tupdesc->attrs[i];
+		char	   *colname = NameStr(att->attname);
+		JsValue		field = {0};
+		bool		found;
 
 		/* Ignore dropped columns in datatype */
 		if (att->attisdropped)
@@ -3116,7 +3120,7 @@ populate_record_worker(FunctionCallInfo fcinfo, const char *funcname,
 {
 	int			json_arg_num = have_record_arg ? 1 : 0;
 	Oid			jtype = get_fn_expr_argtype(fcinfo->flinfo, json_arg_num);
-	JsValue		jsv = { 0 };
+	JsValue		jsv = {0};
 	HeapTupleHeader rec = NULL;
 	Oid			tupType;
 	int32		tupTypmod;
@@ -3134,7 +3138,7 @@ populate_record_worker(FunctionCallInfo fcinfo, const char *funcname,
 	 */
 	if (!cache)
 		fcinfo->flinfo->fn_extra = cache =
-				MemoryContextAllocZero(fnmcxt, sizeof(*cache));
+			MemoryContextAllocZero(fnmcxt, sizeof(*cache));
 
 	if (have_record_arg)
 	{
@@ -3210,7 +3214,8 @@ populate_record_worker(FunctionCallInfo fcinfo, const char *funcname,
 
 		jsv.val.json.str = VARDATA_ANY(json);
 		jsv.val.json.len = VARSIZE_ANY_EXHDR(json);
-		jsv.val.json.type = JSON_TOKEN_INVALID; /* not used in populate_composite() */
+		jsv.val.json.type = JSON_TOKEN_INVALID; /* not used in
+												 * populate_composite() */
 	}
 	else
 	{
@@ -3417,8 +3422,8 @@ json_to_recordset(PG_FUNCTION_ARGS)
 static void
 populate_recordset_record(PopulateRecordsetState *state, JsObject *obj)
 {
-	HeapTupleData	tuple;
-	HeapTupleHeader	tuphead = populate_record(state->ret_tdesc,
+	HeapTupleData tuple;
+	HeapTupleHeader tuphead = populate_record(state->ret_tdesc,
 											  state->my_extra,
 											  state->rec,
 											  state->fn_mcxt,
@@ -4793,9 +4798,9 @@ setPathArray(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
 void
 iterate_jsonb_string_values(Jsonb *jb, void *state, JsonIterateStringValuesAction action)
 {
-	JsonbIterator		*it;
-	JsonbValue			v;
-	JsonbIteratorToken	type;
+	JsonbIterator *it;
+	JsonbValue	v;
+	JsonbIteratorToken type;
 
 	it = JsonbIteratorInit(&jb->root);
 
@@ -4817,7 +4822,7 @@ iterate_json_string_values(text *json, void *action_state, JsonIterateStringValu
 {
 	JsonLexContext *lex = makeJsonLexContext(json, true);
 	JsonSemAction *sem = palloc0(sizeof(JsonSemAction));
-	IterateJsonStringValuesState   *state = palloc0(sizeof(IterateJsonStringValuesState));
+	IterateJsonStringValuesState *state = palloc0(sizeof(IterateJsonStringValuesState));
 
 	state->lex = lex;
 	state->action = action;
@@ -4836,7 +4841,8 @@ iterate_json_string_values(text *json, void *action_state, JsonIterateStringValu
 static void
 iterate_string_values_scalar(void *state, char *token, JsonTokenType tokentype)
 {
-	IterateJsonStringValuesState   *_state = (IterateJsonStringValuesState *) state;
+	IterateJsonStringValuesState *_state = (IterateJsonStringValuesState *) state;
+
 	if (tokentype == JSON_TOKEN_STRING)
 		(*_state->action) (_state->action_state, token, strlen(token));
 }
@@ -4849,14 +4855,15 @@ iterate_string_values_scalar(void *state, char *token, JsonTokenType tokentype)
  */
 Jsonb *
 transform_jsonb_string_values(Jsonb *jsonb, void *action_state,
-							  JsonTransformStringValuesAction transform_action)
+							JsonTransformStringValuesAction transform_action)
 {
-	JsonbIterator		*it;
-	JsonbValue			v, *res = NULL;
-	JsonbIteratorToken	type;
-	JsonbParseState		*st = NULL;
-	text				*out;
-	bool				is_scalar = false;
+	JsonbIterator *it;
+	JsonbValue	v,
+			   *res = NULL;
+	JsonbIteratorToken type;
+	JsonbParseState *st = NULL;
+	text	   *out;
+	bool		is_scalar = false;
 
 	it = JsonbIteratorInit(&jsonb->root);
 	is_scalar = it->isScalar;
@@ -4928,6 +4935,7 @@ static void
 transform_string_values_object_start(void *state)
 {
 	TransformJsonStringValuesState *_state = (TransformJsonStringValuesState *) state;
+
 	appendStringInfoCharMacro(_state->strval, '{');
 }
 
@@ -4935,6 +4943,7 @@ static void
 transform_string_values_object_end(void *state)
 {
 	TransformJsonStringValuesState *_state = (TransformJsonStringValuesState *) state;
+
 	appendStringInfoCharMacro(_state->strval, '}');
 }
 
@@ -4942,6 +4951,7 @@ static void
 transform_string_values_array_start(void *state)
 {
 	TransformJsonStringValuesState *_state = (TransformJsonStringValuesState *) state;
+
 	appendStringInfoCharMacro(_state->strval, '[');
 }
 
@@ -4949,6 +4959,7 @@ static void
 transform_string_values_array_end(void *state)
 {
 	TransformJsonStringValuesState *_state = (TransformJsonStringValuesState *) state;
+
 	appendStringInfoCharMacro(_state->strval, ']');
 }
 
@@ -4984,7 +4995,8 @@ transform_string_values_scalar(void *state, char *token, JsonTokenType tokentype
 
 	if (tokentype == JSON_TOKEN_STRING)
 	{
-		text *out = (*_state->action) (_state->action_state, token, strlen(token));
+		text	   *out = (*_state->action) (_state->action_state, token, strlen(token));
+
 		escape_json(_state->strval, text_to_cstring(out));
 	}
 	else

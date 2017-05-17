@@ -617,7 +617,10 @@ check_db(const char *dbname, const char *role, Oid roleid, List *tokens)
 		tok = lfirst(cell);
 		if (am_walsender && !am_db_walsender)
 		{
-			/* physical replication walsender connections can only match replication keyword */
+			/*
+			 * physical replication walsender connections can only match
+			 * replication keyword
+			 */
 			if (token_is_keyword(tok, "replication"))
 				return true;
 		}
@@ -1842,7 +1845,7 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
 		int			ret;
 		List	   *parsed_servers;
 		ListCell   *l;
-		char       *dupval = pstrdup(val);
+		char	   *dupval = pstrdup(val);
 
 		REQUIRE_AUTH_OPTION(uaRADIUS, "radiusservers", "radius");
 
@@ -1891,7 +1894,7 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
 	{
 		List	   *parsed_ports;
 		ListCell   *l;
-		char       *dupval = pstrdup(val);
+		char	   *dupval = pstrdup(val);
 
 		REQUIRE_AUTH_OPTION(uaRADIUS, "radiusports", "radius");
 
@@ -1926,7 +1929,7 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
 	else if (strcmp(name, "radiussecrets") == 0)
 	{
 		List	   *parsed_secrets;
-		char       *dupval = pstrdup(val);
+		char	   *dupval = pstrdup(val);
 
 		REQUIRE_AUTH_OPTION(uaRADIUS, "radiussecrets", "radius");
 
@@ -1948,7 +1951,7 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
 	else if (strcmp(name, "radiusidentifiers") == 0)
 	{
 		List	   *parsed_identifiers;
-		char       *dupval = pstrdup(val);
+		char	   *dupval = pstrdup(val);
 
 		REQUIRE_AUTH_OPTION(uaRADIUS, "radiusidentifiers", "radius");
 

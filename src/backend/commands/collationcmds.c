@@ -268,9 +268,9 @@ AlterCollation(AlterCollationStmt *stmt)
 		elog(ERROR, "invalid collation version change");
 	else if (oldversion && newversion && strcmp(newversion, oldversion) != 0)
 	{
-		bool        nulls[Natts_pg_collation];
-		bool        replaces[Natts_pg_collation];
-		Datum       values[Natts_pg_collation];
+		bool		nulls[Natts_pg_collation];
+		bool		replaces[Natts_pg_collation];
+		Datum		values[Natts_pg_collation];
 
 		ereport(NOTICE,
 				(errmsg("changing version from %s to %s",
@@ -379,8 +379,8 @@ get_icu_language_tag(const char *localename)
 	uloc_toLanguageTag(localename, buf, sizeof(buf), TRUE, &status);
 	if (U_FAILURE(status))
 		ereport(ERROR,
-				(errmsg("could not convert locale name \"%s\" to language tag: %s",
-						localename, u_errorName(status))));
+		  (errmsg("could not convert locale name \"%s\" to language tag: %s",
+				  localename, u_errorName(status))));
 
 	return pstrdup(buf);
 }
@@ -405,7 +405,7 @@ get_icu_locale_comment(const char *localename)
 
 	return result;
 }
-#endif	/* USE_ICU */
+#endif   /* USE_ICU */
 
 
 Datum
@@ -493,7 +493,7 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 
 		CollationCreate(localebuf, nspid, GetUserId(), COLLPROVIDER_LIBC, enc,
 						localebuf, localebuf,
-						get_collation_actual_version(COLLPROVIDER_LIBC, localebuf),
+				  get_collation_actual_version(COLLPROVIDER_LIBC, localebuf),
 						if_not_exists);
 
 		CommandCounterIncrement();
@@ -526,7 +526,7 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 
 		CollationCreate(alias, nspid, GetUserId(), COLLPROVIDER_LIBC, enc,
 						locale, locale,
-						get_collation_actual_version(COLLPROVIDER_LIBC, locale),
+					 get_collation_actual_version(COLLPROVIDER_LIBC, locale),
 						true);
 		CommandCounterIncrement();
 	}
@@ -546,7 +546,7 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		int i;
+		int			i;
 
 		/*
 		 * Start the loop at -1 to sneak in the root locale without too much
@@ -563,7 +563,7 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 			Oid			collid;
 
 			if (i == -1)
-				name = "";  /* ICU root locale */
+				name = "";		/* ICU root locale */
 			else
 				name = ucol_getAvailable(i);
 
@@ -572,7 +572,7 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 			collid = CollationCreate(psprintf("%s-x-icu", langtag),
 									 nspid, GetUserId(), COLLPROVIDER_ICU, -1,
 									 collcollate, collcollate,
-									 get_collation_actual_version(COLLPROVIDER_ICU, collcollate),
+				 get_collation_actual_version(COLLPROVIDER_ICU, collcollate),
 									 if_not_exists);
 
 			CreateComments(collid, CollationRelationId, 0,
@@ -585,29 +585,29 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 			en = ucol_getKeywordValuesForLocale("collation", name, TRUE, &status);
 			if (U_FAILURE(status))
 				ereport(ERROR,
-						(errmsg("could not get keyword values for locale \"%s\": %s",
-								name, u_errorName(status))));
+				(errmsg("could not get keyword values for locale \"%s\": %s",
+						name, u_errorName(status))));
 
 			status = U_ZERO_ERROR;
 			uenum_reset(en, &status);
 			while ((val = uenum_next(en, NULL, &status)))
 			{
-				char *localeid = psprintf("%s@collation=%s", name, val);
+				char	   *localeid = psprintf("%s@collation=%s", name, val);
 
-				langtag =  get_icu_language_tag(localeid);
+				langtag = get_icu_language_tag(localeid);
 				collcollate = U_ICU_VERSION_MAJOR_NUM >= 54 ? langtag : localeid;
 				collid = CollationCreate(psprintf("%s-x-icu", langtag),
-										 nspid, GetUserId(), COLLPROVIDER_ICU, -1,
+									nspid, GetUserId(), COLLPROVIDER_ICU, -1,
 										 collcollate, collcollate,
-										 get_collation_actual_version(COLLPROVIDER_ICU, collcollate),
+				 get_collation_actual_version(COLLPROVIDER_ICU, collcollate),
 										 if_not_exists);
 				CreateComments(collid, CollationRelationId, 0,
 							   get_icu_locale_comment(localeid));
 			}
 			if (U_FAILURE(status))
 				ereport(ERROR,
-						(errmsg("could not get keyword values for locale \"%s\": %s",
-								name, u_errorName(status))));
+				(errmsg("could not get keyword values for locale \"%s\": %s",
+						name, u_errorName(status))));
 			uenum_close(en);
 		}
 	}

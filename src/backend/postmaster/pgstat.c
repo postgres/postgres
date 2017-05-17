@@ -181,8 +181,8 @@ static TabStatusArray *pgStatTabList = NULL;
  */
 typedef struct TabStatHashEntry
 {
-	Oid t_id;
-	PgStat_TableStatus* tsa_entry;
+	Oid			t_id;
+	PgStat_TableStatus *tsa_entry;
 } TabStatHashEntry;
 
 /*
@@ -1748,17 +1748,17 @@ pgstat_initstats(Relation rel)
 static PgStat_TableStatus *
 get_tabstat_entry(Oid rel_id, bool isshared)
 {
-	TabStatHashEntry* hash_entry;
+	TabStatHashEntry *hash_entry;
 	PgStat_TableStatus *entry;
 	TabStatusArray *tsa;
-	bool found;
+	bool		found;
 
 	/*
 	 * Create hash table if we don't have it already.
 	 */
 	if (pgStatTabHash == NULL)
 	{
-		HASHCTL			ctl;
+		HASHCTL		ctl;
 
 		memset(&ctl, 0, sizeof(ctl));
 		ctl.keysize = sizeof(Oid);
@@ -1837,14 +1837,14 @@ get_tabstat_entry(Oid rel_id, bool isshared)
 PgStat_TableStatus *
 find_tabstat_entry(Oid rel_id)
 {
-	TabStatHashEntry* hash_entry;
+	TabStatHashEntry *hash_entry;
 
 	/* If hashtable doesn't exist, there are no entries at all */
-	if(!pgStatTabHash)
+	if (!pgStatTabHash)
 		return NULL;
 
 	hash_entry = hash_search(pgStatTabHash, &rel_id, HASH_FIND, NULL);
-	if(!hash_entry)
+	if (!hash_entry)
 		return NULL;
 
 	/* Note that this step could also return NULL, but that's correct */
@@ -2872,7 +2872,7 @@ pgstat_bestart(void)
 				break;
 			default:
 				elog(FATAL, "unrecognized process type: %d",
-					(int) MyAuxProcType);
+					 (int) MyAuxProcType);
 				proc_exit(1);
 		}
 	}
@@ -2891,8 +2891,8 @@ pgstat_bestart(void)
 
 	/* We have userid for client-backends, wal-sender and bgworker processes */
 	if (beentry->st_backendType == B_BACKEND
-			|| beentry->st_backendType == B_WAL_SENDER
-			|| beentry->st_backendType == B_BG_WORKER)
+		|| beentry->st_backendType == B_WAL_SENDER
+		|| beentry->st_backendType == B_BG_WORKER)
 		beentry->st_userid = GetSessionUserId();
 	else
 		beentry->st_userid = InvalidOid;
@@ -3409,14 +3409,14 @@ pgstat_get_wait_event(uint32 wait_event_info)
 			break;
 		case PG_WAIT_ACTIVITY:
 			{
-				WaitEventActivity	w = (WaitEventActivity) wait_event_info;
+				WaitEventActivity w = (WaitEventActivity) wait_event_info;
 
 				event_name = pgstat_get_wait_activity(w);
 				break;
 			}
 		case PG_WAIT_CLIENT:
 			{
-				WaitEventClient	w = (WaitEventClient) wait_event_info;
+				WaitEventClient w = (WaitEventClient) wait_event_info;
 
 				event_name = pgstat_get_wait_client(w);
 				break;
@@ -3426,14 +3426,14 @@ pgstat_get_wait_event(uint32 wait_event_info)
 			break;
 		case PG_WAIT_IPC:
 			{
-				WaitEventIPC	w = (WaitEventIPC) wait_event_info;
+				WaitEventIPC w = (WaitEventIPC) wait_event_info;
 
 				event_name = pgstat_get_wait_ipc(w);
 				break;
 			}
 		case PG_WAIT_TIMEOUT:
 			{
-				WaitEventTimeout	w = (WaitEventTimeout) wait_event_info;
+				WaitEventTimeout w = (WaitEventTimeout) wait_event_info;
 
 				event_name = pgstat_get_wait_timeout(w);
 				break;
@@ -3508,7 +3508,7 @@ pgstat_get_wait_activity(WaitEventActivity w)
 		case WAIT_EVENT_LOGICAL_APPLY_MAIN:
 			event_name = "LogicalApplyMain";
 			break;
-		/* no default case, so that compiler will warn */
+			/* no default case, so that compiler will warn */
 	}
 
 	return event_name;
@@ -3548,7 +3548,7 @@ pgstat_get_wait_client(WaitEventClient w)
 		case WAIT_EVENT_WAL_SENDER_WRITE_DATA:
 			event_name = "WalSenderWriteData";
 			break;
-		/* no default case, so that compiler will warn */
+			/* no default case, so that compiler will warn */
 	}
 
 	return event_name;
@@ -3612,7 +3612,7 @@ pgstat_get_wait_ipc(WaitEventIPC w)
 		case WAIT_EVENT_LOGICAL_SYNC_STATE_CHANGE:
 			event_name = "LogicalSyncStateChange";
 			break;
-		/* no default case, so that compiler will warn */
+			/* no default case, so that compiler will warn */
 	}
 
 	return event_name;
@@ -3640,7 +3640,7 @@ pgstat_get_wait_timeout(WaitEventTimeout w)
 		case WAIT_EVENT_RECOVERY_APPLY_DELAY:
 			event_name = "RecoveryApplyDelay";
 			break;
-		/* no default case, so that compiler will warn */
+			/* no default case, so that compiler will warn */
 	}
 
 	return event_name;
@@ -4061,6 +4061,7 @@ pgstat_get_backend_desc(BackendType backendType)
 
 	return backendDesc;
 }
+
 /* ------------------------------------------------------------
  * Local support functions follow
  * ------------------------------------------------------------
@@ -4405,7 +4406,7 @@ PgstatCollectorMain(int argc, char *argv[])
 		wr = WaitLatchOrSocket(MyLatch,
 		WL_LATCH_SET | WL_POSTMASTER_DEATH | WL_SOCKET_READABLE | WL_TIMEOUT,
 							   pgStatSock,
-							   2 * 1000L /* msec */,
+							   2 * 1000L /* msec */ ,
 							   WAIT_EVENT_PGSTAT_MAIN);
 #endif
 

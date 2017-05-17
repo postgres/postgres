@@ -99,7 +99,7 @@ handle_args(int argc, char *argv[])
 	else
 	{
 		fprintf(stderr,
-				_("%s: duration must be a positive integer (duration is \"%d\")\n"),
+		 _("%s: duration must be a positive integer (duration is \"%d\")\n"),
 				progname, test_duration);
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 				progname);

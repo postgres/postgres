@@ -854,7 +854,7 @@ get_object_address(ObjectType objtype, Node *object,
 
 					objlist = castNode(List, object);
 					domaddr = get_object_address_type(OBJECT_DOMAIN,
-													  linitial_node(TypeName, objlist),
+											linitial_node(TypeName, objlist),
 													  missing_ok);
 					constrname = strVal(lsecond(objlist));
 
@@ -878,7 +878,7 @@ get_object_address(ObjectType objtype, Node *object,
 			case OBJECT_PUBLICATION:
 			case OBJECT_SUBSCRIPTION:
 				address = get_object_address_unqualified(objtype,
-														 (Value *) object, missing_ok);
+											   (Value *) object, missing_ok);
 				break;
 			case OBJECT_TYPE:
 			case OBJECT_DOMAIN:
@@ -1345,7 +1345,7 @@ get_object_address_relobject(ObjectType objtype, List *object,
 		if (relation != NULL)
 			heap_close(relation, AccessShareLock);
 
-		relation = NULL;	/* department of accident prevention */
+		relation = NULL;		/* department of accident prevention */
 		return address;
 	}
 
@@ -1762,7 +1762,7 @@ get_object_address_publication_rel(List *object,
 
 	relname = linitial(object);
 	relation = relation_openrv_extended(makeRangeVarFromNameList(relname),
-										 AccessShareLock, missing_ok);
+										AccessShareLock, missing_ok);
 	if (!relation)
 		return address;
 
@@ -2138,7 +2138,7 @@ pg_get_object_address(PG_FUNCTION_ARGS)
 			if (list_length(name) != 1)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					  errmsg("name list length must be exactly %d", 1)));
+						 errmsg("name list length must be exactly %d", 1)));
 			objnode = linitial(name);
 			break;
 		case OBJECT_TYPE:
@@ -2166,18 +2166,18 @@ pg_get_object_address(PG_FUNCTION_ARGS)
 		case OBJECT_FUNCTION:
 		case OBJECT_AGGREGATE:
 		case OBJECT_OPERATOR:
-		{
-			ObjectWithArgs *owa = makeNode(ObjectWithArgs);
+			{
+				ObjectWithArgs *owa = makeNode(ObjectWithArgs);
 
-			owa->objname = name;
-			owa->objargs = args;
-			objnode = (Node *) owa;
-			break;
-		}
+				owa->objname = name;
+				owa->objargs = args;
+				objnode = (Node *) owa;
+				break;
+			}
 		case OBJECT_LARGEOBJECT:
 			/* already handled above */
 			break;
-		/* no default, to let compiler warn about missing case */
+			/* no default, to let compiler warn about missing case */
 	}
 
 	if (objnode == NULL)
@@ -3370,7 +3370,7 @@ getObjectDescription(const ObjectAddress *object)
 			{
 				HeapTuple	tup;
 				char	   *pubname;
-				Form_pg_publication_rel	prform;
+				Form_pg_publication_rel prform;
 
 				tup = SearchSysCache1(PUBLICATIONREL,
 									  ObjectIdGetDatum(object->objectId));
@@ -4896,7 +4896,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 			{
 				HeapTuple	tup;
 				char	   *pubname;
-				Form_pg_publication_rel	prform;
+				Form_pg_publication_rel prform;
 
 				tup = SearchSysCache1(PUBLICATIONREL,
 									  ObjectIdGetDatum(object->objectId));
@@ -5012,8 +5012,8 @@ getOpFamilyIdentity(StringInfo buffer, Oid opfid, List **object)
 
 	if (object)
 		*object = list_make3(pstrdup(NameStr(amForm->amname)),
-							  pstrdup(schema),
-							  pstrdup(NameStr(opfForm->opfname)));
+							 pstrdup(schema),
+							 pstrdup(NameStr(opfForm->opfname)));
 
 	ReleaseSysCache(amTup);
 	ReleaseSysCache(opfTup);

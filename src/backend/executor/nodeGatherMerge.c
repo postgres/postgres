@@ -35,7 +35,7 @@ typedef struct GMReaderTupleBuffer
 	int			readCounter;
 	int			nTuples;
 	bool		done;
-}	GMReaderTupleBuffer;
+} GMReaderTupleBuffer;
 
 /*
  * When we read tuples from workers, it's a good idea to read several at once
@@ -230,17 +230,17 @@ ExecGatherMerge(GatherMergeState *node)
 	ResetExprContext(econtext);
 
 	/*
-	 * Get next tuple, either from one of our workers, or by running the
-	 * plan ourselves.
+	 * Get next tuple, either from one of our workers, or by running the plan
+	 * ourselves.
 	 */
 	slot = gather_merge_getnext(node);
 	if (TupIsNull(slot))
 		return NULL;
 
 	/*
-	 * form the result tuple using ExecProject(), and return it --- unless
-	 * the projection produces an empty set, in which case we must loop
-	 * back around for another tuple
+	 * form the result tuple using ExecProject(), and return it --- unless the
+	 * projection produces an empty set, in which case we must loop back
+	 * around for another tuple
 	 */
 	econtext->ecxt_outertuple = slot;
 	return ExecProject(node->ps.ps_ProjInfo);
@@ -255,7 +255,7 @@ ExecGatherMerge(GatherMergeState *node)
 void
 ExecEndGatherMerge(GatherMergeState *node)
 {
-	ExecEndNode(outerPlanState(node));      /* let children clean up first */
+	ExecEndNode(outerPlanState(node));	/* let children clean up first */
 	ExecShutdownGatherMerge(node);
 	ExecFreeExprContext(&node->ps);
 	ExecClearTuple(node->ps.ps_ResultTupleSlot);
@@ -534,8 +534,8 @@ gather_merge_readnext(GatherMergeState *gm_state, int reader, bool nowait)
 	HeapTuple	tup = NULL;
 
 	/*
-	 * If we're being asked to generate a tuple from the leader, then we
-	 * just call ExecProcNode as normal to produce one.
+	 * If we're being asked to generate a tuple from the leader, then we just
+	 * call ExecProcNode as normal to produce one.
 	 */
 	if (gm_state->nreaders == reader)
 	{
@@ -582,8 +582,8 @@ gather_merge_readnext(GatherMergeState *gm_state, int reader, bool nowait)
 											   &tuple_buffer->done));
 
 		/*
-		 * Attempt to read more tuples in nowait mode and store them in
-		 * the tuple array.
+		 * Attempt to read more tuples in nowait mode and store them in the
+		 * tuple array.
 		 */
 		if (HeapTupleIsValid(tup))
 			form_tuple_array(gm_state, reader);

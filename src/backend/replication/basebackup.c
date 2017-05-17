@@ -58,8 +58,8 @@ static bool sendFile(char *readfilename, char *tarfilename,
 static void sendFileWithContent(const char *filename, const char *content);
 static int64 _tarWriteHeader(const char *filename, const char *linktarget,
 				struct stat * statbuf, bool sizeonly);
-static int64 _tarWriteDir(const char *pathbuf, int basepathlen, struct stat *statbuf,
-				bool sizeonly);
+static int64 _tarWriteDir(const char *pathbuf, int basepathlen, struct stat * statbuf,
+			 bool sizeonly);
 static void send_int8_string(StringInfoData *buf, int64 intval);
 static void SendBackupHeader(List *tablespaces);
 static void base_backup_cleanup(int code, Datum arg);
@@ -106,15 +106,15 @@ static const char *excludeDirContents[] =
 {
 	/*
 	 * Skip temporary statistics files. PG_STAT_TMP_DIR must be skipped even
-	 * when stats_temp_directory is set because PGSS_TEXT_FILE is always created
-	 * there.
+	 * when stats_temp_directory is set because PGSS_TEXT_FILE is always
+	 * created there.
 	 */
 	PG_STAT_TMP_DIR,
 
 	/*
-	 * It is generally not useful to backup the contents of this directory even
-	 * if the intention is to restore to another master. See backup.sgml for a
-	 * more detailed description.
+	 * It is generally not useful to backup the contents of this directory
+	 * even if the intention is to restore to another master. See backup.sgml
+	 * for a more detailed description.
 	 */
 	"pg_replslot",
 
@@ -365,7 +365,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 		dir = AllocateDir("pg_wal");
 		if (!dir)
 			ereport(ERROR,
-				 (errmsg("could not open directory \"%s\": %m", "pg_wal")));
+				  (errmsg("could not open directory \"%s\": %m", "pg_wal")));
 		while ((de = ReadDir(dir, "pg_wal")) != NULL)
 		{
 			/* Does it look like a WAL segment, and is it in the range? */
@@ -404,8 +404,8 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 		qsort(walFiles, nWalFiles, sizeof(char *), compareWalFileNames);
 
 		/*
-		 * There must be at least one xlog file in the pg_wal directory,
-		 * since we are doing backup-including-xlog.
+		 * There must be at least one xlog file in the pg_wal directory, since
+		 * we are doing backup-including-xlog.
 		 */
 		if (nWalFiles < 1)
 			ereport(ERROR,
@@ -1036,7 +1036,7 @@ sendDir(char *path, int basepathlen, bool sizeonly, List *tablespaces,
 			if (strcmp(de->d_name, excludeDirContents[excludeIdx]) == 0)
 			{
 				elog(DEBUG1, "contents of directory \"%s\" excluded from backup", de->d_name);
-				size += _tarWriteDir(pathbuf, basepathlen, &statbuf,  sizeonly);
+				size += _tarWriteDir(pathbuf, basepathlen, &statbuf, sizeonly);
 				excludeFound = true;
 				break;
 			}
@@ -1281,7 +1281,7 @@ _tarWriteHeader(const char *filename, const char *linktarget,
 	if (!sizeonly)
 	{
 		rc = tarCreateHeader(h, filename, linktarget, statbuf->st_size,
-							 statbuf->st_mode, statbuf->st_uid, statbuf->st_gid,
+						  statbuf->st_mode, statbuf->st_uid, statbuf->st_gid,
 							 statbuf->st_mtime);
 
 		switch (rc)
@@ -1295,9 +1295,9 @@ _tarWriteHeader(const char *filename, const char *linktarget,
 				break;
 			case TAR_SYMLINK_TOO_LONG:
 				ereport(ERROR,
-						(errmsg("symbolic link target too long for tar format: "
-								"file name \"%s\", target \"%s\"",
-								filename, linktarget)));
+					 (errmsg("symbolic link target too long for tar format: "
+							 "file name \"%s\", target \"%s\"",
+							 filename, linktarget)));
 				break;
 			default:
 				elog(ERROR, "unrecognized tar error: %d", rc);
@@ -1314,7 +1314,7 @@ _tarWriteHeader(const char *filename, const char *linktarget,
  * write it as a directory anyway.
  */
 static int64
-_tarWriteDir(const char *pathbuf, int basepathlen, struct stat *statbuf,
+_tarWriteDir(const char *pathbuf, int basepathlen, struct stat * statbuf,
 			 bool sizeonly)
 {
 	/* If symlink, write it as a directory anyway */

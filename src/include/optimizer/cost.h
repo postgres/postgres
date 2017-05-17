@@ -99,7 +99,7 @@ extern void cost_tablefuncscan(Path *path, PlannerInfo *root,
 extern void cost_ctescan(Path *path, PlannerInfo *root,
 			 RelOptInfo *baserel, ParamPathInfo *param_info);
 extern void cost_namedtuplestorescan(Path *path, PlannerInfo *root,
-			 RelOptInfo *baserel, ParamPathInfo *param_info);
+						 RelOptInfo *baserel, ParamPathInfo *param_info);
 extern void cost_recursive_union(Path *runion, Path *nrterm, Path *rterm);
 extern void cost_sort(Path *path, PlannerInfo *root,
 		  List *pathkeys, Cost input_cost, double tuples, int width,
@@ -189,7 +189,7 @@ extern void set_namedtuplestore_size_estimates(PlannerInfo *root, RelOptInfo *re
 extern void set_foreign_size_estimates(PlannerInfo *root, RelOptInfo *rel);
 extern PathTarget *set_pathtarget_cost_width(PlannerInfo *root, PathTarget *target);
 extern double compute_bitmap_pages(PlannerInfo *root, RelOptInfo *baserel,
-				  Path *bitmapqual, int loop_count, Cost *cost, double *tuple);
+				Path *bitmapqual, int loop_count, Cost *cost, double *tuple);
 
 /*
  * prototypes for clausesel.c
@@ -206,8 +206,8 @@ extern Selectivity clause_selectivity(PlannerInfo *root,
 				   JoinType jointype,
 				   SpecialJoinInfo *sjinfo);
 extern void cost_gather_merge(GatherMergePath *path, PlannerInfo *root,
-							  RelOptInfo *rel, ParamPathInfo *param_info,
-							  Cost input_startup_cost, Cost input_total_cost,
-							  double *rows);
+				  RelOptInfo *rel, ParamPathInfo *param_info,
+				  Cost input_startup_cost, Cost input_total_cost,
+				  double *rows);
 
 #endif   /* COST_H */

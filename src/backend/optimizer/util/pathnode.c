@@ -1642,8 +1642,8 @@ create_gather_merge_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 						 Relids required_outer, double *rows)
 {
 	GatherMergePath *pathnode = makeNode(GatherMergePath);
-	Cost			 input_startup_cost = 0;
-	Cost			 input_total_cost = 0;
+	Cost		input_startup_cost = 0;
+	Cost		input_total_cost = 0;
 
 	Assert(subpath->parallel_safe);
 	Assert(pathkeys);
@@ -1669,7 +1669,7 @@ create_gather_merge_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 	else
 	{
 		/* We'll need to insert a Sort node, so include cost for that */
-		Path		sort_path;		/* dummy for result of cost_sort */
+		Path		sort_path;	/* dummy for result of cost_sort */
 
 		cost_sort(&sort_path,
 				  root,

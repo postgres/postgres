@@ -412,43 +412,43 @@ const pg_enc2gettext pg_enc2gettext_tbl[] =
  *
  * NULL entries are not supported by ICU, or their mapping is unclear.
  */
-static const char * const pg_enc2icu_tbl[] =
+static const char *const pg_enc2icu_tbl[] =
 {
-	NULL,					/* PG_SQL_ASCII */
-	"EUC-JP",				/* PG_EUC_JP */
-	"EUC-CN",				/* PG_EUC_CN */
-	"EUC-KR",				/* PG_EUC_KR */
-	"EUC-TW",				/* PG_EUC_TW */
-	NULL,					/* PG_EUC_JIS_2004 */
-	"UTF-8",				/* PG_UTF8 */
-	NULL,					/* PG_MULE_INTERNAL */
-	"ISO-8859-1",			/* PG_LATIN1 */
-	"ISO-8859-2",			/* PG_LATIN2 */
-	"ISO-8859-3",			/* PG_LATIN3 */
-	"ISO-8859-4",			/* PG_LATIN4 */
-	"ISO-8859-9",			/* PG_LATIN5 */
-	"ISO-8859-10",			/* PG_LATIN6 */
-	"ISO-8859-13",			/* PG_LATIN7 */
-	"ISO-8859-14",			/* PG_LATIN8 */
-	"ISO-8859-15",			/* PG_LATIN9 */
-	NULL,					/* PG_LATIN10 */
-	"CP1256",				/* PG_WIN1256 */
-	"CP1258",				/* PG_WIN1258 */
-	"CP866",				/* PG_WIN866 */
-	NULL,					/* PG_WIN874 */
-	"KOI8-R",				/* PG_KOI8R */
-	"CP1251",				/* PG_WIN1251 */
-	"CP1252",				/* PG_WIN1252 */
-	"ISO-8859-5",			/* PG_ISO_8859_5 */
-	"ISO-8859-6",			/* PG_ISO_8859_6 */
-	"ISO-8859-7",			/* PG_ISO_8859_7 */
-	"ISO-8859-8",			/* PG_ISO_8859_8 */
-	"CP1250",				/* PG_WIN1250 */
-	"CP1253",				/* PG_WIN1253 */
-	"CP1254",				/* PG_WIN1254 */
-	"CP1255",				/* PG_WIN1255 */
-	"CP1257",				/* PG_WIN1257 */
-	"KOI8-U",				/* PG_KOI8U */
+	NULL,						/* PG_SQL_ASCII */
+	"EUC-JP",					/* PG_EUC_JP */
+	"EUC-CN",					/* PG_EUC_CN */
+	"EUC-KR",					/* PG_EUC_KR */
+	"EUC-TW",					/* PG_EUC_TW */
+	NULL,						/* PG_EUC_JIS_2004 */
+	"UTF-8",					/* PG_UTF8 */
+	NULL,						/* PG_MULE_INTERNAL */
+	"ISO-8859-1",				/* PG_LATIN1 */
+	"ISO-8859-2",				/* PG_LATIN2 */
+	"ISO-8859-3",				/* PG_LATIN3 */
+	"ISO-8859-4",				/* PG_LATIN4 */
+	"ISO-8859-9",				/* PG_LATIN5 */
+	"ISO-8859-10",				/* PG_LATIN6 */
+	"ISO-8859-13",				/* PG_LATIN7 */
+	"ISO-8859-14",				/* PG_LATIN8 */
+	"ISO-8859-15",				/* PG_LATIN9 */
+	NULL,						/* PG_LATIN10 */
+	"CP1256",					/* PG_WIN1256 */
+	"CP1258",					/* PG_WIN1258 */
+	"CP866",					/* PG_WIN866 */
+	NULL,						/* PG_WIN874 */
+	"KOI8-R",					/* PG_KOI8R */
+	"CP1251",					/* PG_WIN1251 */
+	"CP1252",					/* PG_WIN1252 */
+	"ISO-8859-5",				/* PG_ISO_8859_5 */
+	"ISO-8859-6",				/* PG_ISO_8859_6 */
+	"ISO-8859-7",				/* PG_ISO_8859_7 */
+	"ISO-8859-8",				/* PG_ISO_8859_8 */
+	"CP1250",					/* PG_WIN1250 */
+	"CP1253",					/* PG_WIN1253 */
+	"CP1254",					/* PG_WIN1254 */
+	"CP1255",					/* PG_WIN1255 */
+	"CP1257",					/* PG_WIN1257 */
+	"KOI8-U",					/* PG_KOI8U */
 };
 
 bool
@@ -476,7 +476,7 @@ get_encoding_name_for_icu(int encoding)
 	return icu_encoding_name;
 }
 
-#endif /* not FRONTEND */
+#endif   /* not FRONTEND */
 
 
 /* ----------

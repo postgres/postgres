@@ -31,8 +31,8 @@ typedef struct BrinOptions
  */
 typedef struct BrinStatsData
 {
-	BlockNumber	pagesPerRange;
-	BlockNumber	revmapNumPages;
+	BlockNumber pagesPerRange;
+	BlockNumber revmapNumPages;
 } BrinStatsData;
 
 

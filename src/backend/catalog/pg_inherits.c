@@ -38,8 +38,8 @@
  */
 typedef struct SeenRelsEntry
 {
-	Oid			 rel_id;			/* relation oid */
-	ListCell	*numparents_cell;	/* corresponding list cell */
+	Oid			rel_id;			/* relation oid */
+	ListCell   *numparents_cell;	/* corresponding list cell */
 } SeenRelsEntry;
 
 /*
@@ -167,8 +167,8 @@ List *
 find_all_inheritors(Oid parentrelId, LOCKMODE lockmode, List **numparents)
 {
 	/* hash table for O(1) rel_oid -> rel_numparents cell lookup */
-	HTAB		   *seen_rels;
-	HASHCTL			ctl;
+	HTAB	   *seen_rels;
+	HASHCTL		ctl;
 	List	   *rels_list,
 			   *rel_numparents;
 	ListCell   *l;
@@ -212,8 +212,8 @@ find_all_inheritors(Oid parentrelId, LOCKMODE lockmode, List **numparents)
 		foreach(lc, currentchildren)
 		{
 			Oid			child_oid = lfirst_oid(lc);
-			bool			found;
-			SeenRelsEntry	*hash_entry;
+			bool		found;
+			SeenRelsEntry *hash_entry;
 
 			hash_entry = hash_search(seen_rels, &child_oid, HASH_ENTER, &found);
 			if (found)
