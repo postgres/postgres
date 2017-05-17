@@ -1514,33 +1514,53 @@ psql_completion(const char *text, int start, int end)
 		else
 			COMPLETE_WITH_FUNCTION_ARG(prev2_wd);
 	}
-	/* ALTER PUBLICATION <name> ...*/
-	else if (Matches3("ALTER","PUBLICATION",MatchAny))
+	/* ALTER PUBLICATION <name> */
+	else if (Matches3("ALTER", "PUBLICATION", MatchAny))
 	{
-		COMPLETE_WITH_LIST6("WITH (", "ADD TABLE", "SET TABLE", "DROP TABLE",
-							"OWNER TO", "RENAME TO");
+		COMPLETE_WITH_LIST5("ADD TABLE", "DROP TABLE", "OWNER TO", "RENAME TO", "SET");
 	}
-	/* ALTER PUBLICATION <name> .. SET ( ... */
-	else if (HeadMatches3("ALTER", "PUBLICATION",MatchAny) && TailMatches2("SET", "("))
+	/* ALTER PUBLICATION <name> SET */
+	else if (Matches4("ALTER", "PUBLICATION", MatchAny, "SET"))
+	{
+		COMPLETE_WITH_LIST2("(", "TABLE");
+	}
+	/* ALTER PUBLICATION <name> SET ( */
+	else if (HeadMatches3("ALTER", "PUBLICATION", MatchAny) && TailMatches2("SET", "("))
 	{
 		COMPLETE_WITH_CONST("publish");
 	}
-	/* ALTER SUBSCRIPTION <name> ... */
-	else if (Matches3("ALTER","SUBSCRIPTION",MatchAny))
+	/* ALTER SUBSCRIPTION <name> */
+	else if (Matches3("ALTER", "SUBSCRIPTION", MatchAny))
 	{
-		COMPLETE_WITH_LIST8("SET (", "CONNECTION", "SET PUBLICATION", "ENABLE",
-							"DISABLE", "OWNER TO", "RENAME TO", "REFRESH PUBLICATION WITH (");
+		COMPLETE_WITH_LIST7("CONNECTION", "ENABLE", "DISABLE", "OWNER TO",
+							"RENAME TO", "REFRESH PUBLICATION", "SET");
 	}
-	/* ALTER SUBSCRIPTION <name> REFRESH PUBLICATION WITH ( ... */
+	/* ALTER SUBSCRIPTION <name> REFRESH PUBLICATION */
+	else if (HeadMatches3("ALTER", "SUBSCRIPTION", MatchAny) &&
+			 TailMatches2("REFRESH", "PUBLICATION"))
+	{
+		COMPLETE_WITH_CONST("WITH (");
+	}
+	/* ALTER SUBSCRIPTION <name> REFRESH PUBLICATION WITH ( */
 	else if (HeadMatches3("ALTER", "SUBSCRIPTION", MatchAny) &&
 			 TailMatches4("REFRESH", "PUBLICATION", "WITH", "("))
 	{
 		COMPLETE_WITH_CONST("copy_data");
 	}
-	/* ALTER SUBSCRIPTION <name> .. SET ( ... */
+	/* ALTER SUBSCRIPTION <name> SET */
+	else if (Matches4("ALTER", "SUBSCRIPTION", MatchAny, "SET"))
+	{
+		COMPLETE_WITH_LIST2("(", "PUBLICATION");
+	}
+	/* ALTER SUBSCRIPTION <name> SET ( */
 	else if (HeadMatches3("ALTER", "SUBSCRIPTION", MatchAny) && TailMatches2("SET", "("))
 	{
-		COMPLETE_WITH_CONST("slot_name");
+		COMPLETE_WITH_LIST2("slot_name", "synchronous_commit");
+	}
+	/* ALTER SUBSCRIPTION <name> SET PUBLICATION */
+	else if (HeadMatches3("ALTER", "SUBSCRIPTION", MatchAny) && TailMatches2("SET", "PUBLICATION"))
+	{
+		/* complete with nothing here as this refers to remote publications */
 	}
 	/* ALTER SCHEMA <name> */
 	else if (Matches3("ALTER", "SCHEMA", MatchAny))
@@ -2458,8 +2478,8 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH_CONST("WITH (");
 	/* Complete "CREATE SUBSCRIPTION <name> ...  WITH ( <opt>" */
 	else if (HeadMatches2("CREATE", "SUBSCRIPTION") && TailMatches2("WITH", "("))
-		COMPLETE_WITH_LIST5("enabled", "create_slot", "slot_name",
-							"copy_data", "connect");
+		COMPLETE_WITH_LIST6("copy_data", "connect", "create_slot", "enabled",
+							"slot_name", "synchronous_commit");
 
 /* CREATE TRIGGER --- is allowed inside CREATE SCHEMA, so use TailMatches */
 	/* complete CREATE TRIGGER <name> with BEFORE,AFTER,INSTEAD OF */
