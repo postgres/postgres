@@ -45,6 +45,26 @@ SET SESSION AUTHORIZATION 'regress_subscription_user2';
 CREATE SUBSCRIPTION testsub2 CONNECTION 'dbname=doesnotexist' PUBLICATION foo WITH (connect = false);
 ERROR:  must be superuser to create subscriptions
 SET SESSION AUTHORIZATION 'regress_subscription_user';
+-- fail - invalid option combinations
+CREATE SUBSCRIPTION testsub2 CONNECTION 'dbname=doesnotexist' PUBLICATION testpub WITH (connect = false, copy_data = true);
+ERROR:  connect = false and copy_data = true are mutually exclusive options
+CREATE SUBSCRIPTION testsub2 CONNECTION 'dbname=doesnotexist' PUBLICATION testpub WITH (connect = false, enabled = true);
+ERROR:  connect = false and enabled = true are mutually exclusive options
+CREATE SUBSCRIPTION testsub2 CONNECTION 'dbname=doesnotexist' PUBLICATION testpub WITH (connect = false, create_slot = true);
+ERROR:  connect = false and create_slot = true are mutually exclusive options
+CREATE SUBSCRIPTION testsub2 CONNECTION 'dbname=doesnotexist' PUBLICATION testpub WITH (slot_name = NONE, enabled = true);
+ERROR:  slot_name = NONE and enabled = true are mutually exclusive options
+CREATE SUBSCRIPTION testsub2 CONNECTION 'dbname=doesnotexist' PUBLICATION testpub WITH (slot_name = NONE, create_slot = true);
+ERROR:  slot_name = NONE and create_slot = true are mutually exclusive options
+-- ok - with slot_name = NONE
+CREATE SUBSCRIPTION testsub3 CONNECTION 'dbname=doesnotexist' PUBLICATION testpub WITH (slot_name = NONE, connect = false);
+WARNING:  tables were not subscribed, you will have to run ALTER SUBSCRIPTION ... REFRESH PUBLICATION to subscribe the tables
+-- fail
+ALTER SUBSCRIPTION testsub3 ENABLE;
+ERROR:  cannot enable subscription that does not have a slot name
+ALTER SUBSCRIPTION testsub3 REFRESH PUBLICATION;
+ERROR:  ALTER SUBSCRIPTION ... REFRESH is not allowed for disabled subscriptions
+DROP SUBSCRIPTION testsub3;
 -- fail - invalid connection string
 ALTER SUBSCRIPTION testsub CONNECTION 'foobar';
 ERROR:  invalid connection string syntax: missing "=" after "foobar" in connection info string

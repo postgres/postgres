@@ -38,6 +38,21 @@ SET SESSION AUTHORIZATION 'regress_subscription_user2';
 CREATE SUBSCRIPTION testsub2 CONNECTION 'dbname=doesnotexist' PUBLICATION foo WITH (connect = false);
 SET SESSION AUTHORIZATION 'regress_subscription_user';
 
+-- fail - invalid option combinations
+CREATE SUBSCRIPTION testsub2 CONNECTION 'dbname=doesnotexist' PUBLICATION testpub WITH (connect = false, copy_data = true);
+CREATE SUBSCRIPTION testsub2 CONNECTION 'dbname=doesnotexist' PUBLICATION testpub WITH (connect = false, enabled = true);
+CREATE SUBSCRIPTION testsub2 CONNECTION 'dbname=doesnotexist' PUBLICATION testpub WITH (connect = false, create_slot = true);
+CREATE SUBSCRIPTION testsub2 CONNECTION 'dbname=doesnotexist' PUBLICATION testpub WITH (slot_name = NONE, enabled = true);
+CREATE SUBSCRIPTION testsub2 CONNECTION 'dbname=doesnotexist' PUBLICATION testpub WITH (slot_name = NONE, create_slot = true);
+
+-- ok - with slot_name = NONE
+CREATE SUBSCRIPTION testsub3 CONNECTION 'dbname=doesnotexist' PUBLICATION testpub WITH (slot_name = NONE, connect = false);
+-- fail
+ALTER SUBSCRIPTION testsub3 ENABLE;
+ALTER SUBSCRIPTION testsub3 REFRESH PUBLICATION;
+
+DROP SUBSCRIPTION testsub3;
+
 -- fail - invalid connection string
 ALTER SUBSCRIPTION testsub CONNECTION 'foobar';
 

@@ -181,17 +181,17 @@ parse_subscription_options(List *options, bool *connect, bool *enabled_given,
 		if (enabled && *enabled_given && *enabled)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("noconnect and enabled are mutually exclusive options")));
+					 errmsg("connect = false and enabled = true are mutually exclusive options")));
 
 		if (create_slot && create_slot_given && *create_slot)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("noconnect and create slot are mutually exclusive options")));
+					 errmsg("connect = false and create_slot = true are mutually exclusive options")));
 
 		if (copy_data && copy_data_given && *copy_data)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("noconnect and copy data are mutually exclusive options")));
+					 errmsg("connect = false and copy_data = true are mutually exclusive options")));
 
 		/* Change the defaults of other options. */
 		*enabled = false;
@@ -208,12 +208,12 @@ parse_subscription_options(List *options, bool *connect, bool *enabled_given,
 		if (enabled && *enabled_given && *enabled)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("slot_name = NONE and enabled are mutually exclusive options")));
+					 errmsg("slot_name = NONE and enabled = true are mutually exclusive options")));
 
 		if (create_slot && create_slot_given && *create_slot)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("slot_name = NONE and create slot are mutually exclusive options")));
+					 errmsg("slot_name = NONE and create_slot = true are mutually exclusive options")));
 	}
 }
 
