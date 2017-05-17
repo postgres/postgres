@@ -15,7 +15,8 @@ PREREQUISITES:
 2) Install entab (src/tools/entab/).
 
 3) Install perltidy.  Please be sure it is v20090616 (older and newer
-   versions make different formatting choices, and we want consistency).
+   versions make different formatting choices, and we want consistency).  See
+   https://sourceforge.net/projects/perltidy/files/perltidy/perltidy-20090616/
 
 DOING THE INDENT RUN:
 
