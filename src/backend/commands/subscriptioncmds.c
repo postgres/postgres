@@ -296,6 +296,7 @@ CreateSubscription(CreateSubscriptionStmt *stmt, bool isTopLevel)
 
 	/*
 	 * Parse and check options.
+	 *
 	 * Connection and publication should not be specified here.
 	 */
 	parse_subscription_options(stmt->options, &connect, &enabled_given,

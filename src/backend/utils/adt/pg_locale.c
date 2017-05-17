@@ -1381,12 +1381,14 @@ pg_newlocale_from_collation(Oid collid)
 
 			actual_versionstr = get_collation_actual_version(collform->collprovider, collcollate);
 			if (!actual_versionstr)
+			{
 				/* This could happen when specifying a version in CREATE
 				 * COLLATION for a libc locale, or manually creating a mess
 				 * in the catalogs. */
 				ereport(ERROR,
 						(errmsg("collation \"%s\" has no actual version, but a version was specified",
 								NameStr(collform->collname))));
+			}
 			collversionstr = TextDatumGetCString(collversion);
 
 			if (strcmp(actual_versionstr, collversionstr) != 0)

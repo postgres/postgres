@@ -94,23 +94,21 @@ typedef FormData_pg_authid *Form_pg_authid;
  * The uppercase quantities will be replaced at initdb time with
  * user choices.
  *
- * If adding new default roles or changing the OIDs below, be sure to add or
- * update the #defines which follow as appropriate.
+ * The C code typically refers to these roles using the #define symbols,
+ * so be sure to keep those in sync with the DATA lines.
  * ----------------
  */
 DATA(insert OID = 10 ( "POSTGRES" t t t t t t t -1 _null_ _null_));
-DATA(insert OID = 3373 ( "pg_monitor" f t f f f f f -1 _null_ _null_));
-DATA(insert OID = 3374 ( "pg_read_all_settings" f t f f f f f -1 _null_ _null_));
-DATA(insert OID = 3375 ( "pg_read_all_stats" f t f f f f f -1 _null_ _null_));
-DATA(insert OID = 3377 ( "pg_stat_scan_tables" f t f f f f f -1 _null_ _null_));
-DATA(insert OID = 4200 ( "pg_signal_backend" f t f f f f f -1 _null_ _null_));
-
 #define BOOTSTRAP_SUPERUSERID			10
-
+DATA(insert OID = 3373 ( "pg_monitor" f t f f f f f -1 _null_ _null_));
 #define DEFAULT_ROLE_MONITOR		3373
+DATA(insert OID = 3374 ( "pg_read_all_settings" f t f f f f f -1 _null_ _null_));
 #define DEFAULT_ROLE_READ_ALL_SETTINGS	3374
+DATA(insert OID = 3375 ( "pg_read_all_stats" f t f f f f f -1 _null_ _null_));
 #define DEFAULT_ROLE_READ_ALL_STATS	3375
+DATA(insert OID = 3377 ( "pg_stat_scan_tables" f t f f f f f -1 _null_ _null_));
 #define DEFAULT_ROLE_STAT_SCAN_TABLES	3377
+DATA(insert OID = 4200 ( "pg_signal_backend" f t f f f f f -1 _null_ _null_));
 #define DEFAULT_ROLE_SIGNAL_BACKENDID	4200
 
 #endif   /* PG_AUTHID_H */

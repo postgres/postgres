@@ -30,8 +30,10 @@
 /* Tuple coming via logical replication. */
 typedef struct LogicalRepTupleData
 {
-	char   *values[MaxTupleAttributeNumber];	/* value in out function format or NULL if values is NULL */
-	bool	changed[MaxTupleAttributeNumber];	/* marker for changed/unchanged values */
+	/* column values in text format, or NULL for a null value: */
+	char   *values[MaxTupleAttributeNumber];
+	/* markers for changed/unchanged column values: */
+	bool	changed[MaxTupleAttributeNumber];
 } LogicalRepTupleData;
 
 typedef uint32	LogicalRepRelId;

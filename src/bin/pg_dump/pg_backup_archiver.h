@@ -257,8 +257,8 @@ struct _archiveHandle
 	WriteExtraTocPtrType WriteExtraTocPtr;	/* Write extra TOC entry data
 										 * associated with the current archive
 										 * format */
-	ReadExtraTocPtrType ReadExtraTocPtr;	/* Read extr info associated with
-										 * archie format */
+	ReadExtraTocPtrType ReadExtraTocPtr;	/* Read extra info associated with
+										 * archive format */
 	PrintExtraTocPtrType PrintExtraTocPtr;	/* Extra TOC info for format */
 	PrintTocDataPtrType PrintTocDataPtr;
 

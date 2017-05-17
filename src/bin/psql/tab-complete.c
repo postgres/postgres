@@ -2772,6 +2772,7 @@ psql_completion(const char *text, int start, int end)
  */
 	/* Complete GRANT/REVOKE with a list of roles and privileges */
 	else if (TailMatches1("GRANT|REVOKE"))
+	{
 		/*
 		 * With ALTER DEFAULT PRIVILEGES, restrict completion
 		 * to grantable privileges (can't grant roles)
@@ -2795,7 +2796,7 @@ psql_completion(const char *text, int start, int end)
 							" UNION SELECT 'EXECUTE'"
 							" UNION SELECT 'USAGE'"
 							" UNION SELECT 'ALL'");
-
+	}
 	/*
 	 * Complete GRANT/REVOKE <privilege> with "ON", GRANT/REVOKE <role> with
 	 * TO/FROM
@@ -2822,6 +2823,7 @@ psql_completion(const char *text, int start, int end)
 	 * privilege.
 	 */
 	else if (TailMatches3("GRANT|REVOKE", MatchAny, "ON"))
+	{
 		/*
 		 * With ALTER DEFAULT PRIVILEGES, restrict completion
 		 * to the kinds of objects supported.
@@ -2845,11 +2847,10 @@ psql_completion(const char *text, int start, int end)
 								   " UNION SELECT 'TABLE'"
 								   " UNION SELECT 'TABLESPACE'"
 								   " UNION SELECT 'TYPE'");
-
+	}
 	else if (TailMatches4("GRANT|REVOKE", MatchAny, "ON", "ALL"))
 		COMPLETE_WITH_LIST3("FUNCTIONS IN SCHEMA", "SEQUENCES IN SCHEMA",
 							"TABLES IN SCHEMA");
-
 	else if (TailMatches4("GRANT|REVOKE", MatchAny, "ON", "FOREIGN"))
 		COMPLETE_WITH_LIST2("DATA WRAPPER", "SERVER");
 

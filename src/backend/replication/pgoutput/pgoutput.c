@@ -221,14 +221,15 @@ pgoutput_begin_txn(LogicalDecodingContext *ctx, ReorderBufferTXN *txn)
 		OutputPluginWrite(ctx, false);
 		OutputPluginPrepareWrite(ctx, true);
 
-		/*
-		 * XXX: which behaviour we want here?
+		/*----------
+		 * XXX: which behaviour do we want here?
 		 *
 		 * Alternatives:
 		 *  - don't send origin message if origin name not found
 		 *    (that's what we do now)
 		 *  - throw error - that will break replication, not good
 		 *  - send some special "unknown" origin
+		 *----------
 		 */
 		if (replorigin_by_oid(txn->origin_id, true, &origin))
 			logicalrep_write_origin(ctx->out, origin, txn->origin_lsn);

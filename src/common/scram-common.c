@@ -213,9 +213,10 @@ scram_build_verifier(const char *salt, int saltlen, int iterations,
 
 	scram_ServerKey(salted_password, server_key);
 
-	/*
+	/*----------
 	 * The format is:
 	 * SCRAM-SHA-256$<iteration count>:<salt>$<StoredKey>:<ServerKey>
+	 *----------
 	 */
 	maxlen = strlen("SCRAM-SHA-256") + 1
 		+ 10 + 1								/* iteration count */

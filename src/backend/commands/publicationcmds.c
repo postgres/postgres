@@ -493,8 +493,10 @@ OpenTableList(List *tables)
 
 		rel = heap_openrv(rv, ShareUpdateExclusiveLock);
 		myrelid = RelationGetRelid(rel);
+
 		/*
-		 * filter out duplicates when user specifies "foo, foo"
+		 * Filter out duplicates if user specifies "foo, foo".
+		 *
 		 * Note that this algorithm is known to not be very efficient (O(N^2))
 		 * but given that it only works on list of tables given to us by user
 		 * it's deemed acceptable.

@@ -117,6 +117,7 @@ ExecInitNamedTuplestoreScan(NamedTuplestoreScan *node, EState *estate, int eflag
 
 	/*
 	 * XXX: Should we add a function to free that read pointer when done?
+	 *
 	 * This was attempted, but it did not improve performance or memory usage
 	 * in any tested cases.
 	 */

@@ -176,7 +176,7 @@ struct SnapBuild
 	 */
 	TransactionId initial_xmin_horizon;
 
-	/* Indicates if we are building full snapshot or just catalog one .*/
+	/* Indicates if we are building full snapshot or just catalog one. */
 	bool		building_full_snapshot;
 
 	/*

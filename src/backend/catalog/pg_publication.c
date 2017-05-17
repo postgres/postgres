@@ -90,6 +90,11 @@ check_publication_add_relation(Relation targetrel)
  *
  * Does same checks as the above, but does not need relation to be opened
  * and also does not throw errors.
+ *
+ * Note this also excludes all tables with relid < FirstNormalObjectId,
+ * ie all tables created during initdb.  This mainly affects the preinstalled
+ * information_schema.  (IsCatalogClass() only checks for these inside
+ * pg_catalog and toast schemas.)
  */
 static bool
 is_publishable_class(Oid relid, Form_pg_class reltuple)
@@ -97,12 +102,6 @@ is_publishable_class(Oid relid, Form_pg_class reltuple)
 	return reltuple->relkind == RELKIND_RELATION &&
 		!IsCatalogClass(relid, reltuple) &&
 		reltuple->relpersistence == RELPERSISTENCE_PERMANENT &&
-		/*
-		 * Also exclude any tables created as part of initdb. This mainly
-		 * affects the preinstalled information_schema.
-		 * Note that IsCatalogClass() only checks for these inside pg_catalog
-		 * and toast schemas.
-		 */
 		relid >= FirstNormalObjectId;
 }
 

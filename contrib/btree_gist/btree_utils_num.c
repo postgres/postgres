@@ -183,9 +183,11 @@ gbt_num_union(GBT_NUMKEY *out, const GistEntryVector *entryvec, const gbtree_nin
 		cur = (GBT_NUMKEY *) DatumGetPointer((entryvec->vector[i].key));
 		c.lower = &cur[0];
 		c.upper = &cur[tinfo->size];
-		if ((*tinfo->f_gt) (o.lower, c.lower, flinfo))	/* out->lower > cur->lower */
+		/* if out->lower > cur->lower, adopt cur as lower */
+		if ((*tinfo->f_gt) (o.lower, c.lower, flinfo))
 			memcpy((void *) o.lower, (void *) c.lower, tinfo->size);
-		if ((*tinfo->f_lt) (o.upper, c.upper, flinfo))	/* out->upper < cur->upper */
+		/* if out->upper < cur->upper, adopt cur as upper */
+		if ((*tinfo->f_lt) (o.upper, c.upper, flinfo))
 			memcpy((void *) o.upper, (void *) c.upper, tinfo->size);
 	}
 
@@ -274,7 +276,8 @@ gbt_num_consistent(const GBT_NUMKEY_R *key,
 			if (is_leaf)
 				retval = (*tinfo->f_eq) (query, key->lower, flinfo);
 			else
-				retval = ((*tinfo->f_le) (key->lower, query, flinfo) && (*tinfo->f_le) (query, key->upper, flinfo)) ? true : false;
+				retval = ((*tinfo->f_le) (key->lower, query, flinfo) &&
+						  (*tinfo->f_le) (query, key->upper, flinfo));
 			break;
 		case BTGreaterStrategyNumber:
 			if (is_leaf)
@@ -287,7 +290,7 @@ gbt_num_consistent(const GBT_NUMKEY_R *key,
 			break;
 		case BtreeGistNotEqualStrategyNumber:
 			retval = (!((*tinfo->f_eq) (query, key->lower, flinfo) &&
-						(*tinfo->f_eq) (query, key->upper, flinfo))) ? true : false;
+						(*tinfo->f_eq) (query, key->upper, flinfo)));
 			break;
 		default:
 			retval = false;
