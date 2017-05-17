@@ -551,3 +551,23 @@ CheckCmdReplicaIdentity(Relation rel, CmdType cmd)
 						RelationGetRelationName(rel)),
 				 errhint("To enable deleting from the table, set REPLICA IDENTITY using ALTER TABLE.")));
 }
+
+
+/*
+ * Check if we support writing into specific relkind.
+ *
+ * The nspname and relname are only needed for error reporting.
+ */
+void
+CheckSubscriptionRelkind(char relkind, const char *nspname,
+						 const char *relname)
+{
+	/*
+	 * We currently only support writing to regular tables.
+	 */
+	if (relkind != RELKIND_RELATION)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("logical replication target relation \"%s.%s\" is not a table",
+						nspname, relname)));
+}

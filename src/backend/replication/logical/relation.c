@@ -20,6 +20,7 @@
 #include "access/sysattr.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_subscription_rel.h"
+#include "executor/executor.h"
 #include "nodes/makefuncs.h"
 #include "replication/logicalrelation.h"
 #include "replication/worker_internal.h"
@@ -258,15 +259,9 @@ logicalrep_rel_open(LogicalRepRelId remoteid, LOCKMODE lockmode)
 							remoterel->nspname, remoterel->relname)));
 		entry->localrel = heap_open(relid, NoLock);
 
-		/*
-		 * We currently only support writing to regular and partitioned
-		 * tables.
-		 */
-		if (entry->localrel->rd_rel->relkind != RELKIND_RELATION)
-			ereport(ERROR,
-					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("logical replication target relation \"%s.%s\" is not a table",
-							remoterel->nspname, remoterel->relname)));
+		/* Check for supported relkind. */
+		CheckSubscriptionRelkind(entry->localrel->rd_rel->relkind,
+								 remoterel->nspname, remoterel->relname);
 
 		/*
 		 * Build the mapping of local attribute numbers to remote attribute
