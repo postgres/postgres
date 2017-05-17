@@ -53,7 +53,7 @@
  * Information about bounds of a partitioned relation
  *
  * A list partition datum that is known to be NULL is never put into the
- * datums array. Instead, it is tracked using has_null and null_index fields.
+ * datums array. Instead, it is tracked using the null_index field.
  *
  * In the case of range partitioning, ndatums will typically be far less than
  * 2 * nparts, because a partition's upper bound and the next partition's lower
@@ -86,11 +86,11 @@ typedef struct PartitionBoundInfoData
 	int		   *indexes;		/* Partition indexes; one entry per member of
 								 * the datums array (plus one if range
 								 * partitioned table) */
-	bool		has_null;		/* Is there a null-accepting partition? false
-								 * for range partitioned tables */
 	int			null_index;		/* Index of the null-accepting partition; -1
-								 * for range partitioned tables */
+								 * if there isn't one */
 } PartitionBoundInfoData;
+
+#define partition_bound_accepts_nulls(bi) ((bi)->null_index != -1)
 
 /*
  * When qsort'ing partition bounds after reading from the catalog, each bound
@@ -173,7 +173,6 @@ RelationBuildPartitionDesc(Relation rel)
 
 	/* List partitioning specific */
 	PartitionListValue **all_values = NULL;
-	bool		found_null = false;
 	int			null_index = -1;
 
 	/* Range partitioning specific */
@@ -245,7 +244,6 @@ RelationBuildPartitionDesc(Relation rel)
 			 * Create a unified list of non-null values across all partitions.
 			 */
 			i = 0;
-			found_null = false;
 			null_index = -1;
 			foreach(cell, boundspecs)
 			{
@@ -274,9 +272,8 @@ RelationBuildPartitionDesc(Relation rel)
 						 * instead for the code further down below where we
 						 * construct the actual relcache struct.
 						 */
-						if (found_null)
+						if (null_index != -1)
 							elog(ERROR, "found null more than once");
-						found_null = true;
 						null_index = i;
 					}
 
@@ -466,7 +463,6 @@ RelationBuildPartitionDesc(Relation rel)
 		{
 			case PARTITION_STRATEGY_LIST:
 				{
-					boundinfo->has_null = found_null;
 					boundinfo->indexes = (int *) palloc(ndatums * sizeof(int));
 
 					/*
@@ -498,20 +494,18 @@ RelationBuildPartitionDesc(Relation rel)
 					 * accepts only null and hence not covered in the above
 					 * loop which only handled non-null values.
 					 */
-					if (found_null)
+					if (null_index != -1)
 					{
 						Assert(null_index >= 0);
 						if (mapping[null_index] == -1)
 							mapping[null_index] = next_index++;
+						boundinfo->null_index = mapping[null_index];
 					}
+					else
+						boundinfo->null_index = -1;
 
 					/* All partition must now have a valid mapping */
 					Assert(next_index == nparts);
-
-					if (found_null)
-						boundinfo->null_index = mapping[null_index];
-					else
-						boundinfo->null_index = -1;
 					break;
 				}
 
@@ -611,9 +605,6 @@ partition_bounds_equal(PartitionKey key,
 	if (b1->ndatums != b2->ndatums)
 		return false;
 
-	if (b1->has_null != b2->has_null)
-		return false;
-
 	if (b1->null_index != b2->null_index)
 		return false;
 
@@ -696,7 +687,8 @@ check_new_partition_bound(char *relname, Relation parent, Node *bound)
 
 					Assert(boundinfo &&
 						   boundinfo->strategy == PARTITION_STRATEGY_LIST &&
-						   (boundinfo->ndatums > 0 || boundinfo->has_null));
+						   (boundinfo->ndatums > 0 ||
+							partition_bound_accepts_nulls(boundinfo)));
 
 					foreach(cell, spec->listdatums)
 					{
@@ -717,7 +709,7 @@ check_new_partition_bound(char *relname, Relation parent, Node *bound)
 								break;
 							}
 						}
-						else if (boundinfo->has_null)
+						else if (partition_bound_accepts_nulls(boundinfo))
 						{
 							overlap = true;
 							with = boundinfo->null_index;
@@ -1985,7 +1977,7 @@ get_partition_for_tuple(PartitionDispatch *pd,
 		 * partition exists.
 		 */
 		cur_index = -1;
-		if (isnull[0] && partdesc->boundinfo->has_null)
+		if (isnull[0] && partition_bound_accepts_nulls(partdesc->boundinfo))
 			cur_index = partdesc->boundinfo->null_index;
 		else if (!isnull[0])
 		{
