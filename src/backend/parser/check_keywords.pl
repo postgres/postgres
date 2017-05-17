@@ -149,7 +149,8 @@ while (my ($kcat, $kcat_id) = each(%keyword_categories))
 
 # Now read in kwlist.h
 
-open(my $kwlist, '<', $kwlist_filename) || die("Could not open : $kwlist_filename");
+open(my $kwlist, '<', $kwlist_filename)
+  || die("Could not open : $kwlist_filename");
 
 my $prevkwstring = '';
 my $bare_kwname;

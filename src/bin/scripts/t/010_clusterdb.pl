@@ -30,4 +30,4 @@ $node->issues_sql_like(
 	'cluster specific table');
 
 $node->command_ok([qw(clusterdb --echo --verbose dbname=template1)],
-				  'clusterdb with connection string');
+	'clusterdb with connection string');

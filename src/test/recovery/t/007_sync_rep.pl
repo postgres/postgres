@@ -176,20 +176,20 @@ standby4|1|potential),
 # Check that standby1 and standby2 are chosen as sync standbys
 # based on their priorities.
 test_sync_state(
-$node_master, qq(standby1|1|sync
+	$node_master, qq(standby1|1|sync
 standby2|2|sync
 standby4|0|async),
-'priority-based sync replication specified by FIRST keyword',
-'FIRST 2(standby1, standby2)');
+	'priority-based sync replication specified by FIRST keyword',
+	'FIRST 2(standby1, standby2)');
 
 # Check that all the listed standbys are considered as candidates
 # for sync standbys in a quorum-based sync replication.
 test_sync_state(
-$node_master, qq(standby1|1|quorum
+	$node_master, qq(standby1|1|quorum
 standby2|1|quorum
 standby4|0|async),
-'2 quorum and 1 async',
-'ANY 2(standby1, standby2)');
+	'2 quorum and 1 async',
+	'ANY 2(standby1, standby2)');
 
 # Start Standby3 which will be considered in 'quorum' state.
 $node_standby_3->start;
@@ -197,9 +197,9 @@ $node_standby_3->start;
 # Check that the setting of 'ANY 2(*)' chooses all standbys as
 # candidates for quorum sync standbys.
 test_sync_state(
-$node_master, qq(standby1|1|quorum
+	$node_master, qq(standby1|1|quorum
 standby2|1|quorum
 standby3|1|quorum
 standby4|1|quorum),
-'all standbys are considered as candidates for quorum sync standbys',
-'ANY 2(*)');
+	'all standbys are considered as candidates for quorum sync standbys',
+	'ANY 2(*)');

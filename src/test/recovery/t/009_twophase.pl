@@ -9,7 +9,8 @@ use Test::More tests => 12;
 # Setup master node
 my $node_master = get_new_node("master");
 $node_master->init(allows_streaming => 1);
-$node_master->append_conf('postgresql.conf', qq(
+$node_master->append_conf(
+	'postgresql.conf', qq(
 	max_prepared_transactions = 10
 	log_checkpoints = true
 ));
@@ -19,17 +20,19 @@ $node_master->psql('postgres', "CREATE TABLE t_009_tbl (id int)");
 
 # Setup slave node
 my $node_slave = get_new_node('slave');
-$node_slave->init_from_backup($node_master, 'master_backup', has_streaming => 1);
+$node_slave->init_from_backup($node_master, 'master_backup',
+	has_streaming => 1);
 $node_slave->start;
 
 # Switch to synchronous replication
-$node_master->append_conf('postgresql.conf', qq(
+$node_master->append_conf(
+	'postgresql.conf', qq(
 	synchronous_standby_names = '*'
 ));
 $node_master->psql('postgres', "SELECT pg_reload_conf()");
 
 my $psql_out = '';
-my $psql_rc = '';
+my $psql_rc  = '';
 
 ###############################################################################
 # Check that we can commit and abort transaction after soft restart.
@@ -38,7 +41,8 @@ my $psql_rc = '';
 # files.
 ###############################################################################
 
-$node_master->psql('postgres', "
+$node_master->psql(
+	'postgres', "
 	BEGIN;
 	INSERT INTO t_009_tbl VALUES (42);
 	SAVEPOINT s1;
@@ -64,7 +68,8 @@ is($psql_rc, '0', 'Rollback prepared transaction after restart');
 # transaction using dedicated WAL records.
 ###############################################################################
 
-$node_master->psql('postgres', "
+$node_master->psql(
+	'postgres', "
 	CHECKPOINT;
 	BEGIN;
 	INSERT INTO t_009_tbl VALUES (42);
@@ -89,7 +94,8 @@ is($psql_rc, '0', 'Rollback prepared transaction after teardown');
 # Check that WAL replay can handle several transactions with same GID name.
 ###############################################################################
 
-$node_master->psql('postgres', "
+$node_master->psql(
+	'postgres', "
 	CHECKPOINT;
 	BEGIN;
 	INSERT INTO t_009_tbl VALUES (42);
@@ -113,7 +119,8 @@ is($psql_rc, '0', 'Replay several transactions with same GID');
 # while replaying transaction commits.
 ###############################################################################
 
-$node_master->psql('postgres', "
+$node_master->psql(
+	'postgres', "
 	BEGIN;
 	INSERT INTO t_009_tbl VALUES (42);
 	SAVEPOINT s1;
@@ -122,7 +129,8 @@ $node_master->psql('postgres', "
 	COMMIT PREPARED 'xact_009_1';");
 $node_master->teardown_node;
 $node_master->start;
-$psql_rc = $node_master->psql('postgres', "
+$psql_rc = $node_master->psql(
+	'postgres', "
 	BEGIN;
 	INSERT INTO t_009_tbl VALUES (42);
 	SAVEPOINT s1;
@@ -138,24 +146,28 @@ $node_master->psql('postgres', "COMMIT PREPARED 'xact_009_1'");
 # Check that WAL replay will cleanup its shared memory state on running slave.
 ###############################################################################
 
-$node_master->psql('postgres', "
+$node_master->psql(
+	'postgres', "
 	BEGIN;
 	INSERT INTO t_009_tbl VALUES (42);
 	SAVEPOINT s1;
 	INSERT INTO t_009_tbl VALUES (43);
 	PREPARE TRANSACTION 'xact_009_1';
 	COMMIT PREPARED 'xact_009_1';");
-$node_slave->psql('postgres', "SELECT count(*) FROM pg_prepared_xacts",
-	  stdout => \$psql_out);
+$node_slave->psql(
+	'postgres',
+	"SELECT count(*) FROM pg_prepared_xacts",
+	stdout => \$psql_out);
 is($psql_out, '0',
-   "Cleanup of shared memory state on running standby without checkpoint");
+	"Cleanup of shared memory state on running standby without checkpoint");
 
 ###############################################################################
 # Same as in previous case, but let's force checkpoint on slave between
 # prepare and commit to use on-disk twophase files.
 ###############################################################################
 
-$node_master->psql('postgres', "
+$node_master->psql(
+	'postgres', "
 	BEGIN;
 	INSERT INTO t_009_tbl VALUES (42);
 	SAVEPOINT s1;
@@ -163,16 +175,19 @@ $node_master->psql('postgres', "
 	PREPARE TRANSACTION 'xact_009_1';");
 $node_slave->psql('postgres', "CHECKPOINT");
 $node_master->psql('postgres', "COMMIT PREPARED 'xact_009_1'");
-$node_slave->psql('postgres', "SELECT count(*) FROM pg_prepared_xacts",
-	  stdout => \$psql_out);
+$node_slave->psql(
+	'postgres',
+	"SELECT count(*) FROM pg_prepared_xacts",
+	stdout => \$psql_out);
 is($psql_out, '0',
-   "Cleanup of shared memory state on running standby after checkpoint");
+	"Cleanup of shared memory state on running standby after checkpoint");
 
 ###############################################################################
 # Check that prepared transactions can be committed on promoted slave.
 ###############################################################################
 
-$node_master->psql('postgres', "
+$node_master->psql(
+	'postgres', "
 	BEGIN;
 	INSERT INTO t_009_tbl VALUES (42);
 	SAVEPOINT s1;
@@ -180,8 +195,7 @@ $node_master->psql('postgres', "
 	PREPARE TRANSACTION 'xact_009_1';");
 $node_master->teardown_node;
 $node_slave->promote;
-$node_slave->poll_query_until('postgres',
-	"SELECT NOT pg_is_in_recovery()")
+$node_slave->poll_query_until('postgres', "SELECT NOT pg_is_in_recovery()")
   or die "Timed out while waiting for promotion of standby";
 
 $psql_rc = $node_slave->psql('postgres', "COMMIT PREPARED 'xact_009_1'");
@@ -190,7 +204,8 @@ is($psql_rc, '0', "Restore of prepared transaction on promoted slave");
 # change roles
 ($node_master, $node_slave) = ($node_slave, $node_master);
 $node_slave->enable_streaming($node_master);
-$node_slave->append_conf('recovery.conf', qq(
+$node_slave->append_conf(
+	'recovery.conf', qq(
 recovery_target_timeline='latest'
 ));
 $node_slave->start;
@@ -202,7 +217,8 @@ $node_slave->start;
 # consistent.
 ###############################################################################
 
-$node_master->psql('postgres', "
+$node_master->psql(
+	'postgres', "
 	BEGIN;
 	INSERT INTO t_009_tbl VALUES (42);
 	SAVEPOINT s1;
@@ -211,19 +227,21 @@ $node_master->psql('postgres', "
 $node_master->stop;
 $node_slave->restart;
 $node_slave->promote;
-$node_slave->poll_query_until('postgres',
-	"SELECT NOT pg_is_in_recovery()")
+$node_slave->poll_query_until('postgres', "SELECT NOT pg_is_in_recovery()")
   or die "Timed out while waiting for promotion of standby";
 
-$node_slave->psql('postgres', "SELECT count(*) FROM pg_prepared_xacts",
-	  stdout => \$psql_out);
+$node_slave->psql(
+	'postgres',
+	"SELECT count(*) FROM pg_prepared_xacts",
+	stdout => \$psql_out);
 is($psql_out, '1',
-   "Restore prepared transactions from files with master down");
+	"Restore prepared transactions from files with master down");
 
 # restore state
 ($node_master, $node_slave) = ($node_slave, $node_master);
 $node_slave->enable_streaming($node_master);
-$node_slave->append_conf('recovery.conf', qq(
+$node_slave->append_conf(
+	'recovery.conf', qq(
 recovery_target_timeline='latest'
 ));
 $node_slave->start;
@@ -234,7 +252,8 @@ $node_master->psql('postgres', "COMMIT PREPARED 'xact_009_1'");
 # restart while master is down.
 ###############################################################################
 
-$node_master->psql('postgres', "
+$node_master->psql(
+	'postgres', "
 	BEGIN;
 	INSERT INTO t_009_tbl VALUES (242);
 	SAVEPOINT s1;
@@ -245,19 +264,21 @@ $node_master->stop;
 $node_slave->teardown_node;
 $node_slave->start;
 $node_slave->promote;
-$node_slave->poll_query_until('postgres',
-	"SELECT NOT pg_is_in_recovery()")
+$node_slave->poll_query_until('postgres', "SELECT NOT pg_is_in_recovery()")
   or die "Timed out while waiting for promotion of standby";
 
-$node_slave->psql('postgres', "SELECT count(*) FROM pg_prepared_xacts",
-	  stdout => \$psql_out);
+$node_slave->psql(
+	'postgres',
+	"SELECT count(*) FROM pg_prepared_xacts",
+	stdout => \$psql_out);
 is($psql_out, '1',
-   "Restore prepared transactions from records with master down");
+	"Restore prepared transactions from records with master down");
 
 # restore state
 ($node_master, $node_slave) = ($node_slave, $node_master);
 $node_slave->enable_streaming($node_master);
-$node_slave->append_conf('recovery.conf', qq(
+$node_slave->append_conf(
+	'recovery.conf', qq(
 recovery_target_timeline='latest'
 ));
 $node_slave->start;
@@ -269,7 +290,8 @@ $node_master->psql('postgres', "COMMIT PREPARED 'xact_009_1'");
 # XLOG_STANDBY_LOCK wal record.
 ###############################################################################
 
-$node_master->psql('postgres', "
+$node_master->psql(
+	'postgres', "
 	BEGIN;
 	CREATE TABLE t_009_tbl2 (id int);
 	SAVEPOINT s1;
@@ -280,6 +302,8 @@ $node_master->psql('postgres', "
 	CHECKPOINT;
 	COMMIT PREPARED 'xact_009_1';");
 
-$node_slave->psql('postgres', "SELECT count(*) FROM pg_prepared_xacts",
-	  stdout => \$psql_out);
+$node_slave->psql(
+	'postgres',
+	"SELECT count(*) FROM pg_prepared_xacts",
+	stdout => \$psql_out);
 is($psql_out, '0', "Replay prepared transaction with DDL");

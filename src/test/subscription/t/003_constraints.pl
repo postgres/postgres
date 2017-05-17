@@ -19,13 +19,15 @@ $node_subscriber->start;
 $node_publisher->safe_psql('postgres',
 	"CREATE TABLE tab_fk (bid int PRIMARY KEY);");
 $node_publisher->safe_psql('postgres',
-	"CREATE TABLE tab_fk_ref (id int PRIMARY KEY, bid int REFERENCES tab_fk (bid));");
+"CREATE TABLE tab_fk_ref (id int PRIMARY KEY, bid int REFERENCES tab_fk (bid));"
+);
 
 # Setup structure on subscriber
 $node_subscriber->safe_psql('postgres',
 	"CREATE TABLE tab_fk (bid int PRIMARY KEY);");
 $node_subscriber->safe_psql('postgres',
-	"CREATE TABLE tab_fk_ref (id int PRIMARY KEY, bid int REFERENCES tab_fk (bid));");
+"CREATE TABLE tab_fk_ref (id int PRIMARY KEY, bid int REFERENCES tab_fk (bid));"
+);
 
 # Setup logical replication
 my $publisher_connstr = $node_publisher->connstr . ' dbname=postgres';
@@ -34,7 +36,8 @@ $node_publisher->safe_psql('postgres',
 
 my $appname = 'tap_sub';
 $node_subscriber->safe_psql('postgres',
-	"CREATE SUBSCRIPTION tap_sub CONNECTION '$publisher_connstr application_name=$appname' PUBLICATION tap_pub WITH (copy_data = false)");
+"CREATE SUBSCRIPTION tap_sub CONNECTION '$publisher_connstr application_name=$appname' PUBLICATION tap_pub WITH (copy_data = false)"
+);
 
 # Wait for subscriber to finish initialization
 my $caughtup_query =
@@ -51,17 +54,16 @@ $node_publisher->poll_query_until('postgres', $caughtup_query)
   or die "Timed out while waiting for subscriber to catch up";
 
 # Check data on subscriber
-my $result =
-  $node_subscriber->safe_psql('postgres', "SELECT count(*), min(bid), max(bid) FROM tab_fk;");
+my $result = $node_subscriber->safe_psql('postgres',
+	"SELECT count(*), min(bid), max(bid) FROM tab_fk;");
 is($result, qq(1|1|1), 'check replicated tab_fk inserts on subscriber');
 
-$result =
-  $node_subscriber->safe_psql('postgres', "SELECT count(*), min(bid), max(bid) FROM tab_fk_ref;");
+$result = $node_subscriber->safe_psql('postgres',
+	"SELECT count(*), min(bid), max(bid) FROM tab_fk_ref;");
 is($result, qq(1|1|1), 'check replicated tab_fk_ref inserts on subscriber');
 
 # Drop the fk on publisher
-$node_publisher->safe_psql('postgres',
-	"DROP TABLE tab_fk CASCADE;");
+$node_publisher->safe_psql('postgres', "DROP TABLE tab_fk CASCADE;");
 
 # Insert data
 $node_publisher->safe_psql('postgres',
@@ -71,12 +73,13 @@ $node_publisher->poll_query_until('postgres', $caughtup_query)
   or die "Timed out while waiting for subscriber to catch up";
 
 # FK is not enforced on subscriber
-$result =
-  $node_subscriber->safe_psql('postgres', "SELECT count(*), min(bid), max(bid) FROM tab_fk_ref;");
+$result = $node_subscriber->safe_psql('postgres',
+	"SELECT count(*), min(bid), max(bid) FROM tab_fk_ref;");
 is($result, qq(2|1|2), 'check FK ignored on subscriber');
 
 # Add replica trigger
-$node_subscriber->safe_psql('postgres', qq{
+$node_subscriber->safe_psql(
+	'postgres', qq{
 CREATE FUNCTION filter_basic_dml_fn() RETURNS TRIGGER AS \$\$
 BEGIN
     IF (TG_OP = 'INSERT') THEN
@@ -105,8 +108,8 @@ $node_publisher->poll_query_until('postgres', $caughtup_query)
   or die "Timed out while waiting for subscriber to catch up";
 
 # The row should be skipped on subscriber
-$result =
-  $node_subscriber->safe_psql('postgres', "SELECT count(*), min(bid), max(bid) FROM tab_fk_ref;");
+$result = $node_subscriber->safe_psql('postgres',
+	"SELECT count(*), min(bid), max(bid) FROM tab_fk_ref;");
 is($result, qq(2|1|2), 'check replica trigger applied on subscriber');
 
 $node_subscriber->stop('fast');

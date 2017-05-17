@@ -24,6 +24,7 @@ while (my $line = <$in>)
 {
 	if ($line =~ /^0x(.*)[ \t]*U\+(.*)\+(.*)[ \t]*#(.*)$/)
 	{
+
 		# combined characters
 		my ($c, $u1, $u2) = ($1, $2, $3);
 		my $rest = "U+" . $u1 . "+" . $u2 . $4;
@@ -31,18 +32,18 @@ while (my $line = <$in>)
 		my $ucs1 = hex($u1);
 		my $ucs2 = hex($u2);
 
-		push @mapping, {
-			code => $code,
-			ucs => $ucs1,
+		push @mapping,
+		  { code       => $code,
+			ucs        => $ucs1,
 			ucs_second => $ucs2,
-			comment => $rest,
-			direction => BOTH,
-			f => $in_file,
-			l => $.
-		};
+			comment    => $rest,
+			direction  => BOTH,
+			f          => $in_file,
+			l          => $. };
 	}
 	elsif ($line =~ /^0x(.*)[ \t]*U\+(.*)[ \t]*#(.*)$/)
 	{
+
 		# non-combined characters
 		my ($c, $u, $rest) = ($1, $2, "U+" . $2 . $3);
 		my $ucs  = hex($u);
@@ -66,14 +67,13 @@ while (my $line = <$in>)
 			$direction = BOTH;
 		}
 
-		push @mapping, {
-			code => $code,
-			ucs => $ucs,
-			comment => $rest,
+		push @mapping,
+		  { code      => $code,
+			ucs       => $ucs,
+			comment   => $rest,
 			direction => $direction,
-			f => $in_file,
-			l => $.
-		};
+			f         => $in_file,
+			l         => $. };
 	}
 }
 close($in);

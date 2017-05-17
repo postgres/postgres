@@ -91,8 +91,8 @@ $node->safe_psql($dbname1, 'CREATE TABLE t0()');
 
 # XXX no printed message when this fails, just SIGPIPE termination
 $node->command_ok(
-	[   'pg_dump', '-Fd', '--no-sync', '-j2', '-f', $dirfmt,
-		'-U', $dbname1, $node->connstr($dbname1) ],
+	[   'pg_dump', '-Fd', '--no-sync', '-j2', '-f', $dirfmt, '-U', $dbname1,
+		$node->connstr($dbname1) ],
 	'parallel dump');
 
 # recreate $dbname1 for restore test

@@ -50,8 +50,7 @@ while ($remaining-- > 0)
 
 	# Done waiting?
 	my $replay_status = $node_standby->safe_psql('postgres',
-		"SELECT (pg_last_wal_replay_lsn() - '$until_lsn'::pg_lsn) >= 0"
-	);
+		"SELECT (pg_last_wal_replay_lsn() - '$until_lsn'::pg_lsn) >= 0");
 	last if $replay_status eq 't';
 
 	# No, sleep some more.

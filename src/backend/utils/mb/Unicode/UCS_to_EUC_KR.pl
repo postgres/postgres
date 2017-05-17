@@ -31,10 +31,24 @@ foreach my $i (@$mapping)
 }
 
 # Some extra characters that are not in KSX1001.TXT
-push @$mapping,(
-	{direction => BOTH, ucs => 0x20AC, code => 0xa2e6, comment => '# EURO SIGN', f => $this_script, l => __LINE__},
-	{direction => BOTH, ucs => 0x00AE, code => 0xa2e7, comment => '# REGISTERED SIGN', f => $this_script, l => __LINE__ },
-	{direction => BOTH, ucs => 0x327E, code => 0xa2e8, comment => '# CIRCLED HANGUL IEUNG U', f => $this_script, l => __LINE__ }
-	);
+push @$mapping,
+  ( {   direction => BOTH,
+		ucs       => 0x20AC,
+		code      => 0xa2e6,
+		comment   => '# EURO SIGN',
+		f         => $this_script,
+		l         => __LINE__ },
+	{   direction => BOTH,
+		ucs       => 0x00AE,
+		code      => 0xa2e7,
+		comment   => '# REGISTERED SIGN',
+		f         => $this_script,
+		l         => __LINE__ },
+	{   direction => BOTH,
+		ucs       => 0x327E,
+		code      => 0xa2e8,
+		comment   => '# CIRCLED HANGUL IEUNG U',
+		f         => $this_script,
+		l         => __LINE__ });
 
 print_conversion_tables($this_script, "EUC_KR", $mapping);

@@ -44,8 +44,10 @@ $node->issues_sql_like(
 	'reindex with verbose output');
 
 $node->command_ok([qw(reindexdb --echo --table=pg_am dbname=template1)],
-				  'reindexdb table with connection string');
-$node->command_ok([qw(reindexdb --echo dbname=template1)],
-				  'reindexdb database with connection string');
-$node->command_ok([qw(reindexdb --echo --system dbname=template1)],
-				  'reindexdb system with connection string');
+	'reindexdb table with connection string');
+$node->command_ok(
+	[qw(reindexdb --echo dbname=template1)],
+	'reindexdb database with connection string');
+$node->command_ok(
+	[qw(reindexdb --echo --system dbname=template1)],
+	'reindexdb system with connection string');

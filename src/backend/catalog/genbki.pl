@@ -163,11 +163,13 @@ foreach my $catname (@{ $catalogs->{names} })
 
 			# Split line into tokens without interpreting their meaning.
 			my %bki_values;
-			@bki_values{@attnames} = Catalog::SplitDataLine($row->{bki_values});
+			@bki_values{@attnames} =
+			  Catalog::SplitDataLine($row->{bki_values});
 
 			# Perform required substitutions on fields
 			foreach my $att (keys %bki_values)
 			{
+
 				# Substitute constant values we acquired above.
 				# (It's intentional that this can apply to parts of a field).
 				$bki_values{$att} =~ s/\bPGUID\b/$BOOTSTRAP_SUPERUSERID/g;
@@ -178,9 +180,9 @@ foreach my $catname (@{ $catalogs->{names} })
 				# just do nothing (regprocin will complain).
 				if ($bki_attr{$att}->{type} eq 'regproc')
 				{
-					my $procoid = $regprocoids{$bki_values{$att}};
+					my $procoid = $regprocoids{ $bki_values{$att} };
 					$bki_values{$att} = $procoid
-						if defined($procoid) && $procoid ne 'MULTIPLE';
+					  if defined($procoid) && $procoid ne 'MULTIPLE';
 				}
 			}
 
@@ -188,13 +190,13 @@ foreach my $catname (@{ $catalogs->{names} })
 			# This relies on the order we process the files in!
 			if ($catname eq 'pg_proc')
 			{
-				if (defined($regprocoids{$bki_values{proname}}))
+				if (defined($regprocoids{ $bki_values{proname} }))
 				{
-					$regprocoids{$bki_values{proname}} = 'MULTIPLE';
+					$regprocoids{ $bki_values{proname} } = 'MULTIPLE';
 				}
 				else
 				{
-					$regprocoids{$bki_values{proname}} = $row->{oid};
+					$regprocoids{ $bki_values{proname} } = $row->{oid};
 				}
 			}
 
@@ -211,7 +213,7 @@ foreach my $catname (@{ $catalogs->{names} })
 			printf $bki "insert %s( %s )\n", $oid,
 			  join(' ', @bki_values{@attnames});
 
-			# Write comments to postgres.description and postgres.shdescription
+		   # Write comments to postgres.description and postgres.shdescription
 			if (defined $row->{descr})
 			{
 				printf $descr "%s\t%s\t0\t%s\n", $row->{oid}, $catname,
@@ -459,7 +461,8 @@ sub bki_insert
 	my $row        = shift;
 	my @attnames   = @_;
 	my $oid        = $row->{oid} ? "OID = $row->{oid} " : '';
-	my $bki_values = join ' ', map { $_ eq '' ? '""' : $_ } map $row->{$_}, @attnames;
+	my $bki_values = join ' ', map { $_ eq '' ? '""' : $_ } map $row->{$_},
+	  @attnames;
 	printf $bki "insert %s( %s )\n", $oid, $bki_values;
 }
 
@@ -474,9 +477,9 @@ sub emit_schemapg_row
 	$row->{attidentity} ||= '\0';
 
 	# Supply appropriate quoting for these fields.
-	$row->{attname}    = q|{"| . $row->{attname} . q|"}|;
-	$row->{attstorage} = q|'| . $row->{attstorage} . q|'|;
-	$row->{attalign}   = q|'| . $row->{attalign} . q|'|;
+	$row->{attname}     = q|{"| . $row->{attname} . q|"}|;
+	$row->{attstorage}  = q|'| . $row->{attstorage} . q|'|;
+	$row->{attalign}    = q|'| . $row->{attalign} . q|'|;
 	$row->{attidentity} = q|'| . $row->{attidentity} . q|'|;
 
 	# We don't emit initializers for the variable length fields at all.

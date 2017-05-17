@@ -80,10 +80,11 @@ sub Catalogs
 			{
 				$catalog{natts} = $1;
 			}
-			elsif (/^DATA\(insert(\s+OID\s+=\s+(\d+))?\s+\(\s*(.*)\s*\)\s*\)$/)
+			elsif (
+				/^DATA\(insert(\s+OID\s+=\s+(\d+))?\s+\(\s*(.*)\s*\)\s*\)$/)
 			{
-				check_natts($filename, $catalog{natts}, $3,
-							$input_file, $input_line_number);
+				check_natts($filename, $catalog{natts}, $3, $input_file,
+					$input_line_number);
 
 				push @{ $catalog{data} }, { oid => $2, bki_values => $3 };
 			}
@@ -256,14 +257,15 @@ sub check_natts
 {
 	my ($catname, $natts, $bki_val, $file, $line) = @_;
 
-	die "Could not find definition for Natts_${catname} before start of DATA() in $file\n"
-		unless defined $natts;
+	die
+"Could not find definition for Natts_${catname} before start of DATA() in $file\n"
+	  unless defined $natts;
 
 	my $nfields = scalar(SplitDataLine($bki_val));
 
 	die sprintf
-		"Wrong number of attributes in DATA() entry at %s:%d (expected %d but got %d)\n",
-		$file, $line, $natts, $nfields
+"Wrong number of attributes in DATA() entry at %s:%d (expected %d but got %d)\n",
+	  $file, $line, $natts, $nfields
 	  unless $natts == $nfields;
 }
 

@@ -52,7 +52,8 @@ sub ::encode_array_constructor
 
 {
 
-	package PostgreSQL::InServer;  ## no critic (RequireFilenameMatchesPackage);
+	package PostgreSQL::InServer
+	  ;    ## no critic (RequireFilenameMatchesPackage);
 	use strict;
 	use warnings;
 

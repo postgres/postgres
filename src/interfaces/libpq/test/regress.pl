@@ -35,7 +35,8 @@ while (<$regress_in_fh>)
 }
 
 # restore STDOUT/ERR so we can print the outcome to the user
-open(STDERR, ">&", $olderr_fh) or die; # can't complain as STDERR is still duped
+open(STDERR, ">&", $olderr_fh)
+  or die;    # can't complain as STDERR is still duped
 open(STDOUT, ">&", $oldout_fh) or die "can't restore STDOUT: $!";
 
 # just in case

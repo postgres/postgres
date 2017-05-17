@@ -174,7 +174,7 @@ print "Generating $defname.DEF from directory $ARGV[0], platform $platform\n";
 
 my %def = ();
 
-while (<$ARGV[0]/*.obj>)  ## no critic (RequireGlobFunction);
+while (<$ARGV[0]/*.obj>)    ## no critic (RequireGlobFunction);
 {
 	my $objfile = $_;
 	my $symfile = $objfile;

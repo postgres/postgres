@@ -51,6 +51,7 @@ my $flexflags = ($make =~ /^$basetarg:\s*FLEXFLAGS\s*=\s*(\S.*)/m ? $1 : '');
 system("flex $flexflags -o$output $input");
 if ($? == 0)
 {
+
 	# Check for "%option reentrant" in .l file.
 	my $lfile;
 	open($lfile, '<', $input) || die "opening $input for reading: $!";
@@ -58,12 +59,14 @@ if ($? == 0)
 	close($lfile);
 	if ($lcode =~ /\%option\sreentrant/)
 	{
+
 		# Reentrant scanners usually need a fix to prevent
 		# "unused variable" warnings with older flex versions.
 		system("perl src\\tools\\fix-old-flex-code.pl $output");
 	}
 	else
 	{
+
 		# For non-reentrant scanners we need to fix up the yywrap
 		# macro definition to keep the MS compiler happy.
 		# For reentrant scanners (like the core scanner) we do not

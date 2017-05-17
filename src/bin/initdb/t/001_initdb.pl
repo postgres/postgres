@@ -38,6 +38,7 @@ mkdir $datadir;
 # make sure we run one successful test without a TZ setting so we test
 # initdb's time zone setting code
 {
+
 	# delete local only works from perl 5.12, so use the older way to do this
 	local (%ENV) = %ENV;
 	delete $ENV{TZ};

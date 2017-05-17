@@ -41,12 +41,9 @@ my $tempdir_short = TestLib::tempdir_short;
 my %pgdump_runs = (
 	binary_upgrade => {
 		dump_cmd => [
-			'pg_dump',
-			'--no-sync',
-			"--file=$tempdir/binary_upgrade.sql",
-			'--schema-only',
-			'--binary-upgrade',
-			'--dbname=postgres', ], },
+			'pg_dump',                            '--no-sync',
+			"--file=$tempdir/binary_upgrade.sql", '--schema-only',
+			'--binary-upgrade',                   '--dbname=postgres', ], },
 	clean => {
 		dump_cmd => [
 			'pg_dump', "--file=$tempdir/clean.sql",
@@ -63,19 +60,16 @@ my %pgdump_runs = (
 			'postgres', ], },
 	column_inserts => {
 		dump_cmd => [
-			'pg_dump',
-			'--no-sync',
-			"--file=$tempdir/column_inserts.sql",
-			'-a',
-			'--column-inserts',
-			'postgres', ], },
+			'pg_dump',                            '--no-sync',
+			"--file=$tempdir/column_inserts.sql", '-a',
+			'--column-inserts',                   'postgres', ], },
 	createdb => {
 		dump_cmd => [
 			'pg_dump',
 			'--no-sync',
 			"--file=$tempdir/createdb.sql",
 			'-C',
-			'-R',                 # no-op, just for testing
+			'-R',    # no-op, just for testing
 			'postgres', ], },
 	data_only => {
 		dump_cmd => [
@@ -83,7 +77,7 @@ my %pgdump_runs = (
 			'--no-sync',
 			"--file=$tempdir/data_only.sql",
 			'-a',
-			'-v',                 # no-op, just make sure it works
+			'-v',    # no-op, just make sure it works
 			'postgres', ], },
 	defaults => {
 		dump_cmd => [ 'pg_dump', '-f', "$tempdir/defaults.sql", 'postgres', ],
@@ -126,52 +120,35 @@ my %pgdump_runs = (
 			"$tempdir/defaults_tar_format.tar", ], },
 	pg_dumpall_globals => {
 		dump_cmd => [
-			'pg_dumpall',
-			'--no-sync',
-			"--file=$tempdir/pg_dumpall_globals.sql",
-			'-g', ],
-	},
+			'pg_dumpall',                             '--no-sync',
+			"--file=$tempdir/pg_dumpall_globals.sql", '-g', ], },
 	no_privs => {
 		dump_cmd => [
-			'pg_dump',
-			'--no-sync',
-			"--file=$tempdir/no_privs.sql",
-			'-x',
+			'pg_dump',                      '--no-sync',
+			"--file=$tempdir/no_privs.sql", '-x',
 			'postgres', ], },
 	no_owner => {
 		dump_cmd => [
-			'pg_dump',
-			'--no-sync',
-			"--file=$tempdir/no_owner.sql",
-			'-O',
+			'pg_dump',                      '--no-sync',
+			"--file=$tempdir/no_owner.sql", '-O',
 			'postgres', ], },
 	schema_only => {
 		dump_cmd => [
-			'pg_dump',
-			'--no-sync',
-			"--file=$tempdir/schema_only.sql",
-			'-s',
-			'postgres', ],
-	},
+			'pg_dump', '--no-sync', "--file=$tempdir/schema_only.sql",
+			'-s', 'postgres', ], },
 	section_pre_data => {
 		dump_cmd => [
-			'pg_dump',
-			'--no-sync',
-            "--file=$tempdir/section_pre_data.sql",
-			'--section=pre-data',
+			'pg_dump',                              '--no-sync',
+			"--file=$tempdir/section_pre_data.sql", '--section=pre-data',
 			'postgres', ], },
 	section_data => {
 		dump_cmd => [
-			'pg_dump',
-			'--no-sync',
-	        "--file=$tempdir/section_data.sql",
-			'--section=data',
+			'pg_dump',                          '--no-sync',
+			"--file=$tempdir/section_data.sql", '--section=data',
 			'postgres', ], },
 	section_post_data => {
 		dump_cmd => [
-			'pg_dump',
-			'--no-sync',
-             "--file=$tempdir/section_post_data.sql",
+			'pg_dump', '--no-sync', "--file=$tempdir/section_post_data.sql",
 			'--section=post-data', 'postgres', ], },);
 
 ###############################################################
@@ -492,9 +469,8 @@ my %tests = (
 			pg_dumpall_globals => 1,
 			section_post_data  => 1, }, },
 
-	'GRANT SELECT(col2) ON regress_pg_dump_table TO regress_dump_test_role'
-	  => {
-		create_order => 4,
+	'GRANT SELECT(col2) ON regress_pg_dump_table TO regress_dump_test_role' =>
+	  { create_order => 4,
 		create_sql   => 'GRANT SELECT(col2) ON regress_pg_dump_table
 						   TO regress_dump_test_role;',
 		regexp => qr/^

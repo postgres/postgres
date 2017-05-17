@@ -434,7 +434,7 @@ sub diff
 
 sub run_build
 {
-	eval "use LWP::Simple;";  ## no critic (ProhibitStringyEval);
+	eval "use LWP::Simple;";    ## no critic (ProhibitStringyEval);
 
 	my $code_base = shift || '.';
 	my $save_dir = getcwd();

@@ -729,7 +729,7 @@ sub restart
 	my $name    = $self->name;
 	print "### Restarting node \"$name\"\n";
 	TestLib::system_or_bail('pg_ctl', '-D', $pgdata, '-l', $logfile,
-							'restart');
+		'restart');
 	$self->_update_pid(1);
 }
 
@@ -750,7 +750,7 @@ sub promote
 	my $name    = $self->name;
 	print "### Promoting node \"$name\"\n";
 	TestLib::system_or_bail('pg_ctl', '-D', $pgdata, '-l', $logfile,
-							'promote');
+		'promote');
 }
 
 # Internal routine to enable streaming replication on a standby node.
@@ -846,6 +846,7 @@ sub _update_pid
 
 	$self->{_pid} = undef;
 	print "# No postmaster PID for node \"$name\"\n";
+
 	# Complain if we expected to find a pidfile.
 	BAIL_OUT("postmaster.pid unexpectedly not present") if $is_running;
 }
@@ -1140,10 +1141,12 @@ sub psql
 		my $exc_save = $@;
 		if ($exc_save)
 		{
+
 			# IPC::Run::run threw an exception. re-throw unless it's a
 			# timeout, which we'll handle by testing is_expired
 			die $exc_save
-			  if (blessed($exc_save) || $exc_save !~ /^\Q$timeout_exception\E/);
+			  if (blessed($exc_save)
+				|| $exc_save !~ /^\Q$timeout_exception\E/);
 
 			$ret = undef;
 
@@ -1191,7 +1194,8 @@ sub psql
 		  if $ret == 1;
 		die "connection error: '$$stderr'\nwhile running '@psql_params'"
 		  if $ret == 2;
-		die "error running SQL: '$$stderr'\nwhile running '@psql_params' with sql '$sql'"
+		die
+"error running SQL: '$$stderr'\nwhile running '@psql_params' with sql '$sql'"
 		  if $ret == 3;
 		die "psql returns $ret: '$$stderr'\nwhile running '@psql_params'";
 	}
@@ -1362,15 +1366,17 @@ mode must be specified.
 sub lsn
 {
 	my ($self, $mode) = @_;
-	my %modes = ('insert' => 'pg_current_wal_insert_lsn()',
-				 'flush' => 'pg_current_wal_flush_lsn()',
-				 'write' => 'pg_current_wal_lsn()',
-				 'receive' => 'pg_last_wal_receive_lsn()',
-				 'replay' => 'pg_last_wal_replay_lsn()');
+	my %modes = (
+		'insert'  => 'pg_current_wal_insert_lsn()',
+		'flush'   => 'pg_current_wal_flush_lsn()',
+		'write'   => 'pg_current_wal_lsn()',
+		'receive' => 'pg_last_wal_receive_lsn()',
+		'replay'  => 'pg_last_wal_replay_lsn()');
 
 	$mode = '<undef>' if !defined($mode);
-	die "unknown mode for 'lsn': '$mode', valid modes are " . join(', ', keys %modes)
-		if !defined($modes{$mode});
+	die "unknown mode for 'lsn': '$mode', valid modes are "
+	  . join(', ', keys %modes)
+	  if !defined($modes{$mode});
 
 	my $result = $self->safe_psql('postgres', "SELECT $modes{$mode}");
 	chomp($result);
@@ -1409,18 +1415,29 @@ sub wait_for_catchup
 {
 	my ($self, $standby_name, $mode, $target_lsn) = @_;
 	$mode = defined($mode) ? $mode : 'replay';
-	my %valid_modes = ( 'sent' => 1, 'write' => 1, 'flush' => 1, 'replay' => 1 );
-	die "unknown mode $mode for 'wait_for_catchup', valid modes are " . join(', ', keys(%valid_modes)) unless exists($valid_modes{$mode});
+	my %valid_modes =
+	  ('sent' => 1, 'write' => 1, 'flush' => 1, 'replay' => 1);
+	die "unknown mode $mode for 'wait_for_catchup', valid modes are "
+	  . join(', ', keys(%valid_modes))
+	  unless exists($valid_modes{$mode});
+
 	# Allow passing of a PostgresNode instance as shorthand
-	if ( blessed( $standby_name ) && $standby_name->isa("PostgresNode") )
+	if (blessed($standby_name) && $standby_name->isa("PostgresNode"))
 	{
 		$standby_name = $standby_name->name;
 	}
 	die 'target_lsn must be specified' unless defined($target_lsn);
-	print "Waiting for replication conn " . $standby_name . "'s " . $mode . "_lsn to pass " . $target_lsn . " on " . $self->name . "\n";
-	my $query = qq[SELECT '$target_lsn' <= ${mode}_lsn FROM pg_catalog.pg_stat_replication WHERE application_name = '$standby_name';];
+	print "Waiting for replication conn "
+	  . $standby_name . "'s "
+	  . $mode
+	  . "_lsn to pass "
+	  . $target_lsn . " on "
+	  . $self->name . "\n";
+	my $query =
+qq[SELECT '$target_lsn' <= ${mode}_lsn FROM pg_catalog.pg_stat_replication WHERE application_name = '$standby_name';];
 	$self->poll_query_until('postgres', $query)
-		or die "timed out waiting for catchup, current location is " . ($self->safe_psql('postgres', $query) || '(unknown)');
+	  or die "timed out waiting for catchup, current location is "
+	  . ($self->safe_psql('postgres', $query) || '(unknown)');
 	print "done\n";
 }
 
@@ -1453,10 +1470,17 @@ sub wait_for_slot_catchup
 		die "valid modes are restart, confirmed_flush";
 	}
 	die 'target lsn must be specified' unless defined($target_lsn);
-	print "Waiting for replication slot " . $slot_name . "'s " . $mode . "_lsn to pass " . $target_lsn . " on " . $self->name . "\n";
-	my $query = qq[SELECT '$target_lsn' <= ${mode}_lsn FROM pg_catalog.pg_replication_slots WHERE slot_name = '$slot_name';];
+	print "Waiting for replication slot "
+	  . $slot_name . "'s "
+	  . $mode
+	  . "_lsn to pass "
+	  . $target_lsn . " on "
+	  . $self->name . "\n";
+	my $query =
+qq[SELECT '$target_lsn' <= ${mode}_lsn FROM pg_catalog.pg_replication_slots WHERE slot_name = '$slot_name';];
 	$self->poll_query_until('postgres', $query)
-		or die "timed out waiting for catchup, current location is " . ($self->safe_psql('postgres', $query) || '(unknown)');
+	  or die "timed out waiting for catchup, current location is "
+	  . ($self->safe_psql('postgres', $query) || '(unknown)');
 	print "done\n";
 }
 
@@ -1485,18 +1509,23 @@ null columns.
 sub query_hash
 {
 	my ($self, $dbname, $query, @columns) = @_;
-	die 'calls in array context for multi-row results not supported yet' if (wantarray);
+	die 'calls in array context for multi-row results not supported yet'
+	  if (wantarray);
+
 	# Replace __COLUMNS__ if found
-	substr($query, index($query, '__COLUMNS__'), length('__COLUMNS__')) = join(', ', @columns)
-		if index($query, '__COLUMNS__') >= 0;
+	substr($query, index($query, '__COLUMNS__'), length('__COLUMNS__')) =
+	  join(', ', @columns)
+	  if index($query, '__COLUMNS__') >= 0;
 	my $result = $self->safe_psql($dbname, $query);
+
 	# hash slice, see http://stackoverflow.com/a/16755894/398670 .
 	#
 	# Fills the hash with empty strings produced by x-operator element
 	# duplication if result is an empty row
 	#
 	my %val;
-	@val{@columns} = $result ne '' ? split(qr/\|/, $result) : ('',) x scalar(@columns);
+	@val{@columns} =
+	  $result ne '' ? split(qr/\|/, $result) : ('',) x scalar(@columns);
 	return \%val;
 }
 
@@ -1518,8 +1547,14 @@ either.
 sub slot
 {
 	my ($self, $slot_name) = @_;
-	my @columns = ('plugin', 'slot_type', 'datoid', 'database', 'active', 'active_pid', 'xmin', 'catalog_xmin', 'restart_lsn');
-	return $self->query_hash('postgres', "SELECT __COLUMNS__ FROM pg_catalog.pg_replication_slots WHERE slot_name = '$slot_name'", @columns);
+	my @columns = (
+		'plugin', 'slot_type',  'datoid', 'database',
+		'active', 'active_pid', 'xmin',   'catalog_xmin',
+		'restart_lsn');
+	return $self->query_hash(
+		'postgres',
+"SELECT __COLUMNS__ FROM pg_catalog.pg_replication_slots WHERE slot_name = '$slot_name'",
+		@columns);
 }
 
 =pod
@@ -1543,29 +1578,36 @@ to check for timeout. retval is undef on timeout.
 
 sub pg_recvlogical_upto
 {
-	my ($self, $dbname, $slot_name, $endpos, $timeout_secs, %plugin_options) = @_;
+	my ($self, $dbname, $slot_name, $endpos, $timeout_secs, %plugin_options) =
+	  @_;
 	my ($stdout, $stderr);
 
 	my $timeout_exception = 'pg_recvlogical timed out';
 
 	die 'slot name must be specified' unless defined($slot_name);
-	die 'endpos must be specified' unless defined($endpos);
+	die 'endpos must be specified'    unless defined($endpos);
 
-	my @cmd = ('pg_recvlogical', '-S', $slot_name, '--dbname', $self->connstr($dbname));
+	my @cmd = (
+		'pg_recvlogical', '-S', $slot_name, '--dbname',
+		$self->connstr($dbname));
 	push @cmd, '--endpos', $endpos;
 	push @cmd, '-f', '-', '--no-loop', '--start';
 
 	while (my ($k, $v) = each %plugin_options)
 	{
-		die "= is not permitted to appear in replication option name" if ($k =~ qr/=/);
+		die "= is not permitted to appear in replication option name"
+		  if ($k =~ qr/=/);
 		push @cmd, "-o", "$k=$v";
 	}
 
 	my $timeout;
-	$timeout = IPC::Run::timeout($timeout_secs, exception => $timeout_exception ) if $timeout_secs;
+	$timeout =
+	  IPC::Run::timeout($timeout_secs, exception => $timeout_exception)
+	  if $timeout_secs;
 	my $ret = 0;
 
-	do {
+	do
+	{
 		local $@;
 		eval {
 			IPC::Run::run(\@cmd, ">", \$stdout, "2>", \$stderr, $timeout);
@@ -1574,6 +1616,7 @@ sub pg_recvlogical_upto
 		my $exc_save = $@;
 		if ($exc_save)
 		{
+
 			# IPC::Run::run threw an exception. re-throw unless it's a
 			# timeout, which we'll handle by testing is_expired
 			die $exc_save
@@ -1584,8 +1627,9 @@ sub pg_recvlogical_upto
 			die "Got timeout exception '$exc_save' but timer not expired?!"
 			  unless $timeout->is_expired;
 
-			die "$exc_save waiting for endpos $endpos with stdout '$stdout', stderr '$stderr'"
-				unless wantarray;
+			die
+"$exc_save waiting for endpos $endpos with stdout '$stdout', stderr '$stderr'"
+			  unless wantarray;
 		}
 	};
 
@@ -1598,7 +1642,9 @@ sub pg_recvlogical_upto
 	}
 	else
 	{
-		die "pg_recvlogical exited with code '$ret', stdout '$stdout' and stderr '$stderr'" if $ret;
+		die
+"pg_recvlogical exited with code '$ret', stdout '$stdout' and stderr '$stderr'"
+		  if $ret;
 		return $stdout;
 	}
 }

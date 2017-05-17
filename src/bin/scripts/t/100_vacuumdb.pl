@@ -34,4 +34,4 @@ $node->issues_sql_like(
 	qr/statement: ANALYZE;/,
 	'vacuumdb -Z');
 $node->command_ok([qw(vacuumdb -Z --table=pg_am dbname=template1)],
-				  'vacuumdb with connection string');
+	'vacuumdb with connection string');

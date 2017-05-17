@@ -34,7 +34,8 @@ $node_master->safe_psql('postgres',
 	"CREATE TABLE tab_int AS SELECT generate_series(1,1000) AS a");
 
 # Wait until standby has replayed enough data on standby 1
-$node_master->wait_for_catchup($node_standby_1, 'replay', $node_master->lsn('write'));
+$node_master->wait_for_catchup($node_standby_1, 'replay',
+	$node_master->lsn('write'));
 
 # Stop and remove master, and promote standby 1, switching it to a new timeline
 $node_master->teardown_node;
@@ -55,7 +56,8 @@ $node_standby_2->restart;
 # to ensure that the timeline switch has been done.
 $node_standby_1->safe_psql('postgres',
 	"INSERT INTO tab_int VALUES (generate_series(1001,2000))");
-$node_standby_1->wait_for_catchup($node_standby_2, 'replay', $node_standby_1->lsn('write'));
+$node_standby_1->wait_for_catchup($node_standby_2, 'replay',
+	$node_standby_1->lsn('write'));
 
 my $result =
   $node_standby_2->safe_psql('postgres', "SELECT count(*) FROM tab_int");

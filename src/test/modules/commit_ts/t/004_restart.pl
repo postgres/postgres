@@ -22,12 +22,12 @@ like(
 
 ($ret, $stdout, $stderr) =
   $node_master->psql('postgres', qq[SELECT pg_xact_commit_timestamp('1');]);
-is($ret, 0, 'getting ts of BootstrapTransactionId succeeds');
+is($ret,    0,  'getting ts of BootstrapTransactionId succeeds');
 is($stdout, '', 'timestamp of BootstrapTransactionId is null');
 
 ($ret, $stdout, $stderr) =
   $node_master->psql('postgres', qq[SELECT pg_xact_commit_timestamp('2');]);
-is($ret, 0, 'getting ts of FrozenTransactionId succeeds');
+is($ret,    0,  'getting ts of FrozenTransactionId succeeds');
 is($stdout, '', 'timestamp of FrozenTransactionId is null');
 
 # Since FirstNormalTransactionId will've occurred during initdb, long before we

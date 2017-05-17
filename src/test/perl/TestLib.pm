@@ -17,6 +17,7 @@ use File::Spec;
 use File::Temp ();
 use IPC::Run;
 use SimpleTee;
+
 # specify a recent enough version of Test::More  to support the note() function
 use Test::More 0.82;
 
@@ -91,8 +92,8 @@ INIT
 	# Hijack STDOUT and STDERR to the log file
 	open(my $orig_stdout, '>&', \*STDOUT);
 	open(my $orig_stderr, '>&', \*STDERR);
-	open(STDOUT, '>&', $testlog);
-	open(STDERR, '>&', $testlog);
+	open(STDOUT,          '>&', $testlog);
+	open(STDERR,          '>&', $testlog);
 
 	# The test output (ok ...) needs to be printed to the original STDOUT so
 	# that the 'prove' program can parse it, and display it to the user in

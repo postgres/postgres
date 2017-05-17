@@ -8,7 +8,7 @@ use warnings;
 use PostgresNode;
 use TestLib;
 use Test::More;
-if  ($windows_os)
+if ($windows_os)
 {
 	plan skip_all => "authentication tests cannot run on Windows";
 }
@@ -21,7 +21,7 @@ else
 # and then execute a reload to refresh it.
 sub reset_pg_hba
 {
-	my $node = shift;
+	my $node       = shift;
 	my $hba_method = shift;
 
 	unlink($node->data_dir . '/pg_hba.conf');
@@ -32,24 +32,26 @@ sub reset_pg_hba
 # Test access for a single role, useful to wrap all tests into one.
 sub test_login
 {
-	my $node = shift;
-	my $role = shift;
-	my $password = shift;
-	my $expected_res = shift;
+	my $node          = shift;
+	my $role          = shift;
+	my $password      = shift;
+	my $expected_res  = shift;
 	my $status_string = 'failed';
 
 	$status_string = 'success' if ($expected_res eq 0);
 
 	$ENV{"PGPASSWORD"} = $password;
-	my $res = $node->psql('postgres', 'SELECT 1', extra_params => ['-U', $role]);
+	my $res =
+	  $node->psql('postgres', 'SELECT 1', extra_params => [ '-U', $role ]);
 	is($res, $expected_res,
-	   "authentication $status_string for role $role with password $password");
+		"authentication $status_string for role $role with password $password"
+	);
 }
 
 # Initialize master node. Force UTF-8 encoding, so that we can use non-ASCII
 # characters in the passwords below.
 my $node = get_new_node('master');
-$node->init(extra => ['--locale=C', '--encoding=UTF8']);
+$node->init(extra => [ '--locale=C', '--encoding=UTF8' ]);
 $node->start;
 
 # These tests are based on the example strings from RFC4013.txt,
@@ -66,8 +68,9 @@ $node->start;
 # 7  <U+0627><U+0031>            Error - bidirectional check
 
 # Create test roles.
-$node->safe_psql('postgres',
-"SET password_encryption='scram-sha-256';
+$node->safe_psql(
+	'postgres',
+	"SET password_encryption='scram-sha-256';
 SET client_encoding='utf8';
 CREATE ROLE saslpreptest1_role LOGIN PASSWORD 'IX';
 CREATE ROLE saslpreptest4a_role LOGIN PASSWORD 'a';
@@ -80,23 +83,23 @@ CREATE ROLE saslpreptest7_role LOGIN PASSWORD E'foo\\u0627\\u0031bar';
 reset_pg_hba($node, 'scram-sha-256');
 
 # Check that #1 and #5 are treated the same as just 'IX'
-test_login($node, 'saslpreptest1_role', "I\xc2\xadX", 0);
+test_login($node, 'saslpreptest1_role', "I\xc2\xadX",   0);
 test_login($node, 'saslpreptest1_role', "\xe2\x85\xa8", 0);
 
 # but different from lower case 'ix'
 test_login($node, 'saslpreptest1_role', "ix", 2);
 
 # Check #4
-test_login($node, 'saslpreptest4a_role', "a", 0);
+test_login($node, 'saslpreptest4a_role', "a",        0);
 test_login($node, 'saslpreptest4a_role', "\xc2\xaa", 0);
-test_login($node, 'saslpreptest4b_role', "a", 0);
+test_login($node, 'saslpreptest4b_role', "a",        0);
 test_login($node, 'saslpreptest4b_role', "\xc2\xaa", 0);
 
 # Check #6 and #7 - In PostgreSQL, contrary to the spec, if the password
 # contains prohibited characters, we use it as is, without normalization.
 test_login($node, 'saslpreptest6_role', "foo\x07bar", 0);
-test_login($node, 'saslpreptest6_role', "foobar", 2);
+test_login($node, 'saslpreptest6_role', "foobar",     2);
 
 test_login($node, 'saslpreptest7_role', "foo\xd8\xa71bar", 0);
 test_login($node, 'saslpreptest7_role', "foo1\xd8\xa7bar", 2);
-test_login($node, 'saslpreptest7_role', "foobar", 2);
+test_login($node, 'saslpreptest7_role', "foobar",          2);

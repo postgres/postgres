@@ -38,8 +38,10 @@ while (<$in>)
 	# a lot of extra characters on top of the GB2312 character set that
 	# EUC_CN encodes. Filter out those extra characters.
 	next if (($code & 0xFF) < 0xA1);
-	next if (!($code >= 0xA100 && $code <= 0xA9FF ||
-			   $code >= 0xB000 && $code <= 0xF7FF));
+	next
+	  if (
+		!(     $code >= 0xA100 && $code <= 0xA9FF
+			|| $code >= 0xB000 && $code <= 0xF7FF));
 
 	next if ($code >= 0xA2A1 && $code <= 0xA2B0);
 	next if ($code >= 0xA2E3 && $code <= 0xA2E4);
@@ -67,13 +69,12 @@ while (<$in>)
 		$ucs = 0x2015;
 	}
 
-	push @mapping, {
-		ucs => $ucs,
-		code => $code,
+	push @mapping,
+	  { ucs       => $ucs,
+		code      => $code,
 		direction => BOTH,
-		f => $in_file,
-		l => $.
-	};
+		f         => $in_file,
+		l         => $. };
 }
 close($in);
 

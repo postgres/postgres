@@ -24,6 +24,7 @@ while (my $line = <$in>)
 {
 	if ($line =~ /^0x(.*)[ \t]*U\+(.*)\+(.*)[ \t]*#(.*)$/)
 	{
+
 		# combined characters
 		my ($c, $u1, $u2) = ($1, $2, $3);
 		my $rest = "U+" . $u1 . "+" . $u2 . $4;
@@ -31,17 +32,18 @@ while (my $line = <$in>)
 		my $ucs1 = hex($u1);
 		my $ucs2 = hex($u2);
 
-		push @all, { direction => BOTH,
-					 ucs => $ucs1,
-					 ucs_second => $ucs2,
-					 code => $code,
-					 comment => $rest,
-					 f => $in_file,
-					 l => $.
-		};
+		push @all,
+		  { direction  => BOTH,
+			ucs        => $ucs1,
+			ucs_second => $ucs2,
+			code       => $code,
+			comment    => $rest,
+			f          => $in_file,
+			l          => $. };
 	}
 	elsif ($line =~ /^0x(.*)[ \t]*U\+(.*)[ \t]*#(.*)$/)
 	{
+
 		# non-combined characters
 		my ($c, $u, $rest) = ($1, $2, "U+" . $2 . $3);
 		my $ucs  = hex($u);
@@ -49,13 +51,13 @@ while (my $line = <$in>)
 
 		next if ($code < 0x80 && $ucs < 0x80);
 
-		push @all, { direction => BOTH,
-					 ucs => $ucs,
-					 code => $code,
-					 comment => $rest,
-					 f => $in_file,
-					 l => $.
-		};
+		push @all,
+		  { direction => BOTH,
+			ucs       => $ucs,
+			code      => $code,
+			comment   => $rest,
+			f         => $in_file,
+			l         => $. };
 	}
 }
 close($in);

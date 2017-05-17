@@ -74,12 +74,12 @@ sub configure_test_server_for_ssl
 	open my $sslconf, '>', "$pgdata/sslconfig.conf";
 	close $sslconf;
 
-	# Copy all server certificates and keys, and client root cert, to the data dir
+# Copy all server certificates and keys, and client root cert, to the data dir
 	copy_files("ssl/server-*.crt", $pgdata);
 	copy_files("ssl/server-*.key", $pgdata);
 	chmod(0600, glob "$pgdata/server-*.key") or die $!;
 	copy_files("ssl/root+client_ca.crt", $pgdata);
-	copy_files("ssl/root_ca.crt", $pgdata);
+	copy_files("ssl/root_ca.crt",        $pgdata);
 	copy_files("ssl/root+client.crl",    $pgdata);
 
 	# Stop and restart server to load new listen_addresses.
@@ -95,10 +95,11 @@ sub switch_server_cert
 {
 	my $node     = $_[0];
 	my $certfile = $_[1];
-	my $cafile = $_[2] || "root+client_ca";
+	my $cafile   = $_[2] || "root+client_ca";
 	my $pgdata   = $node->data_dir;
 
-	note "reloading server with certfile \"$certfile\" and cafile \"$cafile\"";
+	note
+	  "reloading server with certfile \"$certfile\" and cafile \"$cafile\"";
 
 	open my $sslconf, '>', "$pgdata/sslconfig.conf";
 	print $sslconf "ssl=on\n";
@@ -117,10 +118,10 @@ sub configure_hba_for_ssl
 	my $serverhost = $_[1];
 	my $pgdata     = $node->data_dir;
 
-	# Only accept SSL connections from localhost. Our tests don't depend on this
-	# but seems best to keep it as narrow as possible for security reasons.
-	#
-	# When connecting to certdb, also check the client certificate.
+  # Only accept SSL connections from localhost. Our tests don't depend on this
+  # but seems best to keep it as narrow as possible for security reasons.
+  #
+  # When connecting to certdb, also check the client certificate.
 	open my $hba, '>', "$pgdata/pg_hba.conf";
 	print $hba
 "# TYPE  DATABASE        USER            ADDRESS                 METHOD\n";

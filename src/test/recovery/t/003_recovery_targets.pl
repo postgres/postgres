@@ -22,8 +22,7 @@ sub test_recovery_standby
 
 	foreach my $param_item (@$recovery_params)
 	{
-		$node_standby->append_conf(
-			'recovery.conf', qq($param_item));
+		$node_standby->append_conf('recovery.conf', qq($param_item));
 	}
 
 	$node_standby->start;
@@ -71,8 +70,8 @@ my ($lsn2, $recovery_txid) = split /\|/, $ret;
 # More data, with recovery target timestamp
 $node_master->safe_psql('postgres',
 	"INSERT INTO tab_int VALUES (generate_series(2001,3000))");
-$ret = $node_master->safe_psql('postgres',
-	"SELECT pg_current_wal_lsn(), now();");
+$ret =
+  $node_master->safe_psql('postgres', "SELECT pg_current_wal_lsn(), now();");
 my ($lsn3, $recovery_time) = split /\|/, $ret;
 
 # Even more data, this time with a recovery target name
@@ -87,7 +86,8 @@ $node_master->safe_psql('postgres',
 # And now for a recovery target LSN
 $node_master->safe_psql('postgres',
 	"INSERT INTO tab_int VALUES (generate_series(4001,5000))");
-my $recovery_lsn = $node_master->safe_psql('postgres', "SELECT pg_current_wal_lsn()");
+my $recovery_lsn =
+  $node_master->safe_psql('postgres', "SELECT pg_current_wal_lsn()");
 my $lsn5 =
   $node_master->safe_psql('postgres', "SELECT pg_current_wal_lsn();");
 

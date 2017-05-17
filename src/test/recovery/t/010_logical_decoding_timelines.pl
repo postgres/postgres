@@ -34,7 +34,8 @@ my ($stdout, $stderr, $ret);
 # Initialize master node
 my $node_master = get_new_node('master');
 $node_master->init(allows_streaming => 1, has_archiving => 1);
-$node_master->append_conf('postgresql.conf', q[
+$node_master->append_conf(
+	'postgresql.conf', q[
 wal_level = 'logical'
 max_replication_slots = 3
 max_wal_senders = 2
@@ -60,8 +61,7 @@ $node_master->safe_psql('postgres',
 # the same physical copy trick, so:
 $node_master->safe_psql('postgres', 'CREATE DATABASE dropme;');
 $node_master->safe_psql('dropme',
-"SELECT pg_create_logical_replication_slot('dropme_slot', 'test_decoding');"
-);
+"SELECT pg_create_logical_replication_slot('dropme_slot', 'test_decoding');");
 
 $node_master->safe_psql('postgres', 'CHECKPOINT;');
 
@@ -76,20 +76,23 @@ $node_replica->init_from_backup(
 	$node_master, $backup_name,
 	has_streaming => 1,
 	has_restoring => 1);
-$node_replica->append_conf(
-	'recovery.conf', q[primary_slot_name = 'phys_slot']);
+$node_replica->append_conf('recovery.conf',
+	q[primary_slot_name = 'phys_slot']);
 
 $node_replica->start;
 
 # If we drop 'dropme' on the master, the standby should drop the
 # db and associated slot.
-is($node_master->psql('postgres', 'DROP DATABASE dropme'), 0,
-	'dropped DB with logical slot OK on master');
-$node_master->wait_for_catchup($node_replica, 'replay', $node_master->lsn('insert'));
-is($node_replica->safe_psql('postgres', q[SELECT 1 FROM pg_database WHERE datname = 'dropme']), '',
+is($node_master->psql('postgres', 'DROP DATABASE dropme'),
+	0, 'dropped DB with logical slot OK on master');
+$node_master->wait_for_catchup($node_replica, 'replay',
+	$node_master->lsn('insert'));
+is( $node_replica->safe_psql(
+		'postgres', q[SELECT 1 FROM pg_database WHERE datname = 'dropme']),
+	'',
 	'dropped DB dropme on standby');
-is($node_master->slot('dropme_slot')->{'slot_name'}, undef,
-	'logical slot was actually dropped on standby');
+is($node_master->slot('dropme_slot')->{'slot_name'},
+	undef, 'logical slot was actually dropped on standby');
 
 # Back to testing failover...
 $node_master->safe_psql('postgres',
@@ -109,19 +112,22 @@ is($stdout, 'before_basebackup',
 # from the master to make sure its hot_standby_feedback
 # has locked in a catalog_xmin on the physical slot, and that
 # any xmin is < the catalog_xmin
-$node_master->poll_query_until('postgres', q[
+$node_master->poll_query_until(
+	'postgres', q[
 	SELECT catalog_xmin IS NOT NULL
 	FROM pg_replication_slots
 	WHERE slot_name = 'phys_slot'
 	]);
 my $phys_slot = $node_master->slot('phys_slot');
-isnt($phys_slot->{'xmin'}, '',
-	'xmin assigned on physical slot of master');
-isnt($phys_slot->{'catalog_xmin'}, '',
-	'catalog_xmin assigned on physical slot of master');
+isnt($phys_slot->{'xmin'}, '', 'xmin assigned on physical slot of master');
+isnt($phys_slot->{'catalog_xmin'},
+	'', 'catalog_xmin assigned on physical slot of master');
+
 # Ignore wrap-around here, we're on a new cluster:
-cmp_ok($phys_slot->{'xmin'}, '>=', $phys_slot->{'catalog_xmin'},
-	   'xmin on physical slot must not be lower than catalog_xmin');
+cmp_ok(
+	$phys_slot->{'xmin'}, '>=',
+	$phys_slot->{'catalog_xmin'},
+	'xmin on physical slot must not be lower than catalog_xmin');
 
 $node_master->safe_psql('postgres', 'CHECKPOINT');
 
@@ -162,23 +168,30 @@ COMMIT
 BEGIN
 table public.decoding: INSERT: blah[text]:'after failover'
 COMMIT);
-is($stdout, $final_expected_output_bb, 'decoded expected data from slot before_basebackup');
+is($stdout, $final_expected_output_bb,
+	'decoded expected data from slot before_basebackup');
 is($stderr, '', 'replay from slot before_basebackup produces no stderr');
 
 # So far we've peeked the slots, so when we fetch the same info over
 # pg_recvlogical we should get complete results. First, find out the commit lsn
 # of the last transaction. There's no max(pg_lsn), so:
 
-my $endpos = $node_replica->safe_psql('postgres', "SELECT lsn FROM pg_logical_slot_peek_changes('before_basebackup', NULL, NULL) ORDER BY lsn DESC LIMIT 1;");
+my $endpos = $node_replica->safe_psql('postgres',
+"SELECT lsn FROM pg_logical_slot_peek_changes('before_basebackup', NULL, NULL) ORDER BY lsn DESC LIMIT 1;"
+);
 
 # now use the walsender protocol to peek the slot changes and make sure we see
 # the same results.
 
-$stdout = $node_replica->pg_recvlogical_upto('postgres', 'before_basebackup',
-	$endpos, 30, 'include-xids' => '0', 'skip-empty-xacts' => '1');
+$stdout = $node_replica->pg_recvlogical_upto(
+	'postgres', 'before_basebackup',
+	$endpos,    30,
+	'include-xids'     => '0',
+	'skip-empty-xacts' => '1');
 
 # walsender likes to add a newline
 chomp($stdout);
-is($stdout, $final_expected_output_bb, 'got same output from walsender via pg_recvlogical on before_basebackup');
+is($stdout, $final_expected_output_bb,
+	'got same output from walsender via pg_recvlogical on before_basebackup');
 
 $node_replica->teardown_node();

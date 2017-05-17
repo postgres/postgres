@@ -35,13 +35,12 @@ while (<$in>)
 	my $code = hex($c);
 	if ($code >= 0x80 && $ucs >= 0x0080)
 	{
-		push @mapping, {
-			ucs => $ucs,
-			code => $code,
+		push @mapping,
+		  { ucs       => $ucs,
+			code      => $code,
 			direction => BOTH,
-			f => $in_file,
-			l => $.
-		};
+			f         => $in_file,
+			l         => $. };
 	}
 }
 close($in);

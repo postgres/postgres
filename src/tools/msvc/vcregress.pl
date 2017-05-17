@@ -182,7 +182,7 @@ sub tap_check
 	chdir $dir;
 
 	my @flags;
-	@flags = split(/\s+/,$ENV{PROVE_FLAGS}) if exists $ENV{PROVE_FLAGS};
+	@flags = split(/\s+/, $ENV{PROVE_FLAGS}) if exists $ENV{PROVE_FLAGS};
 
 	my @args = ("prove", @flags, "t/*.pl");
 
@@ -526,6 +526,7 @@ sub fetchRegressOpts
 	$m =~ s{\\\r?\n}{}g;
 	if ($m =~ /^\s*REGRESS_OPTS\s*\+?=(.*)/m)
 	{
+
 		# Substitute known Makefile variables, then ignore options that retain
 		# an unhandled variable reference.  Ignore anything that isn't an
 		# option starting with "--".

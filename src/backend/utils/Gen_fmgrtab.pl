@@ -58,6 +58,7 @@ foreach my $column (@{ $catalogs->{pg_proc}->{columns} })
 my $data = $catalogs->{pg_proc}->{data};
 foreach my $row (@$data)
 {
+
 	# Split line into tokens without interpreting their meaning.
 	my %bki_values;
 	@bki_values{@attnames} = Catalog::SplitDataLine($row->{bki_values});
@@ -75,14 +76,17 @@ foreach my $row (@$data)
 }
 
 # Emit headers for both files
-my $tmpext   = ".tmp$$";
-my $oidsfile = $output_path . 'fmgroids.h';
+my $tmpext     = ".tmp$$";
+my $oidsfile   = $output_path . 'fmgroids.h';
 my $protosfile = $output_path . 'fmgrprotos.h';
-my $tabfile  = $output_path . 'fmgrtab.c';
+my $tabfile    = $output_path . 'fmgrtab.c';
 
-open my $ofh, '>', $oidsfile . $tmpext or die "Could not open $oidsfile$tmpext: $!";
-open my $pfh, '>', $protosfile . $tmpext or die "Could not open $protosfile$tmpext: $!";
-open my $tfh, '>', $tabfile . $tmpext  or die "Could not open $tabfile$tmpext: $!";
+open my $ofh, '>', $oidsfile . $tmpext
+  or die "Could not open $oidsfile$tmpext: $!";
+open my $pfh, '>', $protosfile . $tmpext
+  or die "Could not open $protosfile$tmpext: $!";
+open my $tfh, '>', $tabfile . $tmpext
+  or die "Could not open $tabfile$tmpext: $!";
 
 print $ofh
 qq|/*-------------------------------------------------------------------------
@@ -218,9 +222,9 @@ close($pfh);
 close($tfh);
 
 # Finally, rename the completed files into place.
-Catalog::RenameTempFile($oidsfile, $tmpext);
+Catalog::RenameTempFile($oidsfile,   $tmpext);
 Catalog::RenameTempFile($protosfile, $tmpext);
-Catalog::RenameTempFile($tabfile,  $tmpext);
+Catalog::RenameTempFile($tabfile,    $tmpext);
 
 sub usage
 {
