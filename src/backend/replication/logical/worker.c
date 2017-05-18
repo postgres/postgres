@@ -1552,6 +1552,15 @@ ApplyWorkerMain(Datum main_arg)
 
 		myslotname = MySubscription->slotname;
 
+		/*
+		 * This shouldn't happen if the subscription is enabled, but guard
+		 * against DDL bugs or manual catalog changes.  (libpqwalreceiver
+		 * will crash if slot is NULL.
+		 */
+		if (!myslotname)
+			ereport(ERROR,
+					(errmsg("subscription has no replication slot set")));
+
 		/* Setup replication origin tracking. */
 		StartTransactionCommand();
 		snprintf(originname, sizeof(originname), "pg_%u", MySubscription->oid);

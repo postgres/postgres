@@ -168,7 +168,9 @@ parse_subscription_options(List *options, bool *connect, bool *enabled_given,
 									 false, 0, false);
 		}
 		else
-			elog(ERROR, "unrecognized option: %s", defel->defname);
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("unrecognized subscription parameter: %s", defel->defname)));
 	}
 
 	/*
@@ -214,6 +216,16 @@ parse_subscription_options(List *options, bool *connect, bool *enabled_given,
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("slot_name = NONE and create_slot = true are mutually exclusive options")));
+
+		if (enabled && !*enabled_given && *enabled)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("subscription with slot_name = NONE must also set enabled = false")));
+
+		if (create_slot && !create_slot_given && *create_slot)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("subscription with slot_name = NONE must also set create_slot = false")));
 	}
 }
 

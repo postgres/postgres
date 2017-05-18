@@ -56,6 +56,12 @@ CREATE SUBSCRIPTION testsub2 CONNECTION 'dbname=doesnotexist' PUBLICATION testpu
 ERROR:  slot_name = NONE and enabled = true are mutually exclusive options
 CREATE SUBSCRIPTION testsub2 CONNECTION 'dbname=doesnotexist' PUBLICATION testpub WITH (slot_name = NONE, create_slot = true);
 ERROR:  slot_name = NONE and create_slot = true are mutually exclusive options
+CREATE SUBSCRIPTION testsub2 CONNECTION 'dbname=doesnotexist' PUBLICATION testpub WITH (slot_name = NONE);
+ERROR:  subscription with slot_name = NONE must also set enabled = false
+CREATE SUBSCRIPTION testsub2 CONNECTION 'dbname=doesnotexist' PUBLICATION testpub WITH (slot_name = NONE, enabled = false);
+ERROR:  subscription with slot_name = NONE must also set create_slot = false
+CREATE SUBSCRIPTION testsub2 CONNECTION 'dbname=doesnotexist' PUBLICATION testpub WITH (slot_name = NONE, create_slot = false);
+ERROR:  subscription with slot_name = NONE must also set enabled = false
 -- ok - with slot_name = NONE
 CREATE SUBSCRIPTION testsub3 CONNECTION 'dbname=doesnotexist' PUBLICATION testpub WITH (slot_name = NONE, connect = false);
 WARNING:  tables were not subscribed, you will have to run ALTER SUBSCRIPTION ... REFRESH PUBLICATION to subscribe the tables
@@ -82,6 +88,8 @@ ALTER SUBSCRIPTION testsub SET (slot_name = 'newname');
 -- fail
 ALTER SUBSCRIPTION doesnotexist CONNECTION 'dbname=doesnotexist2';
 ERROR:  subscription "doesnotexist" does not exist
+ALTER SUBSCRIPTION testsub SET (create_slot = false);
+ERROR:  unrecognized subscription parameter: create_slot
 \dRs+
                                               List of subscriptions
   Name   |           Owner           | Enabled |     Publication     | Synchronous commit |       Conninfo       
