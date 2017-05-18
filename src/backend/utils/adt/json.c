@@ -323,7 +323,7 @@ makeJsonLexContextCstringLen(char *json, int len, bool need_escapes)
  * Publicly visible entry point for the JSON parser.
  *
  * lex is a lexing context, set up for the json to be processed by calling
- * makeJsonLexContext(). sem is a strucure of function pointers to semantic
+ * makeJsonLexContext(). sem is a structure of function pointers to semantic
  * action routines to be called at appropriate spots during parsing, and a
  * pointer to a state object to be passed to those routines.
  */
