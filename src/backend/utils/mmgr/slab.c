@@ -194,9 +194,9 @@ SlabContextCreate(MemoryContext parent,
 					 MAXALIGN(sizeof(SlabChunk)),
 					 "padding calculation in SlabChunk is wrong");
 
-	/* otherwise the linked list inside freed chunk isn't guaranteed to fit */
-	StaticAssertStmt(MAXIMUM_ALIGNOF >= sizeof(int),
-					 "MAXALIGN too small to fit int32");
+	/* Make sure the linked list node fits inside a freed chunk */
+	if (chunkSize < sizeof(int))
+		chunkSize = sizeof(int);
 
 	/* chunk, including SLAB header (both addresses nicely aligned) */
 	fullChunkSize = MAXALIGN(sizeof(SlabChunk) + MAXALIGN(chunkSize));
