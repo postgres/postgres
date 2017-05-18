@@ -277,8 +277,13 @@ logicalrep_rel_open(LogicalRepRelId remoteid, LOCKMODE lockmode)
 		found = 0;
 		for (i = 0; i < desc->natts; i++)
 		{
-			int			attnum = logicalrep_rel_att_by_name(remoterel,
-										   NameStr(desc->attrs[i]->attname));
+			int			attnum;
+
+			if (desc->attrs[i]->attisdropped)
+				continue;
+
+			attnum = logicalrep_rel_att_by_name(remoterel,
+												NameStr(desc->attrs[i]->attname));
 
 			entry->attrmap[i] = attnum;
 			if (attnum >= 0)

@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 14;
+use Test::More tests => 15;
 
 # Initialize publisher node
 my $node_publisher = get_new_node('publisher');
@@ -24,6 +24,10 @@ $node_publisher->safe_psql('postgres',
 	"CREATE TABLE tab_full AS SELECT generate_series(1,10) AS a");
 $node_publisher->safe_psql('postgres',
 	"CREATE TABLE tab_rep (a int primary key)");
+$node_publisher->safe_psql('postgres',
+    "CREATE TABLE tab_mixed (a int primary key, b text)");
+$node_publisher->safe_psql('postgres',
+    "INSERT INTO tab_mixed (a, b) VALUES (1, 'foo')");
 
 # Setup structure on subscriber
 $node_subscriber->safe_psql('postgres', "CREATE TABLE tab_notrep (a int)");
@@ -31,6 +35,9 @@ $node_subscriber->safe_psql('postgres', "CREATE TABLE tab_ins (a int)");
 $node_subscriber->safe_psql('postgres', "CREATE TABLE tab_full (a int)");
 $node_subscriber->safe_psql('postgres',
 	"CREATE TABLE tab_rep (a int primary key)");
+# different column count and order than on publisher
+$node_subscriber->safe_psql('postgres',
+    "CREATE TABLE tab_mixed (c text, b text, a int primary key)");
 
 # Setup logical replication
 my $publisher_connstr = $node_publisher->connstr . ' dbname=postgres';
@@ -38,7 +45,7 @@ $node_publisher->safe_psql('postgres', "CREATE PUBLICATION tap_pub");
 $node_publisher->safe_psql('postgres',
 	"CREATE PUBLICATION tap_pub_ins_only WITH (publish = insert)");
 $node_publisher->safe_psql('postgres',
-	"ALTER PUBLICATION tap_pub ADD TABLE tab_rep, tab_full");
+	"ALTER PUBLICATION tap_pub ADD TABLE tab_rep, tab_full, tab_mixed");
 $node_publisher->safe_psql('postgres',
 	"ALTER PUBLICATION tap_pub_ins_only ADD TABLE tab_ins");
 
@@ -87,6 +94,10 @@ is($result, qq(1052|1|1002), 'check replicated inserts on subscriber');
 $result = $node_subscriber->safe_psql('postgres',
 	"SELECT count(*), min(a), max(a) FROM tab_rep");
 is($result, qq(20|-20|-1), 'check replicated changes on subscriber');
+
+$result = $node_subscriber->safe_psql('postgres',
+	"SELECT c, b, a FROM tab_mixed");
+is($result, qq(|foo|1), 'check replicated changes with different column order');
 
 # insert some duplicate rows
 $node_publisher->safe_psql('postgres',
