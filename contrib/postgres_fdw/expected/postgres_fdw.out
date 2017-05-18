@@ -6987,7 +6987,7 @@ FDW Options: (schema_name 'import_source', table_name 't3')
                     Foreign table "import_dest1.t4"
  Column |  Type   | Collation | Nullable | Default |    FDW Options     
 --------+---------+-----------+----------+---------+--------------------
- c1     | integer |           | not null |         | (column_name 'c1')
+ c1     | integer |           |          |         | (column_name 'c1')
 Server: loopback
 FDW Options: (schema_name 'import_source', table_name 't4')
 
@@ -7051,7 +7051,7 @@ FDW Options: (schema_name 'import_source', table_name 't3')
                     Foreign table "import_dest2.t4"
  Column |  Type   | Collation | Nullable | Default |    FDW Options     
 --------+---------+-----------+----------+---------+--------------------
- c1     | integer |           | not null |         | (column_name 'c1')
+ c1     | integer |           |          |         | (column_name 'c1')
 Server: loopback
 FDW Options: (schema_name 'import_source', table_name 't4')
 

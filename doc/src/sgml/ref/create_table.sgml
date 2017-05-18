@@ -454,11 +454,6 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
       these constraints on individual partitions.
      </para>
 
-     <para>
-      When using range partitioning, a <literal>NOT NULL</literal> constraint
-      is added to each non-expression column in the partition key.
-     </para>
-
     </listitem>
    </varlistentry>
 

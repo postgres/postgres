@@ -410,11 +410,6 @@ CREATE TABLE partitioned (
 -- check relkind
 SELECT relkind FROM pg_class WHERE relname = 'partitioned';
 
--- check that range partition key columns are marked NOT NULL
-SELECT attname, attnotnull FROM pg_attribute
-  WHERE attrelid = 'partitioned'::regclass AND attnum > 0
-  ORDER BY attnum;
-
 -- prevent a function referenced in partition key from being dropped
 DROP FUNCTION plusone(int);
 

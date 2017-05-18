@@ -1449,17 +1449,18 @@ get_range_key_properties(PartitionKey key, int keynum,
  * as the lower bound tuple and (au, bu, cu) as the upper bound tuple, we
  * generate an expression tree of the following form:
  *
+ *  (a IS NOT NULL) and (b IS NOT NULL) and (c IS NOT NULL)
+ *		AND
  *	(a > al OR (a = al AND b > bl) OR (a = al AND b = bl AND c >= cl))
  *		AND
  *	(a < au OR (a = au AND b < bu) OR (a = au AND b = bu AND c < cu))
- *
- * If, say, b were an expression key instead of a simple column, we also
- * append (b IS NOT NULL) to the AND's argument list.
  *
  * It is often the case that a prefix of lower and upper bound tuples contains
  * the same values, for example, (al = au), in which case, we will emit an
  * expression tree of the following form:
  *
+ *  (a IS NOT NULL) and (b IS NOT NULL) and (c IS NOT NULL)
+ *		AND
  *	(a = al)
  *		AND
  *	(b > bl OR (b = bl AND c >= cl))
@@ -1472,11 +1473,11 @@ get_range_key_properties(PartitionKey key, int keynum,
  *	(b < bu) OR (b = bu), which is simplified to (b <= bu)
  *
  * In most common cases with only one partition column, say a, the following
- * expression tree will be generated: a >= al AND a < au
+ * expression tree will be generated: a IS NOT NULL AND a >= al AND a < au
  *
  * If all values of both lower and upper bounds are UNBOUNDED, the partition
  * does not really have a constraint, except the IS NOT NULL constraint for
- * any expression keys.
+ * partition keys.
  *
  * If we end up with an empty result list, we append return a single-member
  * list containing a constant-true expression in that case, because callers
@@ -1512,32 +1513,37 @@ get_qual_for_range(PartitionKey key, PartitionBoundSpec *spec)
 	num_or_arms = key->partnatts;
 
 	/*
-	 * A range-partitioned table does not allow partition keys to be null. For
-	 * simple columns, their NOT NULL constraint suffices for the enforcement
-	 * of non-nullability.  But for the expression keys, which are still
-	 * nullable, we must emit a IS NOT NULL expression.  Collect them in
-	 * result first.
+	 * A range-partitioned table does not currently allow partition keys to
+	 * be null, so emit an IS NOT NULL expression for each key column.
 	 */
 	partexprs_item = list_head(key->partexprs);
 	for (i = 0; i < key->partnatts; i++)
 	{
-		if (key->partattrs[i] == 0)
-		{
-			Expr	   *keyCol;
+		Expr	   *keyCol;
 
+		if (key->partattrs[i] != 0)
+		{
+			keyCol = (Expr *) makeVar(1,
+									  key->partattrs[i],
+									  key->parttypid[i],
+									  key->parttypmod[i],
+									  key->parttypcoll[i],
+									  0);
+		}
+		else
+		{
 			if (partexprs_item == NULL)
 				elog(ERROR, "wrong number of partition key expressions");
-			keyCol = lfirst(partexprs_item);
+			keyCol = copyObject(lfirst(partexprs_item));
 			partexprs_item = lnext(partexprs_item);
-			Assert(!IsA(keyCol, Var));
-
-			nulltest = makeNode(NullTest);
-			nulltest->arg = keyCol;
-			nulltest->nulltesttype = IS_NOT_NULL;
-			nulltest->argisrow = false;
-			nulltest->location = -1;
-			result = lappend(result, nulltest);
 		}
+
+		nulltest = makeNode(NullTest);
+		nulltest->arg = keyCol;
+		nulltest->nulltesttype = IS_NOT_NULL;
+		nulltest->argisrow = false;
+		nulltest->location = -1;
+		result = lappend(result, nulltest);
 	}
 
 	/*
@@ -1948,7 +1954,8 @@ get_partition_for_tuple(PartitionDispatch *pd,
 		{
 			*failed_at = parent;
 			*failed_slot = slot;
-			return -1;
+			result = -1;
+			goto error_exit;
 		}
 
 		/*
@@ -1964,12 +1971,21 @@ get_partition_for_tuple(PartitionDispatch *pd,
 
 		if (key->strategy == PARTITION_STRATEGY_RANGE)
 		{
-			/* Disallow nulls in the range partition key of the tuple */
+			/*
+			 * Since we cannot route tuples with NULL partition keys through
+			 * a range-partitioned table, simply return that no partition
+			 * exists
+			 */
 			for (i = 0; i < key->partnatts; i++)
+			{
 				if (isnull[i])
-					ereport(ERROR,
-							(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-						errmsg("range partition key of row contains null")));
+				{
+					*failed_at = parent;
+					*failed_slot = slot;
+					result = -1;
+					goto error_exit;
+				}
+			}
 		}
 
 		/*
@@ -2032,6 +2048,7 @@ get_partition_for_tuple(PartitionDispatch *pd,
 			parent = pd[-parent->indexes[cur_index]];
 	}
 
+error_exit:
 	ecxt->ecxt_scantuple = ecxt_scantuple_old;
 	return result;
 }

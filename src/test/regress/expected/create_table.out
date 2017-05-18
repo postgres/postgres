@@ -407,18 +407,6 @@ SELECT relkind FROM pg_class WHERE relname = 'partitioned';
  p
 (1 row)
 
--- check that range partition key columns are marked NOT NULL
-SELECT attname, attnotnull FROM pg_attribute
-  WHERE attrelid = 'partitioned'::regclass AND attnum > 0
-  ORDER BY attnum;
- attname | attnotnull 
----------+------------
- a       | t
- b       | f
- c       | t
- d       | t
-(4 rows)
-
 -- prevent a function referenced in partition key from being dropped
 DROP FUNCTION plusone(int);
 ERROR:  cannot drop function plusone(integer) because other objects depend on it
@@ -435,10 +423,10 @@ ERROR:  cannot inherit from partitioned table "partitioned2"
             Table "public.partitioned"
  Column |  Type   | Collation | Nullable | Default 
 --------+---------+-----------+----------+---------
- a      | integer |           | not null | 
+ a      | integer |           |          | 
  b      | integer |           |          | 
- c      | text    |           | not null | 
- d      | text    |           | not null | 
+ c      | text    |           |          | 
+ d      | text    |           |          | 
 Partition key: RANGE (a oid_ops, plusone(b), c, d COLLATE "C")
 
 \d partitioned2
@@ -544,9 +532,9 @@ CREATE TABLE part_forced_oids PARTITION OF oids_parted FOR VALUES FROM (1) TO (1
                              Table "public.part_forced_oids"
  Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
 --------+---------+-----------+----------+---------+---------+--------------+-------------
- a      | integer |           | not null |         | plain   |              | 
+ a      | integer |           |          |         | plain   |              | 
 Partition of: oids_parted FOR VALUES FROM (1) TO (10)
-Partition constraint: ((a >= 1) AND (a < 10))
+Partition constraint: ((a IS NOT NULL) AND (a >= 1) AND (a < 10))
 Has OIDs: yes
 
 DROP TABLE oids_parted, part_forced_oids;
@@ -678,7 +666,7 @@ Partitions: part_c_1_10 FOR VALUES FROM (1) TO (10)
  a      | text    |           |          |         | extended |              | 
  b      | integer |           | not null | 0       | plain    |              | 
 Partition of: part_c FOR VALUES FROM (1) TO (10)
-Partition constraint: ((a IS NOT NULL) AND (a = ANY (ARRAY['c'::text])) AND (b >= 1) AND (b < 10))
+Partition constraint: ((a IS NOT NULL) AND (a = ANY (ARRAY['c'::text])) AND (b IS NOT NULL) AND (b >= 1) AND (b < 10))
 Check constraints:
     "check_a" CHECK (length(a) > 0)
 
@@ -706,9 +694,9 @@ CREATE TABLE unbounded_range_part PARTITION OF range_parted4 FOR VALUES FROM (UN
 --------+---------+-----------+----------+---------+---------+--------------+-------------
  a      | integer |           |          |         | plain   |              | 
  b      | integer |           |          |         | plain   |              | 
- c      | integer |           | not null |         | plain   |              | 
+ c      | integer |           |          |         | plain   |              | 
 Partition of: range_parted4 FOR VALUES FROM (UNBOUNDED, UNBOUNDED, UNBOUNDED) TO (UNBOUNDED, UNBOUNDED, UNBOUNDED)
-Partition constraint: ((abs(a) IS NOT NULL) AND (abs(b) IS NOT NULL))
+Partition constraint: ((abs(a) IS NOT NULL) AND (abs(b) IS NOT NULL) AND (c IS NOT NULL))
 
 DROP TABLE unbounded_range_part;
 CREATE TABLE range_parted4_1 PARTITION OF range_parted4 FOR VALUES FROM (UNBOUNDED, UNBOUNDED, UNBOUNDED) TO (1, UNBOUNDED, UNBOUNDED);
@@ -718,9 +706,9 @@ CREATE TABLE range_parted4_1 PARTITION OF range_parted4 FOR VALUES FROM (UNBOUND
 --------+---------+-----------+----------+---------+---------+--------------+-------------
  a      | integer |           |          |         | plain   |              | 
  b      | integer |           |          |         | plain   |              | 
- c      | integer |           | not null |         | plain   |              | 
+ c      | integer |           |          |         | plain   |              | 
 Partition of: range_parted4 FOR VALUES FROM (UNBOUNDED, UNBOUNDED, UNBOUNDED) TO (1, UNBOUNDED, UNBOUNDED)
-Partition constraint: ((abs(a) IS NOT NULL) AND (abs(b) IS NOT NULL) AND (abs(a) <= 1))
+Partition constraint: ((abs(a) IS NOT NULL) AND (abs(b) IS NOT NULL) AND (c IS NOT NULL) AND (abs(a) <= 1))
 
 CREATE TABLE range_parted4_2 PARTITION OF range_parted4 FOR VALUES FROM (3, 4, 5) TO (6, 7, UNBOUNDED);
 \d+ range_parted4_2
@@ -729,9 +717,9 @@ CREATE TABLE range_parted4_2 PARTITION OF range_parted4 FOR VALUES FROM (3, 4, 5
 --------+---------+-----------+----------+---------+---------+--------------+-------------
  a      | integer |           |          |         | plain   |              | 
  b      | integer |           |          |         | plain   |              | 
- c      | integer |           | not null |         | plain   |              | 
+ c      | integer |           |          |         | plain   |              | 
 Partition of: range_parted4 FOR VALUES FROM (3, 4, 5) TO (6, 7, UNBOUNDED)
-Partition constraint: ((abs(a) IS NOT NULL) AND (abs(b) IS NOT NULL) AND ((abs(a) > 3) OR ((abs(a) = 3) AND (abs(b) > 4)) OR ((abs(a) = 3) AND (abs(b) = 4) AND (c >= 5))) AND ((abs(a) < 6) OR ((abs(a) = 6) AND (abs(b) <= 7))))
+Partition constraint: ((abs(a) IS NOT NULL) AND (abs(b) IS NOT NULL) AND (c IS NOT NULL) AND ((abs(a) > 3) OR ((abs(a) = 3) AND (abs(b) > 4)) OR ((abs(a) = 3) AND (abs(b) = 4) AND (c >= 5))) AND ((abs(a) < 6) OR ((abs(a) = 6) AND (abs(b) <= 7))))
 
 CREATE TABLE range_parted4_3 PARTITION OF range_parted4 FOR VALUES FROM (6, 8, UNBOUNDED) TO (9, UNBOUNDED, UNBOUNDED);
 \d+ range_parted4_3
@@ -740,9 +728,9 @@ CREATE TABLE range_parted4_3 PARTITION OF range_parted4 FOR VALUES FROM (6, 8, U
 --------+---------+-----------+----------+---------+---------+--------------+-------------
  a      | integer |           |          |         | plain   |              | 
  b      | integer |           |          |         | plain   |              | 
- c      | integer |           | not null |         | plain   |              | 
+ c      | integer |           |          |         | plain   |              | 
 Partition of: range_parted4 FOR VALUES FROM (6, 8, UNBOUNDED) TO (9, UNBOUNDED, UNBOUNDED)
-Partition constraint: ((abs(a) IS NOT NULL) AND (abs(b) IS NOT NULL) AND ((abs(a) > 6) OR ((abs(a) = 6) AND (abs(b) >= 8))) AND (abs(a) <= 9))
+Partition constraint: ((abs(a) IS NOT NULL) AND (abs(b) IS NOT NULL) AND (c IS NOT NULL) AND ((abs(a) > 6) OR ((abs(a) = 6) AND (abs(b) >= 8))) AND (abs(a) <= 9))
 
 DROP TABLE range_parted4;
 -- cleanup

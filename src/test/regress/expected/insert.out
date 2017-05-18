@@ -189,7 +189,7 @@ DETAIL:  Failing row contains (a, 10).
 insert into part4 values ('b', 10);
 -- fail (partition key a has a NOT NULL constraint)
 insert into part1 values (null);
-ERROR:  null value in column "a" violates not-null constraint
+ERROR:  new row for relation "part1" violates partition constraint
 DETAIL:  Failing row contains (null, null).
 -- fail (expression key (b+0) cannot be null either)
 insert into part1 values (1);
@@ -247,7 +247,8 @@ insert into range_parted values ('b', 1);
 insert into range_parted values ('b', 10);
 -- fail (partition key (b+0) is null)
 insert into range_parted values ('a');
-ERROR:  range partition key of row contains null
+ERROR:  no partition of relation "range_parted" found for row
+DETAIL:  Partition key of the failing row contains (a, (b + 0)) = (a, null).
 select tableoid::regclass, * from range_parted;
  tableoid | a | b  
 ----------+---+----

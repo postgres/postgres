@@ -805,13 +805,11 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	if (stmt->partspec)
 	{
 		char		strategy;
-		int			partnatts,
-					i;
+		int			partnatts;
 		AttrNumber	partattrs[PARTITION_MAX_KEYS];
 		Oid			partopclass[PARTITION_MAX_KEYS];
 		Oid			partcollation[PARTITION_MAX_KEYS];
 		List	   *partexprs = NIL;
-		List	   *cmds = NIL;
 
 		/*
 		 * We need to transform the raw parsetrees corresponding to partition
@@ -828,33 +826,6 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 		partnatts = list_length(stmt->partspec->partParams);
 		StorePartitionKey(rel, strategy, partnatts, partattrs, partexprs,
 						  partopclass, partcollation);
-
-		/* Force key columns to be NOT NULL when using range partitioning */
-		if (strategy == PARTITION_STRATEGY_RANGE)
-		{
-			for (i = 0; i < partnatts; i++)
-			{
-				AttrNumber	partattno = partattrs[i];
-				Form_pg_attribute attform = descriptor->attrs[partattno - 1];
-
-				if (partattno != 0 && !attform->attnotnull)
-				{
-					/* Add a subcommand to make this one NOT NULL */
-					AlterTableCmd *cmd = makeNode(AlterTableCmd);
-
-					cmd->subtype = AT_SetNotNull;
-					cmd->name = pstrdup(NameStr(attform->attname));
-					cmds = lappend(cmds, cmd);
-				}
-			}
-
-			/*
-			 * Although, there cannot be any partitions yet, we still need to
-			 * pass true for recurse; ATPrepSetNotNull() complains if we don't
-			 */
-			if (cmds != NIL)
-				AlterTableInternal(RelationGetRelid(rel), cmds, true);
-		}
 	}
 
 	/*
@@ -5700,32 +5671,6 @@ ATExecDropNotNull(Relation rel, const char *colName, LOCKMODE lockmode)
 				   errmsg("column \"%s\" is marked NOT NULL in parent table",
 						  colName)));
 		heap_close(parent, AccessShareLock);
-	}
-
-	/*
-	 * If the table is a range partitioned table, check that the column is not
-	 * in the partition key.
-	 */
-	if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
-	{
-		PartitionKey key = RelationGetPartitionKey(rel);
-
-		if (get_partition_strategy(key) == PARTITION_STRATEGY_RANGE)
-		{
-			int			partnatts = get_partition_natts(key),
-						i;
-
-			for (i = 0; i < partnatts; i++)
-			{
-				AttrNumber	partattnum = get_partition_col_attnum(key, i);
-
-				if (partattnum == attnum)
-					ereport(ERROR,
-							(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-							 errmsg("column \"%s\" is in range partition key",
-									colName)));
-			}
-		}
 	}
 
 	/*
