@@ -3763,7 +3763,10 @@ getSubscriptions(Archive *fout)
 		subinfo[i].dobj.name = pg_strdup(PQgetvalue(res, i, i_subname));
 		subinfo[i].rolname = pg_strdup(PQgetvalue(res, i, i_rolname));
 		subinfo[i].subconninfo = pg_strdup(PQgetvalue(res, i, i_subconninfo));
-		subinfo[i].subslotname = pg_strdup(PQgetvalue(res, i, i_subslotname));
+		if (PQgetisnull(res, i, i_subslotname))
+			subinfo[i].subslotname = NULL;
+		else
+			subinfo[i].subslotname = pg_strdup(PQgetvalue(res, i, i_subslotname));
 		subinfo[i].subsynccommit =
 			pg_strdup(PQgetvalue(res, i, i_subsynccommit));
 		subinfo[i].subpublications =
@@ -3831,7 +3834,10 @@ dumpSubscription(Archive *fout, SubscriptionInfo *subinfo)
 	}
 
 	appendPQExpBuffer(query, " PUBLICATION %s WITH (connect = false, slot_name = ", publications->data);
-	appendStringLiteralAH(query, subinfo->subslotname, fout);
+	if (subinfo->subslotname)
+		appendStringLiteralAH(query, subinfo->subslotname, fout);
+	else
+		appendPQExpBufferStr(query, "NONE");
 
 	if (strcmp(subinfo->subsynccommit, "off") != 0)
 		appendPQExpBuffer(query, ", synchronous_commit = %s", fmtId(subinfo->subsynccommit));
