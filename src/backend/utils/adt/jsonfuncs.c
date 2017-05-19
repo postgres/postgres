@@ -122,7 +122,7 @@ typedef struct ElementsState
 } ElementsState;
 
 /* state for get_json_object_as_hash */
-typedef struct JhashState
+typedef struct JHashState
 {
 	JsonLexContext *lex;
 	const char *function_name;
