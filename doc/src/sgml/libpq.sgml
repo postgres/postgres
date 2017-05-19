@@ -1425,7 +1425,7 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
         If this parameter is set to <literal>read-write</literal>, only a
         connection in which read-write transactions are accepted by default
         is considered acceptable.  The query
-        <literal>show transaction_read_only</literal> will be sent upon any
+        <literal>SHOW transaction_read_only</literal> will be sent upon any
         successful connection; if it returns <literal>on</>, the connection
         will be closed.  If multiple hosts were specified in the connection
         string, any remaining servers will be tried just as if the connection

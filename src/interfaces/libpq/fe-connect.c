@@ -2845,7 +2845,7 @@ keep_going:						/* We will come back to here until there is
 
 					conn->status = CONNECTION_OK;
 					if (!PQsendQuery(conn,
-									 "show transaction_read_only"))
+									 "SHOW transaction_read_only"))
 					{
 						restoreErrorMessage(conn, &savedMessage);
 						goto error_return;
@@ -2901,7 +2901,7 @@ keep_going:						/* We will come back to here until there is
 
 				conn->status = CONNECTION_OK;
 				if (!PQsendQuery(conn,
-								 "show transaction_read_only"))
+								 "SHOW transaction_read_only"))
 				{
 					restoreErrorMessage(conn, &savedMessage);
 					goto error_return;
@@ -3014,14 +3014,14 @@ keep_going:						/* We will come back to here until there is
 				}
 
 				/*
-				 * Something went wrong with "show transaction_read_only". We
+				 * Something went wrong with "SHOW transaction_read_only". We
 				 * should try next addresses.
 				 */
 				if (res)
 					PQclear(res);
 				restoreErrorMessage(conn, &savedMessage);
 				appendPQExpBuffer(&conn->errorMessage,
-				  libpq_gettext("test \"show transaction_read_only\" failed "
+				  libpq_gettext("test \"SHOW transaction_read_only\" failed "
 								" on \"%s:%s\"\n"),
 								  conn->connhost[conn->whichhost].host,
 								  conn->connhost[conn->whichhost].port);
