@@ -491,7 +491,6 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 {
 	char		relname[NAMEDATALEN];
 	Oid			namespaceId;
-	List	   *schema = stmt->tableElts;
 	Oid			relationId;
 	Oid			tablespaceId;
 	Relation	rel;
@@ -614,19 +613,21 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 
 	/*
 	 * Look up inheritance ancestors and generate relation schema, including
-	 * inherited attributes.
+	 * inherited attributes.  (Note that stmt->tableElts is destructively
+	 * modified by MergeAttributes.)
 	 */
-	schema = MergeAttributes(schema, stmt->inhRelations,
-							 stmt->relation->relpersistence,
-							 stmt->partbound != NULL,
-							 &inheritOids, &old_constraints, &parentOidCount);
+	stmt->tableElts =
+		MergeAttributes(stmt->tableElts, stmt->inhRelations,
+						stmt->relation->relpersistence,
+						stmt->partbound != NULL,
+						&inheritOids, &old_constraints, &parentOidCount);
 
 	/*
 	 * Create a tuple descriptor from the relation schema.  Note that this
 	 * deals with column names, types, and NOT NULL constraints, but not
 	 * default values or CHECK constraints; we handle those below.
 	 */
-	descriptor = BuildDescForRelation(schema);
+	descriptor = BuildDescForRelation(stmt->tableElts);
 
 	/*
 	 * Notice that we allow OIDs here only for plain tables and partitioned
@@ -667,7 +668,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	cookedDefaults = NIL;
 	attnum = 0;
 
-	foreach(listptr, schema)
+	foreach(listptr, stmt->tableElts)
 	{
 		ColumnDef  *colDef = lfirst(listptr);
 
