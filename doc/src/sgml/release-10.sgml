@@ -139,17 +139,6 @@
 
     <listitem>
      <!--
-     Author: Peter Eisentraut <peter_e@gmx.net> 2017-05-12 [c1a7f64b4]
-     Replace "transaction log" with "write-ahead log"
-     -->
-     <para>
-      Rename<acronym>WAL</>-related functions and views to use <literal>lsn</>
-      instead of <literal>location</> (David Rowley)
-     </para>
-    </listitem>
-
-    <listitem>
-     <!--
      Author: Andres Freund <andres@anarazel.de>
      2017-01-18 [69f4b9c85] Move targetlist SRF handling from expression evaluation 
      Author: Tom Lane <tgl@sss.pgh.pa.us>
