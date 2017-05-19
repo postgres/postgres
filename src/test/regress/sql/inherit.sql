@@ -661,3 +661,13 @@ explain (costs off) select * from mcrparted where a > -1;	-- scans all partition
 explain (costs off) select * from mcrparted where a = 20 and abs(b) = 10 and c > 10;	-- scans mcrparted4
 explain (costs off) select * from mcrparted where a = 20 and c > 20; -- scans mcrparted3, mcrparte4, mcrparte5
 drop table mcrparted;
+
+-- check that partitioned table Appends cope with being referenced in
+-- subplans
+create table parted_minmax (a int, b varchar(16)) partition by range (a);
+create table parted_minmax1 partition of parted_minmax for values from (1) to (10);
+create index parted_minmax1i on parted_minmax1 (a, b);
+insert into parted_minmax values (1,'12345');
+explain (costs off) select min(a), max(a) from parted_minmax where b = '12345';
+select min(a), max(a) from parted_minmax where b = '12345';
+drop table parted_minmax;

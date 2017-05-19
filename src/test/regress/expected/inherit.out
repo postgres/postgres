@@ -1918,3 +1918,34 @@ explain (costs off) select * from mcrparted where a = 20 and c > 20; -- scans mc
 (7 rows)
 
 drop table mcrparted;
+-- check that partitioned table Appends cope with being referenced in
+-- subplans
+create table parted_minmax (a int, b varchar(16)) partition by range (a);
+create table parted_minmax1 partition of parted_minmax for values from (1) to (10);
+create index parted_minmax1i on parted_minmax1 (a, b);
+insert into parted_minmax values (1,'12345');
+explain (costs off) select min(a), max(a) from parted_minmax where b = '12345';
+                                              QUERY PLAN                                               
+-------------------------------------------------------------------------------------------------------
+ Result
+   InitPlan 1 (returns $0)
+     ->  Limit
+           ->  Merge Append
+                 Sort Key: parted_minmax1.a
+                 ->  Index Only Scan using parted_minmax1i on parted_minmax1
+                       Index Cond: ((a IS NOT NULL) AND (b = '12345'::text))
+   InitPlan 2 (returns $1)
+     ->  Limit
+           ->  Merge Append
+                 Sort Key: parted_minmax1_1.a DESC
+                 ->  Index Only Scan Backward using parted_minmax1i on parted_minmax1 parted_minmax1_1
+                       Index Cond: ((a IS NOT NULL) AND (b = '12345'::text))
+(13 rows)
+
+select min(a), max(a) from parted_minmax where b = '12345';
+ min | max 
+-----+-----
+   1 |   1
+(1 row)
+
+drop table parted_minmax;
