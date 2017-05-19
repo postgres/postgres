@@ -2262,7 +2262,7 @@ CheckBSDAuth(Port *port, char *user)
 	int			retval;
 
 	/* Send regular password request to client, and get the response */
-	sendAuthRequest(port, AUTH_REQ_PASSWORD);
+	sendAuthRequest(port, AUTH_REQ_PASSWORD, NULL, 0);
 
 	passwd = recv_password_packet(port);
 	if (passwd == NULL)
