@@ -411,8 +411,8 @@ static Datum populate_record_worker(FunctionCallInfo fcinfo, const char *funcnam
 					   bool have_record_arg);
 
 /* helper functions for populate_record[set] */
-static HeapTupleHeader populate_record(TupleDesc tupdesc, RecordIOData **record_info,
-				HeapTupleHeader template, MemoryContext mcxt,
+static HeapTupleHeader populate_record(TupleDesc tupdesc, RecordIOData **record_p,
+				HeapTupleHeader defaultval, MemoryContext mcxt,
 				JsObject *obj);
 static Datum populate_record_field(ColumnIOData *col, Oid typid, int32 typmod,
 					  const char *colname, MemoryContext mcxt,
@@ -3008,12 +3008,12 @@ JsObjectGetField(JsObject *obj, char *field, JsValue *jsv)
 /* populate a record tuple from json/jsonb value */
 static HeapTupleHeader
 populate_record(TupleDesc tupdesc,
-				RecordIOData **precord,
+				RecordIOData **record_p,
 				HeapTupleHeader defaultval,
 				MemoryContext mcxt,
 				JsObject *obj)
 {
-	RecordIOData *record = *precord;
+	RecordIOData *record = *record_p;
 	Datum	   *values;
 	bool	   *nulls;
 	HeapTuple	res;
@@ -3031,7 +3031,7 @@ populate_record(TupleDesc tupdesc,
 	/* (re)allocate metadata cache */
 	if (record == NULL ||
 		record->ncolumns != ncolumns)
-		*precord = record = allocate_record_info(mcxt, ncolumns);
+		*record_p = record = allocate_record_info(mcxt, ncolumns);
 
 	/* invalidate metadata cache if the record type has changed */
 	if (record->record_type != tupdesc->tdtypeid ||
