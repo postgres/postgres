@@ -22,8 +22,8 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> CONNECTION '<replaceable>conninfo</replaceable>'
-ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> SET PUBLICATION <replaceable class="PARAMETER">publication_name</replaceable> [, ...] { REFRESH [ WITH ( <replaceable class="PARAMETER">refresh_option</replaceable> <replaceable class="PARAMETER">value</replaceable> [, ... ] ) ] | SKIP REFRESH }
-ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> REFRESH PUBLICATION [ WITH ( <replaceable class="PARAMETER">refresh_option</replaceable> <replaceable class="PARAMETER">value</replaceable> [, ... ] ) ]
+ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> SET PUBLICATION <replaceable class="PARAMETER">publication_name</replaceable> [, ...] { REFRESH [ WITH ( <replaceable class="PARAMETER">refresh_option</replaceable> [= <replaceable class="PARAMETER">value</replaceable>] [, ... ] ) ] | SKIP REFRESH }
+ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> REFRESH PUBLICATION [ WITH ( <replaceable class="PARAMETER">refresh_option</replaceable> [= <replaceable class="PARAMETER">value</replaceable>] [, ... ] ) ]
 ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> ENABLE
 ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> DISABLE
 ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> SET ( <replaceable class="parameter">subscription_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] )
