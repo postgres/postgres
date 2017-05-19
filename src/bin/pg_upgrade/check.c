@@ -98,9 +98,16 @@ check_and_dump_old_cluster(bool live_check)
 	check_for_reg_data_type_usage(&old_cluster);
 	check_for_isn_and_int8_passing_mismatch(&old_cluster);
 
-	/* Pre-PG 10 allowed tables with 'unknown' type columns */
+	/*
+	 * Pre-PG 10 allowed tables with 'unknown' type columns and non WAL logged
+	 * hash indexes
+	 */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 906)
+	{
 		old_9_6_check_for_unknown_data_type_usage(&old_cluster);
+		if (user_opts.check)
+			old_9_6_invalidate_hash_indexes(&old_cluster, true);
+	}
 
 	/* 9.5 and below should not have roles starting with pg_ */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 905)
@@ -174,6 +181,14 @@ issue_warnings(void)
 	{
 		start_postmaster(&new_cluster, true);
 		new_9_0_populate_pg_largeobject_metadata(&new_cluster, false);
+		stop_postmaster(false);
+	}
+
+	/* Reindex hash indexes for old < 10.0 */
+	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 906)
+	{
+		start_postmaster(&new_cluster, true);
+		old_9_6_invalidate_hash_indexes(&new_cluster, false);
 		stop_postmaster(false);
 	}
 }

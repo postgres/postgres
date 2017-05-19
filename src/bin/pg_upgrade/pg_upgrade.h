@@ -441,6 +441,8 @@ void new_9_0_populate_pg_largeobject_metadata(ClusterInfo *cluster,
 										 bool check_mode);
 void		old_9_3_check_for_line_data_type_usage(ClusterInfo *cluster);
 void		old_9_6_check_for_unknown_data_type_usage(ClusterInfo *cluster);
+void old_9_6_invalidate_hash_indexes(ClusterInfo *cluster,
+								bool check_mode);
 
 /* parallel.c */
 void parallel_exec_prog(const char *log_file, const char *opt_log_file,

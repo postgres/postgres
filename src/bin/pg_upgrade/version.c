@@ -287,3 +287,115 @@ old_9_6_check_for_unknown_data_type_usage(ClusterInfo *cluster)
 	else
 		check_ok();
 }
+
+/*
+ * old_9_6_invalidate_hash_indexes()
+ *	9.6 -> 10
+ *	Hash index binary format has changed from 9.6->10.0
+ */
+void
+old_9_6_invalidate_hash_indexes(ClusterInfo *cluster, bool check_mode)
+{
+	int			dbnum;
+	FILE	   *script = NULL;
+	bool		found = false;
+	char	   *output_path = "reindex_hash.sql";
+
+	prep_status("Checking for hash indexes");
+
+	for (dbnum = 0; dbnum < cluster->dbarr.ndbs; dbnum++)
+	{
+		PGresult   *res;
+		bool		db_used = false;
+		int			ntups;
+		int			rowno;
+		int			i_nspname,
+					i_relname;
+		DbInfo	   *active_db = &cluster->dbarr.dbs[dbnum];
+		PGconn	   *conn = connectToServer(cluster, active_db->db_name);
+
+		/* find hash indexes */
+		res = executeQueryOrDie(conn,
+								"SELECT n.nspname, c.relname "
+								"FROM	pg_catalog.pg_class c, "
+								"		pg_catalog.pg_index i, "
+								"		pg_catalog.pg_am a, "
+								"		pg_catalog.pg_namespace n "
+								"WHERE	i.indexrelid = c.oid AND "
+								"		c.relam = a.oid AND "
+								"		c.relnamespace = n.oid AND "
+								"		a.amname = 'hash'"
+			);
+
+		ntups = PQntuples(res);
+		i_nspname = PQfnumber(res, "nspname");
+		i_relname = PQfnumber(res, "relname");
+		for (rowno = 0; rowno < ntups; rowno++)
+		{
+			found = true;
+			if (!check_mode)
+			{
+				if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
+					pg_fatal("could not open file \"%s\": %s\n", output_path,
+							 strerror(errno));
+				if (!db_used)
+				{
+					PQExpBufferData connectbuf;
+
+					initPQExpBuffer(&connectbuf);
+					appendPsqlMetaConnect(&connectbuf, active_db->db_name);
+					fputs(connectbuf.data, script);
+					termPQExpBuffer(&connectbuf);
+					db_used = true;
+				}
+				fprintf(script, "REINDEX INDEX %s.%s;\n",
+						quote_identifier(PQgetvalue(res, rowno, i_nspname)),
+						quote_identifier(PQgetvalue(res, rowno, i_relname)));
+			}
+		}
+
+		PQclear(res);
+
+		if (!check_mode && db_used)
+		{
+			/* mark hash indexes as invalid */
+			PQclear(executeQueryOrDie(conn,
+									  "UPDATE pg_catalog.pg_index i "
+									  "SET	indisvalid = false "
+									  "FROM	pg_catalog.pg_class c, "
+									  "		pg_catalog.pg_am a, "
+									  "		pg_catalog.pg_namespace n "
+									  "WHERE	i.indexrelid = c.oid AND "
+									  "		c.relam = a.oid AND "
+									  "		c.relnamespace = n.oid AND "
+									  "		a.amname = 'hash'"));
+		}
+
+		PQfinish(conn);
+	}
+
+	if (script)
+		fclose(script);
+
+	if (found)
+	{
+		report_status(PG_WARNING, "warning");
+		if (check_mode)
+			pg_log(PG_WARNING, "\n"
+				   "Your installation contains hash indexes.  These indexes have different\n"
+				   "internal formats between your old and new clusters, so they must be\n"
+				   "reindexed with the REINDEX command.  After upgrading, you will be given\n"
+				   "REINDEX instructions.\n\n");
+		else
+			pg_log(PG_WARNING, "\n"
+				   "Your installation contains hash indexes.  These indexes have different\n"
+				   "internal formats between your old and new clusters, so they must be\n"
+				   "reindexed with the REINDEX command.  The file:\n"
+				   "    %s\n"
+				   "when executed by psql by the database superuser will recreate all invalid\n"
+			  "indexes; until then, none of these indexes will be used.\n\n",
+				   output_path);
+	}
+	else
+		check_ok();
+}
