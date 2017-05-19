@@ -1720,6 +1720,7 @@ connectDBComplete(PGconn *conn)
 {
 	PostgresPollingStatusType flag = PGRES_POLLING_WRITING;
 	time_t		finish_time = ((time_t) -1);
+	int			timeout = 0;
 
 	if (conn == NULL || conn->status == CONNECTION_BAD)
 		return 0;
@@ -1729,8 +1730,7 @@ connectDBComplete(PGconn *conn)
 	 */
 	if (conn->connect_timeout != NULL)
 	{
-		int			timeout = atoi(conn->connect_timeout);
-
+		timeout = atoi(conn->connect_timeout);
 		if (timeout > 0)
 		{
 			/*
@@ -1745,6 +1745,8 @@ connectDBComplete(PGconn *conn)
 
 	for (;;)
 	{
+		int			ret = 0;
+
 		/*
 		 * Wait, if necessary.  Note that the initial state (just after
 		 * PQconnectStart) is to wait for the socket to select for writing.
@@ -1761,7 +1763,8 @@ connectDBComplete(PGconn *conn)
 				return 1;		/* success! */
 
 			case PGRES_POLLING_READING:
-				if (pqWaitTimed(1, 0, conn, finish_time))
+				ret = pqWaitTimed(1, 0, conn, finish_time);
+				if (ret == -1)
 				{
 					conn->status = CONNECTION_BAD;
 					return 0;
@@ -1769,7 +1772,8 @@ connectDBComplete(PGconn *conn)
 				break;
 
 			case PGRES_POLLING_WRITING:
-				if (pqWaitTimed(0, 1, conn, finish_time))
+				ret = pqWaitTimed(0, 1, conn, finish_time);
+				if (ret == -1)
 				{
 					conn->status = CONNECTION_BAD;
 					return 0;
@@ -1780,6 +1784,23 @@ connectDBComplete(PGconn *conn)
 				/* Just in case we failed to set it in PQconnectPoll */
 				conn->status = CONNECTION_BAD;
 				return 0;
+		}
+
+		if (ret == 1)	/* connect_timeout elapsed */
+		{
+			/* If there are no more hosts, return (the error message is already set) */
+			if (++conn->whichhost >= conn->nconnhost)
+			{
+				conn->whichhost = 0;
+				conn->status = CONNECTION_BAD;
+				return 0;
+			}
+			/* Attempt connection to the next host, starting the connect_timeout timer */
+			pqDropConnection(conn, true);
+			conn->addr_cur = conn->connhost[conn->whichhost].addrlist;
+			conn->status = CONNECTION_NEEDED;
+			if (conn->connect_timeout != NULL)
+				finish_time = time(NULL) + timeout;
 		}
 
 		/*

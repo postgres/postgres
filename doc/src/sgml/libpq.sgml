@@ -1041,9 +1041,10 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
        string). Zero or not specified means wait indefinitely.  It is not
        recommended to use a timeout of less than 2 seconds.
        This timeout applies separately to each connection attempt.
-       For example, if you specify two hosts and both of them are unreachable,
-       and <literal>connect_timeout</> is 5, the total time spent waiting for a
-       connection might be up to 10 seconds.
+       For example, if you specify two hosts and <literal>connect_timeout</>
+       is 5, each host will time out if no connection is made within 5
+       seconds, so the total time spent waiting for a connection might be
+       up to 10 seconds.
       </para>
       </listitem>
      </varlistentry>
