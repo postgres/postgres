@@ -64,8 +64,10 @@ xdinside		[^"]+
 %%
 {space}+	{ /* ignore */ }
 
-ANY		{ return ANY; }
-FIRST		{ return FIRST; }
+	/* brute-force case insensitivity is safer than relying on flex -i */
+
+[Aa][Nn][Yy]			{ return ANY; }
+[Ff][Ii][Rr][Ss][Tt]	{ return FIRST; }
 
 {xdstart}	{
 				initStringInfo(&xdbuf);
