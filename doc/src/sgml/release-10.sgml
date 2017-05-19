@@ -1452,11 +1452,12 @@
      <listitem>
       <!--
       Author: Magnus Hagander <magnus@hagander.net>
-      2017-01-14 [f6d6d2920] Change default values for backup and replication paramet
+      2017-01-14 [f6d6d2920] Change default values for backup and replication parameters
+      2017-05-02 [34fc6167] Change hot_standby default value to 'on' 
       -->
       <para>
        Reduce configuration necessary to perform streaming backup and
-       replication (Magnus Hagander)
+       replication (Magnus Hagander, Dang Minh Huong)
       </para>
 
       <para>
