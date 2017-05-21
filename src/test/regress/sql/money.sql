@@ -97,6 +97,18 @@ SELECT '92233720368547758.08'::money;
 SELECT '-92233720368547758.085'::money;
 SELECT '92233720368547758.075'::money;
 
+-- rounding vs. truncation in division
+SELECT '878.08'::money / 11::float8;
+SELECT '878.08'::money / 11::float4;
+SELECT '878.08'::money / 11::bigint;
+SELECT '878.08'::money / 11::int;
+SELECT '878.08'::money / 11::smallint;
+
+-- check for precision loss in division
+SELECT '90000000000000099.00'::money / 10::bigint;
+SELECT '90000000000000099.00'::money / 10::int;
+SELECT '90000000000000099.00'::money / 10::smallint;
+
 -- Cast int4/int8/numeric to money
 SELECT 1234567890::money;
 SELECT 12345678901234567::money;

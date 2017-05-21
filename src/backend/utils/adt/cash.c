@@ -667,7 +667,7 @@ cash_mul_flt8(PG_FUNCTION_ARGS)
 	float8		f = PG_GETARG_FLOAT8(1);
 	Cash		result;
 
-	result = c * f;
+	result = rint(c * f);
 	PG_RETURN_CASH(result);
 }
 
@@ -682,7 +682,7 @@ flt8_mul_cash(PG_FUNCTION_ARGS)
 	Cash		c = PG_GETARG_CASH(1);
 	Cash		result;
 
-	result = f * c;
+	result = rint(f * c);
 	PG_RETURN_CASH(result);
 }
 
@@ -717,7 +717,7 @@ cash_mul_flt4(PG_FUNCTION_ARGS)
 	float4		f = PG_GETARG_FLOAT4(1);
 	Cash		result;
 
-	result = c * f;
+	result = rint(c * (float8) f);
 	PG_RETURN_CASH(result);
 }
 
@@ -732,7 +732,7 @@ flt4_mul_cash(PG_FUNCTION_ARGS)
 	Cash		c = PG_GETARG_CASH(1);
 	Cash		result;
 
-	result = f * c;
+	result = rint((float8) f * c);
 	PG_RETURN_CASH(result);
 }
 
@@ -753,7 +753,7 @@ cash_div_flt4(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_DIVISION_BY_ZERO),
 				 errmsg("division by zero")));
 
-	result = rint(c / f);
+	result = rint(c / (float8) f);
 	PG_RETURN_CASH(result);
 }
 
@@ -802,7 +802,7 @@ cash_div_int8(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_DIVISION_BY_ZERO),
 				 errmsg("division by zero")));
 
-	result = rint(c / i);
+	result = c / i;
 
 	PG_RETURN_CASH(result);
 }
@@ -854,7 +854,7 @@ cash_div_int4(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_DIVISION_BY_ZERO),
 				 errmsg("division by zero")));
 
-	result = rint(c / i);
+	result = c / i;
 
 	PG_RETURN_CASH(result);
 }
@@ -904,7 +904,7 @@ cash_div_int2(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_DIVISION_BY_ZERO),
 				 errmsg("division by zero")));
 
-	result = rint(c / s);
+	result = c / s;
 	PG_RETURN_CASH(result);
 }
 
