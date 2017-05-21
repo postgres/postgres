@@ -185,6 +185,44 @@ SELECT * FROM money_data;
  $123.46
 (1 row)
 
+-- rounding vs. truncation in division
+SELECT '878.08'::money / 11::float8;
+ ?column? 
+----------
+   $79.83
+(1 row)
+
+SELECT '878.08'::money / 11::float4;
+ ?column? 
+----------
+   $79.83
+(1 row)
+
+SELECT '878.08'::money / 11::int;
+ ?column? 
+----------
+   $79.82
+(1 row)
+
+SELECT '878.08'::money / 11::smallint;
+ ?column? 
+----------
+   $79.82
+(1 row)
+
+-- check for precision loss in division
+SELECT '90000000000000099.00'::money / 10::int;
+         ?column?          
+---------------------------
+ $9,000,000,000,000,009.90
+(1 row)
+
+SELECT '90000000000000099.00'::money / 10::smallint;
+         ?column?          
+---------------------------
+ $9,000,000,000,000,009.90
+(1 row)
+
 -- Cast int4/int8 to money
 SELECT 1234567890::money;
        money       
