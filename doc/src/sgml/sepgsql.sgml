@@ -753,7 +753,7 @@ ERROR:  SELinux: security policy violation
   <title>External Resources</title>
   <variablelist>
    <varlistentry>
-    <term><ulink url="http://wiki.postgresql.org/wiki/SEPostgreSQL">SE-PostgreSQL Introduction</ulink></term>
+    <term><ulink url="https://wiki.postgresql.org/wiki/SEPostgreSQL">SE-PostgreSQL Introduction</ulink></term>
     <listitem>
      <para>
       This wiki page provides a brief overview, security design, architecture,

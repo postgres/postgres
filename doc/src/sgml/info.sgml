@@ -14,10 +14,10 @@
     <listitem>
      <para>
       The <productname>PostgreSQL</productname> <ulink
-      url="http://wiki.postgresql.org">wiki</ulink> contains the project's <ulink
-      url="http://wiki.postgresql.org/wiki/Frequently_Asked_Questions">FAQ</>
+      url="https://wiki.postgresql.org">wiki</ulink> contains the project's <ulink
+      url="https://wiki.postgresql.org/wiki/Frequently_Asked_Questions">FAQ</>
       (Frequently Asked Questions) list, <ulink
-      url="http://wiki.postgresql.org/wiki/Todo">TODO</> list, and
+      url="https://wiki.postgresql.org/wiki/Todo">TODO</> list, and
       detailed information about many more topics.
      </para>
     </listitem>
@@ -28,7 +28,7 @@
     <listitem>
      <para>
       The <productname>PostgreSQL</productname>
-      <ulink url="http://www.postgresql.org">web site</ulink>
+      <ulink url="https://www.postgresql.org">web site</ulink>
       carries details on the latest release and other
       information to make your work or play with
       <productname>PostgreSQL</productname> more productive.
