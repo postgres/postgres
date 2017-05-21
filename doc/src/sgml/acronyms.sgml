@@ -300,7 +300,7 @@
     <listitem>
      <para>
       <ulink
-      url="http://git.postgresql.org/gitweb?p=postgresql.git;a=blob;f=src/backend/access/heap/README.HOT;hb=HEAD">Heap-Only
+      url="https://git.postgresql.org/gitweb?p=postgresql.git;a=blob;f=src/backend/access/heap/README.HOT;hb=HEAD">Heap-Only
       Tuples</ulink>
      </para>
     </listitem>
