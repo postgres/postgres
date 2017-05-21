@@ -9,7 +9,7 @@ If you not only found the problem but solved it and generated a patch
 then e-mail it to pgsql-hackers@postgresql.org instead.  Please use the
 command "diff -c" to generate the patch.
 
-You may also enter a bug report at http://www.postgresql.org/ instead of
+You may also enter a bug report at https://www.postgresql.org/ instead of
 e-mailing this form.
 
 ============================================================================

@@ -12,7 +12,7 @@
 
  <para>
   Our wiki, <ulink
-  url="http://wiki.postgresql.org/wiki/Working_with_Git"></ulink>,
+  url="https://wiki.postgresql.org/wiki/Working_with_Git"></ulink>,
   has some discussion on working with Git.
  </para>
 
@@ -64,10 +64,10 @@ git clone git://git.postgresql.org/git/postgresql.git
     <para>
      The Git mirror can also be reached via the HTTP protocol, if for example
      a firewall is blocking access to the Git protocol. Just change the URL
-     prefix to <literal>http</>, as in:
+     prefix to <literal>https</>, as in:
 
 <programlisting>
-git clone http://git.postgresql.org/git/postgresql.git
+git clone https://git.postgresql.org/git/postgresql.git
 </programlisting>
 
      The HTTP protocol is less efficient than the Git protocol, so it will be
