@@ -711,7 +711,7 @@ SELECT name, altitude
 
    <para>
     If you feel you need more introductory material, please visit the PostgreSQL
-    <ulink url="http://www.postgresql.org">web site</ulink>
+    <ulink url="https://www.postgresql.org">web site</ulink>
     for links to more resources.
    </para>
   </sect1>

@@ -346,7 +346,7 @@ su - postgres
   <para>
    The <productname>PostgreSQL</> &version; sources can be obtained from the
    download section of our
-   website: <ulink url="http://www.postgresql.org/download/"></ulink>.  You
+   website: <ulink url="https://www.postgresql.org/download/"></ulink>.  You
    should get a file named <filename>postgresql-&version;.tar.gz</filename>
    or <filename>postgresql-&version;.tar.bz2</filename>. After
    you have obtained the file, unpack it:
@@ -2026,7 +2026,7 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
    it has recently been verified to build and pass its regression tests
    on that platform.  Currently, most testing of platform compatibility
    is done automatically by test machines in the
-   <ulink url="http://buildfarm.postgresql.org/">PostgreSQL Build Farm</ulink>.
+   <ulink url="https://buildfarm.postgresql.org/">PostgreSQL Build Farm</ulink>.
    If you are interested in using <productname>PostgreSQL</> on a platform
    that is not represented in the build farm, but on which the code works
    or can be made to work, you are strongly encouraged to set up a build
@@ -2202,7 +2202,7 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
      should take care of it.
     </para>
 
-    <!-- http://archives.postgresql.org/message-id/6064jt6cfm.fsf_-_@dba2.int.libertyrms.com -->
+    <!-- https://archives.postgresql.org/message-id/6064jt6cfm.fsf_-_@dba2.int.libertyrms.com -->
 
     <para>
      One user reports:
@@ -2264,7 +2264,7 @@ hosts=local4,bind4
 
    <sect3>
     <title>Memory Management</title>
-    <!-- http://archives.postgresql.org/message-id/603bgqmpl9.fsf@dba2.int.libertyrms.com -->
+    <!-- https://archives.postgresql.org/message-id/603bgqmpl9.fsf@dba2.int.libertyrms.com -->
 
     <para>
      AIX can be somewhat peculiar with regards to the way it does
