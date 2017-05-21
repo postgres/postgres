@@ -24,7 +24,7 @@
 <xsl:param name="html.stylesheet">
   <xsl:choose>
     <xsl:when test="$website.stylesheet = 0">stylesheet.css</xsl:when>
-    <xsl:otherwise>http://www.postgresql.org/media/css/docs.css</xsl:otherwise>
+    <xsl:otherwise>https://www.postgresql.org/media/css/docs.css</xsl:otherwise>
   </xsl:choose>
 </xsl:param>
 
