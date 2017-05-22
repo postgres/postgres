@@ -843,7 +843,7 @@ hashbucketcleanup(Relation rel, Bucket cur_bucket, Buffer bucket_buf,
 				if (bucket != cur_bucket)
 				{
 					/*
-					 * We expect tuples to either belong to curent bucket or
+					 * We expect tuples to either belong to current bucket or
 					 * new_bucket.  This is ensured because we don't allow
 					 * further splits from bucket that contains garbage. See
 					 * comments in _hash_expandtable.
