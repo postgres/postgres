@@ -31,9 +31,9 @@ DOING THE INDENT RUN:
 
 3) Download the latest typedef file from the buildfarm:
 
-	wget -O src/tools/pgindent/typedefs.list http://buildfarm.postgresql.org/cgi-bin/typedefs.pl
+	wget -O src/tools/pgindent/typedefs.list https://buildfarm.postgresql.org/cgi-bin/typedefs.pl
 
-   (See http://www.pgbuildfarm.org/cgi-bin/typedefs.pl?show_list for a full
+   (See https://www.pgbuildfarm.org/cgi-bin/typedefs.pl?show_list for a full
    list of typedef files, if you want to indent some back branch.)
 
 4) Run pgindent on the C files:
@@ -109,7 +109,7 @@ BSD indent
 We have standardized on NetBSD's indent, and renamed it pg_bsd_indent.
 We have fixed a few bugs which requre the NetBSD source to be patched
 with indent.bsd.patch patch.  A fully patched version is available at
-ftp://ftp.postgresql.org/pub/dev.
+https://ftp.postgresql.org/pub/dev.
 
 GNU indent, version 2.2.6, has several problems, and is not recommended.
 These bugs become pretty major when you are doing >500k lines of code.
