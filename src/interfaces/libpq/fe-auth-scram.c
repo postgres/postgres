@@ -430,7 +430,8 @@ read_server_first_message(fe_scram_state *state, char *input,
 	}
 
 	/* Verify immediately that the server used our part of the nonce */
-	if (strncmp(nonce, state->client_nonce, strlen(state->client_nonce)) != 0)
+	if (strlen(nonce) < strlen(state->client_nonce) ||
+		memcmp(nonce, state->client_nonce, strlen(state->client_nonce)) != 0)
 	{
 		printfPQExpBuffer(errormessage,
 				 libpq_gettext("invalid SCRAM response (nonce mismatch)\n"));
