@@ -453,7 +453,7 @@ sub run_build
 	chdir "$code_base/src/tools/pgindent";
 
 	my $typedefs_list_url =
-	  "http://buildfarm.postgresql.org/cgi-bin/typedefs.pl";
+	  "https://buildfarm.postgresql.org/cgi-bin/typedefs.pl";
 
 	my $rv = getstore($typedefs_list_url, "tmp_typedefs.list");
 
@@ -463,7 +463,7 @@ sub run_build
 	$ENV{PGTYPEDEFS} = abs_path('tmp_typedefs.list');
 
 	my $pg_bsd_indent_url =
-	    "ftp://ftp.postgresql.org/pub/dev/pg_bsd_indent-"
+	    "https://ftp.postgresql.org/pub/dev/pg_bsd_indent-"
 	  . $INDENT_VERSION
 	  . ".tar.gz";
 
