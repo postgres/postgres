@@ -1383,15 +1383,14 @@ get_qual_for_list(PartitionKey key, PartitionBoundSpec *spec)
 
 	if (nulltest1)
 		result = list_make2(nulltest1, opexpr);
-	else if (nulltest2)
+	else
 	{
 		Expr	   *or;
 
+		Assert(nulltest2 != NULL);
 		or = makeBoolExpr(OR_EXPR, list_make2(nulltest2, opexpr), -1);
 		result = list_make1(or);
 	}
-	else
-		result = list_make1(opexpr);
 
 	return result;
 }
