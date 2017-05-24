@@ -3252,7 +3252,7 @@ SplitIdentifierString(char *rawstring, char separator,
 
 	*namelist = NIL;
 
-	while (isspace((unsigned char) *nextp))
+	while (scanner_isspace(*nextp))
 		nextp++;				/* skip leading whitespace */
 
 	if (*nextp == '\0')
@@ -3290,7 +3290,7 @@ SplitIdentifierString(char *rawstring, char separator,
 
 			curname = nextp;
 			while (*nextp && *nextp != separator &&
-				   !isspace((unsigned char) *nextp))
+				   !scanner_isspace(*nextp))
 				nextp++;
 			endp = nextp;
 			if (curname == nextp)
@@ -3312,13 +3312,13 @@ SplitIdentifierString(char *rawstring, char separator,
 			pfree(downname);
 		}
 
-		while (isspace((unsigned char) *nextp))
+		while (scanner_isspace(*nextp))
 			nextp++;			/* skip trailing whitespace */
 
 		if (*nextp == separator)
 		{
 			nextp++;
-			while (isspace((unsigned char) *nextp))
+			while (scanner_isspace(*nextp))
 				nextp++;		/* skip leading whitespace for next */
 			/* we expect another name, so done remains false */
 		}
@@ -3377,7 +3377,7 @@ SplitDirectoriesString(char *rawstring, char separator,
 
 	*namelist = NIL;
 
-	while (isspace((unsigned char) *nextp))
+	while (scanner_isspace(*nextp))
 		nextp++;				/* skip leading whitespace */
 
 	if (*nextp == '\0')
@@ -3414,7 +3414,7 @@ SplitDirectoriesString(char *rawstring, char separator,
 			while (*nextp && *nextp != separator)
 			{
 				/* trailing whitespace should not be included in name */
-				if (!isspace((unsigned char) *nextp))
+				if (!scanner_isspace(*nextp))
 					endp = nextp + 1;
 				nextp++;
 			}
@@ -3422,13 +3422,13 @@ SplitDirectoriesString(char *rawstring, char separator,
 				return false;	/* empty unquoted name not allowed */
 		}
 
-		while (isspace((unsigned char) *nextp))
+		while (scanner_isspace(*nextp))
 			nextp++;			/* skip trailing whitespace */
 
 		if (*nextp == separator)
 		{
 			nextp++;
-			while (isspace((unsigned char) *nextp))
+			while (scanner_isspace(*nextp))
 				nextp++;		/* skip leading whitespace for next */
 			/* we expect another name, so done remains false */
 		}

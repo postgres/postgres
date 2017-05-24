@@ -770,7 +770,7 @@ parse_ident(PG_FUNCTION_ARGS)
 	nextp = qualname_str;
 
 	/* skip leading whitespace */
-	while (isspace((unsigned char) *nextp))
+	while (scanner_isspace(*nextp))
 		nextp++;
 
 	for (;;)
@@ -858,14 +858,14 @@ parse_ident(PG_FUNCTION_ARGS)
 								text_to_cstring(qualname))));
 		}
 
-		while (isspace((unsigned char) *nextp))
+		while (scanner_isspace(*nextp))
 			nextp++;
 
 		if (*nextp == '.')
 		{
 			after_dot = true;
 			nextp++;
-			while (isspace((unsigned char) *nextp))
+			while (scanner_isspace(*nextp))
 				nextp++;
 		}
 		else if (*nextp == '\0')
