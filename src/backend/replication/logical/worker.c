@@ -1325,7 +1325,7 @@ reread_subscription(void)
 	if (!newsub)
 	{
 		ereport(LOG,
-		   (errmsg("logical replication worker for subscription \"%s\" will "
+		   (errmsg("logical replication apply worker for subscription \"%s\" will "
 				   "stop because the subscription was removed",
 				   MySubscription->name)));
 
@@ -1340,7 +1340,7 @@ reread_subscription(void)
 	if (!newsub->enabled)
 	{
 		ereport(LOG,
-		   (errmsg("logical replication worker for subscription \"%s\" will "
+		   (errmsg("logical replication apply worker for subscription \"%s\" will "
 				   "stop because the subscription was disabled",
 				   MySubscription->name)));
 
@@ -1355,7 +1355,7 @@ reread_subscription(void)
 	if (strcmp(newsub->conninfo, MySubscription->conninfo) != 0)
 	{
 		ereport(LOG,
-		   (errmsg("logical replication worker for subscription \"%s\" will "
+		   (errmsg("logical replication apply worker for subscription \"%s\" will "
 				   "restart because the connection information was changed",
 				   MySubscription->name)));
 
@@ -1370,7 +1370,7 @@ reread_subscription(void)
 	if (strcmp(newsub->name, MySubscription->name) != 0)
 	{
 		ereport(LOG,
-		   (errmsg("logical replication worker for subscription \"%s\" will "
+		   (errmsg("logical replication apply worker for subscription \"%s\" will "
 				   "restart because subscription was renamed",
 				   MySubscription->name)));
 
@@ -1388,7 +1388,7 @@ reread_subscription(void)
 	if (strcmp(newsub->slotname, MySubscription->slotname) != 0)
 	{
 		ereport(LOG,
-		   (errmsg("logical replication worker for subscription \"%s\" will "
+		   (errmsg("logical replication apply worker for subscription \"%s\" will "
 				   "restart because the replication slot name was changed",
 				   MySubscription->name)));
 
@@ -1403,7 +1403,7 @@ reread_subscription(void)
 	if (!equal(newsub->publications, MySubscription->publications))
 	{
 		ereport(LOG,
-		   (errmsg("logical replication worker for subscription \"%s\" will "
+		   (errmsg("logical replication apply worker for subscription \"%s\" will "
 				   "restart because subscription's publications were changed",
 				   MySubscription->name)));
 
@@ -1503,7 +1503,7 @@ ApplyWorkerMain(Datum main_arg)
 	if (!MySubscription->enabled)
 	{
 		ereport(LOG,
-		(errmsg("logical replication worker for subscription \"%s\" will not "
+		(errmsg("logical replication apply worker for subscription \"%s\" will not "
 				"start because the subscription was disabled during startup",
 				MySubscription->name)));
 
@@ -1516,11 +1516,13 @@ ApplyWorkerMain(Datum main_arg)
 								  (Datum) 0);
 
 	if (am_tablesync_worker())
-		elog(LOG, "logical replication sync for subscription %s, table %s started",
-			 MySubscription->name, get_rel_name(MyLogicalRepWorker->relid));
+		ereport(LOG,
+				(errmsg("logical replication table synchronization worker for subscription \"%s\", table \"%s\" has started",
+						MySubscription->name, get_rel_name(MyLogicalRepWorker->relid))));
 	else
-		elog(LOG, "logical replication apply for subscription %s started",
-			 MySubscription->name);
+		ereport(LOG,
+				(errmsg("logical replication apply worker for subscription \"%s\" has started",
+						MySubscription->name)));
 
 	CommitTransactionCommand();
 

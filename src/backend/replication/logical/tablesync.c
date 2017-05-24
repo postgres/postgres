@@ -133,8 +133,11 @@ finish_sync_worker(void)
 	/* Find the main apply worker and signal it. */
 	logicalrep_worker_wakeup(MyLogicalRepWorker->subid, InvalidOid);
 
+	StartTransactionCommand();
 	ereport(LOG,
-			(errmsg("logical replication synchronization worker finished processing")));
+			(errmsg("logical replication table synchronization worker for subscription \"%s\", table \"%s\" has finished",
+					MySubscription->name, get_rel_name(MyLogicalRepWorker->relid))));
+	CommitTransactionCommand();
 
 	/* Stop gracefully */
 	walrcv_disconnect(wrconn);

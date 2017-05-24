@@ -260,7 +260,7 @@ logicalrep_worker_launch(Oid dbid, Oid subid, const char *subname, Oid userid,
 	int			nsyncworkers;
 	TimestampTz now;
 
-	ereport(LOG,
+	ereport(DEBUG1,
 	   (errmsg("starting logical replication worker for subscription \"%s\"",
 			   subname)));
 
