@@ -934,9 +934,13 @@ CheckSCRAMAuth(Port *port, char *shadow_pass, char **logdetail)
 			 */
 			selected_mech = pq_getmsgrawstring(&buf);
 			if (strcmp(selected_mech, SCRAM_SHA256_NAME) != 0)
+			{
 				ereport(COMMERROR,
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
 						 errmsg("client selected an invalid SASL authentication mechanism")));
+				pfree(buf.data);
+				return STATUS_ERROR;
+			}
 
 			inputlen = pq_getmsgint(&buf, 4);
 			if (inputlen == -1)
