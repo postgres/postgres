@@ -466,7 +466,7 @@ PLy_output(volatile int level, PyObject *self, PyObject *args, PyObject *kw)
 				/* the message should not be overwritten */
 				if (PyTuple_Size(args) != 0)
 				{
-					PLy_exception_set(PyExc_TypeError, "Argument 'message' given by name and position");
+					PLy_exception_set(PyExc_TypeError, "argument 'message' given by name and position");
 					return NULL;
 				}
 
