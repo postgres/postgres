@@ -84,6 +84,8 @@ CREATE STATISTICS [ IF NOT EXISTS ] <replaceable class="PARAMETER">statistics_na
       <literal>ndistinct</literal>, which enables n-distinct statistics, and
       <literal>dependencies</literal>, which enables functional
       dependency statistics.
+      If this clause is omitted, all supported statistic types are
+      included in the statistics object.
       For more information, see <xref linkend="planner-stats-extended">
       and <xref linkend="multivariate-statistics-examples">.
      </para>
