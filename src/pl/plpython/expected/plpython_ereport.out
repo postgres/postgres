@@ -68,13 +68,13 @@ CONTEXT:  Traceback (most recent call last):
     plpy.info('unsupported argument', blabla='fooboo') 
 PL/Python anonymous code block
 DO $$ plpy.info('first message', message='second message') $$ LANGUAGE plpythonu;
-ERROR:  TypeError: Argument 'message' given by name and position
+ERROR:  TypeError: argument 'message' given by name and position
 CONTEXT:  Traceback (most recent call last):
   PL/Python anonymous code block, line 1, in <module>
     plpy.info('first message', message='second message') 
 PL/Python anonymous code block
 DO $$ plpy.info('first message', 'second message', message='third message') $$ LANGUAGE plpythonu;
-ERROR:  TypeError: Argument 'message' given by name and position
+ERROR:  TypeError: argument 'message' given by name and position
 CONTEXT:  Traceback (most recent call last):
   PL/Python anonymous code block, line 1, in <module>
     plpy.info('first message', 'second message', message='third message') 
