@@ -74,6 +74,6 @@
 #define REGCONFIGOID    3734
 #define REGDICTIONARYOID    3769
 #define JSONBOID 3802
-#define INT4RANGEOID        3904 
+#define INT4RANGEOID        3904
 
 #endif   /* PG_TYPE_H */
