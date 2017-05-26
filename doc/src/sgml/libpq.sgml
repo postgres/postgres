@@ -7012,22 +7012,6 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
     <listitem>
      <para>
       <indexterm>
-       <primary><envar>PGREALM</envar></primary>
-      </indexterm>
-      <envar>PGREALM</envar> sets the Kerberos realm to use with
-      <productname>PostgreSQL</productname>, if  it is different from the
-      local realm.  If <envar>PGREALM</envar> is set,
-      <application>libpq</application> applications will attempt
-      authentication  with  servers for this realm and use separate ticket
-      files to avoid conflicts with local ticket files.   This
-      environment  variable is only used if GSSAPI authentication is
-      selected by the server.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      <indexterm>
        <primary><envar>PGOPTIONS</envar></primary>
       </indexterm>
       <envar>PGOPTIONS</envar> behaves the same as the <xref
