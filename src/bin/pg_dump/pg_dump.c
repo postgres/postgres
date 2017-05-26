@@ -10237,7 +10237,8 @@ dumpOpclass(Archive *fout, OpclassInfo *opcinfo)
 	i_opcfamilynsp = PQfnumber(res, "opcfamilynsp");
 	i_amname = PQfnumber(res, "amname");
 
-	opcintype = PQgetvalue(res, 0, i_opcintype);
+	/* opcintype may still be needed after we PQclear res */
+	opcintype = pg_strdup(PQgetvalue(res, 0, i_opcintype));
 	opckeytype = PQgetvalue(res, 0, i_opckeytype);
 	opcdefault = PQgetvalue(res, 0, i_opcdefault);
 	/* opcfamily will still be needed after we PQclear res */
@@ -10471,6 +10472,15 @@ dumpOpclass(Archive *fout, OpclassInfo *opcinfo)
 
 	PQclear(res);
 
+	/*
+	 * If needComma is still false it means we haven't added anything after
+	 * the AS keyword.  To avoid printing broken SQL, append a dummy STORAGE
+	 * clause with the same datatype.  This isn't sanctioned by the
+	 * documentation, but actually DefineOpClass will treat it as a no-op.
+	 */
+	if (!needComma)
+		appendPQExpBuffer(q, "STORAGE %s", opcintype);
+
 	appendPQExpBuffer(q, ";\n");
 
 	appendPQExpBuffer(labelq, "OPERATOR CLASS %s",
@@ -10496,6 +10506,8 @@ dumpOpclass(Archive *fout, OpclassInfo *opcinfo)
 				opcinfo->dobj.namespace->dobj.name, opcinfo->rolname,
 				opcinfo->dobj.catId, 0, opcinfo->dobj.dumpId);
 
+	free(opcintype);
+	free(opcfamily);
 	free(amname);
 	destroyPQExpBuffer(query);
 	destroyPQExpBuffer(q);
