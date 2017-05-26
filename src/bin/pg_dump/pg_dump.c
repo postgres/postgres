@@ -13039,7 +13039,7 @@ dumpCollation(Archive *fout, CollInfo *collinfo)
 						  collinfo->dobj.catId.oid);
 	else
 		appendPQExpBuffer(query, "SELECT "
-						  "'p'::char AS collprovider, "
+						  "'c'::char AS collprovider, "
 						  "collcollate, "
 						  "collctype, "
 						  "NULL AS collversion "
