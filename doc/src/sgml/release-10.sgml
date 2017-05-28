@@ -1929,9 +1929,19 @@
       2017-01-17 [323b96aa3] Register missing money operators in system catalogs
       -->
       <para>
-       Add <link linkend="datatype-money"><type>MONEY</></> operators
-       for multiplication and division with <type>INT8</> values (Peter
-       Eisentraut)
+       Add operators for multiplication and division
+       of <link linkend="datatype-money"><type>money</></link> values
+       with <type>int8</> values (Peter Eisentraut)
+      </para>
+
+      <para>
+       Previously such cases would result in converting the <type>int8</>
+       values to <type>float8</> and then using
+       the <type>money</>-and-<type>float8</> operators.  The new behavior
+       avoids possible precision loss.  But note that division
+       of <type>money</> by <type>int8</> now truncates the quotient, like
+       other integer-division cases, while the previous behavior would have
+       rounded.
       </para>
      </listitem>
 
@@ -1941,7 +1951,7 @@
       2016-09-14 [656df624c] Add overflow checks to money type input function
       -->
       <para>
-       More strictly check the <type>MONEY</> type for overflow operations
+       More strictly check the <type>money</> type for overflow operations
        (Peter Eisentraut)
       </para>
      </listitem>
