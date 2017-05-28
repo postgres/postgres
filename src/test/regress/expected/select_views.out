@@ -340,7 +340,7 @@ SELECT * FROM street;
  98th                          Ave  | [(-122.2001,37.258),(-122.1974,37.27)]                                                                                                                                                                                                                                                                                                                                                                                                       | Lafayette
 (333 rows)
 
-SELECT name, #thepath FROM iexit ORDER BY 1, 2;
+SELECT name, #thepath FROM iexit ORDER BY name COLLATE "C", 2;
                 name                | ?column? 
 ------------------------------------+----------
  I- 580                             |        2
