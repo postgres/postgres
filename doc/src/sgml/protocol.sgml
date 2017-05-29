@@ -1401,7 +1401,7 @@ ErrorMessage.
   <para>
     <firstterm>SCRAM-SHA-256</> (called just <firstterm>SCRAM</> from now on) is
     the only implemented SASL mechanism, at the moment. It is described in detail
-    in RFC 7677 and RFC 5741. 
+    in RFC 7677 and RFC 5802. 
   </para>
 
   <para>
