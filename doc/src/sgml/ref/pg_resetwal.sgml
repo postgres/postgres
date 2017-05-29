@@ -281,6 +281,11 @@ PostgreSQL documentation
    <command>pg_resetwal</command> to run.  But before you do
    so, make doubly certain that there is no server process still alive.
   </para>
+
+  <para>
+   <command>pg_resetwal</command> works only with servers of the same
+   major version.
+  </para>
  </refsect1>
 
  <refsect1>
