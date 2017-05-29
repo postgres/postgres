@@ -16,7 +16,7 @@
  *
  *	See src/backend/executor/README for some background, specifically the
  *	"Expression Trees and ExprState nodes", "Expression Initialization",
- *	and "Expession Evaluation" sections.
+ *	and "Expression Evaluation" sections.
  *
  *
  * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
