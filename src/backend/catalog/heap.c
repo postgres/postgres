@@ -3219,7 +3219,7 @@ RemovePartitionKeyByRelId(Oid relid)
  * the new partition's info into its partition descriptor.
  */
 void
-StorePartitionBound(Relation rel, Relation parent, Node *bound)
+StorePartitionBound(Relation rel, Relation parent, PartitionBoundSpec *bound)
 {
 	Relation	classRel;
 	HeapTuple	tuple,

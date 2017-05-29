@@ -454,6 +454,23 @@ CREATE TABLE bools (
 CREATE TABLE bools_true PARTITION OF bools FOR VALUES IN (1);
 DROP TABLE bools;
 
+-- specified literal can be cast, but cast isn't immutable
+CREATE TABLE moneyp (
+	a money
+) PARTITION BY LIST (a);
+CREATE TABLE moneyp_10 PARTITION OF moneyp FOR VALUES IN (10);
+CREATE TABLE moneyp_10 PARTITION OF moneyp FOR VALUES IN ('10');
+DROP TABLE moneyp;
+
+-- immutable cast should work, though
+CREATE TABLE bigintp (
+	a bigint
+) PARTITION BY LIST (a);
+CREATE TABLE bigintp_10 PARTITION OF bigintp FOR VALUES IN (10);
+-- fails due to overlap:
+CREATE TABLE bigintp_10_2 PARTITION OF bigintp FOR VALUES IN ('10');
+DROP TABLE bigintp;
+
 CREATE TABLE range_parted (
 	a date
 ) PARTITION BY RANGE (a);

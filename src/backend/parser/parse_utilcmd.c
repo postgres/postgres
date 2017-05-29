@@ -91,7 +91,7 @@ typedef struct
 								 * the table */
 	IndexStmt  *pkey;			/* PRIMARY KEY index, if any */
 	bool		ispartitioned;	/* true if table is partitioned */
-	Node	   *partbound;		/* transformed FOR VALUES */
+	PartitionBoundSpec *partbound;		/* transformed FOR VALUES */
 } CreateStmtContext;
 
 /* State shared by transformCreateSchemaStmt and its subroutines */
@@ -135,6 +135,8 @@ static void transformConstraintAttrs(CreateStmtContext *cxt,
 static void transformColumnType(CreateStmtContext *cxt, ColumnDef *column);
 static void setSchemaName(char *context_schema, char **stmt_schema_name);
 static void transformPartitionCmd(CreateStmtContext *cxt, PartitionCmd *cmd);
+static Const *transformPartitionBoundValue(ParseState *pstate, A_Const *con,
+						  const char *colName, Oid colType, int32 colTypmod);
 
 
 /*
@@ -256,24 +258,10 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 
 	if (stmt->partspec)
 	{
-		int			partnatts = list_length(stmt->partspec->partParams);
-
 		if (stmt->inhRelations && !stmt->partbound)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 			errmsg("cannot create partitioned table as inheritance child")));
-
-		if (partnatts > PARTITION_MAX_KEYS)
-			ereport(ERROR,
-					(errcode(ERRCODE_TOO_MANY_COLUMNS),
-					 errmsg("cannot partition using more than %d columns",
-							PARTITION_MAX_KEYS)));
-
-		if (!pg_strcasecmp(stmt->partspec->strategy, "list") &&
-			partnatts > 1)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				errmsg("cannot list partition using more than one column")));
 	}
 
 	/*
@@ -3280,24 +3268,33 @@ transformPartitionCmd(CreateStmtContext *cxt, PartitionCmd *cmd)
 /*
  * transformPartitionBound
  *
- * Transform partition bound specification
+ * Transform a partition bound specification
  */
-Node *
-transformPartitionBound(ParseState *pstate, Relation parent, Node *bound)
+PartitionBoundSpec *
+transformPartitionBound(ParseState *pstate, Relation parent,
+						PartitionBoundSpec *spec)
 {
-	PartitionBoundSpec *spec = (PartitionBoundSpec *) bound,
-			   *result_spec;
+	PartitionBoundSpec *result_spec;
 	PartitionKey key = RelationGetPartitionKey(parent);
 	char		strategy = get_partition_strategy(key);
 	int			partnatts = get_partition_natts(key);
 	List	   *partexprs = get_partition_exprs(key);
 
+	/* Avoid scribbling on input */
 	result_spec = copyObject(spec);
 
 	if (strategy == PARTITION_STRATEGY_LIST)
 	{
 		ListCell   *cell;
 		char	   *colname;
+		Oid			coltype;
+		int32		coltypmod;
+
+		if (spec->strategy != PARTITION_STRATEGY_LIST)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+				  errmsg("invalid bound specification for a list partition"),
+				   parser_errposition(pstate, exprLocation((Node *) spec))));
 
 		/* Get the only column's name in case we need to output an error */
 		if (key->partattrs[0] != 0)
@@ -3308,47 +3305,26 @@ transformPartitionBound(ParseState *pstate, Relation parent, Node *bound)
 						 deparse_context_for(RelationGetRelationName(parent),
 											 RelationGetRelid(parent)),
 										 false, false);
-
-		if (spec->strategy != PARTITION_STRATEGY_LIST)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-				  errmsg("invalid bound specification for a list partition"),
-					 parser_errposition(pstate, exprLocation(bound))));
+		/* Need its type data too */
+		coltype = get_partition_col_typid(key, 0);
+		coltypmod = get_partition_col_typmod(key, 0);
 
 		result_spec->listdatums = NIL;
 		foreach(cell, spec->listdatums)
 		{
-			A_Const    *con = (A_Const *) lfirst(cell);
-			Node	   *value;
+			A_Const    *con = castNode(A_Const, lfirst(cell));
+			Const	   *value;
 			ListCell   *cell2;
 			bool		duplicate;
 
-			value = (Node *) make_const(pstate, &con->val, con->location);
-			value = coerce_to_target_type(pstate,
-										  value, exprType(value),
-										  get_partition_col_typid(key, 0),
-										  get_partition_col_typmod(key, 0),
-										  COERCION_ASSIGNMENT,
-										  COERCE_IMPLICIT_CAST,
-										  -1);
-
-			if (value == NULL)
-				ereport(ERROR,
-						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("specified value cannot be cast to type \"%s\" of column \"%s\"",
-							 format_type_be(get_partition_col_typid(key, 0)),
-								colname),
-						 parser_errposition(pstate,
-											exprLocation((Node *) con))));
-
-			/* Simplify the expression */
-			value = (Node *) expression_planner((Expr *) value);
+			value = transformPartitionBoundValue(pstate, con,
+												 colname, coltype, coltypmod);
 
 			/* Don't add to the result if the value is a duplicate */
 			duplicate = false;
 			foreach(cell2, result_spec->listdatums)
 			{
-				Const	   *value2 = (Const *) lfirst(cell2);
+				Const	   *value2 = castNode(Const, lfirst(cell2));
 
 				if (equal(value, value2))
 				{
@@ -3369,16 +3345,13 @@ transformPartitionBound(ParseState *pstate, Relation parent, Node *bound)
 				   *cell2;
 		int			i,
 					j;
-		char	   *colname;
 		bool		seen_unbounded;
 
 		if (spec->strategy != PARTITION_STRATEGY_RANGE)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 				 errmsg("invalid bound specification for a range partition"),
-					 parser_errposition(pstate, exprLocation(bound))));
-
-		Assert(spec->lowerdatums != NIL && spec->upperdatums != NIL);
+				   parser_errposition(pstate, exprLocation((Node *) spec))));
 
 		if (list_length(spec->lowerdatums) != partnatts)
 			ereport(ERROR,
@@ -3390,15 +3363,15 @@ transformPartitionBound(ParseState *pstate, Relation parent, Node *bound)
 					 errmsg("TO must specify exactly one value per partitioning column")));
 
 		/*
-		 * Check that no finite value follows a UNBOUNDED literal in either of
+		 * Check that no finite value follows an UNBOUNDED item in either of
 		 * lower and upper bound lists.
 		 */
 		seen_unbounded = false;
 		foreach(cell1, spec->lowerdatums)
 		{
-			PartitionRangeDatum *ldatum;
+			PartitionRangeDatum *ldatum = castNode(PartitionRangeDatum,
+												   lfirst(cell1));
 
-			ldatum = (PartitionRangeDatum *) lfirst(cell1);
 			if (ldatum->infinite)
 				seen_unbounded = true;
 			else if (seen_unbounded)
@@ -3410,9 +3383,9 @@ transformPartitionBound(ParseState *pstate, Relation parent, Node *bound)
 		seen_unbounded = false;
 		foreach(cell1, spec->upperdatums)
 		{
-			PartitionRangeDatum *rdatum;
+			PartitionRangeDatum *rdatum = castNode(PartitionRangeDatum,
+												   lfirst(cell1));
 
-			rdatum = (PartitionRangeDatum *) lfirst(cell1);
 			if (rdatum->infinite)
 				seen_unbounded = true;
 			else if (seen_unbounded)
@@ -3422,18 +3395,19 @@ transformPartitionBound(ParseState *pstate, Relation parent, Node *bound)
 				 parser_errposition(pstate, exprLocation((Node *) rdatum))));
 		}
 
+		/* Transform all the constants */
 		i = j = 0;
 		result_spec->lowerdatums = result_spec->upperdatums = NIL;
 		forboth(cell1, spec->lowerdatums, cell2, spec->upperdatums)
 		{
-			PartitionRangeDatum *ldatum,
-					   *rdatum;
-			Node	   *value;
-			A_Const    *lcon = NULL,
-					   *rcon = NULL;
+			PartitionRangeDatum *ldatum = (PartitionRangeDatum *) lfirst(cell1);
+			PartitionRangeDatum *rdatum = (PartitionRangeDatum *) lfirst(cell2);
+			char	   *colname;
+			Oid			coltype;
+			int32		coltypmod;
+			A_Const    *con;
+			Const	   *value;
 
-			ldatum = (PartitionRangeDatum *) lfirst(cell1);
-			rdatum = (PartitionRangeDatum *) lfirst(cell2);
 			/* Get the column's name in case we need to output an error */
 			if (key->partattrs[i] != 0)
 				colname = get_relid_attribute_name(RelationGetRelid(parent),
@@ -3446,70 +3420,42 @@ transformPartitionBound(ParseState *pstate, Relation parent, Node *bound)
 											 false, false);
 				++j;
 			}
+			/* Need its type data too */
+			coltype = get_partition_col_typid(key, i);
+			coltypmod = get_partition_col_typmod(key, i);
 
-			if (!ldatum->infinite)
-				lcon = (A_Const *) ldatum->value;
-			if (!rdatum->infinite)
-				rcon = (A_Const *) rdatum->value;
-
-			if (lcon)
+			if (ldatum->value)
 			{
-				value = (Node *) make_const(pstate, &lcon->val, lcon->location);
-				if (((Const *) value)->constisnull)
+				con = castNode(A_Const, ldatum->value);
+				value = transformPartitionBoundValue(pstate, con,
+													 colname,
+													 coltype, coltypmod);
+				if (value->constisnull)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 							 errmsg("cannot specify NULL in range bound")));
-				value = coerce_to_target_type(pstate,
-											  value, exprType(value),
-											  get_partition_col_typid(key, i),
-											get_partition_col_typmod(key, i),
-											  COERCION_ASSIGNMENT,
-											  COERCE_IMPLICIT_CAST,
-											  -1);
-				if (value == NULL)
-					ereport(ERROR,
-							(errcode(ERRCODE_DATATYPE_MISMATCH),
-							 errmsg("specified value cannot be cast to type \"%s\" of column \"%s\"",
-							 format_type_be(get_partition_col_typid(key, i)),
-									colname),
-							 parser_errposition(pstate, exprLocation((Node *) ldatum))));
-
-				/* Simplify the expression */
-				value = (Node *) expression_planner((Expr *) value);
-				ldatum->value = value;
+				ldatum = copyObject(ldatum);	/* don't scribble on input */
+				ldatum->value = (Node *) value;
 			}
 
-			if (rcon)
+			if (rdatum->value)
 			{
-				value = (Node *) make_const(pstate, &rcon->val, rcon->location);
-				if (((Const *) value)->constisnull)
+				con = castNode(A_Const, rdatum->value);
+				value = transformPartitionBoundValue(pstate, con,
+													 colname,
+													 coltype, coltypmod);
+				if (value->constisnull)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 							 errmsg("cannot specify NULL in range bound")));
-				value = coerce_to_target_type(pstate,
-											  value, exprType(value),
-											  get_partition_col_typid(key, i),
-											get_partition_col_typmod(key, i),
-											  COERCION_ASSIGNMENT,
-											  COERCE_IMPLICIT_CAST,
-											  -1);
-				if (value == NULL)
-					ereport(ERROR,
-							(errcode(ERRCODE_DATATYPE_MISMATCH),
-							 errmsg("specified value cannot be cast to type \"%s\" of column \"%s\"",
-							 format_type_be(get_partition_col_typid(key, i)),
-									colname),
-							 parser_errposition(pstate, exprLocation((Node *) rdatum))));
-
-				/* Simplify the expression */
-				value = (Node *) expression_planner((Expr *) value);
-				rdatum->value = value;
+				rdatum = copyObject(rdatum);	/* don't scribble on input */
+				rdatum->value = (Node *) value;
 			}
 
 			result_spec->lowerdatums = lappend(result_spec->lowerdatums,
-											   copyObject(ldatum));
+											   ldatum);
 			result_spec->upperdatums = lappend(result_spec->upperdatums,
-											   copyObject(rdatum));
+											   rdatum);
 
 			++i;
 		}
@@ -3517,5 +3463,50 @@ transformPartitionBound(ParseState *pstate, Relation parent, Node *bound)
 	else
 		elog(ERROR, "unexpected partition strategy: %d", (int) strategy);
 
-	return (Node *) result_spec;
+	return result_spec;
+}
+
+/*
+ * Transform one constant in a partition bound spec
+ */
+static Const *
+transformPartitionBoundValue(ParseState *pstate, A_Const *con,
+						   const char *colName, Oid colType, int32 colTypmod)
+{
+	Node	   *value;
+
+	/* Make it into a Const */
+	value = (Node *) make_const(pstate, &con->val, con->location);
+
+	/* Coerce to correct type */
+	value = coerce_to_target_type(pstate,
+								  value, exprType(value),
+								  colType,
+								  colTypmod,
+								  COERCION_ASSIGNMENT,
+								  COERCE_IMPLICIT_CAST,
+								  -1);
+
+	if (value == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+		errmsg("specified value cannot be cast to type %s for column \"%s\"",
+			   format_type_be(colType), colName),
+				 parser_errposition(pstate, con->location)));
+
+	/* Simplify the expression, in case we had a coercion */
+	if (!IsA(value, Const))
+		value = (Node *) expression_planner((Expr *) value);
+
+	/* Fail if we don't have a constant (i.e., non-immutable coercion) */
+	if (!IsA(value, Const))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+		errmsg("specified value cannot be cast to type %s for column \"%s\"",
+			   format_type_be(colType), colName),
+				 errdetail("The cast requires a non-immutable conversion."),
+				 errhint("Try putting the literal value in single quotes."),
+				 parser_errposition(pstate, con->location)));
+
+	return (Const *) value;
 }

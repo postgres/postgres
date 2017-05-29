@@ -74,9 +74,11 @@ extern void RelationBuildPartitionDesc(Relation relation);
 extern bool partition_bounds_equal(PartitionKey key,
 					   PartitionBoundInfo p1, PartitionBoundInfo p2);
 
-extern void check_new_partition_bound(char *relname, Relation parent, Node *bound);
+extern void check_new_partition_bound(char *relname, Relation parent,
+						  PartitionBoundSpec *spec);
 extern Oid	get_partition_parent(Oid relid);
-extern List *get_qual_from_partbound(Relation rel, Relation parent, Node *bound);
+extern List *get_qual_from_partbound(Relation rel, Relation parent,
+						PartitionBoundSpec *spec);
 extern List *map_partition_varattnos(List *expr, int target_varno,
 						Relation partrel, Relation parent);
 extern List *RelationGetPartitionQual(Relation rel);

@@ -756,7 +756,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	/* Process and store partition bound, if any. */
 	if (stmt->partbound)
 	{
-		Node	   *bound;
+		PartitionBoundSpec *bound;
 		ParseState *pstate;
 		Oid			parentId = linitial_oid(inheritOids);
 		Relation	parent;
@@ -777,6 +777,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 		/* Tranform the bound values */
 		pstate = make_parsestate(NULL);
 		pstate->p_sourcetext = queryString;
+
 		bound = transformPartitionBound(pstate, parent, stmt->partbound);
 
 		/*
@@ -812,6 +813,15 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 		Oid			partcollation[PARTITION_MAX_KEYS];
 		List	   *partexprs = NIL;
 
+		partnatts = list_length(stmt->partspec->partParams);
+
+		/* Protect fixed-size arrays here and in executor */
+		if (partnatts > PARTITION_MAX_KEYS)
+			ereport(ERROR,
+					(errcode(ERRCODE_TOO_MANY_COLUMNS),
+					 errmsg("cannot partition using more than %d columns",
+							PARTITION_MAX_KEYS)));
+
 		/*
 		 * We need to transform the raw parsetrees corresponding to partition
 		 * expressions into executable expression trees.  Like column defaults
@@ -820,11 +830,11 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 		 */
 		stmt->partspec = transformPartitionSpec(rel, stmt->partspec,
 												&strategy);
+
 		ComputePartitionAttrs(rel, stmt->partspec->partParams,
 							  partattrs, &partexprs, partopclass,
 							  partcollation);
 
-		partnatts = list_length(stmt->partspec->partParams);
 		StorePartitionKey(rel, strategy, partnatts, partattrs, partexprs,
 						  partopclass, partcollation);
 	}
@@ -13109,6 +13119,8 @@ RangeVarCallbackForAlterRelation(const RangeVar *rv, Oid relid, Oid oldrelid,
 
 /*
  * Transform any expressions present in the partition key
+ *
+ * Returns a transformed PartitionSpec, as well as the strategy code
  */
 static PartitionSpec *
 transformPartitionSpec(Relation rel, PartitionSpec *partspec, char *strategy)
@@ -13121,19 +13133,26 @@ transformPartitionSpec(Relation rel, PartitionSpec *partspec, char *strategy)
 	newspec = makeNode(PartitionSpec);
 
 	newspec->strategy = partspec->strategy;
-	newspec->location = partspec->location;
 	newspec->partParams = NIL;
+	newspec->location = partspec->location;
 
 	/* Parse partitioning strategy name */
-	if (!pg_strcasecmp(partspec->strategy, "list"))
+	if (pg_strcasecmp(partspec->strategy, "list") == 0)
 		*strategy = PARTITION_STRATEGY_LIST;
-	else if (!pg_strcasecmp(partspec->strategy, "range"))
+	else if (pg_strcasecmp(partspec->strategy, "range") == 0)
 		*strategy = PARTITION_STRATEGY_RANGE;
 	else
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("unrecognized partitioning strategy \"%s\"",
 						partspec->strategy)));
+
+	/* Check valid number of columns for strategy */
+	if (*strategy == PARTITION_STRATEGY_LIST &&
+		list_length(partspec->partParams) != 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("cannot use \"list\" partition strategy with more than one column")));
 
 	/*
 	 * Create a dummy ParseState and insert the target relation as its sole
@@ -13146,16 +13165,16 @@ transformPartitionSpec(Relation rel, PartitionSpec *partspec, char *strategy)
 	/* take care of any partition expressions */
 	foreach(l, partspec->partParams)
 	{
+		PartitionElem *pelem = castNode(PartitionElem, lfirst(l));
 		ListCell   *lc;
-		PartitionElem *pelem = (PartitionElem *) lfirst(l);
 
 		/* Check for PARTITION BY ... (foo, foo) */
 		foreach(lc, newspec->partParams)
 		{
-			PartitionElem *pparam = (PartitionElem *) lfirst(lc);
+			PartitionElem *pparam = castNode(PartitionElem, lfirst(lc));
 
 			if (pelem->name && pparam->name &&
-				!strcmp(pelem->name, pparam->name))
+				strcmp(pelem->name, pparam->name) == 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_DUPLICATE_COLUMN),
 						 errmsg("column \"%s\" appears more than once in partition key",
@@ -13165,6 +13184,9 @@ transformPartitionSpec(Relation rel, PartitionSpec *partspec, char *strategy)
 
 		if (pelem->expr)
 		{
+			/* Copy, to avoid scribbling on the input */
+			pelem = copyObject(pelem);
+
 			/* Now do parse transformation of the expression */
 			pelem->expr = transformExpr(pstate, pelem->expr,
 										EXPR_KIND_PARTITION_EXPRESSION);
@@ -13180,7 +13202,8 @@ transformPartitionSpec(Relation rel, PartitionSpec *partspec, char *strategy)
 }
 
 /*
- * Compute per-partition-column information from a list of PartitionElem's
+ * Compute per-partition-column information from a list of PartitionElems.
+ * Expressions in the PartitionElems must be parse-analyzed already.
  */
 static void
 ComputePartitionAttrs(Relation rel, List *partParams, AttrNumber *partattrs,
@@ -13192,7 +13215,7 @@ ComputePartitionAttrs(Relation rel, List *partParams, AttrNumber *partattrs,
 	attn = 0;
 	foreach(lc, partParams)
 	{
-		PartitionElem *pelem = (PartitionElem *) lfirst(lc);
+		PartitionElem *pelem = castNode(PartitionElem, lfirst(lc));
 		Oid			atttype;
 		Oid			attcollation;
 
@@ -13202,7 +13225,8 @@ ComputePartitionAttrs(Relation rel, List *partParams, AttrNumber *partattrs,
 			HeapTuple	atttuple;
 			Form_pg_attribute attform;
 
-			atttuple = SearchSysCacheAttName(RelationGetRelid(rel), pelem->name);
+			atttuple = SearchSysCacheAttName(RelationGetRelid(rel),
+											 pelem->name);
 			if (!HeapTupleIsValid(atttuple))
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_COLUMN),
@@ -13212,7 +13236,7 @@ ComputePartitionAttrs(Relation rel, List *partParams, AttrNumber *partattrs,
 
 			if (attform->attnum <= 0)
 				ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_COLUMN),
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 				   errmsg("cannot use system column \"%s\" in partition key",
 						  pelem->name)));
 
@@ -13220,8 +13244,6 @@ ComputePartitionAttrs(Relation rel, List *partParams, AttrNumber *partattrs,
 			atttype = attform->atttypid;
 			attcollation = attform->attcollation;
 			ReleaseSysCache(atttuple);
-
-			/* Note that whole-row references can't happen here; see below */
 		}
 		else
 		{
@@ -13240,7 +13262,7 @@ ComputePartitionAttrs(Relation rel, List *partParams, AttrNumber *partattrs,
 				expr = (Node *) ((CollateExpr *) expr)->arg;
 
 			if (IsA(expr, Var) &&
-				((Var *) expr)->varattno != InvalidAttrNumber)
+				((Var *) expr)->varattno > 0)
 			{
 				/*
 				 * User wrote "(column)" or "(column COLLATE something)".
@@ -13251,11 +13273,18 @@ ComputePartitionAttrs(Relation rel, List *partParams, AttrNumber *partattrs,
 			else
 			{
 				Bitmapset  *expr_attrs = NULL;
+				int			i;
 
 				partattrs[attn] = 0;	/* marks the column as expression */
 				*partexprs = lappend(*partexprs, expr);
 
 				/*
+				 * Try to simplify the expression before checking for
+				 * mutability.  The main practical value of doing it in this
+				 * order is that an inline-able SQL-language function will be
+				 * accepted if its expansion is immutable, whether or not the
+				 * function itself is marked immutable.
+				 *
 				 * Note that expression_planner does not change the passed in
 				 * expression destructively and we have already saved the
 				 * expression to be stored into the catalog above.
@@ -13274,27 +13303,38 @@ ComputePartitionAttrs(Relation rel, List *partParams, AttrNumber *partattrs,
 							 errmsg("functions in partition key expression must be marked IMMUTABLE")));
 
 				/*
-				 * While it is not exactly *wrong* for an expression to be a
-				 * constant value, it seems better to prevent such input.
-				 */
-				if (IsA(expr, Const))
-					ereport(ERROR,
-							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-							 errmsg("cannot use constant expression as partition key")));
-
-				/*
 				 * transformPartitionSpec() should have already rejected
 				 * subqueries, aggregates, window functions, and SRFs, based
 				 * on the EXPR_KIND_ for partition expressions.
 				 */
 
-				/* Cannot have expressions containing whole-row references */
+				/*
+				 * Cannot have expressions containing whole-row references or
+				 * system column references.
+				 */
 				pull_varattnos(expr, 1, &expr_attrs);
 				if (bms_is_member(0 - FirstLowInvalidHeapAttributeNumber,
 								  expr_attrs))
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 							 errmsg("partition key expressions cannot contain whole-row references")));
+				for (i = FirstLowInvalidHeapAttributeNumber; i < 0; i++)
+				{
+					if (bms_is_member(i - FirstLowInvalidHeapAttributeNumber,
+									  expr_attrs))
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+								 errmsg("partition key expressions cannot contain system column references")));
+				}
+
+				/*
+				 * While it is not exactly *wrong* for a partition expression
+				 * to be a constant, it seems better to reject such keys.
+				 */
+				if (IsA(expr, Const))
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+							 errmsg("cannot use constant expression as partition key")));
 			}
 		}
 

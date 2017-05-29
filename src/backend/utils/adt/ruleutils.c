@@ -8652,12 +8652,11 @@ get_rule_expr(Node *node, deparse_context *context,
 					case PARTITION_STRATEGY_LIST:
 						Assert(spec->listdatums != NIL);
 
-						appendStringInfoString(buf, "FOR VALUES");
-						appendStringInfoString(buf, " IN (");
+						appendStringInfoString(buf, "FOR VALUES IN (");
 						sep = "";
 						foreach(cell, spec->listdatums)
 						{
-							Const	   *val = lfirst(cell);
+							Const	   *val = castNode(Const, lfirst(cell));
 
 							appendStringInfoString(buf, sep);
 							get_const_expr(val, context, -1);
@@ -8673,41 +8672,38 @@ get_rule_expr(Node *node, deparse_context *context,
 							   list_length(spec->lowerdatums) ==
 							   list_length(spec->upperdatums));
 
-						appendStringInfoString(buf, "FOR VALUES");
-						appendStringInfoString(buf, " FROM");
-						appendStringInfoString(buf, " (");
+						appendStringInfoString(buf, "FOR VALUES FROM (");
 						sep = "";
 						foreach(cell, spec->lowerdatums)
 						{
-							PartitionRangeDatum *datum = lfirst(cell);
-							Const	   *val;
+							PartitionRangeDatum *datum =
+							castNode(PartitionRangeDatum, lfirst(cell));
 
 							appendStringInfoString(buf, sep);
 							if (datum->infinite)
 								appendStringInfoString(buf, "UNBOUNDED");
 							else
 							{
-								val = (Const *) datum->value;
+								Const	   *val = castNode(Const, datum->value);
+
 								get_const_expr(val, context, -1);
 							}
 							sep = ", ";
 						}
-						appendStringInfoString(buf, ")");
-
-						appendStringInfoString(buf, " TO");
-						appendStringInfoString(buf, " (");
+						appendStringInfoString(buf, ") TO (");
 						sep = "";
 						foreach(cell, spec->upperdatums)
 						{
-							PartitionRangeDatum *datum = lfirst(cell);
-							Const	   *val;
+							PartitionRangeDatum *datum =
+							castNode(PartitionRangeDatum, lfirst(cell));
 
 							appendStringInfoString(buf, sep);
 							if (datum->infinite)
 								appendStringInfoString(buf, "UNBOUNDED");
 							else
 							{
-								val = (Const *) datum->value;
+								Const	   *val = castNode(Const, datum->value);
+
 								get_const_expr(val, context, -1);
 							}
 							sep = ", ";

@@ -2376,6 +2376,8 @@ _readPartitionBoundSpec(void)
 	READ_NODE_FIELD(listdatums);
 	READ_NODE_FIELD(lowerdatums);
 	READ_NODE_FIELD(upperdatums);
+	/* XXX somebody forgot location field; too late to change for v10 */
+	local_node->location = -1;
 
 	READ_DONE();
 }
@@ -2390,6 +2392,8 @@ _readPartitionRangeDatum(void)
 
 	READ_BOOL_FIELD(infinite);
 	READ_NODE_FIELD(value);
+	/* XXX somebody forgot location field; too late to change for v10 */
+	local_node->location = -1;
 
 	READ_DONE();
 }

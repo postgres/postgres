@@ -2813,22 +2813,22 @@ _equalTriggerTransition(const TriggerTransition *a, const TriggerTransition *b)
 }
 
 static bool
-_equalPartitionSpec(const PartitionSpec *a, const PartitionSpec *b)
-{
-	COMPARE_STRING_FIELD(strategy);
-	COMPARE_NODE_FIELD(partParams);
-	COMPARE_LOCATION_FIELD(location);
-
-	return true;
-}
-
-static bool
 _equalPartitionElem(const PartitionElem *a, const PartitionElem *b)
 {
 	COMPARE_STRING_FIELD(name);
 	COMPARE_NODE_FIELD(expr);
 	COMPARE_NODE_FIELD(collation);
 	COMPARE_NODE_FIELD(opclass);
+	COMPARE_LOCATION_FIELD(location);
+
+	return true;
+}
+
+static bool
+_equalPartitionSpec(const PartitionSpec *a, const PartitionSpec *b)
+{
+	COMPARE_STRING_FIELD(strategy);
+	COMPARE_NODE_FIELD(partParams);
 	COMPARE_LOCATION_FIELD(location);
 
 	return true;
@@ -3660,11 +3660,11 @@ equal(const void *a, const void *b)
 		case T_TriggerTransition:
 			retval = _equalTriggerTransition(a, b);
 			break;
-		case T_PartitionSpec:
-			retval = _equalPartitionSpec(a, b);
-			break;
 		case T_PartitionElem:
 			retval = _equalPartitionElem(a, b);
+			break;
+		case T_PartitionSpec:
+			retval = _equalPartitionSpec(a, b);
 			break;
 		case T_PartitionBoundSpec:
 			retval = _equalPartitionBoundSpec(a, b);

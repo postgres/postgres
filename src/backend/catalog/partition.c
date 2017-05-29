@@ -247,15 +247,16 @@ RelationBuildPartitionDesc(Relation rel)
 			null_index = -1;
 			foreach(cell, boundspecs)
 			{
+				PartitionBoundSpec *spec = castNode(PartitionBoundSpec,
+													lfirst(cell));
 				ListCell   *c;
-				PartitionBoundSpec *spec = lfirst(cell);
 
 				if (spec->strategy != PARTITION_STRATEGY_LIST)
 					elog(ERROR, "invalid strategy in partition bound spec");
 
 				foreach(c, spec->listdatums)
 				{
-					Const	   *val = lfirst(c);
+					Const	   *val = castNode(Const, lfirst(c));
 					PartitionListValue *list_value = NULL;
 
 					if (!val->constisnull)
@@ -327,7 +328,8 @@ RelationBuildPartitionDesc(Relation rel)
 			i = j = 0;
 			foreach(cell, boundspecs)
 			{
-				PartitionBoundSpec *spec = lfirst(cell);
+				PartitionBoundSpec *spec = castNode(PartitionBoundSpec,
+													lfirst(cell));
 				PartitionRangeBound *lower,
 						   *upper;
 
@@ -665,9 +667,9 @@ partition_bounds_equal(PartitionKey key,
  * of parent.  Also performs additional checks as necessary per strategy.
  */
 void
-check_new_partition_bound(char *relname, Relation parent, Node *bound)
+check_new_partition_bound(char *relname, Relation parent,
+						  PartitionBoundSpec *spec)
 {
-	PartitionBoundSpec *spec = (PartitionBoundSpec *) bound;
 	PartitionKey key = RelationGetPartitionKey(parent);
 	PartitionDesc partdesc = RelationGetPartitionDesc(parent);
 	ParseState *pstate = make_parsestate(NULL);
@@ -692,7 +694,7 @@ check_new_partition_bound(char *relname, Relation parent, Node *bound)
 
 					foreach(cell, spec->listdatums)
 					{
-						Const	   *val = lfirst(cell);
+						Const	   *val = castNode(Const, lfirst(cell));
 
 						if (!val->constisnull)
 						{
@@ -889,9 +891,9 @@ get_partition_parent(Oid relid)
  *		expressions as partition constraint
  */
 List *
-get_qual_from_partbound(Relation rel, Relation parent, Node *bound)
+get_qual_from_partbound(Relation rel, Relation parent,
+						PartitionBoundSpec *spec)
 {
-	PartitionBoundSpec *spec = (PartitionBoundSpec *) bound;
 	PartitionKey key = RelationGetPartitionKey(parent);
 	List	   *my_qual = NIL;
 
@@ -1328,7 +1330,7 @@ get_qual_for_list(PartitionKey key, PartitionBoundSpec *spec)
 	prev = NULL;
 	for (cell = list_head(spec->listdatums); cell; cell = next)
 	{
-		Const	   *val = (Const *) lfirst(cell);
+		Const	   *val = castNode(Const, lfirst(cell));
 
 		next = lnext(cell);
 
@@ -1427,12 +1429,12 @@ get_range_key_properties(PartitionKey key, int keynum,
 	}
 
 	if (!ldatum->infinite)
-		*lower_val = (Const *) ldatum->value;
+		*lower_val = castNode(Const, ldatum->value);
 	else
 		*lower_val = NULL;
 
 	if (!udatum->infinite)
-		*upper_val = (Const *) udatum->value;
+		*upper_val = castNode(Const, udatum->value);
 	else
 		*upper_val = NULL;
 }
@@ -1448,7 +1450,7 @@ get_range_key_properties(PartitionKey key, int keynum,
  * as the lower bound tuple and (au, bu, cu) as the upper bound tuple, we
  * generate an expression tree of the following form:
  *
- *  (a IS NOT NULL) and (b IS NOT NULL) and (c IS NOT NULL)
+ *	(a IS NOT NULL) and (b IS NOT NULL) and (c IS NOT NULL)
  *		AND
  *	(a > al OR (a = al AND b > bl) OR (a = al AND b = bl AND c >= cl))
  *		AND
@@ -1458,7 +1460,7 @@ get_range_key_properties(PartitionKey key, int keynum,
  * the same values, for example, (al = au), in which case, we will emit an
  * expression tree of the following form:
  *
- *  (a IS NOT NULL) and (b IS NOT NULL) and (c IS NOT NULL)
+ *	(a IS NOT NULL) and (b IS NOT NULL) and (c IS NOT NULL)
  *		AND
  *	(a = al)
  *		AND
@@ -1512,8 +1514,8 @@ get_qual_for_range(PartitionKey key, PartitionBoundSpec *spec)
 	num_or_arms = key->partnatts;
 
 	/*
-	 * A range-partitioned table does not currently allow partition keys to
-	 * be null, so emit an IS NOT NULL expression for each key column.
+	 * A range-partitioned table does not currently allow partition keys to be
+	 * null, so emit an IS NOT NULL expression for each key column.
 	 */
 	partexprs_item = list_head(key->partexprs);
 	for (i = 0; i < key->partnatts; i++)
@@ -1565,8 +1567,8 @@ get_qual_for_range(PartitionKey key, PartitionBoundSpec *spec)
 		Datum		test_result;
 		bool		isNull;
 
-		ldatum = lfirst(cell1);
-		udatum = lfirst(cell2);
+		ldatum = castNode(PartitionRangeDatum, lfirst(cell1));
+		udatum = castNode(PartitionRangeDatum, lfirst(cell2));
 
 		/*
 		 * Since get_range_key_properties() modifies partexprs_item, and we
@@ -1644,12 +1646,14 @@ get_qual_for_range(PartitionKey key, PartitionBoundSpec *spec)
 			PartitionRangeDatum *ldatum_next = NULL,
 					   *udatum_next = NULL;
 
-			ldatum = lfirst(cell1);
+			ldatum = castNode(PartitionRangeDatum, lfirst(cell1));
 			if (lnext(cell1))
-				ldatum_next = lfirst(lnext(cell1));
-			udatum = lfirst(cell2);
+				ldatum_next = castNode(PartitionRangeDatum,
+									   lfirst(lnext(cell1)));
+			udatum = castNode(PartitionRangeDatum, lfirst(cell2));
 			if (lnext(cell2))
-				udatum_next = lfirst(lnext(cell2));
+				udatum_next = castNode(PartitionRangeDatum,
+									   lfirst(lnext(cell2)));
 			get_range_key_properties(key, j, ldatum, udatum,
 									 &partexprs_item,
 									 &keyCol,
@@ -1779,7 +1783,7 @@ generate_partition_qual(Relation rel)
 	MemoryContext oldcxt;
 	Datum		boundDatum;
 	bool		isnull;
-	Node	   *bound;
+	PartitionBoundSpec *bound;
 	List	   *my_qual = NIL,
 			   *result = NIL;
 	Relation	parent;
@@ -1807,7 +1811,8 @@ generate_partition_qual(Relation rel)
 	if (isnull)					/* should not happen */
 		elog(ERROR, "relation \"%s\" has relpartbound = null",
 			 RelationGetRelationName(rel));
-	bound = stringToNode(TextDatumGetCString(boundDatum));
+	bound = castNode(PartitionBoundSpec,
+					 stringToNode(TextDatumGetCString(boundDatum)));
 	ReleaseSysCache(tuple);
 
 	my_qual = get_qual_from_partbound(rel, parent, bound);
@@ -1971,9 +1976,8 @@ get_partition_for_tuple(PartitionDispatch *pd,
 		if (key->strategy == PARTITION_STRATEGY_RANGE)
 		{
 			/*
-			 * Since we cannot route tuples with NULL partition keys through
-			 * a range-partitioned table, simply return that no partition
-			 * exists
+			 * Since we cannot route tuples with NULL partition keys through a
+			 * range-partitioned table, simply return that no partition exists
 			 */
 			for (i = 0; i < key->partnatts; i++)
 			{
@@ -2080,7 +2084,7 @@ static PartitionRangeBound *
 make_one_range_bound(PartitionKey key, int index, List *datums, bool lower)
 {
 	PartitionRangeBound *bound;
-	ListCell   *cell;
+	ListCell   *lc;
 	int			i;
 
 	bound = (PartitionRangeBound *) palloc0(sizeof(PartitionRangeBound));
@@ -2091,9 +2095,9 @@ make_one_range_bound(PartitionKey key, int index, List *datums, bool lower)
 	bound->lower = lower;
 
 	i = 0;
-	foreach(cell, datums)
+	foreach(lc, datums)
 	{
-		PartitionRangeDatum *datum = lfirst(cell);
+		PartitionRangeDatum *datum = castNode(PartitionRangeDatum, lfirst(lc));
 
 		/* What's contained in this range datum? */
 		bound->content[i] = !datum->infinite
@@ -2103,7 +2107,7 @@ make_one_range_bound(PartitionKey key, int index, List *datums, bool lower)
 
 		if (bound->content[i] == RANGE_DATUM_FINITE)
 		{
-			Const	   *val = (Const *) datum->value;
+			Const	   *val = castNode(Const, datum->value);
 
 			if (val->constisnull)
 				elog(ERROR, "invalid range bound datum");

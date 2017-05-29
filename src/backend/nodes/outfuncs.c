@@ -3516,16 +3516,6 @@ _outForeignKeyCacheInfo(StringInfo str, const ForeignKeyCacheInfo *node)
 }
 
 static void
-_outPartitionSpec(StringInfo str, const PartitionSpec *node)
-{
-	WRITE_NODE_TYPE("PARTITIONBY");
-
-	WRITE_STRING_FIELD(strategy);
-	WRITE_NODE_FIELD(partParams);
-	WRITE_LOCATION_FIELD(location);
-}
-
-static void
 _outPartitionElem(StringInfo str, const PartitionElem *node)
 {
 	WRITE_NODE_TYPE("PARTITIONELEM");
@@ -3538,6 +3528,16 @@ _outPartitionElem(StringInfo str, const PartitionElem *node)
 }
 
 static void
+_outPartitionSpec(StringInfo str, const PartitionSpec *node)
+{
+	WRITE_NODE_TYPE("PARTITIONBY");
+
+	WRITE_STRING_FIELD(strategy);
+	WRITE_NODE_FIELD(partParams);
+	WRITE_LOCATION_FIELD(location);
+}
+
+static void
 _outPartitionBoundSpec(StringInfo str, const PartitionBoundSpec *node)
 {
 	WRITE_NODE_TYPE("PARTITIONBOUND");
@@ -3546,6 +3546,7 @@ _outPartitionBoundSpec(StringInfo str, const PartitionBoundSpec *node)
 	WRITE_NODE_FIELD(listdatums);
 	WRITE_NODE_FIELD(lowerdatums);
 	WRITE_NODE_FIELD(upperdatums);
+	/* XXX somebody forgot location field; too late to change for v10 */
 }
 
 static void
@@ -3555,6 +3556,7 @@ _outPartitionRangeDatum(StringInfo str, const PartitionRangeDatum *node)
 
 	WRITE_BOOL_FIELD(infinite);
 	WRITE_NODE_FIELD(value);
+	/* XXX somebody forgot location field; too late to change for v10 */
 }
 
 /*
@@ -4184,11 +4186,11 @@ outNode(StringInfo str, const void *obj)
 			case T_TriggerTransition:
 				_outTriggerTransition(str, obj);
 				break;
-			case T_PartitionSpec:
-				_outPartitionSpec(str, obj);
-				break;
 			case T_PartitionElem:
 				_outPartitionElem(str, obj);
+				break;
+			case T_PartitionSpec:
+				_outPartitionSpec(str, obj);
 				break;
 			case T_PartitionBoundSpec:
 				_outPartitionBoundSpec(str, obj);

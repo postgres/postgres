@@ -755,7 +755,10 @@ typedef struct XmlSerialize
 /* Partitioning related definitions */
 
 /*
- * PartitionElem - a column in the partition key
+ * PartitionElem - parse-time representation of a single partition key
+ *
+ * expr can be either a raw expression tree or a parse-analyzed expression.
+ * We don't store these on-disk, though.
  */
 typedef struct PartitionElem
 {
@@ -768,7 +771,9 @@ typedef struct PartitionElem
 } PartitionElem;
 
 /*
- * PartitionSpec - partition key specification
+ * PartitionSpec - parse-time representation of a partition key specification
+ *
+ * This represents the key space we will be partitioning on.
  */
 typedef struct PartitionSpec
 {
@@ -778,52 +783,55 @@ typedef struct PartitionSpec
 	int			location;		/* token location, or -1 if unknown */
 } PartitionSpec;
 
+/* Internal codes for partitioning strategies */
 #define PARTITION_STRATEGY_LIST		'l'
 #define PARTITION_STRATEGY_RANGE	'r'
 
 /*
  * PartitionBoundSpec - a partition bound specification
+ *
+ * This represents the portion of the partition key space assigned to a
+ * particular partition.  These are stored on disk in pg_class.relpartbound.
  */
 typedef struct PartitionBoundSpec
 {
 	NodeTag		type;
 
-	char		strategy;
+	char		strategy;		/* see PARTITION_STRATEGY codes above */
 
-	/* List partition values */
-	List	   *listdatums;
+	/* Partitioning info for LIST strategy: */
+	List	   *listdatums;		/* List of Consts (or A_Consts in raw tree) */
 
-	/*
-	 * Range partition lower and upper bounds; each member of the lists is a
-	 * PartitionRangeDatum (see below).
-	 */
-	List	   *lowerdatums;
-	List	   *upperdatums;
+	/* Partitioning info for RANGE strategy: */
+	List	   *lowerdatums;	/* List of PartitionRangeDatums */
+	List	   *upperdatums;	/* List of PartitionRangeDatums */
 
-	int			location;
+	int			location;		/* token location, or -1 if unknown */
 } PartitionBoundSpec;
 
 /*
- * PartitionRangeDatum
+ * PartitionRangeDatum - can be either a value or UNBOUNDED
+ *
+ * "value" is an A_Const in raw grammar output, a Const after analysis
  */
 typedef struct PartitionRangeDatum
 {
 	NodeTag		type;
 
-	bool		infinite;
-	Node	   *value;
+	bool		infinite;		/* true if UNBOUNDED */
+	Node	   *value;			/* null if UNBOUNDED */
 
-	int			location;
+	int			location;		/* token location, or -1 if unknown */
 } PartitionRangeDatum;
 
 /*
- * PartitionCmd -  ALTER TABLE partition commands
+ * PartitionCmd - info for ALTER TABLE ATTACH/DETACH PARTITION commands
  */
 typedef struct PartitionCmd
 {
 	NodeTag		type;
-	RangeVar   *name;
-	Node	   *bound;
+	RangeVar   *name;			/* name of partition to attach/detach */
+	PartitionBoundSpec *bound;	/* FOR VALUES, if attaching */
 } PartitionCmd;
 
 /****************************************************************************
@@ -1969,7 +1977,7 @@ typedef struct CreateStmt
 	List	   *tableElts;		/* column definitions (list of ColumnDef) */
 	List	   *inhRelations;	/* relations to inherit from (list of
 								 * inhRelation) */
-	Node	   *partbound;		/* FOR VALUES clause */
+	PartitionBoundSpec *partbound;		/* FOR VALUES clause */
 	PartitionSpec *partspec;	/* PARTITION BY clause */
 	TypeName   *ofTypename;		/* OF typename */
 	List	   *constraints;	/* constraints (list of Constraint nodes) */

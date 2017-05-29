@@ -406,7 +406,6 @@ typedef enum NodeTag
 	T_AlterPolicyStmt,
 	T_CreateTransformStmt,
 	T_CreateAmStmt,
-	T_PartitionCmd,
 	T_CreatePublicationStmt,
 	T_AlterPublicationStmt,
 	T_CreateSubscriptionStmt,
@@ -468,6 +467,7 @@ typedef enum NodeTag
 	T_PartitionSpec,
 	T_PartitionBoundSpec,
 	T_PartitionRangeDatum,
+	T_PartitionCmd,
 
 	/*
 	 * TAGS FOR REPLICATION GRAMMAR PARSE NODES (replnodes.h)

@@ -274,7 +274,7 @@ CREATE TABLE partitioned (
 	a1 int,
 	a2 int
 ) PARTITION BY LIST (a1, a2);	-- fail
-ERROR:  cannot list partition using more than one column
+ERROR:  cannot use "list" partition strategy with more than one column
 -- unsupported constraint type for partitioned tables
 CREATE TABLE partitioned (
 	a int PRIMARY KEY
@@ -472,10 +472,31 @@ CREATE TABLE bools (
 	a bool
 ) PARTITION BY LIST (a);
 CREATE TABLE bools_true PARTITION OF bools FOR VALUES IN (1);
-ERROR:  specified value cannot be cast to type "boolean" of column "a"
+ERROR:  specified value cannot be cast to type boolean for column "a"
 LINE 1: ...REATE TABLE bools_true PARTITION OF bools FOR VALUES IN (1);
                                                                     ^
 DROP TABLE bools;
+-- specified literal can be cast, but cast isn't immutable
+CREATE TABLE moneyp (
+	a money
+) PARTITION BY LIST (a);
+CREATE TABLE moneyp_10 PARTITION OF moneyp FOR VALUES IN (10);
+ERROR:  specified value cannot be cast to type money for column "a"
+LINE 1: ...EATE TABLE moneyp_10 PARTITION OF moneyp FOR VALUES IN (10);
+                                                                   ^
+DETAIL:  The cast requires a non-immutable conversion.
+HINT:  Try putting the literal value in single quotes.
+CREATE TABLE moneyp_10 PARTITION OF moneyp FOR VALUES IN ('10');
+DROP TABLE moneyp;
+-- immutable cast should work, though
+CREATE TABLE bigintp (
+	a bigint
+) PARTITION BY LIST (a);
+CREATE TABLE bigintp_10 PARTITION OF bigintp FOR VALUES IN (10);
+-- fails due to overlap:
+CREATE TABLE bigintp_10_2 PARTITION OF bigintp FOR VALUES IN ('10');
+ERROR:  partition "bigintp_10_2" would overlap partition "bigintp_10"
+DROP TABLE bigintp;
 CREATE TABLE range_parted (
 	a date
 ) PARTITION BY RANGE (a);

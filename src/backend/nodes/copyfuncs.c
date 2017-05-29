@@ -4412,18 +4412,6 @@ _copyAlterPolicyStmt(const AlterPolicyStmt *from)
 	return newnode;
 }
 
-static PartitionSpec *
-_copyPartitionSpec(const PartitionSpec *from)
-{
-	PartitionSpec *newnode = makeNode(PartitionSpec);
-
-	COPY_STRING_FIELD(strategy);
-	COPY_NODE_FIELD(partParams);
-	COPY_LOCATION_FIELD(location);
-
-	return newnode;
-}
-
 static PartitionElem *
 _copyPartitionElem(const PartitionElem *from)
 {
@@ -4433,6 +4421,18 @@ _copyPartitionElem(const PartitionElem *from)
 	COPY_NODE_FIELD(expr);
 	COPY_NODE_FIELD(collation);
 	COPY_NODE_FIELD(opclass);
+	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+static PartitionSpec *
+_copyPartitionSpec(const PartitionSpec *from)
+{
+	PartitionSpec *newnode = makeNode(PartitionSpec);
+
+	COPY_STRING_FIELD(strategy);
+	COPY_NODE_FIELD(partParams);
 	COPY_LOCATION_FIELD(location);
 
 	return newnode;
@@ -5509,11 +5509,11 @@ copyObjectImpl(const void *from)
 		case T_TriggerTransition:
 			retval = _copyTriggerTransition(from);
 			break;
-		case T_PartitionSpec:
-			retval = _copyPartitionSpec(from);
-			break;
 		case T_PartitionElem:
 			retval = _copyPartitionElem(from);
+			break;
+		case T_PartitionSpec:
+			retval = _copyPartitionSpec(from);
 			break;
 		case T_PartitionBoundSpec:
 			retval = _copyPartitionBoundSpec(from);

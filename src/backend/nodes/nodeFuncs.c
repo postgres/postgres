@@ -1560,6 +1560,12 @@ exprLocation(const Node *expr)
 			/* just use nested expr's location */
 			loc = exprLocation((Node *) ((const InferenceElem *) expr)->expr);
 			break;
+		case T_PartitionElem:
+			loc = ((const PartitionElem *) expr)->location;
+			break;
+		case T_PartitionSpec:
+			loc = ((const PartitionSpec *) expr)->location;
+			break;
 		case T_PartitionBoundSpec:
 			loc = ((const PartitionBoundSpec *) expr)->location;
 			break;
