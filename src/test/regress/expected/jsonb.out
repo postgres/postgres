@@ -2276,17 +2276,9 @@ SELECT jsa FROM jsonb_populate_record(NULL::jsbrec, '{"jsa": ["aaa", null, [1, 2
 (1 row)
 
 SELECT rec FROM jsonb_populate_record(NULL::jsbrec, '{"rec": 123}') q;
- rec  
-------
- (,,)
-(1 row)
-
+ERROR:  cannot call populate_composite on a scalar
 SELECT rec FROM jsonb_populate_record(NULL::jsbrec, '{"rec": [1, 2]}') q;
- rec  
-------
- (,,)
-(1 row)
-
+ERROR:  cannot call populate_composite on an array
 SELECT rec FROM jsonb_populate_record(NULL::jsbrec, '{"rec": {"a": "abc", "c": "01.02.2003", "x": 43.2}}') q;
                 rec                
 -----------------------------------
@@ -2303,11 +2295,7 @@ SELECT reca FROM jsonb_populate_record(NULL::jsbrec, '{"reca": 123}') q;
 ERROR:  expected json array
 HINT:  see the value of key "reca"
 SELECT reca FROM jsonb_populate_record(NULL::jsbrec, '{"reca": [1, 2]}') q;
-      reca       
------------------
- {"(,,)","(,,)"}
-(1 row)
-
+ERROR:  cannot call populate_composite on a scalar
 SELECT reca FROM jsonb_populate_record(NULL::jsbrec, '{"reca": [{"a": "abc", "b": 456}, null, {"c": "01.02.2003", "x": 43.2}]}') q;
                           reca                          
 --------------------------------------------------------

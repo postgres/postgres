@@ -2682,9 +2682,24 @@ JsValueToJsObject(JsValue *jsv, JsObject *jso)
 
 		if (jbv->type == jbvBinary &&
 			JsonContainerIsObject(jbv->val.binary.data))
+		{
 			jso->val.jsonb_cont = jbv->val.binary.data;
+		}
 		else
-			jso->val.jsonb_cont = NULL;
+		{
+			bool		is_scalar;
+
+			is_scalar = IsAJsonbScalar(jbv) ||
+				(jbv->type == jbvBinary &&
+				 JsonContainerIsScalar(jbv->val.binary.data));
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 is_scalar
+					 ? errmsg("cannot call %s on a scalar",
+							  "populate_composite")
+					 : errmsg("cannot call %s on an array",
+							  "populate_composite")));
+		}
 	}
 }
 
