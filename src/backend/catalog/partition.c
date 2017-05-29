@@ -1296,23 +1296,22 @@ make_partition_op_expr(PartitionKey key, int keynum,
 /*
  * get_qual_for_list
  *
- * Returns a list of expressions to use as a list partition's constraint.
+ * Returns an implicit-AND list of expressions to use as a list partition's
+ * constraint, given the partition key and bound structures.
  */
 static List *
 get_qual_for_list(PartitionKey key, PartitionBoundSpec *spec)
 {
 	List	   *result;
+	Expr	   *keyCol;
 	ArrayExpr  *arr;
 	Expr	   *opexpr;
-	ListCell   *cell,
-			   *prev,
-			   *next;
-	Expr	   *keyCol;
+	NullTest   *nulltest;
+	ListCell   *cell;
+	List	   *arrelems = NIL;
 	bool		list_has_null = false;
-	NullTest   *nulltest1 = NULL,
-			   *nulltest2 = NULL;
 
-	/* Left operand is either a simple Var or arbitrary expression */
+	/* Construct Var or expression representing the partition column */
 	if (key->partattrs[0] != 0)
 		keyCol = (Expr *) makeVar(1,
 								  key->partattrs[0],
@@ -1323,59 +1322,25 @@ get_qual_for_list(PartitionKey key, PartitionBoundSpec *spec)
 	else
 		keyCol = (Expr *) copyObject(linitial(key->partexprs));
 
-	/*
-	 * We must remove any NULL value in the list; we handle it separately
-	 * below.
-	 */
-	prev = NULL;
-	for (cell = list_head(spec->listdatums); cell; cell = next)
+	/* Create list of Consts for the allowed values, excluding any nulls */
+	foreach(cell, spec->listdatums)
 	{
 		Const	   *val = castNode(Const, lfirst(cell));
 
-		next = lnext(cell);
-
 		if (val->constisnull)
-		{
 			list_has_null = true;
-			spec->listdatums = list_delete_cell(spec->listdatums,
-												cell, prev);
-		}
 		else
-			prev = cell;
+			arrelems = lappend(arrelems, copyObject(val));
 	}
 
-	if (!list_has_null)
-	{
-		/*
-		 * Gin up a col IS NOT NULL test that will be AND'd with other
-		 * expressions
-		 */
-		nulltest1 = makeNode(NullTest);
-		nulltest1->arg = keyCol;
-		nulltest1->nulltesttype = IS_NOT_NULL;
-		nulltest1->argisrow = false;
-		nulltest1->location = -1;
-	}
-	else
-	{
-		/*
-		 * Gin up a col IS NULL test that will be OR'd with other expressions
-		 */
-		nulltest2 = makeNode(NullTest);
-		nulltest2->arg = keyCol;
-		nulltest2->nulltesttype = IS_NULL;
-		nulltest2->argisrow = false;
-		nulltest2->location = -1;
-	}
-
-	/* Right operand is an ArrayExpr containing this partition's values */
+	/* Construct an ArrayExpr for the non-null partition values */
 	arr = makeNode(ArrayExpr);
 	arr->array_typeid = !type_is_array(key->parttypid[0])
 		? get_array_type(key->parttypid[0])
 		: key->parttypid[0];
 	arr->array_collid = key->parttypcoll[0];
 	arr->element_typeid = key->parttypid[0];
-	arr->elements = spec->listdatums;
+	arr->elements = arrelems;
 	arr->multidims = false;
 	arr->location = -1;
 
@@ -1383,14 +1348,36 @@ get_qual_for_list(PartitionKey key, PartitionBoundSpec *spec)
 	opexpr = make_partition_op_expr(key, 0, BTEqualStrategyNumber,
 									keyCol, (Expr *) arr);
 
-	if (nulltest1)
-		result = list_make2(nulltest1, opexpr);
+	if (!list_has_null)
+	{
+		/*
+		 * Gin up a "col IS NOT NULL" test that will be AND'd with the main
+		 * expression.  This might seem redundant, but the partition routing
+		 * machinery needs it.
+		 */
+		nulltest = makeNode(NullTest);
+		nulltest->arg = keyCol;
+		nulltest->nulltesttype = IS_NOT_NULL;
+		nulltest->argisrow = false;
+		nulltest->location = -1;
+
+		result = list_make2(nulltest, opexpr);
+	}
 	else
 	{
+		/*
+		 * Gin up a "col IS NULL" test that will be OR'd with the main
+		 * expression.
+		 */
 		Expr	   *or;
 
-		Assert(nulltest2 != NULL);
-		or = makeBoolExpr(OR_EXPR, list_make2(nulltest2, opexpr), -1);
+		nulltest = makeNode(NullTest);
+		nulltest->arg = keyCol;
+		nulltest->nulltesttype = IS_NULL;
+		nulltest->argisrow = false;
+		nulltest->location = -1;
+
+		or = makeBoolExpr(OR_EXPR, list_make2(nulltest, opexpr), -1);
 		result = list_make1(or);
 	}
 
@@ -1401,8 +1388,16 @@ get_qual_for_list(PartitionKey key, PartitionBoundSpec *spec)
  * get_range_key_properties
  *		Returns range partition key information for a given column
  *
- * On return, *partexprs_item points to the cell containing the next
- * expression in the key->partexprs list, or NULL.
+ * This is a subroutine for get_qual_for_range, and its API is pretty
+ * specialized to that caller.
+ *
+ * Constructs an Expr for the key column (returned in *keyCol) and Consts
+ * for the lower and upper range limits (returned in *lower_val and
+ * *upper_val).  For UNBOUNDED limits, NULL is returned instead of a Const.
+ * All of these structures are freshly palloc'd.
+ *
+ * *partexprs_item points to the cell containing the next expression in
+ * the key->partexprs list, or NULL.  It may be advanced upon return.
  */
 static void
 get_range_key_properties(PartitionKey key, int keynum,
@@ -1412,7 +1407,7 @@ get_range_key_properties(PartitionKey key, int keynum,
 						 Expr **keyCol,
 						 Const **lower_val, Const **upper_val)
 {
-	/* Partition key expression for this column */
+	/* Get partition key expression for this column */
 	if (key->partattrs[keynum] != 0)
 	{
 		*keyCol = (Expr *) makeVar(1,
@@ -1424,17 +1419,20 @@ get_range_key_properties(PartitionKey key, int keynum,
 	}
 	else
 	{
+		if (*partexprs_item == NULL)
+			elog(ERROR, "wrong number of partition key expressions");
 		*keyCol = copyObject(lfirst(*partexprs_item));
 		*partexprs_item = lnext(*partexprs_item);
 	}
 
+	/* Get appropriate Const nodes for the bounds */
 	if (!ldatum->infinite)
-		*lower_val = castNode(Const, ldatum->value);
+		*lower_val = castNode(Const, copyObject(ldatum->value));
 	else
 		*lower_val = NULL;
 
 	if (!udatum->infinite)
-		*upper_val = castNode(Const, udatum->value);
+		*upper_val = castNode(Const, copyObject(udatum->value));
 	else
 		*upper_val = NULL;
 }
@@ -1442,9 +1440,8 @@ get_range_key_properties(PartitionKey key, int keynum,
 /*
  * get_qual_for_range
  *
- * Get a list of expressions to use as a range partition's constraint.
- * If there are multiple expressions, they are to be considered implicitly
- * ANDed.
+ * Returns an implicit-AND list of expressions to use as a range partition's
+ * constraint, given the partition key and bound structures.
  *
  * For a multi-column range partition key, say (a, b, c), with (al, bl, cl)
  * as the lower bound tuple and (au, bu, cu) as the upper bound tuple, we
@@ -1480,9 +1477,8 @@ get_range_key_properties(PartitionKey key, int keynum,
  * does not really have a constraint, except the IS NOT NULL constraint for
  * partition keys.
  *
- * If we end up with an empty result list, we append return a single-member
- * list containing a constant-true expression in that case, because callers
- * expect a non-empty list.
+ * If we end up with an empty result list, we return a single-member list
+ * containing a constant TRUE, because callers expect a non-empty list.
  */
 static List *
 get_qual_for_range(PartitionKey key, PartitionBoundSpec *spec)
@@ -1573,7 +1569,7 @@ get_qual_for_range(PartitionKey key, PartitionBoundSpec *spec)
 		/*
 		 * Since get_range_key_properties() modifies partexprs_item, and we
 		 * might need to start over from the previous expression in the later
-		 * part of this functiom, save away the current value.
+		 * part of this function, save away the current value.
 		 */
 		partexprs_item_saved = partexprs_item;
 
@@ -1638,6 +1634,7 @@ get_qual_for_range(PartitionKey key, PartitionBoundSpec *spec)
 		List	   *lower_or_arm_args = NIL,
 				   *upper_or_arm_args = NIL;
 
+		/* Restart scan of columns from the i'th one */
 		j = i;
 		partexprs_item = partexprs_item_saved;
 
@@ -1702,7 +1699,6 @@ get_qual_for_range(PartitionKey key, PartitionBoundSpec *spec)
 																   strategy,
 																   keyCol,
 														(Expr *) upper_val));
-
 			}
 
 			/*
@@ -1759,7 +1755,7 @@ get_qual_for_range(PartitionKey key, PartitionBoundSpec *spec)
 						 : linitial(upper_or_arms));
 
 	/* As noted above, caller expects the list to be non-empty. */
-	if (result == NULL)
+	if (result == NIL)
 		result = list_make1(makeBoolConst(true, false));
 
 	return result;
