@@ -308,14 +308,14 @@ typedef struct JsObject
 	((jsv)->is_json ? (jsv)->val.json.type == JSON_TOKEN_STRING \
 		: ((jsv)->val.jsonb && (jsv)->val.jsonb->type == jbvString))
 
-#define JsObjectSize(jso) \
+#define JsObjectIsEmpty(jso) \
 	((jso)->is_json \
-		? hash_get_num_entries((jso)->val.json_hash) \
-		: !(jso)->val.jsonb_cont || JsonContainerSize((jso)->val.jsonb_cont))
+		? hash_get_num_entries((jso)->val.json_hash) == 0 \
+		: ((jso)->val.jsonb_cont == NULL || \
+		   JsonContainerSize((jso)->val.jsonb_cont) == 0))
 
-#define JsObjectIsEmpty(jso) (JsObjectSize(jso) == 0)
-
-#define JsObjectFree(jso) do { \
+#define JsObjectFree(jso) \
+	do { \
 		if ((jso)->is_json) \
 			hash_destroy((jso)->val.json_hash); \
 	} while (0)
