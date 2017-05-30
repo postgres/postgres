@@ -331,8 +331,6 @@ ReplicationSlotAcquire(const char *name)
 
 	Assert(MyReplicationSlot == NULL);
 
-	ReplicationSlotValidateName(name, ERROR);
-
 	/* Search for the named slot and mark it active if we find it. */
 	LWLockAcquire(ReplicationSlotControlLock, LW_SHARED);
 	for (i = 0; i < max_replication_slots; i++)
