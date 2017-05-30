@@ -3162,7 +3162,7 @@ RenameType(RenameStmt *stmt)
 	if (stmt->renameType == OBJECT_DOMAIN && typTup->typtype != TYPTYPE_DOMAIN)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not a domain",
+				 errmsg("%s is not a domain",
 						format_type_be(typeOid))));
 
 	/*

@@ -433,7 +433,7 @@ AggregateCreate(const char *aggName,
 		if (aggTransType == INTERNALOID && func_strict(combinefn))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					 errmsg("combine function with \"%s\" transition type must not be declared STRICT",
+					 errmsg("combine function with transition type %s must not be declared STRICT",
 							format_type_be(aggTransType))));
 
 	}

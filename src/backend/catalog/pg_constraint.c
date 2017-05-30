@@ -843,8 +843,8 @@ get_domain_constraint_oid(Oid typid, const char *conname, bool missing_ok)
 			if (OidIsValid(conOid))
 				ereport(ERROR,
 						(errcode(ERRCODE_DUPLICATE_OBJECT),
-				errmsg("domain \"%s\" has multiple constraints named \"%s\"",
-					   format_type_be(typid), conname)));
+					errmsg("domain %s has multiple constraints named \"%s\"",
+						   format_type_be(typid), conname)));
 			conOid = HeapTupleGetOid(tuple);
 		}
 	}
@@ -855,7 +855,7 @@ get_domain_constraint_oid(Oid typid, const char *conname, bool missing_ok)
 	if (!OidIsValid(conOid) && !missing_ok)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("constraint \"%s\" for domain \"%s\" does not exist",
+				 errmsg("constraint \"%s\" for domain %s does not exist",
 						conname, format_type_be(typid))));
 
 	heap_close(pg_constraint, AccessShareLock);

@@ -684,7 +684,7 @@ COMMENT ON CONSTRAINT the_constraint ON DOMAIN constraint_comments_dom IS 'yes, 
 COMMENT ON CONSTRAINT no_constraint ON constraint_comments_tbl IS 'yes, the comment';
 ERROR:  constraint "no_constraint" for table "constraint_comments_tbl" does not exist
 COMMENT ON CONSTRAINT no_constraint ON DOMAIN constraint_comments_dom IS 'yes, another comment';
-ERROR:  constraint "no_constraint" for domain "constraint_comments_dom" does not exist
+ERROR:  constraint "no_constraint" for domain constraint_comments_dom does not exist
 -- no such table/domain
 COMMENT ON CONSTRAINT the_constraint ON no_comments_tbl IS 'bad comment';
 ERROR:  relation "no_comments_tbl" does not exist
