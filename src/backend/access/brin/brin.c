@@ -190,7 +190,8 @@ brininsert(Relation idxRel, Datum *values, bool *nulls,
 				AutoVacuumRequestWork(AVW_BRINSummarizeRange,
 									  RelationGetRelid(idxRel),
 									  lastPageRange);
-			brin_free_tuple(lastPageTuple);
+			else
+				LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 		}
 
 		brtup = brinGetTupleForHeapBlock(revmap, heapBlk, &buf, &off,

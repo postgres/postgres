@@ -179,13 +179,16 @@ brinSetHeapBlockItemptr(Buffer buf, BlockNumber pagesPerRange,
 /*
  * Fetch the BrinTuple for a given heap block.
  *
- * The buffer containing the tuple is locked, and returned in *buf. As an
- * optimization, the caller can pass a pinned buffer *buf on entry, which will
- * avoid a pin-unpin cycle when the next tuple is on the same page as a
- * previous one.
+ * The buffer containing the tuple is locked, and returned in *buf.  The
+ * returned tuple points to the shared buffer and must not be freed; if caller
+ * wants to use it after releasing the buffer lock, it must create its own
+ * palloc'ed copy.  As an optimization, the caller can pass a pinned buffer
+ * *buf on entry, which will avoid a pin-unpin cycle when the next tuple is on
+ * the same page as a previous one.
  *
  * If no tuple is found for the given heap range, returns NULL. In that case,
- * *buf might still be updated, but it's not locked.
+ * *buf might still be updated (and pin must be released by caller), but it's
+ * not locked.
  *
  * The output tuple offset within the buffer is returned in *off, and its size
  * is returned in *size.
