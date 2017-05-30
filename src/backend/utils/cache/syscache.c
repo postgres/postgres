@@ -606,6 +606,50 @@ static const struct cachedesc cacheinfo[] = {
 		},
 		128
 	},
+	{PublicationRelationId,		/* PUBLICATIONNAME */
+		PublicationNameIndexId,
+		1,
+		{
+			Anum_pg_publication_pubname,
+			0,
+			0,
+			0
+		},
+		8
+	},
+	{PublicationRelationId,		/* PUBLICATIONOID */
+		PublicationObjectIndexId,
+		1,
+		{
+			ObjectIdAttributeNumber,
+			0,
+			0,
+			0
+		},
+		8
+	},
+	{PublicationRelRelationId,	/* PUBLICATIONREL */
+		PublicationRelObjectIndexId,
+		1,
+		{
+			ObjectIdAttributeNumber,
+			0,
+			0,
+			0
+		},
+		64
+	},
+	{PublicationRelRelationId,	/* PUBLICATIONRELMAP */
+		PublicationRelPrrelidPrpubidIndexId,
+		2,
+		{
+			Anum_pg_publication_rel_prrelid,
+			Anum_pg_publication_rel_prpubid,
+			0,
+			0
+		},
+		64
+	},
 	{RangeRelationId,			/* RANGETYPE */
 		RangeTypidIndexId,
 		1,
@@ -660,50 +704,6 @@ static const struct cachedesc cacheinfo[] = {
 			0
 		},
 		16
-	},
-	{PublicationRelationId,		/* PUBLICATIONOID */
-		PublicationObjectIndexId,
-		1,
-		{
-			ObjectIdAttributeNumber,
-			0,
-			0,
-			0
-		},
-		8
-	},
-	{PublicationRelationId,		/* PUBLICATIONNAME */
-		PublicationNameIndexId,
-		1,
-		{
-			Anum_pg_publication_pubname,
-			0,
-			0,
-			0
-		},
-		8
-	},
-	{PublicationRelRelationId,	/* PUBLICATIONREL */
-		PublicationRelObjectIndexId,
-		1,
-		{
-			ObjectIdAttributeNumber,
-			0,
-			0,
-			0
-		},
-		64
-	},
-	{PublicationRelRelationId,	/* PUBLICATIONRELMAP */
-		PublicationRelPrrelidPrpubidIndexId,
-		2,
-		{
-			Anum_pg_publication_rel_prrelid,
-			Anum_pg_publication_rel_prpubid,
-			0,
-			0
-		},
-		64
 	},
 	{RewriteRelationId,			/* RULERELNAME */
 		RewriteRelRulenameIndexId,
@@ -760,23 +760,23 @@ static const struct cachedesc cacheinfo[] = {
 		},
 		128
 	},
-	{SubscriptionRelationId,	/* SUBSCRIPTIONOID */
-		SubscriptionObjectIndexId,
-		1,
-		{
-			ObjectIdAttributeNumber,
-			0,
-			0,
-			0
-		},
-		4
-	},
 	{SubscriptionRelationId,	/* SUBSCRIPTIONNAME */
 		SubscriptionNameIndexId,
 		2,
 		{
 			Anum_pg_subscription_subdbid,
 			Anum_pg_subscription_subname,
+			0,
+			0
+		},
+		4
+	},
+	{SubscriptionRelationId,	/* SUBSCRIPTIONOID */
+		SubscriptionObjectIndexId,
+		1,
+		{
+			ObjectIdAttributeNumber,
+			0,
 			0,
 			0
 		},
