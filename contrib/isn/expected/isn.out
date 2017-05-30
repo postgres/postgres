@@ -10,22 +10,22 @@ FROM (SELECT amname, opcname, opc.oid
       WHERE opc.oid >= 16384
       ORDER BY 1, 2 OFFSET 0) ss
 WHERE NOT amvalidate(oid);
-INFO:  btree operator family "isn_ops" is missing cross-type operator(s)
-INFO:  btree operator family "isn_ops" is missing cross-type operator(s)
-INFO:  btree operator family "isn_ops" is missing cross-type operator(s)
-INFO:  btree operator family "isn_ops" is missing cross-type operator(s)
-INFO:  btree operator family "isn_ops" is missing cross-type operator(s)
-INFO:  btree operator family "isn_ops" is missing cross-type operator(s)
-INFO:  btree operator family "isn_ops" is missing cross-type operator(s)
-INFO:  btree operator family "isn_ops" is missing cross-type operator(s)
-INFO:  hash operator family "isn_ops" is missing cross-type operator(s)
-INFO:  hash operator family "isn_ops" is missing cross-type operator(s)
-INFO:  hash operator family "isn_ops" is missing cross-type operator(s)
-INFO:  hash operator family "isn_ops" is missing cross-type operator(s)
-INFO:  hash operator family "isn_ops" is missing cross-type operator(s)
-INFO:  hash operator family "isn_ops" is missing cross-type operator(s)
-INFO:  hash operator family "isn_ops" is missing cross-type operator(s)
-INFO:  hash operator family "isn_ops" is missing cross-type operator(s)
+INFO:  operator family "isn_ops" of access method btree is missing cross-type operator(s)
+INFO:  operator family "isn_ops" of access method btree is missing cross-type operator(s)
+INFO:  operator family "isn_ops" of access method btree is missing cross-type operator(s)
+INFO:  operator family "isn_ops" of access method btree is missing cross-type operator(s)
+INFO:  operator family "isn_ops" of access method btree is missing cross-type operator(s)
+INFO:  operator family "isn_ops" of access method btree is missing cross-type operator(s)
+INFO:  operator family "isn_ops" of access method btree is missing cross-type operator(s)
+INFO:  operator family "isn_ops" of access method btree is missing cross-type operator(s)
+INFO:  operator family "isn_ops" of access method hash is missing cross-type operator(s)
+INFO:  operator family "isn_ops" of access method hash is missing cross-type operator(s)
+INFO:  operator family "isn_ops" of access method hash is missing cross-type operator(s)
+INFO:  operator family "isn_ops" of access method hash is missing cross-type operator(s)
+INFO:  operator family "isn_ops" of access method hash is missing cross-type operator(s)
+INFO:  operator family "isn_ops" of access method hash is missing cross-type operator(s)
+INFO:  operator family "isn_ops" of access method hash is missing cross-type operator(s)
+INFO:  operator family "isn_ops" of access method hash is missing cross-type operator(s)
  amname |  opcname   
 --------+------------
  btree  | ean13_ops

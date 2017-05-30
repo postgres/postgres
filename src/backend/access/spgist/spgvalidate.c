@@ -90,8 +90,8 @@ spgvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("spgist operator family \"%s\" contains support procedure %s with cross-type registration",
-							opfamilyname,
+					 errmsg("operator family \"%s\" of access method %s contains support procedure %s with different left and right input types",
+							opfamilyname, "spgist",
 							format_procedure(procform->amproc))));
 			result = false;
 		}
@@ -113,8 +113,8 @@ spgvalidate(Oid opclassoid)
 			default:
 				ereport(INFO,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("spgist operator family \"%s\" contains function %s with invalid support number %d",
-								opfamilyname,
+						 errmsg("operator family \"%s\" of access method %s contains function %s with invalid support number %d",
+								opfamilyname, "spgist",
 								format_procedure(procform->amproc),
 								procform->amprocnum)));
 				result = false;
@@ -125,8 +125,8 @@ spgvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("spgist operator family \"%s\" contains function %s with wrong signature for support number %d",
-							opfamilyname,
+					 errmsg("operator family \"%s\" of access method %s contains function %s with wrong signature for support number %d",
+							opfamilyname, "spgist",
 							format_procedure(procform->amproc),
 							procform->amprocnum)));
 			result = false;
@@ -144,8 +144,8 @@ spgvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("spgist operator family \"%s\" contains operator %s with invalid strategy number %d",
-							opfamilyname,
+					 errmsg("operator family \"%s\" of access method %s contains operator %s with invalid strategy number %d",
+							opfamilyname, "spgist",
 							format_operator(oprform->amopopr),
 							oprform->amopstrategy)));
 			result = false;
@@ -157,8 +157,8 @@ spgvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("spgist operator family \"%s\" contains invalid ORDER BY specification for operator %s",
-							opfamilyname,
+					 errmsg("operator family \"%s\" of access method %s contains invalid ORDER BY specification for operator %s",
+							opfamilyname, "spgist",
 							format_operator(oprform->amopopr))));
 			result = false;
 		}
@@ -170,8 +170,8 @@ spgvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("spgist operator family \"%s\" contains operator %s with wrong signature",
-							opfamilyname,
+					 errmsg("operator family \"%s\" of access method %s contains operator %s with wrong signature",
+							opfamilyname, "spgist",
 							format_operator(oprform->amopopr))));
 			result = false;
 		}
@@ -198,8 +198,8 @@ spgvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("spgist operator family \"%s\" is missing operator(s) for types %s and %s",
-							opfamilyname,
+					 errmsg("operator family \"%s\" of access method %s is missing operator(s) for types %s and %s",
+							opfamilyname, "spgist",
 							format_type_be(thisgroup->lefttype),
 							format_type_be(thisgroup->righttype))));
 			result = false;
@@ -218,8 +218,8 @@ spgvalidate(Oid opclassoid)
 				continue;		/* got it */
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("spgist operator family \"%s\" is missing support function %d for type %s",
-							opfamilyname, i,
+					 errmsg("operator family \"%s\" of access method %s is missing support function %d for type %s",
+							opfamilyname, "spgist", i,
 							format_type_be(thisgroup->lefttype))));
 			result = false;
 		}
@@ -231,8 +231,8 @@ spgvalidate(Oid opclassoid)
 	{
 		ereport(INFO,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("spgist operator class \"%s\" is missing operator(s)",
-						opclassname)));
+				 errmsg("operator class \"%s\" of access method %s is missing operator(s)",
+						opclassname, "spgist")));
 		result = false;
 	}
 

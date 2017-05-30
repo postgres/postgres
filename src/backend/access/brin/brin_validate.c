@@ -113,8 +113,8 @@ brinvalidate(Oid opclassoid)
 				{
 					ereport(INFO,
 							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-							 errmsg("brin operator family \"%s\" contains function %s with invalid support number %d",
-									opfamilyname,
+							 errmsg("operator family \"%s\" of access method %s contains function %s with invalid support number %d",
+									opfamilyname, "brin",
 									format_procedure(procform->amproc),
 									procform->amprocnum)));
 					result = false;
@@ -129,8 +129,8 @@ brinvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("brin operator family \"%s\" contains function %s with wrong signature for support number %d",
-							opfamilyname,
+					 errmsg("operator family \"%s\" of access method %s contains function %s with wrong signature for support number %d",
+							opfamilyname, "brin",
 							format_procedure(procform->amproc),
 							procform->amprocnum)));
 			result = false;
@@ -151,8 +151,8 @@ brinvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("brin operator family \"%s\" contains operator %s with invalid strategy number %d",
-							opfamilyname,
+					 errmsg("operator family \"%s\" of access method %s contains operator %s with invalid strategy number %d",
+							opfamilyname, "brin",
 							format_operator(oprform->amopopr),
 							oprform->amopstrategy)));
 			result = false;
@@ -180,8 +180,8 @@ brinvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("brin operator family \"%s\" contains invalid ORDER BY specification for operator %s",
-							opfamilyname,
+					 errmsg("operator family \"%s\" of access method %s contains invalid ORDER BY specification for operator %s",
+							opfamilyname, "brin",
 							format_operator(oprform->amopopr))));
 			result = false;
 		}
@@ -193,8 +193,8 @@ brinvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("brin operator family \"%s\" contains operator %s with wrong signature",
-							opfamilyname,
+					 errmsg("operator family \"%s\" of access method %s contains operator %s with wrong signature",
+							opfamilyname, "brin",
 							format_operator(oprform->amopopr))));
 			result = false;
 		}
@@ -231,8 +231,8 @@ brinvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("brin operator family \"%s\" is missing operator(s) for types %s and %s",
-							opfamilyname,
+					 errmsg("operator family \"%s\" of access method %s is missing operator(s) for types %s and %s",
+							opfamilyname, "brin",
 							format_type_be(thisgroup->lefttype),
 							format_type_be(thisgroup->righttype))));
 			result = false;
@@ -241,8 +241,8 @@ brinvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("brin operator family \"%s\" is missing support function(s) for types %s and %s",
-							opfamilyname,
+					 errmsg("operator family \"%s\" of access method %s is missing support function(s) for types %s and %s",
+							opfamilyname, "brin",
 							format_type_be(thisgroup->lefttype),
 							format_type_be(thisgroup->righttype))));
 			result = false;
@@ -254,8 +254,8 @@ brinvalidate(Oid opclassoid)
 	{
 		ereport(INFO,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("brin operator class \"%s\" is missing operator(s)",
-						opclassname)));
+				 errmsg("operator class \"%s\" of access method %s is missing operator(s)",
+						opclassname, "brin")));
 		result = false;
 	}
 	for (i = 1; i <= BRIN_MANDATORY_NPROCS; i++)
@@ -265,8 +265,8 @@ brinvalidate(Oid opclassoid)
 			continue;			/* got it */
 		ereport(INFO,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-		  errmsg("brin operator class \"%s\" is missing support function %d",
-				 opclassname, i)));
+		  errmsg("operator class \"%s\" of access method %s is missing support function %d",
+				 opclassname, "brin", i)));
 		result = false;
 	}
 

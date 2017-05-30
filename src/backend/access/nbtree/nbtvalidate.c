@@ -98,8 +98,8 @@ btvalidate(Oid opclassoid)
 			default:
 				ereport(INFO,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("btree operator family \"%s\" contains function %s with invalid support number %d",
-								opfamilyname,
+						 errmsg("operator family \"%s\" of access method %s contains function %s with invalid support number %d",
+								opfamilyname, "btree",
 								format_procedure(procform->amproc),
 								procform->amprocnum)));
 				result = false;
@@ -110,8 +110,8 @@ btvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("btree operator family \"%s\" contains function %s with wrong signature for support number %d",
-							opfamilyname,
+					 errmsg("operator family \"%s\" of access method %s contains function %s with wrong signature for support number %d",
+							opfamilyname, "btree",
 							format_procedure(procform->amproc),
 							procform->amprocnum)));
 			result = false;
@@ -130,8 +130,8 @@ btvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("btree operator family \"%s\" contains operator %s with invalid strategy number %d",
-							opfamilyname,
+					 errmsg("operator family \"%s\" of access method %s contains operator %s with invalid strategy number %d",
+							opfamilyname, "btree",
 							format_operator(oprform->amopopr),
 							oprform->amopstrategy)));
 			result = false;
@@ -143,8 +143,8 @@ btvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("btree operator family \"%s\" contains invalid ORDER BY specification for operator %s",
-							opfamilyname,
+					 errmsg("operator family \"%s\" of access method %s contains invalid ORDER BY specification for operator %s",
+							opfamilyname, "btree",
 							format_operator(oprform->amopopr))));
 			result = false;
 		}
@@ -156,8 +156,8 @@ btvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("btree operator family \"%s\" contains operator %s with wrong signature",
-							opfamilyname,
+					 errmsg("operator family \"%s\" of access method %s contains operator %s with wrong signature",
+							opfamilyname, "btree",
 							format_operator(oprform->amopopr))));
 			result = false;
 		}
@@ -198,8 +198,8 @@ btvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("btree operator family \"%s\" is missing operator(s) for types %s and %s",
-							opfamilyname,
+					 errmsg("operator family \"%s\" of access method %s is missing operator(s) for types %s and %s",
+							opfamilyname, "btree",
 							format_type_be(thisgroup->lefttype),
 							format_type_be(thisgroup->righttype))));
 			result = false;
@@ -208,8 +208,8 @@ btvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("btree operator family \"%s\" is missing support function for types %s and %s",
-							opfamilyname,
+					 errmsg("operator family \"%s\" of access method %s is missing support function for types %s and %s",
+							opfamilyname, "btree",
 							format_type_be(thisgroup->lefttype),
 							format_type_be(thisgroup->righttype))));
 			result = false;
@@ -222,8 +222,8 @@ btvalidate(Oid opclassoid)
 	{
 		ereport(INFO,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("btree operator class \"%s\" is missing operator(s)",
-						opclassname)));
+				 errmsg("operator class \"%s\" of access method %s is missing operator(s)",
+						opclassname, "btree")));
 		result = false;
 	}
 
@@ -239,8 +239,8 @@ btvalidate(Oid opclassoid)
 	{
 		ereport(INFO,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("btree operator family \"%s\" is missing cross-type operator(s)",
-						opfamilyname)));
+				 errmsg("operator family \"%s\" of access method %s is missing cross-type operator(s)",
+						opfamilyname, "btree")));
 		result = false;
 	}
 

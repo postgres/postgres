@@ -90,8 +90,8 @@ ginvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("gin operator family \"%s\" contains support procedure %s with cross-type registration",
-							opfamilyname,
+					 errmsg("operator family \"%s\" of access method %s contains support procedure %s with different left and right input types",
+							opfamilyname, "gin",
 							format_procedure(procform->amproc))));
 			result = false;
 		}
@@ -146,8 +146,8 @@ ginvalidate(Oid opclassoid)
 			default:
 				ereport(INFO,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("gin operator family \"%s\" contains function %s with invalid support number %d",
-								opfamilyname,
+						 errmsg("operator family \"%s\" of access method %s contains function %s with invalid support number %d",
+								opfamilyname, "gin",
 								format_procedure(procform->amproc),
 								procform->amprocnum)));
 				result = false;
@@ -158,8 +158,8 @@ ginvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("gin operator family \"%s\" contains function %s with wrong signature for support number %d",
-							opfamilyname,
+					 errmsg("operator family \"%s\" of access method %s contains function %s with wrong signature for support number %d",
+							opfamilyname, "gin",
 							format_procedure(procform->amproc),
 							procform->amprocnum)));
 			result = false;
@@ -177,8 +177,8 @@ ginvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("gin operator family \"%s\" contains operator %s with invalid strategy number %d",
-							opfamilyname,
+					 errmsg("operator family \"%s\" of access method %s contains operator %s with invalid strategy number %d",
+							opfamilyname, "gin",
 							format_operator(oprform->amopopr),
 							oprform->amopstrategy)));
 			result = false;
@@ -190,8 +190,8 @@ ginvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("gin operator family \"%s\" contains invalid ORDER BY specification for operator %s",
-							opfamilyname,
+					 errmsg("operator family \"%s\" of access method %s contains invalid ORDER BY specification for operator %s",
+							opfamilyname, "gin",
 							format_operator(oprform->amopopr))));
 			result = false;
 		}
@@ -203,8 +203,8 @@ ginvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("gin operator family \"%s\" contains operator %s with wrong signature",
-							opfamilyname,
+					 errmsg("operator family \"%s\" of access method %s contains operator %s with wrong signature",
+							opfamilyname, "gin",
 							format_operator(oprform->amopopr))));
 			result = false;
 		}
@@ -244,8 +244,8 @@ ginvalidate(Oid opclassoid)
 			continue;			/* don't need both, see check below loop */
 		ereport(INFO,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-		   errmsg("gin operator class \"%s\" is missing support function %d",
-				  opclassname, i)));
+		   errmsg("operator class \"%s\" of access method %s is missing support function %d",
+				  opclassname, "gin", i)));
 		result = false;
 	}
 	if (!opclassgroup ||
@@ -254,8 +254,8 @@ ginvalidate(Oid opclassoid)
 	{
 		ereport(INFO,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("gin operator class \"%s\" is missing support function %d or %d",
-						opclassname,
+				 errmsg("operator class \"%s\" of access method %s is missing support function %d or %d",
+						opclassname, "gin",
 						GIN_CONSISTENT_PROC, GIN_TRICONSISTENT_PROC)));
 		result = false;
 	}
