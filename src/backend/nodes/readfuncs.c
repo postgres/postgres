@@ -2376,8 +2376,7 @@ _readPartitionBoundSpec(void)
 	READ_NODE_FIELD(listdatums);
 	READ_NODE_FIELD(lowerdatums);
 	READ_NODE_FIELD(upperdatums);
-	/* XXX somebody forgot location field; too late to change for v10 */
-	local_node->location = -1;
+	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
 }
@@ -2392,8 +2391,7 @@ _readPartitionRangeDatum(void)
 
 	READ_BOOL_FIELD(infinite);
 	READ_NODE_FIELD(value);
-	/* XXX somebody forgot location field; too late to change for v10 */
-	local_node->location = -1;
+	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
 }
@@ -2638,9 +2636,9 @@ parseNodeString(void)
 		return_value = _readAlternativeSubPlan();
 	else if (MATCH("EXTENSIBLENODE", 14))
 		return_value = _readExtensibleNode();
-	else if (MATCH("PARTITIONBOUND", 14))
+	else if (MATCH("PARTITIONBOUNDSPEC", 18))
 		return_value = _readPartitionBoundSpec();
-	else if (MATCH("PARTRANGEDATUM", 14))
+	else if (MATCH("PARTITIONRANGEDATUM", 19))
 		return_value = _readPartitionRangeDatum();
 	else
 	{

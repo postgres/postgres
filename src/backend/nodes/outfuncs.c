@@ -3530,7 +3530,7 @@ _outPartitionElem(StringInfo str, const PartitionElem *node)
 static void
 _outPartitionSpec(StringInfo str, const PartitionSpec *node)
 {
-	WRITE_NODE_TYPE("PARTITIONBY");
+	WRITE_NODE_TYPE("PARTITIONSPEC");
 
 	WRITE_STRING_FIELD(strategy);
 	WRITE_NODE_FIELD(partParams);
@@ -3540,23 +3540,23 @@ _outPartitionSpec(StringInfo str, const PartitionSpec *node)
 static void
 _outPartitionBoundSpec(StringInfo str, const PartitionBoundSpec *node)
 {
-	WRITE_NODE_TYPE("PARTITIONBOUND");
+	WRITE_NODE_TYPE("PARTITIONBOUNDSPEC");
 
 	WRITE_CHAR_FIELD(strategy);
 	WRITE_NODE_FIELD(listdatums);
 	WRITE_NODE_FIELD(lowerdatums);
 	WRITE_NODE_FIELD(upperdatums);
-	/* XXX somebody forgot location field; too late to change for v10 */
+	WRITE_LOCATION_FIELD(location);
 }
 
 static void
 _outPartitionRangeDatum(StringInfo str, const PartitionRangeDatum *node)
 {
-	WRITE_NODE_TYPE("PARTRANGEDATUM");
+	WRITE_NODE_TYPE("PARTITIONRANGEDATUM");
 
 	WRITE_BOOL_FIELD(infinite);
 	WRITE_NODE_FIELD(value);
-	/* XXX somebody forgot location field; too late to change for v10 */
+	WRITE_LOCATION_FIELD(location);
 }
 
 /*
