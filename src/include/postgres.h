@@ -679,7 +679,7 @@ DatumGetFloat4(Datum X)
 		float4		retval;
 	}			myunion;
 
-	myunion.value = GET_4_BYTES(X);
+	myunion.value = DatumGetInt32(X);
 	return myunion.retval;
 }
 #else
@@ -704,7 +704,7 @@ Float4GetDatum(float4 X)
 	}			myunion;
 
 	myunion.value = X;
-	return SET_4_BYTES(myunion.retval);
+	return Int32GetDatum(myunion.retval);
 }
 #else
 extern Datum Float4GetDatum(float4 X);
@@ -727,7 +727,7 @@ DatumGetFloat8(Datum X)
 		float8		retval;
 	}			myunion;
 
-	myunion.value = GET_8_BYTES(X);
+	myunion.value = DatumGetInt64(X);
 	return myunion.retval;
 }
 #else
@@ -753,7 +753,7 @@ Float8GetDatum(float8 X)
 	}			myunion;
 
 	myunion.value = X;
-	return SET_8_BYTES(myunion.retval);
+	return Int64GetDatum(myunion.retval);
 }
 #else
 extern Datum Float8GetDatum(float8 X);
