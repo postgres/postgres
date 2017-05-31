@@ -165,6 +165,26 @@
 
     <listitem>
 <!--
+2017-02-13 [8df9bd0b4] Change logical replication pg_hba.conf use
+-->
+     <para>
+      Change how logical replication
+      uses <link linkend="auth-pg-hba-conf"><filename>pg_hba.conf</filename></link>.
+     </para>
+
+     <para>
+      In previous releases, a logical replication connection required
+      the <literal>replication</literal> keyword in the database column.  As
+      of this release, logical replication matches a normal entry with a
+      database name or keywords such as <literal>all</literal>.  Physical
+      replication continues to use the <literal>replication</literal> keyword.
+      Since built-in logical replication is new in this release as well, this
+      change only affects users of third-party logical replication plugins.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
 2017-01-14 [05cd12ed5] pg_ctl: Change default to wait for all actions
 -->
     <para>
