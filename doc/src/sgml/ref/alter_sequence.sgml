@@ -171,7 +171,7 @@ ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> S
        <para>
         The optional clause <literal>RESTART [ WITH <replaceable
         class="parameter">restart</replaceable> ]</literal> changes the
-        current value of the sequence.  This is equivalent to calling the
+        current value of the sequence.  This is similar to calling the
         <function>setval</> function with <literal>is_called</literal> =
         <literal>false</>: the specified value will be returned by the
         <emphasis>next</> call of <function>nextval</>.
@@ -182,11 +182,11 @@ ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> S
        </para>
 
        <para>
-        Like a <function>setval</function> call, a <literal>RESTART</literal>
-        operation on a sequence is never rolled back, to avoid blocking of
-        concurrent transactions that obtain numbers from the same sequence.
-        (The other clauses cause ordinary catalog updates that can be rolled
-        back.)
+        In contrast to a <function>setval</function> call,
+        a <literal>RESTART</literal> operation on a sequence is transactional
+        and blocks concurrent transactions from obtaining numbers from the
+        same sequence. If that's not the desired mode of
+        operation, <function>setval</> should be used.
        </para>
       </listitem>
      </varlistentry>
@@ -307,8 +307,7 @@ ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> S
   <para>
    <command>ALTER SEQUENCE</command> blocks
    concurrent <function>nextval</function>, <function>currval</function>,
-   <function>lastval</function>, and <command>setval</command> calls, except
-   if only the <literal>RESTART</literal> clause is used.
+   <function>lastval</function>, and <command>setval</command> calls.
   </para>
 
   <para>
