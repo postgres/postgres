@@ -74,6 +74,28 @@ DROP SUBSCRIPTION [ IF EXISTS ] <replaceable class="parameter">name</replaceable
  </refsect1>
 
  <refsect1>
+  <title>Notes</title>
+
+  <para>
+   When dropping a subscription that is associated with a replication slot on
+   the remote host (the normal state), <command>DROP SUBSCRIPTION</command>
+   will connect to the remote host and try to drop the replication slot as
+   part of its operation.  This is necessary so that the resources allocated
+   for the subscription on the remote host are released.  If this fails,
+   either because the remote host is not reachable or because the remote
+   replication slot cannot be dropped or does not exist or never existed,
+   the <command>DROP SUBSCRIPTION</command> command will fail.  To proceed in
+   this situation, disassociate the subscription from the replication slot by
+   executing <literal>ALTER SUBSCRIPTION ... SET (slot_name = NONE)</literal>.
+   After that, <command>DROP SUBSCRIPTION</command> will no longer attempt any
+   actions on a remote host.  Note that if the remote replication slot still
+   exists, it should then be dropped manually; otherwise it will continue to
+   reserve WAL and might eventually cause the disk to fill up.  See
+   also <xref linkend="logical-replication-subscription-slot">.
+  </para>
+ </refsect1>
+
+ <refsect1>
   <title>Examples</title>
 
   <para>
