@@ -490,11 +490,11 @@ AlterSequence(ParseState *pstate, AlterSeqStmt *stmt)
 	if (owned_by)
 		process_owned_by(seqrel, owned_by, stmt->for_identity);
 
+	CatalogTupleUpdate(rel, &seqtuple->t_self, seqtuple);
+
 	InvokeObjectPostAlterHook(RelationRelationId, relid, 0);
 
 	ObjectAddressSet(address, RelationRelationId, relid);
-
-	CatalogTupleUpdate(rel, &seqtuple->t_self, seqtuple);
 
 	heap_close(rel, RowExclusiveLock);
 	relation_close(seqrel, NoLock);
