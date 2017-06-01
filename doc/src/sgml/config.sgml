@@ -3495,7 +3495,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
        of these configuration parameters to force the optimizer to
        choose a different plan.
        Better ways to improve the quality of the
-       plans chosen by the optimizer include adjusting the planer cost
+       plans chosen by the optimizer include adjusting the planner cost
        constants (see <xref linkend="runtime-config-query-constants">),
        running <xref linkend="sql-analyze"> manually, increasing
        the value of the <xref
