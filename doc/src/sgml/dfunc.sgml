@@ -63,10 +63,10 @@
     <listitem>
      <para>
       The compiler flag to create <acronym>PIC</acronym> is
-      <option>-fpic</option>.  To create shared libraries the compiler
+      <option>-fPIC</option>.  To create shared libraries the compiler
       flag is <option>-shared</option>.
 <programlisting>
-gcc -fpic -c foo.c
+gcc -fPIC -c foo.c
 gcc -shared -o foo.so foo.o
 </programlisting>
       This is applicable as of version 3.0 of
@@ -84,14 +84,14 @@ gcc -shared -o foo.so foo.o
      <para>
       The compiler flag of the system compiler to create
       <acronym>PIC</acronym> is <option>+z</option>.  When using
-      <application>GCC</application> it's <option>-fpic</option>. The
+      <application>GCC</application> it's <option>-fPIC</option>. The
       linker flag for shared libraries is <option>-b</option>.  So:
 <programlisting>
 cc +z -c foo.c
 </programlisting>
       or:
 <programlisting>
-gcc -fpic -c foo.c
+gcc -fPIC -c foo.c
 </programlisting>
       and then:
 <programlisting>
@@ -112,13 +112,11 @@ ld -b -o foo.sl foo.o
     <listitem>
      <para>
       The compiler flag to create <acronym>PIC</acronym> is
-      <option>-fpic</option>.  On some platforms in some situations
-      <option>-fPIC</option> must be used if <option>-fpic</option>
-      does not work.  Refer to the GCC manual for more information.
+      <option>-fPIC</option>.
       The compiler flag to create a shared library is
       <option>-shared</option>.  A complete example looks like this:
 <programlisting>
-cc -fpic -c foo.c
+cc -fPIC -c foo.c
 cc -shared -o foo.so foo.o
 </programlisting>
      </para>
@@ -149,12 +147,12 @@ cc -bundle -flat_namespace -undefined suppress -o foo.so foo.o
     <listitem>
      <para>
       The compiler flag to create <acronym>PIC</acronym> is
-      <option>-fpic</option>.  For <acronym>ELF</acronym> systems, the
+      <option>-fPIC</option>.  For <acronym>ELF</acronym> systems, the
       compiler with the flag <option>-shared</option> is used to link
       shared libraries.  On the older non-ELF systems, <literal>ld
       -Bshareable</literal> is used.
 <programlisting>
-gcc -fpic -c foo.c
+gcc -fPIC -c foo.c
 gcc -shared -o foo.so foo.o
 </programlisting>
      </para>
@@ -169,10 +167,10 @@ gcc -shared -o foo.so foo.o
     <listitem>
      <para>
       The compiler flag to create <acronym>PIC</acronym> is
-      <option>-fpic</option>.  <literal>ld -Bshareable</literal> is
+      <option>-fPIC</option>.  <literal>ld -Bshareable</literal> is
       used to link shared libraries.
 <programlisting>
-gcc -fpic -c foo.c
+gcc -fPIC -c foo.c
 ld -Bshareable -o foo.so foo.o
 </programlisting>
      </para>
@@ -188,7 +186,7 @@ ld -Bshareable -o foo.so foo.o
      <para>
       The compiler flag to create <acronym>PIC</acronym> is
       <option>-KPIC</option> with the Sun compiler and
-      <option>-fpic</option> with <application>GCC</>.  To
+      <option>-fPIC</option> with <application>GCC</>.  To
       link shared libraries, the compiler option is
       <option>-G</option> with either compiler or alternatively
       <option>-shared</option> with <application>GCC</>.
@@ -198,7 +196,7 @@ cc -G -o foo.so foo.o
 </programlisting>
       or
 <programlisting>
-gcc -fpic -c foo.c
+gcc -fPIC -c foo.c
 gcc -G -o foo.so foo.o
 </programlisting>
      </para>
