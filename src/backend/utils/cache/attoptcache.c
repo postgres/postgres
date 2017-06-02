@@ -71,7 +71,7 @@ InvalidateAttoptCacheCallback(Datum arg, int cacheid, uint32 hashvalue)
 
 /*
  * InitializeAttoptCache
- *		Initialize the tablespace cache.
+ *		Initialize the attribute options cache.
  */
 static void
 InitializeAttoptCache(void)
