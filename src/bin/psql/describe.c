@@ -2537,10 +2537,9 @@ describeOneTableDetails(const char *schemaname,
 		{
 			printfPQExpBuffer(&buf,
 							  "SELECT pub.pubname\n"
-							  " FROM pg_catalog.pg_publication pub\n"
-							  " LEFT JOIN pg_catalog.pg_publication_rel pr\n"
-							  "      ON (pr.prpubid = pub.oid)\n"
-							  "WHERE pr.prrelid = '%s' OR pub.puballtables\n"
+							  " FROM pg_catalog.pg_publication pub,\n"
+							  "      pg_catalog.pg_get_publication_tables(pub.pubname)\n"
+							  "WHERE relid = '%s'\n"
 							  "ORDER BY 1;",
 							  oid);
 
