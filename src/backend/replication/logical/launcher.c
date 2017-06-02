@@ -614,7 +614,13 @@ logicalrep_launcher_onexit(int code, Datum arg)
 static void
 logicalrep_worker_onexit(int code, Datum arg)
 {
+	/* Disconnect gracefully from the remote side. */
+	if (wrconn)
+		walrcv_disconnect(wrconn);
+
 	logicalrep_worker_detach();
+
+	ApplyLauncherWakeup();
 }
 
 /* SIGTERM: set flag to exit at next convenient time */

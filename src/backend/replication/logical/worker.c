@@ -1329,7 +1329,6 @@ reread_subscription(void)
 				   "stop because the subscription was removed",
 				   MySubscription->name)));
 
-		walrcv_disconnect(wrconn);
 		proc_exit(0);
 	}
 
@@ -1344,7 +1343,6 @@ reread_subscription(void)
 				   "stop because the subscription was disabled",
 				   MySubscription->name)));
 
-		walrcv_disconnect(wrconn);
 		proc_exit(0);
 	}
 
@@ -1359,7 +1357,6 @@ reread_subscription(void)
 				   "restart because the connection information was changed",
 				   MySubscription->name)));
 
-		walrcv_disconnect(wrconn);
 		proc_exit(0);
 	}
 
@@ -1374,7 +1371,6 @@ reread_subscription(void)
 				   "restart because subscription was renamed",
 				   MySubscription->name)));
 
-		walrcv_disconnect(wrconn);
 		proc_exit(0);
 	}
 
@@ -1392,7 +1388,6 @@ reread_subscription(void)
 				   "restart because the replication slot name was changed",
 				   MySubscription->name)));
 
-		walrcv_disconnect(wrconn);
 		proc_exit(0);
 	}
 
@@ -1407,7 +1402,6 @@ reread_subscription(void)
 				   "restart because subscription's publications were changed",
 				   MySubscription->name)));
 
-		walrcv_disconnect(wrconn);
 		proc_exit(0);
 	}
 
@@ -1609,8 +1603,6 @@ ApplyWorkerMain(Datum main_arg)
 
 	/* Run the main loop. */
 	LogicalRepApplyLoop(origin_startpos);
-
-	walrcv_disconnect(wrconn);
 
 	/* We should only get here if we received SIGTERM */
 	proc_exit(0);

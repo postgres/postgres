@@ -140,7 +140,6 @@ finish_sync_worker(void)
 	CommitTransactionCommand();
 
 	/* Stop gracefully */
-	walrcv_disconnect(wrconn);
 	proc_exit(0);
 }
 
