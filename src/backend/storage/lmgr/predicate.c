@@ -2841,7 +2841,7 @@ exit:
 		/* We shouldn't run out of memory if we're moving locks */
 		Assert(!outOfShmem);
 
-		/* Put the scrach entry back */
+		/* Put the scratch entry back */
 		RestoreScratchTarget(false);
 	}
 
