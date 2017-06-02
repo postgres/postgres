@@ -154,9 +154,11 @@ wait_for_sync_status_change(Oid relid, char origstate)
 	int			rc;
 	char		state = origstate;
 
-	while (!got_SIGTERM)
+	for (;;)
 	{
 		LogicalRepWorker *worker;
+
+		CHECK_FOR_INTERRUPTS();
 
 		LWLockAcquire(LogicalRepWorkerLock, LW_SHARED);
 		worker = logicalrep_worker_find(MyLogicalRepWorker->subid,
@@ -525,7 +527,7 @@ copy_read_data(void *outbuf, int minread, int maxread)
 		bytesread += avail;
 	}
 
-	while (!got_SIGTERM && maxread > 0 && bytesread < minread)
+	while (maxread > 0 && bytesread < minread)
 	{
 		pgsocket	fd = PGINVALID_SOCKET;
 		int			rc;
@@ -578,10 +580,6 @@ copy_read_data(void *outbuf, int minread, int maxread)
 
 		ResetLatch(&MyProc->procLatch);
 	}
-
-	/* Check for exit condition. */
-	if (got_SIGTERM)
-		proc_exit(0);
 
 	return bytesread;
 }

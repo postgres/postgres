@@ -80,8 +80,8 @@ static void logicalrep_worker_detach(void);
 static void logicalrep_worker_cleanup(LogicalRepWorker *worker);
 
 /* Flags set by signal handlers */
-volatile sig_atomic_t got_SIGHUP = false;
-volatile sig_atomic_t got_SIGTERM = false;
+static volatile sig_atomic_t got_SIGHUP = false;
+static volatile sig_atomic_t got_SIGTERM = false;
 
 static bool on_commit_launcher_wakeup = false;
 
@@ -624,8 +624,8 @@ logicalrep_worker_onexit(int code, Datum arg)
 }
 
 /* SIGTERM: set flag to exit at next convenient time */
-void
-logicalrep_worker_sigterm(SIGNAL_ARGS)
+static void
+logicalrep_launcher_sigterm(SIGNAL_ARGS)
 {
 	int			save_errno = errno;
 
@@ -638,8 +638,8 @@ logicalrep_worker_sigterm(SIGNAL_ARGS)
 }
 
 /* SIGHUP: set flag to reload configuration at next convenient time */
-void
-logicalrep_worker_sighup(SIGNAL_ARGS)
+static void
+logicalrep_launcher_sighup(SIGNAL_ARGS)
 {
 	int			save_errno = errno;
 
@@ -799,8 +799,8 @@ ApplyLauncherMain(Datum main_arg)
 	before_shmem_exit(logicalrep_launcher_onexit, (Datum) 0);
 
 	/* Establish signal handlers. */
-	pqsignal(SIGHUP, logicalrep_worker_sighup);
-	pqsignal(SIGTERM, logicalrep_worker_sigterm);
+	pqsignal(SIGHUP, logicalrep_launcher_sighup);
+	pqsignal(SIGTERM, logicalrep_launcher_sigterm);
 	BackgroundWorkerUnblockSignals();
 
 	/* Make it easy to identify our processes. */

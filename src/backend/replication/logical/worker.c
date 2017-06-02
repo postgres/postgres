@@ -72,6 +72,8 @@
 #include "storage/proc.h"
 #include "storage/procarray.h"
 
+#include "tcop/tcopprot.h"
+
 #include "utils/builtins.h"
 #include "utils/catcache.h"
 #include "utils/datum.h"
@@ -117,6 +119,9 @@ static void send_feedback(XLogRecPtr recvpos, bool force, bool requestReply);
 static void store_flush_position(XLogRecPtr remote_lsn);
 
 static void reread_subscription(void);
+
+/* Flags set by signal handlers */
+static volatile sig_atomic_t got_SIGHUP = false;
 
 /*
  * Should this worker apply changes for given relation.
@@ -1005,7 +1010,7 @@ LogicalRepApplyLoop(XLogRecPtr last_received)
 	/* mark as idle, before starting to loop */
 	pgstat_report_activity(STATE_IDLE, NULL);
 
-	while (!got_SIGTERM)
+	for (;;)
 	{
 		pgsocket	fd = PGINVALID_SOCKET;
 		int			rc;
@@ -1014,6 +1019,8 @@ LogicalRepApplyLoop(XLogRecPtr last_received)
 		bool		endofstream = false;
 		TimestampTz last_recv_timestamp = GetCurrentTimestamp();
 		bool		ping_sent = false;
+
+		CHECK_FOR_INTERRUPTS();
 
 		MemoryContextSwitchTo(ApplyMessageContext);
 
@@ -1437,6 +1444,19 @@ subscription_change_cb(Datum arg, int cacheid, uint32 hashvalue)
 	MySubscriptionValid = false;
 }
 
+/* SIGHUP: set flag to reload configuration at next convenient time */
+static void
+logicalrep_worker_sighup(SIGNAL_ARGS)
+{
+	int			save_errno = errno;
+
+	got_SIGHUP = true;
+
+	/* Waken anything waiting on the process latch */
+	SetLatch(MyLatch);
+
+	errno = save_errno;
+}
 
 /* Logical Replication Apply worker entry point */
 void
@@ -1454,7 +1474,7 @@ ApplyWorkerMain(Datum main_arg)
 
 	/* Setup signal handling */
 	pqsignal(SIGHUP, logicalrep_worker_sighup);
-	pqsignal(SIGTERM, logicalrep_worker_sigterm);
+	pqsignal(SIGTERM, die);
 	BackgroundWorkerUnblockSignals();
 
 	/* Initialise stats to a sanish value */
@@ -1604,6 +1624,14 @@ ApplyWorkerMain(Datum main_arg)
 	/* Run the main loop. */
 	LogicalRepApplyLoop(origin_startpos);
 
-	/* We should only get here if we received SIGTERM */
 	proc_exit(0);
+}
+
+/*
+ * Is current process a logical replication worker?
+ */
+bool
+IsLogicalWorker(void)
+{
+	return MyLogicalRepWorker != NULL;
 }
