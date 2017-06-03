@@ -154,12 +154,13 @@
 get_relation_stats_hook_type get_relation_stats_hook = NULL;
 get_index_stats_hook_type get_index_stats_hook = NULL;
 
+static double eqsel_internal(PG_FUNCTION_ARGS, bool negate);
 static double var_eq_const(VariableStatData *vardata, Oid operator,
 			 Datum constval, bool constisnull,
-			 bool varonleft);
+			 bool varonleft, bool negate);
 static double var_eq_non_const(VariableStatData *vardata, Oid operator,
 				 Node *other,
-				 bool varonleft);
+				 bool varonleft, bool negate);
 static double ineq_histogram_selectivity(PlannerInfo *root,
 						   VariableStatData *vardata,
 						   FmgrInfo *opproc, bool isgt,
@@ -227,6 +228,15 @@ static List *add_predicate_to_quals(IndexOptInfo *index, List *indexQuals);
 Datum
 eqsel(PG_FUNCTION_ARGS)
 {
+	PG_RETURN_FLOAT8((float8) eqsel_internal(fcinfo, false));
+}
+
+/*
+ * Common code for eqsel() and neqsel()
+ */
+static double
+eqsel_internal(PG_FUNCTION_ARGS, bool negate)
+{
 	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
 	Oid			operator = PG_GETARG_OID(1);
 	List	   *args = (List *) PG_GETARG_POINTER(2);
@@ -237,12 +247,26 @@ eqsel(PG_FUNCTION_ARGS)
 	double		selec;
 
 	/*
+	 * When asked about <>, we do the estimation using the corresponding =
+	 * operator, then convert to <> via "1.0 - eq_selectivity - nullfrac".
+	 */
+	if (negate)
+	{
+		operator = get_negator(operator);
+		if (!OidIsValid(operator))
+		{
+			/* Use default selectivity (should we raise an error instead?) */
+			return 1.0 - DEFAULT_EQ_SEL;
+		}
+	}
+
+	/*
 	 * If expression is not variable = something or something = variable, then
 	 * punt and return a default estimate.
 	 */
 	if (!get_restriction_variable(root, args, varRelid,
 								  &vardata, &other, &varonleft))
-		PG_RETURN_FLOAT8(DEFAULT_EQ_SEL);
+		return negate ? (1.0 - DEFAULT_EQ_SEL) : DEFAULT_EQ_SEL;
 
 	/*
 	 * We can do a lot better if the something is a constant.  (Note: the
@@ -253,14 +277,14 @@ eqsel(PG_FUNCTION_ARGS)
 		selec = var_eq_const(&vardata, operator,
 							 ((Const *) other)->constvalue,
 							 ((Const *) other)->constisnull,
-							 varonleft);
+							 varonleft, negate);
 	else
 		selec = var_eq_non_const(&vardata, operator, other,
-								 varonleft);
+								 varonleft, negate);
 
 	ReleaseVariableStats(vardata);
 
-	PG_RETURN_FLOAT8((float8) selec);
+	return selec;
 }
 
 /*
@@ -271,18 +295,31 @@ eqsel(PG_FUNCTION_ARGS)
 static double
 var_eq_const(VariableStatData *vardata, Oid operator,
 			 Datum constval, bool constisnull,
-			 bool varonleft)
+			 bool varonleft, bool negate)
 {
 	double		selec;
+	double		nullfrac = 0.0;
 	bool		isdefault;
 	Oid			opfuncoid;
 
 	/*
 	 * If the constant is NULL, assume operator is strict and return zero, ie,
-	 * operator will never return TRUE.
+	 * operator will never return TRUE.  (It's zero even for a negator op.)
 	 */
 	if (constisnull)
 		return 0.0;
+
+	/*
+	 * Grab the nullfrac for use below.  Note we allow use of nullfrac
+	 * regardless of security check.
+	 */
+	if (HeapTupleIsValid(vardata->statsTuple))
+	{
+		Form_pg_statistic stats;
+
+		stats = (Form_pg_statistic) GETSTRUCT(vardata->statsTuple);
+		nullfrac = stats->stanullfrac;
+	}
 
 	/*
 	 * If we matched the var to a unique index or DISTINCT clause, assume
@@ -292,11 +329,12 @@ var_eq_const(VariableStatData *vardata, Oid operator,
 	 * ignoring the information.)
 	 */
 	if (vardata->isunique && vardata->rel && vardata->rel->tuples >= 1.0)
-		return 1.0 / vardata->rel->tuples;
-
-	if (HeapTupleIsValid(vardata->statsTuple) &&
-		statistic_proc_security_check(vardata,
-									  (opfuncoid = get_opcode(operator))))
+	{
+		selec = 1.0 / vardata->rel->tuples;
+	}
+	else if (HeapTupleIsValid(vardata->statsTuple) &&
+			 statistic_proc_security_check(vardata,
+										 (opfuncoid = get_opcode(operator))))
 	{
 		Form_pg_statistic stats;
 		AttStatsSlot sslot;
@@ -363,7 +401,7 @@ var_eq_const(VariableStatData *vardata, Oid operator,
 
 			for (i = 0; i < sslot.nnumbers; i++)
 				sumcommon += sslot.numbers[i];
-			selec = 1.0 - sumcommon - stats->stanullfrac;
+			selec = 1.0 - sumcommon - nullfrac;
 			CLAMP_PROBABILITY(selec);
 
 			/*
@@ -396,6 +434,10 @@ var_eq_const(VariableStatData *vardata, Oid operator,
 		selec = 1.0 / get_variable_numdistinct(vardata, &isdefault);
 	}
 
+	/* now adjust if we wanted <> rather than = */
+	if (negate)
+		selec = 1.0 - selec - nullfrac;
+
 	/* result should be in range, but make sure... */
 	CLAMP_PROBABILITY(selec);
 
@@ -408,10 +450,22 @@ var_eq_const(VariableStatData *vardata, Oid operator,
 static double
 var_eq_non_const(VariableStatData *vardata, Oid operator,
 				 Node *other,
-				 bool varonleft)
+				 bool varonleft, bool negate)
 {
 	double		selec;
+	double		nullfrac = 0.0;
 	bool		isdefault;
+
+	/*
+	 * Grab the nullfrac for use below.
+	 */
+	if (HeapTupleIsValid(vardata->statsTuple))
+	{
+		Form_pg_statistic stats;
+
+		stats = (Form_pg_statistic) GETSTRUCT(vardata->statsTuple);
+		nullfrac = stats->stanullfrac;
+	}
 
 	/*
 	 * If we matched the var to a unique index or DISTINCT clause, assume
@@ -421,9 +475,10 @@ var_eq_non_const(VariableStatData *vardata, Oid operator,
 	 * ignoring the information.)
 	 */
 	if (vardata->isunique && vardata->rel && vardata->rel->tuples >= 1.0)
-		return 1.0 / vardata->rel->tuples;
-
-	if (HeapTupleIsValid(vardata->statsTuple))
+	{
+		selec = 1.0 / vardata->rel->tuples;
+	}
+	else if (HeapTupleIsValid(vardata->statsTuple))
 	{
 		Form_pg_statistic stats;
 		double		ndistinct;
@@ -441,7 +496,7 @@ var_eq_non_const(VariableStatData *vardata, Oid operator,
 		 * values, regardless of their frequency in the table.  Is that a good
 		 * idea?)
 		 */
-		selec = 1.0 - stats->stanullfrac;
+		selec = 1.0 - nullfrac;
 		ndistinct = get_variable_numdistinct(vardata, &isdefault);
 		if (ndistinct > 1)
 			selec /= ndistinct;
@@ -469,6 +524,10 @@ var_eq_non_const(VariableStatData *vardata, Oid operator,
 		selec = 1.0 / get_variable_numdistinct(vardata, &isdefault);
 	}
 
+	/* now adjust if we wanted <> rather than = */
+	if (negate)
+		selec = 1.0 - selec - nullfrac;
+
 	/* result should be in range, but make sure... */
 	CLAMP_PROBABILITY(selec);
 
@@ -485,33 +544,7 @@ var_eq_non_const(VariableStatData *vardata, Oid operator,
 Datum
 neqsel(PG_FUNCTION_ARGS)
 {
-	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
-	Oid			operator = PG_GETARG_OID(1);
-	List	   *args = (List *) PG_GETARG_POINTER(2);
-	int			varRelid = PG_GETARG_INT32(3);
-	Oid			eqop;
-	float8		result;
-
-	/*
-	 * We want 1 - eqsel() where the equality operator is the one associated
-	 * with this != operator, that is, its negator.
-	 */
-	eqop = get_negator(operator);
-	if (eqop)
-	{
-		result = DatumGetFloat8(DirectFunctionCall4(eqsel,
-													PointerGetDatum(root),
-													ObjectIdGetDatum(eqop),
-													PointerGetDatum(args),
-													Int32GetDatum(varRelid)));
-	}
-	else
-	{
-		/* Use default selectivity (should we raise an error instead?) */
-		result = DEFAULT_EQ_SEL;
-	}
-	result = 1.0 - result;
-	PG_RETURN_FLOAT8(result);
+	PG_RETURN_FLOAT8((float8) eqsel_internal(fcinfo, true));
 }
 
 /*
@@ -1114,6 +1147,7 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype, bool negate)
 	Const	   *patt;
 	Const	   *prefix = NULL;
 	Selectivity rest_selec = 0;
+	double		nullfrac = 0.0;
 	double		result;
 
 	/*
@@ -1203,6 +1237,17 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype, bool negate)
 	}
 
 	/*
+	 * Grab the nullfrac for use below.
+	 */
+	if (HeapTupleIsValid(vardata.statsTuple))
+	{
+		Form_pg_statistic stats;
+
+		stats = (Form_pg_statistic) GETSTRUCT(vardata.statsTuple);
+		nullfrac = stats->stanullfrac;
+	}
+
+	/*
 	 * Pull out any fixed prefix implied by the pattern, and estimate the
 	 * fractional selectivity of the remainder of the pattern.  Unlike many of
 	 * the other functions in this file, we use the pattern operator's actual
@@ -1252,7 +1297,7 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype, bool negate)
 		if (eqopr == InvalidOid)
 			elog(ERROR, "no = operator for opfamily %u", opfamily);
 		result = var_eq_const(&vardata, eqopr, prefix->constvalue,
-							  false, true);
+							  false, true, false);
 	}
 	else
 	{
@@ -1275,8 +1320,7 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype, bool negate)
 		Selectivity selec;
 		int			hist_size;
 		FmgrInfo	opproc;
-		double		nullfrac,
-					mcv_selec,
+		double		mcv_selec,
 					sumcommon;
 
 		/* Try to use the histogram entries to get selectivity */
@@ -1328,11 +1372,6 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype, bool negate)
 		mcv_selec = mcv_selectivity(&vardata, &opproc, constval, true,
 									&sumcommon);
 
-		if (HeapTupleIsValid(vardata.statsTuple))
-			nullfrac = ((Form_pg_statistic) GETSTRUCT(vardata.statsTuple))->stanullfrac;
-		else
-			nullfrac = 0.0;
-
 		/*
 		 * Now merge the results from the MCV and histogram calculations,
 		 * realizing that the histogram covers only the non-null values that
@@ -1340,11 +1379,15 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype, bool negate)
 		 */
 		selec *= 1.0 - nullfrac - sumcommon;
 		selec += mcv_selec;
-
-		/* result should be in range, but make sure... */
-		CLAMP_PROBABILITY(selec);
 		result = selec;
 	}
+
+	/* now adjust if we wanted not-match rather than match */
+	if (negate)
+		result = 1.0 - result - nullfrac;
+
+	/* result should be in range, but make sure... */
+	CLAMP_PROBABILITY(result);
 
 	if (prefix)
 	{
@@ -1354,7 +1397,7 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype, bool negate)
 
 	ReleaseVariableStats(vardata);
 
-	return negate ? (1.0 - result) : result;
+	return result;
 }
 
 /*
@@ -1451,7 +1494,7 @@ boolvarsel(PlannerInfo *root, Node *arg, int varRelid)
 		 * compute the selectivity as if that is what we have.
 		 */
 		selec = var_eq_const(&vardata, BooleanEqualOperator,
-							 BoolGetDatum(true), false, true);
+							 BoolGetDatum(true), false, true, false);
 	}
 	else if (is_funcclause(arg))
 	{
@@ -5788,7 +5831,7 @@ prefix_selectivity(PlannerInfo *root, VariableStatData *vardata,
 	if (cmpopr == InvalidOid)
 		elog(ERROR, "no = operator for opfamily %u", opfamily);
 	eq_sel = var_eq_const(vardata, cmpopr, prefixcon->constvalue,
-						  false, true);
+						  false, true, false);
 
 	prefixsel = Max(prefixsel, eq_sel);
 
