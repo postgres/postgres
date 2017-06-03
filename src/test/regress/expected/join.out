@@ -5476,48 +5476,44 @@ select * from j1 natural join j2;
 explain (verbose, costs off)
 select * from j1
 inner join (select distinct id from j3) j3 on j1.id = j3.id;
-                  QUERY PLAN                   
------------------------------------------------
+               QUERY PLAN                
+-----------------------------------------
  Nested Loop
    Output: j1.id, j3.id
    Inner Unique: true
    Join Filter: (j1.id = j3.id)
+   ->  Unique
+         Output: j3.id
+         ->  Sort
+               Output: j3.id
+               Sort Key: j3.id
+               ->  Seq Scan on public.j3
+                     Output: j3.id
    ->  Seq Scan on public.j1
          Output: j1.id
-   ->  Materialize
-         Output: j3.id
-         ->  Unique
-               Output: j3.id
-               ->  Sort
-                     Output: j3.id
-                     Sort Key: j3.id
-                     ->  Seq Scan on public.j3
-                           Output: j3.id
-(15 rows)
+(13 rows)
 
 -- ensure group by clause allows the inner to become unique
 explain (verbose, costs off)
 select * from j1
 inner join (select id from j3 group by id) j3 on j1.id = j3.id;
-                  QUERY PLAN                   
------------------------------------------------
+               QUERY PLAN                
+-----------------------------------------
  Nested Loop
    Output: j1.id, j3.id
    Inner Unique: true
    Join Filter: (j1.id = j3.id)
+   ->  Group
+         Output: j3.id
+         Group Key: j3.id
+         ->  Sort
+               Output: j3.id
+               Sort Key: j3.id
+               ->  Seq Scan on public.j3
+                     Output: j3.id
    ->  Seq Scan on public.j1
          Output: j1.id
-   ->  Materialize
-         Output: j3.id
-         ->  Group
-               Output: j3.id
-               Group Key: j3.id
-               ->  Sort
-                     Output: j3.id
-                     Sort Key: j3.id
-                     ->  Seq Scan on public.j3
-                           Output: j3.id
-(16 rows)
+(14 rows)
 
 drop table j1;
 drop table j2;
@@ -5558,13 +5554,11 @@ inner join j2 on j1.id1 = j2.id1 and j1.id2 = j2.id2;
    Output: j1.id1, j1.id2, j2.id1, j2.id2
    Inner Unique: true
    Join Filter: ((j1.id1 = j2.id1) AND (j1.id2 = j2.id2))
+   ->  Seq Scan on public.j2
+         Output: j2.id1, j2.id2
    ->  Seq Scan on public.j1
          Output: j1.id1, j1.id2
-   ->  Materialize
-         Output: j2.id1, j2.id2
-         ->  Seq Scan on public.j2
-               Output: j2.id1, j2.id2
-(10 rows)
+(8 rows)
 
 -- ensure we don't detect the join to be unique when quals are not part of the
 -- join condition

@@ -2214,6 +2214,7 @@ final_cost_nestloop(PlannerInfo *root, NestPath *path,
 		Cost		inner_run_cost = workspace->inner_run_cost;
 		Cost		inner_rescan_run_cost = workspace->inner_rescan_run_cost;
 		double		outer_matched_rows;
+		double		outer_unmatched_rows;
 		Selectivity inner_scan_frac;
 
 		/*
@@ -2226,6 +2227,7 @@ final_cost_nestloop(PlannerInfo *root, NestPath *path,
 		 * least 1, no such clamp is needed now.)
 		 */
 		outer_matched_rows = rint(outer_path_rows * extra->semifactors.outer_match_frac);
+		outer_unmatched_rows = outer_path_rows - outer_matched_rows;
 		inner_scan_frac = 2.0 / (extra->semifactors.match_count + 1.0);
 
 		/*
@@ -2269,7 +2271,7 @@ final_cost_nestloop(PlannerInfo *root, NestPath *path,
 			 * of a nonempty scan.  We consider that these are all rescans,
 			 * since we used inner_run_cost once already.
 			 */
-			run_cost += (outer_path_rows - outer_matched_rows) *
+			run_cost += outer_unmatched_rows *
 				inner_rescan_run_cost / inner_path_rows;
 
 			/*
@@ -2287,20 +2289,28 @@ final_cost_nestloop(PlannerInfo *root, NestPath *path,
 			 * difficult to estimate whether that will happen (and it could
 			 * not happen if there are any unmatched outer rows!), so be
 			 * conservative and always charge the whole first-scan cost once.
+			 * We consider this charge to correspond to the first unmatched
+			 * outer row, unless there isn't one in our estimate, in which
+			 * case blame it on the first matched row.
 			 */
+
+			/* First, count all unmatched join tuples as being processed */
+			ntuples += outer_unmatched_rows * inner_path_rows;
+
+			/* Now add the forced full scan, and decrement appropriate count */
 			run_cost += inner_run_cost;
+			if (outer_unmatched_rows >= 1)
+				outer_unmatched_rows -= 1;
+			else
+				outer_matched_rows -= 1;
 
 			/* Add inner run cost for additional outer tuples having matches */
-			if (outer_matched_rows > 1)
-				run_cost += (outer_matched_rows - 1) * inner_rescan_run_cost * inner_scan_frac;
+			if (outer_matched_rows > 0)
+				run_cost += outer_matched_rows * inner_rescan_run_cost * inner_scan_frac;
 
-			/* Add inner run cost for unmatched outer tuples */
-			run_cost += (outer_path_rows - outer_matched_rows) *
-				inner_rescan_run_cost;
-
-			/* And count the unmatched join tuples as being processed */
-			ntuples += (outer_path_rows - outer_matched_rows) *
-				inner_path_rows;
+			/* Add inner run cost for additional unmatched outer tuples */
+			if (outer_unmatched_rows > 0)
+				run_cost += outer_unmatched_rows * inner_rescan_run_cost;
 		}
 	}
 	else
