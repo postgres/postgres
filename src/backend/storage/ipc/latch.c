@@ -370,7 +370,7 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 		AddWaitEventToSet(set, WL_LATCH_SET, PGINVALID_SOCKET,
 						  (Latch *) latch, NULL);
 
-	if (wakeEvents & WL_POSTMASTER_DEATH)
+	if (wakeEvents & WL_POSTMASTER_DEATH && IsUnderPostmaster)
 		AddWaitEventToSet(set, WL_POSTMASTER_DEATH, PGINVALID_SOCKET,
 						  NULL, NULL);
 
