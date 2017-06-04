@@ -336,12 +336,9 @@ var_eq_const(VariableStatData *vardata, Oid operator,
 			 statistic_proc_security_check(vardata,
 										 (opfuncoid = get_opcode(operator))))
 	{
-		Form_pg_statistic stats;
 		AttStatsSlot sslot;
 		bool		match = false;
 		int			i;
-
-		stats = (Form_pg_statistic) GETSTRUCT(vardata->statsTuple);
 
 		/*
 		 * Is the constant "=" to any of the column's most common values?
@@ -480,11 +477,8 @@ var_eq_non_const(VariableStatData *vardata, Oid operator,
 	}
 	else if (HeapTupleIsValid(vardata->statsTuple))
 	{
-		Form_pg_statistic stats;
 		double		ndistinct;
 		AttStatsSlot sslot;
-
-		stats = (Form_pg_statistic) GETSTRUCT(vardata->statsTuple);
 
 		/*
 		 * Search is for a value that we do not know a priori, but we will
