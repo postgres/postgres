@@ -68,7 +68,7 @@ sepgsql_proc_post_create(Oid functionId)
 
 	tuple = systable_getnext(sscan);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "catalog lookup failed for proc %u", functionId);
+		elog(ERROR, "could not find tuple for function %u", functionId);
 
 	proForm = (Form_pg_proc) GETSTRUCT(tuple);
 
@@ -261,7 +261,7 @@ sepgsql_proc_setattr(Oid functionId)
 							   SnapshotSelf, 1, &skey);
 	newtup = systable_getnext(sscan);
 	if (!HeapTupleIsValid(newtup))
-		elog(ERROR, "catalog lookup failed for function %u", functionId);
+		elog(ERROR, "could not find tuple for function %u", functionId);
 	newform = (Form_pg_proc) GETSTRUCT(newtup);
 
 	/*

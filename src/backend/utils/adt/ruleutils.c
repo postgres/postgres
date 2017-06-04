@@ -1851,7 +1851,7 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 			heap_close(relation, AccessShareLock);
 			return NULL;
 		}
-		elog(ERROR, "cache lookup failed for constraint %u", constraintId);
+		elog(ERROR, "could not find tuple for constraint %u", constraintId);
 	}
 
 	conForm = (Form_pg_constraint) GETSTRUCT(tup);

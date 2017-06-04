@@ -88,7 +88,7 @@ sepgsql_database_post_create(Oid databaseId, const char *dtemplate)
 							   SnapshotSelf, 1, &skey);
 	tuple = systable_getnext(sscan);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "catalog lookup failed for database %u", databaseId);
+		elog(ERROR, "could not find tuple for database %u", databaseId);
 
 	datForm = (Form_pg_database) GETSTRUCT(tuple);
 

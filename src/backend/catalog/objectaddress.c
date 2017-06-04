@@ -3345,7 +3345,7 @@ getObjectDescription(const ObjectAddress *object)
 				tuple = systable_getnext(sscan);
 
 				if (!HeapTupleIsValid(tuple))
-					elog(ERROR, "cache lookup failed for policy %u",
+					elog(ERROR, "could not find tuple for policy %u",
 						 object->objectId);
 
 				form_policy = (Form_pg_policy) GETSTRUCT(tuple);

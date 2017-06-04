@@ -2738,7 +2738,7 @@ ExecGrant_Largeobject(InternalGrant *istmt)
 
 		tuple = systable_getnext(scan);
 		if (!HeapTupleIsValid(tuple))
-			elog(ERROR, "cache lookup failed for large object %u", loid);
+			elog(ERROR, "could not find tuple for large object %u", loid);
 
 		form_lo_meta = (Form_pg_largeobject_metadata) GETSTRUCT(tuple);
 
@@ -5503,7 +5503,7 @@ recordExtObjInitPriv(Oid objoid, Oid classoid)
 
 		tuple = systable_getnext(scan);
 		if (!HeapTupleIsValid(tuple))
-			elog(ERROR, "cache lookup failed for large object %u", objoid);
+			elog(ERROR, "could not find tuple for large object %u", objoid);
 
 		aclDatum = heap_getattr(tuple,
 								Anum_pg_largeobject_metadata_lomacl,

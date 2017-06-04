@@ -83,7 +83,7 @@ sepgsql_attribute_post_create(Oid relOid, AttrNumber attnum)
 
 	tuple = systable_getnext(sscan);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "catalog lookup failed for column %d of relation %u",
+		elog(ERROR, "could not find tuple for column %d of relation %u",
 			 attnum, relOid);
 
 	attForm = (Form_pg_attribute) GETSTRUCT(tuple);
@@ -271,7 +271,7 @@ sepgsql_relation_post_create(Oid relOid)
 
 	tuple = systable_getnext(sscan);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "catalog lookup failed for relation %u", relOid);
+		elog(ERROR, "could not find tuple for relation %u", relOid);
 
 	classForm = (Form_pg_class) GETSTRUCT(tuple);
 
@@ -623,7 +623,7 @@ sepgsql_relation_setattr(Oid relOid)
 
 	newtup = systable_getnext(sscan);
 	if (!HeapTupleIsValid(newtup))
-		elog(ERROR, "catalog lookup failed for relation %u", relOid);
+		elog(ERROR, "could not find tuple for relation %u", relOid);
 	newform = (Form_pg_class) GETSTRUCT(newtup);
 
 	/*
@@ -700,7 +700,7 @@ sepgsql_relation_setattr_extra(Relation catalog,
 							   SnapshotSelf, 1, &skey);
 	tuple = systable_getnext(sscan);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "catalog lookup failed for object %u in catalog \"%s\"",
+		elog(ERROR, "could not find tuple for object %u in catalog \"%s\"",
 			 extra_oid, RelationGetRelationName(catalog));
 
 	datum = heap_getattr(tuple, anum_relation_id,

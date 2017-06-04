@@ -874,7 +874,8 @@ get_partition_parent(Oid relid)
 							  NULL, 2, key);
 
 	tuple = systable_getnext(scan);
-	Assert(HeapTupleIsValid(tuple));
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "could not find tuple for parent of relation %u", relid);
 
 	form = (Form_pg_inherits) GETSTRUCT(tuple);
 	result = form->inhparent;

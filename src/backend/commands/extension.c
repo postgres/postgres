@@ -2387,7 +2387,7 @@ pg_extension_config_dump(PG_FUNCTION_ARGS)
 	extTup = systable_getnext(extScan);
 
 	if (!HeapTupleIsValid(extTup))		/* should not happen */
-		elog(ERROR, "extension with oid %u does not exist",
+		elog(ERROR, "could not find tuple for extension %u",
 			 CurrentExtensionObject);
 
 	memset(repl_val, 0, sizeof(repl_val));
@@ -2535,7 +2535,7 @@ extension_config_remove(Oid extensionoid, Oid tableoid)
 	extTup = systable_getnext(extScan);
 
 	if (!HeapTupleIsValid(extTup))		/* should not happen */
-		elog(ERROR, "extension with oid %u does not exist",
+		elog(ERROR, "could not find tuple for extension %u",
 			 extensionoid);
 
 	/* Search extconfig for the tableoid */
@@ -2736,7 +2736,8 @@ AlterExtensionNamespace(const char *extensionName, const char *newschema, Oid *o
 	extTup = systable_getnext(extScan);
 
 	if (!HeapTupleIsValid(extTup))		/* should not happen */
-		elog(ERROR, "extension with oid %u does not exist", extensionOid);
+		elog(ERROR, "could not find tuple for extension %u",
+			 extensionOid);
 
 	/* Copy tuple so we can modify it below */
 	extTup = heap_copytuple(extTup);
@@ -3057,7 +3058,7 @@ ApplyExtensionUpdates(Oid extensionOid,
 		extTup = systable_getnext(extScan);
 
 		if (!HeapTupleIsValid(extTup))	/* should not happen */
-			elog(ERROR, "extension with oid %u does not exist",
+			elog(ERROR, "could not find tuple for extension %u",
 				 extensionOid);
 
 		extForm = (Form_pg_extension) GETSTRUCT(extTup);
