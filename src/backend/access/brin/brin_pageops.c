@@ -73,10 +73,8 @@ brin_doupdate(Relation idxrel, BlockNumber pagesPerRange,
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-			errmsg("index row size %lu exceeds maximum %lu for index \"%s\"",
-				   (unsigned long) newsz,
-				   (unsigned long) BrinMaxItemSize,
-				   RelationGetRelationName(idxrel))));
+			errmsg("index row size %zu exceeds maximum %zu for index \"%s\"",
+				   newsz, BrinMaxItemSize, RelationGetRelationName(idxrel))));
 		return false;			/* keep compiler quiet */
 	}
 
@@ -357,10 +355,8 @@ brin_doinsert(Relation idxrel, BlockNumber pagesPerRange,
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-			errmsg("index row size %lu exceeds maximum %lu for index \"%s\"",
-				   (unsigned long) itemsz,
-				   (unsigned long) BrinMaxItemSize,
-				   RelationGetRelationName(idxrel))));
+			errmsg("index row size %zu exceeds maximum %zu for index \"%s\"",
+				   itemsz, BrinMaxItemSize, RelationGetRelationName(idxrel))));
 		return InvalidOffsetNumber;		/* keep compiler quiet */
 	}
 
@@ -669,7 +665,7 @@ brin_getinsertbuffer(Relation irel, Buffer oldbuf, Size itemsz,
 	BlockNumber oldblk;
 	BlockNumber newblk;
 	Page		page;
-	int			freespace;
+	Size		freespace;
 
 	/* callers must have checked */
 	Assert(itemsz <= BrinMaxItemSize);
@@ -825,10 +821,8 @@ brin_getinsertbuffer(Relation irel, Buffer oldbuf, Size itemsz,
 
 			ereport(ERROR,
 					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-			errmsg("index row size %lu exceeds maximum %lu for index \"%s\"",
-				   (unsigned long) itemsz,
-				   (unsigned long) freespace,
-				   RelationGetRelationName(irel))));
+			errmsg("index row size %zu exceeds maximum %zu for index \"%s\"",
+				   itemsz, freespace, RelationGetRelationName(irel))));
 			return InvalidBuffer;		/* keep compiler quiet */
 		}
 

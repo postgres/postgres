@@ -61,7 +61,7 @@ pg_rusage_show(const PGRUsage *ru0)
 	}
 
 	snprintf(result, sizeof(result),
-			 "CPU: user: %d.%02d s, system: %d.%02d s, elapsed: %d.%02d s",
+			 _("CPU: user: %d.%02d s, system: %d.%02d s, elapsed: %d.%02d s"),
 			 (int) (ru1.ru.ru_utime.tv_sec - ru0->ru.ru_utime.tv_sec),
 		  (int) (ru1.ru.ru_utime.tv_usec - ru0->ru.ru_utime.tv_usec) / 10000,
 			 (int) (ru1.ru.ru_stime.tv_sec - ru0->ru.ru_stime.tv_sec),
