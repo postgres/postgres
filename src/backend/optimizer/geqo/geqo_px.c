@@ -37,6 +37,7 @@
 #include "optimizer/geqo_random.h"
 #include "optimizer/geqo_recombination.h"
 
+#if defined(PX)
 
 /* px
  *
@@ -105,3 +106,5 @@ px(PlannerInfo *root, Gene *tour1, Gene *tour2, Gene *offspring, int num_gene,
 	}
 
 }
+
+#endif   /* defined(PX) */

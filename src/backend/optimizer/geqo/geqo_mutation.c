@@ -35,6 +35,8 @@
 #include "optimizer/geqo_mutation.h"
 #include "optimizer/geqo_random.h"
 
+#if defined(CX)					/* currently used only in CX mode */
+
 void
 geqo_mutation(PlannerInfo *root, Gene *tour, int num_gene)
 {
@@ -60,3 +62,5 @@ geqo_mutation(PlannerInfo *root, Gene *tour, int num_gene)
 		num_swaps -= 1;
 	}
 }
+
+#endif   /* defined(CX) */

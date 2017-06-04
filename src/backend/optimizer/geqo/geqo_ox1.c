@@ -37,6 +37,7 @@
 #include "optimizer/geqo_random.h"
 #include "optimizer/geqo_recombination.h"
 
+#if defined(OX1)
 
 /* ox1
  *
@@ -90,3 +91,5 @@ ox1(PlannerInfo *root, Gene *tour1, Gene *tour2, Gene *offspring, int num_gene,
 	}
 
 }
+
+#endif   /* defined(OX1) */

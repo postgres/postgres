@@ -38,6 +38,7 @@
 #include "optimizer/geqo_recombination.h"
 #include "optimizer/geqo_random.h"
 
+#if defined(CX)
 
 /* cx
  *
@@ -119,3 +120,5 @@ cx(PlannerInfo *root, Gene *tour1, Gene *tour2, Gene *offspring,
 
 	return num_diffs;
 }
+
+#endif   /* defined(CX) */

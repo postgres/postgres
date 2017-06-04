@@ -31,7 +31,7 @@
  #define GEQO_DEBUG
  */
 
-/* recombination mechanism */
+/* choose one recombination mechanism here */
 /*
  #define ERX
  #define PMX

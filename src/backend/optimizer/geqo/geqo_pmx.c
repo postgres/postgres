@@ -37,6 +37,7 @@
 #include "optimizer/geqo_random.h"
 #include "optimizer/geqo_recombination.h"
 
+#if defined(PMX)
 
 /* pmx
  *
@@ -219,3 +220,5 @@ pmx(PlannerInfo *root, Gene *tour1, Gene *tour2, Gene *offspring, int num_gene)
 	pfree(indx);
 	pfree(check_list);
 }
+
+#endif   /* defined(PMX) */
