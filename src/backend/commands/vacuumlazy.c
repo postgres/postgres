@@ -1139,8 +1139,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 									"%u pages are entirely empty.\n",
 									empty_pages),
 					 empty_pages);
-	appendStringInfo(&buf, _("%s."),
-					 pg_rusage_show(&ru0));
+	appendStringInfo(&buf, "%s.", pg_rusage_show(&ru0));
 
 	ereport(elevel,
 			(errmsg("\"%s\": found %.0f removable, %.0f nonremovable row versions in %u out of %u pages",
@@ -1215,8 +1214,7 @@ lazy_vacuum_heap(Relation onerel, LVRelStats *vacrelstats)
 			(errmsg("\"%s\": removed %d row versions in %d pages",
 					RelationGetRelationName(onerel),
 					tupindex, npages),
-			 errdetail("%s.",
-					   pg_rusage_show(&ru0))));
+			 errdetail_internal("%s", pg_rusage_show(&ru0))));
 }
 
 /*
@@ -1382,7 +1380,7 @@ lazy_vacuum_index(Relation indrel,
 			(errmsg("scanned index \"%s\" to remove %d row versions",
 					RelationGetRelationName(indrel),
 					vacrelstats->num_dead_tuples),
-			 errdetail("%s.", pg_rusage_show(&ru0))));
+			 errdetail_internal("%s", pg_rusage_show(&ru0))));
 }
 
 /*
@@ -1554,7 +1552,7 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
 				(errmsg("\"%s\": truncated %u to %u pages",
 						RelationGetRelationName(onerel),
 						old_rel_pages, new_rel_pages),
-				 errdetail("%s.",
+				 errdetail_internal("%s",
 						   pg_rusage_show(&ru0))));
 		old_rel_pages = new_rel_pages;
 	} while (new_rel_pages > vacrelstats->nonempty_pages &&
