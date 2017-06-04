@@ -6679,6 +6679,7 @@ ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
 						  InvalidOid,	/* no predefined OID */
 						  true, /* is_alter_table */
 						  check_rights,
+						  false,	/* check_not_in_use - we did it already */
 						  skip_build,
 						  quiet);
 

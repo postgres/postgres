@@ -323,6 +323,7 @@ Boot_DeclareIndexStmt:
 								$4,
 								false,
 								false,
+								false,
 								true, /* skip_build */
 								false);
 					do_end();
@@ -364,6 +365,7 @@ Boot_DeclareUniqueIndexStmt:
 					DefineIndex(relationId,
 								stmt,
 								$5,
+								false,
 								false,
 								false,
 								true, /* skip_build */

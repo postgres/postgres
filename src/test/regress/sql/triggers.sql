@@ -1184,6 +1184,37 @@ drop function self_ref_trigger_ins_func();
 drop function self_ref_trigger_del_func();
 
 --
+-- Check that index creation (or DDL in general) is prohibited in a trigger
+--
+
+create table trigger_ddl_table (
+   col1 integer,
+   col2 integer
+);
+
+create function trigger_ddl_func() returns trigger as $$
+begin
+  alter table trigger_ddl_table add primary key (col1);
+  return new;
+end$$ language plpgsql;
+
+create trigger trigger_ddl_func before insert on trigger_ddl_table for each row
+  execute procedure trigger_ddl_func();
+
+insert into trigger_ddl_table values (1, 42);  -- fail
+
+create or replace function trigger_ddl_func() returns trigger as $$
+begin
+  create index on trigger_ddl_table (col2);
+  return new;
+end$$ language plpgsql;
+
+insert into trigger_ddl_table values (1, 42);  -- fail
+
+drop table trigger_ddl_table;
+drop function trigger_ddl_func();
+
+--
 -- Verify behavior of before and after triggers with INSERT...ON CONFLICT
 -- DO UPDATE
 --

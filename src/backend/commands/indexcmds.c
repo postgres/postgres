@@ -295,6 +295,9 @@ CheckIndexCompatible(Oid oldId,
  * 'is_alter_table': this is due to an ALTER rather than a CREATE operation.
  * 'check_rights': check for CREATE rights in namespace and tablespace.  (This
  *		should be true except when ALTER is deleting/recreating an index.)
+ * 'check_not_in_use': check for table not already in use in current session.
+ *		This should be true unless caller is holding the table open, in which
+ *		case the caller had better have checked it earlier.
  * 'skip_build': make the catalog entries but leave the index file empty;
  *		it will be filled later.
  * 'quiet': suppress the NOTICE chatter ordinarily provided for constraints.
@@ -307,6 +310,7 @@ DefineIndex(Oid relationId,
 			Oid indexRelationId,
 			bool is_alter_table,
 			bool check_rights,
+			bool check_not_in_use,
 			bool skip_build,
 			bool quiet)
 {
@@ -403,6 +407,15 @@ DefineIndex(Oid relationId,
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot create indexes on temporary tables of other sessions")));
+
+	/*
+	 * Unless our caller vouches for having checked this already, insist that
+	 * the table not be in use by our own session, either.  Otherwise we might
+	 * fail to make entries in the new index (for instance, if an INSERT or
+	 * UPDATE is in progress and has already made its list of target indexes).
+	 */
+	if (check_not_in_use)
+		CheckTableNotInUse(rel, "CREATE INDEX");
 
 	/*
 	 * Verify we (still) have CREATE rights in the rel's namespace.
