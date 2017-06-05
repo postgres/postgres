@@ -22,9 +22,9 @@
 #ifndef SHM_TOC_H
 #define SHM_TOC_H
 
-#include "storage/shmem.h"
+#include "storage/shmem.h"		/* for add_size() */
 
-struct shm_toc;
+/* shm_toc is an opaque type known only within shm_toc.c */
 typedef struct shm_toc shm_toc;
 
 extern shm_toc *shm_toc_create(uint64 magic, void *address, Size nbytes);
@@ -36,7 +36,9 @@ extern void *shm_toc_lookup(shm_toc *toc, uint64 key, bool noError);
 
 /*
  * Tools for estimating how large a chunk of shared memory will be needed
- * to store a TOC and its dependent objects.
+ * to store a TOC and its dependent objects.  Note: we don't really support
+ * large numbers of keys, but it's convenient to declare number_of_keys
+ * as a Size anyway.
  */
 typedef struct
 {
@@ -47,11 +49,10 @@ typedef struct
 #define shm_toc_initialize_estimator(e) \
 	((e)->space_for_chunks = 0, (e)->number_of_keys = 0)
 #define shm_toc_estimate_chunk(e, sz) \
-	((e)->space_for_chunks = add_size((e)->space_for_chunks, \
-		BUFFERALIGN((sz))))
+	((e)->space_for_chunks = add_size((e)->space_for_chunks, BUFFERALIGN(sz)))
 #define shm_toc_estimate_keys(e, cnt) \
-	((e)->number_of_keys = add_size((e)->number_of_keys, (cnt)))
+	((e)->number_of_keys = add_size((e)->number_of_keys, cnt))
 
-extern Size shm_toc_estimate(shm_toc_estimator *);
+extern Size shm_toc_estimate(shm_toc_estimator *e);
 
 #endif   /* SHM_TOC_H */
