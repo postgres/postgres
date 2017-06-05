@@ -214,12 +214,12 @@ SH_COMPUTE_PARAMETERS(SH_TYPE * tb, uint32 newsize)
 	/* supporting zero sized hashes would complicate matters */
 	size = Max(newsize, 2);
 
-	/* round up size to the next power of 2, that's the bucketing works  */
+	/* round up size to the next power of 2, that's how bucketing works */
 	size = sh_pow2(size);
 	Assert(size <= SH_MAX_SIZE);
 
 	/*
-	 * Verify allocation of ->data is possible on platform, without
+	 * Verify that allocation of ->data is possible on this platform, without
 	 * overflowing Size.
 	 */
 	if ((((uint64) sizeof(SH_ELEMENT_TYPE)) * size) >= MaxAllocHugeSize)
@@ -234,8 +234,8 @@ SH_COMPUTE_PARAMETERS(SH_TYPE * tb, uint32 newsize)
 		tb->sizemask = tb->size - 1;
 
 	/*
-	 * Compute growth threshold here and after growing the table, to make
-	 * computations during insert cheaper.
+	 * Compute the next threshold at which we need to grow the hash table
+	 * again.
 	 */
 	if (tb->size == SH_MAX_SIZE)
 		tb->grow_threshold = ((double) tb->size) * SH_MAX_FILLFACTOR;
@@ -696,7 +696,7 @@ SH_DELETE(SH_TYPE * tb, SH_KEY_TYPE key)
 			 * or an element at its optimal position is encountered.
 			 *
 			 * While that sounds expensive, the average chain length is short,
-			 * and deletions would otherwise require toombstones.
+			 * and deletions would otherwise require tombstones.
 			 */
 			while (true)
 			{
