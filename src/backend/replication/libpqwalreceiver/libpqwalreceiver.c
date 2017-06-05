@@ -806,10 +806,9 @@ libpqrcv_processTuples(PGresult *pgres, WalRcvExecResult *walres,
 	/* Make sure we got expected number of fields. */
 	if (nfields != nRetTypes)
 		ereport(ERROR,
-				(errmsg("invalid query responser"),
+				(errmsg("invalid query response"),
 				 errdetail("Expected %d fields, got %d fields.",
 						   nRetTypes, nfields)));
-
 
 	walres->tuplestore = tuplestore_begin_heap(true, false, work_mem);
 
