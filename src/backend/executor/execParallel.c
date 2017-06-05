@@ -341,7 +341,7 @@ ExecParallelSetupTupleQueues(ParallelContext *pcxt, bool reinitialize)
 							 mul_size(PARALLEL_TUPLE_QUEUE_SIZE,
 									  pcxt->nworkers));
 	else
-		tqueuespace = shm_toc_lookup(pcxt->toc, PARALLEL_KEY_TUPLE_QUEUE);
+		tqueuespace = shm_toc_lookup(pcxt->toc, PARALLEL_KEY_TUPLE_QUEUE, false);
 
 	/* Create the queues, and become the receiver for each. */
 	for (i = 0; i < pcxt->nworkers; ++i)
@@ -684,7 +684,7 @@ ExecParallelGetReceiver(dsm_segment *seg, shm_toc *toc)
 	char	   *mqspace;
 	shm_mq	   *mq;
 
-	mqspace = shm_toc_lookup(toc, PARALLEL_KEY_TUPLE_QUEUE);
+	mqspace = shm_toc_lookup(toc, PARALLEL_KEY_TUPLE_QUEUE, false);
 	mqspace += ParallelWorkerNumber * PARALLEL_TUPLE_QUEUE_SIZE;
 	mq = (shm_mq *) mqspace;
 	shm_mq_set_sender(mq, MyProc);
@@ -705,14 +705,14 @@ ExecParallelGetQueryDesc(shm_toc *toc, DestReceiver *receiver,
 	char	   *queryString;
 
 	/* Get the query string from shared memory */
-	queryString = shm_toc_lookup(toc, PARALLEL_KEY_QUERY_TEXT);
+	queryString = shm_toc_lookup(toc, PARALLEL_KEY_QUERY_TEXT, false);
 
 	/* Reconstruct leader-supplied PlannedStmt. */
-	pstmtspace = shm_toc_lookup(toc, PARALLEL_KEY_PLANNEDSTMT);
+	pstmtspace = shm_toc_lookup(toc, PARALLEL_KEY_PLANNEDSTMT, false);
 	pstmt = (PlannedStmt *) stringToNode(pstmtspace);
 
 	/* Reconstruct ParamListInfo. */
-	paramspace = shm_toc_lookup(toc, PARALLEL_KEY_PARAMS);
+	paramspace = shm_toc_lookup(toc, PARALLEL_KEY_PARAMS, false);
 	paramLI = RestoreParamList(&paramspace);
 
 	/*
@@ -843,7 +843,7 @@ ParallelQueryMain(dsm_segment *seg, shm_toc *toc)
 
 	/* Set up DestReceiver, SharedExecutorInstrumentation, and QueryDesc. */
 	receiver = ExecParallelGetReceiver(seg, toc);
-	instrumentation = shm_toc_lookup(toc, PARALLEL_KEY_INSTRUMENTATION);
+	instrumentation = shm_toc_lookup(toc, PARALLEL_KEY_INSTRUMENTATION, true);
 	if (instrumentation != NULL)
 		instrument_options = instrumentation->instrument_options;
 	queryDesc = ExecParallelGetQueryDesc(toc, receiver, instrument_options);
@@ -858,7 +858,7 @@ ParallelQueryMain(dsm_segment *seg, shm_toc *toc)
 	InstrStartParallelQuery();
 
 	/* Attach to the dynamic shared memory area. */
-	area_space = shm_toc_lookup(toc, PARALLEL_KEY_DSA);
+	area_space = shm_toc_lookup(toc, PARALLEL_KEY_DSA, false);
 	area = dsa_attach_in_place(area_space, seg);
 
 	/* Start up the executor */
@@ -875,7 +875,7 @@ ParallelQueryMain(dsm_segment *seg, shm_toc *toc)
 	ExecutorFinish(queryDesc);
 
 	/* Report buffer usage during parallel execution. */
-	buffer_usage = shm_toc_lookup(toc, PARALLEL_KEY_BUFFER_USAGE);
+	buffer_usage = shm_toc_lookup(toc, PARALLEL_KEY_BUFFER_USAGE, false);
 	InstrEndParallelQuery(&buffer_usage[ParallelWorkerNumber]);
 
 	/* Report instrumentation data if any instrumentation options are set. */

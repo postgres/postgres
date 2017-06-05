@@ -208,6 +208,9 @@ shm_toc_insert(shm_toc *toc, uint64 key, void *address)
 /*
  * Look up a TOC entry.
  *
+ * If the key is not found, returns NULL if noError is true, otherwise
+ * throws elog(ERROR).
+ *
  * Unlike the other functions in this file, this operation acquires no lock;
  * it uses only barriers.  It probably wouldn't hurt concurrency very much even
  * if it did get a lock, but since it's reasonably likely that a group of
@@ -215,7 +218,7 @@ shm_toc_insert(shm_toc *toc, uint64 key, void *address)
  * right around the same time, there seems to be some value in avoiding it.
  */
 void *
-shm_toc_lookup(shm_toc *toc, uint64 key)
+shm_toc_lookup(shm_toc *toc, uint64 key, bool noError)
 {
 	uint64		nentry;
 	uint64		i;
@@ -226,10 +229,15 @@ shm_toc_lookup(shm_toc *toc, uint64 key)
 
 	/* Now search for a matching entry. */
 	for (i = 0; i < nentry; ++i)
+	{
 		if (toc->toc_entry[i].key == key)
 			return ((char *) toc) + toc->toc_entry[i].offset;
+	}
 
 	/* No matching entry was found. */
+	if (!noError)
+		elog(ERROR, "could not find key " UINT64_FORMAT " in shm TOC at %p",
+			 key, toc);
 	return NULL;
 }
 

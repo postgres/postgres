@@ -344,7 +344,7 @@ ExecForeignScanInitializeWorker(ForeignScanState *node, shm_toc *toc)
 		int			plan_node_id = node->ss.ps.plan->plan_node_id;
 		void	   *coordinate;
 
-		coordinate = shm_toc_lookup(toc, plan_node_id);
+		coordinate = shm_toc_lookup(toc, plan_node_id, false);
 		fdwroutine->InitializeWorkerForeignScan(node, toc, coordinate);
 	}
 }

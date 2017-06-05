@@ -1005,7 +1005,7 @@ ExecBitmapHeapInitializeWorker(BitmapHeapScanState *node, shm_toc *toc)
 	ParallelBitmapHeapState *pstate;
 	Snapshot	snapshot;
 
-	pstate = shm_toc_lookup(toc, node->ss.ps.plan->plan_node_id);
+	pstate = shm_toc_lookup(toc, node->ss.ps.plan->plan_node_id, false);
 	node->pstate = pstate;
 
 	snapshot = RestoreSnapshot(pstate->phs_snapshot_data);

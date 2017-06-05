@@ -392,12 +392,12 @@ ReinitializeParallelDSM(ParallelContext *pcxt)
 	}
 
 	/* Reset a few bits of fixed parallel state to a clean state. */
-	fps = shm_toc_lookup(pcxt->toc, PARALLEL_KEY_FIXED);
+	fps = shm_toc_lookup(pcxt->toc, PARALLEL_KEY_FIXED, false);
 	fps->last_xlog_end = 0;
 
 	/* Recreate error queues. */
 	error_queue_space =
-		shm_toc_lookup(pcxt->toc, PARALLEL_KEY_ERROR_QUEUE);
+		shm_toc_lookup(pcxt->toc, PARALLEL_KEY_ERROR_QUEUE, false);
 	for (i = 0; i < pcxt->nworkers; ++i)
 	{
 		char	   *start;
@@ -536,7 +536,7 @@ WaitForParallelWorkersToFinish(ParallelContext *pcxt)
 	{
 		FixedParallelState *fps;
 
-		fps = shm_toc_lookup(pcxt->toc, PARALLEL_KEY_FIXED);
+		fps = shm_toc_lookup(pcxt->toc, PARALLEL_KEY_FIXED, false);
 		if (fps->last_xlog_end > XactLastRecEnd)
 			XactLastRecEnd = fps->last_xlog_end;
 	}
@@ -973,8 +973,7 @@ ParallelWorkerMain(Datum main_arg)
 		   errmsg("invalid magic number in dynamic shared memory segment")));
 
 	/* Look up fixed parallel state. */
-	fps = shm_toc_lookup(toc, PARALLEL_KEY_FIXED);
-	Assert(fps != NULL);
+	fps = shm_toc_lookup(toc, PARALLEL_KEY_FIXED, false);
 	MyFixedParallelState = fps;
 
 	/*
@@ -983,7 +982,7 @@ ParallelWorkerMain(Datum main_arg)
 	 * errors that happen here will not be reported back to the process that
 	 * requested that this worker be launched.
 	 */
-	error_queue_space = shm_toc_lookup(toc, PARALLEL_KEY_ERROR_QUEUE);
+	error_queue_space = shm_toc_lookup(toc, PARALLEL_KEY_ERROR_QUEUE, false);
 	mq = (shm_mq *) (error_queue_space +
 					 ParallelWorkerNumber * PARALLEL_ERROR_QUEUE_SIZE);
 	shm_mq_set_sender(mq, MyProc);
@@ -1027,8 +1026,7 @@ ParallelWorkerMain(Datum main_arg)
 	 * this before restoring GUCs, because the libraries might define custom
 	 * variables.
 	 */
-	libraryspace = shm_toc_lookup(toc, PARALLEL_KEY_LIBRARY);
-	Assert(libraryspace != NULL);
+	libraryspace = shm_toc_lookup(toc, PARALLEL_KEY_LIBRARY, false);
 	RestoreLibraryState(libraryspace);
 
 	/*
@@ -1036,8 +1034,7 @@ ParallelWorkerMain(Datum main_arg)
 	 * loading an additional library, though most likely the entry point is in
 	 * the core backend or in a library we just loaded.
 	 */
-	entrypointstate = shm_toc_lookup(toc, PARALLEL_KEY_ENTRYPOINT);
-	Assert(entrypointstate != NULL);
+	entrypointstate = shm_toc_lookup(toc, PARALLEL_KEY_ENTRYPOINT, false);
 	library_name = entrypointstate;
 	function_name = entrypointstate + strlen(library_name) + 1;
 
@@ -1054,30 +1051,26 @@ ParallelWorkerMain(Datum main_arg)
 	SetClientEncoding(GetDatabaseEncoding());
 
 	/* Restore GUC values from launching backend. */
-	gucspace = shm_toc_lookup(toc, PARALLEL_KEY_GUC);
-	Assert(gucspace != NULL);
+	gucspace = shm_toc_lookup(toc, PARALLEL_KEY_GUC, false);
 	StartTransactionCommand();
 	RestoreGUCState(gucspace);
 	CommitTransactionCommand();
 
 	/* Crank up a transaction state appropriate to a parallel worker. */
-	tstatespace = shm_toc_lookup(toc, PARALLEL_KEY_TRANSACTION_STATE);
+	tstatespace = shm_toc_lookup(toc, PARALLEL_KEY_TRANSACTION_STATE, false);
 	StartParallelWorkerTransaction(tstatespace);
 
 	/* Restore combo CID state. */
-	combocidspace = shm_toc_lookup(toc, PARALLEL_KEY_COMBO_CID);
-	Assert(combocidspace != NULL);
+	combocidspace = shm_toc_lookup(toc, PARALLEL_KEY_COMBO_CID, false);
 	RestoreComboCIDState(combocidspace);
 
 	/* Restore transaction snapshot. */
-	tsnapspace = shm_toc_lookup(toc, PARALLEL_KEY_TRANSACTION_SNAPSHOT);
-	Assert(tsnapspace != NULL);
+	tsnapspace = shm_toc_lookup(toc, PARALLEL_KEY_TRANSACTION_SNAPSHOT, false);
 	RestoreTransactionSnapshot(RestoreSnapshot(tsnapspace),
 							   fps->parallel_master_pgproc);
 
 	/* Restore active snapshot. */
-	asnapspace = shm_toc_lookup(toc, PARALLEL_KEY_ACTIVE_SNAPSHOT);
-	Assert(asnapspace != NULL);
+	asnapspace = shm_toc_lookup(toc, PARALLEL_KEY_ACTIVE_SNAPSHOT, false);
 	PushActiveSnapshot(RestoreSnapshot(asnapspace));
 
 	/*

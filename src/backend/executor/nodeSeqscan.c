@@ -332,7 +332,7 @@ ExecSeqScanInitializeWorker(SeqScanState *node, shm_toc *toc)
 {
 	ParallelHeapScanDesc pscan;
 
-	pscan = shm_toc_lookup(toc, node->ss.ps.plan->plan_node_id);
+	pscan = shm_toc_lookup(toc, node->ss.ps.plan->plan_node_id, false);
 	node->ss.ss_currentScanDesc =
 		heap_beginscan_parallel(node->ss.ss_currentRelation, pscan);
 }
