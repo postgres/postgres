@@ -523,10 +523,20 @@ sub AddProject
 	if ($self->{options}->{openssl})
 	{
 		$proj->AddIncludeDir($self->{options}->{openssl} . '\include');
-		$proj->AddLibrary(
-			$self->{options}->{openssl} . '\lib\VC\ssleay32.lib', 1);
-		$proj->AddLibrary(
-			$self->{options}->{openssl} . '\lib\VC\libeay32.lib', 1);
+		if (-e "$self->{options}->{openssl}/lib/VC/ssleayMD.lib")
+		{
+			$proj->AddLibrary(
+				$self->{options}->{openssl} . '\lib\VC\ssleay32.lib', 1);
+			$proj->AddLibrary(
+				$self->{options}->{openssl} . '\lib\VC\libeay32.lib', 1);
+		}
+		else
+		{
+			$proj->AddLibrary(
+				$self->{options}->{openssl} . '\lib\ssleay32.lib', 1);
+			$proj->AddLibrary(
+				$self->{options}->{openssl} . '\lib\libeay32.lib', 1);
+		}
 	}
 	if ($self->{options}->{nls})
 	{
