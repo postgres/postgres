@@ -363,6 +363,35 @@ XLogDumpReadPage(XLogReaderState *state, XLogRecPtr targetPagePtr, int reqLen,
 }
 
 /*
+ * Calculate the size of a record, split into !FPI and FPI parts.
+ */
+static void
+XLogDumpRecordLen(XLogReaderState *record, uint32 *rec_len, uint32 *fpi_len)
+{
+	int			block_id;
+
+	/*
+	 * Calculate the amount of FPI data in the record.
+	 *
+	 * XXX: We peek into xlogreader's private decoded backup blocks for the
+	 * bimg_len indicating the length of FPI data. It doesn't seem worth it to
+	 * add an accessor macro for this.
+	 */
+	*fpi_len = 0;
+	for (block_id = 0; block_id <= record->max_block_id; block_id++)
+	{
+		if (XLogRecHasBlockImage(record, block_id))
+			*fpi_len += record->blocks[block_id].bimg_len;
+	}
+
+	/*
+	 * Calculate the length of the record as the total length - the length of
+	 * all the block images.
+	 */
+	*rec_len = XLogRecGetTotalLen(record) - *fpi_len;
+}
+
+/*
  * Store per-rmgr and per-record statistics for a given record.
  */
 static void
@@ -373,26 +402,12 @@ XLogDumpCountRecord(XLogDumpConfig *config, XLogDumpStats *stats,
 	uint8		recid;
 	uint32		rec_len;
 	uint32		fpi_len;
-	int			block_id;
 
 	stats->count++;
 
 	rmid = XLogRecGetRmid(record);
-	rec_len = XLogRecGetDataLen(record) + SizeOfXLogRecord;
 
-	/*
-	 * Calculate the amount of FPI data in the record.
-	 *
-	 * XXX: We peek into xlogreader's private decoded backup blocks for the
-	 * bimg_len indicating the length of FPI data. It doesn't seem worth it to
-	 * add an accessor macro for this.
-	 */
-	fpi_len = 0;
-	for (block_id = 0; block_id <= record->max_block_id; block_id++)
-	{
-		if (XLogRecHasBlockImage(record, block_id))
-			fpi_len += record->blocks[block_id].bimg_len;
-	}
+	XLogDumpRecordLen(record, &rec_len, &fpi_len);
 
 	/* Update per-rmgr statistics */
 
@@ -422,6 +437,8 @@ XLogDumpDisplayRecord(XLogDumpConfig *config, XLogReaderState *record)
 {
 	const char *id;
 	const RmgrDescData *desc = &RmgrDescTable[XLogRecGetRmid(record)];
+	uint32		rec_len;
+	uint32		fpi_len;
 	RelFileNode rnode;
 	ForkNumber	forknum;
 	BlockNumber blk;
@@ -429,13 +446,15 @@ XLogDumpDisplayRecord(XLogDumpConfig *config, XLogReaderState *record)
 	uint8		info = XLogRecGetInfo(record);
 	XLogRecPtr	xl_prev = XLogRecGetPrev(record);
 
+	XLogDumpRecordLen(record, &rec_len, &fpi_len);
+
 	id = desc->rm_identify(info);
 	if (id == NULL)
 		id = psprintf("UNKNOWN (%x)", info & ~XLR_INFO_MASK);
 
 	printf("rmgr: %-11s len (rec/tot): %6u/%6u, tx: %10u, lsn: %X/%08X, prev %X/%08X, ",
 		   desc->rm_name,
-		   XLogRecGetDataLen(record), XLogRecGetTotalLen(record),
+		   rec_len, XLogRecGetTotalLen(record),
 		   XLogRecGetXid(record),
 		   (uint32) (record->ReadRecPtr >> 32), (uint32) record->ReadRecPtr,
 		   (uint32) (xl_prev >> 32), (uint32) xl_prev);
