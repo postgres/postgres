@@ -8324,6 +8324,17 @@ ShutdownXLOG(int code, Datum arg)
 	ereport(IsPostmasterEnvironment ? LOG : NOTICE,
 			(errmsg("shutting down")));
 
+	/*
+	 * Signal walsenders to move to stopping state.
+	 */
+	WalSndInitStopping();
+
+	/*
+	 * Wait for WAL senders to be in stopping state.  This prevents commands
+	 * from writing new WAL.
+	 */
+	WalSndWaitStopping();
+
 	if (RecoveryInProgress())
 		CreateRestartPoint(CHECKPOINT_IS_SHUTDOWN | CHECKPOINT_IMMEDIATE);
 	else
