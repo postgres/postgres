@@ -208,10 +208,15 @@ WaitForReplicationWorkerAttach(LogicalRepWorker *worker,
 					   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
 					   1000L, WAIT_EVENT_BGWORKER_STARTUP);
 
+		/* emergency bailout if postmaster has died */
 		if (rc & WL_POSTMASTER_DEATH)
 			proc_exit(1);
 
-		ResetLatch(MyLatch);
+		if (rc & WL_LATCH_SET)
+		{
+			ResetLatch(MyLatch);
+			CHECK_FOR_INTERRUPTS();
+		}
 	}
 
 	return;
@@ -440,10 +445,8 @@ logicalrep_worker_stop(Oid subid, Oid relid)
 
 		LWLockRelease(LogicalRepWorkerLock);
 
-		CHECK_FOR_INTERRUPTS();
-
 		/* Wait for signal. */
-		rc = WaitLatch(&MyProc->procLatch,
+		rc = WaitLatch(MyLatch,
 					   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
 					   1000L, WAIT_EVENT_BGWORKER_STARTUP);
 
@@ -451,7 +454,11 @@ logicalrep_worker_stop(Oid subid, Oid relid)
 		if (rc & WL_POSTMASTER_DEATH)
 			proc_exit(1);
 
-		ResetLatch(&MyProc->procLatch);
+		if (rc & WL_LATCH_SET)
+		{
+			ResetLatch(MyLatch);
+			CHECK_FOR_INTERRUPTS();
+		}
 
 		/* Check worker status. */
 		LWLockAcquire(LogicalRepWorkerLock, LW_SHARED);
@@ -492,7 +499,7 @@ logicalrep_worker_stop(Oid subid, Oid relid)
 		CHECK_FOR_INTERRUPTS();
 
 		/* Wait for more work. */
-		rc = WaitLatch(&MyProc->procLatch,
+		rc = WaitLatch(MyLatch,
 					   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
 					   1000L, WAIT_EVENT_BGWORKER_SHUTDOWN);
 
@@ -500,7 +507,11 @@ logicalrep_worker_stop(Oid subid, Oid relid)
 		if (rc & WL_POSTMASTER_DEATH)
 			proc_exit(1);
 
-		ResetLatch(&MyProc->procLatch);
+		if (rc & WL_LATCH_SET)
+		{
+			ResetLatch(MyLatch);
+			CHECK_FOR_INTERRUPTS();
+		}
 	}
 }
 
@@ -876,7 +887,7 @@ ApplyLauncherMain(Datum main_arg)
 		}
 
 		/* Wait for more work. */
-		rc = WaitLatch(&MyProc->procLatch,
+		rc = WaitLatch(MyLatch,
 					   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
 					   wait_time,
 					   WAIT_EVENT_LOGICAL_LAUNCHER_MAIN);
@@ -885,13 +896,17 @@ ApplyLauncherMain(Datum main_arg)
 		if (rc & WL_POSTMASTER_DEATH)
 			proc_exit(1);
 
+		if (rc & WL_LATCH_SET)
+		{
+			ResetLatch(MyLatch);
+			CHECK_FOR_INTERRUPTS();
+		}
+
 		if (got_SIGHUP)
 		{
 			got_SIGHUP = false;
 			ProcessConfigFile(PGC_SIGHUP);
 		}
-
-		ResetLatch(&MyProc->procLatch);
 	}
 
 	LogicalRepCtx->launcher_pid = 0;

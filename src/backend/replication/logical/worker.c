@@ -1146,7 +1146,7 @@ LogicalRepApplyLoop(XLogRecPtr last_received)
 		/*
 		 * Wait for more data or latch.
 		 */
-		rc = WaitLatchOrSocket(&MyProc->procLatch,
+		rc = WaitLatchOrSocket(MyLatch,
 							   WL_SOCKET_READABLE | WL_LATCH_SET |
 							   WL_TIMEOUT | WL_POSTMASTER_DEATH,
 							   fd, NAPTIME_PER_CYCLE,
@@ -1155,6 +1155,12 @@ LogicalRepApplyLoop(XLogRecPtr last_received)
 		/* Emergency bailout if postmaster has died */
 		if (rc & WL_POSTMASTER_DEATH)
 			proc_exit(1);
+
+		if (rc & WL_LATCH_SET)
+		{
+			ResetLatch(MyLatch);
+			CHECK_FOR_INTERRUPTS();
+		}
 
 		if (got_SIGHUP)
 		{
@@ -1209,8 +1215,6 @@ LogicalRepApplyLoop(XLogRecPtr last_received)
 
 			send_feedback(last_received, requestReply, requestReply);
 		}
-
-		ResetLatch(&MyProc->procLatch);
 	}
 }
 

@@ -1144,7 +1144,7 @@ WaitForBackgroundWorkerShutdown(BackgroundWorkerHandle *handle)
 		if (status == BGWH_STOPPED)
 			break;
 
-		rc = WaitLatch(&MyProc->procLatch,
+		rc = WaitLatch(MyLatch,
 					   WL_LATCH_SET | WL_POSTMASTER_DEATH, 0,
 					   WAIT_EVENT_BGWORKER_SHUTDOWN);
 
@@ -1154,7 +1154,7 @@ WaitForBackgroundWorkerShutdown(BackgroundWorkerHandle *handle)
 			break;
 		}
 
-		ResetLatch(&MyProc->procLatch);
+		ResetLatch(MyLatch);
 	}
 
 	return status;

@@ -527,9 +527,9 @@ WaitForParallelWorkersToFinish(ParallelContext *pcxt)
 		if (!anyone_alive)
 			break;
 
-		WaitLatch(&MyProc->procLatch, WL_LATCH_SET, -1,
+		WaitLatch(MyLatch, WL_LATCH_SET, -1,
 				  WAIT_EVENT_PARALLEL_FINISH);
-		ResetLatch(&MyProc->procLatch);
+		ResetLatch(MyLatch);
 	}
 
 	if (pcxt->toc != NULL)

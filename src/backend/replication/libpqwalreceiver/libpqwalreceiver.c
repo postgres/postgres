@@ -176,7 +176,7 @@ libpqrcv_connect(const char *conninfo, bool logical, const char *appname,
 				   ? WL_SOCKET_READABLE
 				   : WL_SOCKET_WRITEABLE);
 
-		rc = WaitLatchOrSocket(&MyProc->procLatch,
+		rc = WaitLatchOrSocket(MyLatch,
 							   WL_POSTMASTER_DEATH |
 							   WL_LATCH_SET | io_flag,
 							   PQsocket(conn->streamConn),
@@ -190,7 +190,7 @@ libpqrcv_connect(const char *conninfo, bool logical, const char *appname,
 		/* Interrupted? */
 		if (rc & WL_LATCH_SET)
 		{
-			ResetLatch(&MyProc->procLatch);
+			ResetLatch(MyLatch);
 			CHECK_FOR_INTERRUPTS();
 		}
 
@@ -574,21 +574,22 @@ libpqrcv_PQexec(PGconn *streamConn, const char *query)
 			 * the signal arrives in the middle of establishment of
 			 * replication connection.
 			 */
-			ResetLatch(&MyProc->procLatch);
-			rc = WaitLatchOrSocket(&MyProc->procLatch,
+			rc = WaitLatchOrSocket(MyLatch,
 								   WL_POSTMASTER_DEATH | WL_SOCKET_READABLE |
 								   WL_LATCH_SET,
 								   PQsocket(streamConn),
 								   0,
 								   WAIT_EVENT_LIBPQWALRECEIVER);
+
+			/* Emergency bailout? */
 			if (rc & WL_POSTMASTER_DEATH)
 				exit(1);
 
-			/* interrupted */
+			/* Interrupted? */
 			if (rc & WL_LATCH_SET)
 			{
+				ResetLatch(MyLatch);
 				CHECK_FOR_INTERRUPTS();
-				continue;
 			}
 			if (PQconsumeInput(streamConn) == 0)
 				return NULL;	/* trouble */

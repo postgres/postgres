@@ -235,6 +235,8 @@ worker_spi_main(Datum main_arg)
 		if (rc & WL_POSTMASTER_DEATH)
 			proc_exit(1);
 
+		CHECK_FOR_INTERRUPTS();
+
 		/*
 		 * In case of a SIGHUP, just reload the configuration.
 		 */

@@ -68,14 +68,14 @@ ConditionVariablePrepareToSleep(ConditionVariable *cv)
 	{
 		cv_wait_event_set = CreateWaitEventSet(TopMemoryContext, 1);
 		AddWaitEventToSet(cv_wait_event_set, WL_LATCH_SET, PGINVALID_SOCKET,
-						  &MyProc->procLatch, NULL);
+						  MyLatch, NULL);
 	}
 
 	/*
 	 * Reset my latch before adding myself to the queue and before entering
 	 * the caller's predicate loop.
 	 */
-	ResetLatch(&MyProc->procLatch);
+	ResetLatch(MyLatch);
 
 	/* Add myself to the wait queue. */
 	SpinLockAcquire(&cv->mutex);
@@ -135,7 +135,7 @@ ConditionVariableSleep(ConditionVariable *cv, uint32 wait_event_info)
 		WaitEventSetWait(cv_wait_event_set, -1, &event, 1, wait_event_info);
 
 		/* Reset latch before testing whether we can return. */
-		ResetLatch(&MyProc->procLatch);
+		ResetLatch(MyLatch);
 
 		/*
 		 * If this process has been taken out of the wait list, then we know

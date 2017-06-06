@@ -191,7 +191,7 @@ wait_for_relation_state_change(Oid relid, char expected_state)
 		if (!worker)
 			return false;
 
-		rc = WaitLatch(&MyProc->procLatch,
+		rc = WaitLatch(MyLatch,
 					   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
 					   1000L, WAIT_EVENT_LOGICAL_SYNC_STATE_CHANGE);
 
@@ -199,7 +199,7 @@ wait_for_relation_state_change(Oid relid, char expected_state)
 		if (rc & WL_POSTMASTER_DEATH)
 			proc_exit(1);
 
-		ResetLatch(&MyProc->procLatch);
+		ResetLatch(MyLatch);
 	}
 
 	return false;
@@ -236,7 +236,7 @@ wait_for_worker_state_change(char expected_state)
 		if (MyLogicalRepWorker->relstate == expected_state)
 			return true;
 
-		rc = WaitLatch(&MyProc->procLatch,
+		rc = WaitLatch(MyLatch,
 					   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
 					   1000L, WAIT_EVENT_LOGICAL_SYNC_STATE_CHANGE);
 
@@ -244,7 +244,7 @@ wait_for_worker_state_change(char expected_state)
 		if (rc & WL_POSTMASTER_DEATH)
 			proc_exit(1);
 
-		ResetLatch(&MyProc->procLatch);
+		ResetLatch(MyLatch);
 	}
 
 	return false;
@@ -604,7 +604,7 @@ copy_read_data(void *outbuf, int minread, int maxread)
 		/*
 		 * Wait for more data or latch.
 		 */
-		rc = WaitLatchOrSocket(&MyProc->procLatch,
+		rc = WaitLatchOrSocket(MyLatch,
 							   WL_SOCKET_READABLE | WL_LATCH_SET |
 							   WL_TIMEOUT | WL_POSTMASTER_DEATH,
 							   fd, 1000L, WAIT_EVENT_LOGICAL_SYNC_DATA);
@@ -613,7 +613,7 @@ copy_read_data(void *outbuf, int minread, int maxread)
 		if (rc & WL_POSTMASTER_DEATH)
 			proc_exit(1);
 
-		ResetLatch(&MyProc->procLatch);
+		ResetLatch(MyLatch);
 	}
 
 	return bytesread;
