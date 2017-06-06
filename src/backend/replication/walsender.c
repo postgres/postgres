@@ -154,7 +154,6 @@ static bool streamingDoneSending;
 static bool streamingDoneReceiving;
 
 /* Flags set by signal handlers for later service in main loop */
-static volatile sig_atomic_t got_SIGHUP = false;
 static volatile sig_atomic_t walsender_ready_to_stop = false;
 
 /*
