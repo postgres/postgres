@@ -3783,7 +3783,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><literal><link linkend="catalog-pg-collation"><structname>pg_collation</structname></link>.oid</literal></entry>
       <entry>
        For each column in the index key, this contains the OID of the
-       collation to use for the index.
+       the collation to use for the index, or zero if the column is not
+       of a collatable data type.
       </entry>
      </row>
 
@@ -4770,7 +4771,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><literal><link linkend="catalog-pg-opclass"><structname>pg_opclass</structname></link>.oid</literal></entry>
       <entry>
        For each column in the partition key, this contains the OID of the
-       the collation to use for partitioning.
+       the collation to use for partitioning, or zero if the column is not
+       of a collatable data type.
       </entry>
      </row>
 

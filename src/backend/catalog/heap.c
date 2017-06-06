@@ -3160,9 +3160,14 @@ StorePartitionKey(Relation rel,
 
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
-		referenced.classId = CollationRelationId;
-		referenced.objectId = partcollation[i];
-		referenced.objectSubId = 0;
+		/* The default collation is pinned, so don't bother recording it */
+		if (OidIsValid(partcollation[i]) &&
+			partcollation[i] != DEFAULT_COLLATION_OID)
+		{
+			referenced.classId = CollationRelationId;
+			referenced.objectId = partcollation[i];
+			referenced.objectSubId = 0;
+		}
 
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 	}
