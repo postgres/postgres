@@ -174,7 +174,6 @@ static bool streamingDoneReceiving;
 static bool WalSndCaughtUp = false;
 
 /* Flags set by signal handlers for later service in main loop */
-static volatile sig_atomic_t got_SIGHUP = false;
 static volatile sig_atomic_t got_SIGUSR2 = false;
 static volatile sig_atomic_t got_STOPPING = false;
 
@@ -190,7 +189,6 @@ static LogicalDecodingContext *logical_decoding_ctx = NULL;
 static XLogRecPtr logical_startptr = InvalidXLogRecPtr;
 
 /* Signal handlers */
-static void WalSndSigHupHandler(SIGNAL_ARGS);
 static void WalSndLastCycleHandler(SIGNAL_ARGS);
 
 /* Prototypes for private functions */
@@ -1104,9 +1102,9 @@ WalSndWriteData(LogicalDecodingContext *ctx, XLogRecPtr lsn, TransactionId xid,
 			exit(1);
 
 		/* Process any requests or signals received recently */
-		if (got_SIGHUP)
+		if (ConfigReloadPending)
 		{
-			got_SIGHUP = false;
+			ConfigReloadPending = false;
 			ProcessConfigFile(PGC_SIGHUP);
 			SyncRepInitConfig();
 		}
@@ -1188,9 +1186,9 @@ WalSndWaitForWal(XLogRecPtr loc)
 			exit(1);
 
 		/* Process any requests or signals received recently */
-		if (got_SIGHUP)
+		if (ConfigReloadPending)
 		{
-			got_SIGHUP = false;
+			ConfigReloadPending = false;
 			ProcessConfigFile(PGC_SIGHUP);
 			SyncRepInitConfig();
 		}
@@ -1843,9 +1841,9 @@ WalSndLoop(WalSndSendDataCallback send_data)
 			exit(1);
 
 		/* Process any requests or signals received recently */
-		if (got_SIGHUP)
+		if (ConfigReloadPending)
 		{
-			got_SIGHUP = false;
+			ConfigReloadPending = false;
 			ProcessConfigFile(PGC_SIGHUP);
 			SyncRepInitConfig();
 		}
@@ -2636,19 +2634,6 @@ HandleWalSndInitStopping(void)
 	}
 }
 
-/* SIGHUP: set flag to re-read config file at next convenient time */
-static void
-WalSndSigHupHandler(SIGNAL_ARGS)
-{
-	int			save_errno = errno;
-
-	got_SIGHUP = true;
-	if (MyWalSnd)
-		SetLatch(&MyWalSnd->latch);
-
-	errno = save_errno;
-}
-
 /*
  * SIGUSR2: set flag to do a last cycle and shut down afterwards. The WAL
  * sender should already have been switched to WALSNDSTATE_STOPPING at
@@ -2670,7 +2655,7 @@ void
 WalSndSignals(void)
 {
 	/* Set up signal handlers */
-	pqsignal(SIGHUP, WalSndSigHupHandler);		/* set flag to read config
+	pqsignal(SIGHUP, PostgresSigHupHandler);	/* set flag to read config
 												 * file */
 	pqsignal(SIGINT, SIG_IGN);	/* not used */
 	pqsignal(SIGTERM, die);		/* request shutdown */
