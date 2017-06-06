@@ -23,6 +23,8 @@
 #ifndef MISCADMIN_H
 #define MISCADMIN_H
 
+#include <signal.h>
+
 #include "pgtime.h"				/* for pg_time_t */
 
 
@@ -81,6 +83,7 @@ extern PGDLLIMPORT volatile bool InterruptPending;
 extern PGDLLIMPORT volatile bool QueryCancelPending;
 extern PGDLLIMPORT volatile bool ProcDiePending;
 extern PGDLLIMPORT volatile bool IdleInTransactionSessionTimeoutPending;
+extern PGDLLIMPORT volatile sig_atomic_t ConfigReloadPending;
 
 extern volatile bool ClientConnectionLost;
 
@@ -272,6 +275,8 @@ extern pg_stack_base_t set_stack_base(void);
 extern void restore_stack_base(pg_stack_base_t base);
 extern void check_stack_depth(void);
 extern bool stack_is_too_deep(void);
+
+extern void PostgresSigHupHandler(SIGNAL_ARGS);
 
 /* in tcop/utility.c */
 extern void PreventCommandIfReadOnly(const char *cmdname);
