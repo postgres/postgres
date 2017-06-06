@@ -143,7 +143,7 @@ $oldpid = $node_publisher->safe_psql('postgres',
 	"SELECT pid FROM pg_stat_replication WHERE application_name = '$appname';"
 );
 $node_subscriber->safe_psql('postgres',
-"ALTER SUBSCRIPTION tap_sub SET PUBLICATION tap_pub_ins_only REFRESH WITH (copy_data = false)"
+"ALTER SUBSCRIPTION tap_sub SET PUBLICATION tap_pub_ins_only WITH (copy_data = false)"
 );
 $node_publisher->poll_query_until('postgres',
 "SELECT pid != $oldpid FROM pg_stat_replication WHERE application_name = '$appname';"

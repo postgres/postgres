@@ -82,7 +82,7 @@ ERROR:  invalid connection string syntax: missing "=" after "foobar" in connecti
  testsub | regress_subscription_user | f       | {testpub}   | off                | dbname=doesnotexist
 (1 row)
 
-ALTER SUBSCRIPTION testsub SET PUBLICATION testpub2, testpub3 SKIP REFRESH;
+ALTER SUBSCRIPTION testsub SET PUBLICATION testpub2, testpub3 WITH (refresh = false);
 ALTER SUBSCRIPTION testsub CONNECTION 'dbname=doesnotexist2';
 ALTER SUBSCRIPTION testsub SET (slot_name = 'newname');
 -- fail

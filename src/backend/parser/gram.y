@@ -9279,24 +9279,14 @@ AlterSubscriptionStmt:
 					n->options = $6;
 					$$ = (Node *)n;
 				}
-			| ALTER SUBSCRIPTION name SET PUBLICATION publication_name_list REFRESH opt_definition
-				{
-					AlterSubscriptionStmt *n =
-						makeNode(AlterSubscriptionStmt);
-					n->kind = ALTER_SUBSCRIPTION_PUBLICATION_REFRESH;
-					n->subname = $3;
-					n->publication = $6;
-					n->options = $8;
-					$$ = (Node *)n;
-				}
-			| ALTER SUBSCRIPTION name SET PUBLICATION publication_name_list SKIP REFRESH
+			| ALTER SUBSCRIPTION name SET PUBLICATION publication_name_list opt_definition
 				{
 					AlterSubscriptionStmt *n =
 						makeNode(AlterSubscriptionStmt);
 					n->kind = ALTER_SUBSCRIPTION_PUBLICATION;
 					n->subname = $3;
 					n->publication = $6;
-					n->options = NIL;
+					n->options = $7;
 					$$ = (Node *)n;
 				}
 			| ALTER SUBSCRIPTION name ENABLE_P

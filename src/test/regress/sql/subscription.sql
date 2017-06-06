@@ -61,7 +61,7 @@ ALTER SUBSCRIPTION testsub CONNECTION 'foobar';
 
 \dRs+
 
-ALTER SUBSCRIPTION testsub SET PUBLICATION testpub2, testpub3 SKIP REFRESH;
+ALTER SUBSCRIPTION testsub SET PUBLICATION testpub2, testpub3 WITH (refresh = false);
 ALTER SUBSCRIPTION testsub CONNECTION 'dbname=doesnotexist2';
 ALTER SUBSCRIPTION testsub SET (slot_name = 'newname');
 
