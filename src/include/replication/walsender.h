@@ -34,6 +34,9 @@ extern void WalSndSignals(void);
 extern Size WalSndShmemSize(void);
 extern void WalSndShmemInit(void);
 extern void WalSndWakeup(void);
+extern void WalSndInitStopping(void);
+extern void WalSndWaitStopping(void);
+extern void HandleWalSndInitStopping(void);
 extern void WalSndRqstFileReload(void);
 
 extern Datum pg_stat_get_wal_senders(PG_FUNCTION_ARGS);
