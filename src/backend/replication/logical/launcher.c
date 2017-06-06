@@ -803,10 +803,6 @@ ApplyLauncherMain(Datum main_arg)
 	pqsignal(SIGTERM, logicalrep_launcher_sigterm);
 	BackgroundWorkerUnblockSignals();
 
-	/* Make it easy to identify our processes. */
-	SetConfigOption("application_name", MyBgworkerEntry->bgw_name,
-					PGC_USERSET, PGC_S_SESSION);
-
 	LogicalRepCtx->launcher_pid = MyProcPid;
 
 	/*

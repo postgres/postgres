@@ -1488,10 +1488,6 @@ ApplyWorkerMain(Datum main_arg)
 	MyLogicalRepWorker->last_send_time = MyLogicalRepWorker->last_recv_time =
 		MyLogicalRepWorker->reply_time = GetCurrentTimestamp();
 
-	/* Make it easy to identify our processes. */
-	SetConfigOption("application_name", MyBgworkerEntry->bgw_name,
-					PGC_USERSET, PGC_S_SESSION);
-
 	/* Load the libpq-specific functions */
 	load_file("libpqwalreceiver", false);
 
