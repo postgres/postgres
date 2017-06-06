@@ -629,7 +629,7 @@ ReceiveXlogStream(PGconn *conn, StreamCtl *stream)
 			 * server had sent us half of a WAL record, when it was promoted.
 			 * The new timeline will begin at the end of the last complete
 			 * record in that case, overlapping the partial WAL record on the
-			 * the old timeline.
+			 * old timeline.
 			 */
 			uint32		newtimeline;
 			bool		parsed;
