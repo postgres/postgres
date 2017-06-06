@@ -2929,7 +2929,7 @@ WalSndSignals(void)
 	/* Set up signal handlers */
 	pqsignal(SIGHUP, PostgresSigHupHandler);	/* set flag to read config
 												 * file */
-	pqsignal(SIGINT, SIG_IGN);	/* not used */
+	pqsignal(SIGINT, StatementCancelHandler);	/* query cancel */
 	pqsignal(SIGTERM, die);		/* request shutdown */
 	pqsignal(SIGQUIT, quickdie);	/* hard crash time */
 	InitializeTimeouts();		/* establishes SIGALRM handler */
