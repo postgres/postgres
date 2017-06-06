@@ -19,6 +19,7 @@
 
 #include "commands/async.h"
 #include "miscadmin.h"
+#include "replication/walsender.h"
 #include "storage/latch.h"
 #include "storage/ipc.h"
 #include "storage/proc.h"
@@ -273,6 +274,9 @@ procsignal_sigusr1_handler(SIGNAL_ARGS)
 
 	if (CheckProcSignal(PROCSIG_NOTIFY_INTERRUPT))
 		HandleNotifyInterrupt();
+
+	if (CheckProcSignal(PROCSIG_WALSND_INIT_STOPPING))
+		HandleWalSndInitStopping();
 
 	if (CheckProcSignal(PROCSIG_RECOVERY_CONFLICT_DATABASE))
 		RecoveryConflictInterrupt(PROCSIG_RECOVERY_CONFLICT_DATABASE);
