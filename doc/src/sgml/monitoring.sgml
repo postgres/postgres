@@ -1690,11 +1690,6 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
            <literal>backup</>: This WAL sender is sending a backup.
           </para>
          </listitem>
-         <listitem>
-          <para>
-           <literal>stopping</>: This WAL sender is stopping.
-          </para>
-         </listitem>
        </itemizedlist>
      </entry>
     </row>

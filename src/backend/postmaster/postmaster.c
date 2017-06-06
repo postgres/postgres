@@ -2918,7 +2918,7 @@ reaper(SIGNAL_ARGS)
 				 * Waken walsenders for the last time. No regular backends
 				 * should be around anymore.
 				 */
-				SignalChildren(SIGINT);
+				SignalChildren(SIGUSR2);
 
 				pmState = PM_SHUTDOWN_2;
 
@@ -3656,9 +3656,7 @@ PostmasterStateMachine(void)
 				/*
 				 * If we get here, we are proceeding with normal shutdown. All
 				 * the regular children are gone, and it's time to tell the
-				 * checkpointer to do a shutdown checkpoint. All WAL senders
-				 * are told to switch to a stopping state so that the shutdown
-				 * checkpoint can go ahead.
+				 * checkpointer to do a shutdown checkpoint.
 				 */
 				Assert(Shutdown > NoShutdown);
 				/* Start the checkpointer if not running */
@@ -3667,7 +3665,6 @@ PostmasterStateMachine(void)
 				/* And tell it to shut down */
 				if (CheckpointerPID != 0)
 				{
-					SignalSomeChildren(SIGUSR2, BACKEND_TYPE_WALSND);
 					signal_child(CheckpointerPID, SIGUSR2);
 					pmState = PM_SHUTDOWN;
 				}
