@@ -166,7 +166,6 @@ static volatile sig_atomic_t walsender_ready_to_stop = false;
 static volatile sig_atomic_t replication_active = false;
 
 /* Signal handlers */
-static void WalSndSigHupHandler(SIGNAL_ARGS);
 static void WalSndXLogSendHandler(SIGNAL_ARGS);
 static void WalSndLastCycleHandler(SIGNAL_ARGS);
 
@@ -979,9 +978,9 @@ WalSndLoop(void)
 			exit(1);
 
 		/* Process any requests or signals received recently */
-		if (got_SIGHUP)
+		if (ConfigReloadPending)
 		{
-			got_SIGHUP = false;
+			ConfigReloadPending = false;
 			ProcessConfigFile(PGC_SIGHUP);
 			SyncRepInitConfig();
 		}
@@ -1712,19 +1711,6 @@ WalSndRqstFileReload(void)
 	}
 }
 
-/* SIGHUP: set flag to re-read config file at next convenient time */
-static void
-WalSndSigHupHandler(SIGNAL_ARGS)
-{
-	int			save_errno = errno;
-
-	got_SIGHUP = true;
-	if (MyWalSnd)
-		SetLatch(&MyWalSnd->latch);
-
-	errno = save_errno;
-}
-
 /* SIGUSR1: set flag to send WAL records */
 static void
 WalSndXLogSendHandler(SIGNAL_ARGS)
@@ -1763,7 +1749,7 @@ void
 WalSndSignals(void)
 {
 	/* Set up signal handlers */
-	pqsignal(SIGHUP, WalSndSigHupHandler);		/* set flag to read config
+	pqsignal(SIGHUP, PostgresSigHupHandler);	/* set flag to read config
 												 * file */
 	pqsignal(SIGINT, SIG_IGN);	/* not used */
 	pqsignal(SIGTERM, die);		/* request shutdown */
