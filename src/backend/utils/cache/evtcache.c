@@ -68,7 +68,7 @@ EventCacheLookup(EventTriggerEvent event)
 	if (EventTriggerCacheState != ETCS_VALID)
 		BuildEventTriggerCache();
 	entry = hash_search(EventTriggerCache, &event, HASH_FIND, NULL);
-	return entry != NULL ? entry->triggerlist : NULL;
+	return entry != NULL ? entry->triggerlist : NIL;
 }
 
 /*
