@@ -86,8 +86,9 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
 
 <phrase>and <replaceable class="PARAMETER">partition_bound_spec</replaceable> is:</phrase>
 
-{ IN ( { <replaceable class="PARAMETER">bound_literal</replaceable> | NULL } [, ...] ) |
-  FROM ( { <replaceable class="PARAMETER">bound_literal</replaceable> | UNBOUNDED } [, ...] ) TO ( { <replaceable class="PARAMETER">bound_literal</replaceable> | UNBOUNDED } [, ...] ) }
+IN ( { <replaceable class="PARAMETER">numeric_literal</replaceable> | <replaceable class="PARAMETER">string_literal</replaceable> | NULL } [, ...] ) |
+FROM ( { <replaceable class="PARAMETER">numeric_literal</replaceable> | <replaceable class="PARAMETER">string_literal</replaceable> | UNBOUNDED } [, ...] )
+  TO ( { <replaceable class="PARAMETER">numeric_literal</replaceable> | <replaceable class="PARAMETER">string_literal</replaceable> | UNBOUNDED } [, ...] )
 
 <phrase><replaceable class="PARAMETER">index_parameters</replaceable> in <literal>UNIQUE</literal>, <literal>PRIMARY KEY</literal>, and <literal>EXCLUDE</literal> constraints are:</phrase>
 
@@ -252,44 +253,26 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
     <term><literal>PARTITION OF <replaceable class="PARAMETER">parent_table</replaceable> FOR VALUES <replaceable class="PARAMETER">partition_bound_spec</replaceable></literal></term>
     <listitem>
      <para>
-      Creates the table as <firstterm>partition</firstterm> of the specified
+      Creates the table as a <firstterm>partition</firstterm> of the specified
       parent table.
      </para>
 
      <para>
-      The partition bound specification must correspond to the partitioning
-      method and partition key of the parent table, and must not overlap with
-      any existing partition of that parent.
+      The <replaceable class="PARAMETER">partition_bound_spec</replaceable>
+      must correspond to the partitioning method and partition key of the
+      parent table, and must not overlap with any existing partition of that
+      parent.  The form with <literal>IN</> is used for list partitioning,
+      while the form with <literal>FROM</> and <literal>TO</> is used for
+      range partitioning.
      </para>
 
      <para>
-      Each of the values specified in the partition bound specification is
+      Each of the values specified in
+      the <replaceable class="PARAMETER">partition_bound_spec</> is
       a literal, <literal>NULL</literal>, or <literal>UNBOUNDED</literal>.
-      A literal is either a numeric constant or a string constant that is
-      coercible to the corresponding partition key column's type.
-     </para>
-
-     <para>
-      When creating a range partition, the lower bound specified with
-      <literal>FROM</literal> is an inclusive bound, whereas the upper
-      bound specified with <literal>TO</literal> is an exclusive bound.
-      That is, the values specified in the <literal>FROM</literal> list
-      are accepted values of the corresponding partition key columns in a
-      given partition, whereas those in the <literal>TO</literal> list are
-      not.  To be precise, this applies only to the first of the partition
-      key columns for which the corresponding values in the <literal>FROM</literal>
-      and <literal>TO</literal> lists are not equal.  All rows in a given
-      partition contain the same values for all preceding columns, equal to
-      those specified in <literal>FROM</literal> and <literal>TO</literal>
-      lists.  On the other hand, any subsequent columns are insignificant
-      as far as implicit partition constraint is concerned.
-     </para>
-
-     <para>
-      Specifying <literal>UNBOUNDED</literal> in <literal>FROM</literal>
-      signifies <literal>-infinity</literal> as the lower bound of the
-      corresponding column, whereas it signifies <literal>+infinity</literal>
-      as the upper bound when specified in <literal>TO</literal>.
+      Each literal value must be either a numeric constant that is coercible
+      to the corresponding partition key column's type, or a string literal
+      that is valid input for that type.
      </para>
 
      <para>
@@ -298,6 +281,32 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
       column to be null.  However, there cannot be more than one such
       list partition for a given parent table.  <literal>NULL</literal>
       cannot be specified for range partitions.
+     </para>
+
+     <para>
+      When creating a range partition, the lower bound specified with
+      <literal>FROM</literal> is an inclusive bound, whereas the upper
+      bound specified with <literal>TO</literal> is an exclusive bound.
+      That is, the values specified in the <literal>FROM</literal> list
+      are valid values of the corresponding partition key columns for this
+      partition, whereas those in the <literal>TO</literal> list are
+      not.  Note that this statement must be understood according to the
+      rules of row-wise comparison (<xref linkend="row-wise-comparison">).
+      For example, given <literal>PARTITION BY RANGE (x,y)</>, a partition
+      bound <literal>FROM (1, 2) TO (3, 4)</literal>
+      allows <literal>x=1</> with any <literal>y&gt;=2</>,
+      <literal>x=2</> with any non-null <literal>y</>,
+      and <literal>x=3</> with any <literal>y&lt;4</>.
+     </para>
+
+     <para>
+      Writing <literal>UNBOUNDED</literal> in <literal>FROM</literal>
+      signifies <literal>-infinity</literal> as the lower bound of the
+      corresponding column, whereas when written in <literal>TO</literal>,
+      it signifies <literal>+infinity</literal> as the upper bound.
+      All items following an <literal>UNBOUNDED</literal> item within
+      a <literal>FROM</literal> or <literal>TO</literal> list must also
+      be <literal>UNBOUNDED</literal>.
      </para>
 
      <para>
@@ -318,8 +327,9 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
      <para>
       Rows inserted into a partitioned table will be automatically routed to
       the correct partition.  If no suitable partition exists, an error will
-      occur.  Also, if updating a row in a given partition causes it to move
-      to another partition due to the new partition key, an error will occur.
+      occur.  Also, if updating a row in a given partition would require it
+      to move to another partition due to new partition key values, an error
+      will occur.
      </para>
 
      <para>
