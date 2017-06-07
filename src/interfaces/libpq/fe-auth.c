@@ -372,7 +372,12 @@ pg_SSPI_startup(PGconn *conn, int use_negotiate)
 	SECURITY_STATUS r;
 	TimeStamp	expire;
 
-	conn->sspictx = NULL;
+	if (conn->sspictx)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+					libpq_gettext("duplicate SSPI authentication request\n"));
+		return STATUS_ERROR;
+	}
 
 	/*
 	 * Retrieve credentials handle
