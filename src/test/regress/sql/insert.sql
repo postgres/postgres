@@ -332,3 +332,13 @@ select tableoid::regclass::text, * from mcrparted order by 1;
 
 -- cleanup
 drop table mcrparted;
+
+-- check that a BR constraint can't make partition contain violating rows
+create table brtrigpartcon (a int, b text) partition by list (a);
+create table brtrigpartcon1 partition of brtrigpartcon for values in (1);
+create or replace function brtrigpartcon1trigf() returns trigger as $$begin new.a := 2; return new; end$$ language plpgsql;
+create trigger brtrigpartcon1trig before insert on brtrigpartcon1 for each row execute procedure brtrigpartcon1trigf();
+insert into brtrigpartcon values (1, 'hi there');
+insert into brtrigpartcon1 values (1, 'hi there');
+drop table brtrigpartcon;
+drop function brtrigpartcon1trigf();

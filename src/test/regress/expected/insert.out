@@ -379,7 +379,7 @@ drop function mlparted11_trig_fn();
 -- checking its partition constraint before inserting into the leaf partition
 -- selected by tuple-routing
 insert into mlparted1 (a, b) values (2, 3);
-ERROR:  new row for relation "mlparted11" violates partition constraint
+ERROR:  new row for relation "mlparted1" violates partition constraint
 DETAIL:  Failing row contains (3, 2).
 -- check routing error through a list partitioned table when the key is null
 create table lparted_nonullpart (a int, b char) partition by list (b);
@@ -495,3 +495,16 @@ select tableoid::regclass::text, * from mcrparted order by 1;
 
 -- cleanup
 drop table mcrparted;
+-- check that a BR constraint can't make partition contain violating rows
+create table brtrigpartcon (a int, b text) partition by list (a);
+create table brtrigpartcon1 partition of brtrigpartcon for values in (1);
+create or replace function brtrigpartcon1trigf() returns trigger as $$begin new.a := 2; return new; end$$ language plpgsql;
+create trigger brtrigpartcon1trig before insert on brtrigpartcon1 for each row execute procedure brtrigpartcon1trigf();
+insert into brtrigpartcon values (1, 'hi there');
+ERROR:  new row for relation "brtrigpartcon1" violates partition constraint
+DETAIL:  Failing row contains (2, hi there).
+insert into brtrigpartcon1 values (1, 'hi there');
+ERROR:  new row for relation "brtrigpartcon1" violates partition constraint
+DETAIL:  Failing row contains (2, hi there).
+drop table brtrigpartcon;
+drop function brtrigpartcon1trigf();

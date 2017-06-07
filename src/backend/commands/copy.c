@@ -2640,9 +2640,24 @@ CopyFrom(CopyState cstate)
 			}
 			else
 			{
+				/*
+				 * We always check the partition constraint, including when
+				 * the tuple got here via tuple-routing.  However we don't
+				 * need to in the latter case if no BR trigger is defined on
+				 * the partition.  Note that a BR trigger might modify the
+				 * tuple such that the partition constraint is no longer
+				 * satisfied, so we need to check in that case.
+				 */
+				bool	check_partition_constr =
+									(resultRelInfo->ri_PartitionCheck != NIL);
+
+				if (saved_resultRelInfo != NULL &&
+					!(resultRelInfo->ri_TrigDesc &&
+					  resultRelInfo->ri_TrigDesc->trig_insert_before_row))
+					check_partition_constr = false;
+
 				/* Check the constraints of the tuple */
-				if (cstate->rel->rd_att->constr ||
-					resultRelInfo->ri_PartitionCheck)
+				if (cstate->rel->rd_att->constr || check_partition_constr)
 					ExecConstraints(resultRelInfo, slot, estate);
 
 				if (useHeapMultiInsert)

@@ -103,6 +103,8 @@ static char *ExecBuildSlotPartitionKeyDescription(Relation rel,
 									 int maxfieldlen);
 static void EvalPlanQualStart(EPQState *epqstate, EState *parentestate,
 				  Plan *planTree);
+static void ExecPartitionCheck(ResultRelInfo *resultRelInfo,
+				  TupleTableSlot *slot, EState *estate);
 
 /*
  * Note that GetUpdatedColumns() also exists in commands/trigger.c.  There does
@@ -1339,34 +1341,19 @@ InitResultRelInfo(ResultRelInfo *resultRelInfo,
 	resultRelInfo->ri_projectReturning = NULL;
 
 	/*
-	 * If partition_root has been specified, that means we are building the
-	 * ResultRelInfo for one of its leaf partitions.  In that case, we need
-	 * *not* initialize the leaf partition's constraint, but rather the
-	 * partition_root's (if any).  We must do that explicitly like this,
-	 * because implicit partition constraints are not inherited like user-
-	 * defined constraints and would fail to be enforced by ExecConstraints()
-	 * after a tuple is routed to a leaf partition.
+	 * Partition constraint, which also includes the partition constraint of
+	 * all the ancestors that are partitions.  Note that it will be checked
+	 * even in the case of tuple-routing where this table is the target leaf
+	 * partition, if there any BR triggers defined on the table.  Although
+	 * tuple-routing implicitly preserves the partition constraint of the
+	 * target partition for a given row, the BR triggers may change the row
+	 * such that the constraint is no longer satisfied, which we must fail
+	 * for by checking it explicitly.
+	 *
+	 * If this is a partitioned table, the partition constraint (if any) of a
+	 * given row will be checked just before performing tuple-routing.
 	 */
-	if (partition_root)
-	{
-		/*
-		 * Root table itself may or may not be a partition; partition_check
-		 * would be NIL in the latter case.
-		 */
-		partition_check = RelationGetPartitionQual(partition_root);
-
-		/*
-		 * This is not our own partition constraint, but rather an ancestor's.
-		 * So any Vars in it bear the ancestor's attribute numbers.  We must
-		 * switch them to our own. (dummy varno = 1)
-		 */
-		if (partition_check != NIL)
-			partition_check = map_partition_varattnos(partition_check, 1,
-													  resultRelationDesc,
-													  partition_root);
-	}
-	else
-		partition_check = RelationGetPartitionQual(resultRelationDesc);
+	partition_check = RelationGetPartitionQual(resultRelationDesc);
 
 	resultRelInfo->ri_PartitionCheck = partition_check;
 	resultRelInfo->ri_PartitionRoot = partition_root;
@@ -1835,13 +1822,16 @@ ExecRelCheck(ResultRelInfo *resultRelInfo,
 
 /*
  * ExecPartitionCheck --- check that tuple meets the partition constraint.
- *
- * Note: This is called *iff* resultRelInfo is the main target table.
  */
-static bool
+static void
 ExecPartitionCheck(ResultRelInfo *resultRelInfo, TupleTableSlot *slot,
 				   EState *estate)
 {
+	Relation	rel = resultRelInfo->ri_RelationDesc;
+	TupleDesc	tupdesc = RelationGetDescr(rel);
+	Bitmapset  *modifiedCols;
+	Bitmapset  *insertedCols;
+	Bitmapset  *updatedCols;
 	ExprContext *econtext;
 
 	/*
@@ -1869,7 +1859,44 @@ ExecPartitionCheck(ResultRelInfo *resultRelInfo, TupleTableSlot *slot,
 	 * As in case of the catalogued constraints, we treat a NULL result as
 	 * success here, not a failure.
 	 */
-	return ExecCheck(resultRelInfo->ri_PartitionCheckExpr, econtext);
+	if (!ExecCheck(resultRelInfo->ri_PartitionCheckExpr, econtext))
+	{
+		char	   *val_desc;
+		Relation	orig_rel = rel;
+
+		/* See the comment above. */
+		if (resultRelInfo->ri_PartitionRoot)
+		{
+			HeapTuple	tuple = ExecFetchSlotTuple(slot);
+			TupleDesc	old_tupdesc = RelationGetDescr(rel);
+			TupleConversionMap *map;
+
+			rel = resultRelInfo->ri_PartitionRoot;
+			tupdesc = RelationGetDescr(rel);
+			/* a reverse map */
+			map = convert_tuples_by_name(old_tupdesc, tupdesc,
+								 gettext_noop("could not convert row type"));
+			if (map != NULL)
+			{
+				tuple = do_convert_tuple(tuple, map);
+				ExecStoreTuple(tuple, slot, InvalidBuffer, false);
+			}
+		}
+
+		insertedCols = GetInsertedColumns(resultRelInfo, estate);
+		updatedCols = GetUpdatedColumns(resultRelInfo, estate);
+		modifiedCols = bms_union(insertedCols, updatedCols);
+		val_desc = ExecBuildSlotValueDescription(RelationGetRelid(rel),
+												 slot,
+												 tupdesc,
+												 modifiedCols,
+												 64);
+		ereport(ERROR,
+				(errcode(ERRCODE_CHECK_VIOLATION),
+		  errmsg("new row for relation \"%s\" violates partition constraint",
+				 RelationGetRelationName(orig_rel)),
+			val_desc ? errdetail("Failing row contains %s.", val_desc) : 0));
+	}
 }
 
 /*
@@ -1997,46 +2024,10 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 		}
 	}
 
-	if (resultRelInfo->ri_PartitionCheck &&
-		!ExecPartitionCheck(resultRelInfo, slot, estate))
-	{
-		char	   *val_desc;
-		Relation	orig_rel = rel;
-
-		/* See the comment above. */
-		if (resultRelInfo->ri_PartitionRoot)
-		{
-			HeapTuple	tuple = ExecFetchSlotTuple(slot);
-			TupleDesc	old_tupdesc = RelationGetDescr(rel);
-			TupleConversionMap *map;
-
-			rel = resultRelInfo->ri_PartitionRoot;
-			tupdesc = RelationGetDescr(rel);
-			/* a reverse map */
-			map = convert_tuples_by_name(old_tupdesc, tupdesc,
-								 gettext_noop("could not convert row type"));
-			if (map != NULL)
-			{
-				tuple = do_convert_tuple(tuple, map);
-				ExecStoreTuple(tuple, slot, InvalidBuffer, false);
-			}
-		}
-
-		insertedCols = GetInsertedColumns(resultRelInfo, estate);
-		updatedCols = GetUpdatedColumns(resultRelInfo, estate);
-		modifiedCols = bms_union(insertedCols, updatedCols);
-		val_desc = ExecBuildSlotValueDescription(RelationGetRelid(rel),
-												 slot,
-												 tupdesc,
-												 modifiedCols,
-												 64);
-		ereport(ERROR,
-				(errcode(ERRCODE_CHECK_VIOLATION),
-		  errmsg("new row for relation \"%s\" violates partition constraint",
-				 RelationGetRelationName(orig_rel)),
-			val_desc ? errdetail("Failing row contains %s.", val_desc) : 0));
-	}
+	if (resultRelInfo->ri_PartitionCheck)
+		ExecPartitionCheck(resultRelInfo, slot, estate);
 }
+
 
 /*
  * ExecWithCheckOptions -- check that tuple satisfies any WITH CHECK OPTIONs
@@ -3316,6 +3307,13 @@ ExecFindPartition(ResultRelInfo *resultRelInfo, PartitionDispatch *pd,
 	int			result;
 	PartitionDispatchData *failed_at;
 	TupleTableSlot *failed_slot;
+
+	/*
+	 * First check the root table's partition constraint, if any.  No point in
+	 * routing the tuple it if it doesn't belong in the root table itself.
+	 */
+	if (resultRelInfo->ri_PartitionCheck)
+		ExecPartitionCheck(resultRelInfo, slot, estate);
 
 	result = get_partition_for_tuple(pd, slot, estate,
 									 &failed_at, &failed_slot);
