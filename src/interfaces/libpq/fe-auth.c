@@ -133,6 +133,11 @@ pg_GSS_continue(PGconn *conn, int payloadlen)
 			return STATUS_ERROR;
 		}
 	}
+	else
+	{
+		ginbuf.length = 0;
+		ginbuf.value = NULL;
+	}
 
 	maj_stat = gss_init_sec_context(&min_stat,
 									GSS_C_NO_CREDENTIAL,
@@ -142,13 +147,13 @@ pg_GSS_continue(PGconn *conn, int payloadlen)
 									GSS_C_MUTUAL_FLAG,
 									0,
 									GSS_C_NO_CHANNEL_BINDINGS,
-				(conn->gctx == GSS_C_NO_CONTEXT) ? GSS_C_NO_BUFFER : &ginbuf,
+						  (ginbuf.value == NULL) ? GSS_C_NO_BUFFER : &ginbuf,
 									NULL,
 									&goutbuf,
 									NULL,
 									NULL);
 
-	if (conn->gctx != GSS_C_NO_CONTEXT)
+	if (ginbuf.value)
 		free(ginbuf.value);
 
 	if (goutbuf.length != 0)
