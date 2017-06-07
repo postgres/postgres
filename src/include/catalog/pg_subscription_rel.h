@@ -71,7 +71,7 @@ typedef struct SubscriptionRelState
 } SubscriptionRelState;
 
 extern Oid SetSubscriptionRelState(Oid subid, Oid relid, char state,
-						XLogRecPtr sublsn);
+						XLogRecPtr sublsn, bool update_only);
 extern char GetSubscriptionRelState(Oid subid, Oid relid,
 						XLogRecPtr *sublsn, bool missing_ok);
 extern void RemoveSubscriptionRel(Oid subid, Oid relid);

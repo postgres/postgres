@@ -287,7 +287,8 @@ process_syncing_tables_for_sync(XLogRecPtr current_lsn)
 		SetSubscriptionRelState(MyLogicalRepWorker->subid,
 								MyLogicalRepWorker->relid,
 								MyLogicalRepWorker->relstate,
-								MyLogicalRepWorker->relstate_lsn);
+								MyLogicalRepWorker->relstate_lsn,
+								true);
 
 		walrcv_endstreaming(wrconn, &tli);
 		finish_sync_worker();
@@ -414,7 +415,7 @@ process_syncing_tables_for_apply(XLogRecPtr current_lsn)
 				}
 				SetSubscriptionRelState(MyLogicalRepWorker->subid,
 										rstate->relid, rstate->state,
-										rstate->lsn);
+										rstate->lsn, true);
 			}
 		}
 		else
@@ -845,7 +846,8 @@ LogicalRepSyncTableStart(XLogRecPtr *origin_startpos)
 				SetSubscriptionRelState(MyLogicalRepWorker->subid,
 										MyLogicalRepWorker->relid,
 										MyLogicalRepWorker->relstate,
-										MyLogicalRepWorker->relstate_lsn);
+										MyLogicalRepWorker->relstate_lsn,
+										true);
 				CommitTransactionCommand();
 				pgstat_report_stat(false);
 
@@ -932,7 +934,8 @@ LogicalRepSyncTableStart(XLogRecPtr *origin_startpos)
 					SetSubscriptionRelState(MyLogicalRepWorker->subid,
 											MyLogicalRepWorker->relid,
 											SUBREL_STATE_SYNCDONE,
-											*origin_startpos);
+											*origin_startpos,
+											true);
 					finish_sync_worker();
 				}
 				break;

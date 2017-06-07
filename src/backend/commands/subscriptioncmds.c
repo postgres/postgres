@@ -451,7 +451,7 @@ CreateSubscription(CreateSubscriptionStmt *stmt, bool isTopLevel)
 										 rv->schemaname, rv->relname);
 
 				SetSubscriptionRelState(subid, relid, table_state,
-										InvalidXLogRecPtr);
+										InvalidXLogRecPtr, false);
 			}
 
 			ereport(NOTICE,
@@ -574,7 +574,7 @@ AlterSubscription_refresh(Subscription *sub, bool copy_data)
 		{
 			SetSubscriptionRelState(sub->oid, relid,
 						  copy_data ? SUBREL_STATE_INIT : SUBREL_STATE_READY,
-									InvalidXLogRecPtr);
+									InvalidXLogRecPtr, false);
 			ereport(NOTICE,
 					(errmsg("added subscription for table %s.%s",
 							quote_identifier(rv->schemaname),
