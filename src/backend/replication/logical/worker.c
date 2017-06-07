@@ -1595,7 +1595,7 @@ ApplyWorkerMain(Datum main_arg)
 		origin_startpos = replorigin_session_get_progress(false);
 		CommitTransactionCommand();
 
-		wrconn = walrcv_connect(MySubscription->conninfo, true, myslotname,
+		wrconn = walrcv_connect(MySubscription->conninfo, true, MySubscription->name,
 								&err);
 		if (wrconn == NULL)
 			ereport(ERROR,

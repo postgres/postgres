@@ -817,6 +817,11 @@ LogicalRepSyncTableStart(XLogRecPtr *origin_startpos)
 						MySubscription->oid,
 						MyLogicalRepWorker->relid);
 
+	/*
+	 * Here we use the slot name instead of the subscription name as the
+	 * application_name, so that it is different from the main apply worker,
+	 * so that synchronous replication can distinguish them.
+	 */
 	wrconn = walrcv_connect(MySubscription->conninfo, true, slotname, &err);
 	if (wrconn == NULL)
 		ereport(ERROR,
