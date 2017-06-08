@@ -1,0 +1,1 @@
+Documentation concerning how to run these regression tests and interpret the results can be found in the [PostgreSQL manual](http://www.postgresql.org/docs/current/static/index.html), in the chapter ["Regression Tests"](http://www.postgresql.org/docs/current/static/regress.html).
