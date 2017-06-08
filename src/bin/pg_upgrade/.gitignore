@@ -4,5 +4,7 @@
 /delete_old_cluster.sh
 /analyze_new_cluster.bat
 /delete_old_cluster.bat
+/reindex_hash.sql
+/loadable_libraries.txt
 /log/
 /tmp_check/

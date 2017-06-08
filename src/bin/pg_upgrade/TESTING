@@ -1,3 +1,30 @@
+THE SHORT VERSION
+-----------------
+
+On non-Windows machines, you can execute the testing process
+described below by running
+	make check
+in this directory.  This will run the shell script test.sh, performing
+an upgrade from the version in this source tree to a new instance of
+the same version.
+
+To test an upgrade from a different version, you must have a built
+source tree for the old version as well as this version, and you
+must have done "make install" for both versions.  Then do:
+
+export oldsrc=...somewhere/postgresql	(old version's source tree)
+export oldbindir=...otherversion/bin	(old version's installed bin dir)
+export bindir=...thisversion/bin	(this version's installed bin dir)
+export libdir=...thisversion/lib	(this version's installed lib dir)
+sh test.sh
+
+In this case, you will have to manually eyeball the resulting dump
+diff for version-specific differences, as explained below.
+
+
+DETAILS
+-------
+
 The most effective way to test pg_upgrade, aside from testing on user
 data, is by upgrading the PostgreSQL regression database.
 
@@ -7,7 +34,7 @@ specific to each major version of Postgres.
 
 Here are the steps needed to create a regression database dump file:
 
-1)  Create and populate the regression database in the old cluster
+1)  Create and populate the regression database in the old cluster.
     This database can be created by running 'make installcheck' from
     src/test/regression.
 
@@ -60,22 +87,3 @@ steps:
 
 7)  Diff the regression database dump file with the regression dump
     file loaded into the old server.
-
-The shell script test.sh in this directory performs more or less this
-procedure.  You can invoke it by running
-
-    make check
-
-or by running
-
-    make installcheck
-
-if "make install" (or "make install-world") were done beforehand.
-When invoked without arguments, it will run an upgrade from the
-version in this source tree to a new instance of the same version.  To
-test an upgrade from a different version, invoke it like this:
-
-    make installcheck oldbindir=...otherversion/bin oldsrc=...somewhere/postgresql
-
-In this case, you will have to manually eyeball the resulting dump
-diff for version-specific differences, as explained above.
