@@ -131,11 +131,11 @@ main(int argc, char *argv[])
 		{"role", required_argument, NULL, 3},
 		{"use-set-session-authorization", no_argument, &use_setsessauth, 1},
 		{"no-publications", no_argument, &no_publications, 1},
+		{"no-role-passwords", no_argument, &no_role_passwords, 1},
 		{"no-security-labels", no_argument, &no_security_labels, 1},
 		{"no-subscriptions", no_argument, &no_subscriptions, 1},
 		{"no-sync", no_argument, NULL, 4},
 		{"no-unlogged-table-data", no_argument, &no_unlogged_table_data, 1},
-		{"no-role-passwords", no_argument, &no_role_passwords, 1},
 
 		{NULL, 0, NULL, 0}
 	};
@@ -599,12 +599,12 @@ help(void)
 	printf(_("  --if-exists                  use IF EXISTS when dropping objects\n"));
 	printf(_("  --inserts                    dump data as INSERT commands, rather than COPY\n"));
 	printf(_("  --no-publications            do not dump publications\n"));
+	printf(_("  --no-role-passwords          do not dump passwords for roles\n"));
 	printf(_("  --no-security-labels         do not dump security label assignments\n"));
 	printf(_("  --no-subscriptions           do not dump subscriptions\n"));
 	printf(_("  --no-sync                    do not wait for changes to be written safely to disk\n"));
 	printf(_("  --no-tablespaces             do not dump tablespace assignments\n"));
 	printf(_("  --no-unlogged-table-data     do not dump unlogged table data\n"));
-	printf(_("  --no-role-passwords          do not dump passwords for roles\n"));
 	printf(_("  --quote-all-identifiers      quote all identifiers, even if not key words\n"));
 	printf(_("  --use-set-session-authorization\n"
 			 "                               use SET SESSION AUTHORIZATION commands instead of\n"

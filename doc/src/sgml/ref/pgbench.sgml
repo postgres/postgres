@@ -580,6 +580,16 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
      </varlistentry>
 
      <varlistentry>
+      <term><option>--log-prefix=<replaceable>prefix</></option></term>
+      <listitem>
+       <para>
+        Set the filename prefix for the log files created by
+        <option>--log</>.  The default is <literal>pgbench_log</>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--progress-timestamp</option></term>
       <listitem>
        <para>
@@ -606,16 +616,6 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
         log file. For example, when computing tps values, you need to multiply
         the numbers accordingly (e.g. with 0.01 sample rate, you'll only get
         1/100 of the actual tps).
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>--log-prefix=<replaceable>prefix</></option></term>
-      <listitem>
-       <para>
-        Set the filename prefix for the log files created by
-        <option>--log</>.  The default is <literal>pgbench_log</>.
        </para>
       </listitem>
      </varlistentry>
