@@ -88,6 +88,16 @@ CREATE FOREIGN TABLE agg_csv (
 	b	float4
 ) SERVER file_server
 OPTIONS (format 'csv', filename '@abs_srcdir@/data/agg.csv', header 'true', delimiter ';', quote '@', escape '"', null '');
+CREATE FOREIGN TABLE agg_csv_gz (
+	a	int2,
+	b	float4
+) SERVER file_server
+OPTIONS (format 'csv', filename '@abs_srcdir@/data/agg.csv.gz', header 'true', delimiter ';', quote '@', escape '"', null '', decompressor '@abs_srcdir@/scripts/gunzip.pl');
+CREATE FOREIGN TABLE it_is_ok (
+	a	int2,
+	b	float4
+) SERVER file_server
+OPTIONS (format 'csv', filename '@abs_srcdir@/data/it''s_ok.csv.gz', header 'true', delimiter ';', quote '@', escape '"', null '', decompressor '@abs_srcdir@/scripts/gunzip.pl');
 CREATE FOREIGN TABLE agg_bad (
 	a	int2,
 	b	float4
@@ -123,7 +133,7 @@ ERROR:  invalid option "force_not_null"
 HINT:  There are no valid options in this context.
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (force_not_null '*'); -- ERROR
 ERROR:  invalid option "force_not_null"
-HINT:  Valid options in this context are: filename, format, header, delimiter, quote, escape, null, encoding
+HINT:  Valid options in this context are: filename, format, header, delimiter, quote, escape, null, encoding, decompressor
 -- basic query tests
 SELECT * FROM agg_text WHERE b > 10.0 ORDER BY a;
   a  |   b    
@@ -140,7 +150,23 @@ SELECT * FROM agg_csv ORDER BY a;
  100 |  99.097
 (3 rows)
 
+SELECT * FROM agg_csv_gz ORDER BY a;
+  a  |    b    
+-----+---------
+   0 | 0.09561
+  42 |  324.78
+ 100 |  99.097
+(3 rows)
+
 SELECT * FROM agg_csv c JOIN agg_text t ON (t.a = c.a) ORDER BY c.a;
+  a  |    b    |  a  |    b    
+-----+---------+-----+---------
+   0 | 0.09561 |   0 | 0.09561
+  42 |  324.78 |  42 |  324.78
+ 100 |  99.097 | 100 |  99.097
+(3 rows)
+
+SELECT * FROM agg_csv_gz c JOIN agg_text t ON (t.a = c.a) ORDER BY c.a;
   a  |    b    |  a  |    b    
 -----+---------+-----+---------
    0 | 0.09561 |   0 | 0.09561
@@ -174,6 +200,38 @@ EXECUTE st(100);
 (1 row)
 
 DEALLOCATE st;
+\t on
+EXPLAIN (VERBOSE, COSTS FALSE) SELECT * FROM agg_csv_gz;
+ Foreign Scan on public.agg_csv_gz
+   Output: a, b
+   Foreign File: @abs_srcdir@/data/agg.csv.gz
+   Foreign Program: @abs_srcdir@/scripts/gunzip.pl '@abs_srcdir@/data/agg.csv.gz'
+   Foreign Program Compression Est.: 2.7709
+
+\t off
+PREPARE st(int) AS SELECT * FROM agg_csv_gz WHERE a = $1;
+EXECUTE st(100);
+  a  |   b    
+-----+--------
+ 100 | 99.097
+(1 row)
+
+EXECUTE st(100);
+  a  |   b    
+-----+--------
+ 100 | 99.097
+(1 row)
+
+DEALLOCATE st;
+\t on
+EXPLAIN (VERBOSE, COSTS FALSE) SELECT * FROM it_is_ok;
+ Foreign Scan on public.it_is_ok
+   Output: a, b
+   Foreign File: @abs_srcdir@/data/it's_ok.csv.gz
+   Foreign Program: @abs_srcdir@/scripts/gunzip.pl '@abs_srcdir@/data/it'\''s_ok.csv.gz'
+   Foreign Program Compression Est.: 2.7709
+
+\t off
 -- tableoid
 SELECT tableoid::regclass, b FROM agg_csv;
  tableoid |    b    
@@ -243,13 +301,15 @@ SET ROLE file_fdw_superuser;
 -- cleanup
 RESET ROLE;
 DROP EXTENSION file_fdw CASCADE;
-NOTICE:  drop cascades to 8 other objects
+NOTICE:  drop cascades to 10 other objects
 DETAIL:  drop cascades to server file_server
 drop cascades to user mapping for file_fdw_user on server file_server
 drop cascades to user mapping for file_fdw_superuser on server file_server
 drop cascades to user mapping for no_priv_user on server file_server
 drop cascades to foreign table agg_text
 drop cascades to foreign table agg_csv
+drop cascades to foreign table agg_csv_gz
+drop cascades to foreign table it_is_ok
 drop cascades to foreign table agg_bad
 drop cascades to foreign table text_csv
 DROP ROLE file_fdw_superuser, file_fdw_user, no_priv_user;
