@@ -682,12 +682,25 @@ libpqrcv_receive(WalReceiverConn *conn, char **buffer,
 		{
 			PQclear(res);
 
-			/* Verify that there are no more results */
+			/* Verify that there are no more results. */
 			res = PQgetResult(conn->streamConn);
 			if (res != NULL)
+			{
+				PQclear(res);
+
+				/*
+				 * If the other side closed the connection orderly (otherwise
+				 * we'd seen an error, or PGRES_COPY_IN) don't report an error
+				 * here, but let callers deal with it.
+				 */
+				if (PQstatus(conn->streamConn) == CONNECTION_BAD)
+					return -1;
+
 				ereport(ERROR,
 						(errmsg("unexpected result after CommandComplete: %s",
 								PQerrorMessage(conn->streamConn))));
+			}
+
 			return -1;
 		}
 		else if (PQresultStatus(res) == PGRES_COPY_IN)
