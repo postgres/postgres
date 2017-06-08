@@ -656,7 +656,7 @@ recv_password_packet(Port *port)
 			 * log.
 			 */
 			if (mtype != EOF)
-				ereport(COMMERROR,
+				ereport(ERROR,
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
 					errmsg("expected password response, got message type %d",
 						   mtype)));
@@ -684,7 +684,7 @@ recv_password_packet(Port *port)
 	 * StringInfo is guaranteed to have an appended '\0'.
 	 */
 	if (strlen(buf.data) + 1 != buf.len)
-		ereport(COMMERROR,
+		ereport(ERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
 				 errmsg("invalid password packet size")));
 
@@ -897,11 +897,10 @@ CheckSCRAMAuth(Port *port, char *shadow_pass, char **logdetail)
 			/* Only log error if client didn't disconnect. */
 			if (mtype != EOF)
 			{
-				ereport(COMMERROR,
+				ereport(ERROR,
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
 						 errmsg("expected SASL response, got message type %d",
 								mtype)));
-				return STATUS_ERROR;
 			}
 			else
 				return STATUS_EOF;
@@ -935,11 +934,9 @@ CheckSCRAMAuth(Port *port, char *shadow_pass, char **logdetail)
 			selected_mech = pq_getmsgrawstring(&buf);
 			if (strcmp(selected_mech, SCRAM_SHA256_NAME) != 0)
 			{
-				ereport(COMMERROR,
+				ereport(ERROR,
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
 						 errmsg("client selected an invalid SASL authentication mechanism")));
-				pfree(buf.data);
-				return STATUS_ERROR;
 			}
 
 			inputlen = pq_getmsgint(&buf, 4);
@@ -1144,7 +1141,7 @@ pg_GSS_recvauth(Port *port)
 		{
 			/* Only log error if client didn't disconnect. */
 			if (mtype != EOF)
-				ereport(COMMERROR,
+				ereport(ERROR,
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
 						 errmsg("expected GSS response, got message type %d",
 								mtype)));
@@ -1384,7 +1381,7 @@ pg_SSPI_recvauth(Port *port)
 		{
 			/* Only log error if client didn't disconnect. */
 			if (mtype != EOF)
-				ereport(COMMERROR,
+				ereport(ERROR,
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
 						 errmsg("expected SSPI response, got message type %d",
 								mtype)));
