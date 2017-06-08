@@ -81,7 +81,6 @@ static void logicalrep_worker_cleanup(LogicalRepWorker *worker);
 
 /* Flags set by signal handlers */
 static volatile sig_atomic_t got_SIGHUP = false;
-static volatile sig_atomic_t got_SIGTERM = false;
 
 static bool on_commit_launcher_wakeup = false;
 
@@ -634,20 +633,6 @@ logicalrep_worker_onexit(int code, Datum arg)
 	ApplyLauncherWakeup();
 }
 
-/* SIGTERM: set flag to exit at next convenient time */
-static void
-logicalrep_launcher_sigterm(SIGNAL_ARGS)
-{
-	int			save_errno = errno;
-
-	got_SIGTERM = true;
-
-	/* Waken anything waiting on the process latch */
-	SetLatch(MyLatch);
-
-	errno = save_errno;
-}
-
 /* SIGHUP: set flag to reload configuration at next convenient time */
 static void
 logicalrep_launcher_sighup(SIGNAL_ARGS)
@@ -809,12 +794,13 @@ ApplyLauncherMain(Datum main_arg)
 
 	before_shmem_exit(logicalrep_launcher_onexit, (Datum) 0);
 
+	Assert(LogicalRepCtx->launcher_pid == 0);
+	LogicalRepCtx->launcher_pid = MyProcPid;
+
 	/* Establish signal handlers. */
 	pqsignal(SIGHUP, logicalrep_launcher_sighup);
-	pqsignal(SIGTERM, logicalrep_launcher_sigterm);
+	pqsignal(SIGTERM, die);
 	BackgroundWorkerUnblockSignals();
-
-	LogicalRepCtx->launcher_pid = MyProcPid;
 
 	/*
 	 * Establish connection to nailed catalogs (we only ever access
@@ -823,7 +809,7 @@ ApplyLauncherMain(Datum main_arg)
 	BackgroundWorkerInitializeConnection(NULL, NULL);
 
 	/* Enter main loop */
-	while (!got_SIGTERM)
+	for (;;)
 	{
 		int			rc;
 		List	   *sublist;
@@ -832,6 +818,8 @@ ApplyLauncherMain(Datum main_arg)
 		MemoryContext oldctx;
 		TimestampTz now;
 		long		wait_time = DEFAULT_NAPTIME_PER_CYCLE;
+
+		CHECK_FOR_INTERRUPTS();
 
 		now = GetCurrentTimestamp();
 
@@ -909,13 +897,16 @@ ApplyLauncherMain(Datum main_arg)
 		}
 	}
 
-	LogicalRepCtx->launcher_pid = 0;
+	/* Not reachable */
+}
 
-	/* ... and if it returns, we're done */
-	ereport(DEBUG1,
-			(errmsg("logical replication launcher shutting down")));
-
-	proc_exit(0);
+/*
+ * Is current process the logical replication launcher?
+ */
+bool
+IsLogicalLauncher(void)
+{
+	return LogicalRepCtx->launcher_pid == MyProcPid;
 }
 
 /*

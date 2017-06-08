@@ -24,4 +24,6 @@ extern void ApplyLauncherShmemInit(void);
 extern void ApplyLauncherWakeupAtCommit(void);
 extern void AtEOXact_ApplyLauncher(bool isCommit);
 
+extern bool IsLogicalLauncher(void);
+
 #endif   /* LOGICALLAUNCHER_H */

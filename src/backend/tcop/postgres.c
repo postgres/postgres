@@ -55,6 +55,7 @@
 #include "pg_getopt.h"
 #include "postmaster/autovacuum.h"
 #include "postmaster/postmaster.h"
+#include "replication/logicallauncher.h"
 #include "replication/logicalworker.h"
 #include "replication/slot.h"
 #include "replication/walsender.h"
@@ -2848,6 +2849,14 @@ ProcessInterrupts(void)
 			ereport(FATAL,
 					(errcode(ERRCODE_ADMIN_SHUTDOWN),
 					 errmsg("terminating logical replication worker due to administrator command")));
+		else if (IsLogicalLauncher())
+		{
+			ereport(DEBUG1,
+					(errmsg("logical replication launcher shutting down")));
+
+			/* The logical replication launcher can be stopped at any time. */
+			proc_exit(0);
+		}
 		else if (RecoveryConflictPending && RecoveryConflictRetryable)
 		{
 			pgstat_report_recovery_conflict(RecoveryConflictReason);
