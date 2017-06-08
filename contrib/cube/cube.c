@@ -91,14 +91,14 @@ PG_FUNCTION_INFO_V1(cube_enlarge);
 /*
 ** For internal use only
 */
-int32		cube_cmp_v0(NDBOX *a, NDBOX *b);
-bool		cube_contains_v0(NDBOX *a, NDBOX *b);
-bool		cube_overlap_v0(NDBOX *a, NDBOX *b);
-NDBOX	   *cube_union_v0(NDBOX *a, NDBOX *b);
-void		rt_cube_size(NDBOX *a, double *sz);
-NDBOX	   *g_cube_binary_union(NDBOX *r1, NDBOX *r2, int *sizep);
-bool		g_cube_leaf_consistent(NDBOX *key, NDBOX *query, StrategyNumber strategy);
-bool		g_cube_internal_consistent(NDBOX *key, NDBOX *query, StrategyNumber strategy);
+static	int32		cube_cmp_v0(NDBOX *a, NDBOX *b);
+static	bool		cube_contains_v0(NDBOX *a, NDBOX *b);
+static	bool		cube_overlap_v0(NDBOX *a, NDBOX *b);
+static	NDBOX	   *cube_union_v0(NDBOX *a, NDBOX *b);
+static	void		rt_cube_size(NDBOX *a, double *sz);
+static	NDBOX	   *g_cube_binary_union(NDBOX *r1, NDBOX *r2, int *sizep);
+static	bool		g_cube_leaf_consistent(NDBOX *key, NDBOX *query, StrategyNumber strategy);
+static	bool		g_cube_internal_consistent(NDBOX *key, NDBOX *query, StrategyNumber strategy);
 
 /*
 ** Auxiliary funxtions
@@ -402,6 +402,37 @@ g_cube_decompress(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(entry);
 }
 
+static float
+pack_float(const float value, const int realm)
+{
+  union {
+    float f;
+    struct { unsigned value:31, sign:1; } vbits;
+    struct { unsigned value:29, realm:2, sign:1; } rbits;
+  } a;
+
+  a.f = value;
+  a.rbits.value = a.vbits.value >> 2;
+  a.rbits.realm = realm;
+ 
+  return a.f;
+}
+
+static void
+rt_cube_edge(NDBOX *a, double *size)
+{
+	int			i;
+	double		result = 0;
+
+	if (a != (NDBOX *) NULL)
+	{
+		for (i = 0; i < DIM(a); i++)
+			result += Abs(UR_COORD(a, i) - LL_COORD(a, i));
+	}
+	*size = result;
+	return;
+}
+
 
 /*
 ** The GiST Penalty method for boxes
@@ -422,6 +453,26 @@ g_cube_penalty(PG_FUNCTION_ARGS)
 	rt_cube_size(ud, &tmp1);
 	rt_cube_size(DatumGetNDBOX(origentry->key), &tmp2);
 	*result = (float) (tmp1 - tmp2);
+
+	if( *result == 0 )
+	{
+		rt_cube_edge(ud, &tmp1);
+		rt_cube_edge(DatumGetNDBOX(origentry->key), &tmp2);
+		*result = (float) (tmp1 - tmp2);
+		if( *result == 0 )
+		{
+			*result = pack_float(tmp1, 0); /* REALM 0 */
+		}
+		else
+		{
+			*result = pack_float(*result, 2); /* REALM 2 */
+		}
+	}
+	else
+	{
+		*result = pack_float(*result, 3); /* REALM 3 */
+	}
+
 
 	PG_RETURN_FLOAT8(*result);
 }
@@ -481,10 +532,10 @@ g_cube_picksplit(PG_FUNCTION_ARGS)
 			/* compute the wasted space by unioning these guys */
 			/* size_waste = size_union - size_inter; */
 			union_d = cube_union_v0(datum_alpha, datum_beta);
-			rt_cube_size(union_d, &size_union);
+			rt_cube_edge(union_d, &size_union);
 			inter_d = DatumGetNDBOX(DirectFunctionCall2(cube_inter,
 						  entryvec->vector[i].key, entryvec->vector[j].key));
-			rt_cube_size(inter_d, &size_inter);
+			rt_cube_edge(inter_d, &size_inter);
 			size_waste = size_union - size_inter;
 
 			/*
@@ -508,10 +559,10 @@ g_cube_picksplit(PG_FUNCTION_ARGS)
 
 	datum_alpha = DatumGetNDBOX(entryvec->vector[seed_1].key);
 	datum_l = cube_union_v0(datum_alpha, datum_alpha);
-	rt_cube_size(datum_l, &size_l);
+	rt_cube_edge(datum_l, &size_l);
 	datum_beta = DatumGetNDBOX(entryvec->vector[seed_2].key);
 	datum_r = cube_union_v0(datum_beta, datum_beta);
-	rt_cube_size(datum_r, &size_r);
+	rt_cube_edge(datum_r, &size_r);
 
 	/*
 	 * Now split up the regions between the two seeds.  An important property
@@ -551,8 +602,8 @@ g_cube_picksplit(PG_FUNCTION_ARGS)
 		datum_alpha = DatumGetNDBOX(entryvec->vector[i].key);
 		union_dl = cube_union_v0(datum_l, datum_alpha);
 		union_dr = cube_union_v0(datum_r, datum_alpha);
-		rt_cube_size(union_dl, &size_alpha);
-		rt_cube_size(union_dr, &size_beta);
+		rt_cube_edge(union_dl, &size_alpha);
+		rt_cube_edge(union_dr, &size_beta);
 
 		/* pick which page to add it to */
 		if (size_alpha - size_l < size_beta - size_r)
@@ -599,7 +650,7 @@ g_cube_same(PG_FUNCTION_ARGS)
 /*
 ** SUPPORT ROUTINES
 */
-bool
+static	bool
 g_cube_leaf_consistent(NDBOX *key,
 					   NDBOX *query,
 					   StrategyNumber strategy)
@@ -628,7 +679,7 @@ g_cube_leaf_consistent(NDBOX *key,
 	return (retval);
 }
 
-bool
+static	bool
 g_cube_internal_consistent(NDBOX *key,
 						   NDBOX *query,
 						   StrategyNumber strategy)
@@ -655,7 +706,7 @@ g_cube_internal_consistent(NDBOX *key,
 	return (retval);
 }
 
-NDBOX *
+static	NDBOX *
 g_cube_binary_union(NDBOX *r1, NDBOX *r2, int *sizep)
 {
 	NDBOX	   *retval;
@@ -668,7 +719,7 @@ g_cube_binary_union(NDBOX *r1, NDBOX *r2, int *sizep)
 
 
 /* cube_union_v0 */
-NDBOX *
+static	NDBOX *
 cube_union_v0(NDBOX *a, NDBOX *b)
 {
 	int			i;
@@ -838,7 +889,7 @@ cube_size(PG_FUNCTION_ARGS)
 	PG_RETURN_FLOAT8(result);
 }
 
-void
+static	void
 rt_cube_size(NDBOX *a, double *size)
 {
 	double		result;
@@ -865,7 +916,7 @@ rt_cube_size(NDBOX *a, double *size)
 
 /* make up a metric in which one box will be 'lower' than the other
    -- this can be useful for sorting and to determine uniqueness */
-int32
+static	int32
 cube_cmp_v0(NDBOX *a, NDBOX *b)
 {
 	int			i;
@@ -1052,7 +1103,7 @@ cube_ge(PG_FUNCTION_ARGS)
 
 /* Contains */
 /* Box(A) CONTAINS Box(B) IFF pt(A) < pt(B) */
-bool
+static	bool
 cube_contains_v0(NDBOX *a, NDBOX *b)
 {
 	int			i;
@@ -1122,7 +1173,7 @@ cube_contained(PG_FUNCTION_ARGS)
 
 /* Overlap */
 /* Box(A) Overlap Box(B) IFF (pt(a)LL < pt(B)UR) && (pt(b)LL < pt(a)UR) */
-bool
+static	bool
 cube_overlap_v0(NDBOX *a, NDBOX *b)
 {
 	int			i;
