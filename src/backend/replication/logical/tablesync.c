@@ -796,7 +796,7 @@ LogicalRepSyncTableStart(XLogRecPtr *origin_startpos)
 	StartTransactionCommand();
 	relstate = GetSubscriptionRelState(MyLogicalRepWorker->subid,
 									   MyLogicalRepWorker->relid,
-									   &relstate_lsn, false);
+									   &relstate_lsn, true);
 	CommitTransactionCommand();
 
 	SpinLockAcquire(&MyLogicalRepWorker->relmutex);
@@ -942,7 +942,10 @@ LogicalRepSyncTableStart(XLogRecPtr *origin_startpos)
 			}
 		case SUBREL_STATE_SYNCDONE:
 		case SUBREL_STATE_READY:
-			/* Nothing to do here but finish. */
+		case SUBREL_STATE_UNKNOWN:
+			/* Nothing to do here but finish.  (UNKNOWN means the relation was
+			 * removed from pg_subscription_rel before the sync worker could
+			 * start.) */
 			finish_sync_worker();
 			break;
 		default:
