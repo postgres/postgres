@@ -600,6 +600,8 @@ AlterSubscription_refresh(Subscription *sub, bool copy_data)
 
 			RemoveSubscriptionRel(sub->oid, relid);
 
+			logicalrep_worker_stop(sub->oid, relid);
+
 			namespace = get_namespace_name(get_rel_namespace(relid));
 			ereport(NOTICE,
 					(errmsg("removed subscription for table %s.%s",
