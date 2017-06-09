@@ -84,7 +84,7 @@
 #ssl_key_file = 'server.key'
 #ssl_ca_file = ''
 #ssl_crl_file = ''
-#password_encryption = md5		# md5, scram-sha-256 or plain
+#password_encryption = md5		# md5, scram-sha-256, or plain
 #db_user_namespace = off
 #row_security = on
 
@@ -162,7 +162,7 @@
 #effective_io_concurrency = 1		# 1-1000; 0 disables prefetching
 #max_worker_processes = 8		# (change requires restart)
 #max_parallel_workers_per_gather = 2	# taken from max_parallel_workers
-#max_parallel_workers = 8	    # maximum number of max_worker_processes that
+#max_parallel_workers = 8		# maximum number of max_worker_processes that
 					# can be used in parallel queries
 #old_snapshot_threshold = -1		# 1min-60d; -1 disables; 0 is immediate
 					# (change requires restart)
@@ -245,7 +245,7 @@
 # These settings are ignored on a standby server.
 
 #synchronous_standby_names = ''	# standby servers that provide sync rep
-				# method to choose sync standbys, number of sync standbys
+				# method to choose sync standbys, number of sync standbys,
 				# and comma-separated list of application_name
 				# from standby(s); '*' = all
 #vacuum_defer_cleanup_age = 0	# number of xacts by which cleanup is delayed
