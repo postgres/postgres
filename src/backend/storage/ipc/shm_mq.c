@@ -1167,7 +1167,7 @@ shm_mq_inc_bytes_written(volatile shm_mq *mq, Size n)
 }
 
 /*
- * Set sender's latch, unless queue is detached.
+ * Set receiver's latch, unless queue is detached.
  */
 static shm_mq_result
 shm_mq_notify_receiver(volatile shm_mq *mq)
