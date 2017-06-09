@@ -449,7 +449,7 @@ pg_last_wal_replay_lsn(PG_FUNCTION_ARGS)
 
 /*
  * Compute an xlog file name and decimal byte offset given a WAL location,
- * such as is returned by pg_stop_backup() or pg_xlog_switch().
+ * such as is returned by pg_stop_backup() or pg_switch_wal().
  *
  * Note that a location exactly at a segment boundary is taken to be in
  * the previous segment.  This is usually the right thing, since the
@@ -515,7 +515,7 @@ pg_walfile_name_offset(PG_FUNCTION_ARGS)
 
 /*
  * Compute an xlog file name given a WAL location,
- * such as is returned by pg_stop_backup() or pg_xlog_switch().
+ * such as is returned by pg_stop_backup() or pg_switch_wal().
  */
 Datum
 pg_walfile_name(PG_FUNCTION_ARGS)
