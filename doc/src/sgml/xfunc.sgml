@@ -302,7 +302,7 @@ SELECT add_em(1, 2) AS answer;
      bank account:
 
 <programlisting>
-CREATE FUNCTION tf1 (accountno integer, debit numeric) RETURNS integer AS $$
+CREATE FUNCTION tf1 (accountno integer, debit numeric) RETURNS numeric AS $$
     UPDATE bank
         SET balance = balance - debit
         WHERE accountno = tf1.accountno;
@@ -333,7 +333,7 @@ SELECT tf1(17, 100.0);
      is:
 
 <programlisting>
-CREATE FUNCTION tf1 (accountno integer, debit numeric) RETURNS integer AS $$
+CREATE FUNCTION tf1 (accountno integer, debit numeric) RETURNS numeric AS $$
     UPDATE bank
         SET balance = balance - debit
         WHERE accountno = tf1.accountno;
@@ -345,7 +345,7 @@ $$ LANGUAGE SQL;
      The same thing could be done in one command using <literal>RETURNING</>:
 
 <programlisting>
-CREATE FUNCTION tf1 (accountno integer, debit numeric) RETURNS integer AS $$
+CREATE FUNCTION tf1 (accountno integer, debit numeric) RETURNS numeric AS $$
     UPDATE bank
         SET balance = balance - debit
         WHERE accountno = tf1.accountno
