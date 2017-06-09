@@ -1579,6 +1579,18 @@ psql_completion(const char *text, int start, int end)
 	{
 		/* complete with nothing here as this refers to remote publications */
 	}
+	/* ALTER SUBSCRIPTION <name> SET PUBLICATION <name> */
+	else if (HeadMatches3("ALTER", "SUBSCRIPTION", MatchAny) &&
+			 TailMatches3("SET", "PUBLICATION", MatchAny))
+	{
+		COMPLETE_WITH_CONST("WITH (");
+	}
+	/* ALTER SUBSCRIPTION <name> SET PUBLICATION <name> WITH ( */
+	else if (HeadMatches3("ALTER", "SUBSCRIPTION", MatchAny) &&
+			 TailMatches5("SET", "PUBLICATION", MatchAny, "WITH", "("))
+	{
+		COMPLETE_WITH_LIST2("copy_data", "refresh");
+	}
 	/* ALTER SCHEMA <name> */
 	else if (Matches3("ALTER", "SCHEMA", MatchAny))
 		COMPLETE_WITH_LIST2("OWNER TO", "RENAME TO");
