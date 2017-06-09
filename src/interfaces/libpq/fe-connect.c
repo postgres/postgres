@@ -1642,7 +1642,6 @@ connectDBStart(PGconn *conn)
 	for (i = 0; i < conn->nconnhost; ++i)
 	{
 		pg_conn_host *ch = &conn->connhost[i];
-		char	   *node = ch->host;
 		struct addrinfo hint;
 		int			thisport;
 
@@ -1668,17 +1667,28 @@ connectDBStart(PGconn *conn)
 		}
 		snprintf(portstr, sizeof(portstr), "%d", thisport);
 
-		/* Set up for name resolution. */
+		/* Use pg_getaddrinfo_all() to resolve the address */
 		switch (ch->type)
 		{
 			case CHT_HOST_NAME:
+				ret = pg_getaddrinfo_all(ch->host, portstr, &hint, &ch->addrlist);
+				if (ret || !ch->addrlist)
+					appendPQExpBuffer(&conn->errorMessage,
+									  libpq_gettext("could not translate host name \"%s\" to address: %s\n"),
+									  ch->host, gai_strerror(ret));
 				break;
+
 			case CHT_HOST_ADDRESS:
 				hint.ai_flags = AI_NUMERICHOST;
+				ret = pg_getaddrinfo_all(ch->host, portstr, &hint, &ch->addrlist);
+				if (ret || !ch->addrlist)
+					appendPQExpBuffer(&conn->errorMessage,
+									  libpq_gettext("could not parse network address \"%s\": %s\n"),
+									  ch->host, gai_strerror(ret));
 				break;
+
 			case CHT_UNIX_SOCKET:
 #ifdef HAVE_UNIX_SOCKETS
-				node = NULL;
 				hint.ai_family = AF_UNIX;
 				UNIXSOCK_PATH(portstr, thisport, ch->host);
 				if (strlen(portstr) >= UNIXSOCK_PATH_BUFLEN)
@@ -1690,24 +1700,25 @@ connectDBStart(PGconn *conn)
 					conn->options_valid = false;
 					goto connect_errReturn;
 				}
+
+				/*
+				 * NULL hostname tells pg_getaddrinfo_all to parse the service
+				 * name as a Unix-domain socket path.
+				 */
+				ret = pg_getaddrinfo_all(NULL, portstr, &hint, &ch->addrlist);
+				if (ret || !ch->addrlist)
+					appendPQExpBuffer(&conn->errorMessage,
+									  libpq_gettext("could not translate Unix-domain socket path \"%s\" to address: %s\n"),
+									  portstr, gai_strerror(ret));
+				break;
 #else
 				Assert(false);
+				conn->options_valid = false;
+				goto connect_errReturn;
 #endif
-				break;
 		}
-
-		/* Use pg_getaddrinfo_all() to resolve the address */
-		ret = pg_getaddrinfo_all(node, portstr, &hint, &ch->addrlist);
 		if (ret || !ch->addrlist)
 		{
-			if (node)
-				appendPQExpBuffer(&conn->errorMessage,
-								  libpq_gettext("could not translate host name \"%s\" to address: %s\n"),
-								  node, gai_strerror(ret));
-			else
-				appendPQExpBuffer(&conn->errorMessage,
-								  libpq_gettext("could not translate Unix-domain socket path \"%s\" to address: %s\n"),
-								  portstr, gai_strerror(ret));
 			if (ch->addrlist)
 			{
 				pg_freeaddrinfo_all(hint.ai_family, ch->addrlist);
