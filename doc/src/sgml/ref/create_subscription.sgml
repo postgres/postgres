@@ -226,6 +226,19 @@ CREATE SUBSCRIPTION <replaceable class="PARAMETER">subscription_name</replaceabl
    how to configure access control between the subscription and the
    publication instance.
   </para>
+
+  <para>
+   Creating a subscription that connects to the same database cluster (for
+   example, to replicate between databases in the same cluster or to replicate
+   within the same database) will only succeed if the replication slot is not
+   created as part of the same command.  Otherwise, the <command>CREATE
+   SUBSCRIPTION</command> call will hang.  To make this work, create the
+   replication slot separately (using the
+   function <function>pg_create_logical_replication_slot</function> with the
+   plugin name <literal>pgoutput</literal>) and create the subscription using
+   the parameter <literal>create_slot = false</literal>.  This is an
+   implementation restriction that might be lifted in a future release.
+  </para>
  </refsect1>
 
  <refsect1>
