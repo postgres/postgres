@@ -1668,6 +1668,7 @@ connectDBStart(PGconn *conn)
 		snprintf(portstr, sizeof(portstr), "%d", thisport);
 
 		/* Use pg_getaddrinfo_all() to resolve the address */
+		ret = 1;
 		switch (ch->type)
 		{
 			case CHT_HOST_NAME:
