@@ -70,7 +70,7 @@
 
      <row>
       <entry>JDBC</entry>
-      <entry>JDBC</entry>
+      <entry>Java</entry>
       <entry>Type 4 JDBC driver</entry>
       <entry><ulink url="https://jdbc.postgresql.org/"></ulink></entry>
      </row>
@@ -80,6 +80,13 @@
       <entry>C++</entry>
       <entry>New-style C++ interface</entry>
       <entry><ulink url="http://pqxx.org/"></ulink></entry>
+     </row>
+
+     <row>
+      <entry>node-postgres</entry>
+      <entry>JavaScript</entry>
+      <entry>Node.js driver</entry>
+      <entry><ulink url="https://node-postgres.com/"></ulink></entry>
      </row>
 
      <row>
@@ -94,6 +101,13 @@
       <entry>Tcl</entry>
       <entry></entry>
       <entry><ulink url="http://sourceforge.net/projects/pgtclng/"></ulink></entry>
+     </row>
+
+     <row>
+      <entry>pq</entry>
+      <entry>Go</entry>
+      <entry>Pure Go driver for Go's database/sql</entry>
+      <entry><ulink url="https://github.com/lib/pq"></ulink></entry>
      </row>
 
      <row>
