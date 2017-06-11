@@ -345,6 +345,15 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	return result;
 }
 
+/*
+ * generateSerialExtraStmts
+ *		Generate CREATE SEQUENCE and ALTER SEQUENCE ... OWNED BY statements
+ *		to create the sequence for a serial or identity column.
+ *
+ * This includes determining the name the sequence will have.  The caller
+ * can ask to get back the name components by passing non-null pointers
+ * for snamespace_p and sname_p.
+ */
 static void
 generateSerialExtraStmts(CreateStmtContext *cxt, ColumnDef *column,
 						 Oid seqtypid, List *seqoptions, bool for_identity,
@@ -373,7 +382,6 @@ generateSerialExtraStmts(CreateStmtContext *cxt, ColumnDef *column,
 	 * problem, especially since few people would need two serial columns in
 	 * one table.
 	 */
-
 	foreach(option, seqoptions)
 	{
 		DefElem    *defel = lfirst_node(DefElem, option);
@@ -393,7 +401,17 @@ generateSerialExtraStmts(CreateStmtContext *cxt, ColumnDef *column,
 		RangeVar   *rv = makeRangeVarFromNameList(castNode(List, nameEl->arg));
 
 		snamespace = rv->schemaname;
+		if (!snamespace)
+		{
+			/* Given unqualified SEQUENCE NAME, select namespace */
+			if (cxt->rel)
+				snamespaceid = RelationGetNamespace(cxt->rel);
+			else
+				snamespaceid = RangeVarGetCreationNamespace(cxt->relation);
+			snamespace = get_namespace_name(snamespaceid);
+		}
 		sname = rv->relname;
+		/* Remove the SEQUENCE NAME item from seqoptions */
 		seqoptions = list_delete_ptr(seqoptions, nameEl);
 	}
 	else
@@ -433,7 +451,9 @@ generateSerialExtraStmts(CreateStmtContext *cxt, ColumnDef *column,
 	 * not our synthetic one.
 	 */
 	if (seqtypid)
-		seqstmt->options = lcons(makeDefElem("as", (Node *) makeTypeNameFromOid(seqtypid, -1), -1),
+		seqstmt->options = lcons(makeDefElem("as",
+								  (Node *) makeTypeNameFromOid(seqtypid, -1),
+											 -1),
 								 seqstmt->options);
 
 	/*
