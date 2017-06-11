@@ -899,6 +899,434 @@ EXPLAIN (COSTS OFF) SELECT * FROM t1 WHERE f_leak(b);
          Filter: f_leak(b)
 (7 rows)
 
+--
+-- Partitioned Tables
+--
+SET SESSION AUTHORIZATION regress_rls_alice;
+CREATE TABLE part_document (
+    did         int,
+    cid         int,
+    dlevel      int not null,
+    dauthor     name,
+    dtitle      text
+) PARTITION BY RANGE (cid);
+GRANT ALL ON part_document TO public;
+-- Create partitions for document categories
+CREATE TABLE part_document_fiction PARTITION OF part_document FOR VALUES FROM (11) to (12);
+CREATE TABLE part_document_satire PARTITION OF part_document FOR VALUES FROM (55) to (56);
+CREATE TABLE part_document_nonfiction PARTITION OF part_document FOR VALUES FROM (99) to (100);
+GRANT ALL ON part_document_fiction TO public;
+GRANT ALL ON part_document_satire TO public;
+GRANT ALL ON part_document_nonfiction TO public;
+INSERT INTO part_document VALUES
+    ( 1, 11, 1, 'regress_rls_bob', 'my first novel'),
+    ( 2, 11, 2, 'regress_rls_bob', 'my second novel'),
+    ( 3, 99, 2, 'regress_rls_bob', 'my science textbook'),
+    ( 4, 55, 1, 'regress_rls_bob', 'my first satire'),
+    ( 5, 99, 2, 'regress_rls_bob', 'my history book'),
+    ( 6, 11, 1, 'regress_rls_carol', 'great science fiction'),
+    ( 7, 99, 2, 'regress_rls_carol', 'great technology book'),
+    ( 8, 55, 2, 'regress_rls_carol', 'great satire'),
+    ( 9, 11, 1, 'regress_rls_dave', 'awesome science fiction'),
+    (10, 99, 2, 'regress_rls_dave', 'awesome technology book');
+ALTER TABLE part_document ENABLE ROW LEVEL SECURITY;
+-- Create policy on parent
+-- user's security level must be higher than or equal to document's
+CREATE POLICY pp1 ON part_document AS PERMISSIVE
+    USING (dlevel <= (SELECT seclv FROM uaccount WHERE pguser = current_user));
+-- Dave is only allowed to see cid < 55
+CREATE POLICY pp1r ON part_document AS RESTRICTIVE TO regress_rls_dave
+    USING (cid < 55);
+\d+ part_document
+                          Table "regress_rls_schema.part_document"
+ Column  |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
+---------+---------+-----------+----------+---------+----------+--------------+-------------
+ did     | integer |           |          |         | plain    |              | 
+ cid     | integer |           |          |         | plain    |              | 
+ dlevel  | integer |           | not null |         | plain    |              | 
+ dauthor | name    |           |          |         | plain    |              | 
+ dtitle  | text    |           |          |         | extended |              | 
+Partition key: RANGE (cid)
+Policies:
+    POLICY "pp1"
+      USING ((dlevel <= ( SELECT uaccount.seclv
+   FROM uaccount
+  WHERE (uaccount.pguser = CURRENT_USER))))
+    POLICY "pp1r" AS RESTRICTIVE
+      TO regress_rls_dave
+      USING ((cid < 55))
+Partitions: part_document_fiction FOR VALUES FROM (11) TO (12),
+            part_document_nonfiction FOR VALUES FROM (99) TO (100),
+            part_document_satire FOR VALUES FROM (55) TO (56)
+
+SELECT * FROM pg_policies WHERE schemaname = 'regress_rls_schema' AND tablename like '%part_document%' ORDER BY policyname;
+     schemaname     |   tablename   | policyname | permissive  |       roles        | cmd |                    qual                    | with_check 
+--------------------+---------------+------------+-------------+--------------------+-----+--------------------------------------------+------------
+ regress_rls_schema | part_document | pp1        | PERMISSIVE  | {public}           | ALL | (dlevel <= ( SELECT uaccount.seclv        +| 
+                    |               |            |             |                    |     |    FROM uaccount                          +| 
+                    |               |            |             |                    |     |   WHERE (uaccount.pguser = CURRENT_USER))) | 
+ regress_rls_schema | part_document | pp1r       | RESTRICTIVE | {regress_rls_dave} | ALL | (cid < 55)                                 | 
+(2 rows)
+
+-- viewpoint from regress_rls_bob
+SET SESSION AUTHORIZATION regress_rls_bob;
+SET row_security TO ON;
+SELECT * FROM part_document WHERE f_leak(dtitle) ORDER BY did;
+NOTICE:  f_leak => my first novel
+NOTICE:  f_leak => great science fiction
+NOTICE:  f_leak => awesome science fiction
+NOTICE:  f_leak => my first satire
+ did | cid | dlevel |      dauthor      |         dtitle          
+-----+-----+--------+-------------------+-------------------------
+   1 |  11 |      1 | regress_rls_bob   | my first novel
+   4 |  55 |      1 | regress_rls_bob   | my first satire
+   6 |  11 |      1 | regress_rls_carol | great science fiction
+   9 |  11 |      1 | regress_rls_dave  | awesome science fiction
+(4 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM part_document WHERE f_leak(dtitle);
+                     QUERY PLAN                      
+-----------------------------------------------------
+ Append
+   InitPlan 1 (returns $0)
+     ->  Index Scan using uaccount_pkey on uaccount
+           Index Cond: (pguser = CURRENT_USER)
+   ->  Seq Scan on part_document_fiction
+         Filter: ((dlevel <= $0) AND f_leak(dtitle))
+   ->  Seq Scan on part_document_satire
+         Filter: ((dlevel <= $0) AND f_leak(dtitle))
+   ->  Seq Scan on part_document_nonfiction
+         Filter: ((dlevel <= $0) AND f_leak(dtitle))
+(10 rows)
+
+-- viewpoint from regress_rls_carol
+SET SESSION AUTHORIZATION regress_rls_carol;
+SELECT * FROM part_document WHERE f_leak(dtitle) ORDER BY did;
+NOTICE:  f_leak => my first novel
+NOTICE:  f_leak => my second novel
+NOTICE:  f_leak => great science fiction
+NOTICE:  f_leak => awesome science fiction
+NOTICE:  f_leak => my first satire
+NOTICE:  f_leak => great satire
+NOTICE:  f_leak => my science textbook
+NOTICE:  f_leak => my history book
+NOTICE:  f_leak => great technology book
+NOTICE:  f_leak => awesome technology book
+ did | cid | dlevel |      dauthor      |         dtitle          
+-----+-----+--------+-------------------+-------------------------
+   1 |  11 |      1 | regress_rls_bob   | my first novel
+   2 |  11 |      2 | regress_rls_bob   | my second novel
+   3 |  99 |      2 | regress_rls_bob   | my science textbook
+   4 |  55 |      1 | regress_rls_bob   | my first satire
+   5 |  99 |      2 | regress_rls_bob   | my history book
+   6 |  11 |      1 | regress_rls_carol | great science fiction
+   7 |  99 |      2 | regress_rls_carol | great technology book
+   8 |  55 |      2 | regress_rls_carol | great satire
+   9 |  11 |      1 | regress_rls_dave  | awesome science fiction
+  10 |  99 |      2 | regress_rls_dave  | awesome technology book
+(10 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM part_document WHERE f_leak(dtitle);
+                     QUERY PLAN                      
+-----------------------------------------------------
+ Append
+   InitPlan 1 (returns $0)
+     ->  Index Scan using uaccount_pkey on uaccount
+           Index Cond: (pguser = CURRENT_USER)
+   ->  Seq Scan on part_document_fiction
+         Filter: ((dlevel <= $0) AND f_leak(dtitle))
+   ->  Seq Scan on part_document_satire
+         Filter: ((dlevel <= $0) AND f_leak(dtitle))
+   ->  Seq Scan on part_document_nonfiction
+         Filter: ((dlevel <= $0) AND f_leak(dtitle))
+(10 rows)
+
+-- viewpoint from regress_rls_dave
+SET SESSION AUTHORIZATION regress_rls_dave;
+SELECT * FROM part_document WHERE f_leak(dtitle) ORDER BY did;
+NOTICE:  f_leak => my first novel
+NOTICE:  f_leak => my second novel
+NOTICE:  f_leak => great science fiction
+NOTICE:  f_leak => awesome science fiction
+ did | cid | dlevel |      dauthor      |         dtitle          
+-----+-----+--------+-------------------+-------------------------
+   1 |  11 |      1 | regress_rls_bob   | my first novel
+   2 |  11 |      2 | regress_rls_bob   | my second novel
+   6 |  11 |      1 | regress_rls_carol | great science fiction
+   9 |  11 |      1 | regress_rls_dave  | awesome science fiction
+(4 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM part_document WHERE f_leak(dtitle);
+                             QUERY PLAN                             
+--------------------------------------------------------------------
+ Append
+   InitPlan 1 (returns $0)
+     ->  Index Scan using uaccount_pkey on uaccount
+           Index Cond: (pguser = CURRENT_USER)
+   ->  Seq Scan on part_document_fiction
+         Filter: ((cid < 55) AND (dlevel <= $0) AND f_leak(dtitle))
+(6 rows)
+
+-- pp1 ERROR
+INSERT INTO part_document VALUES (100, 11, 5, 'regress_rls_dave', 'testing pp1'); -- fail
+ERROR:  new row violates row-level security policy for table "part_document"
+-- pp1r ERROR
+INSERT INTO part_document VALUES (100, 99, 1, 'regress_rls_dave', 'testing pp1r'); -- fail
+ERROR:  new row violates row-level security policy "pp1r" for table "part_document"
+-- Show that RLS policy does not apply for direct inserts to children
+-- This should fail with RLS POLICY pp1r violation.
+INSERT INTO part_document VALUES (100, 55, 1, 'regress_rls_dave', 'testing RLS with partitions'); -- fail
+ERROR:  new row violates row-level security policy "pp1r" for table "part_document"
+-- But this should succeed.
+INSERT INTO part_document_satire VALUES (100, 55, 1, 'regress_rls_dave', 'testing RLS with partitions'); -- success
+-- We still cannot see the row using the parent
+SELECT * FROM part_document WHERE f_leak(dtitle) ORDER BY did;
+NOTICE:  f_leak => my first novel
+NOTICE:  f_leak => my second novel
+NOTICE:  f_leak => great science fiction
+NOTICE:  f_leak => awesome science fiction
+ did | cid | dlevel |      dauthor      |         dtitle          
+-----+-----+--------+-------------------+-------------------------
+   1 |  11 |      1 | regress_rls_bob   | my first novel
+   2 |  11 |      2 | regress_rls_bob   | my second novel
+   6 |  11 |      1 | regress_rls_carol | great science fiction
+   9 |  11 |      1 | regress_rls_dave  | awesome science fiction
+(4 rows)
+
+-- But we can if we look directly
+SELECT * FROM part_document_satire WHERE f_leak(dtitle) ORDER BY did;
+NOTICE:  f_leak => my first satire
+NOTICE:  f_leak => great satire
+NOTICE:  f_leak => testing RLS with partitions
+ did | cid | dlevel |      dauthor      |           dtitle            
+-----+-----+--------+-------------------+-----------------------------
+   4 |  55 |      1 | regress_rls_bob   | my first satire
+   8 |  55 |      2 | regress_rls_carol | great satire
+ 100 |  55 |      1 | regress_rls_dave  | testing RLS with partitions
+(3 rows)
+
+-- Turn on RLS and create policy on child to show RLS is checked before constraints
+SET SESSION AUTHORIZATION regress_rls_alice;
+ALTER TABLE part_document_satire ENABLE ROW LEVEL SECURITY;
+CREATE POLICY pp3 ON part_document_satire AS RESTRICTIVE
+    USING (cid < 55);
+-- This should fail with RLS violation now.
+SET SESSION AUTHORIZATION regress_rls_dave;
+INSERT INTO part_document_satire VALUES (101, 55, 1, 'regress_rls_dave', 'testing RLS with partitions'); -- fail
+ERROR:  new row violates row-level security policy for table "part_document_satire"
+-- And now we cannot see directly into the partition either, due to RLS
+SELECT * FROM part_document_satire WHERE f_leak(dtitle) ORDER BY did;
+ did | cid | dlevel | dauthor | dtitle 
+-----+-----+--------+---------+--------
+(0 rows)
+
+-- The parent looks same as before
+-- viewpoint from regress_rls_dave
+SELECT * FROM part_document WHERE f_leak(dtitle) ORDER BY did;
+NOTICE:  f_leak => my first novel
+NOTICE:  f_leak => my second novel
+NOTICE:  f_leak => great science fiction
+NOTICE:  f_leak => awesome science fiction
+ did | cid | dlevel |      dauthor      |         dtitle          
+-----+-----+--------+-------------------+-------------------------
+   1 |  11 |      1 | regress_rls_bob   | my first novel
+   2 |  11 |      2 | regress_rls_bob   | my second novel
+   6 |  11 |      1 | regress_rls_carol | great science fiction
+   9 |  11 |      1 | regress_rls_dave  | awesome science fiction
+(4 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM part_document WHERE f_leak(dtitle);
+                             QUERY PLAN                             
+--------------------------------------------------------------------
+ Append
+   InitPlan 1 (returns $0)
+     ->  Index Scan using uaccount_pkey on uaccount
+           Index Cond: (pguser = CURRENT_USER)
+   ->  Seq Scan on part_document_fiction
+         Filter: ((cid < 55) AND (dlevel <= $0) AND f_leak(dtitle))
+(6 rows)
+
+-- viewpoint from regress_rls_carol
+SET SESSION AUTHORIZATION regress_rls_carol;
+SELECT * FROM part_document WHERE f_leak(dtitle) ORDER BY did;
+NOTICE:  f_leak => my first novel
+NOTICE:  f_leak => my second novel
+NOTICE:  f_leak => great science fiction
+NOTICE:  f_leak => awesome science fiction
+NOTICE:  f_leak => my first satire
+NOTICE:  f_leak => great satire
+NOTICE:  f_leak => testing RLS with partitions
+NOTICE:  f_leak => my science textbook
+NOTICE:  f_leak => my history book
+NOTICE:  f_leak => great technology book
+NOTICE:  f_leak => awesome technology book
+ did | cid | dlevel |      dauthor      |           dtitle            
+-----+-----+--------+-------------------+-----------------------------
+   1 |  11 |      1 | regress_rls_bob   | my first novel
+   2 |  11 |      2 | regress_rls_bob   | my second novel
+   3 |  99 |      2 | regress_rls_bob   | my science textbook
+   4 |  55 |      1 | regress_rls_bob   | my first satire
+   5 |  99 |      2 | regress_rls_bob   | my history book
+   6 |  11 |      1 | regress_rls_carol | great science fiction
+   7 |  99 |      2 | regress_rls_carol | great technology book
+   8 |  55 |      2 | regress_rls_carol | great satire
+   9 |  11 |      1 | regress_rls_dave  | awesome science fiction
+  10 |  99 |      2 | regress_rls_dave  | awesome technology book
+ 100 |  55 |      1 | regress_rls_dave  | testing RLS with partitions
+(11 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM part_document WHERE f_leak(dtitle);
+                     QUERY PLAN                      
+-----------------------------------------------------
+ Append
+   InitPlan 1 (returns $0)
+     ->  Index Scan using uaccount_pkey on uaccount
+           Index Cond: (pguser = CURRENT_USER)
+   ->  Seq Scan on part_document_fiction
+         Filter: ((dlevel <= $0) AND f_leak(dtitle))
+   ->  Seq Scan on part_document_satire
+         Filter: ((dlevel <= $0) AND f_leak(dtitle))
+   ->  Seq Scan on part_document_nonfiction
+         Filter: ((dlevel <= $0) AND f_leak(dtitle))
+(10 rows)
+
+-- only owner can change policies
+ALTER POLICY pp1 ON part_document USING (true);    --fail
+ERROR:  must be owner of relation part_document
+DROP POLICY pp1 ON part_document;                  --fail
+ERROR:  must be owner of relation part_document
+SET SESSION AUTHORIZATION regress_rls_alice;
+ALTER POLICY pp1 ON part_document USING (dauthor = current_user);
+-- viewpoint from regress_rls_bob again
+SET SESSION AUTHORIZATION regress_rls_bob;
+SELECT * FROM part_document WHERE f_leak(dtitle) ORDER BY did;
+NOTICE:  f_leak => my first novel
+NOTICE:  f_leak => my second novel
+NOTICE:  f_leak => my first satire
+NOTICE:  f_leak => my science textbook
+NOTICE:  f_leak => my history book
+ did | cid | dlevel |     dauthor     |       dtitle        
+-----+-----+--------+-----------------+---------------------
+   1 |  11 |      1 | regress_rls_bob | my first novel
+   2 |  11 |      2 | regress_rls_bob | my second novel
+   3 |  99 |      2 | regress_rls_bob | my science textbook
+   4 |  55 |      1 | regress_rls_bob | my first satire
+   5 |  99 |      2 | regress_rls_bob | my history book
+(5 rows)
+
+-- viewpoint from rls_regres_carol again
+SET SESSION AUTHORIZATION regress_rls_carol;
+SELECT * FROM part_document WHERE f_leak(dtitle) ORDER BY did;
+NOTICE:  f_leak => great science fiction
+NOTICE:  f_leak => great satire
+NOTICE:  f_leak => great technology book
+ did | cid | dlevel |      dauthor      |        dtitle         
+-----+-----+--------+-------------------+-----------------------
+   6 |  11 |      1 | regress_rls_carol | great science fiction
+   7 |  99 |      2 | regress_rls_carol | great technology book
+   8 |  55 |      2 | regress_rls_carol | great satire
+(3 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM part_document WHERE f_leak(dtitle);
+                          QUERY PLAN                           
+---------------------------------------------------------------
+ Append
+   ->  Seq Scan on part_document_fiction
+         Filter: ((dauthor = CURRENT_USER) AND f_leak(dtitle))
+   ->  Seq Scan on part_document_satire
+         Filter: ((dauthor = CURRENT_USER) AND f_leak(dtitle))
+   ->  Seq Scan on part_document_nonfiction
+         Filter: ((dauthor = CURRENT_USER) AND f_leak(dtitle))
+(7 rows)
+
+-- database superuser does bypass RLS policy when enabled
+RESET SESSION AUTHORIZATION;
+SET row_security TO ON;
+SELECT * FROM part_document ORDER BY did;
+ did | cid | dlevel |      dauthor      |           dtitle            
+-----+-----+--------+-------------------+-----------------------------
+   1 |  11 |      1 | regress_rls_bob   | my first novel
+   2 |  11 |      2 | regress_rls_bob   | my second novel
+   3 |  99 |      2 | regress_rls_bob   | my science textbook
+   4 |  55 |      1 | regress_rls_bob   | my first satire
+   5 |  99 |      2 | regress_rls_bob   | my history book
+   6 |  11 |      1 | regress_rls_carol | great science fiction
+   7 |  99 |      2 | regress_rls_carol | great technology book
+   8 |  55 |      2 | regress_rls_carol | great satire
+   9 |  11 |      1 | regress_rls_dave  | awesome science fiction
+  10 |  99 |      2 | regress_rls_dave  | awesome technology book
+ 100 |  55 |      1 | regress_rls_dave  | testing RLS with partitions
+(11 rows)
+
+SELECT * FROM part_document_satire ORDER by did;
+ did | cid | dlevel |      dauthor      |           dtitle            
+-----+-----+--------+-------------------+-----------------------------
+   4 |  55 |      1 | regress_rls_bob   | my first satire
+   8 |  55 |      2 | regress_rls_carol | great satire
+ 100 |  55 |      1 | regress_rls_dave  | testing RLS with partitions
+(3 rows)
+
+-- database non-superuser with bypass privilege can bypass RLS policy when disabled
+SET SESSION AUTHORIZATION regress_rls_exempt_user;
+SET row_security TO OFF;
+SELECT * FROM part_document ORDER BY did;
+ did | cid | dlevel |      dauthor      |           dtitle            
+-----+-----+--------+-------------------+-----------------------------
+   1 |  11 |      1 | regress_rls_bob   | my first novel
+   2 |  11 |      2 | regress_rls_bob   | my second novel
+   3 |  99 |      2 | regress_rls_bob   | my science textbook
+   4 |  55 |      1 | regress_rls_bob   | my first satire
+   5 |  99 |      2 | regress_rls_bob   | my history book
+   6 |  11 |      1 | regress_rls_carol | great science fiction
+   7 |  99 |      2 | regress_rls_carol | great technology book
+   8 |  55 |      2 | regress_rls_carol | great satire
+   9 |  11 |      1 | regress_rls_dave  | awesome science fiction
+  10 |  99 |      2 | regress_rls_dave  | awesome technology book
+ 100 |  55 |      1 | regress_rls_dave  | testing RLS with partitions
+(11 rows)
+
+SELECT * FROM part_document_satire ORDER by did;
+ did | cid | dlevel |      dauthor      |           dtitle            
+-----+-----+--------+-------------------+-----------------------------
+   4 |  55 |      1 | regress_rls_bob   | my first satire
+   8 |  55 |      2 | regress_rls_carol | great satire
+ 100 |  55 |      1 | regress_rls_dave  | testing RLS with partitions
+(3 rows)
+
+-- RLS policy does not apply to table owner when RLS enabled.
+SET SESSION AUTHORIZATION regress_rls_alice;
+SET row_security TO ON;
+SELECT * FROM part_document ORDER by did;
+ did | cid | dlevel |      dauthor      |           dtitle            
+-----+-----+--------+-------------------+-----------------------------
+   1 |  11 |      1 | regress_rls_bob   | my first novel
+   2 |  11 |      2 | regress_rls_bob   | my second novel
+   3 |  99 |      2 | regress_rls_bob   | my science textbook
+   4 |  55 |      1 | regress_rls_bob   | my first satire
+   5 |  99 |      2 | regress_rls_bob   | my history book
+   6 |  11 |      1 | regress_rls_carol | great science fiction
+   7 |  99 |      2 | regress_rls_carol | great technology book
+   8 |  55 |      2 | regress_rls_carol | great satire
+   9 |  11 |      1 | regress_rls_dave  | awesome science fiction
+  10 |  99 |      2 | regress_rls_dave  | awesome technology book
+ 100 |  55 |      1 | regress_rls_dave  | testing RLS with partitions
+(11 rows)
+
+SELECT * FROM part_document_satire ORDER by did;
+ did | cid | dlevel |      dauthor      |           dtitle            
+-----+-----+--------+-------------------+-----------------------------
+   4 |  55 |      1 | regress_rls_bob   | my first satire
+   8 |  55 |      2 | regress_rls_carol | great satire
+ 100 |  55 |      1 | regress_rls_dave  | testing RLS with partitions
+(3 rows)
+
+-- When RLS disabled, other users get ERROR.
+SET SESSION AUTHORIZATION regress_rls_dave;
+SET row_security TO OFF;
+SELECT * FROM part_document ORDER by did;
+ERROR:  query would be affected by row-level security policy for table "part_document"
+SELECT * FROM part_document_satire ORDER by did;
+ERROR:  query would be affected by row-level security policy for table "part_document_satire"
 ----- Dependencies -----
 SET SESSION AUTHORIZATION regress_rls_alice;
 SET row_security TO ON;

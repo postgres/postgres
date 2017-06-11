@@ -308,6 +308,148 @@ SET row_security TO OFF;
 SELECT * FROM t1 WHERE f_leak(b);
 EXPLAIN (COSTS OFF) SELECT * FROM t1 WHERE f_leak(b);
 
+--
+-- Partitioned Tables
+--
+
+SET SESSION AUTHORIZATION regress_rls_alice;
+
+CREATE TABLE part_document (
+    did         int,
+    cid         int,
+    dlevel      int not null,
+    dauthor     name,
+    dtitle      text
+) PARTITION BY RANGE (cid);
+GRANT ALL ON part_document TO public;
+
+-- Create partitions for document categories
+CREATE TABLE part_document_fiction PARTITION OF part_document FOR VALUES FROM (11) to (12);
+CREATE TABLE part_document_satire PARTITION OF part_document FOR VALUES FROM (55) to (56);
+CREATE TABLE part_document_nonfiction PARTITION OF part_document FOR VALUES FROM (99) to (100);
+
+GRANT ALL ON part_document_fiction TO public;
+GRANT ALL ON part_document_satire TO public;
+GRANT ALL ON part_document_nonfiction TO public;
+
+INSERT INTO part_document VALUES
+    ( 1, 11, 1, 'regress_rls_bob', 'my first novel'),
+    ( 2, 11, 2, 'regress_rls_bob', 'my second novel'),
+    ( 3, 99, 2, 'regress_rls_bob', 'my science textbook'),
+    ( 4, 55, 1, 'regress_rls_bob', 'my first satire'),
+    ( 5, 99, 2, 'regress_rls_bob', 'my history book'),
+    ( 6, 11, 1, 'regress_rls_carol', 'great science fiction'),
+    ( 7, 99, 2, 'regress_rls_carol', 'great technology book'),
+    ( 8, 55, 2, 'regress_rls_carol', 'great satire'),
+    ( 9, 11, 1, 'regress_rls_dave', 'awesome science fiction'),
+    (10, 99, 2, 'regress_rls_dave', 'awesome technology book');
+
+ALTER TABLE part_document ENABLE ROW LEVEL SECURITY;
+
+-- Create policy on parent
+-- user's security level must be higher than or equal to document's
+CREATE POLICY pp1 ON part_document AS PERMISSIVE
+    USING (dlevel <= (SELECT seclv FROM uaccount WHERE pguser = current_user));
+
+-- Dave is only allowed to see cid < 55
+CREATE POLICY pp1r ON part_document AS RESTRICTIVE TO regress_rls_dave
+    USING (cid < 55);
+
+\d+ part_document
+SELECT * FROM pg_policies WHERE schemaname = 'regress_rls_schema' AND tablename like '%part_document%' ORDER BY policyname;
+
+-- viewpoint from regress_rls_bob
+SET SESSION AUTHORIZATION regress_rls_bob;
+SET row_security TO ON;
+SELECT * FROM part_document WHERE f_leak(dtitle) ORDER BY did;
+EXPLAIN (COSTS OFF) SELECT * FROM part_document WHERE f_leak(dtitle);
+
+-- viewpoint from regress_rls_carol
+SET SESSION AUTHORIZATION regress_rls_carol;
+SELECT * FROM part_document WHERE f_leak(dtitle) ORDER BY did;
+EXPLAIN (COSTS OFF) SELECT * FROM part_document WHERE f_leak(dtitle);
+
+-- viewpoint from regress_rls_dave
+SET SESSION AUTHORIZATION regress_rls_dave;
+SELECT * FROM part_document WHERE f_leak(dtitle) ORDER BY did;
+EXPLAIN (COSTS OFF) SELECT * FROM part_document WHERE f_leak(dtitle);
+
+-- pp1 ERROR
+INSERT INTO part_document VALUES (100, 11, 5, 'regress_rls_dave', 'testing pp1'); -- fail
+-- pp1r ERROR
+INSERT INTO part_document VALUES (100, 99, 1, 'regress_rls_dave', 'testing pp1r'); -- fail
+
+-- Show that RLS policy does not apply for direct inserts to children
+-- This should fail with RLS POLICY pp1r violation.
+INSERT INTO part_document VALUES (100, 55, 1, 'regress_rls_dave', 'testing RLS with partitions'); -- fail
+-- But this should succeed.
+INSERT INTO part_document_satire VALUES (100, 55, 1, 'regress_rls_dave', 'testing RLS with partitions'); -- success
+-- We still cannot see the row using the parent
+SELECT * FROM part_document WHERE f_leak(dtitle) ORDER BY did;
+-- But we can if we look directly
+SELECT * FROM part_document_satire WHERE f_leak(dtitle) ORDER BY did;
+
+-- Turn on RLS and create policy on child to show RLS is checked before constraints
+SET SESSION AUTHORIZATION regress_rls_alice;
+ALTER TABLE part_document_satire ENABLE ROW LEVEL SECURITY;
+CREATE POLICY pp3 ON part_document_satire AS RESTRICTIVE
+    USING (cid < 55);
+-- This should fail with RLS violation now.
+SET SESSION AUTHORIZATION regress_rls_dave;
+INSERT INTO part_document_satire VALUES (101, 55, 1, 'regress_rls_dave', 'testing RLS with partitions'); -- fail
+-- And now we cannot see directly into the partition either, due to RLS
+SELECT * FROM part_document_satire WHERE f_leak(dtitle) ORDER BY did;
+-- The parent looks same as before
+-- viewpoint from regress_rls_dave
+SELECT * FROM part_document WHERE f_leak(dtitle) ORDER BY did;
+EXPLAIN (COSTS OFF) SELECT * FROM part_document WHERE f_leak(dtitle);
+
+-- viewpoint from regress_rls_carol
+SET SESSION AUTHORIZATION regress_rls_carol;
+SELECT * FROM part_document WHERE f_leak(dtitle) ORDER BY did;
+EXPLAIN (COSTS OFF) SELECT * FROM part_document WHERE f_leak(dtitle);
+
+-- only owner can change policies
+ALTER POLICY pp1 ON part_document USING (true);    --fail
+DROP POLICY pp1 ON part_document;                  --fail
+
+SET SESSION AUTHORIZATION regress_rls_alice;
+ALTER POLICY pp1 ON part_document USING (dauthor = current_user);
+
+-- viewpoint from regress_rls_bob again
+SET SESSION AUTHORIZATION regress_rls_bob;
+SELECT * FROM part_document WHERE f_leak(dtitle) ORDER BY did;
+
+-- viewpoint from rls_regres_carol again
+SET SESSION AUTHORIZATION regress_rls_carol;
+SELECT * FROM part_document WHERE f_leak(dtitle) ORDER BY did;
+
+EXPLAIN (COSTS OFF) SELECT * FROM part_document WHERE f_leak(dtitle);
+
+-- database superuser does bypass RLS policy when enabled
+RESET SESSION AUTHORIZATION;
+SET row_security TO ON;
+SELECT * FROM part_document ORDER BY did;
+SELECT * FROM part_document_satire ORDER by did;
+
+-- database non-superuser with bypass privilege can bypass RLS policy when disabled
+SET SESSION AUTHORIZATION regress_rls_exempt_user;
+SET row_security TO OFF;
+SELECT * FROM part_document ORDER BY did;
+SELECT * FROM part_document_satire ORDER by did;
+
+-- RLS policy does not apply to table owner when RLS enabled.
+SET SESSION AUTHORIZATION regress_rls_alice;
+SET row_security TO ON;
+SELECT * FROM part_document ORDER by did;
+SELECT * FROM part_document_satire ORDER by did;
+
+-- When RLS disabled, other users get ERROR.
+SET SESSION AUTHORIZATION regress_rls_dave;
+SET row_security TO OFF;
+SELECT * FROM part_document ORDER by did;
+SELECT * FROM part_document_satire ORDER by did;
+
 ----- Dependencies -----
 SET SESSION AUTHORIZATION regress_rls_alice;
 SET row_security TO ON;
