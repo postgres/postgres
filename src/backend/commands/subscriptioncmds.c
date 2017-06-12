@@ -454,9 +454,6 @@ CreateSubscription(CreateSubscriptionStmt *stmt, bool isTopLevel)
 										InvalidXLogRecPtr, false);
 			}
 
-			ereport(NOTICE,
-					(errmsg("synchronized table states")));
-
 			/*
 			 * If requested, create permanent slot for the subscription. We
 			 * won't use the initial snapshot for anything, so no need to
