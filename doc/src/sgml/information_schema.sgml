@@ -1602,31 +1602,47 @@
      <row>
       <entry><literal>identity_start</literal></entry>
       <entry><type>character_data</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>
+       If the column is an identity column, then the start value of the
+       internal sequence, else null.
+      </entry>
      </row>
 
      <row>
       <entry><literal>identity_increment</literal></entry>
       <entry><type>character_data</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>
+       If the column is an identity column, then the increment of the internal
+       sequence, else null.
+      </entry>
      </row>
 
      <row>
       <entry><literal>identity_maximum</literal></entry>
       <entry><type>character_data</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>
+       If the column is an identity column, then the maximum value of the
+       internal sequence, else null.
+      </entry>
      </row>
 
      <row>
       <entry><literal>identity_minimum</literal></entry>
       <entry><type>character_data</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>
+       If the column is an identity column, then the minimum value of the
+       internal sequence, else null.
+      </entry>
      </row>
 
      <row>
       <entry><literal>identity_cycle</literal></entry>
       <entry><type>yes_or_no</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>
+       If the column is an identity column, then <literal>YES</literal> if the
+       internal sequence cycles or <literal>NO</literal> if it does not;
+       otherwise null.
+      </entry>
      </row>
 
      <row>
