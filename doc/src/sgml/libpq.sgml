@@ -5941,12 +5941,12 @@ char *PQencryptPasswordConn(PGconn *conn, const char *passwd, const char *user, 
     <listitem>
      <para>
       Prepares the md5-encrypted form of a <productname>PostgreSQL</> password.
- <synopsis>
+<synopsis>
 char *PQencryptPassword(const char *passwd, const char *user);
- </synopsis>
-      <function>PQencryptPassword</> is an older, deprecated version of 
+</synopsis>
+      <function>PQencryptPassword</> is an older, deprecated version of
       <function>PQencryptPasswodConn</>. The difference is that
-      <function>PQencryptPassword</> does not 
+      <function>PQencryptPassword</> does not
       require a connection object, and <literal>md5</> is always used as the
       encryption algorithm.
      </para>

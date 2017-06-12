@@ -425,7 +425,7 @@ COPY <replaceable class="parameter">count</replaceable>
    </para>
 
    <para>
-    If row-level security is enabled for the table, the relevant 
+    If row-level security is enabled for the table, the relevant
     <command>SELECT</command> policies will apply to <literal>COPY
     <replaceable class="parameter">table</> TO</literal> statements.
     Currently, <command>COPY FROM</command> is not supported for tables

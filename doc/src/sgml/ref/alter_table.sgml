@@ -185,7 +185,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
       table.  Even if there is no <literal>NOT NULL</> constraint on the
       parent, such a constraint can still be added to individual partitions,
       if desired; that is, the children can disallow nulls even if the parent
-      allows them, but not the other way around. 
+      allows them, but not the other way around.
      </para>
     </listitem>
    </varlistentry>
@@ -617,7 +617,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
      </para>
 
      <para>
-      <literal>SHARE UPDATE EXCLUSIVE</literal> lock will be taken for 
+      <literal>SHARE UPDATE EXCLUSIVE</literal> lock will be taken for
       fillfactor and autovacuum storage parameters, as well as the
       following planner related parameters:
       effective_io_concurrency, parallel_workers, seq_page_cost

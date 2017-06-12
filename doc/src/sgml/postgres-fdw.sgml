@@ -566,7 +566,7 @@
      </para>
     </listitem>
    </itemizedlist>
-   These are less likely to be problematic than <varname>search_path</>, but 
+   These are less likely to be problematic than <varname>search_path</>, but
    can be handled with function <literal>SET</> options if the need arises.
   </para>
 

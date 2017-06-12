@@ -1175,7 +1175,7 @@ synchronous_standby_names = 'FIRST 2 (s1, s2, s3)'
     An example of <varname>synchronous_standby_names</> for
     a quorum-based multiple synchronous standbys is:
 <programlisting>
- synchronous_standby_names = 'ANY 2 (s1, s2, s3)'
+synchronous_standby_names = 'ANY 2 (s1, s2, s3)'
 </programlisting>
     In this example, if four standby servers <literal>s1</>, <literal>s2</>,
     <literal>s3</> and <literal>s4</> are running, transaction commits will

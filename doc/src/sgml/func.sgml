@@ -4361,7 +4361,7 @@ SELECT (regexp_match('foobarbequebaz', 'bar.*que'))[1];
    <para>
     Some examples:
 <programlisting>
- SELECT regexp_matches('foo', 'not there');
+SELECT regexp_matches('foo', 'not there');
  regexp_matches
 ----------------
 (0 rows)

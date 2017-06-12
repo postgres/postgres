@@ -275,7 +275,7 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
       <para>
         In a <emphasis>parallel sequential scan</>, the table's blocks will
         be divided among the cooperating processes.  Blocks are handed out one
-        at a time, so that access to the table remains sequential. 
+        at a time, so that access to the table remains sequential.
       </para>
     </listitem>
     <listitem>
