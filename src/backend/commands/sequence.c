@@ -101,7 +101,9 @@ static Form_pg_sequence_data read_seq_tuple(Relation rel,
 static void init_params(ParseState *pstate, List *options, bool for_identity,
 			bool isInit,
 			Form_pg_sequence seqform,
-			Form_pg_sequence_data seqdataform, List **owned_by);
+			Form_pg_sequence_data seqdataform,
+			bool *need_seq_rewrite,
+			List **owned_by);
 static void do_setval(Oid relid, int64 next, bool iscalled);
 static void process_owned_by(Relation seqrel, List *owned_by, bool for_identity);
 
@@ -115,6 +117,7 @@ DefineSequence(ParseState *pstate, CreateSeqStmt *seq)
 {
 	FormData_pg_sequence seqform;
 	FormData_pg_sequence_data seqdataform;
+	bool		need_seq_rewrite;
 	List	   *owned_by;
 	CreateStmt *stmt = makeNode(CreateStmt);
 	Oid			seqoid;
@@ -153,7 +156,9 @@ DefineSequence(ParseState *pstate, CreateSeqStmt *seq)
 	}
 
 	/* Check and set all option values */
-	init_params(pstate, seq->options, seq->for_identity, true, &seqform, &seqdataform, &owned_by);
+	init_params(pstate, seq->options, seq->for_identity, true,
+				&seqform, &seqdataform,
+				&need_seq_rewrite, &owned_by);
 
 	/*
 	 * Create relation (and fill value[] and null[] for the tuple)
@@ -417,6 +422,7 @@ AlterSequence(ParseState *pstate, AlterSeqStmt *stmt)
 	HeapTupleData datatuple;
 	Form_pg_sequence seqform;
 	Form_pg_sequence_data newdataform;
+	bool		need_seq_rewrite;
 	List	   *owned_by;
 	ObjectAddress address;
 	Relation	rel;
@@ -461,35 +467,41 @@ AlterSequence(ParseState *pstate, AlterSeqStmt *stmt)
 	UnlockReleaseBuffer(buf);
 
 	/* Check and set new values */
-	init_params(pstate, stmt->options, stmt->for_identity, false, seqform,
-				newdataform, &owned_by);
+	init_params(pstate, stmt->options, stmt->for_identity, false,
+				seqform, newdataform,
+				&need_seq_rewrite, &owned_by);
 
 	/* Clear local cache so that we don't think we have cached numbers */
 	/* Note that we do not change the currval() state */
 	elm->cached = elm->last;
 
-	/* check the comment above nextval_internal()'s equivalent call. */
-	if (RelationNeedsWAL(seqrel))
-		GetTopTransactionId();
+	/* If needed, rewrite the sequence relation itself */
+	if (need_seq_rewrite)
+	{
+		/* check the comment above nextval_internal()'s equivalent call. */
+		if (RelationNeedsWAL(seqrel))
+			GetTopTransactionId();
 
-	/*
-	 * Create a new storage file for the sequence, making the state changes
-	 * transactional.  We want to keep the sequence's relfrozenxid at 0, since
-	 * it won't contain any unfrozen XIDs.  Same with relminmxid, since a
-	 * sequence will never contain multixacts.
-	 */
-	RelationSetNewRelfilenode(seqrel, seqrel->rd_rel->relpersistence,
-							  InvalidTransactionId, InvalidMultiXactId);
+		/*
+		 * Create a new storage file for the sequence, making the state
+		 * changes transactional.  We want to keep the sequence's relfrozenxid
+		 * at 0, since it won't contain any unfrozen XIDs.  Same with
+		 * relminmxid, since a sequence will never contain multixacts.
+		 */
+		RelationSetNewRelfilenode(seqrel, seqrel->rd_rel->relpersistence,
+								  InvalidTransactionId, InvalidMultiXactId);
 
-	/*
-	 * Insert the modified tuple into the new storage file.
-	 */
-	fill_seq_with_data(seqrel, newdatatuple);
+		/*
+		 * Insert the modified tuple into the new storage file.
+		 */
+		fill_seq_with_data(seqrel, newdatatuple);
+	}
 
 	/* process OWNED BY if given */
 	if (owned_by)
 		process_owned_by(seqrel, owned_by, stmt->for_identity);
 
+	/* update the pg_sequence tuple (we could skip this in some cases...) */
 	CatalogTupleUpdate(rel, &seqtuple->t_self, seqtuple);
 
 	InvokeObjectPostAlterHook(RelationRelationId, relid, 0);
@@ -1204,19 +1216,28 @@ read_seq_tuple(Relation rel, Buffer *buf, HeapTuple seqdatatuple)
 /*
  * init_params: process the options list of CREATE or ALTER SEQUENCE, and
  * store the values into appropriate fields of seqform, for changes that go
- * into the pg_sequence catalog, and seqdataform for changes to the sequence
- * relation itself.  Set *changed_seqform to true if seqform was changed
- * (interesting for ALTER SEQUENCE).  Also set *owned_by to any OWNED BY
- * option, or to NIL if there is none.
+ * into the pg_sequence catalog, and fields of seqdataform for changes to the
+ * sequence relation itself.  Set *need_seq_rewrite to true if we changed any
+ * parameters that require rewriting the sequence's relation (interesting for
+ * ALTER SEQUENCE).  Also set *owned_by to any OWNED BY option, or to NIL if
+ * there is none.
  *
  * If isInit is true, fill any unspecified options with default values;
  * otherwise, do not change existing options that aren't explicitly overridden.
+ *
+ * Note: we force a sequence rewrite whenever we change parameters that affect
+ * generation of future sequence values, even if the seqdataform per se is not
+ * changed.  This allows ALTER SEQUENCE to behave transactionally.  Currently,
+ * the only option that doesn't cause that is OWNED BY.  It's *necessary* for
+ * ALTER SEQUENCE OWNED BY to not rewrite the sequence, because that would
+ * break pg_upgrade by causing unwanted changes in the sequence's relfilenode.
  */
 static void
 init_params(ParseState *pstate, List *options, bool for_identity,
 			bool isInit,
 			Form_pg_sequence seqform,
 			Form_pg_sequence_data seqdataform,
+			bool *need_seq_rewrite,
 			List **owned_by)
 {
 	DefElem    *as_type = NULL;
@@ -1231,6 +1252,7 @@ init_params(ParseState *pstate, List *options, bool for_identity,
 	bool		reset_max_value = false;
 	bool		reset_min_value = false;
 
+	*need_seq_rewrite = false;
 	*owned_by = NIL;
 
 	foreach(option, options)
@@ -1245,6 +1267,7 @@ init_params(ParseState *pstate, List *options, bool for_identity,
 						 errmsg("conflicting or redundant options"),
 						 parser_errposition(pstate, defel->location)));
 			as_type = defel;
+			*need_seq_rewrite = true;
 		}
 		else if (strcmp(defel->defname, "increment") == 0)
 		{
@@ -1254,6 +1277,7 @@ init_params(ParseState *pstate, List *options, bool for_identity,
 						 errmsg("conflicting or redundant options"),
 						 parser_errposition(pstate, defel->location)));
 			increment_by = defel;
+			*need_seq_rewrite = true;
 		}
 		else if (strcmp(defel->defname, "start") == 0)
 		{
@@ -1263,6 +1287,7 @@ init_params(ParseState *pstate, List *options, bool for_identity,
 						 errmsg("conflicting or redundant options"),
 						 parser_errposition(pstate, defel->location)));
 			start_value = defel;
+			*need_seq_rewrite = true;
 		}
 		else if (strcmp(defel->defname, "restart") == 0)
 		{
@@ -1272,6 +1297,7 @@ init_params(ParseState *pstate, List *options, bool for_identity,
 						 errmsg("conflicting or redundant options"),
 						 parser_errposition(pstate, defel->location)));
 			restart_value = defel;
+			*need_seq_rewrite = true;
 		}
 		else if (strcmp(defel->defname, "maxvalue") == 0)
 		{
@@ -1281,6 +1307,7 @@ init_params(ParseState *pstate, List *options, bool for_identity,
 						 errmsg("conflicting or redundant options"),
 						 parser_errposition(pstate, defel->location)));
 			max_value = defel;
+			*need_seq_rewrite = true;
 		}
 		else if (strcmp(defel->defname, "minvalue") == 0)
 		{
@@ -1290,6 +1317,7 @@ init_params(ParseState *pstate, List *options, bool for_identity,
 						 errmsg("conflicting or redundant options"),
 						 parser_errposition(pstate, defel->location)));
 			min_value = defel;
+			*need_seq_rewrite = true;
 		}
 		else if (strcmp(defel->defname, "cache") == 0)
 		{
@@ -1299,6 +1327,7 @@ init_params(ParseState *pstate, List *options, bool for_identity,
 						 errmsg("conflicting or redundant options"),
 						 parser_errposition(pstate, defel->location)));
 			cache_value = defel;
+			*need_seq_rewrite = true;
 		}
 		else if (strcmp(defel->defname, "cycle") == 0)
 		{
@@ -1308,6 +1337,7 @@ init_params(ParseState *pstate, List *options, bool for_identity,
 						 errmsg("conflicting or redundant options"),
 						 parser_errposition(pstate, defel->location)));
 			is_cycled = defel;
+			*need_seq_rewrite = true;
 		}
 		else if (strcmp(defel->defname, "owned_by") == 0)
 		{
