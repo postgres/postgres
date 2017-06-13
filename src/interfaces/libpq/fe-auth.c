@@ -1218,7 +1218,8 @@ PQencryptPasswordConn(PGconn *conn, const char *passwd, const char *user,
 	else
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-				   libpq_gettext("unknown password encryption algorithm\n"));
+				   libpq_gettext("unrecognized password encryption algorithm \"%s\"\n"),
+						  algorithm);
 		return NULL;
 	}
 

@@ -3099,7 +3099,7 @@ keep_going:						/* We will come back to here until there is
 				restoreErrorMessage(conn, &savedMessage);
 				appendPQExpBuffer(&conn->errorMessage,
 				  libpq_gettext("test \"SHOW transaction_read_only\" failed "
-								" on \"%s:%s\"\n"),
+								"on server \"%s:%s\"\n"),
 								  conn->connhost[conn->whichhost].host,
 								  conn->connhost[conn->whichhost].port);
 				conn->status = CONNECTION_OK;
