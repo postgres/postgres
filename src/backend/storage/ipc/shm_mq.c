@@ -769,7 +769,7 @@ shm_mq_wait_for_attach(shm_mq_handle *mqh)
  *
  * The purpose of this function is to make sure that the process
  * with which we're communicating doesn't block forever waiting for us to
- * fill or drain the queue once we've lost interest.  Whem the sender
+ * fill or drain the queue once we've lost interest.  When the sender
  * detaches, the receiver can read any messages remaining in the queue;
  * further reads will return SHM_MQ_DETACHED.  If the receiver detaches,
  * further attempts to send messages will likewise return SHM_MQ_DETACHED.
