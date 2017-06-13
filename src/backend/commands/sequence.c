@@ -429,10 +429,13 @@ AlterSequence(ParseState *pstate, AlterSeqStmt *stmt)
 	HeapTuple	seqtuple;
 	HeapTuple	newdatatuple;
 
-	/* Open and lock sequence. */
-	relid = RangeVarGetRelid(stmt->sequence,
-							 ShareRowExclusiveLock,
-							 stmt->missing_ok);
+	/* Open and lock sequence, and check for ownership along the way. */
+	relid = RangeVarGetRelidExtended(stmt->sequence,
+									 ShareRowExclusiveLock,
+									 stmt->missing_ok,
+									 false,
+									 RangeVarCallbackOwnsRelation,
+									 NULL);
 	if (relid == InvalidOid)
 	{
 		ereport(NOTICE,
@@ -442,11 +445,6 @@ AlterSequence(ParseState *pstate, AlterSeqStmt *stmt)
 	}
 
 	init_sequence(relid, &elm, &seqrel);
-
-	/* allow ALTER to sequence owner only */
-	if (!pg_class_ownercheck(relid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
-					   stmt->sequence->relname);
 
 	rel = heap_open(SequenceRelationId, RowExclusiveLock);
 	seqtuple = SearchSysCacheCopy1(SEQRELID,

@@ -172,7 +172,7 @@ DROP SEQUENCE myseq2;
 ALTER SEQUENCE IF EXISTS sequence_test2 RESTART WITH 24
   INCREMENT BY 4 MAXVALUE 36 MINVALUE 5 CYCLE;
 
-ALTER SEQUENCE pg_class CYCLE;  -- error, not a sequence
+ALTER SEQUENCE serialTest1 CYCLE;  -- error, not a sequence
 
 CREATE SEQUENCE sequence_test2 START WITH 32;
 CREATE SEQUENCE sequence_test4 INCREMENT BY -1;
