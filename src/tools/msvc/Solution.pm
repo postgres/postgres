@@ -562,9 +562,18 @@ sub AddProject
 	if ($self->{options}->{icu})
 	{
 		$proj->AddIncludeDir($self->{options}->{icu} . '\include');
-		$proj->AddLibrary($self->{options}->{icu} . '\lib\icuin.lib');
-		$proj->AddLibrary($self->{options}->{icu} . '\lib\icuuc.lib');
-		$proj->AddLibrary($self->{options}->{icu} . '\lib\icudt.lib');
+		if ($self->{platform} eq 'Win32')
+		{
+			$proj->AddLibrary($self->{options}->{icu} . '\lib\icuin.lib');
+			$proj->AddLibrary($self->{options}->{icu} . '\lib\icuuc.lib');
+			$proj->AddLibrary($self->{options}->{icu} . '\lib\icudt.lib');
+		}
+		else
+		{
+			$proj->AddLibrary($self->{options}->{icu} . '\lib64\icuin.lib');
+			$proj->AddLibrary($self->{options}->{icu} . '\lib64\icuuc.lib');
+			$proj->AddLibrary($self->{options}->{icu} . '\lib64\icudt.lib');
+		}
 	}
 	if ($self->{options}->{xml})
 	{
