@@ -2204,6 +2204,16 @@ SELECT attinhcount, attislocal FROM pg_attribute WHERE attrelid = 'part_3_4'::re
 SELECT coninhcount, conislocal FROM pg_constraint WHERE conrelid = 'part_3_4'::regclass AND conname = 'check_a';
 DROP TABLE part_3_4;
 
+-- check that a detached partition is not dropped on dropping a partitioned table
+CREATE TABLE range_parted2 (
+    a int
+) PARTITION BY RANGE(a);
+CREATE TABLE part_rp PARTITION OF range_parted2 FOR VALUES FROM (0) to (100);
+ALTER TABLE range_parted2 DETACH PARTITION part_rp;
+DROP TABLE range_parted2;
+SELECT * from part_rp;
+DROP TABLE part_rp;
+
 -- Check ALTER TABLE commands for partitioned tables and partitions
 
 -- cannot add/drop column to/from *only* the parent
