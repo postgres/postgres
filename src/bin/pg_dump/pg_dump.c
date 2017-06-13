@@ -7953,7 +7953,7 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 		tbinfo->attstattarget = (int *) pg_malloc(ntups * sizeof(int));
 		tbinfo->attstorage = (char *) pg_malloc(ntups * sizeof(char));
 		tbinfo->typstorage = (char *) pg_malloc(ntups * sizeof(char));
-		tbinfo->attidentity = (char *) pg_malloc(ntups * sizeof(bool));
+		tbinfo->attidentity = (char *) pg_malloc(ntups * sizeof(char));
 		tbinfo->attisdropped = (bool *) pg_malloc(ntups * sizeof(bool));
 		tbinfo->attlen = (int *) pg_malloc(ntups * sizeof(int));
 		tbinfo->attalign = (char *) pg_malloc(ntups * sizeof(char));
