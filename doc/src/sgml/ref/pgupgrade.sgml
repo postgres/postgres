@@ -38,9 +38,9 @@
   <application>pg_upgrade</> (formerly called <application>pg_migrator</>) allows data
   stored in <productname>PostgreSQL</> data files to be upgraded to a later <productname>PostgreSQL</>
   major version without the data dump/reload typically required for
-  major version upgrades, e.g. from 8.4.7 to the current major release
+  major version upgrades, e.g. from 9.6.3 to the current major release
   of <productname>PostgreSQL</>.  It is not required for minor version upgrades, e.g. from
-  9.0.1 to 9.0.4.
+  9.6.2 to 9.6.3.
  </para>
 
  <para>
@@ -66,7 +66,7 @@
 
   <para>
    pg_upgrade supports upgrades from 8.4.X and later to the current
-   major release of <productname>PostgreSQL</>, including snapshot and alpha releases.
+   major release of <productname>PostgreSQL</>, including snapshot and beta releases.
   </para>
  </refsect1>
 
@@ -207,7 +207,7 @@
 
     <para>
      If you are using a version-specific installation directory, e.g.
-     <filename>/opt/PostgreSQL/9.1</>, you do not need to move the old cluster. The
+     <filename>/opt/PostgreSQL/&majorversion;</>, you do not need to move the old cluster. The
      graphical installers all use version-specific installation directories.
     </para>
 
@@ -298,15 +298,15 @@ make prefix=/usr/local/pgsql.new install
      Make sure both database servers are stopped using, on Unix, e.g.:
 
 <programlisting>
-pg_ctl -D /opt/PostgreSQL/8.4 stop
-pg_ctl -D /opt/PostgreSQL/9.0 stop
+pg_ctl -D /opt/PostgreSQL/9.6 stop
+pg_ctl -D /opt/PostgreSQL/&majorversion; stop
 </programlisting>
 
      or on Windows, using the proper service names:
 
 <programlisting>
-NET STOP postgresql-8.4
-NET STOP postgresql-9.0
+NET STOP postgresql-9.6
+NET STOP postgresql-&majorversion;
 </programlisting>
     </para>
 
@@ -366,17 +366,17 @@ NET STOP postgresql-9.0
 
 <programlisting>
 RUNAS /USER:postgres "CMD.EXE"
-SET PATH=%PATH%;C:\Program Files\PostgreSQL\9.0\bin;
+SET PATH=%PATH%;C:\Program Files\PostgreSQL\&majorversion;\bin;
 </programlisting>
 
      and then run <application>pg_upgrade</> with quoted directories, e.g.:
 
 <programlisting>
 pg_upgrade.exe
-        --old-datadir "C:/Program Files/PostgreSQL/8.4/data"
-        --new-datadir "C:/Program Files/PostgreSQL/9.0/data"
-        --old-bindir "C:/Program Files/PostgreSQL/8.4/bin"
-        --new-bindir "C:/Program Files/PostgreSQL/9.0/bin"
+        --old-datadir "C:/Program Files/PostgreSQL/9.6/data"
+        --new-datadir "C:/Program Files/PostgreSQL/&majorversion;/data"
+        --old-bindir "C:/Program Files/PostgreSQL/9.6/bin"
+        --new-bindir "C:/Program Files/PostgreSQL/&majorversion;/bin"
 </programlisting>
 
      Once started, <command>pg_upgrade</> will verify the two clusters are compatible
