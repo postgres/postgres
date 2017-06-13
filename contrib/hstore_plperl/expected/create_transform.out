@@ -44,7 +44,7 @@ DROP FUNCTION plperl_to_hstore(val internal);
 CREATE EXTENSION hstore_plperl;
 \dx+ hstore_plperl
  Objects in extension "hstore_plperl"
-          Object Description          
+          Object description          
 --------------------------------------
  function hstore_to_plperl(internal)
  function plperl_to_hstore(internal)
@@ -54,7 +54,7 @@ CREATE EXTENSION hstore_plperl;
 ALTER EXTENSION hstore_plperl DROP TRANSFORM FOR hstore LANGUAGE plperl;
 \dx+ hstore_plperl
 Objects in extension "hstore_plperl"
-         Object Description          
+         Object description          
 -------------------------------------
  function hstore_to_plperl(internal)
  function plperl_to_hstore(internal)
@@ -63,7 +63,7 @@ Objects in extension "hstore_plperl"
 ALTER EXTENSION hstore_plperl ADD TRANSFORM FOR hstore LANGUAGE plperl;
 \dx+ hstore_plperl
  Objects in extension "hstore_plperl"
-          Object Description          
+          Object description          
 --------------------------------------
  function hstore_to_plperl(internal)
  function plperl_to_hstore(internal)

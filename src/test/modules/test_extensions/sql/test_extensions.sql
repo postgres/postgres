@@ -31,7 +31,7 @@ create extension test_ext8;
 
 -- \dx+ would expose a variable pg_temp_nn schema name, so we can't use it here
 select regexp_replace(pg_describe_object(classid, objid, objsubid),
-                      'pg_temp_\d+', 'pg_temp', 'g') as "Object Description"
+                      'pg_temp_\d+', 'pg_temp', 'g') as "Object description"
 from pg_depend
 where refclassid = 'pg_extension'::regclass and deptype = 'e' and
   refobjid = (select oid from pg_extension where extname = 'test_ext8')
@@ -42,7 +42,7 @@ drop extension test_ext8;
 create extension test_ext8;
 
 select regexp_replace(pg_describe_object(classid, objid, objsubid),
-                      'pg_temp_\d+', 'pg_temp', 'g') as "Object Description"
+                      'pg_temp_\d+', 'pg_temp', 'g') as "Object description"
 from pg_depend
 where refclassid = 'pg_extension'::regclass and deptype = 'e' and
   refobjid = (select oid from pg_extension where extname = 'test_ext8')

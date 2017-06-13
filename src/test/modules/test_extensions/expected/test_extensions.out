@@ -44,7 +44,7 @@ create table old_table1 (col1 serial primary key);
 create extension test_ext7;
 \dx+ test_ext7
 Objects in extension "test_ext7"
-      Object Description       
+      Object description       
 -------------------------------
  sequence ext7_table1_col1_seq
  sequence ext7_table2_col2_seq
@@ -57,7 +57,7 @@ Objects in extension "test_ext7"
 alter extension test_ext7 update to '2.0';
 \dx+ test_ext7
 Objects in extension "test_ext7"
-      Object Description       
+      Object description       
 -------------------------------
  sequence ext7_table2_col2_seq
  table ext7_table2
@@ -67,12 +67,12 @@ Objects in extension "test_ext7"
 create extension test_ext8;
 -- \dx+ would expose a variable pg_temp_nn schema name, so we can't use it here
 select regexp_replace(pg_describe_object(classid, objid, objsubid),
-                      'pg_temp_\d+', 'pg_temp', 'g') as "Object Description"
+                      'pg_temp_\d+', 'pg_temp', 'g') as "Object description"
 from pg_depend
 where refclassid = 'pg_extension'::regclass and deptype = 'e' and
   refobjid = (select oid from pg_extension where extname = 'test_ext8')
 order by 1;
-           Object Description            
+           Object description            
 -----------------------------------------
  function ext8_even(posint)
  function pg_temp.ext8_temp_even(posint)
@@ -85,12 +85,12 @@ order by 1;
 drop extension test_ext8;
 create extension test_ext8;
 select regexp_replace(pg_describe_object(classid, objid, objsubid),
-                      'pg_temp_\d+', 'pg_temp', 'g') as "Object Description"
+                      'pg_temp_\d+', 'pg_temp', 'g') as "Object description"
 from pg_depend
 where refclassid = 'pg_extension'::regclass and deptype = 'e' and
   refobjid = (select oid from pg_extension where extname = 'test_ext8')
 order by 1;
-           Object Description            
+           Object description            
 -----------------------------------------
  function ext8_even(posint)
  function pg_temp.ext8_temp_even(posint)
@@ -112,7 +112,7 @@ end';
 -- extension should now contain no temp objects
 \dx+ test_ext8
 Objects in extension "test_ext8"
-     Object Description     
+     Object description     
 ----------------------------
  function ext8_even(posint)
  table ext8_table1

@@ -53,7 +53,7 @@ DROP FOREIGN DATA WRAPPER foo;
 CREATE FOREIGN DATA WRAPPER foo OPTIONS (testing '1');
 \dew+
                                                  List of foreign-data wrappers
-    Name    |           Owner           | Handler |        Validator         | Access privileges |  FDW Options  | Description 
+    Name    |           Owner           | Handler |        Validator         | Access privileges |  FDW options  | Description 
 ------------+---------------------------+---------+--------------------------+-------------------+---------------+-------------
  dummy      | regress_foreign_data_user | -       | -                        |                   |               | useless
  foo        | regress_foreign_data_user | -       | -                        |                   | (testing '1') | 
@@ -66,7 +66,7 @@ ERROR:  option "testing" provided more than once
 CREATE FOREIGN DATA WRAPPER foo OPTIONS (testing '1', another '2');
 \dew+
                                                        List of foreign-data wrappers
-    Name    |           Owner           | Handler |        Validator         | Access privileges |        FDW Options         | Description 
+    Name    |           Owner           | Handler |        Validator         | Access privileges |        FDW options         | Description 
 ------------+---------------------------+---------+--------------------------+-------------------+----------------------------+-------------
  dummy      | regress_foreign_data_user | -       | -                        |                   |                            | useless
  foo        | regress_foreign_data_user | -       | -                        |                   | (testing '1', another '2') | 
@@ -82,7 +82,7 @@ RESET ROLE;
 CREATE FOREIGN DATA WRAPPER foo VALIDATOR postgresql_fdw_validator;
 \dew+
                                                 List of foreign-data wrappers
-    Name    |           Owner           | Handler |        Validator         | Access privileges | FDW Options | Description 
+    Name    |           Owner           | Handler |        Validator         | Access privileges | FDW options | Description 
 ------------+---------------------------+---------+--------------------------+-------------------+-------------+-------------
  dummy      | regress_foreign_data_user | -       | -                        |                   |             | useless
  foo        | regress_foreign_data_user | -       | postgresql_fdw_validator |                   |             | 
@@ -99,7 +99,7 @@ ERROR:  function bar(text[], oid) does not exist
 ALTER FOREIGN DATA WRAPPER foo NO VALIDATOR;
 \dew+
                                                 List of foreign-data wrappers
-    Name    |           Owner           | Handler |        Validator         | Access privileges | FDW Options | Description 
+    Name    |           Owner           | Handler |        Validator         | Access privileges | FDW options | Description 
 ------------+---------------------------+---------+--------------------------+-------------------+-------------+-------------
  dummy      | regress_foreign_data_user | -       | -                        |                   |             | useless
  foo        | regress_foreign_data_user | -       | -                        |                   |             | 
@@ -114,7 +114,7 @@ ERROR:  option "c" not found
 ALTER FOREIGN DATA WRAPPER foo OPTIONS (ADD x '1', DROP x);
 \dew+
                                                  List of foreign-data wrappers
-    Name    |           Owner           | Handler |        Validator         | Access privileges |  FDW Options   | Description 
+    Name    |           Owner           | Handler |        Validator         | Access privileges |  FDW options   | Description 
 ------------+---------------------------+---------+--------------------------+-------------------+----------------+-------------
  dummy      | regress_foreign_data_user | -       | -                        |                   |                | useless
  foo        | regress_foreign_data_user | -       | -                        |                   | (a '1', b '2') | 
@@ -124,7 +124,7 @@ ALTER FOREIGN DATA WRAPPER foo OPTIONS (ADD x '1', DROP x);
 ALTER FOREIGN DATA WRAPPER foo OPTIONS (DROP a, SET b '3', ADD c '4');
 \dew+
                                                  List of foreign-data wrappers
-    Name    |           Owner           | Handler |        Validator         | Access privileges |  FDW Options   | Description 
+    Name    |           Owner           | Handler |        Validator         | Access privileges |  FDW options   | Description 
 ------------+---------------------------+---------+--------------------------+-------------------+----------------+-------------
  dummy      | regress_foreign_data_user | -       | -                        |                   |                | useless
  foo        | regress_foreign_data_user | -       | -                        |                   | (b '3', c '4') | 
@@ -136,7 +136,7 @@ ALTER FOREIGN DATA WRAPPER foo OPTIONS (b '4');             -- ERROR
 ERROR:  option "b" provided more than once
 \dew+
                                                      List of foreign-data wrappers
-    Name    |           Owner           | Handler |        Validator         | Access privileges |      FDW Options      | Description 
+    Name    |           Owner           | Handler |        Validator         | Access privileges |      FDW options      | Description 
 ------------+---------------------------+---------+--------------------------+-------------------+-----------------------+-------------
  dummy      | regress_foreign_data_user | -       | -                        |                   |                       | useless
  foo        | regress_foreign_data_user | -       | -                        |                   | (b '3', c '4', a '2') | 
@@ -151,7 +151,7 @@ SET ROLE regress_test_role_super;
 ALTER FOREIGN DATA WRAPPER foo OPTIONS (ADD d '5');
 \dew+
                                                         List of foreign-data wrappers
-    Name    |           Owner           | Handler |        Validator         | Access privileges |         FDW Options          | Description 
+    Name    |           Owner           | Handler |        Validator         | Access privileges |         FDW options          | Description 
 ------------+---------------------------+---------+--------------------------+-------------------+------------------------------+-------------
  dummy      | regress_foreign_data_user | -       | -                        |                   |                              | useless
  foo        | regress_foreign_data_user | -       | -                        |                   | (b '3', c '4', a '2', d '5') | 
@@ -170,7 +170,7 @@ HINT:  Must be superuser to alter a foreign-data wrapper.
 RESET ROLE;
 \dew+
                                                         List of foreign-data wrappers
-    Name    |           Owner           | Handler |        Validator         | Access privileges |         FDW Options          | Description 
+    Name    |           Owner           | Handler |        Validator         | Access privileges |         FDW options          | Description 
 ------------+---------------------------+---------+--------------------------+-------------------+------------------------------+-------------
  dummy      | regress_foreign_data_user | -       | -                        |                   |                              | useless
  foo        | regress_test_role_super   | -       | -                        |                   | (b '3', c '4', a '2', d '5') | 
@@ -180,7 +180,7 @@ RESET ROLE;
 ALTER FOREIGN DATA WRAPPER foo RENAME TO foo1;
 \dew+
                                                         List of foreign-data wrappers
-    Name    |           Owner           | Handler |        Validator         | Access privileges |         FDW Options          | Description 
+    Name    |           Owner           | Handler |        Validator         | Access privileges |         FDW options          | Description 
 ------------+---------------------------+---------+--------------------------+-------------------+------------------------------+-------------
  dummy      | regress_foreign_data_user | -       | -                        |                   |                              | useless
  foo1       | regress_test_role_super   | -       | -                        |                   | (b '3', c '4', a '2', d '5') | 
@@ -195,7 +195,7 @@ DROP FOREIGN DATA WRAPPER IF EXISTS nonexistent;
 NOTICE:  foreign-data wrapper "nonexistent" does not exist, skipping
 \dew+
                                                         List of foreign-data wrappers
-    Name    |           Owner           | Handler |        Validator         | Access privileges |         FDW Options          | Description 
+    Name    |           Owner           | Handler |        Validator         | Access privileges |         FDW options          | Description 
 ------------+---------------------------+---------+--------------------------+-------------------+------------------------------+-------------
  dummy      | regress_foreign_data_user | -       | -                        |                   |                              | useless
  foo        | regress_test_role_super   | -       | -                        |                   | (b '3', c '4', a '2', d '5') | 
@@ -211,7 +211,7 @@ RESET ROLE;
 DROP ROLE regress_test_role_super;
 \dew+
                                                 List of foreign-data wrappers
-    Name    |           Owner           | Handler |        Validator         | Access privileges | FDW Options | Description 
+    Name    |           Owner           | Handler |        Validator         | Access privileges | FDW options | Description 
 ------------+---------------------------+---------+--------------------------+-------------------+-------------+-------------
  dummy      | regress_foreign_data_user | -       | -                        |                   |             | useless
  postgresql | regress_foreign_data_user | -       | postgresql_fdw_validator |                   |             | 
@@ -227,7 +227,7 @@ CREATE USER MAPPING IF NOT EXISTS FOR current_user SERVER s1; -- NOTICE
 NOTICE:  user mapping for "regress_foreign_data_user" already exists for server s1, skipping
 \dew+
                                                 List of foreign-data wrappers
-    Name    |           Owner           | Handler |        Validator         | Access privileges | FDW Options | Description 
+    Name    |           Owner           | Handler |        Validator         | Access privileges | FDW options | Description 
 ------------+---------------------------+---------+--------------------------+-------------------+-------------+-------------
  dummy      | regress_foreign_data_user | -       | -                        |                   |             | useless
  foo        | regress_foreign_data_user | -       | -                        |                   |             | 
@@ -236,14 +236,14 @@ NOTICE:  user mapping for "regress_foreign_data_user" already exists for server 
 
 \des+
                                                    List of foreign servers
- Name |           Owner           | Foreign-data wrapper | Access privileges | Type | Version | FDW Options |  Description   
+ Name |           Owner           | Foreign-data wrapper | Access privileges | Type | Version | FDW options |  Description   
 ------+---------------------------+----------------------+-------------------+------+---------+-------------+----------------
  s1   | regress_foreign_data_user | foo                  |                   |      |         |             | foreign server
 (1 row)
 
 \deu+
               List of user mappings
- Server |         User name         | FDW Options 
+ Server |         User name         | FDW options 
 --------+---------------------------+-------------
  s1     | regress_foreign_data_user | 
 (1 row)
@@ -263,7 +263,7 @@ DETAIL:  drop cascades to server s1
 drop cascades to user mapping for regress_foreign_data_user on server s1
 \dew+
                                                 List of foreign-data wrappers
-    Name    |           Owner           | Handler |        Validator         | Access privileges | FDW Options | Description 
+    Name    |           Owner           | Handler |        Validator         | Access privileges | FDW options | Description 
 ------------+---------------------------+---------+--------------------------+-------------------+-------------+-------------
  dummy      | regress_foreign_data_user | -       | -                        |                   |             | useless
  postgresql | regress_foreign_data_user | -       | postgresql_fdw_validator |                   |             | 
@@ -271,13 +271,13 @@ drop cascades to user mapping for regress_foreign_data_user on server s1
 
 \des+
                                        List of foreign servers
- Name | Owner | Foreign-data wrapper | Access privileges | Type | Version | FDW Options | Description 
+ Name | Owner | Foreign-data wrapper | Access privileges | Type | Version | FDW options | Description 
 ------+-------+----------------------+-------------------+------+---------+-------------+-------------
 (0 rows)
 
 \deu+
       List of user mappings
- Server | User name | FDW Options 
+ Server | User name | FDW options 
 --------+-----------+-------------
 (0 rows)
 
@@ -302,7 +302,7 @@ HINT:  Valid options in this context are: authtype, service, connect_timeout, db
 CREATE SERVER s8 FOREIGN DATA WRAPPER postgresql OPTIONS (host 'localhost', dbname 's8db');
 \des+
                                                              List of foreign servers
- Name |           Owner           | Foreign-data wrapper | Access privileges |  Type  | Version |            FDW Options            | Description 
+ Name |           Owner           | Foreign-data wrapper | Access privileges |  Type  | Version |            FDW options            | Description 
 ------+---------------------------+----------------------+-------------------+--------+---------+-----------------------------------+-------------
  s1   | regress_foreign_data_user | foo                  |                   |        |         |                                   | 
  s2   | regress_foreign_data_user | foo                  |                   |        |         | (host 'a', dbname 'b')            | 
@@ -324,7 +324,7 @@ CREATE SERVER t1 FOREIGN DATA WRAPPER foo;
 RESET ROLE;
 \des+
                                                              List of foreign servers
- Name |           Owner           | Foreign-data wrapper | Access privileges |  Type  | Version |            FDW Options            | Description 
+ Name |           Owner           | Foreign-data wrapper | Access privileges |  Type  | Version |            FDW options            | Description 
 ------+---------------------------+----------------------+-------------------+--------+---------+-----------------------------------+-------------
  s1   | regress_foreign_data_user | foo                  |                   |        |         |                                   | 
  s2   | regress_foreign_data_user | foo                  |                   |        |         | (host 'a', dbname 'b')            | 
@@ -348,7 +348,7 @@ SET ROLE regress_test_role;
 CREATE SERVER t2 FOREIGN DATA WRAPPER foo;
 \des+
                                                              List of foreign servers
- Name |           Owner           | Foreign-data wrapper | Access privileges |  Type  | Version |            FDW Options            | Description 
+ Name |           Owner           | Foreign-data wrapper | Access privileges |  Type  | Version |            FDW options            | Description 
 ------+---------------------------+----------------------+-------------------+--------+---------+-----------------------------------+-------------
  s1   | regress_foreign_data_user | foo                  |                   |        |         |                                   | 
  s2   | regress_foreign_data_user | foo                  |                   |        |         | (host 'a', dbname 'b')            | 
@@ -378,7 +378,7 @@ GRANT USAGE ON FOREIGN SERVER s1 TO regress_test_role;
 GRANT USAGE ON FOREIGN SERVER s6 TO regress_test_role2 WITH GRANT OPTION;
 \des+
                                                                                List of foreign servers
- Name |           Owner           | Foreign-data wrapper |                   Access privileges                   |  Type  | Version |            FDW Options            | Description 
+ Name |           Owner           | Foreign-data wrapper |                   Access privileges                   |  Type  | Version |            FDW options            | Description 
 ------+---------------------------+----------------------+-------------------------------------------------------+--------+---------+-----------------------------------+-------------
  s1   | regress_foreign_data_user | foo                  | regress_foreign_data_user=U/regress_foreign_data_user+|        | 1.0     | (servername 's1')                 | 
       |                           |                      | regress_test_role=U/regress_foreign_data_user         |        |         |                                   | 
@@ -429,7 +429,7 @@ DETAIL:  owner of server s1
 privileges for foreign-data wrapper foo
 \des+
                                                                                  List of foreign servers
- Name |           Owner           | Foreign-data wrapper |                   Access privileges                   |  Type  | Version |             FDW Options              | Description 
+ Name |           Owner           | Foreign-data wrapper |                   Access privileges                   |  Type  | Version |             FDW options              | Description 
 ------+---------------------------+----------------------+-------------------------------------------------------+--------+---------+--------------------------------------+-------------
  s1   | regress_test_indirect     | foo                  | regress_test_indirect=U/regress_test_indirect         |        | 1.1     | (servername 's1')                    | 
  s2   | regress_foreign_data_user | foo                  |                                                       |        | 1.1     | (host 'a', dbname 'b')               | 
@@ -447,7 +447,7 @@ privileges for foreign-data wrapper foo
 ALTER SERVER s8 RENAME to s8new;
 \des+
                                                                                  List of foreign servers
- Name  |           Owner           | Foreign-data wrapper |                   Access privileges                   |  Type  | Version |             FDW Options              | Description 
+ Name  |           Owner           | Foreign-data wrapper |                   Access privileges                   |  Type  | Version |             FDW options              | Description 
 -------+---------------------------+----------------------+-------------------------------------------------------+--------+---------+--------------------------------------+-------------
  s1    | regress_test_indirect     | foo                  | regress_test_indirect=U/regress_test_indirect         |        | 1.1     | (servername 's1')                    | 
  s2    | regress_foreign_data_user | foo                  |                                                       |        | 1.1     | (host 'a', dbname 'b')               | 
@@ -615,7 +615,7 @@ ALTER USER MAPPING FOR public SERVER t1 OPTIONS (ADD modified '1');
 RESET ROLE;
 \deu+
                          List of user mappings
- Server |         User name         |           FDW Options            
+ Server |         User name         |           FDW options            
 --------+---------------------------+----------------------------------
  s4     | public                    | ("this mapping" 'is public')
  s4     | regress_foreign_data_user | 
@@ -709,7 +709,7 @@ COMMENT ON FOREIGN TABLE ft1 IS 'ft1';
 COMMENT ON COLUMN ft1.c1 IS 'ft1.c1';
 \d+ ft1
                                                  Foreign table "public.ft1"
- Column |  Type   | Collation | Nullable | Default |          FDW Options           | Storage  | Stats target | Description 
+ Column |  Type   | Collation | Nullable | Default |          FDW options           | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+--------------------------------+----------+--------------+-------------
  c1     | integer |           | not null |         | ("param 1" 'val1')             | plain    |              | ft1.c1
  c2     | text    |           |          |         | (param2 'val2', param3 'val3') | extended |              | 
@@ -718,11 +718,11 @@ Check constraints:
     "ft1_c2_check" CHECK (c2 <> ''::text)
     "ft1_c3_check" CHECK (c3 >= '01-01-1994'::date AND c3 <= '01-31-1994'::date)
 Server: s0
-FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
+FDW options: (delimiter ',', quote '"', "be quoted" 'value')
 
 \det+
                                  List of foreign tables
- Schema | Table | Server |                   FDW Options                   | Description 
+ Schema | Table | Server |                   FDW options                   | Description 
 --------+-------+--------+-------------------------------------------------+-------------
  public | ft1   | s0     | (delimiter ',', quote '"', "be quoted" 'value') | ft1
 (1 row)
@@ -764,7 +764,7 @@ ALTER FOREIGN TABLE ft1 ALTER COLUMN c8 SET STATISTICS -1;
 ALTER FOREIGN TABLE ft1 ALTER COLUMN c8 SET STORAGE PLAIN;
 \d+ ft1
                                                  Foreign table "public.ft1"
- Column |  Type   | Collation | Nullable | Default |          FDW Options           | Storage  | Stats target | Description 
+ Column |  Type   | Collation | Nullable | Default |          FDW options           | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+--------------------------------+----------+--------------+-------------
  c1     | integer |           | not null |         | ("param 1" 'val1')             | plain    | 10000        | 
  c2     | text    |           |          |         | (param2 'val2', param3 'val3') | extended |              | 
@@ -780,7 +780,7 @@ Check constraints:
     "ft1_c2_check" CHECK (c2 <> ''::text)
     "ft1_c3_check" CHECK (c3 >= '01-01-1994'::date AND c3 <= '01-31-1994'::date)
 Server: s0
-FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
+FDW options: (delimiter ',', quote '"', "be quoted" 'value')
 
 -- can't change the column type if it's used elsewhere
 CREATE TABLE use_ft1_column_type (x ft1);
@@ -814,7 +814,7 @@ ALTER FOREIGN TABLE foreign_schema.ft1 RENAME c1 TO foreign_column_1;
 ALTER FOREIGN TABLE foreign_schema.ft1 RENAME TO foreign_table_1;
 \d foreign_schema.foreign_table_1
                         Foreign table "foreign_schema.foreign_table_1"
-      Column      |  Type   | Collation | Nullable | Default |          FDW Options           
+      Column      |  Type   | Collation | Nullable | Default |          FDW options           
 ------------------+---------+-----------+----------+---------+--------------------------------
  foreign_column_1 | integer |           | not null |         | ("param 1" 'val1')
  c2               | text    |           |          |         | (param2 'val2', param3 'val3')
@@ -829,7 +829,7 @@ Check constraints:
     "ft1_c2_check" CHECK (c2 <> ''::text)
     "ft1_c3_check" CHECK (c3 >= '01-01-1994'::date AND c3 <= '01-31-1994'::date)
 Server: s0
-FDW Options: (quote '~', "be quoted" 'value', escape '@')
+FDW options: (quote '~', "be quoted" 'value', escape '@')
 
 -- alter noexisting table
 ALTER FOREIGN TABLE IF EXISTS doesnt_exist_ft1 ADD COLUMN c4 integer;
@@ -1208,7 +1208,7 @@ GRANT USAGE ON FOREIGN SERVER s10 TO regress_unprivileged_role;
 -- owner of server can see option fields
 \deu+
                  List of user mappings
- Server |         User name         |    FDW Options    
+ Server |         User name         |    FDW options    
 --------+---------------------------+-------------------
  s10    | public                    | ("user" 'secret')
  s4     | regress_foreign_data_user | 
@@ -1224,7 +1224,7 @@ RESET ROLE;
 -- superuser can see option fields
 \deu+
                   List of user mappings
- Server |         User name         |     FDW Options     
+ Server |         User name         |     FDW options     
 --------+---------------------------+---------------------
  s10    | public                    | ("user" 'secret')
  s4     | regress_foreign_data_user | 
@@ -1240,7 +1240,7 @@ RESET ROLE;
 SET ROLE regress_unprivileged_role;
 \deu+
               List of user mappings
- Server |         User name         | FDW Options 
+ Server |         User name         | FDW options 
 --------+---------------------------+-------------
  s10    | public                    | 
  s4     | regress_foreign_data_user | 
@@ -1318,13 +1318,13 @@ Child tables: ft2
 
 \d+ ft2
                                        Foreign table "public.ft2"
- Column |  Type   | Collation | Nullable | Default | FDW Options | Storage  | Stats target | Description 
+ Column |  Type   | Collation | Nullable | Default | FDW options | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+-------------+----------+--------------+-------------
  c1     | integer |           | not null |         |             | plain    |              | 
  c2     | text    |           |          |         |             | extended |              | 
  c3     | date    |           |          |         |             | plain    |              | 
 Server: s0
-FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
+FDW options: (delimiter ',', quote '"', "be quoted" 'value')
 Inherits: pt1
 
 DROP FOREIGN TABLE ft2;
@@ -1343,13 +1343,13 @@ CREATE FOREIGN TABLE ft2 (
 ) SERVER s0 OPTIONS (delimiter ',', quote '"', "be quoted" 'value');
 \d+ ft2
                                        Foreign table "public.ft2"
- Column |  Type   | Collation | Nullable | Default | FDW Options | Storage  | Stats target | Description 
+ Column |  Type   | Collation | Nullable | Default | FDW options | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+-------------+----------+--------------+-------------
  c1     | integer |           | not null |         |             | plain    |              | 
  c2     | text    |           |          |         |             | extended |              | 
  c3     | date    |           |          |         |             | plain    |              | 
 Server: s0
-FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
+FDW options: (delimiter ',', quote '"', "be quoted" 'value')
 
 ALTER FOREIGN TABLE ft2 INHERIT pt1;
 \d+ pt1
@@ -1363,13 +1363,13 @@ Child tables: ft2
 
 \d+ ft2
                                        Foreign table "public.ft2"
- Column |  Type   | Collation | Nullable | Default | FDW Options | Storage  | Stats target | Description 
+ Column |  Type   | Collation | Nullable | Default | FDW options | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+-------------+----------+--------------+-------------
  c1     | integer |           | not null |         |             | plain    |              | 
  c2     | text    |           |          |         |             | extended |              | 
  c3     | date    |           |          |         |             | plain    |              | 
 Server: s0
-FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
+FDW options: (delimiter ',', quote '"', "be quoted" 'value')
 Inherits: pt1
 
 CREATE TABLE ct3() INHERITS(ft2);
@@ -1384,13 +1384,13 @@ NOTICE:  merging column "c2" with inherited definition
 NOTICE:  merging column "c3" with inherited definition
 \d+ ft2
                                        Foreign table "public.ft2"
- Column |  Type   | Collation | Nullable | Default | FDW Options | Storage  | Stats target | Description 
+ Column |  Type   | Collation | Nullable | Default | FDW options | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+-------------+----------+--------------+-------------
  c1     | integer |           | not null |         |             | plain    |              | 
  c2     | text    |           |          |         |             | extended |              | 
  c3     | date    |           |          |         |             | plain    |              | 
 Server: s0
-FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
+FDW options: (delimiter ',', quote '"', "be quoted" 'value')
 Inherits: pt1
 Child tables: ct3,
               ft3
@@ -1406,7 +1406,7 @@ Inherits: ft2
 
 \d+ ft3
                                        Foreign table "public.ft3"
- Column |  Type   | Collation | Nullable | Default | FDW Options | Storage  | Stats target | Description 
+ Column |  Type   | Collation | Nullable | Default | FDW options | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+-------------+----------+--------------+-------------
  c1     | integer |           | not null |         |             | plain    |              | 
  c2     | text    |           |          |         |             | extended |              | 
@@ -1436,7 +1436,7 @@ Child tables: ft2
 
 \d+ ft2
                                        Foreign table "public.ft2"
- Column |  Type   | Collation | Nullable | Default | FDW Options | Storage  | Stats target | Description 
+ Column |  Type   | Collation | Nullable | Default | FDW options | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+-------------+----------+--------------+-------------
  c1     | integer |           | not null |         |             | plain    |              | 
  c2     | text    |           |          |         |             | extended |              | 
@@ -1447,7 +1447,7 @@ Child tables: ft2
  c7     | integer |           | not null |         |             | plain    |              | 
  c8     | integer |           |          |         |             | plain    |              | 
 Server: s0
-FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
+FDW options: (delimiter ',', quote '"', "be quoted" 'value')
 Inherits: pt1
 Child tables: ct3,
               ft3
@@ -1468,7 +1468,7 @@ Inherits: ft2
 
 \d+ ft3
                                        Foreign table "public.ft3"
- Column |  Type   | Collation | Nullable | Default | FDW Options | Storage  | Stats target | Description 
+ Column |  Type   | Collation | Nullable | Default | FDW options | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+-------------+----------+--------------+-------------
  c1     | integer |           | not null |         |             | plain    |              | 
  c2     | text    |           |          |         |             | extended |              | 
@@ -1510,7 +1510,7 @@ Child tables: ft2
 
 \d+ ft2
                                        Foreign table "public.ft2"
- Column |  Type   | Collation | Nullable | Default | FDW Options | Storage  | Stats target | Description 
+ Column |  Type   | Collation | Nullable | Default | FDW options | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+-------------+----------+--------------+-------------
  c1     | integer |           | not null |         |             | plain    | 10000        | 
  c2     | text    |           |          |         |             | extended |              | 
@@ -1521,7 +1521,7 @@ Child tables: ft2
  c7     | integer |           |          |         |             | plain    |              | 
  c8     | text    |           |          |         |             | external |              | 
 Server: s0
-FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
+FDW options: (delimiter ',', quote '"', "be quoted" 'value')
 Inherits: pt1
 Child tables: ct3,
               ft3
@@ -1543,13 +1543,13 @@ Child tables: ft2
 
 \d+ ft2
                                        Foreign table "public.ft2"
- Column |  Type   | Collation | Nullable | Default | FDW Options | Storage  | Stats target | Description 
+ Column |  Type   | Collation | Nullable | Default | FDW options | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+-------------+----------+--------------+-------------
  c1     | integer |           | not null |         |             | plain    | 10000        | 
  c2     | text    |           |          |         |             | extended |              | 
  c3     | date    |           |          |         |             | plain    |              | 
 Server: s0
-FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
+FDW options: (delimiter ',', quote '"', "be quoted" 'value')
 Inherits: pt1
 Child tables: ct3,
               ft3
@@ -1583,7 +1583,7 @@ Child tables: ft2
 
 \d+ ft2
                                        Foreign table "public.ft2"
- Column |  Type   | Collation | Nullable | Default | FDW Options | Storage  | Stats target | Description 
+ Column |  Type   | Collation | Nullable | Default | FDW options | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+-------------+----------+--------------+-------------
  c1     | integer |           | not null |         |             | plain    | 10000        | 
  c2     | text    |           |          |         |             | extended |              | 
@@ -1591,7 +1591,7 @@ Child tables: ft2
 Check constraints:
     "pt1chk2" CHECK (c2 <> ''::text)
 Server: s0
-FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
+FDW options: (delimiter ',', quote '"', "be quoted" 'value')
 Inherits: pt1
 Child tables: ct3,
               ft3
@@ -1630,7 +1630,7 @@ Child tables: ft2
 
 \d+ ft2
                                        Foreign table "public.ft2"
- Column |  Type   | Collation | Nullable | Default | FDW Options | Storage  | Stats target | Description 
+ Column |  Type   | Collation | Nullable | Default | FDW options | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+-------------+----------+--------------+-------------
  c1     | integer |           | not null |         |             | plain    |              | 
  c2     | text    |           |          |         |             | extended |              | 
@@ -1638,7 +1638,7 @@ Child tables: ft2
 Check constraints:
     "pt1chk2" CHECK (c2 <> ''::text)
 Server: s0
-FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
+FDW options: (delimiter ',', quote '"', "be quoted" 'value')
 Inherits: pt1
 
 -- drop constraints recursively
@@ -1660,7 +1660,7 @@ Child tables: ft2
 
 \d+ ft2
                                        Foreign table "public.ft2"
- Column |  Type   | Collation | Nullable | Default | FDW Options | Storage  | Stats target | Description 
+ Column |  Type   | Collation | Nullable | Default | FDW options | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+-------------+----------+--------------+-------------
  c1     | integer |           | not null |         |             | plain    |              | 
  c2     | text    |           |          |         |             | extended |              | 
@@ -1669,7 +1669,7 @@ Check constraints:
     "pt1chk2" CHECK (c2 <> ''::text)
     "pt1chk3" CHECK (c2 <> ''::text) NOT VALID
 Server: s0
-FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
+FDW options: (delimiter ',', quote '"', "be quoted" 'value')
 Inherits: pt1
 
 -- VALIDATE CONSTRAINT need do nothing on foreign tables
@@ -1687,7 +1687,7 @@ Child tables: ft2
 
 \d+ ft2
                                        Foreign table "public.ft2"
- Column |  Type   | Collation | Nullable | Default | FDW Options | Storage  | Stats target | Description 
+ Column |  Type   | Collation | Nullable | Default | FDW options | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+-------------+----------+--------------+-------------
  c1     | integer |           | not null |         |             | plain    |              | 
  c2     | text    |           |          |         |             | extended |              | 
@@ -1696,7 +1696,7 @@ Check constraints:
     "pt1chk2" CHECK (c2 <> ''::text)
     "pt1chk3" CHECK (c2 <> ''::text)
 Server: s0
-FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
+FDW options: (delimiter ',', quote '"', "be quoted" 'value')
 Inherits: pt1
 
 -- OID system column
@@ -1715,7 +1715,7 @@ Has OIDs: yes
 
 \d+ ft2
                                        Foreign table "public.ft2"
- Column |  Type   | Collation | Nullable | Default | FDW Options | Storage  | Stats target | Description 
+ Column |  Type   | Collation | Nullable | Default | FDW options | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+-------------+----------+--------------+-------------
  c1     | integer |           | not null |         |             | plain    |              | 
  c2     | text    |           |          |         |             | extended |              | 
@@ -1724,7 +1724,7 @@ Check constraints:
     "pt1chk2" CHECK (c2 <> ''::text)
     "pt1chk3" CHECK (c2 <> ''::text)
 Server: s0
-FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
+FDW options: (delimiter ',', quote '"', "be quoted" 'value')
 Inherits: pt1
 Has OIDs: yes
 
@@ -1744,7 +1744,7 @@ Child tables: ft2
 
 \d+ ft2
                                        Foreign table "public.ft2"
- Column |  Type   | Collation | Nullable | Default | FDW Options | Storage  | Stats target | Description 
+ Column |  Type   | Collation | Nullable | Default | FDW options | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+-------------+----------+--------------+-------------
  c1     | integer |           | not null |         |             | plain    |              | 
  c2     | text    |           |          |         |             | extended |              | 
@@ -1753,7 +1753,7 @@ Check constraints:
     "pt1chk2" CHECK (c2 <> ''::text)
     "pt1chk3" CHECK (c2 <> ''::text)
 Server: s0
-FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
+FDW options: (delimiter ',', quote '"', "be quoted" 'value')
 Inherits: pt1
 
 -- changes name of an attribute recursively
@@ -1775,7 +1775,7 @@ Child tables: ft2
 
 \d+ ft2
                                        Foreign table "public.ft2"
- Column |  Type   | Collation | Nullable | Default | FDW Options | Storage  | Stats target | Description 
+ Column |  Type   | Collation | Nullable | Default | FDW options | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+-------------+----------+--------------+-------------
  f1     | integer |           | not null |         |             | plain    |              | 
  f2     | text    |           |          |         |             | extended |              | 
@@ -1784,7 +1784,7 @@ Check constraints:
     "f2_check" CHECK (f2 <> ''::text)
     "pt1chk2" CHECK (f2 <> ''::text)
 Server: s0
-FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
+FDW options: (delimiter ',', quote '"', "be quoted" 'value')
 Inherits: pt1
 
 -- TRUNCATE doesn't work on foreign tables, either directly or recursively
@@ -1838,7 +1838,7 @@ Partitions: pt2_1 FOR VALUES IN (1)
 
 \d+ pt2_1
                                       Foreign table "public.pt2_1"
- Column |  Type   | Collation | Nullable | Default | FDW Options | Storage  | Stats target | Description 
+ Column |  Type   | Collation | Nullable | Default | FDW options | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+-------------+----------+--------------+-------------
  c1     | integer |           | not null |         |             | plain    |              | 
  c2     | text    |           |          |         |             | extended |              | 
@@ -1846,7 +1846,7 @@ Partitions: pt2_1 FOR VALUES IN (1)
 Partition of: pt2 FOR VALUES IN (1)
 Partition constraint: ((c1 IS NOT NULL) AND (c1 = ANY (ARRAY[1])))
 Server: s0
-FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
+FDW options: (delimiter ',', quote '"', "be quoted" 'value')
 
 -- partition cannot have additional columns
 DROP FOREIGN TABLE pt2_1;
@@ -1858,14 +1858,14 @@ CREATE FOREIGN TABLE pt2_1 (
 ) SERVER s0 OPTIONS (delimiter ',', quote '"', "be quoted" 'value');
 \d+ pt2_1
                                          Foreign table "public.pt2_1"
- Column |     Type     | Collation | Nullable | Default | FDW Options | Storage  | Stats target | Description 
+ Column |     Type     | Collation | Nullable | Default | FDW options | Storage  | Stats target | Description 
 --------+--------------+-----------+----------+---------+-------------+----------+--------------+-------------
  c1     | integer      |           | not null |         |             | plain    |              | 
  c2     | text         |           |          |         |             | extended |              | 
  c3     | date         |           |          |         |             | plain    |              | 
  c4     | character(1) |           |          |         |             | extended |              | 
 Server: s0
-FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
+FDW options: (delimiter ',', quote '"', "be quoted" 'value')
 
 ALTER TABLE pt2 ATTACH PARTITION pt2_1 FOR VALUES IN (1);       -- ERROR
 ERROR:  table "pt2_1" contains column "c4" not found in parent "pt2"
@@ -1887,13 +1887,13 @@ CREATE FOREIGN TABLE pt2_1 (
 ) SERVER s0 OPTIONS (delimiter ',', quote '"', "be quoted" 'value');
 \d+ pt2_1
                                       Foreign table "public.pt2_1"
- Column |  Type   | Collation | Nullable | Default | FDW Options | Storage  | Stats target | Description 
+ Column |  Type   | Collation | Nullable | Default | FDW options | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+-------------+----------+--------------+-------------
  c1     | integer |           | not null |         |             | plain    |              | 
  c2     | text    |           |          |         |             | extended |              | 
  c3     | date    |           |          |         |             | plain    |              | 
 Server: s0
-FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
+FDW options: (delimiter ',', quote '"', "be quoted" 'value')
 
 -- no attach partition validation occurs for foreign tables
 ALTER TABLE pt2 ATTACH PARTITION pt2_1 FOR VALUES IN (1);
@@ -1909,7 +1909,7 @@ Partitions: pt2_1 FOR VALUES IN (1)
 
 \d+ pt2_1
                                       Foreign table "public.pt2_1"
- Column |  Type   | Collation | Nullable | Default | FDW Options | Storage  | Stats target | Description 
+ Column |  Type   | Collation | Nullable | Default | FDW options | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+-------------+----------+--------------+-------------
  c1     | integer |           | not null |         |             | plain    |              | 
  c2     | text    |           |          |         |             | extended |              | 
@@ -1917,7 +1917,7 @@ Partitions: pt2_1 FOR VALUES IN (1)
 Partition of: pt2 FOR VALUES IN (1)
 Partition constraint: ((c1 IS NOT NULL) AND (c1 = ANY (ARRAY[1])))
 Server: s0
-FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
+FDW options: (delimiter ',', quote '"', "be quoted" 'value')
 
 -- cannot add column to a partition
 ALTER TABLE pt2_1 ADD c4 char;
@@ -1937,7 +1937,7 @@ Partitions: pt2_1 FOR VALUES IN (1)
 
 \d+ pt2_1
                                       Foreign table "public.pt2_1"
- Column |  Type   | Collation | Nullable | Default | FDW Options | Storage  | Stats target | Description 
+ Column |  Type   | Collation | Nullable | Default | FDW options | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+-------------+----------+--------------+-------------
  c1     | integer |           | not null |         |             | plain    |              | 
  c2     | text    |           |          |         |             | extended |              | 
@@ -1947,7 +1947,7 @@ Partition constraint: ((c1 IS NOT NULL) AND (c1 = ANY (ARRAY[1])))
 Check constraints:
     "p21chk" CHECK (c2 <> ''::text)
 Server: s0
-FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
+FDW options: (delimiter ',', quote '"', "be quoted" 'value')
 
 -- cannot drop inherited NOT NULL constraint from a partition
 ALTER TABLE pt2_1 ALTER c1 DROP NOT NULL;
@@ -1966,7 +1966,7 @@ Partition key: LIST (c1)
 
 \d+ pt2_1
                                       Foreign table "public.pt2_1"
- Column |  Type   | Collation | Nullable | Default | FDW Options | Storage  | Stats target | Description 
+ Column |  Type   | Collation | Nullable | Default | FDW options | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+-------------+----------+--------------+-------------
  c1     | integer |           | not null |         |             | plain    |              | 
  c2     | text    |           |          |         |             | extended |              | 
@@ -1974,7 +1974,7 @@ Partition key: LIST (c1)
 Check constraints:
     "p21chk" CHECK (c2 <> ''::text)
 Server: s0
-FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
+FDW options: (delimiter ',', quote '"', "be quoted" 'value')
 
 ALTER TABLE pt2 ATTACH PARTITION pt2_1 FOR VALUES IN (1);       -- ERROR
 ERROR:  column "c2" in child table must be marked NOT NULL
@@ -1995,7 +1995,7 @@ Check constraints:
 
 \d+ pt2_1
                                       Foreign table "public.pt2_1"
- Column |  Type   | Collation | Nullable | Default | FDW Options | Storage  | Stats target | Description 
+ Column |  Type   | Collation | Nullable | Default | FDW options | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+-------------+----------+--------------+-------------
  c1     | integer |           | not null |         |             | plain    |              | 
  c2     | text    |           | not null |         |             | extended |              | 
@@ -2003,7 +2003,7 @@ Check constraints:
 Check constraints:
     "p21chk" CHECK (c2 <> ''::text)
 Server: s0
-FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
+FDW options: (delimiter ',', quote '"', "be quoted" 'value')
 
 ALTER TABLE pt2 ATTACH PARTITION pt2_1 FOR VALUES IN (1);       -- ERROR
 ERROR:  child table is missing constraint "pt2chk1"

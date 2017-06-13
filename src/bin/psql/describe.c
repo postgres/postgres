@@ -1726,7 +1726,7 @@ describeOneTableDetails(const char *schemaname,
 		headers[cols++] = gettext_noop("Definition");
 
 	if (tableinfo.relkind == RELKIND_FOREIGN_TABLE && pset.sversion >= 90200)
-		headers[cols++] = gettext_noop("FDW Options");
+		headers[cols++] = gettext_noop("FDW options");
 
 	if (verbose)
 	{
@@ -2786,7 +2786,7 @@ describeOneTableDetails(const char *schemaname,
 			ftoptions = PQgetvalue(result, 0, 1);
 			if (ftoptions && ftoptions[0] != '\0')
 			{
-				printfPQExpBuffer(&buf, _("FDW Options: (%s)"), ftoptions);
+				printfPQExpBuffer(&buf, _("FDW options: (%s)"), ftoptions);
 				printTableAddFooter(&cont, buf.data);
 			}
 			PQclear(result);
@@ -3473,12 +3473,12 @@ listLanguages(const char *pattern, bool verbose, bool showSystem)
 						  ",\n       NOT l.lanispl AS \"%s\",\n"
 						  "       l.lanplcallfoid::regprocedure AS \"%s\",\n"
 				   "       l.lanvalidator::regprocedure AS \"%s\",\n       ",
-						  gettext_noop("Internal Language"),
-						  gettext_noop("Call Handler"),
+						  gettext_noop("Internal language"),
+						  gettext_noop("Call handler"),
 						  gettext_noop("Validator"));
 		if (pset.sversion >= 90000)
 			appendPQExpBuffer(&buf, "l.laninline::regprocedure AS \"%s\",\n       ",
-							  gettext_noop("Inline Handler"));
+							  gettext_noop("Inline handler"));
 		printACLColumn(&buf, "l.lanacl");
 	}
 
@@ -4612,7 +4612,7 @@ listForeignDataWrappers(const char *pattern, bool verbose)
 						  "  quote_literal(option_value)  FROM "
 						  "  pg_options_to_table(fdwoptions)),  ', ') || ')' "
 						  "  END AS \"%s\"",
-						  gettext_noop("FDW Options"));
+						  gettext_noop("FDW options"));
 
 		if (pset.sversion >= 90100)
 			appendPQExpBuffer(&buf,
@@ -4696,7 +4696,7 @@ listForeignServers(const char *pattern, bool verbose)
 						  "  d.description AS \"%s\"",
 						  gettext_noop("Type"),
 						  gettext_noop("Version"),
-						  gettext_noop("FDW Options"),
+						  gettext_noop("FDW options"),
 						  gettext_noop("Description"));
 	}
 
@@ -4767,7 +4767,7 @@ listUserMappings(const char *pattern, bool verbose)
 						  "  quote_literal(option_value)  FROM "
 						  "  pg_options_to_table(umoptions)),  ', ') || ')' "
 						  "  END AS \"%s\"",
-						  gettext_noop("FDW Options"));
+						  gettext_noop("FDW options"));
 
 	appendPQExpBufferStr(&buf, "\nFROM pg_catalog.pg_user_mappings um\n");
 
@@ -4831,7 +4831,7 @@ listForeignTables(const char *pattern, bool verbose)
 						  "  pg_options_to_table(ftoptions)),  ', ') || ')' "
 						  "  END AS \"%s\",\n"
 						  "  d.description AS \"%s\"",
-						  gettext_noop("FDW Options"),
+						  gettext_noop("FDW options"),
 						  gettext_noop("Description"));
 
 	appendPQExpBufferStr(&buf,
@@ -5017,7 +5017,7 @@ listOneExtensionContents(const char *extname, const char *oid)
 					  "FROM pg_catalog.pg_depend\n"
 					  "WHERE refclassid = 'pg_catalog.pg_extension'::pg_catalog.regclass AND refobjid = '%s' AND deptype = 'e'\n"
 					  "ORDER BY 1;",
-					  gettext_noop("Object Description"),
+					  gettext_noop("Object description"),
 					  oid);
 
 	res = PSQLexec(buf.data);
