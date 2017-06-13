@@ -454,6 +454,7 @@ RelationBuildPartitionDesc(Relation rel)
 			palloc0(sizeof(PartitionBoundInfoData));
 		boundinfo->strategy = key->strategy;
 		boundinfo->ndatums = ndatums;
+		boundinfo->null_index = -1;
 		boundinfo->datums = (Datum **) palloc0(ndatums * sizeof(Datum *));
 
 		/* Initialize mapping array with invalid values */
@@ -503,8 +504,6 @@ RelationBuildPartitionDesc(Relation rel)
 							mapping[null_index] = next_index++;
 						boundinfo->null_index = mapping[null_index];
 					}
-					else
-						boundinfo->null_index = -1;
 
 					/* All partition must now have a valid mapping */
 					Assert(next_index == nparts);
