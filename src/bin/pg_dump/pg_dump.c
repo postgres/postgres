@@ -13073,6 +13073,9 @@ dumpCollation(Archive *fout, CollInfo *collinfo)
 		appendPQExpBufferStr(q, "libc");
 	else if (collprovider[0] == 'i')
 		appendPQExpBufferStr(q, "icu");
+	else if (collprovider[0] == 'd')
+		/* to allow dumping pg_catalog; not accepted on input */
+		appendPQExpBufferStr(q, "default");
 	else
 		exit_horribly(NULL,
 					  "unrecognized collation provider: %s\n",
