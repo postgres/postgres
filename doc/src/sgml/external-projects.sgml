@@ -186,19 +186,13 @@
      <row>
       <entry>PL/Java</entry>
       <entry>Java</entry>
-      <entry><ulink url="https://github.com/tada/pljava"></ulink></entry>
+      <entry><ulink url="https://tada.github.io/pljava/"></ulink></entry>
      </row>
 
      <row>
-      <entry>PL/PHP</entry>
-      <entry>PHP</entry>
-      <entry><ulink url="https://public.commandprompt.com/projects/plphp"></ulink></entry>
-     </row>
-
-     <row>
-      <entry>PL/Py</entry>
-      <entry>Python</entry>
-      <entry><ulink url="http://python.projects.postgresql.org/backend/"></ulink></entry>
+      <entry>PL/Lua</entry>
+      <entry>Lua</entry>
+      <entry><ulink url="https://github.com/pllua/pllua"></ulink></entry>
      </row>
 
      <row>
@@ -208,21 +202,15 @@
      </row>
 
      <row>
-      <entry>PL/Ruby</entry>
-      <entry>Ruby</entry>
-      <entry><ulink url="http://raa.ruby-lang.org/project/pl-ruby/"></ulink></entry>
-     </row>
-
-     <row>
-      <entry>PL/Scheme</entry>
-      <entry>Scheme</entry>
-      <entry><ulink url="http://plscheme.projects.postgresql.org/"></ulink></entry>
-     </row>
-
-     <row>
       <entry>PL/sh</entry>
       <entry>Unix shell</entry>
       <entry><ulink url="https://github.com/petere/plsh"></ulink></entry>
+     </row>
+
+     <row>
+      <entry>PL/v8</entry>
+      <entry>JavaScript</entry>
+      <entry><ulink url="https://github.com/plv8/plv8"></ulink></entry>
      </row>
     </tbody>
    </tgroup>
