@@ -1327,6 +1327,14 @@ SELECT * FROM part_document ORDER by did;
 ERROR:  query would be affected by row-level security policy for table "part_document"
 SELECT * FROM part_document_satire ORDER by did;
 ERROR:  query would be affected by row-level security policy for table "part_document_satire"
+-- Check behavior with a policy that uses a SubPlan not an InitPlan.
+SET SESSION AUTHORIZATION regress_rls_alice;
+SET row_security TO ON;
+CREATE POLICY pp3 ON part_document AS RESTRICTIVE
+    USING ((SELECT dlevel <= seclv FROM uaccount WHERE pguser = current_user));
+SET SESSION AUTHORIZATION regress_rls_carol;
+INSERT INTO part_document VALUES (100, 11, 5, 'regress_rls_carol', 'testing pp3'); -- fail
+ERROR:  new row violates row-level security policy "pp3" for table "part_document"
 ----- Dependencies -----
 SET SESSION AUTHORIZATION regress_rls_alice;
 SET row_security TO ON;

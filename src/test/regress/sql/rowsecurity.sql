@@ -450,6 +450,15 @@ SET row_security TO OFF;
 SELECT * FROM part_document ORDER by did;
 SELECT * FROM part_document_satire ORDER by did;
 
+-- Check behavior with a policy that uses a SubPlan not an InitPlan.
+SET SESSION AUTHORIZATION regress_rls_alice;
+SET row_security TO ON;
+CREATE POLICY pp3 ON part_document AS RESTRICTIVE
+    USING ((SELECT dlevel <= seclv FROM uaccount WHERE pguser = current_user));
+
+SET SESSION AUTHORIZATION regress_rls_carol;
+INSERT INTO part_document VALUES (100, 11, 5, 'regress_rls_carol', 'testing pp3'); -- fail
+
 ----- Dependencies -----
 SET SESSION AUTHORIZATION regress_rls_alice;
 SET row_security TO ON;

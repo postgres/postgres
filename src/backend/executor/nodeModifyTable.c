@@ -1841,10 +1841,21 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	if (node->withCheckOptionLists != NIL && mtstate->mt_num_partitions > 0)
 	{
 		List	   *wcoList;
+		PlanState  *plan;
 
-		Assert(operation == CMD_INSERT);
-		resultRelInfo = mtstate->mt_partitions;
+		/*
+		 * In case of INSERT on partitioned tables, there is only one plan.
+		 * Likewise, there is only one WITH CHECK OPTIONS list, not one per
+		 * partition.  We make a copy of the WCO qual for each partition; note
+		 * that, if there are SubPlans in there, they all end up attached to
+		 * the one parent Plan node.
+		 */
+		Assert(operation == CMD_INSERT &&
+			   list_length(node->withCheckOptionLists) == 1 &&
+			   mtstate->mt_nplans == 1);
 		wcoList = linitial(node->withCheckOptionLists);
+		plan = mtstate->mt_plans[0];
+		resultRelInfo = mtstate->mt_partitions;
 		for (i = 0; i < mtstate->mt_num_partitions; i++)
 		{
 			Relation	partrel = resultRelInfo->ri_RelationDesc;
@@ -1858,9 +1869,9 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 													 partrel, rel);
 			foreach(ll, mapped_wcoList)
 			{
-				WithCheckOption *wco = (WithCheckOption *) lfirst(ll);
-				ExprState  *wcoExpr = ExecInitQual((List *) wco->qual,
-												   mtstate->mt_plans[i]);
+				WithCheckOption *wco = castNode(WithCheckOption, lfirst(ll));
+				ExprState  *wcoExpr = ExecInitQual(castNode(List, wco->qual),
+												   plan);
 
 				wcoExprs = lappend(wcoExprs, wcoExpr);
 			}
