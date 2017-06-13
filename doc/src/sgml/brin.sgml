@@ -81,7 +81,7 @@
    occur.  (This last trigger is disabled by default and can be enabled
    with the <literal>autosummarize</literal> parameter.)
    Conversely, a range can be de-summarized using the
-   <function>brin_desummarize_range(regclass, bigint)</function> range,
+   <function>brin_desummarize_range(regclass, bigint)</function> function,
    which is useful when the index tuple is no longer a very good
    representation because the existing values have changed.
   </para>
