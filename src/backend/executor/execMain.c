@@ -104,7 +104,7 @@ static char *ExecBuildSlotPartitionKeyDescription(Relation rel,
 static void EvalPlanQualStart(EPQState *epqstate, EState *parentestate,
 				  Plan *planTree);
 static void ExecPartitionCheck(ResultRelInfo *resultRelInfo,
-				  TupleTableSlot *slot, EState *estate);
+				   TupleTableSlot *slot, EState *estate);
 
 /*
  * Note that GetUpdatedColumns() also exists in commands/trigger.c.  There does
@@ -1347,8 +1347,8 @@ InitResultRelInfo(ResultRelInfo *resultRelInfo,
 	 * partition, if there any BR triggers defined on the table.  Although
 	 * tuple-routing implicitly preserves the partition constraint of the
 	 * target partition for a given row, the BR triggers may change the row
-	 * such that the constraint is no longer satisfied, which we must fail
-	 * for by checking it explicitly.
+	 * such that the constraint is no longer satisfied, which we must fail for
+	 * by checking it explicitly.
 	 *
 	 * If this is a partitioned table, the partition constraint (if any) of a
 	 * given row will be checked just before performing tuple-routing.

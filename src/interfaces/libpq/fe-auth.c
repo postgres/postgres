@@ -419,7 +419,7 @@ pg_SSPI_startup(PGconn *conn, int use_negotiate, int payloadlen)
 	if (conn->sspictx)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-					libpq_gettext("duplicate SSPI authentication request\n"));
+				   libpq_gettext("duplicate SSPI authentication request\n"));
 		return STATUS_ERROR;
 	}
 
@@ -1218,7 +1218,7 @@ PQencryptPasswordConn(PGconn *conn, const char *passwd, const char *user,
 	else
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-				   libpq_gettext("unrecognized password encryption algorithm \"%s\"\n"),
+		libpq_gettext("unrecognized password encryption algorithm \"%s\"\n"),
 						  algorithm);
 		return NULL;
 	}

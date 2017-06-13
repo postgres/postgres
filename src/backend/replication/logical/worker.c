@@ -1343,9 +1343,9 @@ maybe_reread_subscription(void)
 	if (!newsub)
 	{
 		ereport(LOG,
-		   (errmsg("logical replication apply worker for subscription \"%s\" will "
-				   "stop because the subscription was removed",
-				   MySubscription->name)));
+				(errmsg("logical replication apply worker for subscription \"%s\" will "
+						"stop because the subscription was removed",
+						MySubscription->name)));
 
 		proc_exit(0);
 	}
@@ -1357,9 +1357,9 @@ maybe_reread_subscription(void)
 	if (!newsub->enabled)
 	{
 		ereport(LOG,
-		   (errmsg("logical replication apply worker for subscription \"%s\" will "
-				   "stop because the subscription was disabled",
-				   MySubscription->name)));
+				(errmsg("logical replication apply worker for subscription \"%s\" will "
+						"stop because the subscription was disabled",
+						MySubscription->name)));
 
 		proc_exit(0);
 	}
@@ -1371,9 +1371,9 @@ maybe_reread_subscription(void)
 	if (strcmp(newsub->conninfo, MySubscription->conninfo) != 0)
 	{
 		ereport(LOG,
-		   (errmsg("logical replication apply worker for subscription \"%s\" will "
-				   "restart because the connection information was changed",
-				   MySubscription->name)));
+				(errmsg("logical replication apply worker for subscription \"%s\" will "
+					"restart because the connection information was changed",
+						MySubscription->name)));
 
 		proc_exit(0);
 	}
@@ -1385,9 +1385,9 @@ maybe_reread_subscription(void)
 	if (strcmp(newsub->name, MySubscription->name) != 0)
 	{
 		ereport(LOG,
-		   (errmsg("logical replication apply worker for subscription \"%s\" will "
-				   "restart because subscription was renamed",
-				   MySubscription->name)));
+				(errmsg("logical replication apply worker for subscription \"%s\" will "
+						"restart because subscription was renamed",
+						MySubscription->name)));
 
 		proc_exit(0);
 	}
@@ -1402,9 +1402,9 @@ maybe_reread_subscription(void)
 	if (strcmp(newsub->slotname, MySubscription->slotname) != 0)
 	{
 		ereport(LOG,
-		   (errmsg("logical replication apply worker for subscription \"%s\" will "
-				   "restart because the replication slot name was changed",
-				   MySubscription->name)));
+				(errmsg("logical replication apply worker for subscription \"%s\" will "
+					 "restart because the replication slot name was changed",
+						MySubscription->name)));
 
 		proc_exit(0);
 	}
@@ -1416,9 +1416,9 @@ maybe_reread_subscription(void)
 	if (!equal(newsub->publications, MySubscription->publications))
 	{
 		ereport(LOG,
-		   (errmsg("logical replication apply worker for subscription \"%s\" will "
-				   "restart because subscription's publications were changed",
-				   MySubscription->name)));
+				(errmsg("logical replication apply worker for subscription \"%s\" will "
+				  "restart because subscription's publications were changed",
+						MySubscription->name)));
 
 		proc_exit(0);
 	}
@@ -1524,9 +1524,9 @@ ApplyWorkerMain(Datum main_arg)
 	if (!MySubscription->enabled)
 	{
 		ereport(LOG,
-		(errmsg("logical replication apply worker for subscription \"%s\" will not "
+				(errmsg("logical replication apply worker for subscription \"%s\" will not "
 				"start because the subscription was disabled during startup",
-				MySubscription->name)));
+						MySubscription->name)));
 
 		proc_exit(0);
 	}
@@ -1539,7 +1539,7 @@ ApplyWorkerMain(Datum main_arg)
 	if (am_tablesync_worker())
 		ereport(LOG,
 				(errmsg("logical replication table synchronization worker for subscription \"%s\", table \"%s\" has started",
-						MySubscription->name, get_rel_name(MyLogicalRepWorker->relid))));
+			MySubscription->name, get_rel_name(MyLogicalRepWorker->relid))));
 	else
 		ereport(LOG,
 				(errmsg("logical replication apply worker for subscription \"%s\" has started",
@@ -1577,8 +1577,8 @@ ApplyWorkerMain(Datum main_arg)
 
 		/*
 		 * This shouldn't happen if the subscription is enabled, but guard
-		 * against DDL bugs or manual catalog changes.  (libpqwalreceiver
-		 * will crash if slot is NULL.
+		 * against DDL bugs or manual catalog changes.  (libpqwalreceiver will
+		 * crash if slot is NULL.)
 		 */
 		if (!myslotname)
 			ereport(ERROR,

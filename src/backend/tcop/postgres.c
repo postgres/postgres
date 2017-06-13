@@ -3639,8 +3639,8 @@ PostgresMain(int argc, char *argv[],
 		WalSndSignals();
 	else
 	{
-		pqsignal(SIGHUP, PostgresSigHupHandler);		/* set flag to read config
-														 * file */
+		pqsignal(SIGHUP, PostgresSigHupHandler);		/* set flag to read
+														 * config file */
 		pqsignal(SIGINT, StatementCancelHandler);		/* cancel current query */
 		pqsignal(SIGTERM, die); /* cancel current query and exit */
 

@@ -1827,7 +1827,7 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
 						RelationGetRelationName(onerel),
 						old_rel_pages, new_rel_pages),
 				 errdetail_internal("%s",
-						   pg_rusage_show(&ru0))));
+									pg_rusage_show(&ru0))));
 		old_rel_pages = new_rel_pages;
 	} while (new_rel_pages > vacrelstats->nonempty_pages &&
 			 vacrelstats->lock_waiter_detected);

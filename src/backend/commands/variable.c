@@ -773,7 +773,7 @@ assign_client_encoding(const char *newval, void *extra)
 		 */
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TRANSACTION_STATE),
-			  errmsg("cannot change client_encoding during a parallel operation")));
+		errmsg("cannot change client_encoding during a parallel operation")));
 	}
 
 	/* We do not expect an error if PrepareClientEncoding succeeded */

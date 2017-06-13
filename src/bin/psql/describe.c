@@ -2538,7 +2538,7 @@ describeOneTableDetails(const char *schemaname,
 			printfPQExpBuffer(&buf,
 							  "SELECT pub.pubname\n"
 							  " FROM pg_catalog.pg_publication pub,\n"
-							  "      pg_catalog.pg_get_publication_tables(pub.pubname)\n"
+				  "      pg_catalog.pg_get_publication_tables(pub.pubname)\n"
 							  "WHERE relid = '%s'\n"
 							  "ORDER BY 1;",
 							  oid);

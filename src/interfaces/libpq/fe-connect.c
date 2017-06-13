@@ -1842,16 +1842,23 @@ connectDBComplete(PGconn *conn)
 				return 0;
 		}
 
-		if (ret == 1)	/* connect_timeout elapsed */
+		if (ret == 1)			/* connect_timeout elapsed */
 		{
-			/* If there are no more hosts, return (the error message is already set) */
+			/*
+			 * If there are no more hosts, return (the error message is
+			 * already set)
+			 */
 			if (++conn->whichhost >= conn->nconnhost)
 			{
 				conn->whichhost = 0;
 				conn->status = CONNECTION_BAD;
 				return 0;
 			}
-			/* Attempt connection to the next host, starting the connect_timeout timer */
+
+			/*
+			 * Attempt connection to the next host, starting the
+			 * connect_timeout timer
+			 */
 			pqDropConnection(conn, true);
 			conn->addr_cur = conn->connhost[conn->whichhost].addrlist;
 			conn->status = CONNECTION_NEEDED;

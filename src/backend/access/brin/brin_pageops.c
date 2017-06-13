@@ -356,7 +356,7 @@ brin_doinsert(Relation idxrel, BlockNumber pagesPerRange,
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 			errmsg("index row size %zu exceeds maximum %zu for index \"%s\"",
-				   itemsz, BrinMaxItemSize, RelationGetRelationName(idxrel))));
+				 itemsz, BrinMaxItemSize, RelationGetRelationName(idxrel))));
 		return InvalidOffsetNumber;		/* keep compiler quiet */
 	}
 

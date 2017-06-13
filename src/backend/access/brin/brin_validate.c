@@ -265,8 +265,8 @@ brinvalidate(Oid opclassoid)
 			continue;			/* got it */
 		ereport(INFO,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-		  errmsg("operator class \"%s\" of access method %s is missing support function %d",
-				 opclassname, "brin", i)));
+				 errmsg("operator class \"%s\" of access method %s is missing support function %d",
+						opclassname, "brin", i)));
 		result = false;
 	}
 

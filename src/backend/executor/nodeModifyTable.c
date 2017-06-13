@@ -421,8 +421,8 @@ ExecInsert(ModifyTableState *mtstate,
 		 * trigger might modify the tuple such that the partition constraint
 		 * is no longer satisfied, so we need to check in that case.
 		 */
-		bool	check_partition_constr =
-								(resultRelInfo->ri_PartitionCheck != NIL);
+		bool		check_partition_constr =
+		(resultRelInfo->ri_PartitionCheck != NIL);
 
 		/*
 		 * Constraints might reference the tableoid column, so initialize

@@ -244,8 +244,8 @@ ginvalidate(Oid opclassoid)
 			continue;			/* don't need both, see check below loop */
 		ereport(INFO,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-		   errmsg("operator class \"%s\" of access method %s is missing support function %d",
-				  opclassname, "gin", i)));
+				 errmsg("operator class \"%s\" of access method %s is missing support function %d",
+						opclassname, "gin", i)));
 		result = false;
 	}
 	if (!opclassgroup ||
