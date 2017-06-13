@@ -120,6 +120,18 @@ DefineCollation(ParseState *pstate, List *names, List *parameters, bool if_not_e
 		collprovider = ((Form_pg_collation) GETSTRUCT(tp))->collprovider;
 
 		ReleaseSysCache(tp);
+
+		/*
+		 * Copying the "default" collation is not allowed because most code
+		 * checks for DEFAULT_COLLATION_OID instead of COLLPROVIDER_DEFAULT,
+		 * and so having a second collation with COLLPROVIDER_DEFAULT would
+		 * not work and potentially confuse or crash some code.  This could be
+		 * fixed with some legwork.
+		 */
+		if (collprovider == COLLPROVIDER_DEFAULT)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 errmsg("collation \"default\" cannot be copied")));
 	}
 
 	if (localeEl)
