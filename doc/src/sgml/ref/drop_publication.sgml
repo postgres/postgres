@@ -82,9 +82,7 @@ DROP PUBLICATION [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
    Drop a publication:
 <programlisting>
 DROP PUBLICATION mypublication;
-</programlisting>
-  </para>
-
+</programlisting></para>
  </refsect1>
 
  <refsect1>

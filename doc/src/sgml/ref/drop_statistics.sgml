@@ -73,9 +73,7 @@ DROP STATISTICS [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> 
 DROP STATISTICS IF EXISTS
     accounting.users_uid_creation,
     public.grants_user_role;
-</programlisting>
-  </para>
-
+</programlisting></para>
  </refsect1>
 
  <refsect1>

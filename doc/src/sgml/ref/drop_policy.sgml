@@ -96,8 +96,7 @@ DROP POLICY [ IF EXISTS ] <replaceable class="parameter">name</replaceable> ON <
 
 <programlisting>
 DROP POLICY p1 ON my_table;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

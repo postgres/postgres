@@ -140,8 +140,7 @@ ALTER PUBLICATION noinsert SET (publish = 'update, delete');
    Add some tables to the publication:
 <programlisting>
 ALTER PUBLICATION mypublication ADD TABLE users, departments;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

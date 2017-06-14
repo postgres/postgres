@@ -102,9 +102,7 @@ DROP SUBSCRIPTION [ IF EXISTS ] <replaceable class="parameter">name</replaceable
    Drop a subscription:
 <programlisting>
 DROP SUBSCRIPTION mysub;
-</programlisting>
-  </para>
-
+</programlisting></para>
  </refsect1>
 
  <refsect1>

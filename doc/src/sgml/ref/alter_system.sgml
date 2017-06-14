@@ -119,8 +119,7 @@ ALTER SYSTEM SET wal_level = replica;
    in <filename>postgresql.conf</>:
 <programlisting>
 ALTER SYSTEM RESET wal_level;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

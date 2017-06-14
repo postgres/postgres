@@ -204,8 +204,7 @@ ALTER SUBSCRIPTION mysub SET PUBLICATION insert_only;
    Disable (stop) the subscription:
 <programlisting>
 ALTER SUBSCRIPTION mysub DISABLE;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

@@ -725,8 +725,7 @@ INSERT INTO distributors (did, dname) VALUES (9, 'Antwerp Design')
 -- just use a regular unique constraint on "did"
 INSERT INTO distributors (did, dname) VALUES (10, 'Conrad International')
     ON CONFLICT (did) WHERE is_active DO NOTHING;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

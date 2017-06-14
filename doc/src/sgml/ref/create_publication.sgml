@@ -191,8 +191,7 @@ CREATE PUBLICATION alltables FOR ALL TABLES;
 <programlisting>
 CREATE PUBLICATION insert_only FOR TABLE mydata
     WITH (publish = 'insert');
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

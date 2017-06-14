@@ -160,8 +160,7 @@ DROP AGGREGATE myrank(VARIADIC "any" ORDER BY VARIADIC "any");
    To remove multiple aggregate functions in one command:
 <programlisting>
 DROP AGGREGATE myavg(integer), myavg(bigint);
-</programlisting>
-  </para>
+</programlisting></para>
 </refsect1>
 
  <refsect1>

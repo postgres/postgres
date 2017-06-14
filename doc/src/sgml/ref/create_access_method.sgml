@@ -93,8 +93,7 @@ CREATE ACCESS METHOD <replaceable class="parameter">name</replaceable>
    handler function <literal>heptree_handler</>:
 <programlisting>
 CREATE ACCESS METHOD heptree TYPE INDEX HANDLER heptree_handler;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

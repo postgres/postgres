@@ -356,8 +356,7 @@ ALTER TYPE colors ADD VALUE 'orange' AFTER 'red';
    To rename an enum value:
 <programlisting>
 ALTER TYPE colors RENAME VALUE 'purple' TO 'mauve';
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>
