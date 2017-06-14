@@ -1793,14 +1793,15 @@ GetSnapshotData(Snapshot snapshot)
  * Returns TRUE if successful, FALSE if source xact is no longer running.
  */
 bool
-ProcArrayInstallImportedXmin(TransactionId xmin, TransactionId sourcexid)
+ProcArrayInstallImportedXmin(TransactionId xmin,
+							 VirtualTransactionId *sourcevxid)
 {
 	bool		result = false;
 	ProcArrayStruct *arrayP = procArray;
 	int			index;
 
 	Assert(TransactionIdIsNormal(xmin));
-	if (!TransactionIdIsNormal(sourcexid))
+	if (!sourcevxid)
 		return false;
 
 	/* Get lock so source xact can't end while we're doing this */
@@ -1817,8 +1818,10 @@ ProcArrayInstallImportedXmin(TransactionId xmin, TransactionId sourcexid)
 		if (pgxact->vacuumFlags & PROC_IN_VACUUM)
 			continue;
 
-		xid = pgxact->xid;		/* fetch just once */
-		if (xid != sourcexid)
+		/* We are only interested in the specific virtual transaction. */
+		if (proc->backendId != sourcevxid->backendId)
+			continue;
+		if (proc->lxid != sourcevxid->localTransactionId)
 			continue;
 
 		/*

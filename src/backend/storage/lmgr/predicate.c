@@ -148,7 +148,7 @@
  * predicate lock maintenance
  *		GetSerializableTransactionSnapshot(Snapshot snapshot)
  *		SetSerializableTransactionSnapshot(Snapshot snapshot,
- *										   TransactionId sourcexid)
+ *										   VirtualTransactionId *sourcevxid)
  *		RegisterPredicateLockingXid(void)
  *		PredicateLockRelation(Relation relation, Snapshot snapshot)
  *		PredicateLockPage(Relation relation, BlockNumber blkno,
@@ -434,7 +434,8 @@ static uint32 predicatelock_hash(const void *key, Size keysize);
 static void SummarizeOldestCommittedSxact(void);
 static Snapshot GetSafeSnapshot(Snapshot snapshot);
 static Snapshot GetSerializableTransactionSnapshotInt(Snapshot snapshot,
-									  TransactionId sourcexid);
+									  VirtualTransactionId *sourcevxid,
+									  int sourcepid);
 static bool PredicateLockExists(const PREDICATELOCKTARGETTAG *targettag);
 static bool GetParentPredicateLockTag(const PREDICATELOCKTARGETTAG *tag,
 						  PREDICATELOCKTARGETTAG *parent);
@@ -1510,7 +1511,7 @@ GetSafeSnapshot(Snapshot origSnapshot)
 		 * one passed to it, but we avoid assuming that here.
 		 */
 		snapshot = GetSerializableTransactionSnapshotInt(origSnapshot,
-													   InvalidTransactionId);
+														 NULL, InvalidPid);
 
 		if (MySerializableXact == InvalidSerializableXact)
 			return snapshot;	/* no concurrent r/w xacts; it's safe */
@@ -1643,7 +1644,7 @@ GetSerializableTransactionSnapshot(Snapshot snapshot)
 		return GetSafeSnapshot(snapshot);
 
 	return GetSerializableTransactionSnapshotInt(snapshot,
-												 InvalidTransactionId);
+												 NULL, InvalidPid);
 }
 
 /*
@@ -1658,7 +1659,8 @@ GetSerializableTransactionSnapshot(Snapshot snapshot)
  */
 void
 SetSerializableTransactionSnapshot(Snapshot snapshot,
-								   TransactionId sourcexid)
+								   VirtualTransactionId *sourcevxid,
+								   int sourcepid)
 {
 	Assert(IsolationIsSerializable());
 
@@ -1673,7 +1675,8 @@ SetSerializableTransactionSnapshot(Snapshot snapshot,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("a snapshot-importing transaction must not be READ ONLY DEFERRABLE")));
 
-	(void) GetSerializableTransactionSnapshotInt(snapshot, sourcexid);
+	(void) GetSerializableTransactionSnapshotInt(snapshot, sourcevxid,
+												 sourcepid);
 }
 
 /*
@@ -1687,7 +1690,8 @@ SetSerializableTransactionSnapshot(Snapshot snapshot,
  */
 static Snapshot
 GetSerializableTransactionSnapshotInt(Snapshot snapshot,
-									  TransactionId sourcexid)
+									  VirtualTransactionId *sourcevxid,
+									  int sourcepid)
 {
 	PGPROC	   *proc;
 	VirtualTransactionId vxid;
@@ -1741,17 +1745,17 @@ GetSerializableTransactionSnapshotInt(Snapshot snapshot,
 	} while (!sxact);
 
 	/* Get the snapshot, or check that it's safe to use */
-	if (!TransactionIdIsValid(sourcexid))
+	if (!sourcevxid)
 		snapshot = GetSnapshotData(snapshot);
-	else if (!ProcArrayInstallImportedXmin(snapshot->xmin, sourcexid))
+	else if (!ProcArrayInstallImportedXmin(snapshot->xmin, sourcevxid))
 	{
 		ReleasePredXact(sxact);
 		LWLockRelease(SerializableXactHashLock);
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("could not import the requested snapshot"),
-			   errdetail("The source transaction %u is not running anymore.",
-						 sourcexid)));
+			errdetail("The source process with pid %d is not running anymore.",
+						sourcepid)));
 	}
 
 	/*

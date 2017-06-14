@@ -14,6 +14,7 @@
 #ifndef PREDICATE_H
 #define PREDICATE_H
 
+#include "storage/lock.h"
 #include "utils/relcache.h"
 #include "utils/snapshot.h"
 
@@ -46,7 +47,8 @@ extern bool PageIsPredicateLocked(Relation relation, BlockNumber blkno);
 /* predicate lock maintenance */
 extern Snapshot GetSerializableTransactionSnapshot(Snapshot snapshot);
 extern void SetSerializableTransactionSnapshot(Snapshot snapshot,
-								   TransactionId sourcexid);
+								   VirtualTransactionId *sourcevxid,
+								   int sourcepid);
 extern void RegisterPredicateLockingXid(TransactionId xid);
 extern void PredicateLockRelation(Relation relation, Snapshot snapshot);
 extern void PredicateLockPage(Relation relation, BlockNumber blkno, Snapshot snapshot);

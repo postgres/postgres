@@ -262,7 +262,7 @@ static bool ExportInProgress = false;
 static void SnapBuildPurgeCommittedTxn(SnapBuild *builder);
 
 /* snapshot building/manipulation/distribution functions */
-static Snapshot SnapBuildBuildSnapshot(SnapBuild *builder, TransactionId xid);
+static Snapshot SnapBuildBuildSnapshot(SnapBuild *builder);
 
 static void SnapBuildFreeSnapshot(Snapshot snap);
 
@@ -463,7 +463,7 @@ SnapBuildSnapDecRefcount(Snapshot snap)
  * and ->subxip/subxcnt values.
  */
 static Snapshot
-SnapBuildBuildSnapshot(SnapBuild *builder, TransactionId xid)
+SnapBuildBuildSnapshot(SnapBuild *builder)
 {
 	Snapshot	snapshot;
 	Size		ssize;
@@ -562,7 +562,7 @@ SnapBuildInitialSnapshot(SnapBuild *builder)
 	if (TransactionIdIsValid(MyPgXact->xmin))
 		elog(ERROR, "cannot build an initial slot snapshot when MyPgXact->xmin already is valid");
 
-	snap = SnapBuildBuildSnapshot(builder, GetTopTransactionId());
+	snap = SnapBuildBuildSnapshot(builder);
 
 	/*
 	 * We know that snap->xmin is alive, enforced by the logical xmin
@@ -679,7 +679,7 @@ SnapBuildGetOrBuildSnapshot(SnapBuild *builder, TransactionId xid)
 	/* only build a new snapshot if we don't have a prebuilt one */
 	if (builder->snapshot == NULL)
 	{
-		builder->snapshot = SnapBuildBuildSnapshot(builder, xid);
+		builder->snapshot = SnapBuildBuildSnapshot(builder);
 		/* increase refcount for the snapshot builder */
 		SnapBuildSnapIncRefcount(builder->snapshot);
 	}
@@ -743,7 +743,7 @@ SnapBuildProcessChange(SnapBuild *builder, TransactionId xid, XLogRecPtr lsn)
 		/* only build a new snapshot if we don't have a prebuilt one */
 		if (builder->snapshot == NULL)
 		{
-			builder->snapshot = SnapBuildBuildSnapshot(builder, xid);
+			builder->snapshot = SnapBuildBuildSnapshot(builder);
 			/* increase refcount for the snapshot builder */
 			SnapBuildSnapIncRefcount(builder->snapshot);
 		}
@@ -1061,7 +1061,7 @@ SnapBuildCommitTxn(SnapBuild *builder, XLogRecPtr lsn, TransactionId xid,
 		if (builder->snapshot)
 			SnapBuildSnapDecRefcount(builder->snapshot);
 
-		builder->snapshot = SnapBuildBuildSnapshot(builder, xid);
+		builder->snapshot = SnapBuildBuildSnapshot(builder);
 
 		/* we might need to execute invalidations, add snapshot */
 		if (!ReorderBufferXidHasBaseSnapshot(builder->reorder, xid))
@@ -1831,7 +1831,7 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 	{
 		SnapBuildSnapDecRefcount(builder->snapshot);
 	}
-	builder->snapshot = SnapBuildBuildSnapshot(builder, InvalidTransactionId);
+	builder->snapshot = SnapBuildBuildSnapshot(builder);
 	SnapBuildSnapIncRefcount(builder->snapshot);
 
 	ReorderBufferSetRestartPoint(builder->reorder, lsn);
