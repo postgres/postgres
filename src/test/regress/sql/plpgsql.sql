@@ -4766,3 +4766,42 @@ ALTER TABLE alter_table_under_transition_tables
   DROP column name;
 UPDATE alter_table_under_transition_tables
   SET id = id;
+
+--
+-- Check type parsing and record fetching from partitioned tables
+--
+
+CREATE TABLE partitioned_table (a int, b text) PARTITION BY LIST (a);
+CREATE TABLE pt_part1 PARTITION OF partitioned_table FOR VALUES IN (1);
+CREATE TABLE pt_part2 PARTITION OF partitioned_table FOR VALUES IN (2);
+
+INSERT INTO partitioned_table VALUES (1, 'Row 1');
+INSERT INTO partitioned_table VALUES (2, 'Row 2');
+
+CREATE OR REPLACE FUNCTION get_from_partitioned_table(partitioned_table.a%type)
+RETURNS partitioned_table AS $$
+DECLARE
+    a_val partitioned_table.a%TYPE;
+    result partitioned_table%ROWTYPE;
+BEGIN
+    a_val := $1;
+    SELECT * INTO result FROM partitioned_table WHERE a = a_val;
+    RETURN result;
+END; $$ LANGUAGE plpgsql;
+
+SELECT * FROM get_from_partitioned_table(1) AS t;
+
+CREATE OR REPLACE FUNCTION list_partitioned_table()
+RETURNS SETOF partitioned_table.a%TYPE AS $$
+DECLARE
+    row partitioned_table%ROWTYPE;
+    a_val partitioned_table.a%TYPE;
+BEGIN
+    FOR row IN SELECT * FROM partitioned_table ORDER BY a LOOP
+        a_val := row.a;
+        RETURN NEXT a_val;
+    END LOOP;
+    RETURN;
+END; $$ LANGUAGE plpgsql;
+
+SELECT * FROM list_partitioned_table() AS t;
