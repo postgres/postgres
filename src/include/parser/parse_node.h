@@ -157,6 +157,9 @@ typedef Node *(*CoerceParamHook) (ParseState *pstate, Param *param,
  * p_hasAggs, p_hasWindowFuncs, etc: true if we've found any of the indicated
  * constructs in the query.
  *
+ * p_last_srf: the set-returning FuncExpr or OpExpr most recently found in
+ * the query, or NULL if none.
+ *
  * p_pre_columnref_hook, etc: optional parser hook functions for modifying the
  * interpretation of ColumnRefs and ParamRefs.
  *
@@ -198,6 +201,8 @@ struct ParseState
 	bool		p_hasTargetSRFs;
 	bool		p_hasSubLinks;
 	bool		p_hasModifyingCTE;
+
+	Node	   *p_last_srf;		/* most recent set-returning func/op found */
 
 	/*
 	 * Optional hook functions for parser callbacks.  These are null unless

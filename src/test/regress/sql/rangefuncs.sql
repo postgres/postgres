@@ -600,15 +600,6 @@ select * from foobar();  -- fail
 
 drop function foobar();
 
--- check behavior when a function's input sometimes returns a set (bug #8228)
-
-SELECT *,
-  lower(CASE WHEN id = 2 THEN (regexp_matches(str, '^0*([1-9]\d+)$'))[1]
-        ELSE str
-        END)
-FROM
-  (VALUES (1,''), (2,'0000000049404'), (3,'FROM 10000000876')) v(id, str);
-
 -- check whole-row-Var handling in nested lateral functions (bug #11703)
 
 create function extractq2(t int8_tbl) returns int8 as $$

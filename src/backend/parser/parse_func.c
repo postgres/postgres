@@ -64,10 +64,14 @@ static Node *ParseComplexProjection(ParseState *pstate, char *funcname,
  *
  *	The argument expressions (in fargs) must have been transformed
  *	already.  However, nothing in *fn has been transformed.
+ *
+ *	last_srf should be a copy of pstate->p_last_srf from just before we
+ *	started transforming fargs.  If the caller knows that fargs couldn't
+ *	contain any SRF calls, last_srf can just be pstate->p_last_srf.
  */
 Node *
 ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
-				  FuncCall *fn, int location)
+				  Node *last_srf, FuncCall *fn, int location)
 {
 	bool		is_column = (fn == NULL);
 	List	   *agg_order = (fn ? fn->agg_order : NIL);
@@ -628,7 +632,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 
 	/* if it returns a set, check that's OK */
 	if (retset)
-		check_srf_call_placement(pstate, location);
+		check_srf_call_placement(pstate, last_srf, location);
 
 	/* build the appropriate output structure */
 	if (fdresult == FUNCDETAIL_NORMAL)
@@ -759,6 +763,17 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					 errmsg("FILTER is not implemented for non-aggregate window functions"),
 					 parser_errposition(pstate, location)));
 
+		/*
+		 * Window functions can't either take or return sets
+		 */
+		if (pstate->p_last_srf != last_srf)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("window function calls cannot contain set-returning function calls"),
+					 errhint("You might be able to move the set-returning function into a LATERAL FROM item."),
+					 parser_errposition(pstate,
+										exprLocation(pstate->p_last_srf))));
+
 		if (retset)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
@@ -770,6 +785,10 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 
 		retval = (Node *) wfunc;
 	}
+
+	/* if it returns a set, remember it for error checks at higher levels */
+	if (retset)
+		pstate->p_last_srf = retval;
 
 	return retval;
 }
@@ -2083,9 +2102,13 @@ LookupAggWithArgs(ObjectWithArgs *agg, bool noError)
  *		and throw a nice error if not.
  *
  * A side-effect is to set pstate->p_hasTargetSRFs true if appropriate.
+ *
+ * last_srf should be a copy of pstate->p_last_srf from just before we
+ * started transforming the function's arguments.  This allows detection
+ * of whether the SRF's arguments contain any SRFs.
  */
 void
-check_srf_call_placement(ParseState *pstate, int location)
+check_srf_call_placement(ParseState *pstate, Node *last_srf, int location)
 {
 	const char *err;
 	bool		errkind;
@@ -2121,7 +2144,15 @@ check_srf_call_placement(ParseState *pstate, int location)
 			errkind = true;
 			break;
 		case EXPR_KIND_FROM_FUNCTION:
-			/* okay ... but we can't check nesting here */
+			/* okay, but we don't allow nested SRFs here */
+			/* errmsg is chosen to match transformRangeFunction() */
+			/* errposition should point to the inner SRF */
+			if (pstate->p_last_srf != last_srf)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("set-returning functions must appear at top level of FROM"),
+						 parser_errposition(pstate,
+										 exprLocation(pstate->p_last_srf))));
 			break;
 		case EXPR_KIND_WHERE:
 			errkind = true;
@@ -2202,7 +2233,7 @@ check_srf_call_placement(ParseState *pstate, int location)
 			err = _("set-returning functions are not allowed in trigger WHEN conditions");
 			break;
 		case EXPR_KIND_PARTITION_EXPRESSION:
-			err = _("set-returning functions are not allowed in partition key expression");
+			err = _("set-returning functions are not allowed in partition key expressions");
 			break;
 
 			/*

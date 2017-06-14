@@ -315,7 +315,7 @@ CREATE FUNCTION retset (a int) RETURNS SETOF int AS $$ SELECT 1; $$ LANGUAGE SQL
 CREATE TABLE partitioned (
 	a int
 ) PARTITION BY RANGE (retset(a));
-ERROR:  set-returning functions are not allowed in partition key expression
+ERROR:  set-returning functions are not allowed in partition key expressions
 DROP FUNCTION retset(int);
 CREATE TABLE partitioned (
 	a int

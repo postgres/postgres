@@ -572,6 +572,8 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 		List	   *pair = (List *) lfirst(lc);
 		Node	   *fexpr;
 		List	   *coldeflist;
+		Node	   *newfexpr;
+		Node	   *last_srf;
 
 		/* Disassemble the function-call/column-def-list pairs */
 		Assert(list_length(pair) == 2);
@@ -618,13 +620,25 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 					Node	   *arg = (Node *) lfirst(lc);
 					FuncCall   *newfc;
 
+					last_srf = pstate->p_last_srf;
+
 					newfc = makeFuncCall(SystemFuncName("unnest"),
 										 list_make1(arg),
 										 fc->location);
 
-					funcexprs = lappend(funcexprs,
-										transformExpr(pstate, (Node *) newfc,
-												   EXPR_KIND_FROM_FUNCTION));
+					newfexpr = transformExpr(pstate, (Node *) newfc,
+											 EXPR_KIND_FROM_FUNCTION);
+
+					/* nodeFunctionscan.c requires SRFs to be at top level */
+					if (pstate->p_last_srf != last_srf &&
+						pstate->p_last_srf != newfexpr)
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("set-returning functions must appear at top level of FROM"),
+								 parser_errposition(pstate,
+										 exprLocation(pstate->p_last_srf))));
+
+					funcexprs = lappend(funcexprs, newfexpr);
 
 					funcnames = lappend(funcnames,
 										FigureColname((Node *) newfc));
@@ -638,9 +652,21 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 		}
 
 		/* normal case ... */
-		funcexprs = lappend(funcexprs,
-							transformExpr(pstate, fexpr,
-										  EXPR_KIND_FROM_FUNCTION));
+		last_srf = pstate->p_last_srf;
+
+		newfexpr = transformExpr(pstate, fexpr,
+								 EXPR_KIND_FROM_FUNCTION);
+
+		/* nodeFunctionscan.c requires SRFs to be at top level */
+		if (pstate->p_last_srf != last_srf &&
+			pstate->p_last_srf != newfexpr)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("set-returning functions must appear at top level of FROM"),
+					 parser_errposition(pstate,
+										exprLocation(pstate->p_last_srf))));
+
+		funcexprs = lappend(funcexprs, newfexpr);
 
 		funcnames = lappend(funcnames,
 							FigureColname(fexpr));

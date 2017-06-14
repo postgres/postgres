@@ -14,6 +14,9 @@ SELECT generate_series(1, 2), generate_series(1,4);
 -- srf, with SRF argument
 SELECT generate_series(1, generate_series(1, 3));
 
+-- but we've traditionally rejected the same in FROM
+SELECT * FROM generate_series(1, generate_series(1, 3));
+
 -- srf, with two SRF arguments
 SELECT generate_series(generate_series(1,3), generate_series(2, 4));
 
@@ -50,6 +53,10 @@ SELECT dataa, generate_series(1,1), count(*) FROM few GROUP BY 1, 2 HAVING count
 -- it's weird to have GROUP BYs that increase the number of results
 SELECT few.dataa, count(*) FROM few WHERE dataa = 'a' GROUP BY few.dataa ORDER BY 2;
 SELECT few.dataa, count(*) FROM few WHERE dataa = 'a' GROUP BY few.dataa, unnest('{1,1,3}'::int[]) ORDER BY 2;
+
+-- SRFs are not allowed if they'd need to be conditionally executed
+SELECT q1, case when q1 > 0 then generate_series(1,3) else 0 end FROM int8_tbl;
+SELECT q1, coalesce(generate_series(1,3), 0) FROM int8_tbl;
 
 -- SRFs are not allowed in aggregate arguments
 SELECT min(generate_series(1, 3)) FROM few;

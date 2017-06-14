@@ -998,6 +998,29 @@ SELECT name, listchildren(name) FROM nodes;
     </para>
 
     <para>
+     <productname>PostgreSQL</>'s behavior for a set-returning function in a
+     query's select list is almost exactly the same as if the set-returning
+     function had been written in a <literal>LATERAL FROM</>-clause item
+     instead.  For example,
+<programlisting>
+SELECT x, generate_series(1,5) AS g FROM tab;
+</programlisting>
+     is almost equivalent to
+<programlisting>
+SELECT x, g FROM tab, LATERAL generate_series(1,5) AS g;
+</programlisting>
+     It would be exactly the same, except that in this specific example,
+     the planner could choose to put <structname>g</> on the outside of the
+     nestloop join, since <structname>g</> has no actual lateral dependency
+     on <structname>tab</>.  That would result in a different output row
+     order.  Set-returning functions in the select list are always evaluated
+     as though they are on the inside of a nestloop join with the rest of
+     the <literal>FROM</> clause, so that the function(s) are run to
+     completion before the next row from the <literal>FROM</> clause is
+     considered.
+    </para>
+
+    <para>
      If there is more than one set-returning function in the query's select
      list, the behavior is similar to what you get from putting the functions
      into a single <literal>LATERAL ROWS FROM( ... )</> <literal>FROM</>-clause
@@ -1028,32 +1051,19 @@ SELECT srf1(srf2(x), srf3(y)), srf4(srf5(z)) FROM tab;
     </para>
 
     <para>
-     This behavior also means that set-returning functions will be evaluated
-     even when it might appear that they should be skipped because of a
-     conditional-evaluation construct, such as <literal>CASE</>
-     or <literal>COALESCE</>.  For example, consider
+     Set-returning functions cannot be used within conditional-evaluation
+     constructs, such as <literal>CASE</> or <literal>COALESCE</>.  For
+     example, consider
 <programlisting>
 SELECT x, CASE WHEN x &gt; 0 THEN generate_series(1, 5) ELSE 0 END FROM tab;
 </programlisting>
-     It might seem that this should produce five repetitions of input
-     rows that have <literal>x &gt; 0</>, and a single repetition of those
-     that do not; but actually it will produce five repetitions of every
-     input row.  This is because <function>generate_series()</> is run first,
-     and then the <literal>CASE</> expression is applied to its result rows.
-     The behavior is thus comparable to
-<programlisting>
-SELECT x, CASE WHEN x &gt; 0 THEN g ELSE 0 END
-  FROM tab, LATERAL generate_series(1,5) AS g;
-</programlisting>
-     It would be exactly the same, except that in this specific example,
-     the planner could choose to put <structname>g</> on the outside of the
-     nestloop join, since <structname>g</> has no actual lateral dependency
-     on <structname>tab</>.  That would result in a different output row
-     order.  Set-returning functions in the select list are always evaluated
-     as though they are on the inside of a nestloop join with the rest of
-     the <literal>FROM</> clause, so that the function(s) are run to
-     completion before the next row from the <literal>FROM</> clause is
-     considered.
+     It might seem that this should produce five repetitions of input rows
+     that have <literal>x &gt; 0</>, and a single repetition of those that do
+     not; but actually, because <function>generate_series(1, 5)</> would be
+     run in an implicit <literal>LATERAL FROM</> item before
+     the <literal>CASE</> expression is ever evaluated, it would produce five
+     repetitions of every input row.  To reduce confusion, such cases produce
+     a parse-time error instead.
     </para>
 
     <note>
@@ -1078,11 +1088,34 @@ SELECT x, CASE WHEN x &gt; 0 THEN g ELSE 0 END
       functions.  Also, nested set-returning functions did not work as
       described above; instead, a set-returning function could have at most
       one set-returning argument, and each nest of set-returning functions
-      was run independently.  The behavior for conditional execution
-      (set-returning functions inside <literal>CASE</> etc) was different too.
+      was run independently.  Also, conditional execution (set-returning
+      functions inside <literal>CASE</> etc) was previously allowed,
+      complicating things even more.
       Use of the <literal>LATERAL</> syntax is recommended when writing
       queries that need to work in older <productname>PostgreSQL</> versions,
       because that will give consistent results across different versions.
+      If you have a query that is relying on conditional execution of a
+      set-returning function, you may be able to fix it by moving the
+      conditional test into a custom set-returning function.  For example,
+<programlisting>
+SELECT x, CASE WHEN y &gt; 0 THEN generate_series(1, z) ELSE 5 END FROM tab;
+</programlisting>
+      could become
+<programlisting>
+CREATE FUNCTION case_generate_series(cond bool, start int, fin int, els int)
+  RETURNS SETOF int AS $$
+BEGIN
+  IF cond THEN
+    RETURN QUERY SELECT generate_series(start, fin);
+  ELSE
+    RETURN QUERY SELECT els;
+  END IF;
+END$$ LANGUAGE plpgsql;
+
+SELECT x, case_generate_series(y &gt; 0, 1, z, 5) FROM tab;
+</programlisting>
+      This formulation will work the same in all versions
+      of <productname>PostgreSQL</>.
      </para>
     </note>
    </sect2>

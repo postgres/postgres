@@ -118,8 +118,7 @@ static Node *transformCurrentOfExpr(ParseState *pstate, CurrentOfExpr *cexpr);
 static Node *transformColumnRef(ParseState *pstate, ColumnRef *cref);
 static Node *transformWholeRowRef(ParseState *pstate, RangeTblEntry *rte,
 					 int location);
-static Node *transformIndirection(ParseState *pstate, Node *basenode,
-					 List *indirection);
+static Node *transformIndirection(ParseState *pstate, A_Indirection *ind);
 static Node *transformTypeCast(ParseState *pstate, TypeCast *tc);
 static Node *transformCollateClause(ParseState *pstate, CollateClause *c);
 static Node *make_row_comparison_op(ParseState *pstate, List *opname,
@@ -192,14 +191,8 @@ transformExprRecurse(ParseState *pstate, Node *expr)
 			}
 
 		case T_A_Indirection:
-			{
-				A_Indirection *ind = (A_Indirection *) expr;
-
-				result = transformExprRecurse(pstate, ind->arg);
-				result = transformIndirection(pstate, result,
-											  ind->indirection);
-				break;
-			}
+			result = transformIndirection(pstate, (A_Indirection *) expr);
+			break;
 
 		case T_A_ArrayExpr:
 			result = transformArrayExpr(pstate, (A_ArrayExpr *) expr,
@@ -439,11 +432,12 @@ unknown_attribute(ParseState *pstate, Node *relref, char *attname,
 }
 
 static Node *
-transformIndirection(ParseState *pstate, Node *basenode, List *indirection)
+transformIndirection(ParseState *pstate, A_Indirection *ind)
 {
-	Node	   *result = basenode;
+	Node	   *last_srf = pstate->p_last_srf;
+	Node	   *result = transformExprRecurse(pstate, ind->arg);
 	List	   *subscripts = NIL;
-	int			location = exprLocation(basenode);
+	int			location = exprLocation(result);
 	ListCell   *i;
 
 	/*
@@ -451,7 +445,7 @@ transformIndirection(ParseState *pstate, Node *basenode, List *indirection)
 	 * subscripting.  Adjacent A_Indices nodes have to be treated as a single
 	 * multidimensional subscript operation.
 	 */
-	foreach(i, indirection)
+	foreach(i, ind->indirection)
 	{
 		Node	   *n = lfirst(i);
 
@@ -484,6 +478,7 @@ transformIndirection(ParseState *pstate, Node *basenode, List *indirection)
 			newresult = ParseFuncOrColumn(pstate,
 										  list_make1(n),
 										  list_make1(result),
+										  last_srf,
 										  NULL,
 										  location);
 			if (newresult == NULL)
@@ -632,6 +627,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					node = ParseFuncOrColumn(pstate,
 											 list_make1(makeString(colname)),
 											 list_make1(node),
+											 pstate->p_last_srf,
 											 NULL,
 											 cref->location);
 				}
@@ -678,6 +674,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					node = ParseFuncOrColumn(pstate,
 											 list_make1(makeString(colname)),
 											 list_make1(node),
+											 pstate->p_last_srf,
 											 NULL,
 											 cref->location);
 				}
@@ -737,6 +734,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					node = ParseFuncOrColumn(pstate,
 											 list_make1(makeString(colname)),
 											 list_make1(node),
+											 pstate->p_last_srf,
 											 NULL,
 											 cref->location);
 				}
@@ -927,6 +925,8 @@ transformAExprOp(ParseState *pstate, A_Expr *a)
 	else
 	{
 		/* Ordinary scalar operator */
+		Node	   *last_srf = pstate->p_last_srf;
+
 		lexpr = transformExprRecurse(pstate, lexpr);
 		rexpr = transformExprRecurse(pstate, rexpr);
 
@@ -934,6 +934,7 @@ transformAExprOp(ParseState *pstate, A_Expr *a)
 								  a->name,
 								  lexpr,
 								  rexpr,
+								  last_srf,
 								  a->location);
 	}
 
@@ -1053,6 +1054,7 @@ transformAExprNullIf(ParseState *pstate, A_Expr *a)
 								a->name,
 								lexpr,
 								rexpr,
+								pstate->p_last_srf,
 								a->location);
 
 	/*
@@ -1062,6 +1064,12 @@ transformAExprNullIf(ParseState *pstate, A_Expr *a)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("NULLIF requires = operator to yield boolean"),
+				 parser_errposition(pstate, a->location)));
+	if (result->opretset)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+		/* translator: %s is name of a SQL construct, eg NULLIF */
+				 errmsg("%s must not return a set", "NULLIF"),
 				 parser_errposition(pstate, a->location)));
 
 	/*
@@ -1266,6 +1274,7 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 								   a->name,
 								   copyObject(lexpr),
 								   rexpr,
+								   pstate->p_last_srf,
 								   a->location);
 		}
 
@@ -1430,6 +1439,7 @@ transformBoolExpr(ParseState *pstate, BoolExpr *a)
 static Node *
 transformFuncCall(ParseState *pstate, FuncCall *fn)
 {
+	Node	   *last_srf = pstate->p_last_srf;
 	List	   *targs;
 	ListCell   *args;
 
@@ -1465,6 +1475,7 @@ transformFuncCall(ParseState *pstate, FuncCall *fn)
 	return ParseFuncOrColumn(pstate,
 							 fn->funcname,
 							 targs,
+							 last_srf,
 							 fn,
 							 fn->location);
 }
@@ -1619,7 +1630,8 @@ transformMultiAssignRef(ParseState *pstate, MultiAssignRef *maref)
 static Node *
 transformCaseExpr(ParseState *pstate, CaseExpr *c)
 {
-	CaseExpr   *newc;
+	CaseExpr   *newc = makeNode(CaseExpr);
+	Node	   *last_srf = pstate->p_last_srf;
 	Node	   *arg;
 	CaseTestExpr *placeholder;
 	List	   *newargs;
@@ -1627,8 +1639,6 @@ transformCaseExpr(ParseState *pstate, CaseExpr *c)
 	ListCell   *l;
 	Node	   *defresult;
 	Oid			ptype;
-
-	newc = makeNode(CaseExpr);
 
 	/* transform the test expression, if any */
 	arg = transformExprRecurse(pstate, (Node *) c->arg);
@@ -1740,6 +1750,17 @@ transformCaseExpr(ParseState *pstate, CaseExpr *c)
 								  ptype,
 								  "CASE/WHEN");
 	}
+
+	/* if any subexpression contained a SRF, complain */
+	if (pstate->p_last_srf != last_srf)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+		/* translator: %s is name of a SQL construct, eg GROUP BY */
+				 errmsg("set-returning functions are not allowed in %s",
+						"CASE"),
+				 errhint("You might be able to move the set-returning function into a LATERAL FROM item."),
+				 parser_errposition(pstate,
+									exprLocation(pstate->p_last_srf))));
 
 	newc->location = c->location;
 
@@ -2177,6 +2198,7 @@ static Node *
 transformCoalesceExpr(ParseState *pstate, CoalesceExpr *c)
 {
 	CoalesceExpr *newc = makeNode(CoalesceExpr);
+	Node	   *last_srf = pstate->p_last_srf;
 	List	   *newargs = NIL;
 	List	   *newcoercedargs = NIL;
 	ListCell   *args;
@@ -2204,6 +2226,17 @@ transformCoalesceExpr(ParseState *pstate, CoalesceExpr *c)
 									 "COALESCE");
 		newcoercedargs = lappend(newcoercedargs, newe);
 	}
+
+	/* if any subexpression contained a SRF, complain */
+	if (pstate->p_last_srf != last_srf)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+		/* translator: %s is name of a SQL construct, eg GROUP BY */
+				 errmsg("set-returning functions are not allowed in %s",
+						"COALESCE"),
+				 errhint("You might be able to move the set-returning function into a LATERAL FROM item."),
+				 parser_errposition(pstate,
+									exprLocation(pstate->p_last_srf))));
 
 	newc->args = newcoercedargs;
 	newc->location = c->location;
@@ -2793,7 +2826,8 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 		Node	   *rarg = (Node *) lfirst(r);
 		OpExpr	   *cmp;
 
-		cmp = castNode(OpExpr, make_op(pstate, opname, larg, rarg, location));
+		cmp = castNode(OpExpr, make_op(pstate, opname, larg, rarg,
+									   pstate->p_last_srf, location));
 
 		/*
 		 * We don't use coerce_to_boolean here because we insist on the
@@ -3000,11 +3034,18 @@ make_distinct_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree,
 {
 	Expr	   *result;
 
-	result = make_op(pstate, opname, ltree, rtree, location);
+	result = make_op(pstate, opname, ltree, rtree,
+					 pstate->p_last_srf, location);
 	if (((OpExpr *) result)->opresulttype != BOOLOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 			 errmsg("IS DISTINCT FROM requires = operator to yield boolean"),
+				 parser_errposition(pstate, location)));
+	if (((OpExpr *) result)->opretset)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+		/* translator: %s is name of a SQL construct, eg NULLIF */
+				 errmsg("%s must not return a set", "IS DISTINCT FROM"),
 				 parser_errposition(pstate, location)));
 
 	/*
