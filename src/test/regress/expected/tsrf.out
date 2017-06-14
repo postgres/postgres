@@ -443,6 +443,14 @@ SELECT int4mul(generate_series(1,2), 10);
       20
 (2 rows)
 
+SELECT generate_series(1,3) IS DISTINCT FROM 2;
+ ?column? 
+----------
+ t
+ f
+ t
+(3 rows)
+
 -- but SRFs in function RTEs must be at top level (annoying restriction)
 SELECT * FROM int4mul(generate_series(1,2), 10);
 ERROR:  set-returning functions must appear at top level of FROM

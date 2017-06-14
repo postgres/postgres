@@ -98,6 +98,7 @@ VALUES(1, generate_series(1,2));
 
 -- We allow tSRFs that are not at top level
 SELECT int4mul(generate_series(1,2), 10);
+SELECT generate_series(1,3) IS DISTINCT FROM 2;
 
 -- but SRFs in function RTEs must be at top level (annoying restriction)
 SELECT * FROM int4mul(generate_series(1,2), 10);
