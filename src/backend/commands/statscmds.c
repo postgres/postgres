@@ -301,8 +301,7 @@ CreateStatistics(CreateStatsStmt *stmt)
 	/* insert it into pg_statistic_ext */
 	statrel = heap_open(StatisticExtRelationId, RowExclusiveLock);
 	htup = heap_form_tuple(statrel->rd_att, values, nulls);
-	CatalogTupleInsert(statrel, htup);
-	statoid = HeapTupleGetOid(htup);
+	statoid = CatalogTupleInsert(statrel, htup);
 	heap_freetuple(htup);
 	relation_close(statrel, RowExclusiveLock);
 
@@ -372,7 +371,7 @@ RemoveStatisticsById(Oid statsOid)
 
 	CacheInvalidateRelcacheByRelid(relid);
 
-	simple_heap_delete(relation, &tup->t_self);
+	CatalogTupleDelete(relation, &tup->t_self);
 
 	ReleaseSysCache(tup);
 

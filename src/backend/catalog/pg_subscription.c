@@ -401,7 +401,7 @@ RemoveSubscriptionRel(Oid subid, Oid relid)
 	scan = heap_beginscan_catalog(rel, nkeys, skey);
 	while (HeapTupleIsValid(tup = heap_getnext(scan, ForwardScanDirection)))
 	{
-		simple_heap_delete(rel, &tup->t_self);
+		CatalogTupleDelete(rel, &tup->t_self);
 	}
 	heap_endscan(scan);
 
