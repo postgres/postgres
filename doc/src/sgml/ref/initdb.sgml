@@ -276,8 +276,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-T <replaceable>CFG</></option></term>
-      <term><option>--text-search-config=<replaceable>CFG</></option></term>
+      <term><option>-T <replaceable>config</></option></term>
+      <term><option>--text-search-config=<replaceable>config</></option></term>
       <listitem>
        <para>
         Sets the default text search configuration.

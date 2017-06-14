@@ -1251,6 +1251,23 @@ testdb=&gt;
 
 
       <varlistentry>
+        <term><literal>\dD[S+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <listitem>
+        <para>
+        Lists domains. If <replaceable
+        class="parameter">pattern</replaceable>
+        is specified, only domains whose names match the pattern are shown.
+        By default, only user-created objects are shown;  supply a
+        pattern or the <literal>S</literal> modifier to include system
+        objects.
+        If <literal>+</literal> is appended to the command name, each object
+        is listed with its associated permissions and description.
+        </para>
+        </listitem>
+      </varlistentry>
+
+
+      <varlistentry>
         <term><literal>\ddp [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
@@ -1267,23 +1284,6 @@ testdb=&gt;
         default access privileges.  The meaning of the
         privilege display is explained under
         <xref linkend="sql-grant">.
-        </para>
-        </listitem>
-      </varlistentry>
-
-
-      <varlistentry>
-        <term><literal>\dD[S+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
-        <listitem>
-        <para>
-        Lists domains. If <replaceable
-        class="parameter">pattern</replaceable>
-        is specified, only domains whose names match the pattern are shown.
-        By default, only user-created objects are shown;  supply a
-        pattern or the <literal>S</literal> modifier to include system
-        objects.
-        If <literal>+</literal> is appended to the command name, each object
-        is listed with its associated permissions and description.
         </para>
         </listitem>
       </varlistentry>
@@ -1945,18 +1945,6 @@ Tue Oct 26 21:40:57 CEST 1999
 
 
       <varlistentry>
-        <term><literal>\gx [ <replaceable class="parameter">filename</replaceable> ]</literal></term>
-        <term><literal>\gx [ |<replaceable class="parameter">command</replaceable> ]</literal></term>
-        <listitem>
-        <para>
-        <literal>\gx</literal> is equivalent to <literal>\g</literal>, but
-        forces expanded output mode for this query.  See <literal>\x</literal>.
-        </para>
-        </listitem>
-      </varlistentry>
-
-
-      <varlistentry>
         <term><literal>\gexec</literal></term>
 
         <listitem>
@@ -2046,6 +2034,19 @@ hello 10
         </listitem>
       </varlistentry>
 
+
+      <varlistentry>
+        <term><literal>\gx [ <replaceable class="parameter">filename</replaceable> ]</literal></term>
+        <term><literal>\gx [ |<replaceable class="parameter">command</replaceable> ]</literal></term>
+        <listitem>
+        <para>
+        <literal>\gx</literal> is equivalent to <literal>\g</literal>, but
+        forces expanded output mode for this query.  See <literal>\x</literal>.
+        </para>
+        </listitem>
+      </varlistentry>
+
+
       <varlistentry>
         <term><literal>\h</literal> or <literal>\help</literal> <literal>[ <replaceable class="parameter">command</replaceable> ]</literal></term>
         <listitem>
@@ -2113,21 +2114,6 @@ hello 10
         <literal>all</literal>.
         </para>
         </note>
-        </listitem>
-      </varlistentry>
-
-
-      <varlistentry>
-        <term><literal>\ir</literal> or <literal>\include_relative</literal> <replaceable class="parameter">filename</replaceable></term>
-        <listitem>
-        <para>
-        The <literal>\ir</> command is similar to <literal>\i</>, but resolves
-        relative file names differently.  When executing in interactive mode,
-        the two commands behave identically.  However, when invoked from a
-        script, <literal>\ir</literal> interprets file names relative to the
-        directory in which the script is located, rather than the current
-        working directory.
-        </para>
         </listitem>
       </varlistentry>
 
@@ -2217,6 +2203,21 @@ SELECT
     \endif
 \endif
 </programlisting>
+        </listitem>
+      </varlistentry>
+
+
+      <varlistentry>
+        <term><literal>\ir</literal> or <literal>\include_relative</literal> <replaceable class="parameter">filename</replaceable></term>
+        <listitem>
+        <para>
+        The <literal>\ir</> command is similar to <literal>\i</>, but resolves
+        relative file names differently.  When executing in interactive mode,
+        the two commands behave identically.  However, when invoked from a
+        script, <literal>\ir</literal> interprets file names relative to the
+        directory in which the script is located, rather than the current
+        working directory.
+        </para>
         </listitem>
       </varlistentry>
 

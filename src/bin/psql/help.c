@@ -171,13 +171,13 @@ slashUsage(unsigned short int pager)
 
 	fprintf(output, _("General\n"));
 	fprintf(output, _("  \\copyright             show PostgreSQL usage and distribution terms\n"));
+	fprintf(output, _("  \\crosstabview [COLUMNS] execute query and display results in crosstab\n"));
 	fprintf(output, _("  \\errverbose            show most recent error message at maximum verbosity\n"));
 	fprintf(output, _("  \\g [FILE] or ;         execute query (and send results to file or |pipe)\n"));
-	fprintf(output, _("  \\gx [FILE]             as \\g, but forces expanded output mode\n"));
 	fprintf(output, _("  \\gexec                 execute query, then execute each value in its result\n"));
 	fprintf(output, _("  \\gset [PREFIX]         execute query and store results in psql variables\n"));
+	fprintf(output, _("  \\gx [FILE]             as \\g, but forces expanded output mode\n"));
 	fprintf(output, _("  \\q                     quit psql\n"));
-	fprintf(output, _("  \\crosstabview [COLUMNS] execute query and display results in crosstab\n"));
 	fprintf(output, _("  \\watch [SEC]           execute query every SEC seconds\n"));
 	fprintf(output, "\n");
 
@@ -227,8 +227,9 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  \\dc[S+] [PATTERN]      list conversions\n"));
 	fprintf(output, _("  \\dC[+]  [PATTERN]      list casts\n"));
 	fprintf(output, _("  \\dd[S]  [PATTERN]      show object descriptions not displayed elsewhere\n"));
-	fprintf(output, _("  \\ddp    [PATTERN]      list default privileges\n"));
 	fprintf(output, _("  \\dD[S+] [PATTERN]      list domains\n"));
+	fprintf(output, _("  \\ddp    [PATTERN]      list default privileges\n"));
+	fprintf(output, _("  \\dE[S+] [PATTERN]      list foreign tables\n"));
 	fprintf(output, _("  \\det[+] [PATTERN]      list foreign tables\n"));
 	fprintf(output, _("  \\des[+] [PATTERN]      list foreign servers\n"));
 	fprintf(output, _("  \\deu[+] [PATTERN]      list user mappings\n"));
@@ -255,7 +256,6 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  \\dT[S+] [PATTERN]      list data types\n"));
 	fprintf(output, _("  \\du[S+] [PATTERN]      list roles\n"));
 	fprintf(output, _("  \\dv[S+] [PATTERN]      list views\n"));
-	fprintf(output, _("  \\dE[S+] [PATTERN]      list foreign tables\n"));
 	fprintf(output, _("  \\dx[+]  [PATTERN]      list extensions\n"));
 	fprintf(output, _("  \\dy     [PATTERN]      list event triggers\n"));
 	fprintf(output, _("  \\l[+]   [PATTERN]      list databases\n"));
@@ -289,9 +289,9 @@ slashUsage(unsigned short int pager)
 	else
 		fprintf(output, _("  \\c[onnect] {[DBNAME|- USER|- HOST|- PORT|-] | conninfo}\n"
 						  "                         connect to new database (currently no connection)\n"));
+	fprintf(output, _("  \\conninfo              display information about current connection\n"));
 	fprintf(output, _("  \\encoding [ENCODING]   show or set client encoding\n"));
 	fprintf(output, _("  \\password [USERNAME]   securely change the password for a user\n"));
-	fprintf(output, _("  \\conninfo              display information about current connection\n"));
 	fprintf(output, "\n");
 
 	fprintf(output, _("Operating System\n"));
@@ -413,10 +413,10 @@ helpVariables(unsigned short int pager)
 	fprintf(output, _("  PGAPPNAME          same as the application_name connection parameter\n"));
 	fprintf(output, _("  PGDATABASE         same as the dbname connection parameter\n"));
 	fprintf(output, _("  PGHOST             same as the host connection parameter\n"));
-	fprintf(output, _("  PGPORT             same as the port connection parameter\n"));
-	fprintf(output, _("  PGUSER             same as the user connection parameter\n"));
 	fprintf(output, _("  PGPASSWORD         connection password (not recommended)\n"));
 	fprintf(output, _("  PGPASSFILE         password file name\n"));
+	fprintf(output, _("  PGPORT             same as the port connection parameter\n"));
+	fprintf(output, _("  PGUSER             same as the user connection parameter\n"));
 	fprintf(output, _("  PSQL_EDITOR, EDITOR, VISUAL\n"
 					  "                     editor used by the \\e, \\ef, and \\ev commands\n"));
 	fprintf(output, _("  PSQL_EDITOR_LINENUMBER_ARG\n"
