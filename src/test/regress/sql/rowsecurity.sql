@@ -1740,6 +1740,7 @@ CREATE ROLE regress_rls_dob_role1;
 CREATE ROLE regress_rls_dob_role2;
 
 CREATE TABLE dob_t1 (c1 int);
+CREATE TABLE dob_t2 (c1 int) PARTITION BY RANGE (c1);
 
 CREATE POLICY p1 ON dob_t1 TO regress_rls_dob_role1 USING (true);
 DROP OWNED BY regress_rls_dob_role1;
@@ -1748,6 +1749,10 @@ DROP POLICY p1 ON dob_t1; -- should fail, already gone
 CREATE POLICY p1 ON dob_t1 TO regress_rls_dob_role1,regress_rls_dob_role2 USING (true);
 DROP OWNED BY regress_rls_dob_role1;
 DROP POLICY p1 ON dob_t1; -- should succeed
+
+CREATE POLICY p1 ON dob_t2 TO regress_rls_dob_role1,regress_rls_dob_role2 USING (true);
+DROP OWNED BY regress_rls_dob_role1;
+DROP POLICY p1 ON dob_t2; -- should succeed
 
 DROP USER regress_rls_dob_role1;
 DROP USER regress_rls_dob_role2;
