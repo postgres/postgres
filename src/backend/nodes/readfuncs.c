@@ -1358,6 +1358,7 @@ _readRangeTblEntry(void)
 			break;
 		case RTE_NAMEDTUPLESTORE:
 			READ_STRING_FIELD(enrname);
+			READ_FLOAT_FIELD(enrtuples);
 			READ_OID_FIELD(relid);
 			READ_NODE_FIELD(coltypes);
 			READ_NODE_FIELD(coltypmods);

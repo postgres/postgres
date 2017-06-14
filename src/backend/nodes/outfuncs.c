@@ -3047,6 +3047,7 @@ _outRangeTblEntry(StringInfo str, const RangeTblEntry *node)
 			break;
 		case RTE_NAMEDTUPLESTORE:
 			WRITE_STRING_FIELD(enrname);
+			WRITE_FLOAT_FIELD(enrtuples, "%.0f");
 			WRITE_OID_FIELD(relid);
 			WRITE_NODE_FIELD(coltypes);
 			WRITE_NODE_FIELD(coltypmods);
