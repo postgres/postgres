@@ -2169,9 +2169,14 @@ ALTER TABLE list_parted2 ATTACH PARTITION part_5 FOR VALUES IN (5);
 
 -- delete the faulting row and also add a constraint to skip the scan
 DELETE FROM part_5_a WHERE a NOT IN (3);
+ALTER TABLE part_5 ADD CONSTRAINT check_a CHECK (a IS NOT NULL AND a = 5);
+ALTER TABLE list_parted2 ATTACH PARTITION part_5 FOR VALUES IN (5);
+ALTER TABLE list_parted2 DETACH PARTITION part_5;
+ALTER TABLE part_5 DROP CONSTRAINT check_a;
+
+-- scan should again be skipped, even though NOT NULL is now a column property
 ALTER TABLE part_5 ADD CONSTRAINT check_a CHECK (a IN (5)), ALTER a SET NOT NULL;
 ALTER TABLE list_parted2 ATTACH PARTITION part_5 FOR VALUES IN (5);
-
 
 -- check that the table being attached is not already a partition
 ALTER TABLE list_parted2 ATTACH PARTITION part_2 FOR VALUES IN (2);

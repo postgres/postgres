@@ -1210,10 +1210,10 @@ build_paths_for_OR(PlannerInfo *root, RelOptInfo *rel,
 					all_clauses = list_concat(list_copy(clauses),
 											  other_clauses);
 
-				if (!predicate_implied_by(index->indpred, all_clauses))
+				if (!predicate_implied_by(index->indpred, all_clauses, false))
 					continue;	/* can't use it at all */
 
-				if (!predicate_implied_by(index->indpred, other_clauses))
+				if (!predicate_implied_by(index->indpred, other_clauses, false))
 					useful_predicate = true;
 			}
 		}
@@ -1519,7 +1519,7 @@ choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel, List *paths)
 				{
 					Node	   *np = (Node *) lfirst(l);
 
-					if (predicate_implied_by(list_make1(np), qualsofar))
+					if (predicate_implied_by(list_make1(np), qualsofar, false))
 					{
 						redundant = true;
 						break;	/* out of inner foreach loop */
@@ -2871,7 +2871,8 @@ check_index_predicates(PlannerInfo *root, RelOptInfo *rel)
 			continue;			/* ignore non-partial indexes here */
 
 		if (!index->predOK)		/* don't repeat work if already proven OK */
-			index->predOK = predicate_implied_by(index->indpred, clauselist);
+			index->predOK = predicate_implied_by(index->indpred, clauselist,
+												 false);
 
 		/* If rel is an update target, leave indrestrictinfo as set above */
 		if (is_target_rel)
@@ -2886,7 +2887,7 @@ check_index_predicates(PlannerInfo *root, RelOptInfo *rel)
 			/* predicate_implied_by() assumes first arg is immutable */
 			if (contain_mutable_functions((Node *) rinfo->clause) ||
 				!predicate_implied_by(list_make1(rinfo->clause),
-									  index->indpred))
+									  index->indpred, false))
 				index->indrestrictinfo = lappend(index->indrestrictinfo, rinfo);
 		}
 	}

@@ -13410,7 +13410,6 @@ ComputePartitionAttrs(Relation rel, List *partParams, AttrNumber *partattrs,
 static ObjectAddress
 ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd)
 {
-	PartitionKey key = RelationGetPartitionKey(rel);
 	Relation	attachRel,
 				catalog;
 	List	   *childrels;
@@ -13596,11 +13595,6 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd)
 	{
 		int			num_check = attachRel_constr->num_check;
 		int			i;
-		Bitmapset  *not_null_attrs = NULL;
-		List	   *part_constr;
-		ListCell   *lc;
-		bool		partition_accepts_null = true;
-		int			partnatts;
 
 		if (attachRel_constr->has_not_null)
 		{
@@ -13630,7 +13624,6 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd)
 					ntest->argisrow = false;
 					ntest->location = -1;
 					existConstraint = lappend(existConstraint, ntest);
-					not_null_attrs = bms_add_member(not_null_attrs, i);
 				}
 			}
 		}
@@ -13664,59 +13657,8 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd)
 		existConstraint = list_make1(make_ands_explicit(existConstraint));
 
 		/* And away we go ... */
-		if (predicate_implied_by(partConstraint, existConstraint))
+		if (predicate_implied_by(partConstraint, existConstraint, true))
 			skip_validate = true;
-
-		/*
-		 * We choose to err on the safer side, i.e., give up on skipping the
-		 * validation scan, if the partition key column doesn't have the NOT
-		 * NULL constraint and the table is to become a list partition that
-		 * does not accept nulls.  In this case, the partition predicate
-		 * (partConstraint) does include an 'key IS NOT NULL' expression,
-		 * however, because of the way predicate_implied_by_simple_clause() is
-		 * designed to handle IS NOT NULL predicates in the absence of a IS
-		 * NOT NULL clause, we cannot rely on just the above proof.
-		 *
-		 * That is not an issue in case of a range partition, because if there
-		 * were no NOT NULL constraint defined on the key columns, an error
-		 * would be thrown before we get here anyway.  That is not true,
-		 * however, if any of the partition keys is an expression, which is
-		 * handled below.
-		 */
-		part_constr = linitial(partConstraint);
-		part_constr = make_ands_implicit((Expr *) part_constr);
-
-		/*
-		 * part_constr contains an IS NOT NULL expression, if this is a list
-		 * partition that does not accept nulls (in fact, also if this is a
-		 * range partition and some partition key is an expression, but we
-		 * never skip validation in that case anyway; see below)
-		 */
-		foreach(lc, part_constr)
-		{
-			Node	   *expr = lfirst(lc);
-
-			if (IsA(expr, NullTest) &&
-				((NullTest *) expr)->nulltesttype == IS_NOT_NULL)
-			{
-				partition_accepts_null = false;
-				break;
-			}
-		}
-
-		partnatts = get_partition_natts(key);
-		for (i = 0; i < partnatts; i++)
-		{
-			AttrNumber	partattno;
-
-			partattno = get_partition_col_attnum(key, i);
-
-			/* If partition key is an expression, must not skip validation */
-			if (!partition_accepts_null &&
-				(partattno == 0 ||
-				 !bms_is_member(partattno, not_null_attrs)))
-				skip_validate = false;
-		}
 	}
 
 	/* It's safe to skip the validation scan after all */
