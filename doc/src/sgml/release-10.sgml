@@ -129,18 +129,29 @@
 
     <listitem>
 <!--
+2017-01-16 [d43a619c6] Fix check_srf_call_placement() to handle VALUES cases co
 2017-01-18 [69f4b9c85] Move targetlist SRF handling from expression evaluation
 2017-01-18 [f13a1277a] Doc: improve documentation of new SRF-in-tlist behavior.
+2017-06-13 [0436f6bde] Disallow set-returning functions inside CASE or COALESCE
 -->
      <para>
-      Allow <literal>COALESCE</> and <literal>CASE</> to return multiple
-      rows when evaluating set-returning functions (Andres Freund).
+      Change the implementation of set-returning functions appearing in
+      a query's <literal>SELECT</> list (Andres Freund)
      </para>
 
      <para>
-      This also prevents conditionals like <literal>CASE</> from
-      controlling the execution of set-returning functions because
-      set-returning functions are now executed earlier.
+      Set-returning functions are now evaluated before evaluation of scalar
+      expressions in the <literal>SELECT</> list, much as though they had
+      been placed in a <literal>LATERAL FROM</>-clause item.  This allows
+      saner semantics for cases where multiple set-returning functions are
+      present.  If they return different numbers of rows, the shorter results
+      are extended to match the longest result by adding nulls.  Previously
+      the results were cycled until they all terminated at the same time,
+      producing a number of rows equal to the least common multiple of the
+      functions' periods.  In addition, set-returning functions are now
+      disallowed within <literal>CASE</> and <literal>COALESCE</> constructs.
+      For more information
+      see <xref linkend="xfunc-sql-functions-returning-set">.
      </para>
     </listitem>
 
@@ -1698,20 +1709,6 @@
       <para>
        This information is also included in <xref
        linkend="guc-log-autovacuum-min-duration"> output.
-      </para>
-     </listitem>
-
-     <listitem>
-<!--
-2017-01-16 [d43a619c6] Fix check_srf_call_placement() to handle VALUES cases co
--->
-      <para>
-       Fix <function>check_srf_call_placement()</> to handle
-       <command>VALUES</> cases correctly (Tom Lane)
-      </para>
-
-      <para>
-      NEED TEXT.
       </para>
      </listitem>
 
