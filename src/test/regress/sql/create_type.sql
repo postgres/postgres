@@ -109,6 +109,23 @@ DROP TYPE default_test_row CASCADE;
 
 DROP TABLE default_test;
 
+-- Check type create with input/output incompatibility
+CREATE TYPE not_existing_type (INPUT = array_in,
+    OUTPUT = array_out,
+    ELEMENT = int,
+    INTERNALLENGTH = 32);
+
+-- Check dependency transfer of opaque functions when creating a new type
+CREATE FUNCTION base_fn_in(cstring) RETURNS opaque AS 'boolin'
+    LANGUAGE internal IMMUTABLE STRICT;
+CREATE FUNCTION base_fn_out(opaque) RETURNS opaque AS 'boolout'
+    LANGUAGE internal IMMUTABLE STRICT;
+CREATE TYPE base_type(INPUT = base_fn_in, OUTPUT = base_fn_out);
+DROP FUNCTION base_fn_in(cstring); -- error
+DROP FUNCTION base_fn_out(opaque); -- error
+DROP TYPE base_type; -- error
+DROP TYPE base_type CASCADE;
+
 -- Check usage of typmod with a user-defined type
 -- (we have borrowed numeric's typmod functions)
 
