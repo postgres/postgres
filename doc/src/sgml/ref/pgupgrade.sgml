@@ -123,7 +123,7 @@
       <term><option>-k</option></term>
       <term><option>--link</option></term>
       <listitem><para>use hard links instead of copying files to the new
-      cluster (use junction points on Windows)</para></listitem>
+      cluster</para></listitem>
      </varlistentry>
 
      <varlistentry>
