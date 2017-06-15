@@ -536,7 +536,7 @@
        </para>
 
        <para>
-        Specifically, a new <link linkend="SQL-ALTERINDEX"><command>CREATE
+        Specifically, a new <link linkend="SQL-CREATEINDEX"><command>CREATE
         INDEX</></> option allows auto-summarizion of the
         previous <acronym>BRIN</> page range when a new page
         range is created.
