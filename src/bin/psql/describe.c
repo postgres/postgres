@@ -5047,7 +5047,7 @@ listPublications(const char *pattern)
 	PQExpBufferData buf;
 	PGresult   *res;
 	printQueryOpt myopt = pset.popt;
-	static const bool translate_columns[] = {false, false, false, false, false};
+	static const bool translate_columns[] = {false, false, false, false, false, false};
 
 	if (pset.sversion < 100000)
 	{
@@ -5064,11 +5064,13 @@ listPublications(const char *pattern)
 	printfPQExpBuffer(&buf,
 					  "SELECT pubname AS \"%s\",\n"
 					  "  pg_catalog.pg_get_userbyid(pubowner) AS \"%s\",\n"
+					  "  puballtables AS \"%s\",\n"
 					  "  pubinsert AS \"%s\",\n"
 					  "  pubupdate AS \"%s\",\n"
 					  "  pubdelete AS \"%s\"\n",
 					  gettext_noop("Name"),
 					  gettext_noop("Owner"),
+					  gettext_noop("All tables"),
 					  gettext_noop("Inserts"),
 					  gettext_noop("Updates"),
 					  gettext_noop("Deletes"));
@@ -5145,7 +5147,7 @@ describePublications(const char *pattern)
 	for (i = 0; i < PQntuples(res); i++)
 	{
 		const char	align = 'l';
-		int			ncols = 3;
+		int			ncols = 4;
 		int			nrows = 1;
 		int			tables = 0;
 		PGresult   *tabres;
@@ -5161,25 +5163,18 @@ describePublications(const char *pattern)
 		printfPQExpBuffer(&title, _("Publication %s"), pubname);
 		printTableInit(&cont, &myopt, title.data, ncols, nrows);
 
+		printTableAddHeader(&cont, gettext_noop("All tables"), true, align);
 		printTableAddHeader(&cont, gettext_noop("Inserts"), true, align);
 		printTableAddHeader(&cont, gettext_noop("Updates"), true, align);
 		printTableAddHeader(&cont, gettext_noop("Deletes"), true, align);
 
+		printTableAddCell(&cont, PQgetvalue(res, i, 2), false, false);
 		printTableAddCell(&cont, PQgetvalue(res, i, 3), false, false);
 		printTableAddCell(&cont, PQgetvalue(res, i, 4), false, false);
 		printTableAddCell(&cont, PQgetvalue(res, i, 5), false, false);
 
-		if (puballtables)
-			printfPQExpBuffer(&buf,
-							  "SELECT n.nspname, c.relname\n"
-							  "FROM pg_catalog.pg_class c,\n"
-							  "     pg_catalog.pg_namespace n\n"
-							  "WHERE c.relnamespace = n.oid\n"
-					 "  AND c.relkind = " CppAsString2(RELKIND_RELATION) "\n"
-							  "  AND n.nspname <> 'pg_catalog'\n"
-							  "  AND n.nspname <> 'information_schema'\n"
-							  "ORDER BY 1,2");
-		else
+		if (!puballtables)
+		{
 			printfPQExpBuffer(&buf,
 							  "SELECT n.nspname, c.relname\n"
 							  "FROM pg_catalog.pg_class c,\n"
@@ -5190,30 +5185,31 @@ describePublications(const char *pattern)
 							  "  AND pr.prpubid = '%s'\n"
 							  "ORDER BY 1,2", pubid);
 
-		tabres = PSQLexec(buf.data);
-		if (!tabres)
-		{
-			printTableCleanup(&cont);
-			PQclear(res);
-			termPQExpBuffer(&buf);
-			termPQExpBuffer(&title);
-			return false;
+			tabres = PSQLexec(buf.data);
+			if (!tabres)
+			{
+				printTableCleanup(&cont);
+				PQclear(res);
+				termPQExpBuffer(&buf);
+				termPQExpBuffer(&title);
+				return false;
+			}
+			else
+				tables = PQntuples(tabres);
+
+			if (tables > 0)
+				printTableAddFooter(&cont, _("Tables:"));
+
+			for (j = 0; j < tables; j++)
+			{
+				printfPQExpBuffer(&buf, "    \"%s.%s\"",
+								  PQgetvalue(tabres, j, 0),
+								  PQgetvalue(tabres, j, 1));
+
+				printTableAddFooter(&cont, buf.data);
+			}
+			PQclear(tabres);
 		}
-		else
-			tables = PQntuples(tabres);
-
-		if (tables > 0)
-			printTableAddFooter(&cont, _("Tables:"));
-
-		for (j = 0; j < tables; j++)
-		{
-			printfPQExpBuffer(&buf, "    \"%s.%s\"",
-							  PQgetvalue(tabres, j, 0),
-							  PQgetvalue(tabres, j, 1));
-
-			printTableAddFooter(&cont, buf.data);
-		}
-		PQclear(tabres);
 
 		printTable(&cont, pset.queryFout, false, pset.logfile);
 		printTableCleanup(&cont);

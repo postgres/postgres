@@ -45,6 +45,7 @@ ALTER PUBLICATION testpub_foralltables SET TABLE pub_test.testpub_nopk;
 
 SELECT pubname, puballtables FROM pg_publication WHERE pubname = 'testpub_foralltables';
 \d+ testpub_tbl2
+\dRp+ testpub_foralltables
 
 DROP TABLE testpub_tbl2;
 DROP PUBLICATION testpub_foralltables;
