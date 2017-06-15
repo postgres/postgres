@@ -6,19 +6,6 @@ use Test::More tests => 40;
 use ServerSetup;
 use File::Copy;
 
-# Like TestLib.pm, we use IPC::Run
-BEGIN
-{
-	eval {
-		require IPC::Run;
-		import IPC::Run qw(run start);
-		1;
-	} or do
-	{
-		plan skip_all => "IPC::Run not available";
-	  }
-}
-
 #### Some configuration
 
 # This is the hostname used to connect to the server. This cannot be a
