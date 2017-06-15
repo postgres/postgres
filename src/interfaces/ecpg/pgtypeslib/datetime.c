@@ -441,7 +441,7 @@ PGTYPESdate_defmt_asc(date * d, const char *fmt, char *str)
 
 		/*
 		 * as long as the string, one additional byte for the terminator and 2
-		 * for the delimiters between the 3 fiedls
+		 * for the delimiters between the 3 fields
 		 */
 		str_copy = pgtypes_alloc(strlen(str) + 1 + 2);
 		if (!str_copy)
