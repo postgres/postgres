@@ -2135,6 +2135,9 @@ if test "$enable_tap_tests" = yes; then
   if test -z "$PERL"; then
     AC_MSG_ERROR([Perl not found])
   fi
+  # Check for necessary modules
+  AX_PROG_PERL_MODULES(IPC::Run, ,
+    AC_MSG_ERROR([Perl module IPC::Run is required to run TAP tests]))
 fi
 
 # Thread testing
