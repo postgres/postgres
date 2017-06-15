@@ -633,11 +633,11 @@ dependency_implies_attribute(MVDependency *dependency, AttrNumber attnum)
 }
 
 /*
- * staext_dependencies_load
+ * statext_dependencies_load
  *		Load the functional dependencies for the indicated pg_statistic_ext tuple
  */
 MVDependencies *
-staext_dependencies_load(Oid mvoid)
+statext_dependencies_load(Oid mvoid)
 {
 	bool		isnull;
 	Datum		deps;
@@ -987,7 +987,7 @@ dependencies_clauselist_selectivity(PlannerInfo *root,
 	}
 
 	/* load the dependency items stored in the statistics object */
-	dependencies = staext_dependencies_load(stat->statOid);
+	dependencies = statext_dependencies_load(stat->statOid);
 
 	/*
 	 * Apply the dependencies recursively, starting with the widest/strongest
