@@ -1220,6 +1220,8 @@ SetFunctionReturnType(Oid funcOid, Oid newRetType)
 	Relation	pg_proc_rel;
 	HeapTuple	tup;
 	Form_pg_proc procForm;
+	ObjectAddress func_address;
+	ObjectAddress type_address;
 
 	pg_proc_rel = heap_open(ProcedureRelationId, RowExclusiveLock);
 
@@ -1240,6 +1242,20 @@ SetFunctionReturnType(Oid funcOid, Oid newRetType)
 	CatalogUpdateIndexes(pg_proc_rel, tup);
 
 	heap_close(pg_proc_rel, RowExclusiveLock);
+
+	/*
+	 * Also update the dependency to the new type. Opaque is a pinned type, so
+	 * there is no old dependency record for it that we would need to remove.
+	 */
+	type_address.classId = TypeRelationId;
+	type_address.objectId = newRetType;
+	type_address.objectSubId = 0;
+
+	func_address.classId = ProcedureRelationId;
+	func_address.objectId = funcOid;
+	func_address.objectSubId = 0;
+
+	recordDependencyOn(&func_address, &type_address, DEPENDENCY_NORMAL);
 }
 
 
@@ -1254,6 +1270,8 @@ SetFunctionArgType(Oid funcOid, int argIndex, Oid newArgType)
 	Relation	pg_proc_rel;
 	HeapTuple	tup;
 	Form_pg_proc procForm;
+	ObjectAddress func_address;
+	ObjectAddress type_address;
 
 	pg_proc_rel = heap_open(ProcedureRelationId, RowExclusiveLock);
 
@@ -1275,6 +1293,20 @@ SetFunctionArgType(Oid funcOid, int argIndex, Oid newArgType)
 	CatalogUpdateIndexes(pg_proc_rel, tup);
 
 	heap_close(pg_proc_rel, RowExclusiveLock);
+
+	/*
+	 * Also update the dependency to the new type. Opaque is a pinned type, so
+	 * there is no old dependency record for it that we would need to remove.
+	 */
+	type_address.classId = TypeRelationId;
+	type_address.objectId = newArgType;
+	type_address.objectSubId = 0;
+
+	func_address.classId = ProcedureRelationId;
+	func_address.objectId = funcOid;
+	func_address.objectSubId = 0;
+
+	recordDependencyOn(&func_address, &type_address, DEPENDENCY_NORMAL);
 }
 
 
