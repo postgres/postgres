@@ -1824,7 +1824,7 @@ if (!triggered)
 
    <para>
     In normal operation, <quote>read-only</> transactions are allowed to
-    update sequences and to use <command>LISTEN</>, <command>UNLISTEN</>, and
+    use <command>LISTEN</>, <command>UNLISTEN</>, and
     <command>NOTIFY</>, so Hot Standby sessions operate under slightly tighter
     restrictions than ordinary read-only sessions.  It is possible that some
     of these restrictions might be loosened in a future release.
