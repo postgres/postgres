@@ -317,15 +317,22 @@ NET STOP postgresql-&majorversion;
    </step>
 
    <step>
-    <title>Verify standby servers</title>
+    <title>Prepare for standby server upgrades</title>
 
     <para>
-     If you are upgrading Streaming Replication and Log-Shipping standby
-     servers, verify that the old standby servers are caught up by running
-     <application>pg_controldata</> against the old primary and standby
-     clusters.  Verify that the <quote>Latest checkpoint location</>
-     values match in all clusters.  (There will be a mismatch if old
-     standby servers were shut down before the old primary.)
+     If you are upgrading standby servers (as outlined in section <xref
+     linkend="pgupgrade-step-replicas">), verify that the old standby
+     servers are caught up by running <application>pg_controldata</>
+     against the old primary and standby clusters.  Verify that the
+     <quote>Latest checkpoint location</> values match in all clusters.
+     (There will be a mismatch if old standby servers were shut down
+     before the old primary.)
+    </para>
+
+    <para>
+     Also, if upgrading standby servers, change <varname>wal_level</>
+     to <literal>replica</> in the <filename>postgresql.conf</> file on
+     the new master cluster.
     </para>
    </step>
 
@@ -410,7 +417,7 @@ pg_upgrade.exe
     </para>
    </step>
 
-   <step>
+   <step id="pgupgrade-step-replicas">
     <title>Upgrade Streaming Replication and Log-Shipping standby servers</title>
 
     <para>
@@ -468,16 +475,6 @@ pg_upgrade.exe
        Save any configuration files from the standbys you need to keep,
        e.g.  <filename>postgresql.conf</>, <literal>recovery.conf</>,
        as these will be overwritten or removed in the next step.
-      </para>
-     </step>
-
-     <step>
-      <title>Start and stop the new master cluster</title>
-
-      <para>
-       In the new master cluster, change <varname>wal_level</> to
-       <literal>replica</> in the <filename>postgresql.conf</> file
-       and then start and stop the cluster.
       </para>
      </step>
 
