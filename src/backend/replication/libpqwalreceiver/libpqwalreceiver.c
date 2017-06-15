@@ -591,13 +591,19 @@ libpqrcv_PQexec(PGconn *streamConn, const char *query)
 				ResetLatch(MyLatch);
 				CHECK_FOR_INTERRUPTS();
 			}
+
+			/* Consume whatever data is available from the socket */
 			if (PQconsumeInput(streamConn) == 0)
-				return NULL;	/* trouble */
+			{
+				/* trouble; drop whatever we had and return NULL */
+				PQclear(lastResult);
+				return NULL;
+			}
 		}
 
 		/*
-		 * Emulate the PQexec()'s behavior of returning the last result when
-		 * there are many. We are fine with returning just last error message.
+		 * Emulate PQexec()'s behavior of returning the last result when there
+		 * are many.  We are fine with returning just last error message.
 		 */
 		result = PQgetResult(streamConn);
 		if (result == NULL)
