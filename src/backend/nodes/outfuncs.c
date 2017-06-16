@@ -1018,8 +1018,8 @@ _outTableFunc(StringInfo str, const TableFunc *node)
 {
 	WRITE_NODE_TYPE("TABLEFUNC");
 
-	WRITE_NODE_FIELD(ns_names);
 	WRITE_NODE_FIELD(ns_uris);
+	WRITE_NODE_FIELD(ns_names);
 	WRITE_NODE_FIELD(docexpr);
 	WRITE_NODE_FIELD(rowexpr);
 	WRITE_NODE_FIELD(colnames);

@@ -467,8 +467,8 @@ _readTableFunc(void)
 {
 	READ_LOCALS(TableFunc);
 
-	READ_NODE_FIELD(ns_names);
 	READ_NODE_FIELD(ns_uris);
+	READ_NODE_FIELD(ns_names);
 	READ_NODE_FIELD(docexpr);
 	READ_NODE_FIELD(rowexpr);
 	READ_NODE_FIELD(colnames);

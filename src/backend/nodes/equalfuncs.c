@@ -119,13 +119,13 @@ _equalRangeVar(const RangeVar *a, const RangeVar *b)
 static bool
 _equalTableFunc(const TableFunc *a, const TableFunc *b)
 {
-	COMPARE_NODE_FIELD(ns_names);
 	COMPARE_NODE_FIELD(ns_uris);
+	COMPARE_NODE_FIELD(ns_names);
 	COMPARE_NODE_FIELD(docexpr);
 	COMPARE_NODE_FIELD(rowexpr);
 	COMPARE_NODE_FIELD(colnames);
 	COMPARE_NODE_FIELD(coltypes);
-	COMPARE_NODE_FIELD(coltypes);
+	COMPARE_NODE_FIELD(coltypmods);
 	COMPARE_NODE_FIELD(colcollations);
 	COMPARE_NODE_FIELD(colexprs);
 	COMPARE_NODE_FIELD(coldefexprs);
@@ -1231,8 +1231,8 @@ _equalCreateStmt(const CreateStmt *a, const CreateStmt *b)
 	COMPARE_NODE_FIELD(relation);
 	COMPARE_NODE_FIELD(tableElts);
 	COMPARE_NODE_FIELD(inhRelations);
-	COMPARE_NODE_FIELD(partspec);
 	COMPARE_NODE_FIELD(partbound);
+	COMPARE_NODE_FIELD(partspec);
 	COMPARE_NODE_FIELD(ofTypename);
 	COMPARE_NODE_FIELD(constraints);
 	COMPARE_NODE_FIELD(options);
@@ -1869,8 +1869,8 @@ _equalCreateForeignServerStmt(const CreateForeignServerStmt *a, const CreateFore
 	COMPARE_STRING_FIELD(servertype);
 	COMPARE_STRING_FIELD(version);
 	COMPARE_STRING_FIELD(fdwname);
-	COMPARE_NODE_FIELD(options);
 	COMPARE_SCALAR_FIELD(if_not_exists);
+	COMPARE_NODE_FIELD(options);
 
 	return true;
 }
@@ -1891,8 +1891,8 @@ _equalCreateUserMappingStmt(const CreateUserMappingStmt *a, const CreateUserMapp
 {
 	COMPARE_NODE_FIELD(user);
 	COMPARE_STRING_FIELD(servername);
-	COMPARE_NODE_FIELD(options);
 	COMPARE_SCALAR_FIELD(if_not_exists);
+	COMPARE_NODE_FIELD(options);
 
 	return true;
 }
@@ -2507,7 +2507,6 @@ _equalRangeTableFuncCol(const RangeTableFuncCol *a, const RangeTableFuncCol *b)
 	COMPARE_STRING_FIELD(colname);
 	COMPARE_NODE_FIELD(typeName);
 	COMPARE_SCALAR_FIELD(for_ordinality);
-	COMPARE_NODE_FIELD(typeName);
 	COMPARE_SCALAR_FIELD(is_not_null);
 	COMPARE_NODE_FIELD(colexpr);
 	COMPARE_NODE_FIELD(coldefexpr);
@@ -2605,7 +2604,6 @@ _equalLockingClause(const LockingClause *a, const LockingClause *b)
 	COMPARE_NODE_FIELD(lockedRels);
 	COMPARE_SCALAR_FIELD(strength);
 	COMPARE_SCALAR_FIELD(waitPolicy);
-	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -2622,8 +2620,8 @@ _equalRangeTblEntry(const RangeTblEntry *a, const RangeTblEntry *b)
 	COMPARE_SCALAR_FIELD(jointype);
 	COMPARE_NODE_FIELD(joinaliasvars);
 	COMPARE_NODE_FIELD(functions);
-	COMPARE_NODE_FIELD(tablefunc);
 	COMPARE_SCALAR_FIELD(funcordinality);
+	COMPARE_NODE_FIELD(tablefunc);
 	COMPARE_NODE_FIELD(values_lists);
 	COMPARE_STRING_FIELD(ctename);
 	COMPARE_SCALAR_FIELD(ctelevelsup);
