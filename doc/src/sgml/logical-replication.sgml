@@ -299,6 +299,76 @@
   </para>
  </sect1>
 
+ <sect1 id="logical-replication-restrictions">
+  <title>Restrictions</title>
+
+  <para>
+   Logical replication currently has the following restrictions or missing
+   functionality.  These might be addressed in future releases.
+  </para>
+
+  <itemizedlist>
+   <listitem>
+    <para>
+     The database schema and DDL commands are not replicated.  The initial
+     schema can be copied by hand using <literal>pg_dump
+     --schema-only</literal>.  Subsequent schema changes would need to be kept
+     in sync manually.  (Note, however, that there is no need for the schemas
+     to be absolutely the same on both sides.)  Logical replication is robust
+     when schema definitions change in a live database: When the schema is
+     changed on the publisher and replicated data starts arriving at the
+     subscriber but does not fit into the table schema, replication will error
+     until the schema is updated.  In many cases, intermittent errors can be
+     avoided by applying additive schema changes to the subscriber first.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Sequence data is not replicated.  The data in serial or identity columns
+     backed by sequences will of course be replicated as part of the table,
+     but the sequence itself would still show the start value on the
+     subscriber.  If the subscriber is used as a read-only database, then this
+     should typically not be a problem.  If, however, some kind of switchover
+     or failover to the subscriber database is intended, then the sequences
+     would need to be updated to the latest values, either by copying the
+     current data from the publisher (perhaps
+     using <command>pg_dump</command>) or by determining a sufficiently high
+     value from the tables themselves.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     <command>TRUNCATE</command> commands are not replicated.  This can, of
+     course, be worked around by using <command>DELETE</command> instead.  To
+     avoid accidental <command>TRUNCATE</command> invocations, you can revoke
+     the <literal>TRUNCATE</literal> privilege from tables.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Large objects (see <xref linkend="largeobjects">) are not replicated.
+     There is no workaround for that, other than storing data in normal
+     tables.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Replication is only possible from base tables to base tables.  That is,
+     the tables on the publication and on the subscription side must be normal
+     tables, not views, materialized views, partition root tables, or foreign
+     tables.  In the case of partitions, you can therefore replicate a
+     partition hierarchy one-to-one, but you cannot currently replicate to a
+     differently partitioned setup.  Attempts to replicate tables other than
+     base tables will result in an error.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect1>
+
  <sect1 id="logical-replication-architecture">
   <title>Architecture</title>
 
