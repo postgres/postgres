@@ -1433,7 +1433,8 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2, Oid collid)
 
 #ifdef WIN32
 		/* Win32 does not have UTF-8, so we need to map to UTF-16 */
-		if (GetDatabaseEncoding() == PG_UTF8)
+		if (GetDatabaseEncoding() == PG_UTF8
+			&& (!mylocale || mylocale->provider == COLLPROVIDER_LIBC))
 		{
 			int			a1len;
 			int			a2len;
