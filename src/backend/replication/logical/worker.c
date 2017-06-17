@@ -157,12 +157,15 @@ ensure_transaction(void)
 {
 	if (IsTransactionState())
 	{
+		SetCurrentStatementStartTimestamp();
+
 		if (CurrentMemoryContext != ApplyMessageContext)
 			MemoryContextSwitchTo(ApplyMessageContext);
 
 		return false;
 	}
 
+	SetCurrentStatementStartTimestamp();
 	StartTransactionCommand();
 
 	maybe_reread_subscription();
