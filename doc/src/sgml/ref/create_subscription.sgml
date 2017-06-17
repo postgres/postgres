@@ -32,7 +32,7 @@ CREATE SUBSCRIPTION <replaceable class="PARAMETER">subscription_name</replaceabl
   <title>Description</title>
 
   <para>
-   <command>CREATE SUBSCRIPTION</command> adds a new subscription for a
+   <command>CREATE SUBSCRIPTION</command> adds a new subscription for the
    current database.  The subscription name must be distinct from the name of
    any existing subscription in the database.
   </para>
