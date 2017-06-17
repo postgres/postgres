@@ -34,8 +34,6 @@ sub run_test_psql
 # The first argument is a (part of a) connection string, and it's also printed
 # out as the test case name. It is appended to $common_connstr global variable,
 # which also contains a libpq connection string.
-#
-# The second argument is a hostname to connect to.
 sub test_connect_ok
 {
 	my $connstr = $_[0];
