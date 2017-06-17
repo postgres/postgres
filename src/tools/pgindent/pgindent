@@ -534,6 +534,15 @@ push(@files, @ARGV);
 
 foreach my $source_filename (@files)
 {
+	# Automatically ignore .c and .h files that correspond to a .y or .l
+	# file.  indent tends to get badly confused by Bison/flex output,
+	# and there's no value in indenting derived files anyway.
+	my $otherfile = $source_filename;
+	$otherfile =~ s/\.[ch]$/.y/;
+	next if $otherfile ne $source_filename && -f $otherfile;
+	$otherfile =~ s/\.y$/.l/;
+	next if $otherfile ne $source_filename && -f $otherfile;
+
 	my $source        = read_source($source_filename);
 	my $error_message = '';
 

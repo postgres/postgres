@@ -1,6 +1,7 @@
 #list of file patterns to exclude from pgindent runs, see notes in README
-/s_lock\.h$
-/atomics/
+/storage/s_lock\.h$
+/port/atomics/
+/utils/fmgrtab\.c$
 /ecpg/test/expected/
 /snowball/libstemmer/
 /pl/plperl/ppport\.h$

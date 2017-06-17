@@ -22,28 +22,21 @@ DOING THE INDENT RUN:
 
 1) Change directory to the top of the source tree.
 
-2) Remove all derived files (pgindent has trouble with flex files, and it
-   would be pointless to run it on them anyway):
-
-	make maintainer-clean
-   Or:
-	git clean -fdx
-
-3) Download the latest typedef file from the buildfarm:
+2) Download the latest typedef file from the buildfarm:
 
 	wget -O src/tools/pgindent/typedefs.list https://buildfarm.postgresql.org/cgi-bin/typedefs.pl
 
    (See https://www.pgbuildfarm.org/cgi-bin/typedefs.pl?show_list for a full
    list of typedef files, if you want to indent some back branch.)
 
-4) Run pgindent on the C files:
+3) Run pgindent on the C files:
 
 	src/tools/pgindent/pgindent
 
    If any files generate errors, restore their original versions with
    "git checkout", and see below for cleanup ideas.
 
-5) Indent the Perl code using perltidy:
+4) Indent the Perl code using perltidy:
 
 	src/tools/pgindent/pgperltidy
 
@@ -53,11 +46,12 @@ DOING THE INDENT RUN:
 VALIDATION:
 
 1) Check for any newly-created files using "git status"; there shouldn't
-   be any.  (perltidy tends to leave *.LOG files behind if it has trouble.)
+   be any.  (pgindent leaves *.BAK files behind if it has trouble, while
+   perltidy leaves *.LOG files behind.)
 
 2) Do a full test build:
 
-	./configure ...
+	make -s clean
 	make -s all	# look for unexpected warnings, and errors of course
 	make check-world
 
@@ -127,20 +121,25 @@ Which files are processed
 -------------------------
 
 The pgindent run processes (nearly) all PostgreSQL *.c and *.h files,
-but we currently exclude *.y and *.l files.  Exceptions are listed
+but we currently exclude *.y and *.l files, as well as *.c and *.h files
+derived from *.y and *.l files.  Additional exceptions are listed
 in exclude_file_patterns:
 
 src/include/storage/s_lock.h and src/include/port/atomics/ are excluded
 because they contain assembly code that pgindent tends to mess up.
 
+src/backend/utils/fmgrtab.c is excluded because it confuses pgindent
+and it's a derived file anyway.
+
 src/interfaces/ecpg/test/expected/ is excluded to avoid breaking the ecpg
 regression tests.  Several *.h files are included in regression output so
-should not be changed.
+they must not be changed.
 
 src/include/snowball/libstemmer/ and src/backend/snowball/libstemmer/
 are excluded because those files are imported from an external project,
 not maintained locally, and are machine-generated anyway.  Likewise for
 plperl/ppport.h.
+
 
 The perltidy run processes all *.pl and *.pm files, plus a few
 executable Perl scripts that are not named that way.  See the "find"
