@@ -501,8 +501,8 @@ EXPLAIN (ANALYZE, TIMING OFF) SELECT * FROM t WHERE a = 1;
     of this clause to be 1%.  By comparing this estimate and the actual
     number of rows, we see that the estimate is very accurate
     (in fact exact, as the table is very small).  Changing the
-    <literal>WHERE</> to use the <structfield>b</> column, an identical
-    plan is generated.  But observe what happens if we apply the same
+    <literal>WHERE</> condition to use the <structfield>b</> column, an
+    identical plan is generated.  But observe what happens if we apply the same
     condition on both columns, combining them with <literal>AND</>:
 
 <programlisting>
