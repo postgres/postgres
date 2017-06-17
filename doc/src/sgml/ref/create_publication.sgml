@@ -163,6 +163,11 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
   </para>
 
   <para>
+   <command>COPY ... FROM</command> commands are published
+   as <command>INSERT</command> operations.
+  </para>
+
+  <para>
    <command>TRUNCATE</command> and <acronym>DDL</acronym> operations
    are not published.
   </para>
