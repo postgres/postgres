@@ -569,7 +569,7 @@ typedef struct TupleHashEntryData
 	uint32		hash;			/* hash value (cached) */
 } TupleHashEntryData;
 
-/* define paramters necessary to generate the tuple hash table interface */
+/* define parameters necessary to generate the tuple hash table interface */
 #define SH_PREFIX tuplehash
 #define SH_ELEMENT_TYPE TupleHashEntryData
 #define SH_KEY_TYPE MinimalTuple

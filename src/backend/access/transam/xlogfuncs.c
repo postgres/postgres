@@ -175,7 +175,7 @@ pg_stop_backup(PG_FUNCTION_ARGS)
  * The first parameter (variable 'exclusive') allows the user to tell us if
  * this is an exclusive or a non-exclusive backup.
  *
- * The second paramter (variable 'waitforarchive'), which is optional,
+ * The second parameter (variable 'waitforarchive'), which is optional,
  * allows the user to choose if they want to wait for the WAL to be archived
  * or if we should just return as soon as the WAL record is written.
  *

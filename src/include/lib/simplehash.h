@@ -902,7 +902,7 @@ SH_STAT(SH_TYPE * tb)
 #endif   /* SH_DEFINE */
 
 
-/* undefine external paramters, so next hash table can be defined */
+/* undefine external parameters, so next hash table can be defined */
 #undef SH_PREFIX
 #undef SH_KEY_TYPE
 #undef SH_KEY
