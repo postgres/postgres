@@ -345,11 +345,14 @@ PostgreSQL documentation
       <term><option>--no-role-passwords</option></term>
       <listitem>
        <para>
-        Do not dump passwords for roles. When restored, roles will have a NULL
-        password and authentication will always fail until the password is reset.
-        Since password values aren't needed when this option is specified we
-        use the catalog view pg_roles in preference to pg_authid, since access
-        to pg_authid may be restricted by security policy.
+        Do not dump passwords for roles.  When restored, roles will have a
+        null password, and password authentication will always fail until the
+        password is set.  Since password values aren't needed when this option
+        is specified, the role information is read from the catalog
+        view <structname>pg_roles</structname> instead
+        of <structname>pg_authid</structname>.  Therefore, this option also
+        helps if access to <structname>pg_authid</structname> is restricted by
+        some security policy.
        </para>
       </listitem>
      </varlistentry>

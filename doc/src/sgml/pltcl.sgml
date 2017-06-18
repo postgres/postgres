@@ -882,7 +882,7 @@ CREATE EVENT TRIGGER tcl_a_snitch ON ddl_command_start EXECUTE PROCEDURE tclsnit
      first word identifies the subsystem or library reporting the error;
      beyond that the contents are left to the individual subsystem or
      library.  For database errors reported by PL/Tcl commands, the first
-     word is <literal>POSTGRES</literal>, the second word is the Postgres
+     word is <literal>POSTGRES</literal>, the second word is the PostgreSQL
      version number, and additional words are field name/value pairs
      providing detailed information about the error.
      Fields <varname>SQLSTATE</>, <varname>condition</>,

@@ -52,7 +52,7 @@
 -->
      <para>
       <application>pg_upgrade</>-ed hash indexes from previous major
-      Postgres versions must be rebuilt.
+      PostgreSQL versions must be rebuilt.
      </para>
 
      <para>
@@ -277,7 +277,7 @@
      Changing this from the default value caused queries referencing
      parent tables to not include children tables.  The <acronym>SQL</>
      standard requires such behavior and this has been the default since
-     Postgres 7.1.
+     PostgreSQL 7.1.
     </para>
     </listitem>
 
@@ -308,7 +308,7 @@
 
      <para>
       Users needing dump support for pre-8.0 servers need to use dump
-      binaries from Postgres 9.6.
+      binaries from PostgreSQL 9.6.
      </para>
     </listitem>
 
@@ -323,7 +323,7 @@
      <para>
       This removes configure's <option>--disable-integer-datetimes</>
       option.  Floating-point datetimes/timestamps have not been the
-      default since Postgres 8.3 and have few advantages.
+      default since PostgreSQL 8.3 and have few advantages.
      </para>
     </listitem>
 
@@ -336,7 +336,7 @@
      </para>
 
      <para>
-      This protocol hasn't had client support since Postgres 6.3.
+      This protocol hasn't had client support since PostgreSQL 6.3.
      </para>
     </listitem>
 
@@ -350,7 +350,7 @@
 
      <para>
       This removes compatibility with the contrib version of full text
-      search that shipped in pre-8.3 Postgres versions.
+      search that shipped in pre-8.3 PostgreSQL versions.
     </para>
     </listitem>
 
@@ -412,12 +412,12 @@
 2017-02-19 [0414b26ba] Add optimizer and executor support for parallel index-on
 -->
        <para>
-        Support parallel btree index scans (Rahila Syed, Amit Kapila,
+        Support parallel B-tree index scans (Rahila Syed, Amit Kapila,
         Robert Haas, Rafia Sabih)
        </para>
 
        <para>
-        Allows btree index pages to be checked by separate parallel
+        Allows B-tree index pages to be checked by separate parallel
         workers.
        </para>
       </listitem>
@@ -735,7 +735,7 @@
 2017-01-15 [0777f7a2e] Fix matching of boolean index columns to sort ordering.
 -->
       <para>
-       Improve planner matching of boolean indexes (Tom Lane)
+       Improve planner matching of <type>boolean</type> indexes (Tom Lane)
       </para>
       </listitem>
 
@@ -824,7 +824,7 @@
 2017-03-29 [f90d23d0c] Implement SortSupport for macaddr data type
 -->
        <para>
-        Improve sort performance of the macaddr data type (Brandur Leach)
+        Improve sort performance of the <type>macaddr</type> data type (Brandur Leach)
        </para>
       </listitem>
 
@@ -1217,7 +1217,7 @@
 2017-04-05 [68ea2b7f9] Reduce lock level for CREATE STATISTICS
 -->
        <para>
-        Reduce locking required to change table params (Simon Riggs,
+        Reduce locking required to change table parameters (Simon Riggs,
         Fabr&iacute;zio Mello)
        </para>
 
@@ -1337,7 +1337,7 @@
 
       <para>
        This allows more fine-grained replication options, including
-       replication between different major versions of Postgres and
+       replication between different major versions of PostgreSQL and
        selective-table replication.
       </para>
      </listitem>
@@ -2127,7 +2127,7 @@
       </para>
 
       <para>
-       The ecpg version now matches the Postgres distribution version
+       The ecpg version now matches the PostgreSQL distribution version
        number.
       </para>
      </listitem>
@@ -2427,7 +2427,7 @@
 
        <para>
         Temporary replication slots will be used by default when
-        <application>pg_basebackup</> uses wal streaming with default
+        <application>pg_basebackup</> uses WAL streaming with default
         options.
        </para>
       </listitem>
@@ -2525,7 +2525,7 @@
       <para>
        Major versions will now increase just the first number, and minor
        releases will increase just the second number.  A third number
-       will no longer be used in Postgres version numbers.
+       will no longer be used in PostgreSQL version numbers.
       </para>
      </listitem>
 
@@ -2670,7 +2670,7 @@
 2017-04-06 [510074f9f] Remove use of Jade and DSSSL
 -->
       <para>
-       Use <acronym>XSLT</> to build the Postgres documentation (Peter
+       Use <acronym>XSLT</> to build the PostgreSQL documentation (Peter
        Eisentraut)
       </para>
 
@@ -2785,7 +2785,7 @@
 -->
       <para>
        Add <link linkend="amcheck"><application>amcheck</></> which can
-       check the validity of btree indexes (Peter Geoghegan)
+       check the validity of B-tree indexes (Peter Geoghegan)
       </para>
      </listitem>
 

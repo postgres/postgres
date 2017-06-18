@@ -215,7 +215,7 @@ ORDER BY c.relpages DESC LIMIT 10;
    </listitem>
    <listitem>
     <para>
-     Filesystem or storage subsystem faults where checksums happen to
+     File system or storage subsystem faults where checksums happen to
      simply not be enabled.
     </para>
     <para>
@@ -223,7 +223,7 @@ ORDER BY c.relpages DESC LIMIT 10;
      shared memory buffer at the time of verification if there is only a
      shared buffer hit when accessing the block. Consequently,
      <filename>amcheck</> does not necessarily examine data read from the
-     filesystem at the time of verification. Note that when checksums are
+     file system at the time of verification. Note that when checksums are
      enabled, <filename>amcheck</> may raise an error due to a checksum
      failure when a corrupt block is read into a buffer.
     </para>

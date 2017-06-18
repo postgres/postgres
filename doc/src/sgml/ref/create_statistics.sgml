@@ -152,14 +152,14 @@ CREATE STATISTICS s1 (dependencies) ON a, b FROM t1;
 
 ANALYZE t1;
 
--- now the rowcount estimate is more accurate:
+-- now the row count estimate is more accurate:
 EXPLAIN ANALYZE SELECT * FROM t1 WHERE (a = 1) AND (b = 0);
 </programlisting>
 
    Without functional-dependency statistics, the planner would assume
    that the two <literal>WHERE</> conditions are independent, and would
    multiply their selectivities together to arrive at a much-too-small
-   rowcount estimate.
+   row count estimate.
    With such statistics, the planner recognizes that the <literal>WHERE</>
    conditions are redundant and does not underestimate the rowcount.
   </para>

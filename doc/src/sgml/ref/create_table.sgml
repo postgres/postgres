@@ -443,8 +443,8 @@ FROM ( { <replaceable class="PARAMETER">numeric_literal</replaceable> | <replace
       include multiple columns or expressions (up to 32, but this limit can
       altered when building <productname>PostgreSQL</productname>.), but for
       list partitioning, the partition key must consist of a single column or
-      expression.  If no btree operator class is specified when creating a
-      partitioned table, the default btree operator class for the datatype will
+      expression.  If no B-tree operator class is specified when creating a
+      partitioned table, the default B-tree operator class for the datatype will
       be used.  If there is none, an error will be reported.
      </para>
 

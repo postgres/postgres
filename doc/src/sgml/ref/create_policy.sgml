@@ -126,7 +126,7 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
      <para>
       Specify that the policy is to be created as a permissive policy.
       All permissive policies which are applicable to a given query will
-      be combined together using the boolean "OR" operator.  By creating
+      be combined together using the Boolean <quote>OR</quote> operator.  By creating
       permissive policies, administrators can add to the set of records
       which can be accessed.  Policies are permissive by default.
      </para>
@@ -139,7 +139,7 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
      <para>
       Specify that the policy is to be created as a restrictive policy.
       All restrictive policies which are applicable to a given query will
-      be combined together using the boolean "AND" operator.  By creating
+      be combined together using the Boolean <quote>AND</quote> operator.  By creating
       restrictive policies, administrators can reduce the set of records
       which can be accessed as all restrictive policies must be passed for
       each record.

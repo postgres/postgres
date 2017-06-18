@@ -1769,13 +1769,13 @@ UPDATE 1
   <para>
    All of the policies constructed thus far have been permissive policies,
    meaning that when multiple policies are applied they are combined using
-   the "OR" boolean operator.  While permissive policies can be constructed
+   the <quote>OR</quote> Boolean operator.  While permissive policies can be constructed
    to only allow access to rows in the intended cases, it can be simpler to
    combine permissive policies with restrictive policies (which the records
-   must pass and which are combined using the "AND" boolean operator).
+   must pass and which are combined using the <quote>AND</quote> Boolean operator).
    Building on the example above, we add a restrictive policy to require
-   the administrator to be connected over a local unix socket to access the
-   records of the passwd table:
+   the administrator to be connected over a local Unix socket to access the
+   records of the <literal>passwd</literal> table:
   </para>
 
 <programlisting>
@@ -2971,7 +2971,8 @@ VALUES ('Albany', NULL, NULL, 'NY');
        <command>CREATE TABLE</> nor is it possible to add columns to
        partitions after-the-fact using <command>ALTER TABLE</>.  Tables may be
        added as a partition with <command>ALTER TABLE ... ATTACH PARTITION</>
-       only if their columns exactly match the parent, including oids.
+       only if their columns exactly match the parent, including any
+       <literal>oid</literal> column.
       </para>
      </listitem>
 

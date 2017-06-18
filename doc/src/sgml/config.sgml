@@ -1908,10 +1908,10 @@ include_dir 'conf.d'
        <listitem>
         <para>
          Whenever more than <varname>bgwriter_flush_after</varname> bytes have
-         been written by the bgwriter, attempt to force the OS to issue these
+         been written by the background writer, attempt to force the OS to issue these
          writes to the underlying storage.  Doing so will limit the amount of
          dirty data in the kernel's page cache, reducing the likelihood of
-         stalls when an fsync is issued at the end of a checkpoint, or when
+         stalls when an <function>fsync</function> is issued at the end of a checkpoint, or when
          the OS writes data back in larger batches in the background.  Often
          that will result in greatly reduced transaction latency, but there
          also are some cases, especially with workloads that are bigger than
@@ -2029,7 +2029,7 @@ include_dir 'conf.d'
          pool of processes established by
          <xref linkend="guc-max-worker-processes">, limited by
          <xref linkend="guc-max-parallel-workers">.  Note that the requested
-         number of workers may not actually be available at runtime.  If this
+         number of workers may not actually be available at run time.  If this
          occurs, the plan will run with fewer workers than expected, which may
          be inefficient.  The default value is 2.  Setting this value to 0
          disables parallel query execution.
@@ -2090,7 +2090,7 @@ include_dir 'conf.d'
          been written by a single backend, attempt to force the OS to issue
          these writes to the underlying storage.  Doing so will limit the
          amount of dirty data in the kernel's page cache, reducing the
-         likelihood of stalls when an fsync is issued at the end of a
+         likelihood of stalls when an <function>fsync</function> is issued at the end of a
          checkpoint, or when the OS writes data back in larger batches in the
          background.  Often that will result in greatly reduced transaction
          latency, but there also are some cases, especially with workloads
@@ -2270,7 +2270,7 @@ include_dir 'conf.d'
         For reliable recovery when changing <varname>fsync</varname>
         off to on, it is necessary to force all modified buffers in the
         kernel to durable storage.  This can be done while the cluster
-        is shutdown or while fsync is on by running <command>initdb
+        is shutdown or while <varname>fsync</varname> is on by running <command>initdb
         --sync-only</command>, running <command>sync</>, unmounting the
         file system, or rebooting the server.
        </para>
@@ -2700,7 +2700,7 @@ include_dir 'conf.d'
         have been written while performing a checkpoint, attempt to force the
         OS to issue these writes to the underlying storage.  Doing so will
         limit the amount of dirty data in the kernel's page cache, reducing
-        the likelihood of stalls when an fsync is issued at the end of the
+        the likelihood of stalls when an <function>fsync</function> is issued at the end of the
         checkpoint, or when the OS writes data back in larger batches in the
         background.  Often that will result in greatly reduced transaction
         latency, but there also are some cases, especially with workloads
@@ -3460,7 +3460,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       <listitem>
        <para>
         Maximum number of synchronization workers per subscription. This
-        parameter controls the amount of paralelism of the initial data copy
+        parameter controls the amount of parallelism of the initial data copy
         during the subscription initialization or when new tables are added.
        </para>
        <para>
@@ -7356,7 +7356,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         limit, while negative values
         mean <xref linkend="guc-max-pred-locks-per-transaction"> divided by
         the absolute value of this setting.  The default is -2, which keeps
-        the behaviour from previous versions of <productname>PostgreSQL</>.
+        the behavior from previous versions of <productname>PostgreSQL</>.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
        </para>

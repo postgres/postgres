@@ -527,7 +527,7 @@ DROP ROLE doomed_role;
       </row>
       <row>
        <entry>pg_stat_scan_tables</entry>
-       <entry>Execute monitoring functions that may take AccessShareLocks on tables,
+       <entry>Execute monitoring functions that may take <literal>ACCESS SHARE</literal> locks on tables,
        potentially for a long time.</entry>
       </row>
       <row>

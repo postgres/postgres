@@ -1335,7 +1335,7 @@ DO 'elog(WARNING, join ", ", sort keys %INC)' LANGUAGE plperl;
 </programlisting>
        </para>
        <para>
-        Initialization will happen in the postmaster if the plperl library is
+        Initialization will happen in the postmaster if the <literal>plperl</literal> library is
         included in <xref linkend="guc-shared-preload-libraries">, in which
         case extra consideration should be given to the risk of destabilizing
         the postmaster.  The principal reason for making use of this feature

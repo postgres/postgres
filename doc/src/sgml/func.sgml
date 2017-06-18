@@ -1302,7 +1302,7 @@
     transformation functions <literal><function>radians()</function></literal>
     and <literal><function>degrees()</function></literal> shown earlier.
     However, using the degree-based trigonometric functions is preferred,
-    as that way avoids roundoff error for special cases such
+    as that way avoids round-off error for special cases such
     as <literal>sind(30)</>.
    </para>
   </note>
@@ -9571,7 +9571,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         <entry><type>tsvector</type></entry>
         <entry>
           reduce each string value in the document to a <type>tsvector</>, and then
-          concatentate those in document order to produce a single <type>tsvector</>
+          concatenate those in document order to produce a single <type>tsvector</>
         </entry>
         <entry><literal>to_tsvector('english', '{"a": "The Fat Rats"}'::json)</literal></entry>
         <entry><literal>'fat':2 'rat':3</literal></entry>
@@ -9744,7 +9744,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
          <literal><function>unnest(<type>tsvector</>, OUT <replaceable class="PARAMETER">lexeme</> <type>text</>, OUT <replaceable class="PARAMETER">positions</> <type>smallint[]</>, OUT <replaceable class="PARAMETER">weights</> <type>text</>)</function></literal>
         </entry>
         <entry><type>setof record</type></entry>
-        <entry>expand a tsvector to a set of rows</entry>
+        <entry>expand a <type>tsvector</type> to a set of rows</entry>
         <entry><literal>unnest('fat:2,4 cat:3 rat:5A'::tsvector)</literal></entry>
         <entry><literal>(cat,{3},{D}) ...</literal></entry>
        </row>
@@ -17675,7 +17675,7 @@ SELECT collation for ('foo' COLLATE "de_DE");
       <row>
        <entry><literal><function>txid_current_if_assigned()</function></literal></entry>
        <entry><type>bigint</type></entry>
-       <entry>same as <function>txid_current()</function> but returns null instead of assigning an xid if none is already assigned</entry>
+       <entry>same as <function>txid_current()</function> but returns null instead of assigning a new transaction ID if none is already assigned</entry>
       </row>
       <row>
        <entry><literal><function>txid_current_snapshot()</function></literal></entry>
@@ -17705,7 +17705,7 @@ SELECT collation for ('foo' COLLATE "de_DE");
       <row>
        <entry><literal><function>txid_status(<parameter>bigint</parameter>)</function></literal></entry>
        <entry><type>txid_status</type></entry>
-       <entry>report the status of the given xact - <literal>committed</literal>, <literal>aborted</literal>, <literal>in progress</literal>, or NULL if the txid is too old</entry>
+       <entry>report the status of the given transaction: <literal>committed</literal>, <literal>aborted</literal>, <literal>in progress</literal>, or null if the transaction ID is too old</entry>
       </row>
      </tbody>
     </tgroup>
@@ -18592,7 +18592,7 @@ postgres=# select pg_start_backup('label_goes_here');
     the <filename>backup_label</> and <filename>tablespace_map</> are returned
     in the result of the function, and should be written to files in the
     backup (and not in the data directory).  There is an optional second
-    parameter of type boolean.  If false, the <function>pg_stop_backup</>
+    parameter of type <type>boolean</type>.  If false, the <function>pg_stop_backup</>
     will return immediately after the backup is completed without waiting for
     WAL to be archived.  This behavior is only useful for backup
     software which independently monitors WAL archiving. Otherwise, WAL

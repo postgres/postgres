@@ -2354,7 +2354,7 @@ CREATE FUNCTION concat_text(text, text) RETURNS text
      the system should automatically assume a null result if any input
      value is null.  By doing this, we avoid having to check for null inputs
      in the function code.  Without this, we'd have to check for null values
-     explicitly, using PG_ARGISNULL().
+     explicitly, using <function>PG_ARGISNULL()</function>.
     </para>
 
     <para>
@@ -3086,7 +3086,7 @@ CREATE OR REPLACE FUNCTION retcomposite(IN integer, IN integer,
     </para>
 
     <para>
-     The directory <link linkend="tablefunc">contrib/tablefunc</>
+     The directory <link linkend="tablefunc"><filename>contrib/tablefunc</filename></>
      module in the source distribution contains more examples of
      set-returning functions.
     </para>

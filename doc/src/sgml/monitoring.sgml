@@ -1143,7 +1143,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
         </row>
         <row>
          <entry><literal>userlock</></entry>
-         <entry>Waiting to acquire a userlock.</entry>
+         <entry>Waiting to acquire a user lock.</entry>
         </row>
         <row>
          <entry><literal>advisory</></entry>
@@ -1244,7 +1244,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
         </row>
         <row>
          <entry><literal>BtreePage</></entry>
-         <entry>Waiting for the page number needed to continue a parallel btree scan to become available.</entry>
+         <entry>Waiting for the page number needed to continue a parallel B-tree scan to become available.</entry>
         </row>
         <row>
          <entry><literal>ExecuteGather</></entry>

@@ -1214,7 +1214,7 @@ SELECT * FROM zipcodes WHERE city = 'San Francisco' AND zip = '90210';
      <para>
       In many practical situations, this assumption is usually satisfied;
       for example, there might be a GUI in the application that only allows
-      selecting compatible city and zipcode values to use in a query.
+      selecting compatible city and ZIP code values to use in a query.
       But if that's not the case, functional dependencies may not be a viable
       option.
      </para>

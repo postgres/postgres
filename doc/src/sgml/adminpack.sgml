@@ -152,7 +152,7 @@
      <entry><type>integer</type></entry>
      <entry>
       Alternate name for <function>pg_rotate_logfile()</>, but note that it
-      returns integer 0 or 1 rather than boolean
+      returns integer 0 or 1 rather than <type>boolean</type>
      </entry>
     </row>
    </tbody>
