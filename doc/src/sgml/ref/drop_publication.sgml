@@ -46,8 +46,8 @@ DROP PUBLICATION [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
     <term><literal>IF EXISTS</literal></term>
     <listitem>
      <para>
-      Do not throw an error if the extension does not exist. A notice is issued
-      in this case.
+      Do not throw an error if the publication does not exist. A notice is
+      issued in this case.
      </para>
     </listitem>
    </varlistentry>
