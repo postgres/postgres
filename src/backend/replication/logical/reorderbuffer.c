@@ -893,7 +893,7 @@ ReorderBufferIterTXNInit(ReorderBuffer *rb, ReorderBufferTXN *txn)
 	{
 		ReorderBufferChange *cur_change;
 
-		if (txn->nentries != txn->nentries_mem)
+		if (txn->serialized)
 		{
 			/* serialize remaining changes */
 			ReorderBufferSerializeTXN(rb, txn);
@@ -922,7 +922,7 @@ ReorderBufferIterTXNInit(ReorderBuffer *rb, ReorderBufferTXN *txn)
 		{
 			ReorderBufferChange *cur_change;
 
-			if (cur_txn->nentries != cur_txn->nentries_mem)
+			if (cur_txn->serialized)
 			{
 				/* serialize remaining changes */
 				ReorderBufferSerializeTXN(rb, cur_txn);
@@ -1142,7 +1142,7 @@ ReorderBufferCleanupTXN(ReorderBuffer *rb, ReorderBufferTXN *txn)
 	Assert(found);
 
 	/* remove entries spilled to disk */
-	if (txn->nentries != txn->nentries_mem)
+	if (txn->serialized)
 		ReorderBufferRestoreCleanup(rb, txn);
 
 	/* deallocate */
@@ -2124,6 +2124,7 @@ ReorderBufferSerializeTXN(ReorderBuffer *rb, ReorderBufferTXN *txn)
 	Assert(spilled == txn->nentries_mem);
 	Assert(dlist_is_empty(&txn->changes));
 	txn->nentries_mem = 0;
+	txn->serialized = true;
 
 	if (fd != -1)
 		CloseTransientFile(fd);
