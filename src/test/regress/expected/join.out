@@ -5328,6 +5328,41 @@ LINE 1: ...xx1 using lateral (select * from int4_tbl where f1 = x1) ss;
                                                                 ^
 HINT:  There is an entry for table "xx1", but it cannot be referenced from this part of the query.
 --
+-- test that foreign key join estimation performs sanely for outer joins
+--
+begin;
+create table fkest (a int, b int, c int unique, primary key(a,b));
+create table fkest1 (a int, b int, primary key(a,b));
+insert into fkest select x/10, x%10, x from generate_series(1,1000) x;
+insert into fkest1 select x/10, x%10 from generate_series(1,1000) x;
+alter table fkest1
+  add constraint fkest1_a_b_fkey foreign key (a,b) references fkest;
+analyze fkest;
+analyze fkest1;
+explain (costs off)
+select *
+from fkest f
+  left join fkest1 f1 on f.a = f1.a and f.b = f1.b
+  left join fkest1 f2 on f.a = f2.a and f.b = f2.b
+  left join fkest1 f3 on f.a = f3.a and f.b = f3.b
+where f.c = 1;
+                            QUERY PLAN                            
+------------------------------------------------------------------
+ Nested Loop Left Join
+   ->  Nested Loop Left Join
+         ->  Nested Loop Left Join
+               ->  Index Scan using fkest_c_key on fkest f
+                     Index Cond: (c = 1)
+               ->  Index Only Scan using fkest1_pkey on fkest1 f1
+                     Index Cond: ((a = f.a) AND (b = f.b))
+         ->  Index Only Scan using fkest1_pkey on fkest1 f2
+               Index Cond: ((a = f.a) AND (b = f.b))
+   ->  Index Only Scan using fkest1_pkey on fkest1 f3
+         Index Cond: ((a = f.a) AND (b = f.b))
+(11 rows)
+
+rollback;
+--
 -- test planner's ability to mark joins as unique
 --
 create table j1 (id int primary key);
