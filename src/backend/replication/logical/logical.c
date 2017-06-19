@@ -88,22 +88,32 @@ CheckLogicalDecodingRequirements(void)
 				 errmsg("logical decoding requires a database connection")));
 
 	/* ----
-	 * TODO: We got to change that someday soon...
+	 * Logical decoding from a standby is only safe if:
 	 *
-	 * There's basically three things missing to allow this:
-	 * 1) We need to be able to correctly and quickly identify the timeline a
-	 *	  LSN belongs to
-	 * 2) We need to force hot_standby_feedback to be enabled at all times so
-	 *	  the primary cannot remove rows we need.
-	 * 3) support dropping replication slots referring to a database, in
-	 *	  dbase_redo. There can't be any active ones due to HS recovery
-	 *	  conflicts, so that should be relatively easy.
+	 * 1) hot_standby_feedback is enabled, so catalog tuples still needed
+	 *    by the replica are not removed by the master. We already include
+	 *    slots' required xmin in the oldest global xmin up to the master;
+	 *
+	 * 2) A physical replication slot is used to connect the standby
+	 *    to the master, so we can store the xmin (and catalog_xmin,
+	 *    once we send it separately) on the slot and we don't lose
+	 *    needed tuples to vacuum if we lose our connection;
+	 *
+	 * 3) We drop replication slots referring to a database in dbase_redo
+	 *    when the database is dropped on the master.
+	 *
+	 * We should really send the xmin and catalog_xmin separately in hot standby
+	 * feedback, so we don't hold down vacuum of all tables to the level we only
+	 * really need for the catalogs.
+	 *
+	 * In this first draft approach all three requirements are asserted by
+	 * telling the user "don't do that", so emit a warning.
 	 * ----
 	 */
 	if (RecoveryInProgress())
-		ereport(ERROR,
+		ereport(WARNING,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			   errmsg("logical decoding cannot be used while in recovery")));
+				 errmsg("logical decoding during recovery is experimental")));
 }
 
 /*
@@ -459,6 +469,7 @@ DecodingContextFindStartpoint(LogicalDecodingContext *ctx)
 	}
 
 	ctx->slot->data.confirmed_flush = ctx->reader->EndRecPtr;
+	ReplicationSlotMarkDirty();
 }
 
 /*
@@ -903,10 +914,15 @@ LogicalConfirmReceivedLocation(XLogRecPtr lsn)
 	{
 		bool		updated_xmin = false;
 		bool		updated_restart = false;
+		bool		updated_confirm = false;
 
 		SpinLockAcquire(&MyReplicationSlot->mutex);
 
-		MyReplicationSlot->data.confirmed_flush = lsn;
+		if (MyReplicationSlot->data.confirmed_flush != lsn)
+		{
+			MyReplicationSlot->data.confirmed_flush = lsn;
+			updated_confirm = true;
+		}
 
 		/* if we're past the location required for bumping xmin, do so */
 		if (MyReplicationSlot->candidate_xmin_lsn != InvalidXLogRecPtr &&
@@ -945,33 +961,50 @@ LogicalConfirmReceivedLocation(XLogRecPtr lsn)
 		SpinLockRelease(&MyReplicationSlot->mutex);
 
 		/* first write new xmin to disk, so we know what's up after a crash */
-		if (updated_xmin || updated_restart)
+		if (updated_xmin || updated_restart || updated_confirm)
 		{
 			ReplicationSlotMarkDirty();
-			ReplicationSlotSave();
-			elog(DEBUG1, "updated xmin: %u restart: %u", updated_xmin, updated_restart);
-		}
 
-		/*
-		 * Now the new xmin is safely on disk, we can let the global value
-		 * advance. We do not take ProcArrayLock or similar since we only
-		 * advance xmin here and there's not much harm done by a concurrent
-		 * computation missing that.
-		 */
-		if (updated_xmin)
-		{
-			SpinLockAcquire(&MyReplicationSlot->mutex);
-			MyReplicationSlot->effective_catalog_xmin = MyReplicationSlot->data.catalog_xmin;
-			SpinLockRelease(&MyReplicationSlot->mutex);
+			/*
+			 * first write new xmin to disk, so we know whats up
+			 * after a crash.
+			 */
+			if (updated_xmin || updated_restart)
+			{
+				ReplicationSlotSave();
+				elog(DEBUG1, "updated xmin: %u restart: %u", updated_xmin, updated_restart);
+			}
 
-			ReplicationSlotsComputeRequiredXmin(false);
-			ReplicationSlotsComputeRequiredLSN();
+			/*
+			 * Now the new xmin is safely on disk, we can let the global value
+			 * advance. We do not take ProcArrayLock or similar since we only
+			 * advance xmin here and there's not much harm done by a concurrent
+			 * computation missing that.
+			 */
+			if (updated_xmin)
+			{
+				SpinLockAcquire(&MyReplicationSlot->mutex);
+				MyReplicationSlot->effective_catalog_xmin = MyReplicationSlot->data.catalog_xmin;
+				SpinLockRelease(&MyReplicationSlot->mutex);
+
+				ReplicationSlotsComputeRequiredXmin(false);
+				ReplicationSlotsComputeRequiredLSN();
+			}
 		}
 	}
 	else
 	{
+		bool dirtied = false;
+
 		SpinLockAcquire(&MyReplicationSlot->mutex);
-		MyReplicationSlot->data.confirmed_flush = lsn;
+		if (MyReplicationSlot->data.confirmed_flush != lsn)
+		{
+			MyReplicationSlot->data.confirmed_flush = lsn;
+			dirtied = true;
+		}
 		SpinLockRelease(&MyReplicationSlot->mutex);
+
+		if (dirtied)
+			ReplicationSlotMarkDirty();
 	}
 }

@@ -155,6 +155,42 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--endpos=<replaceable>lsn</replaceable></option></term>
+      <listitem>
+       <para>
+        In <option>--start</option> mode, automatically stop replication and
+        exit with normal exit status 0 when receive passes the specified LSN.
+        Because of logical decoding's reordering of operations this actually
+        means that no change that's part of a transaction that committed before
+        endpos is still waiting to be received. There can be still be
+        pending changes made before endpos that're part of transactions that
+        committed after endpos or are not yet committed.
+       </para>
+       <para>
+        The endpos option is not aware of transaction boundaries and may
+        truncate output partway through a transaction. The partially
+        output transaction will not be consumed and will be replayed again
+        when the slot is next read from. Individual messages will never
+        be truncated.
+       </para>
+       <para>
+        If there's a record with start LSN exactly equal to
+        <option>--endpos</option> it will not be output.  If you want to
+        receive up to and including a given LSN, specify
+        <option>--endpos</option> as the desired LSN + 1.
+       </para>
+       <para>
+        If there is no more data ready to be sent when the server's xlog passes
+        endpos, <application>pg_recvlogical</application> may not exit until
+        the next keepalive is received from the server, usually after half of
+        <link
+        linkend="guc-wal-sender-timeout"><literal>wal_sender_timeout</literal></link>
+        has elapsed.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--if-not-exists</option></term>
       <listitem>
        <para>

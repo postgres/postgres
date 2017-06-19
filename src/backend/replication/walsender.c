@@ -53,6 +53,7 @@
 #include "access/transam.h"
 #include "access/xact.h"
 #include "access/xlog_internal.h"
+#include "access/xlogutils.h"
 
 #include "catalog/pg_type.h"
 #include "commands/dbcommands.h"
@@ -523,6 +524,11 @@ StartReplication(StartReplicationCmd *cmd)
 	StringInfoData buf;
 	XLogRecPtr	FlushPtr;
 
+	if (ThisTimeLineID == 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("run IDENTIFY_SYSTEM before trying to START_REPLICATION")));
+
 	/*
 	 * We assume here that we're logging enough information in the WAL for
 	 * log-shipping, since this is checked in PostmasterMain().
@@ -761,6 +767,12 @@ logical_read_xlog_page(XLogReaderState *state, XLogRecPtr targetPagePtr, int req
 	XLogRecPtr	flushptr;
 	int			count;
 
+	XLogReadDetermineTimeline(state, targetPagePtr, reqLen);
+	sendTimeLineIsHistoric = state->currTLI == ThisTimeLineID;
+	sendTimeLine = state->currTLI;
+	sendTimeLineValidUpto = state->currTLIValidUntil;
+	sendTimeLineNextTLI = state->nextTLI;
+
 	/* make sure we have enough WAL available */
 	flushptr = WalSndWaitForWal(targetPagePtr + reqLen);
 
@@ -838,7 +850,18 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 		 * Export a plain (not of the snapbuild.c type) snapshot to the user
 		 * that can be imported into another session.
 		 */
-		snapshot_name = SnapBuildExportSnapshot(ctx->snapshot_builder);
+		if (!RecoveryInProgress())
+		{
+			snapshot_name = SnapBuildExportSnapshot(ctx->snapshot_builder);
+		}
+		else
+		{
+			/*
+			 * Can't assign an xid during recovery so we can't export a
+			 * snapshot.
+			 */
+			snapshot_name = "";
+		}
 
 		/* don't need the decoding context anymore */
 		FreeDecodingContext(ctx);
@@ -987,10 +1010,6 @@ StartLogicalReplication(StartReplicationCmd *cmd)
 	pq_sendint(&buf, 0, 2);
 	pq_endmessage(&buf);
 	pq_flush();
-
-	/* setup state for XLogReadPage */
-	sendTimeLineIsHistoric = false;
-	sendTimeLine = ThisTimeLineID;
 
 	/*
 	 * Initialize position to the last ack'ed one, then the xlog records begin

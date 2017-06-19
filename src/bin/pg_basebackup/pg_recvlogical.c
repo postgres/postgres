@@ -40,6 +40,7 @@ static int	noloop = 0;
 static int	standby_message_timeout = 10 * 1000;		/* 10 sec = default */
 static int	fsync_interval = 10 * 1000; /* 10 sec = default */
 static XLogRecPtr startpos = InvalidXLogRecPtr;
+static XLogRecPtr endpos = InvalidXLogRecPtr;
 static bool do_create_slot = false;
 static bool slot_exists_ok = false;
 static bool do_start_slot = false;
@@ -81,6 +82,7 @@ usage(void)
 			 "                         time between fsyncs to the output file (default: %d)\n"), (fsync_interval / 1000));
 	printf(_("      --if-not-exists    do not error if slot already exists when creating a slot\n"));
 	printf(_("  -I, --startpos=LSN     where in an existing slot should the streaming start\n"));
+	printf(_("      --endpos=LSN       exit when receive reaches or passes the specified lsn\n"));
 	printf(_("  -n, --no-loop          do not loop on connection lost\n"));
 	printf(_("  -o, --option=NAME[=VALUE]\n"
 			 "                         pass option NAME with optional value VALUE to the\n"
@@ -281,6 +283,7 @@ StreamLogicalLog(void)
 		int			bytes_written;
 		int64		now;
 		int			hdr_len;
+		XLogRecPtr	cur_record_lsn = InvalidXLogRecPtr;
 
 		if (copybuf != NULL)
 		{
@@ -454,6 +457,7 @@ StreamLogicalLog(void)
 			int			pos;
 			bool		replyRequested;
 			XLogRecPtr	walEnd;
+			bool		endposReached = false;
 
 			/*
 			 * Parse the keepalive message, enclosed in the CopyData message.
@@ -476,8 +480,24 @@ StreamLogicalLog(void)
 			}
 			replyRequested = copybuf[pos];
 
-			/* If the server requested an immediate reply, send one. */
-			if (replyRequested)
+			if (verbose)
+			{
+				fprintf(stderr, "%s: keepalive with walend=%X/%X received (immediate_reply=%c)\n",
+						progname, (uint32)(walEnd>>32), (uint32)walEnd, replyRequested ? 'y' : 'n');
+			}
+
+			if (endpos != InvalidXLogRecPtr && walEnd >= endpos)
+			{
+				/*
+				 * If there's nothing to read on the socket until a keepalive
+				 * we know that the server has nothing to send us, and if
+				 * walend has passed endpos we know nothing else can have
+				 * committed before endpos. So we can bail out now.
+				 */
+				endposReached = true;
+			}
+
+			if (replyRequested || endposReached)
 			{
 				/* fsync data, so we send a recent flush pointer */
 				if (!OutputFsync(now))
@@ -488,6 +508,18 @@ StreamLogicalLog(void)
 					goto error;
 				last_status = now;
 			}
+
+			if (endposReached)
+			{
+				(void) PQputCopyEnd(conn, NULL);
+				(void) PQflush(conn);
+				if (verbose)
+					fprintf(stderr, "%s: endpos %X/%X reached/passed by keepalive\n",
+							progname, (uint32)(endpos>>32), (uint32)endpos);
+				time_to_abort = true;
+				break;
+			}
+
 			continue;
 		}
 		else if (copybuf[0] != 'w')
@@ -515,10 +547,38 @@ StreamLogicalLog(void)
 		}
 
 		/* Extract WAL location for this block */
-		{
-			XLogRecPtr	temp = fe_recvint64(&copybuf[1]);
+		cur_record_lsn = fe_recvint64(&copybuf[1]);
 
-			output_written_lsn = Max(temp, output_written_lsn);
+		if (endpos != InvalidXLogRecPtr && cur_record_lsn > endpos)
+		{
+			/* We've read past past the limit of what we want to receive */
+
+			if (!OutputFsync(now))
+				goto error;
+
+			if (!sendFeedback(conn, now, true, false))
+				goto error;
+
+			/*
+			 * Try to tell the server we're exiting, but don't wait around or
+			 * retry on failure. Current servers don't understand
+			 * client-initiated CopyDone anyway.
+			 */
+			(void) PQputCopyEnd(conn, NULL);
+			(void) PQflush(conn);
+
+			if (verbose)
+				fprintf(stderr, "%s: endpos %X/%X reached/passed by record startpos %X/%X\n",
+						progname, (uint32)(endpos>>32), (uint32)(endpos),
+						(uint32)(cur_record_lsn>>32), (uint32)cur_record_lsn);
+
+			/* We'll never get a reply CopyDone from the server, so just bail out. */
+			time_to_abort = true;
+			break;
+		}
+		else
+		{
+			output_written_lsn = Max(cur_record_lsn, output_written_lsn);
 		}
 
 		bytes_left = r - hdr_len;
@@ -560,11 +620,20 @@ StreamLogicalLog(void)
 	}
 
 	res = PQgetResult(conn);
-	if (PQresultStatus(res) != PGRES_COMMAND_OK)
+	if (PQresultStatus(res) == PGRES_COPY_OUT)
+	{
+		/*
+		 * We're doing a client-initiated clean exit and have sent CopyDone to
+		 * the server. We've already sent replay confirmation and fsync'd so we
+		 * can just clean up the connection now.
+		 */
+		goto error;
+	}
+	else if (PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
 		fprintf(stderr,
-				_("%s: unexpected termination of replication stream: %s"),
-				progname, PQresultErrorMessage(res));
+				_("%s: unexpected termination of replication stream: %s (status=%u)"),
+				progname, PQresultErrorMessage(res), PQresultStatus(res));
 		goto error;
 	}
 	PQclear(res);
@@ -647,6 +716,7 @@ main(int argc, char **argv)
 		{"start", no_argument, NULL, 2},
 		{"drop-slot", no_argument, NULL, 3},
 		{"if-not-exists", no_argument, NULL, 4},
+		{"endpos", required_argument, NULL, 5},
 		{NULL, 0, NULL, 0}
 	};
 	int			c;
@@ -781,6 +851,16 @@ main(int argc, char **argv)
 			case 4:
 				slot_exists_ok = true;
 				break;
+			case 5:
+				if (sscanf(optarg, "%X/%X", &hi, &lo) != 2)
+				{
+					fprintf(stderr,
+							_("%s: could not parse end position \"%s\"\n"),
+							progname, optarg);
+					exit(1);
+				}
+				endpos = ((uint64) hi) << 32 | lo;
+				break;
 
 			default:
 
@@ -849,9 +929,9 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
-	if (startpos != InvalidXLogRecPtr && (do_create_slot || do_drop_slot))
+	if ((startpos != InvalidXLogRecPtr || endpos != InvalidXLogRecPtr) && (do_create_slot || do_drop_slot))
 	{
-		fprintf(stderr, _("%s: cannot use --create-slot or --drop-slot together with --startpos\n"), progname);
+		fprintf(stderr, _("%s: cannot use --create-slot or --drop-slot together with --startpos or --endpos\n"), progname);
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 				progname);
 		exit(1);
@@ -923,8 +1003,8 @@ main(int argc, char **argv)
 		if (time_to_abort)
 		{
 			/*
-			 * We've been Ctrl-C'ed. That's not an error, so exit without an
-			 * errorcode.
+			 * We've been Ctrl-C'ed or reached an exit limit condition. That's
+			 * not an error, so exit without an errorcode.
 			 */
 			disconnect_and_exit(0);
 		}
