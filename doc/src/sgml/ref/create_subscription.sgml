@@ -222,7 +222,7 @@ CREATE SUBSCRIPTION <replaceable class="PARAMETER">subscription_name</replaceabl
   <title>Notes</title>
 
   <para>
-   See <xref linkend="streaming-replication-authentication"> for details on
+   See <xref linkend="logical-replication-security"> for details on
    how to configure access control between the subscription and the
    publication instance.
   </para>

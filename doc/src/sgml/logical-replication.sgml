@@ -452,7 +452,7 @@
 
   <para>
    The role used for the replication connection must have
-   the <literal>REPLICATION</literal> attribute.  Access for the role must be
+   the <literal>REPLICATION</literal> attribute (or be a superuser).  Access for the role must be
    configured in <filename>pg_hba.conf</filename>.
   </para>
 
