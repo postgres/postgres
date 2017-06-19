@@ -960,7 +960,7 @@
         <para>
          Add function <link
          linkend="functions-info-session-table"><function>pg_current_logfile()</></>
-         to read syslog's current stderr and csvlog output file names
+         to read logging collector's current stderr and csvlog output file names
          (Gilles Darold)
         </para>
        </listitem>
