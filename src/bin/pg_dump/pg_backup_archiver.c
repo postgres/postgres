@@ -2337,12 +2337,12 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 	AH->OF = stdout;
 
 	/*
-	 * On Windows, we need to use binary mode to read/write non-text archive
-	 * formats.  Force stdin/stdout into binary mode if that is what we are
-	 * using.
+	 * On Windows, we need to use binary mode to read/write non-text files,
+	 * which include all archive formats as well as compressed plain text.
+	 * Force stdin/stdout into binary mode if that is what we are using.
 	 */
 #ifdef WIN32
-	if (fmt != archNull &&
+	if ((fmt != archNull || compression != 0) &&
 		(AH->fSpec == NULL || strcmp(AH->fSpec, "") == 0))
 	{
 		if (mode == archModeWrite)
