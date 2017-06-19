@@ -1096,7 +1096,8 @@ testdb=&gt;
 
         <listitem>
         <para>
-        For each relation (table, view, index, sequence, or foreign table)
+        For each relation (table, view, materialized view, index, sequence,
+        or foreign table)
         or composite type matching the
         <replaceable class="parameter">pattern</replaceable>, show all
         columns, their types, the tablespace (if not the default) and any
@@ -1111,8 +1112,8 @@ testdb=&gt;
 
         <para>
         For some types of relation, <literal>\d</> shows additional information
-        for each column: column values for sequences, indexed expression for
-        indexes and foreign data wrapper options for foreign tables.
+        for each column: column values for sequences, indexed expressions for
+        indexes, and foreign data wrapper options for foreign tables.
         </para>
 
         <para>
@@ -1134,8 +1135,9 @@ testdb=&gt;
         <para>
         If <command>\d</command> is used without a
         <replaceable class="parameter">pattern</replaceable> argument, it is
-        equivalent to <command>\dtvsE</command> which will show a list of
-        all visible tables, views, sequences and foreign tables.
+        equivalent to <command>\dtvmsE</command> which will show a list of
+        all visible tables, views, materialized views, sequences and
+        foreign tables.
         This is purely a convenience measure.
         </para>
         </note>
