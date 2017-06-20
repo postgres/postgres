@@ -541,8 +541,9 @@ CREATE [ OR REPLACE ] FUNCTION
        dynamically loadable C language functions when the function name
        in the C language source code is not the same as the name of
        the SQL function. The string <replaceable
-       class="parameter">obj_file</replaceable> is the name of the
-       file containing the dynamically loadable object, and
+       class="parameter">obj_file</replaceable> is the name of the shared
+       library file containing the compiled C function, and is interpreted
+       as for the <xref linkend="SQL-LOAD"> command.  The string
        <replaceable class="parameter">link_symbol</replaceable> is the
        function's link symbol, that is, the name of the function in the C
        language source code.  If the link symbol is omitted, it is assumed

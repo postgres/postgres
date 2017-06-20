@@ -7004,12 +7004,6 @@ SET XML OPTION { DOCUMENT | CONTENT };
      </para>
 
      <para>
-      For each parameter, if more than one library is to be loaded, separate
-      their names with commas.  All library names are converted to lower case
-      unless double-quoted.
-     </para>
-
-     <para>
       Only shared libraries specifically intended to be used with PostgreSQL
       can be loaded this way.  Every PostgreSQL-supported library has
       a <quote>magic block</> that is checked to guarantee compatibility.  For
@@ -7037,6 +7031,10 @@ SET XML OPTION { DOCUMENT | CONTENT };
        <para>
         This variable specifies one or more shared libraries that are to be
         preloaded at connection start.
+        It contains a comma-separated list of library names, where each name
+        is interpreted as for the <xref linkend="SQL-LOAD"> command.
+        Whitespace between entries is ignored; surround a library name with
+        double quotes if you need to include whitespace or commas in the name.
         The parameter value only takes effect at the start of the connection.
         Subsequent changes have no effect.  If a specified library is not
         found, the connection attempt will fail.
@@ -7083,10 +7081,15 @@ SET XML OPTION { DOCUMENT | CONTENT };
       <listitem>
        <para>
         This variable specifies one or more shared libraries that are to be
-        preloaded at connection start.  Only superusers can change this setting.
+        preloaded at connection start.
+        It contains a comma-separated list of library names, where each name
+        is interpreted as for the <xref linkend="SQL-LOAD"> command.
+        Whitespace between entries is ignored; surround a library name with
+        double quotes if you need to include whitespace or commas in the name.
         The parameter value only takes effect at the start of the connection.
         Subsequent changes have no effect.  If a specified library is not
         found, the connection attempt will fail.
+        Only superusers can change this setting.
        </para>
 
        <para>
@@ -7120,9 +7123,13 @@ SET XML OPTION { DOCUMENT | CONTENT };
       <listitem>
        <para>
         This variable specifies one or more shared libraries to be preloaded at
-        server start.  This parameter can only be set at server
-        start.  If a specified library is not found, the server will fail to
-        start.
+        server start.
+        It contains a comma-separated list of library names, where each name
+        is interpreted as for the <xref linkend="SQL-LOAD"> command.
+        Whitespace between entries is ignored; surround a library name with
+        double quotes if you need to include whitespace or commas in the name.
+        This parameter can only be set at server start.  If a specified
+        library is not found, the server will fail to start.
        </para>
 
        <para>
