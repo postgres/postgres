@@ -202,13 +202,19 @@ report_clusters_compatible(void)
 
 
 void
-issue_warnings(char *sequence_script_file_name)
+issue_warnings_and_set_wal_level(char *sequence_script_file_name)
 {
+	/*
+	 * We unconditionally start/stop the new server because pg_resetwal -o
+	 * set wal_level to 'minimum'.  If the user is upgrading standby
+	 * servers using the rsync instructions, they will need pg_upgrade
+	 * to write its final WAL record with the proper wal_level.
+	 */
+	start_postmaster(&new_cluster);
+
 	/* old = PG 8.3 warnings? */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 803)
 	{
-		start_postmaster(&new_cluster);
-
 		/* restore proper sequence values using file created from old server */
 		if (sequence_script_file_name)
 		{
@@ -224,16 +230,13 @@ issue_warnings(char *sequence_script_file_name)
 		old_8_3_rebuild_tsvector_tables(&new_cluster, false);
 		old_8_3_invalidate_hash_gin_indexes(&new_cluster, false);
 		old_8_3_invalidate_bpchar_pattern_ops_indexes(&new_cluster, false);
-		stop_postmaster(false);
 	}
 
 	/* Create dummy large object permissions for old < PG 9.0? */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 804)
-	{
-		start_postmaster(&new_cluster);
 		new_9_0_populate_pg_largeobject_metadata(&new_cluster, false);
-		stop_postmaster(false);
-	}
+
+	stop_postmaster(false);
 }
 
 
