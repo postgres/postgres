@@ -336,61 +336,81 @@ typedef struct JunkFilter
 	AttrNumber	jf_junkAttNo;
 } JunkFilter;
 
-/* ----------------
- *	  ResultRelInfo information
+/*
+ * ResultRelInfo
  *
- *		Whenever we update an existing relation, we have to
- *		update indices on the relation, and perhaps also fire triggers.
- *		The ResultRelInfo class is used to hold all the information needed
- *		about a result relation, including indices.. -cim 10/15/89
- *
- *		RangeTableIndex			result relation's range table index
- *		RelationDesc			relation descriptor for result relation
- *		NumIndices				# of indices existing on result relation
- *		IndexRelationDescs		array of relation descriptors for indices
- *		IndexRelationInfo		array of key/attr info for indices
- *		TrigDesc				triggers to be fired, if any
- *		TrigFunctions			cached lookup info for trigger functions
- *		TrigWhenExprs			array of trigger WHEN expr states
- *		TrigInstrument			optional runtime measurements for triggers
- *		FdwRoutine				FDW callback functions, if foreign table
- *		FdwState				available to save private state of FDW
- *		usesFdwDirectModify		true when modifying foreign table directly
- *		WithCheckOptions		list of WithCheckOption's to be checked
- *		WithCheckOptionExprs	list of WithCheckOption expr states
- *		ConstraintExprs			array of constraint-checking expr states
- *		junkFilter				for removing junk attributes from tuples
- *		projectReturning		for computing a RETURNING list
- *		onConflictSetProj		for computing ON CONFLICT DO UPDATE SET
- *		onConflictSetWhere		list of ON CONFLICT DO UPDATE exprs (qual)
- *		PartitionCheck			partition check expression
- *		PartitionCheckExpr		partition check expression state
- * ----------------
+ * Whenever we update an existing relation, we have to update indexes on the
+ * relation, and perhaps also fire triggers.  ResultRelInfo holds all the
+ * information needed about a result relation, including indexes.
  */
 typedef struct ResultRelInfo
 {
 	NodeTag		type;
+
+	/* result relation's range table index */
 	Index		ri_RangeTableIndex;
+
+	/* relation descriptor for result relation */
 	Relation	ri_RelationDesc;
+
+	/* # of indices existing on result relation */
 	int			ri_NumIndices;
+
+	/* array of relation descriptors for indices */
 	RelationPtr ri_IndexRelationDescs;
+
+	/* array of key/attr info for indices */
 	IndexInfo **ri_IndexRelationInfo;
+
+	/* triggers to be fired, if any */
 	TriggerDesc *ri_TrigDesc;
+
+	/* cached lookup info for trigger functions */
 	FmgrInfo   *ri_TrigFunctions;
+
+	/* array of trigger WHEN expr states */
 	ExprState **ri_TrigWhenExprs;
+
+	/* optional runtime measurements for triggers */
 	Instrumentation *ri_TrigInstrument;
+
+	/* FDW callback functions, if foreign table */
 	struct FdwRoutine *ri_FdwRoutine;
+
+	/* available to save private state of FDW */
 	void	   *ri_FdwState;
+
+	/* true when modifying foreign table directly */
 	bool		ri_usesFdwDirectModify;
+
+	/* list of WithCheckOption's to be checked */
 	List	   *ri_WithCheckOptions;
+
+	/* list of WithCheckOption expr states */
 	List	   *ri_WithCheckOptionExprs;
+
+	/* array of constraint-checking expr states */
 	ExprState **ri_ConstraintExprs;
+
+	/* for removing junk attributes from tuples */
 	JunkFilter *ri_junkFilter;
+
+	/* for computing a RETURNING list */
 	ProjectionInfo *ri_projectReturning;
+
+	/* for computing ON CONFLICT DO UPDATE SET */
 	ProjectionInfo *ri_onConflictSetProj;
+
+	/* list of ON CONFLICT DO UPDATE exprs (qual) */
 	ExprState  *ri_onConflictSetWhere;
+
+	/* partition check expression */
 	List	   *ri_PartitionCheck;
+
+	/* partition check expression state */
 	ExprState  *ri_PartitionCheckExpr;
+
+	/* relation descriptor for root partitioned table */
 	Relation	ri_PartitionRoot;
 } ResultRelInfo;
 
