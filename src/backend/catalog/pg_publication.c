@@ -105,6 +105,30 @@ is_publishable_class(Oid relid, Form_pg_class reltuple)
 		relid >= FirstNormalObjectId;
 }
 
+
+/*
+ * SQL-callable variant of the above
+ *
+ * This returns null when the relation does not exist.  This is intended to be
+ * used for example in psql to avoid gratuitous errors when there are
+ * concurrent catalog changes.
+ */
+Datum
+pg_relation_is_publishable(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+	HeapTuple	tuple;
+	bool		result;
+
+	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
+	if (!tuple)
+		PG_RETURN_NULL();
+	result = is_publishable_class(relid, (Form_pg_class) GETSTRUCT(tuple));
+	ReleaseSysCache(tuple);
+	PG_RETURN_BOOL(result);
+}
+
+
 /*
  * Insert new publication / relation mapping.
  */

@@ -5436,6 +5436,8 @@ DESCR("get progress for all replication origins");
 /* publications */
 DATA(insert OID = 6119 ( pg_get_publication_tables	PGNSP PGUID 12 1 1000 0 0 f f f f t t s s 1 0 26 "25" "{25,26}" "{i,o}" "{pubname,relid}" _null_ _null_ pg_get_publication_tables _null_ _null_ _null_ ));
 DESCR("get OIDs of tables in a publication");
+DATA(insert OID = 6121 ( pg_relation_is_publishable	PGNSP PGUID 12 1    0 0 0 f f f f t f s s 1 0 16 "2205" _null_ _null_ _null_ _null_ _null_ pg_relation_is_publishable _null_ _null_ _null_ ));
+DESCR("returns whether a relation can be part of a publication");
 
 /* rls */
 DATA(insert OID = 3298 (  row_security_active	   PGNSP PGUID 12 1 0 0 0 f f f f t f s s 1 0 16 "26" _null_ _null_ _null_ _null_ _null_	row_security_active _null_ _null_ _null_ ));

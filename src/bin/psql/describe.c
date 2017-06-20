@@ -2536,12 +2536,16 @@ describeOneTableDetails(const char *schemaname,
 		if (pset.sversion >= 100000)
 		{
 			printfPQExpBuffer(&buf,
-							  "SELECT pub.pubname\n"
-							  " FROM pg_catalog.pg_publication pub,\n"
-				  "      pg_catalog.pg_get_publication_tables(pub.pubname)\n"
-							  "WHERE relid = '%s'\n"
+							  "SELECT pubname\n"
+							  "FROM pg_catalog.pg_publication p\n"
+							  "JOIN pg_catalog.pg_publication_rel pr ON p.oid = pr.prpubid\n"
+							  "WHERE pr.prrelid = '%s'\n"
+							  "UNION ALL\n"
+							  "SELECT pubname\n"
+							  "FROM pg_catalog.pg_publication p\n"
+							  "WHERE p.puballtables AND pg_relation_is_publishable('%s')\n"
 							  "ORDER BY 1;",
-							  oid);
+							  oid, oid);
 
 			result = PSQLexec(buf.data);
 			if (!result)
