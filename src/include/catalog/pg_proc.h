@@ -5434,7 +5434,7 @@ DATA(insert OID = 6014 ( pg_show_replication_origin_status PGNSP PGUID 12 1 100 
 DESCR("get progress for all replication origins");
 
 /* publications */
-DATA(insert OID = 6119 ( pg_get_publication_tables	PGNSP PGUID 12 1 1000 0 0 f f t f t t s s 1 0 26 "25" "{25,26}" "{i,o}" "{pubname,relid}" _null_ _null_ pg_get_publication_tables _null_ _null_ _null_ ));
+DATA(insert OID = 6119 ( pg_get_publication_tables	PGNSP PGUID 12 1 1000 0 0 f f f f t t s s 1 0 26 "25" "{25,26}" "{i,o}" "{pubname,relid}" _null_ _null_ pg_get_publication_tables _null_ _null_ _null_ ));
 DESCR("get OIDs of tables in a publication");
 
 /* rls */
