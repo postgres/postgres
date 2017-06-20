@@ -174,23 +174,25 @@ report_clusters_compatible(void)
 
 
 void
-issue_warnings(void)
+issue_warnings_and_set_wal_level(void)
 {
+	/*
+	 * We unconditionally start/stop the new server because pg_resetwal -o
+	 * set wal_level to 'minimum'.  If the user is upgrading standby
+	 * servers using the rsync instructions, they will need pg_upgrade
+	 * to write its final WAL record showing wal_level as 'replica'.
+	 */
+	start_postmaster(&new_cluster, true);
+
 	/* Create dummy large object permissions for old < PG 9.0? */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 804)
-	{
-		start_postmaster(&new_cluster, true);
 		new_9_0_populate_pg_largeobject_metadata(&new_cluster, false);
-		stop_postmaster(false);
-	}
 
 	/* Reindex hash indexes for old < 10.0 */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 906)
-	{
-		start_postmaster(&new_cluster, true);
 		old_9_6_invalidate_hash_indexes(&new_cluster, false);
-		stop_postmaster(false);
-	}
+
+	stop_postmaster(false);
 }
 
 

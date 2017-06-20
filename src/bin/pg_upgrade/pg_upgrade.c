@@ -162,7 +162,7 @@ main(int argc, char **argv)
 	create_script_for_cluster_analyze(&analyze_script_file_name);
 	create_script_for_old_cluster_deletion(&deletion_script_file_name);
 
-	issue_warnings();
+	issue_warnings_and_set_wal_level();
 
 	pg_log(PG_REPORT, "\nUpgrade Complete\n");
 	pg_log(PG_REPORT, "----------------\n");
