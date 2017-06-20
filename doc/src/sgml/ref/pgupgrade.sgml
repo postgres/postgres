@@ -331,8 +331,8 @@ NET STOP postgresql-9.0
 
     <para>
      Also, if upgrading standby servers, change <varname>wal_level</>
-     to <literal>replica</> in the <filename>postgresql.conf</> file on
-     the new master cluster.
+     in the <filename>postgresql.conf</> file on the new master cluster
+     to match the value you used in the old cluster.
     </para>
    </step>
 
