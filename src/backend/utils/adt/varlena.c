@@ -3347,7 +3347,9 @@ SplitIdentifierString(char *rawstring, char separator,
 
 
 /*
- * SplitDirectoriesString --- parse a string containing directory names
+ * SplitDirectoriesString --- parse a string containing file/directory names
+ *
+ * This works fine on file names too; the function name is historical.
  *
  * This is similar to SplitIdentifierString, except that the parsing
  * rules are meant to handle pathnames instead of identifiers: there is

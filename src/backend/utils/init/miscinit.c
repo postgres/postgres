@@ -1435,12 +1435,12 @@ load_libraries(const char *libraries, const char *gucname, bool restricted)
 	/* Need a modifiable copy of string */
 	rawstring = pstrdup(libraries);
 
-	/* Parse string into list of identifiers */
-	if (!SplitIdentifierString(rawstring, ',', &elemlist))
+	/* Parse string into list of filename paths */
+	if (!SplitDirectoriesString(rawstring, ',', &elemlist))
 	{
 		/* syntax error in list */
+		list_free_deep(elemlist);
 		pfree(rawstring);
-		list_free(elemlist);
 		ereport(LOG,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("invalid list syntax in parameter \"%s\"",
@@ -1450,28 +1450,25 @@ load_libraries(const char *libraries, const char *gucname, bool restricted)
 
 	foreach(l, elemlist)
 	{
-		char	   *tok = (char *) lfirst(l);
-		char	   *filename;
+		/* Note that filename was already canonicalized */
+		char	   *filename = (char *) lfirst(l);
+		char	   *expanded = NULL;
 
-		filename = pstrdup(tok);
-		canonicalize_path(filename);
 		/* If restricting, insert $libdir/plugins if not mentioned already */
 		if (restricted && first_dir_separator(filename) == NULL)
 		{
-			char	   *expanded;
-
 			expanded = psprintf("$libdir/plugins/%s", filename);
-			pfree(filename);
 			filename = expanded;
 		}
 		load_file(filename, restricted);
 		ereport(DEBUG1,
 				(errmsg("loaded library \"%s\"", filename)));
-		pfree(filename);
+		if (expanded)
+			pfree(expanded);
 	}
 
+	list_free_deep(elemlist);
 	pfree(rawstring);
-	list_free(elemlist);
 }
 
 /*
