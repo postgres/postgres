@@ -95,6 +95,13 @@ SELECT p1.oid, p1.proname
 FROM pg_proc AS p1
 WHERE proiswindow AND (proisagg OR proretset);
 
+-- currently, no built-in functions should be SECURITY DEFINER;
+-- this might change in future, but there will probably never be many.
+SELECT p1.oid, p1.proname
+FROM pg_proc AS p1
+WHERE prosecdef
+ORDER BY 1;
+
 -- pronargdefaults should be 0 iff proargdefaults is null
 SELECT p1.oid, p1.proname
 FROM pg_proc AS p1
