@@ -1200,7 +1200,7 @@ get_partition_operator(PartitionKey key, int col, StrategyNumber strategy,
 
 	/*
 	 * If one doesn't exist, we must resort to using an operator in the same
-	 * opreator family but with the operator class declared input type.  It is
+	 * operator family but with the operator class declared input type.  It is
 	 * OK to do so, because the column's type is known to be binary-coercible
 	 * with the operator class input type (otherwise, the operator class in
 	 * question would not have been accepted as the partitioning operator
