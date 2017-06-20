@@ -323,7 +323,7 @@ void check_and_dump_old_cluster(bool live_check,
 						   char **sequence_script_file_name);
 void		check_new_cluster(void);
 void		report_clusters_compatible(void);
-void		issue_warnings(char *sequence_script_file_name);
+void		issue_warnings_and_set_wal_level(char *sequence_script_file_name);
 void output_completion_banner(char *analyze_script_file_name,
 						 char *deletion_script_file_name);
 void		check_cluster_versions(void);
