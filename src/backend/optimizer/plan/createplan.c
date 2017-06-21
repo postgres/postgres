@@ -2576,7 +2576,7 @@ create_indexscan_plan(PlannerInfo *root,
 		if (is_redundant_derived_clause(rinfo, indexquals))
 			continue;			/* derived from same EquivalenceClass */
 		if (!contain_mutable_functions((Node *) rinfo->clause) &&
-			predicate_implied_by(list_make1(rinfo->clause), indexquals, false))
+		  predicate_implied_by(list_make1(rinfo->clause), indexquals, false))
 			continue;			/* provably implied by indexquals */
 		qpqual = lappend(qpqual, rinfo);
 	}

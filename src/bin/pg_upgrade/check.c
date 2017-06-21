@@ -177,10 +177,10 @@ void
 issue_warnings_and_set_wal_level(void)
 {
 	/*
-	 * We unconditionally start/stop the new server because pg_resetwal -o
-	 * set wal_level to 'minimum'.  If the user is upgrading standby
-	 * servers using the rsync instructions, they will need pg_upgrade
-	 * to write its final WAL record showing wal_level as 'replica'.
+	 * We unconditionally start/stop the new server because pg_resetwal -o set
+	 * wal_level to 'minimum'.  If the user is upgrading standby servers using
+	 * the rsync instructions, they will need pg_upgrade to write its final
+	 * WAL record showing wal_level as 'replica'.
 	 */
 	start_postmaster(&new_cluster, true);
 

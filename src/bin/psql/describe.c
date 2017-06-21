@@ -2538,12 +2538,12 @@ describeOneTableDetails(const char *schemaname,
 			printfPQExpBuffer(&buf,
 							  "SELECT pubname\n"
 							  "FROM pg_catalog.pg_publication p\n"
-							  "JOIN pg_catalog.pg_publication_rel pr ON p.oid = pr.prpubid\n"
+			  "JOIN pg_catalog.pg_publication_rel pr ON p.oid = pr.prpubid\n"
 							  "WHERE pr.prrelid = '%s'\n"
 							  "UNION ALL\n"
 							  "SELECT pubname\n"
 							  "FROM pg_catalog.pg_publication p\n"
-							  "WHERE p.puballtables AND pg_relation_is_publishable('%s')\n"
+				"WHERE p.puballtables AND pg_relation_is_publishable('%s')\n"
 							  "ORDER BY 1;",
 							  oid, oid);
 

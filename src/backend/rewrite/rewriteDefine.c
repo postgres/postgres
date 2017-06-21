@@ -431,8 +431,8 @@ DefineQueryRewrite(char *rulename,
 			if (event_relation->rd_rel->relispartition)
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				errmsg("could not convert partition \"%s\" to a view",
-					   RelationGetRelationName(event_relation))));
+					   errmsg("could not convert partition \"%s\" to a view",
+							  RelationGetRelationName(event_relation))));
 
 			snapshot = RegisterSnapshot(GetLatestSnapshot());
 			scanDesc = heap_beginscan(event_relation, snapshot, 0, NULL);

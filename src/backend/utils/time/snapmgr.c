@@ -216,8 +216,8 @@ static Snapshot FirstXactSnapshot = NULL;
 /* Structure holding info about exported snapshot. */
 typedef struct ExportedSnapshot
 {
-	char *snapfile;
-	Snapshot snapshot;
+	char	   *snapfile;
+	Snapshot	snapshot;
 } ExportedSnapshot;
 
 /* Current xact's exported snapshots (a list of ExportedSnapshot structs) */
@@ -626,8 +626,8 @@ SetTransactionSnapshot(Snapshot sourcesnap, VirtualTransactionId *sourcevxid,
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("could not import the requested snapshot"),
-			errdetail("The source process with pid %d is not running anymore.",
-						sourcepid)));
+		  errdetail("The source process with pid %d is not running anymore.",
+					sourcepid)));
 
 	/*
 	 * In transaction-snapshot mode, the first snapshot must live until end of
@@ -1096,7 +1096,7 @@ AtEOXact_Snapshot(bool isCommit, bool resetXmin)
 		 */
 		foreach(lc, exportedSnapshots)
 		{
-			ExportedSnapshot	*esnap = (ExportedSnapshot *) lfirst(lc);
+			ExportedSnapshot *esnap = (ExportedSnapshot *) lfirst(lc);
 
 			if (unlink(esnap->snapfile))
 				elog(WARNING, "could not unlink file \"%s\": %m",
@@ -1212,7 +1212,7 @@ ExportSnapshot(Snapshot snapshot)
 	 * inside the transaction from 1.
 	 */
 	snprintf(path, sizeof(path), SNAPSHOT_EXPORT_DIR "/%08X-%08X-%d",
-			 MyProc->backendId, MyProc->lxid, list_length(exportedSnapshots) + 1);
+		MyProc->backendId, MyProc->lxid, list_length(exportedSnapshots) + 1);
 
 	/*
 	 * Copy the snapshot into TopTransactionContext, add it to the
@@ -1260,7 +1260,7 @@ ExportSnapshot(Snapshot snapshot)
 	 * snapshot.h.)
 	 */
 	addTopXid = (TransactionIdIsValid(topXid) &&
-		TransactionIdPrecedes(topXid, snapshot->xmax)) ? 1 : 0;
+				 TransactionIdPrecedes(topXid, snapshot->xmax)) ? 1 : 0;
 	appendStringInfo(&buf, "xcnt:%d\n", snapshot->xcnt + addTopXid);
 	for (i = 0; i < snapshot->xcnt; i++)
 		appendStringInfo(&buf, "xip:%u\n", snapshot->xip[i]);

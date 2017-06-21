@@ -590,6 +590,7 @@ ExplainFormat
 ExplainOneQuery_hook_type
 ExplainState
 ExplainStmt
+ExportedSnapshot
 Expr
 ExprContext
 ExprContextCallbackFunction

@@ -1013,11 +1013,11 @@ typedef struct RangeTblEntry
 	 *
 	 * We need these for CTE RTEs so that the types of self-referential
 	 * columns are well-defined.  For VALUES RTEs, storing these explicitly
-	 * saves having to re-determine the info by scanning the values_lists.
-	 * For ENRs, we store the types explicitly here (we could get the
-	 * information from the catalogs if 'relid' was supplied, but we'd still
-	 * need these for TupleDesc-based ENRs, so we might as well always store
-	 * the type info here).
+	 * saves having to re-determine the info by scanning the values_lists. For
+	 * ENRs, we store the types explicitly here (we could get the information
+	 * from the catalogs if 'relid' was supplied, but we'd still need these
+	 * for TupleDesc-based ENRs, so we might as well always store the type
+	 * info here).
 	 */
 	List	   *coltypes;		/* OID list of column type OIDs */
 	List	   *coltypmods;		/* integer list of column typmods */

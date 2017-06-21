@@ -1754,8 +1754,8 @@ GetSerializableTransactionSnapshotInt(Snapshot snapshot,
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("could not import the requested snapshot"),
-			errdetail("The source process with pid %d is not running anymore.",
-						sourcepid)));
+		  errdetail("The source process with pid %d is not running anymore.",
+					sourcepid)));
 	}
 
 	/*
