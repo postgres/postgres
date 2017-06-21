@@ -527,8 +527,8 @@ FindLockCycleRecurse(PGPROC *checkProc,
 
 		if (memberProc->links.next != NULL && memberProc->waitLock != NULL &&
 			memberProc != checkProc &&
-		  FindLockCycleRecurseMember(memberProc, checkProc, depth, softEdges,
-									 nSoftEdges))
+			FindLockCycleRecurseMember(memberProc, checkProc, depth, softEdges,
+									   nSoftEdges))
 			return true;
 	}
 
@@ -1030,7 +1030,7 @@ TopoSort(LOCK *lock,
 		for (c = 0; c <= last; ++c)
 		{
 			if (topoProcs[c] == proc || (topoProcs[c] != NULL &&
-									  topoProcs[c]->lockGroupLeader == proc))
+										 topoProcs[c]->lockGroupLeader == proc))
 			{
 				ordering[i - nmatches] = topoProcs[c];
 				topoProcs[c] = NULL;
@@ -1106,7 +1106,7 @@ DeadLockReport(void)
 			appendStringInfoChar(&clientbuf, '\n');
 
 		appendStringInfo(&clientbuf,
-				  _("Process %d waits for %s on %s; blocked by process %d."),
+						 _("Process %d waits for %s on %s; blocked by process %d."),
 						 info->pid,
 						 GetLockmodeName(info->locktag.locktag_lockmethodid,
 										 info->lockmode),
@@ -1127,7 +1127,7 @@ DeadLockReport(void)
 		appendStringInfo(&logbuf,
 						 _("Process %d: %s"),
 						 info->pid,
-					  pgstat_get_backend_current_activity(info->pid, false));
+						 pgstat_get_backend_current_activity(info->pid, false));
 	}
 
 	pgstat_report_deadlock();

@@ -506,8 +506,8 @@ bqarr_in(PG_FUNCTION_ARGS)
 	if (state.num > QUERYTYPEMAXITEMS)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-		errmsg("number of query items (%d) exceeds the maximum allowed (%d)",
-			   state.num, (int) QUERYTYPEMAXITEMS)));
+				 errmsg("number of query items (%d) exceeds the maximum allowed (%d)",
+						state.num, (int) QUERYTYPEMAXITEMS)));
 	commonlen = COMPUTESIZE(state.num);
 
 	query = (QUERYTYPE *) palloc(commonlen);

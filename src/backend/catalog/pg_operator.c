@@ -368,7 +368,7 @@ OperatorCreate(const char *operatorName,
 		if (OidIsValid(joinId))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-				 errmsg("only binary operators can have join selectivity")));
+					 errmsg("only binary operators can have join selectivity")));
 		if (canMerge)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
@@ -395,7 +395,7 @@ OperatorCreate(const char *operatorName,
 		if (OidIsValid(joinId))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-				errmsg("only boolean operators can have join selectivity")));
+					 errmsg("only boolean operators can have join selectivity")));
 		if (canMerge)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
@@ -609,7 +609,7 @@ get_other_operator(List *otherOp, Oid otherLeftTypeId, Oid otherRightTypeId,
 		if (!isCommutator)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-			 errmsg("operator cannot be its own negator or sort operator")));
+					 errmsg("operator cannot be its own negator or sort operator")));
 		return InvalidOid;
 	}
 

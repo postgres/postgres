@@ -174,7 +174,7 @@ domain_check_input(Datum value, bool isnull, DomainIOData *my_extra)
 					 */
 					econtext->domainValue_datum =
 						MakeExpandedObjectReadOnly(value, isnull,
-									my_extra->constraint_ref.tcache->typlen);
+												   my_extra->constraint_ref.tcache->typlen);
 					econtext->domainValue_isNull = isnull;
 
 					if (!ExecCheck(con->check_exprstate, econtext))

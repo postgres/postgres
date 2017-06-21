@@ -120,7 +120,7 @@ InitScanRelation(SampleScanState *node, EState *estate, int eflags)
 	 * open that relation and acquire appropriate lock on it.
 	 */
 	currentRelation = ExecOpenScanRelation(estate,
-						   ((SampleScan *) node->ss.ps.plan)->scan.scanrelid,
+										   ((SampleScan *) node->ss.ps.plan)->scan.scanrelid,
 										   eflags);
 
 	node->ss.ss_currentRelation = currentRelation;
@@ -307,7 +307,7 @@ tablesample_init(SampleScanState *scanstate)
 		if (isnull)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLESAMPLE_REPEAT),
-				 errmsg("TABLESAMPLE REPEATABLE parameter cannot be null")));
+					 errmsg("TABLESAMPLE REPEATABLE parameter cannot be null")));
 
 		/*
 		 * The REPEATABLE parameter has been coerced to float8 by the parser.

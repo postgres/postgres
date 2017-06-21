@@ -418,8 +418,8 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 		LWLockRelease(ShmemIndexLock);
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
-		errmsg("could not create ShmemIndex entry for data structure \"%s\"",
-			   name)));
+				 errmsg("could not create ShmemIndex entry for data structure \"%s\"",
+						name)));
 	}
 
 	if (*foundPtr)
@@ -433,9 +433,9 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 		{
 			LWLockRelease(ShmemIndexLock);
 			ereport(ERROR,
-				  (errmsg("ShmemIndex entry size is wrong for data structure"
-						  " \"%s\": expected %zu, actual %zu",
-						  name, size, result->size)));
+					(errmsg("ShmemIndex entry size is wrong for data structure"
+							" \"%s\": expected %zu, actual %zu",
+							name, size, result->size)));
 		}
 		structPtr = result->location;
 	}

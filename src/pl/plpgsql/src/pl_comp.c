@@ -421,7 +421,7 @@ do_compile(FunctionCallInfo fcinfo,
 				/* Create datatype info */
 				argdtype = plpgsql_build_datatype(argtypeid,
 												  -1,
-											   function->fn_input_collation);
+												  function->fn_input_collation);
 
 				/* Disallow pseudotype argument */
 				/* (note we already replaced polymorphic types) */
@@ -430,8 +430,8 @@ do_compile(FunctionCallInfo fcinfo,
 					argdtype->ttype != PLPGSQL_TTYPE_ROW)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						   errmsg("PL/pgSQL functions cannot accept type %s",
-								  format_type_be(argtypeid))));
+							 errmsg("PL/pgSQL functions cannot accept type %s",
+									format_type_be(argtypeid))));
 
 				/* Build variable and add to datum list */
 				argvariable = plpgsql_build_variable(buf, 0,
@@ -511,9 +511,9 @@ do_compile(FunctionCallInfo fcinfo,
 					if (!OidIsValid(rettypeid))
 						ereport(ERROR,
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("could not determine actual return type "
-									"for polymorphic function \"%s\"",
-									plpgsql_error_funcname)));
+								 errmsg("could not determine actual return type "
+										"for polymorphic function \"%s\"",
+										plpgsql_error_funcname)));
 				}
 			}
 
@@ -545,8 +545,8 @@ do_compile(FunctionCallInfo fcinfo,
 				else
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						   errmsg("PL/pgSQL functions cannot return type %s",
-								  format_type_be(rettypeid))));
+							 errmsg("PL/pgSQL functions cannot return type %s",
+									format_type_be(rettypeid))));
 			}
 
 			if (typeStruct->typrelid != InvalidOid ||
@@ -568,7 +568,7 @@ do_compile(FunctionCallInfo fcinfo,
 					(void) plpgsql_build_variable("$0", 0,
 												  build_datatype(typeTup,
 																 -1,
-											   function->fn_input_collation),
+																 function->fn_input_collation),
 												  true);
 				}
 			}
@@ -586,7 +586,7 @@ do_compile(FunctionCallInfo fcinfo,
 			if (procStruct->pronargs != 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-				  errmsg("trigger functions cannot have declared arguments"),
+						 errmsg("trigger functions cannot have declared arguments"),
 						 errhint("The arguments of the trigger can be accessed through TG_NARGS and TG_ARGV instead.")));
 
 			/* Add the record for referencing NEW ROW */
@@ -609,7 +609,7 @@ do_compile(FunctionCallInfo fcinfo,
 			var = plpgsql_build_variable("tg_when", 0,
 										 plpgsql_build_datatype(TEXTOID,
 																-1,
-											   function->fn_input_collation),
+																function->fn_input_collation),
 										 true);
 			function->tg_when_varno = var->dno;
 
@@ -617,7 +617,7 @@ do_compile(FunctionCallInfo fcinfo,
 			var = plpgsql_build_variable("tg_level", 0,
 										 plpgsql_build_datatype(TEXTOID,
 																-1,
-											   function->fn_input_collation),
+																function->fn_input_collation),
 										 true);
 			function->tg_level_varno = var->dno;
 
@@ -625,7 +625,7 @@ do_compile(FunctionCallInfo fcinfo,
 			var = plpgsql_build_variable("tg_op", 0,
 										 plpgsql_build_datatype(TEXTOID,
 																-1,
-											   function->fn_input_collation),
+																function->fn_input_collation),
 										 true);
 			function->tg_op_varno = var->dno;
 
@@ -673,7 +673,7 @@ do_compile(FunctionCallInfo fcinfo,
 			var = plpgsql_build_variable("tg_argv", 0,
 										 plpgsql_build_datatype(TEXTARRAYOID,
 																-1,
-											   function->fn_input_collation),
+																function->fn_input_collation),
 										 true);
 			function->tg_argv_varno = var->dno;
 
@@ -695,7 +695,7 @@ do_compile(FunctionCallInfo fcinfo,
 			var = plpgsql_build_variable("tg_event", 0,
 										 plpgsql_build_datatype(TEXTOID,
 																-1,
-											   function->fn_input_collation),
+																function->fn_input_collation),
 										 true);
 			function->tg_event_varno = var->dno;
 
@@ -703,7 +703,7 @@ do_compile(FunctionCallInfo fcinfo,
 			var = plpgsql_build_variable("tg_tag", 0,
 										 plpgsql_build_datatype(TEXTOID,
 																-1,
-											   function->fn_input_collation),
+																function->fn_input_collation),
 										 true);
 			function->tg_tag_varno = var->dno;
 
@@ -2034,9 +2034,9 @@ build_row_from_class(Oid classOid)
 			 * we ignore this information for now.
 			 */
 			var = plpgsql_build_variable(refname, 0,
-								 plpgsql_build_datatype(attrStruct->atttypid,
-														attrStruct->atttypmod,
-												   attrStruct->attcollation),
+										 plpgsql_build_datatype(attrStruct->atttypid,
+																attrStruct->atttypmod,
+																attrStruct->attcollation),
 										 false);
 
 			/* Add the variable to the row */
@@ -2206,7 +2206,7 @@ build_datatype(HeapTuple typeTup, int32 typmod, Oid collation)
 		/* we can short-circuit looking up base types if it's not varlena */
 		typ->typisarray = (typeStruct->typlen == -1 &&
 						   typeStruct->typstorage != 'p' &&
-				 OidIsValid(get_base_element_type(typeStruct->typbasetype)));
+						   OidIsValid(get_base_element_type(typeStruct->typbasetype)));
 	}
 	else
 		typ->typisarray = false;
@@ -2316,7 +2316,7 @@ plpgsql_start_datums(void)
 	plpgsql_nDatums = 0;
 	/* This is short-lived, so needn't allocate in function's cxt */
 	plpgsql_Datums = MemoryContextAlloc(plpgsql_compile_tmp_cxt,
-									 sizeof(PLpgSQL_datum *) * datums_alloc);
+										sizeof(PLpgSQL_datum *) * datums_alloc);
 	/* datums_last tracks what's been seen by plpgsql_add_initdatums() */
 	datums_last = 0;
 }

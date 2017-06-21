@@ -265,8 +265,8 @@ logicalrep_worker_launch(Oid dbid, Oid subid, const char *subname, Oid userid,
 	TimestampTz now;
 
 	ereport(DEBUG1,
-	   (errmsg("starting logical replication worker for subscription \"%s\"",
-			   subname)));
+			(errmsg("starting logical replication worker for subscription \"%s\"",
+					subname)));
 
 	/* Report this after the initial starting message for consistency. */
 	if (max_replication_slots == 0)
@@ -399,7 +399,7 @@ retry:
 		ereport(WARNING,
 				(errcode(ERRCODE_CONFIGURATION_LIMIT_EXCEEDED),
 				 errmsg("out of background worker slots"),
-			   errhint("You might need to increase max_worker_processes.")));
+				 errhint("You might need to increase max_worker_processes.")));
 		return;
 	}
 
@@ -556,8 +556,8 @@ logicalrep_worker_attach(int slot)
 		LWLockRelease(LogicalRepWorkerLock);
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-		 errmsg("logical replication worker slot %d is empty, cannot attach",
-				slot)));
+				 errmsg("logical replication worker slot %d is empty, cannot attach",
+						slot)));
 	}
 
 	if (MyLogicalRepWorker->proc)
@@ -565,8 +565,8 @@ logicalrep_worker_attach(int slot)
 		LWLockRelease(LogicalRepWorkerLock);
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-			  errmsg("logical replication worker slot %d is already used by "
-					 "another worker, cannot attach", slot)));
+				 errmsg("logical replication worker slot %d is already used by "
+						"another worker, cannot attach", slot)));
 	}
 
 	MyLogicalRepWorker->proc = MyProc;
@@ -829,7 +829,7 @@ ApplyLauncherMain(Datum main_arg)
 		{
 			/* Use temporary context for the database list and worker info. */
 			subctx = AllocSetContextCreate(TopMemoryContext,
-									  "Logical Replication Launcher sublist",
+										   "Logical Replication Launcher sublist",
 										   ALLOCSET_DEFAULT_MINSIZE,
 										   ALLOCSET_DEFAULT_INITSIZE,
 										   ALLOCSET_DEFAULT_MAXSIZE);

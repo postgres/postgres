@@ -294,8 +294,8 @@ CheckRestrictedOperation(const char *cmdname)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 		/* translator: %s is name of a SQL command, eg PREPARE */
-			 errmsg("cannot execute %s within security-restricted operation",
-					cmdname)));
+				 errmsg("cannot execute %s within security-restricted operation",
+						cmdname)));
 }
 
 
@@ -1024,7 +1024,7 @@ ProcessUtilitySlow(ParseState *pstate,
 							 * table
 							 */
 							toast_options = transformRelOptions((Datum) 0,
-											  ((CreateStmt *) stmt)->options,
+																((CreateStmt *) stmt)->options,
 																"toast",
 																validnsps,
 																true,
@@ -1165,8 +1165,8 @@ ProcessUtilitySlow(ParseState *pstate,
 					}
 					else
 						ereport(NOTICE,
-						  (errmsg("relation \"%s\" does not exist, skipping",
-								  atstmt->relation->relname)));
+								(errmsg("relation \"%s\" does not exist, skipping",
+										atstmt->relation->relname)));
 				}
 
 				/* ALTER TABLE stashes commands internally */
@@ -1464,7 +1464,7 @@ ProcessUtilitySlow(ParseState *pstate,
 				PG_TRY();
 				{
 					address = ExecRefreshMatView((RefreshMatViewStmt *) parsetree,
-										 queryString, params, completionTag);
+												 queryString, params, completionTag);
 				}
 				PG_CATCH();
 				{

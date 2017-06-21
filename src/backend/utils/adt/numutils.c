@@ -86,7 +86,7 @@ pg_atoi(const char *s, int size, int c)
 			if (errno == ERANGE || l < SCHAR_MIN || l > SCHAR_MAX)
 				ereport(ERROR,
 						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				errmsg("value \"%s\" is out of range for 8-bit integer", s)));
+						 errmsg("value \"%s\" is out of range for 8-bit integer", s)));
 			break;
 		default:
 			elog(ERROR, "unsupported result size: %d", size);

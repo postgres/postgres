@@ -177,7 +177,7 @@ buildACLCommands(const char *name, const char *subname,
 					else if (strncmp(grantee->data, "group ",
 									 strlen("group ")) == 0)
 						appendPQExpBuffer(firstsql, "GROUP %s;\n",
-									fmtId(grantee->data + strlen("group ")));
+										  fmtId(grantee->data + strlen("group ")));
 					else
 						appendPQExpBuffer(firstsql, "%s;\n",
 										  fmtId(grantee->data));
@@ -185,14 +185,14 @@ buildACLCommands(const char *name, const char *subname,
 				if (privswgo->len > 0)
 				{
 					appendPQExpBuffer(firstsql,
-							   "%sREVOKE GRANT OPTION FOR %s ON %s %s FROM ",
+									  "%sREVOKE GRANT OPTION FOR %s ON %s %s FROM ",
 									  prefix, privswgo->data, type, name);
 					if (grantee->len == 0)
 						appendPQExpBufferStr(firstsql, "PUBLIC");
 					else if (strncmp(grantee->data, "group ",
 									 strlen("group ")) == 0)
 						appendPQExpBuffer(firstsql, "GROUP %s",
-									fmtId(grantee->data + strlen("group ")));
+										  fmtId(grantee->data + strlen("group ")));
 					else
 						appendPQExpBufferStr(firstsql, fmtId(grantee->data));
 				}
@@ -260,7 +260,7 @@ buildACLCommands(const char *name, const char *subname,
 										  fmtId(grantee->data));
 					if (privswgo->len > 0)
 						appendPQExpBuffer(firstsql,
-							"%sGRANT %s ON %s %s TO %s WITH GRANT OPTION;\n",
+										  "%sGRANT %s ON %s %s TO %s WITH GRANT OPTION;\n",
 										  prefix, privswgo->data, type, name,
 										  fmtId(grantee->data));
 				}
@@ -291,7 +291,7 @@ buildACLCommands(const char *name, const char *subname,
 					else if (strncmp(grantee->data, "group ",
 									 strlen("group ")) == 0)
 						appendPQExpBuffer(secondsql, "GROUP %s;\n",
-									fmtId(grantee->data + strlen("group ")));
+										  fmtId(grantee->data + strlen("group ")));
 					else
 						appendPQExpBuffer(secondsql, "%s;\n", fmtId(grantee->data));
 				}
@@ -304,7 +304,7 @@ buildACLCommands(const char *name, const char *subname,
 					else if (strncmp(grantee->data, "group ",
 									 strlen("group ")) == 0)
 						appendPQExpBuffer(secondsql, "GROUP %s",
-									fmtId(grantee->data + strlen("group ")));
+										  fmtId(grantee->data + strlen("group ")));
 					else
 						appendPQExpBufferStr(secondsql, fmtId(grantee->data));
 					appendPQExpBufferStr(secondsql, " WITH GRANT OPTION;\n");
@@ -764,16 +764,16 @@ buildACLQueries(PQExpBuffer acl_subquery, PQExpBuffer racl_subquery,
 						  "(SELECT pg_catalog.array_agg(acl) FROM "
 						  "(SELECT pg_catalog.unnest(pip.initprivs) AS acl "
 						  "EXCEPT "
-		"SELECT pg_catalog.unnest(pg_catalog.acldefault(%s,%s))) as foo) END",
+						  "SELECT pg_catalog.unnest(pg_catalog.acldefault(%s,%s))) as foo) END",
 						  obj_kind,
 						  acl_owner);
 
 		printfPQExpBuffer(init_racl_subquery,
 						  "CASE WHEN privtype = 'e' THEN "
 						  "(SELECT pg_catalog.array_agg(acl) FROM "
-			"(SELECT pg_catalog.unnest(pg_catalog.acldefault(%s,%s)) AS acl "
+						  "(SELECT pg_catalog.unnest(pg_catalog.acldefault(%s,%s)) AS acl "
 						  "EXCEPT "
-					  "SELECT pg_catalog.unnest(pip.initprivs)) as foo) END",
+						  "SELECT pg_catalog.unnest(pip.initprivs)) as foo) END",
 						  obj_kind,
 						  acl_owner);
 	}

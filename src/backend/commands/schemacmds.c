@@ -104,7 +104,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString,
 		ereport(ERROR,
 				(errcode(ERRCODE_RESERVED_NAME),
 				 errmsg("unacceptable schema name \"%s\"", schemaName),
-		   errdetail("The prefix \"pg_\" is reserved for system schemas.")));
+				 errdetail("The prefix \"pg_\" is reserved for system schemas.")));
 
 	/*
 	 * If if_not_exists was given and the schema already exists, bail out.
@@ -133,7 +133,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString,
 	 */
 	if (saved_uid != owner_uid)
 		SetUserIdAndSecContext(owner_uid,
-							save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+							   save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 
 	/* Create the schema's namespace */
 	namespaceId = NamespaceCreate(schemaName, owner_uid, false);
@@ -278,7 +278,7 @@ RenameSchema(const char *oldname, const char *newname)
 		ereport(ERROR,
 				(errcode(ERRCODE_RESERVED_NAME),
 				 errmsg("unacceptable schema name \"%s\"", newname),
-		   errdetail("The prefix \"pg_\" is reserved for system schemas.")));
+				 errdetail("The prefix \"pg_\" is reserved for system schemas.")));
 
 	/* rename */
 	namestrcpy(&(((Form_pg_namespace) GETSTRUCT(tup))->nspname), newname);

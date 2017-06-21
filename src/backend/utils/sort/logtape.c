@@ -357,7 +357,7 @@ ltsReleaseBlock(LogicalTapeSet *lts, long blocknum)
 	{
 		lts->freeBlocksLen *= 2;
 		lts->freeBlocks = (long *) repalloc(lts->freeBlocks,
-										  lts->freeBlocksLen * sizeof(long));
+											lts->freeBlocksLen * sizeof(long));
 	}
 
 	/*

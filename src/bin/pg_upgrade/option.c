@@ -22,7 +22,7 @@
 
 static void usage(void);
 static void check_required_directory(char **dirpath, char **configpath,
-				   char *envVarName, char *cmdLineOption, char *description);
+						 char *envVarName, char *cmdLineOption, char *description);
 #define FIX_DEFAULT_READ_ONLY "-c default_transaction_read_only=false"
 
 
@@ -218,7 +218,7 @@ parseCommandLine(int argc, char *argv[])
 
 		/* Start with newline because we might be appending to a file. */
 		fprintf(fp, "\n"
-		"-----------------------------------------------------------------\n"
+				"-----------------------------------------------------------------\n"
 				"  pg_upgrade run on %s"
 				"-----------------------------------------------------------------\n\n",
 				ctime(&run_time));
@@ -243,9 +243,9 @@ parseCommandLine(int argc, char *argv[])
 	check_required_directory(&new_cluster.bindir, NULL, "PGBINNEW", "-B",
 							 _("new cluster binaries reside"));
 	check_required_directory(&old_cluster.pgdata, &old_cluster.pgconfig,
-						   "PGDATAOLD", "-d", _("old cluster data resides"));
+							 "PGDATAOLD", "-d", _("old cluster data resides"));
 	check_required_directory(&new_cluster.pgdata, &new_cluster.pgconfig,
-						   "PGDATANEW", "-D", _("new cluster data resides"));
+							 "PGDATANEW", "-D", _("new cluster data resides"));
 
 #ifdef WIN32
 
@@ -296,11 +296,11 @@ usage(void)
 	printf(_("  -?, --help                    show this help, then exit\n"));
 	printf(_("\n"
 			 "Before running pg_upgrade you must:\n"
-		"  create a new database cluster (using the new version of initdb)\n"
+			 "  create a new database cluster (using the new version of initdb)\n"
 			 "  shutdown the postmaster servicing the old cluster\n"
 			 "  shutdown the postmaster servicing the new cluster\n"));
 	printf(_("\n"
-	 "When you run pg_upgrade, you must provide the following information:\n"
+			 "When you run pg_upgrade, you must provide the following information:\n"
 			 "  the data directory for the old cluster  (-d DATADIR)\n"
 			 "  the data directory for the new cluster  (-D DATADIR)\n"
 			 "  the \"bin\" directory for the old version (-b BINDIR)\n"
@@ -478,7 +478,7 @@ get_sock_dir(ClusterInfo *cluster, bool live_check)
 				pg_fatal("Cannot open file %s: %m\n", filename);
 
 			for (lineno = 1;
-			   lineno <= Max(LOCK_FILE_LINE_PORT, LOCK_FILE_LINE_SOCKET_DIR);
+				 lineno <= Max(LOCK_FILE_LINE_PORT, LOCK_FILE_LINE_SOCKET_DIR);
 				 lineno++)
 			{
 				if (fgets(line, sizeof(line), fp) == NULL)

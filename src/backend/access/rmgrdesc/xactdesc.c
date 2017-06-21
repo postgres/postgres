@@ -205,8 +205,8 @@ xact_desc_commit(StringInfo buf, uint8 info, xl_xact_commit *xlrec, RepOriginId 
 	if (parsed.nmsgs > 0)
 	{
 		standby_desc_invalidations(
-					buf, parsed.nmsgs, parsed.msgs, parsed.dbId, parsed.tsId,
-						  XactCompletionRelcacheInitFileInval(parsed.xinfo));
+								   buf, parsed.nmsgs, parsed.msgs, parsed.dbId, parsed.tsId,
+								   XactCompletionRelcacheInitFileInval(parsed.xinfo));
 	}
 
 	if (XactCompletionForceSyncCommit(parsed.xinfo))

@@ -333,7 +333,7 @@ pg_relation_size(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	size = calculate_relation_size(&(rel->rd_node), rel->rd_backend,
-							  forkname_to_number(text_to_cstring(forkName)));
+								   forkname_to_number(text_to_cstring(forkName)));
 
 	relation_close(rel, AccessShareLock);
 
@@ -838,10 +838,10 @@ pg_size_bytes(PG_FUNCTION_ARGS)
 			Numeric		mul_num;
 
 			mul_num = DatumGetNumeric(DirectFunctionCall1(int8_numeric,
-												 Int64GetDatum(multiplier)));
+														  Int64GetDatum(multiplier)));
 
 			num = DatumGetNumeric(DirectFunctionCall2(numeric_mul,
-													NumericGetDatum(mul_num),
+													  NumericGetDatum(mul_num),
 													  NumericGetDatum(num)));
 		}
 	}
@@ -978,7 +978,7 @@ pg_relation_filepath(PG_FUNCTION_ARGS)
 				rnode.relNode = relform->relfilenode;
 			else				/* Consult the relation mapper */
 				rnode.relNode = RelationMapOidToFilenode(relid,
-													   relform->relisshared);
+														 relform->relisshared);
 			break;
 
 		default:

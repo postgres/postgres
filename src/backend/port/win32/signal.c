@@ -186,7 +186,7 @@ pgwin32_create_signal_listener(pid_t pid)
 	snprintf(pipename, sizeof(pipename), "\\\\.\\pipe\\pgsignal_%u", (int) pid);
 
 	pipe = CreateNamedPipe(pipename, PIPE_ACCESS_DUPLEX,
-					   PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
+						   PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
 						   PIPE_UNLIMITED_INSTANCES, 16, 16, 1000, NULL);
 
 	if (pipe == INVALID_HANDLE_VALUE)
@@ -266,8 +266,8 @@ pg_signal_thread(LPVOID param)
 		if (pipe == INVALID_HANDLE_VALUE)
 		{
 			pipe = CreateNamedPipe(pipename, PIPE_ACCESS_DUPLEX,
-					   PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
-							   PIPE_UNLIMITED_INSTANCES, 16, 16, 1000, NULL);
+								   PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
+								   PIPE_UNLIMITED_INSTANCES, 16, 16, 1000, NULL);
 
 			if (pipe == INVALID_HANDLE_VALUE)
 			{
@@ -293,8 +293,8 @@ pg_signal_thread(LPVOID param)
 			 * window of time where we will miss incoming requests.
 			 */
 			newpipe = CreateNamedPipe(pipename, PIPE_ACCESS_DUPLEX,
-					   PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
-							   PIPE_UNLIMITED_INSTANCES, 16, 16, 1000, NULL);
+									  PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
+									  PIPE_UNLIMITED_INSTANCES, 16, 16, 1000, NULL);
 			if (newpipe == INVALID_HANDLE_VALUE)
 			{
 				/*
@@ -311,7 +311,7 @@ pg_signal_thread(LPVOID param)
 				 */
 			}
 			hThread = CreateThread(NULL, 0,
-						  (LPTHREAD_START_ROUTINE) pg_signal_dispatch_thread,
+								   (LPTHREAD_START_ROUTINE) pg_signal_dispatch_thread,
 								   (LPVOID) pipe, 0, NULL);
 			if (hThread == INVALID_HANDLE_VALUE)
 				write_stderr("could not create signal dispatch thread: error code %lu\n",

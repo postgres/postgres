@@ -301,8 +301,8 @@ check_parameter_resolution_walker(Node *node, ParseState *pstate)
 			if (param->paramtype != (*parstate->paramTypes)[paramno - 1])
 				ereport(ERROR,
 						(errcode(ERRCODE_AMBIGUOUS_PARAMETER),
-					 errmsg("could not determine data type of parameter $%d",
-							paramno),
+						 errmsg("could not determine data type of parameter $%d",
+								paramno),
 						 parser_errposition(pstate, param->location)));
 		}
 		return false;

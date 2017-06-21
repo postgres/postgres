@@ -214,16 +214,16 @@ add_paths_to_joinrel(PlannerInfo *root,
 		if (bms_overlap(joinrel->relids, sjinfo2->min_righthand) &&
 			!bms_overlap(joinrel->relids, sjinfo2->min_lefthand))
 			extra.param_source_rels = bms_join(extra.param_source_rels,
-										   bms_difference(root->all_baserels,
-													sjinfo2->min_righthand));
+											   bms_difference(root->all_baserels,
+															  sjinfo2->min_righthand));
 
 		/* full joins constrain both sides symmetrically */
 		if (sjinfo2->jointype == JOIN_FULL &&
 			bms_overlap(joinrel->relids, sjinfo2->min_lefthand) &&
 			!bms_overlap(joinrel->relids, sjinfo2->min_righthand))
 			extra.param_source_rels = bms_join(extra.param_source_rels,
-										   bms_difference(root->all_baserels,
-													 sjinfo2->min_lefthand));
+											   bms_difference(root->all_baserels,
+															  sjinfo2->min_lefthand));
 	}
 
 	/*
@@ -918,7 +918,7 @@ sort_inner_and_outer(PlannerInfo *root,
 		cur_mergeclauses = find_mergeclauses_for_pathkeys(root,
 														  outerkeys,
 														  true,
-													extra->mergeclause_list);
+														  extra->mergeclause_list);
 
 		/* Should have used them all... */
 		Assert(list_length(cur_mergeclauses) == list_length(extra->mergeclause_list));
@@ -1445,7 +1445,7 @@ match_unsorted_outer(PlannerInfo *root,
 				return;
 
 			inner_cheapest_total = get_cheapest_parallel_safe_total_inner(
-														 innerrel->pathlist);
+																		  innerrel->pathlist);
 		}
 
 		if (inner_cheapest_total)

@@ -522,7 +522,7 @@ pg_flush_data(int fd, off_t offset, off_t nbytes)
 				/* FATAL error because mapping would remain */
 				ereport(FATAL,
 						(errcode_for_file_access(),
-					  errmsg("could not munmap() while flushing data: %m")));
+						 errmsg("could not munmap() while flushing data: %m")));
 			}
 
 			return;
@@ -1757,8 +1757,8 @@ FileWrite(File file, char *buffer, int amount, uint32 wait_event_info)
 			if (newTotal > (uint64) temp_file_limit * (uint64) 1024)
 				ereport(ERROR,
 						(errcode(ERRCODE_CONFIGURATION_LIMIT_EXCEEDED),
-				 errmsg("temporary file size exceeds temp_file_limit (%dkB)",
-						temp_file_limit)));
+						 errmsg("temporary file size exceeds temp_file_limit (%dkB)",
+								temp_file_limit)));
 		}
 	}
 
@@ -2728,7 +2728,7 @@ RemovePgTempFiles(void)
 			continue;
 
 		snprintf(temp_path, sizeof(temp_path), "pg_tblspc/%s/%s/%s",
-			spc_de->d_name, TABLESPACE_VERSION_DIRECTORY, PG_TEMP_FILES_DIR);
+				 spc_de->d_name, TABLESPACE_VERSION_DIRECTORY, PG_TEMP_FILES_DIR);
 		RemovePgTempFilesInDir(temp_path);
 
 		snprintf(temp_path, sizeof(temp_path), "pg_tblspc/%s/%s",

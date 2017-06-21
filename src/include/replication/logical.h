@@ -18,7 +18,7 @@
 struct LogicalDecodingContext;
 
 typedef void (*LogicalOutputPluginWriterWrite) (
-										   struct LogicalDecodingContext *lr,
+												struct LogicalDecodingContext *lr,
 												XLogRecPtr Ptr,
 												TransactionId xid,
 												bool last_write
@@ -27,7 +27,7 @@ typedef void (*LogicalOutputPluginWriterWrite) (
 typedef LogicalOutputPluginWriterWrite LogicalOutputPluginWriterPrepareWrite;
 
 typedef void (*LogicalOutputPluginWriterUpdateProgress) (
-										   struct LogicalDecodingContext *lr,
+														 struct LogicalDecodingContext *lr,
 														 XLogRecPtr Ptr,
 														 TransactionId xid
 );
@@ -93,14 +93,14 @@ extern LogicalDecodingContext *CreateInitDecodingContext(char *plugin,
 						  XLogPageReadCB read_page,
 						  LogicalOutputPluginWriterPrepareWrite prepare_write,
 						  LogicalOutputPluginWriterWrite do_write,
-					LogicalOutputPluginWriterUpdateProgress update_progress);
+						  LogicalOutputPluginWriterUpdateProgress update_progress);
 extern LogicalDecodingContext *CreateDecodingContext(
 					  XLogRecPtr start_lsn,
 					  List *output_plugin_options,
 					  XLogPageReadCB read_page,
 					  LogicalOutputPluginWriterPrepareWrite prepare_write,
 					  LogicalOutputPluginWriterWrite do_write,
-					LogicalOutputPluginWriterUpdateProgress update_progress);
+					  LogicalOutputPluginWriterUpdateProgress update_progress);
 extern void DecodingContextFindStartpoint(LogicalDecodingContext *ctx);
 extern bool DecodingContextReady(LogicalDecodingContext *ctx);
 extern void FreeDecodingContext(LogicalDecodingContext *ctx);

@@ -1934,7 +1934,7 @@ create_database(const char *dbname)
 				 "ALTER DATABASE \"%s\" SET lc_numeric TO 'C';"
 				 "ALTER DATABASE \"%s\" SET lc_time TO 'C';"
 				 "ALTER DATABASE \"%s\" SET bytea_output TO 'hex';"
-			"ALTER DATABASE \"%s\" SET timezone_abbreviations TO 'Default';",
+				 "ALTER DATABASE \"%s\" SET timezone_abbreviations TO 'Default';",
 				 dbname, dbname, dbname, dbname, dbname, dbname);
 
 	/*

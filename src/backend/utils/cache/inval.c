@@ -236,7 +236,7 @@ AddInvalidationMessage(InvalidationChunk **listHdr,
 		chunk = (InvalidationChunk *)
 			MemoryContextAlloc(CurTransactionContext,
 							   offsetof(InvalidationChunk, msgs) +
-						 FIRSTCHUNKSIZE * sizeof(SharedInvalidationMessage));
+							   FIRSTCHUNKSIZE * sizeof(SharedInvalidationMessage));
 		chunk->nitems = 0;
 		chunk->maxitems = FIRSTCHUNKSIZE;
 		chunk->next = *listHdr;
@@ -464,7 +464,7 @@ ProcessInvalidationMessages(InvalidationListHeader *hdr,
  */
 static void
 ProcessInvalidationMessagesMulti(InvalidationListHeader *hdr,
-				 void (*func) (const SharedInvalidationMessage *msgs, int n))
+								 void (*func) (const SharedInvalidationMessage *msgs, int n))
 {
 	ProcessMessageListMulti(hdr->cclist, func(msgs, n));
 	ProcessMessageListMulti(hdr->rclist, func(msgs, n));
@@ -778,7 +778,7 @@ MakeSharedInvalidMessagesArray(const SharedInvalidationMessage *msgs, int n)
 		 * We're so close to EOXact that we now we're going to lose it anyhow.
 		 */
 		SharedInvalidMessagesArray = palloc(maxSharedInvalidMessagesArray
-										* sizeof(SharedInvalidationMessage));
+											* sizeof(SharedInvalidationMessage));
 	}
 
 	if ((numSharedInvalidMessagesArray + n) > maxSharedInvalidMessagesArray)
@@ -788,7 +788,7 @@ MakeSharedInvalidMessagesArray(const SharedInvalidationMessage *msgs, int n)
 
 		SharedInvalidMessagesArray = repalloc(SharedInvalidMessagesArray,
 											  maxSharedInvalidMessagesArray
-										* sizeof(SharedInvalidationMessage));
+											  * sizeof(SharedInvalidationMessage));
 	}
 
 	/*

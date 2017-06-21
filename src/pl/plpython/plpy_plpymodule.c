@@ -493,7 +493,7 @@ PLy_output(volatile int level, PyObject *self, PyObject *args, PyObject *kw)
 			else
 			{
 				PLy_exception_set(PyExc_TypeError,
-					 "'%s' is an invalid keyword argument for this function",
+								  "'%s' is an invalid keyword argument for this function",
 								  keyword);
 				return NULL;
 			}
@@ -549,7 +549,7 @@ PLy_output(volatile int level, PyObject *self, PyObject *args, PyObject *kw)
 				 (column_name != NULL) ?
 				 err_generic_string(PG_DIAG_COLUMN_NAME, column_name) : 0,
 				 (constraint_name != NULL) ?
-			err_generic_string(PG_DIAG_CONSTRAINT_NAME, constraint_name) : 0,
+				 err_generic_string(PG_DIAG_CONSTRAINT_NAME, constraint_name) : 0,
 				 (datatype_name != NULL) ?
 				 err_generic_string(PG_DIAG_DATATYPE_NAME, datatype_name) : 0,
 				 (table_name != NULL) ?

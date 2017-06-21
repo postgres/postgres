@@ -129,8 +129,8 @@ transformWithClause(ParseState *pstate, WithClause *withClause)
 			if (strcmp(cte->ctename, cte2->ctename) == 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_DUPLICATE_ALIAS),
-					errmsg("WITH query name \"%s\" specified more than once",
-						   cte2->ctename),
+						 errmsg("WITH query name \"%s\" specified more than once",
+								cte2->ctename),
 						 parser_errposition(pstate, cte2->location)));
 		}
 
@@ -313,7 +313,7 @@ analyzeCTE(ParseState *pstate, CommonTableExpr *cte)
 						 errmsg("recursive query \"%s\" column %d has type %s in non-recursive term but type %s overall",
 								cte->ctename, varattno,
 								format_type_with_typemod(lfirst_oid(lctyp),
-													   lfirst_int(lctypmod)),
+														 lfirst_int(lctypmod)),
 								format_type_with_typemod(exprType(texpr),
 														 exprTypmod(texpr))),
 						 errhint("Cast the output of the non-recursive term to the correct type."),
@@ -595,7 +595,7 @@ TopologicalSort(ParseState *pstate, CteItem *items, int numitems)
 		if (j >= numitems)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			errmsg("mutual recursion between WITH items is not implemented"),
+					 errmsg("mutual recursion between WITH items is not implemented"),
 					 parser_errposition(pstate, items[i].cte->location)));
 
 		/*
@@ -699,9 +699,9 @@ checkWellFormedRecursion(CteState *cstate)
 		if (stmt->sortClause)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				  errmsg("ORDER BY in a recursive query is not implemented"),
+					 errmsg("ORDER BY in a recursive query is not implemented"),
 					 parser_errposition(cstate->pstate,
-								  exprLocation((Node *) stmt->sortClause))));
+										exprLocation((Node *) stmt->sortClause))));
 		if (stmt->limitOffset)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -719,7 +719,7 @@ checkWellFormedRecursion(CteState *cstate)
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("FOR UPDATE/SHARE in a recursive query is not implemented"),
 					 parser_errposition(cstate->pstate,
-							   exprLocation((Node *) stmt->lockingClause))));
+										exprLocation((Node *) stmt->lockingClause))));
 	}
 }
 

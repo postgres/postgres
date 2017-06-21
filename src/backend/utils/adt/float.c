@@ -534,8 +534,8 @@ float8in_internal(char *num, char **endptr_p,
 				errnumber[endptr - num] = '\0';
 				ereport(ERROR,
 						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				   errmsg("\"%s\" is out of range for type double precision",
-						  errnumber)));
+						 errmsg("\"%s\" is out of range for type double precision",
+								errnumber)));
 			}
 		}
 		else
@@ -3534,7 +3534,7 @@ width_bucket_float8(PG_FUNCTION_ARGS)
 	if (isnan(operand) || isnan(bound1) || isnan(bound2))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_ARGUMENT_FOR_WIDTH_BUCKET_FUNCTION),
-			 errmsg("operand, lower bound, and upper bound cannot be NaN")));
+				 errmsg("operand, lower bound, and upper bound cannot be NaN")));
 
 	/* Note that we allow "operand" to be infinite */
 	if (isinf(bound1) || isinf(bound2))

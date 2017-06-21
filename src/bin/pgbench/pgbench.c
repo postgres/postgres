@@ -476,17 +476,17 @@ usage(void)
 		   "\nInitialization options:\n"
 		   "  -i, --initialize         invokes initialization mode\n"
 		   "  -F, --fillfactor=NUM     set fill factor\n"
-		"  -n, --no-vacuum          do not run VACUUM after initialization\n"
-	"  -q, --quiet              quiet logging (one message each 5 seconds)\n"
+		   "  -n, --no-vacuum          do not run VACUUM after initialization\n"
+		   "  -q, --quiet              quiet logging (one message each 5 seconds)\n"
 		   "  -s, --scale=NUM          scaling factor\n"
 		   "  --foreign-keys           create foreign key constraints between tables\n"
 		   "  --index-tablespace=TABLESPACE\n"
-	"                           create indexes in the specified tablespace\n"
-	 "  --tablespace=TABLESPACE  create tables in the specified tablespace\n"
+		   "                           create indexes in the specified tablespace\n"
+		   "  --tablespace=TABLESPACE  create tables in the specified tablespace\n"
 		   "  --unlogged-tables        create tables as unlogged tables\n"
 		   "\nOptions to select what to run:\n"
 		   "  -b, --builtin=NAME[@W]   add builtin script NAME weighted at W (default: 1)\n"
-	"                           (use \"-b list\" to list available scripts)\n"
+		   "                           (use \"-b list\" to list available scripts)\n"
 		   "  -f, --file=FILENAME[@W]  add script FILENAME weighted at W (default: 1)\n"
 		   "  -N, --skip-some-updates  skip updates of pgbench_tellers and pgbench_branches\n"
 		   "                           (same as \"-b simple-update\")\n"
@@ -496,7 +496,7 @@ usage(void)
 		   "  -c, --client=NUM         number of concurrent database clients (default: 1)\n"
 		   "  -C, --connect            establish new connection for each transaction\n"
 		   "  -D, --define=VARNAME=VALUE\n"
-	  "                           define variable for use by custom script\n"
+		   "                           define variable for use by custom script\n"
 		   "  -j, --jobs=NUM           number of threads (default: 1)\n"
 		   "  -l, --log                write transaction times to log file\n"
 		   "  -L, --latency-limit=NUM  count transactions lasting more than NUM ms as late\n"
@@ -505,22 +505,22 @@ usage(void)
 		   "  -n, --no-vacuum          do not run VACUUM before tests\n"
 		   "  -P, --progress=NUM       show thread progress report every NUM seconds\n"
 		   "  -r, --report-latencies   report average latency per command\n"
-		"  -R, --rate=NUM           target rate in transactions per second\n"
+		   "  -R, --rate=NUM           target rate in transactions per second\n"
 		   "  -s, --scale=NUM          report this scale factor in output\n"
 		   "  -t, --transactions=NUM   number of transactions each client runs (default: 10)\n"
-		 "  -T, --time=NUM           duration of benchmark test in seconds\n"
+		   "  -T, --time=NUM           duration of benchmark test in seconds\n"
 		   "  -v, --vacuum-all         vacuum all four standard tables before tests\n"
 		   "  --aggregate-interval=NUM aggregate data over NUM seconds\n"
 		   "  --log-prefix=PREFIX      prefix for transaction time log file\n"
 		   "                           (default: \"pgbench_log\")\n"
-		"  --progress-timestamp     use Unix epoch timestamps for progress\n"
+		   "  --progress-timestamp     use Unix epoch timestamps for progress\n"
 		   "  --sampling-rate=NUM      fraction of transactions to log (e.g., 0.01 for 1%%)\n"
 		   "\nCommon options:\n"
 		   "  -d, --debug              print debugging output\n"
-	  "  -h, --host=HOSTNAME      database server host or socket directory\n"
+		   "  -h, --host=HOSTNAME      database server host or socket directory\n"
 		   "  -p, --port=PORT          database server port number\n"
 		   "  -U, --username=USERNAME  connect as specified database user\n"
-		 "  -V, --version            output version information, then exit\n"
+		   "  -V, --version            output version information, then exit\n"
 		   "  -?, --help               show this help, then exit\n"
 		   "\n"
 		   "Report bugs to <pgsql-bugs@postgresql.org>.\n",
@@ -1064,7 +1064,7 @@ lookupCreateVariable(CState *st, const char *context, char *name)
 		/* Create variable at the end of the array */
 		if (st->variables)
 			newvars = (Variable *) pg_realloc(st->variables,
-									(st->nvariables + 1) * sizeof(Variable));
+											  (st->nvariables + 1) * sizeof(Variable));
 		else
 			newvars = (Variable *) pg_malloc(sizeof(Variable));
 
@@ -1615,20 +1615,20 @@ evalFunc(TState *thread, CState *st,
 						}
 
 						setIntValue(retval,
-								 getGaussianRand(thread, imin, imax, param));
+									getGaussianRand(thread, imin, imax, param));
 					}
 					else		/* exponential */
 					{
 						if (param <= 0.0)
 						{
 							fprintf(stderr,
-							"exponential parameter must be greater than zero"
+									"exponential parameter must be greater than zero"
 									" (got %f)\n", param);
 							return false;
 						}
 
 						setIntValue(retval,
-							  getExponentialRand(thread, imin, imax, param));
+									getExponentialRand(thread, imin, imax, param));
 					}
 				}
 
@@ -1883,7 +1883,7 @@ sendCommand(CState *st, Command *command)
 					continue;
 				preparedStatementName(name, st->use_file, j);
 				res = PQprepare(st->con, name,
-						  commands[j]->argv[0], commands[j]->argc - 1, NULL);
+								commands[j]->argv[0], commands[j]->argc - 1, NULL);
 				if (PQresultStatus(res) != PGRES_COMMAND_OK)
 					fprintf(stderr, "%s", PQerrorMessage(st->con));
 				PQclear(res);
@@ -2703,7 +2703,7 @@ init(bool is_no_vacuum)
 	{
 		/* "filler" column defaults to NULL */
 		snprintf(sql, sizeof(sql),
-			"insert into pgbench_tellers(tid,bid,tbalance) values (%d,%d,0)",
+				 "insert into pgbench_tellers(tid,bid,tbalance) values (%d,%d,0)",
 				 i + 1, i / ntellers + 1);
 		executeStatement(con, sql);
 	}
@@ -3438,7 +3438,7 @@ parseScriptWeight(const char *option, char **script)
 		if (wtmp > INT_MAX || wtmp < 0)
 		{
 			fprintf(stderr,
-			"weight specification out of range (0 .. %u): " INT64_FORMAT "\n",
+					"weight specification out of range (0 .. %u): " INT64_FORMAT "\n",
 					INT_MAX, (int64) wtmp);
 			exit(1);
 		}
@@ -3496,7 +3496,7 @@ printResults(TState *threads, StatsData *total, instr_time total_time,
 	time_include = INSTR_TIME_GET_DOUBLE(total_time);
 	tps_include = total->cnt / time_include;
 	tps_exclude = total->cnt / (time_include -
-						(INSTR_TIME_GET_DOUBLE(conn_total_time) / nclients));
+								(INSTR_TIME_GET_DOUBLE(conn_total_time) / nclients));
 
 	/* Report test parameters. */
 	printf("transaction type: %s\n",
@@ -3580,7 +3580,7 @@ printResults(TState *threads, StatsData *total, instr_time total_time,
 				printf(" - number of transactions skipped: " INT64_FORMAT " (%.3f%%)\n",
 					   sql_script[i].stats.skipped,
 					   100.0 * sql_script[i].stats.skipped /
-					(sql_script[i].stats.skipped + sql_script[i].stats.cnt));
+					   (sql_script[i].stats.skipped + sql_script[i].stats.cnt));
 
 			if (num_scripts > 1)
 				printSimpleStats(" - latency", &sql_script[i].stats.latency);

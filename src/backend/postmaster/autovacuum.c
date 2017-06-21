@@ -413,7 +413,7 @@ StartAutoVacLauncher(void)
 	{
 		case -1:
 			ereport(LOG,
-				 (errmsg("could not fork autovacuum launcher process: %m")));
+					(errmsg("could not fork autovacuum launcher process: %m")));
 			return 0;
 
 #ifndef EXEC_BACKEND
@@ -1803,9 +1803,9 @@ autovac_balance_cost(void)
 	 * zero is not a valid value.
 	 */
 	int			vac_cost_limit = (autovacuum_vac_cost_limit > 0 ?
-								autovacuum_vac_cost_limit : VacuumCostLimit);
+								  autovacuum_vac_cost_limit : VacuumCostLimit);
 	int			vac_cost_delay = (autovacuum_vac_cost_delay >= 0 ?
-								autovacuum_vac_cost_delay : VacuumCostDelay);
+								  autovacuum_vac_cost_delay : VacuumCostDelay);
 	double		cost_total;
 	double		cost_avail;
 	dlist_iter	iter;
@@ -2674,7 +2674,7 @@ perform_work_item(AutoVacuumWorkItem *workitem)
 			case AVW_BRINSummarizeRange:
 				DirectFunctionCall2(brin_summarize_range,
 									ObjectIdGetDatum(workitem->avw_relation),
-						   Int64GetDatum((int64) workitem->avw_blockNumber));
+									Int64GetDatum((int64) workitem->avw_blockNumber));
 				break;
 			default:
 				elog(WARNING, "unrecognized work item found: type %d",

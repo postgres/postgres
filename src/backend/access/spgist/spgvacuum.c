@@ -750,7 +750,7 @@ spgprocesspending(spgBulkDeleteState *bds)
 
 					offset = ItemPointerGetOffsetNumber(&nitem->tid);
 					innerTuple = (SpGistInnerTuple) PageGetItem(page,
-												PageGetItemId(page, offset));
+																PageGetItemId(page, offset));
 					if (innerTuple->tupstate == SPGIST_LIVE)
 					{
 						SpGistNodeTuple node;
@@ -766,7 +766,7 @@ spgprocesspending(spgBulkDeleteState *bds)
 					{
 						/* transfer attention to redirect point */
 						spgAddPendingTID(bds,
-								   &((SpGistDeadTuple) innerTuple)->pointer);
+										 &((SpGistDeadTuple) innerTuple)->pointer);
 					}
 					else
 						elog(ERROR, "unexpected SPGiST tuple state: %d",

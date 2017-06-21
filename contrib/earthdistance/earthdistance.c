@@ -69,7 +69,7 @@ geo_distance_internal(Point *pt1, Point *pt2)
 		longdiff = TWO_PI - longdiff;
 
 	sino = sqrt(sin(fabs(lat1 - lat2) / 2.) * sin(fabs(lat1 - lat2) / 2.) +
-			cos(lat1) * cos(lat2) * sin(longdiff / 2.) * sin(longdiff / 2.));
+				cos(lat1) * cos(lat2) * sin(longdiff / 2.) * sin(longdiff / 2.));
 	if (sino > 1.)
 		sino = 1.;
 

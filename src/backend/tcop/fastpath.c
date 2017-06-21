@@ -108,8 +108,8 @@ GetOldFunctionMessage(StringInfo buf)
 			/* FATAL here since no hope of regaining message sync */
 			ereport(FATAL,
 					(errcode(ERRCODE_PROTOCOL_VIOLATION),
-				  errmsg("invalid argument size %d in function call message",
-						 argsize)));
+					 errmsg("invalid argument size %d in function call message",
+							argsize)));
 		}
 		/* and arg contents */
 		if (argsize > 0)
@@ -460,8 +460,8 @@ parse_fcall_arguments(StringInfo msgBuf, struct fp_info *fip,
 			if (argsize < 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
-				  errmsg("invalid argument size %d in function call message",
-						 argsize)));
+						 errmsg("invalid argument size %d in function call message",
+								argsize)));
 
 			/* Reset abuf to empty, and insert raw data into it */
 			resetStringInfo(&abuf);
@@ -523,8 +523,8 @@ parse_fcall_arguments(StringInfo msgBuf, struct fp_info *fip,
 			if (argsize != -1 && abuf.cursor != abuf.len)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
-				errmsg("incorrect binary data format in function argument %d",
-					   i + 1)));
+						 errmsg("incorrect binary data format in function argument %d",
+								i + 1)));
 		}
 		else
 			ereport(ERROR,
@@ -590,8 +590,8 @@ parse_fcall_arguments_20(StringInfo msgBuf, struct fp_info *fip,
 		if (argsize < 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_PROTOCOL_VIOLATION),
-				  errmsg("invalid argument size %d in function call message",
-						 argsize)));
+					 errmsg("invalid argument size %d in function call message",
+							argsize)));
 
 		/* Reset abuf to empty, and insert raw data into it */
 		resetStringInfo(&abuf);
@@ -606,8 +606,8 @@ parse_fcall_arguments_20(StringInfo msgBuf, struct fp_info *fip,
 		if (abuf.cursor != abuf.len)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
-			   errmsg("incorrect binary data format in function argument %d",
-					  i + 1)));
+					 errmsg("incorrect binary data format in function argument %d",
+							i + 1)));
 	}
 
 	/* Desired result format is always binary in protocol 2.0 */

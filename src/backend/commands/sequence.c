@@ -695,9 +695,9 @@ nextval_internal(Oid relid, bool check_permissions)
 
 					snprintf(buf, sizeof(buf), INT64_FORMAT, maxv);
 					ereport(ERROR,
-						 (errcode(ERRCODE_SEQUENCE_GENERATOR_LIMIT_EXCEEDED),
-						  errmsg("nextval: reached maximum value of sequence \"%s\" (%s)",
-								 RelationGetRelationName(seqrel), buf)));
+							(errcode(ERRCODE_SEQUENCE_GENERATOR_LIMIT_EXCEEDED),
+							 errmsg("nextval: reached maximum value of sequence \"%s\" (%s)",
+									RelationGetRelationName(seqrel), buf)));
 				}
 				next = minv;
 			}
@@ -718,9 +718,9 @@ nextval_internal(Oid relid, bool check_permissions)
 
 					snprintf(buf, sizeof(buf), INT64_FORMAT, minv);
 					ereport(ERROR,
-						 (errcode(ERRCODE_SEQUENCE_GENERATOR_LIMIT_EXCEEDED),
-						  errmsg("nextval: reached minimum value of sequence \"%s\" (%s)",
-								 RelationGetRelationName(seqrel), buf)));
+							(errcode(ERRCODE_SEQUENCE_GENERATOR_LIMIT_EXCEEDED),
+							 errmsg("nextval: reached minimum value of sequence \"%s\" (%s)",
+									RelationGetRelationName(seqrel), buf)));
 				}
 				next = maxv;
 			}
@@ -1382,7 +1382,7 @@ init_params(ParseState *pstate, List *options, bool for_identity,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 for_identity
 					 ? errmsg("identity column type must be smallint, integer, or bigint")
-			: errmsg("sequence type must be smallint, integer, or bigint")));
+					 : errmsg("sequence type must be smallint, integer, or bigint")));
 
 		if (!isInit)
 		{
@@ -1394,11 +1394,11 @@ init_params(ParseState *pstate, List *options, bool for_identity,
 			 */
 			if ((seqform->seqtypid == INT2OID && seqform->seqmax == PG_INT16_MAX) ||
 				(seqform->seqtypid == INT4OID && seqform->seqmax == PG_INT32_MAX) ||
-			(seqform->seqtypid == INT8OID && seqform->seqmax == PG_INT64_MAX))
+				(seqform->seqtypid == INT8OID && seqform->seqmax == PG_INT64_MAX))
 				reset_max_value = true;
 			if ((seqform->seqtypid == INT2OID && seqform->seqmin == PG_INT16_MIN) ||
 				(seqform->seqtypid == INT4OID && seqform->seqmin == PG_INT32_MIN) ||
-			(seqform->seqtypid == INT8OID && seqform->seqmin == PG_INT64_MIN))
+				(seqform->seqtypid == INT8OID && seqform->seqmin == PG_INT64_MIN))
 				reset_min_value = true;
 		}
 
@@ -1469,8 +1469,8 @@ init_params(ParseState *pstate, List *options, bool for_identity,
 
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			errmsg("MAXVALUE (%s) is out of range for sequence data type %s",
-				   bufx, format_type_be(seqform->seqtypid))));
+				 errmsg("MAXVALUE (%s) is out of range for sequence data type %s",
+						bufx, format_type_be(seqform->seqtypid))));
 	}
 
 	/* MINVALUE (null arg means NO MINVALUE) */
@@ -1506,8 +1506,8 @@ init_params(ParseState *pstate, List *options, bool for_identity,
 
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			errmsg("MINVALUE (%s) is out of range for sequence data type %s",
-				   bufm, format_type_be(seqform->seqtypid))));
+				 errmsg("MINVALUE (%s) is out of range for sequence data type %s",
+						bufm, format_type_be(seqform->seqtypid))));
 	}
 
 	/* crosscheck min/max */
@@ -1559,8 +1559,8 @@ init_params(ParseState *pstate, List *options, bool for_identity,
 		snprintf(bufm, sizeof(bufm), INT64_FORMAT, seqform->seqmax);
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			  errmsg("START value (%s) cannot be greater than MAXVALUE (%s)",
-					 bufs, bufm)));
+				 errmsg("START value (%s) cannot be greater than MAXVALUE (%s)",
+						bufs, bufm)));
 	}
 
 	/* RESTART [WITH] */
@@ -1589,8 +1589,8 @@ init_params(ParseState *pstate, List *options, bool for_identity,
 		snprintf(bufm, sizeof(bufm), INT64_FORMAT, seqform->seqmin);
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			   errmsg("RESTART value (%s) cannot be less than MINVALUE (%s)",
-					  bufs, bufm)));
+				 errmsg("RESTART value (%s) cannot be less than MINVALUE (%s)",
+						bufs, bufm)));
 	}
 	if (seqdataform->last_value > seqform->seqmax)
 	{
@@ -1601,8 +1601,8 @@ init_params(ParseState *pstate, List *options, bool for_identity,
 		snprintf(bufm, sizeof(bufm), INT64_FORMAT, seqform->seqmax);
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			errmsg("RESTART value (%s) cannot be greater than MAXVALUE (%s)",
-				   bufs, bufm)));
+				 errmsg("RESTART value (%s) cannot be greater than MAXVALUE (%s)",
+						bufs, bufm)));
 	}
 
 	/* CACHE */
@@ -1654,7 +1654,7 @@ process_owned_by(Relation seqrel, List *owned_by, bool for_identity)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("invalid OWNED BY option"),
-				errhint("Specify OWNED BY table.column or OWNED BY NONE.")));
+					 errhint("Specify OWNED BY table.column or OWNED BY NONE.")));
 		tablerel = NULL;
 		attnum = 0;
 	}

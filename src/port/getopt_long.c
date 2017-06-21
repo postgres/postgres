@@ -119,7 +119,7 @@ getopt_long(int argc, char *const argv[],
 
 							if (opterr && has_arg == required_argument)
 								fprintf(stderr,
-								   "%s: option requires an argument -- %s\n",
+										"%s: option requires an argument -- %s\n",
 										argv[0], place);
 
 							place = EMSG;

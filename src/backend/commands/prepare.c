@@ -339,8 +339,8 @@ EvaluateParams(PreparedStatement *pstmt, List *params,
 	if (nparams != num_params)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-		   errmsg("wrong number of parameters for prepared statement \"%s\"",
-				  pstmt->stmt_name),
+				 errmsg("wrong number of parameters for prepared statement \"%s\"",
+						pstmt->stmt_name),
 				 errdetail("Expected %d parameters but got %d.",
 						   num_params, nparams)));
 
@@ -381,7 +381,7 @@ EvaluateParams(PreparedStatement *pstmt, List *params,
 							i + 1,
 							format_type_be(given_type_id),
 							format_type_be(expected_type_id)),
-			   errhint("You will need to rewrite or cast the expression.")));
+					 errhint("You will need to rewrite or cast the expression.")));
 
 		/* Take care of collations in the finished expression. */
 		assign_expr_collations(pstate, expr);
@@ -774,7 +774,7 @@ pg_prepared_statement(PG_FUNCTION_ARGS)
 			values[1] = CStringGetTextDatum(prep_stmt->plansource->query_string);
 			values[2] = TimestampTzGetDatum(prep_stmt->prepare_time);
 			values[3] = build_regtype_array(prep_stmt->plansource->param_types,
-										  prep_stmt->plansource->num_params);
+											prep_stmt->plansource->num_params);
 			values[4] = BoolGetDatum(prep_stmt->from_sql);
 
 			tuplestore_putvalues(tupstore, tupdesc, values, nulls);

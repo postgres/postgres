@@ -231,7 +231,7 @@ setup_background_workers(int nworkers, dsm_segment *seg)
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_RESOURCES),
 					 errmsg("could not register background process"),
-				 errhint("You may need to increase max_worker_processes.")));
+					 errhint("You may need to increase max_worker_processes.")));
 		++wstate->nworkers;
 	}
 

@@ -1221,7 +1221,7 @@ identify_system_timezone(void)
 	 */
 	memset(localtzname, 0, sizeof(localtzname));
 	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE,
-			   "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Time Zones",
+					 "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Time Zones",
 					 0,
 					 KEY_READ,
 					 &rootKey) != ERROR_SUCCESS)

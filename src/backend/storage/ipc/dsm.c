@@ -429,7 +429,7 @@ dsm_backend_startup(void)
 						&dsm_control_mapped_size, WARNING);
 			ereport(FATAL,
 					(errcode(ERRCODE_INTERNAL_ERROR),
-			  errmsg("dynamic shared memory control segment is not valid")));
+					 errmsg("dynamic shared memory control segment is not valid")));
 		}
 	}
 #endif
@@ -935,7 +935,7 @@ dsm_unpin_segment(dsm_handle handle)
 	 * dsm_impl_unpin_segment.
 	 */
 	dsm_impl_unpin_segment(handle,
-					&dsm_control->item[control_slot].impl_private_pm_handle);
+						   &dsm_control->item[control_slot].impl_private_pm_handle);
 
 	/* Note that 1 means no references (0 means unused slot). */
 	if (--dsm_control->item[control_slot].refcnt == 1)

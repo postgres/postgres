@@ -374,8 +374,8 @@ pg_do_encoding_conversion(unsigned char *src, int len,
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("out of memory"),
-		 errdetail("String of %d bytes is too long for encoding conversion.",
-				   len)));
+				 errdetail("String of %d bytes is too long for encoding conversion.",
+						   len)));
 
 	result = palloc(len * MAX_CONVERSION_GROWTH + 1);
 
@@ -399,7 +399,7 @@ pg_convert_to(PG_FUNCTION_ARGS)
 	Datum		string = PG_GETARG_DATUM(0);
 	Datum		dest_encoding_name = PG_GETARG_DATUM(1);
 	Datum		src_encoding_name = DirectFunctionCall1(namein,
-									CStringGetDatum(DatabaseEncoding->name));
+														CStringGetDatum(DatabaseEncoding->name));
 	Datum		result;
 
 	/*
@@ -424,7 +424,7 @@ pg_convert_from(PG_FUNCTION_ARGS)
 	Datum		string = PG_GETARG_DATUM(0);
 	Datum		src_encoding_name = PG_GETARG_DATUM(1);
 	Datum		dest_encoding_name = DirectFunctionCall1(namein,
-									CStringGetDatum(DatabaseEncoding->name));
+														 CStringGetDatum(DatabaseEncoding->name));
 	Datum		result;
 
 	result = DirectFunctionCall3(pg_convert, string,
@@ -606,9 +606,9 @@ pg_any_to_server(const char *s, int len, int encoding)
 				if (s[i] == '\0' || IS_HIGHBIT_SET(s[i]))
 					ereport(ERROR,
 							(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
-					 errmsg("invalid byte value for encoding \"%s\": 0x%02x",
-							pg_enc2name_tbl[PG_SQL_ASCII].name,
-							(unsigned char) s[i])));
+							 errmsg("invalid byte value for encoding \"%s\": 0x%02x",
+									pg_enc2name_tbl[PG_SQL_ASCII].name,
+									(unsigned char) s[i])));
 			}
 		}
 		return (char *) s;
@@ -707,8 +707,8 @@ perform_default_encoding_conversion(const char *src, int len,
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("out of memory"),
-		 errdetail("String of %d bytes is too long for encoding conversion.",
-				   len)));
+				 errdetail("String of %d bytes is too long for encoding conversion.",
+						   len)));
 
 	result = palloc(len * MAX_CONVERSION_GROWTH + 1);
 

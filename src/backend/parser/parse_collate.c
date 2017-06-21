@@ -604,11 +604,11 @@ assign_collations_walker(Node *node, assign_collations_context *context)
 									break;
 								case AGGKIND_ORDERED_SET:
 									assign_ordered_set_collations(aggref,
-																&loccontext);
+																  &loccontext);
 									break;
 								case AGGKIND_HYPOTHETICAL:
 									assign_hypothetical_collations(aggref,
-																&loccontext);
+																   &loccontext);
 									break;
 								default:
 									elog(ERROR, "unrecognized aggkind: %d",
@@ -616,7 +616,7 @@ assign_collations_walker(Node *node, assign_collations_context *context)
 							}
 
 							assign_expr_collations(context->pstate,
-												 (Node *) aggref->aggfilter);
+												   (Node *) aggref->aggfilter);
 						}
 						break;
 					case T_WindowFunc:
@@ -674,7 +674,7 @@ assign_collations_walker(Node *node, assign_collations_context *context)
 						 * equally to loccontext.
 						 */
 						(void) expression_tree_walker(node,
-													assign_collations_walker,
+													  assign_collations_walker,
 													  (void *) &loccontext);
 						break;
 				}
@@ -900,7 +900,7 @@ assign_ordered_set_collations(Aggref *aggref,
 
 	/* Merge sort collations to parent only if there can be only one */
 	merge_sort_collations = (list_length(aggref->args) == 1 &&
-					  get_func_variadictype(aggref->aggfnoid) == InvalidOid);
+							 get_func_variadictype(aggref->aggfnoid) == InvalidOid);
 
 	/* Direct args, if any, are normal children of the Aggref node */
 	(void) assign_collations_walker((Node *) aggref->aggdirectargs,
@@ -938,7 +938,7 @@ assign_hypothetical_collations(Aggref *aggref,
 
 	/* Merge sort collations to parent only if there can be only one */
 	merge_sort_collations = (list_length(aggref->args) == 1 &&
-					  get_func_variadictype(aggref->aggfnoid) == InvalidOid);
+							 get_func_variadictype(aggref->aggfnoid) == InvalidOid);
 
 	/* Process any non-hypothetical direct args */
 	extra_args = list_length(aggref->aggdirectargs) - list_length(aggref->args);

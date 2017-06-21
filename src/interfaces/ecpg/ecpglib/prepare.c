@@ -28,7 +28,7 @@ static const int stmtCacheEntPerBucket = 8; /* # entries/bucket		*/
 static stmtCacheEntry stmtCacheEntries[16384] = {{0, {0}, 0, 0, 0}};
 
 static bool deallocate_one(int lineno, enum COMPAT_MODE c, struct connection *con,
-		   struct prepared_statement *prev, struct prepared_statement *this);
+			   struct prepared_statement *prev, struct prepared_statement *this);
 
 static bool
 isvarchar(unsigned char c)
@@ -180,7 +180,7 @@ ECPGprepare(int lineno, const char *connection_name, const bool questionmarks, c
 
 struct prepared_statement *
 ecpg_find_prepared_statement(const char *name,
-				   struct connection *con, struct prepared_statement **prev_)
+							 struct connection *con, struct prepared_statement **prev_)
 {
 	struct prepared_statement *this,
 			   *prev;

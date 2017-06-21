@@ -115,7 +115,7 @@ check_safe_enum_use(HeapTuple enumval_tup)
 			 errmsg("unsafe use of new value \"%s\" of enum type %s",
 					NameStr(en->enumlabel),
 					format_type_be(en->enumtypid)),
-	 errhint("New enum values must be committed before they can be used.")));
+			 errhint("New enum values must be committed before they can be used.")));
 }
 
 

@@ -189,7 +189,7 @@ extern void set_namedtuplestore_size_estimates(PlannerInfo *root, RelOptInfo *re
 extern void set_foreign_size_estimates(PlannerInfo *root, RelOptInfo *rel);
 extern PathTarget *set_pathtarget_cost_width(PlannerInfo *root, PathTarget *target);
 extern double compute_bitmap_pages(PlannerInfo *root, RelOptInfo *baserel,
-				Path *bitmapqual, int loop_count, Cost *cost, double *tuple);
+					 Path *bitmapqual, int loop_count, Cost *cost, double *tuple);
 
 /*
  * prototypes for clausesel.c

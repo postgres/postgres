@@ -100,7 +100,7 @@ record_in(PG_FUNCTION_ARGS)
 	if (tupType == RECORDOID && tupTypmod < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-		   errmsg("input of anonymous composite types is not implemented")));
+				 errmsg("input of anonymous composite types is not implemented")));
 
 	/*
 	 * This comes from the composite type's pg_type.oid and stores system oids
@@ -476,7 +476,7 @@ record_recv(PG_FUNCTION_ARGS)
 	if (tupType == RECORDOID && tupTypmod < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-		   errmsg("input of anonymous composite types is not implemented")));
+				 errmsg("input of anonymous composite types is not implemented")));
 
 	tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
 	ncolumns = tupdesc->natts;
@@ -924,8 +924,8 @@ record_cmp(FunctionCallInfo fcinfo)
 			if (!OidIsValid(typentry->cmp_proc_finfo.fn_oid))
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				errmsg("could not identify a comparison function for type %s",
-					   format_type_be(typentry->type_id))));
+						 errmsg("could not identify a comparison function for type %s",
+								format_type_be(typentry->type_id))));
 			my_extra->columns[j].typentry = typentry;
 		}
 
@@ -1164,8 +1164,8 @@ record_eq(PG_FUNCTION_ARGS)
 			if (!OidIsValid(typentry->eq_opr_finfo.fn_oid))
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				errmsg("could not identify an equality operator for type %s",
-					   format_type_be(typentry->type_id))));
+						 errmsg("could not identify an equality operator for type %s",
+								format_type_be(typentry->type_id))));
 			my_extra->columns[j].typentry = typentry;
 		}
 

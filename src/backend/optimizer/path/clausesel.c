@@ -690,7 +690,7 @@ clause_selectivity(PlannerInfo *root,
 	{
 		/* inverse of the selectivity of the underlying clause */
 		s1 = 1.0 - clause_selectivity(root,
-								  (Node *) get_notclausearg((Expr *) clause),
+									  (Node *) get_notclausearg((Expr *) clause),
 									  varRelid,
 									  jointype,
 									  sjinfo);

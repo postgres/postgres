@@ -202,7 +202,7 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 				else
 				{
 					ecpg_raise(lineno, ECPG_MISSING_INDICATOR,
-							 ECPG_SQLSTATE_NULL_VALUE_NO_INDICATOR_PARAMETER,
+							   ECPG_SQLSTATE_NULL_VALUE_NO_INDICATOR_PARAMETER,
 							   NULL);
 					return (false);
 				}
@@ -580,7 +580,7 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 							else
 							{
 								ecpg_raise(lineno, ECPG_OUT_OF_MEMORY,
-									 ECPG_SQLSTATE_ECPG_OUT_OF_MEMORY, NULL);
+										   ECPG_SQLSTATE_ECPG_OUT_OF_MEMORY, NULL);
 								return (false);
 							}
 						}

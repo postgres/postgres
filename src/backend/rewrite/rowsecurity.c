@@ -293,7 +293,7 @@ get_row_security_policies(Query *root, RangeTblEntry *rte, int rt_index,
 									  &select_restrictive_policies);
 			add_with_check_options(rel, rt_index,
 								   commandType == CMD_INSERT ?
-								 WCO_RLS_INSERT_CHECK : WCO_RLS_UPDATE_CHECK,
+								   WCO_RLS_INSERT_CHECK : WCO_RLS_UPDATE_CHECK,
 								   select_permissive_policies,
 								   select_restrictive_policies,
 								   withCheckOptions,
@@ -343,8 +343,8 @@ get_row_security_policies(Query *root, RangeTblEntry *rte, int rt_index,
 				List	   *conflict_select_restrictive_policies = NIL;
 
 				get_policies_for_relation(rel, CMD_SELECT, user_id,
-										&conflict_select_permissive_policies,
-									  &conflict_select_restrictive_policies);
+										  &conflict_select_permissive_policies,
+										  &conflict_select_restrictive_policies);
 				add_with_check_options(rel, rt_index,
 									   WCO_RLS_CONFLICT_CHECK,
 									   conflict_select_permissive_policies,

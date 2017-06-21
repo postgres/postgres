@@ -845,7 +845,7 @@ InsertOneNull(int i)
 	Assert(i >= 0 && i < MAXATTR);
 	if (boot_reldesc->rd_att->attrs[i]->attnotnull)
 		elog(ERROR,
-		"NULL value specified for not-null column \"%s\" of relation \"%s\"",
+			 "NULL value specified for not-null column \"%s\" of relation \"%s\"",
 			 NameStr(boot_reldesc->rd_att->attrs[i]->attname),
 			 RelationGetRelationName(boot_reldesc));
 	values[i] = PointerGetDatum(NULL);

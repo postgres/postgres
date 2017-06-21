@@ -183,7 +183,7 @@ pqParseInput3(PGconn *conn)
 			else
 			{
 				pqInternalNotice(&conn->noticeHooks,
-						"message type 0x%02x arrived from server while idle",
+								 "message type 0x%02x arrived from server while idle",
 								 id);
 				/* Discard the unexpected message */
 				conn->inCursor += msgLength;
@@ -246,11 +246,11 @@ pqParseInput3(PGconn *conn)
 						if (conn->result == NULL)
 						{
 							conn->result = PQmakeEmptyPGresult(conn,
-														   PGRES_COMMAND_OK);
+															   PGRES_COMMAND_OK);
 							if (!conn->result)
 							{
 								printfPQExpBuffer(&conn->errorMessage,
-											 libpq_gettext("out of memory"));
+												  libpq_gettext("out of memory"));
 								pqSaveErrorResult(conn);
 							}
 						}
@@ -326,11 +326,11 @@ pqParseInput3(PGconn *conn)
 						if (conn->result == NULL)
 						{
 							conn->result = PQmakeEmptyPGresult(conn,
-														   PGRES_COMMAND_OK);
+															   PGRES_COMMAND_OK);
 							if (!conn->result)
 							{
 								printfPQExpBuffer(&conn->errorMessage,
-											 libpq_gettext("out of memory"));
+												  libpq_gettext("out of memory"));
 								pqSaveErrorResult(conn);
 							}
 						}
@@ -451,7 +451,7 @@ handleSyncLoss(PGconn *conn, char id, int msgLength)
 {
 	printfPQExpBuffer(&conn->errorMessage,
 					  libpq_gettext(
-	"lost synchronization with server: got message type \"%c\", length %d\n"),
+									"lost synchronization with server: got message type \"%c\", length %d\n"),
 					  id, msgLength);
 	/* build an error result holding the error message */
 	pqSaveErrorResult(conn);
@@ -1708,7 +1708,7 @@ pqGetline3(PGconn *conn, char *s, int maxlen)
 		conn->copy_is_binary)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-					  libpq_gettext("PQgetline: not doing text COPY OUT\n"));
+						  libpq_gettext("PQgetline: not doing text COPY OUT\n"));
 		*s = '\0';
 		return EOF;
 	}

@@ -212,7 +212,7 @@ GetConnection(void)
 	if (!tmpparam)
 	{
 		fprintf(stderr,
-		 _("%s: could not determine server setting for integer_datetimes\n"),
+				_("%s: could not determine server setting for integer_datetimes\n"),
 				progname);
 		PQfinish(tmpconn);
 		exit(1);
@@ -221,7 +221,7 @@ GetConnection(void)
 	if (strcmp(tmpparam, "on") != 0)
 	{
 		fprintf(stderr,
-			 _("%s: integer_datetimes compile flag does not match server\n"),
+				_("%s: integer_datetimes compile flag does not match server\n"),
 				progname);
 		PQfinish(tmpconn);
 		exit(1);
@@ -282,7 +282,7 @@ RunIdentifySystem(PGconn *conn, char **sysid, TimeLineID *starttli,
 		if (sscanf(PQgetvalue(res, 0, 2), "%X/%X", &hi, &lo) != 2)
 		{
 			fprintf(stderr,
-				  _("%s: could not parse write-ahead log location \"%s\"\n"),
+					_("%s: could not parse write-ahead log location \"%s\"\n"),
 					progname, PQgetvalue(res, 0, 2));
 
 			PQclear(res);

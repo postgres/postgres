@@ -887,8 +887,8 @@ eanbadcheck:
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-			errmsg("invalid check digit for %s number: \"%s\", should be %c",
-				   isn_names[accept], str, (rcheck == 10) ? ('X') : (rcheck + '0'))));
+					 errmsg("invalid check digit for %s number: \"%s\", should be %c",
+							isn_names[accept], str, (rcheck == 10) ? ('X') : (rcheck + '0'))));
 		}
 	}
 	return false;

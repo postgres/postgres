@@ -343,8 +343,8 @@ DefineType(ParseState *pstate, List *names, List *parameters)
 		if (category < 32 || category > 126)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("invalid type category \"%s\": must be simple ASCII",
-						p)));
+					 errmsg("invalid type category \"%s\": must be simple ASCII",
+							p)));
 	}
 	if (preferredEl)
 		preferred = defGetBoolean(preferredEl);
@@ -454,8 +454,8 @@ DefineType(ParseState *pstate, List *names, List *parameters)
 		{
 			/* backwards-compatibility hack */
 			ereport(WARNING,
-				 (errmsg("changing return type of function %s from %s to %s",
-						 NameListToString(inputName), "opaque", typeName)));
+					(errmsg("changing return type of function %s from %s to %s",
+							NameListToString(inputName), "opaque", typeName)));
 			SetFunctionReturnType(inputOid, typoid);
 		}
 		else
@@ -471,8 +471,8 @@ DefineType(ParseState *pstate, List *names, List *parameters)
 		{
 			/* backwards-compatibility hack */
 			ereport(WARNING,
-				 (errmsg("changing return type of function %s from %s to %s",
-						 NameListToString(outputName), "opaque", "cstring")));
+					(errmsg("changing return type of function %s from %s to %s",
+							NameListToString(outputName), "opaque", "cstring")));
 			SetFunctionReturnType(outputOid, CSTRINGOID);
 		}
 		else
@@ -581,13 +581,13 @@ DefineType(ParseState *pstate, List *names, List *parameters)
 	if (typmodinOid && func_volatile(typmodinOid) == PROVOLATILE_VOLATILE)
 		ereport(WARNING,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-			 errmsg("type modifier input function %s should not be volatile",
-					NameListToString(typmodinName))));
+				 errmsg("type modifier input function %s should not be volatile",
+						NameListToString(typmodinName))));
 	if (typmodoutOid && func_volatile(typmodoutOid) == PROVOLATILE_VOLATILE)
 		ereport(WARNING,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-			errmsg("type modifier output function %s should not be volatile",
-				   NameListToString(typmodoutName))));
+				 errmsg("type modifier output function %s should not be volatile",
+						NameListToString(typmodoutName))));
 
 	/*
 	 * OK, we're done checking, time to make the type.  We must assign the
@@ -956,7 +956,7 @@ DefineDomain(CreateDomainStmt *stmt)
 				if (nullDefined && !typNotNull)
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
-						   errmsg("conflicting NULL/NOT NULL constraints")));
+							 errmsg("conflicting NULL/NOT NULL constraints")));
 				typNotNull = true;
 				nullDefined = true;
 				break;
@@ -965,7 +965,7 @@ DefineDomain(CreateDomainStmt *stmt)
 				if (nullDefined && typNotNull)
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
-						   errmsg("conflicting NULL/NOT NULL constraints")));
+							 errmsg("conflicting NULL/NOT NULL constraints")));
 				typNotNull = false;
 				nullDefined = true;
 				break;
@@ -990,25 +990,25 @@ DefineDomain(CreateDomainStmt *stmt)
 			case CONSTR_UNIQUE:
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("unique constraints not possible for domains")));
+						 errmsg("unique constraints not possible for domains")));
 				break;
 
 			case CONSTR_PRIMARY:
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-				errmsg("primary key constraints not possible for domains")));
+						 errmsg("primary key constraints not possible for domains")));
 				break;
 
 			case CONSTR_EXCLUSION:
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-				  errmsg("exclusion constraints not possible for domains")));
+						 errmsg("exclusion constraints not possible for domains")));
 				break;
 
 			case CONSTR_FOREIGN:
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-				errmsg("foreign key constraints not possible for domains")));
+						 errmsg("foreign key constraints not possible for domains")));
 				break;
 
 			case CONSTR_ATTR_DEFERRABLE:
@@ -1728,8 +1728,8 @@ findTypeOutputFunction(List *procname, Oid typeOid)
 	{
 		/* Found, but must complain and fix the pg_proc entry */
 		ereport(WARNING,
-		(errmsg("changing argument type of function %s from \"opaque\" to %s",
-				NameListToString(procname), format_type_be(typeOid))));
+				(errmsg("changing argument type of function %s from \"opaque\" to %s",
+						NameListToString(procname), format_type_be(typeOid))));
 		SetFunctionArgType(procOid, 0, typeOid);
 
 		/*
@@ -1913,9 +1913,9 @@ findRangeSubOpclass(List *opcname, Oid subtype)
 		if (!IsBinaryCoercible(subtype, opInputType))
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("operator class \"%s\" does not accept data type %s",
-						NameListToString(opcname),
-						format_type_be(subtype))));
+					 errmsg("operator class \"%s\" does not accept data type %s",
+							NameListToString(opcname),
+							format_type_be(subtype))));
 	}
 	else
 	{
@@ -2338,7 +2338,7 @@ AlterDomainNotNull(List *names, bool notNull)
 						ereport(ERROR,
 								(errcode(ERRCODE_NOT_NULL_VIOLATION),
 								 errmsg("column \"%s\" of table \"%s\" contains null values",
-								NameStr(tupdesc->attrs[attnum - 1]->attname),
+										NameStr(tupdesc->attrs[attnum - 1]->attname),
 										RelationGetRelationName(testrel)),
 								 errtablecol(testrel, attnum)));
 					}
@@ -2450,8 +2450,8 @@ AlterDomainDropConstraint(List *names, const char *constrName,
 		if (!missing_ok)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
-				  errmsg("constraint \"%s\" of domain \"%s\" does not exist",
-						 constrName, TypeNameToString(typename))));
+					 errmsg("constraint \"%s\" of domain \"%s\" does not exist",
+							constrName, TypeNameToString(typename))));
 		else
 			ereport(NOTICE,
 					(errmsg("constraint \"%s\" of domain \"%s\" does not exist, skipping",
@@ -2515,19 +2515,19 @@ AlterDomainAddConstraint(List *names, Node *newConstraint,
 		case CONSTR_PRIMARY:
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-				errmsg("primary key constraints not possible for domains")));
+					 errmsg("primary key constraints not possible for domains")));
 			break;
 
 		case CONSTR_EXCLUSION:
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-				  errmsg("exclusion constraints not possible for domains")));
+					 errmsg("exclusion constraints not possible for domains")));
 			break;
 
 		case CONSTR_FOREIGN:
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-				errmsg("foreign key constraints not possible for domains")));
+					 errmsg("foreign key constraints not possible for domains")));
 			break;
 
 		case CONSTR_ATTR_DEFERRABLE:
@@ -2639,8 +2639,8 @@ AlterDomainValidateConstraint(List *names, char *constrName)
 	if (con->contype != CONSTRAINT_CHECK)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-		errmsg("constraint \"%s\" of domain \"%s\" is not a check constraint",
-			   constrName, TypeNameToString(typename))));
+				 errmsg("constraint \"%s\" of domain \"%s\" is not a check constraint",
+						constrName, TypeNameToString(typename))));
 
 	val = SysCacheGetAttr(CONSTROID, tuple,
 						  Anum_pg_constraint_conbin,
@@ -2745,7 +2745,7 @@ validateDomainConstraint(Oid domainoid, char *ccbin)
 					ereport(ERROR,
 							(errcode(ERRCODE_CHECK_VIOLATION),
 							 errmsg("column \"%s\" of table \"%s\" contains values that violate the new constraint",
-								NameStr(tupdesc->attrs[attnum - 1]->attname),
+									NameStr(tupdesc->attrs[attnum - 1]->attname),
 									RelationGetRelationName(testrel)),
 							 errtablecol(testrel, attnum)));
 				}
@@ -2991,8 +2991,8 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 								 constr->conname))
 			ereport(ERROR,
 					(errcode(ERRCODE_DUPLICATE_OBJECT),
-				 errmsg("constraint \"%s\" for domain \"%s\" already exists",
-						constr->conname, domainName)));
+					 errmsg("constraint \"%s\" for domain \"%s\" already exists",
+							constr->conname, domainName)));
 	}
 	else
 		constr->conname = ChooseConstraintName(domainName,
@@ -3042,7 +3042,7 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 		contain_var_clause(expr))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-		  errmsg("cannot use table references in domain check constraint")));
+				 errmsg("cannot use table references in domain check constraint")));
 
 	/*
 	 * Convert to string form for storage.

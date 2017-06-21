@@ -221,7 +221,7 @@ get_sort_group_operators(Oid argtype,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
 				 errmsg("could not identify an ordering operator for type %s",
 						format_type_be(argtype)),
-		 errhint("Use an explicit ordering operator or modify the query.")));
+				 errhint("Use an explicit ordering operator or modify the query.")));
 	if (needEQ && !OidIsValid(eq_opr))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
@@ -723,8 +723,8 @@ op_error(ParseState *pstate, List *op, char oprkind,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
 				 errmsg("operator does not exist: %s",
 						op_signature_string(op, oprkind, arg1, arg2)),
-		  errhint("No operator matches the given name and argument type(s). "
-				  "You might need to add explicit type casts."),
+				 errhint("No operator matches the given name and argument type(s). "
+						 "You might need to add explicit type casts."),
 				 parser_errposition(pstate, location)));
 }
 
@@ -894,7 +894,7 @@ make_scalar_array_op(ParseState *pstate, List *opname,
 		if (!OidIsValid(rtypeId))
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				   errmsg("op ANY/ALL (array) requires array on right side"),
+					 errmsg("op ANY/ALL (array) requires array on right side"),
 					 parser_errposition(pstate, location)));
 	}
 
@@ -936,12 +936,12 @@ make_scalar_array_op(ParseState *pstate, List *opname,
 	if (rettype != BOOLOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-			 errmsg("op ANY/ALL (array) requires operator to yield boolean"),
+				 errmsg("op ANY/ALL (array) requires operator to yield boolean"),
 				 parser_errposition(pstate, location)));
 	if (get_func_retset(opform->oprcode))
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-		  errmsg("op ANY/ALL (array) requires operator not to return a set"),
+				 errmsg("op ANY/ALL (array) requires operator not to return a set"),
 				 parser_errposition(pstate, location)));
 
 	/*
@@ -1057,7 +1057,7 @@ make_oper_cache_key(ParseState *pstate, OprCacheKey *key, List *opname,
 	{
 		/* get the active search path */
 		if (fetch_search_path_array(key->search_path,
-								  MAX_CACHED_PATH_LEN) > MAX_CACHED_PATH_LEN)
+									MAX_CACHED_PATH_LEN) > MAX_CACHED_PATH_LEN)
 			return false;		/* oops, didn't fit */
 	}
 

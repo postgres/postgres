@@ -657,7 +657,7 @@ ExecHashIncreaseNumBatches(HashJoinTable hashtable)
 		hashtable->log2_nbuckets = hashtable->log2_nbuckets_optimal;
 
 		hashtable->buckets = repalloc(hashtable->buckets,
-								sizeof(HashJoinTuple) * hashtable->nbuckets);
+									  sizeof(HashJoinTuple) * hashtable->nbuckets);
 	}
 
 	/*
@@ -783,7 +783,7 @@ ExecHashIncreaseNumBuckets(HashJoinTable hashtable)
 	 */
 	hashtable->buckets =
 		(HashJoinTuple *) repalloc(hashtable->buckets,
-								hashtable->nbuckets * sizeof(HashJoinTuple));
+								   hashtable->nbuckets * sizeof(HashJoinTuple));
 
 	memset(hashtable->buckets, 0, hashtable->nbuckets * sizeof(HashJoinTuple));
 
@@ -1650,7 +1650,7 @@ dense_alloc(HashJoinTable hashtable, Size size)
 	{
 		/* allocate new chunk and put it at the beginning of the list */
 		newChunk = (HashMemoryChunk) MemoryContextAlloc(hashtable->batchCxt,
-								 offsetof(HashMemoryChunkData, data) + size);
+														offsetof(HashMemoryChunkData, data) + size);
 		newChunk->maxlen = size;
 		newChunk->used = 0;
 		newChunk->ntuples = 0;
@@ -1685,7 +1685,7 @@ dense_alloc(HashJoinTable hashtable, Size size)
 	{
 		/* allocate new chunk and put it at the beginning of the list */
 		newChunk = (HashMemoryChunk) MemoryContextAlloc(hashtable->batchCxt,
-					  offsetof(HashMemoryChunkData, data) + HASH_CHUNK_SIZE);
+														offsetof(HashMemoryChunkData, data) + HASH_CHUNK_SIZE);
 
 		newChunk->maxlen = HASH_CHUNK_SIZE;
 		newChunk->used = size;

@@ -837,11 +837,11 @@ json_lex_string(JsonLexContext *lex)
 					{
 						if (hi_surrogate != -1)
 							ereport(ERROR,
-							   (errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-								errmsg("invalid input syntax for type %s",
-									   "json"),
-								errdetail("Unicode high surrogate must not follow a high surrogate."),
-								report_json_context(lex)));
+									(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+									 errmsg("invalid input syntax for type %s",
+											"json"),
+									 errdetail("Unicode high surrogate must not follow a high surrogate."),
+									 report_json_context(lex)));
 						hi_surrogate = (ch & 0x3ff) << 10;
 						continue;
 					}
@@ -849,10 +849,10 @@ json_lex_string(JsonLexContext *lex)
 					{
 						if (hi_surrogate == -1)
 							ereport(ERROR,
-							   (errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-								errmsg("invalid input syntax for type %s", "json"),
-								errdetail("Unicode low surrogate must follow a high surrogate."),
-								report_json_context(lex)));
+									(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+									 errmsg("invalid input syntax for type %s", "json"),
+									 errdetail("Unicode low surrogate must follow a high surrogate."),
+									 report_json_context(lex)));
 						ch = 0x10000 + hi_surrogate + (ch & 0x3ff);
 						hi_surrogate = -1;
 					}
@@ -860,7 +860,7 @@ json_lex_string(JsonLexContext *lex)
 					if (hi_surrogate != -1)
 						ereport(ERROR,
 								(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-						  errmsg("invalid input syntax for type %s", "json"),
+								 errmsg("invalid input syntax for type %s", "json"),
 								 errdetail("Unicode low surrogate must follow a high surrogate."),
 								 report_json_context(lex)));
 
@@ -876,8 +876,8 @@ json_lex_string(JsonLexContext *lex)
 						/* We can't allow this, since our TEXT type doesn't */
 						ereport(ERROR,
 								(errcode(ERRCODE_UNTRANSLATABLE_CHARACTER),
-							   errmsg("unsupported Unicode escape sequence"),
-						   errdetail("\\u0000 cannot be converted to text."),
+								 errmsg("unsupported Unicode escape sequence"),
+								 errdetail("\\u0000 cannot be converted to text."),
 								 report_json_context(lex)));
 					}
 					else if (GetDatabaseEncoding() == PG_UTF8)
@@ -899,7 +899,7 @@ json_lex_string(JsonLexContext *lex)
 					{
 						ereport(ERROR,
 								(errcode(ERRCODE_UNTRANSLATABLE_CHARACTER),
-							   errmsg("unsupported Unicode escape sequence"),
+								 errmsg("unsupported Unicode escape sequence"),
 								 errdetail("Unicode escape values cannot be used for code point values above 007F when the server encoding is not UTF8."),
 								 report_json_context(lex)));
 					}
@@ -945,8 +945,8 @@ json_lex_string(JsonLexContext *lex)
 								(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 								 errmsg("invalid input syntax for type %s",
 										"json"),
-							errdetail("Escape sequence \"\\%s\" is invalid.",
-									  extract_mb_char(s)),
+								 errdetail("Escape sequence \"\\%s\" is invalid.",
+										   extract_mb_char(s)),
 								 report_json_context(lex)));
 				}
 			}
@@ -987,7 +987,7 @@ json_lex_string(JsonLexContext *lex)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for type %s", "json"),
-			errdetail("Unicode low surrogate must follow a high surrogate."),
+				 errdetail("Unicode low surrogate must follow a high surrogate."),
 				 report_json_context(lex)));
 
 	/* Hooray, we found the end of the string! */
@@ -1181,16 +1181,16 @@ report_parse_error(JsonParseContext ctx, JsonLexContext *lex)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 						 errmsg("invalid input syntax for type %s", "json"),
-					  errdetail("Expected \",\" or \"]\", but found \"%s\".",
-								token),
+						 errdetail("Expected \",\" or \"]\", but found \"%s\".",
+								   token),
 						 report_json_context(lex)));
 				break;
 			case JSON_PARSE_OBJECT_START:
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 						 errmsg("invalid input syntax for type %s", "json"),
-					 errdetail("Expected string or \"}\", but found \"%s\".",
-							   token),
+						 errdetail("Expected string or \"}\", but found \"%s\".",
+								   token),
 						 report_json_context(lex)));
 				break;
 			case JSON_PARSE_OBJECT_LABEL:
@@ -1205,8 +1205,8 @@ report_parse_error(JsonParseContext ctx, JsonLexContext *lex)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 						 errmsg("invalid input syntax for type %s", "json"),
-					  errdetail("Expected \",\" or \"}\", but found \"%s\".",
-								token),
+						 errdetail("Expected \",\" or \"}\", but found \"%s\".",
+								   token),
 						 report_json_context(lex)));
 				break;
 			case JSON_PARSE_OBJECT_COMMA:
@@ -1471,7 +1471,7 @@ datum_to_json(Datum val, bool is_null, StringInfo result,
 		 tcategory == JSONTYPE_CAST))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-		 errmsg("key value must be scalar, not array, composite, or json")));
+				 errmsg("key value must be scalar, not array, composite, or json")));
 
 	switch (tcategory)
 	{
@@ -2008,7 +2008,7 @@ json_object_agg_transfn(PG_FUNCTION_ARGS)
 		if (arg_type == InvalidOid)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("could not determine data type for argument %d", 1)));
+					 errmsg("could not determine data type for argument %d", 1)));
 
 		json_categorize_type(arg_type, &state->key_category,
 							 &state->key_output_func);
@@ -2018,7 +2018,7 @@ json_object_agg_transfn(PG_FUNCTION_ARGS)
 		if (arg_type == InvalidOid)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("could not determine data type for argument %d", 2)));
+					 errmsg("could not determine data type for argument %d", 2)));
 
 		json_categorize_type(arg_type, &state->val_category,
 							 &state->val_output_func);

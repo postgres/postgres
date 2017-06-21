@@ -117,10 +117,10 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	if (list_length(fargs) > FUNC_MAX_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
-			 errmsg_plural("cannot pass more than %d argument to a function",
-						   "cannot pass more than %d arguments to a function",
-						   FUNC_MAX_ARGS,
-						   FUNC_MAX_ARGS),
+				 errmsg_plural("cannot pass more than %d argument to a function",
+							   "cannot pass more than %d arguments to a function",
+							   FUNC_MAX_ARGS,
+							   FUNC_MAX_ARGS),
 				 parser_errposition(pstate, location)));
 
 	/*
@@ -176,8 +176,8 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 				if (strcmp(na->name, (char *) lfirst(lc)) == 0)
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
-						   errmsg("argument name \"%s\" used more than once",
-								  na->name),
+							 errmsg("argument name \"%s\" used more than once",
+									na->name),
 							 parser_errposition(pstate, na->location)));
 			}
 			argnames = lappend(argnames, na->name);
@@ -187,7 +187,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 			if (argnames != NIL)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-				  errmsg("positional argument cannot follow named argument"),
+						 errmsg("positional argument cannot follow named argument"),
 						 parser_errposition(pstate, exprLocation(arg))));
 		}
 	}
@@ -272,15 +272,15 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		if (agg_star)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-			   errmsg("%s(*) specified, but %s is not an aggregate function",
-					  NameListToString(funcname),
-					  NameListToString(funcname)),
+					 errmsg("%s(*) specified, but %s is not an aggregate function",
+							NameListToString(funcname),
+							NameListToString(funcname)),
 					 parser_errposition(pstate, location)));
 		if (agg_distinct)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-			errmsg("DISTINCT specified, but %s is not an aggregate function",
-				   NameListToString(funcname)),
+					 errmsg("DISTINCT specified, but %s is not an aggregate function",
+							NameListToString(funcname)),
 					 parser_errposition(pstate, location)));
 		if (agg_within_group)
 			ereport(ERROR,
@@ -291,14 +291,14 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		if (agg_order != NIL)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-			errmsg("ORDER BY specified, but %s is not an aggregate function",
-				   NameListToString(funcname)),
+					 errmsg("ORDER BY specified, but %s is not an aggregate function",
+							NameListToString(funcname)),
 					 parser_errposition(pstate, location)));
 		if (agg_filter)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-			  errmsg("FILTER specified, but %s is not an aggregate function",
-					 NameListToString(funcname)),
+					 errmsg("FILTER specified, but %s is not an aggregate function",
+							NameListToString(funcname)),
 					 parser_errposition(pstate, location)));
 		if (over)
 			ereport(ERROR,
@@ -339,8 +339,8 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 			if (over)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("OVER is not supported for ordered-set aggregate %s",
-						NameListToString(funcname)),
+						 errmsg("OVER is not supported for ordered-set aggregate %s",
+								NameListToString(funcname)),
 						 parser_errposition(pstate, location)));
 			/* gram.y rejects DISTINCT + WITHIN GROUP */
 			Assert(!agg_distinct);
@@ -398,7 +398,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 								 errmsg("function %s does not exist",
 										func_signature_string(funcname, nargs,
 															  argnames,
-														  actual_arg_types)),
+															  actual_arg_types)),
 								 errhint("There is an ordered-set aggregate %s, but it requires %d direct arguments, not %d.",
 										 NameListToString(funcname),
 										 catDirectArgs, numDirectArgs),
@@ -421,12 +421,12 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 							ereport(ERROR,
 									(errcode(ERRCODE_UNDEFINED_FUNCTION),
 									 errmsg("function %s does not exist",
-									   func_signature_string(funcname, nargs,
-															 argnames,
-														  actual_arg_types)),
+											func_signature_string(funcname, nargs,
+																  argnames,
+																  actual_arg_types)),
 									 errhint("To use the hypothetical-set aggregate %s, the number of hypothetical direct arguments (here %d) must match the number of ordering columns (here %d).",
 											 NameListToString(funcname),
-							  nvargs - numAggregatedArgs, numAggregatedArgs),
+											 nvargs - numAggregatedArgs, numAggregatedArgs),
 									 parser_errposition(pstate, location)));
 					}
 					else
@@ -435,9 +435,9 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 							ereport(ERROR,
 									(errcode(ERRCODE_UNDEFINED_FUNCTION),
 									 errmsg("function %s does not exist",
-									   func_signature_string(funcname, nargs,
-															 argnames,
-														  actual_arg_types)),
+											func_signature_string(funcname, nargs,
+																  argnames,
+																  actual_arg_types)),
 									 errhint("There is an ordered-set aggregate %s, but it requires at least %d direct arguments.",
 											 NameListToString(funcname),
 											 catDirectArgs),
@@ -513,7 +513,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 							func_signature_string(funcname, nargs, argnames,
 												  actual_arg_types)),
 					 errhint("No aggregate function matches the given name and argument types. "
-					  "Perhaps you misplaced ORDER BY; ORDER BY must appear "
+							 "Perhaps you misplaced ORDER BY; ORDER BY must appear "
 							 "after all regular arguments of the aggregate."),
 					 parser_errposition(pstate, location)));
 		}
@@ -523,8 +523,8 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					 errmsg("function %s does not exist",
 							func_signature_string(funcname, nargs, argnames,
 												  actual_arg_types)),
-			errhint("No function matches the given name and argument types. "
-					"You might need to add explicit type casts."),
+					 errhint("No function matches the given name and argument types. "
+							 "You might need to add explicit type casts."),
 					 parser_errposition(pstate, location)));
 	}
 
@@ -544,10 +544,10 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		if (nargsplusdefs >= FUNC_MAX_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
-			 errmsg_plural("cannot pass more than %d argument to a function",
-						   "cannot pass more than %d arguments to a function",
-						   FUNC_MAX_ARGS,
-						   FUNC_MAX_ARGS),
+					 errmsg_plural("cannot pass more than %d argument to a function",
+								   "cannot pass more than %d arguments to a function",
+								   FUNC_MAX_ARGS,
+								   FUNC_MAX_ARGS),
 					 parser_errposition(pstate, location)));
 
 		actual_arg_types[nargsplusdefs++] = exprType(expr);
@@ -601,7 +601,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("could not find array type for data type %s",
 							format_type_be(newa->element_typeid)),
-				  parser_errposition(pstate, exprLocation((Node *) vargs))));
+					 parser_errposition(pstate, exprLocation((Node *) vargs))));
 		/* array_collid will be set by parse_collate.c */
 		newa->multidims = false;
 		newa->location = exprLocation((Node *) vargs);
@@ -627,7 +627,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("VARIADIC argument must be an array"),
 					 parser_errposition(pstate,
-									  exprLocation((Node *) llast(fargs)))));
+										exprLocation((Node *) llast(fargs)))));
 	}
 
 	/* if it returns a set, check that's OK */
@@ -731,7 +731,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		if (agg_distinct)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				  errmsg("DISTINCT is not implemented for window functions"),
+					 errmsg("DISTINCT is not implemented for window functions"),
 					 parser_errposition(pstate, location)));
 
 		/*
@@ -918,10 +918,10 @@ func_select_candidate(int nargs,
 	if (nargs > FUNC_MAX_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
-			 errmsg_plural("cannot pass more than %d argument to a function",
-						   "cannot pass more than %d arguments to a function",
-						   FUNC_MAX_ARGS,
-						   FUNC_MAX_ARGS)));
+				 errmsg_plural("cannot pass more than %d argument to a function",
+							   "cannot pass more than %d arguments to a function",
+							   FUNC_MAX_ARGS,
+							   FUNC_MAX_ARGS)));
 
 	/*
 	 * If any input types are domains, reduce them to their base types. This
@@ -1400,7 +1400,7 @@ func_get_detail(List *funcname,
 						case COERCION_PATH_COERCEVIAIO:
 							if ((sourceType == RECORDOID ||
 								 ISCOMPLEX(sourceType)) &&
-							  TypeCategory(targetType) == TYPCATEGORY_STRING)
+								TypeCategory(targetType) == TYPCATEGORY_STRING)
 								iscoercion = false;
 							else
 								iscoercion = true;
@@ -2152,7 +2152,7 @@ check_srf_call_placement(ParseState *pstate, Node *last_srf, int location)
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("set-returning functions must appear at top level of FROM"),
 						 parser_errposition(pstate,
-										 exprLocation(pstate->p_last_srf))));
+											exprLocation(pstate->p_last_srf))));
 			break;
 		case EXPR_KIND_WHERE:
 			errkind = true;

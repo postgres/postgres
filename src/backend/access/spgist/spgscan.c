@@ -442,7 +442,7 @@ redirect:
 			MemoryContext oldCtx;
 
 			innerTuple = (SpGistInnerTuple) PageGetItem(page,
-												PageGetItemId(page, offset));
+														PageGetItemId(page, offset));
 
 			if (innerTuple->tupstate != SPGIST_LIVE)
 			{

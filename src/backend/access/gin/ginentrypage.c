@@ -107,9 +107,9 @@ GinFormTuple(GinState *ginstate,
 		if (errorTooBig)
 			ereport(ERROR,
 					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-			errmsg("index row size %zu exceeds maximum %zu for index \"%s\"",
-				   (Size) newsize, (Size) GinMaxItemSize,
-				   RelationGetRelationName(ginstate->index))));
+					 errmsg("index row size %zu exceeds maximum %zu for index \"%s\"",
+							(Size) newsize, (Size) GinMaxItemSize,
+							RelationGetRelationName(ginstate->index))));
 		pfree(itup);
 		return NULL;
 	}
@@ -256,7 +256,7 @@ entryIsMoveRight(GinBtree btree, Page page)
 	key = gintuple_get_key(btree->ginstate, itup, &category);
 
 	if (ginCompareAttEntries(btree->ginstate,
-				   btree->entryAttnum, btree->entryKey, btree->entryCategory,
+							 btree->entryAttnum, btree->entryKey, btree->entryCategory,
 							 attnum, key, category) > 0)
 		return TRUE;
 

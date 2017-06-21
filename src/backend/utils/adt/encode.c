@@ -175,7 +175,7 @@ hex_decode(const char *src, unsigned len, char *dst)
 		if (s >= srcend)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				  errmsg("invalid hexadecimal data: odd number of digits")));
+					 errmsg("invalid hexadecimal data: odd number of digits")));
 
 		v2 = get_hex(*s++);
 		*p++ = v1 | v2;

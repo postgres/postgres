@@ -163,7 +163,7 @@ struct descriptor *ecpggetdescp(int, char *);
 struct descriptor *ecpg_find_desc(int line, const char *name);
 
 struct prepared_statement *ecpg_find_prepared_statement(const char *,
-						  struct connection *, struct prepared_statement **);
+							 struct connection *, struct prepared_statement **);
 
 bool ecpg_store_result(const PGresult *results, int act_field,
 				  const struct statement *stmt, struct variable *var);

@@ -182,7 +182,7 @@ sepgsql_avc_unlabeled(void)
 		if (security_get_initial_context_raw("unlabeled", &unlabeled) < 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
-			   errmsg("SELinux: failed to get initial security label: %m")));
+					 errmsg("SELinux: failed to get initial security label: %m")));
 		PG_TRY();
 		{
 			avc_unlabeled = MemoryContextStrdup(avc_mem_cxt, unlabeled);

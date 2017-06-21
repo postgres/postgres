@@ -36,7 +36,7 @@ typedef struct xl_clog_truncate
 } xl_clog_truncate;
 
 extern void TransactionIdSetTreeStatus(TransactionId xid, int nsubxids,
-				   TransactionId *subxids, XidStatus status, XLogRecPtr lsn);
+						   TransactionId *subxids, XidStatus status, XLogRecPtr lsn);
 extern XidStatus TransactionIdGetStatus(TransactionId xid, XLogRecPtr *lsn);
 
 extern Size CLOGShmemBuffers(void);

@@ -95,7 +95,7 @@ extern int ginCompareEntries(GinState *ginstate, OffsetNumber attnum,
 				  Datum b, GinNullCategory categoryb);
 extern int ginCompareAttEntries(GinState *ginstate,
 					 OffsetNumber attnuma, Datum a, GinNullCategory categorya,
-				   OffsetNumber attnumb, Datum b, GinNullCategory categoryb);
+					 OffsetNumber attnumb, Datum b, GinNullCategory categoryb);
 extern Datum *ginExtractEntries(GinState *ginstate, OffsetNumber attnum,
 				  Datum value, bool isNull,
 				  int32 *nentries, GinNullCategory **categories);

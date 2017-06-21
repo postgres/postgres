@@ -365,7 +365,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 		dir = AllocateDir("pg_wal");
 		if (!dir)
 			ereport(ERROR,
-				  (errmsg("could not open directory \"%s\": %m", "pg_wal")));
+					(errmsg("could not open directory \"%s\": %m", "pg_wal")));
 		while ((de = ReadDir(dir, "pg_wal")) != NULL)
 		{
 			/* Does it look like a WAL segment, and is it in the range? */
@@ -436,7 +436,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 
 				XLogFileName(nextfname, ThisTimeLineID, nextsegno);
 				ereport(ERROR,
-					  (errmsg("could not find WAL file \"%s\"", nextfname)));
+						(errmsg("could not find WAL file \"%s\"", nextfname)));
 			}
 		}
 		if (segno != endsegno)
@@ -484,7 +484,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 				CheckXLogRemoved(segno, tli);
 				ereport(ERROR,
 						(errcode_for_file_access(),
-					errmsg("unexpected WAL file size \"%s\"", walFiles[i])));
+						 errmsg("unexpected WAL file size \"%s\"", walFiles[i])));
 			}
 
 			/* send the WAL file itself */
@@ -510,7 +510,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 				CheckXLogRemoved(segno, tli);
 				ereport(ERROR,
 						(errcode_for_file_access(),
-					errmsg("unexpected WAL file size \"%s\"", walFiles[i])));
+						 errmsg("unexpected WAL file size \"%s\"", walFiles[i])));
 			}
 
 			/* XLogSegSize is a multiple of 512, so no need for padding */
@@ -652,7 +652,7 @@ parse_basebackup_options(List *options, basebackup_options *opt)
 				ereport(ERROR,
 						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 						 errmsg("%d is outside the valid range for parameter \"%s\" (%d .. %d)",
-				(int) maxrate, "MAX_RATE", MAX_RATE_LOWER, MAX_RATE_UPPER)));
+								(int) maxrate, "MAX_RATE", MAX_RATE_LOWER, MAX_RATE_UPPER)));
 
 			opt->maxrate = (uint32) maxrate;
 			o_maxrate = true;
@@ -992,9 +992,9 @@ sendDir(char *path, int basepathlen, bool sizeonly, List *tablespaces,
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 					 errmsg("the standby was promoted during online backup"),
-				 errhint("This means that the backup being taken is corrupt "
-						 "and should not be used. "
-						 "Try taking another online backup.")));
+					 errhint("This means that the backup being taken is corrupt "
+							 "and should not be used. "
+							 "Try taking another online backup.")));
 
 		/* Scan for files that should be excluded */
 		excludeFound = false;
@@ -1113,7 +1113,7 @@ sendDir(char *path, int basepathlen, bool sizeonly, List *tablespaces,
 			 */
 			ereport(WARNING,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				  errmsg("tablespaces are not supported on this platform")));
+					 errmsg("tablespaces are not supported on this platform")));
 			continue;
 #endif							/* HAVE_READLINK */
 		}
@@ -1225,7 +1225,7 @@ sendFile(char *readfilename, char *tarfilename, struct stat *statbuf,
 		/* Send the chunk as a CopyData message */
 		if (pq_putmessage('d', buf, cnt))
 			ereport(ERROR,
-			   (errmsg("base backup could not send data, aborting backup")));
+					(errmsg("base backup could not send data, aborting backup")));
 
 		len += cnt;
 		throttle(cnt);
@@ -1281,7 +1281,7 @@ _tarWriteHeader(const char *filename, const char *linktarget,
 	if (!sizeonly)
 	{
 		rc = tarCreateHeader(h, filename, linktarget, statbuf->st_size,
-						  statbuf->st_mode, statbuf->st_uid, statbuf->st_gid,
+							 statbuf->st_mode, statbuf->st_uid, statbuf->st_gid,
 							 statbuf->st_mtime);
 
 		switch (rc)
@@ -1295,9 +1295,9 @@ _tarWriteHeader(const char *filename, const char *linktarget,
 				break;
 			case TAR_SYMLINK_TOO_LONG:
 				ereport(ERROR,
-					 (errmsg("symbolic link target too long for tar format: "
-							 "file name \"%s\", target \"%s\"",
-							 filename, linktarget)));
+						(errmsg("symbolic link target too long for tar format: "
+								"file name \"%s\", target \"%s\"",
+								filename, linktarget)));
 				break;
 			default:
 				elog(ERROR, "unrecognized tar error: %d", rc);
@@ -1366,7 +1366,7 @@ throttle(size_t increment)
 		 * the maximum time to sleep. Thus the cast to long is safe.
 		 */
 		wait_result = WaitLatch(MyLatch,
-							 WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
+								WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
 								(long) (sleep / 1000),
 								WAIT_EVENT_BASE_BACKUP_THROTTLE);
 

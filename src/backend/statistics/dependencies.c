@@ -49,13 +49,13 @@ typedef struct DependencyGeneratorData
 typedef DependencyGeneratorData *DependencyGenerator;
 
 static void generate_dependencies_recurse(DependencyGenerator state,
-						   int index, AttrNumber start, AttrNumber *current);
+							  int index, AttrNumber start, AttrNumber *current);
 static void generate_dependencies(DependencyGenerator state);
 static DependencyGenerator DependencyGenerator_init(int n, int k);
 static void DependencyGenerator_free(DependencyGenerator state);
 static AttrNumber *DependencyGenerator_next(DependencyGenerator state);
 static double dependency_degree(int numrows, HeapTuple *rows, int k,
-			 AttrNumber *dependency, VacAttrStats **stats, Bitmapset *attrs);
+				  AttrNumber *dependency, VacAttrStats **stats, Bitmapset *attrs);
 static bool dependency_is_fully_matched(MVDependency *dependency,
 							Bitmapset *attnums);
 static bool dependency_implies_attribute(MVDependency *dependency,
@@ -122,7 +122,7 @@ generate_dependencies_recurse(DependencyGenerator state, int index,
 			if (!match)
 			{
 				state->dependencies = (AttrNumber *) repalloc(state->dependencies,
-				 state->k * (state->ndependencies + 1) * sizeof(AttrNumber));
+															  state->k * (state->ndependencies + 1) * sizeof(AttrNumber));
 				memcpy(&state->dependencies[(state->k * state->ndependencies)],
 					   current, state->k * sizeof(AttrNumber));
 				state->ndependencies++;
@@ -308,7 +308,7 @@ dependency_degree(int numrows, HeapTuple *rows, int k, AttrNumber *dependency,
 		 * to the preceding one.
 		 */
 		if (i == numrows ||
-		multi_sort_compare_dims(0, k - 2, &items[i - 1], &items[i], mss) != 0)
+			multi_sort_compare_dims(0, k - 2, &items[i - 1], &items[i], mss) != 0)
 		{
 			/*
 			 * If no violations were found in the group then track the rows of
@@ -430,8 +430,8 @@ statext_dependencies_build(int numrows, HeapTuple *rows, Bitmapset *attrs,
 
 			dependencies->ndeps++;
 			dependencies = (MVDependencies *) repalloc(dependencies,
-											   offsetof(MVDependencies, deps)
-							   + dependencies->ndeps * sizeof(MVDependency));
+													   offsetof(MVDependencies, deps)
+													   + dependencies->ndeps * sizeof(MVDependency));
 
 			dependencies->deps[dependencies->ndeps - 1] = d;
 		}

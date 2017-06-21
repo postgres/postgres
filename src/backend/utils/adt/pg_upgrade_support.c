@@ -172,7 +172,7 @@ binary_upgrade_create_empty_extension(PG_FUNCTION_ARGS)
 
 	InsertExtensionTuple(text_to_cstring(extName),
 						 GetUserId(),
-					   get_namespace_oid(text_to_cstring(schemaName), false),
+						 get_namespace_oid(text_to_cstring(schemaName), false),
 						 relocatable,
 						 text_to_cstring(extVersion),
 						 extConfig,

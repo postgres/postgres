@@ -1369,7 +1369,7 @@ TypeGetTupleDesc(Oid typeoid, List *colaliases)
 		if (list_length(colaliases) != 1)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-			  errmsg("number of aliases does not match number of columns")));
+					 errmsg("number of aliases does not match number of columns")));
 
 		/* OK, get the column alias */
 		attname = strVal(linitial(colaliases));

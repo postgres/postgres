@@ -81,7 +81,7 @@ typedef struct
 } DECountItem;
 
 static void compute_array_stats(VacAttrStats *stats,
-		   AnalyzeAttrFetchFunc fetchfunc, int samplerows, double totalrows);
+					AnalyzeAttrFetchFunc fetchfunc, int samplerows, double totalrows);
 static void prune_element_hashtable(HTAB *elements_tab, int b_current);
 static uint32 element_hash(const void *key, Size keysize);
 static int	element_match(const void *key1, const void *key2, Size keysize);
@@ -285,7 +285,7 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 	elements_tab = hash_create("Analyzed elements table",
 							   num_mcelem,
 							   &elem_hash_ctl,
-					HASH_ELEM | HASH_FUNCTION | HASH_COMPARE | HASH_CONTEXT);
+							   HASH_ELEM | HASH_FUNCTION | HASH_COMPARE | HASH_CONTEXT);
 
 	/* hashtable for array distinct elements counts */
 	MemSet(&count_hash_ctl, 0, sizeof(count_hash_ctl));

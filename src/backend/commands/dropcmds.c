@@ -102,8 +102,8 @@ RemoveObjects(DropStmt *stmt)
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 						 errmsg("\"%s\" is an aggregate function",
-				NameListToString(castNode(ObjectWithArgs, object)->objname)),
-				errhint("Use DROP AGGREGATE to drop aggregate functions.")));
+								NameListToString(castNode(ObjectWithArgs, object)->objname)),
+						 errhint("Use DROP AGGREGATE to drop aggregate functions.")));
 
 			ReleaseSysCache(tup);
 		}
@@ -393,7 +393,7 @@ does_not_exist_skipping(ObjectType objtype, Node *object)
 				msg = gettext_noop("trigger \"%s\" for relation \"%s\" does not exist, skipping");
 				name = strVal(llast(castNode(List, object)));
 				args = NameListToString(list_truncate(list_copy(castNode(List, object)),
-								   list_length(castNode(List, object)) - 1));
+													  list_length(castNode(List, object)) - 1));
 			}
 			break;
 		case OBJECT_POLICY:
@@ -402,7 +402,7 @@ does_not_exist_skipping(ObjectType objtype, Node *object)
 				msg = gettext_noop("policy \"%s\" for relation \"%s\" does not exist, skipping");
 				name = strVal(llast(castNode(List, object)));
 				args = NameListToString(list_truncate(list_copy(castNode(List, object)),
-								   list_length(castNode(List, object)) - 1));
+													  list_length(castNode(List, object)) - 1));
 			}
 			break;
 		case OBJECT_EVENT_TRIGGER:
@@ -415,7 +415,7 @@ does_not_exist_skipping(ObjectType objtype, Node *object)
 				msg = gettext_noop("rule \"%s\" for relation \"%s\" does not exist, skipping");
 				name = strVal(llast(castNode(List, object)));
 				args = NameListToString(list_truncate(list_copy(castNode(List, object)),
-								   list_length(castNode(List, object)) - 1));
+													  list_length(castNode(List, object)) - 1));
 			}
 			break;
 		case OBJECT_FDW:

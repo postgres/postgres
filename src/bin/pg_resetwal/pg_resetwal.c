@@ -438,7 +438,7 @@ main(int argc, char *argv[])
 	if (ControlFile.state != DB_SHUTDOWNED && !force)
 	{
 		printf(_("The database server was not shut down cleanly.\n"
-			   "Resetting the write-ahead log might cause data to be lost.\n"
+				 "Resetting the write-ahead log might cause data to be lost.\n"
 				 "If you want to proceed anyway, use -f to force reset.\n"));
 		exit(1);
 	}
@@ -564,7 +564,7 @@ ReadControlFile(void)
 	close(fd);
 
 	if (len >= sizeof(ControlFileData) &&
-	  ((ControlFileData *) buffer)->pg_control_version == PG_CONTROL_VERSION)
+		((ControlFileData *) buffer)->pg_control_version == PG_CONTROL_VERSION)
 	{
 		/* Check the CRC. */
 		INIT_CRC32C(crc);

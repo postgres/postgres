@@ -170,7 +170,7 @@ write_eventlog(int level, const char *line)
 	if (evtHandle == INVALID_HANDLE_VALUE)
 	{
 		evtHandle = RegisterEventSource(NULL,
-						 event_source ? event_source : DEFAULT_EVENT_SOURCE);
+										event_source ? event_source : DEFAULT_EVENT_SOURCE);
 		if (evtHandle == NULL)
 		{
 			evtHandle = INVALID_HANDLE_VALUE;
@@ -660,7 +660,7 @@ test_postmaster_connection(pgpid_t pm_pid, bool do_checkpoint)
 						 * timeout first.
 						 */
 						snprintf(connstr, sizeof(connstr),
-						"dbname=postgres port=%d host='%s' connect_timeout=5",
+								 "dbname=postgres port=%d host='%s' connect_timeout=5",
 								 portnum, host_str);
 					}
 				}
@@ -1017,7 +1017,7 @@ do_stop(void)
 			write_stderr(_("%s: server does not shut down\n"), progname);
 			if (shutdown_mode == SMART_MODE)
 				write_stderr(_("HINT: The \"-m fast\" option immediately disconnects sessions rather than\n"
-						  "waiting for session-initiated disconnection.\n"));
+							   "waiting for session-initiated disconnection.\n"));
 			exit(1);
 		}
 		print_msg(_(" done\n"));
@@ -1107,7 +1107,7 @@ do_restart(void)
 			write_stderr(_("%s: server does not shut down\n"), progname);
 			if (shutdown_mode == SMART_MODE)
 				write_stderr(_("HINT: The \"-m fast\" option immediately disconnects sessions rather than\n"
-						  "waiting for session-initiated disconnection.\n"));
+							   "waiting for session-initiated disconnection.\n"));
 			exit(1);
 		}
 
@@ -1492,10 +1492,10 @@ pgwin32_doRegister(void)
 	}
 
 	if ((hService = CreateService(hSCM, register_servicename, register_servicename,
-							   SERVICE_ALL_ACCESS, SERVICE_WIN32_OWN_PROCESS,
+								  SERVICE_ALL_ACCESS, SERVICE_WIN32_OWN_PROCESS,
 								  pgctl_start_type, SERVICE_ERROR_NORMAL,
 								  pgwin32_CommandLine(true),
-	   NULL, NULL, "RPCSS\0", register_username, register_password)) == NULL)
+								  NULL, NULL, "RPCSS\0", register_username, register_password)) == NULL)
 	{
 		CloseServiceHandle(hSCM);
 		write_stderr(_("%s: could not register service \"%s\": error code %lu\n"),
@@ -1781,10 +1781,10 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, bool as_ser
 	/* Allocate list of SIDs to remove */
 	ZeroMemory(&dropSids, sizeof(dropSids));
 	if (!AllocateAndInitializeSid(&NtAuthority, 2,
-		 SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0,
+								  SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0,
 								  0, &dropSids[0].Sid) ||
 		!AllocateAndInitializeSid(&NtAuthority, 2,
-	SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_POWER_USERS, 0, 0, 0, 0, 0,
+								  SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_POWER_USERS, 0, 0, 0, 0, 0,
 								  0, &dropSids[1].Sid))
 	{
 		write_stderr(_("%s: could not allocate SIDs: error code %lu\n"),
@@ -1968,7 +1968,7 @@ do_help(void)
 #endif
 	printf(_("  -l, --log=FILENAME     write (or append) server log to FILENAME\n"));
 	printf(_("  -o, --options=OPTIONS  command line options to pass to postgres\n"
-	 "                         (PostgreSQL server executable) or initdb\n"));
+			 "                         (PostgreSQL server executable) or initdb\n"));
 	printf(_("  -p PATH-TO-POSTGRES    normally not necessary\n"));
 	printf(_("\nOptions for stop or restart:\n"));
 	printf(_("  -m, --mode=MODE        MODE can be \"smart\", \"fast\", or \"immediate\"\n"));

@@ -674,7 +674,7 @@ tsvector_unnest(PG_FUNCTION_ARGS)
 		Datum		values[3];
 
 		values[0] = PointerGetDatum(
-				  cstring_to_text_with_len(data + arrin[i].pos, arrin[i].len)
+									cstring_to_text_with_len(data + arrin[i].pos, arrin[i].len)
 			);
 
 		if (arrin[i].haspos)
@@ -697,14 +697,14 @@ tsvector_unnest(PG_FUNCTION_ARGS)
 				positions[j] = Int16GetDatum(WEP_GETPOS(posv->pos[j]));
 				weight = 'D' - WEP_GETWEIGHT(posv->pos[j]);
 				weights[j] = PointerGetDatum(
-										 cstring_to_text_with_len(&weight, 1)
+											 cstring_to_text_with_len(&weight, 1)
 					);
 			}
 
 			values[1] = PointerGetDatum(
-			  construct_array(positions, posv->npos, INT2OID, 2, true, 's'));
+										construct_array(positions, posv->npos, INT2OID, 2, true, 's'));
 			values[2] = PointerGetDatum(
-			  construct_array(weights, posv->npos, TEXTOID, -1, false, 'i'));
+										construct_array(weights, posv->npos, TEXTOID, -1, false, 'i'));
 		}
 		else
 		{
@@ -738,7 +738,7 @@ tsvector_to_array(PG_FUNCTION_ARGS)
 	for (i = 0; i < tsin->size; i++)
 	{
 		elements[i] = PointerGetDatum(
-		  cstring_to_text_with_len(STRPTR(tsin) + arrin[i].pos, arrin[i].len)
+									  cstring_to_text_with_len(STRPTR(tsin) + arrin[i].pos, arrin[i].len)
 			);
 	}
 

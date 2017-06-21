@@ -192,8 +192,8 @@ PLy_cursor_plan(PyObject *ob, PyObject *args)
 			PLy_elog(ERROR, "could not execute plan");
 		sv = PyString_AsString(so);
 		PLy_exception_set_plural(PyExc_TypeError,
-							  "Expected sequence of %d argument, got %d: %s",
-							 "Expected sequence of %d arguments, got %d: %s",
+								 "Expected sequence of %d argument, got %d: %s",
+								 "Expected sequence of %d arguments, got %d: %s",
 								 plan->nargs,
 								 plan->nargs, nargs, sv);
 		Py_DECREF(so);
@@ -501,7 +501,7 @@ PLy_cursor_close(PyObject *self, PyObject *unused)
 		if (!PortalIsValid(portal))
 		{
 			PLy_exception_set(PyExc_ValueError,
-							"closing a cursor in an aborted subtransaction");
+							  "closing a cursor in an aborted subtransaction");
 			return NULL;
 		}
 

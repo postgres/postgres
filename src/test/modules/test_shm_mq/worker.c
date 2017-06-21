@@ -85,7 +85,7 @@ test_shm_mq_main(Datum main_arg)
 	if (toc == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-			   errmsg("bad magic number in dynamic shared memory segment")));
+				 errmsg("bad magic number in dynamic shared memory segment")));
 
 	/*
 	 * Acquire a worker number.

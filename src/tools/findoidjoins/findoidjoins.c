@@ -51,7 +51,7 @@ main(int argc, char **argv)
 	printfPQExpBuffer(&sql, "%s",
 					  "SET search_path = public;"
 					  "SELECT c.relname, (SELECT nspname FROM "
-		"pg_catalog.pg_namespace n WHERE n.oid = c.relnamespace) AS nspname "
+					  "pg_catalog.pg_namespace n WHERE n.oid = c.relnamespace) AS nspname "
 					  "FROM pg_catalog.pg_class c "
 					  "WHERE c.relkind = " CppAsString2(RELKIND_RELATION)
 					  " AND c.relhasoids "

@@ -683,7 +683,7 @@ PLyList_FromArray_recurse(PLyDatumToOb *elm, int *dims, int ndim, int dim,
 			PyObject   *sublist;
 
 			sublist = PLyList_FromArray_recurse(elm, dims, ndim, dim + 1,
-											 dataptr_p, bitmap_p, bitmask_p);
+												dataptr_p, bitmap_p, bitmask_p);
 			PyList_SET_ITEM(list, i, sublist);
 		}
 	}

@@ -85,7 +85,7 @@ extern void pairingheap_remove(pairingheap *heap, pairingheap_node *node);
 
 #ifdef PAIRINGHEAP_DEBUG
 extern char *pairingheap_dump(pairingheap *heap,
-	 void (*dumpfunc) (pairingheap_node *node, StringInfo buf, void *opaque),
+				 void (*dumpfunc) (pairingheap_node *node, StringInfo buf, void *opaque),
 				 void *opaque);
 #endif
 

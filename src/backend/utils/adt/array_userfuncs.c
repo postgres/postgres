@@ -143,7 +143,7 @@ array_append(PG_FUNCTION_ARGS)
 
 	result = array_set_element(EOHPGetRWDatum(&eah->hdr),
 							   1, &indx, newelem, isNull,
-			   -1, my_extra->typlen, my_extra->typbyval, my_extra->typalign);
+							   -1, my_extra->typlen, my_extra->typbyval, my_extra->typalign);
 
 	PG_RETURN_DATUM(result);
 }
@@ -200,7 +200,7 @@ array_prepend(PG_FUNCTION_ARGS)
 
 	result = array_set_element(EOHPGetRWDatum(&eah->hdr),
 							   1, &indx, newelem, isNull,
-			   -1, my_extra->typlen, my_extra->typbyval, my_extra->typalign);
+							   -1, my_extra->typlen, my_extra->typbyval, my_extra->typalign);
 
 	/* Readjust result's LB to match the input's, as expected for prepend */
 	Assert(result == EOHPGetRWDatum(&eah->hdr));
@@ -352,8 +352,8 @@ array_cat(PG_FUNCTION_ARGS)
 				ereport(ERROR,
 						(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 						 errmsg("cannot concatenate incompatible arrays"),
-					errdetail("Arrays with differing element dimensions are "
-							  "not compatible for concatenation.")));
+						 errdetail("Arrays with differing element dimensions are "
+								   "not compatible for concatenation.")));
 
 			dims[i] = dims1[i];
 			lbs[i] = lbs1[i];
@@ -721,8 +721,8 @@ array_position_common(FunctionCallInfo fcinfo)
 		if (!OidIsValid(typentry->eq_opr_finfo.fn_oid))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				errmsg("could not identify an equality operator for type %s",
-					   format_type_be(element_type))));
+					 errmsg("could not identify an equality operator for type %s",
+							format_type_be(element_type))));
 
 		my_extra->element_type = element_type;
 		fmgr_info_cxt(typentry->eq_opr_finfo.fn_oid, &my_extra->proc,
@@ -860,8 +860,8 @@ array_positions(PG_FUNCTION_ARGS)
 		if (!OidIsValid(typentry->eq_opr_finfo.fn_oid))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				errmsg("could not identify an equality operator for type %s",
-					   format_type_be(element_type))));
+					 errmsg("could not identify an equality operator for type %s",
+							format_type_be(element_type))));
 
 		my_extra->element_type = element_type;
 		fmgr_info_cxt(typentry->eq_opr_finfo.fn_oid, &my_extra->proc,

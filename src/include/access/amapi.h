@@ -77,13 +77,13 @@ typedef bool (*aminsert_function) (Relation indexRelation,
 
 /* bulk delete */
 typedef IndexBulkDeleteResult *(*ambulkdelete_function) (IndexVacuumInfo *info,
-												IndexBulkDeleteResult *stats,
-											IndexBulkDeleteCallback callback,
-													   void *callback_state);
+														 IndexBulkDeleteResult *stats,
+														 IndexBulkDeleteCallback callback,
+														 void *callback_state);
 
 /* post-VACUUM cleanup */
 typedef IndexBulkDeleteResult *(*amvacuumcleanup_function) (IndexVacuumInfo *info,
-											   IndexBulkDeleteResult *stats);
+															IndexBulkDeleteResult *stats);
 
 /* can indexscan return IndexTuples? */
 typedef bool (*amcanreturn_function) (Relation indexRelation, int attno);
@@ -104,7 +104,7 @@ typedef bytea *(*amoptions_function) (Datum reloptions,
 
 /* report AM, index, or index column property */
 typedef bool (*amproperty_function) (Oid index_oid, int attno,
-								  IndexAMProperty prop, const char *propname,
+									 IndexAMProperty prop, const char *propname,
 									 bool *res, bool *isnull);
 
 /* validate definition of an opclass for this AM */

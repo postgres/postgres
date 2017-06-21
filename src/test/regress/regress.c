@@ -85,7 +85,7 @@ regress_dist_ptpath(PG_FUNCTION_ARGS)
 				regress_lseg_construct(&lseg, &path->p[i], &path->p[i + 1]);
 				tmp = DatumGetFloat8(DirectFunctionCall2(dist_ps,
 														 PointPGetDatum(pt),
-													  LsegPGetDatum(&lseg)));
+														 LsegPGetDatum(&lseg)));
 				if (i == 0 || tmp < result)
 					result = tmp;
 			}
@@ -277,7 +277,7 @@ widget_out(PG_FUNCTION_ARGS)
 {
 	WIDGET	   *widget = (WIDGET *) PG_GETARG_POINTER(0);
 	char	   *str = psprintf("(%g,%g,%g)",
-						 widget->center.x, widget->center.y, widget->radius);
+							   widget->center.x, widget->center.y, widget->radius);
 
 	PG_RETURN_CSTRING(str);
 }
@@ -426,11 +426,11 @@ funny_dup17(PG_FUNCTION_ARGS)
 	if (SPI_processed > 0)
 	{
 		selected = DatumGetInt32(DirectFunctionCall1(int4in,
-												CStringGetDatum(SPI_getvalue(
-													   SPI_tuptable->vals[0],
-													   SPI_tuptable->tupdesc,
-																			 1
-																		))));
+													 CStringGetDatum(SPI_getvalue(
+																				  SPI_tuptable->vals[0],
+																				  SPI_tuptable->tupdesc,
+																				  1
+																				  ))));
 	}
 
 	elog(DEBUG4, "funny_dup17 (fired %s) on level %3d: " UINT64_FORMAT "/%d tuples inserted/selected",

@@ -191,8 +191,8 @@ ExplainQuery(ParseState *pstate, ExplainStmt *stmt, const char *queryString,
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("unrecognized value for EXPLAIN option \"%s\": \"%s\"",
-					   opt->defname, p),
+						 errmsg("unrecognized value for EXPLAIN option \"%s\": \"%s\"",
+								opt->defname, p),
 						 parser_errposition(pstate, opt->location)));
 		}
 		else
@@ -445,7 +445,7 @@ ExplainOneUtility(Node *utilityStmt, IntoClause *into, ExplainState *es,
 	{
 		if (es->format == EXPLAIN_FORMAT_TEXT)
 			appendStringInfoString(es->str,
-							  "Utility statements have no plan structure\n");
+								   "Utility statements have no plan structure\n");
 		else
 			ExplainDummyGroup("Utility Statement", NULL, es);
 	}
@@ -813,14 +813,14 @@ ExplainPreScanNode(PlanState *planstate, Bitmapset **rels_used)
 			break;
 		case T_CustomScan:
 			*rels_used = bms_add_members(*rels_used,
-									   ((CustomScan *) plan)->custom_relids);
+										 ((CustomScan *) plan)->custom_relids);
 			break;
 		case T_ModifyTable:
 			*rels_used = bms_add_member(*rels_used,
-									((ModifyTable *) plan)->nominalRelation);
+										((ModifyTable *) plan)->nominalRelation);
 			if (((ModifyTable *) plan)->exclRelRTI)
 				*rels_used = bms_add_member(*rels_used,
-										 ((ModifyTable *) plan)->exclRelRTI);
+											((ModifyTable *) plan)->exclRelRTI);
 			break;
 		default:
 			break;
@@ -1301,7 +1301,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 		{
 			if (es->timing)
 				appendStringInfo(es->str,
-							" (actual time=%.3f..%.3f rows=%.0f loops=%.0f)",
+								 " (actual time=%.3f..%.3f rows=%.0f loops=%.0f)",
 								 startup_sec, total_sec, rows, nloops);
 			else
 				appendStringInfo(es->str,
@@ -1390,7 +1390,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 										   planstate, es);
 			if (es->analyze)
 				ExplainPropertyLong("Heap Fetches",
-				   ((IndexOnlyScanState *) planstate)->ioss_HeapFetches, es);
+									((IndexOnlyScanState *) planstate)->ioss_HeapFetches, es);
 			break;
 		case T_BitmapIndexScan:
 			show_scan_qual(((BitmapIndexScan *) plan)->indexqualorig,
@@ -1647,7 +1647,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 				appendStringInfo(es->str, "Worker %d: ", n);
 				if (es->timing)
 					appendStringInfo(es->str,
-							 "actual time=%.3f..%.3f rows=%.0f loops=%.0f\n",
+									 "actual time=%.3f..%.3f rows=%.0f loops=%.0f\n",
 									 startup_sec, total_sec, rows, nloops);
 				else
 					appendStringInfo(es->str,
@@ -2344,7 +2344,7 @@ show_hash_info(HashState *hashstate, ExplainState *es)
 		{
 			appendStringInfoSpaces(es->str, es->indent * 2);
 			appendStringInfo(es->str,
-						   "Buckets: %d  Batches: %d  Memory Usage: %ldkB\n",
+							 "Buckets: %d  Batches: %d  Memory Usage: %ldkB\n",
 							 hashtable->nbuckets, hashtable->nbatch,
 							 spacePeakKb);
 		}
@@ -2538,10 +2538,10 @@ show_buffer_usage(ExplainState *es, const BufferUsage *usage)
 			appendStringInfoString(es->str, "I/O Timings:");
 			if (!INSTR_TIME_IS_ZERO(usage->blk_read_time))
 				appendStringInfo(es->str, " read=%0.3f",
-							  INSTR_TIME_GET_MILLISEC(usage->blk_read_time));
+								 INSTR_TIME_GET_MILLISEC(usage->blk_read_time));
 			if (!INSTR_TIME_IS_ZERO(usage->blk_write_time))
 				appendStringInfo(es->str, " write=%0.3f",
-							 INSTR_TIME_GET_MILLISEC(usage->blk_write_time));
+								 INSTR_TIME_GET_MILLISEC(usage->blk_write_time));
 			appendStringInfoChar(es->str, '\n');
 		}
 	}
@@ -2787,7 +2787,7 @@ show_modifytable_info(ModifyTableState *mtstate, List *ancestors,
 	/* Should we explicitly label target relations? */
 	labeltargets = (mtstate->mt_nplans > 1 ||
 					(mtstate->mt_nplans == 1 &&
-	   mtstate->resultRelInfo->ri_RangeTableIndex != node->nominalRelation));
+					 mtstate->resultRelInfo->ri_RangeTableIndex != node->nominalRelation));
 
 	if (labeltargets)
 		ExplainOpenGroup("Target Tables", "Target Tables", false, es);
@@ -3369,7 +3369,7 @@ ExplainBeginOutput(ExplainState *es)
 
 		case EXPLAIN_FORMAT_XML:
 			appendStringInfoString(es->str,
-			 "<explain xmlns=\"http://www.postgresql.org/2009/explain\">\n");
+								   "<explain xmlns=\"http://www.postgresql.org/2009/explain\">\n");
 			es->indent++;
 			break;
 

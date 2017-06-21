@@ -552,7 +552,7 @@ exec_command_cd(PsqlScanState scan_state, bool active_branch, const char *cmd)
 			{
 				psql_error("could not get home directory for user ID %ld: %s\n",
 						   (long) user_id,
-						 errno ? strerror(errno) : _("user does not exist"));
+						   errno ? strerror(errno) : _("user does not exist"));
 				exit(EXIT_FAILURE);
 			}
 			dir = pw->pw_dir;
@@ -804,7 +804,7 @@ exec_command_d(PsqlScanState scan_state, bool active_branch, const char *cmd)
 
 					if (pattern)
 						pattern2 = psql_scan_slash_option(scan_state,
-													  OT_NORMAL, NULL, true);
+														  OT_NORMAL, NULL, true);
 					success = listDbRoleSettings(pattern, pattern2);
 				}
 				else
@@ -3291,7 +3291,7 @@ printSSLInfo(void)
 		   protocol ? protocol : _("unknown"),
 		   cipher ? cipher : _("unknown"),
 		   bits ? bits : _("unknown"),
-	  (compression && strcmp(compression, "off") != 0) ? _("on") : _("off"));
+		   (compression && strcmp(compression, "off") != 0) ? _("on") : _("off"));
 }
 
 
@@ -3481,7 +3481,7 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf,
 				 "/", (int) getpid());
 #else
 		snprintf(fnametmp, sizeof(fnametmp), "%s%spsql.edit.%d.sql", tmpdir,
-			   "" /* trailing separator already present */ , (int) getpid());
+				 "" /* trailing separator already present */ , (int) getpid());
 #endif
 
 		fname = (const char *) fnametmp;
@@ -4156,19 +4156,19 @@ printPsetInfo(const char *param, struct printQueryOpt *popt)
 	else if (strcmp(param, "unicode_border_linestyle") == 0)
 	{
 		printf(_("Unicode border line style is \"%s\".\n"),
-			 _unicode_linestyle2string(popt->topt.unicode_border_linestyle));
+			   _unicode_linestyle2string(popt->topt.unicode_border_linestyle));
 	}
 
 	else if (strcmp(param, "unicode_column_linestyle") == 0)
 	{
 		printf(_("Unicode column line style is \"%s\".\n"),
-			 _unicode_linestyle2string(popt->topt.unicode_column_linestyle));
+			   _unicode_linestyle2string(popt->topt.unicode_column_linestyle));
 	}
 
 	else if (strcmp(param, "unicode_header_linestyle") == 0)
 	{
 		printf(_("Unicode header line style is \"%s\".\n"),
-			 _unicode_linestyle2string(popt->topt.unicode_header_linestyle));
+			   _unicode_linestyle2string(popt->topt.unicode_header_linestyle));
 	}
 
 	else
@@ -4578,7 +4578,7 @@ get_create_object_cmd(EditableObjectType obj_type, Oid oid,
 								  "WHEN 'check_option=cascaded' = ANY (c.reloptions) THEN 'CASCADED'::text ELSE NULL END AS checkoption "
 								  "FROM pg_catalog.pg_class c "
 								  "LEFT JOIN pg_catalog.pg_namespace n "
-								"ON c.relnamespace = n.oid WHERE c.oid = %u",
+								  "ON c.relnamespace = n.oid WHERE c.oid = %u",
 								  oid);
 			}
 			else if (pset.sversion >= 90200)
@@ -4590,7 +4590,7 @@ get_create_object_cmd(EditableObjectType obj_type, Oid oid,
 								  "NULL AS checkoption "
 								  "FROM pg_catalog.pg_class c "
 								  "LEFT JOIN pg_catalog.pg_namespace n "
-								"ON c.relnamespace = n.oid WHERE c.oid = %u",
+								  "ON c.relnamespace = n.oid WHERE c.oid = %u",
 								  oid);
 			}
 			else
@@ -4602,7 +4602,7 @@ get_create_object_cmd(EditableObjectType obj_type, Oid oid,
 								  "NULL AS checkoption "
 								  "FROM pg_catalog.pg_class c "
 								  "LEFT JOIN pg_catalog.pg_namespace n "
-								"ON c.relnamespace = n.oid WHERE c.oid = %u",
+								  "ON c.relnamespace = n.oid WHERE c.oid = %u",
 								  oid);
 			}
 			break;

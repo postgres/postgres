@@ -168,7 +168,7 @@ _PG_init(void)
 							 NULL, NULL, NULL);
 
 	DefineCustomBoolVariable("plpgsql.check_asserts",
-				  gettext_noop("Perform checks given in ASSERT statements."),
+							 gettext_noop("Perform checks given in ASSERT statements."),
 							 NULL,
 							 &plpgsql_check_asserts,
 							 true,
@@ -247,7 +247,7 @@ plpgsql_call_handler(PG_FUNCTION_ARGS)
 		 */
 		if (CALLED_AS_TRIGGER(fcinfo))
 			retval = PointerGetDatum(plpgsql_exec_trigger(func,
-										   (TriggerData *) fcinfo->context));
+														  (TriggerData *) fcinfo->context));
 		else if (CALLED_AS_EVENT_TRIGGER(fcinfo))
 		{
 			plpgsql_exec_event_trigger(func,

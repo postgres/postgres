@@ -193,29 +193,29 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size)
 		errno = shmget_errno;
 		ereport(FATAL,
 				(errmsg("could not create shared memory segment: %m"),
-		  errdetail("Failed system call was shmget(key=%lu, size=%zu, 0%o).",
-					(unsigned long) memKey, size,
-					IPC_CREAT | IPC_EXCL | IPCProtection),
+				 errdetail("Failed system call was shmget(key=%lu, size=%zu, 0%o).",
+						   (unsigned long) memKey, size,
+						   IPC_CREAT | IPC_EXCL | IPCProtection),
 				 (shmget_errno == EINVAL) ?
 				 errhint("This error usually means that PostgreSQL's request for a shared memory "
-		 "segment exceeded your kernel's SHMMAX parameter, or possibly that "
+						 "segment exceeded your kernel's SHMMAX parameter, or possibly that "
 						 "it is less than "
 						 "your kernel's SHMMIN parameter.\n"
-		"The PostgreSQL documentation contains more information about shared "
+						 "The PostgreSQL documentation contains more information about shared "
 						 "memory configuration.") : 0,
 				 (shmget_errno == ENOMEM) ?
 				 errhint("This error usually means that PostgreSQL's request for a shared "
 						 "memory segment exceeded your kernel's SHMALL parameter.  You might need "
 						 "to reconfigure the kernel with larger SHMALL.\n"
-		"The PostgreSQL documentation contains more information about shared "
+						 "The PostgreSQL documentation contains more information about shared "
 						 "memory configuration.") : 0,
 				 (shmget_errno == ENOSPC) ?
 				 errhint("This error does *not* mean that you have run out of disk space.  "
 						 "It occurs either if all available shared memory IDs have been taken, "
 						 "in which case you need to raise the SHMMNI parameter in your kernel, "
-		  "or because the system's overall limit for shared memory has been "
+						 "or because the system's overall limit for shared memory has been "
 						 "reached.\n"
-		"The PostgreSQL documentation contains more information about shared "
+						 "The PostgreSQL documentation contains more information about shared "
 						 "memory configuration.") : 0));
 	}
 
@@ -504,10 +504,10 @@ CreateAnonymousSegment(Size *size)
 				(errmsg("could not map anonymous shared memory: %m"),
 				 (mmap_errno == ENOMEM) ?
 				 errhint("This error usually means that PostgreSQL's request "
-					"for a shared memory segment exceeded available memory, "
-					 "swap space, or huge pages. To reduce the request size "
+						 "for a shared memory segment exceeded available memory, "
+						 "swap space, or huge pages. To reduce the request size "
 						 "(currently %zu bytes), reduce PostgreSQL's shared "
-					   "memory usage, perhaps by reducing shared_buffers or "
+						 "memory usage, perhaps by reducing shared_buffers or "
 						 "max_connections.",
 						 *size) : 0));
 	}

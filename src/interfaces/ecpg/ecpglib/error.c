@@ -44,7 +44,7 @@ ecpg_raise(int line, int code, const char *sqlstate, const char *str)
 			snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
 			/*------
 			   translator: this string will be truncated at 149 characters expanded.  */
-			  ecpg_gettext("unsupported type \"%s\" on line %d"), str, line);
+					 ecpg_gettext("unsupported type \"%s\" on line %d"), str, line);
 			break;
 
 		case ECPG_TOO_MANY_ARGUMENTS:
@@ -106,7 +106,7 @@ ecpg_raise(int line, int code, const char *sqlstate, const char *str)
 			snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
 			/*------
 			   translator: this string will be truncated at 149 characters expanded.  */
-			  ecpg_gettext("null value without indicator on line %d"), line);
+					 ecpg_gettext("null value without indicator on line %d"), line);
 			break;
 
 		case ECPG_NO_ARRAY:
@@ -162,7 +162,7 @@ ecpg_raise(int line, int code, const char *sqlstate, const char *str)
 			snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
 			/*------
 			   translator: this string will be truncated at 149 characters expanded.  */
-			 ecpg_gettext("descriptor index out of range on line %d"), line);
+					 ecpg_gettext("descriptor index out of range on line %d"), line);
 			break;
 
 		case ECPG_UNKNOWN_DESCRIPTOR_ITEM:
@@ -190,7 +190,7 @@ ecpg_raise(int line, int code, const char *sqlstate, const char *str)
 			snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
 			/*------
 			   translator: this string will be truncated at 149 characters expanded.  */
-			ecpg_gettext("error in transaction processing on line %d"), line);
+					 ecpg_gettext("error in transaction processing on line %d"), line);
 			break;
 
 		case ECPG_CONNECT:

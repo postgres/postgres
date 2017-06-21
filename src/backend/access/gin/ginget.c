@@ -179,11 +179,11 @@ collectMatchBitmap(GinBtreeData *btree, GinBtreeStack *stack,
 			 *----------
 			 */
 			cmp = DatumGetInt32(FunctionCall4Coll(&btree->ginstate->comparePartialFn[attnum - 1],
-							   btree->ginstate->supportCollation[attnum - 1],
+												  btree->ginstate->supportCollation[attnum - 1],
 												  scanEntry->queryKey,
 												  idatum,
-										 UInt16GetDatum(scanEntry->strategy),
-									PointerGetDatum(scanEntry->extra_data)));
+												  UInt16GetDatum(scanEntry->strategy),
+												  PointerGetDatum(scanEntry->extra_data)));
 
 			if (cmp > 0)
 				return true;
@@ -628,7 +628,7 @@ entryLoadMoreItems(GinState *ginstate, GinScanEntry entry,
 		{
 			ItemPointerSet(&entry->btree.itemptr,
 						   GinItemPointerGetBlockNumber(&advancePast),
-			  OffsetNumberNext(GinItemPointerGetOffsetNumber(&advancePast)));
+						   OffsetNumberNext(GinItemPointerGetOffsetNumber(&advancePast)));
 		}
 		entry->btree.fullScan = false;
 		stack = ginFindLeafPage(&entry->btree, true, snapshot);
@@ -990,7 +990,7 @@ keyGetItem(GinState *ginstate, MemoryContext tempCtx, GinScanKey key,
 		Assert(GinItemPointerGetOffsetNumber(&minItem) > 0);
 		ItemPointerSet(&advancePast,
 					   GinItemPointerGetBlockNumber(&minItem),
-				  OffsetNumberPrev(GinItemPointerGetOffsetNumber(&minItem)));
+					   OffsetNumberPrev(GinItemPointerGetOffsetNumber(&minItem)));
 	}
 
 	/*
@@ -1249,7 +1249,7 @@ scanGetItem(IndexScanDesc scan, ItemPointerData advancePast,
 					GinItemPointerGetBlockNumber(&key->curItem))
 				{
 					ItemPointerSet(&advancePast,
-								 GinItemPointerGetBlockNumber(&key->curItem),
+								   GinItemPointerGetBlockNumber(&key->curItem),
 								   InvalidOffsetNumber);
 				}
 			}
@@ -1461,11 +1461,11 @@ matchPartialInPendingList(GinState *ginstate, Page page,
 		 *----------
 		 */
 		cmp = DatumGetInt32(FunctionCall4Coll(&ginstate->comparePartialFn[entry->attnum - 1],
-							   ginstate->supportCollation[entry->attnum - 1],
+											  ginstate->supportCollation[entry->attnum - 1],
 											  entry->queryKey,
 											  datum[off - 1],
 											  UInt16GetDatum(entry->strategy),
-										PointerGetDatum(entry->extra_data)));
+											  PointerGetDatum(entry->extra_data)));
 		if (cmp == 0)
 			return true;
 		else if (cmp > 0)

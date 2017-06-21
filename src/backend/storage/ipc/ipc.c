@@ -198,7 +198,7 @@ proc_exit_prepare(int code)
 	 */
 	while (--on_proc_exit_index >= 0)
 		(*on_proc_exit_list[on_proc_exit_index].function) (code,
-								  on_proc_exit_list[on_proc_exit_index].arg);
+														   on_proc_exit_list[on_proc_exit_index].arg);
 
 	on_proc_exit_index = 0;
 }
@@ -226,7 +226,7 @@ shmem_exit(int code)
 		 code, before_shmem_exit_index);
 	while (--before_shmem_exit_index >= 0)
 		(*before_shmem_exit_list[before_shmem_exit_index].function) (code,
-						before_shmem_exit_list[before_shmem_exit_index].arg);
+																	 before_shmem_exit_list[before_shmem_exit_index].arg);
 	before_shmem_exit_index = 0;
 
 	/*
@@ -259,7 +259,7 @@ shmem_exit(int code)
 		 code, on_shmem_exit_index);
 	while (--on_shmem_exit_index >= 0)
 		(*on_shmem_exit_list[on_shmem_exit_index].function) (code,
-								on_shmem_exit_list[on_shmem_exit_index].arg);
+															 on_shmem_exit_list[on_shmem_exit_index].arg);
 	on_shmem_exit_index = 0;
 }
 

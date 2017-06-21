@@ -477,7 +477,7 @@ sepgsql_get_label(Oid classId, Oid objectId, int32 subId)
 		if (security_get_initial_context_raw("unlabeled", &unlabeled) < 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
-			   errmsg("SELinux: failed to get initial security label: %m")));
+					 errmsg("SELinux: failed to get initial security label: %m")));
 		PG_TRY();
 		{
 			label = pstrdup(unlabeled);
@@ -510,7 +510,7 @@ sepgsql_object_relabel(const ObjectAddress *object, const char *seclabel)
 		security_check_context_raw((security_context_t) seclabel) < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_NAME),
-			   errmsg("SELinux: invalid security label: \"%s\"", seclabel)));
+				 errmsg("SELinux: invalid security label: \"%s\"", seclabel)));
 
 	/*
 	 * Do actual permission checks for each object classes
@@ -925,7 +925,7 @@ sepgsql_restorecon(PG_FUNCTION_ARGS)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-		  errmsg("SELinux: must be superuser to restore initial contexts")));
+				 errmsg("SELinux: must be superuser to restore initial contexts")));
 
 	/*
 	 * Open selabel_lookup(3) stuff. It provides a set of mapping between an
@@ -945,7 +945,7 @@ sepgsql_restorecon(PG_FUNCTION_ARGS)
 	if (!sehnd)
 		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
-			   errmsg("SELinux: failed to initialize labeling handle: %m")));
+				 errmsg("SELinux: failed to initialize labeling handle: %m")));
 	PG_TRY();
 	{
 		exec_object_restorecon(sehnd, DatabaseRelationId);

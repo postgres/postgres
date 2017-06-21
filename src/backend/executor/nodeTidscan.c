@@ -221,7 +221,7 @@ TidListEval(TidScanState *tidstate)
 
 			Assert(tidexpr->cexpr);
 			if (execCurrentOf(tidexpr->cexpr, econtext,
-						   RelationGetRelid(tidstate->ss.ss_currentRelation),
+							  RelationGetRelid(tidstate->ss.ss_currentRelation),
 							  &cursor_tid))
 			{
 				if (numTids >= numAllocTids)

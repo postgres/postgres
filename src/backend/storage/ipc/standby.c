@@ -284,7 +284,7 @@ ResolveRecoveryConflictWithSnapshot(TransactionId latestRemovedXid, RelFileNode 
 										 node.dbNode);
 
 	ResolveRecoveryConflictWithVirtualXIDs(backends,
-										 PROCSIG_RECOVERY_CONFLICT_SNAPSHOT);
+										   PROCSIG_RECOVERY_CONFLICT_SNAPSHOT);
 }
 
 void
@@ -312,7 +312,7 @@ ResolveRecoveryConflictWithTablespace(Oid tsid)
 	temp_file_users = GetConflictingVirtualXIDs(InvalidTransactionId,
 												InvalidOid);
 	ResolveRecoveryConflictWithVirtualXIDs(temp_file_users,
-									   PROCSIG_RECOVERY_CONFLICT_TABLESPACE);
+										   PROCSIG_RECOVERY_CONFLICT_TABLESPACE);
 }
 
 void
@@ -376,7 +376,7 @@ ResolveRecoveryConflictWithLock(LOCKTAG locktag)
 
 		backends = GetLockConflicts(&locktag, AccessExclusiveLock);
 		ResolveRecoveryConflictWithVirtualXIDs(backends,
-											 PROCSIG_RECOVERY_CONFLICT_LOCK);
+											   PROCSIG_RECOVERY_CONFLICT_LOCK);
 	}
 	else
 	{
@@ -529,7 +529,7 @@ CheckRecoveryConflictDeadlock(void)
 	ereport(ERROR,
 			(errcode(ERRCODE_T_R_DEADLOCK_DETECTED),
 			 errmsg("canceling statement due to conflict with recovery"),
-	   errdetail("User transaction caused buffer deadlock with recovery.")));
+			 errdetail("User transaction caused buffer deadlock with recovery.")));
 }
 
 
@@ -986,7 +986,7 @@ LogCurrentRunningXacts(RunningTransactions CurrRunningXacts)
 	/* array of TransactionIds */
 	if (xlrec.xcnt > 0)
 		XLogRegisterData((char *) CurrRunningXacts->xids,
-					   (xlrec.xcnt + xlrec.subxcnt) * sizeof(TransactionId));
+						 (xlrec.xcnt + xlrec.subxcnt) * sizeof(TransactionId));
 
 	recptr = XLogInsert(RM_STANDBY_ID, XLOG_RUNNING_XACTS);
 

@@ -628,7 +628,7 @@ check_relation_updatable(LogicalRepRelMapEntry *rel)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("publisher does not send replica identity column "
-			 "expected by the logical replication target relation \"%s.%s\"",
+						"expected by the logical replication target relation \"%s.%s\"",
 						rel->remoterel.nspname, rel->remoterel.relname)));
 	}
 
@@ -908,7 +908,7 @@ apply_dispatch(StringInfo s)
 		default:
 			ereport(ERROR,
 					(errcode(ERRCODE_PROTOCOL_VIOLATION),
-			 errmsg("invalid logical replication message type %c", action)));
+					 errmsg("invalid logical replication message type %c", action)));
 	}
 }
 
@@ -1207,7 +1207,7 @@ LogicalRepApplyLoop(XLogRecPtr last_received)
 				if (!ping_sent)
 				{
 					timeout = TimestampTzPlusMilliseconds(last_recv_timestamp,
-												 (wal_receiver_timeout / 2));
+														  (wal_receiver_timeout / 2));
 					if (now >= timeout)
 					{
 						requestReply = true;
@@ -1375,7 +1375,7 @@ maybe_reread_subscription(void)
 	{
 		ereport(LOG,
 				(errmsg("logical replication apply worker for subscription \"%s\" will "
-					"restart because the connection information was changed",
+						"restart because the connection information was changed",
 						MySubscription->name)));
 
 		proc_exit(0);
@@ -1406,7 +1406,7 @@ maybe_reread_subscription(void)
 	{
 		ereport(LOG,
 				(errmsg("logical replication apply worker for subscription \"%s\" will "
-					 "restart because the replication slot name was changed",
+						"restart because the replication slot name was changed",
 						MySubscription->name)));
 
 		proc_exit(0);
@@ -1420,7 +1420,7 @@ maybe_reread_subscription(void)
 	{
 		ereport(LOG,
 				(errmsg("logical replication apply worker for subscription \"%s\" will "
-				  "restart because subscription's publications were changed",
+						"restart because subscription's publications were changed",
 						MySubscription->name)));
 
 		proc_exit(0);
@@ -1528,7 +1528,7 @@ ApplyWorkerMain(Datum main_arg)
 	{
 		ereport(LOG,
 				(errmsg("logical replication apply worker for subscription \"%s\" will not "
-				"start because the subscription was disabled during startup",
+						"start because the subscription was disabled during startup",
 						MySubscription->name)));
 
 		proc_exit(0);
@@ -1542,7 +1542,7 @@ ApplyWorkerMain(Datum main_arg)
 	if (am_tablesync_worker())
 		ereport(LOG,
 				(errmsg("logical replication table synchronization worker for subscription \"%s\", table \"%s\" has started",
-			MySubscription->name, get_rel_name(MyLogicalRepWorker->relid))));
+						MySubscription->name, get_rel_name(MyLogicalRepWorker->relid))));
 	else
 		ereport(LOG,
 				(errmsg("logical replication apply worker for subscription \"%s\" has started",

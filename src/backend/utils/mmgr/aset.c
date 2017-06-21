@@ -1181,7 +1181,7 @@ AllocSetStats(MemoryContext context, int level, bool print,
 		for (i = 0; i < level; i++)
 			fprintf(stderr, "  ");
 		fprintf(stderr,
-			"%s: %zu total in %zd blocks; %zu free (%zd chunks); %zu used\n",
+				"%s: %zu total in %zd blocks; %zu free (%zd chunks); %zu used\n",
 				set->header.name, totalspace, nblocks, freespace, freechunks,
 				totalspace - freespace);
 	}

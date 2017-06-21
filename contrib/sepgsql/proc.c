@@ -106,7 +106,7 @@ sepgsql_proc_post_create(Oid functionId)
 	initStringInfo(&audit_name);
 	nsp_name = get_namespace_name(proForm->pronamespace);
 	appendStringInfo(&audit_name, "%s(",
-			quote_qualified_identifier(nsp_name, NameStr(proForm->proname)));
+					 quote_qualified_identifier(nsp_name, NameStr(proForm->proname)));
 	for (i = 0; i < proForm->pronargs; i++)
 	{
 		if (i > 0)

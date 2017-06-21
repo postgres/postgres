@@ -375,7 +375,7 @@ pgstat_init(void)
 	 * compile-time cross-check that we didn't.
 	 */
 	StaticAssertStmt(sizeof(PgStat_Msg) <= PGSTAT_MAX_MSG_SIZE,
-				   "maximum stats message size exceeds PGSTAT_MAX_MSG_SIZE");
+					 "maximum stats message size exceeds PGSTAT_MAX_MSG_SIZE");
 
 	/*
 	 * Create the UDP socket for sending and receiving statistic messages
@@ -415,7 +415,7 @@ pgstat_init(void)
 
 		if (++tries > 1)
 			ereport(LOG,
-			(errmsg("trying another address for the statistics collector")));
+					(errmsg("trying another address for the statistics collector")));
 
 		/*
 		 * Create the socket.
@@ -424,7 +424,7 @@ pgstat_init(void)
 		{
 			ereport(LOG,
 					(errcode_for_socket_access(),
-			errmsg("could not create socket for statistics collector: %m")));
+					 errmsg("could not create socket for statistics collector: %m")));
 			continue;
 		}
 
@@ -436,7 +436,7 @@ pgstat_init(void)
 		{
 			ereport(LOG,
 					(errcode_for_socket_access(),
-			  errmsg("could not bind socket for statistics collector: %m")));
+					 errmsg("could not bind socket for statistics collector: %m")));
 			closesocket(pgStatSock);
 			pgStatSock = PGINVALID_SOCKET;
 			continue;
@@ -463,7 +463,7 @@ pgstat_init(void)
 		{
 			ereport(LOG,
 					(errcode_for_socket_access(),
-			errmsg("could not connect socket for statistics collector: %m")));
+					 errmsg("could not connect socket for statistics collector: %m")));
 			closesocket(pgStatSock);
 			pgStatSock = PGINVALID_SOCKET;
 			continue;
@@ -612,7 +612,7 @@ retry2:
 
 startup_failed:
 	ereport(LOG,
-	  (errmsg("disabling statistics collector for lack of working socket")));
+			(errmsg("disabling statistics collector for lack of working socket")));
 
 	if (addrs)
 		pg_freeaddrinfo_all(hints.ai_family, addrs);
@@ -2615,11 +2615,11 @@ BackendStatusShmemSize(void)
 					mul_size(NAMEDATALEN, NumBackendStatSlots));
 	/* BackendActivityBuffer: */
 	size = add_size(size,
-			mul_size(pgstat_track_activity_query_size, NumBackendStatSlots));
+					mul_size(pgstat_track_activity_query_size, NumBackendStatSlots));
 #ifdef USE_SSL
 	/* BackendSslStatusBuffer: */
 	size = add_size(size,
-				  mul_size(sizeof(PgBackendSSLStatus), NumBackendStatSlots));
+					mul_size(sizeof(PgBackendSSLStatus), NumBackendStatSlots));
 #endif
 	return size;
 }
@@ -3234,13 +3234,13 @@ pgstat_read_current_status(void)
 
 	localtable = (LocalPgBackendStatus *)
 		MemoryContextAlloc(pgStatLocalContext,
-						 sizeof(LocalPgBackendStatus) * NumBackendStatSlots);
+						   sizeof(LocalPgBackendStatus) * NumBackendStatSlots);
 	localappname = (char *)
 		MemoryContextAlloc(pgStatLocalContext,
 						   NAMEDATALEN * NumBackendStatSlots);
 	localactivity = (char *)
 		MemoryContextAlloc(pgStatLocalContext,
-					 pgstat_track_activity_query_size * NumBackendStatSlots);
+						   pgstat_track_activity_query_size * NumBackendStatSlots);
 #ifdef USE_SSL
 	localsslstatus = (PgBackendSSLStatus *)
 		MemoryContextAlloc(pgStatLocalContext,
@@ -4330,13 +4330,13 @@ PgstatCollectorMain(int argc, char *argv[])
 
 				case PGSTAT_MTYPE_RESETSHAREDCOUNTER:
 					pgstat_recv_resetsharedcounter(
-									   (PgStat_MsgResetsharedcounter *) &msg,
+												   (PgStat_MsgResetsharedcounter *) &msg,
 												   len);
 					break;
 
 				case PGSTAT_MTYPE_RESETSINGLECOUNTER:
 					pgstat_recv_resetsinglecounter(
-									   (PgStat_MsgResetsinglecounter *) &msg,
+												   (PgStat_MsgResetsinglecounter *) &msg,
 												   len);
 					break;
 
@@ -4388,7 +4388,7 @@ PgstatCollectorMain(int argc, char *argv[])
 		/* Sleep until there's something to do */
 #ifndef WIN32
 		wr = WaitLatchOrSocket(MyLatch,
-					 WL_LATCH_SET | WL_POSTMASTER_DEATH | WL_SOCKET_READABLE,
+							   WL_LATCH_SET | WL_POSTMASTER_DEATH | WL_SOCKET_READABLE,
 							   pgStatSock, -1L,
 							   WAIT_EVENT_PGSTAT_MAIN);
 #else
@@ -4404,7 +4404,7 @@ PgstatCollectorMain(int argc, char *argv[])
 		 * backend_read_statsfile.
 		 */
 		wr = WaitLatchOrSocket(MyLatch,
-		WL_LATCH_SET | WL_POSTMASTER_DEATH | WL_SOCKET_READABLE | WL_TIMEOUT,
+							   WL_LATCH_SET | WL_POSTMASTER_DEATH | WL_SOCKET_READABLE | WL_TIMEOUT,
 							   pgStatSock,
 							   2 * 1000L /* msec */ ,
 							   WAIT_EVENT_PGSTAT_MAIN);
@@ -4683,8 +4683,8 @@ pgstat_write_statsfiles(bool permanent, bool allDbs)
 	{
 		ereport(LOG,
 				(errcode_for_file_access(),
-			   errmsg("could not write temporary statistics file \"%s\": %m",
-					  tmpfile)));
+				 errmsg("could not write temporary statistics file \"%s\": %m",
+						tmpfile)));
 		FreeFile(fpout);
 		unlink(tmpfile);
 	}
@@ -4692,8 +4692,8 @@ pgstat_write_statsfiles(bool permanent, bool allDbs)
 	{
 		ereport(LOG,
 				(errcode_for_file_access(),
-			   errmsg("could not close temporary statistics file \"%s\": %m",
-					  tmpfile)));
+				 errmsg("could not close temporary statistics file \"%s\": %m",
+						tmpfile)));
 		unlink(tmpfile);
 	}
 	else if (rename(tmpfile, statfile) < 0)
@@ -4818,8 +4818,8 @@ pgstat_write_db_statsfile(PgStat_StatDBEntry *dbentry, bool permanent)
 	{
 		ereport(LOG,
 				(errcode_for_file_access(),
-			   errmsg("could not write temporary statistics file \"%s\": %m",
-					  tmpfile)));
+				 errmsg("could not write temporary statistics file \"%s\": %m",
+						tmpfile)));
 		FreeFile(fpout);
 		unlink(tmpfile);
 	}
@@ -4827,8 +4827,8 @@ pgstat_write_db_statsfile(PgStat_StatDBEntry *dbentry, bool permanent)
 	{
 		ereport(LOG,
 				(errcode_for_file_access(),
-			   errmsg("could not close temporary statistics file \"%s\": %m",
-					  tmpfile)));
+				 errmsg("could not close temporary statistics file \"%s\": %m",
+						tmpfile)));
 		unlink(tmpfile);
 	}
 	else if (rename(tmpfile, statfile) < 0)
@@ -4986,7 +4986,7 @@ pgstat_read_statsfiles(Oid onlydb, bool permanent, bool deep)
 				 * Add to the DB hash
 				 */
 				dbentry = (PgStat_StatDBEntry *) hash_search(dbhash,
-												  (void *) &dbbuf.databaseid,
+															 (void *) &dbbuf.databaseid,
 															 HASH_ENTER,
 															 &found);
 				if (found)
@@ -5019,7 +5019,7 @@ pgstat_read_statsfiles(Oid onlydb, bool permanent, bool deep)
 				dbentry->tables = hash_create("Per-database table",
 											  PGSTAT_TAB_HASH_SIZE,
 											  &hash_ctl,
-									  HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
+											  HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 
 				hash_ctl.keysize = sizeof(Oid);
 				hash_ctl.entrysize = sizeof(PgStat_StatFuncEntry);
@@ -5027,7 +5027,7 @@ pgstat_read_statsfiles(Oid onlydb, bool permanent, bool deep)
 				dbentry->functions = hash_create("Per-database function",
 												 PGSTAT_FUNCTION_HASH_SIZE,
 												 &hash_ctl,
-									  HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
+												 HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 
 				/*
 				 * If requested, read the data from the database-specific
@@ -5153,8 +5153,8 @@ pgstat_read_db_statsfile(Oid databaseid, HTAB *tabhash, HTAB *funchash,
 					break;
 
 				tabentry = (PgStat_StatTabEntry *) hash_search(tabhash,
-													(void *) &tabbuf.tableid,
-														 HASH_ENTER, &found);
+															   (void *) &tabbuf.tableid,
+															   HASH_ENTER, &found);
 
 				if (found)
 				{
@@ -5187,8 +5187,8 @@ pgstat_read_db_statsfile(Oid databaseid, HTAB *tabhash, HTAB *funchash,
 					break;
 
 				funcentry = (PgStat_StatFuncEntry *) hash_search(funchash,
-												(void *) &funcbuf.functionid,
-														 HASH_ENTER, &found);
+																 (void *) &funcbuf.functionid,
+																 HASH_ENTER, &found);
 
 				if (found)
 				{
@@ -5655,7 +5655,7 @@ pgstat_recv_tabstat(PgStat_MsgTabstat *msg, int len)
 		PgStat_TableEntry *tabmsg = &(msg->m_entry[i]);
 
 		tabentry = (PgStat_StatTabEntry *) hash_search(dbentry->tables,
-													(void *) &(tabmsg->t_id),
+													   (void *) &(tabmsg->t_id),
 													   HASH_ENTER, &found);
 
 		if (!found)
@@ -6140,7 +6140,7 @@ pgstat_recv_funcstat(PgStat_MsgFuncstat *msg, int len)
 	for (i = 0; i < msg->m_nentries; i++, funcmsg++)
 	{
 		funcentry = (PgStat_StatFuncEntry *) hash_search(dbentry->functions,
-												   (void *) &(funcmsg->f_id),
+														 (void *) &(funcmsg->f_id),
 														 HASH_ENTER, &found);
 
 		if (!found)

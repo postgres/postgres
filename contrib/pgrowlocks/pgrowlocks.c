@@ -153,7 +153,7 @@ pgrowlocks(PG_FUNCTION_ARGS)
 			values = (char **) palloc(mydata->ncolumns * sizeof(char *));
 
 			values[Atnum_tid] = (char *) DirectFunctionCall1(tidout,
-											PointerGetDatum(&tuple->t_self));
+															 PointerGetDatum(&tuple->t_self));
 
 			values[Atnum_xmax] = palloc(NCHARS * sizeof(char));
 			snprintf(values[Atnum_xmax], NCHARS, "%d", xmax);

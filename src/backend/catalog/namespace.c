@@ -217,7 +217,7 @@ static bool MatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
 Oid
 RangeVarGetRelidExtended(const RangeVar *relation, LOCKMODE lockmode,
 						 bool missing_ok, bool nowait,
-					   RangeVarGetRelidCallback callback, void *callback_arg)
+						 RangeVarGetRelidCallback callback, void *callback_arg)
 {
 	uint64		inval_count;
 	Oid			relId;
@@ -2751,14 +2751,14 @@ DeconstructQualifiedName(List *names,
 			if (strcmp(catalogname, get_database_name(MyDatabaseId)) != 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				  errmsg("cross-database references are not implemented: %s",
-						 NameListToString(names))));
+						 errmsg("cross-database references are not implemented: %s",
+								NameListToString(names))));
 			break;
 		default:
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-				errmsg("improper qualified name (too many dotted names): %s",
-					   NameListToString(names))));
+					 errmsg("improper qualified name (too many dotted names): %s",
+							NameListToString(names))));
 			break;
 	}
 
@@ -2888,7 +2888,7 @@ CheckSetNamespace(Oid oldNspOid, Oid nspOid)
 	if (isAnyTempNamespace(nspOid) || isAnyTempNamespace(oldNspOid))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			errmsg("cannot move objects into or out of temporary schemas")));
+				 errmsg("cannot move objects into or out of temporary schemas")));
 
 	/* same for TOAST schema */
 	if (nspOid == PG_TOAST_NAMESPACE || oldNspOid == PG_TOAST_NAMESPACE)
@@ -2998,8 +2998,8 @@ makeRangeVarFromNameList(List *names)
 		default:
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("improper relation name (too many dotted names): %s",
-						NameListToString(names))));
+					 errmsg("improper relation name (too many dotted names): %s",
+							NameListToString(names))));
 			break;
 	}
 
@@ -3099,7 +3099,7 @@ bool
 isTempOrTempToastNamespace(Oid namespaceId)
 {
 	if (OidIsValid(myTempNamespace) &&
-	 (myTempNamespace == namespaceId || myTempToastNamespace == namespaceId))
+		(myTempNamespace == namespaceId || myTempToastNamespace == namespaceId))
 		return true;
 	return false;
 }

@@ -2139,7 +2139,7 @@ varstrfastcmp_locale(Datum x, Datum y, SortSupport ssup)
 										  &status);
 				if (U_FAILURE(status))
 					ereport(ERROR,
-					  (errmsg("collation failed: %s", u_errorName(status))));
+							(errmsg("collation failed: %s", u_errorName(status))));
 			}
 			else
 #endif
@@ -2350,7 +2350,7 @@ varstr_abbrev_convert(Datum original, SortSupport ssup)
 												 &iter,
 												 state,
 												 (uint8_t *) sss->buf2,
-											Min(sizeof(Datum), sss->buflen2),
+												 Min(sizeof(Datum), sss->buflen2),
 												 &status);
 					if (U_FAILURE(status))
 						ereport(ERROR,
@@ -2359,7 +2359,7 @@ varstr_abbrev_convert(Datum original, SortSupport ssup)
 				else
 					bsize = ucol_getSortKey(sss->locale->info.icu.ucol,
 											uchar, ulen,
-										(uint8_t *) sss->buf2, sss->buflen2);
+											(uint8_t *) sss->buf2, sss->buflen2);
 			}
 			else
 #endif
@@ -4244,7 +4244,7 @@ text_to_array_internal(PG_FUNCTION_ARGS)
 			/* XXX: this hardcodes assumptions about the text type */
 			PG_RETURN_ARRAYTYPE_P(construct_md_array(elems, nulls,
 													 1, dims, lbs,
-												   TEXTOID, -1, false, 'i'));
+													 TEXTOID, -1, false, 'i'));
 		}
 
 		start_posn = 1;
@@ -5317,7 +5317,7 @@ text_format_parse_format(const char *start_ptr, const char *end_ptr,
 			if (*cp != '$')
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				  errmsg("width argument position must be ended by \"$\"")));
+						 errmsg("width argument position must be ended by \"$\"")));
 			/* The number was width argument position */
 			*widthpos = n;
 			/* Explicit 0 for argument index is immediately refused */
@@ -5362,7 +5362,7 @@ text_format_string_conversion(StringInfo buf, char conversion,
 		else if (conversion == 'I')
 			ereport(ERROR,
 					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-			errmsg("null values cannot be formatted as an SQL identifier")));
+					 errmsg("null values cannot be formatted as an SQL identifier")));
 		return;
 	}
 

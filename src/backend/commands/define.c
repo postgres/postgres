@@ -206,7 +206,7 @@ defGetInt64(DefElem *def)
 			 * strings.
 			 */
 			return DatumGetInt64(DirectFunctionCall1(int8in,
-										 CStringGetDatum(strVal(def->arg))));
+													 CStringGetDatum(strVal(def->arg))));
 		default:
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),

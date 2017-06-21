@@ -726,7 +726,7 @@ tuplesort_begin_common(int workMem, bool randomAccess)
 	 * see comments in grow_memtuples().
 	 */
 	state->memtupsize = Max(1024,
-						ALLOCSET_SEPARATE_THRESHOLD / sizeof(SortTuple) + 1);
+							ALLOCSET_SEPARATE_THRESHOLD / sizeof(SortTuple) + 1);
 
 	state->growmemtuples = true;
 	state->slabAllocatorUsed = false;
@@ -1989,7 +1989,7 @@ tuplesort_gettuple_common(Tuplesortstate *state, bool forward,
 				 */
 				nmoved = LogicalTapeBackspace(state->tapeset,
 											  state->result_tape,
-										  tuplen + 2 * sizeof(unsigned int));
+											  tuplen + 2 * sizeof(unsigned int));
 				if (nmoved == tuplen + sizeof(unsigned int))
 				{
 					/*
@@ -3971,7 +3971,7 @@ copytup_cluster(Tuplesortstate *state, SortTuple *stup, void *tup)
 
 			tuple = (HeapTuple) mtup->tuple;
 			mtup->datum1 = heap_getattr(tuple,
-									  state->indexInfo->ii_KeyAttrNumbers[0],
+										state->indexInfo->ii_KeyAttrNumbers[0],
 										state->tupDesc,
 										&mtup->isnull1);
 		}
@@ -4143,7 +4143,7 @@ comparetup_index_btree(const SortTuple *a, const SortTuple *b,
 				 key_desc ? errdetail("Key %s is duplicated.", key_desc) :
 				 errdetail("Duplicate keys exist."),
 				 errtableconstraint(state->heapRel,
-								 RelationGetRelationName(state->indexRel))));
+									RelationGetRelationName(state->indexRel))));
 	}
 
 	/*
@@ -4348,7 +4348,7 @@ comparetup_datum(const SortTuple *a, const SortTuple *b, Tuplesortstate *state)
 
 	if (state->sortKeys->abbrev_converter)
 		compare = ApplySortAbbrevFullComparator(PointerGetDatum(a->tuple), a->isnull1,
-									   PointerGetDatum(b->tuple), b->isnull1,
+												PointerGetDatum(b->tuple), b->isnull1,
 												state->sortKeys);
 
 	return compare;

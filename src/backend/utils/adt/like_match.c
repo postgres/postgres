@@ -104,7 +104,7 @@ MatchText(char *t, int tlen, char *p, int plen,
 			if (plen <= 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_ESCAPE_SEQUENCE),
-				 errmsg("LIKE pattern must not end with escape character")));
+						 errmsg("LIKE pattern must not end with escape character")));
 			if (GETCHAR(*p) != GETCHAR(*t))
 				return LIKE_FALSE;
 		}
@@ -290,7 +290,7 @@ do_like_escape(text *pat, text *esc)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_ESCAPE_SEQUENCE),
 					 errmsg("invalid escape string"),
-				  errhint("Escape string must be empty or one character.")));
+					 errhint("Escape string must be empty or one character.")));
 
 		e = VARDATA_ANY(esc);
 

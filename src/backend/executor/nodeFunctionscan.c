@@ -96,7 +96,7 @@ FunctionNext(FunctionScanState *node)
 											node->ss.ps.ps_ExprContext,
 											node->argcontext,
 											node->funcstates[0].tupdesc,
-										  node->eflags & EXEC_FLAG_BACKWARD);
+											node->eflags & EXEC_FLAG_BACKWARD);
 
 			/*
 			 * paranoia - cope if the function, which may have constructed the
@@ -155,7 +155,7 @@ FunctionNext(FunctionScanState *node)
 											node->ss.ps.ps_ExprContext,
 											node->argcontext,
 											fs->tupdesc,
-										  node->eflags & EXEC_FLAG_BACKWARD);
+											node->eflags & EXEC_FLAG_BACKWARD);
 
 			/*
 			 * paranoia - cope if the function, which may have constructed the

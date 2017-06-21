@@ -87,7 +87,7 @@ DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
 			ColumnDef  *def = makeColumnDef(tle->resname,
 											exprType((Node *) tle->expr),
 											exprTypmod((Node *) tle->expr),
-										  exprCollation((Node *) tle->expr));
+											exprCollation((Node *) tle->expr));
 
 			/*
 			 * It's possible that the column is of a collatable type but the
@@ -295,9 +295,9 @@ checkViewTupleDesc(TupleDesc newdesc, TupleDesc olddesc)
 		if (strcmp(NameStr(newattr->attname), NameStr(oldattr->attname)) != 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-				 errmsg("cannot change name of view column \"%s\" to \"%s\"",
-						NameStr(oldattr->attname),
-						NameStr(newattr->attname))));
+					 errmsg("cannot change name of view column \"%s\" to \"%s\"",
+							NameStr(oldattr->attname),
+							NameStr(newattr->attname))));
 		/* XXX would it be safe to allow atttypmod to change?  Not sure */
 		if (newattr->atttypid != oldattr->atttypid ||
 			newattr->atttypmod != oldattr->atttypmod)
@@ -460,7 +460,7 @@ DefineView(ViewStmt *stmt, const char *queryString,
 	if (viewParse->hasModifyingCTE)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-		errmsg("views must not contain data-modifying statements in WITH")));
+				 errmsg("views must not contain data-modifying statements in WITH")));
 
 	/*
 	 * If the user specified the WITH CHECK OPTION, add it to the list of
@@ -469,11 +469,11 @@ DefineView(ViewStmt *stmt, const char *queryString,
 	if (stmt->withCheckOption == LOCAL_CHECK_OPTION)
 		stmt->options = lappend(stmt->options,
 								makeDefElem("check_option",
-										  (Node *) makeString("local"), -1));
+											(Node *) makeString("local"), -1));
 	else if (stmt->withCheckOption == CASCADED_CHECK_OPTION)
 		stmt->options = lappend(stmt->options,
 								makeDefElem("check_option",
-									   (Node *) makeString("cascaded"), -1));
+											(Node *) makeString("cascaded"), -1));
 
 	/*
 	 * Check that the view is auto-updatable if WITH CHECK OPTION was
@@ -538,7 +538,7 @@ DefineView(ViewStmt *stmt, const char *queryString,
 	if (stmt->view->relpersistence == RELPERSISTENCE_UNLOGGED)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-		errmsg("views cannot be unlogged because they do not have storage")));
+				 errmsg("views cannot be unlogged because they do not have storage")));
 
 	/*
 	 * If the user didn't explicitly ask for a temporary view, check whether

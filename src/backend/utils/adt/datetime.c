@@ -1205,8 +1205,8 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						{
 							case DTK_CURRENT:
 								ereport(ERROR,
-									 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-									  errmsg("date/time value \"current\" is no longer supported")));
+										(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+										 errmsg("date/time value \"current\" is no longer supported")));
 
 								return DTERR_BAD_FORMAT;
 								break;
@@ -1222,7 +1222,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 								*dtype = DTK_DATE;
 								GetCurrentDateTime(&cur_tm);
 								j2date(date2j(cur_tm.tm_year, cur_tm.tm_mon, cur_tm.tm_mday) - 1,
-									&tm->tm_year, &tm->tm_mon, &tm->tm_mday);
+									   &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
 								break;
 
 							case DTK_TODAY:
@@ -1239,7 +1239,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 								*dtype = DTK_DATE;
 								GetCurrentDateTime(&cur_tm);
 								j2date(date2j(cur_tm.tm_year, cur_tm.tm_mon, cur_tm.tm_mday) + 1,
-									&tm->tm_year, &tm->tm_mon, &tm->tm_mday);
+									   &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
 								break;
 
 							case DTK_ZULU:
@@ -2113,8 +2113,8 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 						{
 							case DTK_CURRENT:
 								ereport(ERROR,
-									 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-									  errmsg("date/time value \"current\" is no longer supported")));
+										(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+										 errmsg("date/time value \"current\" is no longer supported")));
 								return DTERR_BAD_FORMAT;
 								break;
 
@@ -3778,7 +3778,7 @@ DateTimeParseError(int dterr, const char *str, const char *datatype)
 					(errcode(ERRCODE_DATETIME_FIELD_OVERFLOW),
 					 errmsg("date/time field value out of range: \"%s\"",
 							str),
-			errhint("Perhaps you need a different \"datestyle\" setting.")));
+					 errhint("Perhaps you need a different \"datestyle\" setting.")));
 			break;
 		case DTERR_INTERVAL_OVERFLOW:
 			ereport(ERROR,
@@ -3891,7 +3891,7 @@ EncodeDateOnly(struct pg_tm *tm, int style, char *str)
 		case USE_XSD_DATES:
 			/* compatible with ISO date formats */
 			str = pg_ltostr_zeropad(str,
-					(tm->tm_year > 0) ? tm->tm_year : -(tm->tm_year - 1), 4);
+									(tm->tm_year > 0) ? tm->tm_year : -(tm->tm_year - 1), 4);
 			*str++ = '-';
 			str = pg_ltostr_zeropad(str, tm->tm_mon, 2);
 			*str++ = '-';
@@ -3914,7 +3914,7 @@ EncodeDateOnly(struct pg_tm *tm, int style, char *str)
 			}
 			*str++ = '/';
 			str = pg_ltostr_zeropad(str,
-					(tm->tm_year > 0) ? tm->tm_year : -(tm->tm_year - 1), 4);
+									(tm->tm_year > 0) ? tm->tm_year : -(tm->tm_year - 1), 4);
 			break;
 
 		case USE_GERMAN_DATES:
@@ -3924,7 +3924,7 @@ EncodeDateOnly(struct pg_tm *tm, int style, char *str)
 			str = pg_ltostr_zeropad(str, tm->tm_mon, 2);
 			*str++ = '.';
 			str = pg_ltostr_zeropad(str,
-					(tm->tm_year > 0) ? tm->tm_year : -(tm->tm_year - 1), 4);
+									(tm->tm_year > 0) ? tm->tm_year : -(tm->tm_year - 1), 4);
 			break;
 
 		case USE_POSTGRES_DATES:
@@ -3944,7 +3944,7 @@ EncodeDateOnly(struct pg_tm *tm, int style, char *str)
 			}
 			*str++ = '-';
 			str = pg_ltostr_zeropad(str,
-					(tm->tm_year > 0) ? tm->tm_year : -(tm->tm_year - 1), 4);
+									(tm->tm_year > 0) ? tm->tm_year : -(tm->tm_year - 1), 4);
 			break;
 	}
 
@@ -4014,7 +4014,7 @@ EncodeDateTime(struct pg_tm *tm, fsec_t fsec, bool print_tz, int tz, const char 
 		case USE_XSD_DATES:
 			/* Compatible with ISO-8601 date formats */
 			str = pg_ltostr_zeropad(str,
-					(tm->tm_year > 0) ? tm->tm_year : -(tm->tm_year - 1), 4);
+									(tm->tm_year > 0) ? tm->tm_year : -(tm->tm_year - 1), 4);
 			*str++ = '-';
 			str = pg_ltostr_zeropad(str, tm->tm_mon, 2);
 			*str++ = '-';
@@ -4045,7 +4045,7 @@ EncodeDateTime(struct pg_tm *tm, fsec_t fsec, bool print_tz, int tz, const char 
 			}
 			*str++ = '/';
 			str = pg_ltostr_zeropad(str,
-					(tm->tm_year > 0) ? tm->tm_year : -(tm->tm_year - 1), 4);
+									(tm->tm_year > 0) ? tm->tm_year : -(tm->tm_year - 1), 4);
 			*str++ = ' ';
 			str = pg_ltostr_zeropad(str, tm->tm_hour, 2);
 			*str++ = ':';
@@ -4077,7 +4077,7 @@ EncodeDateTime(struct pg_tm *tm, fsec_t fsec, bool print_tz, int tz, const char 
 			str = pg_ltostr_zeropad(str, tm->tm_mon, 2);
 			*str++ = '.';
 			str = pg_ltostr_zeropad(str,
-					(tm->tm_year > 0) ? tm->tm_year : -(tm->tm_year - 1), 4);
+									(tm->tm_year > 0) ? tm->tm_year : -(tm->tm_year - 1), 4);
 			*str++ = ' ';
 			str = pg_ltostr_zeropad(str, tm->tm_hour, 2);
 			*str++ = ':';
@@ -4127,7 +4127,7 @@ EncodeDateTime(struct pg_tm *tm, fsec_t fsec, bool print_tz, int tz, const char 
 			str = AppendTimestampSeconds(str, tm, fsec);
 			*str++ = ' ';
 			str = pg_ltostr_zeropad(str,
-					(tm->tm_year > 0) ? tm->tm_year : -(tm->tm_year - 1), 4);
+									(tm->tm_year > 0) ? tm->tm_year : -(tm->tm_year - 1), 4);
 
 			if (print_tz)
 			{
@@ -4860,7 +4860,7 @@ pg_timezone_names(PG_FUNCTION_ARGS)
 		 * reasonably omit from the pg_timezone_names view.
 		 */
 		if (tzn && (strcmp(tzn, "-00") == 0 ||
-		strcmp(tzn, "Local time zone must be set--see zic manual page") == 0))
+					strcmp(tzn, "Local time zone must be set--see zic manual page") == 0))
 			continue;
 
 		/* Found a displayable zone */

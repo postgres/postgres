@@ -110,7 +110,7 @@ static bool ExecParallelInitializeDSM(PlanState *node,
 static shm_mq_handle **ExecParallelSetupTupleQueues(ParallelContext *pcxt,
 							 bool reinitialize);
 static bool ExecParallelRetrieveInstrumentation(PlanState *planstate,
-							 SharedExecutorInstrumentation *instrumentation);
+									SharedExecutorInstrumentation *instrumentation);
 
 /* Helper function that runs in the parallel worker. */
 static DestReceiver *ExecParallelGetReceiver(dsm_segment *seg, shm_toc *toc);
@@ -446,7 +446,7 @@ ExecInitParallelPlan(PlanState *planstate, EState *estate, int nworkers)
 
 	/* Estimate space for tuple queues. */
 	shm_toc_estimate_chunk(&pcxt->estimator,
-						mul_size(PARALLEL_TUPLE_QUEUE_SIZE, pcxt->nworkers));
+						   mul_size(PARALLEL_TUPLE_QUEUE_SIZE, pcxt->nworkers));
 	shm_toc_estimate_keys(&pcxt->estimator, 1);
 
 	/*
@@ -504,7 +504,7 @@ ExecInitParallelPlan(PlanState *planstate, EState *estate, int nworkers)
 
 	/* Allocate space for each worker's BufferUsage; no need to initialize. */
 	bufusage_space = shm_toc_allocate(pcxt->toc,
-							  mul_size(sizeof(BufferUsage), pcxt->nworkers));
+									  mul_size(sizeof(BufferUsage), pcxt->nworkers));
 	shm_toc_insert(pcxt->toc, PARALLEL_KEY_BUFFER_USAGE, bufusage_space);
 	pei->buffer_usage = bufusage_space;
 
@@ -583,7 +583,7 @@ ExecInitParallelPlan(PlanState *planstate, EState *estate, int nworkers)
  */
 static bool
 ExecParallelRetrieveInstrumentation(PlanState *planstate,
-							  SharedExecutorInstrumentation *instrumentation)
+									SharedExecutorInstrumentation *instrumentation)
 {
 	Instrumentation *instrument;
 	int			i;
@@ -735,7 +735,7 @@ ExecParallelGetQueryDesc(shm_toc *toc, DestReceiver *receiver,
  */
 static bool
 ExecParallelReportInstrumentation(PlanState *planstate,
-							  SharedExecutorInstrumentation *instrumentation)
+								  SharedExecutorInstrumentation *instrumentation)
 {
 	int			i;
 	int			plan_node_id = planstate->plan->plan_node_id;
@@ -804,7 +804,7 @@ ExecParallelInitializeWorker(PlanState *planstate, shm_toc *toc)
 				break;
 			case T_BitmapHeapScanState:
 				ExecBitmapHeapInitializeWorker(
-									 (BitmapHeapScanState *) planstate, toc);
+											   (BitmapHeapScanState *) planstate, toc);
 				break;
 			default:
 				break;

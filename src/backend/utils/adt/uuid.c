@@ -340,7 +340,7 @@ uuid_abbrev_abort(int memtupcount, SortSupport ssup)
 		if (trace_sort)
 			elog(LOG,
 				 "uuid_abbrev: aborting abbreviation at cardinality %f"
-			   " below threshold %f after " INT64_FORMAT " values (%d rows)",
+				 " below threshold %f after " INT64_FORMAT " values (%d rows)",
 				 abbr_card, uss->input_count / 2000.0 + 0.5, uss->input_count,
 				 memtupcount);
 #endif

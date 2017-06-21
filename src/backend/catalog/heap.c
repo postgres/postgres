@@ -282,7 +282,7 @@ heap_create(const char *relname,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("permission denied to create \"%s.%s\"",
 						get_namespace_name(relnamespace), relname),
-		errdetail("System catalog modifications are currently disallowed.")));
+				 errdetail("System catalog modifications are currently disallowed.")));
 
 	/*
 	 * Decide if we need storage or not, and handle a couple other special
@@ -534,8 +534,8 @@ CheckAttributeType(const char *attname,
 		if (list_member_oid(containing_rowtypes, atttypid))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-				errmsg("composite type %s cannot be made a member of itself",
-					   format_type_be(atttypid))));
+					 errmsg("composite type %s cannot be made a member of itself",
+							format_type_be(atttypid))));
 
 		containing_rowtypes = lcons_oid(atttypid, containing_rowtypes);
 
@@ -578,7 +578,7 @@ CheckAttributeType(const char *attname,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 				 errmsg("no collation was derived for column \"%s\" with collatable type %s",
 						attname, format_type_be(atttypid)),
-		errhint("Use the COLLATE clause to set the collation explicitly.")));
+				 errhint("Use the COLLATE clause to set the collation explicitly.")));
 }
 
 /*
@@ -1081,9 +1081,9 @@ heap_create_with_catalog(const char *relname,
 			ereport(ERROR,
 					(errcode(ERRCODE_DUPLICATE_OBJECT),
 					 errmsg("type \"%s\" already exists", relname),
-			   errhint("A relation has an associated type of the same name, "
-					   "so you must use a name that doesn't conflict "
-					   "with any existing type.")));
+					 errhint("A relation has an associated type of the same name, "
+							 "so you must use a name that doesn't conflict "
+							 "with any existing type.")));
 	}
 
 	/*
@@ -1923,8 +1923,8 @@ StoreAttrDefault(Relation rel, AttrNumber attnum,
 	 * Also deparse it to form the mostly-obsolete adsrc field.
 	 */
 	adsrc = deparse_expression(expr,
-							deparse_context_for(RelationGetRelationName(rel),
-												RelationGetRelid(rel)),
+							   deparse_context_for(RelationGetRelationName(rel),
+												   RelationGetRelid(rel)),
 							   false, false);
 
 	/*
@@ -2031,8 +2031,8 @@ StoreRelCheck(Relation rel, char *ccname, Node *expr,
 	 * Also deparse it to form the mostly-obsolete consrc field.
 	 */
 	ccsrc = deparse_expression(expr,
-							deparse_context_for(RelationGetRelationName(rel),
-												RelationGetRelid(rel)),
+							   deparse_context_for(RelationGetRelationName(rel),
+												   RelationGetRelid(rel)),
 							   false, false);
 
 	/*
@@ -2075,8 +2075,8 @@ StoreRelCheck(Relation rel, char *ccname, Node *expr,
 		rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-		errmsg("cannot add NO INHERIT constraint to partitioned table \"%s\"",
-			   RelationGetRelationName(rel))));
+				 errmsg("cannot add NO INHERIT constraint to partitioned table \"%s\"",
+						RelationGetRelationName(rel))));
 
 	/*
 	 * Create the Check Constraint
@@ -2501,8 +2501,8 @@ MergeWithExistingConstraint(Relation rel, char *ccname, Node *expr,
 			if (!found || !allow_merge)
 				ereport(ERROR,
 						(errcode(ERRCODE_DUPLICATE_OBJECT),
-				errmsg("constraint \"%s\" for relation \"%s\" already exists",
-					   ccname, RelationGetRelationName(rel))));
+						 errmsg("constraint \"%s\" for relation \"%s\" already exists",
+								ccname, RelationGetRelationName(rel))));
 
 			/* If the child constraint is "no inherit" then cannot merge */
 			if (con->connoinherit)
@@ -2534,8 +2534,8 @@ MergeWithExistingConstraint(Relation rel, char *ccname, Node *expr,
 
 			/* OK to update the tuple */
 			ereport(NOTICE,
-			   (errmsg("merging constraint \"%s\" with inherited definition",
-					   ccname)));
+					(errmsg("merging constraint \"%s\" with inherited definition",
+							ccname)));
 
 			tup = heap_copytuple(tup);
 			con = (Form_pg_constraint) GETSTRUCT(tup);
@@ -2650,7 +2650,7 @@ cookDefault(ParseState *pstate,
 	if (contain_var_clause(expr))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-			  errmsg("cannot use column references in default expression")));
+				 errmsg("cannot use column references in default expression")));
 
 	/*
 	 * transformExpr() should have already rejected subqueries, aggregates,
@@ -2680,7 +2680,7 @@ cookDefault(ParseState *pstate,
 							attname,
 							format_type_be(atttypid),
 							format_type_be(type_id)),
-			   errhint("You will need to rewrite or cast the expression.")));
+					 errhint("You will need to rewrite or cast the expression.")));
 	}
 
 	/*
@@ -2727,8 +2727,8 @@ cookConstraint(ParseState *pstate,
 	if (list_length(pstate->p_rtable) != 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-			errmsg("only table \"%s\" can be referenced in check constraint",
-				   relname)));
+				 errmsg("only table \"%s\" can be referenced in check constraint",
+						relname)));
 
 	return expr;
 }
@@ -2976,9 +2976,9 @@ heap_truncate_check_FKs(List *relations, bool tempTables)
 							 errmsg("cannot truncate a table referenced in a foreign key constraint"),
 							 errdetail("Table \"%s\" references \"%s\".",
 									   relname2, relname),
-						   errhint("Truncate table \"%s\" at the same time, "
-								   "or use TRUNCATE ... CASCADE.",
-								   relname2)));
+							 errhint("Truncate table \"%s\" at the same time, "
+									 "or use TRUNCATE ... CASCADE.",
+									 relname2)));
 			}
 		}
 	}

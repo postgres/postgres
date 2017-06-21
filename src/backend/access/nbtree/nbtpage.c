@@ -513,9 +513,9 @@ _bt_checkpage(Relation rel, Buffer buf)
 	if (PageIsNew(page))
 		ereport(ERROR,
 				(errcode(ERRCODE_INDEX_CORRUPTED),
-			 errmsg("index \"%s\" contains unexpected zero page at block %u",
-					RelationGetRelationName(rel),
-					BufferGetBlockNumber(buf)),
+				 errmsg("index \"%s\" contains unexpected zero page at block %u",
+						RelationGetRelationName(rel),
+						BufferGetBlockNumber(buf)),
 				 errhint("Please REINDEX it.")));
 
 	/*
@@ -1067,7 +1067,7 @@ _bt_lock_branch_parent(Relation rel, BlockNumber child, BTStack stack,
 			}
 
 			return _bt_lock_branch_parent(rel, parent, stack->bts_parent,
-										topparent, topoff, target, rightsib);
+										  topparent, topoff, target, rightsib);
 		}
 		else
 		{
@@ -1150,8 +1150,8 @@ _bt_pagedel(Relation rel, Buffer buf)
 			if (P_ISHALFDEAD(opaque))
 				ereport(LOG,
 						(errcode(ERRCODE_INDEX_CORRUPTED),
-					errmsg("index \"%s\" contains a half-dead internal page",
-						   RelationGetRelationName(rel)),
+						 errmsg("index \"%s\" contains a half-dead internal page",
+								RelationGetRelationName(rel)),
 						 errhint("This can be caused by an interrupted VACUUM in version 9.3 or older, before upgrade. Please REINDEX it.")));
 			_bt_relbuf(rel, buf);
 			return ndeleted;

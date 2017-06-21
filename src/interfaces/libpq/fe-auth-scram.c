@@ -173,13 +173,13 @@ pg_fe_scram_exchange(void *opaq, char *input, int inputlen,
 		if (inputlen == 0)
 		{
 			printfPQExpBuffer(errorMessage,
-				 libpq_gettext("malformed SCRAM message (empty message)\n"));
+							  libpq_gettext("malformed SCRAM message (empty message)\n"));
 			goto error;
 		}
 		if (inputlen != strlen(input))
 		{
 			printfPQExpBuffer(errorMessage,
-			   libpq_gettext("malformed SCRAM message (length mismatch)\n"));
+							  libpq_gettext("malformed SCRAM message (length mismatch)\n"));
 			goto error;
 		}
 	}
@@ -228,7 +228,7 @@ pg_fe_scram_exchange(void *opaq, char *input, int inputlen,
 			{
 				*success = false;
 				printfPQExpBuffer(errorMessage,
-								libpq_gettext("invalid server signature\n"));
+								  libpq_gettext("invalid server signature\n"));
 			}
 			*done = true;
 			state->state = FE_SCRAM_FINISHED;
@@ -237,7 +237,7 @@ pg_fe_scram_exchange(void *opaq, char *input, int inputlen,
 		default:
 			/* shouldn't happen */
 			printfPQExpBuffer(errorMessage,
-							libpq_gettext("invalid SCRAM exchange state\n"));
+							  libpq_gettext("invalid SCRAM exchange state\n"));
 			goto error;
 	}
 	return;
@@ -260,7 +260,7 @@ read_attr_value(char **input, char attr, PQExpBuffer errorMessage)
 	if (*begin != attr)
 	{
 		printfPQExpBuffer(errorMessage,
-					libpq_gettext("malformed SCRAM message (%c expected)\n"),
+						  libpq_gettext("malformed SCRAM message (%c expected)\n"),
 						  attr);
 		return NULL;
 	}
@@ -269,7 +269,7 @@ read_attr_value(char **input, char attr, PQExpBuffer errorMessage)
 	if (*begin != '=')
 	{
 		printfPQExpBuffer(errorMessage,
-		libpq_gettext("malformed SCRAM message (expected = in attr '%c')\n"),
+						  libpq_gettext("malformed SCRAM message (expected = in attr '%c')\n"),
 						  attr);
 		return NULL;
 	}
@@ -434,7 +434,7 @@ read_server_first_message(fe_scram_state *state, char *input,
 		memcmp(nonce, state->client_nonce, strlen(state->client_nonce)) != 0)
 	{
 		printfPQExpBuffer(errormessage,
-				 libpq_gettext("invalid SCRAM response (nonce mismatch)\n"));
+						  libpq_gettext("invalid SCRAM response (nonce mismatch)\n"));
 		return false;
 	}
 
@@ -473,7 +473,7 @@ read_server_first_message(fe_scram_state *state, char *input,
 	if (*endptr != '\0' || state->iterations < 1)
 	{
 		printfPQExpBuffer(errormessage,
-		libpq_gettext("malformed SCRAM message (invalid iteration count)\n"));
+						  libpq_gettext("malformed SCRAM message (invalid iteration count)\n"));
 		return false;
 	}
 
@@ -508,7 +508,7 @@ read_server_final_message(fe_scram_state *state, char *input,
 		char	   *errmsg = read_attr_value(&input, 'e', errormessage);
 
 		printfPQExpBuffer(errormessage,
-		  libpq_gettext("error received from server in SASL exchange: %s\n"),
+						  libpq_gettext("error received from server in SASL exchange: %s\n"),
 						  errmsg);
 		return false;
 	}

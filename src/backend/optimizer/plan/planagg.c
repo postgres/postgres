@@ -203,7 +203,7 @@ preprocess_minmax_aggregates(PlannerInfo *root, List *tlist)
 			SS_make_initplan_output_param(root,
 										  exprType((Node *) mminfo->target),
 										  -1,
-									 exprCollation((Node *) mminfo->target));
+										  exprCollation((Node *) mminfo->target));
 	}
 
 	/*

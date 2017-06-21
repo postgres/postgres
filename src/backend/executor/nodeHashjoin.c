@@ -234,7 +234,7 @@ ExecHashJoin(HashJoinState *node)
 					Assert(batchno > hashtable->curbatch);
 					ExecHashJoinSaveTuple(ExecFetchSlotMinimalTuple(outerTupleSlot),
 										  hashvalue,
-										&hashtable->outerBatchFile[batchno]);
+										  &hashtable->outerBatchFile[batchno]);
 					/* Loop around, staying in HJ_NEED_NEW_OUTER state */
 					continue;
 				}
@@ -452,20 +452,20 @@ ExecInitHashJoin(HashJoin *node, EState *estate, int eflags)
 		case JOIN_ANTI:
 			hjstate->hj_NullInnerTupleSlot =
 				ExecInitNullTupleSlot(estate,
-								 ExecGetResultType(innerPlanState(hjstate)));
+									  ExecGetResultType(innerPlanState(hjstate)));
 			break;
 		case JOIN_RIGHT:
 			hjstate->hj_NullOuterTupleSlot =
 				ExecInitNullTupleSlot(estate,
-								 ExecGetResultType(outerPlanState(hjstate)));
+									  ExecGetResultType(outerPlanState(hjstate)));
 			break;
 		case JOIN_FULL:
 			hjstate->hj_NullOuterTupleSlot =
 				ExecInitNullTupleSlot(estate,
-								 ExecGetResultType(outerPlanState(hjstate)));
+									  ExecGetResultType(outerPlanState(hjstate)));
 			hjstate->hj_NullInnerTupleSlot =
 				ExecInitNullTupleSlot(estate,
-								 ExecGetResultType(innerPlanState(hjstate)));
+									  ExecGetResultType(innerPlanState(hjstate)));
 			break;
 		default:
 			elog(ERROR, "unrecognized join type: %d",
@@ -764,7 +764,7 @@ ExecHashJoinNewBatch(HashJoinState *hjstate)
 		if (BufFileSeek(innerFile, 0, 0L, SEEK_SET))
 			ereport(ERROR,
 					(errcode_for_file_access(),
-				   errmsg("could not rewind hash-join temporary file: %m")));
+					 errmsg("could not rewind hash-join temporary file: %m")));
 
 		while ((slot = ExecHashJoinGetSavedTuple(hjstate,
 												 innerFile,
@@ -794,7 +794,7 @@ ExecHashJoinNewBatch(HashJoinState *hjstate)
 		if (BufFileSeek(hashtable->outerBatchFile[curbatch], 0, 0L, SEEK_SET))
 			ereport(ERROR,
 					(errcode_for_file_access(),
-				   errmsg("could not rewind hash-join temporary file: %m")));
+					 errmsg("could not rewind hash-join temporary file: %m")));
 	}
 
 	return true;

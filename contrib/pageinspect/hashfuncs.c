@@ -99,7 +99,7 @@ verify_hash_page(bytea *raw_page, int flags)
 			case LH_BUCKET_PAGE | LH_OVERFLOW_PAGE:
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					  errmsg("page is not a hash bucket or overflow page")));
+						 errmsg("page is not a hash bucket or overflow page")));
 			case LH_OVERFLOW_PAGE:
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),

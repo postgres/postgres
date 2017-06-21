@@ -296,7 +296,7 @@ lowerstr_with_len(const char *str, int len)
 		if (wlen < 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
-			errmsg("conversion from wchar_t to server encoding failed: %m")));
+					 errmsg("conversion from wchar_t to server encoding failed: %m")));
 		Assert(wlen < len);
 	}
 	else

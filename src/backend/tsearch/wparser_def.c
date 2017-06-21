@@ -2295,7 +2295,7 @@ mark_hl_fragments(HeadlineParsedText *prs, TSQuery query, int highlight,
 		{
 			if (!covers[i].in && !covers[i].excluded &&
 				(maxitems < covers[i].poslen || (maxitems == covers[i].poslen
-											&& minwords > covers[i].curlen)))
+												 && minwords > covers[i].curlen)))
 			{
 				maxitems = covers[i].poslen;
 				minwords = covers[i].curlen;

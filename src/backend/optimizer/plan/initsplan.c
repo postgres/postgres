@@ -2223,7 +2223,7 @@ distribute_restrictinfo_to_rels(PlannerInfo *root,
 											restrictinfo);
 			/* Update security level info */
 			rel->baserestrict_min_security = Min(rel->baserestrict_min_security,
-											   restrictinfo->security_level);
+												 restrictinfo->security_level);
 			break;
 		case BMS_MULTIPLE:
 

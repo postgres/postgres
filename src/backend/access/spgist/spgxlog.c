@@ -54,7 +54,7 @@ addOrReplaceTuple(Page page, Item tuple, int size, OffsetNumber offset)
 	if (offset <= PageGetMaxOffsetNumber(page))
 	{
 		SpGistDeadTuple dt = (SpGistDeadTuple) PageGetItem(page,
-												PageGetItemId(page, offset));
+														   PageGetItemId(page, offset));
 
 		if (dt->tupstate != SPGIST_PLACEHOLDER)
 			elog(ERROR, "SPGiST tuple to be replaced is not a placeholder");
@@ -130,7 +130,7 @@ spgRedoAddLeaf(XLogReaderState *record)
 	{
 		buffer = XLogInitBufferForRedo(record, 0);
 		SpGistInitBuffer(buffer,
-					 SPGIST_LEAF | (xldata->storesNulls ? SPGIST_NULLS : 0));
+						 SPGIST_LEAF | (xldata->storesNulls ? SPGIST_NULLS : 0));
 		action = BLK_NEEDS_REDO;
 	}
 	else
@@ -153,7 +153,7 @@ spgRedoAddLeaf(XLogReaderState *record)
 				SpGistLeafTuple head;
 
 				head = (SpGistLeafTuple) PageGetItem(page,
-								PageGetItemId(page, xldata->offnumHeadLeaf));
+													 PageGetItemId(page, xldata->offnumHeadLeaf));
 				Assert(head->nextOffset == leafTupleHdr.nextOffset);
 				head->nextOffset = xldata->offnumLeaf;
 			}
@@ -164,7 +164,7 @@ spgRedoAddLeaf(XLogReaderState *record)
 			PageIndexTupleDelete(page, xldata->offnumLeaf);
 			if (PageAddItem(page,
 							(Item) leafTuple, leafTupleHdr.size,
-					 xldata->offnumLeaf, false, false) != xldata->offnumLeaf)
+							xldata->offnumLeaf, false, false) != xldata->offnumLeaf)
 				elog(ERROR, "failed to add item of size %u to SPGiST index page",
 					 leafTupleHdr.size);
 		}
@@ -188,7 +188,7 @@ spgRedoAddLeaf(XLogReaderState *record)
 			page = BufferGetPage(buffer);
 
 			tuple = (SpGistInnerTuple) PageGetItem(page,
-								  PageGetItemId(page, xldata->offnumParent));
+												   PageGetItemId(page, xldata->offnumParent));
 
 			spgUpdateNodeLink(tuple, xldata->nodeI,
 							  blknoLeaf, xldata->offnumLeaf);
@@ -241,7 +241,7 @@ spgRedoMoveLeafs(XLogReaderState *record)
 	{
 		buffer = XLogInitBufferForRedo(record, 1);
 		SpGistInitBuffer(buffer,
-					 SPGIST_LEAF | (xldata->storesNulls ? SPGIST_NULLS : 0));
+						 SPGIST_LEAF | (xldata->storesNulls ? SPGIST_NULLS : 0));
 		action = BLK_NEEDS_REDO;
 	}
 	else
@@ -283,7 +283,7 @@ spgRedoMoveLeafs(XLogReaderState *record)
 		page = BufferGetPage(buffer);
 
 		spgPageIndexMultiDelete(&state, page, toDelete, xldata->nMoves,
-						state.isBuild ? SPGIST_PLACEHOLDER : SPGIST_REDIRECT,
+								state.isBuild ? SPGIST_PLACEHOLDER : SPGIST_REDIRECT,
 								SPGIST_PLACEHOLDER,
 								blknoDst,
 								toInsert[nInsert - 1]);
@@ -302,7 +302,7 @@ spgRedoMoveLeafs(XLogReaderState *record)
 		page = BufferGetPage(buffer);
 
 		tuple = (SpGistInnerTuple) PageGetItem(page,
-								  PageGetItemId(page, xldata->offnumParent));
+											   PageGetItemId(page, xldata->offnumParent));
 
 		spgUpdateNodeLink(tuple, xldata->nodeI,
 						  blknoDst, toInsert[nInsert - 1]);
@@ -396,7 +396,7 @@ spgRedoAddNode(XLogReaderState *record)
 				SpGistInnerTuple parentTuple;
 
 				parentTuple = (SpGistInnerTuple) PageGetItem(page,
-								  PageGetItemId(page, xldata->offnumParent));
+															 PageGetItemId(page, xldata->offnumParent));
 
 				spgUpdateNodeLink(parentTuple, xldata->nodeI,
 								  blknoNew, xldata->offnumNew);
@@ -443,7 +443,7 @@ spgRedoAddNode(XLogReaderState *record)
 				SpGistInnerTuple parentTuple;
 
 				parentTuple = (SpGistInnerTuple) PageGetItem(page,
-								  PageGetItemId(page, xldata->offnumParent));
+															 PageGetItemId(page, xldata->offnumParent));
 
 				spgUpdateNodeLink(parentTuple, xldata->nodeI,
 								  blknoNew, xldata->offnumNew);
@@ -467,7 +467,7 @@ spgRedoAddNode(XLogReaderState *record)
 				page = BufferGetPage(buffer);
 
 				parentTuple = (SpGistInnerTuple) PageGetItem(page,
-								  PageGetItemId(page, xldata->offnumParent));
+															 PageGetItemId(page, xldata->offnumParent));
 
 				spgUpdateNodeLink(parentTuple, xldata->nodeI,
 								  blknoNew, xldata->offnumNew);
@@ -543,7 +543,7 @@ spgRedoSplitTuple(XLogReaderState *record)
 
 		PageIndexTupleDelete(page, xldata->offnumPrefix);
 		if (PageAddItem(page, (Item) prefixTuple, prefixTupleHdr.size,
-				 xldata->offnumPrefix, false, false) != xldata->offnumPrefix)
+						xldata->offnumPrefix, false, false) != xldata->offnumPrefix)
 			elog(ERROR, "failed to add item of size %u to SPGiST index page",
 				 prefixTupleHdr.size);
 
@@ -613,7 +613,7 @@ spgRedoPickSplit(XLogReaderState *record)
 		srcPage = (Page) BufferGetPage(srcBuffer);
 
 		SpGistInitBuffer(srcBuffer,
-					 SPGIST_LEAF | (xldata->storesNulls ? SPGIST_NULLS : 0));
+						 SPGIST_LEAF | (xldata->storesNulls ? SPGIST_NULLS : 0));
 		/* don't update LSN etc till we're done with it */
 	}
 	else
@@ -666,7 +666,7 @@ spgRedoPickSplit(XLogReaderState *record)
 		destPage = (Page) BufferGetPage(destBuffer);
 
 		SpGistInitBuffer(destBuffer,
-					 SPGIST_LEAF | (xldata->storesNulls ? SPGIST_NULLS : 0));
+						 SPGIST_LEAF | (xldata->storesNulls ? SPGIST_NULLS : 0));
 		/* don't update LSN etc till we're done with it */
 	}
 	else
@@ -735,7 +735,7 @@ spgRedoPickSplit(XLogReaderState *record)
 			SpGistInnerTuple parent;
 
 			parent = (SpGistInnerTuple) PageGetItem(page,
-								  PageGetItemId(page, xldata->offnumParent));
+													PageGetItemId(page, xldata->offnumParent));
 			spgUpdateNodeLink(parent, xldata->nodeI,
 							  blknoInner, xldata->offnumInner);
 		}
@@ -767,7 +767,7 @@ spgRedoPickSplit(XLogReaderState *record)
 			page = BufferGetPage(parentBuffer);
 
 			parent = (SpGistInnerTuple) PageGetItem(page,
-								  PageGetItemId(page, xldata->offnumParent));
+													PageGetItemId(page, xldata->offnumParent));
 			spgUpdateNodeLink(parent, xldata->nodeI,
 							  blknoInner, xldata->offnumInner);
 
@@ -852,7 +852,7 @@ spgRedoVacuumLeaf(XLogReaderState *record)
 			SpGistLeafTuple lt;
 
 			lt = (SpGistLeafTuple) PageGetItem(page,
-										   PageGetItemId(page, chainSrc[i]));
+											   PageGetItemId(page, chainSrc[i]));
 			Assert(lt->tupstate == SPGIST_LIVE);
 			lt->nextOffset = chainDest[i];
 		}
@@ -929,7 +929,7 @@ spgRedoVacuumRedirect(XLogReaderState *record)
 			SpGistDeadTuple dt;
 
 			dt = (SpGistDeadTuple) PageGetItem(page,
-								  PageGetItemId(page, itemToPlaceholder[i]));
+											   PageGetItemId(page, itemToPlaceholder[i]));
 			Assert(dt->tupstate == SPGIST_REDIRECT);
 			dt->tupstate = SPGIST_PLACEHOLDER;
 			ItemPointerSetInvalid(&dt->pointer);

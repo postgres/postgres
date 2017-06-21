@@ -34,7 +34,7 @@ pg_dlopen(char *filename)
 	 * call the library!
 	 */
 	shl_t		handle = shl_load(filename,
-								BIND_IMMEDIATE | BIND_VERBOSE | DYNAMIC_PATH,
+								  BIND_IMMEDIATE | BIND_VERBOSE | DYNAMIC_PATH,
 								  0L);
 
 	return (void *) handle;

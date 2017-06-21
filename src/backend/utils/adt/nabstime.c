@@ -159,7 +159,7 @@ tm2abstime(struct pg_tm *tm, int tz)
 		tm->tm_mday < 1 || tm->tm_mday > 31 ||
 		tm->tm_hour < 0 ||
 		tm->tm_hour > HOURS_PER_DAY ||	/* test for > 24:00:00 */
-	  (tm->tm_hour == HOURS_PER_DAY && (tm->tm_min > 0 || tm->tm_sec > 0)) ||
+		(tm->tm_hour == HOURS_PER_DAY && (tm->tm_min > 0 || tm->tm_sec > 0)) ||
 		tm->tm_min < 0 || tm->tm_min > MINS_PER_HOUR - 1 ||
 		tm->tm_sec < 0 || tm->tm_sec > SECS_PER_MINUTE)
 		return INVALID_ABSTIME;
@@ -479,7 +479,7 @@ abstime_timestamp(PG_FUNCTION_ARGS)
 		case INVALID_ABSTIME:
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot convert abstime \"invalid\" to timestamp")));
+					 errmsg("cannot convert abstime \"invalid\" to timestamp")));
 			TIMESTAMP_NOBEGIN(result);
 			break;
 
@@ -552,7 +552,7 @@ abstime_timestamptz(PG_FUNCTION_ARGS)
 		case INVALID_ABSTIME:
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot convert abstime \"invalid\" to timestamp")));
+					 errmsg("cannot convert abstime \"invalid\" to timestamp")));
 			TIMESTAMP_NOBEGIN(result);
 			break;
 
@@ -741,12 +741,12 @@ tintervalout(PG_FUNCTION_ARGS)
 	else
 	{
 		p = DatumGetCString(DirectFunctionCall1(abstimeout,
-								  AbsoluteTimeGetDatum(tinterval->data[0])));
+												AbsoluteTimeGetDatum(tinterval->data[0])));
 		strcat(i_str, p);
 		pfree(p);
 		strcat(i_str, "\" \"");
 		p = DatumGetCString(DirectFunctionCall1(abstimeout,
-								  AbsoluteTimeGetDatum(tinterval->data[1])));
+												AbsoluteTimeGetDatum(tinterval->data[1])));
 		strcat(i_str, p);
 		pfree(p);
 	}
@@ -849,7 +849,7 @@ reltime_interval(PG_FUNCTION_ARGS)
 		case INVALID_RELTIME:
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				  errmsg("cannot convert reltime \"invalid\" to interval")));
+					 errmsg("cannot convert reltime \"invalid\" to interval")));
 			result->time = 0;
 			result->day = 0;
 			result->month = 0;
@@ -958,10 +958,10 @@ intinterval(PG_FUNCTION_ARGS)
 	{
 		if (DatumGetBool(DirectFunctionCall2(abstimege,
 											 AbsoluteTimeGetDatum(t),
-								AbsoluteTimeGetDatum(tinterval->data[0]))) &&
+											 AbsoluteTimeGetDatum(tinterval->data[0]))) &&
 			DatumGetBool(DirectFunctionCall2(abstimele,
 											 AbsoluteTimeGetDatum(t),
-								  AbsoluteTimeGetDatum(tinterval->data[1]))))
+											 AbsoluteTimeGetDatum(tinterval->data[1]))))
 			PG_RETURN_BOOL(true);
 	}
 	PG_RETURN_BOOL(false);
@@ -1108,7 +1108,7 @@ tintervalsame(PG_FUNCTION_ARGS)
 
 	if (DatumGetBool(DirectFunctionCall2(abstimeeq,
 										 AbsoluteTimeGetDatum(i1->data[0]),
-									   AbsoluteTimeGetDatum(i2->data[0]))) &&
+										 AbsoluteTimeGetDatum(i2->data[0]))) &&
 		DatumGetBool(DirectFunctionCall2(abstimeeq,
 										 AbsoluteTimeGetDatum(i1->data[1]),
 										 AbsoluteTimeGetDatum(i2->data[1]))))
@@ -1353,7 +1353,7 @@ tintervalct(PG_FUNCTION_ARGS)
 		PG_RETURN_BOOL(false);
 	if (DatumGetBool(DirectFunctionCall2(abstimele,
 										 AbsoluteTimeGetDatum(i1->data[0]),
-									   AbsoluteTimeGetDatum(i2->data[0]))) &&
+										 AbsoluteTimeGetDatum(i2->data[0]))) &&
 		DatumGetBool(DirectFunctionCall2(abstimege,
 										 AbsoluteTimeGetDatum(i1->data[1]),
 										 AbsoluteTimeGetDatum(i2->data[1]))))
@@ -1374,7 +1374,7 @@ tintervalov(PG_FUNCTION_ARGS)
 		PG_RETURN_BOOL(false);
 	if (DatumGetBool(DirectFunctionCall2(abstimelt,
 										 AbsoluteTimeGetDatum(i1->data[1]),
-									   AbsoluteTimeGetDatum(i2->data[0]))) ||
+										 AbsoluteTimeGetDatum(i2->data[0]))) ||
 		DatumGetBool(DirectFunctionCall2(abstimegt,
 										 AbsoluteTimeGetDatum(i1->data[0]),
 										 AbsoluteTimeGetDatum(i2->data[1]))))

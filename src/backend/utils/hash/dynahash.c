@@ -733,7 +733,7 @@ hash_estimate_size(long num_entries, Size entrysize)
 	size = add_size(size, mul_size(nDirEntries, sizeof(HASHSEGMENT)));
 	/* segments */
 	size = add_size(size, mul_size(nSegments,
-								MAXALIGN(DEF_SEGSIZE * sizeof(HASHBUCKET))));
+								   MAXALIGN(DEF_SEGSIZE * sizeof(HASHBUCKET))));
 	/* elements --- allocated in groups of choose_nelem_alloc() entries */
 	elementAllocCnt = choose_nelem_alloc(entrysize);
 	nElementAllocs = (num_entries - 1) / elementAllocCnt + 1;

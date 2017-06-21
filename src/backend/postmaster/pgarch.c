@@ -388,7 +388,7 @@ pgarch_MainLoop(void)
 				int			rc;
 
 				rc = WaitLatch(MyLatch,
-							 WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
+							   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
 							   timeout * 1000L,
 							   WAIT_EVENT_ARCHIVER_MAIN);
 				if (rc & WL_TIMEOUT)
@@ -593,16 +593,16 @@ pgarch_archiveXlog(char *xlog)
 		{
 #if defined(WIN32)
 			ereport(lev,
-				  (errmsg("archive command was terminated by exception 0x%X",
-						  WTERMSIG(rc)),
-				   errhint("See C include file \"ntstatus.h\" for a description of the hexadecimal value."),
-				   errdetail("The failed archive command was: %s",
-							 xlogarchcmd)));
+					(errmsg("archive command was terminated by exception 0x%X",
+							WTERMSIG(rc)),
+					 errhint("See C include file \"ntstatus.h\" for a description of the hexadecimal value."),
+					 errdetail("The failed archive command was: %s",
+							   xlogarchcmd)));
 #elif defined(HAVE_DECL_SYS_SIGLIST) && HAVE_DECL_SYS_SIGLIST
 			ereport(lev,
 					(errmsg("archive command was terminated by signal %d: %s",
 							WTERMSIG(rc),
-			  WTERMSIG(rc) < NSIG ? sys_siglist[WTERMSIG(rc)] : "(unknown)"),
+							WTERMSIG(rc) < NSIG ? sys_siglist[WTERMSIG(rc)] : "(unknown)"),
 					 errdetail("The failed archive command was: %s",
 							   xlogarchcmd)));
 #else
@@ -616,10 +616,10 @@ pgarch_archiveXlog(char *xlog)
 		else
 		{
 			ereport(lev,
-				(errmsg("archive command exited with unrecognized status %d",
-						rc),
-				 errdetail("The failed archive command was: %s",
-						   xlogarchcmd)));
+					(errmsg("archive command exited with unrecognized status %d",
+							rc),
+					 errdetail("The failed archive command was: %s",
+							   xlogarchcmd)));
 		}
 
 		snprintf(activitymsg, sizeof(activitymsg), "failed on %s", xlog);

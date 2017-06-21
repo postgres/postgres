@@ -150,7 +150,7 @@ pgoutput_startup(LogicalDecodingContext *ctx, OutputPluginOptions *opt,
 
 	/* Create our memory context for private allocations. */
 	data->context = AllocSetContextCreate(ctx->context,
-										"logical replication output context",
+										  "logical replication output context",
 										  ALLOCSET_DEFAULT_MINSIZE,
 										  ALLOCSET_DEFAULT_INITSIZE,
 										  ALLOCSET_DEFAULT_MAXSIZE);
@@ -177,13 +177,13 @@ pgoutput_startup(LogicalDecodingContext *ctx, OutputPluginOptions *opt,
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("client sent proto_version=%d but we only support protocol %d or lower",
-					 data->protocol_version, LOGICALREP_PROTO_VERSION_NUM)));
+							data->protocol_version, LOGICALREP_PROTO_VERSION_NUM)));
 
 		if (data->protocol_version < LOGICALREP_PROTO_MIN_VERSION_NUM)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("client sent proto_version=%d but we only support protocol %d or higher",
-				 data->protocol_version, LOGICALREP_PROTO_MIN_VERSION_NUM)));
+							data->protocol_version, LOGICALREP_PROTO_MIN_VERSION_NUM)));
 
 		if (list_length(data->publication_names) < 1)
 			ereport(ERROR,

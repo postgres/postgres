@@ -346,7 +346,7 @@ bt_page_items(PG_FUNCTION_ARGS)
 		if (RELATION_IS_OTHER_TEMP(rel))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				errmsg("cannot access temporary tables of other sessions")));
+					 errmsg("cannot access temporary tables of other sessions")));
 
 		if (blkno == 0)
 			elog(ERROR, "block 0 is a meta page");
@@ -442,7 +442,7 @@ bt_page_items_bytea(PG_FUNCTION_ARGS)
 		if (raw_page_size < SizeOfPageHeaderData)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				  errmsg("input page too small (%d bytes)", raw_page_size)));
+					 errmsg("input page too small (%d bytes)", raw_page_size)));
 
 		fctx = SRF_FIRSTCALL_INIT();
 		mctx = MemoryContextSwitchTo(fctx->multi_call_memory_ctx);

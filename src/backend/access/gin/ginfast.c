@@ -482,7 +482,7 @@ ginHeapTupleFastCollect(GinState *ginstate,
 	{
 		collector->lentuples *= 2;
 		collector->tuples = (IndexTuple *) repalloc(collector->tuples,
-								  sizeof(IndexTuple) * collector->lentuples);
+													sizeof(IndexTuple) * collector->lentuples);
 	}
 
 	/*
@@ -874,7 +874,7 @@ ginInsertCleanup(GinState *ginstate, bool full_clean,
 			 */
 			ginBeginBAScan(&accum);
 			while ((list = ginGetBAEntry(&accum,
-								  &attnum, &key, &category, &nlist)) != NULL)
+										 &attnum, &key, &category, &nlist)) != NULL)
 			{
 				ginEntryInsert(ginstate, attnum, key, category,
 							   list, nlist, NULL);
@@ -904,7 +904,7 @@ ginInsertCleanup(GinState *ginstate, bool full_clean,
 
 				ginBeginBAScan(&accum);
 				while ((list = ginGetBAEntry(&accum,
-								  &attnum, &key, &category, &nlist)) != NULL)
+											 &attnum, &key, &category, &nlist)) != NULL)
 					ginEntryInsert(ginstate, attnum, key, category,
 								   list, nlist, NULL);
 			}
@@ -989,7 +989,7 @@ gin_clean_pending_list(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("recovery is in progress"),
-		 errhint("GIN pending list cannot be cleaned up during recovery.")));
+				 errhint("GIN pending list cannot be cleaned up during recovery.")));
 
 	/* Must be a GIN index */
 	if (indexRel->rd_rel->relkind != RELKIND_INDEX ||
@@ -1007,7 +1007,7 @@ gin_clean_pending_list(PG_FUNCTION_ARGS)
 	if (RELATION_IS_OTHER_TEMP(indexRel))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			   errmsg("cannot access temporary indexes of other sessions")));
+				 errmsg("cannot access temporary indexes of other sessions")));
 
 	/* User must own the index (comparable to privileges needed for VACUUM) */
 	if (!pg_class_ownercheck(indexoid, GetUserId()))

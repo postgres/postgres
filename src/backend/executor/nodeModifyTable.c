@@ -107,7 +107,7 @@ ExecCheckPlanOutput(Relation resultRel, List *targetList)
 						 errdetail("Table has type %s at ordinal position %d, but query expects %s.",
 								   format_type_be(attr->atttypid),
 								   attno,
-							 format_type_be(exprType((Node *) tle->expr)))));
+								   format_type_be(exprType((Node *) tle->expr)))));
 		}
 		else
 		{
@@ -128,7 +128,7 @@ ExecCheckPlanOutput(Relation resultRel, List *targetList)
 	if (attno != resultDesc->natts)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-		  errmsg("table row type and query-specified row type do not match"),
+				 errmsg("table row type and query-specified row type do not match"),
 				 errdetail("Query has too few columns.")));
 }
 
@@ -211,7 +211,7 @@ ExecCheckHeapTupleVisible(EState *estate,
 		if (!TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmin(tuple->t_data)))
 			ereport(ERROR,
 					(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
-			 errmsg("could not serialize access due to concurrent update")));
+					 errmsg("could not serialize access due to concurrent update")));
 	}
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 }
@@ -291,7 +291,7 @@ ExecInsert(ModifyTableState *mtstate,
 		 * respectively.
 		 */
 		leaf_part_index = ExecFindPartition(resultRelInfo,
-										 mtstate->mt_partition_dispatch_info,
+											mtstate->mt_partition_dispatch_info,
 											slot,
 											estate);
 		Assert(leaf_part_index >= 0 &&
@@ -308,7 +308,7 @@ ExecInsert(ModifyTableState *mtstate,
 		if (resultRelInfo->ri_FdwRoutine)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot route inserted tuples to a foreign table")));
+					 errmsg("cannot route inserted tuples to a foreign table")));
 
 		/* For ExecInsertIndexTuples() to work on the partition's indexes */
 		estate->es_result_relation_info = resultRelInfo;
@@ -529,7 +529,7 @@ ExecInsert(ModifyTableState *mtstate,
 
 			/* insert index entries for tuple */
 			recheckIndexes = ExecInsertIndexTuples(slot, &(tuple->t_self),
-												 estate, true, &specConflict,
+												   estate, true, &specConflict,
 												   arbiterIndexes);
 
 			/* adjust the tuple's state accordingly */
@@ -1614,16 +1614,16 @@ ExecModifyTable(ModifyTableState *node)
 		{
 			case CMD_INSERT:
 				slot = ExecInsert(node, slot, planSlot,
-								node->mt_arbiterindexes, node->mt_onconflict,
+								  node->mt_arbiterindexes, node->mt_onconflict,
 								  estate, node->canSetTag);
 				break;
 			case CMD_UPDATE:
 				slot = ExecUpdate(tupleid, oldtuple, slot, planSlot,
-								&node->mt_epqstate, estate, node->canSetTag);
+								  &node->mt_epqstate, estate, node->canSetTag);
 				break;
 			case CMD_DELETE:
 				slot = ExecDelete(tupleid, oldtuple, planSlot,
-								&node->mt_epqstate, estate, node->canSetTag);
+								  &node->mt_epqstate, estate, node->canSetTag);
 				break;
 			default:
 				elog(ERROR, "unknown operation");
@@ -1721,7 +1721,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 
 		/* Initialize the usesFdwDirectModify flag */
 		resultRelInfo->ri_usesFdwDirectModify = bms_is_member(i,
-												 node->fdwDirectModifyPlans);
+															  node->fdwDirectModifyPlans);
 
 		/*
 		 * Verify result relation is a valid target for the current operation
@@ -1917,7 +1917,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 
 			resultRelInfo->ri_projectReturning =
 				ExecBuildProjectionInfo(rlist, econtext, slot, &mtstate->ps,
-									 resultRelInfo->ri_RelationDesc->rd_att);
+										resultRelInfo->ri_RelationDesc->rd_att);
 			resultRelInfo++;
 		}
 
@@ -1941,7 +1941,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 											partrel, rel);
 			resultRelInfo->ri_projectReturning =
 				ExecBuildProjectionInfo(rlist, econtext, slot, &mtstate->ps,
-									 resultRelInfo->ri_RelationDesc->rd_att);
+										resultRelInfo->ri_RelationDesc->rd_att);
 			resultRelInfo++;
 		}
 	}
@@ -1991,7 +1991,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 
 		/* create target slot for UPDATE SET projection */
 		tupDesc = ExecTypeFromTL((List *) node->onConflictSet,
-						 resultRelInfo->ri_RelationDesc->rd_rel->relhasoids);
+								 resultRelInfo->ri_RelationDesc->rd_rel->relhasoids);
 		mtstate->mt_conflproj = ExecInitExtraTupleSlot(mtstate->ps.state);
 		ExecSetSlotDescriptor(mtstate->mt_conflproj, tupDesc);
 
@@ -2100,7 +2100,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 										subplan->targetlist);
 
 				j = ExecInitJunkFilter(subplan->targetlist,
-							resultRelInfo->ri_RelationDesc->rd_att->tdhasoid,
+									   resultRelInfo->ri_RelationDesc->rd_att->tdhasoid,
 									   ExecInitExtraTupleSlot(estate));
 
 				if (operation == CMD_UPDATE || operation == CMD_DELETE)

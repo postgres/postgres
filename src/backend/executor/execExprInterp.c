@@ -1986,7 +1986,7 @@ ExecEvalCurrentOfExpr(ExprState *state, ExprEvalStep *op)
 {
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-		   errmsg("WHERE CURRENT OF is not supported for this table type")));
+			 errmsg("WHERE CURRENT OF is not supported for this table type")));
 }
 
 /*
@@ -2187,7 +2187,7 @@ ExecEvalArrayExpr(ExprState *state, ExprEvalStep *op)
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
 						 errmsg("cannot merge incompatible arrays"),
 						 errdetail("Array with element type %s cannot be "
-						 "included in ARRAY construct with element type %s.",
+								   "included in ARRAY construct with element type %s.",
 								   format_type_be(ARR_ELEMTYPE(array)),
 								   format_type_be(element_type))));
 
@@ -2207,8 +2207,8 @@ ExecEvalArrayExpr(ExprState *state, ExprEvalStep *op)
 				if (ndims <= 0 || ndims > MAXDIM)
 					ereport(ERROR,
 							(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-						  errmsg("number of array dimensions (%d) exceeds " \
-								 "the maximum allowed (%d)", ndims, MAXDIM)));
+							 errmsg("number of array dimensions (%d) exceeds " \
+									"the maximum allowed (%d)", ndims, MAXDIM)));
 
 				elem_dims = (int *) palloc(elem_ndims * sizeof(int));
 				memcpy(elem_dims, ARR_DIMS(array), elem_ndims * sizeof(int));
@@ -2601,7 +2601,7 @@ ExecEvalArrayRefSubscript(ExprState *state, ExprEvalStep *op)
 		if (arefstate->isassignment)
 			ereport(ERROR,
 					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-				  errmsg("array subscript in assignment must not be null")));
+					 errmsg("array subscript in assignment must not be null")));
 		*op->resnull = true;
 		return false;
 	}
@@ -2834,7 +2834,7 @@ ExecEvalConvertRowtype(ExprState *state, ExprEvalStep *op, ExprContext *econtext
 		/* prepare map from old to new attribute numbers */
 		op->d.convert_rowtype.map =
 			convert_tuples_by_name(indesc, outdesc,
-								 gettext_noop("could not convert row type"));
+								   gettext_noop("could not convert row type"));
 		op->d.convert_rowtype.initialized = true;
 
 		MemoryContextSwitchTo(old_cxt);
@@ -3049,9 +3049,9 @@ ExecEvalConstraintCheck(ExprState *state, ExprEvalStep *op)
 		!DatumGetBool(*op->d.domaincheck.checkvalue))
 		ereport(ERROR,
 				(errcode(ERRCODE_CHECK_VIOLATION),
-			   errmsg("value for domain %s violates check constraint \"%s\"",
-					  format_type_be(op->d.domaincheck.resulttype),
-					  op->d.domaincheck.constraintname),
+				 errmsg("value for domain %s violates check constraint \"%s\"",
+						format_type_be(op->d.domaincheck.resulttype),
+						op->d.domaincheck.constraintname),
 				 errdomainconstraint(op->d.domaincheck.resulttype,
 									 op->d.domaincheck.constraintname)));
 }
@@ -3116,7 +3116,7 @@ ExecEvalXmlExpr(ExprState *state, ExprEvalStep *op)
 						appendStringInfo(&buf, "<%s>%s</%s>",
 										 argname,
 										 map_sql_value_to_xml_value(value,
-												 exprType((Node *) e), true),
+																	exprType((Node *) e), true),
 										 argname);
 						*op->resnull = false;
 					}
@@ -3137,10 +3137,10 @@ ExecEvalXmlExpr(ExprState *state, ExprEvalStep *op)
 
 		case IS_XMLELEMENT:
 			*op->resvalue = PointerGetDatum(xmlelement(xexpr,
-												op->d.xmlexpr.named_argvalue,
-												 op->d.xmlexpr.named_argnull,
+													   op->d.xmlexpr.named_argvalue,
+													   op->d.xmlexpr.named_argnull,
 													   op->d.xmlexpr.argvalue,
-													 op->d.xmlexpr.argnull));
+													   op->d.xmlexpr.argnull));
 			*op->resnull = false;
 			break;
 
@@ -3166,7 +3166,7 @@ ExecEvalXmlExpr(ExprState *state, ExprEvalStep *op)
 
 				*op->resvalue = PointerGetDatum(xmlparse(data,
 														 xexpr->xmloption,
-													   preserve_whitespace));
+														 preserve_whitespace));
 				*op->resnull = false;
 			}
 			break;
@@ -3243,8 +3243,8 @@ ExecEvalXmlExpr(ExprState *state, ExprEvalStep *op)
 				value = argvalue[0];
 
 				*op->resvalue = PointerGetDatum(
-								xmltotext_with_xmloption(DatumGetXmlP(value),
-														 xexpr->xmloption));
+												xmltotext_with_xmloption(DatumGetXmlP(value),
+																		 xexpr->xmloption));
 				*op->resnull = false;
 			}
 			break;
@@ -3418,7 +3418,7 @@ ExecEvalWholeRowVar(ExprState *state, ExprEvalStep *op, ExprContext *econtext)
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
 						 errmsg("table row type and query-specified row type do not match"),
 						 errdetail_plural("Table row contains %d attribute, but query expects %d.",
-				   "Table row contains %d attributes, but query expects %d.",
+										  "Table row contains %d attributes, but query expects %d.",
 										  slot_tupdesc->natts,
 										  slot_tupdesc->natts,
 										  var_tupdesc->natts)));
@@ -3492,10 +3492,10 @@ ExecEvalWholeRowVar(ExprState *state, ExprEvalStep *op, ExprContext *econtext)
 		 * perhaps other places.)
 		 */
 		if (econtext->ecxt_estate &&
-		variable->varno <= list_length(econtext->ecxt_estate->es_range_table))
+			variable->varno <= list_length(econtext->ecxt_estate->es_range_table))
 		{
 			RangeTblEntry *rte = rt_fetch(variable->varno,
-									  econtext->ecxt_estate->es_range_table);
+										  econtext->ecxt_estate->es_range_table);
 
 			if (rte->eref)
 				ExecTypeSetColNames(output_tupdesc, rte->eref->colnames);

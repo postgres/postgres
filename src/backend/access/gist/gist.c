@@ -28,7 +28,7 @@
 /* non-export function prototypes */
 static void gistfixsplit(GISTInsertState *state, GISTSTATE *giststate);
 static bool gistinserttuple(GISTInsertState *state, GISTInsertStack *stack,
-			 GISTSTATE *giststate, IndexTuple tuple, OffsetNumber oldoffnum);
+				GISTSTATE *giststate, IndexTuple tuple, OffsetNumber oldoffnum);
 static bool gistinserttuples(GISTInsertState *state, GISTInsertStack *stack,
 				 GISTSTATE *giststate,
 				 IndexTuple *tuples, int ntup, OffsetNumber oldoffnum,
@@ -1170,7 +1170,7 @@ gistfixsplit(GISTInsertState *state, GISTSTATE *giststate)
  */
 static bool
 gistinserttuple(GISTInsertState *state, GISTInsertStack *stack,
-			  GISTSTATE *giststate, IndexTuple tuple, OffsetNumber oldoffnum)
+				GISTSTATE *giststate, IndexTuple tuple, OffsetNumber oldoffnum)
 {
 	return gistinserttuples(state, stack, giststate, &tuple, 1, oldoffnum,
 							InvalidBuffer, InvalidBuffer, false, false);
@@ -1360,9 +1360,9 @@ gistSplit(Relation r,
 	if (len == 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-			errmsg("index row size %zu exceeds maximum %zu for index \"%s\"",
-				   IndexTupleSize(itup[0]), GiSTPageSize,
-				   RelationGetRelationName(r))));
+				 errmsg("index row size %zu exceeds maximum %zu for index \"%s\"",
+						IndexTupleSize(itup[0]), GiSTPageSize,
+						RelationGetRelationName(r))));
 
 	memset(v.spl_lisnull, TRUE, sizeof(bool) * giststate->tupdesc->natts);
 	memset(v.spl_risnull, TRUE, sizeof(bool) * giststate->tupdesc->natts);
@@ -1471,7 +1471,7 @@ initGISTstate(Relation index)
 		/* opclasses are not required to provide a Distance method */
 		if (OidIsValid(index_getprocid(index, i + 1, GIST_DISTANCE_PROC)))
 			fmgr_info_copy(&(giststate->distanceFn[i]),
-						 index_getprocinfo(index, i + 1, GIST_DISTANCE_PROC),
+						   index_getprocinfo(index, i + 1, GIST_DISTANCE_PROC),
 						   scanCxt);
 		else
 			giststate->distanceFn[i].fn_oid = InvalidOid;

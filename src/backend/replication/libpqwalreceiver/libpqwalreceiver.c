@@ -425,8 +425,8 @@ libpqrcv_endstreaming(WalReceiverConn *conn, TimeLineID *next_tli)
 	if (PQputCopyEnd(conn->streamConn, NULL) <= 0 ||
 		PQflush(conn->streamConn))
 		ereport(ERROR,
-			(errmsg("could not send end-of-streaming message to primary: %s",
-					pchomp(PQerrorMessage(conn->streamConn)))));
+				(errmsg("could not send end-of-streaming message to primary: %s",
+						pchomp(PQerrorMessage(conn->streamConn)))));
 
 	*next_tli = 0;
 
@@ -797,7 +797,7 @@ libpqrcv_create_slot(WalReceiverConn *conn, const char *slotname,
 	}
 
 	*lsn = DatumGetLSN(DirectFunctionCall1Coll(pg_lsn_in, InvalidOid,
-									CStringGetDatum(PQgetvalue(res, 0, 1))));
+											   CStringGetDatum(PQgetvalue(res, 0, 1))));
 	if (!PQgetisnull(res, 0, 2))
 		snapshot = pstrdup(PQgetvalue(res, 0, 2));
 	else
@@ -896,7 +896,7 @@ libpqrcv_exec(WalReceiverConn *conn, const char *query,
 	if (MyDatabaseId == InvalidOid)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-			  errmsg("the query interface requires a database connection")));
+				 errmsg("the query interface requires a database connection")));
 
 	pgres = libpqrcv_PQexec(conn->streamConn, query);
 

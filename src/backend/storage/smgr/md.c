@@ -472,7 +472,7 @@ mdunlinkfork(RelFileNodeBackend rnode, ForkNumber forkNum, bool isRedo)
 				if (errno != ENOENT)
 					ereport(WARNING,
 							(errcode_for_file_access(),
-					   errmsg("could not remove file \"%s\": %m", segpath)));
+							 errmsg("could not remove file \"%s\": %m", segpath)));
 				break;
 			}
 		}
@@ -997,9 +997,9 @@ mdtruncate(SMgrRelation reln, ForkNumber forknum, BlockNumber nblocks)
 			if (FileTruncate(v->mdfd_vfd, (off_t) lastsegblocks * BLCKSZ, WAIT_EVENT_DATA_FILE_TRUNCATE) < 0)
 				ereport(ERROR,
 						(errcode_for_file_access(),
-					errmsg("could not truncate file \"%s\" to %u blocks: %m",
-						   FilePathName(v->mdfd_vfd),
-						   nblocks)));
+						 errmsg("could not truncate file \"%s\" to %u blocks: %m",
+								FilePathName(v->mdfd_vfd),
+								nblocks)));
 			if (!SmgrIsTemp(reln))
 				register_dirty_segment(reln, forknum, v);
 		}
@@ -1225,7 +1225,7 @@ mdsync(void)
 
 					/* Attempt to open and fsync the target segment */
 					seg = _mdfd_getseg(reln, forknum,
-							 (BlockNumber) segno * (BlockNumber) RELSEG_SIZE,
+									   (BlockNumber) segno * (BlockNumber) RELSEG_SIZE,
 									   false,
 									   EXTENSION_RETURN_NULL
 									   | EXTENSION_DONT_CHECK_SIZE);
@@ -1233,7 +1233,7 @@ mdsync(void)
 					INSTR_TIME_SET_CURRENT(sync_start);
 
 					if (seg != NULL &&
-					 FileSync(seg->mdfd_vfd, WAIT_EVENT_DATA_FILE_SYNC) >= 0)
+						FileSync(seg->mdfd_vfd, WAIT_EVENT_DATA_FILE_SYNC) >= 0)
 					{
 						/* Success; update statistics about sync timing */
 						INSTR_TIME_SET_CURRENT(sync_end);
@@ -1279,8 +1279,8 @@ mdsync(void)
 					else
 						ereport(DEBUG1,
 								(errcode_for_file_access(),
-						errmsg("could not fsync file \"%s\" but retrying: %m",
-							   path)));
+								 errmsg("could not fsync file \"%s\" but retrying: %m",
+										path)));
 					pfree(path);
 
 					/*
@@ -1925,9 +1925,9 @@ _mdfd_getseg(SMgrRelation reln, ForkNumber forknum, BlockNumber blkno,
 				return NULL;
 			ereport(ERROR,
 					(errcode_for_file_access(),
-				   errmsg("could not open file \"%s\" (target block %u): %m",
-						  _mdfd_segpath(reln, forknum, nextsegno),
-						  blkno)));
+					 errmsg("could not open file \"%s\" (target block %u): %m",
+							_mdfd_segpath(reln, forknum, nextsegno),
+							blkno)));
 		}
 	}
 

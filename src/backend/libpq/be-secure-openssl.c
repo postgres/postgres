@@ -372,12 +372,12 @@ be_tls_init(bool isServerStart)
 				/* OpenSSL 0.96 does not support X509_V_FLAG_CRL_CHECK */
 #ifdef X509_V_FLAG_CRL_CHECK
 				X509_STORE_set_flags(cvstore,
-						  X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL);
+									 X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL);
 #else
 				ereport(LOG,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
-				errmsg("SSL certificate revocation list file \"%s\" ignored",
-					   ssl_crl_file),
+						 errmsg("SSL certificate revocation list file \"%s\" ignored",
+								ssl_crl_file),
 						 errdetail("SSL library does not support certificate revocation lists.")));
 #endif
 			}
@@ -386,7 +386,7 @@ be_tls_init(bool isServerStart)
 				ereport(isServerStart ? FATAL : LOG,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
 						 errmsg("could not load SSL certificate revocation list file \"%s\": %s",
-							 ssl_crl_file, SSLerrmessage(ERR_get_error()))));
+								ssl_crl_file, SSLerrmessage(ERR_get_error()))));
 				goto error;
 			}
 		}
@@ -541,7 +541,7 @@ aloop:
 				else
 					ereport(COMMERROR,
 							(errcode(ERRCODE_PROTOCOL_VIOLATION),
-					errmsg("could not accept SSL connection: EOF detected")));
+							 errmsg("could not accept SSL connection: EOF detected")));
 				break;
 			case SSL_ERROR_SSL:
 				ereport(COMMERROR,
@@ -552,7 +552,7 @@ aloop:
 			case SSL_ERROR_ZERO_RETURN:
 				ereport(COMMERROR,
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
-				   errmsg("could not accept SSL connection: EOF detected")));
+						 errmsg("could not accept SSL connection: EOF detected")));
 				break;
 			default:
 				ereport(COMMERROR,
@@ -853,7 +853,7 @@ my_BIO_s_socket(void)
 			!BIO_meth_set_puts(my_bio_methods, BIO_meth_get_puts(biom)) ||
 			!BIO_meth_set_ctrl(my_bio_methods, BIO_meth_get_ctrl(biom)) ||
 			!BIO_meth_set_create(my_bio_methods, BIO_meth_get_create(biom)) ||
-		 !BIO_meth_set_destroy(my_bio_methods, BIO_meth_get_destroy(biom)) ||
+			!BIO_meth_set_destroy(my_bio_methods, BIO_meth_get_destroy(biom)) ||
 			!BIO_meth_set_callback_ctrl(my_bio_methods, BIO_meth_get_callback_ctrl(biom)))
 		{
 			BIO_meth_free(my_bio_methods);

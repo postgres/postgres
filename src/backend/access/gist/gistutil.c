@@ -552,7 +552,7 @@ gistdentryinit(GISTSTATE *giststate, int nkey, GISTENTRY *e,
 		gistentryinit(*e, k, r, pg, o, l);
 		dep = (GISTENTRY *)
 			DatumGetPointer(FunctionCall1Coll(&giststate->decompressFn[nkey],
-										   giststate->supportCollation[nkey],
+											  giststate->supportCollation[nkey],
 											  PointerGetDatum(e)));
 		/* decompressFn may just return the given pointer */
 		if (dep != e)
@@ -587,7 +587,7 @@ gistFormTuple(GISTSTATE *giststate, Relation r,
 						  isleaf);
 			cep = (GISTENTRY *)
 				DatumGetPointer(FunctionCall1Coll(&giststate->compressFn[i],
-											  giststate->supportCollation[i],
+												  giststate->supportCollation[i],
 												  PointerGetDatum(&centry)));
 			compatt[i] = cep->key;
 		}
@@ -733,9 +733,9 @@ gistcheckpage(Relation rel, Buffer buf)
 	if (PageIsNew(page))
 		ereport(ERROR,
 				(errcode(ERRCODE_INDEX_CORRUPTED),
-			 errmsg("index \"%s\" contains unexpected zero page at block %u",
-					RelationGetRelationName(rel),
-					BufferGetBlockNumber(buf)),
+				 errmsg("index \"%s\" contains unexpected zero page at block %u",
+						RelationGetRelationName(rel),
+						BufferGetBlockNumber(buf)),
 				 errhint("Please REINDEX it.")));
 
 	/*

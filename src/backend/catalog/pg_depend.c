@@ -214,7 +214,7 @@ deleteDependencyRecordsFor(Oid classId, Oid objectId,
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
 	{
 		if (skipExtensionDeps &&
-		  ((Form_pg_depend) GETSTRUCT(tup))->deptype == DEPENDENCY_EXTENSION)
+			((Form_pg_depend) GETSTRUCT(tup))->deptype == DEPENDENCY_EXTENSION)
 			continue;
 
 		CatalogTupleDelete(depRel, &tup->t_self);
@@ -319,8 +319,8 @@ changeDependencyFor(Oid classId, Oid objectId,
 	if (isObjectPinned(&objAddr, depRel))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-		errmsg("cannot remove dependency on %s because it is a system object",
-			   getObjectDescription(&objAddr))));
+				 errmsg("cannot remove dependency on %s because it is a system object",
+						getObjectDescription(&objAddr))));
 
 	/*
 	 * We can handle adding a dependency on something pinned, though, since

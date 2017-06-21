@@ -67,7 +67,7 @@ placeChar(TrieChar *node, const unsigned char *str, int lenstr,
 		if (curnode->replaceTo)
 			ereport(WARNING,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
-				errmsg("duplicate source strings, first one will be used")));
+					 errmsg("duplicate source strings, first one will be used")));
 		else
 		{
 			curnode->replacelen = replacelen;
@@ -389,9 +389,9 @@ unaccent_dict(PG_FUNCTION_ARGS)
 	dict = lookup_ts_dictionary_cache(dictOid);
 
 	res = (TSLexeme *) DatumGetPointer(FunctionCall4(&(dict->lexize),
-											 PointerGetDatum(dict->dictData),
-										   PointerGetDatum(VARDATA_ANY(str)),
-									   Int32GetDatum(VARSIZE_ANY_EXHDR(str)),
+													 PointerGetDatum(dict->dictData),
+													 PointerGetDatum(VARDATA_ANY(str)),
+													 Int32GetDatum(VARSIZE_ANY_EXHDR(str)),
 													 PointerGetDatum(NULL)));
 
 	PG_FREE_IF_COPY(str, strArg);

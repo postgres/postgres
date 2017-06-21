@@ -68,7 +68,7 @@ brtuple_disk_tupdesc(BrinDesc *brdesc)
 		{
 			for (j = 0; j < brdesc->bd_info[i]->oi_nstored; j++)
 				TupleDescInitEntry(tupdesc, attno++, NULL,
-								 brdesc->bd_info[i]->oi_typcache[j]->type_id,
+								   brdesc->bd_info[i]->oi_typcache[j]->type_id,
 								   -1, 0);
 		}
 

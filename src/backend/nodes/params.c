@@ -132,7 +132,7 @@ EstimateParamListSpace(ParamListInfo paramLI)
 			typByVal = true;
 		}
 		sz = add_size(sz,
-			  datumEstimateSpace(prm->value, prm->isnull, typByVal, typLen));
+					  datumEstimateSpace(prm->value, prm->isnull, typByVal, typLen));
 	}
 
 	return sz;

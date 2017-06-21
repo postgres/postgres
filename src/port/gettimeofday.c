@@ -75,8 +75,8 @@ init_gettimeofday(LPFILETIME lpSystemTimeAsFileTime)
 	 * version and development SDK specific...
 	 */
 	pg_get_system_time = (PgGetSystemTimeFn) GetProcAddress(
-									   GetModuleHandle(TEXT("kernel32.dll")),
-										   "GetSystemTimePreciseAsFileTime");
+															GetModuleHandle(TEXT("kernel32.dll")),
+															"GetSystemTimePreciseAsFileTime");
 	if (pg_get_system_time == NULL)
 	{
 		/*

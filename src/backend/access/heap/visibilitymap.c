@@ -592,7 +592,7 @@ vm_readbuf(Relation rel, BlockNumber blkno, bool extend)
 	{
 		if (smgrexists(rel->rd_smgr, VISIBILITYMAP_FORKNUM))
 			rel->rd_smgr->smgr_vm_nblocks = smgrnblocks(rel->rd_smgr,
-													  VISIBILITYMAP_FORKNUM);
+														VISIBILITYMAP_FORKNUM);
 		else
 			rel->rd_smgr->smgr_vm_nblocks = 0;
 	}

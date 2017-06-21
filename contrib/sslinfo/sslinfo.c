@@ -484,8 +484,8 @@ ssl_extension_info(PG_FUNCTION_ARGS)
 		if (nid == NID_undef)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			errmsg("unknown OpenSSL extension in certificate at position %d",
-				   call_cntr)));
+					 errmsg("unknown OpenSSL extension in certificate at position %d",
+							call_cntr)));
 		values[0] = CStringGetTextDatum(OBJ_nid2sn(nid));
 		nulls[0] = false;
 

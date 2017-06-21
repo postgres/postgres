@@ -102,7 +102,7 @@ gistInitBuildBuffers(int pagesPerBuffer, int levelStep, int maxLevel)
 	 */
 	gfbb->loadedBuffersLen = 32;
 	gfbb->loadedBuffers = (GISTNodeBuffer **) palloc(gfbb->loadedBuffersLen *
-												   sizeof(GISTNodeBuffer *));
+													 sizeof(GISTNodeBuffer *));
 	gfbb->loadedBuffersCount = 0;
 
 	gfbb->rootlevel = maxLevel;

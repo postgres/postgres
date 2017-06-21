@@ -248,7 +248,7 @@ gistValidateBufferingOption(char *value)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("invalid value for \"buffering\" option"),
-			  errdetail("Valid values are \"on\", \"off\", and \"auto\".")));
+				 errdetail("Valid values are \"on\", \"off\", and \"auto\".")));
 	}
 }
 
@@ -1083,7 +1083,7 @@ gistGetMaxLevel(Relation index)
 		 * everywhere, so we just pick the first one.
 		 */
 		itup = (IndexTuple) PageGetItem(page,
-									 PageGetItemId(page, FirstOffsetNumber));
+										PageGetItemId(page, FirstOffsetNumber));
 		blkno = ItemPointerGetBlockNumber(&(itup->t_tid));
 		UnlockReleaseBuffer(buffer);
 
@@ -1143,7 +1143,7 @@ gistInitParentMap(GISTBuildState *buildstate)
 	buildstate->parentMap = hash_create("gistbuild parent map",
 										1024,
 										&hashCtl,
-									  HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
+										HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 }
 
 static void

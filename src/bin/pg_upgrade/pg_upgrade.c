@@ -328,7 +328,7 @@ create_new_objects(void)
 		 */
 		parallel_exec_prog(log_file_name,
 						   NULL,
-		 "\"%s/pg_restore\" %s --exit-on-error --verbose --dbname %s \"%s\"",
+						   "\"%s/pg_restore\" %s --exit-on-error --verbose --dbname %s \"%s\"",
 						   new_cluster.bindir,
 						   cluster_conn_opts(&new_cluster),
 						   escaped_connstr.data,
@@ -561,7 +561,7 @@ set_frozenxids(bool minmxid_only)
 		 */
 		if (strcmp(datallowconn, "f") == 0)
 			PQclear(executeQueryOrDie(conn_template1,
-								"ALTER DATABASE %s ALLOW_CONNECTIONS = true",
+									  "ALTER DATABASE %s ALLOW_CONNECTIONS = true",
 									  quote_identifier(datname)));
 
 		conn = connectToServer(&new_cluster, datname);
@@ -593,7 +593,7 @@ set_frozenxids(bool minmxid_only)
 		/* Reset datallowconn flag */
 		if (strcmp(datallowconn, "f") == 0)
 			PQclear(executeQueryOrDie(conn_template1,
-							   "ALTER DATABASE %s ALLOW_CONNECTIONS = false",
+									  "ALTER DATABASE %s ALLOW_CONNECTIONS = false",
 									  quote_identifier(datname)));
 	}
 

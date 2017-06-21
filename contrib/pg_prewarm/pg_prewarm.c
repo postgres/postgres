@@ -138,8 +138,8 @@ pg_prewarm(PG_FUNCTION_ARGS)
 		if (last_block < 0 || last_block >= nblocks)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			errmsg("ending block number must be between 0 and " INT64_FORMAT,
-				   nblocks - 1)));
+					 errmsg("ending block number must be between 0 and " INT64_FORMAT,
+							nblocks - 1)));
 	}
 
 	/* Now we're ready to do the real work. */

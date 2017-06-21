@@ -23,7 +23,7 @@ static unsigned char _crypt_itoa64[64 + 1] =
 
 char *
 _crypt_gensalt_traditional_rn(unsigned long count,
-				  const char *input, int size, char *output, int output_size)
+							  const char *input, int size, char *output, int output_size)
 {
 	if (size < 2 || output_size < 2 + 1 || (count && count != 25))
 	{
@@ -41,7 +41,7 @@ _crypt_gensalt_traditional_rn(unsigned long count,
 
 char *
 _crypt_gensalt_extended_rn(unsigned long count,
-				  const char *input, int size, char *output, int output_size)
+						   const char *input, int size, char *output, int output_size)
 {
 	unsigned long value;
 
@@ -77,7 +77,7 @@ _crypt_gensalt_extended_rn(unsigned long count,
 
 char *
 _crypt_gensalt_md5_rn(unsigned long count,
-				  const char *input, int size, char *output, int output_size)
+					  const char *input, int size, char *output, int output_size)
 {
 	unsigned long value;
 
@@ -159,7 +159,7 @@ BF_encode(char *dst, const BF_word *src, int size)
 
 char *
 _crypt_gensalt_blowfish_rn(unsigned long count,
-				  const char *input, int size, char *output, int output_size)
+						   const char *input, int size, char *output, int output_size)
 {
 	if (size < 16 || output_size < 7 + 22 + 1 ||
 		(count && (count < 4 || count > 31)))

@@ -93,7 +93,7 @@ btree_desc(StringInfo buf, XLogReaderState *record)
 
 				appendStringInfo(buf, "rel %u/%u/%u; latestRemovedXid %u",
 								 xlrec->node.spcNode, xlrec->node.dbNode,
-							   xlrec->node.relNode, xlrec->latestRemovedXid);
+								 xlrec->node.relNode, xlrec->latestRemovedXid);
 				break;
 			}
 	}

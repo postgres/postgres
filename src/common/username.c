@@ -42,7 +42,7 @@ get_user_name(char **errstr)
 	{
 		*errstr = psprintf(_("could not look up effective user ID %ld: %s"),
 						   (long) user_id,
-						 errno ? strerror(errno) : _("user does not exist"));
+						   errno ? strerror(errno) : _("user does not exist"));
 		return NULL;
 	}
 

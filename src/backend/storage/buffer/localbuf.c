@@ -189,7 +189,7 @@ LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum, BlockNumber blockNum,
 				/* Found a usable buffer */
 				LocalRefCount[b]++;
 				ResourceOwnerRememberBuffer(CurrentResourceOwner,
-										  BufferDescriptorGetBuffer(bufHdr));
+											BufferDescriptorGetBuffer(bufHdr));
 				break;
 			}
 		}

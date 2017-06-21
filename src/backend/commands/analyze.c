@@ -148,8 +148,8 @@ analyze_rel(Oid relid, RangeVar *relation, int options,
 		if (IsAutoVacuumWorkerProcess() && params->log_min_duration >= 0)
 			ereport(LOG,
 					(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
-				  errmsg("skipping analyze of \"%s\" --- lock not available",
-						 relation->relname)));
+					 errmsg("skipping analyze of \"%s\" --- lock not available",
+							relation->relname)));
 	}
 	if (!onerel)
 		return;
@@ -165,8 +165,8 @@ analyze_rel(Oid relid, RangeVar *relation, int options,
 		{
 			if (onerel->rd_rel->relisshared)
 				ereport(WARNING,
-				 (errmsg("skipping \"%s\" --- only superuser can analyze it",
-						 RelationGetRelationName(onerel))));
+						(errmsg("skipping \"%s\" --- only superuser can analyze it",
+								RelationGetRelationName(onerel))));
 			else if (onerel->rd_rel->relnamespace == PG_CATALOG_NAMESPACE)
 				ereport(WARNING,
 						(errmsg("skipping \"%s\" --- only superuser or database owner can analyze it",
@@ -233,8 +233,8 @@ analyze_rel(Oid relid, RangeVar *relation, int options,
 		if (!ok)
 		{
 			ereport(WARNING,
-			 (errmsg("skipping \"%s\" --- cannot analyze this foreign table",
-					 RelationGetRelationName(onerel))));
+					(errmsg("skipping \"%s\" --- cannot analyze this foreign table",
+							RelationGetRelationName(onerel))));
 			relation_close(onerel, ShareUpdateExclusiveLock);
 			return;
 		}
@@ -387,8 +387,8 @@ do_analyze_rel(Relation onerel, int options, VacuumParams *params,
 			if (i == InvalidAttrNumber)
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_COLUMN),
-					errmsg("column \"%s\" of relation \"%s\" does not exist",
-						   col, RelationGetRelationName(onerel))));
+						 errmsg("column \"%s\" of relation \"%s\" does not exist",
+								col, RelationGetRelationName(onerel))));
 			vacattrstats[tcnt] = examine_attribute(onerel, i, NULL);
 			if (vacattrstats[tcnt] != NULL)
 				tcnt++;
@@ -1443,7 +1443,7 @@ acquire_inherited_sample_rows(Relation onerel, int elevel,
 
 					map = convert_tuples_by_name(RelationGetDescr(childrel),
 												 RelationGetDescr(onerel),
-								 gettext_noop("could not convert row type"));
+												 gettext_noop("could not convert row type"));
 					if (map != NULL)
 					{
 						int			j;

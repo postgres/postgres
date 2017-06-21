@@ -186,7 +186,7 @@ wait_for_relation_state_change(Oid relid, char expected_state)
 
 		/* Check if the opposite worker is still running and bail if not. */
 		worker = logicalrep_worker_find(MyLogicalRepWorker->subid,
-								  am_tablesync_worker() ? InvalidOid : relid,
+										am_tablesync_worker() ? InvalidOid : relid,
 										false);
 		LWLockRelease(LogicalRepWorkerLock);
 		if (!worker)
@@ -682,7 +682,7 @@ fetch_remote_table_info(char *nspname, char *relname,
 					 "       a.attnum = ANY(i.indkey)"
 					 "  FROM pg_catalog.pg_attribute a"
 					 "  LEFT JOIN pg_catalog.pg_index i"
-			   "       ON (i.indexrelid = pg_get_replica_identity_index(%u))"
+					 "       ON (i.indexrelid = pg_get_replica_identity_index(%u))"
 					 " WHERE a.attnum > 0::pg_catalog.int2"
 					 "   AND NOT a.attisdropped"
 					 "   AND a.attrelid = %u"

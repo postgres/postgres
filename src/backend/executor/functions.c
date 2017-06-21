@@ -517,7 +517,7 @@ init_execution_state(List *queryTree_list,
 					((CopyStmt *) stmt->utilityStmt)->filename == NULL)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					errmsg("cannot COPY to/from client in a SQL function")));
+							 errmsg("cannot COPY to/from client in a SQL function")));
 
 				if (IsA(stmt->utilityStmt, TransactionStmt))
 					ereport(ERROR,
@@ -531,8 +531,8 @@ init_execution_state(List *queryTree_list,
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				/* translator: %s is a SQL statement name */
-					   errmsg("%s is not allowed in a non-volatile function",
-							  CreateCommandTag((Node *) stmt))));
+						 errmsg("%s is not allowed in a non-volatile function",
+								CreateCommandTag((Node *) stmt))));
 
 			if (IsInParallelMode() && !CommandIsReadOnly(stmt))
 				PreventCommandIfParallelMode(CreateCommandTag((Node *) stmt));
@@ -713,7 +713,7 @@ init_sql_fcache(FmgrInfo *finfo, Oid collation, bool lazyEvalOK)
 
 		queryTree_sublist = pg_analyze_and_rewrite_params(parsetree,
 														  fcache->src,
-									   (ParserSetupHook) sql_fn_parser_setup,
+														  (ParserSetupHook) sql_fn_parser_setup,
 														  fcache->pinfo,
 														  NULL);
 		queryTree_list = lappend(queryTree_list, queryTree_sublist);
@@ -1594,8 +1594,8 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 		if (rettype != VOIDOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-			 errmsg("return type mismatch in function declared to return %s",
-					format_type_be(rettype)),
+					 errmsg("return type mismatch in function declared to return %s",
+							format_type_be(rettype)),
 					 errdetail("Function's final statement must be SELECT or INSERT/UPDATE/DELETE RETURNING.")));
 		return false;
 	}
@@ -1631,9 +1631,9 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 		if (tlistlen != 1)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-			 errmsg("return type mismatch in function declared to return %s",
-					format_type_be(rettype)),
-			  errdetail("Final statement must return exactly one column.")));
+					 errmsg("return type mismatch in function declared to return %s",
+							format_type_be(rettype)),
+					 errdetail("Final statement must return exactly one column.")));
 
 		/* We assume here that non-junk TLEs must come first in tlists */
 		tle = (TargetEntry *) linitial(tlist);
@@ -1643,8 +1643,8 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 		if (!IsBinaryCoercible(restype, rettype))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-			 errmsg("return type mismatch in function declared to return %s",
-					format_type_be(rettype)),
+					 errmsg("return type mismatch in function declared to return %s",
+							format_type_be(rettype)),
 					 errdetail("Actual return type is %s.",
 							   format_type_be(restype))));
 		if (modifyTargetList && restype != rettype)
@@ -1698,8 +1698,8 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 					tle->expr = (Expr *) makeRelabelType(tle->expr,
 														 rettype,
 														 -1,
-												   get_typcollation(rettype),
-													   COERCE_IMPLICIT_CAST);
+														 get_typcollation(rettype),
+														 COERCE_IMPLICIT_CAST);
 					/* Relabel is dangerous if sort/group or setop column */
 					if (tle->ressortgroupref != 0 || parse->setOperations)
 						*modifyTargetList = true;
@@ -1758,7 +1758,7 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 							(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 							 errmsg("return type mismatch in function declared to return %s",
 									format_type_be(rettype)),
-					errdetail("Final statement returns too many columns.")));
+							 errdetail("Final statement returns too many columns.")));
 				attr = tupdesc->attrs[colindex - 1];
 				if (attr->attisdropped && modifyTargetList)
 				{
@@ -1802,8 +1802,8 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 					tle->expr = (Expr *) makeRelabelType(tle->expr,
 														 atttype,
 														 -1,
-												   get_typcollation(atttype),
-													   COERCE_IMPLICIT_CAST);
+														 get_typcollation(atttype),
+														 COERCE_IMPLICIT_CAST);
 					/* Relabel is dangerous if sort/group or setop column */
 					if (tle->ressortgroupref != 0 || parse->setOperations)
 						*modifyTargetList = true;
@@ -1821,7 +1821,7 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 						 errmsg("return type mismatch in function declared to return %s",
 								format_type_be(rettype)),
-					 errdetail("Final statement returns too few columns.")));
+						 errdetail("Final statement returns too few columns.")));
 			if (modifyTargetList)
 			{
 				Expr	   *null_expr;
@@ -1861,7 +1861,7 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 		/* Set up junk filter if needed */
 		if (junkFilter)
 			*junkFilter = ExecInitJunkFilterConversion(tlist,
-												CreateTupleDescCopy(tupdesc),
+													   CreateTupleDescCopy(tupdesc),
 													   NULL);
 
 		/* Report that we are returning entire tuple result */

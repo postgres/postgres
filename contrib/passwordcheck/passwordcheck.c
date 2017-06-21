@@ -112,7 +112,7 @@ check_password(const char *username,
 		if (!pwd_has_letter || !pwd_has_nonletter)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			   errmsg("password must contain both letters and nonletters")));
+					 errmsg("password must contain both letters and nonletters")));
 
 #ifdef USE_CRACKLIB
 		/* call cracklib to check password */

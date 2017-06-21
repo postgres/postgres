@@ -853,7 +853,7 @@ PreCommit_Notify(void)
 			if (asyncQueueIsFull())
 				ereport(ERROR,
 						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-					  errmsg("too many notifications in the NOTIFY queue")));
+						 errmsg("too many notifications in the NOTIFY queue")));
 			nextNotify = asyncQueueAddEntries(nextNotify);
 			LWLockRelease(AsyncQueueLock);
 		}

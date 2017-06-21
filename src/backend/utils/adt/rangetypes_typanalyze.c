@@ -33,7 +33,7 @@
 static int	float8_qsort_cmp(const void *a1, const void *a2);
 static int	range_bound_qsort_cmp(const void *a1, const void *a2, void *arg);
 static void compute_range_stats(VacAttrStats *stats,
-		   AnalyzeAttrFetchFunc fetchfunc, int samplerows, double totalrows);
+					AnalyzeAttrFetchFunc fetchfunc, int samplerows, double totalrows);
 
 /*
  * range_typanalyze -- typanalyze function for range columns
@@ -165,9 +165,9 @@ compute_range_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 				 * and lower bound values.
 				 */
 				length = DatumGetFloat8(FunctionCall2Coll(
-												&typcache->rng_subdiff_finfo,
-													 typcache->rng_collation,
-													  upper.val, lower.val));
+														  &typcache->rng_subdiff_finfo,
+														  typcache->rng_collation,
+														  upper.val, lower.val));
 			}
 			else
 			{
@@ -246,7 +246,7 @@ compute_range_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 			for (i = 0; i < num_hist; i++)
 			{
 				bound_hist_values[i] = PointerGetDatum(range_serialize(
-							   typcache, &lowers[pos], &uppers[pos], false));
+																	   typcache, &lowers[pos], &uppers[pos], false));
 				pos += delta;
 				posfrac += deltafrac;
 				if (posfrac >= (num_hist - 1))

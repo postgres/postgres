@@ -241,8 +241,8 @@ inet_cidr_ntop_ipv6(const u_char *src, int bits, char *dst, size_t size)
 		}
 
 		if (zero_l != words && zero_s == 0 && ((zero_l == 6) ||
-						  ((zero_l == 5 && s[10] == 0xff && s[11] == 0xff) ||
-						   ((zero_l == 7 && s[14] != 0 && s[15] != 1)))))
+											   ((zero_l == 5 && s[10] == 0xff && s[11] == 0xff) ||
+												((zero_l == 7 && s[14] != 0 && s[15] != 1)))))
 			is_ipv4 = 1;
 
 		/* Format whole words. */

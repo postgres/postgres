@@ -196,7 +196,7 @@ gin_leafpage_items(PG_FUNCTION_ARGS)
 		if (opaq->flags != (GIN_DATA | GIN_LEAF | GIN_COMPRESSED))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("input page is not a compressed GIN data leaf page"),
+					 errmsg("input page is not a compressed GIN data leaf page"),
 					 errdetail("Flags %04X, expected %04X",
 							   opaq->flags,
 							   (GIN_DATA | GIN_LEAF | GIN_COMPRESSED))));

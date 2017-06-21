@@ -171,7 +171,7 @@ static double eqjoinsel_semi(Oid operator,
 			   VariableStatData *vardata1, VariableStatData *vardata2,
 			   RelOptInfo *inner_rel);
 static bool estimate_multivariate_ndistinct(PlannerInfo *root,
-						RelOptInfo *rel, List **varinfos, double *ndistinct);
+								RelOptInfo *rel, List **varinfos, double *ndistinct);
 static bool convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 				  Datum lobound, Datum hibound, Oid boundstypid,
 				  double *scaledlobound, double *scaledhibound);
@@ -334,7 +334,7 @@ var_eq_const(VariableStatData *vardata, Oid operator,
 	}
 	else if (HeapTupleIsValid(vardata->statsTuple) &&
 			 statistic_proc_security_check(vardata,
-										 (opfuncoid = get_opcode(operator))))
+										   (opfuncoid = get_opcode(operator))))
 	{
 		AttStatsSlot sslot;
 		bool		match = false;
@@ -360,12 +360,12 @@ var_eq_const(VariableStatData *vardata, Oid operator,
 				/* be careful to apply operator right way 'round */
 				if (varonleft)
 					match = DatumGetBool(FunctionCall2Coll(&eqproc,
-													   DEFAULT_COLLATION_OID,
+														   DEFAULT_COLLATION_OID,
 														   sslot.values[i],
 														   constval));
 				else
 					match = DatumGetBool(FunctionCall2Coll(&eqproc,
-													   DEFAULT_COLLATION_OID,
+														   DEFAULT_COLLATION_OID,
 														   constval,
 														   sslot.values[i]));
 				if (match)
@@ -848,7 +848,7 @@ ineq_histogram_selectivity(PlannerInfo *root,
 														 vardata,
 														 sslot.staop,
 														 NULL,
-													   &sslot.values[probe]);
+														 &sslot.values[probe]);
 
 				ltcmp = DatumGetBool(FunctionCall2Coll(opproc,
 													   DEFAULT_COLLATION_OID,
@@ -1268,7 +1268,7 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype, bool negate)
 				break;
 			case BYTEAOID:
 				prefixstr = DatumGetCString(DirectFunctionCall1(byteaout,
-														prefix->constvalue));
+																prefix->constvalue));
 				break;
 			default:
 				elog(ERROR, "unrecognized consttype: %u",
@@ -1933,17 +1933,17 @@ scalararraysel(PlannerInfo *root,
 				s2 = DatumGetFloat8(FunctionCall5Coll(&oprselproc,
 													  clause->inputcollid,
 													  PointerGetDatum(root),
-												  ObjectIdGetDatum(operator),
+													  ObjectIdGetDatum(operator),
 													  PointerGetDatum(args),
 													  Int16GetDatum(jointype),
-												   PointerGetDatum(sjinfo)));
+													  PointerGetDatum(sjinfo)));
 			else
 				s2 = DatumGetFloat8(FunctionCall4Coll(&oprselproc,
 													  clause->inputcollid,
 													  PointerGetDatum(root),
-												  ObjectIdGetDatum(operator),
+													  ObjectIdGetDatum(operator),
 													  PointerGetDatum(args),
-												   Int32GetDatum(varRelid)));
+													  Int32GetDatum(varRelid)));
 
 			if (useOr)
 			{
@@ -2000,17 +2000,17 @@ scalararraysel(PlannerInfo *root,
 				s2 = DatumGetFloat8(FunctionCall5Coll(&oprselproc,
 													  clause->inputcollid,
 													  PointerGetDatum(root),
-												  ObjectIdGetDatum(operator),
+													  ObjectIdGetDatum(operator),
 													  PointerGetDatum(args),
 													  Int16GetDatum(jointype),
-												   PointerGetDatum(sjinfo)));
+													  PointerGetDatum(sjinfo)));
 			else
 				s2 = DatumGetFloat8(FunctionCall4Coll(&oprselproc,
 													  clause->inputcollid,
 													  PointerGetDatum(root),
-												  ObjectIdGetDatum(operator),
+													  ObjectIdGetDatum(operator),
 													  PointerGetDatum(args),
-												   Int32GetDatum(varRelid)));
+													  Int32GetDatum(varRelid)));
 
 			if (useOr)
 			{
@@ -2295,7 +2295,7 @@ eqjoinsel_inner(Oid operator,
 		if (statistic_proc_security_check(vardata1, opfuncoid))
 			have_mcvs1 = get_attstatsslot(&sslot1, vardata1->statsTuple,
 										  STATISTIC_KIND_MCV, InvalidOid,
-								 ATTSTATSSLOT_VALUES | ATTSTATSSLOT_NUMBERS);
+										  ATTSTATSSLOT_VALUES | ATTSTATSSLOT_NUMBERS);
 	}
 
 	if (HeapTupleIsValid(vardata2->statsTuple))
@@ -2305,7 +2305,7 @@ eqjoinsel_inner(Oid operator,
 		if (statistic_proc_security_check(vardata2, opfuncoid))
 			have_mcvs2 = get_attstatsslot(&sslot2, vardata2->statsTuple,
 										  STATISTIC_KIND_MCV, InvalidOid,
-								 ATTSTATSSLOT_VALUES | ATTSTATSSLOT_NUMBERS);
+										  ATTSTATSSLOT_VALUES | ATTSTATSSLOT_NUMBERS);
 	}
 
 	if (have_mcvs1 && have_mcvs2)
@@ -2545,7 +2545,7 @@ eqjoinsel_semi(Oid operator,
 		if (statistic_proc_security_check(vardata1, opfuncoid))
 			have_mcvs1 = get_attstatsslot(&sslot1, vardata1->statsTuple,
 										  STATISTIC_KIND_MCV, InvalidOid,
-								 ATTSTATSSLOT_VALUES | ATTSTATSSLOT_NUMBERS);
+										  ATTSTATSSLOT_VALUES | ATTSTATSSLOT_NUMBERS);
 	}
 
 	if (HeapTupleIsValid(vardata2->statsTuple) &&
@@ -4612,7 +4612,7 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 			if (varRelid == 0 || bms_is_member(varRelid, varnos))
 			{
 				onerel = find_base_rel(root,
-					   (varRelid ? varRelid : bms_singleton_member(varnos)));
+									   (varRelid ? varRelid : bms_singleton_member(varnos)));
 				vardata->rel = onerel;
 				node = basenode;	/* strip any relabeling */
 			}
@@ -4714,7 +4714,7 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 						{
 							vardata->statsTuple =
 								SearchSysCache3(STATRELATTINH,
-										   ObjectIdGetDatum(index->indexoid),
+												ObjectIdGetDatum(index->indexoid),
 												Int16GetDatum(pos + 1),
 												BoolGetDatum(false));
 							vardata->freefunc = ReleaseSysCache;
@@ -4735,7 +4735,7 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 								 */
 								vardata->acl_ok =
 									(pg_class_aclcheck(rte->relid, GetUserId(),
-												 ACL_SELECT) == ACLCHECK_OK);
+													   ACL_SELECT) == ACLCHECK_OK);
 							}
 							else
 							{
@@ -5545,7 +5545,7 @@ like_fixed_prefix(Const *patt_const, bool case_insensitive, Oid collation,
 		if (typeid == BYTEAOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			errmsg("case insensitive matching not supported on type bytea")));
+					 errmsg("case insensitive matching not supported on type bytea")));
 
 		/* If case-insensitive, we need locale info */
 		if (lc_ctype_is_c(collation))
@@ -5601,7 +5601,7 @@ like_fixed_prefix(Const *patt_const, bool case_insensitive, Oid collation,
 
 		/* Stop if case-varying character (it's sort of a wildcard) */
 		if (case_insensitive &&
-		  pattern_char_isalpha(patt[pos], is_multibyte, locale, locale_is_c))
+			pattern_char_isalpha(patt[pos], is_multibyte, locale, locale_is_c))
 			break;
 
 		match[match_pos++] = patt[pos];
@@ -5647,7 +5647,7 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive, Oid collation,
 	if (typeid == BYTEAOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-		 errmsg("regular-expression matching not supported on type bytea")));
+				 errmsg("regular-expression matching not supported on type bytea")));
 
 	/* Use the regexp machinery to extract the prefix, if any */
 	prefix = regexp_fixed_prefix(DatumGetTextPP(patt_const->constvalue),
@@ -7827,7 +7827,7 @@ brincostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 				 */
 				if (HeapTupleIsValid(vardata.statsTuple) && !vardata.freefunc)
 					elog(ERROR,
-					  "no function provided to release variable stats with");
+						 "no function provided to release variable stats with");
 			}
 			else
 			{
@@ -7850,7 +7850,7 @@ brincostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 			attnum = qinfo->indexcol + 1;
 
 			if (get_index_stats_hook &&
-			(*get_index_stats_hook) (root, index->indexoid, attnum, &vardata))
+				(*get_index_stats_hook) (root, index->indexoid, attnum, &vardata))
 			{
 				/*
 				 * The hook took control of acquiring a stats tuple.  If it
@@ -7863,7 +7863,7 @@ brincostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 			else
 			{
 				vardata.statsTuple = SearchSysCache3(STATRELATTINH,
-										   ObjectIdGetDatum(index->indexoid),
+													 ObjectIdGetDatum(index->indexoid),
 													 Int16GetDatum(attnum),
 													 BoolGetDatum(false));
 				vardata.freefunc = ReleaseSysCache;

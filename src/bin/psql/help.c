@@ -84,8 +84,8 @@ usage(unsigned short int pager)
 	fprintf(output, _("  -f, --file=FILENAME      execute commands from file, then exit\n"));
 	fprintf(output, _("  -l, --list               list available databases, then exit\n"));
 	fprintf(output, _("  -v, --set=, --variable=NAME=VALUE\n"
-			   "                           set psql variable NAME to VALUE\n"
-				 "                           (e.g., -v ON_ERROR_STOP=1)\n"));
+					  "                           set psql variable NAME to VALUE\n"
+					  "                           (e.g., -v ON_ERROR_STOP=1)\n"));
 	fprintf(output, _("  -V, --version            output version information, then exit\n"));
 	fprintf(output, _("  -X, --no-psqlrc          do not read startup file (~/.psqlrc)\n"));
 	fprintf(output, _("  -1 (\"one\"), --single-transaction\n"
@@ -278,7 +278,7 @@ slashUsage(unsigned short int pager)
 			ON(pset.popt.topt.tuples_only));
 	fprintf(output, _("  \\T [STRING]            set HTML <table> tag attributes, or unset if none\n"));
 	fprintf(output, _("  \\x [on|off|auto]       toggle expanded output (currently %s)\n"),
-		pset.popt.topt.expanded == 2 ? "auto" : ON(pset.popt.topt.expanded));
+			pset.popt.topt.expanded == 2 ? "auto" : ON(pset.popt.topt.expanded));
 	fprintf(output, "\n");
 
 	fprintf(output, _("Connection\n"));
@@ -344,7 +344,7 @@ helpVariables(unsigned short int pager)
 
 	fprintf(output, _("  AUTOCOMMIT         if set, successful SQL commands are automatically committed\n"));
 	fprintf(output, _("  COMP_KEYWORD_CASE  determines the case used to complete SQL key words\n"
-	"                     [lower, upper, preserve-lower, preserve-upper]\n"));
+					  "                     [lower, upper, preserve-lower, preserve-upper]\n"));
 	fprintf(output, _("  DBNAME             the currently connected database name\n"));
 	fprintf(output, _("  ECHO               controls what input is written to standard output\n"
 					  "                     [all, errors, none, queries]\n"));
@@ -583,19 +583,19 @@ print_copyright(void)
 		 "(formerly known as Postgres, then as Postgres95)\n\n"
 		 "Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group\n\n"
 		 "Portions Copyright (c) 1994, The Regents of the University of California\n\n"
-	"Permission to use, copy, modify, and distribute this software and its\n"
+		 "Permission to use, copy, modify, and distribute this software and its\n"
 		 "documentation for any purpose, without fee, and without a written agreement\n"
-	 "is hereby granted, provided that the above copyright notice and this\n"
-	   "paragraph and the following two paragraphs appear in all copies.\n\n"
+		 "is hereby granted, provided that the above copyright notice and this\n"
+		 "paragraph and the following two paragraphs appear in all copies.\n\n"
 		 "IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY FOR\n"
 		 "DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING\n"
 		 "LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS\n"
 		 "DOCUMENTATION, EVEN IF THE UNIVERSITY OF CALIFORNIA HAS BEEN ADVISED OF THE\n"
 		 "POSSIBILITY OF SUCH DAMAGE.\n\n"
-	  "THE UNIVERSITY OF CALIFORNIA SPECIFICALLY DISCLAIMS ANY WARRANTIES,\n"
+		 "THE UNIVERSITY OF CALIFORNIA SPECIFICALLY DISCLAIMS ANY WARRANTIES,\n"
 		 "INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY\n"
 		 "AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE PROVIDED HEREUNDER IS\n"
 		 "ON AN \"AS IS\" BASIS, AND THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATIONS TO\n"
-	"PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.\n"
+		 "PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.\n"
 		);
 }

@@ -615,7 +615,7 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 						!bms_is_subset(sjinfo->min_righthand, join_plus_rhs))
 					{
 						join_plus_rhs = bms_add_members(join_plus_rhs,
-													  sjinfo->min_righthand);
+														sjinfo->min_righthand);
 						more = true;
 					}
 					/* full joins constrain both sides symmetrically */

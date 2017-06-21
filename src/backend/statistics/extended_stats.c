@@ -121,7 +121,7 @@ BuildRelationExtStatistics(Relation onerel, double totalrows,
 													stat->columns, stats);
 			else if (t == STATS_EXT_DEPENDENCIES)
 				dependencies = statext_dependencies_build(numrows, rows,
-													   stat->columns, stats);
+														  stat->columns, stats);
 		}
 
 		/* store the statistics in the catalog */

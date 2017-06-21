@@ -504,10 +504,10 @@ cost_index(IndexPath *path, PlannerInfo *root, double loop_count,
 		path->path.rows = path->path.param_info->ppi_rows;
 		/* qpquals come from the rel's restriction clauses and ppi_clauses */
 		qpquals = list_concat(
-				extract_nonindex_conditions(path->indexinfo->indrestrictinfo,
-											path->indexquals),
-			  extract_nonindex_conditions(path->path.param_info->ppi_clauses,
-										  path->indexquals));
+							  extract_nonindex_conditions(path->indexinfo->indrestrictinfo,
+														  path->indexquals),
+							  extract_nonindex_conditions(path->path.param_info->ppi_clauses,
+														  path->indexquals));
 	}
 	else
 	{
@@ -677,7 +677,7 @@ cost_index(IndexPath *path, PlannerInfo *root, double loop_count,
 		 * order.
 		 */
 		path->path.parallel_workers = compute_parallel_worker(baserel,
-											   rand_heap_pages, index_pages);
+															  rand_heap_pages, index_pages);
 
 		/*
 		 * Fall out if workers can't be assigned for parallel scan, because in
@@ -3097,7 +3097,7 @@ final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 					/* not cached yet */
 					thisbucketsize =
 						estimate_hash_bucketsize(root,
-										   get_rightop(restrictinfo->clause),
+												 get_rightop(restrictinfo->clause),
 												 virtualbuckets);
 					restrictinfo->right_bucketsize = thisbucketsize;
 				}
@@ -3113,7 +3113,7 @@ final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 					/* not cached yet */
 					thisbucketsize =
 						estimate_hash_bucketsize(root,
-											get_leftop(restrictinfo->clause),
+												 get_leftop(restrictinfo->clause),
 												 virtualbuckets);
 					restrictinfo->left_bucketsize = thisbucketsize;
 				}
@@ -3376,7 +3376,7 @@ cost_rescan(PlannerInfo *root, Path *path,
 				 */
 				Cost		run_cost = cpu_tuple_cost * path->rows;
 				double		nbytes = relation_byte_size(path->rows,
-													path->pathtarget->width);
+														path->pathtarget->width);
 				long		work_mem_bytes = work_mem * 1024L;
 
 				if (nbytes > work_mem_bytes)
@@ -3403,7 +3403,7 @@ cost_rescan(PlannerInfo *root, Path *path,
 				 */
 				Cost		run_cost = cpu_operator_cost * path->rows;
 				double		nbytes = relation_byte_size(path->rows,
-													path->pathtarget->width);
+														path->pathtarget->width);
 				long		work_mem_bytes = work_mem * 1024L;
 
 				if (nbytes > work_mem_bytes)
@@ -3785,7 +3785,7 @@ compute_semi_anti_join_factors(PlannerInfo *root,
 	jselec = clauselist_selectivity(root,
 									joinquals,
 									0,
-							 (jointype == JOIN_ANTI) ? JOIN_ANTI : JOIN_SEMI,
+									(jointype == JOIN_ANTI) ? JOIN_ANTI : JOIN_SEMI,
 									sjinfo);
 
 	/*
@@ -4925,7 +4925,7 @@ set_rel_width(PlannerInfo *root, RelOptInfo *rel)
 		{
 			/* Real relation, so estimate true tuple width */
 			wholerow_width += get_relation_data_width(reloid,
-										   rel->attr_widths - rel->min_attr);
+													  rel->attr_widths - rel->min_attr);
 		}
 		else
 		{

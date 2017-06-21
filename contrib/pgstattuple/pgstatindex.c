@@ -535,7 +535,7 @@ pgstatginindex_internal(Oid relid, FunctionCallInfo fcinfo)
 	if (RELATION_IS_OTHER_TEMP(rel))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			   errmsg("cannot access temporary indexes of other sessions")));
+				 errmsg("cannot access temporary indexes of other sessions")));
 
 	/*
 	 * Read metapage
@@ -613,7 +613,7 @@ pgstathashindex(PG_FUNCTION_ARGS)
 	if (RELATION_IS_OTHER_TEMP(rel))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			   errmsg("cannot access temporary indexes of other sessions")));
+				 errmsg("cannot access temporary indexes of other sessions")));
 
 	/* Get the information we need from the metapage. */
 	memset(&stats, 0, sizeof(stats));
@@ -648,9 +648,9 @@ pgstathashindex(PG_FUNCTION_ARGS)
 				 MAXALIGN(sizeof(HashPageOpaqueData)))
 			ereport(ERROR,
 					(errcode(ERRCODE_INDEX_CORRUPTED),
-				   errmsg("index \"%s\" contains corrupted page at block %u",
-						  RelationGetRelationName(rel),
-						  BufferGetBlockNumber(buf))));
+					 errmsg("index \"%s\" contains corrupted page at block %u",
+							RelationGetRelationName(rel),
+							BufferGetBlockNumber(buf))));
 		else
 		{
 			HashPageOpaque opaque;
@@ -677,7 +677,7 @@ pgstathashindex(PG_FUNCTION_ARGS)
 				ereport(ERROR,
 						(errcode(ERRCODE_INDEX_CORRUPTED),
 						 errmsg("unexpected page type 0x%04X in HASH index \"%s\" block %u",
-							opaque->hasho_flag, RelationGetRelationName(rel),
+								opaque->hasho_flag, RelationGetRelationName(rel),
 								BufferGetBlockNumber(buf))));
 		}
 		UnlockReleaseBuffer(buf);

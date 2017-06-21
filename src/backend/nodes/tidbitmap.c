@@ -723,7 +723,7 @@ tbm_begin_iterate(TIDBitmap *tbm)
 	 * needs of the TBMIterateResult sub-struct.
 	 */
 	iterator = (TBMIterator *) palloc(sizeof(TBMIterator) +
-								 MAX_TUPLES_PER_PAGE * sizeof(OffsetNumber));
+									  MAX_TUPLES_PER_PAGE * sizeof(OffsetNumber));
 	iterator->tbm = tbm;
 
 	/*
@@ -1498,7 +1498,7 @@ tbm_attach_shared_iterate(dsa_area *dsa, dsa_pointer dp)
 	 * serve the needs of the TBMIterateResult sub-struct.
 	 */
 	iterator = (TBMSharedIterator *) palloc0(sizeof(TBMSharedIterator) +
-								 MAX_TUPLES_PER_PAGE * sizeof(OffsetNumber));
+											 MAX_TUPLES_PER_PAGE * sizeof(OffsetNumber));
 
 	istate = (TBMSharedIteratorState *) dsa_get_address(dsa, dp);
 
@@ -1537,7 +1537,7 @@ pagetable_allocate(pagetable_hash *pagetable, Size size)
 	tbm->dsapagetableold = tbm->dsapagetable;
 	tbm->dsapagetable = dsa_allocate_extended(tbm->dsa,
 											  sizeof(PTEntryArray) + size,
-											DSA_ALLOC_HUGE | DSA_ALLOC_ZERO);
+											  DSA_ALLOC_HUGE | DSA_ALLOC_ZERO);
 	ptbase = dsa_get_address(tbm->dsa, tbm->dsapagetable);
 
 	return ptbase->ptentry;

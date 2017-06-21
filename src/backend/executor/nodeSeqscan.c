@@ -145,7 +145,7 @@ InitScanRelation(SeqScanState *node, EState *estate, int eflags)
 	 * open that relation and acquire appropriate lock on it.
 	 */
 	currentRelation = ExecOpenScanRelation(estate,
-								   ((SeqScan *) node->ss.ps.plan)->scanrelid,
+										   ((SeqScan *) node->ss.ps.plan)->scanrelid,
 										   eflags);
 
 	node->ss.ss_currentRelation = currentRelation;

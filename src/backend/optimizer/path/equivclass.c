@@ -1103,9 +1103,9 @@ generate_join_implied_equalities_for_ecs(PlannerInfo *root,
 		if (ec->ec_broken)
 			sublist = generate_join_implied_equalities_broken(root,
 															  ec,
-														 nominal_join_relids,
+															  nominal_join_relids,
 															  outer_relids,
-														nominal_inner_relids,
+															  nominal_inner_relids,
 															  inner_rel);
 
 		result = list_concat(result, sublist);
@@ -1426,7 +1426,7 @@ create_join_clause(PlannerInfo *root,
 										bms_union(leftem->em_relids,
 												  rightem->em_relids),
 										bms_union(leftem->em_nullable_relids,
-												rightem->em_nullable_relids),
+												  rightem->em_nullable_relids),
 										ec->ec_min_security);
 
 	/* Mark the clause as redundant, or not */
@@ -1738,7 +1738,7 @@ reconsider_outer_join_clause(PlannerInfo *root, RestrictInfo *rinfo,
 												   innervar,
 												   cur_em->em_expr,
 												   bms_copy(inner_relids),
-											 bms_copy(inner_nullable_relids),
+												   bms_copy(inner_nullable_relids),
 												   cur_ec->ec_min_security);
 			if (process_equivalence(root, newrinfo, true))
 				match = true;
@@ -1881,8 +1881,8 @@ reconsider_full_join_clause(PlannerInfo *root, RestrictInfo *rinfo)
 													   leftvar,
 													   cur_em->em_expr,
 													   bms_copy(left_relids),
-											  bms_copy(left_nullable_relids),
-													cur_ec->ec_min_security);
+													   bms_copy(left_nullable_relids),
+													   cur_ec->ec_min_security);
 				if (process_equivalence(root, newrinfo, true))
 					matchleft = true;
 			}
@@ -1896,8 +1896,8 @@ reconsider_full_join_clause(PlannerInfo *root, RestrictInfo *rinfo)
 													   rightvar,
 													   cur_em->em_expr,
 													   bms_copy(right_relids),
-											 bms_copy(right_nullable_relids),
-													cur_ec->ec_min_security);
+													   bms_copy(right_nullable_relids),
+													   cur_ec->ec_min_security);
 				if (process_equivalence(root, newrinfo, true))
 					matchright = true;
 			}

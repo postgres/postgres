@@ -115,8 +115,8 @@ gin_btree_compare_prefix(FunctionCallInfo fcinfo)
 												 data->typecmp,
 												 fcinfo->flinfo,
 												 PG_GET_COLLATION(),
-								   (data->strategy == BTLessStrategyNumber ||
-								 data->strategy == BTLessEqualStrategyNumber)
+												 (data->strategy == BTLessStrategyNumber ||
+												  data->strategy == BTLessEqualStrategyNumber)
 												 ? data->datum : a,
 												 b));
 

@@ -80,8 +80,8 @@ LookupTypeName(ParseState *pstate, const TypeName *typeName,
 			case 1:
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-				errmsg("improper %%TYPE reference (too few dotted names): %s",
-					   NameListToString(typeName->names)),
+						 errmsg("improper %%TYPE reference (too few dotted names): %s",
+								NameListToString(typeName->names)),
 						 parser_errposition(pstate, typeName->location)));
 				break;
 			case 2:
@@ -124,8 +124,8 @@ LookupTypeName(ParseState *pstate, const TypeName *typeName,
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_COLUMN),
-					errmsg("column \"%s\" of relation \"%s\" does not exist",
-						   field, rel->relname),
+						 errmsg("column \"%s\" of relation \"%s\" does not exist",
+								field, rel->relname),
 						 parser_errposition(pstate, typeName->location)));
 		}
 		else
@@ -334,8 +334,8 @@ typenameTypeMod(ParseState *pstate, const TypeName *typeName, Type typ)
 	if (!((Form_pg_type) GETSTRUCT(typ))->typisdefined)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-			errmsg("type modifier cannot be specified for shell type \"%s\"",
-				   TypeNameToString(typeName)),
+				 errmsg("type modifier cannot be specified for shell type \"%s\"",
+						TypeNameToString(typeName)),
 				 parser_errposition(pstate, typeName->location)));
 
 	typmodin = ((Form_pg_type) GETSTRUCT(typ))->typmodin;
@@ -385,7 +385,7 @@ typenameTypeMod(ParseState *pstate, const TypeName *typeName, Type typ)
 		if (!cstr)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-			errmsg("type modifiers must be simple constants or identifiers"),
+					 errmsg("type modifiers must be simple constants or identifiers"),
 					 parser_errposition(pstate, typeName->location)));
 		datums[n++] = CStringGetDatum(cstr);
 	}

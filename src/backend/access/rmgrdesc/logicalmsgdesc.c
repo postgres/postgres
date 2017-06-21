@@ -26,7 +26,7 @@ logicalmsg_desc(StringInfo buf, XLogReaderState *record)
 		xl_logical_message *xlrec = (xl_logical_message *) rec;
 
 		appendStringInfo(buf, "%s message size %zu bytes",
-				 xlrec->transactional ? "transactional" : "nontransactional",
+						 xlrec->transactional ? "transactional" : "nontransactional",
 						 xlrec->message_size);
 	}
 }

@@ -210,7 +210,7 @@ CreateEventTrigger(CreateEventTrigStmt *stmt)
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-			   errmsg("unrecognized filter variable \"%s\"", def->defname)));
+					 errmsg("unrecognized filter variable \"%s\"", def->defname)));
 	}
 
 	/* Validate tag list, if any. */
@@ -585,7 +585,7 @@ AlterEventTriggerOwner_oid(Oid trigOid, Oid newOwnerId)
 	if (!HeapTupleIsValid(tup))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-			   errmsg("event trigger with OID %u does not exist", trigOid)));
+				 errmsg("event trigger with OID %u does not exist", trigOid)));
 
 	AlterEventTriggerOwner_internal(rel, tup, newOwnerId);
 
@@ -615,9 +615,9 @@ AlterEventTriggerOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 	if (!superuser_arg(newOwnerId))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-		  errmsg("permission denied to change owner of event trigger \"%s\"",
-				 NameStr(form->evtname)),
-			 errhint("The owner of an event trigger must be a superuser.")));
+				 errmsg("permission denied to change owner of event trigger \"%s\"",
+						NameStr(form->evtname)),
+				 errhint("The owner of an event trigger must be a superuser.")));
 
 	form->evtowner = newOwnerId;
 	CatalogTupleUpdate(rel, &tup->t_self, tup);
@@ -1461,8 +1461,8 @@ pg_event_trigger_dropped_objects(PG_FUNCTION_ARGS)
 		!currentEventTriggerState->in_sql_drop)
 		ereport(ERROR,
 				(errcode(ERRCODE_E_R_I_E_EVENT_TRIGGER_PROTOCOL_VIOLATED),
-		 errmsg("%s can only be called in a sql_drop event trigger function",
-				"pg_event_trigger_dropped_objects()")));
+				 errmsg("%s can only be called in a sql_drop event trigger function",
+						"pg_event_trigger_dropped_objects()")));
 
 	/* check to see if caller supports us returning a tuplestore */
 	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
@@ -2118,10 +2118,10 @@ pg_event_trigger_ddl_commands(PG_FUNCTION_ARGS)
 									 addr.classId, addr.objectId);
 							schema_oid =
 								heap_getattr(objtup, nspAttnum,
-										 RelationGetDescr(catalog), &isnull);
+											 RelationGetDescr(catalog), &isnull);
 							if (isnull)
 								elog(ERROR,
-								 "invalid null namespace in object %u/%u/%d",
+									 "invalid null namespace in object %u/%u/%d",
 									 addr.classId, addr.objectId, addr.objectSubId);
 							/* XXX not quite get_namespace_name_or_temp */
 							if (isAnyTempNamespace(schema_oid))
@@ -2168,7 +2168,7 @@ pg_event_trigger_ddl_commands(PG_FUNCTION_ARGS)
 				values[i++] = CStringGetTextDatum(CreateCommandTag(cmd->parsetree));
 				/* object_type */
 				values[i++] = CStringGetTextDatum(stringify_adefprivs_objtype(
-												   cmd->d.defprivs.objtype));
+																			  cmd->d.defprivs.objtype));
 				/* schema */
 				nulls[i++] = true;
 				/* identity */
@@ -2191,7 +2191,7 @@ pg_event_trigger_ddl_commands(PG_FUNCTION_ARGS)
 												  "GRANT" : "REVOKE");
 				/* object_type */
 				values[i++] = CStringGetTextDatum(stringify_grantobjtype(
-											   cmd->d.grant.istmt->objtype));
+																		 cmd->d.grant.istmt->objtype));
 				/* schema */
 				nulls[i++] = true;
 				/* identity */

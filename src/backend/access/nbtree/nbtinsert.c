@@ -428,10 +428,10 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 								(errcode(ERRCODE_UNIQUE_VIOLATION),
 								 errmsg("duplicate key value violates unique constraint \"%s\"",
 										RelationGetRelationName(rel)),
-							   key_desc ? errdetail("Key %s already exists.",
-													key_desc) : 0,
+								 key_desc ? errdetail("Key %s already exists.",
+													  key_desc) : 0,
 								 errtableconstraint(heapRel,
-											 RelationGetRelationName(rel))));
+													RelationGetRelationName(rel))));
 					}
 				}
 				else if (all_dead)
@@ -497,7 +497,7 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("failed to re-find tuple within index \"%s\"",
 						RelationGetRelationName(rel)),
-		 errhint("This may be because of a non-immutable index expression."),
+				 errhint("This may be because of a non-immutable index expression."),
 				 errtableconstraint(heapRel,
 									RelationGetRelationName(rel))));
 
@@ -574,12 +574,12 @@ _bt_findinsertloc(Relation rel,
 	if (itemsz > BTMaxItemSize(page))
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-			errmsg("index row size %zu exceeds maximum %zu for index \"%s\"",
-				   itemsz, BTMaxItemSize(page),
-				   RelationGetRelationName(rel)),
-		errhint("Values larger than 1/3 of a buffer page cannot be indexed.\n"
-				"Consider a function index of an MD5 hash of the value, "
-				"or use full text indexing."),
+				 errmsg("index row size %zu exceeds maximum %zu for index \"%s\"",
+						itemsz, BTMaxItemSize(page),
+						RelationGetRelationName(rel)),
+				 errhint("Values larger than 1/3 of a buffer page cannot be indexed.\n"
+						 "Consider a function index of an MD5 hash of the value, "
+						 "or use full text indexing."),
 				 errtableconstraint(heapRel,
 									RelationGetRelationName(rel))));
 
@@ -1194,7 +1194,7 @@ _bt_split(Relation rel, Buffer buf, Buffer cbuf, OffsetNumber firstright,
 		{
 			memset(rightpage, 0, BufferGetPageSize(rbuf));
 			elog(ERROR, "right sibling's left-link doesn't match: "
-			   "block %u links to %u instead of expected %u in index \"%s\"",
+				 "block %u links to %u instead of expected %u in index \"%s\"",
 				 oopaque->btpo_next, sopaque->btpo_prev, origpagenumber,
 				 RelationGetRelationName(rel));
 		}
@@ -1327,7 +1327,7 @@ _bt_split(Relation rel, Buffer buf, Buffer cbuf, OffsetNumber firstright,
 		 * _bt_restore_page().
 		 */
 		XLogRegisterBufData(1,
-					 (char *) rightpage + ((PageHeader) rightpage)->pd_upper,
+							(char *) rightpage + ((PageHeader) rightpage)->pd_upper,
 							((PageHeader) rightpage)->pd_special - ((PageHeader) rightpage)->pd_upper);
 
 		if (isroot)
@@ -2052,7 +2052,7 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 		 * some new func in page API.
 		 */
 		XLogRegisterBufData(0,
-					   (char *) rootpage + ((PageHeader) rootpage)->pd_upper,
+							(char *) rootpage + ((PageHeader) rootpage)->pd_upper,
 							((PageHeader) rootpage)->pd_special -
 							((PageHeader) rootpage)->pd_upper);
 

@@ -73,7 +73,7 @@ check_publication_add_relation(Relation targetrel)
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("\"%s\" is a system table",
 						RelationGetRelationName(targetrel)),
-			   errdetail("System tables cannot be added to publications.")));
+				 errdetail("System tables cannot be added to publications.")));
 
 	/* UNLOGGED and TEMP relations cannot be part of publication. */
 	if (!RelationNeedsWAL(targetrel))
@@ -81,7 +81,7 @@ check_publication_add_relation(Relation targetrel)
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("table \"%s\" cannot be replicated",
 						RelationGetRelationName(targetrel)),
-		errdetail("Temporary and unlogged relations cannot be replicated.")));
+				 errdetail("Temporary and unlogged relations cannot be replicated.")));
 }
 
 /*
@@ -163,8 +163,8 @@ publication_add_relation(Oid pubid, Relation targetrel,
 
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
-			errmsg("relation \"%s\" is already member of publication \"%s\"",
-				   RelationGetRelationName(targetrel), pub->name)));
+				 errmsg("relation \"%s\" is already member of publication \"%s\"",
+						RelationGetRelationName(targetrel), pub->name)));
 	}
 
 	check_publication_add_relation(targetrel);

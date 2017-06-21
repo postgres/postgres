@@ -160,7 +160,7 @@ InsertRule(char *rulname,
 	referenced.objectSubId = 0;
 
 	recordDependencyOn(&myself, &referenced,
-			 (evtype == CMD_SELECT) ? DEPENDENCY_INTERNAL : DEPENDENCY_AUTO);
+					   (evtype == CMD_SELECT) ? DEPENDENCY_INTERNAL : DEPENDENCY_AUTO);
 
 	/*
 	 * Also install dependencies on objects referenced in action and qual.
@@ -312,7 +312,7 @@ DefineQueryRewrite(char *rulename,
 		if (list_length(action) == 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			   errmsg("INSTEAD NOTHING rules on SELECT are not implemented"),
+					 errmsg("INSTEAD NOTHING rules on SELECT are not implemented"),
 					 errhint("Use views instead.")));
 
 		/*
@@ -331,7 +331,7 @@ DefineQueryRewrite(char *rulename,
 			query->commandType != CMD_SELECT)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("rules on SELECT must have action INSTEAD SELECT")));
+					 errmsg("rules on SELECT must have action INSTEAD SELECT")));
 
 		/*
 		 * ... it cannot contain data-modifying WITH ...
@@ -373,9 +373,9 @@ DefineQueryRewrite(char *rulename,
 				rule = event_relation->rd_rules->rules[i];
 				if (rule->event == CMD_SELECT)
 					ereport(ERROR,
-						  (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-						   errmsg("\"%s\" is already a view",
-								  RelationGetRelationName(event_relation))));
+							(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+							 errmsg("\"%s\" is already a view",
+									RelationGetRelationName(event_relation))));
 			}
 		}
 
@@ -425,14 +425,14 @@ DefineQueryRewrite(char *rulename,
 			if (event_relation->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				errmsg("could not convert partitioned table \"%s\" to a view",
-					   RelationGetRelationName(event_relation))));
+						 errmsg("could not convert partitioned table \"%s\" to a view",
+								RelationGetRelationName(event_relation))));
 
 			if (event_relation->rd_rel->relispartition)
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					   errmsg("could not convert partition \"%s\" to a view",
-							  RelationGetRelationName(event_relation))));
+						 errmsg("could not convert partition \"%s\" to a view",
+								RelationGetRelationName(event_relation))));
 
 			snapshot = RegisterSnapshot(GetLatestSnapshot());
 			scanDesc = heap_beginscan(event_relation, snapshot, 0, NULL);
@@ -499,7 +499,7 @@ DefineQueryRewrite(char *rulename,
 			if (haveReturning)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				  errmsg("cannot have multiple RETURNING lists in a rule")));
+						 errmsg("cannot have multiple RETURNING lists in a rule")));
 			haveReturning = true;
 			if (event_qual != NULL)
 				ereport(ERROR,
@@ -673,7 +673,7 @@ checkRuleResultList(List *targetList, TupleDesc resultDesc, bool isSelect,
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 					 isSelect ?
-				   errmsg("SELECT rule's target list has too many entries") :
+					 errmsg("SELECT rule's target list has too many entries") :
 					 errmsg("RETURNING list has too many entries")));
 
 		attr = resultDesc->attrs[i - 1];

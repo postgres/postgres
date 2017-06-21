@@ -630,8 +630,8 @@ SysLogger_Start(void)
 				 */
 				ereport(LOG,
 						(errmsg("redirecting log output to logging collector process"),
-				errhint("Future log output will appear in directory \"%s\".",
-						Log_directory)));
+						 errhint("Future log output will appear in directory \"%s\".",
+								 Log_directory)));
 
 #ifndef WIN32
 				fflush(stdout);

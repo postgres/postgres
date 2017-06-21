@@ -20,7 +20,7 @@
 typedef struct replace_rte_variables_context replace_rte_variables_context;
 
 typedef Node *(*replace_rte_variables_callback) (Var *var,
-									 replace_rte_variables_context *context);
+												 replace_rte_variables_context *context);
 
 struct replace_rte_variables_context
 {

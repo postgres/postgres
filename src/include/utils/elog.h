@@ -137,7 +137,7 @@ extern int	errmsg(const char *fmt,...) pg_attribute_printf(1, 2);
 extern int	errmsg_internal(const char *fmt,...) pg_attribute_printf(1, 2);
 
 extern int errmsg_plural(const char *fmt_singular, const char *fmt_plural,
-	unsigned long n,...) pg_attribute_printf(1, 4) pg_attribute_printf(2, 4);
+			  unsigned long n,...) pg_attribute_printf(1, 4) pg_attribute_printf(2, 4);
 
 extern int	errdetail(const char *fmt,...) pg_attribute_printf(1, 2);
 extern int	errdetail_internal(const char *fmt,...) pg_attribute_printf(1, 2);
@@ -146,10 +146,10 @@ extern int	errdetail_log(const char *fmt,...) pg_attribute_printf(1, 2);
 
 extern int errdetail_log_plural(const char *fmt_singular,
 					 const char *fmt_plural,
-	unsigned long n,...) pg_attribute_printf(1, 4) pg_attribute_printf(2, 4);
+					 unsigned long n,...) pg_attribute_printf(1, 4) pg_attribute_printf(2, 4);
 
 extern int errdetail_plural(const char *fmt_singular, const char *fmt_plural,
-	unsigned long n,...) pg_attribute_printf(1, 4) pg_attribute_printf(2, 4);
+				 unsigned long n,...) pg_attribute_printf(1, 4) pg_attribute_printf(2, 4);
 
 extern int	errhint(const char *fmt,...) pg_attribute_printf(1, 2);
 

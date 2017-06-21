@@ -258,8 +258,8 @@ inet_net_ntop_ipv6(const u_char *src, int bits, char *dst, size_t size)
 			*tp++ = ':';
 		/* Is this address an encapsulated IPv4? */
 		if (i == 6 && best.base == 0 && (best.len == 6 ||
-									 (best.len == 7 && words[7] != 0x0001) ||
-									  (best.len == 5 && words[5] == 0xffff)))
+										 (best.len == 7 && words[7] != 0x0001) ||
+										 (best.len == 5 && words[5] == 0xffff)))
 		{
 			int			n;
 

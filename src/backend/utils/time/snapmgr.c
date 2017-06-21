@@ -416,7 +416,7 @@ GetOldestSnapshot(void)
 	if (!pairingheap_is_empty(&RegisteredSnapshots))
 	{
 		OldestRegisteredSnapshot = pairingheap_container(SnapshotData, ph_node,
-									pairingheap_first(&RegisteredSnapshots));
+														 pairingheap_first(&RegisteredSnapshots));
 		RegisteredLSN = OldestRegisteredSnapshot->lsn;
 	}
 
@@ -619,14 +619,14 @@ SetTransactionSnapshot(Snapshot sourcesnap, VirtualTransactionId *sourcevxid,
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 					 errmsg("could not import the requested snapshot"),
-			   errdetail("The source transaction is not running anymore.")));
+					 errdetail("The source transaction is not running anymore.")));
 	}
 	else if (!ProcArrayInstallImportedXmin(CurrentSnapshot->xmin, sourcevxid))
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("could not import the requested snapshot"),
-		  errdetail("The source process with pid %d is not running anymore.",
-					sourcepid)));
+				 errdetail("The source process with pid %d is not running anymore.",
+						   sourcepid)));
 
 	/*
 	 * In transaction-snapshot mode, the first snapshot must live until end of
@@ -989,7 +989,7 @@ SnapshotResetXmin(void)
 	}
 
 	minSnapshot = pairingheap_container(SnapshotData, ph_node,
-									pairingheap_first(&RegisteredSnapshots));
+										pairingheap_first(&RegisteredSnapshots));
 
 	if (TransactionIdPrecedes(MyPgXact->xmin, minSnapshot->xmin))
 		MyPgXact->xmin = minSnapshot->xmin;
@@ -1211,7 +1211,7 @@ ExportSnapshot(Snapshot snapshot)
 	 * inside the transaction from 1.
 	 */
 	snprintf(path, sizeof(path), SNAPSHOT_EXPORT_DIR "/%08X-%08X-%d",
-		MyProc->backendId, MyProc->lxid, list_length(exportedSnapshots) + 1);
+			 MyProc->backendId, MyProc->lxid, list_length(exportedSnapshots) + 1);
 
 	/*
 	 * Copy the snapshot into TopTransactionContext, add it to the
@@ -1453,7 +1453,7 @@ ImportSnapshot(const char *idstr)
 		IsSubTransaction())
 		ereport(ERROR,
 				(errcode(ERRCODE_ACTIVE_SQL_TRANSACTION),
-		errmsg("SET TRANSACTION SNAPSHOT must be called before any query")));
+				 errmsg("SET TRANSACTION SNAPSHOT must be called before any query")));
 
 	/*
 	 * If we are in read committed mode then the next query would execute with
@@ -1589,7 +1589,7 @@ ImportSnapshot(const char *idstr)
 	if (src_dbid != MyDatabaseId)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			  errmsg("cannot import a snapshot from a different database")));
+				 errmsg("cannot import a snapshot from a different database")));
 
 	/* OK, install the snapshot */
 	SetTransactionSnapshot(&snapshot, &src_vxid, src_pid, NULL);
@@ -1884,7 +1884,7 @@ MaintainOldSnapshotTimeMapping(TimestampTz whenTaken, TransactionId xmin)
 	if (whenTaken < 0)
 	{
 		elog(DEBUG1,
-		"MaintainOldSnapshotTimeMapping called with negative whenTaken = %ld",
+			 "MaintainOldSnapshotTimeMapping called with negative whenTaken = %ld",
 			 (long) whenTaken);
 		return;
 	}

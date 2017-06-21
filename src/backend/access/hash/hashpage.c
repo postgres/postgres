@@ -923,7 +923,7 @@ restart_expand:
 			XLogRegisterBufData(2, (char *) &metap->hashm_ovflpoint,
 								sizeof(uint32));
 			XLogRegisterBufData(2,
-					   (char *) &metap->hashm_spares[metap->hashm_ovflpoint],
+								(char *) &metap->hashm_spares[metap->hashm_ovflpoint],
 								sizeof(uint32));
 		}
 

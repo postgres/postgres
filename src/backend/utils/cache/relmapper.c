@@ -684,8 +684,8 @@ load_relmap_file(bool shared)
 
 	if (!EQ_CRC32C(crc, map->crc))
 		ereport(FATAL,
-		  (errmsg("relation mapping file \"%s\" contains incorrect checksum",
-				  mapfilename)));
+				(errmsg("relation mapping file \"%s\" contains incorrect checksum",
+						mapfilename)));
 }
 
 /*

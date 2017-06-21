@@ -161,8 +161,8 @@ bit_in(PG_FUNCTION_ARGS)
 		if (slen > VARBITMAXLEN / 4)
 			ereport(ERROR,
 					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("bit string length exceeds the maximum allowed (%d)",
-						VARBITMAXLEN)));
+					 errmsg("bit string length exceeds the maximum allowed (%d)",
+							VARBITMAXLEN)));
 		bitlen = slen * 4;
 	}
 
@@ -473,8 +473,8 @@ varbit_in(PG_FUNCTION_ARGS)
 		if (slen > VARBITMAXLEN / 4)
 			ereport(ERROR,
 					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("bit string length exceeds the maximum allowed (%d)",
-						VARBITMAXLEN)));
+					 errmsg("bit string length exceeds the maximum allowed (%d)",
+							VARBITMAXLEN)));
 		bitlen = slen * 4;
 	}
 

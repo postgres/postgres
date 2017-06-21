@@ -684,7 +684,7 @@ crosstab_hash(PG_FUNCTION_ARGS)
 												crosstab_hash,
 												tupdesc,
 												per_query_ctx,
-							 rsinfo->allowedModes & SFRM_Materialize_Random);
+												rsinfo->allowedModes & SFRM_Materialize_Random);
 
 	/*
 	 * SFRM_Materialize mode expects us to return a NULL Datum. The actual
@@ -1046,7 +1046,7 @@ connectby_text(PG_FUNCTION_ARGS)
 								  show_branch,
 								  show_serial,
 								  per_query_ctx,
-							  rsinfo->allowedModes & SFRM_Materialize_Random,
+								  rsinfo->allowedModes & SFRM_Materialize_Random,
 								  attinmeta);
 	rsinfo->setDesc = tupdesc;
 
@@ -1126,7 +1126,7 @@ connectby_text_serial(PG_FUNCTION_ARGS)
 								  show_branch,
 								  show_serial,
 								  per_query_ctx,
-							  rsinfo->allowedModes & SFRM_Materialize_Random,
+								  rsinfo->allowedModes & SFRM_Materialize_Random,
 								  attinmeta);
 	rsinfo->setDesc = tupdesc;
 
@@ -1475,17 +1475,17 @@ validateConnectbyTupleDesc(TupleDesc tupdesc, bool show_branch, bool show_serial
 	if (show_branch && show_serial && tupdesc->attrs[4]->atttypid != INT4OID)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-			  errmsg("query-specified return tuple not valid for Connectby: "
-					 "fifth column must be type %s",
-					 format_type_be(INT4OID))));
+				 errmsg("query-specified return tuple not valid for Connectby: "
+						"fifth column must be type %s",
+						format_type_be(INT4OID))));
 
 	/* check that the type of the fifth column is INT4 */
 	if (!show_branch && show_serial && tupdesc->attrs[3]->atttypid != INT4OID)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-			  errmsg("query-specified return tuple not valid for Connectby: "
-					 "fourth column must be type %s",
-					 format_type_be(INT4OID))));
+				 errmsg("query-specified return tuple not valid for Connectby: "
+						"fourth column must be type %s",
+						format_type_be(INT4OID))));
 
 	/* OK, the tupdesc is valid for our purposes */
 }
@@ -1525,8 +1525,8 @@ compatConnectbyTupleDescs(TupleDesc ret_tupdesc, TupleDesc sql_tupdesc)
 				 errmsg("invalid return type"),
 				 errdetail("SQL key field type %s does " \
 						   "not match return key field type %s.",
-					   format_type_with_typemod(ret_atttypid, ret_atttypmod),
-					format_type_with_typemod(sql_atttypid, sql_atttypmod))));
+						   format_type_with_typemod(ret_atttypid, ret_atttypmod),
+						   format_type_with_typemod(sql_atttypid, sql_atttypmod))));
 
 	ret_atttypid = ret_tupdesc->attrs[1]->atttypid;
 	sql_atttypid = sql_tupdesc->attrs[1]->atttypid;
@@ -1539,8 +1539,8 @@ compatConnectbyTupleDescs(TupleDesc ret_tupdesc, TupleDesc sql_tupdesc)
 				 errmsg("invalid return type"),
 				 errdetail("SQL parent key field type %s does " \
 						   "not match return parent key field type %s.",
-					   format_type_with_typemod(ret_atttypid, ret_atttypmod),
-					format_type_with_typemod(sql_atttypid, sql_atttypmod))));
+						   format_type_with_typemod(ret_atttypid, ret_atttypmod),
+						   format_type_with_typemod(sql_atttypid, sql_atttypmod))));
 
 	/* OK, the two tupdescs are compatible for our purposes */
 }

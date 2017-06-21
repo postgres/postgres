@@ -1080,7 +1080,7 @@ dsa_dump(dsa_area *area)
 			dsa_segment_index segment_index;
 
 			fprintf(stderr,
-				"    segment bin %zu (at least %d contiguous pages free):\n",
+					"    segment bin %zu (at least %d contiguous pages free):\n",
 					i, 1 << (i - 1));
 			segment_index = area->control->segment_bins[i];
 			while (segment_index != DSA_SEGMENT_INDEX_NONE)
@@ -1120,7 +1120,7 @@ dsa_dump(dsa_area *area)
 				fprintf(stderr, "    pool for large object spans:\n");
 			else
 				fprintf(stderr,
-					"    pool for size class %zu (object size %hu bytes):\n",
+						"    pool for size class %zu (object size %hu bytes):\n",
 						i, dsa_size_classes[i]);
 			for (j = 0; j < DSA_FULLNESS_CLASSES; ++j)
 			{
@@ -1734,7 +1734,7 @@ get_segment_by_index(dsa_area *area, dsa_segment_index index)
 		/* It's an error to try to access an unused slot. */
 		if (handle == DSM_HANDLE_INVALID)
 			elog(ERROR,
-			   "dsa_area could not attach to a segment that has been freed");
+				 "dsa_area could not attach to a segment that has been freed");
 
 		segment = dsm_attach(handle);
 		if (segment == NULL)

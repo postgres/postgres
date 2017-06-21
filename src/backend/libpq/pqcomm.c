@@ -377,8 +377,8 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 							hostName, service, gai_strerror(ret))));
 		else
 			ereport(LOG,
-				 (errmsg("could not translate service \"%s\" to address: %s",
-						 service, gai_strerror(ret))));
+					(errmsg("could not translate service \"%s\" to address: %s",
+							service, gai_strerror(ret))));
 		if (addrs)
 			pg_freeaddrinfo_all(hint.ai_family, addrs);
 		return STATUS_ERROR;
@@ -453,8 +453,8 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 			ereport(LOG,
 					(errcode_for_socket_access(),
 			/* translator: first %s is IPv4, IPv6, or Unix */
-				  errmsg("could not create %s socket for address \"%s\": %m",
-						 familyDesc, addrDesc)));
+					 errmsg("could not create %s socket for address \"%s\": %m",
+							familyDesc, addrDesc)));
 			continue;
 		}
 
@@ -519,12 +519,12 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 					 errmsg("could not bind %s address \"%s\": %m",
 							familyDesc, addrDesc),
 					 (IS_AF_UNIX(addr->ai_family)) ?
-				  errhint("Is another postmaster already running on port %d?"
-						  " If not, remove socket file \"%s\" and retry.",
-						  (int) portNumber, service) :
-				  errhint("Is another postmaster already running on port %d?"
-						  " If not, wait a few seconds and retry.",
-						  (int) portNumber)));
+					 errhint("Is another postmaster already running on port %d?"
+							 " If not, remove socket file \"%s\" and retry.",
+							 (int) portNumber, service) :
+					 errhint("Is another postmaster already running on port %d?"
+							 " If not, wait a few seconds and retry.",
+							 (int) portNumber)));
 			closesocket(fd);
 			continue;
 		}

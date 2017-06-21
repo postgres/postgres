@@ -956,8 +956,8 @@ reportDependentObjects(const ObjectAddresses *targetObjects,
 		if (origObject)
 			ereport(ERROR,
 					(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
-				  errmsg("cannot drop %s because other objects depend on it",
-						 getObjectDescription(origObject)),
+					 errmsg("cannot drop %s because other objects depend on it",
+							getObjectDescription(origObject)),
 					 errdetail("%s", clientdetail.data),
 					 errdetail_log("%s", logdetail.data),
 					 errhint("Use DROP ... CASCADE to drop the dependent objects too.")));
@@ -1632,8 +1632,8 @@ find_expr_references_walker(Node *node,
 				case REGROLEOID:
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						errmsg("constant of the type %s cannot be used here",
-							   "regrole")));
+							 errmsg("constant of the type %s cannot be used here",
+									"regrole")));
 					break;
 			}
 		}

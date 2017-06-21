@@ -124,7 +124,7 @@ printMixedStruct(mixedStruct *structToPrint)
 		case PGC_ENUM:
 			printf("ENUM\t%s\t\t\t",
 				   config_enum_lookup_by_value(&structToPrint->_enum,
-											 structToPrint->_enum.boot_val));
+											   structToPrint->_enum.boot_val));
 			break;
 
 		default:

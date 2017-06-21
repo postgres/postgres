@@ -175,7 +175,7 @@ XLogEnsureRecordSpace(int max_block_id, int ndatas)
 		 * they are included in WAL data, but initialize it all for tidiness.
 		 */
 		MemSet(&registered_buffers[max_registered_buffers], 0,
-			(nbuffers - max_registered_buffers) * sizeof(registered_buffer));
+			   (nbuffers - max_registered_buffers) * sizeof(registered_buffer));
 		max_registered_buffers = nbuffers;
 	}
 
@@ -1039,7 +1039,7 @@ InitXLogInsert(void)
 	{
 		registered_buffers = (registered_buffer *)
 			MemoryContextAllocZero(xloginsert_cxt,
-				  sizeof(registered_buffer) * (XLR_NORMAL_MAX_BLOCK_ID + 1));
+								   sizeof(registered_buffer) * (XLR_NORMAL_MAX_BLOCK_ID + 1));
 		max_registered_buffers = XLR_NORMAL_MAX_BLOCK_ID + 1;
 	}
 	if (rdatas == NULL)

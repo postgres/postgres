@@ -557,7 +557,7 @@ pushJsonbValueScalar(JsonbParseState **pstate, JsonbIteratorToken seq,
 			(*pstate)->contVal.type = jbvArray;
 			(*pstate)->contVal.val.array.nElems = 0;
 			(*pstate)->contVal.val.array.rawScalar = (scalarVal &&
-											 scalarVal->val.array.rawScalar);
+													  scalarVal->val.array.rawScalar);
 			if (scalarVal && scalarVal->val.array.nElems > 0)
 			{
 				/* Assume that this array is still really a scalar */
@@ -872,7 +872,7 @@ recurse:
 			JBE_ADVANCE_OFFSET((*it)->curDataOffset,
 							   (*it)->children[(*it)->curIndex]);
 			JBE_ADVANCE_OFFSET((*it)->curValueOffset,
-						   (*it)->children[(*it)->curIndex + (*it)->nElems]);
+							   (*it)->children[(*it)->curIndex + (*it)->nElems]);
 			(*it)->curIndex++;
 
 			/*
@@ -1228,7 +1228,7 @@ JsonbHashScalarValue(const JsonbValue *scalarVal, uint32 *hash)
 		case jbvNumeric:
 			/* Must hash equal numerics to equal hash codes */
 			tmp = DatumGetUInt32(DirectFunctionCall1(hash_numeric,
-								   NumericGetDatum(scalarVal->val.numeric)));
+													 NumericGetDatum(scalarVal->val.numeric)));
 			break;
 		case jbvBool:
 			tmp = scalarVal->val.boolean ? 0x02 : 0x04;
@@ -1265,8 +1265,8 @@ equalsJsonbScalarValue(JsonbValue *aScalar, JsonbValue *bScalar)
 				return lengthCompareJsonbStringValue(aScalar, bScalar) == 0;
 			case jbvNumeric:
 				return DatumGetBool(DirectFunctionCall2(numeric_eq,
-									   PointerGetDatum(aScalar->val.numeric),
-									 PointerGetDatum(bScalar->val.numeric)));
+														PointerGetDatum(aScalar->val.numeric),
+														PointerGetDatum(bScalar->val.numeric)));
 			case jbvBool:
 				return aScalar->val.boolean == bScalar->val.boolean;
 
@@ -1301,8 +1301,8 @@ compareJsonbScalarValue(JsonbValue *aScalar, JsonbValue *bScalar)
 								  DEFAULT_COLLATION_OID);
 			case jbvNumeric:
 				return DatumGetInt32(DirectFunctionCall2(numeric_cmp,
-									   PointerGetDatum(aScalar->val.numeric),
-									 PointerGetDatum(bScalar->val.numeric)));
+														 PointerGetDatum(aScalar->val.numeric),
+														 PointerGetDatum(bScalar->val.numeric)));
 			case jbvBool:
 				if (aScalar->val.boolean == bScalar->val.boolean)
 					return 0;

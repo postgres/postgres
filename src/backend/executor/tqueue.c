@@ -527,7 +527,7 @@ TQSendRecordInfo(TQueueDestReceiver *tqueue, int32 typmod, TupleDesc tupledesc)
 		ctl.hcxt = tqueue->mycontext;
 		tqueue->recordhtab = hash_create("tqueue sender record type hashtable",
 										 100, &ctl,
-									  HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
+										 HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 	}
 
 	/* Have we already seen this record type?  If not, must report it. */
@@ -865,7 +865,7 @@ TQRemapArray(TupleQueueReader *reader, ArrayRemapInfo *remapinfo,
 		/* Reconstruct and return the array.  */
 		*changed = true;
 		arr = construct_md_array(elem_values, elem_nulls,
-							   ARR_NDIM(arr), ARR_DIMS(arr), ARR_LBOUND(arr),
+								 ARR_NDIM(arr), ARR_DIMS(arr), ARR_LBOUND(arr),
 								 typid, remapinfo->typlen,
 								 remapinfo->typbyval, remapinfo->typalign);
 		return PointerGetDatum(arr);
@@ -1099,7 +1099,7 @@ TupleQueueHandleControlMessage(TupleQueueReader *reader, Size nbytes,
 		ctl.hcxt = reader->mycontext;
 		reader->typmodmap = hash_create("tqueue receiver record type hashtable",
 										100, &ctl,
-									  HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
+										HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 	}
 
 	/* Create map entry. */

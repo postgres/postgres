@@ -74,7 +74,7 @@ convert_and_check_filename(text *arg, bool logAllowed)
 		if (path_contains_parent_reference(filename))
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-			(errmsg("reference to parent directory (\"..\") not allowed"))));
+					 (errmsg("reference to parent directory (\"..\") not allowed"))));
 
 		/*
 		 * Allow absolute paths if within DataDir or Log_directory, even
@@ -105,7 +105,7 @@ requireSuperuser(void)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-			  (errmsg("only superuser may access generic file functions"))));
+				 (errmsg("only superuser may access generic file functions"))));
 }
 
 

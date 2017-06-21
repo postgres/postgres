@@ -165,7 +165,7 @@ scalararraysel_containment(PlannerInfo *root,
 														   sslot.numbers,
 														   sslot.nnumbers,
 														   &constval, 1,
-													   OID_ARRAY_CONTAINS_OP,
+														   OID_ARRAY_CONTAINS_OP,
 														   cmpfunc);
 			else
 				selec = mcelem_array_contained_selec(sslot.values,
@@ -188,7 +188,7 @@ scalararraysel_containment(PlannerInfo *root,
 				selec = mcelem_array_contain_overlap_selec(NULL, 0,
 														   NULL, 0,
 														   &constval, 1,
-													   OID_ARRAY_CONTAINS_OP,
+														   OID_ARRAY_CONTAINS_OP,
 														   cmpfunc);
 			else
 				selec = mcelem_array_contained_selec(NULL, 0,
@@ -482,7 +482,7 @@ mcelem_array_selec(ArrayType *array, TypeCacheEntry *typentry,
 	if (operator == OID_ARRAY_CONTAINS_OP || operator == OID_ARRAY_OVERLAP_OP)
 		selec = mcelem_array_contain_overlap_selec(mcelem, nmcelem,
 												   numbers, nnumbers,
-												 elem_values, nonnull_nitems,
+												   elem_values, nonnull_nitems,
 												   operator, cmpfunc);
 	else if (operator == OID_ARRAY_CONTAINED_OP)
 		selec = mcelem_array_contained_selec(mcelem, nmcelem,

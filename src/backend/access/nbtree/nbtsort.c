@@ -345,7 +345,7 @@ _bt_pagestate(BTWriteState *wstate, uint32 level)
 		state->btps_full = (BLCKSZ * (100 - BTREE_NONLEAF_FILLFACTOR) / 100);
 	else
 		state->btps_full = RelationGetTargetPageFreeSpace(wstate->index,
-												   BTREE_DEFAULT_FILLFACTOR);
+														  BTREE_DEFAULT_FILLFACTOR);
 	/* no parent level, yet */
 	state->btps_next = NULL;
 
@@ -485,12 +485,12 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 	if (itupsz > BTMaxItemSize(npage))
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-			errmsg("index row size %zu exceeds maximum %zu for index \"%s\"",
-				   itupsz, BTMaxItemSize(npage),
-				   RelationGetRelationName(wstate->index)),
-		errhint("Values larger than 1/3 of a buffer page cannot be indexed.\n"
-				"Consider a function index of an MD5 hash of the value, "
-				"or use full text indexing."),
+				 errmsg("index row size %zu exceeds maximum %zu for index \"%s\"",
+						itupsz, BTMaxItemSize(npage),
+						RelationGetRelationName(wstate->index)),
+				 errhint("Values larger than 1/3 of a buffer page cannot be indexed.\n"
+						 "Consider a function index of an MD5 hash of the value, "
+						 "or use full text indexing."),
 				 errtableconstraint(wstate->heap,
 									RelationGetRelationName(wstate->index))));
 

@@ -426,7 +426,7 @@ pgwin32_recv(SOCKET s, char *buf, int len, int f)
 		pg_usleep(10000);
 	}
 	ereport(NOTICE,
-	  (errmsg_internal("could not read from ready socket (after retries)")));
+			(errmsg_internal("could not read from ready socket (after retries)")));
 	errno = EWOULDBLOCK;
 	return -1;
 }

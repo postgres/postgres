@@ -84,7 +84,7 @@ text_to_bits(char *str, int len)
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_DATA_CORRUPTED),
-			   errmsg("illegal character '%c' in t_bits string", str[off])));
+					 errmsg("illegal character '%c' in t_bits string", str[off])));
 
 		if (off % 8 == 7)
 			bits[off / 8] = byte;
@@ -132,7 +132,7 @@ heap_page_items(PG_FUNCTION_ARGS)
 		if (raw_page_size < SizeOfPageHeaderData)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				  errmsg("input page too small (%d bytes)", raw_page_size)));
+					 errmsg("input page too small (%d bytes)", raw_page_size)));
 
 		fctx = SRF_FIRSTCALL_INIT();
 		mctx = MemoryContextSwitchTo(fctx->multi_call_memory_ctx);
@@ -236,7 +236,7 @@ heap_page_items(PG_FUNCTION_ARGS)
 					bits_len =
 						((tuphdr->t_infomask2 & HEAP_NATTS_MASK) / 8 + 1) * 8;
 					values[11] = CStringGetTextDatum(
-									 bits_to_text(tuphdr->t_bits, bits_len));
+													 bits_to_text(tuphdr->t_bits, bits_len));
 				}
 				else
 					nulls[11] = true;
@@ -384,7 +384,7 @@ tuple_data_split_internal(Oid relid, char *tupdata,
 	if (tupdata_len != off)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_CORRUPTED),
-			errmsg("end of tuple reached without looking at all its data")));
+				 errmsg("end of tuple reached without looking at all its data")));
 
 	return makeArrayResult(raw_attrs, CurrentMemoryContext);
 }

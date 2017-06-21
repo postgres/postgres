@@ -534,7 +534,7 @@ _hash_freeovflpage(Relation rel, Buffer bucketbuf, Buffer ovflbuf,
 			prevbuf = _hash_getbuf_with_strategy(rel,
 												 prevblkno,
 												 HASH_WRITE,
-										   LH_BUCKET_PAGE | LH_OVERFLOW_PAGE,
+												 LH_BUCKET_PAGE | LH_OVERFLOW_PAGE,
 												 bstrategy);
 	}
 	if (BlockNumberIsValid(nextblkno))
@@ -972,7 +972,7 @@ readpage:
 
 						XLogRegisterBuffer(2, rbuf, REGBUF_STANDARD);
 						XLogRegisterBufData(2, (char *) deletable,
-										  ndeletable * sizeof(OffsetNumber));
+											ndeletable * sizeof(OffsetNumber));
 
 						recptr = XLogInsert(RM_HASH_ID, XLOG_HASH_MOVE_PAGE_CONTENTS);
 

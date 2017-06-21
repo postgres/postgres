@@ -200,8 +200,8 @@ lo_write(int fd, const char *buf, int len)
 	if ((lobj->flags & IFS_WRLOCK) == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-			  errmsg("large object descriptor %d was not opened for writing",
-					 fd)));
+				 errmsg("large object descriptor %d was not opened for writing",
+						fd)));
 
 	/* Permission checks --- first time through only */
 	if ((lobj->flags & IFS_WR_PERM_OK) == 0)
@@ -242,8 +242,8 @@ be_lo_lseek(PG_FUNCTION_ARGS)
 	if (status != (int32) status)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-		errmsg("lo_lseek result out of range for large-object descriptor %d",
-			   fd)));
+				 errmsg("lo_lseek result out of range for large-object descriptor %d",
+						fd)));
 
 	PG_RETURN_INT32((int32) status);
 }
@@ -315,8 +315,8 @@ be_lo_tell(PG_FUNCTION_ARGS)
 	if (offset != (int32) offset)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-		 errmsg("lo_tell result out of range for large-object descriptor %d",
-				fd)));
+				 errmsg("lo_tell result out of range for large-object descriptor %d",
+						fd)));
 
 	PG_RETURN_INT32((int32) offset);
 }
@@ -584,8 +584,8 @@ lo_truncate_internal(int32 fd, int64 len)
 	if ((lobj->flags & IFS_WRLOCK) == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-			  errmsg("large object descriptor %d was not opened for writing",
-					 fd)));
+				 errmsg("large object descriptor %d was not opened for writing",
+						fd)));
 
 	/* Permission checks --- first time through only */
 	if ((lobj->flags & IFS_WR_PERM_OK) == 0)

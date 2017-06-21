@@ -445,8 +445,8 @@ inv_seek(LargeObjectDesc *obj_desc, int64 offset, int whence)
 	if (newoffset < 0 || newoffset > MAX_LARGE_OBJECT_SIZE)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-		   errmsg_internal("invalid large object seek target: " INT64_FORMAT,
-						   newoffset)));
+				 errmsg_internal("invalid large object seek target: " INT64_FORMAT,
+								 newoffset)));
 
 	obj_desc->offset = newoffset;
 	return newoffset;

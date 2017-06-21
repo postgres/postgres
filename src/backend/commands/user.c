@@ -299,14 +299,14 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 		if (!superuser())
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				   errmsg("must be superuser to create replication users")));
+					 errmsg("must be superuser to create replication users")));
 	}
 	else if (bypassrls)
 	{
 		if (!superuser())
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be superuser to change bypassrls attribute")));
+					 errmsg("must be superuser to change bypassrls attribute")));
 	}
 	else
 	{
@@ -325,7 +325,7 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 				(errcode(ERRCODE_RESERVED_NAME),
 				 errmsg("role name \"%s\" is reserved",
 						stmt->role),
-			   errdetail("Role names starting with \"pg_\" are reserved.")));
+				 errdetail("Role names starting with \"pg_\" are reserved.")));
 
 	/*
 	 * Check the pg_authid relation to be certain the role doesn't already
@@ -681,7 +681,7 @@ AlterRole(AlterRoleStmt *stmt)
 		if (!superuser())
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be superuser to change bypassrls attribute")));
+					 errmsg("must be superuser to change bypassrls attribute")));
 	}
 	else if (!have_createrole_privilege())
 	{
@@ -961,7 +961,7 @@ DropRole(DropRoleStmt *stmt)
 		if (rolspec->roletype != ROLESPEC_CSTRING)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				  errmsg("cannot use special role specifier in DROP ROLE")));
+					 errmsg("cannot use special role specifier in DROP ROLE")));
 		role = rolspec->rolename;
 
 		tuple = SearchSysCache1(AUTHNAME, PointerGetDatum(role));
@@ -1159,14 +1159,14 @@ RenameRole(const char *oldname, const char *newname)
 				(errcode(ERRCODE_RESERVED_NAME),
 				 errmsg("role name \"%s\" is reserved",
 						NameStr(authform->rolname)),
-			   errdetail("Role names starting with \"pg_\" are reserved.")));
+				 errdetail("Role names starting with \"pg_\" are reserved.")));
 
 	if (IsReservedName(newname))
 		ereport(ERROR,
 				(errcode(ERRCODE_RESERVED_NAME),
 				 errmsg("role name \"%s\" is reserved",
 						newname),
-			   errdetail("Role names starting with \"pg_\" are reserved.")));
+				 errdetail("Role names starting with \"pg_\" are reserved.")));
 
 	/* make sure the new name doesn't exist */
 	if (SearchSysCacheExists1(AUTHNAME, CStringGetDatum(newname)))
@@ -1198,7 +1198,7 @@ RenameRole(const char *oldname, const char *newname)
 
 	repl_repl[Anum_pg_authid_rolname - 1] = true;
 	repl_val[Anum_pg_authid_rolname - 1] = DirectFunctionCall1(namein,
-												   CStringGetDatum(newname));
+															   CStringGetDatum(newname));
 	repl_null[Anum_pg_authid_rolname - 1] = false;
 
 	datum = heap_getattr(oldtuple, Anum_pg_authid_rolpassword, dsc, &isnull);
@@ -1270,7 +1270,7 @@ GrantRole(GrantRoleStmt *stmt)
 		if (rolename == NULL || priv->cols != NIL)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_GRANT_OPERATION),
-			errmsg("column names cannot be included in GRANT/REVOKE ROLE")));
+					 errmsg("column names cannot be included in GRANT/REVOKE ROLE")));
 
 		roleid = get_role_oid(rolename, false);
 		if (stmt->is_grant)

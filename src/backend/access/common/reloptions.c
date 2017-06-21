@@ -537,7 +537,7 @@ add_reloption_kind(void)
 	if (last_assigned_kind >= RELOPT_KIND_MAX)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-			errmsg("user-defined relation parameter types limit exceeded")));
+				 errmsg("user-defined relation parameter types limit exceeded")));
 	last_assigned_kind <<= 1;
 	return (relopt_kind) last_assigned_kind;
 }
@@ -567,7 +567,7 @@ add_reloption(relopt_gen *newoption)
 		{
 			max_custom_options *= 2;
 			custom_options = repalloc(custom_options,
-								  max_custom_options * sizeof(relopt_gen *));
+									  max_custom_options * sizeof(relopt_gen *));
 		}
 		MemoryContextSwitchTo(oldcxt);
 	}
@@ -818,7 +818,7 @@ transformRelOptions(Datum oldOptions, List *defList, char *namspace,
 			if (def->arg != NULL)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-					errmsg("RESET must not include values for parameters")));
+						 errmsg("RESET must not include values for parameters")));
 		}
 		else
 		{
@@ -1137,8 +1137,8 @@ parse_one_reloption(relopt_value *option, char *text_str, int text_len,
 				if (validate && !parsed)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						errmsg("invalid value for boolean option \"%s\": %s",
-							   option->gen->name, value)));
+							 errmsg("invalid value for boolean option \"%s\": %s",
+									option->gen->name, value)));
 			}
 			break;
 		case RELOPT_TYPE_INT:
@@ -1149,16 +1149,16 @@ parse_one_reloption(relopt_value *option, char *text_str, int text_len,
 				if (validate && !parsed)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						errmsg("invalid value for integer option \"%s\": %s",
-							   option->gen->name, value)));
+							 errmsg("invalid value for integer option \"%s\": %s",
+									option->gen->name, value)));
 				if (validate && (option->values.int_val < optint->min ||
 								 option->values.int_val > optint->max))
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						   errmsg("value %s out of bounds for option \"%s\"",
-								  value, option->gen->name),
-					 errdetail("Valid values are between \"%d\" and \"%d\".",
-							   optint->min, optint->max)));
+							 errmsg("value %s out of bounds for option \"%s\"",
+									value, option->gen->name),
+							 errdetail("Valid values are between \"%d\" and \"%d\".",
+									   optint->min, optint->max)));
 			}
 			break;
 		case RELOPT_TYPE_REAL:
@@ -1175,10 +1175,10 @@ parse_one_reloption(relopt_value *option, char *text_str, int text_len,
 								 option->values.real_val > optreal->max))
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						   errmsg("value %s out of bounds for option \"%s\"",
-								  value, option->gen->name),
-					 errdetail("Valid values are between \"%f\" and \"%f\".",
-							   optreal->min, optreal->max)));
+							 errmsg("value %s out of bounds for option \"%s\"",
+									value, option->gen->name),
+							 errdetail("Valid values are between \"%f\" and \"%f\".",
+									   optreal->min, optreal->max)));
 			}
 			break;
 		case RELOPT_TYPE_STRING:

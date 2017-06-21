@@ -47,15 +47,15 @@ static float8 get_distance(TypeCacheEntry *typcache, RangeBound *bound1,
 static int length_hist_bsearch(Datum *length_hist_values,
 					int length_hist_nvalues, double value, bool equal);
 static double calc_length_hist_frac(Datum *length_hist_values,
-		int length_hist_nvalues, double length1, double length2, bool equal);
+					  int length_hist_nvalues, double length1, double length2, bool equal);
 static double calc_hist_selectivity_contained(TypeCacheEntry *typcache,
 								RangeBound *lower, RangeBound *upper,
 								RangeBound *hist_lower, int hist_nvalues,
-						 Datum *length_hist_values, int length_hist_nvalues);
+								Datum *length_hist_values, int length_hist_nvalues);
 static double calc_hist_selectivity_contains(TypeCacheEntry *typcache,
 							   RangeBound *lower, RangeBound *upper,
 							   RangeBound *hist_lower, int hist_nvalues,
-						 Datum *length_hist_values, int length_hist_nvalues);
+							   Datum *length_hist_values, int length_hist_nvalues);
 
 /*
  * Returns a default selectivity estimate for given operator, when we don't
@@ -535,7 +535,7 @@ calc_hist_selectivity(TypeCacheEntry *typcache, VariableStatData *vardata,
 		case OID_RANGE_CONTAINS_OP:
 			hist_selec =
 				calc_hist_selectivity_contains(typcache, &const_lower,
-											 &const_upper, hist_lower, nhist,
+											   &const_upper, hist_lower, nhist,
 											   lslot.values, lslot.nvalues);
 			break;
 
@@ -554,14 +554,14 @@ calc_hist_selectivity(TypeCacheEntry *typcache, VariableStatData *vardata,
 			{
 				hist_selec =
 					1.0 - calc_hist_selectivity_scalar(typcache, &const_lower,
-												   hist_lower, nhist, false);
+													   hist_lower, nhist, false);
 			}
 			else
 			{
 				hist_selec =
 					calc_hist_selectivity_contained(typcache, &const_lower,
-											 &const_upper, hist_lower, nhist,
-												lslot.values, lslot.nvalues);
+													&const_upper, hist_lower, nhist,
+													lslot.values, lslot.nvalues);
 			}
 			break;
 
@@ -599,7 +599,7 @@ calc_hist_selectivity_scalar(TypeCacheEntry *typcache, RangeBound *constbound,
 	/* Adjust using linear interpolation within the bin */
 	if (index >= 0 && index < hist_nvalues - 1)
 		selec += get_position(typcache, constbound, &hist[index],
-						&hist[index + 1]) / (Selectivity) (hist_nvalues - 1);
+							  &hist[index + 1]) / (Selectivity) (hist_nvalues - 1);
 
 	return selec;
 }
@@ -694,7 +694,7 @@ get_position(TypeCacheEntry *typcache, RangeBound *value, RangeBound *hist1,
 
 		/* Calculate relative position using subdiff function. */
 		bin_width = DatumGetFloat8(FunctionCall2Coll(
-												&typcache->rng_subdiff_finfo,
+													 &typcache->rng_subdiff_finfo,
 													 typcache->rng_collation,
 													 hist2->val,
 													 hist1->val));
@@ -702,7 +702,7 @@ get_position(TypeCacheEntry *typcache, RangeBound *value, RangeBound *hist1,
 			return 0.5;			/* zero width bin */
 
 		position = DatumGetFloat8(FunctionCall2Coll(
-												&typcache->rng_subdiff_finfo,
+													&typcache->rng_subdiff_finfo,
 													typcache->rng_collation,
 													value->val,
 													hist1->val))
@@ -998,7 +998,7 @@ static double
 calc_hist_selectivity_contained(TypeCacheEntry *typcache,
 								RangeBound *lower, RangeBound *upper,
 								RangeBound *hist_lower, int hist_nvalues,
-						  Datum *length_hist_values, int length_hist_nvalues)
+								Datum *length_hist_values, int length_hist_nvalues)
 {
 	int			i,
 				upper_index;
@@ -1108,7 +1108,7 @@ static double
 calc_hist_selectivity_contains(TypeCacheEntry *typcache,
 							   RangeBound *lower, RangeBound *upper,
 							   RangeBound *hist_lower, int hist_nvalues,
-						  Datum *length_hist_values, int length_hist_nvalues)
+							   Datum *length_hist_values, int length_hist_nvalues)
 {
 	int			i,
 				lower_index;

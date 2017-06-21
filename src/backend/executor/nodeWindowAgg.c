@@ -350,7 +350,7 @@ advance_windowaggregate(WindowAggState *winstate,
 	if (fcinfo->isnull && OidIsValid(peraggstate->invtransfn_oid))
 		ereport(ERROR,
 				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-		errmsg("moving-aggregate transition function must not return null")));
+				 errmsg("moving-aggregate transition function must not return null")));
 
 	/*
 	 * We must track the number of rows included in transValue, since to
@@ -599,7 +599,7 @@ finalize_windowaggregate(WindowAggState *winstate,
 								 perfuncstate->winCollation,
 								 (void *) winstate, NULL);
 		fcinfo.arg[0] = MakeExpandedObjectReadOnly(peraggstate->transValue,
-											   peraggstate->transValueIsNull,
+												   peraggstate->transValueIsNull,
 												   peraggstate->transtypeLen);
 		fcinfo.argnull[0] = peraggstate->transValueIsNull;
 		anynull = peraggstate->transValueIsNull;
@@ -1142,7 +1142,7 @@ begin_partition(WindowAggState *winstate)
 			winobj->markptr = tuplestore_alloc_read_pointer(winstate->buffer,
 															0);
 			winobj->readptr = tuplestore_alloc_read_pointer(winstate->buffer,
-														 EXEC_FLAG_BACKWARD);
+															EXEC_FLAG_BACKWARD);
 			winobj->markpos = -1;
 			winobj->seekpos = -1;
 		}
@@ -1631,7 +1631,7 @@ ExecWindowAgg(WindowAggState *winstate)
 				if (offset < 0)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					  errmsg("frame starting offset must not be negative")));
+							 errmsg("frame starting offset must not be negative")));
 			}
 		}
 		if (frameOptions & FRAMEOPTION_END_VALUE)
@@ -1656,7 +1656,7 @@ ExecWindowAgg(WindowAggState *winstate)
 				if (offset < 0)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						errmsg("frame ending offset must not be negative")));
+							 errmsg("frame ending offset must not be negative")));
 			}
 		}
 		winstate->all_first = false;
@@ -1732,8 +1732,8 @@ ExecWindowAgg(WindowAggState *winstate)
 		if (perfuncstate->plain_agg)
 			continue;
 		eval_windowfunction(winstate, perfuncstate,
-			  &(econtext->ecxt_aggvalues[perfuncstate->wfuncstate->wfuncno]),
-			  &(econtext->ecxt_aggnulls[perfuncstate->wfuncstate->wfuncno]));
+							&(econtext->ecxt_aggvalues[perfuncstate->wfuncstate->wfuncno]),
+							&(econtext->ecxt_aggnulls[perfuncstate->wfuncstate->wfuncno]));
 	}
 
 	/*
@@ -1863,7 +1863,7 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 	/* Set up data for comparing tuples */
 	if (node->partNumCols > 0)
 		winstate->partEqfunctions = execTuplesMatchPrepare(node->partNumCols,
-														node->partOperators);
+														   node->partOperators);
 	if (node->ordNumCols > 0)
 		winstate->ordEqfunctions = execTuplesMatchPrepare(node->ordNumCols,
 														  node->ordOperators);

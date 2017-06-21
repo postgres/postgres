@@ -216,7 +216,7 @@ DefineAggregate(ParseState *pstate, List *name, List *args, bool oldstyle, List 
 		if (mtransfuncName != NIL)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-			errmsg("aggregate msfunc must not be specified without mstype")));
+					 errmsg("aggregate msfunc must not be specified without mstype")));
 		if (minvtransfuncName != NIL)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),

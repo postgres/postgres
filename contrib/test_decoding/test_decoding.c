@@ -126,8 +126,8 @@ pg_decode_startup(LogicalDecodingContext *ctx, OutputPluginOptions *opt,
 			else if (!parse_bool(strVal(elem->arg), &data->include_xids))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				  errmsg("could not parse value \"%s\" for parameter \"%s\"",
-						 strVal(elem->arg), elem->defname)));
+						 errmsg("could not parse value \"%s\" for parameter \"%s\"",
+								strVal(elem->arg), elem->defname)));
 		}
 		else if (strcmp(elem->defname, "include-timestamp") == 0)
 		{
@@ -136,8 +136,8 @@ pg_decode_startup(LogicalDecodingContext *ctx, OutputPluginOptions *opt,
 			else if (!parse_bool(strVal(elem->arg), &data->include_timestamp))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				  errmsg("could not parse value \"%s\" for parameter \"%s\"",
-						 strVal(elem->arg), elem->defname)));
+						 errmsg("could not parse value \"%s\" for parameter \"%s\"",
+								strVal(elem->arg), elem->defname)));
 		}
 		else if (strcmp(elem->defname, "force-binary") == 0)
 		{
@@ -148,8 +148,8 @@ pg_decode_startup(LogicalDecodingContext *ctx, OutputPluginOptions *opt,
 			else if (!parse_bool(strVal(elem->arg), &force_binary))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				  errmsg("could not parse value \"%s\" for parameter \"%s\"",
-						 strVal(elem->arg), elem->defname)));
+						 errmsg("could not parse value \"%s\" for parameter \"%s\"",
+								strVal(elem->arg), elem->defname)));
 
 			if (force_binary)
 				opt->output_type = OUTPUT_PLUGIN_BINARY_OUTPUT;
@@ -162,8 +162,8 @@ pg_decode_startup(LogicalDecodingContext *ctx, OutputPluginOptions *opt,
 			else if (!parse_bool(strVal(elem->arg), &data->skip_empty_xacts))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				  errmsg("could not parse value \"%s\" for parameter \"%s\"",
-						 strVal(elem->arg), elem->defname)));
+						 errmsg("could not parse value \"%s\" for parameter \"%s\"",
+								strVal(elem->arg), elem->defname)));
 		}
 		else if (strcmp(elem->defname, "only-local") == 0)
 		{
@@ -173,8 +173,8 @@ pg_decode_startup(LogicalDecodingContext *ctx, OutputPluginOptions *opt,
 			else if (!parse_bool(strVal(elem->arg), &data->only_local))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				  errmsg("could not parse value \"%s\" for parameter \"%s\"",
-						 strVal(elem->arg), elem->defname)));
+						 errmsg("could not parse value \"%s\" for parameter \"%s\"",
+								strVal(elem->arg), elem->defname)));
 		}
 		else
 		{
@@ -421,8 +421,8 @@ pg_decode_change(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 	appendStringInfoString(ctx->out,
 						   quote_qualified_identifier(
 													  get_namespace_name(
-							  get_rel_namespace(RelationGetRelid(relation))),
-											  NameStr(class_form->relname)));
+																		 get_rel_namespace(RelationGetRelid(relation))),
+													  NameStr(class_form->relname)));
 	appendStringInfoChar(ctx->out, ':');
 
 	switch (change->action)

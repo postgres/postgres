@@ -240,7 +240,7 @@ indexam_property(FunctionCallInfo fcinfo,
 
 			case AMPROP_NULLS_FIRST:
 				if (test_indoption(index_oid, attno, routine->amcanorder,
-						 INDOPTION_NULLS_FIRST, INDOPTION_NULLS_FIRST, &res))
+								   INDOPTION_NULLS_FIRST, INDOPTION_NULLS_FIRST, &res))
 					PG_RETURN_BOOL(res);
 				PG_RETURN_NULL();
 

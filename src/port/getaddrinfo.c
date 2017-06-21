@@ -99,7 +99,7 @@ haveNativeWindowsIPv6routines(void)
 		getaddrinfo_ptr = (getaddrinfo_ptr_t) GetProcAddress(hLibrary,
 															 "getaddrinfo");
 		freeaddrinfo_ptr = (freeaddrinfo_ptr_t) GetProcAddress(hLibrary,
-															 "freeaddrinfo");
+															   "freeaddrinfo");
 		getnameinfo_ptr = (getnameinfo_ptr_t) GetProcAddress(hLibrary,
 															 "getnameinfo");
 

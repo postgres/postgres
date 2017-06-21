@@ -237,8 +237,8 @@ DefineTSParser(List *names, List *parameters)
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("text search parser parameter \"%s\" not recognized",
-						defel->defname)));
+					 errmsg("text search parser parameter \"%s\" not recognized",
+							defel->defname)));
 	}
 
 	/*
@@ -381,8 +381,8 @@ verify_dictoptions(Oid tmplId, List *dictoptions)
 		if (dictoptions)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-				errmsg("text search template \"%s\" does not accept options",
-					   NameStr(tform->tmplname))));
+					 errmsg("text search template \"%s\" does not accept options",
+							NameStr(tform->tmplname))));
 	}
 	else
 	{
@@ -743,7 +743,7 @@ DefineTSTemplate(List *names, List *parameters)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-			   errmsg("must be superuser to create text search templates")));
+				 errmsg("must be superuser to create text search templates")));
 
 	/* Convert list of names to a name and namespace */
 	namespaceoid = QualifiedNameGetCreationNamespace(names, &tmplname);
@@ -780,8 +780,8 @@ DefineTSTemplate(List *names, List *parameters)
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-			   errmsg("text search template parameter \"%s\" not recognized",
-					  defel->defname)));
+					 errmsg("text search template parameter \"%s\" not recognized",
+							defel->defname)));
 	}
 
 	/*
@@ -1484,8 +1484,8 @@ DropConfigurationMapping(AlterTSConfigurationStmt *stmt,
 			{
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_OBJECT),
-					   errmsg("mapping for token type \"%s\" does not exist",
-							  strVal(val))));
+						 errmsg("mapping for token type \"%s\" does not exist",
+								strVal(val))));
 			}
 			else
 			{
@@ -1685,7 +1685,7 @@ deserialize_deflist(Datum txt)
 						*wsptr++ = '\0';
 						result = lappend(result,
 										 makeDefElem(pstrdup(workspace),
-							  (Node *) makeString(pstrdup(startvalue)), -1));
+													 (Node *) makeString(pstrdup(startvalue)), -1));
 						state = CS_WAITKEY;
 					}
 				}
@@ -1717,7 +1717,7 @@ deserialize_deflist(Datum txt)
 						*wsptr++ = '\0';
 						result = lappend(result,
 										 makeDefElem(pstrdup(workspace),
-							  (Node *) makeString(pstrdup(startvalue)), -1));
+													 (Node *) makeString(pstrdup(startvalue)), -1));
 						state = CS_WAITKEY;
 					}
 				}
@@ -1732,7 +1732,7 @@ deserialize_deflist(Datum txt)
 					*wsptr++ = '\0';
 					result = lappend(result,
 									 makeDefElem(pstrdup(workspace),
-							  (Node *) makeString(pstrdup(startvalue)), -1));
+												 (Node *) makeString(pstrdup(startvalue)), -1));
 					state = CS_WAITKEY;
 				}
 				else
@@ -1751,7 +1751,7 @@ deserialize_deflist(Datum txt)
 		*wsptr++ = '\0';
 		result = lappend(result,
 						 makeDefElem(pstrdup(workspace),
-							  (Node *) makeString(pstrdup(startvalue)), -1));
+									 (Node *) makeString(pstrdup(startvalue)), -1));
 	}
 	else if (state != CS_WAITKEY)
 		ereport(ERROR,

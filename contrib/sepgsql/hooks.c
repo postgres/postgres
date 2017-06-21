@@ -108,7 +108,7 @@ sepgsql_object_access(ObjectAccessType access,
 					case DatabaseRelationId:
 						Assert(!is_internal);
 						sepgsql_database_post_create(objectId,
-									sepgsql_context_info.createdb_dtemplate);
+													 sepgsql_context_info.createdb_dtemplate);
 						break;
 
 					case NamespaceRelationId:
@@ -395,7 +395,7 @@ _PG_init(void)
 	if (IsUnderPostmaster)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-			 errmsg("sepgsql must be loaded via shared_preload_libraries")));
+				 errmsg("sepgsql must be loaded via shared_preload_libraries")));
 
 	/*
 	 * Check availability of SELinux on the platform. If disabled, we cannot

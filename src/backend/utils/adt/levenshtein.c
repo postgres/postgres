@@ -130,8 +130,8 @@ varstr_levenshtein(const char *source, int slen,
 		 n > MAX_LEVENSHTEIN_STRLEN))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-		errmsg("levenshtein argument exceeds maximum length of %d characters",
-			   MAX_LEVENSHTEIN_STRLEN)));
+				 errmsg("levenshtein argument exceeds maximum length of %d characters",
+						MAX_LEVENSHTEIN_STRLEN)));
 
 #ifdef LEVENSHTEIN_LESS_EQUAL
 	/* Initialize start and stop columns. */

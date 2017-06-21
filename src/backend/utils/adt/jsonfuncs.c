@@ -426,7 +426,7 @@ static Datum populate_scalar(ScalarIOData *io, Oid typid, int32 typmod, JsValue 
 static void prepare_column_cache(ColumnIOData *column, Oid typid, int32 typmod,
 					 MemoryContext mcxt, bool json);
 static Datum populate_record_field(ColumnIOData *col, Oid typid, int32 typmod,
-				   const char *colname, MemoryContext mcxt, Datum defaultval,
+					  const char *colname, MemoryContext mcxt, Datum defaultval,
 					  JsValue *jsv, bool *isnull);
 static RecordIOData *allocate_record_info(MemoryContext mcxt, int ncolumns);
 static bool JsObjectGetField(JsObject *obj, char *field, JsValue *jsv);
@@ -766,7 +766,7 @@ jsonb_object_field_text(PG_FUNCTION_ARGS)
 				break;
 			case jbvNumeric:
 				result = cstring_to_text(DatumGetCString(DirectFunctionCall1(numeric_out,
-										  PointerGetDatum(v->val.numeric))));
+																			 PointerGetDatum(v->val.numeric))));
 				break;
 			case jbvBinary:
 				{
@@ -883,7 +883,7 @@ jsonb_array_element_text(PG_FUNCTION_ARGS)
 				break;
 			case jbvNumeric:
 				result = cstring_to_text(DatumGetCString(DirectFunctionCall1(numeric_out,
-										  PointerGetDatum(v->val.numeric))));
+																			 PointerGetDatum(v->val.numeric))));
 				break;
 			case jbvBinary:
 				{
@@ -1446,7 +1446,7 @@ get_jsonb_path_all(FunctionCallInfo fcinfo, bool as_text)
 			jbvp = findJsonbValueFromContainerLen(container,
 												  JB_FOBJECT,
 												  VARDATA(pathtext[i]),
-											VARSIZE(pathtext[i]) - VARHDRSZ);
+												  VARSIZE(pathtext[i]) - VARHDRSZ);
 		}
 		else if (have_array)
 		{
@@ -2161,7 +2161,7 @@ elements_worker(FunctionCallInfo fcinfo, const char *funcname, bool as_text)
 	state->next_scalar = false;
 	state->lex = lex;
 	state->tmp_cxt = AllocSetContextCreate(CurrentMemoryContext,
-										 "json_array_elements temporary cxt",
+										   "json_array_elements temporary cxt",
 										   ALLOCSET_DEFAULT_SIZES);
 
 	pg_parse_json(lex, sem);
@@ -2818,7 +2818,7 @@ populate_scalar(ScalarIOData *io, Oid typid, int32 typmod, JsValue *jsv)
 			str = pstrdup(jbv->val.boolean ? "true" : "false");
 		else if (jbv->type == jbvNumeric)
 			str = DatumGetCString(DirectFunctionCall1(numeric_out,
-										 PointerGetDatum(jbv->val.numeric)));
+													  PointerGetDatum(jbv->val.numeric)));
 		else if (jbv->type == jbvBinary)
 			str = JsonbToCString(NULL, jbv->val.binary.data,
 								 jbv->val.binary.len);
@@ -2887,7 +2887,7 @@ prepare_column_cache(ColumnIOData *column,
 		column->io.domain.base_typid = type->typbasetype;
 		column->io.domain.base_typmod = type->typtypmod;
 		column->io.domain.base_io = MemoryContextAllocZero(mcxt,
-													   sizeof(ColumnIOData));
+														   sizeof(ColumnIOData));
 		column->io.domain.domain_info = NULL;
 	}
 	else if (type->typtype == TYPTYPE_COMPOSITE || typid == RECORDOID)
@@ -2900,7 +2900,7 @@ prepare_column_cache(ColumnIOData *column,
 	{
 		column->typcat = TYPECAT_ARRAY;
 		column->io.array.element_info = MemoryContextAllocZero(mcxt,
-													   sizeof(ColumnIOData));
+															   sizeof(ColumnIOData));
 		column->io.array.element_type = type->typelem;
 		/* array element typemod stored in attribute's typmod */
 		column->io.array.element_typmod = typmod;
@@ -3379,7 +3379,7 @@ hash_array_start(void *state)
 	if (_state->lex->lex_level == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			   errmsg("cannot call %s on an array", _state->function_name)));
+				 errmsg("cannot call %s on an array", _state->function_name)));
 }
 
 static void
@@ -3390,7 +3390,7 @@ hash_scalar(void *state, char *token, JsonTokenType tokentype)
 	if (_state->lex->lex_level == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			   errmsg("cannot call %s on a scalar", _state->function_name)));
+				 errmsg("cannot call %s on a scalar", _state->function_name)));
 
 	if (_state->lex->lex_level == 1)
 	{
@@ -3580,8 +3580,8 @@ populate_recordset_worker(FunctionCallInfo fcinfo, const char *funcname,
 					!JsonContainerIsObject(v.val.binary.data))
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("argument of %s must be an array of objects",
-								funcname)));
+							 errmsg("argument of %s must be an array of objects",
+									funcname)));
 
 				obj.is_json = false;
 				obj.val.jsonb_cont = v.val.binary.data;
@@ -4712,8 +4712,8 @@ setPathArray(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
 			lindex < INT_MIN)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-			  errmsg("path element at position %d is not an integer: \"%s\"",
-					 level + 1, c)));
+					 errmsg("path element at position %d is not an integer: \"%s\"",
+							level + 1, c)));
 		idx = lindex;
 	}
 	else
@@ -4871,7 +4871,7 @@ iterate_string_values_scalar(void *state, char *token, JsonTokenType tokentype)
  */
 Jsonb *
 transform_jsonb_string_values(Jsonb *jsonb, void *action_state,
-							JsonTransformStringValuesAction transform_action)
+							  JsonTransformStringValuesAction transform_action)
 {
 	JsonbIterator *it;
 	JsonbValue	v,

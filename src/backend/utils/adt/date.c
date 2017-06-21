@@ -143,7 +143,7 @@ date_in(PG_FUNCTION_ARGS)
 		case DTK_CURRENT:
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			  errmsg("date/time value \"current\" is no longer supported")));
+					 errmsg("date/time value \"current\" is no longer supported")));
 
 			GetCurrentDateTime(tm);
 			break;
@@ -1161,7 +1161,7 @@ abstime_date(PG_FUNCTION_ARGS)
 		case INVALID_ABSTIME:
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				   errmsg("cannot convert reserved abstime value to date")));
+					 errmsg("cannot convert reserved abstime value to date")));
 			result = 0;			/* keep compiler quiet */
 			break;
 
@@ -2598,8 +2598,8 @@ timetz_part(PG_FUNCTION_ARGS)
 			default:
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("\"time with time zone\" units \"%s\" not recognized",
-					   lowunits)));
+						 errmsg("\"time with time zone\" units \"%s\" not recognized",
+								lowunits)));
 				result = 0;
 		}
 	}
@@ -2716,9 +2716,9 @@ timetz_izone(PG_FUNCTION_ARGS)
 	if (zone->month != 0 || zone->day != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-		  errmsg("interval time zone \"%s\" must not include months or days",
-				 DatumGetCString(DirectFunctionCall1(interval_out,
-												  PointerGetDatum(zone))))));
+				 errmsg("interval time zone \"%s\" must not include months or days",
+						DatumGetCString(DirectFunctionCall1(interval_out,
+															PointerGetDatum(zone))))));
 
 	tz = -(zone->time / USECS_PER_SEC);
 

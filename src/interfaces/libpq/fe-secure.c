@@ -250,15 +250,15 @@ pqsecure_raw_read(PGconn *conn, void *ptr, size_t len)
 			case ECONNRESET:
 				printfPQExpBuffer(&conn->errorMessage,
 								  libpq_gettext(
-								"server closed the connection unexpectedly\n"
-				   "\tThis probably means the server terminated abnormally\n"
-							 "\tbefore or while processing the request.\n"));
+												"server closed the connection unexpectedly\n"
+												"\tThis probably means the server terminated abnormally\n"
+												"\tbefore or while processing the request.\n"));
 				break;
 #endif
 
 			default:
 				printfPQExpBuffer(&conn->errorMessage,
-				   libpq_gettext("could not receive data from server: %s\n"),
+								  libpq_gettext("could not receive data from server: %s\n"),
 								  SOCK_STRERROR(result_errno,
 												sebuf, sizeof(sebuf)));
 				break;
@@ -359,14 +359,14 @@ retry_masked:
 #endif
 				printfPQExpBuffer(&conn->errorMessage,
 								  libpq_gettext(
-								"server closed the connection unexpectedly\n"
-				   "\tThis probably means the server terminated abnormally\n"
-							 "\tbefore or while processing the request.\n"));
+												"server closed the connection unexpectedly\n"
+												"\tThis probably means the server terminated abnormally\n"
+												"\tbefore or while processing the request.\n"));
 				break;
 
 			default:
 				printfPQExpBuffer(&conn->errorMessage,
-						libpq_gettext("could not send data to server: %s\n"),
+								  libpq_gettext("could not send data to server: %s\n"),
 								  SOCK_STRERROR(result_errno,
 												sebuf, sizeof(sebuf)));
 				break;

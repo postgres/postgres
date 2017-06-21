@@ -188,7 +188,7 @@ compute_tsvector_stats(VacAttrStats *stats,
 	lexemes_tab = hash_create("Analyzed lexemes table",
 							  num_mcelem,
 							  &hash_ctl,
-					HASH_ELEM | HASH_FUNCTION | HASH_COMPARE | HASH_CONTEXT);
+							  HASH_ELEM | HASH_FUNCTION | HASH_COMPARE | HASH_CONTEXT);
 
 	/* Initialize counters. */
 	b_current = 1;
@@ -396,7 +396,7 @@ compute_tsvector_stats(VacAttrStats *stats,
 
 				mcelem_values[i] =
 					PointerGetDatum(cstring_to_text_with_len(item->key.lexeme,
-														  item->key.length));
+															 item->key.length));
 				mcelem_freqs[i] = (double) item->frequency / (double) nonnull_cnt;
 			}
 			mcelem_freqs[i++] = (double) minfreq / (double) nonnull_cnt;

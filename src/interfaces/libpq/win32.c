@@ -307,7 +307,7 @@ winsock_strerror(int err, char *strerrbuf, size_t buflen)
 		success = 0 != FormatMessage(
 									 flags,
 									 dlls[i].handle, err,
-								   MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT),
+									 MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT),
 									 strerrbuf, buflen - 64,
 									 0
 			);

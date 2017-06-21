@@ -152,7 +152,7 @@ extern void index_markpos(IndexScanDesc scan);
 extern void index_restrpos(IndexScanDesc scan);
 extern Size index_parallelscan_estimate(Relation indexrel, Snapshot snapshot);
 extern void index_parallelscan_initialize(Relation heaprel, Relation indexrel,
-							Snapshot snapshot, ParallelIndexScanDesc target);
+							  Snapshot snapshot, ParallelIndexScanDesc target);
 extern void index_parallelrescan(IndexScanDesc scan);
 extern IndexScanDesc index_beginscan_parallel(Relation heaprel,
 						 Relation indexrel, int nkeys, int norderbys,

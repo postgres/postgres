@@ -230,7 +230,7 @@ AlterForeignDataWrapperOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerI
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("permission denied to change owner of foreign-data wrapper \"%s\"",
 						NameStr(form->fdwname)),
-		errhint("The owner of a foreign-data wrapper must be a superuser.")));
+				 errhint("The owner of a foreign-data wrapper must be a superuser.")));
 
 	if (form->fdwowner != newOwnerId)
 	{
@@ -321,7 +321,7 @@ AlterForeignDataWrapperOwner_oid(Oid fwdId, Oid newOwnerId)
 	if (!HeapTupleIsValid(tup))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-		  errmsg("foreign-data wrapper with OID %u does not exist", fwdId)));
+				 errmsg("foreign-data wrapper with OID %u does not exist", fwdId)));
 
 	AlterForeignDataWrapperOwner_internal(rel, tup, newOwnerId);
 
@@ -485,7 +485,7 @@ lookup_fdw_handler_func(DefElem *handler)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("function %s must return type %s",
-				   NameListToString((List *) handler->arg), "fdw_handler")));
+						NameListToString((List *) handler->arg), "fdw_handler")));
 
 	return handlerOid;
 }
@@ -579,9 +579,9 @@ CreateForeignDataWrapper(CreateFdwStmt *stmt)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-			errmsg("permission denied to create foreign-data wrapper \"%s\"",
-				   stmt->fdwname),
-			errhint("Must be superuser to create a foreign-data wrapper.")));
+				 errmsg("permission denied to create foreign-data wrapper \"%s\"",
+						stmt->fdwname),
+				 errhint("Must be superuser to create a foreign-data wrapper.")));
 
 	/* For now the owner cannot be specified on create. Use effective user ID. */
 	ownerId = GetUserId();
@@ -693,9 +693,9 @@ AlterForeignDataWrapper(AlterFdwStmt *stmt)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-			 errmsg("permission denied to alter foreign-data wrapper \"%s\"",
-					stmt->fdwname),
-			 errhint("Must be superuser to alter a foreign-data wrapper.")));
+				 errmsg("permission denied to alter foreign-data wrapper \"%s\"",
+						stmt->fdwname),
+				 errhint("Must be superuser to alter a foreign-data wrapper.")));
 
 	tp = SearchSysCacheCopy1(FOREIGNDATAWRAPPERNAME,
 							 CStringGetDatum(stmt->fdwname));
@@ -703,7 +703,7 @@ AlterForeignDataWrapper(AlterFdwStmt *stmt)
 	if (!HeapTupleIsValid(tp))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-		errmsg("foreign-data wrapper \"%s\" does not exist", stmt->fdwname)));
+				 errmsg("foreign-data wrapper \"%s\" does not exist", stmt->fdwname)));
 
 	fdwForm = (Form_pg_foreign_data_wrapper) GETSTRUCT(tp);
 	fdwId = HeapTupleGetOid(tp);
@@ -741,8 +741,8 @@ AlterForeignDataWrapper(AlterFdwStmt *stmt)
 		 */
 		if (OidIsValid(fdwvalidator))
 			ereport(WARNING,
-			 (errmsg("changing the foreign-data wrapper validator can cause "
-					 "the options for dependent objects to become invalid")));
+					(errmsg("changing the foreign-data wrapper validator can cause "
+							"the options for dependent objects to become invalid")));
 	}
 	else
 	{
@@ -1182,9 +1182,9 @@ CreateUserMapping(CreateUserMappingStmt *stmt)
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_DUPLICATE_OBJECT),
-			   errmsg("user mapping for \"%s\" already exists for server %s",
-					  MappingUserName(useId),
-					  stmt->servername)));
+					 errmsg("user mapping for \"%s\" already exists for server %s",
+							MappingUserName(useId),
+							stmt->servername)));
 	}
 
 	fdw = GetForeignDataWrapper(srv->fdwid);
@@ -1275,8 +1275,8 @@ AlterUserMapping(AlterUserMappingStmt *stmt)
 	if (!OidIsValid(umId))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-			  errmsg("user mapping for \"%s\" does not exist for the server",
-					 MappingUserName(useId))));
+				 errmsg("user mapping for \"%s\" does not exist for the server",
+						MappingUserName(useId))));
 
 	user_mapping_ddl_aclcheck(useId, srv->serverid, stmt->servername);
 
@@ -1390,8 +1390,8 @@ RemoveUserMapping(DropUserMappingStmt *stmt)
 		if (!stmt->missing_ok)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
-			  errmsg("user mapping for \"%s\" does not exist for the server",
-					 MappingUserName(useId))));
+					 errmsg("user mapping for \"%s\" does not exist for the server",
+							MappingUserName(useId))));
 
 		/* IF EXISTS specified, just note it */
 		ereport(NOTICE,

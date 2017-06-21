@@ -69,7 +69,7 @@ pgwin32_open(const char *fileName, int fileFlags,...)
 	assert((fileFlags & ((O_RDONLY | O_WRONLY | O_RDWR) | O_APPEND |
 						 (O_RANDOM | O_SEQUENTIAL | O_TEMPORARY) |
 						 _O_SHORT_LIVED | O_DSYNC | O_DIRECT |
-		  (O_CREAT | O_TRUNC | O_EXCL) | (O_TEXT | O_BINARY))) == fileFlags);
+						 (O_CREAT | O_TRUNC | O_EXCL) | (O_TEXT | O_BINARY))) == fileFlags);
 
 	sa.nLength = sizeof(sa);
 	sa.bInheritHandle = TRUE;
@@ -77,19 +77,19 @@ pgwin32_open(const char *fileName, int fileFlags,...)
 
 	while ((h = CreateFile(fileName,
 	/* cannot use O_RDONLY, as it == 0 */
-					  (fileFlags & O_RDWR) ? (GENERIC_WRITE | GENERIC_READ) :
-					 ((fileFlags & O_WRONLY) ? GENERIC_WRITE : GENERIC_READ),
+						   (fileFlags & O_RDWR) ? (GENERIC_WRITE | GENERIC_READ) :
+						   ((fileFlags & O_WRONLY) ? GENERIC_WRITE : GENERIC_READ),
 	/* These flags allow concurrent rename/unlink */
-					(FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE),
+						   (FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE),
 						   &sa,
 						   openFlagsToCreateFileFlags(fileFlags),
 						   FILE_ATTRIBUTE_NORMAL |
-					 ((fileFlags & O_RANDOM) ? FILE_FLAG_RANDOM_ACCESS : 0) |
-			   ((fileFlags & O_SEQUENTIAL) ? FILE_FLAG_SEQUENTIAL_SCAN : 0) |
-			  ((fileFlags & _O_SHORT_LIVED) ? FILE_ATTRIBUTE_TEMPORARY : 0) |
-				((fileFlags & O_TEMPORARY) ? FILE_FLAG_DELETE_ON_CLOSE : 0) |
-					  ((fileFlags & O_DIRECT) ? FILE_FLAG_NO_BUFFERING : 0) |
-					   ((fileFlags & O_DSYNC) ? FILE_FLAG_WRITE_THROUGH : 0),
+						   ((fileFlags & O_RANDOM) ? FILE_FLAG_RANDOM_ACCESS : 0) |
+						   ((fileFlags & O_SEQUENTIAL) ? FILE_FLAG_SEQUENTIAL_SCAN : 0) |
+						   ((fileFlags & _O_SHORT_LIVED) ? FILE_ATTRIBUTE_TEMPORARY : 0) |
+						   ((fileFlags & O_TEMPORARY) ? FILE_FLAG_DELETE_ON_CLOSE : 0) |
+						   ((fileFlags & O_DIRECT) ? FILE_FLAG_NO_BUFFERING : 0) |
+						   ((fileFlags & O_DSYNC) ? FILE_FLAG_WRITE_THROUGH : 0),
 						   NULL)) == INVALID_HANDLE_VALUE)
 	{
 		/*

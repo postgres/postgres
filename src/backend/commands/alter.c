@@ -468,7 +468,7 @@ ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt,
 	{
 		case OBJECT_EXTENSION:
 			address = AlterExtensionNamespace(strVal((Value *) stmt->object), stmt->newschema,
-										  oldSchemaAddr ? &oldNspOid : NULL);
+											  oldSchemaAddr ? &oldNspOid : NULL);
 			break;
 
 		case OBJECT_FOREIGN_TABLE:

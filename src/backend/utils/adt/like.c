@@ -180,7 +180,7 @@ Generic_Text_IC_like(text *str, text *pat, Oid collation)
 			 */
 			ereport(ERROR,
 					(errcode(ERRCODE_INDETERMINATE_COLLATION),
-			  errmsg("could not determine which collation to use for ILIKE"),
+					 errmsg("could not determine which collation to use for ILIKE"),
 					 errhint("Use the COLLATE clause to set the collation explicitly.")));
 		}
 		locale = pg_newlocale_from_collation(collation);

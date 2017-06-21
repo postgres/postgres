@@ -101,7 +101,7 @@ statext_ndistinct_build(double totalrows, int numrows, HeapTuple *rows,
 			item->attrs = NULL;
 			for (j = 0; j < k; j++)
 				item->attrs = bms_add_member(item->attrs,
-										stats[combination[j]]->attr->attnum);
+											 stats[combination[j]]->attr->attnum);
 			item->ndistinct =
 				ndistinct_for_combination(totalrows, numrows, rows,
 										  stats, k, combination);
@@ -275,8 +275,8 @@ statext_ndistinct_deserialize(bytea *data)
 	if (VARSIZE_ANY_EXHDR(data) < minimum_size)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_CORRUPTED),
-			   errmsg("invalid MVNDistinct size %zd (expected at least %zd)",
-					  VARSIZE_ANY_EXHDR(data), minimum_size)));
+				 errmsg("invalid MVNDistinct size %zd (expected at least %zd)",
+						VARSIZE_ANY_EXHDR(data), minimum_size)));
 
 	/*
 	 * Allocate space for the ndistinct items (no space for each item's

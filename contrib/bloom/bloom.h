@@ -111,8 +111,8 @@ typedef struct BloomOptions
  */
 typedef BlockNumber FreeBlockNumberArray[
 										 MAXALIGN_DOWN(
-		BLCKSZ - SizeOfPageHeaderData - MAXALIGN(sizeof(BloomPageOpaqueData))
-	   - MAXALIGN(sizeof(uint16) * 2 + sizeof(uint32) + sizeof(BloomOptions))
+													   BLCKSZ - SizeOfPageHeaderData - MAXALIGN(sizeof(BloomPageOpaqueData))
+													   - MAXALIGN(sizeof(uint16) * 2 + sizeof(uint32) + sizeof(BloomOptions))
 													   ) / sizeof(BlockNumber)
 ];
 

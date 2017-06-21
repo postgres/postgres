@@ -115,7 +115,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 						 errmsg("function %s must return type %s",
-						   NameListToString(funcname), "language_handler")));
+								NameListToString(funcname), "language_handler")));
 		}
 		else
 		{
@@ -278,16 +278,16 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 			{
 				ereport(WARNING,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				  errmsg("changing return type of function %s from %s to %s",
-						 NameListToString(stmt->plhandler),
-						 "opaque", "language_handler")));
+						 errmsg("changing return type of function %s from %s to %s",
+								NameListToString(stmt->plhandler),
+								"opaque", "language_handler")));
 				SetFunctionReturnType(handlerOid, LANGUAGE_HANDLEROID);
 			}
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 						 errmsg("function %s must return type %s",
-					NameListToString(stmt->plhandler), "language_handler")));
+								NameListToString(stmt->plhandler), "language_handler")));
 		}
 
 		/* validate the inline function */

@@ -574,7 +574,7 @@ WaitForParallelWorkersToExit(ParallelContext *pcxt)
 		if (status == BGWH_POSTMASTER_DIED)
 			ereport(FATAL,
 					(errcode(ERRCODE_ADMIN_SHUTDOWN),
-				 errmsg("postmaster exited during a parallel transaction")));
+					 errmsg("postmaster exited during a parallel transaction")));
 
 		/* Release memory. */
 		pfree(pcxt->worker[i].bgwhandle);
@@ -760,8 +760,8 @@ HandleParallelMessages(void)
 				}
 				else
 					ereport(ERROR,
-						  (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-						   errmsg("lost connection to parallel worker")));
+							(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+							 errmsg("lost connection to parallel worker")));
 			}
 		}
 	}
@@ -970,7 +970,7 @@ ParallelWorkerMain(Datum main_arg)
 	if (toc == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-		   errmsg("invalid magic number in dynamic shared memory segment")));
+				 errmsg("invalid magic number in dynamic shared memory segment")));
 
 	/* Look up fixed parallel state. */
 	fps = shm_toc_lookup(toc, PARALLEL_KEY_FIXED, false);

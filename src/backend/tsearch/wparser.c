@@ -186,8 +186,8 @@ prs_setup_firstcall(FuncCallContext *funcctx, Oid prsid, text *txt)
 	st->list = (LexemeEntry *) palloc(sizeof(LexemeEntry) * st->len);
 
 	prsdata = (void *) DatumGetPointer(FunctionCall2(&prs->prsstart,
-										   PointerGetDatum(VARDATA_ANY(txt)),
-									 Int32GetDatum(VARSIZE_ANY_EXHDR(txt))));
+													 PointerGetDatum(VARDATA_ANY(txt)),
+													 Int32GetDatum(VARSIZE_ANY_EXHDR(txt))));
 
 	while ((type = DatumGetInt32(FunctionCall3(&prs->prstoken,
 											   PointerGetDatum(prsdata),
@@ -319,7 +319,7 @@ ts_headline_byid_opt(PG_FUNCTION_ARGS)
 	if (!OidIsValid(prsobj->headlineOid))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-		   errmsg("text search parser does not support headline creation")));
+				 errmsg("text search parser does not support headline creation")));
 
 	memset(&prs, 0, sizeof(HeadlineParsedText));
 	prs.lenwords = 32;
@@ -364,7 +364,7 @@ Datum
 ts_headline(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_DATUM(DirectFunctionCall3(ts_headline_byid_opt,
-								  ObjectIdGetDatum(getTSCurrentConfig(true)),
+										ObjectIdGetDatum(getTSCurrentConfig(true)),
 										PG_GETARG_DATUM(0),
 										PG_GETARG_DATUM(1)));
 }
@@ -373,7 +373,7 @@ Datum
 ts_headline_opt(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_DATUM(DirectFunctionCall4(ts_headline_byid_opt,
-								  ObjectIdGetDatum(getTSCurrentConfig(true)),
+										ObjectIdGetDatum(getTSCurrentConfig(true)),
 										PG_GETARG_DATUM(0),
 										PG_GETARG_DATUM(1),
 										PG_GETARG_DATUM(2)));
@@ -407,7 +407,7 @@ ts_headline_jsonb_byid_opt(PG_FUNCTION_ARGS)
 	if (!OidIsValid(state->prsobj->headlineOid))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-		   errmsg("text search parser does not support headline creation")));
+				 errmsg("text search parser does not support headline creation")));
 
 	out = transform_jsonb_string_values(jb, state, action);
 
@@ -431,7 +431,7 @@ Datum
 ts_headline_jsonb(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_DATUM(DirectFunctionCall3(ts_headline_jsonb_byid_opt,
-								  ObjectIdGetDatum(getTSCurrentConfig(true)),
+										ObjectIdGetDatum(getTSCurrentConfig(true)),
 										PG_GETARG_DATUM(0),
 										PG_GETARG_DATUM(1)));
 }
@@ -449,7 +449,7 @@ Datum
 ts_headline_jsonb_opt(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_DATUM(DirectFunctionCall4(ts_headline_jsonb_byid_opt,
-								  ObjectIdGetDatum(getTSCurrentConfig(true)),
+										ObjectIdGetDatum(getTSCurrentConfig(true)),
 										PG_GETARG_DATUM(0),
 										PG_GETARG_DATUM(1),
 										PG_GETARG_DATUM(2)));
@@ -484,7 +484,7 @@ ts_headline_json_byid_opt(PG_FUNCTION_ARGS)
 	if (!OidIsValid(state->prsobj->headlineOid))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-		   errmsg("text search parser does not support headline creation")));
+				 errmsg("text search parser does not support headline creation")));
 
 	out = transform_json_string_values(json, state, action);
 
@@ -507,7 +507,7 @@ Datum
 ts_headline_json(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_DATUM(DirectFunctionCall3(ts_headline_json_byid_opt,
-								  ObjectIdGetDatum(getTSCurrentConfig(true)),
+										ObjectIdGetDatum(getTSCurrentConfig(true)),
 										PG_GETARG_DATUM(0),
 										PG_GETARG_DATUM(1)));
 }
@@ -525,7 +525,7 @@ Datum
 ts_headline_json_opt(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_DATUM(DirectFunctionCall4(ts_headline_json_byid_opt,
-								  ObjectIdGetDatum(getTSCurrentConfig(true)),
+										ObjectIdGetDatum(getTSCurrentConfig(true)),
 										PG_GETARG_DATUM(0),
 										PG_GETARG_DATUM(1),
 										PG_GETARG_DATUM(2)));

@@ -456,7 +456,7 @@ MemoryContextStatsDetail(MemoryContext context, int max_children)
 	MemoryContextStatsInternal(context, 0, true, max_children, &grand_totals);
 
 	fprintf(stderr,
-	"Grand total: %zu bytes in %zd blocks; %zu free (%zd chunks); %zu used\n",
+			"Grand total: %zu bytes in %zd blocks; %zu free (%zd chunks); %zu used\n",
 			grand_totals.totalspace, grand_totals.nblocks,
 			grand_totals.freespace, grand_totals.freechunks,
 			grand_totals.totalspace - grand_totals.freespace);

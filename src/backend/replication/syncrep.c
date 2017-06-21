@@ -393,8 +393,8 @@ SyncRepInitConfig(void)
 		MyWalSnd->sync_standby_priority = priority;
 		LWLockRelease(SyncRepLock);
 		ereport(DEBUG1,
-			(errmsg("standby \"%s\" now has synchronous standby priority %u",
-					application_name, priority)));
+				(errmsg("standby \"%s\" now has synchronous standby priority %u",
+						application_name, priority)));
 	}
 }
 
@@ -455,7 +455,7 @@ SyncRepReleaseWaiters(void)
 		if (SyncRepConfig->syncrep_method == SYNC_REP_PRIORITY)
 			ereport(LOG,
 					(errmsg("standby \"%s\" is now a synchronous standby with priority %u",
-						application_name, MyWalSnd->sync_standby_priority)));
+							application_name, MyWalSnd->sync_standby_priority)));
 		else
 			ereport(LOG,
 					(errmsg("standby \"%s\" is now a candidate for quorum synchronous standby",
@@ -606,7 +606,7 @@ SyncRepGetOldestSyncRecPtr(XLogRecPtr *writePtr, XLogRecPtr *flushPtr,
  */
 static void
 SyncRepGetNthLatestSyncRecPtr(XLogRecPtr *writePtr, XLogRecPtr *flushPtr,
-						XLogRecPtr *applyPtr, List *sync_standbys, uint8 nth)
+							  XLogRecPtr *applyPtr, List *sync_standbys, uint8 nth)
 {
 	ListCell   *cell;
 	XLogRecPtr *write_array;

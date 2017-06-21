@@ -1180,7 +1180,7 @@ GetCachedPlan(CachedPlanSource *plansource, ParamListInfo boundParams,
 			{
 				/* otherwise, it should be a sibling of the plansource */
 				MemoryContextSetParent(plan->context,
-								MemoryContextGetParent(plansource->context));
+									   MemoryContextGetParent(plansource->context));
 			}
 			/* Update generic_cost whenever we make a new generic plan */
 			plansource->generic_cost = cached_plan_cost(plan, false);
@@ -1520,7 +1520,7 @@ AcquireExecutorLocks(List *stmt_list, bool acquire)
 			 * acquire a non-conflicting lock.
 			 */
 			if (list_member_int(plannedstmt->resultRelations, rt_index) ||
-			  list_member_int(plannedstmt->nonleafResultRelations, rt_index))
+				list_member_int(plannedstmt->nonleafResultRelations, rt_index))
 				lockmode = RowExclusiveLock;
 			else if ((rc = get_plan_rowmark(plannedstmt->rowMarks, rt_index)) != NULL &&
 					 RowMarkRequiresRowShareLock(rc->markType))

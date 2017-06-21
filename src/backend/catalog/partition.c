@@ -293,7 +293,7 @@ RelationBuildPartitionDesc(Relation rel)
 			 * also save the index of partition the value comes from.
 			 */
 			all_values = (PartitionListValue **) palloc(ndatums *
-											   sizeof(PartitionListValue *));
+														sizeof(PartitionListValue *));
 			i = 0;
 			foreach(cell, non_null_values)
 			{
@@ -318,7 +318,7 @@ RelationBuildPartitionDesc(Relation rel)
 			bool	   *distinct_indexes;
 
 			all_bounds = (PartitionRangeBound **) palloc0(2 * nparts *
-											  sizeof(PartitionRangeBound *));
+														  sizeof(PartitionRangeBound *));
 			distinct_indexes = (bool *) palloc(2 * nparts * sizeof(bool));
 
 			/*
@@ -420,7 +420,7 @@ RelationBuildPartitionDesc(Relation rel)
 			 * into the relcache.
 			 */
 			rbounds = (PartitionRangeBound **) palloc(ndatums *
-											  sizeof(PartitionRangeBound *));
+													  sizeof(PartitionRangeBound *));
 			k = 0;
 			for (i = 0; i < 2 * nparts; i++)
 			{
@@ -481,8 +481,8 @@ RelationBuildPartitionDesc(Relation rel)
 					{
 						boundinfo->datums[i] = (Datum *) palloc(sizeof(Datum));
 						boundinfo->datums[i][0] = datumCopy(all_values[i]->value,
-														key->parttypbyval[0],
-														 key->parttyplen[0]);
+															key->parttypbyval[0],
+															key->parttyplen[0]);
 
 						/* If the old index has no mapping, assign one */
 						if (mapping[all_values[i]->index] == -1)
@@ -513,7 +513,7 @@ RelationBuildPartitionDesc(Relation rel)
 			case PARTITION_STRATEGY_RANGE:
 				{
 					boundinfo->content = (RangeDatumContent **) palloc(ndatums *
-												sizeof(RangeDatumContent *));
+																	   sizeof(RangeDatumContent *));
 					boundinfo->indexes = (int *) palloc((ndatums + 1) *
 														sizeof(int));
 
@@ -522,7 +522,7 @@ RelationBuildPartitionDesc(Relation rel)
 						int			j;
 
 						boundinfo->datums[i] = (Datum *) palloc(key->partnatts *
-															  sizeof(Datum));
+																sizeof(Datum));
 						boundinfo->content[i] = (RangeDatumContent *)
 							palloc(key->partnatts *
 								   sizeof(RangeDatumContent));
@@ -739,7 +739,7 @@ check_new_partition_bound(char *relname, Relation parent,
 										 upper) >= 0)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					errmsg("cannot create range partition with empty range"),
+							 errmsg("cannot create range partition with empty range"),
 							 parser_errposition(pstate, spec->location)));
 
 				if (partdesc->nparts > 0)
@@ -942,7 +942,7 @@ map_partition_varattnos(List *expr, int target_varno,
 
 	part_attnos = convert_tuples_by_name_map(RelationGetDescr(partrel),
 											 RelationGetDescr(parent),
-								 gettext_noop("could not convert row type"));
+											 gettext_noop("could not convert row type"));
 	expr = (List *) map_variable_attnos((Node *) expr,
 										target_varno, 0,
 										part_attnos,
@@ -1120,7 +1120,7 @@ RelationGetPartitionDispatchInfo(Relation rel, int lockmode,
 			pd[i]->tupslot = MakeSingleTupleTableSlot(tupdesc);
 			pd[i]->tupmap = convert_tuples_by_name(RelationGetDescr(parent),
 												   tupdesc,
-								 gettext_noop("could not convert row type"));
+												   gettext_noop("could not convert row type"));
 		}
 		else
 		{
@@ -1595,7 +1595,7 @@ get_qual_for_range(PartitionKey key, PartitionBoundSpec *spec)
 		fix_opfuncids((Node *) test_expr);
 		test_exprstate = ExecInitExpr(test_expr, NULL);
 		test_result = ExecEvalExprSwitchContext(test_exprstate,
-											  GetPerTupleExprContext(estate),
+												GetPerTupleExprContext(estate),
 												&isNull);
 		MemoryContextSwitchTo(oldcxt);
 		FreeExecutorState(estate);
@@ -1676,7 +1676,7 @@ get_qual_for_range(PartitionKey key, PartitionBoundSpec *spec)
 											make_partition_op_expr(key, j,
 																   strategy,
 																   keyCol,
-														(Expr *) lower_val));
+																   (Expr *) lower_val));
 			}
 
 			if (need_next_upper_arm && upper_val)
@@ -1698,7 +1698,7 @@ get_qual_for_range(PartitionKey key, PartitionBoundSpec *spec)
 											make_partition_op_expr(key, j,
 																   strategy,
 																   keyCol,
-														(Expr *) upper_val));
+																   (Expr *) upper_val));
 			}
 
 			/*
@@ -1722,13 +1722,13 @@ get_qual_for_range(PartitionKey key, PartitionBoundSpec *spec)
 		if (lower_or_arm_args != NIL)
 			lower_or_arms = lappend(lower_or_arms,
 									list_length(lower_or_arm_args) > 1
-							  ? makeBoolExpr(AND_EXPR, lower_or_arm_args, -1)
+									? makeBoolExpr(AND_EXPR, lower_or_arm_args, -1)
 									: linitial(lower_or_arm_args));
 
 		if (upper_or_arm_args != NIL)
 			upper_or_arms = lappend(upper_or_arms,
 									list_length(upper_or_arm_args) > 1
-							  ? makeBoolExpr(AND_EXPR, upper_or_arm_args, -1)
+									? makeBoolExpr(AND_EXPR, upper_or_arm_args, -1)
 									: linitial(upper_or_arm_args));
 
 		/* If no work to do in the next iteration, break away. */
@@ -2250,8 +2250,8 @@ partition_bound_cmp(PartitionKey key, PartitionBoundInfo boundinfo,
 					bool		lower = boundinfo->indexes[offset] < 0;
 
 					cmpval = partition_rbound_cmp(key,
-												bound_datums, content, lower,
-											  (PartitionRangeBound *) probe);
+												  bound_datums, content, lower,
+												  (PartitionRangeBound *) probe);
 				}
 				else
 					cmpval = partition_rbound_datum_cmp(key,

@@ -466,8 +466,8 @@ CreateSubscription(CreateSubscriptionStmt *stmt, bool isTopLevel)
 				walrcv_create_slot(wrconn, slotname, false,
 								   CRS_NOEXPORT_SNAPSHOT, &lsn);
 				ereport(NOTICE,
-					  (errmsg("created replication slot \"%s\" on publisher",
-							  slotname)));
+						(errmsg("created replication slot \"%s\" on publisher",
+								slotname)));
 			}
 		}
 		PG_CATCH();
@@ -570,7 +570,7 @@ AlterSubscription_refresh(Subscription *sub, bool copy_data)
 					 list_length(subrel_states), sizeof(Oid), oid_cmp))
 		{
 			SetSubscriptionRelState(sub->oid, relid,
-						  copy_data ? SUBREL_STATE_INIT : SUBREL_STATE_READY,
+									copy_data ? SUBREL_STATE_INIT : SUBREL_STATE_READY,
 									InvalidXLogRecPtr, false);
 			ereport(NOTICE,
 					(errmsg("added subscription for table %s.%s",
@@ -957,9 +957,9 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 
 		if (res->status != WALRCV_OK_COMMAND)
 			ereport(ERROR,
-			(errmsg("could not drop the replication slot \"%s\" on publisher",
-					slotname),
-			 errdetail("The error was: %s", res->err)));
+					(errmsg("could not drop the replication slot \"%s\" on publisher",
+							slotname),
+					 errdetail("The error was: %s", res->err)));
 		else
 			ereport(NOTICE,
 					(errmsg("dropped replication slot \"%s\" on publisher",
@@ -1003,9 +1003,9 @@ AlterSubscriptionOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 	if (!superuser_arg(newOwnerId))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-		   errmsg("permission denied to change owner of subscription \"%s\"",
-				  NameStr(form->subname)),
-			   errhint("The owner of a subscription must be a superuser.")));
+				 errmsg("permission denied to change owner of subscription \"%s\"",
+						NameStr(form->subname)),
+				 errhint("The owner of a subscription must be a superuser.")));
 
 	form->subowner = newOwnerId;
 	CatalogTupleUpdate(rel, &tup->t_self, tup);

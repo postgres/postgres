@@ -358,7 +358,7 @@ _PG_init(void)
 	 * Define (or redefine) custom GUC variables.
 	 */
 	DefineCustomIntVariable("pg_stat_statements.max",
-	  "Sets the maximum number of statements tracked by pg_stat_statements.",
+							"Sets the maximum number of statements tracked by pg_stat_statements.",
 							NULL,
 							&pgss_max,
 							5000,
@@ -371,7 +371,7 @@ _PG_init(void)
 							NULL);
 
 	DefineCustomEnumVariable("pg_stat_statements.track",
-			   "Selects which statements are tracked by pg_stat_statements.",
+							 "Selects which statements are tracked by pg_stat_statements.",
 							 NULL,
 							 &pgss_track,
 							 PGSS_TRACK_TOP,
@@ -383,7 +383,7 @@ _PG_init(void)
 							 NULL);
 
 	DefineCustomBoolVariable("pg_stat_statements.track_utility",
-	   "Selects whether utility commands are tracked by pg_stat_statements.",
+							 "Selects whether utility commands are tracked by pg_stat_statements.",
 							 NULL,
 							 &pgss_track_utility,
 							 true,
@@ -394,7 +394,7 @@ _PG_init(void)
 							 NULL);
 
 	DefineCustomBoolVariable("pg_stat_statements.save",
-			   "Save pg_stat_statements statistics across server shutdowns.",
+							 "Save pg_stat_statements statistics across server shutdowns.",
 							 NULL,
 							 &pgss_save,
 							 true,
@@ -1940,8 +1940,8 @@ qtext_load_file(Size *buffer_size)
 		if (errno != ENOENT)
 			ereport(LOG,
 					(errcode_for_file_access(),
-				   errmsg("could not read pg_stat_statement file \"%s\": %m",
-						  PGSS_TEXT_FILE)));
+					 errmsg("could not read pg_stat_statement file \"%s\": %m",
+							PGSS_TEXT_FILE)));
 		return NULL;
 	}
 
@@ -1985,8 +1985,8 @@ qtext_load_file(Size *buffer_size)
 		if (errno)
 			ereport(LOG,
 					(errcode_for_file_access(),
-				   errmsg("could not read pg_stat_statement file \"%s\": %m",
-						  PGSS_TEXT_FILE)));
+					 errmsg("could not read pg_stat_statement file \"%s\": %m",
+							PGSS_TEXT_FILE)));
 		free(buf);
 		CloseTransientFile(fd);
 		return NULL;
@@ -2145,8 +2145,8 @@ gc_qtexts(void)
 		{
 			ereport(LOG,
 					(errcode_for_file_access(),
-				  errmsg("could not write pg_stat_statement file \"%s\": %m",
-						 PGSS_TEXT_FILE)));
+					 errmsg("could not write pg_stat_statement file \"%s\": %m",
+							PGSS_TEXT_FILE)));
 			hash_seq_term(&hash_seq);
 			goto gc_fail;
 		}
@@ -2163,8 +2163,8 @@ gc_qtexts(void)
 	if (ftruncate(fileno(qfile), extent) != 0)
 		ereport(LOG,
 				(errcode_for_file_access(),
-			   errmsg("could not truncate pg_stat_statement file \"%s\": %m",
-					  PGSS_TEXT_FILE)));
+				 errmsg("could not truncate pg_stat_statement file \"%s\": %m",
+						PGSS_TEXT_FILE)));
 
 	if (FreeFile(qfile))
 	{
@@ -2230,8 +2230,8 @@ gc_fail:
 	if (qfile == NULL)
 		ereport(LOG,
 				(errcode_for_file_access(),
-			  errmsg("could not write new pg_stat_statement file \"%s\": %m",
-					 PGSS_TEXT_FILE)));
+				 errmsg("could not write new pg_stat_statement file \"%s\": %m",
+						PGSS_TEXT_FILE)));
 	else
 		FreeFile(qfile);
 
@@ -2291,8 +2291,8 @@ entry_reset(void)
 	if (ftruncate(fileno(qfile), 0) != 0)
 		ereport(LOG,
 				(errcode_for_file_access(),
-			   errmsg("could not truncate pg_stat_statement file \"%s\": %m",
-					  PGSS_TEXT_FILE)));
+				 errmsg("could not truncate pg_stat_statement file \"%s\": %m",
+						PGSS_TEXT_FILE)));
 
 	FreeFile(qfile);
 

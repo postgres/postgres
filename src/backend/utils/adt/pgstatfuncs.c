@@ -784,7 +784,7 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 					{
 						clean_ipv6_addr(beentry->st_clientaddr.addr.ss_family, remote_host);
 						values[12] = DirectFunctionCall1(inet_in,
-											   CStringGetDatum(remote_host));
+														 CStringGetDatum(remote_host));
 						if (beentry->st_clienthostname &&
 							beentry->st_clienthostname[0])
 							values[13] = CStringGetTextDatum(beentry->st_clienthostname);
@@ -1859,5 +1859,5 @@ pg_stat_get_archiver(PG_FUNCTION_ARGS)
 
 	/* Returns the record as Datum */
 	PG_RETURN_DATUM(HeapTupleGetDatum(
-								   heap_form_tuple(tupdesc, values, nulls)));
+									  heap_form_tuple(tupdesc, values, nulls)));
 }

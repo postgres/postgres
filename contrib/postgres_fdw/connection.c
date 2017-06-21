@@ -241,10 +241,10 @@ connect_pg_server(ForeignServer *server, UserMapping *user)
 		conn = PQconnectdbParams(keywords, values, false);
 		if (!conn || PQstatus(conn) != CONNECTION_OK)
 			ereport(ERROR,
-			   (errcode(ERRCODE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION),
-				errmsg("could not connect to server \"%s\"",
-					   server->servername),
-				errdetail_internal("%s", pchomp(PQerrorMessage(conn)))));
+					(errcode(ERRCODE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION),
+					 errmsg("could not connect to server \"%s\"",
+							server->servername),
+					 errdetail_internal("%s", pchomp(PQerrorMessage(conn)))));
 
 		/*
 		 * Check that non-superuser has used password to establish connection;
@@ -253,10 +253,10 @@ connect_pg_server(ForeignServer *server, UserMapping *user)
 		 */
 		if (!superuser() && !PQconnectionUsedPassword(conn))
 			ereport(ERROR,
-				  (errcode(ERRCODE_S_R_E_PROHIBITED_SQL_STATEMENT_ATTEMPTED),
-				   errmsg("password is required"),
-				   errdetail("Non-superuser cannot connect if the server does not request a password."),
-				   errhint("Target server's authentication method must be changed.")));
+					(errcode(ERRCODE_S_R_E_PROHIBITED_SQL_STATEMENT_ATTEMPTED),
+					 errmsg("password is required"),
+					 errdetail("Non-superuser cannot connect if the server does not request a password."),
+					 errhint("Target server's authentication method must be changed.")));
 
 		/* Prepare new session for use */
 		configure_remote_session(conn);
@@ -589,7 +589,7 @@ pgfdw_report_error(int elevel, PGresult *res, PGconn *conn,
 				(errcode(sqlstate),
 				 message_primary ? errmsg_internal("%s", message_primary) :
 				 errmsg("could not obtain message string for remote error"),
-			   message_detail ? errdetail_internal("%s", message_detail) : 0,
+				 message_detail ? errdetail_internal("%s", message_detail) : 0,
 				 message_hint ? errhint("%s", message_hint) : 0,
 				 message_context ? errcontext("%s", message_context) : 0,
 				 sql ? errcontext("Remote SQL command: %s", sql) : 0));
@@ -1070,7 +1070,7 @@ pgfdw_get_cleanup_result(PGconn *conn, TimestampTz endtime, PGresult **result)
 
 				/* Sleep until there's something to do */
 				wc = WaitLatchOrSocket(MyLatch,
-							  WL_LATCH_SET | WL_SOCKET_READABLE | WL_TIMEOUT,
+									   WL_LATCH_SET | WL_SOCKET_READABLE | WL_TIMEOUT,
 									   PQsocket(conn),
 									   cur_timeout, PG_WAIT_EXTENSION);
 				ResetLatch(MyLatch);

@@ -311,7 +311,7 @@ page_checksum(PG_FUNCTION_ARGS)
 	if (raw_page_size != BLCKSZ)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-		  errmsg("incorrect size of input page (%d bytes)", raw_page_size)));
+				 errmsg("incorrect size of input page (%d bytes)", raw_page_size)));
 
 	page = (PageHeader) VARDATA(raw_page);
 

@@ -128,7 +128,7 @@ pgwin32_is_service(void)
 
 	/* First check for LocalSystem */
 	if (!AllocateAndInitializeSid(&NtAuthority, 1,
-							  SECURITY_LOCAL_SYSTEM_RID, 0, 0, 0, 0, 0, 0, 0,
+								  SECURITY_LOCAL_SYSTEM_RID, 0, 0, 0, 0, 0, 0, 0,
 								  &LocalSystemSid))
 	{
 		fprintf(stderr, "could not get SID for local system account\n");

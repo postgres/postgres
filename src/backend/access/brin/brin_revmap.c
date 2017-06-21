@@ -260,7 +260,7 @@ brinGetTupleForHeapBlock(BrinRevmap *revmap, BlockNumber heapBlk,
 		if (ItemPointerIsValid(&previptr) && ItemPointerEquals(&previptr, iptr))
 			ereport(ERROR,
 					(errcode(ERRCODE_INDEX_CORRUPTED),
-			errmsg_internal("corrupted BRIN index: inconsistent range map")));
+					 errmsg_internal("corrupted BRIN index: inconsistent range map")));
 		previptr = *iptr;
 
 		blk = ItemPointerGetBlockNumber(iptr);
@@ -598,10 +598,10 @@ revmap_physical_extend(BrinRevmap *revmap)
 	if (!PageIsNew(page) && !BRIN_IS_REGULAR_PAGE(page))
 		ereport(ERROR,
 				(errcode(ERRCODE_INDEX_CORRUPTED),
-		  errmsg("unexpected page type 0x%04X in BRIN index \"%s\" block %u",
-				 BrinPageType(page),
-				 RelationGetRelationName(irel),
-				 BufferGetBlockNumber(buf))));
+				 errmsg("unexpected page type 0x%04X in BRIN index \"%s\" block %u",
+						BrinPageType(page),
+						RelationGetRelationName(irel),
+						BufferGetBlockNumber(buf))));
 
 	/* If the page is in use, evacuate it and restart */
 	if (brin_start_evacuating_page(irel, buf))

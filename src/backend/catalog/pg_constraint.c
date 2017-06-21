@@ -646,8 +646,8 @@ RenameConstraintById(Oid conId, const char *newname)
 							 newname))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
-			   errmsg("constraint \"%s\" for relation \"%s\" already exists",
-					  newname, get_rel_name(con->conrelid))));
+				 errmsg("constraint \"%s\" for relation \"%s\" already exists",
+						newname, get_rel_name(con->conrelid))));
 	if (OidIsValid(con->contypid) &&
 		ConstraintNameIsUsed(CONSTRAINT_DOMAIN,
 							 con->contypid,
@@ -678,7 +678,7 @@ RenameConstraintById(Oid conId, const char *newname)
  */
 void
 AlterConstraintNamespaces(Oid ownerId, Oid oldNspId,
-					   Oid newNspId, bool isType, ObjectAddresses *objsMoved)
+						  Oid newNspId, bool isType, ObjectAddresses *objsMoved)
 {
 	Relation	conRel;
 	ScanKeyData key[1];
@@ -785,8 +785,8 @@ get_relation_constraint_oid(Oid relid, const char *conname, bool missing_ok)
 			if (OidIsValid(conOid))
 				ereport(ERROR,
 						(errcode(ERRCODE_DUPLICATE_OBJECT),
-				 errmsg("table \"%s\" has multiple constraints named \"%s\"",
-						get_rel_name(relid), conname)));
+						 errmsg("table \"%s\" has multiple constraints named \"%s\"",
+								get_rel_name(relid), conname)));
 			conOid = HeapTupleGetOid(tuple);
 		}
 	}
@@ -843,8 +843,8 @@ get_domain_constraint_oid(Oid typid, const char *conname, bool missing_ok)
 			if (OidIsValid(conOid))
 				ereport(ERROR,
 						(errcode(ERRCODE_DUPLICATE_OBJECT),
-					errmsg("domain %s has multiple constraints named \"%s\"",
-						   format_type_be(typid), conname)));
+						 errmsg("domain %s has multiple constraints named \"%s\"",
+								format_type_be(typid), conname)));
 			conOid = HeapTupleGetOid(tuple);
 		}
 	}
@@ -941,7 +941,7 @@ get_primary_key_attnos(Oid relid, bool deferrableOk, Oid *constraintOid)
 		for (i = 0; i < numkeys; i++)
 		{
 			pkattnos = bms_add_member(pkattnos,
-							attnums[i] - FirstLowInvalidHeapAttributeNumber);
+									  attnums[i] - FirstLowInvalidHeapAttributeNumber);
 		}
 		*constraintOid = HeapTupleGetOid(tuple);
 
@@ -997,7 +997,7 @@ check_functional_grouping(Oid relid,
 			gvar->varno == varno &&
 			gvar->varlevelsup == varlevelsup)
 			groupbyattnos = bms_add_member(groupbyattnos,
-						gvar->varattno - FirstLowInvalidHeapAttributeNumber);
+										   gvar->varattno - FirstLowInvalidHeapAttributeNumber);
 	}
 
 	if (bms_is_subset(pkattnos, groupbyattnos))

@@ -89,8 +89,8 @@ gin_desc(StringInfo buf, XLogReaderState *record)
 				ginxlogInsert *xlrec = (ginxlogInsert *) rec;
 
 				appendStringInfo(buf, "isdata: %c isleaf: %c",
-							  (xlrec->flags & GIN_INSERT_ISDATA) ? 'T' : 'F',
-							 (xlrec->flags & GIN_INSERT_ISLEAF) ? 'T' : 'F');
+								 (xlrec->flags & GIN_INSERT_ISDATA) ? 'T' : 'F',
+								 (xlrec->flags & GIN_INSERT_ISLEAF) ? 'T' : 'F');
 				if (!(xlrec->flags & GIN_INSERT_ISLEAF))
 				{
 					char	   *payload = rec + sizeof(ginxlogInsert);
@@ -126,9 +126,9 @@ gin_desc(StringInfo buf, XLogReaderState *record)
 						(ginxlogInsertDataInternal *) payload;
 
 						appendStringInfo(buf, " pitem: %u-%u/%u",
-							 PostingItemGetBlockNumber(&insertData->newitem),
-						 ItemPointerGetBlockNumber(&insertData->newitem.key),
-						ItemPointerGetOffsetNumber(&insertData->newitem.key));
+										 PostingItemGetBlockNumber(&insertData->newitem),
+										 ItemPointerGetBlockNumber(&insertData->newitem.key),
+										 ItemPointerGetOffsetNumber(&insertData->newitem.key));
 					}
 				}
 			}
@@ -138,10 +138,10 @@ gin_desc(StringInfo buf, XLogReaderState *record)
 				ginxlogSplit *xlrec = (ginxlogSplit *) rec;
 
 				appendStringInfo(buf, "isrootsplit: %c",
-				(((ginxlogSplit *) rec)->flags & GIN_SPLIT_ROOT) ? 'T' : 'F');
+								 (((ginxlogSplit *) rec)->flags & GIN_SPLIT_ROOT) ? 'T' : 'F');
 				appendStringInfo(buf, " isdata: %c isleaf: %c",
-							  (xlrec->flags & GIN_INSERT_ISDATA) ? 'T' : 'F',
-							 (xlrec->flags & GIN_INSERT_ISLEAF) ? 'T' : 'F');
+								 (xlrec->flags & GIN_INSERT_ISDATA) ? 'T' : 'F',
+								 (xlrec->flags & GIN_INSERT_ISLEAF) ? 'T' : 'F');
 			}
 			break;
 		case XLOG_GIN_VACUUM_PAGE:

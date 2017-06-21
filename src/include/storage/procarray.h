@@ -119,7 +119,7 @@ extern void XidCacheRemoveRunningXids(TransactionId xid,
 						  TransactionId latestXid);
 
 extern void ProcArraySetReplicationSlotXmin(TransactionId xmin,
-							TransactionId catalog_xmin, bool already_locked);
+								TransactionId catalog_xmin, bool already_locked);
 
 extern void ProcArrayGetReplicationSlotXmin(TransactionId *xmin,
 								TransactionId *catalog_xmin);

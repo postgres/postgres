@@ -167,8 +167,8 @@ pg_control_checkpoint(PG_FUNCTION_ARGS)
 	nulls[6] = false;
 
 	values[7] = CStringGetTextDatum(psprintf("%u:%u",
-									ControlFile->checkPointCopy.nextXidEpoch,
-									   ControlFile->checkPointCopy.nextXid));
+											 ControlFile->checkPointCopy.nextXidEpoch,
+											 ControlFile->checkPointCopy.nextXid));
 	nulls[7] = false;
 
 	values[8] = ObjectIdGetDatum(ControlFile->checkPointCopy.nextOid);
@@ -202,7 +202,7 @@ pg_control_checkpoint(PG_FUNCTION_ARGS)
 	nulls[17] = false;
 
 	values[18] = TimestampTzGetDatum(
-					time_t_to_timestamptz(ControlFile->checkPointCopy.time));
+									 time_t_to_timestamptz(ControlFile->checkPointCopy.time));
 	nulls[18] = false;
 
 	htup = heap_form_tuple(tupdesc, values, nulls);

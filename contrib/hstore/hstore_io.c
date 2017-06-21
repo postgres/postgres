@@ -443,8 +443,8 @@ hstore_recv(PG_FUNCTION_ARGS)
 	if (pcount < 0 || pcount > MaxAllocSize / sizeof(Pairs))
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-			  errmsg("number of pairs (%d) exceeds the maximum allowed (%d)",
-					 pcount, (int) (MaxAllocSize / sizeof(Pairs)))));
+				 errmsg("number of pairs (%d) exceeds the maximum allowed (%d)",
+						pcount, (int) (MaxAllocSize / sizeof(Pairs)))));
 	pairs = palloc(pcount * sizeof(Pairs));
 
 	for (i = 0; i < pcount; ++i)
@@ -562,8 +562,8 @@ hstore_from_arrays(PG_FUNCTION_ARGS)
 	if (key_count > MaxAllocSize / sizeof(Pairs))
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-			  errmsg("number of pairs (%d) exceeds the maximum allowed (%d)",
-					 key_count, (int) (MaxAllocSize / sizeof(Pairs)))));
+				 errmsg("number of pairs (%d) exceeds the maximum allowed (%d)",
+						key_count, (int) (MaxAllocSize / sizeof(Pairs)))));
 
 	/* value_array might be NULL */
 
@@ -693,8 +693,8 @@ hstore_from_array(PG_FUNCTION_ARGS)
 	if (count > MaxAllocSize / sizeof(Pairs))
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-			  errmsg("number of pairs (%d) exceeds the maximum allowed (%d)",
-					 count, (int) (MaxAllocSize / sizeof(Pairs)))));
+				 errmsg("number of pairs (%d) exceeds the maximum allowed (%d)",
+						count, (int) (MaxAllocSize / sizeof(Pairs)))));
 
 	pairs = palloc(count * sizeof(Pairs));
 
@@ -1435,8 +1435,8 @@ hstore_to_jsonb_loose(PG_FUNCTION_ARGS)
 			{
 				val.type = jbvNumeric;
 				val.val.numeric = DatumGetNumeric(
-											  DirectFunctionCall3(numeric_in,
-										  CStringGetDatum(tmp.data), 0, -1));
+												  DirectFunctionCall3(numeric_in,
+																	  CStringGetDatum(tmp.data), 0, -1));
 			}
 			else
 			{

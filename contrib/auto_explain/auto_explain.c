@@ -74,8 +74,8 @@ _PG_init(void)
 {
 	/* Define custom GUC variables. */
 	DefineCustomIntVariable("auto_explain.log_min_duration",
-		 "Sets the minimum execution time above which plans will be logged.",
-						 "Zero prints all plans. -1 turns this feature off.",
+							"Sets the minimum execution time above which plans will be logged.",
+							"Zero prints all plans. -1 turns this feature off.",
 							&auto_explain_log_min_duration,
 							-1,
 							-1, INT_MAX / 1000,
@@ -120,7 +120,7 @@ _PG_init(void)
 
 	DefineCustomBoolVariable("auto_explain.log_triggers",
 							 "Include trigger statistics in plans.",
-						"This has no effect unless log_analyze is also set.",
+							 "This has no effect unless log_analyze is also set.",
 							 &auto_explain_log_triggers,
 							 false,
 							 PGC_SUSET,

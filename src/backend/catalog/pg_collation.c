@@ -94,8 +94,8 @@ CollationCreate(const char *collname, Oid collnamespace,
 					 collencoding == -1
 					 ? errmsg("collation \"%s\" already exists",
 							  collname)
-			  : errmsg("collation \"%s\" for encoding \"%s\" already exists",
-					   collname, pg_encoding_to_char(collencoding))));
+					 : errmsg("collation \"%s\" for encoding \"%s\" already exists",
+							  collname, pg_encoding_to_char(collencoding))));
 	}
 
 	/* open pg_collation; see below about the lock level */

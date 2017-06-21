@@ -213,7 +213,7 @@ spg_range_quad_picksplit(PG_FUNCTION_ARGS)
 			   *upperBounds;
 
 	typcache = range_get_typcache(fcinfo,
-						  RangeTypeGetOid(DatumGetRangeType(in->datums[0])));
+								  RangeTypeGetOid(DatumGetRangeType(in->datums[0])));
 
 	/* Allocate memory for bounds */
 	lowerBounds = palloc(sizeof(RangeBound) * in->nTuples);
@@ -347,7 +347,7 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 			 */
 			if (strategy != RANGESTRAT_CONTAINS_ELEM)
 				empty = RangeIsEmpty(
-							 DatumGetRangeType(in->scankeys[i].sk_argument));
+									 DatumGetRangeType(in->scankeys[i].sk_argument));
 			else
 				empty = false;
 
@@ -417,7 +417,7 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 		/* This node has a centroid. Fetch it. */
 		centroid = DatumGetRangeType(in->prefixDatum);
 		typcache = range_get_typcache(fcinfo,
-							   RangeTypeGetOid(DatumGetRangeType(centroid)));
+									  RangeTypeGetOid(DatumGetRangeType(centroid)));
 		range_deserialize(typcache, centroid, &centroidLower, &centroidUpper,
 						  &centroidEmpty);
 
@@ -574,7 +574,7 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 					 */
 					cmp = adjacent_inner_consistent(typcache, &lower,
 													&centroidUpper,
-										   prevCentroid ? &prevUpper : NULL);
+													prevCentroid ? &prevUpper : NULL);
 					if (cmp > 0)
 						which1 = (1 << 1) | (1 << 4);
 					else if (cmp < 0)
@@ -590,7 +590,7 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 					 */
 					cmp = adjacent_inner_consistent(typcache, &upper,
 													&centroidLower,
-										   prevCentroid ? &prevLower : NULL);
+													prevCentroid ? &prevLower : NULL);
 					if (cmp > 0)
 						which2 = (1 << 1) | (1 << 2);
 					else if (cmp < 0)
@@ -973,7 +973,7 @@ spg_range_quad_leaf_consistent(PG_FUNCTION_ARGS)
 				break;
 			case RANGESTRAT_CONTAINED_BY:
 				res = range_contained_by_internal(typcache, leafRange,
-												DatumGetRangeType(keyDatum));
+												  DatumGetRangeType(keyDatum));
 				break;
 			case RANGESTRAT_CONTAINS_ELEM:
 				res = range_contains_elem_internal(typcache, leafRange,

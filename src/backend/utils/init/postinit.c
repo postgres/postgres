@@ -322,8 +322,8 @@ CheckMyDatabase(const char *name, bool am_superuser)
 		if (!dbform->datallowconn)
 			ereport(FATAL,
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-			 errmsg("database \"%s\" is not currently accepting connections",
-					name)));
+					 errmsg("database \"%s\" is not currently accepting connections",
+							name)));
 
 		/*
 		 * Check privilege to connect to the database.  (The am_superuser test
@@ -375,17 +375,17 @@ CheckMyDatabase(const char *name, bool am_superuser)
 
 	if (pg_perm_setlocale(LC_COLLATE, collate) == NULL)
 		ereport(FATAL,
-			(errmsg("database locale is incompatible with operating system"),
-			 errdetail("The database was initialized with LC_COLLATE \"%s\", "
-					   " which is not recognized by setlocale().", collate),
-			 errhint("Recreate the database with another locale or install the missing locale.")));
+				(errmsg("database locale is incompatible with operating system"),
+				 errdetail("The database was initialized with LC_COLLATE \"%s\", "
+						   " which is not recognized by setlocale().", collate),
+				 errhint("Recreate the database with another locale or install the missing locale.")));
 
 	if (pg_perm_setlocale(LC_CTYPE, ctype) == NULL)
 		ereport(FATAL,
-			(errmsg("database locale is incompatible with operating system"),
-			 errdetail("The database was initialized with LC_CTYPE \"%s\", "
-					   " which is not recognized by setlocale().", ctype),
-			 errhint("Recreate the database with another locale or install the missing locale.")));
+				(errmsg("database locale is incompatible with operating system"),
+				 errdetail("The database was initialized with LC_CTYPE \"%s\", "
+						   " which is not recognized by setlocale().", ctype),
+				 errhint("Recreate the database with another locale or install the missing locale.")));
 
 	/* Make the locale settings visible as GUC variables, too */
 	SetConfigOption("lc_collate", collate, PGC_INTERNAL, PGC_S_OVERRIDE);
@@ -757,7 +757,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 		else
 			ereport(FATAL,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-			errmsg("must be superuser to connect during database shutdown")));
+					 errmsg("must be superuser to connect during database shutdown")));
 	}
 
 	/*
@@ -767,7 +767,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	{
 		ereport(FATAL,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-			 errmsg("must be superuser to connect in binary upgrade mode")));
+				 errmsg("must be superuser to connect in binary upgrade mode")));
 	}
 
 	/*
@@ -949,7 +949,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 			ereport(FATAL,
 					(errcode(ERRCODE_UNDEFINED_DATABASE),
 					 errmsg("database \"%s\" does not exist", dbname),
-			   errdetail("It seems to have just been dropped or renamed.")));
+					 errdetail("It seems to have just been dropped or renamed.")));
 	}
 
 	/*
@@ -967,8 +967,8 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 						(errcode(ERRCODE_UNDEFINED_DATABASE),
 						 errmsg("database \"%s\" does not exist",
 								dbname),
-					errdetail("The database subdirectory \"%s\" is missing.",
-							  fullpath)));
+						 errdetail("The database subdirectory \"%s\" is missing.",
+								   fullpath)));
 			else
 				ereport(FATAL,
 						(errcode_for_file_access(),

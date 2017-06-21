@@ -194,18 +194,18 @@ cleanup_directories_atexit(void)
 	{
 		if (made_new_pgdata || found_existing_pgdata)
 			fprintf(stderr,
-			  _("%s: data directory \"%s\" not removed at user's request\n"),
+					_("%s: data directory \"%s\" not removed at user's request\n"),
 					progname, basedir);
 
 		if (made_new_xlogdir || found_existing_xlogdir)
 			fprintf(stderr,
-			   _("%s: WAL directory \"%s\" not removed at user's request\n"),
+					_("%s: WAL directory \"%s\" not removed at user's request\n"),
 					progname, xlog_dir);
 	}
 
 	if (made_tablespace_dirs || found_tablespace_dirs)
 		fprintf(stderr,
-			 _("%s: changes to tablespace directories will not be undone\n"),
+				_("%s: changes to tablespace directories will not be undone\n"),
 				progname);
 }
 
@@ -332,13 +332,13 @@ usage(void)
 	printf(_("  -D, --pgdata=DIRECTORY receive base backup into directory\n"));
 	printf(_("  -F, --format=p|t       output format (plain (default), tar)\n"));
 	printf(_("  -r, --max-rate=RATE    maximum transfer rate to transfer data directory\n"
-	  "                         (in kB/s, or use suffix \"k\" or \"M\")\n"));
+			 "                         (in kB/s, or use suffix \"k\" or \"M\")\n"));
 	printf(_("  -R, --write-recovery-conf\n"
-		  "                         write recovery.conf for replication\n"));
+			 "                         write recovery.conf for replication\n"));
 	printf(_("  -S, --slot=SLOTNAME    replication slot to use\n"));
 	printf(_("      --no-slot          prevent creation of temporary replication slot\n"));
 	printf(_("  -T, --tablespace-mapping=OLDDIR=NEWDIR\n"
-	  "                         relocate tablespace in OLDDIR to NEWDIR\n"));
+			 "                         relocate tablespace in OLDDIR to NEWDIR\n"));
 	printf(_("  -X, --wal-method=none|fetch|stream\n"
 			 "                         include required WAL files with specified method\n"));
 	printf(_("      --waldir=WALDIR    location for the write-ahead log directory\n"));
@@ -414,7 +414,7 @@ reached_end_position(XLogRecPtr segendpos, uint32 timeline,
 			if (sscanf(xlogend, "%X/%X", &hi, &lo) != 2)
 			{
 				fprintf(stderr,
-				  _("%s: could not parse write-ahead log location \"%s\"\n"),
+						_("%s: could not parse write-ahead log location \"%s\"\n"),
 						progname, xlogend);
 				exit(1);
 			}
@@ -771,8 +771,8 @@ progress_report(int tablespacenum, const char *filename, bool force)
 					tablespacenum, tablespacecount,
 			/* Prefix with "..." if we do leading truncation */
 					truncate ? "..." : "",
-			truncate ? VERBOSE_FILENAME_LENGTH - 3 : VERBOSE_FILENAME_LENGTH,
-			truncate ? VERBOSE_FILENAME_LENGTH - 3 : VERBOSE_FILENAME_LENGTH,
+					truncate ? VERBOSE_FILENAME_LENGTH - 3 : VERBOSE_FILENAME_LENGTH,
+					truncate ? VERBOSE_FILENAME_LENGTH - 3 : VERBOSE_FILENAME_LENGTH,
 			/* Truncate filename at beginning if it's too long */
 					truncate ? filename + strlen(filename) - VERBOSE_FILENAME_LENGTH + 3 : filename);
 		}
@@ -1112,7 +1112,7 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 				if (gzclose(ztarfile) != 0)
 				{
 					fprintf(stderr,
-					   _("%s: could not close compressed file \"%s\": %s\n"),
+							_("%s: could not close compressed file \"%s\": %s\n"),
 							progname, filename, get_gz_error(ztarfile));
 					disconnect_and_exit(1);
 				}
@@ -1412,11 +1412,11 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 						 */
 						if (!((pg_str_endswith(filename, "/pg_wal") ||
 							   pg_str_endswith(filename, "/pg_xlog") ||
-							 pg_str_endswith(filename, "/archive_status")) &&
+							   pg_str_endswith(filename, "/archive_status")) &&
 							  errno == EEXIST))
 						{
 							fprintf(stderr,
-							_("%s: could not create directory \"%s\": %s\n"),
+									_("%s: could not create directory \"%s\": %s\n"),
 									progname, filename, strerror(errno));
 							disconnect_and_exit(1);
 						}
@@ -1758,7 +1758,7 @@ BaseBackup(void)
 
 	if (verbose)
 		fprintf(stderr,
-		_("%s: initiating base backup, waiting for checkpoint to complete\n"),
+				_("%s: initiating base backup, waiting for checkpoint to complete\n"),
 				progname);
 
 	if (showprogress && !verbose)
@@ -1907,14 +1907,14 @@ BaseBackup(void)
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
 		fprintf(stderr,
-		 _("%s: could not get write-ahead log end position from server: %s"),
+				_("%s: could not get write-ahead log end position from server: %s"),
 				progname, PQerrorMessage(conn));
 		disconnect_and_exit(1);
 	}
 	if (PQntuples(res) != 1)
 	{
 		fprintf(stderr,
-			 _("%s: no write-ahead log end position returned from server\n"),
+				_("%s: no write-ahead log end position returned from server\n"),
 				progname);
 		disconnect_and_exit(1);
 	}
@@ -1998,7 +1998,7 @@ BaseBackup(void)
 		if (sscanf(xlogend, "%X/%X", &hi, &lo) != 2)
 		{
 			fprintf(stderr,
-				  _("%s: could not parse write-ahead log location \"%s\"\n"),
+					_("%s: could not parse write-ahead log location \"%s\"\n"),
 					progname, xlogend);
 			disconnect_and_exit(1);
 		}
@@ -2312,7 +2312,7 @@ main(int argc, char **argv)
 	if (format == 't' && includewal == STREAM_WAL && strcmp(basedir, "-") == 0)
 	{
 		fprintf(stderr,
-			 _("%s: cannot stream write-ahead logs in tar mode to stdout\n"),
+				_("%s: cannot stream write-ahead logs in tar mode to stdout\n"),
 				progname);
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 				progname);
@@ -2322,7 +2322,7 @@ main(int argc, char **argv)
 	if (replication_slot && includewal != STREAM_WAL)
 	{
 		fprintf(stderr,
-			_("%s: replication slots can only be used with WAL streaming\n"),
+				_("%s: replication slots can only be used with WAL streaming\n"),
 				progname);
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 				progname);
@@ -2405,7 +2405,7 @@ main(int argc, char **argv)
 		 * renamed to pg_wal in post-10 clusters.
 		 */
 		linkloc = psprintf("%s/%s", basedir,
-						 PQserverVersion(conn) < MINIMUM_VERSION_FOR_PG_WAL ?
+						   PQserverVersion(conn) < MINIMUM_VERSION_FOR_PG_WAL ?
 						   "pg_xlog" : "pg_wal");
 
 #ifdef HAVE_SYMLINK

@@ -49,8 +49,8 @@ compareWORD(const void *a, const void *b)
 	int			res;
 
 	res = tsCompareString(
-			   ((const ParsedWord *) a)->word, ((const ParsedWord *) a)->len,
-			   ((const ParsedWord *) b)->word, ((const ParsedWord *) b)->len,
+						  ((const ParsedWord *) a)->word, ((const ParsedWord *) a)->len,
+						  ((const ParsedWord *) b)->word, ((const ParsedWord *) b)->len,
 						  false);
 
 	if (res == 0)
@@ -390,8 +390,8 @@ add_to_tsvector(void *_state, char *elem_value, int elem_len)
 			item_vector = make_tsvector(prs);
 
 			state->result = (TSVector) DirectFunctionCall2(tsvector_concat,
-											 TSVectorGetDatum(state->result),
-											   PointerGetDatum(item_vector));
+														   TSVectorGetDatum(state->result),
+														   PointerGetDatum(item_vector));
 		}
 		else
 			state->result = make_tsvector(prs);
@@ -472,7 +472,7 @@ pushval_morph(Datum opaque, TSQueryParserState state, char *strval, int lenval, 
 							  prs.words[count].word,
 							  prs.words[count].len,
 							  weight,
-						  ((prs.words[count].flags & TSL_PREFIX) || prefix));
+							  ((prs.words[count].flags & TSL_PREFIX) || prefix));
 					pfree(prs.words[count].word);
 					if (cnt)
 						pushOperator(state, OP_AND, 0);

@@ -604,7 +604,7 @@ isRelDataFile(const char *path)
 		else
 		{
 			nmatch = sscanf(path, "pg_tblspc/%u/PG_%20s/%u/%u.%u",
-						  &rnode.spcNode, buf, &rnode.dbNode, &rnode.relNode,
+							&rnode.spcNode, buf, &rnode.dbNode, &rnode.relNode,
 							&segNo);
 			if (nmatch == 4 || nmatch == 5)
 				matched = true;

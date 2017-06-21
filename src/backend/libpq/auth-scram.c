@@ -674,8 +674,8 @@ read_any_attr(char **input, char *attr_p)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
 				 errmsg("malformed SCRAM message"),
-			 errdetail("Attribute expected, but found invalid character %s.",
-					   sanitize_char(attr))));
+				 errdetail("Attribute expected, but found invalid character %s.",
+						   sanitize_char(attr))));
 	if (attr_p)
 		*attr_p = attr;
 	begin++;
@@ -1062,7 +1062,7 @@ read_client_final_message(scram_state *state, char *input)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
 				 errmsg("malformed SCRAM message"),
-			errdetail("Garbage found at the end of client-final-message.")));
+				 errdetail("Garbage found at the end of client-final-message.")));
 
 	state->client_final_message_without_proof = palloc(proof - begin + 1);
 	memcpy(state->client_final_message_without_proof, input, proof - begin);

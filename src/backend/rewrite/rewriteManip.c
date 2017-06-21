@@ -1000,7 +1000,7 @@ AddQual(Query *parsetree, Node *qual)
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			  errmsg("conditional utility statements are not implemented")));
+					 errmsg("conditional utility statements are not implemented")));
 	}
 
 	if (parsetree->setOperations != NULL)
@@ -1166,7 +1166,7 @@ replace_rte_variables_mutator(Node *node,
 			 */
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				   errmsg("WHERE CURRENT OF on a view is not implemented")));
+					 errmsg("WHERE CURRENT OF on a view is not implemented")));
 		}
 		/* otherwise fall through to copy the expr normally */
 	}
@@ -1397,7 +1397,7 @@ ReplaceVarsFromTargetList_callback(Var *var,
 				 */
 				return coerce_to_domain((Node *) makeNullConst(var->vartype,
 															   var->vartypmod,
-															 var->varcollid),
+															   var->varcollid),
 										InvalidOid, -1,
 										var->vartype,
 										COERCE_IMPLICIT_CAST,

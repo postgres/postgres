@@ -157,7 +157,7 @@ static StringInfo query_to_xml_internal(const char *query, char *tablename,
 					  const char *xmlschema, bool nulls, bool tableforest,
 					  const char *targetns, bool top_level);
 static const char *map_sql_table_to_xmlschema(TupleDesc tupdesc, Oid relid,
-						 bool nulls, bool tableforest, const char *targetns);
+						   bool nulls, bool tableforest, const char *targetns);
 static const char *map_sql_schema_to_xmlschema_types(Oid nspid,
 								  List *relid_list, bool nulls,
 								  bool tableforest, const char *targetns);
@@ -798,7 +798,7 @@ xmlpi(char *target, text *arg, bool arg_is_null, bool *result_is_null)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_XML_PROCESSING_INSTRUCTION),
 					 errmsg("invalid XML processing instruction"),
-			errdetail("XML processing instruction cannot contain \"?>\".")));
+					 errdetail("XML processing instruction cannot contain \"?>\".")));
 
 		appendStringInfoChar(&buf, ' ');
 		appendStringInfoString(&buf, string + strspn(string, " "));
@@ -1439,7 +1439,7 @@ xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
 								 NULL,
 								 "UTF-8",
 								 XML_PARSE_NOENT | XML_PARSE_DTDATTR
-						   | (preserve_whitespace ? 0 : XML_PARSE_NOBLANKS));
+								 | (preserve_whitespace ? 0 : XML_PARSE_NOBLANKS));
 			if (doc == NULL || xmlerrcxt->err_occurred)
 				xml_ereport(xmlerrcxt, ERROR, ERRCODE_INVALID_XML_DOCUMENT,
 							"invalid XML document");
@@ -1455,7 +1455,7 @@ xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
 									  &count, &version, NULL, &standalone);
 			if (res_code != 0)
 				xml_ereport_by_code(ERROR, ERRCODE_INVALID_XML_CONTENT,
-							  "invalid XML content: invalid XML declaration",
+									"invalid XML content: invalid XML declaration",
 									res_code);
 
 			doc = xmlNewDoc(version);
@@ -1467,7 +1467,7 @@ xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
 			if (*(utf8string + count))
 			{
 				res_code = xmlParseBalancedChunkMemory(doc, NULL, NULL, 0,
-												   utf8string + count, NULL);
+													   utf8string + count, NULL);
 				if (res_code != 0 || xmlerrcxt->err_occurred)
 					xml_ereport(xmlerrcxt, ERROR, ERRCODE_INVALID_XML_CONTENT,
 								"invalid XML content");
@@ -1623,7 +1623,7 @@ xml_errorHandler(void *data, xmlErrorPtr error)
 	xmlParserInputPtr input = (ctxt != NULL) ? ctxt->input : NULL;
 	xmlNodePtr	node = error->node;
 	const xmlChar *name = (node != NULL &&
-						 node->type == XML_ELEMENT_NODE) ? node->name : NULL;
+						   node->type == XML_ELEMENT_NODE) ? node->name : NULL;
 	int			domain = error->domain;
 	int			level = error->level;
 	StringInfo	errorBuf;
@@ -2171,10 +2171,10 @@ map_sql_value_to_xml_value(Datum value, Oid type, bool xml_escape_strings)
 
 						if (xmlbinary == XMLBINARY_BASE64)
 							xmlTextWriterWriteBase64(writer, VARDATA_ANY(bstr),
-												 0, VARSIZE_ANY_EXHDR(bstr));
+													 0, VARSIZE_ANY_EXHDR(bstr));
 						else
 							xmlTextWriterWriteBinHex(writer, VARDATA_ANY(bstr),
-												 0, VARSIZE_ANY_EXHDR(bstr));
+													 0, VARSIZE_ANY_EXHDR(bstr));
 
 						/* we MUST do this now to flush data out to the buffer */
 						xmlFreeTextWriter(writer);
@@ -2385,8 +2385,8 @@ database_get_xml_visible_tables(void)
 							 CppAsString2(RELKIND_RELATION) ","
 							 CppAsString2(RELKIND_MATVIEW) ","
 							 CppAsString2(RELKIND_VIEW) ")"
-				" AND pg_catalog.has_table_privilege(pg_class.oid, 'SELECT')"
-						  " AND relnamespace IN (" XML_VISIBLE_SCHEMAS ");");
+							 " AND pg_catalog.has_table_privilege(pg_class.oid, 'SELECT')"
+							 " AND relnamespace IN (" XML_VISIBLE_SCHEMAS ");");
 }
 
 
@@ -2405,7 +2405,7 @@ table_to_xml_internal(Oid relid,
 	initStringInfo(&query);
 	appendStringInfo(&query, "SELECT * FROM %s",
 					 DatumGetCString(DirectFunctionCall1(regclassout,
-												  ObjectIdGetDatum(relid))));
+														 ObjectIdGetDatum(relid))));
 	return query_to_xml_internal(query.data, get_rel_name(relid),
 								 xmlschema, nulls, tableforest,
 								 targetns, top_level);
@@ -2421,8 +2421,8 @@ table_to_xml(PG_FUNCTION_ARGS)
 	const char *targetns = text_to_cstring(PG_GETARG_TEXT_PP(3));
 
 	PG_RETURN_XML_P(stringinfo_to_xmltype(table_to_xml_internal(relid, NULL,
-														  nulls, tableforest,
-														   targetns, true)));
+																nulls, tableforest,
+																targetns, true)));
 }
 
 
@@ -2435,8 +2435,8 @@ query_to_xml(PG_FUNCTION_ARGS)
 	const char *targetns = text_to_cstring(PG_GETARG_TEXT_PP(3));
 
 	PG_RETURN_XML_P(stringinfo_to_xmltype(query_to_xml_internal(query, NULL,
-													NULL, nulls, tableforest,
-														   targetns, true)));
+																NULL, nulls, tableforest,
+																targetns, true)));
 }
 
 
@@ -2640,7 +2640,7 @@ cursor_to_xmlschema(PG_FUNCTION_ARGS)
 
 	xmlschema = _SPI_strdup(map_sql_table_to_xmlschema(portal->tupDesc,
 													   InvalidOid, nulls,
-													 tableforest, targetns));
+													   tableforest, targetns));
 	SPI_finish();
 
 	PG_RETURN_XML_P(cstring_to_xmltype(xmlschema));
@@ -2663,8 +2663,8 @@ table_to_xml_and_xmlschema(PG_FUNCTION_ARGS)
 	heap_close(rel, NoLock);
 
 	PG_RETURN_XML_P(stringinfo_to_xmltype(table_to_xml_internal(relid,
-											   xmlschema, nulls, tableforest,
-														   targetns, true)));
+																xmlschema, nulls, tableforest,
+																targetns, true)));
 }
 
 
@@ -2689,13 +2689,13 @@ query_to_xml_and_xmlschema(PG_FUNCTION_ARGS)
 		elog(ERROR, "SPI_cursor_open(\"%s\") failed", query);
 
 	xmlschema = _SPI_strdup(map_sql_table_to_xmlschema(portal->tupDesc,
-								  InvalidOid, nulls, tableforest, targetns));
+													   InvalidOid, nulls, tableforest, targetns));
 	SPI_cursor_close(portal);
 	SPI_finish();
 
 	PG_RETURN_XML_P(stringinfo_to_xmltype(query_to_xml_internal(query, NULL,
-											   xmlschema, nulls, tableforest,
-														   targetns, true)));
+																xmlschema, nulls, tableforest,
+																targetns, true)));
 }
 
 
@@ -2762,7 +2762,7 @@ schema_to_xml(PG_FUNCTION_ARGS)
 	nspid = LookupExplicitNamespace(schemaname, false);
 
 	PG_RETURN_XML_P(stringinfo_to_xmltype(schema_to_xml_internal(nspid, NULL,
-									   nulls, tableforest, targetns, true)));
+																 nulls, tableforest, targetns, true)));
 }
 
 
@@ -2827,8 +2827,8 @@ schema_to_xmlschema_internal(const char *schemaname, bool nulls,
 						   map_sql_typecoll_to_xmlschema_types(tupdesc_list));
 
 	appendStringInfoString(result,
-						 map_sql_schema_to_xmlschema_types(nspid, relid_list,
-											  nulls, tableforest, targetns));
+						   map_sql_schema_to_xmlschema_types(nspid, relid_list,
+															 nulls, tableforest, targetns));
 
 	xsd_schema_element_end(result);
 
@@ -2847,7 +2847,7 @@ schema_to_xmlschema(PG_FUNCTION_ARGS)
 	const char *targetns = text_to_cstring(PG_GETARG_TEXT_PP(3));
 
 	PG_RETURN_XML_P(stringinfo_to_xmltype(schema_to_xmlschema_internal(NameStr(*name),
-											 nulls, tableforest, targetns)));
+																	   nulls, tableforest, targetns)));
 }
 
 
@@ -2869,8 +2869,8 @@ schema_to_xml_and_xmlschema(PG_FUNCTION_ARGS)
 											 tableforest, targetns);
 
 	PG_RETURN_XML_P(stringinfo_to_xmltype(schema_to_xml_internal(nspid,
-													  xmlschema->data, nulls,
-											  tableforest, targetns, true)));
+																 xmlschema->data, nulls,
+																 tableforest, targetns, true)));
 }
 
 
@@ -2930,7 +2930,7 @@ database_to_xml(PG_FUNCTION_ARGS)
 	const char *targetns = text_to_cstring(PG_GETARG_TEXT_PP(2));
 
 	PG_RETURN_XML_P(stringinfo_to_xmltype(database_to_xml_internal(NULL, nulls,
-													tableforest, targetns)));
+																   tableforest, targetns)));
 }
 
 
@@ -2985,7 +2985,7 @@ database_to_xmlschema(PG_FUNCTION_ARGS)
 	const char *targetns = text_to_cstring(PG_GETARG_TEXT_PP(2));
 
 	PG_RETURN_XML_P(stringinfo_to_xmltype(database_to_xmlschema_internal(nulls,
-													tableforest, targetns)));
+																		 tableforest, targetns)));
 }
 
 
@@ -3000,7 +3000,7 @@ database_to_xml_and_xmlschema(PG_FUNCTION_ARGS)
 	xmlschema = database_to_xmlschema_internal(nulls, tableforest, targetns);
 
 	PG_RETURN_XML_P(stringinfo_to_xmltype(database_to_xml_internal(xmlschema->data,
-											 nulls, tableforest, targetns)));
+																   nulls, tableforest, targetns)));
 }
 
 
@@ -3065,14 +3065,14 @@ map_sql_table_to_xmlschema(TupleDesc tupdesc, Oid relid, bool nulls,
 											   true, false);
 
 		tabletypename = map_multipart_sql_identifier_to_xml_name("TableType",
-											 get_database_name(MyDatabaseId),
-								  get_namespace_name(reltuple->relnamespace),
-												 NameStr(reltuple->relname));
+																 get_database_name(MyDatabaseId),
+																 get_namespace_name(reltuple->relnamespace),
+																 NameStr(reltuple->relname));
 
 		rowtypename = map_multipart_sql_identifier_to_xml_name("RowType",
-											 get_database_name(MyDatabaseId),
-								  get_namespace_name(reltuple->relnamespace),
-												 NameStr(reltuple->relname));
+															   get_database_name(MyDatabaseId),
+															   get_namespace_name(reltuple->relnamespace),
+															   NameStr(reltuple->relname));
 
 		ReleaseSysCache(tuple);
 	}
@@ -3090,7 +3090,7 @@ map_sql_table_to_xmlschema(TupleDesc tupdesc, Oid relid, bool nulls,
 	xsd_schema_element_start(&result, targetns);
 
 	appendStringInfoString(&result,
-				   map_sql_typecoll_to_xmlschema_types(list_make1(tupdesc)));
+						   map_sql_typecoll_to_xmlschema_types(list_make1(tupdesc)));
 
 	appendStringInfo(&result,
 					 "<xsd:complexType name=\"%s\">\n"
@@ -3102,10 +3102,10 @@ map_sql_table_to_xmlschema(TupleDesc tupdesc, Oid relid, bool nulls,
 		if (tupdesc->attrs[i]->attisdropped)
 			continue;
 		appendStringInfo(&result,
-			   "    <xsd:element name=\"%s\" type=\"%s\"%s></xsd:element>\n",
-		  map_sql_identifier_to_xml_name(NameStr(tupdesc->attrs[i]->attname),
-										 true, false),
-				   map_sql_type_to_xml_name(tupdesc->attrs[i]->atttypid, -1),
+						 "    <xsd:element name=\"%s\" type=\"%s\"%s></xsd:element>\n",
+						 map_sql_identifier_to_xml_name(NameStr(tupdesc->attrs[i]->attname),
+														true, false),
+						 map_sql_type_to_xml_name(tupdesc->attrs[i]->atttypid, -1),
 						 nulls ? " nillable=\"true\"" : " minOccurs=\"0\"");
 	}
 
@@ -3180,9 +3180,9 @@ map_sql_schema_to_xmlschema_types(Oid nspid, List *relid_list, bool nulls,
 		char	   *relname = get_rel_name(relid);
 		char	   *xmltn = map_sql_identifier_to_xml_name(relname, true, false);
 		char	   *tabletypename = map_multipart_sql_identifier_to_xml_name(tableforest ? "RowType" : "TableType",
-																	  dbname,
-																	 nspname,
-																	relname);
+																			 dbname,
+																			 nspname,
+																			 relname);
 
 		if (!tableforest)
 			appendStringInfo(&result,
@@ -3247,9 +3247,9 @@ map_sql_catalog_to_xmlschema_types(List *nspid_list, bool nulls,
 		char	   *nspname = get_namespace_name(nspid);
 		char	   *xmlsn = map_sql_identifier_to_xml_name(nspname, true, false);
 		char	   *schematypename = map_multipart_sql_identifier_to_xml_name("SchemaType",
-																	  dbname,
-																	 nspname,
-																	   NULL);
+																			  dbname,
+																			  nspname,
+																			  NULL);
 
 		appendStringInfo(&result,
 						 "    <xsd:element name=\"%s\" type=\"%s\"/>\n",
@@ -3361,9 +3361,9 @@ map_sql_type_to_xml_name(Oid typeoid, int typmod)
 
 				appendStringInfoString(&result,
 									   map_multipart_sql_identifier_to_xml_name((typtuple->typtype == TYPTYPE_DOMAIN) ? "Domain" : "UDT",
-											 get_database_name(MyDatabaseId),
-								  get_namespace_name(typtuple->typnamespace),
-												NameStr(typtuple->typname)));
+																				get_database_name(MyDatabaseId),
+																				get_namespace_name(typtuple->typnamespace),
+																				NameStr(typtuple->typname)));
 
 				ReleaseSysCache(tuple);
 			}
@@ -3471,15 +3471,15 @@ map_sql_type_to_xmlschema_type(Oid typeoid, int typmod)
 				appendStringInfo(&result,
 								 "  <xsd:restriction base=\"xsd:%s\">\n"
 								 "  </xsd:restriction>\n",
-				xmlbinary == XMLBINARY_BASE64 ? "base64Binary" : "hexBinary");
+								 xmlbinary == XMLBINARY_BASE64 ? "base64Binary" : "hexBinary");
 				break;
 
 			case NUMERICOID:
 				if (typmod != -1)
 					appendStringInfo(&result,
-								 "  <xsd:restriction base=\"xsd:decimal\">\n"
+									 "  <xsd:restriction base=\"xsd:decimal\">\n"
 									 "    <xsd:totalDigits value=\"%d\"/>\n"
-								   "    <xsd:fractionDigits value=\"%d\"/>\n"
+									 "    <xsd:fractionDigits value=\"%d\"/>\n"
 									 "  </xsd:restriction>\n",
 									 ((typmod - VARHDRSZ) >> 16) & 0xffff,
 									 (typmod - VARHDRSZ) & 0xffff);
@@ -3506,16 +3506,16 @@ map_sql_type_to_xmlschema_type(Oid typeoid, int typmod)
 			case INT8OID:
 				appendStringInfo(&result,
 								 "  <xsd:restriction base=\"xsd:long\">\n"
-					   "    <xsd:maxInclusive value=\"" INT64_FORMAT "\"/>\n"
-					   "    <xsd:minInclusive value=\"" INT64_FORMAT "\"/>\n"
+								 "    <xsd:maxInclusive value=\"" INT64_FORMAT "\"/>\n"
+								 "    <xsd:minInclusive value=\"" INT64_FORMAT "\"/>\n"
 								 "  </xsd:restriction>\n",
-							   (((uint64) 1) << (sizeof(int64) * 8 - 1)) - 1,
+								 (((uint64) 1) << (sizeof(int64) * 8 - 1)) - 1,
 								 (((uint64) 1) << (sizeof(int64) * 8 - 1)));
 				break;
 
 			case FLOAT4OID:
 				appendStringInfoString(&result,
-				"  <xsd:restriction base=\"xsd:float\"></xsd:restriction>\n");
+									   "  <xsd:restriction base=\"xsd:float\"></xsd:restriction>\n");
 				break;
 
 			case FLOAT8OID:
@@ -3535,19 +3535,19 @@ map_sql_type_to_xmlschema_type(Oid typeoid, int typmod)
 
 					if (typmod == -1)
 						appendStringInfo(&result,
-									"  <xsd:restriction base=\"xsd:time\">\n"
+										 "  <xsd:restriction base=\"xsd:time\">\n"
 										 "    <xsd:pattern value=\"\\p{Nd}{2}:\\p{Nd}{2}:\\p{Nd}{2}(.\\p{Nd}+)?%s\"/>\n"
 										 "  </xsd:restriction>\n", tz);
 					else if (typmod == 0)
 						appendStringInfo(&result,
-									"  <xsd:restriction base=\"xsd:time\">\n"
+										 "  <xsd:restriction base=\"xsd:time\">\n"
 										 "    <xsd:pattern value=\"\\p{Nd}{2}:\\p{Nd}{2}:\\p{Nd}{2}%s\"/>\n"
 										 "  </xsd:restriction>\n", tz);
 					else
 						appendStringInfo(&result,
-									"  <xsd:restriction base=\"xsd:time\">\n"
+										 "  <xsd:restriction base=\"xsd:time\">\n"
 										 "    <xsd:pattern value=\"\\p{Nd}{2}:\\p{Nd}{2}:\\p{Nd}{2}.\\p{Nd}{%d}%s\"/>\n"
-							"  </xsd:restriction>\n", typmod - VARHDRSZ, tz);
+										 "  </xsd:restriction>\n", typmod - VARHDRSZ, tz);
 					break;
 				}
 
@@ -3558,25 +3558,25 @@ map_sql_type_to_xmlschema_type(Oid typeoid, int typmod)
 
 					if (typmod == -1)
 						appendStringInfo(&result,
-								"  <xsd:restriction base=\"xsd:dateTime\">\n"
+										 "  <xsd:restriction base=\"xsd:dateTime\">\n"
 										 "    <xsd:pattern value=\"\\p{Nd}{4}-\\p{Nd}{2}-\\p{Nd}{2}T\\p{Nd}{2}:\\p{Nd}{2}:\\p{Nd}{2}(.\\p{Nd}+)?%s\"/>\n"
 										 "  </xsd:restriction>\n", tz);
 					else if (typmod == 0)
 						appendStringInfo(&result,
-								"  <xsd:restriction base=\"xsd:dateTime\">\n"
+										 "  <xsd:restriction base=\"xsd:dateTime\">\n"
 										 "    <xsd:pattern value=\"\\p{Nd}{4}-\\p{Nd}{2}-\\p{Nd}{2}T\\p{Nd}{2}:\\p{Nd}{2}:\\p{Nd}{2}%s\"/>\n"
 										 "  </xsd:restriction>\n", tz);
 					else
 						appendStringInfo(&result,
-								"  <xsd:restriction base=\"xsd:dateTime\">\n"
+										 "  <xsd:restriction base=\"xsd:dateTime\">\n"
 										 "    <xsd:pattern value=\"\\p{Nd}{4}-\\p{Nd}{2}-\\p{Nd}{2}T\\p{Nd}{2}:\\p{Nd}{2}:\\p{Nd}{2}.\\p{Nd}{%d}%s\"/>\n"
-							"  </xsd:restriction>\n", typmod - VARHDRSZ, tz);
+										 "  </xsd:restriction>\n", typmod - VARHDRSZ, tz);
 					break;
 				}
 
 			case DATEOID:
 				appendStringInfoString(&result,
-									"  <xsd:restriction base=\"xsd:date\">\n"
+									   "  <xsd:restriction base=\"xsd:date\">\n"
 									   "    <xsd:pattern value=\"\\p{Nd}{4}-\\p{Nd}{2}-\\p{Nd}{2}\"/>\n"
 									   "  </xsd:restriction>\n");
 				break;
@@ -3591,7 +3591,7 @@ map_sql_type_to_xmlschema_type(Oid typeoid, int typmod)
 
 					appendStringInfo(&result,
 									 "  <xsd:restriction base=\"%s\"/>\n",
-						map_sql_type_to_xml_name(base_typeoid, base_typmod));
+									 map_sql_type_to_xml_name(base_typeoid, base_typmod));
 				}
 				break;
 		}
@@ -3650,7 +3650,7 @@ SPI_sql_row_to_xmlelement(uint64 rownum, StringInfo result, char *tablename,
 			appendStringInfo(result, "  <%s>%s</%s>\n",
 							 colname,
 							 map_sql_value_to_xml_value(colval,
-							  SPI_gettypeid(SPI_tuptable->tupdesc, i), true),
+														SPI_gettypeid(SPI_tuptable->tupdesc, i), true),
 							 colname);
 	}
 
@@ -3772,7 +3772,7 @@ xml_xpathobjtoxmlarray(xmlXPathObjectPtr xpathobj,
 					for (i = 0; i < result; i++)
 					{
 						datum = PointerGetDatum(xml_xmlnodetoxmltype(xpathobj->nodesetval->nodeTab[i],
-																 xmlerrcxt));
+																	 xmlerrcxt));
 						(void) accumArrayResult(astate, datum, false,
 												XMLOID, CurrentMemoryContext);
 					}
@@ -3936,7 +3936,7 @@ xpath_internal(text *xpath_expr_text, xmltype *data, ArrayType *namespaces,
 					ns_names_uris_nulls[i * 2 + 1])
 					ereport(ERROR,
 							(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-					  errmsg("neither namespace name nor URI may be null")));
+							 errmsg("neither namespace name nor URI may be null")));
 				ns_name = TextDatumGetCString(ns_names_uris[i * 2]);
 				ns_uri = TextDatumGetCString(ns_names_uris[i * 2 + 1]);
 				if (xmlXPathRegisterNs(xpathctx,
@@ -4495,7 +4495,7 @@ XmlTableGetValue(TableFuncScanState *state, int colnum,
 				xmlChar    *str;
 
 				str = xmlNodeListGetString(xtCxt->doc,
-						   xpathobj->nodesetval->nodeTab[0]->xmlChildrenNode,
+										   xpathobj->nodesetval->nodeTab[0]->xmlChildrenNode,
 										   1);
 
 				if (str != NULL)
@@ -4546,8 +4546,8 @@ XmlTableGetValue(TableFuncScanState *state, int colnum,
 				for (i = 0; i < count; i++)
 				{
 					appendStringInfoText(&str,
-					   xml_xmlnodetoxmltype(xpathobj->nodesetval->nodeTab[i],
-											xtCxt->xmlerrcxt));
+										 xml_xmlnodetoxmltype(xpathobj->nodesetval->nodeTab[i],
+															  xtCxt->xmlerrcxt));
 				}
 				cstr = str.data;
 			}

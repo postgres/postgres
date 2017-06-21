@@ -182,7 +182,7 @@ main(int argc, char *argv[])
 		}
 
 		reindex_all_databases(maintenance_db, host, port, username,
-							prompt_password, progname, echo, quiet, verbose);
+							  prompt_password, progname, echo, quiet, verbose);
 	}
 	else if (syscatalog)
 	{
@@ -234,7 +234,7 @@ main(int argc, char *argv[])
 			for (cell = schemas.head; cell; cell = cell->next)
 			{
 				reindex_one_database(cell->val, dbname, "SCHEMA", host, port,
-						 username, prompt_password, progname, echo, verbose);
+									 username, prompt_password, progname, echo, verbose);
 			}
 		}
 
@@ -245,7 +245,7 @@ main(int argc, char *argv[])
 			for (cell = indexes.head; cell; cell = cell->next)
 			{
 				reindex_one_database(cell->val, dbname, "INDEX", host, port,
-						 username, prompt_password, progname, echo, verbose);
+									 username, prompt_password, progname, echo, verbose);
 			}
 		}
 		if (tables.head != NULL)
@@ -255,7 +255,7 @@ main(int argc, char *argv[])
 			for (cell = tables.head; cell; cell = cell->next)
 			{
 				reindex_one_database(cell->val, dbname, "TABLE", host, port,
-						 username, prompt_password, progname, echo, verbose);
+									 username, prompt_password, progname, echo, verbose);
 			}
 		}
 
@@ -265,7 +265,7 @@ main(int argc, char *argv[])
 		 */
 		if (indexes.head == NULL && tables.head == NULL && schemas.head == NULL)
 			reindex_one_database(NULL, dbname, "DATABASE", host, port,
-						 username, prompt_password, progname, echo, verbose);
+								 username, prompt_password, progname, echo, verbose);
 	}
 
 	exit(0);
@@ -274,7 +274,7 @@ main(int argc, char *argv[])
 static void
 reindex_one_database(const char *name, const char *dbname, const char *type,
 					 const char *host, const char *port, const char *username,
-			  enum trivalue prompt_password, const char *progname, bool echo,
+					 enum trivalue prompt_password, const char *progname, bool echo,
 					 bool verbose)
 {
 	PQExpBufferData sql;
@@ -327,7 +327,7 @@ static void
 reindex_all_databases(const char *maintenance_db,
 					  const char *host, const char *port,
 					  const char *username, enum trivalue prompt_password,
-				   const char *progname, bool echo, bool quiet, bool verbose)
+					  const char *progname, bool echo, bool quiet, bool verbose)
 {
 	PGconn	   *conn;
 	PGresult   *result;

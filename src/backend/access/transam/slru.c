@@ -907,22 +907,22 @@ SlruReportIOError(SlruCtl ctl, int pageno, TransactionId xid)
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not access status of transaction %u", xid),
-				 errdetail("Could not seek in file \"%s\" to offset %u: %m.",
-						   path, offset)));
+					 errdetail("Could not seek in file \"%s\" to offset %u: %m.",
+							   path, offset)));
 			break;
 		case SLRU_READ_FAILED:
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not access status of transaction %u", xid),
-			   errdetail("Could not read from file \"%s\" at offset %u: %m.",
-						 path, offset)));
+					 errdetail("Could not read from file \"%s\" at offset %u: %m.",
+							   path, offset)));
 			break;
 		case SLRU_WRITE_FAILED:
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not access status of transaction %u", xid),
-				errdetail("Could not write to file \"%s\" at offset %u: %m.",
-						  path, offset)));
+					 errdetail("Could not write to file \"%s\" at offset %u: %m.",
+							   path, offset)));
 			break;
 		case SLRU_FSYNC_FAILED:
 			ereport(ERROR,
@@ -1192,8 +1192,8 @@ restart:;
 	{
 		LWLockRelease(shared->ControlLock);
 		ereport(LOG,
-		  (errmsg("could not truncate directory \"%s\": apparent wraparound",
-				  ctl->Dir)));
+				(errmsg("could not truncate directory \"%s\": apparent wraparound",
+						ctl->Dir)));
 		return;
 	}
 

@@ -1358,8 +1358,8 @@ pg_newlocale_from_collation(Oid collid)
 			collator = ucol_open(collcollate, &status);
 			if (U_FAILURE(status))
 				ereport(ERROR,
-					 (errmsg("could not open collator for locale \"%s\": %s",
-							 collcollate, u_errorName(status))));
+						(errmsg("could not open collator for locale \"%s\": %s",
+								collcollate, u_errorName(status))));
 
 			result->info.icu.locale = strdup(collcollate);
 			result->info.icu.ucol = collator;
@@ -1368,7 +1368,7 @@ pg_newlocale_from_collation(Oid collid)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("ICU is not supported in this build"), \
-			   errhint("You need to rebuild PostgreSQL using --with-icu.")));
+					 errhint("You need to rebuild PostgreSQL using --with-icu.")));
 #endif							/* not USE_ICU */
 		}
 
@@ -1398,13 +1398,13 @@ pg_newlocale_from_collation(Oid collid)
 						(errmsg("collation \"%s\" has version mismatch",
 								NameStr(collform->collname)),
 						 errdetail("The collation in the database was created using version %s, "
-							 "but the operating system provides version %s.",
+								   "but the operating system provides version %s.",
 								   collversionstr, actual_versionstr),
 						 errhint("Rebuild all objects affected by this collation and run "
 								 "ALTER COLLATION %s REFRESH VERSION, "
-					   "or build PostgreSQL with the right library version.",
+								 "or build PostgreSQL with the right library version.",
 								 quote_qualified_identifier(get_namespace_name(collform->collnamespace),
-											 NameStr(collform->collname)))));
+															NameStr(collform->collname)))));
 		}
 
 		ReleaseSysCache(tp);
@@ -1480,8 +1480,8 @@ init_icu_converter(void)
 	conv = ucnv_open(icu_encoding_name, &status);
 	if (U_FAILURE(status))
 		ereport(ERROR,
-			  (errmsg("could not open ICU converter for encoding \"%s\": %s",
-					  icu_encoding_name, u_errorName(status))));
+				(errmsg("could not open ICU converter for encoding \"%s\": %s",
+						icu_encoding_name, u_errorName(status))));
 
 	icu_converter = conv;
 }

@@ -972,7 +972,7 @@ static struct config_bool ConfigureNamesBool[] =
 		{"fsync", PGC_SIGHUP, WAL_SETTINGS,
 			gettext_noop("Forces synchronization of updates to disk."),
 			gettext_noop("The server will use the fsync() system call in several places to make "
-			"sure that updates are physically written to disk. This insures "
+						 "sure that updates are physically written to disk. This insures "
 						 "that a database cluster will recover to a consistent state after "
 						 "an operating system or hardware crash.")
 		},
@@ -984,10 +984,10 @@ static struct config_bool ConfigureNamesBool[] =
 		{"ignore_checksum_failure", PGC_SUSET, DEVELOPER_OPTIONS,
 			gettext_noop("Continues processing after a checksum failure."),
 			gettext_noop("Detection of a checksum failure normally causes PostgreSQL to "
-				"report an error, aborting the current transaction. Setting "
+						 "report an error, aborting the current transaction. Setting "
 						 "ignore_checksum_failure to true causes the system to ignore the failure "
-			   "(but still report a warning), and continue processing. This "
-			  "behavior could cause crashes or other serious problems. Only "
+						 "(but still report a warning), and continue processing. This "
+						 "behavior could cause crashes or other serious problems. Only "
 						 "has an effect if checksums are enabled."),
 			GUC_NOT_IN_SAMPLE
 		},
@@ -999,7 +999,7 @@ static struct config_bool ConfigureNamesBool[] =
 		{"zero_damaged_pages", PGC_SUSET, DEVELOPER_OPTIONS,
 			gettext_noop("Continues processing past damaged page headers."),
 			gettext_noop("Detection of a damaged page header normally causes PostgreSQL to "
-				"report an error, aborting the current transaction. Setting "
+						 "report an error, aborting the current transaction. Setting "
 						 "zero_damaged_pages to true causes the system to instead report a "
 						 "warning, zero out the damaged page, and continue processing. This "
 						 "behavior will destroy data, namely all the rows on the damaged page."),
@@ -1014,7 +1014,7 @@ static struct config_bool ConfigureNamesBool[] =
 			gettext_noop("Writes full pages to WAL when first modified after a checkpoint."),
 			gettext_noop("A page write in process during an operating system crash might be "
 						 "only partially written to disk.  During recovery, the row changes "
-			  "stored in WAL are not enough to recover.  This option writes "
+						 "stored in WAL are not enough to recover.  This option writes "
 						 "pages when first modified after a checkpoint to WAL so full recovery "
 						 "is possible.")
 		},
@@ -1330,8 +1330,8 @@ static struct config_bool ConfigureNamesBool[] =
 			gettext_noop("Logs the host name in the connection logs."),
 			gettext_noop("By default, connection logs only show the IP address "
 						 "of the connecting host. If you want them to show the host name you "
-			  "can turn this on, but depending on your host name resolution "
-			   "setup it might impose a non-negligible performance penalty.")
+						 "can turn this on, but depending on your host name resolution "
+						 "setup it might impose a non-negligible performance penalty.")
 		},
 		&log_hostname,
 		false,
@@ -1341,9 +1341,9 @@ static struct config_bool ConfigureNamesBool[] =
 		{"transform_null_equals", PGC_USERSET, COMPAT_OPTIONS_CLIENT,
 			gettext_noop("Treats \"expr=NULL\" as \"expr IS NULL\"."),
 			gettext_noop("When turned on, expressions of the form expr = NULL "
-			   "(or NULL = expr) are treated as expr IS NULL, that is, they "
-				"return true if expr evaluates to the null value, and false "
-			   "otherwise. The correct behavior of expr = NULL is to always "
+						 "(or NULL = expr) are treated as expr IS NULL, that is, they "
+						 "return true if expr evaluates to the null value, and false "
+						 "otherwise. The correct behavior of expr = NULL is to always "
 						 "return null (unknown).")
 		},
 		&Transform_null_equals,
@@ -1608,7 +1608,7 @@ static struct config_bool ConfigureNamesBool[] =
 		{"lo_compat_privileges", PGC_SUSET, COMPAT_OPTIONS_PREVIOUS,
 			gettext_noop("Enables backward compatibility mode for privilege checks on large objects."),
 			gettext_noop("Skips privilege checks when reading or modifying large objects, "
-				  "for compatibility with PostgreSQL releases prior to 9.0.")
+						 "for compatibility with PostgreSQL releases prior to 9.0.")
 		},
 		&lo_compat_privileges,
 		false,
@@ -1700,7 +1700,7 @@ static struct config_int ConfigureNamesInt[] =
 		{"default_statistics_target", PGC_USERSET, QUERY_TUNING_OTHER,
 			gettext_noop("Sets the default statistics target."),
 			gettext_noop("This applies to table columns that have not had a "
-				"column-specific target set via ALTER TABLE SET STATISTICS.")
+						 "column-specific target set via ALTER TABLE SET STATISTICS.")
 		},
 		&default_statistics_target,
 		100, 1, 10000,
@@ -1711,7 +1711,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("Sets the FROM-list size beyond which subqueries "
 						 "are not collapsed."),
 			gettext_noop("The planner will merge subqueries into upper "
-				"queries if the resulting FROM list would have no more than "
+						 "queries if the resulting FROM list would have no more than "
 						 "this many items.")
 		},
 		&from_collapse_limit,
@@ -2177,7 +2177,7 @@ static struct config_int ConfigureNamesInt[] =
 		{"max_locks_per_transaction", PGC_POSTMASTER, LOCK_MANAGEMENT,
 			gettext_noop("Sets the maximum number of locks per transaction."),
 			gettext_noop("The shared lock table is sized on the assumption that "
-			  "at most max_locks_per_transaction * max_connections distinct "
+						 "at most max_locks_per_transaction * max_connections distinct "
 						 "objects will need to be locked at any one time.")
 		},
 		&max_locks_per_xact,
@@ -2212,7 +2212,7 @@ static struct config_int ConfigureNamesInt[] =
 		{"max_pred_locks_per_page", PGC_SIGHUP, LOCK_MANAGEMENT,
 			gettext_noop("Sets the maximum number of predicate-locked tuples per page."),
 			gettext_noop("If more than this number of tuples on the same page are locked "
-			"by a connection, those locks are replaced by a page level lock.")
+						 "by a connection, those locks are replaced by a page level lock.")
 		},
 		&max_predicate_locks_per_page,
 		2, 0, INT_MAX,
@@ -2290,7 +2290,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("Enables warnings if checkpoint segments are filled more "
 						 "frequently than this."),
 			gettext_noop("Write a message to the server log if checkpoints "
-			"caused by the filling of checkpoint segment files happens more "
+						 "caused by the filling of checkpoint segment files happens more "
 						 "frequently than this number of seconds. Zero turns off the warning."),
 			GUC_UNIT_S
 		},
@@ -2403,7 +2403,7 @@ static struct config_int ConfigureNamesInt[] =
 		{"extra_float_digits", PGC_USERSET, CLIENT_CONN_LOCALE,
 			gettext_noop("Sets the number of digits displayed for floating-point values."),
 			gettext_noop("This affects real, double precision, and geometric data types. "
-			 "The parameter value is added to the standard number of digits "
+						 "The parameter value is added to the standard number of digits "
 						 "(FLT_DIG or DBL_DIG as appropriate).")
 		},
 		&extra_float_digits,
@@ -2947,7 +2947,7 @@ static struct config_real ConfigureNamesReal[] =
 	{
 		{"parallel_tuple_cost", PGC_USERSET, QUERY_TUNING_COST,
 			gettext_noop("Sets the planner's estimate of the cost of "
-				  "passing each tuple (row) from worker to master backend."),
+						 "passing each tuple (row) from worker to master backend."),
 			NULL
 		},
 		&parallel_tuple_cost,
@@ -3899,7 +3899,7 @@ static struct config_enum ConfigureNamesEnum[] =
 		{"password_encryption", PGC_USERSET, CONN_AUTH_SECURITY,
 			gettext_noop("Encrypt passwords."),
 			gettext_noop("When a password is specified in CREATE USER or "
-			   "ALTER USER without writing either ENCRYPTED or UNENCRYPTED, "
+						 "ALTER USER without writing either ENCRYPTED or UNENCRYPTED, "
 						 "this parameter determines whether the password is to be encrypted.")
 		},
 		&Password_encryption,
@@ -5736,8 +5736,8 @@ parse_and_validate_value(struct config_generic *record,
 				{
 					ereport(elevel,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						  errmsg("parameter \"%s\" requires a Boolean value",
-								 name)));
+							 errmsg("parameter \"%s\" requires a Boolean value",
+									name)));
 					return false;
 				}
 
@@ -5756,8 +5756,8 @@ parse_and_validate_value(struct config_generic *record,
 				{
 					ereport(elevel,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("invalid value for parameter \"%s\": \"%s\"",
-								name, value),
+							 errmsg("invalid value for parameter \"%s\": \"%s\"",
+									name, value),
 							 hintmsg ? errhint("%s", _(hintmsg)) : 0));
 					return false;
 				}
@@ -5785,8 +5785,8 @@ parse_and_validate_value(struct config_generic *record,
 				{
 					ereport(elevel,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						  errmsg("parameter \"%s\" requires a numeric value",
-								 name)));
+							 errmsg("parameter \"%s\" requires a numeric value",
+									name)));
 					return false;
 				}
 
@@ -5849,8 +5849,8 @@ parse_and_validate_value(struct config_generic *record,
 
 					ereport(elevel,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("invalid value for parameter \"%s\": \"%s\"",
-								name, value),
+							 errmsg("invalid value for parameter \"%s\": \"%s\"",
+									name, value),
 							 hintmsg ? errhint("%s", _(hintmsg)) : 0));
 
 					if (hintmsg)
@@ -5947,14 +5947,14 @@ set_config_option(const char *name, const char *value,
 	if (IsInParallelMode() && changeVal && action != GUC_ACTION_SAVE)
 		ereport(elevel,
 				(errcode(ERRCODE_INVALID_TRANSACTION_STATE),
-			   errmsg("cannot set parameters during a parallel operation")));
+				 errmsg("cannot set parameters during a parallel operation")));
 
 	record = find_option(name, true, elevel);
 	if (record == NULL)
 	{
 		ereport(elevel,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-			   errmsg("unrecognized configuration parameter \"%s\"", name)));
+				 errmsg("unrecognized configuration parameter \"%s\"", name)));
 		return 0;
 	}
 
@@ -6736,7 +6736,7 @@ GetConfigOption(const char *name, bool missing_ok, bool restrict_superuser)
 
 		case PGC_ENUM:
 			return config_enum_lookup_by_value((struct config_enum *) record,
-								 *((struct config_enum *) record)->variable);
+											   *((struct config_enum *) record)->variable);
 	}
 	return NULL;
 }
@@ -6758,7 +6758,7 @@ GetConfigOptionResetString(const char *name)
 	if (record == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-			   errmsg("unrecognized configuration parameter \"%s\"", name)));
+				 errmsg("unrecognized configuration parameter \"%s\"", name)));
 	if ((record->flags & GUC_SUPERUSER_ONLY) &&
 		!is_member_of_role(GetUserId(), DEFAULT_ROLE_READ_ALL_SETTINGS))
 		ereport(ERROR,
@@ -6786,7 +6786,7 @@ GetConfigOptionResetString(const char *name)
 
 		case PGC_ENUM:
 			return config_enum_lookup_by_value((struct config_enum *) record,
-								 ((struct config_enum *) record)->reset_val);
+											   ((struct config_enum *) record)->reset_val);
 	}
 	return NULL;
 }
@@ -7081,7 +7081,7 @@ AlterSystemSetConfigFile(AlterSystemStmt *altersysstmt)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-			 (errmsg("must be superuser to execute ALTER SYSTEM command"))));
+				 (errmsg("must be superuser to execute ALTER SYSTEM command"))));
 
 	/*
 	 * Extract statement arguments
@@ -7293,7 +7293,7 @@ ExecSetVariableStmt(VariableSetStmt *stmt, bool isTopLevel)
 	if (IsInParallelMode())
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TRANSACTION_STATE),
-			   errmsg("cannot set parameters during a parallel operation")));
+				 errmsg("cannot set parameters during a parallel operation")));
 
 	switch (stmt->kind)
 	{
@@ -7688,7 +7688,7 @@ reapply_stacked_values(struct config_generic *variable,
 			case GUC_SET_LOCAL:
 				/* first, apply the masked value as SET */
 				(void) set_config_option(name, stack->masked.val.stringval,
-									   stack->masked_scontext, PGC_S_SESSION,
+										 stack->masked_scontext, PGC_S_SESSION,
 										 GUC_ACTION_SET, true,
 										 WARNING, false);
 				/* then apply the current value as LOCAL */
@@ -8048,7 +8048,7 @@ GetConfigOptionByName(const char *name, const char **varname, bool missing_ok)
 
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-			   errmsg("unrecognized configuration parameter \"%s\"", name)));
+				 errmsg("unrecognized configuration parameter \"%s\"", name)));
 	}
 
 	if ((record->flags & GUC_SUPERUSER_ONLY) &&
@@ -8278,11 +8278,11 @@ GetConfigOptionByNum(int varnum, const char **values, bool *noshow)
 
 				/* boot_val */
 				values[12] = pstrdup(config_enum_lookup_by_value(lconf,
-														   lconf->boot_val));
+																 lconf->boot_val));
 
 				/* reset_val */
 				values[13] = pstrdup(config_enum_lookup_by_value(lconf,
-														  lconf->reset_val));
+																 lconf->reset_val));
 			}
 			break;
 
@@ -9212,7 +9212,7 @@ serialize_variable(char **destptr, Size *maxbytes,
 				struct config_enum *conf = (struct config_enum *) gconf;
 
 				do_serialize(destptr, maxbytes, "%s",
-						 config_enum_lookup_by_value(conf, *conf->variable));
+							 config_enum_lookup_by_value(conf, *conf->variable));
 			}
 			break;
 	}

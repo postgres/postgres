@@ -558,7 +558,7 @@ Datum
 seg_same(PG_FUNCTION_ARGS)
 {
 	int			cmp = DatumGetInt32(
-	   DirectFunctionCall2(seg_cmp, PG_GETARG_DATUM(0), PG_GETARG_DATUM(1)));
+									DirectFunctionCall2(seg_cmp, PG_GETARG_DATUM(0), PG_GETARG_DATUM(1)));
 
 	PG_RETURN_BOOL(cmp == 0);
 }
@@ -848,7 +848,7 @@ Datum
 seg_lt(PG_FUNCTION_ARGS)
 {
 	int			cmp = DatumGetInt32(
-	   DirectFunctionCall2(seg_cmp, PG_GETARG_DATUM(0), PG_GETARG_DATUM(1)));
+									DirectFunctionCall2(seg_cmp, PG_GETARG_DATUM(0), PG_GETARG_DATUM(1)));
 
 	PG_RETURN_BOOL(cmp < 0);
 }
@@ -857,7 +857,7 @@ Datum
 seg_le(PG_FUNCTION_ARGS)
 {
 	int			cmp = DatumGetInt32(
-	   DirectFunctionCall2(seg_cmp, PG_GETARG_DATUM(0), PG_GETARG_DATUM(1)));
+									DirectFunctionCall2(seg_cmp, PG_GETARG_DATUM(0), PG_GETARG_DATUM(1)));
 
 	PG_RETURN_BOOL(cmp <= 0);
 }
@@ -866,7 +866,7 @@ Datum
 seg_gt(PG_FUNCTION_ARGS)
 {
 	int			cmp = DatumGetInt32(
-	   DirectFunctionCall2(seg_cmp, PG_GETARG_DATUM(0), PG_GETARG_DATUM(1)));
+									DirectFunctionCall2(seg_cmp, PG_GETARG_DATUM(0), PG_GETARG_DATUM(1)));
 
 	PG_RETURN_BOOL(cmp > 0);
 }
@@ -875,7 +875,7 @@ Datum
 seg_ge(PG_FUNCTION_ARGS)
 {
 	int			cmp = DatumGetInt32(
-	   DirectFunctionCall2(seg_cmp, PG_GETARG_DATUM(0), PG_GETARG_DATUM(1)));
+									DirectFunctionCall2(seg_cmp, PG_GETARG_DATUM(0), PG_GETARG_DATUM(1)));
 
 	PG_RETURN_BOOL(cmp >= 0);
 }
@@ -885,7 +885,7 @@ Datum
 seg_different(PG_FUNCTION_ARGS)
 {
 	int			cmp = DatumGetInt32(
-	   DirectFunctionCall2(seg_cmp, PG_GETARG_DATUM(0), PG_GETARG_DATUM(1)));
+									DirectFunctionCall2(seg_cmp, PG_GETARG_DATUM(0), PG_GETARG_DATUM(1)));
 
 	PG_RETURN_BOOL(cmp != 0);
 }

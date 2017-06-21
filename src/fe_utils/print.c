@@ -1006,7 +1006,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout, bool is_pager)
 				int			bytes_to_output;
 				int			chars_to_output = width_wrap[j];
 				bool		finalspaces = (opt_border == 2 ||
-									   (col_count > 0 && j < col_count - 1));
+										   (col_count > 0 && j < col_count - 1));
 
 				/* Print left-hand wrap or newline mark */
 				if (opt_border != 0)
@@ -1046,14 +1046,14 @@ print_aligned_text(const printTableContent *cont, FILE *fout, bool is_pager)
 						/* spaces first */
 						fprintf(fout, "%*s", width_wrap[j] - chars_to_output, "");
 						fputnbytes(fout,
-								 (char *) (this_line->ptr + bytes_output[j]),
+								   (char *) (this_line->ptr + bytes_output[j]),
 								   bytes_to_output);
 					}
 					else		/* Left aligned cell */
 					{
 						/* spaces second */
 						fputnbytes(fout,
-								 (char *) (this_line->ptr + bytes_output[j]),
+								   (char *) (this_line->ptr + bytes_output[j]),
 								   bytes_to_output);
 					}
 
@@ -2360,7 +2360,7 @@ print_latex_longtable_text(const printTableContent *cont, FILE *fout)
 				{
 					fputs("p{", fout);
 					fwrite(next_opt_table_attr_char, strcspn(next_opt_table_attr_char,
-											 LONGTABLE_WHITESPACE), 1, fout);
+															 LONGTABLE_WHITESPACE), 1, fout);
 					last_opt_table_attr_char = next_opt_table_attr_char;
 					next_opt_table_attr_char += strcspn(next_opt_table_attr_char,
 														LONGTABLE_WHITESPACE);
@@ -2371,7 +2371,7 @@ print_latex_longtable_text(const printTableContent *cont, FILE *fout)
 				{
 					fputs("p{", fout);
 					fwrite(last_opt_table_attr_char, strcspn(last_opt_table_attr_char,
-											 LONGTABLE_WHITESPACE), 1, fout);
+															 LONGTABLE_WHITESPACE), 1, fout);
 					fputs("\\textwidth}", fout);
 				}
 				else

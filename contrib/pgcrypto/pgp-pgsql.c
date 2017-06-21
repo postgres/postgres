@@ -818,7 +818,7 @@ parse_key_value_arrays(ArrayType *key_array, ArrayType *val_array,
 		if (!string_is_ascii(v))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("header key must not contain non-ASCII characters")));
+					 errmsg("header key must not contain non-ASCII characters")));
 		if (strstr(v, ": "))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -840,7 +840,7 @@ parse_key_value_arrays(ArrayType *key_array, ArrayType *val_array,
 		if (!string_is_ascii(v))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			  errmsg("header value must not contain non-ASCII characters")));
+					 errmsg("header value must not contain non-ASCII characters")));
 		if (strchr(v, '\n'))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),

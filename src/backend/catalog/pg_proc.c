@@ -397,8 +397,8 @@ ProcedureCreate(const char *procedureName,
 		if (!replace)
 			ereport(ERROR,
 					(errcode(ERRCODE_DUPLICATE_FUNCTION),
-			errmsg("function \"%s\" already exists with same argument types",
-				   procedureName)));
+					 errmsg("function \"%s\" already exists with same argument types",
+							procedureName)));
 		if (!pg_proc_ownercheck(HeapTupleGetOid(oldtup), proowner))
 			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_PROC,
 						   procedureName);
@@ -434,8 +434,8 @@ ProcedureCreate(const char *procedureName,
 					 !equalTupleDescs(olddesc, newdesc))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					errmsg("cannot change return type of existing function"),
-				errdetail("Row type defined by OUT parameters is different."),
+						 errmsg("cannot change return type of existing function"),
+						 errdetail("Row type defined by OUT parameters is different."),
 						 errhint("Use DROP FUNCTION %s first.",
 								 format_procedure(HeapTupleGetOid(oldtup)))));
 		}
@@ -477,10 +477,10 @@ ProcedureCreate(const char *procedureName,
 					strcmp(old_arg_names[j], new_arg_names[j]) != 0)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					   errmsg("cannot change name of input parameter \"%s\"",
-							  old_arg_names[j]),
+							 errmsg("cannot change name of input parameter \"%s\"",
+									old_arg_names[j]),
 							 errhint("Use DROP FUNCTION %s first.",
-								format_procedure(HeapTupleGetOid(oldtup)))));
+									 format_procedure(HeapTupleGetOid(oldtup)))));
 			}
 		}
 
@@ -530,7 +530,7 @@ ProcedureCreate(const char *procedureName,
 							(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 							 errmsg("cannot change data type of existing parameter default value"),
 							 errhint("Use DROP FUNCTION %s first.",
-								format_procedure(HeapTupleGetOid(oldtup)))));
+									 format_procedure(HeapTupleGetOid(oldtup)))));
 				newlc = lnext(newlc);
 			}
 		}
@@ -546,8 +546,8 @@ ProcedureCreate(const char *procedureName,
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					   errmsg("function \"%s\" is not an aggregate function",
-							  procedureName)));
+						 errmsg("function \"%s\" is not an aggregate function",
+								procedureName)));
 		}
 		if (oldproc->proiswindow != isWindowFunc)
 		{
@@ -878,8 +878,8 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					 errmsg("SQL functions cannot have arguments of type %s",
-							format_type_be(proc->proargtypes.values[i]))));
+						 errmsg("SQL functions cannot have arguments of type %s",
+								format_type_be(proc->proargtypes.values[i]))));
 		}
 	}
 
@@ -933,7 +933,7 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 
 				querytree_sublist = pg_analyze_and_rewrite_params(parsetree,
 																  prosrc,
-									   (ParserSetupHook) sql_fn_parser_setup,
+																  (ParserSetupHook) sql_fn_parser_setup,
 																  pinfo,
 																  NULL);
 				querytree_list = list_concat(querytree_list,

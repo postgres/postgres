@@ -131,8 +131,8 @@ compute_return_type(TypeName *returnType, Oid languageOid,
 		if (returnType->typmods != NIL)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-			errmsg("type modifier cannot be specified for shell type \"%s\"",
-				   typnam)));
+					 errmsg("type modifier cannot be specified for shell type \"%s\"",
+							typnam)));
 
 		/* Otherwise, go ahead and make a shell type */
 		ereport(NOTICE,
@@ -230,8 +230,8 @@ interpret_function_parameter_list(ParseState *pstate,
 				if (languageOid == SQLlanguageId)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-						   errmsg("SQL function cannot accept shell type %s",
-								  TypeNameToString(t))));
+							 errmsg("SQL function cannot accept shell type %s",
+									TypeNameToString(t))));
 				/* We don't allow creating aggregates on shell types either */
 				else if (is_aggregate)
 					ereport(ERROR,
@@ -307,7 +307,7 @@ interpret_function_parameter_list(ParseState *pstate,
 					if (!OidIsValid(get_element_type(toid)))
 						ereport(ERROR,
 								(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-							 errmsg("VARIADIC parameter must be an array")));
+								 errmsg("VARIADIC parameter must be an array")));
 					break;
 			}
 		}
@@ -347,8 +347,8 @@ interpret_function_parameter_list(ParseState *pstate,
 					strcmp(prevfp->name, fp->name) == 0)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-						  errmsg("parameter name \"%s\" used more than once",
-								 fp->name)));
+							 errmsg("parameter name \"%s\" used more than once",
+									fp->name)));
 			}
 
 			paramNames[i] = CStringGetTextDatum(fp->name);
@@ -362,7 +362,7 @@ interpret_function_parameter_list(ParseState *pstate,
 			if (!isinput)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-				   errmsg("only input parameters can have default values")));
+						 errmsg("only input parameters can have default values")));
 
 			def = transformExpr(pstate, fp->defexpr,
 								EXPR_KIND_FUNCTION_DEFAULT);
@@ -1231,7 +1231,7 @@ AlterFunction(ParseState *pstate, AlterFunctionStmt *stmt)
 		if (procForm->proleakproof && !superuser())
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				  errmsg("only superuser can define a leakproof function")));
+					 errmsg("only superuser can define a leakproof function")));
 	}
 	if (cost_item)
 	{
@@ -1483,7 +1483,7 @@ CreateCast(CreateCastStmt *stmt)
 		if (nargs < 1 || nargs > 3)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				  errmsg("cast function must take one to three arguments")));
+					 errmsg("cast function must take one to three arguments")));
 		if (!IsBinaryCoercible(sourcetypeid, procstruct->proargtypes.values[0]))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
@@ -1491,8 +1491,8 @@ CreateCast(CreateCastStmt *stmt)
 		if (nargs > 1 && procstruct->proargtypes.values[1] != INT4OID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				   errmsg("second argument of cast function must be type %s",
-						  "integer")));
+					 errmsg("second argument of cast function must be type %s",
+							"integer")));
 		if (nargs > 2 && procstruct->proargtypes.values[2] != BOOLOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
@@ -1517,7 +1517,7 @@ CreateCast(CreateCastStmt *stmt)
 		if (procstruct->proisagg)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("cast function must not be an aggregate function")));
+					 errmsg("cast function must not be an aggregate function")));
 		if (procstruct->proiswindow)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
@@ -1551,7 +1551,7 @@ CreateCast(CreateCastStmt *stmt)
 		if (!superuser())
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-			 errmsg("must be superuser to create a cast WITHOUT FUNCTION")));
+					 errmsg("must be superuser to create a cast WITHOUT FUNCTION")));
 
 		/*
 		 * Also, insist that the types match as to size, alignment, and
@@ -1581,7 +1581,7 @@ CreateCast(CreateCastStmt *stmt)
 			targettyptype == TYPTYPE_COMPOSITE)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				  errmsg("composite data types are not binary-compatible")));
+					 errmsg("composite data types are not binary-compatible")));
 
 		if (sourcetyptype == TYPTYPE_ENUM ||
 			targettyptype == TYPTYPE_ENUM)
@@ -1620,7 +1620,7 @@ CreateCast(CreateCastStmt *stmt)
 	if (sourcetypeid == targettypeid && nargs < 2)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-			  errmsg("source data type and target data type are the same")));
+				 errmsg("source data type and target data type are the same")));
 
 	/* convert CoercionContext enum to char value for castcontext */
 	switch (stmt->context)
@@ -1769,7 +1769,7 @@ check_transform_function(Form_pg_proc procstruct)
 	if (procstruct->proisagg)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-			errmsg("transform function must not be an aggregate function")));
+				 errmsg("transform function must not be an aggregate function")));
 	if (procstruct->proiswindow)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
@@ -1785,8 +1785,8 @@ check_transform_function(Form_pg_proc procstruct)
 	if (procstruct->proargtypes.values[0] != INTERNALOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-			   errmsg("first argument of transform function must be type %s",
-					  "internal")));
+				 errmsg("first argument of transform function must be type %s",
+						"internal")));
 }
 
 
@@ -1869,8 +1869,8 @@ CreateTransform(CreateTransformStmt *stmt)
 		if (procstruct->prorettype != INTERNALOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				   errmsg("return data type of FROM SQL function must be %s",
-						  "internal")));
+					 errmsg("return data type of FROM SQL function must be %s",
+							"internal")));
 		check_transform_function(procstruct);
 		ReleaseSysCache(tuple);
 	}
@@ -1922,9 +1922,9 @@ CreateTransform(CreateTransformStmt *stmt)
 		if (!stmt->replace)
 			ereport(ERROR,
 					(errcode(ERRCODE_DUPLICATE_OBJECT),
-			   errmsg("transform for type %s language \"%s\" already exists",
-					  format_type_be(typeid),
-					  stmt->lang)));
+					 errmsg("transform for type %s language \"%s\" already exists",
+							format_type_be(typeid),
+							stmt->lang)));
 
 		MemSet(replaces, false, sizeof(replaces));
 		replaces[Anum_pg_transform_trffromsql - 1] = true;
@@ -2011,9 +2011,9 @@ get_transform_oid(Oid type_id, Oid lang_id, bool missing_ok)
 	if (!OidIsValid(oid) && !missing_ok)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-			   errmsg("transform for type %s language \"%s\" does not exist",
-					  format_type_be(type_id),
-					  get_language_name(lang_id, false))));
+				 errmsg("transform for type %s language \"%s\" does not exist",
+						format_type_be(type_id),
+						get_language_name(lang_id, false))));
 	return oid;
 }
 
@@ -2160,8 +2160,8 @@ ExecuteDoStmt(DoStmt *stmt)
 	if (!OidIsValid(laninline))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("language \"%s\" does not support inline code execution",
-					NameStr(languageStruct->lanname))));
+				 errmsg("language \"%s\" does not support inline code execution",
+						NameStr(languageStruct->lanname))));
 
 	ReleaseSysCache(languageTuple);
 

@@ -397,9 +397,9 @@ void		get_sock_dir(ClusterInfo *cluster, bool live_check);
 /* relfilenode.c */
 
 void transfer_all_new_tablespaces(DbInfoArr *old_db_arr,
-				  DbInfoArr *new_db_arr, char *old_pgdata, char *new_pgdata);
+							 DbInfoArr *new_db_arr, char *old_pgdata, char *new_pgdata);
 void transfer_all_new_dbs(DbInfoArr *old_db_arr,
-				   DbInfoArr *new_db_arr, char *old_pgdata, char *new_pgdata,
+					 DbInfoArr *new_db_arr, char *old_pgdata, char *new_pgdata,
 					 char *old_tablespace);
 
 /* tablespace.c */

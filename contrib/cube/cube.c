@@ -483,7 +483,7 @@ g_cube_picksplit(PG_FUNCTION_ARGS)
 			union_d = cube_union_v0(datum_alpha, datum_beta);
 			rt_cube_size(union_d, &size_union);
 			inter_d = DatumGetNDBOX(DirectFunctionCall2(cube_inter,
-						  entryvec->vector[i].key, entryvec->vector[j].key));
+														entryvec->vector[i].key, entryvec->vector[j].key));
 			rt_cube_size(inter_d, &size_inter);
 			size_waste = size_union - size_inter;
 
@@ -1354,15 +1354,15 @@ g_cube_distance(PG_FUNCTION_ARGS)
 		{
 			case CubeKNNDistanceTaxicab:
 				retval = DatumGetFloat8(DirectFunctionCall2(distance_taxicab,
-							 PointerGetDatum(cube), PointerGetDatum(query)));
+															PointerGetDatum(cube), PointerGetDatum(query)));
 				break;
 			case CubeKNNDistanceEuclid:
 				retval = DatumGetFloat8(DirectFunctionCall2(cube_distance,
-							 PointerGetDatum(cube), PointerGetDatum(query)));
+															PointerGetDatum(cube), PointerGetDatum(query)));
 				break;
 			case CubeKNNDistanceChebyshev:
 				retval = DatumGetFloat8(DirectFunctionCall2(distance_chebyshev,
-							 PointerGetDatum(cube), PointerGetDatum(query)));
+															PointerGetDatum(cube), PointerGetDatum(query)));
 				break;
 			default:
 				elog(ERROR, "unrecognized cube strategy number: %d", strategy);

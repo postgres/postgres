@@ -63,8 +63,8 @@ dsimple_init(PG_FUNCTION_ARGS)
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				   errmsg("unrecognized simple dictionary parameter: \"%s\"",
-						  defel->defname)));
+					 errmsg("unrecognized simple dictionary parameter: \"%s\"",
+							defel->defname)));
 		}
 	}
 

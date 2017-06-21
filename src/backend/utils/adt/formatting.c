@@ -988,7 +988,7 @@ static char *get_last_relevant_decnum(char *num);
 static void NUM_numpart_from_char(NUMProc *Np, int id, int input_len);
 static void NUM_numpart_to_char(NUMProc *Np, int id);
 static char *NUM_processor(FormatNode *node, NUMDesc *Num, char *inout,
-		   char *number, int from_char_input_len, int to_char_out_pre_spaces,
+			  char *number, int from_char_input_len, int to_char_out_pre_spaces,
 			  int sign, bool is_to_char, Oid collid);
 static DCHCacheEntry *DCH_cache_getnew(const char *str);
 static DCHCacheEntry *DCH_cache_search(const char *str);
@@ -1112,7 +1112,7 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n)
 			if (IS_MULTI(num))
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("cannot use \"V\" and decimal point together")));
+						 errmsg("cannot use \"V\" and decimal point together")));
 			num->flag |= NUM_F_DECIMAL;
 			break;
 
@@ -1195,7 +1195,7 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n)
 			if (IS_DECIMAL(num))
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("cannot use \"V\" and decimal point together")));
+						 errmsg("cannot use \"V\" and decimal point together")));
 			num->flag |= NUM_F_MULTI;
 			break;
 
@@ -1209,7 +1209,7 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n)
 				IS_ROMAN(num) || IS_MULTI(num))
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-					   errmsg("\"EEEE\" is incompatible with other formats"),
+						 errmsg("\"EEEE\" is incompatible with other formats"),
 						 errdetail("\"EEEE\" may only be used together with digit and decimal point patterns.")));
 			num->flag |= NUM_F_EEEE;
 			break;
@@ -2175,8 +2175,8 @@ from_char_set_int(int *dest, const int value, const FormatNode *node)
 	if (*dest != 0 && *dest != value)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-		   errmsg("conflicting values for \"%s\" field in formatting string",
-				  node->key->name),
+				 errmsg("conflicting values for \"%s\" field in formatting string",
+						node->key->name),
 				 errdetail("This value contradicts a previous setting for "
 						   "the same field type.")));
 	*dest = value;
@@ -2238,8 +2238,8 @@ from_char_parse_int_len(int *dest, char **src, const int len, FormatNode *node)
 		if (used < len)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				errmsg("source string too short for \"%s\" formatting field",
-					   node->key->name),
+					 errmsg("source string too short for \"%s\" formatting field",
+							node->key->name),
 					 errdetail("Field requires %d characters, but only %d "
 							   "remain.",
 							   len, used),
@@ -2465,7 +2465,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				 * intervals
 				 */
 				sprintf(s, "%0*d", S_FM(n->suffix) ? 0 : (tm->tm_hour >= 0) ? 2 : 3,
-				 tm->tm_hour % (HOURS_PER_DAY / 2) == 0 ? HOURS_PER_DAY / 2 :
+						tm->tm_hour % (HOURS_PER_DAY / 2) == 0 ? HOURS_PER_DAY / 2 :
 						tm->tm_hour % (HOURS_PER_DAY / 2));
 				if (S_THth(n->suffix))
 					str_numth(s, s, S_TH_TYPE(n->suffix));
@@ -2583,7 +2583,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-						  errmsg("localized string format value too long")));
+								 errmsg("localized string format value too long")));
 				}
 				else
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9,
@@ -2603,7 +2603,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-						  errmsg("localized string format value too long")));
+								 errmsg("localized string format value too long")));
 				}
 				else
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9,
@@ -2623,7 +2623,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-						  errmsg("localized string format value too long")));
+								 errmsg("localized string format value too long")));
 				}
 				else
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9,
@@ -2643,7 +2643,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-						  errmsg("localized string format value too long")));
+								 errmsg("localized string format value too long")));
 				}
 				else
 					strcpy(s, asc_toupper_z(months[tm->tm_mon - 1]));
@@ -2662,7 +2662,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-						  errmsg("localized string format value too long")));
+								 errmsg("localized string format value too long")));
 				}
 				else
 					strcpy(s, months[tm->tm_mon - 1]);
@@ -2681,7 +2681,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-						  errmsg("localized string format value too long")));
+								 errmsg("localized string format value too long")));
 				}
 				else
 					strcpy(s, asc_tolower_z(months[tm->tm_mon - 1]));
@@ -2705,7 +2705,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-						  errmsg("localized string format value too long")));
+								 errmsg("localized string format value too long")));
 				}
 				else
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9,
@@ -2723,7 +2723,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-						  errmsg("localized string format value too long")));
+								 errmsg("localized string format value too long")));
 				}
 				else
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9,
@@ -2741,7 +2741,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-						  errmsg("localized string format value too long")));
+								 errmsg("localized string format value too long")));
 				}
 				else
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9,
@@ -2759,7 +2759,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-						  errmsg("localized string format value too long")));
+								 errmsg("localized string format value too long")));
 				}
 				else
 					strcpy(s, asc_toupper_z(days_short[tm->tm_wday]));
@@ -2776,7 +2776,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-						  errmsg("localized string format value too long")));
+								 errmsg("localized string format value too long")));
 				}
 				else
 					strcpy(s, days_short[tm->tm_wday]);
@@ -2793,7 +2793,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-						  errmsg("localized string format value too long")));
+								 errmsg("localized string format value too long")));
 				}
 				else
 					strcpy(s, asc_tolower_z(days_short[tm->tm_wday]));
@@ -2804,7 +2804,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				sprintf(s, "%0*d", S_FM(n->suffix) ? 0 : 3,
 						(n->key->id == DCH_DDD) ?
 						tm->tm_yday :
-					  date2isoyearday(tm->tm_year, tm->tm_mon, tm->tm_mday));
+						date2isoyearday(tm->tm_year, tm->tm_mon, tm->tm_mday));
 				if (S_THth(n->suffix))
 					str_numth(s, s, S_TH_TYPE(n->suffix));
 				s += strlen(s);
@@ -3080,8 +3080,8 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out)
 			case DCH_OF:
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				errmsg("formatting field \"%s\" is only supported in to_char",
-					   n->key->name)));
+						 errmsg("formatting field \"%s\" is only supported in to_char",
+								n->key->name)));
 				break;
 			case DCH_A_D:
 			case DCH_B_C:
@@ -3191,7 +3191,7 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out)
 					if (matched < 2)
 						ereport(ERROR,
 								(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-							  errmsg("invalid input string for \"Y,YYY\"")));
+								 errmsg("invalid input string for \"Y,YYY\"")));
 					years += (millennia * 1000);
 					from_char_set_int(&out->year, years, n);
 					out->yysz = 4;
@@ -3805,7 +3805,7 @@ do_to_timestamp(text *date_txt, text *fmt,
 		if (!tm->tm_year && !tmfc.bc)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-			errmsg("cannot calculate day of year without year information")));
+					 errmsg("cannot calculate day of year without year information")));
 
 		if (tmfc.mode == FROM_CHAR_DATE_ISOWEEK)
 		{
@@ -4646,7 +4646,7 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 
 static char *
 NUM_processor(FormatNode *node, NUMDesc *Num, char *inout,
-		   char *number, int from_char_input_len, int to_char_out_pre_spaces,
+			  char *number, int from_char_input_len, int to_char_out_pre_spaces,
 			  int sign, bool is_to_char, Oid collid)
 {
 	FormatNode *n;
@@ -5129,15 +5129,15 @@ numeric_to_number(PG_FUNCTION_ARGS)
 	result = DirectFunctionCall3(numeric_in,
 								 CStringGetDatum(numstr),
 								 ObjectIdGetDatum(InvalidOid),
-					  Int32GetDatum(((precision << 16) | scale) + VARHDRSZ));
+								 Int32GetDatum(((precision << 16) | scale) + VARHDRSZ));
 
 	if (IS_MULTI(&Num))
 	{
 		Numeric		x;
 		Numeric		a = DatumGetNumeric(DirectFunctionCall1(int4_numeric,
-														 Int32GetDatum(10)));
+															Int32GetDatum(10)));
 		Numeric		b = DatumGetNumeric(DirectFunctionCall1(int4_numeric,
-												 Int32GetDatum(-Num.multi)));
+															Int32GetDatum(-Num.multi)));
 
 		x = DatumGetNumeric(DirectFunctionCall2(numeric_power,
 												NumericGetDatum(a),
@@ -5183,7 +5183,7 @@ numeric_to_char(PG_FUNCTION_ARGS)
 												Int32GetDatum(0)));
 		numstr = orgnum =
 			int_to_roman(DatumGetInt32(DirectFunctionCall1(numeric_int4,
-													   NumericGetDatum(x))));
+														   NumericGetDatum(x))));
 	}
 	else if (IS_EEEE(&Num))
 	{
@@ -5224,9 +5224,9 @@ numeric_to_char(PG_FUNCTION_ARGS)
 		if (IS_MULTI(&Num))
 		{
 			Numeric		a = DatumGetNumeric(DirectFunctionCall1(int4_numeric,
-														 Int32GetDatum(10)));
+																Int32GetDatum(10)));
 			Numeric		b = DatumGetNumeric(DirectFunctionCall1(int4_numeric,
-												  Int32GetDatum(Num.multi)));
+																Int32GetDatum(Num.multi)));
 
 			x = DatumGetNumeric(DirectFunctionCall2(numeric_power,
 													NumericGetDatum(a),
@@ -5329,7 +5329,7 @@ int4_to_char(PG_FUNCTION_ARGS)
 		else
 		{
 			orgnum = DatumGetCString(DirectFunctionCall1(int4out,
-													  Int32GetDatum(value)));
+														 Int32GetDatum(value)));
 		}
 
 		if (*orgnum == '-')
@@ -5397,7 +5397,7 @@ int8_to_char(PG_FUNCTION_ARGS)
 	{
 		/* Currently don't support int8 conversion to roman... */
 		numstr = orgnum = int_to_roman(DatumGetInt32(
-						  DirectFunctionCall1(int84, Int64GetDatum(value))));
+													 DirectFunctionCall1(int84, Int64GetDatum(value))));
 	}
 	else if (IS_EEEE(&Num))
 	{
@@ -5434,8 +5434,8 @@ int8_to_char(PG_FUNCTION_ARGS)
 
 			value = DatumGetInt64(DirectFunctionCall2(int8mul,
 													  Int64GetDatum(value),
-												   DirectFunctionCall1(dtoi8,
-													Float8GetDatum(multi))));
+													  DirectFunctionCall1(dtoi8,
+																		  Float8GetDatum(multi))));
 			Num.pre += Num.multi;
 		}
 

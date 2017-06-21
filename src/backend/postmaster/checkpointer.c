@@ -462,7 +462,7 @@ CheckpointerMain(void)
 				elapsed_secs < CheckPointWarning)
 				ereport(LOG,
 						(errmsg_plural("checkpoints are occurring too frequently (%d second apart)",
-				"checkpoints are occurring too frequently (%d seconds apart)",
+									   "checkpoints are occurring too frequently (%d seconds apart)",
 									   elapsed_secs,
 									   elapsed_secs),
 						 errhint("Consider increasing the configuration parameter \"max_wal_size\".")));
@@ -1280,8 +1280,8 @@ CompactCheckpointerRequestQueue(void)
 		CheckpointerShmem->requests[preserve_count++] = CheckpointerShmem->requests[n];
 	}
 	ereport(DEBUG1,
-	   (errmsg("compacted fsync request queue from %d entries to %d entries",
-			   CheckpointerShmem->num_requests, preserve_count)));
+			(errmsg("compacted fsync request queue from %d entries to %d entries",
+					CheckpointerShmem->num_requests, preserve_count)));
 	CheckpointerShmem->num_requests = preserve_count;
 
 	/* Cleanup. */

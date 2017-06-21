@@ -235,9 +235,9 @@ _hash_checkpage(Relation rel, Buffer buf, int flags)
 	if (PageIsNew(page))
 		ereport(ERROR,
 				(errcode(ERRCODE_INDEX_CORRUPTED),
-			 errmsg("index \"%s\" contains unexpected zero page at block %u",
-					RelationGetRelationName(rel),
-					BufferGetBlockNumber(buf)),
+				 errmsg("index \"%s\" contains unexpected zero page at block %u",
+						RelationGetRelationName(rel),
+						BufferGetBlockNumber(buf)),
 				 errhint("Please REINDEX it.")));
 
 	/*
@@ -258,9 +258,9 @@ _hash_checkpage(Relation rel, Buffer buf, int flags)
 		if ((opaque->hasho_flag & flags) == 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INDEX_CORRUPTED),
-				   errmsg("index \"%s\" contains corrupted page at block %u",
-						  RelationGetRelationName(rel),
-						  BufferGetBlockNumber(buf)),
+					 errmsg("index \"%s\" contains corrupted page at block %u",
+							RelationGetRelationName(rel),
+							BufferGetBlockNumber(buf)),
 					 errhint("Please REINDEX it.")));
 	}
 

@@ -116,7 +116,7 @@ open_walfile(StreamCtl *stream, XLogRecPtr startpoint)
 		if (size < 0)
 		{
 			fprintf(stderr,
-			_("%s: could not get size of write-ahead log file \"%s\": %s\n"),
+					_("%s: could not get size of write-ahead log file \"%s\": %s\n"),
 					progname, fn, stream->walmethod->getlasterror());
 			return false;
 		}
@@ -191,8 +191,8 @@ close_walfile(StreamCtl *stream, XLogRecPtr pos)
 	if (currpos == -1)
 	{
 		fprintf(stderr,
-			 _("%s: could not determine seek position in file \"%s\": %s\n"),
-		  progname, current_walfile_name, stream->walmethod->getlasterror());
+				_("%s: could not determine seek position in file \"%s\": %s\n"),
+				progname, current_walfile_name, stream->walmethod->getlasterror());
 		stream->walmethod->close(walfile, CLOSE_UNLINK);
 		walfile = NULL;
 
@@ -219,7 +219,7 @@ close_walfile(StreamCtl *stream, XLogRecPtr pos)
 	if (r != 0)
 	{
 		fprintf(stderr, _("%s: could not close file \"%s\": %s\n"),
-		  progname, current_walfile_name, stream->walmethod->getlasterror());
+				progname, current_walfile_name, stream->walmethod->getlasterror());
 		return false;
 	}
 
@@ -511,7 +511,7 @@ ReceiveXlogStream(PGconn *conn, StreamCtl *stream)
 		if (stream->timeline > atoi(PQgetvalue(res, 0, 1)))
 		{
 			fprintf(stderr,
-				_("%s: starting timeline %u is not present in the server\n"),
+					_("%s: starting timeline %u is not present in the server\n"),
 					progname, stream->timeline);
 			PQclear(res);
 			return false;
@@ -525,7 +525,7 @@ ReceiveXlogStream(PGconn *conn, StreamCtl *stream)
 	if (stream->temp_slot)
 	{
 		snprintf(query, sizeof(query),
-			 "CREATE_REPLICATION_SLOT \"%s\" TEMPORARY PHYSICAL RESERVE_WAL",
+				 "CREATE_REPLICATION_SLOT \"%s\" TEMPORARY PHYSICAL RESERVE_WAL",
 				 stream->replication_slot);
 		res = PQexec(conn, query);
 		if (PQresultStatus(res) != PGRES_TUPLES_OK)
@@ -559,7 +559,7 @@ ReceiveXlogStream(PGconn *conn, StreamCtl *stream)
 			{
 				/* FIXME: we might send it ok, but get an error */
 				fprintf(stderr, _("%s: could not send replication command \"%s\": %s"),
-					progname, "TIMELINE_HISTORY", PQresultErrorMessage(res));
+						progname, "TIMELINE_HISTORY", PQresultErrorMessage(res));
 				PQclear(res);
 				return false;
 			}
@@ -652,7 +652,7 @@ ReceiveXlogStream(PGconn *conn, StreamCtl *stream)
 				fprintf(stderr,
 						_("%s: server stopped streaming timeline %u at %X/%X, but reported next timeline %u to begin at %X/%X\n"),
 						progname,
-				stream->timeline, (uint32) (stoppos >> 32), (uint32) stoppos,
+						stream->timeline, (uint32) (stoppos >> 32), (uint32) stoppos,
 						newtimeline, (uint32) (stream->startpos >> 32), (uint32) stream->startpos);
 				goto error;
 			}
@@ -662,7 +662,7 @@ ReceiveXlogStream(PGconn *conn, StreamCtl *stream)
 			if (PQresultStatus(res) != PGRES_COMMAND_OK)
 			{
 				fprintf(stderr,
-				   _("%s: unexpected termination of replication stream: %s"),
+						_("%s: unexpected termination of replication stream: %s"),
 						progname, PQresultErrorMessage(res));
 				PQclear(res);
 				goto error;
@@ -710,7 +710,7 @@ ReceiveXlogStream(PGconn *conn, StreamCtl *stream)
 error:
 	if (walfile != NULL && stream->walmethod->close(walfile, CLOSE_NO_RENAME) != 0)
 		fprintf(stderr, _("%s: could not close file \"%s\": %s\n"),
-		  progname, current_walfile_name, stream->walmethod->getlasterror());
+				progname, current_walfile_name, stream->walmethod->getlasterror());
 	walfile = NULL;
 	return false;
 }
@@ -750,7 +750,7 @@ ReadEndOfStreamingResult(PGresult *res, XLogRecPtr *startpos, uint32 *timeline)
 			   &startpos_xrecoff) != 2)
 	{
 		fprintf(stderr,
-			_("%s: could not parse next timeline's starting point \"%s\"\n"),
+				_("%s: could not parse next timeline's starting point \"%s\"\n"),
 				progname, PQgetvalue(res, 0, 1));
 		return false;
 	}
@@ -1167,7 +1167,7 @@ ProcessXLogDataMsg(PGconn *conn, StreamCtl *stream, char *copybuf, int len,
 									 bytes_to_write) != bytes_to_write)
 		{
 			fprintf(stderr,
-				  _("%s: could not write %u bytes to WAL file \"%s\": %s\n"),
+					_("%s: could not write %u bytes to WAL file \"%s\": %s\n"),
 					progname, bytes_to_write, current_walfile_name,
 					stream->walmethod->getlasterror());
 			return false;

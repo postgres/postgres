@@ -405,7 +405,7 @@ StreamLog(void)
 	if (verbose)
 		fprintf(stderr,
 				_("%s: starting log streaming at %X/%X (timeline %u)\n"),
-		progname, (uint32) (stream.startpos >> 32), (uint32) stream.startpos,
+				progname, (uint32) (stream.startpos >> 32), (uint32) stream.startpos,
 				stream.timeline);
 
 	stream.stream_stop = stop_streaming;

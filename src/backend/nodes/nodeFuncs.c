@@ -121,7 +121,7 @@ exprType(const Node *expr)
 							ereport(ERROR,
 									(errcode(ERRCODE_UNDEFINED_OBJECT),
 									 errmsg("could not find array type for data type %s",
-							format_type_be(exprType((Node *) tent->expr)))));
+											format_type_be(exprType((Node *) tent->expr)))));
 					}
 				}
 				else if (sublink->subLinkType == MULTIEXPR_SUBLINK)
@@ -152,7 +152,7 @@ exprType(const Node *expr)
 							ereport(ERROR,
 									(errcode(ERRCODE_UNDEFINED_OBJECT),
 									 errmsg("could not find array type for data type %s",
-									format_type_be(subplan->firstColType))));
+											format_type_be(subplan->firstColType))));
 					}
 				}
 				else if (subplan->subLinkType == MULTIEXPR_SUBLINK)
@@ -3724,31 +3724,31 @@ planstate_tree_walker(PlanState *planstate,
 	{
 		case T_ModifyTable:
 			if (planstate_walk_members(((ModifyTable *) plan)->plans,
-								  ((ModifyTableState *) planstate)->mt_plans,
+									   ((ModifyTableState *) planstate)->mt_plans,
 									   walker, context))
 				return true;
 			break;
 		case T_Append:
 			if (planstate_walk_members(((Append *) plan)->appendplans,
-									((AppendState *) planstate)->appendplans,
+									   ((AppendState *) planstate)->appendplans,
 									   walker, context))
 				return true;
 			break;
 		case T_MergeAppend:
 			if (planstate_walk_members(((MergeAppend *) plan)->mergeplans,
-								((MergeAppendState *) planstate)->mergeplans,
+									   ((MergeAppendState *) planstate)->mergeplans,
 									   walker, context))
 				return true;
 			break;
 		case T_BitmapAnd:
 			if (planstate_walk_members(((BitmapAnd *) plan)->bitmapplans,
-								 ((BitmapAndState *) planstate)->bitmapplans,
+									   ((BitmapAndState *) planstate)->bitmapplans,
 									   walker, context))
 				return true;
 			break;
 		case T_BitmapOr:
 			if (planstate_walk_members(((BitmapOr *) plan)->bitmapplans,
-								  ((BitmapOrState *) planstate)->bitmapplans,
+									   ((BitmapOrState *) planstate)->bitmapplans,
 									   walker, context))
 				return true;
 			break;

@@ -178,7 +178,7 @@ InitArchiveFmt_Tar(ArchiveHandle *AH)
 			ctx->tarFH = fopen(AH->fSpec, PG_BINARY_W);
 			if (ctx->tarFH == NULL)
 				exit_horribly(modulename,
-						   "could not open TOC file \"%s\" for output: %s\n",
+							  "could not open TOC file \"%s\" for output: %s\n",
 							  AH->fSpec, strerror(errno));
 		}
 		else
@@ -207,7 +207,7 @@ InitArchiveFmt_Tar(ArchiveHandle *AH)
 		 */
 		if (AH->compression != 0)
 			exit_horribly(modulename,
-					 "compression is not supported by tar archive format\n");
+						  "compression is not supported by tar archive format\n");
 	}
 	else
 	{							/* Read Mode */
@@ -556,7 +556,7 @@ _tarReadRaw(ArchiveHandle *AH, void *buf, size_t len, TAR_MEMBER *th, FILE *fh)
 				res = GZREAD(&((char *) buf)[used], 1, len, th->zFH);
 				if (res != len && !GZEOF(th->zFH))
 					exit_horribly(modulename,
-					"could not read from input file: %s\n", strerror(errno));
+								  "could not read from input file: %s\n", strerror(errno));
 			}
 			else
 			{
@@ -1235,7 +1235,7 @@ _tarGetHeader(ArchiveHandle *AH, TAR_MEMBER *th)
 		if (len != 512)
 			exit_horribly(modulename,
 						  ngettext("incomplete tar header found (%lu byte)\n",
-								 "incomplete tar header found (%lu bytes)\n",
+								   "incomplete tar header found (%lu bytes)\n",
 								   len),
 						  (unsigned long) len);
 

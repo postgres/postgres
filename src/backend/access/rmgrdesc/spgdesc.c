@@ -76,7 +76,7 @@ spg_desc(StringInfo buf, XLogReaderState *record)
 			break;
 		case XLOG_SPGIST_VACUUM_REDIRECT:
 			appendStringInfo(buf, "newest XID %u",
-						 ((spgxlogVacuumRedirect *) rec)->newestRedirectXid);
+							 ((spgxlogVacuumRedirect *) rec)->newestRedirectXid);
 			break;
 	}
 }

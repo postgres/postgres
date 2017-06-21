@@ -333,7 +333,7 @@ DecodeStandbyOp(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 				(xl_invalidations *) XLogRecGetData(r);
 
 				ReorderBufferImmediateInvalidation(
-					ctx->reorder, invalidations->nmsgs, invalidations->msgs);
+												   ctx->reorder, invalidations->nmsgs, invalidations->msgs);
 			}
 			break;
 		default:

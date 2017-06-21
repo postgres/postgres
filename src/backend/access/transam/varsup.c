@@ -399,11 +399,11 @@ SetTransactionIdLimit(TransactionId oldest_datfrozenxid, Oid oldest_datoid)
 
 		if (oldest_datname)
 			ereport(WARNING,
-			(errmsg("database \"%s\" must be vacuumed within %u transactions",
-					oldest_datname,
-					xidWrapLimit - curXid),
-			 errhint("To avoid a database shutdown, execute a database-wide VACUUM in that database.\n"
-					 "You might also need to commit or roll back old prepared transactions.")));
+					(errmsg("database \"%s\" must be vacuumed within %u transactions",
+							oldest_datname,
+							xidWrapLimit - curXid),
+					 errhint("To avoid a database shutdown, execute a database-wide VACUUM in that database.\n"
+							 "You might also need to commit or roll back old prepared transactions.")));
 		else
 			ereport(WARNING,
 					(errmsg("database with OID %u must be vacuumed within %u transactions",

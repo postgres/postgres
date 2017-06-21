@@ -431,7 +431,7 @@ ecpg_store_result(const PGresult *results, int act_field,
 			int			len = strlen(PQgetvalue(results, act_tuple, act_field)) + 1;
 
 			if (!ecpg_get_data(results, act_tuple, act_field, stmt->lineno,
-							 var->type, var->ind_type, current_data_location,
+							   var->type, var->ind_type, current_data_location,
 							   var->ind_value, len, 0, var->ind_offset, isarray, stmt->compat, stmt->force_indicator))
 				status = false;
 			else
@@ -1389,7 +1389,7 @@ ecpg_build_params(struct statement *stmt)
 	if (next_insert(stmt->command, position, stmt->questionmarks) >= 0)
 	{
 		ecpg_raise(stmt->lineno, ECPG_TOO_FEW_ARGUMENTS,
-				 ECPG_SQLSTATE_USING_CLAUSE_DOES_NOT_MATCH_PARAMETERS, NULL);
+				   ECPG_SQLSTATE_USING_CLAUSE_DOES_NOT_MATCH_PARAMETERS, NULL);
 		ecpg_free_params(stmt, false);
 		return false;
 	}

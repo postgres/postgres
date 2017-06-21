@@ -123,7 +123,7 @@ AggregateCreate(const char *aggName,
 		ereport(ERROR,
 				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
 				 errmsg_plural("aggregates cannot have more than %d argument",
-							 "aggregates cannot have more than %d arguments",
+							   "aggregates cannot have more than %d arguments",
 							   FUNC_MAX_ARGS - 1,
 							   FUNC_MAX_ARGS - 1)));
 
@@ -331,9 +331,9 @@ AggregateCreate(const char *aggName,
 		if (rettype != aggmTransType)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-			errmsg("return type of inverse transition function %s is not %s",
-				   NameListToString(aggminvtransfnName),
-				   format_type_be(aggmTransType))));
+					 errmsg("return type of inverse transition function %s is not %s",
+							NameListToString(aggminvtransfnName),
+							format_type_be(aggmTransType))));
 
 		tup = SearchSysCache1(PROCOID, ObjectIdGetDatum(minvtransfn));
 		if (!HeapTupleIsValid(tup))
@@ -452,9 +452,9 @@ AggregateCreate(const char *aggName,
 		if (rettype != BYTEAOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("return type of serialization function %s is not %s",
-						NameListToString(aggserialfnName),
-						format_type_be(BYTEAOID))));
+					 errmsg("return type of serialization function %s is not %s",
+							NameListToString(aggserialfnName),
+							format_type_be(BYTEAOID))));
 	}
 
 	/*
@@ -472,9 +472,9 @@ AggregateCreate(const char *aggName,
 		if (rettype != INTERNALOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-			   errmsg("return type of deserialization function %s is not %s",
-					  NameListToString(aggdeserialfnName),
-					  format_type_be(INTERNALOID))));
+					 errmsg("return type of deserialization function %s is not %s",
+							NameListToString(aggdeserialfnName),
+							format_type_be(INTERNALOID))));
 	}
 
 	/*

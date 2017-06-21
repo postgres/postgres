@@ -151,12 +151,12 @@ readTimeLineHistory(TimeLineID targetTLI)
 		if (nfields != 3)
 			ereport(FATAL,
 					(errmsg("syntax error in history file: %s", fline),
-			   errhint("Expected a write-ahead log switchpoint location.")));
+					 errhint("Expected a write-ahead log switchpoint location.")));
 
 		if (result && tli <= lasttli)
 			ereport(FATAL,
 					(errmsg("invalid data in history file: %s", fline),
-				   errhint("Timeline IDs must be in increasing sequence.")));
+					 errhint("Timeline IDs must be in increasing sequence.")));
 
 		lasttli = tli;
 
@@ -177,7 +177,7 @@ readTimeLineHistory(TimeLineID targetTLI)
 	if (result && targetTLI <= lasttli)
 		ereport(FATAL,
 				(errmsg("invalid data in history file \"%s\"", path),
-			errhint("Timeline IDs must be less than child timeline's ID.")));
+				 errhint("Timeline IDs must be less than child timeline's ID.")));
 
 	/*
 	 * Create one more entry for the "tip" of the timeline, which has no entry
@@ -367,7 +367,7 @@ writeTimeLineHistory(TimeLineID newTLI, TimeLineID parentTLI,
 
 				ereport(ERROR,
 						(errcode_for_file_access(),
-					 errmsg("could not write to file \"%s\": %m", tmppath)));
+						 errmsg("could not write to file \"%s\": %m", tmppath)));
 			}
 			pgstat_report_wait_end();
 		}

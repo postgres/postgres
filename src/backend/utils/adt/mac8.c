@@ -163,8 +163,8 @@ macaddr8_in(PG_FUNCTION_ARGS)
 				/* must be trailing garbage... */
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				errmsg("invalid input syntax for type %s: \"%s\"", "macaddr8",
-					   str)));
+						 errmsg("invalid input syntax for type %s: \"%s\"", "macaddr8",
+								str)));
 		}
 
 		/* Move forward to where the next byte should be */
@@ -181,8 +181,8 @@ macaddr8_in(PG_FUNCTION_ARGS)
 			else if (spacer != *ptr)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				errmsg("invalid input syntax for type %s: \"%s\"", "macaddr8",
-					   str)));
+						 errmsg("invalid input syntax for type %s: \"%s\"", "macaddr8",
+								str)));
 
 			/* move past the spacer */
 			ptr++;
@@ -218,8 +218,8 @@ macaddr8_in(PG_FUNCTION_ARGS)
 	else if (count != 8)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-			   errmsg("invalid input syntax for type %s: \"%s\"", "macaddr8",
-					  str)));
+				 errmsg("invalid input syntax for type %s: \"%s\"", "macaddr8",
+						str)));
 
 	result = (macaddr8 *) palloc0(sizeof(macaddr8));
 
@@ -552,10 +552,10 @@ macaddr8tomacaddr(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("macaddr8 data out of range to convert to macaddr"),
-			   errhint("Only addresses that have FF and FE as values in the "
-					   "4th and 5th bytes, from the left, for example: "
-					 "XX-XX-XX-FF-FE-XX-XX-XX, are eligible to be converted "
-					   "from macaddr8 to macaddr.")));
+				 errhint("Only addresses that have FF and FE as values in the "
+						 "4th and 5th bytes, from the left, for example: "
+						 "XX-XX-XX-FF-FE-XX-XX-XX, are eligible to be converted "
+						 "from macaddr8 to macaddr.")));
 
 	result->a = addr->a;
 	result->b = addr->b;

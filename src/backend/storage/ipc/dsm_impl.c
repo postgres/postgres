@@ -258,8 +258,8 @@ dsm_impl_posix(dsm_op op, dsm_handle handle, Size request_size,
 		{
 			ereport(elevel,
 					(errcode_for_dynamic_shared_memory(),
-				   errmsg("could not unmap shared memory segment \"%s\": %m",
-						  name)));
+					 errmsg("could not unmap shared memory segment \"%s\": %m",
+							name)));
 			return false;
 		}
 		*mapped_address = NULL;
@@ -268,8 +268,8 @@ dsm_impl_posix(dsm_op op, dsm_handle handle, Size request_size,
 		{
 			ereport(elevel,
 					(errcode_for_dynamic_shared_memory(),
-				  errmsg("could not remove shared memory segment \"%s\": %m",
-						 name)));
+					 errmsg("could not remove shared memory segment \"%s\": %m",
+							name)));
 			return false;
 		}
 		return true;
@@ -358,8 +358,8 @@ dsm_impl_posix(dsm_op op, dsm_handle handle, Size request_size,
 
 			ereport(elevel,
 					(errcode_for_dynamic_shared_memory(),
-				   errmsg("could not unmap shared memory segment \"%s\": %m",
-						  name)));
+					 errmsg("could not unmap shared memory segment \"%s\": %m",
+							name)));
 			return false;
 		}
 		*mapped_address = NULL;
@@ -530,8 +530,8 @@ dsm_impl_sysv(dsm_op op, dsm_handle handle, Size request_size,
 		{
 			ereport(elevel,
 					(errcode_for_dynamic_shared_memory(),
-				   errmsg("could not unmap shared memory segment \"%s\": %m",
-						  name)));
+					 errmsg("could not unmap shared memory segment \"%s\": %m",
+							name)));
 			return false;
 		}
 		*mapped_address = NULL;
@@ -540,8 +540,8 @@ dsm_impl_sysv(dsm_op op, dsm_handle handle, Size request_size,
 		{
 			ereport(elevel,
 					(errcode_for_dynamic_shared_memory(),
-				  errmsg("could not remove shared memory segment \"%s\": %m",
-						 name)));
+					 errmsg("could not remove shared memory segment \"%s\": %m",
+							name)));
 			return false;
 		}
 		return true;
@@ -645,8 +645,8 @@ dsm_impl_windows(dsm_op op, dsm_handle handle, Size request_size,
 			_dosmaperr(GetLastError());
 			ereport(elevel,
 					(errcode_for_dynamic_shared_memory(),
-				   errmsg("could not unmap shared memory segment \"%s\": %m",
-						  name)));
+					 errmsg("could not unmap shared memory segment \"%s\": %m",
+							name)));
 			return false;
 		}
 		if (*impl_private != NULL
@@ -655,8 +655,8 @@ dsm_impl_windows(dsm_op op, dsm_handle handle, Size request_size,
 			_dosmaperr(GetLastError());
 			ereport(elevel,
 					(errcode_for_dynamic_shared_memory(),
-				  errmsg("could not remove shared memory segment \"%s\": %m",
-						 name)));
+					 errmsg("could not remove shared memory segment \"%s\": %m",
+							name)));
 			return false;
 		}
 
@@ -711,8 +711,8 @@ dsm_impl_windows(dsm_op op, dsm_handle handle, Size request_size,
 			_dosmaperr(errcode);
 			ereport(elevel,
 					(errcode_for_dynamic_shared_memory(),
-				  errmsg("could not create shared memory segment \"%s\": %m",
-						 name)));
+					 errmsg("could not create shared memory segment \"%s\": %m",
+							name)));
 			return false;
 		}
 	}
@@ -816,8 +816,8 @@ dsm_impl_mmap(dsm_op op, dsm_handle handle, Size request_size,
 		{
 			ereport(elevel,
 					(errcode_for_dynamic_shared_memory(),
-				   errmsg("could not unmap shared memory segment \"%s\": %m",
-						  name)));
+					 errmsg("could not unmap shared memory segment \"%s\": %m",
+							name)));
 			return false;
 		}
 		*mapped_address = NULL;
@@ -826,8 +826,8 @@ dsm_impl_mmap(dsm_op op, dsm_handle handle, Size request_size,
 		{
 			ereport(elevel,
 					(errcode_for_dynamic_shared_memory(),
-				  errmsg("could not remove shared memory segment \"%s\": %m",
-						 name)));
+					 errmsg("could not remove shared memory segment \"%s\": %m",
+							name)));
 			return false;
 		}
 		return true;
@@ -960,8 +960,8 @@ dsm_impl_mmap(dsm_op op, dsm_handle handle, Size request_size,
 
 			ereport(elevel,
 					(errcode_for_dynamic_shared_memory(),
-				   errmsg("could not unmap shared memory segment \"%s\": %m",
-						  name)));
+					 errmsg("could not unmap shared memory segment \"%s\": %m",
+							name)));
 			return false;
 		}
 		*mapped_address = NULL;
@@ -1026,8 +1026,8 @@ dsm_impl_pin_segment(dsm_handle handle, void *impl_private,
 					_dosmaperr(GetLastError());
 					ereport(ERROR,
 							(errcode_for_dynamic_shared_memory(),
-						  errmsg("could not duplicate handle for \"%s\": %m",
-								 name)));
+							 errmsg("could not duplicate handle for \"%s\": %m",
+									name)));
 				}
 
 				/*
@@ -1074,8 +1074,8 @@ dsm_impl_unpin_segment(dsm_handle handle, void **impl_private)
 					_dosmaperr(GetLastError());
 					ereport(ERROR,
 							(errcode_for_dynamic_shared_memory(),
-						  errmsg("could not duplicate handle for \"%s\": %m",
-								 name)));
+							 errmsg("could not duplicate handle for \"%s\": %m",
+									name)));
 				}
 
 				*impl_private = NULL;

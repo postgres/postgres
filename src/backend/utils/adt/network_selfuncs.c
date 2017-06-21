@@ -287,7 +287,7 @@ networkjoinsel_inner(Oid operator,
 
 		mcv1_exists = get_attstatsslot(&mcv1_slot, vardata1->statsTuple,
 									   STATISTIC_KIND_MCV, InvalidOid,
-								 ATTSTATSSLOT_VALUES | ATTSTATSSLOT_NUMBERS);
+									   ATTSTATSSLOT_VALUES | ATTSTATSSLOT_NUMBERS);
 		hist1_exists = get_attstatsslot(&hist1_slot, vardata1->statsTuple,
 										STATISTIC_KIND_HISTOGRAM, InvalidOid,
 										ATTSTATSSLOT_VALUES);
@@ -309,7 +309,7 @@ networkjoinsel_inner(Oid operator,
 
 		mcv2_exists = get_attstatsslot(&mcv2_slot, vardata2->statsTuple,
 									   STATISTIC_KIND_MCV, InvalidOid,
-								 ATTSTATSSLOT_VALUES | ATTSTATSSLOT_NUMBERS);
+									   ATTSTATSSLOT_VALUES | ATTSTATSSLOT_NUMBERS);
 		hist2_exists = get_attstatsslot(&hist2_slot, vardata2->statsTuple,
 										STATISTIC_KIND_HISTOGRAM, InvalidOid,
 										ATTSTATSSLOT_VALUES);
@@ -360,7 +360,7 @@ networkjoinsel_inner(Oid operator,
 		selec += (1.0 - nullfrac1 - sumcommon1) *
 			(1.0 - nullfrac2 - sumcommon2) *
 			inet_hist_inclusion_join_sel(hist1_slot.values, hist1_slot.nvalues,
-									   hist2_slot.values, hist2_slot.nvalues,
+										 hist2_slot.values, hist2_slot.nvalues,
 										 opr_codenum);
 
 	/*
@@ -417,7 +417,7 @@ networkjoinsel_semi(Oid operator,
 
 		mcv1_exists = get_attstatsslot(&mcv1_slot, vardata1->statsTuple,
 									   STATISTIC_KIND_MCV, InvalidOid,
-								 ATTSTATSSLOT_VALUES | ATTSTATSSLOT_NUMBERS);
+									   ATTSTATSSLOT_VALUES | ATTSTATSSLOT_NUMBERS);
 		hist1_exists = get_attstatsslot(&hist1_slot, vardata1->statsTuple,
 										STATISTIC_KIND_HISTOGRAM, InvalidOid,
 										ATTSTATSSLOT_VALUES);
@@ -439,7 +439,7 @@ networkjoinsel_semi(Oid operator,
 
 		mcv2_exists = get_attstatsslot(&mcv2_slot, vardata2->statsTuple,
 									   STATISTIC_KIND_MCV, InvalidOid,
-								 ATTSTATSSLOT_VALUES | ATTSTATSSLOT_NUMBERS);
+									   ATTSTATSSLOT_VALUES | ATTSTATSSLOT_NUMBERS);
 		hist2_exists = get_attstatsslot(&hist2_slot, vardata2->statsTuple,
 										STATISTIC_KIND_HISTOGRAM, InvalidOid,
 										ATTSTATSSLOT_VALUES);

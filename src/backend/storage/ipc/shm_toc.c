@@ -253,6 +253,6 @@ Size
 shm_toc_estimate(shm_toc_estimator *e)
 {
 	return add_size(offsetof(shm_toc, toc_entry),
-				 add_size(mul_size(e->number_of_keys, sizeof(shm_toc_entry)),
-						  e->space_for_chunks));
+					add_size(mul_size(e->number_of_keys, sizeof(shm_toc_entry)),
+							 e->space_for_chunks));
 }

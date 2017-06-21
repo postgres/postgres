@@ -157,7 +157,7 @@ CreatePublication(CreatePublicationStmt *stmt)
 	if (stmt->for_all_tables && !superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-		(errmsg("must be superuser to create FOR ALL TABLES publication"))));
+				 (errmsg("must be superuser to create FOR ALL TABLES publication"))));
 
 	rel = heap_open(PublicationRelationId, RowExclusiveLock);
 
@@ -664,8 +664,8 @@ AlterPublicationOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 		if (form->puballtables && !superuser_arg(newOwnerId))
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-			errmsg("permission denied to change owner of publication \"%s\"",
-				   NameStr(form->pubname)),
+					 errmsg("permission denied to change owner of publication \"%s\"",
+							NameStr(form->pubname)),
 					 errhint("The owner of a FOR ALL TABLES publication must be a superuser.")));
 	}
 

@@ -987,7 +987,7 @@ CreateLockFile(const char *filename, bool amPostmaster,
 					 errmsg("could not remove old lock file \"%s\": %m",
 							filename),
 					 errhint("The file seems accidentally left over, but "
-						   "it could not be removed. Please remove the file "
+							 "it could not be removed. Please remove the file "
 							 "by hand and try again.")));
 	}
 
@@ -1303,8 +1303,8 @@ RecheckDataDirLockFile(void)
 				/* non-fatal, at least for now */
 				ereport(LOG,
 						(errcode_for_file_access(),
-				  errmsg("could not open file \"%s\": %m; continuing anyway",
-						 DIRECTORY_LOCK_FILE)));
+						 errmsg("could not open file \"%s\": %m; continuing anyway",
+								DIRECTORY_LOCK_FILE)));
 				return true;
 		}
 	}

@@ -212,7 +212,7 @@ brin_minmax_consistent(PG_FUNCTION_ARGS)
 				break;
 			/* max() >= scankey */
 			finfo = minmax_get_strategy_procinfo(bdesc, attno, subtype,
-											   BTGreaterEqualStrategyNumber);
+												 BTGreaterEqualStrategyNumber);
 			matches = FunctionCall2Coll(finfo, colloid, column->bv_values[1],
 										value);
 			break;
@@ -358,7 +358,7 @@ minmax_get_strategy_procinfo(BrinDesc *bdesc, uint16 attno, Oid subtype,
 				 strategynum, attr->atttypid, subtype, opfamily);
 
 		oprid = DatumGetObjectId(SysCacheGetAttr(AMOPSTRATEGY, tuple,
-											 Anum_pg_amop_amopopr, &isNull));
+												 Anum_pg_amop_amopopr, &isNull));
 		ReleaseSysCache(tuple);
 		Assert(!isNull && RegProcedureIsValid(oprid));
 

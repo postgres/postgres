@@ -207,8 +207,8 @@ index_check_primary_key(Relation heapRel,
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-			 errmsg("multiple primary keys for table \"%s\" are not allowed",
-					RelationGetRelationName(heapRel))));
+				 errmsg("multiple primary keys for table \"%s\" are not allowed",
+						RelationGetRelationName(heapRel))));
 	}
 
 	/*
@@ -232,7 +232,7 @@ index_check_primary_key(Relation heapRel,
 			continue;
 
 		atttuple = SearchSysCache2(ATTNUM,
-								 ObjectIdGetDatum(RelationGetRelid(heapRel)),
+								   ObjectIdGetDatum(RelationGetRelid(heapRel)),
 								   Int16GetDatum(attnum));
 		if (!HeapTupleIsValid(atttuple))
 			elog(ERROR, "cache lookup failed for attribute %d of relation %u",
@@ -325,7 +325,7 @@ ConstructTupleDescriptor(Relation heapRelation,
 				 * here we are indexing on a system attribute (-1...-n)
 				 */
 				from = SystemAttributeDefinition(atnum,
-										   heapRelation->rd_rel->relhasoids);
+												 heapRelation->rd_rel->relhasoids);
 			}
 			else
 			{
@@ -1038,7 +1038,7 @@ index_create(Relation heapRelation,
 		if (indexInfo->ii_Expressions)
 		{
 			recordDependencyOnSingleRelExpr(&myself,
-										  (Node *) indexInfo->ii_Expressions,
+											(Node *) indexInfo->ii_Expressions,
 											heapRelationId,
 											DEPENDENCY_NORMAL,
 											DEPENDENCY_AUTO, false);
@@ -3329,7 +3329,7 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
 	if (RELATION_IS_OTHER_TEMP(iRel))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			   errmsg("cannot reindex temporary tables of other sessions")));
+				 errmsg("cannot reindex temporary tables of other sessions")));
 
 	/*
 	 * Also check for active uses of the index in the current transaction; we

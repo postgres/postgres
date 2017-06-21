@@ -320,8 +320,8 @@ jsonb_put_escaped_value(StringInfo out, JsonbValue *scalarVal)
 			break;
 		case jbvNumeric:
 			appendStringInfoString(out,
-							 DatumGetCString(DirectFunctionCall1(numeric_out,
-								  PointerGetDatum(scalarVal->val.numeric))));
+								   DatumGetCString(DirectFunctionCall1(numeric_out,
+																	   PointerGetDatum(scalarVal->val.numeric))));
 			break;
 		case jbvBool:
 			if (scalarVal->val.boolean)
@@ -664,7 +664,7 @@ jsonb_categorize_type(Oid typoid,
 					CoercionPathType ctype;
 
 					ctype = find_coercion_pathway(JSONOID, typoid,
-											   COERCION_EXPLICIT, &castfunc);
+												  COERCION_EXPLICIT, &castfunc);
 					if (ctype == COERCION_PATH_FUNC && OidIsValid(castfunc))
 					{
 						*tcategory = JSONBTYPE_JSONCAST;
@@ -722,7 +722,7 @@ datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-		 errmsg("key value must be scalar, not array, composite, or json")));
+				 errmsg("key value must be scalar, not array, composite, or json")));
 	}
 	else
 	{
@@ -1212,7 +1212,7 @@ jsonb_build_object(PG_FUNCTION_ARGS)
 		if (val_type == InvalidOid || val_type == UNKNOWNOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			errmsg("could not determine data type for argument %d", i + 1)));
+					 errmsg("could not determine data type for argument %d", i + 1)));
 
 		add_jsonb(arg, false, &result, val_type, true);
 
@@ -1235,7 +1235,7 @@ jsonb_build_object(PG_FUNCTION_ARGS)
 		if (val_type == InvalidOid || val_type == UNKNOWNOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			errmsg("could not determine data type for argument %d", i + 2)));
+					 errmsg("could not determine data type for argument %d", i + 2)));
 		add_jsonb(arg, PG_ARGISNULL(i + 1), &result, val_type, false);
 	}
 
@@ -1295,7 +1295,7 @@ jsonb_build_array(PG_FUNCTION_ARGS)
 		if (val_type == InvalidOid || val_type == UNKNOWNOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			errmsg("could not determine data type for argument %d", i + 1)));
+					 errmsg("could not determine data type for argument %d", i + 1)));
 		add_jsonb(arg, PG_ARGISNULL(i), &result, val_type, false);
 	}
 
@@ -1662,7 +1662,7 @@ jsonb_agg_transfn(PG_FUNCTION_ARGS)
 					/* same for numeric */
 					v.val.numeric =
 						DatumGetNumeric(DirectFunctionCall1(numeric_uplus,
-											NumericGetDatum(v.val.numeric)));
+															NumericGetDatum(v.val.numeric)));
 				}
 				result->res = pushJsonbValue(&result->parseState,
 											 type, &v);
@@ -1892,7 +1892,7 @@ jsonb_object_agg_transfn(PG_FUNCTION_ARGS)
 					/* same for numeric */
 					v.val.numeric =
 						DatumGetNumeric(DirectFunctionCall1(numeric_uplus,
-											NumericGetDatum(v.val.numeric)));
+															NumericGetDatum(v.val.numeric)));
 				}
 				result->res = pushJsonbValue(&result->parseState,
 											 single_scalar ? WJB_VALUE : type,

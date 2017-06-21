@@ -187,7 +187,7 @@ pgxmlNodeSetToText(xmlNodeSetPtr nodeset,
 			if (plainsep != NULL)
 			{
 				xmlBufferWriteCHAR(buf,
-							  xmlXPathCastNodeToString(nodeset->nodeTab[i]));
+								   xmlXPathCastNodeToString(nodeset->nodeTab[i]));
 
 				/* If this isn't the last entry, write the plain sep. */
 				if (i < (nodeset->nodeNr) - 1)
@@ -579,8 +579,8 @@ xpath_table(PG_FUNCTION_ARGS)
 	if (!(rsinfo->allowedModes & SFRM_Materialize))
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-			   errmsg("xpath_table requires Materialize mode, but it is not "
-					  "allowed in this context")));
+				 errmsg("xpath_table requires Materialize mode, but it is not "
+						"allowed in this context")));
 
 	/*
 	 * The tuplestore must exist in a higher context than this function call

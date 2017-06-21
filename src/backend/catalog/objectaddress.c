@@ -853,13 +853,13 @@ get_object_address(ObjectType objtype, Node *object,
 
 					objlist = castNode(List, object);
 					domaddr = get_object_address_type(OBJECT_DOMAIN,
-											linitial_node(TypeName, objlist),
+													  linitial_node(TypeName, objlist),
 													  missing_ok);
 					constrname = strVal(lsecond(objlist));
 
 					address.classId = ConstraintRelationId;
 					address.objectId = get_domain_constraint_oid(domaddr.objectId,
-													 constrname, missing_ok);
+																 constrname, missing_ok);
 					address.objectSubId = 0;
 
 				}
@@ -877,7 +877,7 @@ get_object_address(ObjectType objtype, Node *object,
 			case OBJECT_PUBLICATION:
 			case OBJECT_SUBSCRIPTION:
 				address = get_object_address_unqualified(objtype,
-											   (Value *) object, missing_ok);
+														 (Value *) object, missing_ok);
 				break;
 			case OBJECT_TYPE:
 			case OBJECT_DOMAIN:
@@ -1622,11 +1622,11 @@ get_object_address_opf_member(ObjectType objtype,
 					if (!missing_ok)
 						ereport(ERROR,
 								(errcode(ERRCODE_UNDEFINED_OBJECT),
-						  errmsg("operator %d (%s, %s) of %s does not exist",
-								 membernum,
-								 TypeNameToString(typenames[0]),
-								 TypeNameToString(typenames[1]),
-								 getObjectDescription(&famaddr))));
+								 errmsg("operator %d (%s, %s) of %s does not exist",
+										membernum,
+										TypeNameToString(typenames[0]),
+										TypeNameToString(typenames[1]),
+										getObjectDescription(&famaddr))));
 				}
 				else
 				{
@@ -1653,11 +1653,11 @@ get_object_address_opf_member(ObjectType objtype,
 					if (!missing_ok)
 						ereport(ERROR,
 								(errcode(ERRCODE_UNDEFINED_OBJECT),
-						  errmsg("function %d (%s, %s) of %s does not exist",
-								 membernum,
-								 TypeNameToString(typenames[0]),
-								 TypeNameToString(typenames[1]),
-								 getObjectDescription(&famaddr))));
+								 errmsg("function %d (%s, %s) of %s does not exist",
+										membernum,
+										TypeNameToString(typenames[0]),
+										TypeNameToString(typenames[1]),
+										getObjectDescription(&famaddr))));
 				}
 				else
 				{
@@ -1848,7 +1848,7 @@ get_object_address_defacl(List *object, bool missing_ok)
 		default:
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			  errmsg("unrecognized default ACL object type \"%c\"", objtype),
+					 errmsg("unrecognized default ACL object type \"%c\"", objtype),
 					 errhint("Valid object types are \"%c\", \"%c\", \"%c\", \"%c\", \"%c\".",
 							 DEFACLOBJ_RELATION,
 							 DEFACLOBJ_SEQUENCE,
@@ -1905,8 +1905,8 @@ not_found:
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
-				   errmsg("default ACL for user \"%s\" on %s does not exist",
-						  username, objtype_str)));
+					 errmsg("default ACL for user \"%s\" on %s does not exist",
+							username, objtype_str)));
 	}
 	return address;
 }
@@ -2045,9 +2045,9 @@ pg_get_object_address(PG_FUNCTION_ARGS)
 			if (nulls[i])
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					errmsg("name or argument lists may not contain nulls")));
+						 errmsg("name or argument lists may not contain nulls")));
 			args = lappend(args,
-						typeStringToTypeName(TextDatumGetCString(elems[i])));
+						   typeStringToTypeName(TextDatumGetCString(elems[i])));
 		}
 	}
 	else
@@ -2071,7 +2071,7 @@ pg_get_object_address(PG_FUNCTION_ARGS)
 			if (list_length(args) != 1)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					  errmsg("argument list length must be exactly %d", 1)));
+						 errmsg("argument list length must be exactly %d", 1)));
 			break;
 		case OBJECT_OPFAMILY:
 		case OBJECT_OPCLASS:
@@ -2091,7 +2091,7 @@ pg_get_object_address(PG_FUNCTION_ARGS)
 			if (list_length(args) != 2)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					  errmsg("argument list length must be exactly %d", 2)));
+						 errmsg("argument list length must be exactly %d", 2)));
 			break;
 		default:
 			break;
@@ -2665,7 +2665,7 @@ getObjectDescription(const ObjectAddress *object)
 			if (object->objectSubId != 0)
 				appendStringInfo(&buffer, _(" column %s"),
 								 get_relid_attribute_name(object->objectId,
-													   object->objectSubId));
+														  object->objectSubId));
 			break;
 
 		case OCLASS_PROC:
@@ -2772,7 +2772,7 @@ getObjectDescription(const ObjectAddress *object)
 					elog(ERROR, "cache lookup failed for conversion %u",
 						 object->objectId);
 				appendStringInfo(&buffer, _("conversion %s"),
-				 NameStr(((Form_pg_conversion) GETSTRUCT(conTup))->conname));
+								 NameStr(((Form_pg_conversion) GETSTRUCT(conTup))->conname));
 				ReleaseSysCache(conTup);
 				break;
 			}
@@ -2861,7 +2861,7 @@ getObjectDescription(const ObjectAddress *object)
 
 				appendStringInfo(&buffer, _("operator class %s for access method %s"),
 								 quote_qualified_identifier(nspname,
-												  NameStr(opcForm->opcname)),
+															NameStr(opcForm->opcname)),
 								 NameStr(amForm->amname));
 
 				ReleaseSysCache(amTup);
@@ -2883,7 +2883,7 @@ getObjectDescription(const ObjectAddress *object)
 					elog(ERROR, "cache lookup failed for access method %u",
 						 object->objectId);
 				appendStringInfo(&buffer, _("access method %s"),
-							 NameStr(((Form_pg_am) GETSTRUCT(tup))->amname));
+								 NameStr(((Form_pg_am) GETSTRUCT(tup))->amname));
 				ReleaseSysCache(tup);
 				break;
 			}
@@ -3100,7 +3100,7 @@ getObjectDescription(const ObjectAddress *object)
 					elog(ERROR, "cache lookup failed for text search parser %u",
 						 object->objectId);
 				appendStringInfo(&buffer, _("text search parser %s"),
-					 NameStr(((Form_pg_ts_parser) GETSTRUCT(tup))->prsname));
+								 NameStr(((Form_pg_ts_parser) GETSTRUCT(tup))->prsname));
 				ReleaseSysCache(tup);
 				break;
 			}
@@ -3115,7 +3115,7 @@ getObjectDescription(const ObjectAddress *object)
 					elog(ERROR, "cache lookup failed for text search dictionary %u",
 						 object->objectId);
 				appendStringInfo(&buffer, _("text search dictionary %s"),
-					  NameStr(((Form_pg_ts_dict) GETSTRUCT(tup))->dictname));
+								 NameStr(((Form_pg_ts_dict) GETSTRUCT(tup))->dictname));
 				ReleaseSysCache(tup);
 				break;
 			}
@@ -3130,7 +3130,7 @@ getObjectDescription(const ObjectAddress *object)
 					elog(ERROR, "cache lookup failed for text search template %u",
 						 object->objectId);
 				appendStringInfo(&buffer, _("text search template %s"),
-				  NameStr(((Form_pg_ts_template) GETSTRUCT(tup))->tmplname));
+								 NameStr(((Form_pg_ts_template) GETSTRUCT(tup))->tmplname));
 				ReleaseSysCache(tup);
 				break;
 			}
@@ -3145,7 +3145,7 @@ getObjectDescription(const ObjectAddress *object)
 					elog(ERROR, "cache lookup failed for text search configuration %u",
 						 object->objectId);
 				appendStringInfo(&buffer, _("text search configuration %s"),
-					 NameStr(((Form_pg_ts_config) GETSTRUCT(tup))->cfgname));
+								 NameStr(((Form_pg_ts_config) GETSTRUCT(tup))->cfgname));
 				ReleaseSysCache(tup);
 				break;
 			}
@@ -3259,33 +3259,33 @@ getObjectDescription(const ObjectAddress *object)
 					case DEFACLOBJ_RELATION:
 						appendStringInfo(&buffer,
 										 _("default privileges on new relations belonging to role %s"),
-							   GetUserNameFromId(defacl->defaclrole, false));
+										 GetUserNameFromId(defacl->defaclrole, false));
 						break;
 					case DEFACLOBJ_SEQUENCE:
 						appendStringInfo(&buffer,
 										 _("default privileges on new sequences belonging to role %s"),
-							   GetUserNameFromId(defacl->defaclrole, false));
+										 GetUserNameFromId(defacl->defaclrole, false));
 						break;
 					case DEFACLOBJ_FUNCTION:
 						appendStringInfo(&buffer,
 										 _("default privileges on new functions belonging to role %s"),
-							   GetUserNameFromId(defacl->defaclrole, false));
+										 GetUserNameFromId(defacl->defaclrole, false));
 						break;
 					case DEFACLOBJ_TYPE:
 						appendStringInfo(&buffer,
 										 _("default privileges on new types belonging to role %s"),
-							   GetUserNameFromId(defacl->defaclrole, false));
+										 GetUserNameFromId(defacl->defaclrole, false));
 						break;
 					case DEFACLOBJ_NAMESPACE:
 						appendStringInfo(&buffer,
 										 _("default privileges on new schemas belonging to role %s"),
-							   GetUserNameFromId(defacl->defaclrole, false));
+										 GetUserNameFromId(defacl->defaclrole, false));
 						break;
 					default:
 						/* shouldn't get here */
 						appendStringInfo(&buffer,
-								_("default privileges belonging to role %s"),
-							   GetUserNameFromId(defacl->defaclrole, false));
+										 _("default privileges belonging to role %s"),
+										 GetUserNameFromId(defacl->defaclrole, false));
 						break;
 				}
 
@@ -3293,7 +3293,7 @@ getObjectDescription(const ObjectAddress *object)
 				{
 					appendStringInfo(&buffer,
 									 _(" in schema %s"),
-								get_namespace_name(defacl->defaclnamespace));
+									 get_namespace_name(defacl->defaclnamespace));
 				}
 
 				systable_endscan(rcscan);
@@ -3323,7 +3323,7 @@ getObjectDescription(const ObjectAddress *object)
 					elog(ERROR, "cache lookup failed for event trigger %u",
 						 object->objectId);
 				appendStringInfo(&buffer, _("event trigger %s"),
-				 NameStr(((Form_pg_event_trigger) GETSTRUCT(tup))->evtname));
+								 NameStr(((Form_pg_event_trigger) GETSTRUCT(tup))->evtname));
 				ReleaseSysCache(tup);
 				break;
 			}
@@ -3631,7 +3631,7 @@ pg_identify_object(PG_FUNCTION_ARGS)
 										  RelationGetDescr(catalog), &isnull);
 				if (isnull)
 					elog(ERROR, "invalid null namespace in object %u/%u/%d",
-					 address.classId, address.objectId, address.objectSubId);
+						 address.classId, address.objectId, address.objectSubId);
 			}
 
 			/*
@@ -3646,7 +3646,7 @@ pg_identify_object(PG_FUNCTION_ARGS)
 					Datum		nameDatum;
 
 					nameDatum = heap_getattr(objtup, nameAttnum,
-										 RelationGetDescr(catalog), &isnull);
+											 RelationGetDescr(catalog), &isnull);
 					if (isnull)
 						elog(ERROR, "invalid null name in object %u/%u/%d",
 							 address.classId, address.objectId, address.objectSubId);
@@ -4091,7 +4091,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 
 		case OCLASS_PROC:
 			appendStringInfoString(&buffer,
-							   format_procedure_qualified(object->objectId));
+								   format_procedure_qualified(object->objectId));
 			if (objname)
 				format_procedure_parts(object->objectId, objname, objargs);
 			break;
@@ -4124,8 +4124,8 @@ getObjectIdentityParts(const ObjectAddress *object,
 				castForm = (Form_pg_cast) GETSTRUCT(tup);
 
 				appendStringInfo(&buffer, "(%s AS %s)",
-							  format_type_be_qualified(castForm->castsource),
-							 format_type_be_qualified(castForm->casttarget));
+								 format_type_be_qualified(castForm->castsource),
+								 format_type_be_qualified(castForm->casttarget));
 
 				if (objname)
 				{
@@ -4152,7 +4152,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 				schema = get_namespace_name_or_temp(coll->collnamespace);
 				appendStringInfoString(&buffer,
 									   quote_qualified_identifier(schema,
-												   NameStr(coll->collname)));
+																  NameStr(coll->collname)));
 				if (objname)
 					*objname = list_make2(schema,
 										  pstrdup(NameStr(coll->collname)));
@@ -4191,7 +4191,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 
 					appendStringInfo(&buffer, "%s on %s",
 									 quote_identifier(NameStr(con->conname)),
-						  getObjectIdentityParts(&domain, objname, objargs));
+									 getObjectIdentityParts(&domain, objname, objargs));
 
 					if (objname)
 						*objargs = lappend(*objargs, pstrdup(NameStr(con->conname)));
@@ -4216,7 +4216,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 				schema = get_namespace_name_or_temp(conForm->connamespace);
 				appendStringInfoString(&buffer,
 									   quote_qualified_identifier(schema,
-												 NameStr(conForm->conname)));
+																  NameStr(conForm->conname)));
 				if (objname)
 					*objname = list_make2(schema,
 										  pstrdup(NameStr(conForm->conname)));
@@ -4277,7 +4277,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 						 object->objectId);
 				langForm = (Form_pg_language) GETSTRUCT(langTup);
 				appendStringInfoString(&buffer,
-							   quote_identifier(NameStr(langForm->lanname)));
+									   quote_identifier(NameStr(langForm->lanname)));
 				if (objname)
 					*objname = list_make1(pstrdup(NameStr(langForm->lanname)));
 				ReleaseSysCache(langTup);
@@ -4292,7 +4292,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 
 		case OCLASS_OPERATOR:
 			appendStringInfoString(&buffer,
-								format_operator_qualified(object->objectId));
+								   format_operator_qualified(object->objectId));
 			if (objname)
 				format_operator_parts(object->objectId, objname, objargs);
 			break;
@@ -4322,7 +4322,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 
 				appendStringInfo(&buffer, "%s USING %s",
 								 quote_qualified_identifier(schema,
-												  NameStr(opcForm->opcname)),
+															NameStr(opcForm->opcname)),
 								 quote_identifier(NameStr(amForm->amname)));
 				if (objname)
 					*objname = list_make3(pstrdup(NameStr(amForm->amname)),
@@ -4391,7 +4391,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 				if (objname)
 				{
 					*objname = lappend(*objname,
-									 psprintf("%d", amopForm->amopstrategy));
+									   psprintf("%d", amopForm->amopstrategy));
 					*objargs = list_make2(ltype, rtype);
 				}
 
@@ -4542,10 +4542,10 @@ getObjectIdentityParts(const ObjectAddress *object,
 				schema = get_namespace_name_or_temp(formStatistic->stxnamespace);
 				appendStringInfoString(&buffer,
 									   quote_qualified_identifier(schema,
-										   NameStr(formStatistic->stxname)));
+																  NameStr(formStatistic->stxname)));
 				if (objname)
 					*objname = list_make2(schema,
-								   pstrdup(NameStr(formStatistic->stxname)));
+										  pstrdup(NameStr(formStatistic->stxname)));
 				ReleaseSysCache(tup);
 			}
 			break;
@@ -4565,10 +4565,10 @@ getObjectIdentityParts(const ObjectAddress *object,
 				schema = get_namespace_name_or_temp(formParser->prsnamespace);
 				appendStringInfoString(&buffer,
 									   quote_qualified_identifier(schema,
-											  NameStr(formParser->prsname)));
+																  NameStr(formParser->prsname)));
 				if (objname)
 					*objname = list_make2(schema,
-									  pstrdup(NameStr(formParser->prsname)));
+										  pstrdup(NameStr(formParser->prsname)));
 				ReleaseSysCache(tup);
 				break;
 			}
@@ -4588,10 +4588,10 @@ getObjectIdentityParts(const ObjectAddress *object,
 				schema = get_namespace_name_or_temp(formDict->dictnamespace);
 				appendStringInfoString(&buffer,
 									   quote_qualified_identifier(schema,
-											   NameStr(formDict->dictname)));
+																  NameStr(formDict->dictname)));
 				if (objname)
 					*objname = list_make2(schema,
-									   pstrdup(NameStr(formDict->dictname)));
+										  pstrdup(NameStr(formDict->dictname)));
 				ReleaseSysCache(tup);
 				break;
 			}
@@ -4611,10 +4611,10 @@ getObjectIdentityParts(const ObjectAddress *object,
 				schema = get_namespace_name_or_temp(formTmpl->tmplnamespace);
 				appendStringInfoString(&buffer,
 									   quote_qualified_identifier(schema,
-											   NameStr(formTmpl->tmplname)));
+																  NameStr(formTmpl->tmplname)));
 				if (objname)
 					*objname = list_make2(schema,
-									   pstrdup(NameStr(formTmpl->tmplname)));
+										  pstrdup(NameStr(formTmpl->tmplname)));
 				ReleaseSysCache(tup);
 				break;
 			}
@@ -4634,7 +4634,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 				schema = get_namespace_name_or_temp(formCfg->cfgnamespace);
 				appendStringInfoString(&buffer,
 									   quote_qualified_identifier(schema,
-												 NameStr(formCfg->cfgname)));
+																  NameStr(formCfg->cfgname)));
 				if (objname)
 					*objname = list_make2(schema,
 										  pstrdup(NameStr(formCfg->cfgname)));
@@ -4853,7 +4853,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 						 object->objectId);
 				trigForm = (Form_pg_event_trigger) GETSTRUCT(tup);
 				appendStringInfoString(&buffer,
-							   quote_identifier(NameStr(trigForm->evtname)));
+									   quote_identifier(NameStr(trigForm->evtname)));
 				ReleaseSysCache(tup);
 				break;
 			}
@@ -5043,7 +5043,7 @@ getRelationIdentity(StringInfo buffer, Oid relid, List **object)
 	schema = get_namespace_name_or_temp(relForm->relnamespace);
 	appendStringInfoString(buffer,
 						   quote_qualified_identifier(schema,
-												 NameStr(relForm->relname)));
+													  NameStr(relForm->relname)));
 	if (object)
 		*object = list_make2(schema, pstrdup(NameStr(relForm->relname)));
 

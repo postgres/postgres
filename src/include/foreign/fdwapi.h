@@ -82,17 +82,17 @@ typedef void (*BeginForeignModify_function) (ModifyTableState *mtstate,
 typedef TupleTableSlot *(*ExecForeignInsert_function) (EState *estate,
 													   ResultRelInfo *rinfo,
 													   TupleTableSlot *slot,
-												   TupleTableSlot *planSlot);
+													   TupleTableSlot *planSlot);
 
 typedef TupleTableSlot *(*ExecForeignUpdate_function) (EState *estate,
 													   ResultRelInfo *rinfo,
 													   TupleTableSlot *slot,
-												   TupleTableSlot *planSlot);
+													   TupleTableSlot *planSlot);
 
 typedef TupleTableSlot *(*ExecForeignDelete_function) (EState *estate,
 													   ResultRelInfo *rinfo,
 													   TupleTableSlot *slot,
-												   TupleTableSlot *planSlot);
+													   TupleTableSlot *planSlot);
 
 typedef void (*EndForeignModify_function) (EState *estate,
 										   ResultRelInfo *rinfo);
@@ -112,7 +112,7 @@ typedef TupleTableSlot *(*IterateDirectModify_function) (ForeignScanState *node)
 typedef void (*EndDirectModify_function) (ForeignScanState *node);
 
 typedef RowMarkType (*GetForeignRowMarkType_function) (RangeTblEntry *rte,
-												LockClauseStrength strength);
+													   LockClauseStrength strength);
 
 typedef HeapTuple (*RefetchForeignRow_function) (EState *estate,
 												 ExecRowMark *erm,

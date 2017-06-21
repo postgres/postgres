@@ -30,7 +30,7 @@ timestamptz_to_time_t(TimestampTz t)
 	pg_time_t	result;
 
 	result = (pg_time_t) (t / USECS_PER_SEC +
-				 ((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY));
+						  ((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY));
 	return result;
 }
 

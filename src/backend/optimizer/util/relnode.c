@@ -279,7 +279,7 @@ build_join_rel_hash(PlannerInfo *root)
 	hashtab = hash_create("JoinRelHashTable",
 						  256L,
 						  &hash_ctl,
-					HASH_ELEM | HASH_FUNCTION | HASH_COMPARE | HASH_CONTEXT);
+						  HASH_ELEM | HASH_FUNCTION | HASH_COMPARE | HASH_CONTEXT);
 
 	/* Insert all the already-existing joinrels */
 	foreach(l, root->join_rel_list)

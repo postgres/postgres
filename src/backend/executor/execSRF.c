@@ -291,7 +291,7 @@ ExecMakeTableFunctionResult(SetExprState *setexpr,
 						 */
 						oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
 						tupdesc = lookup_rowtype_tupdesc_copy(HeapTupleHeaderGetTypeId(td),
-											   HeapTupleHeaderGetTypMod(td));
+															  HeapTupleHeaderGetTypMod(td));
 						rsinfo.setDesc = tupdesc;
 						MemoryContextSwitchTo(oldcontext);
 					}
@@ -667,10 +667,10 @@ init_sexpr(Oid foid, Oid input_collation, Expr *node,
 	if (list_length(sexpr->args) > FUNC_MAX_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
-			 errmsg_plural("cannot pass more than %d argument to a function",
-						   "cannot pass more than %d arguments to a function",
-						   FUNC_MAX_ARGS,
-						   FUNC_MAX_ARGS)));
+				 errmsg_plural("cannot pass more than %d argument to a function",
+							   "cannot pass more than %d arguments to a function",
+							   FUNC_MAX_ARGS,
+							   FUNC_MAX_ARGS)));
 
 	/* Set up the primary fmgr lookup information */
 	fmgr_info_cxt(foid, &(sexpr->func), sexprCxt);
@@ -687,7 +687,7 @@ init_sexpr(Oid foid, Oid input_collation, Expr *node,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("set-valued function called in context that cannot accept a set"),
 				 parent ? executor_errposition(parent->state,
-										  exprLocation((Node *) node)) : 0));
+											   exprLocation((Node *) node)) : 0));
 
 	/* Otherwise, caller should have marked the sexpr correctly */
 	Assert(sexpr->func.fn_retset == sexpr->funcReturnsSet);
@@ -897,7 +897,7 @@ tupledesc_match(TupleDesc dst_tupdesc, TupleDesc src_tupdesc)
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("function return row and query-specified return row do not match"),
 				 errdetail_plural("Returned row contains %d attribute, but query expects %d.",
-				"Returned row contains %d attributes, but query expects %d.",
+								  "Returned row contains %d attributes, but query expects %d.",
 								  src_tupdesc->natts,
 								  src_tupdesc->natts, dst_tupdesc->natts)));
 

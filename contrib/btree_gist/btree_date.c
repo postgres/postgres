@@ -87,8 +87,8 @@ gdb_date_dist(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	/* we assume the difference can't overflow */
 	Datum		diff = DirectFunctionCall2(date_mi,
-									 DateADTGetDatum(*((const DateADT *) a)),
-									DateADTGetDatum(*((const DateADT *) b)));
+										   DateADTGetDatum(*((const DateADT *) a)),
+										   DateADTGetDatum(*((const DateADT *) b)));
 
 	return (float8) Abs(DatumGetInt32(diff));
 }
@@ -210,14 +210,14 @@ gbt_date_penalty(PG_FUNCTION_ARGS)
 	diff = DatumGetInt32(DirectFunctionCall2(
 											 date_mi,
 											 DateADTGetDatum(newentry->upper),
-										 DateADTGetDatum(origentry->upper)));
+											 DateADTGetDatum(origentry->upper)));
 
 	res = Max(diff, 0);
 
 	diff = DatumGetInt32(DirectFunctionCall2(
 											 date_mi,
-										   DateADTGetDatum(origentry->lower),
-										  DateADTGetDatum(newentry->lower)));
+											 DateADTGetDatum(origentry->lower),
+											 DateADTGetDatum(newentry->lower)));
 
 	res += Max(diff, 0);
 
@@ -227,8 +227,8 @@ gbt_date_penalty(PG_FUNCTION_ARGS)
 	{
 		diff = DatumGetInt32(DirectFunctionCall2(
 												 date_mi,
-										   DateADTGetDatum(origentry->upper),
-										 DateADTGetDatum(origentry->lower)));
+												 DateADTGetDatum(origentry->upper),
+												 DateADTGetDatum(origentry->lower)));
 		*result += FLT_MIN;
 		*result += (float) (res / ((double) (res + diff)));
 		*result *= (FLT_MAX / (((GISTENTRY *) PG_GETARG_POINTER(0))->rel->rd_att->natts + 1));
@@ -242,8 +242,8 @@ Datum
 gbt_date_picksplit(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_POINTER(gbt_num_picksplit(
-									(GistEntryVector *) PG_GETARG_POINTER(0),
-									  (GIST_SPLITVEC *) PG_GETARG_POINTER(1),
+										(GistEntryVector *) PG_GETARG_POINTER(0),
+										(GIST_SPLITVEC *) PG_GETARG_POINTER(1),
 										&tinfo, fcinfo->flinfo
 										));
 }

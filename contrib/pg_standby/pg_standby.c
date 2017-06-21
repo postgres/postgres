@@ -256,7 +256,7 @@ CustomizableCleanupPriorWALFiles(void)
 				 * in case this worries you.
 				 */
 				if (IsXLogFileName(xlde->d_name) &&
-				  strcmp(xlde->d_name + 8, exclusiveCleanupFileName + 8) < 0)
+					strcmp(xlde->d_name + 8, exclusiveCleanupFileName + 8) < 0)
 				{
 #ifdef WIN32
 					snprintf(WALFilePath, sizeof(WALFilePath), "%s\\%s", archiveLocation, xlde->d_name);
@@ -523,7 +523,7 @@ usage(void)
 		   "Main intended use as restore_command in recovery.conf:\n"
 		   "  restore_command = 'pg_standby [OPTION]... ARCHIVELOCATION %%f %%p %%r'\n"
 		   "e.g.\n"
-	"  restore_command = 'pg_standby /mnt/server/archiverdir %%f %%p %%r'\n");
+		   "  restore_command = 'pg_standby /mnt/server/archiverdir %%f %%p %%r'\n");
 	printf("\nReport bugs to <pgsql-bugs@postgresql.org>.\n");
 }
 

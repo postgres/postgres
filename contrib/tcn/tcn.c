@@ -73,7 +73,7 @@ triggered_change_notification(PG_FUNCTION_ARGS)
 	if (!CALLED_AS_TRIGGER(fcinfo))
 		ereport(ERROR,
 				(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
-		errmsg("triggered_change_notification: must be called as trigger")));
+				 errmsg("triggered_change_notification: must be called as trigger")));
 
 	/* and that it's called after the change */
 	if (!TRIGGER_FIRED_AFTER(trigdata->tg_event))

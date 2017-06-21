@@ -557,7 +557,7 @@ vacuum_all_databases(vacuumingOptions *vacopts,
 	conn = connectMaintenanceDatabase(maintenance_db, host, port,
 									  username, prompt_password, progname);
 	result = executeQuery(conn,
-			"SELECT datname FROM pg_database WHERE datallowconn ORDER BY 1;",
+						  "SELECT datname FROM pg_database WHERE datallowconn ORDER BY 1;",
 						  progname, echo);
 	PQfinish(conn);
 
@@ -705,7 +705,7 @@ run_vacuum_command(PGconn *conn, const char *sql, bool echo,
 	{
 		if (table)
 			fprintf(stderr,
-			_("%s: vacuuming of table \"%s\" in database \"%s\" failed: %s"),
+					_("%s: vacuuming of table \"%s\" in database \"%s\" failed: %s"),
 					progname, table, PQdb(conn), PQerrorMessage(conn));
 		else
 			fprintf(stderr, _("%s: vacuuming of database \"%s\" failed: %s"),

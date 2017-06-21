@@ -396,8 +396,8 @@ fetch_finfo_record(void *filehandle, const char *funcname)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
-			errmsg("could not find function information for function \"%s\"",
-				   funcname),
+				 errmsg("could not find function information for function \"%s\"",
+						funcname),
 				 errhint("SQL-callable functions need an accompanying PG_FUNCTION_INFO_V1(funcname).")));
 		return NULL;			/* silence compiler */
 	}
@@ -631,7 +631,7 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
 
 	if (OidIsValid(fcache->userid))
 		SetUserIdAndSecContext(fcache->userid,
-							save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+							   save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 
 	if (fcache->proconfig)
 	{

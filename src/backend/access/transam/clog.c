@@ -147,7 +147,7 @@ static void set_status_by_pages(int nsubxids, TransactionId *subxids,
  */
 void
 TransactionIdSetTreeStatus(TransactionId xid, int nsubxids,
-					TransactionId *subxids, XidStatus status, XLogRecPtr lsn)
+						   TransactionId *subxids, XidStatus status, XLogRecPtr lsn)
 {
 	int			pageno = TransactionIdToPage(xid);	/* get page of parent */
 	int			i;

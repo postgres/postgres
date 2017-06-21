@@ -57,7 +57,7 @@ _int_overlap_sel(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_DATUM(DirectFunctionCall4(arraycontsel,
 										PG_GETARG_DATUM(0),
-									  ObjectIdGetDatum(OID_ARRAY_OVERLAP_OP),
+										ObjectIdGetDatum(OID_ARRAY_OVERLAP_OP),
 										PG_GETARG_DATUM(2),
 										PG_GETARG_DATUM(3)));
 }
@@ -67,7 +67,7 @@ _int_contains_sel(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_DATUM(DirectFunctionCall4(arraycontsel,
 										PG_GETARG_DATUM(0),
-									 ObjectIdGetDatum(OID_ARRAY_CONTAINS_OP),
+										ObjectIdGetDatum(OID_ARRAY_CONTAINS_OP),
 										PG_GETARG_DATUM(2),
 										PG_GETARG_DATUM(3)));
 }
@@ -77,7 +77,7 @@ _int_contained_sel(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_DATUM(DirectFunctionCall4(arraycontsel,
 										PG_GETARG_DATUM(0),
-									ObjectIdGetDatum(OID_ARRAY_CONTAINED_OP),
+										ObjectIdGetDatum(OID_ARRAY_CONTAINED_OP),
 										PG_GETARG_DATUM(2),
 										PG_GETARG_DATUM(3)));
 }
@@ -87,7 +87,7 @@ _int_overlap_joinsel(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_DATUM(DirectFunctionCall5(arraycontjoinsel,
 										PG_GETARG_DATUM(0),
-									  ObjectIdGetDatum(OID_ARRAY_OVERLAP_OP),
+										ObjectIdGetDatum(OID_ARRAY_OVERLAP_OP),
 										PG_GETARG_DATUM(2),
 										PG_GETARG_DATUM(3),
 										PG_GETARG_DATUM(4)));
@@ -98,7 +98,7 @@ _int_contains_joinsel(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_DATUM(DirectFunctionCall5(arraycontjoinsel,
 										PG_GETARG_DATUM(0),
-									 ObjectIdGetDatum(OID_ARRAY_CONTAINS_OP),
+										ObjectIdGetDatum(OID_ARRAY_CONTAINS_OP),
 										PG_GETARG_DATUM(2),
 										PG_GETARG_DATUM(3),
 										PG_GETARG_DATUM(4)));
@@ -109,7 +109,7 @@ _int_contained_joinsel(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_DATUM(DirectFunctionCall5(arraycontjoinsel,
 										PG_GETARG_DATUM(0),
-									ObjectIdGetDatum(OID_ARRAY_CONTAINED_OP),
+										ObjectIdGetDatum(OID_ARRAY_CONTAINED_OP),
 										PG_GETARG_DATUM(2),
 										PG_GETARG_DATUM(3),
 										PG_GETARG_DATUM(4)));

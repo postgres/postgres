@@ -83,7 +83,7 @@ g_int_consistent(PG_FUNCTION_ARGS)
 		case RTOldContainedByStrategyNumber:
 			if (GIST_LEAF(entry))
 				retval = inner_int_contains(query,
-								  (ArrayType *) DatumGetPointer(entry->key));
+											(ArrayType *) DatumGetPointer(entry->key));
 			else
 				retval = inner_int_overlap((ArrayType *) DatumGetPointer(entry->key),
 										   query);

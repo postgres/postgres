@@ -110,7 +110,7 @@ pg_start_backup(PG_FUNCTION_ARGS)
 		MemoryContextSwitchTo(oldcontext);
 
 		startpoint = do_pg_start_backup(backupidstr, fast, NULL, label_file,
-									dir, NULL, tblspc_map_file, false, true);
+										dir, NULL, tblspc_map_file, false, true);
 
 		before_shmem_exit(nonexclusive_base_backup_cleanup, (Datum) 0);
 	}
@@ -326,7 +326,7 @@ pg_create_restore_point(PG_FUNCTION_ARGS)
 	if (!XLogIsNeeded())
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-			 errmsg("WAL level not sufficient for creating a restore point"),
+				 errmsg("WAL level not sufficient for creating a restore point"),
 				 errhint("wal_level must be set to \"replica\" or \"logical\" at server start.")));
 
 	restore_name_str = text_to_cstring(restore_name);
@@ -528,7 +528,7 @@ pg_walfile_name(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("recovery is in progress"),
-		  errhint("pg_walfile_name() cannot be executed during recovery.")));
+				 errhint("pg_walfile_name() cannot be executed during recovery.")));
 
 	XLByteToPrevSeg(locationpoint, xlogsegno);
 	XLogFileName(xlogfilename, ThisTimeLineID, xlogsegno);
@@ -684,13 +684,13 @@ pg_backup_start_time(PG_FUNCTION_ARGS)
 	if (ferror(lfp))
 		ereport(ERROR,
 				(errcode_for_file_access(),
-			   errmsg("could not read file \"%s\": %m", BACKUP_LABEL_FILE)));
+				 errmsg("could not read file \"%s\": %m", BACKUP_LABEL_FILE)));
 
 	/* Close the backup label file. */
 	if (FreeFile(lfp))
 		ereport(ERROR,
 				(errcode_for_file_access(),
-			  errmsg("could not close file \"%s\": %m", BACKUP_LABEL_FILE)));
+				 errmsg("could not close file \"%s\": %m", BACKUP_LABEL_FILE)));
 
 	if (strlen(backup_start_time) == 0)
 		ereport(ERROR,

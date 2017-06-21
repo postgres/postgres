@@ -111,7 +111,7 @@ DefineOperator(List *names, List *parameters)
 			if (typeName1->setof)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					errmsg("SETOF type not allowed for operator argument")));
+						 errmsg("SETOF type not allowed for operator argument")));
 		}
 		else if (pg_strcasecmp(defel->defname, "rightarg") == 0)
 		{
@@ -119,7 +119,7 @@ DefineOperator(List *names, List *parameters)
 			if (typeName2->setof)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					errmsg("SETOF type not allowed for operator argument")));
+						 errmsg("SETOF type not allowed for operator argument")));
 		}
 		else if (pg_strcasecmp(defel->defname, "procedure") == 0)
 			functionName = defGetQualifiedName(defel);
@@ -171,7 +171,7 @@ DefineOperator(List *names, List *parameters)
 	if (!OidIsValid(typeId1) && !OidIsValid(typeId2))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-		   errmsg("at least one of leftarg or rightarg must be specified")));
+				 errmsg("at least one of leftarg or rightarg must be specified")));
 
 	if (typeName1)
 	{
@@ -275,8 +275,8 @@ ValidateRestrictionEstimator(List *restrictionName)
 	if (get_func_rettype(restrictionOid) != FLOAT8OID)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-			  errmsg("restriction estimator function %s must return type %s",
-					 NameListToString(restrictionName), "float8")));
+				 errmsg("restriction estimator function %s must return type %s",
+						NameListToString(restrictionName), "float8")));
 
 	/* Require EXECUTE rights for the estimator */
 	aclresult = pg_proc_aclcheck(restrictionOid, GetUserId(), ACL_EXECUTE);
@@ -479,7 +479,7 @@ AlterOperator(AlterOperatorStmt *stmt)
 		if (OidIsValid(joinOid))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-				 errmsg("only binary operators can have join selectivity")));
+					 errmsg("only binary operators can have join selectivity")));
 	}
 
 	if (oprForm->oprresult != BOOLOID)
@@ -491,7 +491,7 @@ AlterOperator(AlterOperatorStmt *stmt)
 		if (OidIsValid(joinOid))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-				errmsg("only boolean operators can have join selectivity")));
+					 errmsg("only boolean operators can have join selectivity")));
 	}
 
 	/* Update the tuple */

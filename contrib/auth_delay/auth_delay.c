@@ -57,7 +57,7 @@ _PG_init(void)
 {
 	/* Define custom GUC variables */
 	DefineCustomIntVariable("auth_delay.milliseconds",
-			 "Milliseconds to delay before reporting authentication failure",
+							"Milliseconds to delay before reporting authentication failure",
 							NULL,
 							&auth_delay_milliseconds,
 							0,

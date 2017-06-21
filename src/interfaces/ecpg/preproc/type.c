@@ -237,7 +237,7 @@ static void ECPGdump_a_struct(FILE *o, const char *name, const char *ind_name, c
 
 void
 ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype *type, const int brace_level,
-  const char *ind_name, struct ECPGtype *ind_type, const int ind_brace_level,
+				const char *ind_name, struct ECPGtype *ind_type, const int ind_brace_level,
 				const char *prefix, const char *ind_prefix,
 				char *arr_str_size, const char *struct_sizeof,
 				const char *ind_struct_sizeof)

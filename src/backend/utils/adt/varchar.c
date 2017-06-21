@@ -467,8 +467,8 @@ varchar_input(const char *s, size_t len, int32 atttypmod)
 			if (s[j] != ' ')
 				ereport(ERROR,
 						(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
-					  errmsg("value too long for type character varying(%d)",
-							 (int) maxlen)));
+						 errmsg("value too long for type character varying(%d)",
+								(int) maxlen)));
 		}
 
 		len = mbmaxlen;
@@ -620,8 +620,8 @@ varchar(PG_FUNCTION_ARGS)
 			if (s_data[i] != ' ')
 				ereport(ERROR,
 						(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
-					  errmsg("value too long for type character varying(%d)",
-							 maxlen)));
+						 errmsg("value too long for type character varying(%d)",
+								maxlen)));
 	}
 
 	PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text_with_len(s_data,

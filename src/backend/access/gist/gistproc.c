@@ -910,64 +910,64 @@ gist_box_leaf_consistent(BOX *key, BOX *query, StrategyNumber strategy)
 		case RTLeftStrategyNumber:
 			retval = DatumGetBool(DirectFunctionCall2(box_left,
 													  PointerGetDatum(key),
-													PointerGetDatum(query)));
+													  PointerGetDatum(query)));
 			break;
 		case RTOverLeftStrategyNumber:
 			retval = DatumGetBool(DirectFunctionCall2(box_overleft,
 													  PointerGetDatum(key),
-													PointerGetDatum(query)));
+													  PointerGetDatum(query)));
 			break;
 		case RTOverlapStrategyNumber:
 			retval = DatumGetBool(DirectFunctionCall2(box_overlap,
 													  PointerGetDatum(key),
-													PointerGetDatum(query)));
+													  PointerGetDatum(query)));
 			break;
 		case RTOverRightStrategyNumber:
 			retval = DatumGetBool(DirectFunctionCall2(box_overright,
 													  PointerGetDatum(key),
-													PointerGetDatum(query)));
+													  PointerGetDatum(query)));
 			break;
 		case RTRightStrategyNumber:
 			retval = DatumGetBool(DirectFunctionCall2(box_right,
 													  PointerGetDatum(key),
-													PointerGetDatum(query)));
+													  PointerGetDatum(query)));
 			break;
 		case RTSameStrategyNumber:
 			retval = DatumGetBool(DirectFunctionCall2(box_same,
 													  PointerGetDatum(key),
-													PointerGetDatum(query)));
+													  PointerGetDatum(query)));
 			break;
 		case RTContainsStrategyNumber:
 		case RTOldContainsStrategyNumber:
 			retval = DatumGetBool(DirectFunctionCall2(box_contain,
 													  PointerGetDatum(key),
-													PointerGetDatum(query)));
+													  PointerGetDatum(query)));
 			break;
 		case RTContainedByStrategyNumber:
 		case RTOldContainedByStrategyNumber:
 			retval = DatumGetBool(DirectFunctionCall2(box_contained,
 													  PointerGetDatum(key),
-													PointerGetDatum(query)));
+													  PointerGetDatum(query)));
 			break;
 		case RTOverBelowStrategyNumber:
 			retval = DatumGetBool(DirectFunctionCall2(box_overbelow,
 													  PointerGetDatum(key),
-													PointerGetDatum(query)));
+													  PointerGetDatum(query)));
 			break;
 		case RTBelowStrategyNumber:
 			retval = DatumGetBool(DirectFunctionCall2(box_below,
 													  PointerGetDatum(key),
-													PointerGetDatum(query)));
+													  PointerGetDatum(query)));
 			break;
 		case RTAboveStrategyNumber:
 			retval = DatumGetBool(DirectFunctionCall2(box_above,
 													  PointerGetDatum(key),
-													PointerGetDatum(query)));
+													  PointerGetDatum(query)));
 			break;
 		case RTOverAboveStrategyNumber:
 			retval = DatumGetBool(DirectFunctionCall2(box_overabove,
 													  PointerGetDatum(key),
-													PointerGetDatum(query)));
+													  PointerGetDatum(query)));
 			break;
 		default:
 			elog(ERROR, "unrecognized strategy number: %d", strategy);
@@ -997,60 +997,60 @@ rtree_internal_consistent(BOX *key, BOX *query, StrategyNumber strategy)
 		case RTLeftStrategyNumber:
 			retval = !DatumGetBool(DirectFunctionCall2(box_overright,
 													   PointerGetDatum(key),
-													PointerGetDatum(query)));
+													   PointerGetDatum(query)));
 			break;
 		case RTOverLeftStrategyNumber:
 			retval = !DatumGetBool(DirectFunctionCall2(box_right,
 													   PointerGetDatum(key),
-													PointerGetDatum(query)));
+													   PointerGetDatum(query)));
 			break;
 		case RTOverlapStrategyNumber:
 			retval = DatumGetBool(DirectFunctionCall2(box_overlap,
 													  PointerGetDatum(key),
-													PointerGetDatum(query)));
+													  PointerGetDatum(query)));
 			break;
 		case RTOverRightStrategyNumber:
 			retval = !DatumGetBool(DirectFunctionCall2(box_left,
 													   PointerGetDatum(key),
-													PointerGetDatum(query)));
+													   PointerGetDatum(query)));
 			break;
 		case RTRightStrategyNumber:
 			retval = !DatumGetBool(DirectFunctionCall2(box_overleft,
 													   PointerGetDatum(key),
-													PointerGetDatum(query)));
+													   PointerGetDatum(query)));
 			break;
 		case RTSameStrategyNumber:
 		case RTContainsStrategyNumber:
 		case RTOldContainsStrategyNumber:
 			retval = DatumGetBool(DirectFunctionCall2(box_contain,
 													  PointerGetDatum(key),
-													PointerGetDatum(query)));
+													  PointerGetDatum(query)));
 			break;
 		case RTContainedByStrategyNumber:
 		case RTOldContainedByStrategyNumber:
 			retval = DatumGetBool(DirectFunctionCall2(box_overlap,
 													  PointerGetDatum(key),
-													PointerGetDatum(query)));
+													  PointerGetDatum(query)));
 			break;
 		case RTOverBelowStrategyNumber:
 			retval = !DatumGetBool(DirectFunctionCall2(box_above,
 													   PointerGetDatum(key),
-													PointerGetDatum(query)));
+													   PointerGetDatum(query)));
 			break;
 		case RTBelowStrategyNumber:
 			retval = !DatumGetBool(DirectFunctionCall2(box_overabove,
 													   PointerGetDatum(key),
-													PointerGetDatum(query)));
+													   PointerGetDatum(query)));
 			break;
 		case RTAboveStrategyNumber:
 			retval = !DatumGetBool(DirectFunctionCall2(box_overbelow,
 													   PointerGetDatum(key),
-													PointerGetDatum(query)));
+													   PointerGetDatum(query)));
 			break;
 		case RTOverAboveStrategyNumber:
 			retval = !DatumGetBool(DirectFunctionCall2(box_below,
 													   PointerGetDatum(key),
-													PointerGetDatum(query)));
+													   PointerGetDatum(query)));
 			break;
 		default:
 			elog(ERROR, "unrecognized strategy number: %d", strategy);
@@ -1419,11 +1419,11 @@ gist_point_consistent(PG_FUNCTION_ARGS)
 				POLYGON    *query = PG_GETARG_POLYGON_P(1);
 
 				result = DatumGetBool(DirectFunctionCall5(
-														gist_poly_consistent,
-													  PointerGetDatum(entry),
-													 PolygonPGetDatum(query),
-									  Int16GetDatum(RTOverlapStrategyNumber),
-											   0, PointerGetDatum(recheck)));
+														  gist_poly_consistent,
+														  PointerGetDatum(entry),
+														  PolygonPGetDatum(query),
+														  Int16GetDatum(RTOverlapStrategyNumber),
+														  0, PointerGetDatum(recheck)));
 
 				if (GIST_LEAF(entry) && result)
 				{
@@ -1437,8 +1437,8 @@ gist_point_consistent(PG_FUNCTION_ARGS)
 						   && box->high.y == box->low.y);
 					result = DatumGetBool(DirectFunctionCall2(
 															  poly_contain_pt,
-													 PolygonPGetDatum(query),
-												PointPGetDatum(&box->high)));
+															  PolygonPGetDatum(query),
+															  PointPGetDatum(&box->high)));
 					*recheck = false;
 				}
 			}
@@ -1448,11 +1448,11 @@ gist_point_consistent(PG_FUNCTION_ARGS)
 				CIRCLE	   *query = PG_GETARG_CIRCLE_P(1);
 
 				result = DatumGetBool(DirectFunctionCall5(
-													  gist_circle_consistent,
-													  PointerGetDatum(entry),
-													  CirclePGetDatum(query),
-									  Int16GetDatum(RTOverlapStrategyNumber),
-											   0, PointerGetDatum(recheck)));
+														  gist_circle_consistent,
+														  PointerGetDatum(entry),
+														  CirclePGetDatum(query),
+														  Int16GetDatum(RTOverlapStrategyNumber),
+														  0, PointerGetDatum(recheck)));
 
 				if (GIST_LEAF(entry) && result)
 				{
@@ -1465,9 +1465,9 @@ gist_point_consistent(PG_FUNCTION_ARGS)
 					Assert(box->high.x == box->low.x
 						   && box->high.y == box->low.y);
 					result = DatumGetBool(DirectFunctionCall2(
-														   circle_contain_pt,
-													  CirclePGetDatum(query),
-												PointPGetDatum(&box->high)));
+															  circle_contain_pt,
+															  CirclePGetDatum(query),
+															  PointPGetDatum(&box->high)));
 					*recheck = false;
 				}
 			}

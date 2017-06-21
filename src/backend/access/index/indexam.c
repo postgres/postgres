@@ -431,7 +431,7 @@ index_parallelscan_estimate(Relation indexRelation, Snapshot snapshot)
 	 */
 	if (indexRelation->rd_amroutine->amestimateparallelscan != NULL)
 		nbytes = add_size(nbytes,
-					  indexRelation->rd_amroutine->amestimateparallelscan());
+						  indexRelation->rd_amroutine->amestimateparallelscan());
 
 	return nbytes;
 }
@@ -751,7 +751,7 @@ index_bulk_delete(IndexVacuumInfo *info,
 	CHECK_REL_PROCEDURE(ambulkdelete);
 
 	return indexRelation->rd_amroutine->ambulkdelete(info, stats,
-												   callback, callback_state);
+													 callback, callback_state);
 }
 
 /* ----------------

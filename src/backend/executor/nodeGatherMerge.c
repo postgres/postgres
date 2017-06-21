@@ -515,7 +515,7 @@ form_tuple_array(GatherMergeState *gm_state, int reader)
 		tuple_buffer->tuple[i] = heap_copytuple(gm_readnext_tuple(gm_state,
 																  reader,
 																  false,
-													   &tuple_buffer->done));
+																  &tuple_buffer->done));
 		if (!HeapTupleIsValid(tuple_buffer->tuple[i]))
 			break;
 		tuple_buffer->nTuples++;

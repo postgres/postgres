@@ -1401,7 +1401,7 @@ path_recv(PG_FUNCTION_ARGS)
 	if (npts <= 0 || npts >= (int32) ((INT_MAX - offsetof(PATH, p)) / sizeof(Point)))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
-			 errmsg("invalid number of points in external \"path\" value")));
+				 errmsg("invalid number of points in external \"path\" value")));
 
 	size = offsetof(PATH, p) + sizeof(path->p[0]) * npts;
 	path = (PATH *) palloc(size);
@@ -1907,7 +1907,7 @@ point_dt(Point *pt1, Point *pt2)
 {
 #ifdef GEODEBUG
 	printf("point_dt- segment (%f,%f),(%f,%f) length is %f\n",
-	pt1->x, pt1->y, pt2->x, pt2->y, HYPOT(pt1->x - pt2->x, pt1->y - pt2->y));
+		   pt1->x, pt1->y, pt2->x, pt2->y, HYPOT(pt1->x - pt2->x, pt1->y - pt2->y));
 #endif
 	return HYPOT(pt1->x - pt2->x, pt1->y - pt2->y);
 }
@@ -3225,10 +3225,10 @@ on_sl(PG_FUNCTION_ARGS)
 	LINE	   *line = PG_GETARG_LINE_P(1);
 
 	PG_RETURN_BOOL(DatumGetBool(DirectFunctionCall2(on_pl,
-												 PointPGetDatum(&lseg->p[0]),
+													PointPGetDatum(&lseg->p[0]),
 													LinePGetDatum(line))) &&
 				   DatumGetBool(DirectFunctionCall2(on_pl,
-												 PointPGetDatum(&lseg->p[1]),
+													PointPGetDatum(&lseg->p[1]),
 													LinePGetDatum(line))));
 }
 
@@ -3239,10 +3239,10 @@ on_sb(PG_FUNCTION_ARGS)
 	BOX		   *box = PG_GETARG_BOX_P(1);
 
 	PG_RETURN_BOOL(DatumGetBool(DirectFunctionCall2(on_pb,
-												 PointPGetDatum(&lseg->p[0]),
+													PointPGetDatum(&lseg->p[0]),
 													BoxPGetDatum(box))) &&
 				   DatumGetBool(DirectFunctionCall2(on_pb,
-												 PointPGetDatum(&lseg->p[1]),
+													PointPGetDatum(&lseg->p[1]),
 													BoxPGetDatum(box))));
 }
 
@@ -3484,7 +3484,7 @@ poly_recv(PG_FUNCTION_ARGS)
 	if (npts <= 0 || npts >= (int32) ((INT_MAX - offsetof(POLYGON, p)) / sizeof(Point)))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
-		  errmsg("invalid number of points in external \"polygon\" value")));
+				 errmsg("invalid number of points in external \"polygon\" value")));
 
 	size = offsetof(POLYGON, p) + sizeof(poly->p[0]) * npts;
 	poly = (POLYGON *) palloc0(size);	/* zero any holes */
@@ -5164,7 +5164,7 @@ circle_poly(PG_FUNCTION_ARGS)
 	if (FPzero(circle->radius))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			   errmsg("cannot convert circle with radius zero to polygon")));
+				 errmsg("cannot convert circle with radius zero to polygon")));
 
 	if (npts < 2)
 		ereport(ERROR,

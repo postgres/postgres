@@ -568,6 +568,6 @@ CheckSubscriptionRelkind(char relkind, const char *nspname,
 	if (relkind != RELKIND_RELATION)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-		errmsg("logical replication target relation \"%s.%s\" is not a table",
-			   nspname, relname)));
+				 errmsg("logical replication target relation \"%s.%s\" is not a table",
+						nspname, relname)));
 }

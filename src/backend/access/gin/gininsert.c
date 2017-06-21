@@ -292,7 +292,7 @@ ginBuildCallback(Relation index, HeapTuple htup, Datum *values,
 
 		ginBeginBAScan(&buildstate->accum);
 		while ((list = ginGetBAEntry(&buildstate->accum,
-								  &attnum, &key, &category, &nlist)) != NULL)
+									 &attnum, &key, &category, &nlist)) != NULL)
 		{
 			/* there could be many entries, so be willing to abort here */
 			CHECK_FOR_INTERRUPTS();
@@ -380,7 +380,7 @@ ginbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 	 * ginExtractEntries(), and can be reset after each tuple
 	 */
 	buildstate.funcCtx = AllocSetContextCreate(CurrentMemoryContext,
-					 "Gin build temporary context for user-defined function",
+											   "Gin build temporary context for user-defined function",
 											   ALLOCSET_DEFAULT_SIZES);
 
 	buildstate.accum.ginstate = &buildstate.ginstate;

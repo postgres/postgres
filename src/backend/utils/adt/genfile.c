@@ -60,7 +60,7 @@ convert_and_check_filename(text *arg)
 		if (path_contains_parent_reference(filename))
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-			(errmsg("reference to parent directory (\"..\") not allowed"))));
+					 (errmsg("reference to parent directory (\"..\") not allowed"))));
 
 		/*
 		 * Allow absolute paths if within DataDir or Log_directory, even
@@ -112,7 +112,7 @@ read_binary_file(const char *filename, int64 seek_offset, int64 bytes_to_read,
 				else
 					ereport(ERROR,
 							(errcode_for_file_access(),
-						errmsg("could not stat file \"%s\": %m", filename)));
+							 errmsg("could not stat file \"%s\": %m", filename)));
 			}
 
 			bytes_to_read = fst.st_size - seek_offset;

@@ -187,7 +187,7 @@ replorigin_check_prerequisites(bool check_slots, bool recoveryOK)
 	if (!recoveryOK && RecoveryInProgress())
 		ereport(ERROR,
 				(errcode(ERRCODE_READ_ONLY_SQL_TRANSACTION),
-		   errmsg("cannot manipulate replication origins during recovery")));
+				 errmsg("cannot manipulate replication origins during recovery")));
 
 }
 
@@ -449,7 +449,7 @@ ReplicationOriginShmemSize(void)
 	size = add_size(size, offsetof(ReplicationStateCtl, states));
 
 	size = add_size(size,
-				  mul_size(max_replication_slots, sizeof(ReplicationState)));
+					mul_size(max_replication_slots, sizeof(ReplicationState)));
 	return size;
 }
 
@@ -664,8 +664,8 @@ StartupReplicationOrigin(void)
 
 	if (magic != REPLICATION_STATE_MAGIC)
 		ereport(PANIC,
-		   (errmsg("replication checkpoint has wrong magic %u instead of %u",
-				   magic, REPLICATION_STATE_MAGIC)));
+				(errmsg("replication checkpoint has wrong magic %u instead of %u",
+						magic, REPLICATION_STATE_MAGIC)));
 
 	/* we can skip locking here, no other access is possible */
 
@@ -997,7 +997,7 @@ replorigin_session_setup(RepOriginId node)
 	if (session_replication_state != NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-		errmsg("cannot setup replication origin when one is already setup")));
+				 errmsg("cannot setup replication origin when one is already setup")));
 
 	/* Lock exclusively, as we may have to create a new table entry. */
 	LWLockAcquire(ReplicationOriginLock, LW_EXCLUSIVE);
@@ -1026,8 +1026,8 @@ replorigin_session_setup(RepOriginId node)
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_IN_USE),
-			 errmsg("replication identifier %d is already active for PID %d",
-					curstate->roident, curstate->acquired_by)));
+					 errmsg("replication identifier %d is already active for PID %d",
+							curstate->roident, curstate->acquired_by)));
 		}
 
 		/* ok, found slot */

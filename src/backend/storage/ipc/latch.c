@@ -1214,7 +1214,7 @@ WaitEventSetWaitBlock(WaitEventSet *set, int cur_timeout,
 			}
 		}
 		else if (cur_event->events == WL_POSTMASTER_DEATH &&
-			 (cur_pollfd->revents & (POLLIN | POLLHUP | POLLERR | POLLNVAL)))
+				 (cur_pollfd->revents & (POLLIN | POLLHUP | POLLERR | POLLNVAL)))
 		{
 			/*
 			 * We expect an POLLHUP when the remote end is closed, but because

@@ -51,8 +51,8 @@ dispell_init(PG_FUNCTION_ARGS)
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("multiple DictFile parameters")));
 			NIImportDictionary(&(d->obj),
-							 get_tsearch_config_filename(defGetString(defel),
-														 "dict"));
+							   get_tsearch_config_filename(defGetString(defel),
+														   "dict"));
 			dictloaded = true;
 		}
 		else if (pg_strcasecmp(defel->defname, "AffFile") == 0)

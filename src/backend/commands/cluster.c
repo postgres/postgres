@@ -126,7 +126,7 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 		if (RELATION_IS_OTHER_TEMP(rel))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			   errmsg("cannot cluster temporary tables of other sessions")));
+					 errmsg("cannot cluster temporary tables of other sessions")));
 
 		if (stmt->indexname == NULL)
 		{
@@ -170,8 +170,8 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 			if (!OidIsValid(indexOid))
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_OBJECT),
-					   errmsg("index \"%s\" for table \"%s\" does not exist",
-							  stmt->indexname, stmt->relation->relname)));
+						 errmsg("index \"%s\" for table \"%s\" does not exist",
+								stmt->indexname, stmt->relation->relname)));
 		}
 
 		/* close relation, keep lock till commit */
@@ -361,11 +361,11 @@ cluster_rel(Oid tableOid, Oid indexOid, bool recheck, bool verbose)
 		if (OidIsValid(indexOid))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			   errmsg("cannot cluster temporary tables of other sessions")));
+					 errmsg("cannot cluster temporary tables of other sessions")));
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				errmsg("cannot vacuum temporary tables of other sessions")));
+					 errmsg("cannot vacuum temporary tables of other sessions")));
 	}
 
 	/*

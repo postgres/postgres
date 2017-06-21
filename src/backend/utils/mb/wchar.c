@@ -1785,8 +1785,8 @@ int
 pg_encoding_mblen(int encoding, const char *mbstr)
 {
 	return (PG_VALID_ENCODING(encoding) ?
-		((*pg_wchar_table[encoding].mblen) ((const unsigned char *) mbstr)) :
-	((*pg_wchar_table[PG_SQL_ASCII].mblen) ((const unsigned char *) mbstr)));
+			((*pg_wchar_table[encoding].mblen) ((const unsigned char *) mbstr)) :
+			((*pg_wchar_table[PG_SQL_ASCII].mblen) ((const unsigned char *) mbstr)));
 }
 
 /*
@@ -1796,8 +1796,8 @@ int
 pg_encoding_dsplen(int encoding, const char *mbstr)
 {
 	return (PG_VALID_ENCODING(encoding) ?
-	   ((*pg_wchar_table[encoding].dsplen) ((const unsigned char *) mbstr)) :
-	((*pg_wchar_table[PG_SQL_ASCII].dsplen) ((const unsigned char *) mbstr)));
+			((*pg_wchar_table[encoding].dsplen) ((const unsigned char *) mbstr)) :
+			((*pg_wchar_table[PG_SQL_ASCII].dsplen) ((const unsigned char *) mbstr)));
 }
 
 /*

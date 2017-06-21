@@ -76,7 +76,7 @@ regprocin(PG_FUNCTION_ARGS)
 		strspn(pro_name_or_oid, "0123456789") == strlen(pro_name_or_oid))
 	{
 		result = DatumGetObjectId(DirectFunctionCall1(oidin,
-										  CStringGetDatum(pro_name_or_oid)));
+													  CStringGetDatum(pro_name_or_oid)));
 		PG_RETURN_OID(result);
 	}
 
@@ -247,7 +247,7 @@ regprocedurein(PG_FUNCTION_ARGS)
 		strspn(pro_name_or_oid, "0123456789") == strlen(pro_name_or_oid))
 	{
 		result = DatumGetObjectId(DirectFunctionCall1(oidin,
-										  CStringGetDatum(pro_name_or_oid)));
+													  CStringGetDatum(pro_name_or_oid)));
 		PG_RETURN_OID(result);
 	}
 
@@ -497,7 +497,7 @@ regoperin(PG_FUNCTION_ARGS)
 		strspn(opr_name_or_oid, "0123456789") == strlen(opr_name_or_oid))
 	{
 		result = DatumGetObjectId(DirectFunctionCall1(oidin,
-										  CStringGetDatum(opr_name_or_oid)));
+													  CStringGetDatum(opr_name_or_oid)));
 		PG_RETURN_OID(result);
 	}
 
@@ -670,7 +670,7 @@ regoperatorin(PG_FUNCTION_ARGS)
 		strspn(opr_name_or_oid, "0123456789") == strlen(opr_name_or_oid))
 	{
 		result = DatumGetObjectId(DirectFunctionCall1(oidin,
-										  CStringGetDatum(opr_name_or_oid)));
+													  CStringGetDatum(opr_name_or_oid)));
 		PG_RETURN_OID(result);
 	}
 
@@ -916,7 +916,7 @@ regclassin(PG_FUNCTION_ARGS)
 		strspn(class_name_or_oid, "0123456789") == strlen(class_name_or_oid))
 	{
 		result = DatumGetObjectId(DirectFunctionCall1(oidin,
-										CStringGetDatum(class_name_or_oid)));
+													  CStringGetDatum(class_name_or_oid)));
 		PG_RETURN_OID(result);
 	}
 
@@ -1074,7 +1074,7 @@ regtypein(PG_FUNCTION_ARGS)
 		strspn(typ_name_or_oid, "0123456789") == strlen(typ_name_or_oid))
 	{
 		result = DatumGetObjectId(DirectFunctionCall1(oidin,
-										  CStringGetDatum(typ_name_or_oid)));
+													  CStringGetDatum(typ_name_or_oid)));
 		PG_RETURN_OID(result);
 	}
 
@@ -1210,7 +1210,7 @@ regconfigin(PG_FUNCTION_ARGS)
 		strspn(cfg_name_or_oid, "0123456789") == strlen(cfg_name_or_oid))
 	{
 		result = DatumGetObjectId(DirectFunctionCall1(oidin,
-										  CStringGetDatum(cfg_name_or_oid)));
+													  CStringGetDatum(cfg_name_or_oid)));
 		PG_RETURN_OID(result);
 	}
 
@@ -1321,7 +1321,7 @@ regdictionaryin(PG_FUNCTION_ARGS)
 		strspn(dict_name_or_oid, "0123456789") == strlen(dict_name_or_oid))
 	{
 		result = DatumGetObjectId(DirectFunctionCall1(oidin,
-										 CStringGetDatum(dict_name_or_oid)));
+													  CStringGetDatum(dict_name_or_oid)));
 		PG_RETURN_OID(result);
 	}
 
@@ -1432,7 +1432,7 @@ regrolein(PG_FUNCTION_ARGS)
 		strspn(role_name_or_oid, "0123456789") == strlen(role_name_or_oid))
 	{
 		result = DatumGetObjectId(DirectFunctionCall1(oidin,
-										 CStringGetDatum(role_name_or_oid)));
+													  CStringGetDatum(role_name_or_oid)));
 		PG_RETURN_OID(result);
 	}
 
@@ -1557,7 +1557,7 @@ regnamespacein(PG_FUNCTION_ARGS)
 		strspn(nsp_name_or_oid, "0123456789") == strlen(nsp_name_or_oid))
 	{
 		result = DatumGetObjectId(DirectFunctionCall1(oidin,
-										  CStringGetDatum(nsp_name_or_oid)));
+													  CStringGetDatum(nsp_name_or_oid)));
 		PG_RETURN_OID(result);
 	}
 

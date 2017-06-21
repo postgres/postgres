@@ -356,7 +356,7 @@ transformArraySubscripts(ParseState *pstate,
 					ereport(ERROR,
 							(errcode(ERRCODE_DATATYPE_MISMATCH),
 							 errmsg("array subscript must have type integer"),
-						parser_errposition(pstate, exprLocation(ai->lidx))));
+							 parser_errposition(pstate, exprLocation(ai->lidx))));
 			}
 			else if (!ai->is_slice)
 			{
@@ -427,7 +427,7 @@ transformArraySubscripts(ParseState *pstate,
 							" but expression is of type %s",
 							format_type_be(typeneeded),
 							format_type_be(typesource)),
-				 errhint("You will need to rewrite or cast the expression."),
+					 errhint("You will need to rewrite or cast the expression."),
 					 parser_errposition(pstate, exprLocation(assignFrom))));
 		assignFrom = newFrom;
 	}

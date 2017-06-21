@@ -104,7 +104,7 @@ utf_charcheck(const unsigned char *c)
 			/* check 0xfffe/0xffff, 0xfdd0..0xfedf range, surrogates */
 			if (((z == 0x0f) &&
 				 (((yx & 0xffe) == 0xffe) ||
-			   (((yx & 0xf80) == 0xd80) && (lx >= 0x30) && (lx <= 0x4f)))) ||
+				  (((yx & 0xf80) == 0xd80) && (lx >= 0x30) && (lx <= 0x4f)))) ||
 				((z == 0x0d) && ((yx & 0xb00) == 0x800)))
 				return -1;
 			return 3;

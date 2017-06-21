@@ -356,7 +356,7 @@ lt_q_regex(PG_FUNCTION_ARGS)
 	while (num > 0)
 	{
 		if (DatumGetBool(DirectFunctionCall2(ltq_regex,
-							 PointerGetDatum(tree), PointerGetDatum(query))))
+											 PointerGetDatum(tree), PointerGetDatum(query))))
 		{
 
 			res = true;
