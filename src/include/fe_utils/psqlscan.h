@@ -63,7 +63,7 @@ typedef struct PsqlScanCallbacks
 	/* Fetch value of a variable, as a free'able string; NULL if unknown */
 	/* This pointer can be NULL if no variable substitution is wanted */
 	char	   *(*get_variable) (const char *varname, PsqlScanQuoteType quote,
-											 void *passthrough);
+								 void *passthrough);
 	/* Print an error message someplace appropriate */
 	/* (very old gcc versions don't support attributes on function pointers) */
 #if defined(__GNUC__) && __GNUC__ < 4

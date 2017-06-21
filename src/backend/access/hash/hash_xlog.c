@@ -161,7 +161,7 @@ hash_xlog_add_ovfl_page(XLogReaderState *record)
 	HashPageOpaque ovflopaque;
 	uint32	   *num_bucket;
 	char	   *data;
-	Size datalen PG_USED_FOR_ASSERTS_ONLY;
+	Size		datalen PG_USED_FOR_ASSERTS_ONLY;
 	bool		new_bmpage = false;
 
 	XLogRecGetBlockTag(record, 0, NULL, NULL, &rightblk);
@@ -293,7 +293,7 @@ hash_xlog_split_allocate_page(XLogReaderState *record)
 	Buffer		oldbuf;
 	Buffer		newbuf;
 	Buffer		metabuf;
-	Size datalen PG_USED_FOR_ASSERTS_ONLY;
+	Size		datalen PG_USED_FOR_ASSERTS_ONLY;
 	char	   *data;
 	XLogRedoAction action;
 

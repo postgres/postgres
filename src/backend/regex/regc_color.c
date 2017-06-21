@@ -46,8 +46,8 @@
  * initcm - set up new colormap
  */
 static void
-initcm(struct vars * v,
-	   struct colormap * cm)
+initcm(struct vars *v,
+	   struct colormap *cm)
 {
 	struct colordesc *cd;
 
@@ -100,7 +100,7 @@ initcm(struct vars * v,
  * freecm - free dynamically-allocated things in a colormap
  */
 static void
-freecm(struct colormap * cm)
+freecm(struct colormap *cm)
 {
 	cm->magic = 0;
 	if (cm->cd != cm->cdspace)
@@ -117,7 +117,7 @@ freecm(struct colormap * cm)
  * pg_reg_getcolor - slow case of GETCOLOR()
  */
 color
-pg_reg_getcolor(struct colormap * cm, chr c)
+pg_reg_getcolor(struct colormap *cm, chr c)
 {
 	int			rownum,
 				colnum,
@@ -169,7 +169,7 @@ pg_reg_getcolor(struct colormap * cm, chr c)
  * maxcolor - report largest color number in use
  */
 static color
-maxcolor(struct colormap * cm)
+maxcolor(struct colormap *cm)
 {
 	if (CISERR())
 		return COLORLESS;
@@ -182,7 +182,7 @@ maxcolor(struct colormap * cm)
  * Beware:	may relocate the colordescs.
  */
 static color					/* COLORLESS for error */
-newcolor(struct colormap * cm)
+newcolor(struct colormap *cm)
 {
 	struct colordesc *cd;
 	size_t		n;
@@ -254,7 +254,7 @@ newcolor(struct colormap * cm)
  * freecolor - free a color (must have no arcs or subcolor)
  */
 static void
-freecolor(struct colormap * cm,
+freecolor(struct colormap *cm,
 		  color co)
 {
 	struct colordesc *cd = &cm->cd[co];
@@ -309,7 +309,7 @@ freecolor(struct colormap * cm,
  * pseudocolor - allocate a false color, to be managed by other means
  */
 static color
-pseudocolor(struct colormap * cm)
+pseudocolor(struct colormap *cm)
 {
 	color		co;
 	struct colordesc *cd;
@@ -333,7 +333,7 @@ pseudocolor(struct colormap * cm)
  * This works only for chrs that map into the low color map.
  */
 static color
-subcolor(struct colormap * cm, chr c)
+subcolor(struct colormap *cm, chr c)
 {
 	color		co;				/* current color of c */
 	color		sco;			/* new subcolor */
@@ -363,7 +363,7 @@ subcolor(struct colormap * cm, chr c)
  * colormap, which do not necessarily correspond to exactly one chr code.
  */
 static color
-subcolorhi(struct colormap * cm, color *pco)
+subcolorhi(struct colormap *cm, color *pco)
 {
 	color		co;				/* current color of entry */
 	color		sco;			/* new subcolor */
@@ -386,7 +386,7 @@ subcolorhi(struct colormap * cm, color *pco)
  * newsub - allocate a new subcolor (if necessary) for a color
  */
 static color
-newsub(struct colormap * cm,
+newsub(struct colormap *cm,
 	   color co)
 {
 	color		sco;			/* new subcolor */
@@ -417,7 +417,7 @@ newsub(struct colormap * cm,
  * Returns array index of new row.  Note the array might move.
  */
 static int
-newhicolorrow(struct colormap * cm,
+newhicolorrow(struct colormap *cm,
 			  int oldrow)
 {
 	int			newrow = cm->hiarrayrows;
@@ -466,7 +466,7 @@ newhicolorrow(struct colormap * cm,
  * Essentially, extends the 2-D array to the right with a copy of itself.
  */
 static void
-newhicolorcols(struct colormap * cm)
+newhicolorcols(struct colormap *cm)
 {
 	color	   *newarray;
 	int			r,
@@ -519,10 +519,10 @@ newhicolorcols(struct colormap * cm)
  * mechanized with the "lastsubcolor" state variable.
  */
 static void
-subcolorcvec(struct vars * v,
-			 struct cvec * cv,
-			 struct state * lp,
-			 struct state * rp)
+subcolorcvec(struct vars *v,
+			 struct cvec *cv,
+			 struct state *lp,
+			 struct state *rp)
 {
 	struct colormap *cm = v->cm;
 	color		lastsubcolor = COLORLESS;
@@ -621,10 +621,10 @@ subcolorcvec(struct vars * v,
  * to be able to handle both low and high chr codes.
  */
 static void
-subcoloronechr(struct vars * v,
+subcoloronechr(struct vars *v,
 			   chr ch,
-			   struct state * lp,
-			   struct state * rp,
+			   struct state *lp,
+			   struct state *rp,
 			   color *lastsubcolor)
 {
 	struct colormap *cm = v->cm;
@@ -744,11 +744,11 @@ subcoloronechr(struct vars * v,
  * subcoloronerange - do subcolorcvec's work for a high range
  */
 static void
-subcoloronerange(struct vars * v,
+subcoloronerange(struct vars *v,
 				 chr from,
 				 chr to,
-				 struct state * lp,
-				 struct state * rp,
+				 struct state *lp,
+				 struct state *rp,
 				 color *lastsubcolor)
 {
 	struct colormap *cm = v->cm;
@@ -882,10 +882,10 @@ subcoloronerange(struct vars * v,
  * subcoloronerow - do subcolorcvec's work for one new row in the high colormap
  */
 static void
-subcoloronerow(struct vars * v,
+subcoloronerow(struct vars *v,
 			   int rownum,
-			   struct state * lp,
-			   struct state * rp,
+			   struct state *lp,
+			   struct state *rp,
 			   color *lastsubcolor)
 {
 	struct colormap *cm = v->cm;
@@ -913,8 +913,8 @@ subcoloronerow(struct vars * v,
  * okcolors - promote subcolors to full colors
  */
 static void
-okcolors(struct nfa * nfa,
-		 struct colormap * cm)
+okcolors(struct nfa *nfa,
+		 struct colormap *cm)
 {
 	struct colordesc *cd;
 	struct colordesc *end = CDEND(cm);
@@ -972,8 +972,8 @@ okcolors(struct nfa * nfa,
  * colorchain - add this arc to the color chain of its color
  */
 static void
-colorchain(struct colormap * cm,
-		   struct arc * a)
+colorchain(struct colormap *cm,
+		   struct arc *a)
 {
 	struct colordesc *cd = &cm->cd[a->co];
 
@@ -988,8 +988,8 @@ colorchain(struct colormap * cm,
  * uncolorchain - delete this arc from the color chain of its color
  */
 static void
-uncolorchain(struct colormap * cm,
-			 struct arc * a)
+uncolorchain(struct colormap *cm,
+			 struct arc *a)
 {
 	struct colordesc *cd = &cm->cd[a->co];
 	struct arc *aa = a->colorchainRev;
@@ -1014,12 +1014,12 @@ uncolorchain(struct colormap * cm,
  * rainbow - add arcs of all full colors (but one) between specified states
  */
 static void
-rainbow(struct nfa * nfa,
-		struct colormap * cm,
+rainbow(struct nfa *nfa,
+		struct colormap *cm,
 		int type,
 		color but,				/* COLORLESS if no exceptions */
-		struct state * from,
-		struct state * to)
+		struct state *from,
+		struct state *to)
 {
 	struct colordesc *cd;
 	struct colordesc *end = CDEND(cm);
@@ -1037,13 +1037,13 @@ rainbow(struct nfa * nfa,
  * The calling sequence ought to be reconciled with cloneouts().
  */
 static void
-colorcomplement(struct nfa * nfa,
-				struct colormap * cm,
+colorcomplement(struct nfa *nfa,
+				struct colormap *cm,
 				int type,
-				struct state * of,		/* complements of this guy's PLAIN
+				struct state *of,		/* complements of this guy's PLAIN
 										 * outarcs */
-				struct state * from,
-				struct state * to)
+				struct state *from,
+				struct state *to)
 {
 	struct colordesc *cd;
 	struct colordesc *end = CDEND(cm);
@@ -1063,7 +1063,7 @@ colorcomplement(struct nfa * nfa,
  * dumpcolors - debugging output
  */
 static void
-dumpcolors(struct colormap * cm,
+dumpcolors(struct colormap *cm,
 		   FILE *f)
 {
 	struct colordesc *cd;

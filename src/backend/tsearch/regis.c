@@ -115,7 +115,7 @@ RS_compile(Regis *r, bool issuffix, const char *str)
 				ptr->type = RSF_ONEOF;
 				state = RS_IN_ONEOF;
 			}
-			else	/* shouldn't get here */
+			else				/* shouldn't get here */
 				elog(ERROR, "invalid regis pattern: \"%s\"", str);
 		}
 		else if (state == RS_IN_ONEOF)
@@ -131,7 +131,7 @@ RS_compile(Regis *r, bool issuffix, const char *str)
 				ptr->len = pg_mblen(c);
 				state = RS_IN_ONEOF_IN;
 			}
-			else	/* shouldn't get here */
+			else				/* shouldn't get here */
 				elog(ERROR, "invalid regis pattern: \"%s\"", str);
 		}
 		else if (state == RS_IN_ONEOF_IN || state == RS_IN_NONEOF)
@@ -143,7 +143,7 @@ RS_compile(Regis *r, bool issuffix, const char *str)
 			}
 			else if (t_iseq(c, ']'))
 				state = RS_IN_WAIT;
-			else	/* shouldn't get here */
+			else				/* shouldn't get here */
 				elog(ERROR, "invalid regis pattern: \"%s\"", str);
 		}
 		else

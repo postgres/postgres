@@ -96,13 +96,13 @@ static int	simple_debug = 0;
 static FILE *debugstream = NULL;
 
 void
-ecpg_init_sqlca(struct sqlca_t * sqlca)
+ecpg_init_sqlca(struct sqlca_t *sqlca)
 {
 	memcpy((char *) sqlca, (char *) &sqlca_init, sizeof(struct sqlca_t));
 }
 
 bool
-ecpg_init(const struct connection * con, const char *connection_name, const int lineno)
+ecpg_init(const struct connection *con, const char *connection_name, const int lineno)
 {
 	struct sqlca_t *sqlca = ECPGget_sqlca();
 

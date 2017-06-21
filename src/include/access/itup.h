@@ -55,9 +55,9 @@ typedef IndexTupleData *IndexTuple;
 typedef struct IndexAttributeBitMapData
 {
 	bits8		bits[(INDEX_MAX_KEYS + 8 - 1) / 8];
-}	IndexAttributeBitMapData;
+}			IndexAttributeBitMapData;
 
-typedef IndexAttributeBitMapData *IndexAttributeBitMap;
+typedef IndexAttributeBitMapData * IndexAttributeBitMap;
 
 /*
  * t_info manipulation macros

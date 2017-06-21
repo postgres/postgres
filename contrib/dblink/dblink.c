@@ -179,7 +179,7 @@ dblink_conn_not_avail(const char *conname)
 
 static void
 dblink_get_conn(char *conname_or_str,
-	  PGconn *volatile * conn_p, char **conname_p, volatile bool *freeconn_p)
+	   PGconn *volatile *conn_p, char **conname_p, volatile bool *freeconn_p)
 {
 	remoteConn *rconn = getConnectionByName(conname_or_str);
 	PGconn	   *conn;
@@ -723,7 +723,7 @@ dblink_record_internal(FunctionCallInfo fcinfo, bool is_async)
 				/* shouldn't happen */
 				elog(ERROR, "wrong number of arguments");
 		}
-		else	/* is_async */
+		else					/* is_async */
 		{
 			/* get async result */
 			conname = text_to_cstring(PG_GETARG_TEXT_PP(0));

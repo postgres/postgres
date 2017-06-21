@@ -32,7 +32,7 @@ typedef struct BulkInsertStateData
 {
 	BufferAccessStrategy strategy;		/* our BULKWRITE strategy object */
 	Buffer		current_buf;	/* current insertion target page */
-}	BulkInsertStateData;
+}			BulkInsertStateData;
 
 
 extern void RelationPutHeapTuple(Relation relation, Buffer buffer,

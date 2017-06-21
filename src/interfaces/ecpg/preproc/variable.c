@@ -7,7 +7,7 @@
 static struct variable *allvariables = NULL;
 
 struct variable *
-new_variable(const char *name, struct ECPGtype * type, int brace_level)
+new_variable(const char *name, struct ECPGtype *type, int brace_level)
 {
 	struct variable *p = (struct variable *) mm_alloc(sizeof(struct variable));
 
@@ -22,7 +22,7 @@ new_variable(const char *name, struct ECPGtype * type, int brace_level)
 }
 
 static struct variable *
-find_struct_member(char *name, char *str, struct ECPGstruct_member * members, int brace_level)
+find_struct_member(char *name, char *str, struct ECPGstruct_member *members, int brace_level)
 {
 	char	   *next = strpbrk(++str, ".-["),
 			   *end,
@@ -376,7 +376,7 @@ reset_variables(void)
  * Note: The list is dumped from the end,
  * so we have to add new entries at the beginning */
 void
-add_variable_to_head(struct arguments ** list, struct variable * var, struct variable * ind)
+add_variable_to_head(struct arguments **list, struct variable *var, struct variable *ind)
 {
 	struct arguments *p = (struct arguments *) mm_alloc(sizeof(struct arguments));
 
@@ -388,7 +388,7 @@ add_variable_to_head(struct arguments ** list, struct variable * var, struct var
 
 /* Append a new variable to our request list. */
 void
-add_variable_to_tail(struct arguments ** list, struct variable * var, struct variable * ind)
+add_variable_to_tail(struct arguments **list, struct variable *var, struct variable *ind)
 {
 	struct arguments *p,
 			   *new = (struct arguments *) mm_alloc(sizeof(struct arguments));
@@ -406,7 +406,7 @@ add_variable_to_tail(struct arguments ** list, struct variable * var, struct var
 }
 
 void
-remove_variable_from_list(struct arguments ** list, struct variable * var)
+remove_variable_from_list(struct arguments **list, struct variable *var)
 {
 	struct arguments *p,
 			   *prev = NULL;
@@ -435,7 +435,7 @@ remove_variable_from_list(struct arguments ** list, struct variable * var)
    deletes the list as we go on.
  */
 void
-dump_variables(struct arguments * list, int mode)
+dump_variables(struct arguments *list, int mode)
 {
 	char	   *str_zero;
 
@@ -464,7 +464,7 @@ dump_variables(struct arguments * list, int mode)
 }
 
 void
-check_indicator(struct ECPGtype * var)
+check_indicator(struct ECPGtype *var)
 {
 	/* make sure this is a valid indicator variable */
 	switch (var->type)

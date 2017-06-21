@@ -720,7 +720,7 @@ xpath_table(PG_FUNCTION_ARGS)
 			/* Parse the document */
 			if (xmldoc)
 				doctree = xmlParseMemory(xmldoc, strlen(xmldoc));
-			else	/* treat NULL as not well-formed */
+			else				/* treat NULL as not well-formed */
 				doctree = NULL;
 
 			if (doctree == NULL)

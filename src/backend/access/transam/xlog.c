@@ -4893,7 +4893,7 @@ XLOGShmemInit(void)
 
 	/* WAL insertion locks. Ensure they're aligned to the full padded size */
 	allocptr += sizeof(WALInsertLockPadded) -
-		((uintptr_t) allocptr) %sizeof(WALInsertLockPadded);
+		((uintptr_t) allocptr) % sizeof(WALInsertLockPadded);
 	WALInsertLocks = XLogCtl->Insert.WALInsertLocks =
 		(WALInsertLockPadded *) allocptr;
 	allocptr += sizeof(WALInsertLockPadded) * NUM_XLOGINSERT_LOCKS;
@@ -8426,14 +8426,14 @@ LogCheckpointEnd(bool restartpoint)
 	 */
 	longest_secs = (long) (CheckpointStats.ckpt_longest_sync / 1000000);
 	longest_usecs = CheckpointStats.ckpt_longest_sync -
-		(uint64) longest_secs *1000000;
+		(uint64) longest_secs * 1000000;
 
 	average_sync_time = 0;
 	if (CheckpointStats.ckpt_sync_rels > 0)
 		average_sync_time = CheckpointStats.ckpt_agg_sync_time /
 			CheckpointStats.ckpt_sync_rels;
 	average_secs = (long) (average_sync_time / 1000000);
-	average_usecs = average_sync_time - (uint64) average_secs *1000000;
+	average_usecs = average_sync_time - (uint64) average_secs * 1000000;
 
 	elog(LOG, "%s complete: wrote %d buffers (%.1f%%); "
 		 "%d WAL file(s) added, %d removed, %d recycled; "
@@ -11448,7 +11448,7 @@ XLogPageRead(XLogReaderState *xlogreader, XLogRecPtr targetPagePtr, int reqLen,
 	(XLogPageReadPrivate *) xlogreader->private_data;
 	int			emode = private->emode;
 	uint32		targetPageOff;
-	XLogSegNo targetSegNo PG_USED_FOR_ASSERTS_ONLY;
+	XLogSegNo	targetSegNo PG_USED_FOR_ASSERTS_ONLY;
 
 	XLByteToSeg(targetPagePtr, targetSegNo);
 	targetPageOff = targetPagePtr % XLogSegSize;

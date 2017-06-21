@@ -78,7 +78,7 @@ typedef struct tupleDesc
 	int32		tdtypmod;		/* typmod for tuple type */
 	bool		tdhasoid;		/* tuple has oid attribute in its header */
 	int			tdrefcount;		/* reference count, or -1 if not counting */
-}	*TupleDesc;
+}		   *TupleDesc;
 
 
 extern TupleDesc CreateTemplateTupleDesc(int natts, bool hasoid);

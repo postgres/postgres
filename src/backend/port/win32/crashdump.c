@@ -89,7 +89,7 @@ typedef BOOL (WINAPI * MINIDUMPWRITEDUMP) (HANDLE hProcess, DWORD dwPid, HANDLE 
  * any PostgreSQL functions.
  */
 static LONG WINAPI
-crashDumpHandler(struct _EXCEPTION_POINTERS * pExceptionInfo)
+crashDumpHandler(struct _EXCEPTION_POINTERS *pExceptionInfo)
 {
 	/*
 	 * We only write crash dumps if the "crashdumps" directory within the

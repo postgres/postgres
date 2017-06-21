@@ -27,8 +27,8 @@ static const int stmtCacheNBuckets = 2039;		/* # buckets - a prime # */
 static const int stmtCacheEntPerBucket = 8;		/* # entries/bucket		*/
 static stmtCacheEntry stmtCacheEntries[16384] = {{0, {0}, 0, 0, 0}};
 
-static bool deallocate_one(int lineno, enum COMPAT_MODE c, struct connection * con,
-		 struct prepared_statement * prev, struct prepared_statement * this);
+static bool deallocate_one(int lineno, enum COMPAT_MODE c, struct connection *con,
+		   struct prepared_statement *prev, struct prepared_statement *this);
 
 static bool
 isvarchar(unsigned char c)
@@ -100,7 +100,7 @@ replace_variables(char **text, int lineno)
 }
 
 static bool
-prepare_common(int lineno, struct connection * con, const char *name, const char *variable)
+prepare_common(int lineno, struct connection *con, const char *name, const char *variable)
 {
 	struct statement *stmt;
 	struct prepared_statement *this;
@@ -180,7 +180,7 @@ ECPGprepare(int lineno, const char *connection_name, const bool questionmarks, c
 
 struct prepared_statement *
 ecpg_find_prepared_statement(const char *name,
-				 struct connection * con, struct prepared_statement ** prev_)
+				   struct connection *con, struct prepared_statement **prev_)
 {
 	struct prepared_statement *this,
 			   *prev;
@@ -198,7 +198,7 @@ ecpg_find_prepared_statement(const char *name,
 }
 
 static bool
-deallocate_one(int lineno, enum COMPAT_MODE c, struct connection * con, struct prepared_statement * prev, struct prepared_statement * this)
+deallocate_one(int lineno, enum COMPAT_MODE c, struct connection *con, struct prepared_statement *prev, struct prepared_statement *this)
 {
 	bool		r = false;
 
@@ -273,7 +273,7 @@ ECPGdeallocate(int lineno, int c, const char *connection_name, const char *name)
 }
 
 bool
-ecpg_deallocate_all_conn(int lineno, enum COMPAT_MODE c, struct connection * con)
+ecpg_deallocate_all_conn(int lineno, enum COMPAT_MODE c, struct connection *con)
 {
 	/* deallocate all prepared statements */
 	while (con->prep_stmts)
@@ -292,7 +292,7 @@ ECPGdeallocate_all(int lineno, int compat, const char *connection_name)
 }
 
 char *
-ecpg_prepared(const char *name, struct connection * con)
+ecpg_prepared(const char *name, struct connection *con)
 {
 	struct prepared_statement *this;
 

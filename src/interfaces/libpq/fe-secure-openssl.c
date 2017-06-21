@@ -909,7 +909,7 @@ initialize_SSL(PGconn *conn)
 		!(conn->sslrootcert && strlen(conn->sslrootcert) > 0) ||
 		!(conn->sslcrl && strlen(conn->sslcrl) > 0))
 		have_homedir = pqGetHomeDirectory(homedir, sizeof(homedir));
-	else	/* won't need it */
+	else						/* won't need it */
 		have_homedir = false;
 
 	/*

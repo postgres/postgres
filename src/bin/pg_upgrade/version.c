@@ -138,12 +138,12 @@ old_9_3_check_for_line_data_type_usage(ClusterInfo *cluster)
 								"		pg_catalog.pg_attribute a "
 								"WHERE	c.oid = a.attrelid AND "
 								"		NOT a.attisdropped AND "
-								"		a.atttypid = 'pg_catalog.line'::pg_catalog.regtype AND "
+			 "		a.atttypid = 'pg_catalog.line'::pg_catalog.regtype AND "
 								"		c.relnamespace = n.oid AND "
 		/* exclude possible orphaned temp tables */
 								"		n.nspname !~ '^pg_temp_' AND "
-						 "		n.nspname !~ '^pg_toast_temp_' AND "
-								"		n.nspname NOT IN ('pg_catalog', 'information_schema')");
+								"		n.nspname !~ '^pg_toast_temp_' AND "
+			 "		n.nspname NOT IN ('pg_catalog', 'information_schema')");
 
 		ntups = PQntuples(res);
 		i_nspname = PQfnumber(res, "nspname");
@@ -235,7 +235,7 @@ old_9_6_check_for_unknown_data_type_usage(ClusterInfo *cluster)
 								"		pg_catalog.pg_attribute a "
 								"WHERE	c.oid = a.attrelid AND "
 								"		NOT a.attisdropped AND "
-								"		a.atttypid = 'pg_catalog.unknown'::pg_catalog.regtype AND "
+		  "		a.atttypid = 'pg_catalog.unknown'::pg_catalog.regtype AND "
 								"		c.relkind IN ("
 								CppAsString2(RELKIND_RELATION) ", "
 								CppAsString2(RELKIND_COMPOSITE_TYPE) ", "
@@ -243,8 +243,8 @@ old_9_6_check_for_unknown_data_type_usage(ClusterInfo *cluster)
 								"		c.relnamespace = n.oid AND "
 		/* exclude possible orphaned temp tables */
 								"		n.nspname !~ '^pg_temp_' AND "
-						 "		n.nspname !~ '^pg_toast_temp_' AND "
-								"		n.nspname NOT IN ('pg_catalog', 'information_schema')");
+								"		n.nspname !~ '^pg_toast_temp_' AND "
+			 "		n.nspname NOT IN ('pg_catalog', 'information_schema')");
 
 		ntups = PQntuples(res);
 		i_nspname = PQfnumber(res, "nspname");

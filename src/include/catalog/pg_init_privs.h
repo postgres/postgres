@@ -59,7 +59,7 @@ CATALOG(pg_init_privs,3394) BKI_WITHOUT_OIDS
  *		the format of pg_init_privs relation.
  * ----------------
  */
-typedef FormData_pg_init_privs *Form_pg_init_privs;
+typedef FormData_pg_init_privs * Form_pg_init_privs;
 
 /* ----------------
  *		compiler constants for pg_init_privs

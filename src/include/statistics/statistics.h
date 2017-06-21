@@ -28,6 +28,7 @@ typedef struct MVNDistinctItem
 	double		ndistinct;		/* ndistinct value for this combination */
 	Bitmapset  *attrs;			/* attr numbers of items */
 } MVNDistinctItem;
+
 /* size of the struct, excluding attribute list */
 #define SizeOfMVNDistinctItem \
 	(offsetof(MVNDistinctItem, ndistinct) + sizeof(double))

@@ -72,7 +72,7 @@ typedef struct PartitionKeyData
 	bool	   *parttypbyval;
 	char	   *parttypalign;
 	Oid		   *parttypcoll;
-}	PartitionKeyData;
+}			PartitionKeyData;
 
 typedef struct PartitionKeyData *PartitionKey;
 

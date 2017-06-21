@@ -152,7 +152,7 @@ typedef struct AllocBlockData
 	AllocBlock	next;			/* next block in aset's blocks list, if any */
 	char	   *freeptr;		/* start of free space in this block */
 	char	   *endptr;			/* end of space in this block */
-}	AllocBlockData;
+}			AllocBlockData;
 
 /*
  * AllocChunk
@@ -176,7 +176,7 @@ typedef struct AllocChunkData
 	void	   *aset;
 
 	/* there must not be any padding to reach a MAXALIGN boundary here! */
-}	AllocChunkData;
+}			AllocChunkData;
 
 /*
  * AllocPointerIsValid

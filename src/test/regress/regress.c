@@ -630,7 +630,7 @@ ttdummy(PG_FUNCTION_ARGS)
 	/* Tuple to return to upper Executor ... */
 	if (newtuple)				/* UPDATE */
 		rettuple = SPI_modifytuple(rel, trigtuple, 1, &(attnum[1]), &newoff, NULL);
-	else	/* DELETE */
+	else						/* DELETE */
 		rettuple = trigtuple;
 
 	SPI_finish();				/* don't forget say Bye to SPI mgr */

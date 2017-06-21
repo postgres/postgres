@@ -147,7 +147,7 @@ static struct
 {
 	bool		muse;
 	uint32		high_pos;
-}	SomeStack =
+}			SomeStack =
 
 {
 	false, 0,

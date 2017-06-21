@@ -95,7 +95,7 @@ typedef struct WindowStatePerFuncData
 	int			aggno;			/* if so, index of its PerAggData */
 
 	WindowObject winobj;		/* object used in window function API */
-}	WindowStatePerFuncData;
+}			WindowStatePerFuncData;
 
 /*
  * For plain aggregate window functions, we also have one of these.

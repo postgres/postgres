@@ -40,7 +40,7 @@ extern int	optreset;
 #endif
 
 #ifndef HAVE_GETOPT
-extern int	getopt(int nargc, char *const * nargv, const char *ostr);
+extern int	getopt(int nargc, char *const *nargv, const char *ostr);
 #endif
 
 #endif   /* PG_GETOPT_H */

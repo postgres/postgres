@@ -39,7 +39,7 @@ typedef enum TrackFunctionsLevel
 	TRACK_FUNC_OFF,
 	TRACK_FUNC_PL,
 	TRACK_FUNC_ALL
-}	TrackFunctionsLevel;
+}			TrackFunctionsLevel;
 
 /* ----------
  * The types of backend -> collector messages

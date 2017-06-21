@@ -41,11 +41,11 @@ struct TSQueryParserStateData;	/* private in backend/utils/adt/tsquery.c */
 typedef struct TSQueryParserStateData *TSQueryParserState;
 
 typedef void (*PushFunction) (Datum opaque, TSQueryParserState state,
-										  char *token, int tokenlen,
-										  int16 tokenweights,	/* bitmap as described
-																 * in QueryOperand
-																 * struct */
-										  bool prefix);
+							  char *token, int tokenlen,
+							  int16 tokenweights,		/* bitmap as described
+														 * in QueryOperand
+														 * struct */
+							  bool prefix);
 
 extern TSQuery parse_tsquery(char *buf,
 			  PushFunction pushval,
@@ -152,7 +152,7 @@ typedef struct ExecPhraseData
  * it as zeroes if position data is not available.
  */
 typedef bool (*TSExecuteCallback) (void *arg, QueryOperand *val,
-											   ExecPhraseData *data);
+								   ExecPhraseData *data);
 
 /*
  * Flag bits for TS_execute

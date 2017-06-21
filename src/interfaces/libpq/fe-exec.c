@@ -58,7 +58,7 @@ static int PQsendQueryGuts(PGconn *conn,
 				const char *stmtName,
 				int nParams,
 				const Oid *paramTypes,
-				const char *const * paramValues,
+				const char *const *paramValues,
 				const int *paramLengths,
 				const int *paramFormats,
 				int resultFormat);
@@ -940,7 +940,7 @@ pqSaveParameterStatus(PGconn *conn, const char *name, const char *value)
 	 * Store new info as a single malloc block
 	 */
 	pstatus = (pgParameterStatus *) malloc(sizeof(pgParameterStatus) +
-										   strlen(name) +strlen(value) + 2);
+										   strlen(name) + strlen(value) + 2);
 	if (pstatus)
 	{
 		char	   *ptr;
@@ -1184,7 +1184,7 @@ PQsendQueryParams(PGconn *conn,
 				  const char *command,
 				  int nParams,
 				  const Oid *paramTypes,
-				  const char *const * paramValues,
+				  const char *const *paramValues,
 				  const int *paramLengths,
 				  const int *paramFormats,
 				  int resultFormat)
@@ -1325,7 +1325,7 @@ int
 PQsendQueryPrepared(PGconn *conn,
 					const char *stmtName,
 					int nParams,
-					const char *const * paramValues,
+					const char *const *paramValues,
 					const int *paramLengths,
 					const int *paramFormats,
 					int resultFormat)
@@ -1408,7 +1408,7 @@ PQsendQueryGuts(PGconn *conn,
 				const char *stmtName,
 				int nParams,
 				const Oid *paramTypes,
-				const char *const * paramValues,
+				const char *const *paramValues,
 				const int *paramLengths,
 				const int *paramFormats,
 				int resultFormat)
@@ -1861,7 +1861,7 @@ PQexecParams(PGconn *conn,
 			 const char *command,
 			 int nParams,
 			 const Oid *paramTypes,
-			 const char *const * paramValues,
+			 const char *const *paramValues,
 			 const int *paramLengths,
 			 const int *paramFormats,
 			 int resultFormat)
@@ -1907,7 +1907,7 @@ PGresult *
 PQexecPrepared(PGconn *conn,
 			   const char *stmtName,
 			   int nParams,
-			   const char *const * paramValues,
+			   const char *const *paramValues,
 			   const int *paramLengths,
 			   const int *paramFormats,
 			   int resultFormat)

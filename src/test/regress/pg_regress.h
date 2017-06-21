@@ -26,9 +26,9 @@ typedef struct _stringlist
 } _stringlist;
 
 typedef PID_TYPE(*test_function) (const char *,
-						  _stringlist **,
-						  _stringlist **,
-						  _stringlist **);
+								  _stringlist **,
+								  _stringlist **,
+								  _stringlist **);
 typedef void (*init_function) (int argc, char **argv);
 
 extern char *bindir;

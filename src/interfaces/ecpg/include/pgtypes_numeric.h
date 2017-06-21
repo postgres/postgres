@@ -35,7 +35,7 @@ typedef struct
 } decimal;
 
 #ifdef __cplusplus
-extern		"C"
+extern "C"
 {
 #endif
 

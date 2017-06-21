@@ -63,7 +63,7 @@ newcvec(int nchrs,				/* to hold this many chrs... */
  * Returns pointer as convenience.
  */
 static struct cvec *
-clearcvec(struct cvec * cv)
+clearcvec(struct cvec *cv)
 {
 	assert(cv != NULL);
 	cv->nchrs = 0;
@@ -76,7 +76,7 @@ clearcvec(struct cvec * cv)
  * addchr - add a chr to a cvec
  */
 static void
-addchr(struct cvec * cv,		/* character vector */
+addchr(struct cvec *cv,			/* character vector */
 	   chr c)					/* character to add */
 {
 	assert(cv->nchrs < cv->chrspace);
@@ -87,7 +87,7 @@ addchr(struct cvec * cv,		/* character vector */
  * addrange - add a range to a cvec
  */
 static void
-addrange(struct cvec * cv,		/* character vector */
+addrange(struct cvec *cv,		/* character vector */
 		 chr from,				/* first character of range */
 		 chr to)				/* last character of range */
 {
@@ -109,7 +109,7 @@ addrange(struct cvec * cv,		/* character vector */
  * so transientness is a convenient behavior.
  */
 static struct cvec *
-getcvec(struct vars * v,		/* context */
+getcvec(struct vars *v,			/* context */
 		int nchrs,				/* to hold this many chrs... */
 		int nranges)			/* ... and this many ranges */
 {
@@ -132,7 +132,7 @@ getcvec(struct vars * v,		/* context */
  * freecvec - free a cvec
  */
 static void
-freecvec(struct cvec * cv)
+freecvec(struct cvec *cv)
 {
 	FREE(cv);
 }

@@ -517,4 +517,4 @@ MainLoop(FILE *source)
 	pset.lineno = prev_lineno;
 
 	return successResult;
-}	/* MainLoop() */
+}								/* MainLoop() */

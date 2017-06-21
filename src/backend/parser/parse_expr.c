@@ -2941,7 +2941,7 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 		}
 		if (OidIsValid(opfamily))
 			opfamilies = lappend_oid(opfamilies, opfamily);
-		else	/* should not happen */
+		else					/* should not happen */
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("could not determine interpretation of row comparison operator %s",

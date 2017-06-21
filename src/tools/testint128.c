@@ -45,7 +45,7 @@ typedef union
 		int64		hi;
 #endif
 	}			hl;
-}	test128;
+}			test128;
 
 
 /*
@@ -134,7 +134,7 @@ main(int argc, char **argv)
 		}
 
 		/* check multiplication */
-		t1.i128 = (int128) x *(int128) y;
+		t1.i128 = (int128) x * (int128) y;
 
 		t2.hl.hi = t2.hl.lo = 0;
 		int128_add_int64_mul_int64(&t2.I128, x, y);

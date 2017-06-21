@@ -190,7 +190,7 @@ SlabContextCreate(MemoryContext parent,
 	Size		freelistSize;
 	SlabContext *slab;
 
-	StaticAssertStmt(offsetof(SlabChunk, slab) +sizeof(MemoryContext) ==
+	StaticAssertStmt(offsetof(SlabChunk, slab) + sizeof(MemoryContext) ==
 					 MAXALIGN(sizeof(SlabChunk)),
 					 "padding calculation in SlabChunk is wrong");
 
@@ -221,7 +221,7 @@ SlabContextCreate(MemoryContext parent,
 	/* Do the type-independent part of context creation */
 	slab = (SlabContext *)
 		MemoryContextCreate(T_SlabContext,
-							(offsetof(SlabContext, freelist) +freelistSize),
+							(offsetof(SlabContext, freelist) + freelistSize),
 							&SlabMethods,
 							parent,
 							name);

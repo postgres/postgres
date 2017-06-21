@@ -137,7 +137,7 @@ typedef struct MergeJoinClauseData
 	 * stored here.
 	 */
 	SortSupportData ssup;
-}	MergeJoinClauseData;
+}			MergeJoinClauseData;
 
 /* Result type for MJEvalOuterValues and MJEvalInnerValues */
 typedef enum
@@ -216,7 +216,7 @@ MJExamineQuals(List *mergeclauses,
 			clause->ssup.ssup_reverse = false;
 		else if (opstrategy == BTGreaterStrategyNumber)
 			clause->ssup.ssup_reverse = true;
-		else	/* planner screwed up */
+		else					/* planner screwed up */
 			elog(ERROR, "unsupported mergejoin strategy %d", opstrategy);
 		clause->ssup.ssup_nulls_first = nulls_first;
 

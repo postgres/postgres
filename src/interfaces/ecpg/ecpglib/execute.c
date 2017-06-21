@@ -82,7 +82,7 @@ quote_postgres(char *arg, bool quote, int lineno)
 }
 
 static void
-free_variable(struct variable * var)
+free_variable(struct variable *var)
 {
 	struct variable *var_next;
 
@@ -95,7 +95,7 @@ free_variable(struct variable * var)
 }
 
 static void
-free_statement(struct statement * stmt)
+free_statement(struct statement *stmt)
 {
 	if (stmt == NULL)
 		return;
@@ -145,7 +145,7 @@ next_insert(char *text, int pos, bool questionmarks)
 }
 
 static bool
-ecpg_type_infocache_push(struct ECPGtype_information_cache ** cache, int oid, enum ARRAY_TYPE isarray, int lineno)
+ecpg_type_infocache_push(struct ECPGtype_information_cache **cache, int oid, enum ARRAY_TYPE isarray, int lineno)
 {
 	struct ECPGtype_information_cache *new_entry
 	= (struct ECPGtype_information_cache *) ecpg_alloc(sizeof(struct ECPGtype_information_cache), lineno);
@@ -161,7 +161,7 @@ ecpg_type_infocache_push(struct ECPGtype_information_cache ** cache, int oid, en
 }
 
 static enum ARRAY_TYPE
-ecpg_is_type_an_array(int type, const struct statement * stmt, const struct variable * var)
+ecpg_is_type_an_array(int type, const struct statement *stmt, const struct variable *var)
 {
 	char	   *array_query;
 	enum ARRAY_TYPE isarray = ECPG_ARRAY_NOT_SET;
@@ -307,7 +307,7 @@ ecpg_is_type_an_array(int type, const struct statement * stmt, const struct vari
 
 bool
 ecpg_store_result(const PGresult *results, int act_field,
-				  const struct statement * stmt, struct variable * var)
+				  const struct statement *stmt, struct variable *var)
 {
 	enum ARRAY_TYPE isarray;
 	int			act_tuple,
@@ -491,7 +491,7 @@ sprintf_float_value(char *ptr, float value, const char *delim)
 }
 
 bool
-ecpg_store_input(const int lineno, const bool force_indicator, const struct variable * var,
+ecpg_store_input(const int lineno, const bool force_indicator, const struct variable *var,
 				 char **tobeinserted_p, bool quote)
 {
 	char	   *mallocedval = NULL;
@@ -1049,7 +1049,7 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 }
 
 void
-ecpg_free_params(struct statement * stmt, bool print)
+ecpg_free_params(struct statement *stmt, bool print)
 {
 	int			n;
 
@@ -1065,7 +1065,7 @@ ecpg_free_params(struct statement * stmt, bool print)
 }
 
 static bool
-insert_tobeinserted(int position, int ph_len, struct statement * stmt, char *tobeinserted)
+insert_tobeinserted(int position, int ph_len, struct statement *stmt, char *tobeinserted)
 {
 	char	   *newcopy;
 
@@ -1104,7 +1104,7 @@ insert_tobeinserted(int position, int ph_len, struct statement * stmt, char *tob
  * in arrays which can be used by PQexecParams().
  */
 bool
-ecpg_build_params(struct statement * stmt)
+ecpg_build_params(struct statement *stmt)
 {
 	struct variable *var;
 	int			desc_counter = 0;
@@ -1402,7 +1402,7 @@ ecpg_build_params(struct statement * stmt)
  *		If we are in non-autocommit mode, automatically start a transaction.
  */
 bool
-ecpg_autostart_transaction(struct statement * stmt)
+ecpg_autostart_transaction(struct statement *stmt)
 {
 	if (PQtransactionStatus(stmt->connection->connection) == PQTRANS_IDLE && !stmt->connection->autocommit)
 	{
@@ -1423,7 +1423,7 @@ ecpg_autostart_transaction(struct statement * stmt)
  *		Execute the SQL statement.
  */
 bool
-ecpg_execute(struct statement * stmt)
+ecpg_execute(struct statement *stmt)
 {
 	ecpg_log("ecpg_execute on line %d: query: %s; with %d parameter(s) on connection %s\n", stmt->lineno, stmt->command, stmt->nparams, stmt->connection->name);
 	if (stmt->statement_type == ECPGst_execute)
@@ -1471,7 +1471,7 @@ ecpg_execute(struct statement * stmt)
  *-------
  */
 bool
-ecpg_process_output(struct statement * stmt, bool clear_result)
+ecpg_process_output(struct statement *stmt, bool clear_result)
 {
 	struct variable *var;
 	bool		status = false;
@@ -1747,7 +1747,7 @@ bool
 ecpg_do_prologue(int lineno, const int compat, const int force_indicator,
 				 const char *connection_name, const bool questionmarks,
 				 enum ECPG_statement_type statement_type, const char *query,
-				 va_list args, struct statement ** stmt_out)
+				 va_list args, struct statement **stmt_out)
 {
 	struct statement *stmt;
 	struct connection *con;
@@ -1976,7 +1976,7 @@ ecpg_do_prologue(int lineno, const int compat, const int force_indicator,
  *	  Restore the application locale and free the statement structure.
  */
 void
-ecpg_do_epilogue(struct statement * stmt)
+ecpg_do_epilogue(struct statement *stmt)
 {
 	if (stmt == NULL)
 		return;

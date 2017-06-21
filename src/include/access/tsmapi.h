@@ -21,24 +21,24 @@
  */
 
 typedef void (*SampleScanGetSampleSize_function) (PlannerInfo *root,
-														 RelOptInfo *baserel,
-															List *paramexprs,
-														  BlockNumber *pages,
-															  double *tuples);
+												  RelOptInfo *baserel,
+												  List *paramexprs,
+												  BlockNumber *pages,
+												  double *tuples);
 
 typedef void (*InitSampleScan_function) (SampleScanState *node,
-													 int eflags);
+										 int eflags);
 
 typedef void (*BeginSampleScan_function) (SampleScanState *node,
-													  Datum *params,
-													  int nparams,
-													  uint32 seed);
+										  Datum *params,
+										  int nparams,
+										  uint32 seed);
 
 typedef BlockNumber (*NextSampleBlock_function) (SampleScanState *node);
 
 typedef OffsetNumber (*NextSampleTuple_function) (SampleScanState *node,
-														 BlockNumber blockno,
-													 OffsetNumber maxoffset);
+												  BlockNumber blockno,
+												  OffsetNumber maxoffset);
 
 typedef void (*EndSampleScan_function) (SampleScanState *node);
 

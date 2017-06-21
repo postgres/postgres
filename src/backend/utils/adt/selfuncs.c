@@ -4205,7 +4205,7 @@ convert_string_datum(Datum value, Oid typid)
 	{
 		char	   *xfrmstr;
 		size_t		xfrmlen;
-		size_t xfrmlen2 PG_USED_FOR_ASSERTS_ONLY;
+		size_t		xfrmlen2 PG_USED_FOR_ASSERTS_ONLY;
 
 		/*
 		 * XXX: We could guess at a suitable output buffer size and only call
@@ -4221,7 +4221,8 @@ convert_string_datum(Datum value, Oid typid)
 		/*
 		 *
 		 * http://connect.microsoft.com/VisualStudio/feedback/ViewFeedback.aspx?
-		 * FeedbackID=99694 */
+		 * FeedbackID=99694
+		 */
 		{
 			char		x[1];
 

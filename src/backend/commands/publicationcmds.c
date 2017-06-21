@@ -330,7 +330,7 @@ AlterPublicationTables(AlterPublicationStmt *stmt, Relation rel,
 		PublicationAddTables(pubid, rels, false, stmt);
 	else if (stmt->tableAction == DEFELEM_DROP)
 		PublicationDropTables(pubid, rels, false);
-	else	/* DEFELEM_SET */
+	else						/* DEFELEM_SET */
 	{
 		List	   *oldrelids = GetPublicationRelations(pubid);
 		List	   *delrels = NIL;

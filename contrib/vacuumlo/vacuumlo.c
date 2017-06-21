@@ -47,7 +47,7 @@ struct _param
 	long		transaction_limit;
 };
 
-static int	vacuumlo(const char *database, const struct _param * param);
+static int	vacuumlo(const char *database, const struct _param *param);
 static void usage(const char *progname);
 
 
@@ -56,7 +56,7 @@ static void usage(const char *progname);
  * This vacuums LOs of one database. It returns 0 on success, -1 on failure.
  */
 static int
-vacuumlo(const char *database, const struct _param * param)
+vacuumlo(const char *database, const struct _param *param)
 {
 	PGconn	   *conn;
 	PGresult   *res,

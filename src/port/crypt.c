@@ -307,6 +307,7 @@ unsigned char *cp;
 C_block    *out;
 C_block    *p;
 int			chars_in;
+
 {
 	DCL_BLOCK(D, D0, D1);
 	C_block    *tp;
@@ -977,6 +978,7 @@ C_block		perm[64 / CHUNKBITS][1 << CHUNKBITS];
 unsigned char p[64];
 int			chars_in,
 			chars_out;
+
 {
 	int			i,
 				j,
@@ -1068,6 +1070,7 @@ prtab(s, t, num_rows)
 char	   *s;
 unsigned char *t;
 int			num_rows;
+
 {
 	int			i,
 				j;

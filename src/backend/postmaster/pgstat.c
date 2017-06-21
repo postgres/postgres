@@ -443,7 +443,7 @@ pgstat_init(void)
 		}
 
 		alen = sizeof(pgStatAddr);
-		if (getsockname(pgStatSock, (struct sockaddr *) & pgStatAddr, &alen) < 0)
+		if (getsockname(pgStatSock, (struct sockaddr *) &pgStatAddr, &alen) < 0)
 		{
 			ereport(LOG,
 					(errcode_for_socket_access(),
@@ -459,7 +459,7 @@ pgstat_init(void)
 		 * provides a kernel-level check that only packets from this same
 		 * address will be received.
 		 */
-		if (connect(pgStatSock, (struct sockaddr *) & pgStatAddr, alen) < 0)
+		if (connect(pgStatSock, (struct sockaddr *) &pgStatAddr, alen) < 0)
 		{
 			ereport(LOG,
 					(errcode_for_socket_access(),
@@ -1107,7 +1107,7 @@ pgstat_vacuum_stat(void)
 		if (msg.m_nentries >= PGSTAT_NUM_TABPURGE)
 		{
 			len = offsetof(PgStat_MsgTabpurge, m_tableid[0])
-				+msg.m_nentries * sizeof(Oid);
+				+ msg.m_nentries * sizeof(Oid);
 
 			pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_TABPURGE);
 			msg.m_databaseid = MyDatabaseId;
@@ -1123,7 +1123,7 @@ pgstat_vacuum_stat(void)
 	if (msg.m_nentries > 0)
 	{
 		len = offsetof(PgStat_MsgTabpurge, m_tableid[0])
-			+msg.m_nentries * sizeof(Oid);
+			+ msg.m_nentries * sizeof(Oid);
 
 		pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_TABPURGE);
 		msg.m_databaseid = MyDatabaseId;
@@ -1167,7 +1167,7 @@ pgstat_vacuum_stat(void)
 			if (f_msg.m_nentries >= PGSTAT_NUM_FUNCPURGE)
 			{
 				len = offsetof(PgStat_MsgFuncpurge, m_functionid[0])
-					+f_msg.m_nentries * sizeof(Oid);
+					+ f_msg.m_nentries * sizeof(Oid);
 
 				pgstat_send(&f_msg, len);
 
@@ -1181,7 +1181,7 @@ pgstat_vacuum_stat(void)
 		if (f_msg.m_nentries > 0)
 		{
 			len = offsetof(PgStat_MsgFuncpurge, m_functionid[0])
-				+f_msg.m_nentries * sizeof(Oid);
+				+ f_msg.m_nentries * sizeof(Oid);
 
 			pgstat_send(&f_msg, len);
 		}
@@ -1284,7 +1284,7 @@ pgstat_drop_relation(Oid relid)
 	msg.m_tableid[0] = relid;
 	msg.m_nentries = 1;
 
-	len = offsetof(PgStat_MsgTabpurge, m_tableid[0]) +sizeof(Oid);
+	len = offsetof(PgStat_MsgTabpurge, m_tableid[0]) + sizeof(Oid);
 
 	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_TABPURGE);
 	msg.m_databaseid = MyDatabaseId;

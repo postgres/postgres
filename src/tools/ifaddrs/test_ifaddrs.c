@@ -15,7 +15,7 @@
 
 
 static void
-print_addr(struct sockaddr * addr)
+print_addr(struct sockaddr *addr)
 {
 	char		buffer[256];
 	int			ret,
@@ -45,7 +45,7 @@ print_addr(struct sockaddr * addr)
 }
 
 static void
-callback(struct sockaddr * addr, struct sockaddr * mask, void *unused)
+callback(struct sockaddr *addr, struct sockaddr *mask, void *unused)
 {
 	printf("addr: ");
 	print_addr(addr);

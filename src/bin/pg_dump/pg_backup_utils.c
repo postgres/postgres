@@ -25,7 +25,7 @@ static struct
 {
 	on_exit_nicely_callback function;
 	void	   *arg;
-}	on_exit_nicely_list[MAX_ON_EXIT_NICELY];
+}			on_exit_nicely_list[MAX_ON_EXIT_NICELY];
 
 static int	on_exit_nicely_index;
 

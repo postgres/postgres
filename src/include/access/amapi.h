@@ -60,20 +60,20 @@ typedef enum IndexAMProperty
 
 /* build new index */
 typedef IndexBuildResult *(*ambuild_function) (Relation heapRelation,
-													  Relation indexRelation,
-												struct IndexInfo *indexInfo);
+											   Relation indexRelation,
+											   struct IndexInfo *indexInfo);
 
 /* build empty index */
 typedef void (*ambuildempty_function) (Relation indexRelation);
 
 /* insert this tuple */
 typedef bool (*aminsert_function) (Relation indexRelation,
-											   Datum *values,
-											   bool *isnull,
-											   ItemPointer heap_tid,
-											   Relation heapRelation,
-											   IndexUniqueCheck checkUnique,
-											   struct IndexInfo *indexInfo);
+								   Datum *values,
+								   bool *isnull,
+								   ItemPointer heap_tid,
+								   Relation heapRelation,
+								   IndexUniqueCheck checkUnique,
+								   struct IndexInfo *indexInfo);
 
 /* bulk delete */
 typedef IndexBulkDeleteResult *(*ambulkdelete_function) (IndexVacuumInfo *info,
@@ -90,45 +90,45 @@ typedef bool (*amcanreturn_function) (Relation indexRelation, int attno);
 
 /* estimate cost of an indexscan */
 typedef void (*amcostestimate_function) (struct PlannerInfo *root,
-													 struct IndexPath *path,
-													 double loop_count,
-													 Cost *indexStartupCost,
-													 Cost *indexTotalCost,
-											   Selectivity *indexSelectivity,
-													 double *indexCorrelation,
-													 double *indexPages);
+										 struct IndexPath *path,
+										 double loop_count,
+										 Cost *indexStartupCost,
+										 Cost *indexTotalCost,
+										 Selectivity *indexSelectivity,
+										 double *indexCorrelation,
+										 double *indexPages);
 
 /* parse index reloptions */
 typedef bytea *(*amoptions_function) (Datum reloptions,
-												  bool validate);
+									  bool validate);
 
 /* report AM, index, or index column property */
 typedef bool (*amproperty_function) (Oid index_oid, int attno,
 								  IndexAMProperty prop, const char *propname,
-												 bool *res, bool *isnull);
+									 bool *res, bool *isnull);
 
 /* validate definition of an opclass for this AM */
 typedef bool (*amvalidate_function) (Oid opclassoid);
 
 /* prepare for index scan */
 typedef IndexScanDesc (*ambeginscan_function) (Relation indexRelation,
-														   int nkeys,
-														   int norderbys);
+											   int nkeys,
+											   int norderbys);
 
 /* (re)start index scan */
 typedef void (*amrescan_function) (IndexScanDesc scan,
-											   ScanKey keys,
-											   int nkeys,
-											   ScanKey orderbys,
-											   int norderbys);
+								   ScanKey keys,
+								   int nkeys,
+								   ScanKey orderbys,
+								   int norderbys);
 
 /* next valid tuple */
 typedef bool (*amgettuple_function) (IndexScanDesc scan,
-												 ScanDirection direction);
+									 ScanDirection direction);
 
 /* fetch all valid tuples */
 typedef int64 (*amgetbitmap_function) (IndexScanDesc scan,
-												   TIDBitmap *tbm);
+									   TIDBitmap *tbm);
 
 /* end index scan */
 typedef void (*amendscan_function) (IndexScanDesc scan);

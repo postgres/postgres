@@ -39,8 +39,8 @@
  * Internal errors also return NULL, with v->err set.
  */
 static chr *
-longest(struct vars * v,
-		struct dfa * d,
+longest(struct vars *v,
+		struct dfa *d,
 		chr *start,				/* where the match should start */
 		chr *stop,				/* match must end at or before here */
 		int *hitstopp)			/* record whether hit v->stop, if non-NULL */
@@ -165,8 +165,8 @@ longest(struct vars * v,
  * Internal errors also return NULL, with v->err set.
  */
 static chr *
-shortest(struct vars * v,
-		 struct dfa * d,
+shortest(struct vars *v,
+		 struct dfa *d,
 		 chr *start,			/* where the match should start */
 		 chr *min,				/* match must end at or after here */
 		 chr *max,				/* match must end at or before here */
@@ -300,10 +300,10 @@ shortest(struct vars * v,
  * Internal errors also return 0, with v->err set.
  */
 static int
-matchuntil(struct vars * v,
-		   struct dfa * d,
+matchuntil(struct vars *v,
+		   struct dfa *d,
 		   chr *probe,			/* we want to know if a match ends here */
-		   struct sset ** lastcss,		/* state storage across calls */
+		   struct sset **lastcss,		/* state storage across calls */
 		   chr **lastcp)		/* state storage across calls */
 {
 	chr		   *cp = *lastcp;
@@ -414,8 +414,8 @@ matchuntil(struct vars * v,
  * lastcold - determine last point at which no progress had been made
  */
 static chr *					/* endpoint, or NULL */
-lastcold(struct vars * v,
-		 struct dfa * d)
+lastcold(struct vars *v,
+		 struct dfa *d)
 {
 	struct sset *ss;
 	chr		   *nopr;
@@ -434,10 +434,10 @@ lastcold(struct vars * v,
  * newdfa - set up a fresh DFA
  */
 static struct dfa *
-newdfa(struct vars * v,
-	   struct cnfa * cnfa,
-	   struct colormap * cm,
-	   struct smalldfa * sml)	/* preallocated space, may be NULL */
+newdfa(struct vars *v,
+	   struct cnfa *cnfa,
+	   struct colormap *cm,
+	   struct smalldfa *sml)	/* preallocated space, may be NULL */
 {
 	struct dfa *d;
 	size_t		nss = cnfa->nstates * 2;
@@ -514,7 +514,7 @@ newdfa(struct vars * v,
  * freedfa - free a DFA
  */
 static void
-freedfa(struct dfa * d)
+freedfa(struct dfa *d)
 {
 	if (d->cptsmalloced)
 	{
@@ -554,8 +554,8 @@ hash(unsigned *uv,
  * initialize - hand-craft a cache entry for startup, otherwise get ready
  */
 static struct sset *
-initialize(struct vars * v,
-		   struct dfa * d,
+initialize(struct vars *v,
+		   struct dfa *d,
 		   chr *start)
 {
 	struct sset *ss;
@@ -600,9 +600,9 @@ initialize(struct vars * v,
  * Internal errors also return NULL, with v->err set.
  */
 static struct sset *
-miss(struct vars * v,
-	 struct dfa * d,
-	 struct sset * css,
+miss(struct vars *v,
+	 struct dfa *d,
+	 struct sset *css,
 	 color co,
 	 chr *cp,					/* next chr */
 	 chr *start)				/* where the attempt got started */
@@ -740,8 +740,8 @@ miss(struct vars * v,
  * lacon - lookaround-constraint checker for miss()
  */
 static int						/* predicate:  constraint satisfied? */
-lacon(struct vars * v,
-	  struct cnfa * pcnfa,		/* parent cnfa */
+lacon(struct vars *v,
+	  struct cnfa *pcnfa,		/* parent cnfa */
 	  chr *cp,
 	  color co)					/* "color" of the lookaround constraint */
 {
@@ -797,8 +797,8 @@ lacon(struct vars * v,
  * clear the innards of the state set -- that's up to the caller.
  */
 static struct sset *
-getvacant(struct vars * v,
-		  struct dfa * d,
+getvacant(struct vars *v,
+		  struct dfa *d,
 		  chr *cp,
 		  chr *start)
 {
@@ -868,8 +868,8 @@ getvacant(struct vars * v,
  * pickss - pick the next stateset to be used
  */
 static struct sset *
-pickss(struct vars * v,
-	   struct dfa * d,
+pickss(struct vars *v,
+	   struct dfa *d,
 	   chr *cp,
 	   chr *start)
 {

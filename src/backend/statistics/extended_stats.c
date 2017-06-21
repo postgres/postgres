@@ -353,7 +353,7 @@ multi_sort_init(int ndims)
 	Assert(ndims >= 2);
 
 	mss = (MultiSortSupport) palloc0(offsetof(MultiSortSupportData, ssup)
-									 +sizeof(SortSupportData) * ndims);
+									 + sizeof(SortSupportData) * ndims);
 
 	mss->ndims = ndims;
 

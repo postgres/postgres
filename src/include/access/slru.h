@@ -155,7 +155,7 @@ extern void SimpleLruTruncate(SlruCtl ctl, int cutoffPage);
 extern bool SimpleLruDoesPhysicalPageExist(SlruCtl ctl, int pageno);
 
 typedef bool (*SlruScanCallback) (SlruCtl ctl, char *filename, int segpage,
-											  void *data);
+								  void *data);
 extern bool SlruScanDirectory(SlruCtl ctl, SlruScanCallback callback, void *data);
 extern void SlruDeleteSegment(SlruCtl ctl, int segno);
 

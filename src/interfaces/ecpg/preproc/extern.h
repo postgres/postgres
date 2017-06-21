@@ -94,7 +94,7 @@ extern struct variable *descriptor_variable(const char *name, int input);
 extern struct variable *sqlda_variable(const char *name);
 extern void add_variable_to_head(struct arguments **, struct variable *, struct variable *);
 extern void add_variable_to_tail(struct arguments **, struct variable *, struct variable *);
-extern void remove_variable_from_list(struct arguments ** list, struct variable * var);
+extern void remove_variable_from_list(struct arguments **list, struct variable *var);
 extern void dump_variables(struct arguments *, int);
 extern struct typedefs *get_typedef(char *);
 extern void adjust_array(enum ECPGttype, char **, char **, char *, char *, int, bool);

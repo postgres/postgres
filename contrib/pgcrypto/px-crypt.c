@@ -74,7 +74,7 @@ struct px_crypt_algo
 	char	   *id;
 	unsigned	id_len;
 	char	   *(*crypt) (const char *psw, const char *salt,
-									  char *buf, unsigned len);
+						  char *buf, unsigned len);
 };
 
 static const struct px_crypt_algo
@@ -115,7 +115,7 @@ struct generator
 {
 	char	   *name;
 	char	   *(*gen) (unsigned long count, const char *input, int size,
-									char *output, int output_size);
+						char *output, int output_size);
 	int			input_len;
 	int			def_rounds;
 	int			min_rounds;

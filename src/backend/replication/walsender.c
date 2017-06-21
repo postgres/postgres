@@ -117,7 +117,8 @@ bool		am_cascading_walsender = false;		/* Am I cascading WAL to
 bool		am_db_walsender = false;	/* Connected to a database? */
 
 /* User-settable parameters for walsender */
-int			max_wal_senders = 0;	/* the maximum number of concurrent walsenders */
+int			max_wal_senders = 0;	/* the maximum number of concurrent
+									 * walsenders */
 int			wal_sender_timeout = 60 * 1000;		/* maximum time to send one
 												 * WAL data message */
 bool		log_replication_commands = false;
@@ -214,7 +215,7 @@ static struct
 	int			write_head;
 	int			read_heads[NUM_SYNC_REP_WAIT_MODE];
 	WalTimeSample last_read[NUM_SYNC_REP_WAIT_MODE];
-}	LagTracker;
+}			LagTracker;
 
 /* Signal handlers */
 static void WalSndLastCycleHandler(SIGNAL_ARGS);

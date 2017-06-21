@@ -16,14 +16,14 @@
 #include "sqlda.h"
 #include "sql3types.h"
 
-static void descriptor_free(struct descriptor * desc);
+static void descriptor_free(struct descriptor *desc);
 
 /* We manage descriptors separately for each thread. */
 #ifdef ENABLE_THREAD_SAFETY
 static pthread_key_t descriptor_key;
 static pthread_once_t descriptor_once = PTHREAD_ONCE_INIT;
 
-static void descriptor_deallocate_all(struct descriptor * list);
+static void descriptor_deallocate_all(struct descriptor *list);
 
 static void
 descriptor_destructor(void *arg)
@@ -45,7 +45,7 @@ get_descriptors(void)
 }
 
 static void
-set_descriptors(struct descriptor * value)
+set_descriptors(struct descriptor *value)
 {
 	pthread_setspecific(descriptor_key, value);
 }
@@ -689,7 +689,7 @@ ECPGset_desc(int lineno, const char *desc_name, int index,...)
 
 /* Free the descriptor and items in it. */
 static void
-descriptor_free(struct descriptor * desc)
+descriptor_free(struct descriptor *desc)
 {
 	struct descriptor_item *desc_item;
 
@@ -743,7 +743,7 @@ ECPGdeallocate_desc(int line, const char *name)
 
 /* Deallocate all descriptors in the list */
 static void
-descriptor_deallocate_all(struct descriptor * list)
+descriptor_deallocate_all(struct descriptor *list)
 {
 	while (list)
 	{

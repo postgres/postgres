@@ -58,9 +58,9 @@ struct fp_info
 };
 
 
-static int16 parse_fcall_arguments(StringInfo msgBuf, struct fp_info * fip,
+static int16 parse_fcall_arguments(StringInfo msgBuf, struct fp_info *fip,
 					  FunctionCallInfo fcinfo);
-static int16 parse_fcall_arguments_20(StringInfo msgBuf, struct fp_info * fip,
+static int16 parse_fcall_arguments_20(StringInfo msgBuf, struct fp_info *fip,
 						 FunctionCallInfo fcinfo);
 
 
@@ -195,7 +195,7 @@ SendFunctionResult(Datum retval, bool isnull, Oid rettype, int16 format)
  * function 'func_id'.
  */
 static void
-fetch_fp_info(Oid func_id, struct fp_info * fip)
+fetch_fp_info(Oid func_id, struct fp_info *fip)
 {
 	HeapTuple	func_htp;
 	Form_pg_proc pp;
@@ -405,7 +405,7 @@ HandleFunctionRequest(StringInfo msgBuf)
  * is returned.
  */
 static int16
-parse_fcall_arguments(StringInfo msgBuf, struct fp_info * fip,
+parse_fcall_arguments(StringInfo msgBuf, struct fp_info *fip,
 					  FunctionCallInfo fcinfo)
 {
 	int			nargs;
@@ -543,7 +543,7 @@ parse_fcall_arguments(StringInfo msgBuf, struct fp_info * fip,
  * is returned.
  */
 static int16
-parse_fcall_arguments_20(StringInfo msgBuf, struct fp_info * fip,
+parse_fcall_arguments_20(StringInfo msgBuf, struct fp_info *fip,
 						 FunctionCallInfo fcinfo)
 {
 	int			nargs;

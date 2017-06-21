@@ -25,11 +25,11 @@
 #endif
 
 extern int pg_getaddrinfo_all(const char *hostname, const char *servname,
-				   const struct addrinfo * hintp,
-				   struct addrinfo ** result);
-extern void pg_freeaddrinfo_all(int hint_ai_family, struct addrinfo * ai);
+				   const struct addrinfo *hintp,
+				   struct addrinfo **result);
+extern void pg_freeaddrinfo_all(int hint_ai_family, struct addrinfo *ai);
 
-extern int pg_getnameinfo_all(const struct sockaddr_storage * addr, int salen,
+extern int pg_getnameinfo_all(const struct sockaddr_storage *addr, int salen,
 				   char *node, int nodelen,
 				   char *service, int servicelen,
 				   int flags);

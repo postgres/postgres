@@ -113,7 +113,7 @@ typedef struct LockMethodData
 {
 	int			numLockModes;
 	const LOCKMASK *conflictTab;
-	const char *const * lockModeNames;
+	const char *const *lockModeNames;
 	const bool *trace_flag;
 } LockMethodData;
 

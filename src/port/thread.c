@@ -92,8 +92,8 @@ pqStrerror(int errnum, char *strerrbuf, size_t buflen)
  */
 #ifndef WIN32
 int
-pqGetpwuid(uid_t uid, struct passwd * resultbuf, char *buffer,
-		   size_t buflen, struct passwd ** result)
+pqGetpwuid(uid_t uid, struct passwd *resultbuf, char *buffer,
+		   size_t buflen, struct passwd **result)
 {
 #if defined(FRONTEND) && defined(ENABLE_THREAD_SAFETY) && defined(HAVE_GETPWUID_R)
 	return getpwuid_r(uid, resultbuf, buffer, buflen, result);
@@ -115,9 +115,9 @@ pqGetpwuid(uid_t uid, struct passwd * resultbuf, char *buffer,
 #ifndef HAVE_GETADDRINFO
 int
 pqGethostbyname(const char *name,
-				struct hostent * resultbuf,
+				struct hostent *resultbuf,
 				char *buffer, size_t buflen,
-				struct hostent ** result,
+				struct hostent **result,
 				int *herrno)
 {
 #if defined(FRONTEND) && defined(ENABLE_THREAD_SAFETY) && defined(HAVE_GETHOSTBYNAME_R)

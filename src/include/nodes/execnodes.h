@@ -43,8 +43,8 @@ struct ExprContext;
 struct ExprEvalStep;			/* avoid including execExpr.h everywhere */
 
 typedef Datum (*ExprStateEvalFunc) (struct ExprState *expression,
-												struct ExprContext *econtext,
-												bool *isNull);
+									struct ExprContext *econtext,
+									bool *isNull);
 
 /* Bits in ExprState->flags (see also execExpr.h for private flag bits): */
 /* expression is for use with ExecQual() */
@@ -593,7 +593,7 @@ typedef struct TupleHashTableData
 	FmgrInfo   *in_hash_funcs;	/* hash functions for input datatype(s) */
 	FmgrInfo   *cur_eq_funcs;	/* equality functions for input vs. table */
 	uint32		hash_iv;		/* hash-function IV */
-}	TupleHashTableData;
+}			TupleHashTableData;
 
 typedef tuplehash_iterator TupleHashIterator;
 
@@ -1831,12 +1831,12 @@ typedef struct WindowAggState
 	bool		partition_spooled;		/* true if all tuples in current
 										 * partition have been spooled into
 										 * tuplestore */
-	bool		more_partitions;/* true if there's more partitions after this
-								 * one */
-	bool		framehead_valid;/* true if frameheadpos is known up to date
-								 * for current row */
-	bool		frametail_valid;/* true if frametailpos is known up to date
-								 * for current row */
+	bool		more_partitions;	/* true if there's more partitions after
+									 * this one */
+	bool		framehead_valid;	/* true if frameheadpos is known up to
+									 * date for current row */
+	bool		frametail_valid;	/* true if frametailpos is known up to
+									 * date for current row */
 
 	TupleTableSlot *first_part_slot;	/* first tuple of current or next
 										 * partition */

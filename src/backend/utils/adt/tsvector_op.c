@@ -411,7 +411,7 @@ tsvector_bsearch(const TSVector tsv, char *lexeme, int lexeme_len)
 			StopHigh = StopMiddle;
 		else if (cmp > 0)
 			StopLow = StopMiddle + 1;
-		else	/* found it */
+		else					/* found it */
 			return StopMiddle;
 	}
 
@@ -1058,7 +1058,7 @@ tsvector_concat(PG_FUNCTION_ARGS)
 					if (ptr2->haspos)
 						dataoff += add_pos(in2, ptr2, out, ptr, maxpos) * sizeof(WordEntryPos);
 				}
-				else	/* must have ptr2->haspos */
+				else			/* must have ptr2->haspos */
 				{
 					int			addlen = add_pos(in2, ptr2, out, ptr, maxpos);
 
@@ -1255,7 +1255,7 @@ checkclass_str(CHKVAL *chkval, WordEntry *entry, QueryOperand *val,
 				posvec_iter++;
 			}
 		}
-		else	/* data != NULL */
+		else					/* data != NULL */
 		{
 			data->npos = posvec->npos;
 			data->pos = posvec->pos;
@@ -1489,7 +1489,7 @@ TS_phrase_output(ExecPhraseData *data,
 			Lindex++;
 			Rindex++;
 		}
-		else	/* Lpos > Rpos */
+		else					/* Lpos > Rpos */
 		{
 			/* Rpos is not matched in Ldata, should we output it? */
 			if (emit & TSPO_R_ONLY)

@@ -298,7 +298,7 @@ pgwin32_socket(int af, int type, int protocol)
 }
 
 int
-pgwin32_bind(SOCKET s, struct sockaddr * addr, int addrlen)
+pgwin32_bind(SOCKET s, struct sockaddr *addr, int addrlen)
 {
 	int			res;
 
@@ -320,7 +320,7 @@ pgwin32_listen(SOCKET s, int backlog)
 }
 
 SOCKET
-pgwin32_accept(SOCKET s, struct sockaddr * addr, int *addrlen)
+pgwin32_accept(SOCKET s, struct sockaddr *addr, int *addrlen)
 {
 	SOCKET		rs;
 
@@ -342,7 +342,7 @@ pgwin32_accept(SOCKET s, struct sockaddr * addr, int *addrlen)
 
 /* No signal delivery during connect. */
 int
-pgwin32_connect(SOCKET s, const struct sockaddr * addr, int addrlen)
+pgwin32_connect(SOCKET s, const struct sockaddr *addr, int addrlen)
 {
 	int			r;
 
@@ -500,7 +500,7 @@ pgwin32_send(SOCKET s, const void *buf, int len, int flags)
  * since it is not used in postgresql!
  */
 int
-pgwin32_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, const struct timeval * timeout)
+pgwin32_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, const struct timeval *timeout)
 {
 	WSAEVENT	events[FD_SETSIZE * 2]; /* worst case is readfds totally
 										 * different from writefds, so

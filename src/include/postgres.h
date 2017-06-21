@@ -71,7 +71,7 @@ typedef struct varatt_external
 	int32		va_extsize;		/* External saved size (doesn't) */
 	Oid			va_valueid;		/* Unique ID of value within TOAST table */
 	Oid			va_toastrelid;	/* RelID of TOAST table containing it */
-}	varatt_external;
+}			varatt_external;
 
 /*
  * struct varatt_indirect is a "TOAST pointer" representing an out-of-line
@@ -85,7 +85,7 @@ typedef struct varatt_external
 typedef struct varatt_indirect
 {
 	struct varlena *pointer;	/* Pointer to in-memory varlena */
-}	varatt_indirect;
+}			varatt_indirect;
 
 /*
  * struct varatt_expanded is a "TOAST pointer" representing an out-of-line

@@ -72,7 +72,7 @@ gbt_var_key_readable(const GBT_VARKEY *k)
  * Create a leaf-entry to store in the index, from a single Datum.
  */
 static GBT_VARKEY *
-gbt_var_key_from_datum(const struct varlena * u)
+gbt_var_key_from_datum(const struct varlena *u)
 {
 	int32		lowersize = VARSIZE(u);
 	GBT_VARKEY *r;

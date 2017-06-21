@@ -340,6 +340,7 @@ static PMState pmState = PM_INIT;
 /* Start time of SIGKILL timeout during immediate shutdown or child crash */
 /* Zero means timeout is not running */
 static time_t AbortStartTime = 0;
+
 /* Length of said timeout */
 #define SIGKILL_CHILDREN_AFTER_SECS		5
 
@@ -1558,7 +1559,7 @@ checkDataDir(void)
  * cases are as shown in the code.
  */
 static void
-DetermineSleepTime(struct timeval * timeout)
+DetermineSleepTime(struct timeval *timeout)
 {
 	TimestampTz next_wakeup = 0;
 
@@ -3541,16 +3542,16 @@ LogChildExit(int lev, const char *procname, int pid, int exitstatus)
 				 errhint("See C include file \"ntstatus.h\" for a description of the hexadecimal value."),
 				 activity ? errdetail("Failed process was running: %s", activity) : 0));
 #elif defined(HAVE_DECL_SYS_SIGLIST) && HAVE_DECL_SYS_SIGLIST
-	ereport(lev,
+		ereport(lev,
 
-	/*------
-	  translator: %s is a noun phrase describing a child process, such as
-	  "server process" */
-			(errmsg("%s (PID %d) was terminated by signal %d: %s",
-					procname, pid, WTERMSIG(exitstatus),
-					WTERMSIG(exitstatus) < NSIG ?
-					sys_siglist[WTERMSIG(exitstatus)] : "(unknown)"),
-	  activity ? errdetail("Failed process was running: %s", activity) : 0));
+		/*------
+		  translator: %s is a noun phrase describing a child process, such as
+		  "server process" */
+				(errmsg("%s (PID %d) was terminated by signal %d: %s",
+						procname, pid, WTERMSIG(exitstatus),
+						WTERMSIG(exitstatus) < NSIG ?
+						sys_siglist[WTERMSIG(exitstatus)] : "(unknown)"),
+				 activity ? errdetail("Failed process was running: %s", activity) : 0));
 #else
 		ereport(lev,
 

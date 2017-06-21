@@ -84,7 +84,8 @@ typedef struct GetState
 	char	  **path_names;		/* field name(s) being sought */
 	int		   *path_indexes;	/* array index(es) being sought */
 	bool	   *pathok;			/* is path matched to current depth? */
-	int		   *array_cur_index;	/* current element index at each path level */
+	int		   *array_cur_index;	/* current element index at each path
+									 * level */
 } GetState;
 
 /* state for json_array_length */

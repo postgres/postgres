@@ -44,8 +44,7 @@ typedef struct _rijndael_ctx
 /* These are all based on 32 bit unsigned values and will therefore */
 /* require endian conversions for big-endian architectures			*/
 
-rijndael_ctx *
-			rijndael_set_key(rijndael_ctx *, const u4byte *, const u4byte, int);
+rijndael_ctx *rijndael_set_key(rijndael_ctx *, const u4byte *, const u4byte, int);
 void		rijndael_encrypt(rijndael_ctx *, const u4byte *, u4byte *);
 void		rijndael_decrypt(rijndael_ctx *, const u4byte *, u4byte *);
 

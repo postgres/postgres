@@ -3187,7 +3187,7 @@ AlterTableGetLockLevel(List *cmds)
 				 * might miss data added to the new toast table by concurrent
 				 * insert transactions.
 				 */
-			case AT_SetStorage:/* may add toast tables, see
+			case AT_SetStorage: /* may add toast tables, see
 								 * ATRewriteCatalogs() */
 				cmd_lockmode = AccessExclusiveLock;
 				break;
@@ -3197,27 +3197,27 @@ AlterTableGetLockLevel(List *cmds)
 				 * optimised assuming the constraint holds true.
 				 */
 			case AT_DropConstraint:		/* as DROP INDEX */
-			case AT_DropNotNull:		/* may change some SQL plans */
+			case AT_DropNotNull:	/* may change some SQL plans */
 				cmd_lockmode = AccessExclusiveLock;
 				break;
 
 				/*
 				 * Subcommands that may be visible to concurrent SELECTs
 				 */
-			case AT_DropColumn:	/* change visible to SELECT */
+			case AT_DropColumn: /* change visible to SELECT */
 			case AT_AddColumnToView:	/* CREATE VIEW */
 			case AT_DropOids:	/* calls AT_DropColumn */
 			case AT_EnableAlwaysRule:	/* may change SELECT rules */
 			case AT_EnableReplicaRule:	/* may change SELECT rules */
-			case AT_EnableRule:	/* may change SELECT rules */
-			case AT_DisableRule:		/* may change SELECT rules */
+			case AT_EnableRule: /* may change SELECT rules */
+			case AT_DisableRule:	/* may change SELECT rules */
 				cmd_lockmode = AccessExclusiveLock;
 				break;
 
 				/*
 				 * Changing owner may remove implicit SELECT privileges
 				 */
-			case AT_ChangeOwner:		/* change visible to SELECT */
+			case AT_ChangeOwner:	/* change visible to SELECT */
 				cmd_lockmode = AccessExclusiveLock;
 				break;
 
@@ -3347,8 +3347,8 @@ AlterTableGetLockLevel(List *cmds)
 				 */
 			case AT_SetStatistics:		/* Uses MVCC in getTableAttrs() */
 			case AT_ClusterOn:	/* Uses MVCC in getIndexes() */
-			case AT_DropCluster:		/* Uses MVCC in getIndexes() */
-			case AT_SetOptions:	/* Uses MVCC in getTableAttrs() */
+			case AT_DropCluster:	/* Uses MVCC in getIndexes() */
+			case AT_SetOptions: /* Uses MVCC in getTableAttrs() */
 			case AT_ResetOptions:		/* Uses MVCC in getTableAttrs() */
 				cmd_lockmode = ShareUpdateExclusiveLock;
 				break;
@@ -3358,8 +3358,7 @@ AlterTableGetLockLevel(List *cmds)
 				cmd_lockmode = AccessExclusiveLock;
 				break;
 
-			case AT_ValidateConstraint: /* Uses MVCC in
-												 * getConstraints() */
+			case AT_ValidateConstraint: /* Uses MVCC in getConstraints() */
 				cmd_lockmode = ShareUpdateExclusiveLock;
 				break;
 
@@ -3469,8 +3468,7 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			/* Recursion occurs during execution phase */
 			pass = AT_PASS_ADD_COL;
 			break;
-		case AT_AddColumnToView:		/* add column via CREATE OR REPLACE
-										 * VIEW */
+		case AT_AddColumnToView:	/* add column via CREATE OR REPLACE VIEW */
 			ATSimplePermissions(rel, ATT_VIEW);
 			ATPrepAddColumn(wqueue, rel, recurse, recursing, true, cmd,
 							lockmode);
@@ -3561,7 +3559,7 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			/* No command-specific prep needed */
 			pass = AT_PASS_ADD_CONSTR;
 			break;
-		case AT_DropConstraint:	/* DROP CONSTRAINT */
+		case AT_DropConstraint: /* DROP CONSTRAINT */
 			ATSimplePermissions(rel, ATT_TABLE | ATT_FOREIGN_TABLE);
 			/* Recursion occurs during execution phase */
 			/* No command-specific prep needed except saving recurse flag */
@@ -3569,7 +3567,7 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 				cmd->subtype = AT_DropConstraintRecurse;
 			pass = AT_PASS_DROP;
 			break;
-		case AT_AlterColumnType:		/* ALTER COLUMN TYPE */
+		case AT_AlterColumnType:	/* ALTER COLUMN TYPE */
 			ATSimplePermissions(rel,
 						 ATT_TABLE | ATT_COMPOSITE_TYPE | ATT_FOREIGN_TABLE);
 			/* Performs own recursion */
@@ -3644,7 +3642,7 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			pass = AT_PASS_MISC;	/* doesn't actually matter */
 			break;
 		case AT_SetRelOptions:	/* SET (...) */
-		case AT_ResetRelOptions:		/* RESET (...) */
+		case AT_ResetRelOptions:	/* RESET (...) */
 		case AT_ReplaceRelOptions:		/* reset them all, then set just these */
 			ATSimplePermissions(rel, ATT_TABLE | ATT_VIEW | ATT_MATVIEW | ATT_INDEX);
 			/* This command never recurses */
@@ -3663,7 +3661,7 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			/* No command-specific prep needed */
 			pass = AT_PASS_MISC;
 			break;
-		case AT_AlterConstraint:		/* ALTER CONSTRAINT */
+		case AT_AlterConstraint:	/* ALTER CONSTRAINT */
 			ATSimplePermissions(rel, ATT_TABLE);
 			pass = AT_PASS_MISC;
 			break;
@@ -3675,7 +3673,7 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 				cmd->subtype = AT_ValidateConstraintRecurse;
 			pass = AT_PASS_MISC;
 			break;
-		case AT_ReplicaIdentity:		/* REPLICA IDENTITY ... */
+		case AT_ReplicaIdentity:	/* REPLICA IDENTITY ... */
 			ATSimplePermissions(rel, ATT_TABLE | ATT_MATVIEW);
 			pass = AT_PASS_MISC;
 			/* This command never recurses */
@@ -3697,7 +3695,7 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 		case AT_EnableReplicaRule:
 		case AT_DisableRule:
 		case AT_AddOf:			/* OF */
-		case AT_DropOf: /* NOT OF */
+		case AT_DropOf:			/* NOT OF */
 		case AT_EnableRowSecurity:
 		case AT_DisableRowSecurity:
 		case AT_ForceRowSecurity:
@@ -3813,8 +3811,7 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	switch (cmd->subtype)
 	{
 		case AT_AddColumn:		/* ADD COLUMN */
-		case AT_AddColumnToView:		/* add column via CREATE OR REPLACE
-										 * VIEW */
+		case AT_AddColumnToView:	/* add column via CREATE OR REPLACE VIEW */
 			address = ATExecAddColumn(wqueue, tab, rel, (ColumnDef *) cmd->def,
 									  false, false, false,
 									  false, lockmode);
@@ -3882,8 +3879,7 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 				ATExecAddConstraint(wqueue, tab, rel, (Constraint *) cmd->def,
 									true, false, lockmode);
 			break;
-		case AT_ReAddConstraint:		/* Re-add pre-existing check
-										 * constraint */
+		case AT_ReAddConstraint:	/* Re-add pre-existing check constraint */
 			address =
 				ATExecAddConstraint(wqueue, tab, rel, (Constraint *) cmd->def,
 									true, true, lockmode);
@@ -3895,7 +3891,7 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			address = ATExecAddIndexConstraint(tab, rel, (IndexStmt *) cmd->def,
 											   lockmode);
 			break;
-		case AT_AlterConstraint:		/* ALTER CONSTRAINT */
+		case AT_AlterConstraint:	/* ALTER CONSTRAINT */
 			address = ATExecAlterConstraint(rel, cmd, false, false, lockmode);
 			break;
 		case AT_ValidateConstraint:		/* VALIDATE CONSTRAINT */
@@ -3907,7 +3903,7 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			address = ATExecValidateConstraint(rel, cmd->name, true, false,
 											   lockmode);
 			break;
-		case AT_DropConstraint:	/* DROP CONSTRAINT */
+		case AT_DropConstraint: /* DROP CONSTRAINT */
 			ATExecDropConstraint(rel, cmd->name, cmd->behavior,
 								 false, false,
 								 cmd->missing_ok, lockmode);
@@ -3917,7 +3913,7 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 								 true, false,
 								 cmd->missing_ok, lockmode);
 			break;
-		case AT_AlterColumnType:		/* ALTER COLUMN TYPE */
+		case AT_AlterColumnType:	/* ALTER COLUMN TYPE */
 			address = ATExecAlterColumnType(tab, rel, cmd, lockmode);
 			break;
 		case AT_AlterColumnGenericOptions:		/* ALTER COLUMN OPTIONS */
@@ -3947,7 +3943,7 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 									true, false, false,
 									cmd->missing_ok, lockmode);
 			break;
-		case AT_AddOidsRecurse:	/* SET WITH OIDS */
+		case AT_AddOidsRecurse: /* SET WITH OIDS */
 			/* Use the ADD COLUMN code, unless prep decided to do nothing */
 			if (cmd->def != NULL)
 				address =
@@ -3969,7 +3965,7 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			 */
 			break;
 		case AT_SetRelOptions:	/* SET (...) */
-		case AT_ResetRelOptions:		/* RESET (...) */
+		case AT_ResetRelOptions:	/* RESET (...) */
 		case AT_ReplaceRelOptions:		/* replace entire option list */
 			ATExecSetRelOptions(rel, (List *) cmd->def, cmd->subtype, lockmode);
 			break;
@@ -3993,15 +3989,15 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			ATExecEnableDisableTrigger(rel, NULL,
 								   TRIGGER_FIRES_ON_ORIGIN, false, lockmode);
 			break;
-		case AT_DisableTrigAll:	/* DISABLE TRIGGER ALL */
+		case AT_DisableTrigAll: /* DISABLE TRIGGER ALL */
 			ATExecEnableDisableTrigger(rel, NULL,
 									   TRIGGER_DISABLED, false, lockmode);
 			break;
-		case AT_EnableTrigUser:	/* ENABLE TRIGGER USER */
+		case AT_EnableTrigUser: /* ENABLE TRIGGER USER */
 			ATExecEnableDisableTrigger(rel, NULL,
 									TRIGGER_FIRES_ON_ORIGIN, true, lockmode);
 			break;
-		case AT_DisableTrigUser:		/* DISABLE TRIGGER USER */
+		case AT_DisableTrigUser:	/* DISABLE TRIGGER USER */
 			ATExecEnableDisableTrigger(rel, NULL,
 									   TRIGGER_DISABLED, true, lockmode);
 			break;

@@ -349,8 +349,8 @@ static int	uri_prefix_length(const char *connstr);
 static bool recognized_connection_string(const char *connstr);
 static PQconninfoOption *conninfo_parse(const char *conninfo,
 			   PQExpBuffer errorMessage, bool use_defaults);
-static PQconninfoOption *conninfo_array_parse(const char *const * keywords,
-					 const char *const * values, PQExpBuffer errorMessage,
+static PQconninfoOption *conninfo_array_parse(const char *const *keywords,
+					 const char *const *values, PQExpBuffer errorMessage,
 					 bool use_defaults, int expand_dbname);
 static bool conninfo_add_defaults(PQconninfoOption *options,
 					  PQExpBuffer errorMessage);
@@ -507,8 +507,8 @@ pqDropConnection(PGconn *conn, bool flushInput)
  * call succeeded.
  */
 PGconn *
-PQconnectdbParams(const char *const * keywords,
-				  const char *const * values,
+PQconnectdbParams(const char *const *keywords,
+				  const char *const *values,
 				  int expand_dbname)
 {
 	PGconn	   *conn = PQconnectStartParams(keywords, values, expand_dbname);
@@ -526,8 +526,8 @@ PQconnectdbParams(const char *const * keywords,
  * check server status, accepting parameters identical to PQconnectdbParams
  */
 PGPing
-PQpingParams(const char *const * keywords,
-			 const char *const * values,
+PQpingParams(const char *const *keywords,
+			 const char *const *values,
 			 int expand_dbname)
 {
 	PGconn	   *conn = PQconnectStartParams(keywords, values, expand_dbname);
@@ -610,8 +610,8 @@ PQping(const char *conninfo)
  * See PQconnectPoll for more info.
  */
 PGconn *
-PQconnectStartParams(const char *const * keywords,
-					 const char *const * values,
+PQconnectStartParams(const char *const *keywords,
+					 const char *const *values,
 					 int expand_dbname)
 {
 	PGconn	   *conn;
@@ -2280,7 +2280,7 @@ keep_going:						/* We will come back to here until there is
 				/* Fill in the client address */
 				conn->laddr.salen = sizeof(conn->laddr.addr);
 				if (getsockname(conn->sock,
-								(struct sockaddr *) & conn->laddr.addr,
+								(struct sockaddr *) &conn->laddr.addr,
 								&conn->laddr.salen) < 0)
 				{
 					appendPQExpBuffer(&conn->errorMessage,
@@ -3740,7 +3740,7 @@ internal_cancel(SockAddr *raddr, int be_pid, int be_key,
 		goto cancel_errReturn;
 	}
 retry3:
-	if (connect(tmpsock, (struct sockaddr *) & raddr->addr,
+	if (connect(tmpsock, (struct sockaddr *) &raddr->addr,
 				raddr->salen) < 0)
 	{
 		if (SOCK_ERRNO == EINTR)
@@ -4926,7 +4926,7 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage,
  * a database, in-tree code first wraps the name in a connection string.
  */
 static PQconninfoOption *
-conninfo_array_parse(const char *const * keywords, const char *const * values,
+conninfo_array_parse(const char *const *keywords, const char *const *values,
 					 PQExpBuffer errorMessage, bool use_defaults,
 					 int expand_dbname)
 {

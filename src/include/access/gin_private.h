@@ -309,7 +309,7 @@ typedef struct GinScanKeyData
 	bool		curItemMatches;
 	bool		recheckCurItem;
 	bool		isFinished;
-}	GinScanKeyData;
+}			GinScanKeyData;
 
 typedef struct GinScanEntryData
 {
@@ -342,7 +342,7 @@ typedef struct GinScanEntryData
 	bool		reduceResult;
 	uint32		predictNumberResult;
 	GinBtreeData btree;
-}	GinScanEntryData;
+}			GinScanEntryData;
 
 typedef struct GinScanOpaqueData
 {

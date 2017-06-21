@@ -491,14 +491,14 @@ pg_regcomp(regex_t *re,
  * moresubs - enlarge subRE vector
  */
 static void
-moresubs(struct vars * v,
+moresubs(struct vars *v,
 		 int wanted)			/* want enough room for this one */
 {
 	struct subre **p;
 	size_t		n;
 
 	assert(wanted > 0 && (size_t) wanted >= v->nsubs);
-	n = (size_t) wanted *3 / 2 + 1;
+	n = (size_t) wanted * 3 / 2 + 1;
 
 	if (v->subs == v->sub10)
 	{
@@ -528,7 +528,7 @@ moresubs(struct vars * v,
  * (if any), to make error-handling code terser.
  */
 static int
-freev(struct vars * v,
+freev(struct vars *v,
 	  int err)
 {
 	if (v->re != NULL)
@@ -557,8 +557,8 @@ freev(struct vars * v,
  * NFA must have been optimize()d already.
  */
 static void
-makesearch(struct vars * v,
-		   struct nfa * nfa)
+makesearch(struct vars *v,
+		   struct nfa *nfa)
 {
 	struct arc *a;
 	struct arc *b;
@@ -646,11 +646,11 @@ makesearch(struct vars * v,
  * of a chain of '|' subres.
  */
 static struct subre *
-parse(struct vars * v,
+parse(struct vars *v,
 	  int stopper,				/* EOS or ')' */
 	  int type,					/* LACON (lookaround subRE) or PLAIN */
-	  struct state * init,		/* initial state */
-	  struct state * final)		/* final state */
+	  struct state *init,		/* initial state */
+	  struct state *final)		/* final state */
 {
 	struct state *left;			/* scaffolding for branch */
 	struct state *right;
@@ -725,11 +725,11 @@ parse(struct vars * v,
  * ',' nodes introduced only when necessary due to substructure.
  */
 static struct subre *
-parsebranch(struct vars * v,
+parsebranch(struct vars *v,
 			int stopper,		/* EOS or ')' */
 			int type,			/* LACON (lookaround subRE) or PLAIN */
-			struct state * left,	/* leftmost state */
-			struct state * right,		/* rightmost state */
+			struct state *left, /* leftmost state */
+			struct state *right,	/* rightmost state */
 			int partial)		/* is this only part of a branch? */
 {
 	struct state *lp;			/* left end of current construct */
@@ -774,12 +774,12 @@ parsebranch(struct vars * v,
  * of the branch, making this function's name somewhat inaccurate.
  */
 static void
-parseqatom(struct vars * v,
+parseqatom(struct vars *v,
 		   int stopper,			/* EOS or ')' */
 		   int type,			/* LACON (lookaround subRE) or PLAIN */
-		   struct state * lp,	/* left state to hang it on */
-		   struct state * rp,	/* right state to hang it on */
-		   struct subre * top)	/* subtree top */
+		   struct state *lp,	/* left state to hang it on */
+		   struct state *rp,	/* right state to hang it on */
+		   struct subre *top)	/* subtree top */
 {
 	struct state *s;			/* temporaries for new states */
 	struct state *s2;
@@ -1222,10 +1222,10 @@ parseqatom(struct vars * v,
  * nonword - generate arcs for non-word-character ahead or behind
  */
 static void
-nonword(struct vars * v,
+nonword(struct vars *v,
 		int dir,				/* AHEAD or BEHIND */
-		struct state * lp,
-		struct state * rp)
+		struct state *lp,
+		struct state *rp)
 {
 	int			anchor = (dir == AHEAD) ? '$' : '^';
 
@@ -1240,10 +1240,10 @@ nonword(struct vars * v,
  * word - generate arcs for word character ahead or behind
  */
 static void
-word(struct vars * v,
+word(struct vars *v,
 	 int dir,					/* AHEAD or BEHIND */
-	 struct state * lp,
-	 struct state * rp)
+	 struct state *lp,
+	 struct state *rp)
 {
 	assert(dir == AHEAD || dir == BEHIND);
 	cloneouts(v->nfa, v->wordchrs, lp, rp, dir);
@@ -1254,7 +1254,7 @@ word(struct vars * v,
  * scannum - scan a number
  */
 static int						/* value, <= DUPMAX */
-scannum(struct vars * v)
+scannum(struct vars *v)
 {
 	int			n = 0;
 
@@ -1285,9 +1285,9 @@ scannum(struct vars * v)
  * code in parse(), and when this is called, it doesn't matter any more.
  */
 static void
-repeat(struct vars * v,
-	   struct state * lp,
-	   struct state * rp,
+repeat(struct vars *v,
+	   struct state *lp,
+	   struct state *rp,
 	   int m,
 	   int n)
 {
@@ -1371,9 +1371,9 @@ repeat(struct vars * v,
  * Also called from cbracket for complemented bracket expressions.
  */
 static void
-bracket(struct vars * v,
-		struct state * lp,
-		struct state * rp)
+bracket(struct vars *v,
+		struct state *lp,
+		struct state *rp)
 {
 	assert(SEE('['));
 	NEXT();
@@ -1390,9 +1390,9 @@ bracket(struct vars * v,
  * arcs as the b.e. is seen... but that gets messy.
  */
 static void
-cbracket(struct vars * v,
-		 struct state * lp,
-		 struct state * rp)
+cbracket(struct vars *v,
+		 struct state *lp,
+		 struct state *rp)
 {
 	struct state *left = newstate(v->nfa);
 	struct state *right = newstate(v->nfa);
@@ -1420,9 +1420,9 @@ cbracket(struct vars * v,
  * brackpart - handle one item (or range) within a bracket expression
  */
 static void
-brackpart(struct vars * v,
-		  struct state * lp,
-		  struct state * rp)
+brackpart(struct vars *v,
+		  struct state *lp,
+		  struct state *rp)
 {
 	chr			startc;
 	chr			endc;
@@ -1533,7 +1533,7 @@ brackpart(struct vars * v,
  * to look past the final bracket of the [. etc.
  */
 static const chr *				/* just after end of sequence */
-scanplain(struct vars * v)
+scanplain(struct vars *v)
 {
 	const chr  *endp;
 
@@ -1558,10 +1558,10 @@ scanplain(struct vars * v)
  * This is mostly a shortcut for efficient handling of the common case.
  */
 static void
-onechr(struct vars * v,
+onechr(struct vars *v,
 	   chr c,
-	   struct state * lp,
-	   struct state * rp)
+	   struct state *lp,
+	   struct state *rp)
 {
 	if (!(v->cflags & REG_ICASE))
 	{
@@ -1585,7 +1585,7 @@ onechr(struct vars * v,
  * should be cleaned up to reduce dependencies on input scanning.
  */
 static void
-wordchrs(struct vars * v)
+wordchrs(struct vars *v)
 {
 	struct state *left;
 	struct state *right;
@@ -1617,12 +1617,12 @@ wordchrs(struct vars * v)
  * can be optimized.
  */
 static void
-processlacon(struct vars * v,
-			 struct state * begin,		/* start of parsed LACON sub-re */
-			 struct state * end,	/* end of parsed LACON sub-re */
+processlacon(struct vars *v,
+			 struct state *begin,		/* start of parsed LACON sub-re */
+			 struct state *end, /* end of parsed LACON sub-re */
 			 int latype,
-			 struct state * lp, /* left state to hang it on */
-			 struct state * rp) /* right state to hang it on */
+			 struct state *lp,	/* left state to hang it on */
+			 struct state *rp)	/* right state to hang it on */
 {
 	struct state *s1;
 	int			n;
@@ -1683,11 +1683,11 @@ processlacon(struct vars * v,
  * subre - allocate a subre
  */
 static struct subre *
-subre(struct vars * v,
+subre(struct vars *v,
 	  int op,
 	  int flags,
-	  struct state * begin,
-	  struct state * end)
+	  struct state *begin,
+	  struct state *end)
 {
 	struct subre *ret = v->treefree;
 
@@ -1735,8 +1735,8 @@ subre(struct vars * v,
  * freesubre - free a subRE subtree
  */
 static void
-freesubre(struct vars * v,		/* might be NULL */
-		  struct subre * sr)
+freesubre(struct vars *v,		/* might be NULL */
+		  struct subre *sr)
 {
 	if (sr == NULL)
 		return;
@@ -1753,8 +1753,8 @@ freesubre(struct vars * v,		/* might be NULL */
  * freesrnode - free one node in a subRE subtree
  */
 static void
-freesrnode(struct vars * v,		/* might be NULL */
-		   struct subre * sr)
+freesrnode(struct vars *v,		/* might be NULL */
+		   struct subre *sr)
 {
 	if (sr == NULL)
 		return;
@@ -1777,8 +1777,8 @@ freesrnode(struct vars * v,		/* might be NULL */
  * optst - optimize a subRE subtree
  */
 static void
-optst(struct vars * v,
-	  struct subre * t)
+optst(struct vars *v,
+	  struct subre *t)
 {
 	/*
 	 * DGP (2007-11-13): I assume it was the programmer's intent to eventually
@@ -1793,7 +1793,7 @@ optst(struct vars * v,
  * numst - number tree nodes (assigning "id" indexes)
  */
 static int						/* next number */
-numst(struct subre * t,
+numst(struct subre *t,
 	  int start)				/* starting point for subtree numbers */
 {
 	int			i;
@@ -1827,7 +1827,7 @@ numst(struct subre * t,
  * in or between these two functions.
  */
 static void
-markst(struct subre * t)
+markst(struct subre *t)
 {
 	assert(t != NULL);
 
@@ -1842,7 +1842,7 @@ markst(struct subre * t)
  * cleanst - free any tree nodes not marked INUSE
  */
 static void
-cleanst(struct vars * v)
+cleanst(struct vars *v)
 {
 	struct subre *t;
 	struct subre *next;
@@ -1861,8 +1861,8 @@ cleanst(struct vars * v)
  * nfatree - turn a subRE subtree into a tree of compacted NFAs
  */
 static long						/* optimize results from top node */
-nfatree(struct vars * v,
-		struct subre * t,
+nfatree(struct vars *v,
+		struct subre *t,
 		FILE *f)				/* for debug output */
 {
 	assert(t != NULL && t->begin != NULL);
@@ -1881,8 +1881,8 @@ nfatree(struct vars * v,
  * If converttosearch is true, apply makesearch() to the NFA.
  */
 static long						/* optimize results */
-nfanode(struct vars * v,
-		struct subre * t,
+nfanode(struct vars *v,
+		struct subre *t,
 		int converttosearch,
 		FILE *f)				/* for debug output */
 {
@@ -1920,9 +1920,9 @@ nfanode(struct vars * v,
  * newlacon - allocate a lookaround-constraint subRE
  */
 static int						/* lacon number */
-newlacon(struct vars * v,
-		 struct state * begin,
-		 struct state * end,
+newlacon(struct vars *v,
+		 struct state *begin,
+		 struct state *end,
 		 int latype)
 {
 	int			n;
@@ -1959,7 +1959,7 @@ newlacon(struct vars * v,
  * freelacons - free lookaround-constraint subRE vector
  */
 static void
-freelacons(struct subre * subs,
+freelacons(struct subre *subs,
 		   int n)
 {
 	struct subre *sub;
@@ -2102,7 +2102,7 @@ dump(regex_t *re,
  * dumpst - dump a subRE tree
  */
 static void
-dumpst(struct subre * t,
+dumpst(struct subre *t,
 	   FILE *f,
 	   int nfapresent)			/* is the original NFA still around? */
 {
@@ -2117,7 +2117,7 @@ dumpst(struct subre * t,
  * stdump - recursive guts of dumpst
  */
 static void
-stdump(struct subre * t,
+stdump(struct subre *t,
 	   FILE *f,
 	   int nfapresent)			/* is the original NFA still around? */
 {
@@ -2167,7 +2167,7 @@ stdump(struct subre * t,
  * stid - identify a subtree node for dumping
  */
 static const char *				/* points to buf or constant string */
-stid(struct subre * t,
+stid(struct subre *t,
 	 char *buf,
 	 size_t bufsize)
 {

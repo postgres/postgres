@@ -29,7 +29,7 @@
 #define ECPG_INFORMIX_EXTRA_CHARS	-1264
 
 #ifdef __cplusplus
-extern		"C"
+extern "C"
 {
 #endif
 

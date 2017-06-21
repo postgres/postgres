@@ -271,7 +271,7 @@ extern bool rmtree(const char *path, bool rmtopdir);
  */
 #if defined(WIN32) && !defined(__CYGWIN__) && !defined(UNSAFE_STAT_OK)
 #include <sys/stat.h>
-extern int	pgwin32_safestat(const char *path, struct stat * buf);
+extern int	pgwin32_safestat(const char *path, struct stat *buf);
 
 #define stat(a,b) pgwin32_safestat(a,b)
 #endif
@@ -317,7 +317,7 @@ extern FILE *pgwin32_popen(const char *command, const char *type);
 /* New versions of MingW have gettimeofday, old mingw and msvc don't */
 #ifndef HAVE_GETTIMEOFDAY
 /* Last parameter not used */
-extern int	gettimeofday(struct timeval * tp, struct timezone * tzp);
+extern int	gettimeofday(struct timeval *tp, struct timezone *tzp);
 #endif
 #else							/* !WIN32 */
 
@@ -392,7 +392,7 @@ extern double rint(double x);
 #ifndef HAVE_INET_ATON
 #include <netinet/in.h>
 #include <arpa/inet.h>
-extern int	inet_aton(const char *cp, struct in_addr * addr);
+extern int	inet_aton(const char *cp, struct in_addr *addr);
 #endif
 
 #if !HAVE_DECL_STRLCAT
@@ -423,14 +423,14 @@ extern void srandom(unsigned int seed);
 extern char *pqStrerror(int errnum, char *strerrbuf, size_t buflen);
 
 #ifndef WIN32
-extern int pqGetpwuid(uid_t uid, struct passwd * resultbuf, char *buffer,
-		   size_t buflen, struct passwd ** result);
+extern int pqGetpwuid(uid_t uid, struct passwd *resultbuf, char *buffer,
+		   size_t buflen, struct passwd **result);
 #endif
 
 extern int pqGethostbyname(const char *name,
-				struct hostent * resultbuf,
+				struct hostent *resultbuf,
 				char *buffer, size_t buflen,
-				struct hostent ** result,
+				struct hostent **result,
 				int *herrno);
 
 extern void pg_qsort(void *base, size_t nel, size_t elsize,

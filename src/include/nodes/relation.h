@@ -577,7 +577,8 @@ typedef struct RelOptInfo
 	void	   *fdw_private;
 
 	/* cache space for remembering if we have proven this relation unique */
-	List	   *unique_for_rels;	/* known unique for these other relid set(s) */
+	List	   *unique_for_rels;	/* known unique for these other relid
+									 * set(s) */
 	List	   *non_unique_for_rels;	/* known not unique for these set(s) */
 
 	/* used by various scans and joins: */
@@ -655,10 +656,11 @@ typedef struct IndexOptInfo
 
 	List	   *indextlist;		/* targetlist representing index columns */
 
-	List	   *indrestrictinfo;/* parent relation's baserestrictinfo list,
-								 * less any conditions implied by the index's
-								 * predicate (unless it's a target rel, see
-								 * comments in check_index_predicates()) */
+	List	   *indrestrictinfo;	/* parent relation's baserestrictinfo
+									 * list, less any conditions implied by
+									 * the index's predicate (unless it's a
+									 * target rel, see comments in
+									 * check_index_predicates()) */
 
 	bool		predOK;			/* true if index predicate matches query */
 	bool		unique;			/* true if a unique index */

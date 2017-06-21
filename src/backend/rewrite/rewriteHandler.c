@@ -1400,7 +1400,7 @@ matchLocks(CmdType event,
 					oneLock->enabled == RULE_DISABLED)
 					continue;
 			}
-			else	/* ORIGIN or LOCAL ROLE */
+			else				/* ORIGIN or LOCAL ROLE */
 			{
 				if (oneLock->enabled == RULE_FIRES_ON_REPLICA ||
 					oneLock->enabled == RULE_DISABLED)

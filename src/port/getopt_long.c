@@ -56,7 +56,7 @@
 int
 getopt_long(int argc, char *const argv[],
 			const char *optstring,
-			const struct option * longopts, int *longindex)
+			const struct option *longopts, int *longindex)
 {
 	static char *place = EMSG;	/* option letter processing */
 	char	   *oli;			/* option letter list index */

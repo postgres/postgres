@@ -596,7 +596,7 @@ void
 appendPsqlMetaConnect(PQExpBuffer buf, const char *dbname)
 {
 	const char *s;
-	bool		complex;
+	bool complex;
 
 	/*
 	 * If the name is plain ASCII characters, emit a trivial "\connect "foo"".
@@ -604,6 +604,7 @@ appendPsqlMetaConnect(PQExpBuffer buf, const char *dbname)
 	 * general case.  No database has a zero-length name.
 	 */
 	complex = false;
+
 	for (s = dbname; *s; s++)
 	{
 		if (*s == '\n' || *s == '\r')

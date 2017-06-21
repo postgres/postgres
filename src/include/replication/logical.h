@@ -19,17 +19,17 @@ struct LogicalDecodingContext;
 
 typedef void (*LogicalOutputPluginWriterWrite) (
 										   struct LogicalDecodingContext *lr,
-															XLogRecPtr Ptr,
-															TransactionId xid,
-															bool last_write
+												XLogRecPtr Ptr,
+												TransactionId xid,
+												bool last_write
 );
 
 typedef LogicalOutputPluginWriterWrite LogicalOutputPluginWriterPrepareWrite;
 
 typedef void (*LogicalOutputPluginWriterUpdateProgress) (
 										   struct LogicalDecodingContext *lr,
-															  XLogRecPtr Ptr,
-															TransactionId xid
+														 XLogRecPtr Ptr,
+														 TransactionId xid
 );
 
 typedef struct LogicalDecodingContext

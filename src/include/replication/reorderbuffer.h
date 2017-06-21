@@ -276,30 +276,30 @@ typedef struct ReorderBuffer ReorderBuffer;
 
 /* change callback signature */
 typedef void (*ReorderBufferApplyChangeCB) (
-														ReorderBuffer *rb,
-														ReorderBufferTXN *txn,
-														Relation relation,
-												ReorderBufferChange *change);
+											ReorderBuffer *rb,
+											ReorderBufferTXN *txn,
+											Relation relation,
+											ReorderBufferChange *change);
 
 /* begin callback signature */
 typedef void (*ReorderBufferBeginCB) (
-												  ReorderBuffer *rb,
-												  ReorderBufferTXN *txn);
+									  ReorderBuffer *rb,
+									  ReorderBufferTXN *txn);
 
 /* commit callback signature */
 typedef void (*ReorderBufferCommitCB) (
-												   ReorderBuffer *rb,
-												   ReorderBufferTXN *txn,
-												   XLogRecPtr commit_lsn);
+									   ReorderBuffer *rb,
+									   ReorderBufferTXN *txn,
+									   XLogRecPtr commit_lsn);
 
 /* message callback signature */
 typedef void (*ReorderBufferMessageCB) (
-													ReorderBuffer *rb,
-													ReorderBufferTXN *txn,
-													XLogRecPtr message_lsn,
-													bool transactional,
-												 const char *prefix, Size sz,
-													const char *message);
+										ReorderBuffer *rb,
+										ReorderBufferTXN *txn,
+										XLogRecPtr message_lsn,
+										bool transactional,
+										const char *prefix, Size sz,
+										const char *message);
 
 struct ReorderBuffer
 {

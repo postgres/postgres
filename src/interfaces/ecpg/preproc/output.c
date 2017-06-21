@@ -32,7 +32,7 @@ struct when when_error,
 			when_warn;
 
 static void
-print_action(struct when * w)
+print_action(struct when *w)
 {
 	switch (w->code)
 	{
@@ -96,7 +96,7 @@ hashline_number(void)
 		)
 	{
 		/* "* 2" here is for escaping '\' and '"' below */
-		char	   *line = mm_alloc(strlen("\n#line %d \"%s\"\n") + sizeof(int) * CHAR_BIT * 10 / 3 + strlen(input_filename) *2);
+		char	   *line = mm_alloc(strlen("\n#line %d \"%s\"\n") + sizeof(int) * CHAR_BIT * 10 / 3 + strlen(input_filename) * 2);
 		char	   *src,
 				   *dest;
 

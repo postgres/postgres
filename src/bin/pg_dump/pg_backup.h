@@ -65,8 +65,8 @@ typedef struct _restoreOptions
 	int			noTablespace;	/* Don't issue tablespace-related commands */
 	int			disable_triggers;		/* disable triggers during data-only
 										 * restore */
-	int			use_setsessauth;/* Use SET SESSION AUTHORIZATION commands
-								 * instead of OWNER TO */
+	int			use_setsessauth;	/* Use SET SESSION AUTHORIZATION commands
+									 * instead of OWNER TO */
 	char	   *superuser;		/* Username to use as superuser */
 	char	   *use_role;		/* Issue SET ROLE to this */
 	int			dropSchema;

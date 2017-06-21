@@ -699,7 +699,7 @@ StreamConnection(pgsocket server_fd, Port *port)
 	/* accept connection and fill in the client (remote) address */
 	port->raddr.salen = sizeof(port->raddr.addr);
 	if ((port->sock = accept(server_fd,
-							 (struct sockaddr *) & port->raddr.addr,
+							 (struct sockaddr *) &port->raddr.addr,
 							 &port->raddr.salen)) == PGINVALID_SOCKET)
 	{
 		ereport(LOG,
@@ -720,7 +720,7 @@ StreamConnection(pgsocket server_fd, Port *port)
 	/* fill in the server (local) address */
 	port->laddr.salen = sizeof(port->laddr.addr);
 	if (getsockname(port->sock,
-					(struct sockaddr *) & port->laddr.addr,
+					(struct sockaddr *) &port->laddr.addr,
 					&port->laddr.salen) < 0)
 	{
 		elog(LOG, "getsockname() failed: %m");
@@ -1573,7 +1573,7 @@ fail:
 static void
 socket_putmessage_noblock(char msgtype, const char *s, size_t len)
 {
-	int res		PG_USED_FOR_ASSERTS_ONLY;
+	int			res PG_USED_FOR_ASSERTS_ONLY;
 	int			required;
 
 	/*

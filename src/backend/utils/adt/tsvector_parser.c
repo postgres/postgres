@@ -363,7 +363,7 @@ gettoken_tsvector(TSVectorParseState state,
 			else if (!t_isdigit(state->prsbuf))
 				PRSSYNTAXERROR;
 		}
-		else	/* internal error */
+		else					/* internal error */
 			elog(ERROR, "unrecognized state in gettoken_tsvector: %d",
 				 statecode);
 

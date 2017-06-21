@@ -214,7 +214,7 @@ internal_load_library(const char *libname)
 		 * File not loaded yet.
 		 */
 		file_scanner = (DynamicFileList *)
-			malloc(offsetof(DynamicFileList, filename) +strlen(libname) + 1);
+			malloc(offsetof(DynamicFileList, filename) + strlen(libname) + 1);
 		if (file_scanner == NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_OUT_OF_MEMORY),

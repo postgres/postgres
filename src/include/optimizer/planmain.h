@@ -23,7 +23,7 @@ typedef enum
 	FORCE_PARALLEL_OFF,
 	FORCE_PARALLEL_ON,
 	FORCE_PARALLEL_REGRESS
-}	ForceParallelMode;
+}			ForceParallelMode;
 
 /* GUC parameters */
 #define DEFAULT_CURSOR_TUPLE_FRACTION 0.1

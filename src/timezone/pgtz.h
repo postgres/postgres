@@ -50,7 +50,7 @@ struct state
 	unsigned char types[TZ_MAX_TIMES];
 	struct ttinfo ttis[TZ_MAX_TYPES];
 	char		chars[BIGGEST(BIGGEST(TZ_MAX_CHARS + 1, 3 /* sizeof gmt */ ),
-										  (2 * (TZ_STRLEN_MAX + 1)))];
+							  (2 * (TZ_STRLEN_MAX + 1)))];
 	struct lsinfo lsis[TZ_MAX_LEAPS];
 	int			defaulttype;	/* for early times or if no transitions */
 };
@@ -68,8 +68,8 @@ struct pg_tz
 extern int	pg_open_tzfile(const char *name, char *canonname);
 
 /* in localtime.c */
-extern int tzload(const char *name, char *canonname, struct state * sp,
+extern int tzload(const char *name, char *canonname, struct state *sp,
 	   bool doextend);
-extern bool tzparse(const char *name, struct state * sp, bool lastditch);
+extern bool tzparse(const char *name, struct state *sp, bool lastditch);
 
 #endif   /* _PGTZ_H */

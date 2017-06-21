@@ -132,7 +132,7 @@ struct debug_expect
 };
 
 static void
-fill_expect(struct debug_expect * ex, int text_mode)
+fill_expect(struct debug_expect *ex, int text_mode)
 {
 	ex->debug = 0;
 	ex->expect = 0;
@@ -157,7 +157,7 @@ fill_expect(struct debug_expect * ex, int text_mode)
 	} while (0)
 
 static void
-check_expect(PGP_Context *ctx, struct debug_expect * ex)
+check_expect(PGP_Context *ctx, struct debug_expect *ex)
 {
 	EX_CHECK(cipher_algo);
 	EX_CHECK(s2k_mode);
@@ -179,7 +179,7 @@ show_debug(const char *msg)
 
 static int
 set_arg(PGP_Context *ctx, char *key, char *val,
-		struct debug_expect * ex)
+		struct debug_expect *ex)
 {
 	int			res = 0;
 
@@ -317,7 +317,7 @@ downcase_convert(const uint8 *s, int len)
 
 static int
 parse_args(PGP_Context *ctx, uint8 *args, int arg_len,
-		   struct debug_expect * ex)
+		   struct debug_expect *ex)
 {
 	char	   *str = downcase_convert(args, arg_len);
 	char	   *key,
@@ -362,7 +362,7 @@ create_mbuf_from_vardata(text *data)
 
 static void
 init_work(PGP_Context **ctx_p, int is_text,
-		  text *args, struct debug_expect * ex)
+		  text *args, struct debug_expect *ex)
 {
 	int			err = pgp_init(ctx_p);
 

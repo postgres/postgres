@@ -2051,7 +2051,7 @@ range_parse(const char *string, char *flags, char **lbound_str,
 	}
 	else if (*ptr == ')')
 		ptr++;
-	else	/* must be a comma */
+	else						/* must be a comma */
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("malformed range literal: \"%s\"",

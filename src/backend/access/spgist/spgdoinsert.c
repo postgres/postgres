@@ -765,7 +765,7 @@ doPickSplit(Relation index, SpGistState *state,
 				/* we will delete the tuple altogether, so count full space */
 				spaceToDelete += it->size + sizeof(ItemIdData);
 			}
-			else	/* tuples on root should be live */
+			else				/* tuples on root should be live */
 				elog(ERROR, "unexpected SPGiST tuple state: %d", it->tupstate);
 		}
 	}
@@ -2064,7 +2064,7 @@ spgdoinsert(Relation index, SpGistState *state,
 				goto process_inner_tuple;
 			}
 		}
-		else	/* non-leaf page */
+		else					/* non-leaf page */
 		{
 			/*
 			 * Apply the opclass choose function to figure out how to insert

@@ -151,7 +151,7 @@ struct tztry
 };
 
 static void scan_available_timezones(char *tzdir, char *tzdirsub,
-						 struct tztry * tt,
+						 struct tztry *tt,
 						 int *bestscore, char *bestzonename);
 
 
@@ -159,7 +159,7 @@ static void scan_available_timezones(char *tzdir, char *tzdirsub,
  * Get GMT offset from a system struct tm
  */
 static int
-get_timezone_offset(struct tm * tm)
+get_timezone_offset(struct tm *tm)
 {
 #if defined(HAVE_STRUCT_TM_TM_ZONE)
 	return tm->tm_gmtoff;
@@ -190,7 +190,7 @@ build_time_t(int year, int month, int day)
  * Does a system tm value match one we computed ourselves?
  */
 static bool
-compare_tm(struct tm * s, struct pg_tm * p)
+compare_tm(struct tm *s, struct pg_tm *p)
 {
 	if (s->tm_sec != p->tm_sec ||
 		s->tm_min != p->tm_min ||
@@ -217,7 +217,7 @@ compare_tm(struct tm * s, struct pg_tm * p)
  * test time.
  */
 static int
-score_timezone(const char *tzname, struct tztry * tt)
+score_timezone(const char *tzname, struct tztry *tt)
 {
 	int			i;
 	pg_time_t	pgtt;
@@ -506,7 +506,7 @@ identify_system_timezone(void)
  * score.  bestzonename must be a buffer of length TZ_STRLEN_MAX + 1.
  */
 static void
-scan_available_timezones(char *tzdir, char *tzdirsub, struct tztry * tt,
+scan_available_timezones(char *tzdir, char *tzdirsub, struct tztry *tt,
 						 int *bestscore, char *bestzonename)
 {
 	int			tzdir_orig_len = strlen(tzdir);
@@ -578,7 +578,7 @@ static const struct
 	const char *stdname;		/* Windows name of standard timezone */
 	const char *dstname;		/* Windows name of daylight timezone */
 	const char *pgtzname;		/* Name of pgsql timezone to map to */
-}	win32_tzmap[] =
+}			win32_tzmap[] =
 
 {
 	/*

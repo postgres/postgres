@@ -62,7 +62,7 @@ typedef struct pgstattuple_type
 } pgstattuple_type;
 
 typedef void (*pgstat_page) (pgstattuple_type *, Relation, BlockNumber,
-										 BufferAccessStrategy);
+							 BufferAccessStrategy);
 
 static Datum build_pgstattuple_type(pgstattuple_type *stat,
 					   FunctionCallInfo fcinfo);
@@ -386,7 +386,7 @@ pgstat_heap(Relation rel, FunctionCallInfo fcinfo)
 	heap_endscan(scan);
 	relation_close(rel, AccessShareLock);
 
-	stat.table_len = (uint64) nblocks *BLCKSZ;
+	stat.table_len = (uint64) nblocks * BLCKSZ;
 
 	return build_pgstattuple_type(&stat, fcinfo);
 }
@@ -531,7 +531,7 @@ pgstat_index(Relation rel, BlockNumber start, pgstat_page pagefn,
 		/* Quit if we've scanned the whole relation */
 		if (blkno >= nblocks)
 		{
-			stat.table_len = (uint64) nblocks *BLCKSZ;
+			stat.table_len = (uint64) nblocks * BLCKSZ;
 
 			break;
 		}

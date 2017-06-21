@@ -461,7 +461,7 @@ set_timetravel(PG_FUNCTION_ARGS)
 			s = rname = DatumGetCString(DirectFunctionCall1(nameout, NameGetDatum(relname)));
 			if (s)
 			{
-				pp = malloc(offsetof(TTOffList, name) +strlen(rname) + 1);
+				pp = malloc(offsetof(TTOffList, name) + strlen(rname) + 1);
 				if (pp)
 				{
 					pp->next = NULL;

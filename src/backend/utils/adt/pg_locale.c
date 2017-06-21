@@ -390,7 +390,7 @@ assign_locale_messages(const char *newval, void *extra)
  * itself.)  It's important that this not throw elog(ERROR).
  */
 static void
-free_struct_lconv(struct lconv * s)
+free_struct_lconv(struct lconv *s)
 {
 	if (s->decimal_point)
 		free(s->decimal_point);
@@ -419,7 +419,7 @@ free_struct_lconv(struct lconv * s)
  * about) are non-NULL.  The field list must match free_struct_lconv().
  */
 static bool
-struct_lconv_is_valid(struct lconv * s)
+struct_lconv_is_valid(struct lconv *s)
 {
 	if (s->decimal_point == NULL)
 		return false;
@@ -705,7 +705,7 @@ PGLC_localeconv(void)
  */
 static size_t
 strftime_win32(char *dst, size_t dstlen,
-			   const char *format, const struct tm * tm)
+			   const char *format, const struct tm *tm)
 {
 	size_t		len;
 	wchar_t		wformat[8];		/* formats used below need 3 bytes */
@@ -756,7 +756,7 @@ strftime_win32(char *dst, size_t dstlen,
 
 /* Subroutine for cache_locale_time(). */
 static void
-cache_single_time(char **dst, const char *format, const struct tm * tm)
+cache_single_time(char **dst, const char *format, const struct tm *tm)
 {
 	char		buf[MAX_L10N_DATA];
 	char	   *ptr;

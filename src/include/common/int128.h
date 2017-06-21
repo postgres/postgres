@@ -61,7 +61,7 @@ int128_add_int64(INT128 *i128, int64 v)
 static inline void
 int128_add_int64_mul_int64(INT128 *i128, int64 x, int64 y)
 {
-	*i128 += (int128) x *(int128) y;
+	*i128 += (int128) x * (int128) y;
 }
 
 /*

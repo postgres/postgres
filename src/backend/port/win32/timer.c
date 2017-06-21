@@ -83,7 +83,7 @@ pg_timer_thread(LPVOID param)
  * to handle the timer setting and notification upon timeout.
  */
 int
-setitimer(int which, const struct itimerval * value, struct itimerval * ovalue)
+setitimer(int which, const struct itimerval *value, struct itimerval *ovalue)
 {
 	Assert(value != NULL);
 	Assert(value->it_interval.tv_sec == 0 && value->it_interval.tv_usec == 0);

@@ -803,7 +803,7 @@ get_nextfield(char **str, char *next)
 				state = PAE_INMASK;
 			}
 		}
-		else	/* state == PAE_INMASK */
+		else					/* state == PAE_INMASK */
 		{
 			if (t_isspace(*str))
 			{

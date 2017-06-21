@@ -23,7 +23,7 @@ typedef enum
 	BACKSLASH_QUOTE_OFF,
 	BACKSLASH_QUOTE_ON,
 	BACKSLASH_QUOTE_SAFE_ENCODING
-}	BackslashQuoteType;
+}			BackslashQuoteType;
 
 /* GUC variables in scan.l (every one of these is a bad idea :-() */
 extern int	backslash_quote;

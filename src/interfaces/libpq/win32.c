@@ -44,7 +44,7 @@ static struct WSErrorEntry
 {
 	DWORD		error;
 	const char *description;
-}	WSErrors[] =
+}			WSErrors[] =
 
 {
 	{
@@ -236,7 +236,7 @@ struct MessageDLL
 	const char *dll_name;
 	void	   *handle;
 	int			loaded;			/* BOOL */
-}	dlls[] =
+}			dlls[] =
 
 {
 	{

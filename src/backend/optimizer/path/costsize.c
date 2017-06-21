@@ -827,7 +827,7 @@ index_pages_fetched(double tuples_fetched, BlockNumber pages,
 	Assert(T <= total_pages);
 
 	/* b is pro-rated share of effective_cache_size */
-	b = (double) effective_cache_size *T / total_pages;
+	b = (double) effective_cache_size * T / total_pages;
 
 	/* force it positive and integral */
 	if (b <= 1.0)
@@ -3057,7 +3057,7 @@ final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 	path->num_batches = numbatches;
 
 	/* and compute the number of "virtual" buckets in the whole join */
-	virtualbuckets = (double) numbuckets *(double) numbatches;
+	virtualbuckets = (double) numbuckets * (double) numbatches;
 
 	/*
 	 * Determine bucketsize fraction for inner relation.  We use the smallest

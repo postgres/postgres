@@ -834,7 +834,7 @@ func_match_argtypes(int nargs,
 	}
 
 	return ncandidates;
-}	/* func_match_argtypes() */
+}								/* func_match_argtypes() */
 
 
 /* func_select_candidate()
@@ -1245,7 +1245,7 @@ func_select_candidate(int nargs,
 	}
 
 	return NULL;				/* failed to select a best candidate */
-}	/* func_select_candidate() */
+}								/* func_select_candidate() */
 
 
 /* func_get_detail()

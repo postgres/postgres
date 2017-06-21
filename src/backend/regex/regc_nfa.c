@@ -44,9 +44,9 @@
  * newnfa - set up an NFA
  */
 static struct nfa *				/* the NFA, or NULL */
-newnfa(struct vars * v,
-	   struct colormap * cm,
-	   struct nfa * parent)		/* NULL if primary NFA */
+newnfa(struct vars *v,
+	   struct colormap *cm,
+	   struct nfa *parent)		/* NULL if primary NFA */
 {
 	struct nfa *nfa;
 
@@ -95,7 +95,7 @@ newnfa(struct vars * v,
  * freenfa - free an entire NFA
  */
 static void
-freenfa(struct nfa * nfa)
+freenfa(struct nfa *nfa)
 {
 	struct state *s;
 
@@ -121,7 +121,7 @@ freenfa(struct nfa * nfa)
  * newstate - allocate an NFA state, with zero flag value
  */
 static struct state *			/* NULL on error */
-newstate(struct nfa * nfa)
+newstate(struct nfa *nfa)
 {
 	struct state *s;
 
@@ -185,7 +185,7 @@ newstate(struct nfa * nfa)
  * newfstate - allocate an NFA state with a specified flag value
  */
 static struct state *			/* NULL on error */
-newfstate(struct nfa * nfa, int flag)
+newfstate(struct nfa *nfa, int flag)
 {
 	struct state *s;
 
@@ -199,8 +199,8 @@ newfstate(struct nfa * nfa, int flag)
  * dropstate - delete a state's inarcs and outarcs and free it
  */
 static void
-dropstate(struct nfa * nfa,
-		  struct state * s)
+dropstate(struct nfa *nfa,
+		  struct state *s)
 {
 	struct arc *a;
 
@@ -215,8 +215,8 @@ dropstate(struct nfa * nfa,
  * freestate - free a state, which has no in-arcs or out-arcs
  */
 static void
-freestate(struct nfa * nfa,
-		  struct state * s)
+freestate(struct nfa *nfa,
+		  struct state *s)
 {
 	assert(s != NULL);
 	assert(s->nins == 0 && s->nouts == 0);
@@ -246,8 +246,8 @@ freestate(struct nfa * nfa,
  * destroystate - really get rid of an already-freed state
  */
 static void
-destroystate(struct nfa * nfa,
-			 struct state * s)
+destroystate(struct nfa *nfa,
+			 struct state *s)
 {
 	struct arcbatch *ab;
 	struct arcbatch *abnext;
@@ -273,11 +273,11 @@ destroystate(struct nfa * nfa,
  * In general we never want duplicates.
  */
 static void
-newarc(struct nfa * nfa,
+newarc(struct nfa *nfa,
 	   int t,
 	   color co,
-	   struct state * from,
-	   struct state * to)
+	   struct state *from,
+	   struct state *to)
 {
 	struct arc *a;
 
@@ -319,11 +319,11 @@ newarc(struct nfa * nfa,
  * identical arc (same type/color/from/to).
  */
 static void
-createarc(struct nfa * nfa,
+createarc(struct nfa *nfa,
 		  int t,
 		  color co,
-		  struct state * from,
-		  struct state * to)
+		  struct state *from,
+		  struct state *to)
 {
 	struct arc *a;
 
@@ -365,8 +365,8 @@ createarc(struct nfa * nfa,
  * allocarc - allocate a new out-arc within a state
  */
 static struct arc *				/* NULL for failure */
-allocarc(struct nfa * nfa,
-		 struct state * s)
+allocarc(struct nfa *nfa,
+		 struct state *s)
 {
 	struct arc *a;
 
@@ -418,8 +418,8 @@ allocarc(struct nfa * nfa,
  * freearc - free an arc
  */
 static void
-freearc(struct nfa * nfa,
-		struct arc * victim)
+freearc(struct nfa *nfa,
+		struct arc *victim)
 {
 	struct state *from = victim->from;
 	struct state *to = victim->to;
@@ -492,7 +492,7 @@ freearc(struct nfa * nfa,
  * a similar changearcsource function.
  */
 static void
-changearctarget(struct arc * a, struct state * newto)
+changearctarget(struct arc *a, struct state *newto)
 {
 	struct state *oldto = a->to;
 	struct arc *predecessor;
@@ -534,7 +534,7 @@ changearctarget(struct arc * a, struct state * newto)
  * hasnonemptyout - Does state have a non-EMPTY out arc?
  */
 static int
-hasnonemptyout(struct state * s)
+hasnonemptyout(struct state *s)
 {
 	struct arc *a;
 
@@ -551,7 +551,7 @@ hasnonemptyout(struct state * s)
  * If there is more than one such arc, the result is random.
  */
 static struct arc *
-findarc(struct state * s,
+findarc(struct state *s,
 		int type,
 		color co)
 {
@@ -567,10 +567,10 @@ findarc(struct state * s,
  * cparc - allocate a new arc within an NFA, copying details from old one
  */
 static void
-cparc(struct nfa * nfa,
-	  struct arc * oa,
-	  struct state * from,
-	  struct state * to)
+cparc(struct nfa *nfa,
+	  struct arc *oa,
+	  struct state *from,
+	  struct state *to)
 {
 	newarc(nfa, oa->type, oa->co, from, to);
 }
@@ -579,8 +579,8 @@ cparc(struct nfa * nfa,
  * sortins - sort the in arcs of a state by from/color/type
  */
 static void
-sortins(struct nfa * nfa,
-		struct state * s)
+sortins(struct nfa *nfa,
+		struct state *s)
 {
 	struct arc **sortarray;
 	struct arc *a;
@@ -623,8 +623,8 @@ sortins(struct nfa * nfa,
 static int
 sortins_cmp(const void *a, const void *b)
 {
-	const struct arc *aa = *((const struct arc * const *) a);
-	const struct arc *bb = *((const struct arc * const *) b);
+	const struct arc *aa = *((const struct arc *const *) a);
+	const struct arc *bb = *((const struct arc *const *) b);
 
 	/* we check the fields in the order they are most likely to be different */
 	if (aa->from->no < bb->from->no)
@@ -646,8 +646,8 @@ sortins_cmp(const void *a, const void *b)
  * sortouts - sort the out arcs of a state by to/color/type
  */
 static void
-sortouts(struct nfa * nfa,
-		 struct state * s)
+sortouts(struct nfa *nfa,
+		 struct state *s)
 {
 	struct arc **sortarray;
 	struct arc *a;
@@ -690,8 +690,8 @@ sortouts(struct nfa * nfa,
 static int
 sortouts_cmp(const void *a, const void *b)
 {
-	const struct arc *aa = *((const struct arc * const *) a);
-	const struct arc *bb = *((const struct arc * const *) b);
+	const struct arc *aa = *((const struct arc *const *) a);
+	const struct arc *bb = *((const struct arc *const *) b);
 
 	/* we check the fields in the order they are most likely to be different */
 	if (aa->to->no < bb->to->no)
@@ -733,9 +733,9 @@ sortouts_cmp(const void *a, const void *b)
  * the arc lists, and then we can indeed just update the arcs in-place.
  */
 static void
-moveins(struct nfa * nfa,
-		struct state * oldState,
-		struct state * newState)
+moveins(struct nfa *nfa,
+		struct state *oldState,
+		struct state *newState)
 {
 	assert(oldState != newState);
 
@@ -825,9 +825,9 @@ moveins(struct nfa * nfa,
  * copyins - copy in arcs of a state to another state
  */
 static void
-copyins(struct nfa * nfa,
-		struct state * oldState,
-		struct state * newState)
+copyins(struct nfa *nfa,
+		struct state *oldState,
+		struct state *newState)
 {
 	assert(oldState != newState);
 
@@ -907,9 +907,9 @@ copyins(struct nfa * nfa,
  * and are not guaranteed unique.  It's okay to clobber the array contents.
  */
 static void
-mergeins(struct nfa * nfa,
-		 struct state * s,
-		 struct arc ** arcarray,
+mergeins(struct nfa *nfa,
+		 struct state *s,
+		 struct arc **arcarray,
 		 int arccount)
 {
 	struct arc *na;
@@ -1004,9 +1004,9 @@ mergeins(struct nfa * nfa,
  * moveouts - move all out arcs of a state to another state
  */
 static void
-moveouts(struct nfa * nfa,
-		 struct state * oldState,
-		 struct state * newState)
+moveouts(struct nfa *nfa,
+		 struct state *oldState,
+		 struct state *newState)
 {
 	assert(oldState != newState);
 
@@ -1093,9 +1093,9 @@ moveouts(struct nfa * nfa,
  * copyouts - copy out arcs of a state to another state
  */
 static void
-copyouts(struct nfa * nfa,
-		 struct state * oldState,
-		 struct state * newState)
+copyouts(struct nfa *nfa,
+		 struct state *oldState,
+		 struct state *newState)
 {
 	assert(oldState != newState);
 
@@ -1172,10 +1172,10 @@ copyouts(struct nfa * nfa,
  * cloneouts - copy out arcs of a state to another state pair, modifying type
  */
 static void
-cloneouts(struct nfa * nfa,
-		  struct state * old,
-		  struct state * from,
-		  struct state * to,
+cloneouts(struct nfa *nfa,
+		  struct state *old,
+		  struct state *from,
+		  struct state *to,
 		  int type)
 {
 	struct arc *a;
@@ -1193,9 +1193,9 @@ cloneouts(struct nfa * nfa,
  * states using their tmp pointer.
  */
 static void
-delsub(struct nfa * nfa,
-	   struct state * lp,		/* the sub-NFA goes from here... */
-	   struct state * rp)		/* ...to here, *not* inclusive */
+delsub(struct nfa *nfa,
+	   struct state *lp,		/* the sub-NFA goes from here... */
+	   struct state *rp)		/* ...to here, *not* inclusive */
 {
 	assert(lp != rp);
 
@@ -1216,9 +1216,9 @@ delsub(struct nfa * nfa,
  * This routine's basic job is to destroy all out-arcs of the state.
  */
 static void
-deltraverse(struct nfa * nfa,
-			struct state * leftend,
-			struct state * s)
+deltraverse(struct nfa *nfa,
+			struct state *leftend,
+			struct state *s)
 {
 	struct arc *a;
 	struct state *to;
@@ -1267,11 +1267,11 @@ deltraverse(struct nfa * nfa,
  * it's a state pointer, didn't you? :-))
  */
 static void
-dupnfa(struct nfa * nfa,
-	   struct state * start,	/* duplicate of subNFA starting here */
-	   struct state * stop,		/* and stopping here */
-	   struct state * from,		/* stringing duplicate from here */
-	   struct state * to)		/* to here */
+dupnfa(struct nfa *nfa,
+	   struct state *start,		/* duplicate of subNFA starting here */
+	   struct state *stop,		/* and stopping here */
+	   struct state *from,		/* stringing duplicate from here */
+	   struct state *to)		/* to here */
 {
 	if (start == stop)
 	{
@@ -1291,9 +1291,9 @@ dupnfa(struct nfa * nfa,
  * duptraverse - recursive heart of dupnfa
  */
 static void
-duptraverse(struct nfa * nfa,
-			struct state * s,
-			struct state * stmp)	/* s's duplicate, or NULL */
+duptraverse(struct nfa *nfa,
+			struct state *s,
+			struct state *stmp) /* s's duplicate, or NULL */
 {
 	struct arc *a;
 
@@ -1328,8 +1328,8 @@ duptraverse(struct nfa * nfa,
  * cleartraverse - recursive cleanup for algorithms that leave tmp ptrs set
  */
 static void
-cleartraverse(struct nfa * nfa,
-			  struct state * s)
+cleartraverse(struct nfa *nfa,
+			  struct state *s)
 {
 	struct arc *a;
 
@@ -1365,7 +1365,7 @@ cleartraverse(struct nfa * nfa,
  * that implementation detail not create user-visible performance differences.
  */
 static struct state *
-single_color_transition(struct state * s1, struct state * s2)
+single_color_transition(struct state *s1, struct state *s2)
 {
 	struct arc *a;
 
@@ -1395,7 +1395,7 @@ single_color_transition(struct state * s1, struct state * s2)
  * specialcolors - fill in special colors for an NFA
  */
 static void
-specialcolors(struct nfa * nfa)
+specialcolors(struct nfa *nfa)
 {
 	/* false colors for BOS, BOL, EOS, EOL */
 	if (nfa->parent == NULL)
@@ -1434,7 +1434,7 @@ specialcolors(struct nfa * nfa)
  * without making any progress in the input string.
  */
 static long						/* re_info bits */
-optimize(struct nfa * nfa,
+optimize(struct nfa *nfa,
 		 FILE *f)				/* for debug output; NULL none */
 {
 #ifdef REG_DEBUG
@@ -1474,7 +1474,7 @@ optimize(struct nfa * nfa,
  * pullback - pull back constraints backward to eliminate them
  */
 static void
-pullback(struct nfa * nfa,
+pullback(struct nfa *nfa,
 		 FILE *f)				/* for debug output; NULL none */
 {
 	struct state *s;
@@ -1554,9 +1554,9 @@ pullback(struct nfa * nfa,
  * through their tmp fields).
  */
 static int
-pull(struct nfa * nfa,
-	 struct arc * con,
-	 struct state ** intermediates)
+pull(struct nfa *nfa,
+	 struct arc *con,
+	 struct state **intermediates)
 {
 	struct state *from = con->from;
 	struct state *to = con->to;
@@ -1641,7 +1641,7 @@ pull(struct nfa * nfa,
  * pushfwd - push forward constraints forward to eliminate them
  */
 static void
-pushfwd(struct nfa * nfa,
+pushfwd(struct nfa *nfa,
 		FILE *f)				/* for debug output; NULL none */
 {
 	struct state *s;
@@ -1721,9 +1721,9 @@ pushfwd(struct nfa * nfa,
  * through their tmp fields).
  */
 static int
-push(struct nfa * nfa,
-	 struct arc * con,
-	 struct state ** intermediates)
+push(struct nfa *nfa,
+	 struct arc *con,
+	 struct state **intermediates)
 {
 	struct state *from = con->from;
 	struct state *to = con->to;
@@ -1812,8 +1812,8 @@ push(struct nfa * nfa,
  * #def COMPATIBLE		3	// compatible but not satisfied yet
  */
 static int
-combine(struct arc * con,
-		struct arc * a)
+combine(struct arc *con,
+		struct arc *a)
 {
 #define  CA(ct,at)	 (((ct)<<CHAR_BIT) | (at))
 
@@ -1866,7 +1866,7 @@ combine(struct arc * con,
  * fixempties - get rid of EMPTY arcs
  */
 static void
-fixempties(struct nfa * nfa,
+fixempties(struct nfa *nfa,
 		   FILE *f)				/* for debug output; NULL none */
 {
 	struct state *s;
@@ -2093,10 +2093,10 @@ fixempties(struct nfa * nfa,
  * the NFA ... but that could still be enough to cause trouble.
  */
 static struct state *
-emptyreachable(struct nfa * nfa,
-			   struct state * s,
-			   struct state * lastfound,
-			   struct arc ** inarcsorig)
+emptyreachable(struct nfa *nfa,
+			   struct state *s,
+			   struct state *lastfound,
+			   struct arc **inarcsorig)
 {
 	struct arc *a;
 
@@ -2121,7 +2121,7 @@ emptyreachable(struct nfa * nfa,
  * isconstraintarc - detect whether an arc is of a constraint type
  */
 static inline int
-isconstraintarc(struct arc * a)
+isconstraintarc(struct arc *a)
 {
 	switch (a->type)
 	{
@@ -2139,7 +2139,7 @@ isconstraintarc(struct arc * a)
  * hasconstraintout - does state have a constraint out arc?
  */
 static int
-hasconstraintout(struct state * s)
+hasconstraintout(struct state *s)
 {
 	struct arc *a;
 
@@ -2160,7 +2160,7 @@ hasconstraintout(struct state * s)
  * of such loops before doing that.
  */
 static void
-fixconstraintloops(struct nfa * nfa,
+fixconstraintloops(struct nfa *nfa,
 				   FILE *f)		/* for debug output; NULL none */
 {
 	struct state *s;
@@ -2259,7 +2259,7 @@ restart:
  * of the NFA ... but that could still be enough to cause trouble.
  */
 static int
-findconstraintloop(struct nfa * nfa, struct state * s)
+findconstraintloop(struct nfa *nfa, struct state *s)
 {
 	struct arc *a;
 
@@ -2348,7 +2348,7 @@ findconstraintloop(struct nfa * nfa, struct state * s)
  * break the loop just by removing those loop arcs, with no new states added.
  */
 static void
-breakconstraintloop(struct nfa * nfa, struct state * sinitial)
+breakconstraintloop(struct nfa *nfa, struct state *sinitial)
 {
 	struct state *s;
 	struct state *shead;
@@ -2494,11 +2494,11 @@ breakconstraintloop(struct nfa * nfa, struct state * sinitial)
  * successor states.
  */
 static void
-clonesuccessorstates(struct nfa * nfa,
-					 struct state * ssource,
-					 struct state * sclone,
-					 struct state * spredecessor,
-					 struct arc * refarc,
+clonesuccessorstates(struct nfa *nfa,
+					 struct state *ssource,
+					 struct state *sclone,
+					 struct state *spredecessor,
+					 struct arc *refarc,
 					 char *curdonemap,
 					 char *outerdonemap,
 					 int nstates)
@@ -2726,7 +2726,7 @@ clonesuccessorstates(struct nfa * nfa,
  * cleanup - clean up NFA after optimizations
  */
 static void
-cleanup(struct nfa * nfa)
+cleanup(struct nfa *nfa)
 {
 	struct state *s;
 	struct state *nexts;
@@ -2761,10 +2761,10 @@ cleanup(struct nfa * nfa)
  * markreachable - recursive marking of reachable states
  */
 static void
-markreachable(struct nfa * nfa,
-			  struct state * s,
-			  struct state * okay,		/* consider only states with this mark */
-			  struct state * mark)		/* the value to mark with */
+markreachable(struct nfa *nfa,
+			  struct state *s,
+			  struct state *okay,		/* consider only states with this mark */
+			  struct state *mark)		/* the value to mark with */
 {
 	struct arc *a;
 
@@ -2787,10 +2787,10 @@ markreachable(struct nfa * nfa,
  * markcanreach - recursive marking of states which can reach here
  */
 static void
-markcanreach(struct nfa * nfa,
-			 struct state * s,
-			 struct state * okay,		/* consider only states with this mark */
-			 struct state * mark)		/* the value to mark with */
+markcanreach(struct nfa *nfa,
+			 struct state *s,
+			 struct state *okay,	/* consider only states with this mark */
+			 struct state *mark)	/* the value to mark with */
 {
 	struct arc *a;
 
@@ -2813,7 +2813,7 @@ markcanreach(struct nfa * nfa,
  * analyze - ascertain potentially-useful facts about an optimized NFA
  */
 static long						/* re_info bits to be ORed in */
-analyze(struct nfa * nfa)
+analyze(struct nfa *nfa)
 {
 	struct arc *a;
 	struct arc *aa;
@@ -2834,8 +2834,8 @@ analyze(struct nfa * nfa)
  * compact - construct the compact representation of an NFA
  */
 static void
-compact(struct nfa * nfa,
-		struct cnfa * cnfa)
+compact(struct nfa *nfa,
+		struct cnfa *cnfa)
 {
 	struct state *s;
 	struct arc *a;
@@ -2922,7 +2922,7 @@ compact(struct nfa * nfa,
  * carcsort - sort compacted-NFA arcs by color
  */
 static void
-carcsort(struct carc * first, size_t n)
+carcsort(struct carc *first, size_t n)
 {
 	if (n > 1)
 		qsort(first, n, sizeof(struct carc), carc_cmp);
@@ -2949,7 +2949,7 @@ carc_cmp(const void *a, const void *b)
  * freecnfa - free a compacted NFA
  */
 static void
-freecnfa(struct cnfa * cnfa)
+freecnfa(struct cnfa *cnfa)
 {
 	assert(cnfa->nstates != 0); /* not empty already */
 	cnfa->nstates = 0;
@@ -2962,7 +2962,7 @@ freecnfa(struct cnfa * cnfa)
  * dumpnfa - dump an NFA in human-readable form
  */
 static void
-dumpnfa(struct nfa * nfa,
+dumpnfa(struct nfa *nfa,
 		FILE *f)
 {
 #ifdef REG_DEBUG
@@ -2999,7 +2999,7 @@ dumpnfa(struct nfa * nfa,
  * dumpstate - dump an NFA state in human-readable form
  */
 static void
-dumpstate(struct state * s,
+dumpstate(struct state *s,
 		  FILE *f)
 {
 	struct arc *a;
@@ -3025,7 +3025,7 @@ dumpstate(struct state * s,
  * dumparcs - dump out-arcs in human-readable form
  */
 static void
-dumparcs(struct state * s,
+dumparcs(struct state *s,
 		 FILE *f)
 {
 	int			pos;
@@ -3057,8 +3057,8 @@ dumparcs(struct state * s,
  * dumparc - dump one outarc in readable form, including prefixing tab
  */
 static void
-dumparc(struct arc * a,
-		struct state * s,
+dumparc(struct arc *a,
+		struct state *s,
 		FILE *f)
 {
 	struct arc *aa;
@@ -3121,7 +3121,7 @@ dumparc(struct arc * a,
  */
 #ifdef REG_DEBUG
 static void
-dumpcnfa(struct cnfa * cnfa,
+dumpcnfa(struct cnfa *cnfa,
 		 FILE *f)
 {
 	int			st;
@@ -3151,7 +3151,7 @@ dumpcnfa(struct cnfa * cnfa,
  */
 static void
 dumpcstate(int st,
-		   struct cnfa * cnfa,
+		   struct cnfa *cnfa,
 		   FILE *f)
 {
 	struct carc *ca;

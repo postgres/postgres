@@ -391,7 +391,7 @@ typedef struct AggStatePerTransData
 	FunctionCallInfoData serialfn_fcinfo;
 
 	FunctionCallInfoData deserialfn_fcinfo;
-}	AggStatePerTransData;
+}			AggStatePerTransData;
 
 /*
  * AggStatePerAggData - per-aggregate information
@@ -439,7 +439,7 @@ typedef struct AggStatePerAggData
 	int16		resulttypeLen;
 	bool		resulttypeByVal;
 
-}	AggStatePerAggData;
+}			AggStatePerAggData;
 
 /*
  * AggStatePerGroupData - per-aggregate-per-group working state
@@ -471,7 +471,7 @@ typedef struct AggStatePerGroupData
 	 * NULL and not auto-replace it with a later input value. Only the first
 	 * non-NULL input will be auto-substituted.
 	 */
-}	AggStatePerGroupData;
+}			AggStatePerGroupData;
 
 /*
  * AggStatePerPhaseData - per-grouping-set-phase state
@@ -493,7 +493,7 @@ typedef struct AggStatePerPhaseData
 	FmgrInfo   *eqfunctions;	/* per-grouping-field equality fns */
 	Agg		   *aggnode;		/* Agg node for phase data */
 	Sort	   *sortnode;		/* Sort node for input ordering for phase */
-}	AggStatePerPhaseData;
+}			AggStatePerPhaseData;
 
 /*
  * AggStatePerHashData - per-hashtable state
@@ -515,7 +515,7 @@ typedef struct AggStatePerHashData
 	AttrNumber *hashGrpColIdxInput;		/* hash col indices in input slot */
 	AttrNumber *hashGrpColIdxHash;		/* indices in hashtbl tuples */
 	Agg		   *aggnode;		/* original Agg node, for numGroups etc. */
-}	AggStatePerHashData;
+}			AggStatePerHashData;
 
 
 static void select_current_set(AggState *aggstate, int setno, bool is_hash);

@@ -429,7 +429,7 @@ rb_insert(RBTree *rb, const RBNode *data, bool *isNew)
 	 */
 	*isNew = true;
 
-	x = rb->allocfunc (rb->arg);
+	x = rb->allocfunc(rb->arg);
 
 	x->color = RBRED;
 
@@ -624,7 +624,7 @@ rb_delete_node(RBTree *rb, RBNode *z)
 
 	/* Now we can recycle the y node */
 	if (rb->freefunc)
-		rb->freefunc (y, rb->arg);
+		rb->freefunc(y, rb->arg);
 }
 
 /*
@@ -808,7 +808,7 @@ loop:
 				iter->next_step = NextStepLeft;
 				goto loop;
 			}
-			else	/* not moved - return current, then go up */
+			else				/* not moved - return current, then go up */
 				iter->next_step = NextStepUp;
 			break;
 

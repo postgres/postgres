@@ -21,7 +21,7 @@ static const struct
 {
 	DWORD		winerr;
 	int			doserr;
-}	doserrors[] =
+}			doserrors[] =
 
 {
 	{

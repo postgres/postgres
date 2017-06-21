@@ -28,13 +28,13 @@ typedef enum
 	XML_STANDALONE_NO,
 	XML_STANDALONE_NO_VALUE,
 	XML_STANDALONE_OMITTED
-}	XmlStandaloneType;
+}			XmlStandaloneType;
 
 typedef enum
 {
 	XMLBINARY_BASE64,
 	XMLBINARY_HEX
-}	XmlBinaryType;
+}			XmlBinaryType;
 
 typedef enum
 {

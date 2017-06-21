@@ -40,7 +40,7 @@ extern char *ecpg_gettext(const char *msgid) pg_attribute_format_arg(1);
 #endif   /* FALSE */
 
 #ifdef __cplusplus
-extern		"C"
+extern "C"
 {
 #endif
 

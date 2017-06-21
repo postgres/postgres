@@ -20,9 +20,9 @@
 
 /* Function to call in master process on completion of a worker task */
 typedef void (*ParallelCompletionPtr) (ArchiveHandle *AH,
-												   TocEntry *te,
-												   int status,
-												   void *callback_data);
+									   TocEntry *te,
+									   int status,
+									   void *callback_data);
 
 /* Wait options for WaitForWorkers */
 typedef enum

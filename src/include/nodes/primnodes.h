@@ -400,10 +400,11 @@ typedef struct ArrayRef
 	Oid			refelemtype;	/* type of the array elements */
 	int32		reftypmod;		/* typmod of the array (and elements too) */
 	Oid			refcollid;		/* OID of collation, or InvalidOid if none */
-	List	   *refupperindexpr;/* expressions that evaluate to upper array
-								 * indexes */
-	List	   *reflowerindexpr;/* expressions that evaluate to lower array
-								 * indexes, or NIL for single array element */
+	List	   *refupperindexpr;	/* expressions that evaluate to upper
+									 * array indexes */
+	List	   *reflowerindexpr;	/* expressions that evaluate to lower
+									 * array indexes, or NIL for single array
+									 * element */
 	Expr	   *refexpr;		/* the expression that evaluates to an array
 								 * value */
 	Expr	   *refassgnexpr;	/* expression for the source value, or NULL if
@@ -1367,8 +1368,8 @@ typedef struct TargetEntry
 	Expr	   *expr;			/* expression to evaluate */
 	AttrNumber	resno;			/* attribute number (see notes above) */
 	char	   *resname;		/* name of the column (could be NULL) */
-	Index		ressortgroupref;/* nonzero if referenced by a sort/group
-								 * clause */
+	Index		ressortgroupref;	/* nonzero if referenced by a sort/group
+									 * clause */
 	Oid			resorigtbl;		/* OID of column's source table */
 	AttrNumber	resorigcol;		/* column's number in source table */
 	bool		resjunk;		/* set to true to eliminate the attribute from

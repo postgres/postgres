@@ -187,7 +187,7 @@ find_my_exec(const char *argv0, char *retpath)
 
 			switch (validate_exec(retpath))
 			{
-				case 0: /* found ok */
+				case 0:			/* found ok */
 					return resolve_symlinks(retpath);
 				case -1:		/* wasn't even a candidate, keep looking */
 					break;
@@ -683,7 +683,7 @@ AddUserToTokenDacl(HANDLE hToken)
 
 	/* Figure out the size of the new ACL */
 	dwNewAclSize = asi.AclBytesInUse + sizeof(ACCESS_ALLOWED_ACE) +
-		GetLengthSid(pTokenUser->User.Sid) -sizeof(DWORD);
+		GetLengthSid(pTokenUser->User.Sid) - sizeof(DWORD);
 
 	/* Allocate the ACL buffer & initialize it */
 	pacl = (PACL) LocalAlloc(LPTR, dwNewAclSize);

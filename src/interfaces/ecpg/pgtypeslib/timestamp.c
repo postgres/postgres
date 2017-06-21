@@ -22,14 +22,14 @@ static int64
 time2t(const int hour, const int min, const int sec, const fsec_t fsec)
 {
 	return (((((hour * MINS_PER_HOUR) + min) * SECS_PER_MINUTE) + sec) * USECS_PER_SEC) + fsec;
-}	/* time2t() */
+}								/* time2t() */
 
 static timestamp
 dt2local(timestamp dt, int tz)
 {
 	dt -= (tz * USECS_PER_SEC);
 	return dt;
-}	/* dt2local() */
+}								/* dt2local() */
 
 /* tm2timestamp()
  * Convert a tm structure to a timestamp data type.
@@ -39,7 +39,7 @@ dt2local(timestamp dt, int tz)
  * Returns -1 on failure (overflow).
  */
 int
-tm2timestamp(struct tm * tm, fsec_t fsec, int *tzp, timestamp * result)
+tm2timestamp(struct tm *tm, fsec_t fsec, int *tzp, timestamp * result)
 {
 	int			dDate;
 	int64		time;
@@ -67,7 +67,7 @@ tm2timestamp(struct tm * tm, fsec_t fsec, int *tzp, timestamp * result)
 		return -1;
 
 	return 0;
-}	/* tm2timestamp() */
+}								/* tm2timestamp() */
 
 static timestamp
 SetEpochTimestamp(void)
@@ -82,7 +82,7 @@ SetEpochTimestamp(void)
 
 	tm2timestamp(tm, 0, NULL, &dt);
 	return dt;
-}	/* SetEpochTimestamp() */
+}								/* SetEpochTimestamp() */
 
 /* timestamp2tm()
  * Convert timestamp data type to POSIX time structure.
@@ -96,7 +96,7 @@ SetEpochTimestamp(void)
  *	local time zone. If out of this range, leave as GMT. - tgl 97/05/27
  */
 static int
-timestamp2tm(timestamp dt, int *tzp, struct tm * tm, fsec_t *fsec, const char **tzn)
+timestamp2tm(timestamp dt, int *tzp, struct tm *tm, fsec_t *fsec, const char **tzn)
 {
 	int64		dDate,
 				date0;
@@ -187,7 +187,7 @@ timestamp2tm(timestamp dt, int *tzp, struct tm * tm, fsec_t *fsec, const char **
 	tm->tm_yday = dDate - date2j(tm->tm_year, 1, 1) + 1;
 
 	return 0;
-}	/* timestamp2tm() */
+}								/* timestamp2tm() */
 
 /* EncodeSpecialTimestamp()
  *	* Convert reserved timestamp data type to string.
@@ -203,7 +203,7 @@ EncodeSpecialTimestamp(timestamp dt, char *str)
 		return FALSE;
 
 	return TRUE;
-}	/* EncodeSpecialTimestamp() */
+}								/* EncodeSpecialTimestamp() */
 
 timestamp
 PGTYPEStimestamp_from_asc(char *str, char **endptr)
@@ -309,7 +309,7 @@ PGTYPEStimestamp_current(timestamp * ts)
 }
 
 static int
-dttofmtasc_replace(timestamp * ts, date dDate, int dow, struct tm * tm,
+dttofmtasc_replace(timestamp * ts, date dDate, int dow, struct tm *tm,
 				   char *output, int *pstr_len, const char *fmtstr)
 {
 	union un_fmt_comb replace_val;

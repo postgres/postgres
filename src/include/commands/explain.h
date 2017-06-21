@@ -49,11 +49,11 @@ typedef struct ExplainState
 
 /* Hook for plugins to get control in ExplainOneQuery() */
 typedef void (*ExplainOneQuery_hook_type) (Query *query,
-													   int cursorOptions,
-													   IntoClause *into,
-													   ExplainState *es,
-													 const char *queryString,
-													   ParamListInfo params);
+										   int cursorOptions,
+										   IntoClause *into,
+										   ExplainState *es,
+										   const char *queryString,
+										   ParamListInfo params);
 extern PGDLLIMPORT ExplainOneQuery_hook_type ExplainOneQuery_hook;
 
 /* Hook for plugins to get control in explain_get_index_name() */

@@ -286,8 +286,8 @@ extern const int day_tab[2][13];
 #define DTERR_TZDISP_OVERFLOW	(-5)
 
 
-extern void GetCurrentDateTime(struct pg_tm * tm);
-extern void GetCurrentTimeUsec(struct pg_tm * tm, fsec_t *fsec, int *tzp);
+extern void GetCurrentDateTime(struct pg_tm *tm);
+extern void GetCurrentTimeUsec(struct pg_tm *tm, fsec_t *fsec, int *tzp);
 extern void j2date(int jd, int *year, int *month, int *day);
 extern int	date2j(int year, int month, int day);
 
@@ -296,32 +296,32 @@ extern int ParseDateTime(const char *timestr, char *workbuf, size_t buflen,
 			  int maxfields, int *numfields);
 extern int DecodeDateTime(char **field, int *ftype,
 			   int nf, int *dtype,
-			   struct pg_tm * tm, fsec_t *fsec, int *tzp);
+			   struct pg_tm *tm, fsec_t *fsec, int *tzp);
 extern int	DecodeTimezone(char *str, int *tzp);
 extern int DecodeTimeOnly(char **field, int *ftype,
 			   int nf, int *dtype,
-			   struct pg_tm * tm, fsec_t *fsec, int *tzp);
+			   struct pg_tm *tm, fsec_t *fsec, int *tzp);
 extern int DecodeInterval(char **field, int *ftype, int nf, int range,
-			   int *dtype, struct pg_tm * tm, fsec_t *fsec);
+			   int *dtype, struct pg_tm *tm, fsec_t *fsec);
 extern int DecodeISO8601Interval(char *str,
-					  int *dtype, struct pg_tm * tm, fsec_t *fsec);
+					  int *dtype, struct pg_tm *tm, fsec_t *fsec);
 
 extern void DateTimeParseError(int dterr, const char *str,
 				   const char *datatype) pg_attribute_noreturn();
 
-extern int	DetermineTimeZoneOffset(struct pg_tm * tm, pg_tz *tzp);
-extern int	DetermineTimeZoneAbbrevOffset(struct pg_tm * tm, const char *abbr, pg_tz *tzp);
+extern int	DetermineTimeZoneOffset(struct pg_tm *tm, pg_tz *tzp);
+extern int	DetermineTimeZoneAbbrevOffset(struct pg_tm *tm, const char *abbr, pg_tz *tzp);
 extern int DetermineTimeZoneAbbrevOffsetTS(TimestampTz ts, const char *abbr,
 								pg_tz *tzp, int *isdst);
 
-extern void EncodeDateOnly(struct pg_tm * tm, int style, char *str);
-extern void EncodeTimeOnly(struct pg_tm * tm, fsec_t fsec, bool print_tz, int tz, int style, char *str);
-extern void EncodeDateTime(struct pg_tm * tm, fsec_t fsec, bool print_tz, int tz, const char *tzn, int style, char *str);
-extern void EncodeInterval(struct pg_tm * tm, fsec_t fsec, int style, char *str);
+extern void EncodeDateOnly(struct pg_tm *tm, int style, char *str);
+extern void EncodeTimeOnly(struct pg_tm *tm, fsec_t fsec, bool print_tz, int tz, int style, char *str);
+extern void EncodeDateTime(struct pg_tm *tm, fsec_t fsec, bool print_tz, int tz, const char *tzn, int style, char *str);
+extern void EncodeInterval(struct pg_tm *tm, fsec_t fsec, int style, char *str);
 extern void EncodeSpecialTimestamp(Timestamp dt, char *str);
 
 extern int ValidateDate(int fmask, bool isjulian, bool is2digits, bool bc,
-			 struct pg_tm * tm);
+			 struct pg_tm *tm);
 
 extern int DecodeTimezoneAbbrev(int field, char *lowtoken,
 					 int *offset, pg_tz **tz);

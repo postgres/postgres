@@ -57,7 +57,7 @@ void		sql_exec_dumpalltbspc(PGconn *, struct options *);
 
 /* function to parse command line options and check for some usage errors. */
 void
-get_opts(int argc, char **argv, struct options * my_opts)
+get_opts(int argc, char **argv, struct options *my_opts)
 {
 	int			c;
 	const char *progname;
@@ -260,7 +260,7 @@ get_comma_elts(eary *eary)
 
 /* establish connection with database. */
 PGconn *
-sql_conn(struct options * my_opts)
+sql_conn(struct options *my_opts)
 {
 	PGconn	   *conn;
 	bool		have_password = false;
@@ -411,7 +411,7 @@ sql_exec(PGconn *conn, const char *todo, bool quiet)
  * Dump all databases.  There are no system objects to worry about.
  */
 void
-sql_exec_dumpalldbs(PGconn *conn, struct options * opts)
+sql_exec_dumpalldbs(PGconn *conn, struct options *opts)
 {
 	char		todo[1024];
 
@@ -428,7 +428,7 @@ sql_exec_dumpalldbs(PGconn *conn, struct options * opts)
  * Dump all tables, indexes and sequences in the current database.
  */
 void
-sql_exec_dumpalltables(PGconn *conn, struct options * opts)
+sql_exec_dumpalltables(PGconn *conn, struct options *opts)
 {
 	char		todo[1024];
 	char	   *addfields = ",c.oid AS \"Oid\", nspname AS \"Schema\", spcname as \"Tablespace\" ";
@@ -460,7 +460,7 @@ sql_exec_dumpalltables(PGconn *conn, struct options * opts)
  * given objects in the current database.
  */
 void
-sql_exec_searchtables(PGconn *conn, struct options * opts)
+sql_exec_searchtables(PGconn *conn, struct options *opts)
 {
 	char	   *todo;
 	char	   *qualifiers,
@@ -516,7 +516,7 @@ sql_exec_searchtables(PGconn *conn, struct options * opts)
 					CppAsString2(RELKIND_SEQUENCE) ","
 					CppAsString2(RELKIND_TOASTVALUE) ") AND\n"
 					"		t.oid = CASE\n"
-			"			WHEN reltablespace <> 0 THEN reltablespace\n"
+					"			WHEN reltablespace <> 0 THEN reltablespace\n"
 					"			ELSE dattablespace\n"
 					"		END AND\n"
 					"  (%s)\n"
@@ -530,7 +530,7 @@ sql_exec_searchtables(PGconn *conn, struct options * opts)
 }
 
 void
-sql_exec_dumpalltbspc(PGconn *conn, struct options * opts)
+sql_exec_dumpalltbspc(PGconn *conn, struct options *opts)
 {
 	char		todo[1024];
 

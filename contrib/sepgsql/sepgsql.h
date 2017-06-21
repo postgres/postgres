@@ -235,7 +235,7 @@ extern void sepgsql_audit_log(bool denied,
 extern void sepgsql_compute_avd(const char *scontext,
 					const char *tcontext,
 					uint16 tclass,
-					struct av_decision * avd);
+					struct av_decision *avd);
 
 extern char *sepgsql_compute_create(const char *scontext,
 					   const char *tcontext,

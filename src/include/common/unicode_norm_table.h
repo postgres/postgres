@@ -26,7 +26,8 @@ typedef struct
 } pg_unicode_decomposition;
 
 #define DECOMP_NO_COMPOSE	0x80	/* don't use for re-composition */
-#define DECOMP_INLINE		0x40	/* decomposition is stored inline in dec_index */
+#define DECOMP_INLINE		0x40	/* decomposition is stored inline in
+									 * dec_index */
 
 #define DECOMPOSITION_SIZE(x) ((x)->dec_size_flags & 0x3F)
 #define DECOMPOSITION_NO_COMPOSE(x) (((x)->dec_size_flags & DECOMP_NO_COMPOSE) != 0)

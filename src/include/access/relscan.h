@@ -39,7 +39,7 @@ typedef struct ParallelHeapScanDescData
 	BlockNumber phs_startblock; /* starting block number */
 	BlockNumber phs_cblock;		/* current block number */
 	char		phs_snapshot_data[FLEXIBLE_ARRAY_MEMBER];
-}	ParallelHeapScanDescData;
+}			ParallelHeapScanDescData;
 
 typedef struct HeapScanDescData
 {
@@ -75,7 +75,7 @@ typedef struct HeapScanDescData
 	int			rs_cindex;		/* current tuple's index in vistuples */
 	int			rs_ntuples;		/* number of visible tuples on page */
 	OffsetNumber rs_vistuples[MaxHeapTuplesPerPage];	/* their offsets */
-}	HeapScanDescData;
+}			HeapScanDescData;
 
 /*
  * We use the same IndexScanDescData structure for both amgettuple-based
@@ -137,7 +137,7 @@ typedef struct IndexScanDescData
 
 	/* parallel index scan information, in shared memory */
 	ParallelIndexScanDesc parallel_scan;
-}	IndexScanDescData;
+}			IndexScanDescData;
 
 /* Generic structure for parallel scans */
 typedef struct ParallelIndexScanDescData
@@ -146,7 +146,7 @@ typedef struct ParallelIndexScanDescData
 	Oid			ps_indexid;
 	Size		ps_offset;		/* Offset in bytes of am specific structure */
 	char		ps_snapshot_data[FLEXIBLE_ARRAY_MEMBER];
-}	ParallelIndexScanDescData;
+}			ParallelIndexScanDescData;
 
 /* Struct for heap-or-index scans of system tables */
 typedef struct SysScanDescData
@@ -156,6 +156,6 @@ typedef struct SysScanDescData
 	HeapScanDesc scan;			/* only valid in heap-scan case */
 	IndexScanDesc iscan;		/* only valid in index-scan case */
 	Snapshot	snapshot;		/* snapshot to unregister at end of scan */
-}	SysScanDescData;
+}			SysScanDescData;
 
 #endif   /* RELSCAN_H */

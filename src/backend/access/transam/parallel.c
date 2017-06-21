@@ -113,7 +113,7 @@ static const struct
 {
 	const char *fn_name;
 	parallel_worker_main_type fn_addr;
-}	InternalParallelWorkers[] =
+}			InternalParallelWorkers[] =
 
 {
 	{

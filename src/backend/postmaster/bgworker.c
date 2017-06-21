@@ -118,7 +118,7 @@ static const struct
 {
 	const char *fn_name;
 	bgworker_main_type fn_addr;
-}	InternalBGWorkers[] =
+}			InternalBGWorkers[] =
 
 {
 	{

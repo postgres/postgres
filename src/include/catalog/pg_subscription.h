@@ -42,13 +42,13 @@ CATALOG(pg_subscription,6100) BKI_SHARED_RELATION BKI_ROWTYPE_OID(6101) BKI_SCHE
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
 	/* Connection string to the publisher */
-	text subconninfo BKI_FORCE_NOT_NULL;
+	text		subconninfo BKI_FORCE_NOT_NULL;
 
 	/* Slot name on publisher */
 	NameData	subslotname;
 
 	/* Synchronous commit setting for worker */
-	text subsynccommit BKI_FORCE_NOT_NULL;
+	text		subsynccommit BKI_FORCE_NOT_NULL;
 
 	/* List of publications subscribed to */
 	text		subpublications[1] BKI_FORCE_NOT_NULL;

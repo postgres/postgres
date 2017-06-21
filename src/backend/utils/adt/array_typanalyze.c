@@ -751,8 +751,8 @@ element_compare(const void *key1, const void *key2)
 static int
 trackitem_compare_frequencies_desc(const void *e1, const void *e2)
 {
-	const TrackItem *const * t1 = (const TrackItem *const *) e1;
-	const TrackItem *const * t2 = (const TrackItem *const *) e2;
+	const TrackItem *const *t1 = (const TrackItem *const *) e1;
+	const TrackItem *const *t2 = (const TrackItem *const *) e2;
 
 	return (*t2)->frequency - (*t1)->frequency;
 }
@@ -763,8 +763,8 @@ trackitem_compare_frequencies_desc(const void *e1, const void *e2)
 static int
 trackitem_compare_element(const void *e1, const void *e2)
 {
-	const TrackItem *const * t1 = (const TrackItem *const *) e1;
-	const TrackItem *const * t2 = (const TrackItem *const *) e2;
+	const TrackItem *const *t1 = (const TrackItem *const *) e1;
+	const TrackItem *const *t2 = (const TrackItem *const *) e2;
 
 	return element_compare(&(*t1)->key, &(*t2)->key);
 }
@@ -775,8 +775,8 @@ trackitem_compare_element(const void *e1, const void *e2)
 static int
 countitem_compare_count(const void *e1, const void *e2)
 {
-	const DECountItem *const * t1 = (const DECountItem *const *) e1;
-	const DECountItem *const * t2 = (const DECountItem *const *) e2;
+	const DECountItem *const *t1 = (const DECountItem *const *) e1;
+	const DECountItem *const *t2 = (const DECountItem *const *) e2;
 
 	if ((*t1)->count < (*t2)->count)
 		return -1;

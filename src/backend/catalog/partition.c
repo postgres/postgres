@@ -80,9 +80,9 @@ typedef struct PartitionBoundInfoData
 	int			ndatums;		/* Length of the datums following array */
 	Datum	  **datums;			/* Array of datum-tuples with key->partnatts
 								 * datums each */
-	RangeDatumContent **content;/* what's contained in each range bound datum?
-								 * (see the above enum); NULL for list
-								 * partitioned tables */
+	RangeDatumContent **content;	/* what's contained in each range bound
+									 * datum? (see the above enum); NULL for
+									 * list partitioned tables */
 	int		   *indexes;		/* Partition indexes; one entry per member of
 								 * the datums array (plus one if range
 								 * partitioned table) */

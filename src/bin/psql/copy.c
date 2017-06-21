@@ -63,7 +63,7 @@ struct copy_options
 
 
 static void
-free_copy_options(struct copy_options * ptr)
+free_copy_options(struct copy_options *ptr)
 {
 	if (!ptr)
 		return;

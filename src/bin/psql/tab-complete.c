@@ -130,7 +130,7 @@ static int	completion_max_records;
  * the completion callback functions.  Ugly but there is no better way.
  */
 static const char *completion_charp;	/* to pass a string */
-static const char *const * completion_charpp;	/* to pass a list of strings */
+static const char *const *completion_charpp;	/* to pass a list of strings */
 static const char *completion_info_charp;		/* to pass a second string */
 static const char *completion_info_charp2;		/* to pass a third string */
 static const SchemaQuery *completion_squery;	/* to pass a SchemaQuery */

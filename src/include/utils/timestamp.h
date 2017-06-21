@@ -81,16 +81,16 @@ extern pg_time_t timestamptz_to_time_t(TimestampTz t);
 
 extern const char *timestamptz_to_str(TimestampTz t);
 
-extern int	tm2timestamp(struct pg_tm * tm, fsec_t fsec, int *tzp, Timestamp *dt);
-extern int timestamp2tm(Timestamp dt, int *tzp, struct pg_tm * tm,
+extern int	tm2timestamp(struct pg_tm *tm, fsec_t fsec, int *tzp, Timestamp *dt);
+extern int timestamp2tm(Timestamp dt, int *tzp, struct pg_tm *tm,
 			 fsec_t *fsec, const char **tzn, pg_tz *attimezone);
 extern void dt2time(Timestamp dt, int *hour, int *min, int *sec, fsec_t *fsec);
 
-extern int	interval2tm(Interval span, struct pg_tm * tm, fsec_t *fsec);
-extern int	tm2interval(struct pg_tm * tm, fsec_t fsec, Interval *span);
+extern int	interval2tm(Interval span, struct pg_tm *tm, fsec_t *fsec);
+extern int	tm2interval(struct pg_tm *tm, fsec_t fsec, Interval *span);
 
 extern Timestamp SetEpochTimestamp(void);
-extern void GetEpochTime(struct pg_tm * tm);
+extern void GetEpochTime(struct pg_tm *tm);
 
 extern int	timestamp_cmp_internal(Timestamp dt1, Timestamp dt2);
 

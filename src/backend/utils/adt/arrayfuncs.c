@@ -84,7 +84,7 @@ typedef struct ArrayIteratorData
 	/* current position information, updated on each iteration */
 	char	   *data_ptr;		/* our current position in the array */
 	int			current_item;	/* the item # we're at in the array */
-}	ArrayIteratorData;
+}			ArrayIteratorData;
 
 static bool array_isspace(char ch);
 static int	ArrayCount(const char *str, int *dim, char typdelim);

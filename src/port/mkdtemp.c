@@ -207,7 +207,7 @@ GETTEMP(char *path, int *doopen, int domkdir)
 				if (isdigit((unsigned char) *trv))
 					*trv = 'a';
 				else
-					++* trv;
+					++*trv;
 				break;
 			}
 		}

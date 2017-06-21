@@ -29,7 +29,7 @@ static bool expression_returns_set_walker(Node *node, void *context);
 static int	leftmostLoc(int loc1, int loc2);
 static bool fix_opfuncids_walker(Node *node, void *context);
 static bool planstate_walk_subplans(List *plans, bool (*walker) (),
-												void *context);
+									void *context);
 static bool planstate_walk_members(List *plans, PlanState **planstates,
 					   bool (*walker) (), void *context);
 
@@ -3091,7 +3091,7 @@ query_tree_mutator(Query *query,
 	MUTATE(query->limitCount, query->limitCount, Node *);
 	if (!(flags & QTW_IGNORE_CTE_SUBQUERIES))
 		MUTATE(query->cteList, query->cteList, List *);
-	else	/* else copy CTE list as-is */
+	else						/* else copy CTE list as-is */
 		query->cteList = copyObject(query->cteList);
 	query->rtable = range_table_mutator(query->rtable,
 										mutator, context, flags);

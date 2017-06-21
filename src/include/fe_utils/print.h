@@ -96,14 +96,14 @@ struct separator
 typedef struct printTableOpt
 {
 	enum printFormat format;	/* see enum above */
-	unsigned short int expanded;/* expanded/vertical output (if supported by
-								 * output format); 0=no, 1=yes, 2=auto */
+	unsigned short int expanded;	/* expanded/vertical output (if supported
+									 * by output format); 0=no, 1=yes, 2=auto */
 	unsigned short int border;	/* Print a border around the table. 0=none,
 								 * 1=dividing lines, 2=full */
 	unsigned short int pager;	/* use pager for output (if to stdout and
 								 * stdout is a tty) 0=off 1=on 2=always */
-	int			pager_min_lines;/* don't use pager unless there are at least
-								 * this many lines */
+	int			pager_min_lines;	/* don't use pager unless there are at
+									 * least this many lines */
 	bool		tuples_only;	/* don't output headers, row counts, etc. */
 	bool		start_table;	/* print start decoration, eg <table> */
 	bool		stop_table;		/* print stop decoration, eg </table> */

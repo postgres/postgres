@@ -36,7 +36,7 @@ typedef enum
 	CONSTRAINT_EXCLUSION_OFF,	/* do not use c_e */
 	CONSTRAINT_EXCLUSION_ON,	/* apply c_e to all rels */
 	CONSTRAINT_EXCLUSION_PARTITION		/* apply c_e to otherrels only */
-}	ConstraintExclusionType;
+}			ConstraintExclusionType;
 
 
 /*

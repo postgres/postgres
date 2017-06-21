@@ -93,7 +93,7 @@ join_search_one_level(PlannerInfo *root, int level)
 
 			if (level == 2)		/* consider remaining initial rels */
 				other_rels = lnext(r);
-			else	/* consider all initial rels */
+			else				/* consider all initial rels */
 				other_rels = list_head(joinrels[1]);
 
 			make_rels_by_clause_joins(root,

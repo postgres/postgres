@@ -87,7 +87,7 @@ typedef struct
 	 * added, followed by the items themselves as ItemPointers. DELETE actions
 	 * have no further data.
 	 */
-}	ginxlogSegmentAction;
+}			ginxlogSegmentAction;
 
 /* Action types */
 #define GIN_SEGMENT_UNMODIFIED	0		/* no action (not used in WAL records) */

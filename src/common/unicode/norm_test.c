@@ -56,7 +56,7 @@ pg_wcscmp(const pg_wchar *s1, const pg_wchar *s2)
 int
 main(int argc, char **argv)
 {
-	const pg_unicode_test *test;
+	const		pg_unicode_test *test;
 
 	for (test = UnicodeNormalizationTests; test->input[0] != 0; test++)
 	{

@@ -337,7 +337,7 @@ typedef struct OldSerXidControlData
 	TransactionId headXid;		/* newest valid Xid in the SLRU */
 	TransactionId tailXid;		/* oldest xmin we might be interested in */
 	bool		warningIssued;	/* have we issued SLRU wrap-around warning? */
-}	OldSerXidControlData;
+}			OldSerXidControlData;
 
 typedef struct OldSerXidControlData *OldSerXidControl;
 

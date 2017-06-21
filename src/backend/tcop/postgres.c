@@ -3041,10 +3041,10 @@ ia64_get_bsp(void)
 	char	   *ret;
 
 	/* the ;; is a "stop", seems to be required before fetching BSP */
-	__asm__		__volatile__(
-										 ";;\n"
-										 "	mov	%0=ar.bsp	\n"
-							 :			 "=r"(ret));
+	__asm__ __volatile__(
+						 ";;\n"
+						 "	mov	%0=ar.bsp	\n"
+:						 "=r"(ret));
 
 	return ret;
 }

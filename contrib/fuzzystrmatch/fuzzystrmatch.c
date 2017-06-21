@@ -389,7 +389,7 @@ _metaphone(char *word,			/* IN */
 	/*-- Allocate memory for our phoned_phrase --*/
 	if (max_phonemes == 0)
 	{							/* Assume largest possible */
-		*phoned_word = palloc(sizeof(char) * strlen(word) +1);
+		*phoned_word = palloc(sizeof(char) * strlen(word) + 1);
 	}
 	else
 	{
@@ -722,7 +722,7 @@ _metaphone(char *word,			/* IN */
 	End_Phoned_Word;
 
 	return (META_SUCCESS);
-}	/* END metaphone */
+}								/* END metaphone */
 
 
 /*

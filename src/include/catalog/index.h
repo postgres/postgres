@@ -22,11 +22,11 @@
 
 /* Typedef for callback function for IndexBuildHeapScan */
 typedef void (*IndexBuildCallback) (Relation index,
-												HeapTuple htup,
-												Datum *values,
-												bool *isnull,
-												bool tupleIsAlive,
-												void *state);
+									HeapTuple htup,
+									Datum *values,
+									bool *isnull,
+									bool tupleIsAlive,
+									void *state);
 
 /* Action code for index_set_state_flags */
 typedef enum

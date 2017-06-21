@@ -92,15 +92,15 @@ typedef enum
 typedef struct BTParallelScanDescData
 {
 	BlockNumber btps_scanPage;	/* latest or next page to be scanned */
-	BTPS_State	btps_pageStatus;/* indicates whether next page is available
-								 * for scan. see above for possible states of
-								 * parallel scan. */
+	BTPS_State	btps_pageStatus;	/* indicates whether next page is
+									 * available for scan. see above for
+									 * possible states of parallel scan. */
 	int			btps_arrayKeyCount;		/* count indicating number of array
 										 * scan keys processed by parallel
 										 * scan */
 	slock_t		btps_mutex;		/* protects above variables */
 	ConditionVariable btps_cv;	/* used to synchronize parallel scan */
-}	BTParallelScanDescData;
+}			BTParallelScanDescData;
 
 typedef struct BTParallelScanDescData *BTParallelScanDesc;
 

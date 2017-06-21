@@ -561,7 +561,7 @@ DecodeUnits(int field, char *lowtoken, int *val)
 	}
 
 	return type;
-}	/* DecodeUnits() */
+}								/* DecodeUnits() */
 
 /*
  * Calendar time to Julian date conversions.
@@ -604,7 +604,7 @@ date2j(int y, int m, int d)
 	julian += 7834 * m / 256 + d;
 
 	return julian;
-}	/* date2j() */
+}								/* date2j() */
 
 void
 j2date(int jd, int *year, int *month, int *day)
@@ -630,7 +630,7 @@ j2date(int jd, int *year, int *month, int *day)
 	*month = (quad + 10) % 12 + 1;
 
 	return;
-}	/* j2date() */
+}								/* j2date() */
 
 /* DecodeSpecial()
  * Decode text string using lookup table.
@@ -666,13 +666,13 @@ DecodeSpecial(int field, char *lowtoken, int *val)
 	}
 
 	return type;
-}	/* DecodeSpecial() */
+}								/* DecodeSpecial() */
 
 /* EncodeDateOnly()
  * Encode date as local time.
  */
 int
-EncodeDateOnly(struct tm * tm, int style, char *str, bool EuroDates)
+EncodeDateOnly(struct tm *tm, int style, char *str, bool EuroDates)
 {
 	if (tm->tm_mon < 1 || tm->tm_mon > MONTHS_PER_YEAR)
 		return -1;
@@ -725,7 +725,7 @@ EncodeDateOnly(struct tm * tm, int style, char *str, bool EuroDates)
 	}
 
 	return TRUE;
-}	/* EncodeDateOnly() */
+}								/* EncodeDateOnly() */
 
 void
 TrimTrailingZeros(char *str)
@@ -759,7 +759,7 @@ TrimTrailingZeros(char *str)
  *	European - dd/mm/yyyy
  */
 int
-EncodeDateTime(struct tm * tm, fsec_t fsec, bool print_tz, int tz, const char *tzn, int style, char *str, bool EuroDates)
+EncodeDateTime(struct tm *tm, fsec_t fsec, bool print_tz, int tz, const char *tzn, int style, char *str, bool EuroDates)
 {
 	int			day,
 				hour,
@@ -953,10 +953,10 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, bool print_tz, int tz, const char *t
 	}
 
 	return TRUE;
-}	/* EncodeDateTime() */
+}								/* EncodeDateTime() */
 
 int
-GetEpochTime(struct tm * tm)
+GetEpochTime(struct tm *tm)
 {
 	struct tm  *t0;
 	time_t		epoch = 0;
@@ -976,10 +976,10 @@ GetEpochTime(struct tm * tm)
 	}
 
 	return -1;
-}	/* GetEpochTime() */
+}								/* GetEpochTime() */
 
 static void
-abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char **tzn)
+abstime2tm(AbsoluteTime _time, int *tzp, struct tm *tm, char **tzn)
 {
 	time_t		time = (time_t) _time;
 	struct tm  *tx;
@@ -1064,7 +1064,7 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char **tzn)
 }
 
 void
-GetCurrentDateTime(struct tm * tm)
+GetCurrentDateTime(struct tm *tm)
 {
 	int			tz;
 
@@ -1083,7 +1083,7 @@ dt2time(double jd, int *hour, int *min, int *sec, fsec_t *fsec)
 	time -= (*min) * USECS_PER_MINUTE;
 	*sec = time / USECS_PER_SEC;
 	*fsec = time - (*sec * USECS_PER_SEC);
-}	/* dt2time() */
+}								/* dt2time() */
 
 
 
@@ -1094,7 +1094,7 @@ dt2time(double jd, int *hour, int *min, int *sec, fsec_t *fsec)
  */
 static int
 DecodeNumberField(int len, char *str, int fmask,
-				  int *tmask, struct tm * tm, fsec_t *fsec, int *is2digits)
+				  int *tmask, struct tm *tm, fsec_t *fsec, int *is2digits)
 {
 	char	   *cp;
 
@@ -1196,7 +1196,7 @@ DecodeNumberField(int len, char *str, int fmask,
 	}
 
 	return -1;
-}	/* DecodeNumberField() */
+}								/* DecodeNumberField() */
 
 
 /* DecodeNumber()
@@ -1204,7 +1204,7 @@ DecodeNumberField(int len, char *str, int fmask,
  */
 static int
 DecodeNumber(int flen, char *str, int fmask,
-	int *tmask, struct tm * tm, fsec_t *fsec, int *is2digits, bool EuroDates)
+	 int *tmask, struct tm *tm, fsec_t *fsec, int *is2digits, bool EuroDates)
 {
 	int			val;
 	char	   *cp;
@@ -1305,14 +1305,14 @@ DecodeNumber(int flen, char *str, int fmask,
 		return -1;
 
 	return 0;
-}	/* DecodeNumber() */
+}								/* DecodeNumber() */
 
 /* DecodeDate()
  * Decode date string which includes delimiters.
  * Insist on a complete set of fields.
  */
 static int
-DecodeDate(char *str, int fmask, int *tmask, struct tm * tm, bool EuroDates)
+DecodeDate(char *str, int fmask, int *tmask, struct tm *tm, bool EuroDates)
 {
 	fsec_t		fsec;
 
@@ -1432,7 +1432,7 @@ DecodeDate(char *str, int fmask, int *tmask, struct tm * tm, bool EuroDates)
 	}
 
 	return 0;
-}	/* DecodeDate() */
+}								/* DecodeDate() */
 
 
 /* DecodeTime()
@@ -1441,7 +1441,7 @@ DecodeDate(char *str, int fmask, int *tmask, struct tm * tm, bool EuroDates)
  *	can be used to represent time spans.
  */
 int
-DecodeTime(char *str, int *tmask, struct tm * tm, fsec_t *fsec)
+DecodeTime(char *str, int *tmask, struct tm *tm, fsec_t *fsec)
 {
 	char	   *cp;
 
@@ -1497,7 +1497,7 @@ DecodeTime(char *str, int *tmask, struct tm * tm, fsec_t *fsec)
 		return -1;
 
 	return 0;
-}	/* DecodeTime() */
+}								/* DecodeTime() */
 
 /* DecodeTimezone()
  * Interpret string as a numeric timezone.
@@ -1541,7 +1541,7 @@ DecodeTimezone(char *str, int *tzp)
 
 	*tzp = -tz;
 	return *cp != '\0';
-}	/* DecodeTimezone() */
+}								/* DecodeTimezone() */
 
 
 /* DecodePosixTimezone()
@@ -1583,7 +1583,7 @@ DecodePosixTimezone(char *str, int *tzp)
 	}
 
 	return 0;
-}	/* DecodePosixTimezone() */
+}								/* DecodePosixTimezone() */
 
 /* ParseDateTime()
  * Break string into tokens based on a date/time context.
@@ -1763,7 +1763,7 @@ ParseDateTime(char *timestr, char *lowstr,
 	*numfields = nf;
 
 	return 0;
-}	/* ParseDateTime() */
+}								/* ParseDateTime() */
 
 
 /* DecodeDateTime()
@@ -1788,7 +1788,7 @@ ParseDateTime(char *timestr, char *lowstr,
  */
 int
 DecodeDateTime(char **field, int *ftype, int nf,
-			   int *dtype, struct tm * tm, fsec_t *fsec, bool EuroDates)
+			   int *dtype, struct tm *tm, fsec_t *fsec, bool EuroDates)
 {
 	int			fmask = 0,
 				tmask,
@@ -2351,7 +2351,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 	}
 
 	return 0;
-}	/* DecodeDateTime() */
+}								/* DecodeDateTime() */
 
 /* Function works as follows:
  *
@@ -2464,7 +2464,7 @@ find_end_token(char *str, char *fmt)
 }
 
 static int
-pgtypes_defmt_scan(union un_fmt_comb * scan_val, int scan_type, char **pstr, char *pfmt)
+pgtypes_defmt_scan(union un_fmt_comb *scan_val, int scan_type, char **pstr, char *pfmt)
 {
 	/*
 	 * scan everything between pstr and pstr_end. This is not including the

@@ -365,7 +365,7 @@ pgwin32_is_junction(const char *path)
  * to update this field.
  */
 int
-pgwin32_safestat(const char *path, struct stat * buf)
+pgwin32_safestat(const char *path, struct stat *buf)
 {
 	int			r;
 	WIN32_FILE_ATTRIBUTE_DATA attr;

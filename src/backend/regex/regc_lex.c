@@ -67,7 +67,7 @@
  * lexstart - set up lexical stuff, scan leading options
  */
 static void
-lexstart(struct vars * v)
+lexstart(struct vars *v)
 {
 	prefixes(v);				/* may turn on new type bits etc. */
 	NOERR();
@@ -96,7 +96,7 @@ lexstart(struct vars * v)
  * prefixes - implement various special prefixes
  */
 static void
-prefixes(struct vars * v)
+prefixes(struct vars *v)
 {
 	/* literal string doesn't get any of this stuff */
 	if (v->cflags & REG_QUOTE)
@@ -200,7 +200,7 @@ prefixes(struct vars * v)
  * implicit assumptions about what sorts of strings can be subroutines.
  */
 static void
-lexnest(struct vars * v,
+lexnest(struct vars *v,
 		const chr *beginp,		/* start of interpolation */
 		const chr *endp)		/* one past end of interpolation */
 {
@@ -265,7 +265,7 @@ static const chr brbackw[] = {	/* \w within brackets */
  * Possibly ought to inquire whether there is a "word" character class.
  */
 static void
-lexword(struct vars * v)
+lexword(struct vars *v)
 {
 	lexnest(v, backw, ENDOF(backw));
 }
@@ -274,7 +274,7 @@ lexword(struct vars * v)
  * next - get next token
  */
 static int						/* 1 normal, 0 failure */
-next(struct vars * v)
+next(struct vars *v)
 {
 	chr			c;
 
@@ -384,7 +384,7 @@ next(struct vars * v)
 					else
 						FAILW(REG_BADBR);
 					break;
-				case CHR('\\'):	/* BRE bound ends with \} */
+				case CHR('\\'): /* BRE bound ends with \} */
 					if (INCON(L_BBND) && NEXT1('}'))
 					{
 						v->now++;
@@ -476,7 +476,7 @@ next(struct vars * v)
 							NOTE(REG_ULOCALE);
 							RET(CCLASS);
 							break;
-						default:		/* oops */
+						default:	/* oops */
 							v->now--;
 							RETV(PLAIN, c);
 							break;
@@ -671,7 +671,7 @@ next(struct vars * v)
 		case CHR('$'):
 			RET('$');
 			break;
-		case CHR('\\'): /* mostly punt backslashes to code below */
+		case CHR('\\'):			/* mostly punt backslashes to code below */
 			if (ATEOS())
 				FAILW(REG_EESCAPE);
 			break;
@@ -734,7 +734,7 @@ next(struct vars * v)
  * Note slightly nonstandard use of the CCLASS type code.
  */
 static int						/* not actually used, but convenient for RETV */
-lexescape(struct vars * v)
+lexescape(struct vars *v)
 {
 	chr			c;
 	static const chr alert[] = {
@@ -904,7 +904,7 @@ lexescape(struct vars * v)
  * if maxlen is large enough to make that possible.
  */
 static chr						/* chr value; errors signalled via ERR */
-lexdigits(struct vars * v,
+lexdigits(struct vars *v,
 		  int base,
 		  int minlen,
 		  int maxlen)
@@ -985,7 +985,7 @@ lexdigits(struct vars * v,
  * context-dependency of some things.
  */
 static int						/* 1 normal, 0 failure */
-brenext(struct vars * v,
+brenext(struct vars *v,
 		chr c)
 {
 	switch (c)
@@ -1106,7 +1106,7 @@ brenext(struct vars * v,
  * skip - skip white space and comments in expanded form
  */
 static void
-skip(struct vars * v)
+skip(struct vars *v)
 {
 	const chr  *start = v->now;
 
@@ -1146,7 +1146,7 @@ newline(void)
  * use that it hardly matters.
  */
 static chr
-chrnamed(struct vars * v,
+chrnamed(struct vars *v,
 		 const chr *startp,		/* start of name */
 		 const chr *endp,		/* just past end of name */
 		 chr lastresort)		/* what to return if name lookup fails */

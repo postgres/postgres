@@ -25,87 +25,87 @@ struct ExplainState;
  */
 
 typedef void (*GetForeignRelSize_function) (PlannerInfo *root,
-														RelOptInfo *baserel,
-														Oid foreigntableid);
+											RelOptInfo *baserel,
+											Oid foreigntableid);
 
 typedef void (*GetForeignPaths_function) (PlannerInfo *root,
-													  RelOptInfo *baserel,
-													  Oid foreigntableid);
+										  RelOptInfo *baserel,
+										  Oid foreigntableid);
 
 typedef ForeignScan *(*GetForeignPlan_function) (PlannerInfo *root,
-														 RelOptInfo *baserel,
-														  Oid foreigntableid,
-													  ForeignPath *best_path,
-															 List *tlist,
-														  List *scan_clauses,
-														   Plan *outer_plan);
+												 RelOptInfo *baserel,
+												 Oid foreigntableid,
+												 ForeignPath *best_path,
+												 List *tlist,
+												 List *scan_clauses,
+												 Plan *outer_plan);
 
 typedef void (*BeginForeignScan_function) (ForeignScanState *node,
-													   int eflags);
+										   int eflags);
 
 typedef TupleTableSlot *(*IterateForeignScan_function) (ForeignScanState *node);
 
 typedef bool (*RecheckForeignScan_function) (ForeignScanState *node,
-													   TupleTableSlot *slot);
+											 TupleTableSlot *slot);
 
 typedef void (*ReScanForeignScan_function) (ForeignScanState *node);
 
 typedef void (*EndForeignScan_function) (ForeignScanState *node);
 
 typedef void (*GetForeignJoinPaths_function) (PlannerInfo *root,
-														  RelOptInfo *joinrel,
-														RelOptInfo *outerrel,
-														RelOptInfo *innerrel,
-														  JoinType jointype,
-												   JoinPathExtraData *extra);
+											  RelOptInfo *joinrel,
+											  RelOptInfo *outerrel,
+											  RelOptInfo *innerrel,
+											  JoinType jointype,
+											  JoinPathExtraData *extra);
 
 typedef void (*GetForeignUpperPaths_function) (PlannerInfo *root,
-													 UpperRelationKind stage,
-													   RelOptInfo *input_rel,
-													 RelOptInfo *output_rel);
+											   UpperRelationKind stage,
+											   RelOptInfo *input_rel,
+											   RelOptInfo *output_rel);
 
 typedef void (*AddForeignUpdateTargets_function) (Query *parsetree,
-												   RangeTblEntry *target_rte,
-												   Relation target_relation);
+												  RangeTblEntry *target_rte,
+												  Relation target_relation);
 
 typedef List *(*PlanForeignModify_function) (PlannerInfo *root,
-														 ModifyTable *plan,
-														 Index resultRelation,
-														 int subplan_index);
+											 ModifyTable *plan,
+											 Index resultRelation,
+											 int subplan_index);
 
 typedef void (*BeginForeignModify_function) (ModifyTableState *mtstate,
-														 ResultRelInfo *rinfo,
-														 List *fdw_private,
-														 int subplan_index,
-														 int eflags);
+											 ResultRelInfo *rinfo,
+											 List *fdw_private,
+											 int subplan_index,
+											 int eflags);
 
 typedef TupleTableSlot *(*ExecForeignInsert_function) (EState *estate,
-														ResultRelInfo *rinfo,
-														TupleTableSlot *slot,
+													   ResultRelInfo *rinfo,
+													   TupleTableSlot *slot,
 												   TupleTableSlot *planSlot);
 
 typedef TupleTableSlot *(*ExecForeignUpdate_function) (EState *estate,
-														ResultRelInfo *rinfo,
-														TupleTableSlot *slot,
+													   ResultRelInfo *rinfo,
+													   TupleTableSlot *slot,
 												   TupleTableSlot *planSlot);
 
 typedef TupleTableSlot *(*ExecForeignDelete_function) (EState *estate,
-														ResultRelInfo *rinfo,
-														TupleTableSlot *slot,
+													   ResultRelInfo *rinfo,
+													   TupleTableSlot *slot,
 												   TupleTableSlot *planSlot);
 
 typedef void (*EndForeignModify_function) (EState *estate,
-													   ResultRelInfo *rinfo);
+										   ResultRelInfo *rinfo);
 
 typedef int (*IsForeignRelUpdatable_function) (Relation rel);
 
 typedef bool (*PlanDirectModify_function) (PlannerInfo *root,
-													   ModifyTable *plan,
-													   Index resultRelation,
-													   int subplan_index);
+										   ModifyTable *plan,
+										   Index resultRelation,
+										   int subplan_index);
 
 typedef void (*BeginDirectModify_function) (ForeignScanState *node,
-														int eflags);
+											int eflags);
 
 typedef TupleTableSlot *(*IterateDirectModify_function) (ForeignScanState *node);
 
@@ -115,46 +115,46 @@ typedef RowMarkType (*GetForeignRowMarkType_function) (RangeTblEntry *rte,
 												LockClauseStrength strength);
 
 typedef HeapTuple (*RefetchForeignRow_function) (EState *estate,
-															 ExecRowMark *erm,
-															 Datum rowid,
-															 bool *updated);
+												 ExecRowMark *erm,
+												 Datum rowid,
+												 bool *updated);
 
 typedef void (*ExplainForeignScan_function) (ForeignScanState *node,
-													struct ExplainState *es);
+											 struct ExplainState *es);
 
 typedef void (*ExplainForeignModify_function) (ModifyTableState *mtstate,
-														ResultRelInfo *rinfo,
-														   List *fdw_private,
-														   int subplan_index,
-													struct ExplainState *es);
+											   ResultRelInfo *rinfo,
+											   List *fdw_private,
+											   int subplan_index,
+											   struct ExplainState *es);
 
 typedef void (*ExplainDirectModify_function) (ForeignScanState *node,
-													struct ExplainState *es);
+											  struct ExplainState *es);
 
 typedef int (*AcquireSampleRowsFunc) (Relation relation, int elevel,
-											   HeapTuple *rows, int targrows,
-												  double *totalrows,
-												  double *totaldeadrows);
+									  HeapTuple *rows, int targrows,
+									  double *totalrows,
+									  double *totaldeadrows);
 
 typedef bool (*AnalyzeForeignTable_function) (Relation relation,
-												 AcquireSampleRowsFunc *func,
-													BlockNumber *totalpages);
+											  AcquireSampleRowsFunc *func,
+											  BlockNumber *totalpages);
 
 typedef List *(*ImportForeignSchema_function) (ImportForeignSchemaStmt *stmt,
-														   Oid serverOid);
+											   Oid serverOid);
 
 typedef Size (*EstimateDSMForeignScan_function) (ForeignScanState *node,
-													  ParallelContext *pcxt);
+												 ParallelContext *pcxt);
 typedef void (*InitializeDSMForeignScan_function) (ForeignScanState *node,
-													   ParallelContext *pcxt,
-														   void *coordinate);
+												   ParallelContext *pcxt,
+												   void *coordinate);
 typedef void (*InitializeWorkerForeignScan_function) (ForeignScanState *node,
-																shm_toc *toc,
-														   void *coordinate);
+													  shm_toc *toc,
+													  void *coordinate);
 typedef void (*ShutdownForeignScan_function) (ForeignScanState *node);
 typedef bool (*IsForeignScanParallelSafe_function) (PlannerInfo *root,
-															 RelOptInfo *rel,
-														 RangeTblEntry *rte);
+													RelOptInfo *rel,
+													RangeTblEntry *rte);
 
 /*
  * FdwRoutine is the struct returned by a foreign-data wrapper's handler

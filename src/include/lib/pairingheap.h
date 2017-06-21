@@ -58,8 +58,8 @@ typedef struct pairingheap_node
  * and >0 iff a > b.  For a min-heap, the conditions are reversed.
  */
 typedef int (*pairingheap_comparator) (const pairingheap_node *a,
-												   const pairingheap_node *b,
-												   void *arg);
+									   const pairingheap_node *b,
+									   void *arg);
 
 /*
  * A pairing heap.

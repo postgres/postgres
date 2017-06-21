@@ -180,8 +180,7 @@ static void AssertTXNLsnOrder(ReorderBuffer *rb);
  * ---------------------------------------
  */
 static ReorderBufferIterTXNState *ReorderBufferIterTXNInit(ReorderBuffer *rb, ReorderBufferTXN *txn);
-static ReorderBufferChange *
-			ReorderBufferIterTXNNext(ReorderBuffer *rb, ReorderBufferIterTXNState *state);
+static ReorderBufferChange *ReorderBufferIterTXNNext(ReorderBuffer *rb, ReorderBufferIterTXNState *state);
 static void ReorderBufferIterTXNFinish(ReorderBuffer *rb,
 						   ReorderBufferIterTXNState *state);
 static void ReorderBufferExecuteInvalidations(ReorderBuffer *rb, ReorderBufferTXN *txn);

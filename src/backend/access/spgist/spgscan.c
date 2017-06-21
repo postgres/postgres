@@ -25,7 +25,7 @@
 
 
 typedef void (*storeRes_func) (SpGistScanOpaque so, ItemPointer heapPtr,
-								 Datum leafValue, bool isnull, bool recheck);
+							   Datum leafValue, bool isnull, bool recheck);
 
 typedef struct ScanStackEntry
 {
@@ -430,7 +430,7 @@ redirect:
 				}
 			}
 		}
-		else	/* page is inner */
+		else					/* page is inner */
 		{
 			SpGistInnerTuple innerTuple;
 			spgInnerConsistentIn in;

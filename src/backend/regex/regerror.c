@@ -42,7 +42,7 @@ static const struct rerr
 	int			code;
 	const char *name;
 	const char *explain;
-}	rerrs[] =
+}			rerrs[] =
 
 {
 	/* the actual table is built from regex.h */

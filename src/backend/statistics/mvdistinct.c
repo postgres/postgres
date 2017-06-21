@@ -166,7 +166,7 @@ statext_ndistinct_serialize(MVNDistinct *ndistinct)
 	 * for each item, including number of items for each.
 	 */
 	len = VARHDRSZ + SizeOfMVNDistinct +
-		ndistinct->nitems * (offsetof(MVNDistinctItem, attrs) +sizeof(int));
+		ndistinct->nitems * (offsetof(MVNDistinctItem, attrs) + sizeof(int));
 
 	/* and also include space for the actual attribute numbers */
 	for (i = 0; i < ndistinct->nitems; i++)
@@ -513,10 +513,10 @@ estimate_ndistinct(double totalrows, int numrows, int d, int f1)
 				denom,
 				ndistinct;
 
-	numer = (double) numrows *(double) d;
+	numer = (double) numrows * (double) d;
 
 	denom = (double) (numrows - f1) +
-		(double) f1 *(double) numrows / totalrows;
+		(double) f1 * (double) numrows / totalrows;
 
 	ndistinct = numer / denom;
 

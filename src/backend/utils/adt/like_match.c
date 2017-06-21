@@ -236,7 +236,7 @@ MatchText(char *t, int tlen, char *p, int plen,
 	 * matching this pattern.
 	 */
 	return LIKE_ABORT;
-}	/* MatchText() */
+}								/* MatchText() */
 
 /*
  * like_escape() --- given a pattern and an ESCAPE string,

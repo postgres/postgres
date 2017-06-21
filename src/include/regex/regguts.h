@@ -479,4 +479,4 @@ struct guts
 
 /* prototypes for functions that are exported from regcomp.c to regexec.c */
 extern void pg_set_regex_collation(Oid collation);
-extern color pg_reg_getcolor(struct colormap * cm, chr c);
+extern color pg_reg_getcolor(struct colormap *cm, chr c);

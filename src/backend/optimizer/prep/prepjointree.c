@@ -1015,7 +1015,7 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	if (rte->lateral)
 		rvcontext.relids = get_relids_in_jointree((Node *) subquery->jointree,
 												  true);
-	else	/* won't need relids */
+	else						/* won't need relids */
 		rvcontext.relids = NULL;
 	rvcontext.outer_hasSubLinks = &parse->hasSubLinks;
 	rvcontext.varno = varno;

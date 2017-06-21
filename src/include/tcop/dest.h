@@ -116,11 +116,11 @@ struct _DestReceiver
 {
 	/* Called for each tuple to be output: */
 	bool		(*receiveSlot) (TupleTableSlot *slot,
-											DestReceiver *self);
+								DestReceiver *self);
 	/* Per-executor-run initialization and shutdown: */
 	void		(*rStartup) (DestReceiver *self,
-										 int operation,
-										 TupleDesc typeinfo);
+							 int operation,
+							 TupleDesc typeinfo);
 	void		(*rShutdown) (DestReceiver *self);
 	/* Destroy the receiver object itself (if dynamically allocated) */
 	void		(*rDestroy) (DestReceiver *self);

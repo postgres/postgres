@@ -1002,7 +1002,7 @@ makeVariableNumeric(Variable *var)
 		setIntValue(&var->num_value, strtoint64(var->value));
 		var->is_numeric = true;
 	}
-	else	/* type should be double */
+	else						/* type should be double */
 	{
 		double		dv;
 		char		xs;
@@ -1357,7 +1357,7 @@ evalFunc(TState *thread, CState *st,
 							Assert(0);
 					}
 				}
-				else	/* we have integer operands, or % */
+				else			/* we have integer operands, or % */
 				{
 					int64		li,
 								ri;
@@ -1595,7 +1595,7 @@ evalFunc(TState *thread, CState *st,
 					Assert(nargs == 2);
 					setIntValue(retval, getrand(thread, imin, imax));
 				}
-				else	/* gaussian & exponential */
+				else			/* gaussian & exponential */
 				{
 					double		param;
 
@@ -1617,7 +1617,7 @@ evalFunc(TState *thread, CState *st,
 						setIntValue(retval,
 								 getGaussianRand(thread, imin, imax, param));
 					}
-					else	/* exponential */
+					else		/* exponential */
 					{
 						if (param <= 0.0)
 						{
@@ -1899,7 +1899,7 @@ sendCommand(CState *st, Command *command)
 		r = PQsendQueryPrepared(st->con, name, command->argc - 1,
 								params, NULL, NULL, 0);
 	}
-	else	/* unknown sql mode */
+	else						/* unknown sql mode */
 		r = 0;
 
 	if (r == 0)
@@ -3397,7 +3397,7 @@ findBuiltin(const char *name)
 	/* error cases */
 	if (found == 0)
 		fprintf(stderr, "no builtin script found for name \"%s\"\n", name);
-	else	/* found > 1 */
+	else						/* found > 1 */
 		fprintf(stderr,
 				"ambiguous builtin name: %d builtin scripts found for prefix \"%s\"\n", found, name);
 
@@ -4290,7 +4290,7 @@ main(int argc, char **argv)
 		/* compute when to stop */
 		if (duration > 0)
 			end_time = INSTR_TIME_GET_MICROSEC(thread->start_time) +
-				(int64) 1000000 *duration;
+				(int64) 1000000 * duration;
 
 		/* the first thread (i = 0) is executed by main thread */
 		if (i > 0)
@@ -4313,7 +4313,7 @@ main(int argc, char **argv)
 	/* compute when to stop */
 	if (duration > 0)
 		end_time = INSTR_TIME_GET_MICROSEC(threads[0].start_time) +
-			(int64) 1000000 *duration;
+			(int64) 1000000 * duration;
 	threads[0].thread = INVALID_THREAD;
 #endif   /* ENABLE_THREAD_SAFETY */
 
@@ -4690,7 +4690,7 @@ threadRun(void *arg)
 				 */
 				do
 				{
-					next_report += (int64) progress *1000000;
+					next_report += (int64) progress * 1000000;
 				} while (now >= next_report);
 			}
 		}

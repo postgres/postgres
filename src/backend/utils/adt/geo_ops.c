@@ -126,7 +126,7 @@ single_decode(char *num, char **endptr_p,
 			  const char *type_name, const char *orig_string)
 {
 	return float8in_internal(num, endptr_p, type_name, orig_string);
-}	/* single_decode() */
+}								/* single_decode() */
 
 static void
 single_encode(float8 x, StringInfo str)
@@ -135,7 +135,7 @@ single_encode(float8 x, StringInfo str)
 
 	appendStringInfoString(str, xstr);
 	pfree(xstr);
-}	/* single_encode() */
+}								/* single_encode() */
 
 static void
 pair_decode(char *str, double *x, double *y, char **endptr_p,
@@ -264,7 +264,7 @@ path_decode(char *str, bool opentype, int npts, Point *p,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for type %s: \"%s\"",
 						type_name, orig_string)));
-}	/* path_decode() */
+}								/* path_decode() */
 
 static char *
 path_encode(enum path_delim path_delim, int npts, Point *pt)
@@ -309,7 +309,7 @@ path_encode(enum path_delim path_delim, int npts, Point *pt)
 	}
 
 	return str.data;
-}	/* path_encode() */
+}								/* path_encode() */
 
 /*-------------------------------------------------------------
  * pair_count - count the number of points
@@ -1333,7 +1333,7 @@ path_in(PG_FUNCTION_ARGS)
 	}
 
 	base_size = sizeof(path->p[0]) * npts;
-	size = offsetof(PATH, p) +base_size;
+	size = offsetof(PATH, p) + base_size;
 
 	/* Check for integer overflow */
 	if (base_size / npts != sizeof(path->p[0]) || size <= base_size)
@@ -1403,7 +1403,7 @@ path_recv(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
 			 errmsg("invalid number of points in external \"path\" value")));
 
-	size = offsetof(PATH, p) +sizeof(path->p[0]) * npts;
+	size = offsetof(PATH, p) + sizeof(path->p[0]) * npts;
 	path = (PATH *) palloc(size);
 
 	SET_VARSIZE(path, size);
@@ -3431,7 +3431,7 @@ poly_in(PG_FUNCTION_ARGS)
 						"polygon", str)));
 
 	base_size = sizeof(poly->p[0]) * npts;
-	size = offsetof(POLYGON, p) +base_size;
+	size = offsetof(POLYGON, p) + base_size;
 
 	/* Check for integer overflow */
 	if (base_size / npts != sizeof(poly->p[0]) || size <= base_size)
@@ -3486,7 +3486,7 @@ poly_recv(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
 		  errmsg("invalid number of points in external \"polygon\" value")));
 
-	size = offsetof(POLYGON, p) +sizeof(poly->p[0]) * npts;
+	size = offsetof(POLYGON, p) + sizeof(poly->p[0]) * npts;
 	poly = (POLYGON *) palloc0(size);	/* zero any holes */
 
 	SET_VARSIZE(poly, size);
@@ -4243,7 +4243,7 @@ path_add(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	base_size = sizeof(p1->p[0]) * (p1->npts + p2->npts);
-	size = offsetof(PATH, p) +base_size;
+	size = offsetof(PATH, p) + base_size;
 
 	/* Check for integer overflow */
 	if (base_size / sizeof(p1->p[0]) != (p1->npts + p2->npts) ||
@@ -4385,7 +4385,7 @@ path_poly(PG_FUNCTION_ARGS)
 	 * Never overflows: the old size fit in MaxAllocSize, and the new size is
 	 * just a small constant larger.
 	 */
-	size = offsetof(POLYGON, p) +sizeof(poly->p[0]) * path->npts;
+	size = offsetof(POLYGON, p) + sizeof(poly->p[0]) * path->npts;
 	poly = (POLYGON *) palloc(size);
 
 	SET_VARSIZE(poly, size);
@@ -4460,7 +4460,7 @@ box_poly(PG_FUNCTION_ARGS)
 	int			size;
 
 	/* map four corners of the box to a polygon */
-	size = offsetof(POLYGON, p) +sizeof(poly->p[0]) * 4;
+	size = offsetof(POLYGON, p) + sizeof(poly->p[0]) * 4;
 	poly = (POLYGON *) palloc(size);
 
 	SET_VARSIZE(poly, size);
@@ -4494,7 +4494,7 @@ poly_path(PG_FUNCTION_ARGS)
 	 * Never overflows: the old size fit in MaxAllocSize, and the new size is
 	 * smaller by a small constant.
 	 */
-	size = offsetof(PATH, p) +sizeof(path->p[0]) * poly->npts;
+	size = offsetof(PATH, p) + sizeof(path->p[0]) * poly->npts;
 	path = (PATH *) palloc(size);
 
 	SET_VARSIZE(path, size);
@@ -5172,7 +5172,7 @@ circle_poly(PG_FUNCTION_ARGS)
 				 errmsg("must request at least 2 points")));
 
 	base_size = sizeof(poly->p[0]) * npts;
-	size = offsetof(POLYGON, p) +base_size;
+	size = offsetof(POLYGON, p) + base_size;
 
 	/* Check for integer overflow */
 	if (base_size / npts != sizeof(poly->p[0]) || size <= base_size)

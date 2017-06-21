@@ -1260,7 +1260,7 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 							 quote_identifier(NameStr(idxrelrec->relname)),
 							 generate_relation_name(indrelid, NIL),
 							 quote_identifier(NameStr(amrec->amname)));
-		else	/* currently, must be EXCLUDE constraint */
+		else					/* currently, must be EXCLUDE constraint */
 			appendStringInfo(&buf, "EXCLUDE USING %s (",
 							 quote_identifier(NameStr(amrec->amname)));
 	}
@@ -7374,17 +7374,17 @@ isSimpleNode(Node *node, Node *parentNode, int prettyFlags)
 							return false;
 						return true;	/* own parentheses */
 					}
-				case T_BoolExpr:		/* lower precedence */
-				case T_ArrayRef:		/* other separators */
+				case T_BoolExpr:	/* lower precedence */
+				case T_ArrayRef:	/* other separators */
 				case T_ArrayExpr:		/* other separators */
-				case T_RowExpr:	/* other separators */
+				case T_RowExpr: /* other separators */
 				case T_CoalesceExpr:	/* own parentheses */
 				case T_MinMaxExpr:		/* own parentheses */
-				case T_XmlExpr:	/* own parentheses */
+				case T_XmlExpr: /* own parentheses */
 				case T_NullIfExpr:		/* other separators */
 				case T_Aggref:	/* own parentheses */
 				case T_WindowFunc:		/* own parentheses */
-				case T_CaseExpr:		/* other separators */
+				case T_CaseExpr:	/* other separators */
 					return true;
 				default:
 					return false;
@@ -7425,16 +7425,16 @@ isSimpleNode(Node *node, Node *parentNode, int prettyFlags)
 							return false;
 						return true;	/* own parentheses */
 					}
-				case T_ArrayRef:		/* other separators */
+				case T_ArrayRef:	/* other separators */
 				case T_ArrayExpr:		/* other separators */
-				case T_RowExpr:	/* other separators */
+				case T_RowExpr: /* other separators */
 				case T_CoalesceExpr:	/* own parentheses */
 				case T_MinMaxExpr:		/* own parentheses */
-				case T_XmlExpr:	/* own parentheses */
+				case T_XmlExpr: /* own parentheses */
 				case T_NullIfExpr:		/* other separators */
 				case T_Aggref:	/* own parentheses */
 				case T_WindowFunc:		/* own parentheses */
-				case T_CaseExpr:		/* other separators */
+				case T_CaseExpr:	/* other separators */
 					return true;
 				default:
 					return false;

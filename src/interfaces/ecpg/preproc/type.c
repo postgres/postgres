@@ -34,7 +34,7 @@ mm_strdup(const char *string)
 
 /* duplicate memberlist */
 struct ECPGstruct_member *
-ECPGstruct_member_dup(struct ECPGstruct_member * rm)
+ECPGstruct_member_dup(struct ECPGstruct_member *rm)
 {
 	struct ECPGstruct_member *new = NULL;
 
@@ -74,7 +74,7 @@ ECPGstruct_member_dup(struct ECPGstruct_member * rm)
 
 /* The NAME argument is copied. The type argument is preserved as a pointer. */
 void
-ECPGmake_struct_member(char *name, struct ECPGtype * type, struct ECPGstruct_member ** start)
+ECPGmake_struct_member(char *name, struct ECPGtype *type, struct ECPGstruct_member **start)
 {
 	struct ECPGstruct_member *ptr,
 			   *ne =
@@ -108,7 +108,7 @@ ECPGmake_simple_type(enum ECPGttype type, char *size, int counter)
 }
 
 struct ECPGtype *
-ECPGmake_array_type(struct ECPGtype * type, char *size)
+ECPGmake_array_type(struct ECPGtype *type, char *size)
 {
 	struct ECPGtype *ne = ECPGmake_simple_type(ECPGt_array, size, 0);
 
@@ -118,7 +118,7 @@ ECPGmake_array_type(struct ECPGtype * type, char *size)
 }
 
 struct ECPGtype *
-ECPGmake_struct_type(struct ECPGstruct_member * rm, enum ECPGttype type, char *type_name, char *struct_sizeof)
+ECPGmake_struct_type(struct ECPGstruct_member *rm, enum ECPGttype type, char *type_name, char *struct_sizeof)
 {
 	struct ECPGtype *ne = ECPGmake_simple_type(type, mm_strdup("1"), 0);
 
@@ -175,7 +175,7 @@ get_type(enum ECPGttype type)
 			break;
 		case ECPGt_varchar:
 			return ("ECPGt_varchar");
-		case ECPGt_NO_INDICATOR:		/* no indicator */
+		case ECPGt_NO_INDICATOR:	/* no indicator */
 			return ("ECPGt_NO_INDICATOR");
 			break;
 		case ECPGt_char_variable:		/* string that should not be quoted */
@@ -233,11 +233,11 @@ static void ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 				  char *varcharsize,
 				  char *arrsize, const char *size, const char *prefix, int);
 static void ECPGdump_a_struct(FILE *o, const char *name, const char *ind_name, char *arrsize,
-				  struct ECPGtype * type, struct ECPGtype * ind_type, const char *prefix, const char *ind_prefix);
+				  struct ECPGtype *type, struct ECPGtype *ind_type, const char *prefix, const char *ind_prefix);
 
 void
-ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type, const int brace_level,
- const char *ind_name, struct ECPGtype * ind_type, const int ind_brace_level,
+ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype *type, const int brace_level,
+  const char *ind_name, struct ECPGtype *ind_type, const int ind_brace_level,
 				const char *prefix, const char *ind_prefix,
 				char *arr_str_size, const char *struct_sizeof,
 				const char *ind_struct_sizeof)
@@ -569,7 +569,7 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 
 /* Penetrate a struct and dump the contents. */
 static void
-ECPGdump_a_struct(FILE *o, const char *name, const char *ind_name, char *arrsize, struct ECPGtype * type, struct ECPGtype * ind_type, const char *prefix, const char *ind_prefix)
+ECPGdump_a_struct(FILE *o, const char *name, const char *ind_name, char *arrsize, struct ECPGtype *type, struct ECPGtype *ind_type, const char *prefix, const char *ind_prefix)
 {
 	/*
 	 * If offset is NULL, then this is the first recursive level. If not then
@@ -617,7 +617,7 @@ ECPGdump_a_struct(FILE *o, const char *name, const char *ind_name, char *arrsize
 }
 
 void
-ECPGfree_struct_member(struct ECPGstruct_member * rm)
+ECPGfree_struct_member(struct ECPGstruct_member *rm)
 {
 	while (rm)
 	{
@@ -631,7 +631,7 @@ ECPGfree_struct_member(struct ECPGstruct_member * rm)
 }
 
 void
-ECPGfree_type(struct ECPGtype * type)
+ECPGfree_type(struct ECPGtype *type)
 {
 	if (!IS_SIMPLE_TYPE(type->type))
 	{

@@ -93,7 +93,7 @@ ginint4_queryextract(PG_FUNCTION_ARGS)
 			case RTOldContainsStrategyNumber:
 				if (*nentries > 0)
 					*searchMode = GIN_SEARCH_MODE_DEFAULT;
-				else	/* everything contains the empty set */
+				else			/* everything contains the empty set */
 					*searchMode = GIN_SEARCH_MODE_ALL;
 				break;
 			default:

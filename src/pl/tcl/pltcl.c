@@ -1039,7 +1039,7 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS, pltcl_call_state *call_state,
 	const char *result;
 	int			result_Objc;
 	Tcl_Obj   **result_Objv;
-	int rc		PG_USED_FOR_ASSERTS_ONLY;
+	int			rc PG_USED_FOR_ASSERTS_ONLY;
 
 	call_state->trigdata = trigdata;
 

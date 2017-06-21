@@ -192,33 +192,33 @@ typedef struct WalRcvExecResult
 
 /* libpqwalreceiver hooks */
 typedef WalReceiverConn *(*walrcv_connect_fn) (const char *conninfo, bool logical,
-														 const char *appname,
-														   char **err);
+											   const char *appname,
+											   char **err);
 typedef void (*walrcv_check_conninfo_fn) (const char *conninfo);
 typedef char *(*walrcv_get_conninfo_fn) (WalReceiverConn *conn);
 typedef char *(*walrcv_identify_system_fn) (WalReceiverConn *conn,
-													 TimeLineID *primary_tli,
-														int *server_version);
+											TimeLineID *primary_tli,
+											int *server_version);
 typedef void (*walrcv_readtimelinehistoryfile_fn) (WalReceiverConn *conn,
-															   TimeLineID tli,
-															 char **filename,
-												  char **content, int *size);
+												   TimeLineID tli,
+												   char **filename,
+												   char **content, int *size);
 typedef bool (*walrcv_startstreaming_fn) (WalReceiverConn *conn,
-										 const WalRcvStreamOptions *options);
+										  const WalRcvStreamOptions *options);
 typedef void (*walrcv_endstreaming_fn) (WalReceiverConn *conn,
-													TimeLineID *next_tli);
+										TimeLineID *next_tli);
 typedef int (*walrcv_receive_fn) (WalReceiverConn *conn, char **buffer,
-											  pgsocket *wait_fd);
+								  pgsocket *wait_fd);
 typedef void (*walrcv_send_fn) (WalReceiverConn *conn, const char *buffer,
-											int nbytes);
+								int nbytes);
 typedef char *(*walrcv_create_slot_fn) (WalReceiverConn *conn,
 										const char *slotname, bool temporary,
-										   CRSSnapshotAction snapshot_action,
-													XLogRecPtr *lsn);
+										CRSSnapshotAction snapshot_action,
+										XLogRecPtr *lsn);
 typedef WalRcvExecResult *(*walrcv_exec_fn) (WalReceiverConn *conn,
-														 const char *query,
-														 const int nRetTypes,
-														 const Oid *retTypes);
+											 const char *query,
+											 const int nRetTypes,
+											 const Oid *retTypes);
 typedef void (*walrcv_disconnect_fn) (WalReceiverConn *conn);
 
 typedef struct WalReceiverFunctionsType

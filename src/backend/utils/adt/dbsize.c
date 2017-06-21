@@ -889,7 +889,7 @@ pg_relation_filenode(PG_FUNCTION_ARGS)
 			/* okay, these have storage */
 			if (relform->relfilenode)
 				result = relform->relfilenode;
-			else	/* Consult the relation mapper */
+			else				/* Consult the relation mapper */
 				result = RelationMapOidToFilenode(relid,
 												  relform->relisshared);
 			break;
@@ -976,7 +976,7 @@ pg_relation_filepath(PG_FUNCTION_ARGS)
 				rnode.dbNode = MyDatabaseId;
 			if (relform->relfilenode)
 				rnode.relNode = relform->relfilenode;
-			else	/* Consult the relation mapper */
+			else				/* Consult the relation mapper */
 				rnode.relNode = RelationMapOidToFilenode(relid,
 													   relform->relisshared);
 			break;

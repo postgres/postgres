@@ -145,7 +145,7 @@ static shm_mq_result shm_mq_receive_bytes(shm_mq *mq, Size bytes_needed,
 					 bool nowait, Size *nbytesp, void **datap);
 static bool shm_mq_counterparty_gone(volatile shm_mq *mq,
 						 BackgroundWorkerHandle *handle);
-static bool shm_mq_wait_internal(volatile shm_mq *mq, PGPROC *volatile * ptr,
+static bool shm_mq_wait_internal(volatile shm_mq *mq, PGPROC *volatile *ptr,
 					 BackgroundWorkerHandle *handle);
 static uint64 shm_mq_get_bytes_read(volatile shm_mq *mq, bool *detached);
 static void shm_mq_inc_bytes_read(volatile shm_mq *mq, Size n);
@@ -365,7 +365,7 @@ shm_mq_sendv(shm_mq_handle *mqh, shm_mq_iovec *iov, int iovcnt, bool nowait)
 	{
 		Assert(mqh->mqh_partial_bytes < sizeof(Size));
 		res = shm_mq_send_bytes(mqh, sizeof(Size) - mqh->mqh_partial_bytes,
-								((char *) &nbytes) +mqh->mqh_partial_bytes,
+								((char *) &nbytes) + mqh->mqh_partial_bytes,
 								nowait, &bytes_written);
 
 		if (res == SHM_MQ_DETACHED)
@@ -1053,7 +1053,7 @@ shm_mq_counterparty_gone(volatile shm_mq *mq, BackgroundWorkerHandle *handle)
  * non-NULL when our counterpart attaches to the queue.
  */
 static bool
-shm_mq_wait_internal(volatile shm_mq *mq, PGPROC *volatile * ptr,
+shm_mq_wait_internal(volatile shm_mq *mq, PGPROC *volatile *ptr,
 					 BackgroundWorkerHandle *handle)
 {
 	bool		result = false;

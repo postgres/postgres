@@ -518,7 +518,7 @@ mdextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 
 	v = _mdfd_getseg(reln, forknum, blocknum, skipFsync, EXTENSION_CREATE);
 
-	seekpos = (off_t) BLCKSZ *(blocknum % ((BlockNumber) RELSEG_SIZE));
+	seekpos = (off_t) BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE));
 
 	Assert(seekpos < (off_t) BLCKSZ * RELSEG_SIZE);
 
@@ -664,7 +664,7 @@ mdprefetch(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum)
 
 	v = _mdfd_getseg(reln, forknum, blocknum, false, EXTENSION_FAIL);
 
-	seekpos = (off_t) BLCKSZ *(blocknum % ((BlockNumber) RELSEG_SIZE));
+	seekpos = (off_t) BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE));
 
 	Assert(seekpos < (off_t) BLCKSZ * RELSEG_SIZE);
 
@@ -715,7 +715,7 @@ mdwriteback(SMgrRelation reln, ForkNumber forknum,
 		Assert(nflush >= 1);
 		Assert(nflush <= nblocks);
 
-		seekpos = (off_t) BLCKSZ *(blocknum % ((BlockNumber) RELSEG_SIZE));
+		seekpos = (off_t) BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE));
 
 		FileWriteback(v->mdfd_vfd, seekpos, (off_t) BLCKSZ * nflush, WAIT_EVENT_DATA_FILE_FLUSH);
 
@@ -744,7 +744,7 @@ mdread(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 	v = _mdfd_getseg(reln, forknum, blocknum, false,
 					 EXTENSION_FAIL | EXTENSION_CREATE_RECOVERY);
 
-	seekpos = (off_t) BLCKSZ *(blocknum % ((BlockNumber) RELSEG_SIZE));
+	seekpos = (off_t) BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE));
 
 	Assert(seekpos < (off_t) BLCKSZ * RELSEG_SIZE);
 
@@ -820,7 +820,7 @@ mdwrite(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 	v = _mdfd_getseg(reln, forknum, blocknum, skipFsync,
 					 EXTENSION_FAIL | EXTENSION_CREATE_RECOVERY);
 
-	seekpos = (off_t) BLCKSZ *(blocknum % ((BlockNumber) RELSEG_SIZE));
+	seekpos = (off_t) BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE));
 
 	Assert(seekpos < (off_t) BLCKSZ * RELSEG_SIZE);
 

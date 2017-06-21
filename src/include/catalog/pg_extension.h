@@ -37,7 +37,7 @@ CATALOG(pg_extension,3079)
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
 	/* extversion may never be null, but the others can be. */
-	text extversion BKI_FORCE_NOT_NULL; /* extension version name */
+	text		extversion BKI_FORCE_NOT_NULL;	/* extension version name */
 	Oid			extconfig[1];	/* dumpable configuration tables */
 	text		extcondition[1];	/* WHERE clauses for config tables */
 #endif

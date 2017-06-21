@@ -32,7 +32,7 @@ slist_delete(slist_head *head, slist_node *node)
 {
 	slist_node *last = &head->head;
 	slist_node *cur;
-	bool found	PG_USED_FOR_ASSERTS_ONLY = false;
+	bool		found PG_USED_FOR_ASSERTS_ONLY = false;
 
 	while ((cur = last->next) != NULL)
 	{

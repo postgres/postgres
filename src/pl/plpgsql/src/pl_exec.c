@@ -5095,7 +5095,7 @@ plpgsql_exec_get_datum_type_info(PLpgSQL_execstate *estate,
 					*typmod = -1;
 				if (fno > 0)
 					*collation = rec->tupdesc->attrs[fno - 1]->attcollation;
-				else	/* no system column types have collation */
+				else			/* no system column types have collation */
 					*collation = InvalidOid;
 				break;
 			}

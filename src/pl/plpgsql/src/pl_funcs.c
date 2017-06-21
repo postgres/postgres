@@ -99,7 +99,7 @@ plpgsql_ns_additem(PLpgSQL_nsitem_type itemtype, int itemno, const char *name)
 	/* first item added must be a label */
 	Assert(ns_top != NULL || itemtype == PLPGSQL_NSTYPE_LABEL);
 
-	nse = palloc(offsetof(PLpgSQL_nsitem, name) +strlen(name) + 1);
+	nse = palloc(offsetof(PLpgSQL_nsitem, name) + strlen(name) + 1);
 	nse->itemtype = itemtype;
 	nse->itemno = itemno;
 	nse->prev = ns_top;

@@ -3049,7 +3049,7 @@ TriggerEnabled(EState *estate, ResultRelInfo *relinfo,
 			trigger->tgenabled == TRIGGER_DISABLED)
 			return false;
 	}
-	else	/* ORIGIN or LOCAL role */
+	else						/* ORIGIN or LOCAL role */
 	{
 		if (trigger->tgenabled == TRIGGER_FIRES_ON_REPLICA ||
 			trigger->tgenabled == TRIGGER_DISABLED)
@@ -3290,13 +3290,13 @@ typedef struct AfterTriggerEventDataOneCtid
 {
 	TriggerFlags ate_flags;		/* status bits and offset to shared data */
 	ItemPointerData ate_ctid1;	/* inserted, deleted, or old updated tuple */
-}	AfterTriggerEventDataOneCtid;
+}			AfterTriggerEventDataOneCtid;
 
 /* AfterTriggerEventData, minus ate_ctid1 and ate_ctid2 */
 typedef struct AfterTriggerEventDataZeroCtids
 {
 	TriggerFlags ate_flags;		/* status bits and offset to shared data */
-}	AfterTriggerEventDataZeroCtids;
+}			AfterTriggerEventDataZeroCtids;
 
 #define SizeofTriggerEvent(evt) \
 	(((evt)->ate_flags & AFTER_TRIGGER_TUP_BITS) == AFTER_TRIGGER_2CTID ? \

@@ -51,7 +51,7 @@ struct PushFilterOps
 	 * copied (in-place) returns 0 on error
 	 */
 	int			(*push) (PushFilter *next, void *priv,
-									 const uint8 *src, int len);
+						 const uint8 *src, int len);
 	int			(*flush) (PushFilter *next, void *priv);
 	void		(*free) (void *priv);
 };
@@ -69,7 +69,7 @@ struct PullFilterOps
 	 * use buf as work area if NULL in-place copy
 	 */
 	int			(*pull) (void *priv, PullFilter *src, int len,
-									 uint8 **data_p, uint8 *buf, int buflen);
+						 uint8 **data_p, uint8 *buf, int buflen);
 	void		(*free) (void *priv);
 };
 

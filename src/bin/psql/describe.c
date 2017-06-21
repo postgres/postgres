@@ -1864,8 +1864,8 @@ describeOneTableDetails(const char *schemaname,
 		if (verbose)
 			printfPQExpBuffer(&buf,
 							  "SELECT inhparent::pg_catalog.regclass,"
-							"		pg_get_expr(c.relpartbound, inhrelid),"
-						  "		pg_get_partition_constraintdef(inhrelid)"
+							  "		pg_get_expr(c.relpartbound, inhrelid),"
+							  "		pg_get_partition_constraintdef(inhrelid)"
 							  " FROM pg_catalog.pg_class c"
 							  " JOIN pg_catalog.pg_inherits"
 							  " ON c.oid = inhrelid"

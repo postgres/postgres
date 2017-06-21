@@ -1221,7 +1221,7 @@ ProcessUtilitySlow(ParseState *pstate,
 								AlterDomainValidateConstraint(stmt->typeName,
 															  stmt->name);
 							break;
-						default:		/* oops */
+						default:	/* oops */
 							elog(ERROR, "unrecognized alter domain type: %d",
 								 (int) stmt->subtype);
 							break;

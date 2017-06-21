@@ -112,7 +112,7 @@ static struct pg_tm tm;
 
 /* Initialize *S to a value based on GMTOFF, ISDST, and ABBRIND.  */
 static void
-init_ttinfo(struct ttinfo * s, int32 gmtoff, bool isdst, int abbrind)
+init_ttinfo(struct ttinfo *s, int32 gmtoff, bool isdst, int abbrind)
 {
 	s->tt_gmtoff = gmtoff;
 	s->tt_isdst = isdst;
@@ -189,7 +189,7 @@ union input_buffer
 
 	/* The entire buffer.  */
 	char		buf[2 * sizeof(struct tzhead) + 2 * sizeof(struct state)
-					+			4 * TZ_MAX_TIMES];
+					+ 4 * TZ_MAX_TIMES];
 };
 
 /* Local storage needed for 'tzloadbody'.  */
@@ -215,8 +215,8 @@ union local_storage
  * given name is stored there (the buffer must be > TZ_STRLEN_MAX bytes!).
  */
 static int
-tzloadbody(char const * name, char *canonname, struct state * sp, bool doextend,
-		   union local_storage * lsp)
+tzloadbody(char const *name, char *canonname, struct state *sp, bool doextend,
+		   union local_storage *lsp)
 {
 	int			i;
 	int			fid;
@@ -553,7 +553,7 @@ tzloadbody(char const * name, char *canonname, struct state * sp, bool doextend,
  * given name is stored there (the buffer must be > TZ_STRLEN_MAX bytes!).
  */
 int
-tzload(const char *name, char *canonname, struct state * sp, bool doextend)
+tzload(const char *name, char *canonname, struct state *sp, bool doextend)
 {
 	union local_storage *lsp = malloc(sizeof *lsp);
 
@@ -569,7 +569,7 @@ tzload(const char *name, char *canonname, struct state * sp, bool doextend)
 }
 
 static bool
-typesequiv(const struct state * sp, int a, int b)
+typesequiv(const struct state *sp, int a, int b)
 {
 	bool		result;
 
@@ -737,7 +737,7 @@ getoffset(const char *strp, int32 *offsetp)
  * Otherwise, return a pointer to the first character not part of the rule.
  */
 static const char *
-getrule(const char *strp, struct rule * rulep)
+getrule(const char *strp, struct rule *rulep)
 {
 	if (*strp == 'J')
 	{
@@ -797,7 +797,7 @@ getrule(const char *strp, struct rule * rulep)
  * effect, calculate the year-relative time that rule takes effect.
  */
 static int32
-transtime(int year, const struct rule * rulep,
+transtime(int year, const struct rule *rulep,
 		  int32 offset)
 {
 	bool		leapyear;
@@ -894,7 +894,7 @@ transtime(int year, const struct rule * rulep,
  * Returns true on success, false on failure.
  */
 bool
-tzparse(const char *name, struct state * sp, bool lastditch)
+tzparse(const char *name, struct state *sp, bool lastditch)
 {
 	const char *stdname;
 	const char *dstname = NULL;
@@ -1217,7 +1217,7 @@ tzparse(const char *name, struct state * sp, bool lastditch)
 }
 
 static void
-gmtload(struct state * sp)
+gmtload(struct state *sp)
 {
 	if (tzload(gmt, NULL, sp, true) != 0)
 		tzparse(gmt, sp, true);
@@ -1231,8 +1231,8 @@ gmtload(struct state * sp)
  * but it *is* desirable.)
  */
 static struct pg_tm *
-localsub(struct state const * sp, pg_time_t const * timep,
-		 struct pg_tm * tmp)
+localsub(struct state const *sp, pg_time_t const *timep,
+		 struct pg_tm *tmp)
 {
 	const struct ttinfo *ttisp;
 	int			i;
@@ -1323,7 +1323,7 @@ pg_localtime(const pg_time_t *timep, const pg_tz *tz)
  * Except we have a private "struct state" for GMT, so no sp is passed in.
  */
 static struct pg_tm *
-gmtsub(pg_time_t const * timep, int32 offset, struct pg_tm * tmp)
+gmtsub(pg_time_t const *timep, int32 offset, struct pg_tm *tmp)
 {
 	struct pg_tm *result;
 
@@ -1370,7 +1370,7 @@ leaps_thru_end_of(const int y)
 
 static struct pg_tm *
 timesub(const pg_time_t *timep, int32 offset,
-		const struct state * sp, struct pg_tm * tmp)
+		const struct state *sp, struct pg_tm *tmp)
 {
 	const struct lsinfo *lp;
 	pg_time_t	tdays;

@@ -74,7 +74,7 @@ typedef struct ParamListInfoData
 	int			numParams;		/* number of ParamExternDatas following */
 	struct Bitmapset *paramMask;	/* if non-NULL, can ignore omitted params */
 	ParamExternData params[FLEXIBLE_ARRAY_MEMBER];
-}	ParamListInfoData;
+}			ParamListInfoData;
 
 
 /* ----------------

@@ -687,7 +687,7 @@ ExecHashJoinNewBatch(HashJoinState *hjstate)
 			BufFileClose(hashtable->outerBatchFile[curbatch]);
 		hashtable->outerBatchFile[curbatch] = NULL;
 	}
-	else	/* we just finished the first batch */
+	else						/* we just finished the first batch */
 	{
 		/*
 		 * Reset some of the skew optimization state variables, since we no

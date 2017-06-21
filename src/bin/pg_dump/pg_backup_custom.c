@@ -478,7 +478,7 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te)
 						  "possibly due to out-of-order restore request, "
 				  "which cannot be handled due to non-seekable input file\n",
 						  te->dumpId);
-		else	/* huh, the dataPos led us to EOF? */
+		else					/* huh, the dataPos led us to EOF? */
 			exit_horribly(modulename, "could not find block ID %d in archive -- "
 						  "possibly corrupt archive\n",
 						  te->dumpId);

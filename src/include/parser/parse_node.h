@@ -80,8 +80,8 @@ typedef Node *(*PreParseColumnRefHook) (ParseState *pstate, ColumnRef *cref);
 typedef Node *(*PostParseColumnRefHook) (ParseState *pstate, ColumnRef *cref, Node *var);
 typedef Node *(*ParseParamRefHook) (ParseState *pstate, ParamRef *pref);
 typedef Node *(*CoerceParamHook) (ParseState *pstate, Param *param,
-									   Oid targetTypeId, int32 targetTypeMod,
-											  int location);
+								  Oid targetTypeId, int32 targetTypeMod,
+								  int location);
 
 
 /*

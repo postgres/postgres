@@ -16,7 +16,7 @@
 #define LIBPQ_FE_H
 
 #ifdef __cplusplus
-extern		"C"
+extern "C"
 {
 #endif
 
@@ -253,14 +253,14 @@ typedef struct pgresAttDesc
 /* make a new client connection to the backend */
 /* Asynchronous (non-blocking) */
 extern PGconn *PQconnectStart(const char *conninfo);
-extern PGconn *PQconnectStartParams(const char *const * keywords,
-					 const char *const * values, int expand_dbname);
+extern PGconn *PQconnectStartParams(const char *const *keywords,
+					 const char *const *values, int expand_dbname);
 extern PostgresPollingStatusType PQconnectPoll(PGconn *conn);
 
 /* Synchronous (blocking) */
 extern PGconn *PQconnectdb(const char *conninfo);
-extern PGconn *PQconnectdbParams(const char *const * keywords,
-				  const char *const * values, int expand_dbname);
+extern PGconn *PQconnectdbParams(const char *const *keywords,
+				  const char *const *values, int expand_dbname);
 extern PGconn *PQsetdbLogin(const char *pghost, const char *pgport,
 			 const char *pgoptions, const char *pgtty,
 			 const char *dbName,
@@ -333,7 +333,7 @@ extern int	PQsetClientEncoding(PGconn *conn, const char *encoding);
 extern int	PQsslInUse(PGconn *conn);
 extern void *PQsslStruct(PGconn *conn, const char *struct_name);
 extern const char *PQsslAttribute(PGconn *conn, const char *attribute_name);
-extern const char *const * PQsslAttributeNames(PGconn *conn);
+extern const char *const *PQsslAttributeNames(PGconn *conn);
 
 /* Get the OpenSSL structure associated with a connection. Returns NULL for
  * unencrypted connections or if any other TLS library is in use. */
@@ -383,7 +383,7 @@ extern PGresult *PQexecParams(PGconn *conn,
 			 const char *command,
 			 int nParams,
 			 const Oid *paramTypes,
-			 const char *const * paramValues,
+			 const char *const *paramValues,
 			 const int *paramLengths,
 			 const int *paramFormats,
 			 int resultFormat);
@@ -393,7 +393,7 @@ extern PGresult *PQprepare(PGconn *conn, const char *stmtName,
 extern PGresult *PQexecPrepared(PGconn *conn,
 			   const char *stmtName,
 			   int nParams,
-			   const char *const * paramValues,
+			   const char *const *paramValues,
 			   const int *paramLengths,
 			   const int *paramFormats,
 			   int resultFormat);
@@ -404,7 +404,7 @@ extern int PQsendQueryParams(PGconn *conn,
 				  const char *command,
 				  int nParams,
 				  const Oid *paramTypes,
-				  const char *const * paramValues,
+				  const char *const *paramValues,
 				  const int *paramLengths,
 				  const int *paramFormats,
 				  int resultFormat);
@@ -414,7 +414,7 @@ extern int PQsendPrepare(PGconn *conn, const char *stmtName,
 extern int PQsendQueryPrepared(PGconn *conn,
 					const char *stmtName,
 					int nParams,
-					const char *const * paramValues,
+					const char *const *paramValues,
 					const int *paramLengths,
 					const int *paramFormats,
 					int resultFormat);
@@ -445,8 +445,8 @@ extern int	PQsetnonblocking(PGconn *conn, int arg);
 extern int	PQisnonblocking(const PGconn *conn);
 extern int	PQisthreadsafe(void);
 extern PGPing PQping(const char *conninfo);
-extern PGPing PQpingParams(const char *const * keywords,
-			 const char *const * values, int expand_dbname);
+extern PGPing PQpingParams(const char *const *keywords,
+			 const char *const *values, int expand_dbname);
 
 /* Force the write buffer to be written (or at least try) */
 extern int	PQflush(PGconn *conn);

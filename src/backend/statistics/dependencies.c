@@ -409,7 +409,7 @@ statext_dependencies_build(int numrows, HeapTuple *rows, Bitmapset *attrs,
 				continue;
 
 			d = (MVDependency *) palloc0(offsetof(MVDependency, attributes)
-										 +k * sizeof(AttrNumber));
+										 + k * sizeof(AttrNumber));
 
 			/* copy the dependency (and keep the indexes into stxkeys) */
 			d->degree = degree;
@@ -431,7 +431,7 @@ statext_dependencies_build(int numrows, HeapTuple *rows, Bitmapset *attrs,
 			dependencies->ndeps++;
 			dependencies = (MVDependencies *) repalloc(dependencies,
 											   offsetof(MVDependencies, deps)
-								+dependencies->ndeps * sizeof(MVDependency));
+							   + dependencies->ndeps * sizeof(MVDependency));
 
 			dependencies->deps[dependencies->ndeps - 1] = d;
 		}
@@ -552,7 +552,7 @@ statext_dependencies_deserialize(bytea *data)
 
 	/* allocate space for the MCV items */
 	dependencies = repalloc(dependencies, offsetof(MVDependencies, deps)
-							+(dependencies->ndeps * sizeof(MVDependency *)));
+							+ (dependencies->ndeps * sizeof(MVDependency *)));
 
 	for (i = 0; i < dependencies->ndeps; i++)
 	{
@@ -573,7 +573,7 @@ statext_dependencies_deserialize(bytea *data)
 
 		/* now that we know the number of attributes, allocate the dependency */
 		d = (MVDependency *) palloc0(offsetof(MVDependency, attributes)
-									 +(k * sizeof(AttrNumber)));
+									 + (k * sizeof(AttrNumber)));
 
 		d->degree = degree;
 		d->nattributes = k;

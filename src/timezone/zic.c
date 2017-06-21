@@ -137,9 +137,9 @@ static char lowerit(char);
 static void mkdirs(char const *, bool);
 static void newabbr(const char *abbr);
 static zic_t oadd(zic_t t1, zic_t t2);
-static void outzone(const struct zone * zp, ptrdiff_t ntzones);
-static zic_t rpytime(const struct rule * rp, zic_t wantedy);
-static void rulesub(struct rule * rp,
+static void outzone(const struct zone *zp, ptrdiff_t ntzones);
+static zic_t rpytime(const struct rule *rp, zic_t wantedy);
+static void rulesub(struct rule *rp,
 		const char *loyearp, const char *hiyearp,
 		const char *typep, const char *monthp,
 		const char *dayp, const char *timep);
@@ -291,7 +291,7 @@ struct lookup
 };
 
 static struct lookup const *byword(const char *string,
-	   const struct lookup * lp);
+	   const struct lookup *lp);
 
 static struct lookup const line_codes[] = {
 	{"Rule", LC_RULE},
@@ -372,7 +372,7 @@ static struct attype
 	zic_t		at;
 	bool		dontmerge;
 	unsigned char type;
-}	*attypes;
+}		   *attypes;
 static zic_t gmtoffs[TZ_MAX_TYPES];
 static char isdsts[TZ_MAX_TYPES];
 static unsigned char abbrinds[TZ_MAX_TYPES];
@@ -423,7 +423,7 @@ erealloc(void *ptr, size_t size)
 }
 
 static char *
-ecpyalloc(char const * str)
+ecpyalloc(char const *str)
 {
 	return memcheck(strdup(str));
 }
@@ -449,7 +449,7 @@ growalloc(void *ptr, size_t itemsize, ptrdiff_t nitems, ptrdiff_t *nitems_alloc)
  */
 
 static void
-eats(char const * name, lineno_t num, char const * rname, lineno_t rnum)
+eats(char const *name, lineno_t num, char const *rname, lineno_t rnum)
 {
 	filename = name;
 	linenum = num;
@@ -458,7 +458,7 @@ eats(char const * name, lineno_t num, char const * rname, lineno_t rnum)
 }
 
 static void
-eat(char const * name, lineno_t num)
+eat(char const *name, lineno_t num)
 {
 	eats(name, num, NULL, -1);
 }
@@ -503,7 +503,7 @@ warning(const char *string,...)
 }
 
 static void
-close_file(FILE *stream, char const * dir, char const * name)
+close_file(FILE *stream, char const *dir, char const *name)
 {
 	char const *e = (ferror(stream) ? _("I/O error")
 					 : fclose(stream) != 0 ? strerror(errno) : NULL);
@@ -536,7 +536,7 @@ usage(FILE *stream, int status)
    ancestors.  After this is done, all files are accessed with names
    relative to DIR.  */
 static void
-change_directory(char const * dir)
+change_directory(char const *dir)
 {
 	if (chdir(dir) != 0)
 	{
@@ -720,8 +720,8 @@ main(int argc, char *argv[])
 }
 
 static bool
-componentcheck(char const * name, char const * component,
-			   char const * component_end)
+componentcheck(char const *name, char const *component,
+			   char const *component_end)
 {
 	enum
 	{
@@ -812,7 +812,7 @@ namecheck(const char *name)
  */
 #ifdef HAVE_SYMLINK
 static char *
-relname(char const * from, char const * to)
+relname(char const *from, char const *to)
 {
 	size_t		i,
 				taillen,
@@ -857,7 +857,7 @@ relname(char const * from, char const * to)
 /* Hard link FROM to TO, following any symbolic links.
    Return 0 if successful, an error number otherwise.  */
 static int
-hardlinkerr(char const * from, char const * to)
+hardlinkerr(char const *from, char const *to)
 {
 	int			r = linkat(AT_FDCWD, from, AT_FDCWD, to, AT_SYMLINK_FOLLOW);
 
@@ -865,7 +865,7 @@ hardlinkerr(char const * from, char const * to)
 }
 
 static void
-dolink(char const * fromfield, char const * tofield, bool staysymlink)
+dolink(char const *fromfield, char const *tofield, bool staysymlink)
 {
 	bool		todirs_made = false;
 	int			link_errno;
@@ -1009,7 +1009,7 @@ static const zic_t early_time = (WORK_AROUND_GNOME_BUG_730332
 
 /* Return true if NAME is a directory.  */
 static bool
-itsdir(char const * name)
+itsdir(char const *name)
 {
 	struct stat st;
 	int			res = stat(name, &st);
@@ -1034,7 +1034,7 @@ itsdir(char const * name)
 
 /* Return true if NAME is a symbolic link.  */
 static bool
-itssymlink(char const * name)
+itssymlink(char const *name)
 {
 #ifdef HAVE_SYMLINK
 	char		c;
@@ -1250,7 +1250,7 @@ infile(const char *name)
  * Call error with errstring and return zero on errors.
  */
 static zic_t
-gethms(char const * string, char const * errstring, bool signable)
+gethms(char const *string, char const *errstring, bool signable)
 {
 	/* PG: make hh be int not zic_t to avoid sscanf portability issues */
 	int			hh;
@@ -1634,7 +1634,7 @@ inlink(char **fields, int nfields)
 }
 
 static void
-rulesub(struct rule * rp, const char *loyearp, const char *hiyearp,
+rulesub(struct rule *rp, const char *loyearp, const char *hiyearp,
 		const char *typep, const char *monthp, const char *dayp,
 		const char *timep)
 {
@@ -2323,7 +2323,7 @@ abbroffset(char *buf, zic_t offset)
 }
 
 static size_t
-doabbr(char *abbr, struct zone const * zp, char const * letters,
+doabbr(char *abbr, struct zone const *zp, char const *letters,
 	   zic_t stdoff, bool doquotes)
 {
 	char	   *cp;
@@ -2409,7 +2409,7 @@ stringoffset(char *result, zic_t offset)
 }
 
 static int
-stringrule(char *result, const struct rule * const rp, const zic_t dstoff,
+stringrule(char *result, const struct rule *const rp, const zic_t dstoff,
 		   const zic_t gmtoff)
 {
 	zic_t		tod = rp->r_tod;
@@ -2491,7 +2491,7 @@ stringrule(char *result, const struct rule * const rp, const zic_t dstoff,
 }
 
 static int
-rule_cmp(struct rule const * a, struct rule const * b)
+rule_cmp(struct rule const *a, struct rule const *b)
 {
 	if (!a)
 		return -!!b;
@@ -2509,7 +2509,7 @@ enum
 YEAR_BY_YEAR_ZONE = 1};
 
 static int
-stringzone(char *result, struct zone const * zpfirst, ptrdiff_t zonecount)
+stringzone(char *result, struct zone const *zpfirst, ptrdiff_t zonecount)
 {
 	const struct zone *zp;
 	struct rule *rp;
@@ -2644,7 +2644,7 @@ stringzone(char *result, struct zone const * zpfirst, ptrdiff_t zonecount)
 }
 
 static void
-outzone(const struct zone * zpfirst, ptrdiff_t zonecount)
+outzone(const struct zone *zpfirst, ptrdiff_t zonecount)
 {
 	const struct zone *zp;
 	struct rule *rp;
@@ -3045,7 +3045,7 @@ addtt(zic_t starttime, int type)
 }
 
 static int
-addtype(zic_t gmtoff, char const * abbr, bool isdst, bool ttisstd, bool ttisgmt)
+addtype(zic_t gmtoff, char const *abbr, bool isdst, bool ttisstd, bool ttisgmt)
 {
 	int			i,
 				j;
@@ -3144,7 +3144,7 @@ adjleap(void)
 }
 
 static char *
-shellquote(char *b, char const * s)
+shellquote(char *b, char const *s)
 {
 	*b++ = '\'';
 	while (*s)
@@ -3363,7 +3363,7 @@ itsabbr(const char *abbr, const char *word)
 }
 
 static const struct lookup *
-byword(const char *word, const struct lookup * table)
+byword(const char *word, const struct lookup *table)
 {
 	const struct lookup *foundlp;
 	const struct lookup *lp;
@@ -3478,7 +3478,7 @@ tadd(zic_t t1, zic_t t2)
  */
 
 static zic_t
-rpytime(const struct rule * rp, zic_t wantedy)
+rpytime(const struct rule *rp, zic_t wantedy)
 {
 	int			m,
 				i;
@@ -3570,7 +3570,7 @@ will not work with pre-2004 versions of zic"));
 		return min_time;
 	if (dayoff > max_time / SECSPERDAY)
 		return max_time;
-	t = (zic_t) dayoff *SECSPERDAY;
+	t = (zic_t) dayoff * SECSPERDAY;
 
 	return tadd(t, rp->r_tod);
 }
@@ -3614,7 +3614,7 @@ newabbr(const char *string)
    do it for ARGNAME too.  Exit with failure if there is trouble.
    Do not consider an existing non-directory to be trouble.  */
 static void
-mkdirs(char const * argname, bool ancestors)
+mkdirs(char const *argname, bool ancestors)
 {
 	char	   *name;
 	char	   *cp;

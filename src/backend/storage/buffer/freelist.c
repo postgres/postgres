@@ -94,7 +94,7 @@ typedef struct BufferAccessStrategyData
 	 * struct.
 	 */
 	Buffer		buffers[FLEXIBLE_ARRAY_MEMBER];
-}	BufferAccessStrategyData;
+}			BufferAccessStrategyData;
 
 
 /* Prototypes for internal functions */

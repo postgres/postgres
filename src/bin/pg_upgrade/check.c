@@ -919,16 +919,16 @@ check_for_reg_data_type_usage(ClusterInfo *cluster)
 								"WHERE	c.oid = a.attrelid AND "
 								"		NOT a.attisdropped AND "
 								"		a.atttypid IN ( "
-		  "			'pg_catalog.regproc'::pg_catalog.regtype, "
-								"			'pg_catalog.regprocedure'::pg_catalog.regtype, "
-		  "			'pg_catalog.regoper'::pg_catalog.regtype, "
-								"			'pg_catalog.regoperator'::pg_catalog.regtype, "
+					  "			'pg_catalog.regproc'::pg_catalog.regtype, "
+				 "			'pg_catalog.regprocedure'::pg_catalog.regtype, "
+					  "			'pg_catalog.regoper'::pg_catalog.regtype, "
+				  "			'pg_catalog.regoperator'::pg_catalog.regtype, "
 		/* regclass.oid is preserved, so 'regclass' is OK */
 		/* regtype.oid is preserved, so 'regtype' is OK */
-		"			'pg_catalog.regconfig'::pg_catalog.regtype, "
-								"			'pg_catalog.regdictionary'::pg_catalog.regtype) AND "
+					"			'pg_catalog.regconfig'::pg_catalog.regtype, "
+			"			'pg_catalog.regdictionary'::pg_catalog.regtype) AND "
 								"		c.relnamespace = n.oid AND "
-								"		n.nspname NOT IN ('pg_catalog', 'information_schema')");
+			 "		n.nspname NOT IN ('pg_catalog', 'information_schema')");
 
 		ntups = PQntuples(res);
 		i_nspname = PQfnumber(res, "nspname");
@@ -1015,11 +1015,11 @@ check_for_jsonb_9_4_usage(ClusterInfo *cluster)
 								"		pg_catalog.pg_attribute a "
 								"WHERE	c.oid = a.attrelid AND "
 								"		NOT a.attisdropped AND "
-								"		a.atttypid = 'pg_catalog.jsonb'::pg_catalog.regtype AND "
+			"		a.atttypid = 'pg_catalog.jsonb'::pg_catalog.regtype AND "
 								"		c.relnamespace = n.oid AND "
 		/* exclude possible orphaned temp tables */
 								"  		n.nspname !~ '^pg_temp_' AND "
-								"		n.nspname NOT IN ('pg_catalog', 'information_schema')");
+			 "		n.nspname NOT IN ('pg_catalog', 'information_schema')");
 
 		ntups = PQntuples(res);
 		i_nspname = PQfnumber(res, "nspname");

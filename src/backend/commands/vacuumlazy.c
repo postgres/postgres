@@ -363,10 +363,10 @@ lazy_vacuum_rel(Relation onerel, int options, VacuumParams *params,
 			write_rate = 0;
 			if ((secs > 0) || (usecs > 0))
 			{
-				read_rate = (double) BLCKSZ *VacuumPageMiss / (1024 * 1024) /
-							(secs + usecs / 1000000.0);
-				write_rate = (double) BLCKSZ *VacuumPageDirty / (1024 * 1024) /
-							(secs + usecs / 1000000.0);
+				read_rate = (double) BLCKSZ * VacuumPageMiss / (1024 * 1024) /
+					(secs + usecs / 1000000.0);
+				write_rate = (double) BLCKSZ * VacuumPageDirty / (1024 * 1024) /
+					(secs + usecs / 1000000.0);
 			}
 
 			/*

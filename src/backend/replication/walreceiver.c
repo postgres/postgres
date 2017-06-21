@@ -106,7 +106,7 @@ static struct
 {
 	XLogRecPtr	Write;			/* last byte + 1 written out in the standby */
 	XLogRecPtr	Flush;			/* last byte + 1 flushed in the standby */
-}	LogstreamResult;
+}			LogstreamResult;
 
 static StringInfoData reply_message;
 static StringInfoData incoming_message;

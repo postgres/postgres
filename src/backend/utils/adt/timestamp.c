@@ -455,7 +455,7 @@ timestamptz_in(PG_FUNCTION_ARGS)
  * don't care, so we don't bother being consistent.
  */
 static int
-parse_sane_timezone(struct pg_tm * tm, text *zone)
+parse_sane_timezone(struct pg_tm *tm, text *zone)
 {
 	char		tzname[TZ_STRLEN_MAX + 1];
 	int			rt;
@@ -1526,7 +1526,7 @@ EncodeSpecialTimestamp(Timestamp dt, char *str)
 		strcpy(str, EARLY);
 	else if (TIMESTAMP_IS_NOEND(dt))
 		strcpy(str, LATE);
-	else	/* shouldn't happen */
+	else						/* shouldn't happen */
 		elog(ERROR, "invalid argument for EncodeSpecialTimestamp");
 }
 
@@ -1740,7 +1740,7 @@ dt2time(Timestamp jd, int *hour, int *min, int *sec, fsec_t *fsec)
 	time -= (*min) * USECS_PER_MINUTE;
 	*sec = time / USECS_PER_SEC;
 	*fsec = time - (*sec * USECS_PER_SEC);
-}	/* dt2time() */
+}								/* dt2time() */
 
 
 /*
@@ -1755,7 +1755,7 @@ dt2time(Timestamp jd, int *hour, int *min, int *sec, fsec_t *fsec)
  * If attimezone is NULL, the global timezone setting will be used.
  */
 int
-timestamp2tm(Timestamp dt, int *tzp, struct pg_tm * tm, fsec_t *fsec, const char **tzn, pg_tz *attimezone)
+timestamp2tm(Timestamp dt, int *tzp, struct pg_tm *tm, fsec_t *fsec, const char **tzn, pg_tz *attimezone)
 {
 	Timestamp	date;
 	Timestamp	time;
@@ -1851,7 +1851,7 @@ timestamp2tm(Timestamp dt, int *tzp, struct pg_tm * tm, fsec_t *fsec, const char
  * Returns -1 on failure (value out of range).
  */
 int
-tm2timestamp(struct pg_tm * tm, fsec_t fsec, int *tzp, Timestamp *result)
+tm2timestamp(struct pg_tm *tm, fsec_t fsec, int *tzp, Timestamp *result)
 {
 	TimeOffset	date;
 	TimeOffset	time;
@@ -1899,7 +1899,7 @@ tm2timestamp(struct pg_tm * tm, fsec_t fsec, int *tzp, Timestamp *result)
  * Convert an interval data type to a tm structure.
  */
 int
-interval2tm(Interval span, struct pg_tm * tm, fsec_t *fsec)
+interval2tm(Interval span, struct pg_tm *tm, fsec_t *fsec)
 {
 	TimeOffset	time;
 	TimeOffset	tfrac;
@@ -1927,7 +1927,7 @@ interval2tm(Interval span, struct pg_tm * tm, fsec_t *fsec)
 }
 
 int
-tm2interval(struct pg_tm * tm, fsec_t fsec, Interval *span)
+tm2interval(struct pg_tm *tm, fsec_t fsec, Interval *span)
 {
 	double		total_months = (double) tm->tm_year * MONTHS_PER_YEAR + tm->tm_mon;
 
@@ -1981,7 +1981,7 @@ interval_finite(PG_FUNCTION_ARGS)
  *---------------------------------------------------------*/
 
 void
-GetEpochTime(struct pg_tm * tm)
+GetEpochTime(struct pg_tm *tm)
 {
 	struct pg_tm *t0;
 	pg_time_t	epoch = 0;
@@ -2011,7 +2011,7 @@ SetEpochTimestamp(void)
 	tm2timestamp(tm, 0, NULL, &dt);
 
 	return dt;
-}	/* SetEpochTimestamp() */
+}								/* SetEpochTimestamp() */
 
 /*
  * We are currently sharing some code between timestamp and timestamptz.
@@ -4930,7 +4930,7 @@ timestamp_izone(PG_FUNCTION_ARGS)
 				 errmsg("timestamp out of range")));
 
 	PG_RETURN_TIMESTAMPTZ(result);
-}	/* timestamp_izone() */
+}								/* timestamp_izone() */
 
 /* timestamp_timestamptz()
  * Convert local timestamp to timestamp at GMT

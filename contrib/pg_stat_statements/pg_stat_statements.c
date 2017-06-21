@@ -250,7 +250,7 @@ typedef enum
 	PGSS_TRACK_NONE,			/* track no statements */
 	PGSS_TRACK_TOP,				/* only top level statements */
 	PGSS_TRACK_ALL				/* all statements, including nested ones */
-}	PGSSTrackLevel;
+}			PGSSTrackLevel;
 
 static const struct config_enum_entry track_options[] =
 {

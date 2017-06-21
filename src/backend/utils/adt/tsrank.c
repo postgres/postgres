@@ -910,7 +910,7 @@ calc_rank_cd(const float4 *arrdata, TSVector txt, TSQuery query, int method)
 		CurExtPos = ((double) (ext.q + ext.p)) / 2.0;
 		if (NExtent > 0 && CurExtPos > PrevExtPos		/* prevent division by
 														 * zero in a case of
-				multiple lexize */ )
+			  * multiple lexize */ )
 			SumDist += 1.0 / (CurExtPos - PrevExtPos);
 
 		PrevExtPos = CurExtPos;

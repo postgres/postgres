@@ -71,8 +71,8 @@
  * Function prototypes -- internal to this file only
  */
 
-static AbsoluteTime tm2abstime(struct pg_tm * tm, int tz);
-static void reltime2tm(RelativeTime time, struct pg_tm * tm);
+static AbsoluteTime tm2abstime(struct pg_tm *tm, int tz);
+static void reltime2tm(RelativeTime time, struct pg_tm *tm);
 static void parsetinterval(char *i_string,
 			   AbsoluteTime *i_start,
 			   AbsoluteTime *i_end);
@@ -96,7 +96,7 @@ GetCurrentAbsoluteTime(void)
 
 
 void
-abstime2tm(AbsoluteTime _time, int *tzp, struct pg_tm * tm, char **tzn)
+abstime2tm(AbsoluteTime _time, int *tzp, struct pg_tm *tm, char **tzn)
 {
 	pg_time_t	time = (pg_time_t) _time;
 	struct pg_tm *tx;
@@ -148,7 +148,7 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct pg_tm * tm, char **tzn)
  * Note that tm has full year (not 1900-based) and 1-based month.
  */
 static AbsoluteTime
-tm2abstime(struct pg_tm * tm, int tz)
+tm2abstime(struct pg_tm *tm, int tz)
 {
 	int			day;
 	AbsoluteTime sec;
@@ -680,7 +680,7 @@ reltimesend(PG_FUNCTION_ARGS)
 
 
 static void
-reltime2tm(RelativeTime time, struct pg_tm * tm)
+reltime2tm(RelativeTime time, struct pg_tm *tm)
 {
 	double		dtime = time;
 

@@ -66,7 +66,7 @@
  */
 typedef Size (*EOM_get_flat_size_method) (ExpandedObjectHeader *eohptr);
 typedef void (*EOM_flatten_into_method) (ExpandedObjectHeader *eohptr,
-										  void *result, Size allocated_size);
+										 void *result, Size allocated_size);
 
 /* Struct of function pointers for an expanded object's methods */
 typedef struct ExpandedObjectMethods

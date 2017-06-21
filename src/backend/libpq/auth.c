@@ -92,8 +92,8 @@ static int	auth_peer(hbaPort *port);
 #define PGSQL_PAM_SERVICE "postgresql"	/* Service name passed to PAM */
 
 static int	CheckPAMAuth(Port *port, char *user, char *password);
-static int pam_passwd_conv_proc(int num_msg, const struct pam_message ** msg,
-					 struct pam_response ** resp, void *appdata_ptr);
+static int pam_passwd_conv_proc(int num_msg, const struct pam_message **msg,
+					 struct pam_response **resp, void *appdata_ptr);
 
 static struct pam_conv pam_passw_conv = {
 	&pam_passwd_conv_proc,
@@ -132,11 +132,11 @@ static int	CheckBSDAuth(Port *port, char *user);
 /* Correct header from the Platform SDK */
 typedef
 ULONG		(*__ldap_start_tls_sA) (
-												IN PLDAP ExternalHandle,
-												OUT PULONG ServerReturnValue,
-												OUT LDAPMessage **result,
-										   IN PLDAPControlA * ServerControls,
-											IN PLDAPControlA * ClientControls
+									IN PLDAP ExternalHandle,
+									OUT PULONG ServerReturnValue,
+									OUT LDAPMessage **result,
+									IN PLDAPControlA * ServerControls,
+									IN PLDAPControlA * ClientControls
 );
 #endif
 
@@ -182,7 +182,7 @@ static int	pg_GSS_recvauth(Port *port);
 #ifdef ENABLE_SSPI
 typedef SECURITY_STATUS
 			(WINAPI * QUERY_SECURITY_CONTEXT_TOKEN_FN) (
-													   PCtxtHandle, void **);
+														PCtxtHandle, void **);
 static int	pg_SSPI_recvauth(Port *port);
 static int pg_SSPI_make_upn(char *accountname,
 				 size_t accountnamesize,
@@ -1337,6 +1337,7 @@ pg_SSPI_recvauth(Port *port)
 	DWORD		domainnamesize = sizeof(domainname);
 	SID_NAME_USE accountnameuse;
 	HMODULE		secur32;
+
 	QUERY_SECURITY_CONTEXT_TOKEN_FN _QuerySecurityContextToken;
 
 	/*
@@ -2023,8 +2024,8 @@ auth_peer(hbaPort *port)
  */
 
 static int
-pam_passwd_conv_proc(int num_msg, const struct pam_message ** msg,
-					 struct pam_response ** resp, void *appdata_ptr)
+pam_passwd_conv_proc(int num_msg, const struct pam_message **msg,
+					 struct pam_response **resp, void *appdata_ptr)
 {
 	char	   *passwd;
 	struct pam_response *reply;
@@ -2919,7 +2920,7 @@ PerformRadiusTransaction(char *server, char *secret, char *portstr, char *identi
 	addrsize = sizeof(struct sockaddr_in);
 #endif
 
-	if (bind(sock, (struct sockaddr *) & localaddr, addrsize))
+	if (bind(sock, (struct sockaddr *) &localaddr, addrsize))
 	{
 		ereport(LOG,
 				(errmsg("could not bind local RADIUS socket: %m")));
@@ -3010,7 +3011,7 @@ PerformRadiusTransaction(char *server, char *secret, char *portstr, char *identi
 
 		addrsize = sizeof(remoteaddr);
 		packetlength = recvfrom(sock, receive_buffer, RADIUS_BUFFER_SIZE, 0,
-								(struct sockaddr *) & remoteaddr, &addrsize);
+								(struct sockaddr *) &remoteaddr, &addrsize);
 		if (packetlength < 0)
 		{
 			ereport(LOG,

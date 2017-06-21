@@ -63,7 +63,7 @@ typedef struct xl_hash_createidx
 	double		num_tuples;
 	RegProcedure procid;
 	uint16		ffactor;
-}	xl_hash_createidx;
+}			xl_hash_createidx;
 #define SizeOfHashCreateIdx (offsetof(xl_hash_createidx, ffactor) + sizeof(uint16))
 
 /*

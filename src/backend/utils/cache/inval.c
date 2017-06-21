@@ -194,7 +194,7 @@ static struct SYSCACHECALLBACK
 	int16		link;			/* next callback index+1 for same cache */
 	SyscacheCallbackFunction function;
 	Datum		arg;
-}	syscache_callback_list[MAX_SYSCACHE_CALLBACKS];
+}			syscache_callback_list[MAX_SYSCACHE_CALLBACKS];
 
 static int16 syscache_callback_links[SysCacheSize];
 
@@ -204,7 +204,7 @@ static struct RELCACHECALLBACK
 {
 	RelcacheCallbackFunction function;
 	Datum		arg;
-}	relcache_callback_list[MAX_RELCACHE_CALLBACKS];
+}			relcache_callback_list[MAX_RELCACHE_CALLBACKS];
 
 static int	relcache_callback_count = 0;
 

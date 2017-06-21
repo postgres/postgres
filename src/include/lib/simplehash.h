@@ -121,7 +121,7 @@ typedef struct SH_TYPE
 
 	/* user defined data, useful for callbacks */
 	void	   *private_data;
-}	SH_TYPE;
+}			SH_TYPE;
 
 typedef enum SH_STATUS
 {
@@ -134,19 +134,19 @@ typedef struct SH_ITERATOR
 	uint32		cur;			/* current element */
 	uint32		end;
 	bool		done;			/* iterator exhausted? */
-}	SH_ITERATOR;
+}			SH_ITERATOR;
 
 /* externally visible function prototypes */
-SH_SCOPE SH_TYPE *SH_CREATE(MemoryContext ctx, uint32 nelements,
+SH_SCOPE	SH_TYPE *SH_CREATE(MemoryContext ctx, uint32 nelements,
 		  void *private_data);
 SH_SCOPE void SH_DESTROY(SH_TYPE * tb);
 SH_SCOPE void SH_GROW(SH_TYPE * tb, uint32 newsize);
-SH_SCOPE SH_ELEMENT_TYPE *SH_INSERT(SH_TYPE * tb, SH_KEY_TYPE key, bool *found);
-SH_SCOPE SH_ELEMENT_TYPE *SH_LOOKUP(SH_TYPE * tb, SH_KEY_TYPE key);
+SH_SCOPE	SH_ELEMENT_TYPE *SH_INSERT(SH_TYPE * tb, SH_KEY_TYPE key, bool *found);
+SH_SCOPE	SH_ELEMENT_TYPE *SH_LOOKUP(SH_TYPE * tb, SH_KEY_TYPE key);
 SH_SCOPE bool SH_DELETE(SH_TYPE * tb, SH_KEY_TYPE key);
 SH_SCOPE void SH_START_ITERATE(SH_TYPE * tb, SH_ITERATOR * iter);
 SH_SCOPE void SH_START_ITERATE_AT(SH_TYPE * tb, SH_ITERATOR * iter, uint32 at);
-SH_SCOPE SH_ELEMENT_TYPE *SH_ITERATE(SH_TYPE * tb, SH_ITERATOR * iter);
+SH_SCOPE	SH_ELEMENT_TYPE *SH_ITERATE(SH_TYPE * tb, SH_ITERATOR * iter);
 SH_SCOPE void SH_STAT(SH_TYPE * tb);
 
 #endif   /* SH_DECLARE */
@@ -324,7 +324,7 @@ SH_FREE(SH_TYPE * type, void *pointer)
  * Memory other than for the array of elements will still be allocated from
  * the passed-in context.
  */
-SH_SCOPE SH_TYPE *
+SH_SCOPE	SH_TYPE *
 SH_CREATE(MemoryContext ctx, uint32 nelements, void *private_data)
 {
 	SH_TYPE    *tb;
@@ -470,7 +470,7 @@ SH_GROW(SH_TYPE * tb, uint32 newsize)
  * already exists, false otherwise. Returns the hash-table entry in either
  * case.
  */
-SH_SCOPE SH_ELEMENT_TYPE *
+SH_SCOPE	SH_ELEMENT_TYPE *
 SH_INSERT(SH_TYPE * tb, SH_KEY_TYPE key, bool *found)
 {
 	uint32		hash = SH_HASH_KEY(tb, key);
@@ -634,7 +634,7 @@ restart:
 /*
  * Lookup up entry in hash table.  Returns NULL if key not present.
  */
-SH_SCOPE SH_ELEMENT_TYPE *
+SH_SCOPE	SH_ELEMENT_TYPE *
 SH_LOOKUP(SH_TYPE * tb, SH_KEY_TYPE key)
 {
 	uint32		hash = SH_HASH_KEY(tb, key);
@@ -803,7 +803,7 @@ SH_START_ITERATE_AT(SH_TYPE * tb, SH_ITERATOR * iter, uint32 at)
  * deletions), but if so, there's neither a guarantee that all nodes are
  * visited at least once, nor a guarantee that a node is visited at most once.
  */
-SH_SCOPE SH_ELEMENT_TYPE *
+SH_SCOPE	SH_ELEMENT_TYPE *
 SH_ITERATE(SH_TYPE * tb, SH_ITERATOR * iter)
 {
 	while (!iter->done)

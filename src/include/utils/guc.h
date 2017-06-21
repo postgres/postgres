@@ -335,7 +335,7 @@ extern void DefineCustomEnumVariable(
 						 const char *long_desc,
 						 int *valueAddr,
 						 int bootValue,
-						 const struct config_enum_entry * options,
+						 const struct config_enum_entry *options,
 						 GucContext context,
 						 int flags,
 						 GucEnumCheckHook check_hook,

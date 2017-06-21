@@ -908,7 +908,7 @@ mp_int_sqr(mp_int a, mp_int c)
 	CHECK(a != NULL && c != NULL);
 
 	/* Get a temporary buffer big enough to hold the result */
-	osize = (mp_size) 4 *((MP_USED(a) + 1) / 2);
+	osize = (mp_size) 4 * ((MP_USED(a) + 1) / 2);
 
 	if (a == c)
 	{
@@ -1613,8 +1613,8 @@ mp_int_gcd(mp_int a, mp_int b, mp_int c)
 
 CLEANUP:
 	mp_int_clear(&v);
-V: mp_int_clear(&u);
-U: mp_int_clear(&t);
+V:	mp_int_clear(&u);
+U:	mp_int_clear(&t);
 
 	return res;
 }
@@ -3512,7 +3512,7 @@ s_outlen(mp_int z, mp_size r)
 	double		raw;
 
 	bits = mp_int_count_bits(z);
-	raw = (double) bits *s_log2[r];
+	raw = (double) bits * s_log2[r];
 
 	return (int) (raw + 0.999999);
 }

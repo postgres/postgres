@@ -61,6 +61,7 @@ typedef struct mpz
 	mp_size		used;
 	mp_sign		sign;
 } mpz_t    ,
+
 		   *mp_int;
 
 #define MP_DIGITS(Z) ((Z)->digits)
@@ -117,9 +118,9 @@ mp_result	mp_int_mul_value(mp_int a, int value, mp_int c);
 mp_result	mp_int_mul_pow2(mp_int a, int p2, mp_int c);
 mp_result	mp_int_sqr(mp_int a, mp_int c);		/* c = a * a */
 
-mp_result mp_int_div(mp_int a, mp_int b,	/* q = a / b */
+mp_result mp_int_div(mp_int a, mp_int b,			/* q = a / b */
 		   mp_int q, mp_int r); /* r = a % b */
-mp_result mp_int_div_value(mp_int a, int value,	/* q = a / value */
+mp_result mp_int_div_value(mp_int a, int value,			/* q = a / value */
 				 mp_int q, int *r);		/* r = a % value */
 mp_result mp_int_div_pow2(mp_int a, int p2,		/* q = a / 2^p2  */
 				mp_int q, mp_int r);	/* r = q % 2^p2  */

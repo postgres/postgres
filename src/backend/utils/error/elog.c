@@ -627,7 +627,7 @@ errcode_for_file_access(void)
 		case ENOTDIR:			/* Not a directory */
 		case EISDIR:			/* Is a directory */
 #if defined(ENOTEMPTY) && (ENOTEMPTY != EEXIST) /* same code on AIX */
-		case ENOTEMPTY: /* Directory not empty */
+		case ENOTEMPTY:			/* Directory not empty */
 #endif
 			edata->sqlerrcode = ERRCODE_WRONG_OBJECT_TYPE;
 			break;

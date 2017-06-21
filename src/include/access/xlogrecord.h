@@ -146,7 +146,8 @@ typedef struct XLogRecordBlockImageHeader
 /* Information stored in bimg_info */
 #define BKPIMAGE_HAS_HOLE		0x01	/* page image has "hole" */
 #define BKPIMAGE_IS_COMPRESSED		0x02		/* page image is compressed */
-#define BKPIMAGE_APPLY		0x04	/* page image should be restored during replay */
+#define BKPIMAGE_APPLY		0x04	/* page image should be restored during
+									 * replay */
 
 /*
  * Extra header information used when page image has "hole" and
@@ -195,7 +196,7 @@ typedef struct XLogRecordDataHeaderShort
 {
 	uint8		id;				/* XLR_BLOCK_ID_DATA_SHORT */
 	uint8		data_length;	/* number of payload bytes */
-}	XLogRecordDataHeaderShort;
+}			XLogRecordDataHeaderShort;
 
 #define SizeOfXLogRecordDataHeaderShort (sizeof(uint8) * 2)
 
@@ -203,7 +204,7 @@ typedef struct XLogRecordDataHeaderLong
 {
 	uint8		id;				/* XLR_BLOCK_ID_DATA_LONG */
 	/* followed by uint32 data_length, unaligned */
-}	XLogRecordDataHeaderLong;
+}			XLogRecordDataHeaderLong;
 
 #define SizeOfXLogRecordDataHeaderLong (sizeof(uint8) + sizeof(uint32))
 

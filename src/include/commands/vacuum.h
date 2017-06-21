@@ -59,12 +59,12 @@
 typedef struct VacAttrStats *VacAttrStatsP;
 
 typedef Datum (*AnalyzeAttrFetchFunc) (VacAttrStatsP stats, int rownum,
-												   bool *isNull);
+									   bool *isNull);
 
 typedef void (*AnalyzeAttrComputeStatsFunc) (VacAttrStatsP stats,
-											  AnalyzeAttrFetchFunc fetchfunc,
-														 int samplerows,
-														 double totalrows);
+											 AnalyzeAttrFetchFunc fetchfunc,
+											 int samplerows,
+											 double totalrows);
 
 typedef struct VacAttrStats
 {

@@ -54,9 +54,9 @@ typedef enum
  *	by providing a callback of this form.
  */
 typedef void (*ResourceReleaseCallback) (ResourceReleasePhase phase,
-													 bool isCommit,
-													 bool isTopLevel,
-													 void *arg);
+										 bool isCommit,
+										 bool isTopLevel,
+										 void *arg);
 
 
 /*

@@ -1804,7 +1804,7 @@ lookup_proof_cache(Oid pred_op, Oid clause_op, bool refute_it)
 	clause_op_infos = get_op_btree_interpretation(clause_op);
 	if (clause_op_infos)
 		pred_op_infos = get_op_btree_interpretation(pred_op);
-	else	/* no point in looking */
+	else						/* no point in looking */
 		pred_op_infos = NIL;
 
 	foreach(lcp, pred_op_infos)

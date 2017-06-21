@@ -318,7 +318,7 @@ rj_init(PX_Cipher *c, const uint8 *key, unsigned klen, const uint8 *iv)
 }
 
 static int
-rj_real_init(struct int_ctx * cx, int dir)
+rj_real_init(struct int_ctx *cx, int dir)
 {
 	aes_set_key(&cx->ctx.rj, cx->keybuf, cx->keylen * 8, dir);
 	return 0;

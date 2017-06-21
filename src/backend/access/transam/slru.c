@@ -340,7 +340,7 @@ SimpleLruWaitIO(SlruCtl ctl, int slotno)
 			/* indeed, the I/O must have failed */
 			if (shared->page_status[slotno] == SLRU_PAGE_READ_IN_PROGRESS)
 				shared->page_status[slotno] = SLRU_PAGE_EMPTY;
-			else	/* write_in_progress */
+			else				/* write_in_progress */
 			{
 				shared->page_status[slotno] = SLRU_PAGE_VALID;
 				shared->page_dirty[slotno] = true;

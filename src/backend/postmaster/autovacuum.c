@@ -242,7 +242,7 @@ typedef enum
 	AutoVacForkFailed,			/* failed trying to start a worker */
 	AutoVacRebalance,			/* rebalance the cost limits */
 	AutoVacNumSignals			/* must be last */
-}	AutoVacuumSignal;
+}			AutoVacuumSignal;
 
 /*-------------
  * The main autovacuum shmem struct.  On shared memory we store this main
@@ -321,7 +321,7 @@ NON_EXEC_STATIC void AutoVacLauncherMain(int argc, char *argv[]) pg_attribute_no
 
 static Oid	do_start_worker(void);
 static void launcher_determine_sleep(bool canlaunch, bool recursing,
-						 struct timeval * nap);
+						 struct timeval *nap);
 static void launch_worker(TimestampTz now);
 static List *get_database_list(void);
 static void rebuild_database_list(Oid newdb);
@@ -849,7 +849,7 @@ shutdown:
  * cause a long sleep, which will be interrupted when a worker exits.
  */
 static void
-launcher_determine_sleep(bool canlaunch, bool recursing, struct timeval * nap)
+launcher_determine_sleep(bool canlaunch, bool recursing, struct timeval *nap)
 {
 	/*
 	 * We sleep until the next scheduled vacuum.  We trust that when the

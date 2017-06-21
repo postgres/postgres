@@ -136,15 +136,15 @@ static void do_serialize(char **destptr, Size *maxbytes, const char *fmt,...) pg
 
 static void set_config_sourcefile(const char *name, char *sourcefile,
 					  int sourceline);
-static bool call_bool_check_hook(struct config_bool * conf, bool *newval,
+static bool call_bool_check_hook(struct config_bool *conf, bool *newval,
 					 void **extra, GucSource source, int elevel);
-static bool call_int_check_hook(struct config_int * conf, int *newval,
+static bool call_int_check_hook(struct config_int *conf, int *newval,
 					void **extra, GucSource source, int elevel);
-static bool call_real_check_hook(struct config_real * conf, double *newval,
+static bool call_real_check_hook(struct config_real *conf, double *newval,
 					 void **extra, GucSource source, int elevel);
-static bool call_string_check_hook(struct config_string * conf, char **newval,
+static bool call_string_check_hook(struct config_string *conf, char **newval,
 					   void **extra, GucSource source, int elevel);
-static bool call_enum_check_hook(struct config_enum * conf, int *newval,
+static bool call_enum_check_hook(struct config_enum *conf, int *newval,
 					 void **extra, GucSource source, int elevel);
 
 static bool check_log_destination(char **newval, void **extra, GucSource source);
@@ -3951,17 +3951,17 @@ static int	GUCNestLevel = 0;	/* 1 when in main transaction */
 static int	guc_var_compare(const void *a, const void *b);
 static int	guc_name_compare(const char *namea, const char *nameb);
 static void InitializeGUCOptionsFromEnvironment(void);
-static void InitializeOneGUCOption(struct config_generic * gconf);
-static void push_old_value(struct config_generic * gconf, GucAction action);
-static void ReportGUCOption(struct config_generic * record);
-static void reapply_stacked_values(struct config_generic * variable,
-					   struct config_string * pHolder,
+static void InitializeOneGUCOption(struct config_generic *gconf);
+static void push_old_value(struct config_generic *gconf, GucAction action);
+static void ReportGUCOption(struct config_generic *record);
+static void reapply_stacked_values(struct config_generic *variable,
+					   struct config_string *pHolder,
 					   GucStack *stack,
 					   const char *curvalue,
 					   GucContext curscontext, GucSource cursource);
 static void ShowGUCConfigOption(const char *name, DestReceiver *dest);
 static void ShowAllGUCConfig(DestReceiver *dest);
-static char *_ShowOption(struct config_generic * record, bool use_units);
+static char *_ShowOption(struct config_generic *record, bool use_units);
 static bool validate_option_array_item(const char *name, const char *value,
 						   bool skipIfNoPermissions);
 static void write_auto_conf_file(int fd, const char *filename, ConfigVariable *head_p);
@@ -4022,7 +4022,7 @@ guc_strdup(int elevel, const char *src)
  * Detect whether strval is referenced anywhere in a GUC string item
  */
 static bool
-string_field_used(struct config_string * conf, char *strval)
+string_field_used(struct config_string *conf, char *strval)
 {
 	GucStack   *stack;
 
@@ -4045,7 +4045,7 @@ string_field_used(struct config_string * conf, char *strval)
  * states).
  */
 static void
-set_string_field(struct config_string * conf, char **field, char *newval)
+set_string_field(struct config_string *conf, char **field, char *newval)
 {
 	char	   *oldval = *field;
 
@@ -4061,7 +4061,7 @@ set_string_field(struct config_string * conf, char **field, char *newval)
  * Detect whether an "extra" struct is referenced anywhere in a GUC item
  */
 static bool
-extra_field_used(struct config_generic * gconf, void *extra)
+extra_field_used(struct config_generic *gconf, void *extra)
 {
 	GucStack   *stack;
 
@@ -4106,7 +4106,7 @@ extra_field_used(struct config_generic * gconf, void *extra)
  * states).
  */
 static void
-set_extra_field(struct config_generic * gconf, void **field, void *newval)
+set_extra_field(struct config_generic *gconf, void **field, void *newval)
 {
 	void	   *oldval = *field;
 
@@ -4126,7 +4126,7 @@ set_extra_field(struct config_generic * gconf, void **field, void *newval)
  * initialized to NULL before this is used, else we'll try to free() them.
  */
 static void
-set_stack_value(struct config_generic * gconf, config_var_value *val)
+set_stack_value(struct config_generic *gconf, config_var_value *val)
 {
 	switch (gconf->vartype)
 	{
@@ -4160,7 +4160,7 @@ set_stack_value(struct config_generic * gconf, config_var_value *val)
  * The "extra" field associated with the stack entry is cleared, too.
  */
 static void
-discard_stack_value(struct config_generic * gconf, config_var_value *val)
+discard_stack_value(struct config_generic *gconf, config_var_value *val)
 {
 	switch (gconf->vartype)
 	{
@@ -4283,7 +4283,7 @@ build_guc_variables(void)
  * list is expanded if needed.
  */
 static bool
-add_guc_variable(struct config_generic * var, int elevel)
+add_guc_variable(struct config_generic *var, int elevel)
 {
 	if (num_guc_variables + 1 >= size_guc_variables)
 	{
@@ -4420,8 +4420,8 @@ find_option(const char *name, bool create_placeholders, int elevel)
 static int
 guc_var_compare(const void *a, const void *b)
 {
-	const struct config_generic *confa = *(struct config_generic * const *) a;
-	const struct config_generic *confb = *(struct config_generic * const *) b;
+	const struct config_generic *confa = *(struct config_generic *const *) a;
+	const struct config_generic *confb = *(struct config_generic *const *) b;
 
 	return guc_name_compare(confa->name, confb->name);
 }
@@ -4566,7 +4566,7 @@ InitializeGUCOptionsFromEnvironment(void)
  * might fail, but that the hooks might wish to compute an "extra" struct.
  */
 static void
-InitializeOneGUCOption(struct config_generic * gconf)
+InitializeOneGUCOption(struct config_generic *gconf)
 {
 	gconf->status = 0;
 	gconf->source = PGC_S_DEFAULT;
@@ -4961,7 +4961,7 @@ ResetAllOptions(void)
  *		Push previous state during transactional assignment to a GUC variable.
  */
 static void
-push_old_value(struct config_generic * gconf, GucAction action)
+push_old_value(struct config_generic *gconf, GucAction action)
 {
 	GucStack   *stack;
 
@@ -5138,7 +5138,7 @@ AtEOXact_GUC(bool isCommit, int nestLevel)
 					/* we keep the current active value */
 					discard_stack_value(gconf, &stack->prior);
 				}
-				else	/* must be GUC_LOCAL */
+				else			/* must be GUC_LOCAL */
 					restorePrior = true;
 			}
 			else if (prev == NULL ||
@@ -5385,7 +5385,7 @@ BeginReportingGUCOptions(void)
  * ReportGUCOption: if appropriate, transmit option value to frontend
  */
 static void
-ReportGUCOption(struct config_generic * record)
+ReportGUCOption(struct config_generic *record)
 {
 	if (reporting_enabled && (record->flags & GUC_REPORT))
 	{
@@ -5614,7 +5614,7 @@ parse_real(const char *value, double *result)
  * allocated for modification.
  */
 const char *
-config_enum_lookup_by_value(struct config_enum * record, int val)
+config_enum_lookup_by_value(struct config_enum *record, int val)
 {
 	const struct config_enum_entry *entry;
 
@@ -5637,7 +5637,7 @@ config_enum_lookup_by_value(struct config_enum * record, int val)
  * true. If it's not found, return FALSE and retval is set to 0.
  */
 bool
-config_enum_lookup_by_name(struct config_enum * record, const char *value,
+config_enum_lookup_by_name(struct config_enum *record, const char *value,
 						   int *retval)
 {
 	const struct config_enum_entry *entry;
@@ -5663,7 +5663,7 @@ config_enum_lookup_by_name(struct config_enum * record, const char *value,
  * If suffix is non-NULL, it is added to the end of the string.
  */
 static char *
-config_enum_get_options(struct config_enum * record, const char *prefix,
+config_enum_get_options(struct config_enum *record, const char *prefix,
 						const char *suffix, const char *separator)
 {
 	const struct config_enum_entry *entry;
@@ -5721,10 +5721,10 @@ config_enum_get_options(struct config_enum * record, const char *prefix,
  * Returns true if OK, false if not (or throws error, if elevel >= ERROR)
  */
 static bool
-parse_and_validate_value(struct config_generic * record,
+parse_and_validate_value(struct config_generic *record,
 						 const char *name, const char *value,
 						 GucSource source, int elevel,
-						 union config_var_val * newval, void **newextra)
+						 union config_var_val *newval, void **newextra)
 {
 	switch (record->vartype)
 	{
@@ -7545,7 +7545,7 @@ init_custom_variable(const char *name,
  * variable into the GUC variable array, replacing any placeholder.
  */
 static void
-define_custom_variable(struct config_generic * variable)
+define_custom_variable(struct config_generic *variable)
 {
 	const char *name = variable->name;
 	const char **nameAddr = &name;
@@ -7645,8 +7645,8 @@ define_custom_variable(struct config_generic * variable)
  * fashion implied by the stack entry.
  */
 static void
-reapply_stacked_values(struct config_generic * variable,
-					   struct config_string * pHolder,
+reapply_stacked_values(struct config_generic *variable,
+					   struct config_string *pHolder,
 					   GucStack *stack,
 					   const char *curvalue,
 					   GucContext curscontext, GucSource cursource)
@@ -7842,7 +7842,7 @@ DefineCustomEnumVariable(const char *name,
 						 const char *long_desc,
 						 int *valueAddr,
 						 int bootValue,
-						 const struct config_enum_entry * options,
+						 const struct config_enum_entry *options,
 						 GucContext context,
 						 int flags,
 						 GucEnumCheckHook check_hook,
@@ -8630,7 +8630,7 @@ show_all_file_settings(PG_FUNCTION_ARGS)
 }
 
 static char *
-_ShowOption(struct config_generic * record, bool use_units)
+_ShowOption(struct config_generic *record, bool use_units)
 {
 	char		buffer[256];
 	const char *val;
@@ -8741,7 +8741,7 @@ _ShowOption(struct config_generic * record, bool use_units)
  *		variable scontext, integer
  */
 static void
-write_one_nondefault_variable(FILE *fp, struct config_generic * gconf)
+write_one_nondefault_variable(FILE *fp, struct config_generic *gconf)
 {
 	if (gconf->source == PGC_S_DEFAULT)
 		return;
@@ -8977,7 +8977,7 @@ read_nondefault_variables(void)
  * never sends these, and RestoreGUCState() never changes them.
  */
 static bool
-can_skip_gucvar(struct config_generic * gconf)
+can_skip_gucvar(struct config_generic *gconf)
 {
 	return gconf->context == PGC_POSTMASTER ||
 		gconf->context == PGC_INTERNAL || gconf->source == PGC_S_DEFAULT;
@@ -8990,7 +8990,7 @@ can_skip_gucvar(struct config_generic * gconf)
  * It's OK to overestimate, but not to underestimate.
  */
 static Size
-estimate_variable_size(struct config_generic * gconf)
+estimate_variable_size(struct config_generic *gconf)
 {
 	Size		size;
 	Size		valsize = 0;
@@ -9162,7 +9162,7 @@ do_serialize_binary(char **destptr, Size *maxbytes, void *val, Size valsize)
  */
 static void
 serialize_variable(char **destptr, Size *maxbytes,
-				   struct config_generic * gconf)
+				   struct config_generic *gconf)
 {
 	if (can_skip_gucvar(gconf))
 		return;
@@ -9783,7 +9783,7 @@ GUC_check_errcode(int sqlerrcode)
  */
 
 static bool
-call_bool_check_hook(struct config_bool * conf, bool *newval, void **extra,
+call_bool_check_hook(struct config_bool *conf, bool *newval, void **extra,
 					 GucSource source, int elevel)
 {
 	/* Quick success if no hook */
@@ -9817,7 +9817,7 @@ call_bool_check_hook(struct config_bool * conf, bool *newval, void **extra,
 }
 
 static bool
-call_int_check_hook(struct config_int * conf, int *newval, void **extra,
+call_int_check_hook(struct config_int *conf, int *newval, void **extra,
 					GucSource source, int elevel)
 {
 	/* Quick success if no hook */
@@ -9851,7 +9851,7 @@ call_int_check_hook(struct config_int * conf, int *newval, void **extra,
 }
 
 static bool
-call_real_check_hook(struct config_real * conf, double *newval, void **extra,
+call_real_check_hook(struct config_real *conf, double *newval, void **extra,
 					 GucSource source, int elevel)
 {
 	/* Quick success if no hook */
@@ -9885,7 +9885,7 @@ call_real_check_hook(struct config_real * conf, double *newval, void **extra,
 }
 
 static bool
-call_string_check_hook(struct config_string * conf, char **newval, void **extra,
+call_string_check_hook(struct config_string *conf, char **newval, void **extra,
 					   GucSource source, int elevel)
 {
 	/* Quick success if no hook */
@@ -9919,7 +9919,7 @@ call_string_check_hook(struct config_string * conf, char **newval, void **extra,
 }
 
 static bool
-call_enum_check_hook(struct config_enum * conf, int *newval, void **extra,
+call_enum_check_hook(struct config_enum *conf, int *newval, void **extra,
 					 GucSource source, int elevel)
 {
 	/* Quick success if no hook */

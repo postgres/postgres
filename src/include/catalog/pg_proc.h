@@ -65,10 +65,10 @@ CATALOG(pg_proc,1255) BKI_BOOTSTRAP BKI_ROWTYPE_OID(81) BKI_SCHEMA_MACRO
 	Oid			proallargtypes[1];		/* all param types (NULL if IN only) */
 	char		proargmodes[1]; /* parameter modes (NULL if IN only) */
 	text		proargnames[1]; /* parameter names (NULL if no names) */
-	pg_node_tree proargdefaults;/* list of expression trees for argument
-								 * defaults (NULL if none) */
+	pg_node_tree proargdefaults;	/* list of expression trees for argument
+									 * defaults (NULL if none) */
 	Oid			protrftypes[1]; /* types for which to apply transforms */
-	text prosrc BKI_FORCE_NOT_NULL;		/* procedure source text */
+	text		prosrc BKI_FORCE_NOT_NULL;		/* procedure source text */
 	text		probin;			/* secondary procedure info (can be NULL) */
 	text		proconfig[1];	/* procedure-local GUC settings */
 	aclitem		proacl[1];		/* access permissions */

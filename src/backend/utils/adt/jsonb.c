@@ -1661,7 +1661,7 @@ jsonb_agg_transfn(PG_FUNCTION_ARGS)
 				{
 					/* same for numeric */
 					v.val.numeric =
-					DatumGetNumeric(DirectFunctionCall1(numeric_uplus,
+						DatumGetNumeric(DirectFunctionCall1(numeric_uplus,
 											NumericGetDatum(v.val.numeric)));
 				}
 				result->res = pushJsonbValue(&result->parseState,
@@ -1891,7 +1891,7 @@ jsonb_object_agg_transfn(PG_FUNCTION_ARGS)
 				{
 					/* same for numeric */
 					v.val.numeric =
-					DatumGetNumeric(DirectFunctionCall1(numeric_uplus,
+						DatumGetNumeric(DirectFunctionCall1(numeric_uplus,
 											NumericGetDatum(v.val.numeric)));
 				}
 				result->res = pushJsonbValue(&result->parseState,

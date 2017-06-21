@@ -646,7 +646,7 @@ check_db(const char *dbname, const char *role, Oid roleid, List *tokens)
 }
 
 static bool
-ipv4eq(struct sockaddr_in * a, struct sockaddr_in * b)
+ipv4eq(struct sockaddr_in *a, struct sockaddr_in *b)
 {
 	return (a->sin_addr.s_addr == b->sin_addr.s_addr);
 }
@@ -654,7 +654,7 @@ ipv4eq(struct sockaddr_in * a, struct sockaddr_in * b)
 #ifdef HAVE_IPV6
 
 static bool
-ipv6eq(struct sockaddr_in6 * a, struct sockaddr_in6 * b)
+ipv6eq(struct sockaddr_in6 *a, struct sockaddr_in6 *b)
 {
 	int			i;
 
@@ -747,7 +747,7 @@ check_hostname(hbaPort *port, const char *hostname)
 			if (gai->ai_addr->sa_family == AF_INET)
 			{
 				if (ipv4eq((struct sockaddr_in *) gai->ai_addr,
-						   (struct sockaddr_in *) & port->raddr.addr))
+						   (struct sockaddr_in *) &port->raddr.addr))
 				{
 					found = true;
 					break;
@@ -757,7 +757,7 @@ check_hostname(hbaPort *port, const char *hostname)
 			else if (gai->ai_addr->sa_family == AF_INET6)
 			{
 				if (ipv6eq((struct sockaddr_in6 *) gai->ai_addr,
-						   (struct sockaddr_in6 *) & port->raddr.addr))
+						   (struct sockaddr_in6 *) &port->raddr.addr))
 				{
 					found = true;
 					break;
@@ -783,7 +783,7 @@ check_hostname(hbaPort *port, const char *hostname)
  * Check to see if a connecting IP matches the given address and netmask.
  */
 static bool
-check_ip(SockAddr *raddr, struct sockaddr * addr, struct sockaddr * mask)
+check_ip(SockAddr *raddr, struct sockaddr *addr, struct sockaddr *mask)
 {
 	if (raddr->addr.ss_family == addr->sa_family &&
 		pg_range_sockaddr(&raddr->addr,
@@ -797,7 +797,7 @@ check_ip(SockAddr *raddr, struct sockaddr * addr, struct sockaddr * mask)
  * pg_foreach_ifaddr callback: does client addr match this machine interface?
  */
 static void
-check_network_callback(struct sockaddr * addr, struct sockaddr * netmask,
+check_network_callback(struct sockaddr *addr, struct sockaddr *netmask,
 					   void *cb_data)
 {
 	check_network_data *cn = (check_network_data *) cb_data;
@@ -811,7 +811,7 @@ check_network_callback(struct sockaddr * addr, struct sockaddr * netmask,
 	{
 		/* Make an all-ones netmask of appropriate length for family */
 		pg_sockaddr_cidr_mask(&mask, NULL, addr->sa_family);
-		cn->result = check_ip(cn->raddr, addr, (struct sockaddr *) & mask);
+		cn->result = check_ip(cn->raddr, addr, (struct sockaddr *) &mask);
 	}
 	else
 	{
@@ -2041,8 +2041,8 @@ check_hba(hbaPort *port)
 					else
 					{
 						if (!check_ip(&port->raddr,
-									  (struct sockaddr *) & hba->addr,
-									  (struct sockaddr *) & hba->mask))
+									  (struct sockaddr *) &hba->addr,
+									  (struct sockaddr *) &hba->mask))
 							continue;
 					}
 					break;

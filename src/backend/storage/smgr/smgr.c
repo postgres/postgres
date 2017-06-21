@@ -41,23 +41,23 @@ typedef struct f_smgr
 	void		(*smgr_shutdown) (void);		/* may be NULL */
 	void		(*smgr_close) (SMgrRelation reln, ForkNumber forknum);
 	void		(*smgr_create) (SMgrRelation reln, ForkNumber forknum,
-											bool isRedo);
+								bool isRedo);
 	bool		(*smgr_exists) (SMgrRelation reln, ForkNumber forknum);
 	void		(*smgr_unlink) (RelFileNodeBackend rnode, ForkNumber forknum,
-											bool isRedo);
+								bool isRedo);
 	void		(*smgr_extend) (SMgrRelation reln, ForkNumber forknum,
 						 BlockNumber blocknum, char *buffer, bool skipFsync);
 	void		(*smgr_prefetch) (SMgrRelation reln, ForkNumber forknum,
-											  BlockNumber blocknum);
+								  BlockNumber blocknum);
 	void		(*smgr_read) (SMgrRelation reln, ForkNumber forknum,
-										  BlockNumber blocknum, char *buffer);
+							  BlockNumber blocknum, char *buffer);
 	void		(*smgr_write) (SMgrRelation reln, ForkNumber forknum,
 						 BlockNumber blocknum, char *buffer, bool skipFsync);
 	void		(*smgr_writeback) (SMgrRelation reln, ForkNumber forknum,
-								  BlockNumber blocknum, BlockNumber nblocks);
+								   BlockNumber blocknum, BlockNumber nblocks);
 	BlockNumber (*smgr_nblocks) (SMgrRelation reln, ForkNumber forknum);
 	void		(*smgr_truncate) (SMgrRelation reln, ForkNumber forknum,
-											  BlockNumber nblocks);
+								  BlockNumber nblocks);
 	void		(*smgr_immedsync) (SMgrRelation reln, ForkNumber forknum);
 	void		(*smgr_pre_ckpt) (void);		/* may be NULL */
 	void		(*smgr_sync) (void);	/* may be NULL */

@@ -42,7 +42,7 @@ CATALOG(pg_db_role_setting,2964) BKI_SHARED_RELATION BKI_WITHOUT_OIDS
 #endif
 } FormData_pg_db_role_setting;
 
-typedef FormData_pg_db_role_setting *Form_pg_db_role_setting;
+typedef FormData_pg_db_role_setting * Form_pg_db_role_setting;
 
 /* ----------------
  *		compiler constants for pg_db_role_setting

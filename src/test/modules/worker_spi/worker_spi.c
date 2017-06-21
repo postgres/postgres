@@ -137,7 +137,7 @@ initialize_worker_spi(worktable *table)
 		appendStringInfo(&buf,
 						 "CREATE SCHEMA \"%s\" "
 						 "CREATE TABLE \"%s\" ("
-			   "		type text CHECK (type IN ('total', 'delta')), "
+					   "		type text CHECK (type IN ('total', 'delta')), "
 						 "		value	integer)"
 				  "CREATE UNIQUE INDEX \"%s_unique_total\" ON \"%s\" (type) "
 						 "WHERE type = 'total'",

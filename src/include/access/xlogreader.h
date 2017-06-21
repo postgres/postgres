@@ -31,11 +31,11 @@ typedef struct XLogReaderState XLogReaderState;
 
 /* Function type definition for the read_page callback */
 typedef int (*XLogPageReadCB) (XLogReaderState *xlogreader,
-										   XLogRecPtr targetPagePtr,
-										   int reqLen,
-										   XLogRecPtr targetRecPtr,
-										   char *readBuf,
-										   TimeLineID *pageTLI);
+							   XLogRecPtr targetPagePtr,
+							   int reqLen,
+							   XLogRecPtr targetRecPtr,
+							   char *readBuf,
+							   TimeLineID *pageTLI);
 
 typedef struct
 {

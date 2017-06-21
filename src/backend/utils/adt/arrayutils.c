@@ -93,7 +93,7 @@ ArrayGetNItems(int ndim, const int *dims)
 					 errmsg("array size exceeds the maximum allowed (%d)",
 							(int) MaxArraySize)));
 
-		prod = (int64) ret *(int64) dims[i];
+		prod = (int64) ret * (int64) dims[i];
 
 		ret = (int32) prod;
 		if ((int64) ret != prod)

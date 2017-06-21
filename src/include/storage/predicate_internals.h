@@ -135,7 +135,7 @@ typedef struct PredXactListElementData
 {
 	SHM_QUEUE	link;
 	SERIALIZABLEXACT sxact;
-}	PredXactListElementData;
+}			PredXactListElementData;
 
 typedef struct PredXactListElementData *PredXactListElement;
 
@@ -174,7 +174,7 @@ typedef struct PredXactListData
 	SERIALIZABLEXACT *OldCommittedSxact;		/* shared copy of dummy sxact */
 
 	PredXactListElement element;
-}	PredXactListData;
+}			PredXactListData;
 
 typedef struct PredXactListData *PredXactList;
 
@@ -198,7 +198,7 @@ typedef struct RWConflictData
 	SHM_QUEUE	inLink;			/* link for list of conflicts in to a sxact */
 	SERIALIZABLEXACT *sxactOut;
 	SERIALIZABLEXACT *sxactIn;
-}	RWConflictData;
+}			RWConflictData;
 
 typedef struct RWConflictData *RWConflict;
 
@@ -209,7 +209,7 @@ typedef struct RWConflictPoolHeaderData
 {
 	SHM_QUEUE	availableList;
 	RWConflict	element;
-}	RWConflictPoolHeaderData;
+}			RWConflictPoolHeaderData;
 
 typedef struct RWConflictPoolHeaderData *RWConflictPoolHeader;
 

@@ -126,7 +126,7 @@ typedef struct DictSnowball
 	struct SN_env *z;
 	StopList	stoplist;
 	bool		needrecode;		/* needs recoding before/after call stem */
-	int			(*stem) (struct SN_env * z);
+	int			(*stem) (struct SN_env *z);
 
 	/*
 	 * snowball saves alloced memory between calls, so we should run it in our

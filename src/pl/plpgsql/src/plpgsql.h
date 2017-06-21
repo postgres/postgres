@@ -977,7 +977,7 @@ typedef struct PLpgSQL_plugin
 	/* Function pointers set by PL/pgSQL itself */
 	void		(*error_callback) (void *arg);
 	void		(*assign_expr) (PLpgSQL_execstate *estate, PLpgSQL_datum *target,
-											PLpgSQL_expr *expr);
+								PLpgSQL_expr *expr);
 } PLpgSQL_plugin;
 
 /*

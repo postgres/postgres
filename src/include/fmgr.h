@@ -196,11 +196,11 @@ extern void fmgr_info_copy(FmgrInfo *dstinfo, FmgrInfo *srcinfo,
  * Note: it'd be nice if these could be macros, but I see no way to do that
  * without evaluating the arguments multiple times, which is NOT acceptable.
  */
-extern struct varlena *pg_detoast_datum(struct varlena * datum);
-extern struct varlena *pg_detoast_datum_copy(struct varlena * datum);
-extern struct varlena *pg_detoast_datum_slice(struct varlena * datum,
+extern struct varlena *pg_detoast_datum(struct varlena *datum);
+extern struct varlena *pg_detoast_datum_copy(struct varlena *datum);
+extern struct varlena *pg_detoast_datum_slice(struct varlena *datum,
 					   int32 first, int32 count);
-extern struct varlena *pg_detoast_datum_packed(struct varlena * datum);
+extern struct varlena *pg_detoast_datum_packed(struct varlena *datum);
 
 #define PG_DETOAST_DATUM(datum) \
 	pg_detoast_datum((struct varlena *) DatumGetPointer(datum))
@@ -720,7 +720,7 @@ typedef enum FmgrHookEventType
 typedef bool (*needs_fmgr_hook_type) (Oid fn_oid);
 
 typedef void (*fmgr_hook_type) (FmgrHookEventType event,
-											FmgrInfo *flinfo, Datum *arg);
+								FmgrInfo *flinfo, Datum *arg);
 
 extern PGDLLIMPORT needs_fmgr_hook_type needs_fmgr_hook;
 extern PGDLLIMPORT fmgr_hook_type fmgr_hook;

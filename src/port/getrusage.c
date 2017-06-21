@@ -28,7 +28,7 @@
  */
 
 int
-getrusage(int who, struct rusage * rusage)
+getrusage(int who, struct rusage *rusage)
 {
 #ifdef WIN32
 	FILETIME	starttime;

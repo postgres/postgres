@@ -169,11 +169,11 @@ struct px_cipher
 struct px_combo
 {
 	int			(*init) (PX_Combo *cx, const uint8 *key, unsigned klen,
-									 const uint8 *iv, unsigned ivlen);
+						 const uint8 *iv, unsigned ivlen);
 	int			(*encrypt) (PX_Combo *cx, const uint8 *data, unsigned dlen,
-										uint8 *res, unsigned *rlen);
+							uint8 *res, unsigned *rlen);
 	int			(*decrypt) (PX_Combo *cx, const uint8 *data, unsigned dlen,
-										uint8 *res, unsigned *rlen);
+							uint8 *res, unsigned *rlen);
 	unsigned	(*encrypt_len) (PX_Combo *cx, unsigned dlen);
 	unsigned	(*decrypt_len) (PX_Combo *cx, unsigned dlen);
 	void		(*free) (PX_Combo *cx);

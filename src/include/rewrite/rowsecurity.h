@@ -35,7 +35,7 @@ typedef struct RowSecurityDesc
 } RowSecurityDesc;
 
 typedef List *(*row_security_policy_hook_type) (CmdType cmdtype,
-														  Relation relation);
+												Relation relation);
 
 extern PGDLLIMPORT row_security_policy_hook_type row_security_policy_hook_permissive;
 

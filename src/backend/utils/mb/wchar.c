@@ -98,7 +98,7 @@ pg_euc2wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
 			*to |= *from++;
 			len -= 2;
 		}
-		else	/* must be ASCII */
+		else					/* must be ASCII */
 		{
 			*to = *from++;
 			len--;
@@ -581,7 +581,7 @@ struct mbinterval
 
 /* auxiliary function for binary search in interval table */
 static int
-mbbisearch(pg_wchar ucs, const struct mbinterval * table, int max)
+mbbisearch(pg_wchar ucs, const struct mbinterval *table, int max)
 {
 	int			min = 0;
 	int			mid;

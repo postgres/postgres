@@ -75,7 +75,8 @@ typedef struct ExtensionControlFile
 	char	   *name;			/* name of the extension */
 	char	   *directory;		/* directory for script files */
 	char	   *default_version;	/* default install target version, if any */
-	char	   *module_pathname;	/* string to substitute for MODULE_PATHNAME */
+	char	   *module_pathname;	/* string to substitute for
+									 * MODULE_PATHNAME */
 	char	   *comment;		/* comment, if any */
 	char	   *schema;			/* target schema (allowed if !relocatable) */
 	bool		relocatable;	/* is ALTER EXTENSION SET SCHEMA supported? */

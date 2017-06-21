@@ -250,10 +250,10 @@ update_spins_per_delay(int shared_spins_per_delay)
 static void
 tas_dummy()
 {
-	__asm__		__volatile__(
+	__asm__ __volatile__(
 #if defined(__NetBSD__) && defined(__ELF__)
 /* no underscore for label and % for registers */
-										 "\
+						 "\
 .global		tas 				\n\
 tas:							\n\
 			movel	%sp@(0x4),%a0	\n\
@@ -265,7 +265,7 @@ _success:						\n\
 			moveq	#0,%d0		\n\
 			rts 				\n"
 #else
-										 "\
+						 "\
 .global		_tas				\n\
 _tas:							\n\
 			movel	sp@(0x4),a0	\n\
@@ -277,7 +277,7 @@ _success:						\n\
 			moveq 	#0,d0		\n\
 			rts					\n"
 #endif   /* __NetBSD__ && __ELF__ */
-	);
+		);
 }
 #endif   /* __m68k__ && !__linux__ */
 #endif   /* not __GNUC__ */

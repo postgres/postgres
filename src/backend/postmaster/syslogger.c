@@ -797,7 +797,7 @@ process_pipe_input(char *logbuffer, int *bytes_in_logbuffer)
 	int			dest = LOG_DESTINATION_STDERR;
 
 	/* While we have enough for a header, process data... */
-	while (count >= (int) (offsetof(PipeProtoHeader, data) +1))
+	while (count >= (int) (offsetof(PipeProtoHeader, data) + 1))
 	{
 		PipeProtoHeader p;
 		int			chunklen;

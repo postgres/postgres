@@ -822,7 +822,7 @@ int2mul(PG_FUNCTION_ARGS)
 	 * The most practical way to detect overflow is to do the arithmetic in
 	 * int32 (so that the result can't overflow) and then do a range check.
 	 */
-	result32 = (int32) arg1 *(int32) arg2;
+	result32 = (int32) arg1 * (int32) arg2;
 
 	if (result32 < SHRT_MIN || result32 > SHRT_MAX)
 		ereport(ERROR,

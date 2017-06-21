@@ -667,7 +667,7 @@ typedef enum
 
 	/* last */
 	_DCH_last_
-}	DCH_poz;
+}			DCH_poz;
 
 typedef enum
 {
@@ -710,7 +710,7 @@ typedef enum
 
 	/* last */
 	_NUM_last_
-}	NUM_poz;
+}			NUM_poz;
 
 /* ----------
  * KeyWords for DATE-TIME version
@@ -976,10 +976,10 @@ static void from_char_set_mode(TmFromChar *tmfc, const FromCharDateMode mode);
 static void from_char_set_int(int *dest, const int value, const FormatNode *node);
 static int	from_char_parse_int_len(int *dest, char **src, const int len, FormatNode *node);
 static int	from_char_parse_int(int *dest, char **src, FormatNode *node);
-static int	seq_search(char *name, const char *const * array, int type, int max, int *len);
-static int	from_char_seq_search(int *dest, char **src, const char *const * array, int type, int max, FormatNode *node);
+static int	seq_search(char *name, const char *const *array, int type, int max, int *len);
+static int	from_char_seq_search(int *dest, char **src, const char *const *array, int type, int max, FormatNode *node);
 static void do_to_timestamp(text *date_txt, text *fmt,
-				struct pg_tm * tm, fsec_t *fsec);
+				struct pg_tm *tm, fsec_t *fsec);
 static char *fill_str(char *str, int c, int max);
 static FormatNode *NUM_cache(int len, NUMDesc *Num, text *pars_str, bool *shouldFree);
 static char *int_to_roman(int number);
@@ -1450,9 +1450,9 @@ str_numth(char *dest, char *num, int type)
 #ifdef USE_ICU
 
 typedef int32_t (*ICU_Convert_Func) (UChar *dest, int32_t destCapacity,
-										 const UChar *src, int32_t srcLength,
-												 const char *locale,
-												 UErrorCode *pErrorCode);
+									 const UChar *src, int32_t srcLength,
+									 const char *locale,
+									 UErrorCode *pErrorCode);
 
 static int32_t
 icu_convert_case(ICU_Convert_Func func, pg_locale_t mylocale,
@@ -2303,10 +2303,10 @@ from_char_parse_int(int *dest, char **src, FormatNode *node)
  * ----------
  */
 static int
-seq_search(char *name, const char *const * array, int type, int max, int *len)
+seq_search(char *name, const char *const *array, int type, int max, int *len)
 {
 	const char *p;
-	const char *const * a;
+	const char *const *a;
 	char	   *n;
 	int			last,
 				i;
@@ -2381,7 +2381,7 @@ seq_search(char *name, const char *const * array, int type, int max, int *len)
  * If the string doesn't match, throw an error.
  */
 static int
-from_char_seq_search(int *dest, char **src, const char *const * array, int type, int max,
+from_char_seq_search(int *dest, char **src, const char *const *array, int type, int max,
 					 FormatNode *node)
 {
 	int			len;
@@ -3609,7 +3609,7 @@ to_date(PG_FUNCTION_ARGS)
  */
 static void
 do_to_timestamp(text *date_txt, text *fmt,
-				struct pg_tm * tm, fsec_t *fsec)
+				struct pg_tm *tm, fsec_t *fsec)
 {
 	FormatNode *format;
 	TmFromChar	tmfc;

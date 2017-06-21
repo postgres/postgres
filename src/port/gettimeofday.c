@@ -45,7 +45,7 @@ static const unsigned __int64 epoch = UINT64CONST(116444736000000000);
  * signature, so we can just store a pointer to whichever we find. This
  * is the pointer's type.
  */
-typedef		VOID(WINAPI * PgGetSystemTimeFn) (LPFILETIME);
+typedef VOID(WINAPI * PgGetSystemTimeFn) (LPFILETIME);
 
 /* One-time initializer function, must match that signature. */
 static void WINAPI init_gettimeofday(LPFILETIME lpSystemTimeAsFileTime);
@@ -102,7 +102,7 @@ init_gettimeofday(LPFILETIME lpSystemTimeAsFileTime)
  * elapsed_time().
  */
 int
-gettimeofday(struct timeval * tp, struct timezone * tzp)
+gettimeofday(struct timeval *tp, struct timezone *tzp)
 {
 	FILETIME	file_time;
 	ULARGE_INTEGER ularge;

@@ -35,7 +35,7 @@ binaryheap_allocate(int capacity, binaryheap_comparator compare, void *arg)
 	int			sz;
 	binaryheap *heap;
 
-	sz = offsetof(binaryheap, bh_nodes) +sizeof(Datum) * capacity;
+	sz = offsetof(binaryheap, bh_nodes) + sizeof(Datum) * capacity;
 	heap = (binaryheap *) palloc(sz);
 	heap->bh_space = capacity;
 	heap->bh_compare = compare;

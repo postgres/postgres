@@ -888,8 +888,8 @@ load_domaintype_info(TypeCacheEntry *typentry)
 static int
 dcs_cmp(const void *a, const void *b)
 {
-	const DomainConstraintState *const * ca = (const DomainConstraintState *const *) a;
-	const DomainConstraintState *const * cb = (const DomainConstraintState *const *) b;
+	const DomainConstraintState *const *ca = (const DomainConstraintState *const *) a;
+	const DomainConstraintState *const *cb = (const DomainConstraintState *const *) b;
 
 	return strcmp((*ca)->name, (*cb)->name);
 }

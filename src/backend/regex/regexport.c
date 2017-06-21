@@ -90,7 +90,7 @@ pg_reg_getfinalstate(const regex_t *regex)
  * arcs_len (possibly 0) are emitted into arcs[].
  */
 static void
-traverse_lacons(struct cnfa * cnfa, int st,
+traverse_lacons(struct cnfa *cnfa, int st,
 				int *arcs_count,
 				regex_arc_t *arcs, int arcs_len)
 {

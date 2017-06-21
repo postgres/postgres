@@ -325,7 +325,7 @@ generate_trgm(char *str, int slen)
 
 	protect_out_of_mem(slen);
 
-	trg = (TRGM *) palloc(TRGMHDRSIZE + sizeof(trgm) * (slen / 2 + 1) *3);
+	trg = (TRGM *) palloc(TRGMHDRSIZE + sizeof(trgm) * (slen / 2 + 1) * 3);
 	trg->flag = ARRKEY;
 
 	len = generate_trgm_only(GETARR(trg), str, slen);
@@ -572,8 +572,8 @@ calc_word_similarity(char *str1, int slen1, char *str2, int slen2,
 	protect_out_of_mem(slen1 + slen2);
 
 	/* Make positional trigrams */
-	trg1 = (trgm *) palloc(sizeof(trgm) * (slen1 / 2 + 1) *3);
-	trg2 = (trgm *) palloc(sizeof(trgm) * (slen2 / 2 + 1) *3);
+	trg1 = (trgm *) palloc(sizeof(trgm) * (slen1 / 2 + 1) * 3);
+	trg2 = (trgm *) palloc(sizeof(trgm) * (slen2 / 2 + 1) * 3);
 
 	len1 = generate_trgm_only(trg1, str1, slen1);
 	len2 = generate_trgm_only(trg2, str2, slen2);
@@ -806,7 +806,7 @@ generate_wildcard_trgm(const char *str, int slen)
 
 	protect_out_of_mem(slen);
 
-	trg = (TRGM *) palloc(TRGMHDRSIZE + sizeof(trgm) * (slen / 2 + 1) *3);
+	trg = (TRGM *) palloc(TRGMHDRSIZE + sizeof(trgm) * (slen / 2 + 1) * 3);
 	trg->flag = ARRKEY;
 	SET_VARSIZE(trg, TRGMHDRSIZE);
 

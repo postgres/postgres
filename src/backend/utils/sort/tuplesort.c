@@ -263,7 +263,7 @@ typedef enum
 #define RUN_SECOND		1
 
 typedef int (*SortTupleComparator) (const SortTuple *a, const SortTuple *b,
-												Tuplesortstate *state);
+									Tuplesortstate *state);
 
 /*
  * Private state of a Tuplesort operation.
@@ -314,7 +314,7 @@ struct Tuplesortstate
 	 * memory space thereby released.
 	 */
 	void		(*writetup) (Tuplesortstate *state, int tapenum,
-										 SortTuple *stup);
+							 SortTuple *stup);
 
 	/*
 	 * Function to read a stored tuple from tape back into memory. 'len' is
@@ -322,7 +322,7 @@ struct Tuplesortstate
 	 * from the slab memory arena, or is palloc'd, see readtup_alloc().
 	 */
 	void		(*readtup) (Tuplesortstate *state, SortTuple *stup,
-										int tapenum, unsigned int len);
+							int tapenum, unsigned int len);
 
 	/*
 	 * This array holds the tuples now in sort memory.  If we are in state
@@ -2391,7 +2391,7 @@ inittapes(Tuplesortstate *state)
 	 * case it's not important to account for tuple space, so we don't care if
 	 * LACKMEM becomes inaccurate.)
 	 */
-	tapeSpace = (int64) maxTapes *TAPE_BUFFER_OVERHEAD;
+	tapeSpace = (int64) maxTapes * TAPE_BUFFER_OVERHEAD;
 
 	if (tapeSpace + GetMemoryChunkSpace(state->memtuples) < state->allowedMem)
 		USEMEM(state, tapeSpace);

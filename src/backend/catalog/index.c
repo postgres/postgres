@@ -1937,7 +1937,7 @@ index_update_stats(Relation rel,
 
 		if (rd_rel->relkind != RELKIND_INDEX)
 			visibilitymap_count(rel, &relallvisible, NULL);
-		else	/* don't bother for indexes */
+		else					/* don't bother for indexes */
 			relallvisible = 0;
 
 		if (rd_rel->relpages != (int32) relpages)

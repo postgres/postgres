@@ -69,7 +69,7 @@ char	   *optarg;				/* argument associated with option */
  * returning -1.)
  */
 int
-getopt(int nargc, char *const * nargv, const char *ostr)
+getopt(int nargc, char *const *nargv, const char *ostr)
 {
 	static char *place = EMSG;	/* option letter processing */
 	char	   *oli;			/* option letter list index */

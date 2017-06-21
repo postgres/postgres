@@ -1828,7 +1828,7 @@ Float8GetDatum(float8 X)
  */
 
 struct varlena *
-pg_detoast_datum(struct varlena * datum)
+pg_detoast_datum(struct varlena *datum)
 {
 	if (VARATT_IS_EXTENDED(datum))
 		return heap_tuple_untoast_attr(datum);
@@ -1837,7 +1837,7 @@ pg_detoast_datum(struct varlena * datum)
 }
 
 struct varlena *
-pg_detoast_datum_copy(struct varlena * datum)
+pg_detoast_datum_copy(struct varlena *datum)
 {
 	if (VARATT_IS_EXTENDED(datum))
 		return heap_tuple_untoast_attr(datum);
@@ -1853,14 +1853,14 @@ pg_detoast_datum_copy(struct varlena * datum)
 }
 
 struct varlena *
-pg_detoast_datum_slice(struct varlena * datum, int32 first, int32 count)
+pg_detoast_datum_slice(struct varlena *datum, int32 first, int32 count)
 {
 	/* Only get the specified portion from the toast rel */
 	return heap_tuple_untoast_attr_slice(datum, first, count);
 }
 
 struct varlena *
-pg_detoast_datum_packed(struct varlena * datum)
+pg_detoast_datum_packed(struct varlena *datum)
 {
 	if (VARATT_IS_COMPRESSED(datum) || VARATT_IS_EXTERNAL(datum))
 		return heap_tuple_untoast_attr(datum);

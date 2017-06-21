@@ -37,7 +37,7 @@
 #define SQLERRMC_LEN	150
 
 #ifdef __cplusplus
-extern		"C"
+extern "C"
 {
 #endif
 

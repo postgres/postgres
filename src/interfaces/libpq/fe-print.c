@@ -326,7 +326,7 @@ static void
 do_field(const PQprintOpt *po, const PGresult *res,
 		 const int i, const int j, const int fs_len,
 		 char **fields,
-		 const int nFields, char const ** fieldNames,
+		 const int nFields, char const **fieldNames,
 		 unsigned char *fieldNotNum, int *fieldMax,
 		 const int fieldMaxLen, FILE *fout)
 {

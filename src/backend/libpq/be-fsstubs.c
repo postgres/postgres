@@ -766,7 +766,7 @@ lo_get_fragment_internal(Oid loOid, int64 offset, int32 nbytes)
 	LargeObjectDesc *loDesc;
 	int64		loSize;
 	int64		result_length;
-	int total_read PG_USED_FOR_ASSERTS_ONLY;
+	int			total_read PG_USED_FOR_ASSERTS_ONLY;
 	bytea	   *result = NULL;
 
 	/*
@@ -868,7 +868,7 @@ be_lo_from_bytea(PG_FUNCTION_ARGS)
 	Oid			loOid = PG_GETARG_OID(0);
 	bytea	   *str = PG_GETARG_BYTEA_PP(1);
 	LargeObjectDesc *loDesc;
-	int written PG_USED_FOR_ASSERTS_ONLY;
+	int			written PG_USED_FOR_ASSERTS_ONLY;
 
 	CreateFSContext();
 
@@ -891,7 +891,7 @@ be_lo_put(PG_FUNCTION_ARGS)
 	int64		offset = PG_GETARG_INT64(1);
 	bytea	   *str = PG_GETARG_BYTEA_PP(2);
 	LargeObjectDesc *loDesc;
-	int written PG_USED_FOR_ASSERTS_ONLY;
+	int			written PG_USED_FOR_ASSERTS_ONLY;
 
 	CreateFSContext();
 

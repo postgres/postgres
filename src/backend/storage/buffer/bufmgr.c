@@ -2118,7 +2118,7 @@ BgBufferSync(WritebackContext *wb_context)
 		int32		passes_delta = strategy_passes - prev_strategy_passes;
 
 		strategy_delta = strategy_buf_id - prev_strategy_buf_id;
-		strategy_delta += (long) passes_delta *NBuffers;
+		strategy_delta += (long) passes_delta * NBuffers;
 
 		Assert(strategy_delta >= 0);
 
@@ -4195,7 +4195,7 @@ ckpt_buforder_comparator(const void *pa, const void *pb)
 	/* compare block number */
 	else if (a->blockNum < b->blockNum)
 		return -1;
-	else	/* should not be the same block ... */
+	else						/* should not be the same block ... */
 		return 1;
 }
 

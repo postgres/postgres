@@ -31,7 +31,7 @@ typedef struct SnapshotData *Snapshot;
  * function.
  */
 typedef bool (*SnapshotSatisfiesFunc) (HeapTuple htup,
-										   Snapshot snapshot, Buffer buffer);
+									   Snapshot snapshot, Buffer buffer);
 
 /*
  * Struct representing all kind of possible snapshots.

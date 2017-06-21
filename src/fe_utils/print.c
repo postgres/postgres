@@ -370,7 +370,7 @@ print_unaligned_text(const printTableContent *cont, FILE *fout)
 {
 	bool		opt_tuples_only = cont->opt->tuples_only;
 	unsigned int i;
-	const char *const * ptr;
+	const char *const *ptr;
 	bool		need_recordsep = false;
 
 	if (cancel_pressed)
@@ -461,7 +461,7 @@ print_unaligned_vertical(const printTableContent *cont, FILE *fout)
 {
 	bool		opt_tuples_only = cont->opt->tuples_only;
 	unsigned int i;
-	const char *const * ptr;
+	const char *const *ptr;
 	bool		need_recordsep = false;
 
 	if (cancel_pressed)
@@ -606,7 +606,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout, bool is_pager)
 	unsigned int extra_row_output_lines = 0;
 	unsigned int extra_output_lines = 0;
 
-	const char *const * ptr;
+	const char *const *ptr;
 
 	struct lineptr **col_lineptrs;		/* pointers to line pointer per column */
 
@@ -1049,7 +1049,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout, bool is_pager)
 								 (char *) (this_line->ptr + bytes_output[j]),
 								   bytes_to_output);
 					}
-					else	/* Left aligned cell */
+					else		/* Left aligned cell */
 					{
 						/* spaces second */
 						fputnbytes(fout,
@@ -1236,7 +1236,7 @@ print_aligned_vertical(const printTableContent *cont,
 	const printTextLineFormat *dformat = &format->lrule[PRINT_RULE_DATA];
 	int			encoding = cont->opt->encoding;
 	unsigned long record = cont->opt->prior_records + 1;
-	const char *const * ptr;
+	const char *const *ptr;
 	unsigned int i,
 				hwidth = 0,
 				dwidth = 0,
@@ -1789,7 +1789,7 @@ print_html_text(const printTableContent *cont, FILE *fout)
 	unsigned short opt_border = cont->opt->border;
 	const char *opt_table_attr = cont->opt->tableAttr;
 	unsigned int i;
-	const char *const * ptr;
+	const char *const *ptr;
 
 	if (cancel_pressed)
 		return;
@@ -1879,7 +1879,7 @@ print_html_vertical(const printTableContent *cont, FILE *fout)
 	const char *opt_table_attr = cont->opt->tableAttr;
 	unsigned long record = cont->opt->prior_records + 1;
 	unsigned int i;
-	const char *const * ptr;
+	const char *const *ptr;
 
 	if (cancel_pressed)
 		return;
@@ -1980,7 +1980,7 @@ print_asciidoc_text(const printTableContent *cont, FILE *fout)
 	bool		opt_tuples_only = cont->opt->tuples_only;
 	unsigned short opt_border = cont->opt->border;
 	unsigned int i;
-	const char *const * ptr;
+	const char *const *ptr;
 
 	if (cancel_pressed)
 		return;
@@ -2091,7 +2091,7 @@ print_asciidoc_vertical(const printTableContent *cont, FILE *fout)
 	unsigned short opt_border = cont->opt->border;
 	unsigned long record = cont->opt->prior_records + 1;
 	unsigned int i;
-	const char *const * ptr;
+	const char *const *ptr;
 
 	if (cancel_pressed)
 		return;
@@ -2223,7 +2223,7 @@ print_latex_text(const printTableContent *cont, FILE *fout)
 	bool		opt_tuples_only = cont->opt->tuples_only;
 	unsigned short opt_border = cont->opt->border;
 	unsigned int i;
-	const char *const * ptr;
+	const char *const *ptr;
 
 	if (cancel_pressed)
 		return;
@@ -2328,7 +2328,7 @@ print_latex_longtable_text(const printTableContent *cont, FILE *fout)
 	const char *opt_table_attr = cont->opt->tableAttr;
 	const char *next_opt_table_attr_char = opt_table_attr;
 	const char *last_opt_table_attr_char = NULL;
-	const char *const * ptr;
+	const char *const *ptr;
 
 	if (cancel_pressed)
 		return;
@@ -2482,7 +2482,7 @@ print_latex_vertical(const printTableContent *cont, FILE *fout)
 	unsigned short opt_border = cont->opt->border;
 	unsigned long record = cont->opt->prior_records + 1;
 	unsigned int i;
-	const char *const * ptr;
+	const char *const *ptr;
 
 	if (cancel_pressed)
 		return;
@@ -2591,7 +2591,7 @@ print_troff_ms_text(const printTableContent *cont, FILE *fout)
 	bool		opt_tuples_only = cont->opt->tuples_only;
 	unsigned short opt_border = cont->opt->border;
 	unsigned int i;
-	const char *const * ptr;
+	const char *const *ptr;
 
 	if (cancel_pressed)
 		return;
@@ -2684,7 +2684,7 @@ print_troff_ms_vertical(const printTableContent *cont, FILE *fout)
 	unsigned short opt_border = cont->opt->border;
 	unsigned long record = cont->opt->prior_records + 1;
 	unsigned int i;
-	const char *const * ptr;
+	const char *const *ptr;
 	unsigned short current_format = 0;	/* 0=none, 1=header, 2=body */
 
 	if (cancel_pressed)

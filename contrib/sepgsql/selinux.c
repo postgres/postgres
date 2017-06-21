@@ -36,7 +36,7 @@ static struct
 		const char *av_name;
 		uint32		av_code;
 	}			av[32];
-}	selinux_catalog[] =
+}			selinux_catalog[] =
 
 {
 	{
@@ -732,7 +732,7 @@ void
 sepgsql_compute_avd(const char *scontext,
 					const char *tcontext,
 					uint16 tclass,
-					struct av_decision * avd)
+					struct av_decision *avd)
 {
 	const char *tclass_name;
 	security_class_t tclass_ex;

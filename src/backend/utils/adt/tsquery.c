@@ -1015,7 +1015,8 @@ tsqueryrecv(PG_FUNCTION_ARGS)
 
 		if (item->type == QI_VAL)
 		{
-			size_t		val_len;	/* length after recoding to server encoding */
+			size_t		val_len;	/* length after recoding to server
+									 * encoding */
 			uint8		weight;
 			uint8		prefix;
 			const char *val;

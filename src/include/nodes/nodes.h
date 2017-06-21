@@ -614,6 +614,7 @@ extern int16 *readAttrNumberCols(int numCols);
  * nodes/copyfuncs.c
  */
 extern void *copyObjectImpl(const void *obj);
+
 /* cast result back to argument type, if supported by compiler */
 #ifdef HAVE_TYPEOF
 #define copyObject(obj) ((typeof(obj)) copyObjectImpl(obj))

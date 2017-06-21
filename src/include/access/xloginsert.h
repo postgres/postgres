@@ -32,11 +32,11 @@
 #define REGBUF_WILL_INIT	(0x04 | 0x02)		/* page will be re-initialized
 												 * at replay (implies
 												 * NO_IMAGE) */
-#define REGBUF_STANDARD		0x08/* page follows "standard" page layout, (data
-								 * between pd_lower and pd_upper will be
-								 * skipped) */
-#define REGBUF_KEEP_DATA	0x10/* include data even if a full-page image is
-								 * taken */
+#define REGBUF_STANDARD		0x08	/* page follows "standard" page layout,
+									 * (data between pd_lower and pd_upper
+									 * will be skipped) */
+#define REGBUF_KEEP_DATA	0x10	/* include data even if a full-page image
+									 * is taken */
 
 /* prototypes for public functions in xloginsert.c: */
 extern void XLogBeginInsert(void);

@@ -41,10 +41,10 @@
 #endif
 
 
-static int	time2tm(TimeADT time, struct pg_tm * tm, fsec_t *fsec);
-static int	timetz2tm(TimeTzADT *time, struct pg_tm * tm, fsec_t *fsec, int *tzp);
-static int	tm2time(struct pg_tm * tm, fsec_t fsec, TimeADT *result);
-static int	tm2timetz(struct pg_tm * tm, fsec_t fsec, int tz, TimeTzADT *result);
+static int	time2tm(TimeADT time, struct pg_tm *tm, fsec_t *fsec);
+static int	timetz2tm(TimeTzADT *time, struct pg_tm *tm, fsec_t *fsec, int *tzp);
+static int	tm2time(struct pg_tm *tm, fsec_t fsec, TimeADT *result);
+static int	tm2timetz(struct pg_tm *tm, fsec_t fsec, int tz, TimeTzADT *result);
 static void AdjustTimeForTypmod(TimeADT *time, int32 typmod);
 
 
@@ -302,7 +302,7 @@ EncodeSpecialDate(DateADT dt, char *str)
 		strcpy(str, EARLY);
 	else if (DATE_IS_NOEND(dt))
 		strcpy(str, LATE);
-	else	/* shouldn't happen */
+	else						/* shouldn't happen */
 		elog(ERROR, "invalid argument for EncodeSpecialDate");
 }
 
@@ -1235,7 +1235,7 @@ time_in(PG_FUNCTION_ARGS)
  * Convert a tm structure to a time data type.
  */
 static int
-tm2time(struct pg_tm * tm, fsec_t fsec, TimeADT *result)
+tm2time(struct pg_tm *tm, fsec_t fsec, TimeADT *result)
 {
 	*result = ((((tm->tm_hour * MINS_PER_HOUR + tm->tm_min) * SECS_PER_MINUTE) + tm->tm_sec)
 			   * USECS_PER_SEC) + fsec;
@@ -1250,7 +1250,7 @@ tm2time(struct pg_tm * tm, fsec_t fsec, TimeADT *result)
  * if pg_time_t is just 32 bits) - thomas 97/05/27
  */
 static int
-time2tm(TimeADT time, struct pg_tm * tm, fsec_t *fsec)
+time2tm(TimeADT time, struct pg_tm *tm, fsec_t *fsec)
 {
 	tm->tm_hour = time / USECS_PER_HOUR;
 	time -= tm->tm_hour * USECS_PER_HOUR;
@@ -1934,7 +1934,7 @@ time_part(PG_FUNCTION_ARGS)
  * Convert a tm structure to a time data type.
  */
 static int
-tm2timetz(struct pg_tm * tm, fsec_t fsec, int tz, TimeTzADT *result)
+tm2timetz(struct pg_tm *tm, fsec_t fsec, int tz, TimeTzADT *result)
 {
 	result->time = ((((tm->tm_hour * MINS_PER_HOUR + tm->tm_min) * SECS_PER_MINUTE) + tm->tm_sec) *
 					USECS_PER_SEC) + fsec;
@@ -2068,7 +2068,7 @@ timetztypmodout(PG_FUNCTION_ARGS)
  * Convert TIME WITH TIME ZONE data type to POSIX time structure.
  */
 static int
-timetz2tm(TimeTzADT *time, struct pg_tm * tm, fsec_t *fsec, int *tzp)
+timetz2tm(TimeTzADT *time, struct pg_tm *tm, fsec_t *fsec, int *tzp)
 {
 	TimeOffset	trem = time->time;
 

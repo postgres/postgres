@@ -118,10 +118,10 @@ typedef struct
 
 /* Plugin provides a hook function matching this signature. */
 typedef void (*object_access_hook_type) (ObjectAccessType access,
-													 Oid classId,
-													 Oid objectId,
-													 int subId,
-													 void *arg);
+										 Oid classId,
+										 Oid objectId,
+										 int subId,
+										 void *arg);
 
 /* Plugin sets this variable to a suitable hook function. */
 extern PGDLLIMPORT object_access_hook_type object_access_hook;

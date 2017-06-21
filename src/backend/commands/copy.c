@@ -2626,7 +2626,7 @@ CopyFrom(CopyState cstate)
 
 			if (slot == NULL)	/* "do nothing" */
 				skip_tuple = true;
-			else	/* trigger might have changed tuple */
+			else				/* trigger might have changed tuple */
 				tuple = ExecMaterializeSlot(slot);
 		}
 

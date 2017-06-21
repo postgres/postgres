@@ -121,8 +121,8 @@ typedef struct Port
 	SockAddr	laddr;			/* local addr (postmaster) */
 	SockAddr	raddr;			/* remote addr (client) */
 	char	   *remote_host;	/* name (or ip addr) of remote host */
-	char	   *remote_hostname;/* name (not ip addr) of remote host, if
-								 * available */
+	char	   *remote_hostname;	/* name (not ip addr) of remote host, if
+									 * available */
 	int			remote_hostname_resolv; /* see above */
 	int			remote_hostname_errcode;		/* see above */
 	char	   *remote_port;	/* text rep of remote port */

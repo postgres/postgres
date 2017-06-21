@@ -505,7 +505,7 @@ _hash_freeovflpage(Relation rel, Buffer bucketbuf, Buffer ovflbuf,
 	uint32		ovflbitno;
 	int32		bitmappage,
 				bitmapbit;
-	Bucket bucket PG_USED_FOR_ASSERTS_ONLY;
+	Bucket		bucket PG_USED_FOR_ASSERTS_ONLY;
 	Buffer		prevbuf = InvalidBuffer;
 	Buffer		nextbuf = InvalidBuffer;
 	bool		update_metap = false;

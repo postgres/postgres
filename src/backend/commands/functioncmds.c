@@ -588,7 +588,7 @@ update_proconfig_value(ArrayType *a, List *set_items)
 
 			if (valuestr)
 				a = GUCArrayAdd(a, sstmt->name, valuestr);
-			else	/* RESET */
+			else				/* RESET */
 				a = GUCArrayDelete(a, sstmt->name);
 		}
 	}

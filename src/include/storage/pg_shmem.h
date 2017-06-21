@@ -50,7 +50,7 @@ typedef enum
 	HUGE_PAGES_OFF,
 	HUGE_PAGES_ON,
 	HUGE_PAGES_TRY
-}	HugePagesType;
+}			HugePagesType;
 
 #ifndef WIN32
 extern unsigned long UsedShmemSegID;

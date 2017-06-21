@@ -10,7 +10,7 @@ typedef int64 timestamp;
 typedef int64 TimestampTz;
 
 #ifdef __cplusplus
-extern		"C"
+extern "C"
 {
 #endif
 

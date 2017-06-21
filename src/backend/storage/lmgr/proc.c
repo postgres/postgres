@@ -286,7 +286,7 @@ InitProcGlobal(void)
 void
 InitProcess(void)
 {
-	PGPROC	   *volatile * procgloballist;
+	PGPROC	   *volatile *procgloballist;
 
 	/*
 	 * ProcGlobal should be set up already (if we are a backend, we inherit
@@ -781,7 +781,7 @@ static void
 ProcKill(int code, Datum arg)
 {
 	PGPROC	   *proc;
-	PGPROC	   *volatile * procgloballist;
+	PGPROC	   *volatile *procgloballist;
 
 	Assert(MyProc != NULL);
 

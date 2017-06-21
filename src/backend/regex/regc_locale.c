@@ -56,7 +56,7 @@ static const struct cname
 {
 	const char *name;
 	const char	code;
-}	cnames[] =
+}			cnames[] =
 
 {
 	{
@@ -377,7 +377,7 @@ enum classes
  * element - map collating-element name to chr
  */
 static chr
-element(struct vars * v,		/* context */
+element(struct vars *v,			/* context */
 		const chr *startp,		/* points to start of name */
 		const chr *endp)		/* points just past end of name */
 {
@@ -413,7 +413,7 @@ element(struct vars * v,		/* context */
  * range - supply cvec for a range, including legality check
  */
 static struct cvec *
-range(struct vars * v,			/* context */
+range(struct vars *v,			/* context */
 	  chr a,					/* range start */
 	  chr b,					/* range end, might equal a */
 	  int cases)				/* case-independent? */
@@ -505,7 +505,7 @@ before(chr x, chr y)
  * Must include case counterparts on request.
  */
 static struct cvec *
-eclass(struct vars * v,			/* context */
+eclass(struct vars *v,			/* context */
 	   chr c,					/* Collating element representing the
 								 * equivalence class. */
 	   int cases)				/* all cases? */
@@ -545,14 +545,14 @@ eclass(struct vars * v,			/* context */
  * because callers are not supposed to explicitly free the result either way.
  */
 static struct cvec *
-cclass(struct vars * v,			/* context */
+cclass(struct vars *v,			/* context */
 	   const chr *startp,		/* where the name starts */
 	   const chr *endp,			/* just past the end of the name */
 	   int cases)				/* case-independent? */
 {
 	size_t		len;
 	struct cvec *cv = NULL;
-	const char *const * namePtr;
+	const char *const *namePtr;
 	int			i,
 				index;
 
@@ -669,7 +669,7 @@ cclass(struct vars * v,			/* context */
  * cclass_column_index - get appropriate high colormap column index for chr
  */
 static int
-cclass_column_index(struct colormap * cm, chr c)
+cclass_column_index(struct colormap *cm, chr c)
 {
 	int			colnum = 0;
 
@@ -713,7 +713,7 @@ cclass_column_index(struct colormap * cm, chr c)
  * messy cases are done via range().
  */
 static struct cvec *
-allcases(struct vars * v,		/* context */
+allcases(struct vars *v,		/* context */
 		 chr c)					/* character to get case equivs of */
 {
 	struct cvec *cv;

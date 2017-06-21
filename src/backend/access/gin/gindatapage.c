@@ -391,7 +391,7 @@ GinDataPageAddPostingItem(Page page, PostingItem *data, OffsetNumber offset)
 		if (offset != maxoff + 1)
 			memmove(ptr + sizeof(PostingItem),
 					ptr,
-					(maxoff - offset + 1) *sizeof(PostingItem));
+					(maxoff - offset + 1) * sizeof(PostingItem));
 	}
 	memcpy(ptr, data, sizeof(PostingItem));
 

@@ -78,7 +78,7 @@ typedef struct
 {
 	SubTransactionId subid;
 	char	   *label;
-}	pending_label;
+}			pending_label;
 
 /*
  * sepgsql_get_client_label
@@ -721,7 +721,7 @@ quote_object_name(const char *src1, const char *src2,
  * catalog OID.
  */
 static void
-exec_object_restorecon(struct selabel_handle * sehnd, Oid catalogId)
+exec_object_restorecon(struct selabel_handle *sehnd, Oid catalogId)
 {
 	Relation	rel;
 	SysScanDesc sscan;

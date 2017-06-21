@@ -58,8 +58,8 @@ strtokx(const char *s,
 		bool del_quotes,
 		int encoding)
 {
-	static char *storage = NULL;/* store the local copy of the users string
-								 * here */
+	static char *storage = NULL;	/* store the local copy of the users
+									 * string here */
 	static char *string = NULL; /* pointer into storage where to continue on
 								 * next call */
 

@@ -665,17 +665,17 @@ SpecialTags(TParser *prs)
 {
 	switch (prs->state->lenchartoken)
 	{
-		case 8:			/* </script */
+		case 8:					/* </script */
 			if (pg_strncasecmp(prs->token, "</script", 8) == 0)
 				prs->ignore = false;
 			break;
-		case 7:			/* <script || </style */
+		case 7:					/* <script || </style */
 			if (pg_strncasecmp(prs->token, "</style", 7) == 0)
 				prs->ignore = false;
 			else if (pg_strncasecmp(prs->token, "<script", 7) == 0)
 				prs->ignore = true;
 			break;
-		case 6:			/* <style */
+		case 6:					/* <style */
 			if (pg_strncasecmp(prs->token, "<style", 6) == 0)
 				prs->ignore = true;
 			break;

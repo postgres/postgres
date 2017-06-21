@@ -1160,5 +1160,5 @@ static uint64
 dsm_control_bytes_needed(uint32 nitems)
 {
 	return offsetof(dsm_control_header, item)
-		+sizeof(dsm_control_item) * (uint64) nitems;
+		+ sizeof(dsm_control_item) * (uint64) nitems;
 }

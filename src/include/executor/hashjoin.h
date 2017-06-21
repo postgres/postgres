@@ -66,7 +66,7 @@ typedef struct HashJoinTupleData
 	struct HashJoinTupleData *next;		/* link to next tuple in same bucket */
 	uint32		hashvalue;		/* tuple's hash code */
 	/* Tuple data, in MinimalTuple format, follows on a MAXALIGN boundary */
-}	HashJoinTupleData;
+}			HashJoinTupleData;
 
 #define HJTUPLE_OVERHEAD  MAXALIGN(sizeof(HashJoinTupleData))
 #define HJTUPLE_MINTUPLE(hjtup)  \
@@ -116,7 +116,7 @@ typedef struct HashMemoryChunkData
 										 * list) */
 
 	char		data[FLEXIBLE_ARRAY_MEMBER];	/* buffer allocated at the end */
-}	HashMemoryChunkData;
+}			HashMemoryChunkData;
 
 typedef struct HashMemoryChunkData *HashMemoryChunk;
 
@@ -186,6 +186,6 @@ typedef struct HashJoinTableData
 
 	/* used for dense allocation of tuples (into linked chunks) */
 	HashMemoryChunk chunks;		/* one list for the whole batch */
-}	HashJoinTableData;
+}			HashJoinTableData;
 
 #endif   /* HASHJOIN_H */

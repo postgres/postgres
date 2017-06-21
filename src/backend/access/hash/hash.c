@@ -779,7 +779,7 @@ hashbucketcleanup(Relation rel, Bucket cur_bucket, Buffer bucket_buf,
 {
 	BlockNumber blkno;
 	Buffer		buf;
-	Bucket new_bucket PG_USED_FOR_ASSERTS_ONLY = InvalidBucket;
+	Bucket		new_bucket PG_USED_FOR_ASSERTS_ONLY = InvalidBucket;
 	bool		bucket_dirty = false;
 
 	blkno = bucket_blkno;

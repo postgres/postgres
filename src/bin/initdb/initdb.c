@@ -1382,7 +1382,7 @@ bootstrap_template1(void)
 static void
 setup_auth(FILE *cmdfd)
 {
-	const char *const * line;
+	const char *const *line;
 	static const char *const pg_authid_setup[] = {
 		/*
 		 * The authid table shouldn't be readable except through views, to
@@ -1469,7 +1469,7 @@ get_su_pwd(void)
 static void
 setup_depend(FILE *cmdfd)
 {
-	const char *const * line;
+	const char *const *line;
 	static const char *const pg_depend_setup[] = {
 		/*
 		 * Make PIN entries in pg_depend for all objects made so far in the
@@ -1922,7 +1922,7 @@ vacuum_db(FILE *cmdfd)
 static void
 make_template0(FILE *cmdfd)
 {
-	const char *const * line;
+	const char *const *line;
 	static const char *const template0_setup[] = {
 		"CREATE DATABASE template0 IS_TEMPLATE = true ALLOW_CONNECTIONS = false;\n\n",
 
@@ -1960,7 +1960,7 @@ make_template0(FILE *cmdfd)
 static void
 make_postgres(FILE *cmdfd)
 {
-	const char *const * line;
+	const char *const *line;
 	static const char *const postgres_setup[] = {
 		"CREATE DATABASE postgres;\n\n",
 		"COMMENT ON DATABASE postgres IS 'default administrative connection database';\n\n",
@@ -2030,7 +2030,7 @@ check_ok(void)
 
 /* Hack to suppress a warning about %x from some versions of gcc */
 static inline size_t
-my_strftime(char *s, size_t max, const char *fmt, const struct tm * tm)
+my_strftime(char *s, size_t max, const char *fmt, const struct tm *tm)
 {
 	return strftime(s, max, fmt, tm);
 }
@@ -2305,9 +2305,9 @@ check_authmethod_unspecified(const char **authmethod)
 }
 
 static void
-check_authmethod_valid(const char *authmethod, const char *const * valid_methods, const char *conntype)
+check_authmethod_valid(const char *authmethod, const char *const *valid_methods, const char *conntype)
 {
-	const char *const * p;
+	const char *const *p;
 
 	for (p = valid_methods; *p; p++)
 	{
