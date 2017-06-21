@@ -251,7 +251,7 @@ calc_rangesel(TypeCacheEntry *typcache, VariableStatData *vardata,
 							 ATTSTATSSLOT_NUMBERS))
 		{
 			if (sslot.nnumbers != 1)
-				elog(ERROR, "invalid empty fraction statistic");		/* shouldn't happen */
+				elog(ERROR, "invalid empty fraction statistic");	/* shouldn't happen */
 			empty_frac = sslot.numbers[0];
 			free_attstatsslot(&sslot);
 		}

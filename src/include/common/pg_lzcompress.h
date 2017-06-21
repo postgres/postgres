@@ -88,4 +88,4 @@ extern int32 pglz_compress(const char *source, int32 slen, char *dest,
 extern int32 pglz_decompress(const char *source, int32 slen, char *dest,
 				int32 rawsize);
 
-#endif   /* _PG_LZCOMPRESS_H_ */
+#endif							/* _PG_LZCOMPRESS_H_ */

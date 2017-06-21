@@ -89,7 +89,7 @@ copyFile(const char *src, const char *dst,
 				 schemaName, relName, src, dst, strerror(errno));
 	}
 
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 }
 
 

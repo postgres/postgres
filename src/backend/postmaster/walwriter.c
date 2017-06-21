@@ -109,8 +109,8 @@ WalWriterMain(void)
 	 * reasonable to treat like SIGTERM.
 	 */
 	pqsignal(SIGHUP, WalSigHupHandler); /* set flag to read config file */
-	pqsignal(SIGINT, WalShutdownHandler);		/* request shutdown */
-	pqsignal(SIGTERM, WalShutdownHandler);		/* request shutdown */
+	pqsignal(SIGINT, WalShutdownHandler);	/* request shutdown */
+	pqsignal(SIGTERM, WalShutdownHandler);	/* request shutdown */
 	pqsignal(SIGQUIT, wal_quickdie);	/* hard crash time */
 	pqsignal(SIGALRM, SIG_IGN);
 	pqsignal(SIGPIPE, SIG_IGN);
@@ -286,7 +286,7 @@ WalWriterMain(void)
 		 * sleep time so as to reduce the server's idle power consumption.
 		 */
 		if (left_till_hibernate > 0)
-			cur_timeout = WalWriterDelay;		/* in ms */
+			cur_timeout = WalWriterDelay;	/* in ms */
 		else
 			cur_timeout = WalWriterDelay * HIBERNATE_FACTOR;
 

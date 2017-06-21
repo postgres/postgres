@@ -173,4 +173,4 @@ int			compDESC(const void *a, const void *b);
 				  (direction) ? compASC : compDESC ); \
 	} while(0)
 
-#endif   /* ___INT_H__ */
+#endif							/* ___INT_H__ */

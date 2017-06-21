@@ -81,4 +81,4 @@ extern pg_tzenum *pg_tzenumerate_start(void);
 extern pg_tz *pg_tzenumerate_next(pg_tzenum *dir);
 extern void pg_tzenumerate_end(pg_tzenum *dir);
 
-#endif   /* _PGTIME_H */
+#endif							/* _PGTIME_H */

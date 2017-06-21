@@ -110,4 +110,4 @@ extern void SerializeSnapshot(Snapshot snapshot, char *start_address);
 extern Snapshot RestoreSnapshot(char *start_address);
 extern void RestoreTransactionSnapshot(Snapshot snapshot, void *master_pgproc);
 
-#endif   /* SNAPMGR_H */
+#endif							/* SNAPMGR_H */

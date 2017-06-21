@@ -179,4 +179,4 @@ extern void appendPQExpBufferChar(PQExpBuffer str, char ch);
 extern void appendBinaryPQExpBuffer(PQExpBuffer str,
 						const char *data, size_t datalen);
 
-#endif   /* PQEXPBUFFER_H */
+#endif							/* PQEXPBUFFER_H */

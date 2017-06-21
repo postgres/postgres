@@ -34,7 +34,7 @@ typedef struct spgVacPendingItem
 {
 	ItemPointerData tid;		/* redirection target to visit */
 	bool		done;			/* have we dealt with this? */
-	struct spgVacPendingItem *next;		/* list link */
+	struct spgVacPendingItem *next; /* list link */
 } spgVacPendingItem;
 
 /* Local state for vacuum operations */
@@ -48,7 +48,7 @@ typedef struct spgBulkDeleteState
 
 	/* Additional working state */
 	SpGistState spgstate;		/* for SPGiST operations that need one */
-	spgVacPendingItem *pendingList;		/* TIDs we need to (re)visit */
+	spgVacPendingItem *pendingList; /* TIDs we need to (re)visit */
 	TransactionId myXmin;		/* for detecting newly-added redirects */
 	BlockNumber lastFilledBlock;	/* last non-deletable block */
 } spgBulkDeleteState;

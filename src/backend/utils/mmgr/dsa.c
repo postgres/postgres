@@ -235,7 +235,7 @@ typedef struct
  */
 static const uint16 dsa_size_classes[] = {
 	sizeof(dsa_area_span), 0,	/* special size classes */
-	8, 16, 24, 32, 40, 48, 56, 64,		/* 8 classes separated by 8 bytes */
+	8, 16, 24, 32, 40, 48, 56, 64,	/* 8 classes separated by 8 bytes */
 	80, 96, 112, 128,			/* 4 classes separated by 16 bytes */
 	160, 192, 224, 256,			/* 4 classes separated by 32 bytes */
 	320, 384, 448, 512,			/* 4 classes separated by 64 bytes */
@@ -1304,7 +1304,7 @@ attach_internal(void *place, dsm_segment *segment, dsa_handle handle)
 
 	/* Set up the segment map for this process's mapping. */
 	segment_map = &area->segment_maps[0];
-	segment_map->segment = segment;		/* NULL for in-place */
+	segment_map->segment = segment; /* NULL for in-place */
 	segment_map->mapped_address = place;
 	segment_map->header = (dsa_segment_header *) segment_map->mapped_address;
 	segment_map->fpm = (FreePageManager *)

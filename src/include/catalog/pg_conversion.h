@@ -74,4 +74,4 @@ typedef FormData_pg_conversion *Form_pg_conversion;
  * ---------------
  */
 
-#endif   /* PG_CONVERSION_H */
+#endif							/* PG_CONVERSION_H */

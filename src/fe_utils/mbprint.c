@@ -233,14 +233,14 @@ pg_wcssize(const unsigned char *pwcs, size_t len, int encoding,
 					width = linewidth;
 				linewidth = 0;
 				height += 1;
-				format_size += 1;		/* For NUL char */
+				format_size += 1;	/* For NUL char */
 			}
-			else if (*pwcs == '\r')		/* Linefeed */
+			else if (*pwcs == '\r') /* Linefeed */
 			{
 				linewidth += 2;
 				format_size += 2;
 			}
-			else if (*pwcs == '\t')		/* Tab */
+			else if (*pwcs == '\t') /* Tab */
 			{
 				do
 				{
@@ -321,13 +321,13 @@ pg_wcsformat(const unsigned char *pwcs, size_t len, int encoding,
 				/* make next line point to remaining memory */
 				lines->ptr = ptr;
 			}
-			else if (*pwcs == '\r')		/* Linefeed */
+			else if (*pwcs == '\r') /* Linefeed */
 			{
 				strcpy((char *) ptr, "\\r");
 				linewidth += 2;
 				ptr += 2;
 			}
-			else if (*pwcs == '\t')		/* Tab */
+			else if (*pwcs == '\t') /* Tab */
 			{
 				do
 				{

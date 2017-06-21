@@ -55,7 +55,7 @@ pg_comp_crc32c_sse42(pg_crc32c crc, const void *data, size_t len)
 		crc = _mm_crc32_u32(crc, *((const unsigned int *) p));
 		p += 4;
 	}
-#endif   /* __x86_64__ */
+#endif							/* __x86_64__ */
 
 	/* Process any remaining bytes one at a time. */
 	while (p < pend)

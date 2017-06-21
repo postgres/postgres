@@ -49,4 +49,4 @@ typedef FormData_pg_publication_rel *Form_pg_publication_rel;
 #define Anum_pg_publication_rel_prpubid			1
 #define Anum_pg_publication_rel_prrelid			2
 
-#endif   /* PG_PUBLICATION_REL_H */
+#endif							/* PG_PUBLICATION_REL_H */

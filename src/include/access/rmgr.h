@@ -32,4 +32,4 @@ typedef enum RmgrIds
 
 #define RM_MAX_ID				(RM_NEXT_ID - 1)
 
-#endif   /* RMGR_H */
+#endif							/* RMGR_H */

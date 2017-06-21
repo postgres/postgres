@@ -101,4 +101,4 @@ extern int	bms_next_member(const Bitmapset *a, int prevbit);
 /* support for hashtables using Bitmapsets as keys: */
 extern uint32 bms_hash_value(const Bitmapset *a);
 
-#endif   /* BITMAPSET_H */
+#endif							/* BITMAPSET_H */

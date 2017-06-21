@@ -65,7 +65,7 @@
 #if LIBXML_VERSION >= 20704
 #define HAVE_XMLSTRUCTUREDERRORCONTEXT 1
 #endif
-#endif   /* USE_LIBXML */
+#endif							/* USE_LIBXML */
 
 #include "access/htup_details.h"
 #include "catalog/namespace.h"
@@ -133,7 +133,7 @@ static void *xml_palloc(size_t size);
 static void *xml_repalloc(void *ptr, size_t size);
 static void xml_pfree(void *ptr);
 static char *xml_pstrdup(const char *string);
-#endif   /* USE_LIBXMLCONTEXT */
+#endif							/* USE_LIBXMLCONTEXT */
 
 static xmlChar *xml_text2xmlChar(text *in);
 static int parse_xml_decl(const xmlChar *str, size_t *lenp,
@@ -147,7 +147,7 @@ static int xml_xpathobjtoxmlarray(xmlXPathObjectPtr xpathobj,
 					   ArrayBuildState *astate,
 					   PgXmlErrorContext *xmlerrcxt);
 static xmlChar *pg_xmlCharStrndup(char *str, size_t len);
-#endif   /* USE_LIBXML */
+#endif							/* USE_LIBXML */
 
 static void xmldata_root_element_start(StringInfo result, const char *eltname,
 						   const char *xmlschema, const char *targetns,
@@ -924,7 +924,7 @@ xml_is_document(xmltype *arg)
 #else							/* not USE_LIBXML */
 	NO_XML_SUPPORT();
 	return false;
-#endif   /* not USE_LIBXML */
+#endif							/* not USE_LIBXML */
 }
 
 
@@ -1405,7 +1405,7 @@ xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
 	volatile xmlParserCtxtPtr ctxt = NULL;
 	volatile xmlDocPtr doc = NULL;
 
-	len = VARSIZE_ANY_EXHDR(data);		/* will be useful later */
+	len = VARSIZE_ANY_EXHDR(data);	/* will be useful later */
 	string = xml_text2xmlChar(data);
 
 	utf8string = pg_do_encoding_conversion(string,
@@ -1555,7 +1555,7 @@ xml_pstrdup(const char *string)
 {
 	return MemoryContextStrdup(LibxmlContext, string);
 }
-#endif   /* USE_LIBXMLCONTEXT */
+#endif							/* USE_LIBXMLCONTEXT */
 
 
 /*
@@ -1887,7 +1887,7 @@ is_valid_xml_namechar(pg_wchar c)
 			|| xmlIsCombiningQ(c)
 			|| xmlIsExtenderQ(c));
 }
-#endif   /* USE_LIBXML */
+#endif							/* USE_LIBXML */
 
 
 /*
@@ -1942,7 +1942,7 @@ map_sql_identifier_to_xml_name(char *ident, bool fully_escaped,
 #else							/* not USE_LIBXML */
 	NO_XML_SUPPORT();
 	return NULL;
-#endif   /* not USE_LIBXML */
+#endif							/* not USE_LIBXML */
 }
 
 
@@ -2201,7 +2201,7 @@ map_sql_value_to_xml_value(Datum value, Oid type, bool xml_escape_strings)
 
 					return result;
 				}
-#endif   /* USE_LIBXML */
+#endif							/* USE_LIBXML */
 
 		}
 
@@ -3942,7 +3942,7 @@ xpath_internal(text *xpath_expr_text, xmltype *data, ArrayType *namespaces,
 				if (xmlXPathRegisterNs(xpathctx,
 									   (xmlChar *) ns_name,
 									   (xmlChar *) ns_uri) != 0)
-					ereport(ERROR,		/* is this an internal error??? */
+					ereport(ERROR,	/* is this an internal error??? */
 							(errmsg("could not register XML namespace with name \"%s\" and URI \"%s\"",
 									ns_name, ns_uri)));
 			}
@@ -4000,7 +4000,7 @@ xpath_internal(text *xpath_expr_text, xmltype *data, ArrayType *namespaces,
 
 	pg_xml_done(xmlerrcxt, false);
 }
-#endif   /* USE_LIBXML */
+#endif							/* USE_LIBXML */
 
 /*
  * Evaluate XPath expression and return array of XML values.
@@ -4115,7 +4115,7 @@ xml_is_well_formed(PG_FUNCTION_ARGS)
 #else
 	NO_XML_SUPPORT();
 	return 0;
-#endif   /* not USE_LIBXML */
+#endif							/* not USE_LIBXML */
 }
 
 Datum
@@ -4128,7 +4128,7 @@ xml_is_well_formed_document(PG_FUNCTION_ARGS)
 #else
 	NO_XML_SUPPORT();
 	return 0;
-#endif   /* not USE_LIBXML */
+#endif							/* not USE_LIBXML */
 }
 
 Datum
@@ -4141,7 +4141,7 @@ xml_is_well_formed_content(PG_FUNCTION_ARGS)
 #else
 	NO_XML_SUPPORT();
 	return 0;
-#endif   /* not USE_LIBXML */
+#endif							/* not USE_LIBXML */
 }
 
 /*
@@ -4221,7 +4221,7 @@ XmlTableInitOpaque(TableFuncScanState *state, int natts)
 	state->opaque = xtCxt;
 #else
 	NO_XML_SUPPORT();
-#endif   /* not USE_LIBXML */
+#endif							/* not USE_LIBXML */
 }
 
 /*
@@ -4281,7 +4281,7 @@ XmlTableSetDocument(TableFuncScanState *state, Datum value)
 	xtCxt->xpathcxt = xpathcxt;
 #else
 	NO_XML_SUPPORT();
-#endif   /* not USE_LIBXML */
+#endif							/* not USE_LIBXML */
 }
 
 /*
@@ -4307,7 +4307,7 @@ XmlTableSetNamespace(TableFuncScanState *state, char *name, char *uri)
 					"could not set XML namespace");
 #else
 	NO_XML_SUPPORT();
-#endif   /* not USE_LIBXML */
+#endif							/* not USE_LIBXML */
 }
 
 /*
@@ -4336,7 +4336,7 @@ XmlTableSetRowFilter(TableFuncScanState *state, char *path)
 					"invalid XPath expression");
 #else
 	NO_XML_SUPPORT();
-#endif   /* not USE_LIBXML */
+#endif							/* not USE_LIBXML */
 }
 
 /*
@@ -4367,7 +4367,7 @@ XmlTableSetColumnFilter(TableFuncScanState *state, char *path, int colnum)
 					"invalid XPath expression");
 #else
 	NO_XML_SUPPORT();
-#endif   /* not USE_LIBXML */
+#endif							/* not USE_LIBXML */
 }
 
 /*
@@ -4415,7 +4415,7 @@ XmlTableFetchRow(TableFuncScanState *state)
 #else
 	NO_XML_SUPPORT();
 	return false;
-#endif   /* not USE_LIBXML */
+#endif							/* not USE_LIBXML */
 }
 
 /*
@@ -4585,7 +4585,7 @@ XmlTableGetValue(TableFuncScanState *state, int colnum,
 #else
 	NO_XML_SUPPORT();
 	return 0;
-#endif   /* not USE_LIBXML */
+#endif							/* not USE_LIBXML */
 }
 
 /*
@@ -4631,5 +4631,5 @@ XmlTableDestroyOpaque(TableFuncScanState *state)
 
 #else
 	NO_XML_SUPPORT();
-#endif   /* not USE_LIBXML */
+#endif							/* not USE_LIBXML */
 }

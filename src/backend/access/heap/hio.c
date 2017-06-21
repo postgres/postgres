@@ -329,7 +329,7 @@ RelationGetBufferForTuple(Relation relation, Size len,
 	if (otherBuffer != InvalidBuffer)
 		otherBlock = BufferGetBlockNumber(otherBuffer);
 	else
-		otherBlock = InvalidBlockNumber;		/* just to keep compiler quiet */
+		otherBlock = InvalidBlockNumber;	/* just to keep compiler quiet */
 
 	/*
 	 * We first try to put the tuple on the same page we last inserted a tuple

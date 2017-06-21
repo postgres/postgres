@@ -403,7 +403,7 @@ find(struct vars *v,
 			v->details->rm_extend.rm_so = OFF(cold);
 		else
 			v->details->rm_extend.rm_so = OFF(v->stop);
-		v->details->rm_extend.rm_eo = OFF(v->stop);		/* unknown */
+		v->details->rm_extend.rm_eo = OFF(v->stop); /* unknown */
 	}
 	if (close == NULL)			/* not found */
 		return REG_NOMATCH;
@@ -449,7 +449,7 @@ find(struct vars *v,
 			v->details->rm_extend.rm_so = OFF(cold);
 		else
 			v->details->rm_extend.rm_so = OFF(v->stop);
-		v->details->rm_extend.rm_eo = OFF(v->stop);		/* unknown */
+		v->details->rm_extend.rm_eo = OFF(v->stop); /* unknown */
 	}
 	if (v->nmatch == 1)			/* no need for submatches */
 		return REG_OKAY;
@@ -494,7 +494,7 @@ cfind(struct vars *v,
 			v->details->rm_extend.rm_so = OFF(cold);
 		else
 			v->details->rm_extend.rm_so = OFF(v->stop);
-		v->details->rm_extend.rm_eo = OFF(v->stop);		/* unknown */
+		v->details->rm_extend.rm_eo = OFF(v->stop); /* unknown */
 	}
 	return ret;
 }
@@ -718,7 +718,7 @@ cdissect(struct vars *v,
 			break;
 		case '.':				/* concatenation */
 			assert(t->left != NULL && t->right != NULL);
-			if (t->left->flags & SHORTER)		/* reverse scan */
+			if (t->left->flags & SHORTER)	/* reverse scan */
 				er = crevcondissect(v, t, begin, end);
 			else
 				er = ccondissect(v, t, begin, end);
@@ -729,7 +729,7 @@ cdissect(struct vars *v,
 			break;
 		case '*':				/* iteration */
 			assert(t->left != NULL);
-			if (t->left->flags & SHORTER)		/* reverse scan */
+			if (t->left->flags & SHORTER)	/* reverse scan */
 				er = creviterdissect(v, t, begin, end);
 			else
 				er = citerdissect(v, t, begin, end);

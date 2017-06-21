@@ -95,7 +95,7 @@ typedef struct ArrayRemapInfo
 	int16		typlen;			/* array element type's storage properties */
 	bool		typbyval;
 	char		typalign;
-	TupleRemapInfo *element_remap;		/* array element type's remap info */
+	TupleRemapInfo *element_remap;	/* array element type's remap info */
 } ArrayRemapInfo;
 
 typedef struct RangeRemapInfo
@@ -113,7 +113,7 @@ typedef struct RecordRemapInfo
 	int32		localtypmod;
 	/* If no fields of the record require remapping, these are NULL: */
 	TupleDesc	tupledesc;		/* copy of record's tupdesc */
-	TupleRemapInfo **field_remap;		/* each field's remap info */
+	TupleRemapInfo **field_remap;	/* each field's remap info */
 } RecordRemapInfo;
 
 struct TupleRemapInfo

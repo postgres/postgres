@@ -417,7 +417,7 @@ get_icu_locale_comment(const char *localename)
 
 	return result;
 }
-#endif   /* USE_ICU */
+#endif							/* USE_ICU */
 
 
 Datum
@@ -552,7 +552,7 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 	if (count == 0)
 		ereport(WARNING,
 				(errmsg("no usable system locales were found")));
-#endif   /* not HAVE_LOCALE_T && not WIN32 */
+#endif							/* not HAVE_LOCALE_T && not WIN32 */
 
 #ifdef USE_ICU
 	if (!is_encoding_supported_by_icu(GetDatabaseEncoding()))

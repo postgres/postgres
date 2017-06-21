@@ -43,4 +43,4 @@ typedef enum LockWaitPolicy
 	LockWaitError
 } LockWaitPolicy;
 
-#endif   /* LOCKOPTIONS_H */
+#endif							/* LOCKOPTIONS_H */

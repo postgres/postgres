@@ -250,7 +250,7 @@ pre_sync_fname(const char *fname, bool isdir, const char *progname)
 	return 0;
 }
 
-#endif   /* PG_FLUSH_DATA_WORKS */
+#endif							/* PG_FLUSH_DATA_WORKS */
 
 /*
  * fsync_fname -- Try to fsync a file or directory

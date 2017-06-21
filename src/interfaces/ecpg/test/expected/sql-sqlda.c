@@ -41,7 +41,7 @@ typedef struct sqlda_struct sqlda_t;
 
 #endif
 
-#endif   /* ECPG_SQLDA_H */
+#endif							/* ECPG_SQLDA_H */
 
 #line 7 "sqlda.pgc"
 
@@ -80,7 +80,7 @@ typedef struct
 	int			rscale;			/* result scale */
 	int			dscale;			/* display scale */
 	int			sign;			/* NUMERIC_POS, NUMERIC_NEG, or NUMERIC_NAN */
-	NumericDigit digits[DECSIZE];		/* decimal digits */
+	NumericDigit digits[DECSIZE];	/* decimal digits */
 } decimal;
 
 #ifdef __cplusplus
@@ -113,7 +113,7 @@ int			PGTYPESnumeric_from_decimal(decimal *, numeric *);
 }
 #endif
 
-#endif   /* PGTYPES_NUMERIC */
+#endif							/* PGTYPES_NUMERIC */
 
 #line 8 "sqlda.pgc"
 

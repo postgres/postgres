@@ -67,4 +67,4 @@ typedef FormData_pg_replication_origin *Form_pg_replication_origin;
  * ----------------
  */
 
-#endif   /* PG_REPLICATION_ORIGIN_H */
+#endif							/* PG_REPLICATION_ORIGIN_H */

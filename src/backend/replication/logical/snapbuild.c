@@ -210,7 +210,7 @@ struct SnapBuild
 		TransactionId was_xmax;
 
 		size_t		was_xcnt;	/* number of used xip entries */
-		size_t		was_xcnt_space;		/* allocated size of xip */
+		size_t		was_xcnt_space; /* allocated size of xip */
 		TransactionId *was_xip; /* running xacts array, xidComparator-sorted */
 	}			was_running;
 
@@ -336,7 +336,7 @@ AllocateSnapshotBuilder(ReorderBuffer *reorder,
 	/* Other struct members initialized by zeroing via palloc0 above */
 
 	builder->committed.xcnt = 0;
-	builder->committed.xcnt_space = 128;		/* arbitrary number */
+	builder->committed.xcnt_space = 128;	/* arbitrary number */
 	builder->committed.xip =
 		palloc0(builder->committed.xcnt_space * sizeof(TransactionId));
 	builder->committed.includes_all_transactions = true;
@@ -1248,8 +1248,8 @@ SnapBuildFindSnapshot(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *runn
 			builder->start_decoding_at = lsn + 1;
 
 		/* As no transactions were running xmin/xmax can be trivially set. */
-		builder->xmin = running->nextXid;		/* < are finished */
-		builder->xmax = running->nextXid;		/* >= are running */
+		builder->xmin = running->nextXid;	/* < are finished */
+		builder->xmax = running->nextXid;	/* >= are running */
 
 		/* so we can safely use the faster comparisons */
 		Assert(TransactionIdIsNormal(builder->xmin));
@@ -1295,8 +1295,8 @@ SnapBuildFindSnapshot(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *runn
 		 * currently running transactions have finished. We'll update both
 		 * while waiting for the pending transactions to finish.
 		 */
-		builder->xmin = running->nextXid;		/* < are finished */
-		builder->xmax = running->nextXid;		/* >= are running */
+		builder->xmin = running->nextXid;	/* < are finished */
+		builder->xmax = running->nextXid;	/* >= are running */
 
 		/* so we can safely use the faster comparisons */
 		Assert(TransactionIdIsNormal(builder->xmin));

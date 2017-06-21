@@ -110,7 +110,7 @@ do { \
 	uu.clock_seq_hi_and_reserved |= 0x80; \
 } while(0)
 
-#endif   /* !HAVE_UUID_OSSP */
+#endif							/* !HAVE_UUID_OSSP */
 
 PG_MODULE_MAGIC;
 
@@ -398,7 +398,7 @@ uuid_generate_internal(int v, unsigned char *ns, char *ptr, int len)
 	return DirectFunctionCall1(uuid_in, CStringGetDatum(strbuf));
 }
 
-#endif   /* HAVE_UUID_OSSP */
+#endif							/* HAVE_UUID_OSSP */
 
 
 Datum

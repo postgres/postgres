@@ -971,10 +971,10 @@ cash_words(PG_FUNCTION_ARGS)
 	val = (uint64) value;
 
 	m0 = val % INT64CONST(100); /* cents */
-	m1 = (val / INT64CONST(100)) % 1000;		/* hundreds */
-	m2 = (val / INT64CONST(100000)) % 1000;		/* thousands */
+	m1 = (val / INT64CONST(100)) % 1000;	/* hundreds */
+	m2 = (val / INT64CONST(100000)) % 1000; /* thousands */
 	m3 = (val / INT64CONST(100000000)) % 1000;	/* millions */
-	m4 = (val / INT64CONST(100000000000)) % 1000;		/* billions */
+	m4 = (val / INT64CONST(100000000000)) % 1000;	/* billions */
 	m5 = (val / INT64CONST(100000000000000)) % 1000;	/* trillions */
 	m6 = (val / INT64CONST(100000000000000000)) % 1000; /* quadrillions */
 

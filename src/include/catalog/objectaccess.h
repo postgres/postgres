@@ -182,4 +182,4 @@ extern void RunFunctionExecuteHook(Oid objectId);
 			RunFunctionExecuteHook(objectId);	\
 	} while(0)
 
-#endif   /* OBJECTACCESS_H */
+#endif							/* OBJECTACCESS_H */

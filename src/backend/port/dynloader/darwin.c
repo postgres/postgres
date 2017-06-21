@@ -135,4 +135,4 @@ pg_dlerror(void)
 	return (char *) errorString;
 }
 
-#endif   /* HAVE_DLOPEN */
+#endif							/* HAVE_DLOPEN */

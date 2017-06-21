@@ -337,7 +337,7 @@ do_like_escape(text *pat, text *esc)
 
 	return result;
 }
-#endif   /* do_like_escape */
+#endif							/* do_like_escape */
 
 #ifdef CHAREQ
 #undef CHAREQ

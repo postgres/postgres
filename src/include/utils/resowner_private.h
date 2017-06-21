@@ -88,4 +88,4 @@ extern void ResourceOwnerRememberDSM(ResourceOwner owner,
 extern void ResourceOwnerForgetDSM(ResourceOwner owner,
 					   dsm_segment *);
 
-#endif   /* RESOWNER_PRIVATE_H */
+#endif							/* RESOWNER_PRIVATE_H */

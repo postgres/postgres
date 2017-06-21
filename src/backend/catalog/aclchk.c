@@ -157,7 +157,7 @@ dumpacl(Acl *acl)
 			 DatumGetCString(DirectFunctionCall1(aclitemout,
 												 PointerGetDatum(aip + i))));
 }
-#endif   /* ACLDEBUG */
+#endif							/* ACLDEBUG */
 
 
 /*

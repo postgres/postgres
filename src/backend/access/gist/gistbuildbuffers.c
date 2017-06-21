@@ -709,7 +709,7 @@ gistRelocateBuildBuffersOnSplit(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
 					 * page seen so far.  Skip the remaining columns and move
 					 * on to the next page, if any.
 					 */
-					zero_penalty = false;		/* so outer loop won't exit */
+					zero_penalty = false;	/* so outer loop won't exit */
 					break;
 				}
 			}

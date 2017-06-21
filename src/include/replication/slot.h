@@ -184,4 +184,4 @@ extern void CheckPointReplicationSlots(void);
 
 extern void CheckSlotRequirements(void);
 
-#endif   /* SLOT_H */
+#endif							/* SLOT_H */

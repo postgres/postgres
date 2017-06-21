@@ -157,4 +157,4 @@ extern char *namespace_search_path;
 extern List *fetch_search_path(bool includeImplicit);
 extern int	fetch_search_path_array(Oid *sarray, int sarray_len);
 
-#endif   /* NAMESPACE_H */
+#endif							/* NAMESPACE_H */

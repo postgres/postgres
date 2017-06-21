@@ -156,8 +156,8 @@ PGTYPESdate_today(date * d)
 	return;
 }
 
-#define PGTYPES_DATE_NUM_MAX_DIGITS		20		/* should suffice for most
-												 * years... */
+#define PGTYPES_DATE_NUM_MAX_DIGITS		20	/* should suffice for most
+											 * years... */
 
 #define PGTYPES_FMTDATE_DAY_DIGITS_LZ		1	/* LZ means "leading zeroes" */
 #define PGTYPES_FMTDATE_DOW_LITERAL_SHORT	2

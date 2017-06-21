@@ -91,7 +91,7 @@ static const datetkn datetktbl[] = {
 	/* token, type, value */
 	{EARLY, RESERV, DTK_EARLY}, /* "-infinity" reserved for "early time" */
 	{DA_D, ADBC, AD},			/* "ad" for years > 0 */
-	{"allballs", RESERV, DTK_ZULU},		/* 00:00:00 */
+	{"allballs", RESERV, DTK_ZULU}, /* 00:00:00 */
 	{"am", AMPM, AM},
 	{"apr", MONTH, 4},
 	{"april", MONTH, 4},
@@ -113,8 +113,8 @@ static const datetkn datetktbl[] = {
 	{"friday", DOW, 5},
 	{"h", UNITS, DTK_HOUR},		/* "hour" */
 	{LATE, RESERV, DTK_LATE},	/* "infinity" reserved for "late time" */
-	{INVALID, RESERV, DTK_INVALID},		/* "invalid" reserved for bad time */
-	{"isodow", UNITS, DTK_ISODOW},		/* ISO day of week, Sunday == 7 */
+	{INVALID, RESERV, DTK_INVALID}, /* "invalid" reserved for bad time */
+	{"isodow", UNITS, DTK_ISODOW},	/* ISO day of week, Sunday == 7 */
 	{"isoyear", UNITS, DTK_ISOYEAR},	/* year in terms of the ISO week date */
 	{"j", UNITS, DTK_JULIAN},
 	{"jan", MONTH, 1},
@@ -176,33 +176,33 @@ static const datetkn deltatktbl[] = {
 	{"@", IGNORE_DTF, 0},		/* postgres relative prefix */
 	{DAGO, AGO, 0},				/* "ago" indicates negative time offset */
 	{"c", UNITS, DTK_CENTURY},	/* "century" relative */
-	{"cent", UNITS, DTK_CENTURY},		/* "century" relative */
+	{"cent", UNITS, DTK_CENTURY},	/* "century" relative */
 	{"centuries", UNITS, DTK_CENTURY},	/* "centuries" relative */
-	{DCENTURY, UNITS, DTK_CENTURY},		/* "century" relative */
+	{DCENTURY, UNITS, DTK_CENTURY}, /* "century" relative */
 	{"d", UNITS, DTK_DAY},		/* "day" relative */
 	{DDAY, UNITS, DTK_DAY},		/* "day" relative */
 	{"days", UNITS, DTK_DAY},	/* "days" relative */
 	{"dec", UNITS, DTK_DECADE}, /* "decade" relative */
-	{DDECADE, UNITS, DTK_DECADE},		/* "decade" relative */
-	{"decades", UNITS, DTK_DECADE},		/* "decades" relative */
+	{DDECADE, UNITS, DTK_DECADE},	/* "decade" relative */
+	{"decades", UNITS, DTK_DECADE}, /* "decades" relative */
 	{"decs", UNITS, DTK_DECADE},	/* "decades" relative */
 	{"h", UNITS, DTK_HOUR},		/* "hour" relative */
 	{DHOUR, UNITS, DTK_HOUR},	/* "hour" relative */
 	{"hours", UNITS, DTK_HOUR}, /* "hours" relative */
 	{"hr", UNITS, DTK_HOUR},	/* "hour" relative */
 	{"hrs", UNITS, DTK_HOUR},	/* "hours" relative */
-	{INVALID, RESERV, DTK_INVALID},		/* reserved for invalid time */
+	{INVALID, RESERV, DTK_INVALID}, /* reserved for invalid time */
 	{"m", UNITS, DTK_MINUTE},	/* "minute" relative */
-	{"microsecon", UNITS, DTK_MICROSEC},		/* "microsecond" relative */
-	{"mil", UNITS, DTK_MILLENNIUM},		/* "millennium" relative */
-	{"millennia", UNITS, DTK_MILLENNIUM},		/* "millennia" relative */
-	{DMILLENNIUM, UNITS, DTK_MILLENNIUM},		/* "millennium" relative */
-	{"millisecon", UNITS, DTK_MILLISEC},		/* relative */
+	{"microsecon", UNITS, DTK_MICROSEC},	/* "microsecond" relative */
+	{"mil", UNITS, DTK_MILLENNIUM}, /* "millennium" relative */
+	{"millennia", UNITS, DTK_MILLENNIUM},	/* "millennia" relative */
+	{DMILLENNIUM, UNITS, DTK_MILLENNIUM},	/* "millennium" relative */
+	{"millisecon", UNITS, DTK_MILLISEC},	/* relative */
 	{"mils", UNITS, DTK_MILLENNIUM},	/* "millennia" relative */
 	{"min", UNITS, DTK_MINUTE}, /* "minute" relative */
 	{"mins", UNITS, DTK_MINUTE},	/* "minutes" relative */
-	{DMINUTE, UNITS, DTK_MINUTE},		/* "minute" relative */
-	{"minutes", UNITS, DTK_MINUTE},		/* "minutes" relative */
+	{DMINUTE, UNITS, DTK_MINUTE},	/* "minute" relative */
+	{"minutes", UNITS, DTK_MINUTE}, /* "minutes" relative */
 	{"mon", UNITS, DTK_MONTH},	/* "months" relative */
 	{"mons", UNITS, DTK_MONTH}, /* "months" relative */
 	{DMONTH, UNITS, DTK_MONTH}, /* "month" relative */
@@ -213,7 +213,7 @@ static const datetkn deltatktbl[] = {
 	{"mseconds", UNITS, DTK_MILLISEC},
 	{"msecs", UNITS, DTK_MILLISEC},
 	{"qtr", UNITS, DTK_QUARTER},	/* "quarter" relative */
-	{DQUARTER, UNITS, DTK_QUARTER},		/* "quarter" relative */
+	{DQUARTER, UNITS, DTK_QUARTER}, /* "quarter" relative */
 	{"s", UNITS, DTK_SECOND},
 	{"sec", UNITS, DTK_SECOND},
 	{DSECOND, UNITS, DTK_SECOND},
@@ -221,13 +221,13 @@ static const datetkn deltatktbl[] = {
 	{"secs", UNITS, DTK_SECOND},
 	{DTIMEZONE, UNITS, DTK_TZ}, /* "timezone" time offset */
 	{"timezone_h", UNITS, DTK_TZ_HOUR}, /* timezone hour units */
-	{"timezone_m", UNITS, DTK_TZ_MINUTE},		/* timezone minutes units */
+	{"timezone_m", UNITS, DTK_TZ_MINUTE},	/* timezone minutes units */
 	{"undefined", RESERV, DTK_INVALID}, /* pre-v6.1 invalid time */
 	{"us", UNITS, DTK_MICROSEC},	/* "microsecond" relative */
-	{"usec", UNITS, DTK_MICROSEC},		/* "microsecond" relative */
+	{"usec", UNITS, DTK_MICROSEC},	/* "microsecond" relative */
 	{DMICROSEC, UNITS, DTK_MICROSEC},	/* "microsecond" relative */
 	{"useconds", UNITS, DTK_MICROSEC},	/* "microseconds" relative */
-	{"usecs", UNITS, DTK_MICROSEC},		/* "microseconds" relative */
+	{"usecs", UNITS, DTK_MICROSEC}, /* "microseconds" relative */
 	{"w", UNITS, DTK_WEEK},		/* "week" relative */
 	{DWEEK, UNITS, DTK_WEEK},	/* "week" relative */
 	{"weeks", UNITS, DTK_WEEK}, /* "weeks" relative */
@@ -2752,7 +2752,7 @@ DecodeNumber(int flen, char *str, bool haveTextMonth, int fmask,
 				if (flen >= 3 && *is2digits)
 				{
 					/* Guess that first numeric field is day was wrong */
-					*tmask = DTK_M(DAY);		/* YEAR is already set */
+					*tmask = DTK_M(DAY);	/* YEAR is already set */
 					tm->tm_mday = tm->tm_year;
 					tm->tm_year = val;
 					*is2digits = FALSE;

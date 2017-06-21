@@ -121,7 +121,7 @@
  */
 typedef struct InvalidationChunk
 {
-	struct InvalidationChunk *next;		/* list link */
+	struct InvalidationChunk *next; /* list link */
 	int			nitems;			/* # items currently stored in chunk */
 	int			maxitems;		/* size of allocated array in this chunk */
 	SharedInvalidationMessage msgs[FLEXIBLE_ARRAY_MEMBER];

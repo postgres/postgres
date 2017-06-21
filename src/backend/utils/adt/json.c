@@ -347,7 +347,7 @@ pg_parse_json(JsonLexContext *lex, JsonSemAction *sem)
 			parse_array(lex, sem);
 			break;
 		default:
-			parse_scalar(lex, sem);		/* json can be a bare scalar */
+			parse_scalar(lex, sem); /* json can be a bare scalar */
 	}
 
 	lex_expect(JSON_PARSE_END, lex, JSON_TOKEN_END);

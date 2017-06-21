@@ -76,4 +76,4 @@ extern TargetEntry *get_tle_by_resno(List *tlist, AttrNumber resno);
 
 extern RowMarkClause *get_parse_rowmark(Query *qry, Index rtindex);
 
-#endif   /* PARSETREE_H */
+#endif							/* PARSETREE_H */

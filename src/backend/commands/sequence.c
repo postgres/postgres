@@ -611,7 +611,7 @@ nextval_internal(Oid relid, bool check_permissions)
 	 */
 	PreventCommandIfParallelMode("nextval()");
 
-	if (elm->last != elm->cached)		/* some numbers were cached */
+	if (elm->last != elm->cached)	/* some numbers were cached */
 	{
 		Assert(elm->last_valid);
 		Assert(elm->increment != 0);
@@ -1455,7 +1455,7 @@ init_params(ParseState *pstate, List *options, bool for_identity,
 				seqform->seqmax = PG_INT64_MAX;
 		}
 		else
-			seqform->seqmax = -1;		/* descending seq */
+			seqform->seqmax = -1;	/* descending seq */
 		seqdataform->log_cnt = 0;
 	}
 
@@ -1532,9 +1532,9 @@ init_params(ParseState *pstate, List *options, bool for_identity,
 	else if (isInit)
 	{
 		if (seqform->seqincrement > 0)
-			seqform->seqstart = seqform->seqmin;		/* ascending seq */
+			seqform->seqstart = seqform->seqmin;	/* ascending seq */
 		else
-			seqform->seqstart = seqform->seqmax;		/* descending seq */
+			seqform->seqstart = seqform->seqmax;	/* descending seq */
 	}
 
 	/* crosscheck START */

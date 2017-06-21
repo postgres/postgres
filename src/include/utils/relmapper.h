@@ -63,4 +63,4 @@ extern void relmap_redo(XLogReaderState *record);
 extern void relmap_desc(StringInfo buf, XLogReaderState *record);
 extern const char *relmap_identify(uint8 info);
 
-#endif   /* RELMAPPER_H */
+#endif							/* RELMAPPER_H */

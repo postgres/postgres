@@ -106,4 +106,4 @@ extern void DescribeLockTag(StringInfo buf, const LOCKTAG *tag);
 
 extern const char *GetLockNameFromTagType(uint16 locktag_type);
 
-#endif   /* LMGR_H */
+#endif							/* LMGR_H */

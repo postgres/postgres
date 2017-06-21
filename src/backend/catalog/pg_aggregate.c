@@ -83,9 +83,9 @@ AggregateCreate(const char *aggName,
 	Oid			finalfn = InvalidOid;	/* can be omitted */
 	Oid			combinefn = InvalidOid; /* can be omitted */
 	Oid			serialfn = InvalidOid;	/* can be omitted */
-	Oid			deserialfn = InvalidOid;		/* can be omitted */
+	Oid			deserialfn = InvalidOid;	/* can be omitted */
 	Oid			mtransfn = InvalidOid;	/* can be omitted */
-	Oid			minvtransfn = InvalidOid;		/* can be omitted */
+	Oid			minvtransfn = InvalidOid;	/* can be omitted */
 	Oid			mfinalfn = InvalidOid;	/* can be omitted */
 	Oid			sortop = InvalidOid;	/* can be omitted */
 	Oid		   *aggArgTypes = parameterTypes->values;
@@ -605,30 +605,30 @@ AggregateCreate(const char *aggName,
 
 	myself = ProcedureCreate(aggName,
 							 aggNamespace,
-							 false,		/* no replacement */
-							 false,		/* doesn't return a set */
+							 false, /* no replacement */
+							 false, /* doesn't return a set */
 							 finaltype, /* returnType */
-							 GetUserId(),		/* proowner */
-							 INTERNALlanguageId,		/* languageObjectId */
-							 InvalidOid,		/* no validator */
+							 GetUserId(),	/* proowner */
+							 INTERNALlanguageId,	/* languageObjectId */
+							 InvalidOid,	/* no validator */
 							 "aggregate_dummy", /* placeholder proc */
-							 NULL,		/* probin */
-							 true,		/* isAgg */
-							 false,		/* isWindowFunc */
-							 false,		/* security invoker (currently not
-										 * definable for agg) */
-							 false,		/* isLeakProof */
-							 false,		/* isStrict (not needed for agg) */
-							 PROVOLATILE_IMMUTABLE,		/* volatility (not
-														 * needed for agg) */
+							 NULL,	/* probin */
+							 true,	/* isAgg */
+							 false, /* isWindowFunc */
+							 false, /* security invoker (currently not
+									 * definable for agg) */
+							 false, /* isLeakProof */
+							 false, /* isStrict (not needed for agg) */
+							 PROVOLATILE_IMMUTABLE, /* volatility (not needed
+													 * for agg) */
 							 proparallel,
 							 parameterTypes,	/* paramTypes */
 							 allParameterTypes, /* allParamTypes */
 							 parameterModes,	/* parameterModes */
 							 parameterNames,	/* parameterNames */
 							 parameterDefaults, /* parameterDefaults */
-							 PointerGetDatum(NULL),		/* trftypes */
-							 PointerGetDatum(NULL),		/* proconfig */
+							 PointerGetDatum(NULL), /* trftypes */
+							 PointerGetDatum(NULL), /* proconfig */
 							 1, /* procost */
 							 0);	/* prorows */
 	procOid = myself.objectId;

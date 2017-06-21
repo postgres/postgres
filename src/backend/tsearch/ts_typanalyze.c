@@ -423,7 +423,7 @@ compute_tsvector_stats(VacAttrStats *stats,
 		stats->stats_valid = true;
 		stats->stanullfrac = 1.0;
 		stats->stawidth = 0;	/* "unknown" */
-		stats->stadistinct = 0.0;		/* "unknown" */
+		stats->stadistinct = 0.0;	/* "unknown" */
 	}
 
 	/*

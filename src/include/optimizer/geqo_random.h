@@ -38,4 +38,4 @@ extern double geqo_rand(PlannerInfo *root);
 #define geqo_randint(root, upper, lower) \
 	( (int) floor( geqo_rand(root)*(((upper)-(lower))+0.999999) ) + (lower) )
 
-#endif   /* GEQO_RANDOM_H */
+#endif							/* GEQO_RANDOM_H */

@@ -34,7 +34,7 @@ typedef struct SimpleStringListCell
 	struct SimpleStringListCell *next;
 	bool		touched;		/* true, when this string was searched and
 								 * touched */
-	char		val[FLEXIBLE_ARRAY_MEMBER];		/* null-terminated string here */
+	char		val[FLEXIBLE_ARRAY_MEMBER]; /* null-terminated string here */
 } SimpleStringListCell;
 
 typedef struct SimpleStringList
@@ -52,4 +52,4 @@ extern bool simple_string_list_member(SimpleStringList *list, const char *val);
 
 extern const char *simple_string_list_not_touched(SimpleStringList *list);
 
-#endif   /* SIMPLE_LIST_H */
+#endif							/* SIMPLE_LIST_H */

@@ -120,4 +120,4 @@ extern int check_usermap(const char *usermap_name,
 			  bool case_sensitive);
 extern bool pg_isblank(const char c);
 
-#endif   /* HBA_H */
+#endif							/* HBA_H */

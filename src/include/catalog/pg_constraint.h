@@ -198,4 +198,4 @@ typedef FormData_pg_constraint *Form_pg_constraint;
  * the FKCONSTR_MATCH_xxx constants defined in parsenodes.h.
  */
 
-#endif   /* PG_CONSTRAINT_H */
+#endif							/* PG_CONSTRAINT_H */

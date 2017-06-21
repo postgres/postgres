@@ -748,7 +748,7 @@ struct MinimalTupleData
 
 extern Datum fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
 			bool *isnull);
-#endif   /* defined(DISABLE_COMPLEX_MACRO) */
+#endif							/* defined(DISABLE_COMPLEX_MACRO) */
 
 
 /* ----------------
@@ -821,4 +821,4 @@ extern MinimalTuple heap_copy_minimal_tuple(MinimalTuple mtup);
 extern HeapTuple heap_tuple_from_minimal_tuple(MinimalTuple mtup);
 extern MinimalTuple minimal_tuple_from_heap_tuple(HeapTuple htup);
 
-#endif   /* HTUP_DETAILS_H */
+#endif							/* HTUP_DETAILS_H */

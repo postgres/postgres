@@ -45,4 +45,4 @@
 #define MAP_FAILED ((void *) -1)
 #endif
 
-#endif   /* MEM_H */
+#endif							/* MEM_H */

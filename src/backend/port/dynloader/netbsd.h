@@ -18,7 +18,7 @@
 #include <link.h>
 #include <dlfcn.h>
 
-#include "utils/dynamic_loader.h"		/* pgrminclude ignore */
+#include "utils/dynamic_loader.h"	/* pgrminclude ignore */
 
 /*
  * Dynamic Loader on NetBSD 1.0.
@@ -56,4 +56,4 @@ void	   *BSD44_derived_dlopen(const char *filename, int num);
 void	   *BSD44_derived_dlsym(void *handle, const char *name);
 void		BSD44_derived_dlclose(void *handle);
 
-#endif   /* PORT_PROTOS_H */
+#endif							/* PORT_PROTOS_H */

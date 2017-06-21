@@ -183,8 +183,8 @@ typedef struct
 {
 	Oid			db_oid;			/* oid of the database */
 	char	   *db_name;		/* database name */
-	char		db_tablespace[MAXPGPATH];		/* database default tablespace
-												 * path */
+	char		db_tablespace[MAXPGPATH];	/* database default tablespace
+											 * path */
 	char	   *db_collate;
 	char	   *db_ctype;
 	int			db_encoding;
@@ -272,7 +272,7 @@ typedef struct
 	uint32		major_version;	/* PG_VERSION of cluster */
 	char		major_version_str[64];	/* string PG_VERSION of cluster */
 	uint32		bin_version;	/* version returned from pg_ctl */
-	const char *tablespace_suffix;		/* directory specification */
+	const char *tablespace_suffix;	/* directory specification */
 } ClusterInfo;
 
 

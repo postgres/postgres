@@ -56,4 +56,4 @@ extern void buildACLQueries(PQExpBuffer acl_subquery, PQExpBuffer racl_subquery,
 				const char *acl_column, const char *acl_owner,
 				const char *obj_kind, bool binary_upgrade);
 
-#endif   /* DUMPUTILS_H */
+#endif							/* DUMPUTILS_H */

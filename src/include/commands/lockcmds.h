@@ -21,4 +21,4 @@
  */
 extern void LockTableCommand(LockStmt *lockstmt);
 
-#endif   /* LOCKCMDS_H */
+#endif							/* LOCKCMDS_H */

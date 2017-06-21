@@ -35,7 +35,7 @@ static char current_walfile_name[MAXPGPATH] = "";
 static bool reportFlushPosition = false;
 static XLogRecPtr lastFlushPosition = InvalidXLogRecPtr;
 
-static bool still_sending = true;		/* feedback still needs to be sent? */
+static bool still_sending = true;	/* feedback still needs to be sent? */
 
 static PGresult *HandleCopyStream(PGconn *conn, StreamCtl *stream,
 				 XLogRecPtr *stoppos);
@@ -330,18 +330,18 @@ sendFeedback(PGconn *conn, XLogRecPtr blockpos, TimestampTz now, bool replyReque
 
 	replybuf[len] = 'r';
 	len += 1;
-	fe_sendint64(blockpos, &replybuf[len]);		/* write */
+	fe_sendint64(blockpos, &replybuf[len]); /* write */
 	len += 8;
 	if (reportFlushPosition)
-		fe_sendint64(lastFlushPosition, &replybuf[len]);		/* flush */
+		fe_sendint64(lastFlushPosition, &replybuf[len]);	/* flush */
 	else
-		fe_sendint64(InvalidXLogRecPtr, &replybuf[len]);		/* flush */
+		fe_sendint64(InvalidXLogRecPtr, &replybuf[len]);	/* flush */
 	len += 8;
 	fe_sendint64(InvalidXLogRecPtr, &replybuf[len]);	/* apply */
 	len += 8;
 	fe_sendint64(now, &replybuf[len]);	/* sendTime */
 	len += 8;
-	replybuf[len] = replyRequested ? 1 : 0;		/* replyRequested */
+	replybuf[len] = replyRequested ? 1 : 0; /* replyRequested */
 	len += 1;
 
 	if (PQputCopyData(conn, replybuf, len) <= 0 || PQflush(conn))

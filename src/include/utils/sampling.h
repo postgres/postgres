@@ -32,7 +32,7 @@ typedef struct
 	int			n;				/* desired sample size */
 	BlockNumber t;				/* current block number */
 	int			m;				/* blocks selected so far */
-	SamplerRandomState randstate;		/* random generator state */
+	SamplerRandomState randstate;	/* random generator state */
 } BlockSamplerData;
 
 typedef BlockSamplerData *BlockSampler;
@@ -47,7 +47,7 @@ extern BlockNumber BlockSampler_Next(BlockSampler bs);
 typedef struct
 {
 	double		W;
-	SamplerRandomState randstate;		/* random generator state */
+	SamplerRandomState randstate;	/* random generator state */
 } ReservoirStateData;
 
 typedef ReservoirStateData *ReservoirState;
@@ -62,4 +62,4 @@ extern double anl_random_fract(void);
 extern double anl_init_selection_state(int n);
 extern double anl_get_next_S(double t, int n, double *stateptr);
 
-#endif   /* SAMPLING_H */
+#endif							/* SAMPLING_H */

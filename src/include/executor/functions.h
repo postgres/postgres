@@ -36,4 +36,4 @@ extern bool check_sql_fn_retval(Oid func_id, Oid rettype,
 
 extern DestReceiver *CreateSQLFunctionDestReceiver(void);
 
-#endif   /* FUNCTIONS_H */
+#endif							/* FUNCTIONS_H */

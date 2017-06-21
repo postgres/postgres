@@ -451,7 +451,7 @@ DecodingContextFindStartpoint(LogicalDecodingContext *ctx)
 		if (err)
 			elog(ERROR, "%s", err);
 		if (!record)
-			elog(ERROR, "no record found");		/* shouldn't happen */
+			elog(ERROR, "no record found"); /* shouldn't happen */
 
 		startptr = InvalidXLogRecPtr;
 
@@ -661,7 +661,7 @@ commit_cb_wrapper(ReorderBuffer *cache, ReorderBufferTXN *txn,
 	/* Push callback + info on the error context stack */
 	state.ctx = ctx;
 	state.callback_name = "commit";
-	state.report_location = txn->final_lsn;		/* beginning of commit record */
+	state.report_location = txn->final_lsn; /* beginning of commit record */
 	errcallback.callback = output_plugin_error_callback;
 	errcallback.arg = (void *) &state;
 	errcallback.previous = error_context_stack;

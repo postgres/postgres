@@ -154,7 +154,7 @@ struct px_hmac
 struct px_cipher
 {
 	unsigned	(*block_size) (PX_Cipher *c);
-	unsigned	(*key_size) (PX_Cipher *c);		/* max key len */
+	unsigned	(*key_size) (PX_Cipher *c); /* max key len */
 	unsigned	(*iv_size) (PX_Cipher *c);
 
 	int			(*init) (PX_Cipher *c, const uint8 *key, unsigned klen, const uint8 *iv);
@@ -239,4 +239,4 @@ void		px_debug(const char *fmt,...) pg_attribute_printf(1, 2);
 					(c)->decrypt(c, data, dlen, res, rlen)
 #define px_combo_free(c)		(c)->free(c)
 
-#endif   /* __PX_H */
+#endif							/* __PX_H */

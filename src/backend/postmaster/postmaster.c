@@ -344,10 +344,10 @@ static time_t AbortStartTime = 0;
 /* Length of said timeout */
 #define SIGKILL_CHILDREN_AFTER_SECS		5
 
-static bool ReachedNormalRunning = false;		/* T if we've reached PM_RUN */
+static bool ReachedNormalRunning = false;	/* T if we've reached PM_RUN */
 
-bool		ClientAuthInProgress = false;		/* T during new-client
-												 * authentication */
+bool		ClientAuthInProgress = false;	/* T during new-client
+											 * authentication */
 
 bool		redirection_done = false;	/* stderr redirected for syslogger? */
 
@@ -455,7 +455,7 @@ typedef struct
 	HANDLE		procHandle;
 	DWORD		procId;
 } win32_deadchild_waitinfo;
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 
 static pid_t backend_forkexec(Port *port);
 static pid_t internal_forkexec(int argc, char *argv[], Port *port);
@@ -537,7 +537,7 @@ static bool save_backend_variables(BackendParameters *param, Port *port,
 
 static void ShmemBackendArrayAdd(Backend *bn);
 static void ShmemBackendArrayRemove(Backend *bn);
-#endif   /* EXEC_BACKEND */
+#endif							/* EXEC_BACKEND */
 
 #define StartupDataBase()		StartChildProcess(StartupProcess)
 #define StartBackgroundWriter() StartChildProcess(BgWriterProcess)
@@ -631,20 +631,18 @@ PostmasterMain(int argc, char *argv[])
 	pqinitmask();
 	PG_SETMASK(&BlockSig);
 
-	pqsignal_no_restart(SIGHUP, SIGHUP_handler);		/* reread config file
-														 * and have children do
-														 * same */
+	pqsignal_no_restart(SIGHUP, SIGHUP_handler);	/* reread config file and
+													 * have children do same */
 	pqsignal_no_restart(SIGINT, pmdie); /* send SIGTERM and shut down */
-	pqsignal_no_restart(SIGQUIT, pmdie);		/* send SIGQUIT and die */
-	pqsignal_no_restart(SIGTERM, pmdie);		/* wait for children and shut
-												 * down */
+	pqsignal_no_restart(SIGQUIT, pmdie);	/* send SIGQUIT and die */
+	pqsignal_no_restart(SIGTERM, pmdie);	/* wait for children and shut down */
 	pqsignal(SIGALRM, SIG_IGN); /* ignored */
 	pqsignal(SIGPIPE, SIG_IGN); /* ignored */
-	pqsignal_no_restart(SIGUSR1, sigusr1_handler);		/* message from child
-														 * process */
-	pqsignal_no_restart(SIGUSR2, dummy_handler);		/* unused, reserve for
-														 * children */
-	pqsignal_no_restart(SIGCHLD, reaper);		/* handle child termination */
+	pqsignal_no_restart(SIGUSR1, sigusr1_handler);	/* message from child
+													 * process */
+	pqsignal_no_restart(SIGUSR2, dummy_handler);	/* unused, reserve for
+													 * children */
+	pqsignal_no_restart(SIGCHLD, reaper);	/* handle child termination */
 	pqsignal(SIGTTIN, SIG_IGN); /* ignored */
 	pqsignal(SIGTTOU, SIG_IGN); /* ignored */
 	/* ignore SIGXFSZ, so that ulimit violations work like disk full */
@@ -3148,7 +3146,7 @@ CleanupBackgroundWorker(int pid,
 		rw->rw_backend = NULL;
 		rw->rw_pid = 0;
 		rw->rw_child_slot = 0;
-		ReportBackgroundWorkerExit(&iter);		/* report child death */
+		ReportBackgroundWorkerExit(&iter);	/* report child death */
 
 		LogChildExit(EXIT_STATUS_0(exitstatus) ? DEBUG1 : LOG,
 					 namebuf, pid, exitstatus);
@@ -4003,7 +4001,7 @@ BackendStartup(Port *port)
 		/* And run the backend */
 		BackendRun(port);
 	}
-#endif   /* EXEC_BACKEND */
+#endif							/* EXEC_BACKEND */
 
 	if (pid < 0)
 	{
@@ -4030,7 +4028,7 @@ BackendStartup(Port *port)
 	 * of backends.
 	 */
 	bn->pid = pid;
-	bn->bkend_type = BACKEND_TYPE_NORMAL;		/* Can change later to WALSND */
+	bn->bkend_type = BACKEND_TYPE_NORMAL;	/* Can change later to WALSND */
 	dlist_push_head(&BackendList, &bn->elem);
 
 #ifdef EXEC_BACKEND
@@ -4120,7 +4118,7 @@ BackendInitialize(Port *port)
 	 * Must do this now because authentication uses libpq to send messages.
 	 */
 	pq_init();					/* initialize libpq to talk to client */
-	whereToSendOutput = DestRemote;		/* now safe to ereport to client */
+	whereToSendOutput = DestRemote; /* now safe to ereport to client */
 
 	/*
 	 * We arrange for a simple exit(1) if we receive SIGTERM or SIGQUIT or
@@ -4668,7 +4666,7 @@ internal_forkexec(int argc, char *argv[], Port *port)
 
 	return pi.dwProcessId;
 }
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 
 
 /*
@@ -4842,7 +4840,7 @@ SubPostmasterMain(int argc, char *argv[])
 		/* Attach process to shared data structures */
 		CreateSharedMemoryAndSemaphores(false, 0);
 
-		AuxiliaryProcessMain(argc - 2, argv + 2);		/* does not return */
+		AuxiliaryProcessMain(argc - 2, argv + 2);	/* does not return */
 	}
 	if (strcmp(argv[1], "--forkavlauncher") == 0)
 	{
@@ -4855,7 +4853,7 @@ SubPostmasterMain(int argc, char *argv[])
 		/* Attach process to shared data structures */
 		CreateSharedMemoryAndSemaphores(false, 0);
 
-		AutoVacLauncherMain(argc - 2, argv + 2);		/* does not return */
+		AutoVacLauncherMain(argc - 2, argv + 2);	/* does not return */
 	}
 	if (strcmp(argv[1], "--forkavworker") == 0)
 	{
@@ -4896,24 +4894,24 @@ SubPostmasterMain(int argc, char *argv[])
 	{
 		/* Do not want to attach to shared memory */
 
-		PgArchiverMain(argc, argv);		/* does not return */
+		PgArchiverMain(argc, argv); /* does not return */
 	}
 	if (strcmp(argv[1], "--forkcol") == 0)
 	{
 		/* Do not want to attach to shared memory */
 
-		PgstatCollectorMain(argc, argv);		/* does not return */
+		PgstatCollectorMain(argc, argv);	/* does not return */
 	}
 	if (strcmp(argv[1], "--forklog") == 0)
 	{
 		/* Do not want to attach to shared memory */
 
-		SysLoggerMain(argc, argv);		/* does not return */
+		SysLoggerMain(argc, argv);	/* does not return */
 	}
 
 	abort();					/* shouldn't get here */
 }
-#endif   /* EXEC_BACKEND */
+#endif							/* EXEC_BACKEND */
 
 
 /*
@@ -5272,7 +5270,7 @@ StartChildProcess(AuxProcType type)
 		AuxiliaryProcessMain(ac, av);
 		ExitPostmaster(0);
 	}
-#endif   /* EXEC_BACKEND */
+#endif							/* EXEC_BACKEND */
 
 	if (pid < 0)
 	{
@@ -6228,7 +6226,7 @@ ShmemBackendArrayRemove(Backend *bn)
 	/* Mark the slot as empty */
 	ShmemBackendArray[i].pid = 0;
 }
-#endif   /* EXEC_BACKEND */
+#endif							/* EXEC_BACKEND */
 
 
 #ifdef WIN32
@@ -6304,7 +6302,7 @@ pgwin32_deadchild_callback(PVOID lpParameter, BOOLEAN TimerOrWaitFired)
 	/* Queue SIGCHLD signal */
 	pg_queue_signal(SIGCHLD);
 }
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 
 /*
  * Initialize one and only handle for monitoring postmaster death.
@@ -6355,5 +6353,5 @@ InitPostmasterDeathWatchHandle(void)
 		ereport(FATAL,
 				(errmsg_internal("could not duplicate postmaster handle: error code %lu",
 								 GetLastError())));
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 }

@@ -36,4 +36,4 @@ extern const FmgrBuiltin fmgr_builtins[];
 
 extern const int fmgr_nbuiltins;	/* number of entries in table */
 
-#endif   /* FMGRTAB_H */
+#endif							/* FMGRTAB_H */

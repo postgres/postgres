@@ -54,4 +54,4 @@ typedef FormData_pg_user_mapping *Form_pg_user_mapping;
 #define Anum_pg_user_mapping_umserver		2
 #define Anum_pg_user_mapping_umoptions		3
 
-#endif   /* PG_USER_MAPPING_H */
+#endif							/* PG_USER_MAPPING_H */

@@ -1290,9 +1290,9 @@ send_feedback(XLogRecPtr recvpos, bool force, bool requestReply)
 		resetStringInfo(reply_message);
 
 	pq_sendbyte(reply_message, 'r');
-	pq_sendint64(reply_message, recvpos);		/* write */
-	pq_sendint64(reply_message, flushpos);		/* flush */
-	pq_sendint64(reply_message, writepos);		/* apply */
+	pq_sendint64(reply_message, recvpos);	/* write */
+	pq_sendint64(reply_message, flushpos);	/* flush */
+	pq_sendint64(reply_message, writepos);	/* apply */
 	pq_sendint64(reply_message, now);	/* sendTime */
 	pq_sendbyte(reply_message, requestReply);	/* replyRequested */
 

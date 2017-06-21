@@ -596,7 +596,7 @@ createBackupLabel(XLogRecPtr startpoint, TimeLineID starttli, XLogRecPtr checkpo
 		pg_fatal("backup label buffer too small\n");	/* shouldn't happen */
 
 	/* TODO: move old file out of the way, if any. */
-	open_target_file("backup_label", true);		/* BACKUP_LABEL_FILE */
+	open_target_file("backup_label", true); /* BACKUP_LABEL_FILE */
 	write_target_range(buf, 0, len);
 	close_target_file();
 }

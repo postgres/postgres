@@ -58,4 +58,4 @@ extern void PGSemaphoreUnlock(PGSemaphore sema);
 /* Lock a semaphore only if able to do so without blocking */
 extern bool PGSemaphoreTryLock(PGSemaphore sema);
 
-#endif   /* PG_SEMA_H */
+#endif							/* PG_SEMA_H */

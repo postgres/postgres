@@ -99,4 +99,4 @@ extern char *SSLCipherSuites;
 extern char *SSLECDHCurve;
 extern bool SSLPreferServerCiphers;
 
-#endif   /* LIBPQ_H */
+#endif							/* LIBPQ_H */

@@ -54,10 +54,10 @@ typedef struct NDBOX
 #define PG_RETURN_NDBOX(x)	PG_RETURN_POINTER(x)
 
 /* GiST operator strategy numbers */
-#define CubeKNNDistanceCoord			15		/* ~> */
-#define CubeKNNDistanceTaxicab			16		/* <#> */
-#define CubeKNNDistanceEuclid			17		/* <-> */
-#define CubeKNNDistanceChebyshev		18		/* <=> */
+#define CubeKNNDistanceCoord			15	/* ~> */
+#define CubeKNNDistanceTaxicab			16	/* <#> */
+#define CubeKNNDistanceEuclid			17	/* <-> */
+#define CubeKNNDistanceChebyshev		18	/* <=> */
 
 /* in cubescan.l */
 extern int	cube_yylex(void);

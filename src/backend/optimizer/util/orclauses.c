@@ -84,7 +84,7 @@ extract_restriction_or_clauses(PlannerInfo *root)
 		if (rel == NULL)
 			continue;
 
-		Assert(rel->relid == rti);		/* sanity check on array */
+		Assert(rel->relid == rti);	/* sanity check on array */
 
 		/* ignore RTEs that are "other rels" */
 		if (rel->reloptkind != RELOPT_BASEREL)

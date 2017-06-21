@@ -466,4 +466,4 @@ func_call_2(void)
 	pthread_mutex_unlock(&init_mutex);
 }
 
-#endif   /* !ENABLE_THREAD_SAFETY && !IN_CONFIGURE */
+#endif							/* !ENABLE_THREAD_SAFETY && !IN_CONFIGURE */

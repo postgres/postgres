@@ -913,8 +913,8 @@ ginInsertCleanup(GinState *ginstate, bool full_clean,
 			 * Remember next page - it will become the new list head
 			 */
 			blkno = GinPageGetOpaque(page)->rightlink;
-			UnlockReleaseBuffer(buffer);		/* shiftList will do exclusive
-												 * locking */
+			UnlockReleaseBuffer(buffer);	/* shiftList will do exclusive
+											 * locking */
 
 			/*
 			 * remove read pages from pending list, at this point all content

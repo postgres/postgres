@@ -22,4 +22,4 @@
 
 extern bool scanint8(const char *str, bool errorOK, int64 *result);
 
-#endif   /* INT8_H */
+#endif							/* INT8_H */

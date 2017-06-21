@@ -36,4 +36,4 @@ extern void finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 				 MultiXactId minMulti,
 				 char newrelpersistence);
 
-#endif   /* CLUSTER_H */
+#endif							/* CLUSTER_H */

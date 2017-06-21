@@ -135,4 +135,4 @@ extern bool criticalRelcachesBuilt;
 /* should be used only by relcache.c and postinit.c */
 extern bool criticalSharedRelcachesBuilt;
 
-#endif   /* RELCACHE_H */
+#endif							/* RELCACHE_H */

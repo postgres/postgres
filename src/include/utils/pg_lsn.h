@@ -24,4 +24,4 @@
 #define PG_GETARG_LSN(n)	 DatumGetLSN(PG_GETARG_DATUM(n))
 #define PG_RETURN_LSN(x)	 return LSNGetDatum(x)
 
-#endif   /* PG_LSN_H */
+#endif							/* PG_LSN_H */

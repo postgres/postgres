@@ -164,7 +164,7 @@ struct config_generic
 };
 
 /* bit values in status field */
-#define GUC_IS_IN_FILE		0x0001		/* found it in config file */
+#define GUC_IS_IN_FILE		0x0001	/* found it in config file */
 /*
  * Caution: the GUC_IS_IN_FILE bit is transient state for ProcessConfigFile.
  * Do not assume that its value represents useful information elsewhere.
@@ -265,4 +265,4 @@ extern const char *config_enum_lookup_by_value(struct config_enum *record, int v
 extern bool config_enum_lookup_by_name(struct config_enum *record,
 						   const char *value, int *retval);
 
-#endif   /* GUC_TABLES_H */
+#endif							/* GUC_TABLES_H */

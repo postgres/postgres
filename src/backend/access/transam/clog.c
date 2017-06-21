@@ -149,7 +149,7 @@ void
 TransactionIdSetTreeStatus(TransactionId xid, int nsubxids,
 					TransactionId *subxids, XidStatus status, XLogRecPtr lsn)
 {
-	int			pageno = TransactionIdToPage(xid);		/* get page of parent */
+	int			pageno = TransactionIdToPage(xid);	/* get page of parent */
 	int			i;
 
 	Assert(status == TRANSACTION_STATUS_COMMITTED ||

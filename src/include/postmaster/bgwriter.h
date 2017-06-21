@@ -40,4 +40,4 @@ extern void CheckpointerShmemInit(void);
 
 extern bool FirstCallSinceLastCheckpoint(void);
 
-#endif   /* _BGWRITER_H */
+#endif							/* _BGWRITER_H */

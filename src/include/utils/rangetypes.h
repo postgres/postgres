@@ -136,4 +136,4 @@ extern bool bounds_adjacent(TypeCacheEntry *typcache, RangeBound bound1,
 				RangeBound bound2);
 extern RangeType *make_empty_range(TypeCacheEntry *typcache);
 
-#endif   /* RANGETYPES_H */
+#endif							/* RANGETYPES_H */

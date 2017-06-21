@@ -81,8 +81,8 @@
  * that the potential for improvement was great enough to merit the cost of
  * supporting them.
  */
-#define VACUUM_TRUNCATE_LOCK_CHECK_INTERVAL		20		/* ms */
-#define VACUUM_TRUNCATE_LOCK_WAIT_INTERVAL		50		/* ms */
+#define VACUUM_TRUNCATE_LOCK_CHECK_INTERVAL		20	/* ms */
+#define VACUUM_TRUNCATE_LOCK_WAIT_INTERVAL		50	/* ms */
 #define VACUUM_TRUNCATE_LOCK_TIMEOUT			5000	/* ms */
 
 /*
@@ -112,7 +112,7 @@ typedef struct LVRelStats
 	BlockNumber old_rel_pages;	/* previous value of pg_class.relpages */
 	BlockNumber rel_pages;		/* total number of pages */
 	BlockNumber scanned_pages;	/* number of pages we examined */
-	BlockNumber pinskipped_pages;		/* # of pages we skipped due to a pin */
+	BlockNumber pinskipped_pages;	/* # of pages we skipped due to a pin */
 	BlockNumber frozenskipped_pages;	/* # of frozen pages we skipped */
 	BlockNumber tupcount_pages; /* pages whose tuples we counted */
 	double		scanned_tuples; /* counts only tuples on tupcount_pages */

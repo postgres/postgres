@@ -974,7 +974,7 @@ out:
 	return found;
 }
 
-#endif   /* FRONTEND */
+#endif							/* FRONTEND */
 
 
 /* ----------------------------------------

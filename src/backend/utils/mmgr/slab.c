@@ -764,4 +764,4 @@ SlabCheck(MemoryContext context)
 	}
 }
 
-#endif   /* MEMORY_CONTEXT_CHECKING */
+#endif							/* MEMORY_CONTEXT_CHECKING */

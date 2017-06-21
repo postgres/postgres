@@ -131,8 +131,8 @@ static int	completion_max_records;
  */
 static const char *completion_charp;	/* to pass a string */
 static const char *const *completion_charpp;	/* to pass a list of strings */
-static const char *completion_info_charp;		/* to pass a second string */
-static const char *completion_info_charp2;		/* to pass a third string */
+static const char *completion_info_charp;	/* to pass a second string */
+static const char *completion_info_charp2;	/* to pass a third string */
 static const SchemaQuery *completion_squery;	/* to pass a SchemaQuery */
 static bool completion_case_sensitive;	/* completion is case sensitive */
 
@@ -1043,8 +1043,8 @@ static const pgsql_thing_t words_after_create[] = {
 	{"SYSTEM", NULL, NULL, THING_NO_CREATE | THING_NO_DROP},
 	{"TABLE", NULL, &Query_for_list_of_tables},
 	{"TABLESPACE", Query_for_list_of_tablespaces},
-	{"TEMP", NULL, NULL, THING_NO_DROP | THING_NO_ALTER},		/* for CREATE TEMP TABLE
-																 * ... */
+	{"TEMP", NULL, NULL, THING_NO_DROP | THING_NO_ALTER},	/* for CREATE TEMP TABLE
+															 * ... */
 	{"TEMPLATE", Query_for_list_of_ts_templates, NULL, THING_NO_SHOW},
 	{"TEMPORARY", NULL, NULL, THING_NO_DROP | THING_NO_ALTER},	/* for CREATE TEMPORARY
 																 * TABLE ... */
@@ -1052,8 +1052,8 @@ static const pgsql_thing_t words_after_create[] = {
 	{"TRANSFORM", NULL, NULL},
 	{"TRIGGER", "SELECT pg_catalog.quote_ident(tgname) FROM pg_catalog.pg_trigger WHERE substring(pg_catalog.quote_ident(tgname),1,%d)='%s' AND NOT tgisinternal"},
 	{"TYPE", NULL, &Query_for_list_of_datatypes},
-	{"UNIQUE", NULL, NULL, THING_NO_DROP | THING_NO_ALTER},		/* for CREATE UNIQUE
-																 * INDEX ... */
+	{"UNIQUE", NULL, NULL, THING_NO_DROP | THING_NO_ALTER}, /* for CREATE UNIQUE
+															 * INDEX ... */
 	{"UNLOGGED", NULL, NULL, THING_NO_DROP | THING_NO_ALTER},	/* for CREATE UNLOGGED
 																 * TABLE ... */
 	{"USER", Query_for_list_of_roles},
@@ -4422,6 +4422,6 @@ dequote_file_name(char *text, char quote_char)
 
 	return s;
 }
-#endif   /* NOT_USED */
+#endif							/* NOT_USED */
 
-#endif   /* USE_READLINE */
+#endif							/* USE_READLINE */

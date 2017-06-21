@@ -76,7 +76,7 @@ typedef struct SlruFlushData
 {
 	int			num_files;		/* # files actually open */
 	int			fd[MAX_FLUSH_BUFFERS];	/* their FD's */
-	int			segno[MAX_FLUSH_BUFFERS];		/* their log seg#s */
+	int			segno[MAX_FLUSH_BUFFERS];	/* their log seg#s */
 } SlruFlushData;
 
 typedef struct SlruFlushData *SlruFlush;
@@ -150,10 +150,10 @@ SimpleLruShmemSize(int nslots, int nlsns)
 	sz = MAXALIGN(sizeof(SlruSharedData));
 	sz += MAXALIGN(nslots * sizeof(char *));	/* page_buffer[] */
 	sz += MAXALIGN(nslots * sizeof(SlruPageStatus));	/* page_status[] */
-	sz += MAXALIGN(nslots * sizeof(bool));		/* page_dirty[] */
-	sz += MAXALIGN(nslots * sizeof(int));		/* page_number[] */
-	sz += MAXALIGN(nslots * sizeof(int));		/* page_lru_count[] */
-	sz += MAXALIGN(nslots * sizeof(LWLockPadded));		/* buffer_locks[] */
+	sz += MAXALIGN(nslots * sizeof(bool));	/* page_dirty[] */
+	sz += MAXALIGN(nslots * sizeof(int));	/* page_number[] */
+	sz += MAXALIGN(nslots * sizeof(int));	/* page_lru_count[] */
+	sz += MAXALIGN(nslots * sizeof(LWLockPadded));	/* buffer_locks[] */
 
 	if (nlsns > 0)
 		sz += MAXALIGN(nslots * nlsns * sizeof(XLogRecPtr));	/* group_lsn[] */
@@ -972,9 +972,9 @@ SlruSelectLRUPage(SlruCtl ctl, int pageno)
 		int			bestvalidslot = 0;	/* keep compiler quiet */
 		int			best_valid_delta = -1;
 		int			best_valid_page_number = 0; /* keep compiler quiet */
-		int			bestinvalidslot = 0;		/* keep compiler quiet */
+		int			bestinvalidslot = 0;	/* keep compiler quiet */
 		int			best_invalid_delta = -1;
-		int			best_invalid_page_number = 0;		/* keep compiler quiet */
+		int			best_invalid_page_number = 0;	/* keep compiler quiet */
 
 		/* See if page already has a buffer assigned */
 		for (slotno = 0; slotno < shared->num_slots; slotno++)

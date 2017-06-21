@@ -201,7 +201,7 @@ interpret_function_parameter_list(ParseState *pstate,
 	ListCell   *x;
 	int			i;
 
-	*variadicArgType = InvalidOid;		/* default result */
+	*variadicArgType = InvalidOid;	/* default result */
 	*requiredResultType = InvalidOid;	/* default result */
 
 	inTypes = (Oid *) palloc(parameterCount * sizeof(Oid));
@@ -562,7 +562,7 @@ interpret_func_parallel(DefElem *defel)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("parameter \"parallel\" must be SAFE, RESTRICTED, or UNSAFE")));
-		return PROPARALLEL_UNSAFE;		/* keep compiler quiet */
+		return PROPARALLEL_UNSAFE;	/* keep compiler quiet */
 	}
 }
 
@@ -1090,7 +1090,7 @@ CreateFunction(ParseState *pstate, CreateFunctionStmt *stmt)
 						   languageValidator,
 						   prosrc_str,	/* converted to text later */
 						   probin_str,	/* converted to text later */
-						   false,		/* not an aggregate */
+						   false,	/* not an aggregate */
 						   isWindowFunc,
 						   security,
 						   isLeakProof,
@@ -1146,7 +1146,7 @@ RemoveFunctionById(Oid funcOid)
 		relation = heap_open(AggregateRelationId, RowExclusiveLock);
 
 		tup = SearchSysCache1(AGGFNOID, ObjectIdGetDatum(funcOid));
-		if (!HeapTupleIsValid(tup))		/* should not happen */
+		if (!HeapTupleIsValid(tup)) /* should not happen */
 			elog(ERROR, "cache lookup failed for pg_aggregate tuple for function %u", funcOid);
 
 		CatalogTupleDelete(relation, &tup->t_self);
@@ -1326,7 +1326,7 @@ SetFunctionReturnType(Oid funcOid, Oid newRetType)
 		elog(ERROR, "cache lookup failed for function %u", funcOid);
 	procForm = (Form_pg_proc) GETSTRUCT(tup);
 
-	if (procForm->prorettype != OPAQUEOID)		/* caller messed up */
+	if (procForm->prorettype != OPAQUEOID)	/* caller messed up */
 		elog(ERROR, "function %u doesn't return OPAQUE", funcOid);
 
 	/* okay to overwrite copied tuple */

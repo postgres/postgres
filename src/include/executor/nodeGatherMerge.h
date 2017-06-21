@@ -24,4 +24,4 @@ extern void ExecEndGatherMerge(GatherMergeState *node);
 extern void ExecReScanGatherMerge(GatherMergeState *node);
 extern void ExecShutdownGatherMerge(GatherMergeState *node);
 
-#endif   /* NODEGATHERMERGE_H */
+#endif							/* NODEGATHERMERGE_H */

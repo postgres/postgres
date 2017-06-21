@@ -440,10 +440,10 @@ GetHugePageSize(Size *hugepagesize, int *mmap_flags)
 			FreeFile(fp);
 		}
 	}
-#endif   /* __linux__ */
+#endif							/* __linux__ */
 }
 
-#endif   /* MAP_HUGETLB */
+#endif							/* MAP_HUGETLB */
 
 /*
  * Creates an anonymous mmap()ed shared memory segment.
@@ -533,7 +533,7 @@ AnonymousShmemDetach(int status, Datum arg)
 	}
 }
 
-#endif   /* USE_ANONYMOUS_SHMEM */
+#endif							/* USE_ANONYMOUS_SHMEM */
 
 /*
  * PGSharedMemoryCreate
@@ -771,7 +771,7 @@ PGSharedMemoryNoReAttach(void)
 	UsedShmemSegID = 0;
 }
 
-#endif   /* EXEC_BACKEND */
+#endif							/* EXEC_BACKEND */
 
 /*
  * PGSharedMemoryDetach

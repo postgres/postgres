@@ -71,4 +71,4 @@ extern void unregister_ENR(QueryEnvironment *queryEnv, const char *name);
 extern EphemeralNamedRelation get_ENR(QueryEnvironment *queryEnv, const char *name);
 extern TupleDesc ENRMetadataGetTupDesc(EphemeralNamedRelationMetadata enrmd);
 
-#endif   /* QUERYENVIRONMENT_H */
+#endif							/* QUERYENVIRONMENT_H */

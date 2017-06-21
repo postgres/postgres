@@ -75,19 +75,19 @@ ecpg_dynamic_type(Oid type)
 		case BOOLOID:
 			return SQL3_BOOLEAN;	/* bool */
 		case INT2OID:
-			return SQL3_SMALLINT;		/* int2 */
+			return SQL3_SMALLINT;	/* int2 */
 		case INT4OID:
 			return SQL3_INTEGER;	/* int4 */
 		case TEXTOID:
-			return SQL3_CHARACTER;		/* text */
+			return SQL3_CHARACTER;	/* text */
 		case FLOAT4OID:
 			return SQL3_REAL;	/* float4 */
 		case FLOAT8OID:
-			return SQL3_DOUBLE_PRECISION;		/* float8 */
+			return SQL3_DOUBLE_PRECISION;	/* float8 */
 		case BPCHAROID:
-			return SQL3_CHARACTER;		/* bpchar */
+			return SQL3_CHARACTER;	/* bpchar */
 		case VARCHAROID:
-			return SQL3_CHARACTER_VARYING;		/* varchar */
+			return SQL3_CHARACTER_VARYING;	/* varchar */
 		case DATEOID:
 			return SQL3_DATE_TIME_TIMESTAMP;	/* date */
 		case TIMEOID:

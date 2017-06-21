@@ -25,4 +25,4 @@ typedef struct AttributeOpts
 
 AttributeOpts *get_attribute_options(Oid spcid, int attnum);
 
-#endif   /* ATTOPTCACHE_H */
+#endif							/* ATTOPTCACHE_H */

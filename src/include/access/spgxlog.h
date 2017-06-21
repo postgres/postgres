@@ -238,7 +238,7 @@ typedef struct spgxlogVacuumRoot
 typedef struct spgxlogVacuumRedirect
 {
 	uint16		nToPlaceholder; /* number of redirects to make placeholders */
-	OffsetNumber firstPlaceholder;		/* first placeholder tuple to remove */
+	OffsetNumber firstPlaceholder;	/* first placeholder tuple to remove */
 	TransactionId newestRedirectXid;	/* newest XID of removed redirects */
 
 	/* offsets of redirect tuples to make placeholders follow */
@@ -254,4 +254,4 @@ extern void spg_xlog_startup(void);
 extern void spg_xlog_cleanup(void);
 extern void spg_mask(char *pagedata, BlockNumber blkno);
 
-#endif   /* SPGXLOG_H */
+#endif							/* SPGXLOG_H */

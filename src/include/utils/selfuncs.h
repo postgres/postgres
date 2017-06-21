@@ -126,10 +126,10 @@ typedef struct
 typedef struct
 {
 	/* These are the values the cost estimator must return to the planner */
-	Cost		indexStartupCost;		/* index-related startup cost */
+	Cost		indexStartupCost;	/* index-related startup cost */
 	Cost		indexTotalCost; /* total index-related scan cost */
-	Selectivity indexSelectivity;		/* selectivity of index */
-	double		indexCorrelation;		/* order correlation of index */
+	Selectivity indexSelectivity;	/* selectivity of index */
+	double		indexCorrelation;	/* order correlation of index */
 
 	/* Intermediate values we obtain along the way */
 	double		numIndexPages;	/* number of leaf pages visited */
@@ -222,4 +222,4 @@ extern Selectivity scalararraysel_containment(PlannerInfo *root,
 						   Oid elemtype, bool isEquality, bool useOr,
 						   int varRelid);
 
-#endif   /* SELFUNCS_H */
+#endif							/* SELFUNCS_H */

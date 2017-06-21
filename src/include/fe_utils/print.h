@@ -67,7 +67,7 @@ typedef struct printTextFormat
 {
 	/* A complete line style */
 	const char *name;			/* for display purposes */
-	printTextLineFormat lrule[4];		/* indexed by enum printTextRule */
+	printTextLineFormat lrule[4];	/* indexed by enum printTextRule */
 	const char *midvrule_nl;	/* vertical line for continue after newline */
 	const char *midvrule_wrap;	/* vertical line for wrapped data */
 	const char *midvrule_blank; /* vertical line for blank data */
@@ -77,8 +77,8 @@ typedef struct printTextFormat
 	const char *nl_right;		/* right mark for newline */
 	const char *wrap_left;		/* left mark after wrapped data */
 	const char *wrap_right;		/* right mark for wrapped data */
-	bool		wrap_right_border;		/* use right-hand border for wrap
-										 * marks when border=0? */
+	bool		wrap_right_border;	/* use right-hand border for wrap marks
+									 * when border=0? */
 } printTextFormat;
 
 typedef enum unicode_linestyle
@@ -166,9 +166,9 @@ typedef struct printQueryOpt
 	char	   *nullPrint;		/* how to print null entities */
 	char	   *title;			/* override title */
 	char	  **footers;		/* override footer (default is "(xx rows)") */
-	bool		translate_header;		/* do gettext on column headers */
-	const bool *translate_columns;		/* translate_columns[i-1] => do
-										 * gettext on col i */
+	bool		translate_header;	/* do gettext on column headers */
+	const bool *translate_columns;	/* translate_columns[i-1] => do gettext on
+									 * col i */
 	int			n_translate_columns;	/* length of translate_columns[] */
 } printQueryOpt;
 
@@ -212,4 +212,4 @@ extern void setDecimalLocale(void);
 extern const printTextFormat *get_line_style(const printTableOpt *opt);
 extern void refresh_utf8format(const printTableOpt *opt);
 
-#endif   /* PRINT_H */
+#endif							/* PRINT_H */

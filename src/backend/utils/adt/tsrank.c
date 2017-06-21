@@ -908,8 +908,8 @@ calc_rank_cd(const float4 *arrdata, TSVector txt, TSQuery query, int method)
 		Wdoc += Cpos / ((double) (1 + nNoise));
 
 		CurExtPos = ((double) (ext.q + ext.p)) / 2.0;
-		if (NExtent > 0 && CurExtPos > PrevExtPos		/* prevent division by
-														 * zero in a case of
+		if (NExtent > 0 && CurExtPos > PrevExtPos	/* prevent division by
+													 * zero in a case of
 			  * multiple lexize */ )
 			SumDist += 1.0 / (CurExtPos - PrevExtPos);
 

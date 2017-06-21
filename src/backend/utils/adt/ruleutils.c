@@ -83,7 +83,7 @@
 #define PRETTYINDENT_JOIN		4
 #define PRETTYINDENT_VAR		4
 
-#define PRETTYINDENT_LIMIT		40		/* wrap limit */
+#define PRETTYINDENT_LIMIT		40	/* wrap limit */
 
 /* Pretty flags */
 #define PRETTYFLAG_PAREN		1
@@ -113,8 +113,8 @@ typedef struct
 	int			wrapColumn;		/* max line length, or -1 for no limit */
 	int			indentLevel;	/* current indent level for prettyprint */
 	bool		varprefix;		/* TRUE to print prefixes on Vars */
-	ParseExprKind special_exprkind;		/* set only for exprkinds needing
-										 * special handling */
+	ParseExprKind special_exprkind; /* set only for exprkinds needing special
+									 * handling */
 } deparse_context;
 
 /*
@@ -280,7 +280,7 @@ typedef struct
  */
 typedef struct
 {
-	char		name[NAMEDATALEN];		/* Hash key --- must be first */
+	char		name[NAMEDATALEN];	/* Hash key --- must be first */
 	int			counter;		/* Largest addition used so far for name */
 } NameHashEntry;
 
@@ -2566,7 +2566,7 @@ pg_get_functiondef(PG_FUNCTION_ARGS)
 	if (!isnull)
 	{
 		simple_quote_literal(&buf, TextDatumGetCString(tmp));
-		appendStringInfoString(&buf, ", ");		/* assume prosrc isn't null */
+		appendStringInfoString(&buf, ", "); /* assume prosrc isn't null */
 	}
 
 	tmp = SysCacheGetAttr(PROCOID, proctup, Anum_pg_proc_prosrc, &isnull);
@@ -7376,14 +7376,14 @@ isSimpleNode(Node *node, Node *parentNode, int prettyFlags)
 					}
 				case T_BoolExpr:	/* lower precedence */
 				case T_ArrayRef:	/* other separators */
-				case T_ArrayExpr:		/* other separators */
+				case T_ArrayExpr:	/* other separators */
 				case T_RowExpr: /* other separators */
 				case T_CoalesceExpr:	/* own parentheses */
-				case T_MinMaxExpr:		/* own parentheses */
+				case T_MinMaxExpr:	/* own parentheses */
 				case T_XmlExpr: /* own parentheses */
-				case T_NullIfExpr:		/* other separators */
+				case T_NullIfExpr:	/* other separators */
 				case T_Aggref:	/* own parentheses */
-				case T_WindowFunc:		/* own parentheses */
+				case T_WindowFunc:	/* own parentheses */
 				case T_CaseExpr:	/* other separators */
 					return true;
 				default:
@@ -7426,14 +7426,14 @@ isSimpleNode(Node *node, Node *parentNode, int prettyFlags)
 						return true;	/* own parentheses */
 					}
 				case T_ArrayRef:	/* other separators */
-				case T_ArrayExpr:		/* other separators */
+				case T_ArrayExpr:	/* other separators */
 				case T_RowExpr: /* other separators */
 				case T_CoalesceExpr:	/* own parentheses */
-				case T_MinMaxExpr:		/* own parentheses */
+				case T_MinMaxExpr:	/* own parentheses */
 				case T_XmlExpr: /* own parentheses */
-				case T_NullIfExpr:		/* other separators */
+				case T_NullIfExpr:	/* other separators */
 				case T_Aggref:	/* own parentheses */
-				case T_WindowFunc:		/* own parentheses */
+				case T_WindowFunc:	/* own parentheses */
 				case T_CaseExpr:	/* other separators */
 					return true;
 				default:
@@ -9219,7 +9219,7 @@ get_const_expr(Const *constval, deparse_context *context, int showtype)
 			else
 			{
 				appendStringInfo(buf, "'%s'", extval);
-				needlabel = true;		/* we must attach a cast */
+				needlabel = true;	/* we must attach a cast */
 			}
 			break;
 
@@ -9238,7 +9238,7 @@ get_const_expr(Const *constval, deparse_context *context, int showtype)
 			else
 			{
 				appendStringInfo(buf, "'%s'", extval);
-				needlabel = true;		/* we must attach a cast */
+				needlabel = true;	/* we must attach a cast */
 			}
 			break;
 
@@ -9432,7 +9432,7 @@ get_sublink_expr(SubLink *sublink, deparse_context *context)
 			break;
 
 		case ANY_SUBLINK:
-			if (strcmp(opname, "=") == 0)		/* Represent = ANY as IN */
+			if (strcmp(opname, "=") == 0)	/* Represent = ANY as IN */
 				appendStringInfoString(buf, " IN ");
 			else
 				appendStringInfo(buf, " %s ANY ", opname);

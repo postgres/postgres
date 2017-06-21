@@ -237,7 +237,7 @@ PageAddItemExtended(Page page,
 		else
 		{
 			if (offsetNumber < limit)
-				needshuffle = true;		/* need to move existing linp's */
+				needshuffle = true; /* need to move existing linp's */
 		}
 	}
 	else
@@ -912,7 +912,7 @@ PageIndexMultiDelete(Page page, OffsetNumber *itemnos, int nitems)
 		}
 		else
 		{
-			itemidptr->offsetindex = nused;		/* where it will go */
+			itemidptr->offsetindex = nused; /* where it will go */
 			itemidptr->itemoff = offset;
 			itemidptr->alignedlen = MAXALIGN(size);
 			totallen += itemidptr->alignedlen;

@@ -67,7 +67,7 @@ newnfa(struct vars *v,
 	nfa->eos[0] = nfa->eos[1] = COLORLESS;
 	nfa->parent = parent;		/* Precedes newfstate so parent is valid. */
 	nfa->post = newfstate(nfa, '@');	/* number 0 */
-	nfa->pre = newfstate(nfa, '>');		/* number 1 */
+	nfa->pre = newfstate(nfa, '>'); /* number 1 */
 
 	nfa->init = newstate(nfa);	/* may become invalid later */
 	nfa->final = newstate(nfa);
@@ -1253,7 +1253,7 @@ deltraverse(struct nfa *nfa,
 	}
 
 	assert(s->no != FREESTATE); /* we're still here */
-	assert(s == leftend || s->nins != 0);		/* and still reachable */
+	assert(s == leftend || s->nins != 0);	/* and still reachable */
 	assert(s->nouts == 0);		/* but have no outarcs */
 
 	s->tmp = NULL;				/* we're done here */
@@ -1751,7 +1751,7 @@ push(struct nfa *nfa,
 		if (NISERR())
 			return 0;
 		copyouts(nfa, to, s);	/* duplicate outarcs */
-		cparc(nfa, con, from, s);		/* move constraint arc */
+		cparc(nfa, con, from, s);	/* move constraint arc */
 		freearc(nfa, con);
 		if (NISERR())
 			return 0;
@@ -1833,7 +1833,7 @@ combine(struct arc *con,
 		case CA('$', '$'):
 		case CA(AHEAD, AHEAD):
 		case CA(BEHIND, BEHIND):
-			if (con->co == a->co)		/* true duplication */
+			if (con->co == a->co)	/* true duplication */
 				return SATISFIED;
 			return INCOMPATIBLE;
 			break;
@@ -2763,8 +2763,8 @@ cleanup(struct nfa *nfa)
 static void
 markreachable(struct nfa *nfa,
 			  struct state *s,
-			  struct state *okay,		/* consider only states with this mark */
-			  struct state *mark)		/* the value to mark with */
+			  struct state *okay,	/* consider only states with this mark */
+			  struct state *mark)	/* the value to mark with */
 {
 	struct arc *a;
 
@@ -3114,7 +3114,7 @@ dumparc(struct arc *a,
 	if (aa == NULL)
 		fprintf(f, "?!?");		/* missing from in-chain */
 }
-#endif   /* REG_DEBUG */
+#endif							/* REG_DEBUG */
 
 /*
  * dumpcnfa - dump a compacted NFA in human-readable form
@@ -3178,4 +3178,4 @@ dumpcstate(int st,
 	fflush(f);
 }
 
-#endif   /* REG_DEBUG */
+#endif							/* REG_DEBUG */

@@ -138,7 +138,7 @@ IndexNext(IndexScanState *node)
 		 */
 		ExecStoreTuple(tuple,	/* tuple to store */
 					   slot,	/* slot to store in */
-					   scandesc->xs_cbuf,		/* buffer containing tuple */
+					   scandesc->xs_cbuf,	/* buffer containing tuple */
 					   false);	/* don't pfree */
 
 		/*
@@ -284,7 +284,7 @@ next_indextuple:
 		 */
 		ExecStoreTuple(tuple,	/* tuple to store */
 					   slot,	/* slot to store in */
-					   scandesc->xs_cbuf,		/* buffer containing tuple */
+					   scandesc->xs_cbuf,	/* buffer containing tuple */
 					   false);	/* don't pfree */
 
 		/*
@@ -1296,7 +1296,7 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
 								   flags,
 								   varattno,	/* attribute number to scan */
 								   op_strategy, /* op's strategy */
-								   op_righttype,		/* strategy subtype */
+								   op_righttype,	/* strategy subtype */
 								   ((OpExpr *) clause)->inputcollid,	/* collation */
 								   opfuncid,	/* reg proc to use */
 								   scanvalue);	/* constant */
@@ -1421,12 +1421,12 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
 				 */
 				ScanKeyEntryInitialize(this_sub_key,
 									   flags,
-									   varattno,		/* attribute number */
-									   op_strategy,		/* op's strategy */
+									   varattno,	/* attribute number */
+									   op_strategy, /* op's strategy */
 									   op_righttype,	/* strategy subtype */
 									   inputcollation,	/* collation */
-									   opfuncid,		/* reg proc to use */
-									   scanvalue);		/* constant */
+									   opfuncid,	/* reg proc to use */
+									   scanvalue);	/* constant */
 				n_sub_key++;
 			}
 
@@ -1558,7 +1558,7 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
 								   flags,
 								   varattno,	/* attribute number to scan */
 								   op_strategy, /* op's strategy */
-								   op_righttype,		/* strategy subtype */
+								   op_righttype,	/* strategy subtype */
 								   saop->inputcollid,	/* collation */
 								   opfuncid,	/* reg proc to use */
 								   scanvalue);	/* constant */
@@ -1608,7 +1608,7 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
 			ScanKeyEntryInitialize(this_scan_key,
 								   flags,
 								   varattno,	/* attribute number to scan */
-								   InvalidStrategy,		/* no strategy */
+								   InvalidStrategy, /* no strategy */
 								   InvalidOid,	/* no strategy subtype */
 								   InvalidOid,	/* no collation */
 								   InvalidOid,	/* no reg proc for this */

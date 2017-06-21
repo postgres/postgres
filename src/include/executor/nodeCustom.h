@@ -39,4 +39,4 @@ extern void ExecCustomScanInitializeWorker(CustomScanState *node,
 							   shm_toc *toc);
 extern void ExecShutdownCustomScan(CustomScanState *node);
 
-#endif   /* NODECUSTOM_H */
+#endif							/* NODECUSTOM_H */

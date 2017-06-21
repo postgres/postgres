@@ -1104,7 +1104,7 @@ generate_mergejoin_paths(PlannerInfo *root,
 	}
 	num_sortkeys = list_length(innersortkeys);
 	if (num_sortkeys > 1 && !useallclauses)
-		trialsortkeys = list_copy(innersortkeys);		/* need modifiable copy */
+		trialsortkeys = list_copy(innersortkeys);	/* need modifiable copy */
 	else
 		trialsortkeys = innersortkeys;	/* won't really truncate */
 
@@ -1732,7 +1732,7 @@ hash_inner_and_outer(PlannerInfo *root,
 
 					if (outerpath == cheapest_startup_outer &&
 						innerpath == cheapest_total_inner)
-						continue;		/* already tried it */
+						continue;	/* already tried it */
 
 					try_hashjoin_path(root,
 									  joinrel,

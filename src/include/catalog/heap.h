@@ -146,4 +146,4 @@ extern void RemovePartitionKeyByRelId(Oid relid);
 extern void StorePartitionBound(Relation rel, Relation parent,
 					PartitionBoundSpec *bound);
 
-#endif   /* HEAP_H */
+#endif							/* HEAP_H */

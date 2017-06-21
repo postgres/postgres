@@ -1933,7 +1933,7 @@ numeric_abbrev_convert_var(NumericVar *var, NumericSortSupport *nss)
 	return NumericAbbrevGetDatum(result);
 }
 
-#endif   /* NUMERIC_ABBREV_BITS == 64 */
+#endif							/* NUMERIC_ABBREV_BITS == 64 */
 
 #if NUMERIC_ABBREV_BITS == 32
 
@@ -2010,7 +2010,7 @@ numeric_abbrev_convert_var(NumericVar *var, NumericSortSupport *nss)
 	return NumericAbbrevGetDatum(result);
 }
 
-#endif   /* NUMERIC_ABBREV_BITS == 32 */
+#endif							/* NUMERIC_ABBREV_BITS == 32 */
 
 /*
  * Ordinary (non-sortsupport) comparisons follow.
@@ -4704,7 +4704,7 @@ numeric_stddev_internal(NumericAggState *state,
 	rscale = vsumX.dscale * 2;
 
 	mul_var(&vsumX, &vsumX, &vsumX, rscale);	/* vsumX = sumX * sumX */
-	mul_var(&vN, &vsumX2, &vsumX2, rscale);		/* vsumX2 = N * sumX2 */
+	mul_var(&vN, &vsumX2, &vsumX2, rscale); /* vsumX2 = N * sumX2 */
 	sub_var(&vsumX2, &vsumX, &vsumX2);	/* N * sumX2 - sumX * sumX */
 
 	if (cmp_var(&vsumX2, &const_zero) <= 0)
@@ -4715,11 +4715,11 @@ numeric_stddev_internal(NumericAggState *state,
 	else
 	{
 		if (sample)
-			mul_var(&vN, &vNminus1, &vNminus1, 0);		/* N * (N - 1) */
+			mul_var(&vN, &vNminus1, &vNminus1, 0);	/* N * (N - 1) */
 		else
 			mul_var(&vN, &vN, &vNminus1, 0);	/* N * N */
 		rscale = select_div_scale(&vsumX2, &vNminus1);
-		div_var(&vsumX2, &vNminus1, &vsumX, rscale, true);		/* variance */
+		div_var(&vsumX2, &vNminus1, &vsumX, rscale, true);	/* variance */
 		if (!variance)
 			sqrt_var(&vsumX, &vsumX, rscale);	/* stddev */
 
@@ -5369,7 +5369,7 @@ dump_var(const char *str, NumericVar *var)
 
 	printf("\n");
 }
-#endif   /* NUMERIC_DEBUG */
+#endif							/* NUMERIC_DEBUG */
 
 
 /* ----------------------------------------------------------------------
@@ -8081,7 +8081,7 @@ power_var(NumericVar *base, NumericVar *exp, NumericVar *result)
 	if (cmp_var(base, &const_zero) == 0)
 	{
 		set_var_from_var(&const_zero, result);
-		result->dscale = NUMERIC_MIN_SIG_DIGITS;		/* no need to round */
+		result->dscale = NUMERIC_MIN_SIG_DIGITS;	/* no need to round */
 		return;
 	}
 

@@ -28,4 +28,4 @@ extern void *nodeRead(char *token, int tok_len);
  */
 extern Node *parseNodeString(void);
 
-#endif   /* READFUNCS_H */
+#endif							/* READFUNCS_H */

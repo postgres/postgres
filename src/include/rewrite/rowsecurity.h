@@ -46,4 +46,4 @@ extern void get_row_security_policies(Query *root,
 						  List **securityQuals, List **withCheckOptions,
 						  bool *hasRowSecurity, bool *hasSubLinks);
 
-#endif   /* ROWSECURITY_H */
+#endif							/* ROWSECURITY_H */

@@ -48,20 +48,20 @@ bool		Transform_null_equals = false;
  * Node-type groups for operator precedence warnings
  * We use zero for everything not otherwise classified
  */
-#define PREC_GROUP_POSTFIX_IS	1		/* postfix IS tests (NullTest, etc) */
-#define PREC_GROUP_INFIX_IS		2		/* infix IS (IS DISTINCT FROM, etc) */
-#define PREC_GROUP_LESS			3		/* < > */
-#define PREC_GROUP_EQUAL		4		/* = */
-#define PREC_GROUP_LESS_EQUAL	5		/* <= >= <> */
-#define PREC_GROUP_LIKE			6		/* LIKE ILIKE SIMILAR */
-#define PREC_GROUP_BETWEEN		7		/* BETWEEN */
-#define PREC_GROUP_IN			8		/* IN */
-#define PREC_GROUP_NOT_LIKE		9		/* NOT LIKE/ILIKE/SIMILAR */
-#define PREC_GROUP_NOT_BETWEEN	10		/* NOT BETWEEN */
-#define PREC_GROUP_NOT_IN		11		/* NOT IN */
-#define PREC_GROUP_POSTFIX_OP	12		/* generic postfix operators */
-#define PREC_GROUP_INFIX_OP		13		/* generic infix operators */
-#define PREC_GROUP_PREFIX_OP	14		/* generic prefix operators */
+#define PREC_GROUP_POSTFIX_IS	1	/* postfix IS tests (NullTest, etc) */
+#define PREC_GROUP_INFIX_IS		2	/* infix IS (IS DISTINCT FROM, etc) */
+#define PREC_GROUP_LESS			3	/* < > */
+#define PREC_GROUP_EQUAL		4	/* = */
+#define PREC_GROUP_LESS_EQUAL	5	/* <= >= <> */
+#define PREC_GROUP_LIKE			6	/* LIKE ILIKE SIMILAR */
+#define PREC_GROUP_BETWEEN		7	/* BETWEEN */
+#define PREC_GROUP_IN			8	/* IN */
+#define PREC_GROUP_NOT_LIKE		9	/* NOT LIKE/ILIKE/SIMILAR */
+#define PREC_GROUP_NOT_BETWEEN	10	/* NOT BETWEEN */
+#define PREC_GROUP_NOT_IN		11	/* NOT IN */
+#define PREC_GROUP_POSTFIX_OP	12	/* generic postfix operators */
+#define PREC_GROUP_INFIX_OP		13	/* generic infix operators */
+#define PREC_GROUP_PREFIX_OP	14	/* generic prefix operators */
 
 /*
  * Map precedence groupings to old precedence ordering
@@ -741,7 +741,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 				break;
 			}
 		default:
-			crerr = CRERR_TOO_MANY;		/* too many dotted names */
+			crerr = CRERR_TOO_MANY; /* too many dotted names */
 			break;
 	}
 
@@ -2574,7 +2574,7 @@ transformCurrentOfExpr(ParseState *pstate, CurrentOfExpr *cexpr)
 	 * If so, replace the raw name reference with a parameter reference. (This
 	 * is a hack for the convenience of plpgsql.)
 	 */
-	if (cexpr->cursor_name != NULL)		/* in case already transformed */
+	if (cexpr->cursor_name != NULL) /* in case already transformed */
 	{
 		ColumnRef  *cref = makeNode(ColumnRef);
 		Node	   *node = NULL;

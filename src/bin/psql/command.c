@@ -563,7 +563,7 @@ exec_command_cd(PsqlScanState scan_state, bool active_branch, const char *cmd)
 			 * directory, so if someone wants to code this here instead...
 			 */
 			dir = "/";
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 		}
 
 		if (chdir(dir) == -1)

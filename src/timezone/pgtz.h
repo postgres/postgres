@@ -72,4 +72,4 @@ extern int tzload(const char *name, char *canonname, struct state *sp,
 	   bool doextend);
 extern bool tzparse(const char *name, struct state *sp, bool lastditch);
 
-#endif   /* _PGTZ_H */
+#endif							/* _PGTZ_H */

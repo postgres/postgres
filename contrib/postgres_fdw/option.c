@@ -258,7 +258,7 @@ is_valid_option(const char *keyword, Oid context)
 {
 	PgFdwOption *opt;
 
-	Assert(postgres_fdw_options);		/* must be initialized already */
+	Assert(postgres_fdw_options);	/* must be initialized already */
 
 	for (opt = postgres_fdw_options; opt->keyword; opt++)
 	{
@@ -277,7 +277,7 @@ is_libpq_option(const char *keyword)
 {
 	PgFdwOption *opt;
 
-	Assert(postgres_fdw_options);		/* must be initialized already */
+	Assert(postgres_fdw_options);	/* must be initialized already */
 
 	for (opt = postgres_fdw_options; opt->keyword; opt++)
 	{

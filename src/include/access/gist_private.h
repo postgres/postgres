@@ -118,7 +118,7 @@ typedef struct GISTSearchHeapItem
 {
 	ItemPointerData heapPtr;
 	bool		recheck;		/* T if quals must be rechecked */
-	bool		recheckDistances;		/* T if distances must be rechecked */
+	bool		recheckDistances;	/* T if distances must be rechecked */
 	HeapTuple	recontup;		/* data reconstructed from the index, used in
 								 * index-only scans */
 	OffsetNumber offnum;		/* track offset in page to mark tuple as
@@ -136,8 +136,8 @@ typedef struct GISTSearchItem
 		/* we must store parentlsn to detect whether a split occurred */
 		GISTSearchHeapItem heap;	/* heap info, if heap tuple */
 	}			data;
-	double		distances[FLEXIBLE_ARRAY_MEMBER];		/* numberOfOrderBys
-														 * entries */
+	double		distances[FLEXIBLE_ARRAY_MEMBER];	/* numberOfOrderBys
+													 * entries */
 } GISTSearchItem;
 
 #define GISTSearchItemIsHeap(item)	((item).blkno == InvalidBlockNumber)
@@ -225,12 +225,12 @@ typedef struct GistSplitVector
 {
 	GIST_SPLITVEC splitVector;	/* passed to/from user PickSplit method */
 
-	Datum		spl_lattr[INDEX_MAX_KEYS];		/* Union of subkeys in
-												 * splitVector.spl_left */
+	Datum		spl_lattr[INDEX_MAX_KEYS];	/* Union of subkeys in
+											 * splitVector.spl_left */
 	bool		spl_lisnull[INDEX_MAX_KEYS];
 
-	Datum		spl_rattr[INDEX_MAX_KEYS];		/* Union of subkeys in
-												 * splitVector.spl_right */
+	Datum		spl_rattr[INDEX_MAX_KEYS];	/* Union of subkeys in
+											 * splitVector.spl_right */
 	bool		spl_risnull[INDEX_MAX_KEYS];
 
 	bool	   *spl_dontcare;	/* flags tuples which could go to either side
@@ -288,7 +288,7 @@ typedef struct
 	int32		blocksCount;	/* current # of blocks occupied by buffer */
 
 	BlockNumber pageBlocknum;	/* temporary file block # */
-	GISTNodeBufferPage *pageBuffer;		/* in-memory buffer page */
+	GISTNodeBufferPage *pageBuffer; /* in-memory buffer page */
 
 	/* is this buffer queued for emptying? */
 	bool		queuedForEmptying;
@@ -360,8 +360,8 @@ typedef struct GISTBuildBuffers
 	 * loaded in main memory.
 	 */
 	GISTNodeBuffer **loadedBuffers;
-	int			loadedBuffersCount;		/* # of entries in loadedBuffers */
-	int			loadedBuffersLen;		/* allocated size of loadedBuffers */
+	int			loadedBuffersCount; /* # of entries in loadedBuffers */
+	int			loadedBuffersLen;	/* allocated size of loadedBuffers */
 
 	/* Level of the current root node (= height of the index tree - 1) */
 	int			rootlevel;
@@ -522,4 +522,4 @@ extern void gistRelocateBuildBuffersOnSplit(GISTBuildBuffers *gfbb,
 								List *splitinfo);
 extern void gistUnloadNodeBuffers(GISTBuildBuffers *gfbb);
 
-#endif   /* GIST_PRIVATE_H */
+#endif							/* GIST_PRIVATE_H */

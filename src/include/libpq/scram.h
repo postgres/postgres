@@ -31,4 +31,4 @@ extern char *pg_be_scram_build_verifier(const char *password);
 extern bool scram_verify_plain_password(const char *username,
 							const char *password, const char *verifier);
 
-#endif   /* PG_SCRAM_H */
+#endif							/* PG_SCRAM_H */

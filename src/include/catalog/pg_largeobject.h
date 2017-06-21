@@ -34,8 +34,8 @@ CATALOG(pg_largeobject,2613) BKI_WITHOUT_OIDS
 	int32		pageno;			/* Page number (starting from 0) */
 
 	/* data has variable length, but we allow direct access; see inv_api.c */
-	bytea		data BKI_FORCE_NOT_NULL;		/* Data for page (may be
-												 * zero-length) */
+	bytea		data BKI_FORCE_NOT_NULL;	/* Data for page (may be
+											 * zero-length) */
 } FormData_pg_largeobject;
 
 /* ----------------
@@ -58,4 +58,4 @@ extern Oid	LargeObjectCreate(Oid loid);
 extern void LargeObjectDrop(Oid loid);
 extern bool LargeObjectExists(Oid loid);
 
-#endif   /* PG_LARGEOBJECT_H */
+#endif							/* PG_LARGEOBJECT_H */

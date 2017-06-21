@@ -2466,7 +2466,7 @@ tsvector_update_trigger(PG_FUNCTION_ARGS, bool config_column)
 	Oid			cfgId;
 
 	/* Check call context */
-	if (!CALLED_AS_TRIGGER(fcinfo))		/* internal error */
+	if (!CALLED_AS_TRIGGER(fcinfo)) /* internal error */
 		elog(ERROR, "tsvector_update_trigger: not fired by trigger manager");
 
 	trigdata = (TriggerData *) fcinfo->context;

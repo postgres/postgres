@@ -164,7 +164,7 @@ typedef struct GlobalTransactionData
 	 * track of the end LSN because that is the LSN we need to wait for prior
 	 * to commit.
 	 */
-	XLogRecPtr	prepare_start_lsn;		/* XLOG offset of prepare record start */
+	XLogRecPtr	prepare_start_lsn;	/* XLOG offset of prepare record start */
 	XLogRecPtr	prepare_end_lsn;	/* XLOG offset of prepare record end */
 	TransactionId xid;			/* The GXACT id */
 
@@ -898,7 +898,7 @@ TwoPhaseGetDummyProc(TransactionId xid)
 /*
  * Header for a 2PC state file
  */
-#define TWOPHASE_MAGIC	0x57F94533		/* format identifier */
+#define TWOPHASE_MAGIC	0x57F94533	/* format identifier */
 
 typedef struct TwoPhaseFileHeader
 {
@@ -1024,7 +1024,7 @@ StartPrepare(GlobalTransaction gxact)
 	hdr.nabortrels = smgrGetPendingDeletes(false, &abortrels);
 	hdr.ninvalmsgs = xactGetCommittedInvalidationMessages(&invalmsgs,
 														  &hdr.initfileinval);
-	hdr.gidlen = strlen(gxact->gid) + 1;		/* Include '\0' */
+	hdr.gidlen = strlen(gxact->gid) + 1;	/* Include '\0' */
 
 	save_state_data(&hdr, sizeof(TwoPhaseFileHeader));
 	save_state_data(gxact->gid, hdr.gidlen);

@@ -118,7 +118,7 @@ typedef struct PortalData
 	const char *prepStmtName;	/* source prepared statement (NULL if none) */
 	MemoryContext heap;			/* subsidiary memory for portal */
 	ResourceOwner resowner;		/* resources owned by portal */
-	void		(*cleanup) (Portal portal);		/* cleanup hook */
+	void		(*cleanup) (Portal portal); /* cleanup hook */
 
 	/*
 	 * State data for remembering which subtransaction(s) the portal was
@@ -127,8 +127,8 @@ typedef struct PortalData
 	 * createSubid is the creating subxact and activeSubid is the last subxact
 	 * in which we ran the portal.
 	 */
-	SubTransactionId createSubid;		/* the creating subxact */
-	SubTransactionId activeSubid;		/* the last subxact with activity */
+	SubTransactionId createSubid;	/* the creating subxact */
+	SubTransactionId activeSubid;	/* the last subxact with activity */
 
 	/* The query or queries the portal will execute */
 	const char *sourceText;		/* text of query (as of 8.4, never NULL) */
@@ -238,4 +238,4 @@ extern void PortalCreateHoldStore(Portal portal);
 extern void PortalHashTableDeleteAll(void);
 extern bool ThereAreNoReadyPortals(void);
 
-#endif   /* PORTAL_H */
+#endif							/* PORTAL_H */

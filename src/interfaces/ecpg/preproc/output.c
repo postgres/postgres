@@ -228,8 +228,8 @@ output_escaped_str(char *str, bool quoted)
 				j++;
 			} while (str[j] == ' ' || str[j] == '\t');
 
-			if ((str[j] != '\n') && (str[j] != '\r' || str[j + 1] != '\n'))		/* not followed by a
-																				 * newline */
+			if ((str[j] != '\n') && (str[j] != '\r' || str[j + 1] != '\n')) /* not followed by a
+																			 * newline */
 				fputs("\\\\", base_yyout);
 		}
 		else if (str[i] == '\r' && str[i + 1] == '\n')

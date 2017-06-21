@@ -586,10 +586,10 @@ next(struct vars *v)
 					FAILW(REG_BADRPT);
 				switch (*v->now++)
 				{
-					case CHR(':'):		/* non-capturing paren */
+					case CHR(':'):	/* non-capturing paren */
 						RETV('(', 0);
 						break;
-					case CHR('#'):		/* comment */
+					case CHR('#'):	/* comment */
 						while (!ATEOS() && *v->now != CHR(')'))
 							v->now++;
 						if (!ATEOS())
@@ -597,11 +597,11 @@ next(struct vars *v)
 						assert(v->nexttype == v->lasttype);
 						return next(v);
 						break;
-					case CHR('='):		/* positive lookahead */
+					case CHR('='):	/* positive lookahead */
 						NOTE(REG_ULOOKAROUND);
 						RETV(LACON, LATYPE_AHEAD_POS);
 						break;
-					case CHR('!'):		/* negative lookahead */
+					case CHR('!'):	/* negative lookahead */
 						NOTE(REG_ULOOKAROUND);
 						RETV(LACON, LATYPE_AHEAD_NEG);
 						break;
@@ -610,11 +610,11 @@ next(struct vars *v)
 							FAILW(REG_BADRPT);
 						switch (*v->now++)
 						{
-							case CHR('='):		/* positive lookbehind */
+							case CHR('='):	/* positive lookbehind */
 								NOTE(REG_ULOOKAROUND);
 								RETV(LACON, LATYPE_BEHIND_POS);
 								break;
-							case CHR('!'):		/* negative lookbehind */
+							case CHR('!'):	/* negative lookbehind */
 								NOTE(REG_ULOOKAROUND);
 								RETV(LACON, LATYPE_BEHIND_NEG);
 								break;
@@ -836,7 +836,7 @@ lexescape(struct vars *v)
 			break;
 		case CHR('x'):
 			NOTE(REG_UUNPORT);
-			c = lexdigits(v, 16, 1, 255);		/* REs >255 long outside spec */
+			c = lexdigits(v, 16, 1, 255);	/* REs >255 long outside spec */
 			if (ISERR() || !CHR_IS_IN_RANGE(c))
 				FAILW(REG_EESCAPE);
 			RETV(PLAIN, c);
@@ -863,7 +863,7 @@ lexescape(struct vars *v)
 		case CHR('9'):
 			save = v->now;
 			v->now--;			/* put first digit back */
-			c = lexdigits(v, 10, 1, 255);		/* REs >255 long outside spec */
+			c = lexdigits(v, 10, 1, 255);	/* REs >255 long outside spec */
 			if (ISERR())
 				FAILW(REG_EESCAPE);
 			/* ugly heuristic (first test is "exactly 1 digit?") */

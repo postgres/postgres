@@ -116,7 +116,7 @@ typedef struct
 
 typedef struct
 {
-	pid_t		checkpointer_pid;		/* PID (0 if not started) */
+	pid_t		checkpointer_pid;	/* PID (0 if not started) */
 
 	slock_t		ckpt_lck;		/* protects all the ckpt_* fields */
 
@@ -126,8 +126,8 @@ typedef struct
 
 	int			ckpt_flags;		/* checkpoint flags, as defined in xlog.h */
 
-	uint32		num_backend_writes;		/* counts user backend buffer writes */
-	uint32		num_backend_fsync;		/* counts user backend fsync calls */
+	uint32		num_backend_writes; /* counts user backend buffer writes */
+	uint32		num_backend_fsync;	/* counts user backend fsync calls */
 
 	int			num_requests;	/* current # of requests */
 	int			max_requests;	/* allocated array size */
@@ -205,15 +205,14 @@ CheckpointerMain(void)
 	 * want to wait for the backends to exit, whereupon the postmaster will
 	 * tell us it's okay to shut down (via SIGUSR2).
 	 */
-	pqsignal(SIGHUP, ChkptSigHupHandler);		/* set flag to read config
-												 * file */
-	pqsignal(SIGINT, ReqCheckpointHandler);		/* request checkpoint */
+	pqsignal(SIGHUP, ChkptSigHupHandler);	/* set flag to read config file */
+	pqsignal(SIGINT, ReqCheckpointHandler); /* request checkpoint */
 	pqsignal(SIGTERM, SIG_IGN); /* ignore SIGTERM */
 	pqsignal(SIGQUIT, chkpt_quickdie);	/* hard crash time */
 	pqsignal(SIGALRM, SIG_IGN);
 	pqsignal(SIGPIPE, SIG_IGN);
 	pqsignal(SIGUSR1, chkpt_sigusr1_handler);
-	pqsignal(SIGUSR2, ReqShutdownHandler);		/* request shutdown */
+	pqsignal(SIGUSR2, ReqShutdownHandler);	/* request shutdown */
 
 	/*
 	 * Reset some signals that are accepted by postmaster but not here

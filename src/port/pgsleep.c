@@ -60,4 +60,4 @@ pg_usleep(long microsec)
 	}
 }
 
-#endif   /* defined(FRONTEND) || !defined(WIN32) */
+#endif							/* defined(FRONTEND) || !defined(WIN32) */

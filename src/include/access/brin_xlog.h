@@ -148,4 +148,4 @@ extern void brin_desc(StringInfo buf, XLogReaderState *record);
 extern const char *brin_identify(uint8 info);
 extern void brin_mask(char *pagedata, BlockNumber blkno);
 
-#endif   /* BRIN_XLOG_H */
+#endif							/* BRIN_XLOG_H */

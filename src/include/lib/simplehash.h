@@ -149,7 +149,7 @@ SH_SCOPE void SH_START_ITERATE_AT(SH_TYPE * tb, SH_ITERATOR * iter, uint32 at);
 SH_SCOPE	SH_ELEMENT_TYPE *SH_ITERATE(SH_TYPE * tb, SH_ITERATOR * iter);
 SH_SCOPE void SH_STAT(SH_TYPE * tb);
 
-#endif   /* SH_DECLARE */
+#endif							/* SH_DECLARE */
 
 
 /* generate implementation of the hash table */
@@ -788,7 +788,7 @@ SH_START_ITERATE_AT(SH_TYPE * tb, SH_ITERATOR * iter, uint32 at)
 	 * Iterate backwards, that allows the current element to be deleted, even
 	 * if there are backward shifts.
 	 */
-	iter->cur = at & tb->sizemask;		/* ensure at is within a valid range */
+	iter->cur = at & tb->sizemask;	/* ensure at is within a valid range */
 	iter->end = iter->cur;
 	iter->done = false;
 }
@@ -899,7 +899,7 @@ SH_STAT(SH_TYPE * tb)
 		 total_collisions, max_collisions, avg_collisions);
 }
 
-#endif   /* SH_DEFINE */
+#endif							/* SH_DEFINE */
 
 
 /* undefine external parameters, so next hash table can be defined */

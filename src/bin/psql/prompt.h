@@ -14,4 +14,4 @@
 
 char	   *get_prompt(promptStatus_t status, ConditionalStack cstack);
 
-#endif   /* PROMPT_H */
+#endif							/* PROMPT_H */

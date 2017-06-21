@@ -173,4 +173,4 @@ extern int	pg_regprefix(regex_t *, pg_wchar **, size_t *);
 extern void pg_regfree(regex_t *);
 extern size_t pg_regerror(int, const regex_t *, char *, size_t);
 
-#endif   /* _REGEX_H_ */
+#endif							/* _REGEX_H_ */

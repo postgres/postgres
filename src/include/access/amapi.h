@@ -203,19 +203,19 @@ typedef struct IndexAmRoutine
 	amcanreturn_function amcanreturn;	/* can be NULL */
 	amcostestimate_function amcostestimate;
 	amoptions_function amoptions;
-	amproperty_function amproperty;		/* can be NULL */
+	amproperty_function amproperty; /* can be NULL */
 	amvalidate_function amvalidate;
 	ambeginscan_function ambeginscan;
 	amrescan_function amrescan;
-	amgettuple_function amgettuple;		/* can be NULL */
+	amgettuple_function amgettuple; /* can be NULL */
 	amgetbitmap_function amgetbitmap;	/* can be NULL */
 	amendscan_function amendscan;
-	ammarkpos_function ammarkpos;		/* can be NULL */
-	amrestrpos_function amrestrpos;		/* can be NULL */
+	ammarkpos_function ammarkpos;	/* can be NULL */
+	amrestrpos_function amrestrpos; /* can be NULL */
 
 	/* interface functions to support parallel index scans */
-	amestimateparallelscan_function amestimateparallelscan;		/* can be NULL */
-	aminitparallelscan_function aminitparallelscan;		/* can be NULL */
+	amestimateparallelscan_function amestimateparallelscan; /* can be NULL */
+	aminitparallelscan_function aminitparallelscan; /* can be NULL */
 	amparallelrescan_function amparallelrescan; /* can be NULL */
 } IndexAmRoutine;
 
@@ -224,4 +224,4 @@ typedef struct IndexAmRoutine
 extern IndexAmRoutine *GetIndexAmRoutine(Oid amhandler);
 extern IndexAmRoutine *GetIndexAmRoutineByAmId(Oid amoid, bool noerror);
 
-#endif   /* AMAPI_H */
+#endif							/* AMAPI_H */

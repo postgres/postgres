@@ -101,7 +101,7 @@ pg_freeaddrinfo_all(int hint_ai_family, struct addrinfo *ai)
 		}
 	}
 	else
-#endif   /* HAVE_UNIX_SOCKETS */
+#endif							/* HAVE_UNIX_SOCKETS */
 	{
 		/* struct was built by getaddrinfo() */
 		if (ai != NULL)
@@ -256,4 +256,4 @@ getnameinfo_unix(const struct sockaddr_un *sa, int salen,
 
 	return 0;
 }
-#endif   /* HAVE_UNIX_SOCKETS */
+#endif							/* HAVE_UNIX_SOCKETS */

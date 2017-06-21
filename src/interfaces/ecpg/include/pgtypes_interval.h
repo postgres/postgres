@@ -21,7 +21,7 @@ typedef long long int int64;
 #endif
 
 #define HAVE_INT64_TIMESTAMP
-#endif   /* C_H */
+#endif							/* C_H */
 
 typedef struct
 {
@@ -44,4 +44,4 @@ extern int	PGTYPESinterval_copy(interval *, interval *);
 }
 #endif
 
-#endif   /* PGTYPES_INTERVAL */
+#endif							/* PGTYPES_INTERVAL */

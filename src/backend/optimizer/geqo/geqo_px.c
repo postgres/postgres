@@ -107,4 +107,4 @@ px(PlannerInfo *root, Gene *tour1, Gene *tour2, Gene *offspring, int num_gene,
 
 }
 
-#endif   /* defined(PX) */
+#endif							/* defined(PX) */

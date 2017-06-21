@@ -14,4 +14,4 @@
 
 extern pid_t fork_process(void);
 
-#endif   /* FORK_PROCESS_H */
+#endif							/* FORK_PROCESS_H */

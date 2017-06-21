@@ -512,7 +512,7 @@ HeapTupleSatisfiesUpdate(HeapTuple htup, CommandId curcid,
 		else if (TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetRawXmin(tuple)))
 		{
 			if (HeapTupleHeaderGetCmin(tuple) >= curcid)
-				return HeapTupleInvisible;		/* inserted after scan started */
+				return HeapTupleInvisible;	/* inserted after scan started */
 
 			if (tuple->t_infomask & HEAP_XMAX_INVALID)	/* xid invalid */
 				return HeapTupleMayBeUpdated;
@@ -571,8 +571,8 @@ HeapTupleSatisfiesUpdate(HeapTuple htup, CommandId curcid,
 						return HeapTupleSelfUpdated;	/* updated after scan
 														 * started */
 					else
-						return HeapTupleInvisible;		/* updated before scan
-														 * started */
+						return HeapTupleInvisible;	/* updated before scan
+													 * started */
 				}
 			}
 
@@ -587,7 +587,7 @@ HeapTupleSatisfiesUpdate(HeapTuple htup, CommandId curcid,
 			if (HeapTupleHeaderGetCmax(tuple) >= curcid)
 				return HeapTupleSelfUpdated;	/* updated after scan started */
 			else
-				return HeapTupleInvisible;		/* updated before scan started */
+				return HeapTupleInvisible;	/* updated before scan started */
 		}
 		else if (TransactionIdIsInProgress(HeapTupleHeaderGetRawXmin(tuple)))
 			return HeapTupleInvisible;
@@ -646,7 +646,7 @@ HeapTupleSatisfiesUpdate(HeapTuple htup, CommandId curcid,
 			if (HeapTupleHeaderGetCmax(tuple) >= curcid)
 				return HeapTupleSelfUpdated;	/* updated after scan started */
 			else
-				return HeapTupleInvisible;		/* updated before scan started */
+				return HeapTupleInvisible;	/* updated before scan started */
 		}
 
 		if (MultiXactIdIsRunning(HeapTupleHeaderGetRawXmax(tuple), false))
@@ -682,7 +682,7 @@ HeapTupleSatisfiesUpdate(HeapTuple htup, CommandId curcid,
 		if (HEAP_XMAX_IS_LOCKED_ONLY(tuple->t_infomask))
 			return HeapTupleBeingUpdated;
 		if (HeapTupleHeaderGetCmax(tuple) >= curcid)
-			return HeapTupleSelfUpdated;		/* updated after scan started */
+			return HeapTupleSelfUpdated;	/* updated after scan started */
 		else
 			return HeapTupleInvisible;	/* updated before scan started */
 	}
@@ -1038,7 +1038,7 @@ HeapTupleSatisfiesMVCC(HeapTuple htup, Snapshot snapshot,
 				else if (HeapTupleHeaderGetCmax(tuple) >= snapshot->curcid)
 					return true;	/* updated after scan started */
 				else
-					return false;		/* updated before scan started */
+					return false;	/* updated before scan started */
 			}
 
 			if (!TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetRawXmax(tuple)))

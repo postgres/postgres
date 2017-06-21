@@ -546,7 +546,7 @@ DefineView(ViewStmt *stmt, const char *queryString,
 	 * long as the CREATE command is consistent with that --- no explicit
 	 * schema name.
 	 */
-	view = copyObject(stmt->view);		/* don't corrupt original command */
+	view = copyObject(stmt->view);	/* don't corrupt original command */
 	if (view->relpersistence == RELPERSISTENCE_PERMANENT
 		&& isQueryUsingTempRelation(viewParse))
 	{

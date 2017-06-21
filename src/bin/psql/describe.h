@@ -111,4 +111,4 @@ bool		describePublications(const char *pattern);
 /* \dRs */
 bool		describeSubscriptions(const char *pattern, bool verbose);
 
-#endif   /* DESCRIBE_H */
+#endif							/* DESCRIBE_H */

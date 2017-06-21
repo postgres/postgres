@@ -86,4 +86,4 @@ extern void EventTriggerCollectAlterTSConfig(AlterTSConfigurationStmt *stmt,
 								 Oid cfgId, Oid *dictIds, int ndicts);
 extern void EventTriggerCollectAlterDefPrivs(AlterDefaultPrivilegesStmt *stmt);
 
-#endif   /* EVENT_TRIGGER_H */
+#endif							/* EVENT_TRIGGER_H */

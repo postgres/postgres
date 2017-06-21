@@ -132,7 +132,7 @@ pg_create_logical_replication_slot(PG_FUNCTION_ARGS)
 	 * Create logical decoding context, to build the initial snapshot.
 	 */
 	ctx = CreateInitDecodingContext(NameStr(*plugin), NIL,
-									false,		/* do not build snapshot */
+									false,	/* do not build snapshot */
 									logical_read_local_xlog_page, NULL, NULL,
 									NULL);
 

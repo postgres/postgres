@@ -21,4 +21,4 @@ extern TupleTableSlot *ExecTidScan(TidScanState *node);
 extern void ExecEndTidScan(TidScanState *node);
 extern void ExecReScanTidScan(TidScanState *node);
 
-#endif   /* NODETIDSCAN_H */
+#endif							/* NODETIDSCAN_H */

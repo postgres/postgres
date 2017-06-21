@@ -1561,8 +1561,7 @@ ExecModifyTable(ModifyTableState *node)
 						elog(ERROR, "ctid is NULL");
 
 					tupleid = (ItemPointer) DatumGetPointer(datum);
-					tuple_ctid = *tupleid;		/* be sure we don't free
-												 * ctid!! */
+					tuple_ctid = *tupleid;	/* be sure we don't free ctid!! */
 					tupleid = &tuple_ctid;
 				}
 
@@ -1775,7 +1774,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 
 		root_rti = linitial_int(node->partitioned_rels);
 		root_oid = getrelid(root_rti, estate->es_range_table);
-		rel = heap_open(root_oid, NoLock);		/* locked by InitPlan */
+		rel = heap_open(root_oid, NoLock);	/* locked by InitPlan */
 	}
 	else
 		rel = mtstate->resultRelInfo->ri_RelationDesc;

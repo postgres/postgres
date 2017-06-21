@@ -64,10 +64,10 @@ typedef int IpcSemaphoreId;		/* semaphore ID returned by semget(2) */
 static PGSemaphore sharedSemas; /* array of PGSemaphoreData in shared memory */
 static int	numSharedSemas;		/* number of PGSemaphoreDatas used so far */
 static int	maxSharedSemas;		/* allocated size of PGSemaphoreData array */
-static IpcSemaphoreId *mySemaSets;		/* IDs of sema sets acquired so far */
+static IpcSemaphoreId *mySemaSets;	/* IDs of sema sets acquired so far */
 static int	numSemaSets;		/* number of sema sets acquired so far */
 static int	maxSemaSets;		/* allocated size of mySemaSets array */
-static IpcSemaphoreKey nextSemaKey;		/* next key to try using */
+static IpcSemaphoreKey nextSemaKey; /* next key to try using */
 static int	nextSemaNumber;		/* next free sem num in last sema set */
 
 
@@ -333,7 +333,7 @@ PGReserveSemaphores(int maxSemas, int port)
 		elog(PANIC, "out of memory");
 	numSemaSets = 0;
 	nextSemaKey = port * 1000;
-	nextSemaNumber = SEMAS_PER_SET;		/* force sema set alloc on 1st call */
+	nextSemaNumber = SEMAS_PER_SET; /* force sema set alloc on 1st call */
 
 	on_shmem_exit(ReleaseSemaphores, 0);
 }

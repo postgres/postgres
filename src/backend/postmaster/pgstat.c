@@ -74,21 +74,21 @@
  * Timer definitions.
  * ----------
  */
-#define PGSTAT_STAT_INTERVAL	500		/* Minimum time between stats file
-										 * updates; in milliseconds. */
+#define PGSTAT_STAT_INTERVAL	500 /* Minimum time between stats file
+									 * updates; in milliseconds. */
 
-#define PGSTAT_RETRY_DELAY		10		/* How long to wait between checks for
-										 * a new file; in milliseconds. */
+#define PGSTAT_RETRY_DELAY		10	/* How long to wait between checks for a
+									 * new file; in milliseconds. */
 
 #define PGSTAT_MAX_WAIT_TIME	10000	/* Maximum time to wait for a stats
 										 * file update; in milliseconds. */
 
-#define PGSTAT_INQ_INTERVAL		640		/* How often to ping the collector for
-										 * a new file; in milliseconds. */
+#define PGSTAT_INQ_INTERVAL		640 /* How often to ping the collector for a
+									 * new file; in milliseconds. */
 
-#define PGSTAT_RESTART_INTERVAL 60		/* How often to attempt to restart a
-										 * failed statistics collector; in
-										 * seconds. */
+#define PGSTAT_RESTART_INTERVAL 60	/* How often to attempt to restart a
+									 * failed statistics collector; in
+									 * seconds. */
 
 #define PGSTAT_POLL_LOOP_COUNT	(PGSTAT_MAX_WAIT_TIME / PGSTAT_RETRY_DELAY)
 #define PGSTAT_INQ_LOOP_COUNT	(PGSTAT_INQ_INTERVAL / PGSTAT_RETRY_DELAY)
@@ -213,7 +213,7 @@ typedef struct PgStat_SubXactStatus
 {
 	int			nest_level;		/* subtransaction nest level */
 	struct PgStat_SubXactStatus *prev;	/* higher-level subxact if any */
-	PgStat_TableXactStatus *first;		/* head of list for this subxact */
+	PgStat_TableXactStatus *first;	/* head of list for this subxact */
 } PgStat_SubXactStatus;
 
 static PgStat_SubXactStatus *pgStatXactStack = NULL;
@@ -226,9 +226,9 @@ PgStat_Counter pgStatBlockWriteTime = 0;
 /* Record that's written to 2PC state file when pgstat state is persisted */
 typedef struct TwoPhasePgStatRecord
 {
-	PgStat_Counter tuples_inserted;		/* tuples inserted in xact */
-	PgStat_Counter tuples_updated;		/* tuples updated in xact */
-	PgStat_Counter tuples_deleted;		/* tuples deleted in xact */
+	PgStat_Counter tuples_inserted; /* tuples inserted in xact */
+	PgStat_Counter tuples_updated;	/* tuples updated in xact */
+	PgStat_Counter tuples_deleted;	/* tuples deleted in xact */
 	PgStat_Counter inserted_pre_trunc;	/* tuples inserted prior to truncate */
 	PgStat_Counter updated_pre_trunc;	/* tuples updated prior to truncate */
 	PgStat_Counter deleted_pre_trunc;	/* tuples deleted prior to truncate */
@@ -710,7 +710,7 @@ pgstat_forkexec(void)
 
 	return postmaster_forkexec(ac, av);
 }
-#endif   /* EXEC_BACKEND */
+#endif							/* EXEC_BACKEND */
 
 
 /*
@@ -1290,7 +1290,7 @@ pgstat_drop_relation(Oid relid)
 	msg.m_databaseid = MyDatabaseId;
 	pgstat_send(&msg, len);
 }
-#endif   /* NOT_USED */
+#endif							/* NOT_USED */
 
 
 /* ----------

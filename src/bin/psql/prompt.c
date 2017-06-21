@@ -310,7 +310,7 @@ get_prompt(promptStatus_t status, ConditionalStack cstack)
 					 */
 					buf[0] = (*p == '[') ? RL_PROMPT_START_IGNORE : RL_PROMPT_END_IGNORE;
 					buf[1] = '\0';
-#endif   /* USE_READLINE */
+#endif							/* USE_READLINE */
 					break;
 
 				default:

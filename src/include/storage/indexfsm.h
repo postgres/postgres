@@ -23,4 +23,4 @@ extern void RecordUsedIndexPage(Relation rel, BlockNumber page);
 
 extern void IndexFreeSpaceMapVacuum(Relation rel);
 
-#endif   /* INDEXFSM_H_ */
+#endif							/* INDEXFSM_H_ */

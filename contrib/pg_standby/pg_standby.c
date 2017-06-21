@@ -44,8 +44,8 @@ int			maxwaittime = 0;	/* how long are we prepared to wait for? */
 int			keepfiles = 0;		/* number of WAL files to keep, 0 keep all */
 int			maxretries = 3;		/* number of retries on restore command */
 bool		debug = false;		/* are we debugging? */
-bool		need_cleanup = false;		/* do we need to remove files from
-										 * archive? */
+bool		need_cleanup = false;	/* do we need to remove files from
+									 * archive? */
 
 #ifndef WIN32
 static volatile sig_atomic_t signaled = false;
@@ -59,8 +59,8 @@ char	   *restartWALFileName; /* the file from which we can restart restore */
 char	   *priorWALFileName;	/* the file we need to get from archive */
 char		WALFilePath[MAXPGPATH * 2]; /* the file path including archive */
 char		restoreCommand[MAXPGPATH];	/* run this to restore */
-char		exclusiveCleanupFileName[MAXFNAMELEN];		/* the file we need to
-														 * get from archive */
+char		exclusiveCleanupFileName[MAXFNAMELEN];	/* the file we need to get
+													 * from archive */
 
 /*
  * Two types of failover are supported (smart and fast failover).
@@ -582,7 +582,7 @@ main(int argc, char **argv)
 	 * There's no way to trigger failover via signal on Windows.
 	 */
 	(void) pqsignal(SIGUSR1, sighandler);
-	(void) pqsignal(SIGINT, sighandler);		/* deprecated, use SIGUSR1 */
+	(void) pqsignal(SIGINT, sighandler);	/* deprecated, use SIGUSR1 */
 	(void) pqsignal(SIGQUIT, sigquit_handler);
 #endif
 

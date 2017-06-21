@@ -58,4 +58,4 @@ extern Value *makeFloat(char *numericStr);
 extern Value *makeString(char *str);
 extern Value *makeBitString(char *str);
 
-#endif   /* VALUE_H */
+#endif							/* VALUE_H */

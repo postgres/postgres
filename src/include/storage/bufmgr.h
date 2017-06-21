@@ -79,7 +79,7 @@ extern PGDLLIMPORT int32 *LocalRefCount;
 #define MAX_IO_CONCURRENCY 1000
 
 /* special block number for ReadBuffer() */
-#define P_NEW	InvalidBlockNumber		/* grow the file to get a new page */
+#define P_NEW	InvalidBlockNumber	/* grow the file to get a new page */
 
 /*
  * Buffer content lock modes (mode argument for LockBuffer())
@@ -275,6 +275,6 @@ TestForOldSnapshot(Snapshot snapshot, Relation relation, Page page)
 		TestForOldSnapshot_impl(snapshot, relation);
 }
 
-#endif   /* FRONTEND */
+#endif							/* FRONTEND */
 
-#endif   /* BUFMGR_H */
+#endif							/* BUFMGR_H */

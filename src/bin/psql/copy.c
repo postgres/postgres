@@ -102,7 +102,7 @@ parse_slash_copy(const char *args)
 
 	result = pg_malloc0(sizeof(struct copy_options));
 
-	result->before_tofrom = pg_strdup("");		/* initialize for appending */
+	result->before_tofrom = pg_strdup("");	/* initialize for appending */
 
 	token = strtokx(args, whitespace, ".,()", "\"",
 					0, false, false, pset.encoding);

@@ -46,4 +46,4 @@ extern HeapTuple do_convert_tuple(HeapTuple tuple, TupleConversionMap *map);
 
 extern void free_conversion_map(TupleConversionMap *map);
 
-#endif   /* TUPCONVERT_H */
+#endif							/* TUPCONVERT_H */

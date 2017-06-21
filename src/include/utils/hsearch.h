@@ -157,4 +157,4 @@ extern int	bitmap_match(const void *key1, const void *key2, Size keysize);
 
 #define oid_hash uint32_hash	/* Remove me eventually */
 
-#endif   /* HSEARCH_H */
+#endif							/* HSEARCH_H */

@@ -74,4 +74,4 @@
 #define relptr_copy(rp1, rp2) \
 	((rp1).relptr_off = (rp2).relptr_off)
 
-#endif   /* RELPTR_H */
+#endif							/* RELPTR_H */

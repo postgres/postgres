@@ -522,8 +522,8 @@ makeFuncExpr(Oid funcid, Oid rettype, List *args,
 	funcexpr = makeNode(FuncExpr);
 	funcexpr->funcid = funcid;
 	funcexpr->funcresulttype = rettype;
-	funcexpr->funcretset = false;		/* only allowed case here */
-	funcexpr->funcvariadic = false;		/* only allowed case here */
+	funcexpr->funcretset = false;	/* only allowed case here */
+	funcexpr->funcvariadic = false; /* only allowed case here */
 	funcexpr->funcformat = fformat;
 	funcexpr->funccollid = funccollid;
 	funcexpr->inputcollid = inputcollid;

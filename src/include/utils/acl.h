@@ -127,11 +127,11 @@ typedef ArrayType Acl;
  * External representations of the privilege bits --- aclitemin/aclitemout
  * represent each possible privilege bit with a distinct 1-character code
  */
-#define ACL_INSERT_CHR			'a'		/* formerly known as "append" */
-#define ACL_SELECT_CHR			'r'		/* formerly known as "read" */
-#define ACL_UPDATE_CHR			'w'		/* formerly known as "write" */
+#define ACL_INSERT_CHR			'a' /* formerly known as "append" */
+#define ACL_SELECT_CHR			'r' /* formerly known as "read" */
+#define ACL_UPDATE_CHR			'w' /* formerly known as "write" */
 #define ACL_DELETE_CHR			'd'
-#define ACL_TRUNCATE_CHR		'D'		/* super-delete, as it were */
+#define ACL_TRUNCATE_CHR		'D' /* super-delete, as it were */
 #define ACL_REFERENCES_CHR		'x'
 #define ACL_TRIGGER_CHR			't'
 #define ACL_EXECUTE_CHR			'X'
@@ -331,4 +331,4 @@ extern bool pg_statistics_object_ownercheck(Oid stat_oid, Oid roleid);
 extern bool has_createrole_privilege(Oid roleid);
 extern bool has_bypassrls_privilege(Oid roleid);
 
-#endif   /* ACL_H */
+#endif							/* ACL_H */

@@ -93,4 +93,4 @@ extern char *get_subscription_name(Oid subid);
 
 extern int	CountDBSubscriptions(Oid dbid);
 
-#endif   /* PG_SUBSCRIPTION_H */
+#endif							/* PG_SUBSCRIPTION_H */

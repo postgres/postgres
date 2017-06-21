@@ -739,7 +739,7 @@ plperl_init_interp(void)
 	STMT_START { \
 		if (saved != NULL) { setlocale_perl(name, saved); pfree(saved); } \
 	} STMT_END
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 
 	if (plperl_on_init && *plperl_on_init)
 	{
@@ -2956,7 +2956,7 @@ plperl_hash_from_tuple(HeapTuple tuple, TupleDesc tupdesc)
 	check_stack_depth();
 
 	hv = newHV();
-	hv_ksplit(hv, tupdesc->natts);		/* pre-grow the hash */
+	hv_ksplit(hv, tupdesc->natts);	/* pre-grow the hash */
 
 	for (i = 0; i < tupdesc->natts; i++)
 	{
@@ -3933,7 +3933,7 @@ setlocale_perl(int category, char *locale)
 				newctype = RETVAL;
 			new_ctype(newctype);
 		}
-#endif   /* USE_LOCALE_CTYPE */
+#endif							/* USE_LOCALE_CTYPE */
 #ifdef USE_LOCALE_COLLATE
 		if (category == LC_COLLATE
 #ifdef LC_ALL
@@ -3951,7 +3951,7 @@ setlocale_perl(int category, char *locale)
 				newcoll = RETVAL;
 			new_collate(newcoll);
 		}
-#endif   /* USE_LOCALE_COLLATE */
+#endif							/* USE_LOCALE_COLLATE */
 
 #ifdef USE_LOCALE_NUMERIC
 		if (category == LC_NUMERIC
@@ -3970,7 +3970,7 @@ setlocale_perl(int category, char *locale)
 				newnum = RETVAL;
 			new_numeric(newnum);
 		}
-#endif   /* USE_LOCALE_NUMERIC */
+#endif							/* USE_LOCALE_NUMERIC */
 	}
 
 	return RETVAL;

@@ -183,4 +183,4 @@ extern double point_dt(Point *pt1, Point *pt2);
 extern double point_sl(Point *pt1, Point *pt2);
 extern double pg_hypot(double x, double y);
 
-#endif   /* GEO_DECLS_H */
+#endif							/* GEO_DECLS_H */

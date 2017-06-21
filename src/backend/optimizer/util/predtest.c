@@ -382,7 +382,7 @@ predicate_implied_by_recurse(Node *clause, Node *predicate,
 						iterate_end(pred_info);
 						if (!presult)
 						{
-							result = false;		/* doesn't imply any of B's */
+							result = false; /* doesn't imply any of B's */
 							break;
 						}
 					}
@@ -650,7 +650,7 @@ predicate_refuted_by_recurse(Node *clause, Node *predicate,
 						iterate_end(pred_info);
 						if (!presult)
 						{
-							result = false;		/* citem refutes nothing */
+							result = false; /* citem refutes nothing */
 							break;
 						}
 					}
@@ -1360,12 +1360,12 @@ static const bool BT_implies_table[6][6] = {
  *			The predicate operator:
  *	 LT    LE	 EQ    GE	 GT    NE
  */
-	{TRUE, TRUE, none, none, none, TRUE},		/* LT */
-	{none, TRUE, none, none, none, none},		/* LE */
-	{none, TRUE, TRUE, TRUE, none, none},		/* EQ */
-	{none, none, none, TRUE, none, none},		/* GE */
-	{none, none, none, TRUE, TRUE, TRUE},		/* GT */
-	{none, none, none, none, none, TRUE}		/* NE */
+	{TRUE, TRUE, none, none, none, TRUE},	/* LT */
+	{none, TRUE, none, none, none, none},	/* LE */
+	{none, TRUE, TRUE, TRUE, none, none},	/* EQ */
+	{none, none, none, TRUE, none, none},	/* GE */
+	{none, none, none, TRUE, TRUE, TRUE},	/* GT */
+	{none, none, none, none, none, TRUE}	/* NE */
 };
 
 static const bool BT_refutes_table[6][6] = {
@@ -1373,12 +1373,12 @@ static const bool BT_refutes_table[6][6] = {
  *			The predicate operator:
  *	 LT    LE	 EQ    GE	 GT    NE
  */
-	{none, none, TRUE, TRUE, TRUE, none},		/* LT */
-	{none, none, none, none, TRUE, none},		/* LE */
-	{TRUE, none, none, none, TRUE, TRUE},		/* EQ */
-	{TRUE, none, none, none, none, none},		/* GE */
-	{TRUE, TRUE, TRUE, none, none, none},		/* GT */
-	{none, none, TRUE, none, none, none}		/* NE */
+	{none, none, TRUE, TRUE, TRUE, none},	/* LT */
+	{none, none, none, none, TRUE, none},	/* LE */
+	{TRUE, none, none, none, TRUE, TRUE},	/* EQ */
+	{TRUE, none, none, none, none, none},	/* GE */
+	{TRUE, TRUE, TRUE, none, none, none},	/* GT */
+	{none, none, TRUE, none, none, none}	/* NE */
 };
 
 static const StrategyNumber BT_implic_table[6][6] = {
@@ -1386,12 +1386,12 @@ static const StrategyNumber BT_implic_table[6][6] = {
  *			The predicate operator:
  *	 LT    LE	 EQ    GE	 GT    NE
  */
-	{BTGE, BTGE, none, none, none, BTGE},		/* LT */
-	{BTGT, BTGE, none, none, none, BTGT},		/* LE */
-	{BTGT, BTGE, BTEQ, BTLE, BTLT, BTNE},		/* EQ */
-	{none, none, none, BTLE, BTLT, BTLT},		/* GE */
-	{none, none, none, BTLE, BTLE, BTLE},		/* GT */
-	{none, none, none, none, none, BTEQ}		/* NE */
+	{BTGE, BTGE, none, none, none, BTGE},	/* LT */
+	{BTGT, BTGE, none, none, none, BTGT},	/* LE */
+	{BTGT, BTGE, BTEQ, BTLE, BTLT, BTNE},	/* EQ */
+	{none, none, none, BTLE, BTLT, BTLT},	/* GE */
+	{none, none, none, BTLE, BTLE, BTLE},	/* GT */
+	{none, none, none, none, none, BTEQ}	/* NE */
 };
 
 static const StrategyNumber BT_refute_table[6][6] = {
@@ -1399,12 +1399,12 @@ static const StrategyNumber BT_refute_table[6][6] = {
  *			The predicate operator:
  *	 LT    LE	 EQ    GE	 GT    NE
  */
-	{none, none, BTGE, BTGE, BTGE, none},		/* LT */
-	{none, none, BTGT, BTGT, BTGE, none},		/* LE */
-	{BTLE, BTLT, BTNE, BTGT, BTGE, BTEQ},		/* EQ */
-	{BTLE, BTLT, BTLT, none, none, none},		/* GE */
-	{BTLE, BTLE, BTLE, none, none, none},		/* GT */
-	{none, none, BTEQ, none, none, none}		/* NE */
+	{none, none, BTGE, BTGE, BTGE, none},	/* LT */
+	{none, none, BTGT, BTGT, BTGE, none},	/* LE */
+	{BTLE, BTLT, BTNE, BTGT, BTGE, BTEQ},	/* EQ */
+	{BTLE, BTLT, BTLT, none, none, none},	/* GE */
+	{BTLE, BTLE, BTLE, none, none, none},	/* GT */
+	{none, none, BTEQ, none, none, none}	/* NE */
 };
 
 

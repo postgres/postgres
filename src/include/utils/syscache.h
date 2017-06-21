@@ -209,4 +209,4 @@ extern bool RelationSupportsSysCache(Oid relid);
 
 #define ReleaseSysCacheList(x)	ReleaseCatCacheList(x)
 
-#endif   /* SYSCACHE_H */
+#endif							/* SYSCACHE_H */

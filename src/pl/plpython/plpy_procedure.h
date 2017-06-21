@@ -17,7 +17,7 @@ typedef struct PLySavedArgs
 	struct PLySavedArgs *next;	/* linked-list pointer */
 	PyObject   *args;			/* "args" element of globals dict */
 	int			nargs;			/* length of namedargs array */
-	PyObject   *namedargs[FLEXIBLE_ARRAY_MEMBER];		/* named args */
+	PyObject   *namedargs[FLEXIBLE_ARRAY_MEMBER];	/* named args */
 } PLySavedArgs;
 
 /* cached procedure data */
@@ -66,4 +66,4 @@ extern PLyProcedure *PLy_procedure_get(Oid fn_oid, Oid fn_rel, bool is_trigger);
 extern void PLy_procedure_compile(PLyProcedure *proc, const char *src);
 extern void PLy_procedure_delete(PLyProcedure *proc);
 
-#endif   /* PLPY_PROCEDURE_H */
+#endif							/* PLPY_PROCEDURE_H */

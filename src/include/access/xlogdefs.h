@@ -99,4 +99,4 @@ typedef uint16 RepOriginId;
 #define DEFAULT_SYNC_METHOD		SYNC_METHOD_FSYNC
 #endif
 
-#endif   /* XLOG_DEFS_H */
+#endif							/* XLOG_DEFS_H */

@@ -2412,7 +2412,7 @@ preprocess_rowmarks(PlannerInfo *root)
 		newrc->markType = select_rowmark_type(rte, LCS_NONE);
 		newrc->allMarkTypes = (1 << newrc->markType);
 		newrc->strength = LCS_NONE;
-		newrc->waitPolicy = LockWaitBlock;		/* doesn't matter */
+		newrc->waitPolicy = LockWaitBlock;	/* doesn't matter */
 		newrc->isParent = false;
 
 		prowmarks = lappend(prowmarks, newrc);
@@ -2469,7 +2469,7 @@ select_rowmark_type(RangeTblEntry *rte, LockClauseStrength strength)
 				break;
 		}
 		elog(ERROR, "unrecognized LockClauseStrength %d", (int) strength);
-		return ROW_MARK_EXCLUSIVE;		/* keep compiler quiet */
+		return ROW_MARK_EXCLUSIVE;	/* keep compiler quiet */
 	}
 }
 
@@ -2519,7 +2519,7 @@ preprocess_limit(PlannerInfo *root, double tuple_fraction,
 			{
 				*count_est = DatumGetInt64(((Const *) est)->constvalue);
 				if (*count_est <= 0)
-					*count_est = 1;		/* force to at least 1 */
+					*count_est = 1; /* force to at least 1 */
 			}
 		}
 		else
@@ -2653,7 +2653,7 @@ preprocess_limit(PlannerInfo *root, double tuple_fraction,
 				/* both fractional, so add them together */
 				tuple_fraction += limit_fraction;
 				if (tuple_fraction >= 1.0)
-					tuple_fraction = 0.0;		/* assume fetch all */
+					tuple_fraction = 0.0;	/* assume fetch all */
 			}
 		}
 	}
@@ -3514,7 +3514,7 @@ create_grouping_paths(PlannerInfo *root,
 	RelOptInfo *grouped_rel;
 	PathTarget *partial_grouping_target = NULL;
 	AggClauseCosts agg_partial_costs;	/* parallel only */
-	AggClauseCosts agg_final_costs;		/* parallel only */
+	AggClauseCosts agg_final_costs; /* parallel only */
 	Size		hashaggtablesize;
 	double		dNumGroups;
 	double		dNumPartialGroups = 0;
@@ -5626,7 +5626,7 @@ make_sort_input_target(PlannerInfo *root,
 	/* Shouldn't get here unless query has ORDER BY */
 	Assert(parse->sortClause);
 
-	*have_postponed_srfs = false;		/* default result */
+	*have_postponed_srfs = false;	/* default result */
 
 	/* Inspect tlist and collect per-column information */
 	ncols = list_length(final_target->exprs);

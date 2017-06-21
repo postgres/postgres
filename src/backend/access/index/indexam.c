@@ -326,7 +326,7 @@ index_rescan(IndexScanDesc scan,
 
 	scan->xs_continue_hot = false;
 
-	scan->kill_prior_tuple = false;		/* for safety */
+	scan->kill_prior_tuple = false; /* for safety */
 
 	scan->indexRelation->rd_amroutine->amrescan(scan, keys, nkeys,
 												orderbys, norderbys);
@@ -401,7 +401,7 @@ index_restrpos(IndexScanDesc scan)
 
 	scan->xs_continue_hot = false;
 
-	scan->kill_prior_tuple = false;		/* for safety */
+	scan->kill_prior_tuple = false; /* for safety */
 
 	scan->indexRelation->rd_amroutine->amrestrpos(scan);
 }

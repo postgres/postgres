@@ -39,7 +39,7 @@ typedef struct sqlda_struct sqlda_t;
 
 #endif
 
-#endif   /* ECPG_SQLDA_H */
+#endif							/* ECPG_SQLDA_H */
 
 #line 5 "describe.pgc"
 

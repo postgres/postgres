@@ -28,4 +28,4 @@ extern ObjectAddress RenameSchema(const char *oldname, const char *newname);
 extern ObjectAddress AlterSchemaOwner(const char *name, Oid newOwnerId);
 extern void AlterSchemaOwner_oid(Oid schemaOid, Oid newOwnerId);
 
-#endif   /* SCHEMACMDS_H */
+#endif							/* SCHEMACMDS_H */

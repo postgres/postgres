@@ -67,4 +67,4 @@ DECLARE_TOAST(pg_shseclabel, 4060, 4061);
 #define PgShseclabelToastTable 4060
 #define PgShseclabelToastIndex 4061
 
-#endif   /* TOASTING_H */
+#endif							/* TOASTING_H */

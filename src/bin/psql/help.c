@@ -515,7 +515,7 @@ helpSQL(const char *topic, unsigned short int pager)
 					while (topic[j] != ' ' && j++ <= len)
 						wordlen++;
 				}
-				if (wordlen >= len)		/* Don't try again if the same word */
+				if (wordlen >= len) /* Don't try again if the same word */
 				{
 					if (!output)
 						output = PageOutput(nl_count, pager ? &(pset.popt.topt) : NULL);

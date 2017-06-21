@@ -214,7 +214,7 @@ plpython2_validator(PG_FUNCTION_ARGS)
 	/* call plpython validator with our fcinfo so it gets our oid */
 	return plpython_validator(fcinfo);
 }
-#endif   /* PY_MAJOR_VERSION < 3 */
+#endif							/* PY_MAJOR_VERSION < 3 */
 
 Datum
 plpython_call_handler(PG_FUNCTION_ARGS)
@@ -288,7 +288,7 @@ plpython2_call_handler(PG_FUNCTION_ARGS)
 {
 	return plpython_call_handler(fcinfo);
 }
-#endif   /* PY_MAJOR_VERSION < 3 */
+#endif							/* PY_MAJOR_VERSION < 3 */
 
 Datum
 plpython_inline_handler(PG_FUNCTION_ARGS)
@@ -368,7 +368,7 @@ plpython2_inline_handler(PG_FUNCTION_ARGS)
 {
 	return plpython_inline_handler(fcinfo);
 }
-#endif   /* PY_MAJOR_VERSION < 3 */
+#endif							/* PY_MAJOR_VERSION < 3 */
 
 static bool
 PLy_procedure_is_trigger(Form_pg_proc procStruct)

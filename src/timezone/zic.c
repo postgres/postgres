@@ -27,7 +27,7 @@ typedef int64 zic_t;
 
 #ifndef ZIC_MAX_ABBR_LEN_WO_WARN
 #define ZIC_MAX_ABBR_LEN_WO_WARN	  6
-#endif   /* !defined ZIC_MAX_ABBR_LEN_WO_WARN */
+#endif							/* !defined ZIC_MAX_ABBR_LEN_WO_WARN */
 
 #ifndef WIN32
 #ifdef S_IRUSR
@@ -83,9 +83,9 @@ struct rule
  *	r_dycode		r_dayofmonth	r_wday
  */
 
-#define DC_DOM		0	/* 1..31 */		/* unused */
-#define DC_DOWGEQ	1	/* 1..31 */		/* 0..6 (Sun..Sat) */
-#define DC_DOWLEQ	2	/* 1..31 */		/* 0..6 (Sun..Sat) */
+#define DC_DOM		0	/* 1..31 */ /* unused */
+#define DC_DOWGEQ	1	/* 1..31 */ /* 0..6 (Sun..Sat) */
+#define DC_DOWLEQ	2	/* 1..31 */ /* 0..6 (Sun..Sat) */
 
 struct zone
 {
@@ -572,7 +572,7 @@ main(int argc, char *argv[])
 
 #ifndef WIN32
 	umask(umask(S_IWGRP | S_IWOTH) | (S_IWGRP | S_IWOTH));
-#endif   /* !WIN32 */
+#endif							/* !WIN32 */
 	progname = argv[0];
 	if (TYPE_BIT(zic_t) <64)
 	{
@@ -852,7 +852,7 @@ relname(char const *from, char const *to)
 	}
 	return result;
 }
-#endif   /* HAVE_SYMLINK */
+#endif							/* HAVE_SYMLINK */
 
 /* Hard link FROM to TO, following any symbolic links.
    Return 0 if successful, an error number otherwise.  */
@@ -920,7 +920,7 @@ dolink(char const *fromfield, char const *tofield, bool staysymlink)
 						strerror(link_errno));
 		}
 		else
-#endif   /* HAVE_SYMLINK */
+#endif							/* HAVE_SYMLINK */
 		{
 			FILE	   *fp,
 					   *tp;
@@ -2140,7 +2140,7 @@ writezone(const char *const name, const char *const string, char version)
 				writetype[type] = true;
 			}
 		}
-#endif   /* !defined
+#endif							/* !defined
 								 * LEAVE_SOME_PRE_2011_SYSTEMS_IN_THE_LURCH */
 		thistypecnt = 0;
 		for (i = 0; i < typecnt; ++i)

@@ -169,7 +169,7 @@ SysLoggerMain(int argc, char *argv[])
 
 #ifdef EXEC_BACKEND
 	syslogger_parseArgs(argc, argv);
-#endif   /* EXEC_BACKEND */
+#endif							/* EXEC_BACKEND */
 
 	am_syslogger = true;
 
@@ -268,7 +268,7 @@ SysLoggerMain(int argc, char *argv[])
 	threadHandle = (HANDLE) _beginthreadex(NULL, 0, pipeThread, NULL, 0, NULL);
 	if (threadHandle == 0)
 		elog(FATAL, "could not create syslogger data transfer thread: %m");
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 
 	/*
 	 * Remember active logfile's name.  We recompute this from the reference
@@ -490,7 +490,7 @@ SysLoggerMain(int argc, char *argv[])
 						 WAIT_EVENT_SYSLOGGER_MAIN);
 
 		EnterCriticalSection(&sysloggerSection);
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 
 		if (pipe_eof_seen)
 		{
@@ -716,7 +716,7 @@ syslogger_forkexec(void)
 				 (long) _get_osfhandle(_fileno(syslogFile)));
 	else
 		strcpy(filenobuf, "0");
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 	av[ac++] = filenobuf;
 
 	av[ac] = NULL;
@@ -756,9 +756,9 @@ syslogger_parseArgs(int argc, char *argv[])
 			setvbuf(syslogFile, NULL, PG_IOLBF, 0);
 		}
 	}
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 }
-#endif   /* EXEC_BACKEND */
+#endif							/* EXEC_BACKEND */
 
 
 /* --------------------------------
@@ -1084,7 +1084,7 @@ pipeThread(void *arg)
 	_endthread();
 	return 0;
 }
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 
 /*
  * Open the csv log file - we do this opportunistically, because
@@ -1103,7 +1103,7 @@ open_csvlogfile(void)
 
 	csvlogFile = logfile_open(filename, "a", false);
 
-	if (last_csv_file_name != NULL)		/* probably shouldn't happen */
+	if (last_csv_file_name != NULL) /* probably shouldn't happen */
 		pfree(last_csv_file_name);
 
 	last_csv_file_name = filename;

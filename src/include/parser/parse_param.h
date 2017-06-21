@@ -22,4 +22,4 @@ extern void parse_variable_parameters(ParseState *pstate,
 extern void check_variable_parameters(ParseState *pstate, Query *query);
 extern bool query_contains_extern_params(Query *query);
 
-#endif   /* PARSE_PARAM_H */
+#endif							/* PARSE_PARAM_H */

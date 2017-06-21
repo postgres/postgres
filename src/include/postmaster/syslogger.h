@@ -94,4 +94,4 @@ extern void SysLoggerMain(int argc, char *argv[]) pg_attribute_noreturn();
 #define LOG_METAINFO_DATAFILE  "current_logfiles"
 #define LOG_METAINFO_DATAFILE_TMP  LOG_METAINFO_DATAFILE ".tmp"
 
-#endif   /* _SYSLOGGER_H */
+#endif							/* _SYSLOGGER_H */

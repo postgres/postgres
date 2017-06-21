@@ -1895,7 +1895,7 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 		AclResult	aclresult;
 		int			i;
 
-		if (wfunc->winref != node->winref)		/* planner screwed up? */
+		if (wfunc->winref != node->winref)	/* planner screwed up? */
 			elog(ERROR, "WindowFunc with winref %u assigned to WindowAgg with winref %u",
 				 wfunc->winref, node->winref);
 
@@ -2209,7 +2209,7 @@ initialize_peragg(WindowAggState *winstate, WindowFunc *wfunc,
 	/* build expression trees using actual argument & result types */
 	build_aggregate_transfn_expr(inputTypes,
 								 numArguments,
-								 0,		/* no ordered-set window functions yet */
+								 0, /* no ordered-set window functions yet */
 								 false, /* no variadic window functions yet */
 								 aggtranstype,
 								 wfunc->inputcollid,

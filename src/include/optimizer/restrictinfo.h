@@ -43,4 +43,4 @@ extern bool join_clause_is_movable_into(RestrictInfo *rinfo,
 							Relids currentrelids,
 							Relids current_and_outer);
 
-#endif   /* RESTRICTINFO_H */
+#endif							/* RESTRICTINFO_H */

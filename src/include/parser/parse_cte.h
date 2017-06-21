@@ -21,4 +21,4 @@ extern List *transformWithClause(ParseState *pstate, WithClause *withClause);
 extern void analyzeCTETargetList(ParseState *pstate, CommonTableExpr *cte,
 					 List *tlist);
 
-#endif   /* PARSE_CTE_H */
+#endif							/* PARSE_CTE_H */

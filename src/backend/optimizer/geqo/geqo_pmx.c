@@ -221,4 +221,4 @@ pmx(PlannerInfo *root, Gene *tour1, Gene *tour2, Gene *offspring, int num_gene)
 	pfree(check_list);
 }
 
-#endif   /* defined(PMX) */
+#endif							/* defined(PMX) */

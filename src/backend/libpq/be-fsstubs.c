@@ -796,7 +796,7 @@ lo_get_fragment_internal(Oid loOid, int64 offset, int32 nbytes)
 	if (loSize > offset)
 	{
 		if (nbytes >= 0 && nbytes <= loSize - offset)
-			result_length = nbytes;		/* request is wholly inside LO */
+			result_length = nbytes; /* request is wholly inside LO */
 		else
 			result_length = loSize - offset;	/* adjust to end of LO */
 	}

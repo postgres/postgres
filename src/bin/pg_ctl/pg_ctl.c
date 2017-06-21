@@ -83,7 +83,7 @@ static const char *progname;
 static char *log_file = NULL;
 static char *exec_path = NULL;
 static char *event_source = NULL;
-static char *register_servicename = "PostgreSQL";		/* FIXME: + version ID? */
+static char *register_servicename = "PostgreSQL";	/* FIXME: + version ID? */
 static char *register_username = NULL;
 static char *register_password = NULL;
 static char *argv0 = NULL;
@@ -211,7 +211,7 @@ write_stderr(const char *fmt,...)
 	 */
 	if (pgwin32_is_service())	/* Running as a service */
 	{
-		char		errbuf[2048];		/* Arbitrary size? */
+		char		errbuf[2048];	/* Arbitrary size? */
 
 		vsnprintf(errbuf, sizeof(errbuf), fmt, ap);
 
@@ -500,7 +500,7 @@ start_postmaster(void)
 	postmasterProcess = pi.hProcess;
 	CloseHandle(pi.hThread);
 	return pi.dwProcessId;		/* Shell's PID, not postmaster's! */
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 }
 
 
@@ -787,8 +787,7 @@ read_post_opts(void)
 				 */
 				if ((arg1 = strstr(optline, " \"")) != NULL)
 				{
-					*arg1 = '\0';		/* terminate so we get only program
-										 * name */
+					*arg1 = '\0';	/* terminate so we get only program name */
 					post_opts = pg_strdup(arg1 + 1);	/* point past whitespace */
 				}
 				if (exec_path == NULL)
@@ -1005,7 +1004,7 @@ do_stop(void)
 			if ((pid = get_pgpid(false)) != 0)
 			{
 				print_msg(".");
-				pg_usleep(1000000);		/* 1 sec */
+				pg_usleep(1000000); /* 1 sec */
 			}
 			else
 				break;
@@ -1095,7 +1094,7 @@ do_restart(void)
 			if ((pid = get_pgpid(false)) != 0)
 			{
 				print_msg(".");
-				pg_usleep(1000000);		/* 1 sec */
+				pg_usleep(1000000); /* 1 sec */
 			}
 			else
 				break;
@@ -1362,7 +1361,7 @@ IsWindowsXPOrGreater(void)
 	osv.dwOSVersionInfoSize = sizeof(osv);
 
 	/* Windows XP = Version 5.1 */
-	return (!GetVersionEx(&osv) ||		/* could not get version */
+	return (!GetVersionEx(&osv) ||	/* could not get version */
 			osv.dwMajorVersion > 5 || (osv.dwMajorVersion == 5 && osv.dwMinorVersion >= 1));
 }
 
@@ -1374,7 +1373,7 @@ IsWindows7OrGreater(void)
 	osv.dwOSVersionInfoSize = sizeof(osv);
 
 	/* Windows 7 = Version 6.0 */
-	return (!GetVersionEx(&osv) ||		/* could not get version */
+	return (!GetVersionEx(&osv) ||	/* could not get version */
 			osv.dwMajorVersion > 6 || (osv.dwMajorVersion == 6 && osv.dwMinorVersion >= 0));
 }
 #endif
@@ -1665,7 +1664,7 @@ pgwin32_ServiceMain(DWORD argc, LPTSTR *argv)
 				break;
 			}
 
-		case (WAIT_OBJECT_0 + 1):		/* postmaster went down */
+		case (WAIT_OBJECT_0 + 1):	/* postmaster went down */
 			break;
 
 		default:
@@ -1917,7 +1916,7 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, bool as_ser
 	 */
 	return r;
 }
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 
 static void
 do_advice(void)

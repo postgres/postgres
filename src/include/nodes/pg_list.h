@@ -336,6 +336,6 @@ extern List *list_copy_tail(const List *list, int nskip);
 #define listCopy(list)				list_copy(list)
 
 extern int	length(List *list);
-#endif   /* ENABLE_LIST_COMPAT */
+#endif							/* ENABLE_LIST_COMPAT */
 
-#endif   /* PG_LIST_H */
+#endif							/* PG_LIST_H */

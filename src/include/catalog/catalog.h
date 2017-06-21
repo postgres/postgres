@@ -48,4 +48,4 @@ extern Oid GetNewOidWithIndex(Relation relation, Oid indexId,
 extern Oid GetNewRelFileNode(Oid reltablespace, Relation pg_class,
 				  char relpersistence);
 
-#endif   /* CATALOG_H */
+#endif							/* CATALOG_H */

@@ -103,7 +103,7 @@ static struct pam_conv pam_passw_conv = {
 static char *pam_passwd = NULL; /* Workaround for Solaris 2.6 brokenness */
 static Port *pam_port_cludge;	/* Workaround for passing "Port *port" into
 								 * pam_passwd_conv_proc */
-#endif   /* USE_PAM */
+#endif							/* USE_PAM */
 
 
 /*----------------------------------------------------------------
@@ -114,7 +114,7 @@ static Port *pam_port_cludge;	/* Workaround for passing "Port *port" into
 #include <bsd_auth.h>
 
 static int	CheckBSDAuth(Port *port, char *user);
-#endif   /* USE_BSD_AUTH */
+#endif							/* USE_BSD_AUTH */
 
 
 /*----------------------------------------------------------------
@@ -141,7 +141,7 @@ ULONG		(*__ldap_start_tls_sA) (
 #endif
 
 static int	CheckLDAPAuth(Port *port);
-#endif   /* USE_LDAP */
+#endif							/* USE_LDAP */
 
 /*----------------------------------------------------------------
  * Cert authentication
@@ -172,7 +172,7 @@ bool		pg_krb_caseins_users;
 #endif
 
 static int	pg_GSS_recvauth(Port *port);
-#endif   /* ENABLE_GSS */
+#endif							/* ENABLE_GSS */
 
 
 /*----------------------------------------------------------------
@@ -558,7 +558,7 @@ ClientAuthentication(Port *port)
 			status = CheckPAMAuth(port, port->user_name, "");
 #else
 			Assert(false);
-#endif   /* USE_PAM */
+#endif							/* USE_PAM */
 			break;
 
 		case uaBSD:
@@ -566,7 +566,7 @@ ClientAuthentication(Port *port)
 			status = CheckBSDAuth(port, port->user_name);
 #else
 			Assert(false);
-#endif   /* USE_BSD_AUTH */
+#endif							/* USE_BSD_AUTH */
 			break;
 
 		case uaLDAP:
@@ -671,7 +671,7 @@ recv_password_packet(Port *port)
 	}
 
 	initStringInfo(&buf);
-	if (pq_getmessage(&buf, 1000))		/* receive password */
+	if (pq_getmessage(&buf, 1000))	/* receive password */
 	{
 		/* EOF - pq_getmessage already logged a suitable message */
 		pfree(buf.data);
@@ -1287,7 +1287,7 @@ pg_GSS_recvauth(Port *port)
 
 	return ret;
 }
-#endif   /* ENABLE_GSS */
+#endif							/* ENABLE_GSS */
 
 
 /*----------------------------------------------------------------
@@ -1696,7 +1696,7 @@ pg_SSPI_make_upn(char *accountname,
 	pfree(upname);
 	return STATUS_OK;
 }
-#endif   /* ENABLE_SSPI */
+#endif							/* ENABLE_SSPI */
 
 
 
@@ -1715,7 +1715,7 @@ static bool
 interpret_ident_response(const char *ident_response,
 						 char *ident_user)
 {
-	const char *cursor = ident_response;		/* Cursor into *ident_response */
+	const char *cursor = ident_response;	/* Cursor into *ident_response */
 
 	/*
 	 * Ident's response, in the telnet tradition, should end in crlf (\r\n).
@@ -1769,7 +1769,7 @@ interpret_ident_response(const char *ident_response,
 					{
 						int			i;	/* Index into *ident_user */
 
-						cursor++;		/* Go over colon */
+						cursor++;	/* Go over colon */
 						while (pg_isblank(*cursor))
 							cursor++;	/* skip blanks */
 						/* Rest of line is user name.  Copy it over. */
@@ -1805,7 +1805,7 @@ ident_inet(hbaPort *port)
 	const SockAddr remote_addr = port->raddr;
 	const SockAddr local_addr = port->laddr;
 	char		ident_user[IDENT_USERNAME_MAX + 1];
-	pgsocket	sock_fd = PGINVALID_SOCKET;		/* for talking to Ident server */
+	pgsocket	sock_fd = PGINVALID_SOCKET; /* for talking to Ident server */
 	int			rc;				/* Return code from a locally called function */
 	bool		ident_return;
 	char		remote_addr_s[NI_MAXHOST];
@@ -2010,7 +2010,7 @@ auth_peer(hbaPort *port)
 
 	return check_usermap(port->hba->usermap, port->user_name, ident_user, false);
 }
-#endif   /* HAVE_UNIX_SOCKETS */
+#endif							/* HAVE_UNIX_SOCKETS */
 
 
 /*----------------------------------------------------------------
@@ -2161,8 +2161,8 @@ CheckPAMAuth(Port *port, char *user, char *password)
 	 * later used inside the PAM conversation to pass the password to the
 	 * authentication module.
 	 */
-	pam_passw_conv.appdata_ptr = (char *) password;		/* from password above,
-														 * not allocated */
+	pam_passw_conv.appdata_ptr = (char *) password; /* from password above,
+													 * not allocated */
 
 	/* Optionally, one can set the service name in pg_hba.conf */
 	if (port->hba->pamservice && port->hba->pamservice[0] != '\0')
@@ -2249,7 +2249,7 @@ CheckPAMAuth(Port *port, char *user, char *password)
 
 	return (retval == PAM_SUCCESS ? STATUS_OK : STATUS_ERROR);
 }
-#endif   /* USE_PAM */
+#endif							/* USE_PAM */
 
 
 /*----------------------------------------------------------------
@@ -2282,7 +2282,7 @@ CheckBSDAuth(Port *port, char *user)
 
 	return STATUS_OK;
 }
-#endif   /* USE_BSD_AUTH */
+#endif							/* USE_BSD_AUTH */
 
 
 /*----------------------------------------------------------------
@@ -2581,7 +2581,7 @@ CheckLDAPAuth(Port *port)
 
 	return STATUS_OK;
 }
-#endif   /* USE_LDAP */
+#endif							/* USE_LDAP */
 
 
 /*----------------------------------------------------------------
@@ -3071,8 +3071,8 @@ PerformRadiusTransaction(char *server, char *secret, char *portstr, char *identi
 		memcpy(cryptvector + 4, packet->vector, RADIUS_VECTOR_LENGTH);	/* request
 																		 * authenticator, from
 																		 * original packet */
-		if (packetlength > RADIUS_HEADER_LENGTH)		/* there may be no
-														 * attributes at all */
+		if (packetlength > RADIUS_HEADER_LENGTH)	/* there may be no
+													 * attributes at all */
 			memcpy(cryptvector + RADIUS_HEADER_LENGTH, receive_buffer + RADIUS_HEADER_LENGTH, packetlength - RADIUS_HEADER_LENGTH);
 		memcpy(cryptvector + packetlength, secret, strlen(secret));
 

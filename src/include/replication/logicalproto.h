@@ -103,4 +103,4 @@ extern LogicalRepRelation *logicalrep_read_rel(StringInfo in);
 extern void logicalrep_write_typ(StringInfo out, Oid typoid);
 extern void logicalrep_read_typ(StringInfo out, LogicalRepTyp *ltyp);
 
-#endif   /* LOGICALREP_PROTO_H */
+#endif							/* LOGICALREP_PROTO_H */

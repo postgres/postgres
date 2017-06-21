@@ -104,4 +104,4 @@ extern size_t char2wchar(wchar_t *to, size_t tolen,
 		   const char *from, size_t fromlen, pg_locale_t locale);
 #endif
 
-#endif   /* _PG_LOCALE_ */
+#endif							/* _PG_LOCALE_ */

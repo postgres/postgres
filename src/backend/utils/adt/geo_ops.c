@@ -1598,7 +1598,7 @@ path_inter(PG_FUNCTION_ARGS)
 		{
 			if (!p1->closed)
 				continue;
-			iprev = p1->npts - 1;		/* include the closure segment */
+			iprev = p1->npts - 1;	/* include the closure segment */
 		}
 
 		for (j = 0; j < p2->npts; j++)
@@ -1652,7 +1652,7 @@ path_distance(PG_FUNCTION_ARGS)
 		{
 			if (!p1->closed)
 				continue;
-			iprev = p1->npts - 1;		/* include the closure segment */
+			iprev = p1->npts - 1;	/* include the closure segment */
 		}
 
 		for (j = 0; j < p2->npts; j++)
@@ -1710,7 +1710,7 @@ path_length(PG_FUNCTION_ARGS)
 		{
 			if (!path->closed)
 				continue;
-			iprev = path->npts - 1;		/* include the closure segment */
+			iprev = path->npts - 1; /* include the closure segment */
 		}
 
 		result += point_dt(&path->p[iprev], &path->p[i]);
@@ -2457,7 +2457,7 @@ dist_ppath(PG_FUNCTION_ARGS)
 				{
 					if (!path->closed)
 						continue;
-					iprev = path->npts - 1;		/* include the closure segment */
+					iprev = path->npts - 1; /* include the closure segment */
 				}
 
 				statlseg_construct(&lseg, &path->p[iprev], &path->p[i]);
@@ -2776,7 +2776,7 @@ close_ps(PG_FUNCTION_ARGS)
 	xh = lseg->p[0].x < lseg->p[1].x;
 	yh = lseg->p[0].y < lseg->p[1].y;
 
-	if (FPeq(lseg->p[0].x, lseg->p[1].x))		/* vertical? */
+	if (FPeq(lseg->p[0].x, lseg->p[1].x))	/* vertical? */
 	{
 #ifdef GEODEBUG
 		printf("close_ps- segment is vertical\n");
@@ -2822,24 +2822,24 @@ close_ps(PG_FUNCTION_ARGS)
 	 */
 
 	invm = -1.0 / point_sl(&(lseg->p[0]), &(lseg->p[1]));
-	tmp = line_construct_pm(&lseg->p[!yh], invm);		/* lower edge of the
-														 * "band" */
+	tmp = line_construct_pm(&lseg->p[!yh], invm);	/* lower edge of the
+													 * "band" */
 	if (pt->y < (tmp->A * pt->x + tmp->C))
 	{							/* we are below the lower edge */
-		result = point_copy(&lseg->p[!yh]);		/* below the lseg, take lower
-												 * end pt */
+		result = point_copy(&lseg->p[!yh]); /* below the lseg, take lower end
+											 * pt */
 #ifdef GEODEBUG
 		printf("close_ps below: tmp A %f  B %f   C %f\n",
 			   tmp->A, tmp->B, tmp->C);
 #endif
 		PG_RETURN_POINT_P(result);
 	}
-	tmp = line_construct_pm(&lseg->p[yh], invm);		/* upper edge of the
-														 * "band" */
+	tmp = line_construct_pm(&lseg->p[yh], invm);	/* upper edge of the
+													 * "band" */
 	if (pt->y > (tmp->A * pt->x + tmp->C))
 	{							/* we are below the lower edge */
-		result = point_copy(&lseg->p[yh]);		/* above the lseg, take higher
-												 * end pt */
+		result = point_copy(&lseg->p[yh]);	/* above the lseg, take higher end
+											 * pt */
 #ifdef GEODEBUG
 		printf("close_ps above: tmp A %f  B %f   C %f\n",
 			   tmp->A, tmp->B, tmp->C);

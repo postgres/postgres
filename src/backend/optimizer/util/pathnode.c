@@ -411,7 +411,7 @@ set_cheapest(RelOptInfo *parent_rel)
 void
 add_path(RelOptInfo *parent_rel, Path *new_path)
 {
-	bool		accept_new = true;		/* unless we find a superior old path */
+	bool		accept_new = true;	/* unless we find a superior old path */
 	ListCell   *insert_after = NULL;	/* where to insert new item */
 	List	   *new_path_pathkeys;
 	ListCell   *p1;
@@ -484,7 +484,7 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 								 outercmp == BMS_SUBSET1) &&
 								new_path->rows <= old_path->rows &&
 								new_path->parallel_safe >= old_path->parallel_safe)
-								remove_old = true;		/* new dominates old */
+								remove_old = true;	/* new dominates old */
 						}
 						else if (keyscmp == PATHKEYS_BETTER2)
 						{
@@ -492,7 +492,7 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 								 outercmp == BMS_SUBSET2) &&
 								new_path->rows >= old_path->rows &&
 								new_path->parallel_safe <= old_path->parallel_safe)
-								accept_new = false;		/* old dominates new */
+								accept_new = false; /* old dominates new */
 						}
 						else	/* keyscmp == PATHKEYS_EQUAL */
 						{
@@ -534,11 +534,11 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 							else if (outercmp == BMS_SUBSET1 &&
 									 new_path->rows <= old_path->rows &&
 									 new_path->parallel_safe >= old_path->parallel_safe)
-								remove_old = true;		/* new dominates old */
+								remove_old = true;	/* new dominates old */
 							else if (outercmp == BMS_SUBSET2 &&
 									 new_path->rows >= old_path->rows &&
 									 new_path->parallel_safe <= old_path->parallel_safe)
-								accept_new = false;		/* old dominates new */
+								accept_new = false; /* old dominates new */
 							/* else different parameterizations, keep both */
 						}
 						break;
@@ -551,7 +551,7 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 								 outercmp == BMS_SUBSET1) &&
 								new_path->rows <= old_path->rows &&
 								new_path->parallel_safe >= old_path->parallel_safe)
-								remove_old = true;		/* new dominates old */
+								remove_old = true;	/* new dominates old */
 						}
 						break;
 					case COSTS_BETTER2:
@@ -563,7 +563,7 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 								 outercmp == BMS_SUBSET2) &&
 								new_path->rows >= old_path->rows &&
 								new_path->parallel_safe <= old_path->parallel_safe)
-								accept_new = false;		/* old dominates new */
+								accept_new = false; /* old dominates new */
 						}
 						break;
 					case COSTS_DIFFERENT:
@@ -751,7 +751,7 @@ add_path_precheck(RelOptInfo *parent_rel,
 void
 add_partial_path(RelOptInfo *parent_rel, Path *new_path)
 {
-	bool		accept_new = true;		/* unless we find a superior old path */
+	bool		accept_new = true;	/* unless we find a superior old path */
 	ListCell   *insert_after = NULL;	/* where to insert new item */
 	ListCell   *p1;
 	ListCell   *p1_prev;
@@ -1081,7 +1081,7 @@ create_bitmap_heap_path(PlannerInfo *root,
 	pathnode->path.parallel_aware = parallel_degree > 0 ? true : false;
 	pathnode->path.parallel_safe = rel->consider_parallel;
 	pathnode->path.parallel_workers = parallel_degree;
-	pathnode->path.pathkeys = NIL;		/* always unordered */
+	pathnode->path.pathkeys = NIL;	/* always unordered */
 
 	pathnode->bitmapqual = bitmapqual;
 
@@ -1118,7 +1118,7 @@ create_bitmap_and_path(PlannerInfo *root,
 	pathnode->path.parallel_safe = rel->consider_parallel;
 	pathnode->path.parallel_workers = 0;
 
-	pathnode->path.pathkeys = NIL;		/* always unordered */
+	pathnode->path.pathkeys = NIL;	/* always unordered */
 
 	pathnode->bitmapquals = bitmapquals;
 
@@ -1154,7 +1154,7 @@ create_bitmap_or_path(PlannerInfo *root,
 	pathnode->path.parallel_safe = rel->consider_parallel;
 	pathnode->path.parallel_workers = 0;
 
-	pathnode->path.pathkeys = NIL;		/* always unordered */
+	pathnode->path.pathkeys = NIL;	/* always unordered */
 
 	pathnode->bitmapquals = bitmapquals;
 
@@ -1182,7 +1182,7 @@ create_tidscan_path(PlannerInfo *root, RelOptInfo *rel, List *tidquals,
 	pathnode->path.parallel_aware = false;
 	pathnode->path.parallel_safe = rel->consider_parallel;
 	pathnode->path.parallel_workers = 0;
-	pathnode->path.pathkeys = NIL;		/* always unordered */
+	pathnode->path.pathkeys = NIL;	/* always unordered */
 
 	pathnode->tidquals = tidquals;
 
@@ -1214,8 +1214,7 @@ create_append_path(RelOptInfo *rel, List *subpaths, Relids required_outer,
 	pathnode->path.parallel_aware = false;
 	pathnode->path.parallel_safe = rel->consider_parallel;
 	pathnode->path.parallel_workers = parallel_workers;
-	pathnode->path.pathkeys = NIL;		/* result is always considered
-										 * unsorted */
+	pathnode->path.pathkeys = NIL;	/* result is always considered unsorted */
 	pathnode->partitioned_rels = list_copy(partitioned_rels);
 	pathnode->subpaths = subpaths;
 
@@ -1311,7 +1310,7 @@ create_merge_append_path(PlannerInfo *root,
 		else
 		{
 			/* We'll need to insert a Sort node, so include cost for that */
-			Path		sort_path;		/* dummy for result of cost_sort */
+			Path		sort_path;	/* dummy for result of cost_sort */
 
 			cost_sort(&sort_path,
 					  root,
@@ -1743,7 +1742,7 @@ create_gather_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 	pathnode->path.parallel_aware = false;
 	pathnode->path.parallel_safe = false;
 	pathnode->path.parallel_workers = 0;
-	pathnode->path.pathkeys = NIL;		/* Gather has unordered result */
+	pathnode->path.pathkeys = NIL;	/* Gather has unordered result */
 
 	pathnode->subpath = subpath;
 	pathnode->num_workers = subpath->parallel_workers;
@@ -2818,8 +2817,8 @@ create_groupingsets_path(PlannerInfo *root,
 		}
 		else
 		{
-			Path		sort_path;		/* dummy for result of cost_sort */
-			Path		agg_path;		/* dummy for result of cost_agg */
+			Path		sort_path;	/* dummy for result of cost_sort */
+			Path		agg_path;	/* dummy for result of cost_agg */
 
 			if (rollup->is_hashed || is_first_sort)
 			{

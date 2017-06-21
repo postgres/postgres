@@ -25,4 +25,4 @@ typedef struct
 	Oid			sortfamily;		/* ordering operator's sort opfamily, or 0 */
 } OpFamilyMember;
 
-#endif   /* OPFAM_INTERNAL_H */
+#endif							/* OPFAM_INTERNAL_H */

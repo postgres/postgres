@@ -28,8 +28,7 @@ CATALOG(pg_shseclabel,3592) BKI_SHARED_RELATION BKI_ROWTYPE_OID(4066) BKI_WITHOU
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
 	text		provider BKI_FORCE_NOT_NULL;	/* name of label provider */
-	text		label BKI_FORCE_NOT_NULL;		/* security label of the
-												 * object */
+	text		label BKI_FORCE_NOT_NULL;	/* security label of the object */
 #endif
 } FormData_pg_shseclabel;
 
@@ -45,4 +44,4 @@ typedef FormData_pg_shseclabel * Form_pg_shseclabel;
 #define Anum_pg_shseclabel_provider		3
 #define Anum_pg_shseclabel_label		4
 
-#endif   /* PG_SHSECLABEL_H */
+#endif							/* PG_SHSECLABEL_H */

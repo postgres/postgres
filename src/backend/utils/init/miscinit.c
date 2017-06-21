@@ -1137,8 +1137,8 @@ TouchSocketLockFiles(void)
 			read(fd, buffer, sizeof(buffer));
 			close(fd);
 		}
-#endif   /* HAVE_UTIMES */
-#endif   /* HAVE_UTIME */
+#endif							/* HAVE_UTIMES */
+#endif							/* HAVE_UTIME */
 	}
 }
 

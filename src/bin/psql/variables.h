@@ -93,4 +93,4 @@ void SetVariableHooks(VariableSpace space, const char *name,
 
 void		PsqlVarEnumError(const char *name, const char *value, const char *suggestions);
 
-#endif   /* VARIABLES_H */
+#endif							/* VARIABLES_H */

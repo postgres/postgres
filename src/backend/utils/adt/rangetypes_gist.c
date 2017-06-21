@@ -70,7 +70,7 @@ typedef enum
 typedef struct
 {
 	TypeCacheEntry *typcache;	/* typcache for range type */
-	bool		has_subtype_diff;		/* does it have subtype_diff? */
+	bool		has_subtype_diff;	/* does it have subtype_diff? */
 	int			entries_count;	/* total number of entries being split */
 
 	/* Information about currently selected split follows */

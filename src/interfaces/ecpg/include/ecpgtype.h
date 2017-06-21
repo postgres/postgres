@@ -103,4 +103,4 @@ enum ECPG_statement_type
 }
 #endif
 
-#endif   /* _ECPGTYPE_H */
+#endif							/* _ECPGTYPE_H */

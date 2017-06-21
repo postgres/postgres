@@ -130,4 +130,4 @@ pg_dlerror(void)
 #endif
 }
 
-#endif   /* !HAVE_DLOPEN */
+#endif							/* !HAVE_DLOPEN */

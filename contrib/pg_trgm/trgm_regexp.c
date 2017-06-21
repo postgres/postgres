@@ -450,7 +450,7 @@ struct TrgmPackedGraph
 	 * by color trigram number.
 	 */
 	int			colorTrigramsCount;
-	int		   *colorTrigramGroups;		/* array of size colorTrigramsCount */
+	int		   *colorTrigramGroups; /* array of size colorTrigramsCount */
 
 	/*
 	 * The states of the simplified NFA.  State number 0 is always initial
@@ -2350,4 +2350,4 @@ printTrgmPackedGraph(TrgmPackedGraph *packedGraph, TRGM *trigrams)
 	pfree(buf.data);
 }
 
-#endif   /* TRGM_REGEXP_DEBUG */
+#endif							/* TRGM_REGEXP_DEBUG */

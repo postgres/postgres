@@ -75,4 +75,4 @@ typedef FormData_pg_shdescription * Form_pg_shdescription;
  *	by genbki.pl and loaded during initdb.
  */
 
-#endif   /* PG_SHDESCRIPTION_H */
+#endif							/* PG_SHDESCRIPTION_H */

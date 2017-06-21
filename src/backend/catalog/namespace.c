@@ -157,7 +157,7 @@ static bool baseSearchPathValid = true;
 typedef struct
 {
 	List	   *searchPath;		/* the desired search path */
-	Oid			creationNamespace;		/* the desired creation namespace */
+	Oid			creationNamespace;	/* the desired creation namespace */
 	int			nestLevel;		/* subtransaction nesting level */
 } OverrideStackEntry;
 
@@ -273,7 +273,7 @@ RangeVarGetRelidExtended(const RangeVar *relation, LOCKMODE lockmode,
 		if (relation->relpersistence == RELPERSISTENCE_TEMP)
 		{
 			if (!OidIsValid(myTempNamespace))
-				relId = InvalidOid;		/* this probably can't happen? */
+				relId = InvalidOid; /* this probably can't happen? */
 			else
 			{
 				if (relation->schemaname)
@@ -1665,7 +1665,7 @@ OpernameGetCandidates(List *names, char oprkind, bool missing_schema_ok)
 					/* We have a match with a previous result */
 					Assert(pathpos != prevResult->pathpos);
 					if (pathpos > prevResult->pathpos)
-						continue;		/* keep previous result */
+						continue;	/* keep previous result */
 					/* replace previous result */
 					prevResult->pathpos = pathpos;
 					prevResult->oid = HeapTupleGetOid(opertup);
@@ -3428,7 +3428,7 @@ PopOverrideSearchPath(void)
 		entry = (OverrideStackEntry *) linitial(overrideStack);
 		activeSearchPath = entry->searchPath;
 		activeCreationNamespace = entry->creationNamespace;
-		activeTempCreationPending = false;		/* XXX is this OK? */
+		activeTempCreationPending = false;	/* XXX is this OK? */
 	}
 	else
 	{
@@ -3876,7 +3876,7 @@ AtEOXact_Namespace(bool isCommit, bool parallel)
 		{
 			myTempNamespace = InvalidOid;
 			myTempToastNamespace = InvalidOid;
-			baseSearchPathValid = false;		/* need to rebuild list */
+			baseSearchPathValid = false;	/* need to rebuild list */
 		}
 		myTempNamespaceSubID = InvalidSubTransactionId;
 	}
@@ -3928,7 +3928,7 @@ AtEOSubXact_Namespace(bool isCommit, SubTransactionId mySubid,
 			/* TEMP namespace creation failed, so reset state */
 			myTempNamespace = InvalidOid;
 			myTempToastNamespace = InvalidOid;
-			baseSearchPathValid = false;		/* need to rebuild list */
+			baseSearchPathValid = false;	/* need to rebuild list */
 		}
 	}
 
@@ -3953,7 +3953,7 @@ AtEOSubXact_Namespace(bool isCommit, SubTransactionId mySubid,
 		entry = (OverrideStackEntry *) linitial(overrideStack);
 		activeSearchPath = entry->searchPath;
 		activeCreationNamespace = entry->creationNamespace;
-		activeTempCreationPending = false;		/* XXX is this OK? */
+		activeTempCreationPending = false;	/* XXX is this OK? */
 	}
 	else
 	{

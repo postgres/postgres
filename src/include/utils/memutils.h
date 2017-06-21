@@ -37,7 +37,7 @@
  * MemoryContextAllocHuge().  Both limits permit code to assume that it may
  * compute twice an allocation's size without overflow.
  */
-#define MaxAllocSize	((Size) 0x3fffffff)		/* 1 gigabyte - 1 */
+#define MaxAllocSize	((Size) 0x3fffffff) /* 1 gigabyte - 1 */
 
 #define AllocSizeIsValid(size)	((Size) (size) <= MaxAllocSize)
 
@@ -194,4 +194,4 @@ extern MemoryContext SlabContextCreate(MemoryContext parent,
 #define SLAB_DEFAULT_BLOCK_SIZE		(8 * 1024)
 #define SLAB_LARGE_BLOCK_SIZE		(8 * 1024 * 1024)
 
-#endif   /* MEMUTILS_H */
+#endif							/* MEMUTILS_H */

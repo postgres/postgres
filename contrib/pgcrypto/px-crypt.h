@@ -79,4 +79,4 @@ char	   *px_crypt_des(const char *key, const char *setting);
 char *px_crypt_md5(const char *pw, const char *salt,
 			 char *dst, unsigned dstlen);
 
-#endif   /* _PX_CRYPT_H */
+#endif							/* _PX_CRYPT_H */

@@ -19,4 +19,4 @@ extern void PostRestoreCommand(void);
 extern bool IsPromoteTriggered(void);
 extern void ResetPromoteTriggered(void);
 
-#endif   /* _STARTUP_H */
+#endif							/* _STARTUP_H */

@@ -114,8 +114,8 @@
  * Maximal length of one node
  * ----------
  */
-#define DCH_MAX_ITEM_SIZ	   12		/* max localized day name		*/
-#define NUM_MAX_ITEM_SIZ		8		/* roman number (RN has 15 chars)	*/
+#define DCH_MAX_ITEM_SIZ	   12	/* max localized day name		*/
+#define NUM_MAX_ITEM_SIZ		8	/* roman number (RN has 15 chars)	*/
 
 /* ----------
  * More is in float.c
@@ -724,7 +724,7 @@ static const KeyWord DCH_keywords[] = {
 	{"AM", 2, DCH_AM, FALSE, FROM_CHAR_DATE_NONE},
 	{"B.C.", 4, DCH_B_C, FALSE, FROM_CHAR_DATE_NONE},	/* B */
 	{"BC", 2, DCH_BC, FALSE, FROM_CHAR_DATE_NONE},
-	{"CC", 2, DCH_CC, TRUE, FROM_CHAR_DATE_NONE},		/* C */
+	{"CC", 2, DCH_CC, TRUE, FROM_CHAR_DATE_NONE},	/* C */
 	{"DAY", 3, DCH_DAY, FALSE, FROM_CHAR_DATE_NONE},	/* D */
 	{"DDD", 3, DCH_DDD, TRUE, FROM_CHAR_DATE_GREGORIAN},
 	{"DD", 2, DCH_DD, TRUE, FROM_CHAR_DATE_GREGORIAN},
@@ -732,11 +732,11 @@ static const KeyWord DCH_keywords[] = {
 	{"Day", 3, DCH_Day, FALSE, FROM_CHAR_DATE_NONE},
 	{"Dy", 2, DCH_Dy, FALSE, FROM_CHAR_DATE_NONE},
 	{"D", 1, DCH_D, TRUE, FROM_CHAR_DATE_GREGORIAN},
-	{"FX", 2, DCH_FX, FALSE, FROM_CHAR_DATE_NONE},		/* F */
+	{"FX", 2, DCH_FX, FALSE, FROM_CHAR_DATE_NONE},	/* F */
 	{"HH24", 4, DCH_HH24, TRUE, FROM_CHAR_DATE_NONE},	/* H */
 	{"HH12", 4, DCH_HH12, TRUE, FROM_CHAR_DATE_NONE},
 	{"HH", 2, DCH_HH, TRUE, FROM_CHAR_DATE_NONE},
-	{"IDDD", 4, DCH_IDDD, TRUE, FROM_CHAR_DATE_ISOWEEK},		/* I */
+	{"IDDD", 4, DCH_IDDD, TRUE, FROM_CHAR_DATE_ISOWEEK},	/* I */
 	{"ID", 2, DCH_ID, TRUE, FROM_CHAR_DATE_ISOWEEK},
 	{"IW", 2, DCH_IW, TRUE, FROM_CHAR_DATE_ISOWEEK},
 	{"IYYY", 4, DCH_IYYY, TRUE, FROM_CHAR_DATE_ISOWEEK},
@@ -744,22 +744,22 @@ static const KeyWord DCH_keywords[] = {
 	{"IY", 2, DCH_IY, TRUE, FROM_CHAR_DATE_ISOWEEK},
 	{"I", 1, DCH_I, TRUE, FROM_CHAR_DATE_ISOWEEK},
 	{"J", 1, DCH_J, TRUE, FROM_CHAR_DATE_NONE}, /* J */
-	{"MI", 2, DCH_MI, TRUE, FROM_CHAR_DATE_NONE},		/* M */
+	{"MI", 2, DCH_MI, TRUE, FROM_CHAR_DATE_NONE},	/* M */
 	{"MM", 2, DCH_MM, TRUE, FROM_CHAR_DATE_GREGORIAN},
 	{"MONTH", 5, DCH_MONTH, FALSE, FROM_CHAR_DATE_GREGORIAN},
 	{"MON", 3, DCH_MON, FALSE, FROM_CHAR_DATE_GREGORIAN},
 	{"MS", 2, DCH_MS, TRUE, FROM_CHAR_DATE_NONE},
 	{"Month", 5, DCH_Month, FALSE, FROM_CHAR_DATE_GREGORIAN},
 	{"Mon", 3, DCH_Mon, FALSE, FROM_CHAR_DATE_GREGORIAN},
-	{"OF", 2, DCH_OF, FALSE, FROM_CHAR_DATE_NONE},		/* O */
+	{"OF", 2, DCH_OF, FALSE, FROM_CHAR_DATE_NONE},	/* O */
 	{"P.M.", 4, DCH_P_M, FALSE, FROM_CHAR_DATE_NONE},	/* P */
 	{"PM", 2, DCH_PM, FALSE, FROM_CHAR_DATE_NONE},
 	{"Q", 1, DCH_Q, TRUE, FROM_CHAR_DATE_NONE}, /* Q */
 	{"RM", 2, DCH_RM, FALSE, FROM_CHAR_DATE_GREGORIAN}, /* R */
 	{"SSSS", 4, DCH_SSSS, TRUE, FROM_CHAR_DATE_NONE},	/* S */
 	{"SS", 2, DCH_SS, TRUE, FROM_CHAR_DATE_NONE},
-	{"TZ", 2, DCH_TZ, FALSE, FROM_CHAR_DATE_NONE},		/* T */
-	{"US", 2, DCH_US, TRUE, FROM_CHAR_DATE_NONE},		/* U */
+	{"TZ", 2, DCH_TZ, FALSE, FROM_CHAR_DATE_NONE},	/* T */
+	{"US", 2, DCH_US, TRUE, FROM_CHAR_DATE_NONE},	/* U */
 	{"WW", 2, DCH_WW, TRUE, FROM_CHAR_DATE_GREGORIAN},	/* W */
 	{"W", 1, DCH_W, TRUE, FROM_CHAR_DATE_GREGORIAN},
 	{"Y,YYY", 5, DCH_Y_YYY, TRUE, FROM_CHAR_DATE_GREGORIAN},	/* Y */
@@ -773,17 +773,17 @@ static const KeyWord DCH_keywords[] = {
 	{"am", 2, DCH_am, FALSE, FROM_CHAR_DATE_NONE},
 	{"b.c.", 4, DCH_b_c, FALSE, FROM_CHAR_DATE_NONE},	/* b */
 	{"bc", 2, DCH_bc, FALSE, FROM_CHAR_DATE_NONE},
-	{"cc", 2, DCH_CC, TRUE, FROM_CHAR_DATE_NONE},		/* c */
+	{"cc", 2, DCH_CC, TRUE, FROM_CHAR_DATE_NONE},	/* c */
 	{"day", 3, DCH_day, FALSE, FROM_CHAR_DATE_NONE},	/* d */
 	{"ddd", 3, DCH_DDD, TRUE, FROM_CHAR_DATE_GREGORIAN},
 	{"dd", 2, DCH_DD, TRUE, FROM_CHAR_DATE_GREGORIAN},
 	{"dy", 2, DCH_dy, FALSE, FROM_CHAR_DATE_NONE},
 	{"d", 1, DCH_D, TRUE, FROM_CHAR_DATE_GREGORIAN},
-	{"fx", 2, DCH_FX, FALSE, FROM_CHAR_DATE_NONE},		/* f */
+	{"fx", 2, DCH_FX, FALSE, FROM_CHAR_DATE_NONE},	/* f */
 	{"hh24", 4, DCH_HH24, TRUE, FROM_CHAR_DATE_NONE},	/* h */
 	{"hh12", 4, DCH_HH12, TRUE, FROM_CHAR_DATE_NONE},
 	{"hh", 2, DCH_HH, TRUE, FROM_CHAR_DATE_NONE},
-	{"iddd", 4, DCH_IDDD, TRUE, FROM_CHAR_DATE_ISOWEEK},		/* i */
+	{"iddd", 4, DCH_IDDD, TRUE, FROM_CHAR_DATE_ISOWEEK},	/* i */
 	{"id", 2, DCH_ID, TRUE, FROM_CHAR_DATE_ISOWEEK},
 	{"iw", 2, DCH_IW, TRUE, FROM_CHAR_DATE_ISOWEEK},
 	{"iyyy", 4, DCH_IYYY, TRUE, FROM_CHAR_DATE_ISOWEEK},
@@ -791,7 +791,7 @@ static const KeyWord DCH_keywords[] = {
 	{"iy", 2, DCH_IY, TRUE, FROM_CHAR_DATE_ISOWEEK},
 	{"i", 1, DCH_I, TRUE, FROM_CHAR_DATE_ISOWEEK},
 	{"j", 1, DCH_J, TRUE, FROM_CHAR_DATE_NONE}, /* j */
-	{"mi", 2, DCH_MI, TRUE, FROM_CHAR_DATE_NONE},		/* m */
+	{"mi", 2, DCH_MI, TRUE, FROM_CHAR_DATE_NONE},	/* m */
 	{"mm", 2, DCH_MM, TRUE, FROM_CHAR_DATE_GREGORIAN},
 	{"month", 5, DCH_month, FALSE, FROM_CHAR_DATE_GREGORIAN},
 	{"mon", 3, DCH_mon, FALSE, FROM_CHAR_DATE_GREGORIAN},
@@ -802,8 +802,8 @@ static const KeyWord DCH_keywords[] = {
 	{"rm", 2, DCH_rm, FALSE, FROM_CHAR_DATE_GREGORIAN}, /* r */
 	{"ssss", 4, DCH_SSSS, TRUE, FROM_CHAR_DATE_NONE},	/* s */
 	{"ss", 2, DCH_SS, TRUE, FROM_CHAR_DATE_NONE},
-	{"tz", 2, DCH_tz, FALSE, FROM_CHAR_DATE_NONE},		/* t */
-	{"us", 2, DCH_US, TRUE, FROM_CHAR_DATE_NONE},		/* u */
+	{"tz", 2, DCH_tz, FALSE, FROM_CHAR_DATE_NONE},	/* t */
+	{"us", 2, DCH_US, TRUE, FROM_CHAR_DATE_NONE},	/* u */
 	{"ww", 2, DCH_WW, TRUE, FROM_CHAR_DATE_GREGORIAN},	/* w */
 	{"w", 1, DCH_W, TRUE, FROM_CHAR_DATE_GREGORIAN},
 	{"y,yyy", 5, DCH_Y_YYY, TRUE, FROM_CHAR_DATE_GREGORIAN},	/* y */
@@ -1377,7 +1377,7 @@ dump_node(FormatNode *node, int max)
 			elog(DEBUG_elog_output, "%d:\t unknown NODE!", a);
 	}
 }
-#endif   /* DEBUG */
+#endif							/* DEBUG */
 
 /*****************************************************************************
  *			Private utils
@@ -1491,7 +1491,7 @@ u_strToTitle_default_BI(UChar *dest, int32_t destCapacity,
 						NULL, locale, pErrorCode);
 }
 
-#endif   /* USE_ICU */
+#endif							/* USE_ICU */
 
 /*
  * If the system provides the needed functions for wide-character manipulation
@@ -1602,7 +1602,7 @@ str_tolower(const char *buff, size_t nbytes, Oid collid)
 				wchar2char(result, workspace, result_size, mylocale);
 				pfree(workspace);
 			}
-#endif   /* USE_WIDE_UPPER_LOWER */
+#endif							/* USE_WIDE_UPPER_LOWER */
 			else
 			{
 				char	   *p;
@@ -1725,7 +1725,7 @@ str_toupper(const char *buff, size_t nbytes, Oid collid)
 				wchar2char(result, workspace, result_size, mylocale);
 				pfree(workspace);
 			}
-#endif   /* USE_WIDE_UPPER_LOWER */
+#endif							/* USE_WIDE_UPPER_LOWER */
 			else
 			{
 				char	   *p;
@@ -1861,7 +1861,7 @@ str_initcap(const char *buff, size_t nbytes, Oid collid)
 				wchar2char(result, workspace, result_size, mylocale);
 				pfree(workspace);
 			}
-#endif   /* USE_WIDE_UPPER_LOWER */
+#endif							/* USE_WIDE_UPPER_LOWER */
 			else
 			{
 				char	   *p;
@@ -2066,7 +2066,7 @@ dump_index(const KeyWord *k, const int *index)
 	elog(DEBUG_elog_output, "\n\t\tUsed positions: %d,\n\t\tFree positions: %d",
 		 count, free_i);
 }
-#endif   /* DEBUG */
+#endif							/* DEBUG */
 
 /* ----------
  * Return TRUE if next format picture is not digit value
@@ -4309,12 +4309,12 @@ NUM_numpart_from_char(NUMProc *Np, int id, int input_len)
 			if (*Np->inout_p == '-' || (IS_BRACKET(Np->Num) &&
 										*Np->inout_p == '<'))
 			{
-				*Np->number = '-';		/* set - */
+				*Np->number = '-';	/* set - */
 				Np->inout_p++;
 			}
 			else if (*Np->inout_p == '+')
 			{
-				*Np->number = '+';		/* set + */
+				*Np->number = '+';	/* set + */
 				Np->inout_p++;
 			}
 		}
@@ -4512,7 +4512,7 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 		{
 			if (!IS_FILLMODE(Np->Num))
 			{
-				*Np->inout_p = ' ';		/* Write + */
+				*Np->inout_p = ' '; /* Write + */
 				++Np->inout_p;
 			}
 			Np->sign_wrote = TRUE;
@@ -4539,7 +4539,7 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 			 */
 			if (!IS_FILLMODE(Np->Num))
 			{
-				*Np->inout_p = ' ';		/* Write ' ' */
+				*Np->inout_p = ' '; /* Write ' ' */
 				++Np->inout_p;
 			}
 		}
@@ -4608,7 +4608,7 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 				}
 				else
 				{
-					*Np->inout_p = *Np->number_p;		/* Write DIGIT */
+					*Np->inout_p = *Np->number_p;	/* Write DIGIT */
 					++Np->inout_p;
 					Np->num_in = TRUE;
 				}
@@ -4847,7 +4847,7 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout,
 					if (Np->is_to_char)
 					{
 						NUM_numpart_to_char(Np, n->key->id);
-						continue;		/* for() */
+						continue;	/* for() */
 					}
 					else
 					{

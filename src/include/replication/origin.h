@@ -71,4 +71,4 @@ const char *replorigin_identify(uint8 info);
 extern Size ReplicationOriginShmemSize(void);
 extern void ReplicationOriginShmemInit(void);
 
-#endif   /* PG_ORIGIN_H */
+#endif							/* PG_ORIGIN_H */

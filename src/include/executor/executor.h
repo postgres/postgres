@@ -538,4 +538,4 @@ extern void CheckCmdReplicaIdentity(Relation rel, CmdType cmd);
 extern void CheckSubscriptionRelkind(char relkind, const char *nspname,
 						 const char *relname);
 
-#endif   /* EXECUTOR_H  */
+#endif							/* EXECUTOR_H  */

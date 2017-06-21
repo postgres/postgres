@@ -788,7 +788,7 @@ mcelem_array_contained_selec(Datum *mcelem, int nmcelem,
 			else
 			{
 				if (cmp == 0)
-					match = true;		/* mcelem is found */
+					match = true;	/* mcelem is found */
 				break;
 			}
 		}

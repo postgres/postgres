@@ -217,7 +217,7 @@ main(int argc, char *argv[])
 #endif
 
 	if (argc > 1 && strcmp(argv[1], "--boot") == 0)
-		AuxiliaryProcessMain(argc, argv);		/* does not return */
+		AuxiliaryProcessMain(argc, argv);	/* does not return */
 	else if (argc > 1 && strcmp(argv[1], "--describe-config") == 0)
 		GucInfoMain();			/* does not return */
 	else if (argc > 1 && strcmp(argv[1], "--single") == 0)
@@ -225,7 +225,7 @@ main(int argc, char *argv[])
 					 NULL,		/* no dbname */
 					 strdup(get_user_name_or_exit(progname)));	/* does not return */
 	else
-		PostmasterMain(argc, argv);		/* does not return */
+		PostmasterMain(argc, argv); /* does not return */
 	abort();					/* should not get here */
 }
 
@@ -283,10 +283,10 @@ startup_hacks(const char *progname)
 		{
 			_set_FMA3_enable(0);
 		}
-#endif   /* defined(_M_AMD64) && _MSC_VER == 1800 */
+#endif							/* defined(_M_AMD64) && _MSC_VER == 1800 */
 
 	}
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 
 	/*
 	 * Initialize dummy_spinlock, in case we are on a platform where we have
@@ -419,5 +419,5 @@ check_root(const char *progname)
 				  "more information on how to properly start the server.\n");
 		exit(1);
 	}
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 }

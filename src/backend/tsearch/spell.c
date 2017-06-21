@@ -827,7 +827,7 @@ get_nextfield(char **str, char *next)
 
 	*next = '\0';
 
-	return (state == PAE_INMASK);		/* OK if we got a nonempty field */
+	return (state == PAE_INMASK);	/* OK if we got a nonempty field */
 }
 
 /*

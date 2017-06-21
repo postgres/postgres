@@ -89,4 +89,4 @@ extern bool set_plan_disabling_options(const char *arg,
 						   GucContext context, GucSource source);
 extern const char *get_stats_option_name(const char *arg);
 
-#endif   /* TCOPPROT_H */
+#endif							/* TCOPPROT_H */

@@ -97,19 +97,18 @@ typedef struct
 	Oid			class_oid;		/* oid of catalog */
 	Oid			oid_index_oid;	/* oid of index on system oid column */
 	int			oid_catcache_id;	/* id of catcache on system oid column	*/
-	int			name_catcache_id;		/* id of catcache on (name,namespace),
-										 * or (name) if the object does not
-										 * live in a namespace */
+	int			name_catcache_id;	/* id of catcache on (name,namespace), or
+									 * (name) if the object does not live in a
+									 * namespace */
 	AttrNumber	attnum_name;	/* attnum of name field */
-	AttrNumber	attnum_namespace;		/* attnum of namespace field */
+	AttrNumber	attnum_namespace;	/* attnum of namespace field */
 	AttrNumber	attnum_owner;	/* attnum of owner field */
 	AttrNumber	attnum_acl;		/* attnum of acl field */
 	AclObjectKind acl_kind;		/* ACL_KIND_* of this object type */
-	bool		is_nsp_name_unique;		/* can the nsp/name combination (or
-										 * name alone, if there's no
-										 * namespace) be considered a unique
-										 * identifier for an object of this
-										 * class? */
+	bool		is_nsp_name_unique; /* can the nsp/name combination (or name
+									 * alone, if there's no namespace) be
+									 * considered a unique identifier for an
+									 * object of this class? */
 } ObjectPropertyType;
 
 static const ObjectPropertyType ObjectProperty[] =

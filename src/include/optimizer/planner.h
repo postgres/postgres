@@ -59,4 +59,4 @@ extern bool plan_cluster_use_sort(Oid tableOid, Oid indexOid);
 
 extern List *get_partitioned_child_rels(PlannerInfo *root, Index rti);
 
-#endif   /* PLANNER_H */
+#endif							/* PLANNER_H */

@@ -60,4 +60,4 @@ extern void StartBackgroundWorker(void) pg_attribute_noreturn();
 extern BackgroundWorker *BackgroundWorkerEntry(int slotno);
 #endif
 
-#endif   /* BGWORKER_INTERNALS_H */
+#endif							/* BGWORKER_INTERNALS_H */

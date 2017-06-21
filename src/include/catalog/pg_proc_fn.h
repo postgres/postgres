@@ -48,4 +48,4 @@ extern bool function_parse_error_transpose(const char *prosrc);
 
 extern List *oid_array_to_list(Datum datum);
 
-#endif   /* PG_PROC_FN_H */
+#endif							/* PG_PROC_FN_H */

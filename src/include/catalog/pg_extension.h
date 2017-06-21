@@ -69,4 +69,4 @@ typedef FormData_pg_extension *Form_pg_extension;
  * ----------------
  */
 
-#endif   /* PG_EXTENSION_H */
+#endif							/* PG_EXTENSION_H */

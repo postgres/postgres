@@ -315,4 +315,4 @@ extern void end_MultiFuncCall(PG_FUNCTION_ARGS, FuncCallContext *funcctx);
 		PG_RETURN_NULL(); \
 	} while (0)
 
-#endif   /* FUNCAPI_H */
+#endif							/* FUNCAPI_H */

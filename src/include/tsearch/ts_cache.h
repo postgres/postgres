@@ -95,4 +95,4 @@ extern Oid	getTSCurrentConfig(bool emitError);
 extern bool check_TSCurrentConfig(char **newval, void **extra, GucSource source);
 extern void assign_TSCurrentConfig(const char *newval, void *extra);
 
-#endif   /* TS_CACHE_H */
+#endif							/* TS_CACHE_H */

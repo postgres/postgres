@@ -118,4 +118,4 @@ fork_process(void)
 	return result;
 }
 
-#endif   /* ! WIN32 */
+#endif							/* ! WIN32 */

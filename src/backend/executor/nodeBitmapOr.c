@@ -150,7 +150,7 @@ MultiExecBitmapOr(BitmapOrState *node)
 				elog(ERROR, "unrecognized result from subplan");
 
 			if (result == NULL)
-				result = subresult;		/* first subplan */
+				result = subresult; /* first subplan */
 			else
 			{
 				tbm_union(result, subresult);

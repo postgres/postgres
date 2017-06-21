@@ -280,4 +280,4 @@ extern bytea *attribute_reloptions(Datum reloptions, bool validate);
 extern bytea *tablespace_reloptions(Datum reloptions, bool validate);
 extern LOCKMODE AlterTableGetRelOptionsLockLevel(List *defList);
 
-#endif   /* RELOPTIONS_H */
+#endif							/* RELOPTIONS_H */

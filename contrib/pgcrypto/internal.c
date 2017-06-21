@@ -42,11 +42,11 @@
 /*
  * System reseeds should be separated at least this much.
  */
-#define SYSTEM_RESEED_MIN			(20*60)		/* 20 min */
+#define SYSTEM_RESEED_MIN			(20*60) /* 20 min */
 /*
  * How often to roll dice.
  */
-#define SYSTEM_RESEED_CHECK_TIME	(10*60)		/* 10 min */
+#define SYSTEM_RESEED_CHECK_TIME	(10*60) /* 10 min */
 /*
  * The chance is x/256 that the reseed happens.
  */

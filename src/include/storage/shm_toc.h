@@ -55,4 +55,4 @@ typedef struct
 
 extern Size shm_toc_estimate(shm_toc_estimator *e);
 
-#endif   /* SHM_TOC_H */
+#endif							/* SHM_TOC_H */

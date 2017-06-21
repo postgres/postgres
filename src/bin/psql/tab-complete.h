@@ -14,4 +14,4 @@ extern PQExpBuffer tab_completion_query_buf;
 
 extern void initialize_readline(void);
 
-#endif   /* TAB_COMPLETE_H */
+#endif							/* TAB_COMPLETE_H */

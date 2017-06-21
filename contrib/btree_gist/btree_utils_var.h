@@ -40,7 +40,7 @@ typedef struct
 	bool		(*f_le) (const void *, const void *, Oid, FmgrInfo *);	/* less equal */
 	bool		(*f_lt) (const void *, const void *, Oid, FmgrInfo *);	/* less than */
 	int32		(*f_cmp) (const void *, const void *, Oid, FmgrInfo *); /* compare */
-	GBT_VARKEY *(*f_l2n) (GBT_VARKEY *, FmgrInfo *flinfo);		/* convert leaf to node */
+	GBT_VARKEY *(*f_l2n) (GBT_VARKEY *, FmgrInfo *flinfo);	/* convert leaf to node */
 } gbtree_vinfo;
 
 

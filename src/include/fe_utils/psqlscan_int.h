@@ -143,4 +143,4 @@ extern void psqlscan_escape_variable(PsqlScanState state,
 						 const char *txt, int len,
 						 PsqlScanQuoteType quote);
 
-#endif   /* PSQLSCAN_INT_H */
+#endif							/* PSQLSCAN_INT_H */

@@ -56,4 +56,4 @@ void		aes_ecb_decrypt(rijndael_ctx *ctx, uint8 *data, unsigned len);
 void		aes_cbc_encrypt(rijndael_ctx *ctx, uint8 *iva, uint8 *data, unsigned len);
 void		aes_cbc_decrypt(rijndael_ctx *ctx, uint8 *iva, uint8 *data, unsigned len);
 
-#endif   /* _RIJNDAEL_H_ */
+#endif							/* _RIJNDAEL_H_ */

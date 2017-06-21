@@ -532,4 +532,4 @@ pg_atomic_sub_fetch_u64(volatile pg_atomic_uint64 *ptr, int64 sub_)
 
 #undef INSIDE_ATOMICS_H
 
-#endif   /* ATOMICS_H */
+#endif							/* ATOMICS_H */

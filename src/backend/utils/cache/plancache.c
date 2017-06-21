@@ -157,7 +157,7 @@ CreateCachedPlan(RawStmt *raw_parse_tree,
 	MemoryContext source_context;
 	MemoryContext oldcxt;
 
-	Assert(query_string != NULL);		/* required as of 8.4 */
+	Assert(query_string != NULL);	/* required as of 8.4 */
 
 	/*
 	 * Make a dedicated memory context for the CachedPlanSource and its
@@ -238,7 +238,7 @@ CreateOneShotCachedPlan(RawStmt *raw_parse_tree,
 {
 	CachedPlanSource *plansource;
 
-	Assert(query_string != NULL);		/* required as of 8.4 */
+	Assert(query_string != NULL);	/* required as of 8.4 */
 
 	/*
 	 * Create and fill the CachedPlanSource struct within the caller's memory

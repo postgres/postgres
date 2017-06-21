@@ -416,8 +416,8 @@ DefineAggregate(ParseState *pstate, List *name, List *args, bool oldstyle, List 
 	/*
 	 * Most of the argument-checking is done inside of AggregateCreate
 	 */
-	return AggregateCreate(aggName,		/* aggregate name */
-						   aggNamespace,		/* namespace */
+	return AggregateCreate(aggName, /* aggregate name */
+						   aggNamespace,	/* namespace */
 						   aggKind,
 						   numArgs,
 						   numDirectArgs,
@@ -427,22 +427,22 @@ DefineAggregate(ParseState *pstate, List *name, List *args, bool oldstyle, List 
 						   PointerGetDatum(parameterNames),
 						   parameterDefaults,
 						   variadicArgType,
-						   transfuncName,		/* step function name */
-						   finalfuncName,		/* final function name */
-						   combinefuncName,		/* combine function name */
-						   serialfuncName,		/* serial function name */
+						   transfuncName,	/* step function name */
+						   finalfuncName,	/* final function name */
+						   combinefuncName, /* combine function name */
+						   serialfuncName,	/* serial function name */
 						   deserialfuncName,	/* deserial function name */
-						   mtransfuncName,		/* fwd trans function name */
+						   mtransfuncName,	/* fwd trans function name */
 						   minvtransfuncName,	/* inv trans function name */
-						   mfinalfuncName,		/* final function name */
+						   mfinalfuncName,	/* final function name */
 						   finalfuncExtraArgs,
 						   mfinalfuncExtraArgs,
 						   sortoperatorName,	/* sort operator name */
 						   transTypeId, /* transition data type */
 						   transSpace,	/* transition space */
-						   mtransTypeId,		/* transition data type */
+						   mtransTypeId,	/* transition data type */
 						   mtransSpace, /* transition space */
-						   initval,		/* initial condition */
+						   initval, /* initial condition */
 						   minitval,	/* initial condition */
-						   proparallel);		/* parallel safe? */
+						   proparallel);	/* parallel safe? */
 }

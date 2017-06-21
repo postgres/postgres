@@ -89,14 +89,14 @@ typedef struct IndexScanDescData
 	Relation	indexRelation;	/* index relation descriptor */
 	Snapshot	xs_snapshot;	/* snapshot to see */
 	int			numberOfKeys;	/* number of index qualifier conditions */
-	int			numberOfOrderBys;		/* number of ordering operators */
+	int			numberOfOrderBys;	/* number of ordering operators */
 	ScanKey		keyData;		/* array of index qualifier descriptors */
 	ScanKey		orderByData;	/* array of ordering op descriptors */
 	bool		xs_want_itup;	/* caller requests index tuples */
 	bool		xs_temp_snap;	/* unregister snapshot at scan end? */
 
 	/* signaling to index AM about killing index tuples */
-	bool		kill_prior_tuple;		/* last-returned tuple is dead */
+	bool		kill_prior_tuple;	/* last-returned tuple is dead */
 	bool		ignore_killed_tuples;	/* do not return killed entries */
 	bool		xactStartedInRecovery;	/* prevents killing/seeing killed
 										 * tuples */
@@ -158,4 +158,4 @@ typedef struct SysScanDescData
 	Snapshot	snapshot;		/* snapshot to unregister at end of scan */
 }			SysScanDescData;
 
-#endif   /* RELSCAN_H */
+#endif							/* RELSCAN_H */

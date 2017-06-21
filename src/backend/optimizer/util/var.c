@@ -62,8 +62,8 @@ typedef struct
 {
 	PlannerInfo *root;
 	int			sublevels_up;
-	bool		possible_sublink;		/* could aliases include a SubLink? */
-	bool		inserted_sublink;		/* have we inserted a SubLink? */
+	bool		possible_sublink;	/* could aliases include a SubLink? */
+	bool		inserted_sublink;	/* have we inserted a SubLink? */
 } flatten_join_alias_vars_context;
 
 static bool pull_varnos_walker(Node *node,

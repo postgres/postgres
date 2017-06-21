@@ -52,4 +52,4 @@ extern void parseTypeString(const char *str, Oid *typeid_p, int32 *typmod_p, boo
 
 #define ISCOMPLEX(typeid) (typeidTypeRelid(typeid) != InvalidOid)
 
-#endif   /* PARSE_TYPE_H */
+#endif							/* PARSE_TYPE_H */

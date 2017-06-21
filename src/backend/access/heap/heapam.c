@@ -521,15 +521,15 @@ heapgettup(HeapScanDesc scan,
 				}
 			}
 			else
-				page = scan->rs_startblock;		/* first page */
+				page = scan->rs_startblock; /* first page */
 			heapgetpage(scan, page);
-			lineoff = FirstOffsetNumber;		/* first offnum */
+			lineoff = FirstOffsetNumber;	/* first offnum */
 			scan->rs_inited = true;
 		}
 		else
 		{
 			/* continue from previously returned page/tuple */
-			page = scan->rs_cblock;		/* current page */
+			page = scan->rs_cblock; /* current page */
 			lineoff =			/* next offnum */
 				OffsetNumberNext(ItemPointerGetOffsetNumber(&(tuple->t_self)));
 		}
@@ -577,7 +577,7 @@ heapgettup(HeapScanDesc scan,
 		else
 		{
 			/* continue from previously returned page/tuple */
-			page = scan->rs_cblock;		/* current page */
+			page = scan->rs_cblock; /* current page */
 		}
 
 		LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
@@ -823,7 +823,7 @@ heapgettup_pagemode(HeapScanDesc scan,
 				}
 			}
 			else
-				page = scan->rs_startblock;		/* first page */
+				page = scan->rs_startblock; /* first page */
 			heapgetpage(scan, page);
 			lineindex = 0;
 			scan->rs_inited = true;
@@ -831,7 +831,7 @@ heapgettup_pagemode(HeapScanDesc scan,
 		else
 		{
 			/* continue from previously returned page/tuple */
-			page = scan->rs_cblock;		/* current page */
+			page = scan->rs_cblock; /* current page */
 			lineindex = scan->rs_cindex + 1;
 		}
 
@@ -876,7 +876,7 @@ heapgettup_pagemode(HeapScanDesc scan,
 		else
 		{
 			/* continue from previously returned page/tuple */
-			page = scan->rs_cblock;		/* current page */
+			page = scan->rs_cblock; /* current page */
 		}
 
 		dp = BufferGetPage(scan->rs_cbuf);
@@ -1088,7 +1088,7 @@ fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
 			 )
 		);
 }
-#endif   /* defined(DISABLE_COMPLEX_MACRO) */
+#endif							/* defined(DISABLE_COMPLEX_MACRO) */
 
 
 /* ----------------------------------------------------------------
@@ -1787,7 +1787,7 @@ heap_update_snapshot(HeapScanDesc scan, Snapshot snapshot)
 #define HEAPDEBUG_1
 #define HEAPDEBUG_2
 #define HEAPDEBUG_3
-#endif   /* !defined(HEAPDEBUGALL) */
+#endif							/* !defined(HEAPDEBUGALL) */
 
 
 HeapTuple
@@ -2623,7 +2623,7 @@ heap_prepare_insert(Relation relation, HeapTuple tup, TransactionId xid,
 		HeapTupleHeaderSetXminFrozen(tup->t_data);
 
 	HeapTupleHeaderSetCmin(tup->t_data, cid);
-	HeapTupleHeaderSetXmax(tup->t_data, 0);		/* for cleanliness */
+	HeapTupleHeaderSetXmax(tup->t_data, 0); /* for cleanliness */
 	tup->t_tableOid = RelationGetRelid(relation);
 
 	/*
@@ -4214,7 +4214,7 @@ l2:
 		HeapTupleClearHeapOnly(newtup);
 	}
 
-	RelationPutHeapTuple(relation, newbuf, heaptup, false);		/* insert new tuple */
+	RelationPutHeapTuple(relation, newbuf, heaptup, false); /* insert new tuple */
 
 
 	/* Clear obsolete visibility flags, possibly set by ourselves above... */
@@ -6361,7 +6361,7 @@ FreezeMultiXactId(MultiXactId multi, uint16 t_infomask,
 			{
 				Assert(!TransactionIdDidCommit(xid));
 				*flags |= FRM_INVALIDATE_XMAX;
-				xid = InvalidTransactionId;		/* not strictly necessary */
+				xid = InvalidTransactionId; /* not strictly necessary */
 			}
 			else
 			{

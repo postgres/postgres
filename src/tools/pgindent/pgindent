@@ -235,11 +235,6 @@ sub post_indent
 	# Fix run-together comments to have a tab between them
 	$source =~ s!\*/(/\*.*\*/)$!*/\t$1!gm;
 
-	# cpp conditionals
-
-	# Reduce whitespace between #endif and comments to one tab
-	$source =~ s!^\#endif[ \t]+/\*!#endif   /*!gm;
-
 	## Functions
 
 	# Use a single space before '*' in function return types

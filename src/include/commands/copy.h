@@ -41,4 +41,4 @@ extern uint64 CopyFrom(CopyState cstate);
 
 extern DestReceiver *CreateCopyDestReceiver(void);
 
-#endif   /* COPY_H */
+#endif							/* COPY_H */

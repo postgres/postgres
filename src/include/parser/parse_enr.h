@@ -19,4 +19,4 @@
 extern bool name_matches_visible_ENR(ParseState *pstate, const char *refname);
 extern EphemeralNamedRelationMetadata get_visible_ENR(ParseState *pstate, const char *refname);
 
-#endif   /* PARSE_ENR_H */
+#endif							/* PARSE_ENR_H */

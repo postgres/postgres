@@ -39,9 +39,9 @@ extern int	postmaster_alive_fds[2];
  * Constants that represent which of postmaster_alive_fds is held by
  * postmaster, and which is used in children to check for postmaster death.
  */
-#define POSTMASTER_FD_WATCH		0		/* used in children to check for
-										 * postmaster death */
-#define POSTMASTER_FD_OWN		1		/* kept open by postmaster only */
+#define POSTMASTER_FD_WATCH		0	/* used in children to check for
+									 * postmaster death */
+#define POSTMASTER_FD_OWN		1	/* kept open by postmaster only */
 #endif
 
 extern const char *progname;
@@ -74,4 +74,4 @@ extern void ShmemBackendArrayAllocation(void);
  */
 #define MAX_BACKENDS	0x3FFFF
 
-#endif   /* _POSTMASTER_H */
+#endif							/* _POSTMASTER_H */

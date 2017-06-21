@@ -29,7 +29,7 @@ typedef void (*storeRes_func) (SpGistScanOpaque so, ItemPointer heapPtr,
 
 typedef struct ScanStackEntry
 {
-	Datum		reconstructedValue;		/* value reconstructed from parent */
+	Datum		reconstructedValue; /* value reconstructed from parent */
 	void	   *traversalValue; /* opclass-specific traverse value */
 	int			level;			/* level of items on this page */
 	ItemPointerData ptr;		/* block and offset to scan from */

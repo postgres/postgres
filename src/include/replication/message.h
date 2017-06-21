@@ -39,4 +39,4 @@ void		logicalmsg_redo(XLogReaderState *record);
 void		logicalmsg_desc(StringInfo buf, XLogReaderState *record);
 const char *logicalmsg_identify(uint8 info);
 
-#endif   /* PG_LOGICAL_MESSAGE_H */
+#endif							/* PG_LOGICAL_MESSAGE_H */

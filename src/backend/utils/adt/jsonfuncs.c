@@ -57,8 +57,8 @@ typedef struct OkeysState
 typedef struct IterateJsonStringValuesState
 {
 	JsonLexContext *lex;
-	JsonIterateStringValuesAction action;		/* an action that will be
-												 * applied to each json value */
+	JsonIterateStringValuesAction action;	/* an action that will be applied
+											 * to each json value */
 	void	   *action_state;	/* any necessary context for iteration */
 } IterateJsonStringValuesState;
 
@@ -67,8 +67,8 @@ typedef struct TransformJsonStringValuesState
 {
 	JsonLexContext *lex;
 	StringInfo	strval;			/* resulting json */
-	JsonTransformStringValuesAction action;		/* an action that will be
-												 * applied to each json value */
+	JsonTransformStringValuesAction action; /* an action that will be applied
+											 * to each json value */
 	void	   *action_state;	/* any necessary context for transformation */
 } TransformJsonStringValuesState;
 
@@ -136,7 +136,7 @@ typedef struct JHashState
 /* hashtable element */
 typedef struct JsonHashEntry
 {
-	char		fname[NAMEDATALEN];		/* hash key (MUST BE FIRST) */
+	char		fname[NAMEDATALEN]; /* hash key (MUST BE FIRST) */
 	char	   *val;
 	JsonTokenType type;
 } JsonHashEntry;
@@ -2479,7 +2479,7 @@ populate_array_element_end(void *_state, bool isnull)
 		else if (state->element_scalar)
 		{
 			jsv.val.json.str = state->element_scalar;
-			jsv.val.json.len = -1;		/* null-terminated */
+			jsv.val.json.len = -1;	/* null-terminated */
 		}
 		else
 		{
@@ -2545,9 +2545,9 @@ populate_array_json(PopulateArrayContext *ctx, char *json, int len)
  *		elements and accumulate result using given ArrayBuildState.
  */
 static void
-populate_array_dim_jsonb(PopulateArrayContext *ctx,		/* context */
-						 JsonbValue *jbv,		/* jsonb sub-array */
-						 int ndim)		/* current dimension */
+populate_array_dim_jsonb(PopulateArrayContext *ctx, /* context */
+						 JsonbValue *jbv,	/* jsonb sub-array */
+						 int ndim)	/* current dimension */
 {
 	JsonbContainer *jbc = jbv->val.binary.data;
 	JsonbIterator *it;
@@ -2812,7 +2812,7 @@ populate_scalar(ScalarIOData *io, Oid typid, int32 typmod, JsValue *jsv)
 
 			str = JsonbToCString(NULL, &jsonb->root, VARSIZE(jsonb));
 		}
-		else if (jbv->type == jbvString)		/* quotes are stripped */
+		else if (jbv->type == jbvString)	/* quotes are stripped */
 			str = pnstrdup(jbv->val.string.val, jbv->val.string.len);
 		else if (jbv->type == jbvBool)
 			str = pstrdup(jbv->val.boolean ? "true" : "false");
@@ -3977,8 +3977,8 @@ addJsonbToParseState(JsonbParseState **jbps, Jsonb *jb)
 
 	if (JB_ROOT_IS_SCALAR(jb))
 	{
-		(void) JsonbIteratorNext(&it, &v, false);		/* skip array header */
-		(void) JsonbIteratorNext(&it, &v, false);		/* fetch scalar value */
+		(void) JsonbIteratorNext(&it, &v, false);	/* skip array header */
+		(void) JsonbIteratorNext(&it, &v, false);	/* fetch scalar value */
 
 		switch (o->type)
 		{

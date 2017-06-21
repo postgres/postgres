@@ -127,4 +127,4 @@ extern void SyncDataDirectory(void);
 #define PG_TEMP_FILES_DIR "pgsql_tmp"
 #define PG_TEMP_FILE_PREFIX "pgsql_tmp"
 
-#endif   /* FD_H */
+#endif							/* FD_H */

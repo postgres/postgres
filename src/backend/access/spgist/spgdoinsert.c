@@ -1004,7 +1004,7 @@ doPickSplit(Relation index, SpGistState *state,
 			insertedNew = true;
 		}
 		for (i = 0; i < nToInsert; i++)
-			leafPageSelect[i] = 0;		/* signifies current page */
+			leafPageSelect[i] = 0;	/* signifies current page */
 	}
 	else if (in.nTuples == 1 && totalLeafSizes > SPGIST_PAGE_CAPACITY)
 	{
@@ -1076,12 +1076,12 @@ doPickSplit(Relation index, SpGistState *state,
 			{
 				if (leafSizes[i] <= curspace)
 				{
-					nodePageSelect[i] = 0;		/* signifies current page */
+					nodePageSelect[i] = 0;	/* signifies current page */
 					curspace -= leafSizes[i];
 				}
 				else
 				{
-					nodePageSelect[i] = 1;		/* signifies new leaf page */
+					nodePageSelect[i] = 1;	/* signifies new leaf page */
 					newspace -= leafSizes[i];
 				}
 			}

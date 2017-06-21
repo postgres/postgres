@@ -57,7 +57,7 @@ extern void RequestAddinShmemSpace(Size size);
 /* this is a hash bucket in the shmem index table */
 typedef struct
 {
-	char		key[SHMEM_INDEX_KEYSIZE];		/* string name */
+	char		key[SHMEM_INDEX_KEYSIZE];	/* string name */
 	void	   *location;		/* location in shared mem */
 	Size		size;			/* # bytes allocated for the structure */
 } ShmemIndexEnt;
@@ -77,4 +77,4 @@ extern Pointer SHMQueuePrev(const SHM_QUEUE *queue, const SHM_QUEUE *curElem,
 extern bool SHMQueueEmpty(const SHM_QUEUE *queue);
 extern bool SHMQueueIsDetached(const SHM_QUEUE *queue);
 
-#endif   /* SHMEM_H */
+#endif							/* SHMEM_H */

@@ -29,7 +29,7 @@
 
 #ifdef WIN32
 #define FD_SETSIZE 1024			/* set before winsock2.h is included */
-#endif   /* ! WIN32 */
+#endif							/* ! WIN32 */
 
 #include "postgres_fe.h"
 
@@ -93,7 +93,7 @@ static int	pthread_join(pthread_t th, void **thread_return);
 #define LOG_STEP_SECONDS	5	/* seconds between log messages */
 #define DEFAULT_NXACTS	10		/* default nxacts */
 
-#define MIN_GAUSSIAN_PARAM		2.0		/* minimum parameter for gauss */
+#define MIN_GAUSSIAN_PARAM		2.0 /* minimum parameter for gauss */
 
 int			nxacts = 0;			/* number of transactions per client */
 int			duration = 0;		/* duration in seconds */
@@ -342,8 +342,8 @@ typedef struct
 	pthread_t	thread;			/* thread handle */
 	CState	   *state;			/* array of CState */
 	int			nstate;			/* length of state[] */
-	unsigned short random_state[3];		/* separate randomness for each thread */
-	int64		throttle_trigger;		/* previous/next throttling (us) */
+	unsigned short random_state[3]; /* separate randomness for each thread */
+	int64		throttle_trigger;	/* previous/next throttling (us) */
 	FILE	   *logfile;		/* where to log, or NULL */
 
 	/* per thread collected stats */
@@ -605,7 +605,7 @@ strtoint64(const char *str)
 	{
 		int64		tmp = result * 10 + (*ptr++ - '0');
 
-		if ((tmp / 10) != result)		/* overflow? */
+		if ((tmp / 10) != result)	/* overflow? */
 			fprintf(stderr, "value \"%s\" is out of range for type bigint\n", str);
 		result = tmp;
 	}
@@ -2235,7 +2235,7 @@ doCustom(TState *thread, CState *st, StatsData *agg)
 								st->state = CSTATE_FINISHED;
 								break;
 							}
-							else if (!ret)		/* on error */
+							else if (!ret)	/* on error */
 							{
 								commandFailed(st, "execution of meta-command 'setshell' failed");
 								st->state = CSTATE_ABORTED;
@@ -2255,7 +2255,7 @@ doCustom(TState *thread, CState *st, StatsData *agg)
 								st->state = CSTATE_FINISHED;
 								break;
 							}
-							else if (!ret)		/* on error */
+							else if (!ret)	/* on error */
 							{
 								commandFailed(st, "execution of meta-command 'shell' failed");
 								st->state = CSTATE_ABORTED;
@@ -3029,7 +3029,7 @@ process_backslash_command(PsqlScanState sstate, const char *source)
 	Command    *my_command;
 	PQExpBufferData word_buf;
 	int			word_offset;
-	int			offsets[MAX_ARGS];		/* offsets of argument words */
+	int			offsets[MAX_ARGS];	/* offsets of argument words */
 	int			start_offset,
 				end_offset;
 	int			lineno;
@@ -3649,8 +3649,8 @@ main(int argc, char **argv)
 	};
 
 	int			c;
-	int			is_init_mode = 0;		/* initialize mode? */
-	int			is_no_vacuum = 0;		/* no vacuum at all before testing? */
+	int			is_init_mode = 0;	/* initialize mode? */
+	int			is_no_vacuum = 0;	/* no vacuum at all before testing? */
 	int			do_vacuum_accounts = 0; /* do vacuum accounts before testing? */
 	int			optindex;
 	bool		scale_given = false;
@@ -3749,7 +3749,7 @@ main(int argc, char **argv)
 				if (getrlimit(RLIMIT_NOFILE, &rlim) == -1)
 #else							/* but BSD doesn't ... */
 				if (getrlimit(RLIMIT_OFILE, &rlim) == -1)
-#endif   /* RLIMIT_NOFILE */
+#endif							/* RLIMIT_NOFILE */
 				{
 					fprintf(stderr, "getrlimit failed: %s\n", strerror(errno));
 					exit(1);
@@ -3761,7 +3761,7 @@ main(int argc, char **argv)
 					fprintf(stderr, "Reduce number of clients, or use limit/ulimit to increase the system limit.\n");
 					exit(1);
 				}
-#endif   /* HAVE_GETRLIMIT */
+#endif							/* HAVE_GETRLIMIT */
 				break;
 			case 'j':			/* jobs */
 				benchmarking_option_set = true;
@@ -3778,7 +3778,7 @@ main(int argc, char **argv)
 					fprintf(stderr, "threads are not supported on this platform; use -j1\n");
 					exit(1);
 				}
-#endif   /* !ENABLE_THREAD_SAFETY */
+#endif							/* !ENABLE_THREAD_SAFETY */
 				break;
 			case 'C':
 				benchmarking_option_set = true;
@@ -4315,7 +4315,7 @@ main(int argc, char **argv)
 		end_time = INSTR_TIME_GET_MICROSEC(threads[0].start_time) +
 			(int64) 1000000 * duration;
 	threads[0].thread = INVALID_THREAD;
-#endif   /* ENABLE_THREAD_SAFETY */
+#endif							/* ENABLE_THREAD_SAFETY */
 
 	/* wait for threads and accumulate results */
 	initStats(&stats, 0);
@@ -4333,7 +4333,7 @@ main(int argc, char **argv)
 			pthread_join(thread->thread, NULL);
 #else
 		(void) threadRun(thread);
-#endif   /* ENABLE_THREAD_SAFETY */
+#endif							/* ENABLE_THREAD_SAFETY */
 
 		/* aggregate thread level stats */
 		mergeSimpleStats(&stats.latency, &thread->stats.latency);
@@ -4370,7 +4370,7 @@ threadRun(void *arg)
 	instr_time	start,
 				end;
 	int			nstate = thread->nstate;
-	int			remains = nstate;		/* number of remaining clients */
+	int			remains = nstate;	/* number of remaining clients */
 	int			i;
 
 	/* for reporting progress: */
@@ -4441,7 +4441,7 @@ threadRun(void *arg)
 		fd_set		input_mask;
 		int			maxsock;	/* max socket number to be waited for */
 		int64		min_usec;
-		int64		now_usec = 0;		/* set this only if needed */
+		int64		now_usec = 0;	/* set this only if needed */
 
 		/* identify which client sockets should be checked for input */
 		FD_ZERO(&input_mask);
@@ -4825,4 +4825,4 @@ pthread_join(pthread_t th, void **thread_return)
 	return 0;
 }
 
-#endif   /* WIN32 */
+#endif							/* WIN32 */

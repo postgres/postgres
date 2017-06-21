@@ -128,4 +128,4 @@ extern enum COMPAT_MODE compat;
 
 #define INFORMIX_MODE	(compat == ECPG_COMPAT_INFORMIX || compat == ECPG_COMPAT_INFORMIX_SE)
 
-#endif   /* _ECPG_PREPROC_EXTERN_H */
+#endif							/* _ECPG_PREPROC_EXTERN_H */

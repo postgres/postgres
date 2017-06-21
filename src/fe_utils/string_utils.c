@@ -536,7 +536,7 @@ appendShellStringNoError(PQExpBuffer buf, const char *str)
 		backslash_run_length--;
 	}
 	appendPQExpBufferStr(buf, "^\"");
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 
 	return ok;
 }
@@ -713,9 +713,9 @@ parsePGArray(const char *atext, char ***itemarray, int *nitems)
 					{
 						atext++;
 						if (*atext == '\0')
-							return false;		/* premature end of string */
+							return false;	/* premature end of string */
 					}
-					*strings++ = *atext++;		/* copy quoted data */
+					*strings++ = *atext++;	/* copy quoted data */
 				}
 				atext++;
 			}

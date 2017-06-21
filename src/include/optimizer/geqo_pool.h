@@ -37,4 +37,4 @@ extern void spread_chromo(PlannerInfo *root, Chromosome *chromo, Pool *pool);
 
 extern void sort_pool(PlannerInfo *root, Pool *pool);
 
-#endif   /* GEQO_POOL_H */
+#endif							/* GEQO_POOL_H */

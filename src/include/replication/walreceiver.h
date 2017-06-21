@@ -153,7 +153,7 @@ typedef struct
 		struct
 		{
 			uint32		proto_version;	/* Logical protocol version */
-			List	   *publication_names;		/* String list of publications */
+			List	   *publication_names;	/* String list of publications */
 		}			logical;
 	}			proto;
 } WalRcvStreamOptions;
@@ -298,4 +298,4 @@ extern int	GetReplicationApplyDelay(void);
 extern int	GetReplicationTransferLatency(void);
 extern void WalRcvForceReply(void);
 
-#endif   /* _WALRECEIVER_H */
+#endif							/* _WALRECEIVER_H */

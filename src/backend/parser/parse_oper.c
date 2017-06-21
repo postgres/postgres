@@ -319,7 +319,7 @@ static FuncDetailCode
 oper_select_candidate(int nargs,
 					  Oid *input_typeids,
 					  FuncCandidateList candidates,
-					  Oid *operOid)		/* output argument */
+					  Oid *operOid) /* output argument */
 {
 	int			ncandidates;
 

@@ -84,4 +84,4 @@ typedef FormData_pg_description * Form_pg_description;
  *	by genbki.pl and loaded during initdb.
  */
 
-#endif   /* PG_DESCRIPTION_H */
+#endif							/* PG_DESCRIPTION_H */

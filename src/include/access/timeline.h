@@ -41,4 +41,4 @@ extern TimeLineID tliOfPointInHistory(XLogRecPtr ptr, List *history);
 extern XLogRecPtr tliSwitchPoint(TimeLineID tli, List *history,
 			   TimeLineID *nextTLI);
 
-#endif   /* TIMELINE_H */
+#endif							/* TIMELINE_H */

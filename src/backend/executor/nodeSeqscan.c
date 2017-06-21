@@ -90,8 +90,8 @@ SeqNext(SeqScanState *node)
 	if (tuple)
 		ExecStoreTuple(tuple,	/* tuple to store */
 					   slot,	/* slot to store in */
-					   scandesc->rs_cbuf,		/* buffer associated with this
-												 * tuple */
+					   scandesc->rs_cbuf,	/* buffer associated with this
+											 * tuple */
 					   false);	/* don't pfree this pointer */
 	else
 		ExecClearTuple(slot);

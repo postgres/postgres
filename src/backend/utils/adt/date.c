@@ -527,7 +527,7 @@ date_pli(PG_FUNCTION_ARGS)
 	DateADT		result;
 
 	if (DATE_NOT_FINITE(dateVal))
-		PG_RETURN_DATEADT(dateVal);		/* can't change infinity */
+		PG_RETURN_DATEADT(dateVal); /* can't change infinity */
 
 	result = dateVal + days;
 
@@ -551,7 +551,7 @@ date_mii(PG_FUNCTION_ARGS)
 	DateADT		result;
 
 	if (DATE_NOT_FINITE(dateVal))
-		PG_RETURN_DATEADT(dateVal);		/* can't change infinity */
+		PG_RETURN_DATEADT(dateVal); /* can't change infinity */
 
 	result = dateVal - days;
 

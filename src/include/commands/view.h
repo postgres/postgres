@@ -24,4 +24,4 @@ extern ObjectAddress DefineView(ViewStmt *stmt, const char *queryString,
 
 extern void StoreViewQuery(Oid viewOid, Query *viewParse, bool replace);
 
-#endif   /* VIEW_H */
+#endif							/* VIEW_H */

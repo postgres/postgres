@@ -364,7 +364,7 @@ ecpg_store_result(const PGresult *results, int act_field,
 						/* special mode for handling char**foo=0 */
 						for (act_tuple = 0; act_tuple < ntuples; act_tuple++)
 							len += strlen(PQgetvalue(results, act_tuple, act_field)) + 1;
-						len *= var->offset;		/* should be 1, but YMNK */
+						len *= var->offset; /* should be 1, but YMNK */
 						len += (ntuples + 1) * sizeof(char *);
 					}
 					else
@@ -534,7 +534,7 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 			if (*(long long int *) var->ind_value < (long long) 0)
 				*tobeinserted_p = NULL;
 			break;
-#endif   /* HAVE_LONG_LONG_INT */
+#endif							/* HAVE_LONG_LONG_INT */
 		case ECPGt_NO_INDICATOR:
 			if (force_indicator == false)
 			{
@@ -704,7 +704,7 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 
 				*tobeinserted_p = mallocedval;
 				break;
-#endif   /* HAVE_LONG_LONG_INT */
+#endif							/* HAVE_LONG_LONG_INT */
 			case ECPGt_float:
 				if (!(mallocedval = ecpg_alloc(asize * 25, lineno)))
 					return false;
@@ -1361,8 +1361,8 @@ ecpg_build_params(struct statement *stmt)
 			if (stmt->command[position] == '?')
 			{
 				/* yes, replace with new style */
-				int			buffersize = sizeof(int) * CHAR_BIT * 10 / 3;		/* a rough guess of the
-																				 * size we need */
+				int			buffersize = sizeof(int) * CHAR_BIT * 10 / 3;	/* a rough guess of the
+																			 * size we need */
 
 				if (!(tobeinserted = (char *) ecpg_alloc(buffersize, stmt->lineno)))
 				{

@@ -731,14 +731,14 @@ DATA(insert OID = 3831 ( anyrange		PGNSP PGUID  -1 f p P f t \054 0 0 0 anyrange
 #define  TYPCATEGORY_DATETIME	'D'
 #define  TYPCATEGORY_ENUM		'E'
 #define  TYPCATEGORY_GEOMETRIC	'G'
-#define  TYPCATEGORY_NETWORK	'I'		/* think INET */
+#define  TYPCATEGORY_NETWORK	'I' /* think INET */
 #define  TYPCATEGORY_NUMERIC	'N'
 #define  TYPCATEGORY_PSEUDOTYPE 'P'
 #define  TYPCATEGORY_RANGE		'R'
 #define  TYPCATEGORY_STRING		'S'
 #define  TYPCATEGORY_TIMESPAN	'T'
 #define  TYPCATEGORY_USER		'U'
-#define  TYPCATEGORY_BITSTRING	'V'		/* er ... "varbit"? */
+#define  TYPCATEGORY_BITSTRING	'V' /* er ... "varbit"? */
 #define  TYPCATEGORY_UNKNOWN	'X'
 
 /* Is a type OID a polymorphic pseudotype?	(Beware of multiple evaluation) */
@@ -749,4 +749,4 @@ DATA(insert OID = 3831 ( anyrange		PGNSP PGUID  -1 f p P f t \054 0 0 0 anyrange
 	 (typid) == ANYENUMOID || \
 	 (typid) == ANYRANGEOID)
 
-#endif   /* PG_TYPE_H */
+#endif							/* PG_TYPE_H */

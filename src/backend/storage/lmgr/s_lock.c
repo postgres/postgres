@@ -133,7 +133,7 @@ perform_spin_delay(SpinDelayStatus *status)
 		if (++(status->delays) > NUM_DELAYS)
 			s_lock_stuck(status->file, status->line, status->func);
 
-		if (status->cur_delay == 0)		/* first time to delay? */
+		if (status->cur_delay == 0) /* first time to delay? */
 			status->cur_delay = MIN_DELAY_USEC;
 
 		pg_usleep(status->cur_delay);
@@ -276,12 +276,12 @@ _tas:							\n\
 _success:						\n\
 			moveq 	#0,d0		\n\
 			rts					\n"
-#endif   /* __NetBSD__ && __ELF__ */
+#endif							/* __NetBSD__ && __ELF__ */
 		);
 }
-#endif   /* __m68k__ && !__linux__ */
-#endif   /* not __GNUC__ */
-#endif   /* HAVE_SPINLOCKS */
+#endif							/* __m68k__ && !__linux__ */
+#endif							/* not __GNUC__ */
+#endif							/* HAVE_SPINLOCKS */
 
 
 
@@ -375,4 +375,4 @@ main()
 	return 1;
 }
 
-#endif   /* S_LOCK_TEST */
+#endif							/* S_LOCK_TEST */

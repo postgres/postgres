@@ -75,7 +75,7 @@ typedef struct ProcArrayStruct
 	int			numKnownAssignedXids;	/* current # of valid entries */
 	int			tailKnownAssignedXids;	/* index of oldest valid element */
 	int			headKnownAssignedXids;	/* index of newest element, + 1 */
-	slock_t		known_assigned_xids_lck;		/* protects head/tail pointers */
+	slock_t		known_assigned_xids_lck;	/* protects head/tail pointers */
 
 	/*
 	 * Highest subxid that has been removed from KnownAssignedXids array to
@@ -149,7 +149,7 @@ static void DisplayXidCache(void);
 #define xc_by_known_assigned_inc()	((void) 0)
 #define xc_no_overflow_inc()		((void) 0)
 #define xc_slow_answer_inc()		((void) 0)
-#endif   /* XIDCACHE_DEBUG */
+#endif							/* XIDCACHE_DEBUG */
 
 /* Primitives for KnownAssignedXids array handling for standby */
 static void KnownAssignedXidsCompress(bool force);
@@ -364,7 +364,7 @@ ProcArrayRemove(PGPROC *proc, TransactionId latestXid)
 			/* Keep the PGPROC array sorted. See notes above */
 			memmove(&arrayP->pgprocnos[index], &arrayP->pgprocnos[index + 1],
 					(arrayP->numProcs - index - 1) * sizeof(int));
-			arrayP->pgprocnos[arrayP->numProcs - 1] = -1;		/* for debugging */
+			arrayP->pgprocnos[arrayP->numProcs - 1] = -1;	/* for debugging */
 			arrayP->numProcs--;
 			LWLockRelease(ProcArrayLock);
 			return;
@@ -432,7 +432,7 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid)
 		pgxact->xmin = InvalidTransactionId;
 		/* must be cleared with xid/xmin: */
 		pgxact->vacuumFlags &= ~PROC_VACUUM_STATE_MASK;
-		pgxact->delayChkpt = false;		/* be sure this is cleared in abort */
+		pgxact->delayChkpt = false; /* be sure this is cleared in abort */
 		proc->recoveryConflictPending = false;
 
 		Assert(pgxact->nxids == 0);
@@ -1354,7 +1354,7 @@ GetOldestXmin(Relation rel, int flags)
 
 		if (allDbs ||
 			proc->databaseId == MyDatabaseId ||
-			proc->databaseId == 0)		/* always include WalSender */
+			proc->databaseId == 0)	/* always include WalSender */
 		{
 			/* Fetch xid just once - see GetNewTransactionId */
 			TransactionId xid = pgxact->xid;
@@ -3099,7 +3099,7 @@ DisplayXidCache(void)
 			xc_no_overflow,
 			xc_slow_answer);
 }
-#endif   /* XIDCACHE_DEBUG */
+#endif							/* XIDCACHE_DEBUG */
 
 
 /* ----------------------------------------------

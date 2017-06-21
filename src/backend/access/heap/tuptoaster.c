@@ -1523,7 +1523,7 @@ toast_save_datum(Relation rel, Datum value,
 	{
 		data_p = VARDATA_SHORT(dval);
 		data_todo = VARSIZE_SHORT(dval) - VARHDRSZ_SHORT;
-		toast_pointer.va_rawsize = data_todo + VARHDRSZ;		/* as if not short */
+		toast_pointer.va_rawsize = data_todo + VARHDRSZ;	/* as if not short */
 		toast_pointer.va_extsize = data_todo;
 	}
 	else if (VARATT_IS_COMPRESSED(dval))

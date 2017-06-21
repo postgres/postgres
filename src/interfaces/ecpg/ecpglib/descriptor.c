@@ -141,7 +141,7 @@ get_int_item(int lineno, void *var, enum ECPGttype vartype, int value)
 		case ECPGt_unsigned_long_long:
 			*(unsigned long long int *) var = (unsigned long long int) value;
 			break;
-#endif   /* HAVE_LONG_LONG_INT */
+#endif							/* HAVE_LONG_LONG_INT */
 		case ECPGt_float:
 			*(float *) var = (float) value;
 			break;
@@ -186,7 +186,7 @@ set_int_item(int lineno, int *target, const void *var, enum ECPGttype vartype)
 		case ECPGt_unsigned_long_long:
 			*target = *(const unsigned long long int *) var;
 			break;
-#endif   /* HAVE_LONG_LONG_INT */
+#endif							/* HAVE_LONG_LONG_INT */
 		case ECPGt_float:
 			*target = *(const float *) var;
 			break;
@@ -753,7 +753,7 @@ descriptor_deallocate_all(struct descriptor *list)
 		list = next;
 	}
 }
-#endif   /* ENABLE_THREAD_SAFETY */
+#endif							/* ENABLE_THREAD_SAFETY */
 
 bool
 ECPGallocate_desc(int line, const char *name)
@@ -855,7 +855,7 @@ ECPGdescribe(int line, int compat, bool input, const char *connection_name, cons
 
 		/* rest of variable parameters */
 		ptr = va_arg(args, void *);
-		(void) va_arg(args, long);		/* skip args */
+		(void) va_arg(args, long);	/* skip args */
 		(void) va_arg(args, long);
 		(void) va_arg(args, long);
 

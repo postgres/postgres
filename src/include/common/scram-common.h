@@ -56,4 +56,4 @@ extern void scram_ServerKey(const uint8 *salted_password, uint8 *result);
 extern char *scram_build_verifier(const char *salt, int saltlen, int iterations,
 					 const char *password);
 
-#endif   /* SCRAM_COMMON_H */
+#endif							/* SCRAM_COMMON_H */

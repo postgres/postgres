@@ -204,7 +204,7 @@ extern void XLogReaderInvalReadState(XLogReaderState *state);
 
 #ifdef FRONTEND
 extern XLogRecPtr XLogFindNextRecord(XLogReaderState *state, XLogRecPtr RecPtr);
-#endif   /* FRONTEND */
+#endif							/* FRONTEND */
 
 /* Functions for decoding an XLogRecord */
 
@@ -233,4 +233,4 @@ extern bool XLogRecGetBlockTag(XLogReaderState *record, uint8 block_id,
 				   RelFileNode *rnode, ForkNumber *forknum,
 				   BlockNumber *blknum);
 
-#endif   /* XLOGREADER_H */
+#endif							/* XLOGREADER_H */

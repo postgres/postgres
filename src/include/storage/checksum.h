@@ -21,4 +21,4 @@
  */
 extern uint16 pg_checksum_page(char *page, BlockNumber blkno);
 
-#endif   /* CHECKSUM_H */
+#endif							/* CHECKSUM_H */

@@ -123,4 +123,4 @@ extern void tuplesort_rescan(Tuplesortstate *state);
 extern void tuplesort_markpos(Tuplesortstate *state);
 extern void tuplesort_restorepos(Tuplesortstate *state);
 
-#endif   /* TUPLESORT_H */
+#endif							/* TUPLESORT_H */

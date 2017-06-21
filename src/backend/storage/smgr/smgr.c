@@ -38,7 +38,7 @@
 typedef struct f_smgr
 {
 	void		(*smgr_init) (void);	/* may be NULL */
-	void		(*smgr_shutdown) (void);		/* may be NULL */
+	void		(*smgr_shutdown) (void);	/* may be NULL */
 	void		(*smgr_close) (SMgrRelation reln, ForkNumber forknum);
 	void		(*smgr_create) (SMgrRelation reln, ForkNumber forknum,
 								bool isRedo);
@@ -59,9 +59,9 @@ typedef struct f_smgr
 	void		(*smgr_truncate) (SMgrRelation reln, ForkNumber forknum,
 								  BlockNumber nblocks);
 	void		(*smgr_immedsync) (SMgrRelation reln, ForkNumber forknum);
-	void		(*smgr_pre_ckpt) (void);		/* may be NULL */
+	void		(*smgr_pre_ckpt) (void);	/* may be NULL */
 	void		(*smgr_sync) (void);	/* may be NULL */
-	void		(*smgr_post_ckpt) (void);		/* may be NULL */
+	void		(*smgr_post_ckpt) (void);	/* may be NULL */
 } f_smgr;
 
 

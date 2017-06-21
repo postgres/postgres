@@ -261,7 +261,7 @@ findNewestTimeLine(TimeLineID startTLI)
 	{
 		if (existsTimeLineHistory(probeTLI))
 		{
-			newestTLI = probeTLI;		/* probeTLI exists */
+			newestTLI = probeTLI;	/* probeTLI exists */
 		}
 		else
 		{

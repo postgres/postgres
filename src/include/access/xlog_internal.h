@@ -319,4 +319,4 @@ extern bool XLogArchiveIsReady(const char *xlog);
 extern bool XLogArchiveIsReadyOrDone(const char *xlog);
 extern void XLogArchiveCleanup(const char *xlog);
 
-#endif   /* XLOG_INTERNAL_H */
+#endif							/* XLOG_INTERNAL_H */

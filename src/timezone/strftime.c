@@ -245,7 +245,7 @@ _fmt(const char *format, const struct pg_tm *t, char *pt, const char *ptlim,
 					 */
 					pt = _add("kitchen sink", pt, ptlim);
 					continue;
-#endif   /* defined KITCHEN_SINK */
+#endif							/* defined KITCHEN_SINK */
 				case 'l':
 
 					/*

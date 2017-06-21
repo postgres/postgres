@@ -33,4 +33,4 @@ extern ObjectAddress makeOperatorDependencies(HeapTuple tuple, bool isUpdate);
 
 extern void OperatorUpd(Oid baseId, Oid commId, Oid negId, bool isDelete);
 
-#endif   /* PG_OPERATOR_FN_H */
+#endif							/* PG_OPERATOR_FN_H */

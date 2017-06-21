@@ -78,4 +78,4 @@ extern char *getObjectIdentityParts(const ObjectAddress *address,
 					   List **objname, List **objargs);
 extern ArrayType *strlist_to_textarray(List *list);
 
-#endif   /* OBJECTADDRESS_H */
+#endif							/* OBJECTADDRESS_H */

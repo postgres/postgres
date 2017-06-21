@@ -42,13 +42,13 @@ typedef struct
 
 	/* Methods */
 
-	bool		(*f_gt) (const void *, const void *, FmgrInfo *);		/* greater than */
-	bool		(*f_ge) (const void *, const void *, FmgrInfo *);		/* greater or equal */
-	bool		(*f_eq) (const void *, const void *, FmgrInfo *);		/* equal */
-	bool		(*f_le) (const void *, const void *, FmgrInfo *);		/* less or equal */
-	bool		(*f_lt) (const void *, const void *, FmgrInfo *);		/* less than */
-	int			(*f_cmp) (const void *, const void *, FmgrInfo *);		/* key compare function */
-	float8		(*f_dist) (const void *, const void *, FmgrInfo *);		/* key distance function */
+	bool		(*f_gt) (const void *, const void *, FmgrInfo *);	/* greater than */
+	bool		(*f_ge) (const void *, const void *, FmgrInfo *);	/* greater or equal */
+	bool		(*f_eq) (const void *, const void *, FmgrInfo *);	/* equal */
+	bool		(*f_le) (const void *, const void *, FmgrInfo *);	/* less or equal */
+	bool		(*f_lt) (const void *, const void *, FmgrInfo *);	/* less than */
+	int			(*f_cmp) (const void *, const void *, FmgrInfo *);	/* key compare function */
+	float8		(*f_dist) (const void *, const void *, FmgrInfo *); /* key distance function */
 } gbtree_ninfo;
 
 

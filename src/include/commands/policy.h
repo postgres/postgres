@@ -35,4 +35,4 @@ extern ObjectAddress rename_policy(RenameStmt *stmt);
 
 extern bool relation_has_policies(Relation rel);
 
-#endif   /* POLICY_H */
+#endif							/* POLICY_H */

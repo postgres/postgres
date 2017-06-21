@@ -42,9 +42,8 @@ typedef struct TSQueryParserStateData *TSQueryParserState;
 
 typedef void (*PushFunction) (Datum opaque, TSQueryParserState state,
 							  char *token, int tokenlen,
-							  int16 tokenweights,		/* bitmap as described
-														 * in QueryOperand
-														 * struct */
+							  int16 tokenweights,	/* bitmap as described in
+													 * QueryOperand struct */
 							  bool prefix);
 
 extern TSQuery parse_tsquery(char *buf,
@@ -237,4 +236,4 @@ extern TSQuerySign makeTSQuerySign(TSQuery a);
 extern QTNode *findsubquery(QTNode *root, QTNode *ex, QTNode *subs,
 			 bool *isfind);
 
-#endif   /* _PG_TS_UTILS_H_ */
+#endif							/* _PG_TS_UTILS_H_ */

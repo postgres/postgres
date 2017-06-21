@@ -48,7 +48,7 @@ struct BrinRevmap
 {
 	Relation	rm_irel;
 	BlockNumber rm_pagesPerRange;
-	BlockNumber rm_lastRevmapPage;		/* cached from the metapage */
+	BlockNumber rm_lastRevmapPage;	/* cached from the metapage */
 	Buffer		rm_metaBuf;
 	Buffer		rm_currBuf;
 };

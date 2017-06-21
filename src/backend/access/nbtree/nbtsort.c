@@ -111,7 +111,7 @@ typedef struct BTPageState
 	OffsetNumber btps_lastoff;	/* last item offset loaded */
 	uint32		btps_level;		/* tree level (0 = leaf) */
 	Size		btps_full;		/* "full" if less than this much free space */
-	struct BTPageState *btps_next;		/* link to parent level, if any */
+	struct BTPageState *btps_next;	/* link to parent level, if any */
 } BTPageState;
 
 /*
@@ -122,8 +122,8 @@ typedef struct BTWriteState
 	Relation	heap;
 	Relation	index;
 	bool		btws_use_wal;	/* dump pages to WAL? */
-	BlockNumber btws_pages_alloced;		/* # pages allocated */
-	BlockNumber btws_pages_written;		/* # pages written out */
+	BlockNumber btws_pages_alloced; /* # pages allocated */
+	BlockNumber btws_pages_written; /* # pages written out */
 	Page		btws_zeropage;	/* workspace for filling zeroes */
 } BTWriteState;
 
@@ -208,7 +208,7 @@ _bt_leafbuild(BTSpool *btspool, BTSpool *btspool2)
 		ShowUsage("BTREE BUILD (Spool) STATISTICS");
 		ResetUsage();
 	}
-#endif   /* BTREE_BUILD_STATS */
+#endif							/* BTREE_BUILD_STATS */
 
 	tuplesort_performsort(btspool->sortstate);
 	if (btspool2)
@@ -566,7 +566,7 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 
 			oopaque->btpo_next = nblkno;
 			nopaque->btpo_prev = oblkno;
-			nopaque->btpo_next = P_NONE;		/* redundant */
+			nopaque->btpo_next = P_NONE;	/* redundant */
 		}
 
 		/*

@@ -815,10 +815,10 @@ count_usable_fds(int max_to_probe, int *usable_fds, int *already_open)
 	getrlimit_status = getrlimit(RLIMIT_NOFILE, &rlim);
 #else							/* but BSD doesn't ... */
 	getrlimit_status = getrlimit(RLIMIT_OFILE, &rlim);
-#endif   /* RLIMIT_NOFILE */
+#endif							/* RLIMIT_NOFILE */
 	if (getrlimit_status != 0)
 		ereport(WARNING, (errmsg("getrlimit failed: %m")));
-#endif   /* HAVE_GETRLIMIT */
+#endif							/* HAVE_GETRLIMIT */
 
 	/* dup until failure or probe limit reached */
 	for (;;)
@@ -978,7 +978,7 @@ _dump_lru(void)
 	snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), "LEAST");
 	elog(LOG, "%s", buf);
 }
-#endif   /* FDDEBUG */
+#endif							/* FDDEBUG */
 
 static void
 Delete(File file)
@@ -2502,7 +2502,7 @@ closeAllVfds(void)
 
 	if (SizeVfdCache > 0)
 	{
-		Assert(FileIsNotOpen(0));		/* Make sure ring not corrupted */
+		Assert(FileIsNotOpen(0));	/* Make sure ring not corrupted */
 		for (i = 1; i < SizeVfdCache; i++)
 		{
 			if (!FileIsNotOpen(i))
@@ -2653,7 +2653,7 @@ CleanupTempFiles(bool isProcExit)
 	 */
 	if (isProcExit || have_xact_temporary_files)
 	{
-		Assert(FileIsNotOpen(0));		/* Make sure ring not corrupted */
+		Assert(FileIsNotOpen(0));	/* Make sure ring not corrupted */
 		for (i = 1; i < SizeVfdCache; i++)
 		{
 			unsigned short fdstate = VfdCache[i].fdstate;
@@ -3102,7 +3102,7 @@ pre_sync_fname(const char *fname, bool isdir, int elevel)
 	(void) CloseTransientFile(fd);
 }
 
-#endif   /* PG_FLUSH_DATA_WORKS */
+#endif							/* PG_FLUSH_DATA_WORKS */
 
 static void
 datadir_fsync_fname(const char *fname, bool isdir, int elevel)

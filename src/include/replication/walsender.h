@@ -72,4 +72,4 @@ extern void WalSndRqstFileReload(void);
 		}									\
 	} while (0)
 
-#endif   /* _WALSENDER_H */
+#endif							/* _WALSENDER_H */

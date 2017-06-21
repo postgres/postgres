@@ -108,4 +108,4 @@ slist_check(slist_head *head)
 		;
 }
 
-#endif   /* ILIST_DEBUG */
+#endif							/* ILIST_DEBUG */

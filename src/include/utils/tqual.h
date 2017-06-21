@@ -51,7 +51,7 @@ typedef enum
 	HEAPTUPLE_DEAD,				/* tuple is dead and deletable */
 	HEAPTUPLE_LIVE,				/* tuple is live (committed, no deleter) */
 	HEAPTUPLE_RECENTLY_DEAD,	/* tuple is dead, but not deletable yet */
-	HEAPTUPLE_INSERT_IN_PROGRESS,		/* inserting xact is still in progress */
+	HEAPTUPLE_INSERT_IN_PROGRESS,	/* inserting xact is still in progress */
 	HEAPTUPLE_DELETE_IN_PROGRESS	/* deleting xact is still in progress */
 } HTSV_Result;
 
@@ -109,4 +109,4 @@ extern bool ResolveCminCmaxDuringDecoding(struct HTAB *tuplecid_data,
 	 (snapshotdata).lsn = (l),					\
 	 (snapshotdata).whenTaken = (w))
 
-#endif   /* TQUAL_H */
+#endif							/* TQUAL_H */

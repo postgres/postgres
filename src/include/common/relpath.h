@@ -71,4 +71,4 @@ extern char *GetRelationPath(Oid dbNode, Oid spcNode, Oid relNode,
 #define relpath(rnode, forknum) \
 	relpathbackend((rnode).node, (rnode).backend, forknum)
 
-#endif   /* RELPATH_H */
+#endif							/* RELPATH_H */

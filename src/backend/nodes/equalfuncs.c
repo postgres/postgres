@@ -2311,7 +2311,7 @@ _equalParamRef(const ParamRef *a, const ParamRef *b)
 static bool
 _equalAConst(const A_Const *a, const A_Const *b)
 {
-	if (!equal(&a->val, &b->val))		/* hack for in-line Value field */
+	if (!equal(&a->val, &b->val))	/* hack for in-line Value field */
 		return false;
 	COMPARE_LOCATION_FIELD(location);
 

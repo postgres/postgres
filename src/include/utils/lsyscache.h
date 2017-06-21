@@ -183,4 +183,4 @@ extern Oid	get_range_subtype(Oid rangeOid);
 
 #define TypeIsToastable(typid)	(get_typstorage(typid) != 'p')
 
-#endif   /* LSYSCACHE_H */
+#endif							/* LSYSCACHE_H */

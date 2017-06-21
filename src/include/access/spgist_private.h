@@ -48,8 +48,8 @@ typedef SpGistPageOpaqueData *SpGistPageOpaque;
 
 /* Flag bits in page special space */
 #define SPGIST_META			(1<<0)
-#define SPGIST_DELETED		(1<<1)		/* never set, but keep for backwards
-										 * compatibility */
+#define SPGIST_DELETED		(1<<1)	/* never set, but keep for backwards
+									 * compatibility */
 #define SPGIST_LEAF			(1<<2)
 #define SPGIST_NULLS		(1<<3)
 
@@ -94,7 +94,7 @@ typedef struct SpGistLUPCache
 typedef struct SpGistMetaPageData
 {
 	uint32		magicNumber;	/* for identity cross-check */
-	SpGistLUPCache lastUsedPages;		/* shared storage of last-used info */
+	SpGistLUPCache lastUsedPages;	/* shared storage of last-used info */
 } SpGistMetaPageData;
 
 #define SPGIST_MAGIC_NUMBER (0xBA0BABEE)
@@ -120,10 +120,10 @@ typedef struct SpGistState
 	spgConfigOut config;		/* filled in by opclass config method */
 
 	SpGistTypeDesc attType;		/* type of input data and leaf values */
-	SpGistTypeDesc attPrefixType;		/* type of inner-tuple prefix values */
+	SpGistTypeDesc attPrefixType;	/* type of inner-tuple prefix values */
 	SpGistTypeDesc attLabelType;	/* type of node label values */
 
-	char	   *deadTupleStorage;		/* workspace for spgFormDeadTuple */
+	char	   *deadTupleStorage;	/* workspace for spgFormDeadTuple */
 
 	TransactionId myXid;		/* XID to use when creating a redirect tuple */
 	bool		isBuild;		/* true if doing index build */
@@ -159,7 +159,7 @@ typedef struct SpGistScanOpaqueData
 	int			iPtr;			/* index for scanning through same */
 	ItemPointerData heapPtrs[MaxIndexTuplesPerPage];	/* TIDs from cur page */
 	bool		recheck[MaxIndexTuplesPerPage]; /* their recheck flags */
-	HeapTuple	reconTups[MaxIndexTuplesPerPage];		/* reconstructed tuples */
+	HeapTuple	reconTups[MaxIndexTuplesPerPage];	/* reconstructed tuples */
 
 	/*
 	 * Note: using MaxIndexTuplesPerPage above is a bit hokey since
@@ -179,10 +179,10 @@ typedef struct SpGistCache
 	spgConfigOut config;		/* filled in by opclass config method */
 
 	SpGistTypeDesc attType;		/* type of input data and leaf values */
-	SpGistTypeDesc attPrefixType;		/* type of inner-tuple prefix values */
+	SpGistTypeDesc attPrefixType;	/* type of inner-tuple prefix values */
 	SpGistTypeDesc attLabelType;	/* type of node label values */
 
-	SpGistLUPCache lastUsedPages;		/* local storage of last-used info */
+	SpGistLUPCache lastUsedPages;	/* local storage of last-used info */
 } SpGistCache;
 
 
@@ -418,4 +418,4 @@ extern void spgPageIndexMultiDelete(SpGistState *state, Page page,
 extern bool spgdoinsert(Relation index, SpGistState *state,
 			ItemPointer heapPtr, Datum datum, bool isnull);
 
-#endif   /* SPGIST_PRIVATE_H */
+#endif							/* SPGIST_PRIVATE_H */

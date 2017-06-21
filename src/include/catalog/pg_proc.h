@@ -62,13 +62,13 @@ CATALOG(pg_proc,1255) BKI_BOOTSTRAP BKI_ROWTYPE_OID(81) BKI_SCHEMA_MACRO
 	oidvector	proargtypes;	/* parameter types (excludes OUT params) */
 
 #ifdef CATALOG_VARLEN
-	Oid			proallargtypes[1];		/* all param types (NULL if IN only) */
+	Oid			proallargtypes[1];	/* all param types (NULL if IN only) */
 	char		proargmodes[1]; /* parameter modes (NULL if IN only) */
 	text		proargnames[1]; /* parameter names (NULL if no names) */
 	pg_node_tree proargdefaults;	/* list of expression trees for argument
 									 * defaults (NULL if none) */
 	Oid			protrftypes[1]; /* types for which to apply transforms */
-	text		prosrc BKI_FORCE_NOT_NULL;		/* procedure source text */
+	text		prosrc BKI_FORCE_NOT_NULL;	/* procedure source text */
 	text		probin;			/* secondary procedure info (can be NULL) */
 	text		proconfig[1];	/* procedure-local GUC settings */
 	aclitem		proacl[1];		/* access permissions */
@@ -5482,18 +5482,18 @@ DESCR("list of files in the WAL directory");
  * must be labeled volatile to ensure they will not get optimized away,
  * even if the actual return value is not changeable.
  */
-#define PROVOLATILE_IMMUTABLE	'i'		/* never changes for given input */
-#define PROVOLATILE_STABLE		's'		/* does not change within a scan */
-#define PROVOLATILE_VOLATILE	'v'		/* can change even within a scan */
+#define PROVOLATILE_IMMUTABLE	'i' /* never changes for given input */
+#define PROVOLATILE_STABLE		's' /* does not change within a scan */
+#define PROVOLATILE_VOLATILE	'v' /* can change even within a scan */
 
 /*
  * Symbolic values for proparallel column: these indicate whether a function
  * can be safely be run in a parallel backend, during parallelism but
  * necessarily in the master, or only in non-parallel mode.
  */
-#define PROPARALLEL_SAFE		's'		/* can run in worker or master */
-#define PROPARALLEL_RESTRICTED	'r'		/* can run in parallel master only */
-#define PROPARALLEL_UNSAFE		'u'		/* banned while in parallel mode */
+#define PROPARALLEL_SAFE		's' /* can run in worker or master */
+#define PROPARALLEL_RESTRICTED	'r' /* can run in parallel master only */
+#define PROPARALLEL_UNSAFE		'u' /* banned while in parallel mode */
 
 /*
  * Symbolic values for proargmodes column.  Note that these must agree with
@@ -5506,4 +5506,4 @@ DESCR("list of files in the WAL directory");
 #define PROARGMODE_VARIADIC 'v'
 #define PROARGMODE_TABLE	't'
 
-#endif   /* PG_PROC_H */
+#endif							/* PG_PROC_H */

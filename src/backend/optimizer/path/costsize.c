@@ -2963,7 +2963,7 @@ initial_cost_hashjoin(PlannerInfo *root, JoinCostWorkspace *workspace,
 	 */
 	ExecChooseHashTableSize(inner_path_rows,
 							inner_path->pathtarget->width,
-							true,		/* useskew */
+							true,	/* useskew */
 							&numbuckets,
 							&numbatches,
 							&num_skew_mcvs);
@@ -4047,7 +4047,7 @@ get_parameterized_baserel_size(PlannerInfo *root, RelOptInfo *rel,
 	nrows = rel->tuples *
 		clauselist_selectivity(root,
 							   allclauses,
-							   rel->relid,		/* do not use 0! */
+							   rel->relid,	/* do not use 0! */
 							   JOIN_INNER,
 							   NULL);
 	nrows = clamp_row_est(nrows);

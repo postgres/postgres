@@ -56,4 +56,4 @@ typedef FormData_pg_attrdef *Form_pg_attrdef;
 #define Anum_pg_attrdef_adbin			3
 #define Anum_pg_attrdef_adsrc			4
 
-#endif   /* PG_ATTRDEF_H */
+#endif							/* PG_ATTRDEF_H */

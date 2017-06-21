@@ -53,4 +53,4 @@ extern ObjectAddress AlterExtensionNamespace(const char *extensionName, const ch
 
 extern void AlterExtensionOwner_oid(Oid extensionOid, Oid newOwnerId);
 
-#endif   /* EXTENSION_H */
+#endif							/* EXTENSION_H */

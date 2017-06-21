@@ -78,4 +78,4 @@ extern void AutoVacuumRequestWork(AutoVacuumWorkItemType type,
 extern Size AutoVacuumShmemSize(void);
 extern void AutoVacuumShmemInit(void);
 
-#endif   /* AUTOVACUUM_H */
+#endif							/* AUTOVACUUM_H */

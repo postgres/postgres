@@ -322,7 +322,7 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 	 * won't change underneath us.
 	 */
 	if (!dbtemplate)
-		dbtemplate = "template1";		/* Default template database name */
+		dbtemplate = "template1";	/* Default template database name */
 
 	if (!get_db_info(dbtemplate, ShareLock,
 					 &src_dboid, &src_owner, &src_encoding,
@@ -1284,7 +1284,7 @@ movedb(const char *dbname, const char *tblspcname)
 		sysscan = systable_beginscan(pgdbrel, DatabaseNameIndexId, true,
 									 NULL, 1, &scankey);
 		oldtuple = systable_getnext(sysscan);
-		if (!HeapTupleIsValid(oldtuple))		/* shouldn't happen... */
+		if (!HeapTupleIsValid(oldtuple))	/* shouldn't happen... */
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_DATABASE),
 					 errmsg("database \"%s\" does not exist", dbname)));

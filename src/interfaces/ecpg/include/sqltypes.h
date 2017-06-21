@@ -54,4 +54,4 @@
 #define SQLSERIAL8	ECPGt_long
 #endif
 
-#endif   /* ndef ECPG_SQLTYPES_H */
+#endif							/* ndef ECPG_SQLTYPES_H */

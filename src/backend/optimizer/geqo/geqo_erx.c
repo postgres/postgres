@@ -468,4 +468,4 @@ edge_failure(PlannerInfo *root, Gene *gene, int index, Edge *edge_table, int num
 	return 0;					/* to keep the compiler quiet */
 }
 
-#endif   /* defined(ERX) */
+#endif							/* defined(ERX) */

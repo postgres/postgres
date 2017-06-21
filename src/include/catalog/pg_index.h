@@ -108,4 +108,4 @@ typedef FormData_pg_index *Form_pg_index;
 #define IndexIsReady(indexForm) ((indexForm)->indisready)
 #define IndexIsLive(indexForm)	((indexForm)->indislive)
 
-#endif   /* PG_INDEX_H */
+#endif							/* PG_INDEX_H */

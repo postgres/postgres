@@ -52,4 +52,4 @@ typedef FormData_pg_largeobject_metadata *Form_pg_largeobject_metadata;
 #define Anum_pg_largeobject_metadata_lomowner	1
 #define Anum_pg_largeobject_metadata_lomacl		2
 
-#endif   /* PG_LARGEOBJECT_METADATA_H */
+#endif							/* PG_LARGEOBJECT_METADATA_H */

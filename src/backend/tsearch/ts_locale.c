@@ -28,7 +28,7 @@ t_isdigit(const char *ptr)
 {
 	int			clen = pg_mblen(ptr);
 	wchar_t		character[2];
-	Oid			collation = DEFAULT_COLLATION_OID;		/* TODO */
+	Oid			collation = DEFAULT_COLLATION_OID;	/* TODO */
 	pg_locale_t mylocale = 0;	/* TODO */
 
 	if (clen == 1 || lc_ctype_is_c(collation))
@@ -44,7 +44,7 @@ t_isspace(const char *ptr)
 {
 	int			clen = pg_mblen(ptr);
 	wchar_t		character[2];
-	Oid			collation = DEFAULT_COLLATION_OID;		/* TODO */
+	Oid			collation = DEFAULT_COLLATION_OID;	/* TODO */
 	pg_locale_t mylocale = 0;	/* TODO */
 
 	if (clen == 1 || lc_ctype_is_c(collation))
@@ -60,7 +60,7 @@ t_isalpha(const char *ptr)
 {
 	int			clen = pg_mblen(ptr);
 	wchar_t		character[2];
-	Oid			collation = DEFAULT_COLLATION_OID;		/* TODO */
+	Oid			collation = DEFAULT_COLLATION_OID;	/* TODO */
 	pg_locale_t mylocale = 0;	/* TODO */
 
 	if (clen == 1 || lc_ctype_is_c(collation))
@@ -76,7 +76,7 @@ t_isprint(const char *ptr)
 {
 	int			clen = pg_mblen(ptr);
 	wchar_t		character[2];
-	Oid			collation = DEFAULT_COLLATION_OID;		/* TODO */
+	Oid			collation = DEFAULT_COLLATION_OID;	/* TODO */
 	pg_locale_t mylocale = 0;	/* TODO */
 
 	if (clen == 1 || lc_ctype_is_c(collation))
@@ -86,7 +86,7 @@ t_isprint(const char *ptr)
 
 	return iswprint((wint_t) character[0]);
 }
-#endif   /* USE_WIDE_UPPER_LOWER */
+#endif							/* USE_WIDE_UPPER_LOWER */
 
 
 /*
@@ -246,7 +246,7 @@ lowerstr_with_len(const char *str, int len)
 	char	   *out;
 
 #ifdef USE_WIDE_UPPER_LOWER
-	Oid			collation = DEFAULT_COLLATION_OID;		/* TODO */
+	Oid			collation = DEFAULT_COLLATION_OID;	/* TODO */
 	pg_locale_t mylocale = 0;	/* TODO */
 #endif
 
@@ -300,7 +300,7 @@ lowerstr_with_len(const char *str, int len)
 		Assert(wlen < len);
 	}
 	else
-#endif   /* USE_WIDE_UPPER_LOWER */
+#endif							/* USE_WIDE_UPPER_LOWER */
 	{
 		const char *ptr = str;
 		char	   *outptr;

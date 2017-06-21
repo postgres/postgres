@@ -34,4 +34,4 @@ extern void DropOwnedObjects(DropOwnedStmt *stmt);
 extern void ReassignOwnedObjects(ReassignOwnedStmt *stmt);
 extern List *roleSpecsToIds(List *memberNames);
 
-#endif   /* USER_H */
+#endif							/* USER_H */

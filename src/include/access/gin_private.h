@@ -75,7 +75,7 @@ typedef struct GinState
 	FmgrInfo	extractQueryFn[INDEX_MAX_KEYS];
 	FmgrInfo	consistentFn[INDEX_MAX_KEYS];
 	FmgrInfo	triConsistentFn[INDEX_MAX_KEYS];
-	FmgrInfo	comparePartialFn[INDEX_MAX_KEYS];		/* optional method */
+	FmgrInfo	comparePartialFn[INDEX_MAX_KEYS];	/* optional method */
 	/* canPartialMatch[i] is true if comparePartialFn[i] is valid */
 	bool		canPartialMatch[INDEX_MAX_KEYS];
 	/* Collations to pass to the support functions */
@@ -473,4 +473,4 @@ ginCompareItemPointers(ItemPointer a, ItemPointer b)
 
 extern int	ginTraverseLock(Buffer buffer, bool searchMode);
 
-#endif   /* GIN_PRIVATE_H */
+#endif							/* GIN_PRIVATE_H */

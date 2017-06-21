@@ -182,4 +182,4 @@ extern bool is_builtin(Oid objectId);
 extern bool is_shippable(Oid objectId, Oid classId, PgFdwRelationInfo *fpinfo);
 extern const char *get_jointype_name(JoinType jointype);
 
-#endif   /* POSTGRES_FDW_H */
+#endif							/* POSTGRES_FDW_H */

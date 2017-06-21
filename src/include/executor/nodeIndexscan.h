@@ -42,4 +42,4 @@ extern bool ExecIndexEvalArrayKeys(ExprContext *econtext,
 					   IndexArrayKeyInfo *arrayKeys, int numArrayKeys);
 extern bool ExecIndexAdvanceArrayKeys(IndexArrayKeyInfo *arrayKeys, int numArrayKeys);
 
-#endif   /* NODEINDEXSCAN_H */
+#endif							/* NODEINDEXSCAN_H */

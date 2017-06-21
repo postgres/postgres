@@ -37,7 +37,7 @@
 static char *outfile = NULL;
 static int	verbose = 0;
 static int	noloop = 0;
-static int	standby_message_timeout = 10 * 1000;		/* 10 sec = default */
+static int	standby_message_timeout = 10 * 1000;	/* 10 sec = default */
 static int	fsync_interval = 10 * 1000; /* 10 sec = default */
 static XLogRecPtr startpos = InvalidXLogRecPtr;
 static XLogRecPtr endpos = InvalidXLogRecPtr;
@@ -142,13 +142,13 @@ sendFeedback(PGconn *conn, TimestampTz now, bool force, bool replyRequested)
 	len += 1;
 	fe_sendint64(output_written_lsn, &replybuf[len]);	/* write */
 	len += 8;
-	fe_sendint64(output_fsync_lsn, &replybuf[len]);		/* flush */
+	fe_sendint64(output_fsync_lsn, &replybuf[len]); /* flush */
 	len += 8;
 	fe_sendint64(InvalidXLogRecPtr, &replybuf[len]);	/* apply */
 	len += 8;
 	fe_sendint64(now, &replybuf[len]);	/* sendTime */
 	len += 8;
-	replybuf[len] = replyRequested ? 1 : 0;		/* replyRequested */
+	replybuf[len] = replyRequested ? 1 : 0; /* replyRequested */
 	len += 1;
 
 	startpos = output_written_lsn;

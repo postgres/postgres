@@ -156,4 +156,4 @@ extern Datum MakeExpandedObjectReadOnlyInternal(Datum d);
 extern Datum TransferExpandedObject(Datum d, MemoryContext new_parent);
 extern void DeleteExpandedObject(Datum d);
 
-#endif   /* EXPANDEDDATUM_H */
+#endif							/* EXPANDEDDATUM_H */

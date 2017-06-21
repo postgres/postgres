@@ -44,7 +44,7 @@ typedef struct pullup_replace_vars_context
 	RangeTblEntry *target_rte;	/* RTE of subquery */
 	Relids		relids;			/* relids within subquery, as numbered after
 								 * pullup (set only if target_rte->lateral) */
-	bool	   *outer_hasSubLinks;		/* -> outer query's hasSubLinks */
+	bool	   *outer_hasSubLinks;	/* -> outer query's hasSubLinks */
 	int			varno;			/* varno of subquery */
 	bool		need_phvs;		/* do we need PlaceHolderVars? */
 	bool		wrap_non_vars;	/* do we need 'em on *all* non-Vars? */
@@ -772,7 +772,7 @@ pull_up_subqueries_recurse(PlannerInfo *root, Node *jtnode,
 		if (deletion_ok && !have_undeleted_child)
 		{
 			/* OK to delete this FromExpr entirely */
-			root->hasDeletedRTEs = true;		/* probably is set already */
+			root->hasDeletedRTEs = true;	/* probably is set already */
 			return NULL;
 		}
 	}
@@ -2088,7 +2088,7 @@ pullup_replace_vars_callback(Var *var,
 				  &colnames, &fields);
 		/* Adjust the generated per-field Vars, but don't insert PHVs */
 		rcon->need_phvs = false;
-		context->sublevels_up = 0;		/* to match the expandRTE output */
+		context->sublevels_up = 0;	/* to match the expandRTE output */
 		fields = (List *) replace_rte_variables_mutator((Node *) fields,
 														context);
 		rcon->need_phvs = save_need_phvs;
@@ -2784,7 +2784,7 @@ reduce_outer_joins_pass2(Node *jtnode,
 
 			if (right_state->contains_outer)
 			{
-				if (jointype != JOIN_FULL)		/* ie, INNER/LEFT/SEMI/ANTI */
+				if (jointype != JOIN_FULL)	/* ie, INNER/LEFT/SEMI/ANTI */
 				{
 					/* pass appropriate constraints, per comment above */
 					pass_nonnullable_rels = local_nonnullable_rels;

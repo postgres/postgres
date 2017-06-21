@@ -102,7 +102,7 @@ typedef struct CopyStateData
 	bool		fe_eof;			/* true if detected end of copy data */
 	EolType		eol_type;		/* EOL type of input */
 	int			file_encoding;	/* file or remote side's character encoding */
-	bool		need_transcoding;		/* file encoding diff from server? */
+	bool		need_transcoding;	/* file encoding diff from server? */
 	bool		encoding_embeds_ascii;	/* ASCII can be non-first byte? */
 
 	/* parameters from the COPY command */
@@ -119,17 +119,17 @@ typedef struct CopyStateData
 	bool		header_line;	/* CSV header line? */
 	char	   *null_print;		/* NULL marker string (server encoding!) */
 	int			null_print_len; /* length of same */
-	char	   *null_print_client;		/* same converted to file encoding */
+	char	   *null_print_client;	/* same converted to file encoding */
 	char	   *delim;			/* column delimiter (must be 1 byte) */
 	char	   *quote;			/* CSV quote char (must be 1 byte) */
 	char	   *escape;			/* CSV escape char (must be 1 byte) */
 	List	   *force_quote;	/* list of column names */
 	bool		force_quote_all;	/* FORCE_QUOTE *? */
-	bool	   *force_quote_flags;		/* per-column CSV FQ flags */
+	bool	   *force_quote_flags;	/* per-column CSV FQ flags */
 	List	   *force_notnull;	/* list of column names */
 	bool	   *force_notnull_flags;	/* per-column CSV FNN flags */
 	List	   *force_null;		/* list of column names */
-	bool	   *force_null_flags;		/* per-column CSV FN flags */
+	bool	   *force_null_flags;	/* per-column CSV FN flags */
 	bool		convert_selectively;	/* do selective binary conversion? */
 	List	   *convert_select; /* list of column names (can be NIL) */
 	bool	   *convert_select_flags;	/* per-column CSV/TEXT CS flags */
@@ -162,7 +162,7 @@ typedef struct CopyStateData
 	Oid		   *typioparams;	/* array of element types for in_functions */
 	int		   *defmap;			/* array of default att numbers */
 	ExprState **defexprs;		/* array of default att expressions */
-	bool		volatile_defexprs;		/* is any of defexprs volatile? */
+	bool		volatile_defexprs;	/* is any of defexprs volatile? */
 	List	   *range_table;
 
 	PartitionDispatch *partition_dispatch_info;
@@ -195,7 +195,7 @@ typedef struct CopyStateData
 	 * can display it in error messages if appropriate.
 	 */
 	StringInfoData line_buf;
-	bool		line_buf_converted;		/* converted to server encoding? */
+	bool		line_buf_converted; /* converted to server encoding? */
 	bool		line_buf_valid; /* contains the row being processed? */
 
 	/*
@@ -355,10 +355,10 @@ SendCopyBegin(CopyState cstate)
 		int			i;
 
 		pq_beginmessage(&buf, 'H');
-		pq_sendbyte(&buf, format);		/* overall format */
+		pq_sendbyte(&buf, format);	/* overall format */
 		pq_sendint(&buf, natts, 2);
 		for (i = 0; i < natts; i++)
-			pq_sendint(&buf, format, 2);		/* per-column formats */
+			pq_sendint(&buf, format, 2);	/* per-column formats */
 		pq_endmessage(&buf);
 		cstate->copy_dest = COPY_NEW_FE;
 	}
@@ -388,10 +388,10 @@ ReceiveCopyBegin(CopyState cstate)
 		int			i;
 
 		pq_beginmessage(&buf, 'G');
-		pq_sendbyte(&buf, format);		/* overall format */
+		pq_sendbyte(&buf, format);	/* overall format */
 		pq_sendint(&buf, natts, 2);
 		for (i = 0; i < natts; i++)
-			pq_sendint(&buf, format, 2);		/* per-column formats */
+			pq_sendint(&buf, format, 2);	/* per-column formats */
 		pq_endmessage(&buf);
 		cstate->copy_dest = COPY_NEW_FE;
 		cstate->fe_msgbuf = makeStringInfo();
@@ -609,20 +609,20 @@ CopyGetData(CopyState cstate, void *databuf, int minread, int maxread)
 					RESUME_CANCEL_INTERRUPTS();
 					switch (mtype)
 					{
-						case 'd':		/* CopyData */
+						case 'd':	/* CopyData */
 							break;
-						case 'c':		/* CopyDone */
+						case 'c':	/* CopyDone */
 							/* COPY IN correctly terminated by frontend */
 							cstate->fe_eof = true;
 							return bytesread;
-						case 'f':		/* CopyFail */
+						case 'f':	/* CopyFail */
 							ereport(ERROR,
 									(errcode(ERRCODE_QUERY_CANCELED),
 									 errmsg("COPY from stdin failed: %s",
 									   pq_getmsgstring(cstate->fe_msgbuf))));
 							break;
-						case 'H':		/* Flush */
-						case 'S':		/* Sync */
+						case 'H':	/* Flush */
+						case 'S':	/* Sync */
 
 							/*
 							 * Ignore Flush/Sync for the convenience of client
@@ -1697,7 +1697,7 @@ BeginCopy(ParseState *pstate,
 	/* See Multibyte encoding comment above */
 	cstate->encoding_embeds_ascii = PG_ENCODING_IS_CLIENT_ONLY(cstate->file_encoding);
 
-	cstate->copy_dest = COPY_FILE;		/* default */
+	cstate->copy_dest = COPY_FILE;	/* default */
 
 	MemoryContextSwitchTo(oldcontext);
 
@@ -1951,7 +1951,7 @@ CopyTo(CopyState cstate)
 		tupDesc = cstate->queryDesc->tupDesc;
 	attr = tupDesc->attrs;
 	num_phys_attrs = tupDesc->natts;
-	cstate->null_print_client = cstate->null_print;		/* default */
+	cstate->null_print_client = cstate->null_print; /* default */
 
 	/* We use fe_msgbuf as a per-row buffer regardless of copy_dest */
 	cstate->fe_msgbuf = makeStringInfo();
@@ -3707,8 +3707,8 @@ CopyReadLineText(CopyState cstate)
 
 				if (c == '\n')
 				{
-					raw_buf_ptr++;		/* eat newline */
-					cstate->eol_type = EOL_CRNL;		/* in case not set yet */
+					raw_buf_ptr++;	/* eat newline */
+					cstate->eol_type = EOL_CRNL;	/* in case not set yet */
 				}
 				else
 				{
@@ -4458,7 +4458,7 @@ CopyAttributeOutText(CopyState cstate, char *string)
 							break;
 						/* All ASCII control chars are length 1 */
 						ptr++;
-						continue;		/* fall to end of loop */
+						continue;	/* fall to end of loop */
 				}
 				/* if we get here, we need to convert the control char */
 				DUMPSOFAR();
@@ -4518,7 +4518,7 @@ CopyAttributeOutText(CopyState cstate, char *string)
 							break;
 						/* All ASCII control chars are length 1 */
 						ptr++;
-						continue;		/* fall to end of loop */
+						continue;	/* fall to end of loop */
 				}
 				/* if we get here, we need to convert the control char */
 				DUMPSOFAR();

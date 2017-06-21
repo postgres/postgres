@@ -35,7 +35,7 @@ static char *basedir = NULL;
 static int	verbose = 0;
 static int	compresslevel = 0;
 static int	noloop = 0;
-static int	standby_message_timeout = 10 * 1000;		/* 10 sec = default */
+static int	standby_message_timeout = 10 * 1000;	/* 10 sec = default */
 static volatile bool time_to_abort = false;
 static bool do_create_slot = false;
 static bool slot_exists_ok = false;

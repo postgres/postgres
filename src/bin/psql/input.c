@@ -333,7 +333,7 @@ decode_history(void)
 	}
 	END_ITERATE_HISTORY();
 }
-#endif   /* USE_READLINE */
+#endif							/* USE_READLINE */
 
 
 /*

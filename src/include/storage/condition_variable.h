@@ -56,4 +56,4 @@ extern void ConditionVariablePrepareToSleep(ConditionVariable *);
 extern bool ConditionVariableSignal(ConditionVariable *);
 extern int	ConditionVariableBroadcast(ConditionVariable *);
 
-#endif   /* CONDITION_VARIABLE_H */
+#endif							/* CONDITION_VARIABLE_H */

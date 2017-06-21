@@ -624,7 +624,7 @@ inv_write(LargeObjectDesc *obj_desc, const char *buf, int nbytes)
 		{
 			if ((oldtuple = systable_getnext_ordered(sd, ForwardScanDirection)) != NULL)
 			{
-				if (HeapTupleHasNulls(oldtuple))		/* paranoia */
+				if (HeapTupleHasNulls(oldtuple))	/* paranoia */
 					elog(ERROR, "null field found in pg_largeobject");
 				olddata = (Form_pg_largeobject) GETSTRUCT(oldtuple);
 				Assert(olddata->pageno >= pageno);
@@ -806,7 +806,7 @@ inv_truncate(LargeObjectDesc *obj_desc, int64 len)
 	olddata = NULL;
 	if ((oldtuple = systable_getnext_ordered(sd, ForwardScanDirection)) != NULL)
 	{
-		if (HeapTupleHasNulls(oldtuple))		/* paranoia */
+		if (HeapTupleHasNulls(oldtuple))	/* paranoia */
 			elog(ERROR, "null field found in pg_largeobject");
 		olddata = (Form_pg_largeobject) GETSTRUCT(oldtuple);
 		Assert(olddata->pageno >= pageno);

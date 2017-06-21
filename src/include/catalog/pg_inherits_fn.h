@@ -23,4 +23,4 @@ extern List *find_all_inheritors(Oid parentrelId, LOCKMODE lockmode,
 extern bool has_subclass(Oid relationId);
 extern bool typeInheritsFrom(Oid subclassTypeId, Oid superclassTypeId);
 
-#endif   /* PG_INHERITS_FN_H */
+#endif							/* PG_INHERITS_FN_H */

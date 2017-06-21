@@ -582,7 +582,7 @@ PrefetchBuffer(Relation reln, ForkNumber forkNum, BlockNumber blockNum)
 		 * not clear that there's enough of a problem to justify that.
 		 */
 	}
-#endif   /* USE_PREFETCH */
+#endif							/* USE_PREFETCH */
 }
 
 
@@ -991,10 +991,10 @@ BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 {
 	BufferTag	newTag;			/* identity of requested block */
 	uint32		newHash;		/* hash value for newTag */
-	LWLock	   *newPartitionLock;		/* buffer partition lock for it */
+	LWLock	   *newPartitionLock;	/* buffer partition lock for it */
 	BufferTag	oldTag;			/* previous identity of selected buffer */
 	uint32		oldHash;		/* hash value for oldTag */
-	LWLock	   *oldPartitionLock;		/* buffer partition lock for it */
+	LWLock	   *oldPartitionLock;	/* buffer partition lock for it */
 	uint32		oldFlags;
 	int			buf_id;
 	BufferDesc *buf;
@@ -1353,7 +1353,7 @@ InvalidateBuffer(BufferDesc *buf)
 {
 	BufferTag	oldTag;
 	uint32		oldHash;		/* hash value for oldTag */
-	LWLock	   *oldPartitionLock;		/* buffer partition lock for it */
+	LWLock	   *oldPartitionLock;	/* buffer partition lock for it */
 	uint32		oldFlags;
 	uint32		buf_state;
 
@@ -2947,7 +2947,7 @@ DropRelFileNodesAllBuffers(RelFileNodeBackend *rnodes, int nnodes)
 	if (nnodes == 0)
 		return;
 
-	nodes = palloc(sizeof(RelFileNode) * nnodes);		/* non-local relations */
+	nodes = palloc(sizeof(RelFileNode) * nnodes);	/* non-local relations */
 
 	/* If it's a local relation, it's localbuf.c's problem. */
 	for (i = 0; i < nnodes; i++)

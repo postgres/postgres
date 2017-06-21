@@ -128,9 +128,9 @@ typedef struct PlannerGlobal
 
 	bool		parallelModeOK; /* parallel mode potentially OK? */
 
-	bool		parallelModeNeeded;		/* parallel mode actually required? */
+	bool		parallelModeNeeded; /* parallel mode actually required? */
 
-	char		maxParallelHazard;		/* worst PROPARALLEL hazard level */
+	char		maxParallelHazard;	/* worst PROPARALLEL hazard level */
 } PlannerGlobal;
 
 /* macro for fetching the Plan associated with a SubPlan node */
@@ -176,7 +176,7 @@ typedef struct PlannerInfo
 	 * does not correspond to a base relation, such as a join RTE or an
 	 * unreferenced view RTE; or if the RelOptInfo hasn't been made yet.
 	 */
-	struct RelOptInfo **simple_rel_array;		/* All 1-rel RelOptInfos */
+	struct RelOptInfo **simple_rel_array;	/* All 1-rel RelOptInfos */
 	int			simple_rel_array_size;	/* allocated size of array */
 
 	/*
@@ -229,23 +229,23 @@ typedef struct PlannerInfo
 
 	List	   *cte_plan_ids;	/* per-CTE-item list of subplan IDs */
 
-	List	   *multiexpr_params;		/* List of Lists of Params for
-										 * MULTIEXPR subquery outputs */
+	List	   *multiexpr_params;	/* List of Lists of Params for MULTIEXPR
+									 * subquery outputs */
 
 	List	   *eq_classes;		/* list of active EquivalenceClasses */
 
 	List	   *canon_pathkeys; /* list of "canonical" PathKeys */
 
-	List	   *left_join_clauses;		/* list of RestrictInfos for
-										 * mergejoinable outer join clauses
-										 * w/nonnullable var on left */
+	List	   *left_join_clauses;	/* list of RestrictInfos for mergejoinable
+									 * outer join clauses w/nonnullable var on
+									 * left */
 
-	List	   *right_join_clauses;		/* list of RestrictInfos for
-										 * mergejoinable outer join clauses
-										 * w/nonnullable var on right */
+	List	   *right_join_clauses; /* list of RestrictInfos for mergejoinable
+									 * outer join clauses w/nonnullable var on
+									 * right */
 
-	List	   *full_join_clauses;		/* list of RestrictInfos for
-										 * mergejoinable full join clauses */
+	List	   *full_join_clauses;	/* list of RestrictInfos for mergejoinable
+									 * full join clauses */
 
 	List	   *join_info_list; /* list of SpecialJoinInfos */
 
@@ -255,7 +255,7 @@ typedef struct PlannerInfo
 
 	List	   *rowMarks;		/* list of PlanRowMarks */
 
-	List	   *placeholder_list;		/* list of PlaceHolderInfos */
+	List	   *placeholder_list;	/* list of PlaceHolderInfos */
 
 	List	   *fkey_list;		/* list of ForeignKeyOptInfos */
 
@@ -263,7 +263,7 @@ typedef struct PlannerInfo
 
 	List	   *group_pathkeys; /* groupClause pathkeys, if any */
 	List	   *window_pathkeys;	/* pathkeys of bottom window, if any */
-	List	   *distinct_pathkeys;		/* distinctClause pathkeys, if any */
+	List	   *distinct_pathkeys;	/* distinctClause pathkeys, if any */
 	List	   *sort_pathkeys;	/* sortClause pathkeys, if any */
 
 	List	   *initial_rels;	/* RelOptInfos we are now trying to join */
@@ -286,7 +286,7 @@ typedef struct PlannerInfo
 
 	MemoryContext planner_cxt;	/* context holding PlannerInfo */
 
-	double		total_table_pages;		/* # of pages in all tables of query */
+	double		total_table_pages;	/* # of pages in all tables of query */
 
 	double		tuple_fraction; /* tuple_fraction passed to query_planner */
 	double		limit_tuples;	/* limit_tuples passed to query_planner */
@@ -294,8 +294,8 @@ typedef struct PlannerInfo
 	Index		qual_security_level;	/* minimum security_level for quals */
 	/* Note: qual_security_level is zero if there are no securityQuals */
 
-	bool		hasInheritedTarget;		/* true if parse->resultRelation is an
-										 * inheritance child rel */
+	bool		hasInheritedTarget; /* true if parse->resultRelation is an
+									 * inheritance child rel */
 	bool		hasJoinRTEs;	/* true if any RTEs are RTE_JOIN kind */
 	bool		hasLateralRTEs; /* true if any RTEs are marked LATERAL */
 	bool		hasDeletedRTEs; /* true if any RTE was deleted from jointree */
@@ -528,17 +528,17 @@ typedef struct RelOptInfo
 	double		rows;			/* estimated number of result tuples */
 
 	/* per-relation planner control flags */
-	bool		consider_startup;		/* keep cheap-startup-cost paths? */
+	bool		consider_startup;	/* keep cheap-startup-cost paths? */
 	bool		consider_param_startup; /* ditto, for parameterized paths? */
-	bool		consider_parallel;		/* consider parallel paths? */
+	bool		consider_parallel;	/* consider parallel paths? */
 
 	/* default result targetlist for Paths scanning this relation */
-	struct PathTarget *reltarget;		/* list of Vars/Exprs, cost, width */
+	struct PathTarget *reltarget;	/* list of Vars/Exprs, cost, width */
 
 	/* materialization information */
 	List	   *pathlist;		/* Path structures */
 	List	   *ppilist;		/* ParamPathInfos used in pathlist */
-	List	   *partial_pathlist;		/* partial Paths */
+	List	   *partial_pathlist;	/* partial Paths */
 	struct Path *cheapest_startup_path;
 	struct Path *cheapest_total_path;
 	struct Path *cheapest_unique_path;
@@ -582,17 +582,16 @@ typedef struct RelOptInfo
 	List	   *non_unique_for_rels;	/* known not unique for these set(s) */
 
 	/* used by various scans and joins: */
-	List	   *baserestrictinfo;		/* RestrictInfo structures (if base
-										 * rel) */
-	QualCost	baserestrictcost;		/* cost of evaluating the above */
-	Index		baserestrict_min_security;		/* min security_level found in
-												 * baserestrictinfo */
+	List	   *baserestrictinfo;	/* RestrictInfo structures (if base rel) */
+	QualCost	baserestrictcost;	/* cost of evaluating the above */
+	Index		baserestrict_min_security;	/* min security_level found in
+											 * baserestrictinfo */
 	List	   *joininfo;		/* RestrictInfo structures for join clauses
 								 * involving this rel */
-	bool		has_eclass_joins;		/* T means joininfo is incomplete */
+	bool		has_eclass_joins;	/* T means joininfo is incomplete */
 
 	/* used by "other" relations */
-	Relids		top_parent_relids;		/* Relids of topmost parents */
+	Relids		top_parent_relids;	/* Relids of topmost parents */
 } RelOptInfo;
 
 /*
@@ -696,8 +695,8 @@ typedef struct ForeignKeyOptInfo
 	Index		ref_relid;		/* RT index of the referenced table */
 	int			nkeys;			/* number of columns in the foreign key */
 	AttrNumber	conkey[INDEX_MAX_KEYS]; /* cols in referencing table */
-	AttrNumber	confkey[INDEX_MAX_KEYS];		/* cols in referenced table */
-	Oid			conpfeqop[INDEX_MAX_KEYS];		/* PK = FK operator OIDs */
+	AttrNumber	confkey[INDEX_MAX_KEYS];	/* cols in referenced table */
+	Oid			conpfeqop[INDEX_MAX_KEYS];	/* PK = FK operator OIDs */
 
 	/* Derived info about whether FK's equality conditions match the query: */
 	int			nmatched_ec;	/* # of FK cols matched by ECs */
@@ -822,7 +821,7 @@ typedef struct EquivalenceMember
 
 	Expr	   *em_expr;		/* the expression represented */
 	Relids		em_relids;		/* all relids appearing in em_expr */
-	Relids		em_nullable_relids;		/* nullable by lower outer joins */
+	Relids		em_nullable_relids; /* nullable by lower outer joins */
 	bool		em_is_const;	/* expression is pseudoconstant? */
 	bool		em_is_child;	/* derived version for a child relation? */
 	Oid			em_datatype;	/* the "nominal type" used by the opfamily */
@@ -959,8 +958,7 @@ typedef struct Path
 
 	bool		parallel_aware; /* engage parallel-aware logic? */
 	bool		parallel_safe;	/* OK to use as part of parallel plan? */
-	int			parallel_workers;		/* desired # of workers; 0 = not
-										 * parallel */
+	int			parallel_workers;	/* desired # of workers; 0 = not parallel */
 
 	/* estimated size/costs for path (see costsize.c for more info) */
 	double		rows;			/* estimated number of result tuples */
@@ -1298,7 +1296,7 @@ typedef struct JoinPath
 	Path	   *outerjoinpath;	/* path for the outer side of the join */
 	Path	   *innerjoinpath;	/* path for the inner side of the join */
 
-	List	   *joinrestrictinfo;		/* RestrictInfos to apply to join */
+	List	   *joinrestrictinfo;	/* RestrictInfos to apply to join */
 
 	/*
 	 * See the notes for RelOptInfo and ParamPathInfo to understand why
@@ -1351,11 +1349,11 @@ typedef JoinPath NestPath;
 typedef struct MergePath
 {
 	JoinPath	jpath;
-	List	   *path_mergeclauses;		/* join clauses to be used for merge */
+	List	   *path_mergeclauses;	/* join clauses to be used for merge */
 	List	   *outersortkeys;	/* keys for explicit sort, if any */
 	List	   *innersortkeys;	/* keys for explicit sort, if any */
-	bool		skip_mark_restore;		/* can executor skip mark/restore? */
-	bool		materialize_inner;		/* add Materialize to inner? */
+	bool		skip_mark_restore;	/* can executor skip mark/restore? */
+	bool		materialize_inner;	/* add Materialize to inner? */
 } MergePath;
 
 /*
@@ -1370,7 +1368,7 @@ typedef struct MergePath
 typedef struct HashPath
 {
 	JoinPath	jpath;
-	List	   *path_hashclauses;		/* join clauses used for hashing */
+	List	   *path_hashclauses;	/* join clauses used for hashing */
 	int			num_batches;	/* number of batches expected */
 } HashPath;
 
@@ -1750,7 +1748,7 @@ typedef struct RestrictInfo
 
 	bool		is_pushed_down; /* TRUE if clause was pushed down in level */
 
-	bool		outerjoin_delayed;		/* TRUE if delayed by lower outer join */
+	bool		outerjoin_delayed;	/* TRUE if delayed by lower outer join */
 
 	bool		can_join;		/* see comment above */
 
@@ -1804,11 +1802,11 @@ typedef struct RestrictInfo
 	bool		outer_is_left;	/* T = outer var on left, F = on right */
 
 	/* valid if clause is hashjoinable, else InvalidOid: */
-	Oid			hashjoinoperator;		/* copy of clause operator */
+	Oid			hashjoinoperator;	/* copy of clause operator */
 
 	/* cache space for hashclause processing; -1 if not yet set */
 	Selectivity left_bucketsize;	/* avg bucketsize of left side */
-	Selectivity right_bucketsize;		/* avg bucketsize of right side */
+	Selectivity right_bucketsize;	/* avg bucketsize of right side */
 } RestrictInfo;
 
 /*
@@ -1922,7 +1920,7 @@ typedef struct SpecialJoinInfo
 	Relids		syn_righthand;	/* base relids syntactically within RHS */
 	JoinType	jointype;		/* always INNER, LEFT, FULL, SEMI, or ANTI */
 	bool		lhs_strict;		/* joinclause is strict for some LHS rel */
-	bool		delay_upper_joins;		/* can't commute with upper RHS */
+	bool		delay_upper_joins;	/* can't commute with upper RHS */
 	/* Remaining fields are set only for JOIN_SEMI jointype: */
 	bool		semi_can_btree; /* true if semi_operators are all btree */
 	bool		semi_can_hash;	/* true if semi_operators are all hash */
@@ -2223,4 +2221,4 @@ typedef struct JoinCostWorkspace
 	int			numbatches;
 } JoinCostWorkspace;
 
-#endif   /* RELATION_H */
+#endif							/* RELATION_H */

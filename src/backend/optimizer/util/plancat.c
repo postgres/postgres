@@ -354,8 +354,8 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 			/* Build targetlist using the completed indexprs data */
 			info->indextlist = build_index_tlist(root, info, relation);
 
-			info->indrestrictinfo = NIL;		/* set later, in indxpath.c */
-			info->predOK = false;		/* set later, in indxpath.c */
+			info->indrestrictinfo = NIL;	/* set later, in indxpath.c */
+			info->predOK = false;	/* set later, in indxpath.c */
 			info->unique = index->indisunique;
 			info->immediate = index->indimmediate;
 			info->hypothetical = false;
@@ -827,7 +827,7 @@ infer_collation_opclass_match(InferenceElem *elem, Relation idxRel,
 							  List *idxExprs)
 {
 	AttrNumber	natt;
-	Oid			inferopfamily = InvalidOid;		/* OID of opclass opfamily */
+	Oid			inferopfamily = InvalidOid; /* OID of opclass opfamily */
 	Oid			inferopcinputtype = InvalidOid; /* OID of opclass input type */
 	int			nplain = 0;		/* # plain attrs observed */
 

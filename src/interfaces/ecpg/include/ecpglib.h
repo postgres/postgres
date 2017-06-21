@@ -21,23 +21,23 @@ extern char *ecpg_gettext(const char *msgid) pg_attribute_format_arg(1);
 #ifndef __cplusplus
 #ifndef bool
 #define bool char
-#endif   /* ndef bool */
+#endif							/* ndef bool */
 
 #ifndef true
 #define true	((bool) 1)
-#endif   /* ndef true */
+#endif							/* ndef true */
 #ifndef false
 #define false	((bool) 0)
-#endif   /* ndef false */
-#endif   /* not C++ */
+#endif							/* ndef false */
+#endif							/* not C++ */
 
 #ifndef TRUE
 #define TRUE	1
-#endif   /* TRUE */
+#endif							/* TRUE */
 
 #ifndef FALSE
 #define FALSE	0
-#endif   /* FALSE */
+#endif							/* FALSE */
 
 #ifdef __cplusplus
 extern "C"
@@ -97,4 +97,4 @@ void		ecpg_pthreads_init(void);
 }
 #endif
 
-#endif   /* _ECPGLIB_H */
+#endif							/* _ECPGLIB_H */

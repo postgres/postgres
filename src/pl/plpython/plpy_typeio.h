@@ -119,4 +119,4 @@ extern PyObject *PLyDict_FromTuple(PLyTypeInfo *info, HeapTuple tuple, TupleDesc
 /* conversion from Python objects to C strings */
 extern char *PLyObject_AsString(PyObject *plrv);
 
-#endif   /* PLPY_TYPEIO_H */
+#endif							/* PLPY_TYPEIO_H */

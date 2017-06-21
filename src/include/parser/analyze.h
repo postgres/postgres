@@ -43,4 +43,4 @@ extern void applyLockingClause(Query *qry, Index rtindex,
 				   LockClauseStrength strength,
 				   LockWaitPolicy waitPolicy, bool pushedDown);
 
-#endif   /* ANALYZE_H */
+#endif							/* ANALYZE_H */

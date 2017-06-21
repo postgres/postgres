@@ -27,4 +27,4 @@ extern int pg_sockaddr_cidr_mask(struct sockaddr_storage *mask,
 
 extern int	pg_foreach_ifaddr(PgIfAddrCallback callback, void *cb_data);
 
-#endif   /* IFADDR_H */
+#endif							/* IFADDR_H */

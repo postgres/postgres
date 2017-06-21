@@ -332,7 +332,7 @@ assign_collations_walker(Node *node, assign_collations_context *context)
 					/* Node's result type isn't collatable. */
 					collation = InvalidOid;
 					strength = COLLATE_NONE;
-					location = -1;		/* won't be used */
+					location = -1;	/* won't be used */
 				}
 			}
 			break;
@@ -428,7 +428,7 @@ assign_collations_walker(Node *node, assign_collations_context *context)
 					/* Node's result type isn't collatable. */
 					collation = InvalidOid;
 					strength = COLLATE_NONE;
-					location = -1;		/* won't be used */
+					location = -1;	/* won't be used */
 				}
 
 				/*
@@ -711,7 +711,7 @@ assign_collations_walker(Node *node, assign_collations_context *context)
 					/* Node's result type isn't collatable. */
 					collation = InvalidOid;
 					strength = COLLATE_NONE;
-					location = -1;		/* won't be used */
+					location = -1;	/* won't be used */
 				}
 
 				/*

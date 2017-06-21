@@ -198,4 +198,4 @@ extern BlockNumber ss_get_location(Relation rel, BlockNumber relnblocks);
 extern void SyncScanShmemInit(void);
 extern Size SyncScanShmemSize(void);
 
-#endif   /* HEAPAM_H */
+#endif							/* HEAPAM_H */

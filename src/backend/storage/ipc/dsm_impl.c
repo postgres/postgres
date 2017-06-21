@@ -686,9 +686,9 @@ dsm_impl_windows(dsm_op op, dsm_handle handle, Size request_size,
 
 		hmap = CreateFileMapping(INVALID_HANDLE_VALUE,	/* Use the pagefile */
 								 NULL,	/* Default security attrs */
-								 PAGE_READWRITE,		/* Memory is read/write */
-								 size_high,		/* Upper 32 bits of size */
-								 size_low,		/* Lower 32 bits of size */
+								 PAGE_READWRITE,	/* Memory is read/write */
+								 size_high, /* Upper 32 bits of size */
+								 size_low,	/* Lower 32 bits of size */
 								 name);
 
 		errcode = GetLastError();

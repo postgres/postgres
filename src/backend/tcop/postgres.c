@@ -153,7 +153,7 @@ static CachedPlanSource *unnamed_stmt_psrc = NULL;
 /* assorted command-line switches */
 static const char *userDoption = NULL;	/* -D switch */
 static bool EchoQuery = false;	/* -E switch */
-static bool UseSemiNewlineNewline = false;		/* -j switch */
+static bool UseSemiNewlineNewline = false;	/* -j switch */
 
 /* whether or not, and why, we were canceled by conflict with recovery */
 static bool RecoveryConflictPending = false;
@@ -682,7 +682,7 @@ pg_analyze_and_rewrite_params(RawStmt *parsetree,
 	Query	   *query;
 	List	   *querytree_list;
 
-	Assert(query_string != NULL);		/* required as of 8.4 */
+	Assert(query_string != NULL);	/* required as of 8.4 */
 
 	TRACE_POSTGRESQL_QUERY_REWRITE_START(query_string);
 
@@ -1193,9 +1193,9 @@ exec_simple_query(const char *query_string)
  */
 static void
 exec_parse_message(const char *query_string,	/* string to execute */
-				   const char *stmt_name,		/* name for prepared stmt */
-				   Oid *paramTypes,		/* parameter types */
-				   int numParams)		/* number of parameters */
+				   const char *stmt_name,	/* name for prepared stmt */
+				   Oid *paramTypes, /* parameter types */
+				   int numParams)	/* number of parameters */
 {
 	MemoryContext unnamed_stmt_context = NULL;
 	MemoryContext oldcontext;
@@ -1660,7 +1660,7 @@ exec_bind_message(StringInfo input_message)
 			}
 			else
 			{
-				pbuf.data = NULL;		/* keep compiler quiet */
+				pbuf.data = NULL;	/* keep compiler quiet */
 				csave = 0;
 			}
 
@@ -1694,7 +1694,7 @@ exec_bind_message(StringInfo input_message)
 				if (pstring && pstring != pbuf.data)
 					pfree(pstring);
 			}
-			else if (pformat == 1)		/* binary mode */
+			else if (pformat == 1)	/* binary mode */
 			{
 				Oid			typreceive;
 				Oid			typioparam;
@@ -2555,7 +2555,7 @@ drop_unnamed_stmt(void)
 void
 quickdie(SIGNAL_ARGS)
 {
-	sigaddset(&BlockSig, SIGQUIT);		/* prevent nested calls */
+	sigaddset(&BlockSig, SIGQUIT);	/* prevent nested calls */
 	PG_SETMASK(&BlockSig);
 
 	/*
@@ -2832,7 +2832,7 @@ ProcessInterrupts(void)
 	if (ProcDiePending)
 	{
 		ProcDiePending = false;
-		QueryCancelPending = false;		/* ProcDie trumps QueryCancel */
+		QueryCancelPending = false; /* ProcDie trumps QueryCancel */
 		LockErrorCleanup();
 		/* As in quickdie, don't risk sending to client during auth */
 		if (ClientAuthInProgress && whereToSendOutput == DestRemote)
@@ -2883,7 +2883,7 @@ ProcessInterrupts(void)
 	}
 	if (ClientConnectionLost)
 	{
-		QueryCancelPending = false;		/* lost connection trumps QueryCancel */
+		QueryCancelPending = false; /* lost connection trumps QueryCancel */
 		LockErrorCleanup();
 		/* don't send to client, we already know the connection to be dead. */
 		whereToSendOutput = DestNone;
@@ -2900,7 +2900,7 @@ ProcessInterrupts(void)
 	 */
 	if (RecoveryConflictPending && DoingCommandRead)
 	{
-		QueryCancelPending = false;		/* this trumps QueryCancel */
+		QueryCancelPending = false; /* this trumps QueryCancel */
 		RecoveryConflictPending = false;
 		LockErrorCleanup();
 		pgstat_report_recovery_conflict(RecoveryConflictReason);
@@ -2950,7 +2950,7 @@ ProcessInterrupts(void)
 		 */
 		if (lock_timeout_occurred && stmt_timeout_occurred &&
 			get_timeout_finish_time(STATEMENT_TIMEOUT) < get_timeout_finish_time(LOCK_TIMEOUT))
-			lock_timeout_occurred = false;		/* report stmt timeout */
+			lock_timeout_occurred = false;	/* report stmt timeout */
 
 		if (lock_timeout_occurred)
 		{
@@ -3050,7 +3050,7 @@ ia64_get_bsp(void)
 	return ret;
 }
 #endif
-#endif   /* IA64 */
+#endif							/* IA64 */
 
 
 /*
@@ -3168,7 +3168,7 @@ stack_is_too_deep(void)
 	if (stack_depth > max_stack_depth_bytes &&
 		register_stack_base_ptr != NULL)
 		return true;
-#endif   /* IA64 */
+#endif							/* IA64 */
 
 	return false;
 }
@@ -3283,7 +3283,7 @@ get_stats_option_name(const char *arg)
 	switch (arg[0])
 	{
 		case 'p':
-			if (optarg[1] == 'a')		/* "parser" */
+			if (optarg[1] == 'a')	/* "parser" */
 				return "log_parser_stats";
 			else if (optarg[1] == 'l')	/* "planner" */
 				return "log_planner_stats";
@@ -3339,7 +3339,7 @@ process_postgres_switches(int argc, char *argv[], GucContext ctx,
 	}
 	else
 	{
-		gucsource = PGC_S_CLIENT;		/* switches came from client */
+		gucsource = PGC_S_CLIENT;	/* switches came from client */
 	}
 
 #ifdef HAVE_INT_OPTERR
@@ -3640,9 +3640,9 @@ PostgresMain(int argc, char *argv[],
 		WalSndSignals();
 	else
 	{
-		pqsignal(SIGHUP, PostgresSigHupHandler);		/* set flag to read
-														 * config file */
-		pqsignal(SIGINT, StatementCancelHandler);		/* cancel current query */
+		pqsignal(SIGHUP, PostgresSigHupHandler);	/* set flag to read config
+													 * file */
+		pqsignal(SIGINT, StatementCancelHandler);	/* cancel current query */
 		pqsignal(SIGTERM, die); /* cancel current query and exit */
 
 		/*
@@ -3651,9 +3651,9 @@ PostgresMain(int argc, char *argv[],
 		 * rather than quickdie().
 		 */
 		if (IsUnderPostmaster)
-			pqsignal(SIGQUIT, quickdie);		/* hard crash time */
+			pqsignal(SIGQUIT, quickdie);	/* hard crash time */
 		else
-			pqsignal(SIGQUIT, die);		/* cancel current query and exit */
+			pqsignal(SIGQUIT, die); /* cancel current query and exit */
 		InitializeTimeouts();	/* establishes SIGALRM handler */
 
 		/*
@@ -3671,8 +3671,8 @@ PostgresMain(int argc, char *argv[],
 		 * Reset some signals that are accepted by postmaster but not by
 		 * backend
 		 */
-		pqsignal(SIGCHLD, SIG_DFL);		/* system() requires this on some
-										 * platforms */
+		pqsignal(SIGCHLD, SIG_DFL); /* system() requires this on some
+									 * platforms */
 	}
 
 	pqinitmask();
@@ -3856,7 +3856,7 @@ PostgresMain(int argc, char *argv[],
 		 * forgetting a timeout cancel.
 		 */
 		disable_all_timeouts(false);
-		QueryCancelPending = false;		/* second to avoid race condition */
+		QueryCancelPending = false; /* second to avoid race condition */
 
 		/* Not reading from the client anymore. */
 		DoingCommandRead = false;
@@ -4225,7 +4225,7 @@ PostgresMain(int argc, char *argv[],
 					}
 
 					if (whereToSendOutput == DestRemote)
-						pq_putemptymessage('3');		/* CloseComplete */
+						pq_putemptymessage('3');	/* CloseComplete */
 				}
 				break;
 
@@ -4468,7 +4468,7 @@ ShowUsage(const char *title)
 					 r.ru_nvcsw - Save_r.ru_nvcsw,
 					 r.ru_nivcsw - Save_r.ru_nivcsw,
 					 r.ru_nvcsw, r.ru_nivcsw);
-#endif   /* HAVE_GETRUSAGE */
+#endif							/* HAVE_GETRUSAGE */
 
 	/* remove trailing newline */
 	if (str.data[str.len - 1] == '\n')

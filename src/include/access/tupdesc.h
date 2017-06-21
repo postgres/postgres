@@ -134,4 +134,4 @@ extern TupleDesc BuildDescForRelation(List *schema);
 
 extern TupleDesc BuildDescFromLists(List *names, List *types, List *typmods, List *collations);
 
-#endif   /* TUPDESC_H */
+#endif							/* TUPDESC_H */

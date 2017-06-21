@@ -32,4 +32,4 @@ extern void ExecIndexOnlyScanInitializeDSM(IndexOnlyScanState *node,
 extern void ExecIndexOnlyScanInitializeWorker(IndexOnlyScanState *node,
 								  shm_toc *toc);
 
-#endif   /* NODEINDEXONLYSCAN_H */
+#endif							/* NODEINDEXONLYSCAN_H */

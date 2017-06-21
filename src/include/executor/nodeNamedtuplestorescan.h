@@ -21,4 +21,4 @@ extern TupleTableSlot *ExecNamedTuplestoreScan(NamedTuplestoreScanState *node);
 extern void ExecEndNamedTuplestoreScan(NamedTuplestoreScanState *node);
 extern void ExecReScanNamedTuplestoreScan(NamedTuplestoreScanState *node);
 
-#endif   /* NODENAMEDTUPLESTORESCAN_H */
+#endif							/* NODENAMEDTUPLESTORESCAN_H */

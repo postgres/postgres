@@ -78,10 +78,10 @@ typedef struct SERIALIZABLEXACT
 	/* these values are not both interesting at the same time */
 	union
 	{
-		SerCommitSeqNo earliestOutConflictCommit;		/* when committed with
-														 * conflict out */
-		SerCommitSeqNo lastCommitBeforeSnapshot;		/* when not committed or
-														 * no conflict out */
+		SerCommitSeqNo earliestOutConflictCommit;	/* when committed with
+													 * conflict out */
+		SerCommitSeqNo lastCommitBeforeSnapshot;	/* when not committed or
+													 * no conflict out */
 	}			SeqNo;
 	SHM_QUEUE	outConflicts;	/* list of write transactions whose data we
 								 * couldn't read. */
@@ -99,18 +99,18 @@ typedef struct SERIALIZABLEXACT
 
 	TransactionId topXid;		/* top level xid for the transaction, if one
 								 * exists; else invalid */
-	TransactionId finishedBefore;		/* invalid means still running; else
-										 * the struct expires when no
-										 * serializable xids are before this. */
+	TransactionId finishedBefore;	/* invalid means still running; else the
+									 * struct expires when no serializable
+									 * xids are before this. */
 	TransactionId xmin;			/* the transaction's snapshot xmin */
 	uint32		flags;			/* OR'd combination of values defined below */
 	int			pid;			/* pid of associated process */
 } SERIALIZABLEXACT;
 
-#define SXACT_FLAG_COMMITTED			0x00000001		/* already committed */
-#define SXACT_FLAG_PREPARED				0x00000002		/* about to commit */
-#define SXACT_FLAG_ROLLED_BACK			0x00000004		/* already rolled back */
-#define SXACT_FLAG_DOOMED				0x00000008		/* will roll back */
+#define SXACT_FLAG_COMMITTED			0x00000001	/* already committed */
+#define SXACT_FLAG_PREPARED				0x00000002	/* about to commit */
+#define SXACT_FLAG_ROLLED_BACK			0x00000004	/* already rolled back */
+#define SXACT_FLAG_DOOMED				0x00000008	/* will roll back */
 /*
  * The following flag actually means that the flagged transaction has a
  * conflict out *to a transaction which committed ahead of it*.  It's hard
@@ -153,25 +153,24 @@ typedef struct PredXactListData
 	 * but are not needed outside the predicate.c source file. Protected by
 	 * SerializableXactHashLock.
 	 */
-	TransactionId SxactGlobalXmin;		/* global xmin for active serializable
-										 * transactions */
+	TransactionId SxactGlobalXmin;	/* global xmin for active serializable
+									 * transactions */
 	int			SxactGlobalXminCount;	/* how many active serializable
 										 * transactions have this xmin */
-	int			WritableSxactCount;		/* how many non-read-only serializable
-										 * transactions are active */
-	SerCommitSeqNo LastSxactCommitSeqNo;		/* a strictly monotonically
-												 * increasing number for
-												 * commits of serializable
-												 * transactions */
+	int			WritableSxactCount; /* how many non-read-only serializable
+									 * transactions are active */
+	SerCommitSeqNo LastSxactCommitSeqNo;	/* a strictly monotonically
+											 * increasing number for commits
+											 * of serializable transactions */
 	/* Protected by SerializableXactHashLock. */
-	SerCommitSeqNo CanPartialClearThrough;		/* can clear predicate locks
-												 * and inConflicts for
-												 * committed transactions
-												 * through this seq no */
+	SerCommitSeqNo CanPartialClearThrough;	/* can clear predicate locks and
+											 * inConflicts for committed
+											 * transactions through this seq
+											 * no */
 	/* Protected by SerializableFinishedListLock. */
 	SerCommitSeqNo HavePartialClearedThrough;	/* have cleared through this
 												 * seq no */
-	SERIALIZABLEXACT *OldCommittedSxact;		/* shared copy of dummy sxact */
+	SERIALIZABLEXACT *OldCommittedSxact;	/* shared copy of dummy sxact */
 
 	PredXactListElement element;
 }			PredXactListData;
@@ -477,4 +476,4 @@ extern PredicateLockData *GetPredicateLockStatusData(void);
 extern int GetSafeSnapshotBlockingPids(int blocked_pid,
 							int *output, int output_size);
 
-#endif   /* PREDICATE_INTERNALS_H */
+#endif							/* PREDICATE_INTERNALS_H */

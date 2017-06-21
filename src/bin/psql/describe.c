@@ -3391,7 +3391,7 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 	if (showSeq)
 		appendPQExpBufferStr(&buf, CppAsString2(RELKIND_SEQUENCE) ",");
 	if (showSystem || pattern)
-		appendPQExpBufferStr(&buf, "'s',");		/* was RELKIND_SPECIAL */
+		appendPQExpBufferStr(&buf, "'s',"); /* was RELKIND_SPECIAL */
 	if (showForeign)
 		appendPQExpBufferStr(&buf, CppAsString2(RELKIND_FOREIGN_TABLE) ",");
 

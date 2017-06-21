@@ -19,4 +19,4 @@ extern void PLy_exception_set_plural(PyObject *exc, const char *fmt_singular, co
 
 extern void PLy_exception_set_with_details(PyObject *excclass, ErrorData *edata);
 
-#endif   /* PLPY_ELOG_H */
+#endif							/* PLPY_ELOG_H */

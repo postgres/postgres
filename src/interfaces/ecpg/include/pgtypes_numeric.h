@@ -31,7 +31,7 @@ typedef struct
 	int			rscale;			/* result scale */
 	int			dscale;			/* display scale */
 	int			sign;			/* NUMERIC_POS, NUMERIC_NEG, or NUMERIC_NAN */
-	NumericDigit digits[DECSIZE];		/* decimal digits */
+	NumericDigit digits[DECSIZE];	/* decimal digits */
 } decimal;
 
 #ifdef __cplusplus
@@ -64,4 +64,4 @@ int			PGTYPESnumeric_from_decimal(decimal *, numeric *);
 }
 #endif
 
-#endif   /* PGTYPES_NUMERIC */
+#endif							/* PGTYPES_NUMERIC */

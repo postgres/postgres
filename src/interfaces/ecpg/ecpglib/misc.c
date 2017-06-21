@@ -23,9 +23,9 @@
 #define LONG_LONG_MIN LLONG_MIN
 #else
 #define LONG_LONG_MIN LONGLONG_MIN
-#endif   /* LLONG_MIN */
-#endif   /* LONG_LONG_MIN */
-#endif   /* HAVE_LONG_LONG_INT */
+#endif							/* LLONG_MIN */
+#endif							/* LONG_LONG_MIN */
+#endif							/* HAVE_LONG_LONG_INT */
 
 bool		ecpg_internal_regression_mode = false;
 
@@ -344,7 +344,7 @@ ECPGset_noind_null(enum ECPGttype type, void *ptr)
 		case ECPGt_unsigned_long_long:
 			*((long long *) ptr) = LONG_LONG_MIN;
 			break;
-#endif   /* HAVE_LONG_LONG_INT */
+#endif							/* HAVE_LONG_LONG_INT */
 		case ECPGt_float:
 			memset((char *) ptr, 0xff, sizeof(float));
 			break;
@@ -417,7 +417,7 @@ ECPGis_noind_null(enum ECPGttype type, void *ptr)
 			if (*((long long *) ptr) == LONG_LONG_MIN)
 				return true;
 			break;
-#endif   /* HAVE_LONG_LONG_INT */
+#endif							/* HAVE_LONG_LONG_INT */
 		case ECPGt_float:
 			return (_check(ptr, sizeof(float)));
 			break;
@@ -481,8 +481,8 @@ win32_pthread_once(volatile pthread_once_t *once, void (*fn) (void))
 		pthread_mutex_unlock(&win32_pthread_once_lock);
 	}
 }
-#endif   /* ENABLE_THREAD_SAFETY */
-#endif   /* WIN32 */
+#endif							/* ENABLE_THREAD_SAFETY */
+#endif							/* WIN32 */
 
 #ifdef ENABLE_NLS
 
@@ -516,7 +516,7 @@ ecpg_gettext(const char *msgid)
 
 	return dgettext(PG_TEXTDOMAIN("ecpglib"), msgid);
 }
-#endif   /* ENABLE_NLS */
+#endif							/* ENABLE_NLS */
 
 struct var_list *ivlist = NULL;
 

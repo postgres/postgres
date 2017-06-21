@@ -43,4 +43,4 @@ extern BipartiteMatchState *BipartiteMatch(int u_size, int v_size, short **adjac
 
 extern void BipartiteMatchFree(BipartiteMatchState *state);
 
-#endif   /* BIPARTITE_MATCH_H */
+#endif							/* BIPARTITE_MATCH_H */

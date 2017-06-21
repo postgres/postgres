@@ -154,7 +154,7 @@ typedef struct
 
 static HTAB *pendingOpsTable = NULL;
 static List *pendingUnlinks = NIL;
-static MemoryContext pendingOpsCxt;		/* context for the above  */
+static MemoryContext pendingOpsCxt; /* context for the above  */
 
 static CycleCtr mdsync_cycle_ctr = 0;
 static CycleCtr mdckpt_cycle_ctr = 0;
@@ -669,7 +669,7 @@ mdprefetch(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum)
 	Assert(seekpos < (off_t) BLCKSZ * RELSEG_SIZE);
 
 	(void) FilePrefetch(v->mdfd_vfd, seekpos, BLCKSZ, WAIT_EVENT_DATA_FILE_PREFETCH);
-#endif   /* USE_PREFETCH */
+#endif							/* USE_PREFETCH */
 }
 
 /*

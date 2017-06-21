@@ -188,7 +188,7 @@ convert_tuples_by_position(TupleDesc indesc,
 	n = indesc->natts + 1;		/* +1 for NULL */
 	map->invalues = (Datum *) palloc(n * sizeof(Datum));
 	map->inisnull = (bool *) palloc(n * sizeof(bool));
-	map->invalues[0] = (Datum) 0;		/* set up the NULL entry */
+	map->invalues[0] = (Datum) 0;	/* set up the NULL entry */
 	map->inisnull[0] = true;
 
 	return map;
@@ -267,7 +267,7 @@ convert_tuples_by_name(TupleDesc indesc,
 	n = indesc->natts + 1;		/* +1 for NULL */
 	map->invalues = (Datum *) palloc(n * sizeof(Datum));
 	map->inisnull = (bool *) palloc(n * sizeof(bool));
-	map->invalues[0] = (Datum) 0;		/* set up the NULL entry */
+	map->invalues[0] = (Datum) 0;	/* set up the NULL entry */
 	map->inisnull[0] = true;
 
 	return map;

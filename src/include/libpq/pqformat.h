@@ -47,4 +47,4 @@ extern const char *pq_getmsgstring(StringInfo msg);
 extern const char *pq_getmsgrawstring(StringInfo msg);
 extern void pq_getmsgend(StringInfo msg);
 
-#endif   /* PQFORMAT_H */
+#endif							/* PQFORMAT_H */

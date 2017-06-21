@@ -20,4 +20,4 @@ extern TupleTableSlot *ExecModifyTable(ModifyTableState *node);
 extern void ExecEndModifyTable(ModifyTableState *node);
 extern void ExecReScanModifyTable(ModifyTableState *node);
 
-#endif   /* NODEMODIFYTABLE_H */
+#endif							/* NODEMODIFYTABLE_H */

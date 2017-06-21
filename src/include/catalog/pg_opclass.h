@@ -247,4 +247,4 @@ DATA(insert (	3580	pg_lsn_minmax_ops		PGNSP PGUID 4082  3220 t 3220 ));
 DATA(insert (	3580	box_inclusion_ops		PGNSP PGUID 4104   603 t 603 ));
 /* no brin opclass for the geometric types except box */
 
-#endif   /* PG_OPCLASS_H */
+#endif							/* PG_OPCLASS_H */

@@ -70,16 +70,16 @@ DefineOperator(List *names, List *parameters)
 	char	   *oprName;
 	Oid			oprNamespace;
 	AclResult	aclresult;
-	bool		canMerge = false;		/* operator merges */
+	bool		canMerge = false;	/* operator merges */
 	bool		canHash = false;	/* operator hashes */
-	List	   *functionName = NIL;		/* function for operator */
-	TypeName   *typeName1 = NULL;		/* first type name */
-	TypeName   *typeName2 = NULL;		/* second type name */
+	List	   *functionName = NIL; /* function for operator */
+	TypeName   *typeName1 = NULL;	/* first type name */
+	TypeName   *typeName2 = NULL;	/* second type name */
 	Oid			typeId1 = InvalidOid;	/* types converted to OID */
 	Oid			typeId2 = InvalidOid;
 	Oid			rettype;
 	List	   *commutatorName = NIL;	/* optional commutator operator name */
-	List	   *negatorName = NIL;		/* optional negator operator name */
+	List	   *negatorName = NIL;	/* optional negator operator name */
 	List	   *restrictionName = NIL;	/* optional restrict. sel. procedure */
 	List	   *joinName = NIL; /* optional join sel. procedure */
 	Oid			functionOid;	/* functions converted to OID */
@@ -243,9 +243,9 @@ DefineOperator(List *names, List *parameters)
 					   oprNamespace,	/* namespace */
 					   typeId1, /* left type id */
 					   typeId2, /* right type id */
-					   functionOid,		/* function for operator */
+					   functionOid, /* function for operator */
 					   commutatorName,	/* optional commutator operator name */
-					   negatorName,		/* optional negator operator name */
+					   negatorName, /* optional negator operator name */
 					   restrictionOid,	/* optional restrict. sel. procedure */
 					   joinOid, /* optional join sel. procedure name */
 					   canMerge,	/* operator merges */

@@ -85,7 +85,7 @@ timetravel(PG_FUNCTION_ARGS)
 	Trigger    *trigger;		/* to get trigger name */
 	int			argc;
 	char	  **args;			/* arguments */
-	int			attnum[MaxAttrNum];		/* fnumbers of start/stop columns */
+	int			attnum[MaxAttrNum]; /* fnumbers of start/stop columns */
 	Datum		oldtimeon,
 				oldtimeoff;
 	Datum		newtimeon,

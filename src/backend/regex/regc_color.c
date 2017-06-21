@@ -145,7 +145,7 @@ pg_reg_getcolor(struct colormap *cm, chr c)
 			low = middle + 1;
 		else
 		{
-			rownum = cmr->rownum;		/* found a match */
+			rownum = cmr->rownum;	/* found a match */
 			break;
 		}
 	}
@@ -1040,8 +1040,7 @@ static void
 colorcomplement(struct nfa *nfa,
 				struct colormap *cm,
 				int type,
-				struct state *of,		/* complements of this guy's PLAIN
-										 * outarcs */
+				struct state *of,	/* complements of this guy's PLAIN outarcs */
 				struct state *from,
 				struct state *to)
 {
@@ -1138,4 +1137,4 @@ dumpchr(chr c,
 		fprintf(f, "\\u%04lx", (long) c);
 }
 
-#endif   /* REG_DEBUG */
+#endif							/* REG_DEBUG */

@@ -1231,7 +1231,7 @@ setup_config(void)
 	conflines = replace_token(conflines,
 							  "host    replication     all             ::1",
 							  "#host    replication     all             ::1");
-#endif   /* HAVE_IPV6 */
+#endif							/* HAVE_IPV6 */
 
 	/* Replace default authentication methods */
 	conflines = replace_token(conflines,
@@ -2961,7 +2961,7 @@ main(int argc, char *argv[])
 		{"show", no_argument, NULL, 's'},
 		{"noclean", no_argument, NULL, 'n'},	/* for backwards compatibility */
 		{"no-clean", no_argument, NULL, 'n'},
-		{"nosync", no_argument, NULL, 'N'},		/* for backwards compatibility */
+		{"nosync", no_argument, NULL, 'N'}, /* for backwards compatibility */
 		{"no-sync", no_argument, NULL, 'N'},
 		{"sync-only", no_argument, NULL, 'S'},
 		{"waldir", required_argument, NULL, 'X'},

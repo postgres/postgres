@@ -883,7 +883,7 @@ find_strongest_dependency(StatisticExtInfo *stats, MVDependencies *dependencies,
 		 * slightly more expensive than the previous checks.
 		 */
 		if (dependency_is_fully_matched(dependency, attnums))
-			strongest = dependency;		/* save new best match */
+			strongest = dependency; /* save new best match */
 	}
 
 	return strongest;

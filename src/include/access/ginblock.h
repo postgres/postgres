@@ -41,7 +41,7 @@ typedef GinPageOpaqueData *GinPageOpaque;
 #define GIN_DELETED		  (1 << 2)
 #define GIN_META		  (1 << 3)
 #define GIN_LIST		  (1 << 4)
-#define GIN_LIST_FULLROW  (1 << 5)		/* makes sense only on GIN_LIST page */
+#define GIN_LIST_FULLROW  (1 << 5)	/* makes sense only on GIN_LIST page */
 #define GIN_INCOMPLETE_SPLIT (1 << 6)	/* page was split, but parent not
 										 * updated */
 #define GIN_COMPRESSED	  (1 << 7)
@@ -196,10 +196,10 @@ typedef struct
  */
 typedef signed char GinNullCategory;
 
-#define GIN_CAT_NORM_KEY		0		/* normal, non-null key value */
-#define GIN_CAT_NULL_KEY		1		/* null key value */
-#define GIN_CAT_EMPTY_ITEM		2		/* placeholder for zero-key item */
-#define GIN_CAT_NULL_ITEM		3		/* placeholder for null item */
+#define GIN_CAT_NORM_KEY		0	/* normal, non-null key value */
+#define GIN_CAT_NULL_KEY		1	/* null key value */
+#define GIN_CAT_EMPTY_ITEM		2	/* placeholder for zero-key item */
+#define GIN_CAT_NULL_ITEM		3	/* placeholder for null item */
 #define GIN_CAT_EMPTY_QUERY		(-1)	/* placeholder for full-scan query */
 
 /*
@@ -333,4 +333,4 @@ typedef struct
 #define SizeOfGinPostingList(plist) (offsetof(GinPostingList, bytes) + SHORTALIGN((plist)->nbytes) )
 #define GinNextPostingListSegment(cur) ((GinPostingList *) (((char *) (cur)) + SizeOfGinPostingList((cur))))
 
-#endif   /* GINBLOCK_H */
+#endif							/* GINBLOCK_H */

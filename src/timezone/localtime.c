@@ -44,7 +44,7 @@
  * that tzname[0] has the "normal" length of three characters).
  */
 #define WILDABBR	"   "
-#endif   /* !defined WILDABBR */
+#endif							/* !defined WILDABBR */
 
 static const char wildabbr[] = WILDABBR;
 
@@ -270,7 +270,7 @@ tzloadbody(char const *name, char *canonname, struct state *sp, bool doextend,
 			return EINVAL;
 		if (nread
 			< (tzheadsize		/* struct tzhead */
-			   + timecnt * stored		/* ats */
+			   + timecnt * stored	/* ats */
 			   + timecnt		/* types */
 			   + typecnt * 6	/* ttinfos */
 			   + charcnt		/* chars */
@@ -788,7 +788,7 @@ getrule(const char *strp, struct rule *rulep)
 		strp = getoffset(strp, &rulep->r_time);
 	}
 	else
-		rulep->r_time = 2 * SECSPERHOUR;		/* default = 2:00:00 */
+		rulep->r_time = 2 * SECSPERHOUR;	/* default = 2:00:00 */
 	return strp;
 }
 
@@ -921,7 +921,7 @@ tzparse(const char *name, struct state *sp, bool lastditch)
 			stdlen = (sizeof sp->chars) - 1;
 		charcnt = stdlen + 1;
 		stdoffset = 0;
-		sp->goback = sp->goahead = false;		/* simulate failed tzload() */
+		sp->goback = sp->goahead = false;	/* simulate failed tzload() */
 		load_ok = false;
 	}
 	else

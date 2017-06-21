@@ -67,15 +67,15 @@ typedef struct TsmRoutine
 	SampleScanGetSampleSize_function SampleScanGetSampleSize;
 
 	/* Functions for executing a SampleScan on a physical table */
-	InitSampleScan_function InitSampleScan;		/* can be NULL */
+	InitSampleScan_function InitSampleScan; /* can be NULL */
 	BeginSampleScan_function BeginSampleScan;
 	NextSampleBlock_function NextSampleBlock;	/* can be NULL */
 	NextSampleTuple_function NextSampleTuple;
-	EndSampleScan_function EndSampleScan;		/* can be NULL */
+	EndSampleScan_function EndSampleScan;	/* can be NULL */
 } TsmRoutine;
 
 
 /* Functions in access/tablesample/tablesample.c */
 extern TsmRoutine *GetTsmRoutine(Oid tsmhandler);
 
-#endif   /* TSMAPI_H */
+#endif							/* TSMAPI_H */

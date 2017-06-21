@@ -52,8 +52,8 @@ typedef FormData_pg_cast *Form_pg_cast;
 
 typedef enum CoercionCodes
 {
-	COERCION_CODE_IMPLICIT = 'i',		/* coercion in context of expression */
-	COERCION_CODE_ASSIGNMENT = 'a',		/* coercion in context of assignment */
+	COERCION_CODE_IMPLICIT = 'i',	/* coercion in context of expression */
+	COERCION_CODE_ASSIGNMENT = 'a', /* coercion in context of assignment */
 	COERCION_CODE_EXPLICIT = 'e'	/* explicit cast operation */
 } CoercionCodes;
 
@@ -64,8 +64,8 @@ typedef enum CoercionCodes
  */
 typedef enum CoercionMethod
 {
-	COERCION_METHOD_FUNCTION = 'f',		/* use a function */
-	COERCION_METHOD_BINARY = 'b',		/* types are binary-compatible */
+	COERCION_METHOD_FUNCTION = 'f', /* use a function */
+	COERCION_METHOD_BINARY = 'b',	/* types are binary-compatible */
 	COERCION_METHOD_INOUT = 'i' /* use input/output functions */
 } CoercionMethod;
 
@@ -392,4 +392,4 @@ DATA(insert ( 1700 1700 1703 i f ));
 DATA(insert (  114 3802    0 a i ));
 DATA(insert ( 3802	114    0 a i ));
 
-#endif   /* PG_CAST_H */
+#endif							/* PG_CAST_H */

@@ -811,7 +811,7 @@ ineq_histogram_selectivity(PlannerInfo *root,
 			 */
 			double		histfrac;
 			int			lobound = 0;	/* first possible slot to search */
-			int			hibound = sslot.nvalues;		/* last+1 slot to search */
+			int			hibound = sslot.nvalues;	/* last+1 slot to search */
 			bool		have_end = false;
 
 			/*
@@ -1805,7 +1805,7 @@ scalararraysel(PlannerInfo *root,
 	/* get nominal (after relabeling) element type of rightop */
 	nominal_element_type = get_base_element_type(exprType(rightop));
 	if (!OidIsValid(nominal_element_type))
-		return (Selectivity) 0.5;		/* probably shouldn't happen */
+		return (Selectivity) 0.5;	/* probably shouldn't happen */
 	/* get nominal collation, too, for generating constants */
 	nominal_element_collation = exprCollation(rightop);
 
@@ -4510,10 +4510,10 @@ get_join_variables(PlannerInfo *root, List *args, SpecialJoinInfo *sjinfo,
 
 	if (vardata1->rel &&
 		bms_is_subset(vardata1->rel->relids, sjinfo->syn_righthand))
-		*join_is_reversed = true;		/* var1 is on RHS */
+		*join_is_reversed = true;	/* var1 is on RHS */
 	else if (vardata2->rel &&
 			 bms_is_subset(vardata2->rel->relids, sjinfo->syn_lefthand))
-		*join_is_reversed = true;		/* var2 is on LHS */
+		*join_is_reversed = true;	/* var2 is on LHS */
 	else
 		*join_is_reversed = false;
 }
@@ -5331,7 +5331,7 @@ get_actual_variable_range(PlannerInfo *root, VariableStatData *vardata,
 			ScanKeyEntryInitialize(&scankeys[0],
 								   SK_ISNULL | SK_SEARCHNOTNULL,
 								   1,	/* index col to scan */
-								   InvalidStrategy,		/* no strategy */
+								   InvalidStrategy, /* no strategy */
 								   InvalidOid,	/* no strategy subtype */
 								   InvalidOid,	/* no collation */
 								   InvalidOid,	/* no reg proc for this */
@@ -5725,7 +5725,7 @@ pattern_fixed_prefix(Const *patt, Pattern_Type ptype, Oid collation,
 			break;
 		default:
 			elog(ERROR, "unrecognized ptype: %d", (int) ptype);
-			result = Pattern_Prefix_None;		/* keep compiler quiet */
+			result = Pattern_Prefix_None;	/* keep compiler quiet */
 			break;
 	}
 	return result;
@@ -5931,8 +5931,7 @@ regex_selectivity_sub(const char *patt, int pattlen, bool case_insensitive)
 				negclass = true;
 				pos++;
 			}
-			if (patt[pos] == ']')		/* ']' at start of class is not
-										 * special */
+			if (patt[pos] == ']')	/* ']' at start of class is not special */
 				pos++;
 			while (pos < pattlen && patt[pos] != ']')
 				pos++;
@@ -6430,7 +6429,7 @@ orderby_operands_eval_cost(PlannerInfo *root, IndexPath *path)
 		{
 			elog(ERROR, "unsupported indexorderby type: %d",
 				 (int) nodeTag(clause));
-			other_operand = NULL;		/* keep compiler quiet */
+			other_operand = NULL;	/* keep compiler quiet */
 		}
 
 		cost_qual_eval_node(&index_qual_cost, other_operand, root);

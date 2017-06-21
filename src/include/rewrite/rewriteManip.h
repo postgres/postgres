@@ -28,7 +28,7 @@ struct replace_rte_variables_context
 	void	   *callback_arg;	/* context data for callback function */
 	int			target_varno;	/* RTE index to search for */
 	int			sublevels_up;	/* (current) nesting depth */
-	bool		inserted_sublink;		/* have we inserted a SubLink? */
+	bool		inserted_sublink;	/* have we inserted a SubLink? */
 };
 
 typedef enum ReplaceVarsNoMatchOption
@@ -82,4 +82,4 @@ extern Node *ReplaceVarsFromTargetList(Node *node,
 						  int nomatch_varno,
 						  bool *outer_hasSubLinks);
 
-#endif   /* REWRITEMANIP_H */
+#endif							/* REWRITEMANIP_H */

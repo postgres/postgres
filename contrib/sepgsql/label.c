@@ -68,10 +68,10 @@ static fmgr_hook_type next_fmgr_hook = NULL;
  * labels were set during the (sub-)transactions.
  */
 static char *client_label_peer = NULL;	/* set by getpeercon(3) */
-static List *client_label_pending = NIL;		/* pending list being set by
-												 * sepgsql_setcon() */
-static char *client_label_committed = NULL;		/* set by sepgsql_setcon(),
-												 * and already committed */
+static List *client_label_pending = NIL;	/* pending list being set by
+											 * sepgsql_setcon() */
+static char *client_label_committed = NULL; /* set by sepgsql_setcon(), and
+											 * already committed */
 static char *client_label_func = NULL;	/* set by trusted procedure */
 
 typedef struct

@@ -347,7 +347,7 @@ compute_range_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 		stats->stats_valid = true;
 		stats->stanullfrac = 1.0;
 		stats->stawidth = 0;	/* "unknown" */
-		stats->stadistinct = 0.0;		/* "unknown" */
+		stats->stadistinct = 0.0;	/* "unknown" */
 	}
 
 	/*

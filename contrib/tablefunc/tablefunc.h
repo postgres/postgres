@@ -36,4 +36,4 @@
 
 #include "fmgr.h"
 
-#endif   /* TABLEFUNC_H */
+#endif							/* TABLEFUNC_H */

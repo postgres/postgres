@@ -129,7 +129,7 @@ static HTAB *collation_cache = NULL;
 
 
 #if defined(WIN32) && defined(LC_MESSAGES)
-static char *IsoLocaleName(const char *);		/* MSVC specific */
+static char *IsoLocaleName(const char *);	/* MSVC specific */
 #endif
 
 
@@ -174,7 +174,7 @@ pg_perm_setlocale(int category, const char *locale)
 	else
 #endif
 		result = setlocale(category, locale);
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 
 	if (result == NULL)
 		return result;			/* fall out immediately on failure */
@@ -219,9 +219,9 @@ pg_perm_setlocale(int category, const char *locale)
 			result = IsoLocaleName(locale);
 			if (result == NULL)
 				result = (char *) locale;
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 			break;
-#endif   /* LC_MESSAGES */
+#endif							/* LC_MESSAGES */
 		case LC_MONETARY:
 			envvar = "LC_MONETARY";
 			envbuf = lc_monetary_envbuf;
@@ -752,7 +752,7 @@ strftime_win32(char *dst, size_t dstlen,
 
 /* redefine strftime() */
 #define strftime(a,b,c,d) strftime_win32(a,b,c,d)
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 
 /* Subroutine for cache_locale_time(). */
 static void
@@ -972,9 +972,9 @@ IsoLocaleName(const char *winlocname)
 	return NULL;
 #else
 	return NULL;				/* Not supported on this version of msvc/mingw */
-#endif   /* _MSC_VER >= 1400 */
+#endif							/* _MSC_VER >= 1400 */
 }
-#endif   /* WIN32 && LC_MESSAGES */
+#endif							/* WIN32 && LC_MESSAGES */
 
 
 /*
@@ -1242,7 +1242,7 @@ report_newlocale_failure(const char *localename)
 			  errdetail("The operating system could not find any locale data for the locale name \"%s\".",
 						localename) : 0)));
 }
-#endif   /* HAVE_LOCALE_T */
+#endif							/* HAVE_LOCALE_T */
 
 
 /*
@@ -1346,7 +1346,7 @@ pg_newlocale_from_collation(Oid collid)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("collation provider LIBC is not supported on this platform")));
-#endif   /* not HAVE_LOCALE_T */
+#endif							/* not HAVE_LOCALE_T */
 		}
 		else if (collform->collprovider == COLLPROVIDER_ICU)
 		{
@@ -1369,7 +1369,7 @@ pg_newlocale_from_collation(Oid collid)
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("ICU is not supported in this build"), \
 			   errhint("You need to rebuild PostgreSQL using --with-icu.")));
-#endif   /* not USE_ICU */
+#endif							/* not USE_ICU */
 		}
 
 		collversion = SysCacheGetAttr(COLLOID, tp, Anum_pg_collation_collversion,
@@ -1569,7 +1569,7 @@ wchar2char(char *to, const wchar_t *from, size_t tolen, pg_locale_t locale)
 		}
 	}
 	else
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 	if (locale == (pg_locale_t) 0)
 	{
 		/* Use wcstombs directly for the default locale */
@@ -1588,12 +1588,12 @@ wchar2char(char *to, const wchar_t *from, size_t tolen, pg_locale_t locale)
 		result = wcstombs(to, from, tolen);
 
 		uselocale(save_locale);
-#endif   /* HAVE_WCSTOMBS_L */
+#endif							/* HAVE_WCSTOMBS_L */
 #else							/* !HAVE_LOCALE_T */
 		/* Can't have locale != 0 without HAVE_LOCALE_T */
 		elog(ERROR, "wcstombs_l is not available");
 		result = 0;				/* keep compiler quiet */
-#endif   /* HAVE_LOCALE_T */
+#endif							/* HAVE_LOCALE_T */
 	}
 
 	return result;
@@ -1642,7 +1642,7 @@ char2wchar(wchar_t *to, size_t tolen, const char *from, size_t fromlen,
 		}
 	}
 	else
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 	{
 		/* mbstowcs requires ending '\0' */
 		char	   *str = pnstrdup(from, fromlen);
@@ -1665,12 +1665,12 @@ char2wchar(wchar_t *to, size_t tolen, const char *from, size_t fromlen,
 			result = mbstowcs(to, str, tolen);
 
 			uselocale(save_locale);
-#endif   /* HAVE_MBSTOWCS_L */
+#endif							/* HAVE_MBSTOWCS_L */
 #else							/* !HAVE_LOCALE_T */
 			/* Can't have locale != 0 without HAVE_LOCALE_T */
 			elog(ERROR, "mbstowcs_l is not available");
 			result = 0;			/* keep compiler quiet */
-#endif   /* HAVE_LOCALE_T */
+#endif							/* HAVE_LOCALE_T */
 		}
 
 		pfree(str);
@@ -1697,4 +1697,4 @@ char2wchar(wchar_t *to, size_t tolen, const char *from, size_t fromlen,
 	return result;
 }
 
-#endif   /* USE_WIDE_UPPER_LOWER */
+#endif							/* USE_WIDE_UPPER_LOWER */

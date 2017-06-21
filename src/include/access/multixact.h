@@ -157,4 +157,4 @@ extern const char *multixact_identify(uint8 info);
 extern char *mxid_to_string(MultiXactId multi, int nmembers,
 			   MultiXactMember *members);
 
-#endif   /* MULTIXACT_H */
+#endif							/* MULTIXACT_H */

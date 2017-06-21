@@ -22,4 +22,4 @@ typedef struct PLyResultObject
 extern void PLy_result_init_type(void);
 extern PyObject *PLy_result_new(void);
 
-#endif   /* PLPY_RESULTOBJECT_H */
+#endif							/* PLPY_RESULTOBJECT_H */

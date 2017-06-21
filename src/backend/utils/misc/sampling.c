@@ -59,8 +59,8 @@ BlockSampler_HasMore(BlockSampler bs)
 BlockNumber
 BlockSampler_Next(BlockSampler bs)
 {
-	BlockNumber K = bs->N - bs->t;		/* remaining blocks */
-	int			k = bs->n - bs->m;		/* blocks still to sample */
+	BlockNumber K = bs->N - bs->t;	/* remaining blocks */
+	int			k = bs->n - bs->m;	/* blocks still to sample */
 	double		p;				/* probability to skip block */
 	double		V;				/* random */
 
@@ -150,7 +150,7 @@ reservoir_get_next_S(ReservoirState rs, double t, int n)
 		double		V,
 					quot;
 
-		V = sampler_random_fract(rs->randstate);		/* Generate V */
+		V = sampler_random_fract(rs->randstate);	/* Generate V */
 		S = 0;
 		t += 1;
 		/* Note: "num" in Vitter's code is always equal to t - n */
@@ -211,7 +211,7 @@ reservoir_get_next_S(ReservoirState rs, double t, int n)
 				y *= numer / denom;
 				denom -= 1;
 			}
-			W = exp(-log(sampler_random_fract(rs->randstate)) / n);		/* Generate W in advance */
+			W = exp(-log(sampler_random_fract(rs->randstate)) / n); /* Generate W in advance */
 			if (exp(log(y) / n) <= (t + X) / t)
 				break;
 		}

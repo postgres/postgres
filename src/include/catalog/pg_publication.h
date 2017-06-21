@@ -101,4 +101,4 @@ extern char *get_publication_name(Oid pubid);
 
 extern Datum pg_get_publication_tables(PG_FUNCTION_ARGS);
 
-#endif   /* PG_PUBLICATION_H */
+#endif							/* PG_PUBLICATION_H */

@@ -108,8 +108,8 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptInfo *parent)
 	rel->rows = 0;
 	/* cheap startup cost is interesting iff not all tuples to be retrieved */
 	rel->consider_startup = (root->tuple_fraction > 0);
-	rel->consider_param_startup = false;		/* might get changed later */
-	rel->consider_parallel = false;		/* might get changed later */
+	rel->consider_param_startup = false;	/* might get changed later */
+	rel->consider_parallel = false; /* might get changed later */
 	rel->reltarget = create_empty_pathtarget();
 	rel->pathlist = NIL;
 	rel->ppilist = NIL;
@@ -132,7 +132,7 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptInfo *parent)
 	rel->allvisfrac = 0;
 	rel->subroot = NULL;
 	rel->subplan_params = NIL;
-	rel->rel_parallel_workers = -1;		/* set up in get_relation_info */
+	rel->rel_parallel_workers = -1; /* set up in get_relation_info */
 	rel->serverid = InvalidOid;
 	rel->userid = rte->checkAsUser;
 	rel->useridiscurrent = false;
@@ -944,7 +944,7 @@ fetch_upper_rel(PlannerInfo *root, UpperRelationKind kind, Relids relids)
 	/* cheap startup cost is interesting iff not all tuples to be retrieved */
 	upperrel->consider_startup = (root->tuple_fraction > 0);
 	upperrel->consider_param_startup = false;
-	upperrel->consider_parallel = false;		/* might get changed later */
+	upperrel->consider_parallel = false;	/* might get changed later */
 	upperrel->reltarget = create_empty_pathtarget();
 	upperrel->pathlist = NIL;
 	upperrel->cheapest_startup_path = NULL;

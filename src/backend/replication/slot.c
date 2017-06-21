@@ -86,7 +86,7 @@ typedef struct ReplicationSlotOnDisk
 #define ReplicationSlotOnDiskV2Size \
 	sizeof(ReplicationSlotOnDisk) - ReplicationSlotOnDiskConstantSize
 
-#define SLOT_MAGIC		0x1051CA1		/* format identifier */
+#define SLOT_MAGIC		0x1051CA1	/* format identifier */
 #define SLOT_VERSION	2		/* version for new files */
 
 /* Control array for replication slot management */

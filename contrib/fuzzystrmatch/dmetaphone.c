@@ -111,7 +111,7 @@ The remaining code is authored by Andrew Dunstan <amdunstan@ncshp.org> and
 #include <string.h>
 #include <stdarg.h>
 
-#endif   /* DMETAPHONE_MAIN */
+#endif							/* DMETAPHONE_MAIN */
 
 #include <assert.h>
 #include <ctype.h>
@@ -197,7 +197,7 @@ dmetaphone_alt(PG_FUNCTION_ARGS)
  * in a case like this.
  */
 
-#define META_FREE(x) ((void)true)		/* pfree((x)) */
+#define META_FREE(x) ((void)true)	/* pfree((x)) */
 #else							/* not defined DMETAPHONE_MAIN */
 
 /* use the standard malloc library when not running in PostgreSQL */
@@ -209,7 +209,7 @@ dmetaphone_alt(PG_FUNCTION_ARGS)
 					  (v = (t*)realloc((v),((n)*sizeof(t))))
 
 #define META_FREE(x) free((x))
-#endif   /* defined DMETAPHONE_MAIN */
+#endif							/* defined DMETAPHONE_MAIN */
 
 
 
@@ -977,7 +977,7 @@ DoubleMetaphone(char *str, char **codes)
 					}
 				}
 
-				if (GetAt(original, current + 1) == 'J')		/* it could happen! */
+				if (GetAt(original, current + 1) == 'J')	/* it could happen! */
 					current += 2;
 				else
 					current += 1;

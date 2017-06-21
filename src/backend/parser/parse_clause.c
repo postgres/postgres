@@ -1323,7 +1323,7 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 			ListCell   *lx,
 					   *rx;
 
-			Assert(j->usingClause == NIL);		/* shouldn't have USING() too */
+			Assert(j->usingClause == NIL);	/* shouldn't have USING() too */
 
 			foreach(lx, l_colnames)
 			{
@@ -3389,7 +3389,7 @@ addTargetToGroupList(ParseState *pstate, TargetEntry *tle,
 		grpcl->tleSortGroupRef = assignSortGroupRef(tle, targetlist);
 		grpcl->eqop = eqop;
 		grpcl->sortop = sortop;
-		grpcl->nulls_first = false;		/* OK with or without sortop */
+		grpcl->nulls_first = false; /* OK with or without sortop */
 		grpcl->hashable = hashable;
 
 		grouplist = lappend(grouplist, grpcl);

@@ -293,7 +293,7 @@ resolve_symlinks(char *path)
 		log_error4(_("could not change directory to \"%s\": %s"), orig_wd, strerror(errno));
 		return -1;
 	}
-#endif   /* HAVE_READLINK */
+#endif							/* HAVE_READLINK */
 
 	return 0;
 }
@@ -499,7 +499,7 @@ pipe_read_line(char *cmd, char *line, int maxsize)
 	CloseHandle(childstdoutrddup);
 
 	return retval;
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 }
 
 

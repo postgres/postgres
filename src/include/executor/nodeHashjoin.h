@@ -25,4 +25,4 @@ extern void ExecReScanHashJoin(HashJoinState *node);
 extern void ExecHashJoinSaveTuple(MinimalTuple tuple, uint32 hashvalue,
 					  BufFile **fileptr);
 
-#endif   /* NODEHASHJOIN_H */
+#endif							/* NODEHASHJOIN_H */

@@ -36,4 +36,4 @@ extern int	pgarch_start(void);
 extern void PgArchiverMain(int argc, char *argv[]) pg_attribute_noreturn();
 #endif
 
-#endif   /* _PGARCH_H */
+#endif							/* _PGARCH_H */

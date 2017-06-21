@@ -82,4 +82,4 @@ extern pg_crc32c pg_comp_crc32c_sb8(pg_crc32c crc, const void *data, size_t len)
 
 #endif
 
-#endif   /* PG_CRC32C_H */
+#endif							/* PG_CRC32C_H */

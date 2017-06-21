@@ -358,9 +358,9 @@ static SERIALIZABLEXACT *OldCommittedSxact;
  * attempt to degrade performance (mostly as false positive serialization
  * failure) gracefully in the face of memory pressurel
  */
-int			max_predicate_locks_per_xact;		/* set by guc.c */
+int			max_predicate_locks_per_xact;	/* set by guc.c */
 int			max_predicate_locks_per_relation;	/* set by guc.c */
-int			max_predicate_locks_per_page;		/* set by guc.c */
+int			max_predicate_locks_per_page;	/* set by guc.c */
 
 /*
  * This provides a list of objects in order to track transactions
@@ -2914,8 +2914,8 @@ DropAllPredicateLocksFromTable(Relation relation, bool transfer)
 		heapId = relation->rd_index->indrelid;
 	}
 	Assert(heapId != InvalidOid);
-	Assert(transfer || !isIndex);		/* index OID only makes sense with
-										 * transfer */
+	Assert(transfer || !isIndex);	/* index OID only makes sense with
+									 * transfer */
 
 	/* Retrieve first time needed, then keep. */
 	heaptargettaghash = 0;

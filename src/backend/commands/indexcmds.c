@@ -645,7 +645,7 @@ DefineIndex(Oid relationId,
 		else
 		{
 			elog(ERROR, "unknown constraint type");
-			constraint_type = NULL;		/* keep compiler quiet */
+			constraint_type = NULL; /* keep compiler quiet */
 		}
 
 		ereport(DEBUG1,
@@ -909,7 +909,7 @@ DefineIndex(Oid relationId,
 												   newer_snapshots[k]))
 						break;
 				}
-				if (k >= n_newer_snapshots)		/* not there anymore */
+				if (k >= n_newer_snapshots) /* not there anymore */
 					SetInvalidVirtualTransactionId(old_snapshots[j]);
 			}
 			pfree(newer_snapshots);
@@ -1704,9 +1704,9 @@ ChooseIndexColumnNames(List *indexElems)
 
 		/* Get the preliminary name from the IndexElem */
 		if (ielem->indexcolname)
-			origname = ielem->indexcolname;		/* caller-specified name */
+			origname = ielem->indexcolname; /* caller-specified name */
 		else if (ielem->name)
-			origname = ielem->name;		/* simple column reference */
+			origname = ielem->name; /* simple column reference */
 		else
 			origname = "expr";	/* default name for expression */
 

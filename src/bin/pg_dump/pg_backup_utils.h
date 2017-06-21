@@ -35,4 +35,4 @@ extern void exit_nicely(int code) pg_attribute_noreturn();
 
 extern void exit_horribly(const char *modulename, const char *fmt,...) pg_attribute_printf(2, 3) pg_attribute_noreturn();
 
-#endif   /* PG_BACKUP_UTILS_H */
+#endif							/* PG_BACKUP_UTILS_H */

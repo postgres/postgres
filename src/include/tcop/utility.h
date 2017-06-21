@@ -52,4 +52,4 @@ extern LogStmtLevel GetCommandLogLevel(Node *parsetree);
 
 extern bool CommandIsReadOnly(PlannedStmt *pstmt);
 
-#endif   /* UTILITY_H */
+#endif							/* UTILITY_H */

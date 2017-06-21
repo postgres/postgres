@@ -96,7 +96,7 @@ typedef struct ExtensionVersionInfo
 	/* working state for Dijkstra's algorithm: */
 	bool		distance_known; /* is distance from start known yet? */
 	int			distance;		/* current worst-case distance estimate */
-	struct ExtensionVersionInfo *previous;		/* current best predecessor */
+	struct ExtensionVersionInfo *previous;	/* current best predecessor */
 } ExtensionVersionInfo;
 
 /* Local functions */
@@ -2387,7 +2387,7 @@ pg_extension_config_dump(PG_FUNCTION_ARGS)
 
 	extTup = systable_getnext(extScan);
 
-	if (!HeapTupleIsValid(extTup))		/* should not happen */
+	if (!HeapTupleIsValid(extTup))	/* should not happen */
 		elog(ERROR, "could not find tuple for extension %u",
 			 CurrentExtensionObject);
 
@@ -2433,7 +2433,7 @@ pg_extension_config_dump(PG_FUNCTION_ARGS)
 		{
 			if (arrayData[i] == tableoid)
 			{
-				arrayIndex = i + 1;		/* replace this element instead */
+				arrayIndex = i + 1; /* replace this element instead */
 				break;
 			}
 		}
@@ -2535,7 +2535,7 @@ extension_config_remove(Oid extensionoid, Oid tableoid)
 
 	extTup = systable_getnext(extScan);
 
-	if (!HeapTupleIsValid(extTup))		/* should not happen */
+	if (!HeapTupleIsValid(extTup))	/* should not happen */
 		elog(ERROR, "could not find tuple for extension %u",
 			 extensionoid);
 
@@ -2736,7 +2736,7 @@ AlterExtensionNamespace(const char *extensionName, const char *newschema, Oid *o
 
 	extTup = systable_getnext(extScan);
 
-	if (!HeapTupleIsValid(extTup))		/* should not happen */
+	if (!HeapTupleIsValid(extTup))	/* should not happen */
 		elog(ERROR, "could not find tuple for extension %u",
 			 extensionOid);
 
@@ -2801,7 +2801,7 @@ AlterExtensionNamespace(const char *extensionName, const char *newschema, Oid *o
 		dep.objectId = pg_depend->objid;
 		dep.objectSubId = pg_depend->objsubid;
 
-		if (dep.objectSubId != 0)		/* should not happen */
+		if (dep.objectSubId != 0)	/* should not happen */
 			elog(ERROR, "extension should not have a sub-object dependency");
 
 		/* Relocate the object */

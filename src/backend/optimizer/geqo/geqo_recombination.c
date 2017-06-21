@@ -89,4 +89,4 @@ free_city_table(PlannerInfo *root, City *city_table)
 	pfree(city_table);
 }
 
-#endif   /* CX || PX || OX1 || OX2 */
+#endif							/* CX || PX || OX1 || OX2 */

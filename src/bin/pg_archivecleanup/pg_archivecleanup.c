@@ -28,14 +28,13 @@ const char *progname;
 /* Options and defaults */
 bool		debug = false;		/* are we debugging? */
 bool		dryrun = false;		/* are we performing a dry-run operation? */
-char	   *additional_ext = NULL;		/* Extension to remove from filenames */
+char	   *additional_ext = NULL;	/* Extension to remove from filenames */
 
 char	   *archiveLocation;	/* where to find the archive? */
 char	   *restartWALFileName; /* the file from which we can restart restore */
 char		WALFilePath[MAXPGPATH * 2]; /* the file path including archive */
-char		exclusiveCleanupFileName[MAXFNAMELEN];		/* the oldest file we
-														 * want to remain in
-														 * archive */
+char		exclusiveCleanupFileName[MAXFNAMELEN];	/* the oldest file we want
+													 * to remain in archive */
 
 
 /* =====================================================================
@@ -315,8 +314,8 @@ main(int argc, char **argv)
 				dryrun = true;
 				break;
 			case 'x':
-				additional_ext = pg_strdup(optarg);		/* Extension to remove
-														 * from xlogfile names */
+				additional_ext = pg_strdup(optarg); /* Extension to remove
+													 * from xlogfile names */
 				break;
 			default:
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);

@@ -43,4 +43,4 @@ typedef int Buffer;
  */
 typedef struct BufferAccessStrategyData *BufferAccessStrategy;
 
-#endif   /* BUF_H */
+#endif							/* BUF_H */

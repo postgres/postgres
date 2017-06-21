@@ -16,7 +16,7 @@
 
 typedef struct LogicalRepRelMapEntry
 {
-	LogicalRepRelation remoterel;		/* key is remoterel.remoteid */
+	LogicalRepRelation remoterel;	/* key is remoterel.remoteid */
 
 	/* Mapping to local relation, filled as needed. */
 	Oid			localreloid;	/* local relation id */
@@ -39,4 +39,4 @@ extern void logicalrep_rel_close(LogicalRepRelMapEntry *rel,
 extern void logicalrep_typmap_update(LogicalRepTyp *remotetyp);
 extern Oid	logicalrep_typmap_getid(Oid remoteid);
 
-#endif   /* LOGICALRELATION_H */
+#endif							/* LOGICALRELATION_H */

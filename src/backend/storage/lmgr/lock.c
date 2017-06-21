@@ -336,7 +336,7 @@ PROCLOCK_PRINT(const char *where, const PROCLOCK *proclockP)
 
 #define LOCK_PRINT(where, lock, type)  ((void) 0)
 #define PROCLOCK_PRINT(where, proclockP)  ((void) 0)
-#endif   /* not LOCK_DEBUG */
+#endif							/* not LOCK_DEBUG */
 
 
 static uint32 proclock_hash(const void *key, Size keysize);
@@ -595,7 +595,7 @@ LockHasWaiters(const LOCKTAG *locktag, LOCKMODE lockmode, bool sessionLock)
 	/*
 	 * Find the LOCALLOCK entry for this lock and lockmode
 	 */
-	MemSet(&localtag, 0, sizeof(localtag));		/* must clear padding */
+	MemSet(&localtag, 0, sizeof(localtag)); /* must clear padding */
 	localtag.lock = *locktag;
 	localtag.mode = lockmode;
 
@@ -749,7 +749,7 @@ LockAcquireExtended(const LOCKTAG *locktag,
 	/*
 	 * Find or create a LOCALLOCK entry for this lock and lockmode
 	 */
-	MemSet(&localtag, 0, sizeof(localtag));		/* must clear padding */
+	MemSet(&localtag, 0, sizeof(localtag)); /* must clear padding */
 	localtag.lock = *locktag;
 	localtag.mode = lockmode;
 
@@ -1212,7 +1212,7 @@ SetupLockInTable(LockMethod lockMethodTable, PGPROC *proc,
 				}
 			}
 		}
-#endif   /* CHECK_DEADLOCK_RISK */
+#endif							/* CHECK_DEADLOCK_RISK */
 	}
 
 	/*
@@ -1842,7 +1842,7 @@ LockRelease(const LOCKTAG *locktag, LOCKMODE lockmode, bool sessionLock)
 	/*
 	 * Find the LOCALLOCK entry for this lock and lockmode
 	 */
-	MemSet(&localtag, 0, sizeof(localtag));		/* must clear padding */
+	MemSet(&localtag, 0, sizeof(localtag)); /* must clear padding */
 	localtag.lock = *locktag;
 	localtag.mode = lockmode;
 
@@ -3923,7 +3923,7 @@ DumpAllLocks(void)
 			elog(LOG, "DumpAllLocks: proclock->tag.myLock = NULL");
 	}
 }
-#endif   /* LOCK_DEBUG */
+#endif							/* LOCK_DEBUG */
 
 /*
  * LOCK 2PC resource manager's routines

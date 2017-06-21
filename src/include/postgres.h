@@ -147,7 +147,7 @@ typedef union
 	{
 		uint32		va_header;
 		uint32		va_rawsize; /* Original data size (excludes header) */
-		char		va_data[FLEXIBLE_ARRAY_MEMBER];		/* Compressed data */
+		char		va_data[FLEXIBLE_ARRAY_MEMBER]; /* Compressed data */
 	}			va_compressed;
 } varattrib_4b;
 
@@ -264,7 +264,7 @@ typedef struct
 #define SET_VARTAG_1B_E(PTR,tag) \
 	(((varattrib_1b_e *) (PTR))->va_header = 0x01, \
 	 ((varattrib_1b_e *) (PTR))->va_tag = (tag))
-#endif   /* WORDS_BIGENDIAN */
+#endif							/* WORDS_BIGENDIAN */
 
 #define VARHDRSZ_SHORT			offsetof(varattrib_1b, va_data)
 #define VARATT_SHORT_MAX		0x7F
@@ -803,4 +803,4 @@ extern void ExceptionalCondition(const char *conditionName,
 					 const char *errorType,
 			   const char *fileName, int lineNumber) pg_attribute_noreturn();
 
-#endif   /* POSTGRES_H */
+#endif							/* POSTGRES_H */

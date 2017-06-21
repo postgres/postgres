@@ -43,7 +43,7 @@ typedef enum ParseExprKind
 	EXPR_KIND_FILTER,			/* FILTER */
 	EXPR_KIND_WINDOW_PARTITION, /* window definition PARTITION BY */
 	EXPR_KIND_WINDOW_ORDER,		/* window definition ORDER BY */
-	EXPR_KIND_WINDOW_FRAME_RANGE,		/* window frame clause with RANGE */
+	EXPR_KIND_WINDOW_FRAME_RANGE,	/* window frame clause with RANGE */
 	EXPR_KIND_WINDOW_FRAME_ROWS,	/* window frame clause with ROWS */
 	EXPR_KIND_SELECT_TARGET,	/* SELECT target list item */
 	EXPR_KIND_INSERT_TARGET,	/* INSERT target list item */
@@ -63,11 +63,11 @@ typedef enum ParseExprKind
 	EXPR_KIND_FUNCTION_DEFAULT, /* default parameter value for function */
 	EXPR_KIND_INDEX_EXPRESSION, /* index expression */
 	EXPR_KIND_INDEX_PREDICATE,	/* index predicate */
-	EXPR_KIND_ALTER_COL_TRANSFORM,		/* transform expr in ALTER COLUMN TYPE */
+	EXPR_KIND_ALTER_COL_TRANSFORM,	/* transform expr in ALTER COLUMN TYPE */
 	EXPR_KIND_EXECUTE_PARAMETER,	/* parameter value in EXECUTE */
 	EXPR_KIND_TRIGGER_WHEN,		/* WHEN condition in CREATE TRIGGER */
 	EXPR_KIND_POLICY,			/* USING or WITH CHECK expr in policy */
-	EXPR_KIND_PARTITION_EXPRESSION		/* PARTITION BY expression */
+	EXPR_KIND_PARTITION_EXPRESSION	/* PARTITION BY expression */
 } ParseExprKind;
 
 
@@ -167,7 +167,7 @@ typedef Node *(*CoerceParamHook) (ParseState *pstate, Param *param,
  */
 struct ParseState
 {
-	struct ParseState *parentParseState;		/* stack link */
+	struct ParseState *parentParseState;	/* stack link */
 	const char *p_sourcetext;	/* source text, or NULL if not available */
 	List	   *p_rtable;		/* range table so far */
 	List	   *p_joinexprs;	/* JoinExprs for RTE_JOIN p_rtable entries */
@@ -175,25 +175,24 @@ struct ParseState
 								 * node's fromlist) */
 	List	   *p_namespace;	/* currently-referenceable RTEs (List of
 								 * ParseNamespaceItem) */
-	bool		p_lateral_active;		/* p_lateral_only items visible? */
+	bool		p_lateral_active;	/* p_lateral_only items visible? */
 	List	   *p_ctenamespace; /* current namespace for common table exprs */
 	List	   *p_future_ctes;	/* common table exprs not yet in namespace */
-	CommonTableExpr *p_parent_cte;		/* this query's containing CTE */
-	Relation	p_target_relation;		/* INSERT/UPDATE/DELETE target rel */
-	RangeTblEntry *p_target_rangetblentry;		/* target rel's RTE */
+	CommonTableExpr *p_parent_cte;	/* this query's containing CTE */
+	Relation	p_target_relation;	/* INSERT/UPDATE/DELETE target rel */
+	RangeTblEntry *p_target_rangetblentry;	/* target rel's RTE */
 	bool		p_is_insert;	/* process assignment like INSERT not UPDATE */
 	List	   *p_windowdefs;	/* raw representations of window clauses */
 	ParseExprKind p_expr_kind;	/* what kind of expression we're parsing */
 	int			p_next_resno;	/* next targetlist resno to assign */
 	List	   *p_multiassign_exprs;	/* junk tlist entries for multiassign */
-	List	   *p_locking_clause;		/* raw FOR UPDATE/FOR SHARE info */
+	List	   *p_locking_clause;	/* raw FOR UPDATE/FOR SHARE info */
 	bool		p_locked_from_parent;	/* parent has marked this subquery
 										 * with FOR UPDATE/FOR SHARE */
-	bool		p_resolve_unknowns;		/* resolve unknown-type SELECT outputs
-										 * as type text */
+	bool		p_resolve_unknowns; /* resolve unknown-type SELECT outputs as
+									 * type text */
 
-	QueryEnvironment *p_queryEnv;		/* curr env, incl refs to enclosing
-										 * env */
+	QueryEnvironment *p_queryEnv;	/* curr env, incl refs to enclosing env */
 
 	/* Flags telling about things found in the query: */
 	bool		p_hasAggs;
@@ -212,7 +211,7 @@ struct ParseState
 	PostParseColumnRefHook p_post_columnref_hook;
 	ParseParamRefHook p_paramref_hook;
 	CoerceParamHook p_coerce_param_hook;
-	void	   *p_ref_hook_state;		/* common passthrough link for above */
+	void	   *p_ref_hook_state;	/* common passthrough link for above */
 };
 
 /*
@@ -280,4 +279,4 @@ extern ArrayRef *transformArraySubscripts(ParseState *pstate,
 						 Node *assignFrom);
 extern Const *make_const(ParseState *pstate, Value *value, int location);
 
-#endif   /* PARSE_NODE_H */
+#endif							/* PARSE_NODE_H */

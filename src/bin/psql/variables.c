@@ -273,7 +273,7 @@ SetVariable(VariableSpace space, const char *name, const char *value)
 				}
 			}
 			else if (new_value)
-				pg_free(new_value);		/* current->value is left unchanged */
+				pg_free(new_value); /* current->value is left unchanged */
 
 			return confirmed;
 		}

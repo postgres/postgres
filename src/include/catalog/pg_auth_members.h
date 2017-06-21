@@ -54,4 +54,4 @@ typedef FormData_pg_auth_members *Form_pg_auth_members;
 #define Anum_pg_auth_members_grantor		3
 #define Anum_pg_auth_members_admin_option	4
 
-#endif   /* PG_AUTH_MEMBERS_H */
+#endif							/* PG_AUTH_MEMBERS_H */

@@ -62,7 +62,7 @@
 #include "replication/logical.h"
 #include "replication/reorderbuffer.h"
 #include "replication/slot.h"
-#include "replication/snapbuild.h"		/* just for SnapBuildSnapDecRefcount */
+#include "replication/snapbuild.h"	/* just for SnapBuildSnapDecRefcount */
 #include "storage/bufmgr.h"
 #include "storage/fd.h"
 #include "storage/sinval.h"
@@ -124,8 +124,8 @@ typedef struct ReorderBufferToastEnt
 	Size		num_chunks;		/* number of chunks we've already seen */
 	Size		size;			/* combined size of chunks seen */
 	dlist_head	chunks;			/* linked list of chunks */
-	struct varlena *reconstructed;		/* reconstructed varlena now pointed
-										 * to in main tup */
+	struct varlena *reconstructed;	/* reconstructed varlena now pointed to in
+									 * main tup */
 } ReorderBufferToastEnt;
 
 /* Disk serialization support datastructures */
@@ -157,7 +157,7 @@ static const Size max_changes_in_memory = 4096;
  * major bottleneck, especially when spilling to disk while decoding batch
  * workloads.
  */
-static const Size max_cached_tuplebufs = 4096 * 2;		/* ~8MB */
+static const Size max_cached_tuplebufs = 4096 * 2;	/* ~8MB */
 
 /* ---------------------------------------
  * primary reorderbuffer support routines

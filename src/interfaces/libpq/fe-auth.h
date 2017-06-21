@@ -30,4 +30,4 @@ extern void pg_fe_scram_exchange(void *opaq, char *input, int inputlen,
 					 bool *done, bool *success, PQExpBuffer errorMessage);
 extern char *pg_fe_scram_build_verifier(const char *password);
 
-#endif   /* FE_AUTH_H */
+#endif							/* FE_AUTH_H */

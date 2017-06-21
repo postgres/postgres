@@ -266,7 +266,7 @@ extern void slist_check(slist_head *head);
  */
 #define dlist_check(head)	((void) (head))
 #define slist_check(head)	((void) (head))
-#endif   /* ILIST_DEBUG */
+#endif							/* ILIST_DEBUG */
 
 /* doubly linked list implementation */
 
@@ -724,4 +724,4 @@ slist_delete_current(slist_mutable_iter *iter)
 		 (iter).cur = (iter).next,											\
 		 (iter).next = (iter).next ? (iter).next->next : NULL)
 
-#endif   /* ILIST_H */
+#endif							/* ILIST_H */

@@ -606,11 +606,11 @@ DefineType(ParseState *pstate, List *names, List *parameters)
 	address =
 		TypeCreate(InvalidOid,	/* no predetermined type OID */
 				   typeName,	/* type name */
-				   typeNamespace,		/* namespace */
+				   typeNamespace,	/* namespace */
 				   InvalidOid,	/* relation oid (n/a here) */
 				   0,			/* relation kind (ditto) */
 				   GetUserId(), /* owner's ID */
-				   internalLength,		/* internal size */
+				   internalLength,	/* internal size */
 				   TYPTYPE_BASE,	/* type-type (base type) */
 				   category,	/* type-category */
 				   preferred,	/* is it a preferred type? */
@@ -653,7 +653,7 @@ DefineType(ParseState *pstate, List *names, List *parameters)
 			   GetUserId(),		/* owner's ID */
 			   -1,				/* internal size (always varlena) */
 			   TYPTYPE_BASE,	/* type-type (base type) */
-			   TYPCATEGORY_ARRAY,		/* type-category (array) */
+			   TYPCATEGORY_ARRAY,	/* type-category (array) */
 			   false,			/* array types are never preferred */
 			   delimiter,		/* array element delimiter */
 			   F_ARRAY_IN,		/* input procedure */
@@ -662,7 +662,7 @@ DefineType(ParseState *pstate, List *names, List *parameters)
 			   F_ARRAY_SEND,	/* send procedure */
 			   typmodinOid,		/* typmodin procedure */
 			   typmodoutOid,	/* typmodout procedure */
-			   F_ARRAY_TYPANALYZE,		/* analyze procedure */
+			   F_ARRAY_TYPANALYZE,	/* analyze procedure */
 			   typoid,			/* element type ID */
 			   true,			/* yes this is an array type */
 			   InvalidOid,		/* no further array type */
@@ -1033,19 +1033,19 @@ DefineDomain(CreateDomainStmt *stmt)
 	address =
 		TypeCreate(InvalidOid,	/* no predetermined type OID */
 				   domainName,	/* type name */
-				   domainNamespace,		/* namespace */
+				   domainNamespace, /* namespace */
 				   InvalidOid,	/* relation oid (n/a here) */
 				   0,			/* relation kind (ditto) */
 				   GetUserId(), /* owner's ID */
-				   internalLength,		/* internal size */
-				   TYPTYPE_DOMAIN,		/* type-type (domain type) */
+				   internalLength,	/* internal size */
+				   TYPTYPE_DOMAIN,	/* type-type (domain type) */
 				   category,	/* type-category */
 				   false,		/* domain types are never preferred */
 				   delimiter,	/* array element delimiter */
-				   inputProcedure,		/* input procedure */
-				   outputProcedure,		/* output procedure */
+				   inputProcedure,	/* input procedure */
+				   outputProcedure, /* output procedure */
 				   receiveProcedure,	/* receive procedure */
-				   sendProcedure,		/* send procedure */
+				   sendProcedure,	/* send procedure */
 				   InvalidOid,	/* typmodin procedure - none */
 				   InvalidOid,	/* typmodout procedure - none */
 				   analyzeProcedure,	/* analyze procedure */
@@ -1054,7 +1054,7 @@ DefineDomain(CreateDomainStmt *stmt)
 				   InvalidOid,	/* no arrays for domains (yet) */
 				   basetypeoid, /* base type ID */
 				   defaultValue,	/* default type value (text) */
-				   defaultValueBin,		/* default type value (binary) */
+				   defaultValueBin, /* default type value (binary) */
 				   byValue,		/* passed by value */
 				   alignment,	/* required alignment */
 				   storage,		/* TOAST strategy */
@@ -1145,7 +1145,7 @@ DefineEnum(CreateEnumStmt *stmt)
 	enumTypeAddr =
 		TypeCreate(InvalidOid,	/* no predetermined type OID */
 				   enumName,	/* type name */
-				   enumNamespace,		/* namespace */
+				   enumNamespace,	/* namespace */
 				   InvalidOid,	/* relation oid (n/a here) */
 				   0,			/* relation kind (ditto) */
 				   GetUserId(), /* owner's ID */
@@ -1191,7 +1191,7 @@ DefineEnum(CreateEnumStmt *stmt)
 			   GetUserId(),		/* owner's ID */
 			   -1,				/* internal size (always varlena) */
 			   TYPTYPE_BASE,	/* type-type (base type) */
-			   TYPCATEGORY_ARRAY,		/* type-category (array) */
+			   TYPCATEGORY_ARRAY,	/* type-category (array) */
 			   false,			/* array types are never preferred */
 			   DEFAULT_TYPDELIM,	/* array element delimiter */
 			   F_ARRAY_IN,		/* input procedure */
@@ -1200,7 +1200,7 @@ DefineEnum(CreateEnumStmt *stmt)
 			   F_ARRAY_SEND,	/* send procedure */
 			   InvalidOid,		/* typmodin procedure - none */
 			   InvalidOid,		/* typmodout procedure - none */
-			   F_ARRAY_TYPANALYZE,		/* analyze procedure */
+			   F_ARRAY_TYPANALYZE,	/* analyze procedure */
 			   enumTypeAddr.objectId,	/* element type ID */
 			   true,			/* yes this is an array type */
 			   InvalidOid,		/* no further array type */
@@ -1473,12 +1473,12 @@ DefineRange(CreateRangeStmt *stmt)
 	address =
 		TypeCreate(InvalidOid,	/* no predetermined type OID */
 				   typeName,	/* type name */
-				   typeNamespace,		/* namespace */
+				   typeNamespace,	/* namespace */
 				   InvalidOid,	/* relation oid (n/a here) */
 				   0,			/* relation kind (ditto) */
 				   GetUserId(), /* owner's ID */
 				   -1,			/* internal size (always varlena) */
-				   TYPTYPE_RANGE,		/* type-type (range type) */
+				   TYPTYPE_RANGE,	/* type-type (range type) */
 				   TYPCATEGORY_RANGE,	/* type-category (range type) */
 				   false,		/* range types are never preferred */
 				   DEFAULT_TYPDELIM,	/* array element delimiter */
@@ -1491,7 +1491,7 @@ DefineRange(CreateRangeStmt *stmt)
 				   F_RANGE_TYPANALYZE,	/* analyze procedure */
 				   InvalidOid,	/* element type ID - none */
 				   false,		/* this is not an array type */
-				   rangeArrayOid,		/* array type we are about to create */
+				   rangeArrayOid,	/* array type we are about to create */
 				   InvalidOid,	/* base type ID (only for domains) */
 				   NULL,		/* never a default type value */
 				   NULL,		/* no binary form available either */
@@ -1521,7 +1521,7 @@ DefineRange(CreateRangeStmt *stmt)
 			   GetUserId(),		/* owner's ID */
 			   -1,				/* internal size (always varlena) */
 			   TYPTYPE_BASE,	/* type-type (base type) */
-			   TYPCATEGORY_ARRAY,		/* type-category (array) */
+			   TYPCATEGORY_ARRAY,	/* type-category (array) */
 			   false,			/* array types are never preferred */
 			   DEFAULT_TYPDELIM,	/* array element delimiter */
 			   F_ARRAY_IN,		/* input procedure */
@@ -1530,7 +1530,7 @@ DefineRange(CreateRangeStmt *stmt)
 			   F_ARRAY_SEND,	/* send procedure */
 			   InvalidOid,		/* typmodin procedure - none */
 			   InvalidOid,		/* typmodout procedure - none */
-			   F_ARRAY_TYPANALYZE,		/* analyze procedure */
+			   F_ARRAY_TYPANALYZE,	/* analyze procedure */
 			   typoid,			/* element type ID */
 			   true,			/* yes this is an array type */
 			   InvalidOid,		/* no further array type */
@@ -1591,14 +1591,14 @@ makeRangeConstructors(const char *name, Oid namespace,
 												   pronargs[i]);
 
 		myself = ProcedureCreate(name,	/* name: same as range type */
-								 namespace,		/* namespace */
+								 namespace, /* namespace */
 								 false, /* replace */
 								 false, /* returns set */
-								 rangeOid,		/* return type */
+								 rangeOid,	/* return type */
 								 BOOTSTRAP_SUPERUSERID, /* proowner */
 								 INTERNALlanguageId,	/* language */
-								 F_FMGR_INTERNAL_VALIDATOR,		/* language validator */
-								 prosrc[i],		/* prosrc */
+								 F_FMGR_INTERNAL_VALIDATOR, /* language validator */
+								 prosrc[i], /* prosrc */
 								 NULL,	/* probin */
 								 false, /* isAgg */
 								 false, /* isWindowFunc */
@@ -1606,8 +1606,8 @@ makeRangeConstructors(const char *name, Oid namespace,
 								 false, /* leakproof */
 								 false, /* isStrict */
 								 PROVOLATILE_IMMUTABLE, /* volatility */
-								 PROPARALLEL_SAFE,		/* parallel safety */
-								 constructorArgTypesVector,		/* parameterTypes */
+								 PROPARALLEL_SAFE,	/* parallel safety */
+								 constructorArgTypesVector, /* parameterTypes */
 								 PointerGetDatum(NULL), /* allParameterTypes */
 								 PointerGetDatum(NULL), /* parameterModes */
 								 PointerGetDatum(NULL), /* parameterNames */
@@ -2131,7 +2131,7 @@ AlterDomainDefault(List *names, Node *defaultRaw)
 	ParseState *pstate;
 	Relation	rel;
 	char	   *defaultValue;
-	Node	   *defaultExpr = NULL;		/* NULL if no default specified */
+	Node	   *defaultExpr = NULL; /* NULL if no default specified */
 	Datum		new_record[Natts_pg_type];
 	bool		new_record_nulls[Natts_pg_type];
 	bool		new_record_repl[Natts_pg_type];
@@ -2226,7 +2226,7 @@ AlterDomainDefault(List *names, Node *defaultRaw)
 	/* Rebuild dependencies */
 	GenerateTypeDependencies(typTup->typnamespace,
 							 domainoid,
-							 InvalidOid,		/* typrelid is n/a */
+							 InvalidOid,	/* typrelid is n/a */
 							 0, /* relation kind is n/a */
 							 typTup->typowner,
 							 typTup->typinput,
@@ -2237,11 +2237,11 @@ AlterDomainDefault(List *names, Node *defaultRaw)
 							 typTup->typmodout,
 							 typTup->typanalyze,
 							 InvalidOid,
-							 false,		/* a domain isn't an implicit array */
+							 false, /* a domain isn't an implicit array */
 							 typTup->typbasetype,
 							 typTup->typcollation,
 							 defaultExpr,
-							 true);		/* Rebuild is true */
+							 true); /* Rebuild is true */
 
 	InvokeObjectPostAlterHook(TypeRelationId, domainoid, 0);
 
@@ -3065,12 +3065,12 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 							  false,	/* Is Deferrable */
 							  false,	/* Is Deferred */
 							  !constr->skip_validation, /* Is Validated */
-							  InvalidOid,		/* not a relation constraint */
+							  InvalidOid,	/* not a relation constraint */
 							  NULL,
 							  0,
-							  domainOid,		/* domain constraint */
-							  InvalidOid,		/* no associated index */
-							  InvalidOid,		/* Foreign key fields */
+							  domainOid,	/* domain constraint */
+							  InvalidOid,	/* no associated index */
+							  InvalidOid,	/* Foreign key fields */
 							  NULL,
 							  NULL,
 							  NULL,
@@ -3079,11 +3079,11 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 							  ' ',
 							  ' ',
 							  ' ',
-							  NULL,		/* not an exclusion constraint */
-							  expr,		/* Tree form of check constraint */
+							  NULL, /* not an exclusion constraint */
+							  expr, /* Tree form of check constraint */
 							  ccbin,	/* Binary form of check constraint */
 							  ccsrc,	/* Source form of check constraint */
-							  true,		/* is local */
+							  true, /* is local */
 							  0,	/* inhcount */
 							  false,	/* connoinherit */
 							  false);	/* is_internal */

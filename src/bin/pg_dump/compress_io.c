@@ -388,7 +388,7 @@ ReadDataFromArchiveZlib(ArchiveHandle *AH, ReadFunc readF)
 	free(out);
 	free(zp);
 }
-#endif   /* HAVE_LIBZ */
+#endif							/* HAVE_LIBZ */
 
 
 /*

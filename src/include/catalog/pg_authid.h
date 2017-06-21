@@ -111,4 +111,4 @@ DATA(insert OID = 3377 ( "pg_stat_scan_tables" f t f f f f f -1 _null_ _null_));
 DATA(insert OID = 4200 ( "pg_signal_backend" f t f f f f f -1 _null_ _null_));
 #define DEFAULT_ROLE_SIGNAL_BACKENDID	4200
 
-#endif   /* PG_AUTHID_H */
+#endif							/* PG_AUTHID_H */

@@ -177,18 +177,18 @@ typedef struct TransactionStateData
 	TBlockState blockState;		/* high-level state */
 	int			nestingLevel;	/* transaction nesting depth */
 	int			gucNestLevel;	/* GUC context nesting depth */
-	MemoryContext curTransactionContext;		/* my xact-lifetime context */
+	MemoryContext curTransactionContext;	/* my xact-lifetime context */
 	ResourceOwner curTransactionOwner;	/* my query resources */
 	TransactionId *childXids;	/* subcommitted child XIDs, in XID order */
 	int			nChildXids;		/* # of subcommitted child XIDs */
 	int			maxChildXids;	/* allocated size of childXids[] */
 	Oid			prevUser;		/* previous CurrentUserId setting */
 	int			prevSecContext; /* previous SecurityRestrictionContext */
-	bool		prevXactReadOnly;		/* entry-time xact r/o state */
-	bool		startedInRecovery;		/* did we start in recovery? */
+	bool		prevXactReadOnly;	/* entry-time xact r/o state */
+	bool		startedInRecovery;	/* did we start in recovery? */
 	bool		didLogXid;		/* has xid been included in WAL record? */
-	int			parallelModeLevel;		/* Enter/ExitParallelMode counter */
-	struct TransactionStateData *parent;		/* back link to parent */
+	int			parallelModeLevel;	/* Enter/ExitParallelMode counter */
+	struct TransactionStateData *parent;	/* back link to parent */
 } TransactionStateData;
 
 typedef TransactionStateData *TransactionState;
@@ -2641,8 +2641,7 @@ CleanupTransaction(void)
 	 * do abort cleanup processing
 	 */
 	AtCleanup_Portals();		/* now safe to release portal memory */
-	AtEOXact_Snapshot(false, true);		/* and release the transaction's
-										 * snapshots */
+	AtEOXact_Snapshot(false, true); /* and release the transaction's snapshots */
 
 	CurrentResourceOwner = NULL;	/* and resource owner */
 	if (TopTransactionResourceOwner)
@@ -3769,7 +3768,7 @@ DefineSavepoint(char *name)
 		case TBLOCK_SUBINPROGRESS:
 			/* Normal subtransaction start */
 			PushTransaction();
-			s = CurrentTransactionState;		/* changed by push */
+			s = CurrentTransactionState;	/* changed by push */
 
 			/*
 			 * Savepoint names, like the TransactionState block itself, live
@@ -4080,7 +4079,7 @@ BeginInternalSubTransaction(char *name)
 		case TBLOCK_SUBINPROGRESS:
 			/* Normal subtransaction start */
 			PushTransaction();
-			s = CurrentTransactionState;		/* changed by push */
+			s = CurrentTransactionState;	/* changed by push */
 
 			/*
 			 * Savepoint names, like the TransactionState block itself, live

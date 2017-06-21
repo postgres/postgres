@@ -107,7 +107,7 @@ static const uint32 PGSS_PG_MAJOR_VERSION = PG_VERSION_NUM / 100;
 #define ASSUMED_LENGTH_INIT		1024	/* initial assumed mean query length */
 #define USAGE_DECREASE_FACTOR	(0.99)	/* decreased every entry_dealloc */
 #define STICKY_DECREASE_FACTOR	(0.50)	/* factor for sticky entries */
-#define USAGE_DEALLOC_PERCENT	5		/* free this % of entries at once */
+#define USAGE_DEALLOC_PERCENT	5	/* free this % of entries at once */
 
 #define JUMBLE_SIZE				1024	/* query serialization buffer size */
 
@@ -146,15 +146,15 @@ typedef struct Counters
 	double		sum_var_time;	/* sum of variances in execution time in msec */
 	int64		rows;			/* total # of retrieved or affected rows */
 	int64		shared_blks_hit;	/* # of shared buffer hits */
-	int64		shared_blks_read;		/* # of shared disk blocks read */
+	int64		shared_blks_read;	/* # of shared disk blocks read */
 	int64		shared_blks_dirtied;	/* # of shared disk blocks dirtied */
 	int64		shared_blks_written;	/* # of shared disk blocks written */
 	int64		local_blks_hit; /* # of local buffer hits */
 	int64		local_blks_read;	/* # of local disk blocks read */
-	int64		local_blks_dirtied;		/* # of local disk blocks dirtied */
-	int64		local_blks_written;		/* # of local disk blocks written */
+	int64		local_blks_dirtied; /* # of local disk blocks dirtied */
+	int64		local_blks_written; /* # of local disk blocks written */
 	int64		temp_blks_read; /* # of temp blocks read */
-	int64		temp_blks_written;		/* # of temp blocks written */
+	int64		temp_blks_written;	/* # of temp blocks written */
 	double		blk_read_time;	/* time spent reading, in msec */
 	double		blk_write_time; /* time spent writing, in msec */
 	double		usage;			/* usage factor */
@@ -183,7 +183,7 @@ typedef struct pgssEntry
 typedef struct pgssSharedState
 {
 	LWLock	   *lock;			/* protects hashtable search/modification */
-	double		cur_median_usage;		/* current median usage in hashtable */
+	double		cur_median_usage;	/* current median usage in hashtable */
 	Size		mean_query_len; /* current mean entry text length */
 	slock_t		mutex;			/* protects following fields only: */
 	Size		extent;			/* current extent of query file */
@@ -940,7 +940,7 @@ pgss_ExecutorEnd(QueryDesc *queryDesc)
 				   queryId,
 				   queryDesc->plannedstmt->stmt_location,
 				   queryDesc->plannedstmt->stmt_len,
-				   queryDesc->totaltime->total * 1000.0,		/* convert to msec */
+				   queryDesc->totaltime->total * 1000.0,	/* convert to msec */
 				   queryDesc->estate->es_processed,
 				   &queryDesc->totaltime->bufusage,
 				   NULL);
@@ -1337,7 +1337,7 @@ pg_stat_statements_reset(PG_FUNCTION_ARGS)
 #define PG_STAT_STATEMENTS_COLS_V1_1	18
 #define PG_STAT_STATEMENTS_COLS_V1_2	19
 #define PG_STAT_STATEMENTS_COLS_V1_3	23
-#define PG_STAT_STATEMENTS_COLS			23		/* maximum of above */
+#define PG_STAT_STATEMENTS_COLS			23	/* maximum of above */
 
 /*
  * Retrieve statement statistics.
@@ -2967,12 +2967,12 @@ generate_normalized_query(pgssJumbleState *jstate, const char *query,
 	char	   *norm_query;
 	int			query_len = *query_len_p;
 	int			i,
-				norm_query_buflen,		/* Space allowed for norm_query */
+				norm_query_buflen,	/* Space allowed for norm_query */
 				len_to_wrt,		/* Length (in bytes) to write */
 				quer_loc = 0,	/* Source query byte location */
 				n_quer_loc = 0, /* Normalized query byte location */
 				last_off = 0,	/* Offset from start for previous tok */
-				last_tok_len = 0;		/* Length (in bytes) of that tok */
+				last_tok_len = 0;	/* Length (in bytes) of that tok */
 
 	/*
 	 * Get constants' lengths (core system only gives us locations).  Note

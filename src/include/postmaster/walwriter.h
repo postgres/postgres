@@ -18,4 +18,4 @@ extern int	WalWriterFlushAfter;
 
 extern void WalWriterMain(void) pg_attribute_noreturn();
 
-#endif   /* _WALWRITER_H */
+#endif							/* _WALWRITER_H */

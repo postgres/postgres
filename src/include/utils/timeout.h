@@ -84,4 +84,4 @@ extern bool get_timeout_indicator(TimeoutId id, bool reset_indicator);
 extern TimestampTz get_timeout_start_time(TimeoutId id);
 extern TimestampTz get_timeout_finish_time(TimeoutId id);
 
-#endif   /* TIMEOUT_H */
+#endif							/* TIMEOUT_H */

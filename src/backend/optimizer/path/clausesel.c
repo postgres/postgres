@@ -31,7 +31,7 @@
  */
 typedef struct RangeQueryClause
 {
-	struct RangeQueryClause *next;		/* next in linked list */
+	struct RangeQueryClause *next;	/* next in linked list */
 	Node	   *var;			/* The common variable of the clauses */
 	bool		have_lobound;	/* found a low-bound clause yet? */
 	bool		have_hibound;	/* found a high-bound clause yet? */
@@ -848,7 +848,7 @@ clause_selectivity(PlannerInfo *root,
 
 #ifdef SELECTIVITY_DEBUG
 	elog(DEBUG4, "clause_selectivity: s1 %f", s1);
-#endif   /* SELECTIVITY_DEBUG */
+#endif							/* SELECTIVITY_DEBUG */
 
 	return s1;
 }

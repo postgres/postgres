@@ -81,8 +81,8 @@ typedef struct
 typedef struct SimpleEcontextStackEntry
 {
 	ExprContext *stack_econtext;	/* a stacked econtext */
-	SubTransactionId xact_subxid;		/* ID for current subxact */
-	struct SimpleEcontextStackEntry *next;		/* next stack entry up */
+	SubTransactionId xact_subxid;	/* ID for current subxact */
+	struct SimpleEcontextStackEntry *next;	/* next stack entry up */
 } SimpleEcontextStackEntry;
 
 static EState *shared_simple_eval_estate = NULL;
@@ -543,7 +543,7 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo,
 					 * the generated result type, instead.
 					 */
 					tupdesc = estate.rettupdesc;
-					if (tupdesc == NULL)		/* shouldn't happen */
+					if (tupdesc == NULL)	/* shouldn't happen */
 						elog(ERROR, "return type must be a row type");
 					break;
 				default:
@@ -2726,7 +2726,7 @@ exec_stmt_return(PLpgSQL_execstate *estate, PLpgSQL_stmt_return *stmt)
 						if (!row->rowtupdesc)	/* should not happen */
 							elog(ERROR, "row variable has no tupdesc");
 						tup = make_tuple_from_row(estate, row, row->rowtupdesc);
-						if (tup == NULL)		/* should not happen */
+						if (tup == NULL)	/* should not happen */
 							elog(ERROR, "row not compatible with its own tupdesc");
 						estate->retval = PointerGetDatum(tup);
 						estate->rettupdesc = row->rowtupdesc;
@@ -3441,7 +3441,7 @@ plpgsql_estate_setup(PLpgSQL_execstate *estate,
 	estate->paramLI->paramFetch = plpgsql_param_fetch;
 	estate->paramLI->paramFetchArg = (void *) estate;
 	estate->paramLI->parserSetup = (ParserSetupHook) plpgsql_parser_setup;
-	estate->paramLI->parserSetupArg = NULL;		/* filled during use */
+	estate->paramLI->parserSetupArg = NULL; /* filled during use */
 	estate->paramLI->numParams = estate->ndatums;
 	estate->paramLI->paramMask = NULL;
 	estate->params_dirty = false;
@@ -3456,7 +3456,7 @@ plpgsql_estate_setup(PLpgSQL_execstate *estate,
 		ctl.entrysize = sizeof(plpgsql_CastHashEntry);
 		ctl.hcxt = CurrentMemoryContext;
 		estate->cast_hash = hash_create("PLpgSQL private cast cache",
-										16,		/* start small and extend */
+										16, /* start small and extend */
 										&ctl,
 									  HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 		estate->cast_hash_context = CurrentMemoryContext;
@@ -4765,7 +4765,7 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				 * array, either, so that's a no-op too.  This is all ugly but
 				 * corresponds to the current behavior of execExpr*.c.
 				 */
-				if (arrayelem->arraytyplen > 0 &&		/* fixed-length array? */
+				if (arrayelem->arraytyplen > 0 &&	/* fixed-length array? */
 					(oldarrayisnull || isNull))
 					return;
 
@@ -5102,7 +5102,7 @@ plpgsql_exec_get_datum_type_info(PLpgSQL_execstate *estate,
 
 		default:
 			elog(ERROR, "unrecognized dtype: %d", datum->dtype);
-			*typeid = InvalidOid;		/* keep compiler quiet */
+			*typeid = InvalidOid;	/* keep compiler quiet */
 			*typmod = -1;
 			*collation = InvalidOid;
 			break;

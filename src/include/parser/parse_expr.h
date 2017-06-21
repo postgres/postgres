@@ -23,4 +23,4 @@ extern Node *transformExpr(ParseState *pstate, Node *expr, ParseExprKind exprKin
 
 extern const char *ParseExprKindName(ParseExprKind exprKind);
 
-#endif   /* PARSE_EXPR_H */
+#endif							/* PARSE_EXPR_H */

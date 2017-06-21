@@ -21,4 +21,4 @@ extern void gistrescan(IndexScanDesc scan, ScanKey key, int nkeys,
 		   ScanKey orderbys, int norderbys);
 extern void gistendscan(IndexScanDesc scan);
 
-#endif   /* GISTSCAN_H */
+#endif							/* GISTSCAN_H */

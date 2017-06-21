@@ -55,4 +55,4 @@ typedef enum ScanDirection
 #define ScanDirectionIsForward(direction) \
 	((bool) ((direction) == ForwardScanDirection))
 
-#endif   /* SDIR_H */
+#endif							/* SDIR_H */

@@ -85,6 +85,6 @@ pqsignal_no_restart(int signo, pqsigfunc func)
 	return oact.sa_handler;
 }
 
-#endif   /* !WIN32 */
+#endif							/* !WIN32 */
 
-#endif   /* !defined(WIN32) || defined(FRONTEND) */
+#endif							/* !defined(WIN32) || defined(FRONTEND) */

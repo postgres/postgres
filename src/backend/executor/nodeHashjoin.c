@@ -618,7 +618,7 @@ ExecHashJoinOuterGetTuple(PlanState *outerNode,
 			econtext->ecxt_outertuple = slot;
 			if (ExecHashGetHashValue(hashtable, econtext,
 									 hjstate->hj_OuterHashKeys,
-									 true,		/* outer tuple */
+									 true,	/* outer tuple */
 									 HJ_FILL_OUTER(hjstate),
 									 hashvalue))
 			{

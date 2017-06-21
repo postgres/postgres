@@ -159,4 +159,4 @@ extern int	SPI_register_trigger_data(TriggerData *tdata);
 extern void AtEOXact_SPI(bool isCommit);
 extern void AtEOSubXact_SPI(bool isCommit, SubTransactionId mySubid);
 
-#endif   /* SPI_H */
+#endif							/* SPI_H */

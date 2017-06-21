@@ -54,4 +54,4 @@ extern int	pg_reg_getnumcharacters(const regex_t *regex, int co);
 extern void pg_reg_getcharacters(const regex_t *regex, int co,
 					 pg_wchar *chars, int chars_len);
 
-#endif   /* _REGEXPORT_H_ */
+#endif							/* _REGEXPORT_H_ */

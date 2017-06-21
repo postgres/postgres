@@ -84,7 +84,7 @@
  *
  * NB: Changing TOAST_MAX_CHUNK_SIZE requires an initdb.
  */
-#define EXTERN_TUPLES_PER_PAGE	4		/* tweak only this */
+#define EXTERN_TUPLES_PER_PAGE	4	/* tweak only this */
 
 #define EXTERN_TUPLE_MAX_SIZE	MaximumBytesPerTuple(EXTERN_TUPLES_PER_PAGE)
 
@@ -236,4 +236,4 @@ extern Size toast_datum_size(Datum value);
  */
 extern Oid	toast_get_valid_index(Oid toastoid, LOCKMODE lock);
 
-#endif   /* TUPTOASTER_H */
+#endif							/* TUPTOASTER_H */

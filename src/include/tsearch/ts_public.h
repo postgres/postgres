@@ -129,4 +129,4 @@ typedef struct
 								 * getnext == true */
 } DictSubState;
 
-#endif   /* _PG_TS_PUBLIC_H_ */
+#endif							/* _PG_TS_PUBLIC_H_ */

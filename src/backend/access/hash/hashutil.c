@@ -207,7 +207,7 @@ _hash_get_totalbuckets(uint32 splitpoint_phase)
 	/* account for buckets within splitpoint_group */
 	phases_within_splitpoint_group =
 		(((splitpoint_phase - HASH_SPLITPOINT_GROUPS_WITH_ONE_PHASE) &
-		  HASH_SPLITPOINT_PHASE_MASK) + 1);		/* from 0-based to 1-based */
+		  HASH_SPLITPOINT_PHASE_MASK) + 1); /* from 0-based to 1-based */
 	total_buckets +=
 		(((1 << (splitpoint_group - 1)) >> HASH_SPLITPOINT_PHASE_BITS) *
 		 phases_within_splitpoint_group);

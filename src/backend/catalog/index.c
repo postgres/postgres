@@ -158,7 +158,7 @@ relationHasPrimaryKey(Relation rel)
 		HeapTuple	indexTuple;
 
 		indexTuple = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(indexoid));
-		if (!HeapTupleIsValid(indexTuple))		/* should not happen */
+		if (!HeapTupleIsValid(indexTuple))	/* should not happen */
 			elog(ERROR, "cache lookup failed for index %u", indexoid);
 		result = ((Form_pg_index) GETSTRUCT(indexTuple))->indisprimary;
 		ReleaseSysCache(indexTuple);
@@ -332,7 +332,7 @@ ConstructTupleDescriptor(Relation heapRelation,
 				/*
 				 * here we are indexing on a normal attribute (1...n)
 				 */
-				if (atnum > natts)		/* safety check */
+				if (atnum > natts)	/* safety check */
 					elog(ERROR, "invalid column number %d", atnum);
 				from = heapTupDesc->attrs[AttrNumberGetAttrOffset(atnum)];
 			}
@@ -420,7 +420,7 @@ ConstructTupleDescriptor(Relation heapRelation,
 		/*
 		 * Set the attribute name as specified by caller.
 		 */
-		if (colnames_item == NULL)		/* shouldn't happen */
+		if (colnames_item == NULL)	/* shouldn't happen */
 			elog(ERROR, "too few entries in colnames list");
 		namestrcpy(&to->attname, (const char *) lfirst(colnames_item));
 		colnames_item = lnext(colnames_item);
@@ -954,7 +954,7 @@ index_create(Relation heapRelation,
 			else
 			{
 				elog(ERROR, "constraint must be PRIMARY, UNIQUE or EXCLUDE");
-				constraintType = 0;		/* keep compiler quiet */
+				constraintType = 0; /* keep compiler quiet */
 			}
 
 			index_constraint_create(heapRelation,
@@ -964,9 +964,9 @@ index_create(Relation heapRelation,
 									constraintType,
 									deferrable,
 									initdeferred,
-									false,		/* already marked primary */
-									false,		/* pg_index entry is OK */
-									false,		/* no old dependencies */
+									false,	/* already marked primary */
+									false,	/* pg_index entry is OK */
+									false,	/* no old dependencies */
 									allow_system_table_mods,
 									is_internal);
 		}
@@ -1205,7 +1205,7 @@ index_constraint_create(Relation heapRelation,
 								   indexInfo->ii_KeyAttrNumbers,
 								   indexInfo->ii_NumIndexAttrs,
 								   InvalidOid,	/* no domain */
-								   indexRelationId,		/* index OID */
+								   indexRelationId, /* index OID */
 								   InvalidOid,	/* no foreign key */
 								   NULL,
 								   NULL,
@@ -1216,12 +1216,12 @@ index_constraint_create(Relation heapRelation,
 								   ' ',
 								   ' ',
 								   indexInfo->ii_ExclusionOps,
-								   NULL,		/* no check constraint */
+								   NULL,	/* no check constraint */
 								   NULL,
 								   NULL,
-								   true,		/* islocal */
+								   true,	/* islocal */
 								   0,	/* inhcount */
-								   true,		/* noinherit */
+								   true,	/* noinherit */
 								   is_internal);
 
 	/*
@@ -2259,7 +2259,7 @@ IndexBuildHeapRangeScan(Relation heapRelation,
 	if (IsBootstrapProcessingMode() || indexInfo->ii_Concurrent)
 	{
 		snapshot = RegisterSnapshot(GetTransactionSnapshot());
-		OldestXmin = InvalidTransactionId;		/* not used */
+		OldestXmin = InvalidTransactionId;	/* not used */
 
 		/* "any visible" mode is not compatible with this */
 		Assert(!anyvisible);
@@ -2272,8 +2272,8 @@ IndexBuildHeapRangeScan(Relation heapRelation,
 	}
 
 	scan = heap_beginscan_strat(heapRelation,	/* relation */
-								snapshot,		/* snapshot */
-								0,		/* number of keys */
+								snapshot,	/* snapshot */
+								0,	/* number of keys */
 								NULL,	/* scan key */
 								true,	/* buffer access strategy OK */
 								allow_sync);	/* syncscan OK? */
@@ -2524,7 +2524,7 @@ IndexBuildHeapRangeScan(Relation heapRelation,
 					break;
 				default:
 					elog(ERROR, "unexpected HeapTupleSatisfiesVacuum result");
-					indexIt = tupleIsAlive = false;		/* keep compiler quiet */
+					indexIt = tupleIsAlive = false; /* keep compiler quiet */
 					break;
 			}
 
@@ -2677,8 +2677,8 @@ IndexCheckExclusion(Relation heapRelation,
 	 */
 	snapshot = RegisterSnapshot(GetLatestSnapshot());
 	scan = heap_beginscan_strat(heapRelation,	/* relation */
-								snapshot,		/* snapshot */
-								0,		/* number of keys */
+								snapshot,	/* snapshot */
+								0,	/* number of keys */
 								NULL,	/* scan key */
 								true,	/* buffer access strategy OK */
 								true);	/* syncscan OK */
@@ -2997,8 +2997,8 @@ validate_index_heapscan(Relation heapRelation,
 	 * match the sorted TIDs.
 	 */
 	scan = heap_beginscan_strat(heapRelation,	/* relation */
-								snapshot,		/* snapshot */
-								0,		/* number of keys */
+								snapshot,	/* snapshot */
+								0,	/* number of keys */
 								NULL,	/* scan key */
 								true,	/* buffer access strategy OK */
 								false); /* syncscan not OK */

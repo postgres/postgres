@@ -744,7 +744,7 @@ restore_toc_entry(ArchiveHandle *AH, TocEntry *te, bool is_parallel)
 
 	defnDumped = false;
 
-	if ((reqs & REQ_SCHEMA) != 0)		/* We want the schema */
+	if ((reqs & REQ_SCHEMA) != 0)	/* We want the schema */
 	{
 		/* Show namespace if available */
 		if (te->namespace)
@@ -2179,7 +2179,7 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 		AH->lookahead[AH->lookaheadLen++] = vmin;
 
 		/* Check header version; varies from V1.0 */
-		if (vmaj > 1 || (vmaj == 1 && vmin > 0))		/* Version > 1.0 */
+		if (vmaj > 1 || (vmaj == 1 && vmin > 0))	/* Version > 1.0 */
 		{
 			if ((byteread = fgetc(fh)) == EOF)
 				READ_ERROR_EXIT(fh);
@@ -3600,7 +3600,7 @@ WriteHead(ArchiveHandle *AH)
 {
 	struct tm	crtm;
 
-	(*AH->WriteBufPtr) (AH, "PGDMP", 5);		/* Magic code */
+	(*AH->WriteBufPtr) (AH, "PGDMP", 5);	/* Magic code */
 	(*AH->WriteBytePtr) (AH, ARCHIVE_MAJOR(AH->version));
 	(*AH->WriteBytePtr) (AH, ARCHIVE_MINOR(AH->version));
 	(*AH->WriteBytePtr) (AH, ARCHIVE_REV(AH->version));
@@ -3648,7 +3648,7 @@ ReadHead(ArchiveHandle *AH)
 		vmaj = (*AH->ReadBytePtr) (AH);
 		vmin = (*AH->ReadBytePtr) (AH);
 
-		if (vmaj > 1 || (vmaj == 1 && vmin > 0))		/* Version > 1.0 */
+		if (vmaj > 1 || (vmaj == 1 && vmin > 0))	/* Version > 1.0 */
 			vrev = (*AH->ReadBytePtr) (AH);
 		else
 			vrev = 0;

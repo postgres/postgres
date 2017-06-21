@@ -34,7 +34,7 @@ typedef struct PartitionDescData
 {
 	int			nparts;			/* Number of partitions */
 	Oid		   *oids;			/* OIDs of partitions */
-	PartitionBoundInfo boundinfo;		/* collection of partition bounds */
+	PartitionBoundInfo boundinfo;	/* collection of partition bounds */
 } PartitionDescData;
 
 typedef struct PartitionDescData *PartitionDesc;
@@ -98,4 +98,4 @@ extern int get_partition_for_tuple(PartitionDispatch *pd,
 						EState *estate,
 						PartitionDispatchData **failed_at,
 						TupleTableSlot **failed_slot);
-#endif   /* PARTITION_H */
+#endif							/* PARTITION_H */

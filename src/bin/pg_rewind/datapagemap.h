@@ -27,4 +27,4 @@ extern datapagemap_iterator_t *datapagemap_iterate(datapagemap_t *map);
 extern bool datapagemap_next(datapagemap_iterator_t *iter, BlockNumber *blkno);
 extern void datapagemap_print(datapagemap_t *map);
 
-#endif   /* DATAPAGEMAP_H */
+#endif							/* DATAPAGEMAP_H */

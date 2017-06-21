@@ -157,19 +157,19 @@ DATA(insert OID = 1259 (  pg_class		PGNSP 83 0 PGUID 0 0 0 0 0 0 0 f f p r 33 0 
 DESCR("");
 
 
-#define		  RELKIND_RELATION		  'r'		/* ordinary table */
-#define		  RELKIND_INDEX			  'i'		/* secondary index */
-#define		  RELKIND_SEQUENCE		  'S'		/* sequence object */
-#define		  RELKIND_TOASTVALUE	  't'		/* for out-of-line values */
-#define		  RELKIND_VIEW			  'v'		/* view */
-#define		  RELKIND_MATVIEW		  'm'		/* materialized view */
-#define		  RELKIND_COMPOSITE_TYPE  'c'		/* composite type */
-#define		  RELKIND_FOREIGN_TABLE   'f'		/* foreign table */
-#define		  RELKIND_PARTITIONED_TABLE 'p'		/* partitioned table */
+#define		  RELKIND_RELATION		  'r'	/* ordinary table */
+#define		  RELKIND_INDEX			  'i'	/* secondary index */
+#define		  RELKIND_SEQUENCE		  'S'	/* sequence object */
+#define		  RELKIND_TOASTVALUE	  't'	/* for out-of-line values */
+#define		  RELKIND_VIEW			  'v'	/* view */
+#define		  RELKIND_MATVIEW		  'm'	/* materialized view */
+#define		  RELKIND_COMPOSITE_TYPE  'c'	/* composite type */
+#define		  RELKIND_FOREIGN_TABLE   'f'	/* foreign table */
+#define		  RELKIND_PARTITIONED_TABLE 'p' /* partitioned table */
 
-#define		  RELPERSISTENCE_PERMANENT	'p'		/* regular table */
-#define		  RELPERSISTENCE_UNLOGGED	'u'		/* unlogged permanent table */
-#define		  RELPERSISTENCE_TEMP		't'		/* temporary table */
+#define		  RELPERSISTENCE_PERMANENT	'p' /* regular table */
+#define		  RELPERSISTENCE_UNLOGGED	'u' /* unlogged permanent table */
+#define		  RELPERSISTENCE_TEMP		't' /* temporary table */
 
 /* default selection for replica identity (primary key or nothing) */
 #define		  REPLICA_IDENTITY_DEFAULT	'd'
@@ -184,4 +184,4 @@ DESCR("");
  */
 #define		  REPLICA_IDENTITY_INDEX	'i'
 
-#endif   /* PG_CLASS_H */
+#endif							/* PG_CLASS_H */

@@ -129,8 +129,8 @@ int			Log_autovacuum_min_duration = -1;
 #define STATS_READ_DELAY 1000
 
 /* the minimum allowed time between two awakenings of the launcher */
-#define MIN_AUTOVAC_SLEEPTIME 100.0		/* milliseconds */
-#define MAX_AUTOVAC_SLEEPTIME 300		/* seconds */
+#define MIN_AUTOVAC_SLEEPTIME 100.0 /* milliseconds */
+#define MAX_AUTOVAC_SLEEPTIME 300	/* seconds */
 
 /* Flags to tell if we are in an autovacuum process */
 static bool am_autovacuum_launcher = false;
@@ -516,7 +516,7 @@ AutoVacLauncherMain(int argc, char *argv[])
 
 		/* Forget any pending QueryCancel or timeout request */
 		disable_all_timeouts(false);
-		QueryCancelPending = false;		/* second to avoid race condition */
+		QueryCancelPending = false; /* second to avoid race condition */
 
 		/* Report the error to the server log */
 		EmitErrorReport();

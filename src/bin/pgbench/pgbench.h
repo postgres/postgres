@@ -137,4 +137,4 @@ extern void syntax_error(const char *source, int lineno, const char *line,
 
 extern int64 strtoint64(const char *str);
 
-#endif   /* PGBENCH_H */
+#endif							/* PGBENCH_H */

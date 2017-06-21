@@ -133,7 +133,7 @@ typedef struct _dumpableObject
 	char	   *name;			/* object name (should never be NULL) */
 	struct _namespaceInfo *namespace;	/* containing namespace, or NULL */
 	DumpComponents dump;		/* bitmask of components to dump */
-	DumpComponents dump_contains;		/* as above, but for contained objects */
+	DumpComponents dump_contains;	/* as above, but for contained objects */
 	bool		ext_member;		/* true if object is member of extension */
 	DumpId	   *dependencies;	/* dumpIds of objects this one depends on */
 	int			nDeps;			/* number of valid dependencies */
@@ -271,7 +271,7 @@ typedef struct _tableInfo
 	char	   *reltablespace;	/* relation tablespace */
 	char	   *reloptions;		/* options specified by WITH (...) */
 	char	   *checkoption;	/* WITH CHECK OPTION, if any */
-	char	   *toast_reloptions;		/* WITH options for the TOAST table */
+	char	   *toast_reloptions;	/* WITH options for the TOAST table */
 	bool		hasindex;		/* does it have any indexes? */
 	bool		hasrules;		/* does it have any rules? */
 	bool		hastriggers;	/* does it have any triggers? */
@@ -317,7 +317,7 @@ typedef struct _tableInfo
 	char	  **attfdwoptions;	/* per-attribute fdw options */
 	bool	   *notnull;		/* NOT NULL constraints on attributes */
 	bool	   *inhNotNull;		/* true if NOT NULL is inherited */
-	struct _attrDefInfo **attrdefs;		/* DEFAULT expressions */
+	struct _attrDefInfo **attrdefs; /* DEFAULT expressions */
 	struct _constraintInfo *checkexprs; /* CHECK constraints */
 	char	   *partkeydef;		/* partition key definition */
 	char	   *partbound;		/* partition bound definition */
@@ -328,9 +328,9 @@ typedef struct _tableInfo
 	 */
 	int			numParents;		/* number of (immediate) parent tables */
 	struct _tableInfo **parents;	/* TableInfos of immediate parents */
-	struct _tableDataInfo *dataObj;		/* TableDataInfo, if dumping its data */
+	struct _tableDataInfo *dataObj; /* TableDataInfo, if dumping its data */
 	int			numTriggers;	/* number of triggers for table */
-	struct _triggerInfo *triggers;		/* array of TriggerInfo structs */
+	struct _triggerInfo *triggers;	/* array of TriggerInfo structs */
 } TableInfo;
 
 typedef struct _attrDefInfo
@@ -712,4 +712,4 @@ extern void getPublicationTables(Archive *fout, TableInfo tblinfo[],
 					 int numTables);
 extern void getSubscriptions(Archive *fout);
 
-#endif   /* PG_DUMP_H */
+#endif							/* PG_DUMP_H */

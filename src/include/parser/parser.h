@@ -38,4 +38,4 @@ extern List *raw_parser(const char *str);
 extern List *SystemFuncName(char *name);
 extern TypeName *SystemTypeName(char *name);
 
-#endif   /* PARSER_H */
+#endif							/* PARSER_H */

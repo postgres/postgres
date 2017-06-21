@@ -31,4 +31,4 @@ typedef void (*check_object_relabel_type) (const ObjectAddress *object,
 extern void register_label_provider(const char *provider,
 						check_object_relabel_type hook);
 
-#endif   /* SECLABEL_H */
+#endif							/* SECLABEL_H */

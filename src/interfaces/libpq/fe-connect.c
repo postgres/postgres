@@ -184,7 +184,7 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 	offsetof(struct pg_conn, pgpassfile)},
 
 	{"connect_timeout", "PGCONNECT_TIMEOUT", NULL, NULL,
-		"Connect-timeout", "", 10,		/* strlen(INT32_MAX) == 10 */
+		"Connect-timeout", "", 10,	/* strlen(INT32_MAX) == 10 */
 	offsetof(struct pg_conn, connect_timeout)},
 
 	{"dbname", "PGDATABASE", NULL, NULL,
@@ -236,7 +236,7 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 	offsetof(struct pg_conn, keepalives_idle)},
 
 	{"keepalives_interval", NULL, NULL, NULL,
-		"TCP-Keepalives-Interval", "", 10,		/* strlen(INT32_MAX) == 10 */
+		"TCP-Keepalives-Interval", "", 10,	/* strlen(INT32_MAX) == 10 */
 	offsetof(struct pg_conn, keepalives_interval)},
 
 	{"keepalives_count", NULL, NULL, NULL,
@@ -1369,7 +1369,7 @@ connectFailureMessage(PGconn *conn, int errorno)
 						  service);
 	}
 	else
-#endif   /* HAVE_UNIX_SOCKETS */
+#endif							/* HAVE_UNIX_SOCKETS */
 	{
 		char		host_addr[NI_MAXHOST];
 		const char *displayed_host;
@@ -1608,8 +1608,8 @@ setKeepalivesWin32(PGconn *conn)
 	}
 	return 1;
 }
-#endif   /* SIO_KEEPALIVE_VALS */
-#endif   /* WIN32 */
+#endif							/* SIO_KEEPALIVE_VALS */
+#endif							/* WIN32 */
 
 /* ----------
  * connectDBStart -
@@ -2086,7 +2086,7 @@ keep_going:						/* We will come back to here until there is
 						conn->addr_cur = addr_cur->ai_next;
 						continue;
 					}
-#endif   /* F_SETFD */
+#endif							/* F_SETFD */
 
 					if (!IS_AF_UNIX(addr_cur->ai_family))
 					{
@@ -2124,8 +2124,8 @@ keep_going:						/* We will come back to here until there is
 #ifdef SIO_KEEPALIVE_VALS
 						else if (!setKeepalivesWin32(conn))
 							err = 1;
-#endif   /* SIO_KEEPALIVE_VALS */
-#endif   /* WIN32 */
+#endif							/* SIO_KEEPALIVE_VALS */
+#endif							/* WIN32 */
 
 						if (err)
 						{
@@ -2163,7 +2163,7 @@ keep_going:						/* We will come back to here until there is
 					conn->sigpipe_flag = true;
 #else
 					conn->sigpipe_flag = false;
-#endif   /* MSG_NOSIGNAL */
+#endif							/* MSG_NOSIGNAL */
 
 #ifdef SO_NOSIGPIPE
 					optval = 1;
@@ -2173,7 +2173,7 @@ keep_going:						/* We will come back to here until there is
 						conn->sigpipe_so = true;
 						conn->sigpipe_flag = false;
 					}
-#endif   /* SO_NOSIGPIPE */
+#endif							/* SO_NOSIGPIPE */
 
 					/*
 					 * Start/make connection.  This should not block, since we
@@ -2357,7 +2357,7 @@ keep_going:						/* We will come back to here until there is
 						goto error_return;
 					}
 				}
-#endif   /* HAVE_UNIX_SOCKETS */
+#endif							/* HAVE_UNIX_SOCKETS */
 
 #ifdef USE_SSL
 
@@ -2394,7 +2394,7 @@ keep_going:						/* We will come back to here until there is
 					conn->status = CONNECTION_SSL_STARTUP;
 					return PGRES_POLLING_READING;
 				}
-#endif   /* USE_SSL */
+#endif							/* USE_SSL */
 
 				/*
 				 * Build the startup packet.
@@ -2559,7 +2559,7 @@ keep_going:						/* We will come back to here until there is
 #else							/* !USE_SSL */
 				/* can't get here */
 				goto error_return;
-#endif   /* USE_SSL */
+#endif							/* USE_SSL */
 			}
 
 			/*
@@ -2962,11 +2962,11 @@ keep_going:						/* We will come back to here until there is
 				case PGRES_POLLING_OK:	/* Success */
 					break;
 
-				case PGRES_POLLING_READING:		/* Still going */
+				case PGRES_POLLING_READING: /* Still going */
 					conn->status = CONNECTION_SETENV;
 					return PGRES_POLLING_READING;
 
-				case PGRES_POLLING_WRITING:		/* Still going */
+				case PGRES_POLLING_WRITING: /* Still going */
 					conn->status = CONNECTION_SETENV;
 					return PGRES_POLLING_WRITING;
 
@@ -3510,8 +3510,7 @@ closePGconn(PGconn *conn)
 	 * Close the connection, reset all transient state, flush I/O buffers.
 	 */
 	pqDropConnection(conn, true);
-	conn->status = CONNECTION_BAD;		/* Well, not really _bad_ - just
-										 * absent */
+	conn->status = CONNECTION_BAD;	/* Well, not really _bad_ - just absent */
 	conn->asyncStatus = PGASYNC_IDLE;
 	pqClearAsyncResult(conn);	/* deallocate result */
 	resetPQExpBuffer(&conn->errorMessage);
@@ -4158,7 +4157,7 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 		ldap_unbind(ld);
 		return 3;
 	}
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 
 	/* search */
 	res = NULL;
@@ -4383,7 +4382,7 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 	return 0;
 }
 
-#endif   /* USE_LDAP */
+#endif							/* USE_LDAP */
 
 #define MAXBUFSIZE 256
 
@@ -5412,7 +5411,7 @@ conninfo_uri_parse_options(PQconninfoOption *options, const char *uri,
 
 		if (prevchar == ':')
 		{
-			const char *port = ++p;		/* advance past host terminator */
+			const char *port = ++p; /* advance past host terminator */
 
 			while (*p && *p != '/' && *p != '?' && *p != ',')
 				++p;
@@ -5444,7 +5443,7 @@ conninfo_uri_parse_options(PQconninfoOption *options, const char *uri,
 
 	if (prevchar && prevchar != '?')
 	{
-		const char *dbname = ++p;		/* advance past host terminator */
+		const char *dbname = ++p;	/* advance past host terminator */
 
 		/* Look for query parameters */
 		while (*p && *p != '?')

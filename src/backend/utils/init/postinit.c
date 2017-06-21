@@ -275,7 +275,7 @@ PerformAuthentication(Port *port)
 
 	set_ps_display("startup", false);
 
-	ClientAuthInProgress = false;		/* client_min_messages is active now */
+	ClientAuthInProgress = false;	/* client_min_messages is active now */
 }
 
 

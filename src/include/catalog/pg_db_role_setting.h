@@ -66,4 +66,4 @@ extern void DropSetting(Oid databaseid, Oid roleid);
 extern void ApplySetting(Snapshot snapshot, Oid databaseid, Oid roleid,
 			 Relation relsetting, GucSource source);
 
-#endif   /* PG_DB_ROLE_SETTING_H */
+#endif							/* PG_DB_ROLE_SETTING_H */

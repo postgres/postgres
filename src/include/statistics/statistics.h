@@ -16,7 +16,7 @@
 #include "commands/vacuum.h"
 #include "nodes/relation.h"
 
-#define STATS_MAX_DIMENSIONS	8		/* max number of attributes */
+#define STATS_MAX_DIMENSIONS	8	/* max number of attributes */
 
 /* Multivariate distinct coefficients */
 #define STATS_NDISTINCT_MAGIC		0xA352BFA4	/* struct identifier */
@@ -49,8 +49,8 @@ typedef struct MVNDistinct
 /* size of the struct excluding the items array */
 #define SizeOfMVNDistinct	(offsetof(MVNDistinct, nitems) + sizeof(uint32))
 
-#define STATS_DEPS_MAGIC		0xB4549A2C		/* marks serialized bytea */
-#define STATS_DEPS_TYPE_BASIC	1		/* basic dependencies type */
+#define STATS_DEPS_MAGIC		0xB4549A2C	/* marks serialized bytea */
+#define STATS_DEPS_TYPE_BASIC	1	/* basic dependencies type */
 
 /*
  * Functional dependencies, tracking column-level relationships (values
@@ -60,7 +60,7 @@ typedef struct MVDependency
 {
 	double		degree;			/* degree of validity (0-1) */
 	AttrNumber	nattributes;	/* number of attributes */
-	AttrNumber	attributes[FLEXIBLE_ARRAY_MEMBER];		/* attribute numbers */
+	AttrNumber	attributes[FLEXIBLE_ARRAY_MEMBER];	/* attribute numbers */
 } MVDependency;
 
 /* size of the struct excluding the deps array */
@@ -96,4 +96,4 @@ extern bool has_stats_of_kind(List *stats, char requiredkind);
 extern StatisticExtInfo *choose_best_statistics(List *stats,
 					   Bitmapset *attnums, char requiredkind);
 
-#endif   /* STATISTICS_H */
+#endif							/* STATISTICS_H */

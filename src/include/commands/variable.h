@@ -37,4 +37,4 @@ extern bool check_role(char **newval, void **extra, GucSource source);
 extern void assign_role(const char *newval, void *extra);
 extern const char *show_role(void);
 
-#endif   /* VARIABLE_H */
+#endif							/* VARIABLE_H */

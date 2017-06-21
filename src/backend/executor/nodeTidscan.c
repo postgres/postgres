@@ -382,10 +382,10 @@ TidNext(TidScanState *node)
 			 * pointers onto disk pages and were not created with palloc() and
 			 * so should not be pfree()'d.
 			 */
-			ExecStoreTuple(tuple,		/* tuple to store */
+			ExecStoreTuple(tuple,	/* tuple to store */
 						   slot,	/* slot to store in */
-						   buffer,		/* buffer associated with tuple  */
-						   false);		/* don't pfree */
+						   buffer,	/* buffer associated with tuple  */
+						   false);	/* don't pfree */
 
 			/*
 			 * At this point we have an extra pin on the buffer, because
@@ -551,7 +551,7 @@ ExecInitTidScan(TidScan *node, EState *estate, int eflags)
 	currentRelation = ExecOpenScanRelation(estate, node->scan.scanrelid, eflags);
 
 	tidstate->ss.ss_currentRelation = currentRelation;
-	tidstate->ss.ss_currentScanDesc = NULL;		/* no heap scan here */
+	tidstate->ss.ss_currentScanDesc = NULL; /* no heap scan here */
 
 	/*
 	 * get the scan type from the relation descriptor.

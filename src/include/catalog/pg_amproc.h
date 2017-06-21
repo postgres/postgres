@@ -536,4 +536,4 @@ DATA(insert (	4104   603	 603  4  4108 ));
 DATA(insert (	4104   603	 603  11 4067 ));
 DATA(insert (	4104   603	 603  13  187 ));
 
-#endif   /* PG_AMPROC_H */
+#endif							/* PG_AMPROC_H */

@@ -37,14 +37,14 @@ typedef struct
 static const pg_unicode_decomposition UnicodeDecompMain[6532] =
 {
 	{0x00A0, 0, 1 | DECOMP_INLINE, 0x0020},
-	{0x00A8, 0, 2 | DECOMP_NO_COMPOSE, 0},		/* compatibility mapping */
+	{0x00A8, 0, 2 | DECOMP_NO_COMPOSE, 0},	/* compatibility mapping */
 	{0x00AA, 0, 1 | DECOMP_INLINE, 0x0061},
-	{0x00AF, 0, 2 | DECOMP_NO_COMPOSE, 2},		/* compatibility mapping */
+	{0x00AF, 0, 2 | DECOMP_NO_COMPOSE, 2},	/* compatibility mapping */
 	{0x00B2, 0, 1 | DECOMP_INLINE, 0x0032},
 	{0x00B3, 0, 1 | DECOMP_INLINE, 0x0033},
-	{0x00B4, 0, 2 | DECOMP_NO_COMPOSE, 4},		/* compatibility mapping */
+	{0x00B4, 0, 2 | DECOMP_NO_COMPOSE, 4},	/* compatibility mapping */
 	{0x00B5, 0, 1 | DECOMP_INLINE, 0x03BC},
-	{0x00B8, 0, 2 | DECOMP_NO_COMPOSE, 6},		/* compatibility mapping */
+	{0x00B8, 0, 2 | DECOMP_NO_COMPOSE, 6},	/* compatibility mapping */
 	{0x00B9, 0, 1 | DECOMP_INLINE, 0x0031},
 	{0x00BA, 0, 1 | DECOMP_INLINE, 0x006F},
 	{0x00BC, 0, 3, 8},

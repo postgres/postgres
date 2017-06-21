@@ -1553,7 +1553,7 @@ get_qual_for_range(PartitionKey key, PartitionBoundSpec *spec)
 	 */
 	i = 0;
 	partexprs_item = list_head(key->partexprs);
-	partexprs_item_saved = partexprs_item;		/* placate compiler */
+	partexprs_item_saved = partexprs_item;	/* placate compiler */
 	forboth(cell1, spec->lowerdatums, cell2, spec->upperdatums)
 	{
 		EState	   *estate;

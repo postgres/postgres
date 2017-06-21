@@ -102,9 +102,9 @@ pg_to_ascii(unsigned char *src, unsigned char *src_end, unsigned char *dest, int
 static text *
 encode_to_ascii(text *data, int enc)
 {
-	pg_to_ascii((unsigned char *) VARDATA(data),		/* src */
-				(unsigned char *) (data) + VARSIZE(data),		/* src end */
-				(unsigned char *) VARDATA(data),		/* dest */
+	pg_to_ascii((unsigned char *) VARDATA(data),	/* src */
+				(unsigned char *) (data) + VARSIZE(data),	/* src end */
+				(unsigned char *) VARDATA(data),	/* dest */
 				enc);			/* encoding */
 
 	return data;

@@ -65,4 +65,4 @@ extern void build_aggregate_finalfn_expr(Oid *agg_input_types,
 							 Oid finalfn_oid,
 							 Expr **finalfnexpr);
 
-#endif   /* PARSE_AGG_H */
+#endif							/* PARSE_AGG_H */

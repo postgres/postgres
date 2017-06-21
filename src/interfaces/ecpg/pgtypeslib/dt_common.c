@@ -30,7 +30,7 @@ static datetkn datetktbl[] = {
 	{"ahst", TZ, -36000},		/* Alaska-Hawaii Std Time */
 	{"akdt", DTZ, -28800},		/* Alaska Daylight Time */
 	{"akst", DTZ, -32400},		/* Alaska Standard Time */
-	{"allballs", RESERV, DTK_ZULU},		/* 00:00:00 */
+	{"allballs", RESERV, DTK_ZULU}, /* 00:00:00 */
 	{"almst", TZ, 25200},		/* Almaty Savings Time */
 	{"almt", TZ, 21600},		/* Almaty Time */
 	{"am", AMPM, AM},
@@ -201,12 +201,12 @@ static datetkn datetktbl[] = {
 	idt							/* Israeli, Iran, Indian Daylight Time */
 #endif
 	{LATE, RESERV, DTK_LATE},	/* "infinity" reserved for "late time" */
-	{INVALID, RESERV, DTK_INVALID},		/* "invalid" reserved for bad time */
+	{INVALID, RESERV, DTK_INVALID}, /* "invalid" reserved for bad time */
 	{"iot", TZ, 18000},			/* Indian Chagos Time */
 	{"irkst", DTZ, 32400},		/* Irkutsk Summer Time */
 	{"irkt", TZ, 28800},		/* Irkutsk Time */
 	{"irt", TZ, 12600},			/* Iran Time */
-	{"isodow", UNITS, DTK_ISODOW},		/* ISO day of week, Sunday == 7 */
+	{"isodow", UNITS, DTK_ISODOW},	/* ISO day of week, Sunday == 7 */
 #if 0
 	isst
 #endif
@@ -425,33 +425,33 @@ static datetkn deltatktbl[] = {
 	{"@", IGNORE_DTF, 0},		/* postgres relative prefix */
 	{DAGO, AGO, 0},				/* "ago" indicates negative time offset */
 	{"c", UNITS, DTK_CENTURY},	/* "century" relative */
-	{"cent", UNITS, DTK_CENTURY},		/* "century" relative */
+	{"cent", UNITS, DTK_CENTURY},	/* "century" relative */
 	{"centuries", UNITS, DTK_CENTURY},	/* "centuries" relative */
-	{DCENTURY, UNITS, DTK_CENTURY},		/* "century" relative */
+	{DCENTURY, UNITS, DTK_CENTURY}, /* "century" relative */
 	{"d", UNITS, DTK_DAY},		/* "day" relative */
 	{DDAY, UNITS, DTK_DAY},		/* "day" relative */
 	{"days", UNITS, DTK_DAY},	/* "days" relative */
 	{"dec", UNITS, DTK_DECADE}, /* "decade" relative */
-	{DDECADE, UNITS, DTK_DECADE},		/* "decade" relative */
-	{"decades", UNITS, DTK_DECADE},		/* "decades" relative */
+	{DDECADE, UNITS, DTK_DECADE},	/* "decade" relative */
+	{"decades", UNITS, DTK_DECADE}, /* "decades" relative */
 	{"decs", UNITS, DTK_DECADE},	/* "decades" relative */
 	{"h", UNITS, DTK_HOUR},		/* "hour" relative */
 	{DHOUR, UNITS, DTK_HOUR},	/* "hour" relative */
 	{"hours", UNITS, DTK_HOUR}, /* "hours" relative */
 	{"hr", UNITS, DTK_HOUR},	/* "hour" relative */
 	{"hrs", UNITS, DTK_HOUR},	/* "hours" relative */
-	{INVALID, RESERV, DTK_INVALID},		/* reserved for invalid time */
+	{INVALID, RESERV, DTK_INVALID}, /* reserved for invalid time */
 	{"m", UNITS, DTK_MINUTE},	/* "minute" relative */
-	{"microsecon", UNITS, DTK_MICROSEC},		/* "microsecond" relative */
-	{"mil", UNITS, DTK_MILLENNIUM},		/* "millennium" relative */
-	{"millennia", UNITS, DTK_MILLENNIUM},		/* "millennia" relative */
-	{DMILLENNIUM, UNITS, DTK_MILLENNIUM},		/* "millennium" relative */
-	{"millisecon", UNITS, DTK_MILLISEC},		/* relative */
+	{"microsecon", UNITS, DTK_MICROSEC},	/* "microsecond" relative */
+	{"mil", UNITS, DTK_MILLENNIUM}, /* "millennium" relative */
+	{"millennia", UNITS, DTK_MILLENNIUM},	/* "millennia" relative */
+	{DMILLENNIUM, UNITS, DTK_MILLENNIUM},	/* "millennium" relative */
+	{"millisecon", UNITS, DTK_MILLISEC},	/* relative */
 	{"mils", UNITS, DTK_MILLENNIUM},	/* "millennia" relative */
 	{"min", UNITS, DTK_MINUTE}, /* "minute" relative */
 	{"mins", UNITS, DTK_MINUTE},	/* "minutes" relative */
-	{DMINUTE, UNITS, DTK_MINUTE},		/* "minute" relative */
-	{"minutes", UNITS, DTK_MINUTE},		/* "minutes" relative */
+	{DMINUTE, UNITS, DTK_MINUTE},	/* "minute" relative */
+	{"minutes", UNITS, DTK_MINUTE}, /* "minutes" relative */
 	{"mon", UNITS, DTK_MONTH},	/* "months" relative */
 	{"mons", UNITS, DTK_MONTH}, /* "months" relative */
 	{DMONTH, UNITS, DTK_MONTH}, /* "month" relative */
@@ -462,7 +462,7 @@ static datetkn deltatktbl[] = {
 	{"mseconds", UNITS, DTK_MILLISEC},
 	{"msecs", UNITS, DTK_MILLISEC},
 	{"qtr", UNITS, DTK_QUARTER},	/* "quarter" relative */
-	{DQUARTER, UNITS, DTK_QUARTER},		/* "quarter" relative */
+	{DQUARTER, UNITS, DTK_QUARTER}, /* "quarter" relative */
 	{"s", UNITS, DTK_SECOND},
 	{"sec", UNITS, DTK_SECOND},
 	{DSECOND, UNITS, DTK_SECOND},
@@ -470,13 +470,13 @@ static datetkn deltatktbl[] = {
 	{"secs", UNITS, DTK_SECOND},
 	{DTIMEZONE, UNITS, DTK_TZ}, /* "timezone" time offset */
 	{"timezone_h", UNITS, DTK_TZ_HOUR}, /* timezone hour units */
-	{"timezone_m", UNITS, DTK_TZ_MINUTE},		/* timezone minutes units */
+	{"timezone_m", UNITS, DTK_TZ_MINUTE},	/* timezone minutes units */
 	{"undefined", RESERV, DTK_INVALID}, /* pre-v6.1 invalid time */
 	{"us", UNITS, DTK_MICROSEC},	/* "microsecond" relative */
-	{"usec", UNITS, DTK_MICROSEC},		/* "microsecond" relative */
+	{"usec", UNITS, DTK_MICROSEC},	/* "microsecond" relative */
 	{DMICROSEC, UNITS, DTK_MICROSEC},	/* "microsecond" relative */
 	{"useconds", UNITS, DTK_MICROSEC},	/* "microseconds" relative */
-	{"usecs", UNITS, DTK_MICROSEC},		/* "microseconds" relative */
+	{"usecs", UNITS, DTK_MICROSEC}, /* "microseconds" relative */
 	{"w", UNITS, DTK_WEEK},		/* "week" relative */
 	{DWEEK, UNITS, DTK_WEEK},	/* "week" relative */
 	{"weeks", UNITS, DTK_WEEK}, /* "weeks" relative */

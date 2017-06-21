@@ -46,7 +46,7 @@
 #include "utils/relmapper.h"
 #include "utils/tqual.h"
 
-uint32		bootstrap_data_checksum_version = 0;		/* No checksum */
+uint32		bootstrap_data_checksum_version = 0;	/* No checksum */
 
 
 #define ALLOC(t, c) \
@@ -163,7 +163,7 @@ static struct typmap *Ap = NULL;
 static Datum values[MAXATTR];	/* current row's attribute values */
 static bool Nulls[MAXATTR];
 
-static MemoryContext nogc = NULL;		/* special no-gc mem context */
+static MemoryContext nogc = NULL;	/* special no-gc mem context */
 
 /*
  *	At bootstrap time, we first declare all the indices to be built, and
@@ -680,7 +680,7 @@ DefineAttr(char *name, char *type, int attnum, int nullness)
 
 	namestrcpy(&attrtypes[attnum]->attname, name);
 	elog(DEBUG4, "column %s %s", NameStr(attrtypes[attnum]->attname), type);
-	attrtypes[attnum]->attnum = attnum + 1;		/* fillatt */
+	attrtypes[attnum]->attnum = attnum + 1; /* fillatt */
 
 	typeoid = gettype(type);
 

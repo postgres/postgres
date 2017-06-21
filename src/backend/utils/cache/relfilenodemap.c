@@ -68,9 +68,9 @@ RelfilenodeMapInvalidateCallback(Datum arg, Oid relid)
 		 * all entries, otherwise just remove the specific relation's entry.
 		 * Always remove negative cache entries.
 		 */
-		if (relid == InvalidOid ||		/* complete reset */
-			entry->relid == InvalidOid ||		/* negative cache entry */
-			entry->relid == relid)		/* individual flushed relation */
+		if (relid == InvalidOid ||	/* complete reset */
+			entry->relid == InvalidOid ||	/* negative cache entry */
+			entry->relid == relid)	/* individual flushed relation */
 		{
 			if (hash_search(RelfilenodeMapHash,
 							(void *) &entry->key,

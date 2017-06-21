@@ -20,4 +20,4 @@ extern void ResetUnloggedRelations(int op);
 #define UNLOGGED_RELATION_CLEANUP		0x0001
 #define UNLOGGED_RELATION_INIT			0x0002
 
-#endif   /* REINIT_H */
+#endif							/* REINIT_H */

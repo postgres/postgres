@@ -77,4 +77,4 @@ typedef struct TriggerDesc
 	bool		trig_delete_old_table;
 } TriggerDesc;
 
-#endif   /* RELTRIGGER_H */
+#endif							/* RELTRIGGER_H */

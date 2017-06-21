@@ -63,4 +63,4 @@ geqo_mutation(PlannerInfo *root, Gene *tour, int num_gene)
 	}
 }
 
-#endif   /* defined(CX) */
+#endif							/* defined(CX) */

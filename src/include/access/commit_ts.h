@@ -74,4 +74,4 @@ extern void commit_ts_redo(XLogReaderState *record);
 extern void commit_ts_desc(StringInfo buf, XLogReaderState *record);
 extern const char *commit_ts_identify(uint8 info);
 
-#endif   /* COMMIT_TS_H */
+#endif							/* COMMIT_TS_H */

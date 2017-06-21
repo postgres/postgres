@@ -387,7 +387,7 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 			index_insert(indexRelation, /* index relation */
 						 values,	/* array of index Datums */
 						 isnull,	/* null flags */
-						 tupleid,		/* tid of heap tuple */
+						 tupleid,	/* tid of heap tuple */
 						 heapRelation,	/* heap relation */
 						 checkUnique,	/* type of uniqueness check to do */
 						 indexInfo);	/* index AM may need this */

@@ -32,7 +32,7 @@
 #include <gssapi.h>
 #else
 #include <gssapi/gssapi.h>
-#endif   /* HAVE_GSSAPI_H */
+#endif							/* HAVE_GSSAPI_H */
 /*
  * GSSAPI brings in headers that set a lot of things in the global namespace on win32,
  * that doesn't match the msvc build. It gives a bunch of compiler warnings that we ignore,
@@ -41,7 +41,7 @@
 #ifdef _MSC_VER
 #undef HAVE_GETADDRINFO
 #endif
-#endif   /* ENABLE_GSS */
+#endif							/* ENABLE_GSS */
 
 #ifdef ENABLE_SSPI
 #define SECURITY_WIN32
@@ -61,7 +61,7 @@ typedef struct
 	int			length;
 } gss_buffer_desc;
 #endif
-#endif   /* ENABLE_SSPI */
+#endif							/* ENABLE_SSPI */
 
 #include "datatype/timestamp.h"
 #include "libpq/hba.h"
@@ -124,7 +124,7 @@ typedef struct Port
 	char	   *remote_hostname;	/* name (not ip addr) of remote host, if
 									 * available */
 	int			remote_hostname_resolv; /* see above */
-	int			remote_hostname_errcode;		/* see above */
+	int			remote_hostname_errcode;	/* see above */
 	char	   *remote_port;	/* text rep of remote port */
 	CAC_state	canAcceptConnections;	/* postmaster connection status */
 
@@ -148,7 +148,7 @@ typedef struct Port
 	 * but since it gets used by elog.c in the same way as database_name and
 	 * other members of this struct, we may as well keep it here.
 	 */
-	TimestampTz SessionStartTime;		/* backend start time */
+	TimestampTz SessionStartTime;	/* backend start time */
 
 	/*
 	 * TCP keepalive settings.
@@ -223,4 +223,4 @@ extern int	pq_setkeepalivesidle(int idle, Port *port);
 extern int	pq_setkeepalivesinterval(int interval, Port *port);
 extern int	pq_setkeepalivescount(int count, Port *port);
 
-#endif   /* LIBPQ_BE_H */
+#endif							/* LIBPQ_BE_H */

@@ -114,4 +114,4 @@ extern void replication_scanner_finish(void);
 
 extern Node *replication_parse_result;
 
-#endif   /* _WALSENDER_PRIVATE_H */
+#endif							/* _WALSENDER_PRIVATE_H */

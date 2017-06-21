@@ -16,7 +16,7 @@
 #include <unistd.h>
 #include <time.h>
 
-#include "access/xlog_internal.h"		/* for pg_start/stop_backup */
+#include "access/xlog_internal.h"	/* for pg_start/stop_backup */
 #include "catalog/catalog.h"
 #include "catalog/pg_type.h"
 #include "lib/stringinfo.h"
@@ -273,8 +273,8 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 
 			/* Send CopyOutResponse message */
 			pq_beginmessage(&buf, 'H');
-			pq_sendbyte(&buf, 0);		/* overall format */
-			pq_sendint(&buf, 0, 2);		/* natts */
+			pq_sendbyte(&buf, 0);	/* overall format */
+			pq_sendint(&buf, 0, 2); /* natts */
 			pq_endmessage(&buf);
 
 			if (ti->path == NULL)
@@ -318,7 +318,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 				Assert(lnext(lc) == NULL);
 			}
 			else
-				pq_putemptymessage('c');		/* CopyDone */
+				pq_putemptymessage('c');	/* CopyDone */
 		}
 	}
 	PG_END_ENSURE_ERROR_CLEANUP(base_backup_cleanup, (Datum) 0);
@@ -814,7 +814,7 @@ SendXlogRecPtrResult(XLogRecPtr ptr, TimeLineID tli)
 	pq_sendstring(&buf, "recptr");
 	pq_sendint(&buf, 0, 4);		/* table oid */
 	pq_sendint(&buf, 0, 2);		/* attnum */
-	pq_sendint(&buf, TEXTOID, 4);		/* type oid */
+	pq_sendint(&buf, TEXTOID, 4);	/* type oid */
 	pq_sendint(&buf, -1, 2);
 	pq_sendint(&buf, 0, 4);
 	pq_sendint(&buf, 0, 2);
@@ -827,7 +827,7 @@ SendXlogRecPtrResult(XLogRecPtr ptr, TimeLineID tli)
 	 * int8 may seem like a surprising data type for this, but in theory int4
 	 * would not be wide enough for this, as TimeLineID is unsigned.
 	 */
-	pq_sendint(&buf, INT8OID, 4);		/* type oid */
+	pq_sendint(&buf, INT8OID, 4);	/* type oid */
 	pq_sendint(&buf, -1, 2);
 	pq_sendint(&buf, 0, 4);
 	pq_sendint(&buf, 0, 2);
@@ -1115,7 +1115,7 @@ sendDir(char *path, int basepathlen, bool sizeonly, List *tablespaces,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				  errmsg("tablespaces are not supported on this platform")));
 			continue;
-#endif   /* HAVE_READLINK */
+#endif							/* HAVE_READLINK */
 		}
 		else if (S_ISDIR(statbuf.st_mode))
 		{

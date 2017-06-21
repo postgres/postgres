@@ -159,7 +159,7 @@ make_one_rel(PlannerInfo *root, List *joinlist)
 		if (brel == NULL)
 			continue;
 
-		Assert(brel->relid == rti);		/* sanity check on array */
+		Assert(brel->relid == rti); /* sanity check on array */
 
 		/* ignore RTEs that are "other rels" */
 		if (brel->reloptkind != RELOPT_BASEREL)
@@ -258,7 +258,7 @@ set_base_rel_sizes(PlannerInfo *root)
 		if (rel == NULL)
 			continue;
 
-		Assert(rel->relid == rti);		/* sanity check on array */
+		Assert(rel->relid == rti);	/* sanity check on array */
 
 		/* ignore RTEs that are "other rels" */
 		if (rel->reloptkind != RELOPT_BASEREL)
@@ -300,7 +300,7 @@ set_base_rel_pathlists(PlannerInfo *root)
 		if (rel == NULL)
 			continue;
 
-		Assert(rel->relid == rti);		/* sanity check on array */
+		Assert(rel->relid == rti);	/* sanity check on array */
 
 		/* ignore RTEs that are "other rels" */
 		if (rel->reloptkind != RELOPT_BASEREL)
@@ -3442,4 +3442,4 @@ debug_print_rel(PlannerInfo *root, RelOptInfo *rel)
 	fflush(stdout);
 }
 
-#endif   /* OPTIMIZER_DEBUG */
+#endif							/* OPTIMIZER_DEBUG */

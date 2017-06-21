@@ -58,4 +58,4 @@ extern Node *adjust_appendrel_attrs(PlannerInfo *root, Node *node,
 extern Node *adjust_appendrel_attrs_multilevel(PlannerInfo *root, Node *node,
 								  RelOptInfo *child_rel);
 
-#endif   /* PREP_H */
+#endif							/* PREP_H */

@@ -99,4 +99,4 @@ extern BrinMemTuple *brin_memtuple_initialize(BrinMemTuple *dtuple,
 extern BrinMemTuple *brin_deform_tuple(BrinDesc *brdesc,
 				  BrinTuple *tuple, BrinMemTuple *dMemtuple);
 
-#endif   /* BRIN_TUPLE_H */
+#endif							/* BRIN_TUPLE_H */

@@ -67,4 +67,4 @@ extern void ParallelWorkerReportLastRecEnd(XLogRecPtr last_xlog_end);
 
 extern void ParallelWorkerMain(Datum main_arg);
 
-#endif   /* PARALLEL_H */
+#endif							/* PARALLEL_H */

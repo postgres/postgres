@@ -30,4 +30,4 @@ extern int relation_is_updatable(Oid reloid,
 					  bool include_triggers,
 					  Bitmapset *include_cols);
 
-#endif   /* REWRITEHANDLER_H */
+#endif							/* REWRITEHANDLER_H */

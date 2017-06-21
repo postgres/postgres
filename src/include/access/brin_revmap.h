@@ -38,4 +38,4 @@ extern BrinTuple *brinGetTupleForHeapBlock(BrinRevmap *revmap,
 						 Size *size, int mode, Snapshot snapshot);
 extern bool brinRevmapDesummarizeRange(Relation idxrel, BlockNumber heapBlk);
 
-#endif   /* BRIN_REVMAP_H */
+#endif							/* BRIN_REVMAP_H */

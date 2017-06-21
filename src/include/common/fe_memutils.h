@@ -41,4 +41,4 @@ extern void pfree(void *pointer);
 extern char *psprintf(const char *fmt,...) pg_attribute_printf(1, 2);
 extern size_t pvsnprintf(char *buf, size_t len, const char *fmt, va_list args) pg_attribute_printf(3, 0);
 
-#endif   /* FE_MEMUTILS_H */
+#endif							/* FE_MEMUTILS_H */

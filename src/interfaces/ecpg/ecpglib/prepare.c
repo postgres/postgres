@@ -23,8 +23,8 @@ typedef struct
 } stmtCacheEntry;
 
 static int	nextStmtID = 1;
-static const int stmtCacheNBuckets = 2039;		/* # buckets - a prime # */
-static const int stmtCacheEntPerBucket = 8;		/* # entries/bucket		*/
+static const int stmtCacheNBuckets = 2039;	/* # buckets - a prime # */
+static const int stmtCacheEntPerBucket = 8; /* # entries/bucket		*/
 static stmtCacheEntry stmtCacheEntries[16384] = {{0, {0}, 0, 0, 0}};
 
 static bool deallocate_one(int lineno, enum COMPAT_MODE c, struct connection *con,
@@ -380,7 +380,7 @@ SearchStmtCache(const char *ecpgQuery)
  *	 OR  negative error code
  */
 static int
-ecpg_freeStmtCacheEntry(int lineno, int compat, int entNo)		/* entry # to free */
+ecpg_freeStmtCacheEntry(int lineno, int compat, int entNo)	/* entry # to free */
 {
 	stmtCacheEntry *entry;
 	struct connection *con;
@@ -416,7 +416,7 @@ ecpg_freeStmtCacheEntry(int lineno, int compat, int entNo)		/* entry # to free *
  */
 static int
 AddStmtToCache(int lineno,		/* line # of statement		*/
-			   const char *stmtID,		/* statement ID				*/
+			   const char *stmtID,	/* statement ID				*/
 			   const char *connection,	/* connection				*/
 			   int compat,		/* compatibility level */
 			   const char *ecpgQuery)	/* query					*/

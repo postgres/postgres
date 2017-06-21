@@ -177,7 +177,7 @@ PQprint(FILE *fout, const PGresult *res, const PQprintOpt *po)
 				  (1 + (po->standard != 0)) >= screen_size.ws_row -
 				  (po->header != 0) *
 				  (total_line_length / screen_size.ws_col + 1) * 2
-				  - (po->header != 0) * 2		/* row count and newline */
+				  - (po->header != 0) * 2	/* row count and newline */
 				  )))
 			{
 				fout = popen(pagerenv, "w");
@@ -190,8 +190,8 @@ PQprint(FILE *fout, const PGresult *res, const PQprintOpt *po)
 						sigpipe_masked = true;
 #else
 					oldsigpipehandler = pqsignal(SIGPIPE, SIG_IGN);
-#endif   /* ENABLE_THREAD_SAFETY */
-#endif   /* WIN32 */
+#endif							/* ENABLE_THREAD_SAFETY */
+#endif							/* WIN32 */
 				}
 				else
 					fout = stdout;
@@ -313,8 +313,8 @@ PQprint(FILE *fout, const PGresult *res, const PQprintOpt *po)
 				pq_reset_sigpipe(&osigset, sigpipe_pending, true);
 #else
 			pqsignal(SIGPIPE, oldsigpipehandler);
-#endif   /* ENABLE_THREAD_SAFETY */
-#endif   /* WIN32 */
+#endif							/* ENABLE_THREAD_SAFETY */
+#endif							/* WIN32 */
 		}
 		if (po->html3 && !po->expanded)
 			fputs("</table>\n", fout);

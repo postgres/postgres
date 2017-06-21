@@ -56,4 +56,4 @@ extern void datumSerialize(Datum value, bool isnull, bool typByVal,
 			   int typLen, char **start_address);
 extern Datum datumRestore(char **start_address, bool *isnull);
 
-#endif   /* DATUM_H */
+#endif							/* DATUM_H */

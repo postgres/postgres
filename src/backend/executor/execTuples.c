@@ -244,8 +244,8 @@ ExecDropSingleTupleTableSlot(TupleTableSlot *slot)
  * --------------------------------
  */
 void
-ExecSetSlotDescriptor(TupleTableSlot *slot,		/* slot to change */
-					  TupleDesc tupdesc)		/* new tuple descriptor */
+ExecSetSlotDescriptor(TupleTableSlot *slot, /* slot to change */
+					  TupleDesc tupdesc)	/* new tuple descriptor */
 {
 	/* For safety, make sure slot is empty before changing it */
 	ExecClearTuple(slot);

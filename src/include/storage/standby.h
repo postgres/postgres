@@ -73,7 +73,7 @@ typedef struct RunningTransactionsData
 	int			subxcnt;		/* # of subxact ids in xids[] */
 	bool		subxid_overflow;	/* snapshot overflowed, subxids missing */
 	TransactionId nextXid;		/* copy of ShmemVariableCache->nextXid */
-	TransactionId oldestRunningXid;		/* *not* oldestXmin */
+	TransactionId oldestRunningXid; /* *not* oldestXmin */
 	TransactionId latestCompletedXid;	/* so we can set xmax */
 
 	TransactionId *xids;		/* array of (sub)xids still running */
@@ -88,4 +88,4 @@ extern XLogRecPtr LogStandbySnapshot(void);
 extern void LogStandbyInvalidations(int nmsgs, SharedInvalidationMessage *msgs,
 						bool relcacheInitFileInval);
 
-#endif   /* STANDBY_H */
+#endif							/* STANDBY_H */

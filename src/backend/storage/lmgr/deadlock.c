@@ -539,8 +539,8 @@ static bool
 FindLockCycleRecurseMember(PGPROC *checkProc,
 						   PGPROC *checkProcLeader,
 						   int depth,
-						   EDGE *softEdges,		/* output argument */
-						   int *nSoftEdges)		/* output argument */
+						   EDGE *softEdges, /* output argument */
+						   int *nSoftEdges) /* output argument */
 {
 	PGPROC	   *proc;
 	LOCK	   *lock = checkProc->waitLock;

@@ -1193,7 +1193,7 @@ _tarPositionTo(ArchiveHandle *AH, const char *filename)
 						  th->targetFile, filename);
 
 		/* Header doesn't match, so read to next header */
-		len = ((th->fileLen + 511) & ~511);		/* Padded length */
+		len = ((th->fileLen + 511) & ~511); /* Padded length */
 		blks = len >> 9;		/* # of 512 byte blocks */
 
 		for (i = 0; i < blks; i++)

@@ -32,7 +32,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)dl.c	5.4 (Berkeley) 2/23/91";
-#endif   /* LIBC_SCCS and not lint */
+#endif							/* LIBC_SCCS and not lint */
 
 #include "postgres.h"
 
@@ -89,7 +89,7 @@ BSD44_derived_dlsym(void *handle, const char *name)
 		snprintf(buf, sizeof(buf), "_%s", name);
 		name = buf;
 	}
-#endif   /* !__ELF__ */
+#endif							/* !__ELF__ */
 	if ((vp = dlsym(handle, (char *) name)) == NULL)
 		snprintf(error_message, sizeof(error_message),
 				 "dlsym (%s) failed", name);

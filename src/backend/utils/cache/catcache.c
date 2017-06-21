@@ -339,7 +339,7 @@ CatCachePrintStats(int code, Datum arg)
 		 cc_lsearches,
 		 cc_lhits);
 }
-#endif   /* CATCACHE_STATS */
+#endif							/* CATCACHE_STATS */
 
 
 /*

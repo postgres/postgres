@@ -194,9 +194,9 @@ logicalrep_write_update(StringInfo out, Relation rel, HeapTuple oldtuple,
 	if (oldtuple != NULL)
 	{
 		if (rel->rd_rel->relreplident == REPLICA_IDENTITY_FULL)
-			pq_sendbyte(out, 'O');		/* old tuple follows */
+			pq_sendbyte(out, 'O');	/* old tuple follows */
 		else
-			pq_sendbyte(out, 'K');		/* old key follows */
+			pq_sendbyte(out, 'K');	/* old key follows */
 		logicalrep_write_tuple(out, rel, oldtuple);
 	}
 
@@ -424,12 +424,12 @@ logicalrep_write_tuple(StringInfo out, Relation rel, HeapTuple tuple)
 
 		if (isnull[i])
 		{
-			pq_sendbyte(out, 'n');		/* null column */
+			pq_sendbyte(out, 'n');	/* null column */
 			continue;
 		}
 		else if (att->attlen == -1 && VARATT_IS_EXTERNAL_ONDISK(values[i]))
 		{
-			pq_sendbyte(out, 'u');		/* unchanged toast column */
+			pq_sendbyte(out, 'u');	/* unchanged toast column */
 			continue;
 		}
 

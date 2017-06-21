@@ -48,7 +48,7 @@ typedef struct df_files
 	ino_t		inode;			/* Inode number of file */
 #endif
 	void	   *handle;			/* a handle for pg_dl* functions */
-	char		filename[FLEXIBLE_ARRAY_MEMBER];		/* Full pathname of file */
+	char		filename[FLEXIBLE_ARRAY_MEMBER];	/* Full pathname of file */
 } DynamicFileList;
 
 static DynamicFileList *file_list = NULL;
@@ -448,7 +448,7 @@ internal_unload_library(const char *libname)
 		else
 			prv = file_scanner;
 	}
-#endif   /* NOT_USED */
+#endif							/* NOT_USED */
 }
 
 static bool

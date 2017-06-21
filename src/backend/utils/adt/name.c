@@ -200,8 +200,7 @@ namecpy(Name n1, Name n2)
 int
 namecat(Name n1, Name n2)
 {
-	return namestrcat(n1, NameStr(*n2));		/* n2 can't be any longer than
-												 * n1 */
+	return namestrcat(n1, NameStr(*n2));	/* n2 can't be any longer than n1 */
 }
 #endif
 
@@ -317,9 +316,9 @@ current_schemas(PG_FUNCTION_ARGS)
 
 	array = construct_array(names, i,
 							NAMEOID,
-							NAMEDATALEN,		/* sizeof(Name) */
-							false,		/* Name is not by-val */
-							'c');		/* alignment of Name */
+							NAMEDATALEN,	/* sizeof(Name) */
+							false,	/* Name is not by-val */
+							'c');	/* alignment of Name */
 
 	PG_RETURN_POINTER(array);
 }

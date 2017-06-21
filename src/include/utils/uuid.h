@@ -28,4 +28,4 @@ typedef struct pg_uuid_t
 #define DatumGetUUIDP(X)		((pg_uuid_t *) DatumGetPointer(X))
 #define PG_GETARG_UUID_P(X)		DatumGetUUIDP(PG_GETARG_DATUM(X))
 
-#endif   /* UUID_H */
+#endif							/* UUID_H */

@@ -446,8 +446,7 @@ _readRangeVar(void)
 {
 	READ_LOCALS(RangeVar);
 
-	local_node->catalogname = NULL;		/* not currently saved in output
-										 * format */
+	local_node->catalogname = NULL; /* not currently saved in output format */
 
 	READ_STRING_FIELD(schemaname);
 	READ_STRING_FIELD(relname);
@@ -539,7 +538,7 @@ _readConst(void)
 
 	token = pg_strtok(&length); /* skip :constvalue */
 	if (local_node->constisnull)
-		token = pg_strtok(&length);		/* skip "<>" */
+		token = pg_strtok(&length); /* skip "<>" */
 	else
 		local_node->constvalue = readDatum(local_node->constbyval);
 

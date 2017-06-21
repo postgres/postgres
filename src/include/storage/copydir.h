@@ -16,4 +16,4 @@
 extern void copydir(char *fromdir, char *todir, bool recurse);
 extern void copy_file(char *fromfile, char *tofile);
 
-#endif   /* COPYDIR_H */
+#endif							/* COPYDIR_H */

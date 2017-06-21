@@ -124,7 +124,7 @@ static int	selfpipe_owner_pid = 0;
 /* Private function prototypes */
 static void sendSelfPipeByte(void);
 static void drainSelfPipe(void);
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 
 #if defined(WAIT_USE_EPOLL)
 static void WaitEventAdjustEpoll(WaitEventSet *set, WaitEvent *event, int action);
@@ -230,7 +230,7 @@ InitLatch(volatile Latch *latch)
 	latch->event = CreateEvent(NULL, TRUE, FALSE, NULL);
 	if (latch->event == NULL)
 		elog(ERROR, "CreateEvent failed: error code %lu", GetLastError());
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 }
 
 /*
@@ -576,7 +576,7 @@ CreateWaitEventSet(MemoryContext context, int nevents)
 		elog(ERROR, "epoll_create failed: %m");
 	if (fcntl(set->epoll_fd, F_SETFD, FD_CLOEXEC) == -1)
 		elog(ERROR, "fcntl(F_SETFD) failed on epoll descriptor: %m");
-#endif   /* EPOLL_CLOEXEC */
+#endif							/* EPOLL_CLOEXEC */
 #elif defined(WAIT_USE_WIN32)
 
 	/*
@@ -1469,7 +1469,7 @@ latch_sigusr1_handler(void)
 	if (waiting)
 		sendSelfPipeByte();
 }
-#endif   /* !WIN32 */
+#endif							/* !WIN32 */
 
 /* Send one byte to the self-pipe, to wake up WaitLatch */
 #ifndef WIN32
@@ -1502,7 +1502,7 @@ retry:
 		return;
 	}
 }
-#endif   /* !WIN32 */
+#endif							/* !WIN32 */
 
 /*
  * Read all available data from the self-pipe
@@ -1550,4 +1550,4 @@ drainSelfPipe(void)
 		/* else buffer wasn't big enough, so read again */
 	}
 }
-#endif   /* !WIN32 */
+#endif							/* !WIN32 */

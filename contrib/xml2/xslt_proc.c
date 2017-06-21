@@ -29,7 +29,7 @@
 #include <libxslt/security.h>
 #include <libxslt/transform.h>
 #include <libxslt/xsltutils.h>
-#endif   /* USE_LIBXSLT */
+#endif							/* USE_LIBXSLT */
 
 
 #ifdef USE_LIBXSLT
@@ -39,7 +39,7 @@ extern PgXmlErrorContext *pgxml_parser_init(PgXmlStrictness strictness);
 
 /* local defs */
 static const char **parse_params(text *paramstr);
-#endif   /* USE_LIBXSLT */
+#endif							/* USE_LIBXSLT */
 
 
 PG_FUNCTION_INFO_V1(xslt_process);
@@ -189,7 +189,7 @@ xslt_process(PG_FUNCTION_ARGS)
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			 errmsg("xslt_process() is not available without libxslt")));
 	PG_RETURN_NULL();
-#endif   /* USE_LIBXSLT */
+#endif							/* USE_LIBXSLT */
 }
 
 #ifdef USE_LIBXSLT
@@ -253,4 +253,4 @@ parse_params(text *paramstr)
 	return params;
 }
 
-#endif   /* USE_LIBXSLT */
+#endif							/* USE_LIBXSLT */

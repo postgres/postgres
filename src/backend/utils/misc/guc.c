@@ -438,8 +438,8 @@ bool		Debug_pretty_print = true;
 bool		log_parser_stats = false;
 bool		log_planner_stats = false;
 bool		log_executor_stats = false;
-bool		log_statement_stats = false;		/* this is sort of all three
-												 * above together */
+bool		log_statement_stats = false;	/* this is sort of all three above
+											 * together */
 bool		log_btree_build_stats = false;
 char	   *event_source;
 
@@ -7040,7 +7040,7 @@ replace_auto_config_value(ConfigVariable **head_p, ConfigVariable **tail_p,
 	item->name = pstrdup(name);
 	item->value = pstrdup(value);
 	item->errmsg = NULL;
-	item->filename = pstrdup("");		/* new item has no location */
+	item->filename = pstrdup("");	/* new item has no location */
 	item->sourceline = 0;
 	item->ignore = false;
 	item->applied = false;
@@ -8956,7 +8956,7 @@ read_nondefault_variables(void)
 
 	FreeFile(fp);
 }
-#endif   /* EXEC_BACKEND */
+#endif							/* EXEC_BACKEND */
 
 /*
  * can_skip_gucvar:
@@ -10404,7 +10404,7 @@ check_effective_io_concurrency(int *newval, void **extra, GucSource source)
 		return false;
 #else
 	return true;
-#endif   /* USE_PREFETCH */
+#endif							/* USE_PREFETCH */
 }
 
 static void
@@ -10412,7 +10412,7 @@ assign_effective_io_concurrency(int newval, void *extra)
 {
 #ifdef USE_PREFETCH
 	target_prefetch_pages = *((int *) extra);
-#endif   /* USE_PREFETCH */
+#endif							/* USE_PREFETCH */
 }
 
 static void
@@ -10424,13 +10424,13 @@ assign_pgstat_temp_directory(const char *newval, void *extra)
 	char	   *fname;
 
 	/* directory */
-	dname = guc_malloc(ERROR, strlen(newval) + 1);		/* runtime dir */
+	dname = guc_malloc(ERROR, strlen(newval) + 1);	/* runtime dir */
 	sprintf(dname, "%s", newval);
 
 	/* global stats */
-	tname = guc_malloc(ERROR, strlen(newval) + 12);		/* /global.tmp */
+	tname = guc_malloc(ERROR, strlen(newval) + 12); /* /global.tmp */
 	sprintf(tname, "%s/global.tmp", newval);
-	fname = guc_malloc(ERROR, strlen(newval) + 13);		/* /global.stat */
+	fname = guc_malloc(ERROR, strlen(newval) + 13); /* /global.stat */
 	sprintf(fname, "%s/global.stat", newval);
 
 	if (pgstat_stat_directory)

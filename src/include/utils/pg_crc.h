@@ -104,4 +104,4 @@ do {															  \
  */
 extern PGDLLIMPORT const uint32 pg_crc32_table[256];
 
-#endif   /* PG_CRC_H */
+#endif							/* PG_CRC_H */

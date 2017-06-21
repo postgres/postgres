@@ -72,7 +72,7 @@ typedef struct SortSupportData
 	 * sort support functions.
 	 */
 	bool		ssup_reverse;	/* descending-order sort? */
-	bool		ssup_nulls_first;		/* sort nulls first? */
+	bool		ssup_nulls_first;	/* sort nulls first? */
 
 	/*
 	 * These fields are workspace for callers, and should not be touched by
@@ -274,4 +274,4 @@ extern void PrepareSortSupportFromOrderingOp(Oid orderingOp, SortSupport ssup);
 extern void PrepareSortSupportFromIndexRel(Relation indexRel, int16 strategy,
 							   SortSupport ssup);
 
-#endif   /* SORTSUPPORT_H */
+#endif							/* SORTSUPPORT_H */

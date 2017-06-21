@@ -42,4 +42,4 @@ extern const char *generic_identify(uint8 info);
 extern void generic_desc(StringInfo buf, XLogReaderState *record);
 extern void generic_mask(char *pagedata, BlockNumber blkno);
 
-#endif   /* GENERIC_XLOG_H */
+#endif							/* GENERIC_XLOG_H */

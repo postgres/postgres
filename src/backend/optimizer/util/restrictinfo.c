@@ -114,7 +114,7 @@ make_restrictinfo_internal(Expr *clause,
 	restrictinfo->is_pushed_down = is_pushed_down;
 	restrictinfo->outerjoin_delayed = outerjoin_delayed;
 	restrictinfo->pseudoconstant = pseudoconstant;
-	restrictinfo->can_join = false;		/* may get set below */
+	restrictinfo->can_join = false; /* may get set below */
 	restrictinfo->security_level = security_level;
 	restrictinfo->outer_relids = outer_relids;
 	restrictinfo->nullable_relids = nullable_relids;
@@ -127,7 +127,7 @@ make_restrictinfo_internal(Expr *clause,
 	if (security_level > 0)
 		restrictinfo->leakproof = !contain_leaked_vars((Node *) clause);
 	else
-		restrictinfo->leakproof = false;		/* really, "don't know" */
+		restrictinfo->leakproof = false;	/* really, "don't know" */
 
 	/*
 	 * If it's a binary opclause, set up left/right relids info. In any case

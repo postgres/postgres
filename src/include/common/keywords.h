@@ -41,4 +41,4 @@ extern const ScanKeyword *ScanKeywordLookup(const char *text,
 				  const ScanKeyword *keywords,
 				  int num_keywords);
 
-#endif   /* KEYWORDS_H */
+#endif							/* KEYWORDS_H */

@@ -87,4 +87,4 @@ typedef FormData_pg_shdepend *Form_pg_shdepend;
  * are explicitly stored in pg_shdepend.
  */
 
-#endif   /* PG_SHDEPEND_H */
+#endif							/* PG_SHDEPEND_H */

@@ -28,4 +28,4 @@ extern void ExecReScanSetParamPlan(SubPlanState *node, PlanState *parent);
 
 extern void ExecSetParamPlan(SubPlanState *node, ExprContext *econtext);
 
-#endif   /* NODESUBPLAN_H */
+#endif							/* NODESUBPLAN_H */

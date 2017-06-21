@@ -140,4 +140,4 @@ tas_sema(volatile slock_t *lock)
 	return !PGSemaphoreTryLock(SpinlockSemaArray[lockndx - 1]);
 }
 
-#endif   /* !HAVE_SPINLOCKS */
+#endif							/* !HAVE_SPINLOCKS */

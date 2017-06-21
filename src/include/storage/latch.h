@@ -176,4 +176,4 @@ extern void latch_sigusr1_handler(void);
 #define latch_sigusr1_handler()  ((void) 0)
 #endif
 
-#endif   /* LATCH_H */
+#endif							/* LATCH_H */

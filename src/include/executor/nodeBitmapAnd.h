@@ -21,4 +21,4 @@ extern Node *MultiExecBitmapAnd(BitmapAndState *node);
 extern void ExecEndBitmapAnd(BitmapAndState *node);
 extern void ExecReScanBitmapAnd(BitmapAndState *node);
 
-#endif   /* NODEBITMAPAND_H */
+#endif							/* NODEBITMAPAND_H */

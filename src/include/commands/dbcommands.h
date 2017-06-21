@@ -31,4 +31,4 @@ extern char *get_database_name(Oid dbid);
 
 extern void check_encoding_locale_matches(int encoding, const char *collate, const char *ctype);
 
-#endif   /* DBCOMMANDS_H */
+#endif							/* DBCOMMANDS_H */

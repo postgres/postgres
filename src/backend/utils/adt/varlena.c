@@ -268,7 +268,7 @@ byteain(PG_FUNCTION_ARGS)
 		bc = (len - 2) / 2 + VARHDRSZ;	/* maximum possible length */
 		result = palloc(bc);
 		bc = hex_decode(inputText + 2, len - 2, VARDATA(result));
-		SET_VARSIZE(result, bc + VARHDRSZ);		/* actual length */
+		SET_VARSIZE(result, bc + VARHDRSZ); /* actual length */
 
 		PG_RETURN_BYTEA_P(result);
 	}
@@ -823,8 +823,8 @@ text_substring(Datum str, int32 start, int32 length, bool length_not_specified)
 	{
 		S1 = Max(S, 1);
 
-		if (length_not_specified)		/* special case - get length to end of
-										 * string */
+		if (length_not_specified)	/* special case - get length to end of
+									 * string */
 			L1 = -1;
 		else
 		{
@@ -888,8 +888,8 @@ text_substring(Datum str, int32 start, int32 length, bool length_not_specified)
 		 */
 		slice_start = 0;
 
-		if (length_not_specified)		/* special case - get length to end of
-										 * string */
+		if (length_not_specified)	/* special case - get length to end of
+									 * string */
 			slice_size = L1 = -1;
 		else
 		{
@@ -1012,8 +1012,8 @@ textoverlay(PG_FUNCTION_ARGS)
 {
 	text	   *t1 = PG_GETARG_TEXT_PP(0);
 	text	   *t2 = PG_GETARG_TEXT_PP(1);
-	int			sp = PG_GETARG_INT32(2);		/* substring start position */
-	int			sl = PG_GETARG_INT32(3);		/* substring length */
+	int			sp = PG_GETARG_INT32(2);	/* substring start position */
+	int			sl = PG_GETARG_INT32(3);	/* substring length */
 
 	PG_RETURN_TEXT_P(text_overlay(t1, t2, sp, sl));
 }
@@ -1023,10 +1023,10 @@ textoverlay_no_len(PG_FUNCTION_ARGS)
 {
 	text	   *t1 = PG_GETARG_TEXT_PP(0);
 	text	   *t2 = PG_GETARG_TEXT_PP(1);
-	int			sp = PG_GETARG_INT32(2);		/* substring start position */
+	int			sp = PG_GETARG_INT32(2);	/* substring start position */
 	int			sl;
 
-	sl = text_length(PointerGetDatum(t2));		/* defaults to length(t2) */
+	sl = text_length(PointerGetDatum(t2));	/* defaults to length(t2) */
 	PG_RETURN_TEXT_P(text_overlay(t1, t2, sp, sl));
 }
 
@@ -1520,7 +1520,7 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2, Oid collid)
 
 			return result;
 		}
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 
 		if (len1 >= TEXTBUFLEN)
 			a1p = (char *) palloc(len1 + 1);
@@ -1573,7 +1573,7 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2, Oid collid)
 #else							/* not USE_ICU */
 				/* shouldn't happen */
 				elog(ERROR, "unsupported collprovider: %c", mylocale->provider);
-#endif   /* not USE_ICU */
+#endif							/* not USE_ICU */
 			}
 			else
 			{
@@ -2159,7 +2159,7 @@ varstrfastcmp_locale(Datum x, Datum y, SortSupport ssup)
 #else							/* not USE_ICU */
 			/* shouldn't happen */
 			elog(ERROR, "unsupported collprovider: %c", sss->locale->provider);
-#endif   /* not USE_ICU */
+#endif							/* not USE_ICU */
 		}
 		else
 		{
@@ -2899,8 +2899,8 @@ byteaoverlay(PG_FUNCTION_ARGS)
 {
 	bytea	   *t1 = PG_GETARG_BYTEA_PP(0);
 	bytea	   *t2 = PG_GETARG_BYTEA_PP(1);
-	int			sp = PG_GETARG_INT32(2);		/* substring start position */
-	int			sl = PG_GETARG_INT32(3);		/* substring length */
+	int			sp = PG_GETARG_INT32(2);	/* substring start position */
+	int			sl = PG_GETARG_INT32(3);	/* substring length */
 
 	PG_RETURN_BYTEA_P(bytea_overlay(t1, t2, sp, sl));
 }
@@ -2910,7 +2910,7 @@ byteaoverlay_no_len(PG_FUNCTION_ARGS)
 {
 	bytea	   *t1 = PG_GETARG_BYTEA_PP(0);
 	bytea	   *t2 = PG_GETARG_BYTEA_PP(1);
-	int			sp = PG_GETARG_INT32(2);		/* substring start position */
+	int			sp = PG_GETARG_INT32(2);	/* substring start position */
 	int			sl;
 
 	sl = VARSIZE_ANY_EXHDR(t2); /* defaults to length(t2) */
@@ -3273,7 +3273,7 @@ SplitIdentifierString(char *rawstring, char separator,
 			{
 				endp = strchr(nextp + 1, '"');
 				if (endp == NULL)
-					return false;		/* mismatched quotes */
+					return false;	/* mismatched quotes */
 				if (endp[1] != '"')
 					break;		/* found end of quoted name */
 				/* Collapse adjacent quotes into one quote, and look again */
@@ -3400,7 +3400,7 @@ SplitDirectoriesString(char *rawstring, char separator,
 			{
 				endp = strchr(nextp + 1, '"');
 				if (endp == NULL)
-					return false;		/* mismatched quotes */
+					return false;	/* mismatched quotes */
 				if (endp[1] != '"')
 					break;		/* found end of quoted name */
 				/* Collapse adjacent quotes into one quote, and look again */
@@ -3932,7 +3932,7 @@ replace_text_regexp(text *src_text, void *regexp,
 									data,
 									data_len,
 									search_start,
-									NULL,		/* no details */
+									NULL,	/* no details */
 									REGEXP_REPLACE_BACKREF_CNT,
 									pmatch,
 									0);
@@ -4251,7 +4251,7 @@ text_to_array_internal(PG_FUNCTION_ARGS)
 		/* start_ptr points to the start_posn'th character of inputstring */
 		start_ptr = VARDATA_ANY(inputstring);
 
-		for (fldnum = 1;; fldnum++)		/* field number is 1 based */
+		for (fldnum = 1;; fldnum++) /* field number is 1 based */
 		{
 			CHECK_FOR_INTERRUPTS();
 
@@ -4695,7 +4695,7 @@ string_agg_transfn(PG_FUNCTION_ARGS)
 		else if (!PG_ARGISNULL(2))
 			appendStringInfoText(state, PG_GETARG_TEXT_PP(2));	/* delimiter */
 
-		appendStringInfoText(state, PG_GETARG_TEXT_PP(1));		/* value */
+		appendStringInfoText(state, PG_GETARG_TEXT_PP(1));	/* value */
 	}
 
 	/*

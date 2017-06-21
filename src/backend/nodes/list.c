@@ -52,7 +52,7 @@ check_list_invariants(const List *list)
 }
 #else
 #define check_list_invariants(l)
-#endif   /* USE_ASSERT_CHECKING */
+#endif							/* USE_ASSERT_CHECKING */
 
 /*
  * Return a freshly allocated List. Since empty non-NIL lists are

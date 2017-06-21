@@ -277,7 +277,7 @@ pg_set_regex_collation(Oid collation)
 				pg_regex_strategy = PG_REGEX_LOCALE_WIDE;
 		}
 		else
-#endif   /* USE_WIDE_UPPER_LOWER */
+#endif							/* USE_WIDE_UPPER_LOWER */
 		{
 			if (pg_regex_locale)
 				pg_regex_strategy = PG_REGEX_LOCALE_1BYTE_L;

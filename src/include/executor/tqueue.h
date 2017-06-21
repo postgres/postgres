@@ -30,4 +30,4 @@ extern void DestroyTupleQueueReader(TupleQueueReader *reader);
 extern HeapTuple TupleQueueReaderNext(TupleQueueReader *reader,
 					 bool nowait, bool *done);
 
-#endif   /* TQUEUE_H */
+#endif							/* TQUEUE_H */

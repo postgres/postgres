@@ -75,23 +75,23 @@ typedef z_stream *z_streamp;
 
 /* Historical version numbers (checked in code) */
 #define K_VERS_1_0	MAKE_ARCHIVE_VERSION(1, 0, 0)
-#define K_VERS_1_2	MAKE_ARCHIVE_VERSION(1, 2, 0)		/* Allow No ZLIB */
-#define K_VERS_1_3	MAKE_ARCHIVE_VERSION(1, 3, 0)		/* BLOBs */
-#define K_VERS_1_4	MAKE_ARCHIVE_VERSION(1, 4, 0)		/* Date & name in header */
-#define K_VERS_1_5	MAKE_ARCHIVE_VERSION(1, 5, 0)		/* Handle dependencies */
-#define K_VERS_1_6	MAKE_ARCHIVE_VERSION(1, 6, 0)		/* Schema field in TOCs */
-#define K_VERS_1_7	MAKE_ARCHIVE_VERSION(1, 7, 0)		/* File Offset size in
-														 * header */
-#define K_VERS_1_8	MAKE_ARCHIVE_VERSION(1, 8, 0)		/* change interpretation
-														 * of ID numbers and
-														 * dependencies */
-#define K_VERS_1_9	MAKE_ARCHIVE_VERSION(1, 9, 0)		/* add default_with_oids
-														 * tracking */
-#define K_VERS_1_10 MAKE_ARCHIVE_VERSION(1, 10, 0)		/* add tablespace */
-#define K_VERS_1_11 MAKE_ARCHIVE_VERSION(1, 11, 0)		/* add toc section
-														 * indicator */
-#define K_VERS_1_12 MAKE_ARCHIVE_VERSION(1, 12, 0)		/* add separate BLOB
-														 * entries */
+#define K_VERS_1_2	MAKE_ARCHIVE_VERSION(1, 2, 0)	/* Allow No ZLIB */
+#define K_VERS_1_3	MAKE_ARCHIVE_VERSION(1, 3, 0)	/* BLOBs */
+#define K_VERS_1_4	MAKE_ARCHIVE_VERSION(1, 4, 0)	/* Date & name in header */
+#define K_VERS_1_5	MAKE_ARCHIVE_VERSION(1, 5, 0)	/* Handle dependencies */
+#define K_VERS_1_6	MAKE_ARCHIVE_VERSION(1, 6, 0)	/* Schema field in TOCs */
+#define K_VERS_1_7	MAKE_ARCHIVE_VERSION(1, 7, 0)	/* File Offset size in
+													 * header */
+#define K_VERS_1_8	MAKE_ARCHIVE_VERSION(1, 8, 0)	/* change interpretation
+													 * of ID numbers and
+													 * dependencies */
+#define K_VERS_1_9	MAKE_ARCHIVE_VERSION(1, 9, 0)	/* add default_with_oids
+													 * tracking */
+#define K_VERS_1_10 MAKE_ARCHIVE_VERSION(1, 10, 0)	/* add tablespace */
+#define K_VERS_1_11 MAKE_ARCHIVE_VERSION(1, 11, 0)	/* add toc section
+													 * indicator */
+#define K_VERS_1_12 MAKE_ARCHIVE_VERSION(1, 12, 0)	/* add separate BLOB
+													 * entries */
 
 /* Current archive version number (the format we can output) */
 #define K_VERS_MAJOR 1
@@ -217,8 +217,8 @@ struct _archiveHandle
 
 	char	   *archiveRemoteVersion;	/* When reading an archive, the
 										 * version of the dumped DB */
-	char	   *archiveDumpVersion;		/* When reading an archive, the
-										 * version of the dumper */
+	char	   *archiveDumpVersion; /* When reading an archive, the version of
+									 * the dumper */
 
 	int			debugLevel;		/* Used for logging (currently only by
 								 * --verbose) */
@@ -242,25 +242,24 @@ struct _archiveHandle
 	size_t		lookaheadLen;	/* Length of data in lookahead */
 	pgoff_t		lookaheadPos;	/* Current read position in lookahead buffer */
 
-	ArchiveEntryPtrType ArchiveEntryPtr;		/* Called for each metadata
-												 * object */
-	StartDataPtrType StartDataPtr;		/* Called when table data is about to
-										 * be dumped */
-	WriteDataPtrType WriteDataPtr;		/* Called to send some table data to
-										 * the archive */
+	ArchiveEntryPtrType ArchiveEntryPtr;	/* Called for each metadata object */
+	StartDataPtrType StartDataPtr;	/* Called when table data is about to be
+									 * dumped */
+	WriteDataPtrType WriteDataPtr;	/* Called to send some table data to the
+									 * archive */
 	EndDataPtrType EndDataPtr;	/* Called when table data dump is finished */
-	WriteBytePtrType WriteBytePtr;		/* Write a byte to output */
+	WriteBytePtrType WriteBytePtr;	/* Write a byte to output */
 	ReadBytePtrType ReadBytePtr;	/* Read a byte from an archive */
 	WriteBufPtrType WriteBufPtr;	/* Write a buffer of output to the archive */
 	ReadBufPtrType ReadBufPtr;	/* Read a buffer of input from the archive */
 	ClosePtrType ClosePtr;		/* Close the archive */
 	ReopenPtrType ReopenPtr;	/* Reopen the archive */
-	WriteExtraTocPtrType WriteExtraTocPtr;		/* Write extra TOC entry data
-												 * associated with the current
-												 * archive format */
-	ReadExtraTocPtrType ReadExtraTocPtr;		/* Read extra info associated
-												 * with archive format */
-	PrintExtraTocPtrType PrintExtraTocPtr;		/* Extra TOC info for format */
+	WriteExtraTocPtrType WriteExtraTocPtr;	/* Write extra TOC entry data
+											 * associated with the current
+											 * archive format */
+	ReadExtraTocPtrType ReadExtraTocPtr;	/* Read extra info associated with
+											 * archive format */
+	PrintExtraTocPtrType PrintExtraTocPtr;	/* Extra TOC info for format */
 	PrintTocDataPtrType PrintTocDataPtr;
 
 	StartBlobsPtrType StartBlobsPtr;
@@ -275,7 +274,7 @@ struct _archiveHandle
 	ClonePtrType ClonePtr;		/* Clone format-specific fields */
 	DeClonePtrType DeClonePtr;	/* Clean up cloned fields */
 
-	CustomOutPtrType CustomOutPtr;		/* Alternative script output routine */
+	CustomOutPtrType CustomOutPtr;	/* Alternative script output routine */
 
 	/* Stuff for direct DB connection */
 	char	   *archdbname;		/* DB name *read* from archive */

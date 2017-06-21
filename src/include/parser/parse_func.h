@@ -70,4 +70,4 @@ extern Oid LookupAggWithArgs(ObjectWithArgs *agg,
 extern void check_srf_call_placement(ParseState *pstate, Node *last_srf,
 						 int location);
 
-#endif   /* PARSE_FUNC_H */
+#endif							/* PARSE_FUNC_H */

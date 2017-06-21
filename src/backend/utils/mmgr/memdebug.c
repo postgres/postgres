@@ -90,4 +90,4 @@ randomize_mem(char *ptr, size_t size)
 	save_ctr = ctr;
 }
 
-#endif   /* RANDOMIZE_ALLOCATED_MEMORY */
+#endif							/* RANDOMIZE_ALLOCATED_MEMORY */

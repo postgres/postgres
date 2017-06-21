@@ -593,11 +593,11 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 											  stmt->initdeferred,
 											  true,
 											  RelationGetRelid(rel),
-											  NULL,		/* no conkey */
+											  NULL, /* no conkey */
 											  0,
-											  InvalidOid,		/* no domain */
-											  InvalidOid,		/* no index */
-											  InvalidOid,		/* no foreign key */
+											  InvalidOid,	/* no domain */
+											  InvalidOid,	/* no index */
+											  InvalidOid,	/* no foreign key */
 											  NULL,
 											  NULL,
 											  NULL,
@@ -606,14 +606,14 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 											  ' ',
 											  ' ',
 											  ' ',
-											  NULL,		/* no exclusion */
-											  NULL,		/* no check constraint */
+											  NULL, /* no exclusion */
+											  NULL, /* no check constraint */
 											  NULL,
 											  NULL,
-											  true,		/* islocal */
-											  0,		/* inhcount */
-											  true,		/* isnoinherit */
-											  isInternal);		/* is_internal */
+											  true, /* islocal */
+											  0,	/* inhcount */
+											  true, /* isnoinherit */
+											  isInternal);	/* is_internal */
 	}
 
 	/*
@@ -2026,7 +2026,7 @@ equalTriggerDescs(TriggerDesc *trigdesc1, TriggerDesc *trigdesc2)
 		return false;
 	return true;
 }
-#endif   /* NOT_USED */
+#endif							/* NOT_USED */
 
 /*
  * Call a trigger function.
@@ -3255,8 +3255,7 @@ typedef SetConstraintStateData *SetConstraintState;
  */
 typedef uint32 TriggerFlags;
 
-#define AFTER_TRIGGER_OFFSET			0x0FFFFFFF		/* must be low-order
-														 * bits */
+#define AFTER_TRIGGER_OFFSET			0x0FFFFFFF	/* must be low-order bits */
 #define AFTER_TRIGGER_DONE				0x10000000
 #define AFTER_TRIGGER_IN_PROGRESS		0x20000000
 /* bits describing the size and tuple sources of this event */
@@ -3317,7 +3316,7 @@ typedef struct AfterTriggerEventDataZeroCtids
  */
 typedef struct AfterTriggerEventChunk
 {
-	struct AfterTriggerEventChunk *next;		/* list link */
+	struct AfterTriggerEventChunk *next;	/* list link */
 	char	   *freeptr;		/* start of free space in chunk */
 	char	   *endfree;		/* end of free space in chunk */
 	char	   *endptr;			/* end of chunk */
@@ -3409,7 +3408,7 @@ typedef struct AfterTriggersData
 {
 	CommandId	firing_counter; /* next firing ID to assign */
 	SetConstraintState state;	/* the active S C state */
-	AfterTriggerEventList events;		/* deferred-event list */
+	AfterTriggerEventList events;	/* deferred-event list */
 	int			query_depth;	/* current query list index */
 	AfterTriggerEventList *query_stack; /* events pending from each query */
 	Tuplestorestate **fdw_tuplestores;	/* foreign tuples for one row from
@@ -3422,7 +3421,7 @@ typedef struct AfterTriggersData
 	/* these fields are just for resetting at subtrans abort: */
 
 	SetConstraintState *state_stack;	/* stacked S C states */
-	AfterTriggerEventList *events_stack;		/* stacked list pointers */
+	AfterTriggerEventList *events_stack;	/* stacked list pointers */
 	int		   *depth_stack;	/* stacked query_depths */
 	CommandId  *firing_stack;	/* stacked firing_counters */
 	int			maxtransdepth;	/* allocated len of above arrays */
@@ -4058,7 +4057,7 @@ afterTriggerInvokeEvents(AfterTriggerEventList *events,
 						slot1 = MakeSingleTupleTableSlot(rel->rd_att);
 						slot2 = MakeSingleTupleTableSlot(rel->rd_att);
 					}
-					if (trigdesc == NULL)		/* should not happen */
+					if (trigdesc == NULL)	/* should not happen */
 						elog(ERROR, "relation %u has no triggers",
 							 evtshared->ats_relid);
 				}
@@ -4132,7 +4131,7 @@ AfterTriggerBeginXact(void)
 	/*
 	 * Initialize after-trigger state structure to empty
 	 */
-	afterTriggers.firing_counter = (CommandId) 1;		/* mustn't be 0 */
+	afterTriggers.firing_counter = (CommandId) 1;	/* mustn't be 0 */
 	afterTriggers.query_depth = -1;
 
 	/*

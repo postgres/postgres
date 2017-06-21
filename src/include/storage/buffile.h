@@ -42,4 +42,4 @@ extern int	BufFileSeek(BufFile *file, int fileno, off_t offset, int whence);
 extern void BufFileTell(BufFile *file, int *fileno, off_t *offset);
 extern int	BufFileSeekBlock(BufFile *file, long blknum);
 
-#endif   /* BUFFILE_H */
+#endif							/* BUFFILE_H */

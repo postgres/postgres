@@ -151,4 +151,4 @@ extern void ProcessCommittedInvalidationMessages(SharedInvalidationMessage *msgs
 
 extern void LocalExecuteInvalidationMessage(SharedInvalidationMessage *msg);
 
-#endif   /* SINVAL_H */
+#endif							/* SINVAL_H */

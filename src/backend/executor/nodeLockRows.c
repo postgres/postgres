@@ -172,7 +172,7 @@ lnext:
 				break;
 			default:
 				elog(ERROR, "unsupported rowmark type");
-				lockmode = LockTupleNoKeyExclusive;		/* keep compiler quiet */
+				lockmode = LockTupleNoKeyExclusive; /* keep compiler quiet */
 				break;
 		}
 

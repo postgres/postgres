@@ -79,4 +79,4 @@ DATA(insert OID = 1 (  template1 PGUID ENCODING "LC_COLLATE" "LC_CTYPE" t t -1 0
 SHDESCR("default template for new databases");
 #define TemplateDbOid			1
 
-#endif   /* PG_DATABASE_H */
+#endif							/* PG_DATABASE_H */

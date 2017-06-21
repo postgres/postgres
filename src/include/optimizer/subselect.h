@@ -40,4 +40,4 @@ extern Param *assign_nestloop_param_placeholdervar(PlannerInfo *root,
 									 PlaceHolderVar *phv);
 extern int	SS_assign_special_param(PlannerInfo *root);
 
-#endif   /* SUBSELECT_H */
+#endif							/* SUBSELECT_H */

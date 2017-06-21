@@ -52,7 +52,7 @@ void		win32_pthread_once(volatile pthread_once_t *once, void (*fn) (void));
 		if (!*(once)) \
 			win32_pthread_once((once), (fn)); \
 	} while(0)
-#endif   /* WIN32 */
-#endif   /* ENABLE_THREAD_SAFETY */
+#endif							/* WIN32 */
+#endif							/* ENABLE_THREAD_SAFETY */
 
-#endif   /* _ECPG_PTHREAD_WIN32_H */
+#endif							/* _ECPG_PTHREAD_WIN32_H */

@@ -64,4 +64,4 @@ typedef struct TableFuncRoutine
 	void		(*DestroyOpaque) (struct TableFuncScanState *state);
 } TableFuncRoutine;
 
-#endif   /* _TABLEFUNC_H */
+#endif							/* _TABLEFUNC_H */

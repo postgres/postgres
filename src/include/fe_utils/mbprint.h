@@ -26,4 +26,4 @@ extern void pg_wcsformat(const unsigned char *pwcs, size_t len, int encoding,
 extern void pg_wcssize(const unsigned char *pwcs, size_t len, int encoding,
 		   int *width, int *height, int *format_size);
 
-#endif   /* MBPRINT_H */
+#endif							/* MBPRINT_H */

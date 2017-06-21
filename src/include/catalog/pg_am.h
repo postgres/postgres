@@ -58,7 +58,7 @@ typedef FormData_pg_am *Form_pg_am;
  *		compiler constant for amtype
  * ----------------
  */
-#define AMTYPE_INDEX					'i'		/* index access method */
+#define AMTYPE_INDEX					'i' /* index access method */
 
 /* ----------------
  *		initial contents of pg_am
@@ -84,4 +84,4 @@ DATA(insert OID = 3580 (  brin		brinhandler i ));
 DESCR("block range index (BRIN) access method");
 #define BRIN_AM_OID 3580
 
-#endif   /* PG_AM_H */
+#endif							/* PG_AM_H */

@@ -146,4 +146,4 @@ extern inet *cidr_set_masklen_internal(const inet *src, int bits);
 extern int	bitncmp(const unsigned char *l, const unsigned char *r, int n);
 extern int	bitncommon(const unsigned char *l, const unsigned char *r, int n);
 
-#endif   /* INET_H */
+#endif							/* INET_H */

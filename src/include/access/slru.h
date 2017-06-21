@@ -165,4 +165,4 @@ extern bool SlruScanDirCbReportPresence(SlruCtl ctl, char *filename,
 extern bool SlruScanDirCbDeleteAll(SlruCtl ctl, char *filename, int segpage,
 					   void *data);
 
-#endif   /* SLRU_H */
+#endif							/* SLRU_H */

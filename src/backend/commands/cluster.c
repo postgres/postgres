@@ -325,7 +325,7 @@ cluster_rel(Oid tableOid, Oid indexOid, bool recheck, bool verbose)
 			 * Check that the index is still the one with indisclustered set.
 			 */
 			tuple = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(indexOid));
-			if (!HeapTupleIsValid(tuple))		/* probably can't happen */
+			if (!HeapTupleIsValid(tuple))	/* probably can't happen */
 			{
 				relation_close(OldHeap, AccessExclusiveLock);
 				return;

@@ -22,4 +22,4 @@ extern bool predicate_implied_by(List *predicate_list, List *clause_list,
 extern bool predicate_refuted_by(List *predicate_list, List *clause_list,
 					 bool clause_is_check);
 
-#endif   /* PREDTEST_H */
+#endif							/* PREDTEST_H */

@@ -772,7 +772,7 @@ tintervalrecv(PG_FUNCTION_ARGS)
 
 	if (tinterval->data[0] == INVALID_ABSTIME ||
 		tinterval->data[1] == INVALID_ABSTIME)
-		status = T_INTERVAL_INVAL;		/* undefined  */
+		status = T_INTERVAL_INVAL;	/* undefined  */
 	else
 		status = T_INTERVAL_VALID;
 
@@ -919,7 +919,7 @@ timepl(PG_FUNCTION_ARGS)
 	if (AbsoluteTimeIsReal(t1) &&
 		RelativeTimeIsValid(t2) &&
 		((t2 > 0 && t1 < NOEND_ABSTIME - t2) ||
-		 (t2 <= 0 && t1 > NOSTART_ABSTIME - t2)))		/* prevent overflow */
+		 (t2 <= 0 && t1 > NOSTART_ABSTIME - t2)))	/* prevent overflow */
 		PG_RETURN_ABSOLUTETIME(t1 + t2);
 
 	PG_RETURN_ABSOLUTETIME(INVALID_ABSTIME);
@@ -1538,7 +1538,7 @@ bogus:
 			(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
 			 errmsg("invalid input syntax for type %s: \"%s\"",
 					"tinterval", i_string)));
-	*i_start = *i_end = INVALID_ABSTIME;		/* keep compiler quiet */
+	*i_start = *i_end = INVALID_ABSTIME;	/* keep compiler quiet */
 }
 
 

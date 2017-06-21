@@ -82,4 +82,4 @@ extern void RangeCreate(Oid rangeTypeOid, Oid rangeSubType, Oid rangeCollation,
 			RegProcedure rangeSubDiff);
 extern void RangeDelete(Oid rangeTypeOid);
 
-#endif   /* PG_RANGE_H */
+#endif							/* PG_RANGE_H */

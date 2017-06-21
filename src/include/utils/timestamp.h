@@ -104,4 +104,4 @@ extern int	date2isoweek(int year, int mon, int mday);
 extern int	date2isoyear(int year, int mon, int mday);
 extern int	date2isoyearday(int year, int mon, int mday);
 
-#endif   /* TIMESTAMP_H */
+#endif							/* TIMESTAMP_H */

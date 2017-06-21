@@ -576,7 +576,7 @@ RemoveConstraintById(Oid conId)
 					 con->conrelid);
 			classForm = (Form_pg_class) GETSTRUCT(relTup);
 
-			if (classForm->relchecks == 0)		/* should not happen */
+			if (classForm->relchecks == 0)	/* should not happen */
 				elog(ERROR, "relation \"%s\" has relchecks = 0",
 					 RelationGetRelationName(rel));
 			classForm->relchecks--;
@@ -928,7 +928,7 @@ get_primary_key_attnos(Oid relid, bool deferrableOk, Oid *constraintOid)
 		if (isNull)
 			elog(ERROR, "null conkey for constraint %u",
 				 HeapTupleGetOid(tuple));
-		arr = DatumGetArrayTypeP(adatum);		/* ensure not toasted */
+		arr = DatumGetArrayTypeP(adatum);	/* ensure not toasted */
 		numkeys = ARR_DIMS(arr)[0];
 		if (ARR_NDIM(arr) != 1 ||
 			numkeys < 0 ||

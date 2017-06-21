@@ -8,6 +8,6 @@
 /* source created by ecpg which defines this */
 #ifndef _ECPGLIB_H
 typedef decimal dec_t;
-#endif   /* ndef _ECPGLIB_H */
+#endif							/* ndef _ECPGLIB_H */
 
-#endif   /* ndef _ECPG_DECIMAL_H */
+#endif							/* ndef _ECPG_DECIMAL_H */

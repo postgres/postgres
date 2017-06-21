@@ -664,7 +664,7 @@ ipv6eq(struct sockaddr_in6 *a, struct sockaddr_in6 *b)
 
 	return true;
 }
-#endif   /* HAVE_IPV6 */
+#endif							/* HAVE_IPV6 */
 
 /*
  * Check whether host name matches pattern.
@@ -1022,7 +1022,7 @@ parse_hba_line(TokenizedLine *tok_line, int elevel)
 			*err_msg = "hostssl record cannot match because SSL is not supported by this build";
 #endif
 		}
-		else if (token->string[4] == 'n')		/* "hostnossl" */
+		else if (token->string[4] == 'n')	/* "hostnossl" */
 		{
 			parsedline->conntype = ctHostNoSSL;
 		}
@@ -1726,7 +1726,7 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
 		hbaline->ldapbasedn = pstrdup(urldata->lud_dn);
 
 		if (urldata->lud_attrs)
-			hbaline->ldapsearchattribute = pstrdup(urldata->lud_attrs[0]);		/* only use first one */
+			hbaline->ldapsearchattribute = pstrdup(urldata->lud_attrs[0]);	/* only use first one */
 		hbaline->ldapscope = urldata->lud_scope;
 		if (urldata->lud_filter)
 		{
@@ -1743,7 +1743,7 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("LDAP URLs not supported on this platform")));
 		*err_msg = "LDAP URLs not supported on this platform";
-#endif   /* not OpenLDAP */
+#endif							/* not OpenLDAP */
 	}
 	else if (strcmp(name, "ldaptls") == 0)
 	{

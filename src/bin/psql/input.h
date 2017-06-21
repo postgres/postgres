@@ -32,8 +32,8 @@
 #if defined(HAVE_HISTORY_H)
 #include <history.h>
 #endif
-#endif   /* HAVE_READLINE_READLINE_H, etc */
-#endif   /* HAVE_LIBREADLINE */
+#endif							/* HAVE_READLINE_READLINE_H, etc */
+#endif							/* HAVE_LIBREADLINE */
 
 #include "pqexpbuffer.h"
 
@@ -48,4 +48,4 @@ extern bool printHistory(const char *fname, unsigned short int pager);
 extern void pg_append_history(const char *s, PQExpBuffer history_buf);
 extern void pg_send_history(PQExpBuffer history_buf);
 
-#endif   /* INPUT_H */
+#endif							/* INPUT_H */

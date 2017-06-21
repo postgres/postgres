@@ -121,8 +121,8 @@ typedef struct ControlFileData
 	 * example, WAL logs contain per-page magic numbers that can serve as
 	 * version cues for the WAL log.
 	 */
-	uint32		pg_control_version;		/* PG_CONTROL_VERSION */
-	uint32		catalog_version_no;		/* see catversion.h */
+	uint32		pg_control_version; /* PG_CONTROL_VERSION */
+	uint32		catalog_version_no; /* see catversion.h */
 
 	/*
 	 * System status data
@@ -244,4 +244,4 @@ typedef struct ControlFileData
  */
 #define PG_CONTROL_SIZE		8192
 
-#endif   /* PG_CONTROL_H */
+#endif							/* PG_CONTROL_H */

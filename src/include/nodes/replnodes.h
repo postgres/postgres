@@ -105,4 +105,4 @@ typedef struct SQLCmd
 	NodeTag		type;
 } SQLCmd;
 
-#endif   /* REPLNODES_H */
+#endif							/* REPLNODES_H */

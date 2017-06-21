@@ -604,7 +604,7 @@ copyAclUserName(PQExpBuffer output, char *input)
 			while (!(*input == '"' && *(input + 1) != '"'))
 			{
 				if (*input == '\0')
-					return input;		/* really a syntax error... */
+					return input;	/* really a syntax error... */
 
 				/*
 				 * Quoting convention is to escape " as "".  Keep this code in

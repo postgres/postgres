@@ -1975,7 +1975,7 @@ mp_int_string_len(mp_int z, mp_size radix)
 	if (radix < MP_MIN_RADIX || radix > MP_MAX_RADIX)
 		return MP_RANGE;
 
-	len = s_outlen(z, radix) + 1;		/* for terminator */
+	len = s_outlen(z, radix) + 1;	/* for terminator */
 
 	/* Allow for sign marker on negatives */
 	if (MP_SIGN(z) == MP_NEG)
@@ -2512,7 +2512,7 @@ s_usub(mp_digit *da, mp_digit *db, mp_digit *dc,
 	/* Subtract corresponding digits and propagate borrow */
 	for (pos = 0; pos < size_b; ++pos, ++da, ++db, ++dc)
 	{
-		w = ((mp_word) MP_DIGIT_MAX + 1 +		/* MP_RADIX */
+		w = ((mp_word) MP_DIGIT_MAX + 1 +	/* MP_RADIX */
 			 (mp_word) *da) - w - (mp_word) *db;
 
 		*dc = LOWER_HALF(w);
@@ -2522,7 +2522,7 @@ s_usub(mp_digit *da, mp_digit *db, mp_digit *dc,
 	/* Finish the subtraction for remaining upper digits of da */
 	for ( /* */ ; pos < size_a; ++pos, ++da, ++dc)
 	{
-		w = ((mp_word) MP_DIGIT_MAX + 1 +		/* MP_RADIX */
+		w = ((mp_word) MP_DIGIT_MAX + 1 +	/* MP_RADIX */
 			 (mp_word) *da) - w;
 
 		*dc = LOWER_HALF(w);
@@ -2594,10 +2594,10 @@ s_kmul(mp_digit *da, mp_digit *db, mp_digit *dc,
 		 * t1 and t2 are initially used as temporaries to compute the inner
 		 * product (a1 + a0)(b1 + b0) = a1b1 + a1b0 + a0b1 + a0b0
 		 */
-		carry = s_uadd(da, a_top, t1, bot_size, at_size);		/* t1 = a1 + a0 */
+		carry = s_uadd(da, a_top, t1, bot_size, at_size);	/* t1 = a1 + a0 */
 		t1[bot_size] = carry;
 
-		carry = s_uadd(db, b_top, t2, bot_size, bt_size);		/* t2 = b1 + b0 */
+		carry = s_uadd(db, b_top, t2, bot_size, bt_size);	/* t2 = b1 + b0 */
 		t2[bot_size] = carry;
 
 		(void) s_kmul(t1, t2, t3, bot_size + 1, bot_size + 1);	/* t3 = t1 * t2 */
@@ -2609,7 +2609,7 @@ s_kmul(mp_digit *da, mp_digit *db, mp_digit *dc,
 		ZERO(t1, buf_size);
 		ZERO(t2, buf_size);
 		(void) s_kmul(da, db, t1, bot_size, bot_size);	/* t1 = a0 * b0 */
-		(void) s_kmul(a_top, b_top, t2, at_size, bt_size);		/* t2 = a1 * b1 */
+		(void) s_kmul(a_top, b_top, t2, at_size, bt_size);	/* t2 = a1 * b1 */
 
 		/* Subtract out t1 and t2 to get the inner product */
 		s_usub(t3, t1, t3, buf_size + 2, buf_size);
@@ -2692,10 +2692,10 @@ s_ksqr(mp_digit *da, mp_digit *dc, mp_size size_a)
 		t3 = t2 + buf_size;
 		ZERO(t1, 4 * buf_size);
 
-		(void) s_ksqr(da, t1, bot_size);		/* t1 = a0 ^ 2 */
-		(void) s_ksqr(a_top, t2, at_size);		/* t2 = a1 ^ 2 */
+		(void) s_ksqr(da, t1, bot_size);	/* t1 = a0 ^ 2 */
+		(void) s_ksqr(a_top, t2, at_size);	/* t2 = a1 ^ 2 */
 
-		(void) s_kmul(da, a_top, t3, bot_size, at_size);		/* t3 = a0 * a1 */
+		(void) s_kmul(da, a_top, t3, bot_size, at_size);	/* t3 = a0 * a1 */
 
 		/* Quick multiply t3 by 2, shifting left (can't overflow) */
 		{
@@ -2782,7 +2782,7 @@ s_usqr(mp_digit *da, mp_digit *dc, mp_size size_a)
 			w = UPPER_HALF(w);
 			if (ov)
 			{
-				w += MP_DIGIT_MAX;		/* MP_RADIX */
+				w += MP_DIGIT_MAX;	/* MP_RADIX */
 				++w;
 			}
 		}

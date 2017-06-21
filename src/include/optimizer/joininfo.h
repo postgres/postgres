@@ -27,4 +27,4 @@ extern void remove_join_clause_from_rels(PlannerInfo *root,
 							 RestrictInfo *restrictinfo,
 							 Relids join_relids);
 
-#endif   /* JOININFO_H */
+#endif							/* JOININFO_H */

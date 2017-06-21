@@ -61,9 +61,9 @@ typedef struct
 } registered_buffer;
 
 static registered_buffer *registered_buffers;
-static int	max_registered_buffers;		/* allocated size */
-static int	max_registered_block_id = 0;		/* highest block_id + 1
-												 * currently registered */
+static int	max_registered_buffers; /* allocated size */
+static int	max_registered_block_id = 0;	/* highest block_id + 1 currently
+											 * registered */
 
 /*
  * A chain of XLogRecDatas to hold the "main data" of a WAL record, registered
@@ -438,7 +438,7 @@ XLogInsert(RmgrId rmid, uint8 info)
 	if (IsBootstrapProcessingMode() && rmid != RM_XLOG_ID)
 	{
 		XLogResetInsertion();
-		EndPos = SizeOfXLogLongPHD;		/* start of 1st chkpt record */
+		EndPos = SizeOfXLogLongPHD; /* start of 1st chkpt record */
 		return EndPos;
 	}
 

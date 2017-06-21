@@ -34,4 +34,4 @@ typedef struct
 
 extern List *EventCacheLookup(EventTriggerEvent event);
 
-#endif   /* EVTCACHE_H */
+#endif							/* EVTCACHE_H */

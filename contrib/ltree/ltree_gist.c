@@ -302,7 +302,7 @@ ltree_picksplit(PG_FUNCTION_ARGS)
 	for (j = FirstOffsetNumber; j <= maxoff; j = OffsetNumberNext(j))
 	{
 		array[j].index = j;
-		lu = GETENTRY(entryvec, j);		/* use as tmp val */
+		lu = GETENTRY(entryvec, j); /* use as tmp val */
 		array[j].r = LTG_GETLNODE(lu);
 	}
 
@@ -312,7 +312,7 @@ ltree_picksplit(PG_FUNCTION_ARGS)
 	lu_l = lu_r = ru_l = ru_r = NULL;
 	for (j = FirstOffsetNumber; j <= maxoff; j = OffsetNumberNext(j))
 	{
-		lu = GETENTRY(entryvec, array[j].index);		/* use as tmp val */
+		lu = GETENTRY(entryvec, array[j].index);	/* use as tmp val */
 		if (j <= (maxoff - FirstOffsetNumber + 1) / 2)
 		{
 			v->spl_left[v->spl_nleft] = array[j].index;

@@ -158,7 +158,7 @@ croak_cstr(const char *str)
 	sv_setsv(errsv, ssv);
 
 	croak(NULL);
-#endif   /* croak_sv */
+#endif							/* croak_sv */
 }
 
-#endif   /* PL_PERL_HELPERS_H */
+#endif							/* PL_PERL_HELPERS_H */

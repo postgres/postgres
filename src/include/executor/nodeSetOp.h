@@ -21,4 +21,4 @@ extern TupleTableSlot *ExecSetOp(SetOpState *node);
 extern void ExecEndSetOp(SetOpState *node);
 extern void ExecReScanSetOp(SetOpState *node);
 
-#endif   /* NODESETOP_H */
+#endif							/* NODESETOP_H */

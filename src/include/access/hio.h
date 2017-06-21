@@ -30,7 +30,7 @@
  */
 typedef struct BulkInsertStateData
 {
-	BufferAccessStrategy strategy;		/* our BULKWRITE strategy object */
+	BufferAccessStrategy strategy;	/* our BULKWRITE strategy object */
 	Buffer		current_buf;	/* current insertion target page */
 }			BulkInsertStateData;
 
@@ -42,4 +42,4 @@ extern Buffer RelationGetBufferForTuple(Relation relation, Size len,
 						  BulkInsertState bistate,
 						  Buffer *vmbuffer, Buffer *vmbuffer_other);
 
-#endif   /* HIO_H */
+#endif							/* HIO_H */

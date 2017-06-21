@@ -52,4 +52,4 @@ typedef FormData_pg_policy *Form_pg_policy;
 #define Anum_pg_policy_polqual			6
 #define Anum_pg_policy_polwithcheck		7
 
-#endif   /* PG_POLICY_H */
+#endif							/* PG_POLICY_H */

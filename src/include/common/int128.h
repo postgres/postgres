@@ -271,6 +271,6 @@ int128_to_int64(INT128 val)
 	return (int64) val.lo;
 }
 
-#endif   /* USE_NATIVE_INT128 */
+#endif							/* USE_NATIVE_INT128 */
 
-#endif   /* INT128_H */
+#endif							/* INT128_H */

@@ -57,7 +57,7 @@
 #include "pg_getopt.h"
 
 
-static ControlFileData ControlFile;		/* pg_control values */
+static ControlFileData ControlFile; /* pg_control values */
 static XLogSegNo newXlogSegNo;	/* new XLOG segment # */
 static bool guessed = false;	/* T if we had to guess at any values */
 static const char *progname;
@@ -834,7 +834,7 @@ static void
 RewriteControlFile(void)
 {
 	int			fd;
-	char		buffer[PG_CONTROL_SIZE];		/* need not be aligned */
+	char		buffer[PG_CONTROL_SIZE];	/* need not be aligned */
 
 	/*
 	 * Adjust fields as needed to force an empty XLOG starting at

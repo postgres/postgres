@@ -87,7 +87,7 @@ static IncludeWal includewal = STREAM_WAL;
 static bool fastcheckpoint = false;
 static bool writerecoveryconf = false;
 static bool do_sync = true;
-static int	standby_message_timeout = 10 * 1000;		/* 10 sec = default */
+static int	standby_message_timeout = 10 * 1000;	/* 10 sec = default */
 static pg_time_t last_progress_report = 0;
 static int32 maxrate = 0;		/* no limit by default */
 static char *replication_slot = NULL;
@@ -1398,7 +1398,7 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 					/*
 					 * Directory
 					 */
-					filename[strlen(filename) - 1] = '\0';		/* Remove trailing slash */
+					filename[strlen(filename) - 1] = '\0';	/* Remove trailing slash */
 					if (mkdir(filename, S_IRWXU) != 0)
 					{
 						/*
@@ -1442,7 +1442,7 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 					 * are, you can call it an undocumented feature that you
 					 * can map them too.)
 					 */
-					filename[strlen(filename) - 1] = '\0';		/* Remove trailing slash */
+					filename[strlen(filename) - 1] = '\0';	/* Remove trailing slash */
 
 					mapped_tblspc_path = get_tablespace_mapping(&copybuf[157]);
 					if (symlink(mapped_tblspc_path, filename) != 0)
@@ -2204,7 +2204,7 @@ main(int argc, char **argv)
 #ifdef HAVE_LIBZ
 				compresslevel = Z_DEFAULT_COMPRESSION;
 #else
-				compresslevel = 1;		/* will be rejected below */
+				compresslevel = 1;	/* will be rejected below */
 #endif
 				break;
 			case 'Z':

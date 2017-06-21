@@ -240,7 +240,7 @@ CreateSharedInvalidationState(void)
 	/* Mark all backends inactive, and initialize nextLXID */
 	for (i = 0; i < shmInvalBuffer->maxBackends; i++)
 	{
-		shmInvalBuffer->procState[i].procPid = 0;		/* inactive */
+		shmInvalBuffer->procState[i].procPid = 0;	/* inactive */
 		shmInvalBuffer->procState[i].proc = NULL;
 		shmInvalBuffer->procState[i].nextMsgNum = 0;	/* meaningless */
 		shmInvalBuffer->procState[i].resetState = false;
@@ -271,7 +271,7 @@ SharedInvalBackendInit(bool sendOnly)
 	/* Look for a free entry in the procState array */
 	for (index = 0; index < segP->lastBackend; index++)
 	{
-		if (segP->procState[index].procPid == 0)		/* inactive slot? */
+		if (segP->procState[index].procPid == 0)	/* inactive slot? */
 		{
 			stateP = &segP->procState[index];
 			break;

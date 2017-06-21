@@ -149,4 +149,4 @@ extern void appendBinaryStringInfo(StringInfo str,
  */
 extern void enlargeStringInfo(StringInfo str, int needed);
 
-#endif   /* STRINGINFO_H */
+#endif							/* STRINGINFO_H */

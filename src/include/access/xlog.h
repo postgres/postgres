@@ -24,9 +24,9 @@
 /* Sync methods */
 #define SYNC_METHOD_FSYNC		0
 #define SYNC_METHOD_FDATASYNC	1
-#define SYNC_METHOD_OPEN		2		/* for O_SYNC */
+#define SYNC_METHOD_OPEN		2	/* for O_SYNC */
 #define SYNC_METHOD_FSYNC_WRITETHROUGH	3
-#define SYNC_METHOD_OPEN_DSYNC	4		/* for O_DSYNC */
+#define SYNC_METHOD_OPEN_DSYNC	4	/* for O_DSYNC */
 extern int	sync_method;
 
 extern PGDLLIMPORT TimeLineID ThisTimeLineID;	/* current TLI */
@@ -173,9 +173,8 @@ extern bool XLOG_DEBUG;
 
 /* These directly affect the behavior of CreateCheckPoint and subsidiaries */
 #define CHECKPOINT_IS_SHUTDOWN	0x0001	/* Checkpoint is for shutdown */
-#define CHECKPOINT_END_OF_RECOVERY	0x0002		/* Like shutdown checkpoint,
-												 * but issued at end of WAL
-												 * recovery */
+#define CHECKPOINT_END_OF_RECOVERY	0x0002	/* Like shutdown checkpoint, but
+											 * issued at end of WAL recovery */
 #define CHECKPOINT_IMMEDIATE	0x0004	/* Do it without delays */
 #define CHECKPOINT_FORCE		0x0008	/* Force even if no activity */
 #define CHECKPOINT_FLUSH_ALL	0x0010	/* Flush all pages, including those
@@ -202,18 +201,18 @@ typedef struct CheckpointStatsData
 	TimestampTz ckpt_sync_end_t;	/* end of fsyncs */
 	TimestampTz ckpt_end_t;		/* end of checkpoint */
 
-	int			ckpt_bufs_written;		/* # of buffers written */
+	int			ckpt_bufs_written;	/* # of buffers written */
 
 	int			ckpt_segs_added;	/* # of new xlog segments created */
-	int			ckpt_segs_removed;		/* # of xlog segments deleted */
-	int			ckpt_segs_recycled;		/* # of xlog segments recycled */
+	int			ckpt_segs_removed;	/* # of xlog segments deleted */
+	int			ckpt_segs_recycled; /* # of xlog segments recycled */
 
 	int			ckpt_sync_rels; /* # of relations synced */
-	uint64		ckpt_longest_sync;		/* Longest sync for one relation */
-	uint64		ckpt_agg_sync_time;		/* The sum of all the individual sync
-										 * times, which is not necessarily the
-										 * same as the total elapsed time for
-										 * the entire sync phase. */
+	uint64		ckpt_longest_sync;	/* Longest sync for one relation */
+	uint64		ckpt_agg_sync_time; /* The sum of all the individual sync
+									 * times, which is not necessarily the
+									 * same as the total elapsed time for the
+									 * entire sync phase. */
 } CheckpointStatsData;
 
 extern CheckpointStatsData CheckpointStats;
@@ -324,4 +323,4 @@ extern SessionBackupState get_backup_status(void);
 #define TABLESPACE_MAP			"tablespace_map"
 #define TABLESPACE_MAP_OLD		"tablespace_map.old"
 
-#endif   /* XLOG_H */
+#endif							/* XLOG_H */

@@ -30,4 +30,4 @@ extern void ExecForeignScanInitializeWorker(ForeignScanState *node,
 								shm_toc *toc);
 extern void ExecShutdownForeignScan(ForeignScanState *node);
 
-#endif   /* NODEFOREIGNSCAN_H */
+#endif							/* NODEFOREIGNSCAN_H */

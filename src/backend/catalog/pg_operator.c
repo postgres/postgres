@@ -225,7 +225,7 @@ OperatorShellMake(const char *operatorName,
 	for (i = 0; i < Natts_pg_operator; ++i)
 	{
 		nulls[i] = false;
-		values[i] = (Datum) NULL;		/* redundant, but safe */
+		values[i] = (Datum) NULL;	/* redundant, but safe */
 	}
 
 	/*

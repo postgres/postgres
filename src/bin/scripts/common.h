@@ -55,4 +55,4 @@ extern void SetCancelConn(PGconn *conn);
 extern void ResetCancelConn(void);
 
 
-#endif   /* COMMON_H */
+#endif							/* COMMON_H */

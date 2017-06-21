@@ -102,7 +102,7 @@ CreateExecutorState(void)
 	 * Initialize all fields of the Executor State structure
 	 */
 	estate->es_direction = ForwardScanDirection;
-	estate->es_snapshot = InvalidSnapshot;		/* caller must initialize this */
+	estate->es_snapshot = InvalidSnapshot;	/* caller must initialize this */
 	estate->es_crosscheck_snapshot = InvalidSnapshot;	/* no crosscheck */
 	estate->es_range_table = NIL;
 	estate->es_plannedstmt = NULL;

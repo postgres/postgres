@@ -65,4 +65,4 @@ extern void addHyperLogLog(hyperLogLogState *cState, uint32 hash);
 extern double estimateHyperLogLog(hyperLogLogState *cState);
 extern void freeHyperLogLog(hyperLogLogState *cState);
 
-#endif   /* HYPERLOGLOG_H */
+#endif							/* HYPERLOGLOG_H */

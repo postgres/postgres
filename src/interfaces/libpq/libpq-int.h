@@ -69,7 +69,7 @@ typedef struct
 	int			length;
 } gss_buffer_desc;
 #endif
-#endif   /* ENABLE_SSPI */
+#endif							/* ENABLE_SSPI */
 
 #ifdef USE_OPENSSL
 #include <openssl/ssl.h>
@@ -78,7 +78,7 @@ typedef struct
 #ifndef OPENSSL_NO_ENGINE
 #define USE_SSL_ENGINE
 #endif
-#endif   /* USE_OPENSSL */
+#endif							/* USE_OPENSSL */
 
 /*
  * POSTGRES backend dependent Constants.
@@ -143,7 +143,7 @@ typedef struct pgMessageField
 {
 	struct pgMessageField *next;	/* list link */
 	char		code;			/* field code */
-	char		contents[FLEXIBLE_ARRAY_MEMBER];		/* value, nul-terminated */
+	char		contents[FLEXIBLE_ARRAY_MEMBER];	/* value, nul-terminated */
 } PGMessageField;
 
 /* Fields needed for notice handling */
@@ -151,7 +151,7 @@ typedef struct
 {
 	PQnoticeReceiver noticeRec; /* notice message receiver */
 	void	   *noticeRecArg;
-	PQnoticeProcessor noticeProc;		/* notice message processor */
+	PQnoticeProcessor noticeProc;	/* notice message processor */
 	void	   *noticeProcArg;
 } PGNoticeHooks;
 
@@ -161,7 +161,7 @@ typedef struct PGEvent
 	char	   *name;			/* used only for error messages */
 	void	   *passThrough;	/* pointer supplied at registration time */
 	void	   *data;			/* optional state (instance) data */
-	bool		resultInitialized;		/* T if RESULTCREATE/COPY succeeded */
+	bool		resultInitialized;	/* T if RESULTCREATE/COPY succeeded */
 } PGEvent;
 
 struct pg_result
@@ -175,7 +175,7 @@ struct pg_result
 	int			numParameters;
 	PGresParamDesc *paramDescs;
 	ExecStatusType resultStatus;
-	char		cmdStatus[CMDSTATUS_LEN];		/* cmd status from the query */
+	char		cmdStatus[CMDSTATUS_LEN];	/* cmd status from the query */
 	int			binary;			/* binary tuple values if binary == 1,
 								 * otherwise text */
 
@@ -255,7 +255,7 @@ typedef struct PQEnvironmentOption
 /* Typedef for parameter-status list entries */
 typedef struct pgParameterStatus
 {
-	struct pgParameterStatus *next;		/* list link */
+	struct pgParameterStatus *next; /* list link */
 	char	   *name;			/* parameter name */
 	char	   *value;			/* parameter value */
 	/* Note: name and value are stored in same malloc block as struct is */
@@ -274,7 +274,7 @@ typedef struct pgLobjfuncs
 	Oid			fn_lo_tell;		/* OID of backend function lo_tell		*/
 	Oid			fn_lo_tell64;	/* OID of backend function lo_tell64	*/
 	Oid			fn_lo_truncate; /* OID of backend function lo_truncate	*/
-	Oid			fn_lo_truncate64;		/* OID of function lo_truncate64 */
+	Oid			fn_lo_truncate64;	/* OID of function lo_truncate64 */
 	Oid			fn_lo_read;		/* OID of backend function LOread		*/
 	Oid			fn_lo_write;	/* OID of backend function LOwrite		*/
 } PGlobjfuncs;
@@ -333,7 +333,7 @@ struct pg_conn
 	char	   *pgtty;			/* tty on which the backend messages is
 								 * displayed (OBSOLETE, NOT USED) */
 	char	   *connect_timeout;	/* connection timeout (numeric string) */
-	char	   *client_encoding_initial;		/* encoding to use */
+	char	   *client_encoding_initial;	/* encoding to use */
 	char	   *pgoptions;		/* options to start the backend with */
 	char	   *appname;		/* application name */
 	char	   *fbappname;		/* fallback application name */
@@ -346,8 +346,8 @@ struct pg_conn
 	char	   *keepalives_idle;	/* time between TCP keepalives */
 	char	   *keepalives_interval;	/* time between TCP keepalive
 										 * retransmits */
-	char	   *keepalives_count;		/* maximum number of TCP keepalive
-										 * retransmits */
+	char	   *keepalives_count;	/* maximum number of TCP keepalive
+									 * retransmits */
 	char	   *sslmode;		/* SSL mode (require,prefer,allow,disable) */
 	char	   *sslcompression; /* SSL compression (0 or 1) */
 	char	   *sslkey;			/* client key filename */
@@ -380,14 +380,13 @@ struct pg_conn
 	PGTransactionStatusType xactStatus; /* never changes to ACTIVE */
 	PGQueryClass queryclass;
 	char	   *last_query;		/* last SQL command, or NULL if unknown */
-	char		last_sqlstate[6];		/* last reported SQLSTATE */
+	char		last_sqlstate[6];	/* last reported SQLSTATE */
 	bool		options_valid;	/* true if OK to attempt connection */
 	bool		nonblocking;	/* whether this connection is using nonblock
 								 * sending semantics */
 	bool		singleRowMode;	/* return current query result row-by-row? */
 	char		copy_is_binary; /* 1 = copy binary, 0 = copy text */
-	int			copy_already_done;		/* # bytes already returned in COPY
-										 * OUT */
+	int			copy_already_done;	/* # bytes already returned in COPY OUT */
 	PGnotify   *notifyHead;		/* oldest unreported Notify msg */
 	PGnotify   *notifyTail;		/* newest unreported Notify msg */
 
@@ -403,8 +402,7 @@ struct pg_conn
 	SockAddr	raddr;			/* Remote address */
 	ProtocolVersion pversion;	/* FE/BE protocol version in use */
 	int			sversion;		/* server version, e.g. 70401 for 7.4.1 */
-	bool		auth_req_received;		/* true if any type of auth req
-										 * received */
+	bool		auth_req_received;	/* true if any type of auth req received */
 	bool		password_needed;	/* true if server demanded a password */
 	bool		pgpassfile_used;	/* true if password is from pgpassfile */
 	bool		sigpipe_so;		/* have we masked SIGPIPE via SO_NOSIGPIPE? */
@@ -468,8 +466,8 @@ struct pg_conn
 	void	   *engine;			/* dummy field to keep struct the same if
 								 * OpenSSL version changes */
 #endif
-#endif   /* USE_OPENSSL */
-#endif   /* USE_SSL */
+#endif							/* USE_OPENSSL */
+#endif							/* USE_SSL */
 
 #ifdef ENABLE_GSS
 	gss_ctx_id_t gctx;			/* GSS context */
@@ -489,7 +487,7 @@ struct pg_conn
 #endif
 
 	/* Buffer for current error message */
-	PQExpBufferData errorMessage;		/* expansible string */
+	PQExpBufferData errorMessage;	/* expansible string */
 
 	/* Buffer for receiving various parts of messages */
 	PQExpBufferData workBuffer; /* expansible string */
@@ -528,7 +526,7 @@ extern char *const pgresStatus[];
 #define ROOT_CRL_FILE		"root.crl"
 #endif
 
-#endif   /* USE_SSL */
+#endif							/* USE_SSL */
 
 /* ----------------
  * Internal functions of libpq
@@ -698,4 +696,4 @@ extern char *libpq_ngettext(const char *msgid, const char *msgid_plural, unsigne
 #define SOCK_ERRNO_SET(e) (errno = (e))
 #endif
 
-#endif   /* LIBPQ_INT_H */
+#endif							/* LIBPQ_INT_H */

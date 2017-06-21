@@ -57,7 +57,7 @@ CATALOG(pg_trigger,2620)
 	int2vector	tgattr;			/* column numbers, if trigger is on columns */
 
 #ifdef CATALOG_VARLEN
-	bytea		tgargs BKI_FORCE_NOT_NULL;		/* first\000second\000tgnargs\000 */
+	bytea		tgargs BKI_FORCE_NOT_NULL;	/* first\000second\000tgnargs\000 */
 	pg_node_tree tgqual;		/* WHEN expression, or NULL if none */
 	NameData	tgoldtable;		/* old transition table, or NULL if none */
 	NameData	tgnewtable;		/* new transition table, or NULL if none */
@@ -153,4 +153,4 @@ typedef FormData_pg_trigger *Form_pg_trigger;
 #define TRIGGER_USES_TRANSITION_TABLE(namepointer) \
 	((namepointer) != (char *) NULL)
 
-#endif   /* PG_TRIGGER_H */
+#endif							/* PG_TRIGGER_H */

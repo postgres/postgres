@@ -245,7 +245,7 @@ typedef struct AsyncQueueControl
 	QueuePosition head;			/* head points to the next free location */
 	QueuePosition tail;			/* the global tail is equivalent to the pos of
 								 * the "slowest" backend */
-	TimestampTz lastQueueFillWarn;		/* time of last queue-full msg */
+	TimestampTz lastQueueFillWarn;	/* time of last queue-full msg */
 	QueueBackendStatus backend[FLEXIBLE_ARRAY_MEMBER];
 	/* backend[0] is not used; used entries are from [1] to [MaxBackends] */
 } AsyncQueueControl;
@@ -265,7 +265,7 @@ static SlruCtlData AsyncCtlData;
 
 #define AsyncCtl					(&AsyncCtlData)
 #define QUEUE_PAGESIZE				BLCKSZ
-#define QUEUE_FULL_WARN_INTERVAL	5000		/* warn at most once every 5s */
+#define QUEUE_FULL_WARN_INTERVAL	5000	/* warn at most once every 5s */
 
 /*
  * slru.c currently assumes that all filenames are four characters of hex
@@ -291,7 +291,7 @@ static SlruCtlData AsyncCtlData;
  * (ie, have committed a LISTEN on).  It is a simple list of channel names,
  * allocated in TopMemoryContext.
  */
-static List *listenChannels = NIL;		/* list of C strings */
+static List *listenChannels = NIL;	/* list of C strings */
 
 /*
  * State for pending LISTEN/UNLISTEN actions consists of an ordered list of
@@ -316,7 +316,7 @@ typedef struct
 	char		channel[FLEXIBLE_ARRAY_MEMBER]; /* nul-terminated string */
 } ListenAction;
 
-static List *pendingActions = NIL;		/* list of ListenAction */
+static List *pendingActions = NIL;	/* list of ListenAction */
 
 static List *upperPendingActions = NIL; /* list of upper-xact lists */
 
@@ -342,9 +342,9 @@ typedef struct Notification
 	char	   *payload;		/* payload string (can be empty) */
 } Notification;
 
-static List *pendingNotifies = NIL;		/* list of Notifications */
+static List *pendingNotifies = NIL; /* list of Notifications */
 
-static List *upperPendingNotifies = NIL;		/* list of upper-xact lists */
+static List *upperPendingNotifies = NIL;	/* list of upper-xact lists */
 
 /*
  * Inbound notifications are initially processed by HandleNotifyInterrupt(),
@@ -1184,7 +1184,7 @@ asyncQueueUnregister(void)
 {
 	bool		advanceTail;
 
-	Assert(listenChannels == NIL);		/* else caller error */
+	Assert(listenChannels == NIL);	/* else caller error */
 
 	if (!amRegisteredListener)	/* nothing to do */
 		return;
@@ -1825,7 +1825,7 @@ asyncQueueReadAllNotifications(void)
 				/* we only want to read as far as head */
 				copysize = QUEUE_POS_OFFSET(head) - curoffset;
 				if (copysize < 0)
-					copysize = 0;		/* just for safety */
+					copysize = 0;	/* just for safety */
 			}
 			else
 			{

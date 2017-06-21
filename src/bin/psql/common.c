@@ -377,7 +377,7 @@ setup_cancel_handler(void)
 
 	SetConsoleCtrlHandler(consoleHandler, TRUE);
 }
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 
 
 /* ConnectionUp

@@ -14,4 +14,4 @@
 
 extern ControlFileData *get_controlfile(const char *DataDir, const char *progname, bool *crc_ok_p);
 
-#endif   /* COMMON_CONTROLDATA_UTILS_H */
+#endif							/* COMMON_CONTROLDATA_UTILS_H */

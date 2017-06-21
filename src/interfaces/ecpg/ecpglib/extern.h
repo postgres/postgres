@@ -220,4 +220,4 @@ void		ecpg_set_native_sqlda(int, struct sqlda_struct **, const PGresult *, int, 
 #define ECPG_SQLSTATE_ECPG_INTERNAL_ERROR	"YE000"
 #define ECPG_SQLSTATE_ECPG_OUT_OF_MEMORY	"YE001"
 
-#endif   /* _ECPG_LIB_EXTERN_H */
+#endif							/* _ECPG_LIB_EXTERN_H */

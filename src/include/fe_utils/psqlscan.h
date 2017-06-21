@@ -94,4 +94,4 @@ extern void psql_scan_reselect_sql_lexer(PsqlScanState state);
 
 extern bool psql_scan_in_quote(PsqlScanState state);
 
-#endif   /* PSQLSCAN_H */
+#endif							/* PSQLSCAN_H */

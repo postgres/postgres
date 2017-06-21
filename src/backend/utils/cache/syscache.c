@@ -419,7 +419,7 @@ static const struct cachedesc cacheinfo[] = {
 		},
 		8
 	},
-	{ForeignDataWrapperRelationId,		/* FOREIGNDATAWRAPPERNAME */
+	{ForeignDataWrapperRelationId,	/* FOREIGNDATAWRAPPERNAME */
 		ForeignDataWrapperNameIndexId,
 		1,
 		{
@@ -430,7 +430,7 @@ static const struct cachedesc cacheinfo[] = {
 		},
 		2
 	},
-	{ForeignDataWrapperRelationId,		/* FOREIGNDATAWRAPPEROID */
+	{ForeignDataWrapperRelationId,	/* FOREIGNDATAWRAPPEROID */
 		ForeignDataWrapperOidIndexId,
 		1,
 		{
@@ -683,7 +683,7 @@ static const struct cachedesc cacheinfo[] = {
 		},
 		128
 	},
-	{ReplicationOriginRelationId,		/* REPLORIGIDENT */
+	{ReplicationOriginRelationId,	/* REPLORIGIDENT */
 		ReplicationOriginIdentIndex,
 		1,
 		{
@@ -694,7 +694,7 @@ static const struct cachedesc cacheinfo[] = {
 		},
 		16
 	},
-	{ReplicationOriginRelationId,		/* REPLORIGNAME */
+	{ReplicationOriginRelationId,	/* REPLORIGNAME */
 		ReplicationOriginNameIndex,
 		1,
 		{

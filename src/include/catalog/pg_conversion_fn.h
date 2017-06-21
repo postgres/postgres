@@ -24,4 +24,4 @@ extern ObjectAddress ConversionCreate(const char *conname, Oid connamespace,
 extern void RemoveConversionById(Oid conversionOid);
 extern Oid	FindDefaultConversion(Oid connamespace, int32 for_encoding, int32 to_encoding);
 
-#endif   /* PG_CONVERSION_FN_H */
+#endif							/* PG_CONVERSION_FN_H */

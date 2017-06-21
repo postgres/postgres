@@ -104,7 +104,7 @@ getrusage(int who, struct rusage *rusage)
 	rusage->ru_utime.tv_usec = TICK_TO_USEC(u, tick_rate);
 	rusage->ru_stime.tv_sec = TICK_TO_SEC(s, tick_rate);
 	rusage->ru_stime.tv_usec = TICK_TO_USEC(u, tick_rate);
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 
 	return 0;
 }

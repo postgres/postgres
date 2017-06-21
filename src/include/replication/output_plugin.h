@@ -108,4 +108,4 @@ extern void OutputPluginPrepareWrite(struct LogicalDecodingContext *ctx, bool la
 extern void OutputPluginWrite(struct LogicalDecodingContext *ctx, bool last_write);
 extern void OutputPluginUpdateProgress(struct LogicalDecodingContext *ctx);
 
-#endif   /* OUTPUT_PLUGIN_H */
+#endif							/* OUTPUT_PLUGIN_H */

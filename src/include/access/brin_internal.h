@@ -107,4 +107,4 @@ extern bytea *brinoptions(Datum reloptions, bool validate);
 /* brin_validate.c */
 extern bool brinvalidate(Oid opclassoid);
 
-#endif   /* BRIN_INTERNAL_H */
+#endif							/* BRIN_INTERNAL_H */

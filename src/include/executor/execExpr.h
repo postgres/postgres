@@ -261,7 +261,7 @@ typedef struct ExprEvalStep
 			bool		first;	/* first time through, need to initialize? */
 			bool		slow;	/* need runtime check for nulls? */
 			TupleDesc	tupdesc;	/* descriptor for resulting tuples */
-			JunkFilter *junkFilter;		/* JunkFilter to remove resjunk cols */
+			JunkFilter *junkFilter; /* JunkFilter to remove resjunk cols */
 		}			wholerow;
 
 		/* for EEOP_ASSIGN_*_VAR */
@@ -292,7 +292,7 @@ typedef struct ExprEvalStep
 		struct
 		{
 			FmgrInfo   *finfo;	/* function's lookup data */
-			FunctionCallInfo fcinfo_data;		/* arguments etc */
+			FunctionCallInfo fcinfo_data;	/* arguments etc */
 			/* faster to access without additional indirection: */
 			PGFunction	fn_addr;	/* actual call address */
 			int			nargs;	/* number of arguments */
@@ -302,19 +302,19 @@ typedef struct ExprEvalStep
 		struct
 		{
 			bool	   *anynull;	/* track if any input was NULL */
-			int			jumpdone;		/* jump here if result determined */
+			int			jumpdone;	/* jump here if result determined */
 		}			boolexpr;
 
 		/* for EEOP_QUAL */
 		struct
 		{
-			int			jumpdone;		/* jump here on false or null */
+			int			jumpdone;	/* jump here on false or null */
 		}			qualexpr;
 
 		/* for EEOP_JUMP[_CONDITION] */
 		struct
 		{
-			int			jumpdone;		/* target instruction's index */
+			int			jumpdone;	/* target instruction's index */
 		}			jump;
 
 		/* for EEOP_NULLTEST_ROWIS[NOT]NULL */
@@ -328,7 +328,7 @@ typedef struct ExprEvalStep
 		struct
 		{
 			int			paramid;	/* numeric ID for parameter */
-			Oid			paramtype;		/* OID of parameter's datatype */
+			Oid			paramtype;	/* OID of parameter's datatype */
 		}			param;
 
 		/* for EEOP_CASE_TESTVAL/DOMAIN_TESTVAL */
@@ -372,14 +372,14 @@ typedef struct ExprEvalStep
 		/* for EEOP_ARRAYEXPR */
 		struct
 		{
-			Datum	   *elemvalues;		/* element values get stored here */
+			Datum	   *elemvalues; /* element values get stored here */
 			bool	   *elemnulls;
 			int			nelems; /* length of the above arrays */
-			Oid			elemtype;		/* array element type */
-			int16		elemlength;		/* typlen of the array element type */
-			bool		elembyval;		/* is the element type pass-by-value? */
-			char		elemalign;		/* typalign of the element type */
-			bool		multidims;		/* is array expression multi-D? */
+			Oid			elemtype;	/* array element type */
+			int16		elemlength; /* typlen of the array element type */
+			bool		elembyval;	/* is the element type pass-by-value? */
+			char		elemalign;	/* typalign of the element type */
+			bool		multidims;	/* is array expression multi-D? */
 		}			arrayexpr;
 
 		/* for EEOP_ARRAYCOERCE */
@@ -387,9 +387,9 @@ typedef struct ExprEvalStep
 		{
 			ArrayCoerceExpr *coerceexpr;
 			Oid			resultelemtype; /* element type of result array */
-			FmgrInfo   *elemfunc;		/* lookup info for element coercion
-										 * function */
-			struct ArrayMapState *amstate;		/* workspace for array_map */
+			FmgrInfo   *elemfunc;	/* lookup info for element coercion
+									 * function */
+			struct ArrayMapState *amstate;	/* workspace for array_map */
 		}			arraycoerce;
 
 		/* for EEOP_ROW */
@@ -437,8 +437,8 @@ typedef struct ExprEvalStep
 		/* for EEOP_FIELDSELECT */
 		struct
 		{
-			AttrNumber	fieldnum;		/* field number to extract */
-			Oid			resulttype;		/* field's type */
+			AttrNumber	fieldnum;	/* field number to extract */
+			Oid			resulttype; /* field's type */
 			/* cached tupdesc pointer - filled at runtime */
 			TupleDesc	argdesc;
 		}			fieldselect;
@@ -466,7 +466,7 @@ typedef struct ExprEvalStep
 			struct ArrayRefState *state;
 			int			off;	/* 0-based index of this subscript */
 			bool		isupper;	/* is it upper or lower subscript? */
-			int			jumpdone;		/* jump here on null */
+			int			jumpdone;	/* jump here on null */
 		}			arrayref_subscript;
 
 		/* for EEOP_ARRAYREF_OLD / ASSIGN / FETCH */
@@ -491,7 +491,7 @@ typedef struct ExprEvalStep
 		/* for EEOP_CONVERT_ROWTYPE */
 		struct
 		{
-			ConvertRowtypeExpr *convert;		/* original expression */
+			ConvertRowtypeExpr *convert;	/* original expression */
 			/* these three fields are filled at runtime: */
 			TupleDesc	indesc; /* tupdesc for input type */
 			TupleDesc	outdesc;	/* tupdesc for output type */
@@ -509,7 +509,7 @@ typedef struct ExprEvalStep
 			bool		typbyval;
 			char		typalign;
 			FmgrInfo   *finfo;	/* function's lookup data */
-			FunctionCallInfo fcinfo_data;		/* arguments etc */
+			FunctionCallInfo fcinfo_data;	/* arguments etc */
 			/* faster to access without additional indirection: */
 			PGFunction	fn_addr;	/* actual call address */
 		}			scalararrayop;
@@ -647,4 +647,4 @@ extern void ExecEvalAlternativeSubPlan(ExprState *state, ExprEvalStep *op,
 extern void ExecEvalWholeRowVar(ExprState *state, ExprEvalStep *op,
 					ExprContext *econtext);
 
-#endif   /* EXEC_EXPR_H */
+#endif							/* EXEC_EXPR_H */

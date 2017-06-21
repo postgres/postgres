@@ -226,7 +226,7 @@ LOG_LWDEBUG(const char *where, LWLock *lock, const char *msg)
 #else							/* not LOCK_DEBUG */
 #define PRINT_LWDEBUG(a,b,c) ((void)0)
 #define LOG_LWDEBUG(a,b,c) ((void)0)
-#endif   /* LOCK_DEBUG */
+#endif							/* LOCK_DEBUG */
 
 #ifdef LWLOCK_STATS
 
@@ -323,7 +323,7 @@ get_lwlock_stats_entry(LWLock *lock)
 	}
 	return lwstats;
 }
-#endif   /* LWLOCK_STATS */
+#endif							/* LWLOCK_STATS */
 
 
 /*
@@ -1129,7 +1129,7 @@ LWLockAcquire(LWLock *lock, LWLockMode mode)
 		lwstats->ex_acquire_count++;
 	else
 		lwstats->sh_acquire_count++;
-#endif   /* LWLOCK_STATS */
+#endif							/* LWLOCK_STATS */
 
 	/*
 	 * We can't wait if we haven't got a PGPROC.  This should only occur

@@ -63,4 +63,4 @@ extern void tblspc_redo(XLogReaderState *rptr);
 extern void tblspc_desc(StringInfo buf, XLogReaderState *rptr);
 extern const char *tblspc_identify(uint8 info);
 
-#endif   /* TABLESPACE_H */
+#endif							/* TABLESPACE_H */

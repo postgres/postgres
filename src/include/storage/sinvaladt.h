@@ -40,4 +40,4 @@ extern void SICleanupQueue(bool callerHasWriteLock, int minFree);
 
 extern LocalTransactionId GetNextLocalTransactionId(void);
 
-#endif   /* SINVALADT_H */
+#endif							/* SINVALADT_H */

@@ -57,4 +57,4 @@ typedef FormData_pg_ts_config *Form_pg_ts_config;
 DATA(insert OID = 3748 ( "simple" PGNSP PGUID 3722 ));
 DESCR("simple configuration");
 
-#endif   /* PG_TS_CONFIG_H */
+#endif							/* PG_TS_CONFIG_H */

@@ -32,4 +32,4 @@ typedef uint64 ean13;
 
 extern void initialize(void);
 
-#endif   /* ISN_H */
+#endif							/* ISN_H */

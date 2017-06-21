@@ -290,7 +290,7 @@ pg_codepage_to_encoding(UINT cp)
 	return -1;
 }
 #endif
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 
 #if (defined(HAVE_LANGINFO_H) && defined(CODESET)) || defined(WIN32)
 
@@ -435,4 +435,4 @@ pg_get_encoding_from_locale(const char *ctype, bool write_message)
 	return PG_SQL_ASCII;
 }
 
-#endif   /* (HAVE_LANGINFO_H && CODESET) || WIN32 */
+#endif							/* (HAVE_LANGINFO_H && CODESET) || WIN32 */

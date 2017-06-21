@@ -28,7 +28,7 @@ typedef struct
 {
 	/* dynahash.c requires key to be first field */
 	char		stmt_name[NAMEDATALEN];
-	CachedPlanSource *plansource;		/* the actual cached plan */
+	CachedPlanSource *plansource;	/* the actual cached plan */
 	bool		from_sql;		/* prepared via SQL, not FE/BE protocol? */
 	TimestampTz prepare_time;	/* the time when the stmt was prepared */
 } PreparedStatement;
@@ -57,4 +57,4 @@ extern List *FetchPreparedStatementTargetList(PreparedStatement *stmt);
 
 extern void DropAllPreparedStatements(void);
 
-#endif   /* PREPARE_H */
+#endif							/* PREPARE_H */

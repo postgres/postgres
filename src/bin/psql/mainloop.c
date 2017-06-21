@@ -36,7 +36,7 @@ MainLoop(FILE *source)
 {
 	PsqlScanState scan_state;	/* lexer working state */
 	ConditionalStack cond_stack;	/* \if status stack */
-	volatile PQExpBuffer query_buf;		/* buffer for query being accumulated */
+	volatile PQExpBuffer query_buf; /* buffer for query being accumulated */
 	volatile PQExpBuffer previous_buf;	/* if there isn't anything in the new
 										 * buffer yet, use this one for \e,
 										 * etc. */

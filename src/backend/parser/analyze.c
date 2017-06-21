@@ -268,7 +268,7 @@ transformStmt(ParseState *pstate, Node *parseTree)
 		default:
 			break;
 	}
-#endif   /* RAW_EXPRESSION_COVERAGE_TEST */
+#endif							/* RAW_EXPRESSION_COVERAGE_TEST */
 
 	switch (nodeTag(parseTree))
 	{
@@ -2103,7 +2103,7 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 				grpcl->tleSortGroupRef = 0;
 				grpcl->eqop = eqop;
 				grpcl->sortop = sortop;
-				grpcl->nulls_first = false;		/* OK with or without sortop */
+				grpcl->nulls_first = false; /* OK with or without sortop */
 				grpcl->hashable = hashable;
 
 				op->groupClauses = lappend(op->groupClauses, grpcl);
@@ -2124,7 +2124,7 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 				rescolnode->collation = rescolcoll;
 				rescolnode->location = bestlocation;
 				restle = makeTargetEntry((Expr *) rescolnode,
-										 0,		/* no need to set resno */
+										 0, /* no need to set resno */
 										 NULL,
 										 false);
 				*targetlist = lappend(*targetlist, restle);
@@ -2605,7 +2605,7 @@ LCS_asString(LockClauseStrength strength)
 void
 CheckSelectLocking(Query *qry, LockClauseStrength strength)
 {
-	Assert(strength != LCS_NONE);		/* else caller error */
+	Assert(strength != LCS_NONE);	/* else caller error */
 
 	if (qry->setOperations)
 		ereport(ERROR,
@@ -2844,7 +2844,7 @@ applyLockingClause(Query *qry, Index rtindex,
 {
 	RowMarkClause *rc;
 
-	Assert(strength != LCS_NONE);		/* else caller error */
+	Assert(strength != LCS_NONE);	/* else caller error */
 
 	/* If it's an explicit clause, make sure hasForUpdate gets set */
 	if (!pushedDown)
@@ -2907,4 +2907,4 @@ test_raw_expression_coverage(Node *node, void *context)
 									  context);
 }
 
-#endif   /* RAW_EXPRESSION_COVERAGE_TEST */
+#endif							/* RAW_EXPRESSION_COVERAGE_TEST */

@@ -34,4 +34,4 @@ extern int pg_getnameinfo_all(const struct sockaddr_storage *addr, int salen,
 				   char *service, int servicelen,
 				   int flags);
 
-#endif   /* IP_H */
+#endif							/* IP_H */

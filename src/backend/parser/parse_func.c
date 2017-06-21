@@ -317,7 +317,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		int			catDirectArgs;
 
 		tup = SearchSysCache1(AGGFNOID, ObjectIdGetDatum(funcid));
-		if (!HeapTupleIsValid(tup))		/* should not happen */
+		if (!HeapTupleIsValid(tup)) /* should not happen */
 			elog(ERROR, "cache lookup failed for aggregate %u", funcid);
 		classForm = (Form_pg_aggregate) GETSTRUCT(tup);
 		aggkind = classForm->aggkind;
@@ -658,7 +658,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		aggref->aggfnoid = funcid;
 		aggref->aggtype = rettype;
 		/* aggcollid and inputcollid will be set by parse_collate.c */
-		aggref->aggtranstype = InvalidOid;		/* will be set by planner */
+		aggref->aggtranstype = InvalidOid;	/* will be set by planner */
 		/* aggargtypes will be set by transformAggregateCall */
 		/* aggdirectargs and args will be set by transformAggregateCall */
 		/* aggorder and aggdistinct will be set by transformAggregateCall */
@@ -667,7 +667,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		aggref->aggvariadic = func_variadic;
 		aggref->aggkind = aggkind;
 		/* agglevelsup will be set by transformAggregateCall */
-		aggref->aggsplit = AGGSPLIT_SIMPLE;		/* planner might change this */
+		aggref->aggsplit = AGGSPLIT_SIMPLE; /* planner might change this */
 		aggref->location = location;
 
 		/*
@@ -713,7 +713,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		WindowFunc *wfunc = makeNode(WindowFunc);
 
 		Assert(over);			/* lack of this was checked above */
-		Assert(!agg_within_group);		/* also checked above */
+		Assert(!agg_within_group);	/* also checked above */
 
 		wfunc->winfnoid = funcid;
 		wfunc->wintype = rettype;
@@ -811,7 +811,7 @@ int
 func_match_argtypes(int nargs,
 					Oid *input_typeids,
 					FuncCandidateList raw_candidates,
-					FuncCandidateList *candidates)		/* return value */
+					FuncCandidateList *candidates)	/* return value */
 {
 	FuncCandidateList current_candidate;
 	FuncCandidateList next_candidate;
@@ -1077,7 +1077,7 @@ func_select_candidate(int nargs,
 
 		if (input_base_typeids[i] != UNKNOWNOID)
 			continue;
-		resolved_unknowns = true;		/* assume we can do it */
+		resolved_unknowns = true;	/* assume we can do it */
 		slot_category[i] = TYPCATEGORY_INVALID;
 		slot_has_preferred_type[i] = false;
 		have_conflict = false;
@@ -1205,7 +1205,7 @@ func_select_candidate(int nargs,
 		{
 			if (input_base_typeids[i] == UNKNOWNOID)
 				continue;
-			if (known_type == UNKNOWNOID)		/* first known arg? */
+			if (known_type == UNKNOWNOID)	/* first known arg? */
 				known_type = input_base_typeids[i];
 			else if (known_type != input_base_typeids[i])
 			{
@@ -1292,8 +1292,8 @@ func_get_detail(List *funcname,
 				bool *retset,	/* return value */
 				int *nvargs,	/* return value */
 				Oid *vatype,	/* return value */
-				Oid **true_typeids,		/* return value */
-				List **argdefaults)		/* optional return value */
+				Oid **true_typeids, /* return value */
+				List **argdefaults) /* optional return value */
 {
 	FuncCandidateList raw_candidates;
 	FuncCandidateList best_candidate;

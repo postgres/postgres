@@ -73,11 +73,11 @@ typedef TimeIntervalData *TimeInterval;
  * These were chosen as special 32-bit bit patterns,
  *	so redefine them explicitly using these bit patterns. - tgl 97/02/24
  */
-#define INVALID_ABSTIME ((AbsoluteTime) 0x7FFFFFFE)		/* 2147483647 (2^31 - 1) */
-#define NOEND_ABSTIME	((AbsoluteTime) 0x7FFFFFFC)		/* 2147483645 (2^31 - 3) */
-#define NOSTART_ABSTIME ((AbsoluteTime) INT_MIN)		/* -2147483648 */
+#define INVALID_ABSTIME ((AbsoluteTime) 0x7FFFFFFE) /* 2147483647 (2^31 - 1) */
+#define NOEND_ABSTIME	((AbsoluteTime) 0x7FFFFFFC) /* 2147483645 (2^31 - 3) */
+#define NOSTART_ABSTIME ((AbsoluteTime) INT_MIN)	/* -2147483648 */
 
-#define INVALID_RELTIME ((RelativeTime) 0x7FFFFFFE)		/* 2147483647 (2^31 - 1) */
+#define INVALID_RELTIME ((RelativeTime) 0x7FFFFFFE) /* 2147483647 (2^31 - 1) */
 
 #define AbsoluteTimeIsValid(time) \
 	((bool) ((time) != INVALID_ABSTIME))
@@ -100,4 +100,4 @@ typedef TimeIntervalData *TimeInterval;
 extern AbsoluteTime GetCurrentAbsoluteTime(void);
 extern void abstime2tm(AbsoluteTime time, int *tzp, struct pg_tm *tm, char **tzn);
 
-#endif   /* NABSTIME_H */
+#endif							/* NABSTIME_H */

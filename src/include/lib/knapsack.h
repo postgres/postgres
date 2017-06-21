@@ -14,4 +14,4 @@
 extern Bitmapset *DiscreteKnapsack(int max_weight, int num_items,
 				 int *item_weights, double *item_values);
 
-#endif   /* KNAPSACK_H */
+#endif							/* KNAPSACK_H */

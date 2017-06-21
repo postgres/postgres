@@ -137,7 +137,7 @@ recurse_dir(const char *datadir, const char *parentpath,
 #else
 			pg_fatal("\"%s\" is a symbolic link, but symbolic links are not supported on this platform\n",
 					 fullpath);
-#endif   /* HAVE_READLINK */
+#endif							/* HAVE_READLINK */
 		}
 	}
 

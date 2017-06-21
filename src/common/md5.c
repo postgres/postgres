@@ -117,21 +117,21 @@ doTheRounds(uint32 X[16], uint32 state[4])
 	b = c + ROT_LEFT((b + F(c, d, a) + X[7] + 0xfd469501), 22); /* 8 */
 	a = b + ROT_LEFT((a + F(b, c, d) + X[8] + 0x698098d8), 7);	/* 9 */
 	d = a + ROT_LEFT((d + F(a, b, c) + X[9] + 0x8b44f7af), 12); /* 10 */
-	c = d + ROT_LEFT((c + F(d, a, b) + X[10] + 0xffff5bb1), 17);		/* 11 */
-	b = c + ROT_LEFT((b + F(c, d, a) + X[11] + 0x895cd7be), 22);		/* 12 */
+	c = d + ROT_LEFT((c + F(d, a, b) + X[10] + 0xffff5bb1), 17);	/* 11 */
+	b = c + ROT_LEFT((b + F(c, d, a) + X[11] + 0x895cd7be), 22);	/* 12 */
 	a = b + ROT_LEFT((a + F(b, c, d) + X[12] + 0x6b901122), 7); /* 13 */
-	d = a + ROT_LEFT((d + F(a, b, c) + X[13] + 0xfd987193), 12);		/* 14 */
-	c = d + ROT_LEFT((c + F(d, a, b) + X[14] + 0xa679438e), 17);		/* 15 */
-	b = c + ROT_LEFT((b + F(c, d, a) + X[15] + 0x49b40821), 22);		/* 16 */
+	d = a + ROT_LEFT((d + F(a, b, c) + X[13] + 0xfd987193), 12);	/* 14 */
+	c = d + ROT_LEFT((c + F(d, a, b) + X[14] + 0xa679438e), 17);	/* 15 */
+	b = c + ROT_LEFT((b + F(c, d, a) + X[15] + 0x49b40821), 22);	/* 16 */
 
 	/* round 2 */
 	a = b + ROT_LEFT((a + G(b, c, d) + X[1] + 0xf61e2562), 5);	/* 17 */
 	d = a + ROT_LEFT((d + G(a, b, c) + X[6] + 0xc040b340), 9);	/* 18 */
-	c = d + ROT_LEFT((c + G(d, a, b) + X[11] + 0x265e5a51), 14);		/* 19 */
+	c = d + ROT_LEFT((c + G(d, a, b) + X[11] + 0x265e5a51), 14);	/* 19 */
 	b = c + ROT_LEFT((b + G(c, d, a) + X[0] + 0xe9b6c7aa), 20); /* 20 */
 	a = b + ROT_LEFT((a + G(b, c, d) + X[5] + 0xd62f105d), 5);	/* 21 */
 	d = a + ROT_LEFT((d + G(a, b, c) + X[10] + 0x02441453), 9); /* 22 */
-	c = d + ROT_LEFT((c + G(d, a, b) + X[15] + 0xd8a1e681), 14);		/* 23 */
+	c = d + ROT_LEFT((c + G(d, a, b) + X[15] + 0xd8a1e681), 14);	/* 23 */
 	b = c + ROT_LEFT((b + G(c, d, a) + X[4] + 0xe7d3fbc8), 20); /* 24 */
 	a = b + ROT_LEFT((a + G(b, c, d) + X[9] + 0x21e1cde6), 5);	/* 25 */
 	d = a + ROT_LEFT((d + G(a, b, c) + X[14] + 0xc33707d6), 9); /* 26 */
@@ -140,41 +140,41 @@ doTheRounds(uint32 X[16], uint32 state[4])
 	a = b + ROT_LEFT((a + G(b, c, d) + X[13] + 0xa9e3e905), 5); /* 29 */
 	d = a + ROT_LEFT((d + G(a, b, c) + X[2] + 0xfcefa3f8), 9);	/* 30 */
 	c = d + ROT_LEFT((c + G(d, a, b) + X[7] + 0x676f02d9), 14); /* 31 */
-	b = c + ROT_LEFT((b + G(c, d, a) + X[12] + 0x8d2a4c8a), 20);		/* 32 */
+	b = c + ROT_LEFT((b + G(c, d, a) + X[12] + 0x8d2a4c8a), 20);	/* 32 */
 
 	/* round 3 */
 	a = b + ROT_LEFT((a + H(b, c, d) + X[5] + 0xfffa3942), 4);	/* 33 */
 	d = a + ROT_LEFT((d + H(a, b, c) + X[8] + 0x8771f681), 11); /* 34 */
-	c = d + ROT_LEFT((c + H(d, a, b) + X[11] + 0x6d9d6122), 16);		/* 35 */
-	b = c + ROT_LEFT((b + H(c, d, a) + X[14] + 0xfde5380c), 23);		/* 36 */
+	c = d + ROT_LEFT((c + H(d, a, b) + X[11] + 0x6d9d6122), 16);	/* 35 */
+	b = c + ROT_LEFT((b + H(c, d, a) + X[14] + 0xfde5380c), 23);	/* 36 */
 	a = b + ROT_LEFT((a + H(b, c, d) + X[1] + 0xa4beea44), 4);	/* 37 */
 	d = a + ROT_LEFT((d + H(a, b, c) + X[4] + 0x4bdecfa9), 11); /* 38 */
 	c = d + ROT_LEFT((c + H(d, a, b) + X[7] + 0xf6bb4b60), 16); /* 39 */
-	b = c + ROT_LEFT((b + H(c, d, a) + X[10] + 0xbebfbc70), 23);		/* 40 */
+	b = c + ROT_LEFT((b + H(c, d, a) + X[10] + 0xbebfbc70), 23);	/* 40 */
 	a = b + ROT_LEFT((a + H(b, c, d) + X[13] + 0x289b7ec6), 4); /* 41 */
 	d = a + ROT_LEFT((d + H(a, b, c) + X[0] + 0xeaa127fa), 11); /* 42 */
 	c = d + ROT_LEFT((c + H(d, a, b) + X[3] + 0xd4ef3085), 16); /* 43 */
 	b = c + ROT_LEFT((b + H(c, d, a) + X[6] + 0x04881d05), 23); /* 44 */
 	a = b + ROT_LEFT((a + H(b, c, d) + X[9] + 0xd9d4d039), 4);	/* 45 */
-	d = a + ROT_LEFT((d + H(a, b, c) + X[12] + 0xe6db99e5), 11);		/* 46 */
-	c = d + ROT_LEFT((c + H(d, a, b) + X[15] + 0x1fa27cf8), 16);		/* 47 */
+	d = a + ROT_LEFT((d + H(a, b, c) + X[12] + 0xe6db99e5), 11);	/* 46 */
+	c = d + ROT_LEFT((c + H(d, a, b) + X[15] + 0x1fa27cf8), 16);	/* 47 */
 	b = c + ROT_LEFT((b + H(c, d, a) + X[2] + 0xc4ac5665), 23); /* 48 */
 
 	/* round 4 */
 	a = b + ROT_LEFT((a + I(b, c, d) + X[0] + 0xf4292244), 6);	/* 49 */
 	d = a + ROT_LEFT((d + I(a, b, c) + X[7] + 0x432aff97), 10); /* 50 */
-	c = d + ROT_LEFT((c + I(d, a, b) + X[14] + 0xab9423a7), 15);		/* 51 */
+	c = d + ROT_LEFT((c + I(d, a, b) + X[14] + 0xab9423a7), 15);	/* 51 */
 	b = c + ROT_LEFT((b + I(c, d, a) + X[5] + 0xfc93a039), 21); /* 52 */
 	a = b + ROT_LEFT((a + I(b, c, d) + X[12] + 0x655b59c3), 6); /* 53 */
 	d = a + ROT_LEFT((d + I(a, b, c) + X[3] + 0x8f0ccc92), 10); /* 54 */
-	c = d + ROT_LEFT((c + I(d, a, b) + X[10] + 0xffeff47d), 15);		/* 55 */
+	c = d + ROT_LEFT((c + I(d, a, b) + X[10] + 0xffeff47d), 15);	/* 55 */
 	b = c + ROT_LEFT((b + I(c, d, a) + X[1] + 0x85845dd1), 21); /* 56 */
 	a = b + ROT_LEFT((a + I(b, c, d) + X[8] + 0x6fa87e4f), 6);	/* 57 */
-	d = a + ROT_LEFT((d + I(a, b, c) + X[15] + 0xfe2ce6e0), 10);		/* 58 */
+	d = a + ROT_LEFT((d + I(a, b, c) + X[15] + 0xfe2ce6e0), 10);	/* 58 */
 	c = d + ROT_LEFT((c + I(d, a, b) + X[6] + 0xa3014314), 15); /* 59 */
-	b = c + ROT_LEFT((b + I(c, d, a) + X[13] + 0x4e0811a1), 21);		/* 60 */
+	b = c + ROT_LEFT((b + I(c, d, a) + X[13] + 0x4e0811a1), 21);	/* 60 */
 	a = b + ROT_LEFT((a + I(b, c, d) + X[4] + 0xf7537e82), 6);	/* 61 */
-	d = a + ROT_LEFT((d + I(a, b, c) + X[11] + 0xbd3af235), 10);		/* 62 */
+	d = a + ROT_LEFT((d + I(a, b, c) + X[11] + 0xbd3af235), 10);	/* 62 */
 	c = d + ROT_LEFT((c + I(d, a, b) + X[2] + 0x2ad7d2bb), 15); /* 63 */
 	b = c + ROT_LEFT((b + I(c, d, a) + X[9] + 0xeb86d391), 21); /* 64 */
 

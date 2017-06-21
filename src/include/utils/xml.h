@@ -40,7 +40,7 @@ typedef enum
 {
 	PG_XML_STRICTNESS_LEGACY,	/* ignore errors unless function result
 								 * indicates error condition */
-	PG_XML_STRICTNESS_WELLFORMED,		/* ignore non-parser messages */
+	PG_XML_STRICTNESS_WELLFORMED,	/* ignore non-parser messages */
 	PG_XML_STRICTNESS_ALL		/* report all notices/warnings/errors */
 } PgXmlStrictness;
 
@@ -81,4 +81,4 @@ extern int	xmloption;			/* XmlOptionType, but int for guc enum */
 
 extern const TableFuncRoutine XmlTableRoutine;
 
-#endif   /* XML_H */
+#endif							/* XML_H */

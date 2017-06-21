@@ -46,4 +46,4 @@ extern void expand_tilde(char **filename);
 
 extern bool recognized_connection_string(const char *connstr);
 
-#endif   /* COMMON_H */
+#endif							/* COMMON_H */

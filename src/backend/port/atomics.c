@@ -82,7 +82,7 @@ pg_atomic_clear_flag_impl(volatile pg_atomic_flag *ptr)
 	S_UNLOCK((slock_t *) &ptr->sema);
 }
 
-#endif   /* PG_HAVE_ATOMIC_FLAG_SIMULATION */
+#endif							/* PG_HAVE_ATOMIC_FLAG_SIMULATION */
 
 #ifdef PG_HAVE_ATOMIC_U32_SIMULATION
 void
@@ -156,7 +156,7 @@ pg_atomic_fetch_add_u32_impl(volatile pg_atomic_uint32 *ptr, int32 add_)
 	return oldval;
 }
 
-#endif   /* PG_HAVE_ATOMIC_U32_SIMULATION */
+#endif							/* PG_HAVE_ATOMIC_U32_SIMULATION */
 
 
 #ifdef PG_HAVE_ATOMIC_U64_SIMULATION
@@ -219,4 +219,4 @@ pg_atomic_fetch_add_u64_impl(volatile pg_atomic_uint64 *ptr, int64 add_)
 	return oldval;
 }
 
-#endif   /* PG_HAVE_ATOMIC_U64_SIMULATION */
+#endif							/* PG_HAVE_ATOMIC_U64_SIMULATION */

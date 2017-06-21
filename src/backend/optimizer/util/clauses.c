@@ -1399,7 +1399,7 @@ contain_context_dependent_node(Node *clause)
 	return contain_context_dependent_node_walker(clause, &flags);
 }
 
-#define CCDN_IN_CASEEXPR	0x0001		/* CaseTestExpr okay here? */
+#define CCDN_IN_CASEEXPR	0x0001	/* CaseTestExpr okay here? */
 
 static bool
 contain_context_dependent_node_walker(Node *node, int *flags)
@@ -2434,7 +2434,7 @@ estimate_expression_value(PlannerInfo *root, Node *node)
 {
 	eval_const_expressions_context context;
 
-	context.boundParams = root->glob->boundParams;		/* bound Params */
+	context.boundParams = root->glob->boundParams;	/* bound Params */
 	/* we do not need to mark the plan as depending on inlined functions */
 	context.root = NULL;
 	context.active_fns = NIL;	/* nothing being recursively simplified */
@@ -2712,8 +2712,8 @@ eval_const_expressions_mutator(Node *node,
 					 * Need to get OID of underlying function.  Okay to
 					 * scribble on input to this extent.
 					 */
-					set_opfuncid((OpExpr *) expr);		/* rely on struct
-														 * equivalence */
+					set_opfuncid((OpExpr *) expr);	/* rely on struct
+													 * equivalence */
 
 					/*
 					 * Code for op/func reduction is pretty bulky, so split it
@@ -3114,7 +3114,7 @@ eval_const_expressions_mutator(Node *node,
 				if (newarg && IsA(newarg, Const))
 				{
 					context->case_val = newarg;
-					newarg = NULL;		/* not needed anymore, see above */
+					newarg = NULL;	/* not needed anymore, see above */
 				}
 				else
 					context->case_val = NULL;
@@ -3463,7 +3463,7 @@ eval_const_expressions_mutator(Node *node,
 						default:
 							elog(ERROR, "unrecognized nulltesttype: %d",
 								 (int) ntest->nulltesttype);
-							result = false;		/* keep compiler quiet */
+							result = false; /* keep compiler quiet */
 							break;
 					}
 
@@ -3517,7 +3517,7 @@ eval_const_expressions_mutator(Node *node,
 						default:
 							elog(ERROR, "unrecognized booltesttype: %d",
 								 (int) btest->booltesttype);
-							result = false;		/* keep compiler quiet */
+							result = false; /* keep compiler quiet */
 							break;
 					}
 
@@ -4263,7 +4263,7 @@ evaluate_function(Oid funcid, Oid result_type, int32 result_typmod,
 	newexpr->funcretset = false;
 	newexpr->funcvariadic = funcvariadic;
 	newexpr->funcformat = COERCE_EXPLICIT_CALL; /* doesn't matter */
-	newexpr->funccollid = result_collid;		/* doesn't matter */
+	newexpr->funccollid = result_collid;	/* doesn't matter */
 	newexpr->inputcollid = input_collid;
 	newexpr->args = args;
 	newexpr->location = -1;

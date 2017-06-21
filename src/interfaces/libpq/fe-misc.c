@@ -814,7 +814,7 @@ definitelyEOF:
 definitelyFailed:
 	/* Do *not* drop any already-read data; caller still wants it */
 	pqDropConnection(conn, false);
-	conn->status = CONNECTION_BAD;		/* No more connection to backend */
+	conn->status = CONNECTION_BAD;	/* No more connection to backend */
 	return -1;
 }
 
@@ -1165,7 +1165,7 @@ pqSocketPoll(int sock, int forRead, int forWrite, time_t end_time)
 
 	return select(sock + 1, &input_mask, &output_mask,
 				  &except_mask, ptr_timeout);
-#endif   /* HAVE_POLL */
+#endif							/* HAVE_POLL */
 }
 
 
@@ -1259,4 +1259,4 @@ libpq_ngettext(const char *msgid, const char *msgid_plural, unsigned long n)
 	return dngettext(PG_TEXTDOMAIN("libpq"), msgid, msgid_plural, n);
 }
 
-#endif   /* ENABLE_NLS */
+#endif							/* ENABLE_NLS */

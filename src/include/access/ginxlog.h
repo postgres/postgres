@@ -90,11 +90,11 @@ typedef struct
 }			ginxlogSegmentAction;
 
 /* Action types */
-#define GIN_SEGMENT_UNMODIFIED	0		/* no action (not used in WAL records) */
-#define GIN_SEGMENT_DELETE		1		/* a whole segment is removed */
-#define GIN_SEGMENT_INSERT		2		/* a whole segment is added */
-#define GIN_SEGMENT_REPLACE		3		/* a segment is replaced */
-#define GIN_SEGMENT_ADDITEMS	4		/* items are added to existing segment */
+#define GIN_SEGMENT_UNMODIFIED	0	/* no action (not used in WAL records) */
+#define GIN_SEGMENT_DELETE		1	/* a whole segment is removed */
+#define GIN_SEGMENT_INSERT		2	/* a whole segment is added */
+#define GIN_SEGMENT_REPLACE		3	/* a segment is replaced */
+#define GIN_SEGMENT_ADDITEMS	4	/* items are added to existing segment */
 
 typedef struct
 {
@@ -214,4 +214,4 @@ extern void gin_xlog_startup(void);
 extern void gin_xlog_cleanup(void);
 extern void gin_mask(char *pagedata, BlockNumber blkno);
 
-#endif   /* GINXLOG_H */
+#endif							/* GINXLOG_H */

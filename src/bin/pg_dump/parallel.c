@@ -91,7 +91,7 @@ struct ParallelSlot
 	T_WorkerStatus workerStatus;	/* see enum above */
 
 	/* These fields are valid if workerStatus == WRKR_WORKING: */
-	ParallelCompletionPtr callback;		/* function to call on completion */
+	ParallelCompletionPtr callback; /* function to call on completion */
 	void	   *callback_data;	/* passthrough data for it */
 
 	ArchiveHandle *AH;			/* Archive data worker is using */
@@ -134,7 +134,7 @@ static int	piperead(int s, char *buf, int len);
 #define piperead(a,b,c)		read(a,b,c)
 #define pipewrite(a,b,c)	write(a,b,c)
 
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 
 /*
  * State info for archive_close_connection() shutdown callback.
@@ -193,7 +193,7 @@ static DWORD tls_index;
 /* globally visible variables (needed by exit_nicely) */
 bool		parallel_init_done = false;
 DWORD		mainThreadId;
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 
 static const char *modulename = gettext_noop("parallel archiver");
 
@@ -335,7 +335,7 @@ getThreadLocalPQExpBuffer(void)
 
 	return id_return;
 }
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 
 /*
  * pg_dump and pg_restore call this to register the cleanup handler
@@ -512,7 +512,7 @@ WaitForTerminatingWorkers(ParallelState *pstate)
 				break;
 			}
 		}
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 
 		/* On all platforms, update workerStatus and te[] as well */
 		Assert(j < pstate->numWorkers);
@@ -729,7 +729,7 @@ setup_cancel_handler(void)
 	}
 }
 
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 
 
 /*
@@ -898,7 +898,7 @@ init_spawned_worker_win32(WorkerInfo *wi)
 	_endthreadex(0);
 	return 0;
 }
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 
 /*
  * This function starts a parallel dump or restore by spawning off the worker
@@ -1044,7 +1044,7 @@ ParallelBackupStart(ArchiveHandle *AH)
 		closesocket(pipeMW[PIPE_READ]);
 		/* close write end of Worker -> Master */
 		closesocket(pipeWM[PIPE_WRITE]);
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 	}
 
 	/*
@@ -1840,4 +1840,4 @@ piperead(int s, char *buf, int len)
 	return ret;
 }
 
-#endif   /* WIN32 */
+#endif							/* WIN32 */

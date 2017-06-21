@@ -42,7 +42,7 @@ CatalogOpenIndexes(Relation heapRel)
 	ResultRelInfo *resultRelInfo;
 
 	resultRelInfo = makeNode(ResultRelInfo);
-	resultRelInfo->ri_RangeTableIndex = 1;		/* dummy */
+	resultRelInfo->ri_RangeTableIndex = 1;	/* dummy */
 	resultRelInfo->ri_RelationDesc = heapRel;
 	resultRelInfo->ri_TrigDesc = NULL;	/* we don't fire triggers */
 
@@ -136,7 +136,7 @@ CatalogIndexInsert(CatalogIndexState indstate, HeapTuple heapTuple)
 		index_insert(relationDescs[i],	/* index relation */
 					 values,	/* array of index Datums */
 					 isnull,	/* is-null flags */
-					 &(heapTuple->t_self),		/* tid of heap tuple */
+					 &(heapTuple->t_self),	/* tid of heap tuple */
 					 heapRelation,
 					 relationDescs[i]->rd_index->indisunique ?
 					 UNIQUE_CHECK_YES : UNIQUE_CHECK_NO,

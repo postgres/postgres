@@ -76,4 +76,4 @@
 #define JSONBOID 3802
 #define INT4RANGEOID		3904
 
-#endif   /* PG_TYPE_H */
+#endif							/* PG_TYPE_H */

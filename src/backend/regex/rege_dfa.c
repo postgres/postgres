@@ -303,7 +303,7 @@ static int
 matchuntil(struct vars *v,
 		   struct dfa *d,
 		   chr *probe,			/* we want to know if a match ends here */
-		   struct sset **lastcss,		/* state storage across calls */
+		   struct sset **lastcss,	/* state storage across calls */
 		   chr **lastcp)		/* state storage across calls */
 {
 	chr		   *cp = *lastcp;
@@ -672,15 +672,15 @@ miss(struct vars *v,
 				for (ca = cnfa->states[i]; ca->co != COLORLESS; ca++)
 				{
 					if (ca->co < cnfa->ncolors)
-						continue;		/* not a LACON arc */
+						continue;	/* not a LACON arc */
 					if (ISBSET(d->work, ca->to))
-						continue;		/* arc would be a no-op anyway */
-					sawlacons = 1;		/* this LACON affects our result */
+						continue;	/* arc would be a no-op anyway */
+					sawlacons = 1;	/* this LACON affects our result */
 					if (!lacon(v, cnfa, cp, ca->co))
 					{
 						if (ISERR())
 							return NULL;
-						continue;		/* LACON arc cannot be traversed */
+						continue;	/* LACON arc cannot be traversed */
 					}
 					if (ISERR())
 						return NULL;
@@ -821,7 +821,7 @@ getvacant(struct vars *v,
 		FDEBUG(("zapping c%d's %ld outarc\n", (int) (p - d->ssets), (long) co));
 		p->outs[co] = NULL;
 		ap = p->inchain[co];
-		p->inchain[co].ss = NULL;		/* paranoia */
+		p->inchain[co].ss = NULL;	/* paranoia */
 	}
 	ss->ins.ss = NULL;
 

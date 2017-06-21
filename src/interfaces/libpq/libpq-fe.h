@@ -56,8 +56,8 @@ typedef enum
 	 */
 	CONNECTION_STARTED,			/* Waiting for connection to be made.  */
 	CONNECTION_MADE,			/* Connection OK; waiting to send.     */
-	CONNECTION_AWAITING_RESPONSE,		/* Waiting for a response from the
-										 * postmaster.        */
+	CONNECTION_AWAITING_RESPONSE,	/* Waiting for a response from the
+									 * postmaster.        */
 	CONNECTION_AUTH_OK,			/* Received authentication; waiting for
 								 * backend startup. */
 	CONNECTION_SETENV,			/* Negotiating environment. */
@@ -609,4 +609,4 @@ extern int	pg_valid_server_encoding_id(int encoding);
 }
 #endif
 
-#endif   /* LIBPQ_FE_H */
+#endif							/* LIBPQ_FE_H */

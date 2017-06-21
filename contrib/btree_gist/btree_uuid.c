@@ -171,7 +171,7 @@ static double
 uuid_2_double(const pg_uuid_t *u)
 {
 	uint64		uu[2];
-	const double two64 = 18446744073709551616.0;		/* 2^64 */
+	const double two64 = 18446744073709551616.0;	/* 2^64 */
 
 	/* Source data may not be suitably aligned, so copy */
 	memcpy(uu, u->data, UUID_LEN);

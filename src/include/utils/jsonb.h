@@ -148,7 +148,7 @@ typedef uint32 JEntry;
 #define JENTRY_ISBOOL_FALSE		0x20000000
 #define JENTRY_ISBOOL_TRUE		0x30000000
 #define JENTRY_ISNULL			0x40000000
-#define JENTRY_ISCONTAINER		0x50000000		/* array or object */
+#define JENTRY_ISCONTAINER		0x50000000	/* array or object */
 
 /* Access macros.  Note possible multiple evaluations */
 #define JBE_OFFLENFLD(je_)		((je_) & JENTRY_OFFLENMASK)
@@ -200,8 +200,8 @@ typedef struct JsonbContainer
 } JsonbContainer;
 
 /* flags for the header-field in JsonbContainer */
-#define JB_CMASK				0x0FFFFFFF		/* mask for count field */
-#define JB_FSCALAR				0x10000000		/* flag bits */
+#define JB_CMASK				0x0FFFFFFF	/* mask for count field */
+#define JB_FSCALAR				0x10000000	/* flag bits */
 #define JB_FOBJECT				0x20000000
 #define JB_FARRAY				0x40000000
 
@@ -263,7 +263,7 @@ struct JsonbValue
 		{
 			int			nElems;
 			JsonbValue *elems;
-			bool		rawScalar;		/* Top-level "raw scalar" array? */
+			bool		rawScalar;	/* Top-level "raw scalar" array? */
 		}			array;		/* Array container type */
 
 		struct
@@ -378,4 +378,4 @@ extern char *JsonbToCStringIndent(StringInfo out, JsonbContainer *in,
 					 int estimated_len);
 
 
-#endif   /* __JSONB_H__ */
+#endif							/* __JSONB_H__ */

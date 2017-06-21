@@ -357,7 +357,7 @@ brin_doinsert(Relation idxrel, BlockNumber pagesPerRange,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 			errmsg("index row size %zu exceeds maximum %zu for index \"%s\"",
 				 itemsz, BrinMaxItemSize, RelationGetRelationName(idxrel))));
-		return InvalidOffsetNumber;		/* keep compiler quiet */
+		return InvalidOffsetNumber; /* keep compiler quiet */
 	}
 
 	/* Make sure the revmap is long enough to contain the entry we need */
@@ -823,7 +823,7 @@ brin_getinsertbuffer(Relation irel, Buffer oldbuf, Size itemsz,
 					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 			errmsg("index row size %zu exceeds maximum %zu for index \"%s\"",
 				   itemsz, freespace, RelationGetRelationName(irel))));
-			return InvalidBuffer;		/* keep compiler quiet */
+			return InvalidBuffer;	/* keep compiler quiet */
 		}
 
 		if (newblk != oldblk)

@@ -25,8 +25,8 @@
 /* Flags for bit map */
 #define VISIBILITYMAP_ALL_VISIBLE	0x01
 #define VISIBILITYMAP_ALL_FROZEN	0x02
-#define VISIBILITYMAP_VALID_BITS	0x03		/* OR of all valid
-												 * visibilitymap flags bits */
+#define VISIBILITYMAP_VALID_BITS	0x03	/* OR of all valid visibilitymap
+											 * flags bits */
 
 /* Macros for visibilitymap test */
 #define VM_ALL_VISIBLE(r, b, v) \
@@ -46,4 +46,4 @@ extern uint8 visibilitymap_get_status(Relation rel, BlockNumber heapBlk, Buffer 
 extern void visibilitymap_count(Relation rel, BlockNumber *all_visible, BlockNumber *all_frozen);
 extern void visibilitymap_truncate(Relation rel, BlockNumber nheapblocks);
 
-#endif   /* VISIBILITYMAP_H */
+#endif							/* VISIBILITYMAP_H */

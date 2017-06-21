@@ -79,7 +79,7 @@ TypeShellMake(const char *typeName, Oid typeNamespace, Oid ownerId)
 	for (i = 0; i < Natts_pg_type; ++i)
 	{
 		nulls[i] = false;
-		values[i] = (Datum) NULL;		/* redundant, but safe */
+		values[i] = (Datum) NULL;	/* redundant, but safe */
 	}
 
 	/*
@@ -214,7 +214,7 @@ TypeCreate(Oid newTypeOid,
 		   bool isImplicitArray,
 		   Oid arrayType,
 		   Oid baseType,
-		   const char *defaultTypeValue,		/* human readable rep */
+		   const char *defaultTypeValue,	/* human readable rep */
 		   char *defaultTypeBin,	/* cooked rep */
 		   bool passedByValue,
 		   char alignment,
@@ -511,8 +511,8 @@ TypeCreate(Oid newTypeOid,
 void
 GenerateTypeDependencies(Oid typeNamespace,
 						 Oid typeObjectId,
-						 Oid relationOid,		/* only for relation rowtypes */
-						 char relationKind,		/* ditto */
+						 Oid relationOid,	/* only for relation rowtypes */
+						 char relationKind, /* ditto */
 						 Oid owner,
 						 Oid inputProcedure,
 						 Oid outputProcedure,

@@ -125,7 +125,7 @@ static int	check_field_number(const PGresult *res, int field_num);
  */
 
 #define PGRESULT_DATA_BLOCKSIZE		2048
-#define PGRESULT_ALIGN_BOUNDARY		MAXIMUM_ALIGNOF		/* from configure */
+#define PGRESULT_ALIGN_BOUNDARY		MAXIMUM_ALIGNOF /* from configure */
 #define PGRESULT_BLOCK_OVERHEAD		Max(sizeof(PGresult_data), PGRESULT_ALIGN_BOUNDARY)
 #define PGRESULT_SEP_ALLOC_THRESHOLD	(PGRESULT_DATA_BLOCKSIZE / 2)
 
@@ -3026,7 +3026,7 @@ PQcmdTuples(PGresult *res)
 		while (*p && *p != ' ')
 			p++;
 		if (*p == 0)
-			goto interpret_error;		/* no space? */
+			goto interpret_error;	/* no space? */
 		p++;
 	}
 	else if (strncmp(res->cmdStatus, "SELECT ", 7) == 0 ||

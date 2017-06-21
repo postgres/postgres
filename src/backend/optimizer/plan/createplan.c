@@ -63,9 +63,9 @@
  * ressortgroupref labels.  This is passed down by parent nodes such as Sort
  * and Group, which need these values to be available in their inputs.
  */
-#define CP_EXACT_TLIST		0x0001		/* Plan must return specified tlist */
-#define CP_SMALL_TLIST		0x0002		/* Prefer narrower tlists */
-#define CP_LABEL_TLIST		0x0004		/* tlist must contain sortgrouprefs */
+#define CP_EXACT_TLIST		0x0001	/* Plan must return specified tlist */
+#define CP_SMALL_TLIST		0x0002	/* Prefer narrower tlists */
+#define CP_LABEL_TLIST		0x0004	/* tlist must contain sortgrouprefs */
 
 
 static Plan *create_plan_recurse(PlannerInfo *root, Path *best_path,
@@ -1418,7 +1418,7 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path, int flags)
 			 * for the IN clause operators' RHS datatype.
 			 */
 			eqop = get_equality_op_for_ordering_op(sortop, NULL);
-			if (!OidIsValid(eqop))		/* shouldn't happen */
+			if (!OidIsValid(eqop))	/* shouldn't happen */
 				elog(ERROR, "could not find equality operator for ordering operator %u",
 					 sortop);
 
@@ -2908,7 +2908,7 @@ create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 			plan->total_cost = opath->path.total_cost;
 			plan->plan_rows =
 				clamp_row_est(opath->bitmapselectivity * opath->path.parent->tuples);
-			plan->plan_width = 0;		/* meaningless */
+			plan->plan_width = 0;	/* meaningless */
 			plan->parallel_aware = false;
 			plan->parallel_safe = opath->path.parallel_safe;
 		}
@@ -3394,7 +3394,7 @@ create_worktablescan_plan(PlannerInfo *root, Path *best_path,
 		if (!cteroot)			/* shouldn't happen */
 			elog(ERROR, "bad levelsup for CTE \"%s\"", rte->ctename);
 	}
-	if (cteroot->wt_param_id < 0)		/* shouldn't happen */
+	if (cteroot->wt_param_id < 0)	/* shouldn't happen */
 		elog(ERROR, "could not find param ID for CTE \"%s\"", rte->ctename);
 
 	/* Sort clauses into best execution order */
@@ -5726,7 +5726,7 @@ prepare_sort_from_pathkeys(Plan *lefttree, List *pathkeys,
 								  NULL,
 								  true);
 			tlist = lappend(tlist, tle);
-			lefttree->targetlist = tlist;		/* just in case NIL before */
+			lefttree->targetlist = tlist;	/* just in case NIL before */
 		}
 
 		/*
@@ -6426,7 +6426,7 @@ make_modifytable(PlannerInfo *root,
 	node->partitioned_rels = partitioned_rels;
 	node->resultRelations = resultRelations;
 	node->resultRelIndex = -1;	/* will be set correctly in setrefs.c */
-	node->rootResultRelIndex = -1;		/* will be set correctly in setrefs.c */
+	node->rootResultRelIndex = -1;	/* will be set correctly in setrefs.c */
 	node->plans = subplans;
 	if (!onconflict)
 	{

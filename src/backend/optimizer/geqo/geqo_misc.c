@@ -129,4 +129,4 @@ print_edge_table(FILE *fp, Edge *edge_table, int num_gene)
 	fflush(fp);
 }
 
-#endif   /* GEQO_DEBUG */
+#endif							/* GEQO_DEBUG */

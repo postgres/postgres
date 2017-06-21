@@ -93,4 +93,4 @@ typedef struct RevmapContents
 #define REVMAP_PAGE_MAXITEMS \
 	(REVMAP_CONTENT_SIZE / sizeof(ItemPointerData))
 
-#endif   /* BRIN_PAGE_H */
+#endif							/* BRIN_PAGE_H */

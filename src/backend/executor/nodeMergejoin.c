@@ -225,7 +225,7 @@ MJExamineQuals(List *mergeclauses,
 								   &op_strategy,
 								   &op_lefttype,
 								   &op_righttype);
-		if (op_strategy != BTEqualStrategyNumber)		/* should not happen */
+		if (op_strategy != BTEqualStrategyNumber)	/* should not happen */
 			elog(ERROR, "cannot merge using non-equality operator %u",
 				 qual->opno);
 
@@ -849,7 +849,7 @@ ExecMergeJoin(MergeJoinState *node)
 					 */
 					TupleTableSlot *result;
 
-					node->mj_MatchedInner = true;		/* do it only once */
+					node->mj_MatchedInner = true;	/* do it only once */
 
 					result = MJFillInner(node);
 					if (result)
@@ -951,7 +951,7 @@ ExecMergeJoin(MergeJoinState *node)
 					 */
 					TupleTableSlot *result;
 
-					node->mj_MatchedOuter = true;		/* do it only once */
+					node->mj_MatchedOuter = true;	/* do it only once */
 
 					result = MJFillOuter(node);
 					if (result)
@@ -1212,7 +1212,7 @@ ExecMergeJoin(MergeJoinState *node)
 					 */
 					TupleTableSlot *result;
 
-					node->mj_MatchedOuter = true;		/* do it only once */
+					node->mj_MatchedOuter = true;	/* do it only once */
 
 					result = MJFillOuter(node);
 					if (result)
@@ -1274,7 +1274,7 @@ ExecMergeJoin(MergeJoinState *node)
 					 */
 					TupleTableSlot *result;
 
-					node->mj_MatchedInner = true;		/* do it only once */
+					node->mj_MatchedInner = true;	/* do it only once */
 
 					result = MJFillInner(node);
 					if (result)
@@ -1344,7 +1344,7 @@ ExecMergeJoin(MergeJoinState *node)
 					 */
 					TupleTableSlot *result;
 
-					node->mj_MatchedInner = true;		/* do it only once */
+					node->mj_MatchedInner = true;	/* do it only once */
 
 					result = MJFillInner(node);
 					if (result)
@@ -1390,7 +1390,7 @@ ExecMergeJoin(MergeJoinState *node)
 					 */
 					TupleTableSlot *result;
 
-					node->mj_MatchedOuter = true;		/* do it only once */
+					node->mj_MatchedOuter = true;	/* do it only once */
 
 					result = MJFillOuter(node);
 					if (result)

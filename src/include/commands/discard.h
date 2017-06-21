@@ -17,4 +17,4 @@
 
 extern void DiscardCommand(DiscardStmt *stmt, bool isTopLevel);
 
-#endif   /* DISCARD_H */
+#endif							/* DISCARD_H */

@@ -18,4 +18,4 @@
 
 extern void extract_restriction_or_clauses(PlannerInfo *root);
 
-#endif   /* ORCLAUSES_H */
+#endif							/* ORCLAUSES_H */

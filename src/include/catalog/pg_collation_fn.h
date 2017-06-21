@@ -23,4 +23,4 @@ extern Oid CollationCreate(const char *collname, Oid collnamespace,
 				bool if_not_exists);
 extern void RemoveCollationById(Oid collationOid);
 
-#endif   /* PG_COLLATION_FN_H */
+#endif							/* PG_COLLATION_FN_H */

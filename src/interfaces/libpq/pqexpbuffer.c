@@ -91,7 +91,7 @@ initPQExpBuffer(PQExpBuffer str)
 	str->data = (char *) malloc(INITIAL_EXPBUFFER_SIZE);
 	if (str->data == NULL)
 	{
-		str->data = (char *) oom_buffer;		/* see comment above */
+		str->data = (char *) oom_buffer;	/* see comment above */
 		str->maxlen = 0;
 		str->len = 0;
 	}

@@ -89,7 +89,7 @@ typedef struct pg_sha512_ctx
 } pg_sha512_ctx;
 typedef struct pg_sha256_ctx pg_sha224_ctx;
 typedef struct pg_sha512_ctx pg_sha384_ctx;
-#endif   /* USE_SSL */
+#endif							/* USE_SSL */
 
 /* Interface routines for SHA224/256/384/512 */
 extern void pg_sha224_init(pg_sha224_ctx *ctx);
@@ -112,4 +112,4 @@ extern void pg_sha512_update(pg_sha512_ctx *ctx, const uint8 *input0,
 				 size_t len);
 extern void pg_sha512_final(pg_sha512_ctx *ctx, uint8 *dest);
 
-#endif   /* _PG_SHA2_H_ */
+#endif							/* _PG_SHA2_H_ */

@@ -22,4 +22,4 @@ typedef int64 Cash;
 #define PG_GETARG_CASH(n)	DatumGetCash(PG_GETARG_DATUM(n))
 #define PG_RETURN_CASH(x)	return CashGetDatum(x)
 
-#endif   /* CASH_H */
+#endif							/* CASH_H */

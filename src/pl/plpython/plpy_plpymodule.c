@@ -140,7 +140,7 @@ PyInit_plpy(void)
 
 	return m;
 }
-#endif   /* PY_MAJOR_VERSION >= 3 */
+#endif							/* PY_MAJOR_VERSION >= 3 */
 
 void
 PLy_init_plpy(void)

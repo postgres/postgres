@@ -92,4 +92,4 @@ ox1(PlannerInfo *root, Gene *tour1, Gene *tour2, Gene *offspring, int num_gene,
 
 }
 
-#endif   /* defined(OX1) */
+#endif							/* defined(OX1) */

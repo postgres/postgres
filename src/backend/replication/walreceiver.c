@@ -259,8 +259,7 @@ WalReceiverMain(void)
 	walrcv->latch = &MyProc->procLatch;
 
 	/* Properly accept or ignore signals the postmaster might send us */
-	pqsignal(SIGHUP, WalRcvSigHupHandler);		/* set flag to read config
-												 * file */
+	pqsignal(SIGHUP, WalRcvSigHupHandler);	/* set flag to read config file */
 	pqsignal(SIGINT, SIG_IGN);
 	pqsignal(SIGTERM, WalRcvShutdownHandler);	/* request shutdown */
 	pqsignal(SIGQUIT, WalRcvQuickDieHandler);	/* hard crash time */

@@ -244,7 +244,7 @@ process_equivalence(PlannerInfo *root, RestrictInfo *restrictinfo,
 		{
 			EquivalenceMember *cur_em = (EquivalenceMember *) lfirst(lc2);
 
-			Assert(!cur_em->em_is_child);		/* no children yet */
+			Assert(!cur_em->em_is_child);	/* no children yet */
 
 			/*
 			 * If below an outer join, don't match constants: they're not as
@@ -1704,7 +1704,7 @@ reconsider_outer_join_clause(PlannerInfo *root, RestrictInfo *rinfo,
 		{
 			EquivalenceMember *cur_em = (EquivalenceMember *) lfirst(lc2);
 
-			Assert(!cur_em->em_is_child);		/* no children yet */
+			Assert(!cur_em->em_is_child);	/* no children yet */
 			if (equal(outervar, cur_em->em_expr))
 			{
 				match = true;
@@ -1834,7 +1834,7 @@ reconsider_full_join_clause(PlannerInfo *root, RestrictInfo *rinfo)
 		foreach(lc2, cur_ec->ec_members)
 		{
 			coal_em = (EquivalenceMember *) lfirst(lc2);
-			Assert(!coal_em->em_is_child);		/* no children yet */
+			Assert(!coal_em->em_is_child);	/* no children yet */
 			if (IsA(coal_em->em_expr, CoalesceExpr))
 			{
 				CoalesceExpr *cexpr = (CoalesceExpr *) coal_em->em_expr;
@@ -1997,7 +1997,7 @@ match_eclasses_to_foreign_key_col(PlannerInfo *root,
 	Index		var2varno = fkinfo->ref_relid;
 	AttrNumber	var2attno = fkinfo->confkey[colno];
 	Oid			eqop = fkinfo->conpfeqop[colno];
-	List	   *opfamilies = NIL;		/* compute only if needed */
+	List	   *opfamilies = NIL;	/* compute only if needed */
 	ListCell   *lc1;
 
 	foreach(lc1, root->eq_classes)

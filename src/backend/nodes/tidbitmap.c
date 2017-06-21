@@ -216,7 +216,7 @@ typedef struct PTIterationArray
  */
 struct TBMSharedIterator
 {
-	TBMSharedIteratorState *state;		/* shared state */
+	TBMSharedIteratorState *state;	/* shared state */
 	PTEntryArray *ptbase;		/* pagetable element array */
 	PTIterationArray *ptpages;	/* sorted exact page index list */
 	PTIterationArray *ptchunks; /* sorted lossy page index list */
@@ -297,8 +297,8 @@ tbm_create(long maxbytes, dsa_area *dsa)
 	 */
 	nbuckets = maxbytes /
 		(sizeof(PagetableEntry) + sizeof(Pointer) + sizeof(Pointer));
-	nbuckets = Min(nbuckets, INT_MAX - 1);		/* safety limit */
-	nbuckets = Max(nbuckets, 16);		/* sanity limit */
+	nbuckets = Min(nbuckets, INT_MAX - 1);	/* safety limit */
+	nbuckets = Max(nbuckets, 16);	/* sanity limit */
 	tbm->maxentries = (int) nbuckets;
 	tbm->lossify_start = 0;
 	tbm->dsa = dsa;

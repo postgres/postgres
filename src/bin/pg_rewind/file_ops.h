@@ -21,4 +21,4 @@ extern void remove_target(file_entry_t *t);
 
 extern char *slurpFile(const char *datadir, const char *path, size_t *filesize);
 
-#endif   /* FILE_OPS_H */
+#endif							/* FILE_OPS_H */

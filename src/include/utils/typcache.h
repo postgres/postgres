@@ -83,9 +83,9 @@ typedef struct TypeCacheEntry
 	 */
 	struct TypeCacheEntry *rngelemtype; /* range's element type */
 	Oid			rng_collation;	/* collation for comparisons, if any */
-	FmgrInfo	rng_cmp_proc_finfo;		/* comparison function */
+	FmgrInfo	rng_cmp_proc_finfo; /* comparison function */
 	FmgrInfo	rng_canonical_finfo;	/* canonicalization function, if any */
-	FmgrInfo	rng_subdiff_finfo;		/* difference function, if any */
+	FmgrInfo	rng_subdiff_finfo;	/* difference function, if any */
 
 	/*
 	 * Domain constraint data if it's a domain type.  NULL if not domain, or
@@ -136,7 +136,7 @@ typedef struct DomainConstraintRef
 
 	/* Management data --- treat these fields as private to typcache.c */
 	DomainConstraintCache *dcc; /* current constraints, or NULL if none */
-	MemoryContextCallback callback;		/* used to release refcount when done */
+	MemoryContextCallback callback; /* used to release refcount when done */
 } DomainConstraintRef;
 
 
@@ -160,4 +160,4 @@ extern void assign_record_type_typmod(TupleDesc tupDesc);
 
 extern int	compare_values_of_enum(TypeCacheEntry *tcache, Oid arg1, Oid arg2);
 
-#endif   /* TYPCACHE_H */
+#endif							/* TYPCACHE_H */

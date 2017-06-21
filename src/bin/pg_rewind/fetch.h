@@ -41,4 +41,4 @@ extern void copy_executeFileMap(filemap_t *map);
 typedef void (*process_file_callback_t) (const char *path, file_type_t type, size_t size, const char *link_target);
 extern void traverse_datadir(const char *datadir, process_file_callback_t callback);
 
-#endif   /* FETCH_H */
+#endif							/* FETCH_H */

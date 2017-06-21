@@ -154,7 +154,7 @@ typedef struct PgStat_TableStatus
 {
 	Oid			t_id;			/* table's OID */
 	bool		t_shared;		/* is it a shared catalog? */
-	struct PgStat_TableXactStatus *trans;		/* lowest subxact's counts */
+	struct PgStat_TableXactStatus *trans;	/* lowest subxact's counts */
 	PgStat_TableCounts t_counts;	/* event counts to be sent */
 } PgStat_TableStatus;
 
@@ -164,19 +164,19 @@ typedef struct PgStat_TableStatus
  */
 typedef struct PgStat_TableXactStatus
 {
-	PgStat_Counter tuples_inserted;		/* tuples inserted in (sub)xact */
-	PgStat_Counter tuples_updated;		/* tuples updated in (sub)xact */
-	PgStat_Counter tuples_deleted;		/* tuples deleted in (sub)xact */
+	PgStat_Counter tuples_inserted; /* tuples inserted in (sub)xact */
+	PgStat_Counter tuples_updated;	/* tuples updated in (sub)xact */
+	PgStat_Counter tuples_deleted;	/* tuples deleted in (sub)xact */
 	bool		truncated;		/* relation truncated in this (sub)xact */
 	PgStat_Counter inserted_pre_trunc;	/* tuples inserted prior to truncate */
 	PgStat_Counter updated_pre_trunc;	/* tuples updated prior to truncate */
 	PgStat_Counter deleted_pre_trunc;	/* tuples deleted prior to truncate */
 	int			nest_level;		/* subtransaction nest level */
 	/* links to other structs for same relation: */
-	struct PgStat_TableXactStatus *upper;		/* next higher subxact if any */
+	struct PgStat_TableXactStatus *upper;	/* next higher subxact if any */
 	PgStat_TableStatus *parent; /* per-table status */
 	/* structs of same subxact level are linked here: */
-	struct PgStat_TableXactStatus *next;		/* next of same subxact */
+	struct PgStat_TableXactStatus *next;	/* next of same subxact */
 } PgStat_TableXactStatus;
 
 
@@ -418,7 +418,7 @@ typedef struct PgStat_MsgBgWriter
 	PgStat_Counter m_buf_written_backend;
 	PgStat_Counter m_buf_fsync_backend;
 	PgStat_Counter m_buf_alloc;
-	PgStat_Counter m_checkpoint_write_time;		/* times in milliseconds */
+	PgStat_Counter m_checkpoint_write_time; /* times in milliseconds */
 	PgStat_Counter m_checkpoint_sync_time;
 } PgStat_MsgBgWriter;
 
@@ -633,13 +633,13 @@ typedef struct PgStat_StatTabEntry
 	PgStat_Counter blocks_fetched;
 	PgStat_Counter blocks_hit;
 
-	TimestampTz vacuum_timestamp;		/* user initiated vacuum */
+	TimestampTz vacuum_timestamp;	/* user initiated vacuum */
 	PgStat_Counter vacuum_count;
-	TimestampTz autovac_vacuum_timestamp;		/* autovacuum initiated */
+	TimestampTz autovac_vacuum_timestamp;	/* autovacuum initiated */
 	PgStat_Counter autovac_vacuum_count;
-	TimestampTz analyze_timestamp;		/* user initiated */
+	TimestampTz analyze_timestamp;	/* user initiated */
 	PgStat_Counter analyze_count;
-	TimestampTz autovac_analyze_timestamp;		/* autovacuum initiated */
+	TimestampTz autovac_analyze_timestamp;	/* autovacuum initiated */
 	PgStat_Counter autovac_analyze_count;
 } PgStat_StatTabEntry;
 
@@ -664,13 +664,13 @@ typedef struct PgStat_StatFuncEntry
  */
 typedef struct PgStat_ArchiverStats
 {
-	PgStat_Counter archived_count;		/* archival successes */
+	PgStat_Counter archived_count;	/* archival successes */
 	char		last_archived_wal[MAX_XFN_CHARS + 1];	/* last WAL file
 														 * archived */
-	TimestampTz last_archived_timestamp;		/* last archival success time */
+	TimestampTz last_archived_timestamp;	/* last archival success time */
 	PgStat_Counter failed_count;	/* failed archival attempts */
-	char		last_failed_wal[MAX_XFN_CHARS + 1];		/* WAL file involved in
-														 * last failure */
+	char		last_failed_wal[MAX_XFN_CHARS + 1]; /* WAL file involved in
+													 * last failure */
 	TimestampTz last_failed_timestamp;	/* last archival failure time */
 	TimestampTz stat_reset_timestamp;
 } PgStat_ArchiverStats;
@@ -683,7 +683,7 @@ typedef struct PgStat_GlobalStats
 	TimestampTz stats_timestamp;	/* time of stats file update */
 	PgStat_Counter timed_checkpoints;
 	PgStat_Counter requested_checkpoints;
-	PgStat_Counter checkpoint_write_time;		/* times in milliseconds */
+	PgStat_Counter checkpoint_write_time;	/* times in milliseconds */
 	PgStat_Counter checkpoint_sync_time;
 	PgStat_Counter buf_written_checkpoints;
 	PgStat_Counter buf_written_clean;
@@ -934,9 +934,9 @@ typedef struct PgBackendSSLStatus
 	/* Information about SSL connection */
 	int			ssl_bits;
 	bool		ssl_compression;
-	char		ssl_version[NAMEDATALEN];		/* MUST be null-terminated */
-	char		ssl_cipher[NAMEDATALEN];		/* MUST be null-terminated */
-	char		ssl_clientdn[NAMEDATALEN];		/* MUST be null-terminated */
+	char		ssl_version[NAMEDATALEN];	/* MUST be null-terminated */
+	char		ssl_cipher[NAMEDATALEN];	/* MUST be null-terminated */
+	char		ssl_clientdn[NAMEDATALEN];	/* MUST be null-terminated */
 } PgBackendSSLStatus;
 
 
@@ -987,7 +987,7 @@ typedef struct PgBackendStatus
 	Oid			st_databaseid;
 	Oid			st_userid;
 	SockAddr	st_clientaddr;
-	char	   *st_clienthostname;		/* MUST be null-terminated */
+	char	   *st_clienthostname;	/* MUST be null-terminated */
 
 	/* Information about SSL connection */
 	bool		st_ssl;
@@ -1324,4 +1324,4 @@ extern int	pgstat_fetch_stat_numbackends(void);
 extern PgStat_ArchiverStats *pgstat_fetch_stat_archiver(void);
 extern PgStat_GlobalStats *pgstat_fetch_global(void);
 
-#endif   /* PGSTAT_H */
+#endif							/* PGSTAT_H */

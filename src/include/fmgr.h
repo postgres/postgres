@@ -82,7 +82,7 @@ typedef struct FunctionCallInfoData
 	Oid			fncollation;	/* collation for function to use */
 	bool		isnull;			/* function must set true if result is NULL */
 	short		nargs;			/* # arguments actually passed */
-	Datum		arg[FUNC_MAX_ARGS];		/* Arguments passed to function */
+	Datum		arg[FUNC_MAX_ARGS]; /* Arguments passed to function */
 	bool		argnull[FUNC_MAX_ARGS]; /* T if arg[i] is actually NULL */
 } FunctionCallInfoData;
 
@@ -690,8 +690,8 @@ extern void RestoreLibraryState(char *start_address);
  */
 
 /* AggCheckCallContext can return one of the following codes, or 0: */
-#define AGG_CONTEXT_AGGREGATE	1		/* regular aggregate */
-#define AGG_CONTEXT_WINDOW		2		/* window function */
+#define AGG_CONTEXT_AGGREGATE	1	/* regular aggregate */
+#define AGG_CONTEXT_WINDOW		2	/* window function */
 
 extern int AggCheckCallContext(FunctionCallInfo fcinfo,
 					MemoryContext *aggcontext);
@@ -743,4 +743,4 @@ extern PGDLLIMPORT fmgr_hook_type fmgr_hook;
  */
 extern char *fmgr(Oid procedureId,...);
 
-#endif   /* FMGR_H */
+#endif							/* FMGR_H */

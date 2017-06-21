@@ -64,7 +64,7 @@ pg_regerror(int errcode,		/* error code, or REG_ATOI or REG_ITOA */
 {
 	const struct rerr *r;
 	const char *msg;
-	char		convbuf[sizeof(unk) + 50];		/* 50 = plenty for int */
+	char		convbuf[sizeof(unk) + 50];	/* 50 = plenty for int */
 	size_t		len;
 	int			icode;
 
@@ -78,7 +78,7 @@ pg_regerror(int errcode,		/* error code, or REG_ATOI or REG_ITOA */
 			msg = convbuf;
 			break;
 		case REG_ITOA:			/* convert number to name */
-			icode = atoi(errbuf);		/* not our problem if this fails */
+			icode = atoi(errbuf);	/* not our problem if this fails */
 			for (r = rerrs; r->code >= 0; r++)
 				if (r->code == icode)
 					break;

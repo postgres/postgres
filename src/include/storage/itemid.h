@@ -180,4 +180,4 @@ typedef uint16 ItemLength;
 	(itemId)->lp_flags = LP_DEAD \
 )
 
-#endif   /* ITEMID_H */
+#endif							/* ITEMID_H */

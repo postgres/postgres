@@ -1165,5 +1165,5 @@ static const uint32 pg_crc32c_table[8][256] = {
 		0xA1354CE5, 0x864870AC, 0xEFCF3477, 0xC8B2083E,
 		0xCCB751C4, 0xEBCA6D8D, 0x824D2956, 0xA530151F
 	}
-#endif   /* WORDS_BIGENDIAN */
+#endif							/* WORDS_BIGENDIAN */
 };

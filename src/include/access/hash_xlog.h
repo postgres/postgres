@@ -24,14 +24,13 @@
 /*
  * XLOG records for hash operations
  */
-#define XLOG_HASH_INIT_META_PAGE	0x00		/* initialize the meta page */
-#define XLOG_HASH_INIT_BITMAP_PAGE	0x10		/* initialize the bitmap page */
+#define XLOG_HASH_INIT_META_PAGE	0x00	/* initialize the meta page */
+#define XLOG_HASH_INIT_BITMAP_PAGE	0x10	/* initialize the bitmap page */
 #define XLOG_HASH_INSERT		0x20	/* add index tuple without split */
 #define XLOG_HASH_ADD_OVFL_PAGE 0x30	/* add overflow page */
 #define XLOG_HASH_SPLIT_ALLOCATE_PAGE	0x40	/* allocate new page for split */
 #define XLOG_HASH_SPLIT_PAGE	0x50	/* split page */
-#define XLOG_HASH_SPLIT_COMPLETE	0x60		/* completion of split
-												 * operation */
+#define XLOG_HASH_SPLIT_COMPLETE	0x60	/* completion of split operation */
 #define XLOG_HASH_MOVE_PAGE_CONTENTS	0x70	/* remove tuples from one page
 												 * and add to another page */
 #define XLOG_HASH_SQUEEZE_PAGE	0x80	/* add tuples to one of the previous
@@ -41,11 +40,10 @@
 #define XLOG_HASH_SPLIT_CLEANUP 0xA0	/* clear split-cleanup flag in primary
 										 * bucket page after deleting tuples
 										 * that are moved due to split	*/
-#define XLOG_HASH_UPDATE_META_PAGE	0xB0		/* update meta page after
-												 * vacuum */
+#define XLOG_HASH_UPDATE_META_PAGE	0xB0	/* update meta page after vacuum */
 
-#define XLOG_HASH_VACUUM_ONE_PAGE	0xC0		/* remove dead tuples from
-												 * index page */
+#define XLOG_HASH_VACUUM_ONE_PAGE	0xC0	/* remove dead tuples from index
+											 * page */
 
 /*
  * xl_hash_split_allocate_page flag values, 8 bits are available.
@@ -151,9 +149,9 @@ typedef struct xl_hash_split_complete
 typedef struct xl_hash_move_page_contents
 {
 	uint16		ntups;
-	bool		is_prim_bucket_same_wrt;		/* TRUE if the page to which
-												 * tuples are moved is same as
-												 * primary bucket page */
+	bool		is_prim_bucket_same_wrt;	/* TRUE if the page to which
+											 * tuples are moved is same as
+											 * primary bucket page */
 } xl_hash_move_page_contents;
 
 #define SizeOfHashMovePageContents	\
@@ -176,13 +174,13 @@ typedef struct xl_hash_squeeze_page
 	BlockNumber prevblkno;
 	BlockNumber nextblkno;
 	uint16		ntups;
-	bool		is_prim_bucket_same_wrt;		/* TRUE if the page to which
-												 * tuples are moved is same as
-												 * primary bucket page */
-	bool		is_prev_bucket_same_wrt;		/* TRUE if the page to which
-												 * tuples are moved is the
-												 * page previous to the freed
-												 * overflow page */
+	bool		is_prim_bucket_same_wrt;	/* TRUE if the page to which
+											 * tuples are moved is same as
+											 * primary bucket page */
+	bool		is_prev_bucket_same_wrt;	/* TRUE if the page to which
+											 * tuples are moved is the page
+											 * previous to the freed overflow
+											 * page */
 } xl_hash_squeeze_page;
 
 #define SizeOfHashSqueezePage	\
@@ -198,8 +196,8 @@ typedef struct xl_hash_squeeze_page
  */
 typedef struct xl_hash_delete
 {
-	bool		clear_dead_marking;		/* TRUE if this operation clears
-										 * LH_PAGE_HAS_DEAD_TUPLES flag */
+	bool		clear_dead_marking; /* TRUE if this operation clears
+									 * LH_PAGE_HAS_DEAD_TUPLES flag */
 	bool		is_primary_bucket_page; /* TRUE if the operation is for
 										 * primary bucket page */
 } xl_hash_delete;
@@ -279,4 +277,4 @@ extern void hash_desc(StringInfo buf, XLogReaderState *record);
 extern const char *hash_identify(uint8 info);
 extern void hash_mask(char *pagedata, BlockNumber blkno);
 
-#endif   /* HASH_XLOG_H */
+#endif							/* HASH_XLOG_H */

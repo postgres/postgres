@@ -111,16 +111,16 @@ WalSndCtlData *WalSndCtl = NULL;
 WalSnd	   *MyWalSnd = NULL;
 
 /* Global state */
-bool		am_walsender = false;		/* Am I a walsender process? */
-bool		am_cascading_walsender = false;		/* Am I cascading WAL to
-												 * another standby? */
+bool		am_walsender = false;	/* Am I a walsender process? */
+bool		am_cascading_walsender = false; /* Am I cascading WAL to another
+											 * standby? */
 bool		am_db_walsender = false;	/* Connected to a database? */
 
 /* User-settable parameters for walsender */
 int			max_wal_senders = 0;	/* the maximum number of concurrent
 									 * walsenders */
-int			wal_sender_timeout = 60 * 1000;		/* maximum time to send one
-												 * WAL data message */
+int			wal_sender_timeout = 60 * 1000; /* maximum time to send one WAL
+											 * data message */
 bool		log_replication_commands = false;
 
 /*
@@ -450,16 +450,16 @@ SendTimeLineHistory(TimeLineHistoryCmd *cmd)
 	pq_sendstring(&buf, "filename");	/* col name */
 	pq_sendint(&buf, 0, 4);		/* table oid */
 	pq_sendint(&buf, 0, 2);		/* attnum */
-	pq_sendint(&buf, TEXTOID, 4);		/* type oid */
+	pq_sendint(&buf, TEXTOID, 4);	/* type oid */
 	pq_sendint(&buf, -1, 2);	/* typlen */
 	pq_sendint(&buf, 0, 4);		/* typmod */
 	pq_sendint(&buf, 0, 2);		/* format code */
 
 	/* second field */
-	pq_sendstring(&buf, "content");		/* col name */
+	pq_sendstring(&buf, "content"); /* col name */
 	pq_sendint(&buf, 0, 4);		/* table oid */
 	pq_sendint(&buf, 0, 2);		/* attnum */
-	pq_sendint(&buf, BYTEAOID, 4);		/* type oid */
+	pq_sendint(&buf, BYTEAOID, 4);	/* type oid */
 	pq_sendint(&buf, -1, 2);	/* typlen */
 	pq_sendint(&buf, 0, 4);		/* typmod */
 	pq_sendint(&buf, 0, 2);		/* format code */
@@ -1748,7 +1748,7 @@ ProcessStandbyReplyMessage(void)
 	writePtr = pq_getmsgint64(&reply_message);
 	flushPtr = pq_getmsgint64(&reply_message);
 	applyPtr = pq_getmsgint64(&reply_message);
-	(void) pq_getmsgint64(&reply_message);		/* sendTime; not used ATM */
+	(void) pq_getmsgint64(&reply_message);	/* sendTime; not used ATM */
 	replyRequested = pq_getmsgbyte(&reply_message);
 
 	elog(DEBUG2, "write %X/%X flush %X/%X apply %X/%X%s",
@@ -1911,7 +1911,7 @@ ProcessStandbyHSFeedbackMessage(void)
 	 * byte. See XLogWalRcvSendHSFeedback() in walreceiver.c for the creation
 	 * of this message.
 	 */
-	(void) pq_getmsgint64(&reply_message);		/* sendTime; not used ATM */
+	(void) pq_getmsgint64(&reply_message);	/* sendTime; not used ATM */
 	feedbackXmin = pq_getmsgint(&reply_message, 4);
 	feedbackEpoch = pq_getmsgint(&reply_message, 4);
 	feedbackCatalogXmin = pq_getmsgint(&reply_message, 4);
@@ -1978,7 +1978,7 @@ ProcessStandbyHSFeedbackMessage(void)
 	 * XXX: It might make sense to generalize the ephemeral slot concept and
 	 * always use the slot mechanism to handle the feedback xmin.
 	 */
-	if (MyReplicationSlot != NULL)		/* XXX: persistency configurable? */
+	if (MyReplicationSlot != NULL)	/* XXX: persistency configurable? */
 		PhysicalReplicationSlotNewXmin(feedbackXmin, feedbackCatalogXmin);
 	else
 	{
@@ -2000,7 +2000,7 @@ ProcessStandbyHSFeedbackMessage(void)
 static long
 WalSndComputeSleeptime(TimestampTz now)
 {
-	long		sleeptime = 10000;		/* 10 s */
+	long		sleeptime = 10000;	/* 10 s */
 
 	if (wal_sender_timeout > 0 && last_reply_timestamp > 0)
 	{

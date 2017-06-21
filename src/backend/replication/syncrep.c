@@ -888,7 +888,7 @@ SyncRepGetSyncStandbysPriority(bool *am_sync)
 				if (list_length(result) == SyncRepConfig->num_sync)
 				{
 					list_free(pending);
-					return result;		/* Exit if got enough sync standbys */
+					return result;	/* Exit if got enough sync standbys */
 				}
 
 				/*

@@ -54,11 +54,10 @@
  * Timer definitions.
  * ----------
  */
-#define PGARCH_AUTOWAKE_INTERVAL 60		/* How often to force a poll of the
-										 * archive status directory; in
-										 * seconds. */
-#define PGARCH_RESTART_INTERVAL 10		/* How often to attempt to restart a
-										 * failed archiver; in seconds. */
+#define PGARCH_AUTOWAKE_INTERVAL 60 /* How often to force a poll of the
+									 * archive status directory; in seconds. */
+#define PGARCH_RESTART_INTERVAL 10	/* How often to attempt to restart a
+									 * failed archiver; in seconds. */
 
 #define NUM_ARCHIVE_RETRIES 3
 
@@ -203,7 +202,7 @@ pgarch_forkexec(void)
 
 	return postmaster_forkexec(ac, av);
 }
-#endif   /* EXEC_BACKEND */
+#endif							/* EXEC_BACKEND */
 
 
 /*

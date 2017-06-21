@@ -199,10 +199,10 @@ typedef enum
 /* forward declaration */
 struct TParser;
 
-typedef int (*TParserCharTest) (struct TParser *);		/* any p_is* functions
-														 * except p_iseq */
-typedef void (*TParserSpecial) (struct TParser *);		/* special handler for
-														 * special cases... */
+typedef int (*TParserCharTest) (struct TParser *);	/* any p_is* functions
+													 * except p_iseq */
+typedef void (*TParserSpecial) (struct TParser *);	/* special handler for
+													 * special cases... */
 
 typedef struct
 {
@@ -302,7 +302,7 @@ TParserInit(char *str, int len)
 	if (prs->charmaxlen > 1)
 	{
 		Oid			collation = DEFAULT_COLLATION_OID;	/* TODO */
-		pg_locale_t mylocale = 0;		/* TODO */
+		pg_locale_t mylocale = 0;	/* TODO */
 
 		prs->usewide = true;
 		if (lc_ctype_is_c(collation))
@@ -560,7 +560,7 @@ p_iseq(TParser *prs, char c)
 
 p_iswhat(alnum)
 p_iswhat(alpha)
-#endif   /* USE_WIDE_UPPER_LOWER */
+#endif							/* USE_WIDE_UPPER_LOWER */
 
 p_iswhat(digit)
 p_iswhat(lower)
@@ -1697,7 +1697,7 @@ static const TParserStateActionItem actionTPS_InHyphenUnsignedInt[] = {
  */
 typedef struct
 {
-	const TParserStateActionItem *action;		/* the actual state info */
+	const TParserStateActionItem *action;	/* the actual state info */
 	TParserState state;			/* only for Assert crosscheck */
 #ifdef WPARSER_TRACE
 	const char *state_name;		/* only for debug printout */

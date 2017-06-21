@@ -333,7 +333,7 @@ pgstatindex_impl(Relation rel, FunctionCallInfo fcinfo)
 		values[j++] = psprintf("%d", indexStat.version);
 		values[j++] = psprintf("%d", indexStat.level);
 		values[j++] = psprintf(INT64_FORMAT,
-							   (1 +		/* include the metapage in index_size */
+							   (1 + /* include the metapage in index_size */
 								indexStat.leaf_pages +
 								indexStat.internal_pages +
 								indexStat.deleted_pages +

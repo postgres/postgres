@@ -49,8 +49,7 @@ CATALOG(pg_init_privs,3394) BKI_WITHOUT_OIDS
 	char		privtype;		/* from initdb or extension? */
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
-	aclitem		initprivs[1] BKI_FORCE_NOT_NULL;		/* initial privs on
-														 * object */
+	aclitem		initprivs[1] BKI_FORCE_NOT_NULL;	/* initial privs on object */
 #endif
 } FormData_pg_init_privs;
 
@@ -98,4 +97,4 @@ typedef enum InitPrivsType
  *	The initial contents are loaded near the end of initdb.
  */
 
-#endif   /* PG_INIT_PRIVS_H */
+#endif							/* PG_INIT_PRIVS_H */

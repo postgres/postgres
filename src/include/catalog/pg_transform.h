@@ -44,4 +44,4 @@ typedef FormData_pg_transform *Form_pg_transform;
 #define Anum_pg_transform_trffromsql	3
 #define Anum_pg_transform_trftosql	4
 
-#endif   /* PG_TRANSFORM_H */
+#endif							/* PG_TRANSFORM_H */

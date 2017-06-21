@@ -18,4 +18,4 @@
 
 extern void RemoveRewriteRuleById(Oid ruleOid);
 
-#endif   /* REWRITEREMOVE_H */
+#endif							/* REWRITEREMOVE_H */

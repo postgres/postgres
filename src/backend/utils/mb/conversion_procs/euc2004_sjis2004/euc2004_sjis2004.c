@@ -261,7 +261,7 @@ shift_jis_20042euc_jis_2004(const unsigned char *sjis, unsigned char *p, int len
 			/*
 			 * JIS X 0213
 			 */
-			if (c1 >= 0x81 && c1 <= 0x9f)		/* plane 1 1ku-62ku */
+			if (c1 >= 0x81 && c1 <= 0x9f)	/* plane 1 1ku-62ku */
 			{
 				ku = (c1 << 1) - 0x100;
 				ten = get_ten(c2, &kubun);

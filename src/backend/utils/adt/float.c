@@ -65,7 +65,7 @@ do {															\
 
 
 /* Configurable GUC parameter */
-int			extra_float_digits = 0;		/* Added to DBL_DIG or FLT_DIG */
+int			extra_float_digits = 0; /* Added to DBL_DIG or FLT_DIG */
 
 /* Cached constants for degree-based trig functions */
 static bool degree_consts_set = false;
@@ -105,7 +105,7 @@ static void init_degree_constants(void);
  */
 #define cbrt my_cbrt
 static double cbrt(double x);
-#endif   /* HAVE_CBRT */
+#endif							/* HAVE_CBRT */
 
 
 /*
@@ -329,7 +329,7 @@ float4in(PG_FUNCTION_ARGS)
 		if (endptr != num && endptr[-1] == '\0')
 			endptr--;
 	}
-#endif   /* HAVE_BUGGY_SOLARIS_STRTOD */
+#endif							/* HAVE_BUGGY_SOLARIS_STRTOD */
 
 	/* skip trailing whitespace */
 	while (*endptr != '\0' && isspace((unsigned char) *endptr))
@@ -555,7 +555,7 @@ float8in_internal(char *num, char **endptr_p,
 		if (endptr != num && endptr[-1] == '\0')
 			endptr--;
 	}
-#endif   /* HAVE_BUGGY_SOLARIS_STRTOD */
+#endif							/* HAVE_BUGGY_SOLARIS_STRTOD */
 
 	/* skip trailing whitespace */
 	while (*endptr != '\0' && isspace((unsigned char) *endptr))
@@ -3608,4 +3608,4 @@ cbrt(double x)
 	return isneg ? -tmpres : tmpres;
 }
 
-#endif   /* !HAVE_CBRT */
+#endif							/* !HAVE_CBRT */

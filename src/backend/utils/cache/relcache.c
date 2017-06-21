@@ -1371,7 +1371,7 @@ RelationBuildDesc(Oid targetRelId, bool insertIt)
 	/*
 	 * initialize the relation lock manager information
 	 */
-	RelationInitLockInfo(relation);		/* see lmgr.c */
+	RelationInitLockInfo(relation); /* see lmgr.c */
 
 	/*
 	 * initialize physical addressing information for the relation
@@ -2011,7 +2011,7 @@ formrdesc(const char *relationName, Oid relationReltype,
 	/*
 	 * initialize the relation lock manager information
 	 */
-	RelationInitLockInfo(relation);		/* see lmgr.c */
+	RelationInitLockInfo(relation); /* see lmgr.c */
 
 	/*
 	 * initialize physical addressing information for the relation
@@ -2423,7 +2423,7 @@ RelationClearRelation(Relation relation, bool rebuild)
 
 		if (relation->rd_rel->relkind == RELKIND_INDEX)
 		{
-			relation->rd_isvalid = false;		/* needs to be revalidated */
+			relation->rd_isvalid = false;	/* needs to be revalidated */
 			if (relation->rd_refcnt > 1 && IsTransactionState())
 				RelationReloadIndexInfo(relation);
 		}
@@ -3657,7 +3657,7 @@ RelationCacheInitializePhase3(void)
 		formrdesc("pg_type", TypeRelation_Rowtype_Id, false,
 				  true, Natts_pg_type, Desc_pg_type);
 
-#define NUM_CRITICAL_LOCAL_RELS 4		/* fix if you change list above */
+#define NUM_CRITICAL_LOCAL_RELS 4	/* fix if you change list above */
 	}
 
 	MemoryContextSwitchTo(oldcxt);
@@ -3960,7 +3960,7 @@ BuildHardcodedDescriptor(int natts, const FormData_pg_attribute *attrs,
 	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
 	result = CreateTemplateTupleDesc(natts, hasoids);
-	result->tdtypeid = RECORDOID;		/* not right, but we don't care */
+	result->tdtypeid = RECORDOID;	/* not right, but we don't care */
 	result->tdtypmod = -1;
 
 	for (i = 0; i < natts; i++)
@@ -4239,7 +4239,7 @@ RelationGetFKeyList(Relation relation)
 			elog(ERROR, "null conkey for rel %s",
 				 RelationGetRelationName(relation));
 
-		arr = DatumGetArrayTypeP(adatum);		/* ensure not toasted */
+		arr = DatumGetArrayTypeP(adatum);	/* ensure not toasted */
 		nelem = ARR_DIMS(arr)[0];
 		if (ARR_NDIM(arr) != 1 ||
 			nelem < 1 ||
@@ -4258,7 +4258,7 @@ RelationGetFKeyList(Relation relation)
 			elog(ERROR, "null confkey for rel %s",
 				 RelationGetRelationName(relation));
 
-		arr = DatumGetArrayTypeP(adatum);		/* ensure not toasted */
+		arr = DatumGetArrayTypeP(adatum);	/* ensure not toasted */
 		nelem = ARR_DIMS(arr)[0];
 		if (ARR_NDIM(arr) != 1 ||
 			nelem != info->nkeys ||
@@ -4275,7 +4275,7 @@ RelationGetFKeyList(Relation relation)
 			elog(ERROR, "null conpfeqop for rel %s",
 				 RelationGetRelationName(relation));
 
-		arr = DatumGetArrayTypeP(adatum);		/* ensure not toasted */
+		arr = DatumGetArrayTypeP(adatum);	/* ensure not toasted */
 		nelem = ARR_DIMS(arr)[0];
 		if (ARR_NDIM(arr) != 1 ||
 			nelem != info->nkeys ||
@@ -5448,7 +5448,7 @@ load_relcache_init_file(bool shared)
 		rel->rd_att->tdrefcount = 1;	/* mark as refcounted */
 
 		rel->rd_att->tdtypeid = relform->reltype;
-		rel->rd_att->tdtypmod = -1;		/* unnecessary, but... */
+		rel->rd_att->tdtypmod = -1; /* unnecessary, but... */
 
 		/* next read all the attribute tuple form data entries */
 		has_not_null = false;
@@ -5473,7 +5473,7 @@ load_relcache_init_file(bool shared)
 			if (fread(rel->rd_options, 1, len, fp) != len)
 				goto read_failed;
 			if (len != VARSIZE(rel->rd_options))
-				goto read_failed;		/* sanity check */
+				goto read_failed;	/* sanity check */
 		}
 		else
 		{

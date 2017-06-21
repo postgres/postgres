@@ -27,4 +27,4 @@
 #define TableOidAttributeNumber					(-7)
 #define FirstLowInvalidHeapAttributeNumber		(-8)
 
-#endif   /* SYSATTR_H */
+#endif							/* SYSATTR_H */

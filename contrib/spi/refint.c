@@ -248,7 +248,7 @@ check_foreign_key(PG_FUNCTION_ARGS)
 	Datum	   *kvals;			/* key values */
 	char	   *relname;		/* referencing relation name */
 	Relation	rel;			/* triggered relation */
-	HeapTuple	trigtuple = NULL;		/* tuple to being changed */
+	HeapTuple	trigtuple = NULL;	/* tuple to being changed */
 	HeapTuple	newtuple = NULL;	/* tuple to return */
 	TupleDesc	tupdesc;		/* tuple description */
 	EPlan	   *plan;			/* prepared plan(s) */

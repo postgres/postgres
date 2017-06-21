@@ -415,7 +415,7 @@ tablesample_getnext(SampleScanState *scanstate)
 	else
 	{
 		/* continue from previously returned page/tuple */
-		blockno = scan->rs_cblock;		/* current page */
+		blockno = scan->rs_cblock;	/* current page */
 	}
 
 	/*

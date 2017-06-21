@@ -344,7 +344,7 @@ ExecBuildProjectionInfo(List *targetList,
 			attnum = variable->varattno;
 
 			if (inputDesc == NULL)
-				isSafeVar = true;		/* can't check, just assume OK */
+				isSafeVar = true;	/* can't check, just assume OK */
 			else if (attnum <= inputDesc->natts)
 			{
 				Form_pg_attribute attr = inputDesc->attrs[attnum - 1];
@@ -1362,7 +1362,7 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 
 					/* If WHEN result isn't true, jump to next CASE arm */
 					scratch.opcode = EEOP_JUMP_IF_NOT_TRUE;
-					scratch.d.jump.jumpdone = -1;		/* computed later */
+					scratch.d.jump.jumpdone = -1;	/* computed later */
 					ExprEvalPushStep(state, &scratch);
 					whenstep = state->steps_len - 1;
 
@@ -1374,7 +1374,7 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 
 					/* Emit JUMP step to jump to end of CASE's code */
 					scratch.opcode = EEOP_JUMP;
-					scratch.d.jump.jumpdone = -1;		/* computed later */
+					scratch.d.jump.jumpdone = -1;	/* computed later */
 					ExprEvalPushStep(state, &scratch);
 
 					/*
@@ -1720,7 +1720,7 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 
 					/* if it's not null, skip to end of COALESCE expr */
 					scratch.opcode = EEOP_JUMP_IF_NOT_NULL;
-					scratch.d.jump.jumpdone = -1;		/* adjust later */
+					scratch.d.jump.jumpdone = -1;	/* adjust later */
 					ExprEvalPushStep(state, &scratch);
 
 					adjust_jumps = lappend_int(adjust_jumps,

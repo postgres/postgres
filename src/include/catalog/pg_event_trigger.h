@@ -61,4 +61,4 @@ typedef FormData_pg_event_trigger *Form_pg_event_trigger;
 #define Anum_pg_event_trigger_evtenabled		5
 #define Anum_pg_event_trigger_evttags			6
 
-#endif   /* PG_EVENT_TRIGGER_H */
+#endif							/* PG_EVENT_TRIGGER_H */

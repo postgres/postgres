@@ -120,7 +120,7 @@ EstimateParamListSpace(ParamListInfo paramLI)
 		}
 
 		sz = add_size(sz, sizeof(Oid)); /* space for type OID */
-		sz = add_size(sz, sizeof(uint16));		/* space for pflags */
+		sz = add_size(sz, sizeof(uint16));	/* space for pflags */
 
 		/* space for datum/isnull */
 		if (OidIsValid(typeOid))

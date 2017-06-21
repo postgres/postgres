@@ -119,14 +119,11 @@ typedef struct RI_ConstraintInfo
 	char		confdeltype;	/* foreign key's ON DELETE action */
 	char		confmatchtype;	/* foreign key's match type */
 	int			nkeys;			/* number of key columns */
-	int16		pk_attnums[RI_MAX_NUMKEYS];		/* attnums of referenced cols */
-	int16		fk_attnums[RI_MAX_NUMKEYS];		/* attnums of referencing cols */
-	Oid			pf_eq_oprs[RI_MAX_NUMKEYS];		/* equality operators (PK =
-												 * FK) */
-	Oid			pp_eq_oprs[RI_MAX_NUMKEYS];		/* equality operators (PK =
-												 * PK) */
-	Oid			ff_eq_oprs[RI_MAX_NUMKEYS];		/* equality operators (FK =
-												 * FK) */
+	int16		pk_attnums[RI_MAX_NUMKEYS]; /* attnums of referenced cols */
+	int16		fk_attnums[RI_MAX_NUMKEYS]; /* attnums of referencing cols */
+	Oid			pf_eq_oprs[RI_MAX_NUMKEYS]; /* equality operators (PK = FK) */
+	Oid			pp_eq_oprs[RI_MAX_NUMKEYS]; /* equality operators (PK = PK) */
+	Oid			ff_eq_oprs[RI_MAX_NUMKEYS]; /* equality operators (FK = FK) */
 	dlist_node	valid_link;		/* Link in list of valid entries */
 } RI_ConstraintInfo;
 
@@ -579,7 +576,7 @@ ri_Check_Pk_Match(Relation pk_rel, Relation fk_rel,
 	result = ri_PerformCheck(riinfo, &qkey, qplan,
 							 fk_rel, pk_rel,
 							 old_row, NULL,
-							 true,		/* treat like update */
+							 true,	/* treat like update */
 							 SPI_OK_SELECT);
 
 	if (SPI_finish() != SPI_OK_FINISH)
@@ -771,7 +768,7 @@ ri_restrict_del(TriggerData *trigdata, bool is_no_action)
 			ri_PerformCheck(riinfo, &qkey, qplan,
 							fk_rel, pk_rel,
 							old_row, NULL,
-							true,		/* must detect new rows */
+							true,	/* must detect new rows */
 							SPI_OK_SELECT);
 
 			if (SPI_finish() != SPI_OK_FINISH)
@@ -994,7 +991,7 @@ ri_restrict_upd(TriggerData *trigdata, bool is_no_action)
 			ri_PerformCheck(riinfo, &qkey, qplan,
 							fk_rel, pk_rel,
 							old_row, NULL,
-							true,		/* must detect new rows */
+							true,	/* must detect new rows */
 							SPI_OK_SELECT);
 
 			if (SPI_finish() != SPI_OK_FINISH)
@@ -1150,7 +1147,7 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 			ri_PerformCheck(riinfo, &qkey, qplan,
 							fk_rel, pk_rel,
 							old_row, NULL,
-							true,		/* must detect new rows */
+							true,	/* must detect new rows */
 							SPI_OK_DELETE);
 
 			if (SPI_finish() != SPI_OK_FINISH)
@@ -1331,7 +1328,7 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 			ri_PerformCheck(riinfo, &qkey, qplan,
 							fk_rel, pk_rel,
 							old_row, new_row,
-							true,		/* must detect new rows */
+							true,	/* must detect new rows */
 							SPI_OK_UPDATE);
 
 			if (SPI_finish() != SPI_OK_FINISH)
@@ -1496,7 +1493,7 @@ RI_FKey_setnull_del(PG_FUNCTION_ARGS)
 			ri_PerformCheck(riinfo, &qkey, qplan,
 							fk_rel, pk_rel,
 							old_row, NULL,
-							true,		/* must detect new rows */
+							true,	/* must detect new rows */
 							SPI_OK_UPDATE);
 
 			if (SPI_finish() != SPI_OK_FINISH)
@@ -1672,7 +1669,7 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 			ri_PerformCheck(riinfo, &qkey, qplan,
 							fk_rel, pk_rel,
 							old_row, NULL,
-							true,		/* must detect new rows */
+							true,	/* must detect new rows */
 							SPI_OK_UPDATE);
 
 			if (SPI_finish() != SPI_OK_FINISH)
@@ -1838,7 +1835,7 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 			ri_PerformCheck(riinfo, &qkey, qplan,
 							fk_rel, pk_rel,
 							old_row, NULL,
-							true,		/* must detect new rows */
+							true,	/* must detect new rows */
 							SPI_OK_UPDATE);
 
 			if (SPI_finish() != SPI_OK_FINISH)
@@ -2029,7 +2026,7 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 			ri_PerformCheck(riinfo, &qkey, qplan,
 							fk_rel, pk_rel,
 							old_row, NULL,
-							true,		/* must detect new rows */
+							true,	/* must detect new rows */
 							SPI_OK_UPDATE);
 
 			if (SPI_finish() != SPI_OK_FINISH)
@@ -3111,7 +3108,7 @@ ri_PerformCheck(const RI_ConstraintInfo *riinfo,
 	 */
 	if (IsolationUsesXactSnapshot() && detectNewRows)
 	{
-		CommandCounterIncrement();		/* be sure all my own work is visible */
+		CommandCounterIncrement();	/* be sure all my own work is visible */
 		test_snapshot = GetLatestSnapshot();
 		crosscheck_snapshot = GetTransactionSnapshot();
 	}
@@ -3584,11 +3581,11 @@ ri_AttributesEqual(Oid eq_opr, Oid typeid,
 	{
 		oldvalue = FunctionCall3(&entry->cast_func_finfo,
 								 oldvalue,
-								 Int32GetDatum(-1),		/* typmod */
+								 Int32GetDatum(-1), /* typmod */
 								 BoolGetDatum(false));	/* implicit coercion */
 		newvalue = FunctionCall3(&entry->cast_func_finfo,
 								 newvalue,
-								 Int32GetDatum(-1),		/* typmod */
+								 Int32GetDatum(-1), /* typmod */
 								 BoolGetDatum(false));	/* implicit coercion */
 	}
 
@@ -3663,7 +3660,7 @@ ri_HashCompareOp(Oid eq_opr, Oid typeid)
 		op_input_types(eq_opr, &lefttype, &righttype);
 		Assert(lefttype == righttype);
 		if (typeid == lefttype)
-			castfunc = InvalidOid;		/* simplest case */
+			castfunc = InvalidOid;	/* simplest case */
 		else
 		{
 			pathtype = find_coercion_pathway(lefttype, typeid,

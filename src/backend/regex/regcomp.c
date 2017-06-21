@@ -257,7 +257,7 @@ struct vars
 /* parsing macros; most know that `v' is the struct vars pointer */
 #define NEXT()	(next(v))		/* advance by one token */
 #define SEE(t)	(v->nexttype == (t))	/* is next token this? */
-#define EAT(t)	(SEE(t) && next(v))		/* if next is this, swallow it */
+#define EAT(t)	(SEE(t) && next(v)) /* if next is this, swallow it */
 #define VISERR(vv)	((vv)->err != 0)	/* have we seen an error yet? */
 #define ISERR() VISERR(v)
 #define VERR(vv,e)	((vv)->nexttype = EOS, \
@@ -942,7 +942,7 @@ parseqatom(struct vars *v,
 				assert((size_t) subno < v->nsubs);
 			}
 			else
-				atomtype = PLAIN;		/* something that's not '(' */
+				atomtype = PLAIN;	/* something that's not '(' */
 			NEXT();
 			/* need new endpoints because tree will contain pointers */
 			s = newstate(v->nfa);
@@ -1124,7 +1124,7 @@ parseqatom(struct vars *v,
 	/* if it's a backref, now is the time to replicate the subNFA */
 	if (atomtype == BACKREF)
 	{
-		assert(atom->begin->nouts == 1);		/* just the EMPTY */
+		assert(atom->begin->nouts == 1);	/* just the EMPTY */
 		delsub(v->nfa, atom->begin, atom->end);
 		assert(v->subs[subno] != NULL);
 
@@ -1145,7 +1145,7 @@ parseqatom(struct vars *v,
 	if (atomtype == BACKREF)
 	{
 		/* special case:  backrefs have internal quantifiers */
-		EMPTYARC(s, atom->begin);		/* empty prefix */
+		EMPTYARC(s, atom->begin);	/* empty prefix */
 		/* just stuff everything into atom */
 		repeat(v, atom->begin, atom->end, m, n);
 		atom->min = (short) m;
@@ -1157,7 +1157,7 @@ parseqatom(struct vars *v,
 	else if (m == 1 && n == 1)
 	{
 		/* no/vacuous quantifier:  done */
-		EMPTYARC(s, atom->begin);		/* empty prefix */
+		EMPTYARC(s, atom->begin);	/* empty prefix */
 		/* rest of branch can be strung starting from atom->end */
 		s2 = atom->end;
 	}
@@ -1175,7 +1175,7 @@ parseqatom(struct vars *v,
 		assert(m >= 1 && m != DUPINF && n >= 1);
 		repeat(v, s, atom->begin, m - 1, (n == DUPINF) ? n : n - 1);
 		f = COMBINE(qprefer, atom->flags);
-		t = subre(v, '.', f, s, atom->end);		/* prefix and atom */
+		t = subre(v, '.', f, s, atom->end); /* prefix and atom */
 		NOERR();
 		t->left = subre(v, '=', PREF(f), s, atom->begin);
 		NOERR();
@@ -1618,7 +1618,7 @@ wordchrs(struct vars *v)
  */
 static void
 processlacon(struct vars *v,
-			 struct state *begin,		/* start of parsed LACON sub-re */
+			 struct state *begin,	/* start of parsed LACON sub-re */
 			 struct state *end, /* end of parsed LACON sub-re */
 			 int latype,
 			 struct state *lp,	/* left state to hang it on */
@@ -2180,7 +2180,7 @@ stid(struct subre *t,
 		sprintf(buf, "%p", t);
 	return buf;
 }
-#endif   /* REG_DEBUG */
+#endif							/* REG_DEBUG */
 
 
 #include "regc_lex.c"

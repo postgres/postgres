@@ -27,4 +27,4 @@ extern int	PGTYPEStimestamp_sub_interval(timestamp * tin, interval * span, times
 }
 #endif
 
-#endif   /* PGTYPES_TIMESTAMP */
+#endif							/* PGTYPES_TIMESTAMP */

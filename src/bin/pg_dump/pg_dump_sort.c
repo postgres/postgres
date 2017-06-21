@@ -360,7 +360,7 @@ sortDumpableObjects(DumpableObject **objs, int numObjs,
 static bool
 TopoSort(DumpableObject **objs,
 		 int numObjs,
-		 DumpableObject **ordering,		/* output argument */
+		 DumpableObject **ordering, /* output argument */
 		 int *nOrdering)		/* output argument */
 {
 	DumpId		maxDumpId = getMaxDumpId();

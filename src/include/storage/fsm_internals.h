@@ -69,4 +69,4 @@ extern bool fsm_set_avail(Page page, int slot, uint8 value);
 extern bool fsm_truncate_avail(Page page, int nslots);
 extern bool fsm_rebuild_page(Page page);
 
-#endif   /* FSM_INTERNALS_H */
+#endif							/* FSM_INTERNALS_H */

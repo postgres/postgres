@@ -151,4 +151,4 @@ extern void RegisterCustomScanMethods(const CustomScanMethods *methods);
 extern const CustomScanMethods *GetCustomScanMethods(const char *CustomName,
 					 bool missing_ok);
 
-#endif   /* EXTENSIBLE_H */
+#endif							/* EXTENSIBLE_H */

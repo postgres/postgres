@@ -405,7 +405,7 @@ compileTheLexeme(DictThesaurus *d)
 	{
 		TSLexeme   *ptr;
 
-		if (strcmp(d->wrds[i].lexeme, "?") == 0)		/* Is stop word marker? */
+		if (strcmp(d->wrds[i].lexeme, "?") == 0)	/* Is stop word marker? */
 			newwrds = addCompiledLexeme(newwrds, &nnw, &tnm, NULL, d->wrds[i].entries, 0);
 		else
 		{

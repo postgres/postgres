@@ -21,4 +21,4 @@ extern TupleTableSlot *ExecNestLoop(NestLoopState *node);
 extern void ExecEndNestLoop(NestLoopState *node);
 extern void ExecReScanNestLoop(NestLoopState *node);
 
-#endif   /* NODENESTLOOP_H */
+#endif							/* NODENESTLOOP_H */

@@ -362,4 +362,4 @@ DECLARE_UNIQUE_INDEX(pg_subscription_rel_srrelid_srsubid_index, 6117, on pg_subs
 /* last step of initialization script: build the indexes declared above */
 BUILD_INDICES
 
-#endif   /* INDEXING_H */
+#endif							/* INDEXING_H */

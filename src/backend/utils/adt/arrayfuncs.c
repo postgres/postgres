@@ -171,8 +171,8 @@ Datum
 array_in(PG_FUNCTION_ARGS)
 {
 	char	   *string = PG_GETARG_CSTRING(0);	/* external form */
-	Oid			element_type = PG_GETARG_OID(1);		/* type of an array
-														 * element */
+	Oid			element_type = PG_GETARG_OID(1);	/* type of an array
+													 * element */
 	int32		typmod = PG_GETARG_INT32(2);	/* typmod for array elements */
 	int			typlen;
 	bool		typbyval;
@@ -1130,9 +1130,9 @@ array_out(PG_FUNCTION_ARGS)
 
 			/* count data plus backslashes; detect chars needing quotes */
 			if (values[i][0] == '\0')
-				needquote = true;		/* force quotes for empty string */
+				needquote = true;	/* force quotes for empty string */
 			else if (pg_strcasecmp(values[i], "NULL") == 0)
-				needquote = true;		/* force quotes for literal NULL */
+				needquote = true;	/* force quotes for literal NULL */
 			else
 				needquote = false;
 
@@ -2318,14 +2318,14 @@ array_set_element(Datum arraydatum,
 			dim[0] += addedbefore;
 			lb[0] = indx[0];
 			if (addedbefore > 1)
-				newhasnulls = true;		/* will insert nulls */
+				newhasnulls = true; /* will insert nulls */
 		}
 		if (indx[0] >= (dim[0] + lb[0]))
 		{
 			addedafter = indx[0] - (dim[0] + lb[0]) + 1;
 			dim[0] += addedafter;
 			if (addedafter > 1)
-				newhasnulls = true;		/* will insert nulls */
+				newhasnulls = true; /* will insert nulls */
 		}
 	}
 	else
@@ -2575,7 +2575,7 @@ array_set_element_expanded(Datum arraydatum,
 			lb[0] = indx[0];
 			dimschanged = true;
 			if (addedbefore > 1)
-				newhasnulls = true;		/* will insert nulls */
+				newhasnulls = true; /* will insert nulls */
 		}
 		if (indx[0] >= (dim[0] + lb[0]))
 		{
@@ -2583,7 +2583,7 @@ array_set_element_expanded(Datum arraydatum,
 			dim[0] += addedafter;
 			dimschanged = true;
 			if (addedafter > 1)
-				newhasnulls = true;		/* will insert nulls */
+				newhasnulls = true; /* will insert nulls */
 		}
 	}
 	else
@@ -2871,7 +2871,7 @@ array_set_slice(Datum arraydatum,
 		if (lowerIndx[0] < lb[0])
 		{
 			if (upperIndx[0] < lb[0] - 1)
-				newhasnulls = true;		/* will insert nulls */
+				newhasnulls = true; /* will insert nulls */
 			addedbefore = lb[0] - lowerIndx[0];
 			dim[0] += addedbefore;
 			lb[0] = lowerIndx[0];
@@ -2879,7 +2879,7 @@ array_set_slice(Datum arraydatum,
 		if (upperIndx[0] >= (dim[0] + lb[0]))
 		{
 			if (lowerIndx[0] > (dim[0] + lb[0]))
-				newhasnulls = true;		/* will insert nulls */
+				newhasnulls = true; /* will insert nulls */
 			addedafter = upperIndx[0] - (dim[0] + lb[0]) + 1;
 			dim[0] += addedafter;
 		}
@@ -2956,7 +2956,7 @@ array_set_slice(Datum arraydatum,
 									   ndim, dim, lb,
 									   lowerIndx, upperIndx,
 									   elmlen, elmbyval, elmalign);
-		lenbefore = lenafter = 0;		/* keep compiler quiet */
+		lenbefore = lenafter = 0;	/* keep compiler quiet */
 		itemsbefore = itemsafter = nolditems = 0;
 	}
 	else
@@ -4963,8 +4963,7 @@ initArrayResult(Oid element_type, MemoryContext rcontext, bool subcontext)
 		MemoryContextAlloc(arr_context, sizeof(ArrayBuildState));
 	astate->mcontext = arr_context;
 	astate->private_cxt = subcontext;
-	astate->alen = (subcontext ? 64 : 8);		/* arbitrary starting array
-												 * size */
+	astate->alen = (subcontext ? 64 : 8);	/* arbitrary starting array size */
 	astate->dvalues = (Datum *)
 		MemoryContextAlloc(arr_context, astate->alen * sizeof(Datum));
 	astate->dnulls = (bool *)
@@ -5140,8 +5139,7 @@ initArrayResultArr(Oid array_type, Oid element_type, MemoryContext rcontext,
 				   bool subcontext)
 {
 	ArrayBuildStateArr *astate;
-	MemoryContext arr_context = rcontext;		/* by default use the parent
-												 * ctx */
+	MemoryContext arr_context = rcontext;	/* by default use the parent ctx */
 
 	/* Lookup element type, unless element_type already provided */
 	if (!OidIsValid(element_type))

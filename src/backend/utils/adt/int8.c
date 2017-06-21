@@ -104,7 +104,7 @@ scanint8(const char *str, bool errorOK, int64 *result)
 	{
 		int64		newtmp = tmp * 10 + (*ptr++ - '0');
 
-		if ((newtmp / 10) != tmp)		/* overflow? */
+		if ((newtmp / 10) != tmp)	/* overflow? */
 		{
 			if (errorOK)
 				return false;

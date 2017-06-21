@@ -22,4 +22,4 @@ extern ObjectAddress DefineCollation(ParseState *pstate, List *names, List *para
 extern void IsThereCollationInNamespace(const char *collname, Oid nspOid);
 extern ObjectAddress AlterCollation(AlterCollationStmt *stmt);
 
-#endif   /* COLLATIONCMDS_H */
+#endif							/* COLLATIONCMDS_H */

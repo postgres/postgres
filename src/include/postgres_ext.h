@@ -71,4 +71,4 @@ typedef PG_INT64_TYPE pg_int64;
 #define PG_DIAG_SOURCE_LINE		'L'
 #define PG_DIAG_SOURCE_FUNCTION 'R'
 
-#endif   /* POSTGRES_EXT_H */
+#endif							/* POSTGRES_EXT_H */

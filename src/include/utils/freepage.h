@@ -96,4 +96,4 @@ extern void FreePageManagerPut(FreePageManager *fpm, Size first_page,
 				   Size npages);
 extern char *FreePageManagerDump(FreePageManager *fpm);
 
-#endif   /* FREEPAGE_H */
+#endif							/* FREEPAGE_H */

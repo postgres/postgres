@@ -79,4 +79,4 @@ extern void rb_begin_iterate(RBTree *rb, RBOrderControl ctrl,
 				 RBTreeIterator *iter);
 extern RBNode *rb_iterate(RBTreeIterator *iter);
 
-#endif   /* RBTREE_H */
+#endif							/* RBTREE_H */

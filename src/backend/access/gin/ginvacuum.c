@@ -650,7 +650,7 @@ ginbulkdelete(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 			vacuum_delay_point();
 		}
 
-		if (blkno == InvalidBlockNumber)		/* rightmost page */
+		if (blkno == InvalidBlockNumber)	/* rightmost page */
 			break;
 
 		buffer = ReadBufferExtended(index, MAIN_FORKNUM, blkno,

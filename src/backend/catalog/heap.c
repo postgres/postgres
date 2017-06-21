@@ -950,25 +950,25 @@ AddNewRelationType(const char *typeName,
 	return
 		TypeCreate(new_row_type,	/* optional predetermined OID */
 				   typeName,	/* type name */
-				   typeNamespace,		/* type namespace */
+				   typeNamespace,	/* type namespace */
 				   new_rel_oid, /* relation oid */
 				   new_rel_kind,	/* relation kind */
 				   ownerid,		/* owner's ID */
 				   -1,			/* internal size (varlena) */
 				   TYPTYPE_COMPOSITE,	/* type-type (composite) */
-				   TYPCATEGORY_COMPOSITE,		/* type-category (ditto) */
+				   TYPCATEGORY_COMPOSITE,	/* type-category (ditto) */
 				   false,		/* composite types are never preferred */
 				   DEFAULT_TYPDELIM,	/* default array delimiter */
 				   F_RECORD_IN, /* input procedure */
 				   F_RECORD_OUT,	/* output procedure */
-				   F_RECORD_RECV,		/* receive procedure */
-				   F_RECORD_SEND,		/* send procedure */
+				   F_RECORD_RECV,	/* receive procedure */
+				   F_RECORD_SEND,	/* send procedure */
 				   InvalidOid,	/* typmodin procedure - none */
 				   InvalidOid,	/* typmodout procedure - none */
 				   InvalidOid,	/* analyze procedure - default */
 				   InvalidOid,	/* array element type - irrelevant */
 				   false,		/* this is not an array type */
-				   new_array_type,		/* array type if any */
+				   new_array_type,	/* array type if any */
 				   InvalidOid,	/* domain base type - irrelevant */
 				   NULL,		/* default value - none */
 				   NULL,		/* default binary representation */
@@ -1218,7 +1218,7 @@ heap_create_with_catalog(const char *relname,
 
 		relarrayname = makeArrayTypeName(relname, relnamespace);
 
-		TypeCreate(new_array_oid,		/* force the type's OID to this */
+		TypeCreate(new_array_oid,	/* force the type's OID to this */
 				   relarrayname,	/* Array type name */
 				   relnamespace,	/* Same namespace as parent */
 				   InvalidOid,	/* Not composite, no relationOid */
@@ -1560,7 +1560,7 @@ RemoveAttributeById(Oid relid, AttrNumber attnum)
 	tuple = SearchSysCacheCopy2(ATTNUM,
 								ObjectIdGetDatum(relid),
 								Int16GetDatum(attnum));
-	if (!HeapTupleIsValid(tuple))		/* shouldn't happen */
+	if (!HeapTupleIsValid(tuple))	/* shouldn't happen */
 		elog(ERROR, "cache lookup failed for attribute %d of relation %u",
 			 attnum, relid);
 	attStruct = (Form_pg_attribute) GETSTRUCT(tuple);
@@ -1725,7 +1725,7 @@ RemoveAttrDefaultById(Oid attrdefId)
 	tuple = SearchSysCacheCopy2(ATTNUM,
 								ObjectIdGetDatum(myrelid),
 								Int16GetDatum(myattnum));
-	if (!HeapTupleIsValid(tuple))		/* shouldn't happen */
+	if (!HeapTupleIsValid(tuple))	/* shouldn't happen */
 		elog(ERROR, "cache lookup failed for attribute %d of relation %u",
 			 myattnum, myrelid);
 
@@ -2083,7 +2083,7 @@ StoreRelCheck(Relation rel, char *ccname, Node *expr,
 	 */
 	constrOid =
 		CreateConstraintEntry(ccname,	/* Constraint Name */
-							  RelationGetNamespace(rel),		/* namespace */
+							  RelationGetNamespace(rel),	/* namespace */
 							  CONSTRAINT_CHECK, /* Constraint Type */
 							  false,	/* Is Deferrable */
 							  false,	/* Is Deferred */
@@ -2091,9 +2091,9 @@ StoreRelCheck(Relation rel, char *ccname, Node *expr,
 							  RelationGetRelid(rel),	/* relation */
 							  attNos,	/* attrs in the constraint */
 							  keycount, /* # attrs in the constraint */
-							  InvalidOid,		/* not a domain constraint */
-							  InvalidOid,		/* no associated index */
-							  InvalidOid,		/* Foreign key fields */
+							  InvalidOid,	/* not a domain constraint */
+							  InvalidOid,	/* no associated index */
+							  InvalidOid,	/* Foreign key fields */
 							  NULL,
 							  NULL,
 							  NULL,
@@ -2102,14 +2102,14 @@ StoreRelCheck(Relation rel, char *ccname, Node *expr,
 							  ' ',
 							  ' ',
 							  ' ',
-							  NULL,		/* not an exclusion constraint */
-							  expr,		/* Tree form of check constraint */
+							  NULL, /* not an exclusion constraint */
+							  expr, /* Tree form of check constraint */
 							  ccbin,	/* Binary form of check constraint */
 							  ccsrc,	/* Source form of check constraint */
 							  is_local, /* conislocal */
 							  inhcount, /* coninhcount */
 							  is_no_inherit,	/* connoinherit */
-							  is_internal);		/* internally constructed? */
+							  is_internal); /* internally constructed? */
 
 	pfree(ccbin);
 	pfree(ccsrc);

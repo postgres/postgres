@@ -2103,8 +2103,8 @@ refreshMatViewData(Archive *fout, TableDataInfo *tdinfo)
 
 	if (tdinfo->dobj.dump & DUMP_COMPONENT_DATA)
 		ArchiveEntry(fout,
-					 tdinfo->dobj.catId,		/* catalog ID */
-					 tdinfo->dobj.dumpId,		/* dump ID */
+					 tdinfo->dobj.catId,	/* catalog ID */
+					 tdinfo->dobj.dumpId,	/* dump ID */
 					 tbinfo->dobj.name, /* Name */
 					 tbinfo->dobj.namespace->dobj.name, /* Namespace */
 					 NULL,		/* Tablespace */
@@ -2116,7 +2116,7 @@ refreshMatViewData(Archive *fout, TableDataInfo *tdinfo)
 					 "",		/* Del */
 					 NULL,		/* Copy */
 					 tdinfo->dobj.dependencies, /* Deps */
-					 tdinfo->dobj.nDeps,		/* # Deps */
+					 tdinfo->dobj.nDeps,	/* # Deps */
 					 NULL,		/* Dumper */
 					 NULL);		/* Dumper Arg */
 
@@ -2610,7 +2610,7 @@ dumpDatabase(Archive *fout)
 				 dba,			/* Owner */
 				 false,			/* with oids */
 				 "DATABASE",	/* Desc */
-				 SECTION_PRE_DATA,		/* Section */
+				 SECTION_PRE_DATA,	/* Section */
 				 creaQry->data, /* Create */
 				 delQry->data,	/* Del */
 				 NULL,			/* Copy */
@@ -5211,8 +5211,8 @@ getAggregates(Archive *fout, int *numAggs)
 		if (strlen(agginfo[i].aggfn.rolname) == 0)
 			write_msg(NULL, "WARNING: owner of aggregate function \"%s\" appears to be invalid\n",
 					  agginfo[i].aggfn.dobj.name);
-		agginfo[i].aggfn.lang = InvalidOid;		/* not currently interesting */
-		agginfo[i].aggfn.prorettype = InvalidOid;		/* not saved */
+		agginfo[i].aggfn.lang = InvalidOid; /* not currently interesting */
+		agginfo[i].aggfn.prorettype = InvalidOid;	/* not saved */
 		agginfo[i].aggfn.proacl = pg_strdup(PQgetvalue(res, i, i_aggacl));
 		agginfo[i].aggfn.rproacl = pg_strdup(PQgetvalue(res, i, i_raggacl));
 		agginfo[i].aggfn.initproacl = pg_strdup(PQgetvalue(res, i, i_initaggacl));
@@ -6210,7 +6210,7 @@ getTables(Archive *fout, int *numTables)
 
 		tblinfo[i].interesting = tblinfo[i].dobj.dump ? true : false;
 		tblinfo[i].dummy_view = false;	/* might get set during sort */
-		tblinfo[i].postponed_def = false;		/* might get set during sort */
+		tblinfo[i].postponed_def = false;	/* might get set during sort */
 
 		tblinfo[i].is_identity_sequence = (i_is_identity_sequence >= 0 &&
 			   strcmp(PQgetvalue(res, i, i_is_identity_sequence), "t") == 0);
@@ -11212,7 +11212,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	PQExpBuffer asPart;
 	PGresult   *res;
 	char	   *funcsig;		/* identity signature */
-	char	   *funcfullsig = NULL;		/* full signature */
+	char	   *funcfullsig = NULL; /* full signature */
 	char	   *funcsig_tag;
 	char	   *proretset;
 	char	   *prosrc;
@@ -13300,7 +13300,7 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	PQExpBuffer labelq;
 	PQExpBuffer details;
 	char	   *aggsig;			/* identity signature */
-	char	   *aggfullsig = NULL;		/* full signature */
+	char	   *aggfullsig = NULL;	/* full signature */
 	char	   *aggsig_tag;
 	PGresult   *res;
 	int			i_aggtransfn;

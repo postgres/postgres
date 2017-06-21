@@ -27,4 +27,4 @@ extern void truncate_identifier(char *ident, int len, bool warn);
 
 extern bool scanner_isspace(char ch);
 
-#endif   /* SCANSUP_H */
+#endif							/* SCANSUP_H */

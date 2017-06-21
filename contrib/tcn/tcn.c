@@ -132,7 +132,7 @@ triggered_change_notification(PG_FUNCTION_ARGS)
 		Form_pg_index index;
 
 		indexTuple = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(indexoid));
-		if (!HeapTupleIsValid(indexTuple))		/* should not happen */
+		if (!HeapTupleIsValid(indexTuple))	/* should not happen */
 			elog(ERROR, "cache lookup failed for index %u", indexoid);
 		index = (Form_pg_index) GETSTRUCT(indexTuple);
 		/* we're only interested if it is the primary key and valid */
@@ -175,5 +175,5 @@ triggered_change_notification(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
 				 errmsg("triggered_change_notification: must be called on a table with a primary key")));
 
-	return PointerGetDatum(NULL);		/* after trigger; value doesn't matter */
+	return PointerGetDatum(NULL);	/* after trigger; value doesn't matter */
 }

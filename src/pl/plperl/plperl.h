@@ -62,8 +62,8 @@
 #else
 #define vsnprintf		pg_vsnprintf
 #define snprintf		pg_snprintf
-#endif   /* __GNUC__ */
-#endif   /* USE_REPL_SNPRINTF */
+#endif							/* __GNUC__ */
+#endif							/* USE_REPL_SNPRINTF */
 
 /* perl version and platform portability */
 #define NEED_eval_pv
@@ -107,4 +107,4 @@ void		plperl_spi_freeplan(char *);
 void		plperl_spi_cursor_close(char *);
 char	   *plperl_sv_to_literal(SV *, char *);
 
-#endif   /* PL_PERL_H */
+#endif							/* PL_PERL_H */

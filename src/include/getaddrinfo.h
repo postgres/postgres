@@ -55,8 +55,8 @@
 #define EAI_NONAME		WSAHOST_NOT_FOUND
 #define EAI_SERVICE		WSATYPE_NOT_FOUND
 #define EAI_SOCKTYPE	WSAESOCKTNOSUPPORT
-#endif   /* !WIN32 */
-#endif   /* !EAI_FAIL */
+#endif							/* !WIN32 */
+#endif							/* !EAI_FAIL */
 
 #ifndef AI_PASSIVE
 #define AI_PASSIVE		0x0001
@@ -124,7 +124,7 @@ struct addrinfo
 	struct addrinfo *ai_next;
 };
 #endif
-#endif   /* HAVE_STRUCT_ADDRINFO */
+#endif							/* HAVE_STRUCT_ADDRINFO */
 
 
 #ifndef HAVE_GETADDRINFO
@@ -157,6 +157,6 @@ extern const char *gai_strerror(int errcode);
 extern int getnameinfo(const struct sockaddr *sa, int salen,
 			char *node, int nodelen,
 			char *service, int servicelen, int flags);
-#endif   /* HAVE_GETADDRINFO */
+#endif							/* HAVE_GETADDRINFO */
 
-#endif   /* GETADDRINFO_H */
+#endif							/* GETADDRINFO_H */

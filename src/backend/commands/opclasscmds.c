@@ -856,7 +856,7 @@ AlterOpFamilyAdd(AlterOpFamilyStmt *stmt, Oid amoid, Oid opfamilyoid,
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("operator argument types must be specified in ALTER OPERATOR FAMILY")));
-					operOid = InvalidOid;		/* keep compiler quiet */
+					operOid = InvalidOid;	/* keep compiler quiet */
 				}
 
 				if (item->order_family)

@@ -14,4 +14,4 @@ extern const PsqlScanCallbacks psqlscan_callbacks;
 
 extern int	MainLoop(FILE *source);
 
-#endif   /* MAINLOOP_H */
+#endif							/* MAINLOOP_H */

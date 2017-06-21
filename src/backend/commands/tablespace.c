@@ -388,7 +388,7 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			 errmsg("tablespaces are not supported on this platform")));
 	return InvalidOid;			/* keep compiler quiet */
-#endif   /* HAVE_SYMLINK */
+#endif							/* HAVE_SYMLINK */
 }
 
 /*
@@ -549,7 +549,7 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			 errmsg("tablespaces are not supported on this platform")));
-#endif   /* HAVE_SYMLINK */
+#endif							/* HAVE_SYMLINK */
 }
 
 

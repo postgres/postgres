@@ -812,7 +812,7 @@ LogicalRepSyncTableStart(XLogRecPtr *origin_startpos)
 	 * NAMEDATALEN on the remote that matters, but this scheme will also work
 	 * reasonably if that is different.)
 	 */
-	StaticAssertStmt(NAMEDATALEN >= 32, "NAMEDATALEN too small");		/* for sanity */
+	StaticAssertStmt(NAMEDATALEN >= 32, "NAMEDATALEN too small");	/* for sanity */
 	slotname = psprintf("%.*s_%u_sync_%u",
 						NAMEDATALEN - 28,
 						MySubscription->slotname,

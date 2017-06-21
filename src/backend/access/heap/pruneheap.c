@@ -31,8 +31,7 @@
 typedef struct
 {
 	TransactionId new_prune_xid;	/* new prune hint value for page */
-	TransactionId latestRemovedXid;		/* latest xid to be removed by this
-										 * prune */
+	TransactionId latestRemovedXid; /* latest xid to be removed by this prune */
 	int			nredirected;	/* numbers of entries in arrays below */
 	int			ndead;
 	int			nunused;
@@ -149,8 +148,8 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
 		 */
 		if (PageIsFull(page) || PageGetHeapFreeSpace(page) < minfree)
 		{
-			TransactionId ignore = InvalidTransactionId;		/* return value not
-																 * needed */
+			TransactionId ignore = InvalidTransactionId;	/* return value not
+															 * needed */
 
 			/* OK to prune */
 			(void) heap_page_prune(relation, buffer, OldestXmin, true, &ignore);

@@ -33,7 +33,7 @@
 #define GIN_SEARCH_MODE_DEFAULT			0
 #define GIN_SEARCH_MODE_INCLUDE_EMPTY	1
 #define GIN_SEARCH_MODE_ALL				2
-#define GIN_SEARCH_MODE_EVERYTHING		3		/* for internal use only */
+#define GIN_SEARCH_MODE_EVERYTHING		3	/* for internal use only */
 
 /*
  * GinStatsData represents stats data for planner use
@@ -73,4 +73,4 @@ extern int	gin_pending_list_limit;
 extern void ginGetStats(Relation index, GinStatsData *stats);
 extern void ginUpdateStats(Relation index, const GinStatsData *stats);
 
-#endif   /* GIN_H */
+#endif							/* GIN_H */

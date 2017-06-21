@@ -2076,7 +2076,7 @@ fireRules(Query *parsetree,
 											returning_flag);
 
 			rule_action->querySource = qsrc;
-			rule_action->canSetTag = false;		/* might change later */
+			rule_action->canSetTag = false; /* might change later */
 
 			results = lappend(results, rule_action);
 		}
@@ -2555,9 +2555,9 @@ relation_is_updatable(Oid reloid,
 				updatable_cols = bms_int_members(updatable_cols, include_cols);
 
 			if (bms_is_empty(updatable_cols))
-				auto_events = (1 << CMD_DELETE);		/* May support DELETE */
+				auto_events = (1 << CMD_DELETE);	/* May support DELETE */
 			else
-				auto_events = ALL_EVENTS;		/* May support all events */
+				auto_events = ALL_EVENTS;	/* May support all events */
 
 			/*
 			 * The base relation must also support these update commands.

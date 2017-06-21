@@ -26,4 +26,4 @@ extern void RemovePublicationRelById(Oid proid);
 extern ObjectAddress AlterPublicationOwner(const char *name, Oid newOwnerId);
 extern void AlterPublicationOwner_oid(Oid pubid, Oid newOwnerId);
 
-#endif   /* PUBLICATIONCMDS_H */
+#endif							/* PUBLICATIONCMDS_H */

@@ -1162,4 +1162,4 @@ DATA(insert (	4104	603  603 12 s	  2572	  3580 0 ));
 /* we could, but choose not to, supply entries for strategies 13 and 14 */
 DATA(insert (	4104	603  600  7 s	   433	  3580 0 ));
 
-#endif   /* PG_AMOP_H */
+#endif							/* PG_AMOP_H */

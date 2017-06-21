@@ -66,4 +66,4 @@ extern int multi_sort_compare_dim(int dim, const SortItem *a,
 extern int multi_sort_compare_dims(int start, int end, const SortItem *a,
 						const SortItem *b, MultiSortSupport mss);
 
-#endif   /* EXTENDED_STATS_INTERNAL_H */
+#endif							/* EXTENDED_STATS_INTERNAL_H */

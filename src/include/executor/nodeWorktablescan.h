@@ -21,4 +21,4 @@ extern TupleTableSlot *ExecWorkTableScan(WorkTableScanState *node);
 extern void ExecEndWorkTableScan(WorkTableScanState *node);
 extern void ExecReScanWorkTableScan(WorkTableScanState *node);
 
-#endif   /* NODEWORKTABLESCAN_H */
+#endif							/* NODEWORKTABLESCAN_H */

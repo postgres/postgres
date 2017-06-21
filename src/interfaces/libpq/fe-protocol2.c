@@ -1099,7 +1099,7 @@ checkXactStatus(PGconn *conn, const char *cmdTag)
 	 * However, if we see one of these tags then we know for sure the server
 	 * is in abort state ...
 	 */
-	else if (strcmp(cmdTag, "*ABORT STATE*") == 0)		/* pre-7.3 only */
+	else if (strcmp(cmdTag, "*ABORT STATE*") == 0)	/* pre-7.3 only */
 		conn->xactStatus = PQTRANS_INERROR;
 }
 
@@ -1526,7 +1526,7 @@ pqFunctionCall2(PGconn *conn, Oid fnid,
 									   conn))
 							continue;
 					}
-					if (pqGetc(&id, conn))		/* get the last '0' */
+					if (pqGetc(&id, conn))	/* get the last '0' */
 						continue;
 				}
 				if (id == '0')

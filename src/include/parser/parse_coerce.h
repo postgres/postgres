@@ -91,4 +91,4 @@ extern CoercionPathType find_coercion_pathway(Oid targetTypeId,
 extern CoercionPathType find_typmod_coercion_function(Oid typeId,
 							  Oid *funcid);
 
-#endif   /* PARSE_COERCE_H */
+#endif							/* PARSE_COERCE_H */

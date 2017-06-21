@@ -115,4 +115,4 @@ array_iter_next(array_iter *it, bool *isnull, int i,
 	return ret;
 }
 
-#endif   /* ARRAYACCESS_H */
+#endif							/* ARRAYACCESS_H */

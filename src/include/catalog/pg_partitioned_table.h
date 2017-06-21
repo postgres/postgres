@@ -71,4 +71,4 @@ typedef FormData_pg_partitioned_table *Form_pg_partitioned_table;
 #define Anum_pg_partitioned_table_partcollation 6
 #define Anum_pg_partitioned_table_partexprs		7
 
-#endif   /* PG_PARTITIONED_TABLE_H */
+#endif							/* PG_PARTITIONED_TABLE_H */

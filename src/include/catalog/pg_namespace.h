@@ -82,4 +82,4 @@ DESCR("standard public schema");
  */
 extern Oid	NamespaceCreate(const char *nspName, Oid ownerId, bool isTemp);
 
-#endif   /* PG_NAMESPACE_H */
+#endif							/* PG_NAMESPACE_H */

@@ -352,7 +352,7 @@ hash_create(const char *tabname, long nelem, HASHCTL *info, int flags)
 			hashp->hash = tag_hash;
 	}
 	else
-		hashp->hash = string_hash;		/* default hash function */
+		hashp->hash = string_hash;	/* default hash function */
 
 	/*
 	 * If you don't specify a match function, it defaults to string_compare if
@@ -1417,7 +1417,7 @@ hash_seq_search(HASH_SEQ_STATUS *status)
 
 	/* Begin scan of curBucket... */
 	status->curEntry = curElem->link;
-	if (status->curEntry == NULL)		/* end of this bucket */
+	if (status->curEntry == NULL)	/* end of this bucket */
 		++curBucket;
 	status->curBucket = curBucket;
 	return (void *) ELEMENTKEY(curElem);
@@ -1740,7 +1740,7 @@ next_pow2_int(long num)
 #define MAX_SEQ_SCANS 100
 
 static HTAB *seq_scan_tables[MAX_SEQ_SCANS];	/* tables being scanned */
-static int	seq_scan_level[MAX_SEQ_SCANS];		/* subtransaction nest level */
+static int	seq_scan_level[MAX_SEQ_SCANS];	/* subtransaction nest level */
 static int	num_seq_scans = 0;
 
 

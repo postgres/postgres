@@ -1170,7 +1170,7 @@ build_paths_for_OR(PlannerInfo *root, RelOptInfo *rel,
 				   List *clauses, List *other_clauses)
 {
 	List	   *result = NIL;
-	List	   *all_clauses = NIL;		/* not computed till needed */
+	List	   *all_clauses = NIL;	/* not computed till needed */
 	ListCell   *lc;
 
 	foreach(lc, rel->indexlist)
@@ -1383,7 +1383,7 @@ choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel, List *paths)
 
 	Assert(npaths > 0);			/* else caller error */
 	if (npaths == 1)
-		return (Path *) linitial(paths);		/* easy case */
+		return (Path *) linitial(paths);	/* easy case */
 
 	/*
 	 * In theory we should consider every nonempty subset of the given paths.
@@ -1650,7 +1650,7 @@ bitmap_and_cost_est(PlannerInfo *root, RelOptInfo *rel, List *paths)
 	apath.path.pathtype = T_BitmapAnd;
 	apath.path.parent = rel;
 	apath.path.pathtarget = rel->reltarget;
-	apath.path.param_info = NULL;		/* not used in bitmap trees */
+	apath.path.param_info = NULL;	/* not used in bitmap trees */
 	apath.path.pathkeys = NIL;
 	apath.bitmapquals = paths;
 	cost_bitmap_and_node(&apath, root);
@@ -1982,7 +1982,7 @@ get_loop_count(PlannerInfo *root, Index cur_relid, Relids outer_relids)
 		outer_rel = root->simple_rel_array[outer_relid];
 		if (outer_rel == NULL)
 			continue;
-		Assert(outer_rel->relid == outer_relid);		/* sanity check on array */
+		Assert(outer_rel->relid == outer_relid);	/* sanity check on array */
 
 		/* Other relation could be proven empty, if so ignore */
 		if (IS_DUMMY_REL(outer_rel))
@@ -2632,7 +2632,7 @@ match_pathkeys_to_index(IndexOptInfo *index, List *pathkeys,
 			return;
 	}
 
-	*orderby_clauses_p = orderby_clauses;		/* success! */
+	*orderby_clauses_p = orderby_clauses;	/* success! */
 	*clause_columns_p = clause_columns;
 }
 
@@ -3062,7 +3062,7 @@ relation_has_unique_index_for(PlannerInfo *root, RelOptInfo *rel,
 
 				if (match_index_to_operand(rexpr, c, ind))
 				{
-					matched = true;		/* column is unique */
+					matched = true; /* column is unique */
 					break;
 				}
 			}
@@ -3983,7 +3983,7 @@ adjust_rowcompare_for_index(RowCompareExpr *clause,
 			if (!var_on_left)
 			{
 				expr_op = get_commutator(expr_op);
-				if (!OidIsValid(expr_op))		/* should not happen */
+				if (!OidIsValid(expr_op))	/* should not happen */
 					elog(ERROR, "could not find commutator of member %d(%u,%u) of opfamily %u",
 						 op_strategy, lefttype, righttype, opfam);
 			}

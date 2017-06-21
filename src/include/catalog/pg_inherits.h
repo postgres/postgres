@@ -56,4 +56,4 @@ typedef FormData_pg_inherits *Form_pg_inherits;
  * ----------------
  */
 
-#endif   /* PG_INHERITS_H */
+#endif							/* PG_INHERITS_H */

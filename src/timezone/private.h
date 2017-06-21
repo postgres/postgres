@@ -40,10 +40,10 @@
 
 #ifndef WIFEXITED
 #define WIFEXITED(status)	(((status) & 0xff) == 0)
-#endif   /* !defined WIFEXITED */
+#endif							/* !defined WIFEXITED */
 #ifndef WEXITSTATUS
 #define WEXITSTATUS(status) (((status) >> 8) & 0xff)
-#endif   /* !defined WEXITSTATUS */
+#endif							/* !defined WEXITSTATUS */
 
 /* Unlike <ctype.h>'s isdigit, this also works if c < 0 | c > UCHAR_MAX. */
 #define is_digit(c) ((unsigned)(c) - '0' <= 9)
@@ -60,7 +60,7 @@
 extern int	unlink(const char *filename);
 
 #define remove	unlink
-#endif   /* !defined remove */
+#endif							/* !defined remove */
 
 
 /*
@@ -166,4 +166,4 @@ extern int	unlink(const char *filename);
   ((int64) YEARSPERREPEAT * (int64) AVGSECSPERYEAR)
 #define SECSPERREPEAT_BITS	34	/* ceil(log2(SECSPERREPEAT)) */
 
-#endif   /* !defined PRIVATE_H */
+#endif							/* !defined PRIVATE_H */

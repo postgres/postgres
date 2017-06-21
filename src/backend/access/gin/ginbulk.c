@@ -116,7 +116,7 @@ ginInitBA(BuildAccumulator *accum)
 							cmpEntryAccumulator,
 							ginCombineData,
 							ginAllocEntryAccumulator,
-							NULL,		/* no freefunc needed */
+							NULL,	/* no freefunc needed */
 							(void *) accum);
 }
 

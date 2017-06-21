@@ -87,4 +87,4 @@ extern int	dtcvfmtasc(char *, char *, timestamp *);
 }
 #endif
 
-#endif   /* ndef _ECPG_INFORMIX_H */
+#endif							/* ndef _ECPG_INFORMIX_H */

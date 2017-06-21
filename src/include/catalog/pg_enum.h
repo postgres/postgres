@@ -70,4 +70,4 @@ extern void AddEnumLabel(Oid enumTypeOid, const char *newVal,
 extern void RenameEnumLabel(Oid enumTypeOid,
 				const char *oldVal, const char *newVal);
 
-#endif   /* PG_ENUM_H */
+#endif							/* PG_ENUM_H */

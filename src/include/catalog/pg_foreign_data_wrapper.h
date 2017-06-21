@@ -61,4 +61,4 @@ typedef FormData_pg_foreign_data_wrapper *Form_pg_foreign_data_wrapper;
 #define Anum_pg_foreign_data_wrapper_fdwacl			5
 #define Anum_pg_foreign_data_wrapper_fdwoptions		6
 
-#endif   /* PG_FOREIGN_DATA_WRAPPER_H */
+#endif							/* PG_FOREIGN_DATA_WRAPPER_H */

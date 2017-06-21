@@ -121,10 +121,10 @@ pgunlink(const char *path)
 /* We undefined these above; now redefine for possible use below */
 #define rename(from, to)		pgrename(from, to)
 #define unlink(path)			pgunlink(path)
-#endif   /* defined(WIN32) || defined(__CYGWIN__) */
+#endif							/* defined(WIN32) || defined(__CYGWIN__) */
 
 
-#if defined(WIN32) && !defined(__CYGWIN__)		/* Cygwin has its own symlinks */
+#if defined(WIN32) && !defined(__CYGWIN__)	/* Cygwin has its own symlinks */
 
 /*
  *	pgsymlink support:
@@ -352,7 +352,7 @@ pgwin32_is_junction(const char *path)
 	}
 	return ((attr & FILE_ATTRIBUTE_REPARSE_POINT) == FILE_ATTRIBUTE_REPARSE_POINT);
 }
-#endif   /* defined(WIN32) && !defined(__CYGWIN__) */
+#endif							/* defined(WIN32) && !defined(__CYGWIN__) */
 
 
 #if defined(WIN32) && !defined(__CYGWIN__)

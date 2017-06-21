@@ -149,7 +149,7 @@ static int	internal_flush(void);
 #ifdef HAVE_UNIX_SOCKETS
 static int	Lock_AF_UNIX(char *unixSocketDir, char *unixSocketPath);
 static int	Setup_AF_UNIX(char *sock_path);
-#endif   /* HAVE_UNIX_SOCKETS */
+#endif							/* HAVE_UNIX_SOCKETS */
 
 static PQcommMethods PqCommSocketMethods = {
 	socket_comm_reset,
@@ -253,7 +253,7 @@ socket_close(int code, Datum arg)
 
 		if (MyProcPort->gss->cred != GSS_C_NO_CREDENTIAL)
 			gss_release_cred(&min_s, &MyProcPort->gss->cred);
-#endif   /* ENABLE_GSS */
+#endif							/* ENABLE_GSS */
 
 		/*
 		 * GSS and SSPI share the port->gss struct.  Since nowhere else does a
@@ -261,7 +261,7 @@ socket_close(int code, Datum arg)
 		 * BackendInitialize().
 		 */
 		free(MyProcPort->gss);
-#endif   /* ENABLE_GSS || ENABLE_SSPI */
+#endif							/* ENABLE_GSS || ENABLE_SSPI */
 
 		/*
 		 * Cleanly shut down SSL layer.  Nowhere else does a postmaster child
@@ -362,7 +362,7 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 		service = unixSocketPath;
 	}
 	else
-#endif   /* HAVE_UNIX_SOCKETS */
+#endif							/* HAVE_UNIX_SOCKETS */
 	{
 		snprintf(portNumberStr, sizeof(portNumberStr), "%d", portNumber);
 		service = portNumberStr;
@@ -680,7 +680,7 @@ Setup_AF_UNIX(char *sock_path)
 	}
 	return STATUS_OK;
 }
-#endif   /* HAVE_UNIX_SOCKETS */
+#endif							/* HAVE_UNIX_SOCKETS */
 
 
 /*
@@ -858,8 +858,8 @@ TouchSocketFiles(void)
 #else							/* !HAVE_UTIME */
 #ifdef HAVE_UTIMES
 		utimes(sock_path, NULL);
-#endif   /* HAVE_UTIMES */
-#endif   /* HAVE_UTIME */
+#endif							/* HAVE_UTIMES */
+#endif							/* HAVE_UTIME */
 	}
 }
 
@@ -1704,11 +1704,11 @@ pq_getkeepalivesidle(Port *port)
 			elog(LOG, "getsockopt(TCP_KEEPALIVE) failed: %m");
 			port->default_keepalives_idle = -1; /* don't know */
 		}
-#endif   /* TCP_KEEPIDLE */
+#endif							/* TCP_KEEPIDLE */
 #else							/* WIN32 */
 		/* We can't get the defaults on Windows, so return "don't know" */
 		port->default_keepalives_idle = -1;
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 	}
 
 	return port->default_keepalives_idle;
@@ -1733,7 +1733,7 @@ pq_setkeepalivesidle(int idle, Port *port)
 		if (pq_getkeepalivesidle(port) < 0)
 		{
 			if (idle == 0)
-				return STATUS_OK;		/* default is set but unknown */
+				return STATUS_OK;	/* default is set but unknown */
 			else
 				return STATUS_ERROR;
 		}
@@ -1792,12 +1792,12 @@ pq_getkeepalivesinterval(Port *port)
 					   &size) < 0)
 		{
 			elog(LOG, "getsockopt(TCP_KEEPINTVL) failed: %m");
-			port->default_keepalives_interval = -1;		/* don't know */
+			port->default_keepalives_interval = -1; /* don't know */
 		}
 #else
 		/* We can't get the defaults on Windows, so return "don't know" */
 		port->default_keepalives_interval = -1;
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 	}
 
 	return port->default_keepalives_interval;
@@ -1822,7 +1822,7 @@ pq_setkeepalivesinterval(int interval, Port *port)
 		if (pq_getkeepalivesinterval(port) < 0)
 		{
 			if (interval == 0)
-				return STATUS_OK;		/* default is set but unknown */
+				return STATUS_OK;	/* default is set but unknown */
 			else
 				return STATUS_ERROR;
 		}
@@ -1872,7 +1872,7 @@ pq_getkeepalivescount(Port *port)
 					   &size) < 0)
 		{
 			elog(LOG, "getsockopt(TCP_KEEPCNT) failed: %m");
-			port->default_keepalives_count = -1;		/* don't know */
+			port->default_keepalives_count = -1;	/* don't know */
 		}
 	}
 
@@ -1897,7 +1897,7 @@ pq_setkeepalivescount(int count, Port *port)
 		if (pq_getkeepalivescount(port) < 0)
 		{
 			if (count == 0)
-				return STATUS_OK;		/* default is set but unknown */
+				return STATUS_OK;	/* default is set but unknown */
 			else
 				return STATUS_ERROR;
 		}

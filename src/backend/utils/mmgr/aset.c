@@ -99,7 +99,7 @@
 #define ALLOC_BLOCKHDRSZ	MAXALIGN(sizeof(AllocBlockData))
 #define ALLOC_CHUNKHDRSZ	sizeof(struct AllocChunkData)
 
-typedef struct AllocBlockData *AllocBlock;		/* forward reference */
+typedef struct AllocBlockData *AllocBlock;	/* forward reference */
 typedef struct AllocChunkData *AllocChunk;
 
 /*
@@ -122,7 +122,7 @@ typedef struct AllocSetContext
 	MemoryContextData header;	/* Standard memory-context fields */
 	/* Info about storage allocated in this context: */
 	AllocBlock	blocks;			/* head of list of blocks in this set */
-	AllocChunk	freelist[ALLOCSET_NUM_FREELISTS];		/* free chunk lists */
+	AllocChunk	freelist[ALLOCSET_NUM_FREELISTS];	/* free chunk lists */
 	/* Allocation parameters for this context: */
 	Size		initBlockSize;	/* initial block size */
 	Size		maxBlockSize;	/* maximum block size */
@@ -170,7 +170,7 @@ typedef struct AllocChunkData
 	Size		padding;
 #endif
 
-#endif   /* MEMORY_CONTEXT_CHECKING */
+#endif							/* MEMORY_CONTEXT_CHECKING */
 
 	/* aset is the owning aset if allocated, or the freelist link if free */
 	void	   *aset;
@@ -721,7 +721,7 @@ AllocSetAlloc(MemoryContext context, Size size)
 
 				chunk->size = availchunk;
 #ifdef MEMORY_CONTEXT_CHECKING
-				chunk->requested_size = 0;		/* mark it free */
+				chunk->requested_size = 0;	/* mark it free */
 #endif
 				chunk->aset = (void *) set->freelist[a_fidx];
 				set->freelist[a_fidx] = chunk;
@@ -1252,10 +1252,10 @@ AllocSetCheck(MemoryContext context)
 			Size		chsize,
 						dsize;
 
-			chsize = chunk->size;		/* aligned chunk size */
+			chsize = chunk->size;	/* aligned chunk size */
 			VALGRIND_MAKE_MEM_DEFINED(&chunk->requested_size,
 									  sizeof(chunk->requested_size));
-			dsize = chunk->requested_size;		/* real data */
+			dsize = chunk->requested_size;	/* real data */
 			if (dsize > 0)		/* not on a free list */
 				VALGRIND_MAKE_MEM_NOACCESS(&chunk->requested_size,
 										   sizeof(chunk->requested_size));
@@ -1305,4 +1305,4 @@ AllocSetCheck(MemoryContext context)
 	}
 }
 
-#endif   /* MEMORY_CONTEXT_CHECKING */
+#endif							/* MEMORY_CONTEXT_CHECKING */

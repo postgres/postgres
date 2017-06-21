@@ -462,7 +462,7 @@ _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 						}
 
 						if (so->hashso_sk_hash == _hash_get_indextuple_hashkey(itup))
-							break;		/* yes, so exit for-loop */
+							break;	/* yes, so exit for-loop */
 					}
 
 					/* Before leaving current page, deal with any killed items */
@@ -519,7 +519,7 @@ _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 						}
 
 						if (so->hashso_sk_hash == _hash_get_indextuple_hashkey(itup))
-							break;		/* yes, so exit for-loop */
+							break;	/* yes, so exit for-loop */
 					}
 
 					/* Before leaving current page, deal with any killed items */

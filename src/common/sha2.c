@@ -94,7 +94,7 @@
 	(x) = ((tmp & 0xffff0000ffff0000ULL) >> 16) | \
 		  ((tmp & 0x0000ffff0000ffffULL) << 16); \
 }
-#endif   /* not bigendian */
+#endif							/* not bigendian */
 
 /*
  * Macro for incrementally adding the unsigned 64-bit integer n to the
@@ -459,7 +459,7 @@ SHA256_Transform(pg_sha256_ctx *context, const uint8 *data)
 	/* Clean up */
 	a = b = c = d = e = f = g = h = T1 = T2 = 0;
 }
-#endif   /* SHA2_UNROLL_TRANSFORM */
+#endif							/* SHA2_UNROLL_TRANSFORM */
 
 void
 pg_sha256_update(pg_sha256_ctx *context, const uint8 *data, size_t len)
@@ -785,7 +785,7 @@ SHA512_Transform(pg_sha512_ctx *context, const uint8 *data)
 	/* Clean up */
 	a = b = c = d = e = f = g = h = T1 = T2 = 0;
 }
-#endif   /* SHA2_UNROLL_TRANSFORM */
+#endif							/* SHA2_UNROLL_TRANSFORM */
 
 void
 pg_sha512_update(pg_sha512_ctx *context, const uint8 *data, size_t len)

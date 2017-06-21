@@ -130,7 +130,7 @@ PosixSemaphoreCreate(sem_t *sem)
 	if (sem_init(sem, 1, 1) < 0)
 		elog(FATAL, "sem_init failed: %m");
 }
-#endif   /* USE_NAMED_POSIX_SEMAPHORES */
+#endif							/* USE_NAMED_POSIX_SEMAPHORES */
 
 
 /*

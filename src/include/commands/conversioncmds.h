@@ -20,4 +20,4 @@
 
 extern ObjectAddress CreateConversionCommand(CreateConversionStmt *parsetree);
 
-#endif   /* CONVERSIONCMDS_H */
+#endif							/* CONVERSIONCMDS_H */

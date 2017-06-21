@@ -2570,7 +2570,7 @@ EvalPlanQualFetch(EState *estate, Relation relation, int lockmode,
 						break;
 					case LockWaitSkip:
 						if (!ConditionalXactLockTableWait(SnapshotDirty.xmax))
-							return NULL;		/* skip instead of waiting */
+							return NULL;	/* skip instead of waiting */
 						break;
 					case LockWaitError:
 						if (!ConditionalXactLockTableWait(SnapshotDirty.xmax))

@@ -90,7 +90,7 @@ typedef struct BackgroundWorker
 	char		bgw_name[BGW_MAXLEN];
 	int			bgw_flags;
 	BgWorkerStartTime bgw_start_time;
-	int			bgw_restart_time;		/* in seconds, or BGW_NEVER_RESTART */
+	int			bgw_restart_time;	/* in seconds, or BGW_NEVER_RESTART */
 	char		bgw_library_name[BGW_MAXLEN];
 	char		bgw_function_name[BGW_MAXLEN];
 	Datum		bgw_main_arg;
@@ -147,4 +147,4 @@ extern void BackgroundWorkerInitializeConnectionByOid(Oid dboid, Oid useroid);
 extern void BackgroundWorkerBlockSignals(void);
 extern void BackgroundWorkerUnblockSignals(void);
 
-#endif   /* BGWORKER_H */
+#endif							/* BGWORKER_H */

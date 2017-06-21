@@ -476,7 +476,7 @@ get_encoding_name_for_icu(int encoding)
 	return icu_encoding_name;
 }
 
-#endif   /* not FRONTEND */
+#endif							/* not FRONTEND */
 
 
 /* ----------

@@ -251,7 +251,7 @@ pg_GSS_startup(PGconn *conn, int payloadlen)
 
 	return pg_GSS_continue(conn, payloadlen);
 }
-#endif   /* ENABLE_GSS */
+#endif							/* ENABLE_GSS */
 
 
 #ifdef ENABLE_SSPI
@@ -477,7 +477,7 @@ pg_SSPI_startup(PGconn *conn, int use_negotiate, int payloadlen)
 
 	return pg_SSPI_continue(conn, payloadlen);
 }
-#endif   /* ENABLE_SSPI */
+#endif							/* ENABLE_SSPI */
 
 /*
  * Initialize SASL authentication exchange.
@@ -901,7 +901,7 @@ pg_fe_sendauth(AuthRequest areq, int payloadlen, PGconn *conn)
 			printfPQExpBuffer(&conn->errorMessage,
 					 libpq_gettext("GSSAPI authentication not supported\n"));
 			return STATUS_ERROR;
-#endif   /* defined(ENABLE_GSS) || defined(ENABLE_SSPI) */
+#endif							/* defined(ENABLE_GSS) || defined(ENABLE_SSPI) */
 
 #ifdef ENABLE_SSPI
 		case AUTH_REQ_SSPI:
@@ -933,8 +933,8 @@ pg_fe_sendauth(AuthRequest areq, int payloadlen, PGconn *conn)
 			printfPQExpBuffer(&conn->errorMessage,
 					   libpq_gettext("SSPI authentication not supported\n"));
 			return STATUS_ERROR;
-#endif   /* !define(ENABLE_GSSAPI) */
-#endif   /* ENABLE_SSPI */
+#endif							/* !define(ENABLE_GSSAPI) */
+#endif							/* ENABLE_SSPI */
 
 
 		case AUTH_REQ_CRYPT:

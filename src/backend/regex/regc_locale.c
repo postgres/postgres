@@ -754,7 +754,7 @@ cmp(const chr *x, const chr *y, /* strings to compare */
  * stop at embedded NULs!
  */
 static int						/* 0 for equal, nonzero for unequal */
-casecmp(const chr *x, const chr *y,		/* strings to compare */
+casecmp(const chr *x, const chr *y, /* strings to compare */
 		size_t len)				/* exact length of comparison */
 {
 	for (; len > 0; len--, x++, y++)

@@ -22,4 +22,4 @@ extern void ExecEndGather(GatherState *node);
 extern void ExecShutdownGather(GatherState *node);
 extern void ExecReScanGather(GatherState *node);
 
-#endif   /* NODEGATHER_H */
+#endif							/* NODEGATHER_H */

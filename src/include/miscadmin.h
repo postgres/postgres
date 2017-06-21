@@ -111,7 +111,7 @@ do { \
 	if (InterruptPending) \
 		ProcessInterrupts(); \
 } while(0)
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 
 
 #define HOLD_INTERRUPTS()  (InterruptHoldoffCount++)
@@ -472,4 +472,4 @@ extern bool has_rolreplication(Oid roleid);
 extern bool BackupInProgress(void);
 extern void CancelBackup(void);
 
-#endif   /* MISCADMIN_H */
+#endif							/* MISCADMIN_H */

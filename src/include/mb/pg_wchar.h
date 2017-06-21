@@ -361,12 +361,12 @@ typedef int (*mbverifier) (const unsigned char *mbstr, int len);
 
 typedef struct
 {
-	mb2wchar_with_len_converter mb2wchar_with_len;		/* convert a multibyte
-														 * string to a wchar */
-	wchar2mb_with_len_converter wchar2mb_with_len;		/* convert a wchar
-														 * string to a multibyte */
+	mb2wchar_with_len_converter mb2wchar_with_len;	/* convert a multibyte
+													 * string to a wchar */
+	wchar2mb_with_len_converter wchar2mb_with_len;	/* convert a wchar string
+													 * to a multibyte */
 	mblen_converter mblen;		/* get byte length of a char */
-	mbdisplaylen_converter dsplen;		/* get display width of a char */
+	mbdisplaylen_converter dsplen;	/* get display width of a char */
 	mbverifier	mbverify;		/* verify multibyte sequence */
 	int			maxmblen;		/* max bytes for a char in this encoding */
 } pg_wchar_tbl;
@@ -622,4 +622,4 @@ extern bool pg_utf8_islegal(const unsigned char *source, int length);
 extern WCHAR *pgwin32_message_to_UTF16(const char *str, int len, int *utf16len);
 #endif
 
-#endif   /* PG_WCHAR_H */
+#endif							/* PG_WCHAR_H */

@@ -35,4 +35,4 @@ extern void brin_evacuate_page(Relation idxRel, BlockNumber pagesPerRange,
 
 extern bool brin_page_cleanup(Relation idxrel, Buffer buf);
 
-#endif   /* BRIN_PAGEOPS_H */
+#endif							/* BRIN_PAGEOPS_H */

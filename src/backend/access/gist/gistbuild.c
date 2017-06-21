@@ -814,7 +814,7 @@ gistbufferinginserttuples(GISTBuildState *buildstate, Buffer buffer, int level,
 								  downlinks, ndownlinks, downlinkoffnum,
 								  InvalidBlockNumber, InvalidOffsetNumber);
 
-		list_free_deep(splitinfo);		/* we don't need this anymore */
+		list_free_deep(splitinfo);	/* we don't need this anymore */
 	}
 	else
 		UnlockReleaseBuffer(buffer);

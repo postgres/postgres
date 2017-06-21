@@ -67,7 +67,7 @@ typedef struct remoteConn
 {
 	PGconn	   *conn;			/* Hold the remote connection */
 	int			openCursorCount;	/* The number of open cursors */
-	bool		newXactForCursor;		/* Opened a transaction for a cursor */
+	bool		newXactForCursor;	/* Opened a transaction for a cursor */
 } remoteConn;
 
 typedef struct storeInfo
@@ -1098,7 +1098,7 @@ storeQueryResult(volatile storeInfo *sinfo, PGconn *conn, const char *sql)
 	if (!PQsendQuery(conn, sql))
 		elog(ERROR, "could not send query: %s", pchomp(PQerrorMessage(conn)));
 
-	if (!PQsetSingleRowMode(conn))		/* shouldn't fail */
+	if (!PQsetSingleRowMode(conn))	/* shouldn't fail */
 		elog(ERROR, "failed to set single-row mode for dblink query");
 
 	for (;;)

@@ -64,4 +64,4 @@ extern Expr *make_scalar_array_op(ParseState *pstate, List *opname,
 					 bool useOr,
 					 Node *ltree, Node *rtree, int location);
 
-#endif   /* PARSE_OPER_H */
+#endif							/* PARSE_OPER_H */

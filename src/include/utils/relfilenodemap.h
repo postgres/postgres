@@ -15,4 +15,4 @@
 
 extern Oid	RelidByRelfilenode(Oid reltablespace, Oid relfilenode);
 
-#endif   /* RELFILENODEMAP_H */
+#endif							/* RELFILENODEMAP_H */

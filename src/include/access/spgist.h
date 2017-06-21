@@ -74,33 +74,33 @@ typedef enum spgChooseResultType
 
 typedef struct spgChooseOut
 {
-	spgChooseResultType resultType;		/* action code, see above */
+	spgChooseResultType resultType; /* action code, see above */
 	union
 	{
 		struct					/* results for spgMatchNode */
 		{
 			int			nodeN;	/* descend to this node (index from 0) */
-			int			levelAdd;		/* increment level by this much */
-			Datum		restDatum;		/* new leaf datum */
+			int			levelAdd;	/* increment level by this much */
+			Datum		restDatum;	/* new leaf datum */
 		}			matchNode;
 		struct					/* results for spgAddNode */
 		{
-			Datum		nodeLabel;		/* new node's label */
+			Datum		nodeLabel;	/* new node's label */
 			int			nodeN;	/* where to insert it (index from 0) */
 		}			addNode;
 		struct					/* results for spgSplitTuple */
 		{
 			/* Info to form new upper-level inner tuple with one child tuple */
-			bool		prefixHasPrefix;		/* tuple should have a prefix? */
-			Datum		prefixPrefixDatum;		/* if so, its value */
+			bool		prefixHasPrefix;	/* tuple should have a prefix? */
+			Datum		prefixPrefixDatum;	/* if so, its value */
 			int			prefixNNodes;	/* number of nodes */
-			Datum	   *prefixNodeLabels;		/* their labels (or NULL for
-												 * no labels) */
-			int			childNodeN;		/* which node gets child tuple */
+			Datum	   *prefixNodeLabels;	/* their labels (or NULL for no
+											 * labels) */
+			int			childNodeN; /* which node gets child tuple */
 
 			/* Info to form new lower-level inner tuple with all old nodes */
-			bool		postfixHasPrefix;		/* tuple should have a prefix? */
-			Datum		postfixPrefixDatum;		/* if so, its value */
+			bool		postfixHasPrefix;	/* tuple should have a prefix? */
+			Datum		postfixPrefixDatum; /* if so, its value */
 		}			splitTuple;
 	}			result;
 } spgChooseOut;
@@ -123,7 +123,7 @@ typedef struct spgPickSplitOut
 	int			nNodes;			/* number of nodes for new inner tuple */
 	Datum	   *nodeLabels;		/* their labels (or NULL for no labels) */
 
-	int		   *mapTuplesToNodes;		/* node index for each leaf tuple */
+	int		   *mapTuplesToNodes;	/* node index for each leaf tuple */
 	Datum	   *leafTupleDatums;	/* datum to store in each new leaf tuple */
 } spgPickSplitOut;
 
@@ -135,10 +135,9 @@ typedef struct spgInnerConsistentIn
 	ScanKey		scankeys;		/* array of operators and comparison values */
 	int			nkeys;			/* length of array */
 
-	Datum		reconstructedValue;		/* value reconstructed at parent */
+	Datum		reconstructedValue; /* value reconstructed at parent */
 	void	   *traversalValue; /* opclass-specific traverse value */
-	MemoryContext traversalMemoryContext;		/* put new traverse values
-												 * here */
+	MemoryContext traversalMemoryContext;	/* put new traverse values here */
 	int			level;			/* current level (counting from zero) */
 	bool		returnData;		/* original data must be returned? */
 
@@ -167,7 +166,7 @@ typedef struct spgLeafConsistentIn
 	ScanKey		scankeys;		/* array of operators and comparison values */
 	int			nkeys;			/* length of array */
 
-	Datum		reconstructedValue;		/* value reconstructed at parent */
+	Datum		reconstructedValue; /* value reconstructed at parent */
 	void	   *traversalValue; /* opclass-specific traverse value */
 	int			level;			/* current level (counting from zero) */
 	bool		returnData;		/* original data must be returned? */
@@ -214,4 +213,4 @@ extern IndexBulkDeleteResult *spgvacuumcleanup(IndexVacuumInfo *info,
 /* spgvalidate.c */
 extern bool spgvalidate(Oid opclassoid);
 
-#endif   /* SPGIST_H */
+#endif							/* SPGIST_H */

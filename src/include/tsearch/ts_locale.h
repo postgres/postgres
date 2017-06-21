@@ -61,7 +61,7 @@ extern int	t_isprint(const char *ptr);
 #define t_iseq(x,c)		(TOUCHAR(x) == (unsigned char) (c))
 
 #define COPYCHAR(d,s)	(*((unsigned char *) (d)) = TOUCHAR(s))
-#endif   /* USE_WIDE_UPPER_LOWER */
+#endif							/* USE_WIDE_UPPER_LOWER */
 
 extern char *lowerstr(const char *str);
 extern char *lowerstr_with_len(const char *str, int len);
@@ -73,4 +73,4 @@ extern void tsearch_readline_end(tsearch_readline_state *stp);
 
 extern char *t_readline(FILE *fp);
 
-#endif   /* __TSLOCALE_H__ */
+#endif							/* __TSLOCALE_H__ */

@@ -125,7 +125,7 @@ typedef struct
 #define OPR						3
 #define OPEN					4
 #define CLOSE					5
-#define VALTRUE					6		/* for stop words */
+#define VALTRUE					6	/* for stop words */
 #define VALFALSE				7
 
 

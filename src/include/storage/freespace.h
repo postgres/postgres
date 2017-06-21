@@ -37,4 +37,4 @@ extern void UpdateFreeSpaceMap(Relation rel,
 				   BlockNumber endBlkNum,
 				   Size freespace);
 
-#endif   /* FREESPACE_H_ */
+#endif							/* FREESPACE_H_ */

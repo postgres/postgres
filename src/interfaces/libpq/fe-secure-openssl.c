@@ -91,7 +91,7 @@ static pthread_mutex_t ssl_config_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t ssl_config_mutex = NULL;
 static long win32_ssl_create_mutex = 0;
 #endif
-#endif   /* ENABLE_THREAD_SAFETY */
+#endif							/* ENABLE_THREAD_SAFETY */
 
 
 /* ------------------------------------------------------------ */
@@ -730,7 +730,7 @@ pq_lockingcallback(int mode, int n, const char *file, int line)
 			PGTHREAD_ERROR("failed to unlock mutex");
 	}
 }
-#endif   /* ENABLE_THREAD_SAFETY && HAVE_CRYPTO_LOCK */
+#endif							/* ENABLE_THREAD_SAFETY && HAVE_CRYPTO_LOCK */
 
 /*
  * Initialize SSL library.
@@ -809,8 +809,8 @@ pgtls_init(PGconn *conn)
 				CRYPTO_set_locking_callback(pq_lockingcallback);
 		}
 	}
-#endif   /* HAVE_CRYPTO_LOCK */
-#endif   /* ENABLE_THREAD_SAFETY */
+#endif							/* HAVE_CRYPTO_LOCK */
+#endif							/* ENABLE_THREAD_SAFETY */
 
 	if (!ssl_lib_initialized)
 	{
@@ -1142,7 +1142,7 @@ initialize_SSL(PGconn *conn)
 			/* cannot return NULL because we already checked before strdup */
 			engine_colon = strchr(engine_str, ':');
 
-			*engine_colon = '\0';		/* engine_str now has engine name */
+			*engine_colon = '\0';	/* engine_str now has engine name */
 			engine_colon++;		/* engine_colon now has key name */
 
 			conn->engine = ENGINE_by_id(engine_str);
@@ -1209,7 +1209,7 @@ initialize_SSL(PGconn *conn)
 								 * file */
 		}
 		else
-#endif   /* USE_SSL_ENGINE */
+#endif							/* USE_SSL_ENGINE */
 		{
 			/* PGSSLKEY is not an engine, treat it as a filename */
 			strlcpy(fnbuf, conn->sslkey, sizeof(fnbuf));

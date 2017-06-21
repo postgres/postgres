@@ -829,7 +829,7 @@ hstore_from_record(PG_FUNCTION_ARGS)
 		my_extra->ncolumns = ncolumns;
 	}
 
-	Assert(ncolumns <= MaxTupleAttributeNumber);		/* thus, no overflow */
+	Assert(ncolumns <= MaxTupleAttributeNumber);	/* thus, no overflow */
 	pairs = palloc(ncolumns * sizeof(Pairs));
 
 	if (rec)

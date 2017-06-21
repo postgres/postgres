@@ -64,4 +64,4 @@ DESCR("ispell dictionary");
 DATA(insert OID = 3742 ( "thesaurus" PGNSP thesaurus_init thesaurus_lexize ));
 DESCR("thesaurus dictionary: phrase by phrase substitution");
 
-#endif   /* PG_TS_TEMPLATE_H */
+#endif							/* PG_TS_TEMPLATE_H */

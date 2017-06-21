@@ -82,4 +82,4 @@ extern List *GetForeignColumnOptions(Oid relid, AttrNumber attnum);
 extern Oid	get_foreign_data_wrapper_oid(const char *fdwname, bool missing_ok);
 extern Oid	get_foreign_server_oid(const char *servername, bool missing_ok);
 
-#endif   /* FOREIGN_H */
+#endif							/* FOREIGN_H */

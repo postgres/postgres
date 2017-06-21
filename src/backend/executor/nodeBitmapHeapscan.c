@@ -129,7 +129,7 @@ BitmapHeapNext(BitmapHeapScanState *node)
 				node->prefetch_pages = 0;
 				node->prefetch_target = -1;
 			}
-#endif   /* USE_PREFETCH */
+#endif							/* USE_PREFETCH */
 		}
 		else
 		{
@@ -182,7 +182,7 @@ BitmapHeapNext(BitmapHeapScanState *node)
 				node->shared_prefetch_iterator =
 					tbm_attach_shared_iterate(dsa, pstate->prefetch_iterator);
 			}
-#endif   /* USE_PREFETCH */
+#endif							/* USE_PREFETCH */
 		}
 		node->initialized = true;
 	}
@@ -265,7 +265,7 @@ BitmapHeapNext(BitmapHeapScanState *node)
 					pstate->prefetch_target++;
 				SpinLockRelease(&pstate->mutex);
 			}
-#endif   /* USE_PREFETCH */
+#endif							/* USE_PREFETCH */
 		}
 
 		/*
@@ -514,7 +514,7 @@ BitmapAdjustPrefetchIterator(BitmapHeapScanState *node,
 				tbm_shared_iterate(prefetch_iterator);
 		}
 	}
-#endif   /* USE_PREFETCH */
+#endif							/* USE_PREFETCH */
 }
 
 /*
@@ -558,7 +558,7 @@ BitmapAdjustPrefetchTarget(BitmapHeapScanState *node)
 			pstate->prefetch_target++;
 		SpinLockRelease(&pstate->mutex);
 	}
-#endif   /* USE_PREFETCH */
+#endif							/* USE_PREFETCH */
 }
 
 /*
@@ -634,7 +634,7 @@ BitmapPrefetch(BitmapHeapScanState *node, HeapScanDesc scan)
 			}
 		}
 	}
-#endif   /* USE_PREFETCH */
+#endif							/* USE_PREFETCH */
 }
 
 /*

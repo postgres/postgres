@@ -597,7 +597,7 @@ gather_merge_readnext(GatherMergeState *gm_state, int reader, bool nowait)
 	ExecStoreTuple(tup,			/* tuple to store */
 				   gm_state->gm_slots[reader],	/* slot in which to store the
 												 * tuple */
-				   InvalidBuffer,		/* buffer associated with this tuple */
+				   InvalidBuffer,	/* buffer associated with this tuple */
 				   true);		/* pfree this pointer if not from heap */
 
 	return true;

@@ -90,4 +90,4 @@ am_tablesync_worker(void)
 	return OidIsValid(MyLogicalRepWorker->relid);
 }
 
-#endif   /* WORKER_INTERNAL_H */
+#endif							/* WORKER_INTERNAL_H */

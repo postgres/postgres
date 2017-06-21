@@ -145,8 +145,7 @@ typedef struct HashScanOpaqueData
 	 */
 	bool		hashso_buc_split;
 	/* info about killed items if any (killedItems is NULL if never used) */
-	HashScanPosItem *killedItems;		/* tids and offset numbers of killed
-										 * items */
+	HashScanPosItem *killedItems;	/* tids and offset numbers of killed items */
 	int			numKilled;		/* number of currently stored items */
 } HashScanOpaqueData;
 
@@ -218,8 +217,8 @@ typedef struct HashMetaPageData
 	uint32		hashm_firstfree;	/* lowest-number free ovflpage (bit#) */
 	uint32		hashm_nmaps;	/* number of bitmap pages */
 	RegProcedure hashm_procid;	/* hash procedure id from pg_proc */
-	uint32		hashm_spares[HASH_MAX_SPLITPOINTS];		/* spare pages before
-														 * each splitpoint */
+	uint32		hashm_spares[HASH_MAX_SPLITPOINTS]; /* spare pages before each
+													 * splitpoint */
 	BlockNumber hashm_mapp[HASH_MAX_BITMAPS];	/* blknos of ovfl bitmaps */
 } HashMetaPageData;
 
@@ -242,7 +241,7 @@ typedef HashMetaPageData *HashMetaPage;
 /*
  * Constants
  */
-#define BYTE_TO_BIT				3		/* 2^3 bits/byte */
+#define BYTE_TO_BIT				3	/* 2^3 bits/byte */
 #define ALL_SET					((uint32) ~0)
 
 /*
@@ -423,4 +422,4 @@ extern void hashbucketcleanup(Relation rel, Bucket cur_bucket,
 				  bool bucket_has_garbage,
 				  IndexBulkDeleteCallback callback, void *callback_state);
 
-#endif   /* HASH_H */
+#endif							/* HASH_H */

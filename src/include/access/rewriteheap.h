@@ -54,4 +54,4 @@ typedef struct LogicalRewriteMappingData
 #define LOGICAL_REWRITE_FORMAT "map-%x-%x-%X_%X-%x-%x"
 void		CheckPointLogicalRewriteHeap(void);
 
-#endif   /* REWRITE_HEAP_H */
+#endif							/* REWRITE_HEAP_H */

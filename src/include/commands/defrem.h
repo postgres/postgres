@@ -164,4 +164,4 @@ extern TypeName *defGetTypeName(DefElem *def);
 extern int	defGetTypeLength(DefElem *def);
 extern List *defGetStringList(DefElem *def);
 
-#endif   /* DEFREM_H */
+#endif							/* DEFREM_H */

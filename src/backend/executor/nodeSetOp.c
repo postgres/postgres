@@ -263,7 +263,7 @@ setop_retrieve_direct(SetOpState *setopstate)
 					   resultTupleSlot,
 					   InvalidBuffer,
 					   true);
-		setopstate->grp_firstTuple = NULL;		/* don't keep two pointers */
+		setopstate->grp_firstTuple = NULL;	/* don't keep two pointers */
 
 		/* Initialize working state for a new input tuple group */
 		initialize_counts(pergroup);

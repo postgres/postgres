@@ -27,4 +27,4 @@ extern void CheckPointSUBTRANS(void);
 extern void ExtendSUBTRANS(TransactionId newestXact);
 extern void TruncateSUBTRANS(TransactionId oldestXact);
 
-#endif   /* SUBTRANS_H */
+#endif							/* SUBTRANS_H */

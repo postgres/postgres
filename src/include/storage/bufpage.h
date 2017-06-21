@@ -173,13 +173,12 @@ typedef PageHeaderData *PageHeader;
  * page for its new tuple version; this suggests that a prune is needed.
  * Again, this is just a hint.
  */
-#define PD_HAS_FREE_LINES	0x0001		/* are there any unused line pointers? */
-#define PD_PAGE_FULL		0x0002		/* not enough free space for new
-										 * tuple? */
-#define PD_ALL_VISIBLE		0x0004		/* all tuples on page are visible to
-										 * everyone */
+#define PD_HAS_FREE_LINES	0x0001	/* are there any unused line pointers? */
+#define PD_PAGE_FULL		0x0002	/* not enough free space for new tuple? */
+#define PD_ALL_VISIBLE		0x0004	/* all tuples on page are visible to
+									 * everyone */
 
-#define PD_VALID_FLAG_BITS	0x0007		/* OR of all valid pd_flags bits */
+#define PD_VALID_FLAG_BITS	0x0007	/* OR of all valid pd_flags bits */
 
 /*
  * Page layout version number 0 is for pre-7.3 Postgres releases.
@@ -436,4 +435,4 @@ extern bool PageIndexTupleOverwrite(Page page, OffsetNumber offnum,
 extern char *PageSetChecksumCopy(Page page, BlockNumber blkno);
 extern void PageSetChecksumInplace(Page page, BlockNumber blkno);
 
-#endif   /* BUFPAGE_H */
+#endif							/* BUFPAGE_H */

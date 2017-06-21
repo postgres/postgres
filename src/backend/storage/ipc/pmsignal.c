@@ -289,5 +289,5 @@ PostmasterIsAlive(void)
 	return false;
 #else							/* WIN32 */
 	return (WaitForSingleObject(PostmasterHandle, 0) == WAIT_TIMEOUT);
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 }

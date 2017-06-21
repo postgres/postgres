@@ -51,4 +51,4 @@ extern void binaryheap_replace_first(binaryheap *heap, Datum d);
 
 #define binaryheap_empty(h)			((h)->bh_size == 0)
 
-#endif   /* BINARYHEAP_H */
+#endif							/* BINARYHEAP_H */

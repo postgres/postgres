@@ -335,7 +335,7 @@ DecodeISO8601Interval(char *str,
  *	* Assert wasn't available so removed it.
  */
 int
-DecodeInterval(char **field, int *ftype, int nf,		/* int range, */
+DecodeInterval(char **field, int *ftype, int nf,	/* int range, */
 			   int *dtype, struct /* pg_ */ tm *tm, fsec_t *fsec)
 {
 	int			IntervalStyle = INTSTYLE_POSTGRES_VERBOSE;

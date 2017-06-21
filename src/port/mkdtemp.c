@@ -66,7 +66,7 @@ static char sccsid[] = "@(#)mktemp.c	8.1 (Berkeley) 6/4/93";
 #else
 __RCSID("$NetBSD: gettemp.c,v 1.17 2014/01/21 19:09:48 seanb Exp $");
 #endif
-#endif   /* LIBC_SCCS and not lint */
+#endif							/* LIBC_SCCS and not lint */
 #endif
 
 #include <sys/types.h>
@@ -215,7 +215,7 @@ GETTEMP(char *path, int *doopen, int domkdir)
 	/* NOTREACHED */
 }
 
-#endif   /* !HAVE_NBTOOL_CONFIG_H || !HAVE_MKSTEMP ||
+#endif							/* !HAVE_NBTOOL_CONFIG_H || !HAVE_MKSTEMP ||
 								 * !HAVE_MKDTEMP */
 
 
@@ -265,7 +265,7 @@ static char sccsid[] = "@(#)mktemp.c	8.1 (Berkeley) 6/4/93";
 #else
 __RCSID("$NetBSD: mkdtemp.c,v 1.11 2012/03/15 18:22:30 christos Exp $");
 #endif
-#endif   /* LIBC_SCCS and not lint */
+#endif							/* LIBC_SCCS and not lint */
 
 #if HAVE_NBTOOL_CONFIG_H
 #define GETTEMP		__nbcompat_gettemp
@@ -290,4 +290,4 @@ mkdtemp(char *path)
 	return GETTEMP(path, NULL, 1) ? path : NULL;
 }
 
-#endif   /* !HAVE_NBTOOL_CONFIG_H || !HAVE_MKDTEMP */
+#endif							/* !HAVE_NBTOOL_CONFIG_H || !HAVE_MKDTEMP */

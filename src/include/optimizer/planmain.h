@@ -120,4 +120,4 @@ extern void extract_query_dependencies(Node *query,
 						   List **invalItems,
 						   bool *hasRowSecurity);
 
-#endif   /* PLANMAIN_H */
+#endif							/* PLANMAIN_H */

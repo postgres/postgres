@@ -352,7 +352,7 @@ do_compile(FunctionCallInfo fcinfo,
 	function->fn_tid = procTup->t_self;
 	function->fn_input_collation = fcinfo->fncollation;
 	function->fn_cxt = func_cxt;
-	function->out_param_varno = -1;		/* set up for no OUT param */
+	function->out_param_varno = -1; /* set up for no OUT param */
 	function->resolve_option = plpgsql_variable_conflict;
 	function->print_strict_params = plpgsql_print_strict_params;
 	/* only promote extra warnings and errors at CREATE FUNCTION time */
@@ -838,7 +838,7 @@ plpgsql_compile_inline(char *proc_source)
 	function->fn_is_trigger = PLPGSQL_NOT_TRIGGER;
 	function->fn_input_collation = InvalidOid;
 	function->fn_cxt = func_cxt;
-	function->out_param_varno = -1;		/* set up for no OUT param */
+	function->out_param_varno = -1; /* set up for no OUT param */
 	function->resolve_option = plpgsql_variable_conflict;
 	function->print_strict_params = plpgsql_print_strict_params;
 
@@ -1439,7 +1439,7 @@ plpgsql_parse_dblword(char *word1, char *word2,
 					/* Block-qualified reference to scalar variable. */
 					wdatum->datum = plpgsql_Datums[ns->itemno];
 					wdatum->ident = NULL;
-					wdatum->quoted = false;		/* not used */
+					wdatum->quoted = false; /* not used */
 					wdatum->idents = idents;
 					return true;
 
@@ -1469,7 +1469,7 @@ plpgsql_parse_dblword(char *word1, char *word2,
 						wdatum->datum = plpgsql_Datums[ns->itemno];
 					}
 					wdatum->ident = NULL;
-					wdatum->quoted = false;		/* not used */
+					wdatum->quoted = false; /* not used */
 					wdatum->idents = idents;
 					return true;
 

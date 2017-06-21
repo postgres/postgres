@@ -99,7 +99,7 @@ range_sockaddr_AF_INET6(const struct sockaddr_in6 *addr,
 
 	return 1;
 }
-#endif   /* HAVE_IPV6 */
+#endif							/* HAVE_IPV6 */
 
 /*
  *	pg_sockaddr_cidr_mask - make a network mask of the appropriate family
@@ -471,7 +471,7 @@ pg_foreach_ifaddr(PgIfAddrCallback callback, void *cb_data)
 #define _SIZEOF_ADDR_IFREQ(ifr) \
 	sizeof (struct ifreq)
 #endif
-#endif   /* !_SIZEOF_ADDR_IFREQ */
+#endif							/* !_SIZEOF_ADDR_IFREQ */
 
 /*
  * Enumerate the system's network interface addresses and call the callback
@@ -589,6 +589,6 @@ pg_foreach_ifaddr(PgIfAddrCallback callback, void *cb_data)
 
 	return 0;
 }
-#endif   /* !defined(SIOCGIFCONF) */
+#endif							/* !defined(SIOCGIFCONF) */
 
-#endif   /* !HAVE_GETIFADDRS */
+#endif							/* !HAVE_GETIFADDRS */

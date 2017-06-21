@@ -155,4 +155,4 @@ pg_backend_random(char *dst, int len)
 }
 
 
-#endif   /* HAVE_STRONG_RANDOM */
+#endif							/* HAVE_STRONG_RANDOM */

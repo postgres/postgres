@@ -814,7 +814,7 @@ get_func_arg_info(HeapTuple procTup,
 		 * deconstruct_array() since the array data is just going to look like
 		 * a C array of values.
 		 */
-		arr = DatumGetArrayTypeP(proallargtypes);		/* ensure not toasted */
+		arr = DatumGetArrayTypeP(proallargtypes);	/* ensure not toasted */
 		numargs = ARR_DIMS(arr)[0];
 		if (ARR_NDIM(arr) != 1 ||
 			numargs < 0 ||
@@ -953,7 +953,7 @@ get_func_input_arg_names(Datum proargnames, Datum proargmodes,
 	 * For proargmodes, we don't need to use deconstruct_array() since the
 	 * array data is just going to look like a C array of values.
 	 */
-	arr = DatumGetArrayTypeP(proargnames);		/* ensure not toasted */
+	arr = DatumGetArrayTypeP(proargnames);	/* ensure not toasted */
 	if (ARR_NDIM(arr) != 1 ||
 		ARR_HASNULL(arr) ||
 		ARR_ELEMTYPE(arr) != TEXTOID)
@@ -1200,7 +1200,7 @@ build_function_result_tupdesc_d(Datum proallargtypes,
 		ARR_ELEMTYPE(arr) != OIDOID)
 		elog(ERROR, "proallargtypes is not a 1-D Oid array");
 	argtypes = (Oid *) ARR_DATA_PTR(arr);
-	arr = DatumGetArrayTypeP(proargmodes);		/* ensure not toasted */
+	arr = DatumGetArrayTypeP(proargmodes);	/* ensure not toasted */
 	if (ARR_NDIM(arr) != 1 ||
 		ARR_DIMS(arr)[0] != numargs ||
 		ARR_HASNULL(arr) ||

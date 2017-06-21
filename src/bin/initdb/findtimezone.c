@@ -279,7 +279,7 @@ score_timezone(const char *tzname, struct tztry *tt)
 			if (pgtm->tm_zone == NULL)
 				return -1;		/* probably shouldn't happen */
 			memset(cbuf, 0, sizeof(cbuf));
-			strftime(cbuf, sizeof(cbuf) - 1, "%Z", systm);		/* zone abbr */
+			strftime(cbuf, sizeof(cbuf) - 1, "%Z", systm);	/* zone abbr */
 			if (strcmp(cbuf, pgtm->tm_zone) != 0)
 			{
 #ifdef DEBUG_IDENTIFY_TIMEZONE
@@ -1336,7 +1336,7 @@ identify_system_timezone(void)
 #endif
 	return NULL;				/* go to GMT */
 }
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 
 
 /*

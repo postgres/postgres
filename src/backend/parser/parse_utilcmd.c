@@ -91,7 +91,7 @@ typedef struct
 								 * the table */
 	IndexStmt  *pkey;			/* PRIMARY KEY index, if any */
 	bool		ispartitioned;	/* true if table is partitioned */
-	PartitionBoundSpec *partbound;		/* transformed FOR VALUES */
+	PartitionBoundSpec *partbound;	/* transformed FOR VALUES */
 } CreateStmtContext;
 
 /* State shared by transformCreateSchemaStmt and its subroutines */
@@ -1213,7 +1213,7 @@ transformOfType(CreateStmtContext *cxt, TypeName *ofTypename)
 	tuple = typenameType(NULL, ofTypename, NULL);
 	check_of_type(tuple);
 	ofTypeId = HeapTupleGetOid(tuple);
-	ofTypename->typeOid = ofTypeId;		/* cached for later */
+	ofTypename->typeOid = ofTypeId; /* cached for later */
 
 	tupdesc = lookup_rowtype_tupdesc(ofTypeId, -1);
 	for (i = 0; i < tupdesc->natts; i++)
@@ -2403,7 +2403,7 @@ transformRuleStmt(RuleStmt *stmt, const char *queryString,
 	assign_expr_collations(pstate, *whereClause);
 
 	/* this is probably dead code without add_missing_from: */
-	if (list_length(pstate->p_rtable) != 2)		/* naughty, naughty... */
+	if (list_length(pstate->p_rtable) != 2) /* naughty, naughty... */
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 				 errmsg("rule WHERE condition cannot contain references to other relations")));
@@ -2420,7 +2420,7 @@ transformRuleStmt(RuleStmt *stmt, const char *queryString,
 
 		nothing_qry->commandType = CMD_NOTHING;
 		nothing_qry->rtable = pstate->p_rtable;
-		nothing_qry->jointree = makeFromExpr(NIL, NULL);		/* no join wanted */
+		nothing_qry->jointree = makeFromExpr(NIL, NULL);	/* no join wanted */
 
 		*actions = list_make1(nothing_qry);
 	}

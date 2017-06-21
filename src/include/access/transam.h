@@ -183,4 +183,4 @@ extern void AdvanceOldestClogXid(TransactionId oldest_datfrozenxid);
 extern bool ForceTransactionIdLimitUpdate(void);
 extern Oid	GetNewObjectId(void);
 
-#endif   /* TRAMSAM_H */
+#endif							/* TRAMSAM_H */

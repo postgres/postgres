@@ -83,7 +83,7 @@
  */
 #ifdef HAVE_COMPUTED_GOTO
 #define EEO_USE_COMPUTED_GOTO
-#endif   /* HAVE_COMPUTED_GOTO */
+#endif							/* HAVE_COMPUTED_GOTO */
 
 /*
  * Macros for opcode dispatch.
@@ -112,7 +112,7 @@ static const void **dispatch_table = NULL;
 #define EEO_DISPATCH()		goto starteval
 #define EEO_OPCODE(opcode)	(opcode)
 
-#endif   /* EEO_USE_COMPUTED_GOTO */
+#endif							/* EEO_USE_COMPUTED_GOTO */
 
 #define EEO_NEXT() \
 	do { \
@@ -256,7 +256,7 @@ ExecReadyInterpretedExpr(ExprState *state)
 
 		state->flags |= EEO_FLAG_DIRECT_THREADED;
 	}
-#endif   /* EEO_USE_COMPUTED_GOTO */
+#endif							/* EEO_USE_COMPUTED_GOTO */
 
 	state->evalfunc = ExecInterpExpr;
 }
@@ -373,7 +373,7 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 		return PointerGetDatum(dispatch_table);
 #else
 	Assert(state != NULL);
-#endif   /* EEO_USE_COMPUTED_GOTO */
+#endif							/* EEO_USE_COMPUTED_GOTO */
 
 	/* setup state */
 	op = state->steps;
@@ -1559,7 +1559,7 @@ CheckVarSlotCompatibility(TupleTableSlot *slot, int attnum, Oid vartype)
 		TupleDesc	slot_tupdesc = slot->tts_tupleDescriptor;
 		Form_pg_attribute attr;
 
-		if (attnum > slot_tupdesc->natts)		/* should never happen */
+		if (attnum > slot_tupdesc->natts)	/* should never happen */
 			elog(ERROR, "attribute number %d exceeds number of columns %d",
 				 attnum, slot_tupdesc->natts);
 
@@ -2475,7 +2475,7 @@ ExecEvalFieldSelect(ExprState *state, ExprEvalStep *op, ExprContext *econtext)
 	if (fieldnum <= 0)			/* should never happen */
 		elog(ERROR, "unsupported reference to system column %d in FieldSelect",
 			 fieldnum);
-	if (fieldnum > tupDesc->natts)		/* should never happen */
+	if (fieldnum > tupDesc->natts)	/* should never happen */
 		elog(ERROR, "attribute number %d exceeds number of columns %d",
 			 fieldnum, tupDesc->natts);
 	attr = tupDesc->attrs[fieldnum - 1];

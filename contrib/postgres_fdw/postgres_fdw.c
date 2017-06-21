@@ -899,14 +899,14 @@ postgresGetForeignPaths(PlannerInfo *root,
 	 * to estimate cost and size of this path.
 	 */
 	path = create_foreignscan_path(root, baserel,
-								   NULL,		/* default pathtarget */
+								   NULL,	/* default pathtarget */
 								   fpinfo->rows,
 								   fpinfo->startup_cost,
 								   fpinfo->total_cost,
 								   NIL, /* no pathkeys */
-								   NULL,		/* no outer rel either */
-								   NULL,		/* no extra plan */
-								   NIL);		/* no fdw_private list */
+								   NULL,	/* no outer rel either */
+								   NULL,	/* no extra plan */
+								   NIL);	/* no fdw_private list */
 	add_path(baserel, (Path *) path);
 
 	/* Add paths with pathkeys */
@@ -1075,7 +1075,7 @@ postgresGetForeignPaths(PlannerInfo *root,
 									   rows,
 									   startup_cost,
 									   total_cost,
-									   NIL,		/* no pathkeys */
+									   NIL, /* no pathkeys */
 									   param_info->ppi_req_outer,
 									   NULL,
 									   NIL);	/* no fdw_private list */
@@ -1591,7 +1591,7 @@ postgresPlanForeignModify(PlannerInfo *root,
 			/* bit numbers are offset by FirstLowInvalidHeapAttributeNumber */
 			AttrNumber	attno = col + FirstLowInvalidHeapAttributeNumber;
 
-			if (attno <= InvalidAttrNumber)		/* shouldn't happen */
+			if (attno <= InvalidAttrNumber) /* shouldn't happen */
 				elog(ERROR, "system-column update is not supported");
 			targetAttrs = lappend_int(targetAttrs, attno);
 		}
@@ -2173,7 +2173,7 @@ postgresPlanDirectModify(PlannerInfo *root,
 			AttrNumber	attno = col + FirstLowInvalidHeapAttributeNumber;
 			TargetEntry *tle;
 
-			if (attno <= InvalidAttrNumber)		/* shouldn't happen */
+			if (attno <= InvalidAttrNumber) /* shouldn't happen */
 				elog(ERROR, "system-column update is not supported");
 
 			tle = get_tle_by_resno(subplan->targetlist, attno);
@@ -4305,7 +4305,7 @@ foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
 	 * Note that since this joinrel is at the end of the join_rel_list list
 	 * when we are called, we can get the position by list_length.
 	 */
-	Assert(fpinfo->relation_index == 0);		/* shouldn't be set yet */
+	Assert(fpinfo->relation_index == 0);	/* shouldn't be set yet */
 	fpinfo->relation_index =
 		list_length(root->parse->rtable) + list_length(root->join_rel_list);
 
@@ -4316,7 +4316,7 @@ static void
 add_paths_with_pathkeys_for_rel(PlannerInfo *root, RelOptInfo *rel,
 								Path *epq_path)
 {
-	List	   *useful_pathkeys_list = NIL;		/* List of all pathkeys */
+	List	   *useful_pathkeys_list = NIL; /* List of all pathkeys */
 	ListCell   *lc;
 
 	useful_pathkeys_list = get_useful_pathkeys_for_relation(root, rel);
@@ -4568,7 +4568,7 @@ postgresGetForeignJoinPaths(PlannerInfo *root,
 									   rows,
 									   startup_cost,
 									   total_cost,
-									   NIL,		/* no pathkeys */
+									   NIL, /* no pathkeys */
 									   NULL,	/* no required_outer */
 									   epq_path,
 									   NIL);	/* no fdw_private */

@@ -28,12 +28,12 @@
 /* Workspace for split_pathtarget_walker */
 typedef struct
 {
-	List	   *input_target_exprs;		/* exprs available from input */
+	List	   *input_target_exprs; /* exprs available from input */
 	List	   *level_srfs;		/* list of lists of SRF exprs */
-	List	   *level_input_vars;		/* vars needed by SRFs of each level */
-	List	   *level_input_srfs;		/* SRFs needed by SRFs of each level */
-	List	   *current_input_vars;		/* vars needed in current subexpr */
-	List	   *current_input_srfs;		/* SRFs needed in current subexpr */
+	List	   *level_input_vars;	/* vars needed by SRFs of each level */
+	List	   *level_input_srfs;	/* SRFs needed by SRFs of each level */
+	List	   *current_input_vars; /* vars needed in current subexpr */
+	List	   *current_input_srfs; /* SRFs needed in current subexpr */
 	int			current_depth;	/* max SRF depth in current subexpr */
 } split_pathtarget_context;
 
@@ -145,7 +145,7 @@ add_to_flat_tlist(List *tlist, List *exprs)
 		{
 			TargetEntry *tle;
 
-			tle = makeTargetEntry(copyObject(expr),		/* copy needed?? */
+			tle = makeTargetEntry(copyObject(expr), /* copy needed?? */
 								  next_resno++,
 								  NULL,
 								  false);

@@ -18,4 +18,4 @@
 
 extern pg_wchar *unicode_normalize_kc(const pg_wchar *input);
 
-#endif   /* UNICODE_NORM_H */
+#endif							/* UNICODE_NORM_H */

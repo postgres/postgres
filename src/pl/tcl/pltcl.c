@@ -135,16 +135,16 @@ typedef struct pltcl_interp_desc
 typedef struct pltcl_proc_desc
 {
 	char	   *user_proname;	/* user's name (from pg_proc.proname) */
-	char	   *internal_proname;		/* Tcl name (based on function OID) */
+	char	   *internal_proname;	/* Tcl name (based on function OID) */
 	MemoryContext fn_cxt;		/* memory context for this procedure */
 	unsigned long fn_refcount;	/* number of active references */
 	TransactionId fn_xmin;		/* xmin of pg_proc row */
 	ItemPointerData fn_tid;		/* TID of pg_proc row */
 	bool		fn_readonly;	/* is function readonly? */
 	bool		lanpltrusted;	/* is it pltcl (vs. pltclu)? */
-	pltcl_interp_desc *interp_desc;		/* interpreter to use */
+	pltcl_interp_desc *interp_desc; /* interpreter to use */
 	FmgrInfo	result_in_func; /* input function for fn's result type */
-	Oid			result_typioparam;		/* param to pass to same */
+	Oid			result_typioparam;	/* param to pass to same */
 	bool		fn_retisset;	/* true if function returns a set */
 	bool		fn_retistuple;	/* true if function returns composite */
 	int			nargs;			/* number of arguments */
@@ -221,8 +221,8 @@ typedef struct pltcl_call_state
 	AttInMetadata *attinmeta;	/* metadata for building tuples of that type */
 
 	ReturnSetInfo *rsi;			/* passed-in ReturnSetInfo, if any */
-	Tuplestorestate *tuple_store;		/* SRFs accumulate result here */
-	MemoryContext tuple_store_cxt;		/* context and resowner for tuplestore */
+	Tuplestorestate *tuple_store;	/* SRFs accumulate result here */
+	MemoryContext tuple_store_cxt;	/* context and resowner for tuplestore */
 	ResourceOwner tuple_store_owner;
 } pltcl_call_state;
 
@@ -1054,7 +1054,7 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS, pltcl_call_state *call_state,
 	/* Find or compile the function */
 	prodesc = compile_pltcl_function(fcinfo->flinfo->fn_oid,
 									 RelationGetRelid(trigdata->tg_relation),
-									 false,		/* not an event trigger */
+									 false, /* not an event trigger */
 									 pltrusted);
 
 	call_state->prodesc = prodesc;

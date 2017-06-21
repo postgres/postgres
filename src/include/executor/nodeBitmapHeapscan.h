@@ -28,4 +28,4 @@ extern void ExecBitmapHeapInitializeDSM(BitmapHeapScanState *node,
 extern void ExecBitmapHeapInitializeWorker(BitmapHeapScanState *node,
 							   shm_toc *toc);
 
-#endif   /* NODEBITMAPHEAPSCAN_H */
+#endif							/* NODEBITMAPHEAPSCAN_H */

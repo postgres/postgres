@@ -81,4 +81,4 @@ extern char *makeArrayTypeName(const char *typeName, Oid typeNamespace);
 extern bool moveArrayTypeName(Oid typeOid, const char *typeName,
 				  Oid typeNamespace);
 
-#endif   /* PG_TYPE_FN_H */
+#endif							/* PG_TYPE_FN_H */

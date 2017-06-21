@@ -32,4 +32,4 @@ extern ObjectAddress ExecAlterOwnerStmt(AlterOwnerStmt *stmt);
 extern void AlterObjectOwner_internal(Relation catalog, Oid objectId,
 						  Oid new_ownerId);
 
-#endif   /* ALTER_H */
+#endif							/* ALTER_H */

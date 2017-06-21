@@ -54,7 +54,7 @@ struct fp_info
 	Oid			namespace;		/* other stuff from pg_proc */
 	Oid			rettype;
 	Oid			argtypes[FUNC_MAX_ARGS];
-	char		fname[NAMEDATALEN];		/* function name for logging */
+	char		fname[NAMEDATALEN]; /* function name for logging */
 };
 
 
@@ -293,7 +293,7 @@ HandleFunctionRequest(StringInfo msgBuf)
 	if (PG_PROTOCOL_MAJOR(FrontendProtocol) < 3)
 		(void) pq_getmsgstring(msgBuf); /* dummy string */
 
-	fid = (Oid) pq_getmsgint(msgBuf, 4);		/* function oid */
+	fid = (Oid) pq_getmsgint(msgBuf, 4);	/* function oid */
 
 	/*
 	 * There used to be a lame attempt at caching lookup info here. Now we

@@ -48,7 +48,7 @@ typedef struct IndexVacuumInfo
 	bool		estimated_count;	/* num_heap_tuples is an estimate */
 	int			message_level;	/* ereport level for progress messages */
 	double		num_heap_tuples;	/* tuples remaining in heap */
-	BufferAccessStrategy strategy;		/* access strategy for reads */
+	BufferAccessStrategy strategy;	/* access strategy for reads */
 } IndexVacuumInfo;
 
 /*
@@ -73,7 +73,7 @@ typedef struct IndexBulkDeleteResult
 	BlockNumber num_pages;		/* pages remaining in index */
 	BlockNumber pages_removed;	/* # removed during vacuum operation */
 	bool		estimated_count;	/* num_index_tuples is an estimate */
-	double		num_index_tuples;		/* tuples remaining */
+	double		num_index_tuples;	/* tuples remaining */
 	double		tuples_removed; /* # removed during vacuum operation */
 	BlockNumber pages_deleted;	/* # unused pages in index */
 	BlockNumber pages_free;		/* # pages available for reuse */
@@ -203,4 +203,4 @@ extern HeapTuple systable_getnext_ordered(SysScanDesc sysscan,
 						 ScanDirection direction);
 extern void systable_endscan_ordered(SysScanDesc sysscan);
 
-#endif   /* GENAM_H */
+#endif							/* GENAM_H */

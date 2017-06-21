@@ -71,4 +71,4 @@ extern void gincostestimate(struct PlannerInfo *root,
 				double *indexCorrelation,
 				double *indexPages);
 
-#endif   /* INDEX_SELFUNCS_H */
+#endif							/* INDEX_SELFUNCS_H */

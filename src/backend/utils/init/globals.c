@@ -62,10 +62,10 @@ char	   *DataDir = NULL;
 char		OutputFileName[MAXPGPATH];	/* debugging output file */
 
 char		my_exec_path[MAXPGPATH];	/* full path to my executable */
-char		pkglib_path[MAXPGPATH];		/* full path to lib directory */
+char		pkglib_path[MAXPGPATH]; /* full path to lib directory */
 
 #ifdef EXEC_BACKEND
-char		postgres_exec_path[MAXPGPATH];		/* full path to backend */
+char		postgres_exec_path[MAXPGPATH];	/* full path to backend */
 
 /* note: currently this is not valid in backend processes */
 #endif
@@ -126,7 +126,7 @@ int			max_worker_processes = 8;
 int			max_parallel_workers = 8;
 int			MaxBackends = 0;
 
-int			VacuumCostPageHit = 1;		/* GUC parameters for vacuum */
+int			VacuumCostPageHit = 1;	/* GUC parameters for vacuum */
 int			VacuumCostPageMiss = 10;
 int			VacuumCostPageDirty = 20;
 int			VacuumCostLimit = 200;
@@ -136,5 +136,5 @@ int			VacuumPageHit = 0;
 int			VacuumPageMiss = 0;
 int			VacuumPageDirty = 0;
 
-int			VacuumCostBalance = 0;		/* working state for vacuum */
+int			VacuumCostBalance = 0;	/* working state for vacuum */
 bool		VacuumCostActive = false;

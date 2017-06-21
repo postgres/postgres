@@ -1249,7 +1249,7 @@ addRangeTableEntry(ParseState *pstate,
 	rte->inFromCl = inFromCl;
 
 	rte->requiredPerms = ACL_SELECT;
-	rte->checkAsUser = InvalidOid;		/* not set-uid by default, either */
+	rte->checkAsUser = InvalidOid;	/* not set-uid by default, either */
 	rte->selectedCols = NULL;
 	rte->insertedCols = NULL;
 	rte->updatedCols = NULL;
@@ -1304,7 +1304,7 @@ addRangeTableEntryForRelation(ParseState *pstate,
 	rte->inFromCl = inFromCl;
 
 	rte->requiredPerms = ACL_SELECT;
-	rte->checkAsUser = InvalidOid;		/* not set-uid by default, either */
+	rte->checkAsUser = InvalidOid;	/* not set-uid by default, either */
 	rte->selectedCols = NULL;
 	rte->insertedCols = NULL;
 	rte->updatedCols = NULL;
@@ -1471,7 +1471,7 @@ addRangeTableEntryForFunction(ParseState *pstate,
 		rtfunc->funccoltypes = NIL;
 		rtfunc->funccoltypmods = NIL;
 		rtfunc->funccolcollations = NIL;
-		rtfunc->funcparams = NULL;		/* not set until planning */
+		rtfunc->funcparams = NULL;	/* not set until planning */
 
 		/*
 		 * Now determine if the function returns a simple or composite type.
@@ -2615,7 +2615,7 @@ expandRelAttrs(ParseState *pstate, RangeTblEntry *rte,
 		markVarForSelectPriv(pstate, varnode, rte);
 	}
 
-	Assert(name == NULL && var == NULL);		/* lists not the same length? */
+	Assert(name == NULL && var == NULL);	/* lists not the same length? */
 
 	return te_list;
 }
@@ -2684,7 +2684,7 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 				tp = SearchSysCache2(ATTNUM,
 									 ObjectIdGetDatum(rte->relid),
 									 Int16GetDatum(attnum));
-				if (!HeapTupleIsValid(tp))		/* shouldn't happen */
+				if (!HeapTupleIsValid(tp))	/* shouldn't happen */
 					elog(ERROR, "cache lookup failed for attribute %d of relation %u",
 						 attnum, rte->relid);
 				att_tup = (Form_pg_attribute) GETSTRUCT(tp);
@@ -2868,7 +2868,7 @@ get_rte_attribute_is_dropped(RangeTblEntry *rte, AttrNumber attnum)
 				tp = SearchSysCache2(ATTNUM,
 									 ObjectIdGetDatum(rte->relid),
 									 Int16GetDatum(attnum));
-				if (!HeapTupleIsValid(tp))		/* shouldn't happen */
+				if (!HeapTupleIsValid(tp))	/* shouldn't happen */
 					elog(ERROR, "cache lookup failed for attribute %d of relation %u",
 						 attnum, rte->relid);
 				att_tup = (Form_pg_attribute) GETSTRUCT(tp);

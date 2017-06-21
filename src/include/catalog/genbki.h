@@ -47,4 +47,4 @@
 #define DESCR(x)  extern int no_such_variable
 #define SHDESCR(x) extern int no_such_variable
 
-#endif   /* GENBKI_H */
+#endif							/* GENBKI_H */

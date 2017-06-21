@@ -21,4 +21,4 @@ extern Node *MultiExecBitmapOr(BitmapOrState *node);
 extern void ExecEndBitmapOr(BitmapOrState *node);
 extern void ExecReScanBitmapOr(BitmapOrState *node);
 
-#endif   /* NODEBITMAPOR_H */
+#endif							/* NODEBITMAPOR_H */

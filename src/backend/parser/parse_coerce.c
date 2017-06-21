@@ -549,7 +549,7 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *target_typeids,
 		/* accept if target is polymorphic, for now */
 		if (IsPolymorphicType(targetTypeId))
 		{
-			have_generics = true;		/* do more checking later */
+			have_generics = true;	/* do more checking later */
 			continue;
 		}
 
@@ -1443,7 +1443,7 @@ check_generic_type_consistency(Oid *actual_arg_types,
 		{
 			if (actual_type == UNKNOWNOID)
 				continue;
-			actual_type = getBaseType(actual_type);		/* flatten domains */
+			actual_type = getBaseType(actual_type); /* flatten domains */
 			if (OidIsValid(array_typeid) && actual_type != array_typeid)
 				return false;
 			array_typeid = actual_type;
@@ -1452,7 +1452,7 @@ check_generic_type_consistency(Oid *actual_arg_types,
 		{
 			if (actual_type == UNKNOWNOID)
 				continue;
-			actual_type = getBaseType(actual_type);		/* flatten domains */
+			actual_type = getBaseType(actual_type); /* flatten domains */
 			if (OidIsValid(range_typeid) && actual_type != range_typeid)
 				return false;
 			range_typeid = actual_type;
@@ -1662,7 +1662,7 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 			}
 			if (allow_poly && decl_type == actual_type)
 				continue;		/* no new information here */
-			actual_type = getBaseType(actual_type);		/* flatten domains */
+			actual_type = getBaseType(actual_type); /* flatten domains */
 			if (OidIsValid(array_typeid) && actual_type != array_typeid)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
@@ -1682,7 +1682,7 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 			}
 			if (allow_poly && decl_type == actual_type)
 				continue;		/* no new information here */
-			actual_type = getBaseType(actual_type);		/* flatten domains */
+			actual_type = getBaseType(actual_type); /* flatten domains */
 			if (OidIsValid(range_typeid) && actual_type != range_typeid)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),

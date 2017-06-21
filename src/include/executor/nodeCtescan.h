@@ -21,4 +21,4 @@ extern TupleTableSlot *ExecCteScan(CteScanState *node);
 extern void ExecEndCteScan(CteScanState *node);
 extern void ExecReScanCteScan(CteScanState *node);
 
-#endif   /* NODECTESCAN_H */
+#endif							/* NODECTESCAN_H */

@@ -46,7 +46,7 @@ typedef struct
 	TransactionId fn_xmin;		/* for checking up-to-dateness */
 	ItemPointerData fn_tid;
 	PGFunction	user_fn;		/* the function's address */
-	const Pg_finfo_record *inforec;		/* address of its info record */
+	const Pg_finfo_record *inforec; /* address of its info record */
 } CFuncHashTabEntry;
 
 static HTAB *CFuncHash = NULL;
@@ -172,7 +172,7 @@ fmgr_info_cxt_security(Oid functionId, FmgrInfo *finfo, MemoryContext mcxt,
 		finfo->fn_nargs = fbp->nargs;
 		finfo->fn_strict = fbp->strict;
 		finfo->fn_retset = fbp->retset;
-		finfo->fn_stats = TRACK_FUNC_ALL;		/* ie, never track */
+		finfo->fn_stats = TRACK_FUNC_ALL;	/* ie, never track */
 		finfo->fn_addr = fbp->func;
 		finfo->fn_oid = functionId;
 		return;
@@ -208,7 +208,7 @@ fmgr_info_cxt_security(Oid functionId, FmgrInfo *finfo, MemoryContext mcxt,
 		 FmgrHookIsNeeded(functionId)))
 	{
 		finfo->fn_addr = fmgr_security_definer;
-		finfo->fn_stats = TRACK_FUNC_ALL;		/* ie, never track */
+		finfo->fn_stats = TRACK_FUNC_ALL;	/* ie, never track */
 		finfo->fn_oid = functionId;
 		ReleaseSysCache(procedureTuple);
 		return;
@@ -1795,7 +1795,7 @@ Int64GetDatum(int64 X)
 	*retval = X;
 	return PointerGetDatum(retval);
 }
-#endif   /* USE_FLOAT8_BYVAL */
+#endif							/* USE_FLOAT8_BYVAL */
 
 #ifndef USE_FLOAT4_BYVAL
 

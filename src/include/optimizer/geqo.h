@@ -73,7 +73,7 @@ extern double Geqo_seed;		/* 0 .. 1 */
 typedef struct
 {
 	List	   *initial_rels;	/* the base relations we are joining */
-	unsigned short random_state[3];		/* state for pg_erand48() */
+	unsigned short random_state[3]; /* state for pg_erand48() */
 } GeqoPrivateData;
 
 
@@ -85,4 +85,4 @@ extern RelOptInfo *geqo(PlannerInfo *root,
 extern Cost geqo_eval(PlannerInfo *root, Gene *tour, int num_gene);
 extern RelOptInfo *gimme_tree(PlannerInfo *root, Gene *tour, int num_gene);
 
-#endif   /* GEQO_H */
+#endif							/* GEQO_H */

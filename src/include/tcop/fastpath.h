@@ -18,4 +18,4 @@
 extern int	GetOldFunctionMessage(StringInfo buf);
 extern void HandleFunctionRequest(StringInfo msgBuf);
 
-#endif   /* FASTPATH_H */
+#endif							/* FASTPATH_H */

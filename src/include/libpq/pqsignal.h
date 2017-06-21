@@ -28,7 +28,7 @@ extern int	pqsigsetmask(int mask);
 #define sigfillset(set)			(*(set) = ~0)
 #define sigaddset(set, signum)	(*(set) |= (sigmask(signum)))
 #define sigdelset(set, signum)	(*(set) &= ~(sigmask(signum)))
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 
 extern sigset_t UnBlockSig,
 			BlockSig,
@@ -36,4 +36,4 @@ extern sigset_t UnBlockSig,
 
 extern void pqinitmask(void);
 
-#endif   /* PQSIGNAL_H */
+#endif							/* PQSIGNAL_H */

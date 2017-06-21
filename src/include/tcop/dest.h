@@ -129,7 +129,7 @@ struct _DestReceiver
 	/* Private fields might appear beyond this point... */
 };
 
-extern DestReceiver *None_Receiver;		/* permanent receiver for DestNone */
+extern DestReceiver *None_Receiver; /* permanent receiver for DestNone */
 
 /* The primary destination management functions */
 
@@ -142,4 +142,4 @@ extern void EndCommand(const char *commandTag, CommandDest dest);
 extern void NullCommand(CommandDest dest);
 extern void ReadyForQuery(CommandDest dest);
 
-#endif   /* DEST_H */
+#endif							/* DEST_H */

@@ -93,7 +93,7 @@ typedef struct
 	char	   *fname;			/* function name (for error msgs) */
 	char	   *src;			/* function body text (for error msgs) */
 
-	SQLFunctionParseInfoPtr pinfo;		/* data for parser callback hooks */
+	SQLFunctionParseInfoPtr pinfo;	/* data for parser callback hooks */
 
 	Oid			rettype;		/* actual return type */
 	int16		typlen;			/* length of the return type */
@@ -245,13 +245,13 @@ prepare_sql_fn_parse_info(HeapTuple procedureTuple,
 									  Anum_pg_proc_proargnames,
 									  &isNull);
 		if (isNull)
-			proargnames = PointerGetDatum(NULL);		/* just to be sure */
+			proargnames = PointerGetDatum(NULL);	/* just to be sure */
 
 		proargmodes = SysCacheGetAttr(PROCNAMEARGSNSP, procedureTuple,
 									  Anum_pg_proc_proargmodes,
 									  &isNull);
 		if (isNull)
-			proargmodes = PointerGetDatum(NULL);		/* just to be sure */
+			proargmodes = PointerGetDatum(NULL);	/* just to be sure */
 
 		n_arg_names = get_func_input_arg_names(proargnames, proargmodes,
 											   &pinfo->argnames);
@@ -648,7 +648,7 @@ init_sql_fcache(FmgrInfo *finfo, Oid collation, bool lazyEvalOK)
 	if (IsPolymorphicType(rettype))
 	{
 		rettype = get_fn_expr_rettype(finfo);
-		if (rettype == InvalidOid)		/* this probably should not happen */
+		if (rettype == InvalidOid)	/* this probably should not happen */
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("could not determine actual result type for function declared to return type %s",
@@ -1544,7 +1544,7 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 	AssertArg(!IsPolymorphicType(rettype));
 
 	if (modifyTargetList)
-		*modifyTargetList = false;		/* initialize for no change */
+		*modifyTargetList = false;	/* initialize for no change */
 	if (junkFilter)
 		*junkFilter = NULL;		/* initialize in case of VOID result */
 
@@ -1770,7 +1770,7 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 												   InvalidOid,
 												   sizeof(int32),
 												   (Datum) 0,
-												   true,		/* isnull */
+												   true,	/* isnull */
 												   true /* byval */ );
 					newtlist = lappend(newtlist,
 									   makeTargetEntry(null_expr,

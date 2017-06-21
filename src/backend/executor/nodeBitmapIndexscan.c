@@ -73,7 +73,7 @@ MultiExecBitmapIndexScan(BitmapIndexScanState *node)
 	if (node->biss_result)
 	{
 		tbm = node->biss_result;
-		node->biss_result = NULL;		/* reset for next time */
+		node->biss_result = NULL;	/* reset for next time */
 	}
 	else
 	{

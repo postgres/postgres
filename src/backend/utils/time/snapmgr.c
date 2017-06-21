@@ -72,7 +72,7 @@
 /*
  * GUC parameters
  */
-int			old_snapshot_threshold;		/* number of minutes, -1 disables */
+int			old_snapshot_threshold; /* number of minutes, -1 disables */
 
 /*
  * Structure for dealing with old_snapshot_threshold implementation.
@@ -84,9 +84,8 @@ typedef struct OldSnapshotControlData
 	 * only allowed to move forward.
 	 */
 	slock_t		mutex_current;	/* protect current_timestamp */
-	TimestampTz current_timestamp;		/* latest snapshot timestamp */
-	slock_t		mutex_latest_xmin;		/* protect latest_xmin and
-										 * next_map_update */
+	TimestampTz current_timestamp;	/* latest snapshot timestamp */
+	slock_t		mutex_latest_xmin;	/* protect latest_xmin and next_map_update */
 	TransactionId latest_xmin;	/* latest snapshot xmin */
 	TimestampTz next_map_update;	/* latest snapshot valid up to */
 	slock_t		mutex_threshold;	/* protect threshold fields */

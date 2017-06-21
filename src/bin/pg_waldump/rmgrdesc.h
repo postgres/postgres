@@ -19,4 +19,4 @@ typedef struct RmgrDescData
 
 extern const RmgrDescData RmgrDescTable[];
 
-#endif   /* RMGRDESC_H */
+#endif							/* RMGRDESC_H */

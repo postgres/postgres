@@ -83,7 +83,7 @@ RelationGetIndexScan(Relation indexRelation, int nkeys, int norderbys)
 
 	scan->heapRelation = NULL;	/* may be set later */
 	scan->indexRelation = indexRelation;
-	scan->xs_snapshot = InvalidSnapshot;		/* caller must initialize this */
+	scan->xs_snapshot = InvalidSnapshot;	/* caller must initialize this */
 	scan->numberOfKeys = nkeys;
 	scan->numberOfOrderBys = norderbys;
 

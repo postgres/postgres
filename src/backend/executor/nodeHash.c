@@ -1176,7 +1176,7 @@ ExecScanHashTableForUnmatched(HashJoinState *hjstate, ExprContext *econtext)
 				/* insert hashtable's tuple into exec slot */
 				inntuple = ExecStoreMinimalTuple(HJTUPLE_MINTUPLE(hashTuple),
 												 hjstate->hj_HashTupleSlot,
-												 false);		/* do not pfree */
+												 false);	/* do not pfree */
 				econtext->ecxt_innertuple = inntuple;
 
 				/*

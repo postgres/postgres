@@ -28,4 +28,4 @@ extern int	PGTYPESdate_fmt_asc(date, const char *, char *);
 }
 #endif
 
-#endif   /* PGTYPES_DATETIME */
+#endif							/* PGTYPES_DATETIME */

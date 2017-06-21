@@ -24,4 +24,4 @@ extern int durable_rename(const char *oldfile, const char *newfile,
 			   const char *progname);
 extern int	fsync_parent_path(const char *fname, const char *progname);
 
-#endif   /* FILE_UTILS_H */
+#endif							/* FILE_UTILS_H */

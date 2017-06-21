@@ -443,4 +443,4 @@ extern ExpandedArrayHeader *DatumGetExpandedArrayX(Datum d,
 extern AnyArrayType *DatumGetAnyArray(Datum d);
 extern void deconstruct_expanded_array(ExpandedArrayHeader *eah);
 
-#endif   /* ARRAY_H */
+#endif							/* ARRAY_H */

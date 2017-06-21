@@ -105,12 +105,12 @@ typedef struct GIST_SPLITVEC
 	OffsetNumber *spl_left;		/* array of entries that go left */
 	int			spl_nleft;		/* size of this array */
 	Datum		spl_ldatum;		/* Union of keys in spl_left */
-	bool		spl_ldatum_exists;		/* true, if spl_ldatum already exists. */
+	bool		spl_ldatum_exists;	/* true, if spl_ldatum already exists. */
 
 	OffsetNumber *spl_right;	/* array of entries that go right */
 	int			spl_nright;		/* size of the array */
 	Datum		spl_rdatum;		/* Union of keys in spl_right */
-	bool		spl_rdatum_exists;		/* true, if spl_rdatum already exists. */
+	bool		spl_rdatum_exists;	/* true, if spl_rdatum already exists. */
 } GIST_SPLITVEC;
 
 /*
@@ -170,4 +170,4 @@ typedef struct
 	do { (e).key = (k); (e).rel = (r); (e).page = (pg); \
 		 (e).offset = (o); (e).leafkey = (l); } while (0)
 
-#endif   /* GIST_H */
+#endif							/* GIST_H */

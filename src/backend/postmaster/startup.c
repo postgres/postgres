@@ -183,7 +183,7 @@ StartupProcessMain(void)
 	 */
 	pqsignal(SIGHUP, StartupProcSigHupHandler); /* reload config file */
 	pqsignal(SIGINT, SIG_IGN);	/* ignore query cancel */
-	pqsignal(SIGTERM, StartupProcShutdownHandler);		/* request shutdown */
+	pqsignal(SIGTERM, StartupProcShutdownHandler);	/* request shutdown */
 	pqsignal(SIGQUIT, startupproc_quickdie);	/* hard crash time */
 	InitializeTimeouts();		/* establishes SIGALRM handler */
 	pqsignal(SIGPIPE, SIG_IGN);

@@ -14,4 +14,4 @@
 
 #include "utils/probes.h"		/* pgrminclude ignore */
 
-#endif   /* PG_TRACE_H */
+#endif							/* PG_TRACE_H */

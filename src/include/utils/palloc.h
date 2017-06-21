@@ -113,7 +113,7 @@ MemoryContextSwitchTo(MemoryContext context)
 	CurrentMemoryContext = context;
 	return old;
 }
-#endif   /* FRONTEND */
+#endif							/* FRONTEND */
 
 /* Registration of memory context reset/delete callbacks */
 extern void MemoryContextRegisterResetCallback(MemoryContext context,
@@ -133,4 +133,4 @@ extern char *pchomp(const char *in);
 extern char *psprintf(const char *fmt,...) pg_attribute_printf(1, 2);
 extern size_t pvsnprintf(char *buf, size_t len, const char *fmt, va_list args) pg_attribute_printf(3, 0);
 
-#endif   /* PALLOC_H */
+#endif							/* PALLOC_H */

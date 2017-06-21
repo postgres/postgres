@@ -53,4 +53,4 @@ typedef FormData_pg_foreign_table *Form_pg_foreign_table;
 #define Anum_pg_foreign_table_ftserver			2
 #define Anum_pg_foreign_table_ftoptions			3
 
-#endif   /* PG_FOREIGN_TABLE_H */
+#endif							/* PG_FOREIGN_TABLE_H */

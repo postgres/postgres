@@ -19,15 +19,15 @@
 typedef struct BufferUsage
 {
 	long		shared_blks_hit;	/* # of shared buffer hits */
-	long		shared_blks_read;		/* # of shared disk blocks read */
+	long		shared_blks_read;	/* # of shared disk blocks read */
 	long		shared_blks_dirtied;	/* # of shared blocks dirtied */
 	long		shared_blks_written;	/* # of shared disk blocks written */
 	long		local_blks_hit; /* # of local buffer hits */
 	long		local_blks_read;	/* # of local disk blocks read */
-	long		local_blks_dirtied;		/* # of shared blocks dirtied */
-	long		local_blks_written;		/* # of local disk blocks written */
+	long		local_blks_dirtied; /* # of shared blocks dirtied */
+	long		local_blks_written; /* # of local disk blocks written */
 	long		temp_blks_read; /* # of temp blocks read */
-	long		temp_blks_written;		/* # of temp blocks written */
+	long		temp_blks_written;	/* # of temp blocks written */
 	instr_time	blk_read_time;	/* time spent reading */
 	instr_time	blk_write_time; /* time spent writing */
 } BufferUsage;
@@ -81,4 +81,4 @@ extern void InstrStartParallelQuery(void);
 extern void InstrEndParallelQuery(BufferUsage *result);
 extern void InstrAccumParallelQuery(BufferUsage *result);
 
-#endif   /* INSTRUMENT_H */
+#endif							/* INSTRUMENT_H */

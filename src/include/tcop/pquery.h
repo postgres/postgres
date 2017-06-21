@@ -42,4 +42,4 @@ extern uint64 PortalRunFetch(Portal portal,
 			   long count,
 			   DestReceiver *dest);
 
-#endif   /* PQUERY_H */
+#endif							/* PQUERY_H */

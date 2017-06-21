@@ -36,7 +36,7 @@ typedef struct
 	OffsetNumber newitemoff;	/* where the new item is to be inserted */
 	int			leftspace;		/* space available for items on left page */
 	int			rightspace;		/* space available for items on right page */
-	int			olddataitemstotal;		/* space taken by old items */
+	int			olddataitemstotal;	/* space taken by old items */
 
 	bool		have_split;		/* found a valid split? */
 

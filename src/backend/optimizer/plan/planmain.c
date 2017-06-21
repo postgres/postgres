@@ -246,7 +246,7 @@ query_planner(PlannerInfo *root, List *tlist,
 		if (brel == NULL)
 			continue;
 
-		Assert(brel->relid == rti);		/* sanity check on array */
+		Assert(brel->relid == rti); /* sanity check on array */
 
 		if (IS_SIMPLE_REL(brel))
 			total_pages += (double) brel->pages;

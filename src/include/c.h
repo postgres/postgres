@@ -62,7 +62,7 @@
 #define WIN32
 #endif
 
-#if !defined(WIN32) && !defined(__CYGWIN__)		/* win32 includes further down */
+#if !defined(WIN32) && !defined(__CYGWIN__) /* win32 includes further down */
 #include "pg_config_os.h"		/* must be before any system header files */
 #endif
 
@@ -209,7 +209,7 @@ typedef char bool;
 #ifndef false
 #define false	((bool) 0)
 #endif
-#endif   /* not C++ */
+#endif							/* not C++ */
 
 typedef bool *BoolPtr;
 
@@ -254,7 +254,7 @@ typedef char *Pointer;
 typedef signed char int8;		/* == 8 bits */
 typedef signed short int16;		/* == 16 bits */
 typedef signed int int32;		/* == 32 bits */
-#endif   /* not HAVE_INT8 */
+#endif							/* not HAVE_INT8 */
 
 /*
  * uintN
@@ -266,7 +266,7 @@ typedef signed int int32;		/* == 32 bits */
 typedef unsigned char uint8;	/* == 8 bits */
 typedef unsigned short uint16;	/* == 16 bits */
 typedef unsigned int uint32;	/* == 32 bits */
-#endif   /* not HAVE_UINT8 */
+#endif							/* not HAVE_UINT8 */
 
 /*
  * bitsN
@@ -553,7 +553,7 @@ typedef NameData *Name;
  */
 #ifndef offsetof
 #define offsetof(type, field)	((long) &((type *)0)->field)
-#endif   /* offsetof */
+#endif							/* offsetof */
 
 /*
  * lengthof
@@ -732,7 +732,7 @@ typedef NameData *Name;
 	Trap(TYPEALIGN(bndr, (uintptr_t)(ptr)) != (uintptr_t)(ptr), \
 		 "UnalignedPointer")
 
-#endif   /* USE_ASSERT_CHECKING && !FRONTEND */
+#endif							/* USE_ASSERT_CHECKING && !FRONTEND */
 
 /*
  * Macros to support compile-time assertion checks.
@@ -758,7 +758,7 @@ typedef NameData *Name;
 	((void) sizeof(struct { int static_assert_failure : (condition) ? 1 : -1; }))
 #define StaticAssertExpr(condition, errmessage) \
 	StaticAssertStmt(condition, errmessage)
-#endif   /* HAVE__STATIC_ASSERT */
+#endif							/* HAVE__STATIC_ASSERT */
 
 
 /*
@@ -786,7 +786,7 @@ typedef NameData *Name;
 #define AssertVariableIsOfTypeMacro(varname, typename) \
 	((void) StaticAssertExpr(sizeof(varname) == sizeof(typename),		\
 	 CppAsString(varname) " does not have type " CppAsString(typename)))
-#endif   /* HAVE__BUILTIN_TYPES_COMPATIBLE_P */
+#endif							/* HAVE__BUILTIN_TYPES_COMPATIBLE_P */
 
 
 /* ----------------------------------------------------------------
@@ -1124,4 +1124,4 @@ extern int	fdatasync(int fildes);
 /* /port compatibility functions */
 #include "port.h"
 
-#endif   /* C_H */
+#endif							/* C_H */

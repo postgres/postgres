@@ -31,4 +31,4 @@ extern void print_pathkeys(const List *pathkeys, const List *rtable);
 extern void print_tl(const List *tlist, const List *rtable);
 extern void print_slot(TupleTableSlot *slot);
 
-#endif   /* PRINT_H */
+#endif							/* PRINT_H */

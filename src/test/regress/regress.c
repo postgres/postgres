@@ -550,7 +550,7 @@ ttdummy(PG_FUNCTION_ARGS)
 			return PointerGetDatum(NULL);
 		}
 	}
-	else if (oldoff != TTDUMMY_INFINITY)		/* DELETE */
+	else if (oldoff != TTDUMMY_INFINITY)	/* DELETE */
 	{
 		pfree(relname);
 		return PointerGetDatum(NULL);
@@ -579,7 +579,7 @@ ttdummy(PG_FUNCTION_ARGS)
 	{
 		cvals[attnum[0] - 1] = newoff;	/* start_date eq current date */
 		cnulls[attnum[0] - 1] = ' ';
-		cvals[attnum[1] - 1] = TTDUMMY_INFINITY;		/* stop_date eq INFINITY */
+		cvals[attnum[1] - 1] = TTDUMMY_INFINITY;	/* stop_date eq INFINITY */
 		cnulls[attnum[1] - 1] = ' ';
 	}
 	else
@@ -708,8 +708,7 @@ Datum
 int44out(PG_FUNCTION_ARGS)
 {
 	int32	   *an_array = (int32 *) PG_GETARG_POINTER(0);
-	char	   *result = (char *) palloc(16 * 4);		/* Allow 14 digits +
-														 * sign */
+	char	   *result = (char *) palloc(16 * 4);	/* Allow 14 digits + sign */
 	int			i;
 	char	   *walk;
 
@@ -896,7 +895,7 @@ test_atomic_flag(void)
 
 	pg_atomic_clear_flag(&flag);
 }
-#endif   /* PG_HAVE_ATOMIC_FLAG_SIMULATION */
+#endif							/* PG_HAVE_ATOMIC_FLAG_SIMULATION */
 
 static void
 test_atomic_uint32(void)

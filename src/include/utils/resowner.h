@@ -79,4 +79,4 @@ extern void RegisterResourceReleaseCallback(ResourceReleaseCallback callback,
 extern void UnregisterResourceReleaseCallback(ResourceReleaseCallback callback,
 								  void *arg);
 
-#endif   /* RESOWNER_H */
+#endif							/* RESOWNER_H */

@@ -1187,8 +1187,8 @@ connectby(char *relname,
 								 branch_delim,
 								 start_with,
 								 start_with,	/* current_branch */
-								 0,		/* initial level is 0 */
-								 &serial,		/* initial serial is 1 */
+								 0, /* initial level is 0 */
+								 &serial,	/* initial serial is 1 */
 								 max_depth,
 								 show_branch,
 								 show_serial,

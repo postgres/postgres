@@ -57,8 +57,8 @@ typedef struct EventTriggerQueryState
 	bool		in_sql_drop;
 
 	/* table_rewrite */
-	Oid			table_rewrite_oid;		/* InvalidOid, or set for
-										 * table_rewrite event */
+	Oid			table_rewrite_oid;	/* InvalidOid, or set for table_rewrite
+									 * event */
 	int			table_rewrite_reason;	/* AT_REWRITE reason */
 
 	/* Support for command collection */

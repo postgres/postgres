@@ -34,4 +34,4 @@ extern void AtEOXact_LargeObject(bool isCommit);
 extern void AtEOSubXact_LargeObject(bool isCommit, SubTransactionId mySubid,
 						SubTransactionId parentSubid);
 
-#endif   /* BE_FSSTUBS_H */
+#endif							/* BE_FSSTUBS_H */

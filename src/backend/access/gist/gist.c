@@ -1442,7 +1442,7 @@ initGISTstate(Relation index)
 	giststate = (GISTSTATE *) palloc(sizeof(GISTSTATE));
 
 	giststate->scanCxt = scanCxt;
-	giststate->tempCxt = scanCxt;		/* caller must change this if needed */
+	giststate->tempCxt = scanCxt;	/* caller must change this if needed */
 	giststate->tupdesc = index->rd_att;
 
 	for (i = 0; i < index->rd_att->natts; i++)

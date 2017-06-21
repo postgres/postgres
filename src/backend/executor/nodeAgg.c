@@ -511,9 +511,9 @@ typedef struct AggStatePerHashData
 	FmgrInfo   *eqfunctions;	/* per-grouping-field equality fns */
 	int			numCols;		/* number of hash key columns */
 	int			numhashGrpCols; /* number of columns in hash table */
-	int			largestGrpColIdx;		/* largest col required for hashing */
-	AttrNumber *hashGrpColIdxInput;		/* hash col indices in input slot */
-	AttrNumber *hashGrpColIdxHash;		/* indices in hashtbl tuples */
+	int			largestGrpColIdx;	/* largest col required for hashing */
+	AttrNumber *hashGrpColIdxInput; /* hash col indices in input slot */
+	AttrNumber *hashGrpColIdxHash;	/* indices in hashtbl tuples */
 	Agg		   *aggnode;		/* original Agg node, for numGroups etc. */
 }			AggStatePerHashData;
 
@@ -2373,8 +2373,7 @@ agg_retrieve_direct(AggState *aggstate)
 							   firstSlot,
 							   InvalidBuffer,
 							   true);
-				aggstate->grp_firstTuple = NULL;		/* don't keep two
-														 * pointers */
+				aggstate->grp_firstTuple = NULL;	/* don't keep two pointers */
 
 				/* set up for first advance_aggregates call */
 				tmpcontext->ecxt_outertuple = firstSlot;

@@ -49,4 +49,4 @@ typedef struct BrinStatsData
 
 extern void brinGetStats(Relation index, BrinStatsData *stats);
 
-#endif   /* BRIN_H */
+#endif							/* BRIN_H */

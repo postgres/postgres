@@ -40,4 +40,4 @@ extern void ExecParallelReinitialize(ParallelExecutorInfo *pei);
 
 extern void ParallelQueryMain(dsm_segment *seg, shm_toc *toc);
 
-#endif   /* EXECPARALLEL_H */
+#endif							/* EXECPARALLEL_H */

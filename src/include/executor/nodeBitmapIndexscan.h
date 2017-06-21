@@ -21,4 +21,4 @@ extern Node *MultiExecBitmapIndexScan(BitmapIndexScanState *node);
 extern void ExecEndBitmapIndexScan(BitmapIndexScanState *node);
 extern void ExecReScanBitmapIndexScan(BitmapIndexScanState *node);
 
-#endif   /* NODEBITMAPINDEXSCAN_H */
+#endif							/* NODEBITMAPINDEXSCAN_H */

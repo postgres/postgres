@@ -74,4 +74,4 @@ extern DateADT GetSQLCurrentDate(void);
 extern TimeTzADT *GetSQLCurrentTime(int32 typmod);
 extern TimeADT GetSQLLocalTime(int32 typmod);
 
-#endif   /* DATE_H */
+#endif							/* DATE_H */

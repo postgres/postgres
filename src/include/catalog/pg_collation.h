@@ -85,4 +85,4 @@ DESCR("standard POSIX collation");
 #define COLLPROVIDER_ICU		'i'
 #define COLLPROVIDER_LIBC		'c'
 
-#endif   /* PG_COLLATION_H */
+#endif							/* PG_COLLATION_H */

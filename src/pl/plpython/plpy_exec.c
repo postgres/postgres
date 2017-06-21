@@ -31,7 +31,7 @@ typedef struct PLySRFState
 {
 	PyObject   *iter;			/* Python iterator producing results */
 	PLySavedArgs *savedargs;	/* function argument values */
-	MemoryContextCallback callback;		/* for releasing refcounts when done */
+	MemoryContextCallback callback; /* for releasing refcounts when done */
 } PLySRFState;
 
 static PyObject *PLy_function_build_args(FunctionCallInfo fcinfo, PLyProcedure *proc);

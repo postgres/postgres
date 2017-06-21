@@ -1310,7 +1310,7 @@ check_ungrouped_columns_walker(Node *node,
 					gvar->varno == var->varno &&
 					gvar->varattno == var->varattno &&
 					gvar->varlevelsup == 0)
-					return false;		/* acceptable, we're okay */
+					return false;	/* acceptable, we're okay */
 			}
 		}
 

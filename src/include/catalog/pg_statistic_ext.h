@@ -77,4 +77,4 @@ typedef FormData_pg_statistic_ext *Form_pg_statistic_ext;
 #define STATS_EXT_NDISTINCT			'd'
 #define STATS_EXT_DEPENDENCIES		'f'
 
-#endif   /* PG_STATISTIC_EXT_H */
+#endif							/* PG_STATISTIC_EXT_H */

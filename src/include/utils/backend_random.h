@@ -16,4 +16,4 @@ extern Size BackendRandomShmemSize(void);
 extern void BackendRandomShmemInit(void);
 extern bool pg_backend_random(char *dst, int len);
 
-#endif   /* BACKEND_RANDOM_H */
+#endif							/* BACKEND_RANDOM_H */

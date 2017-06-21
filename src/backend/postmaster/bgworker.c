@@ -636,7 +636,7 @@ SanityCheckBackgroundWorker(BackgroundWorker *worker, int elevel)
 static void
 bgworker_quickdie(SIGNAL_ARGS)
 {
-	sigaddset(&BlockSig, SIGQUIT);		/* prevent nested calls */
+	sigaddset(&BlockSig, SIGQUIT);	/* prevent nested calls */
 	PG_SETMASK(&BlockSig);
 
 	/*
@@ -986,7 +986,7 @@ RegisterDynamicBackgroundWorker(BackgroundWorker *worker,
 		if (!slot->in_use)
 		{
 			memcpy(&slot->worker, worker, sizeof(BackgroundWorker));
-			slot->pid = InvalidPid;		/* indicates not started yet */
+			slot->pid = InvalidPid; /* indicates not started yet */
 			slot->generation++;
 			slot->terminate = false;
 			generation = slot->generation;

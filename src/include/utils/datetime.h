@@ -259,7 +259,7 @@ do { \
  * Include check for leap year.
  */
 
-extern const char *const months[];		/* months (3-char abbreviations) */
+extern const char *const months[];	/* months (3-char abbreviations) */
 extern const char *const days[];	/* days (full names) */
 extern const int day_tab[2][13];
 
@@ -338,4 +338,4 @@ extern TimeZoneAbbrevTable *ConvertTimeZoneAbbrevs(struct tzEntry *abbrevs,
 					   int n);
 extern void InstallTimeZoneAbbrevs(TimeZoneAbbrevTable *tbl);
 
-#endif   /* DATETIME_H */
+#endif							/* DATETIME_H */

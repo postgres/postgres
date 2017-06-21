@@ -1854,4 +1854,4 @@ DESCR("delete array element");
 DATA(insert OID = 3287 (  "#-"	   PGNSP PGUID b f f 3802 1009 3802 0 0 jsonb_delete_path - - ));
 DESCR("delete path");
 
-#endif   /* PG_OPERATOR_H */
+#endif							/* PG_OPERATOR_H */

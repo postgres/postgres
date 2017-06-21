@@ -96,4 +96,4 @@ typedef struct RelFileNodeBackend
 	 (node1).backend == (node2).backend && \
 	 (node1).node.spcNode == (node2).node.spcNode)
 
-#endif   /* RELFILENODE_H */
+#endif							/* RELFILENODE_H */

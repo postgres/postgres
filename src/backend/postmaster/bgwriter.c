@@ -122,8 +122,8 @@ BackgroundWriterMain(void)
 	 */
 	pqsignal(SIGHUP, BgSigHupHandler);	/* set flag to read config file */
 	pqsignal(SIGINT, SIG_IGN);
-	pqsignal(SIGTERM, ReqShutdownHandler);		/* shutdown */
-	pqsignal(SIGQUIT, bg_quickdie);		/* hard crash time */
+	pqsignal(SIGTERM, ReqShutdownHandler);	/* shutdown */
+	pqsignal(SIGQUIT, bg_quickdie); /* hard crash time */
 	pqsignal(SIGALRM, SIG_IGN);
 	pqsignal(SIGPIPE, SIG_IGN);
 	pqsignal(SIGUSR1, bgwriter_sigusr1_handler);

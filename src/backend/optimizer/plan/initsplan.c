@@ -287,7 +287,7 @@ find_lateral_references(PlannerInfo *root)
 		if (brel == NULL)
 			continue;
 
-		Assert(brel->relid == rti);		/* sanity check on array */
+		Assert(brel->relid == rti); /* sanity check on array */
 
 		/*
 		 * This bit is less obvious than it might look.  We ignore appendrel
@@ -436,7 +436,7 @@ create_lateral_join_info(PlannerInfo *root)
 		if (brel == NULL)
 			continue;
 
-		Assert(brel->relid == rti);		/* sanity check on array */
+		Assert(brel->relid == rti); /* sanity check on array */
 
 		/* ignore RTEs that are "other rels" */
 		if (brel->reloptkind != RELOPT_BASEREL)
@@ -945,7 +945,7 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 				/* JOIN_RIGHT was eliminated during reduce_outer_joins() */
 				elog(ERROR, "unrecognized join type: %d",
 					 (int) j->jointype);
-				nonnullable_rels = NULL;		/* keep compiler quiet */
+				nonnullable_rels = NULL;	/* keep compiler quiet */
 				nullable_rels = NULL;
 				leftjoinlist = rightjoinlist = NIL;
 				break;
@@ -1214,7 +1214,7 @@ make_outerjoininfo(PlannerInfo *root,
 	{
 		sjinfo->min_lefthand = bms_copy(left_rels);
 		sjinfo->min_righthand = bms_copy(right_rels);
-		sjinfo->lhs_strict = false;		/* don't care about this */
+		sjinfo->lhs_strict = false; /* don't care about this */
 		return sjinfo;
 	}
 
@@ -2047,7 +2047,7 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 static bool
 check_outerjoin_delay(PlannerInfo *root,
 					  Relids *relids_p, /* in/out parameter */
-					  Relids *nullable_relids_p,		/* output parameter */
+					  Relids *nullable_relids_p,	/* output parameter */
 					  bool is_pushed_down)
 {
 	Relids		relids;
@@ -2304,8 +2304,8 @@ process_implied_equality(PlannerInfo *root,
 	 * original (this is necessary in case there are subselects in there...)
 	 */
 	clause = make_opclause(opno,
-						   BOOLOID,		/* opresulttype */
-						   false,		/* opretset */
+						   BOOLOID, /* opresulttype */
+						   false,	/* opretset */
 						   copyObject(item1),
 						   copyObject(item2),
 						   InvalidOid,
@@ -2367,8 +2367,8 @@ build_implied_join_equality(Oid opno,
 	 * original (this is necessary in case there are subselects in there...)
 	 */
 	clause = make_opclause(opno,
-						   BOOLOID,		/* opresulttype */
-						   false,		/* opretset */
+						   BOOLOID, /* opresulttype */
+						   false,	/* opretset */
 						   copyObject(item1),
 						   copyObject(item2),
 						   InvalidOid,
@@ -2378,12 +2378,12 @@ build_implied_join_equality(Oid opno,
 	 * Build the RestrictInfo node itself.
 	 */
 	restrictinfo = make_restrictinfo(clause,
-									 true,		/* is_pushed_down */
-									 false,		/* outerjoin_delayed */
-									 false,		/* pseudoconstant */
+									 true,	/* is_pushed_down */
+									 false, /* outerjoin_delayed */
+									 false, /* pseudoconstant */
 									 security_level,	/* security_level */
 									 qualscope, /* required_relids */
-									 NULL,		/* outer_relids */
+									 NULL,	/* outer_relids */
 									 nullable_relids);	/* nullable_relids */
 
 	/* Set mergejoinability/hashjoinability flags */

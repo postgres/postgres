@@ -155,8 +155,8 @@ struct PGP_Context
 	 */
 	int			mdc_checked;
 	int			corrupt_prefix; /* prefix failed RFC 4880 "quick check" */
-	int			unsupported_compr;		/* has bzip2 compression */
-	int			unexpected_binary;		/* binary data seen in text_mode */
+	int			unsupported_compr;	/* has bzip2 compression */
+	int			unexpected_binary;	/* binary data seen in text_mode */
 	int			in_mdc_pkt;
 	int			use_mdcbuf_filter;
 	PX_MD	   *mdc_ctx;

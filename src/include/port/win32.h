@@ -442,7 +442,7 @@ typedef unsigned short mode_t;
 /* Pulled from Makefile.port in mingw */
 #define DLSUFFIX ".dll"
 
-#endif   /* _MSC_VER */
+#endif							/* _MSC_VER */
 
 /* These aren't provided by either MingW or MSVC */
 #define S_IRGRP 0

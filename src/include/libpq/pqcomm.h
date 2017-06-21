@@ -57,7 +57,7 @@ struct sockaddr_storage
 #define ss_len		ss_stuff.sa.sa_len
 #define HAVE_STRUCT_SOCKADDR_STORAGE_SS_LEN 1
 #endif
-#endif   /* HAVE_STRUCT_SOCKADDR_STORAGE */
+#endif							/* HAVE_STRUCT_SOCKADDR_STORAGE */
 
 typedef struct
 {
@@ -133,19 +133,19 @@ typedef uint32 PacketLen;
 #define SM_DATABASE		64
 #define SM_USER			32
 /* We append database name if db_user_namespace true. */
-#define SM_DATABASE_USER (SM_DATABASE+SM_USER+1)		/* +1 for @ */
+#define SM_DATABASE_USER (SM_DATABASE+SM_USER+1)	/* +1 for @ */
 #define SM_OPTIONS		64
 #define SM_UNUSED		64
 #define SM_TTY			64
 
 typedef struct StartupPacket
 {
-	ProtocolVersion protoVersion;		/* Protocol version */
+	ProtocolVersion protoVersion;	/* Protocol version */
 	char		database[SM_DATABASE];	/* Database name */
 	/* Db_user_namespace appends dbname */
 	char		user[SM_USER];	/* User name */
 	char		options[SM_OPTIONS];	/* Optional additional args */
-	char		unused[SM_UNUSED];		/* Unused */
+	char		unused[SM_UNUSED];	/* Unused */
 	char		tty[SM_TTY];	/* Tty for debug output */
 } StartupPacket;
 
@@ -192,7 +192,7 @@ typedef uint32 AuthRequest;
 typedef struct CancelRequestPacket
 {
 	/* Note that each field is stored in network byte order! */
-	MsgType		cancelRequestCode;		/* code to identify a cancel request */
+	MsgType		cancelRequestCode;	/* code to identify a cancel request */
 	uint32		backendPID;		/* PID of client's backend */
 	uint32		cancelAuthCode; /* secret key to authorize cancel */
 } CancelRequestPacket;
@@ -204,4 +204,4 @@ typedef struct CancelRequestPacket
  */
 #define NEGOTIATE_SSL_CODE PG_PROTOCOL(1234,5679)
 
-#endif   /* PQCOMM_H */
+#endif							/* PQCOMM_H */

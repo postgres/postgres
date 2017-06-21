@@ -301,7 +301,7 @@ expand_targetlist(List *tlist, int command_type,
 													  attcollation,
 													  att_tup->attlen,
 													  (Datum) 0,
-													  true,		/* isnull */
+													  true, /* isnull */
 													  att_tup->attbyval);
 						new_expr = coerce_to_domain(new_expr,
 													InvalidOid, -1,
@@ -319,7 +319,7 @@ expand_targetlist(List *tlist, int command_type,
 													  InvalidOid,
 													  sizeof(int32),
 													  (Datum) 0,
-													  true,		/* isnull */
+													  true, /* isnull */
 													  true /* byval */ );
 					}
 					break;
@@ -341,7 +341,7 @@ expand_targetlist(List *tlist, int command_type,
 													  InvalidOid,
 													  sizeof(int32),
 													  (Datum) 0,
-													  true,		/* isnull */
+													  true, /* isnull */
 													  true /* byval */ );
 					}
 					break;

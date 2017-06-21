@@ -48,4 +48,4 @@ extern bool feTimestampDifferenceExceeds(TimestampTz start_time, TimestampTz sto
 extern void fe_sendint64(int64 i, char *buf);
 extern int64 fe_recvint64(char *buf);
 
-#endif   /* STREAMUTIL_H */
+#endif							/* STREAMUTIL_H */

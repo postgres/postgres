@@ -228,4 +228,4 @@ extern PathKey *make_canonical_pathkey(PlannerInfo *root,
 					   EquivalenceClass *eclass, Oid opfamily,
 					   int strategy, bool nulls_first);
 
-#endif   /* PATHS_H */
+#endif							/* PATHS_H */

@@ -608,12 +608,12 @@ print_aligned_text(const printTableContent *cont, FILE *fout, bool is_pager)
 
 	const char *const *ptr;
 
-	struct lineptr **col_lineptrs;		/* pointers to line pointer per column */
+	struct lineptr **col_lineptrs;	/* pointers to line pointer per column */
 
 	bool	   *header_done;	/* Have all header lines been output? */
 	int		   *bytes_output;	/* Bytes output for column value */
 	printTextLineWrap *wrap;	/* Wrap status for each column */
-	int			output_columns = 0;		/* Width of interactive console */
+	int			output_columns = 0; /* Width of interactive console */
 	bool		is_local_pager = false;
 
 	if (cancel_pressed)
@@ -1086,7 +1086,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout, bool is_pager)
 				 * If left-aligned, pad out remaining space if needed (not
 				 * last column, and/or wrap marks required).
 				 */
-				if (cont->aligns[j] != 'r')		/* Left aligned cell */
+				if (cont->aligns[j] != 'r') /* Left aligned cell */
 				{
 					if (finalspaces ||
 						wrap[j] == PRINT_LINE_WRAP_WRAP ||
@@ -1249,7 +1249,7 @@ print_aligned_vertical(const printTableContent *cont,
 	bool		is_local_pager = false,
 				hmultiline = false,
 				dmultiline = false;
-	int			output_columns = 0;		/* Width of interactive console */
+	int			output_columns = 0; /* Width of interactive console */
 
 	if (cancel_pressed)
 		return;

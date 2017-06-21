@@ -102,4 +102,4 @@ typedef struct CollectedCommand
 	}			d;
 } CollectedCommand;
 
-#endif   /* DEPARSE_UTILITY_H */
+#endif							/* DEPARSE_UTILITY_H */

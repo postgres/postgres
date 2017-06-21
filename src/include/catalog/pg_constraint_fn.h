@@ -79,4 +79,4 @@ extern bool check_functional_grouping(Oid relid,
 						  List *grouping_columns,
 						  List **constraintDeps);
 
-#endif   /* PG_CONSTRAINT_FN_H */
+#endif							/* PG_CONSTRAINT_FN_H */

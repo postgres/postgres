@@ -258,7 +258,7 @@ gather_getnext(GatherState *gatherstate)
 
 			if (HeapTupleIsValid(tup))
 			{
-				ExecStoreTuple(tup,		/* tuple to store */
+				ExecStoreTuple(tup, /* tuple to store */
 							   fslot,	/* slot in which to store the tuple */
 							   InvalidBuffer,	/* buffer associated with this
 												 * tuple */

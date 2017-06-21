@@ -61,4 +61,4 @@ extern Datum WinGetFuncArgInFrame(WindowObject winobj, int argno,
 extern Datum WinGetFuncArgCurrent(WindowObject winobj, int argno,
 					 bool *isnull);
 
-#endif   /* WINDOWAPI_H */
+#endif							/* WINDOWAPI_H */

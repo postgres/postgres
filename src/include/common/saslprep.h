@@ -27,4 +27,4 @@ typedef enum
 
 extern pg_saslprep_rc pg_saslprep(const char *input, char **output);
 
-#endif   /* SASLPREP_H */
+#endif							/* SASLPREP_H */

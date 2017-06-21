@@ -77,4 +77,4 @@ extern void dsm_impl_pin_segment(dsm_handle handle, void *impl_private,
 					 void **impl_private_pm_handle);
 extern void dsm_impl_unpin_segment(dsm_handle handle, void **impl_private);
 
-#endif   /* DSM_IMPL_H */
+#endif							/* DSM_IMPL_H */

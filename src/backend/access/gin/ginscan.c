@@ -362,7 +362,7 @@ ginNewScanKey(IndexScanDesc scan)
 			{
 				if (nullFlags[j])
 				{
-					nullFlags[j] = true;		/* not any other nonzero value */
+					nullFlags[j] = true;	/* not any other nonzero value */
 					hasNullQuery = true;
 				}
 			}

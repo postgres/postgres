@@ -12,4 +12,4 @@
 
 extern bool pg_str_endswith(const char *str, const char *end);
 
-#endif   /* COMMON_STRING_H */
+#endif							/* COMMON_STRING_H */

@@ -19,4 +19,4 @@
 /* functions in json.c */
 extern void escape_json(StringInfo buf, const char *str);
 
-#endif   /* JSON_H */
+#endif							/* JSON_H */

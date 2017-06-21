@@ -44,8 +44,8 @@ typedef struct base_yy_extra_type
 	 */
 	bool		have_lookahead; /* is lookahead info valid? */
 	int			lookahead_token;	/* one-token lookahead */
-	core_YYSTYPE lookahead_yylval;		/* yylval for lookahead token */
-	YYLTYPE		lookahead_yylloc;		/* yylloc for lookahead token */
+	core_YYSTYPE lookahead_yylval;	/* yylval for lookahead token */
+	YYLTYPE		lookahead_yylloc;	/* yylloc for lookahead token */
 	char	   *lookahead_end;	/* end of current token */
 	char		lookahead_hold_char;	/* to be put back at *lookahead_end */
 
@@ -72,4 +72,4 @@ extern int base_yylex(YYSTYPE *lvalp, YYLTYPE *llocp,
 extern void parser_init(base_yy_extra_type *yyext);
 extern int	base_yyparse(core_yyscan_t yyscanner);
 
-#endif   /* GRAMPARSE_H */
+#endif							/* GRAMPARSE_H */

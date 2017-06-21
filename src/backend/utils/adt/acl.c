@@ -793,7 +793,7 @@ acldefault(GrantObjectType objtype, Oid ownerId)
 			break;
 		default:
 			elog(ERROR, "unrecognized objtype: %d", (int) objtype);
-			world_default = ACL_NO_RIGHTS;		/* keep compiler quiet */
+			world_default = ACL_NO_RIGHTS;	/* keep compiler quiet */
 			owner_default = ACL_NO_RIGHTS;
 			break;
 	}
@@ -4713,7 +4713,7 @@ roles_has_privs_of(Oid roleid)
 	/*
 	 * Now safe to assign to state variable
 	 */
-	cached_privs_role = InvalidOid;		/* just paranoia */
+	cached_privs_role = InvalidOid; /* just paranoia */
 	list_free(cached_privs_roles);
 	cached_privs_roles = new_cached_privs_roles;
 	cached_privs_role = roleid;

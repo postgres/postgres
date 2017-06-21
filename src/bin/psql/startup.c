@@ -12,7 +12,7 @@
 #else							/* WIN32 */
 #include <io.h>
 #include <win32.h>
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 
 #include "getopt_long.h"
 

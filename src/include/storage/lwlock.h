@@ -223,4 +223,4 @@ typedef enum BuiltinTrancheIds
  */
 typedef LWLock *LWLockId;
 
-#endif   /* LWLOCK_H */
+#endif							/* LWLOCK_H */

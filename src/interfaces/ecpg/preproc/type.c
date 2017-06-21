@@ -178,7 +178,7 @@ get_type(enum ECPGttype type)
 		case ECPGt_NO_INDICATOR:	/* no indicator */
 			return ("ECPGt_NO_INDICATOR");
 			break;
-		case ECPGt_char_variable:		/* string that should not be quoted */
+		case ECPGt_char_variable:	/* string that should not be quoted */
 			return ("ECPGt_char_variable");
 			break;
 		case ECPGt_const:		/* constant string quoted */

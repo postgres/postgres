@@ -41,4 +41,4 @@ extern void setRuleCheckAsUser(Node *node, Oid userid);
 extern void EnableDisableRule(Relation rel, const char *rulename,
 				  char fires_when);
 
-#endif   /* REWRITEDEFINE_H */
+#endif							/* REWRITEDEFINE_H */

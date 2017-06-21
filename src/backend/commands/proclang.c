@@ -161,18 +161,18 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 			{
 				tmpAddr = ProcedureCreate(pltemplate->tmplinline,
 										  PG_CATALOG_NAMESPACE,
-										  false,		/* replace */
-										  false,		/* returnsSet */
+										  false,	/* replace */
+										  false,	/* returnsSet */
 										  VOIDOID,
 										  BOOTSTRAP_SUPERUSERID,
 										  ClanguageId,
 										  F_FMGR_C_VALIDATOR,
 										  pltemplate->tmplinline,
 										  pltemplate->tmpllibrary,
-										  false,		/* isAgg */
-										  false,		/* isWindowFunc */
-										  false,		/* security_definer */
-										  false,		/* isLeakProof */
+										  false,	/* isAgg */
+										  false,	/* isWindowFunc */
+										  false,	/* security_definer */
+										  false,	/* isLeakProof */
 										  true, /* isStrict */
 										  PROVOLATILE_VOLATILE,
 										  PROPARALLEL_UNSAFE,
@@ -204,18 +204,18 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 			{
 				tmpAddr = ProcedureCreate(pltemplate->tmplvalidator,
 										  PG_CATALOG_NAMESPACE,
-										  false,		/* replace */
-										  false,		/* returnsSet */
+										  false,	/* replace */
+										  false,	/* returnsSet */
 										  VOIDOID,
 										  BOOTSTRAP_SUPERUSERID,
 										  ClanguageId,
 										  F_FMGR_C_VALIDATOR,
 										  pltemplate->tmplvalidator,
 										  pltemplate->tmpllibrary,
-										  false,		/* isAgg */
-										  false,		/* isWindowFunc */
-										  false,		/* security_definer */
-										  false,		/* isLeakProof */
+										  false,	/* isAgg */
+										  false,	/* isWindowFunc */
+										  false,	/* security_definer */
+										  false,	/* isLeakProof */
 										  true, /* isStrict */
 										  PROVOLATILE_VOLATILE,
 										  PROPARALLEL_UNSAFE,
@@ -533,7 +533,7 @@ DropProceduralLanguageById(Oid langOid)
 	rel = heap_open(LanguageRelationId, RowExclusiveLock);
 
 	langTup = SearchSysCache1(LANGOID, ObjectIdGetDatum(langOid));
-	if (!HeapTupleIsValid(langTup))		/* should not happen */
+	if (!HeapTupleIsValid(langTup)) /* should not happen */
 		elog(ERROR, "cache lookup failed for language %u", langOid);
 
 	CatalogTupleDelete(rel, &langTup->t_self);

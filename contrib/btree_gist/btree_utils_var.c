@@ -488,7 +488,7 @@ gbt_var_picksplit(const GistEntryVector *entryvec, GIST_SPLITVEC *v,
 
 		cur = (char *) DatumGetPointer(entryvec->vector[i].key);
 		ro = gbt_var_key_readable((GBT_VARKEY *) cur);
-		if (ro.lower == ro.upper)		/* leaf */
+		if (ro.lower == ro.upper)	/* leaf */
 		{
 			sv[svcntr] = gbt_var_leaf2node((GBT_VARKEY *) cur, tinfo, flinfo);
 			arr[i].t = sv[svcntr];

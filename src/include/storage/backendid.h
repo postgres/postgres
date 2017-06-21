@@ -22,7 +22,7 @@ typedef int BackendId;			/* unique currently active backend identifier */
 
 #define InvalidBackendId		(-1)
 
-extern PGDLLIMPORT BackendId MyBackendId;		/* backend id of this backend */
+extern PGDLLIMPORT BackendId MyBackendId;	/* backend id of this backend */
 
 /* backend id of our parallel session leader, or InvalidBackendId if none */
 extern PGDLLIMPORT BackendId ParallelMasterBackendId;
@@ -34,4 +34,4 @@ extern PGDLLIMPORT BackendId ParallelMasterBackendId;
 #define BackendIdForTempRelations() \
 	(ParallelMasterBackendId == InvalidBackendId ? MyBackendId : ParallelMasterBackendId)
 
-#endif   /* BACKENDID_H */
+#endif							/* BACKENDID_H */

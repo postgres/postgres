@@ -86,8 +86,8 @@ extern uint32 bootstrap_data_checksum_version;
 
 
 /* User-settable parameters */
-int			max_wal_size_mb = 1024;		/* 1 GB */
-int			min_wal_size_mb = 80;		/* 80 MB */
+int			max_wal_size_mb = 1024; /* 1 GB */
+int			min_wal_size_mb = 80;	/* 80 MB */
 int			wal_keep_segments = 0;
 int			XLOGbuffers = -1;
 int			XLogArchiveTimeout = 0;
@@ -582,8 +582,7 @@ typedef struct XLogCtlData
 	XLogRecPtr	asyncXactLSN;	/* LSN of newest async commit/abort */
 	XLogRecPtr	replicationSlotMinLSN;	/* oldest LSN needed by any slot */
 
-	XLogSegNo	lastRemovedSegNo;		/* latest removed/recycled XLOG
-										 * segment */
+	XLogSegNo	lastRemovedSegNo;	/* latest removed/recycled XLOG segment */
 
 	/* Fake LSN counter, for unlogged relations. Protected by ulsn_lck. */
 	XLogRecPtr	unloggedLSN;
@@ -784,7 +783,7 @@ static int	readFile = -1;
 static XLogSegNo readSegNo = 0;
 static uint32 readOff = 0;
 static uint32 readLen = 0;
-static XLogSource readSource = 0;		/* XLOG_FROM_* code */
+static XLogSource readSource = 0;	/* XLOG_FROM_* code */
 
 /*
  * Keeps track of which source we're currently reading from. This is
@@ -812,14 +811,14 @@ typedef struct XLogPageReadPrivate
  * XLogReceiptSource tracks where we last successfully read some WAL.)
  */
 static TimestampTz XLogReceiptTime = 0;
-static XLogSource XLogReceiptSource = 0;		/* XLOG_FROM_* code */
+static XLogSource XLogReceiptSource = 0;	/* XLOG_FROM_* code */
 
 /* State information for XLOG reading */
 static XLogRecPtr ReadRecPtr;	/* start of last record read */
 static XLogRecPtr EndRecPtr;	/* end+1 of last record read */
 
-static XLogRecPtr minRecoveryPoint;		/* local copy of
-										 * ControlFile->minRecoveryPoint */
+static XLogRecPtr minRecoveryPoint; /* local copy of
+									 * ControlFile->minRecoveryPoint */
 static TimeLineID minRecoveryPointTLI;
 static bool updateMinRecoveryPoint = true;
 
@@ -2020,7 +2019,7 @@ XLogRecPtrToBytePos(XLogRecPtr ptr)
 	{
 		result = fullsegs * UsableBytesInSegment +
 			(XLOG_BLCKSZ - SizeOfXLogLongPHD) + /* account for first page */
-			(fullpages - 1) * UsableBytesInPage;		/* full pages */
+			(fullpages - 1) * UsableBytesInPage;	/* full pages */
 		if (offset > 0)
 		{
 			Assert(offset >= SizeOfXLogShortPHD);
@@ -2508,7 +2507,7 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible)
 				/* signal that we need to wakeup walsenders later */
 				WalSndWakeupRequest();
 
-				LogwrtResult.Flush = LogwrtResult.Write;		/* end of page */
+				LogwrtResult.Flush = LogwrtResult.Write;	/* end of page */
 
 				if (XLogArchivingActive())
 					XLogArchiveNotifySeg(openLogSegNo);
@@ -4377,7 +4376,7 @@ static void
 WriteControlFile(void)
 {
 	int			fd;
-	char		buffer[PG_CONTROL_SIZE];		/* need not be aligned */
+	char		buffer[PG_CONTROL_SIZE];	/* need not be aligned */
 
 	/*
 	 * Initialize version and compatibility-check fields
@@ -6531,7 +6530,7 @@ StartupXLOG(void)
 				ereport(LOG,
 						(errmsg("using previous checkpoint record at %X/%X",
 				   (uint32) (checkPointLoc >> 32), (uint32) checkPointLoc)));
-				InRecovery = true;		/* force recovery even if SHUTDOWNED */
+				InRecovery = true;	/* force recovery even if SHUTDOWNED */
 			}
 			else
 				ereport(PANIC,
@@ -8835,7 +8834,7 @@ CreateCheckPoint(int flags)
 	if (shutdown)
 	{
 		if (flags & CHECKPOINT_END_OF_RECOVERY)
-			LocalXLogInsertAllowed = -1;		/* return to "check" state */
+			LocalXLogInsertAllowed = -1;	/* return to "check" state */
 		else
 			LocalXLogInsertAllowed = 0; /* never again write WAL */
 	}
@@ -9965,7 +9964,7 @@ xlog_outrec(StringInfo buf, XLogReaderState *record)
 			appendStringInfoString(buf, " FPW");
 	}
 }
-#endif   /* WAL_DEBUG */
+#endif							/* WAL_DEBUG */
 
 /*
  * Returns a string describing an XLogRecord, consisting of its identity

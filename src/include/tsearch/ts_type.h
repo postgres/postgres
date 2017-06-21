@@ -248,4 +248,4 @@ typedef TSQueryData *TSQuery;
 #define PG_GETARG_TSQUERY_COPY(n)	DatumGetTSQueryCopy(PG_GETARG_DATUM(n))
 #define PG_RETURN_TSQUERY(x)		return TSQueryGetDatum(x)
 
-#endif   /* _PG_TSTYPE_H_ */
+#endif							/* _PG_TSTYPE_H_ */
