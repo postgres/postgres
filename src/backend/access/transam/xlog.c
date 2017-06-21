@@ -3811,7 +3811,7 @@ RemoveXlogFile(const char *segname, XLogRecPtr PriorRedoPtr, XLogRecPtr endptr)
 	/*
 	 * Initialize info about where to try to recycle to.
 	 */
-	XLByteToPrevSeg(endptr, endlogSegNo);
+	XLByteToSeg(endptr, endlogSegNo);
 	if (PriorRedoPtr == InvalidXLogRecPtr)
 		recycleSegNo = endlogSegNo + 10;
 	else
