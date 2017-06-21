@@ -903,6 +903,11 @@ create table fooview (x int, y text) partition by list (x);
 create rule "_RETURN" as on select to fooview do instead
   select 1 as x, 'aaa'::text as y;
 
+-- nor can one convert a partition to view
+create table fooview_part partition of fooview for values in (1);
+create rule "_RETURN" as on select to fooview_part do instead
+  select 1 as x, 'aaa'::text as y;
+
 --
 -- check for planner problems with complex inherited UPDATES
 --
