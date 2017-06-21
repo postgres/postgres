@@ -2854,8 +2854,9 @@ ProcessInterrupts(void)
 			ereport(DEBUG1,
 					(errmsg("logical replication launcher shutting down")));
 
-			/* The logical replication launcher can be stopped at any time. */
-			proc_exit(0);
+			/* The logical replication launcher can be stopped at any time.
+			 * Use exit status 1 so the background worker is restarted. */
+			proc_exit(1);
 		}
 		else if (RecoveryConflictPending && RecoveryConflictRetryable)
 		{
