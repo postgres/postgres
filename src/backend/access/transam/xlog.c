@@ -3860,7 +3860,7 @@ RemoveXlogFile(const char *segname, XLogRecPtr endptr)
 	 * Initialize info about where to try to recycle to.  We allow recycling
 	 * segments up to XLOGfileslop segments beyond the current XLOG location.
 	 */
-	XLByteToPrevSeg(endptr, endlogSegNo);
+	XLByteToSeg(endptr, endlogSegNo);
 	max_advance = XLOGfileslop;
 
 	snprintf(path, MAXPGPATH, XLOGDIR "/%s", segname);
