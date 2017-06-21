@@ -4220,8 +4220,7 @@ convert_string_datum(Datum value, Oid typid)
 
 		/*
 		 *
-		 * http://connect.microsoft.com/VisualStudio/feedback/ViewFeedback.aspx?
-		 * FeedbackID=99694
+		 * http://connect.microsoft.com/VisualStudio/feedback/ViewFeedback.aspx?FeedbackID=99694
 		 */
 		{
 			char		x[1];
