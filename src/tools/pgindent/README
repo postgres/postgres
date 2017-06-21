@@ -10,7 +10,9 @@ http://adpgtech.blogspot.com/2015/05/running-pgindent-on-non-core-code-or.html
 
 PREREQUISITES:
 
-1) Install pg_bsd_indent in your PATH (see below for details).
+1) Install pg_bsd_indent in your PATH.  Fetch its source code with
+   git clone https://git.postgresql.org/git/pg_bsd_indent.git
+   then follow the directions in README.pg_bsd_indent therein.
 
 2) Install entab (src/tools/entab/).
 
@@ -57,6 +59,9 @@ VALIDATION:
 
    Your configure switches should include at least --enable-tap-tests
    or else much of the Perl code won't get exercised.
+   The ecpg regression tests may well fail due to pgindent's updates of
+   header files that get copied into ecpg output; if so, adjust the
+   expected-files to match.
 
 3) If you have the patience, it's worth eyeballing the "git diff" output
    for any egregiously ugly changes.  See below for cleanup ideas.
@@ -100,10 +105,10 @@ you're at it.
 BSD indent
 ----------
 
-We have standardized on NetBSD's indent, and renamed it pg_bsd_indent.
-We have fixed a few bugs which requre the NetBSD source to be patched
-with indent.bsd.patch patch.  A fully patched version is available at
-https://ftp.postgresql.org/pub/dev.
+We have standardized on FreeBSD's indent, and renamed it pg_bsd_indent.
+pg_bsd_indent does differ slightly from FreeBSD's version, mostly in
+being more easily portable to non-BSD platforms.  You can obtain it from
+https://git.postgresql.org/git/pg_bsd_indent.git
 
 GNU indent, version 2.2.6, has several problems, and is not recommended.
 These bugs become pretty major when you are doing >500k lines of code.
@@ -132,8 +137,10 @@ src/backend/utils/fmgrtab.c is excluded because it confuses pgindent
 and it's a derived file anyway.
 
 src/interfaces/ecpg/test/expected/ is excluded to avoid breaking the ecpg
-regression tests.  Several *.h files are included in regression output so
-they must not be changed.
+regression tests, since what ecpg generates is not necessarily formatted
+as pgindent would do it.  (Note that we do not exclude ecpg's header files
+from the run; some of them get copied verbatim into ecpg's output, meaning
+that the expected files may need to be updated to match.)
 
 src/include/snowball/libstemmer/ and src/backend/snowball/libstemmer/
 are excluded because those files are imported from an external project,

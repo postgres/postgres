@@ -12,15 +12,12 @@ use IO::Handle;
 use Getopt::Long;
 
 # Update for pg_bsd_indent version
-my $INDENT_VERSION = "1.3";
-my $devnull        = File::Spec->devnull;
-
-# Common indent settings
+my $INDENT_VERSION = "2.0";
+# Our standard indent settings
 my $indent_opts =
-  "-bad -bap -bc -bl -d0 -cdb -nce -nfc1 -di12 -i4 -l79 -lp -nip -npro -bbb";
+  "-bad -bap -bbb -bc -bl -cli1 -cp33 -cdb -nce -d0 -di12 -nfc1 -i4 -l79 -lp -nip -npro -sac -tpg -ts4";
 
-# indent-dependent settings
-my $extra_opts = "";
+my $devnull        = File::Spec->devnull;
 
 my ($typedefs_file, $typedef_str, $code_base, $excludes, $indent, $build);
 
@@ -74,11 +71,11 @@ sub check_indent
 	if ($? >> 8 != 1)
 	{
 		print STDERR
-		  "You do not appear to have 'indent' installed on your system.\n";
+		  "You do not appear to have $indent installed on your system.\n";
 		exit 1;
 	}
 
-	if (`$indent -V` !~ m/ $INDENT_VERSION$/)
+	if (`$indent --version` !~ m/ $INDENT_VERSION$/)
 	{
 		print STDERR
 "You do not appear to have $indent version $INDENT_VERSION installed on your system.\n";
@@ -89,13 +86,8 @@ sub check_indent
 	if ($? == 0)
 	{
 		print STDERR
-		  "You appear to have GNU indent rather than BSD indent.\n",
-		  "See the pgindent/README file for a description of its problems.\n";
-		$extra_opts = "-cdb -bli0 -npcs -cli4 -sc";
-	}
-	else
-	{
-		$extra_opts = "-cli1";
+		    "You appear to have GNU indent rather than BSD indent.\n";
+		exit 1;
 	}
 }
 
@@ -198,59 +190,15 @@ sub pre_indent
 {
 	my $source = shift;
 
-	# remove trailing whitespace
-	$source =~ s/[ \t]+$//gm;
-
 	## Comments
 
 	# Convert // comments to /* */
 	$source =~ s!^([ \t]*)//(.*)$!$1/* $2 */!gm;
 
-	# 'else' followed by a single-line comment, followed by
-	# a brace on the next line confuses BSD indent, so we push
-	# the comment down to the next line, then later pull it
-	# back up again.  Add space before _PGMV or indent will add
-	# it for us.
-	# AMD: A symptom of not getting this right is that you see errors like:
-	# FILE: ../../../src/backend/rewrite/rewriteHandler.c
-	# Error@2259:
-	# Stuff missing from end of file
-	$source =~
-	  s!(\}|[ \t])else[ \t]*(/\*)(.*\*/)[ \t]*$!$1else\n    $2 _PGMV$3!gm;
-
-	# Indent multi-line after-'else' comment so BSD indent will move it
-	# properly. We already moved down single-line comments above.
-	# Check for '*' to make sure we are not in a single-line comment that
-	# has other text on the line.
-	$source =~ s!(\}|[ \t])else[ \t]*(/\*[^*]*)[ \t]*$!$1else\n    $2!gm;
-
-	# Mark some comments for special treatment later
+	# Adjust dash-protected block comments so indent won't change them
 	$source =~ s!/\* +---!/*---X_X!g;
 
 	## Other
-
-	# Work around bug where function that defines no local variables
-	# misindents switch() case lines and line after #else.  Do not do
-	# for struct/enum.
-	my @srclines = split(/\n/, $source);
-	foreach my $lno (1 .. $#srclines)
-	{
-		my $l2 = $srclines[$lno];
-
-		# Line is only a single open brace in column 0
-		next unless $l2 =~ /^\{[ \t]*$/;
-
-		# previous line has a closing paren
-		next unless $srclines[ $lno - 1 ] =~ /\)/;
-
-		# previous line was struct, etc.
-		next
-		  if $srclines[ $lno - 1 ] =~
-			  m!=|^(struct|enum|[ \t]*typedef|extern[ \t]+"C")!;
-
-		$srclines[$lno] = "$l2\nint pgindent_func_no_var_fix;";
-	}
-	$source = join("\n", @srclines) . "\n";    # make sure there's a final \n
 
 	# Prevent indenting of code in 'extern "C"' blocks.
 	# we replace the braces with comments which we'll reverse later
@@ -259,6 +207,9 @@ sub pre_indent
 	$source =~
 s!(^#ifdef[ \t]+__cplusplus.*\nextern[ \t]+"C"[ \t]*\n)\{[ \t]*$!$1$extern_c_start!gm;
 	$source =~ s!(^#ifdef[ \t]+__cplusplus.*\n)\}[ \t]*$!$1$extern_c_stop!gm;
+
+	# Protect backslashes in DATA() and wrapping in CATALOG()
+	$source =~ s!^((DATA|CATALOG)\(.*)$!/*$1*/!gm;
 
 	return $source;
 }
@@ -269,26 +220,20 @@ sub post_indent
 	my $source          = shift;
 	my $source_filename = shift;
 
-	# put back braces for extern "C"
+	# Restore DATA/CATALOG lines
+	$source =~ s!^/\*((DATA|CATALOG)\(.*)\*/$!$1!gm;
+
+	# Put back braces for extern "C"
 	$source =~ s!^/\* Open extern "C" \*/$!{!gm;
 	$source =~ s!^/\* Close extern "C" \*/$!}!gm;
 
 	## Comments
 
-	# remove special comment marker
+	# Undo change of dash-protected block comments
 	$source =~ s!/\*---X_X!/* ---!g;
 
-	# Pull up single-line comment after 'else' that was pulled down above
-	$source =~ s!else\n[ \t]+/\* _PGMV!else\t/*!g;
-
-	# Indent single-line after-'else' comment by only one tab.
-	$source =~ s!(\}|[ \t])else[ \t]+(/\*.*\*/)[ \t]*$!$1else\t$2!gm;
-
-	# Add tab before comments with no whitespace before them (on a tab stop)
-	$source =~ s!(\S)(/\*.*\*/)$!$1\t$2!gm;
-
-	# Remove blank line between opening brace and block comment.
-	$source =~ s!(\t*\{\n)\n([ \t]+/\*)$!$1$2!gm;
+	# Fix run-together comments to have a tab between them
+	$source =~ s!\*/(/\*.*\*/)$!*/\t$1!gm;
 
 	# cpp conditionals
 
@@ -297,13 +242,10 @@ sub post_indent
 
 	## Functions
 
-	# Work around misindenting of function with no variables defined.
-	$source =~ s!^[ \t]*int[ \t]+pgindent_func_no_var_fix;[ \t]*\n{1,2}!!gm;
-
 	# Use a single space before '*' in function return types
 	$source =~ s!^([A-Za-z_]\S*)[ \t]+\*$!$1 *!gm;
 
-	#  Move prototype names to the same line as return type.  Useful
+	# Move prototype names to the same line as return type.  Useful
 	# for ctags.  Indent should do this, but it does not.  It formats
 	# prototypes just like real functions.
 
@@ -319,21 +261,6 @@ sub post_indent
 			)
 		!$1 . (substr($1,-1,1) eq '*' ? '' : ' ') . $2!gmxe;
 
-	## Other
-
-	# Remove too much indenting after closing brace.
-	$source =~ s!^\}\t[ \t]+!}\t!gm;
-
-	# Workaround indent bug that places excessive space before 'static'.
-	$source =~ s!^static[ \t]+!static !gm;
-
-	# Remove leading whitespace from typedefs
-	$source =~ s!^[ \t]+typedef enum!typedef enum!gm
-	  if $source_filename =~ 'libpq-(fe|events).h$';
-
-	# Remove trailing blank lines
-	$source =~ s!\n+\z!\n!;
-
 	return $source;
 }
 
@@ -344,7 +271,7 @@ sub run_indent
 	my $error_message = shift;
 
 	my $cmd =
-	  "$indent $indent_opts $extra_opts -U" . $filtered_typedefs_fh->filename;
+	  "$indent $indent_opts -U" . $filtered_typedefs_fh->filename;
 
 	my $tmp_fh = new File::Temp(TEMPLATE => "pgsrcXXXXX");
 	my $filename = $tmp_fh->filename;
@@ -461,21 +388,15 @@ sub run_build
 
 	$ENV{PGTYPEDEFS} = abs_path('tmp_typedefs.list');
 
-	my $pg_bsd_indent_url =
-	    "https://ftp.postgresql.org/pub/dev/pg_bsd_indent-"
-	  . $INDENT_VERSION
-	  . ".tar.gz";
+	my $indentrepo = "https://git.postgresql.org/git/pg_bsd_indent.git";
+	system("git clone $indentrepo >$devnull 2>&1");
+	die "could not fetch pg_bsd_indent sources from $indentrepo\n"
+	  unless $? == 0;
 
-	$rv = getstore($pg_bsd_indent_url, "pg_bsd_indent.tgz");
-
-	die "cannot fetch BSD indent tarfile from $pg_bsd_indent_url\n"
-	  unless is_success($rv);
-
-	# XXX add error checking here
-
-	system("tar -z -xf pg_bsd_indent.tgz");
-	chdir "pg_bsd_indent";
-	system("make > $devnull 2>&1");
+	chdir "pg_bsd_indent" || die;
+	system("make all check >$devnull");
+	die "could not build pg_bsd_indent from source\n"
+	  unless $? == 0;
 
 	$ENV{PGINDENT} = abs_path('pg_bsd_indent');
 
@@ -504,8 +425,10 @@ sub build_clean
 
 	chdir "$code_base";
 
-	system("rm -rf src/tools/pgindent/bsdindent");
-	system("git clean -q -f src/tools/entab src/tools/pgindent");
+	system("rm -rf src/tools/pgindent/pg_bsd_indent");
+	system("rm -f src/tools/pgindent/tmp_typedefs.list");
+
+	system("git clean -q -f src/tools/entab");
 }
 
 
@@ -529,7 +452,7 @@ $filtered_typedefs_fh = load_typedefs();
 
 check_indent();
 
-# make sure we process any non-option arguments.
+# any non-option arguments are files to be processed
 push(@files, @ARGV);
 
 foreach my $source_filename (@files)
@@ -544,14 +467,10 @@ foreach my $source_filename (@files)
 	next if $otherfile ne $source_filename && -f $otherfile;
 
 	my $source        = read_source($source_filename);
+	my $orig_source   = $source;
 	my $error_message = '';
 
 	$source = pre_indent($source);
-
-	# Protect backslashes in DATA() and wrapping in CATALOG()
-
-	$source = detab($source);
-	$source =~ s!^((DATA|CATALOG)\(.*)$!/*$1*/!gm;
 
 	$source = run_indent($source, \$error_message);
 	if ($source eq "")
@@ -560,13 +479,9 @@ foreach my $source_filename (@files)
 		next;
 	}
 
- # Restore DATA/CATALOG lines; must be done here so tab alignment is preserved
-	$source =~ s!^/\*((DATA|CATALOG)\(.*)\*/$!$1!gm;
-	$source = entab($source);
-
 	$source = post_indent($source, $source_filename);
 
-	write_source($source, $source_filename);
+	write_source($source, $source_filename) if $source ne $orig_source;
 }
 
 build_clean($code_base) if $build;
