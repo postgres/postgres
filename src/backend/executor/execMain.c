@@ -2093,8 +2093,8 @@ ExecWithCheckOptions(WCOKind kind, ResultRelInfo *resultRelInfo,
 					 * the permissions on the relation (that is, if the user
 					 * could view it directly anyway).  For RLS violations, we
 					 * don't include the data since we don't know if the user
-					 * should be able to view the tuple as as that depends on
-					 * the USING policy.
+					 * should be able to view the tuple as that depends on the
+					 * USING policy.
 					 */
 				case WCO_VIEW_CHECK:
 					insertedCols = GetInsertedColumns(resultRelInfo, estate);
