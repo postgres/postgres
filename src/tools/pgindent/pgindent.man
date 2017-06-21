@@ -19,9 +19,6 @@ command line option --indent:
 
 	pgindent --indent=/opt/extras/bsdindent
 
-Similarly, the entab program can be specified using the PGENTAB environment
-variable, or using the --entab command line option.
-
 pgindent also needs a file containing a list of typedefs. This can be
 specified using the PGTYPEDEFS environment variable, or via the command line
 --typedefs option. If neither is used, it will look for it within the

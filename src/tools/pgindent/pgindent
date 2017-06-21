@@ -38,9 +38,8 @@ run_build($code_base) if ($build);
 $typedefs_file ||= shift if @ARGV && $ARGV[0] !~ /\.[ch]$/;
 $typedefs_file ||= $ENV{PGTYPEDEFS};
 
-# build mode sets PGINDENT and PGENTAB
+# build mode sets PGINDENT
 $indent ||= $ENV{PGINDENT} || $ENV{INDENT} || "pg_bsd_indent";
-my $entab = $ENV{PGENTAB} || "entab";
 
 # no non-option arguments given. so do everything in the current directory
 $code_base ||= '.' unless @ARGV;
@@ -57,16 +56,6 @@ my $filtered_typedefs_fh;
 
 sub check_indent
 {
-	system("$entab < $devnull");
-	if ($?)
-	{
-		print STDERR
-"Go to the src/tools/entab directory and do 'make' and 'make install'.\n",
-		  "This will put the 'entab' command in your path.\n",
-		  "Then run $0 again.\n";
-		exit 1;
-	}
-
 	system("$indent -? < $devnull > $devnull 2>&1");
 	if ($? >> 8 != 1)
 	{
@@ -288,46 +277,6 @@ sub run_indent
 
 }
 
-# XXX Ideally we'd implement entab/detab in pure perl.
-
-sub detab
-{
-	my $source = shift;
-
-	my $tmp_fh = new File::Temp(TEMPLATE => "pgdetXXXXX");
-	print $tmp_fh $source;
-	$tmp_fh->close();
-
-	open(my $entab, '-|', "$entab -d -t4 -qc " . $tmp_fh->filename);
-	local ($/) = undef;
-	$source = <$entab>;
-	close($entab);
-
-	return $source;
-}
-
-
-sub entab
-{
-	my $source = shift;
-
-	my $tmp_fh = new File::Temp(TEMPLATE => "pgentXXXXX");
-	print $tmp_fh $source;
-	$tmp_fh->close();
-
-	open(
-		my $entab,
-		'-|',
-		"$entab -d -t8 -qc "
-		  . $tmp_fh->filename
-		  . " | $entab -t4 -qc | $entab -d -t4 -m");
-	local ($/) = undef;
-	$source = <$entab>;
-	close($entab);
-
-	return $source;
-}
-
 
 # for development diagnostics
 sub diff
@@ -395,11 +344,6 @@ sub run_build
 
 	$ENV{PGINDENT} = abs_path('pg_bsd_indent');
 
-	chdir "../../entab";
-	system("make > $devnull 2>&1");
-
-	$ENV{PGENTAB} = abs_path('entab');
-
 	chdir $save_dir;
 }
 
@@ -422,8 +366,6 @@ sub build_clean
 
 	system("rm -rf src/tools/pgindent/pg_bsd_indent");
 	system("rm -f src/tools/pgindent/tmp_typedefs.list");
-
-	system("git clean -q -f src/tools/entab");
 }
 
 
