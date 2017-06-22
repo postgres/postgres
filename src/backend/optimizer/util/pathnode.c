@@ -3158,6 +3158,9 @@ create_lockrows_path(PlannerInfo *root, RelOptInfo *rel,
  * 'operation' is the operation type
  * 'canSetTag' is true if we set the command tag/es_processed
  * 'nominalRelation' is the parent RT index for use of EXPLAIN
+ * 'partitioned_rels' is an integer list of RT indexes of non-leaf tables in
+ *		the partition tree, if this is an UPDATE/DELETE to a partitioned table.
+ *		Otherwise NIL.
  * 'resultRelations' is an integer list of actual RT indexes of target rel(s)
  * 'subpaths' is a list of Path(s) producing source data (one per rel)
  * 'subroots' is a list of PlannerInfo structs (one per rel)
