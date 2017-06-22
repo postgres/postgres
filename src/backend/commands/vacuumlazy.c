@@ -4,11 +4,10 @@
  *	  Concurrent ("lazy") vacuuming.
  *
  *
- * The major space usage for LAZY VACUUM is storage for the array of dead
- * tuple TIDs, with the next biggest need being storage for per-disk-page
- * free space info.  We want to ensure we can vacuum even the very largest
- * relations with finite memory space usage.  To do that, we set upper bounds
- * on the number of tuples and pages we will keep track of at once.
+ * The major space usage for LAZY VACUUM is storage for the array of dead tuple
+ * TIDs.  We want to ensure we can vacuum even the very largest relations with
+ * finite memory space usage.  To do that, we set upper bounds on the number of
+ * tuples we will keep track of at once.
  *
  * We are willing to use at most maintenance_work_mem (or perhaps
  * autovacuum_work_mem) memory space to keep track of dead tuples.  We
