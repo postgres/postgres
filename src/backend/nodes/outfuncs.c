@@ -32,6 +32,8 @@
 #include "utils/datum.h"
 #include "utils/rel.h"
 
+static void outChar(StringInfo str, char c);
+
 
 /*
  * Macros to simplify output of different kinds of fields.  Use these
@@ -62,7 +64,8 @@
 
 /* Write a char field (ie, one ascii character) */
 #define WRITE_CHAR_FIELD(fldname) \
-	appendStringInfo(str, " :" CppAsString(fldname) " %c", node->fldname)
+	(appendStringInfo(str, " :" CppAsString(fldname) " "), \
+	 outChar(str, node->fldname))
 
 /* Write an enumerated-type field as an integer code */
 #define WRITE_ENUM_FIELD(fldname, enumtype) \
@@ -138,6 +141,21 @@ outToken(StringInfo str, const char *s)
 			appendStringInfoChar(str, '\\');
 		appendStringInfoChar(str, *s++);
 	}
+}
+
+/*
+ * Convert one char.  Goes through outToken() so that special characters are
+ * escaped.
+ */
+static void
+outChar(StringInfo str, char c)
+{
+	char		in[2];
+
+	in[0] = c;
+	in[1] = '\0';
+
+	outToken(str, in);
 }
 
 static void
