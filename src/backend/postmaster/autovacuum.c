@@ -612,7 +612,8 @@ AutoVacLauncherMain(int argc, char *argv[])
 
 	/*
 	 * Set up our DSA so that backends can install work-item requests.  It may
-	 * already exist as created by a previous launcher.
+	 * already exist as created by a previous launcher; and we may even be
+	 * already attached to it, if we're here after longjmp'ing above.
 	 */
 	if (!AutoVacuumShmem->av_dsa_handle)
 	{
@@ -626,7 +627,7 @@ AutoVacLauncherMain(int argc, char *argv[])
 		AutoVacuumShmem->av_workitems = InvalidDsaPointer;
 		LWLockRelease(AutovacuumLock);
 	}
-	else
+	else if (AutoVacuumDSA == NULL)
 	{
 		AutoVacuumDSA = dsa_attach(AutoVacuumShmem->av_dsa_handle);
 		dsa_pin_mapping(AutoVacuumDSA);
