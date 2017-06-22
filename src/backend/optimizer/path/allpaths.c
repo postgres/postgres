@@ -849,10 +849,10 @@ set_foreign_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
  *	  Set size estimates for a simple "append relation"
  *
  * The passed-in rel and RTE represent the entire append relation.  The
- * relation's contents are computed by appending together the output of
- * the individual member relations.  Note that in the inheritance case,
- * the first member relation is actually the same table as is mentioned in
- * the parent RTE ... but it has a different RTE and RelOptInfo.  This is
+ * relation's contents are computed by appending together the output of the
+ * individual member relations.  Note that in the non-partitioned inheritance
+ * case, the first member relation is actually the same table as is mentioned
+ * in the parent RTE ... but it has a different RTE and RelOptInfo.  This is
  * a good thing because their outputs are not the same size.
  */
 static void
