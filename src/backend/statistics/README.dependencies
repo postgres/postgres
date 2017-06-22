@@ -79,20 +79,21 @@ to break the consistency.
 Clause reduction (planner/optimizer)
 ------------------------------------
 
-Applying the functional dependencies is fairly simple - given a list of
+Applying the functional dependencies is fairly simple: given a list of
 equality clauses, we compute selectivities of each clause and then use the
 degree to combine them using this formula
 
     P(a=?,b=?) = P(a=?) * (d + (1-d) * P(b=?))
 
-Where 'd' is the degree of functional dependence (a=>b).
+Where 'd' is the degree of functional dependency (a => b).
 
 With more than two equality clauses, this process happens recursively. For
-example for (a,b,c) we first use (a,b=>c) to break the computation into
+example for (a,b,c) we first use (a,b => c) to break the computation into
 
-    P(a=?,b=?,c=?) = P(a=?,b=?) * (d + (1-d)*P(b=?))
+    P(a=?,b=?,c=?) = P(a=?,b=?) * (e + (1-e) * P(c=?))
 
-and then apply (a=>b) the same way on P(a=?,b=?).
+where 'e' is the degree of functional dependency (a,b => c); then we can
+apply (a=>b) the same way on P(a=?,b=?).
 
 
 Consistency of clauses
