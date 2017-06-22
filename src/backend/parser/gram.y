@@ -3834,7 +3834,7 @@ ExistingIndex:   USING INDEX index_name				{ $$ = $3; }
 /*****************************************************************************
  *
  *		QUERY :
- *				CREATE STATISTICS stats_name [(stat types)]
+ *				CREATE STATISTICS [IF NOT EXISTS] stats_name [(stat types)]
  *					ON expression-list FROM from_list
  *
  * Note: the expectation here is that the clauses after ON are a subset of
@@ -3846,15 +3846,26 @@ ExistingIndex:   USING INDEX index_name				{ $$ = $3; }
  *****************************************************************************/
 
 CreateStatsStmt:
-			CREATE opt_if_not_exists STATISTICS any_name
+			CREATE STATISTICS any_name
 			opt_name_list ON expr_list FROM from_list
 				{
 					CreateStatsStmt *n = makeNode(CreateStatsStmt);
-					n->defnames = $4;
-					n->stat_types = $5;
-					n->exprs = $7;
-					n->relations = $9;
-					n->if_not_exists = $2;
+					n->defnames = $3;
+					n->stat_types = $4;
+					n->exprs = $6;
+					n->relations = $8;
+					n->if_not_exists = false;
+					$$ = (Node *)n;
+				}
+			| CREATE STATISTICS IF_P NOT EXISTS any_name
+			opt_name_list ON expr_list FROM from_list
+				{
+					CreateStatsStmt *n = makeNode(CreateStatsStmt);
+					n->defnames = $6;
+					n->stat_types = $7;
+					n->exprs = $9;
+					n->relations = $11;
+					n->if_not_exists = true;
 					$$ = (Node *)n;
 				}
 			;

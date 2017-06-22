@@ -30,9 +30,11 @@ CREATE STATISTICS tst ON (relpages, reltuples) FROM pg_class;
 ERROR:  only simple column references are allowed in CREATE STATISTICS
 CREATE STATISTICS tst (unrecognized) ON relname, relnatts FROM pg_class;
 ERROR:  unrecognized statistic type "unrecognized"
--- Ensure stats are dropped sanely
+-- Ensure stats are dropped sanely, and test IF NOT EXISTS while at it
 CREATE TABLE ab1 (a INTEGER, b INTEGER, c INTEGER);
-CREATE STATISTICS ab1_a_b_stats ON a, b FROM ab1;
+CREATE STATISTICS IF NOT EXISTS ab1_a_b_stats ON a, b FROM ab1;
+CREATE STATISTICS IF NOT EXISTS ab1_a_b_stats ON a, b FROM ab1;
+NOTICE:  statistics object "ab1_a_b_stats" already exists, skipping
 DROP STATISTICS ab1_a_b_stats;
 CREATE SCHEMA regress_schema_2;
 CREATE STATISTICS regress_schema_2.ab1_a_b_stats ON a, b FROM ab1;

@@ -18,9 +18,10 @@ CREATE STATISTICS tst ON relnatts + relpages FROM pg_class;
 CREATE STATISTICS tst ON (relpages, reltuples) FROM pg_class;
 CREATE STATISTICS tst (unrecognized) ON relname, relnatts FROM pg_class;
 
--- Ensure stats are dropped sanely
+-- Ensure stats are dropped sanely, and test IF NOT EXISTS while at it
 CREATE TABLE ab1 (a INTEGER, b INTEGER, c INTEGER);
-CREATE STATISTICS ab1_a_b_stats ON a, b FROM ab1;
+CREATE STATISTICS IF NOT EXISTS ab1_a_b_stats ON a, b FROM ab1;
+CREATE STATISTICS IF NOT EXISTS ab1_a_b_stats ON a, b FROM ab1;
 DROP STATISTICS ab1_a_b_stats;
 
 CREATE SCHEMA regress_schema_2;
