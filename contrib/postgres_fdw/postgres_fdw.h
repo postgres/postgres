@@ -176,10 +176,10 @@ extern void deparseSelectStmtForRel(StringInfo buf, PlannerInfo *root,
 						RelOptInfo *foreignrel, List *tlist,
 						List *remote_conds, List *pathkeys, bool is_subquery,
 						List **retrieved_attrs, List **params_list);
+extern const char *get_jointype_name(JoinType jointype);
 
 /* in shippable.c */
 extern bool is_builtin(Oid objectId);
 extern bool is_shippable(Oid objectId, Oid classId, PgFdwRelationInfo *fpinfo);
-extern const char *get_jointype_name(JoinType jointype);
 
 #endif							/* POSTGRES_FDW_H */
