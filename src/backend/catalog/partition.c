@@ -573,7 +573,7 @@ RelationBuildPartitionDesc(Relation rel)
 		/*
 		 * Now assign OIDs from the original array into mapped indexes of the
 		 * result array.  Order of OIDs in the former is defined by the
-		 * catalog scan that retrived them, whereas that in the latter is
+		 * catalog scan that retrieved them, whereas that in the latter is
 		 * defined by canonicalized representation of the list values or the
 		 * range bounds.
 		 */
