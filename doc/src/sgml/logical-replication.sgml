@@ -110,11 +110,29 @@
    Publications can choose to limit the changes they produce to
    any combination of <command>INSERT</command>, <command>UPDATE</command>, and
    <command>DELETE</command>, similar to how triggers are fired by
-   particular event types.  If a table without a <literal>REPLICA
-   IDENTITY</literal> is added to a publication that
-   replicates <command>UPDATE</command> or <command>DELETE</command>
-   operations then subsequent <command>UPDATE</command>
-   or <command>DELETE</command> operations will fail on the publisher.
+   particular event types.  By default, all operation types are replicated.
+  </para>
+
+  <para>
+   A published table must have a <quote>replica identity</quote> configured in
+   order to be able to replicate <command>UPDATE</command>
+   and <command>DELETE</command> operations, so that appropriate rows to
+   update or delete can be identified on the subscriber side.  By default,
+   this is the primary key, if there is one.  Another unique index (with
+   certain additional requirements) can also be set to be the replica
+   identity.  If the table does not have any suitable key, then it can be set
+   to replica identity <quote>full</quote>, which means the entire row becomes
+   the key.  This, however, is very inefficient and should only be used as a
+   fallback if no other solution is possible.  If a replica identity other
+   than <quote>full</quote> is set on the publisher side, a replica identity
+   comprising the same or fewer columns must also be set on the subscriber
+   side.  See <xref linkend="SQL-CREATETABLE-REPLICA-IDENTITY"> for details on
+   how to set the replica identity.  If a table without a replica identity is
+   added to a publication that replicates <command>UPDATE</command>
+   or <command>DELETE</command> operations then
+   subsequent <command>UPDATE</command> or <command>DELETE</command>
+   operations will cause an error on the publisher.  <command>INSERT</command>
+   operations can proceed regardless of any replica identity.
   </para>
 
   <para>
