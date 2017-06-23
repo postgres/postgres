@@ -1486,6 +1486,18 @@ init_icu_converter(void)
 	icu_converter = conv;
 }
 
+/*
+ * Convert a string in the database encoding into a string of UChars.
+ *
+ * The source string at buff is of length nbytes
+ * (it needn't be nul-terminated)
+ *
+ * *buff_uchar receives a pointer to the palloc'd result string, and
+ * the function's result is the number of UChars generated.
+ *
+ * The result string is nul-terminated, though most callers rely on the
+ * result length instead.
+ */
 int32_t
 icu_to_uchar(UChar **buff_uchar, const char *buff, size_t nbytes)
 {
@@ -1494,18 +1506,30 @@ icu_to_uchar(UChar **buff_uchar, const char *buff, size_t nbytes)
 
 	init_icu_converter();
 
-	len_uchar = 2 * nbytes;		/* max length per docs */
+	len_uchar = 2 * nbytes + 1; /* max length per docs */
 	*buff_uchar = palloc(len_uchar * sizeof(**buff_uchar));
 	status = U_ZERO_ERROR;
-	len_uchar = ucnv_toUChars(icu_converter, *buff_uchar, len_uchar, buff, nbytes, &status);
+	len_uchar = ucnv_toUChars(icu_converter, *buff_uchar, len_uchar,
+							  buff, nbytes, &status);
 	if (U_FAILURE(status))
 		ereport(ERROR,
 				(errmsg("ucnv_toUChars failed: %s", u_errorName(status))));
 	return len_uchar;
 }
 
+/*
+ * Convert a string of UChars into the database encoding.
+ *
+ * The source string at buff_uchar is of length len_uchar
+ * (it needn't be nul-terminated)
+ *
+ * *result receives a pointer to the palloc'd result string, and the
+ * function's result is the number of bytes generated (not counting nul).
+ *
+ * The result string is nul-terminated.
+ */
 int32_t
-icu_from_uchar(char **result, UChar *buff_uchar, int32_t len_uchar)
+icu_from_uchar(char **result, const UChar *buff_uchar, int32_t len_uchar)
 {
 	UErrorCode	status;
 	int32_t		len_result;
@@ -1515,13 +1539,14 @@ icu_from_uchar(char **result, UChar *buff_uchar, int32_t len_uchar)
 	len_result = UCNV_GET_MAX_BYTES_FOR_STRING(len_uchar, ucnv_getMaxCharSize(icu_converter));
 	*result = palloc(len_result + 1);
 	status = U_ZERO_ERROR;
-	ucnv_fromUChars(icu_converter, *result, len_result, buff_uchar, len_uchar, &status);
+	len_result = ucnv_fromUChars(icu_converter, *result, len_result + 1,
+								 buff_uchar, len_uchar, &status);
 	if (U_FAILURE(status))
 		ereport(ERROR,
 				(errmsg("ucnv_fromUChars failed: %s", u_errorName(status))));
 	return len_result;
 }
-#endif
+#endif							/* USE_ICU */
 
 /*
  * These functions convert from/to libc's wchar_t, *not* pg_wchar_t.

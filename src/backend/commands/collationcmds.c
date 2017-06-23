@@ -381,6 +381,10 @@ normalize_libc_locale_name(char *new, const char *old)
 
 
 #ifdef USE_ICU
+/*
+ * Get the ICU language tag for a locale name.
+ * The result is a palloc'd string.
+ */
 static char *
 get_icu_language_tag(const char *localename)
 {
@@ -397,7 +401,10 @@ get_icu_language_tag(const char *localename)
 	return pstrdup(buf);
 }
 
-
+/*
+ * Get a comment (specifically, the display name) for an ICU locale.
+ * The result is a palloc'd string.
+ */
 static char *
 get_icu_locale_comment(const char *localename)
 {
@@ -407,10 +414,12 @@ get_icu_locale_comment(const char *localename)
 	char	   *result;
 
 	status = U_ZERO_ERROR;
-	len_uchar = uloc_getDisplayName(localename, "en", &displayname[0], sizeof(displayname), &status);
+	len_uchar = uloc_getDisplayName(localename, "en",
+									&displayname[0], sizeof(displayname),
+									&status);
 	if (U_FAILURE(status))
 		ereport(ERROR,
-				(errmsg("could get display name for locale \"%s\": %s",
+				(errmsg("could not get display name for locale \"%s\": %s",
 						localename, u_errorName(status))));
 
 	icu_from_uchar(&result, displayname, len_uchar);

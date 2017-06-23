@@ -1561,6 +1561,7 @@ str_tolower(const char *buff, size_t nbytes, Oid collid)
 			len_conv = icu_convert_case(u_strToLower, mylocale,
 										&buff_conv, buff_uchar, len_uchar);
 			icu_from_uchar(&result, buff_conv, len_conv);
+			pfree(buff_uchar);
 		}
 		else
 #endif
@@ -1684,6 +1685,7 @@ str_toupper(const char *buff, size_t nbytes, Oid collid)
 			len_conv = icu_convert_case(u_strToUpper, mylocale,
 										&buff_conv, buff_uchar, len_uchar);
 			icu_from_uchar(&result, buff_conv, len_conv);
+			pfree(buff_uchar);
 		}
 		else
 #endif
@@ -1808,6 +1810,7 @@ str_initcap(const char *buff, size_t nbytes, Oid collid)
 			len_conv = icu_convert_case(u_strToTitle_default_BI, mylocale,
 										&buff_conv, buff_uchar, len_uchar);
 			icu_from_uchar(&result, buff_conv, len_conv);
+			pfree(buff_uchar);
 		}
 		else
 #endif

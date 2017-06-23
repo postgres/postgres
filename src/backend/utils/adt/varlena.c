@@ -1569,6 +1569,9 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2, Oid collid)
 					result = ucol_strcoll(mylocale->info.icu.ucol,
 										  uchar1, ulen1,
 										  uchar2, ulen2);
+
+					pfree(uchar1);
+					pfree(uchar2);
 				}
 #else							/* not USE_ICU */
 				/* shouldn't happen */
@@ -2155,6 +2158,9 @@ varstrfastcmp_locale(Datum x, Datum y, SortSupport ssup)
 				result = ucol_strcoll(sss->locale->info.icu.ucol,
 									  uchar1, ulen1,
 									  uchar2, ulen2);
+
+				pfree(uchar1);
+				pfree(uchar2);
 			}
 #else							/* not USE_ICU */
 			/* shouldn't happen */
@@ -2279,7 +2285,7 @@ varstr_abbrev_convert(Datum original, SortSupport ssup)
 		Size		bsize;
 #ifdef USE_ICU
 		int32_t		ulen = -1;
-		UChar	   *uchar;
+		UChar	   *uchar = NULL;
 #endif
 
 		/*
@@ -2354,7 +2360,8 @@ varstr_abbrev_convert(Datum original, SortSupport ssup)
 												 &status);
 					if (U_FAILURE(status))
 						ereport(ERROR,
-								(errmsg("sort key generation failed: %s", u_errorName(status))));
+								(errmsg("sort key generation failed: %s",
+										u_errorName(status))));
 				}
 				else
 					bsize = ucol_getSortKey(sss->locale->info.icu.ucol,
@@ -2394,6 +2401,11 @@ varstr_abbrev_convert(Datum original, SortSupport ssup)
 		 * okay.  See remarks on bytea case above.)
 		 */
 		memcpy(pres, sss->buf2, Min(sizeof(Datum), bsize));
+
+#ifdef USE_ICU
+		if (uchar)
+			pfree(uchar);
+#endif
 	}
 
 	/*
