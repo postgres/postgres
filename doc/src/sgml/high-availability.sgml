@@ -2203,12 +2203,12 @@ LOG:  database system is ready to accept read only connections
     <function>pg_cancel_backend()</>
     and <function>pg_terminate_backend()</> will work on user backends,
     but not the Startup process, which performs
-    recovery. <structname>pg_stat_activity</structname> does not show an
-    entry for the Startup process, nor do recovering transactions show
-    as active. As a result, <structname>pg_prepared_xacts</structname>
-    is always empty during recovery. If you wish to resolve in-doubt
-    prepared transactions, view <literal>pg_prepared_xacts</> on the
-    primary and issue commands to resolve transactions there.
+    recovery. <structname>pg_stat_activity</structname> does not show
+    recovering transactions as active. As a result,
+    <structname>pg_prepared_xacts</structname> is always empty during
+    recovery. If you wish to resolve in-doubt prepared transactions, view
+    <literal>pg_prepared_xacts</> on the primary and issue commands to
+    resolve transactions there or resolve them after the end of recovery.
    </para>
 
    <para>
