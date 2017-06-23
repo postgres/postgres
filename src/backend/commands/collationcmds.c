@@ -443,7 +443,7 @@ get_icu_locale_comment(const char *localename)
 
 	status = U_ZERO_ERROR;
 	len_uchar = uloc_getDisplayName(localename, "en",
-									&displayname[0], sizeof(displayname),
+									displayname, lengthof(displayname),
 									&status);
 	if (U_FAILURE(status))
 		ereport(ERROR,
