@@ -3443,6 +3443,16 @@ LagTrackerRead(int head, XLogRecPtr lsn, TimestampTz now)
 			(LagTracker.read_heads[head] + 1) % LAG_TRACKER_BUFFER_SIZE;
 	}
 
+	/*
+	 * If the lag tracker is empty, that means the standby has processed
+	 * everything we've ever sent so we should now clear 'last_read'.  If we
+	 * didn't do that, we'd risk using a stale and irrelevant sample for
+	 * interpolation at the beginning of the next burst of WAL after a period
+	 * of idleness.
+	 */
+	if (LagTracker.read_heads[head] == LagTracker.write_head)
+		LagTracker.last_read[head].time = 0;
+
 	if (time > now)
 	{
 		/* If the clock somehow went backwards, treat as not found. */
@@ -3459,9 +3469,14 @@ LagTrackerRead(int head, XLogRecPtr lsn, TimestampTz now)
 		 * eventually start moving again and cross one of our samples before
 		 * we can show the lag increasing.
 		 */
-		if (LagTracker.read_heads[head] != LagTracker.write_head &&
-			LagTracker.last_read[head].time != 0)
+		if (LagTracker.read_heads[head] == LagTracker.write_head)
 		{
+			/* There are no future samples, so we can't interpolate. */
+			return -1;
+		}
+		else if (LagTracker.last_read[head].time != 0)
+		{
+			/* We can interpolate between last_read and the next sample. */
 			double		fraction;
 			WalTimeSample prev = LagTracker.last_read[head];
 			WalTimeSample next = LagTracker.buffer[LagTracker.read_heads[head]];
@@ -3494,8 +3509,14 @@ LagTrackerRead(int head, XLogRecPtr lsn, TimestampTz now)
 		}
 		else
 		{
-			/* Couldn't interpolate due to lack of data. */
-			return -1;
+			/*
+			 * We have only a future sample, implying that we were entirely
+			 * caught up but and now there is a new burst of WAL and the
+			 * standby hasn't processed the first sample yet.  Until the
+			 * standby reaches the future sample the best we can do is report
+			 * the hypothetical lag if that sample were to be replayed now.
+			 */
+			time = LagTracker.buffer[LagTracker.read_heads[head]].time;
 		}
 	}
 
