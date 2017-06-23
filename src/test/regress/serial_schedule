@@ -49,6 +49,7 @@ test: regex
 test: oidjoins
 test: type_sanity
 test: opr_sanity
+test: misc_sanity
 test: comments
 test: expressions
 test: insert

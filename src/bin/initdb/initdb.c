@@ -1478,9 +1478,16 @@ setup_depend(FILE *cmdfd)
 		 * for instance) but generating only the minimum required set of
 		 * dependencies seems hard.
 		 *
-		 * Note that we deliberately do not pin the system views, which
-		 * haven't been created yet.  Also, no conversions, databases, or
-		 * tablespaces are pinned.
+		 * Catalogs that are intentionally not scanned here are:
+		 *
+		 * pg_database: it's a feature, not a bug, that template1 is not
+		 * pinned.
+		 *
+		 * pg_extension: a pinned extension isn't really an extension, hmm?
+		 *
+		 * pg_tablespace: tablespaces don't participate in the dependency
+		 * code, and DropTableSpace() explicitly protects the built-in
+		 * tablespaces.
 		 *
 		 * First delete any already-made entries; PINs override all else, and
 		 * must be the only entries for their objects.
@@ -1500,6 +1507,8 @@ setup_depend(FILE *cmdfd)
 		" FROM pg_cast;\n\n",
 		"INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' "
 		" FROM pg_constraint;\n\n",
+		"INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' "
+		" FROM pg_conversion;\n\n",
 		"INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' "
 		" FROM pg_attrdef;\n\n",
 		"INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' "
@@ -2905,6 +2914,11 @@ initialize_data_directory(void)
 	setup_auth(cmdfd);
 
 	setup_depend(cmdfd);
+
+	/*
+	 * Note that no objects created after setup_depend() will be "pinned".
+	 * They are all droppable at the whim of the DBA.
+	 */
 
 	setup_sysviews(cmdfd);
 
