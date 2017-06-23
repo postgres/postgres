@@ -19711,9 +19711,9 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
       <row>
        <entry>
         <indexterm><primary>pg_import_system_collations</primary></indexterm>
-        <literal><function>pg_import_system_collations(<parameter>if_not_exists</> <type>boolean</>, <parameter>schema</> <type>regnamespace</>)</function></literal>
+        <literal><function>pg_import_system_collations(<parameter>schema</> <type>regnamespace</>)</function></literal>
        </entry>
-       <entry><type>void</type></entry>
+       <entry><type>integer</type></entry>
        <entry>Import operating system collations</entry>
       </row>
      </tbody>
@@ -19730,18 +19730,20 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
    </para>
 
    <para>
-    <function>pg_import_system_collations</> populates the system
-    catalog <literal>pg_collation</literal> with collations based on all the
-    locales it finds on the operating system.  This is
+    <function>pg_import_system_collations</> adds collations to the system
+    catalog <literal>pg_collation</literal> based on all the
+    locales it finds in the operating system.  This is
     what <command>initdb</command> uses;
     see <xref linkend="collation-managing"> for more details.  If additional
     locales are installed into the operating system later on, this function
-    can be run again to add collations for the new locales.  In that case, the
-    parameter <parameter>if_not_exists</parameter> should be set to true to
-    skip over existing collations.  The <parameter>schema</parameter>
-    parameter would typically be <literal>pg_catalog</literal>, but that is
-    not a requirement.  (Collation objects based on locales that are no longer
-    present on the operating system are never removed by this function.)
+    can be run again to add collations for the new locales.  Locales that
+    match existing entries in <literal>pg_collation</literal> will be skipped.
+    (But collation objects based on locales that are no longer
+    present in the operating system are not removed by this function.)
+    The <parameter>schema</parameter> parameter would typically
+    be <literal>pg_catalog</literal>, but that is not a requirement;
+    the collations could be installed into some other schema as well.
+    The function returns the number of new collation objects it created.
    </para>
 
   </sect2>

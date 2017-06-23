@@ -20,7 +20,8 @@ extern Oid CollationCreate(const char *collname, Oid collnamespace,
 				int32 collencoding,
 				const char *collcollate, const char *collctype,
 				const char *collversion,
-				bool if_not_exists);
+				bool if_not_exists,
+				bool quiet);
 extern void RemoveCollationById(Oid collationOid);
 
 #endif							/* PG_COLLATION_FN_H */

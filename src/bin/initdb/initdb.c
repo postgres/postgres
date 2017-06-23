@@ -1636,10 +1636,16 @@ setup_description(FILE *cmdfd)
 static void
 setup_collation(FILE *cmdfd)
 {
-	PG_CMD_PUTS("SELECT pg_import_system_collations(if_not_exists => false, schema => 'pg_catalog');\n\n");
+	/*
+	 * Add an SQL-standard name.  We don't want to pin this, so it doesn't go
+	 * in pg_collation.h.  But add it before reading system collations, so
+	 * that it wins if libc defines a locale named ucs_basic.
+	 */
+	PG_CMD_PRINTF3("INSERT INTO pg_collation (collname, collnamespace, collowner, collprovider, collencoding, collcollate, collctype) VALUES ('ucs_basic', 'pg_catalog'::regnamespace, %u, '%c', %d, 'C', 'C');\n\n",
+				   BOOTSTRAP_SUPERUSERID, COLLPROVIDER_LIBC, PG_UTF8);
 
-	/* Add an SQL-standard name */
-	PG_CMD_PRINTF3("INSERT INTO pg_collation (collname, collnamespace, collowner, collprovider, collencoding, collcollate, collctype) VALUES ('ucs_basic', 'pg_catalog'::regnamespace, %u, '%c', %d, 'C', 'C');\n\n", BOOTSTRAP_SUPERUSERID, COLLPROVIDER_LIBC, PG_UTF8);
+	/* Now import all collations we can find in the operating system */
+	PG_CMD_PUTS("SELECT pg_import_system_collations('pg_catalog');\n\n");
 }
 
 /*
