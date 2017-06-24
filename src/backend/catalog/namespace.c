@@ -1915,9 +1915,60 @@ OpfamilyIsVisible(Oid opfid)
 }
 
 /*
+ * lookup_collation
+ *		If there's a collation of the given name/namespace, and it works
+ *		with the given encoding, return its OID.  Else return InvalidOid.
+ */
+static Oid
+lookup_collation(const char *collname, Oid collnamespace, int32 encoding)
+{
+	Oid			collid;
+	HeapTuple	colltup;
+	Form_pg_collation collform;
+
+	/* Check for encoding-specific entry (exact match) */
+	collid = GetSysCacheOid3(COLLNAMEENCNSP,
+							 PointerGetDatum(collname),
+							 Int32GetDatum(encoding),
+							 ObjectIdGetDatum(collnamespace));
+	if (OidIsValid(collid))
+		return collid;
+
+	/*
+	 * Check for any-encoding entry.  This takes a bit more work: while libc
+	 * collations with collencoding = -1 do work with all encodings, ICU
+	 * collations only work with certain encodings, so we have to check that
+	 * aspect before deciding it's a match.
+	 */
+	colltup = SearchSysCache3(COLLNAMEENCNSP,
+							  PointerGetDatum(collname),
+							  Int32GetDatum(-1),
+							  ObjectIdGetDatum(collnamespace));
+	if (!HeapTupleIsValid(colltup))
+		return InvalidOid;
+	collform = (Form_pg_collation) GETSTRUCT(colltup);
+	if (collform->collprovider == COLLPROVIDER_ICU)
+	{
+		if (is_encoding_supported_by_icu(encoding))
+			collid = HeapTupleGetOid(colltup);
+		else
+			collid = InvalidOid;
+	}
+	else
+	{
+		collid = HeapTupleGetOid(colltup);
+	}
+	ReleaseSysCache(colltup);
+	return collid;
+}
+
+/*
  * CollationGetCollid
  *		Try to resolve an unqualified collation name.
  *		Returns OID if collation found in search path, else InvalidOid.
+ *
+ * Note that this will only find collations that work with the current
+ * database's encoding.
  */
 Oid
 CollationGetCollid(const char *collname)
@@ -1935,19 +1986,7 @@ CollationGetCollid(const char *collname)
 		if (namespaceId == myTempNamespace)
 			continue;			/* do not look in temp namespace */
 
-		/* Check for database-encoding-specific entry */
-		collid = GetSysCacheOid3(COLLNAMEENCNSP,
-								 PointerGetDatum(collname),
-								 Int32GetDatum(dbencoding),
-								 ObjectIdGetDatum(namespaceId));
-		if (OidIsValid(collid))
-			return collid;
-
-		/* Check for any-encoding entry */
-		collid = GetSysCacheOid3(COLLNAMEENCNSP,
-								 PointerGetDatum(collname),
-								 Int32GetDatum(-1),
-								 ObjectIdGetDatum(namespaceId));
+		collid = lookup_collation(collname, namespaceId, dbencoding);
 		if (OidIsValid(collid))
 			return collid;
 	}
@@ -1961,6 +2000,9 @@ CollationGetCollid(const char *collname)
  *		Determine whether a collation (identified by OID) is visible in the
  *		current search path.  Visible means "would be found by searching
  *		for the unqualified collation name".
+ *
+ * Note that only collations that work with the current database's encoding
+ * will be considered visible.
  */
 bool
 CollationIsVisible(Oid collid)
@@ -1990,9 +2032,10 @@ CollationIsVisible(Oid collid)
 	{
 		/*
 		 * If it is in the path, it might still not be visible; it could be
-		 * hidden by another conversion of the same name earlier in the path.
-		 * So we must do a slow check to see if this conversion would be found
-		 * by CollationGetCollid.
+		 * hidden by another collation of the same name earlier in the path,
+		 * or it might not work with the current DB encoding.  So we must do a
+		 * slow check to see if this collation would be found by
+		 * CollationGetCollid.
 		 */
 		char	   *collname = NameStr(collform->collname);
 
@@ -3442,6 +3485,9 @@ PopOverrideSearchPath(void)
 
 /*
  * get_collation_oid - find a collation by possibly qualified name
+ *
+ * Note that this will only find collations that work with the current
+ * database's encoding.
  */
 Oid
 get_collation_oid(List *name, bool missing_ok)
@@ -3463,17 +3509,7 @@ get_collation_oid(List *name, bool missing_ok)
 		if (missing_ok && !OidIsValid(namespaceId))
 			return InvalidOid;
 
-		/* first try for encoding-specific entry, then any-encoding */
-		colloid = GetSysCacheOid3(COLLNAMEENCNSP,
-								  PointerGetDatum(collation_name),
-								  Int32GetDatum(dbencoding),
-								  ObjectIdGetDatum(namespaceId));
-		if (OidIsValid(colloid))
-			return colloid;
-		colloid = GetSysCacheOid3(COLLNAMEENCNSP,
-								  PointerGetDatum(collation_name),
-								  Int32GetDatum(-1),
-								  ObjectIdGetDatum(namespaceId));
+		colloid = lookup_collation(collation_name, namespaceId, dbencoding);
 		if (OidIsValid(colloid))
 			return colloid;
 	}
@@ -3489,16 +3525,7 @@ get_collation_oid(List *name, bool missing_ok)
 			if (namespaceId == myTempNamespace)
 				continue;		/* do not look in temp namespace */
 
-			colloid = GetSysCacheOid3(COLLNAMEENCNSP,
-									  PointerGetDatum(collation_name),
-									  Int32GetDatum(dbencoding),
-									  ObjectIdGetDatum(namespaceId));
-			if (OidIsValid(colloid))
-				return colloid;
-			colloid = GetSysCacheOid3(COLLNAMEENCNSP,
-									  PointerGetDatum(collation_name),
-									  Int32GetDatum(-1),
-									  ObjectIdGetDatum(namespaceId));
+			colloid = lookup_collation(collation_name, namespaceId, dbencoding);
 			if (OidIsValid(colloid))
 				return colloid;
 		}

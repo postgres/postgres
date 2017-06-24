@@ -508,8 +508,8 @@ SELECT * FROM test1 ORDER BY a || b COLLATE "fr_FR";
     operating system C library.  These are the locales that most tools
     provided by the operating system use.  Another provider
     is <literal>icu</literal>, which uses the external
-    ICU<indexterm><primary>ICU</></> library.  Support for ICU has to be
-    configured when PostgreSQL is built.
+    ICU<indexterm><primary>ICU</></> library.  ICU locales can only be
+    used if support for ICU was configured when PostgreSQL was built.
    </para>
 
    <para>
@@ -529,12 +529,12 @@ SELECT * FROM test1 ORDER BY a || b COLLATE "fr_FR";
    </para>
 
    <para>
-    A collation provided by <literal>icu</literal> maps to a named collator
-    provided by the ICU library.  ICU does not support
-    separate <quote>collate</quote> and <quote>ctype</quote> settings, so they
-    are always the same.  Also, ICU collations are independent of the
-    encoding, so there is always only one ICU collation for a given name in a
-    database.
+    A collation object provided by <literal>icu</literal> maps to a named
+    collator provided by the ICU library.  ICU does not support
+    separate <quote>collate</quote> and <quote>ctype</quote> settings, so
+    they are always the same.  Also, ICU collations are independent of the
+    encoding, so there is always only one ICU collation of a given name in
+    a database.
    </para>
 
    <sect3>
@@ -566,10 +566,10 @@ SELECT * FROM test1 ORDER BY a || b COLLATE "fr_FR";
    <para>
     If the operating system provides support for using multiple locales
     within a single program (<function>newlocale</> and related functions),
-    or support for ICU is configured,
+    or if support for ICU is configured,
     then when a database cluster is initialized, <command>initdb</command>
     populates the system catalog <literal>pg_collation</literal> with
-    collations based on all the locales it finds on the operating
+    collations based on all the locales it finds in the operating
     system at the time.
    </para>
 
@@ -602,10 +602,12 @@ SELECT * FROM test1 ORDER BY a || b COLLATE "fr_FR";
     directly to the locales installed in the operating system, which can be
     listed using the command <literal>locale -a</literal>.  In case
     a <literal>libc</literal> collation is needed that has different values
-    for <symbol>LC_COLLATE</symbol> and <symbol>LC_CTYPE</symbol>, or new
+    for <symbol>LC_COLLATE</symbol> and <symbol>LC_CTYPE</symbol>, or if new
     locales are installed in the operating system after the database system
     was initialized, then a new collation may be created using
     the <xref linkend="sql-createcollation"> command.
+    New operating system locales can also be imported en masse using
+    the <link linkend="functions-admin-collation"><function>pg_import_system_collations()</function></link> function.
    </para>
 
    <para>
@@ -617,8 +619,8 @@ SELECT * FROM test1 ORDER BY a || b COLLATE "fr_FR";
     Use of the stripped collation names is recommended, since it will
     make one less thing you need to change if you decide to change to
     another database encoding.  Note however that the <literal>default</>,
-    <literal>C</>, and <literal>POSIX</> collations, as well as all collations
-    provided by ICU can be used regardless of the database encoding.
+    <literal>C</>, and <literal>POSIX</> collations can be used regardless of
+    the database encoding.
    </para>
 
    <para>
@@ -641,7 +643,7 @@ SELECT a COLLATE "C" &lt; b COLLATE "POSIX" FROM test1;
     Collations provided by ICU are created with names in BCP 47 language tag
     format, with a <quote>private use</quote>
     extension <literal>-x-icu</literal> appended, to distinguish them from
-    libc locales.  So <literal>de-x-icu</literal> would be an example.
+    libc locales.  So <literal>de-x-icu</literal> would be an example name.
    </para>
 
    <para>
@@ -652,7 +654,7 @@ SELECT a COLLATE "C" &lt; b COLLATE "POSIX" FROM test1;
     See <ulink url="http://userguide.icu-project.org/locale"></ulink> for
     information on ICU locale naming.  <command>initdb</command> uses the ICU
     APIs to extract a set of locales with distinct collation rules to populate
-    the initial set of collations.  Here are some examples collations that
+    the initial set of collations.  Here are some example collations that
     might be created:
 
     <variablelist>
@@ -675,7 +677,7 @@ SELECT a COLLATE "C" &lt; b COLLATE "POSIX" FROM test1;
       <listitem>
        <para>German collation for Austria, default variant</para>
        <para>
-        (Note that as of this writing, there is no,
+        (As of this writing, there is no,
         say, <literal>de-DE-x-icu</literal> or <literal>de-CH-x-icu</literal>,
         because those are equivalent to <literal>de-x-icu</literal>.)
        </para>
@@ -701,9 +703,11 @@ SELECT a COLLATE "C" &lt; b COLLATE "POSIX" FROM test1;
    </para>
 
    <para>
-    Some (less frequently used) encodings are not supported by ICU.  If the
-    database cluster was initialized with such an encoding, no ICU collations
-    will be predefined.
+    Some (less frequently used) encodings are not supported by ICU.  When the
+    database encoding is one of these, ICU collation entries
+    in <literal>pg_collation</literal> are ignored.  Attempting to use one
+    will draw an error along the lines of <quote>collation "de-x-icu" for
+    encoding "WIN874" does not exist</>.
    </para>
    </sect4>
    </sect3>
@@ -761,8 +765,11 @@ CREATE COLLATION "de-DE-x-icu" FROM "de-x-icu";
    classification) and <envar>LC_COLLATE</> (string sort order) locale
    settings. For <literal>C</> or
    <literal>POSIX</> locale, any character set is allowed, but for other
-   locales there is only one character set that will work correctly.
+   libc-provided locales there is only one character set that will work
+   correctly.
    (On Windows, however, UTF-8 encoding can be used with any locale.)
+   If you have ICU support configured, ICU-provided locales can be used
+   with most but not all server-side encodings.
   </para>
 
    <sect2 id="multibyte-charset-supported">
@@ -775,13 +782,14 @@ CREATE COLLATION "de-DE-x-icu" FROM "de-x-icu";
 
      <table id="charset-table">
       <title><productname>PostgreSQL</productname> Character Sets</title>
-      <tgroup cols="6">
+      <tgroup cols="7">
        <thead>
         <row>
          <entry>Name</entry>
          <entry>Description</entry>
          <entry>Language</entry>
          <entry>Server?</entry>
+         <entry>ICU?</entry>
          <!--
           The Bytes/Char field is populated by looking at the values returned
           by pg_wchar_table.mblen function for each encoding.
@@ -796,6 +804,7 @@ CREATE COLLATION "de-DE-x-icu" FROM "de-x-icu";
          <entry>Big Five</entry>
          <entry>Traditional Chinese</entry>
          <entry>No</entry>
+         <entry>No</entry>
          <entry>1-2</entry>
          <entry><literal>WIN950</>, <literal>Windows950</></entry>
         </row>
@@ -803,6 +812,7 @@ CREATE COLLATION "de-DE-x-icu" FROM "de-x-icu";
          <entry><literal>EUC_CN</literal></entry>
          <entry>Extended UNIX Code-CN</entry>
          <entry>Simplified Chinese</entry>
+         <entry>Yes</entry>
          <entry>Yes</entry>
          <entry>1-3</entry>
          <entry></entry>
@@ -812,6 +822,7 @@ CREATE COLLATION "de-DE-x-icu" FROM "de-x-icu";
          <entry>Extended UNIX Code-JP</entry>
          <entry>Japanese</entry>
          <entry>Yes</entry>
+         <entry>Yes</entry>
          <entry>1-3</entry>
          <entry></entry>
         </row>
@@ -820,6 +831,7 @@ CREATE COLLATION "de-DE-x-icu" FROM "de-x-icu";
          <entry>Extended UNIX Code-JP, JIS X 0213</entry>
          <entry>Japanese</entry>
          <entry>Yes</entry>
+         <entry>No</entry>
          <entry>1-3</entry>
          <entry></entry>
         </row>
@@ -827,6 +839,7 @@ CREATE COLLATION "de-DE-x-icu" FROM "de-x-icu";
          <entry><literal>EUC_KR</literal></entry>
          <entry>Extended UNIX Code-KR</entry>
          <entry>Korean</entry>
+         <entry>Yes</entry>
          <entry>Yes</entry>
          <entry>1-3</entry>
          <entry></entry>
@@ -836,6 +849,7 @@ CREATE COLLATION "de-DE-x-icu" FROM "de-x-icu";
          <entry>Extended UNIX Code-TW</entry>
          <entry>Traditional Chinese, Taiwanese</entry>
          <entry>Yes</entry>
+         <entry>Yes</entry>
          <entry>1-3</entry>
          <entry></entry>
         </row>
@@ -843,6 +857,7 @@ CREATE COLLATION "de-DE-x-icu" FROM "de-x-icu";
          <entry><literal>GB18030</literal></entry>
          <entry>National Standard</entry>
          <entry>Chinese</entry>
+         <entry>No</entry>
          <entry>No</entry>
          <entry>1-4</entry>
          <entry></entry>
@@ -852,6 +867,7 @@ CREATE COLLATION "de-DE-x-icu" FROM "de-x-icu";
          <entry>Extended National Standard</entry>
          <entry>Simplified Chinese</entry>
          <entry>No</entry>
+         <entry>No</entry>
          <entry>1-2</entry>
          <entry><literal>WIN936</>, <literal>Windows936</></entry>
         </row>
@@ -859,6 +875,7 @@ CREATE COLLATION "de-DE-x-icu" FROM "de-x-icu";
          <entry><literal>ISO_8859_5</literal></entry>
          <entry>ISO 8859-5, <acronym>ECMA</> 113</entry>
          <entry>Latin/Cyrillic</entry>
+         <entry>Yes</entry>
          <entry>Yes</entry>
          <entry>1</entry>
          <entry></entry>
@@ -868,6 +885,7 @@ CREATE COLLATION "de-DE-x-icu" FROM "de-x-icu";
          <entry>ISO 8859-6, <acronym>ECMA</> 114</entry>
          <entry>Latin/Arabic</entry>
          <entry>Yes</entry>
+         <entry>Yes</entry>
          <entry>1</entry>
          <entry></entry>
         </row>
@@ -875,6 +893,7 @@ CREATE COLLATION "de-DE-x-icu" FROM "de-x-icu";
          <entry><literal>ISO_8859_7</literal></entry>
          <entry>ISO 8859-7, <acronym>ECMA</> 118</entry>
          <entry>Latin/Greek</entry>
+         <entry>Yes</entry>
          <entry>Yes</entry>
          <entry>1</entry>
          <entry></entry>
@@ -884,6 +903,7 @@ CREATE COLLATION "de-DE-x-icu" FROM "de-x-icu";
          <entry>ISO 8859-8, <acronym>ECMA</> 121</entry>
          <entry>Latin/Hebrew</entry>
          <entry>Yes</entry>
+         <entry>Yes</entry>
          <entry>1</entry>
          <entry></entry>
         </row>
@@ -891,6 +911,7 @@ CREATE COLLATION "de-DE-x-icu" FROM "de-x-icu";
          <entry><literal>JOHAB</literal></entry>
          <entry><acronym>JOHAB</></entry>
          <entry>Korean (Hangul)</entry>
+         <entry>No</entry>
          <entry>No</entry>
          <entry>1-3</entry>
          <entry></entry>
@@ -900,6 +921,7 @@ CREATE COLLATION "de-DE-x-icu" FROM "de-x-icu";
          <entry><acronym>KOI</acronym>8-R</entry>
          <entry>Cyrillic (Russian)</entry>
          <entry>Yes</entry>
+         <entry>Yes</entry>
          <entry>1</entry>
          <entry><literal>KOI8</></entry>
         </row>
@@ -907,6 +929,7 @@ CREATE COLLATION "de-DE-x-icu" FROM "de-x-icu";
          <entry><literal>KOI8U</literal></entry>
          <entry><acronym>KOI</acronym>8-U</entry>
          <entry>Cyrillic (Ukrainian)</entry>
+         <entry>Yes</entry>
          <entry>Yes</entry>
          <entry>1</entry>
          <entry></entry>
@@ -916,6 +939,7 @@ CREATE COLLATION "de-DE-x-icu" FROM "de-x-icu";
          <entry>ISO 8859-1, <acronym>ECMA</> 94</entry>
          <entry>Western European</entry>
          <entry>Yes</entry>
+         <entry>Yes</entry>
          <entry>1</entry>
          <entry><literal>ISO88591</></entry>
         </row>
@@ -923,6 +947,7 @@ CREATE COLLATION "de-DE-x-icu" FROM "de-x-icu";
          <entry><literal>LATIN2</literal></entry>
          <entry>ISO 8859-2, <acronym>ECMA</> 94</entry>
          <entry>Central European</entry>
+         <entry>Yes</entry>
          <entry>Yes</entry>
          <entry>1</entry>
          <entry><literal>ISO88592</></entry>
@@ -932,6 +957,7 @@ CREATE COLLATION "de-DE-x-icu" FROM "de-x-icu";
          <entry>ISO 8859-3, <acronym>ECMA</> 94</entry>
          <entry>South European</entry>
          <entry>Yes</entry>
+         <entry>Yes</entry>
          <entry>1</entry>
          <entry><literal>ISO88593</></entry>
         </row>
@@ -939,6 +965,7 @@ CREATE COLLATION "de-DE-x-icu" FROM "de-x-icu";
          <entry><literal>LATIN4</literal></entry>
          <entry>ISO 8859-4, <acronym>ECMA</> 94</entry>
          <entry>North European</entry>
+         <entry>Yes</entry>
          <entry>Yes</entry>
          <entry>1</entry>
          <entry><literal>ISO88594</></entry>
@@ -948,6 +975,7 @@ CREATE COLLATION "de-DE-x-icu" FROM "de-x-icu";
          <entry>ISO 8859-9, <acronym>ECMA</> 128</entry>
          <entry>Turkish</entry>
          <entry>Yes</entry>
+         <entry>Yes</entry>
          <entry>1</entry>
          <entry><literal>ISO88599</></entry>
         </row>
@@ -955,6 +983,7 @@ CREATE COLLATION "de-DE-x-icu" FROM "de-x-icu";
          <entry><literal>LATIN6</literal></entry>
          <entry>ISO 8859-10, <acronym>ECMA</> 144</entry>
          <entry>Nordic</entry>
+         <entry>Yes</entry>
          <entry>Yes</entry>
          <entry>1</entry>
          <entry><literal>ISO885910</></entry>
@@ -964,6 +993,7 @@ CREATE COLLATION "de-DE-x-icu" FROM "de-x-icu";
          <entry>ISO 8859-13</entry>
          <entry>Baltic</entry>
          <entry>Yes</entry>
+         <entry>Yes</entry>
          <entry>1</entry>
          <entry><literal>ISO885913</></entry>
         </row>
@@ -971,6 +1001,7 @@ CREATE COLLATION "de-DE-x-icu" FROM "de-x-icu";
          <entry><literal>LATIN8</literal></entry>
          <entry>ISO 8859-14</entry>
          <entry>Celtic</entry>
+         <entry>Yes</entry>
          <entry>Yes</entry>
          <entry>1</entry>
          <entry><literal>ISO885914</></entry>
@@ -980,6 +1011,7 @@ CREATE COLLATION "de-DE-x-icu" FROM "de-x-icu";
          <entry>ISO 8859-15</entry>
          <entry>LATIN1 with Euro and accents</entry>
          <entry>Yes</entry>
+         <entry>Yes</entry>
          <entry>1</entry>
          <entry><literal>ISO885915</></entry>
         </row>
@@ -988,6 +1020,7 @@ CREATE COLLATION "de-DE-x-icu" FROM "de-x-icu";
          <entry>ISO 8859-16, <acronym>ASRO</> SR 14111</entry>
          <entry>Romanian</entry>
          <entry>Yes</entry>
+         <entry>No</entry>
          <entry>1</entry>
          <entry><literal>ISO885916</></entry>
         </row>
@@ -996,6 +1029,7 @@ CREATE COLLATION "de-DE-x-icu" FROM "de-x-icu";
          <entry>Mule internal code</entry>
          <entry>Multilingual Emacs</entry>
          <entry>Yes</entry>
+         <entry>No</entry>
          <entry>1-4</entry>
          <entry></entry>
         </row>
@@ -1003,6 +1037,7 @@ CREATE COLLATION "de-DE-x-icu" FROM "de-x-icu";
          <entry><literal>SJIS</literal></entry>
          <entry>Shift JIS</entry>
          <entry>Japanese</entry>
+         <entry>No</entry>
          <entry>No</entry>
          <entry>1-2</entry>
          <entry><literal>Mskanji</>, <literal>ShiftJIS</>, <literal>WIN932</>, <literal>Windows932</></entry>
@@ -1012,6 +1047,7 @@ CREATE COLLATION "de-DE-x-icu" FROM "de-x-icu";
          <entry>Shift JIS, JIS X 0213</entry>
          <entry>Japanese</entry>
          <entry>No</entry>
+         <entry>No</entry>
          <entry>1-2</entry>
          <entry></entry>
         </row>
@@ -1020,6 +1056,7 @@ CREATE COLLATION "de-DE-x-icu" FROM "de-x-icu";
          <entry>unspecified (see text)</entry>
          <entry><emphasis>any</></entry>
          <entry>Yes</entry>
+         <entry>No</entry>
          <entry>1</entry>
          <entry></entry>
         </row>
@@ -1027,6 +1064,7 @@ CREATE COLLATION "de-DE-x-icu" FROM "de-x-icu";
          <entry><literal>UHC</literal></entry>
          <entry>Unified Hangul Code</entry>
          <entry>Korean</entry>
+         <entry>No</entry>
          <entry>No</entry>
          <entry>1-2</entry>
          <entry><literal>WIN949</>, <literal>Windows949</></entry>
@@ -1036,6 +1074,7 @@ CREATE COLLATION "de-DE-x-icu" FROM "de-x-icu";
          <entry>Unicode, 8-bit</entry>
          <entry><emphasis>all</></entry>
          <entry>Yes</entry>
+         <entry>Yes</entry>
          <entry>1-4</entry>
          <entry><literal>Unicode</></entry>
         </row>
@@ -1043,6 +1082,7 @@ CREATE COLLATION "de-DE-x-icu" FROM "de-x-icu";
          <entry><literal>WIN866</literal></entry>
          <entry>Windows CP866</entry>
          <entry>Cyrillic</entry>
+         <entry>Yes</entry>
          <entry>Yes</entry>
          <entry>1</entry>
          <entry><literal>ALT</></entry>
@@ -1052,6 +1092,7 @@ CREATE COLLATION "de-DE-x-icu" FROM "de-x-icu";
          <entry>Windows CP874</entry>
          <entry>Thai</entry>
          <entry>Yes</entry>
+         <entry>No</entry>
          <entry>1</entry>
          <entry></entry>
         </row>
@@ -1059,6 +1100,7 @@ CREATE COLLATION "de-DE-x-icu" FROM "de-x-icu";
          <entry><literal>WIN1250</literal></entry>
          <entry>Windows CP1250</entry>
          <entry>Central European</entry>
+         <entry>Yes</entry>
          <entry>Yes</entry>
          <entry>1</entry>
          <entry></entry>
@@ -1068,6 +1110,7 @@ CREATE COLLATION "de-DE-x-icu" FROM "de-x-icu";
          <entry>Windows CP1251</entry>
          <entry>Cyrillic</entry>
          <entry>Yes</entry>
+         <entry>Yes</entry>
          <entry>1</entry>
          <entry><literal>WIN</></entry>
         </row>
@@ -1075,6 +1118,7 @@ CREATE COLLATION "de-DE-x-icu" FROM "de-x-icu";
          <entry><literal>WIN1252</literal></entry>
          <entry>Windows CP1252</entry>
          <entry>Western European</entry>
+         <entry>Yes</entry>
          <entry>Yes</entry>
          <entry>1</entry>
          <entry></entry>
@@ -1084,6 +1128,7 @@ CREATE COLLATION "de-DE-x-icu" FROM "de-x-icu";
          <entry>Windows CP1253</entry>
          <entry>Greek</entry>
          <entry>Yes</entry>
+         <entry>Yes</entry>
          <entry>1</entry>
          <entry></entry>
         </row>
@@ -1091,6 +1136,7 @@ CREATE COLLATION "de-DE-x-icu" FROM "de-x-icu";
          <entry><literal>WIN1254</literal></entry>
          <entry>Windows CP1254</entry>
          <entry>Turkish</entry>
+         <entry>Yes</entry>
          <entry>Yes</entry>
          <entry>1</entry>
          <entry></entry>
@@ -1100,6 +1146,7 @@ CREATE COLLATION "de-DE-x-icu" FROM "de-x-icu";
          <entry>Windows CP1255</entry>
          <entry>Hebrew</entry>
          <entry>Yes</entry>
+         <entry>Yes</entry>
          <entry>1</entry>
          <entry></entry>
         </row>
@@ -1107,6 +1154,7 @@ CREATE COLLATION "de-DE-x-icu" FROM "de-x-icu";
          <entry><literal>WIN1256</literal></entry>
          <entry>Windows CP1256</entry>
          <entry>Arabic</entry>
+         <entry>Yes</entry>
          <entry>Yes</entry>
          <entry>1</entry>
          <entry></entry>
@@ -1116,6 +1164,7 @@ CREATE COLLATION "de-DE-x-icu" FROM "de-x-icu";
          <entry>Windows CP1257</entry>
          <entry>Baltic</entry>
          <entry>Yes</entry>
+         <entry>Yes</entry>
          <entry>1</entry>
          <entry></entry>
         </row>
@@ -1123,6 +1172,7 @@ CREATE COLLATION "de-DE-x-icu" FROM "de-x-icu";
          <entry><literal>WIN1258</literal></entry>
          <entry>Windows CP1258</entry>
          <entry>Vietnamese</entry>
+         <entry>Yes</entry>
          <entry>Yes</entry>
          <entry>1</entry>
          <entry><literal>ABC</>, <literal>TCVN</>, <literal>TCVN5712</>, <literal>VSCII</></entry>

@@ -353,6 +353,21 @@ pg_collation_actual_version(PG_FUNCTION_ARGS)
 }
 
 
+/*
+ * Check a string to see if it is pure ASCII
+ */
+static bool
+is_all_ascii(const char *str)
+{
+	while (*str)
+	{
+		if (IS_HIGHBIT_SET(*str))
+			return false;
+		str++;
+	}
+	return true;
+}
+
 /* will we use "locale -a" in pg_import_system_collations? */
 #if defined(HAVE_LOCALE_T) && !defined(WIN32)
 #define READ_LOCALE_A_OUTPUT
@@ -431,7 +446,9 @@ get_icu_language_tag(const char *localename)
 
 /*
  * Get a comment (specifically, the display name) for an ICU locale.
- * The result is a palloc'd string.
+ * The result is a palloc'd string, or NULL if we can't get a comment
+ * or find that it's not all ASCII.  (We can *not* accept non-ASCII
+ * comments, because the contents of template0 must be encoding-agnostic.)
  */
 static char *
 get_icu_locale_comment(const char *localename)
@@ -439,6 +456,7 @@ get_icu_locale_comment(const char *localename)
 	UErrorCode	status;
 	UChar		displayname[128];
 	int32		len_uchar;
+	int32		i;
 	char	   *result;
 
 	status = U_ZERO_ERROR;
@@ -446,11 +464,20 @@ get_icu_locale_comment(const char *localename)
 									displayname, lengthof(displayname),
 									&status);
 	if (U_FAILURE(status))
-		ereport(ERROR,
-				(errmsg("could not get display name for locale \"%s\": %s",
-						localename, u_errorName(status))));
+		return NULL;			/* no good reason to raise an error */
 
-	icu_from_uchar(&result, displayname, len_uchar);
+	/* Check for non-ASCII comment (can't use is_all_ascii for this) */
+	for (i = 0; i < len_uchar; i++)
+	{
+		if (displayname[i] > 127)
+			return NULL;
+	}
+
+	/* OK, transcribe */
+	result = palloc(len_uchar + 1);
+	for (i = 0; i < len_uchar; i++)
+		result[i] = displayname[i];
+	result[len_uchar] = '\0';
 
 	return result;
 }
@@ -502,7 +529,6 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 		{
 			size_t		len;
 			int			enc;
-			bool		skip;
 			char		alias[NAMEDATALEN];
 
 			len = strlen(localebuf);
@@ -521,16 +547,7 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 			 * interpret the non-ASCII characters. We can't do much with
 			 * those, so we filter them out.
 			 */
-			skip = false;
-			for (i = 0; i < len; i++)
-			{
-				if (IS_HIGHBIT_SET(localebuf[i]))
-				{
-					skip = true;
-					break;
-				}
-			}
-			if (skip)
+			if (!is_all_ascii(localebuf))
 			{
 				elog(DEBUG1, "locale name has non-ASCII characters, skipped: \"%s\"", localebuf);
 				continue;
@@ -642,14 +659,6 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 
 	/* Load collations known to ICU */
 #ifdef USE_ICU
-	if (!is_encoding_supported_by_icu(GetDatabaseEncoding()))
-	{
-		ereport(NOTICE,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("encoding \"%s\" not supported by ICU",
-						pg_encoding_to_char(GetDatabaseEncoding()))));
-	}
-	else
 	{
 		int			i;
 
@@ -661,6 +670,7 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 		{
 			const char *name;
 			char	   *langtag;
+			char	   *icucomment;
 			const char *collcollate;
 			UEnumeration *en;
 			UErrorCode	status;
@@ -674,6 +684,14 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 
 			langtag = get_icu_language_tag(name);
 			collcollate = U_ICU_VERSION_MAJOR_NUM >= 54 ? langtag : name;
+
+			/*
+			 * Be paranoid about not allowing any non-ASCII strings into
+			 * pg_collation
+			 */
+			if (!is_all_ascii(langtag) || !is_all_ascii(collcollate))
+				continue;
+
 			collid = CollationCreate(psprintf("%s-x-icu", langtag),
 									 nspid, GetUserId(),
 									 COLLPROVIDER_ICU, -1,
@@ -686,8 +704,10 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 
 				CommandCounterIncrement();
 
-				CreateComments(collid, CollationRelationId, 0,
-							   get_icu_locale_comment(name));
+				icucomment = get_icu_locale_comment(name);
+				if (icucomment)
+					CreateComments(collid, CollationRelationId, 0,
+								   icucomment);
 			}
 
 			/*
@@ -708,6 +728,14 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 
 				langtag = get_icu_language_tag(localeid);
 				collcollate = U_ICU_VERSION_MAJOR_NUM >= 54 ? langtag : localeid;
+
+				/*
+				 * Be paranoid about not allowing any non-ASCII strings into
+				 * pg_collation
+				 */
+				if (!is_all_ascii(langtag) || !is_all_ascii(collcollate))
+					continue;
+
 				collid = CollationCreate(psprintf("%s-x-icu", langtag),
 										 nspid, GetUserId(),
 										 COLLPROVIDER_ICU, -1,
@@ -720,8 +748,10 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 
 					CommandCounterIncrement();
 
-					CreateComments(collid, CollationRelationId, 0,
-								   get_icu_locale_comment(localeid));
+					icucomment = get_icu_locale_comment(name);
+					if (icucomment)
+						CreateComments(collid, CollationRelationId, 0,
+									   icucomment);
 				}
 			}
 			if (U_FAILURE(status))
