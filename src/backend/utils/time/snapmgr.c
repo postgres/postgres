@@ -2078,7 +2078,7 @@ SerializeSnapshot(Snapshot snapshot, char *start_address)
 
 	/*
 	 * Ignore the SubXID array if it has overflowed, unless the snapshot was
-	 * taken during recovey - in that case, top-level XIDs are in subxip as
+	 * taken during recovery - in that case, top-level XIDs are in subxip as
 	 * well, and we mustn't lose them.
 	 */
 	if (serialized_snapshot.suboverflowed && !snapshot->takenDuringRecovery)
