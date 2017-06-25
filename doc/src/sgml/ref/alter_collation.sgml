@@ -92,7 +92,7 @@ ALTER COLLATION <replaceable>name</replaceable> SET SCHEMA <replaceable>new_sche
     <term><literal>REFRESH VERSION</literal></term>
     <listitem>
      <para>
-      Updated the collation version.
+      Update the collation's version.
       See <xref linkend="sql-altercollation-notes"
       endterm="sql-altercollation-notes-title"> below.
      </para>
@@ -107,16 +107,16 @@ ALTER COLLATION <replaceable>name</replaceable> SET SCHEMA <replaceable>new_sche
   <para>
    When using collations provided by the ICU library, the ICU-specific version
    of the collator is recorded in the system catalog when the collation object
-   is created.  When the collation is then used, the current version is
+   is created.  When the collation is used, the current version is
    checked against the recorded version, and a warning is issued when there is
    a mismatch, for example:
 <screen>
-WARNING:  ICU collator version mismatch
-DETAIL:  The database was created using version 1.2.3.4, the library provides version 2.3.4.5.
-HINT:  Rebuild all objects affected by this collation and run ALTER COLLATION pg_catalog."xx-x-icu" REFRESH VERSION, or build PostgreSQL with the right version of ICU.
+WARNING:  collation "xx-x-icu" has version mismatch
+DETAIL:  The collation in the database was created using version 1.2.3.4, but the operating system provides version 2.3.4.5.
+HINT:  Rebuild all objects affected by this collation and run ALTER COLLATION pg_catalog."xx-x-icu" REFRESH VERSION, or build PostgreSQL with the right library version.
 </screen>
    A change in collation definitions can lead to corrupt indexes and other
-   problems where the database system relies on stored objects having a
+   problems because the database system relies on stored objects having a
    certain sort order.  Generally, this should be avoided, but it can happen
    in legitimate circumstances, such as when
    using <command>pg_upgrade</command> to upgrade to server binaries linked
