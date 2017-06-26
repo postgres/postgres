@@ -1732,7 +1732,7 @@
 
        <para>
         This is accessed via <function>ts_headline()</> and
-        <function>to_tsvector</>.
+        <function>to_tsvector()</>.
        </para>
       </listitem>
 
@@ -1876,7 +1876,7 @@
 -->
       <para>
        Improve <link
-       linkend="functions-json-processing-table"><function>json_populate_record</></>
+       linkend="functions-json-processing-table"><function>json_populate_record()</></>
        and friends operate recursively (Nikita Glukhov)
       </para>
 
