@@ -1311,6 +1311,12 @@ get_qual_for_list(PartitionKey key, PartitionBoundSpec *spec)
 	List	   *arrelems = NIL;
 	bool		list_has_null = false;
 
+	/*
+	 * Only single-column list partitioning is supported, so we are worried
+	 * only about the partition key with index 0.
+	 */
+	Assert(key->partnatts == 1);
+
 	/* Construct Var or expression representing the partition column */
 	if (key->partattrs[0] != 0)
 		keyCol = (Expr *) makeVar(1,
@@ -1333,20 +1339,28 @@ get_qual_for_list(PartitionKey key, PartitionBoundSpec *spec)
 			arrelems = lappend(arrelems, copyObject(val));
 	}
 
-	/* Construct an ArrayExpr for the non-null partition values */
-	arr = makeNode(ArrayExpr);
-	arr->array_typeid = !type_is_array(key->parttypid[0])
-		? get_array_type(key->parttypid[0])
-		: key->parttypid[0];
-	arr->array_collid = key->parttypcoll[0];
-	arr->element_typeid = key->parttypid[0];
-	arr->elements = arrelems;
-	arr->multidims = false;
-	arr->location = -1;
+	if (arrelems)
+	{
+		/* Construct an ArrayExpr for the non-null partition values */
+		arr = makeNode(ArrayExpr);
+		arr->array_typeid = !type_is_array(key->parttypid[0])
+			? get_array_type(key->parttypid[0])
+			: key->parttypid[0];
+		arr->array_collid = key->parttypcoll[0];
+		arr->element_typeid = key->parttypid[0];
+		arr->elements = arrelems;
+		arr->multidims = false;
+		arr->location = -1;
 
-	/* Generate the main expression, i.e., keyCol = ANY (arr) */
-	opexpr = make_partition_op_expr(key, 0, BTEqualStrategyNumber,
-									keyCol, (Expr *) arr);
+		/* Generate the main expression, i.e., keyCol = ANY (arr) */
+		opexpr = make_partition_op_expr(key, 0, BTEqualStrategyNumber,
+										keyCol, (Expr *) arr);
+	}
+	else
+	{
+		/* If there are no partition values, we don't need an = ANY expr */
+		opexpr = NULL;
+	}
 
 	if (!list_has_null)
 	{
@@ -1361,7 +1375,7 @@ get_qual_for_list(PartitionKey key, PartitionBoundSpec *spec)
 		nulltest->argisrow = false;
 		nulltest->location = -1;
 
-		result = list_make2(nulltest, opexpr);
+		result = opexpr ? list_make2(nulltest, opexpr) : list_make1(nulltest);
 	}
 	else
 	{
@@ -1369,16 +1383,21 @@ get_qual_for_list(PartitionKey key, PartitionBoundSpec *spec)
 		 * Gin up a "col IS NULL" test that will be OR'd with the main
 		 * expression.
 		 */
-		Expr	   *or;
-
 		nulltest = makeNode(NullTest);
 		nulltest->arg = keyCol;
 		nulltest->nulltesttype = IS_NULL;
 		nulltest->argisrow = false;
 		nulltest->location = -1;
 
-		or = makeBoolExpr(OR_EXPR, list_make2(nulltest, opexpr), -1);
-		result = list_make1(or);
+		if (opexpr)
+		{
+			Expr	   *or;
+
+			or = makeBoolExpr(OR_EXPR, list_make2(nulltest, opexpr), -1);
+			result = list_make1(or);
+		}
+		else
+			result = list_make1(nulltest);
 	}
 
 	return result;
