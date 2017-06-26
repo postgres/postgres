@@ -3721,8 +3721,19 @@ pgstat_read_statsfile(Oid onlydb, bool permanent)
 	{
 		ereport(pgStatRunningInCollector ? LOG : WARNING,
 				(errmsg("corrupted statistics file \"%s\"", statfile)));
+		memset(&globalStats, 0, sizeof(globalStats));
 		goto done;
 	}
+
+	/*
+	 * In the collector, disregard the timestamp we read from the permanent
+	 * stats file; we should be willing to write a temp stats file immediately
+	 * upon the first request from any backend.  This only matters if the old
+	 * file's timestamp is less than PGSTAT_STAT_INTERVAL ago, but that's not
+	 * an unusual scenario.
+	 */
+	if (pgStatRunningInCollector)
+		globalStats.stats_timestamp = 0;
 
 	/*
 	 * We found an existing collector stats file. Read it and put all the
