@@ -113,7 +113,7 @@ get_modifiers(char *buf, int16 *weight, bool *prefix)
  * Parse phrase operator. The operator
  * may take the following forms:
  *
- *		a <X> b (distance is no greater than X)
+ *		a <N> b (distance is exactly N lexemes)
  *		a <-> b (default distance = 1)
  *
  * The buffer should begin with '<' char
@@ -129,10 +129,9 @@ parse_phrase_operator(char *buf, int16 *distance)
 		PHRASE_ERR,
 		PHRASE_FINISH
 	}			state = PHRASE_OPEN;
-
 	char	   *ptr = buf;
 	char	   *endptr;
-	long		l = 1;
+	long		l = 1;			/* default distance */
 
 	while (*ptr)
 	{
@@ -151,16 +150,17 @@ parse_phrase_operator(char *buf, int16 *distance)
 					ptr++;
 					break;
 				}
-				else if (!t_isdigit(ptr))
+				if (!t_isdigit(ptr))
 				{
 					state = PHRASE_ERR;
 					break;
 				}
 
+				errno = 0;
 				l = strtol(ptr, &endptr, 10);
 				if (ptr == endptr)
 					state = PHRASE_ERR;
-				else if (errno == ERANGE || l > MAXENTRYPOS)
+				else if (errno == ERANGE || l < 0 || l > MAXENTRYPOS)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 							 errmsg("distance in phrase operator should not be greater than %d",
