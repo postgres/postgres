@@ -68,6 +68,10 @@ typedef enum
 
 #define DEFAULT_WAIT	60
 
+#define USEC_PER_SEC	1000000
+
+#define WAITS_PER_SEC	10		/* should divide USEC_PER_SEC evenly */
+
 static bool do_wait = true;
 static int	wait_seconds = DEFAULT_WAIT;
 static bool wait_seconds_arg = false;
@@ -531,7 +535,7 @@ test_postmaster_connection(pgpid_t pm_pid, bool do_checkpoint)
 
 	connstr[0] = '\0';
 
-	for (i = 0; i < wait_seconds; i++)
+	for (i = 0; i < wait_seconds * WAITS_PER_SEC; i++)
 	{
 		/* Do we need a connection string? */
 		if (connstr[0] == '\0')
@@ -701,24 +705,28 @@ test_postmaster_connection(pgpid_t pm_pid, bool do_checkpoint)
 #endif
 
 		/* No response, or startup still in process; wait */
-#ifdef WIN32
-		if (do_checkpoint)
+		if (i % WAITS_PER_SEC == 0)
 		{
-			/*
-			 * Increment the wait hint by 6 secs (connection timeout + sleep)
-			 * We must do this to indicate to the SCM that our startup time is
-			 * changing, otherwise it'll usually send a stop signal after 20
-			 * seconds, despite incrementing the checkpoint counter.
-			 */
-			status.dwWaitHint += 6000;
-			status.dwCheckPoint++;
-			SetServiceStatus(hStatus, (LPSERVICE_STATUS) &status);
-		}
-		else
+#ifdef WIN32
+			if (do_checkpoint)
+			{
+				/*
+				 * Increment the wait hint by 6 secs (connection timeout +
+				 * sleep).  We must do this to indicate to the SCM that our
+				 * startup time is changing, otherwise it'll usually send a
+				 * stop signal after 20 seconds, despite incrementing the
+				 * checkpoint counter.
+				 */
+				status.dwWaitHint += 6000;
+				status.dwCheckPoint++;
+				SetServiceStatus(hStatus, (LPSERVICE_STATUS) &status);
+			}
+			else
 #endif
-			print_msg(".");
+				print_msg(".");
+		}
 
-		pg_usleep(1000000);		/* 1 sec */
+		pg_usleep(USEC_PER_SEC / WAITS_PER_SEC);
 	}
 
 	/* return result of last call to PQping */
@@ -998,12 +1006,13 @@ do_stop(void)
 
 		print_msg(_("waiting for server to shut down..."));
 
-		for (cnt = 0; cnt < wait_seconds; cnt++)
+		for (cnt = 0; cnt < wait_seconds * WAITS_PER_SEC; cnt++)
 		{
 			if ((pid = get_pgpid(false)) != 0)
 			{
-				print_msg(".");
-				pg_usleep(1000000); /* 1 sec */
+				if (cnt % WAITS_PER_SEC == 0)
+					print_msg(".");
+				pg_usleep(USEC_PER_SEC / WAITS_PER_SEC);
 			}
 			else
 				break;
@@ -1088,12 +1097,13 @@ do_restart(void)
 
 		/* always wait for restart */
 
-		for (cnt = 0; cnt < wait_seconds; cnt++)
+		for (cnt = 0; cnt < wait_seconds * WAITS_PER_SEC; cnt++)
 		{
 			if ((pid = get_pgpid(false)) != 0)
 			{
-				print_msg(".");
-				pg_usleep(1000000); /* 1 sec */
+				if (cnt % WAITS_PER_SEC == 0)
+					print_msg(".");
+				pg_usleep(USEC_PER_SEC / WAITS_PER_SEC);
 			}
 			else
 				break;
@@ -1225,17 +1235,18 @@ do_promote(void)
 	if (do_wait)
 	{
 		DBState		state = DB_STARTUP;
+		int			cnt;
 
 		print_msg(_("waiting for server to promote..."));
-		while (wait_seconds > 0)
+		for (cnt = 0; cnt < wait_seconds * WAITS_PER_SEC; cnt++)
 		{
 			state = get_control_dbstate();
 			if (state == DB_IN_PRODUCTION)
 				break;
 
-			print_msg(".");
-			pg_usleep(1000000); /* 1 sec */
-			wait_seconds--;
+			if (cnt % WAITS_PER_SEC == 0)
+				print_msg(".");
+			pg_usleep(USEC_PER_SEC / WAITS_PER_SEC);
 		}
 		if (state == DB_IN_PRODUCTION)
 		{
