@@ -390,7 +390,7 @@ check_agg_arguments_walker(Node *node,
 		return false;
 	}
 	/* We can throw error on sight for a window function */
-	if (IsA(node, WindowFunc))
+	if (IsA(node, WindowFunc) && context->sublevels_up == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_GROUPING_ERROR),
 				 errmsg("aggregate function calls cannot contain window function calls"),
