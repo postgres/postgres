@@ -705,21 +705,28 @@ check_agg_arguments_walker(Node *node,
 		}
 		/* Continue and descend into subtree */
 	}
-	/* We can throw error on sight for a set-returning function */
-	if ((IsA(node, FuncExpr) &&((FuncExpr *) node)->funcretset) ||
-		(IsA(node, OpExpr) &&((OpExpr *) node)->opretset))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("aggregate function calls cannot contain set-returning function calls"),
-				 errhint("You might be able to move the set-returning function into a LATERAL FROM item."),
-				 parser_errposition(context->pstate, exprLocation(node))));
-	/* We can throw error on sight for a window function */
-	if (IsA(node, WindowFunc))
-		ereport(ERROR,
-				(errcode(ERRCODE_GROUPING_ERROR),
-				 errmsg("aggregate function calls cannot contain window function calls"),
-				 parser_errposition(context->pstate,
-									((WindowFunc *) node)->location)));
+
+	/*
+	 * SRFs and window functions can be rejected immediately, unless we are
+	 * within a sub-select within the aggregate's arguments; in that case
+	 * they're OK.
+	 */
+	if (context->sublevels_up == 0)
+	{
+		if ((IsA(node, FuncExpr) &&((FuncExpr *) node)->funcretset) ||
+			(IsA(node, OpExpr) &&((OpExpr *) node)->opretset))
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("aggregate function calls cannot contain set-returning function calls"),
+					 errhint("You might be able to move the set-returning function into a LATERAL FROM item."),
+					 parser_errposition(context->pstate, exprLocation(node))));
+		if (IsA(node, WindowFunc))
+			ereport(ERROR,
+					(errcode(ERRCODE_GROUPING_ERROR),
+					 errmsg("aggregate function calls cannot contain window function calls"),
+					 parser_errposition(context->pstate,
+										((WindowFunc *) node)->location)));
+	}
 	if (IsA(node, Query))
 	{
 		/* Recurse into subselects */

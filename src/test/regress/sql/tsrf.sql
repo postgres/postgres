@@ -61,6 +61,12 @@ SELECT q1, coalesce(generate_series(1,3), 0) FROM int8_tbl;
 -- SRFs are not allowed in aggregate arguments
 SELECT min(generate_series(1, 3)) FROM few;
 
+-- ... unless they're within a sub-select
+SELECT sum((3 = ANY(SELECT generate_series(1,4)))::int);
+
+SELECT sum((3 = ANY(SELECT lag(x) over(order by x)
+                    FROM generate_series(1,4) x))::int);
+
 -- SRFs are not allowed in window function arguments, either
 SELECT min(generate_series(1, 3)) OVER() FROM few;
 

@@ -212,6 +212,20 @@ ERROR:  aggregate function calls cannot contain set-returning function calls
 LINE 1: SELECT min(generate_series(1, 3)) FROM few;
                    ^
 HINT:  You might be able to move the set-returning function into a LATERAL FROM item.
+-- ... unless they're within a sub-select
+SELECT sum((3 = ANY(SELECT generate_series(1,4)))::int);
+ sum 
+-----
+   1
+(1 row)
+
+SELECT sum((3 = ANY(SELECT lag(x) over(order by x)
+                    FROM generate_series(1,4) x))::int);
+ sum 
+-----
+   1
+(1 row)
+
 -- SRFs are not allowed in window function arguments, either
 SELECT min(generate_series(1, 3)) OVER() FROM few;
 ERROR:  window function calls cannot contain set-returning function calls
