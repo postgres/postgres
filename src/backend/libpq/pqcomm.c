@@ -1676,7 +1676,7 @@ pq_setkeepaliveswin32(Port *port, int idle, int interval)
 int
 pq_getkeepalivesidle(Port *port)
 {
-#if defined(TCP_KEEPIDLE) || defined(TCP_KEEPALIVE) || defined(WIN32)
+#if defined(TCP_KEEPIDLE) || defined(TCP_KEEPALIVE_THRESHOLD) || defined(TCP_KEEPALIVE) || defined(WIN32)
 	if (port == NULL || IS_AF_UNIX(port->laddr.addr.ss_family))
 		return 0;
 
@@ -1688,7 +1688,8 @@ pq_getkeepalivesidle(Port *port)
 #ifndef WIN32
 		ACCEPT_TYPE_ARG3 size = sizeof(port->default_keepalives_idle);
 
-#ifdef TCP_KEEPIDLE
+#if defined(TCP_KEEPIDLE)
+		/* TCP_KEEPIDLE is the name of this option on Linux and *BSD */
 		if (getsockopt(port->sock, IPPROTO_TCP, TCP_KEEPIDLE,
 					   (char *) &port->default_keepalives_idle,
 					   &size) < 0)
@@ -1696,7 +1697,17 @@ pq_getkeepalivesidle(Port *port)
 			elog(LOG, "getsockopt(TCP_KEEPIDLE) failed: %m");
 			port->default_keepalives_idle = -1; /* don't know */
 		}
-#else
+#elif defined(TCP_KEEPALIVE_THRESHOLD)
+		/* TCP_KEEPALIVE_THRESHOLD is the name of this option on Solaris */
+		if (getsockopt(port->sock, IPPROTO_TCP, TCP_KEEPALIVE_THRESHOLD,
+					   (char *) &port->default_keepalives_idle,
+					   &size) < 0)
+		{
+			elog(LOG, "getsockopt(TCP_KEEPALIVE_THRESHOLD) failed: %m");
+			port->default_keepalives_idle = -1; /* don't know */
+		}
+#else							/* must have TCP_KEEPALIVE */
+		/* TCP_KEEPALIVE is the name of this option on macOS */
 		if (getsockopt(port->sock, IPPROTO_TCP, TCP_KEEPALIVE,
 					   (char *) &port->default_keepalives_idle,
 					   &size) < 0)
@@ -1704,7 +1715,7 @@ pq_getkeepalivesidle(Port *port)
 			elog(LOG, "getsockopt(TCP_KEEPALIVE) failed: %m");
 			port->default_keepalives_idle = -1; /* don't know */
 		}
-#endif							/* TCP_KEEPIDLE */
+#endif							/* KEEPIDLE/KEEPALIVE_THRESHOLD/KEEPALIVE */
 #else							/* WIN32 */
 		/* We can't get the defaults on Windows, so return "don't know" */
 		port->default_keepalives_idle = -1;
@@ -1723,7 +1734,8 @@ pq_setkeepalivesidle(int idle, Port *port)
 	if (port == NULL || IS_AF_UNIX(port->laddr.addr.ss_family))
 		return STATUS_OK;
 
-#if defined(TCP_KEEPIDLE) || defined(TCP_KEEPALIVE) || defined(SIO_KEEPALIVE_VALS)
+/* check SIO_KEEPALIVE_VALS here, not just WIN32, as some toolchains lack it */
+#if defined(TCP_KEEPIDLE) || defined(TCP_KEEPALIVE_THRESHOLD) || defined(TCP_KEEPALIVE) || defined(SIO_KEEPALIVE_VALS)
 	if (idle == port->keepalives_idle)
 		return STATUS_OK;
 
@@ -1742,14 +1754,24 @@ pq_setkeepalivesidle(int idle, Port *port)
 	if (idle == 0)
 		idle = port->default_keepalives_idle;
 
-#ifdef TCP_KEEPIDLE
+#if defined(TCP_KEEPIDLE)
+	/* TCP_KEEPIDLE is the name of this option on Linux and *BSD */
 	if (setsockopt(port->sock, IPPROTO_TCP, TCP_KEEPIDLE,
 				   (char *) &idle, sizeof(idle)) < 0)
 	{
 		elog(LOG, "setsockopt(TCP_KEEPIDLE) failed: %m");
 		return STATUS_ERROR;
 	}
-#else
+#elif defined(TCP_KEEPALIVE_THRESHOLD)
+	/* TCP_KEEPALIVE_THRESHOLD is the name of this option on Solaris */
+	if (setsockopt(port->sock, IPPROTO_TCP, TCP_KEEPALIVE_THRESHOLD,
+				   (char *) &idle, sizeof(idle)) < 0)
+	{
+		elog(LOG, "setsockopt(TCP_KEEPALIVE_THRESHOLD) failed: %m");
+		return STATUS_ERROR;
+	}
+#else							/* must have TCP_KEEPALIVE */
+	/* TCP_KEEPALIVE is the name of this option on macOS */
 	if (setsockopt(port->sock, IPPROTO_TCP, TCP_KEEPALIVE,
 				   (char *) &idle, sizeof(idle)) < 0)
 	{
@@ -1762,7 +1784,7 @@ pq_setkeepalivesidle(int idle, Port *port)
 #else							/* WIN32 */
 	return pq_setkeepaliveswin32(port, idle, port->keepalives_interval);
 #endif
-#else							/* TCP_KEEPIDLE || SIO_KEEPALIVE_VALS */
+#else							/* no way to set it */
 	if (idle != 0)
 	{
 		elog(LOG, "setting the keepalive idle time is not supported");
@@ -1812,7 +1834,7 @@ pq_setkeepalivesinterval(int interval, Port *port)
 	if (port == NULL || IS_AF_UNIX(port->laddr.addr.ss_family))
 		return STATUS_OK;
 
-#if defined(TCP_KEEPINTVL) || defined (SIO_KEEPALIVE_VALS)
+#if defined(TCP_KEEPINTVL) || defined(SIO_KEEPALIVE_VALS)
 	if (interval == port->keepalives_interval)
 		return STATUS_OK;
 

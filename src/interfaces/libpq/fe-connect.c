@@ -1470,7 +1470,8 @@ setKeepalivesIdle(PGconn *conn)
 	if (idle < 0)
 		idle = 0;
 
-#ifdef TCP_KEEPIDLE
+#if defined(TCP_KEEPIDLE)
+	/* TCP_KEEPIDLE is the name of this option on Linux and *BSD */
 	if (setsockopt(conn->sock, IPPROTO_TCP, TCP_KEEPIDLE,
 				   (char *) &idle, sizeof(idle)) < 0)
 	{
@@ -1481,9 +1482,20 @@ setKeepalivesIdle(PGconn *conn)
 						  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 		return 0;
 	}
-#else
-#ifdef TCP_KEEPALIVE
-	/* macOS uses TCP_KEEPALIVE rather than TCP_KEEPIDLE */
+#elif defined(TCP_KEEPALIVE_THRESHOLD)
+	/* TCP_KEEPALIVE_THRESHOLD is the name of this option on Solaris */
+	if (setsockopt(conn->sock, IPPROTO_TCP, TCP_KEEPALIVE_THRESHOLD,
+				   (char *) &idle, sizeof(idle)) < 0)
+	{
+		char		sebuf[256];
+
+		appendPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("setsockopt(TCP_KEEPALIVE_THRESHOLD) failed: %s\n"),
+						  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
+		return 0;
+	}
+#elif defined(TCP_KEEPALIVE)
+	/* TCP_KEEPALIVE is the name of this option on macOS */
 	if (setsockopt(conn->sock, IPPROTO_TCP, TCP_KEEPALIVE,
 				   (char *) &idle, sizeof(idle)) < 0)
 	{
@@ -1494,7 +1506,6 @@ setKeepalivesIdle(PGconn *conn)
 						  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 		return 0;
 	}
-#endif
 #endif
 
 	return 1;
@@ -1562,7 +1573,7 @@ setKeepalivesCount(PGconn *conn)
 
 	return 1;
 }
-#else							/* Win32 */
+#else							/* WIN32 */
 #ifdef SIO_KEEPALIVE_VALS
 /*
  * Enable keepalives and set the keepalive values on Win32,
