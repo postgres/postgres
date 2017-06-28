@@ -1725,6 +1725,45 @@ with wcte as (insert into table1 values (42))
 drop table table1;
 drop table table2;
 
+--
+-- Verify behavior of INSERT ... ON CONFLICT DO UPDATE ... with
+-- transition tables.
+--
+
+create table my_table (a int primary key, b text);
+create trigger my_table_insert_trig
+  after insert on my_table referencing new table as new_table
+  for each statement execute procedure dump_insert();
+create trigger my_table_update_trig
+  after update on my_table referencing old table as old_table new table as new_table
+  for each statement execute procedure dump_update();
+
+-- inserts only
+insert into my_table values (1, 'AAA'), (2, 'BBB')
+  on conflict (a) do
+  update set b = my_table.b || ':' || excluded.b;
+
+-- mixture of inserts and updates
+insert into my_table values (1, 'AAA'), (2, 'BBB'), (3, 'CCC'), (4, 'DDD')
+  on conflict (a) do
+  update set b = my_table.b || ':' || excluded.b;
+
+-- updates only
+insert into my_table values (3, 'CCC'), (4, 'DDD')
+  on conflict (a) do
+  update set b = my_table.b || ':' || excluded.b;
+
+--
+-- Verify that you can't create a trigger with transition tables for
+-- more than one event.
+--
+
+create trigger my_table_multievent_trig
+  after insert or update on my_table referencing new table as new_table
+  for each statement execute procedure dump_insert();
+
+drop table my_table;
+
 -- cleanup
 drop function dump_insert();
 drop function dump_update();

@@ -401,6 +401,23 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("TRUNCATE triggers with transition tables are not supported")));
 
+			/*
+			 * We currently don't allow multi-event triggers ("INSERT OR
+			 * UPDATE") with transition tables, because it's not clear how to
+			 * handle INSERT ... ON CONFLICT statements which can fire both
+			 * INSERT and UPDATE triggers.  We show the inserted tuples to
+			 * INSERT triggers and the updated tuples to UPDATE triggers, but
+			 * it's not yet clear what INSERT OR UPDATE trigger should see.
+			 * This restriction could be lifted if we can decide on the right
+			 * semantics in a later release.
+			 */
+			if (((TRIGGER_FOR_INSERT(tgtype) ? 1 : 0) +
+				 (TRIGGER_FOR_UPDATE(tgtype) ? 1 : 0) +
+				 (TRIGGER_FOR_DELETE(tgtype) ? 1 : 0)) != 1)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("Transition tables cannot be specified for triggers with more than one event")));
+
 			if (tt->isNew)
 			{
 				if (!(TRIGGER_FOR_INSERT(tgtype) ||
@@ -2128,8 +2145,10 @@ MakeTransitionCaptureState(TriggerDesc *trigdesc)
 			CurrentResourceOwner = CurTransactionResourceOwner;
 			if (trigdesc->trig_delete_old_table || trigdesc->trig_update_old_table)
 				state->tcs_old_tuplestore = tuplestore_begin_heap(false, false, work_mem);
-			if (trigdesc->trig_insert_new_table || trigdesc->trig_update_new_table)
-				state->tcs_new_tuplestore = tuplestore_begin_heap(false, false, work_mem);
+			if (trigdesc->trig_insert_new_table)
+				state->tcs_insert_tuplestore = tuplestore_begin_heap(false, false, work_mem);
+			if (trigdesc->trig_update_new_table)
+				state->tcs_update_tuplestore = tuplestore_begin_heap(false, false, work_mem);
 		}
 		PG_CATCH();
 		{
@@ -2147,8 +2166,10 @@ MakeTransitionCaptureState(TriggerDesc *trigdesc)
 void
 DestroyTransitionCaptureState(TransitionCaptureState *tcs)
 {
-	if (tcs->tcs_new_tuplestore != NULL)
-		tuplestore_end(tcs->tcs_new_tuplestore);
+	if (tcs->tcs_insert_tuplestore != NULL)
+		tuplestore_end(tcs->tcs_insert_tuplestore);
+	if (tcs->tcs_update_tuplestore != NULL)
+		tuplestore_end(tcs->tcs_update_tuplestore);
 	if (tcs->tcs_old_tuplestore != NULL)
 		tuplestore_end(tcs->tcs_old_tuplestore);
 	pfree(tcs);
@@ -3993,7 +4014,29 @@ AfterTriggerExecute(AfterTriggerEvent event,
 		if (LocTriggerData.tg_trigger->tgoldtable)
 			LocTriggerData.tg_oldtable = transition_capture->tcs_old_tuplestore;
 		if (LocTriggerData.tg_trigger->tgnewtable)
-			LocTriggerData.tg_newtable = transition_capture->tcs_new_tuplestore;
+		{
+			/*
+			 * Currently a trigger with transition tables may only be defined
+			 * for a single event type (here AFTER INSERT or AFTER UPDATE, but
+			 * not AFTER INSERT OR ...).
+			 */
+			Assert((TRIGGER_FOR_INSERT(LocTriggerData.tg_trigger->tgtype) != 0) ^
+				   (TRIGGER_FOR_UPDATE(LocTriggerData.tg_trigger->tgtype) != 0));
+
+			/*
+			 * Show either the insert or update new tuple images, depending on
+			 * which event type the trigger was registered for.  A single
+			 * statement may have produced both in the case of INSERT ... ON
+			 * CONFLICT ... DO UPDATE, and in that case the event determines
+			 * which tuplestore the trigger sees as the NEW TABLE.
+			 */
+			if (TRIGGER_FOR_INSERT(LocTriggerData.tg_trigger->tgtype))
+				LocTriggerData.tg_newtable =
+					transition_capture->tcs_insert_tuplestore;
+			else
+				LocTriggerData.tg_newtable =
+					transition_capture->tcs_update_tuplestore;
+		}
 	}
 
 	/*
@@ -5241,7 +5284,10 @@ AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 			Tuplestorestate *new_tuplestore;
 
 			Assert(newtup != NULL);
-			new_tuplestore = transition_capture->tcs_new_tuplestore;
+			if (event == TRIGGER_EVENT_INSERT)
+				new_tuplestore = transition_capture->tcs_insert_tuplestore;
+			else
+				new_tuplestore = transition_capture->tcs_update_tuplestore;
 
 			if (original_insert_tuple != NULL)
 				tuplestore_puttuple(new_tuplestore, original_insert_tuple);
