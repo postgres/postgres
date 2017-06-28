@@ -4135,9 +4135,14 @@ getNamespaces(Archive *fout, int *numNamespaces)
 		 * essentially a no-op because the new public schema won't have an
 		 * entry in pg_init_privs anyway, as the entry will be removed when
 		 * the public schema is dropped.
+		 *
+		 * Further, we have to handle the case where the public schema does
+		 * not exist at all.
 		 */
 		if (dopt->outputClean)
-			appendPQExpBuffer(query, " AND pip.objoid <> 'public'::regnamespace");
+			appendPQExpBuffer(query, " AND pip.objoid <> "
+									 "coalesce((select oid from pg_namespace "
+									 "where nspname = 'public'),0)");
 
 		appendPQExpBuffer(query, ") ");
 
