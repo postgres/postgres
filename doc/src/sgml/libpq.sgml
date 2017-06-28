@@ -1125,10 +1125,10 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
         Controls the number of seconds of inactivity after which TCP should
         send a keepalive message to the server.  A value of zero uses the
         system default. This parameter is ignored for connections made via a
-        Unix-domain socket, or if keepalives are disabled. It is only supported
-        on systems where the <symbol>TCP_KEEPIDLE</> or <symbol>TCP_KEEPALIVE</>
-        socket option is available, and on Windows; on other systems, it has no
-        effect.
+        Unix-domain socket, or if keepalives are disabled.
+        It is only supported on systems where <symbol>TCP_KEEPIDLE</> or
+        an equivalent socket option is available, and on Windows; on other
+        systems, it has no effect.
        </para>
       </listitem>
      </varlistentry>
@@ -1141,9 +1141,9 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
         that is not acknowledged by the server should be retransmitted.  A
         value of zero uses the system default. This parameter is ignored for
         connections made via a Unix-domain socket, or if keepalives are disabled.
-        It is only supported on systems where the <symbol>TCP_KEEPINTVL</>
-        socket option is available, and on Windows; on other systems, it has no
-        effect.
+        It is only supported on systems where <symbol>TCP_KEEPINTVL</> or
+        an equivalent socket option is available, and on Windows; on other
+        systems, it has no effect.
        </para>
       </listitem>
      </varlistentry>
@@ -1156,8 +1156,9 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
         client's connection to the server is considered dead.  A value of
         zero uses the system default. This parameter is ignored for
         connections made via a Unix-domain socket, or if keepalives are disabled.
-        It is only supported on systems where the <symbol>TCP_KEEPCNT</>
-        socket option is available; on other systems, it has no effect.
+        It is only supported on systems where <symbol>TCP_KEEPCNT</> or
+        an equivalent socket option is available; on other systems, it has no
+        effect.
        </para>
       </listitem>
      </varlistentry>
