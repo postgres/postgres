@@ -314,6 +314,36 @@ ExecInsert(ModifyTableState *mtstate,
 		estate->es_result_relation_info = resultRelInfo;
 
 		/*
+		 * If we're capturing transition tuples, we might need to convert from
+		 * the partition rowtype to parent rowtype.
+		 */
+		if (mtstate->mt_transition_capture != NULL)
+		{
+			if (resultRelInfo->ri_TrigDesc &&
+				(resultRelInfo->ri_TrigDesc->trig_insert_before_row ||
+				 resultRelInfo->ri_TrigDesc->trig_insert_instead_row))
+			{
+				/*
+				 * If there are any BEFORE or INSTEAD triggers on the
+				 * partition, we'll have to be ready to convert their result
+				 * back to tuplestore format.
+				 */
+				mtstate->mt_transition_capture->tcs_original_insert_tuple = NULL;
+				mtstate->mt_transition_capture->tcs_map =
+					mtstate->mt_transition_tupconv_maps[leaf_part_index];
+			}
+			else
+			{
+				/*
+				 * Otherwise, just remember the original unconverted tuple, to
+				 * avoid a needless round trip conversion.
+				 */
+				mtstate->mt_transition_capture->tcs_original_insert_tuple = tuple;
+				mtstate->mt_transition_capture->tcs_map = NULL;
+			}
+		}
+
+		/*
 		 * We might need to convert from the parent rowtype to the partition
 		 * rowtype.
 		 */
@@ -588,7 +618,8 @@ ExecInsert(ModifyTableState *mtstate,
 	}
 
 	/* AFTER ROW INSERT Triggers */
-	ExecARInsertTriggers(estate, resultRelInfo, tuple, recheckIndexes);
+	ExecARInsertTriggers(estate, resultRelInfo, tuple, recheckIndexes,
+						 mtstate->mt_transition_capture);
 
 	list_free(recheckIndexes);
 
@@ -636,7 +667,8 @@ ExecInsert(ModifyTableState *mtstate,
  * ----------------------------------------------------------------
  */
 static TupleTableSlot *
-ExecDelete(ItemPointer tupleid,
+ExecDelete(ModifyTableState *mtstate,
+		   ItemPointer tupleid,
 		   HeapTuple oldtuple,
 		   TupleTableSlot *planSlot,
 		   EPQState *epqstate,
@@ -813,7 +845,8 @@ ldelete:;
 		(estate->es_processed)++;
 
 	/* AFTER ROW DELETE Triggers */
-	ExecARDeleteTriggers(estate, resultRelInfo, tupleid, oldtuple);
+	ExecARDeleteTriggers(estate, resultRelInfo, tupleid, oldtuple,
+						 mtstate->mt_transition_capture);
 
 	/* Process RETURNING if present */
 	if (resultRelInfo->ri_projectReturning)
@@ -894,7 +927,8 @@ ldelete:;
  * ----------------------------------------------------------------
  */
 static TupleTableSlot *
-ExecUpdate(ItemPointer tupleid,
+ExecUpdate(ModifyTableState *mtstate,
+		   ItemPointer tupleid,
 		   HeapTuple oldtuple,
 		   TupleTableSlot *slot,
 		   TupleTableSlot *planSlot,
@@ -1122,7 +1156,8 @@ lreplace:;
 
 	/* AFTER ROW UPDATE Triggers */
 	ExecARUpdateTriggers(estate, resultRelInfo, tupleid, oldtuple, tuple,
-						 recheckIndexes);
+						 recheckIndexes,
+						 mtstate->mt_transition_capture);
 
 	list_free(recheckIndexes);
 
@@ -1329,7 +1364,7 @@ ExecOnConflictUpdate(ModifyTableState *mtstate,
 	 */
 
 	/* Execute UPDATE with projection */
-	*returning = ExecUpdate(&tuple.t_self, NULL,
+	*returning = ExecUpdate(mtstate, &tuple.t_self, NULL,
 							mtstate->mt_conflproj, planSlot,
 							&mtstate->mt_epqstate, mtstate->ps.state,
 							canSetTag);
@@ -1376,20 +1411,31 @@ fireBSTriggers(ModifyTableState *node)
 }
 
 /*
- * Process AFTER EACH STATEMENT triggers
+ * Return the ResultRelInfo for which we will fire AFTER STATEMENT triggers.
+ * This is also the relation into whose tuple format all captured transition
+ * tuples must be converted.
  */
-static void
-fireASTriggers(ModifyTableState *node)
+static ResultRelInfo *
+getASTriggerResultRelInfo(ModifyTableState *node)
 {
-	ResultRelInfo *resultRelInfo = node->resultRelInfo;
-
 	/*
 	 * If the node modifies a partitioned table, we must fire its triggers.
 	 * Note that in that case, node->resultRelInfo points to the first leaf
 	 * partition, not the root table.
 	 */
 	if (node->rootResultRelInfo != NULL)
-		resultRelInfo = node->rootResultRelInfo;
+		return node->rootResultRelInfo;
+	else
+		return node->resultRelInfo;
+}
+
+/*
+ * Process AFTER EACH STATEMENT triggers
+ */
+static void
+fireASTriggers(ModifyTableState *node)
+{
+	ResultRelInfo *resultRelInfo = getASTriggerResultRelInfo(node);
 
 	switch (node->operation)
 	{
@@ -1411,6 +1457,72 @@ fireASTriggers(ModifyTableState *node)
 	}
 }
 
+/*
+ * Set up the state needed for collecting transition tuples for AFTER
+ * triggers.
+ */
+static void
+ExecSetupTransitionCaptureState(ModifyTableState *mtstate, EState *estate)
+{
+	ResultRelInfo *targetRelInfo = getASTriggerResultRelInfo(mtstate);
+	int		i;
+
+	/* Check for transition tables on the directly targeted relation. */
+	mtstate->mt_transition_capture =
+		MakeTransitionCaptureState(targetRelInfo->ri_TrigDesc);
+
+	/*
+	 * If we found that we need to collect transition tuples then we may also
+	 * need tuple conversion maps for any children that have TupleDescs that
+	 * aren't compatible with the tuplestores.
+	 */
+	if (mtstate->mt_transition_capture != NULL)
+	{
+		ResultRelInfo *resultRelInfos;
+		int		numResultRelInfos;
+
+		/* Find the set of partitions so that we can find their TupleDescs. */
+		if (mtstate->mt_partition_dispatch_info != NULL)
+		{
+			/*
+			 * For INSERT via partitioned table, so we need TupleDescs based
+			 * on the partition routing table.
+			 */
+			resultRelInfos = mtstate->mt_partitions;
+			numResultRelInfos = mtstate->mt_num_partitions;
+		}
+		else
+		{
+			/* Otherwise we need the ResultRelInfo for each subplan. */
+			resultRelInfos = mtstate->resultRelInfo;
+			numResultRelInfos = mtstate->mt_nplans;
+		}
+
+		/*
+		 * Build array of conversion maps from each child's TupleDesc to the
+		 * one used in the tuplestore.  The map pointers may be NULL when no
+		 * conversion is necessary, which is hopefully a common case for
+		 * partitions.
+		 */
+		mtstate->mt_transition_tupconv_maps = (TupleConversionMap **)
+			palloc0(sizeof(TupleConversionMap *) * numResultRelInfos);
+		for (i = 0; i < numResultRelInfos; ++i)
+		{
+			mtstate->mt_transition_tupconv_maps[i] =
+				convert_tuples_by_name(RelationGetDescr(resultRelInfos[i].ri_RelationDesc),
+									   RelationGetDescr(targetRelInfo->ri_RelationDesc),
+									   gettext_noop("could not convert row type"));
+		}
+
+		/*
+		 * Install the conversion map for the first plan for UPDATE and DELETE
+		 * operations.  It will be advanced each time we switch to the next
+		 * plan.  (INSERT operations set it every time.)
+		 */
+		mtstate->mt_transition_capture->tcs_map =
+			mtstate->mt_transition_tupconv_maps[0];
+	}
+}
 
 /* ----------------------------------------------------------------
  *	   ExecModifyTable
@@ -1509,6 +1621,13 @@ ExecModifyTable(ModifyTableState *node)
 				estate->es_result_relation_info = resultRelInfo;
 				EvalPlanQualSetPlan(&node->mt_epqstate, subplanstate->plan,
 									node->mt_arowmarks[node->mt_whichplan]);
+				if (node->mt_transition_capture != NULL)
+				{
+					/* Prepare to convert transition tuples from this child. */
+					Assert(node->mt_transition_tupconv_maps != NULL);
+					node->mt_transition_capture->tcs_map =
+						node->mt_transition_tupconv_maps[node->mt_whichplan];
+				}
 				continue;
 			}
 			else
@@ -1618,11 +1737,11 @@ ExecModifyTable(ModifyTableState *node)
 								  estate, node->canSetTag);
 				break;
 			case CMD_UPDATE:
-				slot = ExecUpdate(tupleid, oldtuple, slot, planSlot,
+				slot = ExecUpdate(node, tupleid, oldtuple, slot, planSlot,
 								  &node->mt_epqstate, estate, node->canSetTag);
 				break;
 			case CMD_DELETE:
-				slot = ExecDelete(tupleid, oldtuple, planSlot,
+				slot = ExecDelete(node, tupleid, oldtuple, planSlot,
 								  &node->mt_epqstate, estate, node->canSetTag);
 				break;
 			default:
@@ -1803,6 +1922,9 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		mtstate->mt_partition_tupconv_maps = partition_tupconv_maps;
 		mtstate->mt_partition_tuple_slot = partition_tuple_slot;
 	}
+
+	/* Build state for collecting transition tuples */
+	ExecSetupTransitionCaptureState(mtstate, estate);
 
 	/*
 	 * Initialize any WITH CHECK OPTION constraints if needed.

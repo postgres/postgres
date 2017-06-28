@@ -10933,6 +10933,7 @@ ATExecAddInherit(Relation child_rel, RangeVar *parent, LOCKMODE lockmode)
 	Relation	parent_rel;
 	List	   *children;
 	ObjectAddress address;
+	const char *trigger_name;
 
 	/*
 	 * A self-exclusive lock is needed here.  See the similar case in
@@ -11013,6 +11014,19 @@ ATExecAddInherit(Relation child_rel, RangeVar *parent, LOCKMODE lockmode)
 				 errmsg("table \"%s\" without OIDs cannot inherit from table \"%s\" with OIDs",
 						RelationGetRelationName(child_rel),
 						RelationGetRelationName(parent_rel))));
+
+	/*
+	 * If child_rel has row-level triggers with transition tables, we
+	 * currently don't allow it to become an inheritance child.  See also
+	 * prohibitions in ATExecAttachPartition() and CreateTrigger().
+	 */
+	trigger_name = FindTriggerIncompatibleWithInheritance(child_rel->trigdesc);
+	if (trigger_name != NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("trigger \"%s\" prevents table \"%s\" from becoming an inheritance child",
+						trigger_name, RelationGetRelationName(child_rel)),
+				 errdetail("ROW triggers with transition tables are not supported in inheritance hierarchies")));
 
 	/* OK to create inheritance */
 	CreateInheritance(child_rel, parent_rel);
@@ -13418,6 +13432,7 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd)
 	TupleDesc	tupleDesc;
 	bool		skip_validate = false;
 	ObjectAddress address;
+	const char *trigger_name;
 
 	attachRel = heap_openrv(cmd->name, AccessExclusiveLock);
 
@@ -13546,6 +13561,19 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd)
 							RelationGetRelationName(rel)),
 					 errdetail("New partition should contain only the columns present in parent.")));
 	}
+
+	/*
+	 * If child_rel has row-level triggers with transition tables, we
+	 * currently don't allow it to become a partition.  See also prohibitions
+	 * in ATExecAddInherit() and CreateTrigger().
+	 */
+	trigger_name = FindTriggerIncompatibleWithInheritance(attachRel->trigdesc);
+	if (trigger_name != NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("trigger \"%s\" prevents table \"%s\" from becoming a partition",
+						trigger_name, RelationGetRelationName(attachRel)),
+				 errdetail("ROW triggers with transition tables are not supported on partitions")));
 
 	/* OK to create inheritance.  Rest of the checks performed there */
 	CreateInheritance(attachRel, rel);

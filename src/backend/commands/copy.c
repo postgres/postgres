@@ -171,6 +171,8 @@ typedef struct CopyStateData
 	ResultRelInfo *partitions;	/* Per partition result relation */
 	TupleConversionMap **partition_tupconv_maps;
 	TupleTableSlot *partition_tuple_slot;
+	TransitionCaptureState *transition_capture;
+	TupleConversionMap **transition_tupconv_maps;
 
 	/*
 	 * These variables are used to reduce overhead in textual COPY FROM.
@@ -1436,6 +1438,36 @@ BeginCopy(ParseState *pstate,
 			cstate->num_partitions = num_partitions;
 			cstate->partition_tupconv_maps = partition_tupconv_maps;
 			cstate->partition_tuple_slot = partition_tuple_slot;
+
+			/*
+			 * If there are any triggers with transition tables on the named
+			 * relation, we need to be prepared to capture transition tuples
+			 * from child relations too.
+			 */
+			cstate->transition_capture =
+				MakeTransitionCaptureState(rel->trigdesc);
+
+			/*
+			 * If we are capturing transition tuples, they may need to be
+			 * converted from partition format back to partitioned table
+			 * format (this is only ever necessary if a BEFORE trigger
+			 * modifies the tuple).
+			 */
+			if (cstate->transition_capture != NULL)
+			{
+				int		i;
+
+				cstate->transition_tupconv_maps = (TupleConversionMap **)
+					palloc0(sizeof(TupleConversionMap *) *
+							cstate->num_partitions);
+				for (i = 0; i < cstate->num_partitions; ++i)
+				{
+					cstate->transition_tupconv_maps[i] =
+						convert_tuples_by_name(RelationGetDescr(cstate->partitions[i].ri_RelationDesc),
+											   RelationGetDescr(rel),
+											   gettext_noop("could not convert row type"));
+				}
+			}
 		}
 	}
 	else
@@ -2592,6 +2624,35 @@ CopyFrom(CopyState cstate)
 			estate->es_result_relation_info = resultRelInfo;
 
 			/*
+			 * If we're capturing transition tuples, we might need to convert
+			 * from the partition rowtype to parent rowtype.
+			 */
+			if (cstate->transition_capture != NULL)
+			{
+				if (resultRelInfo->ri_TrigDesc &&
+					(resultRelInfo->ri_TrigDesc->trig_insert_before_row ||
+					 resultRelInfo->ri_TrigDesc->trig_insert_instead_row))
+				{
+					/*
+					 * If there are any BEFORE or INSTEAD triggers on the
+					 * partition, we'll have to be ready to convert their
+					 * result back to tuplestore format.
+					 */
+					cstate->transition_capture->tcs_original_insert_tuple = NULL;
+					cstate->transition_capture->tcs_map =
+						cstate->transition_tupconv_maps[leaf_part_index];
+				}
+				else
+				{
+					/*
+					 * Otherwise, just remember the original unconverted
+					 * tuple, to avoid a needless round trip conversion.
+					 */
+					cstate->transition_capture->tcs_original_insert_tuple = tuple;
+					cstate->transition_capture->tcs_map = NULL;
+				}
+			}
+			/*
 			 * We might need to convert from the parent rowtype to the
 			 * partition rowtype.
 			 */
@@ -2703,7 +2764,7 @@ CopyFrom(CopyState cstate)
 
 					/* AFTER ROW INSERT Triggers */
 					ExecARInsertTriggers(estate, resultRelInfo, tuple,
-										 recheckIndexes);
+										 recheckIndexes, cstate->transition_capture);
 
 					list_free(recheckIndexes);
 				}
@@ -2856,7 +2917,7 @@ CopyFromInsertBatch(CopyState cstate, EState *estate, CommandId mycid,
 									  estate, false, NULL, NIL);
 			ExecARInsertTriggers(estate, resultRelInfo,
 								 bufferedTuples[i],
-								 recheckIndexes);
+								 recheckIndexes, NULL);
 			list_free(recheckIndexes);
 		}
 	}
@@ -2866,14 +2927,15 @@ CopyFromInsertBatch(CopyState cstate, EState *estate, CommandId mycid,
 	 * anyway.
 	 */
 	else if (resultRelInfo->ri_TrigDesc != NULL &&
-			 resultRelInfo->ri_TrigDesc->trig_insert_after_row)
+			 (resultRelInfo->ri_TrigDesc->trig_insert_after_row ||
+			  resultRelInfo->ri_TrigDesc->trig_insert_new_table))
 	{
 		for (i = 0; i < nBufferedTuples; i++)
 		{
 			cstate->cur_lineno = firstBufferedLineNo + i;
 			ExecARInsertTriggers(estate, resultRelInfo,
 								 bufferedTuples[i],
-								 NIL);
+								 NIL, NULL);
 		}
 	}
 

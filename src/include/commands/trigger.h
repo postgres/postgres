@@ -42,6 +42,39 @@ typedef struct TriggerData
 } TriggerData;
 
 /*
+ * Meta-data to control the capture of old and new tuples into transition
+ * tables from child tables.
+ */
+typedef struct TransitionCaptureState
+{
+	/*
+	 * Is there at least one trigger specifying each transition relation on
+	 * the relation explicitly named in the DML statement or COPY command?
+	 */
+	bool		tcs_delete_old_table;
+	bool		tcs_update_old_table;
+	bool		tcs_update_new_table;
+	bool		tcs_insert_new_table;
+
+	/*
+	 * For UPDATE and DELETE, AfterTriggerSaveEvent may need to convert the
+	 * new and old tuples from a child table's format to the format of the
+	 * relation named in a query so that it is compatible with the transition
+	 * tuplestores.
+	 */
+	TupleConversionMap *tcs_map;
+
+	/*
+	 * For INSERT and COPY, it would be wasteful to convert tuples from child
+	 * format to parent format after they have already been converted in the
+	 * opposite direction during routing.  In that case we bypass conversion
+	 * and allow the inserting code (copy.c and nodeModifyTable.c) to provide
+	 * the original tuple directly.
+	 */
+	HeapTuple	tcs_original_insert_tuple;
+} TransitionCaptureState;
+
+/*
  * TriggerEvent bit flags
  *
  * Note that we assume different event types (INSERT/DELETE/UPDATE/TRUNCATE)
@@ -127,6 +160,9 @@ extern void RelationBuildTriggers(Relation relation);
 
 extern TriggerDesc *CopyTriggerDesc(TriggerDesc *trigdesc);
 
+extern const char *FindTriggerIncompatibleWithInheritance(TriggerDesc *trigdesc);
+extern TransitionCaptureState *MakeTransitionCaptureState(TriggerDesc *trigdesc);
+
 extern void FreeTriggerDesc(TriggerDesc *trigdesc);
 
 extern void ExecBSInsertTriggers(EState *estate,
@@ -139,7 +175,8 @@ extern TupleTableSlot *ExecBRInsertTriggers(EState *estate,
 extern void ExecARInsertTriggers(EState *estate,
 					 ResultRelInfo *relinfo,
 					 HeapTuple trigtuple,
-					 List *recheckIndexes);
+					 List *recheckIndexes,
+					 TransitionCaptureState *transition_capture);
 extern TupleTableSlot *ExecIRInsertTriggers(EState *estate,
 					 ResultRelInfo *relinfo,
 					 TupleTableSlot *slot);
@@ -155,7 +192,8 @@ extern bool ExecBRDeleteTriggers(EState *estate,
 extern void ExecARDeleteTriggers(EState *estate,
 					 ResultRelInfo *relinfo,
 					 ItemPointer tupleid,
-					 HeapTuple fdw_trigtuple);
+					 HeapTuple fdw_trigtuple,
+					 TransitionCaptureState *transition_capture);
 extern bool ExecIRDeleteTriggers(EState *estate,
 					 ResultRelInfo *relinfo,
 					 HeapTuple trigtuple);
@@ -174,7 +212,8 @@ extern void ExecARUpdateTriggers(EState *estate,
 					 ItemPointer tupleid,
 					 HeapTuple fdw_trigtuple,
 					 HeapTuple newtuple,
-					 List *recheckIndexes);
+					 List *recheckIndexes,
+					 TransitionCaptureState *transition_capture);
 extern TupleTableSlot *ExecIRUpdateTriggers(EState *estate,
 					 ResultRelInfo *relinfo,
 					 HeapTuple trigtuple,

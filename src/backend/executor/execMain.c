@@ -3198,7 +3198,7 @@ EvalPlanQualEnd(EPQState *epqstate)
  * 'tup_conv_maps' receives an array of TupleConversionMap objects with one
  *		entry for every leaf partition (required to convert input tuple based
  *		on the root table's rowtype to a leaf partition's rowtype after tuple
- *		routing is done
+ *		routing is done)
  * 'partition_tuple_slot' receives a standalone TupleTableSlot to be used
  *		to manipulate any given leaf partition's rowtype after that partition
  *		is chosen by tuple-routing.

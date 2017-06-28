@@ -273,6 +273,30 @@ has_subclass(Oid relationId)
 	return result;
 }
 
+/*
+ * has_superclass - does this relation inherit from another?  The caller
+ * should hold a lock on the given relation so that it can't be concurrently
+ * added to or removed from an inheritance hierarchy.
+ */
+bool
+has_superclass(Oid relationId)
+{
+	Relation	catalog;
+	SysScanDesc scan;
+	ScanKeyData skey;
+	bool		result;
+
+	catalog = heap_open(InheritsRelationId, AccessShareLock);
+	ScanKeyInit(&skey, Anum_pg_inherits_inhrelid, BTEqualStrategyNumber,
+				F_OIDEQ, ObjectIdGetDatum(relationId));
+	scan = systable_beginscan(catalog, InheritsRelidSeqnoIndexId, true,
+							  NULL, 1, &skey);
+	result = HeapTupleIsValid(systable_getnext(scan));
+	systable_endscan(scan);
+	heap_close(catalog, AccessShareLock);
+
+	return result;
+}
 
 /*
  * Given two type OIDs, determine whether the first is a complex type
