@@ -1442,14 +1442,18 @@ fireASTriggers(ModifyTableState *node)
 		case CMD_INSERT:
 			if (node->mt_onconflict == ONCONFLICT_UPDATE)
 				ExecASUpdateTriggers(node->ps.state,
-									 resultRelInfo);
-			ExecASInsertTriggers(node->ps.state, resultRelInfo);
+									 resultRelInfo,
+									 node->mt_transition_capture);
+			ExecASInsertTriggers(node->ps.state, resultRelInfo,
+								 node->mt_transition_capture);
 			break;
 		case CMD_UPDATE:
-			ExecASUpdateTriggers(node->ps.state, resultRelInfo);
+			ExecASUpdateTriggers(node->ps.state, resultRelInfo,
+								 node->mt_transition_capture);
 			break;
 		case CMD_DELETE:
-			ExecASDeleteTriggers(node->ps.state, resultRelInfo);
+			ExecASDeleteTriggers(node->ps.state, resultRelInfo,
+								 node->mt_transition_capture);
 			break;
 		default:
 			elog(ERROR, "unknown operation");
@@ -2303,6 +2307,10 @@ void
 ExecEndModifyTable(ModifyTableState *node)
 {
 	int			i;
+
+	/* Free transition tables */
+	if (node->mt_transition_capture != NULL)
+		DestroyTransitionCaptureState(node->mt_transition_capture);
 
 	/*
 	 * Allow any FDWs to shut down

@@ -1416,6 +1416,12 @@ BeginCopy(ParseState *pstate,
 					 errmsg("table \"%s\" does not have OIDs",
 							RelationGetRelationName(cstate->rel))));
 
+		/*
+		 * If there are any triggers with transition tables on the named
+		 * relation, we need to be prepared to capture transition tuples.
+		 */
+		cstate->transition_capture = MakeTransitionCaptureState(rel->trigdesc);
+
 		/* Initialize state for CopyFrom tuple routing. */
 		if (is_from && rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 		{
@@ -1438,14 +1444,6 @@ BeginCopy(ParseState *pstate,
 			cstate->num_partitions = num_partitions;
 			cstate->partition_tupconv_maps = partition_tupconv_maps;
 			cstate->partition_tuple_slot = partition_tuple_slot;
-
-			/*
-			 * If there are any triggers with transition tables on the named
-			 * relation, we need to be prepared to capture transition tuples
-			 * from child relations too.
-			 */
-			cstate->transition_capture =
-				MakeTransitionCaptureState(rel->trigdesc);
 
 			/*
 			 * If we are capturing transition tuples, they may need to be
@@ -2807,7 +2805,7 @@ CopyFrom(CopyState cstate)
 		pq_endmsgread();
 
 	/* Execute AFTER STATEMENT insertion triggers */
-	ExecASInsertTriggers(estate, resultRelInfo);
+	ExecASInsertTriggers(estate, resultRelInfo, cstate->transition_capture);
 
 	/* Handle queued AFTER triggers */
 	AfterTriggerEndQuery(estate);
@@ -2935,7 +2933,7 @@ CopyFromInsertBatch(CopyState cstate, EState *estate, CommandId mycid,
 			cstate->cur_lineno = firstBufferedLineNo + i;
 			ExecARInsertTriggers(estate, resultRelInfo,
 								 bufferedTuples[i],
-								 NIL, NULL);
+								 NIL, cstate->transition_capture);
 		}
 	}
 

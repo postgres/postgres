@@ -419,6 +419,12 @@ ExecSimpleRelationInsert(EState *estate, TupleTableSlot *slot)
 		ExecARInsertTriggers(estate, resultRelInfo, tuple,
 							 recheckIndexes, NULL);
 
+		/*
+		 * XXX we should in theory pass a TransitionCaptureState object to the
+		 * above to capture transition tuples, but after statement triggers
+		 * don't actually get fired by replication yet anyway
+		 */
+
 		list_free(recheckIndexes);
 	}
 }

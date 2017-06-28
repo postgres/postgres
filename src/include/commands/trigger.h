@@ -42,8 +42,8 @@ typedef struct TriggerData
 } TriggerData;
 
 /*
- * Meta-data to control the capture of old and new tuples into transition
- * tables from child tables.
+ * The state for capturing old and new tuples into transition tables for a
+ * single ModifyTable node.
  */
 typedef struct TransitionCaptureState
 {
@@ -72,6 +72,10 @@ typedef struct TransitionCaptureState
 	 * the original tuple directly.
 	 */
 	HeapTuple	tcs_original_insert_tuple;
+
+	/* The tuplestores backing the transition tables. */
+	Tuplestorestate *tcs_old_tuplestore;
+	Tuplestorestate *tcs_new_tuplestore;
 } TransitionCaptureState;
 
 /*
@@ -162,13 +166,15 @@ extern TriggerDesc *CopyTriggerDesc(TriggerDesc *trigdesc);
 
 extern const char *FindTriggerIncompatibleWithInheritance(TriggerDesc *trigdesc);
 extern TransitionCaptureState *MakeTransitionCaptureState(TriggerDesc *trigdesc);
+extern void DestroyTransitionCaptureState(TransitionCaptureState *tcs);
 
 extern void FreeTriggerDesc(TriggerDesc *trigdesc);
 
 extern void ExecBSInsertTriggers(EState *estate,
 					 ResultRelInfo *relinfo);
 extern void ExecASInsertTriggers(EState *estate,
-					 ResultRelInfo *relinfo);
+					 ResultRelInfo *relinfo,
+					 TransitionCaptureState *transition_capture);
 extern TupleTableSlot *ExecBRInsertTriggers(EState *estate,
 					 ResultRelInfo *relinfo,
 					 TupleTableSlot *slot);
@@ -183,7 +189,8 @@ extern TupleTableSlot *ExecIRInsertTriggers(EState *estate,
 extern void ExecBSDeleteTriggers(EState *estate,
 					 ResultRelInfo *relinfo);
 extern void ExecASDeleteTriggers(EState *estate,
-					 ResultRelInfo *relinfo);
+					 ResultRelInfo *relinfo,
+					 TransitionCaptureState *transition_capture);
 extern bool ExecBRDeleteTriggers(EState *estate,
 					 EPQState *epqstate,
 					 ResultRelInfo *relinfo,
@@ -200,7 +207,8 @@ extern bool ExecIRDeleteTriggers(EState *estate,
 extern void ExecBSUpdateTriggers(EState *estate,
 					 ResultRelInfo *relinfo);
 extern void ExecASUpdateTriggers(EState *estate,
-					 ResultRelInfo *relinfo);
+					 ResultRelInfo *relinfo,
+					 TransitionCaptureState *transition_capture);
 extern TupleTableSlot *ExecBRUpdateTriggers(EState *estate,
 					 EPQState *epqstate,
 					 ResultRelInfo *relinfo,

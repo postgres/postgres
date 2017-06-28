@@ -1704,6 +1704,27 @@ alter table child inherit parent;
 
 drop table child, parent;
 
+--
+-- Verify behavior of queries with wCTEs, where multiple transition
+-- tuplestores can be active at the same time because there are
+-- multiple DML statements that might fire triggers with transition
+-- tables
+--
+create table table1 (a int);
+create table table2 (a text);
+create trigger table1_trig
+  after insert on table1 referencing new table as new_table
+  for each statement execute procedure dump_insert();
+create trigger table2_trig
+  after insert on table2 referencing new table as new_table
+  for each statement execute procedure dump_insert();
+
+with wcte as (insert into table1 values (42))
+  insert into table2 values ('hello world');
+
+drop table table1;
+drop table table2;
+
 -- cleanup
 drop function dump_insert();
 drop function dump_update();
