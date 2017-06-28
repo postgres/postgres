@@ -34,9 +34,7 @@
 #include "catalog/pg_control.h"
 #include "common/controldata_utils.h"
 #include "getopt_long.h"
-#include "libpq-fe.h"
-#include "miscadmin.h"
-#include "pqexpbuffer.h"
+#include "utils/pidfile.h"
 
 /* PID can be negative for standalone backend */
 typedef long pgpid_t;
@@ -49,6 +47,12 @@ typedef enum
 	IMMEDIATE_MODE
 } ShutdownMode;
 
+typedef enum
+{
+	POSTMASTER_READY,
+	POSTMASTER_STILL_STARTING,
+	POSTMASTER_FAILED
+} WaitPMResult;
 
 typedef enum
 {
@@ -147,12 +151,12 @@ static int	CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, 
 #endif
 
 static pgpid_t get_pgpid(bool is_status_request);
-static char **readfile(const char *path);
+static char **readfile(const char *path, int *numlines);
 static void free_readfile(char **optlines);
 static pgpid_t start_postmaster(void);
 static void read_post_opts(void);
 
-static PGPing test_postmaster_connection(pgpid_t pm_pid, bool do_checkpoint);
+static WaitPMResult wait_for_postmaster(pgpid_t pm_pid, bool do_checkpoint);
 static bool postmaster_is_alive(pid_t pid);
 
 #if defined(HAVE_GETRLIMIT) && defined(RLIMIT_CORE)
@@ -304,9 +308,14 @@ get_pgpid(bool is_status_request)
 
 /*
  * get the lines from a text file - return NULL if file can't be opened
+ *
+ * Trailing newlines are deleted from the lines (this is a change from pre-v10)
+ *
+ * *numlines is set to the number of line pointers returned; there is
+ * also an additional NULL pointer after the last real line.
  */
 static char **
-readfile(const char *path)
+readfile(const char *path, int *numlines)
 {
 	int			fd;
 	int			nlines;
@@ -317,6 +326,8 @@ readfile(const char *path)
 	int			n;
 	int			len;
 	struct stat statbuf;
+
+	*numlines = 0;				/* in case of failure or empty file */
 
 	/*
 	 * Slurp the file into memory.
@@ -367,6 +378,7 @@ readfile(const char *path)
 
 	/* set up the result buffer */
 	result = (char **) pg_malloc((nlines + 1) * sizeof(char *));
+	*numlines = nlines;
 
 	/* now split the buffer into lines */
 	linebegin = buffer;
@@ -375,10 +387,13 @@ readfile(const char *path)
 	{
 		if (buffer[i] == '\n')
 		{
-			int			slen = &buffer[i] - linebegin + 1;
+			int			slen = &buffer[i] - linebegin;
 			char	   *linebuf = pg_malloc(slen + 1);
 
 			memcpy(linebuf, linebegin, slen);
+			/* we already dropped the \n, but get rid of any \r too */
+			if (slen > 0 && linebuf[slen - 1] == '\r')
+				slen--;
 			linebuf[slen] = '\0';
 			result[n++] = linebuf;
 			linebegin = &buffer[i + 1];
@@ -509,7 +524,7 @@ start_postmaster(void)
 
 
 /*
- * Find the pgport and try a connection
+ * Wait for the postmaster to become ready.
  *
  * On Unix, pm_pid is the PID of the just-launched postmaster.  On Windows,
  * it may be the PID of an ancestor shell process, so we can't check the
@@ -522,168 +537,67 @@ start_postmaster(void)
  * Note that the checkpoint parameter enables a Windows service control
  * manager checkpoint, it's got nothing to do with database checkpoints!!
  */
-static PGPing
-test_postmaster_connection(pgpid_t pm_pid, bool do_checkpoint)
+static WaitPMResult
+wait_for_postmaster(pgpid_t pm_pid, bool do_checkpoint)
 {
-	PGPing		ret = PQPING_NO_RESPONSE;
-	char		connstr[MAXPGPATH * 2 + 256];
 	int			i;
-
-	/* if requested wait time is zero, return "still starting up" code */
-	if (wait_seconds <= 0)
-		return PQPING_REJECT;
-
-	connstr[0] = '\0';
 
 	for (i = 0; i < wait_seconds * WAITS_PER_SEC; i++)
 	{
-		/* Do we need a connection string? */
-		if (connstr[0] == '\0')
+		char	  **optlines;
+		int			numlines;
+
+		/*
+		 * Try to read the postmaster.pid file.  If it's not valid, or if the
+		 * status line isn't there yet, just keep waiting.
+		 */
+		if ((optlines = readfile(pid_file, &numlines)) != NULL &&
+			numlines >= LOCK_FILE_LINE_PM_STATUS)
 		{
-			/*----------
-			 * The number of lines in postmaster.pid tells us several things:
-			 *
-			 * # of lines
-			 *		0	lock file created but status not written
-			 *		2	pre-9.1 server, shared memory not created
-			 *		3	pre-9.1 server, shared memory created
-			 *		5	9.1+ server, ports not opened
-			 *		6	9.1+ server, shared memory not created
-			 *		7	9.1+ server, shared memory created
-			 *
-			 * This code does not support pre-9.1 servers.  On Unix machines
-			 * we could consider extracting the port number from the shmem
-			 * key, but that (a) is not robust, and (b) doesn't help with
-			 * finding out the socket directory.  And it wouldn't work anyway
-			 * on Windows.
-			 *
-			 * If we see less than 6 lines in postmaster.pid, just keep
-			 * waiting.
-			 *----------
-			 */
-			char	  **optlines;
-
-			/* Try to read the postmaster.pid file */
-			if ((optlines = readfile(pid_file)) != NULL &&
-				optlines[0] != NULL &&
-				optlines[1] != NULL &&
-				optlines[2] != NULL)
-			{
-				if (optlines[3] == NULL)
-				{
-					/* File is exactly three lines, must be pre-9.1 */
-					write_stderr(_("\n%s: -w option is not supported when starting a pre-9.1 server\n"),
-								 progname);
-					return PQPING_NO_ATTEMPT;
-				}
-				else if (optlines[4] != NULL &&
-						 optlines[5] != NULL)
-				{
-					/* File is complete enough for us, parse it */
-					pgpid_t		pmpid;
-					time_t		pmstart;
-
-					/*
-					 * Make sanity checks.  If it's for the wrong PID, or the
-					 * recorded start time is before pg_ctl started, then
-					 * either we are looking at the wrong data directory, or
-					 * this is a pre-existing pidfile that hasn't (yet?) been
-					 * overwritten by our child postmaster.  Allow 2 seconds
-					 * slop for possible cross-process clock skew.
-					 */
-					pmpid = atol(optlines[LOCK_FILE_LINE_PID - 1]);
-					pmstart = atol(optlines[LOCK_FILE_LINE_START_TIME - 1]);
-					if (pmstart >= start_time - 2 &&
-#ifndef WIN32
-						pmpid == pm_pid
-#else
-					/* Windows can only reject standalone-backend PIDs */
-						pmpid > 0
-#endif
-						)
-					{
-						/*
-						 * OK, seems to be a valid pidfile from our child.
-						 */
-						int			portnum;
-						char	   *sockdir;
-						char	   *hostaddr;
-						char		host_str[MAXPGPATH];
-
-						/*
-						 * Extract port number and host string to use. Prefer
-						 * using Unix socket if available.
-						 */
-						portnum = atoi(optlines[LOCK_FILE_LINE_PORT - 1]);
-						sockdir = optlines[LOCK_FILE_LINE_SOCKET_DIR - 1];
-						hostaddr = optlines[LOCK_FILE_LINE_LISTEN_ADDR - 1];
-
-						/*
-						 * While unix_socket_directories can accept relative
-						 * directories, libpq's host parameter must have a
-						 * leading slash to indicate a socket directory.  So,
-						 * ignore sockdir if it's relative, and try to use TCP
-						 * instead.
-						 */
-						if (sockdir[0] == '/')
-							strlcpy(host_str, sockdir, sizeof(host_str));
-						else
-							strlcpy(host_str, hostaddr, sizeof(host_str));
-
-						/* remove trailing newline */
-						if (strchr(host_str, '\n') != NULL)
-							*strchr(host_str, '\n') = '\0';
-
-						/* Fail if couldn't get either sockdir or host addr */
-						if (host_str[0] == '\0')
-						{
-							write_stderr(_("\n%s: -w option cannot use a relative socket directory specification\n"),
-										 progname);
-							return PQPING_NO_ATTEMPT;
-						}
-
-						/*
-						 * Map listen-only addresses to counterparts usable
-						 * for establishing a connection.  connect() to "::"
-						 * or "0.0.0.0" is not portable to OpenBSD 5.0 or to
-						 * Windows Server 2008, and connect() to "::" is
-						 * additionally not portable to NetBSD 6.0.  (Cygwin
-						 * does handle both addresses, though.)
-						 */
-						if (strcmp(host_str, "*") == 0)
-							strcpy(host_str, "localhost");
-						else if (strcmp(host_str, "0.0.0.0") == 0)
-							strcpy(host_str, "127.0.0.1");
-						else if (strcmp(host_str, "::") == 0)
-							strcpy(host_str, "::1");
-
-						/*
-						 * We need to set connect_timeout otherwise on Windows
-						 * the Service Control Manager (SCM) will probably
-						 * timeout first.
-						 */
-						snprintf(connstr, sizeof(connstr),
-								 "dbname=postgres port=%d host='%s' connect_timeout=5",
-								 portnum, host_str);
-					}
-				}
-			}
+			/* File is complete enough for us, parse it */
+			pgpid_t		pmpid;
+			time_t		pmstart;
 
 			/*
-			 * Free the results of readfile.
-			 *
-			 * This is safe to call even if optlines is NULL.
+			 * Make sanity checks.  If it's for the wrong PID, or the recorded
+			 * start time is before pg_ctl started, then either we are looking
+			 * at the wrong data directory, or this is a pre-existing pidfile
+			 * that hasn't (yet?) been overwritten by our child postmaster.
+			 * Allow 2 seconds slop for possible cross-process clock skew.
 			 */
-			free_readfile(optlines);
+			pmpid = atol(optlines[LOCK_FILE_LINE_PID - 1]);
+			pmstart = atol(optlines[LOCK_FILE_LINE_START_TIME - 1]);
+			if (pmstart >= start_time - 2 &&
+#ifndef WIN32
+				pmpid == pm_pid
+#else
+			/* Windows can only reject standalone-backend PIDs */
+				pmpid > 0
+#endif
+				)
+			{
+				/*
+				 * OK, seems to be a valid pidfile from our child.  Check the
+				 * status line (this assumes a v10 or later server).
+				 */
+				char	   *pmstatus = optlines[LOCK_FILE_LINE_PM_STATUS - 1];
+
+				if (strcmp(pmstatus, PM_STATUS_READY) == 0 ||
+					strcmp(pmstatus, PM_STATUS_STANDBY) == 0)
+				{
+					/* postmaster is done starting up */
+					free_readfile(optlines);
+					return POSTMASTER_READY;
+				}
+			}
 		}
 
-		/* If we have a connection string, ping the server */
-		if (connstr[0] != '\0')
-		{
-			ret = PQping(connstr);
-			if (ret == PQPING_OK || ret == PQPING_NO_ATTEMPT)
-				break;
-		}
+		/*
+		 * Free the results of readfile.
+		 *
+		 * This is safe to call even if optlines is NULL.
+		 */
+		free_readfile(optlines);
 
 		/*
 		 * Check whether the child postmaster process is still alive.  This
@@ -697,14 +611,14 @@ test_postmaster_connection(pgpid_t pm_pid, bool do_checkpoint)
 			int			exitstatus;
 
 			if (waitpid((pid_t) pm_pid, &exitstatus, WNOHANG) == (pid_t) pm_pid)
-				return PQPING_NO_RESPONSE;
+				return POSTMASTER_FAILED;
 		}
 #else
 		if (WaitForSingleObject(postmasterProcess, 0) == WAIT_OBJECT_0)
-			return PQPING_NO_RESPONSE;
+			return POSTMASTER_FAILED;
 #endif
 
-		/* No response, or startup still in process; wait */
+		/* Startup still in process; wait, printing a dot once per second */
 		if (i % WAITS_PER_SEC == 0)
 		{
 #ifdef WIN32
@@ -729,8 +643,8 @@ test_postmaster_connection(pgpid_t pm_pid, bool do_checkpoint)
 		pg_usleep(USEC_PER_SEC / WAITS_PER_SEC);
 	}
 
-	/* return result of last call to PQping */
-	return ret;
+	/* out of patience; report that postmaster is still starting up */
+	return POSTMASTER_STILL_STARTING;
 }
 
 
@@ -764,14 +678,15 @@ read_post_opts(void)
 		if (ctl_command == RESTART_COMMAND)
 		{
 			char	  **optlines;
+			int			numlines;
 
-			optlines = readfile(postopts_file);
+			optlines = readfile(postopts_file, &numlines);
 			if (optlines == NULL)
 			{
 				write_stderr(_("%s: could not read file \"%s\"\n"), progname, postopts_file);
 				exit(1);
 			}
-			else if (optlines[0] == NULL || optlines[1] != NULL)
+			else if (numlines != 1)
 			{
 				write_stderr(_("%s: option file \"%s\" must have exactly one line\n"),
 							 progname, postopts_file);
@@ -779,14 +694,10 @@ read_post_opts(void)
 			}
 			else
 			{
-				int			len;
 				char	   *optline;
 				char	   *arg1;
 
 				optline = optlines[0];
-				/* trim off line endings */
-				len = strcspn(optline, "\r\n");
-				optline[len] = '\0';
 
 				/*
 				 * Are we at the first option, as defined by space and
@@ -917,28 +828,23 @@ do_start(void)
 	{
 		print_msg(_("waiting for server to start..."));
 
-		switch (test_postmaster_connection(pm_pid, false))
+		switch (wait_for_postmaster(pm_pid, false))
 		{
-			case PQPING_OK:
+			case POSTMASTER_READY:
 				print_msg(_(" done\n"));
 				print_msg(_("server started\n"));
 				break;
-			case PQPING_REJECT:
+			case POSTMASTER_STILL_STARTING:
 				print_msg(_(" stopped waiting\n"));
 				print_msg(_("server is still starting up\n"));
 				break;
-			case PQPING_NO_RESPONSE:
+			case POSTMASTER_FAILED:
 				print_msg(_(" stopped waiting\n"));
 				write_stderr(_("%s: could not start server\n"
 							   "Examine the log output.\n"),
 							 progname);
 				exit(1);
 				break;
-			case PQPING_NO_ATTEMPT:
-				print_msg(_(" failed\n"));
-				write_stderr(_("%s: could not wait for server because of misconfiguration\n"),
-							 progname);
-				exit(1);
 		}
 	}
 	else
@@ -1319,15 +1225,16 @@ do_status(void)
 			{
 				char	  **optlines;
 				char	  **curr_line;
+				int			numlines;
 
 				printf(_("%s: server is running (PID: %ld)\n"),
 					   progname, pid);
 
-				optlines = readfile(postopts_file);
+				optlines = readfile(postopts_file, &numlines);
 				if (optlines != NULL)
 				{
 					for (curr_line = optlines; *curr_line != NULL; curr_line++)
-						fputs(*curr_line, stdout);
+						puts(*curr_line);
 
 					/* Free the results of readfile */
 					free_readfile(optlines);
@@ -1634,7 +1541,7 @@ pgwin32_ServiceMain(DWORD argc, LPTSTR *argv)
 	if (do_wait)
 	{
 		write_eventlog(EVENTLOG_INFORMATION_TYPE, _("Waiting for server startup...\n"));
-		if (test_postmaster_connection(postmasterPID, true) != PQPING_OK)
+		if (wait_for_postmaster(postmasterPID, true) != POSTMASTER_READY)
 		{
 			write_eventlog(EVENTLOG_ERROR_TYPE, _("Timed out waiting for server startup\n"));
 			pgwin32_SetServiceStatus(SERVICE_STOPPED);
@@ -1655,7 +1562,7 @@ pgwin32_ServiceMain(DWORD argc, LPTSTR *argv)
 			{
 				/*
 				 * status.dwCheckPoint can be incremented by
-				 * test_postmaster_connection(), so it might not start from 0.
+				 * wait_for_postmaster(), so it might not start from 0.
 				 */
 				int			maxShutdownCheckPoint = status.dwCheckPoint + 12;
 

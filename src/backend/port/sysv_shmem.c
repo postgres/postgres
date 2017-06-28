@@ -38,6 +38,7 @@
 #include "storage/ipc.h"
 #include "storage/pg_shmem.h"
 #include "utils/guc.h"
+#include "utils/pidfile.h"
 
 
 /*

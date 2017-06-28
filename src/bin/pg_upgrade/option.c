@@ -14,8 +14,8 @@
 #include <io.h>
 #endif
 
-#include "miscadmin.h"
 #include "getopt_long.h"
+#include "utils/pidfile.h"
 
 #include "pg_upgrade.h"
 

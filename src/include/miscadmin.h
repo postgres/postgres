@@ -28,8 +28,6 @@
 #include "pgtime.h"				/* for pg_time_t */
 
 
-#define PG_BACKEND_VERSIONSTR "postgres (PostgreSQL) " PG_VERSION "\n"
-
 #define InvalidPid				(-1)
 
 
@@ -430,31 +428,6 @@ extern PGDLLIMPORT bool process_shared_preload_libraries_in_progress;
 extern char *session_preload_libraries_string;
 extern char *shared_preload_libraries_string;
 extern char *local_preload_libraries_string;
-
-/*
- * As of 9.1, the contents of the data-directory lock file are:
- *
- * line #
- *		1	postmaster PID (or negative of a standalone backend's PID)
- *		2	data directory path
- *		3	postmaster start timestamp (time_t representation)
- *		4	port number
- *		5	first Unix socket directory path (empty if none)
- *		6	first listen_address (IP address or "*"; empty if no TCP port)
- *		7	shared memory key (not present on Windows)
- *
- * Lines 6 and up are added via AddToDataDirLockFile() after initial file
- * creation.
- *
- * The socket lock file, if used, has the same contents as lines 1-5.
- */
-#define LOCK_FILE_LINE_PID			1
-#define LOCK_FILE_LINE_DATA_DIR		2
-#define LOCK_FILE_LINE_START_TIME	3
-#define LOCK_FILE_LINE_PORT			4
-#define LOCK_FILE_LINE_SOCKET_DIR	5
-#define LOCK_FILE_LINE_LISTEN_ADDR	6
-#define LOCK_FILE_LINE_SHMEM_KEY	7
 
 extern void CreateDataDirLockFile(bool amPostmaster);
 extern void CreateSocketLockFile(const char *socketfile, bool amPostmaster,
