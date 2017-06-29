@@ -224,18 +224,32 @@ isnt($xmin, '', 'xmin of cascaded slot non-null with hs feedback');
 is($catalog_xmin, '', 'catalog xmin of cascaded slot still null with hs_feedback');
 
 note "doing some work to advance xmin";
-for my $i (10000 .. 11000)
-{
-	$node_master->safe_psql('postgres', qq[INSERT INTO tab_int VALUES ($i);]);
-}
+$node_master->safe_psql('postgres', q{
+do $$
+begin
+  for i in 10000..11000 loop
+    -- use an exception block so that each iteration eats an XID
+    begin
+      insert into tab_int values (i);
+    exception
+      when division_by_zero then null;
+    end;
+  end loop;
+end$$;
+});
+
 $node_master->safe_psql('postgres', 'VACUUM;');
 $node_master->safe_psql('postgres', 'CHECKPOINT;');
+
+wait_slot_xmins($node_master, $slotname_1, "xmin <> '$xmin'");
 
 my ($xmin2, $catalog_xmin2) = get_slot_xmins($node_master, $slotname_1);
 note "new xmin $xmin2, old xmin $xmin";
 isnt($xmin2, $xmin, 'xmin of non-cascaded slot with hs feedback has changed');
 is($catalog_xmin2, '',
 	'catalog xmin of non-cascaded slot still null with hs_feedback unchanged');
+
+wait_slot_xmins($node_standby_1, $slotname_2, "xmin <> '$xmin'");
 
 ($xmin2, $catalog_xmin2) = get_slot_xmins($node_standby_1, $slotname_2);
 note "new xmin $xmin2, old xmin $xmin";
