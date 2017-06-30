@@ -515,7 +515,7 @@ logicalrep_worker_stop(Oid subid, Oid relid)
 }
 
 /*
- * Wake up (using latch) the logical replication worker.
+ * Wake up (using latch) any logical replication worker for specified sub/rel.
  */
 void
 logicalrep_worker_wakeup(Oid subid, Oid relid)
@@ -523,19 +523,25 @@ logicalrep_worker_wakeup(Oid subid, Oid relid)
 	LogicalRepWorker *worker;
 
 	LWLockAcquire(LogicalRepWorkerLock, LW_SHARED);
+
 	worker = logicalrep_worker_find(subid, relid, true);
-	LWLockRelease(LogicalRepWorkerLock);
 
 	if (worker)
 		logicalrep_worker_wakeup_ptr(worker);
+
+	LWLockRelease(LogicalRepWorkerLock);
 }
 
 /*
- * Wake up (using latch) the logical replication worker.
+ * Wake up (using latch) the specified logical replication worker.
+ *
+ * Caller must hold lock, else worker->proc could change under us.
  */
 void
 logicalrep_worker_wakeup_ptr(LogicalRepWorker *worker)
 {
+	Assert(LWLockHeldByMe(LogicalRepWorkerLock));
+
 	SetLatch(&worker->proc->procLatch);
 }
 
