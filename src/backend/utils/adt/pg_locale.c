@@ -1354,6 +1354,11 @@ pg_newlocale_from_collation(Oid collid)
 			UCollator  *collator;
 			UErrorCode	status;
 
+			if (strcmp(collcollate, collctype) != 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("collations with different collate and ctype values are not supported by ICU")));
+
 			status = U_ZERO_ERROR;
 			collator = ucol_open(collcollate, &status);
 			if (U_FAILURE(status))
