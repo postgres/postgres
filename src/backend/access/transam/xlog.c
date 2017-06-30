@@ -4221,10 +4221,10 @@ ReadRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr, int emode,
 			 * pg_wal, so we are presumably now consistent.
 			 *
 			 * We require that there's at least some valid WAL present in
-			 * pg_wal, however (!fetch_ckpt). We could recover using the WAL
-			 * from the archive, even if pg_wal is completely empty, but we'd
-			 * have no idea how far we'd have to replay to reach consistency.
-			 * So err on the safe side and give up.
+			 * pg_wal, however (!fetching_ckpt).  We could recover using the
+			 * WAL from the archive, even if pg_wal is completely empty, but
+			 * we'd have no idea how far we'd have to replay to reach
+			 * consistency.  So err on the safe side and give up.
 			 */
 			if (!InArchiveRecovery && ArchiveRecoveryRequested &&
 				!fetching_ckpt)
