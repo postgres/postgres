@@ -114,6 +114,9 @@ typedef struct
 	 */
 	char		slotname[NAMEDATALEN];
 
+	/* set true once conninfo is ready to display (obfuscated pwds etc) */
+	bool		ready_to_display;
+
 	slock_t		mutex;			/* locks shared variables shown above */
 
 	/*
@@ -121,9 +124,6 @@ typedef struct
 	 * barriers for ordering are sufficient.
 	 */
 	bool		force_reply;
-
-	/* set true once conninfo is ready to display (obfuscated pwds etc) */
-	bool		ready_to_display;
 
 	/*
 	 * Latch used by startup process to wake up walreceiver after telling it

@@ -668,13 +668,9 @@ StartReplication(StartReplicationCmd *cmd)
 		sentPtr = cmd->startpoint;
 
 		/* Initialize shared memory status, too */
-		{
-			WalSnd	   *walsnd = MyWalSnd;
-
-			SpinLockAcquire(&walsnd->mutex);
-			walsnd->sentPtr = sentPtr;
-			SpinLockRelease(&walsnd->mutex);
-		}
+		SpinLockAcquire(&MyWalSnd->mutex);
+		MyWalSnd->sentPtr = sentPtr;
+		SpinLockRelease(&MyWalSnd->mutex);
 
 		SyncRepInitConfig();
 
@@ -1093,13 +1089,9 @@ StartLogicalReplication(StartReplicationCmd *cmd)
 	sentPtr = MyReplicationSlot->data.confirmed_flush;
 
 	/* Also update the sent position status in shared memory */
-	{
-		WalSnd	   *walsnd = MyWalSnd;
-
-		SpinLockAcquire(&walsnd->mutex);
-		walsnd->sentPtr = MyReplicationSlot->data.restart_lsn;
-		SpinLockRelease(&walsnd->mutex);
-	}
+	SpinLockAcquire(&MyWalSnd->mutex);
+	MyWalSnd->sentPtr = MyReplicationSlot->data.restart_lsn;
+	SpinLockRelease(&MyWalSnd->mutex);
 
 	replication_active = true;
 
@@ -2892,10 +2884,12 @@ WalSndRqstFileReload(void)
 	{
 		WalSnd	   *walsnd = &WalSndCtl->walsnds[i];
 
-		if (walsnd->pid == 0)
-			continue;
-
 		SpinLockAcquire(&walsnd->mutex);
+		if (walsnd->pid == 0)
+		{
+			SpinLockRelease(&walsnd->mutex);
+			continue;
+		}
 		walsnd->needreload = true;
 		SpinLockRelease(&walsnd->mutex);
 	}
@@ -3071,7 +3065,6 @@ WalSndWaitStopping(void)
 
 		for (i = 0; i < max_wal_senders; i++)
 		{
-			WalSndState state;
 			WalSnd	   *walsnd = &WalSndCtl->walsnds[i];
 
 			SpinLockAcquire(&walsnd->mutex);
@@ -3082,14 +3075,13 @@ WalSndWaitStopping(void)
 				continue;
 			}
 
-			state = walsnd->state;
-			SpinLockRelease(&walsnd->mutex);
-
-			if (state != WALSNDSTATE_STOPPING)
+			if (walsnd->state != WALSNDSTATE_STOPPING)
 			{
 				all_stopped = false;
+				SpinLockRelease(&walsnd->mutex);
 				break;
 			}
+			SpinLockRelease(&walsnd->mutex);
 		}
 
 		/* safe to leave if confirmation is done for all WAL senders */
@@ -3210,14 +3202,18 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 		TimeOffset	flushLag;
 		TimeOffset	applyLag;
 		int			priority;
+		int			pid;
 		WalSndState state;
 		Datum		values[PG_STAT_GET_WAL_SENDERS_COLS];
 		bool		nulls[PG_STAT_GET_WAL_SENDERS_COLS];
 
-		if (walsnd->pid == 0)
-			continue;
-
 		SpinLockAcquire(&walsnd->mutex);
+		if (walsnd->pid == 0)
+		{
+			SpinLockRelease(&walsnd->mutex);
+			continue;
+		}
+		pid = walsnd->pid;
 		sentPtr = walsnd->sentPtr;
 		state = walsnd->state;
 		write = walsnd->write;
@@ -3230,7 +3226,7 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 		SpinLockRelease(&walsnd->mutex);
 
 		memset(nulls, 0, sizeof(nulls));
-		values[0] = Int32GetDatum(walsnd->pid);
+		values[0] = Int32GetDatum(pid);
 
 		if (!superuser())
 		{
@@ -3265,7 +3261,7 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 			 * which always returns an invalid flush location, as an
 			 * asynchronous standby.
 			 */
-			priority = XLogRecPtrIsInvalid(walsnd->flush) ? 0 : priority;
+			priority = XLogRecPtrIsInvalid(flush) ? 0 : priority;
 
 			if (writeLag < 0)
 				nulls[6] = true;

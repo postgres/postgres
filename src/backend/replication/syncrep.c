@@ -711,14 +711,24 @@ SyncRepGetSyncStandbysQuorum(bool *am_sync)
 
 	for (i = 0; i < max_wal_senders; i++)
 	{
+		XLogRecPtr	flush;
+		WalSndState	state;
+		int			pid;
+
 		walsnd = &WalSndCtl->walsnds[i];
 
+		SpinLockAcquire(&walsnd->mutex);
+		pid = walsnd->pid;
+		flush = walsnd->flush;
+		state = walsnd->state;
+		SpinLockRelease(&walsnd->mutex);
+
 		/* Must be active */
-		if (walsnd->pid == 0)
+		if (pid == 0)
 			continue;
 
 		/* Must be streaming */
-		if (walsnd->state != WALSNDSTATE_STREAMING)
+		if (state != WALSNDSTATE_STREAMING)
 			continue;
 
 		/* Must be synchronous */
@@ -726,7 +736,7 @@ SyncRepGetSyncStandbysQuorum(bool *am_sync)
 			continue;
 
 		/* Must have a valid flush position */
-		if (XLogRecPtrIsInvalid(walsnd->flush))
+		if (XLogRecPtrIsInvalid(flush))
 			continue;
 
 		/*
@@ -780,14 +790,24 @@ SyncRepGetSyncStandbysPriority(bool *am_sync)
 	 */
 	for (i = 0; i < max_wal_senders; i++)
 	{
+		XLogRecPtr	flush;
+		WalSndState	state;
+		int			pid;
+
 		walsnd = &WalSndCtl->walsnds[i];
 
+		SpinLockAcquire(&walsnd->mutex);
+		pid = walsnd->pid;
+		flush = walsnd->flush;
+		state = walsnd->state;
+		SpinLockRelease(&walsnd->mutex);
+
 		/* Must be active */
-		if (walsnd->pid == 0)
+		if (pid == 0)
 			continue;
 
 		/* Must be streaming */
-		if (walsnd->state != WALSNDSTATE_STREAMING)
+		if (state != WALSNDSTATE_STREAMING)
 			continue;
 
 		/* Must be synchronous */
@@ -796,7 +816,7 @@ SyncRepGetSyncStandbysPriority(bool *am_sync)
 			continue;
 
 		/* Must have a valid flush position */
-		if (XLogRecPtrIsInvalid(walsnd->flush))
+		if (XLogRecPtrIsInvalid(flush))
 			continue;
 
 		/*

@@ -30,10 +30,17 @@ typedef enum WalSndState
 
 /*
  * Each walsender has a WalSnd struct in shared memory.
+ *
+ * This struct is protected by 'mutex', with two exceptions: one is
+ * sync_standby_priority as noted below.  The other exception is that some
+ * members are only written by the walsender process itself, and thus that
+ * process is free to read those members without holding spinlock.  pid and
+ * needreload always require the spinlock to be held for all accesses.
  */
 typedef struct WalSnd
 {
-	pid_t		pid;			/* this walsender's process id, or 0 */
+	pid_t		pid;			/* this walsender's PID, or 0 if not active */
+
 	WalSndState state;			/* this walsender's state */
 	XLogRecPtr	sentPtr;		/* WAL has been sent up to this point */
 	bool		needreload;		/* does currently-open file need to be
