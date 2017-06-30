@@ -459,7 +459,10 @@ libpqrcv_endstreaming(WalReceiverConn *conn, TimeLineID *next_tli)
 		PQclear(res);
 
 		/* End the copy */
-		PQendcopy(conn->streamConn);
+		if (PQendcopy(conn->streamConn))
+			ereport(ERROR,
+					(errmsg("error while shutting down streaming COPY: %s",
+							pchomp(PQerrorMessage(conn->streamConn)))));
 
 		/* CommandComplete should follow */
 		res = PQgetResult(conn->streamConn);
