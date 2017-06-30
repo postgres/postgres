@@ -31,7 +31,7 @@
 #define ZLIB_OUT_SIZE 4096
 
 /*-------------------------------------------------------------------------
- * WalDirectoryMethod - write wal to a directory looking like pg_xlog
+ * WalDirectoryMethod - write wal to a directory looking like pg_wal
  *-------------------------------------------------------------------------
  */
 
@@ -375,7 +375,7 @@ FreeWalDirectoryMethod(void)
 
 
 /*-------------------------------------------------------------------------
- * WalTarMethod - write wal to a tar file containing pg_xlog contents
+ * WalTarMethod - write wal to a tar file containing pg_wal contents
  *-------------------------------------------------------------------------
  */
 
