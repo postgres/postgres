@@ -2289,7 +2289,7 @@ partition_bound_cmp(PartitionKey key, PartitionBoundInfo boundinfo,
 
 /*
  * Binary search on a collection of partition bounds. Returns greatest
- * bound in array boundinfo->datums which is less than or equal to *probe
+ * bound in array boundinfo->datums which is less than or equal to *probe.
  * If all bounds in the array are greater than *probe, -1 is returned.
  *
  * *probe could either be a partition bound or a Datum array representing
