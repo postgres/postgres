@@ -949,7 +949,7 @@ PLyObject_ToDatum(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarray)
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("malformed record literal: \"%s\"", str),
 					 errdetail("Missing left parenthesis."),
-					 errhint("To return a composite type in an array, return the composite type as a Python tuple, e.g. \"[('foo')]\"")));
+					 errhint("To return a composite type in an array, return the composite type as a Python tuple, e.g., \"[('foo',)]\".")));
 	}
 
 	return InputFunctionCall(&arg->typfunc,
@@ -1387,7 +1387,7 @@ PLyGenericObject_ToComposite(PLyTypeInfo *info, TupleDesc desc, PyObject *object
 						(errcode(ERRCODE_UNDEFINED_COLUMN),
 						 errmsg("attribute \"%s\" does not exist in Python object", key),
 						 inarray ?
-						 errhint("To return a composite type in an array, return the composite type as a Python tuple, e.g. \"[('foo')]\"") :
+						 errhint("To return a composite type in an array, return the composite type as a Python tuple, e.g., \"[('foo',)]\".") :
 						 errhint("To return null in a column, let the returned object have an attribute named after column with value None.")));
 			}
 
