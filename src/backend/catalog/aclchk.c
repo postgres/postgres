@@ -5660,7 +5660,7 @@ removeExtObjInitPriv(Oid objoid, Oid classoid)
 				if (!HeapTupleIsValid(attTuple))
 					continue;
 
-				/* when removing, remove all entires, even dropped columns */
+				/* when removing, remove all entries, even dropped columns */
 
 				recordExtensionInitPrivWorker(objoid, classoid, curr_att, NULL);
 
