@@ -29,10 +29,6 @@
  * 0xFFFFFFFF/xxxx_XACTS_PER_PAGE/SLRU_PAGES_PER_SEGMENT.  We need
  * take no explicit notice of that fact in slru.c, except when comparing
  * segment and page numbers in SimpleLruTruncate (see PagePrecedes()).
- *
- * Note: slru.c currently assumes that segment file names will be four hex
- * digits.  This sets a lower bound on the segment size (64K transactions
- * for 32-bit TransactionIds).
  */
 #define SLRU_PAGES_PER_SEGMENT	32
 
