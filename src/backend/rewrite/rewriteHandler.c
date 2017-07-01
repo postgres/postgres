@@ -827,7 +827,7 @@ rewriteTargetListIU(List *targetList,
 
 		if (commandType == CMD_UPDATE)
 		{
-			if (att_tup->attidentity == ATTRIBUTE_IDENTITY_ALWAYS && !apply_default)
+			if (att_tup->attidentity == ATTRIBUTE_IDENTITY_ALWAYS && new_tle && !apply_default)
 				ereport(ERROR,
 						(errcode(ERRCODE_GENERATED_ALWAYS),
 						 errmsg("column \"%s\" can only be updated to DEFAULT", NameStr(att_tup->attname)),
