@@ -201,11 +201,11 @@ WaitForReplicationWorkerAttach(LogicalRepWorker *worker,
 
 		/*
 		 * We need timeout because we generally don't get notified via latch
-		 * about the worker attach.
+		 * about the worker attach.  But we don't expect to have to wait long.
 		 */
 		rc = WaitLatch(MyLatch,
 					   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
-					   1000L, WAIT_EVENT_BGWORKER_STARTUP);
+					   10L, WAIT_EVENT_BGWORKER_STARTUP);
 
 		/* emergency bailout if postmaster has died */
 		if (rc & WL_POSTMASTER_DEATH)
@@ -408,8 +408,8 @@ retry:
 }
 
 /*
- * Stop the logical replication worker and wait until it detaches from the
- * slot.
+ * Stop the logical replication worker for subid/relid, if any, and wait until
+ * it detaches from the slot.
  */
 void
 logicalrep_worker_stop(Oid subid, Oid relid)
@@ -435,8 +435,8 @@ logicalrep_worker_stop(Oid subid, Oid relid)
 	generation = worker->generation;
 
 	/*
-	 * If we found worker but it does not have proc set it is starting up,
-	 * wait for it to finish and then kill it.
+	 * If we found a worker but it does not have proc set then it is still
+	 * starting up; wait for it to finish starting and then kill it.
 	 */
 	while (worker->in_use && !worker->proc)
 	{
@@ -444,10 +444,10 @@ logicalrep_worker_stop(Oid subid, Oid relid)
 
 		LWLockRelease(LogicalRepWorkerLock);
 
-		/* Wait for signal. */
+		/* Wait a bit --- we don't expect to have to wait long. */
 		rc = WaitLatch(MyLatch,
 					   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
-					   1000L, WAIT_EVENT_BGWORKER_STARTUP);
+					   10L, WAIT_EVENT_BGWORKER_STARTUP);
 
 		/* emergency bailout if postmaster has died */
 		if (rc & WL_POSTMASTER_DEATH)
@@ -459,7 +459,7 @@ logicalrep_worker_stop(Oid subid, Oid relid)
 			CHECK_FOR_INTERRUPTS();
 		}
 
-		/* Check worker status. */
+		/* Recheck worker status. */
 		LWLockAcquire(LogicalRepWorkerLock, LW_SHARED);
 
 		/*
@@ -480,27 +480,22 @@ logicalrep_worker_stop(Oid subid, Oid relid)
 
 	/* Now terminate the worker ... */
 	kill(worker->proc->pid, SIGTERM);
-	LWLockRelease(LogicalRepWorkerLock);
 
 	/* ... and wait for it to die. */
 	for (;;)
 	{
 		int			rc;
 
-		LWLockAcquire(LogicalRepWorkerLock, LW_SHARED);
+		/* is it gone? */
 		if (!worker->proc || worker->generation != generation)
-		{
-			LWLockRelease(LogicalRepWorkerLock);
 			break;
-		}
+
 		LWLockRelease(LogicalRepWorkerLock);
 
-		CHECK_FOR_INTERRUPTS();
-
-		/* Wait for more work. */
+		/* Wait a bit --- we don't expect to have to wait long. */
 		rc = WaitLatch(MyLatch,
 					   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
-					   1000L, WAIT_EVENT_BGWORKER_SHUTDOWN);
+					   10L, WAIT_EVENT_BGWORKER_SHUTDOWN);
 
 		/* emergency bailout if postmaster has died */
 		if (rc & WL_POSTMASTER_DEATH)
@@ -511,7 +506,11 @@ logicalrep_worker_stop(Oid subid, Oid relid)
 			ResetLatch(MyLatch);
 			CHECK_FOR_INTERRUPTS();
 		}
+
+		LWLockAcquire(LogicalRepWorkerLock, LW_SHARED);
 	}
+
+	LWLockRelease(LogicalRepWorkerLock);
 }
 
 /*
