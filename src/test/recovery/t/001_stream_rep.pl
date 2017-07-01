@@ -156,7 +156,8 @@ sub wait_slot_xmins
 		SELECT $check_expr
 		FROM pg_catalog.pg_replication_slots
 		WHERE slot_name = '$slot_name';
-	]);
+	])
+	  or die "Timed out waiting for slot xmins to advance";
 }
 
 # Fetch xmin columns from slot's pg_replication_slots row

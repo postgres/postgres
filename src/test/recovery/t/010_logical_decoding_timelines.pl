@@ -117,7 +117,9 @@ $node_master->poll_query_until(
 	SELECT catalog_xmin IS NOT NULL
 	FROM pg_replication_slots
 	WHERE slot_name = 'phys_slot'
-	]);
+	])
+  or die "slot's catalog_xmin never became set";
+
 my $phys_slot = $node_master->slot('phys_slot');
 isnt($phys_slot->{'xmin'}, '', 'xmin assigned on physical slot of master');
 isnt($phys_slot->{'catalog_xmin'},
@@ -137,7 +139,8 @@ $node_master->stop('immediate');
 $node_replica->promote;
 print "waiting for replica to come up\n";
 $node_replica->poll_query_until('postgres',
-	"SELECT NOT pg_is_in_recovery();");
+	"SELECT NOT pg_is_in_recovery();")
+  or die "replica never exited recovery";
 
 $node_replica->safe_psql('postgres',
 	"INSERT INTO decoding(blah) VALUES ('after failover');");

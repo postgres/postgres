@@ -43,7 +43,7 @@ PostgresNode - class representing PostgreSQL server instance
   # run query every second until it returns 't'
   # or times out
   $node->poll_query_until('postgres', q|SELECT random() < 0.1;|')
-    or print "timed out";
+    or die "timed out";
 
   # Do an online pg_basebackup
   my $ret = $node->backup('testbackup1');

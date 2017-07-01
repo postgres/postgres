@@ -55,7 +55,8 @@ $master->append_conf('postgresql.conf', 'track_commit_timestamp = off');
 $master->restart;
 
 system_or_bail('pg_ctl', '-D', $standby->data_dir, 'promote');
-$standby->poll_query_until('postgres', "SELECT pg_is_in_recovery() <> true");
+$standby->poll_query_until('postgres', "SELECT NOT pg_is_in_recovery()")
+  or die "standby never exited recovery";
 
 $standby->safe_psql('postgres', "create table t11()");
 my $standby_ts = $standby->safe_psql('postgres',
