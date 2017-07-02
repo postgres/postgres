@@ -9,7 +9,7 @@ use Test::More tests => 11;
 my $check_sql =
 "SELECT application_name, sync_priority, sync_state FROM pg_stat_replication ORDER BY application_name;";
 
-# Check that sync_state of each standby is expected.
+# Check that sync_state of each standby is expected (waiting till it is).
 # If $setting is given, synchronous_standby_names is set to it and
 # the configuration file is reloaded before the test.
 sub test_sync_state
@@ -23,24 +23,7 @@ sub test_sync_state
 		$self->reload;
 	}
 
-	my $timeout_max = 30;
-	my $timeout     = 0;
-	my $result;
-
-	# A reload may take some time to take effect on busy machines,
-	# hence use a loop with a timeout to give some room for the test
-	# to pass.
-	while ($timeout < $timeout_max)
-	{
-		$result = $self->safe_psql('postgres', $check_sql);
-
-		last if ($result eq $expected);
-
-		$timeout++;
-		sleep 1;
-	}
-
-	is($result, $expected, $msg);
+	ok( $self->poll_query_until('postgres', $check_sql, $expected), $msg);
 }
 
 # Initialize master node

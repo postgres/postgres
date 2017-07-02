@@ -1213,36 +1213,43 @@ sub psql
 
 =pod
 
-=item $node->poll_query_until(dbname, query)
+=item $node->poll_query_until($dbname, $query [, $expected ])
 
-Run a query once a second, until it returns 't' (i.e. SQL boolean true).
-Continues polling if psql returns an error result. Times out after 180 seconds.
+Run B<$query> repeatedly, until it returns the B<$expected> result
+('t', or SQL boolean true, by default).
+Continues polling if B<psql> returns an error result.
+Times out after 180 seconds.
+Returns 1 if successful, 0 if timed out.
 
 =cut
 
 sub poll_query_until
 {
-	my ($self, $dbname, $query) = @_;
+	my ($self, $dbname, $query, $expected) = @_;
 
-	my $max_attempts = 180;
-	my $attempts     = 0;
+	$expected = 't' unless defined($expected);	# default value
+
+	my $cmd =
+		[ 'psql', '-XAt', '-c', $query, '-d', $self->connstr($dbname) ];
 	my ($stdout, $stderr);
+	my $max_attempts = 180 * 10;
+	my $attempts     = 0;
 
 	while ($attempts < $max_attempts)
 	{
-		my $cmd =
-		  [ 'psql', '-XAt', '-c', $query, '-d', $self->connstr($dbname) ];
 		my $result = IPC::Run::run $cmd, '>', \$stdout, '2>', \$stderr;
 
 		chomp($stdout);
 		$stdout =~ s/\r//g if $TestLib::windows_os;
-		if ($stdout eq "t")
+
+		if ($stdout eq $expected)
 		{
 			return 1;
 		}
 
-		# Wait a second before retrying.
-		sleep 1;
+		# Wait 0.1 second before retrying.
+		select undef, undef, undef, 0.1;
+
 		$attempts++;
 	}
 
