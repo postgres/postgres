@@ -1533,7 +1533,7 @@ sub query_hash
 	#
 	my %val;
 	@val{@columns} =
-	  $result ne '' ? split(qr/\|/, $result) : ('',) x scalar(@columns);
+	  $result ne '' ? split(qr/\|/, $result, -1) : ('',) x scalar(@columns);
 	return \%val;
 }
 
