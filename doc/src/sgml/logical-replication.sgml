@@ -185,6 +185,14 @@
   </para>
 
   <para>
+   A logical replication subscription can be a standby for synchronous
+   replication (see <xref linkend="synchronous-replication">).  The standby
+   name is by default the subscription name.  An alternative name can be
+   specified as <literal>application_name</literal> in the connection
+   information of the subscription.
+  </para>
+
+  <para>
    Subscriptions are dumped by <command>pg_dump</command> if the current user
    is a superuser.  Otherwise a warning is written and subscriptions are
    skipped, because non-superusers cannot read all subscription information

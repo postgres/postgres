@@ -3074,7 +3074,19 @@ include_dir 'conf.d'
         (as shown by a state of <literal>streaming</literal> in the
         <link linkend="monitoring-stats-views-table">
         <literal>pg_stat_replication</></link> view).
-        Specifying more than one standby names can allow very high availability.
+        Specifying more than one synchronous standby can allow for very high
+        availability and protection against data loss.
+       </para>
+       <para>
+        The name of a standby server for this purpose is the
+        <varname>application_name</> setting of the standby, as set in the
+        standby's connection information.  In case of a physical replication
+        standby, this should be set in the <varname>primary_conninfo</>
+        setting in <filename>recovery.conf</filename>; the default
+        is <literal>walreceiver</literal>.  For logical replication, this can
+        be set in the connection information of the subscription, and it
+        defaults to the subscription name.  For other replication stream
+        consumers, consult their documentation.
        </para>
        <para>
         This parameter specifies a list of standby servers using
@@ -3136,15 +3148,12 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
         as a synchronous standby.
        </para>
        <para>
-        The name of a standby server for this purpose is the
-        <varname>application_name</> setting of the standby, as set in the
-        <varname>primary_conninfo</> of the standby's WAL receiver.  There is
-        no mechanism to enforce uniqueness. In case of duplicates one of the
-        matching standbys will be considered as higher priority, though
-        exactly which one is indeterminate.
-        The special entry <literal>*</> matches any
-        <varname>application_name</>, including the default application name
-        of <literal>walreceiver</>.
+        The special entry <literal>*</> matches any standby name.
+       </para>
+       <para>
+        There is no mechanism to enforce uniqueness of standby names.  In case
+        of duplicates one of the matching standbys will be considered as
+        higher priority, though exactly which one is indeterminate.
        </para>
        <note>
         <para>
