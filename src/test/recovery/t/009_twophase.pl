@@ -4,10 +4,24 @@ use warnings;
 
 use PostgresNode;
 use TestLib;
-use Test::More tests => 17;
+use Test::More tests => 20;
 
 my $psql_out = '';
 my $psql_rc  = '';
+
+sub configure_and_reload
+{
+	my ($node, $parameter) = @_;
+	my $name = $node->name;
+
+	$node->append_conf(
+		'postgresql.conf', qq(
+		$parameter
+	));
+	$node->psql('postgres', "SELECT pg_reload_conf()",
+				stdout => \$psql_out);
+	is($psql_out, 't', "reload node $name with $parameter");
+}
 
 # Set up two nodes, which will alternately be master and replication slave.
 
@@ -28,15 +42,11 @@ $node_paris->init_from_backup($node_london, 'london_backup',
 	has_streaming => 1);
 $node_paris->start;
 
-# Switch to synchronous replication
-$node_london->append_conf(
-	'postgresql.conf', qq(
-	synchronous_standby_names = '*'
-));
-$node_london->psql('postgres', "SELECT pg_reload_conf()",
-		   stdout => \$psql_out);
-is($psql_out, 't', 'Enable synchronous replication');
+# Switch to synchronous replication in both directions
+configure_and_reload($node_london, "synchronous_standby_names = 'paris'");
+configure_and_reload($node_paris, "synchronous_standby_names = 'london'");
 
+# Set up nonce names for current master and slave nodes
 note "Initially, london is master and paris is slave";
 my ($cur_master, $cur_slave) = ($node_london, $node_paris);
 my $cur_master_name = $cur_master->name;
@@ -213,7 +223,10 @@ note "Now paris is master and london is slave";
 ($cur_master, $cur_slave) = ($node_paris, $node_london);
 $cur_master_name = $cur_master->name;
 
-$psql_rc = $cur_master->psql('postgres', "COMMIT PREPARED 'xact_009_10'");
+# because london is not running at this point, we can't use syncrep commit
+# on this command
+$psql_rc = $cur_master->psql('postgres',
+	"SET synchronous_commit = off; COMMIT PREPARED 'xact_009_10'");
 is($psql_rc, '0', "Restore of prepared transaction on promoted slave");
 
 # restart old master as new slave
@@ -309,8 +322,8 @@ $cur_slave->start;
 $cur_master->psql('postgres', "COMMIT PREPARED 'xact_009_12'");
 
 ###############################################################################
-# Check for a lock conflict between prepared transaction with DDL inside and replay of
-# XLOG_STANDBY_LOCK wal record.
+# Check for a lock conflict between prepared transaction with DDL inside and
+# replay of XLOG_STANDBY_LOCK wal record.
 ###############################################################################
 
 $cur_master->psql(
@@ -327,13 +340,19 @@ $cur_master->psql(
 
 $cur_slave->psql(
 	'postgres',
-	"SELECT count(*) FROM pg_prepared_xacts",
+	"SELECT count(*) FROM t_009_tbl2",
 	stdout => \$psql_out);
-is($psql_out, '0', "Replay prepared transaction with DDL");
+is($psql_out, '1', "Replay prepared transaction with DDL");
 
 ###############################################################################
 # Verify expected data appears on both servers.
 ###############################################################################
+
+$cur_master->psql(
+	'postgres',
+	"SELECT count(*) FROM pg_prepared_xacts",
+	stdout => \$psql_out);
+is($psql_out, '0', "No uncommitted prepared transactions on master");
 
 $cur_master->psql(
 	'postgres',
@@ -369,6 +388,12 @@ $cur_master->psql(
 	stdout => \$psql_out);
 is($psql_out, qq{27|issued to paris},
    "Check expected t_009_tbl2 data on master");
+
+$cur_slave->psql(
+	'postgres',
+	"SELECT count(*) FROM pg_prepared_xacts",
+	stdout => \$psql_out);
+is($psql_out, '0', "No uncommitted prepared transactions on slave");
 
 $cur_slave->psql(
 	'postgres',
