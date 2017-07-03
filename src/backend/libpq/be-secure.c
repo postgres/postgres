@@ -298,10 +298,12 @@ rloop:
 				ereport(COMMERROR,
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
 						 errmsg("SSL error: %s", SSLerrmessage(ecode))));
-				/* fall through */
-			case SSL_ERROR_ZERO_RETURN:
 				errno = ECONNRESET;
 				n = -1;
+				break;
+			case SSL_ERROR_ZERO_RETURN:
+				/* connection was cleanly shut down by peer */
+				n = 0;
 				break;
 			default:
 				ereport(COMMERROR,
@@ -423,8 +425,14 @@ wloop:
 				ereport(COMMERROR,
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
 						 errmsg("SSL error: %s", SSLerrmessage(ecode))));
-				/* fall through */
+				errno = ECONNRESET;
+				n = -1;
+				break;
 			case SSL_ERROR_ZERO_RETURN:
+				/*
+				 * the SSL connnection was closed, leave it to the caller
+				 * to ereport it
+				 */
 				errno = ECONNRESET;
 				n = -1;
 				break;
