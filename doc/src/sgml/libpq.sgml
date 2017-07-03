@@ -1984,8 +1984,7 @@ const char *PQsslAttribute(const PGconn *conn, const char *attribute_name);
           <listitem>
            <para>
              SSL/TLS version in use. Common values
-             are <literal>"SSLv2"</literal>, <literal>"SSLv3"</literal>,
-             <literal>"TLSv1"</literal>, <literal>"TLSv1.1"</literal>
+             are <literal>"TLSv1"</literal>, <literal>"TLSv1.1"</literal>
              and <literal>"TLSv1.2"</literal>, but an implementation may
              return other strings if some other protocol is used.
            </para>
