@@ -104,7 +104,7 @@ px_THROW_ERROR(int err)
 #else
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("pg_random_bytes() is not supported by this build"),
+				 errmsg("generating random data is not supported by this build"),
 				 errdetail("This functionality requires a source of strong random numbers"),
 				 errhint("You need to rebuild PostgreSQL using --enable-strong-random")));
 #endif

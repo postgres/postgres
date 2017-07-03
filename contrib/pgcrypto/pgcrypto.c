@@ -451,13 +451,10 @@ PG_FUNCTION_INFO_V1(pg_random_uuid);
 Datum
 pg_random_uuid(PG_FUNCTION_ARGS)
 {
+#ifdef HAVE_STRONG_RANDOM
 	uint8	   *buf = (uint8 *) palloc(UUID_LEN);
 
-	/*
-	 * Generate random bits. pg_backend_random() will do here, we don't promis
-	 * UUIDs to be cryptographically random, when built with
-	 * --disable-strong-random.
-	 */
+	/* Generate random bits. */
 	if (!pg_backend_random((char *) buf, UUID_LEN))
 		px_THROW_ERROR(PXE_NO_RANDOM);
 
@@ -469,6 +466,9 @@ pg_random_uuid(PG_FUNCTION_ARGS)
 	buf[8] = (buf[8] & 0x3f) | 0x80;	/* "variant" field */
 
 	PG_RETURN_UUID_P((pg_uuid_t *) buf);
+#else
+	px_THROW_ERROR(PXE_NO_RANDOM);
+#endif
 }
 
 static void *
