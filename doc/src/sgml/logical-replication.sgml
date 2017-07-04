@@ -429,6 +429,13 @@
    and constraints.
   </para>
 
+  <para>
+   The logical replication apply process currently only fires row triggers,
+   not statement triggers.  The initial table synchronization, however, is
+   implemented like a <command>COPY</command> command and thus fires both row
+   and statement triggers for <command>INSERT</command>.
+  </para>
+
   <sect2 id="logical-replication-snapshot">
     <title>Initial Snapshot</title>
     <para>
