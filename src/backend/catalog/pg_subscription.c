@@ -28,6 +28,8 @@
 
 #include "nodes/makefuncs.h"
 
+#include "storage/lmgr.h"
+
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -245,6 +247,8 @@ SetSubscriptionRelState(Oid subid, Oid relid, char state,
 	Oid			subrelid = InvalidOid;
 	bool		nulls[Natts_pg_subscription_rel];
 	Datum		values[Natts_pg_subscription_rel];
+
+	LockSharedObject(SubscriptionRelationId, subid, 0, AccessShareLock);
 
 	rel = heap_open(SubscriptionRelRelationId, RowExclusiveLock);
 

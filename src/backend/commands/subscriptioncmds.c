@@ -644,6 +644,9 @@ AlterSubscription(AlterSubscriptionStmt *stmt)
 	subid = HeapTupleGetOid(tup);
 	sub = GetSubscription(subid, false);
 
+	/* Lock the subscription so nobody else can do anything with it. */
+	LockSharedObject(SubscriptionRelationId, subid, 0, AccessExclusiveLock);
+
 	/* Form a new tuple. */
 	memset(values, 0, sizeof(values));
 	memset(nulls, false, sizeof(nulls));
